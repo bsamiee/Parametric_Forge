@@ -24,9 +24,6 @@
     # --- Git Configuration --------------------------------------------------
     "git/ignore".source = ./00.core/configs/git/gitignore;
     "git/attributes".source = ./00.core/configs/git/gitattributes;
-    
-    # --- 1Password Plugin Configuration -------------------------------------
-    "op/plugins/gh.json".source = ./00.core/configs/git/op-gh-plugin.json;
     # --- Language Server Configurations -------------------------------------
     # Nix
     "nil/nil.toml".source = ./00.core/configs/languages/nil.toml; # TODO: nil only reads from project root, move to templates

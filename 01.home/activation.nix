@@ -116,6 +116,18 @@
           echo "    Run 'op signin' and then 'home-manager switch' to retry"
         fi
       ''}
+
+      # Configure gh CLI with 1Password plugin
+      echo "  Configuring gh CLI with 1Password..."
+      if ${myLib.secrets.opReady}; then
+        if command -v op-gh-setup.sh >/dev/null 2>&1; then
+          op-gh-setup.sh >/dev/null 2>&1 && echo "    ✓ gh CLI configured with 1Password" || echo "    ⚠ gh CLI configuration failed"
+        else
+          echo "    ⚠ op-gh-setup.sh not found in PATH (will be available after deployment)"
+        fi
+      else
+        echo "    ⚠ Skipping gh CLI setup - 1Password not ready"
+      fi
     '';
 
   };
