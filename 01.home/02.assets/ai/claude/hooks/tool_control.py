@@ -111,11 +111,10 @@ def main() -> int:
     if tool in file_tools and (errors := get_validation_errors(session)):
         match tool:
             case "Edit" | "MultiEdit" | "mcp__filesystem__edit_file":
-                # Allow fixing the file with errors
+                # Allow editing files with errors (let Claude's permissions handle approval)
                 try:
                     if (fp := json.loads(input_data).get("file_path", "")) and fp in errors:
-                        response = create_response("approve")
-                        print(json.dumps(response))  # noqa: T201
+                        # Don't block editing the file with errors, but don't auto-approve either
                         return 0
                 except json.JSONDecodeError:
                     pass
@@ -126,21 +125,21 @@ def main() -> int:
         print(json.dumps(response), file=sys.stderr)  # noqa: T201
         return 2
 
-    # Main tool decision logic
+    # Main tool decision logic - only handle blocking and substitution
+    # Let Claude's native permissions handle everything else
     match tool:
         case t if t in BLOCKED:
             response = create_response("block", f"Use alternatives to {tool}")
-            exit_code = 2
+            print(json.dumps(response))  # noqa: T201
+            return 2
         case t if t in SUBSTITUTIONS:
             response = create_response("modify", f"Using {SUBSTITUTIONS[tool]} instead",
                 {"tool": SUBSTITUTIONS[tool], "input": input_data})
-            exit_code = 0
+            print(json.dumps(response))  # noqa: T201
+            return 0
         case _:
-            response = create_response("approve")
-            exit_code = 0
-
-    print(json.dumps(response))  # noqa: T201
-    return exit_code
+            # Don't interfere - let Claude's permission system handle it
+            return 0
 
 
 if __name__ == "__main__":
