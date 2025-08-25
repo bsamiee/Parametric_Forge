@@ -1,0 +1,345 @@
+# Title         : config.toml
+# Author        : Bardia Samiee
+# Project       : Parametric Forge
+# License       : MIT
+# Path          : 01.home/00.core/configs/network/doggo/config.toml
+# ----------------------------------------------------------------------------
+# doggo DNS client configuration with resolvers and output formatting
+
+# --- Core Settings ------------------------------------------------------------
+# Default query type (A, AAAA, CNAME, MX, NS, PTR, SOA, SRV, TXT, ANY)
+query_type = "A"
+
+# Default query class (IN, CH, HS)
+query_class = "IN"
+
+# Timeout for DNS queries (seconds)
+timeout = 5
+
+# Number of retries for failed queries
+retries = 3
+
+# Use TCP instead of UDP for queries
+use_tcp = false
+
+# Use IPv4 only
+ipv4_only = false
+
+# Use IPv6 only
+ipv6_only = false
+
+# --- DNS Resolvers -----------------------------------------------------------
+# Primary DNS resolvers (in order of preference)
+resolvers = [
+    "1.1.1.1:53",        # Cloudflare
+    "8.8.8.8:53",        # Google
+    "9.9.9.9:53",        # Quad9
+    "208.67.222.222:53"  # OpenDNS
+]
+
+# DNS over HTTPS (DoH) resolvers
+doh_resolvers = [
+    "https://cloudflare-dns.com/dns-query",
+    "https://dns.google/dns-query",
+    "https://dns.quad9.net/dns-query"
+]
+
+# DNS over TLS (DoT) resolvers
+dot_resolvers = [
+    "1.1.1.1:853",
+    "8.8.8.8:853",
+    "9.9.9.9:853"
+]
+
+# Use system DNS resolvers as fallback
+use_system_resolvers = true
+
+# --- Output Settings ---------------------------------------------------------
+# Output format (table, json, yaml, short)
+output_format = "table"
+
+# Use colored output
+colored_output = true
+
+# Color theme (auto, dark, light)
+color_theme = "dark"
+
+# Show query time
+show_time = true
+
+# Show resolver used
+show_resolver = true
+
+# Show query statistics
+show_stats = true
+
+# Reverse DNS lookup for IP addresses
+reverse_lookup = false
+
+# --- Display Configuration --------------------------------------------------
+# Table column configuration
+[table]
+# Show columns (name, type, class, ttl, answer, resolver, time)
+columns = ["name", "type", "ttl", "answer", "time"]
+
+# Column widths (0 = auto-size)
+column_widths = { name = 30, type = 6, ttl = 8, answer = 40, time = 8 }
+
+# Column alignment
+column_alignment = { name = "left", type = "center", ttl = "right", answer = "left", time = "right" }
+
+# --- Color Theme Configuration -----------------------------------------------
+[colors.dark]
+# Query type colors
+type_a = "green"
+type_aaaa = "blue"
+type_cname = "yellow"
+type_mx = "magenta"
+type_ns = "cyan"
+type_ptr = "red"
+type_soa = "white"
+type_srv = "bright_green"
+type_txt = "bright_yellow"
+type_other = "gray"
+
+# Status colors
+success = "green"
+error = "red"
+warning = "yellow"
+info = "cyan"
+
+# Answer colors
+ip_address = "bright_green"
+domain_name = "bright_blue"
+mail_server = "bright_magenta"
+text_record = "bright_yellow"
+
+# Metadata colors
+ttl = "gray"
+resolver = "cyan"
+query_time = "yellow"
+header = "bold_white"
+
+[colors.light]
+# Light theme for bright terminals
+type_a = "dark_green"
+type_aaaa = "dark_blue"
+type_cname = "dark_yellow"
+type_mx = "dark_magenta"
+type_ns = "dark_cyan"
+type_ptr = "dark_red"
+type_soa = "black"
+type_srv = "green"
+type_txt = "yellow"
+type_other = "gray"
+
+success = "dark_green"
+error = "dark_red"
+warning = "dark_yellow"
+info = "dark_cyan"
+
+ip_address = "green"
+domain_name = "blue"
+mail_server = "magenta"
+text_record = "yellow"
+
+ttl = "gray"
+resolver = "dark_cyan"
+query_time = "dark_yellow"
+header = "bold_black"
+
+# --- Query Optimization -----------------------------------------------------
+# Enable EDNS (Extension Mechanisms for DNS)
+enable_edns = true
+
+# EDNS buffer size
+edns_buffer_size = 4096
+
+# Enable DNSSEC validation
+enable_dnssec = false
+
+# Check DNSSEC signatures
+check_dnssec = false
+
+# --- Caching Settings -------------------------------------------------------
+# Enable DNS response caching
+enable_cache = true
+
+# Cache size (number of entries)
+cache_size = 1000
+
+# Cache TTL override (seconds, 0 = use record TTL)
+cache_ttl = 0
+
+# Cache file location
+cache_file = "$XDG_CACHE_HOME/doggo/cache.db"
+
+# --- Advanced Settings ------------------------------------------------------
+# Source IP address for queries
+source_ip = ""
+
+# Source port for queries (0 = random)
+source_port = 0
+
+# Enable query ID randomization
+randomize_query_id = true
+
+# Enable case randomization (0x20 bit)
+randomize_case = true
+
+# --- Protocol Settings ------------------------------------------------------
+# DNS over HTTPS settings
+[doh]
+# Enable DNS over HTTPS
+enabled = false
+
+# HTTP method (GET, POST)
+method = "POST"
+
+# HTTP headers
+headers = { "Accept" = "application/dns-message" }
+
+# Verify SSL certificates
+verify_ssl = true
+
+# DNS over TLS settings
+[dot]
+# Enable DNS over TLS
+enabled = false
+
+# TLS version (1.2, 1.3)
+tls_version = "1.3"
+
+# Verify SSL certificates
+verify_ssl = true
+
+# Server name for SNI
+server_name = ""
+
+# --- Logging and Debugging --------------------------------------------------
+# Log level (error, warn, info, debug, trace)
+log_level = "info"
+
+# Log file location
+log_file = ""
+
+# Enable query logging
+log_queries = false
+
+# Enable response logging
+log_responses = false
+
+# Debug mode (show raw DNS packets)
+debug_mode = false
+
+# --- Performance Monitoring -------------------------------------------------
+# Enable performance monitoring
+enable_monitoring = false
+
+# Monitor query response times
+monitor_response_times = true
+
+# Monitor resolver availability
+monitor_resolvers = true
+
+# Alert threshold for slow queries (milliseconds)
+slow_query_threshold = 1000
+
+# --- Custom Query Types -----------------------------------------------------
+# Define custom query type shortcuts
+[query_shortcuts]
+mail = "MX"
+nameservers = "NS"
+text = "TXT"
+reverse = "PTR"
+all = "ANY"
+
+# --- Resolver Profiles ------------------------------------------------------
+# Predefined resolver configurations
+[resolver_profiles]
+
+[resolver_profiles.fast]
+resolvers = ["1.1.1.1:53", "8.8.8.8:53"]
+timeout = 2
+retries = 1
+
+[resolver_profiles.secure]
+doh_resolvers = ["https://cloudflare-dns.com/dns-query"]
+enable_dnssec = true
+verify_ssl = true
+
+[resolver_profiles.privacy]
+dot_resolvers = ["1.1.1.1:853"]
+enable_dnssec = true
+verify_ssl = true
+
+[resolver_profiles.local]
+resolvers = ["127.0.0.1:53"]
+use_system_resolvers = true
+
+# --- Integration Settings ---------------------------------------------------
+[integration]
+# Shell completion support
+enable_completions = true
+
+# History file location
+history_file = "$XDG_DATA_HOME/doggo/history"
+
+# Maximum history entries
+max_history = 1000
+
+# External tools integration
+[integration.tools]
+# Whois command for domain information
+whois_command = "whois"
+
+# Ping command for connectivity testing
+ping_command = "ping"
+
+# Traceroute command for path tracing
+traceroute_command = "traceroute"
+
+# --- Batch Query Settings ---------------------------------------------------
+[batch]
+# Enable batch query mode
+enabled = false
+
+# Batch file format (text, csv, json)
+input_format = "text"
+
+# Parallel query limit
+parallel_limit = 10
+
+# Delay between queries (milliseconds)
+query_delay = 100
+
+# --- Export Settings --------------------------------------------------------
+[export]
+# Export format (json, csv, yaml, xml)
+format = "json"
+
+# Export file location
+file = ""
+
+# Include metadata in export
+include_metadata = true
+
+# Pretty print JSON
+json_pretty = true
+
+# CSV delimiter
+csv_delimiter = ","
+
+# --- Security Settings ------------------------------------------------------
+[security]
+# Validate DNS responses
+validate_responses = true
+
+# Check for DNS spoofing
+check_spoofing = false
+
+# Maximum response size (bytes)
+max_response_size = 65535
+
+# Trusted resolvers only
+trusted_resolvers_only = false

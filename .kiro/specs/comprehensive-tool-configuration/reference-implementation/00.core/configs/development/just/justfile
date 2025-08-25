@@ -1,0 +1,164 @@
+# Title         : justfile
+# Author        : Bardia Samiee
+# Project       : Parametric Forge
+# License       : MIT
+# Path          : 01.home/00.core/configs/development/just/justfile
+# ----------------------------------------------------------------------------
+# Just command runner template with common development tasks
+
+# --- Default Recipe -----------------------------------------------------------
+# Show available recipes when just is run without arguments
+default:
+    @just --list
+
+# --- Development Workflow ----------------------------------------------------
+# Install project dependencies
+install:
+    @echo "Installing project dependencies..."
+    # Add your dependency installation commands here
+    # Example: npm install, pip install -r requirements.txt, cargo build
+
+# Run development server or application
+dev:
+    @echo "Starting development environment..."
+    # Add your development server command here
+    # Example: npm run dev, python manage.py runserver, cargo run
+
+# Run tests with coverage
+test:
+    @echo "Running test suite..."
+    # Add your test commands here
+    # Example: npm test, pytest --cov, cargo test
+
+# Run linting and formatting
+lint:
+    @echo "Running linters and formatters..."
+    # Add your linting commands here
+    # Example: eslint ., ruff check ., cargo clippy
+
+# Format code according to project standards
+format:
+    @echo "Formatting code..."
+    # Add your formatting commands here
+    # Example: prettier --write ., ruff format ., cargo fmt
+
+# --- Build and Release -------------------------------------------------------
+# Build project for production
+build:
+    @echo "Building project..."
+    # Add your build commands here
+    # Example: npm run build, python -m build, cargo build --release
+
+# Clean build artifacts and temporary files
+clean:
+    @echo "Cleaning build artifacts..."
+    # Add your cleanup commands here
+    # Example: rm -rf dist/ node_modules/.cache, cargo clean
+
+# Create a new release
+release version:
+    @echo "Creating release {{version}}..."
+    # Add your release commands here
+    # Example: git tag v{{version}}, npm version {{version}}
+
+# --- Documentation -----------------------------------------------------------
+# Generate project documentation
+docs:
+    @echo "Generating documentation..."
+    # Add your documentation commands here
+    # Example: mkdocs build, cargo doc, sphinx-build
+
+# Serve documentation locally
+docs-serve:
+    @echo "Serving documentation locally..."
+    # Add your documentation server commands here
+    # Example: mkdocs serve, cargo doc --open
+
+# --- Database and Services ---------------------------------------------------
+# Set up local database
+db-setup:
+    @echo "Setting up local database..."
+    # Add your database setup commands here
+    # Example: createdb myapp, python manage.py migrate
+
+# Reset database to clean state
+db-reset:
+    @echo "Resetting database..."
+    # Add your database reset commands here
+    # Example: dropdb myapp && createdb myapp
+
+# Start required services
+services-start:
+    @echo "Starting required services..."
+    # Add your service startup commands here
+    # Example: docker-compose up -d, brew services start redis
+
+# Stop all services
+services-stop:
+    @echo "Stopping services..."
+    # Add your service shutdown commands here
+    # Example: docker-compose down, brew services stop redis
+
+# --- Utility Recipes ---------------------------------------------------------
+# Check project health and dependencies
+check:
+    @echo "Checking project health..."
+    # Add your health check commands here
+    # Example: npm audit, pip check, cargo audit
+
+# Update dependencies to latest versions
+update:
+    @echo "Updating dependencies..."
+    # Add your update commands here
+    # Example: npm update, pip-tools compile --upgrade, cargo update
+
+# Show project information and status
+info:
+    @echo "Project Information:"
+    @echo "==================="
+    @pwd
+    @git status --porcelain | wc -l | xargs echo "Modified files:"
+    @git rev-parse --short HEAD | xargs echo "Current commit:"
+    @git branch --show-current | xargs echo "Current branch:"
+
+# --- Environment Management --------------------------------------------------
+# Set up development environment
+env-setup:
+    @echo "Setting up development environment..."
+    # Add environment setup commands here
+    # Example: cp .env.example .env, python -m venv venv
+
+# Activate development environment
+env-activate:
+    @echo "Activating development environment..."
+    # Add environment activation commands here
+    # Example: source venv/bin/activate, nvm use
+
+# --- Git Workflow ------------------------------------------------------------
+# Create a new feature branch
+feature branch:
+    @echo "Creating feature branch: {{branch}}"
+    git checkout -b feature/{{branch}}
+
+# Commit changes with conventional commit format
+commit message:
+    @echo "Committing changes..."
+    git add .
+    git commit -m "{{message}}"
+
+# Push current branch to origin
+push:
+    @echo "Pushing to origin..."
+    git push origin $(git branch --show-current)
+
+# Pull latest changes and rebase
+sync:
+    @echo "Syncing with remote..."
+    git pull --rebase origin main
+
+# --- Custom Project Recipes --------------------------------------------------
+# Add your project-specific recipes below this line
+# Example:
+# deploy-staging:
+#     @echo "Deploying to staging..."
+#     # Your deployment commands here

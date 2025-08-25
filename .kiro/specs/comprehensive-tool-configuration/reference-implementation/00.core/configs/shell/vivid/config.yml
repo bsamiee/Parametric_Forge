@@ -1,0 +1,252 @@
+# Title         : config.yml
+# Author        : Bardia Samiee
+# Project       : Parametric Forge
+# License       : MIT
+# Path          : 01.home/00.core/configs/shell/vivid/config.yml
+# ----------------------------------------------------------------------------
+# Vivid LS_COLORS generator configuration with custom themes and file types
+
+# --- Core Settings ------------------------------------------------------------
+# Default theme to use when no theme is specified
+default_theme: "parametric-dark"
+
+# Color depth (8, 16, 256, or truecolor)
+color_depth: "truecolor"
+
+# Use bold text for certain file types
+use_bold: true
+
+# Use italic text for certain file types (if terminal supports it)
+use_italic: false
+
+# Use underline for certain file types
+use_underline: false
+
+# --- File Type Categories ---------------------------------------------------
+# Define custom file type categories for better organization
+
+categories:
+  # --- Development Files ---
+  source_code:
+    extensions: [
+      "c", "cpp", "cc", "cxx", "h", "hpp", "hxx",
+      "rs", "go", "py", "js", "ts", "jsx", "tsx",
+      "java", "kt", "swift", "rb", "php", "cs",
+      "scala", "clj", "hs", "ml", "fs", "elm",
+      "dart", "lua", "pl", "r", "jl", "zig"
+    ]
+    color: "bright_green"
+    style: "bold"
+
+  config_files:
+    extensions: [
+      "json", "yaml", "yml", "toml", "ini", "cfg",
+      "conf", "config", "xml", "plist", "env"
+    ]
+    color: "bright_yellow"
+
+  build_files:
+    extensions: [
+      "mk", "cmake", "ninja", "bazel", "buck",
+      "gradle", "maven", "sbt", "cargo", "npm"
+    ]
+    names: [
+      "Makefile", "makefile", "CMakeLists.txt",
+      "build.gradle", "pom.xml", "Cargo.toml",
+      "package.json", "pyproject.toml", "setup.py"
+    ]
+    color: "bright_magenta"
+
+  # --- Documentation Files ---
+  documentation:
+    extensions: [
+      "md", "rst", "txt", "rtf", "tex", "adoc",
+      "org", "wiki", "man", "1", "2", "3", "4", "5", "6", "7", "8"
+    ]
+    color: "bright_cyan"
+
+  # --- Media Files ---
+  images:
+    extensions: [
+      "jpg", "jpeg", "png", "gif", "bmp", "tiff", "tif",
+      "svg", "webp", "ico", "heic", "heif", "raw",
+      "cr2", "nef", "arw", "dng", "psd", "ai", "eps"
+    ]
+    color: "magenta"
+
+  videos:
+    extensions: [
+      "mp4", "avi", "mkv", "mov", "wmv", "flv", "webm",
+      "m4v", "3gp", "ogv", "ts", "mts", "m2ts"
+    ]
+    color: "bright_red"
+
+  audio:
+    extensions: [
+      "mp3", "wav", "flac", "aac", "ogg", "wma", "m4a",
+      "opus", "ape", "ac3", "dts", "aiff", "au"
+    ]
+    color: "red"
+
+  # --- Archive Files ---
+  archives:
+    extensions: [
+      "zip", "tar", "gz", "bz2", "xz", "7z", "rar",
+      "dmg", "iso", "img", "deb", "rpm", "pkg",
+      "msi", "exe", "app", "apk"
+    ]
+    color: "yellow"
+
+  # --- System Files ---
+  executables:
+    extensions: [
+      "exe", "msi", "app", "deb", "rpm", "pkg",
+      "dmg", "run", "bin", "com", "bat", "cmd"
+    ]
+    color: "bright_green"
+    style: "bold"
+
+  system_files:
+    extensions: [
+      "sys", "dll", "so", "dylib", "a", "lib",
+      "framework", "bundle", "kext", "driver"
+    ]
+    color: "red"
+
+  # --- Temporary and Cache Files ---
+  temporary:
+    extensions: [
+      "tmp", "temp", "cache", "log", "bak", "backup",
+      "old", "orig", "swp", "swo", "~", "DS_Store"
+    ]
+    color: "bright_black"
+
+# --- Theme Definitions -------------------------------------------------------
+themes:
+  # --- Parametric Dark Theme ---
+  parametric-dark:
+    description: "Dark theme optimized for Parametric Forge development"
+    
+    # Base file types
+    normal: "white"
+    file: "white"
+    directory: "bright_blue:bold"
+    symlink: "bright_cyan"
+    
+    # Special files
+    fifo: "yellow:bg_black"
+    socket: "bright_magenta:bg_black"
+    door: "bright_magenta:bg_black"
+    block_device: "bright_yellow:bg_black"
+    char_device: "bright_yellow:bg_black"
+    
+    # Permissions
+    executable: "bright_green:bold"
+    setuid: "white:bg_red"
+    setgid: "black:bg_yellow"
+    sticky: "white:bg_blue"
+    other_writable: "blue:bg_green"
+    sticky_other_writable: "black:bg_green"
+    
+    # File categories (using defined categories above)
+    source_code: "bright_green:bold"
+    config_files: "bright_yellow"
+    build_files: "bright_magenta"
+    documentation: "bright_cyan"
+    images: "magenta"
+    videos: "bright_red"
+    audio: "red"
+    archives: "yellow"
+    executables: "bright_green:bold"
+    system_files: "red"
+    temporary: "bright_black"
+
+  # --- Parametric Light Theme ---
+  parametric-light:
+    description: "Light theme for bright terminal backgrounds"
+    
+    # Base file types
+    normal: "black"
+    file: "black"
+    directory: "blue:bold"
+    symlink: "cyan"
+    
+    # Special files
+    fifo: "brown:bg_white"
+    socket: "magenta:bg_white"
+    door: "magenta:bg_white"
+    block_device: "brown:bg_white"
+    char_device: "brown:bg_white"
+    
+    # Permissions
+    executable: "green:bold"
+    setuid: "white:bg_red"
+    setgid: "black:bg_yellow"
+    sticky: "white:bg_blue"
+    other_writable: "blue:bg_yellow"
+    sticky_other_writable: "black:bg_yellow"
+    
+    # File categories
+    source_code: "green:bold"
+    config_files: "brown"
+    build_files: "magenta"
+    documentation: "blue"
+    images: "magenta"
+    videos: "red"
+    audio: "red"
+    archives: "brown"
+    executables: "green:bold"
+    system_files: "red"
+    temporary: "bright_black"
+
+# --- Custom File Patterns ---------------------------------------------------
+# Define specific patterns for files that don't fit standard categories
+
+custom_patterns:
+  # Version control
+  ".gitignore": "bright_black"
+  ".gitattributes": "bright_black"
+  ".gitmodules": "bright_black"
+  ".git": "bright_black"
+  
+  # Editor files
+  ".vimrc": "green"
+  ".nvimrc": "green"
+  ".emacs": "magenta"
+  
+  # Shell files
+  ".bashrc": "green"
+  ".zshrc": "green"
+  ".profile": "green"
+  ".bash_profile": "green"
+  
+  # Configuration directories
+  ".config": "yellow"
+  ".local": "yellow"
+  ".cache": "bright_black"
+  
+  # Development directories
+  "node_modules": "bright_black"
+  ".git": "bright_black"
+  "target": "bright_black"
+  "build": "bright_black"
+  "dist": "bright_black"
+
+# --- Integration Settings ---------------------------------------------------
+# Settings for integration with other tools
+
+integration:
+  # Export format (bash, zsh, fish, csh)
+  shell_format: "bash"
+  
+  # Generate completion scripts
+  generate_completions: true
+  
+  # Cache generated themes
+  use_cache: true
+  
+  # Cache directory (uses XDG_CACHE_HOME if available)
+  cache_dir: "$XDG_CACHE_HOME/vivid"
+  
+  # Update check interval (in days, 0 to disable)
+  update_check_interval: 7

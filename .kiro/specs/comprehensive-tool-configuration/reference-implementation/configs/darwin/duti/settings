@@ -1,0 +1,108 @@
+# Title         : settings
+# Author        : Bardia Samiee
+# Project       : Parametric Forge
+# License       : MIT
+# Path          : configs/darwin/duti/settings
+# ----------------------------------------------------------------------------
+# macOS default application settings using duti
+# Format: bundle_id UTI role
+# Roles: all, viewer, editor, shell
+
+# --- Text and Source Code Files -------------------------------------------
+# Set VS Code as default for all text and source files
+com.microsoft.VSCode public.plain-text all
+com.microsoft.VSCode public.unix-executable all
+com.microsoft.VSCode public.shell-script all
+com.microsoft.VSCode public.source-code all
+
+# Programming languages
+com.microsoft.VSCode public.c-source all
+com.microsoft.VSCode public.c-plus-plus-source all
+com.microsoft.VSCode public.objective-c-source all
+com.microsoft.VSCode public.python-script all
+com.microsoft.VSCode public.ruby-script all
+com.microsoft.VSCode public.perl-script all
+com.microsoft.VSCode public.php-script all
+
+# Web development files
+com.microsoft.VSCode public.html all
+com.microsoft.VSCode public.css all
+com.microsoft.VSCode com.netscape.javascript-source all
+com.microsoft.VSCode public.typescript-source all
+
+# Configuration files
+com.microsoft.VSCode public.json all
+com.microsoft.VSCode public.xml all
+com.microsoft.VSCode public.yaml all
+com.microsoft.VSCode org.yaml.yaml all
+com.microsoft.VSCode public.toml all
+com.microsoft.VSCode public.ini all
+
+# Markup and documentation
+com.microsoft.VSCode net.daringfireball.markdown all
+com.microsoft.VSCode public.reStructuredText all
+com.microsoft.VSCode org.asciidoc.asciidoc-source all
+
+# --- Development-Specific Files -------------------------------------------
+# Nix files
+com.microsoft.VSCode org.nixos.nix all
+
+# Rust files
+com.microsoft.VSCode org.rust-lang.rust all
+
+# Go files
+com.microsoft.VSCode public.go-source all
+
+# Docker files
+com.microsoft.VSCode com.docker.dockerfile all
+
+# --- Archive Files --------------------------------------------------------
+# Use The Unarchiver if available, otherwise system default
+# Uncomment if The Unarchiver is installed
+# cx.c3.theunarchiver public.zip-archive all
+# cx.c3.theunarchiver public.tar-archive all
+# cx.c3.theunarchiver org.gnu.gnu-zip-archive all
+# cx.c3.theunarchiver public.bzip2-archive all
+# cx.c3.theunarchiver org.7-zip.7-zip-archive all
+
+# --- Media Files ----------------------------------------------------------
+# Use default macOS applications for media
+com.apple.QuickTimePlayerX public.movie all
+com.apple.QuickTimePlayerX public.mpeg-4 all
+com.apple.QuickTimePlayerX com.apple.quicktime-movie all
+
+# Images - use Preview for most, but allow specialized apps
+com.apple.Preview public.image all
+com.apple.Preview public.png all
+com.apple.Preview public.jpeg all
+com.apple.Preview public.tiff all
+com.apple.Preview com.compuserve.gif all
+
+# PDFs - use Preview
+com.apple.Preview com.adobe.pdf all
+
+# --- Terminal and Shell Files ---------------------------------------------
+# Terminal files should open in terminal
+com.apple.Terminal public.shell-script editor
+com.googlecode.iterm2 public.shell-script editor
+
+# --- Specialized File Types -----------------------------------------------
+# SQLite databases - use DB Browser if available
+# com.sqlitebrowser.sqlitebrowser public.database all
+
+# CSV files - use Numbers or Excel
+com.apple.iWork.Numbers public.comma-separated-values-text all
+
+# --- System Files ---------------------------------------------------------
+# Property lists - use Xcode or text editor
+com.apple.dt.Xcode com.apple.property-list all
+com.microsoft.VSCode com.apple.property-list editor
+
+# --- Notes and Documentation ----------------------------------------------
+# Markdown files - use dedicated markdown editor if preferred
+# com.typora.typora net.daringfireball.markdown all
+# Otherwise use VS Code (already set above)
+
+# --- Custom Extensions ----------------------------------------------------
+# Add custom file type associations here
+# Example: com.example.app com.example.custom-type all

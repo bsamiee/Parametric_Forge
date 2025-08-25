@@ -1,0 +1,71 @@
+<!-- Title         : delegates.xml -->
+<!-- Author        : Bardia Samiee -->
+<!-- Project       : Parametric Forge -->
+<!-- License       : MIT -->
+<!-- Path          : configs/darwin/imagemagick/delegates.xml -->
+<!-- -------------------------------------------------------------------------- -->
+<!-- ImageMagick delegate configuration for macOS -->
+
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE delegatemap [
+<!ELEMENT delegatemap (delegate)+>
+<!ELEMENT delegate (#PCDATA)>
+<!ATTLIST delegate decode CDATA #IMPLIED>
+<!ATTLIST delegate encode CDATA #IMPLIED>
+<!ATTLIST delegate mode CDATA #IMPLIED>
+<!ATTLIST delegate spawn CDATA #IMPLIED>
+<!ATTLIST delegate stealth CDATA #IMPLIED>
+<!ATTLIST delegate thread-support CDATA #IMPLIED>
+<!ATTLIST delegate command CDATA #REQUIRED>
+]>
+<delegatemap>
+  <!-- macOS-specific delegates for media processing -->
+  
+  <!-- HEIC support using macOS built-in tools -->
+  <delegate decode="heic" command="&quot;/usr/bin/sips&quot; -s format png &quot;%i&quot; --out &quot;%o&quot;"/>
+  
+  <!-- Video thumbnail generation using ffmpeg (if available) -->
+  <delegate decode="avi" command="&quot;/opt/homebrew/bin/ffmpeg&quot; -i &quot;%i&quot; -vframes 1 -f image2 &quot;%o&quot;"/>
+  <delegate decode="mp4" command="&quot;/opt/homebrew/bin/ffmpeg&quot; -i &quot;%i&quot; -vframes 1 -f image2 &quot;%o&quot;"/>
+  <delegate decode="mov" command="&quot;/opt/homebrew/bin/ffmpeg&quot; -i &quot;%i&quot; -vframes 1 -f image2 &quot;%o&quot;"/>
+  <delegate decode="mkv" command="&quot;/opt/homebrew/bin/ffmpeg&quot; -i &quot;%i&quot; -vframes 1 -f image2 &quot;%o&quot;"/>
+  
+  <!-- Raw image processing using dcraw (if available) -->
+  <delegate decode="dng:decode" command="&quot;/opt/homebrew/bin/dcraw&quot; -c -w &quot;%i&quot; | &quot;/opt/homebrew/bin/convert&quot; - &quot;%o&quot;"/>
+  <delegate decode="cr2:decode" command="&quot;/opt/homebrew/bin/dcraw&quot; -c -w &quot;%i&quot; | &quot;/opt/homebrew/bin/convert&quot; - &quot;%o&quot;"/>
+  <delegate decode="nef:decode" command="&quot;/opt/homebrew/bin/dcraw&quot; -c -w &quot;%i&quot; | &quot;/opt/homebrew/bin/convert&quot; - &quot;%o&quot;"/>
+  
+  <!-- SVG processing using rsvg-convert (safer than built-in SVG) -->
+  <delegate decode="svg:decode" command="&quot;/opt/homebrew/bin/rsvg-convert&quot; -o &quot;%o&quot; &quot;%i&quot;"/>
+  <delegate decode="mvg:decode" stealth="True"/>
+  
+  <!-- WebP support -->
+  <delegate decode="webp" command="&quot;/opt/homebrew/bin/dwebp&quot; &quot;%i&quot; -o &quot;%o&quot;"/>
+  <delegate encode="webp" command="&quot;/opt/homebrew/bin/cwebp&quot; -quiet -q 75 &quot;%i&quot; -o &quot;%o&quot;"/>
+  
+  <!-- AVIF support (if available) -->
+  <delegate decode="avif" command="&quot;/opt/homebrew/bin/avifdec&quot; &quot;%i&quot; &quot;%o&quot;"/>
+  <delegate encode="avif" command="&quot;/opt/homebrew/bin/avifenc&quot; &quot;%i&quot; &quot;%o&quot;"/>
+  
+  <!-- Disable potentially dangerous delegates -->
+  <delegate decode="ps" stealth="True"/>
+  <delegate decode="eps" stealth="True"/>
+  <delegate decode="pdf" stealth="True"/>
+  <delegate decode="xps" stealth="True"/>
+  
+  <!-- Text rendering using macOS fonts -->
+  <delegate decode="txt" command="&quot;/usr/bin/textutil&quot; -convert html &quot;%i&quot; -output &quot;%o&quot;"/>
+  
+  <!-- Archive handling (disabled for security) -->
+  <delegate decode="zip" stealth="True"/>
+  <delegate decode="tar" stealth="True"/>
+  <delegate decode="gz" stealth="True"/>
+  
+  <!-- URL/HTTP delegates (disabled for security) -->
+  <delegate decode="http" stealth="True"/>
+  <delegate decode="https" stealth="True"/>
+  <delegate decode="ftp" stealth="True"/>
+  
+  <!-- Fallback to macOS system tools where appropriate -->
+  <delegate decode="*" command="&quot;/usr/bin/qlmanage&quot; -t &quot;%i&quot; -o &quot;%o&quot;"/>
+</delegatemap>

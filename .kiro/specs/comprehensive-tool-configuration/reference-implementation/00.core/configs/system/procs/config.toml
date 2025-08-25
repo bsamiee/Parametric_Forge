@@ -1,0 +1,169 @@
+# Title         : config.toml
+# Author        : Bardia Samiee
+# Project       : Parametric Forge
+# License       : MIT
+# Path          : 01.home/00.core/configs/system/procs/config.toml
+# ----------------------------------------------------------------------------
+# Procs process viewer configuration with enhanced display and filtering
+
+# --- Core Settings ------------------------------------------------------------
+# Default sorting column (options: pid, ppid, user, cpu, mem, time, command)
+sort_column = "cpu"
+
+# Sort order (ascending or descending)
+sort_order = "descending"
+
+# Number of processes to display (0 for unlimited)
+count = 0
+
+# Refresh interval in milliseconds
+interval = 1000
+
+# --- Display Settings --------------------------------------------------------
+# Color theme (auto, always, never)
+color = "auto"
+
+# Show tree view of process hierarchy
+tree = false
+
+# Show threads in addition to processes
+thread = false
+
+# Show kernel threads
+kernel = false
+
+# Pager for output (less, more, or empty for no pager)
+pager = ""
+
+# --- Column Configuration ----------------------------------------------------
+# Available columns: pid, ppid, user, group, cpu, mem, vmem, time, start, command, read, write
+# Customize which columns to display and their order
+columns = [
+    "pid",
+    "user", 
+    "cpu",
+    "mem",
+    "time",
+    "command"
+]
+
+# Column alignment (left, right, center)
+[column_alignment]
+pid = "right"
+ppid = "right"
+user = "left"
+group = "left"
+cpu = "right"
+mem = "right"
+vmem = "right"
+time = "right"
+start = "left"
+command = "left"
+read = "right"
+write = "right"
+
+# --- Filtering Settings ------------------------------------------------------
+# Filter by user (empty for all users)
+user = ""
+
+# Filter by process name pattern (regex supported)
+filter = ""
+
+# Exclude processes matching pattern (regex supported)
+exclude = ""
+
+# Show only processes with TTY
+tty = false
+
+# --- Performance Settings ---------------------------------------------------
+# Use precise CPU calculation (may impact performance)
+precise = true
+
+# Watch mode - continuously update display
+watch = false
+
+# --- Theme Configuration ----------------------------------------------------
+# Color scheme for different elements
+[theme]
+# Process ID colors
+pid_color = "cyan"
+ppid_color = "blue"
+
+# User and group colors
+user_color = "green"
+group_color = "yellow"
+
+# Resource usage colors
+cpu_color = "red"
+mem_color = "magenta"
+vmem_color = "blue"
+
+# Time and date colors
+time_color = "white"
+start_color = "cyan"
+
+# Command colors
+command_color = "white"
+kernel_color = "gray"
+
+# I/O colors
+read_color = "green"
+write_color = "red"
+
+# Header colors
+header_color = "bold_white"
+separator_color = "gray"
+
+# --- Advanced Filtering -----------------------------------------------------
+# Custom filter expressions (advanced users)
+[filters]
+# Show only high CPU processes
+high_cpu = "cpu > 10.0"
+
+# Show only high memory processes  
+high_memory = "mem > 100.0"
+
+# Show only user processes (exclude system)
+user_only = "user != 'root' && user != '_*'"
+
+# Show only long-running processes
+long_running = "time > '01:00:00'"
+
+# --- Integration Settings ---------------------------------------------------
+# Export format for scripting (json, csv, tsv)
+export_format = "json"
+
+# Log file for process monitoring
+log_file = ""
+
+# Enable process monitoring alerts
+alerts = false
+
+# --- Platform-Specific Settings ---------------------------------------------
+# macOS-specific settings
+[macos]
+# Show macOS-specific process attributes
+show_app_nap = true
+show_sudden_termination = false
+
+# Linux-specific settings  
+[linux]
+# Show Linux-specific process attributes
+show_cgroups = false
+show_namespaces = false
+show_oom_score = false
+
+# --- Keyboard Shortcuts -----------------------------------------------------
+# Custom key bindings for interactive mode
+[keybindings]
+quit = "q"
+refresh = "r"
+sort_cpu = "c"
+sort_memory = "m"
+sort_pid = "p"
+sort_time = "t"
+toggle_tree = "T"
+toggle_threads = "H"
+kill_process = "k"
+search = "/"
+filter_user = "u"

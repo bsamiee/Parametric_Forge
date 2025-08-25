@@ -1,0 +1,30 @@
+# Title         : poetry.toml
+# Author        : Bardia Samiee
+# Project       : Parametric Forge
+# License       : MIT
+# Path          : 01.home/00.core/configs/poetry.toml
+# ----------------------------------------------------------------------------
+# Poetry configuration with XDG compliance and performance settings
+
+# --- XDG Base Directory Compliance -------------------------------------------
+cache-dir = "${XDG_CACHE_HOME}/pypoetry"
+
+# --- Virtual Environment Configuration ---------------------------------------
+[virtualenvs]
+in-project = true
+prefer-active-python = true
+prompt = "{project_name}-py{python_version}"
+
+# --- Performance Optimizations -----------------------------------------------
+[installer]
+parallel = true
+max-workers = 4
+
+[experimental]
+new-installer = true
+
+[solver]
+lazy-wheel = true
+
+# --- Development Workflow ----------------------------------------------------
+[repositories]

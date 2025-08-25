@@ -1,0 +1,84 @@
+<!-- Title         : policy.xml -->
+<!-- Author        : Bardia Samiee -->
+<!-- Project       : Parametric Forge -->
+<!-- License       : MIT -->
+<!-- Path          : configs/darwin/imagemagick/policy.xml -->
+<!-- -------------------------------------------------------------------------- -->
+<!-- ImageMagick security policy for macOS -->
+
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE policymap [
+<!ELEMENT policymap (policy)+>
+<!ELEMENT policy (#PCDATA)>
+<!ATTLIST policy domain (delegate|coder|filter|path|resource) #IMPLIED>
+<!ATTLIST policy name CDATA #IMPLIED>
+<!ATTLIST policy pattern CDATA #IMPLIED>
+<!ATTLIST policy rights CDATA #IMPLIED>
+<!ATTLIST policy stealth (True|False) #IMPLIED>
+<!ATTLIST policy value CDATA #IMPLIED>
+]>
+<policymap>
+  <!-- Resource limits (macOS-optimized for typical hardware) -->
+  <policy domain="resource" name="temporary-path" value="/tmp"/>
+  <policy domain="resource" name="memory" value="2GiB"/>
+  <policy domain="resource" name="map" value="4GiB"/>
+  <policy domain="resource" name="width" value="32KP"/>
+  <policy domain="resource" name="height" value="32KP"/>
+  <policy domain="resource" name="area" value="1GP"/>
+  <policy domain="resource" name="disk" value="8GiB"/>
+  <policy domain="resource" name="file" value="768"/>
+  <policy domain="resource" name="thread" value="4"/>
+  <policy domain="resource" name="throttle" value="0"/>
+  <policy domain="resource" name="time" value="3600"/>
+  
+  <!-- Safe image format coders (commonly used and secure) -->
+  <policy domain="coder" rights="read|write" pattern="PNG" />
+  <policy domain="coder" rights="read|write" pattern="JPEG" />
+  <policy domain="coder" rights="read|write" pattern="JPG" />
+  <policy domain="coder" rights="read|write" pattern="GIF" />
+  <policy domain="coder" rights="read|write" pattern="WEBP" />
+  <policy domain="coder" rights="read|write" pattern="TIFF" />
+  <policy domain="coder" rights="read|write" pattern="TIF" />
+  <policy domain="coder" rights="read|write" pattern="BMP" />
+  <policy domain="coder" rights="read|write" pattern="ICO" />
+  <policy domain="coder" rights="read|write" pattern="ICNS" />  <!-- macOS icons -->
+  <policy domain="coder" rights="read|write" pattern="HEIC" />  <!-- macOS/iOS format -->
+  <policy domain="coder" rights="read|write" pattern="AVIF" />  <!-- Modern format -->
+  
+  <!-- Vector formats (read-only for security) -->
+  <policy domain="coder" rights="read" pattern="SVG" />
+  
+  <!-- Raw camera formats (read-only) -->
+  <policy domain="coder" rights="read" pattern="DNG" />
+  <policy domain="coder" rights="read" pattern="CR2" />
+  <policy domain="coder" rights="read" pattern="NEF" />
+  <policy domain="coder" rights="read" pattern="ARW" />
+  
+  <!-- Security restrictions - disable potentially dangerous formats -->
+  <policy domain="coder" rights="none" pattern="PS" />
+  <policy domain="coder" rights="none" pattern="PS2" />
+  <policy domain="coder" rights="none" pattern="PS3" />
+  <policy domain="coder" rights="none" pattern="EPS" />
+  <policy domain="coder" rights="none" pattern="PDF" />
+  <policy domain="coder" rights="none" pattern="XPS" />
+  <policy domain="coder" rights="none" pattern="EPHEMERAL" />
+  <policy domain="coder" rights="none" pattern="URL" />
+  <policy domain="coder" rights="none" pattern="HTTPS" />
+  <policy domain="coder" rights="none" pattern="HTTP" />
+  <policy domain="coder" rights="none" pattern="FTP" />
+  <policy domain="coder" rights="none" pattern="MVG" />
+  <policy domain="coder" rights="none" pattern="MSL" />
+  
+  <!-- Path restrictions for security -->
+  <policy domain="path" rights="none" pattern="@*"/>
+  <policy domain="path" rights="none" pattern="|*"/>
+  
+  <!-- Delegate restrictions -->
+  <policy domain="delegate" rights="none" pattern="*" />
+  
+  <!-- Filter restrictions -->
+  <policy domain="filter" rights="none" pattern="*" />
+  
+  <!-- Cache policy -->
+  <policy domain="cache" name="shared-secret" value="passphrase" stealth="true"/>
+</policymap>

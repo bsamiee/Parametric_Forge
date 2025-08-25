@@ -1,0 +1,268 @@
+{
+  "_comment": "Title: config.json",
+  "_author": "Bardia Samiee",
+  "_project": "Parametric Forge",
+  "_license": "MIT",
+  "_path": "01.home/00.core/configs/development/fx/config.json",
+  "_description": "fx JSON viewer configuration with themes and interactive features",
+  
+  "_section_comment": "--- Core Settings ---",
+  "theme": "dark",
+  "indent": 2,
+  "expand_all": false,
+  "show_size": true,
+  "show_types": true,
+  "line_numbers": true,
+  
+  "_section_comment": "--- Display Settings ---",
+  "color_output": true,
+  "mouse_support": true,
+  "wrap_lines": false,
+  "show_cursor": true,
+  "highlight_search": true,
+  "case_sensitive_search": false,
+  
+  "_section_comment": "--- Navigation Settings ---",
+  "vim_mode": true,
+  "scroll_speed": 3,
+  "page_size": 20,
+  "auto_expand_arrays": false,
+  "auto_expand_objects": false,
+  "max_auto_expand_depth": 2,
+  
+  "_section_comment": "--- Color Themes ---",
+  "themes": {
+    "dark": {
+      "background": "#1e1e1e",
+      "foreground": "#d4d4d4",
+      "cursor": "#ffffff",
+      "selection": "#264f78",
+      "line_numbers": "#858585",
+      "json_key": "#9cdcfe",
+      "json_string": "#ce9178",
+      "json_number": "#b5cea8",
+      "json_boolean": "#569cd6",
+      "json_null": "#ff6b6b",
+      "json_punctuation": "#d4d4d4",
+      "search_highlight": "#ffff00",
+      "error": "#f44747",
+      "warning": "#ffcc02",
+      "info": "#75beff"
+    },
+    "light": {
+      "background": "#ffffff",
+      "foreground": "#000000",
+      "cursor": "#000000",
+      "selection": "#add6ff",
+      "line_numbers": "#6e7681",
+      "json_key": "#0451a5",
+      "json_string": "#a31515",
+      "json_number": "#098658",
+      "json_boolean": "#0000ff",
+      "json_null": "#ff0000",
+      "json_punctuation": "#000000",
+      "search_highlight": "#ffff00",
+      "error": "#e1011a",
+      "warning": "#bf8803",
+      "info": "#0969da"
+    },
+    "monokai": {
+      "background": "#272822",
+      "foreground": "#f8f8f2",
+      "cursor": "#f8f8f0",
+      "selection": "#49483e",
+      "line_numbers": "#90908a",
+      "json_key": "#f92672",
+      "json_string": "#e6db74",
+      "json_number": "#ae81ff",
+      "json_boolean": "#66d9ef",
+      "json_null": "#f92672",
+      "json_punctuation": "#f8f8f2",
+      "search_highlight": "#ffff00",
+      "error": "#f92672",
+      "warning": "#fd971f",
+      "info": "#66d9ef"
+    },
+    "solarized_dark": {
+      "background": "#002b36",
+      "foreground": "#839496",
+      "cursor": "#93a1a1",
+      "selection": "#073642",
+      "line_numbers": "#586e75",
+      "json_key": "#268bd2",
+      "json_string": "#2aa198",
+      "json_number": "#d33682",
+      "json_boolean": "#859900",
+      "json_null": "#dc322f",
+      "json_punctuation": "#839496",
+      "search_highlight": "#b58900",
+      "error": "#dc322f",
+      "warning": "#cb4b16",
+      "info": "#268bd2"
+    }
+  },
+  
+  "_section_comment": "--- Key Bindings ---",
+  "keybindings": {
+    "quit": ["q", "ctrl+c"],
+    "help": ["?", "h"],
+    "search": ["/"],
+    "search_next": ["n"],
+    "search_previous": ["N"],
+    "goto_top": ["g", "home"],
+    "goto_bottom": ["G", "end"],
+    "page_up": ["ctrl+b", "page_up"],
+    "page_down": ["ctrl+f", "page_down"],
+    "scroll_up": ["k", "up"],
+    "scroll_down": ["j", "down"],
+    "scroll_left": ["h", "left"],
+    "scroll_right": ["l", "right"],
+    "expand_all": ["E"],
+    "collapse_all": ["C"],
+    "toggle_expand": ["space", "enter"],
+    "copy_path": ["y"],
+    "copy_value": ["Y"],
+    "toggle_line_numbers": ["L"],
+    "toggle_types": ["T"],
+    "toggle_sizes": ["S"],
+    "refresh": ["r", "f5"],
+    "edit": ["e"],
+    "save": ["ctrl+s"],
+    "undo": ["u", "ctrl+z"],
+    "redo": ["ctrl+r", "ctrl+y"]
+  },
+  
+  "_section_comment": "--- Editor Settings ---",
+  "editor": {
+    "command": "$EDITOR",
+    "args": [],
+    "temp_file_prefix": "fx_edit_",
+    "temp_file_suffix": ".json",
+    "auto_save": false,
+    "backup_on_edit": true
+  },
+  
+  "_section_comment": "--- Search Settings ---",
+  "search": {
+    "incremental": true,
+    "wrap_around": true,
+    "regex_support": true,
+    "highlight_all_matches": true,
+    "max_matches": 1000,
+    "case_sensitive": false
+  },
+  
+  "_section_comment": "--- Performance Settings ---",
+  "performance": {
+    "lazy_loading": true,
+    "max_array_preview": 100,
+    "max_object_preview": 50,
+    "max_string_length": 1000,
+    "virtual_scrolling": true,
+    "render_buffer_size": 1000
+  },
+  
+  "_section_comment": "--- File Handling ---",
+  "file_handling": {
+    "auto_detect_format": true,
+    "supported_formats": ["json", "jsonl", "yaml", "yml"],
+    "max_file_size": "100MB",
+    "encoding": "utf-8",
+    "line_endings": "auto"
+  },
+  
+  "_section_comment": "--- Export Settings ---",
+  "export": {
+    "default_format": "json",
+    "pretty_print": true,
+    "sort_keys": false,
+    "ensure_ascii": false,
+    "indent_size": 2
+  },
+  
+  "_section_comment": "--- Validation Settings ---",
+  "validation": {
+    "validate_on_load": true,
+    "show_validation_errors": true,
+    "strict_mode": false,
+    "allow_comments": true,
+    "allow_trailing_commas": true
+  },
+  
+  "_section_comment": "--- Integration Settings ---",
+  "integration": {
+    "shell_completion": true,
+    "clipboard_support": true,
+    "external_tools": {
+      "jq": {
+        "enabled": true,
+        "command": "jq",
+        "args": ["-C"]
+      },
+      "yq": {
+        "enabled": true,
+        "command": "yq",
+        "args": ["-C"]
+      }
+    }
+  },
+  
+  "_section_comment": "--- Plugins ---",
+  "plugins": {
+    "enabled": [],
+    "disabled": [],
+    "plugin_directory": "$XDG_CONFIG_HOME/fx/plugins",
+    "auto_load": true
+  },
+  
+  "_section_comment": "--- History Settings ---",
+  "history": {
+    "enabled": true,
+    "max_entries": 1000,
+    "file": "$XDG_DATA_HOME/fx/history.json",
+    "save_on_exit": true
+  },
+  
+  "_section_comment": "--- Logging Settings ---",
+  "logging": {
+    "level": "info",
+    "file": "$XDG_DATA_HOME/fx/fx.log",
+    "max_size": "10MB",
+    "max_files": 5,
+    "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  },
+  
+  "_section_comment": "--- Advanced Settings ---",
+  "advanced": {
+    "memory_limit": "1GB",
+    "gc_threshold": 1000,
+    "update_check": true,
+    "telemetry": false,
+    "crash_reporting": false
+  },
+  
+  "_section_comment": "--- Custom Filters ---",
+  "custom_filters": {
+    "flatten": "def flatten: if type == \"array\" then map(flatten) | add else . end;",
+    "keys_recursive": "def keys_recursive: if type == \"object\" then keys + (to_entries | map(.value | keys_recursive) | add // []) else [] end;",
+    "values_recursive": "def values_recursive: if type == \"object\" then (to_entries | map(.value)) + (to_entries | map(.value | values_recursive) | add // []) elif type == \"array\" then . + (map(values_recursive) | add // []) else [.] end;",
+    "size_recursive": "def size_recursive: if type == \"object\" then (to_entries | length) + (to_entries | map(.value | size_recursive) | add // 0) elif type == \"array\" then length + (map(size_recursive) | add // 0) else 1 end;"
+  },
+  
+  "_section_comment": "--- Bookmarks ---",
+  "bookmarks": {
+    "enabled": true,
+    "file": "$XDG_DATA_HOME/fx/bookmarks.json",
+    "max_bookmarks": 100,
+    "auto_save": true
+  },
+  
+  "_section_comment": "--- Diff Settings ---",
+  "diff": {
+    "enabled": true,
+    "algorithm": "myers",
+    "context_lines": 3,
+    "ignore_whitespace": false,
+    "color_diff": true
+  }
+}

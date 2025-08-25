@@ -1,0 +1,70 @@
+# Title         : config.toml
+# Author        : Bardia Samiee
+# Project       : Parametric Forge
+# License       : MIT
+# Path          : 01.home/00.core/configs/development/just/config.toml
+# ----------------------------------------------------------------------------
+# Just command runner configuration with optimized settings
+
+# --- Core Settings ------------------------------------------------------------
+# Use bash as the default shell for better compatibility
+shell = ["bash", "-c"]
+
+# Enable dotenv file loading for environment variables
+dotenv-load = true
+
+# Set working directory to project root
+working-directory = "."
+
+# --- Display Settings --------------------------------------------------------
+# Use colored output for better readability
+color = "auto"
+
+# Show command being executed before running
+verbosity = "normal"
+
+# List recipes in source order rather than alphabetical
+list-heading = "Available recipes:\n"
+list-prefix = "  "
+
+# --- Execution Settings ------------------------------------------------------
+# Allow recipes to be run from subdirectories
+allow-duplicate-recipes = false
+
+# Require confirmation for destructive operations
+confirm = false
+
+# Set default recipe when just is run without arguments
+default-recipe = "default"
+
+# --- Error Handling ----------------------------------------------------------
+# Continue execution even if a recipe fails (when using dependencies)
+ignore-comments = false
+
+# Show full command output on failure
+quiet = false
+
+# --- Integration Settings ----------------------------------------------------
+# Enable shell completion
+completion-generation = true
+
+# Use project-specific justfile over global one
+justfile-search = "parents"
+
+# --- Advanced Settings -------------------------------------------------------
+# Set environment variables for all recipes
+[env]
+# JUST_PROJECT_ROOT = justfile_directory()
+# JUST_INVOCATION_DIRECTORY = invocation_directory()
+
+# --- Recipe Aliases ----------------------------------------------------------
+# Define shorter aliases for common recipes
+[aliases]
+i = "install"
+d = "dev"
+t = "test"
+l = "lint"
+f = "format"
+b = "build"
+c = "clean"
+r = "release"

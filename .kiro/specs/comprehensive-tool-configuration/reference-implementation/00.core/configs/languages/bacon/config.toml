@@ -1,0 +1,385 @@
+# Title         : config.toml
+# Author        : Bardia Samiee
+# Project       : Parametric Forge
+# License       : MIT
+# Path          : 01.home/00.core/configs/languages/bacon/config.toml
+# ----------------------------------------------------------------------------
+# Bacon Rust compiler background runner configuration with jobs and keybindings
+
+# --- Default Job Configuration ----------------------------------------------
+default_job = "check"
+
+# --- Job Definitions --------------------------------------------------------
+[jobs.check]
+command = ["cargo", "check", "--color", "always"]
+need_stdout = false
+allow_warnings = true
+allow_failures = false
+background = true
+watch = ["src", "tests", "examples", "build.rs", "Cargo.toml", "Cargo.lock"]
+ignore = ["target", ".git", "*.tmp", "*.bak"]
+
+[jobs.check-all]
+command = ["cargo", "check", "--all-targets", "--color", "always"]
+need_stdout = false
+allow_warnings = true
+allow_failures = false
+background = true
+watch = ["src", "tests", "examples", "benches", "build.rs", "Cargo.toml", "Cargo.lock"]
+ignore = ["target", ".git", "*.tmp", "*.bak"]
+
+[jobs.clippy]
+command = ["cargo", "clippy", "--color", "always"]
+need_stdout = false
+allow_warnings = true
+allow_failures = false
+background = true
+watch = ["src", "tests", "examples", "build.rs", "Cargo.toml", "Cargo.lock"]
+ignore = ["target", ".git", "*.tmp", "*.bak"]
+
+[jobs.clippy-all]
+command = ["cargo", "clippy", "--all-targets", "--all-features", "--", "-D", "warnings", "--color", "always"]
+need_stdout = false
+allow_warnings = false
+allow_failures = false
+background = true
+watch = ["src", "tests", "examples", "benches", "build.rs", "Cargo.toml", "Cargo.lock"]
+ignore = ["target", ".git", "*.tmp", "*.bak"]
+
+[jobs.test]
+command = ["cargo", "test", "--color", "always"]
+need_stdout = true
+allow_warnings = true
+allow_failures = true
+background = false
+watch = ["src", "tests", "examples", "build.rs", "Cargo.toml", "Cargo.lock"]
+ignore = ["target", ".git", "*.tmp", "*.bak"]
+
+[jobs.test-all]
+command = ["cargo", "test", "--all-targets", "--all-features", "--color", "always"]
+need_stdout = true
+allow_warnings = true
+allow_failures = true
+background = false
+watch = ["src", "tests", "examples", "benches", "build.rs", "Cargo.toml", "Cargo.lock"]
+ignore = ["target", ".git", "*.tmp", "*.bak"]
+
+[jobs.doc]
+command = ["cargo", "doc", "--color", "always"]
+need_stdout = false
+allow_warnings = true
+allow_failures = false
+background = true
+watch = ["src", "examples", "build.rs", "Cargo.toml", "Cargo.lock"]
+ignore = ["target", ".git", "*.tmp", "*.bak"]
+
+[jobs.doc-open]
+command = ["cargo", "doc", "--open", "--color", "always"]
+need_stdout = false
+allow_warnings = true
+allow_failures = false
+background = false
+watch = ["src", "examples", "build.rs", "Cargo.toml", "Cargo.lock"]
+ignore = ["target", ".git", "*.tmp", "*.bak"]
+
+[jobs.run]
+command = ["cargo", "run", "--color", "always"]
+need_stdout = true
+allow_warnings = true
+allow_failures = true
+background = false
+watch = ["src", "examples", "build.rs", "Cargo.toml", "Cargo.lock"]
+ignore = ["target", ".git", "*.tmp", "*.bak"]
+
+[jobs.run-example]
+command = ["cargo", "run", "--example", "main", "--color", "always"]
+need_stdout = true
+allow_warnings = true
+allow_failures = true
+background = false
+watch = ["src", "examples", "build.rs", "Cargo.toml", "Cargo.lock"]
+ignore = ["target", ".git", "*.tmp", "*.bak"]
+
+[jobs.build]
+command = ["cargo", "build", "--color", "always"]
+need_stdout = false
+allow_warnings = true
+allow_failures = false
+background = true
+watch = ["src", "tests", "examples", "build.rs", "Cargo.toml", "Cargo.lock"]
+ignore = ["target", ".git", "*.tmp", "*.bak"]
+
+[jobs.build-release]
+command = ["cargo", "build", "--release", "--color", "always"]
+need_stdout = false
+allow_warnings = true
+allow_failures = false
+background = true
+watch = ["src", "tests", "examples", "build.rs", "Cargo.toml", "Cargo.lock"]
+ignore = ["target", ".git", "*.tmp", "*.bak"]
+
+[jobs.fmt]
+command = ["cargo", "fmt", "--", "--check", "--color", "always"]
+need_stdout = false
+allow_warnings = false
+allow_failures = false
+background = true
+watch = ["src", "tests", "examples", "benches", "build.rs"]
+ignore = ["target", ".git", "*.tmp", "*.bak"]
+
+[jobs.fmt-fix]
+command = ["cargo", "fmt"]
+need_stdout = false
+allow_warnings = true
+allow_failures = false
+background = false
+watch = ["src", "tests", "examples", "benches", "build.rs"]
+ignore = ["target", ".git", "*.tmp", "*.bak"]
+
+[jobs.bench]
+command = ["cargo", "bench", "--color", "always"]
+need_stdout = true
+allow_warnings = true
+allow_failures = true
+background = false
+watch = ["src", "benches", "build.rs", "Cargo.toml", "Cargo.lock"]
+ignore = ["target", ".git", "*.tmp", "*.bak"]
+
+[jobs.audit]
+command = ["cargo", "audit"]
+need_stdout = true
+allow_warnings = true
+allow_failures = true
+background = false
+watch = ["Cargo.toml", "Cargo.lock"]
+ignore = ["target", ".git", "*.tmp", "*.bak"]
+
+[jobs.outdated]
+command = ["cargo", "outdated"]
+need_stdout = true
+allow_warnings = true
+allow_failures = true
+background = false
+watch = ["Cargo.toml", "Cargo.lock"]
+ignore = ["target", ".git", "*.tmp", "*.bak"]
+
+[jobs.expand]
+command = ["cargo", "expand", "--color", "always"]
+need_stdout = true
+allow_warnings = true
+allow_failures = true
+background = false
+watch = ["src", "build.rs", "Cargo.toml", "Cargo.lock"]
+ignore = ["target", ".git", "*.tmp", "*.bak"]
+
+[jobs.miri]
+command = ["cargo", "miri", "test", "--color", "always"]
+need_stdout = true
+allow_warnings = true
+allow_failures = true
+background = false
+watch = ["src", "tests", "build.rs", "Cargo.toml", "Cargo.lock"]
+ignore = ["target", ".git", "*.tmp", "*.bak"]
+
+# --- Keybindings ------------------------------------------------------------
+[keybindings]
+# Job switching
+c = "job:check"
+a = "job:check-all"
+l = "job:clippy"
+L = "job:clippy-all"
+t = "job:test"
+T = "job:test-all"
+r = "job:run"
+R = "job:run-example"
+b = "job:build"
+B = "job:build-release"
+d = "job:doc"
+D = "job:doc-open"
+f = "job:fmt"
+F = "job:fmt-fix"
+n = "job:bench"
+u = "job:audit"
+o = "job:outdated"
+e = "job:expand"
+m = "job:miri"
+
+# Navigation and control
+q = "quit"
+esc = "back"
+enter = "select"
+space = "toggle-summary"
+h = "help"
+i = "toggle-backtrace"
+s = "toggle-wrap"
+g = "scroll-to-top"
+G = "scroll-to-bottom"
+j = "scroll-down"
+k = "scroll-up"
+ctrl-d = "page-down"
+ctrl-u = "page-up"
+
+# Filtering and search
+/ = "search"
+n = "search-next"
+N = "search-previous"
+ctrl-c = "clear-search"
+
+# Output control
+w = "toggle-warnings"
+e = "toggle-errors"
+v = "toggle-verbose"
+
+# --- Display Settings -------------------------------------------------------
+[display]
+# Show summary line
+show_summary = true
+
+# Show line numbers
+show_line_numbers = true
+
+# Wrap long lines
+wrap_lines = false
+
+# Show backtrace for errors
+show_backtrace = false
+
+# Maximum number of lines to show
+max_lines = 1000
+
+# Color scheme (auto, always, never)
+color = "auto"
+
+# --- File Watching ----------------------------------------------------------
+[watch]
+# Debounce delay in milliseconds
+debounce = 100
+
+# Poll interval in milliseconds (for systems without native file watching)
+poll_interval = 1000
+
+# Follow symbolic links
+follow_symlinks = true
+
+# Watch hidden files
+watch_hidden = false
+
+# Maximum depth for recursive watching
+max_depth = 10
+
+# --- Performance Settings ---------------------------------------------------
+[performance]
+# Number of worker threads
+worker_threads = 4
+
+# Buffer size for command output
+buffer_size = 8192
+
+# Maximum memory usage for output buffering (MB)
+max_memory = 100
+
+# Command timeout in seconds
+command_timeout = 300
+
+# --- Notification Settings --------------------------------------------------
+[notifications]
+# Enable desktop notifications
+enabled = false
+
+# Notification timeout in seconds
+timeout = 5
+
+# Show notifications for successful builds
+success = false
+
+# Show notifications for warnings
+warnings = true
+
+# Show notifications for errors
+errors = true
+
+# --- Integration Settings ---------------------------------------------------
+[integration]
+# Editor integration
+editor = "$EDITOR"
+
+# Terminal integration
+terminal = "$TERM"
+
+# Shell integration
+shell = "$SHELL"
+
+# Git integration
+git_integration = true
+
+# --- Advanced Settings ------------------------------------------------------
+[advanced]
+# Clear screen before running commands
+clear_screen = false
+
+# Show command being executed
+show_command = false
+
+# Use alternate screen buffer
+alternate_screen = true
+
+# Mouse support
+mouse_support = true
+
+# --- Logging Settings -------------------------------------------------------
+[logging]
+# Log level (error, warn, info, debug, trace)
+level = "info"
+
+# Log file location
+file = "$XDG_DATA_HOME/bacon/bacon.log"
+
+# Maximum log file size (MB)
+max_size = 10
+
+# Number of log files to keep
+max_files = 5
+
+# --- Custom Commands --------------------------------------------------------
+[commands]
+# Custom commands that can be bound to keys
+clean = ["cargo", "clean"]
+update = ["cargo", "update"]
+tree = ["cargo", "tree"]
+metadata = ["cargo", "metadata", "--format-version", "1"]
+
+# --- Project-Specific Settings ---------------------------------------------
+# These can be overridden in project-specific bacon.toml files
+
+# Default workspace member to focus on
+# workspace_member = "my-crate"
+
+# Custom environment variables
+[env]
+RUST_BACKTRACE = "1"
+RUST_LOG = "info"
+
+# --- Platform-Specific Settings --------------------------------------------
+# macOS-specific settings
+[macos]
+# Use native file watching
+native_watching = true
+
+# Notification center integration
+notification_center = false
+
+# Linux-specific settings
+[linux]
+# Use inotify for file watching
+use_inotify = true
+
+# Notification daemon integration
+notification_daemon = false
+
+# Windows-specific settings
+[windows]
+# Use Windows file watching API
+native_watching = true
+
+# Windows notification integration
+windows_notifications = false

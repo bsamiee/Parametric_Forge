@@ -1,0 +1,282 @@
+# Title         : hyperfine.toml
+# Author        : Bardia Samiee
+# Project       : Parametric Forge
+# License       : MIT
+# Path          : 01.home/00.core/configs/development/hyperfine.toml
+# ----------------------------------------------------------------------------
+# Hyperfine benchmarking tool configuration for consistent performance testing
+# and statistical analysis across different development projects and environments.
+
+# --- Core Benchmarking Settings ----------------------------------------------
+# Basic configuration for benchmark execution and statistical analysis
+
+# Default number of benchmark runs for statistical significance
+min_runs = 10                  # Minimum runs for reliable statistics
+max_runs = 100                 # Maximum runs to prevent excessive execution time
+
+# Warmup configuration to ensure consistent results
+warmup_count = 3               # Number of warmup runs before measurement
+prepare_command = ""           # Command to run before each benchmark (if needed)
+cleanup_command = ""           # Command to run after each benchmark (if needed)
+
+# Statistical analysis settings
+confidence_interval = 0.95     # 95% confidence interval for results
+outlier_threshold = 1.5        # Threshold for outlier detection (IQR multiplier)
+
+# --- Execution Environment ---------------------------------------------------
+# Configure the environment for consistent benchmark execution
+
+# Shell configuration for command execution
+shell = "zsh"                  # Use zsh for command execution
+shell_args = ["-c"]           # Shell arguments for command execution
+
+# Environment variable handling
+ignore_failure = false        # Don't ignore command failures
+show_output = false           # Hide command output during benchmarking
+parameter_scan_mode = "linear" # Linear parameter scanning by default
+
+# --- Output and Reporting Configuration --------------------------------------
+# Configure how benchmark results are displayed and exported
+
+# Console output settings
+style = "full"                # Output style: full, basic, minimal
+time_unit = "auto"            # Time unit: auto, nanosecond, microsecond, millisecond, second
+show_output_of_failed_runs = true  # Show output when commands fail
+
+# Progress indication
+show_progress_bar = true      # Show progress bar during benchmarking
+progress_bar_style = "█▉▊▋▌▍▎▏"  # Unicode progress bar characters
+
+# --- Export Configuration ----------------------------------------------------
+# Configure export formats for benchmark results
+
+# Default export formats
+[export]
+# JSON export for programmatic analysis
+json = {
+    enabled = true
+    filename_template = "benchmark-{timestamp}.json"
+    include_metadata = true
+    pretty_print = true
+}
+
+# CSV export for spreadsheet analysis
+csv = {
+    enabled = false            # Disabled by default, enable per-benchmark
+    filename_template = "benchmark-{timestamp}.csv"
+    include_headers = true
+    delimiter = ","
+}
+
+# Markdown export for documentation
+markdown = {
+    enabled = false            # Disabled by default, enable per-benchmark
+    filename_template = "benchmark-{timestamp}.md"
+    include_graphs = true
+    table_format = "github"    # GitHub-flavored markdown tables
+}
+
+# --- Statistical Analysis Configuration --------------------------------------
+# Configure statistical methods and analysis parameters
+
+[statistics]
+# Outlier detection and handling
+outlier_detection = "iqr"     # Method: iqr, zscore, modified_zscore
+outlier_action = "warn"       # Action: ignore, warn, exclude
+
+# Distribution analysis
+distribution_analysis = true   # Analyze result distribution
+histogram_bins = 20           # Number of histogram bins for distribution
+
+# Comparison settings
+comparison_threshold = 0.05   # Threshold for significant difference (5%)
+relative_comparison = true    # Show relative performance differences
+
+# --- Performance Optimization Settings ---------------------------------------
+# Configure hyperfine for optimal performance and resource usage
+
+[performance]
+# Resource limits
+max_memory_usage = "1GB"      # Maximum memory usage per benchmark
+max_execution_time = "5m"     # Maximum execution time per benchmark
+cpu_affinity = []             # CPU cores to use (empty = all available)
+
+# Caching and temporary files
+cache_directory = "$XDG_CACHE_HOME/hyperfine"  # XDG-compliant cache directory
+temp_directory = "/tmp/hyperfine"              # Temporary file directory
+cleanup_temp_files = true                      # Clean up temporary files
+
+# --- Integration with Development Tools --------------------------------------
+# Configure integration with other development and analysis tools
+
+[integration]
+# Git integration for version comparison
+git_integration = {
+    enabled = true
+    track_commits = true       # Track git commits in benchmark metadata
+    include_branch_info = true # Include branch information
+    include_dirty_status = true # Include working directory status
+}
+
+# CI/CD integration
+ci_integration = {
+    enabled = true
+    export_format = "json"     # Default export format for CI
+    fail_on_regression = false # Don't fail CI on performance regression
+    regression_threshold = 1.2 # 20% regression threshold
+}
+
+# --- Benchmark Templates and Presets ----------------------------------------
+# Define common benchmark patterns and configurations
+
+[templates]
+# Quick benchmark for development
+quick = {
+    min_runs = 3
+    max_runs = 10
+    warmup_count = 1
+    time_unit = "millisecond"
+    style = "basic"
+}
+
+# Thorough benchmark for production analysis
+thorough = {
+    min_runs = 50
+    max_runs = 200
+    warmup_count = 10
+    time_unit = "auto"
+    style = "full"
+    export = ["json", "markdown"]
+}
+
+# Comparison benchmark for A/B testing
+comparison = {
+    min_runs = 20
+    max_runs = 50
+    warmup_count = 5
+    relative_comparison = true
+    comparison_threshold = 0.02  # 2% threshold for significance
+    export = ["json", "csv"]
+}
+
+# Memory-intensive benchmark
+memory_intensive = {
+    min_runs = 5
+    max_runs = 20
+    warmup_count = 2
+    max_memory_usage = "4GB"
+    max_execution_time = "10m"
+}
+
+# --- Language-Specific Configurations ----------------------------------------
+# Benchmark configurations optimized for different programming languages
+
+[languages]
+# Rust benchmarking
+rust = {
+    prepare_command = "cargo build --release"
+    command_prefix = "cargo run --release --bin"
+    warmup_count = 5           # Rust benefits from more warmup
+    min_runs = 20
+}
+
+# Python benchmarking
+python = {
+    prepare_command = "python -m py_compile {script}"
+    command_prefix = "python"
+    warmup_count = 3
+    min_runs = 15
+    # Python can have high variance, so more runs needed
+}
+
+# Node.js benchmarking
+nodejs = {
+    prepare_command = "npm install"
+    command_prefix = "node"
+    warmup_count = 5           # V8 JIT benefits from warmup
+    min_runs = 25
+}
+
+# Shell script benchmarking
+shell = {
+    shell = "bash"
+    shell_args = ["-c"]
+    warmup_count = 2
+    min_runs = 10
+}
+
+# --- Platform-Specific Settings ----------------------------------------------
+# Handle differences between macOS and Linux environments
+
+[platform]
+# macOS-specific settings
+darwin = {
+    # macOS has different process scheduling
+    min_runs = 15              # Slightly more runs for consistency
+    cpu_affinity = []          # Don't set CPU affinity on macOS
+    time_unit = "millisecond"  # macOS timer resolution
+}
+
+# Linux-specific settings
+linux = {
+    # Linux allows more precise control
+    min_runs = 10
+    cpu_affinity = [0, 1]      # Use first two CPU cores for consistency
+    time_unit = "auto"         # Auto-detect best time unit
+}
+
+# --- Error Handling and Debugging --------------------------------------------
+# Configure error handling and debugging features
+
+[debugging]
+# Verbose output for troubleshooting
+verbose_mode = false          # Disabled by default
+debug_output = false          # Don't show debug information
+log_level = "info"           # Logging level: error, warn, info, debug
+
+# Error handling
+continue_on_error = false     # Stop on first error
+retry_failed_runs = 1        # Retry failed runs once
+timeout_handling = "abort"   # How to handle timeouts: abort, skip, retry
+
+# --- Custom Metrics and Analysis --------------------------------------------- 
+# Configure custom metrics and analysis methods
+
+[metrics]
+# Additional metrics to collect
+collect_memory_usage = true   # Collect peak memory usage
+collect_cpu_usage = true     # Collect CPU utilization
+collect_io_stats = false     # Don't collect I/O statistics by default
+
+# Custom analysis functions
+[analysis]
+# Regression detection
+regression_detection = {
+    enabled = true
+    baseline_file = "baseline-benchmark.json"
+    threshold = 1.1            # 10% regression threshold
+    method = "mean"            # Compare means: mean, median, min
+}
+
+# Performance profiling integration
+profiling = {
+    enabled = false            # Disabled by default
+    profiler = "perf"         # Profiler to use: perf, instruments, valgrind
+    profile_output = "$XDG_DATA_HOME/hyperfine/profiles"
+}
+
+# --- Notification and Reporting ----------------------------------------------
+# Configure notifications and automated reporting
+
+[notifications]
+# Completion notifications
+notify_on_completion = false  # Don't notify by default
+notification_command = ""     # Custom notification command
+
+# Reporting
+automated_reports = {
+    enabled = false           # Disabled by default
+    report_format = "markdown"
+    report_destination = "reports/"
+    include_graphs = true
+}

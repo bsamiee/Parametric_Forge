@@ -1,0 +1,85 @@
+# Title         : .dockerignore
+# Author        : Bardia Samiee
+# Project       : Dotfiles
+# License       : MIT
+# Path          : home/configs/.dockerignore
+# ---------------------------------------
+# Docker build exclusions - VCS, caches, secrets, and development artifacts
+
+# --- Version Control ----------------------------------------------------------
+.git
+.gitignore
+.gitattributes
+.github
+
+# --- Documentation ------------------------------------------------------------
+*.md
+README*
+LICENSE*
+CHANGELOG*
+docs/
+
+# --- Environment & Secrets ----------------------------------------------------
+.env
+.env.*
+*.env
+.secrets
+*.key
+*.pem
+*.crt
+
+# --- Development Files --------------------------------------------------------
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# --- Language-Specific Artifacts ----------------------------------------------
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm/
+.yarn/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+.tox/
+.venv/
+venv/
+.mypy_cache/
+.ruff_cache/
+
+# Rust
+target/
+Cargo.lock
+
+# Go
+vendor/
+
+# --- Build Artifacts ----------------------------------------------------------
+dist/
+build/
+*.log
+logs/
+tmp/
+temp/
+
+# --- Testing ------------------------------------------------------------------
+coverage/
+.coverage
+*.cover
+.hypothesis/
+test-results/
+
+# --- CI/CD --------------------------------------------------------------------
+.gitlab-ci.yml
+.travis.yml
+.circleci/
+Jenkinsfile

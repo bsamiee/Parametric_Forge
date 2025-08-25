@@ -1,0 +1,280 @@
+# Title         : config.toml
+# Author        : Bardia Samiee
+# Project       : Parametric Forge
+# License       : MIT
+# Path          : 01.home/00.core/configs/file-ops/ouch/config.toml
+# ----------------------------------------------------------------------------
+# Ouch archive manager configuration with optimized compression settings
+
+# --- Core Settings ------------------------------------------------------------
+# Default compression level (0-9, where 9 is maximum compression)
+default_compression_level = 6
+
+# Preserve file permissions and timestamps
+preserve_permissions = true
+preserve_timestamps = true
+
+# Show progress bar for operations
+show_progress = true
+
+# Use colored output
+colored_output = true
+
+# Verbose output level (0=quiet, 1=normal, 2=verbose, 3=debug)
+verbosity = 1
+
+# --- Compression Settings ----------------------------------------------------
+# Compression algorithms and their settings
+[compression]
+
+# ZIP compression settings
+[compression.zip]
+level = 6                    # Compression level (0-9)
+method = "deflate"           # Compression method (store, deflate)
+preserve_permissions = true  # Preserve Unix permissions in ZIP
+large_file_support = true    # Enable ZIP64 for files > 4GB
+
+# TAR compression settings
+[compression.tar]
+preserve_permissions = true  # Preserve file permissions
+preserve_ownership = false   # Don't preserve ownership (may cause issues)
+preserve_timestamps = true   # Preserve modification times
+sparse_files = true         # Handle sparse files efficiently
+
+# GZIP compression settings
+[compression.gzip]
+level = 6                   # Compression level (1-9)
+fast = false               # Use fast compression (lower quality)
+
+# BZIP2 compression settings
+[compression.bzip2]
+level = 6                   # Compression level (1-9)
+work_factor = 30           # Work factor (0-250, higher = better compression)
+
+# XZ compression settings
+[compression.xz]
+level = 6                   # Compression level (0-9)
+check = "crc64"            # Integrity check (none, crc32, crc64, sha256)
+threads = 0                # Number of threads (0 = auto-detect)
+
+# ZSTD compression settings
+[compression.zstd]
+level = 3                   # Compression level (1-22)
+threads = 0                # Number of threads (0 = auto-detect)
+long_distance_matching = false  # Enable long distance matching
+
+# LZ4 compression settings
+[compression.lz4]
+level = 1                   # Compression level (1-12)
+favor_decode_speed = true   # Optimize for decompression speed
+content_checksum = true     # Add content checksum
+
+# 7Z compression settings
+[compression.7z]
+level = 5                   # Compression level (0-9)
+method = "lzma2"           # Compression method (lzma, lzma2, ppmd)
+solid = true               # Use solid compression
+threads = 0                # Number of threads (0 = auto-detect)
+
+# --- Extraction Settings ----------------------------------------------------
+[extraction]
+# Preserve file permissions during extraction
+preserve_permissions = true
+
+# Preserve timestamps during extraction
+preserve_timestamps = true
+
+# Overwrite existing files without prompting
+overwrite = false
+
+# Create destination directory if it doesn't exist
+create_dirs = true
+
+# Strip leading path components (0 = don't strip)
+strip_components = 0
+
+# --- File Handling -----------------------------------------------------------
+[files]
+# Maximum file size to process (in bytes, 0 = unlimited)
+max_file_size = 0
+
+# Exclude patterns (glob patterns)
+exclude_patterns = [
+    ".DS_Store",
+    "Thumbs.db",
+    "desktop.ini",
+    ".git/",
+    ".svn/",
+    "__pycache__/",
+    "*.pyc",
+    "node_modules/",
+    ".vscode/",
+    ".idea/"
+]
+
+# Include patterns (glob patterns, overrides excludes)
+include_patterns = []
+
+# Follow symbolic links
+follow_symlinks = false
+
+# Include hidden files and directories
+include_hidden = true
+
+# --- Performance Settings ---------------------------------------------------
+[performance]
+# Buffer size for I/O operations (in bytes)
+buffer_size = 65536
+
+# Number of worker threads (0 = auto-detect)
+threads = 0
+
+# Memory limit for compression (in MB, 0 = unlimited)
+memory_limit = 0
+
+# Use memory mapping for large files
+use_mmap = true
+
+# --- Output Settings ---------------------------------------------------------
+[output]
+# Default output directory (empty = current directory)
+output_dir = ""
+
+# Naming convention for archives
+# Available variables: {name}, {ext}, {date}, {time}
+archive_name_template = "{name}.{ext}"
+
+# Date format for {date} variable
+date_format = "%Y%m%d"
+
+# Time format for {time} variable
+time_format = "%H%M%S"
+
+# --- Format Detection --------------------------------------------------------
+[detection]
+# Auto-detect archive format from file extension
+auto_detect = true
+
+# Fallback format when detection fails
+fallback_format = "tar.gz"
+
+# Custom format mappings
+[detection.formats]
+".tgz" = "tar.gz"
+".tbz" = "tar.bz2"
+".tbz2" = "tar.bz2"
+".txz" = "tar.xz"
+".tzst" = "tar.zst"
+
+# --- Integration Settings ---------------------------------------------------
+[integration]
+# Shell completion support
+enable_completions = true
+
+# Integration with file managers
+file_manager_integration = true
+
+# Custom commands for specific formats
+[integration.commands]
+# Example: Use external tool for RAR files
+# ".rar" = "unrar x {file} {output}"
+
+# --- Security Settings ------------------------------------------------------
+[security]
+# Verify archive integrity before extraction
+verify_integrity = true
+
+# Maximum extraction ratio (prevents zip bombs)
+max_extraction_ratio = 1000
+
+# Maximum number of files in archive
+max_files = 100000
+
+# Scan for potentially dangerous files
+scan_dangerous_files = true
+
+# Dangerous file extensions to warn about
+dangerous_extensions = [
+    ".exe", ".bat", ".cmd", ".com", ".scr",
+    ".pif", ".vbs", ".js", ".jar", ".app"
+]
+
+# --- Logging -----------------------------------------------------------------
+[logging]
+# Log file location (empty = no logging)
+log_file = ""
+
+# Log level (error, warn, info, debug, trace)
+log_level = "info"
+
+# Rotate log files
+rotate_logs = true
+
+# Maximum log file size (in MB)
+max_log_size = 10
+
+# Number of log files to keep
+max_log_files = 5
+
+# --- Platform-Specific Settings ---------------------------------------------
+# macOS-specific settings
+[macos]
+# Preserve extended attributes
+preserve_xattrs = true
+
+# Preserve resource forks
+preserve_resource_forks = true
+
+# Handle .app bundles as directories
+treat_app_as_dir = true
+
+# Linux-specific settings
+[linux]
+# Preserve extended attributes
+preserve_xattrs = true
+
+# Preserve SELinux contexts
+preserve_selinux = false
+
+# Preserve POSIX ACLs
+preserve_acls = false
+
+# Windows-specific settings
+[windows]
+# Handle long paths
+long_path_support = true
+
+# Preserve NTFS streams
+preserve_streams = false
+
+# --- Advanced Options --------------------------------------------------------
+[advanced]
+# Use temporary directory for operations
+use_temp_dir = true
+
+# Temporary directory location (empty = system default)
+temp_dir = ""
+
+# Clean up temporary files on exit
+cleanup_temp = true
+
+# Enable experimental features
+experimental = false
+
+# Custom environment variables
+[advanced.env]
+# Example: Set custom temporary directory
+# TMPDIR = "/custom/temp/path"
+
+# --- Aliases and Shortcuts --------------------------------------------------
+[aliases]
+# Command aliases for common operations
+c = "compress"
+x = "extract"
+l = "list"
+t = "test"
+
+# Format aliases
+tgz = "tar.gz"
+tbz = "tar.bz2"
+txz = "tar.xz"

@@ -1,0 +1,337 @@
+# Title         : config.yaml
+# Author        : Bardia Samiee
+# Project       : Parametric Forge
+# License       : MIT
+# Path          : 01.home/00.core/configs/containers/colima/config.yaml
+# ----------------------------------------------------------------------------
+# Colima container runtime configuration for macOS with Docker and Kubernetes
+
+# --- VM Configuration -------------------------------------------------------
+# Number of CPUs allocated to the VM
+cpu: 4
+
+# Memory allocated to the VM (in GiB)
+memory: 8
+
+# Disk size allocated to the VM (in GiB)
+disk: 100
+
+# VM architecture (x86_64, aarch64)
+arch: aarch64
+
+# VM type (qemu, vz - vz is faster on Apple Silicon)
+vm_type: vz
+
+# --- Runtime Configuration --------------------------------------------------
+# Container runtime (docker, containerd)
+runtime: docker
+
+# Kubernetes deployment (disabled, k3s, k8s)
+kubernetes:
+  enabled: false
+  version: v1.28.2
+  k3s_args: []
+
+# --- Network Configuration --------------------------------------------------
+# Network configuration
+network:
+  # Network address for the VM
+  address: false
+  
+  # DNS servers for the VM
+  dns: 
+    - 1.1.1.1
+    - 8.8.8.8
+  
+  # DNS search domains
+  dns_search: []
+  
+  # Host DNS resolution
+  host_dns: true
+
+# --- Docker Configuration ---------------------------------------------------
+docker:
+  # Docker daemon configuration
+  daemon:
+    # Enable experimental features
+    experimental: true
+    
+    # Enable BuildKit
+    features:
+      buildkit: true
+    
+    # Registry mirrors for faster pulls
+    registry-mirrors:
+      - https://mirror.gcr.io
+    
+    # Insecure registries
+    insecure-registries:
+      - localhost:5000
+    
+    # Default logging driver
+    log-driver: json-file
+    log-opts:
+      max-size: "10m"
+      max-file: "3"
+      compress: "true"
+    
+    # Storage driver
+    storage-driver: overlay2
+    
+    # Default ulimits
+    default-ulimits:
+      nofile:
+        Name: nofile
+        Hard: 64000
+        Soft: 64000
+      memlock:
+        Name: memlock
+        Hard: -1
+        Soft: -1
+    
+    # Resource limits
+    max-concurrent-downloads: 6
+    max-concurrent-uploads: 5
+    shutdown-timeout: 15
+    
+    # Security options
+    userland-proxy: false
+    live-restore: true
+    
+    # Metrics and debugging
+    debug: false
+    log-level: info
+    metrics-addr: ""
+    
+    # Build cache configuration
+    builder:
+      gc:
+        enabled: true
+        policy:
+          - keepStorage: "10GB"
+            filter:
+              - "unused-for=24h"
+          - keepStorage: "50GB"
+            all: true
+
+# --- Mount Configuration ----------------------------------------------------
+# Host directories to mount in the VM
+mounts:
+  - location: "~"
+    writable: true
+  - location: "/tmp/colima"
+    writable: true
+  - location: "/var/folders"
+    writable: false
+
+# --- SSH Configuration ------------------------------------------------------
+ssh:
+  # SSH config directory
+  config_dir: ~/.ssh
+  
+  # SSH public key file
+  public_key: ~/.ssh/id_rsa.pub
+  
+  # SSH private key file
+  private_key: ~/.ssh/id_rsa
+  
+  # SSH agent forwarding
+  forward_agent: true
+
+# --- Environment Variables --------------------------------------------------
+env:
+  # Docker environment variables
+  DOCKER_BUILDKIT: "1"
+  COMPOSE_DOCKER_CLI_BUILD: "1"
+  
+  # Development environment variables
+  DEVELOPMENT: "true"
+  
+  # Timezone
+  TZ: "UTC"
+
+# --- Performance Tuning -----------------------------------------------------
+# VM performance settings
+performance:
+  # Enable hardware acceleration
+  hardware_acceleration: true
+  
+  # Memory ballooning
+  memory_ballooning: true
+  
+  # CPU governor (performance, powersave, ondemand)
+  cpu_governor: "ondemand"
+  
+  # I/O scheduler (noop, deadline, cfq, mq-deadline)
+  io_scheduler: "mq-deadline"
+
+# --- Security Configuration -------------------------------------------------
+security:
+  # Enable AppArmor (Linux security module)
+  apparmor: false
+  
+  # Enable SELinux
+  selinux: false
+  
+  # Seccomp profile
+  seccomp_profile: ""
+  
+  # User namespace remapping
+  userns_remap: ""
+
+# --- Logging Configuration --------------------------------------------------
+logging:
+  # Log level (debug, info, warn, error)
+  level: info
+  
+  # Log file location
+  file: ~/.colima/colima.log
+  
+  # Maximum log file size
+  max_size: 10MB
+  
+  # Number of log files to keep
+  max_files: 5
+  
+  # Log format (text, json)
+  format: text
+
+# --- Auto-start Configuration -----------------------------------------------
+autostart:
+  # Auto-start Colima on system boot
+  enabled: false
+  
+  # Services to start automatically
+  services:
+    - docker
+  
+  # Delay before starting services (seconds)
+  delay: 30
+
+# --- Update Configuration ---------------------------------------------------
+updates:
+  # Check for updates automatically
+  auto_check: true
+  
+  # Update channel (stable, beta, nightly)
+  channel: stable
+  
+  # Update interval (hours)
+  interval: 24
+
+# --- Backup Configuration ---------------------------------------------------
+backup:
+  # Enable automatic backups
+  enabled: false
+  
+  # Backup directory
+  directory: ~/.colima/backups
+  
+  # Backup interval (hours)
+  interval: 24
+  
+  # Number of backups to keep
+  retention: 7
+
+# --- Integration Configuration ----------------------------------------------
+integration:
+  # Docker Desktop compatibility
+  docker_desktop_compat: true
+  
+  # VS Code integration
+  vscode: true
+  
+  # IntelliJ integration
+  intellij: true
+  
+  # Kubernetes tools integration
+  kubectl: false
+  helm: false
+
+# --- Advanced Configuration ------------------------------------------------
+advanced:
+  # Custom QEMU arguments
+  qemu_args: []
+  
+  # Custom kernel parameters
+  kernel_params: []
+  
+  # Custom init scripts
+  init_scripts: []
+  
+  # VM firmware (bios, uefi)
+  firmware: uefi
+  
+  # Boot timeout (seconds)
+  boot_timeout: 300
+
+# --- Profiles Configuration ------------------------------------------------
+profiles:
+  # Development profile
+  development:
+    cpu: 2
+    memory: 4
+    disk: 50
+    runtime: docker
+    kubernetes:
+      enabled: false
+  
+  # Production testing profile
+  production:
+    cpu: 8
+    memory: 16
+    disk: 200
+    runtime: containerd
+    kubernetes:
+      enabled: true
+      version: v1.28.2
+  
+  # Minimal profile
+  minimal:
+    cpu: 1
+    memory: 2
+    disk: 20
+    runtime: docker
+    kubernetes:
+      enabled: false
+
+# --- Monitoring Configuration ----------------------------------------------
+monitoring:
+  # Enable resource monitoring
+  enabled: false
+  
+  # Monitoring interval (seconds)
+  interval: 60
+  
+  # Metrics to collect
+  metrics:
+    - cpu
+    - memory
+    - disk
+    - network
+  
+  # Alert thresholds
+  alerts:
+    cpu_threshold: 80
+    memory_threshold: 90
+    disk_threshold: 85
+
+# --- Cleanup Configuration -------------------------------------------------
+cleanup:
+  # Auto-cleanup unused resources
+  auto_cleanup: true
+  
+  # Cleanup interval (hours)
+  interval: 24
+  
+  # Resources to cleanup
+  resources:
+    - containers
+    - images
+    - volumes
+    - networks
+  
+  # Cleanup thresholds
+  thresholds:
+    unused_for: "24h"
+    keep_recent: 10

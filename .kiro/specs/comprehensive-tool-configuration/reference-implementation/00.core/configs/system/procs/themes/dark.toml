@@ -1,0 +1,137 @@
+# Title         : dark.toml
+# Author        : Bardia Samiee
+# Project       : Parametric Forge
+# License       : MIT
+# Path          : 01.home/00.core/configs/system/procs/themes/dark.toml
+# ----------------------------------------------------------------------------
+# Dark theme for procs process viewer optimized for dark terminals
+
+# --- Base Colors -------------------------------------------------------------
+[colors]
+# Background and foreground
+background = "black"
+foreground = "white"
+
+# --- Process Information Colors ----------------------------------------------
+# Process identifiers
+pid = "bright_cyan"
+ppid = "cyan"
+user = "bright_green"
+group = "green"
+
+# --- Resource Usage Colors --------------------------------------------------
+# CPU usage (gradient based on usage)
+cpu_low = "green"        # < 25% CPU
+cpu_medium = "yellow"    # 25-75% CPU  
+cpu_high = "red"         # > 75% CPU
+cpu_critical = "bright_red"  # > 90% CPU
+
+# Memory usage (gradient based on usage)
+mem_low = "blue"         # < 25% memory
+mem_medium = "magenta"   # 25-75% memory
+mem_high = "red"         # > 75% memory
+mem_critical = "bright_red"  # > 90% memory
+
+# Virtual memory
+vmem = "bright_blue"
+
+# --- Time and Status Colors -------------------------------------------------
+# Process runtime
+time_short = "white"     # < 1 hour
+time_medium = "yellow"   # 1-24 hours
+time_long = "red"        # > 24 hours
+
+# Process start time
+start_recent = "bright_green"  # Started today
+start_old = "gray"            # Started before today
+
+# --- Command and Path Colors ------------------------------------------------
+# Command name
+command = "bright_white"
+command_args = "white"
+command_path = "gray"
+
+# Kernel processes
+kernel_process = "bright_black"
+
+# --- I/O Activity Colors ----------------------------------------------------
+# Disk I/O
+read_activity = "bright_green"
+write_activity = "bright_red"
+io_idle = "gray"
+
+# Network activity (if supported)
+network_in = "blue"
+network_out = "magenta"
+
+# --- Header and UI Colors ---------------------------------------------------
+# Column headers
+header = "bold_white"
+header_separator = "gray"
+
+# Borders and separators
+border = "gray"
+separator = "dark_gray"
+
+# --- Status and Alert Colors ------------------------------------------------
+# Process states
+running = "green"
+sleeping = "blue"
+stopped = "yellow"
+zombie = "red"
+dead = "bright_red"
+
+# Priority levels
+priority_high = "red"
+priority_normal = "white"
+priority_low = "gray"
+
+# --- Selection and Highlighting ---------------------------------------------
+# Selected process
+selected_bg = "blue"
+selected_fg = "bright_white"
+
+# Search highlighting
+search_match = "black"
+search_match_bg = "yellow"
+
+# --- Tree View Colors -------------------------------------------------------
+# Process tree connectors
+tree_connector = "gray"
+tree_branch = "white"
+tree_leaf = "gray"
+
+# Parent-child relationships
+parent_process = "bright_white"
+child_process = "white"
+orphan_process = "yellow"
+
+# --- Special Process Types --------------------------------------------------
+# System processes
+system_process = "cyan"
+daemon_process = "blue"
+
+# User processes
+user_process = "white"
+root_process = "red"
+
+# Container processes
+container_process = "magenta"
+docker_process = "bright_magenta"
+
+# --- Performance Indicators -------------------------------------------------
+# Load indicators
+load_low = "green"
+load_medium = "yellow"
+load_high = "red"
+
+# Swap usage
+swap_usage = "magenta"
+swap_critical = "bright_red"
+
+# --- Error and Warning Colors -----------------------------------------------
+# Error states
+error = "bright_red"
+warning = "yellow"
+info = "cyan"
+success = "green"

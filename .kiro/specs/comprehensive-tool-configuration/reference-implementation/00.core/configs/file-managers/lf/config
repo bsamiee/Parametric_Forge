@@ -1,0 +1,493 @@
+# Title         : config
+# Author        : Bardia Samiee
+# Project       : Parametric Forge
+# License       : MIT
+# Path          : 01.home/00.core/configs/file-managers/lf/config
+# ----------------------------------------------------------------------------
+# lf lightweight file manager configuration with commands and keybindings
+
+# --- Core Settings ------------------------------------------------------------
+# Show hidden files by default
+set hidden false
+
+# Show file icons (requires nerd fonts)
+set icons true
+
+# Show file info in the bottom
+set info size
+
+# Number of files to show in preview
+set preview true
+
+# Ratios for the three columns (parent:current:preview)
+set ratios 1:2:3
+
+# Draw borders around panes
+set drawbox true
+
+# Use colors
+set color256 true
+
+# Ignore case in sorting and search
+set ignorecase true
+
+# Ignore diacritics in sorting and search
+set ignoredia true
+
+# Show selection count in the status line
+set selmode true
+
+# Wrap cursor around at the top and bottom of the file list
+set wrapscroll true
+
+# Scroll offset (number of files to keep visible above/below cursor)
+set scrolloff 5
+
+# Tab stop width for preview
+set tabstop 4
+
+# Shell to use for shell commands
+set shell bash
+
+# Shell command flags
+set shellopts '-eu'
+
+# Internal field separator for shell commands
+set ifs "\n"
+
+# File opener command
+set opener open
+
+# --- Display Settings --------------------------------------------------------
+# Time format for file modification time
+set timefmt "2006-01-02 15:04:05"
+
+# File size format (binary or decimal)
+set unitfmt df
+
+# Truncate file names that are too long
+set truncatechar "~"
+
+# Show file count in directory info
+set dircounts true
+
+# Show directory first in sorting
+set dirfirst true
+
+# Sort method (name, size, time, ctime, atime, ext)
+set sortby name
+
+# Reverse sort order
+set reverse false
+
+# --- Preview Settings -------------------------------------------------------
+# Preview script for different file types
+set previewer ~/.config/lf/preview.sh
+
+# Cleaner script to clean up preview artifacts
+set cleaner ~/.config/lf/cleaner.sh
+
+# Maximum number of lines to show in text preview
+set preview_max_lines 1000
+
+# Maximum file size for text preview (in bytes)
+set preview_max_size 10485760
+
+# --- Key Bindings -----------------------------------------------------------
+# Remove default bindings
+map d
+map m
+map o
+map n
+map "'"
+map '"'
+map c
+map e
+map f
+
+# Navigation
+map j down
+map k up
+map h updir
+map l open
+map gg top
+map G bottom
+map <c-u> half-up
+map <c-d> half-down
+map <c-b> page-up
+map <c-f> page-down
+
+# Selection
+map <space> toggle
+map v invert
+map u unselect
+map V invert-all
+map <c-a> select-all
+
+# File operations
+map yy copy
+map dd cut
+map pp paste
+map po paste-overwrite
+map pl paste-link
+map pr paste-relative
+map xx delete
+map DD delete-permanent
+
+# Create new files/directories
+map cf create-file
+map cd create-dir
+map ch chmod
+
+# Rename operations
+map r rename
+map R rename-start
+map rr rename-end
+map ra rename-all
+
+# Search and filter
+map / search
+map ? search-back
+map n search-next
+map N search-prev
+map f find
+map F find-back
+map ; find-next
+map , find-prev
+
+# Bookmarks
+map "'" mark-load
+map '"' mark-save
+map m mark-save
+map M mark-remove
+
+# Sorting
+map ss set sortby name
+map st set sortby time
+map sS set sortby size
+map se set sortby ext
+map sr set reverse!
+
+# View options
+map zh set hidden!
+map zi set icons!
+map zp set preview!
+map zd set info size
+map za set info time
+map zr set ratios 1:2
+map zR set ratios 1:2:3
+
+# External commands
+map o open-with
+map O open-with-gui
+map e edit
+map E edit-config
+map x execute
+map X execute-silent
+
+# System operations
+map q quit
+map Q quit-all
+map <c-z> suspend
+map <c-c> interrupt
+
+# Help
+map ? help
+
+# --- Custom Commands --------------------------------------------------------
+# Open file with default application
+cmd open ${{
+    case $(file --mime-type -Lb $f) in
+        text/*) lf -remote "send $id \$$EDITOR \$fx";;
+        *) for f in $fx; do $OPENER $f > /dev/null 2> /dev/null & done;;
+    esac
+}}
+
+# Open file with specific application
+cmd open-with ${{
+    printf "Open with: "
+    read app
+    for f in $fx; do
+        $app "$f" > /dev/null 2> /dev/null &
+    done
+}}
+
+# Open file with GUI application
+cmd open-with-gui ${{
+    printf "Open with (GUI): "
+    read app
+    for f in $fx; do
+        nohup $app "$f" > /dev/null 2> /dev/null &
+    done
+}}
+
+# Edit file with default editor
+cmd edit ${{
+    $EDITOR $fx
+}}
+
+# Edit lf configuration
+cmd edit-config ${{
+    $EDITOR ~/.config/lf/lfrc
+}}
+
+# Create new file
+cmd create-file ${{
+    printf "File name: "
+    read name
+    touch "$name"
+}}
+
+# Create new directory
+cmd create-dir ${{
+    printf "Directory name: "
+    read name
+    mkdir -p "$name"
+}}
+
+# Change file permissions
+cmd chmod ${{
+    printf "Mode bits: "
+    read mode
+    chmod $mode $fx
+}}
+
+# Rename file/directory
+cmd rename ${{
+    printf "New name: "
+    read name
+    mv "$f" "$name"
+}}
+
+# Rename with current name pre-filled
+cmd rename-start ${{
+    name=$(basename "$f")
+    printf "Rename to: $name"
+    read -e -i "$name" newname
+    mv "$f" "$newname"
+}}
+
+# Rename from the end of filename
+cmd rename-end ${{
+    name=$(basename "$f")
+    ext="${name##*.}"
+    base="${name%.*}"
+    printf "Rename to: $base"
+    read -e -i "$base" newbase
+    if [ "$ext" != "$name" ]; then
+        mv "$f" "$newbase.$ext"
+    else
+        mv "$f" "$newbase"
+    fi
+}}
+
+# Bulk rename selected files
+cmd rename-all ${{
+    if [ -n "$fs" ]; then
+        printf '%s\n' $fs > /tmp/lf-rename-list
+        $EDITOR /tmp/lf-rename-list
+        if [ -f /tmp/lf-rename-list ]; then
+            paste <(printf '%s\n' $fs) /tmp/lf-rename-list | while IFS=$'\t' read -r old new; do
+                if [ "$old" != "$new" ] && [ -n "$new" ]; then
+                    mv "$old" "$new"
+                fi
+            done
+            rm /tmp/lf-rename-list
+        fi
+    fi
+}}
+
+# Delete files/directories
+cmd delete ${{
+    printf "Delete selected files? [y/N] "
+    read confirm
+    if [ "$confirm" = "y" ] || [ "$confirm" = "Y" ]; then
+        rm -rf $fx
+    fi
+}}
+
+# Permanently delete files (bypass trash)
+cmd delete-permanent ${{
+    printf "Permanently delete selected files? [y/N] "
+    read confirm
+    if [ "$confirm" = "y" ] || [ "$confirm" = "Y" ]; then
+        rm -rf $fx
+    fi
+}}
+
+# Move to trash (if available)
+cmd trash ${{
+    if command -v trash >/dev/null 2>&1; then
+        trash $fx
+    elif command -v gio >/dev/null 2>&1; then
+        gio trash $fx
+    else
+        printf "Trash command not available. Delete permanently? [y/N] "
+        read confirm
+        if [ "$confirm" = "y" ] || [ "$confirm" = "Y" ]; then
+            rm -rf $fx
+        fi
+    fi
+}}
+
+# Copy file path to clipboard
+cmd copy-path ${{
+    if command -v pbcopy >/dev/null 2>&1; then
+        printf '%s' "$f" | pbcopy
+    elif command -v xclip >/dev/null 2>&1; then
+        printf '%s' "$f" | xclip -selection clipboard
+    elif command -v wl-copy >/dev/null 2>&1; then
+        printf '%s' "$f" | wl-copy
+    fi
+}}
+
+# Copy file name to clipboard
+cmd copy-name ${{
+    name=$(basename "$f")
+    if command -v pbcopy >/dev/null 2>&1; then
+        printf '%s' "$name" | pbcopy
+    elif command -v xclip >/dev/null 2>&1; then
+        printf '%s' "$name" | xclip -selection clipboard
+    elif command -v wl-copy >/dev/null 2>&1; then
+        printf '%s' "$name" | wl-copy
+    fi
+}}
+
+# Archive selected files
+cmd archive ${{
+    printf "Archive name (without extension): "
+    read name
+    case "$name" in
+        *.tar.gz|*.tgz) tar -czf "$name" $fx;;
+        *.tar.bz2|*.tbz2) tar -cjf "$name" $fx;;
+        *.tar.xz|*.txz) tar -cJf "$name" $fx;;
+        *.tar) tar -cf "$name" $fx;;
+        *.zip) zip -r "$name" $fx;;
+        *.7z) 7z a "$name" $fx;;
+        *) tar -czf "$name.tar.gz" $fx;;
+    esac
+}}
+
+# Extract archive
+cmd extract ${{
+    case "$f" in
+        *.tar.gz|*.tgz) tar -xzf "$f";;
+        *.tar.bz2|*.tbz2) tar -xjf "$f";;
+        *.tar.xz|*.txz) tar -xJf "$f";;
+        *.tar) tar -xf "$f";;
+        *.zip) unzip "$f";;
+        *.7z) 7z x "$f";;
+        *.rar) unrar x "$f";;
+        *) printf "Unsupported archive format\n";;
+    esac
+}}
+
+# Show file information
+cmd info ${{
+    file "$f"
+    stat "$f"
+    if command -v mediainfo >/dev/null 2>&1; then
+        mediainfo "$f" 2>/dev/null
+    fi
+}}
+
+# Calculate directory size
+cmd dirsize ${{
+    du -sh "$f"
+}}
+
+# Find files
+cmd find-files ${{
+    printf "Find files: "
+    read pattern
+    find . -name "*$pattern*" -type f
+}}
+
+# Find directories
+cmd find-dirs ${{
+    printf "Find directories: "
+    read pattern
+    find . -name "*$pattern*" -type d
+}}
+
+# Execute command
+cmd execute ${{
+    printf "Command: "
+    read cmd
+    $cmd
+}}
+
+# Execute command silently
+cmd execute-silent ${{
+    printf "Command: "
+    read cmd
+    $cmd > /dev/null 2>&1 &
+}}
+
+# Show help
+cmd help ${{
+    printf "lf keybindings:\n"
+    printf "Navigation: j/k (up/down), h/l (parent/enter), gg/G (top/bottom)\n"
+    printf "Selection: space (toggle), v (invert), u (unselect)\n"
+    printf "Files: yy (copy), dd (cut), pp (paste), xx (delete)\n"
+    printf "Create: cf (file), cd (directory)\n"
+    printf "Rename: r (rename), R (rename from start)\n"
+    printf "Search: / (search), f (find)\n"
+    printf "View: zh (hidden), zi (icons), zp (preview)\n"
+    printf "Other: o (open), e (edit), q (quit)\n"
+    printf "Press any key to continue..."
+    read
+}}
+
+# --- File Type Associations -------------------------------------------------
+# Text files
+cmd open-text ${{
+    $EDITOR "$f"
+}}
+
+# Image files
+cmd open-image ${{
+    if command -v feh >/dev/null 2>&1; then
+        feh "$f" &
+    elif command -v sxiv >/dev/null 2>&1; then
+        sxiv "$f" &
+    else
+        $OPENER "$f" &
+    fi
+}}
+
+# Video files
+cmd open-video ${{
+    if command -v mpv >/dev/null 2>&1; then
+        mpv "$f" &
+    elif command -v vlc >/dev/null 2>&1; then
+        vlc "$f" &
+    else
+        $OPENER "$f" &
+    fi
+}}
+
+# Audio files
+cmd open-audio ${{
+    if command -v mpv >/dev/null 2>&1; then
+        mpv "$f" &
+    else
+        $OPENER "$f" &
+    fi
+}}
+
+# PDF files
+cmd open-pdf ${{
+    if command -v zathura >/dev/null 2>&1; then
+        zathura "$f" &
+    else
+        $OPENER "$f" &
+    fi
+}}
+
+# --- Startup Commands -------------------------------------------------------
+# Change to home directory on startup
+# cd ~
+
+# Load bookmarks
+# source ~/.config/lf/bookmarks

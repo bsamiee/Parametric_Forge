@@ -1,0 +1,148 @@
+# Title         : git-tools.nix
+# Author        : Bardia Samiee
+# Project       : Parametric Forge
+# License       : MIT
+# Path          : /01.home/00.core/programs/git-tools.nix
+# ----------------------------------------------------------------------------
+# Git ecosystem tools: Git, GitHub CLI, and Lazygit configuration.
+
+_:
+
+{
+  # --- Git Core Configuration -----------------------------------------------
+  programs = {
+    git = {
+      enable = true;
+      # User information intentionally not set - configured per-machine
+      # --- Git Tools --------------------------------------------------------
+      lfs.enable = true;
+      delta = {
+        enable = true;
+        options = {
+          navigate = true;
+          line-numbers = true;
+        };
+      };
+      # --- Core Configuration -----------------------------------------------
+      extraConfig = {
+        init.defaultBranch = "master";
+        pull.ff = "only";
+        push = {
+          default = "current";
+          autoSetupRemote = true;
+          useForceIfIncludes = true; # Safer force pushes - requires local ref to be up-to-date
+          followTags = true; # Automatically push annotated tags
+        };
+        core = {
+          # editor already set globally in environment.nix
+          autocrlf = "input";
+          whitespace = "trailing-space,space-before-tab";
+          preloadindex = true; # Faster operations by preloading index
+          # exclude/attributes files placed by file-management.nix
+        };
+        feature.manyFiles = true; # Optimizations for repos with many files
+        index.threads = 0; # Use all CPU cores for index operations
+        diff = {
+          colorMoved = "default";
+          algorithm = "histogram";
+          submodule = "log"; # Show submodule changes in diffs
+          renames = "copies"; # Detect both renames and copies
+        };
+        merge.conflictstyle = "zdiff3";
+        rerere.enabled = true;
+        fetch = {
+          prune = true;
+          prunetags = true;
+          fsckObjects = true; # Verify object integrity on fetch
+        };
+        receive.fsckObjects = true; # Verify object integrity on receive
+        pack.threads = 0;
+        transfer.fsckobjects = true;
+        status = {
+          branch = true;
+          showUntrackedFiles = "all";
+          submoduleSummary = true; # Show submodule summary in status
+        };
+        log = {
+          date = "iso"; # ISO 8601 format for dates
+          follow = true; # Follow renames in history
+        };
+        branch = {
+          sort = "-committerdate";
+          autosetupmerge = "always"; # Auto-track remote branches
+          autosetuprebase = "always"; # Default to rebase for new branches
+        };
+        rebase = {
+          autoStash = true;
+          autoSquash = true;
+          updateRefs = true;
+        };
+        # Commit configuration - SSH signing handled by ssh.nix
+        commit.verbose = true;
+        help.autocorrect = 20;
+      };
+    };
+    # --- GitHub CLI Configuration -------------------------------------------
+    gh = {
+      enable = true;
+      settings = {
+        git_protocol = "ssh";
+        prompt = "enabled";
+        spinner = "enabled";
+        prefer_editor_prompt = "disabled";
+        # pager, editor, browser inherit from env vars (GH_PAGER, EDITOR, BROWSER)
+      };
+      # Extensions: gh-copilot, gh-dash, gh-skyline available via `gh extension install`
+    };
+    # --- Lazygit Configuration ----------------------------------------------
+    lazygit = {
+      enable = true;
+      settings = {
+        # --- User Interface -------------------------------------------------
+        gui = {
+          showFileTree = true;
+          showCommandLog = false;
+          showBottomLine = false;
+          showBranchCommitHash = true; # Show commit hash alongside branch name
+          showDivergenceFromBaseBranch = "arrowAndNumber"; # Show commits ahead/behind
+          border = "rounded";
+          sidePanelWidth = 0.3333;
+          nerdFontsVersion = "3";
+        };
+        # --- Git Workflow ---------------------------------------------------
+        git = {
+          paging = {
+            colorArg = "always";
+            # pager inherits from GIT_PAGER env var
+          };
+          pull.mode = "rebase";
+          autoRefresh = true;
+          autoFetch = true;
+          autoForwardBranches = "onlyMainBranches"; # Auto fast-forward main branches
+          fetchAll = true; # Fetch all remotes
+          mainBranches = [
+            "master"
+            "main"
+            "develop"
+          ];
+        };
+        # --- Performance ----------------------------------------------------
+        refresher = {
+          refreshInterval = 10;
+          fetchInterval = 60;
+        };
+        # --- System Integration ---------------------------------------------
+        os = {
+          # editor commands use $EDITOR env var
+          edit = "{{editor}} {{filename}}";
+          editAtLine = "{{editor}} +{{line}} {{filename}}";
+        };
+        # --- Update Management ----------------------------------------------
+        update = {
+          method = "prompt";
+          days = 14;
+        };
+      };
+    };
+  };
+}

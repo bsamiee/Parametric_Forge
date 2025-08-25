@@ -1,0 +1,44 @@
+# Title         : config
+# Author        : Bardia Samiee
+# Project       : Parametric Forge
+# License       : MIT
+# Path          : configs/darwin/ffmpeg/config
+# ----------------------------------------------------------------------------
+# FFmpeg configuration for macOS with hardware acceleration support
+
+# macOS-specific hardware acceleration
+-hwaccel videotoolbox
+-hwaccel_output_format videotoolbox_vld
+
+# Enable AVFoundation input support
+-f avfoundation
+
+# macOS-specific codec preferences
+-c:v h264_videotoolbox
+-c:a aac
+
+# Quality settings optimized for macOS hardware
+-crf 23
+-preset medium
+
+# macOS-specific output formats
+-movflags +faststart
+
+# Thread settings (optimize for Apple Silicon/Intel)
+-threads 0
+
+# Memory settings for macOS
+-max_muxing_queue_size 1024
+
+# macOS-specific filters
+-vf "scale_vt=w=1920:h=1080:color_matrix=bt709:color_primaries=bt709:color_trc=bt709"
+
+# Audio settings for macOS
+-ar 48000
+-ac 2
+
+# Logging level
+-loglevel warning
+
+# macOS-specific paths
+-y  # Overwrite output files without asking

@@ -1,0 +1,27 @@
+# Title         : rustfmt.toml
+# Author        : Bardia Samiee
+# Project       : Parametric Forge
+# License       : MIT
+# Path          : 01.home/00.core/configs/languages/rustfmt.toml
+# ----------------------------------------------------------------------------
+# Rust formatter configuration with modern standards
+
+# --- Edition Configuration -----------------------------------------------
+edition = "2021"
+unstable_features = false
+
+# --- Project Standards ---------------------------------------------------
+max_width = 120
+tab_spaces = 4
+hard_tabs = false
+newline_style = "Unix"
+
+# --- Import Organization -------------------------------------------------
+imports_granularity = "Crate"
+group_imports = "StdExternalCrate"
+reorder_imports = true
+reorder_modules = true
+
+# --- Comment Configuration -----------------------------------------------
+wrap_comments = true
+comment_width = 80

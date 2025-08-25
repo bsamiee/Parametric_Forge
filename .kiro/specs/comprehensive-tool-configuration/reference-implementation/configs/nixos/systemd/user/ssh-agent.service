@@ -1,0 +1,31 @@
+# Title         : ssh-agent.service
+# Author        : Bardia Samiee
+# Project       : Parametric Forge
+# License       : MIT
+# Path          : configs/nixos/systemd/user/ssh-agent.service
+# ----------------------------------------------------------------------------
+# systemd user service for SSH agent management on Linux
+
+[Unit]
+Description=SSH Agent
+Documentation=man:ssh-agent(1)
+Wants=ssh-agent.socket
+
+[Service]
+Type=simple
+Environment=SSH_AUTH_SOCK=%t/ssh-agent.socket
+ExecStart=/run/current-system/sw/bin/ssh-agent -D -a $SSH_AUTH_SOCK
+ExecStartPost=/run/current-system/sw/bin/bash -c '/run/current-system/sw/bin/ssh-add %h/.local/share/ssh/id_* 2>/dev/null || true'
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=10
+
+# Security settings
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=%h/.local/share/ssh %t
+
+[Install]
+WantedBy=default.target

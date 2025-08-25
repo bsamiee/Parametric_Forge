@@ -1,0 +1,51 @@
+# Title         : clippy.toml
+# Author        : Bardia Samiee
+# Project       : Parametric Forge
+# License       : MIT
+# Path          : 01.home/00.core/configs/languages/clippy.toml
+# ----------------------------------------------------------------------------
+# Clippy behavioral configuration
+
+# --- Behavioral Thresholds ------------------------------------------
+cognitive-complexity-threshold = 30
+too-many-lines-threshold = 100
+too-many-arguments-threshold = 7
+type-complexity-threshold = 250
+excessive-dependencies-threshold = 100
+trivial-copy-size-limit = 8
+
+allow-dbg-in-tests = true
+allow-print-in-tests = true
+allow-unwrap-in-tests = true
+allow-expect-in-tests = true
+
+# --- Documentation Settings ------------------------------------------
+doc-valid-idents = [
+  "macOS",
+  "iOS",
+  "FreeBSD",
+  "OpenBSD",
+  "NetBSD",
+  "WebAssembly",
+  "JavaScript",
+  "TypeScript",
+  "GitHub",
+  "GitLab",
+  "IPv4",
+  "IPv6",
+  "HTTP",
+  "HTTPS",
+  "REST",
+  "JSON",
+  "XML",
+  "YAML",
+  "TOML",
+  "PostgreSQL",
+  "MySQL",
+  "SQLite",
+  "Redis",
+  "OAuth",
+  "GraphQL",
+  "gRPC",
+  "WebSocket",
+]

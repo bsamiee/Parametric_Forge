@@ -1,0 +1,363 @@
+# Title         : bottom.toml
+# Author        : Bardia Samiee
+# Project       : Parametric Forge
+# License       : MIT
+# Path          : 01.home/00.core/configs/system/bottom.toml
+# ----------------------------------------------------------------------------
+# Bottom system monitor configuration with custom layouts, themes, and
+# performance monitoring settings for comprehensive system resource visualization.
+
+# --- Core Configuration ------------------------------------------------------
+# Basic settings for bottom's behavior and appearance
+
+# Default widget and layout settings
+default_widget_type = "proc"   # Default widget: proc, cpu, mem, net, disk, temp
+default_widget_count = 1       # Number of widgets to show initially
+disable_click = false          # Enable mouse click interactions
+dot_marker = false             # Use braille dots instead of lines for graphs
+left_legend = true             # Show legends on the left side
+hide_table_gap = false         # Show gaps between table sections
+hide_time = false              # Show time in the interface
+show_table_scroll_position = true  # Show scroll position indicator
+
+# --- Update and Refresh Settings ---------------------------------------------
+# Configure how frequently bottom updates its display
+
+# Update rates (in milliseconds)
+rate = 1000                    # General update rate (1 second)
+default_time_value = 60000     # Default time range for graphs (60 seconds)
+time_delta = 15000             # Time delta for graph updates (15 seconds)
+use_old_network_legend = false # Use new network legend format
+
+# --- Process Display Configuration -------------------------------------------
+# Settings for the process table and process monitoring
+
+# Process table settings
+tree_mode = false              # Show processes in tree mode by default
+show_table_scroll_position = true  # Show scroll position
+process_command = false        # Show process name instead of full command
+case_sensitive = false         # Case-insensitive process search
+whole_word = false             # Allow partial word matching in search
+regex = true                   # Enable regex search in process names
+use_current_cpu_total = false  # Use average CPU instead of current total
+unnormalized_cpu = false       # Show normalized CPU percentages
+group_processes = true         # Group processes by name
+hide_avg_cpu = false           # Show average CPU usage
+
+# Process filtering and sorting
+[processes]
+columns = [
+    "PID",                     # Process ID
+    "Name",                    # Process name
+    "CPU%",                    # CPU usage percentage
+    "Mem%",                    # Memory usage percentage
+    "Read/s",                  # Disk read rate
+    "Write/s",                 # Disk write rate
+    "Total Read",              # Total disk reads
+    "Total Write",             # Total disk writes
+    "State",                   # Process state
+    "User",                    # Process owner
+]
+
+# Default sorting
+sort_column = "CPU%"           # Default sort column
+sort_order = "desc"            # Sort order: asc, desc
+
+# --- CPU Configuration -------------------------------------------------------
+# Settings for CPU monitoring and display
+
+# CPU display options
+cpu_left_legend = true         # Show CPU legend on left
+avg_cpu = true                 # Show average CPU usage
+per_cpu = true                 # Show per-core CPU usage
+
+# CPU graph settings
+[cpu]
+default = true                 # Enable CPU monitoring by default
+show_average = true            # Show average CPU line
+show_per_core = true           # Show individual CPU cores
+graph_type = "line"            # Graph type: line, block
+
+# --- Memory Configuration ----------------------------------------------------
+# Settings for memory monitoring and display
+
+# Memory display options
+mem_as_value = false           # Show memory as percentage by default
+cache_memory = true            # Include cache in memory calculations
+swap_memory = true             # Show swap memory information
+
+# Memory graph settings
+[memory]
+default = true                 # Enable memory monitoring by default
+show_ram = true                # Show RAM usage
+show_cache = true              # Show cache usage
+show_buffer = true             # Show buffer usage
+show_swap = true               # Show swap usage
+graph_type = "line"            # Graph type: line, block
+
+# --- Network Configuration ---------------------------------------------------
+# Settings for network monitoring and interface display
+
+# Network display options
+network_use_binary_prefix = false  # Use decimal prefixes (MB vs MiB)
+network_use_bytes = false          # Show network in bits by default
+network_use_log = false            # Don't use logarithmic scale
+
+# Network interface settings
+[network]
+default = true                 # Enable network monitoring by default
+show_total_rx = true           # Show total received data
+show_total_tx = true           # Show total transmitted data
+show_rx_rate = true            # Show receive rate
+show_tx_rate = true            # Show transmit rate
+graph_type = "line"            # Graph type: line, block
+
+# Interface filtering
+interfaces = [
+    "en0",                     # Primary Ethernet/WiFi interface
+    "en1",                     # Secondary interface
+    "lo0",                     # Loopback interface
+]
+
+# --- Disk Configuration ------------------------------------------------------
+# Settings for disk usage and I/O monitoring
+
+# Disk display options
+disk_filter = []               # No disk filtering by default
+mount_filter = []              # No mount point filtering by default
+use_disk = true                # Enable disk monitoring
+
+# Disk I/O settings
+[disk]
+default = true                 # Enable disk monitoring by default
+show_disk_usage = true         # Show disk space usage
+show_io_usage = true           # Show disk I/O rates
+graph_type = "line"            # Graph type: line, block
+
+# Disk filtering (exclude virtual filesystems)
+exclude_filesystems = [
+    "tmpfs",                   # Temporary filesystems
+    "devtmpfs",                # Device filesystems
+    "sysfs",                   # System filesystems
+    "proc",                    # Process filesystems
+    "devfs",                   # Device filesystems (macOS)
+]
+
+# --- Temperature Configuration -----------------------------------------------
+# Settings for temperature monitoring and sensor display
+
+# Temperature display options
+temperature_type = "celsius"   # Temperature unit: celsius, fahrenheit, kelvin
+hide_avg_temp = false          # Show average temperature
+
+# Temperature sensor settings
+[temperature]
+default = true                 # Enable temperature monitoring by default
+show_average = true            # Show average temperature
+graph_type = "line"            # Graph type: line, block
+
+# Sensor filtering (platform-specific)
+sensors = [
+    "CPU",                     # CPU temperature sensors
+    "GPU",                     # GPU temperature sensors
+    "System",                  # System temperature sensors
+]
+
+# --- Color Theme Configuration -----------------------------------------------
+# Define colors for different UI elements and data visualization
+
+[colors]
+# --- Interface Colors -----------------------------------------------------
+table_header_color = "LightBlue"      # Table headers
+border_color = "Gray"                 # Widget borders
+highlighted_border_color = "LightBlue"  # Selected widget borders
+text_color = "Gray"                   # Default text
+selected_text_color = "Black"         # Selected text
+selected_bg_color = "LightBlue"       # Selected background
+
+# --- Graph Colors --------------------------------------------------------
+graph_color = "Gray"                  # Default graph lines
+high_battery_color = "green"          # High battery level
+medium_battery_color = "yellow"       # Medium battery level
+low_battery_color = "red"             # Low battery level
+
+# --- CPU Colors ----------------------------------------------------------
+cpu_core_colors = [
+    "LightMagenta",            # CPU core 1
+    "LightYellow",             # CPU core 2
+    "LightCyan",               # CPU core 3
+    "LightGreen",              # CPU core 4
+    "LightBlue",               # CPU core 5
+    "LightRed",                # CPU core 6
+    "Cyan",                    # CPU core 7
+    "Green",                   # CPU core 8
+]
+
+# --- Memory Colors -------------------------------------------------------
+ram_color = "LightMagenta"            # RAM usage
+cache_color = "LightYellow"           # Cache usage
+swap_color = "LightRed"               # Swap usage
+arc_color = "LightCyan"               # ARC cache (ZFS)
+
+# --- Network Colors ------------------------------------------------------
+rx_color = "LightBlue"                # Network receive
+tx_color = "LightRed"                 # Network transmit
+rx_total_color = "LightCyan"          # Total received
+tx_total_color = "LightGreen"         # Total transmitted
+
+# --- Disk Colors --------------------------------------------------------
+read_color = "LightMagenta"           # Disk read
+write_color = "LightYellow"           # Disk write
+total_read_color = "LightCyan"        # Total read
+total_write_color = "LightGreen"      # Total write
+
+# --- Temperature Colors --------------------------------------------------
+temp_color = "LightRed"               # Temperature readings
+avg_temp_color = "Red"                # Average temperature
+
+# --- Layout Configuration ------------------------------------------------
+# Define custom layouts for different monitoring scenarios
+
+# Default layout for general system monitoring
+[[row]]
+    [[row.child]]
+    type = "cpu"
+    ratio = 30
+    [[row.child]]
+    type = "mem"
+    ratio = 30
+    [[row.child]]
+    type = "net"
+    ratio = 40
+
+[[row]]
+    [[row.child]]
+    type = "temp"
+    ratio = 30
+    [[row.child]]
+    type = "disk"
+    ratio = 70
+
+[[row]]
+    [[row.child]]
+    type = "proc"
+    ratio = 100
+
+# --- Performance Monitoring Layout ---------------------------------------
+# Layout optimized for performance analysis and debugging
+
+# Alternative layout for development work
+# [[row]]
+#     [[row.child]]
+#     type = "proc"
+#     ratio = 60
+#     [[row.child]]
+#     type = "cpu"
+#     ratio = 40
+# 
+# [[row]]
+#     [[row.child]]
+#     type = "mem"
+#     ratio = 50
+#     [[row.child]]
+#     type = "disk"
+#     ratio = 50
+
+# --- Keybinding Configuration --------------------------------------------
+# Custom key bindings for enhanced navigation and control
+
+[keybindings]
+# Navigation keys
+up = "k"                      # Move up (vim-style)
+down = "j"                    # Move down (vim-style)
+left = "h"                    # Move left (vim-style)
+right = "l"                   # Move right (vim-style)
+
+# Widget navigation
+next_widget = "Tab"           # Next widget
+prev_widget = "Shift+Tab"     # Previous widget
+
+# Process management
+kill_process = "dd"           # Kill selected process (vim-style)
+search = "/"                  # Search processes
+filter = "f"                  # Filter processes
+sort_menu = "s"               # Sort menu
+
+# Display toggles
+toggle_tree = "t"             # Toggle tree mode
+toggle_count = "c"            # Toggle process count
+toggle_percentage = "p"       # Toggle percentage view
+toggle_case_sensitive = "i"   # Toggle case sensitivity
+
+# Time navigation
+zoom_in = "+"                 # Zoom in time range
+zoom_out = "-"                # Zoom out time range
+reset_zoom = "="              # Reset time range
+
+# --- Platform-Specific Settings -----------------------------------------
+# Handle differences between macOS and Linux
+
+[platform]
+# macOS-specific configuration
+[platform.darwin]
+# macOS temperature sensors
+temperature_sensors = [
+    "CPU Die",                # CPU die temperature
+    "CPU Proximity",          # CPU proximity temperature
+    "GPU Die",                # GPU die temperature
+    "Battery",                # Battery temperature
+]
+
+# macOS network interfaces
+network_interfaces = [
+    "en0",                    # Primary interface (WiFi/Ethernet)
+    "en1",                    # Secondary interface
+    "bridge0",                # Bridge interface
+    "lo0",                    # Loopback
+]
+
+# Linux-specific configuration
+[platform.linux]
+# Linux temperature sensors
+temperature_sensors = [
+    "coretemp",               # CPU core temperatures
+    "acpi",                   # ACPI temperature sensors
+    "hwmon",                  # Hardware monitoring sensors
+]
+
+# Linux network interfaces
+network_interfaces = [
+    "eth0",                   # Ethernet interface
+    "wlan0",                  # WiFi interface
+    "lo",                     # Loopback
+    "docker0",                # Docker bridge
+]
+
+# --- Integration and Export Settings ------------------------------------
+# Configure integration with other tools and data export
+
+[integration]
+# Export configuration
+export_data = false           # Disable data export by default
+export_format = "json"        # Export format: json, csv
+export_interval = 60          # Export interval in seconds
+export_path = "$XDG_DATA_HOME/bottom/exports"  # Export directory
+
+# Logging configuration
+log_level = "warn"            # Log level: error, warn, info, debug
+log_file = "$XDG_DATA_HOME/bottom/bottom.log"  # Log file path
+max_log_size = "10MB"         # Maximum log file size
+
+# --- Accessibility Features ---------------------------------------------
+# Configure accessibility and usability enhancements
+
+[accessibility]
+# Visual accessibility
+high_contrast = false         # Use high contrast colors
+large_text = false            # Use larger text
+reduce_motion = false         # Reduce animations and transitions
+
+# Interaction accessibility
+keyboard_only = false         # Keyboard-only navigation mode
+screen_reader = false         # Screen reader compatibility mode
+audio_alerts = false          # Audio alerts for critical events

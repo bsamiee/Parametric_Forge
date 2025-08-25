@@ -1,0 +1,331 @@
+# Title         : config.toml
+# Author        : Bardia Samiee
+# Project       : Parametric Forge
+# License       : MIT
+# Path          : 01.home/00.core/configs/system/duf/config.toml
+# ----------------------------------------------------------------------------
+# duf disk usage display configuration with themes and filtering
+
+# --- Core Settings ------------------------------------------------------------
+# Sort by column (mountpoint, size, used, avail, usage, inodes, type, filesystem)
+sort = "usage"
+
+# Sort order (ascending, descending)
+sort_order = "descending"
+
+# Output format (table, json, csv)
+output = "table"
+
+# Show all filesystems (including pseudo filesystems)
+show_all = false
+
+# Show only local filesystems
+only_local = true
+
+# Show inodes information
+show_inodes = true
+
+# Show filesystem type
+show_type = true
+
+# --- Display Settings --------------------------------------------------------
+# Use colored output
+color = true
+
+# Color theme (auto, dark, light)
+theme = "dark"
+
+# Show header
+show_header = true
+
+# Show totals row
+show_totals = false
+
+# Use binary units (1024) instead of decimal (1000)
+binary_units = true
+
+# Number of decimal places for sizes
+decimal_places = 1
+
+# --- Filtering Settings ------------------------------------------------------
+# Hide specific filesystem types
+hide_fs_types = [
+    "tmpfs",
+    "devtmpfs", 
+    "devfs",
+    "sysfs",
+    "proc",
+    "squashfs",
+    "overlay",
+    "aufs",
+    "fuse.gvfsd-fuse",
+    "fuse.lxcfs"
+]
+
+# Hide specific mount points
+hide_mounts = [
+    "/dev",
+    "/proc",
+    "/sys",
+    "/run",
+    "/snap",
+    "/var/lib/docker",
+    "/System/Volumes/Data"
+]
+
+# Show only specific filesystem types
+show_fs_types = []
+
+# Show only specific mount points
+show_mounts = []
+
+# Hide filesystems smaller than threshold (in bytes)
+hide_smaller_than = 0
+
+# Hide filesystems with usage below threshold (percentage)
+hide_usage_below = 0
+
+# --- Warning Thresholds -----------------------------------------------------
+# Warning threshold for disk usage (percentage)
+warning_threshold = 80
+
+# Critical threshold for disk usage (percentage)  
+critical_threshold = 90
+
+# Warning threshold for inode usage (percentage)
+inode_warning_threshold = 80
+
+# Critical threshold for inode usage (percentage)
+inode_critical_threshold = 90
+
+# --- Column Configuration ---------------------------------------------------
+# Available columns and their display order
+columns = [
+    "mountpoint",
+    "size", 
+    "used",
+    "avail",
+    "usage",
+    "inodes",
+    "type",
+    "filesystem"
+]
+
+# Column widths (0 = auto-size)
+[column_widths]
+mountpoint = 0
+size = 8
+used = 8
+avail = 8
+usage = 8
+inodes = 8
+type = 10
+filesystem = 15
+
+# Column alignment (left, right, center)
+[column_alignment]
+mountpoint = "left"
+size = "right"
+used = "right"
+avail = "right"
+usage = "right"
+inodes = "right"
+type = "left"
+filesystem = "left"
+
+# --- Color Theme Configuration -----------------------------------------------
+[themes.dark]
+# Header colors
+header = "bold_white"
+separator = "gray"
+
+# Usage level colors
+usage_low = "green"          # < 50%
+usage_medium = "yellow"      # 50-80%
+usage_high = "red"          # 80-90%
+usage_critical = "bright_red" # > 90%
+
+# Size colors
+size_bytes = "cyan"
+size_kb = "blue"
+size_mb = "magenta"
+size_gb = "green"
+size_tb = "yellow"
+size_pb = "red"
+
+# Filesystem type colors
+fs_ext4 = "green"
+fs_xfs = "blue"
+fs_btrfs = "yellow"
+fs_zfs = "cyan"
+fs_ntfs = "magenta"
+fs_apfs = "bright_green"
+fs_hfs = "bright_blue"
+fs_fat32 = "bright_yellow"
+fs_exfat = "bright_cyan"
+fs_other = "white"
+
+# Mount point colors
+mount_root = "bright_white"
+mount_home = "green"
+mount_tmp = "yellow"
+mount_var = "blue"
+mount_boot = "red"
+mount_other = "white"
+
+# Status indicators
+available = "green"
+warning = "yellow"
+critical = "red"
+readonly = "blue"
+mounted = "green"
+unmounted = "gray"
+
+[themes.light]
+# Light theme for bright terminals
+header = "bold_black"
+separator = "gray"
+
+usage_low = "dark_green"
+usage_medium = "dark_yellow"
+usage_high = "dark_red"
+usage_critical = "red"
+
+size_bytes = "dark_cyan"
+size_kb = "dark_blue"
+size_mb = "dark_magenta"
+size_gb = "dark_green"
+size_tb = "dark_yellow"
+size_pb = "dark_red"
+
+fs_ext4 = "dark_green"
+fs_xfs = "dark_blue"
+fs_btrfs = "dark_yellow"
+fs_zfs = "dark_cyan"
+fs_ntfs = "dark_magenta"
+fs_apfs = "green"
+fs_hfs = "blue"
+fs_fat32 = "yellow"
+fs_exfat = "cyan"
+fs_other = "black"
+
+mount_root = "black"
+mount_home = "dark_green"
+mount_tmp = "dark_yellow"
+mount_var = "dark_blue"
+mount_boot = "dark_red"
+mount_other = "black"
+
+available = "dark_green"
+warning = "dark_yellow"
+critical = "dark_red"
+readonly = "dark_blue"
+mounted = "dark_green"
+unmounted = "gray"
+
+# --- Platform-Specific Settings ---------------------------------------------
+# macOS-specific settings
+[macos]
+# Show APFS snapshots
+show_snapshots = false
+
+# Hide system volumes
+hide_system_volumes = true
+
+# Show Time Machine volumes
+show_time_machine = false
+
+# Linux-specific settings
+[linux]
+# Show bind mounts
+show_bind_mounts = false
+
+# Show loop devices
+show_loop_devices = false
+
+# Show network filesystems
+show_network_fs = true
+
+# Windows-specific settings (if supported)
+[windows]
+# Show drive letters
+show_drive_letters = true
+
+# Show network drives
+show_network_drives = true
+
+# --- Advanced Settings ------------------------------------------------------
+[advanced]
+# Refresh interval for watch mode (seconds)
+refresh_interval = 1
+
+# Maximum number of filesystems to display
+max_filesystems = 100
+
+# Use cached filesystem information
+use_cache = false
+
+# Cache timeout in seconds
+cache_timeout = 30
+
+# --- Export Settings --------------------------------------------------------
+[export]
+# CSV delimiter
+csv_delimiter = ","
+
+# CSV quote character
+csv_quote = "\""
+
+# Include header in CSV export
+csv_header = true
+
+# JSON pretty print
+json_pretty = true
+
+# JSON indent size
+json_indent = 2
+
+# --- Integration Settings ---------------------------------------------------
+[integration]
+# External commands for filesystem operations
+[integration.commands]
+# Command to open filesystem in file manager
+open_command = "open"  # macOS: "open", Linux: "xdg-open", Windows: "explorer"
+
+# Command to analyze disk usage
+analyze_command = "du -sh"
+
+# Command to check filesystem
+check_command = "fsck"
+
+# --- Monitoring Settings ----------------------------------------------------
+[monitoring]
+# Enable monitoring mode
+enable_monitoring = false
+
+# Alert on threshold breach
+enable_alerts = false
+
+# Alert command to execute
+alert_command = ""
+
+# Log file for monitoring
+log_file = ""
+
+# Log format (text, json, csv)
+log_format = "text"
+
+# --- Custom Filters ---------------------------------------------------------
+[filters]
+# Custom filter expressions
+# Example: show only filesystems with more than 1GB
+# min_size = "1G"
+
+# Example: show only filesystems with usage above 50%
+# min_usage = 50
+
+# Example: show only specific mount points
+# include_mounts = ["/", "/home", "/var"]
+
+# Example: exclude temporary filesystems
+# exclude_types = ["tmpfs", "devtmpfs"]

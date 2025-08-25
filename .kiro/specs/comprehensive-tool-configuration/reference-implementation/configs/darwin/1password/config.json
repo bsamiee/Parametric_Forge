@@ -1,0 +1,37 @@
+{
+  "_comment": "Title: config.json",
+  "_comment2": "Author: Bardia Samiee",
+  "_comment3": "Project: Parametric Forge",
+  "_comment4": "License: MIT",
+  "_comment5": "Path: configs/darwin/1password/config.json",
+  "_comment6": "1Password CLI configuration for macOS integration",
+  
+  "version": "1.0",
+  "accounts": [
+    {
+      "shorthand": "personal",
+      "url": "https://my.1password.com",
+      "email": "user@example.com",
+      "_comment": "Replace with your actual 1Password account details"
+    }
+  ],
+  "biometric_unlock": true,
+  "auto_update": true,
+  "telemetry": false,
+  "format": "json",
+  "cache": {
+    "enabled": true,
+    "ttl": 3600,
+    "_comment": "Cache session tokens for 1 hour"
+  },
+  "security": {
+    "require_touch_id": true,
+    "session_timeout": 3600,
+    "_comment": "Require Touch ID and timeout sessions after 1 hour"
+  },
+  "integration": {
+    "ssh_agent": true,
+    "git_signing": true,
+    "_comment": "Enable SSH agent and Git signing integration"
+  }
+}

@@ -1,0 +1,28 @@
+# Title         : cargo.toml
+# Author        : Bardia Samiee
+# Project       : Parametric Forge
+# License       : MIT
+# Path          : 01.home/00.core/configs/languages/cargo.toml
+# ----------------------------------------------------------------------------
+# Cargo configuration with XDG compliance and performance optimizations
+
+[build]
+jobs = 0
+
+# --- Performance Optimizations -----------------------------------------------
+[profile.release]
+lto = "thin"
+codegen-units = 1
+panic = "abort"
+
+# --- Network Configuration ---------------------------------------------------
+[http]
+ssl-version.min = "tlsv1.2"
+timeout = 30
+
+[net]
+retry = 3
+git-fetch-with-cli = true
+
+[registries.crates-io]
+protocol = "sparse"

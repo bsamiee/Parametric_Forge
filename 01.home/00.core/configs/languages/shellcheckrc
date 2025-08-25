@@ -1,0 +1,22 @@
+# Title         : shellcheckrc
+# Author        : Bardia Samiee
+# Project       : Parametric Forge
+# License       : MIT
+# Path          : 01.home/00.core/configs/languages/shellcheckrc
+# ----------------------------------------------------------------------------
+# ShellCheck configuration for bash scripts
+
+# --- Core Configuration -----------------------------------------------------
+external-sources=true
+shell=bash
+enable=all
+source-path=SCRIPTDIR
+format=tty
+
+# --- Rule Exclusions --------------------------------------------------------
+disable=SC1091  # Not following sourced files
+disable=SC2034  # Unused variables
+disable=SC1090  # Can't follow non-constant source
+disable=SC2148  # Tips depend on target shell
+disable=SC2086  # Double quote to prevent globbing
+disable=SC2128  # Expanding array without index

@@ -1,0 +1,299 @@
+# Title         : config.toml
+# Author        : Bardia Samiee
+# Project       : Parametric Forge
+# License       : MIT
+# Path          : 01.home/00.core/configs/system/dust/config.toml
+# ----------------------------------------------------------------------------
+# dust directory analysis configuration with display and filtering options
+
+# --- Core Settings ------------------------------------------------------------
+# Number of directories to display
+number_of_lines = 20
+
+# Depth of directory traversal (0 = unlimited)
+depth = 0
+
+# Minimum size threshold to display (in bytes)
+min_size = 0
+
+# Use binary units (1024) instead of decimal (1000)
+binary_units = true
+
+# Reverse sort order (largest first)
+reverse = true
+
+# --- Display Settings --------------------------------------------------------
+# Use colored output
+color = true
+
+# Show progress bar during analysis
+show_progress = true
+
+# Display format (tree, flat, json)
+display_format = "tree"
+
+# Show file count in addition to size
+show_file_count = true
+
+# Show percentage of parent directory
+show_percentage = true
+
+# Show full paths instead of relative paths
+full_paths = false
+
+# --- Tree Display Settings --------------------------------------------------
+# Characters used for tree drawing
+[tree_chars]
+vertical = "│"
+horizontal = "─"
+up_and_right = "└"
+vertical_and_right = "├"
+down_and_horizontal = "┬"
+vertical_and_horizontal = "┼"
+
+# Tree indentation settings
+tree_indent = 2
+max_tree_width = 80
+
+# --- Filtering Settings ------------------------------------------------------
+# File extensions to ignore
+ignore_extensions = [
+    ".tmp", ".temp", ".cache", ".log", ".bak",
+    ".swp", ".swo", "~", ".DS_Store", "Thumbs.db"
+]
+
+# Directory names to ignore
+ignore_directories = [
+    ".git", ".svn", ".hg", ".bzr", "CVS",
+    "node_modules", "__pycache__", ".pytest_cache",
+    ".tox", ".venv", "venv", "env", ".env",
+    "target", "build", "dist", ".next", ".nuxt",
+    ".cache", "cache", "tmp", "temp"
+]
+
+# File patterns to ignore (glob patterns)
+ignore_patterns = [
+    "*.pyc", "*.pyo", "*.class", "*.o", "*.obj",
+    "*.exe", "*.dll", "*.so", "*.dylib",
+    "*~", ".#*", "#*#"
+]
+
+# Hidden files and directories handling
+show_hidden = false
+ignore_hidden = true
+
+# --- Size Calculation -------------------------------------------------------
+# Follow symbolic links
+follow_symlinks = false
+
+# Count hard links only once
+count_hardlinks_once = true
+
+# Include file metadata in size calculation
+include_metadata = false
+
+# Block size for size calculation (0 = actual size)
+block_size = 0
+
+# --- Output Formatting ------------------------------------------------------
+# Size display format (auto, bytes, kb, mb, gb, tb)
+size_format = "auto"
+
+# Number of decimal places for sizes
+decimal_places = 1
+
+# Alignment for size column (left, right, center)
+size_alignment = "right"
+
+# Width of size column
+size_column_width = 8
+
+# --- Color Configuration ----------------------------------------------------
+[colors]
+# Directory colors based on size
+dir_small = "green"          # < 1MB
+dir_medium = "yellow"        # 1MB - 100MB
+dir_large = "red"           # 100MB - 1GB
+dir_huge = "bright_red"     # > 1GB
+
+# File colors based on type
+file_executable = "bright_green"
+file_archive = "yellow"
+file_image = "magenta"
+file_video = "bright_red"
+file_audio = "red"
+file_document = "cyan"
+file_code = "blue"
+file_config = "bright_yellow"
+file_other = "white"
+
+# Tree structure colors
+tree_lines = "gray"
+tree_connector = "gray"
+
+# Size and percentage colors
+size_text = "white"
+percentage_low = "green"     # < 10%
+percentage_medium = "yellow" # 10-50%
+percentage_high = "red"      # > 50%
+
+# Progress bar colors
+progress_bar = "blue"
+progress_complete = "green"
+
+# --- Performance Settings ---------------------------------------------------
+# Number of threads for directory scanning
+threads = 0  # 0 = auto-detect
+
+# Buffer size for file operations
+buffer_size = 8192
+
+# Cache directory information
+use_cache = false
+
+# Cache timeout in seconds
+cache_timeout = 300
+
+# --- Advanced Filtering -----------------------------------------------------
+# Regular expressions for advanced filtering
+[regex_filters]
+# Ignore files matching these patterns
+ignore_file_regex = []
+
+# Ignore directories matching these patterns
+ignore_dir_regex = []
+
+# Only include files matching these patterns
+include_file_regex = []
+
+# Only include directories matching these patterns
+include_dir_regex = []
+
+# --- Platform-Specific Settings ---------------------------------------------
+# macOS-specific settings
+[macos]
+# Handle .app bundles as single files
+treat_app_as_file = true
+
+# Show resource forks in size calculation
+include_resource_forks = false
+
+# Handle case-insensitive filesystem
+case_insensitive = true
+
+# Linux-specific settings
+[linux]
+# Handle different filesystem types
+handle_special_fs = false
+
+# Include extended attributes in size
+include_xattrs = false
+
+# Follow mount points
+cross_filesystems = false
+
+# Windows-specific settings
+[windows]
+# Handle long paths
+long_path_support = true
+
+# Include alternate data streams
+include_ads = false
+
+# Handle case-insensitive filesystem
+case_insensitive = true
+
+# --- Export Settings --------------------------------------------------------
+# Export format (json, csv, xml)
+export_format = "json"
+
+# Export file location
+export_file = ""
+
+# Include metadata in export
+export_metadata = true
+
+# Pretty print JSON export
+json_pretty_print = true
+
+# CSV delimiter
+csv_delimiter = ","
+
+# --- Monitoring and Alerts --------------------------------------------------
+# Enable monitoring mode
+monitoring_mode = false
+
+# Alert threshold (in bytes)
+alert_threshold = 0
+
+# Alert command to execute
+alert_command = ""
+
+# Monitoring interval (seconds)
+monitoring_interval = 60
+
+# --- Integration Settings ---------------------------------------------------
+[integration]
+# External commands
+[integration.commands]
+# Command to open directory
+open_command = "open"  # macOS: "open", Linux: "xdg-open"
+
+# Command to delete directory
+delete_command = "rm -rf"
+
+# Command to analyze with external tool
+analyze_command = "du -sh"
+
+# --- Custom Profiles --------------------------------------------------------
+# Predefined configurations for different use cases
+[profiles.development]
+ignore_directories = [
+    ".git", "node_modules", "target", "build", "dist",
+    "__pycache__", ".pytest_cache", ".tox", ".venv"
+]
+ignore_extensions = [".pyc", ".pyo", ".class", ".o", ".obj"]
+depth = 3
+number_of_lines = 15
+
+[profiles.system]
+show_hidden = true
+ignore_hidden = false
+follow_symlinks = false
+depth = 2
+number_of_lines = 25
+
+[profiles.media]
+ignore_directories = [".git", ".svn", "Thumbs.db"]
+ignore_extensions = [".tmp", ".cache"]
+show_file_count = true
+depth = 4
+number_of_lines = 30
+
+[profiles.cleanup]
+min_size = 1048576  # 1MB minimum
+ignore_directories = []
+ignore_extensions = []
+show_hidden = true
+reverse = true
+number_of_lines = 50
+
+# --- Logging Settings -------------------------------------------------------
+[logging]
+# Log level (error, warn, info, debug, trace)
+log_level = "info"
+
+# Log file location
+log_file = ""
+
+# Log format (text, json)
+log_format = "text"
+
+# Rotate log files
+rotate_logs = true
+
+# Maximum log file size (MB)
+max_log_size = 10
+
+# Number of log files to keep
+max_log_files = 5

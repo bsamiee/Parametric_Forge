@@ -1,0 +1,36 @@
+# Title         : marksman.toml
+# Author        : Bardia Samiee
+# Project       : Parametric Forge
+# License       : MIT
+# Path          : 01.home/00.core/configs/languages/marksman.toml
+# ----------------------------------------------------------------------------
+# Marksman LSP configuration for Markdown
+
+[core]
+markdown.file_extensions = ["md", "markdown", "mdx"]
+text_width = 120
+incremental_references = true
+
+[code_action]
+toc.enable = true
+create_missing_file.enable = true
+organize_links.enable = true
+
+[completion]
+wiki.enable = true
+heading.enable = true
+tags.enable = true
+references.enable = true
+
+[diagnostics]
+wiki_link_not_found.enable = true
+undefined_reference.enable = true
+unused_reference.enable = true
+duplicate_reference_definition.enable = true
+
+[hover]
+enable = true
+references.enable = true
+
+[workspace]
+additional_watched_paths = ["docs", "notes", "wiki"]

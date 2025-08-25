@@ -1,0 +1,93 @@
+[package]
+name = "parametric-forge-interface"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.89"
+authors = ["Bardia Samiee <b.samiee93@gmail.com>"]
+description = "Interactive TUI for Parametric Forge configuration management"
+license = "MIT"
+
+[[bin]]
+name = "forge-interface"
+path = "src/main.rs"
+
+[dependencies]
+# TUI Framework
+ratatui = "0.29.0"
+crossterm = "0.29.0"
+
+# Serialization (required for Nix JSON output)
+serde = { version = "1.0.219", features = ["derive"] }
+serde_json = "1.0.142"
+
+# System detection
+which = "8.0.0"
+
+# Widget foundation
+tui-input = "0.14.0"
+
+# Performance optimizations
+rustc-hash = "2.1.1"
+once_cell = "1.21.3"
+smallvec = "1.15.1"
+arrayvec = "0.7.6"                # Stack-allocated vectors with const generics
+ahash = "0.8.11"                  # Faster hasher than FxHasher
+rayon = "1.11.0"                  # Data parallelism for batch operations
+memmap2 = "0.9.7"                 # Memory-mapped I/O for large datasets
+
+# Platform-specific paths
+directories = "6.0.0"
+
+# Enum utilities
+strum = { version = "0.27.2", features = ["derive"] }
+
+# Code generation & derives for compression
+derive_more = { version = "2.0.1", features = ["constructor", "from", "into", "display", "deref", "deref_mut"] }
+getset = "0.1.6"                 # Auto getters/setters  
+bitflags = "2.9.1"               # Compact flag types
+delegate = "0.13.4"              # Delegation patterns
+compact_str = "0.9.0"            # Small string optimization (most inputs <22 chars)
+tinyvec = { version = "1.9.0", features = ["rustc_1_55"] } # Stack-allocated small vectors
+thiserror = "2.0.15"              # Better error types
+
+# Professional geometry & math
+num-traits = "0.2"               # Generic numeric operations
+euclid = "0.22"                  # Type-safe coordinate spaces
+kurbo = "0.11"                   # High-performance 2D primitives
+
+# Async runtime (for command execution)
+tokio = { version = "1.47.1", features = [
+  "rt",
+  "rt-multi-thread",
+  "process",
+  "time",
+  "macros",
+  "sync",
+  "fs",
+] }
+
+# Ordered maps
+indexmap = "2.10"
+
+# Enhanced error reporting
+color-eyre = "0.6.5"
+
+# Validation
+validator = "0.19"
+
+# Clipboard integration
+arboard = "3.4"
+
+[profile.release]
+lto = "fat"
+codegen-units = 1
+panic = "abort"
+strip = "symbols"
+opt-level = 3
+
+[profile.dev]
+debug = 1
+incremental = true
+
+[profile.dev.package."*"]
+opt-level = 3
