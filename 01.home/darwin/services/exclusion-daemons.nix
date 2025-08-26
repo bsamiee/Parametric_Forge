@@ -30,7 +30,9 @@ let
 in
 {
   # --- Development Directory Exclusion Monitor ------------------------------
-  launchd.agents."org.nixos.dev-exclusions" = mkPeriodicJob {
+  launchd.agents."org.nixos.dev-exclusions" = {
+    enable = true;
+    config = mkPeriodicJob {
     interval = 21600; # 6 hours
     script = ''
       echo "[Dev Exclusions] Starting scan at $(date)"
@@ -84,5 +86,6 @@ in
     logBaseName = "${config.xdg.stateHome}/logs/dev-exclusions";
     nice = 19;
     runAtLoad = true;
+    };
   };
 }

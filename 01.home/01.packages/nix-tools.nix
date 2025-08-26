@@ -18,7 +18,7 @@ with pkgs;
   # --- Build & Development Tools --------------------------------------------
   nix-output-monitor # Pretty output for Nix builds (used in nb, nd aliases)
   nix-fast-build # Parallel evaluation and building for 90% performance gain
-  nix-index # Package search by file contents (provides nix-locate command)
+  # nix-index → Managed by programs.nix-index in shell-tools.nix
 
   # --- Language Server & Code Quality ---------------------------------------
   nil # Nix language server for IDE integration

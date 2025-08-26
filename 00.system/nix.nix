@@ -104,7 +104,8 @@
     '';
 
     # --- Garbage Collection -------------------------------------------------
-    gc = {
+    # Only configure if nix.enable is true (when not managed by Determinate Systems)
+    gc = lib.mkIf config.nix.enable ({
       automatic = true;
       options = "--delete-older-than 7d --max-freed $((5 * 1024 * 1024 * 1024))";
     }
@@ -122,9 +123,9 @@
           dates = "weekly";
           persistent = true;
         }
-    );
+    ));
     # Store optimization (periodic, not auto due to macOS corruption risks)
-    optimise.automatic = true;
+    optimise.automatic = lib.mkIf config.nix.enable true;
   };
   # --- Nixpkgs Configuration ------------------------------------------------
   nixpkgs = {

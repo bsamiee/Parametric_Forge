@@ -13,7 +13,7 @@ with pkgs;
   # --- Development Tools ----------------------------------------------------
   just # make → Modern task runner with better syntax
   hyperfine # time → Command-line benchmarking tool
-  jq # JSON processor and query tool
+  # jq → Managed by programs.jq in shell-tools.nix
   pre-commit # Git hook framework
 
   # --- Code Quality & Linting -----------------------------------------------

@@ -14,8 +14,8 @@
 with pkgs;
 [
   # --- Git Ecosystem Tools --------------------------------------------------
-  gh # GitHub's official command-line tool
-  lazygit # Simple terminal UI for git commands
+  # gh → Managed by programs.gh in git-tools.nix
+  # lazygit → Managed by programs.lazygit in git-tools.nix
   gitAndTools.git-extras # Extra git commands (use git changelog instead of git-cliff)
   git-secret # Encrypt secrets in git
   git-crypt # Transparent file encryption in git
@@ -28,7 +28,7 @@ with pkgs;
   colima # Container runtimes on macOS
   podman # Docker alternative
   dive # Docker image explorer
-  lazydocker # Docker TUI
+  # lazydocker → Managed by programs.lazydocker in container-tools.nix
   buildkit # Next-gen container builder
   hadolint # Dockerfile linter
 

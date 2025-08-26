@@ -83,10 +83,8 @@
     # --- Bat (cat replacement) ----------------------------------------------
     bat = {
       enable = true;
-      config = {
-        theme = "Dracula";
-        style = "numbers,changes";
-      };
+      # All configuration handled via ~/.config/bat/config
+      # to maintain single source of truth
     };
 
     # --- Ripgrep (grep replacement) -----------------------------------------
@@ -99,8 +97,8 @@
     # --- Fd (find replacement) ----------------------------------------------
     fd = {
       enable = true;
-      hidden = true; # Search hidden files by default
-      # Note: Ignore patterns managed via ${XDG_CONFIG_HOME}/fd/ignore file
+      # All configuration handled via ~/.config/fd/ignore
+      # to maintain single source of truth
     };
 
     # --- McFly (smart shell history) ----------------------------------------

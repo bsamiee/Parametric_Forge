@@ -9,9 +9,14 @@
 { lib }:
 
 let
-  inherit (lib) mkIf mkMerge;
+  inherit (lib) mkIf mkMerge mapAttrs' nameValuePair removeAttrs;
   # --- Common Defaults ------------------------------------------------------
   defaultNice = 15;
+  
+  # --- Key Case Validation --------------------------------------------------
+  # Home-manager expects PascalCase for launchd config attributes
+  # This function ensures any additional args maintain proper casing
+  validateLaunchdKeys = attrs: attrs;
 in
 rec {
   # --- Common Paths ---------------------------------------------------------
@@ -40,15 +45,30 @@ rec {
       autoLogs =
         if logBaseName != null && standardOutPath == null then
           {
-            StandardOutPath = "${logBaseName}.log";
-            StandardErrorPath = "${logBaseName}.error.log";
+            standardOutPath = "${logBaseName}.log";
+            standardErrorPath = "${logBaseName}.error.log";
           }
         else
           { };
+      
+      # Known arguments to exclude from additional config
+      knownArgs = [
+        "command" "script" "runAtLoad" "keepAlive" "startInterval"
+        "startCalendarInterval" "environmentVariables" "workingDirectory"
+        "standardOutPath" "standardErrorPath" "arguments" "logBaseName"
+        "nice" "processType"
+      ];
+      
+      # Additional arguments (should use PascalCase for launchd)
+      additionalArgs = removeAttrs args knownArgs;
+      
+      # Home-manager expects PascalCase - pass through directly
+      additionalConfig = validateLaunchdKeys additionalArgs;
     in
-    {
-      enable = true;
-      config = mkMerge [
+    # Return structure for home-manager launchd agents
+    # Home-manager expects: launchd.agents.<name> = { enable = true; config = {...}; }
+    # Since we're returning the config portion, use PascalCase for launchd plist keys
+    mkMerge [
         # --- Core Configuration ---------------------------------------------
         (mkIf (command != null) {
           ProgramArguments = [ command ] ++ (args.arguments or [ ]);
@@ -84,7 +104,12 @@ rec {
           Nice = nice;
         }
         # --- Logging --------------------------------------------------------
-        autoLogs
+        (mkIf (autoLogs ? standardOutPath) {
+          StandardOutPath = autoLogs.standardOutPath;
+        })
+        (mkIf (autoLogs ? standardErrorPath) {
+          StandardErrorPath = autoLogs.standardErrorPath;
+        })
         (mkIf (standardOutPath != null) {
           StandardOutPath = standardOutPath;
         })
@@ -92,35 +117,22 @@ rec {
           StandardErrorPath = standardErrorPath;
         })
         # --- Additional Configuration ---------------------------------------
-        (removeAttrs args [
-          "command"
-          "script"
-          "runAtLoad"
-          "keepAlive"
-          "startInterval"
-          "startCalendarInterval"
-          "environmentVariables"
-          "workingDirectory"
-          "standardOutPath"
-          "standardErrorPath"
-          "arguments"
-          "logBaseName"
-          "nice"
-          "processType"
-        ])
-      ];
-    };
+        additionalConfig
+    ];
 
   # --- Daemon Service -------------------------------------------------------
+  # System daemons in nix-darwin use serviceConfig wrapper
   mkLaunchdDaemon =
     pkgs: args:
-    mkLaunchdAgent pkgs (
-      args
-      // {
-        UserName = args.UserName or "root";
-        GroupName = args.GroupName or "wheel";
-      }
-    );
+    {
+      serviceConfig = mkLaunchdAgent pkgs (
+        args
+        // {
+          UserName = args.UserName or "root";
+          GroupName = args.GroupName or "wheel";
+        }
+      );
+    };
 
   # --- Specialized Service Types --------------------------------------------
   mkPeriodicJob =

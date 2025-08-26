@@ -143,14 +143,11 @@
     DO_NOT_TRACK = "1";
 
     # --- Tool Configurations ------------------------------------------------
-    # Bat (enhanced cat)
-    BAT_THEME = "Dracula"; # Consistent with Nix module setting
-    BAT_STYLE = "numbers,changes,header"; # Add header for better file context
-    BAT_PAGER = "less -FRX"; # Same as PAGER for consistency
+    # Bat (enhanced cat) - Management paths only
     BAT_CONFIG_PATH = "${config.xdg.configHome}/bat/config"; # Config file location
-    BAT_CACHE_PATH = "${config.xdg.cacheHome}/bat"; # Cache directory for themes/syntaxes
+    BAT_CACHE_PATH = "${config.xdg.cacheHome}/bat"; # Cache for compiled themes/syntaxes
     
-    # Ripgrep (ultra-fast text search)
+    # Ripgrep (ultra-fast text search) - Management path only
     RIPGREP_CONFIG_PATH = "${config.xdg.configHome}/ripgrep/config"; # Config file location
     
     # Delta (syntax-highlighting diff viewer)

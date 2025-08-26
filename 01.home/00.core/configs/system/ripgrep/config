@@ -25,37 +25,62 @@
 # Sort files by path (consistent output)
 --sort=path
 
+# Line numbers by default
+--line-number
+
+# Trim whitespace from end of lines in output
+--trim
+
+# Use memory maps when possible for better performance
+--mmap
+
+# Limit file size to prevent searching massive files (100MB)
+--max-filesize=100M
+
 # --- Color Configuration (Dracula theme) -----------------------------------
-# Line numbers
---colors=line:fg:yellow
---colors=line:style:bold
+# Official Dracula theme for ripgrep - https://draculatheme.com/ripgrep
+# Using hexadecimal RGB format for exact Dracula colors
 
-# File paths
---colors=path:fg:green
---colors=path:style:bold
+# File paths - Purple (#BD93F9)
+--colors=path:fg:0xbd,0x93,0xf9
 
-# Match highlighting
---colors=match:fg:black
---colors=match:bg:yellow
---colors=match:style:nobold
+# Line numbers - Green (#50FA7B)
+--colors=line:fg:0x50,0xfa,0x7b
 
-# Column indicator for long lines
---colors=column:fg:magenta
---colors=column:style:bold
+# Column numbers - Green (#50FA7B)
+--colors=column:fg:0x50,0xfa,0x7b
+
+# Match highlighting - Red (#FF5555)
+--colors=match:fg:0xff,0x55,0x55
+--colors=match:style:bold
 
 # --- Type Definitions -------------------------------------------------------
+# Note: 'config' type already exists in ripgrep, extending it
 # Web development files
 --type-add=web:*.{html,css,scss,sass,less,js,jsx,ts,tsx,vue,svelte}
 --type-add=web:*.{json,jsonc,json5}
 
-# Configuration files
---type-add=config:*.{toml,yaml,yml,ini,conf,config}
+# Extended configuration files (adds to built-in 'config' type)
+--type-add=config:*.{toml,yaml,yml}
 --type-add=config:*.{env,env.*}
 --type-add=config:.*rc
+--type-add=config:Dockerfile*
+--type-add=config:docker-compose*.{yml,yaml}
 
 # Documentation
 --type-add=docs:*.{md,markdown,rst,txt,adoc,org}
---type-add=docs:README*,LICENSE*,CHANGELOG*
+--type-add=docs:README*
+--type-add=docs:LICENSE*
+--type-add=docs:CHANGELOG*
+--type-add=docs:CONTRIBUTING*
+
+# Nix files
+--type-add=nix:*.nix
+--type-add=nix:flake.lock
+
+# Shell scripts
+--type-add=shell:*.{sh,bash,zsh,fish}
+--type-add=shell:*.{bashrc,zshrc}
 
 # --- Global Ignore Patterns -------------------------------------------------
 # Version control

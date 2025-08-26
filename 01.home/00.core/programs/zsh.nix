@@ -19,21 +19,22 @@
   programs.zsh = {
     # --- Core Settings ------------------------------------------------------
     enable = true;
-    enableCompletion = true;
-    autosuggestion.enable = true;
-    syntaxHighlighting.enable = true;
+    enableCompletion = true; # Includes zsh-completions
+    autosuggestion.enable = true; # zsh-autosuggestions
+    syntaxHighlighting.enable = true; # zsh-syntax-highlighting
+    historySubstringSearch = {
+      enable = true; # zsh-history-substring-search
+      searchUpKey = "^[[A"; # Up arrow
+      searchDownKey = "^[[B"; # Down arrow
+    };
     # --- Shell Aliases ------------------------------------------------------
     shellAliases = lib.mkMerge [
       (import ../aliases/core.nix { })
       (import ../aliases/sysadmin.nix { })
     ];
     # --- Zsh Plugins --------------------------------------------------------
-    plugins = [
-      {
-        name = "zsh-history-substring-search";
-        src = "${pkgs.zsh-history-substring-search}/share/zsh-history-substring-search";
-      }
-    ];
+    # Note: All plugins now managed via built-in enable flags above
+    plugins = [];
     # --- History Configuration ----------------------------------------------
     history = {
       path = "${config.xdg.stateHome}/zsh/history";
@@ -49,18 +50,10 @@
     initContent = lib.mkMerge [
       # --- Pre-compinit (order 500) -----------------------------------------
       (lib.mkOrder 500 ''
-        # Note: zsh-autosuggestions and zsh-syntax-highlighting are loaded via home-manager's
-        # built-in integration (autosuggestion.enable and syntaxHighlighting.enable above)
+        # Note: All zsh plugins (autosuggestions, syntax-highlighting, history-substring-search, completions)
+        # are now loaded via home-manager's built-in integration options
 
-        # Load history substring search (not built into home-manager)
-        source ${pkgs.zsh-history-substring-search}/share/zsh-history-substring-search/zsh-history-substring-search.zsh
-
-        # Load additional completions
-        fpath+="${pkgs.zsh-completions}/share/zsh/site-functions"
-
-        # Bind keys for history substring search
-        bindkey '^[[A' history-substring-search-up     # Up arrow
-        bindkey '^[[B' history-substring-search-down   # Down arrow
+        # Additional keybindings for history substring search
         bindkey '^P' history-substring-search-up       # Ctrl+P
         bindkey '^N' history-substring-search-down     # Ctrl+N
       '')

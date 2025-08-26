@@ -1,0 +1,160 @@
+# Title         : bottom.toml
+# Author        : Bardia Samiee
+# Project       : Parametric Forge
+# License       : MIT
+# Path          : /01.home/00.core/configs/system/bottom/bottom.toml
+# ----------------------------------------------------------------------------
+# Resource monitor configuration with Dracula theme
+
+# --- General Flags -------------------------------------------------------
+[flags]
+# Display
+avg_cpu = true                     # Show average CPU in addition to per-core
+temperature_type = "c"             # Celsius for temperature
+rate = 1000                        # Update rate in milliseconds (1 second)
+left_legend = false                # Legend on right side
+current_usage = true               # Show current usage in process widget
+group_processes = true             # Group processes with same name
+tree = false                       # Don't use tree mode by default
+hide_table_gap = false             # Show gaps between tables
+disable_click = false              # Enable mouse support
+enable_cache_memory = false        # Don't show cache in memory widget
+enable_gpu = false                 # Disable GPU monitoring (not available on all systems)
+
+# Behavior
+case_sensitive = false             # Case-insensitive process search
+whole_word = false                 # Partial word matching in search
+regex = false                      # Don't use regex by default
+show_table_scroll_position = true  # Show scroll position indicator
+process_command = false            # Show process name, not full command
+disable_advanced_kill = false      # Enable advanced kill options
+network_use_binary_prefix = true   # Use MiB/s instead of MB/s
+network_use_bytes = false          # Use bits for network
+network_use_log = false            # Linear network scale
+retention = "10m"                  # Keep 10 minutes of data
+
+# Layout
+default_widget_type = "process"    # Start with process view
+default_widget_count = 1           # Single widget
+expanded = false                   # Start in normal mode
+basic = false                      # Use full mode
+use_old_network_legend = false     # Modern network legend
+hide_table_count = false           # Show table row counts
+battery = true                     # Show battery widget if available
+
+# --- Color Configuration (Dracula Theme) ---------------------------------
+[colors]
+# Table colors
+table_header_color = "#8be9fd"     # Cyan - table headers
+widget_title_color = "#bd93f9"     # Purple - widget titles  
+border_color = "#6272a4"           # Comment - borders
+highlighted_border_color = "#ff79c6" # Pink - active borders
+text_color = "#f8f8f2"             # Foreground - normal text
+selected_text_color = "#282a36"    # Background - selected text
+selected_bg_color = "#44475a"      # Current Line - selection background
+disabled_text_color = "#6272a4"    # Comment - disabled items
+
+# Graph colors (Dracula palette)
+graph_color = "#50fa7b"            # Green - primary graphs
+cpu_core_colors = [
+    "#ff5555",  # Red
+    "#ffb86c",  # Orange  
+    "#f1fa8c",  # Yellow
+    "#50fa7b",  # Green
+    "#8be9fd",  # Cyan
+    "#bd93f9",  # Purple
+    "#ff79c6",  # Pink
+    "#f8f8f2"   # Foreground (for 8+ cores)
+]
+ram_color = "#ff79c6"              # Pink - RAM usage
+swap_color = "#ffb86c"             # Orange - swap usage
+cache_color = "#bd93f9"            # Purple - cache
+arc_color = "#8be9fd"              # Cyan - ARC cache
+gpu_core_colors = [
+    "#ff5555",  # Red
+    "#50fa7b"   # Green
+]
+rx_color = "#50fa7b"               # Green - network receive
+tx_color = "#ff5555"               # Red - network transmit
+rx_total_color = "#8be9fd"         # Cyan - total received
+tx_total_color = "#ffb86c"         # Orange - total transmitted
+
+# Battery colors (gradient)
+high_battery_color = "#50fa7b"     # Green - high charge
+medium_battery_color = "#f1fa8c"   # Yellow - medium charge
+low_battery_color = "#ff5555"      # Red - low charge
+
+# --- Process Configuration -----------------------------------------------
+[processes]
+columns = [
+    "PID",
+    "Name", 
+    "CPU%",
+    "Mem%",
+    "R/s",
+    "W/s",
+    "T.Read",
+    "T.Write",
+    "User",
+    "State"
+]
+
+# --- Disk Filter Configuration -------------------------------------------
+[disk]
+[disk.name_filter]
+is_list_ignored = true
+list = ["/dev/loop*", "devfs", "devtmpfs", "tmpfs", "overlay", "run"]
+regex = true
+case_sensitive = false
+whole_word = false
+
+[disk.mount_filter]
+is_list_ignored = true
+list = ["/boot", "/boot/efi", "/var/snap", "/var/lib/docker"]
+regex = false
+case_sensitive = false
+whole_word = false
+
+# --- Temperature Filter --------------------------------------------------
+[temperature]
+[temperature.sensor_filter]
+is_list_ignored = false
+list = []
+regex = false
+case_sensitive = false
+whole_word = false
+
+# --- Network Filter ------------------------------------------------------
+[network]
+[network.interface_filter]
+is_list_ignored = true
+list = ["lo", "lo0"]  # Ignore loopback interfaces
+regex = false
+case_sensitive = false
+whole_word = true
+
+# --- CPU Configuration ---------------------------------------------------
+[cpu]
+default = "default"  # Default view (all cores)
+
+# --- Custom Layout (optional, uncomment to use) -------------------------
+# [[row]]
+#   ratio = 30
+#   [[row.child]]
+#   type = "cpu"
+# [[row]]
+#     ratio = 40
+#     [[row.child]]
+#       ratio = 4
+#       type = "mem"
+#     [[row.child]]
+#       ratio = 3
+#       [[row.child.child]]
+#         type = "temp"
+#       [[row.child.child]]
+#         type = "disk"
+# [[row]]
+#   ratio = 30
+#   [[row.child]]
+#     type = "proc"
+#     default = true

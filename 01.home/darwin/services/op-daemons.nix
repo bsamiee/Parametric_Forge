@@ -145,7 +145,9 @@ let
 in
 {
   # --- Unified Cache Manager Agent ------------------------------------------
-  launchd.agents.op-cache-manager = mkPeriodicJob {
+  launchd.agents.op-cache-manager = {
+    enable = true;
+    config = mkPeriodicJob {
     command = "${opCacheManager}";
     interval = 3600; # Every hour
     runAtLoad = true;
@@ -159,6 +161,7 @@ in
     WatchPaths = [
       config.secrets.paths.template
     ];
+    };
   };
 
   # --- Shell Integration ----------------------------------------------------

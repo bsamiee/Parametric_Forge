@@ -40,7 +40,9 @@ let
 in
 {
   # --- XDG Runtime Directory Maintenance ------------------------------------
-  launchd.agents."org.nixos.xdg-runtime" = mkPeriodicJob {
+  launchd.agents."org.nixos.xdg-runtime" = {
+    enable = true;
+    config = mkPeriodicJob {
     interval = 3600;
     nice = 15;
     script = ''
@@ -87,9 +89,12 @@ in
     '';
     logBaseName = "${config.xdg.stateHome}/logs/xdg-runtime";
     runAtLoad = true;
+    };
   };
   # --- XDG Cache Cleanup Agent ----------------------------------------------
-  launchd.agents."org.nixos.xdg-cache-cleanup" = mkCalendarJob {
+  launchd.agents."org.nixos.xdg-cache-cleanup" = {
+    enable = true;
+    config = mkCalendarJob {
     calendar = [
       {
         Weekday = 1;
@@ -158,5 +163,6 @@ in
       echo "XDG cache cleanup completed at $(date)"
     '';
     logBaseName = "${config.xdg.stateHome}/logs/xdg-cleanup";
+    };
   };
 }

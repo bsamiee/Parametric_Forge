@@ -13,6 +13,6 @@ with pkgs;
   # --- Media Processing Tools -----------------------------------------------
   ffmpeg # Complete multimedia framework
   imagemagick # Image manipulation
-  pandoc # Universal document converter
+  # pandoc → Managed by programs.pandoc in media-tools.nix (programs dir)
   graphviz # Graph visualization software
 ]

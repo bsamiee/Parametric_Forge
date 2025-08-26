@@ -61,11 +61,18 @@
     "fd/ignore".source = ./00.core/configs/system/fd/ignore; # Global ignore patterns
     
     # --- Text Processing & Search Tools -------------------------------------
+    # Bat (enhanced cat)
+    "bat/config".source = ./00.core/configs/system/bat/config; # Bat configuration
     # Ripgrep (ultra-fast text search)
     "ripgrep/config".source = ./00.core/configs/system/ripgrep/config; # Global ripgrep configuration
     
     # --- File Analysis & Diff Tools ----------------------------------------
     "tokei/tokei.toml".source = ./00.core/configs/system/tokei/tokei.toml; # Code statistics config
+
+    # --- System Monitoring Tools ---------------------------------------------
+    "procs/config.toml".source = ./00.core/configs/system/procs/config.toml; # Process viewer config
+    "dust/config.toml".source = ./00.core/configs/system/dust/config.toml; # Directory size analyzer config
+    "bottom/bottom.toml".source = ./00.core/configs/system/bottom/bottom.toml; # Resource monitor config
 
     # --- Media Processing ---------------------------------------------------
     # ImageMagick

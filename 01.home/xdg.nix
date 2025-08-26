@@ -79,6 +79,9 @@
       # File Analysis & Diff Tools
       mkdir -pm 755 "${config.xdg.configHome}/tokei"
       mkdir -pm 755 "${config.xdg.configHome}/file"
+      # System Monitoring Tools
+      mkdir -pm 755 "${config.xdg.configHome}/procs"
+      mkdir -pm 755 "${config.xdg.configHome}/dust"
       # Media Processing
       mkdir -pm 755 "${config.xdg.configHome}/ffmpeg"
       mkdir -pm 755 "${config.xdg.configHome}/bottom"

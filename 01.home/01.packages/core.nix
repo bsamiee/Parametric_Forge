@@ -11,17 +11,17 @@
 with pkgs;
 [
   # --- File & Directory Operations ------------------------------------------
-  eza # ls → Modern file listing with git integration, icons, tree view
-  fd # find → Fast file finder respecting .gitignore
-  broot # tree → Interactive file tree explorer
+  # eza → Managed by programs.eza in shell-tools.nix
+  # fd → Managed by programs.fd in shell-tools.nix
+  # broot → Managed by programs.broot in shell-tools.nix
   trash-cli # rm → Safe deletion to trash instead of permanent delete
   fcp # cp → Fast parallel file copy (simple cases)
   uutils-coreutils-noprefix # Full POSIX cp when fcp lacks features (-r, -p, -a, --reflink CoW)
   rsync # mv/sync → Advanced file synchronization and transfer
 
   # --- Text Processing & Search ---------------------------------------------
-  bat # cat → Syntax highlighting viewer with line numbers
-  ripgrep # grep → Ultra-fast text search (rg command)
+  # bat → Managed by programs.bat in shell-tools.nix
+  # ripgrep → Managed by programs.ripgrep in shell-tools.nix
   sd # sed → Intuitive find/replace without regex complexity
   xan # awk/cut → CSV/TSV data processor (xsv successor)
   choose # cut → Human-friendly column selector
@@ -35,24 +35,24 @@ with pkgs;
 
   # --- System Monitoring ----------------------------------------------------
   procs # ps → Process viewer with tree, search, and color
-  bottom # top/htop → Resource monitor with graphs (btm command)
+  # bottom → Managed by programs.bottom in shell-tools.nix
   duf # df → Disk usage with visual bars and colors
   dust # du → Directory size analyzer with tree view
 
   # --- Network Tools --------------------------------------------------------
   xh # curl/wget → Modern HTTP client with intuitive syntax
-  openssh # ssh → SSH client and utilities (enhanced classic)
+  # openssh → Managed by programs.ssh in ssh.nix
   doggo # dig → Modern DNS client with colors and DoH/DoT support
   gping # ping → Ping with real-time graphs
   mtr # traceroute+ping → Combined network diagnostic tool
 
   # --- Shell Enhancements ---------------------------------------------------
-  zoxide # cd → Smart directory jumper with frecency (z command)
-  starship # PS1 → Fast, customizable cross-shell prompt
-  direnv # source → Auto-load environment variables per directory
-  fzf # → Fuzzy finder for files, history, processes
+  # zoxide → Managed by programs.zoxide in shell-tools.nix
+  # starship → Managed by programs.starship in shell-tools.nix
+  # direnv → Managed by programs.direnv in shell-tools.nix
+  # fzf → Managed by programs.fzf in shell-tools.nix
   vivid # → LS_COLORS generator for better file visualization
-  mcfly # ctrl+r → Smart shell history with neural network ranking
+  # mcfly → Managed by programs.mcfly in shell-tools.nix
 
   # --- Archive & Compression ------------------------------------------------
   ouch # tar/zip → Universal archive tool (compress/decompress)
@@ -84,8 +84,8 @@ with pkgs;
   neovim # vim → Hyperextensible text editor
 
   # --- Zsh Enhancements -----------------------------------------------------
-  zsh-autosuggestions # Fish-like autosuggestions for command completion
-  zsh-syntax-highlighting # Fish-like syntax highlighting as you type
-  zsh-completions # Additional completion definitions for zsh
-  zsh-history-substring-search # Fish-like history search with arrow keys
+  # zsh-autosuggestions → Managed by programs.zsh.autosuggestion in zsh.nix
+  # zsh-syntax-highlighting → Managed by programs.zsh.syntaxHighlighting in zsh.nix
+  # zsh-completions → Managed by programs.zsh.enableCompletion in zsh.nix
+  # zsh-history-substring-search → Managed by programs.zsh.historySubstringSearch in zsh.nix
 ]
