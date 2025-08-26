@@ -1,0 +1,71 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(claude mcp:*)",
+      "Bash(sqlite3:*)",
+      "Bash(grep:*)",
+      "Bash(basedpyright:*)",
+      "Bash(shellcheck:*)",
+      "mcp__rhino__execute_rhinoscript_python_code",
+      "mcp__rhino__get_object_info",
+      "mcp__rhino__get_document_info",
+      "mcp__perplexity-ask__perplexity_ask",
+      "mcp__tavily__tavily-search",
+      "mcp__github__list_commits",
+      "mcp__github__get_file_contents",
+      "mcp__github__search_code",
+      "mcp__github__search_repositories",
+      "mcp__github__get_issue",
+      "mcp__exa__web_search_exa",
+      "mcp__context7__resolve-library-id",
+      "mcp__context7__get-library-docs",
+      "mcp__exa__crawling_exa",
+      "mcp__codex__codex",
+      "mcp__tavily__tavily-extract",
+      "mcp__filesystem__read_file",
+      "mcp__filesystem__read_multiple_files",
+      "mcp__filesystem__directory_tree",
+      "mcp__filesystem__search_files",
+      "mcp__filesystem__list_directory"
+    ],
+    "deny": [
+      "WebSearch",
+      "Bash(clia mcp:*)",
+      "mcp__filesystem__write_fil",
+      "mcp__filesystem__edit_file",
+      "mcp__filesystem__move_file",
+      "mcp__exa__deep_researcher_start",
+      "mcp__exa__deep_researcher_check"
+    ],
+    "ask": []
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "npx -y ccstatusline@latest",
+    "padding": 0
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ~/.claude/hooks/tool_control.py"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ~/.claude/hooks/file_cleanup.py"
+          }
+        ]
+      }
+    ]
+  }
+}

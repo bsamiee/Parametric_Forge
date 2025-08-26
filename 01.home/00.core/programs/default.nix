@@ -10,6 +10,7 @@
 
 {
   imports = [
+    ./container-tools.nix
     ./git-tools.nix
     ./shell-tools.nix
     ./ssh.nix

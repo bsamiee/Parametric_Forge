@@ -2,7 +2,7 @@
 # Author        : Bardia Samiee
 # Project       : Parametric Forge
 # License       : MIT
-# Path          : 01.home/00.core/configs/languages/clippy-lints.toml
+# Path          : /01.home/00.core/configs/languages/clippy-lints.toml
 # ----------------------------------------------------------------------------
 # Global Clippy lints configuration for all Rust projects
 

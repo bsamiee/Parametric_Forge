@@ -1,0 +1,33 @@
+# Title         : pg_format
+# Author        : Bardia Samiee
+# Project       : Parametric Forge
+# License       : MIT
+# Path          : /01.home/00.core/configs/formatting/pg_format
+# ----------------------------------------------------------------------------
+# PostgreSQL formatter configuration
+
+# --- Indentation ------------------------------------------------------------
+spaces = 4                    # 4-space indentation (project standard)
+tabs = false                  # Use spaces, not tabs (default: false)
+
+# --- Line Length ------------------------------------------------------------
+wrap_limit = 120             # Wrap comments at 120 chars (project standard)
+wrap_comment = true          # Enable comment wrapping with wrap_limit
+
+# --- Comma Placement --------------------------------------------------------
+comma_start = false          # Commas at end of line (default: false)
+comma_end = true             # Keep trailing commas (default: true)
+comma_break = false          # Don't break after every comma (default: false)
+
+# --- Case Formatting --------------------------------------------------------
+keyword_case = uppercase     # SQL keywords in UPPERCASE
+function_case = unchanged    # Keep function names as-is
+type_case = unchanged        # Keep data types as-is
+
+# --- Statement Grouping -----------------------------------------------------
+group_statements = true      # Group statements in transactions (default: true)
+no_grouping = false         # Same as above, inverse option
+
+# --- Output Control ---------------------------------------------------------
+keep_newline = true         # Preserve empty lines in PL/pgSQL
+no_extra_line = true        # No extra blank line at end

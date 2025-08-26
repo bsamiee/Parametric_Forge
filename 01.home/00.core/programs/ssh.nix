@@ -61,10 +61,8 @@
     };
     # --- Global SSH Client Configuration ------------------------------------
     extraConfig = lib.mkBefore ''
-      # Use 1Password for all SSH keys (default, can be overridden by configuration.nix)
-      ${lib.optionalString (config.configuration.settings.integrations.onePassword.sshAgent or true) ''
-        IdentityAgent ${myLib.secrets.opSSHSocket context}
-      ''}
+      # Use 1Password for all SSH keys
+      IdentityAgent ${myLib.secrets.opSSHSocket context}
 
       # Don't fall back to other auth methods
       IdentitiesOnly yes

@@ -13,7 +13,6 @@ let
 
   # --- Import Library Modules -----------------------------------------------
   detection = import ./detection.nix { inherit lib; };
-  configDefaults = import ./config-defaults.nix;
   gitStatus = import ./git-status.nix { inherit lib; };
 in
 {
@@ -47,9 +46,6 @@ in
 
   # --- Development Shell Helpers --------------------------------------------
   devshell = import ./devshell-helpers.nix { inherit lib; };
-
-  # --- Configuration Defaults -----------------------------------------------
-  inherit configDefaults;
 
   # --- Git Status Utilities -------------------------------------------------
   inherit (gitStatus) getRepoStatus statusCommand statusChars;

@@ -8,8 +8,6 @@
 
 {
   pkgs,
-  lib,
-  kubernetes ? false,
   ...
 }:
 
@@ -19,7 +17,6 @@ with pkgs;
   gh # GitHub's official command-line tool
   lazygit # Simple terminal UI for git commands
   gitAndTools.git-extras # Extra git commands (use git changelog instead of git-cliff)
-  gitui # Alternative Git TUI
   git-secret # Encrypt secrets in git
   git-crypt # Transparent file encryption in git
   gitleaks # Secret scanner for git repos
@@ -51,11 +48,10 @@ with pkgs;
   # --- Backup & Sync --------------------------------------------------------
   restic # Fast, secure backup program
   rclone # Cloud storage sync
-]
-# --- Kubernetes Tools (Conditional) -----------------------------------------
-++ lib.optionals kubernetes [
-  # kubectl
-  # k9s
-  # helm
-  # kubectx
+  
+  # --- Kubernetes Tools -----------------------------------------------------
+  kubectl # Kubernetes CLI
+  k9s # Terminal UI for Kubernetes
+  helm # Kubernetes package manager
+  kubectx # Switch between kubectl contexts
 ]

@@ -40,6 +40,8 @@
       else
         echo "    ⚠ sqlite-vec not found in expected locations"
       fi
+      # Link libspatialite
+      ln -sf "${pkgs.libspatialite}/lib/mod_spatialite.dylib" "$HOME/.local/lib/mod_spatialite.dylib" 2>/dev/null || true
     '';
 
     # --- Consolidated 1Password Setup ---------------------------------------

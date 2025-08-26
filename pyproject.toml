@@ -27,7 +27,7 @@ dependencies = [
 target-version = "py313"
 line-length = 120
 preview = true
-src = ["01.home/02.assets/ai/claude"]
+src = ["01.home/00.core/configs/apps/claude"]
 cache-dir = ".cache/ruff"
 exclude = [
     "**/.venv/**",
@@ -174,12 +174,12 @@ mark-parentheses = true
     "PT023",   # use parentheses on fixtures/marks
     "PT006",   # wrong parametrize tuple type
 ]
-"01.home/02.assets/ai/claude/hooks/*.py" = ["S603", "S607"]  # Allow subprocess for hooks
+"01.home/00.core/configs/apps/claude/hooks/*.py" = ["S603", "S607"]  # Allow subprocess for hooks
 
 # --- Mypy Configuration -----------------------------------------------------
 [tool.mypy]
 python_version = "3.13"
-mypy_path = ["$MYPY_CONFIG_FILE_DIR/01.home/02.assets/ai/claude"]
+mypy_path = ["$MYPY_CONFIG_FILE_DIR/01.home/00.core/configs/apps/claude"]
 cache_dir = ".cache/mypy"
 namespace_packages = true
 explicit_package_bases = true
@@ -244,8 +244,8 @@ ignore_missing_imports = true
 [tool.basedpyright]
 pythonVersion = "3.13"
 typeCheckingMode = "strict"
-include = ["01.home/02.assets/ai/claude"]
-extraPaths = ["01.home/02.assets/ai/claude"]
+include = ["01.home/00.core/configs/apps/claude"]
+extraPaths = ["01.home/00.core/configs/apps/claude"]
 exclude = [
     "**/.venv/**",
     "**/.cache/**",
@@ -329,33 +329,3 @@ reportPropertyTypeMismatch = "error"
 reportUnnecessaryContains = "warning"
 reportUnusedCoroutine = "error"
 useLibraryCodeForTypes = true
-
-# --- Pytest Configuration (if you add tests) -------------------------------
-[tool.pytest.ini_options]
-minversion = "8.0"
-testpaths = ["tests"]
-python_files = "test_*.py"
-python_functions = "test_*"
-python_classes = "Test*"
-addopts = """
-    -ra
-    --strict-markers
-    --strict-config
-    --failed-first
-    --tb=short
-"""
-
-# --- Coverage Configuration (if you add tests) -----------------------------
-[tool.coverage.run]
-source = ["01.home/02.assets/ai/claude"]
-omit = ["*/tests/*", "*/__pycache__/*"]
-
-[tool.coverage.report]
-exclude_lines = [
-    "pragma: no cover",
-    "def __repr__",
-    "raise NotImplementedError",
-    "if __name__ == .__main__.:",
-    "if TYPE_CHECKING:",
-    "@abstractmethod",
-]

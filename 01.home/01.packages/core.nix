@@ -66,7 +66,7 @@ with pkgs;
   # --- SQLite Extensions ----------------------------------------------------
   sqlite # Base SQLite 3.50.2 (newer than macOS default 3.43.2)
   sqlite-vec # Vector search SQLite extension (semantic pattern matching)
-  # sqlean - NOT AVAILABLE in nixpkgs, manually installed to ~/.local/lib/sqlean/
+  # sqlean - NOT AVAILABLE in nixpkgs, manually installed to ~/.local/lib/sqlean/ in 01.home/activation.nix
   sqlite-interactive # Interactive SQLite CLI with enhanced features
   sqlite-utils # Python CLI tool for SQLite database manipulation
   libspatialite # OGC-compliant spatial SQL engine (GIS operations, coordinate transformations)
@@ -79,13 +79,9 @@ with pkgs;
   gawk # GNU awk
   bash # Bash shell (newer version than macOS default)
   gnutar # GNU version of tar
-  diffutils # GNU diff utilities
 
   # --- Terminal File Managers -----------------------------------------------
   yazi # Blazing fast terminal file manager (async, image preview)
-  lf # Lightweight terminal file manager (fast, minimal)
-  ranger # Feature-rich terminal file manager (Python-based)
-  nnn # Extremely fast terminal file manager (n³)
 
   # --- Zsh Enhancements -----------------------------------------------------
   zsh-autosuggestions # Fish-like autosuggestions for command completion

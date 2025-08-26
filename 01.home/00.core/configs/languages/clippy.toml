@@ -2,7 +2,7 @@
 # Author        : Bardia Samiee
 # Project       : Parametric Forge
 # License       : MIT
-# Path          : 01.home/00.core/configs/languages/clippy.toml
+# Path          : /01.home/00.core/configs/languages/clippy.toml
 # ----------------------------------------------------------------------------
 # Clippy behavioral configuration
 
@@ -11,7 +11,6 @@ cognitive-complexity-threshold = 30
 too-many-lines-threshold = 100
 too-many-arguments-threshold = 7
 type-complexity-threshold = 250
-excessive-dependencies-threshold = 100
 trivial-copy-size-limit = 8
 
 allow-dbg-in-tests = true

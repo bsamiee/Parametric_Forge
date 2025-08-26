@@ -20,6 +20,7 @@
     # --- Terminal Configuration ---------------------------------------------
     "wezterm/wezterm.lua".source = ./00.core/configs/apps/wezterm.lua;
     "starship.toml".source = ./00.core/configs/apps/starship.toml;
+    "ccstatusline/settings.json".source = ./00.core/configs/apps/ccstatusline-settings.json;
 
     # --- Git Configuration --------------------------------------------------
     "git/ignore".source = ./00.core/configs/git/gitignore;
@@ -27,9 +28,6 @@
     # --- Language Server Configurations -------------------------------------
     # Nix
     "nil/nil.toml".source = ./00.core/configs/languages/nil.toml; # TODO: nil only reads from project root, move to templates
-    # TypeScript/JavaScript
-    "typescript/tsconfig.json".source = ./00.core/configs/languages/tsconfig.json; # TODO: TS reads from project root, move to templates
-    "eslint/eslint.config.js".source = ./00.core/configs/languages/eslint.config.js; # TODO: ESLint reads from project root, move to templates
     # Python
     "basedpyright/basedpyright.json".source = ./00.core/configs/languages/basedpyright.json; # TODO: basedpyright reads from project root, move to templates
     "pypoetry/config.toml".source = ./00.core/configs/poetry.toml; # OK: Poetry respects XDG
@@ -48,17 +46,22 @@
     "cargo/config.toml".source = ./00.core/configs/languages/cargo.toml; # OK: cargo respects XDG
     # Lua
     "luarocks/config.lua".source = ./00.core/configs/languages/luarocks.lua; # OK: luarocks uses LUAROCKS_CONFIG env var
+    # TODO: lua-language-server - .luarc.json should be per-project, add to templates when needed
+    # TODO: busted - .busted config should be per-project (testing framework)
+    # TODO: luacov - .luacov config should be per-project (coverage tool)
+    # TODO: pytest - pytest.ini or setup.cfg should be per-project, add to templates when needed
     # --- Formatting Tools ---------------------------------------------------
     "taplo/taplo.toml".source = ./00.core/configs/formatting/.taplo.toml; # TODO: taplo only reads from project root, move to templates
     "yamllint/config".source = ./00.core/configs/formatting/.yamllint.yml; # OK: yamllint uses YAMLLINT_CONFIG_FILE env var
 
     # --- Container Runtime Configurations -----------------------------------
-    # Add container configs here when created:
-    # "docker/config.json".source = ./00.core/configs/containers/docker-config.json;
-    # "docker/daemon.json".source = ./00.core/configs/containers/docker-daemon.json;
-    # "colima/default/colima.yaml".source = ./00.core/configs/containers/colima.yaml;
-    # "containers/containers.conf".source = ./00.core/configs/containers/containers.conf; # Podman
-    # "containers/registries.conf".source = ./00.core/configs/containers/registries.conf; # Podman
+    "docker/config.json".source = ./00.core/configs/containers/docker-config.json;
+    "colima/default/colima.yaml".source = ./00.core/configs/containers/colima.yaml;
+    "containers/containers.conf".source = ./00.core/configs/containers/containers.conf; # Podman
+    "containers/registries.conf".source = ./00.core/configs/containers/registries.conf; # Podman
+    "containers/storage.conf".source = ./00.core/configs/containers/storage.conf; # Podman
+    # TODO: dive - Add dive/config.yaml for UI preferences and keybindings when needed
+    # TODO: hadolint - Add hadolint.yaml for linting rules and ignored warnings when needed
   };
   # --- Home Files (Non-XDG) -------------------------------------------------
   home.file = {
@@ -74,10 +77,16 @@
     ".editorconfig".source = ./00.core/configs/formatting/.editorconfig;
     # --- Container Runtime Files (Home Root) --------------------------------
     ".dockerignore".source = ./00.core/configs/containers/.dockerignore;
+    # --- PostgreSQL Formatter ------------------------------------------------
+    ".pg_format".source = ./00.core/configs/formatting/pg_format; # TODO: pgformatter only reads from ~/, doesn't support XDG
 
     # --- Asset Folder Files -------------------------------------------------
   }
-  // (myLib.build.deployDir ./02.assets/ai/claude ".claude");
+  // (myLib.build.deployDir ./00.core/configs/apps/claude ".claude")
+  // {
+    # Deploy prettierrc to .claude for hooks that expect it there
+    ".claude/.prettierrc".source = ./00.core/configs/formatting/.prettierrc;
+  };
 
   # --- Asset Bin Scripts (Added to PATH) ------------------------------------
   home.packages =

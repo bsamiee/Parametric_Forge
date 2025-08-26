@@ -268,96 +268,6 @@
             fi
           '';
         };
-        # --- Interactive Interface ------------------------------------------
-        # Development version with faster rebuilds
-        interface-dev = myLib.build.rust pkgs (
-          rustPlatform.buildRustPackage {
-            pname = "parametric-forge-interface-dev";
-            version = "0.1.0-dev";
-            src = lib.cleanSourceWith {
-              src = ../interface;
-              filter = path: _type: !(lib.hasSuffix "target" path || lib.hasSuffix "result" path);
-            };
-            cargoLock = {
-              lockFile = ../interface/Cargo.lock;
-              allowBuiltinFetchGit = true;
-            };
-            # Faster dev build settings
-            env = {
-              CARGO_BUILD_RUSTFLAGS = "-C opt-level=1";
-            };
-            # Skip unnecessary inputs for faster builds
-            nativeBuildInputs = with pkgs; [ pkg-config ];
-            buildInputs =
-              with pkgs;
-              [
-                libiconv
-              ]
-              ++ lib.optionals pkgs.stdenv.isDarwin [
-                pkgs.darwin.apple_sdk.frameworks.Security
-                pkgs.darwin.apple_sdk.frameworks.SystemConfiguration
-                pkgs.darwin.apple_sdk.frameworks.CoreFoundation
-              ]
-              ++ lib.optionals pkgs.stdenv.isLinux [
-                openssl
-              ];
-          }
-        );
-
-        # Production version with optimizations
-        interface = myLib.build.rust pkgs (
-          rustPlatform.buildRustPackage {
-            pname = "parametric-forge-interface";
-            version = "0.1.0";
-            src = lib.cleanSourceWith {
-              src = ../interface;
-              filter = path: _type: !(lib.hasSuffix "target" path || lib.hasSuffix "result" path);
-            };
-            cargoLock = {
-              lockFile = ../interface/Cargo.lock;
-              allowBuiltinFetchGit = true;
-            };
-            # Native build inputs for compilation
-            nativeBuildInputs = with pkgs; [
-              pkg-config
-            ];
-            # Runtime and build dependencies
-            buildInputs =
-              with pkgs;
-              [
-                libiconv
-              ]
-              ++ lib.optionals pkgs.stdenv.isDarwin [
-                # Darwin framework dependencies (using system frameworks)
-                pkgs.darwin.apple_sdk.frameworks.Security
-                pkgs.darwin.apple_sdk.frameworks.SystemConfiguration
-                pkgs.darwin.apple_sdk.frameworks.CoreFoundation
-              ]
-              ++ lib.optionals pkgs.stdenv.isLinux [
-                # Linux-specific dependencies
-                openssl
-              ];
-            # Environment variables for optimization
-            env = {
-              CARGO_BUILD_RUSTFLAGS = "-C target-cpu=native";
-            };
-            # Comprehensive meta attributes
-            meta = with lib; {
-              description = "Interactive TUI for Parametric Forge configuration management";
-              longDescription = ''
-                A modern terminal user interface for configuring and managing
-                Parametric Forge Nix-based system configurations. Provides an
-                intuitive way to select packages, configure system settings,
-                and apply configurations without needing to understand Nix syntax.
-              '';
-              homepage = "https://github.com/bsamiee/parametric-forge";
-              license = licenses.mit;
-              maintainers = [ "Bardia Samiee <b.samiee93@gmail.com>" ];
-              platforms = platforms.unix;
-              mainProgram = "forge-interface";
-            };
-          }
-        );
       };
       # --- Apps -------------------------------------------------------------
       apps = {
@@ -375,16 +285,6 @@
           type = "app";
           program = "${self'.packages.check-system}/bin/check-system";
           meta.description = "Check system configuration and environment";
-        };
-        interface = {
-          type = "app";
-          program = "${self'.packages.interface}/bin/forge-interface";
-          meta.description = "Interactive TUI for Parametric Forge configuration management";
-        };
-        interface-dev = {
-          type = "app";
-          program = "${self'.packages.interface-dev}/bin/forge-interface";
-          meta.description = "Development version of interface (faster builds)";
         };
       };
     };

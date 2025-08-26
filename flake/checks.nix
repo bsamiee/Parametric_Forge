@@ -96,7 +96,7 @@ in
               cd $src
               echo "Checking flake structure..."
 
-              for dir in flake lib modules 00.system 01.home interface; do
+              for dir in flake lib modules 00.system 01.home; do
                 if [ ! -d "$dir" ]; then
                   echo "  ✗ Missing critical directory: $dir"
                   exit 1

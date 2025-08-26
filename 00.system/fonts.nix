@@ -9,15 +9,6 @@
 { pkgs, myLib, ... }:
 
 {
-  # --- Font Defaults (for future GUI-based installation) --------------------
-  # These defaults will be used when we implement a GUI configuration tool
-  # that allows users to select their preferred fonts during installation.
-  # defaults = {
-  #   monospace = "JetBrains Mono";
-  #   serif = "Source Serif Pro";
-  #   sansSerif = "Inter";
-  # };
-
   # --- Font Packages --------------------------------------------------------
   fonts.packages = myLib.fonts.withIcons pkgs (
     with pkgs;

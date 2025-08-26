@@ -16,9 +16,8 @@
 .load /Users/bardiasamiee/.local/lib/sqlean/time.dylib
 .load /Users/bardiasamiee/.local/lib/sqlean/crypto.dylib
 .load /Users/bardiasamiee/.local/lib/sqlean/math.dylib
-
--- Load vector extension for embeddings ---------------------------------------
 .load /Users/bardiasamiee/.local/lib/sqlite-vec/vec0.dylib
+.load /Users/bardiasamiee/.local/lib/mod_spatialite.dylib -- GIS/spatial operations (linked from Nix)
 
 -- Performance settings -------------------------------------------------------
 PRAGMA journal_mode = WAL;

@@ -1,12 +1,12 @@
 # Title         : .yamlfmt
 # Author        : Bardia Samiee
-# Project       : Dotfiles
+# Project       : Parametric Forge
 # License       : MIT
-# Path          : home/configs/formatting/.yamlfmt
-# ---------------------------------------
+# Path          : /01.home/00.core/configs/formatting/.yamlfmt
+# ----------------------------------------------------------------------------
 # YAML formatter configuration
 
-# --- Formatter Configuration ----------------------------------------------
+# --- Formatter Configuration ------------------------------------------------
 formatter:
     indent: 4
     include_document_start: false

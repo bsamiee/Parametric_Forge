@@ -18,7 +18,7 @@
     # --- Locale and Internationalization ------------------------------------
     LANG = "en_US.UTF-8"; # System locale
     LC_ALL = ""; # Don't override individual locale categories
-    TZ = config.configuration.settings.system.timezone or "America/Chicago"; # Timezone from configuration
+    TZ = "America/Chicago"; # Central Time (Houston)
 
     # --- XDG Base Directory Specification -----------------------------------
     # Explicitly set XDG variables for tools that don't use home-manager's values
@@ -64,7 +64,6 @@
     NPM_CONFIG_PREFIX = "${config.xdg.dataHome}/npm";
     NODE_REPL_HISTORY = "${config.xdg.dataHome}/node_repl_history";
     # Python
-    # PYTHONSTARTUP not set - no pythonrc file exists
     PYTHONHISTORY = "${config.xdg.stateHome}/python/history";
     PYTHONDONTWRITEBYTECODE = "1";
     PIPX_HOME = "${config.xdg.dataHome}/pipx";
@@ -76,6 +75,8 @@
     MYPY_CACHE_DIR = "${config.xdg.cacheHome}/mypy";
     MYPY_CONFIG_FILE = "${config.xdg.configHome}/mypy/mypy.ini";
     UV_CACHE_DIR = "${config.xdg.cacheHome}/uv";
+    PYTEST_CACHE_DIR = "${config.xdg.cacheHome}/pytest";
+    PIPX_DEFAULT_PYTHON = "${config.home.homeDirectory}/.nix-profile/bin/python3";
 
     # --- XDG-Compliant Shell History ----------------------------------------
     HISTFILE = "${config.xdg.stateHome}/bash/history";
@@ -83,23 +84,32 @@
     SQLITE_HISTORY = "${config.xdg.stateHome}/sqlite/history";
 
     # --- XDG-Compliant Application Config -----------------------------------
+    # Docker & Container Runtimes
     DOCKER_CONFIG = "${config.xdg.configHome}/docker";
+    DOCKER_HOST = "unix://${config.home.homeDirectory}/.colima/default/docker.sock"; # Colima socket
+    DOCKER_CERT_PATH = "${config.xdg.dataHome}/docker/certs";
     MACHINE_STORAGE_PATH = "${config.xdg.dataHome}/docker-machine";
+    # Colima
     COLIMA_HOME = "${config.xdg.dataHome}/colima";
+    # Podman
     CONTAINERS_CONF = "${config.xdg.configHome}/containers/containers.conf";
+    CONTAINERS_REGISTRIES_CONF = "${config.xdg.configHome}/containers/registries.conf";
+    CONTAINERS_STORAGE_CONF = "${config.xdg.configHome}/containers/storage.conf";
+    PODMAN_USERNS = "keep-id"; # Better rootless experience
+    # Container tool configs
+    LAZYDOCKER_CONFIG_DIR = "${config.xdg.configHome}/lazydocker";
+    DIVE_CONFIG = "${config.xdg.configHome}/dive/config.yaml";
+    HADOLINT_CONFIG = "${config.xdg.configHome}/hadolint.yaml";
+    # GitHub CLI
     GH_CONFIG_DIR = "${config.xdg.configHome}/gh";
     GH_PAGER = "delta"; # Use delta for rich diffs in gh commands
-    GNUPGHOME = "${config.xdg.dataHome}/gnupg";
-    GRADLE_USER_HOME = "${config.xdg.dataHome}/gradle";
-    LUAROCKS_CONFIG = "${config.xdg.configHome}/luarocks/config.lua";
 
     # --- Formatter Configs --------------------------------------------------
-    # Note: Only some tools support env vars for config paths
     YAMLLINT_CONFIG_FILE = "${config.xdg.configHome}/yamllint/config"; # Supported by yamllint
 
     # --- Additional Language Server Paths -----------------------------------
-    # Lua package manager
-    LUAROCKS_TREE = "${config.xdg.dataHome}/luarocks";
+    LUAROCKS_TREE = "${config.xdg.dataHome}/luarocks"; # Lua package manager
+    LUAROCKS_CONFIG = "${config.xdg.configHome}/luarocks/config.lua";
 
     # --- Font Configuration -------------------------------------------------
     FONTCONFIG_PATH = "${config.xdg.configHome}/fontconfig";
@@ -109,6 +119,7 @@
     # --- Performance & Build Settings ---------------------------------------
     DOCKER_BUILDKIT = "1";
     COMPOSE_DOCKER_CLI_BUILD = "1";
+    BUILDKIT_PROGRESS = "plain"; # Options: auto, plain, tty
     TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE = "/var/run/docker.sock";
     MAKEFLAGS = "-j$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4)";
     CMAKE_BUILD_PARALLEL_LEVEL = "$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4)";
@@ -116,7 +127,6 @@
     # --- Temporary Directory Management -------------------------------------
     # npm uses this for package extraction during install
     NPM_CONFIG_TMP = "${config.xdg.cacheHome}/npm-tmp";
-    # xh (our HTTP client) configuration directory
     XH_CONFIG_DIR = "${config.xdg.configHome}/xh";
 
     # --- Privacy & Telemetry Opt-Outs ---------------------------------------
@@ -129,17 +139,43 @@
     DO_NOT_TRACK = "1";
 
     # --- Tool Configurations ------------------------------------------------
-    # Difftastic configuration
+    # Bat (enhanced cat)
+    BAT_THEME = "Dracula"; # Consistent with Nix module setting
+    BAT_STYLE = "numbers,changes,header"; # Add header for better file context
+    BAT_PAGER = "less -FRX"; # Same as PAGER for consistency
+    # Zsh plugin configurations
+    ZSH_AUTOSUGGEST_STRATEGY = "(history completion)"; # Try history first, then completion
+    ZSH_AUTOSUGGEST_BUFFER_MAX_SIZE = "20"; # Don't suggest for long commands (20 chars)
+    ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE = "fg=#6272a4"; # Dracula comment color for suggestions
+    # Completion cache location (XDG-compliant)
+    ZSH_COMPDUMP = "${config.xdg.cacheHome}/zsh/zcompdump-$ZSH_VERSION"
     DFT_BACKGROUND = "dark";
     DFT_DISPLAY = "inline";
-    # Enhanced directory colors (molokai theme)
-    LS_COLORS = "fi=00:mi=00:mh=00:ln=01;36:or=01;31:di=01;34:ow=04;01;34:st=34:tw=04;34:pi=01;33:so=01;33:bd=33:cd=33:su=01;35:sg=01;35:ca=01;33:ex=01;32";
-    # Nix-index database location
     NIX_INDEX_DATABASE = "${config.xdg.cacheHome}/nix-index";
+    MCFLY_RESULTS = "50"; # Number of results to display
+    MCFLY_INTERFACE_VIEW = "BOTTOM"; # Where to display results
+    # Enhanced directory colors (Dracula-inspired)
+    LS_COLORS = "fi=00:mi=00:mh=00:ln=01;36:or=01;31:di=01;34:ow=04;01;34:st=34:tw=04;34:pi=01;33:so=01;33:bd=33:cd=33:su=01;35:sg=01;35:ca=01;33:ex=01;32";
 
     # --- Java/JVM Configuration (XDG-compliant) -----------------------------
     JAVA_OPTIONS = "-Djava.util.prefs.userRoot=${config.xdg.configHome}/java";
     _JAVA_OPTIONS = "-Djava.util.prefs.userRoot=${config.xdg.configHome}/java";
+
+    # --- Build & Task Automation --------------------------------------------
+    PRE_COMMIT_HOME = "${config.xdg.dataHome}/pre-commit"; # Pre-commit hooks cache
+
+    # --- Secret Management --------------------------------------------------
+    PASSWORD_STORE_DIR = "${config.xdg.dataHome}/pass"; # Unix pass storage
+    GOPASS_CONFIG = "${config.xdg.configHome}/gopass/config.yml"; # Gopass configuration
+    GOPASS_HOMEDIR = "${config.xdg.dataHome}/gopass"; # Gopass data directory
+    VAULT_ADDR = "http://127.0.0.1:8200"; # Default Vault server address
+
+    # --- Backup & Sync Tools ------------------------------------------------
+    RCLONE_CONFIG = "${config.xdg.configHome}/rclone/rclone.conf"; # Rclone configuration
+    RESTIC_CACHE_DIR = "${config.xdg.cacheHome}/restic"; # Restic cache
+
+    # --- Development Utilities ----------------------------------------------
+    TLDR_CACHE_DIR = "${config.xdg.cacheHome}/tldr"; # TLDR pages cache
 
     # --- WezTerm Integration ------------------------------------------------
     # WezTerm daemon paths (XDG-compliant)

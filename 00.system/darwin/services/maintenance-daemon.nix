@@ -51,7 +51,7 @@ let
     # --- Homebrew Maintenance -----------------------------------------------
     if command -v brew >/dev/null 2>&1; then
       echo "→ Homebrew maintenance:"
-      
+
       # Cleanup old versions
       if brew cleanup --prune=30 2>/dev/null; then
         echo "  ✓ Cleaned up old Homebrew versions"

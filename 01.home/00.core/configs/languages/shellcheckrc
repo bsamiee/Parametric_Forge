@@ -2,7 +2,7 @@
 # Author        : Bardia Samiee
 # Project       : Parametric Forge
 # License       : MIT
-# Path          : 01.home/00.core/configs/languages/shellcheckrc
+# Path          : /01.home/00.core/configs/languages/shellcheckrc
 # ----------------------------------------------------------------------------
 # ShellCheck configuration for bash scripts
 
@@ -11,7 +11,6 @@ external-sources=true
 shell=bash
 enable=all
 source-path=SCRIPTDIR
-format=tty
 
 # --- Rule Exclusions --------------------------------------------------------
 disable=SC1091  # Not following sourced files

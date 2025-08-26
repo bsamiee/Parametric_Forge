@@ -98,7 +98,7 @@
         ];
       }
       {
-        pattern = "env";
+        pattern = ".env";
         types = [ "dev" ];
       }
       {
@@ -155,6 +155,16 @@
       }
       {
         pattern = "basedpyright";
+        types = [ "cache" ];
+        location = "xdg-cache";
+      }
+      {
+        pattern = "mypy";
+        types = [ "cache" ];
+        location = "xdg-cache";
+      }
+      {
+        pattern = "pytest";
         types = [ "cache" ];
         location = "xdg-cache";
       }
@@ -237,6 +247,11 @@
           "cache"
         ];
       }
+      {
+        pattern = "lua-language-server";
+        types = [ "cache" ];
+        location = "xdg-cache";
+      }
       # --- Java/JVM ---------------------------------------------------------
       {
         pattern = ".gradle";
@@ -288,7 +303,7 @@
         types = [ "dev" ];
       }
       {
-        pattern = "bin";
+        pattern = ".bin";
         types = [ "dev" ];
       }
       {
@@ -389,6 +404,73 @@
         pattern = "xcuserdata";
         types = [ "dev" ];
       }
+      # --- Container Tools --------------------------------------------------
+      {
+        pattern = "docker";
+        types = [ "cache" ];
+        location = "xdg-cache";
+      }
+      {
+        pattern = "colima";
+        types = [ "cache" ];
+        location = "xdg-cache";
+      }
+      {
+        pattern = "podman";
+        types = [ "cache" ];
+        location = "xdg-cache";
+      }
+      {
+        pattern = "lazydocker";
+        types = [ "cache" ];
+        location = "xdg-cache";
+      }
+      {
+        pattern = "dive";
+        types = [ "cache" ];
+        location = "xdg-cache";
+      }
+      {
+        pattern = "buildkit";
+        types = [ "cache" ];
+        location = "xdg-cache";
+      }
+      # --- Shell Tools ------------------------------------------------------
+      {
+        pattern = "bat";
+        types = [ "cache" ];
+        location = "xdg-cache";
+      }
+      {
+        pattern = "direnv";
+        types = [ "cache" ];
+        location = "xdg-cache";
+      }
+      {
+        pattern = "fd";
+        types = [ "cache" ];
+        location = "xdg-cache";
+      }
+      {
+        pattern = "zoxide";
+        types = [ "cache" ];
+        location = "xdg-data";
+      }
+      {
+        pattern = "broot";
+        types = [ "cache" ];
+        location = "xdg-data";
+      }
+      {
+        pattern = "mcfly";
+        types = [ "cache" ];
+        location = "xdg-data";
+      }
+      {
+        pattern = "nix-index";
+        types = [ "cache" ];
+        location = "xdg-cache";
+      }
       # --- System/Tools -----------------------------------------------------
       {
         pattern = "nix";
@@ -418,6 +500,19 @@
       {
         pattern = "ssh";
         types = [ "cache" ];
+        location = "xdg-cache";
+      }
+      {
+        pattern = "claude";
+        types = [ "cache" ];
+        location = "xdg-cache";
+      }
+      {
+        pattern = "claude/logs";
+        types = [
+          "logs"
+          "cache"
+        ];
         location = "xdg-cache";
       }
       {

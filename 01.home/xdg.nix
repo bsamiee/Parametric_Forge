@@ -61,9 +61,17 @@
       mkdir -pm 755 "${config.xdg.configHome}/containers"
       mkdir -pm 755 "${config.xdg.configHome}/gh"
       mkdir -pm 755 "${config.xdg.configHome}/lazygit"
+      mkdir -pm 755 "${config.xdg.configHome}/lazydocker"
+      mkdir -pm 755 "${config.xdg.configHome}/dive"
+      mkdir -pm 755 "${config.xdg.configHome}/hadolint"
       mkdir -pm 755 "${config.xdg.configHome}/wezterm"
       mkdir -pm 755 "${config.xdg.configHome}/xh"
       mkdir -pm 755 "${config.xdg.configHome}/shellcheck"
+      # Shell tools (managed by home-manager or have configs)
+      mkdir -pm 755 "${config.xdg.configHome}/broot" # Managed by home-manager
+      mkdir -pm 755 "${config.xdg.configHome}/starship" # Has config file
+      mkdir -pm 755 "${config.xdg.configHome}/mcfly" # Managed by home-manager
+      mkdir -pm 755 "${config.xdg.configHome}/bottom" # Managed by home-manager
       mkdir -pm 755 "${config.xdg.configHome}/marksman"
       mkdir -pm 755 "${config.xdg.configHome}/rust-analyzer"
       mkdir -pm 755 "${config.xdg.configHome}/clippy"
@@ -74,16 +82,34 @@
       mkdir -pm 755 "${config.xdg.configHome}/basedpyright"
       mkdir -pm 755 "${config.xdg.configHome}/ruff"
       mkdir -pm 755 "${config.xdg.configHome}/mypy"
-      # JavaScript/TypeScript
-      mkdir -pm 755 "${config.xdg.configHome}/typescript"
-      mkdir -pm 755 "${config.xdg.configHome}/eslint"
+      mkdir -pm 755 "${config.xdg.configHome}/pytest"
       # Lua
       mkdir -pm 755 "${config.xdg.configHome}/luarocks"
+      mkdir -pm 755 "${config.xdg.configHome}/lua-language-server"
       # Formatting tools (only those that support XDG)
       mkdir -pm 755 "${config.xdg.configHome}/taplo"
       mkdir -pm 755 "${config.xdg.configHome}/yamllint"
       # Java
       mkdir -pm 755 "${config.xdg.configHome}/java"
+      # Build & Task Automation
+      mkdir -pm 755 "${config.xdg.configHome}/just"
+      mkdir -pm 755 "${config.xdg.configHome}/pre-commit"
+      # SQL Tools
+      mkdir -pm 755 "${config.xdg.configHome}/sqlfluff"
+      mkdir -pm 755 "${config.xdg.configHome}/pgformatter"
+      # Secret Management
+      mkdir -pm 755 "${config.xdg.configHome}/vault"
+      mkdir -pm 755 "${config.xdg.configHome}/pass"
+      mkdir -pm 755 "${config.xdg.configHome}/gopass"
+      # Backup & Sync
+      mkdir -pm 755 "${config.xdg.configHome}/restic"
+      mkdir -pm 755 "${config.xdg.configHome}/rclone"
+      # Data Processing
+      mkdir -pm 755 "${config.xdg.configHome}/fx"
+      mkdir -pm 755 "${config.xdg.configHome}/jless"
+      # Utilities
+      mkdir -pm 755 "${config.xdg.configHome}/tldr"
+      mkdir -pm 755 "${config.xdg.configHome}/watchexec"
       # --- Data Directories ------------------------------------------------
       mkdir -pm 755 "${config.xdg.dataHome}/applications"
       mkdir -pm 755 "${config.xdg.dataHome}/fonts"
@@ -96,15 +122,28 @@
       mkdir -pm 755 "${config.xdg.dataHome}/go"
       mkdir -pm 755 "${config.xdg.dataHome}/npm"
       mkdir -pm 755 "${config.xdg.dataHome}/pipx"
-      mkdir -pm 755 "${config.xdg.dataHome}/gradle"
+      # NOTE: gradle not installed - removed directory
       mkdir -pm 755 "${config.xdg.dataHome}/docker-machine"
+      mkdir -pm 755 "${config.xdg.dataHome}/docker/certs"
       mkdir -pm 755 "${config.xdg.dataHome}/colima"
-      mkdir -pm 700 "${config.xdg.dataHome}/gnupg"
+      mkdir -pm 755 "${config.xdg.dataHome}/podman"
+      # NOTE: gnupg not installed - removed directory
+      # Build & Task Automation
+      mkdir -pm 755 "${config.xdg.dataHome}/pre-commit"
+      # Secret Management
+      mkdir -pm 755 "${config.xdg.dataHome}/pass"
+      mkdir -pm 755 "${config.xdg.dataHome}/gopass"
+      mkdir -pm 755 "${config.xdg.dataHome}/vault"
+      # Shell tools data
+      mkdir -pm 755 "${config.xdg.dataHome}/broot"
+      mkdir -pm 755 "${config.xdg.dataHome}/zoxide"
+      mkdir -pm 755 "${config.xdg.dataHome}/mcfly"
       # --- State Directories -----------------------------------------------
       mkdir -pm 755 "${config.xdg.stateHome}/nix"
       mkdir -pm 755 "${config.xdg.stateHome}/logs"
       mkdir -pm 755 "${config.xdg.stateHome}/bash"
       mkdir -pm 755 "${config.xdg.stateHome}/zsh"
+      mkdir -pm 755 "${config.xdg.cacheHome}/zsh"
       mkdir -pm 755 "${config.xdg.stateHome}/less"
       mkdir -pm 755 "${config.xdg.stateHome}/python"
       mkdir -pm 755 "${config.xdg.stateHome}/sqlite"
@@ -125,6 +164,7 @@
       mkdir -pm 755 "${config.xdg.cacheHome}/basedpyright"
       mkdir -pm 755 "${config.xdg.cacheHome}/mypy"
       mkdir -pm 755 "${config.xdg.cacheHome}/uv"
+      mkdir -pm 755 "${config.xdg.cacheHome}/pytest"
       mkdir -pm 755 "${config.xdg.cacheHome}/cargo"
       mkdir -pm 755 "${config.xdg.cacheHome}/rust-analyzer"
       mkdir -pm 755 "${config.xdg.cacheHome}/sccache"
@@ -134,6 +174,26 @@
       mkdir -pm 755 "${config.xdg.cacheHome}/docker"
       mkdir -pm 755 "${config.xdg.cacheHome}/colima"
       mkdir -pm 755 "${config.xdg.cacheHome}/podman"
+      mkdir -pm 755 "${config.xdg.cacheHome}/lazydocker"
+      mkdir -pm 755 "${config.xdg.cacheHome}/dive"
+      mkdir -pm 755 "${config.xdg.cacheHome}/buildkit"
+      # Shell tools caches
+      mkdir -pm 755 "${config.xdg.cacheHome}/bat"
+      mkdir -pm 755 "${config.xdg.cacheHome}/direnv"
+      mkdir -pm 755 "${config.xdg.cacheHome}/fd"
+      # Lua tools caches
+      mkdir -pm 755 "${config.xdg.cacheHome}/lua-language-server"
+      # Build & Task Automation caches
+      mkdir -pm 755 "${config.xdg.cacheHome}/pre-commit"
+      # SQL Tools caches  
+      mkdir -pm 755 "${config.xdg.cacheHome}/sqlfluff"
+      # Secret Management caches
+      mkdir -pm 755 "${config.xdg.cacheHome}/vault"
+      # Backup & Sync caches
+      mkdir -pm 755 "${config.xdg.cacheHome}/restic"
+      mkdir -pm 755 "${config.xdg.cacheHome}/rclone"
+      # Utilities caches
+      mkdir -pm 755 "${config.xdg.cacheHome}/tldr"
       # --- Non-XDG Directories ---------------------------------------------
       mkdir -pm 700 "${config.home.homeDirectory}/.ssh"
       mkdir -pm 700 "${config.home.homeDirectory}/.ssh/sockets"

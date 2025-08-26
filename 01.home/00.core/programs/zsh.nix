@@ -46,12 +46,13 @@
     initContent = lib.mkMerge [
       # --- Pre-compinit (order 500) -----------------------------------------
       (lib.mkOrder 500 ''
-        # Load zsh plugins
-        source ${pkgs.zsh-autosuggestions}/share/zsh-autosuggestions/zsh-autosuggestions.zsh
-        source ${pkgs.zsh-syntax-highlighting}/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+        # Note: zsh-autosuggestions and zsh-syntax-highlighting are loaded via home-manager's
+        # built-in integration (autosuggestion.enable and syntaxHighlighting.enable above)
+        
+        # Load history substring search (not built into home-manager)
         source ${pkgs.zsh-history-substring-search}/share/zsh-history-substring-search/zsh-history-substring-search.zsh
 
-        # Load completions
+        # Load additional completions
         fpath+="${pkgs.zsh-completions}/share/zsh/site-functions"
 
         # Bind keys for history substring search

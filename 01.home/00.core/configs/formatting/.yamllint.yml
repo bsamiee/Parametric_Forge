@@ -1,9 +1,9 @@
 # Title         : .yamllint.yml
 # Author        : Bardia Samiee
-# Project       : Dotfiles
+# Project       : Parametric Forge
 # License       : MIT
-# Path          : home/configs/formatting/.yamllint.yml
-# ---------------------------------------
+# Path          : /01.home/00.core/configs/formatting/.yamllint.yml
+# ----------------------------------------------------------------------------
 # YAML linting configuration
 extends: relaxed
 rules:

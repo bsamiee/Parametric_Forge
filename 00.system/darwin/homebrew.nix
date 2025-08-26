@@ -46,8 +46,6 @@ in
       "terminal-notifier" # macOS notification system integration
       "mono" # .NET runtime (dependency for some tools)
       "codex" # AI coding assistant (ChatGPT CLI)
-      # Note: SQLite extensions installed manually (not available via brew/nix):
-      # 1. sqlean: ~/.local/lib/sqlean - Download from: https://github.com/nalgeon/sqlean/releases
     ];
     # --- Mac App Store Applications -----------------------------------------
     masApps = { };

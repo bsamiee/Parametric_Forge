@@ -1,25 +1,25 @@
 # Title         : .dockerignore
 # Author        : Bardia Samiee
-# Project       : Dotfiles
+# Project       : Parametric Forge
 # License       : MIT
-# Path          : home/configs/.dockerignore
-# ---------------------------------------
-# Docker build exclusions - VCS, caches, secrets, and development artifacts
+# Path          : /01.home/00.core/configs/containers/.dockerignore
+# ----------------------------------------------------------------------------
+# Docker build exclusions
 
-# --- Version Control ----------------------------------------------------------
+# --- Version Control --------------------------------------------------------
 .git
 .gitignore
 .gitattributes
 .github
 
-# --- Documentation ------------------------------------------------------------
+# --- Documentation ----------------------------------------------------------
 *.md
 README*
 LICENSE*
 CHANGELOG*
 docs/
 
-# --- Environment & Secrets ----------------------------------------------------
+# --- Environment & Secrets --------------------------------------------------
 .env
 .env.*
 *.env
@@ -28,14 +28,14 @@ docs/
 *.pem
 *.crt
 
-# --- Development Files --------------------------------------------------------
+# --- Development Files ------------------------------------------------------
 .vscode/
 .idea/
 *.swp
 *.swo
 .DS_Store
 
-# --- Language-Specific Artifacts ----------------------------------------------
+# --- Language Artifacts -----------------------------------------------------
 # Node.js
 node_modules/
 npm-debug.log*
@@ -63,7 +63,7 @@ Cargo.lock
 # Go
 vendor/
 
-# --- Build Artifacts ----------------------------------------------------------
+# --- Build Artifacts --------------------------------------------------------
 dist/
 build/
 *.log
@@ -71,14 +71,14 @@ logs/
 tmp/
 temp/
 
-# --- Testing ------------------------------------------------------------------
+# --- Testing ----------------------------------------------------------------
 coverage/
 .coverage
 *.cover
 .hypothesis/
 test-results/
 
-# --- CI/CD --------------------------------------------------------------------
+# --- CI/CD ------------------------------------------------------------------
 .gitlab-ci.yml
 .travis.yml
 .circleci/

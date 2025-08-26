@@ -8,7 +8,6 @@
 
 {
   imports = [
-    ./configuration.nix
     ./secrets.nix
   ];
 }

@@ -9,12 +9,14 @@
 
 set -euo pipefail
 
+# --- Configuration Setup ----------------------------------------------------
 CONFIG_DIR="$HOME/.config/op/plugins"
 CONFIG_FILE="$CONFIG_DIR/gh.json"
 
 # Ensure config directory exists
 mkdir -p "$CONFIG_DIR"
 
+# --- 1Password Lookups ------------------------------------------------------
 # Get 1Password account ID
 ACCOUNT_ID=$(op account get --format=json | jq -r '.id')
 
@@ -24,7 +26,7 @@ VAULT_ID=$(op vault get "Tokens" --format=json | jq -r '.id')
 # Find the Github Token item
 ITEM_ID=$(op item get "Github Token" --vault="Tokens" --format=json | jq -r '.id')
 
-# Create the configuration
+# --- Generate Configuration -------------------------------------------------
 cat > "$CONFIG_FILE" <<EOF
 {
 	"account_id": "$ACCOUNT_ID",

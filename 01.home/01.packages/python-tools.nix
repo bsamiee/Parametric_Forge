@@ -20,8 +20,6 @@ with pkgs;
   basedpyright # Type checker for Python (better than pyright)
 
   # --- Python Development Utilities -----------------------------------------
-  cookiecutter # Project template tool
-  python3Packages.black # Python code formatter
   python3Packages.pytest # Testing framework
   python3Packages.rich # Rich text formatting
   python3Packages.typer # CLI creation library

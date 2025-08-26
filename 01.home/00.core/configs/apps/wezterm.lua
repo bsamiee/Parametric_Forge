@@ -15,7 +15,7 @@ local config = wezterm.config_builder()
 local workspace_switcher = wezterm.plugin.require("https://github.com/MLFlexer/smart_workspace_switcher.wezterm")
 
 -- Path Configuration (XDG-compliant) ───────────────────────────────────────
--- Use environment variables from our Nix configuration
+-- Use environment variables from Nix configuration
 local XDG = {
 	CONFIG_HOME = os.getenv("XDG_CONFIG_HOME") or os.getenv("HOME") .. "/.config",
 	DATA_HOME = os.getenv("XDG_DATA_HOME") or os.getenv("HOME") .. "/.local/share",
@@ -42,7 +42,7 @@ local DOMAINS = {
 -- Appearance Constants ─────────────────────────────────────────────────────
 local APPEARANCE = {
 	color_scheme = "Dracula (base16)",
-	background_opacity = 0.75,
+	background_opacity = 0.85,
 	blur_radius = 20,
 	inactive_pane = { saturation = 0.75, brightness = 0.8 },
 }

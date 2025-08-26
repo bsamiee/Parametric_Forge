@@ -27,7 +27,7 @@
         };
         shellcheck.enable = true; # Shell script linter
         # --- Rust Ecosystem ---------------------------------------------------
-        rustfmt.enable = true; # Official Rust formatter (for interface/)
+        rustfmt.enable = true; # Official Rust formatter
         # --- Lua --------------------------------------------------------------
         stylua = {
           enable = true;
@@ -63,12 +63,6 @@
       # --- Per-formatter Settings --------------------------------------------
       settings = {
         formatter = {
-          # Rust-specific settings
-          rustfmt = {
-            excludes = [
-              "interface/target/**"
-            ];
-          };
           # Nix settings
           nixfmt = {
             options = [
@@ -89,8 +83,6 @@
           # Development environments
           ".direnv/**"
           ".envrc"
-          # Build artifacts
-          "interface/target/**"
           # Backup files
           "*.backup"
           "*.bak"
@@ -101,7 +93,6 @@
           "01.home/exclusions.nix" # Manual formatting for readability
           "00.DEPRECATED/**" # Don't format deprecated code
           ".kiro/**" # Kiro's managed files
-          "interface/Cargo.lock" # Auto-generated
         ];
       };
     };

@@ -24,10 +24,7 @@ with pkgs;
 
   # --- Code Quality Tools ---------------------------------------------------
   nodePackages.prettier # Code formatter
-  nodePackages.eslint # JavaScript linter
-  nodePackages.typescript # TypeScript compiler
-  nodePackages.typescript-language-server # TypeScript/JavaScript LSP
-  nodePackages.vscode-langservers-extracted # JSON/HTML/CSS/ESLint LSPs
+  nodePackages.vscode-langservers-extracted # JSON/HTML/CSS LSPs
 
   # --- JSON/YAML Tools ------------------------------------------------------
   nodePackages.js-yaml # YAML/JSON converter
@@ -35,6 +32,6 @@ with pkgs;
 
   # --- AI CLI Tools (Manual Installation) -----------------------------------
   # Not in nixpkgs - install globally via npm:
-  # npm install -g @anthropic-ai/claude-code
   # npm install -g @google/gemini-cli
+  # npm install -g ccstatusline
 ]

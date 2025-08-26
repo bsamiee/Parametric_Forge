@@ -4,12 +4,11 @@
 # License       : MIT
 # Path          : 01.home/01.packages/default.nix
 # ----------------------------------------------------------------------------
-# Package aggregator with conditional imports based on user preferences.
+# Package aggregator - all packages enabled by default.
 
 {
   lib,
   pkgs,
-  config,
   context ? null,
   ...
 }:
@@ -18,21 +17,13 @@ let
   # Platform detection
   isDarwin = context.isDarwin or pkgs.stdenv.isDarwin;
 
-  # Get configuration from the module system (already merged with defaults)
-  cfg = config.configuration.settings;
-  packageSuites = cfg.packageSuites or { };
-
-  # --- Consolidated Package Imports (single evaluation) ---------------------
-  # Import all package modules once, then conditionally use them
+  # --- Import all package modules ------------------------------------
   allPackageModules = {
     core = import ./core.nix { inherit pkgs; };
     nixTools = import ./nix-tools.nix { inherit pkgs; };
     devTools = import ./dev-tools.nix { inherit pkgs; };
     sysadmin = import ./sysadmin.nix { inherit pkgs; };
-    devops = import ./devops.nix {
-      inherit pkgs lib;
-      kubernetes = false;
-    };
+    devops = import ./devops.nix { inherit pkgs; };
     media = import ./media-tools.nix { inherit pkgs; };
     macos = import ./macos-tools.nix { inherit pkgs; };
     aiTools = import ./ai-tools.nix { inherit pkgs; };
@@ -42,45 +33,27 @@ let
     lua = import ./lua-tools.nix { inherit pkgs; };
   };
 
-  # --- Conditional Package Selection (using cached imports) -----------------
-  # Core packages (always enabled)
-  corePackages = allPackageModules.core;
-  inherit (allPackageModules) nixTools devTools;
-
-  # Conditional package collections
-  sysadminTools = lib.optionals (packageSuites.sysadmin.enable or true) allPackageModules.sysadmin;
-  devopsTools = lib.optionals (packageSuites.tools.devops.enable or true) allPackageModules.devops;
-  mediaTools = lib.optionals (packageSuites.tools.media.enable or false) allPackageModules.media;
-  macosTools = lib.optionals (isDarwin && (packageSuites.tools.macos.enable or isDarwin)) allPackageModules.macos;
-  aiTools = lib.optionals (packageSuites.tools.ai.enable or false) allPackageModules.aiTools;
-
-  # Development language tools (conditional based on interface config)
-  pythonTools = lib.optionals (packageSuites.development.python.enable or true) allPackageModules.python;
-  rustTools = lib.optionals (packageSuites.development.rust.enable or true) allPackageModules.rust;
-  nodeTools = lib.optionals (packageSuites.development.node.enable or true) allPackageModules.node;
-  luaTools = lib.optionals (packageSuites.development.lua.enable or true) allPackageModules.lua;
-
 in
 {
   home.packages = lib.flatten [
-    # --- Core Packages (always included) ------------------------------------
-    corePackages
-    nixTools
-    devTools
-
-    # --- Conditional Packages -----------------------------------------------
-    sysadminTools
-    devopsTools
-    mediaTools
-    macosTools
-    aiTools
-
-    # --- Development Languages (conditional) --------------------------------
-    pythonTools
-    rustTools
-    nodeTools
-    luaTools
+    # --- Core Packages ---------------------------------------------
+    allPackageModules.core
+    allPackageModules.nixTools
+    allPackageModules.devTools
+    
+    # --- System Tools ----------------------------------------------
+    allPackageModules.sysadmin
+    allPackageModules.devops
+    allPackageModules.media
+    allPackageModules.aiTools
+    
+    # --- Platform-specific -----------------------------------------
+    (lib.optionals isDarwin allPackageModules.macos)
+    
+    # --- Development Languages -------------------------------------
+    allPackageModules.python
+    allPackageModules.rust
+    allPackageModules.node
+    allPackageModules.lua
   ];
-
-  # Interface configuration loaded successfully
 }

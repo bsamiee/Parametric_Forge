@@ -2,8 +2,8 @@
 # Author        : Bardia Samiee
 # Project       : Parametric Forge
 # License       : MIT
-# Path          : 01.home/00.core/configs/poetry.toml
-# ----------------------------------------------------------------------------
+# Path          : /01.home/00.core/configs/poetry.toml
+# -----------------------------------------------------------------------------
 # Poetry configuration with XDG compliance and performance settings
 
 # --- XDG Base Directory Compliance -------------------------------------------

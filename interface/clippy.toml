@@ -1,9 +1,0 @@
-# Clippy configuration for stricter linting
-msrv = "1.89.0"
-
-# Deny certain lints to enforce good practices
-avoid-breaking-exported-api = false
-cognitive-complexity-threshold = 30
-too-many-arguments-threshold = 7
-type-complexity-threshold = 250
-trivial-copy-size-limit = 128

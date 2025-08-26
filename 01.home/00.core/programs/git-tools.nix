@@ -13,7 +13,8 @@ _:
   programs = {
     git = {
       enable = true;
-      # User information intentionally not set - configured per-machine
+      userName = "bsamiee";
+      userEmail = "b.samiee93@gmail.com";
       # --- Git Tools --------------------------------------------------------
       lfs.enable = true;
       delta = {
@@ -108,6 +109,18 @@ _:
           border = "rounded";
           sidePanelWidth = 0.3333;
           nerdFontsVersion = "3";
+          # Dracula theme colors
+          theme = {
+            activeBorderColor = [ "#ff79c6" "bold" ]; # Pink
+            inactiveBorderColor = [ "#6272a4" ]; # Comment
+            searchingActiveBorderColor = [ "#f1fa8c" "bold" ]; # Yellow
+            optionsTextColor = [ "#8be9fd" ]; # Cyan
+            selectedLineBgColor = [ "#44475a" ]; # Current Line
+            cherryPickedCommitFgColor = [ "#8be9fd" ]; # Cyan
+            cherryPickedCommitBgColor = [ "#bd93f9" ]; # Purple
+            unstagedChangesColor = [ "#ff5555" ]; # Red
+            defaultFgColor = [ "#f8f8f2" ]; # Foreground
+          };
         };
         # --- Git Workflow ---------------------------------------------------
         git = {
