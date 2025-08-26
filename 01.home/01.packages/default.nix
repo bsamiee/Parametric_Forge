@@ -40,16 +40,16 @@ in
     allPackageModules.core
     allPackageModules.nixTools
     allPackageModules.devTools
-    
+
     # --- System Tools ----------------------------------------------
     allPackageModules.sysadmin
     allPackageModules.devops
     allPackageModules.media
     allPackageModules.aiTools
-    
+
     # --- Platform-specific -----------------------------------------
     (lib.optionals isDarwin allPackageModules.macos)
-    
+
     # --- Development Languages -------------------------------------
     allPackageModules.python
     allPackageModules.rust

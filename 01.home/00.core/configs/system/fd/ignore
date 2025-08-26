@@ -1,0 +1,115 @@
+# Title         : ignore
+# Author        : Bardia Samiee
+# Project       : Parametric Forge
+# License       : MIT
+# Path          : /01.home/00.core/configs/system/fd/ignore
+# ----------------------------------------------------------------------------
+# Global ignore patterns for fd - fast file finder
+# These patterns are applied in addition to .gitignore files
+
+# --- Version Control --------------------------------------------------------
+.git/
+.svn/
+.hg/
+.bzr/
+_darcs/
+
+# --- Build Artifacts --------------------------------------------------------
+target/
+build/
+dist/
+out/
+*.o
+*.a
+*.so
+*.dylib
+*.dll
+*.exe
+*.class
+*.pyc
+*.pyo
+__pycache__/
+
+# --- Dependencies -----------------------------------------------------------
+node_modules/
+.venv/
+venv/
+vendor/
+bower_components/
+.bundle/
+.cargo/registry/
+.cargo/git/
+
+# --- IDE/Editor -------------------------------------------------------------
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+.project
+.classpath
+.settings/
+
+# --- Cache/Temporary --------------------------------------------------------
+.cache/
+.direnv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+*.log
+*.tmp
+*.temp
+/tmp/
+/temp/
+
+# --- macOS ------------------------------------------------------------------
+.Spotlight-V100/
+.Trashes/
+.fseventsd/
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.AppleDouble/
+.LSOverride
+
+# --- Linux ------------------------------------------------------------------
+.Trash-*/
+lost+found/
+
+# --- Nix/Home-Manager -------------------------------------------------------
+result
+result-*
+.direnv/
+.envrc.cache
+
+# --- Large Files ------------------------------------------------------------
+*.iso
+*.dmg
+*.img
+*.vmdk
+*.vdi
+*.vhd
+*.qcow2
+
+# --- Archives (optional - uncomment if needed) -----------------------------
+# *.zip
+# *.tar
+# *.tar.gz
+# *.tgz
+# *.tar.bz2
+# *.tbz2
+# *.tar.xz
+# *.txz
+# *.rar
+# *.7z
+
+# --- Media (optional - uncomment if needed) --------------------------------
+# *.mp4
+# *.avi
+# *.mkv
+# *.mov
+# *.mp3
+# *.flac
+# *.wav

@@ -19,7 +19,7 @@
   xdg.configFile = {
     # --- Terminal Configuration ---------------------------------------------
     "wezterm/wezterm.lua".source = ./00.core/configs/apps/wezterm.lua;
-    "starship.toml".source = ./00.core/configs/apps/starship.toml;
+    # Note: starship.toml handled by programs.starship.settings in shell-tools.nix
     "ccstatusline/settings.json".source = ./00.core/configs/apps/ccstatusline-settings.json;
 
     # --- Git Configuration --------------------------------------------------
@@ -54,6 +54,23 @@
     "taplo/taplo.toml".source = ./00.core/configs/formatting/.taplo.toml; # TODO: taplo only reads from project root, move to templates
     "yamllint/config".source = ./00.core/configs/formatting/.yamllint.yml; # OK: yamllint uses YAMLLINT_CONFIG_FILE env var
 
+    # --- File & Directory Operations Tools ----------------------------------
+    # Eza (modern ls replacement)
+    "eza/theme.yml".source = ./00.core/configs/system/eza/theme.yml; # Dracula-inspired theme
+    # Fd (modern find replacement)
+    "fd/ignore".source = ./00.core/configs/system/fd/ignore; # Global ignore patterns
+    
+    # --- Text Processing & Search Tools -------------------------------------
+    # Ripgrep (ultra-fast text search)
+    "ripgrep/config".source = ./00.core/configs/system/ripgrep/config; # Global ripgrep configuration
+    
+    # --- File Analysis & Diff Tools ----------------------------------------
+    "tokei/tokei.toml".source = ./00.core/configs/system/tokei/tokei.toml; # Code statistics config
+
+    # --- Media Processing ---------------------------------------------------
+    # ImageMagick
+    "ImageMagick/policy.xml".source = ./00.core/configs/media-tools/imagemagick/policy.xml;
+
     # --- Container Runtime Configurations -----------------------------------
     "docker/config.json".source = ./00.core/configs/containers/docker-config.json;
     "colima/default/colima.yaml".source = ./00.core/configs/containers/colima.yaml;
@@ -65,20 +82,23 @@
   };
   # --- Home Files (Non-XDG) -------------------------------------------------
   home.file = {
-    # --- SQLite Configuration ------------------------------------------------
+    # --- DNS Tools ----------------------------------------------------------
+    ".digrc".source = ./00.core/configs/system/dig/.digrc;
+    # --- SQLite Configuration -----------------------------------------------
     ".sqliterc".source = ./00.core/configs/languages/sqliterc;
     # --- Root-level Rust configs (Rust tools expect these here) -------------
     ".rustfmt.toml".source = ./00.core/configs/languages/rustfmt.toml;
     ".cargo-deny.toml".source = ./00.core/configs/languages/cargo-deny.toml;
     # These tools look for configs in home root and don't support env vars:
     ".prettierrc".source = ./00.core/configs/formatting/.prettierrc;
+    ".ncurc.json".source = ./00.core/configs/node/.ncurc.json;
     ".stylua.toml".source = ./00.core/configs/languages/.stylua.toml;
     ".yamlfmt".source = ./00.core/configs/formatting/.yamlfmt;
     ".editorconfig".source = ./00.core/configs/formatting/.editorconfig;
     # --- Container Runtime Files (Home Root) --------------------------------
     ".dockerignore".source = ./00.core/configs/containers/.dockerignore;
-    # --- PostgreSQL Formatter ------------------------------------------------
-    ".pg_format".source = ./00.core/configs/formatting/pg_format; # TODO: pgformatter only reads from ~/, doesn't support XDG
+    # --- TLDR Configuration -------------------------------------------------
+    ".tldrrc".source = ./00.core/configs/system/tldr/.tldrrc;
 
     # --- Asset Folder Files -------------------------------------------------
   }
@@ -101,7 +121,10 @@
     lib.optionals (binPackage != null) [ binPackage ];
 
   # --- Platform-Specific Data Files -----------------------------------------
-  xdg.dataFile = lib.optionalAttrs (!pkgs.stdenv.isDarwin) {
+  xdg.dataFile = {
+    # Pandoc
+    "pandoc/defaults/forge.yaml".source = ./00.core/configs/media-tools/pandoc/defaults.yaml;
+  } // lib.optionalAttrs (!pkgs.stdenv.isDarwin) {
     # Desktop entries for Linux (not needed on macOS which uses .app bundles)
     "applications/code.desktop" = {
       text = ''

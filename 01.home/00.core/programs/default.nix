@@ -12,6 +12,7 @@
   imports = [
     ./container-tools.nix
     ./git-tools.nix
+    ./media-tools.nix
     ./shell-tools.nix
     ./ssh.nix
     ./zsh.nix

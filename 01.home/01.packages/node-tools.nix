@@ -13,13 +13,11 @@ with pkgs;
   # --- Node.js Toolchain ----------------------------------------------------
   nodejs_22 # Node.js runtime
   pnpm # Fast, disk space efficient package manager
-  yarn # Alternative package manager
 
   # --- Infrastructure & Automation Tools ------------------------------------
   nodePackages.npm-check-updates # Check for dependency updates (ncu command)
   nodePackages.http-server # Simple zero-config HTTP server for testing
   nodePackages.concurrently # Run multiple commands concurrently
-  nodePackages.json-server # Quick REST API mock server from JSON files
   nodePackages.serve # Static file server with hot reload
 
   # --- Code Quality Tools ---------------------------------------------------

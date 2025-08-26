@@ -24,8 +24,6 @@ with pkgs;
   # --- SQL Quality Tools -----------------------------------------------------
   sqlfluff # SQL linter and formatter (multi-dialect)
   sqlcheck # Anti-pattern detection for SQL queries
-  pgformatter # PostgreSQL syntax beautifier
-  squawk # PostgreSQL migration safety linter
 
   # --- Config File Language Servers -----------------------------------------
   taplo # TOML formatter and linter

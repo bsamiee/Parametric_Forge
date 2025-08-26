@@ -51,11 +51,12 @@
       mkdir -pm 755 "${config.xdg.cacheHome}"
       # --- Configuration Directories ---------------------------------------
       mkdir -pm 755 "${config.xdg.configHome}/fontconfig"
-      mkdir -pm 755 "${config.xdg.configHome}/git"
+      mkdir -pm 755 "${config.xdg.configHome}/ImageMagick"
       mkdir -pm 755 "${config.xdg.configHome}/nix"
       mkdir -pm 755 "${config.xdg.configHome}/nil"
       mkdir -pm 755 "${config.xdg.configHome}/op"
       mkdir -pm 755 "${config.xdg.configHome}/nvim"
+      # Node/npm tools (npm doesn't support XDG but we use NPM_CONFIG_USERCONFIG)
       mkdir -pm 755 "${config.xdg.configHome}/npm"
       mkdir -pm 755 "${config.xdg.configHome}/docker"
       mkdir -pm 755 "${config.xdg.configHome}/containers"
@@ -66,12 +67,21 @@
       mkdir -pm 755 "${config.xdg.configHome}/hadolint"
       mkdir -pm 755 "${config.xdg.configHome}/wezterm"
       mkdir -pm 755 "${config.xdg.configHome}/xh"
+      mkdir -pm 755 "${config.xdg.configHome}/yt-dlp"
       mkdir -pm 755 "${config.xdg.configHome}/shellcheck"
       # Shell tools (managed by home-manager or have configs)
-      mkdir -pm 755 "${config.xdg.configHome}/broot" # Managed by home-manager
-      mkdir -pm 755 "${config.xdg.configHome}/starship" # Has config file
-      mkdir -pm 755 "${config.xdg.configHome}/mcfly" # Managed by home-manager
-      mkdir -pm 755 "${config.xdg.configHome}/bottom" # Managed by home-manager
+      mkdir -pm 755 "${config.xdg.configHome}/broot"
+      mkdir -pm 755 "${config.xdg.configHome}/starship"
+      mkdir -pm 755 "${config.xdg.configHome}/mcfly"
+      mkdir -pm 755 "${config.xdg.configHome}/eza"
+      mkdir -pm 755 "${config.xdg.configHome}/fd"
+      mkdir -pm 755 "${config.xdg.configHome}/ripgrep"
+      # File Analysis & Diff Tools
+      mkdir -pm 755 "${config.xdg.configHome}/tokei"
+      mkdir -pm 755 "${config.xdg.configHome}/file"
+      # Media Processing
+      mkdir -pm 755 "${config.xdg.configHome}/ffmpeg"
+      mkdir -pm 755 "${config.xdg.configHome}/bottom"
       mkdir -pm 755 "${config.xdg.configHome}/marksman"
       mkdir -pm 755 "${config.xdg.configHome}/rust-analyzer"
       mkdir -pm 755 "${config.xdg.configHome}/clippy"
@@ -96,21 +106,17 @@
       mkdir -pm 755 "${config.xdg.configHome}/pre-commit"
       # SQL Tools
       mkdir -pm 755 "${config.xdg.configHome}/sqlfluff"
-      mkdir -pm 755 "${config.xdg.configHome}/pgformatter"
-      # Secret Management
-      mkdir -pm 755 "${config.xdg.configHome}/vault"
-      mkdir -pm 755 "${config.xdg.configHome}/pass"
-      mkdir -pm 755 "${config.xdg.configHome}/gopass"
       # Backup & Sync
       mkdir -pm 755 "${config.xdg.configHome}/restic"
       mkdir -pm 755 "${config.xdg.configHome}/rclone"
       # Data Processing
       mkdir -pm 755 "${config.xdg.configHome}/fx"
       mkdir -pm 755 "${config.xdg.configHome}/jless"
+      # Document Processing
+      mkdir -pm 755 "${config.xdg.configHome}/pandoc"
       # Utilities
       mkdir -pm 755 "${config.xdg.configHome}/tldr"
       mkdir -pm 755 "${config.xdg.configHome}/watchexec"
-      # --- Data Directories ------------------------------------------------
       mkdir -pm 755 "${config.xdg.dataHome}/applications"
       mkdir -pm 755 "${config.xdg.dataHome}/fonts"
       mkdir -pm 755 "${config.xdg.dataHome}/icons"
@@ -120,7 +126,11 @@
       mkdir -pm 755 "${config.xdg.dataHome}/cargo"
       mkdir -pm 755 "${config.xdg.dataHome}/rustup"
       mkdir -pm 755 "${config.xdg.dataHome}/go"
+      # Node package managers (npm needs NPM_CONFIG_PREFIX, pnpm is XDG-compliant)
       mkdir -pm 755 "${config.xdg.dataHome}/npm"
+      mkdir -pm 755 "${config.xdg.dataHome}/pnpm"
+      mkdir -pm 755 "${config.xdg.dataHome}/pnpm/store"
+      mkdir -pm 755 "${config.xdg.dataHome}/pnpm/global"
       mkdir -pm 755 "${config.xdg.dataHome}/pipx"
       # NOTE: gradle not installed - removed directory
       mkdir -pm 755 "${config.xdg.dataHome}/docker-machine"
@@ -130,14 +140,25 @@
       # NOTE: gnupg not installed - removed directory
       # Build & Task Automation
       mkdir -pm 755 "${config.xdg.dataHome}/pre-commit"
-      # Secret Management
-      mkdir -pm 755 "${config.xdg.dataHome}/pass"
-      mkdir -pm 755 "${config.xdg.dataHome}/gopass"
-      mkdir -pm 755 "${config.xdg.dataHome}/vault"
       # Shell tools data
       mkdir -pm 755 "${config.xdg.dataHome}/broot"
       mkdir -pm 755 "${config.xdg.dataHome}/zoxide"
       mkdir -pm 755 "${config.xdg.dataHome}/mcfly"
+      # Document processing data
+      mkdir -pm 755 "${config.xdg.dataHome}/pandoc"
+      mkdir -pm 755 "${config.xdg.dataHome}/pandoc/defaults"
+      mkdir -pm 755 "${config.xdg.dataHome}/pandoc/templates"
+      mkdir -pm 755 "${config.xdg.dataHome}/pandoc/filters"
+      mkdir -pm 755 "${config.xdg.dataHome}/pandoc/csl"
+      # Media Processing
+      mkdir -pm 755 "${config.xdg.dataHome}/ffmpeg"
+      # File Analysis & Diff Tools
+      mkdir -pm 755 "${config.xdg.dataHome}/file"
+      mkdir -pm 755 "${config.xdg.dataHome}/tokei"
+      # Trash (FreeDesktop.org specification)
+      mkdir -pm 755 "${config.xdg.dataHome}/Trash"
+      mkdir -pm 755 "${config.xdg.dataHome}/Trash/files"
+      mkdir -pm 755 "${config.xdg.dataHome}/Trash/info"
       # --- State Directories -----------------------------------------------
       mkdir -pm 755 "${config.xdg.stateHome}/nix"
       mkdir -pm 755 "${config.xdg.stateHome}/logs"
@@ -146,7 +167,9 @@
       mkdir -pm 755 "${config.xdg.cacheHome}/zsh"
       mkdir -pm 755 "${config.xdg.stateHome}/less"
       mkdir -pm 755 "${config.xdg.stateHome}/python"
+      mkdir -pm 755 "${config.xdg.stateHome}/pnpm" # pnpm uses XDG_STATE_HOME directly
       mkdir -pm 755 "${config.xdg.stateHome}/sqlite"
+      mkdir -pm 755 "${config.xdg.stateHome}/ffmpeg"
       mkdir -pm 755 "${config.xdg.stateHome}/wezterm"  # For daemon socket and logs
       # --- Cache Directories -----------------------------------------------
       mkdir -pm 755 "${config.xdg.cacheHome}/nix"
@@ -155,8 +178,14 @@
       mkdir -pm 755 "${config.xdg.cacheHome}/claude"
       mkdir -pm 755 "${config.xdg.cacheHome}/claude/logs"
       mkdir -pm 755 "${config.xdg.cacheHome}/fontconfig"
-      mkdir -pm 755 "${config.xdg.cacheHome}/npm"
-      mkdir -pm 755 "${config.xdg.cacheHome}/npm-tmp"
+      # Media processing caches
+      mkdir -pm 755 "${config.xdg.cacheHome}/ImageMagick"
+      mkdir -pm 755 "${config.xdg.cacheHome}/yt-dlp"
+      mkdir -pm 755 "${config.xdg.cacheHome}/ffmpeg"
+      # Node package manager caches
+      mkdir -pm 755 "${config.xdg.cacheHome}/npm" # npm cache (not XDG-aware but uses this)
+      mkdir -pm 755 "${config.xdg.cacheHome}/pnpm" # pnpm uses XDG_CACHE_HOME directly
+      mkdir -pm 755 "${config.xdg.cacheHome}/ncu" # npm-check-updates cache
       mkdir -pm 755 "${config.xdg.cacheHome}/pip"
       mkdir -pm 755 "${config.xdg.cacheHome}/pypoetry"
       mkdir -pm 755 "${config.xdg.cacheHome}/pylint"
@@ -185,10 +214,8 @@
       mkdir -pm 755 "${config.xdg.cacheHome}/lua-language-server"
       # Build & Task Automation caches
       mkdir -pm 755 "${config.xdg.cacheHome}/pre-commit"
-      # SQL Tools caches  
+      # SQL Tools caches
       mkdir -pm 755 "${config.xdg.cacheHome}/sqlfluff"
-      # Secret Management caches
-      mkdir -pm 755 "${config.xdg.cacheHome}/vault"
       # Backup & Sync caches
       mkdir -pm 755 "${config.xdg.cacheHome}/restic"
       mkdir -pm 755 "${config.xdg.cacheHome}/rclone"

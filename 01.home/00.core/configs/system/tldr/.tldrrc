@@ -1,0 +1,5 @@
+{
+  "platform": "linux",
+  "skipUpdateWhenPageNotFound": false,
+  "theme": "ocean"
+}

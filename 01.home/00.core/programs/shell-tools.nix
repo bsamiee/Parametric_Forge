@@ -13,6 +13,22 @@
 
 {
   programs = {
+    # --- JQ (JSON processor) ------------------------------------------------
+    jq = {
+      enable = true;
+      colors = {
+        # Dracula theme colors for JSON output
+        null = "0;38;5;241"; # Comment (#6272a4) - muted for null
+        false = "0;38;5;203"; # Red (#ff5555) - false as warning/error
+        true = "0;38;5;84"; # Green (#50fa7b) - true as success
+        numbers = "0;38;5;141"; # Purple (#bd93f9) - numbers distinct
+        strings = "0;38;5;228"; # Yellow (#f1fa8c) - strings as literals
+        arrays = "0;38;5;117"; # Cyan (#8be9fd) - arrays as containers
+        objects = "0;38;5;212"; # Pink (#ff79c6) - objects as structures
+        objectKeys = "0;38;5;215"; # Orange (#ffb86c) - keys as identifiers
+      };
+    };
+
     # --- Nix Index ----------------------------------------------------------
     nix-index = {
       enable = true;
@@ -76,23 +92,15 @@
     # --- Ripgrep (grep replacement) -----------------------------------------
     ripgrep = {
       enable = true;
-      arguments = [
-        "--smart-case"
-        "--hidden"
-        "--glob=!.git/*"
-      ];
+      # Configuration handled via RIPGREP_CONFIG_PATH environment variable
+      # pointing to ~/.config/ripgrep/config
     };
 
     # --- Fd (find replacement) ----------------------------------------------
     fd = {
       enable = true;
       hidden = true; # Search hidden files by default
-      ignores = [
-        ".git/"
-        "node_modules/"
-        "target/"
-        ".direnv/"
-      ];
+      # Note: Ignore patterns managed via ${XDG_CONFIG_HOME}/fd/ignore file
     };
 
     # --- McFly (smart shell history) ----------------------------------------

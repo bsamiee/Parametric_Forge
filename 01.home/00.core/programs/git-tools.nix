@@ -20,8 +20,31 @@ _:
       delta = {
         enable = true;
         options = {
-          navigate = true;
-          line-numbers = true;
+          # --- Core Features --------------------------------------------------
+          navigate = true; # Use n and N to navigate between diff sections
+          line-numbers = true; # Show line numbers
+          side-by-side = false; # Set to true for side-by-side view (wider terminals)
+          hyperlinks = true; # Make commit hashes clickable in supported terminals
+          
+          # --- Dracula Theme Configuration ------------------------------------
+          syntax-theme = "Dracula";
+          plus-style = "syntax #003800"; # Added lines - dark green background
+          minus-style = "syntax #3f0001"; # Removed lines - dark red background
+          
+          # --- Decorations ----------------------------------------------------
+          features = "decorations line-numbers"; # Enable feature groups
+          decorations = {
+            commit-decoration-style = "bold yellow box ul";
+            file-style = "bold yellow ul";
+            file-decoration-style = "none";
+            hunk-header-decoration-style = "cyan box ul";
+          };
+          
+          # --- Line Numbers ---------------------------------------------------
+          line-numbers-left-style = "cyan";
+          line-numbers-right-style = "cyan";
+          line-numbers-minus-style = "124"; # Red for removed lines
+          line-numbers-plus-style = "28"; # Green for added lines
         };
       };
       # --- Core Configuration -----------------------------------------------

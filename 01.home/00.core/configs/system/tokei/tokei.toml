@@ -1,0 +1,25 @@
+# Title         : tokei.toml
+# Author        : Bardia Samiee
+# Project       : Parametric Forge
+# License       : MIT
+# Path          : /01.home/00.core/configs/system/tokei/tokei.toml
+# ----------------------------------------------------------------------------
+# Tokei configuration for code statistics analysis
+
+# Display settings
+columns = 100                           # Terminal width for proper alignment
+hidden = true                            # Include hidden files in analysis
+treat_doc_strings_as_comments = true    # Count docstrings as comments, not code
+
+# Ignore settings
+no_ignore_dot = false                    # Respect .ignore and .tokeignore files
+no_ignore_vcs = false                    # Respect VCS ignore files (.gitignore, etc.)
+
+# Default sort order
+sort = "lines"                           # Sort by lines of code by default
+
+# Language filtering (uncomment to filter)
+# types = ["Rust", "Python", "TypeScript", "Nix", "Shell"]
+
+# Exclusion patterns (in addition to ignore files)
+# exclude = ["target", "node_modules", "*.min.js", "dist", "build"]

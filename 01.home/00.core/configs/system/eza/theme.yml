@@ -1,0 +1,114 @@
+# Title         : theme.yml
+# Author        : Bardia Samiee
+# Project       : Parametric Forge
+# License       : MIT
+# Path          : /01.home/00.core/configs/system/eza/theme.yml
+# ----------------------------------------------------------------------------
+# Eza theme configuration - Dracula-inspired colors
+
+filekinds:
+  normal: 248            # f8f8f2 - Foreground
+  directory: 141         # bd93f9 - Purple
+  symlink: 117          # 8be9fd - Cyan
+  pipe: 228             # f1fa8c - Yellow
+  block_device: 215     # ffb86c - Orange
+  char_device: 215      # ffb86c - Orange
+  socket: 212           # ff79c6 - Pink
+  special: 203          # ff5555 - Red
+  executable: 84        # 50fa7b - Green
+
+perms:
+  user_read: 228        # f1fa8c - Yellow
+  user_write: 203       # ff5555 - Red
+  user_execute_file: 84 # 50fa7b - Green
+  user_execute_other: 84
+
+  group_read: 141       # bd93f9 - Purple
+  group_write: 141
+  group_execute: 84
+
+  other_read: 117       # 8be9fd - Cyan
+  other_write: 117
+  other_execute: 84
+
+  special_user_file: 215    # ffb86c - Orange
+  special_other: 215
+
+  attribute: 241        # 6272a4 - Comment
+
+size:
+  major: 215            # ffb86c - Orange
+  minor: 228            # f1fa8c - Yellow
+
+  number_byte: 248      # f8f8f2 - Foreground
+  number_kilo: 117      # 8be9fd - Cyan
+  number_mega: 141      # bd93f9 - Purple
+  number_giga: 212      # ff79c6 - Pink
+  number_huge: 203      # ff5555 - Red
+
+  unit_byte: 248
+  unit_kilo: 117
+  unit_mega: 141
+  unit_giga: 212
+  unit_huge: 203
+
+users:
+  user_you: 84          # 50fa7b - Green
+  user_root: 203        # ff5555 - Red
+  user_other: 228       # f1fa8c - Yellow
+
+  group_yours: 84
+  group_other: 228
+
+links:
+  normal: 117           # 8be9fd - Cyan
+  multi_link_file: 215  # ffb86c - Orange
+
+git:
+  new: 84               # 50fa7b - Green
+  modified: 228         # f1fa8c - Yellow
+  deleted: 203          # ff5555 - Red
+  renamed: 141          # bd93f9 - Purple
+  typechange: 215       # ffb86c - Orange
+  ignored: 241          # 6272a4 - Comment
+  conflicted: 203       # ff5555 - Red
+
+security_context:
+  colon: 241            # 6272a4 - Comment
+  user: 228             # f1fa8c - Yellow
+  role: 141             # bd93f9 - Purple
+  typ: 117              # 8be9fd - Cyan
+  range: 212            # ff79c6 - Pink
+
+file_type:
+  image: 212            # ff79c6 - Pink
+  video: 141            # bd93f9 - Purple
+  music: 117            # 8be9fd - Cyan
+  lossless: 117
+  crypto: 84            # 50fa7b - Green
+  document: 228         # f1fa8c - Yellow
+  compressed: 215       # ffb86c - Orange
+  temp: 241             # 6272a4 - Comment
+  compiled: 203         # ff5555 - Red
+  source: 84            # 50fa7b - Green
+  build: 215            # ffb86c - Orange
+
+punctuation: 241        # 6272a4 - Comment
+
+date:
+  moment: 84            # 50fa7b - Green (just now)
+  hour_old: 117         # 8be9fd - Cyan
+  day_old: 228          # f1fa8c - Yellow
+  week_old: 141         # bd93f9 - Purple
+  older: 241            # 6272a4 - Comment
+
+inode:
+  valid: 141            # bd93f9 - Purple
+  invalid: 203          # ff5555 - Red
+
+overlays:
+  acl: 215              # ffb86c - Orange
+  extended: 117         # 8be9fd - Cyan
+
+broken_symlink: 203    # ff5555 - Red
+broken_path_overlay: 239 # Dark overlay

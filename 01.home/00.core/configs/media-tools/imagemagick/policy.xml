@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ImageMagick Security Policy -->
+<!-- Parametric Forge - Secure defaults for ImageMagick -->
+<policymap>
+  <!-- Resource limits -->
+  <policy domain="resource" name="temporary-path" value="/tmp"/>
+  <policy domain="resource" name="memory" value="1GB"/>
+  <policy domain="resource" name="disk" value="2GB"/>
+  <policy domain="resource" name="map" value="1GB"/>
+  <policy domain="resource" name="area" value="128MB"/>
+  <policy domain="resource" name="height" value="16KP"/>
+  <policy domain="resource" name="width" value="16KP"/>
+  <policy domain="resource" name="list-length" value="128"/>
+  <policy domain="resource" name="time" value="120"/>
+  <policy domain="resource" name="thread" value="4"/>
+
+  <!-- System security policies -->
+  <policy domain="system" name="shred" value="2"/>
+  <policy domain="system" name="precision" value="6"/>
+
+  <!-- Path-based access control -->
+  <policy domain="path" rights="none" pattern="@*"/>
+  <policy domain="path" rights="none" pattern="|*"/>
+  <policy domain="path" rights="none" pattern="~*"/>
+
+  <!-- Coder restrictions for security -->
+  <!-- Disable dangerous coders -->
+  <policy domain="coder" rights="none" pattern="EPHEMERAL"/>
+  <policy domain="coder" rights="none" pattern="URL"/>
+  <policy domain="coder" rights="none" pattern="HTTPS"/>
+  <policy domain="coder" rights="none" pattern="HTTP"/>
+  <policy domain="coder" rights="none" pattern="FTP"/>
+  <policy domain="coder" rights="none" pattern="MVG"/>
+  <policy domain="coder" rights="none" pattern="MSL"/>
+  <policy domain="coder" rights="none" pattern="TEXT"/>
+  <policy domain="coder" rights="none" pattern="SHOW"/>
+  <policy domain="coder" rights="none" pattern="WIN"/>
+  <policy domain="coder" rights="none" pattern="PLT"/>
+
+  <!-- PDF security (prevent Ghostscript vulnerabilities) -->
+  <policy domain="coder" rights="read|write" pattern="PDF" restrictions="noprofile"/>
+  <policy domain="coder" rights="read|write" pattern="PS" restrictions="noprofile"/>
+  <policy domain="coder" rights="read|write" pattern="PS2" restrictions="noprofile"/>
+  <policy domain="coder" rights="read|write" pattern="PS3" restrictions="noprofile"/>
+  <policy domain="coder" rights="read|write" pattern="EPS" restrictions="noprofile"/>
+  <policy domain="coder" rights="read|write" pattern="XPS" restrictions="noprofile"/>
+
+  <!-- Common safe formats -->
+  <policy domain="coder" rights="read|write" pattern="JPEG"/>
+  <policy domain="coder" rights="read|write" pattern="PNG"/>
+  <policy domain="coder" rights="read|write" pattern="GIF"/>
+  <policy domain="coder" rights="read|write" pattern="WEBP"/>
+  <policy domain="coder" rights="read|write" pattern="TIFF"/>
+  <policy domain="coder" rights="read|write" pattern="BMP"/>
+  <policy domain="coder" rights="read|write" pattern="ICO"/>
+  <policy domain="coder" rights="read|write" pattern="SVG"/>
+
+  <!-- Vector formats (limited) -->
+  <policy domain="coder" rights="read" pattern="SVG"/>
+
+  <!-- Video/animation formats -->
+  <policy domain="coder" rights="read|write" pattern="GIF"/>
+  <policy domain="coder" rights="read" pattern="MP4"/>
+  <policy domain="coder" rights="read" pattern="MPEG"/>
+  <policy domain="coder" rights="read" pattern="AVI"/>
+
+  <!-- Raw camera formats (read-only) -->
+  <policy domain="coder" rights="read" pattern="RAW"/>
+  <policy domain="coder" rights="read" pattern="DNG"/>
+  <policy domain="coder" rights="read" pattern="CR2"/>
+  <policy domain="coder" rights="read" pattern="NEF"/>
+  <policy domain="coder" rights="read" pattern="ARW"/>
+</policymap>

@@ -13,7 +13,6 @@ with pkgs;
   # --- Media Processing Tools -----------------------------------------------
   ffmpeg # Complete multimedia framework
   imagemagick # Image manipulation
-  yt-dlp # Video downloader
   pandoc # Universal document converter
   graphviz # Graph visualization software
 ]

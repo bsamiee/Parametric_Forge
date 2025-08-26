@@ -22,5 +22,6 @@
     ./xdg-daemons.nix
     ./exclusion-daemons.nix
     ./op-daemons.nix
+    ./npm-check-daemon.nix
   ];
 }

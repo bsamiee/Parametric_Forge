@@ -40,18 +40,7 @@ with pkgs;
   bats # Bash testing framework
   entr # File watcher for auto-running commands
 
-  # --- Secret Management Tools ----------------------------------------------
-  vault # HashiCorp Vault
-  pass # Unix password manager
-  gopass # Pass on steroids
-
   # --- Backup & Sync --------------------------------------------------------
   restic # Fast, secure backup program
   rclone # Cloud storage sync
-  
-  # --- Kubernetes Tools -----------------------------------------------------
-  kubectl # Kubernetes CLI
-  k9s # Terminal UI for Kubernetes
-  helm # Kubernetes package manager
-  kubectx # Switch between kubectl contexts
 ]

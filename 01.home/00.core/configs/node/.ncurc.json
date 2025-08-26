@@ -1,0 +1,9 @@
+{
+  "upgrade": true,
+  "target": "minor",
+  "reject": ["@types/*"],
+  "packageManager": "pnpm",
+  "cache": true,
+  "cacheExpiration": 15,
+  "cacheFile": "~/.cache/ncu/cache.json"
+}

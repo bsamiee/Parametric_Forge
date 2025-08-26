@@ -1,0 +1,102 @@
+# Title         : ripgrep/config
+# Author        : Bardia Samiee
+# Project       : Parametric Forge
+# License       : MIT
+# Path          : /01.home/00.core/configs/system/ripgrep/config
+# ----------------------------------------------------------------------------
+# Ripgrep global configuration - one argument per line
+
+# --- Search Behavior --------------------------------------------------------
+# Smart case search (case-insensitive unless pattern has uppercase)
+--smart-case
+
+# Search hidden files by default (files starting with .)
+--hidden
+
+# Follow symbolic links
+--follow
+
+# --- Performance & Display --------------------------------------------------
+# Maximum columns to display (prevent long lines from breaking terminal)
+--max-columns=150
+# Show preview of long lines that are cut off
+--max-columns-preview
+
+# Sort files by path (consistent output)
+--sort=path
+
+# --- Color Configuration (Dracula theme) -----------------------------------
+# Line numbers
+--colors=line:fg:yellow
+--colors=line:style:bold
+
+# File paths
+--colors=path:fg:green
+--colors=path:style:bold
+
+# Match highlighting
+--colors=match:fg:black
+--colors=match:bg:yellow
+--colors=match:style:nobold
+
+# Column indicator for long lines
+--colors=column:fg:magenta
+--colors=column:style:bold
+
+# --- Type Definitions -------------------------------------------------------
+# Web development files
+--type-add=web:*.{html,css,scss,sass,less,js,jsx,ts,tsx,vue,svelte}
+--type-add=web:*.{json,jsonc,json5}
+
+# Configuration files
+--type-add=config:*.{toml,yaml,yml,ini,conf,config}
+--type-add=config:*.{env,env.*}
+--type-add=config:.*rc
+
+# Documentation
+--type-add=docs:*.{md,markdown,rst,txt,adoc,org}
+--type-add=docs:README*,LICENSE*,CHANGELOG*
+
+# --- Global Ignore Patterns -------------------------------------------------
+# Version control
+--glob=!.git/*
+--glob=!.svn/*
+--glob=!.hg/*
+
+# Dependencies and build artifacts
+--glob=!node_modules/*
+--glob=!target/*
+--glob=!dist/*
+--glob=!build/*
+--glob=!out/*
+--glob=!.next/*
+--glob=!.nuxt/*
+--glob=!.venv/*
+--glob=!venv/*
+--glob=!__pycache__/*
+--glob=!*.pyc
+--glob=!.pytest_cache/*
+--glob=!.mypy_cache/*
+--glob=!.ruff_cache/*
+
+# Editor and IDE
+--glob=!.vscode/*
+--glob=!.idea/*
+--glob=!*.swp
+--glob=!*.swo
+--glob=!*~
+
+# OS-specific
+--glob=!.DS_Store
+--glob=!Thumbs.db
+--glob=!desktop.ini
+
+# Nix-specific
+--glob=!result
+--glob=!result-*
+--glob=!.direnv/*
+
+# Cache and logs
+--glob=!.cache/*
+--glob=!*.log
+--glob=!logs/*

@@ -59,10 +59,12 @@
     BINSTALL_DISABLE_TELEMETRY = "1";
     # Go
     GOPATH = "${config.xdg.dataHome}/go";
-    # Node/npm
+    # Node/npm (npm doesn't support XDG - uses these env vars for custom paths)
     NPM_CONFIG_USERCONFIG = "${config.xdg.configHome}/npm/npmrc";
     NPM_CONFIG_PREFIX = "${config.xdg.dataHome}/npm";
     NODE_REPL_HISTORY = "${config.xdg.dataHome}/node_repl_history";
+    # pnpm (fully XDG-compliant - respects XDG_* vars directly)
+    PNPM_HOME = "${config.xdg.dataHome}/pnpm"; # Base directory for pnpm installations
     # Python
     PYTHONHISTORY = "${config.xdg.stateHome}/python/history";
     PYTHONDONTWRITEBYTECODE = "1";
@@ -107,7 +109,11 @@
     # --- Formatter Configs --------------------------------------------------
     YAMLLINT_CONFIG_FILE = "${config.xdg.configHome}/yamllint/config"; # Supported by yamllint
 
-    # --- Additional Language Server Paths -----------------------------------
+    # --- Language Server Configuration --------------------------------------
+    # Bash Language Server
+    BASH_IDE_LOG_LEVEL = "info"; # Logging level for bash-language-server
+    SHELLCHECK_PATH = "shellcheck"; # Path to ShellCheck (available in PATH)
+    SHFMT_PATH = "shfmt"; # Path to shfmt (available in PATH)
     LUAROCKS_TREE = "${config.xdg.dataHome}/luarocks"; # Lua package manager
     LUAROCKS_CONFIG = "${config.xdg.configHome}/luarocks/config.lua";
 
@@ -124,10 +130,8 @@
     MAKEFLAGS = "-j$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4)";
     CMAKE_BUILD_PARALLEL_LEVEL = "$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4)";
 
-    # --- Temporary Directory Management -------------------------------------
-    # npm uses this for package extraction during install
-    NPM_CONFIG_TMP = "${config.xdg.cacheHome}/npm-tmp";
-    XH_CONFIG_DIR = "${config.xdg.configHome}/xh";
+    # --- HTTP Client Configuration -------------------------------------------
+    XH_CONFIG_DIR = "${config.xdg.configHome}/xh"; # HTTPie-like client config
 
     # --- Privacy & Telemetry Opt-Outs ---------------------------------------
     DOTNET_CLI_TELEMETRY_OPTOUT = "1";
@@ -143,12 +147,35 @@
     BAT_THEME = "Dracula"; # Consistent with Nix module setting
     BAT_STYLE = "numbers,changes,header"; # Add header for better file context
     BAT_PAGER = "less -FRX"; # Same as PAGER for consistency
+    BAT_CONFIG_PATH = "${config.xdg.configHome}/bat/config"; # Config file location
+    BAT_CACHE_PATH = "${config.xdg.cacheHome}/bat"; # Cache directory for themes/syntaxes
+    
+    # Ripgrep (ultra-fast text search)
+    RIPGREP_CONFIG_PATH = "${config.xdg.configHome}/ripgrep/config"; # Config file location
+    
+    # Delta (syntax-highlighting diff viewer)
+    DELTA_PAGER = "less -FRX"; # Override default pager for delta
+    # DELTA_FEATURES = "+side-by-side"; # Uncomment to temporarily enable features
+    
+    # Hexyl (hex viewer) - Dracula-themed colors for different byte types
+    HEXYL_COLOR_ASCII_PRINTABLE = "#50fa7b"; # Green for printable ASCII
+    HEXYL_COLOR_ASCII_WHITESPACE = "#8be9fd"; # Cyan for whitespace
+    HEXYL_COLOR_ASCII_OTHER = "#f1fa8c"; # Yellow for other ASCII
+    HEXYL_COLOR_NULL = "#ff5555"; # Red for null bytes
+    HEXYL_COLOR_NONASCII = "#bd93f9"; # Purple for non-ASCII
+    HEXYL_COLOR_OFFSET = "#6272a4"; # Comment color for offsets
+    
+    # Tokei (code statistics) - Terminal color control
+    # NO_COLOR = "1"; # Uncomment to disable colored output globally
+    # CLICOLOR_FORCE = "1"; # Uncomment to force color output when not in terminal
+    
+    # File command (file type detection)
+    MAGIC = "${config.xdg.configHome}/file/magic:${config.xdg.dataHome}/file/magic"; # Custom magic file paths
     # Zsh plugin configurations
     ZSH_AUTOSUGGEST_STRATEGY = "(history completion)"; # Try history first, then completion
     ZSH_AUTOSUGGEST_BUFFER_MAX_SIZE = "20"; # Don't suggest for long commands (20 chars)
     ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE = "fg=#6272a4"; # Dracula comment color for suggestions
-    # Completion cache location (XDG-compliant)
-    ZSH_COMPDUMP = "${config.xdg.cacheHome}/zsh/zcompdump-$ZSH_VERSION"
+    ZSH_COMPDUMP = "${config.xdg.cacheHome}/zsh/zcompdump-$ZSH_VERSION"; # Completion cache location (XDG-compliant)
     DFT_BACKGROUND = "dark";
     DFT_DISPLAY = "inline";
     NIX_INDEX_DATABASE = "${config.xdg.cacheHome}/nix-index";
@@ -164,18 +191,14 @@
     # --- Build & Task Automation --------------------------------------------
     PRE_COMMIT_HOME = "${config.xdg.dataHome}/pre-commit"; # Pre-commit hooks cache
 
-    # --- Secret Management --------------------------------------------------
-    PASSWORD_STORE_DIR = "${config.xdg.dataHome}/pass"; # Unix pass storage
-    GOPASS_CONFIG = "${config.xdg.configHome}/gopass/config.yml"; # Gopass configuration
-    GOPASS_HOMEDIR = "${config.xdg.dataHome}/gopass"; # Gopass data directory
-    VAULT_ADDR = "http://127.0.0.1:8200"; # Default Vault server address
-
     # --- Backup & Sync Tools ------------------------------------------------
     RCLONE_CONFIG = "${config.xdg.configHome}/rclone/rclone.conf"; # Rclone configuration
     RESTIC_CACHE_DIR = "${config.xdg.cacheHome}/restic"; # Restic cache
 
     # --- Development Utilities ----------------------------------------------
     TLDR_CACHE_DIR = "${config.xdg.cacheHome}/tldr"; # TLDR pages cache
+    PARALLEL = "-j+0 --bar --eta"; # GNU parallel defaults: use all cores, show progress
+    # WATCHEXEC_LOG = "debug"; # Optional: Watchexec debug logging level
 
     # --- WezTerm Integration ------------------------------------------------
     # WezTerm daemon paths (XDG-compliant)
@@ -195,8 +218,52 @@
     # Note: SSH_AUTH_SOCK is dynamically set in zsh.nix based on socket availability
 
     # --- Claude Code Configuration -------------------------------------------
+
+    # --- Network Performance Testing ----------------------------------------
+    # IPERF3_PASSWORD = "your-password-here"; # Optional: Set password for iperf3 auth
+
     CLAUDE_CONFIG_DIR = "${config.home.homeDirectory}/.claude";
     CLAUDE_CACHE_DIR = "${config.xdg.cacheHome}/claude";
+
+    # --- Network Tools ------------------------------------------------------
+    # WHOIS_SERVER = "whois.iana.org"; # Optional: Default WHOIS server
+    # IDN_DISABLE = "1"; # Optional: Disable IDN processing for dig
+
+    # --- Media Processing Configuration ---------------------------------------
+    # FFmpeg
+    # Note: FFMPEG_DATADIR is deprecated and only used for preset file discovery
+    # FFmpeg doesn't support XDG - uses ~/.ffmpeg/ for user configs
+    FFREPORT = "file=${config.xdg.stateHome}/ffmpeg/ffreport.log:level=32"; # Controls automatic logging output and verbosity
+
+    # ImageMagick
+    MAGICK_CONFIGURE_PATH = "${config.xdg.configHome}/ImageMagick"; # Configuration files search path
+    MAGICK_FONT_PATH = if (context != null && context.isDarwin)
+      then "/System/Library/Fonts:/Library/Fonts:${config.home.homeDirectory}/Library/Fonts"
+      else "${config.home.homeDirectory}/.local/share/fonts:/usr/share/fonts"; # Font files search path
+    MAGICK_TEMPORARY_PATH = "${config.xdg.cacheHome}/ImageMagick"; # Temporary files path
+    MAGICK_MEMORY_LIMIT = "1GB"; # Heap memory limit
+    MAGICK_DISK_LIMIT = "2GB"; # Disk space limit
+    MAGICK_THREAD_LIMIT = "4"; # Parallel threads limit
+
+    # --- Document Processing ------------------------------------------------
+    # Pandoc supports partial XDG compliance - uses XDG dirs but falls back to ~/.pandoc
+    PANDOC_DATA_DIR = "${config.xdg.dataHome}/pandoc"; # Override default data directory for templates, filters, CSL files
+
+    # --- Graph Visualization ------------------------------------------------
+    # Graphviz - uses same font paths as ImageMagick
+    # DOTFONTPATH = MAGICK_FONT_PATH; # Uncomment if Graphviz can't find fonts
+
+    # --- File & Directory Operations Tools ----------------------------------
+    # Eza (modern ls replacement)
+    EZA_CONFIG_DIR = "${config.xdg.configHome}/eza"; # Directory for theme.yml
+    EZA_ICON_SPACING = "2"; # Spaces between icon and filename
+    EZA_ICONS_AUTO = "1"; # Enable automatic icon display
+    # Note: EZA_COLORS removed - using theme.yml instead for color configuration
+
+    # Rsync (file synchronization)
+    RSYNC_RSH = "ssh"; # Use SSH for remote transfers (default)
+    # RSYNC_PASSWORD = ""; # Only set if using rsync daemon auth
+    # RSYNC_PROXY = ""; # Only set if behind proxy for rsync daemon
   };
 
   # --- User Session Path ----------------------------------------------------
@@ -208,5 +275,6 @@
     "${config.xdg.dataHome}/go/bin"
     "${config.xdg.dataHome}/pipx/bin"
     "${config.xdg.dataHome}/npm/bin"
+    "${config.xdg.dataHome}/pnpm"
   ];
 }

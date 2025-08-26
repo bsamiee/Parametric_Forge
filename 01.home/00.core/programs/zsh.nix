@@ -23,7 +23,10 @@
     autosuggestion.enable = true;
     syntaxHighlighting.enable = true;
     # --- Shell Aliases ------------------------------------------------------
-    shellAliases = import ../aliases/core.nix { };
+    shellAliases = lib.mkMerge [
+      (import ../aliases/core.nix { })
+      (import ../aliases/sysadmin.nix { })
+    ];
     # --- Zsh Plugins --------------------------------------------------------
     plugins = [
       {
@@ -48,7 +51,7 @@
       (lib.mkOrder 500 ''
         # Note: zsh-autosuggestions and zsh-syntax-highlighting are loaded via home-manager's
         # built-in integration (autosuggestion.enable and syntaxHighlighting.enable above)
-        
+
         # Load history substring search (not built into home-manager)
         source ${pkgs.zsh-history-substring-search}/share/zsh-history-substring-search/zsh-history-substring-search.zsh
 

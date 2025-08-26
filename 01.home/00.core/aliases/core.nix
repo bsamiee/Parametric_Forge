@@ -12,9 +12,29 @@
   # --- SQLite with Extensions ----------------------------------------------
   sqlite3 = ''sqlite3 -init ~/.sqliterc'';
 
-  # --- Memory System Shortcuts ---------------------------------------------
-  mem = ''~/.claude/hooks/memory.sh''; # Claude memory system alias
-  mem-stats = ''~/.claude/hooks/memory.sh stats''; # Claude memory system alias
-  mem-errors = ''~/.claude/hooks/memory.sh errors''; # Claude memory system alias
-  mem-query = ''~/.claude/hooks/memory.sh query''; # Claude memory system alias
+  # --- Node.js CLI Tools ---------------------------------------------------
+  # http-server
+  httpserve = "http-server";
+  httpservedev = "http-server -c-1 -o";  # No cache, auto-open
+  httpservecors = "http-server --cors";   # Enable CORS
+
+  # concurrently shorthand
+  conc = "concurrently";
+
+  # YAML/JSON conversion
+  yaml2json = "js-yaml";
+  json2yaml = "js-yaml";  # Works with piped input
+
+  # JSON manipulation
+  prettyjson = "json";
+  jval = "json --validate";
+  jkeys = "json -ka";
+  jstream = "json -ga";
+  jmerge = "json --merge";
+  jfilter = "json -c";
+
+  # serve
+  servedev = "serve -c-1 -o";  # Development mode (no cache, auto-open)
+  servecors = "serve --cors";   # Enable CORS headers
+  servessl = "serve -S";        # Enable SSL/TLS
 }
