@@ -147,7 +147,7 @@ in
             Privileges = mkDefault true;
           };
           "NSToolbar Configuration Browser" = {
-            "TB Display Mode" = mkDefault 1;
+            "TB Display Mode" = mkDefault 2;
             "TB Icon Size Mode" = mkDefault 1;
             "TB Is Shown" = mkDefault 1;
             "TB Size Mode" = mkDefault 1;
