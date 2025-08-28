@@ -106,6 +106,17 @@ let
     # Cache management
     cache = "cachix push";
     cstatus = "cachix use";
+
+    # Basic shortcuts (moved from core.nix)
+    s = "nix-shell";
+    clean = "nix-collect-garbage -d && nix store optimise && rm -rf ~/.cache/nix/* /tmp/nix-* ~/.local/share/Trash/* ~/.Trash/* 2>/dev/null && echo 'Cleanup complete. Storage:' && df -h /nix/store | tail -1";
+
+    # Utility functions (moved from zsh.nix)
+    info = "f() { [[ $# -lt 1 ]] && { echo \"Store: $(du -sh /nix/store 2>/dev/null | cut -f1), Generations: $(nix-env --list-generations 2>/dev/null | wc -l)\"; } || nix path-info --closure-size -h \"nixpkgs#$1\" 2>/dev/null || nix-store --query --roots \"$1\" 2>/dev/null || echo \"Not found: $1\"; }; f";
+    devshell = "f() { local packages=(git jq ripgrep fd bat); [[ -f \"package.json\" ]] && packages+=(nodejs); [[ -f \"pyproject.toml\" ]] && packages+=(python3); [[ -f \"Cargo.toml\" ]] && packages+=(rustc cargo); [[ -f \"go.mod\" ]] && packages+=(go); echo \"Dev shell: \${packages[*]}\"; nix-shell -p \${packages[*]}; }; f";
+    biggest = "f() { echo \"Analyzing store...\"; nix-du | head -20; }; f";
+    trace = "f() { nix build --print-build-logs --show-trace \"$@\" 2>&1 | tee build.log; }; f";
+    indexauto = "f() { local check_marker=\"$NIX_INDEX_DATABASE/.last-check\"; [[ -f \"$check_marker\" ]] && [[ $(find \"$check_marker\" -mmin -1440 2>/dev/null) ]] && return; mkdir -p \"$NIX_INDEX_DATABASE\" && touch \"$check_marker\"; [[ ! -f \"$NIX_INDEX_DATABASE/files\" ]] && { echo \"Building nix-index...\"; (nix-index 2>/dev/null) &! }; }; f";
   };
 
 in

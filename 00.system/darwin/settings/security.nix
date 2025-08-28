@@ -12,23 +12,34 @@ let
   inherit (lib) mkDefault;
 in
 {
-  # --- PAM Authentication ---------------------------------------------------
-  security.pam.services.sudo_local = {
-    enable = mkDefault true;
-    touchIdAuth = mkDefault true;
-    watchIdAuth = mkDefault false;
-    reattach = mkDefault false;
-  };
-  # --- Certificate Management -----------------------------------------------
-  security.pki = {
-    installCACerts = mkDefault true;
-    certificateFiles = [ ];
-    certificates = [ ];
-    caCertificateBlacklist = [ ];
+  # --- Security Configuration -----------------------------------------------
+  security = {
+    # --- PAM Authentication -------------------------------------------------
+    pam.services.sudo_local = {
+      enable = mkDefault true;
+      touchIdAuth = mkDefault true;
+      watchIdAuth = mkDefault false;
+      reattach = mkDefault false;
+    };
+    # --- Certificate Management ---------------------------------------------
+    pki = {
+      installCACerts = mkDefault true;
+      certificateFiles = [ ];
+      certificates = [ ];
+      caCertificateBlacklist = [ ];
+    };
+    # --- Sudoers Configuration -----------------------------------------------
+    sudo = {
+      extraConfig = ''
+        # Allow passwordless yabai scripting addition loading
+        # Note: Path will be resolved by the yabai package installation
+        %admin ALL=(root) NOPASSWD: /run/current-system/sw/bin/yabai --load-sa
+      '';
+    };
   };
   # --- Networking Security (Application Firewall) ---------------------------
   networking.applicationFirewall = {
-    enable = mkDefault true;
+    enable = mkDefault false;
     blockAllIncoming = mkDefault false;
     allowSigned = mkDefault true;
     allowSignedApp = mkDefault true;

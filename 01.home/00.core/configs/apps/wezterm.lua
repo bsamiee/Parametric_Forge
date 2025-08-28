@@ -876,16 +876,8 @@ config.keys = {
 	-- Pane splitting (Cmd+D horizontal, Cmd+Shift+D vertical) like iTerm2
 	{ key = "d", mods = "CMD", action = act.SplitHorizontal({ domain = "CurrentPaneDomain" }) },
 	{ key = "d", mods = "CMD|SHIFT", action = act.SplitVertical({ domain = "CurrentPaneDomain" }) },
-	-- Pane navigation (Ctrl + arrows) - safer than Option which is used for word jumping
-	{ key = "LeftArrow", mods = "CTRL", action = act.ActivatePaneDirection("Left") },
-	{ key = "DownArrow", mods = "CTRL", action = act.ActivatePaneDirection("Down") },
-	{ key = "UpArrow", mods = "CTRL", action = act.ActivatePaneDirection("Up") },
-	{ key = "RightArrow", mods = "CTRL", action = act.ActivatePaneDirection("Right") },
-	-- Pane resizing (Ctrl+Shift + arrows) - consistent modifier pattern
-	{ key = "LeftArrow", mods = "CTRL|SHIFT", action = act.AdjustPaneSize({ "Left", 2 }) },
-	{ key = "DownArrow", mods = "CTRL|SHIFT", action = act.AdjustPaneSize({ "Down", 2 }) },
-	{ key = "UpArrow", mods = "CTRL|SHIFT", action = act.AdjustPaneSize({ "Up", 2 }) },
-	{ key = "RightArrow", mods = "CTRL|SHIFT", action = act.AdjustPaneSize({ "Right", 2 }) },
+	-- NOTE: Removed CTRL+arrows and CTRL+SHIFT+arrows to preserve terminal functionality
+	-- Use CMD+OPT+hjkl for pane navigation and CMD+SHIFT+hjkl for resizing instead
 	-- Pane management
 	{ key = "w", mods = "CMD|OPT", action = act.CloseCurrentPane({ confirm = false }) },
 	{ key = "z", mods = "CMD|OPT", action = act.TogglePaneZoomState },

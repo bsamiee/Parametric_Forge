@@ -49,8 +49,36 @@ _:
   parallel-keep = ''parallel -k''; # Keep output order
   parallel-progress = ''parallel --bar --eta''; # Show progress bar and ETA
 
+  # --- Network & System Monitoring ------------------------------------------
+  # Basic network information (moved from core.nix)
+  myip = "xh -b GET ipinfo.io/ip"; # Public IP (body only)
+  localip = ''ipconfig getifaddr en0 2>/dev/null || ip -4 addr show | grep -oP '(?<=inet\s)\d+(\.\d+){3}' | head -1'';
+  speed = "speedtest-cli --simple"; # Quick speed test
+  ping = "gping"; # Ping with graph
+  trace = "mtr"; # Better traceroute
+
+  # Port information and management
+  ports = "lsof -iTCP -sTCP:LISTEN -n -P"; # List listening ports
+  port = "lsof -i"; # Show all network connections
+  kport = ''lsof -ti:''; # Find process on port (use with kill: kport 8080 | xargs kill)
+
+  # System monitoring
+  connections = "lsof -i -n -P | grep ESTABLISHED"; # Active network connections
+  openfiles = "lsof | wc -l"; # Count open files
+  zombie = "procs --tree | rg '<defunct>'"; # Find zombie processes
+
+  # Process management
+  k = "kill"; # Kill process
+  k9 = "kill -9"; # Force kill process
+
   # --- Smart System Operations ----------------------------------------------
   log-tail = ''f() { [[ -f docker-compose.yml ]] && docker compose logs -f || [[ $# -gt 0 ]] && tail -f "$@" || journalctl -f 2>/dev/null || tail -f /var/log/system.log 2>/dev/null || echo "No logs found"; }; f''; # Context-aware log following
   clean-dev = ''f() { fd -H -t d -E .git 'node_modules|target/debug|\.pytest_cache|\.venv|__pycache__|\.mypy_cache' . --max-depth 4 | parallel -j+0 rm -rf {} && echo "Cleaned development artifacts"; }; f''; # Clean common dev artifacts safely
   disk-hogs = ''fd -t f -S +100M --max-depth 3 | head -20 | xargs -I {} du -h {} | sort -hr''; # Find large files efficiently
+
+  # --- Backup & Sync Operations ---------------------------------------------
+  sync-cloud = ''f() { rclone sync "''${1:-.}" "''${2:?Usage: sync-cloud <local> <remote>}" --progress --exclude-from ~/.config/rclone/exclude; }; f''; # Sync to cloud storage
+  backup-snap = ''f() { restic backup "''${@:-.}" --exclude-file ~/.config/restic/exclude --tag "$(date +%Y%m%d)"; }; f''; # Create backup snapshot
+  backup-list = "restic snapshots --compact"; # List backup snapshots
+  backup-mount = ''f() { mkdir -p ~/mnt/backup && restic mount ~/mnt/backup && echo "Backup mounted at ~/mnt/backup"; }; f''; # Mount backup for browsing
 }

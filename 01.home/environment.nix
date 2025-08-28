@@ -58,10 +58,6 @@
     CARGO_NET_GIT_FETCH_WITH_CLI = "true";
     CARGO_TERM_COLOR = "always";
     BINSTALL_DISABLE_TELEMETRY = "1";
-    # Rust testing & profiling tools
-    CARGO_NEXTEST_DIR = "${config.xdg.cacheHome}/cargo-nextest"; # Nextest cache
-    CARGO_TARPAULIN_CACHE_DIR = "${config.xdg.cacheHome}/tarpaulin"; # Coverage cache
-    WASM_PACK_CACHE = "${config.xdg.cacheHome}/wasm-pack"; # WebAssembly cache
     CARGO_PROFILE_RELEASE_DEBUG = "true"; # Enable debug symbols in release for profiling
     # Go
     GOPATH = "${config.xdg.dataHome}/go";
@@ -85,7 +81,6 @@
     UV_CACHE_DIR = "${config.xdg.cacheHome}/uv";
     PYTEST_CACHE_DIR = "${config.xdg.cacheHome}/pytest";
     PIPX_DEFAULT_PYTHON = "${config.home.homeDirectory}/.nix-profile/bin/python3";
-    # Python testing orchestration
     NOX_CACHE_DIR = "${config.xdg.cacheHome}/nox"; # Nox testing cache
 
     # --- XDG-Compliant Shell History ----------------------------------------
@@ -124,9 +119,6 @@
     SHFMT_PATH = "shfmt"; # Path to shfmt (available in PATH)
     LUAROCKS_TREE = "${config.xdg.dataHome}/luarocks"; # Lua package manager
     LUAROCKS_CONFIG = "${config.xdg.configHome}/luarocks/config.lua";
-    # Lua testing tools
-    BUSTED_OUTPUT_TYPE = "utfTerminal"; # Default output format for busted tests
-    LUACOV_CONFIG = "${config.xdg.configHome}/luacov/config"; # Coverage config
 
     # --- Font Configuration -------------------------------------------------
     FONTCONFIG_PATH = "${config.xdg.configHome}/fontconfig";
@@ -171,6 +163,10 @@
 
     # Ripgrep (ultra-fast text search) - Management path only
     RIPGREP_CONFIG_PATH = "${config.xdg.configHome}/ripgrep/config"; # Config file location
+
+    # Starship (cross-shell prompt) - XDG-compliant paths
+    STARSHIP_CONFIG = "${config.xdg.configHome}/starship.toml"; # Configuration file location
+    STARSHIP_CACHE = "${config.xdg.cacheHome}/starship"; # Cache directory for session data
 
     # Delta (syntax-highlighting diff viewer)
     DELTA_PAGER = "less -FRX"; # Override default pager for delta
@@ -256,6 +252,11 @@
     # WHOIS_SERVER = "whois.iana.org"; # Optional: Default WHOIS server
     # IDN_DISABLE = "1"; # Optional: Disable IDN processing for dig
 
+    # --- File Manager Configuration ------------------------------------------
+    # Yazi - Blazing fast terminal file manager (XDG-compliant)
+    YAZI_CONFIG_HOME = "${config.xdg.configHome}/yazi"; # Config directory
+    YAZI_FILE_ONE = "${config.home.profileDirectory}/bin/file"; # File command for type detection
+
     # --- Media Processing Configuration ---------------------------------------
     # FFmpeg
     # Note: FFMPEG_DATADIR is deprecated and only used for preset file discovery
@@ -282,6 +283,16 @@
     # --- Graph Visualization ------------------------------------------------
     # Graphviz - uses same font paths as ImageMagick
     # DOTFONTPATH = MAGICK_FONT_PATH; # Uncomment if Graphviz can't find fonts
+    # D2 diagram scripting language
+    D2_LAYOUT = "dagre"; # Default layout engine (dagre, elk, tala)
+
+    # --- SketchyBar Configuration -------------------------------------------
+    # SketchyBar system stats tool
+    SKETCHYBAR_STATS_BINARY = "${config.home.profileDirectory}/bin/sketchybar-system-stats"; # System stats binary path
+    # SbarLua path
+    SBARLUA_PATH = "${config.xdg.dataHome}/sketchybar_lua"; # SbarLua library installation path
+    # App font icon mapping
+    SKETCHYBAR_ICON_MAP = "${config.home.profileDirectory}/bin/icon_map.sh"; # Icon mapping script
 
     # --- File & Directory Operations Tools ----------------------------------
     # Eza (modern ls replacement)

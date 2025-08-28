@@ -37,7 +37,7 @@ in
     };
     # --- Screenshots --------------------------------------------------------
     screencapture = {
-      location = mkDefault "${context.userHome}/Desktop";
+      location = mkDefault "${context.userHome}/Downloads";
       type = mkDefault "png";
       disable-shadow = mkDefault true;
       include-date = mkDefault true;

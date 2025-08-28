@@ -100,6 +100,12 @@ let
     delmerged = "delete-merged-branches";
     standup = "standup";
 
+    # Code quality & hooks
+    hooks = "pre-commit";
+    hookinstall = "pre-commit install";
+    hookrun = "pre-commit run --all-files";
+    hookupdate = "pre-commit update";
+
     # Git-extras analysis
     authors = "authors";
     effort = "effort";

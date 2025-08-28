@@ -32,7 +32,8 @@ in
       CACHIX_CACHE = "bsamiee";
       EDITOR = "nvim";
       VISUAL = "nvim";
-    } // homebrewVars;
+    }
+    // homebrewVars;
     # --- XDG Profile Paths --------------------------------------------------
     profiles = lib.mkBefore [
       "${context.userHome}/.local/state/nix/profile"

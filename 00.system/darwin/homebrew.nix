@@ -27,11 +27,12 @@ in
       autoUpdate = mkDefault false;
       cleanup = mkDefault "zap"; # Remove all unmanaged packages
       upgrade = mkDefault false;
-      extraFlags = mkDefault ["--verbose"]; # Better debugging output
+      extraFlags = mkDefault [ "--verbose" ]; # Better debugging output
     };
     # --- Essential Taps -----------------------------------------------------
     taps = [
       "homebrew/bundle" # Required for brewfile support
+      "FelixKratz/formulae" # SketchyBar ecosystem packages
     ];
     # --- GUI Applications (Casks) -------------------------------------------
     casks = [
@@ -60,7 +61,6 @@ in
       # Browsers & Internet
       "arc" # Modern web browser
       "firefox" # Mozilla Firefox browser
-      "google-chrome" # Google Chrome browser
       "tor-browser" # Privacy-focused browser
 
       # Communication & Social
@@ -68,6 +68,7 @@ in
       "microsoft-teams" # Microsoft Teams collaboration
       "superhuman" # Premium email client
       "telegram" # Telegram messenger
+      "whatsapp" # WhatsApp messenger
       "zoom" # Zoom video conferencing
 
       # Cloud & Storage
@@ -88,6 +89,8 @@ in
       # Media & Creative
       "blender" # 3D creation suite
       "calibre" # E-book management
+      "handbrake" # Video transcoder with GUI
+      "kindle" # Amazon Kindle e-reader
       "lockdown-browser" # Respondus LockDown Browser
       "scrivener" # Writing software
       "spotify" # Spotify music streaming
@@ -101,6 +104,9 @@ in
       "betterzip" # Preview ZIP/TAR contents without extracting
       "suspicious-package" # Inspect macOS .pkg installers
 
+      # Fonts
+      "font-sketchybar-app-font" # SketchyBar app icon font
+
       # Adobe & Creative Suite
       "adobe-acrobat-pro" # Adobe Acrobat DC
       "adobe-creative-cloud" # Adobe Creative Cloud manager
@@ -113,6 +119,7 @@ in
       "grammarly-desktop" # Grammarly writing assistant
       "parallels" # Parallels Desktop virtualization
       "rize" # Time tracking application
+      "toggl-track" # Time tracking for productivity
     ];
 
     # --- Installation Sources Summary ---------------------------------------
@@ -132,11 +139,6 @@ in
     # Hardware-Specific:
     # - CZUR Scanner: Document scanner software (hardware-specific)
     #
-    # Google Workspace (if standalone versions exist):
-    # - Google Docs: Word processing (standalone app, not web)
-    # - Google Sheets: Spreadsheet (standalone app, not web)
-    # - Google Slides: Presentations (standalone app, not web)
-    #
     # Reading & E-books:
     # - Readwise iBooks: iBooks integration tool
     # - Z-Library: E-book reader/manager (not in official repositories)
@@ -148,28 +150,23 @@ in
     brews = [
       "codex" # AI coding assistant (ChatGPT CLI)
       "mono" # .NET runtime (dependency for some tools)
+      "borders" # JankyBorders - SketchyBar window borders enhancement
+      "sketchybar" # SketchyBar status bar replacement
     ];
     # --- Mac App Store Applications -----------------------------------------
     masApps = {
-      # Apple Ecosystem
-      "Keynote" = 409183694;
-      
       # Microsoft Suite
       "Microsoft Excel" = 462058435;
       "Microsoft PowerPoint" = 462062816;
       "Microsoft Word" = 462054704;
       "OneDrive" = 823766827;
-      
+
       # Productivity & Time Management
       "Drafts" = 1435957248;
       "Fantastical" = 975937182;
       "Goodnotes" = 1444383602;
       "Timery" = 1425368544;
-      "Toggl Track" = 1291898086;
-      
-      # Communication & Social
-      "WhatsApp" = 310633997;
-      
+
       # Utilities & System
       "CARROTweather" = 993487541;
       "CleanMyMac" = 1339170533;
@@ -177,10 +174,7 @@ in
       "Keka" = 470158793;
       "Parcel" = 639968404;
       "Rapidmg" = 6451349778;
-      
-      # Reading & Media
-      "Kindle" = 302584613;
-      
+
       # Privacy & Security
       "MEGAVPN" = 6456784858;
     };

@@ -21,13 +21,14 @@ in
     let
       # Always include symbols-only for fallback glyphs
       basePackages = [ pkgs.nerd-fonts.symbols-only ];
-      
+
       # Map regular fonts to their nerd-fonts equivalents
       # This uses the actual pre-patched fonts from nixpkgs
-      getNerdFont = font:
+      getNerdFont =
+        font:
         let
           fontName = font.pname or font.name or "";
-          
+
           # Comprehensive mapping of regular fonts to nerd-fonts packages
           # Based on actual packages available in pkgs.nerd-fonts.*
           nerdFontMapping = {
@@ -57,21 +58,21 @@ in
             "go-font" = pkgs.nerd-fonts.go-mono;
             "droid-sans-mono" = pkgs.nerd-fonts.droid-sans-mono;
             "terminus-font" = pkgs.nerd-fonts.terminess-ttf;
-            
+
             # Name transformations (nixpkgs uses different names)
             "ibm-plex" = pkgs.nerd-fonts.blex-mono; # IBM Plex Mono
             "source-code-pro" = pkgs.nerd-fonts.sauce-code-pro;
             "overpass" = pkgs.nerd-fonts.overpass;
             "geist-font" = pkgs.nerd-fonts.geist-mono;
-            
+
             # Fonts that need the originals (no nerd-fonts variant)
             "inter" = font; # Use original + symbols-only fallback
             "dm-sans" = font; # Use original
-            "source-sans" = font; # Use original  
+            "source-sans" = font; # Use original
             "source-serif" = font; # Use original
             "source-sans-pro" = font; # Use original
             "source-serif-pro" = font; # Use original
-            
+
             # Emoji and symbol fonts - never patch these
             "openmoji-color" = font;
             "openmoji-black" = font;
@@ -79,7 +80,7 @@ in
             "noto-fonts-color-emoji" = font;
             "emojione" = font;
             "twemoji-color-font" = font;
-            
+
             # Arabic/special fonts - use originals
             "scheherazade-new" = font;
             "amiri" = font;
@@ -87,10 +88,10 @@ in
           };
         in
         nerdFontMapping.${fontName} or font; # Default to original if not mapped
-      
+
       # Process the font list
       processedFonts = map getNerdFont (lib.unique fonts);
-      
+
       # Filter out duplicates between base and processed
       finalFonts = lib.unique (basePackages ++ processedFonts);
     in

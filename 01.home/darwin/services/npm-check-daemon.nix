@@ -19,14 +19,31 @@
     enable = true;
     config = myLib.launchd.mkCalendarJob pkgs {
       script = ''
+        OUTDATED_COUNT=0
+        PROJECTS_CHECKED=0
+
         for dir in ~/Documents/*/package.json ~/Documents/*/*/package.json ~/Projects/*/package.json; do
           if [[ -f "$dir" ]]; then
             project_dir="$(dirname "$dir")"
             echo "Checking updates for: $project_dir"
-            cd "$project_dir" && ${pkgs.nodePackages.npm-check-updates}/bin/ncu --color
+            
+            # Check for updates
+            if cd "$project_dir" && ${pkgs.nodePackages.npm-check-updates}/bin/ncu --color | tee /dev/tty | grep -q "Run ncu -u to upgrade"; then
+              OUTDATED_COUNT=$((OUTDATED_COUNT + 1))
+            fi
+            PROJECTS_CHECKED=$((PROJECTS_CHECKED + 1))
             echo "---"
           fi
         done
+
+        # Send notification
+        if [ $PROJECTS_CHECKED -gt 0 ]; then
+          if [ $OUTDATED_COUNT -gt 0 ]; then
+            alerter -title "NPM Updates Available" -subtitle "$OUTDATED_COUNT of $PROJECTS_CHECKED projects" -message "Run 'ncu -u' to update packages" -appIcon "/System/Applications/Utilities/Terminal.app/Contents/Resources/Terminal.icns" -sound Hero
+          else
+            alerter -title "NPM Check Complete" -message "All $PROJECTS_CHECKED projects are up to date" -appIcon "/System/Applications/Utilities/Terminal.app/Contents/Resources/Terminal.icns" -sound Glass
+          fi
+        fi
       '';
 
       calendar = [

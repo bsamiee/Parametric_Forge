@@ -126,6 +126,7 @@ in
         # Font Cache Management
         FONT_CACHE="${config.xdg.cacheHome}/fontconfig"
         STATE_FILE="${fontStateFile}"
+        FONT_REFRESH=0
 
         # Calculate current font state hash
         CURRENT_STATE=$(find ${lib.concatStringsSep " " fontDirs} \
@@ -143,6 +144,7 @@ in
           [ -d "$FONT_CACHE" ] && rm -rf "''${FONT_CACHE:?}"/*
           ${pkgs.fontconfig}/bin/fc-cache -rfv
           echo "$CURRENT_STATE" > "$STATE_FILE"
+          FONT_REFRESH=1
         elif [ -d "$FONT_CACHE" ]; then
           # Size-based cleanup as fallback
           SIZE=$(du -sm "$FONT_CACHE" 2>/dev/null | cut -f1)
@@ -151,6 +153,7 @@ in
             rm -rf "''${FONT_CACHE:?}"/*
             ${pkgs.fontconfig}/bin/fc-cache -rfv
             echo "$CURRENT_STATE" > "$STATE_FILE"
+            FONT_REFRESH=1
           fi
         fi
 
@@ -163,6 +166,11 @@ in
         find "${config.xdg.stateHome}/logs" -name "*.log" -mtime +30 -delete 2>/dev/null || true
 
         echo "XDG cache cleanup completed at $(date)"
+
+        # Send notification for significant operations
+        if [ $FONT_REFRESH -eq 1 ]; then
+          alerter -title "Cache Maintenance" -message "Font cache refreshed successfully" -appIcon "/System/Applications/Utilities/Terminal.app/Contents/Resources/Terminal.icns" -sound Tink -timeout 3
+        fi
       '';
       logBaseName = "${config.xdg.stateHome}/logs/xdg-cleanup";
     };

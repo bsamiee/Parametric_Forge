@@ -18,6 +18,30 @@
 {
   # --- Home Activation Scripts ----------------------------------------------
   home.activation = {
+    # --- Yazi Plugin Installation --------------------------------------------
+    yaziPlugins = lib.hm.dag.entryAfter [ "createXdgDirs" ] ''
+      # Auto-install/update Yazi plugins when package.toml changes
+      YAZI_CONFIG="${config.xdg.configHome}/yazi/package.toml"
+      YAZI_CACHE="${config.xdg.cacheHome}/yazi/plugins.sha256"
+
+      # Calculate current package.toml checksum
+      CURRENT_HASH=$(shasum -a 256 "$YAZI_CONFIG" | cut -d' ' -f1)
+      CACHED_HASH=$(cat "$YAZI_CACHE" 2>/dev/null || echo "")
+
+      # Install/update plugins only if package.toml changed
+      if [ "$CURRENT_HASH" != "$CACHED_HASH" ]; then
+        echo "[Yazi] Synchronizing plugins..."
+        
+        # Install/update all plugins from package.toml
+        if ya pack -i >/dev/null 2>&1; then
+          echo "    ✓ Yazi plugins updated"
+          echo "$CURRENT_HASH" > "$YAZI_CACHE"
+        else
+          echo "    ⚠ Some plugins failed to install"
+        fi
+      fi
+    '';
+
     # --- Alerter Installation ------------------------------------------------
     alerterSetup = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
       # Install alerter (terminal-notifier replacement with more features)

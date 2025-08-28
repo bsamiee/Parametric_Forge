@@ -1,0 +1,95 @@
+# Title         : theme.toml
+# Author        : Bardia Samiee
+# Project       : Parametric Forge
+# License       : MIT
+# Path          : /01.home/00.core/configs/apps/yazi/theme.toml
+# ----------------------------------------------------------------------------
+
+# Schema validation not used in modern yazi
+
+[flavor]
+dark = "dracula"
+light = "dracula"
+
+[mgr]
+hovered = { fg = "#282a36", bg = "#bd93f9", bold = true }
+border_symbol = "│"
+
+[tabs]
+sep_inner = { open = " ", close = " " }
+sep_outer = { open = "", close = "" }
+
+[status]
+sep_left = { open = "", close = " " }
+sep_right = { open = " ", close = "" }
+
+[which]
+cols = 3
+separator = " → "
+
+[confirm]
+btn_labels = ["Yes", "No"]
+
+[icon]
+prepend_dirs = [
+  { name = ".git", text = "", fg = "#ff79c6" },
+  { name = "node_modules", text = "", fg = "#50fa7b" },
+  { name = "target", text = "", fg = "#ff79c6" },
+  { name = ".venv", text = "", fg = "#f1fa8c" },
+  { name = "__pycache__", text = "", fg = "#f1fa8c" },
+  { name = ".config", text = "", fg = "#bd93f9" },
+  { name = ".ssh", text = "", fg = "#ff79c6" },
+  { name = "src", text = "", fg = "#8be9fd" },
+  { name = "lib", text = "", fg = "#8be9fd" },
+  { name = "bin", text = "", fg = "#50fa7b" },
+  { name = "docs", text = "", fg = "#f8f8f2" },
+]
+
+prepend_exts = [
+  { name = "nix", text = "❄", fg = "#8be9fd" },
+  { name = "py", text = "", fg = "#f1fa8c" },
+  { name = "rs", text = "", fg = "#ff79c6" },
+  { name = "js", text = "", fg = "#f1fa8c" },
+  { name = "ts", text = "", fg = "#8be9fd" },
+  { name = "go", text = "", fg = "#8be9fd" },
+  { name = "lua", text = "", fg = "#8be9fd" },
+
+  # 3D Parametric & Technical Design
+  { name = "3dm", text = "󰆧", fg = "#8be9fd" },    # Rhino 3D models
+  { name = "3dmbak", text = "󰆧", fg = "#8be9fd" }, # Rhino backup files
+  { name = "gh", text = "󱁤", fg = "#8be9fd" },     # Grasshopper definitions
+  { name = "ghx", text = "󱁤", fg = "#8be9fd" },    # Grasshopper XML
+
+  # CAD/Engineering/Architecture
+  { name = "dwg", text = "󰻫", fg = "#bd93f9" }, # AutoCAD drawings
+  { name = "dxf", text = "󰻫", fg = "#bd93f9" }, # AutoCAD exchange
+  { name = "dwt", text = "󰻫", fg = "#bd93f9" }, # AutoCAD templates
+  { name = "rvt", text = "🏗", fg = "#bd93f9" }, # Revit projects
+  { name = "rfa", text = "🏗", fg = "#bd93f9" }, # Revit families
+  { name = "rft", text = "🏗", fg = "#bd93f9" }, # Revit templates
+
+  # Creative 3D Modeling
+  { name = "blend", text = "", fg = "#ff79c6" },  # Blender projects
+  { name = "blend1", text = "", fg = "#ff79c6" }, # Blender backup
+
+  # Adobe Creative Suite
+  { name = "psd", text = "", fg = "#ff79c6" }, # Photoshop documents
+  { name = "psb", text = "", fg = "#ff79c6" }, # Photoshop large docs
+  { name = "ai", text = "", fg = "#bd93f9" },  # Illustrator files
+  { name = "ait", text = "", fg = "#bd93f9" }, # Illustrator templates
+  { name = "indd", text = "", fg = "#ffb86c" }, # InDesign documents
+  { name = "idml", text = "", fg = "#ffb86c" }, # InDesign markup
+  { name = "indt", text = "", fg = "#ffb86c" }, # InDesign templates
+
+  # Photography & Asset Management
+  { name = "lrcat", text = "", fg = "#f1fa8c" },      # Lightroom catalogs
+  { name = "lrtemplate", text = "", fg = "#f1fa8c" }, # Lightroom templates
+  { name = "xmp", text = "", fg = "#f1fa8c" },        # Adobe metadata
+]
+
+prepend_conds = [
+  { if = "hidden & dir", text = "󰜌" },
+  { if = "hidden & !dir", text = "󰘓" },
+  { if = "link & !orphan", text = "" },
+  { if = "orphan", text = "" },
+]

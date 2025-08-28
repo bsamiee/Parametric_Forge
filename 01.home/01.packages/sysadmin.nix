@@ -15,13 +15,24 @@ with pkgs;
   iperf # Network performance testing (iperf3)
   whois # Domain information lookup
   speedtest-cli # Internet speed testing from terminal
-  bind # DNS tools (includes dig)
+  bind # DNS tools (includes dig, nslookup, host)
+  wireshark-cli # Network protocol analyzer (tshark) - Required by pcap.yazi
 
-  # --- System Utilities -----------------------------------------------------
+  # --- System Monitoring ----------------------------------------------------
   parallel-full # GNU parallel for parallel command execution
   watchexec # watch → File watcher that runs commands on changes
   tldr # man → Simplified, practical man pages with examples
+  fastfetch # neofetch → Fast system information tool with customization
+
+  # --- File Transfer & Archive Management -----------------------------------
+  transmission # BitTorrent client - Required by torrent-preview.yazi
+  archivemount # Mount archives as filesystems - Required by archivemount.yazi
 
   # --- Security & Authentication --------------------------------------------
-  _1password-cli # 1Password command-line tool
+  _1password-cli # 1Password command-line tool for secrets management
+
+  # --- macOS Management -----------------------------------------------------
+  yabai # Tiling window manager for macOS
+  skhd # Simple hotkey daemon for macOS
+  sketchybar # Highly customizable macOS status bar
 ]

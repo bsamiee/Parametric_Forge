@@ -10,7 +10,8 @@
 
 with pkgs;
 [
-  # --- File & Directory Operations ------------------------------------------
+  # --- Modern CLI Replacements ----------------------------------------------
+  # File & Directory Operations
   # eza → Managed by programs.eza in shell-tools.nix
   # fd → Managed by programs.fd in shell-tools.nix
   # broot → Managed by programs.broot in shell-tools.nix
@@ -18,7 +19,7 @@ with pkgs;
   fcp # cp → Fast parallel file copy (simple cases)
   rsync # mv/sync → Advanced file synchronization and transfer
 
-  # --- Text Processing & Search ---------------------------------------------
+  # Text Processing & Search
   # bat → Managed by programs.bat in shell-tools.nix
   # ripgrep → Managed by programs.ripgrep in shell-tools.nix
   sd # sed → Intuitive find/replace without regex complexity
@@ -26,20 +27,19 @@ with pkgs;
   choose # cut → Human-friendly column selector
   grex # → Generate regex patterns from examples
 
-  # --- File Analysis & Diff -------------------------------------------------
+  # File Analysis & Diff
   delta # diff → Syntax-aware diff viewer with side-by-side view
-  hexyl # hexdump/xxd → Colorful hex viewer
   tokei # cloc → Fast code statistics (lines, comments, languages)
   file # file → File type detection by content (enhanced classic)
 
-  # --- System Monitoring ----------------------------------------------------
+  # System Monitoring
   procs # ps → Process viewer with tree, search, and color
   # bottom → Managed by programs.bottom in shell-tools.nix
   duf # df → Disk usage with visual bars and colors
   dust # du → Directory size analyzer with tree view
   mas # Mac App Store CLI for managing store apps
 
-  # --- Network Tools --------------------------------------------------------
+  # Network Tools
   xh # curl/wget → Modern HTTP client with intuitive syntax
   # openssh → Managed by programs.ssh in ssh.nix
   doggo # dig → Modern DNS client with colors and DoH/DoT support
@@ -53,6 +53,10 @@ with pkgs;
   # fzf → Managed by programs.fzf in shell-tools.nix
   vivid # → LS_COLORS generator for better file visualization
   # mcfly → Managed by programs.mcfly in shell-tools.nix
+  # zsh-autosuggestions → Managed by programs.zsh.autosuggestion in zsh.nix
+  # zsh-syntax-highlighting → Managed by programs.zsh.syntaxHighlighting in zsh.nix
+  # zsh-completions → Managed by programs.zsh.enableCompletion in zsh.nix
+  # zsh-history-substring-search → Managed by programs.zsh.historySubstringSearch in zsh.nix
 
   # --- Archive & Compression ------------------------------------------------
   ouch # tar/zip → Universal archive tool (compress/decompress)
@@ -62,15 +66,11 @@ with pkgs;
   xz # XZ compression utilities
   lz4 # Extremely fast compression
   brotli # Generic-purpose lossless compression
+  p7zip # 7-Zip for Unix - Required by yazi for archive preview/extraction
+  unar # Universal archive unpacker with lsar - Better archive preview
 
-  # --- SQLite Extensions ----------------------------------------------------
-  sqlite # Base SQLite 3.50.2 (newer than macOS default 3.43.2)
-  sqlite-vec # Vector search SQLite extension (semantic pattern matching)
-  sqlite-interactive # Interactive SQLite CLI with enhanced features
-  sqlite-utils # Python CLI tool for SQLite database manipulation
-  libspatialite # OGC-compliant spatial SQL engine (GIS operations, coordinate transformations)
-
-  # --- Core GNU Utilities (newer versions than macOS defaults) --------------
+  # --- GNU Core Utilities ---------------------------------------------------
+  # Newer versions than macOS defaults for consistency
   coreutils # GNU core utilities (ls, cp, mv, etc.)
   findutils # GNU find, xargs, etc.
   gnugrep # GNU grep
@@ -79,13 +79,9 @@ with pkgs;
   bash # Bash shell (newer version than macOS default)
   gnutar # GNU version of tar
 
-  # --- Terminal File Managers -----------------------------------------------
+  # --- Terminal Essentials --------------------------------------------------
   yazi # Blazing fast terminal file manager (async, image preview)
+  yabai
+  skhd
   neovim # vim → Hyperextensible text editor
-
-  # --- Zsh Enhancements -----------------------------------------------------
-  # zsh-autosuggestions → Managed by programs.zsh.autosuggestion in zsh.nix
-  # zsh-syntax-highlighting → Managed by programs.zsh.syntaxHighlighting in zsh.nix
-  # zsh-completions → Managed by programs.zsh.enableCompletion in zsh.nix
-  # zsh-history-substring-search → Managed by programs.zsh.historySubstringSearch in zsh.nix
 ]

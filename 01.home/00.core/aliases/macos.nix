@@ -22,6 +22,9 @@ _:
   # --- Quick Look Preview ---------------------------------------------------
   preview = "qlmanage -p 2>/dev/null"; # Preview without opening app
 
+  # --- Terminal Launchers ---------------------------------------------------
+  wez = "open -ga WezTerm"; # Launch WezTerm (moved from core.nix)
+
   # --- Spotlight Search -----------------------------------------------------
   search = "mdfind"; # Search everywhere via Spotlight
   searchhere = "mdfind -onlyin ."; # Search current dir via Spotlight

@@ -1,0 +1,855 @@
+# Title         : keymap.toml
+# Author        : Bardia Samiee
+# Project       : Parametric Forge
+# License       : MIT
+# Path          : /01.home/00.core/configs/apps/yazi/keymap.toml
+# ----------------------------------------------------------------------------
+# Yazi keybindings configuration - unified with yabai/skhd/wezterm patterns
+
+# Schema validation
+# Schema validation not used in modern yazi
+
+# --- Manager (File List) Layer --------------------------------------------
+[mgr]
+prepend_keymap = [
+  # --- LEVEL 1: Basic Navigation (vim-style) ------------------------------
+  { on = [
+    "h",
+  ], run = "leave", desc = "Go to parent directory" },
+  { on = [
+    "j",
+  ], run = "arrow 1", desc = "Move cursor down" },
+  { on = [
+    "k",
+  ], run = "arrow -1", desc = "Move cursor up" },
+  { on = [
+    "l",
+  ], run = "enter", desc = "Enter directory or open file" },
+
+  # Fast navigation and preview control
+  { on = [
+    "J",
+  ], run = "arrow 5", desc = "Move down 5 lines" },
+  { on = [
+    "K",
+  ], run = "arrow -5", desc = "Move up 5 lines" },
+  { on = [
+    "<C-j>",
+  ], run = "seek 5", desc = "Preview down" },
+  { on = [
+    "<C-k>",
+  ], run = "seek -5", desc = "Preview up" },
+  { on = [
+    "<C-u>",
+  ], run = "arrow -50%", desc = "Half page up" },
+  { on = [
+    "<C-d>",
+  ], run = "arrow 50%", desc = "Half page down" },
+  { on = [
+    "H",
+  ], run = "back", desc = "Go back in history" },
+  { on = [
+    "L",
+  ], run = "forward", desc = "Go forward in history" },
+  { on = [
+    "<C-o>",
+  ], run = "back", desc = "Go back (vim-style)" },
+  { on = [
+    "<C-i>",
+  ], run = "forward", desc = "Go forward (vim-style)" },
+
+  # Critical Navigation Enhancements
+  { on = [
+    "<C-n>",
+  ], run = "arrow 1", desc = "Next item" },
+  { on = [
+    "<C-p>",
+  ], run = "arrow -1", desc = "Previous item" },
+  { on = [
+    "g",
+    "f",
+  ], run = "reveal", desc = "Reveal symlink target" },
+  { on = [
+    "g",
+    "w",
+  ], run = '''shell 'fd . --max-depth 3' --block --confirm''', desc = "Flat view (depth 3)" },
+
+  # Numbered navigation (vim-style relative motions)
+  { on = [
+    "5",
+    "j",
+  ], run = "arrow 5", desc = "Move down 5" },
+  { on = [
+    "5",
+    "k",
+  ], run = "arrow -5", desc = "Move up 5" },
+  { on = [
+    "1",
+    "0",
+    "j",
+  ], run = "arrow 10", desc = "Move down 10" },
+  { on = [
+    "1",
+    "0",
+    "k",
+  ], run = "arrow -10", desc = "Move up 10" },
+
+  # --- LEVEL 2: File Operations -------------------------------------------
+  # Creation and modification (lowercase for non-destructive)
+  { on = [
+    "a",
+  ], run = "create", desc = "Create file/directory" },
+  { on = [
+    "A",
+  ], run = "create --dir", desc = "Create directory" },
+  { on = [
+    "r",
+  ], run = "rename --cursor=before_ext", desc = "Rename" },
+  { on = [
+    "R",
+  ], run = "rename --cursor=start", desc = "Rename from start" },
+  { on = [
+    "cw",
+  ], run = "rename --empty=stem", desc = "Change name (keep extension)" },
+  { on = [
+    "ce",
+  ], run = "rename --empty=ext", desc = "Change extension" },
+  { on = [
+    "c",
+  ], run = "yank", desc = "Copy/yank files" },
+  { on = [
+    "x",
+  ], run = "yank --cut", desc = "Cut files" },
+  { on = [
+    "p",
+  ], run = "plugin smart-paste.yazi", desc = "Smart paste files" },
+  { on = [
+    "P",
+  ], run = "paste --force", desc = "Paste (overwrite)" },
+
+  # Deletion (uppercase for destructive) - With Safety Features
+  { on = [
+    "d",
+  ], run = "remove", desc = "Move to trash" },
+  { on = [
+    "D",
+  ], run = "remove --permanently", desc = "Delete permanently" },
+  { on = [
+    "<A-d>",
+  ], run = '''lua safe_remove()''', desc = "Safe delete with confirmation" },
+
+  # --- LEVEL 3: Selection (space-based like file managers) ----------------
+  { on = [
+    "<Space>",
+  ], run = [
+    "select --state=none",
+    "arrow 1",
+  ], desc = "Toggle selection" },
+  { on = [
+    "v",
+  ], run = "visual_mode", desc = "Enter visual mode" },
+  { on = [
+    "V",
+  ], run = "visual_mode --unset", desc = "Enter visual mode (unset)" },
+  { on = [
+    "<C-a>",
+  ], run = "select_all --state=true", desc = "Select all" },
+  { on = [
+    "<C-r>",
+  ], run = "select_all --state=none", desc = "Inverse selection" },
+  { on = [
+    "<C-Space>",
+  ], run = "toggle_all", desc = "Toggle all" },
+
+  # --- LEVEL 4: Search & Filter (/-based like vim) ------------------------
+  { on = [
+    "/",
+  ], run = "find --smart", desc = "Find in current directory" },
+  { on = [
+    "?",
+  ], run = "find --previous --smart", desc = "Find previous" },
+  { on = [
+    "n",
+  ], run = "find_arrow", desc = "Go to next found" },
+  { on = [
+    "N",
+  ], run = "find_arrow --previous", desc = "Go to previous found" },
+  { on = [
+    "f",
+  ], run = "filter", desc = "Filter files" },
+  { on = [
+    "F",
+  ], run = "filter --smart", desc = "Smart filter" },
+
+  # Global search - Advanced Search & Selection
+  { on = [
+    "s",
+  ], run = "search fd", desc = "Search files (fd)" },
+  { on = [
+    "S",
+  ], run = "search rg", desc = "Search content (ripgrep)" },
+  { on = [
+    "s",
+    "f",
+  ], run = '''search --via=fd --args="-t f"''', desc = "Search files only" },
+  { on = [
+    "s",
+    "d",
+  ], run = '''search --via=fd --args="-t d"''', desc = "Search directories only" },
+  { on = [
+    "s",
+    "e",
+  ], run = '''search --via=fd --args="-e"''', desc = "Search by extension" },
+  { on = [
+    "s",
+    "h",
+  ], run = '''search --via=fd --args="-H"''', desc = "Search hidden files" },
+  { on = [
+    "<C-s>",
+  ], run = "escape --search", desc = "Cancel search" },
+
+  # Bulk selection patterns
+  { on = [
+    "v",
+    "e",
+  ], run = '''select --glob="*.$input"''', desc = "Select by extension" },
+  { on = [
+    "v",
+    "p",
+  ], run = '''select --glob="$input"''', desc = "Select by pattern" },
+
+  # --- LEVEL 5: Quick Navigation -------------------------------------------
+  # Bookmarks (g-prefix like vim)
+  { on = [
+    "g",
+    "h",
+  ], run = "cd ~", desc = "Go home" },
+  { on = [
+    "g",
+    "c",
+  ], run = "cd ~/.config", desc = "Go to config" },
+  { on = [
+    "g",
+    "d",
+  ], run = "cd ~/Downloads", desc = "Go to downloads" },
+  { on = [
+    "g",
+    "D",
+  ], run = "cd ~/Documents", desc = "Go to documents" },
+  { on = [
+    "g",
+    "p",
+  ], run = "cd ~/Documents/99.Github", desc = "Go to projects" },
+  { on = [
+    "g",
+    "F",
+  ], run = "cd ~/Documents/99.Github/Parametric_Forge", desc = "Go to Parametric Forge" },
+  { on = [
+    "g",
+    "n",
+  ], run = "cd ~/.config/nix", desc = "Go to nix config" },
+  { on = [
+    "g",
+    "t",
+  ], run = "cd /tmp", desc = "Go to temp" },
+  { on = [
+    "g",
+    "e",
+  ], run = "cd /", desc = "Go to root" },
+  { on = [
+    "g",
+    "g",
+  ], run = "arrow -99999999", desc = "Go to top" },
+  { on = [
+    "G",
+  ], run = "arrow 99999999", desc = "Go to bottom" },
+
+  # External tool navigation
+  { on = [
+    "Z",
+  ], run = "shell 'fd . | fzf | xargs -I {} yazi {}' --block", desc = "Jump with fzf" },
+
+  # UI/UX Refinements - Persistent Bookmarks & Command Palette
+  { on = [
+    "'",
+    "a",
+  ], run = "plugin whoosh --args=add", desc = "Add bookmark" },
+  { on = [
+    "'",
+  ], run = "plugin whoosh --args=jump", desc = "Jump to bookmark" },
+  { on = [
+    "'",
+    "d",
+  ], run = "plugin whoosh --args=delete", desc = "Delete bookmark" },
+  { on = [
+    "'",
+    "r",
+  ], run = "plugin whoosh --args=rename", desc = "Rename bookmark" },
+  { on = [
+    "<Leader>",
+  ], run = "plugin command-palette.yazi", desc = "Open command palette" },
+
+  # --- LEVEL 6: Tabs (CMD+number pattern from wezterm) --------------------
+  { on = [
+    "t",
+  ], run = "tab_create --current", desc = "New tab" },
+  { on = [
+    "1",
+  ], run = "tab_switch 0", desc = "Switch to tab 1" },
+  { on = [
+    "2",
+  ], run = "tab_switch 1", desc = "Switch to tab 2" },
+  { on = [
+    "3",
+  ], run = "tab_switch 2", desc = "Switch to tab 3" },
+  { on = [
+    "4",
+  ], run = "tab_switch 3", desc = "Switch to tab 4" },
+  { on = [
+    "5",
+  ], run = "tab_switch 4", desc = "Switch to tab 5" },
+  { on = [
+    "[",
+  ], run = "tab_switch -1 --relative", desc = "Previous tab" },
+  { on = [
+    "]",
+  ], run = "tab_switch 1 --relative", desc = "Next tab" },
+  { on = [
+    "w",
+  ], run = "tab_close", desc = "Close tab" },
+
+  # Stack navigation (consistent with skhd window stacking)
+  { on = [
+    "<S-Tab>",
+  ], run = "tab_swap -1", desc = "Swap tab left" },
+  { on = [
+    "<Tab>",
+  ], run = "tab_swap 1", desc = "Swap tab right" },
+
+  # --- LEVEL 7: View Options -----------------------------------------------
+  # Sorting (comma-prefix like file managers)
+  { on = [
+    ",",
+    "m",
+  ], run = [
+    "sort modified --reverse=no",
+    "linemode mtime",
+  ], desc = "Sort by modified time" },
+  { on = [
+    ",",
+    "M",
+  ], run = [
+    "sort modified --reverse",
+    "linemode mtime",
+  ], desc = "Sort by modified time (reverse)" },
+  { on = [
+    ",",
+    "s",
+  ], run = [
+    "sort size --reverse=no",
+    "linemode size",
+  ], desc = "Sort by size" },
+  { on = [
+    ",",
+    "S",
+  ], run = [
+    "sort size --reverse",
+    "linemode size",
+  ], desc = "Sort by size (reverse)" },
+  { on = [
+    ",",
+    "a",
+  ], run = "sort alphabetical --reverse=no", desc = "Sort alphabetically" },
+  { on = [
+    ",",
+    "A",
+  ], run = "sort alphabetical --reverse", desc = "Sort alphabetically (reverse)" },
+  { on = [
+    ",",
+    "n",
+  ], run = "sort natural --reverse=no", desc = "Sort naturally" },
+  { on = [
+    ",",
+    "N",
+  ], run = "sort natural --reverse", desc = "Sort naturally (reverse)" },
+
+  # Display toggles
+  { on = [
+    ".",
+  ], run = "hidden toggle", desc = "Toggle hidden files" },
+  { on = [
+    ";",
+  ], run = "linemode", desc = "Switch linemode" },
+
+  # --- LEVEL 8: Shell & External Commands ---------------------------------
+  { on = [
+    "!",
+  ], run = "shell --interactive", desc = "Run shell command" },
+  { on = [
+    ":",
+  ], run = "shell --block --interactive", desc = "Run shell (block)" },
+  { on = [
+    "<C-t>",
+  ], run = '''shell "$SHELL" --block --confirm''', desc = "Drop to shell" },
+  { on = [
+    "W",
+  ], run = '''shell 'wezterm start --cwd "$PWD"' --orphan''', desc = "Open WezTerm here" },
+  { on = [
+    "e",
+  ], run = '''shell 'nvim "$PWD"' --block''', desc = "Edit directory in nvim" },
+  { on = [
+    "m",
+  ], run = '''shell 'chmod +x "$@"' --block''', desc = "Make executable" },
+
+  # --- Git Integration - Enhanced Operations -------------------------------
+  { on = [
+    "g",
+    "s",
+  ], run = "shell 'git status' --block", desc = "Git status" },
+  { on = [
+    "g",
+    "l",
+  ], run = "shell 'git log --oneline -20' --block", desc = "Git log" },
+  { on = [
+    "g",
+    "d",
+  ], run = "plugin diff", desc = "Git diff (plugin)" },
+  { on = [
+    "g",
+    "a",
+  ], run = '''shell 'git add "$@"' --confirm''', desc = "Git add" },
+  { on = [
+    "g",
+    "A",
+  ], run = "shell 'git add -A' --confirm", desc = "Git add all" },
+  { on = [
+    "g",
+    "u",
+  ], run = '''shell 'git reset HEAD "$@"' --confirm''', desc = "Git unstage" },
+  { on = [
+    "g",
+    "b",
+  ], run = "shell 'git branch -a' --block", desc = "Git branches" },
+  { on = [
+    "g",
+    "c",
+  ], run = '''shell 'git checkout "$@"' --confirm''', desc = "Git checkout" },
+  { on = [
+    "g",
+    "C",
+  ], run = "shell 'git commit' --confirm", desc = "Git commit" },
+  { on = [
+    "g",
+    "y",
+  ], run = "shell 'git pull' --confirm", desc = "Git pull" },
+  { on = [
+    "g",
+    "r",
+  ], run = '''shell 'git restore "$@"' --confirm''', desc = "Git restore" },
+  { on = [
+    "g",
+    "S",
+  ], run = "shell 'git stash' --confirm", desc = "Git stash" },
+  { on = [
+    "g",
+    "z",
+  ], run = "plugin lazygit", desc = "Open lazygit" },
+  { on = [
+    "g",
+    "R",
+  ], run = "plugin cd-git-root", desc = "Jump to git root" },
+
+  # --- LEVEL 9: Copy Paths (y-prefix for yank) ----------------------------
+  { on = [
+    "y",
+    "p",
+  ], run = "copy path", desc = "Copy file path" },
+  { on = [
+    "y",
+    "d",
+  ], run = "copy dirname", desc = "Copy directory path" },
+  { on = [
+    "y",
+    "f",
+  ], run = "copy filename", desc = "Copy filename" },
+  { on = [
+    "y",
+    "n",
+  ], run = "copy name_without_ext", desc = "Copy name without extension" },
+
+  # --- Archive Operations --------------------------------------------------
+  { on = [
+    "o",
+    "c",
+  ], run = "plugin compress", desc = "Create archive (compress.yazi)" },
+  { on = [
+    "o",
+    "x",
+  ], run = '''shell 'ouch decompress "$@"' --block''', desc = "Extract archive" },
+
+  # --- LEVEL 10: Help & Tasks ----------------------------------------------
+  { on = [
+    "~",
+  ], run = "help", desc = "Open help" },
+  { on = [
+    "T",
+  ], run = "tasks_show", desc = "Show tasks" },
+  { on = [
+    "<Esc>",
+  ], run = "escape", desc = "Clear selection/cancel" },
+  { on = [
+    "q",
+  ], run = "quit", desc = "Quit" },
+  { on = [
+    "Q",
+  ], run = "quit --no-cwd-file", desc = "Quit without writing cwd" },
+
+  # --- Enhanced Search & Navigation ----------------------------------------
+  { on = [
+    "z",
+    "f",
+  ], run = "plugin fazif", desc = "Advanced search (fazif)" },
+  { on = [
+    "z",
+  ], run = "plugin keyjump", desc = "Zoxide jump" },
+
+  # --- Preview Controls ----------------------------------------------------
+  { on = [
+    "<C-l>",
+  ], run = "plugin max-preview", desc = "Maximize preview" },
+  { on = [
+    "<C-h>",
+  ], run = "plugin hide-preview", desc = "Hide preview" },
+  { on = [
+    "<A-w>",
+  ], run = "plugin toggle-wrap", desc = "Toggle text wrap" },
+
+  # --- Dual Pane Navigation ------------------------------------------------
+  { on = [
+    "<A-Tab>",
+  ], run = "plugin dual-pane --args=next_pane", desc = "Switch pane" },
+  { on = [
+    "<A-v>",
+  ], run = "plugin dual-pane", desc = "Toggle dual-pane mode" },
+
+  # --- System Administration ----------------------------------------------
+  { on = [
+    "<C-x>",
+    "s",
+  ], run = "plugin sudo", desc = "Sudo operations" },
+  { on = [
+    "<C-x>",
+    "r",
+  ], run = "plugin rsync", desc = "Rsync files" },
+  { on = [
+    "<C-x>",
+    "m",
+  ], run = "plugin sshfs", desc = "Mount SSHFS" },
+
+  # --- Additional Safety & UI Features -------------------------------------
+  { on = [
+    "<A-s>",
+  ], run = '''lua sync_session()''', desc = "Sync session across instances" },
+  { on = [
+    "<A-l>",
+  ], run = '''lua adjust_layout()''', desc = "Auto-adjust layout for terminal" },
+  { on = [
+    "<A-r>",
+  ], run = '''lua safe_bulk_rename()''', desc = "Safe bulk rename" },
+
+  # --- New Plugin Integrations ----------------------------------------------
+  # System clipboard operations
+  { on = [
+    "y",
+    "c",
+  ], run = "plugin system-clipboard", desc = "Copy to system clipboard" },
+  { on = [
+    "<C-c>",
+  ], run = "plugin system-clipboard --args=copy", desc = "Copy to system clipboard" },
+  { on = [
+    "<C-v>",
+  ], run = "plugin system-clipboard --args=paste", desc = "Paste from system clipboard" },
+
+  # Project/session management
+  { on = [
+    "P",
+    "s",
+  ], run = "plugin projects --args=save", desc = "Save project session" },
+  { on = [
+    "P",
+    "l",
+  ], run = "plugin projects --args=load", desc = "Load project session" },
+  { on = [
+    "P",
+    "d",
+  ], run = "plugin projects --args=delete", desc = "Delete project session" },
+
+  # Starship prompt integration (automatic - no keybind needed)
+
+  # Bypass navigation (automatic - enhances 'l' and enter)
+
+  # File recovery from trash
+  { on = [
+    "u",
+    "r",
+  ], run = "plugin restore", desc = "Restore deleted files from trash" },
+  { on = [
+    "u",
+    "R",
+  ], run = "plugin restore --args=list", desc = "List trash contents" },
+
+  # Enhanced trash management with recycle-bin
+  { on = [
+    "u",
+    "t",
+  ], run = "plugin recycle-bin", desc = "Open trash manager" },
+  { on = [
+    "u",
+    "e",
+  ], run = "plugin recycle-bin --args=empty", desc = "Empty trash" },
+  { on = [
+    "u",
+    "c",
+  ], run = "plugin recycle-bin --args=clean", desc = "Clean old trash items" },
+
+  # Fast enter - automatically handled, enhances 'l' and enter keys
+  # Bypass - automatically handled, skips single subdirectories
+
+  # Enhanced git status with untracked files
+  { on = [
+    "g",
+    "U",
+  ], run = "plugin git-files", desc = "Show git status with untracked" },
+]
+
+# --- Tasks Manager Layer --------------------------------------------------
+[tasks]
+prepend_keymap = [
+  { on = [
+    "j",
+  ], run = "arrow 1", desc = "Move cursor down" },
+  { on = [
+    "k",
+  ], run = "arrow -1", desc = "Move cursor up" },
+  { on = [
+    "x",
+  ], run = "cancel", desc = "Cancel task" },
+  { on = [
+    "~",
+  ], run = "help", desc = "Open help" },
+  { on = [
+    "<Esc>",
+  ], run = "close", desc = "Hide tasks" },
+]
+
+# --- Spot (File Information) Layer ----------------------------------------
+[spot]
+prepend_keymap = [
+  { on = [
+    "j",
+  ], run = "arrow 1", desc = "Move cursor down" },
+  { on = [
+    "k",
+  ], run = "arrow -1", desc = "Move cursor up" },
+  { on = [
+    "J",
+  ], run = "arrow 5", desc = "Move down 5 lines" },
+  { on = [
+    "K",
+  ], run = "arrow -5", desc = "Move up 5 lines" },
+  { on = [
+    "g",
+    "g",
+  ], run = "arrow -99999999", desc = "Go to top" },
+  { on = [
+    "G",
+  ], run = "arrow 99999999", desc = "Go to bottom" },
+  { on = [
+    "~",
+  ], run = "help", desc = "Open help" },
+  { on = [
+    "<Esc>",
+  ], run = "close", desc = "Close spot" },
+]
+
+# --- Pick Component -------------------------------------------------------
+[pick]
+prepend_keymap = [
+  { on = [
+    "j",
+  ], run = "arrow 1", desc = "Move cursor down" },
+  { on = [
+    "k",
+  ], run = "arrow -1", desc = "Move cursor up" },
+  { on = [
+    "J",
+  ], run = "arrow 5", desc = "Move down 5 lines" },
+  { on = [
+    "K",
+  ], run = "arrow -5", desc = "Move up 5 lines" },
+  { on = [
+    "~",
+  ], run = "help", desc = "Open help" },
+  { on = [
+    "<Enter>",
+  ], run = "accept", desc = "Accept selection" },
+  { on = [
+    "<Esc>",
+  ], run = "close", desc = "Cancel pick" },
+  { on = [
+    "<C-q>",
+  ], run = "close", desc = "Cancel pick" },
+]
+
+# --- Input Component ------------------------------------------------------
+[input]
+prepend_keymap = [
+  { on = [
+    "<C-h>",
+  ], run = "move -1", desc = "Move back a char" },
+  { on = [
+    "<C-l>",
+  ], run = "move 1", desc = "Move forward a char" },
+  { on = [
+    "<C-b>",
+  ], run = "move -1", desc = "Move back a char" },
+  { on = [
+    "<C-f>",
+  ], run = "move 1", desc = "Move forward a char" },
+  { on = [
+    "<C-a>",
+  ], run = "move -999", desc = "Move to start" },
+  { on = [
+    "<C-e>",
+  ], run = "move 999", desc = "Move to end" },
+  { on = [
+    "<C-w>",
+  ], run = "backward --kill", desc = "Delete word backward" },
+  { on = [
+    "<C-k>",
+  ], run = "kill", desc = "Delete to end" },
+  { on = [
+    "<C-u>",
+  ], run = "undo", desc = "Undo" },
+  { on = [
+    "<C-y>",
+  ], run = "redo", desc = "Redo" },
+  { on = [
+    "<Backspace>",
+  ], run = "backspace", desc = "Delete char backward" },
+  { on = [
+    "<Delete>",
+  ], run = "delete", desc = "Delete char forward" },
+  { on = [
+    "<Enter>",
+  ], run = "accept", desc = "Accept input" },
+  { on = [
+    "<Esc>",
+  ], run = "close", desc = "Cancel input" },
+  { on = [
+    "<C-q>",
+  ], run = "close", desc = "Cancel input" },
+]
+
+# --- Confirm Dialog -------------------------------------------------------
+[confirm]
+prepend_keymap = [
+  { on = [
+    "y",
+  ], run = "accept", desc = "Confirm" },
+  { on = [
+    "Y",
+  ], run = "accept", desc = "Confirm" },
+  { on = [
+    "<Enter>",
+  ], run = "accept", desc = "Confirm" },
+  { on = [
+    "n",
+  ], run = "close", desc = "Cancel" },
+  { on = [
+    "N",
+  ], run = "close", desc = "Cancel" },
+  { on = [
+    "<Esc>",
+  ], run = "close", desc = "Cancel" },
+  { on = [
+    "<C-q>",
+  ], run = "close", desc = "Cancel" },
+]
+
+# --- Completion Component -------------------------------------------------
+[cmp]
+prepend_keymap = [
+  { on = [
+    "j",
+  ], run = "arrow 1", desc = "Move cursor down" },
+  { on = [
+    "k",
+  ], run = "arrow -1", desc = "Move cursor up" },
+  { on = [
+    "J",
+  ], run = "arrow 5", desc = "Move down 5 lines" },
+  { on = [
+    "K",
+  ], run = "arrow -5", desc = "Move up 5 lines" },
+  { on = [
+    "<Tab>",
+  ], run = "arrow 1", desc = "Move cursor down" },
+  { on = [
+    "<S-Tab>",
+  ], run = "arrow -1", desc = "Move cursor up" },
+  { on = [
+    "<C-j>",
+  ], run = "arrow 1", desc = "Move cursor down" },
+  { on = [
+    "<C-k>",
+  ], run = "arrow -1", desc = "Move cursor up" },
+  { on = [
+    "<Enter>",
+  ], run = [
+    "accept",
+    "close",
+  ], desc = "Accept completion" },
+  { on = [
+    "<C-q>",
+  ], run = "close", desc = "Cancel completion" },
+  { on = [
+    "<Esc>",
+  ], run = "close", desc = "Cancel completion" },
+  { on = [
+    "~",
+  ], run = "help", desc = "Open help" },
+]
+
+# --- Help Menu ------------------------------------------------------------
+[help]
+prepend_keymap = [
+  { on = [
+    "j",
+  ], run = "arrow 1", desc = "Move cursor down" },
+  { on = [
+    "k",
+  ], run = "arrow -1", desc = "Move cursor up" },
+  { on = [
+    "J",
+  ], run = "arrow 5", desc = "Move down 5 lines" },
+  { on = [
+    "K",
+  ], run = "arrow -5", desc = "Move up 5 lines" },
+  { on = [
+    "/",
+  ], run = "filter", desc = "Filter help" },
+  { on = [
+    "g",
+    "g",
+  ], run = "arrow -99999999", desc = "Go to top" },
+  { on = [
+    "G",
+  ], run = "arrow 99999999", desc = "Go to bottom" },
+  { on = [
+    "<Esc>",
+  ], run = "close", desc = "Close help" },
+  { on = [
+    "q",
+  ], run = "close", desc = "Close help" },
+]

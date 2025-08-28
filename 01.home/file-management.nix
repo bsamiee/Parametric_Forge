@@ -22,38 +22,73 @@
     # Note: starship.toml handled by programs.starship.settings in shell-tools.nix
     "ccstatusline/settings.json".source = ./00.core/configs/apps/ccstatusline-settings.json;
 
+    # --- Window Management (macOS) ------------------------------------------
+    "yabai/yabairc".source = ./00.core/configs/apps/yabairc; # Yabai window manager config
+    "borders/bordersrc".source = ./00.core/configs/apps/borders/bordersrc; # JankyBorders window borders config
+
+    # --- SketchyBar Configuration (Modern SbarLua) --------------------------
+    # Modern Lua-based SketchyBar configuration with XDG Base Directory compliance
+    # Target: ~/.config/sketchybar/ (XDG_CONFIG_HOME/sketchybar/)
+    #
+    # Deployment Structure:
+    # ├── init.lua              - SbarLua main entry point
+    # ├── modules/              - Lua configuration modules
+    # │   ├── bar.lua          - Bar configuration (position, appearance)
+    # │   ├── colors.lua       - Dracula color scheme definitions
+    # │   ├── icons.lua        - Icon mappings and Nerd Font symbols
+    # │   └── items/           - Individual bar item configurations
+    # │       ├── spaces.lua   - Yabai space indicators
+    # │       ├── battery.lua  - Battery status with charging icons
+    # │       ├── clock.lua    - Date/time display
+    # │       ├── cpu.lua      - CPU usage monitoring
+    # │       └── volume.lua   - Audio control with mute toggle
+    # ├── providers/           - Binary providers for system data
+    # │   └── system-stats     - Native system stats provider
+    # ├── helpers/             - Utility scripts
+    # │   └── icon_map.sh      - App icon mapping script
+    # └── helpers/             - Utility scripts and icon mappings
+    #
+    # Main SbarLua configuration
+    "sketchybar/init.lua".source = ./00.core/configs/apps/sketchybar/init.lua;
+    # Lua modules directory - contains bar, colors, icons, and item modules
+    "sketchybar/modules" = {
+      source = ./00.core/configs/apps/sketchybar/modules;
+      recursive = true;
+    };
+    # Helper scripts directory for utilities and icon mapping
+    "sketchybar/helpers/.keep".text = ""; # Ensure helpers directory exists
+
+    # --- System Information -------------------------------------------------
+    "fastfetch/config.json".source = ./00.core/configs/apps/fastfetch/config.json;
+
+    # --- File Manager (Yazi) ------------------------------------------------
+    "yazi/yazi.toml".source = ./00.core/configs/apps/yazi/yazi.toml;
+    "yazi/keymap.toml".source = ./00.core/configs/apps/yazi/keymap.toml;
+    "yazi/theme.toml".source = ./00.core/configs/apps/yazi/theme.toml;
+    "yazi/package.toml".source = ./00.core/configs/apps/yazi/package.toml;
+    "yazi/init.lua".source = ./00.core/configs/apps/yazi/init.lua;
+    # Dracula flavor deployment - proper directory structure
+    "yazi/flavors/dracula.yazi/flavor.toml".source = ./00.core/configs/apps/yazi/dracula-flavor.toml;
+
     # --- Git Configuration --------------------------------------------------
     "git/ignore".source = ./00.core/configs/git/gitignore;
     "git/attributes".source = ./00.core/configs/git/gitattributes;
     "gitleaks/gitleaks.toml".source = ./00.core/configs/git/gitleaks.toml;
     # --- Language Server Configurations -------------------------------------
-    # Nix
-    "nil/nil.toml".source = ./00.core/configs/languages/nil.toml; # TODO: nil only reads from project root, move to templates
-    # Python
-    "basedpyright/basedpyright.json".source = ./00.core/configs/languages/basedpyright.json; # TODO: basedpyright reads from project root, move to templates
-    "pypoetry/config.toml".source = ./00.core/configs/poetry.toml; # OK: Poetry respects XDG
-    "ruff/ruff.toml".source = ./00.core/configs/languages/ruff.toml; # OK: Ruff respects XDG
-    "mypy/mypy.ini".source = ./00.core/configs/languages/mypy.ini; # OK: Mypy uses MYPY_CONFIG_FILE env var
-    # Rust
-    "rust-analyzer/rust-analyzer.json".source = ./00.core/configs/languages/rust-analyzer.json; # TODO: rust-analyzer reads from project root, move to templates
-    "clippy/clippy.toml".source = ./00.core/configs/languages/clippy.toml; # TODO: clippy reads from project root, move to templates
-    "clippy/clippy-lints.toml".source = ./00.core/configs/languages/clippy-lints.toml; # TODO: clippy reads from project root, move to templates
-    # Markdown
-    "marksman/marksman.toml".source = ./00.core/configs/languages/marksman.toml; # TODO: marksman reads from project root, move to templates
+    # Python (global configs - work via environment variables)
+    "pypoetry/config.toml".source = ./00.core/configs/poetry.toml;
+    "ruff/ruff.toml".source = ./00.core/configs/languages/ruff.toml;
+    "mypy/mypy.ini".source = ./00.core/configs/languages/mypy.ini;
+    "basedpyright/config.json".source = ./00.core/configs/languages/basedpyright.json;
     # Shell
-    "shellcheck/shellcheckrc".source = ./00.core/configs/languages/shellcheckrc; # OK: shellcheck respects XDG
+    "shellcheck/shellcheckrc".source = ./00.core/configs/languages/shellcheckrc;
     # Package managers
-    "npm/npmrc".source = ./00.core/configs/npmrc; # OK: npm uses NPM_CONFIG_USERCONFIG env var
-    "cargo/config.toml".source = ./00.core/configs/languages/cargo.toml; # OK: cargo respects XDG
+    "npm/npmrc".source = ./00.core/configs/npmrc;
+    "cargo/config.toml".source = ./00.core/configs/languages/cargo.toml;
     # Lua
-    "luarocks/config.lua".source = ./00.core/configs/languages/luarocks.lua; # OK: luarocks uses LUAROCKS_CONFIG env var
-    # TODO: lua-language-server - .luarc.json should be per-project, add to templates when needed
-    # TODO: busted - .busted config should be per-project (testing framework)
-    # TODO: luacov - .luacov config should be per-project (coverage tool)
-    # TODO: pytest - pytest.ini or setup.cfg should be per-project, add to templates when needed
+    "luarocks/config.lua".source = ./00.core/configs/languages/luarocks.lua;
     # --- Formatting Tools ---------------------------------------------------
-    "taplo/taplo.toml".source = ./00.core/configs/formatting/.taplo.toml; # TODO: taplo only reads from project root, move to templates
-    "yamllint/config".source = ./00.core/configs/formatting/.yamllint.yml; # OK: yamllint uses YAMLLINT_CONFIG_FILE env var
+    "yamllint/config".source = ./00.core/configs/formatting/.yamllint.yml;
 
     # --- File & Directory Operations Tools ----------------------------------
     # Eza (modern ls replacement)
@@ -85,8 +120,6 @@
     "containers/containers.conf".source = ./00.core/configs/containers/containers.conf; # Podman
     "containers/registries.conf".source = ./00.core/configs/containers/registries.conf; # Podman
     "containers/storage.conf".source = ./00.core/configs/containers/storage.conf; # Podman
-    # TODO: dive - Add dive/config.yaml for UI preferences and keybindings when needed
-    # TODO: hadolint - Add hadolint.yaml for linting rules and ignored warnings when needed
   };
   # --- Home Files (Non-XDG) -------------------------------------------------
   home.file = {
@@ -108,11 +141,17 @@
     # --- TLDR Configuration -------------------------------------------------
     ".tldrrc".source = ./00.core/configs/system/tldr/.tldrrc;
 
+    # --- Window Management (macOS - Non-XDG) --------------------------------
+    ".skhdrc".source = ./00.core/configs/apps/skhdrc; # skhd doesn't support XDG
+
+    # --- SketchyBar Fonts (Local Fonts Directory) ---------------------------
+    # Note: App font now installed via Homebrew cask (font-sketchybar-app-font)
+
     # --- Asset Folder Files -------------------------------------------------
   }
   // (myLib.build.deployDir ./00.core/configs/apps/claude ".claude")
   // {
-    # Deploy prettierrc to .claude for hooks that expect it there  
+    # Deploy prettierrc to .claude for hooks that expect it there
     ".claude/.prettierrc".source = ./00.core/configs/formatting/.prettierrc;
   };
 

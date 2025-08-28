@@ -1,0 +1,291 @@
+# Title         : yazi.toml
+# Author        : Bardia Samiee
+# Project       : Parametric Forge
+# License       : MIT
+# Path          : /01.home/00.core/configs/apps/yazi/yazi.toml
+# ----------------------------------------------------------------------------
+# Yazi terminal file manager configuration
+
+# --- Manager Configuration ------------------------------------------------
+[mgr]
+# Layout ratio: [parent, current, preview] - optimize for current directory focus
+ratio = [
+  1,
+  5,
+  2,
+] # More space for current dir, narrower preview for most workflows
+
+# File sorting - prioritize natural sorting for better UX
+sort_by = "natural"    # Natural sort: 1.md < 2.md < 10.md
+sort_sensitive = false # Case-insensitive sorting
+sort_reverse = false   # Normal order
+sort_dir_first = true  # Directories first (consistent with eza alias)
+sort_translit = true   # Better handling of international characters
+
+# Display configuration
+linemode = "mtime"  # Show modification time (aligns with dev workflow)
+show_hidden = false # Hidden files toggle-able with '.'
+show_symlink = true # Show symlink indicators
+scrolloff = 8       # Keep 8 lines visible for better context when scrolling
+
+# Mouse support for trackpad/mouse users
+mouse_events = [
+  "click",
+  "scroll",
+  "drag",
+] # Enable click, scroll, and drag for better interactivity
+
+# Window title format
+title_format = "Yazi: {cwd} [{count} items]" # Shows current dir and item count
+
+# --- Preview Configuration ------------------------------------------------
+[preview]
+# Text preview settings
+wrap = "no"       # No text wrapping in preview
+tab_size = 2      # 2-space tabs (consistent with project style)
+max_width = 1000  # Increased for wide monitors
+max_height = 1200 # Increased for tall content
+
+# Image preview settings
+cache_dir = ""            # Use default cache directory (XDG-compliant)
+image_delay = 100         # 100ms delay for better performance with large images
+image_filter = "lanczos3" # Best quality filter for sharp images
+image_quality = 90        # Higher quality for better previews
+
+# Ueberzug configuration (for image preview in some terminals)
+ueberzug_scale = 1             # Default scaling
+ueberzug_offset = [0, 0, 0, 0] # No offset adjustments
+
+# --- Tasks Configuration --------------------------------------------------
+[tasks]
+micro_workers = 20         # Increased for modern hardware (was 10)
+macro_workers = 10         # More parallel file operations (was 5)
+bizarre_retry = 5          # Retry limit for failed operations
+suppress_preload = false   # Show preload tasks in task manager
+image_alloc = 1073741824   # 1GB for better image processing (was 512MB)
+image_bound = [8000, 8000] # Support larger images for modern displays
+
+# --- Opener Configuration -------------------------------------------------
+[opener]
+# Text editors - prioritize nvim with fallback options
+edit = [
+  { run = 'nvim "$@"', desc = "Neovim", block = true },
+  { run = 'code "$@"', desc = "VS Code", orphan = true },
+  { run = '${EDITOR:-nvim} "$@"', desc = "$EDITOR", block = true },
+]
+
+# File opening - use macOS defaults
+open = [{ run = 'open "$@"', desc = "Open" }]
+
+# Reveal in Finder
+reveal = [{ run = 'open -R "$1"', desc = "Reveal in Finder" }]
+
+# Archive extraction with smart handling
+extract = [
+  { run = 'ouch decompress "$@"', desc = "Extract with ouch" },
+  { run = 'unar "$@"', desc = "Extract with unar (fallback)" },
+  { run = 'ya pub extract --list "$@"', desc = "List & Extract" },
+]
+
+# Media playback with enhanced options
+play = [
+  { run = 'mpv --player-operation-mode=pseudo-gui "$@"', orphan = true, desc = "MPV Player" },
+  { run = 'vlc "$@"', orphan = true, desc = "VLC Player" },
+  { run = '''mediainfo "$1"; echo "Press enter to exit"; read _''', block = true, desc = "Show media info" },
+]
+
+# --- File Association Rules -----------------------------------------------
+[open]
+rules = [
+  # Directories
+  { name = "*/", use = [
+    "edit",
+    "open",
+    "reveal",
+  ] },
+
+  # Text files - prefer nvim
+  { mime = "text/*", use = [
+    "edit",
+    "reveal",
+  ] },
+  { mime = "*/json", use = [
+    "edit",
+    "reveal",
+  ] },
+  { mime = "*/javascript", use = [
+    "edit",
+    "reveal",
+  ] },
+  { mime = "*/typescript", use = [
+    "edit",
+    "reveal",
+  ] },
+  { mime = "*/yaml", use = [
+    "edit",
+    "reveal",
+  ] },
+  { mime = "*/toml", use = [
+    "edit",
+    "reveal",
+  ] },
+  { mime = "*/xml", use = [
+    "edit",
+    "reveal",
+  ] },
+
+  # Images
+  { mime = "image/*", use = [
+    "open",
+    "reveal",
+  ] },
+
+  # Videos
+  { mime = "video/*", use = [
+    "play",
+    "reveal",
+  ] },
+
+  # Audio
+  { mime = "audio/*", use = [
+    "play",
+    "reveal",
+  ] },
+
+  # Documents
+  { mime = "application/pdf", use = [
+    "open",
+    "reveal",
+  ] },
+  { mime = "application/*office*", use = [
+    "open",
+    "reveal",
+  ] },
+  { mime = "application/*document*", use = [
+    "open",
+    "reveal",
+  ] },
+
+  # Archives - comprehensive support
+  { mime = "application/{zip,rar,7z*,tar,gzip,xz,zstd,bzip*}", use = [
+    "extract",
+    "open",
+    "reveal",
+  ] },
+  { name = "*.{zip,rar,7z,tar,gz,bz2,xz,zst}", use = [
+    "extract",
+    "open",
+    "reveal",
+  ] },
+
+  # Development files with specialized handling
+  { name = "*.{nix,lock}", use = [
+    "edit",
+    "reveal",
+  ] },
+  { name = "*.{rs,go,c,cpp,h,hpp}", use = [
+    "edit",
+    "reveal",
+  ] },
+  { name = "Makefile", use = [
+    "edit",
+    "reveal",
+  ] },
+  { name = "justfile", use = [
+    "edit",
+    "reveal",
+  ] },
+
+  # Default fallback
+  { name = "*", use = [
+    "open",
+    "reveal",
+  ] },
+]
+
+# --- Plugin Configuration -------------------------------------------------
+[plugin]
+# Fetchers for enhanced file information
+prepend_fetchers = [
+  # MIME type detection - fast file type identification
+  { id = "mime", name = "*", run = "mime-ext" },
+  # Git integration - fetch git status for files
+  { id = "git", name = "*", run = "git" },
+  { id = "git", name = "*/", run = "git" },
+]
+
+# Previewers for enhanced file previews
+prepend_previewers = [
+  # Directory preview with enhanced listing
+  { name = "*/", run = "eza-preview" },
+
+  # Code and text with syntax highlighting
+  { mime = "text/*", run = "bat" },
+  { mime = "application/javascript", run = "bat" },
+  { mime = "application/typescript", run = "bat" },
+  { name = "*.{rs,go,c,cpp,h,hpp,py,rb,lua,nix}", run = "bat" },
+
+  # Markdown with beautiful rendering
+  { name = "*.{md,markdown}", run = "glow" },
+
+  # Data files with structured preview
+  { name = "*.{json,ndjson}", run = "json" },
+  { name = "*.{csv,tsv}", run = "miller" },
+  { name = "*.{parquet,pq}", run = "duckdb" },
+  { name = "*.{db,sqlite,sqlite3}", run = "duckdb" },
+
+  # Jupyter notebooks
+  { name = "*.ipynb", run = "nbpreview" },
+
+  # Office documents with pandoc
+  { name = "*.{docx,xlsx,pptx,odt,ods,odp}", run = "pandoc" },
+  { name = "*.{doc,xls,ppt}", run = "pandoc" },
+
+  # Modern image formats via built-in image previewer
+  { mime = "image/*", run = "image" },
+
+  # Enhanced media preview with metadata
+  { mime = "video/*", run = "mediainfo" },
+  { mime = "audio/*", run = "exifaudio" },
+
+  # PDF documents
+  { mime = "application/pdf", run = "pdf" },
+
+  # Archives with better listing
+  { name = "*.{zip,rar,7z,tar,gz,bz2,xz,zst}", run = "lsar" },
+  { mime = "application/{zip,tar,gzip,7z*,rar,xz,bzip*}", run = "ouch" },
+
+  # Compressed text files
+  { name = "*.{log.gz,txt.gz,log.bz2,txt.bz2}", run = "zless-preview" },
+
+  # Binary/hex preview
+  { name = "*.{bin,dat,exe,dll,so,dylib}", run = "hexyl" },
+
+  # Default fallback
+  { name = "*", run = "file" },
+]
+
+# --- Input Configuration --------------------------------------------------
+[input]
+cursor_blink = true # Visual feedback for cursor position
+
+# Dialog positions and sizes
+cd_title = "Change directory to:"
+cd_origin = "top-center"
+cd_offset = [0, 3, 60, 3]         # Larger input area
+
+create_title = ["Create file:", "Create directory:"]
+create_origin = "top-center"
+create_offset = [0, 3, 60, 3]
+
+rename_title = "Rename to:"
+rename_origin = "hovered"
+rename_offset = [0, 1, 60, 3]
+
+search_title = "Search with {n}:"
+search_origin = "top-center"
+search_offset = [0, 3, 70, 3]
+
+# --- Log Configuration ----------------------------------------------------
+[log]
+enabled = false # Disable logging for performance (enable for debugging)

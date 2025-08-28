@@ -109,11 +109,7 @@ in
     # Docker aliases with 'd' prefix
     lib.mapAttrs' (name: value: {
       name = "d${name}";
-      value =
-        if lib.hasPrefix "f()" value then
-          value
-        else
-          "docker ${value}";
+      value = if lib.hasPrefix "f()" value then value else "docker ${value}";
     }) dockerCommands
     # Docker Compose aliases with 'dc' prefix
     // lib.mapAttrs' (name: value: {
@@ -134,6 +130,11 @@ in
       # Docker system info
       dinfo = "docker system df";
       dversion = "docker version --format 'Client: {{.Client.Version}}\nServer: {{.Server.Version}}'";
+
+      # Container management tools (moved from core.nix)
+      lzd = "lazydocker"; # Docker TUI
+      ctop = "ctop"; # Container top
+      dive = "dive"; # Docker image explorer
 
       # Cross-tool integrations
       port-what = "f() { pid=\$(lsof -ti:\$1 2>/dev/null); [[ -n \$pid ]] && ps -p \$pid || docker ps --filter \"publish=\$1\" --format \"table {{.Names}}\t{{.Image}}\t{{.Ports}}\"; }; f"; # Enhanced port detection with Docker fallback

@@ -54,6 +54,9 @@ let
 
     echo "[op-cache] Refreshing secret cache..."
 
+    SUCCESS_COUNT=0
+    FAIL_COUNT=0
+
     # Generate cache file with resolved secrets
     {
       echo "# 1Password secrets cache - Generated $(date)"
@@ -65,8 +68,10 @@ let
         # Try to resolve the secret
         if resolved=$(op read "$value" 2>/dev/null); then
           echo "export $key='$resolved'"
+          SUCCESS_COUNT=$((SUCCESS_COUNT + 1))
         else
           echo "# Failed to resolve: $key"
+          FAIL_COUNT=$((FAIL_COUNT + 1))
         fi
       done < "$TEMPLATE_FILE"
     } > "$CACHE_FILE.tmp"
@@ -75,7 +80,14 @@ let
     mv "$CACHE_FILE.tmp" "$CACHE_FILE"
     chmod 600 "$CACHE_FILE"
 
-    echo "[op-cache] Cache refreshed successfully"
+    # Send notification
+    if [ $FAIL_COUNT -eq 0 ]; then
+      echo "[op-cache] Cache refreshed successfully"
+      alerter -title "1Password Cache Updated" -message "$SUCCESS_COUNT secrets cached successfully" -appIcon "/System/Applications/Utilities/Terminal.app/Contents/Resources/Terminal.icns" -sound Tink -timeout 3
+    else
+      echo "[op-cache] Cache refresh completed with errors"
+      alerter -title "1Password Cache Warning" -subtitle "$FAIL_COUNT secrets failed" -message "Successfully cached $SUCCESS_COUNT secrets" -appIcon "/System/Applications/Utilities/Terminal.app/Contents/Resources/Terminal.icns" -sound Hero
+    fi
   '';
 
   # --- Shell Integration Script (shared between bash and zsh) ---------------

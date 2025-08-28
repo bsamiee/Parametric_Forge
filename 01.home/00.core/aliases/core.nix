@@ -60,6 +60,8 @@ _:
   jsons = "jq -S ."; # Sort keys
   jsonkeys = "jq -r 'keys[]'"; # List keys
   validate = "jq empty 2>/dev/null && echo '✓ Valid JSON' || echo '✗ Invalid JSON'";
+  fx = "fx"; # Interactive JSON viewer
+  jsonpage = "jless"; # JSON pager (like less for JSON)
 
   # --- System Monitoring ----------------------------------------------------
   # Process monitoring
@@ -71,25 +73,11 @@ _:
   dus = "dust -d 1"; # Current directory summary
   dua = "dust"; # Full tree view
 
-  # --- Network Tools --------------------------------------------------------
-  myip = "xh -b GET ipinfo.io/ip"; # Public IP (body only)
-  localip = "ipconfig getifaddr en0 2>/dev/null || ip -4 addr show | grep -oP '(?<=inet\s)\d+(\.\d+){3}' | head -1";
-  speed = "speedtest-cli --simple";
-  ping = "gping"; # Ping with graph
-  trace = "mtr"; # Better traceroute
-
-  # Port information
-  ports = "lsof -iTCP -sTCP:LISTEN -n -P";
-  port = "lsof -i";
-  kport = "lsof -ti:"; # Find process on port (use with kill: kport 8080 | xargs kill)
-
   # --- File Operations ------------------------------------------------------
-  # Archive operations with ouch
-  compress = "ouch compress";
-  decompress = "ouch decompress";
-  targz = "ouch compress"; # Detects format by extension
-  untar = "ouch decompress";
-  extract = "ouch decompress"; # Universal extract
+  # Archive operations with ouch - short, universal aliases
+  z = "ouch compress"; # Quick compress (auto-detects format by extension)
+  uz = "ouch decompress"; # Quick decompress (universal unzip)
+  zls = "ouch list"; # List archive contents (peek inside)
 
   # Sync operations
   sync = "rsync -avP"; # Archive, verbose, progress
@@ -144,15 +132,6 @@ _:
   reload = "exec $SHELL"; # Reload shell
   cls = "clear"; # Windows muscle memory
 
-  # Process management
-  k = "kill";
-  k9 = "kill -9";
-  zombie = "procs --tree | rg '<defunct>'";
-
-  # System info shortcuts
-  connections = "lsof -i -n -P | grep ESTABLISHED";
-  openfiles = "lsof | wc -l";
-
   # --- Time & Date Operations -----------------------------------------------
   now = "date +'%Y-%m-%d %H:%M:%S'"; # ISO 8601 timestamp
   today = "date +'%Y-%m-%d'"; # ISO date for filenames
@@ -169,6 +148,11 @@ _:
   y2j = "yq eval -o=json"; # YAML to JSON
   j2y = "yq eval -P"; # JSON to YAML
   yaml = "yq eval"; # Process YAML
+
+  # --- SQL Tools ------------------------------------------------------------
+  sqlfmt = "sqlfluff format"; # SQL formatter
+  sqllint = "sqlfluff lint"; # SQL linter
+  sqlcheck = "sqlcheck"; # SQL anti-pattern detection
 
   # --- HTTP Development Server ----------------------------------------------
   serve = "python3 -m http.server"; # Instant web server on port 8000
@@ -188,9 +172,6 @@ _:
   root = "cd \"\$(git rev-parse --show-toplevel 2>/dev/null || echo .)\""; # Go to git root
   tmp = "cd \"\$(mktemp -d)\" && pwd"; # Create and enter temp directory
 
-  # --- Terminal Launchers ---------------------------------------------------
-  wez = "open -ga WezTerm"; # Launch WezTerm
-
   # --- 1Password Secret Management ------------------------------------------
   op-run = "op run --env-file=\"\$OP_ENV_TEMPLATE\" --";
   op-sync = "op read op://Private/1Password/password >/dev/null && echo '✓ 1Password authenticated' || echo '✗ Run: op signin'";
@@ -201,28 +182,22 @@ _:
   cloc = "tokei";
   loc = "tokei --compact";
 
-  # --- Container Tools ------------------------------------------------------
-  lzd = "lazydocker"; # Docker TUI
-  ctop = "ctop"; # Container top
+  # --- System Information Tools ---------------------------------------------
+  # Mac App Store CLI workflow
+  masl = "mas list"; # List installed apps
+  mass = "mas search"; # Search store
+  masi = "mas install"; # Install by ID
+  masu = "mas upgrade"; # Upgrade all apps
+
+  # File type detection with useful flags
+  ftype = "file -b"; # File type (brief, no filename)
+  fmime = "file -bi"; # MIME type + encoding
 
   # --- Quick Directory Navigation -------------------------------------------
   ".." = "cd ..";
   "..." = "cd ../..";
   "...." = "cd ../../..";
   "....." = "cd ../../../..";
-
-  # --- Nix Shortcuts --------------------------------------------------------
-  # Handled in zsh.nix for complex functions, keeping simple ones here
-  ns = "nix-shell";
-  nb = "nix build";
-  nr = "nix run";
-  nf = "nix flake";
-
-  # --- Nix Maintenance ------------------------------------------------------
-  # Complete cleanup: garbage collection, optimization, cache clearing
-  nixclean = "nix-collect-garbage -d && nix store optimise && rm -rf ~/.cache/nix/* /tmp/nix-* ~/.local/share/Trash/* ~/.Trash/* 2>/dev/null && echo 'Cleanup complete. Storage:' && df -h /nix/store | tail -1";
-  nixgc = "nix-collect-garbage -d"; # Just garbage collection
-  nixopt = "nix store optimise"; # Just optimization
 
   # --- Smart Project Context ------------------------------------------------
   dev = "f() { [[ -f flake.nix ]] && nix develop || [[ -f docker-compose.yml ]] && docker compose up -d || [[ -f package.json ]] && npm run dev || echo 'No dev environment detected'; }; f"; # Smart dev environment launcher

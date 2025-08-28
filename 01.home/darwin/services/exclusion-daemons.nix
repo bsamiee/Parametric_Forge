@@ -37,22 +37,27 @@ in
       script = ''
         echo "[Dev Exclusions] Starting scan at $(date)"
 
+        EXCLUDED_COUNT=0
+
         # --- Exclusion Function ---------------------------------------------
         exclude_dir() {
           local dir="$1"
+          local excluded=0
 
           if [ ! -f "$dir/.metadata_never_index" ]; then
             touch "$dir/.metadata_never_index" 2>/dev/null && \
-              echo "  ✓ Spotlight excluded: $dir" || true
+              echo "  ✓ Spotlight excluded: $dir" && excluded=1 || true
           fi
 
           if command -v tmutil >/dev/null 2>&1;
           then
             tmutil isexcluded "$dir" >/dev/null 2>&1 || {
               tmutil addexclusion "$dir" 2>/dev/null && \
-                echo "  ✓ Time Machine excluded: $dir" || true
+                echo "  ✓ Time Machine excluded: $dir" && excluded=1 || true
             }
           fi
+          
+          [ $excluded -eq 1 ] && EXCLUDED_COUNT=$((EXCLUDED_COUNT + 1))
         }
 
         # --- XDG Cache Exclusions -------------------------------------------
@@ -82,6 +87,11 @@ in
         done
 
         echo "[Dev Exclusions] Scan completed at $(date)"
+
+        # Send notification if exclusions were added
+        if [ $EXCLUDED_COUNT -gt 0 ]; then
+          alerter -title "Exclusions Updated" -message "$EXCLUDED_COUNT directories excluded from Spotlight/Time Machine" -appIcon "/System/Applications/Utilities/Terminal.app/Contents/Resources/Terminal.icns" -sound Tink -timeout 3
+        fi
       '';
       logBaseName = "${config.xdg.stateHome}/logs/dev-exclusions";
       nice = 19;

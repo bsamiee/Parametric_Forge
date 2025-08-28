@@ -3,7 +3,6 @@ result
 result-*
 *.drv
 .nixpkgs-review/
-.kiro/
 
 # --- Secrets & Credentials (CRITICAL) ---
 .secrets/

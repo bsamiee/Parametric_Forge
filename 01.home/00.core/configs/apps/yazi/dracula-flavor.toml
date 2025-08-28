@@ -1,0 +1,189 @@
+# Title         : dracula-flavor.toml
+# Author        : Bardia Samiee
+# Project       : Parametric Forge
+# License       : MIT
+# Path          : /01.home/00.core/configs/apps/yazi/dracula-flavor.toml
+# ----------------------------------------------------------------------------
+# Official Dracula color scheme for yazi - proper flavor.toml format
+# Colors: https://draculatheme.com/contribute
+
+# Dracula Color Palette - Official Colors from draculatheme.com
+# Background: #282a36, Current Line: #44475a, Selection: #44475a
+# Foreground: #f8f8f2, Comment: #6272a4
+# Cyan: #8be9fd, Green: #50fa7b, Orange: #ffb86c
+# Pink: #ff79c6, Purple: #bd93f9, Red: #ff5555, Yellow: #f1fa8c
+
+[manager]
+# Current working directory
+cwd = { fg = "#8be9fd" }
+# Hovered item with Dracula selection background
+hovered = { fg = "#f8f8f2", bg = "#44475a" }
+# Preview pane hover
+preview_hovered = { underline = true }
+# Search results
+find_keyword = { fg = "#f1fa8c", italic = true }
+find_position = { fg = "#ff79c6", bg = "reset", italic = true }
+# File markers
+marker_selected = { fg = "#8be9fd", bg = "#44475a" }
+marker_copied = { fg = "#f1fa8c", bg = "#f1fa8c" }
+marker_cut = { fg = "#ff5555", bg = "#ff5555" }
+marker_marked = { fg = "#50fa7b", bg = "#50fa7b" }
+# Border styling
+border_symbol = "│"
+border_style = { fg = "#6272a4" }
+
+[mode]
+normal_main = { fg = "#282a36", bg = "#50fa7b", bold = true }
+normal_alt = { fg = "#f8f8f2", bg = "#44475a", bold = true }
+select_main = { fg = "#282a36", bg = "#bd93f9", bold = true }
+select_alt = { fg = "#f8f8f2", bg = "#44475a", bold = true }
+unset_main = { fg = "#282a36", bg = "#ff5555", bold = true }
+unset_alt = { fg = "#f8f8f2", bg = "#44475a", bold = true }
+
+[tabs]
+active = { fg = "#282a36", bg = "#bd93f9", bold = true }
+inactive = { fg = "#f8f8f2", bg = "#282a36" }
+
+[status]
+separator_open = ""
+separator_close = ""
+separator_style = { fg = "#6272a4" }
+
+[select]
+border = { fg = "#bd93f9" }
+active = { fg = "#8be9fd" }
+inactive = { fg = "#6272a4" }
+
+[input]
+border = { fg = "#bd93f9" }
+title = { fg = "#bd93f9", bold = true }
+value = { fg = "#f8f8f2" }
+selected = { bg = "#44475a" }
+
+[completion]
+border = { fg = "#bd93f9" }
+active = { fg = "#282a36", bg = "#bd93f9", bold = true }
+inactive = { fg = "#f8f8f2", bg = "#282a36" }
+
+[tasks]
+border = { fg = "#bd93f9" }
+title = { fg = "#bd93f9", bold = true }
+hovered = { fg = "#282a36", bg = "#bd93f9" }
+
+[which]
+border = { fg = "#bd93f9" }
+cand = { fg = "#8be9fd" }
+rest = { fg = "#6272a4" }
+desc = { fg = "#f8f8f2" }
+separator = " → "
+separator_style = { fg = "#6272a4" }
+
+[help]
+border = { fg = "#bd93f9" }
+title = { fg = "#bd93f9", bold = true }
+on = { fg = "#bd93f9", bold = true }
+run = { fg = "#8be9fd" }
+desc = { fg = "#f8f8f2" }
+hovered = { fg = "#282a36", bg = "#bd93f9" }
+footer = { fg = "#6272a4" }
+
+[confirm]
+border = { fg = "#bd93f9" }
+title = { fg = "#bd93f9", bold = true }
+content = { fg = "#f8f8f2" }
+
+[filetype]
+rules = [
+  # Programming languages with semantic colors
+  { name = "*.py", fg = "#50fa7b" },   # Python - Green
+  { name = "*.js", fg = "#f1fa8c" },   # JavaScript - Yellow
+  { name = "*.ts", fg = "#8be9fd" },   # TypeScript - Cyan
+  { name = "*.jsx", fg = "#8be9fd" },  # React JSX - Cyan
+  { name = "*.tsx", fg = "#8be9fd" },  # React TSX - Cyan
+  { name = "*.rs", fg = "#ff79c6" },   # Rust - Pink
+  { name = "*.go", fg = "#8be9fd" },   # Go - Cyan
+  { name = "*.java", fg = "#ff79c6" }, # Java - Pink
+  { name = "*.c", fg = "#bd93f9" },    # C - Purple
+  { name = "*.cpp", fg = "#ff79c6" },  # C++ - Pink
+  { name = "*.h", fg = "#bd93f9" },    # C header - Purple
+  { name = "*.hpp", fg = "#ff79c6" },  # C++ header - Pink
+  { name = "*.nix", fg = "#8be9fd" },  # Nix - Cyan
+
+  # Web technologies
+  { name = "*.html", fg = "#ff79c6" }, # HTML - Pink
+  { name = "*.css", fg = "#bd93f9" },  # CSS - Purple
+  { name = "*.scss", fg = "#bd93f9" }, # SCSS - Purple
+
+  # Configuration files
+  { name = "*.json", fg = "#f1fa8c" }, # JSON - Yellow
+  { name = "*.toml", fg = "#bd93f9" }, # TOML - Purple
+  { name = "*.yaml", fg = "#bd93f9" }, # YAML - Purple
+  { name = "*.yml", fg = "#bd93f9" },  # YAML - Purple
+  { name = "*.xml", fg = "#ffb86c" },  # XML - Orange
+
+  # Documentation
+  { name = "*.md", fg = "#f8f8f2" },                  # Markdown - White
+  { name = "README*", fg = "#50fa7b", bold = true },  # README - Green bold
+  { name = "LICENSE*", fg = "#50fa7b", bold = true }, # License - Green bold
+
+  # Shell scripts
+  { name = "*.sh", fg = "#50fa7b" },         # Shell - Green
+  { name = "*Dockerfile*", fg = "#8be9fd" }, # Docker - Cyan
+  { name = "Makefile", fg = "#ff79c6" },     # Makefile - Pink
+
+  # 3D Parametric & Technical Design - Cyan (precision/technical)
+  { name = "*.3dm", fg = "#8be9fd" },    # Rhino 3D models
+  { name = "*.3dmbak", fg = "#8be9fd" }, # Rhino backup files
+  { name = "*.gh", fg = "#8be9fd" },     # Grasshopper definitions
+  { name = "*.ghx", fg = "#8be9fd" },    # Grasshopper XML definitions
+
+  # CAD/Engineering/Architecture - Purple (professional/structural)
+  { name = "*.dwg", fg = "#bd93f9" }, # AutoCAD drawings
+  { name = "*.dxf", fg = "#bd93f9" }, # AutoCAD exchange format
+  { name = "*.dwt", fg = "#bd93f9" }, # AutoCAD drawing templates
+  { name = "*.rvt", fg = "#bd93f9" }, # Revit projects
+  { name = "*.rfa", fg = "#bd93f9" }, # Revit family files
+  { name = "*.rft", fg = "#bd93f9" }, # Revit family templates
+
+  # Creative 3D Modeling - Pink (artistic/creative)
+  { name = "*.blend", fg = "#ff79c6" },  # Blender projects
+  { name = "*.blend1", fg = "#ff79c6" }, # Blender backup files
+
+  # Adobe Raster Graphics - Pink (visual/artistic)
+  { name = "*.psd", fg = "#ff79c6" }, # Photoshop documents
+  { name = "*.psb", fg = "#ff79c6" }, # Photoshop large documents
+
+  # Adobe Vector Graphics - Purple (precise vector design)
+  { name = "*.ai", fg = "#bd93f9" },  # Illustrator files
+  { name = "*.ait", fg = "#bd93f9" }, # Illustrator templates
+
+  # Adobe Publishing & Layout - Orange (print/publishing)
+  { name = "*.indd", fg = "#ffb86c" }, # InDesign documents
+  { name = "*.idml", fg = "#ffb86c" }, # InDesign markup language
+  { name = "*.indt", fg = "#ffb86c" }, # InDesign document templates
+
+  # Photography & Asset Management - Yellow (cataloging/organization)
+  { name = "*.lrcat", fg = "#f1fa8c" },      # Lightroom catalogs
+  { name = "*.lrtemplate", fg = "#f1fa8c" }, # Lightroom templates
+  { name = "*.xmp", fg = "#f1fa8c" },        # Adobe metadata
+
+  # Archives
+  { mime = "application/zip", fg = "#f1fa8c" },
+  { mime = "application/gzip", fg = "#f1fa8c" },
+  { mime = "application/x-tar", fg = "#f1fa8c" },
+  { mime = "application/x-bzip2", fg = "#f1fa8c" },
+  { mime = "application/x-7z-compressed", fg = "#f1fa8c" },
+  { mime = "application/x-rar", fg = "#f1fa8c" },
+
+  # Media files
+  { mime = "image/*", fg = "#ff79c6" }, # Images - Pink
+  { mime = "video/*", fg = "#bd93f9" }, # Videos - Purple
+  { mime = "audio/*", fg = "#bd93f9" }, # Audio - Purple
+
+  # Documents
+  { mime = "application/pdf", fg = "#ff5555" }, # PDF - Red
+  { name = "*.log", fg = "#6272a4" },           # Logs - Comment gray
+
+  # Directories
+  { name = "*/", fg = "#8be9fd", bold = true }, # Directories - Cyan bold
+]

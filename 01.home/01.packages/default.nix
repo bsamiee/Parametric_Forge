@@ -9,6 +9,8 @@
 {
   lib,
   pkgs,
+  myLib,
+  context,
   ...
 }:
 
@@ -18,6 +20,7 @@ let
     core = import ./core.nix { inherit pkgs; };
     nixTools = import ./nix-tools.nix { inherit pkgs; };
     devTools = import ./dev-tools.nix { inherit pkgs; };
+    gitTools = import ./git-tools.nix { inherit pkgs; };
     sysadmin = import ./sysadmin.nix { inherit pkgs; };
     devops = import ./devops.nix { inherit pkgs; };
     media = import ./media-tools.nix { inherit pkgs; };
@@ -26,6 +29,7 @@ let
     rust = import ./rust-tools.nix { inherit pkgs; };
     node = import ./node-tools.nix { inherit pkgs; };
     lua = import ./lua-tools.nix { inherit pkgs; };
+    sketchybar = import ./sketchybar.nix { inherit lib pkgs myLib context; };
   };
 
 in
@@ -35,12 +39,14 @@ in
     allPackageModules.core
     allPackageModules.nixTools
     allPackageModules.devTools
+    allPackageModules.gitTools
 
     # --- System Tools ----------------------------------------------
     allPackageModules.sysadmin
     allPackageModules.devops
     allPackageModules.media
     allPackageModules.aiTools
+    allPackageModules.sketchybar
 
     # --- Development Languages -------------------------------------
     allPackageModules.python

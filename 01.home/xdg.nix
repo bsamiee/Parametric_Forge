@@ -53,7 +53,6 @@
       mkdir -pm 755 "${config.xdg.configHome}/fontconfig"
       mkdir -pm 755 "${config.xdg.configHome}/ImageMagick"
       mkdir -pm 755 "${config.xdg.configHome}/nix"
-      mkdir -pm 755 "${config.xdg.configHome}/nil"
       mkdir -pm 755 "${config.xdg.configHome}/op"
       mkdir -pm 755 "${config.xdg.configHome}/nvim"
       # Node/npm tools (npm doesn't support XDG but we use NPM_CONFIG_USERCONFIG)
@@ -67,10 +66,16 @@
       mkdir -pm 755 "${config.xdg.configHome}/ctop"
       mkdir -pm 755 "${config.xdg.configHome}/dive"
       mkdir -pm 755 "${config.xdg.configHome}/hadolint"
+      mkdir -pm 755 "${config.xdg.configHome}/yabai"
       mkdir -pm 755 "${config.xdg.configHome}/wezterm"
       mkdir -pm 755 "${config.xdg.configHome}/xh"
       mkdir -pm 755 "${config.xdg.configHome}/yt-dlp"
       mkdir -pm 755 "${config.xdg.configHome}/shellcheck"
+      mkdir -pm 755 "${config.xdg.configHome}/borders"
+      mkdir -pm 755 "${config.xdg.configHome}/sketchybar"
+      mkdir -pm 755 "${config.xdg.configHome}/sketchybar/modules"
+      mkdir -pm 755 "${config.xdg.configHome}/sketchybar/helpers"
+      mkdir -pm 755 "${config.xdg.configHome}/sketchybar/providers"
       # Shell tools (managed by home-manager or have configs)
       mkdir -pm 755 "${config.xdg.configHome}/broot"
       mkdir -pm 755 "${config.xdg.configHome}/starship"
@@ -78,6 +83,7 @@
       mkdir -pm 755 "${config.xdg.configHome}/eza"
       mkdir -pm 755 "${config.xdg.configHome}/fd"
       mkdir -pm 755 "${config.xdg.configHome}/ripgrep"
+      mkdir -pm 755 "${config.xdg.configHome}/fastfetch"
       # File Analysis & Diff Tools
       mkdir -pm 755 "${config.xdg.configHome}/tokei"
       mkdir -pm 755 "${config.xdg.configHome}/file"
@@ -87,9 +93,6 @@
       # Media Processing
       mkdir -pm 755 "${config.xdg.configHome}/ffmpeg"
       mkdir -pm 755 "${config.xdg.configHome}/bottom"
-      mkdir -pm 755 "${config.xdg.configHome}/marksman"
-      mkdir -pm 755 "${config.xdg.configHome}/rust-analyzer"
-      mkdir -pm 755 "${config.xdg.configHome}/clippy"
       mkdir -pm 755 "${config.xdg.configHome}/cargo"
       # Python tools
       mkdir -pm 755 "${config.xdg.configHome}/python"
@@ -102,19 +105,14 @@
       mkdir -pm 755 "${config.xdg.configHome}/luarocks"
       mkdir -pm 755 "${config.xdg.configHome}/lua-language-server"
       # Formatting tools (only those that support XDG)
-      mkdir -pm 755 "${config.xdg.configHome}/taplo"
       mkdir -pm 755 "${config.xdg.configHome}/yamllint"
       # Java
       mkdir -pm 755 "${config.xdg.configHome}/java"
       # Build & Task Automation
       mkdir -pm 755 "${config.xdg.configHome}/just"
       mkdir -pm 755 "${config.xdg.configHome}/pre-commit"
-      mkdir -pm 755 "${config.xdg.configHome}/bacon"
       mkdir -pm 755 "${config.xdg.configHome}/cargo-audit"
       mkdir -pm 755 "${config.xdg.configHome}/cargo-deny"
-      mkdir -pm 755 "${config.xdg.configHome}/cargo-nextest" # Rust test runner config
-      mkdir -pm 755 "${config.xdg.configHome}/tarpaulin" # Coverage config
-      mkdir -pm 755 "${config.xdg.configHome}/wasm-pack" # WASM config
       mkdir -pm 755 "${config.xdg.configHome}/nox" # Python testing orchestrator
       # SQL Tools
       mkdir -pm 755 "${config.xdg.configHome}/sqlfluff"
@@ -131,6 +129,8 @@
       mkdir -pm 755 "${config.xdg.configHome}/watchexec"
       mkdir -pm 755 "${config.xdg.configHome}/vivid"
       mkdir -pm 755 "${config.xdg.configHome}/yazi"
+      mkdir -pm 755 "${config.xdg.configHome}/yazi/plugins"  # Yazi plugins directory
+      mkdir -pm 755 "${config.xdg.configHome}/yazi/flavors"  # Yazi flavors/themes directory
       mkdir -pm 755 "${config.xdg.dataHome}/applications"
       mkdir -pm 755 "${config.xdg.dataHome}/fonts"
       mkdir -pm 755 "${config.xdg.dataHome}/icons"
@@ -174,8 +174,6 @@
       mkdir -pm 755 "${config.xdg.dataHome}/yazi"
       mkdir -pm 755 "${config.xdg.dataHome}/cargo-audit"
       mkdir -pm 755 "${config.xdg.dataHome}/cargo-generate"
-      mkdir -pm 755 "${config.xdg.dataHome}/cargo-nextest" # Test runner data
-      mkdir -pm 755 "${config.xdg.dataHome}/wasm-pack" # WASM package data
       mkdir -pm 755 "${config.xdg.dataHome}/nox" # Python testing data
       # Trash (FreeDesktop.org specification)
       mkdir -pm 755 "${config.xdg.dataHome}/Trash"
@@ -193,8 +191,7 @@
       mkdir -pm 755 "${config.xdg.stateHome}/sqlite"
       mkdir -pm 755 "${config.xdg.stateHome}/ffmpeg"
       mkdir -pm 755 "${config.xdg.stateHome}/wezterm"  # For daemon socket and logs
-      mkdir -pm 755 "${config.xdg.stateHome}/yazi"
-      mkdir -pm 755 "${config.xdg.stateHome}/bacon"
+      mkdir -pm 755 "${config.xdg.stateHome}/yazi"     # For yazi state and logs
       # --- Cache Directories -----------------------------------------------
       mkdir -pm 755 "${config.xdg.cacheHome}/nix"
       mkdir -pm 755 "${config.xdg.cacheHome}/op"
@@ -220,13 +217,11 @@
       mkdir -pm 755 "${config.xdg.cacheHome}/pytest"
       mkdir -pm 755 "${config.xdg.cacheHome}/nox" # Python testing orchestrator
       mkdir -pm 755 "${config.xdg.cacheHome}/cargo"
-      mkdir -pm 755 "${config.xdg.cacheHome}/rust-analyzer"
       mkdir -pm 755 "${config.xdg.cacheHome}/sccache"
-      mkdir -pm 755 "${config.xdg.cacheHome}/cargo-nextest" # Rust test runner
-      mkdir -pm 755 "${config.xdg.cacheHome}/tarpaulin" # Rust code coverage
-      mkdir -pm 755 "${config.xdg.cacheHome}/wasm-pack" # WebAssembly toolchain
       mkdir -pm 755 "${config.xdg.cacheHome}/flamegraph" # Performance profiling
       mkdir -pm 755 "${config.xdg.cacheHome}/shellcheck"
+      mkdir -pm 755 "${config.xdg.cacheHome}/sketchybar"
+      mkdir -pm 755 "${config.xdg.cacheHome}/starship"
       mkdir -pm 755 "${config.xdg.cacheHome}/nix-index"
       # Container runtime caches
       mkdir -pm 755 "${config.xdg.cacheHome}/docker"
@@ -244,8 +239,6 @@
       mkdir -pm 755 "${config.xdg.cacheHome}/gitleaks"
       # Lua tools caches
       mkdir -pm 755 "${config.xdg.cacheHome}/lua-language-server"
-      mkdir -pm 755 "${config.xdg.cacheHome}/busted" # Lua test framework
-      mkdir -pm 755 "${config.xdg.cacheHome}/luacov" # Lua code coverage
       # Build & Task Automation caches
       mkdir -pm 755 "${config.xdg.cacheHome}/pre-commit"
       # SQL Tools caches
@@ -257,7 +250,7 @@
       mkdir -pm 755 "${config.xdg.cacheHome}/tldr"
       mkdir -pm 755 "${config.xdg.cacheHome}/vivid"
       mkdir -pm 755 "${config.xdg.cacheHome}/yazi"
-      mkdir -pm 755 "${config.xdg.cacheHome}/bacon"
+      mkdir -pm 755 "${config.xdg.cacheHome}/yazi/plugins"  # Plugin installation cache
       mkdir -pm 755 "${config.xdg.cacheHome}/cargo-audit"
       mkdir -pm 755 "${config.xdg.cacheHome}/cargo-generate"
       mkdir -pm 755 "${config.xdg.cacheHome}/cachix"

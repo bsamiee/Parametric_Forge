@@ -1,0 +1,123 @@
+#!/bin/bash
+# Title         : yabairc
+# Author        : Bardia Samiee (adapted from josean-dev)
+# Project       : Parametric Forge
+# License       : MIT
+# Path          : /01.home/00.core/configs/apps/yabairc
+# ----------------------------------------------------------------------------
+# Yabai window manager configuration
+
+# --- Scripting Addition Setup --------------------------------------------
+# Enable advanced window control features (required for borders and opacity)
+# Note: Requires SIP to be partially disabled for full functionality
+sudo yabai --load-sa
+yabai -m signal --add event=dock_did_restart action="sudo yabai --load-sa"
+
+# --- Layout Configuration ------------------------------------------------
+yabai -m config layout bsp
+yabai -m config window_placement second_child
+
+# --- Padding and Gaps ----------------------------------------------------
+yabai -m config top_padding 12
+yabai -m config bottom_padding 12
+yabai -m config left_padding 12
+yabai -m config right_padding 12
+yabai -m config window_gap 12
+
+# --- Window Appearance ---------------------------------------------------
+# Elegant Dracula-themed borders
+# Colors: Active=#bd93f9 (Purple), Inactive=#6272a4 (Comment Gray)
+yabai -m config window_border on
+yabai -m config window_border_width 2
+yabai -m config active_window_border_color 0xffbd93f9  # Dracula Purple
+yabai -m config normal_window_border_color 0xff6272a4  # Dracula Comment Gray
+yabai -m config window_border_radius 8
+
+# Subtle transparency for depth
+yabai -m config window_opacity on
+yabai -m config window_opacity_duration 0.15
+yabai -m config active_window_opacity 1.0
+yabai -m config normal_window_opacity 0.95
+
+# --- Window Behavior -----------------------------------------------------
+yabai -m config split_ratio 0.50
+yabai -m config split_type auto
+yabai -m config auto_balance off
+yabai -m config window_shadow on
+yabai -m config window_animation_duration 0.0
+yabai -m config window_zoom_persist on
+yabai -m config window_origin_display default
+yabai -m config window_topmost off
+
+# --- Focus & Mouse Settings ----------------------------------------------
+# Better terminal cooperation - disabled auto focus
+yabai -m config focus_follows_mouse off
+yabai -m config mouse_follows_focus off
+yabai -m config mouse_modifier alt
+yabai -m config mouse_action1 move
+yabai -m config mouse_action2 resize
+yabai -m config mouse_drop_action stack
+
+# --- Application Rules ---------------------------------------------------
+# System Applications
+yabai -m rule --add app="^System Settings$" manage=off
+yabai -m rule --add app="^System Preferences$" manage=off
+yabai -m rule --add app="^Activity Monitor$" manage=off
+yabai -m rule --add app="^Archive Utility$" manage=off
+yabai -m rule --add app="^Installer$" manage=off
+yabai -m rule --add app="^Software Update$" manage=off
+
+# Utilities
+yabai -m rule --add app="^Calculator$" manage=off
+yabai -m rule --add app="^Dictionary$" manage=off
+yabai -m rule --add app="^Karabiner-Elements$" manage=off
+yabai -m rule --add app="^QuickTime Player$" manage=off
+yabai -m rule --add app="^1Password$" manage=off
+yabai -m rule --add app="^Digital Colormeter$" manage=off
+yabai -m rule --add app="^KeyShade$" manage=off
+
+# System Productivity Tools (should float)
+yabai -m rule --add app="^Raycast$" manage=off
+yabai -m rule --add app="^Bartender$" manage=off
+yabai -m rule --add app="^CleanShot X$" manage=off
+yabai -m rule --add app="^AirBuddy$" manage=off
+yabai -m rule --add app="^AlDente$" manage=off
+yabai -m rule --add app="^BetterMouse$" manage=off
+yabai -m rule --add app="^BetterTouchTool$" manage=off
+
+# Development Tools
+yabai -m rule --add app="^Simulator$" manage=off
+yabai -m rule --add app="^Console$" manage=off
+# Main development apps - manage normally but float preferences
+yabai -m rule --add app="^Code$" title="(Preferences|Settings)" manage=off
+yabai -m rule --add app="^Visual Studio Code$" title="(Preferences|Settings)" manage=off
+yabai -m rule --add app="^Rhino" title="(Preferences|Options|License)" manage=off
+# WezTerm configuration - properly managed by yabai
+yabai -m rule --add app="^WezTerm$" manage=on
+yabai -m rule --add app="^WezTerm$" title="(Preferences|Settings)" manage=off
+yabai -m rule --add app="^WezTerm$" title="(Copy|Move|Info)" manage=off
+
+# Adobe Creative Suite
+yabai -m rule --add app="^Adobe" title="(Preferences|Settings)" manage=off
+yabai -m rule --add app="^Creative Cloud" manage=off
+
+# Communication Apps - manage normally but float preferences
+yabai -m rule --add app="^Discord$" title="(Settings|Preferences)" manage=off
+yabai -m rule --add app="^Microsoft Teams" title="(Settings|Preferences)" manage=off
+yabai -m rule --add app="^Telegram$" title="(Settings|Preferences)" manage=off
+
+# Browsers - manage normally but float preferences and special windows
+yabai -m rule --add app="^Arc$" title="(Preferences|Settings|Library)" manage=off
+yabai -m rule --add app="^Firefox$" title="(Preferences|Library)" manage=off
+
+# Media Apps
+yabai -m rule --add app="^Spotify$" title="(Preferences|Settings)" manage=off
+yabai -m rule --add app="^HandBrake$" title="(Preferences|Queue)" manage=off
+
+# Finder dialogs and special windows
+yabai -m rule --add app="^Finder$" title="(Co(py|nnect)|Move|Info|Pref)" manage=off
+# Enhanced preference window detection for common patterns
+yabai -m rule --add title="^(General|(Tab|Password|Website|Extension)s|AutoFill|Se(arch|curity)|Privacy|Advance)$" manage=off
+yabai -m rule --add title="(Preferences|Settings|Options|Configuration|About)" manage=off
+
+echo "yabai: configuration loaded..."

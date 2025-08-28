@@ -31,6 +31,9 @@
     shellAliases = lib.mkMerge [
       (import ../aliases/core.nix { })
       (import ../aliases/sysadmin.nix { })
+      (import ../aliases/dev-tools.nix { inherit lib; }).aliases
+      (import ../aliases/devops.nix { inherit lib; }).aliases
+      (import ../aliases/media.nix { inherit lib; }).aliases
     ];
     # --- Zsh Plugins --------------------------------------------------------
     # Note: All plugins now managed via built-in enable flags above
@@ -56,29 +59,29 @@
         zmodload zsh/zpty      # Pseudo-terminal operations (for async)
         zmodload zsh/system    # System interaction capabilities
         zmodload zsh/parameter # Advanced parameter manipulation
-        
+
         # PERFORMANCE: Skip security check on trusted directories
         zstyle ':completion:*' accept-exact-dirs true
-        
+
         # HISTORY OPTIONS: Advanced history behavior settings
         setopt HIST_VERIFY         # Show command before executing from history
         setopt HIST_REDUCE_BLANKS  # Clean up extra spaces in history
         setopt HIST_NO_FUNCTIONS   # Don't save function definitions
         setopt SHARE_HISTORY       # Share history between all sessions
         setopt INC_APPEND_HISTORY  # Write to history immediately
-        
+
         # DIRECTORY NAVIGATION: Enhanced cd and directory behavior
         setopt AUTO_PUSHD          # Automatically maintain directory stack
         setopt PUSHD_IGNORE_DUPS   # Don't duplicate directories in stack
         setopt PUSHD_SILENT        # Don't print directory stack after pushd
         setopt CDABLE_VARS         # Allow cd to variable values
-        
+
         # JOB CONTROL: Better background job management
         setopt CHECK_JOBS          # Warn about running jobs when exiting
         setopt HUP                 # Send HUP signal to jobs when shell exits
         setopt LONG_LIST_JOBS      # Display PID when suspending processes
       '')
-      
+
       # --- Completion System (order 200) ------------------------------------
       (lib.mkOrder 200 ''
         # Advanced completion with fzf integration
@@ -95,7 +98,7 @@
         zstyle ':completion:*' special-dirs true
         zstyle ':completion:*:*:kill:*:processes' list-colors '=(#b) #([0-9]#) ([0-9a-z-]#)*=01;34=0=01'
         zstyle ':completion:*:(ssh|scp|rsync):*:hosts-host' ignored-patterns '*(.|:)*' loopback localhost broadcasthost
-        
+
         # FZF-TAB integration (if available)
         command -v fzf >/dev/null 2>&1 && {
           zstyle ':fzf-tab:complete:cd:*' fzf-preview 'eza -1 --color=always $realpath 2>/dev/null'
@@ -103,7 +106,7 @@
           zstyle ':fzf-tab:*' switch-group '<' '>'
         }
       '')
-      
+
       # --- Utility Functions & Helpers (order 300) ---------------------------
       # Helper functions for performance and security
       (lib.mkOrder 300 ''
@@ -116,15 +119,36 @@
                echo "Command '$1' not found"; return 127 ;;
           esac
         }
-        
+
         # Project root navigation
         project-root() {
           cd "$(git rev-parse --show-toplevel 2>/dev/null || 
                fd -t d '^(.git|.hg|.svn|flake.nix|Cargo.toml|package.json|pyproject.toml)$' --max-depth 3 --exec dirname {} | head -1)" 2>/dev/null || 
           echo "Not in a project"
         }
+
+        # Yazi shell wrapper with cd-on-quit functionality
+        # This allows changing directory in shell when exiting yazi
+        y() {
+          local tmp="$(mktemp -t "yazi-cwd.XXXXXX")"
+          yazi "$@" --cwd-file="$tmp"
+          if cwd="$(cat -- "$tmp")" && [ -n "$cwd" ] && [ "$cwd" != "$PWD" ]; then
+            cd -- "$cwd"
+          fi
+          rm -f -- "$tmp"
+        }
+
+        # Standard yy() function for yazi integration (alternative naming)
+        yy() {
+          local tmp="$(mktemp -t "yazi-cwd.XXXXXX")" cwd
+          yazi "$@" --cwd-file="$tmp"
+          if cwd="$(command cat -- "$tmp")" && [ -n "$cwd" ] && [ "$cwd" != "$PWD" ]; then
+            builtin cd -- "$cwd"
+          fi
+          rm -f -- "$tmp"
+        }
       '')
-      
+
       # --- Pre-compinit (order 500) -----------------------------------------
       (lib.mkOrder 500 ''
         # Note: All zsh plugins (autosuggestions, syntax-highlighting, history-substring-search, completions)
@@ -135,13 +159,13 @@
         bindkey '^P' history-substring-search-up       # Ctrl+P - search history up
         bindkey '^N' history-substring-search-down     # Ctrl+N - search history down
         # Note: ^R reserved for mcfly integration
-        
+
         # Word navigation (useful in terminals)
         bindkey '^[[1;5C' forward-word   # Ctrl+Right - jump word forward
         bindkey '^[[1;5D' backward-word  # Ctrl+Left - jump word backward
         bindkey '^[[H' beginning-of-line # Home - go to line start
         bindkey '^[[F' end-of-line      # End - go to line end
-        
+
         # Edit command in editor
         autoload -z edit-command-line
         zle -N edit-command-line
@@ -152,41 +176,15 @@
         # Startup optimizations
         typeset -U path PATH
         mkdir -p "${config.xdg.cacheHome}/zsh" "${config.xdg.stateHome}/zsh"
-        
+
         # Context-aware optimizations
         [[ -n "$NVIM$VSCODE_PID" ]] && { zstyle ':completion:*' max-matches-width 0; zstyle ':completion:*' max-matches 10; }
         [[ -n "$SSH_CLIENT$SSH_TTY" ]] && { HISTSIZE=10000; SAVEHIST=10000; }
       '')
-      # --- Nix Utilities (order 600) ---------------------------------------
-      (lib.mkOrder 600 ''
-        # Package info and dev shell launcher
-        nix-info() {
-          [[ $# -lt 1 ]] && { echo "Store: $(du -sh /nix/store 2>/dev/null | cut -f1), Generations: $(nix-env --list-generations 2>/dev/null | wc -l)"; } ||
-          nix path-info --closure-size -h "nixpkgs#$1" 2>/dev/null || nix-store --query --roots "$1" 2>/dev/null || echo "Not found: $1"
-        }
-        
-        dev-shell() {
-          local packages=(git jq ripgrep fd bat)
-          [[ -f "package.json" ]] && packages+=(nodejs)
-          [[ -f "pyproject.toml" ]] && packages+=(python3) 
-          [[ -f "Cargo.toml" ]] && packages+=(rustc cargo)
-          [[ -f "go.mod" ]] && packages+=(go)
-          echo "Dev shell: ''${packages[*]}"; nix-shell -p ''${packages[*]}
-        }
-        
-        nix-biggest() { echo "Analyzing store..."; nix-du | head -20; }
-        ntrace() { nix build --print-build-logs --show-trace "$@" 2>&1 | tee build.log; }
-      '')
       # --- Post-compinit (order 650) - Main Configuration -------------------
       (lib.mkOrder 650 ''
-        # Nix-index database management
-        nix-index-auto() {
-          local check_marker="$NIX_INDEX_DATABASE/.last-check"
-          [[ -f "$check_marker" ]] && [[ $(find "$check_marker" -mmin -1440 2>/dev/null) ]] && return
-          mkdir -p "$NIX_INDEX_DATABASE" && touch "$check_marker"
-          [[ ! -f "$NIX_INDEX_DATABASE/files" ]] && { echo "Building nix-index..."; (nix-index 2>/dev/null) &! }
-        }
-        nix-index-auto
+        # Auto nix-index management (function moved to nix.nix aliases)
+        nindexauto
 
         # 1Password CLI plugin aliases
         [ -f "$HOME/.config/op/plugins.sh" ] && source "$HOME/.config/op/plugins.sh"
@@ -205,7 +203,7 @@
           command -v podman &>/dev/null && podman machine list 2>/dev/null | grep -q Running &&
             export DOCKER_HOST="unix://$(podman machine inspect --format '{{.ConnectionInfo.PodmanSocket.Path}}' 2>/dev/null)"
         }
-        
+
         docker-start() {
           command -v colima &>/dev/null && { pgrep -q colima || { echo "Starting Colima..."; colima start; }; _set_docker_host; } ||
           command -v podman &>/dev/null && { podman machine list --format "{{.Running}}" | grep -q true || { echo "Starting Podman..."; podman machine start; }; _set_docker_host; } ||
@@ -245,13 +243,13 @@
         # Shell customizations and integrations
         autoload -U add-zsh-hook
         typeset -A ZSH_HIGHLIGHT_STYLES; ZSH_HIGHLIGHT_STYLES[path]=none ZSH_HIGHLIGHT_STYLES[path_prefix]=none
-        
+
         # Auto-activation functions  
         auto-venv() { [[ -f ".venv/bin/activate" ]] && source .venv/bin/activate || { [[ -n "$VIRTUAL_ENV" ]] && [[ ! -f ".venv/bin/activate" ]] && deactivate 2>/dev/null || true; }; }
-        
+
         # Register hooks
         add-zsh-hook chpwd project-info auto-venv
-        
+
         # WezTerm integration
         [[ -n "$WEZTERM_PANE" ]] && {
           _wezterm_set_user_var() { printf "\\033]1337;SetUserVar=%s=%s\\007" "$1" "$(echo -n "$2" | base64)"; }

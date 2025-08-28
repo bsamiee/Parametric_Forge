@@ -11,14 +11,55 @@
 let
   # --- Default Python Version -----------------------------------------------
   python = pkgs.python313; # Can be overridden per project
+
+  # --- Base Python Environment ----------------------------------------------
+  # Development-specific tools not needed globally
+  pythonWithPackages = python.withPackages (
+    ps: with ps; [
+      # Only pip needed - poetry/uv handle the rest
+      pip
+
+      # Interactive development
+      ipython
+      ipdb
+      icecream
+
+      # Testing suite
+      pytest
+      pytest-cov
+      pytest-xdist
+      pytest-timeout
+      pytest-mock
+      hypothesis
+      coverage
+      faker
+      freezegun
+
+      # Code quality
+      vulture
+      radon
+
+      # Profiling
+      pyinstrument
+    ]
+  );
 in
 myLib.build.auto pkgs (
   pkgs.mkShell {
     name = "python-project-dev";
 
     # --- Package Selection --------------------------------------------------
-    packages = [
-      python # Specific Python version for this project
+    packages = with pkgs; [
+      pythonWithPackages # Python with development packages
+
+      # Testing & automation tools
+      nox
+      python3Packages.tox
+      pre-commit
+
+      # Build & distribution
+      python3Packages.build
+      python3Packages.twine
     ];
     # --- Environment Variables ----------------------------------------------
     env = {
@@ -68,6 +109,13 @@ myLib.build.auto pkgs (
       # Smart project detection and setup
       if [ -f "pyproject.toml" ]; then
         echo "📦 Project detected: pyproject.toml found"
+        
+        # Check for data science dependencies
+        if grep -q -E "(numpy|pandas|scipy|matplotlib|scikit-learn)" pyproject.toml 2>/dev/null; then
+          echo "📊 Data science dependencies detected"
+          echo "   Note: Heavy packages (numpy, pandas, etc.) are available globally"
+          echo "   Use 'poetry install' to get project-specific versions if needed"
+        fi
 
         # Dependency analysis for service recommendations
         ${myLib.devshell.detectServices}
@@ -78,10 +126,13 @@ myLib.build.auto pkgs (
         # Development workflow hints
         echo ""
         echo "🚀 Common commands:"
-        echo "   poetry install    - Install dependencies"
-        echo "   poetry run pytest - Run tests"
-        echo "   poetry run ruff   - Lint code (if ruff installed globally)"
-        echo "   pre-commit install - Setup git hooks (if pre-commit installed globally)"
+        echo "   poetry install      - Install dependencies"
+        echo "   pytest              - Run tests (available globally)"
+        echo "   ruff check .        - Lint code"
+        echo "   ruff format .       - Format code"
+        echo "   mypy .              - Type check"
+        echo "   pre-commit install  - Setup git hooks"
+        echo "   nox                 - Run test automation"
 
       elif [ -f "requirements.txt" ] || [ -f "setup.py" ]; then
         echo "📦 Legacy Python project detected"
