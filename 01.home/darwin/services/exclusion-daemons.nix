@@ -33,59 +33,59 @@ in
   launchd.agents."org.nixos.dev-exclusions" = {
     enable = true;
     config = mkPeriodicJob {
-    interval = 21600; # 6 hours
-    script = ''
-      echo "[Dev Exclusions] Starting scan at $(date)"
+      interval = 21600; # 6 hours
+      script = ''
+        echo "[Dev Exclusions] Starting scan at $(date)"
 
-      # --- Exclusion Function -------------------------------------------
-      exclude_dir() {
-        local dir="$1"
+        # --- Exclusion Function ---------------------------------------------
+        exclude_dir() {
+          local dir="$1"
 
-        if [ ! -f "$dir/.metadata_never_index" ]; then
-          touch "$dir/.metadata_never_index" 2>/dev/null && \
-            echo "  ✓ Spotlight excluded: $dir" || true
-        fi
+          if [ ! -f "$dir/.metadata_never_index" ]; then
+            touch "$dir/.metadata_never_index" 2>/dev/null && \
+              echo "  ✓ Spotlight excluded: $dir" || true
+          fi
 
-        if command -v tmutil >/dev/null 2>&1;
-        then
-          tmutil isexcluded "$dir" >/dev/null 2>&1 || {
-            tmutil addexclusion "$dir" 2>/dev/null && \
-              echo "  ✓ Time Machine excluded: $dir" || true
-          }
-        fi
-      }
+          if command -v tmutil >/dev/null 2>&1;
+          then
+            tmutil isexcluded "$dir" >/dev/null 2>&1 || {
+              tmutil addexclusion "$dir" 2>/dev/null && \
+                echo "  ✓ Time Machine excluded: $dir" || true
+            }
+          fi
+        }
 
-      # --- XDG Cache Exclusions -----------------------------------------
-      echo "Checking XDG cache directories..."
-      ${lib.concatMapStrings (e: ''
-        if [ -d "${config.xdg.cacheHome}/${e.pattern}" ]; then
-          exclude_dir "${config.xdg.cacheHome}/${e.pattern}"
-        fi
-      '') cacheInXdg}
+        # --- XDG Cache Exclusions -------------------------------------------
+        echo "Checking XDG cache directories..."
+        ${lib.concatMapStrings (e: ''
+          if [ -d "${config.xdg.cacheHome}/${e.pattern}" ]; then
+            exclude_dir "${config.xdg.cacheHome}/${e.pattern}"
+          fi
+        '') cacheInXdg}
 
-      exclude_dir "${config.xdg.cacheHome}"
-      exclude_dir "${config.xdg.stateHome}/logs"
-      exclude_dir "${config.xdg.dataHome}/Trash"
+        exclude_dir "${config.xdg.cacheHome}"
+        exclude_dir "${config.xdg.stateHome}/logs"
+        exclude_dir "${config.xdg.dataHome}/Trash"
 
-      # --- Project Directory Scanning -----------------------------------
-      for project_dir in ${lib.concatStringsSep " " projectDirs}; do
-        if [ -d "$project_dir" ]; then
-          echo "Scanning $project_dir..."
+        # --- Project Directory Scanning -------------------------------------
+        for project_dir in ${lib.concatStringsSep " " projectDirs}; do
+          if [ -d "$project_dir" ]; then
+            echo "Scanning $project_dir..."
 
-          find "$project_dir" -maxdepth 5 \(
-            ${lib.concatMapStringsSep " -o " (p: "-name \"${p}\"") patternsToExclude}
-          \) -type d -prune 2>/dev/null | while read -r dir;
-          do
-            exclude_dir "$dir"
-          done
-        fi
-      done
+            find "$project_dir" -maxdepth 5 \(
+              ${lib.concatMapStringsSep " -o " (p: "-name \"${p}\"") patternsToExclude}
+            \) -type d -prune 2>/dev/null | while read -r dir;
+            do
+              exclude_dir "$dir"
+            done
+          fi
+        done
 
-      echo "[Dev Exclusions] Scan completed at $(date)"
-    '';
-    logBaseName = "${config.xdg.stateHome}/logs/dev-exclusions";
-    nice = 19;
-    runAtLoad = true;
+        echo "[Dev Exclusions] Scan completed at $(date)"
+      '';
+      logBaseName = "${config.xdg.stateHome}/logs/dev-exclusions";
+      nice = 19;
+      runAtLoad = true;
     };
   };
 }

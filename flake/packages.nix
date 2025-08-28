@@ -6,7 +6,7 @@
 # ----------------------------------------------------------------------------
 # Custom packages and runnable apps
 
-{ inputs, myLib, ... }:
+_:
 
 {
   perSystem =
@@ -14,34 +14,8 @@
       self',
       pkgs,
       system,
-      lib,
       ...
     }:
-    let
-      # --- Rust Overlay Configuration ---------------------------------------
-      pkgsWithRust = import inputs.nixpkgs {
-        inherit system;
-        overlays = [ inputs.rust-overlay.overlays.default ];
-      };
-      # --- Pin Rust Toolchain -----------------------------------------------
-      rustToolchain = pkgsWithRust.rust-bin.stable."1.89.0".default.override {
-        extensions = [
-          "rust-src"
-          "rust-analyzer"
-        ];
-        targets = [
-          "aarch64-apple-darwin"
-          "x86_64-apple-darwin"
-          "x86_64-unknown-linux-gnu"
-          "aarch64-unknown-linux-gnu"
-        ];
-      };
-      # --- Create Rust Platform ---------------------------------------------
-      rustPlatform = pkgsWithRust.makeRustPlatform {
-        cargo = rustToolchain;
-        rustc = rustToolchain;
-      };
-    in
     {
       packages = {
         # --- Bootstrap Script -----------------------------------------------

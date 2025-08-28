@@ -786,7 +786,7 @@ config.skip_close_confirmation_for_processes_named = {
 }
 
 -- Performance ──────────────────────────────────────────────────────────────
-config.front_end = "OpenGL"  -- Changed from WebGpu - OpenGL supports transparency properly on macOS
+config.front_end = "OpenGL" -- Changed from WebGpu - OpenGL supports transparency properly on macOS
 config.max_fps = 120
 config.animation_fps = 120
 config.scrollback_lines = 5000

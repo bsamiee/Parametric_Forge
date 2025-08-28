@@ -13,7 +13,6 @@ let
 
   # --- Import Library Modules -----------------------------------------------
   detection = import ./detection.nix { inherit lib; };
-  gitStatus = import ./git-status.nix { inherit lib; };
 in
 {
   # --- Detection Functions --------------------------------------------------
@@ -47,8 +46,8 @@ in
   # --- Development Shell Helpers --------------------------------------------
   devshell = import ./devshell-helpers.nix { inherit lib; };
 
-  # --- Git Status Utilities -------------------------------------------------
-  inherit (gitStatus) getRepoStatus statusCommand statusChars;
+  # --- Alerter Notification Helpers (macOS) ---------------------------------
+  alerter = import ./alerter.nix { inherit lib; };
 
   # --- Re-export Nixpkgs Lib Functions --------------------------------------
   inherit (lib)

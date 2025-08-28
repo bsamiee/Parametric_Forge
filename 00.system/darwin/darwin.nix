@@ -19,13 +19,12 @@
   # --- System Configuration -------------------------------------------------
   system = {
     stateVersion = 6;
-    startup.chime = null; # null=unset, true=enable, false=disable
+    startup.chime = null;
   };
 
   # --- Programs -------------------------------------------------------------
   programs.zsh.enable = true;
 
   # --- Environment ----------------------------------------------------------
-  # Intel Macs need /usr/local/bin prioritized for Homebrew
   environment.systemPath = lib.mkIf context.isX86_64 (lib.mkBefore [ "/usr/local/bin" ]);
 }

@@ -44,7 +44,6 @@
           echo "  ✓ Time Machine excluded: /nix store"
         fi
 
-        echo "  Note: User directory exclusions managed by home-manager services"
       '';
       deps = [ "etc" ];
     };
@@ -100,7 +99,6 @@
       ];
     };
     # --- Darwin XDG Runtime Directory ---------------------------------------
-    # Initial creation only - maintenance handled by user launchd agent
     darwinRuntimeDirectory = {
       text = ''
         echo "[Parametric Forge] Ensuring XDG runtime directory exists..."
@@ -114,14 +112,12 @@
         else
           echo "  ✓ XDG runtime directory exists"
         fi
-        # Note: Cleanup handled by org.nixos.xdg-runtime launchd agent
       '';
       deps = [ "users" ];
     };
   };
   # --- Shell Initialization -------------------------------------------------
   environment.shellInit = ''
-    # Homebrew shell integration
     if [ -x /opt/homebrew/bin/brew ]; then
       eval "$(/opt/homebrew/bin/brew shellenv)"
     elif [ -x /usr/local/bin/brew ]; then

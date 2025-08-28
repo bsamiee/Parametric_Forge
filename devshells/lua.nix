@@ -12,22 +12,18 @@ pkgs.mkShell {
   name = "lua-dev";
   # --- Package Selection ----------------------------------------------------
   packages = with pkgs; [
-    # --- Core Lua Tools -----------------------------------------------------
     lua
-    luajit
-    luarocks
-    lua-language-server
-    stylua
-
-    # --- Additional Development Tools ---------------------------------------
-    luajitPackages.penlight # Useful Lua libraries for testing
-    luajitPackages.busted # Unit testing framework
-    luajitPackages.luacov # Code coverage tool
+    luajitPackages.penlight
+    luajitPackages.busted
+    luajitPackages.luacov
   ];
   # --- Environment Variables ------------------------------------------------
   env = {
     LUA_PATH = "${pkgs.luajitPackages.penlight}/share/lua/5.1/?.lua;${pkgs.luajitPackages.penlight}/share/lua/5.1/?/init.lua;./?.lua;./?/init.lua";
     LUA_CPATH = "${pkgs.luajitPackages.penlight}/lib/lua/5.1/?.so;./?.so";
+    BUSTED_OUTPUT_TYPE = "TAP";
+    LUACOV_CONFIG = ".luacov";
+    LUACOV_STATSFILE = ".luacov.stats.out";
   };
   # --- Shell Hook -----------------------------------------------------------
   shellHook = ''

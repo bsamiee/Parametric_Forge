@@ -9,6 +9,7 @@
 {
   config,
   context ? null,
+  lib,
   ...
 }:
 
@@ -57,6 +58,11 @@
     CARGO_NET_GIT_FETCH_WITH_CLI = "true";
     CARGO_TERM_COLOR = "always";
     BINSTALL_DISABLE_TELEMETRY = "1";
+    # Rust testing & profiling tools
+    CARGO_NEXTEST_DIR = "${config.xdg.cacheHome}/cargo-nextest"; # Nextest cache
+    CARGO_TARPAULIN_CACHE_DIR = "${config.xdg.cacheHome}/tarpaulin"; # Coverage cache
+    WASM_PACK_CACHE = "${config.xdg.cacheHome}/wasm-pack"; # WebAssembly cache
+    CARGO_PROFILE_RELEASE_DEBUG = "true"; # Enable debug symbols in release for profiling
     # Go
     GOPATH = "${config.xdg.dataHome}/go";
     # Node/npm (npm doesn't support XDG - uses these env vars for custom paths)
@@ -79,9 +85,11 @@
     UV_CACHE_DIR = "${config.xdg.cacheHome}/uv";
     PYTEST_CACHE_DIR = "${config.xdg.cacheHome}/pytest";
     PIPX_DEFAULT_PYTHON = "${config.home.homeDirectory}/.nix-profile/bin/python3";
+    # Python testing orchestration
+    NOX_CACHE_DIR = "${config.xdg.cacheHome}/nox"; # Nox testing cache
 
     # --- XDG-Compliant Shell History ----------------------------------------
-    HISTFILE = "${config.xdg.stateHome}/bash/history";
+    HISTFILE = "${config.xdg.stateHome}/zsh/history"; # Primary shell is zsh
     LESSHISTFILE = "${config.xdg.stateHome}/less/history";
     SQLITE_HISTORY = "${config.xdg.stateHome}/sqlite/history";
 
@@ -116,6 +124,9 @@
     SHFMT_PATH = "shfmt"; # Path to shfmt (available in PATH)
     LUAROCKS_TREE = "${config.xdg.dataHome}/luarocks"; # Lua package manager
     LUAROCKS_CONFIG = "${config.xdg.configHome}/luarocks/config.lua";
+    # Lua testing tools
+    BUSTED_OUTPUT_TYPE = "utfTerminal"; # Default output format for busted tests
+    LUACOV_CONFIG = "${config.xdg.configHome}/luacov/config"; # Coverage config
 
     # --- Font Configuration -------------------------------------------------
     FONTCONFIG_PATH = "${config.xdg.configHome}/fontconfig";
@@ -125,7 +136,9 @@
     # --- Performance & Build Settings ---------------------------------------
     DOCKER_BUILDKIT = "1";
     COMPOSE_DOCKER_CLI_BUILD = "1";
-    BUILDKIT_PROGRESS = "plain"; # Options: auto, plain, tty
+    BUILDKIT_PROGRESS = "plain"; # Options: auto, plain, tty, quiet, rawjson
+    BUILDKIT_TTY_LOG_LINES = "20"; # Number of log lines in TTY mode
+    BUILDKIT_COLORS = "1"; # Enable colored output for buildkit
     TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE = "/var/run/docker.sock";
     MAKEFLAGS = "-j$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4)";
     CMAKE_BUILD_PARALLEL_LEVEL = "$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4)";
@@ -141,33 +154,46 @@
     SAM_CLI_TELEMETRY = "0";
     POWERSHELL_TELEMETRY_OPTOUT = "1";
     DO_NOT_TRACK = "1";
+    CARGO_BINSTALL_DISABLE_TELEMETRY = "1"; # Disable cargo-binstall telemetry
+
+    # --- Security & Secret Detection ----------------------------------------
+    # Gitleaks configuration
+    GITLEAKS_CONFIG = "${config.xdg.configHome}/gitleaks/gitleaks.toml";
+    GITLEAKS_NO_UPDATE_CHECK = "true"; # Disable update checks in managed environment
+    # Git secret and encryption tools
+    SECRETS_GPG_COMMAND = "gpg"; # GPG command for git-secret
+    # Note: GNUPGHOME is set system-wide if using GPG
 
     # --- Tool Configurations ------------------------------------------------
     # Bat (enhanced cat) - Management paths only
     BAT_CONFIG_PATH = "${config.xdg.configHome}/bat/config"; # Config file location
     BAT_CACHE_PATH = "${config.xdg.cacheHome}/bat"; # Cache for compiled themes/syntaxes
-    
+
     # Ripgrep (ultra-fast text search) - Management path only
     RIPGREP_CONFIG_PATH = "${config.xdg.configHome}/ripgrep/config"; # Config file location
-    
+
     # Delta (syntax-highlighting diff viewer)
     DELTA_PAGER = "less -FRX"; # Override default pager for delta
     # DELTA_FEATURES = "+side-by-side"; # Uncomment to temporarily enable features
-    
-    # Hexyl (hex viewer) - Dracula-themed colors for different byte types
-    HEXYL_COLOR_ASCII_PRINTABLE = "#50fa7b"; # Green for printable ASCII
-    HEXYL_COLOR_ASCII_WHITESPACE = "#8be9fd"; # Cyan for whitespace
-    HEXYL_COLOR_ASCII_OTHER = "#f1fa8c"; # Yellow for other ASCII
-    HEXYL_COLOR_NULL = "#ff5555"; # Red for null bytes
-    HEXYL_COLOR_NONASCII = "#bd93f9"; # Purple for non-ASCII
-    HEXYL_COLOR_OFFSET = "#6272a4"; # Comment color for offsets
-    
+
+    # Hexyl (hex viewer) - Official Dracula palette
+    HEXYL_COLOR_ASCII_PRINTABLE = "#f8f8f2"; # Foreground - normal readable text
+    HEXYL_COLOR_ASCII_WHITESPACE = "#6272a4"; # Comment - subtle whitespace
+    HEXYL_COLOR_ASCII_OTHER = "#bd93f9"; # Purple - other ASCII
+    HEXYL_COLOR_NULL = "#ff5555"; # Red - null bytes (warning)
+    HEXYL_COLOR_NONASCII = "#ffb86c"; # Orange - non-ASCII bytes
+    HEXYL_COLOR_OFFSET = "#8be9fd"; # Cyan - offset column
+
     # Tokei (code statistics) - Terminal color control
     # NO_COLOR = "1"; # Uncomment to disable colored output globally
     # CLICOLOR_FORCE = "1"; # Uncomment to force color output when not in terminal
-    
+
     # File command (file type detection)
     MAGIC = "${config.xdg.configHome}/file/magic:${config.xdg.dataHome}/file/magic"; # Custom magic file paths
+
+    # JQ (JSON processor) - Dracula-complementary ANSI colors
+    # Format: null:false:true:numbers:strings:arrays:objects:keys
+    JQ_COLORS = lib.mkForce "0;90:0;31:0;32:0;33:0;35:0;36:0;34:1;33"; # Optimized for Dracula terminals (override home-manager defaults)
     # Zsh plugin configurations
     ZSH_AUTOSUGGEST_STRATEGY = "(history completion)"; # Try history first, then completion
     ZSH_AUTOSUGGEST_BUFFER_MAX_SIZE = "20"; # Don't suggest for long commands (20 chars)
@@ -178,8 +204,9 @@
     NIX_INDEX_DATABASE = "${config.xdg.cacheHome}/nix-index";
     MCFLY_RESULTS = "50"; # Number of results to display
     MCFLY_INTERFACE_VIEW = "BOTTOM"; # Where to display results
-    # Enhanced directory colors (Dracula-inspired)
-    LS_COLORS = "fi=00:mi=00:mh=00:ln=01;36:or=01;31:di=01;34:ow=04;01;34:st=34:tw=04;34:pi=01;33:so=01;33:bd=33:cd=33:su=01;35:sg=01;35:ca=01;33:ex=01;32";
+    # LS_COLORS - Official Dracula dircolors (simplified for portability)
+    # Full RGB version available at github.com/dracula/dircolors
+    LS_COLORS = "di=1;35:ln=1;36:so=1;35:pi=33:ex=1;32:bd=1;33:cd=1;33:su=37;41:sg=30;43:tw=30;42:ow=35;42:st=37;44:*.tar=1;31:*.zip=1;31:*.jpg=1;35:*.png=1;35:*.mp3=36:*.pdf=35:*.md=1;35:*.txt=37:*~=90:*.bak=90";
 
     # --- Java/JVM Configuration (XDG-compliant) -----------------------------
     JAVA_OPTIONS = "-Djava.util.prefs.userRoot=${config.xdg.configHome}/java";
@@ -187,6 +214,9 @@
 
     # --- Build & Task Automation --------------------------------------------
     PRE_COMMIT_HOME = "${config.xdg.dataHome}/pre-commit"; # Pre-commit hooks cache
+    JUST_CHOOSER = "fzf"; # Binary chooser for just --choose
+    JUST_TIMESTAMP = "1"; # Enable timestamps in just output
+    JUST_TIMESTAMP_FORMAT = "%Y-%m-%d %H:%M:%S"; # Format for just timestamps
 
     # --- Backup & Sync Tools ------------------------------------------------
     RCLONE_CONFIG = "${config.xdg.configHome}/rclone/rclone.conf"; # Rclone configuration
@@ -234,9 +264,12 @@
 
     # ImageMagick
     MAGICK_CONFIGURE_PATH = "${config.xdg.configHome}/ImageMagick"; # Configuration files search path
-    MAGICK_FONT_PATH = if (context != null && context.isDarwin)
-      then "/System/Library/Fonts:/Library/Fonts:${config.home.homeDirectory}/Library/Fonts"
-      else "${config.home.homeDirectory}/.local/share/fonts:/usr/share/fonts"; # Font files search path
+    # Font path includes both system fonts and home-manager font packages
+    MAGICK_FONT_PATH =
+      if (context != null && context.isDarwin) then
+        "/System/Library/Fonts:/Library/Fonts:${config.home.homeDirectory}/Library/Fonts:${config.home.profileDirectory}/share/fonts"
+      else
+        "${config.home.homeDirectory}/.local/share/fonts:/usr/share/fonts:${config.home.profileDirectory}/share/fonts";
     MAGICK_TEMPORARY_PATH = "${config.xdg.cacheHome}/ImageMagick"; # Temporary files path
     MAGICK_MEMORY_LIMIT = "1GB"; # Heap memory limit
     MAGICK_DISK_LIMIT = "2GB"; # Disk space limit
@@ -255,6 +288,8 @@
     EZA_CONFIG_DIR = "${config.xdg.configHome}/eza"; # Directory for theme.yml
     EZA_ICON_SPACING = "2"; # Spaces between icon and filename
     EZA_ICONS_AUTO = "1"; # Enable automatic icon display
+    EZA_STRICT = "1"; # Error on incompatible options (good for scripts/automation)
+    EZA_GRID_ROWS = "3"; # Min rows for grid-details view (prevents sparse layouts on wide screens)
     # Note: EZA_COLORS removed - using theme.yml instead for color configuration
 
     # Rsync (file synchronization)

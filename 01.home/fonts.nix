@@ -6,8 +6,34 @@
 # ----------------------------------------------------------------------------
 # User fontconfig settings using system-installed fonts.
 
-_:
+{ lib, pkgs, ... }:
 
+let
+  # --- Font Names That Get Patched ------------------------------------------
+  patchedFonts = [
+    "Geist"
+    "Geist Mono"
+    "Inter"
+    "DM Sans"
+    "IBM Plex Sans"
+    "IBM Plex Serif"
+    "IBM Plex Mono"
+    "Source Sans 3"
+    "Source Serif 4"
+    "Overpass"
+    "Iosevka"
+  ];
+
+  # --- Generate Font Aliases ------------------------------------------------
+  mkFontAlias = fontName: ''
+    <alias>
+      <family>${fontName}</family>
+      <prefer>
+        <family>${fontName} Nerd Font</family>
+      </prefer>
+    </alias>
+  '';
+in
 {
   # --- Fontconfig Settings --------------------------------------------------
   fonts.fontconfig = {
@@ -42,5 +68,18 @@ _:
       # --- Emoji Fonts ------------------------------------------------------
       emoji = [ "OpenMoji" ]; # Open source, outlined style, 3,180+ emojis
     };
+
+  };
+
+  # --- Darwin-Only Font Aliases via XDG File --------------------------------
+  # Redirect original font requests to Nerd Font variants
+  xdg.configFile."fontconfig/conf.d/99-nerd-font-aliases.conf" = lib.mkIf pkgs.stdenv.isDarwin {
+    text = ''
+      <?xml version="1.0"?>
+      <!DOCTYPE fontconfig SYSTEM "urn:fontconfig:fonts.dtd">
+      <fontconfig>
+        ${lib.concatStrings (map mkFontAlias patchedFonts)}
+      </fontconfig>
+    '';
   };
 }

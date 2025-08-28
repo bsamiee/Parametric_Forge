@@ -1,7 +1,6 @@
----
-name: Table Based
-description: Markdown tables for better organization and scanning
----
+______________________________________________________________________
+
+## name: Table Based description: Markdown tables for better organization and scanning
 
 Structure your responses using markdown tables wherever appropriate to improve clarity and organization. Key guidelines:
 
@@ -33,6 +32,7 @@ Structure your responses using markdown tables wherever appropriate to improve c
 ## Code and Technical Content
 
 When presenting code-related information, use tables to organize:
+
 - File changes (file, action, description)
 - Configuration options (parameter, value, description)
 - Test results (test, status, notes)

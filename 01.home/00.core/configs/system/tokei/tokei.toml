@@ -7,19 +7,18 @@
 # Tokei configuration for code statistics analysis
 
 # Display settings
-columns = 100                           # Terminal width for proper alignment
-hidden = true                            # Include hidden files in analysis
-treat_doc_strings_as_comments = true    # Count docstrings as comments, not code
+columns = 100                        # Terminal width for proper alignment
+treat_doc_strings_as_comments = true # Count docstrings as comments, not code
 
 # Ignore settings
-no_ignore_dot = false                    # Respect .ignore and .tokeignore files
-no_ignore_vcs = false                    # Respect VCS ignore files (.gitignore, etc.)
+no_ignore_dot = false # Respect .ignore and .tokeignore files
+no_ignore_vcs = false # Respect VCS ignore files (.gitignore, etc.)
 
 # Default sort order
-sort = "lines"                           # Sort by lines of code by default
+sort = "lines" # Sort by lines of code by default
 
 # Language filtering (uncomment to filter)
 # types = ["Rust", "Python", "TypeScript", "Nix", "Shell"]
 
-# Exclusion patterns (in addition to ignore files)
-# exclude = ["target", "node_modules", "*.min.js", "dist", "build"]
+# Note: 'hidden' and 'exclude' are CLI-only options, not valid in config files
+# Use: tokei --hidden --exclude="target,node_modules" for those features

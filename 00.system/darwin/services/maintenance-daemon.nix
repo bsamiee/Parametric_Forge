@@ -9,7 +9,7 @@
 { pkgs, myLib, ... }:
 
 let
-  # --- Service Helper Functions ---------------------------------------------
+  # --- Service Helper Functions ----------------------------------------------
   inherit (myLib.launchd) mkLaunchdDaemon;
 
   # --- Maintenance Script ---------------------------------------------------
@@ -34,14 +34,12 @@ let
     # --- Nix Health Checks --------------------------------------------------
     echo "→ Nix health checks:"
 
-    # Store integrity verification
     if ${pkgs.nix}/bin/nix store verify --all --no-contents 2>/dev/null; then
       echo "  ✓ Store integrity verified"
     else
       echo "  ⚠ Store verification found issues"
     fi
 
-    # Daemon status check
     if pgrep -x "nix-daemon" > /dev/null; then
       echo "  ✓ Nix daemon is running"
     else
@@ -52,14 +50,12 @@ let
     if command -v brew >/dev/null 2>&1; then
       echo "→ Homebrew maintenance:"
 
-      # Cleanup old versions
       if brew cleanup --prune=30 2>/dev/null; then
         echo "  ✓ Cleaned up old Homebrew versions"
       else
         echo "  ⚠ Homebrew cleanup encountered issues"
       fi
 
-      # Check for issues
       if brew doctor 2>/dev/null | head -10; then
         echo "  ✓ Homebrew doctor check completed"
       else
@@ -69,7 +65,7 @@ let
       echo "  → Homebrew not installed, skipping"
     fi
 
-    # --- Log Rotation --------------------------------------------------------
+    # --- Log Rotation -------------------------------------------------------
     echo "→ Log rotation:"
     find /var/log -name "*.log" -mtime +60 -delete 2>/dev/null || true
     echo "  ✓ Rotated old system logs"
@@ -83,7 +79,6 @@ in
   # --- System Maintenance Daemon --------------------------------------------
   launchd.daemons.system-maintenance = mkLaunchdDaemon pkgs {
     command = "${maintenanceScript}";
-    # Run Sundays at 5 AM (after GC at 3 AM and before user services)
     startCalendarInterval = [
       {
         Weekday = 0;
@@ -93,7 +88,7 @@ in
     ];
     nice = 19;
     logBaseName = "/var/log/system-maintenance";
-    ExitTimeOut = 3600; # 1 hour max runtime
+    ExitTimeOut = 3600;
     LowPriorityIO = true;
     ProcessType = "Background";
   };

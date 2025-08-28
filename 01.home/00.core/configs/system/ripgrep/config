@@ -5,6 +5,8 @@
 # Path          : /01.home/00.core/configs/system/ripgrep/config
 # ----------------------------------------------------------------------------
 # Ripgrep global configuration - one argument per line
+# shellcheck disable=all
+# shfmt:skip
 
 # --- Search Behavior --------------------------------------------------------
 # Smart case search (case-insensitive unless pattern has uppercase)

@@ -199,6 +199,12 @@ def main() -> int:
     """Main entry point for the PostToolUse hook."""
     tool_name = os.environ.get("CLAUDE_TOOL_NAME", "")
     tool_input = os.environ.get("CLAUDE_TOOL_INPUT", "{}")
+    
+    # Log to file for debugging (optional)
+    debug_mode = os.environ.get("CLAUDE_HOOK_DEBUG", "").lower() == "true"
+    if debug_mode:
+        with open("/tmp/claude_file_cleanup.log", "a") as f:
+            f.write(f"Tool: {tool_name}\n")
 
     if tool_name not in FILE_TOOLS:
         return 0

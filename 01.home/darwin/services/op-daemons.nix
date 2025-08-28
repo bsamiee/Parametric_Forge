@@ -148,19 +148,19 @@ in
   launchd.agents.op-cache-manager = {
     enable = true;
     config = mkPeriodicJob {
-    command = "${opCacheManager}";
-    interval = 3600; # Every hour
-    runAtLoad = true;
-    nice = 10;
-    logBaseName = "${config.xdg.stateHome}/op-cache";
-    environmentVariables = {
-      PATH = launchdPath;
-      HOME = config.home.homeDirectory;
-    };
-    # Additional config that mkPeriodicJob passes through
-    WatchPaths = [
-      config.secrets.paths.template
-    ];
+      command = "${opCacheManager}";
+      interval = 3600; # Every hour
+      runAtLoad = true;
+      nice = 10;
+      logBaseName = "${config.xdg.stateHome}/op-cache";
+      environmentVariables = {
+        PATH = launchdPath;
+        HOME = config.home.homeDirectory;
+      };
+      # Additional config that mkPeriodicJob passes through
+      WatchPaths = [
+        config.secrets.paths.template
+      ];
     };
   };
 

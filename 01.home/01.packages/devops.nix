@@ -29,6 +29,7 @@ with pkgs;
   podman # Docker alternative
   dive # Docker image explorer
   # lazydocker → Managed by programs.lazydocker in container-tools.nix
+  ctop # Container metrics and monitoring (like top for containers)
   buildkit # Next-gen container builder
   hadolint # Dockerfile linter
 

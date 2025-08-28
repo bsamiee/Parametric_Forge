@@ -17,7 +17,7 @@
 {
   # --- Imports --------------------------------------------------------------
   imports = [
-    ../default.nix # Universal system configs
+    ../default.nix
   ];
   # --- System & State -------------------------------------------------------
   system.stateVersion = "25.05";

@@ -1,8 +1,6 @@
----
-name: prometheus-expert
-description: Expert in Prometheus for monitoring, alerting, and performance optimization.
-model: sonnet
----
+______________________________________________________________________
+
+## name: prometheus-expert description: Expert in Prometheus for monitoring, alerting, and performance optimization. model: sonnet
 
 ## Focus Areas
 

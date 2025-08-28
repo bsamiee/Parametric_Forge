@@ -11,7 +11,7 @@
 {
   imports = [
     ./activation.nix
-    ./services # User-level launchd agents
+    ./services
   ];
 
   # --- Platform Assertion ---------------------------------------------------
@@ -21,11 +21,4 @@
       message = "01.home/darwin/default.nix should only be used on Darwin systems";
     }
   ];
-
-  # --- Darwin-Specific Settings ---------------------------------------------
-  # Programs will be imported from modules/programs/
-  # Aliases will be imported from modules/aliases/
-
-  # --- macOS Application Support --------------------------------------------
-  # Platform-specific variables can be defined here when needed
 }

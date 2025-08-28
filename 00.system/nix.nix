@@ -24,8 +24,8 @@
         "nix-command"
         "flakes"
         "auto-allocate-uids"
-        "ca-derivations" # Content-addressed derivations for efficiency
-        "recursive-nix" # Nix-in-Nix for containers/VMs
+        "ca-derivations"
+        "recursive-nix"
       ];
       # --- Security ---------------------------------------------------------
       trusted-users = lib.mkForce (
@@ -47,14 +47,14 @@
       cores = 0;
       max-substitution-jobs = 32;
       http-connections = 50;
-      http2 = true; # Enable HTTP/2 for parallel fetching
+      http2 = true;
 
       # --- Build Optimization -----------------------------------------------
       keep-outputs = false;
       keep-derivations = false;
       compress-build-log = true;
       keep-failed = false;
-      keep-going = true; # Continue building despite failures
+      keep-going = true;
 
       # --- Store Management -------------------------------------------------
       min-free-check-interval = 300;
@@ -73,7 +73,7 @@
       allow-import-from-derivation = true;
       show-trace = true;
       log-lines = 100;
-      run-diff-hook = true; # Enable diff hook for debugging
+      run-diff-hook = true;
 
       # --- Binary Caches ----------------------------------------------------
       substituters = lib.mkForce [
@@ -104,27 +104,27 @@
     '';
 
     # --- Garbage Collection -------------------------------------------------
-    # Only configure if nix.enable is true (when not managed by Determinate Systems)
-    gc = lib.mkIf config.nix.enable ({
-      automatic = true;
-      options = "--delete-older-than 7d --max-freed $((5 * 1024 * 1024 * 1024))";
-    }
-    // (
-      if context.isDarwin then
-        {
-          interval = {
-            Hour = 3;
-            Minute = 0;
-            Weekday = 0;
-          };
-        }
-      else
-        {
-          dates = "weekly";
-          persistent = true;
-        }
-    ));
-    # Store optimization (periodic, not auto due to macOS corruption risks)
+    gc = lib.mkIf config.nix.enable (
+      {
+        automatic = true;
+        options = "--delete-older-than 7d --max-freed $((5 * 1024 * 1024 * 1024))";
+      }
+      // (
+        if context.isDarwin then
+          {
+            interval = {
+              Hour = 3;
+              Minute = 0;
+              Weekday = 0;
+            };
+          }
+        else
+          {
+            dates = "weekly";
+            persistent = true;
+          }
+      )
+    );
     optimise.automatic = lib.mkIf config.nix.enable true;
   };
   # --- Nixpkgs Configuration ------------------------------------------------

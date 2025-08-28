@@ -16,7 +16,6 @@ with pkgs;
   # broot → Managed by programs.broot in shell-tools.nix
   trash-cli # rm → Safe deletion to trash instead of permanent delete
   fcp # cp → Fast parallel file copy (simple cases)
-  uutils-coreutils-noprefix # Full POSIX cp when fcp lacks features (-r, -p, -a, --reflink CoW)
   rsync # mv/sync → Advanced file synchronization and transfer
 
   # --- Text Processing & Search ---------------------------------------------
@@ -38,6 +37,7 @@ with pkgs;
   # bottom → Managed by programs.bottom in shell-tools.nix
   duf # df → Disk usage with visual bars and colors
   dust # du → Directory size analyzer with tree view
+  mas # Mac App Store CLI for managing store apps
 
   # --- Network Tools --------------------------------------------------------
   xh # curl/wget → Modern HTTP client with intuitive syntax

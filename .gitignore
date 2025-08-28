@@ -19,6 +19,7 @@ result-*
 tokens.local.nix
 *-credentials.nix
 op-env.cache
+00.DEPRECATED/
 
 # --- Python ---
 __pycache__/

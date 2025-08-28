@@ -2,7 +2,10 @@
   "public": "dist",
   "cleanUrls": true,
   "rewrites": [
-    { "source": "app/**", "destination": "/index.html" }
+    {
+      "source": "app/**",
+      "destination": "/index.html"
+    }
   ],
   "headers": [
     {

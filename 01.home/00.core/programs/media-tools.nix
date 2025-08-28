@@ -62,10 +62,12 @@
         yes-playlist = false; # Don't download entire playlists by default
 
         # --- Platform-specific Configuration ---------------------------
-      } // lib.optionalAttrs context.isDarwin {
+      }
+      // lib.optionalAttrs context.isDarwin {
         # macOS-specific settings
         output = "~/Downloads/%(uploader)s/%(title)s.%(ext)s";
-      } // lib.optionalAttrs (!context.isDarwin) {
+      }
+      // lib.optionalAttrs (!context.isDarwin) {
         # Linux-specific settings
         output = "~/Downloads/%(uploader)s/%(title)s.%(ext)s";
       };

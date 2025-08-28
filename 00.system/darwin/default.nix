@@ -9,14 +9,15 @@
 {
   # --- Imports --------------------------------------------------------------
   imports = [
-    ../default.nix # Universal system configs
-    ./darwin.nix # Core Darwin configuration
-    ./activation.nix # Activation scripts and exclusions
-    ./homebrew.nix # Homebrew and Mac App Store integration
-    ./settings/interface.nix # Visual interface and desktop environment
-    ./settings/system.nix # Core system behavior and services
-    ./settings/input.nix # Input devices: keyboard, mouse, trackpad
-    ./settings/security.nix # Security, PAM, certificates
-    ./services # Service infrastructure
+    ../default.nix
+    ./darwin.nix
+    ./activation.nix
+    ./homebrew.nix
+    ./applications.nix
+    ./settings/interface.nix
+    ./settings/system.nix
+    ./settings/input.nix
+    ./settings/security.nix
+    ./services
   ];
 }

@@ -13,7 +13,7 @@
 }:
 
 {
-  # --- Imports --------------------------------------------------------------
+  # --- Imports ------------------------------------------------------------
   imports = [
     ../modules
     ./01.packages
@@ -27,9 +27,8 @@
     ./file-management.nix
   ]
   ++ lib.optionals (context != null) [
-    # Platform-specific home-manager modules
     (if context.isDarwin then ./darwin else ./nixos)
   ];
-  # --- Core Programs --------------------------------------------------------
+  # --- Core Programs ------------------------------------------------------
   programs.home-manager.enable = true;
 }

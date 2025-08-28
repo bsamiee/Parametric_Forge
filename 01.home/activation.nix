@@ -18,6 +18,25 @@
 {
   # --- Home Activation Scripts ----------------------------------------------
   home.activation = {
+    # --- Alerter Installation ------------------------------------------------
+    alerterSetup = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+      # Install alerter (terminal-notifier replacement with more features)
+      if [ ! -f "$HOME/.local/bin/alerter" ]; then
+        echo "[Alerter] Installing notification tool..."
+        ${lib.optionalString context.isDarwin ''
+          mkdir -p "$HOME/.local/bin"
+          # Only x86_64 binary available, will use Rosetta on ARM64
+          curl -sL "https://github.com/vjeantet/alerter/releases/download/1.0.1/alerter_v1.0.1_darwin_amd64.zip" \
+            -o /tmp/alerter.zip && \
+          unzip -q /tmp/alerter.zip -d /tmp && \
+          mv /tmp/alerter "$HOME/.local/bin/alerter" && \
+          chmod +x "$HOME/.local/bin/alerter" && \
+          rm -f /tmp/alerter.zip && \
+          echo "    ✓ Alerter installed (advanced notification tool)"
+        ''}
+      fi
+    '';
+
     # --- SQLite Extensions Setup --------------------------------------------
     sqliteExtensions = lib.hm.dag.entryAfter [ "createXdgDirs" ] ''
       # Install sqlean (not in nixpkgs)

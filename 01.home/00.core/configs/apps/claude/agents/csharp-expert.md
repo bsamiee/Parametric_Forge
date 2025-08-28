@@ -1,8 +1,6 @@
----
-name: csharp-expert
-description: Expert in C# programming focusing on best practices, performance optimization, and code quality. Use PROACTIVELY for C# refactoring, optimization, or complex patterns.
-model: sonnet
----
+______________________________________________________________________
+
+## name: csharp-expert description: Expert in C# programming focusing on best practices, performance optimization, and code quality. Use PROACTIVELY for C# refactoring, optimization, or complex patterns. model: sonnet
 
 ## Focus Areas
 

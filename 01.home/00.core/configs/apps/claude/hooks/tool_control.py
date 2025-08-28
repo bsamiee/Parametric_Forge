@@ -102,6 +102,13 @@ def main() -> int:
     try:
         tool = os.environ.get("CLAUDE_TOOL_NAME", "")
         input_str = os.environ.get("CLAUDE_TOOL_INPUT", "{}")
+        
+        # Log to file for debugging (optional)
+        debug_mode = os.environ.get("CLAUDE_HOOK_DEBUG", "").lower() == "true"
+        if debug_mode:
+            with open("/tmp/claude_tool_control.log", "a") as f:
+                f.write(f"Tool: {tool}, Input: {input_str[:100]}...\n")
+        
         try:
             input_data = json.loads(input_str)
         except json.JSONDecodeError:
@@ -134,6 +141,9 @@ def main() -> int:
                 pass
         return 0
     except Exception as e:
+        # Log errors to file for debugging
+        with open("/tmp/claude_tool_control_errors.log", "a") as f:
+            f.write(f"Error: {e}\n")
         print(f"Hook error: {e}", file=sys.stderr)
         return 0
 

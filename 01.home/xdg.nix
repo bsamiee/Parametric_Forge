@@ -61,8 +61,10 @@
       mkdir -pm 755 "${config.xdg.configHome}/docker"
       mkdir -pm 755 "${config.xdg.configHome}/containers"
       mkdir -pm 755 "${config.xdg.configHome}/gh"
+      mkdir -pm 755 "${config.xdg.configHome}/gitleaks"
       mkdir -pm 755 "${config.xdg.configHome}/lazygit"
       mkdir -pm 755 "${config.xdg.configHome}/lazydocker"
+      mkdir -pm 755 "${config.xdg.configHome}/ctop"
       mkdir -pm 755 "${config.xdg.configHome}/dive"
       mkdir -pm 755 "${config.xdg.configHome}/hadolint"
       mkdir -pm 755 "${config.xdg.configHome}/wezterm"
@@ -107,6 +109,13 @@
       # Build & Task Automation
       mkdir -pm 755 "${config.xdg.configHome}/just"
       mkdir -pm 755 "${config.xdg.configHome}/pre-commit"
+      mkdir -pm 755 "${config.xdg.configHome}/bacon"
+      mkdir -pm 755 "${config.xdg.configHome}/cargo-audit"
+      mkdir -pm 755 "${config.xdg.configHome}/cargo-deny"
+      mkdir -pm 755 "${config.xdg.configHome}/cargo-nextest" # Rust test runner config
+      mkdir -pm 755 "${config.xdg.configHome}/tarpaulin" # Coverage config
+      mkdir -pm 755 "${config.xdg.configHome}/wasm-pack" # WASM config
+      mkdir -pm 755 "${config.xdg.configHome}/nox" # Python testing orchestrator
       # SQL Tools
       mkdir -pm 755 "${config.xdg.configHome}/sqlfluff"
       # Backup & Sync
@@ -120,6 +129,8 @@
       # Utilities
       mkdir -pm 755 "${config.xdg.configHome}/tldr"
       mkdir -pm 755 "${config.xdg.configHome}/watchexec"
+      mkdir -pm 755 "${config.xdg.configHome}/vivid"
+      mkdir -pm 755 "${config.xdg.configHome}/yazi"
       mkdir -pm 755 "${config.xdg.dataHome}/applications"
       mkdir -pm 755 "${config.xdg.dataHome}/fonts"
       mkdir -pm 755 "${config.xdg.dataHome}/icons"
@@ -158,6 +169,14 @@
       # File Analysis & Diff Tools
       mkdir -pm 755 "${config.xdg.dataHome}/file"
       mkdir -pm 755 "${config.xdg.dataHome}/tokei"
+      # Tool-specific data directories
+      mkdir -pm 755 "${config.xdg.dataHome}/vivid"
+      mkdir -pm 755 "${config.xdg.dataHome}/yazi"
+      mkdir -pm 755 "${config.xdg.dataHome}/cargo-audit"
+      mkdir -pm 755 "${config.xdg.dataHome}/cargo-generate"
+      mkdir -pm 755 "${config.xdg.dataHome}/cargo-nextest" # Test runner data
+      mkdir -pm 755 "${config.xdg.dataHome}/wasm-pack" # WASM package data
+      mkdir -pm 755 "${config.xdg.dataHome}/nox" # Python testing data
       # Trash (FreeDesktop.org specification)
       mkdir -pm 755 "${config.xdg.dataHome}/Trash"
       mkdir -pm 755 "${config.xdg.dataHome}/Trash/files"
@@ -174,6 +193,8 @@
       mkdir -pm 755 "${config.xdg.stateHome}/sqlite"
       mkdir -pm 755 "${config.xdg.stateHome}/ffmpeg"
       mkdir -pm 755 "${config.xdg.stateHome}/wezterm"  # For daemon socket and logs
+      mkdir -pm 755 "${config.xdg.stateHome}/yazi"
+      mkdir -pm 755 "${config.xdg.stateHome}/bacon"
       # --- Cache Directories -----------------------------------------------
       mkdir -pm 755 "${config.xdg.cacheHome}/nix"
       mkdir -pm 755 "${config.xdg.cacheHome}/op"
@@ -197,9 +218,14 @@
       mkdir -pm 755 "${config.xdg.cacheHome}/mypy"
       mkdir -pm 755 "${config.xdg.cacheHome}/uv"
       mkdir -pm 755 "${config.xdg.cacheHome}/pytest"
+      mkdir -pm 755 "${config.xdg.cacheHome}/nox" # Python testing orchestrator
       mkdir -pm 755 "${config.xdg.cacheHome}/cargo"
       mkdir -pm 755 "${config.xdg.cacheHome}/rust-analyzer"
       mkdir -pm 755 "${config.xdg.cacheHome}/sccache"
+      mkdir -pm 755 "${config.xdg.cacheHome}/cargo-nextest" # Rust test runner
+      mkdir -pm 755 "${config.xdg.cacheHome}/tarpaulin" # Rust code coverage
+      mkdir -pm 755 "${config.xdg.cacheHome}/wasm-pack" # WebAssembly toolchain
+      mkdir -pm 755 "${config.xdg.cacheHome}/flamegraph" # Performance profiling
       mkdir -pm 755 "${config.xdg.cacheHome}/shellcheck"
       mkdir -pm 755 "${config.xdg.cacheHome}/nix-index"
       # Container runtime caches
@@ -207,14 +233,19 @@
       mkdir -pm 755 "${config.xdg.cacheHome}/colima"
       mkdir -pm 755 "${config.xdg.cacheHome}/podman"
       mkdir -pm 755 "${config.xdg.cacheHome}/lazydocker"
+      mkdir -pm 755 "${config.xdg.cacheHome}/ctop"
       mkdir -pm 755 "${config.xdg.cacheHome}/dive"
       mkdir -pm 755 "${config.xdg.cacheHome}/buildkit"
       # Shell tools caches
       mkdir -pm 755 "${config.xdg.cacheHome}/bat"
       mkdir -pm 755 "${config.xdg.cacheHome}/direnv"
       mkdir -pm 755 "${config.xdg.cacheHome}/fd"
+      # Security tools caches
+      mkdir -pm 755 "${config.xdg.cacheHome}/gitleaks"
       # Lua tools caches
       mkdir -pm 755 "${config.xdg.cacheHome}/lua-language-server"
+      mkdir -pm 755 "${config.xdg.cacheHome}/busted" # Lua test framework
+      mkdir -pm 755 "${config.xdg.cacheHome}/luacov" # Lua code coverage
       # Build & Task Automation caches
       mkdir -pm 755 "${config.xdg.cacheHome}/pre-commit"
       # SQL Tools caches
@@ -224,6 +255,13 @@
       mkdir -pm 755 "${config.xdg.cacheHome}/rclone"
       # Utilities caches
       mkdir -pm 755 "${config.xdg.cacheHome}/tldr"
+      mkdir -pm 755 "${config.xdg.cacheHome}/vivid"
+      mkdir -pm 755 "${config.xdg.cacheHome}/yazi"
+      mkdir -pm 755 "${config.xdg.cacheHome}/bacon"
+      mkdir -pm 755 "${config.xdg.cacheHome}/cargo-audit"
+      mkdir -pm 755 "${config.xdg.cacheHome}/cargo-generate"
+      mkdir -pm 755 "${config.xdg.cacheHome}/cachix"
+      mkdir -pm 755 "${config.xdg.cacheHome}/hadolint"
       # --- Non-XDG Directories ---------------------------------------------
       mkdir -pm 700 "${config.home.homeDirectory}/.ssh"
       mkdir -pm 700 "${config.home.homeDirectory}/.ssh/sockets"
@@ -232,6 +270,9 @@
       mkdir -pm 755 "${config.home.homeDirectory}/.local/lib/sqlean"
       mkdir -pm 755 "${config.home.homeDirectory}/.local/lib/sqlite-vec"
       mkdir -pm 755 "${config.home.homeDirectory}/bin"
+      # Cargo-specific directories (not XDG-compliant)
+      mkdir -pm 755 "${config.home.homeDirectory}/.cargo"
+      mkdir -pm 755 "${config.home.homeDirectory}/.cargo/advisory-db"
 
       echo "  ✓ XDG directory structure created"
     '';

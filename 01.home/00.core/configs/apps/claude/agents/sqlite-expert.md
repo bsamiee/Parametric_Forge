@@ -1,8 +1,6 @@
----
-name: sqlite-expert
-description: SQLite database optimization, query writing, indexing, and best practices specialist. Proactively analyzes and optimizes SQLite databases for performance and reliability.
-model: sonnet
----
+______________________________________________________________________
+
+## name: sqlite-expert description: SQLite database optimization, query writing, indexing, and best practices specialist. Proactively analyzes and optimizes SQLite databases for performance and reliability. model: sonnet
 
 ## Focus Areas
 

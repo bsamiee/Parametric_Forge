@@ -1,8 +1,6 @@
----
-name: lua-expert
-description: Write efficient and idiomatic Lua code, mastering the language features, patterns, and performance optimization. Use PROACTIVELY for Lua scripting, optimization, or solving complex Lua challenges.
-model: sonnet
----
+______________________________________________________________________
+
+## name: lua-expert description: Write efficient and idiomatic Lua code, mastering the language features, patterns, and performance optimization. Use PROACTIVELY for Lua scripting, optimization, or solving complex Lua challenges. model: sonnet
 
 ## Focus Areas
 

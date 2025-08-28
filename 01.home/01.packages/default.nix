@@ -9,14 +9,10 @@
 {
   lib,
   pkgs,
-  context ? null,
   ...
 }:
 
 let
-  # Platform detection
-  isDarwin = context.isDarwin or pkgs.stdenv.isDarwin;
-
   # --- Import all package modules ------------------------------------
   allPackageModules = {
     core = import ./core.nix { inherit pkgs; };
@@ -25,7 +21,6 @@ let
     sysadmin = import ./sysadmin.nix { inherit pkgs; };
     devops = import ./devops.nix { inherit pkgs; };
     media = import ./media-tools.nix { inherit pkgs; };
-    macos = import ./macos-tools.nix { inherit pkgs; };
     aiTools = import ./ai-tools.nix { inherit pkgs; };
     python = import ./python-tools.nix { inherit pkgs; };
     rust = import ./rust-tools.nix { inherit pkgs; };
@@ -46,9 +41,6 @@ in
     allPackageModules.devops
     allPackageModules.media
     allPackageModules.aiTools
-
-    # --- Platform-specific -----------------------------------------
-    (lib.optionals isDarwin allPackageModules.macos)
 
     # --- Development Languages -------------------------------------
     allPackageModules.python

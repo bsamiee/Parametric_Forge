@@ -1,8 +1,6 @@
----
-name: github-actions-expert
-description: Expert in GitHub Actions for automating workflows and CI/CD processes. 
-model: sonnet
----
+______________________________________________________________________
+
+## name: github-actions-expert description: Expert in GitHub Actions for automating workflows and CI/CD processes. model: sonnet
 
 ## Focus Areas
 

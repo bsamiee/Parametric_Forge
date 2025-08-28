@@ -25,6 +25,7 @@
     # --- Git Configuration --------------------------------------------------
     "git/ignore".source = ./00.core/configs/git/gitignore;
     "git/attributes".source = ./00.core/configs/git/gitattributes;
+    "gitleaks/gitleaks.toml".source = ./00.core/configs/git/gitleaks.toml;
     # --- Language Server Configurations -------------------------------------
     # Nix
     "nil/nil.toml".source = ./00.core/configs/languages/nil.toml; # TODO: nil only reads from project root, move to templates
@@ -59,20 +60,20 @@
     "eza/theme.yml".source = ./00.core/configs/system/eza/theme.yml; # Dracula-inspired theme
     # Fd (modern find replacement)
     "fd/ignore".source = ./00.core/configs/system/fd/ignore; # Global ignore patterns
-    
+
     # --- Text Processing & Search Tools -------------------------------------
     # Bat (enhanced cat)
     "bat/config".source = ./00.core/configs/system/bat/config; # Bat configuration
     # Ripgrep (ultra-fast text search)
     "ripgrep/config".source = ./00.core/configs/system/ripgrep/config; # Global ripgrep configuration
-    
+
     # --- File Analysis & Diff Tools ----------------------------------------
     "tokei/tokei.toml".source = ./00.core/configs/system/tokei/tokei.toml; # Code statistics config
 
     # --- System Monitoring Tools ---------------------------------------------
     "procs/config.toml".source = ./00.core/configs/system/procs/config.toml; # Process viewer config
     "dust/config.toml".source = ./00.core/configs/system/dust/config.toml; # Directory size analyzer config
-    "bottom/bottom.toml".source = ./00.core/configs/system/bottom/bottom.toml; # Resource monitor config
+    # Bottom is managed by home-manager's programs.bottom module
 
     # --- Media Processing ---------------------------------------------------
     # ImageMagick
@@ -111,7 +112,7 @@
   }
   // (myLib.build.deployDir ./00.core/configs/apps/claude ".claude")
   // {
-    # Deploy prettierrc to .claude for hooks that expect it there
+    # Deploy prettierrc to .claude for hooks that expect it there  
     ".claude/.prettierrc".source = ./00.core/configs/formatting/.prettierrc;
   };
 
@@ -131,7 +132,8 @@
   xdg.dataFile = {
     # Pandoc
     "pandoc/defaults/forge.yaml".source = ./00.core/configs/media-tools/pandoc/defaults.yaml;
-  } // lib.optionalAttrs (!pkgs.stdenv.isDarwin) {
+  }
+  // lib.optionalAttrs (!pkgs.stdenv.isDarwin) {
     # Desktop entries for Linux (not needed on macOS which uses .app bundles)
     "applications/code.desktop" = {
       text = ''

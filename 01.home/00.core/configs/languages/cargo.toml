@@ -7,15 +7,15 @@
 # Cargo global configuration (CARGO_HOME/config.toml)
 
 [build]
-jobs = 0                     # 0 = use all available CPU cores
+jobs = 0 # 0 = use all available CPU cores
 
 # --- Network Configuration ---------------------------------------------------
 [http]
-timeout = 30                 # HTTP timeout in seconds
+timeout = 30 # HTTP timeout in seconds
 
 [net]
-retry = 3                    # Network retry attempts
-git-fetch-with-cli = true    # Use git CLI for fetches (better auth handling)
+retry = 3                 # Network retry attempts
+git-fetch-with-cli = true # Use git CLI for fetches (better auth handling)
 
 [registries.crates-io]
-protocol = "sparse"          # Use sparse protocol for faster index updates
+protocol = "sparse" # Use sparse protocol for faster index updates

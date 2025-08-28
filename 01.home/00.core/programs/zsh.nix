@@ -34,87 +34,158 @@
     ];
     # --- Zsh Plugins --------------------------------------------------------
     # Note: All plugins now managed via built-in enable flags above
-    plugins = [];
+    plugins = [ ];
     # --- History Configuration ----------------------------------------------
     history = {
       path = "${config.xdg.stateHome}/zsh/history";
-      size = 50000;
-      save = 50000;
+      size = 100000; # Increased from 50000 for better history retention
+      save = 100000;
       share = true;
       extended = true;
       ignoreDups = true;
       ignoreSpace = true;
+      ignoreAllDups = true; # Remove older duplicates
       expireDuplicatesFirst = true;
     };
     # --- Init Content -------------------------------------------------------
     initContent = lib.mkMerge [
+      # --- Performance & Module Loading (order 100) --------------------------
+      # These load zsh modules early for better performance and capabilities
+      (lib.mkOrder 100 ''
+        # MODULES: Load zsh internal modules for advanced features
+        zmodload zsh/zpty      # Pseudo-terminal operations (for async)
+        zmodload zsh/system    # System interaction capabilities
+        zmodload zsh/parameter # Advanced parameter manipulation
+        
+        # PERFORMANCE: Skip security check on trusted directories
+        zstyle ':completion:*' accept-exact-dirs true
+        
+        # HISTORY OPTIONS: Advanced history behavior settings
+        setopt HIST_VERIFY         # Show command before executing from history
+        setopt HIST_REDUCE_BLANKS  # Clean up extra spaces in history
+        setopt HIST_NO_FUNCTIONS   # Don't save function definitions
+        setopt SHARE_HISTORY       # Share history between all sessions
+        setopt INC_APPEND_HISTORY  # Write to history immediately
+        
+        # DIRECTORY NAVIGATION: Enhanced cd and directory behavior
+        setopt AUTO_PUSHD          # Automatically maintain directory stack
+        setopt PUSHD_IGNORE_DUPS   # Don't duplicate directories in stack
+        setopt PUSHD_SILENT        # Don't print directory stack after pushd
+        setopt CDABLE_VARS         # Allow cd to variable values
+        
+        # JOB CONTROL: Better background job management
+        setopt CHECK_JOBS          # Warn about running jobs when exiting
+        setopt HUP                 # Send HUP signal to jobs when shell exits
+        setopt LONG_LIST_JOBS      # Display PID when suspending processes
+      '')
+      
+      # --- Completion System (order 200) ------------------------------------
+      (lib.mkOrder 200 ''
+        # Advanced completion with fzf integration
+        zstyle ':completion:*' menu select
+        zstyle ':completion:*' matcher-list 'm:{[:lower:][:upper:]}={[:upper:][:lower:]}' 'r:|[._-]=* r:|=*' 'l:|=* r:|=*'
+        zstyle ':completion:*' list-colors ''${(s.:.)LS_COLORS}
+        zstyle ':completion:*' group-name ""
+        zstyle ':completion:*:descriptions' format '%F{yellow}-- %d --%f'
+        zstyle ':completion:*:warnings' format '%F{red}No matches found%f'
+        zstyle ':completion:*' accept-exact '*(N)'
+        zstyle ':completion:*' use-cache true
+        zstyle ':completion:*' cache-path "${config.xdg.cacheHome}/zsh/completion-cache"
+        zstyle ':completion:*:cd:*' tag-order local-directories directory-stack path-directories
+        zstyle ':completion:*' special-dirs true
+        zstyle ':completion:*:*:kill:*:processes' list-colors '=(#b) #([0-9]#) ([0-9a-z-]#)*=01;34=0=01'
+        zstyle ':completion:*:(ssh|scp|rsync):*:hosts-host' ignored-patterns '*(.|:)*' loopback localhost broadcasthost
+        
+        # FZF-TAB integration (if available)
+        command -v fzf >/dev/null 2>&1 && {
+          zstyle ':fzf-tab:complete:cd:*' fzf-preview 'eza -1 --color=always $realpath 2>/dev/null'
+          zstyle ':fzf-tab:complete:kill:argument-rest' fzf-preview 'ps --pid=$word -o cmd --no-headers -w -w'
+          zstyle ':fzf-tab:*' switch-group '<' '>'
+        }
+      '')
+      
+      # --- Utility Functions & Helpers (order 300) ---------------------------
+      # Helper functions for performance and security
+      (lib.mkOrder 300 ''
+        # Enhanced command not found handler
+        command_not_found_handler() {
+          case "$1" in
+            rm|mv|dd|format|fdisk|sudo) echo "Command '$1' not found (dangerous command)"; return 127 ;;
+            *) command -v nix-locate >/dev/null 2>&1 && 
+               { echo "Searching nixpkgs for '$1'..."; nix-locate --minimal --no-group --type x --type s --top-level --whole-name --at-root "/bin/$1"; } || 
+               echo "Command '$1' not found"; return 127 ;;
+          esac
+        }
+        
+        # Project root navigation
+        project-root() {
+          cd "$(git rev-parse --show-toplevel 2>/dev/null || 
+               fd -t d '^(.git|.hg|.svn|flake.nix|Cargo.toml|package.json|pyproject.toml)$' --max-depth 3 --exec dirname {} | head -1)" 2>/dev/null || 
+          echo "Not in a project"
+        }
+      '')
+      
       # --- Pre-compinit (order 500) -----------------------------------------
       (lib.mkOrder 500 ''
         # Note: All zsh plugins (autosuggestions, syntax-highlighting, history-substring-search, completions)
         # are now loaded via home-manager's built-in integration options
 
-        # Additional keybindings for history substring search
-        bindkey '^P' history-substring-search-up       # Ctrl+P
-        bindkey '^N' history-substring-search-down     # Ctrl+N
+        # KEYBINDINGS: Additional keyboard shortcuts
+        # Enhanced navigation (preserving mcfly's ^R)
+        bindkey '^P' history-substring-search-up       # Ctrl+P - search history up
+        bindkey '^N' history-substring-search-down     # Ctrl+N - search history down
+        # Note: ^R reserved for mcfly integration
+        
+        # Word navigation (useful in terminals)
+        bindkey '^[[1;5C' forward-word   # Ctrl+Right - jump word forward
+        bindkey '^[[1;5D' backward-word  # Ctrl+Left - jump word backward
+        bindkey '^[[H' beginning-of-line # Home - go to line start
+        bindkey '^[[F' end-of-line      # End - go to line end
+        
+        # Edit command in editor
+        autoload -z edit-command-line
+        zle -N edit-command-line
+        bindkey '^X^E' edit-command-line # Ctrl+X Ctrl+E - edit in $EDITOR
       '')
-      # --- Order 550 --------------------------------------------------------
+      # --- Environment Optimization (order 550) ----------------------------
       (lib.mkOrder 550 ''
-        # Placeholder for modern command replacements
-        # This section reserved for future Unix command modernization
-        # e.g., ls -> eza, cat -> bat, find -> fd, grep -> rg
+        # Startup optimizations
+        typeset -U path PATH
+        mkdir -p "${config.xdg.cacheHome}/zsh" "${config.xdg.stateHome}/zsh"
+        
+        # Context-aware optimizations
+        [[ -n "$NVIM$VSCODE_PID" ]] && { zstyle ':completion:*' max-matches-width 0; zstyle ':completion:*' max-matches 10; }
+        [[ -n "$SSH_CLIENT$SSH_TTY" ]] && { HISTSIZE=10000; SAVEHIST=10000; }
       '')
-      # --- Order 600 --------------------------------------------------------
+      # --- Nix Utilities (order 600) ---------------------------------------
       (lib.mkOrder 600 ''
-        # Smart package info lookup
+        # Package info and dev shell launcher
         nix-info() {
-          [[ $# -lt 1 ]] && {
-            echo "Store size: $(du -sh /nix/store 2>/dev/null | cut -f1)"
-            echo "Generations: $(nix-env --list-generations 2>/dev/null | wc -l)"
-          } || {
-            nix path-info --closure-size -h "nixpkgs#$1" 2>/dev/null || \
-            nix-store --query --roots "$1" 2>/dev/null || \
-            echo "Not found: $1"
-          }
+          [[ $# -lt 1 ]] && { echo "Store: $(du -sh /nix/store 2>/dev/null | cut -f1), Generations: $(nix-env --list-generations 2>/dev/null | wc -l)"; } ||
+          nix path-info --closure-size -h "nixpkgs#$1" 2>/dev/null || nix-store --query --roots "$1" 2>/dev/null || echo "Not found: $1"
         }
-
-        # Quick dev shell with common tools
+        
         dev-shell() {
-          echo "Starting dev shell with common tools..."
-          nix-shell -p git nodejs python3 xh jq ripgrep fd bat
+          local packages=(git jq ripgrep fd bat)
+          [[ -f "package.json" ]] && packages+=(nodejs)
+          [[ -f "pyproject.toml" ]] && packages+=(python3) 
+          [[ -f "Cargo.toml" ]] && packages+=(rustc cargo)
+          [[ -f "go.mod" ]] && packages+=(go)
+          echo "Dev shell: ''${packages[*]}"; nix-shell -p ''${packages[*]}
         }
-
-        # What's using disk space?
-        nix-biggest() {
-          echo "Analyzing store (this may take a moment)..."
-          nix-du | head -20
-        }
-
-        # Trace nix builds with detailed output
-        ntrace() {
-          nix build --print-build-logs --show-trace "$@" 2>&1 | tee build.log
-        }
+        
+        nix-biggest() { echo "Analyzing store..."; nix-du | head -20; }
+        ntrace() { nix build --print-build-logs --show-trace "$@" 2>&1 | tee build.log; }
       '')
       # --- Post-compinit (order 650) - Main Configuration -------------------
       (lib.mkOrder 650 ''
         # Nix-index database management
         nix-index-auto() {
           local check_marker="$NIX_INDEX_DATABASE/.last-check"
-          local db_marker="$NIX_INDEX_DATABASE/.last-update"
-
-          # Only check once per day
           [[ -f "$check_marker" ]] && [[ $(find "$check_marker" -mmin -1440 2>/dev/null) ]] && return
-
           mkdir -p "$NIX_INDEX_DATABASE" && touch "$check_marker"
-
-          if [[ ! -f "$NIX_INDEX_DATABASE/files" ]]; then
-            echo "Building nix-index database..."
-            (nix-index 2>/dev/null && touch "$db_marker") &!
-          elif [[ -f "$db_marker" ]] && [[ $(find "$db_marker" -mtime +7 2>/dev/null) ]]; then
-            echo "Updating nix-index database..."
-            (nix-index 2>/dev/null && touch "$db_marker") &!
-          fi
+          [[ ! -f "$NIX_INDEX_DATABASE/files" ]] && { echo "Building nix-index..."; (nix-index 2>/dev/null) &! }
         }
-
         nix-index-auto
 
         # 1Password CLI plugin aliases
@@ -127,31 +198,20 @@
           }
         ''}
 
-        # Docker/Colima/Podman socket detection helper
+        # Container runtime management
         _set_docker_host() {
-          [ -S "$HOME/.colima/default/docker.sock" ] && export DOCKER_HOST="unix://$HOME/.colima/default/docker.sock" && return
           [ -S "$HOME/.colima/docker.sock" ] && export DOCKER_HOST="unix://$HOME/.colima/docker.sock" && return
           [ -S "$HOME/.docker/run/docker.sock" ] && export DOCKER_HOST="unix://$HOME/.docker/run/docker.sock" && return
-          command -v podman &>/dev/null && podman machine list 2>/dev/null | grep -q Running && \
-            export DOCKER_HOST="unix://$(podman machine inspect --format '{{.ConnectionInfo.PodmanSocket.Path}}' 2>/dev/null || echo "")"
+          command -v podman &>/dev/null && podman machine list 2>/dev/null | grep -q Running &&
+            export DOCKER_HOST="unix://$(podman machine inspect --format '{{.ConnectionInfo.PodmanSocket.Path}}' 2>/dev/null)"
         }
-
-        # Docker/Colima/Podman helpers with dynamic socket detection
+        
         docker-start() {
-          command -v colima &>/dev/null && {
-            pgrep -q colima || { echo "Starting Colima..." && colima start; }
-            _set_docker_host
-          } || command -v podman &>/dev/null && {
-            podman machine list --format "{{.Running}}" | grep -q true || {
-              echo "Starting Podman..." && podman machine start
-            }
-            _set_docker_host
-          } || echo "No container runtime found (colima/podman)"
-
-          [ -n "$DOCKER_HOST" ] && echo "Container runtime ready at $DOCKER_HOST"
+          command -v colima &>/dev/null && { pgrep -q colima || { echo "Starting Colima..."; colima start; }; _set_docker_host; } ||
+          command -v podman &>/dev/null && { podman machine list --format "{{.Running}}" | grep -q true || { echo "Starting Podman..."; podman machine start; }; _set_docker_host; } ||
+          echo "No container runtime found"
+          [ -n "$DOCKER_HOST" ] && echo "Ready at $DOCKER_HOST"
         }
-
-        # Set DOCKER_HOST if socket exists
         _set_docker_host
 
         # Set SSH_AUTH_SOCK for 1Password if available
@@ -169,69 +229,36 @@
           echo "Virtual environment will be created in .venv/"
         }
 
-        # Rust compilation cache status (sccache)
+        # Rust compilation cache status
         ruscache() {
-          command -v sccache &>/dev/null && {
-            echo "🦀 Rust compilation cache status:"
-            sccache --show-stats
-          } || echo "sccache not available"
+          command -v sccache &>/dev/null && { echo "Rust cache:"; sccache --show-stats; } || echo "sccache not available"
         }
 
-        # Project detection and LSP auto-initialization
-        project-detect() {
-          [[ -f "flake.nix" ]] && echo "❄️  Project: Nix Flake (nil LSP available)" && return
-          [[ -f "package.json" ]] && {
-            [[ -f "tsconfig.json" ]] && echo "📦 Project: TypeScript (typescript-language-server available)" || \
-              echo "📦 Project: Node.js (typescript-language-server available)"
-            return
-          }
-          [[ -f "pyproject.toml" ]] || [[ -f "setup.py" ]] || [[ -f "requirements.txt" ]] && \
-            echo "🐍 Project: Python (basedpyright available)" && return
-          [[ -f "Cargo.toml" ]] && echo "🦀 Project: Rust (rust-analyzer available)" && return
-          [[ -f "go.mod" ]] && echo "🐹 Project: Go (gopls needs installation)" && return
-          [[ -n "$(find . -maxdepth 1 -name "*.lua" 2>/dev/null)" ]] || [[ -f ".luarc.json" ]] && \
-            echo "🌙 Project: Lua (lua-language-server available)" && return
-          [[ -f "Dockerfile" ]] || [[ -f "docker-compose.yml" ]] || [[ -f "docker-compose.yaml" ]] && \
-            echo "🐳 Project: Docker (hadolint available for Dockerfiles)"
+        # Project detection
+        project-info() {
+          [[ -f "flake.nix" ]] && echo "Nix" && return
+          [[ -f "package.json" ]] && echo "Node" && return  
+          [[ -f "Cargo.toml" ]] && echo "Rust" && return
+          [[ -f "pyproject.toml" ]] && echo "Python" && return
         }
 
-        # Auto-detect on directory change
+        # Shell customizations and integrations
         autoload -U add-zsh-hook
-        add-zsh-hook chpwd project-detect
-
-
-        # Zoxide integration
-        command -v zoxide &>/dev/null && eval "$(zoxide init zsh)"
-
-        # ZSH syntax highlighting styles (for paths)
-        typeset -A ZSH_HIGHLIGHT_STYLES
-        ZSH_HIGHLIGHT_STYLES[path]=none
-        ZSH_HIGHLIGHT_STYLES[path_prefix]=none
-
-        # WezTerm Shell Integration
+        typeset -A ZSH_HIGHLIGHT_STYLES; ZSH_HIGHLIGHT_STYLES[path]=none ZSH_HIGHLIGHT_STYLES[path_prefix]=none
+        
+        # Auto-activation functions  
+        auto-venv() { [[ -f ".venv/bin/activate" ]] && source .venv/bin/activate || { [[ -n "$VIRTUAL_ENV" ]] && [[ ! -f ".venv/bin/activate" ]] && deactivate 2>/dev/null || true; }; }
+        
+        # Register hooks
+        add-zsh-hook chpwd project-info auto-venv
+        
+        # WezTerm integration
         [[ -n "$WEZTERM_PANE" ]] && {
-          function _wezterm_set_user_var() {
-            printf "\\033]1337;SetUserVar=%s=%s\\007" "$1" "$(echo -n "$2" | base64)"
-          }
-
-          function _wezterm_check_git() {
-            git rev-parse --git-dir >/dev/null 2>&1 && \
-              _wezterm_set_user_var "IS_GIT_REPO" "true" || \
-              _wezterm_set_user_var "IS_GIT_REPO" "false"
-          }
-
-          add-zsh-hook chpwd _wezterm_check_git
-          add-zsh-hook precmd _wezterm_check_git
+          _wezterm_set_user_var() { printf "\\033]1337;SetUserVar=%s=%s\\007" "$1" "$(echo -n "$2" | base64)"; }
+          _wezterm_check_git() { git rev-parse --git-dir >/dev/null 2>&1 && _wezterm_set_user_var "IS_GIT_REPO" "true" || _wezterm_set_user_var "IS_GIT_REPO" "false"; }
+          add-zsh-hook chpwd precmd _wezterm_check_git
           _wezterm_check_git
         }
-
-        # Python venv auto-activation
-        auto-venv() {
-          [[ -f ".venv/bin/activate" ]] && source .venv/bin/activate || {
-            [[ -n "$VIRTUAL_ENV" ]] && [[ ! -f ".venv/bin/activate" ]] && deactivate 2>/dev/null || true
-          }
-        }
-        add-zsh-hook chpwd auto-venv
       '')
       # --- Last-stage integrations (order 1000) -----------------------------
       (lib.mkOrder 1000 ''

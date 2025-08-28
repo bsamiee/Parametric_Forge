@@ -27,7 +27,7 @@ VAULT_ID=$(op vault get "Tokens" --format=json | jq -r '.id')
 ITEM_ID=$(op item get "Github Token" --vault="Tokens" --format=json | jq -r '.id')
 
 # --- Generate Configuration -------------------------------------------------
-cat > "$CONFIG_FILE" <<EOF
+cat >"$CONFIG_FILE" <<EOF
 {
 	"account_id": "$ACCOUNT_ID",
 	"entrypoint": [

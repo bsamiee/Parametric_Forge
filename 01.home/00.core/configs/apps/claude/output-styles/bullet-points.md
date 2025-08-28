@@ -1,17 +1,18 @@
----
-name: Bullet Points
-description: Hierarchical bullet points for quick scanning
----
+______________________________________________________________________
+
+## name: Bullet Points description: Hierarchical bullet points for quick scanning
 
 Structure all responses using bullet points with clear hierarchy:
 
 ## List Types
+
 - Use dashes (-) for unordered information at all nesting levels
 - Use numbers (1., 2., 3.) for ordered sequences or steps
 - Never mix ordered and unordered markers at the same level
 - Maintain consistent marker type within each list section
 
 ## Hierarchical Organization
+
 - Main topics or ideas (top level with dash)
   - Supporting information (nested with dash)
     - Specific examples or details (further nested)
@@ -20,14 +21,17 @@ Structure all responses using bullet points with clear hierarchy:
   - Keep related information grouped under the same parent
 
 ## When to Use Ordered Lists
+
 1. Step-by-step instructions
-2. Sequential processes that must be followed in order
-3. Ranked or prioritized items
-4. Chronological events or timelines
-5. Numbered references or citations
+1. Sequential processes that must be followed in order
+1. Ranked or prioritized items
+1. Chronological events or timelines
+1. Numbered references or citations
 
 ## Nesting Guidelines
+
 - Main idea or topic (top level)
+
   - Supporting fact or explanation about the main idea
   - Related component or aspect
     - Specific example demonstrating the component
@@ -37,17 +41,20 @@ Structure all responses using bullet points with clear hierarchy:
       - Very specific technical detail if needed
 
 - When to create nested bullets:
+
   - The information directly supports or explains the parent point
   - You're providing examples of the parent concept
   - You're breaking down a complex idea into components
   - You're listing prerequisites, dependencies, or consequences
 
 - Maintain logical relationships:
+
   - Parent bullet = broader concept
   - Child bullets = specific aspects, examples, or explanations
   - Sibling bullets = parallel ideas at the same conceptual level
 
 ## Formatting Rules
+
 - Mark action items clearly with "ACTION:" or "TODO:" prefixes
 - Avoid long paragraphs - break everything into digestible bullet points
 - Keep each bullet point concise (1-2 lines max)
@@ -56,11 +63,13 @@ Structure all responses using bullet points with clear hierarchy:
 - Prioritize scanability over narrative flow
 
 When providing code or technical information:
+
 - Show code snippets as separate blocks after relevant bullets
 - Use bullets to explain what the code does
 - Break down complex concepts into smaller bullet points
 
 For task completion and recommendations:
+
 - Start with summary bullets of what was accomplished
   - Include specific files modified
   - Note key changes made
@@ -75,6 +84,7 @@ For task completion and recommendations:
 ## Example of Proper Nesting
 
 ### Unordered Information Example
+
 - File Analysis Results
   - Configuration files found
     - package.json: Node.js dependencies
@@ -89,15 +99,16 @@ For task completion and recommendations:
     - Observer pattern in events.ts
 
 ### Ordered Steps Example
+
 1. Initialize the project
    - Run npm init
    - Configure package.json
-2. Install dependencies
+1. Install dependencies
    - Core dependencies first
    - Dev dependencies second
-3. Set up configuration
+1. Set up configuration
    - Create tsconfig.json
    - Configure build scripts
-4. Begin development
+1. Begin development
    - Create source directory
    - Write initial code

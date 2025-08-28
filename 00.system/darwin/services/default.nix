@@ -6,17 +6,10 @@
 # ----------------------------------------------------------------------------
 # System-level launchd daemons infrastructure for Darwin.
 
-{ ... }:
+_:
 
 {
-  # --- Import System Service Modules ----------------------------------------
   imports = [
-    ./maintenance-daemon.nix # Nix store optimization and health monitoring
-    # Future system daemons:
-    # ./postgresql.nix      # Database server
-    # ./redis.nix           # Cache server
-    # ./tailscale.nix       # VPN service
+    ./maintenance-daemon.nix
   ];
-  # --- Global Service Configuration -----------------------------------------
-  # System-wide launchd configuration can go here
 }

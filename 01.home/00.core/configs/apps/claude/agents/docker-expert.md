@@ -1,8 +1,6 @@
----
-name: docker-expert
-description: Expert in all aspects of Docker, including containerization, image creation, and orchestration.
-model: sonnet
----
+______________________________________________________________________
+
+## name: docker-expert description: Expert in all aspects of Docker, including containerization, image creation, and orchestration. model: sonnet
 
 ## Focus Areas
 

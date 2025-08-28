@@ -2,8 +2,10 @@
   "$schema": "https://raw.githubusercontent.com/DetachHead/basedpyright/main/packages/vscode-pyright/schemas/pyrightconfig.schema.json",
   "pythonVersion": "3.13",
   "typeCheckingMode": "strict",
-  
-  "include": [".", "tests"],
+  "include": [
+    ".",
+    "tests"
+  ],
   "exclude": [
     "**/.venv/**",
     "**/.cache/**",
@@ -15,20 +17,16 @@
     "**/dist/**",
     "**/build/**"
   ],
-  
   "strictListInference": true,
   "strictDictionaryInference": true,
   "strictParameterNoneValue": true,
   "strictSetInference": true,
-  
   "venvPath": ".",
   "venv": ".venv",
   "stubPath": "typings",
   "useLibraryCodeForTypes": true,
-  
   "reportMissingImports": "none",
   "reportMissingModuleSource": "none",
-  
   "reportUnnecessaryIsInstance": "warning",
   "reportUnnecessaryCast": "warning",
   "reportUnnecessaryComparison": "warning",
@@ -37,7 +35,6 @@
   "reportUnknownArgumentType": "warning",
   "reportUnknownLambdaType": "warning",
   "reportUnsafeMultipleInheritance": "warning",
-  
   "reportAny": false,
   "reportExplicitAny": false,
   "reportIgnoreCommentWithoutRule": true,

@@ -1,7 +1,9 @@
 {
   "upgrade": true,
   "target": "minor",
-  "reject": ["@types/*"],
+  "reject": [
+    "@types/*"
+  ],
   "packageManager": "pnpm",
   "cache": true,
   "cacheExpiration": 15,

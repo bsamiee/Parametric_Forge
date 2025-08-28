@@ -18,7 +18,10 @@ _:
         gui = {
           theme = {
             # Dracula-inspired theme (limited to terminal colors)
-            activeBorderColor = [ "green" "bold" ]; # Active borders
+            activeBorderColor = [
+              "green"
+              "bold"
+            ]; # Active borders
             inactiveBorderColor = [ "default" ]; # Inactive borders
             selectedLineBgColor = [ "magenta" ]; # Selected line - closest to Dracula purple
             optionsTextColor = [ "cyan" ]; # Options text
@@ -75,7 +78,7 @@ _:
               color = "green"; # Memory usage
             }
           ];
-          maxDuration = "3m";  # Must be a duration string, not an integer
+          maxDuration = "3m"; # Must be a duration string, not an integer
         };
         # --- Bulk Commands --------------------------------------------------
         bulkCommands = {

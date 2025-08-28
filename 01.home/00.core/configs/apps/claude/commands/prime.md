@@ -6,10 +6,10 @@ IMPORTANT: CRITICAL: Aggresively cache earlier directory knowledge, retain a min
 ## TASKS
 
 - 1. RUN: git ls-files
-- 2. RUN: mcp__filesystem__list_directory
-NOTE: Understand and identify project architecture and implications of what exists
-- 3. RUN: mcp__filesystem__search_files | IDENTIFY: 2-3 files to review
-- 4. RUN: mcp__filesystem__read_multiple_files (Identified files from previous step)
+- 2. RUN: mcp\_\_filesystem\_\_list_directory
+     NOTE: Understand and identify project architecture and implications of what exists
+- 3. RUN: mcp\_\_filesystem\_\_search_files | IDENTIFY: 2-3 files to review
+- 4. RUN: mcp\_\_filesystem\_\_read_multiple_files (Identified files from previous step)
 - 5. IMPORTANT: CRITICAL: READ: README.md (project root) IF IT EXISTS
 
 IMPORTANT: Always verify findings, never assume or guess anything - WITHOUT VERIFICATION YOU WILL NOT SUGGEST SOMETHING - NEVER FORGET THIS

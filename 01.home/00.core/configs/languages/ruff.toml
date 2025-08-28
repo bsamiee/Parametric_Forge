@@ -154,7 +154,10 @@ unfixable = []
   "PT023",   # use parentheses on fixtures/marks
   "PT006",   # wrong parametrize tuple type
 ]
-"01.home/00.core/configs/apps/claude/hooks/*.py" = ["S603", "S607"]  # Allow subprocess for hooks
+"01.home/00.core/configs/apps/claude/hooks/*.py" = [
+  "S603",
+  "S607",
+] # Allow subprocess for hooks
 
 # --- Import Organization -----------------------------------------------------
 [lint.isort]

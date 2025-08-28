@@ -25,12 +25,12 @@ _:
           line-numbers = true; # Show line numbers
           side-by-side = false; # Set to true for side-by-side view (wider terminals)
           hyperlinks = true; # Make commit hashes clickable in supported terminals
-          
+
           # --- Dracula Theme Configuration ------------------------------------
           syntax-theme = "Dracula";
           plus-style = "syntax #003800"; # Added lines - dark green background
           minus-style = "syntax #3f0001"; # Removed lines - dark red background
-          
+
           # --- Decorations ----------------------------------------------------
           features = "decorations line-numbers"; # Enable feature groups
           decorations = {
@@ -39,7 +39,7 @@ _:
             file-decoration-style = "none";
             hunk-header-decoration-style = "cyan box ul";
           };
-          
+
           # --- Line Numbers ---------------------------------------------------
           line-numbers-left-style = "cyan";
           line-numbers-right-style = "cyan";
@@ -134,9 +134,15 @@ _:
           nerdFontsVersion = "3";
           # Dracula theme colors
           theme = {
-            activeBorderColor = [ "#ff79c6" "bold" ]; # Pink
+            activeBorderColor = [
+              "#ff79c6"
+              "bold"
+            ]; # Pink
             inactiveBorderColor = [ "#6272a4" ]; # Comment
-            searchingActiveBorderColor = [ "#f1fa8c" "bold" ]; # Yellow
+            searchingActiveBorderColor = [
+              "#f1fa8c"
+              "bold"
+            ]; # Yellow
             optionsTextColor = [ "#8be9fd" ]; # Cyan
             selectedLineBgColor = [ "#44475a" ]; # Current Line
             cherryPickedCommitFgColor = [ "#8be9fd" ]; # Cyan

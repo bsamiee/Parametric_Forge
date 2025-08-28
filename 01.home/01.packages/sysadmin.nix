@@ -21,4 +21,7 @@ with pkgs;
   parallel-full # GNU parallel for parallel command execution
   watchexec # watch → File watcher that runs commands on changes
   tldr # man → Simplified, practical man pages with examples
+
+  # --- Security & Authentication --------------------------------------------
+  _1password-cli # 1Password command-line tool
 ]

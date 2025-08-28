@@ -9,7 +9,7 @@
 # --- Codex Defaults ---------------------------------------------------------
 preferred_auth_method = "chatgpt"
 model = "gpt-5"
-approval_policy = "on-request"         # ask before running edits/commands
-sandbox_mode = "workspace-write"       # read-all, write under CWD
-disable_response_storage = true        # helpful for ZDR orgs
+approval_policy = "on-request"          # ask before running edits/commands
+sandbox_mode = "workspace-write"        # read-all, write under CWD
+disable_response_storage = true         # helpful for ZDR orgs
 projects = { "/Users/bardiasamiee/Documents/99.Github/Parametric_Forge" = { trust_level = "trusted" } }

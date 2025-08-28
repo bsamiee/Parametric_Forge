@@ -5,7 +5,7 @@
 ## Core Features
 
 - **System Configuration**: macOS system settings, services, and package management
-- **User Configuration**: Cross-platform dotfiles, development environments, and user packages  
+- **User Configuration**: Cross-platform dotfiles, development environments, and user packages
 - **Development Environments**: Language-specific dev shells (Rust, Python, Lua, Node.js)
 - **Interactive Interface**: Rust-based TUI for configuration management
 - **Multi-Platform**: macOS primary, Linux/NixOS secondary, container/VM ready

@@ -9,10 +9,10 @@
 { lib }:
 
 let
-  inherit (lib) mkIf mkMerge mapAttrs' nameValuePair removeAttrs;
+  inherit (lib) mkIf mkMerge removeAttrs;
   # --- Common Defaults ------------------------------------------------------
   defaultNice = 15;
-  
+
   # --- Key Case Validation --------------------------------------------------
   # Home-manager expects PascalCase for launchd config attributes
   # This function ensures any additional args maintain proper casing
@@ -50,18 +50,28 @@ rec {
           }
         else
           { };
-      
+
       # Known arguments to exclude from additional config
       knownArgs = [
-        "command" "script" "runAtLoad" "keepAlive" "startInterval"
-        "startCalendarInterval" "environmentVariables" "workingDirectory"
-        "standardOutPath" "standardErrorPath" "arguments" "logBaseName"
-        "nice" "processType"
+        "command"
+        "script"
+        "runAtLoad"
+        "keepAlive"
+        "startInterval"
+        "startCalendarInterval"
+        "environmentVariables"
+        "workingDirectory"
+        "standardOutPath"
+        "standardErrorPath"
+        "arguments"
+        "logBaseName"
+        "nice"
+        "processType"
       ];
-      
+
       # Additional arguments (should use PascalCase for launchd)
       additionalArgs = removeAttrs args knownArgs;
-      
+
       # Home-manager expects PascalCase - pass through directly
       additionalConfig = validateLaunchdKeys additionalArgs;
     in
@@ -69,70 +79,68 @@ rec {
     # Home-manager expects: launchd.agents.<name> = { enable = true; config = {...}; }
     # Since we're returning the config portion, use PascalCase for launchd plist keys
     mkMerge [
-        # --- Core Configuration ---------------------------------------------
-        (mkIf (command != null) {
-          ProgramArguments = [ command ] ++ (args.arguments or [ ]);
-        })
-        (mkIf (script != null) {
-          ProgramArguments = [
-            "${pkgs.bash}/bin/bash"
-            "-c"
-            script
-          ];
-        })
-        # --- Scheduling -----------------------------------------------------
-        {
-          RunAtLoad = runAtLoad;
-          KeepAlive = keepAlive;
-        }
-        (mkIf (startInterval != null) {
-          StartInterval = startInterval;
-        })
-        (mkIf (startCalendarInterval != null) {
-          StartCalendarInterval = startCalendarInterval;
-        })
-        # --- Environment ----------------------------------------------------
-        (mkIf (environmentVariables != { }) {
-          EnvironmentVariables = environmentVariables;
-        })
-        (mkIf (workingDirectory != null) {
-          WorkingDirectory = workingDirectory;
-        })
-        # --- Resource Management --------------------------------------------
-        {
-          ProcessType = processType;
-          Nice = nice;
-        }
-        # --- Logging --------------------------------------------------------
-        (mkIf (autoLogs ? standardOutPath) {
-          StandardOutPath = autoLogs.standardOutPath;
-        })
-        (mkIf (autoLogs ? standardErrorPath) {
-          StandardErrorPath = autoLogs.standardErrorPath;
-        })
-        (mkIf (standardOutPath != null) {
-          StandardOutPath = standardOutPath;
-        })
-        (mkIf (standardErrorPath != null) {
-          StandardErrorPath = standardErrorPath;
-        })
-        # --- Additional Configuration ---------------------------------------
-        additionalConfig
+      # --- Core Configuration ---------------------------------------------
+      (mkIf (command != null) {
+        ProgramArguments = [ command ] ++ (args.arguments or [ ]);
+      })
+      (mkIf (script != null) {
+        ProgramArguments = [
+          "${pkgs.bash}/bin/bash"
+          "-c"
+          script
+        ];
+      })
+      # --- Scheduling -----------------------------------------------------
+      {
+        RunAtLoad = runAtLoad;
+        KeepAlive = keepAlive;
+      }
+      (mkIf (startInterval != null) {
+        StartInterval = startInterval;
+      })
+      (mkIf (startCalendarInterval != null) {
+        StartCalendarInterval = startCalendarInterval;
+      })
+      # --- Environment ----------------------------------------------------
+      (mkIf (environmentVariables != { }) {
+        EnvironmentVariables = environmentVariables;
+      })
+      (mkIf (workingDirectory != null) {
+        WorkingDirectory = workingDirectory;
+      })
+      # --- Resource Management --------------------------------------------
+      {
+        ProcessType = processType;
+        Nice = nice;
+      }
+      # --- Logging --------------------------------------------------------
+      (mkIf (autoLogs ? standardOutPath) {
+        StandardOutPath = autoLogs.standardOutPath;
+      })
+      (mkIf (autoLogs ? standardErrorPath) {
+        StandardErrorPath = autoLogs.standardErrorPath;
+      })
+      (mkIf (standardOutPath != null) {
+        StandardOutPath = standardOutPath;
+      })
+      (mkIf (standardErrorPath != null) {
+        StandardErrorPath = standardErrorPath;
+      })
+      # --- Additional Configuration ---------------------------------------
+      additionalConfig
     ];
 
   # --- Daemon Service -------------------------------------------------------
   # System daemons in nix-darwin use serviceConfig wrapper
-  mkLaunchdDaemon =
-    pkgs: args:
-    {
-      serviceConfig = mkLaunchdAgent pkgs (
-        args
-        // {
-          UserName = args.UserName or "root";
-          GroupName = args.GroupName or "wheel";
-        }
-      );
-    };
+  mkLaunchdDaemon = pkgs: args: {
+    serviceConfig = mkLaunchdAgent pkgs (
+      args
+      // {
+        UserName = args.UserName or "root";
+        GroupName = args.GroupName or "wheel";
+      }
+    );
+  };
 
   # --- Specialized Service Types --------------------------------------------
   mkPeriodicJob =

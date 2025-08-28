@@ -6,27 +6,15 @@
 # ----------------------------------------------------------------------------
 # Modern shell tool integrations and enhancements.
 
-{
-  config,
-  ...
-}:
+_:
 
 {
   programs = {
     # --- JQ (JSON processor) ------------------------------------------------
     jq = {
       enable = true;
-      colors = {
-        # Dracula theme colors for JSON output
-        null = "0;38;5;241"; # Comment (#6272a4) - muted for null
-        false = "0;38;5;203"; # Red (#ff5555) - false as warning/error
-        true = "0;38;5;84"; # Green (#50fa7b) - true as success
-        numbers = "0;38;5;141"; # Purple (#bd93f9) - numbers distinct
-        strings = "0;38;5;228"; # Yellow (#f1fa8c) - strings as literals
-        arrays = "0;38;5;117"; # Cyan (#8be9fd) - arrays as containers
-        objects = "0;38;5;212"; # Pink (#ff79c6) - objects as structures
-        objectKeys = "0;38;5;215"; # Orange (#ffb86c) - keys as identifiers
-      };
+      # Colors configured via JQ_COLORS environment variable in environment.nix
+      # to maintain single source of truth and use optimal ANSI codes
     };
 
     # --- Nix Index ----------------------------------------------------------
@@ -75,7 +63,7 @@
     # --- Eza (ls replacement) -----------------------------------------------
     eza = {
       enable = true;
-      enableZshIntegration = false; # Custom aliases defined elsewhere
+      enableZshIntegration = true; # Enable for proper theme/icon support
       git = true;
       icons = "auto";
     };
@@ -84,21 +72,18 @@
     bat = {
       enable = true;
       # All configuration handled via ~/.config/bat/config
-      # to maintain single source of truth
     };
 
     # --- Ripgrep (grep replacement) -----------------------------------------
     ripgrep = {
       enable = true;
-      # Configuration handled via RIPGREP_CONFIG_PATH environment variable
-      # pointing to ~/.config/ripgrep/config
+      # Configuration handled via RIPGREP_CONFIG_PATH environment variable, pointing to ~/.config/ripgrep/config
     };
 
     # --- Fd (find replacement) ----------------------------------------------
     fd = {
       enable = true;
       # All configuration handled via ~/.config/fd/ignore
-      # to maintain single source of truth
     };
 
     # --- McFly (smart shell history) ----------------------------------------
@@ -114,25 +99,7 @@
     # --- Bottom (resource monitor) ------------------------------------------
     bottom = {
       enable = true;
-      settings = {
-        flags = {
-          avg_cpu = true;
-          temperature_type = "c";
-          rate = 1000;
-          left_legend = false;
-          current_usage = true;
-          group_processes = true;
-        };
-        colors = {
-          # Widget colors
-          table_header_color = "#8be9fd"; # Cyan
-          widget_title_color = "#bd93f9"; # Purpl
-          border_color = "#6272a4"; # Comment
-          highlighted_border_color = "#ff79c6"; # Pink
-          # Graph colors
-          graph_color = "#50fa7b"; # Green
-        };
-      };
+      settings = builtins.fromTOML (builtins.readFile ../configs/system/bottom/bottom.toml);
     };
 
     # --- Broot (interactive tree) -------------------------------------------
@@ -174,23 +141,79 @@
         };
         verbs = [
           # File operations
-          { invocation = "edit"; shortcut = "e"; execution = "$EDITOR {file}"; }
-          { invocation = "view"; shortcut = "v"; execution = "bat {file}"; }
-          { invocation = "create {subpath}"; execution = "$EDITOR {directory}/{subpath}"; leave_broot = false; }
+          {
+            invocation = "edit";
+            shortcut = "e";
+            execution = "$EDITOR {file}";
+          }
+          {
+            invocation = "view";
+            shortcut = "v";
+            execution = "bat {file}";
+          }
+          {
+            invocation = "create {subpath}";
+            execution = "$EDITOR {directory}/{subpath}";
+            leave_broot = false;
+          }
           # Git operations
-          { invocation = "git_diff"; shortcut = "gd"; execution = "git diff {file}"; }
-          { invocation = "git_status"; shortcut = "gs"; execution = "git status {directory}"; }
-          { invocation = "git_log"; shortcut = "gl"; execution = "git log {file}"; }
+          {
+            invocation = "git_diff";
+            shortcut = "gd";
+            execution = "git diff {file}";
+          }
+          {
+            invocation = "git_status";
+            shortcut = "gs";
+            execution = "git status {directory}";
+          }
+          {
+            invocation = "git_log";
+            shortcut = "gl";
+            execution = "git log {file}";
+          }
           # Navigation shortcuts
-          { invocation = "home"; key = "ctrl-h"; execution = ":focus ~"; }
-          { invocation = "root"; key = "ctrl-r"; execution = ":focus /"; }
-          { invocation = "parent"; shortcut = "p"; execution = ":parent"; }
+          {
+            invocation = "home";
+            key = "ctrl-h";
+            execution = ":focus ~";
+          }
+          {
+            invocation = "root";
+            key = "ctrl-r";
+            execution = ":focus /";
+          }
+          {
+            invocation = "parent";
+            shortcut = "p";
+            execution = ":parent";
+          }
           # Directory operations
-          { invocation = "mkdir {subpath}"; shortcut = "md"; execution = "mkdir -p {directory}/{subpath}"; leave_broot = false; }
-          { invocation = "cd"; key = "alt-enter"; execution = "cd {directory}"; from_shell = true; }
+          {
+            invocation = "mkdir {subpath}";
+            shortcut = "md";
+            execution = "mkdir -p {directory}/{subpath}";
+            leave_broot = false;
+          }
+          {
+            invocation = "cd";
+            key = "alt-enter";
+            execution = "cd {directory}";
+            from_shell = true;
+          }
           # Copy to other panel
-          { invocation = "copy_to_panel"; shortcut = "cpp"; execution = "cp -r {file} {other-panel-directory}"; apply_to = "any"; }
-          { invocation = "move_to_panel"; shortcut = "mvp"; execution = "mv {file} {other-panel-directory}"; apply_to = "any"; }
+          {
+            invocation = "copy_to_panel";
+            shortcut = "cpp";
+            execution = "cp -r {file} {other-panel-directory}";
+            apply_to = "any";
+          }
+          {
+            invocation = "move_to_panel";
+            shortcut = "mvp";
+            execution = "mv {file} {other-panel-directory}";
+            apply_to = "any";
+          }
         ];
       };
     };

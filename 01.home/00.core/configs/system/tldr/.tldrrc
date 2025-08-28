@@ -1,5 +1,5 @@
 {
-  "platform": "linux",
+  "platform": "osx",
   "skipUpdateWhenPageNotFound": false,
-  "theme": "ocean"
+  "theme": "base16"
 }
