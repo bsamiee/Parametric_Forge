@@ -125,7 +125,7 @@ in
       # Standalone shortcuts
       d = "docker";
       dc = "docker compose";
-      col = "colima";
+      colima = "colima"; # Docker Desktop alternative
 
       # Docker system info
       dinfo = "docker system df";

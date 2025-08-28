@@ -25,7 +25,7 @@ with pkgs;
   fastfetch # neofetch → Fast system information tool with customization
 
   # --- File Transfer & Archive Management -----------------------------------
-  transmission # BitTorrent client - Required by torrent-preview.yazi
+  transmission_4 # BitTorrent client v4 - Required by torrent-preview.yazi
   archivemount # Mount archives as filesystems - Required by archivemount.yazi
 
   # --- Security & Authentication --------------------------------------------

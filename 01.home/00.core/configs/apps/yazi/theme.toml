@@ -73,10 +73,10 @@ prepend_exts = [
   { name = "blend1", text = "", fg = "#ff79c6" }, # Blender backup
 
   # Adobe Creative Suite
-  { name = "psd", text = "", fg = "#ff79c6" }, # Photoshop documents
-  { name = "psb", text = "", fg = "#ff79c6" }, # Photoshop large docs
-  { name = "ai", text = "", fg = "#bd93f9" },  # Illustrator files
-  { name = "ait", text = "", fg = "#bd93f9" }, # Illustrator templates
+  { name = "psd", text = "", fg = "#ff79c6" },  # Photoshop documents
+  { name = "psb", text = "", fg = "#ff79c6" },  # Photoshop large docs
+  { name = "ai", text = "", fg = "#bd93f9" },   # Illustrator files
+  { name = "ait", text = "", fg = "#bd93f9" },  # Illustrator templates
   { name = "indd", text = "", fg = "#ffb86c" }, # InDesign documents
   { name = "idml", text = "", fg = "#ffb86c" }, # InDesign markup
   { name = "indt", text = "", fg = "#ffb86c" }, # InDesign templates

@@ -14,11 +14,10 @@ with pkgs;
   ffmpeg # Complete multimedia framework for audio/video
   imagemagick # Image manipulation and conversion
   vips # High-performance image processing (4-5x faster than ImageMagick)
-  handbrake # CLI video transcoder (GUI version in homebrew.nix)
+  # handbrake → Managed via Homebrew formula (CLI) and cask (GUI)
 
   # --- Document Processing --------------------------------------------------
-  pandoc # Universal document converter (markdown, docx, pdf, etc.)
-  # pandoc → Also managed by programs.pandoc in media-tools.nix (programs dir)
+  # pandoc → Managed by programs.pandoc in media-tools.nix (programs dir)
   poppler_utils # PDF utilities (pdfinfo, pdftotext) - Required by yazi for PDF preview
   djvulibre # DjVu document support - Required by djvu-view.yazi
 

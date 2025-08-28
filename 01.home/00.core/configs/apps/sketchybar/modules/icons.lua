@@ -7,50 +7,50 @@
 -- Icon definitions using Nerd Font symbols
 
 return {
-  -- System icons
-  cpu = "",
-  memory = "",
-  disk = "󰋊",
-  network_connected = "󰖩",
-  network_disconnected = "󰖪",
+	-- System icons
+	cpu = "",
+	memory = "",
+	disk = "󰋊",
+	network_connected = "󰖩",
+	network_disconnected = "󰖪",
 
-  -- Battery icons
-  battery_100 = "󰁹",
-  battery_75 = "󰂂",
-  battery_50 = "󰂀",
-  battery_25 = "󰁾",
-  battery_0 = "󰂎",
-  battery_charging = "󰂄",
+	-- Battery icons
+	battery_100 = "󰁹",
+	battery_75 = "󰂂",
+	battery_50 = "󰂀",
+	battery_25 = "󰁾",
+	battery_0 = "󰂎",
+	battery_charging = "󰂄",
 
-  -- Volume icons
-  volume_high = "",
-  volume_medium = "",
-  volume_low = "",
-  volume_muted = "",
+	-- Volume icons
+	volume_high = "",
+	volume_medium = "",
+	volume_low = "",
+	volume_muted = "",
 
-  -- Time and date
-  clock = "",
-  calendar = "",
+	-- Time and date
+	clock = "",
+	calendar = "",
 
-  -- Spaces and windows
-  space = "●",
-  space_active = "●",
-  space_empty = "○",
-  window = "",
+	-- Spaces and windows
+	space = "●",
+	space_active = "●",
+	space_empty = "○",
+	window = "",
 
-  -- Applications
-  terminal = "",
-  browser = "",
-  finder = "󰀶",
+	-- Applications
+	terminal = "",
+	browser = "",
+	finder = "󰀶",
 
-  -- Status indicators
-  success = "",
-  warning = "",
-  error = "",
-  info = "",
+	-- Status indicators
+	success = "",
+	warning = "",
+	error = "",
+	info = "",
 
-  -- Arrows and separators
-  arrow_right = "",
-  arrow_left = "",
-  separator = "",
+	-- Arrows and separators
+	arrow_right = "",
+	arrow_left = "",
+	separator = "",
 }

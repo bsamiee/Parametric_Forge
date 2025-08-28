@@ -29,8 +29,8 @@ yabai -m config window_gap 12
 # Colors: Active=#bd93f9 (Purple), Inactive=#6272a4 (Comment Gray)
 yabai -m config window_border on
 yabai -m config window_border_width 2
-yabai -m config active_window_border_color 0xffbd93f9  # Dracula Purple
-yabai -m config normal_window_border_color 0xff6272a4  # Dracula Comment Gray
+yabai -m config active_window_border_color 0xffbd93f9 # Dracula Purple
+yabai -m config normal_window_border_color 0xff6272a4 # Dracula Comment Gray
 yabai -m config window_border_radius 8
 
 # Subtle transparency for depth

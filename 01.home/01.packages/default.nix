@@ -17,7 +17,13 @@
 let
   # --- Import all package modules ------------------------------------
   allPackageModules = {
-    core = import ./core.nix { inherit pkgs; };
+    core = import ./core.nix {
+      inherit
+        lib
+        pkgs
+        context
+        ;
+    };
     nixTools = import ./nix-tools.nix { inherit pkgs; };
     devTools = import ./dev-tools.nix { inherit pkgs; };
     gitTools = import ./git-tools.nix { inherit pkgs; };
@@ -29,7 +35,14 @@ let
     rust = import ./rust-tools.nix { inherit pkgs; };
     node = import ./node-tools.nix { inherit pkgs; };
     lua = import ./lua-tools.nix { inherit pkgs; };
-    sketchybar = import ./sketchybar.nix { inherit lib pkgs myLib context; };
+    sketchybar = import ./sketchybar.nix {
+      inherit
+        lib
+        pkgs
+        myLib
+        context
+        ;
+    };
   };
 
 in

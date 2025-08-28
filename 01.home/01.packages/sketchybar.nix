@@ -6,7 +6,12 @@
 # ----------------------------------------------------------------------------
 # SketchyBar system stats provider (only unavailable component).
 
-{ lib, pkgs, context, ... }:
+{
+  lib,
+  pkgs,
+  context,
+  ...
+}:
 
 lib.optionals context.isDarwin [
   # Only custom build what's not available in official sources
@@ -21,10 +26,10 @@ lib.optionals context.isDarwin [
       owner = "joncrangle";
       repo = "sketchybar-system-stats";
       rev = version;
-      sha256 = "sha256-08wlf1c5ik6z65qkqk7xnbxhrsc86lz029p6331myq106865sk0w";
+      sha256 = "sha256-HExdDDIgYF/DGOYmAT41iOkM+7L9TDxxMd/MWFhwlCM=";
     };
 
-    cargoHash = "sha256-S3H3+ilcGc6UYu6TUVQTJvmRTdtHEGD1qXEeGNuw8P8=";
+    cargoHash = "sha256-vRvfoHaz8BNIyXj1u69a9yr3fxgqz3TuquwoeMPpRwU=";
 
     meta = with lib; {
       description = "System statistics provider for SketchyBar";

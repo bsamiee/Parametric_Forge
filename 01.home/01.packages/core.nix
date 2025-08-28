@@ -6,7 +6,12 @@
 # ----------------------------------------------------------------------------
 # Modern CLI replacements for Unix commands and essential shell tools.
 
-{ pkgs, ... }:
+{
+  pkgs,
+  lib,
+  context,
+  ...
+}:
 
 with pkgs;
 [
@@ -37,7 +42,6 @@ with pkgs;
   # bottom → Managed by programs.bottom in shell-tools.nix
   duf # df → Disk usage with visual bars and colors
   dust # du → Directory size analyzer with tree view
-  mas # Mac App Store CLI for managing store apps
 
   # Network Tools
   xh # curl/wget → Modern HTTP client with intuitive syntax
@@ -81,7 +85,11 @@ with pkgs;
 
   # --- Terminal Essentials --------------------------------------------------
   yazi # Blazing fast terminal file manager (async, image preview)
-  yabai
-  skhd
   neovim # vim → Hyperextensible text editor
+]
+++ lib.optionals context.isDarwin [
+  # --- macOS-specific packages ---------------------------------------------
+  mas # Mac App Store CLI for managing store apps
+  yabai # Tiling window manager for macOS
+  skhd # Simple hotkey daemon for macOS
 ]

@@ -18,6 +18,27 @@ _:
     }:
     {
       packages = {
+        # --- SketchyBar packages --------------------------------------------
+        sketchybar-system-stats = pkgs.rustPlatform.buildRustPackage rec {
+          pname = "sketchybar-system-stats";
+          version = "0.6.4";
+
+          src = pkgs.fetchFromGitHub {
+            owner = "joncrangle";
+            repo = "sketchybar-system-stats";
+            rev = version;
+            sha256 = "sha256-HExdDDIgYF/DGOYmAT41iOkM+7L9TDxxMd/MWFhwlCM=";
+          };
+
+          cargoHash = "sha256-vRvfoHaz8BNIyXj1u69a9yr3fxgqz3TuquwoeMPpRwU=";
+
+          meta = with pkgs.lib; {
+            description = "System statistics provider for SketchyBar";
+            homepage = "https://github.com/joncrangle/sketchybar-system-stats";
+            license = licenses.gpl3Only;
+            platforms = platforms.darwin;
+          };
+        };
         # --- Bootstrap Script -----------------------------------------------
         forge-bootstrap = pkgs.writeShellApplication {
           name = "forge-bootstrap";

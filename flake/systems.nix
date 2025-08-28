@@ -89,46 +89,47 @@ in
       };
     };
     # --- NixOS Configurations -----------------------------------------------
-    nixosConfigurations = {
-      vm = mkSystem {
-        system = "x86_64-linux";
-        user = "bardiasamiee";
-        extraModules = [
-          {
-            virtualisation.vmVariant = {
-              virtualisation = {
-                memorySize = 4096;
-                cores = 2;
-              };
-            };
-          }
-        ];
-      };
-      container = mkSystem {
-        system = "x86_64-linux";
-        user = "bardiasamiee";
-        extraModules = [
-          ../00.system/nixos/containers.nix
-          {
-            # Container-optimized settings
-            boot.isContainer = true;
-          }
-        ];
-      };
-      aarch64-vm = mkSystem {
-        system = "aarch64-linux";
-        user = "bardiasamiee";
-        extraModules = [
-          {
-            virtualisation.vmVariant = {
-              virtualisation = {
-                memorySize = 4096;
-                cores = 2;
-              };
-            };
-          }
-        ];
-      };
-    };
+    # TODO: Fix Darwin-specific package conflicts in NixOS configurations
+    # nixosConfigurations = {
+    #   vm = mkSystem {
+    #     system = "x86_64-linux";
+    #     user = "bardiasamiee";
+    #     extraModules = [
+    #       {
+    #         virtualisation.vmVariant = {
+    #           virtualisation = {
+    #             memorySize = 4096;
+    #             cores = 2;
+    #           };
+    #         };
+    #       }
+    #     ];
+    #   };
+    #   container = mkSystem {
+    #     system = "x86_64-linux";
+    #     user = "bardiasamiee";
+    #     extraModules = [
+    #       ../00.system/nixos/containers.nix
+    #       {
+    #         # Container-optimized settings
+    #         boot.isContainer = true;
+    #       }
+    #     ];
+    #   };
+    #   aarch64-vm = mkSystem {
+    #     system = "aarch64-linux";
+    #     user = "bardiasamiee";
+    #     extraModules = [
+    #       {
+    #         virtualisation.vmVariant = {
+    #           virtualisation = {
+    #             memorySize = 4096;
+    #             cores = 2;
+    #           };
+    #         };
+    #       }
+    #     ];
+    #   };
+    # };
   };
 }

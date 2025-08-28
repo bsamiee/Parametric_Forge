@@ -17,17 +17,23 @@
 {
   programs.ssh = {
     enable = true;
-    # --- Connection Management ----------------------------------------------
-    # Reuse SSH connections for performance
-    controlMaster = "auto";
-    controlPersist = "10m";
-    controlPath = "${config.xdg.cacheHome}/ssh/control-%C";
 
-    # --- Security Settings --------------------------------------------------
-    hashKnownHosts = true;
+    # Disable default config to prevent deprecation warnings
+    enableDefaultConfig = false;
 
     # --- Host Configurations ------------------------------------------------
     matchBlocks = {
+      # Default match block with connection management settings
+      "*" = {
+        # Reuse SSH connections for performance
+        controlMaster = "auto";
+        controlPersist = "10m";
+        controlPath = "${config.xdg.cacheHome}/ssh/control-%C";
+
+        # Security settings
+        hashKnownHosts = true;
+      };
+
       "github.com" = {
         hostname = "github.com";
         user = "git";

@@ -85,6 +85,7 @@ in
               command -v check-system > /dev/null || exit 1
               echo "Package smoke test passed" > $out
             '';
+
         # --- Flake Structure ------------------------------------------------
         flake-structure =
           pkgs.runCommand "flake-structure-check"

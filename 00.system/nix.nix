@@ -16,7 +16,7 @@
 
 {
   nix = {
-    enable = false; # Managed by Determinate Systems Nix
+    enable = true;
     package = pkgs.nixVersions.latest;
     settings = {
       # --- Features ---------------------------------------------------------
@@ -26,6 +26,13 @@
         "auto-allocate-uids"
         "ca-derivations"
         "recursive-nix"
+        "fetch-tree" # Faster Git fetching with shallow clones
+        "repl-flake" # Enhanced REPL with flake support
+        "pipe-operators" # |> and <| operators for better syntax
+        "discard-references" # Stabilized unsafe discard
+        "fetch-closure" # Fast binary cache imports at eval time
+        "dynamic-derivations" # Enhanced derivation management
+        "verified-fetches" # Git signature verification
       ];
       # --- Security ---------------------------------------------------------
       trusted-users = lib.mkForce (
@@ -55,6 +62,10 @@
       compress-build-log = true;
       keep-failed = false;
       keep-going = true;
+      always-allow-substitutes = true; # Force substitution over building
+      builders-use-substitutes = true; # Builders can use binary caches
+      fsync-store-paths = false; # Skip fsync for better performance
+      post-build-hook = "/Users/bardiasamiee/.nix-profile/bin/cachix push bsamiee";
 
       # --- Store Management -------------------------------------------------
       min-free-check-interval = 300;
@@ -91,7 +102,6 @@
       narinfo-cache-positive-ttl = 86400;
       eval-cache = true;
       tarball-ttl = 300;
-      builders-use-substitutes = true;
 
       # --- Network Resilience -----------------------------------------------
       connect-timeout = 5;

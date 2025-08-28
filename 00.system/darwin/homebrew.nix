@@ -19,19 +19,21 @@ in
     # --- Global Settings ----------------------------------------------------
     global = {
       autoUpdate = mkDefault false;
-      brewfile = mkDefault true; # Enable Brewfile management
-      # lockfiles defaults to false when brewfile is true (prevents Nix store write attempts)
+      brewfile = mkDefault false; # Disable Brewfile (managed via Nix)
+      lockfiles = mkDefault false; # Prevent Nix store write attempts
     };
     # --- Activation Behavior ------------------------------------------------
     onActivation = {
       autoUpdate = mkDefault false;
       cleanup = mkDefault "zap"; # Remove all unmanaged packages
       upgrade = mkDefault false;
-      extraFlags = mkDefault [ "--verbose" ]; # Better debugging output
+      extraFlags = mkDefault [
+        "--verbose"
+        "--parallel"
+      ]; # Parallel installation
     };
     # --- Essential Taps -----------------------------------------------------
     taps = [
-      "homebrew/bundle" # Required for brewfile support
       "FelixKratz/formulae" # SketchyBar ecosystem packages
     ];
     # --- GUI Applications (Casks) -------------------------------------------
@@ -46,7 +48,6 @@ in
       # Productivity & Window Management
       "airbuddy" # AirPods battery/connection manager
       "aldente" # Battery charge limiter for MacBooks
-      "almighty" # System settings enhancer
       "alt-tab" # Windows-style alt-tab window switcher
       "bartender" # Menu bar organization
       "bettermouse" # Mouse customization tool
@@ -74,7 +75,7 @@ in
       # Cloud & Storage
       "google-drive" # Google Drive sync client
       "megasync" # MEGA cloud sync client
-      "transmission" # BitTorrent client
+      "transmission" # Transmission BitTorrent GUI client
 
       # Development & Design
       "heptabase" # Note-taking/knowledge base
@@ -89,7 +90,7 @@ in
       # Media & Creative
       "blender" # 3D creation suite
       "calibre" # E-book management
-      "handbrake" # Video transcoder with GUI
+      "handbrake-app" # HandBrake GUI video transcoder
       "kindle" # Amazon Kindle e-reader
       "lockdown-browser" # Respondus LockDown Browser
       "scrivener" # Writing software
@@ -122,33 +123,10 @@ in
       "toggl-track" # Time tracking for productivity
     ];
 
-    # --- Installation Sources Summary ---------------------------------------
-    #
-    # ✓ Via Homebrew Casks (above): All major applications managed declaratively
-    # ✓ Via Mac App Store (masApps): System-integrated apps with automatic updates
-    # ✓ Via Nix Derivations (00.system/darwin/applications.nix): Custom apps unavailable in Homebrew
-    #
-    # --- Manual Installation Required ---------------------------------------
-    # The following applications require manual download and installation:
-    #
-    # Adobe Plugin Managers:
-    # ✓ aescripts + aeplugins: After Effects plugin manager (via system-level Nix derivation)
-    # ✓ Astute Manager: Illustrator plugin manager (via system-level Nix derivation)
-    # ✓ DNG Profile Manager: X-Rite ColorChecker calibration (via colorchecker-camera-calibration cask)
-    #
-    # Hardware-Specific:
-    # - CZUR Scanner: Document scanner software (hardware-specific)
-    #
-    # Reading & E-books:
-    # - Readwise iBooks: iBooks integration tool
-    # - Z-Library: E-book reader/manager (not in official repositories)
-    #
-    # Discontinued/Unidentified:
-    # - Supercharge: Could not identify - may be discontinued or renamed
-
     # --- CLI Tools (Brews) --------------------------------------------------
     brews = [
       "codex" # AI coding assistant (ChatGPT CLI)
+      "handbrake" # CLI video transcoder (GUI in casks as handbrake-app)
       "mono" # .NET runtime (dependency for some tools)
       "borders" # JankyBorders - SketchyBar window borders enhancement
       "sketchybar" # SketchyBar status bar replacement
@@ -168,7 +146,7 @@ in
       "Timery" = 1425368544;
 
       # Utilities & System
-      "CARROTweather" = 993487541;
+      "CARROT Weather" = 993487541;
       "CleanMyMac" = 1339170533;
       "Icon Tool for Developers" = 554660130;
       "Keka" = 470158793;

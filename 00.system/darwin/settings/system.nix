@@ -30,7 +30,7 @@ in
     # --- Activity Monitor ---------------------------------------------------
     ActivityMonitor = {
       ShowCategory = mkDefault 100;
-      IconType = mkDefault 5;
+      IconType = mkDefault 0;
       SortColumn = mkDefault "CPUUsage";
       SortDirection = mkDefault 0;
       OpenMainWindow = mkDefault true;
@@ -54,16 +54,6 @@ in
       ShowSeconds = mkDefault false;
       FlashDateSeparators = mkDefault false;
       IsAnalog = mkDefault false;
-    };
-    # --- Control Center -----------------------------------------------------
-    controlcenter = {
-      BatteryShowPercentage = mkDefault true;
-      Sound = mkDefault true;
-      Bluetooth = mkDefault true;
-      AirDrop = mkDefault true;
-      Display = mkDefault true;
-      FocusModes = mkDefault true;
-      NowPlaying = mkDefault true;
     };
     # --- System Services ----------------------------------------------------
     smb = {

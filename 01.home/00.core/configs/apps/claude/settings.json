@@ -34,7 +34,7 @@
     "deny": [
       "WebSearch",
       "Bash(clia mcp:*)",
-      "mcp__filesystem__write_fil",
+      "mcp__filesystem__write_file",
       "mcp__filesystem__edit_file",
       "mcp__filesystem__move_file",
       "mcp__exa__deep_researcher_start",

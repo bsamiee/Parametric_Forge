@@ -28,13 +28,7 @@
       searchDownKey = "^[[B"; # Down arrow
     };
     # --- Shell Aliases ------------------------------------------------------
-    shellAliases = lib.mkMerge [
-      (import ../aliases/core.nix { })
-      (import ../aliases/sysadmin.nix { })
-      (import ../aliases/dev-tools.nix { inherit lib; }).aliases
-      (import ../aliases/devops.nix { inherit lib; }).aliases
-      (import ../aliases/media.nix { inherit lib; }).aliases
-    ];
+    # shellAliases = import ../aliases { inherit lib; }; # TODO: Fix alias conflicts
     # --- Zsh Plugins --------------------------------------------------------
     # Note: All plugins now managed via built-in enable flags above
     plugins = [ ];

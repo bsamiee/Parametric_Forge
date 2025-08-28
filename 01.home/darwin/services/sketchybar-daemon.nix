@@ -19,10 +19,32 @@ let
   # --- Service Helper Functions ---------------------------------------------
   inherit (userServiceHelpers) mkResilientService;
 
+  # --- Build sketchybar-system-stats package --------------------------------
+  sketchybar-system-stats = pkgs.rustPlatform.buildRustPackage rec {
+    pname = "sketchybar-system-stats";
+    version = "0.6.4";
+
+    src = pkgs.fetchFromGitHub {
+      owner = "joncrangle";
+      repo = "sketchybar-system-stats";
+      rev = version;
+      sha256 = "sha256-HExdDDIgYF/DGOYmAT41iOkM+7L9TDxxMd/MWFhwlCM=";
+    };
+
+    cargoHash = "sha256-vRvfoHaz8BNIyXj1u69a9yr3fxgqz3TuquwoeMPpRwU=";
+
+    meta = with lib; {
+      description = "System statistics provider for SketchyBar";
+      homepage = "https://github.com/joncrangle/sketchybar-system-stats";
+      license = licenses.gpl3Only;
+      platforms = platforms.darwin;
+    };
+  };
+
   # --- Dracula Color Scheme -------------------------------------------------
   draculaColors = {
-    active = "0xffbd93f9";    # Purple (matches bordersrc)
-    inactive = "0xff6272a4";  # Comment
+    active = "0xffbd93f9"; # Purple (matches bordersrc)
+    inactive = "0xff6272a4"; # Comment
     width = "4.0";
   };
 
@@ -32,13 +54,17 @@ lib.mkIf context.isDarwin {
   # --- SketchyBar System Stats Provider ------------------------------------
   launchd.agents."org.nixos.sketchybar-system-stats" = {
     enable = true;
-    config = mkResilientService pkgs {
-      command = "${pkgs.sketchybar-system-stats}/bin/sketchybar-system-stats";
+    config = mkResilientService {
+      command = "${sketchybar-system-stats}/bin/sketchybar-system-stats";
       arguments = [
-        "--cpu" "usage"
-        "--memory" "ram_usage"
-        "--disk" "usage"
-        "--interval" "2"
+        "--cpu"
+        "usage"
+        "--memory"
+        "ram_usage"
+        "--disk"
+        "usage"
+        "--interval"
+        "2"
       ];
       environmentVariables = {
         PATH = "/opt/homebrew/bin:/run/current-system/sw/bin:/usr/bin:/bin";
@@ -62,7 +88,7 @@ lib.mkIf context.isDarwin {
   # --- JankyBorders Window Border Service ----------------------------------
   launchd.agents."org.nixos.jankyborders" = {
     enable = true;
-    config = mkResilientService pkgs {
+    config = mkResilientService {
       command = "/opt/homebrew/bin/borders";
       arguments = [
         "active_color=${draculaColors.active}"
