@@ -170,22 +170,6 @@ in
         "com.apple.finder.qlcache" = {
           enableTextSelection = mkDefault true;
         };
-        # --- Control Center Menu Bar Items ----------------------------------
-        "com.apple.controlcenter" = {
-          "NSStatusItem Visible WiFi" = mkDefault true;
-          "NSStatusItem Visible BentoBox" = mkDefault true;
-          "NSStatusItem Visible Clock" = mkDefault true;
-          "NSStatusItem Visible Battery" = mkDefault false;
-          "NSStatusItem Visible Bluetooth" = mkDefault false;
-          "NSStatusItem Visible Sound" = mkDefault false;
-          "NSStatusItem Visible FocusModes" = mkDefault false;
-          "NSStatusItem Visible AirDrop" = mkDefault false;
-          "NSStatusItem Visible ScreenMirroring" = mkDefault false;
-          "NSStatusItem Visible NowPlaying" = mkDefault false;
-          "NSStatusItem Visible AudioVideoModule" = mkDefault false;
-          "NSStatusItem Visible FaceTime" = mkDefault false;
-          "NSStatusItem Visible Shortcuts" = mkDefault false;
-        };
         # --- Dock Hidden Settings -------------------------------------------
         "com.apple.dock" = {
           "no-bouncing" = mkDefault false;

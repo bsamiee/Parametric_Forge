@@ -25,12 +25,9 @@ in
     # --- Activation Behavior ------------------------------------------------
     onActivation = {
       autoUpdate = mkDefault false;
-      cleanup = mkDefault "zap"; # Remove all unmanaged packages
+      cleanup = mkDefault "uninstall"; # Remove unmanaged packages (less aggressive than zap)
       upgrade = mkDefault false;
-      extraFlags = mkDefault [
-        "--verbose"
-        "--parallel"
-      ]; # Parallel installation
+      # extraFlags removed - parallel is not a valid homebrew option in nix-darwin
     };
     # --- Essential Taps -----------------------------------------------------
     taps = [
@@ -125,6 +122,7 @@ in
 
     # --- CLI Tools (Brews) --------------------------------------------------
     brews = [
+      "mas" # Mac App Store CLI for masApps integration
       "codex" # AI coding assistant (ChatGPT CLI)
       "handbrake" # CLI video transcoder (GUI in casks as handbrake-app)
       "mono" # .NET runtime (dependency for some tools)

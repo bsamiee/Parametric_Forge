@@ -16,7 +16,7 @@
 
 {
   nix = {
-    enable = true;
+    enable = false; # Use Determinate Nix instead of nix-darwin management
     package = pkgs.nixVersions.latest;
     settings = {
       # --- Features ---------------------------------------------------------

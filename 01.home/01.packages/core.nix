@@ -89,7 +89,6 @@ with pkgs;
 ]
 ++ lib.optionals context.isDarwin [
   # --- macOS-specific packages ---------------------------------------------
-  mas # Mac App Store CLI for managing store apps
   yabai # Tiling window manager for macOS
   skhd # Simple hotkey daemon for macOS
 ]

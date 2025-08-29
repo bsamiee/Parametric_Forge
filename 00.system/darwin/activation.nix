@@ -55,16 +55,7 @@
           fi
         done
 
-        # CoreDuet nuclear throttling (SIP prevents deletion, so throttle to death)
-        for proc in contextstored coreduetd; do
-          pid=$(pgrep "$proc" 2>/dev/null | head -1)
-          if [ -n "$pid" ]; then
-            sudo renice +19 "$pid" 2>/dev/null || true
-            sudo taskpolicy -b -p "$pid" 2>/dev/null || true  
-            sudo taskpolicy -c maintenance -p "$pid" 2>/dev/null || true
-            echo "  ✓ Maximum throttled: $proc (E-cores only, maintenance QoS)"
-          fi
-        done
+        # Note: Process throttling removed to prevent potential EPERM errors during build
 
         echo "  ℹ For optimal performance, also add folders manually to:"
         echo "    System Settings > Spotlight > Search Privacy"
