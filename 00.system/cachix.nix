@@ -29,9 +29,11 @@ let
 
       echo "$OUT_PATHS" | ${pkgs.cachix}/bin/cachix push "$CACHE_NAME" 2>&1 || {
         echo "[Cachix] Push failed, but build succeeded"
+        ${pkgs.terminal-notifier}/bin/terminal-notifier -title "Cachix" -message "Push failed for $PATH_COUNT paths" -sound Glass 2>/dev/null || true
         exit 0
       }
       echo "[Cachix] Successfully pushed $PATH_COUNT paths to $CACHE_NAME"
+      ${pkgs.terminal-notifier}/bin/terminal-notifier -title "Cachix" -message "Successfully pushed $PATH_COUNT paths to cache" -sound Tink 2>/dev/null || true
     else
       echo "[Cachix] No auth token available, skipping push"
       echo "[Cachix] Set CACHIX_AUTH_TOKEN environment variable to enable"

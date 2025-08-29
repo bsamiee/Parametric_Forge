@@ -155,12 +155,12 @@
 
         # Remove quarantine from common problematic apps
         find /Applications -maxdepth 2 -name "*.app" -exec xattr -rd com.apple.quarantine {} \; 2>/dev/null || true
-        
+
         # Remove quarantine from user Applications
         if [ -d "${context.userHome}/Applications" ]; then
           find "${context.userHome}/Applications" -maxdepth 2 -name "*.app" -exec xattr -rd com.apple.quarantine {} \; 2>/dev/null || true
         fi
-        
+
         echo "  ✓ Removed quarantine from all applications"
       '';
       deps = [ "nixAppsIntegration" ];
@@ -169,14 +169,14 @@
     sequoiaFixes = {
       text = ''
         echo "[Parametric Forge] Applying Sequoia FileProvider fixes..."
-        
+
         # FileProvider nuclear option - disable broken extensions
         for ext in $(pluginkit -m -p com.apple.FileProvider 2>/dev/null | grep -o '[a-zA-Z0-9.-]*\.FileProvider[a-zA-Z0-9.-]*' || true); do
           pluginkit -r "$ext" 2>/dev/null || true
         done
         pkill -f fileproviderd 2>/dev/null || true
         echo "  ✓ FileProvider extensions reset"
-        
+
         # Exclude problematic sync folders from Spotlight
         SYNC_FOLDERS=(
           "${context.userHome}/Library/CloudStorage"
@@ -186,21 +186,21 @@
           "${context.userHome}/Dropbox"
           "${context.userHome}/MEGAsync"
         )
-        
+
         for folder in "''${SYNC_FOLDERS[@]}"; do
           if [ -d "$folder" ]; then
             mdutil -i off "$folder" 2>/dev/null && echo "  ✓ Spotlight excluded: $(basename "$folder")"
           fi
         done
-        
+
         # Clear FileProvider caches
         rm -rf "${context.userHome}/Library/Caches/com.apple.FileProvider"* 2>/dev/null || true
-        
+
         # Throttle mdworker processes 
         for pid in $(pgrep mdworker 2>/dev/null || true); do
           renice +15 "$pid" 2>/dev/null || true
         done
-        
+
         echo "  ✓ Sequoia performance fixes applied"
       '';
       deps = [ "performanceOptimizations" ];

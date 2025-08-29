@@ -37,7 +37,6 @@ in
   # --- Launchd Utilities (Darwin) -------------------------------------------
   launchd = import ./launchd.nix { inherit lib; };
 
-
   # --- 1Password Utilities --------------------------------------------------
   secrets = import ./1password-helpers.nix { inherit lib; };
 

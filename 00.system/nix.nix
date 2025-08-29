@@ -27,9 +27,7 @@
         "ca-derivations"
         "recursive-nix"
         "fetch-tree" # Faster Git fetching with shallow clones
-        "repl-flake" # Enhanced REPL with flake support
         "pipe-operators" # |> and <| operators for better syntax
-        "discard-references" # Stabilized unsafe discard
         "fetch-closure" # Fast binary cache imports at eval time
         "dynamic-derivations" # Enhanced derivation management
         "verified-fetches" # Git signature verification
@@ -65,7 +63,6 @@
       always-allow-substitutes = true; # Force substitution over building
       builders-use-substitutes = true; # Builders can use binary caches
       fsync-store-paths = false; # Skip fsync for better performance
-      post-build-hook = "/Users/bardiasamiee/.nix-profile/bin/cachix push bsamiee";
 
       # --- Store Management -------------------------------------------------
       min-free-check-interval = 300;

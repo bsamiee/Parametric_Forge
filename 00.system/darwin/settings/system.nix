@@ -84,12 +84,34 @@ in
     CustomUserPreferences = {
       # --- Spotlight Search Configuration -----------------------------------
       "com.apple.spotlight" = {
-        orderedItems = lib.map (name: { enabled = 0; inherit name; }) [
-          "APPLICATIONS" "SYSTEM_PREFS" "DIRECTORIES" "DOCUMENTS" "PDF" 
-          "IMAGES" "SOURCE" "MUSIC" "MOVIES" "PRESENTATIONS" "SPREADSHEETS"
-          "MESSAGES" "CONTACT" "EVENT_TODO" "BOOKMARKS" "MENU_SPOTLIGHT_SUGGESTIONS"
-          "MENU_CONVERSION" "MENU_EXPRESSION" "MENU_DEFINITION" "MENU_WEBSEARCH"
-        ];
+        orderedItems =
+          lib.map
+            (name: {
+              enabled = 0;
+              inherit name;
+            })
+            [
+              "APPLICATIONS"
+              "SYSTEM_PREFS"
+              "DIRECTORIES"
+              "DOCUMENTS"
+              "PDF"
+              "IMAGES"
+              "SOURCE"
+              "MUSIC"
+              "MOVIES"
+              "PRESENTATIONS"
+              "SPREADSHEETS"
+              "MESSAGES"
+              "CONTACT"
+              "EVENT_TODO"
+              "BOOKMARKS"
+              "MENU_SPOTLIGHT_SUGGESTIONS"
+              "MENU_CONVERSION"
+              "MENU_EXPRESSION"
+              "MENU_DEFINITION"
+              "MENU_WEBSEARCH"
+            ];
       };
       # --- Terminal Security Settings ---------------------------------------
       "com.apple.Terminal" = {
