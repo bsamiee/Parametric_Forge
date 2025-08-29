@@ -22,6 +22,5 @@
     ./xdg-daemons.nix
     ./op-daemons.nix
     ./npm-check-daemon.nix
-    ./sketchybar-daemon.nix
   ];
 }

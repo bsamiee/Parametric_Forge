@@ -12,5 +12,6 @@ _:
   imports = [
     ./maintenance-daemon.nix
     ./clt-daemon.nix
+    ./window-manager.nix
   ];
 }

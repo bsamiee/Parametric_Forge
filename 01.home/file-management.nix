@@ -22,7 +22,10 @@
     # Note: starship.toml handled by programs.starship.settings in shell-tools.nix
 
     # --- Window Management (macOS) ------------------------------------------
-    "yabai/yabairc".source = ./00.core/configs/apps/yabairc; # Yabai window manager config
+    "yabai/yabairc" = {
+      source = ./00.core/configs/apps/yabairc;
+      executable = true; # Yabai requires executable config files
+    };
     "borders/bordersrc".source = ./00.core/configs/apps/borders/bordersrc; # JankyBorders window borders config
 
     # --- SketchyBar Configuration (Modern SbarLua) --------------------------
@@ -64,10 +67,15 @@
     "yazi/yazi.toml".source = ./00.core/configs/apps/yazi/yazi.toml;
     "yazi/keymap.toml".source = ./00.core/configs/apps/yazi/keymap.toml;
     "yazi/theme.toml".source = ./00.core/configs/apps/yazi/theme.toml;
-    "yazi/package.toml".source = ./00.core/configs/apps/yazi/package.toml;
     "yazi/init.lua".source = ./00.core/configs/apps/yazi/init.lua;
     # Dracula flavor deployment - proper directory structure
     "yazi/flavors/dracula.yazi/flavor.toml".source = ./00.core/configs/apps/yazi/dracula-flavor.toml;
+    # Organized plugin packages by domain
+    "yazi/packages/core-navigation.toml".source = ./00.core/configs/apps/yazi/packages/core-navigation.toml;
+    "yazi/packages/development.toml".source = ./00.core/configs/apps/yazi/packages/development.toml;
+    "yazi/packages/media-preview.toml".source = ./00.core/configs/apps/yazi/packages/media-preview.toml;
+    "yazi/packages/system-integration.toml".source = ./00.core/configs/apps/yazi/packages/system-integration.toml;
+    "yazi/packages/ui-enhancement.toml".source = ./00.core/configs/apps/yazi/packages/ui-enhancement.toml;
 
     # --- Git Configuration --------------------------------------------------
     "git/ignore".source = ./00.core/configs/git/gitignore;
@@ -86,6 +94,7 @@
     "cargo/config.toml".source = ./00.core/configs/languages/cargo.toml;
     # Lua
     "luarocks/config.lua".source = ./00.core/configs/languages/luarocks.lua;
+    "luacheck/.luacheckrc".source = ./00.core/configs/languages/.luacheckrc;
     # --- Formatting Tools ---------------------------------------------------
     "yamllint/config".source = ./00.core/configs/formatting/.yamllint.yml;
 
@@ -141,7 +150,10 @@
     ".tldrrc".source = ./00.core/configs/system/tldr/.tldrrc;
 
     # --- Window Management (macOS - Non-XDG) --------------------------------
-    ".skhdrc".source = ./00.core/configs/apps/skhdrc; # skhd doesn't support XDG
+    ".skhdrc" = {
+      source = ./00.core/configs/apps/skhdrc;
+      executable = true; # skhd requires executable config files
+    };
 
     # --- SketchyBar Fonts (Local Fonts Directory) ---------------------------
     # Note: App font now installed via Homebrew cask (font-sketchybar-app-font)
