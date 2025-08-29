@@ -34,9 +34,4 @@ with pkgs;
 
   # --- Security & Authentication --------------------------------------------
   _1password-cli # 1Password command-line tool for secrets management
-
-  # --- macOS Management -----------------------------------------------------
-  yabai # Tiling window manager for macOS
-  skhd # Simple hotkey daemon for macOS
-  sketchybar # Highly customizable macOS status bar
 ]

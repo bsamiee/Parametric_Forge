@@ -73,8 +73,3 @@ with pkgs;
   yazi # Blazing fast terminal file manager (async, image preview)
   neovim # vim → Hyperextensible text editor
 ]
-++ lib.optionals context.isDarwin [
-  # --- macOS-specific packages ---------------------------------------------
-  yabai # Tiling window manager for macOS
-  skhd # Simple hotkey daemon for macOS
-]

@@ -123,8 +123,12 @@ in
       "codex" # AI coding assistant (ChatGPT CLI)
       "handbrake" # CLI video transcoder (GUI in casks as handbrake-app)
       "mono" # .NET runtime (dependency for some tools)
-      "borders" # JankyBorders - SketchyBar window borders enhancement
-      "sketchybar" # SketchyBar status bar replacement
+      
+      # Window Management Ecosystem
+      "yabai" # Tiling window manager for macOS
+      "skhd" # Simple hotkey daemon for macOS  
+      "borders" # JankyBorders - window borders enhancement
+      "sketchybar" # Status bar replacement
     ];
     # --- Mac App Store Applications -----------------------------------------
     # --- Mac App Store Applications -----------------------------------------
@@ -135,6 +139,13 @@ in
     };
     # --- Whalebrew (Docker-based tools) -------------------------------------
     # whalebrews = [ ];
+
+    # --- Homebrew Services (Auto-start on login) ---------------------------
+    services = {
+      "yabai" = { enable = true; };
+      "skhd" = { enable = true; };
+      "sketchybar" = { enable = true; };
+    };
 
     # --- Cask Configuration -------------------------------------------------
     caskArgs = mkDefault {

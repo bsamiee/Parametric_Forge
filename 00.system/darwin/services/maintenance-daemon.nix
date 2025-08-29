@@ -68,7 +68,7 @@ let
     # --- Mac App Store Updates ----------------------------------------------
     if command -v mas >/dev/null 2>&1; then
       echo "→ Mac App Store updates:"
-      
+
       if mas upgrade 2>/dev/null; then
         echo "  [OK] Updated all Mac App Store applications"
       else
