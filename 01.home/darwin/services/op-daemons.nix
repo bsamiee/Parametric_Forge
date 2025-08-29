@@ -157,7 +157,7 @@ let
 in
 {
   # --- Unified Cache Manager Agent ------------------------------------------
-  launchd.agents.op-cache-manager = {
+  launchd.agents.onepassword-secrets = {
     enable = true;
     config = mkPeriodicJob {
       command = "${opCacheManager}";

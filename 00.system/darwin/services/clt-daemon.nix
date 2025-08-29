@@ -63,7 +63,7 @@ let
   '';
 in
 {
-  launchd.daemons.command-line-tools-monitor = myLib.launchd.mkLaunchdDaemon pkgs {
+  launchd.daemons.xcode-clt-monitor = myLib.launchd.mkLaunchdDaemon pkgs {
     command = "${cltScript}";
     startCalendarInterval = [
       {

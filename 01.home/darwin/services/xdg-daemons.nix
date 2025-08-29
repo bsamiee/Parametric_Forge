@@ -74,7 +74,7 @@ let
 in
 {
   # --- XDG Runtime Directory Maintenance ------------------------------------
-  launchd.agents."org.nixos.xdg-runtime" = {
+  launchd.agents."org.nixos.xdg-temp-cleanup" = {
     enable = true;
     config = mkPeriodicJob {
       interval = 3600;
@@ -126,7 +126,7 @@ in
     };
   };
   # --- XDG Cache Cleanup Agent ----------------------------------------------
-  launchd.agents."org.nixos.xdg-cache-cleanup" = {
+  launchd.agents."org.nixos.font-cache-manager" = {
     enable = true;
     config = mkCalendarJob {
       calendar = [

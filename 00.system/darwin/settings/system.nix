@@ -15,17 +15,17 @@ in
   system.defaults = {
     # --- Login Window -------------------------------------------------------
     loginwindow = {
-      SHOWFULLNAME = mkDefault true;
-      GuestEnabled = mkDefault false;
-      autoLoginUser = mkDefault null;
-      LoginwindowText = mkDefault null;
-      ShutDownDisabled = mkDefault false;
-      SleepDisabled = mkDefault false;
-      RestartDisabled = mkDefault false;
-      ShutDownDisabledWhileLoggedIn = mkDefault false;
-      PowerOffDisabledWhileLoggedIn = mkDefault false;
-      RestartDisabledWhileLoggedIn = mkDefault false;
-      DisableConsoleAccess = mkDefault true;
+      SHOWFULLNAME = true; # Show "Bardia Samiee" instead of "bardiasamiee"
+      GuestEnabled = false;
+      autoLoginUser = null;
+      LoginwindowText = null;
+      ShutDownDisabled = false;
+      SleepDisabled = false;
+      RestartDisabled = false;
+      ShutDownDisabledWhileLoggedIn = false;
+      PowerOffDisabledWhileLoggedIn = false;
+      RestartDisabledWhileLoggedIn = false;
+      DisableConsoleAccess = true;
     };
     # --- Activity Monitor ---------------------------------------------------
     ActivityMonitor = {

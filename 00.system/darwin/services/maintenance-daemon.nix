@@ -13,7 +13,7 @@ let
   inherit (myLib.launchd) mkLaunchdDaemon;
 
   # --- Maintenance Script ---------------------------------------------------
-  maintenanceScript = pkgs.writeShellScript "system-maintenance" ''
+  maintenanceScript = myLib.launchd.mkNamedExecutable pkgs "nix-store-maintenance" ''
     #!${pkgs.bash}/bin/bash
     set -euo pipefail
 
@@ -77,8 +77,8 @@ let
 in
 {
   # --- System Maintenance Daemon --------------------------------------------
-  launchd.daemons.system-maintenance = mkLaunchdDaemon pkgs {
-    command = "${maintenanceScript}";
+  launchd.daemons.nix-store-maintenance = mkLaunchdDaemon pkgs {
+    command = "${maintenanceScript}/bin/nix-store-maintenance";
     startCalendarInterval = [
       {
         Weekday = 0;

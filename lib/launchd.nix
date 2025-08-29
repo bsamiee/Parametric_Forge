@@ -13,12 +13,20 @@ let
   # --- Common Defaults ------------------------------------------------------
   defaultNice = 15;
 
+  # --- Named Executable Wrapper --------------------------------------------
+  mkNamedExecutable = pkgs: name: script: pkgs.writeShellApplication {
+    inherit name;
+    text = script;
+  };
+
   # --- Key Case Validation --------------------------------------------------
   # Home-manager expects PascalCase for launchd config attributes
   # This function ensures any additional args maintain proper casing
   validateLaunchdKeys = attrs: attrs;
 in
 rec {
+  # --- Named Executable Wrapper (exported) ------------------------------------
+  inherit mkNamedExecutable;
   # --- Common Paths ---------------------------------------------------------
   getRuntimeDir = pkgs: if pkgs.stdenv.isDarwin then "\${HOME}/Library/Caches/TemporaryItems" else "/run/user/\$(id -u)";
   # --- Core Service Builder -------------------------------------------------
