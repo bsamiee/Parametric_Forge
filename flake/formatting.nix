@@ -90,7 +90,6 @@
           ".DS_Store"
           "Thumbs.db"
           # Project-specific exclusions
-          "01.home/exclusions.nix" # Manual formatting for readability
           "00.DEPRECATED/**" # Don't format deprecated code
           ".kiro/**" # Kiro's managed files
         ];

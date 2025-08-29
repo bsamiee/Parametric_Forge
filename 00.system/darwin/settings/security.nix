@@ -57,7 +57,7 @@ in
     # --- Application Security -----------------------------------------------
     CustomUserPreferences = {
       "com.apple.security" = {
-        GKAutoRearm = mkDefault true;
+        GKAutoRearm = mkDefault true; # Enable Gatekeeper auto-rearm for security
       };
       "com.apple.Safari" = {
         WarnAboutFraudulentWebsites = mkDefault true;

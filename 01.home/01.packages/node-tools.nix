@@ -31,5 +31,4 @@ with pkgs;
   # --- AI CLI Tools (Manual Installation) -----------------------------------
   # Not in nixpkgs - install globally via npm:
   # npm install -g @google/gemini-cli
-  # npm install -g ccstatusline
 ]

@@ -20,7 +20,6 @@
   # --- Import User Service Modules ------------------------------------------
   imports = [
     ./xdg-daemons.nix
-    ./exclusion-daemons.nix
     ./op-daemons.nix
     ./npm-check-daemon.nix
     ./sketchybar-daemon.nix

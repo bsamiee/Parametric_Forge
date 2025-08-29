@@ -20,7 +20,6 @@
     # --- Terminal Configuration ---------------------------------------------
     "wezterm/wezterm.lua".source = ./00.core/configs/apps/wezterm.lua;
     # Note: starship.toml handled by programs.starship.settings in shell-tools.nix
-    "ccstatusline/settings.json".source = ./00.core/configs/apps/ccstatusline-settings.json;
 
     # --- Window Management (macOS) ------------------------------------------
     "yabai/yabairc".source = ./00.core/configs/apps/yabairc; # Yabai window manager config

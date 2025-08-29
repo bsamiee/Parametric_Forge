@@ -26,23 +26,48 @@
       '';
       deps = [ ];
     };
-    # --- Nix Store Exclusions -----------------------------------------------
-    nixStoreExclusions = {
+    # --- Performance Optimizations ------------------------------------------
+    performanceOptimizations = {
       text = ''
-        echo "[Parametric Forge] Excluding Nix store from indexing/backup..."
+        echo "[Parametric Forge] Applying performance optimizations..."
 
-        # Exclude Nix store from Spotlight
+        # Proven mdutil exclusions (nix-darwin community approach)
         if [ -d "/nix" ]; then
-          mdutil -i off -d /nix 2>/dev/null || true
-          touch /nix/.metadata_never_index 2>/dev/null || true
-          echo "  ✓ Spotlight excluded: /nix store"
+          sudo mdutil -i off /nix 2>/dev/null && echo "  ✓ Disabled Spotlight indexing: /nix"
+          sudo tmutil addexclusion /nix 2>/dev/null && echo "  ✓ Time Machine excluded: /nix"
         fi
 
-        # Exclude Nix store from Time Machine
-        if [ -d "/nix" ]; then
-          tmutil addexclusion /nix 2>/dev/null || true
-          echo "  ✓ Time Machine excluded: /nix store"
+        # Cloud storage exclusions (if not manually added to Privacy)
+        CLOUD_DIR="${context.userHome}/Library/CloudStorage"
+        if [ -d "$CLOUD_DIR" ]; then
+          sudo mdutil -i off "$CLOUD_DIR" 2>/dev/null && echo "  ✓ Disabled Spotlight indexing: CloudStorage"
+          sudo tmutil addexclusion "$CLOUD_DIR" 2>/dev/null && echo "  ✓ Time Machine excluded: CloudStorage"
         fi
+
+        # Cache directories exclusions
+        CACHE_DIRS=(
+          "${context.userHome}/Library/Caches"
+          "${context.userHome}/.cache" 
+        )
+        for dir in "''${CACHE_DIRS[@]}"; do
+          if [ -d "$dir" ]; then
+            sudo mdutil -i off "$dir" 2>/dev/null && echo "  ✓ Disabled Spotlight indexing: $(basename "$dir")"
+          fi
+        done
+
+        # CoreDuet nuclear throttling (SIP prevents deletion, so throttle to death)
+        for proc in contextstored coreduetd; do
+          pid=$(pgrep "$proc" 2>/dev/null | head -1)
+          if [ -n "$pid" ]; then
+            sudo renice +19 "$pid" 2>/dev/null || true
+            sudo taskpolicy -b -p "$pid" 2>/dev/null || true  
+            sudo taskpolicy -c maintenance -p "$pid" 2>/dev/null || true
+            echo "  ✓ Maximum throttled: $proc (E-cores only, maintenance QoS)"
+          fi
+        done
+
+        echo "  ℹ For optimal performance, also add folders manually to:"
+        echo "    System Settings > Spotlight > Search Privacy"
 
       '';
       deps = [ "etc" ];
@@ -87,11 +112,11 @@
           done
         fi
 
-        # Force LaunchServices database rebuild
-        echo "  Rebuilding LaunchServices database..."
+        # Gentle LaunchServices refresh (preserve authentication)
+        echo "  Refreshing LaunchServices for Nix apps only..."
         /System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister \
-          -kill -r -domain local -domain system -domain user 2>/dev/null || true
-        echo "  ✓ LaunchServices database rebuilt"
+          -f -R "$APPS_DIR" 2>/dev/null || true
+        echo "  ✓ LaunchServices refreshed without breaking system auth"
       '';
       deps = [
         "etc"
@@ -114,6 +139,71 @@
         fi
       '';
       deps = [ "users" ];
+    };
+    # --- App Permission Management ------------------------------------------
+    appPermissionManagement = {
+      text = ''
+        echo "[Parametric Forge] Managing app permissions..."
+
+        # Check Gatekeeper status (do not disable to preserve security)
+        if spctl --status | grep -q "enabled"; then
+          echo "  ℹ Gatekeeper is enabled (recommended for security)"
+          echo "  ℹ Use 'spctl --master-disable' manually if needed"
+        else
+          echo "  ⚠ Gatekeeper is disabled"
+        fi
+
+        # Remove quarantine from common problematic apps
+        find /Applications -maxdepth 2 -name "*.app" -exec xattr -rd com.apple.quarantine {} \; 2>/dev/null || true
+        
+        # Remove quarantine from user Applications
+        if [ -d "${context.userHome}/Applications" ]; then
+          find "${context.userHome}/Applications" -maxdepth 2 -name "*.app" -exec xattr -rd com.apple.quarantine {} \; 2>/dev/null || true
+        fi
+        
+        echo "  ✓ Removed quarantine from all applications"
+      '';
+      deps = [ "nixAppsIntegration" ];
+    };
+    # --- Sequoia FileProvider Performance Fixes ---------------------------
+    sequoiaFixes = {
+      text = ''
+        echo "[Parametric Forge] Applying Sequoia FileProvider fixes..."
+        
+        # FileProvider nuclear option - disable broken extensions
+        for ext in $(pluginkit -m -p com.apple.FileProvider 2>/dev/null | grep -o '[a-zA-Z0-9.-]*\.FileProvider[a-zA-Z0-9.-]*' || true); do
+          pluginkit -r "$ext" 2>/dev/null || true
+        done
+        pkill -f fileproviderd 2>/dev/null || true
+        echo "  ✓ FileProvider extensions reset"
+        
+        # Exclude problematic sync folders from Spotlight
+        SYNC_FOLDERS=(
+          "${context.userHome}/Library/CloudStorage"
+          "${context.userHome}/Library/Application Support/CloudDocs" 
+          "${context.userHome}/Google Drive"
+          "${context.userHome}/OneDrive"
+          "${context.userHome}/Dropbox"
+          "${context.userHome}/MEGAsync"
+        )
+        
+        for folder in "''${SYNC_FOLDERS[@]}"; do
+          if [ -d "$folder" ]; then
+            mdutil -i off "$folder" 2>/dev/null && echo "  ✓ Spotlight excluded: $(basename "$folder")"
+          fi
+        done
+        
+        # Clear FileProvider caches
+        rm -rf "${context.userHome}/Library/Caches/com.apple.FileProvider"* 2>/dev/null || true
+        
+        # Throttle mdworker processes 
+        for pid in $(pgrep mdworker 2>/dev/null || true); do
+          renice +15 "$pid" 2>/dev/null || true
+        done
+        
+        echo "  ✓ Sequoia performance fixes applied"
+      '';
+      deps = [ "performanceOptimizations" ];
     };
   };
   # --- Shell Initialization -------------------------------------------------

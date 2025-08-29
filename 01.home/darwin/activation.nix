@@ -31,5 +31,13 @@
         echo "  ✓ Migrated npm config (original preserved)"
       fi
     '';
+    # --- Exclusion Markers --------------------------------------------------
+    exclusionMarkers = lib.hm.dag.entryAfter [ "xdgMigration" ] ''
+      # Create exclusion markers in key directories
+      for dir in Downloads Documents Projects Development Code repos workspace .config; do
+        [ -d "$HOME/$dir" ] && { touch "$HOME/$dir"/{.metadata_never_index,.nosync,.noindex} 2>/dev/null; } || true
+      done
+      echo "[Parametric Forge] ✓ Exclusion markers deployed"
+    '';
   };
 }

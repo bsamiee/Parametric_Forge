@@ -20,7 +20,6 @@
     ./00.core/programs
     ./tokens.nix
     ./activation.nix
-    ./exclusions.nix
     ./xdg.nix
     ./fonts.nix
     ./environment.nix

@@ -83,7 +83,7 @@ in
         };
         # --- Bluetooth Mouse Configuration ----------------------------------
         "com.apple.driver.AppleBluetoothMultitouch.mouse" = {
-          MouseButtonMode = mkDefault "OneButton";
+          MouseButtonMode = mkDefault "TwoButton";
           MouseVerticalScroll = mkDefault true;
           MouseHorizontalScroll = mkDefault true;
           MouseMomentumScroll = mkDefault true;

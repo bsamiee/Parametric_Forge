@@ -12,8 +12,6 @@
   pkgs,
   myLib,
   userServiceHelpers,
-  exclusions,
-  exclusionFilters,
   ...
 }:
 
@@ -21,11 +19,15 @@ let
   # --- Service Helper Functions ---------------------------------------------
   inherit (userServiceHelpers) mkPeriodicJob mkCalendarJob;
   inherit (myLib.launchd) getRuntimeDir;
-  inherit (exclusionFilters) byLocation getPatterns;
 
-  # --- Cache Configuration --------------------------------------------------
-  cacheInXdg = byLocation "xdg-cache" exclusions;
-  cacheDirs = getPatterns cacheInXdg;
+  # --- Common Cache Directories (simplified, no exclusion system) -----------
+  cacheDirs = [
+    "npm" "pnpm" "yarn" "pip" "pypoetry" "pylint" "ruff" "basedpyright" "mypy" "pytest" "uv"
+    "cargo" "rust-analyzer" "sccache" "go-build" "gradle" "maven"
+    "docker" "colima" "podman" "lazydocker" "dive" "buildkit"
+    "bat" "direnv" "fd" "nix-index" "nix" "fontconfig" "shellcheck" "bazel"
+    "op" "ssh" "claude" "sqlite_history"
+  ];
 
   # --- Runtime Directory Path -----------------------------------------------
   runtimeDir = getRuntimeDir pkgs;
