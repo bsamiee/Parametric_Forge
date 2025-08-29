@@ -22,6 +22,6 @@
     ./xdg-daemons.nix
     ./op-daemons.nix
     ./npm-check-daemon.nix
-    ./window-manager.nix
+    ./window-daemons.nix
   ];
 }

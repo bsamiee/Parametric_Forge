@@ -45,7 +45,7 @@ in
         KeyRepeat = mkDefault 2;
         ApplePressAndHoldEnabled = mkDefault false;
         AppleKeyboardUIMode = mkDefault 3;
-        "com.apple.keyboard.fnState" = mkDefault false;
+        "com.apple.keyboard.fnState" = mkDefault true;
         NSAutomaticCapitalizationEnabled = mkDefault true;
         NSAutomaticSpellingCorrectionEnabled = mkDefault true;
         NSAutomaticPeriodSubstitutionEnabled = mkDefault true;

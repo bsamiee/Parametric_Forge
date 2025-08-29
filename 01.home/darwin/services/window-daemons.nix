@@ -1,3 +1,11 @@
+# Title         : 01.home/darwin/services/window-daemons.nix
+# Author        : Bardia Samiee
+# Project       : Parametric Forge
+# License       : MIT
+# Path          : /01.home/darwin/services/window-daemons.nix
+# ----------------------------------------------------------------------------
+# Window management daemon services for macOS.
+
 { myLib, ... }:
 
 {
