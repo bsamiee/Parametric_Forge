@@ -140,12 +140,6 @@ in
     # --- Whalebrew (Docker-based tools) -------------------------------------
     # whalebrews = [ ];
 
-    # --- Homebrew Services (Auto-start on login) ---------------------------
-    services = {
-      "yabai" = { enable = true; };
-      "skhd" = { enable = true; };
-      "sketchybar" = { enable = true; };
-    };
 
     # --- Cask Configuration -------------------------------------------------
     caskArgs = mkDefault {
