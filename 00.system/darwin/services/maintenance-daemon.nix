@@ -13,7 +13,7 @@ let
   inherit (myLib.launchd) mkLaunchdDaemon;
 
   # --- Maintenance Script ---------------------------------------------------
-  maintenanceScript = pkgs.writeShellScript "system-maintenance" ''
+  maintenanceScript = myLib.launchd.mkNamedExecutable pkgs "sys-maintenance-daemon" ''
     #!${pkgs.bash}/bin/bash
     set -euo pipefail
 
@@ -35,15 +35,15 @@ let
     echo "→ Nix health checks:"
 
     if ${pkgs.nix}/bin/nix store verify --all --no-contents 2>/dev/null; then
-      echo "  ✓ Store integrity verified"
+      echo "  [OK] Store integrity verified"
     else
-      echo "  ⚠ Store verification found issues"
+      echo "  [WARN] Store verification found issues"
     fi
 
     if pgrep -x "nix-daemon" > /dev/null; then
-      echo "  ✓ Nix daemon is running"
+      echo "  [OK] Nix daemon is running"
     else
-      echo "  ⚠ Nix daemon is not running"
+      echo "  [WARN] Nix daemon is not running"
     fi
 
     # --- Homebrew Maintenance -----------------------------------------------
@@ -51,24 +51,37 @@ let
       echo "→ Homebrew maintenance:"
 
       if brew cleanup --prune=30 2>/dev/null; then
-        echo "  ✓ Cleaned up old Homebrew versions"
+        echo "  [OK] Cleaned up old Homebrew versions"
       else
-        echo "  ⚠ Homebrew cleanup encountered issues"
+        echo "  [WARN] Homebrew cleanup encountered issues"
       fi
 
       if brew doctor 2>/dev/null | head -10; then
-        echo "  ✓ Homebrew doctor check completed"
+        echo "  [OK] Homebrew doctor check completed"
       else
-        echo "  ⚠ Homebrew doctor found issues"
+        echo "  [WARN] Homebrew doctor found issues"
       fi
     else
       echo "  → Homebrew not installed, skipping"
     fi
 
+    # --- Mac App Store Updates ----------------------------------------------
+    if command -v mas >/dev/null 2>&1; then
+      echo "→ Mac App Store updates:"
+      
+      if mas upgrade 2>/dev/null; then
+        echo "  [OK] Updated all Mac App Store applications"
+      else
+        echo "  [WARN] Some App Store updates failed or no updates available"
+      fi
+    else
+      echo "  → mas CLI not installed, skipping App Store updates"
+    fi
+
     # --- Log Rotation -------------------------------------------------------
     echo "→ Log rotation:"
     find /var/log -name "*.log" -mtime +60 -delete 2>/dev/null || true
-    echo "  ✓ Rotated old system logs"
+    echo "  [OK] Rotated old system logs"
 
     echo "═══════════════════════════════════════════════════════════════════════"
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] System maintenance completed"
@@ -77,8 +90,9 @@ let
 in
 {
   # --- System Maintenance Daemon --------------------------------------------
-  launchd.daemons.system-maintenance = mkLaunchdDaemon pkgs {
-    command = "${maintenanceScript}";
+  launchd.daemons.nix-store-maintenance = mkLaunchdDaemon pkgs {
+    command = "${maintenanceScript}/bin/sys-maintenance-daemon";
+    label = "Sys Maintenance Daemon";
     startCalendarInterval = [
       {
         Weekday = 0;

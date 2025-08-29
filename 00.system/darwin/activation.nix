@@ -33,15 +33,15 @@
 
         # Proven mdutil exclusions (nix-darwin community approach)
         if [ -d "/nix" ]; then
-          sudo mdutil -i off /nix 2>/dev/null && echo "  ✓ Disabled Spotlight indexing: /nix"
-          sudo tmutil addexclusion /nix 2>/dev/null && echo "  ✓ Time Machine excluded: /nix"
+          sudo mdutil -i off /nix 2>/dev/null && echo "  [OK] Disabled Spotlight indexing: /nix"
+          sudo tmutil addexclusion /nix 2>/dev/null && echo "  [OK] Time Machine excluded: /nix"
         fi
 
         # Cloud storage exclusions (if not manually added to Privacy)
         CLOUD_DIR="${context.userHome}/Library/CloudStorage"
         if [ -d "$CLOUD_DIR" ]; then
-          sudo mdutil -i off "$CLOUD_DIR" 2>/dev/null && echo "  ✓ Disabled Spotlight indexing: CloudStorage"
-          sudo tmutil addexclusion "$CLOUD_DIR" 2>/dev/null && echo "  ✓ Time Machine excluded: CloudStorage"
+          sudo mdutil -i off "$CLOUD_DIR" 2>/dev/null && echo "  [OK] Disabled Spotlight indexing: CloudStorage"
+          sudo tmutil addexclusion "$CLOUD_DIR" 2>/dev/null && echo "  [OK] Time Machine excluded: CloudStorage"
         fi
 
         # Cache directories exclusions
@@ -51,13 +51,13 @@
         )
         for dir in "''${CACHE_DIRS[@]}"; do
           if [ -d "$dir" ]; then
-            sudo mdutil -i off "$dir" 2>/dev/null && echo "  ✓ Disabled Spotlight indexing: $(basename "$dir")"
+            sudo mdutil -i off "$dir" 2>/dev/null && echo "  [OK] Disabled Spotlight indexing: $(basename "$dir")"
           fi
         done
 
         # Note: Process throttling removed to prevent potential EPERM errors during build
 
-        echo "  ℹ For optimal performance, also add folders manually to:"
+        echo "  [INFO] For optimal performance, also add folders manually to:"
         echo "    System Settings > Spotlight > Search Privacy"
 
       '';
@@ -83,7 +83,7 @@
             if [ -e "$app" ]; then
               app_name=$(basename "$app")
               ln -sf "$app" "$APPS_DIR/$app_name"
-              echo "  ✓ Linked: $app_name"
+              echo "  [OK] Linked: $app_name"
             fi
           done
         fi
@@ -97,17 +97,21 @@
               app_name=$(basename "$app")
               if [ ! -e "$APPS_DIR/$app_name" ]; then
                 ln -sf "$app" "$APPS_DIR/$app_name"
-                echo "  ✓ Linked: $app_name"
+                echo "  [OK] Linked: $app_name"
               fi
             fi
           done
         fi
 
-        # Gentle LaunchServices refresh (preserve authentication)
-        echo "  Refreshing LaunchServices for Nix apps only..."
-        /System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister \
-          -f -R "$APPS_DIR" 2>/dev/null || true
-        echo "  ✓ LaunchServices refreshed without breaking system auth"
+        # Minimal LaunchServices refresh (only if changes detected)
+        if [ -n "$(find "$APPS_DIR" -newer "$APPS_DIR" -print -quit 2>/dev/null)" ]; then
+          echo "  Changes detected, refreshing LaunchServices for Nix apps..."
+          /System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister \
+            -f -R "$APPS_DIR" 2>/dev/null || true
+          echo "  [OK] LaunchServices updated for new apps only"
+        else
+          echo "  [OK] No app changes detected, skipping LaunchServices refresh"
+        fi
       '';
       deps = [
         "etc"
@@ -124,9 +128,9 @@
         # Create runtime directory with proper permissions
         if [ ! -d "$RUNTIME_DIR" ]; then
           mkdir -pm 700 "$RUNTIME_DIR"
-          echo "  ✓ Created XDG runtime directory at $RUNTIME_DIR"
+          echo "  [OK] Created XDG runtime directory at $RUNTIME_DIR"
         else
-          echo "  ✓ XDG runtime directory exists"
+          echo "  [OK] XDG runtime directory exists"
         fi
       '';
       deps = [ "users" ];
@@ -138,10 +142,10 @@
 
         # Check Gatekeeper status (do not disable to preserve security)
         if spctl --status | grep -q "enabled"; then
-          echo "  ℹ Gatekeeper is enabled (recommended for security)"
-          echo "  ℹ Use 'spctl --master-disable' manually if needed"
+          echo "  [INFO] Gatekeeper is enabled (recommended for security)"
+          echo "  [INFO] Use 'spctl --master-disable' manually if needed"
         else
-          echo "  ⚠ Gatekeeper is disabled"
+          echo "  [WARN] Gatekeeper is disabled"
         fi
 
         # Remove quarantine from common problematic apps
@@ -152,49 +156,87 @@
           find "${context.userHome}/Applications" -maxdepth 2 -name "*.app" -exec xattr -rd com.apple.quarantine {} \; 2>/dev/null || true
         fi
 
-        echo "  ✓ Removed quarantine from all applications"
+        echo "  [OK] Removed quarantine from all applications"
       '';
       deps = [ "nixAppsIntegration" ];
     };
     # --- Sequoia FileProvider Performance Fixes ---------------------------
     sequoiaFixes = {
       text = ''
-        echo "[Parametric Forge] Applying Sequoia FileProvider fixes..."
+        echo "[Parametric Forge] Applying targeted Sequoia fixes..."
 
-        # FileProvider nuclear option - disable broken extensions
-        for ext in $(pluginkit -m -p com.apple.FileProvider 2>/dev/null | grep -o '[a-zA-Z0-9.-]*\.FileProvider[a-zA-Z0-9.-]*' || true); do
-          pluginkit -r "$ext" 2>/dev/null || true
-        done
-        pkill -f fileproviderd 2>/dev/null || true
-        echo "  ✓ FileProvider extensions reset"
+        # Clear FileProvider caches only (preserve system services)
+        rm -rf "${context.userHome}/Library/Caches/com.apple.FileProvider"* 2>/dev/null || true
+        echo "  [OK] FileProvider caches cleared"
 
-        # Exclude problematic sync folders from Spotlight
+        # Exclude sync folders from Spotlight (preserve system folders)
         SYNC_FOLDERS=(
-          "${context.userHome}/Library/CloudStorage"
-          "${context.userHome}/Library/Application Support/CloudDocs" 
           "${context.userHome}/Google Drive"
-          "${context.userHome}/OneDrive"
+          "${context.userHome}/OneDrive" 
           "${context.userHome}/Dropbox"
           "${context.userHome}/MEGAsync"
         )
 
         for folder in "''${SYNC_FOLDERS[@]}"; do
           if [ -d "$folder" ]; then
-            mdutil -i off "$folder" 2>/dev/null && echo "  ✓ Spotlight excluded: $(basename "$folder")"
+            mdutil -i off "$folder" 2>/dev/null && echo "  [OK] Spotlight excluded: $(basename "$folder")"
           fi
         done
 
-        # Clear FileProvider caches
-        rm -rf "${context.userHome}/Library/Caches/com.apple.FileProvider"* 2>/dev/null || true
-
-        # Throttle mdworker processes 
-        for pid in $(pgrep mdworker 2>/dev/null || true); do
-          renice +15 "$pid" 2>/dev/null || true
-        done
-
-        echo "  ✓ Sequoia performance fixes applied"
+        echo "  [OK] Targeted Sequoia fixes applied (system services preserved)"
       '';
       deps = [ "performanceOptimizations" ];
+    };
+    # --- Smart Mac App Store Management ------------------------------------
+    smartMasInstall = {
+      text = ''
+        echo "[Parametric Forge] Smart Mac App Store management..."
+
+        if ! command -v mas >/dev/null 2>&1; then
+          echo "  [WARN] mas CLI not found, skipping App Store management"
+          exit 0
+        fi
+
+        # App ID mappings (from original masApps)
+        declare -A MAS_APPS=(
+          ["Microsoft Excel"]="462058435"
+          ["Microsoft PowerPoint"]="462062816" 
+          ["Microsoft Word"]="462054704"
+          ["OneDrive"]="823766827"
+          ["Drafts"]="1435957248"
+          ["Fantastical"]="975937182"
+          ["Goodnotes"]="1444383602"
+          ["CARROT Weather"]="993487541"
+          ["CleanMyMac"]="1339170533"
+          ["Icon Tool for Developers"]="554660130"
+          ["Keka"]="470158793"
+          ["Parcel"]="639968404"
+          ["Rapidmg"]="6451349778"
+          ["MEGAVPN"]="6456784858"
+        )
+
+        INSTALLED_IDS=$(mas list 2>/dev/null | awk '{print $1}' || echo "")
+        OUTDATED_IDS=$(mas outdated 2>/dev/null | awk '{print $1}' || echo "")
+
+        for app_name in "''${!MAS_APPS[@]}"; do
+          app_id="''${MAS_APPS[$app_name]}"
+          
+          if echo "$INSTALLED_IDS" | grep -q "^$app_id$"; then
+            if echo "$OUTDATED_IDS" | grep -q "^$app_id$"; then
+              echo "  [UPDATE] Updating: $app_name"
+              mas upgrade "$app_id" 2>/dev/null || echo "  [WARN] Update failed: $app_name"
+            else
+              echo "  [OK] Current: $app_name"
+            fi
+          else
+            echo "  [INSTALL] Installing: $app_name"
+            mas install "$app_id" 2>/dev/null || echo "  [WARN] Install failed: $app_name"
+          fi
+        done
+
+        echo "  [OK] Mac App Store management completed"
+      '';
+      deps = [ "sequoiaFixes" ];
     };
   };
   # --- Shell Initialization -------------------------------------------------

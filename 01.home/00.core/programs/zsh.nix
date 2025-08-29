@@ -21,7 +21,13 @@
     enable = true;
     enableCompletion = true; # Includes zsh-completions
     autosuggestion.enable = true; # zsh-autosuggestions
-    syntaxHighlighting.enable = true; # zsh-syntax-highlighting
+    syntaxHighlighting = {
+      enable = true;
+      styles = {
+        path = "none";
+        path_prefix = "none";
+      };
+    };
     historySubstringSearch = {
       enable = true; # zsh-history-substring-search
       searchUpKey = "^[[A"; # Up arrow
@@ -35,50 +41,30 @@
     # --- History Configuration ----------------------------------------------
     history = {
       path = "${config.xdg.stateHome}/zsh/history";
-      size = 100000; # Increased from 50000 for better history retention
+      size = 100000;
       save = 100000;
       share = true;
       extended = true;
       ignoreDups = true;
       ignoreSpace = true;
-      ignoreAllDups = true; # Remove older duplicates
+      ignoreAllDups = true;
       expireDuplicatesFirst = true;
     };
     # --- Init Content -------------------------------------------------------
     initContent = lib.mkMerge [
       # --- Performance & Module Loading (order 100) --------------------------
-      # These load zsh modules early for better performance and capabilities
       (lib.mkOrder 100 ''
-        # MODULES: Load zsh internal modules for advanced features
-        zmodload zsh/zpty      # Pseudo-terminal operations (for async)
-        zmodload zsh/system    # System interaction capabilities
-        zmodload zsh/parameter # Advanced parameter manipulation
-
-        # PERFORMANCE: Skip security check on trusted directories
+        zmodload zsh/zpty zsh/system zsh/parameter
         zstyle ':completion:*' accept-exact-dirs true
 
-        # HISTORY OPTIONS: Advanced history behavior settings
-        setopt HIST_VERIFY         # Show command before executing from history
-        setopt HIST_REDUCE_BLANKS  # Clean up extra spaces in history
-        setopt HIST_NO_FUNCTIONS   # Don't save function definitions
-        setopt SHARE_HISTORY       # Share history between all sessions
-        setopt INC_APPEND_HISTORY  # Write to history immediately
-
-        # DIRECTORY NAVIGATION: Enhanced cd and directory behavior
-        setopt AUTO_PUSHD          # Automatically maintain directory stack
-        setopt PUSHD_IGNORE_DUPS   # Don't duplicate directories in stack
-        setopt PUSHD_SILENT        # Don't print directory stack after pushd
-        setopt CDABLE_VARS         # Allow cd to variable values
-
-        # JOB CONTROL: Better background job management
-        setopt CHECK_JOBS          # Warn about running jobs when exiting
-        setopt HUP                 # Send HUP signal to jobs when shell exits
-        setopt LONG_LIST_JOBS      # Display PID when suspending processes
+        setopt HIST_VERIFY HIST_REDUCE_BLANKS HIST_NO_FUNCTIONS
+        setopt SHARE_HISTORY INC_APPEND_HISTORY
+        setopt AUTO_PUSHD PUSHD_IGNORE_DUPS PUSHD_SILENT CDABLE_VARS
+        setopt CHECK_JOBS HUP LONG_LIST_JOBS
       '')
 
       # --- Completion System (order 200) ------------------------------------
       (lib.mkOrder 200 ''
-        # Advanced completion with fzf integration
         zstyle ':completion:*' menu select
         zstyle ':completion:*' matcher-list 'm:{[:lower:][:upper:]}={[:upper:][:lower:]}' 'r:|[._-]=* r:|=*' 'l:|=* r:|=*'
         zstyle ':completion:*' list-colors ''${(s.:.)LS_COLORS}
@@ -109,7 +95,7 @@
           case "$1" in
             rm|mv|dd|format|fdisk|sudo) echo "Command '$1' not found (dangerous command)"; return 127 ;;
             *) command -v nix-locate >/dev/null 2>&1 && 
-               { echo "Searching nixpkgs for '$1'..."; nix-locate --minimal --no-group --type x --type s --top-level --whole-name --at-root "/bin/$1"; } || 
+               { echo "Searching nixpkgs for '$1'..."; nix-locate --minimal --no-group --type x --type s --whole-name --at-root "/bin/$1"; } || 
                echo "Command '$1' not found"; return 127 ;;
           esac
         }
@@ -121,8 +107,7 @@
           echo "Not in a project"
         }
 
-        # Yazi shell wrapper with cd-on-quit functionality
-        # This allows changing directory in shell when exiting yazi
+        # Yazi shell wrapper with cd-on-quit
         y() {
           local tmp="$(mktemp -t "yazi-cwd.XXXXXX")"
           yazi "$@" --cwd-file="$tmp"
@@ -132,7 +117,6 @@
           rm -f -- "$tmp"
         }
 
-        # Standard yy() function for yazi integration (alternative naming)
         yy() {
           local tmp="$(mktemp -t "yazi-cwd.XXXXXX")" cwd
           yazi "$@" --cwd-file="$tmp"
@@ -145,25 +129,16 @@
 
       # --- Pre-compinit (order 500) -----------------------------------------
       (lib.mkOrder 500 ''
-        # Note: All zsh plugins (autosuggestions, syntax-highlighting, history-substring-search, completions)
-        # are now loaded via home-manager's built-in integration options
+        bindkey '^P' history-substring-search-up
+        bindkey '^N' history-substring-search-down
+        bindkey '^[[1;5C' forward-word
+        bindkey '^[[1;5D' backward-word
+        bindkey '^[[H' beginning-of-line
+        bindkey '^[[F' end-of-line
 
-        # KEYBINDINGS: Additional keyboard shortcuts
-        # Enhanced navigation (preserving mcfly's ^R)
-        bindkey '^P' history-substring-search-up       # Ctrl+P - search history up
-        bindkey '^N' history-substring-search-down     # Ctrl+N - search history down
-        # Note: ^R reserved for mcfly integration
-
-        # Word navigation (useful in terminals)
-        bindkey '^[[1;5C' forward-word   # Ctrl+Right - jump word forward
-        bindkey '^[[1;5D' backward-word  # Ctrl+Left - jump word backward
-        bindkey '^[[H' beginning-of-line # Home - go to line start
-        bindkey '^[[F' end-of-line      # End - go to line end
-
-        # Edit command in editor
         autoload -z edit-command-line
         zle -N edit-command-line
-        bindkey '^X^E' edit-command-line # Ctrl+X Ctrl+E - edit in $EDITOR
+        bindkey '^X^E' edit-command-line
       '')
       # --- Environment Optimization (order 550) ----------------------------
       (lib.mkOrder 550 ''
@@ -177,8 +152,8 @@
       '')
       # --- Post-compinit (order 650) - Main Configuration -------------------
       (lib.mkOrder 650 ''
-        # Auto nix-index management (function moved to nix.nix aliases)
-        nindexauto
+        # Auto nix-index management - check if available first
+        command -v nindexauto >/dev/null 2>&1 && nindexauto || true
 
         # 1Password CLI plugin aliases
         [ -f "$HOME/.config/op/plugins.sh" ] && source "$HOME/.config/op/plugins.sh"
@@ -207,12 +182,9 @@
         _set_docker_host
 
         # Set SSH_AUTH_SOCK for 1Password if available
-        # Socket path is platform-aware via myLib.secrets.opSSHSocket
         ONEPASS_SOCKET="${myLib.secrets.opSSHSocket context}"
         [ -S "$ONEPASS_SOCKET" ] && export SSH_AUTH_SOCK="$ONEPASS_SOCKET"
         unset ONEPASS_SOCKET
-
-        # Quick Python environment setup
         pysetup() {
           [ -f "pyproject.toml" ] && { echo "pyproject.toml already exists"; return 1; }
           poetry init -n
@@ -221,12 +193,10 @@
           echo "Virtual environment will be created in .venv/"
         }
 
-        # Rust compilation cache status
         ruscache() {
           command -v sccache &>/dev/null && { echo "Rust cache:"; sccache --show-stats; } || echo "sccache not available"
         }
 
-        # Project detection
         project-info() {
           [[ -f "flake.nix" ]] && echo "Nix" && return
           [[ -f "package.json" ]] && echo "Node" && return  
@@ -234,21 +204,18 @@
           [[ -f "pyproject.toml" ]] && echo "Python" && return
         }
 
-        # Shell customizations and integrations
         autoload -U add-zsh-hook
-        typeset -A ZSH_HIGHLIGHT_STYLES; ZSH_HIGHLIGHT_STYLES[path]=none ZSH_HIGHLIGHT_STYLES[path_prefix]=none
 
-        # Auto-activation functions  
         auto-venv() { [[ -f ".venv/bin/activate" ]] && source .venv/bin/activate || { [[ -n "$VIRTUAL_ENV" ]] && [[ ! -f ".venv/bin/activate" ]] && deactivate 2>/dev/null || true; }; }
-
-        # Register hooks
-        add-zsh-hook chpwd project-info auto-venv
+        add-zsh-hook chpwd project-info
+        add-zsh-hook chpwd auto-venv
 
         # WezTerm integration
         [[ -n "$WEZTERM_PANE" ]] && {
-          _wezterm_set_user_var() { printf "\\033]1337;SetUserVar=%s=%s\\007" "$1" "$(echo -n "$2" | base64)"; }
+          _wezterm_set_user_var() { printf "\033]1337;SetUserVar=%s=%s\007" "$1" "$(echo -n "$2" | base64)"; }
           _wezterm_check_git() { git rev-parse --git-dir >/dev/null 2>&1 && _wezterm_set_user_var "IS_GIT_REPO" "true" || _wezterm_set_user_var "IS_GIT_REPO" "false"; }
-          add-zsh-hook chpwd precmd _wezterm_check_git
+          add-zsh-hook chpwd _wezterm_check_git
+          add-zsh-hook precmd _wezterm_check_git
           _wezterm_check_git
         }
       '')
@@ -274,7 +241,6 @@
         # Local zsh customizations
         # This file is not managed by Nix - add your temporary tweaks here
       '';
-      onChange = "touch $HOME/.zshrc.local";
     };
   };
 }

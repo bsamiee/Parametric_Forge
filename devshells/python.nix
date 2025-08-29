@@ -108,11 +108,11 @@ myLib.build.auto pkgs (
 
       # Smart project detection and setup
       if [ -f "pyproject.toml" ]; then
-        echo "📦 Project detected: pyproject.toml found"
+        echo "Project detected: pyproject.toml found"
         
         # Check for data science dependencies
         if grep -q -E "(numpy|pandas|scipy|matplotlib|scikit-learn)" pyproject.toml 2>/dev/null; then
-          echo "📊 Data science dependencies detected"
+          echo "Data science dependencies detected"
           echo "   Note: Heavy packages (numpy, pandas, etc.) are available globally"
           echo "   Use 'poetry install' to get project-specific versions if needed"
         fi
@@ -125,7 +125,7 @@ myLib.build.auto pkgs (
 
         # Development workflow hints
         echo ""
-        echo "🚀 Common commands:"
+        echo "Common commands:"
         echo "   poetry install      - Install dependencies"
         echo "   pytest              - Run tests (available globally)"
         echo "   ruff check .        - Lint code"
@@ -135,20 +135,20 @@ myLib.build.auto pkgs (
         echo "   nox                 - Run test automation"
 
       elif [ -f "requirements.txt" ] || [ -f "setup.py" ]; then
-        echo "📦 Legacy Python project detected"
-        echo "💡 Consider migrating to pyproject.toml for modern tooling"
+        echo "Legacy Python project detected"
+        echo "Consider migrating to pyproject.toml for modern tooling"
 
         # Basic venv setup for legacy projects
         if [ -d ".venv" ]; then
-          echo "🐍 Activating virtual environment..."
+          echo "Activating virtual environment..."
           source .venv/bin/activate
         else
-          echo "💡 Create virtual environment with: python -m venv .venv && source .venv/bin/activate"
+          echo "Create virtual environment with: python -m venv .venv && source .venv/bin/activate"
         fi
 
       else
-        echo "📁 General Python development environment"
-        echo "💡 Create a new project with: poetry new project-name"
+        echo "General Python development environment"
+        echo "Create a new project with: poetry new project-name"
       fi
 
       echo ""

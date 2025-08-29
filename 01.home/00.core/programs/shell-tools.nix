@@ -13,8 +13,7 @@ _:
     # --- JQ (JSON processor) ------------------------------------------------
     jq = {
       enable = true;
-      # Colors configured via JQ_COLORS environment variable in environment.nix
-      # to maintain single source of truth and use optimal ANSI codes
+      # Colors configured via JQ_COLORS in environment.nix
     };
 
     # --- Nix Index ----------------------------------------------------------
@@ -39,7 +38,6 @@ _:
         "--height 40%"
         "--layout=reverse"
         "--border"
-        # Official Dracula theme colors from draculatheme.com/fzf
         "--color=fg:#f8f8f2,bg:#282a36,hl:#bd93f9"
         "--color=fg+:#f8f8f2,bg+:#44475a,hl+:#bd93f9"
         "--color=info:#ffb86c,prompt:#50fa7b,pointer:#ff79c6"
@@ -63,7 +61,7 @@ _:
     # --- Eza (ls replacement) -----------------------------------------------
     eza = {
       enable = true;
-      enableZshIntegration = true; # Enable for proper theme/icon support
+      enableZshIntegration = true;
       git = true;
       icons = "auto";
     };
@@ -71,29 +69,26 @@ _:
     # --- Bat (cat replacement) ----------------------------------------------
     bat = {
       enable = true;
-      # All configuration handled via ~/.config/bat/config
     };
 
     # --- Ripgrep (grep replacement) -----------------------------------------
     ripgrep = {
       enable = true;
-      # Configuration handled via RIPGREP_CONFIG_PATH environment variable, pointing to ~/.config/ripgrep/config
     };
 
     # --- Fd (find replacement) ----------------------------------------------
     fd = {
       enable = true;
-      # All configuration handled via ~/.config/fd/ignore
     };
 
     # --- McFly (smart shell history) ----------------------------------------
     mcfly = {
       enable = true;
       enableZshIntegration = true;
-      keyScheme = "vim"; # Use vim keybindings
-      interfaceView = "BOTTOM"; # Show at bottom of screen
-      fuzzySearchFactor = 2; # Enable fuzzy search with moderate weight
-      enableLightTheme = false; # Dark theme to match our setup
+      keyScheme = "vim";
+      interfaceView = "BOTTOM";
+      fuzzySearchFactor = 2;
+      enableLightTheme = false;
     };
 
     # --- Bottom (resource monitor) ------------------------------------------
@@ -107,11 +102,9 @@ _:
       enable = true;
       enableZshIntegration = true;
       settings = {
-        modal = true; # Use vim-like modal interface
-        # Dracula theme skin
+        modal = true;
         skin = {
-          # Status line
-          status_normal_fg = "#f8f8f2"; # Foreground
+          status_normal_fg = "#f8f8f2";
           status_normal_bg = "#44475a"; # Current Line
           status_error_fg = "#ff5555"; # Red
           status_error_bg = "#282a36"; # Background

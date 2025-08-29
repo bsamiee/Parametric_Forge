@@ -47,7 +47,15 @@
             "*.yml"
             "*.yaml"
           ];
+          settings = {
+            formatter = {
+              pad_line_comments = 2; # Ensure 2 spaces before comments
+              max_line_length = 120; # Match yamllint config
+              indent = 4; # Match yamllint config
+            };
+          };
         };
+        # Note: yamllint is run in checks.nix for linting validation
         taplo = {
           enable = true;
           includes = [ "*.toml" ];

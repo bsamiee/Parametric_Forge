@@ -9,7 +9,7 @@
 
 options=(
   style=round
-  width=4.0
+  width=3.0
   hidpi=on
   active_color=0xffbd93f9   # Dracula purple - focused window
   inactive_color=0xff6272a4 # Dracula comment - unfocused windows

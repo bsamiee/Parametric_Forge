@@ -13,6 +13,7 @@ let
 
   # --- Import Library Modules -----------------------------------------------
   detection = import ./detection.nix { inherit lib; };
+  launchdLib = import ./launchd.nix { inherit lib; };
 in
 {
   # --- Detection Functions --------------------------------------------------
@@ -35,7 +36,10 @@ in
   build = import ./build.nix { inherit nixpkgs; };
 
   # --- Launchd Utilities (Darwin) -------------------------------------------
-  launchd = import ./launchd.nix { inherit lib; };
+  launchd = launchdLib;
+
+  # --- Service Environment Builders -----------------------------------------
+  inherit (launchdLib) mkServiceEnvironment mkBasicEnvironment;
 
   # --- 1Password Utilities --------------------------------------------------
   secrets = import ./1password-helpers.nix { inherit lib; };

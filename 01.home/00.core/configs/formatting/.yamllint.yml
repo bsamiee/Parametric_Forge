@@ -7,52 +7,53 @@
 # YAML linting configuration
 extends: relaxed
 rules:
-  line-length:
-    max: 120
-    level: warning
-    allow-non-breakable-words: true
-    allow-non-breakable-inline-mappings: true
-  indentation:
-    spaces: 4
-    indent-sequences: true
-    check-multi-line-strings: false
-  comments:
-    min-spaces-from-content: 2
-    require-starting-space: true
-  brackets:
-    min-spaces-inside: 0
-    max-spaces-inside: 1
-  braces:
-    min-spaces-inside: 0
-    max-spaces-inside: 1
-  colons:
-    max-spaces-before: 0
-    max-spaces-after: 1
-  commas:
-    max-spaces-before: 0
-    min-spaces-after: 1
-    max-spaces-after: 1
-  empty-lines:
-    max: 2
-    max-start: 0
-    max-end: 1
-  truthy:
-    allowed-values: ['true', 'false', 'yes', 'no', 'on', 'off']
-    check-keys: true
-  document-start: disable
-  document-end: disable
-  key-duplicates: enable
-  key-ordering: disable
-  quoted-strings:
-    quote-type: any
-    required: false
-    allow-quoted-quotes: false
-  trailing-spaces: enable
-  new-lines:
-    type: unix
+    line-length:
+        max: 120
+        level: warning
+        allow-non-breakable-words: true
+        allow-non-breakable-inline-mappings: true
+    indentation:
+        spaces: 4
+        indent-sequences: true
+        check-multi-line-strings: false
+    comments:
+        min-spaces-from-content: 2
+        require-starting-space: true
+    brackets:
+        min-spaces-inside: 0
+        max-spaces-inside: 1
+    braces:
+        min-spaces-inside: 0
+        max-spaces-inside: 1
+    colons:
+        max-spaces-before: 0
+        max-spaces-after: 1
+    commas:
+        max-spaces-before: 0
+        min-spaces-after: 1
+        max-spaces-after: 1
+    empty-lines:
+        max: 2
+        max-start: 0
+        max-end: 1
+    truthy:
+        allowed-values: ['true', 'false', 'yes', 'no', 'on', 'off']
+        check-keys: true
+    document-start:
+        present: false  # Don't require --- at start
+    document-end: disable
+    key-duplicates: enable
+    key-ordering: disable
+    quoted-strings:
+        quote-type: any
+        required: false
+        allow-quoted-quotes: false
+    trailing-spaces: enable
+    new-lines:
+        type: unix
 ignore: |-
-  .git/
-  node_modules/
-  vendor/
-  *.lock
-  *.generated.yml
+    .git/
+    node_modules/
+    vendor/
+    *.lock
+    *.generated.yml

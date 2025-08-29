@@ -34,33 +34,35 @@ pkgs.mkShell {
 
     ${myLib.devshell.loadSecretsIfFresh}
 
-    echo "🚀 Core Tools:"
+    echo "Core Tools:"
     echo "  lua               - Lua interpreter"
     echo "  luajit            - JIT compiler"
     echo "  luarocks          - Package manager"
     echo ""
-    echo "🔧 Development Tools:"
+    echo "Development Tools:"
     echo "  lua-language-server - LSP for IDE integration"
     echo "  stylua            - Code formatter"
+    echo "  luacheck          - Static analyzer and linter"
     echo ""
-    echo "🧪 Testing Tools:"
+    echo "Testing Tools:"
     echo "  busted            - Unit testing framework"
     echo "  luacov            - Code coverage"
     echo ""
-    echo "💡 Quick commands:"
+    echo "Quick commands:"
     echo "  stylua .          - Format all Lua files"
     echo "  stylua --check .  - Check formatting"
+    echo "  luacheck .        - Lint code quality"
     echo "  busted            - Run tests"
     echo ""
 
     # Project detection
     if [ -f ".stylua.toml" ] || [ -f "stylua.toml" ]; then
-      echo "🌙 Lua project detected (stylua config found)"
+      echo "Lua project detected (stylua config found)"
     elif [ -f "init.lua" ]; then
-      echo "🌙 Neovim configuration detected"
-      echo "  💡 Test config with: nvim --headless +checkhealth +qa"
+      echo "Neovim configuration detected"
+      echo "  Test config with: nvim --headless +checkhealth +qa"
     elif [ -f "rockspec" ] || [ -f "*.rockspec" ]; then
-      echo "🌙 LuaRocks project detected"
+      echo "LuaRocks project detected"
     fi
     echo ""
   '';

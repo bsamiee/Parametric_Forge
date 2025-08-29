@@ -72,7 +72,7 @@ _:
               esac
             done
 
-            echo "🚀 Parametric Forge Bootstrap"
+            echo "Parametric Forge Bootstrap"
             echo "═══════════════════════════════════════════════════════════════"
             echo ""
 
@@ -84,37 +84,37 @@ _:
               # Detect architecture
               if [[ "$(uname -m)" == "arm64" ]]; then
                 CONFIG="default"  # aarch64-darwin
-                echo "✓ Platform: macOS (Apple Silicon)"
+                echo "[OK] Platform: macOS (Apple Silicon)"
               else
                 CONFIG="x86_64"
-                echo "✓ Platform: macOS (Intel)"
+                echo "[OK] Platform: macOS (Intel)"
               fi
               REBUILD_CMD="darwin-rebuild switch --flake .#$CONFIG"
 
             elif [[ -f /.dockerenv ]] || [[ -f /run/.containerenv ]]; then
               CONFIG="container"
-              echo "✓ Platform: Container environment"
+              echo "[OK] Platform: Container environment"
               REBUILD_CMD="nixos-rebuild switch --flake .#container"
 
             elif [[ "$OSTYPE" == "linux"* ]]; then
               # Check architecture for Linux
               if [[ "$(uname -m)" == "aarch64" ]]; then
                 CONFIG="aarch64-vm"
-                echo "✓ Platform: Linux/VM (ARM64)"
+                echo "[OK] Platform: Linux/VM (ARM64)"
               else
                 CONFIG="vm"
-                echo "✓ Platform: Linux/VM (x86_64)"
+                echo "[OK] Platform: Linux/VM (x86_64)"
               fi
               REBUILD_CMD="nixos-rebuild switch --flake .#$CONFIG"
 
             else
-              echo "⚠ Unknown platform: $OSTYPE"
+              echo "[WARN] Unknown platform: $OSTYPE"
               echo "Manual configuration required"
               exit 1
             fi
 
-            echo "✓ Configuration: $CONFIG"
-            echo "✓ User: $USER"
+            echo "[OK] Configuration: $CONFIG"
+            echo "[OK] User: $USER"
             echo ""
 
             # Initialize user config if requested
@@ -129,7 +129,7 @@ _:
                 git commit -m "Initial Parametric Forge configuration"
               fi
 
-              echo "  ✓ User configuration initialized"
+              echo "  [OK] User configuration initialized"
               echo ""
             fi
 
@@ -145,9 +145,9 @@ _:
                 eval "$REBUILD_CMD"
                 echo ""
                 echo "═══════════════════════════════════════════════════════════════"
-                echo "✓ Configuration applied successfully!"
+                echo "[OK] Configuration applied successfully!"
               else
-                echo "⚠ Nix is not installed. Please install Nix first."
+                echo "[WARN] Nix is not installed. Please install Nix first."
                 echo "  Visit: https://nixos.org/download"
                 exit 1
               fi
@@ -208,16 +208,16 @@ _:
             echo "Environment Detection:"
 
             if [[ -f /.dockerenv ]]; then
-              echo "  ✓ Docker container detected"
+              echo "  [OK] Docker container detected"
             elif [[ -f /run/.containerenv ]]; then
-              echo "  ✓ Podman container detected"
+              echo "  [OK] Podman container detected"
             elif [[ "$OSTYPE" == "darwin"* ]]; then
-              echo "  ✓ macOS system detected"
+              echo "  [OK] macOS system detected"
             elif [[ "$OSTYPE" == "linux"* ]]; then
               if [[ -d /sys/class/dmi/id ]] && grep -q "VirtualBox\|VMware\|QEMU\|Hyper-V" /sys/class/dmi/id/product_name 2>/dev/null; then
-                echo "  ✓ Virtual machine detected"
+                echo "  [OK] Virtual machine detected"
               else
-                echo "  ✓ Native Linux system detected"
+                echo "  [OK] Native Linux system detected"
               fi
             fi
 
@@ -241,12 +241,12 @@ _:
 
             # Check if we're in a Parametric Forge directory
             if [[ -f "./setup.sh" && -f "flake.nix" ]]; then
-              echo "✓ Found Parametric Forge setup script in current directory"
+              echo "[OK] Found Parametric Forge setup script in current directory"
               echo "  Running: ./setup.sh $*"
               echo ""
               exec ./setup.sh "$@"
             else
-              echo "⚠ This command should be run from a Parametric Forge directory"
+              echo "[WARN] This command should be run from a Parametric Forge directory"
               echo ""
               echo "To get started:"
               echo "  1. Clone the repository:"

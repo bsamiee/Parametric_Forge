@@ -37,39 +37,78 @@ in
               nativeBuildInputs = with pkgs; [
                 statix
                 deadnix
-                nixpkgs-fmt
               ];
             }
             ''
               cd $src
-              echo "Running Nix quality checks..."
+              echo "Running Nix quality validation..."
+              echo "  Note: Run 'nix fmt' first to apply formatting and basic fixes"
 
+              # Validation-only checks (formatting handled by treefmt)
               statix check . || exit 1
               deadnix --fail --no-underscore . || exit 1
-              nixpkgs-fmt --check . 2>/dev/null || echo "  ⚠ Some formatting issues (non-blocking)"
 
               echo "Nix code quality checks passed" > $out
             '';
 
-        # --- Shell Scripts --------------------------------------------------
-        shell-scripts =
-          pkgs.runCommand "shell-scripts-check"
+        # --- Language Quality Checks -------------------------------------------
+        language-quality =
+          pkgs.runCommand "language-quality-check"
             {
               src = ./..;
-              nativeBuildInputs = [ pkgs.shellcheck ];
+              nativeBuildInputs = with pkgs; [
+                shellcheck # Shell script analysis
+                yamllint # YAML validation
+                ruff # Python linting
+                taplo # TOML validation
+                jq # JSON validation
+                stylua # Lua format validation
+                luajitPackages.luacheck # Lua linting
+              ];
             }
             ''
               cd $src
-              echo "Checking shell scripts..."
+              echo "Running language quality validation..."
+              echo "  Note: Run 'nix fmt' first to apply formatting"
 
-              for script in setup.sh scripts/*.sh; do
-                if [ -f "$script" ]; then
-                  echo "  Checking: $script"
-                  shellcheck -S warning "$script" || exit 1
-                fi
+              # Shell Scripts - validation only (formatting handled by treefmt)
+              find . -name "*.sh" -type f | while read -r script; do
+                echo "  Shell: $script"
+                shellcheck -S warning "$script" || exit 1
               done
 
-              echo "Shell script checks passed" > $out
+              # YAML files - validation only (formatting handled by treefmt)
+              find . -name "*.yml" -o -name "*.yaml" -type f | while read -r file; do
+                echo "  YAML: $file"
+                yamllint "$file" || exit 1
+              done
+
+              # Python files - linting validation (formatting handled by treefmt)
+              find . -name "*.py" -type f | while read -r file; do
+                echo "  Python: $file"
+                ruff check "$file" || exit 1
+              done
+
+              # TOML files - validation (formatting handled by treefmt)
+              find . -name "*.toml" -type f | while read -r file; do
+                echo "  TOML: $file"
+                taplo check "$file" || exit 1
+              done
+
+              # JSON files - validation (formatting handled by treefmt)
+              find . -name "*.json" -type f | while read -r file; do
+                echo "  JSON: $file"
+                jq empty "$file" || exit 1
+              done
+
+              # Lua files - validation (formatting handled by treefmt)
+              find . -name "*.lua" -type f | while read -r file; do
+                echo "  Lua: $file"
+                stylua --check "$file" || exit 1
+                luacheck "$file" || exit 1
+              done
+
+              echo "Language quality checks passed" > $out
             '';
         # --- Package Smoke Test ---------------------------------------------
         packages-smoke =

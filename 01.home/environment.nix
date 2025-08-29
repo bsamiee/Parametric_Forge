@@ -17,22 +17,20 @@
   # --- User Session Variables -----------------------------------------------
   home.sessionVariables = {
     # --- Locale and Internationalization ------------------------------------
-    LANG = "en_US.UTF-8"; # System locale
-    LC_ALL = ""; # Don't override individual locale categories
-    TZ = "America/Chicago"; # Central Time (Houston)
+    LANG = "en_US.UTF-8";
+    LC_ALL = "";
+    TZ = "America/Chicago";
 
     # --- XDG Base Directory Specification -----------------------------------
-    # Explicitly set XDG variables for tools that don't use home-manager's values
     XDG_CONFIG_HOME = "${config.xdg.configHome}";
     XDG_DATA_HOME = "${config.xdg.dataHome}";
     XDG_CACHE_HOME = "${config.xdg.cacheHome}";
     XDG_STATE_HOME = "${config.xdg.stateHome}";
-    # XDG_RUNTIME_DIR is set by system (macOS: ~/Library/Caches/TemporaryItems, Linux: /run/user/$UID)
 
     # --- Shell Security & Performance ---------------------------------------
     TMPDIR =
-      if (context != null && context.isDarwin) then "${config.home.homeDirectory}/Library/Caches/TemporaryItems" else "/tmp"; # Secure temporary directory
-    KEYTIMEOUT = "1"; # Faster vi mode switching (10ms)
+      if (context != null && context.isDarwin) then "${config.home.homeDirectory}/Library/Caches/TemporaryItems" else "/tmp";
+    KEYTIMEOUT = "1";
 
     # --- Core Utilities -----------------------------------------------------
     EDITOR = "nvim";
@@ -42,8 +40,8 @@
     GIT_PAGER = "delta";
 
     # --- System Integration -------------------------------------------------
-    # Platform-aware browser command
-    BROWSER = if (context != null && context.isDarwin) then "open" else "xdg-open";
+    # Note: Browser defaults handled by system LSHandlers in 00.system/darwin/settings/system.nix
+    # BROWSER env var removed to prevent conflicts with system-level browser configuration
     COLORTERM = "truecolor";
     # Better man pages with bat if available
     MANPAGER = "sh -c 'col -bx | bat -l man -p'";
@@ -79,45 +77,40 @@
     MYPY_CACHE_DIR = "${config.xdg.cacheHome}/mypy";
     MYPY_CONFIG_FILE = "${config.xdg.configHome}/mypy/mypy.ini";
     UV_CACHE_DIR = "${config.xdg.cacheHome}/uv";
+    # UV_PROJECT_ENVIRONMENT, UV_COMPILE_BYTECODE, UV_LINK_MODE → Not documented/supported
     PYTEST_CACHE_DIR = "${config.xdg.cacheHome}/pytest";
     PIPX_DEFAULT_PYTHON = "${config.home.homeDirectory}/.nix-profile/bin/python3";
-    NOX_CACHE_DIR = "${config.xdg.cacheHome}/nox"; # Nox testing cache
+    NOX_CACHE_DIR = "${config.xdg.cacheHome}/nox";
 
     # --- XDG-Compliant Shell History ----------------------------------------
-    HISTFILE = "${config.xdg.stateHome}/zsh/history"; # Primary shell is zsh
+    HISTFILE = "${config.xdg.stateHome}/zsh/history";
     LESSHISTFILE = "${config.xdg.stateHome}/less/history";
     SQLITE_HISTORY = "${config.xdg.stateHome}/sqlite/history";
 
     # --- XDG-Compliant Application Config -----------------------------------
-    # Docker & Container Runtimes
     DOCKER_CONFIG = "${config.xdg.configHome}/docker";
-    DOCKER_HOST = "unix://${config.home.homeDirectory}/.colima/default/docker.sock"; # Colima socket
+    # DOCKER_HOST → Dynamically set in zsh.nix:200-213 to support multiple runtimes
     DOCKER_CERT_PATH = "${config.xdg.dataHome}/docker/certs";
     MACHINE_STORAGE_PATH = "${config.xdg.dataHome}/docker-machine";
-    # Colima
     COLIMA_HOME = "${config.xdg.dataHome}/colima";
-    # Podman
     CONTAINERS_CONF = "${config.xdg.configHome}/containers/containers.conf";
     CONTAINERS_REGISTRIES_CONF = "${config.xdg.configHome}/containers/registries.conf";
     CONTAINERS_STORAGE_CONF = "${config.xdg.configHome}/containers/storage.conf";
-    PODMAN_USERNS = "keep-id"; # Better rootless experience
-    # Container tool configs
+    PODMAN_USERNS = "keep-id";
     LAZYDOCKER_CONFIG_DIR = "${config.xdg.configHome}/lazydocker";
     DIVE_CONFIG = "${config.xdg.configHome}/dive/config.yaml";
     HADOLINT_CONFIG = "${config.xdg.configHome}/hadolint.yaml";
-    # GitHub CLI
     GH_CONFIG_DIR = "${config.xdg.configHome}/gh";
-    GH_PAGER = "delta"; # Use delta for rich diffs in gh commands
+    GH_PAGER = "delta";
 
     # --- Formatter Configs --------------------------------------------------
-    YAMLLINT_CONFIG_FILE = "${config.xdg.configHome}/yamllint/config"; # Supported by yamllint
+    YAMLLINT_CONFIG_FILE = "${config.xdg.configHome}/yamllint/config";
 
     # --- Language Server Configuration --------------------------------------
-    # Bash Language Server
-    BASH_IDE_LOG_LEVEL = "info"; # Logging level for bash-language-server
-    SHELLCHECK_PATH = "shellcheck"; # Path to ShellCheck (available in PATH)
-    SHFMT_PATH = "shfmt"; # Path to shfmt (available in PATH)
-    LUAROCKS_TREE = "${config.xdg.dataHome}/luarocks"; # Lua package manager
+    BASH_IDE_LOG_LEVEL = "info";
+    SHELLCHECK_PATH = "shellcheck";
+    SHFMT_PATH = "shfmt";
+    LUAROCKS_TREE = "${config.xdg.dataHome}/luarocks";
     LUAROCKS_CONFIG = "${config.xdg.configHome}/luarocks/config.lua";
 
     # --- Font Configuration -------------------------------------------------
@@ -128,15 +121,15 @@
     # --- Performance & Build Settings ---------------------------------------
     DOCKER_BUILDKIT = "1";
     COMPOSE_DOCKER_CLI_BUILD = "1";
-    BUILDKIT_PROGRESS = "plain"; # Options: auto, plain, tty, quiet, rawjson
-    BUILDKIT_TTY_LOG_LINES = "20"; # Number of log lines in TTY mode
-    BUILDKIT_COLORS = "1"; # Enable colored output for buildkit
+    BUILDKIT_PROGRESS = "plain";
+    BUILDKIT_TTY_LOG_LINES = "20";
+    BUILDKIT_COLORS = "1";
     TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE = "/var/run/docker.sock";
     MAKEFLAGS = "-j$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4)";
     CMAKE_BUILD_PARALLEL_LEVEL = "$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4)";
 
     # --- HTTP Client Configuration -------------------------------------------
-    XH_CONFIG_DIR = "${config.xdg.configHome}/xh"; # HTTPie-like client config
+    XH_CONFIG_DIR = "${config.xdg.configHome}/xh";
 
     # --- Privacy & Telemetry Opt-Outs ---------------------------------------
     DOTNET_CLI_TELEMETRY_OPTOUT = "1";
@@ -146,27 +139,19 @@
     SAM_CLI_TELEMETRY = "0";
     POWERSHELL_TELEMETRY_OPTOUT = "1";
     DO_NOT_TRACK = "1";
-    CARGO_BINSTALL_DISABLE_TELEMETRY = "1"; # Disable cargo-binstall telemetry
+    CARGO_BINSTALL_DISABLE_TELEMETRY = "1";
 
     # --- Security & Secret Detection ----------------------------------------
-    # Gitleaks configuration
     GITLEAKS_CONFIG = "${config.xdg.configHome}/gitleaks/gitleaks.toml";
-    GITLEAKS_NO_UPDATE_CHECK = "true"; # Disable update checks in managed environment
-    # Git secret and encryption tools
-    SECRETS_GPG_COMMAND = "gpg"; # GPG command for git-secret
-    # Note: GNUPGHOME is set system-wide if using GPG
+    GITLEAKS_NO_UPDATE_CHECK = "true";
+    SECRETS_GPG_COMMAND = "gpg";
 
     # --- Tool Configurations ------------------------------------------------
-    # Bat (enhanced cat) - Management paths only
-    BAT_CONFIG_PATH = "${config.xdg.configHome}/bat/config"; # Config file location
-    BAT_CACHE_PATH = "${config.xdg.cacheHome}/bat"; # Cache for compiled themes/syntaxes
-
-    # Ripgrep (ultra-fast text search) - Management path only
-    RIPGREP_CONFIG_PATH = "${config.xdg.configHome}/ripgrep/config"; # Config file location
-
-    # Starship (cross-shell prompt) - XDG-compliant paths
-    STARSHIP_CONFIG = "${config.xdg.configHome}/starship.toml"; # Configuration file location
-    STARSHIP_CACHE = "${config.xdg.cacheHome}/starship"; # Cache directory for session data
+    BAT_CONFIG_PATH = "${config.xdg.configHome}/bat/config";
+    BAT_CACHE_PATH = "${config.xdg.cacheHome}/bat";
+    RIPGREP_CONFIG_PATH = "${config.xdg.configHome}/ripgrep/config";
+    STARSHIP_CONFIG = "${config.xdg.configHome}/starship.toml";
+    STARSHIP_CACHE = "${config.xdg.cacheHome}/starship";
 
     # Delta (syntax-highlighting diff viewer)
     DELTA_PAGER = "less -FRX"; # Override default pager for delta
@@ -213,6 +198,12 @@
     JUST_CHOOSER = "fzf"; # Binary chooser for just --choose
     JUST_TIMESTAMP = "1"; # Enable timestamps in just output
     JUST_TIMESTAMP_FORMAT = "%Y-%m-%d %H:%M:%S"; # Format for just timestamps
+    JUST_UNSTABLE = "1"; # Enable experimental features
+
+    # Hyperfine (benchmarking) - Uses CLI flags --warmup and --runs, no env vars supported
+
+    # Watchexec (file watcher) - If enabled in packages
+    # WATCHEXEC_IGNORE = ".git,target,node_modules,.venv,__pycache__"; # (TODO: Uncomment when tool added)
 
     # --- Backup & Sync Tools ------------------------------------------------
     RCLONE_CONFIG = "${config.xdg.configHome}/rclone/rclone.conf"; # Rclone configuration
@@ -274,7 +265,7 @@
     MAGICK_TEMPORARY_PATH = "${config.xdg.cacheHome}/ImageMagick"; # Temporary files path
     MAGICK_MEMORY_LIMIT = "1GB"; # Heap memory limit
     MAGICK_DISK_LIMIT = "2GB"; # Disk space limit
-    MAGICK_THREAD_LIMIT = "4"; # Parallel threads limit
+    MAGICK_THREAD_LIMIT = "0"; # 0 = Use all available CPU cores (ImageMagick auto-detects)
 
     # --- Document Processing ------------------------------------------------
     # Pandoc supports partial XDG compliance - uses XDG dirs but falls back to ~/.pandoc

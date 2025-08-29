@@ -7,42 +7,108 @@
 # ----------------------------------------------------------------------------
 # Yabai window manager configuration
 
+# --- Error Handling & Validation -----------------------------------------
+set -euo pipefail  # Strict bash mode: exit on error, undefined vars, pipe failures
+
+# Validate yabai binary availability (safe during startup)
+if ! command -v yabai >/dev/null 2>&1; then
+    echo "ERROR: yabai not found in PATH" >&2
+    exit 1
+fi
+
+# Note: Removed self-referential process check (yabairc runs WITHIN yabai startup)
+# Note: Removed query test (yabai isn't ready to accept queries during config load)
+
+echo "yabai: Starting configuration..."
+
 # --- Scripting Addition Setup --------------------------------------------
 # Enable advanced window control features (required for borders and opacity)
 # Note: Requires SIP to be partially disabled for full functionality
-sudo yabai --load-sa
+if sudo yabai --load-sa 2>/dev/null; then
+    echo "yabai: Scripting addition loaded successfully"
+else
+    echo "WARNING: Scripting addition failed to load (advanced features unavailable)" >&2
+fi
+
+# Auto-reload scripting addition when dock restarts
 yabai -m signal --add event=dock_did_restart action="sudo yabai --load-sa"
+
+# --- Dynamic Padding Management (Signal-Based) --------------------------
+# Removes padding when fullscreen windows exist, restores when none exist
+# This solves the fullscreen window padding issue professionally
+yabai -m signal --add event=window_focused action='
+    space_id=$(yabai -m query --spaces --space | jq -r ".index")
+    fullscreen_count=$(yabai -m query --windows --space | jq "[.[] | select(.\"zoom-fullscreen\" == 1)] | length")
+    if [ "$fullscreen_count" -gt 0 ]; then
+        yabai -m config --space $space_id top_padding 0
+        yabai -m config --space $space_id bottom_padding 0
+        yabai -m config --space $space_id left_padding 0
+        yabai -m config --space $space_id right_padding 0
+    else
+        yabai -m config --space $space_id top_padding 8
+        yabai -m config --space $space_id bottom_padding 8
+        yabai -m config --space $space_id left_padding 8
+        yabai -m config --space $space_id right_padding 8
+    fi'
+
+yabai -m signal --add event=window_resized action='
+    space_id=$(yabai -m query --spaces --space | jq -r ".index")
+    fullscreen_count=$(yabai -m query --windows --space | jq "[.[] | select(.\"zoom-fullscreen\" == 1)] | length")
+    if [ "$fullscreen_count" -gt 0 ]; then
+        yabai -m config --space $space_id top_padding 0
+        yabai -m config --space $space_id bottom_padding 0
+        yabai -m config --space $space_id left_padding 0
+        yabai -m config --space $space_id right_padding 0
+    else
+        yabai -m config --space $space_id top_padding 8
+        yabai -m config --space $space_id bottom_padding 8
+        yabai -m config --space $space_id left_padding 8
+        yabai -m config --space $space_id right_padding 8
+    fi'
+
+# --- SketchyBar Integration Signals -------------------------------------
+# Notify SketchyBar about space and window changes
+yabai -m signal --add event=space_changed \
+    action="sketchybar --trigger space_changed SPACE_ID=\$YABAI_SPACE_ID 2>/dev/null || true"
+
+yabai -m signal --add event=window_focused \
+    action="sketchybar --trigger window_focused WINDOW_ID=\$YABAI_WINDOW_ID 2>/dev/null || true; sketchybar --trigger ecosystem_file_operation 2>/dev/null || true"
 
 # --- Layout Configuration ------------------------------------------------
 yabai -m config layout bsp
 yabai -m config window_placement second_child
 
-# --- Padding and Gaps ----------------------------------------------------
-yabai -m config top_padding 12
-yabai -m config bottom_padding 12
-yabai -m config left_padding 12
-yabai -m config right_padding 12
-yabai -m config window_gap 12
+# --- Pythagorean Spacing System (Geometric Proportions) -----------------
+# Pythagorean triple: 6:8:10 (3:4:5 scaled) where 6² + 8² = 10²
+yabai -m config top_padding 8      # Outer margin (Pythagorean leg a×2)
+yabai -m config bottom_padding 8   # Consistent perimeter
+yabai -m config left_padding 8     # Balanced lateral space
+yabai -m config right_padding 8    # Perfect symmetry
+yabai -m config window_gap 6       # Inner gap (Pythagorean leg b×2)
+
+# --- External Bar Integration --------------------------------------------
+# SketchyBar integration with proper height allocation
+yabai -m config external_bar all:32:0  # 32px height, 0px bottom
+yabai -m config menubar_opacity 0.0    # Hide native menubar
 
 # --- Window Appearance ---------------------------------------------------
-# Elegant Dracula-themed borders
-# Colors: Active=#bd93f9 (Purple), Inactive=#6272a4 (Comment Gray)
-yabai -m config window_border on
-yabai -m config window_border_width 2
-yabai -m config active_window_border_color 0xffbd93f9 # Dracula Purple
-yabai -m config normal_window_border_color 0xff6272a4 # Dracula Comment Gray
-yabai -m config window_border_radius 8
+# Borders handled by JankyBorders service for better visual quality
+# yabai -m config window_border on
+# yabai -m config window_border_width 2
+# yabai -m config active_window_border_color 0xffbd93f9 # Dracula Purple
+# yabai -m config normal_window_border_color 0xff6272a4 # Dracula Comment Gray
+# yabai -m config window_border_radius 8
 
-# Subtle transparency for depth
+# Swiss Design Opacity Hierarchy - Clear Information Architecture
 yabai -m config window_opacity on
-yabai -m config window_opacity_duration 0.15
-yabai -m config active_window_opacity 1.0
-yabai -m config normal_window_opacity 0.95
+yabai -m config window_opacity_duration 0.18    # Slightly slower for elegance
+yabai -m config active_window_opacity 1.0       # Full opacity = primary focus
+yabai -m config normal_window_opacity 0.92      # More pronounced hierarchy (8% reduction)
 
 # --- Window Behavior -----------------------------------------------------
-yabai -m config split_ratio 0.50
+yabai -m config split_ratio 0.50   # 50/50 splits for automatic balance
 yabai -m config split_type auto
-yabai -m config auto_balance off
+yabai -m config auto_balance on    # Automatically resize windows when new ones open
 yabai -m config window_shadow on
 yabai -m config window_animation_duration 0.0
 yabai -m config window_zoom_persist on
@@ -120,4 +186,13 @@ yabai -m rule --add app="^Finder$" title="(Co(py|nnect)|Move|Info|Pref)" manage=
 yabai -m rule --add title="^(General|(Tab|Password|Website|Extension)s|AutoFill|Se(arch|curity)|Privacy|Advance)$" manage=off
 yabai -m rule --add title="(Preferences|Settings|Options|Configuration|About)" manage=off
 
-echo "yabai: configuration loaded..."
+# --- Configuration Validation & Success Report -------------------------
+# Validate core configuration was applied
+if yabai -m query --spaces >/dev/null 2>&1 && yabai -m query --windows >/dev/null 2>&1; then
+    echo "yabai: Configuration loaded successfully"
+    echo "yabai: Pythagorean spacing system active (6px gaps, 8px padding)"
+    echo "yabai: Auto-balance enabled - new windows will resize automatically" 
+    echo "yabai: $(yabai -m query --spaces | jq length) spaces available"
+else
+    echo "WARNING: Configuration validation failed" >&2
+fi

@@ -1,371 +1,422 @@
 # Title         : starship.toml
-# Author        : Bardia Samiee
+# Author        : Bardia Samiee  
 # Project       : Parametric Forge
 # License       : MIT
 # Path          : /01.home/00.core/configs/apps/starship.toml
 # ----------------------------------------------------------------------------
-# Starship prompt with official Dracula theme and optimized configuration
+# Clean Starship: Nerd Font Symbols preset + Balanced Dracula colors
 
 "$schema" = 'https://starship.rs/config-schema.json'
 
-command_timeout = 2000
-scan_timeout = 50
 add_newline = true
-continuation_prompt = '▶▶ '
+command_timeout = 800
+scan_timeout = 50
+continuation_prompt = "┆ "
 
 format = """
-$os\
-$username\
-$hostname\
-$sudo\
-$shell\
-$shlvl\
-$direnv\
 $directory\
 $git_branch\
 $git_status\
-$git_metrics\
-$git_state\
-$fill\
-$package\
-$container\
-$vagrant\
-$nix_shell\
+$git_commit\
 $python\
-$lua\
 $nodejs\
-$golang\
-$haskell\
 $rust\
-$ruby\
-$java\
-$kotlin\
-$aws\
+$golang\
+$nix_shell\
 $docker_context\
-$conda\
-$line_break\
+$kubernetes\
+$package\
+$jobs\
 $character"""
 
-right_format = "$status$memory_usage$battery$jobs$cmd_duration$time"
-palette = "dracula"
+right_format = """$cmd_duration"""
 
-[os]
-disabled = false
-style = "fg:cyan"
-format = "$symbol"
+palette = 'dracula'
+
+[aws]
+symbol = "  "
+style = "bold orange"
+format = "[$symbol($profile )(\\($region\\)) [$duration]]($style) "
+expiration_symbol = "󰅙 "
+force_display = false
+
+[buf]
+symbol = " "
+
+[bun]
+symbol = " "
+
+[c]
+symbol = " "
+
+[cpp]
+symbol = " "
+
+[cmake]
+symbol = " "
+
+[conda]
+symbol = " "
+
+[crystal]
+symbol = " "
+
+[dart]
+symbol = " "
+
+[deno]
+symbol = " "
+
+[directory]
+read_only = " 󰌾"
+style = "bold purple"
+truncation_length = 3
+truncate_to_repo = true
+home_symbol = "~"
+truncation_symbol = "…/"
+fish_style_pwd_dir_length = 1
+
+[directory.substitutions]
+"Documents" = "󰈙 "
+"Downloads" = " "
+"Music" = "󰝚 "
+"Pictures" = " "
+"Videos" = " "
+"Desktop" = "󰇄 "
+"Applications" = "󰀶 "
+"Library" = " "
+"Developer" = " "
+".config" = " "
+".ssh" = "󰢤 "
+".git" = " "
+
+[docker_context]
+symbol = " "
+style = "bold cyan"
+format = "[$symbol$context]($style) "
+only_with_files = true
+detect_extensions = []
+detect_files = ["docker-compose.yml", "docker-compose.yaml", "Dockerfile"]
+detect_folders = []
+
+[elixir]
+symbol = " "
+
+[elm]
+symbol = " "
+
+[fennel]
+symbol = " "
+
+[fossil_branch]
+symbol = " "
+
+[gcloud]
+symbol = "  "
+
+[git_branch]
+symbol = " "
+style = "bold pink"
+format = "[$symbol$branch(:$remote_branch)]($style) "
+truncation_length = 20
+truncation_symbol = "…"
+only_attached = false
+
+[git_status]
+style = "bold orange"
+format = '[\[$all_status$ahead_behind\]]($style) '
+ahead = "󰜷${count}"
+behind = "󰜮${count}"
+diverged = "󰹺󰜷${ahead_count}󰜮${behind_count}"
+untracked = "?${count}"
+stashed = "󰏗${count}"
+modified = "!${count}"
+staged = "+${count}"
+renamed = "»${count}"
+deleted = "✘${count}"
+conflicted = "=${count}"
+
+[git_commit]
+tag_symbol = ' 󰓹 '
+commit_hash_length = 8
+style = "bold purple"
+format = "[\\($hash$tag\\)]($style) "
+only_detached = true
+
+[git_state]
+format = '\([$state( $progress_current/$progress_total)]($style)\) '
+style = "bright-black"
+
+[golang]
+symbol = " "
+format = "[$symbol($version )]($style)"
+style = "bold cyan"
+detect_extensions = ["go"]
+detect_files = ["go.mod", "go.sum"]
+
+[guix_shell]
+symbol = " "
+
+[haskell]
+symbol = " "
+
+[haxe]
+symbol = " "
+
+[hg_branch]
+symbol = " "
+
+
+[java]
+symbol = " "
+
+[julia]
+symbol = " "
+
+[kotlin]
+symbol = " "
+
+[lua]
+symbol = " "
+
+[memory_usage]
+threshold = 75
+symbol = "󰍛 "
+style = "bold cyan"
+format = "$symbol[${ram_pct}]($style)"
+
+[meson]
+symbol = "󰔷 "
+
+[nim]
+symbol = "󰆥 "
+
+[nix_shell]
+symbol = " "
+style = "bold blue"
+
+[nodejs]
+symbol = " "
+format = "[$symbol($version )]($style)"
+style = "bold green"
+detect_extensions = ["js", "mjs", "cjs", "ts", "tsx"]
+detect_files = ["package.json", ".nvmrc"]
+detect_folders = ["node_modules"]
+not_capable_style = "bold red"
+
+[ocaml]
+symbol = " "
 
 [os.symbols]
-Macos = "•"
-Linux = "•"
-Windows = "•"
-NixOS = "❄"
-Arch = "⧼"
-Ubuntu = "•"
-Fedora = "•"
-Debian = "•"
+Alpaquita = " "
+Alpine = " "
+AlmaLinux = " "
+Amazon = " "
+Android = " "
+Arch = " "
+Artix = " "
+CachyOS = " "
+CentOS = " "
+Debian = " "
+DragonFly = " "
+Emscripten = " "
+EndeavourOS = " "
+Fedora = " "
+FreeBSD = " "
+Garuda = "󰛓 "
+Gentoo = " "
+HardenedBSD = "󰞌 "
+Illumos = "󰈸 "
+Kali = " "
+Linux = " "
+Mabox = " "
+Macos = " "
+Manjaro = " "
+Mariner = " "
+MidnightBSD = " "
+Mint = " "
+NetBSD = " "
+NixOS = " "
+Nobara = " "
+OpenBSD = "󰈺 "
+openSUSE = " "
+OracleLinux = "󰌷 "
+Pop = " "
+Raspbian = " "
+Redhat = " "
+RedHatEnterprise = " "
+RockyLinux = " "
+Redox = "󰀘 "
+Solus = "󰠳 "
+SUSE = " "
+Ubuntu = " "
+Unknown = " "
+Void = " "
+Windows = "󰍲 "
+
+[package]
+symbol = "󰏗 "
+style = "bold orange"
+
+[cmd_duration]
+min_time = 2000
+show_milliseconds = false
+style = "bold cyan"
+format = "󰔟 [$duration]($style)"
+
+[battery]
+full_symbol = "󰁹 "
+charging_symbol = "󰂄 "
+discharging_symbol = "󰂃 "
+
+[[battery.display]]
+threshold = 15
+style = "bold red"
+
+[[battery.display]]
+threshold = 50
+style = "bold yellow"
+
+[[battery.display]]
+threshold = 80
+style = "bold green"
+
+[kubernetes]
+symbol = "󱃾 "
+style = "bold blue"
+format = "[$symbol$context( \\($namespace\\))]($style)"
+
+[perl]
+symbol = " "
+
+[php]
+symbol = " "
+
+[pijul_channel]
+symbol = " "
+
+[pixi]
+symbol = "󰏗 "
+
+[python]
+symbol = " "
+format = '[$symbol($version )(\($virtualenv\) )]($style)'
+version_format = "v${raw}"
+style = "yellow bold"
+pyenv_version_name = true
+pyenv_prefix = ""
+python_binary = ["./venv/bin/python", "python", "python3", "python2"]
+detect_extensions = ["py", "pyi"]
+detect_files = [
+  ".python-version",
+  "Pipfile",
+  "requirements.txt",
+  "pyproject.toml",
+  "tox.ini",
+  "setup.py",
+  "__init__.py",
+  "uv.lock",
+  "requirements-dev.txt",
+  "Pipfile.lock",
+]
+detect_folders = [".venv", "venv", "__pycache__"]
+
+[rlang]
+symbol = "󰟔 "
+
+[ruby]
+symbol = " "
+
+[rust]
+symbol = "󱘗 "
+format = "[$symbol($version )]($style)"
+style = "bold orange"
+detect_extensions = ["rs"]
+detect_files = ["Cargo.toml"]
+
+[scala]
+symbol = " "
+
+[swift]
+symbol = " "
+
+[zig]
+symbol = " "
+
+[gradle]
+symbol = " "
+
+[fill]
+symbol = " "
+
+[time]
+time_format = "%R"
+style = "bold comment"
+format = "[$time]($style)"
+
+# --- Missing Advanced Modules --------------------------------------------
+
+[jobs]
+symbol = "󰜎 "
+style = "bold red"
+number_threshold = 1
+symbol_threshold = 1
+format = "[$symbol$number]($style) "
+
+[env_var]
+# Show important environment variables
+variable = "SHELL"
+default = "unknown shell"
+format = "with [$env_value]($style) "
+style = "cyan bold"
+disabled = true
+
+[sudo]
+style = "bold red"
+symbol = "󰞀 "
+format = "[as $symbol]($style)"
 
 [username]
-style_user = "bold fg:purple"
-style_root = "bold fg:red"
-format = "[$user]($style) on "
+style_user = "green bold"
+style_root = "red bold"
+format = "[$user]($style) "
 show_always = false
 
 [hostname]
 ssh_only = true
-format = "[$hostname]($style) "
-style = "bold fg:pink"
-trim_at = "."
-
-[directory]
-style = 'bold fg:green'
-format = '[$path]($style)[$read_only]($read_only_style) '
-read_only = ""
-read_only_style = "fg:red"
-truncation_length = 3
-truncation_symbol = '…/'
-truncate_to_repo = true
-fish_style_pwd_dir_length = 1
-
-[directory.substitutions]
-'Documents' = 'docs'
-'Downloads' = 'dl'
-'Music' = 'music'
-'Pictures' = 'pics'
-'Videos' = 'vid'
-'Desktop' = 'desk'
-'.config' = 'conf'
-'.ssh' = 'ssh'
-
-[git_branch]
-style = 'fg:pink'
-symbol = ''
-format = '[[$symbol$branch]($style) '
-truncation_length = 20
-truncation_symbol = '…'
-
-[git_status]
-style = 'fg:red'
-format = '([$all_status$ahead_behind]($style)) '
-conflicted = ''
-ahead = '⇡$count'
-behind = '⇣$count'
-diverged = '⇕'
-up_to_date = ''
-untracked = '?'
-stashed = ''
-modified = ''
-staged = ''
-renamed = '→'
-deleted = ''
-ignore_submodules = true
-
-[git_commit]
-tag_symbol = ''
-commit_hash_length = 7
-format = '[($hash$tag)]($style) '
-style = 'fg:green'
-only_detached = true
-
-[git_state]
-style = 'fg:yellow'
-format = '([$state( $progress_current/$progress_total)]($style)) '
-
-[git_metrics]
-format = '([$added]($added_style))([$deleted]($deleted_style)) '
-added_style = 'fg:green'
-deleted_style = 'fg:red'
-only_nonzero_diffs = true
-disabled = false
-
-[fill]
-symbol = ' '
-
-[package]
-symbol = ''
-style = "fg:orange"
-format = "([[$symbol]($style) )"
-disabled = false
-
-[nix_shell]
-symbol = ''
-style = 'fg:cyan'
-format = '([[$symbol$state( ($name))]($style) )'
-impure_msg = '[impure]'
-pure_msg = '[pure]'
-
-[python]
-style = 'dimmed fg:yellow'
-symbol = ''
-format = '([[$symbol]($style) )'
-pyenv_version_name = false
-python_binary = ['python', 'python3', 'python2']
-detect_extensions = ['py']
-detect_files = [
-  '.python-version',
-  'Pipfile',
-  '__init__.py',
-  'pyproject.toml',
-  'requirements.txt',
-  'setup.py',
-  'tox.ini',
-  'poetry.lock',
-]
-
-[lua]
-format = '([[$symbol]($style) )'
-symbol = ''
-style = 'dimmed fg:cyan'
-detect_extensions = ['lua']
-detect_files = ['.lua-version']
-
-[nodejs]
-style = 'dimmed fg:green'
-symbol = ''
-format = '([[$symbol]($style) )'
-detect_extensions = ['js', 'mjs', 'cjs', 'ts', 'tsx']
-detect_files = ['package.json', '.node-version', '.nvmrc']
-
-[golang]
-style = 'dimmed fg:cyan'
-symbol = ''
-format = '([[$symbol]($style) )'
-detect_extensions = ['go']
-detect_files = [
-  'go.mod',
-  'go.sum',
-  'glide.yaml',
-  'Gopkg.yml',
-  'Gopkg.lock',
-  '.go-version',
-]
-
-[haskell]
-style = 'fg:purple'
-symbol = ''
-format = '([[$symbol]($style) )'
-detect_extensions = ['hs', 'lhs']
-detect_files = ['stack.yaml', 'cabal.project']
-
-[rust]
-style = 'dimmed fg:orange'
-symbol = ''
-format = '([[$symbol]($style) )'
-detect_extensions = ['rs']
-detect_files = ['Cargo.toml']
-
-[ruby]
-style = 'dimmed fg:red'
-symbol = ''
-format = '([[$symbol]($style) )'
-detect_extensions = ['rb']
-detect_files = ['Gemfile', '.ruby-version']
-
-[java]
-symbol = ''
-style = 'dimmed fg:orange'
-format = '([[$symbol]($style) )'
-detect_extensions = ['java', 'class', 'jar']
-detect_files = ['pom.xml', 'build.gradle.kts', 'build.sbt', '.java-version']
-
-[kotlin]
-symbol = ''
-style = 'fg:purple'
-format = '([[$symbol]($style) )'
-detect_extensions = ['kt', 'kts']
-detect_files = ['pom.xml', 'build.gradle.kts']
-
-[conda]
-symbol = ''
-style = 'fg:green'
-format = '([[$symbol$environment]($style) )'
-ignore_base = true
-
-[direnv]
-symbol = ''
-style = 'fg:orange'
-format = '([[$symbol$allowed]($style) )'
-allowed_msg = ''
-not_allowed_msg = '!'
-loaded_msg = ''
-unloaded_msg = ''
-disabled = false
-
-[container]
-symbol = ''
-style = 'fg:pink'
-format = '([[$symbol$name]($style) )'
-
-[shell]
-fish_indicator = ''
-bash_indicator = ''
-zsh_indicator = ''
-powershell_indicator = ''
-ion_indicator = ''
-elvish_indicator = ''
-tcsh_indicator = ''
-xonsh_indicator = ''
-cmd_indicator = ''
-nu_indicator = ''
-unknown_indicator = '?'
-style = 'dimmed fg:comment'
-format = '([$indicator]($style) )'
-disabled = false
-
-[sudo]
-symbol = ''
-style = 'fg:red'
-format = '([[$symbol]($style) )'
-disabled = false
-
-[vagrant]
-symbol = ''
-style = 'fg:cyan'
-format = '([[$symbol$version]($style) )'
-detect_files = ['Vagrantfile']
-detect_folders = ['.vagrant']
-disabled = false
-
-[aws]
-symbol = ''
-style = 'fg:yellow'
-format = '([[$symbol$profile($region)]($style) )'
-expiry_symbol = '!'
-
-[docker_context]
-symbol = ''
-style = 'fg:cyan'
-format = '([[$symbol$context]($style) )'
-detect_files = ['docker-compose.yml', 'docker-compose.yaml', 'Dockerfile']
-detect_extensions = ['Dockerfile']
-only_with_files = true
-
-[jobs]
-symbol = ''
-style = 'fg:red'
-number_threshold = 1
-format = '([[$symbol$number]($style) )'
-symbol_threshold = 1
-
-[cmd_duration]
-min_time = 2000
-style = 'italic fg:yellow'
-format = '([[$duration]($style) )'
-show_milliseconds = false
-show_notifications = false
-
-[time]
-disabled = false
-time_format = '%R'
-style = 'fg:comment'
-format = '[ $time]($style)'
-
-[status]
-disabled = false
-style = 'fg:red'
-format = '[[$status]]($style) '
-map_symbol = true
-
-[memory_usage]
-disabled = false
-threshold = 70
-style = 'fg:yellow'
-symbol = ''
-format = '([[$symbol$ram]($style) )'
-
-[battery]
-full_symbol = ''
-charging_symbol = ''
-discharging_symbol = ''
-unknown_symbol = ''
-empty_symbol = ''
-format = '([[$symbol$percentage]($style) )'
-
-[[battery.display]]
-threshold = 30
-style = 'fg:red'
-discharging_symbol = ''
-
-[[battery.display]]
-threshold = 60
-style = 'fg:yellow'
-
-[[battery.display]]
-threshold = 100
-style = 'fg:green'
+ssh_symbol = "󰢹 "
+format = "on [$ssh_symbol$hostname]($style) "
+style = "green bold"
 
 [shlvl]
-disabled = false
-format = '[[$shlvl]]($style) '
-style = 'dimmed fg:yellow'
+format = "[$symbol$shlvl]($style) "
+symbol = "󰞷 "
 threshold = 2
+style = "yellow bold"
+
+[status]
+style = "red bold"
+symbol = "󰅗 "
+success_symbol = ""
+not_executable_symbol = "󰗖 "
+not_found_symbol = "󰍉 "
+sigint_symbol = "󰻿 "
+signal_symbol = "󱑖 "
+format = '[$symbol$common_meaning$signal_name$maybe_int]($style) '
+map_symbol = true
+
+[localip]
+ssh_only = true
+format = "[$localipv4]($style) "
+style = "cyan bold"
 
 [character]
-success_symbol = '[→](bold fg:green)'
-error_symbol = '[→](bold fg:red)'
-vimcmd_symbol = '[←](bold fg:green)'
-vimcmd_replace_one_symbol = '[←](bold fg:purple)'
-vimcmd_replace_symbol = '[←](bold fg:purple)'
-vimcmd_visual_symbol = '[←](bold fg:yellow)'
+success_symbol = "[❯](bold green)"
+error_symbol = "[❯](bold red)"
+vimcmd_symbol = "[❮](bold purple)"
+vimcmd_replace_one_symbol = "[❮](bold purple)"
+vimcmd_replace_symbol = "[❮](bold purple)"
+vimcmd_visual_symbol = "[❮](bold yellow)"
 
 [palettes.dracula]
 background = "#282a36"
@@ -380,6 +431,20 @@ purple = "#bd93f9"
 red = "#ff5555"
 yellow = "#f1fa8c"
 
-# Advanced: Transient prompt support (for supported shells)
-[transient_prompt]
-disabled = false
+# --- Custom Modules -----------------------------------------------------------
+
+[custom.git_worktree]
+command = "git rev-parse --show-toplevel 2>/dev/null | xargs basename"
+when = "git rev-parse --is-inside-work-tree 2>/dev/null"
+format = "[ $output]($style) "
+style = "bold blue"
+shell = ["sh"]
+disabled = true
+
+[custom.python_venv_path]
+command = "basename $VIRTUAL_ENV 2>/dev/null"
+when = '[ -n "$VIRTUAL_ENV" ]'
+format = "[($output)]($style) "
+style = "dim yellow"
+shell = ["sh"]
+disabled = true

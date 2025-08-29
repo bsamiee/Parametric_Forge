@@ -4,93 +4,93 @@
 # License       : MIT
 # Path          : /01.home/00.core/configs/system/eza/theme.yml
 # ----------------------------------------------------------------------------
-# Eza theme configuration - Official Dracula colors with hex values and style attributes
+# Eza theme configuration - Official Dracula colors with hex values
 # Color reference: https://github.com/dracula/dracula-theme
 colourful: true
 filekinds:
-  normal: {foreground: "#f8f8f2"} # Foreground
-  directory: {foreground: "#8be9fd", is_bold: true} # Cyan (bold for emphasis)
-  symlink: {foreground: "#ff79c6"} # Pink
-  pipe: {foreground: "#f1fa8c"} # Yellow
-  block_device: {foreground: "#ffb86c"} # Orange
-  char_device: {foreground: "#ffb86c"} # Orange
-  socket: {foreground: "#bd93f9"} # Purple
-  special: {foreground: "#ff5555"} # Red
-  executable: {foreground: "#50fa7b", is_bold: true} # Green (bold for emphasis)
+    normal: {foreground: "#f8f8f2"}  # Foreground
+    directory: {foreground: "#8be9fd", is_bold: true}  # Cyan (bold)
+    symlink: {foreground: "#ff79c6"}  # Pink
+    pipe: {foreground: "#f1fa8c"}  # Yellow
+    block_device: {foreground: "#ffb86c"}  # Orange
+    char_device: {foreground: "#ffb86c"}  # Orange
+    socket: {foreground: "#bd93f9"}  # Purple
+    special: {foreground: "#ff5555"}  # Red
+    executable: {foreground: "#50fa7b", is_bold: true}  # Green (bold)
 perms:
-  user_read: {foreground: "#f1fa8c"} # Yellow
-  user_write: {foreground: "#ff5555"} # Red
-  user_execute_file: {foreground: "#50fa7b"} # Green
-  user_execute_other: {foreground: "#50fa7b"}
-  group_read: {foreground: "#bd93f9"} # Purple
-  group_write: {foreground: "#bd93f9"}
-  group_execute: {foreground: "#50fa7b"}
-  other_read: {foreground: "#8be9fd"} # Cyan
-  other_write: {foreground: "#8be9fd"}
-  other_execute: {foreground: "#50fa7b"}
-  special_user_file: {foreground: "#ffb86c"} # Orange
-  special_other: {foreground: "#ffb86c"}
-  attribute: {foreground: "#6272a4", is_dimmed: true} # Comment (dimmed)
+    user_read: {foreground: "#f1fa8c"}  # Yellow
+    user_write: {foreground: "#ff5555"}  # Red
+    user_execute_file: {foreground: "#50fa7b"}  # Green
+    user_execute_other: {foreground: "#50fa7b"}
+    group_read: {foreground: "#bd93f9"}  # Purple
+    group_write: {foreground: "#bd93f9"}
+    group_execute: {foreground: "#50fa7b"}
+    other_read: {foreground: "#8be9fd"}  # Cyan
+    other_write: {foreground: "#8be9fd"}
+    other_execute: {foreground: "#50fa7b"}
+    special_user_file: {foreground: "#ffb86c"}  # Orange
+    special_other: {foreground: "#ffb86c"}
+    attribute: {foreground: "#6272a4", is_dimmed: true}  # Comment (dimmed)
 size:
-  major: {foreground: "#ffb86c", is_bold: true} # Orange (bold for large sizes)
-  minor: {foreground: "#f1fa8c"} # Yellow
-  number_byte: {foreground: "#f8f8f2"} # Foreground
-  number_kilo: {foreground: "#8be9fd"} # Cyan
-  number_mega: {foreground: "#bd93f9"} # Purple
-  number_giga: {foreground: "#ff79c6"} # Pink
-  number_huge: {foreground: "#ff5555"} # Red
-  unit_byte: {foreground: "#f8f8f2"}
-  unit_kilo: {foreground: "#8be9fd"}
-  unit_mega: {foreground: "#bd93f9"}
-  unit_giga: {foreground: "#ff79c6"}
-  unit_huge: {foreground: "#ff5555"}
+    major: {foreground: "#ffb86c", is_bold: true}  # Orange (bold)
+    minor: {foreground: "#f1fa8c"}  # Yellow
+    number_byte: {foreground: "#f8f8f2"}  # Foreground
+    number_kilo: {foreground: "#8be9fd"}  # Cyan
+    number_mega: {foreground: "#bd93f9"}  # Purple
+    number_giga: {foreground: "#ff79c6"}  # Pink
+    number_huge: {foreground: "#ff5555"}  # Red
+    unit_byte: {foreground: "#f8f8f2"}
+    unit_kilo: {foreground: "#8be9fd"}
+    unit_mega: {foreground: "#bd93f9"}
+    unit_giga: {foreground: "#ff79c6"}
+    unit_huge: {foreground: "#ff5555"}
 users:
-  user_you: {foreground: "#50fa7b"} # Green
-  user_root: {foreground: "#ff5555", is_bold: true} # Red (bold for root)
-  user_other: {foreground: "#f1fa8c"} # Yellow
-  group_yours: {foreground: "#50fa7b"}
-  group_other: {foreground: "#f1fa8c"}
+    user_you: {foreground: "#50fa7b"}  # Green
+    user_root: {foreground: "#ff5555", is_bold: true}  # Red (bold)
+    user_other: {foreground: "#f1fa8c"}  # Yellow
+    group_yours: {foreground: "#50fa7b"}
+    group_other: {foreground: "#f1fa8c"}
 links:
-  normal: {foreground: "#8be9fd"} # Cyan
-  multi_link_file: {foreground: "#ffb86c"} # Orange
+    normal: {foreground: "#8be9fd"}  # Cyan
+    multi_link_file: {foreground: "#ffb86c"}  # Orange
 git:
-  new: {foreground: "#50fa7b"} # Green
-  modified: {foreground: "#f1fa8c"} # Yellow
-  deleted: {foreground: "#ff5555"} # Red
-  renamed: {foreground: "#bd93f9"} # Purple
-  typechange: {foreground: "#ffb86c"} # Orange
-  ignored: {foreground: "#6272a4", is_dimmed: true} # Comment (dimmed)
-  conflicted: {foreground: "#ff5555", is_bold: true} # Red (bold for conflicts)
+    new: {foreground: "#50fa7b"}  # Green
+    modified: {foreground: "#f1fa8c"}  # Yellow
+    deleted: {foreground: "#ff5555"}  # Red
+    renamed: {foreground: "#bd93f9"}  # Purple
+    typechange: {foreground: "#ffb86c"}  # Orange
+    ignored: {foreground: "#6272a4", is_dimmed: true}  # Comment (dimmed)
+    conflicted: {foreground: "#ff5555", is_bold: true}  # Red (bold)
 security_context:
-  colon: {foreground: "#6272a4"} # Comment
-  user: {foreground: "#f1fa8c"} # Yellow
-  role: {foreground: "#bd93f9"} # Purple
-  typ: {foreground: "#8be9fd"} # Cyan
-  range: {foreground: "#ff79c6"} # Pink
+    colon: {foreground: "#6272a4"}  # Comment
+    user: {foreground: "#f1fa8c"}  # Yellow
+    role: {foreground: "#bd93f9"}  # Purple
+    typ: {foreground: "#8be9fd"}  # Cyan
+    range: {foreground: "#ff79c6"}  # Pink
 file_type:
-  image: {foreground: "#ff79c6"} # Pink
-  video: {foreground: "#bd93f9"} # Purple
-  music: {foreground: "#8be9fd"} # Cyan
-  lossless: {foreground: "#8be9fd"}
-  crypto: {foreground: "#50fa7b"} # Green
-  document: {foreground: "#f1fa8c"} # Yellow
-  compressed: {foreground: "#ffb86c"} # Orange
-  temp: {foreground: "#6272a4", is_dimmed: true} # Comment (dimmed for temp files)
-  compiled: {foreground: "#ff5555"} # Red
-  source: {foreground: "#50fa7b"} # Green
-  build: {foreground: "#ffb86c"} # Orange
-punctuation: {foreground: "#6272a4"} # Comment
+    image: {foreground: "#ff79c6"}  # Pink
+    video: {foreground: "#bd93f9"}  # Purple
+    music: {foreground: "#8be9fd"}  # Cyan
+    lossless: {foreground: "#8be9fd"}
+    crypto: {foreground: "#50fa7b"}  # Green
+    document: {foreground: "#f1fa8c"}  # Yellow
+    compressed: {foreground: "#ffb86c"}  # Orange
+    temp: {foreground: "#6272a4", is_dimmed: true}  # Comment (dimmed)
+    compiled: {foreground: "#ff5555"}  # Red
+    source: {foreground: "#50fa7b"}  # Green
+    build: {foreground: "#ffb86c"}  # Orange
+punctuation: {foreground: "#6272a4"}  # Comment
 date:
-  moment: {foreground: "#50fa7b"} # Green (just now)
-  hour_old: {foreground: "#8be9fd"} # Cyan
-  day_old: {foreground: "#f1fa8c"} # Yellow
-  week_old: {foreground: "#bd93f9"} # Purple
-  older: {foreground: "#6272a4", is_dimmed: true} # Comment (dimmed for old dates)
+    moment: {foreground: "#50fa7b"}  # Green (just now)
+    hour_old: {foreground: "#8be9fd"}  # Cyan
+    day_old: {foreground: "#f1fa8c"}  # Yellow
+    week_old: {foreground: "#bd93f9"}  # Purple
+    older: {foreground: "#6272a4", is_dimmed: true}  # Comment (dimmed)
 inode:
-  valid: {foreground: "#bd93f9"} # Purple
-  invalid: {foreground: "#ff5555"} # Red
+    valid: {foreground: "#bd93f9"}  # Purple
+    invalid: {foreground: "#ff5555"}  # Red
 overlays:
-  acl: {foreground: "#ffb86c"} # Orange
-  extended: {foreground: "#8be9fd"} # Cyan
-broken_symlink: {foreground: "#ff5555", is_underline: true} # Red (underlined)
-broken_path_overlay: {foreground: "#44475a"} # Current Line (dark overlay)
+    acl: {foreground: "#ffb86c"}  # Orange
+    extended: {foreground: "#8be9fd"}  # Cyan
+broken_symlink: {foreground: "#ff5555", is_underline: true}  # Red (underlined)
+broken_path_overlay: {foreground: "#44475a"}  # Current Line (dark overlay)

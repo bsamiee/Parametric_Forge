@@ -37,7 +37,6 @@ in
         wvous-br-corner = mkDefault 1;
         # Application management
         persistent-apps = mkDefault [
-          "/System/Library/CoreServices/Finder.app"
           "/System/Applications/iPhone Mirroring.app"
           {
             spacer = {

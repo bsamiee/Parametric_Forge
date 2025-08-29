@@ -24,7 +24,7 @@ prepend_keymap = [
   ], run = "arrow -1", desc = "Move cursor up" },
   { on = [
     "l",
-  ], run = "enter", desc = "Enter directory or open file" },
+  ], run = "plugin bypass smart-enter", desc = "Smart enter with bypass + fast-enter features" },
 
   # Fast navigation and preview control
   { on = [
@@ -47,10 +47,10 @@ prepend_keymap = [
   ], run = "arrow 50%", desc = "Half page down" },
   { on = [
     "H",
-  ], run = "back", desc = "Go back in history" },
+  ], run = "plugin bypass reverse", desc = "Bypass parent directories" },
   { on = [
     "L",
-  ], run = "forward", desc = "Go forward in history" },
+  ], run = "plugin bypass", desc = "Bypass child directories" },
   { on = [
     "<C-o>",
   ], run = "back", desc = "Go back (vim-style)" },
@@ -285,9 +285,6 @@ prepend_keymap = [
     "'",
     "r",
   ], run = "plugin whoosh --args=rename", desc = "Rename bookmark" },
-  { on = [
-    "<Leader>",
-  ], run = "plugin command-palette.yazi", desc = "Open command palette" },
 
   # --- LEVEL 6: Tabs (CMD+number pattern from wezterm) --------------------
   { on = [
@@ -505,13 +502,22 @@ prepend_keymap = [
   ], run = "quit --no-cwd-file", desc = "Quit without writing cwd" },
 
   # --- Enhanced Search & Navigation ----------------------------------------
-  { on = [
-    "z",
-    "f",
-  ], run = "plugin fazif", desc = "Advanced search (fazif)" },
+  # Note: fazif plugin removed - using native fzf integration
   { on = [
     "z",
   ], run = "plugin keyjump", desc = "Zoxide jump" },
+  { on = [
+    "i",
+  ], run = "plugin searchjump", desc = "Flash.nvim-style search jump" },
+  { on = [
+    "<A-i>",
+  ], run = "plugin easyjump", desc = "Hop.nvim-style easy jump" },
+  { on = [
+    "<A-c>",
+  ], run = "plugin cdhist -- _ --fuzzy=fzf", desc = "Directory history (cdhist)" },
+  { on = [
+    "`",
+  ], run = "plugin command-palette", desc = "Command palette (fzf)" },
 
   # --- Preview Controls ----------------------------------------------------
   { on = [
@@ -620,6 +626,28 @@ prepend_keymap = [
     "g",
     "U",
   ], run = "plugin git-files", desc = "Show git status with untracked" },
+
+  # --- File Tagging (simple-tag plugin) ------------------------------------
+  { on = [
+    "t",
+    "t",
+  ], run = "plugin simple-tag -- toggle-tag", desc = "Toggle tag (press any key)" },
+  { on = [
+    "t",
+    "a",
+  ], run = "plugin simple-tag -- add-tag", desc = "Add tag (press any key)" },
+  { on = [
+    "t",
+    "d",
+  ], run = "plugin simple-tag -- remove-tag", desc = "Remove tag (press any key)" },
+  { on = [
+    "t",
+    "f",
+  ], run = "plugin simple-tag -- filter --mode=or", desc = "Filter by tags" },
+  { on = [
+    "t",
+    "s",
+  ], run = "plugin simple-tag -- select --mode=or", desc = "Select by tags" },
 ]
 
 # --- Tasks Manager Layer --------------------------------------------------

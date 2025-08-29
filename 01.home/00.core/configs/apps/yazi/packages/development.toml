@@ -1,0 +1,67 @@
+# Title         : development.toml
+# Author        : Bardia Samiee
+# Project       : Parametric Forge
+# License       : MIT
+# Path          : /01.home/00.core/configs/apps/yazi/packages/development.toml
+# ----------------------------------------------------------------------------
+# Development tools: Git integration, archives, and file operations
+
+# --- Git Integration ------------------------------------------------------
+# Git status - Show git status in file list
+[[plugin.deps]]
+use = "yazi-rs/plugins:git"
+
+# Git root - Jump to git repository root
+[[plugin.deps]]
+use = "ciarandg/cd-git-root.yazi"
+
+# Git files - Show git changes including untracked files
+[[plugin.deps]]
+use = "ktunprasert/git-files.yazi"
+
+# Lazygit integration - Full git management from yazi
+[[plugin.deps]]
+use = "Lil-Dank/lazygit.yazi"
+
+# Path from git root - Copy paths relative to repository root
+[[plugin.deps]]
+use = "aresler/path-from-root.yazi"
+
+# --- Archive Operations ---------------------------------------------------
+# Compress - Create archives from selected files (tar, zip, 7z, etc.)
+[[plugin.deps]]
+use = "KKV9/compress.yazi"
+
+# Archive mount - Mount archives as filesystems for transparent access
+[[plugin.deps]]
+use = "AnirudhG07/archivemount.yazi"
+
+# Archive compression/extraction with ouch
+[[plugin.deps]]
+use = "ndtoan96/ouch.yazi"
+
+# --- File Operations ------------------------------------------------------
+# File actions - Custom script menu system for batch operations
+[[plugin.deps]]
+use = "BBOOXX/file-actions.yazi"
+
+# Image converter - Convert between image formats using ImageMagick
+[[plugin.deps]]
+use = "atareao/convert.yazi"
+
+# File permissions - Enhanced chmod operations
+[[plugin.deps]]
+use = "yazi-rs/plugins:chmod"
+
+# Diff - Compare files and create patches
+[[plugin.deps]]
+use = "yazi-rs/plugins:diff"
+
+# Sudo operations - For system file management
+[[plugin.deps]]
+use = "yazi-rs/plugins:sudo"
+
+# --- File Type Detection --------------------------------------------------
+# MIME type detection - Fast file type identification by extension
+[[plugin.deps]]
+use = "yazi-rs/plugins:mime-ext"

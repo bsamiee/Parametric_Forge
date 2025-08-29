@@ -71,66 +71,55 @@ in
 
 {
   # --- System-Level Window Management Daemons ---------------------------
-  launchd.daemons = {
-    # --- Foundation Layer: Core Window Management -------------------------
-    "org.nixos.yabai" = {
-      enable = true;
-      serviceConfig = mkLaunchdDaemon {
-        label = "Yabai Window Manager";
-        command = yabaiDaemon;
-        nice = -10; # Higher priority for system daemon
-        processType = "Interactive"; # Needs interaction with windows
-        runAtLoad = true;
-        keepAlive = true;
-        environmentVariables = {
-          PATH = "/run/current-system/sw/bin:/usr/bin:/bin";
-          USER = primaryUser;
-          HOME = userHome;
-        };
-        workingDirectory = userHome;
-        logBaseName = "/var/log/yabai";
-      };
+  # --- Foundation Layer: Core Window Management -------------------------
+  launchd.daemons."org.nixos.yabai" = mkLaunchdDaemon pkgs {
+    command = "${yabaiDaemon}/bin/yabai-system-daemon";
+    label = "Yabai Window Manager";
+    nice = -10; # Higher priority for system daemon
+    processType = "Interactive"; # Needs interaction with windows
+    runAtLoad = true;
+    keepAlive = true;
+    environmentVariables = {
+      PATH = "/run/current-system/sw/bin:/usr/bin:/bin";
+      USER = primaryUser;
+      HOME = userHome;
     };
+    workingDirectory = userHome;
+    logBaseName = "/var/log/yabai";
+  };
 
-    # --- Integration Layer: Hotkey Management -----------------------------
-    "org.nixos.skhd" = {
-      enable = true;
-      serviceConfig = mkLaunchdDaemon {
-        label = "SKHD Hotkey Daemon";
-        command = skhdDaemon;
-        nice = -5; # High priority but after yabai
-        processType = "Interactive"; # Needs keyboard access
-        runAtLoad = true;
-        keepAlive = true;
-        environmentVariables = {
-          PATH = "/run/current-system/sw/bin:/usr/bin:/bin";
-          USER = primaryUser;
-          HOME = userHome;
-        };
-        workingDirectory = userHome;
-        logBaseName = "/var/log/skhd";
-      };
+  # --- Integration Layer: Hotkey Management -----------------------------
+  launchd.daemons."org.nixos.skhd" = mkLaunchdDaemon pkgs {
+    command = "${skhdDaemon}/bin/skhd-system-daemon";
+    label = "SKHD Hotkey Daemon";
+    nice = -5; # High priority but after yabai
+    processType = "Interactive"; # Needs keyboard access
+    runAtLoad = true;
+    keepAlive = true;
+    environmentVariables = {
+      PATH = "/run/current-system/sw/bin:/usr/bin:/bin";
+      USER = primaryUser;
+      HOME = userHome;
     };
+    workingDirectory = userHome;
+    logBaseName = "/var/log/skhd";
+  };
 
-    # --- Support Layer: System Statistics Provider -----------------------
-    "org.nixos.sketchybar-system-stats" = {
-      enable = true;
-      serviceConfig = mkLaunchdDaemon {
-        label = "SketchyBar System Stats";
-        command = "${sketchybar-system-stats}/bin/sketchybar-system-stats";
-        arguments = [
-          "--cpu" "usage"
-          "--memory" "ram_usage"
-          "--disk" "usage"
-          "--interval" "2"
-        ];
-        nice = 5; # Lower priority
-        processType = "Background";
-        runAtLoad = true;
-        keepAlive = true;
-        logBaseName = "/var/log/sketchybar-system-stats";
-      };
-    };
+  # --- Support Layer: System Statistics Provider -----------------------
+  launchd.daemons."org.nixos.sketchybar-system-stats" = mkLaunchdDaemon pkgs {
+    command = "${sketchybar-system-stats}/bin/sketchybar-system-stats";
+    arguments = [
+      "--cpu" "usage"
+      "--memory" "ram_usage"
+      "--disk" "usage"
+      "--interval" "2"
+    ];
+    label = "SketchyBar System Stats";
+    nice = 5; # Lower priority
+    processType = "Background";
+    runAtLoad = true;
+    keepAlive = true;
+    logBaseName = "/var/log/sketchybar-system-stats";
   };
   
   # --- Logging Configuration ---------------------------------------------

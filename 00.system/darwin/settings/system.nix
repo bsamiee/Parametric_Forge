@@ -15,17 +15,17 @@ in
   system.defaults = {
     # --- Login Window -------------------------------------------------------
     loginwindow = {
-      SHOWFULLNAME = mkDefault true;
-      GuestEnabled = mkDefault false;
-      autoLoginUser = mkDefault null;
-      LoginwindowText = mkDefault null;
-      ShutDownDisabled = mkDefault false;
-      SleepDisabled = mkDefault false;
-      RestartDisabled = mkDefault false;
-      ShutDownDisabledWhileLoggedIn = mkDefault false;
-      PowerOffDisabledWhileLoggedIn = mkDefault false;
-      RestartDisabledWhileLoggedIn = mkDefault false;
-      DisableConsoleAccess = mkDefault true;
+      SHOWFULLNAME = true;
+      GuestEnabled = false;
+      autoLoginUser = null;
+      LoginwindowText = null;
+      ShutDownDisabled = false;
+      SleepDisabled = false;
+      RestartDisabled = false;
+      ShutDownDisabledWhileLoggedIn = false;
+      PowerOffDisabledWhileLoggedIn = false;
+      RestartDisabledWhileLoggedIn = false;
+      DisableConsoleAccess = true;
     };
     # --- Activity Monitor ---------------------------------------------------
     ActivityMonitor = {
@@ -75,6 +75,9 @@ in
     SoftwareUpdate = {
       AutomaticallyInstallMacOSUpdates = mkDefault false;
     };
+    # --- Spotlight Privacy Exclusions ----------------------------------------
+    # Note: SpotlightServer option may not exist in current nix-darwin version
+    # Spotlight exclusions handled via system activation script instead
     # --- Global System Behavior ---------------------------------------------
     NSGlobalDomain = {
       "com.apple.sound.beep.volume" = mkDefault null;
@@ -84,34 +87,90 @@ in
     CustomUserPreferences = {
       # --- Spotlight Search Configuration -----------------------------------
       "com.apple.spotlight" = {
-        orderedItems =
-          lib.map
-            (name: {
-              enabled = 0;
-              inherit name;
-            })
-            [
-              "APPLICATIONS"
-              "SYSTEM_PREFS"
-              "DIRECTORIES"
-              "DOCUMENTS"
-              "PDF"
-              "IMAGES"
-              "SOURCE"
-              "MUSIC"
-              "MOVIES"
-              "PRESENTATIONS"
-              "SPREADSHEETS"
-              "MESSAGES"
-              "CONTACT"
-              "EVENT_TODO"
-              "BOOKMARKS"
-              "MENU_SPOTLIGHT_SUGGESTIONS"
-              "MENU_CONVERSION"
-              "MENU_EXPRESSION"
-              "MENU_DEFINITION"
-              "MENU_WEBSEARCH"
-            ];
+        orderedItems = [
+          # --- Enabled: Essential functionality --------------------------------
+          {
+            name = "APPLICATIONS";
+            enabled = 1;
+          }
+          {
+            name = "SYSTEM_PREFS";
+            enabled = 1;
+          }
+          {
+            name = "DIRECTORIES";
+            enabled = 1;
+          }
+          {
+            name = "DOCUMENTS";
+            enabled = 1;
+          }
+          {
+            name = "PDF";
+            enabled = 1;
+          }
+          # --- Disabled: Performance impact & privacy -----------------------
+          {
+            name = "IMAGES";
+            enabled = 0;
+          }
+          {
+            name = "SOURCE";
+            enabled = 0;
+          }
+          {
+            name = "MUSIC";
+            enabled = 0;
+          }
+          {
+            name = "MOVIES";
+            enabled = 0;
+          }
+          {
+            name = "PRESENTATIONS";
+            enabled = 0;
+          }
+          {
+            name = "SPREADSHEETS";
+            enabled = 0;
+          }
+          {
+            name = "MESSAGES";
+            enabled = 0;
+          }
+          {
+            name = "CONTACT";
+            enabled = 0;
+          }
+          {
+            name = "EVENT_TODO";
+            enabled = 0;
+          }
+          {
+            name = "BOOKMARKS";
+            enabled = 0;
+          }
+          {
+            name = "MENU_SPOTLIGHT_SUGGESTIONS";
+            enabled = 0;
+          }
+          {
+            name = "MENU_CONVERSION";
+            enabled = 0;
+          }
+          {
+            name = "MENU_EXPRESSION";
+            enabled = 0;
+          }
+          {
+            name = "MENU_DEFINITION";
+            enabled = 0;
+          }
+          {
+            name = "MENU_WEBSEARCH";
+            enabled = 0;
+          }
+        ];
       };
       # --- Terminal Security Settings ---------------------------------------
       "com.apple.Terminal" = {
@@ -191,6 +250,70 @@ in
           {
             LSHandlerContentType = "public.php-script";
             LSHandlerRoleAll = mkDefault "com.microsoft.vscode";
+          }
+          # --- Modern Development Languages ----------------------------------
+          {
+            LSHandlerContentType = "public.rust-source";
+            LSHandlerRoleAll = mkDefault "com.microsoft.vscode";
+          }
+          {
+            LSHandlerContentType = "public.go-source";
+            LSHandlerRoleAll = mkDefault "com.microsoft.vscode";
+          }
+          {
+            LSHandlerContentType = "public.lua-source";
+            LSHandlerRoleAll = mkDefault "com.microsoft.vscode";
+          }
+          {
+            LSHandlerContentType = "org.nixos.nix";
+            LSHandlerRoleAll = mkDefault "com.microsoft.vscode";
+          }
+          # --- TypeScript & Modern Web --------------------------------------
+          {
+            LSHandlerContentType = "com.microsoft.typescript";
+            LSHandlerRoleAll = mkDefault "com.microsoft.vscode";
+          }
+          {
+            LSHandlerContentType = "public.typescript-source";
+            LSHandlerRoleAll = mkDefault "com.microsoft.vscode";
+          }
+          {
+            LSHandlerContentType = "public.jsx";
+            LSHandlerRoleAll = mkDefault "com.microsoft.vscode";
+          }
+          {
+            LSHandlerContentType = "public.tsx";
+            LSHandlerRoleAll = mkDefault "com.microsoft.vscode";
+          }
+          # --- Frontend Frameworks ------------------------------------------
+          {
+            LSHandlerContentType = "public.vue-source";
+            LSHandlerRoleAll = mkDefault "com.microsoft.vscode";
+          }
+          {
+            LSHandlerContentType = "public.svelte-source";
+            LSHandlerRoleAll = mkDefault "com.microsoft.vscode";
+          }
+          # --- Web Browsing & URLs ------------------------------------------
+          {
+            LSHandlerContentType = "public.html";
+            LSHandlerRoleAll = mkDefault "company.thebrowser.Browser";
+          }
+          {
+            LSHandlerContentType = "public.url";
+            LSHandlerRoleAll = mkDefault "company.thebrowser.Browser";
+          }
+          {
+            LSHandlerContentType = "public.xhtml";
+            LSHandlerRoleAll = mkDefault "company.thebrowser.Browser";
+          }
+          {
+            LSHandlerURLScheme = "http";
+            LSHandlerRoleAll = mkDefault "company.thebrowser.Browser";
+          }
+          {
+            LSHandlerURLScheme = "https";
+            LSHandlerRoleAll = mkDefault "company.thebrowser.Browser";
           }
         ];
       };

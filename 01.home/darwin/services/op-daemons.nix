@@ -18,77 +18,78 @@
 let
   # --- Service Helper Functions ---------------------------------------------
   inherit (userServiceHelpers) mkPeriodicJob;
-  # --- Common launchd PATH Environment --------------------------------------
-  launchdPath = "/usr/bin:/bin:/usr/sbin:/sbin:/opt/homebrew/bin:/usr/local/bin";
+  # --- Universal Service Environment ----------------------------------------
+  serviceEnv = myLib.mkServiceEnvironment { inherit config context; };
 
   # --- Combined Cache Manager Script ----------------------------------------
-  opCacheManager = pkgs.writeShellScript "op-cache-manager" ''
-    #!/usr/bin/env bash
-    set -euo pipefail
+  opCacheManager = pkgs.writeShellApplication {
+    name = "security-daemon";
+    text = ''
+      #!/usr/bin/env bash
+      set -euo pipefail
 
-    CACHE_FILE="${config.secrets.paths.cache}"
-    TEMPLATE_FILE="${config.secrets.paths.template}"
+      CACHE_FILE="${config.secrets.paths.cache}"
+      TEMPLATE_FILE="${config.secrets.paths.template}"
 
-    # Check if op CLI is available
-    if ! command -v op >/dev/null 2>&1; then
-      echo "[op-cache] 1Password CLI not found"
-      exit 0
-    fi
+      # Check if op CLI is available
+      if ! command -v op >/dev/null 2>&1; then
+        echo "[op-cache] 1Password CLI not found"
+        exit 0
+      fi
 
-    # Check authentication
-    if ! op account get >/dev/null 2>&1; then
-      echo "[op-cache] Not authenticated to 1Password"
-      exit 0
-    fi
+      # Check authentication
+      if ! op account get >/dev/null 2>&1; then
+        echo "[op-cache] Not authenticated to 1Password"
+        exit 0
+      fi
 
-    echo "[op-cache] Connected to 1Password"
+      echo "[op-cache] Connected to 1Password"
 
-    # Check if template exists
-    if [ ! -f "$TEMPLATE_FILE" ]; then
-      echo "[op-cache] No template file found"
-      exit 0
-    fi
+      # Check if template exists
+      if [ ! -f "$TEMPLATE_FILE" ]; then
+        echo "[op-cache] No template file found"
+        exit 0
+      fi
 
-    # Create cache directory
-    mkdir -p "$(dirname "$CACHE_FILE")"
+      # Create cache directory
+      mkdir -p "$(dirname "$CACHE_FILE")"
 
-    echo "[op-cache] Refreshing secret cache..."
+      echo "[op-cache] Refreshing secret cache..."
 
-    SUCCESS_COUNT=0
-    FAIL_COUNT=0
+      SUCCESS_COUNT=0
+      FAIL_COUNT=0
 
-    # Generate cache file with resolved secrets
-    {
-      echo "# 1Password secrets cache - Generated $(date)"
-      echo "# DO NOT COMMIT THIS FILE"
-      while IFS='=' read -r key value; do
-        # Skip comments and empty lines
-        [[ "$key" =~ ^#.*$ || -z "$key" ]] && continue
+      # Generate cache file with resolved secrets
+      {
+        echo "# 1Password secrets cache - Generated $(date)"
+        echo "# DO NOT COMMIT THIS FILE"
+        while IFS='=' read -r key value; do
+          # Skip comments and empty lines
+          [[ "$key" =~ ^#.*$ || -z "$key" ]] && continue
 
-        # Try to resolve the secret
-        if resolved=$(op read "$value" 2>/dev/null); then
-          echo "export $key='$resolved'"
-          SUCCESS_COUNT=$((SUCCESS_COUNT + 1))
-        else
-          echo "# Failed to resolve: $key"
-          FAIL_COUNT=$((FAIL_COUNT + 1))
-        fi
-      done < "$TEMPLATE_FILE"
-    } > "$CACHE_FILE.tmp"
+          # Try to resolve the secret
+          if resolved=$(op read "$value" 2>/dev/null); then
+            echo "export $key='$resolved'"
+            SUCCESS_COUNT=$((SUCCESS_COUNT + 1))
+          else
+            echo "# Failed to resolve: $key"
+            FAIL_COUNT=$((FAIL_COUNT + 1))
+          fi
+        done < "$TEMPLATE_FILE"
+      } > "$CACHE_FILE.tmp"
 
-    # Atomic move
-    mv "$CACHE_FILE.tmp" "$CACHE_FILE"
-    chmod 600 "$CACHE_FILE"
+      # Atomic move
+      mv "$CACHE_FILE.tmp" "$CACHE_FILE"
+      chmod 600 "$CACHE_FILE"
 
-    # Send notification
-    if [ $FAIL_COUNT -eq 0 ]; then
-      echo "[op-cache] Cache refreshed successfully"
-      alerter -title "1Password Cache Updated" -message "$SUCCESS_COUNT secrets cached successfully" -appIcon "/System/Applications/Utilities/Terminal.app/Contents/Resources/Terminal.icns" -sound Tink -timeout 3
-    else
-      echo "[op-cache] Cache refresh completed with errors"
-      alerter -title "1Password Cache Warning" -subtitle "$FAIL_COUNT secrets failed" -message "Successfully cached $SUCCESS_COUNT secrets" -appIcon "/System/Applications/Utilities/Terminal.app/Contents/Resources/Terminal.icns" -sound Hero
-    fi
-  '';
+      # Send notification
+      if [ $FAIL_COUNT -eq 0 ]; then
+        echo "[op-cache] Cache refreshed successfully: $SUCCESS_COUNT secrets cached"
+      else
+        echo "[op-cache] Cache refresh completed with errors: $SUCCESS_COUNT cached, $FAIL_COUNT failed"
+      fi
+    '';
+  };
 
   # --- Shell Integration Script (shared between bash and zsh) ---------------
   shellIntegration = ''
@@ -124,32 +125,32 @@ let
       op-status() {
         echo "1Password Integration Status:"
         if (${myLib.secrets.opAvailable}); then
-          echo "  ✓ CLI installed"
+          echo "  [OK] CLI installed"
         else
-          echo "  ✗ CLI not found"
+          echo "  [ERROR] CLI not found"
         fi
 
         if (${myLib.secrets.opAuthenticated}); then
-          echo "  ✓ Authenticated"
+          echo "  [OK] Authenticated"
         else
-          echo "  ✗ Not authenticated"
+          echo "  [ERROR] Not authenticated"
         fi
 
         if [ -S "${myLib.secrets.opSSHSocket context}" ]; then
-          echo "  ✓ SSH agent socket exists"
+          echo "  [OK] SSH agent socket exists"
         else
-          echo "  ✗ SSH agent socket not found"
+          echo "  [ERROR] SSH agent socket not found"
         fi
 
         if [ -f "${config.secrets.paths.cache}" ]; then
-          echo "  ✓ Cache file exists"
+          echo "  [OK] Cache file exists"
           if (${myLib.secrets.checkCacheFresh config.secrets.paths.cache 60}); then
-            echo "  ✓ Cache is fresh (<60 minutes)"
+            echo "  [OK] Cache is fresh (<60 minutes)"
           else
-            echo "  ⚠ Cache is stale (>60 minutes)"
+            echo "  [WARN] Cache is stale (>60 minutes)"
           fi
         else
-          echo "  ✗ No cache file"
+          echo "  [ERROR] No cache file"
         fi
       }
     fi
@@ -157,18 +158,16 @@ let
 in
 {
   # --- Unified Cache Manager Agent ------------------------------------------
-  launchd.agents.op-cache-manager = {
+  launchd.agents.onepassword-secrets = {
     enable = true;
     config = mkPeriodicJob {
-      command = "${opCacheManager}";
+      label = "Security Daemon";
+      command = "${opCacheManager}/bin/security-daemon";
       interval = 3600; # Every hour
       runAtLoad = true;
       nice = 10;
       logBaseName = "${config.xdg.stateHome}/op-cache";
-      environmentVariables = {
-        PATH = launchdPath;
-        HOME = config.home.homeDirectory;
-      };
+      environmentVariables = serviceEnv;
       # Additional config that mkPeriodicJob passes through
       WatchPaths = [
         config.secrets.paths.template

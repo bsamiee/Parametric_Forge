@@ -19,4 +19,5 @@ with pkgs;
 
   # --- Code Quality Tools ---------------------------------------------------
   stylua # Opinionated Lua code formatter (most modern)
+  luajitPackages.luacheck # Static analyzer and linter for Lua
 ]

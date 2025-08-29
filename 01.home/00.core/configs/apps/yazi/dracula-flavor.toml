@@ -14,23 +14,24 @@
 # Pink: #ff79c6, Purple: #bd93f9, Red: #ff5555, Yellow: #f1fa8c
 
 [manager]
-# Current working directory
-cwd = { fg = "#8be9fd" }
-# Hovered item with Dracula selection background
-hovered = { fg = "#f8f8f2", bg = "#44475a" }
-# Preview pane hover
-preview_hovered = { underline = true }
-# Search results
-find_keyword = { fg = "#f1fa8c", italic = true }
-find_position = { fg = "#ff79c6", bg = "reset", italic = true }
-# File markers
-marker_selected = { fg = "#8be9fd", bg = "#44475a" }
-marker_copied = { fg = "#f1fa8c", bg = "#f1fa8c" }
-marker_cut = { fg = "#ff5555", bg = "#ff5555" }
-marker_marked = { fg = "#50fa7b", bg = "#50fa7b" }
-# Border styling
+# Swiss Design Information Hierarchy
+cwd = { fg = "#8be9fd", bold = true }                     # Current directory: Cyan bold (primary)
+hovered = { fg = "#282a36", bg = "#bd93f9", bold = true } # Selection: Inverted purple (maximum contrast)
+preview_hovered = { fg = "#bd93f9", underline = true }    # Preview focus: Purple underline (subtle hierarchy)
+
+# Modernist Search System
+find_keyword = { fg = "#282a36", bg = "#f1fa8c", bold = true }  # Search term: High contrast yellow
+find_position = { fg = "#ff79c6", bg = "#44475a", bold = true } # Search position: Pink on dark
+
+# Bauhaus Marker System - Functional Color Coding
+marker_selected = { fg = "#282a36", bg = "#8be9fd", bold = true } # Selected: Cyan (navigation)
+marker_copied = { fg = "#282a36", bg = "#f1fa8c", bold = true }   # Copied: Yellow (temporary state)
+marker_cut = { fg = "#282a36", bg = "#ff5555", bold = true }      # Cut: Red (destructive action)
+marker_marked = { fg = "#282a36", bg = "#50fa7b", bold = true }   # Marked: Green (positive action)
+
+# Minimalist Grid Lines
 border_symbol = "│"
-border_style = { fg = "#6272a4" }
+border_style = { fg = "#44475a" } # Darker borders for subtlety
 
 [mode]
 normal_main = { fg = "#282a36", bg = "#50fa7b", bold = true }
@@ -41,8 +42,9 @@ unset_main = { fg = "#282a36", bg = "#ff5555", bold = true }
 unset_alt = { fg = "#f8f8f2", bg = "#44475a", bold = true }
 
 [tabs]
-active = { fg = "#282a36", bg = "#bd93f9", bold = true }
-inactive = { fg = "#f8f8f2", bg = "#282a36" }
+# Bauhaus Tab System - Clear Active/Inactive Distinction
+active = { fg = "#282a36", bg = "#bd93f9", bold = true }     # Active tab: Purple (primary action)
+inactive = { fg = "#6272a4", bg = "#282a36", italic = true } # Inactive tabs: Muted gray (recessive)
 
 [status]
 separator_open = ""

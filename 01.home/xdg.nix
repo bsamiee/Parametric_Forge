@@ -76,9 +76,7 @@
       mkdir -pm 755 "${config.xdg.configHome}/sketchybar/modules"
       mkdir -pm 755 "${config.xdg.configHome}/sketchybar/helpers"
       mkdir -pm 755 "${config.xdg.configHome}/sketchybar/providers"
-      # Shell tools (managed by home-manager or have configs)
       mkdir -pm 755 "${config.xdg.configHome}/broot"
-      mkdir -pm 755 "${config.xdg.configHome}/starship"
       mkdir -pm 755 "${config.xdg.configHome}/mcfly"
       mkdir -pm 755 "${config.xdg.configHome}/eza"
       mkdir -pm 755 "${config.xdg.configHome}/fd"

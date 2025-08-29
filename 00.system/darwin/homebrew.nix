@@ -25,8 +25,8 @@ in
     # --- Activation Behavior ------------------------------------------------
     onActivation = {
       autoUpdate = mkDefault false;
-      cleanup = mkDefault "uninstall"; # Remove unmanaged packages (less aggressive than zap)
-      upgrade = mkDefault false;
+      cleanup = mkDefault "none"; # Don't touch existing apps - prevents reinstalls
+      upgrade = mkDefault true; # Auto-upgrade existing apps to resolve version conflicts
       # extraFlags removed - parallel is not a valid homebrew option in nix-darwin
     };
     # --- Essential Taps -----------------------------------------------------
@@ -80,7 +80,7 @@ in
       "kiro" # Your Kiro app
       "replacicon" # App icon customization
       "rhino" # Rhino 8 CAD software
-      "typeface3" # Font management
+      "typeface" # Font management
       "via" # Keyboard configuration
       "visual-studio-code" # VS Code editor
 
@@ -88,8 +88,6 @@ in
       "blender" # 3D creation suite
       "calibre" # E-book management
       "handbrake-app" # HandBrake GUI video transcoder
-      "kindle" # Amazon Kindle e-reader
-      "lockdown-browser" # Respondus LockDown Browser
       "scrivener" # Writing software
       "spotify" # Spotify music streaming
       "steam" # Steam gaming platform
@@ -117,7 +115,6 @@ in
       "grammarly-desktop" # Grammarly writing assistant
       "parallels" # Parallels Desktop virtualization
       "rize" # Time tracking application
-      "toggl-track" # Time tracking for productivity
     ];
 
     # --- CLI Tools (Brews) --------------------------------------------------
@@ -130,29 +127,11 @@ in
       "sketchybar" # SketchyBar status bar replacement
     ];
     # --- Mac App Store Applications -----------------------------------------
+    # --- Mac App Store Applications -----------------------------------------
+    # Disabled: Using smart install/update activation script instead
+    # masApps causes unnecessary reinstalls of existing apps
     masApps = {
-      # Microsoft Suite
-      "Microsoft Excel" = 462058435;
-      "Microsoft PowerPoint" = 462062816;
-      "Microsoft Word" = 462054704;
-      "OneDrive" = 823766827;
-
-      # Productivity & Time Management
-      "Drafts" = 1435957248;
-      "Fantastical" = 975937182;
-      "Goodnotes" = 1444383602;
-      "Timery" = 1425368544;
-
-      # Utilities & System
-      "CARROT Weather" = 993487541;
-      "CleanMyMac" = 1339170533;
-      "Icon Tool for Developers" = 554660130;
-      "Keka" = 470158793;
-      "Parcel" = 639968404;
-      "Rapidmg" = 6451349778;
-
-      # Privacy & Security
-      "MEGAVPN" = 6456784858;
+      # Apps managed via smartMasInstall activation script in activation.nix
     };
     # --- Whalebrew (Docker-based tools) -------------------------------------
     # whalebrews = [ ];
@@ -160,7 +139,7 @@ in
     # --- Cask Configuration -------------------------------------------------
     caskArgs = mkDefault {
       appdir = "/Applications";
-      require_sha = true; # Security: verify checksums
+      require_sha = false; # Allow casks without SHA (some vendors don't provide)
       no_quarantine = true; # Performance: skip Gatekeeper (safe with SHA verification)
       no_binaries = false; # Allow cask binaries in PATH
       fontdir = "~/Library/Fonts"; # Font installation directory

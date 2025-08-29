@@ -16,62 +16,48 @@
 with pkgs;
 [
   # --- Modern CLI Replacements ----------------------------------------------
-  # File & Directory Operations
-  # eza → Managed by programs.eza in shell-tools.nix
-  # fd → Managed by programs.fd in shell-tools.nix
-  # broot → Managed by programs.broot in shell-tools.nix
-  trash-cli # rm → Safe deletion to trash instead of permanent delete
-  fcp # cp → Fast parallel file copy (simple cases)
-  rsync # mv/sync → Advanced file synchronization and transfer
+  # eza/fd/broot → Managed by programs in shell-tools.nix
+  trash-cli # rm → Safe deletion
+  fcp # cp → Fast parallel copy
+  rsync # sync → File synchronization
 
-  # Text Processing & Search
-  # bat → Managed by programs.bat in shell-tools.nix
-  # ripgrep → Managed by programs.ripgrep in shell-tools.nix
-  sd # sed → Intuitive find/replace without regex complexity
-  xan # awk/cut → CSV/TSV data processor (xsv successor)
-  choose # cut → Human-friendly column selector
-  grex # → Generate regex patterns from examples
+  # bat/ripgrep → Managed by programs in shell-tools.nix
+  sd # sed → Find/replace
+  xan # awk → CSV/TSV processor
+  choose # cut → Column selector
+  grex # → Regex generator
 
-  # File Analysis & Diff
-  delta # diff → Syntax-aware diff viewer with side-by-side view
-  tokei # cloc → Fast code statistics (lines, comments, languages)
-  file # file → File type detection by content (enhanced classic)
+  delta # diff → Syntax-aware viewer
+  tokei # cloc → Code statistics
+  file # → Enhanced file detection
 
   # System Monitoring
-  procs # ps → Process viewer with tree, search, and color
-  # bottom → Managed by programs.bottom in shell-tools.nix
-  duf # df → Disk usage with visual bars and colors
-  dust # du → Directory size analyzer with tree view
+  procs # ps → Process viewer
+  # bottom → Managed by programs in shell-tools.nix
+  duf # df → Disk usage
+  dust # du → Directory size analyzer
 
-  # Network Tools
-  xh # curl/wget → Modern HTTP client with intuitive syntax
-  # openssh → Managed by programs.ssh in ssh.nix
-  doggo # dig → Modern DNS client with colors and DoH/DoT support
-  gping # ping → Ping with real-time graphs
-  mtr # traceroute+ping → Combined network diagnostic tool
+  xh # curl → HTTP client
+  # openssh → Managed by programs in ssh.nix
+  doggo # dig → DNS client
+  gping # ping → Real-time graphs
+  mtr # traceroute+ping
 
   # --- Shell Enhancements ---------------------------------------------------
-  # zoxide → Managed by programs.zoxide in shell-tools.nix
-  # starship → Managed by programs.starship in shell-tools.nix
-  # direnv → Managed by programs.direnv in shell-tools.nix
-  # fzf → Managed by programs.fzf in shell-tools.nix
-  vivid # → LS_COLORS generator for better file visualization
-  # mcfly → Managed by programs.mcfly in shell-tools.nix
-  # zsh-autosuggestions → Managed by programs.zsh.autosuggestion in zsh.nix
-  # zsh-syntax-highlighting → Managed by programs.zsh.syntaxHighlighting in zsh.nix
-  # zsh-completions → Managed by programs.zsh.enableCompletion in zsh.nix
-  # zsh-history-substring-search → Managed by programs.zsh.historySubstringSearch in zsh.nix
+  # zoxide/starship/direnv/fzf/mcfly → Managed by programs in shell-tools.nix
+  # zsh plugins → Managed by programs in zsh.nix
+  vivid # → LS_COLORS generator
 
   # --- Archive & Compression ------------------------------------------------
-  ouch # tar/zip → Universal archive tool (compress/decompress)
-  unzip # Utilities for zip archives
-  zip # Create zip archives
-  zstd # Zstandard compression
-  xz # XZ compression utilities
-  lz4 # Extremely fast compression
-  brotli # Generic-purpose lossless compression
-  p7zip # 7-Zip for Unix - Required by yazi for archive preview/extraction
-  unar # Universal archive unpacker with lsar - Better archive preview
+  ouch # tar/zip → Universal archive tool
+  unzip
+  zip
+  zstd
+  xz
+  lz4
+  brotli
+  p7zip # Required by yazi
+  unar # Archive preview
 
   # --- GNU Core Utilities ---------------------------------------------------
   # Newer versions than macOS defaults for consistency

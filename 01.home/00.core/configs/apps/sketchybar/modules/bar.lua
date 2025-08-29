@@ -10,37 +10,37 @@ local colors = require("modules.colors")
 
 -- Configure bar appearance
 sbar.bar({
-	height = 32,
-	blur_radius = 30,
-	position = "top",
-	sticky = false,
-	padding_left = 10,
-	padding_right = 10,
-	color = colors.background,
-	corner_radius = 8,
-	y_offset = 8,
-	margin = 10,
+    height = 32,
+    blur_radius = 30,
+    position = "top",
+    sticky = false,
+    padding_left = 10,
+    padding_right = 10,
+    color = colors.background,
+    corner_radius = 8,
+    y_offset = 8,
+    margin = 10,
 })
 
 -- Set default item properties
 sbar.default({
-	icon = {
-		font = "SF Pro:Semibold:15.0",
-		color = colors.foreground,
-		padding_left = 10,
-		padding_right = 4,
-	},
-	label = {
-		font = "SF Pro:Semibold:15.0",
-		color = colors.foreground,
-		padding_left = 4,
-		padding_right = 10,
-	},
-	background = {
-		color = colors.comment,
-		corner_radius = 6,
-		height = 24,
-	},
-	padding_left = 5,
-	padding_right = 5,
+    icon = {
+        font = "SF Pro:Semibold:15.0",
+        color = colors.foreground,
+        padding_left = 10,
+        padding_right = 4,
+    },
+    label = {
+        font = "SF Pro:Semibold:15.0",
+        color = colors.foreground,
+        padding_left = 4,
+        padding_right = 10,
+    },
+    background = {
+        color = colors.comment,
+        corner_radius = 6,
+        height = 24,
+    },
+    padding_left = 5,
+    padding_right = 5,
 })

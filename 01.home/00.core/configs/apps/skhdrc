@@ -16,10 +16,9 @@
 "System Preferences"
 ]
 
-# --- LEVEL 1: Window Focus Navigation (CMD + hjkl) --------------------------
-# Using CMD instead of ALT to avoid terminal conflicts
-# Application-specific overrides: preserve IDE and terminal navigation
-cmd - h : [
+# --- TIER 1: Daily Operations (80% usage - Simple & Memorable) -------------
+# Window focus with intuitive arrow keys - no app conflicts
+opt - left : [
 "WezTerm" ~ # Let WezTerm handle its own pane navigation
 "Code" ~    # Preserve VS Code navigation
 "Visual Studio Code" ~
@@ -27,7 +26,7 @@ cmd - h : [
 "*" : yabai -m window --focus west
 ]
 
-cmd - j : [
+opt - down : [
 "WezTerm" ~
 "Code" ~
 "Visual Studio Code" ~
@@ -35,7 +34,7 @@ cmd - j : [
 "*" : yabai -m window --focus south
 ]
 
-cmd - k : [
+opt - up : [
 "WezTerm" ~
 "Code" ~
 "Visual Studio Code" ~
@@ -43,7 +42,7 @@ cmd - k : [
 "*" : yabai -m window --focus north
 ]
 
-cmd - l : [
+opt - right : [
 "WezTerm" ~
 "Code" ~
 "Visual Studio Code" ~
@@ -51,121 +50,64 @@ cmd - l : [
 "*" : yabai -m window --focus east
 ]
 
-# Display focus (unchanged - these are safe)
+# Display focus (unchanged)
 alt - s : yabai -m display --focus west
 alt - g : yabai -m display --focus east
 
-# --- LEVEL 2: Space Navigation (ALT + numbers) ------------------------------
-# Complete 1-9 coverage for space focus
-alt - 1 : yabai -m space --focus 1
-alt - 2 : yabai -m space --focus 2
-alt - 3 : yabai -m space --focus 3
-alt - 4 : yabai -m space --focus 4
-alt - 5 : yabai -m space --focus 5
-alt - 6 : yabai -m space --focus 6
-alt - 7 : yabai -m space --focus 7
-alt - 8 : yabai -m space --focus 8
-alt - 9 : yabai -m space --focus 9
+# Workspace navigation - stable numbers that never change
+shift + ctrl + alt - 1 : yabai -m space --focus 1
+shift + ctrl + alt - 2 : yabai -m space --focus 2
+shift + ctrl + alt - 3 : yabai -m space --focus 3
+shift + ctrl + alt - 4 : yabai -m space --focus 4
+shift + ctrl + alt - 5 : yabai -m space --focus 5
+shift + ctrl + alt - 6 : yabai -m space --focus 6
+shift + ctrl + alt - 7 : yabai -m space --focus 7
+shift + ctrl + alt - 8 : yabai -m space --focus 8
+shift + ctrl + alt - 9 : yabai -m space --focus 9
 
-# --- LEVEL 3: Window Manipulation (CMD + ALT) -------------------------------
-# Window swapping (replacing undefined "hyper")
-cmd + alt - h : yabai -m window --swap west
-cmd + alt - j : yabai -m window --swap south
-cmd + alt - k : yabai -m window --swap north
-cmd + alt - l : yabai -m window --swap east
+# --- TIER 2: Essential Manual Overrides (SHIFT + OPT) ---------------------
+# Core toggles when you need manual control over auto-balance
+shift + opt - return : yabai -m window --toggle zoom-fullscreen  # Toggle fullscreen
+shift + opt - space  : yabai -m window --toggle float --grid 4:4:1:1:2:2
+shift + opt - r      : yabai -m space --rotate 270  # Fix layout when messy
 
-# Window warping (move and split)
-ctrl + alt - h : yabai -m window --warp west
-ctrl + alt - j : yabai -m window --warp south
-ctrl + alt - k : yabai -m window --warp north
-ctrl + alt - l : yabai -m window --warp east
+# --- TIER 3: Power Operations (MEH = shift+alt+opt) -------------------------
+# Move window to workspace and follow (stable workspace numbers)
+shift + alt + opt - 1 : yabai -m window --space 1; yabai -m space --focus 1
+shift + alt + opt - 2 : yabai -m window --space 2; yabai -m space --focus 2  
+shift + alt + opt - 3 : yabai -m window --space 3; yabai -m space --focus 3
+shift + alt + opt - 4 : yabai -m window --space 4; yabai -m space --focus 4
+shift + alt + opt - 5 : yabai -m window --space 5; yabai -m space --focus 5
+shift + alt + opt - 6 : yabai -m window --space 6; yabai -m space --focus 6
+shift + alt + opt - 7 : yabai -m window --space 7; yabai -m space --focus 7
+shift + alt + opt - 8 : yabai -m window --space 8; yabai -m space --focus 8
+shift + alt + opt - 9 : yabai -m window --space 9; yabai -m space --focus 9
 
-# Move window to space and follow (complete 1-9)
-cmd + alt - 1 : yabai -m window --space 1
-yabai -m space --focus 1
-cmd + alt - 2 : yabai -m window --space 2
-yabai -m space --focus 2
-cmd + alt - 3 : yabai -m window --space 3
-yabai -m space --focus 3
-cmd + alt - 4 : yabai -m window --space 4
-yabai -m space --focus 4
-cmd + alt - 5 : yabai -m window --space 5
-yabai -m space --focus 5
-cmd + alt - 6 : yabai -m window --space 6
-yabai -m space --focus 6
-cmd + alt - 7 : yabai -m window --space 7
-yabai -m space --focus 7
-cmd + alt - 8 : yabai -m window --space 8
-yabai -m space --focus 8
-cmd + alt - 9 : yabai -m window --space 9
-yabai -m space --focus 9
+# Window swapping 
+shift + alt + opt - left  : yabai -m window --swap west
+shift + alt + opt - right : yabai -m window --swap east
+shift + alt + opt - down  : yabai -m window --swap south  
+shift + alt + opt - up    : yabai -m window --swap north
 
-# Move window to prev/next space
-cmd + alt - p : yabai -m window --space prev
-yabai -m space --focus prev
-cmd + alt - n : yabai -m window --space next
-yabai -m space --focus next
+# Display management
+shift + alt + opt - s : yabai -m window --display west; yabai -m display --focus west
+shift + alt + opt - g : yabai -m window --display east; yabai -m display --focus east
 
-# Move window to display
-cmd + alt - s : yabai -m window --display west
-yabai -m display --focus west
-cmd + alt - g : yabai -m window --display east
-yabai -m display --focus east
+# --- TIER 3: Expert Overrides (SUPER = shift+alt+opt+cmd) ------------------
+# When auto-balance isn't enough - rare usage
+shift + alt + opt + cmd - left  : yabai -m window --swap west
+shift + alt + opt + cmd - right : yabai -m window --swap east  
+shift + alt + opt + cmd - x     : yabai -m space --mirror x-axis
+shift + alt + opt + cmd - y     : yabai -m space --mirror y-axis
 
-# --- LEVEL 4: Window Resizing (CTRL + ALT + hjkl) ---------------------------
-# Smart resize with dual operations (works on both sides of BSP splits)
-lctrl + alt - h : yabai -m window --resize left:-50:0 || yabai -m window --resize right:-50:0
-lctrl + alt - j : yabai -m window --resize bottom:0:50 || yabai -m window --resize top:0:50
-lctrl + alt - k : yabai -m window --resize top:0:-50 || yabai -m window --resize bottom:0:-50
-lctrl + alt - l : yabai -m window --resize right:50:0 || yabai -m window --resize left:50:0
-
-# --- LEVEL 5: Layout Control (CMD + ALT + SHIFT) ----------------------------
-cmd + alt + shift - e : yabai -m space --balance
-cmd + alt + shift - r : yabai -m space --rotate 270
-cmd + alt + shift - x : yabai -m space --mirror x-axis
-cmd + alt + shift - y : yabai -m space --mirror y-axis
-cmd + alt + shift - t : yabai -m window --toggle float --grid 4:4:1:1:2:2
-cmd + alt + shift - m : yabai -m window --toggle zoom-fullscreen
-cmd + alt + shift - g : yabai -m space --toggle padding && yabai -m space --toggle gap
-
-# --- LEVEL 6: Window Insertion Points (SHIFT + CTRL + ALT + hjkl) -----------
-shift + lctrl + alt - h : yabai -m window --insert west
-shift + lctrl + alt - j : yabai -m window --insert south
-shift + lctrl + alt - k : yabai -m window --insert north
-shift + lctrl + alt - l : yabai -m window --insert east
-
-# --- LEVEL 7: Stack Navigation (SHIFT + CTRL + n/p) -------------------------
-# Navigate between stacked windows
-shift + ctrl - n : yabai -m window --focus stack.next || yabai -m window --focus next
-shift + ctrl - p : yabai -m window --focus stack.prev || yabai -m window --focus prev
-shift + ctrl - f : yabai -m window --focus stack.first
-shift + ctrl - l : yabai -m window --focus stack.last
-
-# Add window to stack in direction
-shift + ctrl + alt - h : yabai -m window west --stack $(yabai -m query --windows --window | jq -r '.id')
-shift + ctrl + alt - j : yabai -m window south --stack $(yabai -m query --windows --window | jq -r '.id')
-shift + ctrl + alt - k : yabai -m window north --stack $(yabai -m query --windows --window | jq -r '.id')
-shift + ctrl + alt - l : yabai -m window east --stack $(yabai -m query --windows --window | jq -r '.id')
-
-# --- LEVEL 8: Dynamic Space Management ---------------------------------------
-# Create new space and focus it
-shift + cmd - n : yabai -m space --create &&
-  index="$(yabai -m query --spaces --display | jq '.[-1].index')" &&
-  yabai -m space --focus "${index}"
-
-# Create new space, move window, and follow
-shift + cmd - m : yabai -m space --create &&
-  index="$(yabai -m query --spaces --display | jq '.[-1].index')" &&
-  yabai -m window --space "${index}" &&
-  yabai -m space --focus "${index}"
-
-# Destroy empty space
-shift + cmd - w : yabai -m space --destroy
-
-# Dynamic space navigation with fallback
+# --- Utility Operations (Simple Keys) ---------------------------------------
+# Quick navigation and space management
 alt - tab : yabai -m space --focus recent || yabai -m space --focus first
+shift + alt + opt + cmd - c : yabai -m space --create && index="$(yabai -m query --spaces --display | jq '.[-1].index')" && yabai -m space --focus "${index}"
+shift + alt + opt + cmd - d : yabai -m space --destroy
 
 # --- Service Management -----------------------------------------------------
-ctrl + alt - q : brew services stop yabai
-ctrl + alt - s : brew services start yabai
-ctrl + alt - r : brew services restart yabai
+# Nix-managed LaunchD services (not Homebrew)
+ctrl + alt - q : launchctl unload ~/Library/LaunchAgents/org.nixos.yabai.plist
+ctrl + alt - s : launchctl load ~/Library/LaunchAgents/org.nixos.yabai.plist
+ctrl + alt - r : launchctl kickstart -k gui/$(id -u)/org.nixos.yabai

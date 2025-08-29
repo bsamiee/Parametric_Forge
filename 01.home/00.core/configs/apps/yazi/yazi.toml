@@ -8,12 +8,13 @@
 
 # --- Manager Configuration ------------------------------------------------
 [mgr]
-# Layout ratio: [parent, current, preview] - optimize for current directory focus
+# Modernist Grid System: Golden Ratio Layout [parent, current, preview]
+# Based on Fibonacci sequence for natural visual flow
 ratio = [
-  1,
-  5,
-  2,
-] # More space for current dir, narrower preview for most workflows
+  1, # Parent: Minimal context (1 unit)
+  6, # Current: Primary workspace (Golden ratio dominance)
+  2, # Preview: Supporting detail (Secondary hierarchy)
+] # 1:6:2 creates sophisticated visual balance
 
 # File sorting - prioritize natural sorting for better UX
 sort_by = "natural"    # Natural sort: 1.md < 2.md < 10.md
@@ -212,6 +213,9 @@ prepend_fetchers = [
   # Git integration - fetch git status for files
   { id = "git", name = "*", run = "git" },
   { id = "git", name = "*/", run = "git" },
+  # Simple tag integration - show file tags
+  { id = "simple-tag", name = "*", run = "simple-tag" },
+  { id = "simple-tag", name = "*/", run = "simple-tag" },
 ]
 
 # Previewers for enhanced file previews

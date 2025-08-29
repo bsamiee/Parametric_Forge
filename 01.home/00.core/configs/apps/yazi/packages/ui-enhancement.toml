@@ -1,0 +1,54 @@
+# Title         : ui-enhancement.toml
+# Author        : Bardia Samiee
+# Project       : Parametric Forge
+# License       : MIT
+# Path          : /01.home/00.core/configs/apps/yazi/packages/ui-enhancement.toml
+# ----------------------------------------------------------------------------
+# User interface improvements: borders, layouts, themes, and status enhancements
+
+# --- UI Layout & Display -------------------------------------------------
+# Full border - Enhanced UI borders for better visual separation
+[[plugin.deps]]
+use = "yazi-rs/plugins:full-border"
+
+# Max preview - Auto-maximize preview for focused reading
+[[plugin.deps]]
+use = "yazi-rs/plugins:max-preview"
+
+# Hide preview - Toggle preview for more file list space
+[[plugin.deps]]
+use = "yazi-rs/plugins:hide-preview"
+
+# Toggle wrap - Soft wrap toggle for text files
+[[plugin.deps]]
+use = "yazi-rs/plugins:toggle-wrap"
+
+# Dual pane - Traditional dual-pane file manager navigation
+[[plugin.deps]]
+use = "dawsers/dual-pane.yazi"
+
+# --- Status Bar Enhancements ---------------------------------------------
+# Starship prompt - Integration with existing starship.toml config
+[[plugin.deps]]
+use = "Rolv-Apneseth/starship.yazi"
+
+# Yatline - Advanced customizable status and header lines
+[[plugin.deps]]
+use = "imsi32/yatline.yazi"
+
+# Filesystem usage - Show disk usage in status bar
+[[plugin.deps]]
+use = "walldmtd/fs-usage.yazi"
+
+# Location preferences - Auto-apply settings per directory
+[[plugin.deps]]
+use = "boydaihungst/pref-by-location.yazi"
+
+# --- Tab Management -------------------------------------------------------
+# Projects - Save/restore tab sessions as projects
+[[plugin.deps]]
+use = "MasouShizuka/projects.yazi"
+
+# Close and restore tabs - Recover accidentally closed tabs
+[[plugin.deps]]
+use = "MasouShizuka/close-and-restore-tab.yazi"

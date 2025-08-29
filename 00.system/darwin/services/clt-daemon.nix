@@ -19,13 +19,13 @@ let
 
     # Core status
     if CLT_PATH=$(xcode-select -p 2>/dev/null) && [[ -d "$CLT_PATH" ]]; then
-      log "✓ CLT installed: $CLT_PATH"
+      log "[OK] CLT installed: $CLT_PATH"
 
       # Version check
       if CLT_VER=$(pkgutil --pkg-info=com.apple.pkg.CLTools_Executables 2>/dev/null | awk '/version/ {print $2}'); then
-        log "✓ Version: $CLT_VER"
+        log "[OK] Version: $CLT_VER"
       else
-        log "⚠ Package corrupted"
+        log "[WARN] Package corrupted"
       fi
 
       # Tool availability
@@ -33,38 +33,39 @@ let
       for tool in clang git make ld; do
         check "$tool" || MISSING="$MISSING $tool"
       done
-      [[ -z "$MISSING" ]] && log "✓ Core tools available" || log "⚠ Missing:$MISSING"
+      [[ -z "$MISSING" ]] && log "[OK] Core tools available" || log "[WARN] Missing:$MISSING"
 
       # Compilation test
       if echo 'int main(){return 0;}' | clang -x c - -o /tmp/clt_test 2>/dev/null && /tmp/clt_test; then
-        log "✓ Compilation working"
+        log "[OK] Compilation working"
         rm -f /tmp/clt_test
       else
-        log "⚠ Compilation failed"
+        log "[WARN] Compilation failed"
       fi
     else
-      log "❌ CLT not installed"
+      log "[ERROR] CLT not installed"
     fi
 
     # Update check
     if UPDATES=$(softwareupdate -l 2>/dev/null | grep -i "command line tools\|developer"); then
-      log "⚠ Updates available"
+      log "[WARN] Updates available"
       echo "$UPDATES"
     else
-      log "✓ No CLT updates"
+      log "[OK] No CLT updates"
     fi
 
     # Homebrew compatibility
     if check brew && CLT_STATUS=$(brew config 2>/dev/null | grep "CLT:"); then
-      log "✓ Homebrew: $CLT_STATUS"
+      log "[OK] Homebrew: $CLT_STATUS"
     elif check brew; then
-      log "⚠ Homebrew CLT status unknown"
+      log "[WARN] Homebrew CLT status unknown"
     fi
   '';
 in
 {
-  launchd.daemons.command-line-tools-monitor = myLib.launchd.mkLaunchdDaemon pkgs {
+  launchd.daemons.xcode-clt-monitor = myLib.launchd.mkLaunchdDaemon pkgs {
     command = "${cltScript}";
+    label = "X-Tools Daemon";
     startCalendarInterval = [
       {
         Hour = 6;

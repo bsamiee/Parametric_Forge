@@ -66,17 +66,17 @@ myLib.build.auto pkgs (
 
       # Smart project detection and setup
       if [ -f "Cargo.toml" ]; then
-        echo "🦀 Rust project detected: Cargo.toml found"
+        echo "Rust project detected: Cargo.toml found"
 
         # Check for workspace vs single crate
         if grep -q "^\[workspace\]" Cargo.toml; then
-          echo "📦 Workspace detected with multiple crates"
+          echo "Workspace detected with multiple crates"
           WORKSPACE_MEMBERS=$(grep -A 10 "^\[workspace\]" Cargo.toml | grep "members" | head -1)
           if [ -n "$WORKSPACE_MEMBERS" ]; then
             echo "   Members: $WORKSPACE_MEMBERS"
           fi
         else
-          echo "📦 Single crate project"
+          echo "Single crate project"
           CRATE_NAME=$(grep "^name" Cargo.toml | head -1 | cut -d'"' -f2)
           if [ -n "$CRATE_NAME" ]; then
             echo "   Crate: $CRATE_NAME"
@@ -106,7 +106,7 @@ myLib.build.auto pkgs (
         # Workflow recommendations (non-intrusive)
         if [ -n "$NEEDS_WASM" ] || [ -n "$NEEDS_ASYNC" ] || [ -n "$NEEDS_CLI" ]; then
           echo ""
-          echo "🔧 Project patterns detected:"
+          echo "Project patterns detected:"
           [ -n "$NEEDS_WASM" ] && echo "   • WebAssembly (wasm-pack available)"
           [ -n "$NEEDS_ASYNC" ] && echo "   • Async runtime (tokio/async-std)"
           [ -n "$NEEDS_CLI" ] && echo "   • CLI application (clap/structopt)"
@@ -115,13 +115,13 @@ myLib.build.auto pkgs (
         # Check for rust-toolchain.toml
         if [ -f "rust-toolchain.toml" ] || [ -f "rust-toolchain" ]; then
           echo ""
-          echo "🔧 Project-specific toolchain detected"
-          echo "   💡 Using project toolchain over devshell default"
+          echo "Project-specific toolchain detected"
+          echo "   Using project toolchain over devshell default"
         fi
 
         # Development workflow hints
         echo ""
-        echo "🚀 Common commands:"
+        echo "Common commands:"
         echo "   cargo check       - Quick compilation check"
         echo "   cargo clippy      - Lint code"
         echo "   cargo fmt         - Format code"
@@ -134,13 +134,13 @@ myLib.build.auto pkgs (
         fi
 
       elif [ -f "Cargo.lock" ]; then
-        echo "🦀 Rust project detected (Cargo.lock found, missing Cargo.toml)"
-        echo "💡 This might be a git submodule or incomplete project"
+        echo "Rust project detected (Cargo.lock found, missing Cargo.toml)"
+        echo "This might be a git submodule or incomplete project"
 
       else
-        echo "📁 General Rust development environment"
-        echo "💡 Create a new project with: cargo new project-name"
-        echo "💡 Or generate from template: cargo generate <template>"
+        echo "General Rust development environment"
+        echo "Create a new project with: cargo new project-name"
+        echo "Or generate from template: cargo generate <template>"
       fi
 
       echo ""

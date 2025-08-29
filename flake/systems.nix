@@ -87,6 +87,11 @@ in
         system = "x86_64-darwin";
         user = "bardiasamiee";
       };
+      # TODO: Remove hostname-specific config once host-file-less deployment working
+      MacBook-Pro-355 = mkSystem {
+        system = "aarch64-darwin";
+        user = "bardiasamiee";
+      };
     };
     # --- NixOS Configurations -----------------------------------------------
     # TODO: Fix Darwin-specific package conflicts in NixOS configurations

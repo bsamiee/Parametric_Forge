@@ -2,8 +2,8 @@
 # Path: ~/.local/share/pandoc/defaults/
 # Common document conversion settings
 metadata:
-  author: "Bardia Samiee"
-  lang: "en-US"
+    author: "Bardia Samiee"
+    lang: "en-US"
 # Input/Output
 from: markdown
 to: html5
@@ -22,9 +22,9 @@ include-before-body: []
 include-after-body: []
 # Variables
 variables:
-  geometry: margin=1in
-  fontsize: 11pt
-  linestretch: 1.2
-  mainfont: "Times New Roman"
-  sansfont: "Arial"
-  monofont: "Courier New"
+    geometry: margin=1in
+    fontsize: 11pt
+    linestretch: 1.2
+    mainfont: "Times New Roman"
+    sansfont: "Arial"
+    monofont: "Courier New"

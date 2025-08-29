@@ -10,23 +10,57 @@
 
 let
   inherit (lib) mkIf mkMerge removeAttrs;
-  # --- Common Defaults ------------------------------------------------------
   defaultNice = 15;
 
-  # --- Key Case Validation --------------------------------------------------
+  mkNamedExecutable =
+    pkgs: name: script:
+    pkgs.writeShellApplication {
+      inherit name;
+      text = script;
+    };
+
   # Home-manager expects PascalCase for launchd config attributes
-  # This function ensures any additional args maintain proper casing
   validateLaunchdKeys = attrs: attrs;
 in
 rec {
+  # --- Named Executable Wrapper (exported) ------------------------------------
+  inherit mkNamedExecutable;
   # --- Common Paths ---------------------------------------------------------
   getRuntimeDir = pkgs: if pkgs.stdenv.isDarwin then "\${HOME}/Library/Caches/TemporaryItems" else "/run/user/\$(id -u)";
+
+  # --- Universal Service Environment ----------------------------------------
+  mkServiceEnvironment =
+    { config, context }:
+    let
+      homebrewPath = if context.isAarch64 then "/opt/homebrew/bin" else "/usr/local/bin";
+      universalServicePath = "${homebrewPath}:${config.home.homeDirectory}/.nix-profile/bin:/run/current-system/sw/bin:${config.home.homeDirectory}/.local/bin:/usr/bin:/bin";
+    in
+    {
+      PATH = universalServicePath;
+      HOME = config.home.homeDirectory;
+      XDG_CONFIG_HOME = config.xdg.configHome;
+      XDG_STATE_HOME = config.xdg.stateHome;
+      XDG_CACHE_HOME = config.xdg.cacheHome;
+    };
+
+  # --- Simplified Environment (basic services) ------------------------------
+  mkBasicEnvironment =
+    { config, context }:
+    let
+      homebrewPath = if context.isAarch64 then "/opt/homebrew/bin" else "/usr/local/bin";
+      basicPath = "${homebrewPath}:/run/current-system/sw/bin:/usr/bin:/bin";
+    in
+    {
+      PATH = basicPath;
+      HOME = config.home.homeDirectory;
+    };
   # --- Core Service Builder -------------------------------------------------
   mkLaunchdAgent =
     pkgs:
     {
       command ? null,
       script ? null,
+      label ? null,
       runAtLoad ? false,
       keepAlive ? false,
       startInterval ? null,
@@ -55,6 +89,7 @@ rec {
       knownArgs = [
         "command"
         "script"
+        "label"
         "runAtLoad"
         "keepAlive"
         "startInterval"
@@ -95,6 +130,9 @@ rec {
         RunAtLoad = runAtLoad;
         KeepAlive = keepAlive;
       }
+      (mkIf (label != null) {
+        Label = label;
+      })
       (mkIf (startInterval != null) {
         StartInterval = startInterval;
       })

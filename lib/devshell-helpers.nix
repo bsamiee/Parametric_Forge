@@ -14,9 +14,9 @@ rec {
   loadSecretsIfFresh = ''
     if [ -f "$OP_ENV_CACHE" ] && [ -z "$(find "$OP_ENV_CACHE" -mmin +5 2>/dev/null)" ]; then
       source "$OP_ENV_CACHE"
-      echo "  ✓ Loaded 1Password secrets from cache"
+      echo "  [OK] Loaded 1Password secrets from cache"
     elif [ -f "$OP_ENV_TEMPLATE" ] && command -v op >/dev/null 2>&1; then
-      echo "  💡 Load secrets with: op-cache-refresh (then re-enter shell)"
+      echo "  [INFO] Load secrets with: op-cache-refresh (then re-enter shell)"
     fi
   '';
 
@@ -27,7 +27,7 @@ rec {
     lib.concatStringsSep "\n" (
       map (tool: ''
         if ! command -v ${tool.cmd} &> /dev/null; then
-          echo "  ⚠️  ${tool.name} not found - install with: ${tool.install}"
+          echo "  [WARN] ${tool.name} not found - install with: ${tool.install}"
         fi
       '') tools
     );
@@ -36,11 +36,11 @@ rec {
   # Python venv activation helper
   activatePythonVenv = ''
     if [ -d ".venv" ]; then
-      echo "🐍 Activating virtual environment..."
+      echo "Activating virtual environment..."
       source .venv/bin/activate
       echo "   Virtual environment: $(python --version) in .venv/"
     elif [ -f "pyproject.toml" ]; then
-      echo "💡 Create virtual environment with: poetry install"
+      echo "[INFO] Create virtual environment with: poetry install"
     fi
   '';
 
@@ -74,11 +74,11 @@ rec {
 
     if [ -n "$NEEDS_POSTGRES" ] || [ -n "$NEEDS_REDIS" ] || [ -n "$NEEDS_DOCKER" ]; then
       echo ""
-      echo "🔧 Services detected in dependencies:"
+      echo "Services detected in dependencies:"
       [ -n "$NEEDS_POSTGRES" ] && echo "   • PostgreSQL (database dependencies found)"
       [ -n "$NEEDS_REDIS" ] && echo "   • Redis (cache/queue dependencies found)"
       [ -n "$NEEDS_DOCKER" ] && echo "   • Docker services (compose file found)"
-      echo "   💡 Configure services in docker-compose.yml or use global services"
+      echo "   [INFO] Configure services in docker-compose.yml or use global services"
     fi
   '';
 }

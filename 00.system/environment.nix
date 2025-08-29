@@ -18,7 +18,7 @@ let
     HOMEBREW_NO_ANALYTICS = "1"; # Privacy: disable telemetry and analytics
     HOMEBREW_NO_INSTALL_CLEANUP = "0"; # Allow cleanup after individual installs
     HOMEBREW_NO_EMOJI = "1"; # Cleaner CLI output
-    HOMEBREW_VERBOSE = "1"; # Enable verbose output globally
+    # HOMEBREW_VERBOSE = "1"; # Disabled for performance - enable manually if debugging needed
     HOMEBREW_NO_ENV_HINTS = "1"; # Suppress environment setup hints
     HOMEBREW_CLEANUP_MAX_AGE_DAYS = "3"; # Aggressive cache cleanup
   };

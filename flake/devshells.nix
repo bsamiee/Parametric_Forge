@@ -50,37 +50,37 @@
             echo "  Parametric Forge Development Environment"
             echo "═══════════════════════════════════════════════════════"
             echo ""
-            echo "📦 System: ${system}"
-            echo "👤 User: $USER"
+            echo "System: ${system}"
+            echo "User: $USER"
             echo ""
 
             echo "Checking Nix configuration..."
             if nix show-config | grep -q "experimental-features.*flakes"; then
-              echo "  ✓ Flakes enabled"
+              echo "  [OK] Flakes enabled"
             else
-              echo "  ⚠ Flakes not enabled in system config"
+              echo "  [WARN] Flakes not enabled in system config"
             fi
 
             if nix show-config | grep -q "experimental-features.*nix-command"; then
-              echo "  ✓ Nix command enabled"
+              echo "  [OK] Nix command enabled"
             else
-              echo "  ⚠ Nix command not enabled in system config"
+              echo "  [WARN] Nix command not enabled in system config"
             fi
 
             echo ""
-            echo "🔍 Analysis Tools (occasional use):"
+            echo "Analysis Tools (occasional use):"
             echo "  nix-tree          - Interactive dependency browser"
             echo "  nix-du            - Store space analyzer"
             echo "  nix-diff          - Compare derivations"
             echo "  nvd               - Compare generations"
             echo "  nix-visualize     - Generate dependency graphs"
             echo ""
-            echo "📦 Package Tools:"
+            echo "Package Tools:"
             echo "  nixpkgs-review    - Review nixpkgs changes"
             echo "  flake-checker     - Check flake health"
             echo "  nix-eval-jobs     - Parallel evaluation"
             echo ""
-            echo "🚀 Commands:"
+            echo "Commands:"
             ${
               if myLib.isDarwin system then
                 ''
@@ -99,7 +99,7 @@
             echo "  nix run .#bootstrap                # Run bootstrap script"
             echo "  nix run .#check-system             # Check system details"
             echo ""
-            echo "💡 Available development shells:"
+            echo "Available development shells:"
             echo "  nix develop .#python               # Python development"
             echo "  nix develop .#rust                 # Rust development"
             echo "  nix develop .#lua                  # Lua development"

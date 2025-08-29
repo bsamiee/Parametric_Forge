@@ -227,9 +227,9 @@ def main() -> int:
 
     if success_count > 0 or any(r["message"] != f"No formatter for {Path(r['file']).suffix} files" for r in results):
         context = (
-            f"✨ Formatted {success_count}/{len(file_paths)} files"
+            f"[OK] Formatted {success_count}/{len(file_paths)} files"
             if success_count > 0
-            else f"⚠️ Formatting issues: {next(r['message'] for r in results if not r['success'])}"
+            else f"[WARN] Formatting issues: {next(r['message'] for r in results if not r['success'])}"
         )
 
         response = {
