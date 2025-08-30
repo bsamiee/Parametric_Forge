@@ -238,6 +238,23 @@
       '';
       deps = [ "sequoiaFixes" ];
     };
+    # --- Default Browser Setup ---------------------------------------------
+    defaultBrowserSetup = {
+      text = ''
+        echo "[Parametric Forge] Setting Arc as default browser..."
+
+        if command -v defaultbrowser >/dev/null 2>&1; then
+          if defaultbrowser arc 2>/dev/null; then
+            echo "  [OK] Arc set as default browser"
+          else
+            echo "  [WARN] Failed to set Arc as default"
+          fi
+        else
+          echo "  [WARN] defaultbrowser tool not available yet (installing via Homebrew)"
+        fi
+      '';
+      deps = [ "smartMasInstall" ];
+    };
   };
   # --- Shell Initialization -------------------------------------------------
   environment.shellInit = ''

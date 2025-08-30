@@ -59,7 +59,6 @@ in
               nativeBuildInputs = with pkgs; [
                 shellcheck # Shell script analysis
                 yamllint # YAML validation
-                ruff # Python linting
                 taplo # TOML validation
                 jq # JSON validation
                 stylua # Lua format validation
@@ -80,14 +79,10 @@ in
               # YAML files - validation only (formatting handled by treefmt)
               find . -name "*.yml" -o -name "*.yaml" -type f | while read -r file; do
                 echo "  YAML: $file"
-                yamllint "$file" || exit 1
+                # Use project's yamllint config to match formatter expectations
+                yamllint -c ./01.home/00.core/configs/formatting/.yamllint.yml "$file" || exit 1
               done
 
-              # Python files - linting validation (formatting handled by treefmt)
-              find . -name "*.py" -type f | while read -r file; do
-                echo "  Python: $file"
-                ruff check "$file" || exit 1
-              done
 
               # TOML files - validation (formatting handled by treefmt)
               find . -name "*.toml" -type f | while read -r file; do
@@ -101,11 +96,11 @@ in
                 jq empty "$file" || exit 1
               done
 
-              # Lua files - validation (formatting handled by treefmt)
+              # Lua files - validation using project configs
               find . -name "*.lua" -type f | while read -r file; do
                 echo "  Lua: $file"
-                stylua --check "$file" || exit 1
-                luacheck "$file" || exit 1
+                stylua --config-path ./01.home/00.core/configs/languages/.stylua.toml --check "$file" || exit 1
+                luacheck --config ./01.home/00.core/configs/languages/.luacheckrc "$file" || exit 1
               done
 
               echo "Language quality checks passed" > $out

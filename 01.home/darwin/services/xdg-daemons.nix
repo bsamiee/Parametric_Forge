@@ -208,15 +208,9 @@ in
 
             echo "XDG cache cleanup completed at $(date)"
 
-            # Send notification for significant operations
+            # Log significant operations
             if [ $FONT_REFRESH -eq 1 ]; then
-              ${
-                myLib.alerter.success {
-                  title = "Cache Maintenance";
-                  message = "Font cache refreshed successfully";
-                  timeout = 3;
-                }
-              } 2>/dev/null || true
+              echo "Font cache refresh completed successfully"
             fi
           '';
         }

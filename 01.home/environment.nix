@@ -232,11 +232,6 @@
     # Note: SSH_AUTH_SOCK is dynamically set in zsh.nix based on socket availability
 
     # --- Claude Code Configuration -------------------------------------------
-
-    # --- Network Performance Testing ----------------------------------------
-    # IPERF3_PASSWORD = "your-password-here"; # Optional: Set password for iperf3 auth
-
-    CLAUDE_CONFIG_DIR = "${config.home.homeDirectory}/.claude";
     CLAUDE_CACHE_DIR = "${config.xdg.cacheHome}/claude";
 
     # --- Network Tools ------------------------------------------------------

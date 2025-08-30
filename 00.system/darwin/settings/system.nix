@@ -73,7 +73,7 @@ in
     };
     # --- Software Updates ---------------------------------------------------
     SoftwareUpdate = {
-      AutomaticallyInstallMacOSUpdates = mkDefault false;
+      AutomaticallyInstallMacOSUpdates = mkDefault true; # Auto-install system updates
     };
     # --- Spotlight Privacy Exclusions ----------------------------------------
     # Note: SpotlightServer option may not exist in current nix-darwin version
@@ -294,27 +294,9 @@ in
             LSHandlerContentType = "public.svelte-source";
             LSHandlerRoleAll = mkDefault "com.microsoft.vscode";
           }
-          # --- Web Browsing & URLs ------------------------------------------
-          {
-            LSHandlerContentType = "public.html";
-            LSHandlerRoleAll = mkDefault "company.thebrowser.Browser";
-          }
-          {
-            LSHandlerContentType = "public.url";
-            LSHandlerRoleAll = mkDefault "company.thebrowser.Browser";
-          }
-          {
-            LSHandlerContentType = "public.xhtml";
-            LSHandlerRoleAll = mkDefault "company.thebrowser.Browser";
-          }
-          {
-            LSHandlerURLScheme = "http";
-            LSHandlerRoleAll = mkDefault "company.thebrowser.Browser";
-          }
-          {
-            LSHandlerURLScheme = "https";
-            LSHandlerRoleAll = mkDefault "company.thebrowser.Browser";
-          }
+          # --- Web Browsing & URLs (Handled by defaultbrowser CLI tool) ---------
+          # Note: Default browser management moved to activation script using defaultbrowser tool
+          # This provides more reliable browser setting than manual LSHandlers configuration
         ];
       };
     };

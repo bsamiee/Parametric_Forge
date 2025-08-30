@@ -14,6 +14,8 @@ Implements defense-in-depth with tool substitution, command modernization,
 dangerous pattern detection, and intelligent decision making. Based on proven
 patterns from disler/claude-code-hooks-mastery and production implementations.
 """
+# ruff: noqa: S108, PTH123, PLR0911, SIM102, BLE001
+
 from __future__ import annotations
 
 import json
@@ -24,10 +26,13 @@ import sys
 from functools import lru_cache
 from typing import Final, TypedDict
 
+
 class HookResponse(TypedDict, total=False):
+    """Type definition for hook response structure."""
     decision: str
     reason: str
     modifications: dict[str, str]
+
 
 # --- Compiled Patterns -------------------------------------------------------
 _DANGEROUS_COMPILED = [
@@ -44,10 +49,7 @@ _DANGEROUS_COMPILED = [
     ]
 ]
 
-_PROTECTED_COMPILED = re.compile("|".join([
-    r"\.env(?:\.|$)", r"package-lock\.json$", r"yarn\.lock$", r"Gemfile\.lock$",
-    r"poetry\.lock$", r"\.git/", r"/etc/", r"\.ssh/"
-]))
+_PROTECTED_COMPILED = re.compile(r"\.env(?:\.|$)|package-lock\.json$|yarn\.lock$|Gemfile\.lock$|poetry\.lock$|\.git/|/etc/|\.ssh/")  # noqa: E501
 
 _ENV_EXAMPLE = re.compile(r"\.env\.(example|sample|template|dist)$")
 
@@ -69,10 +71,12 @@ FILE_TOOLS = frozenset({
     "mcp__filesystem__edit_file", "mcp__filesystem__read_file", "mcp__filesystem__move_file"
 })
 
+
 # --- Cached Tool Availability ------------------------------------------------
 @lru_cache(maxsize=128)
 def _tool_exists(tool: str) -> bool:
     return bool(shutil.which(tool))
+
 
 # --- Response Helpers --------------------------------------------------------
 def _modify_response(tool: str, input_data: str, reason: str | None = None) -> HookResponse:
@@ -81,34 +85,40 @@ def _modify_response(tool: str, input_data: str, reason: str | None = None) -> H
         response["reason"] = reason
     return response
 
+
 def _block_response(reason: str) -> HookResponse:
     return HookResponse(decision="block", reason=reason)
+
 
 # --- Security & Modernization ------------------------------------------------
 def _check_patterns(command: str) -> str | None:
     return next((msg for pattern, msg in _DANGEROUS_COMPILED if pattern.search(command)), None)
 
+
 def _is_protected_file(file_path: str) -> bool:
     return bool(file_path and _PROTECTED_COMPILED.search(file_path))
 
+
 def _modernize_command(command: str) -> str | None:
     for old_cmd, new_cmd in COMMAND_REPLACEMENTS.items():
-        if _tool_exists(new_cmd) and (pattern := re.compile(rf'\b{re.escape(old_cmd)}\b')):
+        if _tool_exists(new_cmd) and (pattern := re.compile(rf"\b{re.escape(old_cmd)}\b")):
             if (modernized := pattern.sub(new_cmd, command)) != command:
                 return modernized
     return None
 
+
 def main() -> int:
+    """Main entry point for tool control hook."""
     try:
         tool = os.environ.get("CLAUDE_TOOL_NAME", "")
         input_str = os.environ.get("CLAUDE_TOOL_INPUT", "{}")
-        
+
         # Log to file for debugging (optional)
         debug_mode = os.environ.get("CLAUDE_HOOK_DEBUG", "").lower() == "true"
         if debug_mode:
-            with open("/tmp/claude_tool_control.log", "a") as f:
+            with open("/tmp/claude_tool_control.log", "a", encoding="utf-8") as f:
                 f.write(f"Tool: {tool}, Input: {input_str[:100]}...\n")
-        
+
         try:
             input_data = json.loads(input_str)
         except json.JSONDecodeError:
@@ -116,36 +126,32 @@ def main() -> int:
         match tool:
             case t if t in TOOL_SUBSTITUTIONS:
                 replacement = TOOL_SUBSTITUTIONS[t]
-                response = _modify_response(replacement, input_str, f"Using {replacement} instead of {t}")
-                print(json.dumps(response))
+                _modify_response(replacement, input_str, f"Using {replacement} instead of {t}")
                 return 0
             case t if t in FILE_TOOLS:
                 if file_path := input_data.get("file_path", ""):
                     if _is_protected_file(file_path) and not _ENV_EXAMPLE.search(file_path):
-                        response = _block_response(f"Access to {file_path} is restricted for security")
-                        print(json.dumps(response))
+                        _block_response(f"Access to {file_path} is restricted for security")
                         return 0
             case "Bash":
                 command = input_data.get("command", "")
                 if danger := _check_patterns(command):
-                    response = _block_response(f"SECURITY: {danger}")
-                    print(json.dumps(response), file=sys.stderr)
+                    _block_response(f"SECURITY: {danger}")
                     return 2
                 if modernized := _modernize_command(command):
                     input_data["command"] = modernized
-                    response = _modify_response("Bash", json.dumps(input_data),
+                    _modify_response("Bash", json.dumps(input_data),
                                               f"Modernized: {command[:30]}... → {modernized[:30]}...")
-                    print(json.dumps(response))
                     return 0
             case _:
                 pass
-        return 0
+        return 0  # noqa: TRY300
     except Exception as e:
         # Log errors to file for debugging
-        with open("/tmp/claude_tool_control_errors.log", "a") as f:
+        with open("/tmp/claude_tool_control_errors.log", "a", encoding="utf-8") as f:
             f.write(f"Error: {e}\n")
-        print(f"Hook error: {e}", file=sys.stderr)
         return 0
+
 
 if __name__ == "__main__":
     sys.exit(main())

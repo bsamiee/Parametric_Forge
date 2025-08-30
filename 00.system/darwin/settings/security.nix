@@ -31,9 +31,15 @@ in
     # --- Sudoers Configuration -----------------------------------------------
     sudo = {
       extraConfig = ''
-        # Allow passwordless yabai scripting addition loading
-        # Note: Path will be resolved by the yabai package installation
+        # Allow passwordless yabai scripting addition loading (both Nix and Homebrew paths)
         %admin ALL=(root) NOPASSWD: /run/current-system/sw/bin/yabai --load-sa
+        %admin ALL=(root) NOPASSWD: /opt/homebrew/bin/yabai --load-sa
+        %admin ALL=(root) NOPASSWD: /usr/local/bin/yabai --load-sa
+
+        # Allow passwordless system maintenance commands
+        %admin ALL=(root) NOPASSWD: /usr/bin/mdutil *
+        %admin ALL=(root) NOPASSWD: /usr/bin/tmutil addexclusion *
+        %admin ALL=(root) NOPASSWD: /System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister *
       '';
     };
   };
@@ -49,8 +55,8 @@ in
   system.defaults = {
     # --- Screensaver Security -----------------------------------------------
     screensaver = {
-      askForPassword = mkDefault true;
-      askForPasswordDelay = mkDefault 5;
+      askForPassword = mkDefault false; # Disable password prompt after screensaver
+      askForPasswordDelay = mkDefault 0; # No delay when disabled
     };
     # --- Global System Behavior ---------------------------------------------
     NSGlobalDomain = { };

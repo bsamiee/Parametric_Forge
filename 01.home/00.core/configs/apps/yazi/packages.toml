@@ -1,0 +1,137 @@
+# Title         : packages.toml
+# Author        : Bardia Samiee
+# Project       : Parametric Forge
+# License       : MIT
+# Path          : /01.home/00.core/configs/apps/yazi/packages.toml
+# ----------------------------------------------------------------------------
+# PLACEHOLDER
+
+
+# --- Core Functionality -----------------------------------------------------
+# Session Management
+[[plugin]]
+use = "yazi-rs/plugins:session" # Session - Cross-instance state synchronization
+
+# Clipboard & Paste Operations
+[[plugin]]
+use = "orhnk/system-clipboard" # System clipboard - Cross-platform clipboard integration
+
+[[plugin]]
+use = "yazi-rs/plugins:smart-paste" # Smart paste - Context-aware paste into hovered directories
+
+[[plugin]]
+use = "boydaihungst/restore" # Restore - Restore/recover deleted files from trash (excellent for macOS)
+
+# Command Enhancement
+[[plugin]]
+use = "Mr-Ples/command-palette" # Command palette - Fuzzy searchable keybinds
+
+# macOS Integration
+[[plugin]]
+use = "yazi-rs/plugins:mactag" # macOS file tagging - Native macOS tagging system integration
+
+# --- Navigation -------------------------------------------------------------
+[[plugin]]
+use = "yazi-rs/plugins:smart-enter" # Smart enter - intelligently handle enter key based on file type
+
+[[plugin]]
+use = "Rolv-Apneseth/bypass" # Bypass - Skip single-subdirectory folders automatically
+
+# Vim-Style Movement
+[[plugin]]
+use = "dedukun/relative-motions" # Relative motions - Vim-style numbered motions (3j, 5k, etc.)
+
+[[plugin]]
+use = "yazi-rs/plugins:jump-to-char" # Jump to char - Vim-like f<char> navigation
+
+# Visual Navigation & Jumping
+[[plugin]]
+use = "mikavilpas/easyjump" # Easy jump - Hop.nvim-style visual jumping with character labels (replaces searchjump)
+
+# Filtering & Search
+[[plugin]]
+use = "yazi-rs/plugins:smart-filter" # Smart filter - Continuous filtering with auto-directory entry
+
+# --- UI Enhancements --------------------------------------------------------
+# Layout & Pane Management
+[[plugin]]
+use = "yazi-rs/plugins:toggle-pane" # Toggle pane - Show/hide/maximize different panes (parent, current, preview)
+
+# Tab Session Management
+[[plugin]]
+use = "MasouShizuka/projects" # Projects - Save/restore tab sessions as projects (essential productivity)
+
+[[plugin]]
+use = "MasouShizuka/close-and-restore-tab" # Close and restore tabs - Recover accidentally closed tabs
+
+# Directory-Specific Preferences
+[[plugin]]
+use = "boydaihungst/pref-by-location" # Location preferences - Auto-apply settings per directory (very useful)
+
+# --- Development & Operations -----------------------------------------------
+# Git Integration
+[[plugin]]
+use = "yazi-rs/plugins:git" # Git status and linemode - Essential for development workflow
+
+[[plugin]]
+use = "yazi-rs/plugins:vcs-files" # VCS files - Show git changes including untracked files
+
+# Archive Operations
+[[plugin]]
+use = "KKV9/compress" # Compress - Create archives from selected files (tar, zip, 7z, etc.)
+
+[[plugin]]
+use = "yazi-rs/plugins:lsar" # LSAR - Archive previewer for various formats
+
+# File Operations & Permissions
+[[plugin]]
+use = "yazi-rs/plugins:chmod" # File permissions - Enhanced chmod operations
+
+[[plugin]]
+use = "yazi-rs/plugins:diff" # Diff - Compare files and create patches
+
+# Performance & File Detection
+[[plugin]]
+use = "yazi-rs/plugins:mime-ext" # MIME type detection - Fast file type identification by extension
+
+# Development Workflow
+[[plugin]]
+use = "AnirudhG07/custom-shell" # Custom shell - Enhanced shell command integration
+
+[[plugin]]
+use = "yazi-rs/plugins:mount" # Mount manager - Handle device mounting (useful for development)
+
+[[plugin]]
+use = "yazi-rs/plugins:piper" # Piper - Universal shell command previewer (replaces glow, bat, and many others)
+
+# --- Media & Previews -------------------------------------------------------
+# Document Formats
+[[plugin]]
+use = "AnirudhG07/nbpreview" # Jupyter notebook preview - Essential for data science workflows
+
+[[plugin]]
+use = "AnirudhG07/rich-preview" # Rich preview - Markdown, JSON, CSV, etc. using rich-cli
+
+[[plugin]]
+use = "navysky12/comicthumb" # Comic book archives - Preview CBZ/CBR files (macOS compatible)
+
+# Image & Visual Media
+[[plugin]]
+use = "yazi-rs/plugins:zoom" # Image zoom - Magnify images for detailed viewing
+
+# Audio & Video Media
+[[plugin]]
+use = "boydaihungst/mediainfo" # Media info - Rich metadata for audio/video files (actively maintained fork)
+
+[[plugin]]
+use = "Sonico98/exifaudio" # Audio metadata with exiftool - Detailed audio file information and cover art
+
+# Specialized Data Formats
+[[plugin]]
+use = "vmikk/zless-preview" # Compressed text preview - View .gz, .bz2, .xz without extraction
+
+[[plugin]]
+use = "wylie102/duckdb" # DuckDB - SQL-based data preview for Parquet/CSV/JSON analysis
+
+[[plugin]]
+use = "Reledia/hexyl" # Binary/hex viewer - Essential for development and analysis

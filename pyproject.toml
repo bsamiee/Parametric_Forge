@@ -15,7 +15,11 @@ license = { text = "MIT" }
 readme = "README.md"
 requires-python = ">=3.13,<3.14"
 keywords = ["nix", "configuration", "hooks", "claude"]
-dependencies = ["numpy==2.3.2", "sentence-transformers==5.1.0"]
+dependencies = [
+  "numpy==2.3.2",
+  "pillow>=11.3.0",
+  "sentence-transformers==5.1.0",
+]
 
 # --- Tool Configurations ----------------------------------------------------
 
@@ -25,7 +29,6 @@ target-version = "py313"
 line-length = 120
 preview = true
 src = ["01.home/00.core/configs/apps/claude"]
-cache-dir = ".cache/ruff"
 exclude = [
   "**/.venv/**",
   "**/.cache/**",

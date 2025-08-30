@@ -6,13 +6,13 @@
 # ----------------------------------------------------------------------------
 # Window management daemon services for macOS.
 
-{ myLib, ... }:
+{ pkgs, myLib, ... }:
 
 {
   launchd.agents = {
     yabai = {
       enable = true;
-      config = myLib.launchd.mkUserAgent {
+      config = myLib.launchd.mkLaunchdAgent pkgs {
         command = "/opt/homebrew/bin/yabai";
         label = "Yabai";
         runAtLoad = true;
@@ -22,7 +22,7 @@
 
     skhd = {
       enable = true;
-      config = myLib.launchd.mkUserAgent {
+      config = myLib.launchd.mkLaunchdAgent pkgs {
         command = "/opt/homebrew/bin/skhd";
         label = "SKHD";
         runAtLoad = true;
@@ -32,7 +32,7 @@
 
     sketchybar = {
       enable = true;
-      config = myLib.launchd.mkUserAgent {
+      config = myLib.launchd.mkLaunchdAgent pkgs {
         command = "/opt/homebrew/bin/sketchybar";
         label = "SketchyBar";
         runAtLoad = true;

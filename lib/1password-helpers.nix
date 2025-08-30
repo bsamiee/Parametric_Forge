@@ -33,7 +33,7 @@ rec {
     in
     if isDarwin then
       # macOS standard location
-      "\"$HOME/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock\""
+      "$HOME/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
     else if isWSL then
       # WSL2 can use Windows 1Password via npiperelay or socat bridge
       # User can set WSL_1PASSWORD_SOCKET environment variable to override

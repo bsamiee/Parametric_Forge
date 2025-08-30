@@ -339,12 +339,14 @@ version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
     { name = "numpy" },
+    { name = "pillow" },
     { name = "sentence-transformers" },
 ]
 
 [package.metadata]
 requires-dist = [
     { name = "numpy", specifier = "==2.3.2" },
+    { name = "pillow", specifier = ">=11.3.0" },
     { name = "sentence-transformers", specifier = "==5.1.0" },
 ]
 

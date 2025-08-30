@@ -31,7 +31,4 @@ with pkgs;
   # TODO: Add cloud-to-cloud transfer aliases (no local mounting due to 5TB vs 400GB constraint)
   transmission_4 # BitTorrent client v4 - Required by torrent-preview.yazi
   archivemount # Mount archives as filesystems - Required by archivemount.yazi
-
-  # --- Security & Authentication --------------------------------------------
-  _1password-cli # 1Password command-line tool for secrets management
 ]

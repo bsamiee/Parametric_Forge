@@ -71,8 +71,16 @@ myLib.build.auto pkgs (
       PYTHONUTF8 = "1";
       PYTHONPROFILEIMPORTTIME = "1";
       PYTHONWARNINGS = "default";
+
+      # Project-local cache directories (all tools use .cache/)
       PRE_COMMIT_HOME = "$PWD/.cache/pre-commit";
       NOX_CACHE_DIR = "$PWD/.cache/nox";
+      MYPY_CACHE_DIR = "$PWD/.cache/mypy";
+      RUFF_CACHE_DIR = "$PWD/.cache/ruff";
+      PYTEST_CACHEDIR = "$PWD/.cache/pytest";
+      POETRY_CACHE_DIR = "$PWD/.cache/poetry";
+      UV_CACHE_DIR = "$PWD/.cache/uv";
+      PIP_CACHE_DIR = "$PWD/.cache/pip";
     };
     # --- Shell Hook ---------------------------------------------------------
     shellHook = ''

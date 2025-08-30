@@ -70,12 +70,8 @@
     "yazi/init.lua".source = ./00.core/configs/apps/yazi/init.lua;
     # Dracula flavor deployment - proper directory structure
     "yazi/flavors/dracula.yazi/flavor.toml".source = ./00.core/configs/apps/yazi/dracula-flavor.toml;
-    # Organized plugin packages by domain
-    "yazi/packages/core-navigation.toml".source = ./00.core/configs/apps/yazi/packages/core-navigation.toml;
-    "yazi/packages/development.toml".source = ./00.core/configs/apps/yazi/packages/development.toml;
-    "yazi/packages/media-preview.toml".source = ./00.core/configs/apps/yazi/packages/media-preview.toml;
-    "yazi/packages/system-integration.toml".source = ./00.core/configs/apps/yazi/packages/system-integration.toml;
-    "yazi/packages/ui-enhancement.toml".source = ./00.core/configs/apps/yazi/packages/ui-enhancement.toml;
+    # Consolidated plugin package configuration
+    "yazi/package.toml".source = ./00.core/configs/apps/yazi/packages.toml;
 
     # --- Git Configuration --------------------------------------------------
     "git/ignore".source = ./00.core/configs/git/gitignore;
@@ -159,12 +155,10 @@
     # Note: App font now installed via Homebrew cask (font-sketchybar-app-font)
 
     # --- Asset Folder Files -------------------------------------------------
+    # Claude configs deployed to .claude/ for hooks, agents, commands, etc.
+    # Note: Claude Code CLI expects .claude.json in ~/ (not ~/.claude/)
   }
-  // (myLib.build.deployDir ./00.core/configs/apps/claude ".claude")
-  // {
-    # Deploy prettierrc to .claude for hooks that expect it there
-    ".claude/.prettierrc".source = ./00.core/configs/formatting/.prettierrc;
-  };
+  // (myLib.build.deployDir ./00.core/configs/apps/claude ".claude");
 
   # --- Asset Bin Scripts (Added to PATH) ------------------------------------
   home.packages =

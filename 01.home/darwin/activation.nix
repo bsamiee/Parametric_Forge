@@ -33,6 +33,9 @@
     '';
     # --- Spotlight Exclusion & Cloud Sync Protection -------------------------
     spotlightShield = lib.hm.dag.entryAfter [ "xdgMigration" ] ''
+      # Ensure full system PATH is available
+      export PATH="/usr/bin:/bin:/usr/sbin:/sbin:$PATH"
+
       echo "[Parametric Forge] Deploying surgical Spotlight exclusions..."
 
       # Function: Deploy triple-layer exclusion to directory
@@ -109,7 +112,7 @@
         if command -v find >/dev/null 2>&1; then
           while IFS= read -r -d $'\0' dir; do
             shield_directory "$dir" && ((PYTHON_CACHE_COUNT++)) || true
-          done < <(find "$HOME/Documents/99.Github" -type d -name "$pattern" -print0 2>/dev/null | head -z -30)
+          done < <(find "$HOME/Documents/99.Github" -maxdepth 3 -type d -name "$pattern" -print0 2>/dev/null | head -5)
         fi
       done
 
@@ -118,7 +121,7 @@
       if command -v find >/dev/null 2>&1; then
         while IFS= read -r -d $'\0' dir; do
           shield_directory "$dir" && ((NODE_MODULES_COUNT++)) || true
-        done < <(find "$HOME/Documents/99.Github" -type d -name "node_modules" -print0 2>/dev/null | head -z -15)
+        done < <(find "$HOME/Documents/99.Github" -type d -name "node_modules" -print0 2>/dev/null | head -15)
       fi
 
       # Git repositories (exclude .git directories only)
@@ -126,7 +129,7 @@
       if command -v find >/dev/null 2>&1; then
         while IFS= read -r -d $'\0' dir; do
           shield_directory "$dir" && ((GIT_COUNT++)) || true
-        done < <(find "$HOME/Documents/99.Github" -type d -name ".git" -print0 2>/dev/null | head -z -20)
+        done < <(find "$HOME/Documents/99.Github" -type d -name ".git" -print0 2>/dev/null | head -20)
       fi
 
       # Nix store exclusion (if writable)

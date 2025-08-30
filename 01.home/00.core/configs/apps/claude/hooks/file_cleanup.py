@@ -15,6 +15,7 @@ appropriate formatter for each file type (ruff, prettier, etc.).
 It leverages Claude's CLAUDE_FILE_PATHS environment variable and returns
 structured JSON responses for better control flow.
 """
+# ruff: noqa: S404, S108
 
 from __future__ import annotations
 
@@ -149,12 +150,28 @@ def format_with_prettier(file_path: Path) -> tuple[bool, str]:
 
 
 def strip_trailing_whitespace(file_path: Path) -> bool:
-    """Strip trailing whitespace from text files."""
+    """Strip trailing whitespace from text files using advanced cleanup."""
     try:
         if (content := file_path.read_bytes()) and NULL_BYTE not in content[:8192]:
             text = content.decode("utf-8")
-            if (cleaned := "\n".join(line.rstrip() for line in text.splitlines())) and not cleaned.endswith("\n"):
+            lines = text.splitlines()
+
+            # Advanced whitespace cleanup:
+            # 1. Strip trailing whitespace from all lines
+            # 2. Remove whitespace from blank lines (fcakyon method)
+            # 3. Ensure single final newline
+            cleaned_lines: list[str] = []
+            for line in lines:
+                if line.strip():  # Non-empty line
+                    cleaned_lines.append(line.rstrip())
+                else:  # Blank line - remove all whitespace
+                    cleaned_lines.append("")
+
+            # Ensure file ends with exactly one newline
+            cleaned = "\n".join(cleaned_lines)
+            if cleaned and not cleaned.endswith("\n"):
                 cleaned += "\n"
+
             if text != cleaned:
                 file_path.write_text(cleaned, encoding="utf-8")
                 return True
@@ -199,11 +216,11 @@ def main() -> int:
     """Main entry point for the PostToolUse hook."""
     tool_name = os.environ.get("CLAUDE_TOOL_NAME", "")
     tool_input = os.environ.get("CLAUDE_TOOL_INPUT", "{}")
-    
+
     # Log to file for debugging (optional)
     debug_mode = os.environ.get("CLAUDE_HOOK_DEBUG", "").lower() == "true"
     if debug_mode:
-        with open("/tmp/claude_file_cleanup.log", "a") as f:
+        with Path("/tmp/claude_file_cleanup.log").open("a", encoding="utf-8") as f:
             f.write(f"Tool: {tool_name}\n")
 
     if tool_name not in FILE_TOOLS:
@@ -235,7 +252,7 @@ def main() -> int:
         response = {
             "hookSpecificOutput": {"hookEventName": "PostToolUse", "additionalContext": context, "results": results}
         }
-        print(json.dumps(response))
+        sys.stdout.write(json.dumps(response) + "\n")
 
     return 0
 

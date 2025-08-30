@@ -47,9 +47,6 @@ in
   # --- Development Shell Helpers --------------------------------------------
   devshell = import ./devshell-helpers.nix { inherit lib; };
 
-  # --- Alerter Notification Helpers (macOS) ---------------------------------
-  alerter = import ./alerter.nix { inherit lib; };
-
   # --- Re-export Nixpkgs Lib Functions --------------------------------------
   inherit (lib)
     mkIf

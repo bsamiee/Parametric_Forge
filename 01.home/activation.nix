@@ -20,6 +20,9 @@
   home.activation = {
     # --- Yazi Plugin Installation --------------------------------------------
     yaziPlugins = lib.hm.dag.entryAfter [ "createXdgDirs" ] ''
+      # Ensure full system PATH is available
+      export PATH="/usr/bin:/bin:/usr/sbin:/sbin:$PATH"
+
       # Auto-install/update Yazi plugins when package.toml changes
       YAZI_CONFIG="${config.xdg.configHome}/yazi/package.toml"
       YAZI_CACHE="${config.xdg.cacheHome}/yazi/plugins.sha256"
@@ -39,27 +42,6 @@
         else
           echo "    [WARN] Some plugins failed to install"
         fi
-      fi
-    '';
-
-    # --- Alerter Installation ------------------------------------------------
-    alerterSetup = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-      if [ ! -f "$HOME/.local/bin/alerter" ]; then
-        echo "[Alerter] Installing notification tool..."
-        ${lib.optionalString context.isDarwin ''
-          mkdir -p "$HOME/.local/bin"
-          if command -v curl >/dev/null 2>&1; then
-            curl -sL "https://github.com/vjeantet/alerter/releases/download/1.0.1/alerter_v1.0.1_darwin_amd64.zip" \
-              -o /tmp/alerter.zip && \
-            unzip -q /tmp/alerter.zip -d /tmp && \
-            mv /tmp/alerter "$HOME/.local/bin/alerter" && \
-            chmod +x "$HOME/.local/bin/alerter" && \
-            rm -f /tmp/alerter.zip && \
-            echo "    [OK] Alerter installed"
-          else
-            echo "    [WARN] curl not available - alerter installation skipped"
-          fi
-        ''}
       fi
     '';
 

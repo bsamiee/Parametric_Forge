@@ -46,43 +46,44 @@ files = {
   -- Yazi configuration
   ["**/yazi/**/*.lua"] = {
     globals = {
-      "ya",
-      "Command",
-      "Child",
+      "ya", "Command", "Child", "cx", "ui", "Status", "Linemode",
+      -- Custom functions defined in init.lua
+      "smart_open", "smart_paste", "bookmark_jump", "cd_git_root", 
+      "create_archive", "setup_large_dir_handling", "safe_remove",
+      "safe_bulk_rename", "sync_session", "enhanced_search", "quick_diff",
+      "lazy_git_integration", "smart_sudo_operations", "ecosystem_cd",
+      "notify_ecosystem_directory_change", "adjust_layout",
     },
   },
 
-  -- SketchyBar configuration
+  -- SketchyBar configuration  
   ["**/sketchybar/**/*.lua"] = {
     globals = {
       "sbar",
+      -- Cross-module globals for SketchyBar
+      "events", "performance", "interactions", "ecosystem", "context",
+    },
+  },
+
+  -- LuaRocks configuration
+  ["**/luarocks.lua"] = {
+    globals = {
+      "rocks_servers", "deps_mode", "local_by_default",
     },
   },
 
   -- Test files (Busted framework)
   ["**/spec/**/*.lua"] = {
     globals = {
-      "describe",
-      "it",
-      "before_each",
-      "after_each",
-      "setup",
-      "teardown",
-      "pending",
-      "finally",
+      "describe", "it", "before_each", "after_each", "setup", 
+      "teardown", "pending", "finally",
     },
   },
 
   ["**/test/**/*.lua"] = {
     globals = {
-      "describe",
-      "it",
-      "before_each",
-      "after_each",
-      "setup",
-      "teardown",
-      "pending",
-      "finally",
+      "describe", "it", "before_each", "after_each", "setup",
+      "teardown", "pending", "finally", 
     },
   },
 }

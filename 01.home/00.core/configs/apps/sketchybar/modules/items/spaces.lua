@@ -29,7 +29,33 @@ for i, name in ipairs(space_names) do
         click_script = "yabai -m space --focus " .. i,
     })
 
-    -- Optimized event handling using Tier 1 foundations
+    -- Dual event subscription: Official SketchyBar + Custom Ecosystem
+    -- Official SketchyBar space_change event (standards compliance)
+    space:subscribe("space_change", function(env)
+        performance.debounce(function()
+            local space_data = env.INFO and sbar.json and sbar.json.decode(env.INFO) or {}
+            local selected = false
+            if space_data and type(space_data) == "table" then
+                for _, space_info in ipairs(space_data) do
+                    if space_info.index == i and space_info["has-focus"] then
+                        selected = true
+                        break
+                    end
+                end
+            end
+            space:set({
+                background = {
+                    drawing = selected,
+                    color = selected and colors.space_active or colors.space_inactive,
+                },
+                icon = {
+                    color = selected and colors.background or colors.foreground,
+                },
+            })
+        end, 0.05, "space_official_" .. i)
+    end)
+
+    -- Custom ecosystem space_changed event (ecosystem coordination)
     space:subscribe("space_changed", function(env)
         performance.debounce(function()
             local selected = env.SELECTED == "true"
@@ -42,7 +68,8 @@ for i, name in ipairs(space_names) do
                     color = selected and colors.background or colors.foreground,
                 },
             })
-        end, 0.05, "space_" .. i)
+            events.trigger("yabai_space_changed", { space_id = i })
+        end, 0.05, "space_custom_" .. i)
     end)
 
     -- Enhanced window focus with performance optimization

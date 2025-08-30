@@ -196,6 +196,7 @@
       mkdir -pm 755 "${config.xdg.cacheHome}/ssh"
       mkdir -pm 755 "${config.xdg.cacheHome}/claude"
       mkdir -pm 755 "${config.xdg.cacheHome}/claude/logs"
+      mkdir -pm 755 "${config.xdg.cacheHome}/claude/screenshots"
       mkdir -pm 755 "${config.xdg.cacheHome}/fontconfig"
       # Media processing caches
       mkdir -pm 755 "${config.xdg.cacheHome}/ImageMagick"

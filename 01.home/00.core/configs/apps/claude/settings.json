@@ -6,6 +6,7 @@
       "Bash(grep:*)",
       "Bash(basedpyright:*)",
       "Bash(shellcheck:*)",
+      "Read",
       "mcp__codex__codex",
       "mcp__rhino__execute_rhinoscript_python_code",
       "mcp__rhino__get_object_info",
@@ -43,6 +44,17 @@
     "ask": []
   },
   "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ~/.claude/hooks/ui_prompt_helper.py",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
     "PreToolUse": [
       {
         "matcher": "",

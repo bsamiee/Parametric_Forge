@@ -37,6 +37,7 @@ in
     casks = [
       # System & Core Tools
       "1password" # Password manager with macOS integration
+      "1password-cli" # 1Password command-line interface
       "cleanshot" # Advanced screenshot and screen recording tool
       "docker" # Docker Desktop containerization
       "dotnet-sdk" # .NET SDK (large, GUI tools)
@@ -123,10 +124,11 @@ in
       "codex" # AI coding assistant (ChatGPT CLI)
       "handbrake" # CLI video transcoder (GUI in casks as handbrake-app)
       "mono" # .NET runtime (dependency for some tools)
-      
+      "defaultbrowser" # CLI tool for setting default browser properly
+
       # Window Management Ecosystem
       "yabai" # Tiling window manager for macOS
-      "skhd" # Simple hotkey daemon for macOS  
+      "skhd" # Simple hotkey daemon for macOS
       "borders" # JankyBorders - window borders enhancement
       "sketchybar" # Status bar replacement
     ];
@@ -139,7 +141,6 @@ in
     };
     # --- Whalebrew (Docker-based tools) -------------------------------------
     # whalebrews = [ ];
-
 
     # --- Cask Configuration -------------------------------------------------
     caskArgs = mkDefault {

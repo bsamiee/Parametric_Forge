@@ -67,38 +67,66 @@ shift + ctrl + alt - 9 : yabai -m space --focus 9
 
 # --- TIER 2: Essential Manual Overrides (SHIFT + OPT) ---------------------
 # Core toggles when you need manual control over auto-balance
-shift + opt - return : yabai -m window --toggle zoom-fullscreen  # Toggle fullscreen
-shift + opt - space  : yabai -m window --toggle float --grid 4:4:1:1:2:2
-shift + opt - r      : yabai -m space --rotate 270  # Fix layout when messy
+# Pure global toggle with cross-tool coordination - windowed (4px) ↔ full (0px) modes
+shift + opt - return : \
+    current="$(yabai -m config top_padding)"; \
+if [ "$current" = "0" ]; then
+    yabai -m config top_padding 4
+    yabai -m config bottom_padding 4
+    yabai -m config left_padding 4
+    yabai -m config right_padding 4
+    yabai -m config window_gap 3
+    echo '{"padding":4,"gap":3,"mode":"windowed"}' >/tmp/yabai_config.json
+else
+    yabai -m config top_padding 0
+    yabai -m config bottom_padding 0
+    yabai -m config left_padding 0
+    yabai -m config right_padding 0
+    yabai -m config window_gap 0
+    echo '{"padding":0,"gap":0,"mode":"full"}' >/tmp/yabai_config.json
+fi
+shift + opt - space : yabai -m window --toggle float --grid 4:4:1:1:2:2
+shift + opt - r : yabai -m space --rotate 270 # Fix layout when messy
 
 # --- TIER 3: Power Operations (MEH = shift+alt+opt) -------------------------
 # Move window to workspace and follow (stable workspace numbers)
-shift + alt + opt - 1 : yabai -m window --space 1; yabai -m space --focus 1
-shift + alt + opt - 2 : yabai -m window --space 2; yabai -m space --focus 2  
-shift + alt + opt - 3 : yabai -m window --space 3; yabai -m space --focus 3
-shift + alt + opt - 4 : yabai -m window --space 4; yabai -m space --focus 4
-shift + alt + opt - 5 : yabai -m window --space 5; yabai -m space --focus 5
-shift + alt + opt - 6 : yabai -m window --space 6; yabai -m space --focus 6
-shift + alt + opt - 7 : yabai -m window --space 7; yabai -m space --focus 7
-shift + alt + opt - 8 : yabai -m window --space 8; yabai -m space --focus 8
-shift + alt + opt - 9 : yabai -m window --space 9; yabai -m space --focus 9
+shift + alt + opt - 1 : yabai -m window --space 1
+yabai -m space --focus 1
+shift + alt + opt - 2 : yabai -m window --space 2
+yabai -m space --focus 2
+shift + alt + opt - 3 : yabai -m window --space 3
+yabai -m space --focus 3
+shift + alt + opt - 4 : yabai -m window --space 4
+yabai -m space --focus 4
+shift + alt + opt - 5 : yabai -m window --space 5
+yabai -m space --focus 5
+shift + alt + opt - 6 : yabai -m window --space 6
+yabai -m space --focus 6
+shift + alt + opt - 7 : yabai -m window --space 7
+yabai -m space --focus 7
+shift + alt + opt - 8 : yabai -m window --space 8
+yabai -m space --focus 8
+shift + alt + opt - 9 : yabai -m window --space 9
+yabai -m space --focus 9
 
-# Window swapping 
-shift + alt + opt - left  : yabai -m window --swap west
+# Window swapping
+shift + alt + opt - left : yabai -m window --swap west
 shift + alt + opt - right : yabai -m window --swap east
-shift + alt + opt - down  : yabai -m window --swap south  
-shift + alt + opt - up    : yabai -m window --swap north
+shift + alt + opt - down : yabai -m window --swap south
+shift + alt + opt - up : yabai -m window --swap north
 
 # Display management
-shift + alt + opt - s : yabai -m window --display west; yabai -m display --focus west
-shift + alt + opt - g : yabai -m window --display east; yabai -m display --focus east
+shift + alt + opt - s : yabai -m window --display west
+yabai -m display --focus west
+shift + alt + opt - g : yabai -m window --display east
+yabai -m display --focus east
 
 # --- TIER 3: Expert Overrides (SUPER = shift+alt+opt+cmd) ------------------
 # When auto-balance isn't enough - rare usage
-shift + alt + opt + cmd - left  : yabai -m window --swap west
-shift + alt + opt + cmd - right : yabai -m window --swap east  
-shift + alt + opt + cmd - x     : yabai -m space --mirror x-axis
-shift + alt + opt + cmd - y     : yabai -m space --mirror y-axis
+shift + alt + opt + cmd - left : yabai -m window --swap west
+shift + alt + opt + cmd - right : yabai -m window --swap east
+shift + alt + opt + cmd - x : yabai -m space --mirror x-axis
+shift + alt + opt + cmd - y : yabai -m space --mirror y-axis
 
 # --- Utility Operations (Simple Keys) ---------------------------------------
 # Quick navigation and space management
@@ -110,4 +138,4 @@ shift + alt + opt + cmd - d : yabai -m space --destroy
 # Nix-managed LaunchD services (not Homebrew)
 ctrl + alt - q : launchctl unload ~/Library/LaunchAgents/org.nixos.yabai.plist
 ctrl + alt - s : launchctl load ~/Library/LaunchAgents/org.nixos.yabai.plist
-ctrl + alt - r : launchctl kickstart -k gui/$(id -u)/org.nixos.yabai
+ctrl + alt - r : launchctl kickstart -k "gui/$(id -u)/org.nixos.yabai"
