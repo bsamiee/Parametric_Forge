@@ -40,15 +40,12 @@ yabai -m signal --add event=space_created action="yabai -m config layout bsp"
 # --- SketchyBar Integration Signals (Dual-Stream) ---------------------
 # Trigger both official SketchyBar events AND custom ecosystem events
 yabai -m signal --add event=space_changed action="
-    sketchybar --trigger space_change 2>/dev/null || true;
-    sketchybar --trigger space_changed SPACE_ID=\$YABAI_SPACE_ID 2>/dev/null || true;
-    echo '{\"space\":\$YABAI_SPACE_ID,\"index\":\$YABAI_SPACE_INDEX}' > /tmp/yabai_space.json"
+    sketchybar --trigger space_change SPACE_ID=\$YABAI_SPACE_ID SPACE_INDEX=\$YABAI_SPACE_INDEX 2>/dev/null || true;
+    echo '{\"space_id\":\$YABAI_SPACE_ID,\"space_index\":\$YABAI_SPACE_INDEX}' > /tmp/yabai_space.json"
 
 yabai -m signal --add event=window_focused action="
-    sketchybar --trigger front_app_switched 2>/dev/null || true;
-    sketchybar --trigger window_focused WINDOW_ID=\$YABAI_WINDOW_ID 2>/dev/null || true;
-    sketchybar --trigger ecosystem_file_operation 2>/dev/null || true;
-    echo '{\"window\":\$YABAI_WINDOW_ID}' > /tmp/yabai_window.json"
+    sketchybar --trigger front_app_switched WINDOW_ID=\$YABAI_WINDOW_ID 2>/dev/null || true;
+    echo '{\"window_id\":\$YABAI_WINDOW_ID}' > /tmp/yabai_window.json"
 
 # --- Core Configuration --------------------------------------------------
 # Enable debug output for better troubleshooting (modern best practice)
@@ -80,12 +77,9 @@ yabai -m config external_bar all:32:0 # 32px height, 0px bottom
 yabai -m config menubar_opacity 0.0   # Hide native menubar
 
 # --- Window Appearance ---------------------------------------------------
-# Borders handled by JankyBorders service for better visual quality
-# yabai -m config window_border on
-# yabai -m config window_border_width 2
-# yabai -m config active_window_border_color 0xffbd93f9 # Dracula Purple
-# yabai -m config normal_window_border_color 0xff6272a4 # Dracula Comment Gray
-# yabai -m config window_border_radius 8
+# Window borders handled by JankyBorders service (see 01.home/00.core/configs/apps/borders/bordersrc)
+# JankyBorders provides superior performance and visual quality over native yabai borders
+yabai -m config window_border off
 
 # Swiss Design Opacity Hierarchy - Clear Information Architecture
 yabai -m config window_opacity on

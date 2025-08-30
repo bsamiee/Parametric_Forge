@@ -29,54 +29,34 @@ for i, name in ipairs(space_names) do
 		click_script = "yabai -m space --focus " .. i,
 	})
 
-	-- Dual event subscription: Official SketchyBar + Custom Ecosystem
-	-- Official SketchyBar space_change event (standards compliance)
+	-- Official SketchyBar space_change event with yabai integration
 	space:subscribe("space_change", function(env)
 		performance.debounce(function()
-			local space_data = env.INFO and sbar.json and sbar.json.decode(env.INFO) or {}
-			local selected = false
-			if space_data and type(space_data) == "table" then
-				for _, space_info in ipairs(space_data) do
-					if space_info.index == i and space_info["has-focus"] then
-						selected = true
-						break
-					end
-				end
+			local current_space_id = tonumber(env.SPACE_ID) or 0
+			local selected = (current_space_id == i)
+			
+			space:set({
+				background = {
+					drawing = selected,
+					color = selected and colors.space_active or colors.space_inactive,
+				},
+				icon = {
+					color = selected and colors.background or colors.foreground,
+				},
+			})
+			
+			if selected then
+				events.trigger("yabai_space_changed", { 
+					space_id = i, 
+					space_index = tonumber(env.SPACE_INDEX) or i 
+				})
 			end
-			space:set({
-				background = {
-					drawing = selected,
-					color = selected and colors.space_active or colors.space_inactive,
-				},
-				icon = {
-					color = selected and colors.background or colors.foreground,
-				},
-			})
-		end, 0.05, "space_official_" .. i)
+		end, 0.1, "space_change_" .. i)
 	end)
 
-	-- Custom ecosystem space_changed event (ecosystem coordination)
-	space:subscribe("space_changed", function(env)
-		performance.debounce(function()
-			local selected = env.SELECTED == "true"
-			space:set({
-				background = {
-					drawing = selected,
-					color = selected and colors.space_active or colors.space_inactive,
-				},
-				icon = {
-					color = selected and colors.background or colors.foreground,
-				},
-			})
-			events.trigger("yabai_space_changed", { space_id = i })
-		end, 0.05, "space_custom_" .. i)
-	end)
-
-	-- Enhanced window focus with performance optimization
+	-- Window focus event optimized for minimal overhead
 	space:subscribe("window_focused", function(env)
-		performance.debounce(function()
-			events.trigger("yabai_space_changed", { space_id = i })
-		end, 0.1, "focus_space_" .. i)
+		events.trigger("yabai_space_changed", { space_id = i })
 	end)
 
 	-- Foundation for Tier 2: click interactions
@@ -126,7 +106,7 @@ sbar.add("item", "front_app", {
 		})
 	end)
 	:subscribe("window_focused", function(env)
-		-- Performance-optimized front app updates with proper async handling
+		-- Optimized front app updates with reduced debounce time
 		performance.debounce(function()
 			performance.yabai_query_cached("--windows --window", 2, function(window_data)
 				if window_data and window_data.app then
@@ -135,7 +115,7 @@ sbar.add("item", "front_app", {
 					})
 				end
 			end)
-		end, 0.2, "front_app_update")
+		end, 0.1, "front_app_update")
 	end)
 
 -- Foundation for Tier 2: front app interaction capabilities

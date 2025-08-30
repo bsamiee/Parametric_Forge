@@ -137,8 +137,6 @@ in
       runAtLoad = false; # Don't run immediately, wait for system to settle
       nice = 10;
       logBaseName = "${config.xdg.stateHome}/logs/mas-manager";
-      # Run 30 minutes after login to ensure PATH is fully available
-      StartInterval = 1800; # 30 minutes
     };
   };
 
