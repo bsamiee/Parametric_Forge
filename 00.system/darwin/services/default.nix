@@ -12,6 +12,6 @@ _:
   imports = [
     ./maintenance-daemon.nix
     ./clt-daemon.nix
-    ./ui-daemon.nix
+    ./sketchybar-daemon.nix
   ];
 }

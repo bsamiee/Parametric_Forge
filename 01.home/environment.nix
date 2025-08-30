@@ -273,12 +273,7 @@
     D2_LAYOUT = "dagre"; # Default layout engine (dagre, elk, tala)
 
     # --- SketchyBar Configuration -------------------------------------------
-    # SketchyBar system stats tool
-    SKETCHYBAR_STATS_BINARY = "${config.home.profileDirectory}/bin/sketchybar-system-stats"; # System stats binary path
-    # SketchyBar configuration directory
     SKETCHYBAR_CONFIG_DIR = "${config.xdg.configHome}/sketchybar"; # Config directory (XDG-compliant)
-    # App font icon mapping
-    SKETCHYBAR_ICON_MAP = "${config.home.profileDirectory}/bin/icon_map.sh"; # Icon mapping script
 
     # --- File & Directory Operations Tools ----------------------------------
     # Eza (modern ls replacement)

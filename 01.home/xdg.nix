@@ -67,7 +67,6 @@
       mkdir -pm 755 "${config.xdg.configHome}/ctop"
       mkdir -pm 755 "${config.xdg.configHome}/dive"
       mkdir -pm 755 "${config.xdg.configHome}/hadolint"
-      mkdir -pm 755 "${config.xdg.configHome}/yabai"
       mkdir -pm 755 "${config.xdg.configHome}/wezterm"
       mkdir -pm 755 "${config.xdg.configHome}/xh"
       mkdir -pm 755 "${config.xdg.configHome}/yt-dlp"

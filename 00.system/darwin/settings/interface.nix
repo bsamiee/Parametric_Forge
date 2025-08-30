@@ -104,9 +104,9 @@ in
         NSNavPanelExpandedStateForSaveMode = mkDefault true;
         NSNavPanelExpandedStateForSaveMode2 = mkDefault true;
         NSDocumentSaveNewDocumentsToCloud = mkDefault false;
-        NSWindowResizeTime = mkDefault 0.2; # TESTING: Reset to normal speed
-        NSWindowShouldDragOnGesture = mkDefault false; # TESTING: Disable unusual window drag
-        NSAutomaticWindowAnimationsEnabled = mkDefault false; # PERFORMANCE: Disable window animations
+        NSWindowResizeTime = mkDefault 0.001; # PERFORMANCE: Instant window resize
+        NSWindowShouldDragOnGesture = mkDefault false;
+        NSAutomaticWindowAnimationsEnabled = mkDefault false;
         NSUseAnimatedFocusRing = mkDefault false;
         NSScrollAnimationEnabled = mkDefault true;
         AppleShowAllExtensions = mkDefault true;
