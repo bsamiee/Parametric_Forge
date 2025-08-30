@@ -18,6 +18,8 @@
 let
   # --- Service Helper Functions ---------------------------------------------
   inherit (userServiceHelpers) mkPeriodicJob;
+  # --- Universal Service Environment ----------------------------------------
+  serviceEnv = myLib.mkServiceEnvironment { inherit config context; };
 
   # --- App Quarantine Removal Script ---------------------------------------
   quarantineRemovalScript = pkgs.writeShellApplication {
@@ -36,6 +38,7 @@ let
       # Function to remove quarantine with state tracking
       remove_quarantine() {
         local app_path="$1"
+        
         if [[ -d "$app_path" ]]; then
           app_name=$(basename "$app_path")
           app_mtime=$(stat -f "%m" "$app_path" 2>/dev/null || echo "0")
@@ -69,6 +72,7 @@ let
             # Verify complete removal
             if ! xattr -l "$app_path" 2>/dev/null | grep -q quarantine; then
               echo "    [SUCCESS] All quarantine attributes removed from $app_name"
+              QUARANTINE_REMOVED=$((QUARANTINE_REMOVED + 1))
             else
               echo "    [ERROR] Some quarantine attributes remain in $app_name"
               return 1
@@ -77,7 +81,9 @@ let
           
           # Mark as processed
           echo "$app_name:$app_mtime" >> "$PROCESSED_APPS"
+          PROCESSED_COUNT=$((PROCESSED_COUNT + 1))
         fi
+        return 0
       }
 
       PROCESSED_COUNT=0
@@ -87,13 +93,7 @@ let
       if [[ -d "/Applications" ]]; then
         echo "  [PROCESSING] Scanning /Applications directory..."
         while IFS= read -r -d $'\0' app; do
-          if remove_quarantine "$app"; then
-            PROCESSED_COUNT=$((PROCESSED_COUNT + 1))
-            # Check if quarantine was actually removed
-            if ! xattr -l "$app" 2>/dev/null | grep -q quarantine; then
-              QUARANTINE_REMOVED=$((QUARANTINE_REMOVED + 1))
-            fi
-          fi
+          remove_quarantine "$app" || true  # Continue even if one app fails
         done < <(find /Applications -maxdepth 1 -name "*.app" -type d -print0 2>/dev/null)
       fi
 
@@ -101,12 +101,7 @@ let
       if [[ -d "${context.userHome}/Applications" ]]; then
         echo "  [PROCESSING] Scanning user Applications directory..."
         while IFS= read -r -d $'\0' app; do
-          if remove_quarantine "$app"; then
-            PROCESSED_COUNT=$((PROCESSED_COUNT + 1))
-            if ! xattr -l "$app" 2>/dev/null | grep -q quarantine; then
-              QUARANTINE_REMOVED=$((QUARANTINE_REMOVED + 1))
-            fi
-          fi
+          remove_quarantine "$app" || true
         done < <(find "${context.userHome}/Applications" -maxdepth 1 -name "*.app" -type d -print0 2>/dev/null)
       fi
 
@@ -114,12 +109,7 @@ let
       if [[ -d "/Applications/Nix Apps" ]]; then
         echo "  [PROCESSING] Scanning Nix Apps directory..."
         while IFS= read -r -d $'\0' app; do
-          if remove_quarantine "$app"; then
-            PROCESSED_COUNT=$((PROCESSED_COUNT + 1))
-            if ! xattr -l "$app" 2>/dev/null | grep -q quarantine; then
-              QUARANTINE_REMOVED=$((QUARANTINE_REMOVED + 1))
-            fi
-          fi
+          remove_quarantine "$app" || true
         done < <(find "/Applications/Nix Apps" -maxdepth 1 -name "*.app" -type d -print0 2>/dev/null)
       fi
 
@@ -148,6 +138,7 @@ in
       runAtLoad = true; # Run once at login
       nice = 15; # Lower priority
       logBaseName = "${config.xdg.stateHome}/logs/quarantine-removal";
+      environmentVariables = serviceEnv;
     };
   };
 }

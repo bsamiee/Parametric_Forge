@@ -33,7 +33,8 @@ rec {
     { config, context }:
     let
       homebrewPath = if context.isAarch64 then "/opt/homebrew/bin" else "/usr/local/bin";
-      universalServicePath = "${homebrewPath}:${config.home.homeDirectory}/.nix-profile/bin:/run/current-system/sw/bin:${config.home.homeDirectory}/.local/bin:/usr/bin:/bin";
+      nixProfilePath = "/etc/profiles/per-user/${context.user}/bin";
+      universalServicePath = "${homebrewPath}:${nixProfilePath}:${config.home.homeDirectory}/.nix-profile/bin:/run/current-system/sw/bin:${config.home.homeDirectory}/.local/bin:/usr/bin:/bin";
     in
     {
       PATH = universalServicePath;

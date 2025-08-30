@@ -10,6 +10,7 @@
   config,
   pkgs,
   myLib,
+  context,
   userServiceHelpers,
   ...
 }:
@@ -17,6 +18,8 @@
 let
   # --- Service Helper Functions ---------------------------------------------
   inherit (userServiceHelpers) mkPeriodicJob;
+  # --- Universal Service Environment ----------------------------------------
+  serviceEnv = myLib.mkServiceEnvironment { inherit config context; };
 
   # --- Mac App Store Management Script -------------------------------------
   masManagerScript = pkgs.writeShellApplication {
@@ -31,6 +34,19 @@ let
       # Check if mas CLI is available
       if ! command -v mas >/dev/null 2>&1; then
         echo "[WARN] mas CLI not found, skipping App Store management"
+        exit 0
+      fi
+
+      # Check if user is signed into App Store
+      if ! mas account >/dev/null 2>&1; then
+        echo "[WARN] Not signed into Mac App Store, skipping management"
+        echo "[INFO] Please sign in via System Preferences > Apple ID or run 'mas signin'"
+        exit 0
+      fi
+
+      # Verify mas functionality
+      if ! mas list >/dev/null 2>&1; then
+        echo "[WARN] mas CLI not functioning properly, skipping management"
         exit 0
       fi
 
@@ -115,13 +131,21 @@ let
       fi
 
       # Attempt to set Arc as default browser
-      if defaultbrowser browser 2>/dev/null; then
+      if defaultbrowser arc 2>/dev/null; then
         echo "[OK] Arc set as default browser"
       else
         echo "[WARN] Failed to set Arc as default browser"
         # Try to get current default for troubleshooting
         current_browser=$(defaultbrowser 2>/dev/null || echo "unknown")
         echo "[INFO] Current default browser: $current_browser"
+        
+        # Try alternative approach if Arc is installed
+        if [ -d "/Applications/Arc.app" ]; then
+          echo "[RETRY] Attempting to set Arc using bundle identifier..."
+          if defaultbrowser company.thebrowser.Browser 2>/dev/null; then
+            echo "[OK] Arc set as default using bundle identifier"
+          fi
+        fi
       fi
     '';
   };
@@ -134,9 +158,13 @@ in
       label = "MAS Daemon";
       command = "${masManagerScript}/bin/mas-manager";
       interval = 86400; # Daily
-      runAtLoad = false; # Don't run immediately, wait for system to settle
+      runAtLoad = true; # Run at login when PATH is available
       nice = 10;
       logBaseName = "${config.xdg.stateHome}/logs/mas-manager";
+      environmentVariables = serviceEnv;
+      # Add delay to let system settle and PATH initialize
+      ProcessType = "Background";
+      ThrottleInterval = 300; # Wait 5 minutes before first run
     };
   };
 
@@ -150,6 +178,7 @@ in
       runAtLoad = true; # Run once at login
       nice = 10;
       logBaseName = "${config.xdg.stateHome}/logs/browser-setup";
+      environmentVariables = serviceEnv;
     };
   };
 }

@@ -109,24 +109,5 @@ function M.flush_batch()
 	M.batch_queue = {}
 end
 
--- System stats integration with window-manager.nix system-stats service
-function M.get_system_stats(callback)
-	local cached = M.cache_get("system_stats")
-	if cached then
-		callback(cached)
-		return
-	end
-
-	-- Integration with sketchybar-system-stats from window-manager.nix
-	sbar.exec("ps aux | grep sketchybar-system-stats | grep -v grep", function(result)
-		if result and result ~= "" then
-			-- System stats service is running, data available via events
-			callback({ available = true, source = "service" })
-		else
-			-- Fallback to direct queries
-			callback({ available = false, source = "fallback" })
-		end
-	end)
-end
 
 return M

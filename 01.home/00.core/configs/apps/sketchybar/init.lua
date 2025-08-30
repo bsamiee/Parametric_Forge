@@ -19,19 +19,13 @@ events = require("modules.core.events")
 performance = require("modules.core.performance")
 interactions = require("modules.core.interactions")
 
--- Initialize Tier 2 ecosystem systems
-ecosystem = require("modules.core.ecosystem")
+-- Initialize core systems
 context = require("modules.core.context")
 
--- Initialize all systems in dependency order
+-- Initialize systems in dependency order
 events.init()
-performance.init = performance.init or function() end -- Safe init
 interactions.init()
-ecosystem.init()
 context.init()
-
--- Register cross-system event handlers after all systems are ready
-interactions.register_events()
 
 -- Import configuration modules
 require("modules.bar")

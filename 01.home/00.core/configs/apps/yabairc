@@ -37,15 +37,15 @@ yabai -m signal --add event=dock_did_restart action="sudo yabai --load-sa"
 # Ensure new spaces inherit global padding settings
 yabai -m signal --add event=space_created action="yabai -m config layout bsp"
 
-# --- SketchyBar Integration Signals (Dual-Stream) ---------------------
-# Trigger both official SketchyBar events AND custom ecosystem events
+# --- SketchyBar Integration Signals -------------------------------------
+# Unified state coordination - single JSON file, targeted triggers
 yabai -m signal --add event=space_changed action="
-    sketchybar --trigger space_change SPACE_ID=\$YABAI_SPACE_ID SPACE_INDEX=\$YABAI_SPACE_INDEX 2>/dev/null || true;
-    echo '{\"space_id\":\$YABAI_SPACE_ID,\"space_index\":\$YABAI_SPACE_INDEX}' > /tmp/yabai_space.json"
+    echo '{\"space\":\$YABAI_SPACE_ID,\"window\":\$YABAI_WINDOW_ID,\"event\":\"space\"}' > /tmp/yabai_state.json;
+    sketchybar --trigger space_change 2>/dev/null || true"
 
 yabai -m signal --add event=window_focused action="
-    sketchybar --trigger front_app_switched WINDOW_ID=\$YABAI_WINDOW_ID 2>/dev/null || true;
-    echo '{\"window_id\":\$YABAI_WINDOW_ID}' > /tmp/yabai_window.json"
+    echo '{\"space\":\$YABAI_SPACE_ID,\"window\":\$YABAI_WINDOW_ID,\"event\":\"window\"}' > /tmp/yabai_state.json;
+    sketchybar --trigger window_focus 2>/dev/null || true"
 
 # --- Core Configuration --------------------------------------------------
 # Enable debug output for better troubleshooting (modern best practice)
@@ -55,8 +55,10 @@ yabai -m config debug_output on
 yabai -m config layout bsp
 yabai -m config window_placement second_child
 
-# Enforce BSP layout on all existing spaces (declarative)
-for space in $(yabai -m query --spaces | jq -r '.[].index'); do
+# Enforce BSP layout on all existing spaces and cache count
+SPACE_DATA=$(yabai -m query --spaces)
+SPACE_COUNT=$(echo "$SPACE_DATA" | jq length)
+echo "$SPACE_DATA" | jq -r '.[].index' | while read -r space; do
     yabai -m space "$space" --layout bsp 2>/dev/null || true
 done
 
@@ -68,8 +70,8 @@ yabai -m config left_padding 4   # Balanced lateral space
 yabai -m config right_padding 4  # Perfect symmetry
 yabai -m config window_gap 3     # Inner gap (3/4 ratio)
 
-# Write initial state for cross-tool coordination
-echo '{"padding":4,"gap":3,"mode":"windowed"}' >/tmp/yabai_config.json
+# Write initial unified state
+echo '{"padding":4,"gap":3,"mode":"windowed","space":1,"window":0}' >/tmp/yabai_state.json
 
 # --- External Bar Integration --------------------------------------------
 # SketchyBar integration with proper height allocation
@@ -77,9 +79,7 @@ yabai -m config external_bar all:32:0 # 32px height, 0px bottom
 yabai -m config menubar_opacity 0.0   # Hide native menubar
 
 # --- Window Appearance ---------------------------------------------------
-# Window borders handled by JankyBorders service (see 01.home/00.core/configs/apps/borders/bordersrc)
-# JankyBorders provides superior performance and visual quality over native yabai borders
-yabai -m config window_border off
+yabai -m config window_border off  # JankyBorders handles this
 
 # Swiss Design Opacity Hierarchy - Clear Information Architecture
 yabai -m config window_opacity on
@@ -136,47 +136,19 @@ yabai -m rule --add app="^Docker Desktop$" manage=off
 yabai -m rule --add app="^1Password 7$" manage=off
 
 # Development Tools
-yabai -m rule --add app="^Simulator$" manage=off
-yabai -m rule --add app="^Console$" manage=off
-# Main development apps - manage normally but float preferences
-yabai -m rule --add app="^Code$" title="(Preferences|Settings)" manage=off
-yabai -m rule --add app="^Visual Studio Code$" title="(Preferences|Settings)" manage=off
-yabai -m rule --add app="^Rhino" title="(Preferences|Options|License)" manage=off
-# WezTerm configuration - properly managed by yabai
+yabai -m rule --add app="^(Simulator|Console)$" manage=off
 yabai -m rule --add app="^WezTerm$" manage=on
-yabai -m rule --add app="^WezTerm$" title="(Preferences|Settings)" manage=off
-yabai -m rule --add app="^WezTerm$" title="(Copy|Move|Info)" manage=off
+yabai -m rule --add app="^(Creative Cloud|Finder)$" manage=off
 
-# Adobe Creative Suite
-yabai -m rule --add app="^Adobe" title="(Preferences|Settings)" manage=off
-yabai -m rule --add app="^Creative Cloud" manage=off
-
-# Communication Apps - manage normally but float preferences
-yabai -m rule --add app="^Discord$" title="(Settings|Preferences)" manage=off
-yabai -m rule --add app="^Microsoft Teams" title="(Settings|Preferences)" manage=off
-yabai -m rule --add app="^Telegram$" title="(Settings|Preferences)" manage=off
-
-# Browsers - manage normally but float preferences and special windows
-yabai -m rule --add app="^Arc$" title="(Preferences|Settings|Library)" manage=off
-yabai -m rule --add app="^Firefox$" title="(Preferences|Library)" manage=off
-
-# Media Apps
-yabai -m rule --add app="^Spotify$" title="(Preferences|Settings)" manage=off
-yabai -m rule --add app="^HandBrake$" title="(Preferences|Queue)" manage=off
-
-# Finder - completely exclude from tiling (major usability improvement)
-yabai -m rule --add app="^Finder$" manage=off
-# Enhanced preference window detection for common patterns
+# Universal preference window detection (consolidates all app-specific rules)
+yabai -m rule --add title="(Preferences|Settings|Options|Configuration|About|Library|Queue)" manage=off
 yabai -m rule --add title="^(General|(Tab|Password|Website|Extension)s|AutoFill|Se(arch|curity)|Privacy|Advance)$" manage=off
-yabai -m rule --add title="(Preferences|Settings|Options|Configuration|About)" manage=off
 
-# --- Configuration Validation & Success Report -------------------------
-# Validate core configuration was applied
-if yabai -m query --spaces >/dev/null 2>&1 && yabai -m query --windows >/dev/null 2>&1; then
-    echo "yabai: Configuration loaded successfully"
-    echo "yabai: Refined spacing system active (3px gaps, 4px padding)"
-    echo "yabai: Auto-balance enabled - new windows will resize automatically"
-    echo "yabai: $(yabai -m query --spaces | jq length) spaces available"
+# --- Configuration Validation -------------------------------------------
+if yabai -m query --windows >/dev/null 2>&1; then
+    echo "yabai: Configuration loaded - Refined spacing + Auto-balance active"
+    echo "yabai: $SPACE_COUNT spaces available"
+    sketchybar --trigger yabai_ready 2>/dev/null || true
 else
-    echo "WARNING: Configuration validation failed" >&2
+    echo "WARNING: Configuration validation failed - running in degraded mode" >&2
 fi

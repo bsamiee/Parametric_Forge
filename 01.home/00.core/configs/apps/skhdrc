@@ -69,22 +69,17 @@ shift + ctrl + alt - 9 : yabai -m space --focus 9
 # Core toggles when you need manual control over auto-balance
 # Pure global toggle with cross-tool coordination - windowed (4px) ↔ full (0px) modes
 shift + opt - return : \
-    current="$(yabai -m config top_padding)"; \
-if [ "$current" = "0" ]; then
-    yabai -m config top_padding 4
-    yabai -m config bottom_padding 4
-    yabai -m config left_padding 4
-    yabai -m config right_padding 4
-    yabai -m config window_gap 3
-    echo '{"padding":4,"gap":3,"mode":"windowed"}' >/tmp/yabai_config.json
-else
-    yabai -m config top_padding 0
-    yabai -m config bottom_padding 0
-    yabai -m config left_padding 0
-    yabai -m config right_padding 0
-    yabai -m config window_gap 0
-    echo '{"padding":0,"gap":0,"mode":"full"}' >/tmp/yabai_config.json
-fi
+    if [ "$(yabai -m config top_padding)" = "0" ]; then \
+        yabai -m config top_padding 4; yabai -m config bottom_padding 4; \
+        yabai -m config left_padding 4; yabai -m config right_padding 4; \
+        yabai -m config window_gap 3; \
+        echo '{"padding":4,"gap":3,"mode":"windowed","space":1,"window":0}' >/tmp/yabai_state.json; \
+    else \
+        yabai -m config top_padding 0; yabai -m config bottom_padding 0; \
+        yabai -m config left_padding 0; yabai -m config right_padding 0; \
+        yabai -m config window_gap 0; \
+        echo '{"padding":0,"gap":0,"mode":"full","space":1,"window":0}' >/tmp/yabai_state.json; \
+    fi
 shift + opt - space : yabai -m window --toggle float --grid 4:4:1:1:2:2
 shift + opt - r : yabai -m space --rotate 270 # Fix layout when messy
 
@@ -100,20 +95,22 @@ shift + alt + opt - 7 : yabai -m window --space 7; yabai -m space --focus 7
 shift + alt + opt - 8 : yabai -m window --space 8; yabai -m space --focus 8
 shift + alt + opt - 9 : yabai -m window --space 9; yabai -m space --focus 9
 
-# Window swapping
+# Window operations - arrows for swapping, hjkl for resizing
 shift + alt + opt - left : yabai -m window --swap west
 shift + alt + opt - right : yabai -m window --swap east
 shift + alt + opt - down : yabai -m window --swap south
 shift + alt + opt - up : yabai -m window --swap north
+shift + alt + opt - h : yabai -m window --resize left:-50:0 || yabai -m window --resize right:-50:0
+shift + alt + opt - l : yabai -m window --resize right:50:0 || yabai -m window --resize left:50:0  
+shift + alt + opt - j : yabai -m window --resize bottom:0:50 || yabai -m window --resize top:0:50
+shift + alt + opt - k : yabai -m window --resize top:0:-50 || yabai -m window --resize bottom:0:-50
 
 # Display management (fixed syntax)
 shift + alt + opt - s : yabai -m window --display west; yabai -m display --focus west
 shift + alt + opt - g : yabai -m window --display east; yabai -m display --focus east
 
-# --- TIER 3: Expert Overrides (SUPER = shift+alt+opt+cmd) ------------------
-# When auto-balance isn't enough - rare usage
-shift + alt + opt + cmd - left : yabai -m window --swap west
-shift + alt + opt + cmd - right : yabai -m window --swap east
+# --- TIER 4: Expert Overrides (SUPER = shift+alt+opt+cmd) ------------------
+# Space mirroring for layout corrections
 shift + alt + opt + cmd - x : yabai -m space --mirror x-axis
 shift + alt + opt + cmd - y : yabai -m space --mirror y-axis
 
@@ -123,8 +120,15 @@ alt - tab : yabai -m space --focus recent || yabai -m space --focus first
 shift + alt + opt + cmd - c : yabai -m space --create && index="$(yabai -m query --spaces --display | jq '.[-1].index')" && yabai -m space --focus "${index}"
 shift + alt + opt + cmd - d : yabai -m space --destroy
 
-# --- Service Management -----------------------------------------------------
-# Nix-managed LaunchD services (not Homebrew)
-ctrl + alt - q : launchctl unload ~/Library/LaunchAgents/org.nixos.yabai.plist
-ctrl + alt - s : launchctl load ~/Library/LaunchAgents/org.nixos.yabai.plist
-ctrl + alt - r : launchctl kickstart -k "gui/$(id -u)/org.nixos.yabai"
+# --- Service Management with Error Recovery ---------------------------------
+# Enhanced service management with validation and recovery
+ctrl + alt - q : launchctl unload ~/Library/LaunchAgents/org.nixos.yabai.plist && echo "yabai: Service stopped"
+ctrl + alt - s : launchctl load ~/Library/LaunchAgents/org.nixos.yabai.plist && echo "yabai: Service started"
+ctrl + alt - r : launchctl kickstart -k "gui/$(id -u)/org.nixos.yabai" && sleep 2 && yabai -m query --spaces >/dev/null 2>&1 && echo "yabai: Service restarted successfully" || echo "yabai: Service restart failed"
+
+# Emergency service recovery (Hold shift for full reset)
+shift + ctrl + alt - r : \
+    echo "Emergency service recovery initiated..."; \
+    launchctl kickstart -k "gui/$(id -u)/org.nixos.yabai"; \
+    launchctl kickstart -k "gui/$(id -u)/org.nixos.skhd"; \
+    echo "Full service recovery completed"

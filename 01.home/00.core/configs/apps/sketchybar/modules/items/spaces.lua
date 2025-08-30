@@ -54,8 +54,8 @@ for i, name in ipairs(space_names) do
 		end, 0.1, "space_change_" .. i)
 	end)
 
-	-- Window focus event optimized for minimal overhead
-	space:subscribe("window_focused", function(env)
+	-- Window focus event optimized for minimal overhead  
+	space:subscribe("window_focus", function(env)
 		events.trigger("yabai_space_changed", { space_id = i })
 	end)
 
@@ -105,7 +105,7 @@ sbar.add("item", "front_app", {
 			},
 		})
 	end)
-	:subscribe("window_focused", function(env)
+	:subscribe("window_focus", function(env)
 		-- Optimized front app updates with reduced debounce time
 		performance.debounce(function()
 			performance.yabai_query_cached("--windows --window", 2, function(window_data)
@@ -125,8 +125,8 @@ interactions.register_click("front_app", function(click_env)
 	end
 end)
 
--- Ecosystem context indicator
-sbar.add("item", "ecosystem_context", {
+-- Project context indicator (foundation for future widgets)
+sbar.add("item", "project_context", {
 	position = "right",
 	icon = {
 		string = "⚡",
@@ -134,11 +134,12 @@ sbar.add("item", "ecosystem_context", {
 		padding_left = 8,
 	},
 	label = {
-		string = "Ready",
+		string = "",
 		color = colors.foreground,
 		padding_right = 10,
 	},
 	background = {
+		drawing = false,
 		color = colors.comment,
 		corner_radius = 6,
 		height = 24,
@@ -150,20 +151,25 @@ sbar.add("item", "ecosystem_context", {
 		rust = colors.orange,
 		python = colors.yellow,
 		git = colors.red,
-		general = colors.comment,
 	}
 
-	sbar.set("ecosystem_context", {
-		icon = {
-			color = type_colors[project_type] or colors.accent,
-			string = project_type == "nix" and "❄" or "⚡",
-		},
-		label = {
-			string = project_type:upper(),
-			color = colors.foreground,
-		},
-		background = {
-			color = (type_colors[project_type] or colors.comment) & 0x00ffffff | 0x40000000, -- 25% opacity via alpha channel
-		},
-	})
+	if project_type ~= "general" then
+		sbar.set("project_context", {
+			icon = {
+				color = type_colors[project_type] or colors.accent,
+				string = project_type == "nix" and "❄" or "⚡",
+			},
+			label = {
+				string = project_type:upper(),
+			},
+			background = {
+				drawing = true,
+				color = colors.comment,
+			},
+		})
+	else
+		sbar.set("project_context", {
+			background = { drawing = false },
+		})
+	end
 end)
