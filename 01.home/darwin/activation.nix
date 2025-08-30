@@ -31,8 +31,84 @@
         echo "  [OK] Migrated npm config (original preserved)"
       fi
     '';
+    # --- Smart Mac App Store Management ------------------------------------
+    smartMasInstall = lib.hm.dag.entryAfter [ "xdgMigration" ] ''
+      # Ensure homebrew PATH is available for mas CLI
+      export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
+      
+      echo "[Parametric Forge] Smart Mac App Store management..."
+
+      if command -v mas >/dev/null 2>&1; then
+        # Check if user is signed into App Store
+        if ! mas account >/dev/null 2>&1; then
+          echo "  [SKIP] Not signed into Mac App Store"
+          echo "  [INFO] Sign in via System Preferences > Apple ID or run 'mas signin'"
+        else
+          # App ID mappings
+          declare -A MAS_APPS=(
+            ["Microsoft Excel"]="462058435"
+            ["Microsoft PowerPoint"]="462062816" 
+            ["Microsoft Word"]="462054704"
+            ["OneDrive"]="823766827"
+            ["Drafts"]="1435957248"
+            ["Fantastical"]="975937182"
+            ["Goodnotes"]="1444383602"
+            ["CARROT Weather"]="993487541"
+            ["CleanMyMac"]="1339170533"
+            ["Icon Tool for Developers"]="554660130"
+            ["Keka"]="470158793"
+            ["Parcel"]="639968404"
+            ["Rapidmg"]="6451349778"
+            ["MEGAVPN"]="6456784858"
+          )
+
+          INSTALLED_IDS=$(mas list 2>/dev/null | awk '{print $1}' || echo "")
+          OUTDATED_IDS=$(mas outdated 2>/dev/null | awk '{print $1}' || echo "")
+
+          INSTALL_COUNT=0
+          UPDATE_COUNT=0
+          CURRENT_COUNT=0
+          FAIL_COUNT=0
+
+          for app_name in "''${!MAS_APPS[@]}"; do
+            app_id="''${MAS_APPS[$app_name]}"
+            
+            if echo "$INSTALLED_IDS" | grep -q "^$app_id$"; then
+              if echo "$OUTDATED_IDS" | grep -q "^$app_id$"; then
+                echo "  [UPDATE] Updating: $app_name"
+                if mas upgrade "$app_id" 2>/dev/null; then
+                  UPDATE_COUNT=$((UPDATE_COUNT + 1))
+                else
+                  echo "  [WARN] Update failed: $app_name"
+                  FAIL_COUNT=$((FAIL_COUNT + 1))
+                fi
+              else
+                CURRENT_COUNT=$((CURRENT_COUNT + 1))
+              fi
+            else
+              echo "  [INSTALL] Installing: $app_name"
+              if mas install "$app_id" 2>/dev/null; then
+                INSTALL_COUNT=$((INSTALL_COUNT + 1))
+              else
+                echo "  [WARN] Install failed: $app_name"
+                FAIL_COUNT=$((FAIL_COUNT + 1))
+              fi
+            fi
+          done
+
+          if [ $((INSTALL_COUNT + UPDATE_COUNT)) -gt 0 ]; then
+            echo "  [SUMMARY] MAS: $INSTALL_COUNT installed, $UPDATE_COUNT updated"
+          fi
+          [ $CURRENT_COUNT -gt 0 ] && echo "  [OK] $CURRENT_COUNT apps current"
+          [ $FAIL_COUNT -gt 0 ] && echo "  [WARN] $FAIL_COUNT operations failed"
+        fi
+      else
+        echo "  [SKIP] mas CLI not found"
+      fi
+    '';
+
     # --- Comprehensive User-Level Spotlight Protection ---------------------
-    spotlightShield = lib.hm.dag.entryAfter [ "xdgMigration" ] ''
+    spotlightShield = lib.hm.dag.entryAfter [ "smartMasInstall" ] ''
       export PATH="/usr/bin:/bin:/usr/sbin:/sbin:$PATH"
 
       echo "[Parametric Forge] Deploying comprehensive user-level Spotlight protection..."
