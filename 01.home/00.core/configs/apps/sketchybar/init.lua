@@ -39,6 +39,10 @@ require("modules.items.clock")
 require("modules.items.cpu")
 require("modules.items.volume")
 
+-- Import advanced components leveraging existing foundation
+require("modules.items.brackets")
+require("modules.items.slider")
+
 -- Validate yabai integration before starting
 local yabai_ok = false
 sbar.exec("command -v yabai", function(result)

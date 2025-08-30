@@ -21,11 +21,7 @@
     "wezterm/wezterm.lua".source = ./00.core/configs/apps/wezterm.lua;
     # Note: starship.toml handled by programs.starship.settings in shell-tools.nix
 
-    # --- Window Management (macOS) ------------------------------------------
-    "yabai/yabairc" = {
-      source = ./00.core/configs/apps/yabairc;
-      executable = true; # Yabai requires executable config files
-    };
+    # Note: skhd config deployed to ~/.skhdrc (see home.file section)
     "borders/bordersrc".source = ./00.core/configs/apps/borders/bordersrc; # JankyBorders window borders config
 
     # --- SketchyBar Configuration (Modern SbarLua) --------------------------
@@ -150,6 +146,10 @@
     ".tldrrc".source = ./00.core/configs/system/tldr/.tldrrc;
 
     # --- Window Management (macOS - Non-XDG) --------------------------------
+    ".yabairc" = {
+      source = ./00.core/configs/apps/yabairc;
+      executable = true; # yabai requires executable config files
+    };
     ".skhdrc" = {
       source = ./00.core/configs/apps/skhdrc;
       executable = true; # skhd requires executable config files

@@ -37,7 +37,7 @@ local volume = sbar.add("item", "volume", {
 	background = {
 		color = colors.comment,
 	},
-	click_script = "osascript -e 'set volume output muted not (output muted of (get volume settings))'",
+	click_script = "sketchybar --set volume_slider drawing=toggle",
 })
 
 -- Update function
@@ -66,6 +66,11 @@ end
 
 -- Subscribe to volume change events
 volume:subscribe("volume_change", update_volume)
+
+-- Listen for slider updates using existing event system
+events.register("volume_updated", function(data)
+	update_volume()
+end)
 
 -- Initial update
 update_volume()

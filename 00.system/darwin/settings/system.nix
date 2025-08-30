@@ -176,13 +176,19 @@ in
       "com.apple.Terminal" = {
         SecureKeyboardEntry = mkDefault false;
       };
-      # --- File Type Associations (TEMPORARILY DISABLED FOR ARC TESTING) ----
-      # TEMPORARILY DISABLED - Testing if file type associations cause Arc SwiftUI observer loop
-      # "com.apple.LaunchServices/com.apple.launchservices.secure" = {
-      #   LSHandlers = [
-      #     # All file type associations temporarily disabled
-      #   ];
-      # };
+      # --- File Type Associations (Arc Browser) ------------------------------
+      "com.apple.LaunchServices/com.apple.launchservices.secure" = {
+        LSHandlers = [
+          # Web URLs
+          { LSHandlerContentType = "public.url"; LSHandlerRoleAll = "company.thebrowser.Browser"; }
+          { LSHandlerURLScheme = "http"; LSHandlerRoleAll = "company.thebrowser.Browser"; }
+          { LSHandlerURLScheme = "https"; LSHandlerRoleAll = "company.thebrowser.Browser"; }
+          { LSHandlerURLScheme = "ftp"; LSHandlerRoleAll = "company.thebrowser.Browser"; }
+          # Web files
+          { LSHandlerContentType = "public.html"; LSHandlerRoleAll = "company.thebrowser.Browser"; }
+          { LSHandlerContentType = "public.xhtml"; LSHandlerRoleAll = "company.thebrowser.Browser"; }
+        ];
+      };
     };
   };
 }

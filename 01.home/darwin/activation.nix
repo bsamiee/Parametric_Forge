@@ -72,10 +72,14 @@
 
       # CRITICAL: All Application Support directories (browsers cause massive CPU usage)
       echo "  [PHASE 1] Protecting all browser and app data..."
-      find "$HOME/Library/Application Support" -maxdepth 1 -type d | while read -r dir; do
-        [[ "$(basename "$dir")" == "Application Support" ]] && continue
-        shield_directory "$dir"
-      done
+      APP_SUPPORT_PROTECTED=0
+      if [ -d "$HOME/Library/Application Support" ]; then
+        while IFS= read -r -d $'\0' dir; do
+          if shield_directory "$dir"; then
+            ((APP_SUPPORT_PROTECTED++))
+          fi
+        done < <(find "$HOME/Library/Application Support" -maxdepth 1 -type d ! -name "Application Support" -print0 2>/dev/null)
+      fi
 
       # Development and build directories
       DEV_DIRS=(
@@ -143,16 +147,22 @@
         -name "node_modules" -o -name ".git" \
       \) -print0 2>/dev/null)
 
-      # Summary
-      APP_SUPPORT_COUNT=$(find "$HOME/Library/Application Support" -maxdepth 1 -type d | wc -l)
+      # Summary with actual counts
       echo "  [SUMMARY] Protection deployed:"
-      echo "    • Application Support directories: $APP_SUPPORT_COUNT"
+      echo "    • Application Support directories: $APP_SUPPORT_PROTECTED"
       echo "    • Development caches: $DEV_PROTECTED"
       echo "    • Cloud sync folders: $CLOUD_PROTECTED"  
       echo "    • Python caches: $PYTHON_CACHE_COUNT"
       echo "    • Node modules: $NODE_MODULES_COUNT"
       echo "    • Git repositories: $GIT_COUNT"
-      echo "  [SUCCESS] Comprehensive Spotlight protection active"
+      
+      # Only log if meaningful work was done
+      TOTAL_PROTECTED=$((APP_SUPPORT_PROTECTED + DEV_PROTECTED + CLOUD_PROTECTED + PYTHON_CACHE_COUNT + NODE_MODULES_COUNT + GIT_COUNT))
+      if [ $TOTAL_PROTECTED -gt 0 ]; then
+        echo "  [SUCCESS] $TOTAL_PROTECTED directories newly protected"
+      else
+        echo "  [OK] All directories already protected (state-managed)"
+      fi
     '';
   };
 }

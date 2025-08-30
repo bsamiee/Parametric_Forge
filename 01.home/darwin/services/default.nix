@@ -23,6 +23,5 @@
     ./op-daemons.nix
     ./npm-check-daemon.nix
     ./app-management-daemon.nix
-    ./system-integration-daemon.nix
   ];
 }

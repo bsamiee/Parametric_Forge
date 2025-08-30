@@ -78,34 +78,8 @@
       ln -sf "${pkgs.libspatialite}/lib/mod_spatialite.dylib" "$HOME/.local/lib/mod_spatialite.dylib" 2>/dev/null || true
     '';
 
-    # --- Window Manager Services Setup -------------------------------------
-    windowManagerServices = lib.hm.dag.entryAfter [ "sqliteExtensions" ] ''
-      ${lib.optionalString context.isDarwin ''
-        # Install native window manager services (one-time setup)
-        if command -v yabai >/dev/null 2>&1 && command -v skhd >/dev/null 2>&1; then
-          echo "[Window Manager] Installing native services..."
-          
-          # Install yabai service
-          if ! launchctl list | grep -q "org.nixos.yabai"; then
-            yabai --install-service && echo "  [OK] yabai service installed"
-          else
-            echo "  [OK] yabai service already installed"
-          fi
-          
-          # Install skhd service
-          if ! launchctl list | grep -q "org.nixos.skhd"; then
-            skhd --install-service && echo "  [OK] skhd service installed"
-          else
-            echo "  [OK] skhd service already installed"
-          fi
-        else
-          echo "  [SKIP] yabai or skhd not found, skipping service installation"
-        fi
-      ''}
-    '';
-
     # --- Basic 1Password Directory Setup -----------------------------------
-    opDirectories = lib.hm.dag.entryAfter [ "windowManagerServices" ] ''
+    opDirectories = lib.hm.dag.entryAfter [ "sqliteExtensions" ] ''
       echo "[1Password] Setting up directories and permissions..."
 
       # Ensure SSH directory exists with proper permissions
