@@ -181,6 +181,16 @@
         }
         _set_docker_host
 
+        # Window manager auto-start
+        ${lib.optionalString pkgs.stdenv.isDarwin ''
+          if ! pgrep -q yabai && command -v yabai >/dev/null 2>&1; then
+            yabai --start-service >/dev/null 2>&1 && echo "🪟 yabai started"
+          fi
+          if ! pgrep -q skhd && command -v skhd >/dev/null 2>&1; then
+            skhd --start-service >/dev/null 2>&1 && echo "⌨️ skhd started"
+          fi
+        ''}
+
         # Set SSH_AUTH_SOCK for 1Password if available
         ONEPASS_SOCKET="${myLib.secrets.opSSHSocket context}"
         [ -S "$ONEPASS_SOCKET" ] && export SSH_AUTH_SOCK="$ONEPASS_SOCKET"

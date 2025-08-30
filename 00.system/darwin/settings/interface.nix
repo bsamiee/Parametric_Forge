@@ -26,7 +26,7 @@ in
         static-only = mkDefault false;
         minimize-to-application = mkDefault true;
         mineffect = mkDefault "scale";
-        launchanim = mkDefault true;
+        launchanim = mkDefault false; # PERFORMANCE: Disable launch animations
         showhidden = mkDefault false;
         expose-group-apps = mkDefault false;
         mru-spaces = mkDefault false;
@@ -104,9 +104,9 @@ in
         NSNavPanelExpandedStateForSaveMode = mkDefault true;
         NSNavPanelExpandedStateForSaveMode2 = mkDefault true;
         NSDocumentSaveNewDocumentsToCloud = mkDefault false;
-        NSWindowResizeTime = mkDefault 0.001;
-        NSWindowShouldDragOnGesture = mkDefault true;
-        NSAutomaticWindowAnimationsEnabled = mkDefault true;
+        NSWindowResizeTime = mkDefault 0.2; # TESTING: Reset to normal speed
+        NSWindowShouldDragOnGesture = mkDefault false; # TESTING: Disable unusual window drag
+        NSAutomaticWindowAnimationsEnabled = mkDefault false; # PERFORMANCE: Disable window animations
         NSUseAnimatedFocusRing = mkDefault false;
         NSScrollAnimationEnabled = mkDefault true;
         AppleShowAllExtensions = mkDefault true;

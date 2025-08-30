@@ -7,7 +7,6 @@
       "Bash(basedpyright:*)",
       "Bash(shellcheck:*)",
       "Read",
-      "mcp__codex__codex",
       "mcp__rhino__execute_rhinoscript_python_code",
       "mcp__rhino__get_object_info",
       "mcp__rhino__get_document_info",
@@ -51,6 +50,11 @@
             "type": "command",
             "command": "python3 ~/.claude/hooks/ui_prompt_helper.py",
             "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "python3 ~/.claude/hooks/unified_logger.py",
+            "timeout": 3
           }
         ]
       }
@@ -62,6 +66,11 @@
           {
             "type": "command",
             "command": "python3 ~/.claude/hooks/tool_control.py"
+          },
+          {
+            "type": "command",
+            "command": "python3 ~/.claude/hooks/unified_logger.py",
+            "timeout": 3
           }
         ]
       }
@@ -73,6 +82,11 @@
           {
             "type": "command",
             "command": "python3 ~/.claude/hooks/file_cleanup.py"
+          },
+          {
+            "type": "command",
+            "command": "python3 ~/.claude/hooks/unified_logger.py",
+            "timeout": 3
           }
         ]
       }

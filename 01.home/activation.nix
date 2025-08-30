@@ -71,20 +71,22 @@
       ln -sf "${pkgs.libspatialite}/lib/mod_spatialite.dylib" "$HOME/.local/lib/mod_spatialite.dylib" 2>/dev/null || true
     '';
 
-    # --- Consolidated 1Password Setup ---------------------------------------
+    # --- Consolidated 1Password Setup with Retry Logic ---------------------
     opSetup = lib.hm.dag.entryAfter [ "sqliteExtensions" ] ''
       echo "[1Password] Initializing secrets and SSH..."
 
-      # Check CLI availability and authentication
+      # Check CLI availability and authentication (simplified)
       if (${myLib.secrets.opAvailable}); then
         echo "  [OK] CLI found"
         if (${myLib.secrets.opAuthenticated}); then
           echo "  [OK] Authenticated"
         else
           echo "  [WARN] Not authenticated - run 'op signin'"
+          echo "  [INFO] Continuing with limited functionality..."
         fi
       else
         echo "  [WARN] CLI not found - install with: brew install 1password-cli"
+        echo "  [INFO] 1Password features will be unavailable"
       fi
 
       # Check SSH agent socket

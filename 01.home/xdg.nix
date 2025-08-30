@@ -59,6 +59,7 @@
       mkdir -pm 755 "${config.xdg.configHome}/npm"
       mkdir -pm 755 "${config.xdg.configHome}/docker"
       mkdir -pm 755 "${config.xdg.configHome}/containers"
+      mkdir -pm 755 "${config.xdg.configHome}/dig"
       mkdir -pm 755 "${config.xdg.configHome}/gh"
       mkdir -pm 755 "${config.xdg.configHome}/gitleaks"
       mkdir -pm 755 "${config.xdg.configHome}/lazygit"
@@ -102,6 +103,7 @@
       # Lua
       mkdir -pm 755 "${config.xdg.configHome}/luarocks"
       mkdir -pm 755 "${config.xdg.configHome}/lua-language-server"
+      mkdir -pm 755 "${config.xdg.configHome}/luacheck"
       # Formatting tools (only those that support XDG)
       mkdir -pm 755 "${config.xdg.configHome}/yamllint"
       # Java

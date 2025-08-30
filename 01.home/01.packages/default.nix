@@ -35,14 +35,6 @@ let
     rust = import ./rust-tools.nix { inherit pkgs; };
     node = import ./node-tools.nix { inherit pkgs; };
     lua = import ./lua-tools.nix { inherit pkgs; };
-    sketchybar = import ./sketchybar.nix {
-      inherit
-        lib
-        pkgs
-        myLib
-        context
-        ;
-    };
   };
 
 in
@@ -59,7 +51,6 @@ in
     allPackageModules.devops
     allPackageModules.media
     allPackageModules.aiTools
-    allPackageModules.sketchybar
 
     # --- Development Languages -------------------------------------
     allPackageModules.python

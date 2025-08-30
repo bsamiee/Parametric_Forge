@@ -23,11 +23,11 @@ echo "yabai: Starting configuration..."
 
 # --- Scripting Addition Setup --------------------------------------------
 # Enable advanced window control features (required for borders and opacity)
-# Note: Requires SIP to be partially disabled for full functionality
-if sudo yabai --load-sa 2>/dev/null; then
+# Note: Requires passwordless sudo configuration in /private/etc/sudoers.d/yabai
+if sudo --non-interactive yabai --load-sa 2>/dev/null; then
     echo "yabai: Scripting addition loaded successfully"
 else
-    echo "WARNING: Scripting addition failed to load (advanced features unavailable)" >&2
+    echo "WARNING: Scripting addition failed to load (configure passwordless sudo)" >&2
 fi
 
 # Auto-reload scripting addition when dock restarts

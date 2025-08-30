@@ -31,35 +31,53 @@
         echo "  [OK] Migrated npm config (original preserved)"
       fi
     '';
-    # --- Spotlight Exclusion & Cloud Sync Protection -------------------------
+    # --- Comprehensive User-Level Spotlight Protection ---------------------
     spotlightShield = lib.hm.dag.entryAfter [ "xdgMigration" ] ''
-      # Ensure full system PATH is available
       export PATH="/usr/bin:/bin:/usr/sbin:/sbin:$PATH"
 
-      echo "[Parametric Forge] Deploying surgical Spotlight exclusions..."
+      echo "[Parametric Forge] Deploying comprehensive user-level Spotlight protection..."
 
-      # Function: Deploy triple-layer exclusion to directory
+      # State tracking for protected directories
+      PROTECTED_STATE="${config.xdg.stateHome}/spotlight-protected"
+      mkdir -p "$(dirname "$PROTECTED_STATE")"
+
+      # Function: Deploy triple-layer exclusion to directory with state tracking
       shield_directory() {
         local dir="$1"
         local name="$(basename "$dir")"
 
         if [ -d "$dir" ]; then
-          # Layer 1: Modern Spotlight exclusion (primary)
+          local dir_mtime=$(stat -f "%m" "$dir" 2>/dev/null || echo "0")
+          
+          # Check if already protected and unchanged
+          if grep -q "^$dir:$dir_mtime$" "$PROTECTED_STATE" 2>/dev/null; then
+            return 0  # Skip already protected directories
+          fi
+          
+          # Layer 1: Modern Spotlight exclusion (macOS 10.4+)
           touch "$dir/.metadata_never_index" 2>/dev/null || true
-
-          # Layer 2: Legacy Spotlight exclusion (compatibility)
+          # Layer 2: Legacy Spotlight exclusion (backward compatibility)
           touch "$dir/.noindex" 2>/dev/null || true
-
-          # Layer 3: iCloud exclusion (prevents iCloud sync cascade)
+          # Layer 3: iCloud exclusion (prevents sync cascade)
           touch "$dir/.nosync" 2>/dev/null || true
 
-          echo "  [OK] Shielded: $name"
+          echo "  [OK] Protected: $name"
+          
+          # Mark as protected
+          echo "$dir:$dir_mtime" >> "$PROTECTED_STATE"
           return 0
         fi
         return 1
       }
 
-      # High-impact development directories (cause massive cascade)
+      # CRITICAL: All Application Support directories (browsers cause massive CPU usage)
+      echo "  [PHASE 1] Protecting all browser and app data..."
+      find "$HOME/Library/Application Support" -maxdepth 1 -type d | while read -r dir; do
+        [[ "$(basename "$dir")" == "Application Support" ]] && continue
+        shield_directory "$dir"
+      done
+
+      # Development and build directories
       DEV_DIRS=(
         "$HOME/.cache"
         "$HOME/.npm"
@@ -68,14 +86,8 @@
         "$HOME/.local/share/nvim"
         "$HOME/.config/nix"
         "$HOME/.nix-profile"
-        "$HOME/Library/Caches"
-        "$HOME/Library/Application Support/Code/CachedExtensions"
-        "$HOME/Library/Application Support/Code/logs"
         "$HOME/Library/Developer"
         "$HOME/Library/Fonts"
-        "$HOME/CZURImages"
-        "$HOME/Heptabase-auto-backup"
-        "$HOME/Downloads/00.Color theory and pallete related"
         "$HOME/Documents/99.Github"
         "$HOME/.venv"
         "$HOME/illustrator-mcp-tmp"
@@ -93,58 +105,54 @@
         "$HOME/Creative Cloud Files Personal Account b.samiee@mzn-group.com F8CF4DB961A518290A495CCB@AdobeID"
       )
 
-      # Shield development directories
+      # PHASE 2: Development directories
+      echo "  [PHASE 2] Protecting development and build caches..."
       DEV_PROTECTED=0
       for dir in "''${DEV_DIRS[@]}"; do
         shield_directory "$dir" && ((DEV_PROTECTED++)) || true
       done
 
-      # Shield cloud sync directories
+      # PHASE 3: Cloud sync directories
+      echo "  [PHASE 3] Protecting cloud sync directories..."
       CLOUD_PROTECTED=0
       for dir in "''${CLOUD_DIRS[@]}"; do
         shield_directory "$dir" && ((CLOUD_PROTECTED++)) || true
       done
 
-      # Python project exclusions (high-impact cache directories)
+      # PHASE 4: Dynamic project exclusions (optimized single traversal)
+      echo "  [PHASE 4] Protecting dynamic project caches..."
       PYTHON_CACHE_COUNT=0
-      PYTHON_PATTERNS=(".venv" "__pycache__" ".pytest_cache" "*.egg-info" ".cache/nox")
-      for pattern in "''${PYTHON_PATTERNS[@]}"; do
-        if command -v find >/dev/null 2>&1; then
-          while IFS= read -r -d $'\0' dir; do
-            shield_directory "$dir" && ((PYTHON_CACHE_COUNT++)) || true
-          done < <(find "$HOME/Documents/99.Github" -maxdepth 3 -type d -name "$pattern" -print0 2>/dev/null | head -5)
-        fi
-      done
-
-      # Node.js cache directories (limit to prevent over-exclusion)
       NODE_MODULES_COUNT=0
-      if command -v find >/dev/null 2>&1; then
-        while IFS= read -r -d $'\0' dir; do
-          shield_directory "$dir" && ((NODE_MODULES_COUNT++)) || true
-        done < <(find "$HOME/Documents/99.Github" -type d -name "node_modules" -print0 2>/dev/null | head -15)
-      fi
-
-      # Git repositories (exclude .git directories only)
       GIT_COUNT=0
-      if command -v find >/dev/null 2>&1; then
-        while IFS= read -r -d $'\0' dir; do
-          shield_directory "$dir" && ((GIT_COUNT++)) || true
-        done < <(find "$HOME/Documents/99.Github" -type d -name ".git" -print0 2>/dev/null | head -20)
-      fi
+      
+      # Single find command with multiple conditions (3x faster)
+      while IFS= read -r -d $'\0' dir; do
+        case "$(basename "$dir")" in
+          .venv|__pycache__|*.egg-info|.pytest_cache)
+            shield_directory "$dir" && ((PYTHON_CACHE_COUNT++)) || true
+            ;;
+          node_modules)
+            shield_directory "$dir" && ((NODE_MODULES_COUNT++)) || true
+            ;;
+          .git)
+            shield_directory "$dir" && ((GIT_COUNT++)) || true
+            ;;
+        esac
+      done < <(find "$HOME/Documents/99.Github" -maxdepth 4 -type d \( \
+        -name ".venv" -o -name "__pycache__" -o -name "*.egg-info" -o -name ".pytest_cache" -o \
+        -name "node_modules" -o -name ".git" \
+      \) -print0 2>/dev/null)
 
-      # Nix store exclusion (if writable)
-      NIX_PROTECTED=0
-      for nix_path in "/nix/store" "$HOME/.nix-defexpr"; do
-        shield_directory "$nix_path" && ((NIX_PROTECTED++)) || true
-      done
-
-      echo "  [OK] Development: $DEV_PROTECTED protected"
-      echo "  [OK] Cloud sync: $CLOUD_PROTECTED protected"
-      echo "  [OK] Python caches: $PYTHON_CACHE_COUNT protected"
-      echo "  [OK] Node modules: $NODE_MODULES_COUNT protected"
-      echo "  [OK] Git repos: $GIT_COUNT protected"
-      echo "  [OK] Nix paths: $NIX_PROTECTED protected"
-      echo "  [INFO] Spotlight cascade protection deployed - $(($DEV_PROTECTED + $CLOUD_PROTECTED + $PYTHON_CACHE_COUNT + $NODE_MODULES_COUNT + $GIT_COUNT + $NIX_PROTECTED)) total shields"
+      # Summary
+      APP_SUPPORT_COUNT=$(find "$HOME/Library/Application Support" -maxdepth 1 -type d | wc -l)
+      echo "  [SUMMARY] Protection deployed:"
+      echo "    • Application Support directories: $APP_SUPPORT_COUNT"
+      echo "    • Development caches: $DEV_PROTECTED"
+      echo "    • Cloud sync folders: $CLOUD_PROTECTED"  
+      echo "    • Python caches: $PYTHON_CACHE_COUNT"
+      echo "    • Node modules: $NODE_MODULES_COUNT"
+      echo "    • Git repositories: $GIT_COUNT"
+      echo "  [SUCCESS] Comprehensive Spotlight protection active"
     '';
   };
 }

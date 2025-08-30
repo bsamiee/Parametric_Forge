@@ -13,13 +13,13 @@ sbar.bar({
     height = 32,
     blur_radius = 30,
     position = "top",
-    sticky = false,
+    sticky = true,
     padding_left = 10,
     padding_right = 10,
     color = colors.background,
-    corner_radius = 8,
-    y_offset = 8,
-    margin = 10,
+    corner_radius = 0,
+    y_offset = 0,
+    margin = 0,
 })
 
 -- Set default item properties

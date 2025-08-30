@@ -60,7 +60,7 @@ in
         AppleEnableMouseSwipeNavigateWithScrolls = mkDefault false;
         AppleEnableSwipeNavigateWithScrolls = mkDefault false;
         "com.apple.swipescrolldirection" = mkDefault null;
-        NSWindowShouldDragOnGesture = mkDefault true;
+        # NSWindowShouldDragOnGesture = mkDefault true; # MOVED to interface.nix to avoid conflict
       };
       # --- Advanced Input Customizations ------------------------------------
       CustomUserPreferences = {

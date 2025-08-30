@@ -45,7 +45,10 @@
       "WebFetch(domain:github.com)",
       "WebFetch(domain:github.com)",
       "WebFetch(domain:yazi-rs.github.io)",
-      "WebFetch(domain:starship.rs)"
+      "WebFetch(domain:starship.rs)",
+      "mcp__filesystem__read_text_file",
+      "mcp__filesystem__read_text_file",
+      "mcp__filesystem__read_text_file"
     ],
     "deny": [
       "WebSearch",

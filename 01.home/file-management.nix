@@ -33,8 +33,9 @@
     # Target: ~/.config/sketchybar/ (XDG_CONFIG_HOME/sketchybar/)
     #
     # Deployment Structure:
-    # ├── init.lua              - SbarLua main entry point
-    # ├── modules/              - Lua configuration modules
+    # ├── sketchybarrc         - Main bootstrap script (executable)
+    # ├── init.lua             - SbarLua main entry point
+    # ├── modules/             - Lua configuration modules
     # │   ├── bar.lua          - Bar configuration (position, appearance)
     # │   ├── colors.lua       - Dracula color scheme definitions
     # │   ├── icons.lua        - Icon mappings and Nerd Font symbols
@@ -46,10 +47,13 @@
     # │       └── volume.lua   - Audio control with mute toggle
     # ├── providers/           - Binary providers for system data
     # │   └── system-stats     - Native system stats provider
-    # ├── helpers/             - Utility scripts
-    # │   └── icon_map.sh      - App icon mapping script
     # └── helpers/             - Utility scripts and icon mappings
     #
+    # Bootstrap script - SketchyBar looks for this by default
+    "sketchybar/sketchybarrc" = {
+      source = ./00.core/configs/apps/sketchybar/sketchybarrc;
+      executable = true; # Must be executable for SketchyBar to run it
+    };
     # Main SbarLua configuration
     "sketchybar/init.lua".source = ./00.core/configs/apps/sketchybar/init.lua;
     # Lua modules directory - contains bar, colors, icons, and item modules
@@ -150,14 +154,8 @@
       source = ./00.core/configs/apps/skhdrc;
       executable = true; # skhd requires executable config files
     };
-
-    # --- SketchyBar Fonts (Local Fonts Directory) ---------------------------
-    # Note: App font now installed via Homebrew cask (font-sketchybar-app-font)
-
-    # --- Asset Folder Files -------------------------------------------------
-    # Claude configs deployed to .claude/ for hooks, agents, commands, etc.
-    # Note: Claude Code CLI expects .claude.json in ~/ (not ~/.claude/)
   }
+  # --- Claude Code CLI Configuration ----------------------------------------
   // (myLib.build.deployDir ./00.core/configs/apps/claude ".claude");
 
   # --- Asset Bin Scripts (Added to PATH) ------------------------------------

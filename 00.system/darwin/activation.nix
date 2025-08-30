@@ -26,40 +26,35 @@
       '';
       deps = [ ];
     };
-    # --- Performance Optimizations ------------------------------------------
-    performanceOptimizations = {
+    # --- System-Level Spotlight Protection ----------------------------------
+    systemSpotlightProtection = {
       text = ''
-        echo "[Parametric Forge] Applying performance optimizations..."
+        # Simplified logging: 0=silent, 1=minimal, 2=verbose (default)  
+        LOG_LEVEL=''${PARAMETRIC_FORGE_LOG_LEVEL:-2}
+        
+        [ "$LOG_LEVEL" -ge 1 ] && echo "[Parametric Forge] Applying system-level Spotlight protection..."
 
-        # Proven mdutil exclusions (nix-darwin community approach)
-        if [ -d "/nix" ]; then
-          sudo mdutil -i off /nix 2>/dev/null && echo "  [OK] Disabled Spotlight indexing: /nix"
-          sudo tmutil addexclusion /nix 2>/dev/null && echo "  [OK] Time Machine excluded: /nix"
-        fi
-
-        # Cloud storage exclusions (if not manually added to Privacy)
-        CLOUD_DIR="${context.userHome}/Library/CloudStorage"
-        if [ -d "$CLOUD_DIR" ]; then
-          sudo mdutil -i off "$CLOUD_DIR" 2>/dev/null && echo "  [OK] Disabled Spotlight indexing: CloudStorage"
-          sudo tmutil addexclusion "$CLOUD_DIR" 2>/dev/null && echo "  [OK] Time Machine excluded: CloudStorage"
-        fi
-
-        # Cache directories exclusions
-        CACHE_DIRS=(
-          "${context.userHome}/Library/Caches"
-          "${context.userHome}/.cache" 
+        # CRITICAL: System-wide directories requiring sudo access
+        SYSTEM_EXCLUSIONS=(
+          "/nix"                                    # Nix store (massive file count)
+          "${context.userHome}/Library/CloudStorage" # Apple's cloud sync integration
+          "${context.userHome}/Library/Caches"       # System-wide app caches
+          "${context.userHome}/.cache"               # Unix-style cache directory
         )
-        for dir in "''${CACHE_DIRS[@]}"; do
+
+        for dir in "''${SYSTEM_EXCLUSIONS[@]}"; do
           if [ -d "$dir" ]; then
-            sudo mdutil -i off "$dir" 2>/dev/null && echo "  [OK] Disabled Spotlight indexing: $(basename "$dir")"
+            if sudo mdutil -i off "$dir" 2>/dev/null; then
+              [ "$LOG_LEVEL" -ge 2 ] && echo "  [OK] System exclusion: $(basename "$dir")"
+              # Also exclude from Time Machine for performance
+              sudo tmutil addexclusion "$dir" 2>/dev/null || true
+            else
+              [ "$LOG_LEVEL" -ge 1 ] && echo "  [WARN] Failed to exclude: $dir"
+            fi
           fi
         done
 
-        # Note: Process throttling removed to prevent potential EPERM errors during build
-
-        echo "  [INFO] For optimal performance, also add folders manually to:"
-        echo "    System Settings > Spotlight > Search Privacy"
-
+        [ "$LOG_LEVEL" -ge 1 ] && echo "  [INFO] System-level protection complete"
       '';
       deps = [ "etc" ];
     };
@@ -135,57 +130,130 @@
       '';
       deps = [ "users" ];
     };
-    # --- App Permission Management ------------------------------------------
+    # --- Enhanced App Permission Management ---------------------------------
     appPermissionManagement = {
       text = ''
-        echo "[Parametric Forge] Managing app permissions..."
+        echo "[Parametric Forge] Enhanced app permissions management..."
 
-        # Check Gatekeeper status (do not disable to preserve security)
-        if spctl --status | grep -q "enabled"; then
-          echo "  [INFO] Gatekeeper is enabled (recommended for security)"
-          echo "  [INFO] Use 'spctl --master-disable' manually if needed"
+        # CRITICAL: Disable Gatekeeper entirely for maximum performance
+        echo "  [SECURITY] Disabling Gatekeeper for performance optimization..."
+        
+        # Method 1: Disable via defaults (works reliably)
+        sudo defaults write /Library/Preferences/com.apple.security.assessment disable -bool true 2>/dev/null || true
+        sudo defaults write /Library/Preferences/com.apple.security GKAutoRearm -bool false 2>/dev/null || true
+        
+        # Method 2: Fallback to spctl (may require System Settings confirmation)
+        sudo spctl --global-disable 2>/dev/null || true
+        
+        # Verify status
+        if spctl --status 2>&1 | grep -q "disabled"; then
+          echo "  [OK] Gatekeeper disabled - no more security delays"
         else
-          echo "  [WARN] Gatekeeper is disabled"
+          echo "  [WARN] Gatekeeper may still be enabled - check System Settings"
         fi
 
-        # Remove quarantine from common problematic apps
-        find /Applications -maxdepth 2 -name "*.app" -exec xattr -rd com.apple.quarantine {} \; 2>/dev/null || true
-
-        # Remove quarantine from user Applications
-        if [ -d "${context.userHome}/Applications" ]; then
-          find "${context.userHome}/Applications" -maxdepth 2 -name "*.app" -exec xattr -rd com.apple.quarantine {} \; 2>/dev/null || true
-        fi
-
-        echo "  [OK] Removed quarantine from all applications"
-      '';
-      deps = [ "nixAppsIntegration" ];
-    };
-    # --- Sequoia FileProvider Performance Fixes ---------------------------
-    sequoiaFixes = {
-      text = ''
-        echo "[Parametric Forge] Applying targeted Sequoia fixes..."
-
-        # Clear FileProvider caches only (preserve system services)
-        rm -rf "${context.userHome}/Library/Caches/com.apple.FileProvider"* 2>/dev/null || true
-        echo "  [OK] FileProvider caches cleared"
-
-        # Exclude sync folders from Spotlight (preserve system folders)
-        SYNC_FOLDERS=(
-          "${context.userHome}/Google Drive"
-          "${context.userHome}/OneDrive" 
-          "${context.userHome}/Dropbox"
-          "${context.userHome}/MEGAsync"
-        )
-
-        for folder in "''${SYNC_FOLDERS[@]}"; do
-          if [ -d "$folder" ]; then
-            mdutil -i off "$folder" 2>/dev/null && echo "  [OK] Spotlight excluded: $(basename "$folder")"
+        # State file to track processed apps
+        STATE_DIR="/var/tmp/parametric-forge"
+        PROCESSED_APPS="$STATE_DIR/quarantine-processed"
+        mkdir -p "$STATE_DIR"
+        
+        # Function to remove quarantine with state tracking
+        remove_quarantine() {
+          local app_path="$1"
+          if [[ -d "$app_path" ]]; then
+            app_name=$(basename "$app_path")
+            app_mtime=$(stat -f "%m" "$app_path" 2>/dev/null || echo "0")
+            
+            # Check if already processed and unchanged
+            if grep -q "^$app_name:$app_mtime$" "$PROCESSED_APPS" 2>/dev/null; then
+              return 0  # Skip already processed apps
+            fi
+            
+            echo "  Processing: $app_name"
+            
+            # Check current quarantine status
+            if xattr -l "$app_path" 2>/dev/null | grep -q quarantine; then
+              echo "    [FOUND] Quarantine detected, removing..."
+              
+              # Remove quarantine from main app bundle with sudo
+              if sudo xattr -rd com.apple.quarantine "$app_path" 2>/dev/null; then
+                echo "    [OK] Main bundle quarantine removed"
+              else
+                echo "    [WARN] Failed to remove main quarantine: $app_path"
+                return 1
+              fi
+              
+              # Remove quarantine from ALL nested bundles (comprehensive)
+              find "$app_path" -name "*.app" -exec sudo xattr -rd com.apple.quarantine {} \; 2>/dev/null || true
+              find "$app_path" -name "*.framework" -exec sudo xattr -rd com.apple.quarantine {} \; 2>/dev/null || true
+              find "$app_path" -name "*.bundle" -exec sudo xattr -rd com.apple.quarantine {} \; 2>/dev/null || true
+              find "$app_path" -name "*.dylib" -exec sudo xattr -rd com.apple.quarantine {} \; 2>/dev/null || true
+              find "$app_path" -name "*.plugin" -exec sudo xattr -rd com.apple.quarantine {} \; 2>/dev/null || true
+              
+              # Verify complete removal
+              if ! xattr -l "$app_path" 2>/dev/null | grep -q quarantine; then
+                echo "    [SUCCESS] All quarantine attributes removed from $app_name"
+              else
+                echo "    [ERROR] Some quarantine attributes remain in $app_name"
+                return 1
+              fi
+            fi
+            
+            # Mark as processed
+            echo "$app_name:$app_mtime" >> "$PROCESSED_APPS"
           fi
+        }
+
+        # Process ALL applications in /Applications
+        echo "  [PROCESSING] Scanning /Applications directory..."
+        find /Applications -maxdepth 1 -name "*.app" -type d | while read -r app; do
+          remove_quarantine "$app"
         done
 
-        echo "  [OK] Targeted Sequoia fixes applied (system services preserved)"
+        # Process user applications if they exist
+        if [[ -d "${context.userHome}/Applications" ]]; then
+          echo "  [PROCESSING] Scanning user Applications directory..."
+          find "${context.userHome}/Applications" -maxdepth 1 -name "*.app" -type d | while read -r app; do
+            remove_quarantine "$app"
+          done
+        fi
+
+        # Process Nix Apps if they exist
+        if [[ -d "/Applications/Nix Apps" ]]; then
+          echo "  [PROCESSING] Scanning Nix Apps directory..."
+          find "/Applications/Nix Apps" -maxdepth 1 -name "*.app" -type d | while read -r app; do
+            remove_quarantine "$app"
+          done
+        fi
+
+        # Additional security bypass optimizations
+        echo "  [OPTIMIZATION] Applying additional security bypasses..."
+
+        # Clear system security caches
+        sudo killall -HUP mDNSResponder 2>/dev/null || true
+        sudo dscacheutil -flushcache 2>/dev/null || true
+
+        # Clear Launch Services database to remove stale quarantine references
+        /System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister \
+          -kill -r -domain local -domain system -domain user 2>/dev/null || true
+
+        echo "  [COMPLETE] Enhanced app permission management finished"
+        echo "  [NOTE] Apps should now launch significantly faster without security delays"
       '';
-      deps = [ "performanceOptimizations" ];
+      deps = [ "fileProviderOptimization" ];
+    };
+    # --- FileProvider Cache Management -------------------------------------
+    fileProviderOptimization = {
+      text = ''
+        echo "[Parametric Forge] Optimizing FileProvider performance..."
+
+        # Clear FileProvider caches that cause sync cascade issues
+        rm -rf "${context.userHome}/Library/Caches/com.apple.FileProvider"* 2>/dev/null || true
+        echo "  [OK] FileProvider caches cleared"
+        
+        echo "  [INFO] FileProvider optimization complete"
+      '';
+      deps = [ "systemSpotlightProtection" ];
     };
     # --- Smart Mac App Store Management ------------------------------------
     smartMasInstall = {
@@ -236,7 +304,7 @@
 
         echo "  [OK] Mac App Store management completed"
       '';
-      deps = [ "sequoiaFixes" ];
+      deps = [ "appPermissionManagement" ];
     };
     # --- Default Browser Setup ---------------------------------------------
     defaultBrowserSetup = {
@@ -244,7 +312,7 @@
         echo "[Parametric Forge] Setting Arc as default browser..."
 
         if command -v defaultbrowser >/dev/null 2>&1; then
-          if defaultbrowser arc 2>/dev/null; then
+          if defaultbrowser browser 2>/dev/null; then
             echo "  [OK] Arc set as default browser"
           else
             echo "  [WARN] Failed to set Arc as default"
@@ -255,13 +323,41 @@
       '';
       deps = [ "smartMasInstall" ];
     };
+    # --- Yabai Passwordless Sudo Setup -------------------------------------
+    yabaiSudoSetup = {
+      text = ''
+        echo "[Parametric Forge] Configuring passwordless sudo for yabai..."
+
+        YABAI_PATH=$(command -v yabai || echo "/opt/homebrew/bin/yabai")
+        if [ -x "$YABAI_PATH" ]; then
+          YABAI_SHA=$(shasum -a 256 "$YABAI_PATH" | cut -d " " -f 1)
+          SUDOERS_CONTENT="${context.user} ALL=(root) NOPASSWD: sha256:$YABAI_SHA $YABAI_PATH --load-sa"
+          
+          echo "$SUDOERS_CONTENT" > /tmp/yabai_sudoers
+          
+          if sudo visudo -cf /tmp/yabai_sudoers; then
+            sudo cp /tmp/yabai_sudoers /private/etc/sudoers.d/yabai
+            sudo chmod 440 /private/etc/sudoers.d/yabai
+            echo "  [OK] Passwordless sudo configured for yabai scripting addition"
+          else
+            echo "  [ERROR] sudoers syntax error - manual configuration required"
+          fi
+          rm -f /tmp/yabai_sudoers
+        else
+          echo "  [WARN] yabai binary not found at expected location"
+        fi
+      '';
+      deps = [ "defaultBrowserSetup" ];
+    };
   };
   # --- Shell Initialization -------------------------------------------------
   environment.shellInit = ''
+    # Homebrew integration
     if [ -x /opt/homebrew/bin/brew ]; then
       eval "$(/opt/homebrew/bin/brew shellenv)"
     elif [ -x /usr/local/bin/brew ]; then
       eval "$(/usr/local/bin/brew shellenv)"
     fi
   '';
+  # --- Performance environment variables moved to 00.system/environment.nix
 }

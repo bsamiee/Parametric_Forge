@@ -150,7 +150,7 @@
     BAT_CONFIG_PATH = "${config.xdg.configHome}/bat/config";
     BAT_CACHE_PATH = "${config.xdg.cacheHome}/bat";
     RIPGREP_CONFIG_PATH = "${config.xdg.configHome}/ripgrep/config";
-    STARSHIP_CONFIG = "${config.xdg.configHome}/starship.toml";
+    # STARSHIP_CONFIG removed - using programs.starship.settings instead (shell-tools.nix:29)
     STARSHIP_CACHE = "${config.xdg.cacheHome}/starship";
 
     # Delta (syntax-highlighting diff viewer)
@@ -275,8 +275,8 @@
     # --- SketchyBar Configuration -------------------------------------------
     # SketchyBar system stats tool
     SKETCHYBAR_STATS_BINARY = "${config.home.profileDirectory}/bin/sketchybar-system-stats"; # System stats binary path
-    # SbarLua path
-    SBARLUA_PATH = "${config.xdg.dataHome}/sketchybar_lua"; # SbarLua library installation path
+    # SketchyBar configuration directory
+    SKETCHYBAR_CONFIG_DIR = "${config.xdg.configHome}/sketchybar"; # Config directory (XDG-compliant)
     # App font icon mapping
     SKETCHYBAR_ICON_MAP = "${config.home.profileDirectory}/bin/icon_map.sh"; # Icon mapping script
 

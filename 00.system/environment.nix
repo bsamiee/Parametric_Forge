@@ -16,7 +16,7 @@ let
   # --- Homebrew Variables ---------------------------------------------------
   homebrewVars = lib.optionalAttrs context.isDarwin {
     HOMEBREW_NO_ANALYTICS = "1"; # Privacy: disable telemetry and analytics
-    HOMEBREW_NO_INSTALL_CLEANUP = "0"; # Allow cleanup after individual installs
+    # HOMEBREW_NO_INSTALL_CLEANUP = "1"; # Disabled - was causing Homebrew errors
     HOMEBREW_NO_EMOJI = "1"; # Cleaner CLI output
     # HOMEBREW_VERBOSE = "1"; # Disabled for performance - enable manually if debugging needed
     HOMEBREW_NO_ENV_HINTS = "1"; # Suppress environment setup hints

@@ -25,8 +25,8 @@ in
     # --- Activation Behavior ------------------------------------------------
     onActivation = {
       autoUpdate = mkDefault false;
-      cleanup = mkDefault "none"; # Don't touch existing apps - prevents reinstalls
-      upgrade = mkDefault true; # Auto-upgrade existing apps to resolve version conflicts
+      cleanup = mkDefault "uninstall"; # TESTING: Let Homebrew properly manage apps
+      upgrade = mkDefault false; # TESTING: Disable upgrades during activation
       # extraFlags removed - parallel is not a valid homebrew option in nix-darwin
     };
     # --- Essential Taps -----------------------------------------------------
@@ -58,7 +58,7 @@ in
       "transnomino" # File renaming utility
 
       # Browsers & Internet
-      "arc" # Modern web browser
+      # "arc" # REMOVED - testing manual installation vs Homebrew management
       "firefox" # Mozilla Firefox browser
       "tor-browser" # Privacy-focused browser
 
@@ -125,12 +125,13 @@ in
       "handbrake" # CLI video transcoder (GUI in casks as handbrake-app)
       "mono" # .NET runtime (dependency for some tools)
       "defaultbrowser" # CLI tool for setting default browser properly
+      # "alerter" # REMOVED - formula doesn't exist in Homebrew
 
       # Window Management Ecosystem
       "yabai" # Tiling window manager for macOS
       "skhd" # Simple hotkey daemon for macOS
       "borders" # JankyBorders - window borders enhancement
-      "sketchybar" # Status bar replacement
+      # "sketchybar" # MOVED - now using nix-darwin services.sketchybar
     ];
     # --- Mac App Store Applications -----------------------------------------
     # --- Mac App Store Applications -----------------------------------------

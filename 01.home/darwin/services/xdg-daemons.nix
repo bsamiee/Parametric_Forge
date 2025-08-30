@@ -139,12 +139,12 @@ in
         {
           Weekday = 1;
           Hour = 3;
-          Minute = 30;
+          Minute = 45;  # Avoid 3:00 (Nix GC), 3:30 (other services)
         }
         {
           Weekday = 4;
           Hour = 3;
-          Minute = 30;
+          Minute = 45;
         }
       ];
       nice = 19;
@@ -157,8 +157,24 @@ in
             find "${config.xdg.cacheHome}" -type f -atime +30 -delete 2>/dev/null || true
             find "${config.xdg.cacheHome}" -type d -empty -delete 2>/dev/null || true
 
-            ${lib.concatMapStrings (dir: ''
+            # Cache-specific cleanup with size limits
+            ${lib.concatMapStrings (dir: let
+              sizeLimit = {
+                npm = "500";     # 500MB limit for npm
+                cargo = "1000";  # 1GB limit for cargo
+                pip = "300";     # 300MB limit for pip
+                mypy = "200";    # 200MB limit for mypy
+                go-build = "400"; # 400MB limit for go
+              }.${dir} or "100"; # Default 100MB limit
+            in ''
               if [ -d "${config.xdg.cacheHome}/${dir}" ]; then
+                # Size-based cleanup first
+                SIZE=$(du -sm "${config.xdg.cacheHome}/${dir}" 2>/dev/null | cut -f1 || echo "0")
+                if [ "$SIZE" -gt ${sizeLimit} ] 2>/dev/null; then
+                  echo "  ${dir} cache is ''${SIZE}MB (limit: ${sizeLimit}MB), cleaning..."
+                  find "${config.xdg.cacheHome}/${dir}" -type f -atime +7 -delete 2>/dev/null || true
+                fi
+                # Age-based cleanup
                 find "${config.xdg.cacheHome}/${dir}" -type f -atime +30 -delete 2>/dev/null || true
                 find "${config.xdg.cacheHome}/${dir}" -type d -empty -delete 2>/dev/null || true
               fi
@@ -169,22 +185,41 @@ in
             STATE_FILE="${fontStateFile}"
             FONT_REFRESH=0
 
-            # Calculate current font state hash
-            CURRENT_STATE=$(find ${lib.concatStringsSep " " fontDirs} \
-              -type f \( -name "*.ttf" -o -name "*.otf" -o -name "*.ttc" \) \
-              -exec stat -f "%m %z %N" {} \; 2>/dev/null \
-              | sort | ${pkgs.coreutils}/bin/sha256sum | cut -d' ' -f1)
-
-            # Read previous state
+            # Fast directory mtime check first (avoid expensive file enumeration)
+            DIR_STATE=""
+            for dir in ${lib.concatStringsSep " " fontDirs}; do
+              if [ -d "$dir" ]; then
+                DIR_MTIME=$(stat -f "%m" "$dir" 2>/dev/null || echo "0")
+                DIR_STATE="$DIR_STATE:$dir:$DIR_MTIME"
+              fi
+            done
+            
+            # Read state file once
             [ -f "$STATE_FILE" ] || touch "$STATE_FILE"
-            PREV_STATE=$(cat "$STATE_FILE" 2>/dev/null || echo "")
+            {
+              read -r PREV_STATE || PREV_STATE=""
+              read -r PREV_DIR_STATE || PREV_DIR_STATE=""
+            } < "$STATE_FILE"
+            
+            # Only compute expensive hash if directories changed
+            if [ "$DIR_STATE" != "$PREV_DIR_STATE" ]; then
+              echo "Font directory changes detected, computing file hash..."
+              CURRENT_STATE=$(find ${lib.concatStringsSep " " fontDirs} \
+                -type f \( -name "*.ttf" -o -name "*.otf" -o -name "*.ttc" \) \
+                -exec stat -f "%m %z %N" {} \; 2>/dev/null \
+                | sort | ${pkgs.coreutils}/bin/sha256sum | cut -d' ' -f1)
+            else
+              CURRENT_STATE="$PREV_STATE"
+            fi
 
             # Content-aware refresh
             if [ "$CURRENT_STATE" != "$PREV_STATE" ]; then
               echo "Font changes detected, refreshing cache..."
               [ -d "$FONT_CACHE" ] && rm -rf "''${FONT_CACHE:?}"/*
               ${pkgs.fontconfig}/bin/fc-cache -rfv
+              # Save both file hash and directory state for next run
               echo "$CURRENT_STATE" > "$STATE_FILE"
+              echo "$DIR_STATE" >> "$STATE_FILE"
               FONT_REFRESH=1
             elif [ -d "$FONT_CACHE" ]; then
               # Size-based cleanup as fallback

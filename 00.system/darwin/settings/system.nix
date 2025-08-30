@@ -15,17 +15,17 @@ in
   system.defaults = {
     # --- Login Window -------------------------------------------------------
     loginwindow = {
-      SHOWFULLNAME = true;
+      SHOWFULLNAME = false;  # Show user list with pre-selected username
       GuestEnabled = false;
       autoLoginUser = null;
-      LoginwindowText = null;
+      # LoginwindowText not used when SHOWFULLNAME = false
       ShutDownDisabled = false;
       SleepDisabled = false;
       RestartDisabled = false;
       ShutDownDisabledWhileLoggedIn = false;
       PowerOffDisabledWhileLoggedIn = false;
       RestartDisabledWhileLoggedIn = false;
-      DisableConsoleAccess = true;
+      DisableConsoleAccess = false;
     };
     # --- Activity Monitor ---------------------------------------------------
     ActivityMonitor = {
@@ -61,7 +61,7 @@ in
       ServerDescription = mkDefault null;
     };
     LaunchServices = {
-      LSQuarantine = mkDefault null;
+      LSQuarantine = mkDefault false; # PERFORMANCE: Disable quarantine for downloaded apps
     };
     # --- Accessibility ------------------------------------------------------
     universalaccess = {
@@ -176,129 +176,13 @@ in
       "com.apple.Terminal" = {
         SecureKeyboardEntry = mkDefault false;
       };
-      # --- File Type Associations -------------------------------------------
-      "com.apple.LaunchServices/com.apple.launchservices.secure" = {
-        LSHandlers = [
-          # --- Source Code & Development ------------------------------------
-          {
-            LSHandlerContentType = "public.source-code";
-            LSHandlerRoleAll = mkDefault "com.microsoft.vscode";
-          }
-          {
-            LSHandlerContentType = "public.plain-text";
-            LSHandlerRoleAll = mkDefault "com.microsoft.vscode";
-          }
-          {
-            LSHandlerContentType = "public.unix-executable";
-            LSHandlerRoleAll = mkDefault "com.microsoft.vscode";
-          }
-          {
-            LSHandlerContentType = "public.shell-script";
-            LSHandlerRoleAll = mkDefault "com.microsoft.vscode";
-          }
-          # --- Web Development ----------------------------------------------
-          {
-            LSHandlerContentType = "public.json";
-            LSHandlerRoleAll = mkDefault "com.microsoft.vscode";
-          }
-          {
-            LSHandlerContentType = "com.netscape.javascript-source";
-            LSHandlerRoleAll = mkDefault "com.microsoft.vscode";
-          }
-          {
-            LSHandlerContentType = "public.xml";
-            LSHandlerRoleAll = mkDefault "com.microsoft.vscode";
-          }
-          {
-            LSHandlerContentType = "public.html";
-            LSHandlerRoleAll = mkDefault "com.microsoft.vscode";
-          }
-          {
-            LSHandlerContentType = "public.css";
-            LSHandlerRoleAll = mkDefault "com.microsoft.vscode";
-          }
-          # --- Documentation & Configuration --------------------------------
-          {
-            LSHandlerContentType = "net.daringfireball.markdown";
-            LSHandlerRoleAll = mkDefault "com.microsoft.vscode";
-          }
-          {
-            LSHandlerContentType = "public.yaml";
-            LSHandlerRoleAll = mkDefault "com.microsoft.vscode";
-          }
-          {
-            LSHandlerContentType = "com.apple.property-list";
-            LSHandlerRoleAll = mkDefault "com.microsoft.vscode";
-          }
-          {
-            LSHandlerContentType = "public.toml";
-            LSHandlerRoleAll = mkDefault "com.microsoft.vscode";
-          }
-          # --- Language Specific --------------------------------------------
-          {
-            LSHandlerContentType = "public.python-script";
-            LSHandlerRoleAll = mkDefault "com.microsoft.vscode";
-          }
-          {
-            LSHandlerContentType = "public.ruby-script";
-            LSHandlerRoleAll = mkDefault "com.microsoft.vscode";
-          }
-          {
-            LSHandlerContentType = "public.perl-script";
-            LSHandlerRoleAll = mkDefault "com.microsoft.vscode";
-          }
-          {
-            LSHandlerContentType = "public.php-script";
-            LSHandlerRoleAll = mkDefault "com.microsoft.vscode";
-          }
-          # --- Modern Development Languages ----------------------------------
-          {
-            LSHandlerContentType = "public.rust-source";
-            LSHandlerRoleAll = mkDefault "com.microsoft.vscode";
-          }
-          {
-            LSHandlerContentType = "public.go-source";
-            LSHandlerRoleAll = mkDefault "com.microsoft.vscode";
-          }
-          {
-            LSHandlerContentType = "public.lua-source";
-            LSHandlerRoleAll = mkDefault "com.microsoft.vscode";
-          }
-          {
-            LSHandlerContentType = "org.nixos.nix";
-            LSHandlerRoleAll = mkDefault "com.microsoft.vscode";
-          }
-          # --- TypeScript & Modern Web --------------------------------------
-          {
-            LSHandlerContentType = "com.microsoft.typescript";
-            LSHandlerRoleAll = mkDefault "com.microsoft.vscode";
-          }
-          {
-            LSHandlerContentType = "public.typescript-source";
-            LSHandlerRoleAll = mkDefault "com.microsoft.vscode";
-          }
-          {
-            LSHandlerContentType = "public.jsx";
-            LSHandlerRoleAll = mkDefault "com.microsoft.vscode";
-          }
-          {
-            LSHandlerContentType = "public.tsx";
-            LSHandlerRoleAll = mkDefault "com.microsoft.vscode";
-          }
-          # --- Frontend Frameworks ------------------------------------------
-          {
-            LSHandlerContentType = "public.vue-source";
-            LSHandlerRoleAll = mkDefault "com.microsoft.vscode";
-          }
-          {
-            LSHandlerContentType = "public.svelte-source";
-            LSHandlerRoleAll = mkDefault "com.microsoft.vscode";
-          }
-          # --- Web Browsing & URLs (Handled by defaultbrowser CLI tool) ---------
-          # Note: Default browser management moved to activation script using defaultbrowser tool
-          # This provides more reliable browser setting than manual LSHandlers configuration
-        ];
-      };
+      # --- File Type Associations (TEMPORARILY DISABLED FOR ARC TESTING) ----
+      # TEMPORARILY DISABLED - Testing if file type associations cause Arc SwiftUI observer loop
+      # "com.apple.LaunchServices/com.apple.launchservices.secure" = {
+      #   LSHandlers = [
+      #     # All file type associations temporarily disabled
+      #   ];
+      # };
     };
   };
 }
