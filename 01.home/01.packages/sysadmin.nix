@@ -10,6 +10,9 @@
 
 with pkgs;
 [
+  # --- Security & Authentication -------------------------------------------
+  _1password-cli # 1Password command-line interface
+
   # --- Network Analysis -----------------------------------------------------
   bandwhich # Terminal bandwidth monitor by process/connection
   iperf # Network performance testing (iperf3)

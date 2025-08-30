@@ -50,6 +50,10 @@ yabai -m signal --add event=window_focused action="
     sketchybar --trigger ecosystem_file_operation 2>/dev/null || true;
     echo '{\"window\":\$YABAI_WINDOW_ID}' > /tmp/yabai_window.json"
 
+# --- Core Configuration --------------------------------------------------
+# Enable debug output for better troubleshooting (modern best practice)
+yabai -m config debug_output on
+
 # --- Layout Configuration ------------------------------------------------
 yabai -m config layout bsp
 yabai -m config window_placement second_child
@@ -106,7 +110,7 @@ yabai -m config mouse_follows_focus off
 yabai -m config mouse_modifier alt
 yabai -m config mouse_action1 move
 yabai -m config mouse_action2 resize
-yabai -m config mouse_drop_action stack
+yabai -m config mouse_drop_action swap  # Modern: swap instead of stack for better workflow
 
 # --- Application Rules ---------------------------------------------------
 # System Applications
@@ -126,14 +130,16 @@ yabai -m rule --add app="^1Password$" manage=off
 yabai -m rule --add app="^Digital Colormeter$" manage=off
 yabai -m rule --add app="^KeyShade$" manage=off
 
-# System Productivity Tools (should float)
+# Modern system tools that should float (based on your actual homebrew installs)
 yabai -m rule --add app="^Raycast$" manage=off
-yabai -m rule --add app="^Bartender$" manage=off
+yabai -m rule --add app="^Bartender 4$" manage=off
 yabai -m rule --add app="^CleanShot X$" manage=off
 yabai -m rule --add app="^AirBuddy$" manage=off
-yabai -m rule --add app="^AlDente$" manage=off
+yabai -m rule --add app="^AlDente Pro$" manage=off
 yabai -m rule --add app="^BetterMouse$" manage=off
 yabai -m rule --add app="^BetterTouchTool$" manage=off
+yabai -m rule --add app="^Docker Desktop$" manage=off
+yabai -m rule --add app="^1Password 7$" manage=off
 
 # Development Tools
 yabai -m rule --add app="^Simulator$" manage=off
@@ -164,8 +170,8 @@ yabai -m rule --add app="^Firefox$" title="(Preferences|Library)" manage=off
 yabai -m rule --add app="^Spotify$" title="(Preferences|Settings)" manage=off
 yabai -m rule --add app="^HandBrake$" title="(Preferences|Queue)" manage=off
 
-# Finder dialogs and special windows
-yabai -m rule --add app="^Finder$" title="(Co(py|nnect)|Move|Info|Pref)" manage=off
+# Finder - completely exclude from tiling (major usability improvement)
+yabai -m rule --add app="^Finder$" manage=off
 # Enhanced preference window detection for common patterns
 yabai -m rule --add title="^(General|(Tab|Password|Website|Extension)s|AutoFill|Se(arch|curity)|Privacy|Advance)$" manage=off
 yabai -m rule --add title="(Preferences|Settings|Options|Configuration|About)" manage=off

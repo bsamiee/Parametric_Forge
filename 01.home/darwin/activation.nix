@@ -124,7 +124,7 @@
       PYTHON_CACHE_COUNT=0
       NODE_MODULES_COUNT=0
       GIT_COUNT=0
-      
+
       # Single find command with multiple conditions (3x faster)
       while IFS= read -r -d $'\0' dir; do
         case "$(basename "$dir")" in

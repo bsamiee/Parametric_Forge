@@ -31,7 +31,7 @@
       text = ''
         # Simplified logging: 0=silent, 1=minimal, 2=verbose (default)  
         LOG_LEVEL=''${PARAMETRIC_FORGE_LOG_LEVEL:-2}
-        
+
         [ "$LOG_LEVEL" -ge 1 ] && echo "[Parametric Forge] Applying system-level Spotlight protection..."
 
         # CRITICAL: System-wide directories requiring sudo access
@@ -130,104 +130,27 @@
       '';
       deps = [ "users" ];
     };
-    # --- Enhanced App Permission Management ---------------------------------
-    appPermissionManagement = {
+    # --- Security Settings Optimization ------------------------------------
+    securityOptimization = {
       text = ''
-        echo "[Parametric Forge] Enhanced app permissions management..."
+        echo "[Parametric Forge] Optimizing system security settings..."
 
         # CRITICAL: Disable Gatekeeper entirely for maximum performance
         echo "  [SECURITY] Disabling Gatekeeper for performance optimization..."
-        
+
         # Method 1: Disable via defaults (works reliably)
         sudo defaults write /Library/Preferences/com.apple.security.assessment disable -bool true 2>/dev/null || true
         sudo defaults write /Library/Preferences/com.apple.security GKAutoRearm -bool false 2>/dev/null || true
-        
+
         # Method 2: Fallback to spctl (may require System Settings confirmation)
         sudo spctl --global-disable 2>/dev/null || true
-        
+
         # Verify status
         if spctl --status 2>&1 | grep -q "disabled"; then
           echo "  [OK] Gatekeeper disabled - no more security delays"
         else
           echo "  [WARN] Gatekeeper may still be enabled - check System Settings"
         fi
-
-        # State file to track processed apps
-        STATE_DIR="/var/tmp/parametric-forge"
-        PROCESSED_APPS="$STATE_DIR/quarantine-processed"
-        mkdir -p "$STATE_DIR"
-        
-        # Function to remove quarantine with state tracking
-        remove_quarantine() {
-          local app_path="$1"
-          if [[ -d "$app_path" ]]; then
-            app_name=$(basename "$app_path")
-            app_mtime=$(stat -f "%m" "$app_path" 2>/dev/null || echo "0")
-            
-            # Check if already processed and unchanged
-            if grep -q "^$app_name:$app_mtime$" "$PROCESSED_APPS" 2>/dev/null; then
-              return 0  # Skip already processed apps
-            fi
-            
-            echo "  Processing: $app_name"
-            
-            # Check current quarantine status
-            if xattr -l "$app_path" 2>/dev/null | grep -q quarantine; then
-              echo "    [FOUND] Quarantine detected, removing..."
-              
-              # Remove quarantine from main app bundle with sudo
-              if sudo xattr -rd com.apple.quarantine "$app_path" 2>/dev/null; then
-                echo "    [OK] Main bundle quarantine removed"
-              else
-                echo "    [WARN] Failed to remove main quarantine: $app_path"
-                return 1
-              fi
-              
-              # Remove quarantine from ALL nested bundles (comprehensive)
-              find "$app_path" -name "*.app" -exec sudo xattr -rd com.apple.quarantine {} \; 2>/dev/null || true
-              find "$app_path" -name "*.framework" -exec sudo xattr -rd com.apple.quarantine {} \; 2>/dev/null || true
-              find "$app_path" -name "*.bundle" -exec sudo xattr -rd com.apple.quarantine {} \; 2>/dev/null || true
-              find "$app_path" -name "*.dylib" -exec sudo xattr -rd com.apple.quarantine {} \; 2>/dev/null || true
-              find "$app_path" -name "*.plugin" -exec sudo xattr -rd com.apple.quarantine {} \; 2>/dev/null || true
-              
-              # Verify complete removal
-              if ! xattr -l "$app_path" 2>/dev/null | grep -q quarantine; then
-                echo "    [SUCCESS] All quarantine attributes removed from $app_name"
-              else
-                echo "    [ERROR] Some quarantine attributes remain in $app_name"
-                return 1
-              fi
-            fi
-            
-            # Mark as processed
-            echo "$app_name:$app_mtime" >> "$PROCESSED_APPS"
-          fi
-        }
-
-        # Process ALL applications in /Applications
-        echo "  [PROCESSING] Scanning /Applications directory..."
-        find /Applications -maxdepth 1 -name "*.app" -type d | while read -r app; do
-          remove_quarantine "$app"
-        done
-
-        # Process user applications if they exist
-        if [[ -d "${context.userHome}/Applications" ]]; then
-          echo "  [PROCESSING] Scanning user Applications directory..."
-          find "${context.userHome}/Applications" -maxdepth 1 -name "*.app" -type d | while read -r app; do
-            remove_quarantine "$app"
-          done
-        fi
-
-        # Process Nix Apps if they exist
-        if [[ -d "/Applications/Nix Apps" ]]; then
-          echo "  [PROCESSING] Scanning Nix Apps directory..."
-          find "/Applications/Nix Apps" -maxdepth 1 -name "*.app" -type d | while read -r app; do
-            remove_quarantine "$app"
-          done
-        fi
-
-        # Additional security bypass optimizations
-        echo "  [OPTIMIZATION] Applying additional security bypasses..."
 
         # Clear system security caches
         sudo killall -HUP mDNSResponder 2>/dev/null || true
@@ -237,8 +160,7 @@
         /System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister \
           -kill -r -domain local -domain system -domain user 2>/dev/null || true
 
-        echo "  [COMPLETE] Enhanced app permission management finished"
-        echo "  [NOTE] Apps should now launch significantly faster without security delays"
+        echo "  [OK] Security optimization complete"
       '';
       deps = [ "fileProviderOptimization" ];
     };
@@ -250,104 +172,10 @@
         # Clear FileProvider caches that cause sync cascade issues
         rm -rf "${context.userHome}/Library/Caches/com.apple.FileProvider"* 2>/dev/null || true
         echo "  [OK] FileProvider caches cleared"
-        
+
         echo "  [INFO] FileProvider optimization complete"
       '';
       deps = [ "systemSpotlightProtection" ];
-    };
-    # --- Smart Mac App Store Management ------------------------------------
-    smartMasInstall = {
-      text = ''
-        echo "[Parametric Forge] Smart Mac App Store management..."
-
-        if ! command -v mas >/dev/null 2>&1; then
-          echo "  [WARN] mas CLI not found, skipping App Store management"
-          exit 0
-        fi
-
-        # App ID mappings (from original masApps)
-        declare -A MAS_APPS=(
-          ["Microsoft Excel"]="462058435"
-          ["Microsoft PowerPoint"]="462062816" 
-          ["Microsoft Word"]="462054704"
-          ["OneDrive"]="823766827"
-          ["Drafts"]="1435957248"
-          ["Fantastical"]="975937182"
-          ["Goodnotes"]="1444383602"
-          ["CARROT Weather"]="993487541"
-          ["CleanMyMac"]="1339170533"
-          ["Icon Tool for Developers"]="554660130"
-          ["Keka"]="470158793"
-          ["Parcel"]="639968404"
-          ["Rapidmg"]="6451349778"
-          ["MEGAVPN"]="6456784858"
-        )
-
-        INSTALLED_IDS=$(mas list 2>/dev/null | awk '{print $1}' || echo "")
-        OUTDATED_IDS=$(mas outdated 2>/dev/null | awk '{print $1}' || echo "")
-
-        for app_name in "''${!MAS_APPS[@]}"; do
-          app_id="''${MAS_APPS[$app_name]}"
-          
-          if echo "$INSTALLED_IDS" | grep -q "^$app_id$"; then
-            if echo "$OUTDATED_IDS" | grep -q "^$app_id$"; then
-              echo "  [UPDATE] Updating: $app_name"
-              mas upgrade "$app_id" 2>/dev/null || echo "  [WARN] Update failed: $app_name"
-            else
-              echo "  [OK] Current: $app_name"
-            fi
-          else
-            echo "  [INSTALL] Installing: $app_name"
-            mas install "$app_id" 2>/dev/null || echo "  [WARN] Install failed: $app_name"
-          fi
-        done
-
-        echo "  [OK] Mac App Store management completed"
-      '';
-      deps = [ "appPermissionManagement" ];
-    };
-    # --- Default Browser Setup ---------------------------------------------
-    defaultBrowserSetup = {
-      text = ''
-        echo "[Parametric Forge] Setting Arc as default browser..."
-
-        if command -v defaultbrowser >/dev/null 2>&1; then
-          if defaultbrowser browser 2>/dev/null; then
-            echo "  [OK] Arc set as default browser"
-          else
-            echo "  [WARN] Failed to set Arc as default"
-          fi
-        else
-          echo "  [WARN] defaultbrowser tool not available yet (installing via Homebrew)"
-        fi
-      '';
-      deps = [ "smartMasInstall" ];
-    };
-    # --- Yabai Passwordless Sudo Setup -------------------------------------
-    yabaiSudoSetup = {
-      text = ''
-        echo "[Parametric Forge] Configuring passwordless sudo for yabai..."
-
-        YABAI_PATH=$(command -v yabai || echo "/opt/homebrew/bin/yabai")
-        if [ -x "$YABAI_PATH" ]; then
-          YABAI_SHA=$(shasum -a 256 "$YABAI_PATH" | cut -d " " -f 1)
-          SUDOERS_CONTENT="${context.user} ALL=(root) NOPASSWD: sha256:$YABAI_SHA $YABAI_PATH --load-sa"
-          
-          echo "$SUDOERS_CONTENT" > /tmp/yabai_sudoers
-          
-          if sudo visudo -cf /tmp/yabai_sudoers; then
-            sudo cp /tmp/yabai_sudoers /private/etc/sudoers.d/yabai
-            sudo chmod 440 /private/etc/sudoers.d/yabai
-            echo "  [OK] Passwordless sudo configured for yabai scripting addition"
-          else
-            echo "  [ERROR] sudoers syntax error - manual configuration required"
-          fi
-          rm -f /tmp/yabai_sudoers
-        else
-          echo "  [WARN] yabai binary not found at expected location"
-        fi
-      '';
-      deps = [ "defaultBrowserSetup" ];
     };
   };
   # --- Shell Initialization -------------------------------------------------

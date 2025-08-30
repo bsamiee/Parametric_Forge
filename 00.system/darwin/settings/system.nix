@@ -15,7 +15,7 @@ in
   system.defaults = {
     # --- Login Window -------------------------------------------------------
     loginwindow = {
-      SHOWFULLNAME = false;  # Show user list with pre-selected username
+      SHOWFULLNAME = false; # Show user list with pre-selected username
       GuestEnabled = false;
       autoLoginUser = null;
       # LoginwindowText not used when SHOWFULLNAME = false

@@ -6,7 +6,12 @@
 # ----------------------------------------------------------------------------
 # UI services using built-in nix-darwin service modules.
 
-{ pkgs, lib, context, ... }:
+{
+  pkgs,
+  lib,
+  context,
+  ...
+}:
 
 let
   # Custom system stats provider (not available in nixpkgs)
@@ -37,9 +42,9 @@ in
     enable = lib.mkDefault context.isDarwin;
     package = pkgs.sketchybar;
     extraPackages = [
-      pkgs.sbarlua                    # Lua interface for SketchyBar
-      pkgs.sketchybar-app-font        # App icon font
-      sketchybar-system-stats         # Custom system stats provider
+      pkgs.sbarlua # Lua interface for SketchyBar
+      pkgs.sketchybar-app-font # App icon font
+      sketchybar-system-stats # Custom system stats provider
     ];
     # Configuration managed via ~/.config/sketchybar/sketchybarrc (deployed by home-manager)
   };

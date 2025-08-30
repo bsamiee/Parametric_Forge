@@ -181,9 +181,32 @@
         }
         _set_docker_host
 
-        # Window manager auto-start
+        # Window manager auto-start and sudo setup
         ${lib.optionalString pkgs.stdenv.isDarwin ''
+          # Yabai sudo setup (moved from system activation)
+          yabai-sudo-setup() {
+            local yabai_path
+            yabai_path=$(command -v yabai 2>/dev/null)
+            
+            if [ -n "$yabai_path" ] && [ -x "$yabai_path" ]; then
+              local yabai_sha sudoers_file
+              yabai_sha=$(shasum -a 256 "$yabai_path" | cut -d " " -f 1)
+              sudoers_file="/private/etc/sudoers.d/yabai"
+              
+              # Check if sudoers file exists and is current
+              if [ ! -f "$sudoers_file" ] || ! grep -q "sha256:$yabai_sha" "$sudoers_file" 2>/dev/null; then
+                echo "🔧 Configuring yabai sudo access..."
+                local sudoers_content="${context.user} ALL=(root) NOPASSWD: sha256:$yabai_sha $yabai_path --load-sa"
+                echo "$sudoers_content" | sudo tee "$sudoers_file" >/dev/null
+                sudo chmod 440 "$sudoers_file"
+                echo "✅ yabai sudo access configured"
+              fi
+            fi
+          }
+
+          # Auto-start window managers
           if ! pgrep -q yabai && command -v yabai >/dev/null 2>&1; then
+            yabai-sudo-setup
             yabai --start-service >/dev/null 2>&1 && echo "🪟 yabai started"
           fi
           if ! pgrep -q skhd && command -v skhd >/dev/null 2>&1; then

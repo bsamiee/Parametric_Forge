@@ -19,29 +19,36 @@
   # --- Home Activation Scripts ----------------------------------------------
   home.activation = {
     # --- Yazi Plugin Installation --------------------------------------------
-    yaziPlugins = lib.hm.dag.entryAfter [ "createXdgDirs" ] ''
-      # Ensure full system PATH is available
-      export PATH="/usr/bin:/bin:/usr/sbin:/sbin:$PATH"
+    yaziPlugins = lib.hm.dag.entryAfter [ "installPackages" ] ''
+      # Ensure full system PATH is available + nix user packages
+      export PATH="$HOME/.nix-profile/bin:/run/current-system/sw/bin:/usr/bin:/bin:/usr/sbin:/sbin:$PATH"
 
       # Auto-install/update Yazi plugins when package.toml changes
       YAZI_CONFIG="${config.xdg.configHome}/yazi/package.toml"
       YAZI_CACHE="${config.xdg.cacheHome}/yazi/plugins.sha256"
 
-      # Calculate current package.toml checksum
-      CURRENT_HASH=$(shasum -a 256 "$YAZI_CONFIG" | cut -d' ' -f1)
-      CACHED_HASH=$(cat "$YAZI_CACHE" 2>/dev/null || echo "")
+      # Check if yazi is available
+      if command -v ya >/dev/null 2>&1; then
+        # Calculate current package.toml checksum
+        CURRENT_HASH=$(shasum -a 256 "$YAZI_CONFIG" | cut -d' ' -f1)
+        CACHED_HASH=$(cat "$YAZI_CACHE" 2>/dev/null || echo "")
 
-      # Install/update plugins only if package.toml changed
-      if [ "$CURRENT_HASH" != "$CACHED_HASH" ]; then
-        echo "[Yazi] Synchronizing plugins..."
+        # Install/update plugins only if package.toml changed
+        if [ "$CURRENT_HASH" != "$CACHED_HASH" ]; then
+          echo "[Yazi] Synchronizing plugins..."
 
-        # Install/update all plugins from package.toml
-        if ya pack -i >/dev/null 2>&1; then
-          echo "    [OK] Yazi plugins updated"
-          echo "$CURRENT_HASH" > "$YAZI_CACHE"
+          # Install/update all plugins from package.toml with detailed error output
+          if ya pack -i 2>&1; then
+            echo "    [OK] Yazi plugins updated"
+            echo "$CURRENT_HASH" > "$YAZI_CACHE"
+          else
+            echo "    [WARN] Some plugins failed to install (see output above for details)"
+          fi
         else
-          echo "    [WARN] Some plugins failed to install"
+          echo "[Yazi] Plugins up to date (config unchanged)"
         fi
+      else
+        echo "[Yazi] Plugin manager 'ya' not found in PATH, skipping plugin installation"
       fi
     '';
 
@@ -71,91 +78,18 @@
       ln -sf "${pkgs.libspatialite}/lib/mod_spatialite.dylib" "$HOME/.local/lib/mod_spatialite.dylib" 2>/dev/null || true
     '';
 
-    # --- Consolidated 1Password Setup with Retry Logic ---------------------
-    opSetup = lib.hm.dag.entryAfter [ "sqliteExtensions" ] ''
-      echo "[1Password] Initializing secrets and SSH..."
+    # --- Basic 1Password Directory Setup -----------------------------------
+    opDirectories = lib.hm.dag.entryAfter [ "sqliteExtensions" ] ''
+      echo "[1Password] Setting up directories and permissions..."
 
-      # Check CLI availability and authentication (simplified)
-      if (${myLib.secrets.opAvailable}); then
-        echo "  [OK] CLI found"
-        if (${myLib.secrets.opAuthenticated}); then
-          echo "  [OK] Authenticated"
-        else
-          echo "  [WARN] Not authenticated - run 'op signin'"
-          echo "  [INFO] Continuing with limited functionality..."
-        fi
-      else
-        echo "  [WARN] CLI not found - install with: brew install 1password-cli"
-        echo "  [INFO] 1Password features will be unavailable"
-      fi
+      # Ensure SSH directory exists with proper permissions
+      mkdir -p ~/.ssh
+      chmod 700 ~/.ssh
 
-      # Check SSH agent socket
-      SOCKET_PATH="${myLib.secrets.opSSHSocket context}"
-      if [ -z "$SOCKET_PATH" ]; then
-        echo "  [WARN] Unknown platform - SSH agent path not configured"
-      elif [ -S "$SOCKET_PATH" ]; then
-        echo "  [OK] SSH agent at: $SOCKET_PATH"
-      else
-        echo "  [WARN] SSH agent not running at: $SOCKET_PATH"
-        ${lib.optionalString context.isDarwin ''
-          echo "    Enable in 1Password app: Settings → Developer → SSH Agent"
-        ''}
-        ${lib.optionalString context.isLinux ''
-          echo "    Ensure 1Password 8.10.28+ is installed with SSH agent enabled"
-        ''}
-        ${lib.optionalString (context.isWSL or false) ''
-          echo "    For WSL: Configure npiperelay bridge or set WSL_1PASSWORD_SOCKET"
-        ''}
-      fi
+      # Ensure 1Password config directory exists
+      mkdir -p ~/.config/op
 
-      ${lib.optionalString (config.secrets.references ? sshAuthKey && config.secrets.references ? sshSigningKey) ''
-        if ${myLib.secrets.opReady}; then
-          echo "  Fetching SSH keys..."
-
-          # Fetch authentication key with validation
-          AUTH_KEY=$(${myLib.secrets.fetchSecret config.secrets.references.sshAuthKey})
-          if [ -n "$AUTH_KEY" ] && [[ "$AUTH_KEY" == ssh-* ]]; then
-            echo "$AUTH_KEY" > ~/.ssh/github_auth.pub
-            chmod 644 ~/.ssh/github_auth.pub
-            echo "    [OK] Authentication key saved"
-          else
-            echo "    [WARN] Failed to fetch valid authentication key"
-            rm -f ~/.ssh/github_auth.pub
-          fi
-
-          # Fetch signing key with validation
-          SIGN_KEY=$(${myLib.secrets.fetchSecret config.secrets.references.sshSigningKey})
-          if [ -n "$SIGN_KEY" ] && [[ "$SIGN_KEY" == ssh-* ]]; then
-            echo "$SIGN_KEY" > ~/.ssh/github_sign.pub
-            chmod 644 ~/.ssh/github_sign.pub
-            echo "    [OK] Signing key saved"
-
-            # Update allowed_signers
-            EMAIL=$(git config --global user.email 2>/dev/null || echo "${config.home.username}@users.noreply.github.com")
-            echo "$EMAIL $SIGN_KEY" > ~/.ssh/allowed_signers
-            chmod 644 ~/.ssh/allowed_signers
-            echo "    [OK] Allowed signers updated"
-          else
-            echo "    [WARN] Failed to fetch valid signing key"
-            rm -f ~/.ssh/github_sign.pub ~/.ssh/allowed_signers
-          fi
-        else
-          echo "  [WARN] Cannot fetch SSH keys - 1Password not ready"
-          echo "    Run 'op signin' and then 'home-manager switch' to retry"
-        fi
-      ''}
-
-      # Configure gh CLI with 1Password plugin
-      echo "  Configuring gh CLI with 1Password..."
-      if ${myLib.secrets.opReady}; then
-        if command -v op-gh-setup.sh >/dev/null 2>&1; then
-          op-gh-setup.sh >/dev/null 2>&1 && echo "    [OK] gh CLI configured with 1Password" || echo "    [WARN] gh CLI configuration failed"
-        else
-          echo "    [WARN] op-gh-setup.sh not found in PATH (will be available after deployment)"
-        fi
-      else
-        echo "    [WARN] Skipping gh CLI setup - 1Password not ready"
-      fi
+      echo "  [OK] Basic 1Password directories created"
     '';
 
   };

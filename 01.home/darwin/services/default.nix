@@ -22,6 +22,7 @@
     ./xdg-daemons.nix
     ./op-daemons.nix
     ./npm-check-daemon.nix
-    ./window-daemons.nix
+    ./app-management-daemon.nix
+    ./system-integration-daemon.nix
   ];
 }

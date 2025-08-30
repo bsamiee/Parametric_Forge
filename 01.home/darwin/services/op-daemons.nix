@@ -12,6 +12,7 @@
   myLib,
   context,
   userServiceHelpers,
+  lib,
   ...
 }:
 
@@ -172,6 +173,101 @@ in
       WatchPaths = [
         config.secrets.paths.template
       ];
+    };
+  };
+
+  # --- SSH Key Management Agent --------------------------------------------
+  launchd.agents.onepassword-ssh-setup = {
+    enable = true;
+    config = mkPeriodicJob {
+      label = "1Password SSH Setup";
+      command = "${
+        pkgs.writeShellApplication {
+          name = "op-ssh-setup";
+          text = ''
+            #!/usr/bin/env bash
+            set -euo pipefail
+
+            echo "[$(date)] Starting 1Password SSH key setup..."
+
+            # Check if op CLI is available and authenticated
+            if ! command -v op >/dev/null 2>&1; then
+              echo "[WARN] 1Password CLI not found"
+              exit 0
+            fi
+
+            if ! op account get >/dev/null 2>&1; then
+              echo "[WARN] Not authenticated to 1Password"
+              exit 0
+            fi
+
+            echo "[OK] 1Password CLI available and authenticated"
+
+            # Ensure SSH directory exists
+            mkdir -p ~/.ssh
+            chmod 700 ~/.ssh
+
+            SUCCESS_COUNT=0
+            FAIL_COUNT=0
+
+            ${lib.optionalString (config.secrets.references ? sshAuthKey && config.secrets.references ? sshSigningKey) ''
+              # Fetch authentication key with validation
+              echo "Fetching SSH authentication key..."
+              if AUTH_KEY=$(op read "${config.secrets.references.sshAuthKey}" 2>/dev/null) && [[ "$AUTH_KEY" == ssh-* ]]; then
+                echo "$AUTH_KEY" > ~/.ssh/github_auth.pub
+                chmod 644 ~/.ssh/github_auth.pub
+                echo "[OK] Authentication key saved"
+                SUCCESS_COUNT=$((SUCCESS_COUNT + 1))
+              else
+                echo "[WARN] Failed to fetch valid authentication key"
+                rm -f ~/.ssh/github_auth.pub
+                FAIL_COUNT=$((FAIL_COUNT + 1))
+              fi
+
+              # Fetch signing key with validation
+              echo "Fetching SSH signing key..."
+              if SIGN_KEY=$(op read "${config.secrets.references.sshSigningKey}" 2>/dev/null) && [[ "$SIGN_KEY" == ssh-* ]]; then
+                echo "$SIGN_KEY" > ~/.ssh/github_sign.pub
+                chmod 644 ~/.ssh/github_sign.pub
+                echo "[OK] Signing key saved"
+
+                # Update allowed_signers
+                EMAIL=$(git config --global user.email 2>/dev/null || echo "${config.home.username}@users.noreply.github.com")
+                echo "$EMAIL $SIGN_KEY" > ~/.ssh/allowed_signers
+                chmod 644 ~/.ssh/allowed_signers
+                echo "[OK] Allowed signers updated"
+                SUCCESS_COUNT=$((SUCCESS_COUNT + 1))
+              else
+                echo "[WARN] Failed to fetch valid signing key"
+                rm -f ~/.ssh/github_sign.pub ~/.ssh/allowed_signers
+                FAIL_COUNT=$((FAIL_COUNT + 1))
+              fi
+            ''}
+
+            # Configure gh CLI with 1Password plugin
+            echo "Configuring gh CLI with 1Password..."
+            if command -v op-gh-setup.sh >/dev/null 2>&1; then
+              if op-gh-setup.sh >/dev/null 2>&1; then
+                echo "[OK] gh CLI configured with 1Password"
+                SUCCESS_COUNT=$((SUCCESS_COUNT + 1))
+              else
+                echo "[WARN] gh CLI configuration failed"
+                FAIL_COUNT=$((FAIL_COUNT + 1))
+              fi
+            else
+              echo "[WARN] op-gh-setup.sh not found in PATH"
+              FAIL_COUNT=$((FAIL_COUNT + 1))
+            fi
+
+            echo "[SUMMARY] SSH Setup Complete: $SUCCESS_COUNT successful, $FAIL_COUNT failed"
+          '';
+        }
+      }/bin/op-ssh-setup";
+      interval = 21600; # Every 6 hours
+      runAtLoad = true;
+      nice = 10;
+      logBaseName = "${config.xdg.stateHome}/logs/op-ssh-setup";
+      environmentVariables = serviceEnv;
     };
   };
 

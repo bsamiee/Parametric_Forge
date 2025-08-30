@@ -9,8 +9,8 @@
 -- Initialize SbarLua with error handling
 local ok, sbar_module = pcall(require, "sketchybar")
 if not ok then
-    print("ERROR: SketchyBar SbarLua module not found")
-    os.exit(1)
+	print("ERROR: SketchyBar SbarLua module not found")
+	os.exit(1)
 end
 sbar = sbar_module
 
@@ -48,11 +48,11 @@ require("modules.items.volume")
 -- Validate yabai integration before starting
 local yabai_ok = false
 sbar.exec("command -v yabai", function(result)
-    yabai_ok = result and result ~= ""
+	yabai_ok = result and result ~= ""
 end)
 
 if not yabai_ok then
-    print("WARNING: yabai not found - some features may not work")
+	print("WARNING: yabai not found - some features may not work")
 end
 
 -- Start event loop and finalize setup
@@ -61,5 +61,5 @@ sbar.run()
 print("SketchyBar: SbarLua configuration loaded successfully")
 print("SketchyBar: Height 32px - aligned with yabai external bar")
 if yabai_ok then
-    print("SketchyBar: Yabai integration active")
+	print("SketchyBar: Yabai integration active")
 end

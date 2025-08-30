@@ -31,69 +31,69 @@ in
     };
     # --- Essential Taps -----------------------------------------------------
     taps = [
-      "FelixKratz/formulae" # SketchyBar ecosystem packages
+      "koekeishiya/formulae" # For yabai and skhd window management
+      "FelixKratz/formulae"  # For borders (JankyBorders)
     ];
     # --- GUI Applications (Casks) -------------------------------------------
     casks = [
       # System & Core Tools
-      "1password" # Password manager with macOS integration
-      "1password-cli" # 1Password command-line interface
-      "cleanshot" # Advanced screenshot and screen recording tool
-      "docker" # Docker Desktop containerization
+      # "1password" # Already installed manually
+      # "1password-cli" # Moved to nix packages (sysadmin.nix)
+      # "cleanshot" # Already installed manually
+      "docker-desktop" # Docker Desktop containerization - CRITICAL for deployment
       "dotnet-sdk" # .NET SDK (large, GUI tools)
-      "wezterm@nightly" # Terminal emulator (nightly build)
+      # "wezterm@nightly" # Already have WezTerm manually
 
-      # Productivity & Window Management
-      "airbuddy" # AirPods battery/connection manager
-      "aldente" # Battery charge limiter for MacBooks
-      "alt-tab" # Windows-style alt-tab window switcher
-      "bartender" # Menu bar organization
-      "bettermouse" # Mouse customization tool
-      "bettertouchtool" # Advanced input device customization
-      "hazel" # Automated file organization
-      "latest" # App update tracker
-      "raycast" # Productivity launcher (Spotlight replacement)
-      "superkey" # Keyboard enhancement tool
-      "swish" # Window management via trackpad gestures
-      "transnomino" # File renaming utility
+      # Productivity & Window Management - MOST ALREADY INSTALLED
+      # "airbuddy" # Already installed manually
+      # "aldente" # Already installed manually
+      # "alt-tab" # Already installed manually
+      # "bartender" # Already installed manually
+      # "bettermouse" # Already installed manually
+      # "bettertouchtool" # Already installed manually
+      # "hazel" # Already installed manually
+      # "latest" # Already installed manually
+      # "raycast" # Already installed manually
+      # "superkey" # Already installed manually
+      # "swish" # Already installed manually
+      # "transnomino" # Already installed manually
 
-      # Browsers & Internet
-      # "arc" # REMOVED - testing manual installation vs Homebrew management
-      "firefox" # Mozilla Firefox browser
-      "tor-browser" # Privacy-focused browser
+      # Browsers & Internet - ALREADY INSTALLED
+      # "firefox" # Already installed manually
+      # "tor-browser" # Already installed manually
 
-      # Communication & Social
-      "discord" # Discord chat platform
-      "microsoft-teams" # Microsoft Teams collaboration
-      "superhuman" # Premium email client
-      "telegram" # Telegram messenger
-      "whatsapp" # WhatsApp messenger
-      "zoom" # Zoom video conferencing
+      # Communication & Social - MIXED
+      # "discord" # Already installed manually
+      # "microsoft-teams" # Already installed manually
+      # "superhuman" # Already installed manually
+      "telegram" # MISSING - need homebrew
+      "whatsapp" # MISSING - need homebrew
+      "zoom" # MISSING - need homebrew
 
-      # Cloud & Storage
-      "google-drive" # Google Drive sync client
-      "megasync" # MEGA cloud sync client
-      "transmission" # Transmission BitTorrent GUI client
+      # Cloud & Storage - CORRECTED
+      # "google-drive" # Already installed manually
+      # "megasync" # Already installed manually (MEGAsync.app)
+      "transmission" # MISSING - need homebrew
 
-      # Development & Design
-      "heptabase" # Note-taking/knowledge base
-      "iconjar" # Icon management tool
-      "kiro" # Your Kiro app
-      "replacicon" # App icon customization
-      "rhino" # Rhino 8 CAD software
-      "typeface" # Font management
-      "via" # Keyboard configuration
-      "visual-studio-code" # VS Code editor
+      # Development & Design - MIXED
+      # "heptabase" # Already installed manually
+      # "iconjar" # Already installed manually
+      # "kiro" # Already installed manually
+      # "replacicon" # Already installed manually
+      "rhino-app" # Rhino 8 CAD software
+      # "typeface" # Already installed manually
+      # "via" # Already installed manually
+      # "visual-studio-code" # Already installed manually
 
-      # Media & Creative
-      "blender" # 3D creation suite
-      "calibre" # E-book management
-      "handbrake-app" # HandBrake GUI video transcoder
-      "scrivener" # Writing software
-      "spotify" # Spotify music streaming
-      "steam" # Steam gaming platform
+      # Media & Creative - CORRECTED
+      # "blender" # Already installed manually
+      # "calibre" # Already installed manually
+      "handbrake-app" # MISSING - need homebrew
+      # "scrivener" # Already installed manually
+      # "spotify" # Already installed manually
+      # "steam" # Already installed manually
 
-      # QuickLook Plugins
+      # QuickLook Plugins - DELETED FOR CLEAN HOMEBREW INSTALL
       "syntax-highlight" # Code syntax highlighting for 150+ file types
       "qlmarkdown" # Markdown preview with GitHub-flavored rendering
       "quicklook-json" # JSON formatted preview
@@ -101,21 +101,18 @@ in
       "betterzip" # Preview ZIP/TAR contents without extracting
       "suspicious-package" # Inspect macOS .pkg installers
 
-      # Fonts
-      "font-sketchybar-app-font" # SketchyBar app icon font
+      # Adobe & Creative Suite - ALREADY INSTALLED
+      # "adobe-acrobat-pro" # Already installed manually
+      # "adobe-creative-cloud" # Already installed manually
+      # "colorchecker-camera-calibration" # Already installed manually
+      "topaz-gigapixel-ai" # MISSING - need homebrew
+      "topaz-photo-ai" # MISSING - need homebrew
+      "zxpinstaller" # MISSING - need homebrew
 
-      # Adobe & Creative Suite
-      "adobe-acrobat-pro" # Adobe Acrobat DC
-      "adobe-creative-cloud" # Adobe Creative Cloud manager
-      "colorchecker-camera-calibration" # X-Rite color profiling tool
-      "topaz-gigapixel-ai" # AI image upscaling
-      "topaz-photo-ai" # AI photo enhancement
-      "zxpinstaller" # Adobe extension installer
-
-      # Utilities & System Enhancement
-      "grammarly-desktop" # Grammarly writing assistant
-      "parallels" # Parallels Desktop virtualization
-      "rize" # Time tracking application
+      # Utilities & System Enhancement - MIXED
+      # "grammarly-desktop" # Already installed manually
+      # "parallels" # Already installed manually
+      # "rize" # Already installed manually
     ];
 
     # --- CLI Tools (Brews) --------------------------------------------------
@@ -123,14 +120,14 @@ in
       "mas" # Mac App Store CLI for masApps integration
       "codex" # AI coding assistant (ChatGPT CLI)
       "handbrake" # CLI video transcoder (GUI in casks as handbrake-app)
-      "mono" # .NET runtime (dependency for some tools)
+      # "mono" # .NET runtime - RE-INSTALL AFTER FULL DEPLOYMENT (failed during initial setup)
       "defaultbrowser" # CLI tool for setting default browser properly
       # "alerter" # REMOVED - formula doesn't exist in Homebrew
 
-      # Window Management Ecosystem
-      "yabai" # Tiling window manager for macOS
-      "skhd" # Simple hotkey daemon for macOS
-      "borders" # JankyBorders - window borders enhancement
+      # Window Management Ecosystem - MOVED TO NIX SYSTEM PACKAGES
+      # "yabai" # Now via environment.systemPackages in darwin.nix
+      # "skhd" # Now via environment.systemPackages in darwin.nix
+      # "borders" # Now via environment.systemPackages in darwin.nix (jankyborders)
       # "sketchybar" # MOVED - now using nix-darwin services.sketchybar
     ];
     # --- Mac App Store Applications -----------------------------------------

@@ -69,7 +69,6 @@ _:
     # --- Bat (cat replacement) ----------------------------------------------
     bat = {
       enable = true;
-      enableZshIntegration = true;
     };
 
     # --- Ripgrep (grep replacement) -----------------------------------------
@@ -80,7 +79,6 @@ _:
     # --- Fd (find replacement) ----------------------------------------------
     fd = {
       enable = true;
-      enableZshIntegration = true;
     };
 
     # --- McFly (smart shell history) ----------------------------------------

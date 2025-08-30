@@ -139,7 +139,7 @@ in
         {
           Weekday = 1;
           Hour = 3;
-          Minute = 45;  # Avoid 3:00 (Nix GC), 3:30 (other services)
+          Minute = 45; # Avoid 3:00 (Nix GC), 3:30 (other services)
         }
         {
           Weekday = 4;
@@ -158,27 +158,33 @@ in
             find "${config.xdg.cacheHome}" -type d -empty -delete 2>/dev/null || true
 
             # Cache-specific cleanup with size limits
-            ${lib.concatMapStrings (dir: let
-              sizeLimit = {
-                npm = "500";     # 500MB limit for npm
-                cargo = "1000";  # 1GB limit for cargo
-                pip = "300";     # 300MB limit for pip
-                mypy = "200";    # 200MB limit for mypy
-                go-build = "400"; # 400MB limit for go
-              }.${dir} or "100"; # Default 100MB limit
-            in ''
-              if [ -d "${config.xdg.cacheHome}/${dir}" ]; then
-                # Size-based cleanup first
-                SIZE=$(du -sm "${config.xdg.cacheHome}/${dir}" 2>/dev/null | cut -f1 || echo "0")
-                if [ "$SIZE" -gt ${sizeLimit} ] 2>/dev/null; then
-                  echo "  ${dir} cache is ''${SIZE}MB (limit: ${sizeLimit}MB), cleaning..."
-                  find "${config.xdg.cacheHome}/${dir}" -type f -atime +7 -delete 2>/dev/null || true
+            ${lib.concatMapStrings (
+              dir:
+              let
+                sizeLimit =
+                  {
+                    npm = "500"; # 500MB limit for npm
+                    cargo = "1000"; # 1GB limit for cargo
+                    pip = "300"; # 300MB limit for pip
+                    mypy = "200"; # 200MB limit for mypy
+                    go-build = "400"; # 400MB limit for go
+                  }
+                  .${dir} or "100"; # Default 100MB limit
+              in
+              ''
+                if [ -d "${config.xdg.cacheHome}/${dir}" ]; then
+                  # Size-based cleanup first
+                  SIZE=$(du -sm "${config.xdg.cacheHome}/${dir}" 2>/dev/null | cut -f1 || echo "0")
+                  if [ "$SIZE" -gt ${sizeLimit} ] 2>/dev/null; then
+                    echo "  ${dir} cache is ''${SIZE}MB (limit: ${sizeLimit}MB), cleaning..."
+                    find "${config.xdg.cacheHome}/${dir}" -type f -atime +7 -delete 2>/dev/null || true
+                  fi
+                  # Age-based cleanup
+                  find "${config.xdg.cacheHome}/${dir}" -type f -atime +30 -delete 2>/dev/null || true
+                  find "${config.xdg.cacheHome}/${dir}" -type d -empty -delete 2>/dev/null || true
                 fi
-                # Age-based cleanup
-                find "${config.xdg.cacheHome}/${dir}" -type f -atime +30 -delete 2>/dev/null || true
-                find "${config.xdg.cacheHome}/${dir}" -type d -empty -delete 2>/dev/null || true
-              fi
-            '') cacheDirs}
+              ''
+            ) cacheDirs}
 
             # Font Cache Management
             FONT_CACHE="${config.xdg.cacheHome}/fontconfig"
@@ -193,14 +199,14 @@ in
                 DIR_STATE="$DIR_STATE:$dir:$DIR_MTIME"
               fi
             done
-            
+
             # Read state file once
             [ -f "$STATE_FILE" ] || touch "$STATE_FILE"
             {
               read -r PREV_STATE || PREV_STATE=""
               read -r PREV_DIR_STATE || PREV_DIR_STATE=""
             } < "$STATE_FILE"
-            
+
             # Only compute expensive hash if directories changed
             if [ "$DIR_STATE" != "$PREV_DIR_STATE" ]; then
               echo "Font directory changes detected, computing file hash..."
