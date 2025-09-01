@@ -41,16 +41,16 @@ else
     echo "yabai: ! Scripting addition failed - basic mode only" >&2
 fi
 
-YABAI_CONFIG_DIR="$HOME/.config/yabai"
+# YABAI_CONFIG_DIR="$HOME/.config/yabai"  # Removed - no longer needed
 
 # --- Event Signals ----------------------------------------------------------
-yabai -m signal --add event=space_created action="yabai -m space --layout bsp; $YABAI_CONFIG_DIR/spacesync.sh"
-yabai -m signal --add event=space_destroyed action="$YABAI_CONFIG_DIR/spacesync.sh"
-yabai -m signal --add event=space_changed action="$YABAI_CONFIG_DIR/spacesync.sh"
-yabai -m signal --add event=display_added action="sleep 2 && $YABAI_CONFIG_DIR/spacesync.sh"
-yabai -m signal --add event=display_removed action="sleep 1 && $YABAI_CONFIG_DIR/spacesync.sh"
+yabai -m signal --add event=space_created action="yabai -m space --layout bsp; sketchybar --trigger space_change"
+yabai -m signal --add event=space_destroyed action="sketchybar --trigger space_change"
+yabai -m signal --add event=space_changed action="sketchybar --trigger space_change"
+yabai -m signal --add event=display_added action="sketchybar --trigger space_change"
+yabai -m signal --add event=display_removed action="sketchybar --trigger space_change"
 
-yabai -m signal --add event=window_focused action="sketchybar --trigger window_focus"
+yabai -m signal --add event=window_focused action="yabai -m window --opacity 0.5 && sleep 0.1 && yabai -m window --opacity 0.95; sketchybar --trigger window_focus"
 yabai -m signal --add event=window_created action="sketchybar --trigger windows_on_spaces"
 yabai -m signal --add event=window_destroyed action="sketchybar --trigger windows_on_spaces"
 yabai -m signal --add event=window_moved action="sketchybar --trigger windows_on_spaces"
@@ -71,7 +71,7 @@ yabai -m config top_padding 4 \
                 window_gap 4
 
 # --- External Bar Integration -----------------------------------------------
-yabai -m config external_bar all:40:0 \
+yabai -m config external_bar all:48:0 \
                 menubar_opacity 0.0
 
 # --- Initialize Spaces ------------------------------------------------------
@@ -85,11 +85,7 @@ done < <(echo "$SPACE_DATA" | jq -r '.[].index')
 echo "yabai: ✓ Configured $SPACE_COUNT spaces"
 
 # --- Sync SketchyBar --------------------------------------------------------
-if [ -x "$YABAI_CONFIG_DIR/spacesync.sh" ]; then
-    "$YABAI_CONFIG_DIR/spacesync.sh"
-else
-    echo "yabai: ! spacesync.sh not found" >&2
-fi
+sketchybar --trigger space_change
 
 # --- Window Behavior & Appearance -------------------------------------------
 yabai -m config window_opacity on \
@@ -102,7 +98,7 @@ yabai -m config window_opacity on \
                 window_zoom_persist on \
                 window_origin_display default
 
-yabai -m config focus_follows_mouse off \
+yabai -m config focus_follows_mouse autoraise \
                 mouse_follows_focus off \
                 mouse_modifier alt \
                 mouse_action1 move \
@@ -152,23 +148,15 @@ yabai -m rule --add app="^Spotify$" manage=off sub-layer=below grid=10:10:2:7:6:
 
 # Creative & Design Apps
 yabai -m rule --add app="^Blender$" manage=off sub-layer=below
+yabai -m rule --add app="^Adobe Photoshop 2025$" manage=off sub-layer=below grid=10:10:0:0:10:10
+yabai -m rule --add app="^Adobe Illustrator 2025$" manage=off sub-layer=below grid=10:10:0:0:10:10
+yabai -m rule --add app="^Adobe After Effects 2025$" manage=off sub-layer=below grid=10:10:0:0:10:10
 
 # Development Tools
 yabai -m rule --add app="^Console$" manage=off sub-layer=below
 yabai -m rule --add app="^WezTerm$" manage=on
 yabai -m rule --add app="^Visual Studio Code$" manage=on
 yabai -m rule --add app="^Adobe Creative Cloud$" manage=off sub-layer=below grid=10:10:1:1:8:8
-
-# Web Browsers (managed for productivity)
-yabai -m rule --add app="^Google Chrome$" manage=on
-yabai -m rule --add app="^Arc$" manage=on
-yabai -m rule --add app="^Firefox$" manage=on
-yabai -m rule --add app="^Safari$" manage=on
-
-# Adobe Creative Suite (large unmanaged apps)
-yabai -m rule --add app="^Adobe Photoshop 2025$" manage=off sub-layer=below grid=10:10:0:0:10:10
-yabai -m rule --add app="^Adobe Illustrator 2025$" manage=off sub-layer=below grid=10:10:0:0:10:10
-yabai -m rule --add app="^Adobe After Effects 2025$" manage=off sub-layer=below grid=10:10:0:0:10:10
 
 # Universal Rules
 yabai -m rule --add window_type="^(dialog|utility|toolbar|splash)$" manage=off sub-layer=below

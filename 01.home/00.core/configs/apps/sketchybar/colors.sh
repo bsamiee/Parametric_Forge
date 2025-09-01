@@ -5,9 +5,9 @@
 # License       : MIT
 # Path          : /01.home/00.core/configs/apps/sketchybar/colors.sh
 # ----------------------------------------------------------------------------
-# Dracula color palette for SketchyBar - consistent with ecosystem theme
+# Dracula color palette for SketchyBar
 
-# --- Dracula Core Palette ------------------------------------------------
+# --- Base Dracula Palette ---------------------------------------------------
 export DRACULA_BG=0xff282a36
 export DRACULA_FG=0xfff8f8f2
 export DRACULA_SELECTION=0xff44475a
@@ -20,43 +20,57 @@ export DRACULA_PURPLE=0xffbd93f9
 export DRACULA_RED=0xffff5555
 export DRACULA_YELLOW=0xfff1fa8c
 
-# --- SketchyBar Semantic Colors (Transparency-Integrated) ---------------
-export BAR_COLOR=0xcc282a36 # 80% opacity - floating aesthetic
-export ICON_COLOR=$DRACULA_FG
-export LABEL_COLOR=$DRACULA_FG
+# --- Semantic Color Mappings ------------------------------------------------
+export BLACK=$DRACULA_BG
+export WHITE=$DRACULA_FG
+export DARK_GREY=$DRACULA_SELECTION
+export GREY=$DRACULA_COMMENT
+export CYAN=$DRACULA_CYAN
+export GREEN=$DRACULA_GREEN
+export ORANGE=$DRACULA_ORANGE
+export PINK=$DRACULA_PINK
+export PURPLE=$DRACULA_PURPLE
+export RED=$DRACULA_RED
+export YELLOW=$DRACULA_YELLOW
+
+# --- Light Transparency (80% opacity) ------------------------------------------
+export LIGHT_BLACK=0xcc282a36
+export LIGHT_WHITE=0xccf8f8f2
+export LIGHT_DARK_GREY=0xcc44475a
+export LIGHT_GREY=0xcc6272a4
+export LIGHT_CYAN=0xcc8be9fd
+export LIGHT_GREEN=0xcc50fa7b
+export LIGHT_ORANGE=0xccffb86c
+export LIGHT_PINK=0xccff79c6
+export LIGHT_PURPLE=0xccbd93f9
+export LIGHT_RED=0xccff5555
+export LIGHT_YELLOW=0xccf1fa8c
+
+# --- Faint Transparency (50% opacity) ------------------------------------------
+export FAINT_BLACK=0x80282a36
+export FAINT_WHITE=0x80f8f8f2
+export FAINT_DARK_GREY=0x8044475a
+export FAINT_GREY=0x806272a4
+export FAINT_CYAN=0x808be9fd
+export FAINT_GREEN=0x8050fa7b
+export FAINT_ORANGE=0x80ffb86c
+export FAINT_PINK=0x80ff79c6
+export FAINT_PURPLE=0x80bd93f9
+export FAINT_RED=0x80ff5555
+export FAINT_YELLOW=0x80f1fa8c
+
+# --- Misc Colors -----------------------------------------------------------
 export TRANSPARENT=0x00000000
+export SHADOW_LIGHT=0x40282a36 # 25% Dracula BG
+export SHADOW_HEAVY=$FAINT_BLACK # 50% Dracula BG
 
-# Item backgrounds (harmonized with ecosystem transparency)
-export BG_PRIMARY=0xdd6272a4 # 87% comment - readable yet integrated
-export BG_ACTIVE=0xddbd93f9  # 87% purple - maintains vibrancy  
-export BG_SUCCESS=0xdd50fa7b # 87% green - success visibility
-export BG_WARNING=0xddffb86c # 87% orange - warning clarity
-export BG_ERROR=0xddff5555   # 87% red - error prominence
-export BG_INFO=0xdd8be9fd    # 87% cyan - information calm
-
-# --- Widget State Colors (Extended for Enhanced Functionality) ------------
-export SPACE_ACTIVE_ICON=$DRACULA_BG      # Dark icon on bright background
-export SPACE_ACTIVE_BG=$DRACULA_PURPLE    # Active space background
-export SPACE_OCCUPIED_ICON=$DRACULA_CYAN  # Cyan for spaces with windows
-export SPACE_OCCUPIED_BG=$BG_INFO         # Semi-transparent cyan background
-export SPACE_EMPTY_ICON=$DRACULA_COMMENT  # Subtle comment color for empty spaces
-export SPACE_EMPTY_BG=$TRANSPARENT        # Transparent background for empty spaces
-
-# --- Future Widget Colors (Ready for Phase 2) ----------------------------
-export SYSTEM_CPU_COLOR=$DRACULA_RED      # CPU usage indicator
-export SYSTEM_MEM_COLOR=$DRACULA_YELLOW   # Memory usage indicator  
-export SYSTEM_DISK_COLOR=$DRACULA_ORANGE  # Disk usage indicator
-export BATTERY_NORMAL_COLOR=$DRACULA_GREEN # Battery normal state
-export BATTERY_LOW_COLOR=$DRACULA_ORANGE  # Battery warning state
-export BATTERY_CRITICAL_COLOR=$DRACULA_RED # Battery critical state
-export AUDIO_NORMAL_COLOR=$DRACULA_CYAN   # Audio normal state
-export AUDIO_MUTED_COLOR=$DRACULA_COMMENT # Audio muted state
-
-# --- Transparency Variants -----------------------------------------------
-export TRANSPARENT=0x00000000
-export BG_SEMI=0x80282a36 # Semi-transparent background
-
-# --- System Integration Colors -------------------------------------------
+# --- Bar & UI Components ----------------------------------------------------
+export BAR_COLOR=$LIGHT_BLACK
+export ICON_COLOR=$WHITE
+export LABEL_COLOR=$WHITE
 export BORDER_COLOR=$DRACULA_SELECTION
-export SHADOW_COLOR=0x40000000 # Subtle shadow
+
+# --- Popup System ----------------------------------------------------------
+export POPUP_BACKGROUND_COLOR=$DRACULA_BG
+export POPUP_BORDER_COLOR=$WHITE
 

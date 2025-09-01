@@ -65,6 +65,10 @@ shift + ctrl + alt - 7 : yabai -m space --focus 7
 shift + ctrl + alt - 8 : yabai -m space --focus 8
 shift + ctrl + alt - 9 : yabai -m space --focus 9
 
+# Space cycling within current display
+shift + ctrl + alt - left : yabai -m space --focus prev || yabai -m space --focus last
+shift + ctrl + alt - right : yabai -m space --focus next || yabai -m space --focus first
+
 # --- TIER 2: Essential Manual Overrides (SHIFT + OPT) ---------------------
 # Core toggles when you need manual control over auto-balance
 # Pure global toggle with cross-tool coordination - windowed (4px) ↔ full (0px) modes
@@ -120,6 +124,8 @@ shift + alt + opt + cmd - y : yabai -m space --mirror y-axis
 # --- Utility Operations (Simple Keys) ---------------------------------------
 # Quick navigation and space management
 alt - tab : yabai -m space --focus recent || yabai -m space --focus first
-shift + alt + opt + cmd - c : yabai -m space --create && index="$(yabai -m query --spaces --display | jq '.[-1].index')" && yabai -m space --focus "${index}"
-shift + alt + opt + cmd - d : yabai -m space --destroy
+
+# Clean space management - signals trigger dynamic sketchybar space recreation
+cmd + alt - n : yabai -m space --create
+cmd + alt - d : yabai -m space --destroy
 

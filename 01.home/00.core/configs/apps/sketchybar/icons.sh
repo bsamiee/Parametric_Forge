@@ -1,4 +1,5 @@
 #!/bin/bash
+# shellcheck disable=SC2034  # Icons sourced by other scripts
 # Title         : icons.sh
 # Author        : Bardia Samiee
 # Project       : Parametric Forge
@@ -7,22 +8,47 @@
 # ----------------------------------------------------------------------------
 # Essential icon definitions for SketchyBar
 
-# --- General Icons -------------------------------------------------------
-export ICON_LOADING=󰔟
-export ICON_APPLE=󰀵
-export ICON_ACTIVITY=󰓅
+# --- General Icons ----------------------------------------------------------
+LOADING=􀖇
+APPLE=􀣺
+PREFERENCES=􀺽
+ACTIVITY=􀒓
+LOCK=􀒳
+BELL=􀋚
+BELL_DOT=􀝗
 
-# --- Yabai Window Management Icons ---------------------------------------
-export ICON_YABAI_STACK=󰕴
-export ICON_YABAI_FULLSCREEN=󰊓
-export ICON_YABAI_FLOAT=󰖲
-export ICON_YABAI_GRID=󰕞
+# --- Git Icons --------------------------------------------------------------
+GIT_ISSUE=􀍷
+GIT_DISCUSSION=􀒤
+GIT_PULL_REQUEST=􀙡
+GIT_COMMIT=􀡚
+GIT_INDICATOR=􀂓
 
-# --- System Status Icons ------------------------------------------------
-export ICON_BATTERY=󰁹
-export ICON_VOLUME=󰕾
-export ICON_CLOCK=󰃰
+# --- Spotify Icons ----------------------------------------------------------
+SPOTIFY_BACK=􀊎
+SPOTIFY_PLAY_PAUSE=􀊈
+SPOTIFY_NEXT=􀊐
+SPOTIFY_SHUFFLE=􀊝
+SPOTIFY_REPEAT=􀊞
 
-# --- Navigation ----------------------------------------------------------
-export ICON_CHEVRON=󰅂
+# --- Yabai Icons ------------------------------------------------------------
+YABAI_STACK=􀏭
+YABAI_FULLSCREEN_ZOOM=􀏜
+YABAI_PARENT_ZOOM=􀥃
+YABAI_FLOAT=􀢌
+YABAI_GRID=􀧍
 
+# --- Battery Icons ----------------------------------------------------------
+BATTERY_100=􀛨
+BATTERY_75=􀺸
+BATTERY_50=􀺶
+BATTERY_25=􀛩
+BATTERY_0=􀛪
+BATTERY_CHARGING=􀢋
+
+# --- Volume Icons -----------------------------------------------------------
+VOLUME_100=􀊩
+VOLUME_66=􀊧
+VOLUME_33=􀊥
+VOLUME_10=􀊡
+VOLUME_0=􀊣

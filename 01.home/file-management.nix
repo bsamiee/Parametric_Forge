@@ -93,11 +93,8 @@
       source = ./00.core/configs/apps/yabai/yabairc;
       executable = true;
     };
-    "yabai/spacesync.sh" = {
-      source = ./00.core/configs/apps/yabai/spacesync.sh;
-      executable = true;
-    };
   };
+
   # --- Home Files (Non-XDG) -------------------------------------------------
   home.file = {
     # --- DNS Tools ----------------------------------------------------------
@@ -121,7 +118,6 @@
     # w3m is not XDG-compliant and expects configs in ~/.w3m/
     ".w3m/config".source = ./00.core/configs/apps/w3m/config;
     ".w3m/keymap".source = ./00.core/configs/apps/w3m/keymap;
-
   }
   # --- Modular UI Configurations (deployDir) -------------------------------
   // (myLib.build.deployDir ./00.core/configs/apps/sketchybar ".config/sketchybar")
@@ -142,7 +138,6 @@
 
   # --- Platform-Specific Data Files -----------------------------------------
   xdg.dataFile = {
-    # Pandoc
     "pandoc/defaults/forge.yaml".source = ./00.core/configs/media-tools/pandoc/defaults.yaml;
   }
   // lib.optionalAttrs (!pkgs.stdenv.isDarwin) {
