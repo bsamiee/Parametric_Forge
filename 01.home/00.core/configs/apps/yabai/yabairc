@@ -141,24 +141,35 @@ yabai -m rule --add app="^AlDente$" manage=off sub-layer=below grid=10:10:7:7:3:
 yabai -m rule --add app="^BetterMouse$" manage=off sub-layer=below grid=10:10:2:2:6:6
 yabai -m rule --add app="^BetterTouchTool$" manage=off sub-layer=below grid=10:10:1:1:8:8
 yabai -m rule --add app="^Docker Desktop$" manage=off sub-layer=below grid=10:10:1:1:8:8
-yabai -m rule --add app="^1Password 7$" manage=off sub-layer=below grid=10:10:2:2:6:6
+yabai -m rule --add app="^1Password$" manage=off sub-layer=below grid=10:10:2:2:6:6
 yabai -m rule --add app="^Hammerspoon$" manage=off sub-layer=below grid=10:10:2:2:6:6
 
 # Communication & Media Apps with consistent side positioning
 yabai -m rule --add app="^Discord$" manage=off sub-layer=below grid=10:10:6:0:4:10
 yabai -m rule --add app="^Telegram$" manage=off sub-layer=below grid=10:10:7:2:3:6
 yabai -m rule --add app="^WhatsApp$" manage=off sub-layer=below grid=10:10:7:2:3:6
-yabai -m rule --add app="^Zoom$" manage=off sub-layer=below grid=10:10:2:2:6:6
+yabai -m rule --add app="^zoom.us$" manage=off sub-layer=below grid=10:10:2:2:6:6
 yabai -m rule --add app="^Spotify$" manage=off sub-layer=below grid=10:10:2:7:6:3
 
 # Creative & Design Apps
 yabai -m rule --add app="^Blender$" manage=off sub-layer=below
 
 # Development Tools
-yabai -m rule --add app="^Simulator$" manage=off sub-layer=below
 yabai -m rule --add app="^Console$" manage=off sub-layer=below
 yabai -m rule --add app="^WezTerm$" manage=on
-yabai -m rule --add app="^Creative Cloud$" manage=off sub-layer=below
+yabai -m rule --add app="^Visual Studio Code$" manage=on
+yabai -m rule --add app="^Adobe Creative Cloud$" manage=off sub-layer=below grid=10:10:1:1:8:8
+
+# Web Browsers (managed for productivity)
+yabai -m rule --add app="^Google Chrome$" manage=on
+yabai -m rule --add app="^Arc$" manage=on
+yabai -m rule --add app="^Firefox$" manage=on
+yabai -m rule --add app="^Safari$" manage=on
+
+# Adobe Creative Suite (large unmanaged apps)
+yabai -m rule --add app="^Adobe Photoshop 2025$" manage=off sub-layer=below grid=10:10:0:0:10:10
+yabai -m rule --add app="^Adobe Illustrator 2025$" manage=off sub-layer=below grid=10:10:0:0:10:10
+yabai -m rule --add app="^Adobe After Effects 2025$" manage=off sub-layer=below grid=10:10:0:0:10:10
 
 # Universal Rules
 yabai -m rule --add window_type="^(dialog|utility|toolbar|splash)$" manage=off sub-layer=below
