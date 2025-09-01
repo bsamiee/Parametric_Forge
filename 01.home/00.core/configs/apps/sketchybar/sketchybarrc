@@ -17,7 +17,7 @@ source "$PLUGIN_DIR/icons.sh"
 sketchybar --bar height=36 \
                  position=top \
                  sticky=true \
-                 y_offset=4 \
+                 margin=4 \
                  corner_radius=8 \
                  padding_left=12 \
                  padding_right=12 \
