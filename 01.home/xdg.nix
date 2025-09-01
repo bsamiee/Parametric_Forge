@@ -222,7 +222,6 @@
       mkdir -pm 755 "${config.xdg.cacheHome}/sccache"
       mkdir -pm 755 "${config.xdg.cacheHome}/flamegraph" # Performance profiling
       mkdir -pm 755 "${config.xdg.cacheHome}/shellcheck"
-      mkdir -pm 755 "${config.xdg.cacheHome}/starship"
       mkdir -pm 755 "${config.xdg.cacheHome}/nix-index"
       # Container runtime caches
       mkdir -pm 755 "${config.xdg.cacheHome}/docker"
