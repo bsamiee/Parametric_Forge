@@ -24,6 +24,7 @@ export DRACULA_YELLOW=0xfff1fa8c
 export BAR_COLOR=0xcc282a36 # 80% opacity - floating aesthetic
 export ICON_COLOR=$DRACULA_FG
 export LABEL_COLOR=$DRACULA_FG
+export TRANSPARENT=0x00000000
 
 # Item backgrounds (harmonized with ecosystem transparency)
 export BG_PRIMARY=0xdd6272a4 # 87% comment - readable yet integrated
