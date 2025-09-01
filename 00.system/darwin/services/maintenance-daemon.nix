@@ -61,7 +61,7 @@ let
     # Update check
     if UPDATES=$(softwareupdate -l 2>/dev/null | grep -i "command line tools\|developer"); then
       echo "  [WARN] Updates available"
-      echo "$UPDATES" | sed 's/^/    /'
+      echo "${UPDATES//$'\n'/$'\n'    }"
     else
       echo "  [OK] No CLT updates"
     fi
