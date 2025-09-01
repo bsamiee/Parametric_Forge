@@ -61,16 +61,5 @@ export FAINT_YELLOW=0x80f1fa8c
 
 # --- Misc Colors -----------------------------------------------------------
 export TRANSPARENT=0x00000000
-export SHADOW_LIGHT=0x40282a36 # 25% Dracula BG
+export SHADOW_LIGHT=0x40282a36   # 25% Dracula BG
 export SHADOW_HEAVY=$FAINT_BLACK # 50% Dracula BG
-
-# --- Bar & UI Components ----------------------------------------------------
-export BAR_COLOR=$LIGHT_BLACK
-export ICON_COLOR=$WHITE
-export LABEL_COLOR=$WHITE
-export BORDER_COLOR=$DRACULA_SELECTION
-
-# --- Popup System ----------------------------------------------------------
-export POPUP_BACKGROUND_COLOR=$DRACULA_BG
-export POPUP_BORDER_COLOR=$WHITE
-

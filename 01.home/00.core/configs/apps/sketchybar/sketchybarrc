@@ -10,72 +10,90 @@
 
 set -euo pipefail
 
-PLUGIN_DIR="$HOME/.config/sketchybar/plugins"
-ITEM_DIR="$HOME/.config/sketchybar/items"
 source "$HOME/.config/sketchybar/colors.sh"
 source "$HOME/.config/sketchybar/icons.sh"
+source "$HOME/.config/sketchybar/constants.sh"
+
+ITEM_DIR="$HOME/.config/sketchybar/items"
+PLUGIN_DIR="$HOME/.config/sketchybar/plugins"
 
 # --- Bar Configuration ---------------------------------------------------
-sketchybar --bar height=36 \
-                 position=top \
-                 sticky=true \
-                 margin=4 \
-                 y_offset=4 \
-                 corner_radius=16 \
-                 padding_left=12 \
-                 padding_right=12 \
-                 color="$BAR_COLOR" \
-                 blur_radius=16
+bar=(
+  height=36
+  color="$LIGHT_BLACK"
+  border_color="$DARK_GREY"
+  border_width="$BORDER_THIN"
+  shadow=on
+  shadow.color="$SHADOW_LIGHT"
+  shadow.angle=30
+  shadow.distance=3
+  position=top
+  sticky=on
+  padding_right=12
+  padding_left=12
+  corner_radius=16
+  y_offset=4
+  margin=4
+  blur_radius=16
+  notch_width=0
+  notch_offset=0
+  font_smoothing=on
+)
+
+sketchybar --bar "${bar[@]}"
 
 # --- Default Properties --------------------------------------------------
-sketchybar --default updates=when_shown \
-                     icon.font="GeistMono Nerd Font:Light:15.0" \
-                     icon.color="$ICON_COLOR" \
-                     icon.padding_left=4 \
-                     icon.padding_right=4 \
-                     label.font="GeistMono Nerd Font:Light:15.0" \
-                     label.color="$LABEL_COLOR" \
-                     label.padding_left=4 \
-                     label.padding_right=4 \
-                     background.corner_radius=8 \
-                     background.height=28 \
-                     padding_left=4 \
-                     padding_right=4
+defaults=(
+  updates=when_shown
+  icon.font="$SYMBOL_FONT:$MEDIUM_WEIGHT:$SIZE_MEDIUM"
+  icon.color="$WHITE"
+  icon.padding_left="$PADDINGS"
+  icon.padding_right="$PADDINGS"
+  label.font="$TEXT_FONT:$REGULAR_WEIGHT:$SIZE_SMALL"
+  label.color="$WHITE"
+  label.padding_left="$PADDINGS"
+  label.padding_right="$PADDINGS"
+  padding_right="$PADDINGS"
+  padding_left="$PADDINGS"
+  background.height=28
+  background.corner_radius=8
+  popup.background.border_width="$BORDER_MEDIUM"
+  popup.background.corner_radius=8
+  popup.background.border_color="$WHITE"
+  popup.background.color="$BLACK"
+  popup.blur_radius=16
+  popup.background.shadow.drawing=on
+)
+
+sketchybar --default "${defaults[@]}"
 
 # --- Core Events ---------------------------------------------------------
 sketchybar --add event space_change \
-           --add event window_focus \
-           --add event windows_on_spaces
+  --add event window_focus          \
+  --add event windows_on_spaces
 
 # --- Dynamic Spaces ------------------------------------------------------
 source "$ITEM_DIR/spaces.sh"
 
 # --- Left Items ----------------------------------------------------------
-sketchybar --add item apple_menu left \
-           --set apple_menu icon="$APPLE" \
-                           label.drawing=off \
-                           background.drawing=off \
-                           click_script="open -a 'System Settings'"
-
-sketchybar --add item yabai left \
-           --set yabai script="$PLUGIN_DIR/yabai.sh" \
-                       icon.font="GeistMono Nerd Font:Bold:16.0" \
-                       label.drawing=off \
-                       icon.width=30 \
-                       icon="$YABAI_GRID" \
-                       icon.color="$ORANGE" \
-                       associated_display=active \
-           --subscribe yabai window_focus \
-                            windows_on_spaces \
-                            mouse.clicked \
-                            space_change \
-                            \
-           --add item front_app left \
-           --set front_app icon.drawing=off \
-                           label.color="$LABEL_COLOR" \
-                           background.drawing=off \
-                           script='yabai -m query --windows --window | jq -r ".app" 2>/dev/null || echo "Desktop"' \
-           --subscribe front_app front_app_switched window_focus
+sketchybar --add item yabai left            \
+  --set yabai script="$PLUGIN_DIR/yabai.sh" \
+  label.drawing=off                         \
+  icon.width=30                             \
+  icon="$YABAI_GRID"                        \
+  icon.color="$ORANGE"                      \
+  associated_display=active                 \
+  --subscribe yabai window_focus            \
+  windows_on_spaces                         \
+  mouse.clicked                             \
+  space_change                              \
+                                            \
+  --add item front_app left                 \
+  --set front_app icon.drawing=off          \
+  label.color="$WHITE"                      \
+  background.drawing=off                    \
+  script='yabai -m query --windows --window | jq -r ".app" 2>/dev/null || echo "Desktop"' \
+  --subscribe front_app front_app_switched window_focus
 
 # --- Initialize ----------------------------------------------------------
 sketchybar --update

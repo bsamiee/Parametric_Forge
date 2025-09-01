@@ -1,5 +1,4 @@
 #!/bin/bash
-# shellcheck disable=SC2034  # Icons sourced by other scripts
 # Title         : icons.sh
 # Author        : Bardia Samiee
 # Project       : Parametric Forge
@@ -7,6 +6,7 @@
 # Path          : /01.home/00.core/configs/apps/sketchybar/icons.sh
 # ----------------------------------------------------------------------------
 # Essential icon definitions for SketchyBar
+# shellcheck disable=SC2034  # Icons sourced by other scripts
 
 # --- General Icons ----------------------------------------------------------
 LOADING=􀖇
@@ -16,6 +16,7 @@ ACTIVITY=􀒓
 LOCK=􀒳
 BELL=􀋚
 BELL_DOT=􀝗
+SEPARATOR=􀆊
 
 # --- Git Icons --------------------------------------------------------------
 GIT_ISSUE=􀍷
