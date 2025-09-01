@@ -17,6 +17,18 @@ let
     #!${pkgs.bash}/bin/bash
     set -euo pipefail
 
+    # --- Helper Functions ----------------------------------------------------
+    check_command() { command -v "$1" >/dev/null 2>&1; }
+    
+    log_status() { echo "  [$1] $2"; }
+    
+    indent_output() {
+      while IFS= read -r line; do
+        echo "    $line"
+      done
+    }
+
+    # --- Header --------------------------------------------------------------
     echo "═══════════════════════════════════════════════════════════════════════"
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] Starting system maintenance"
     echo "═══════════════════════════════════════════════════════════════════════"
@@ -24,60 +36,59 @@ let
     # --- Command Line Tools Health Check ------------------------------------
     echo "→ Command Line Tools health:"
 
-    check() { command -v "$1" >/dev/null 2>&1; }
-
     if CLT_PATH=$(xcode-select -p 2>/dev/null) && [[ -d "$CLT_PATH" ]]; then
-      echo "  [OK] CLT installed: $CLT_PATH"
+      log_status "OK" "CLT installed: $CLT_PATH"
 
-      # Version check
       if CLT_VER=$(pkgutil --pkg-info=com.apple.pkg.CLTools_Executables 2>/dev/null | awk '/version/ {print $2}'); then
-        echo "  [OK] Version: $CLT_VER"
+        log_status "OK" "Version: $CLT_VER"
       else
-        echo "  [WARN] Package corrupted"
+        log_status "WARN" "Package corrupted"
       fi
 
-      # Tool availability
-      MISSING=""
+      MISSING_TOOLS=()
       for tool in clang git make ld; do
-        check "$tool" || MISSING="$MISSING $tool"
+        check_command "$tool" || MISSING_TOOLS+=("$tool")
       done
-      if [[ -z "$MISSING" ]]; then
-        echo "  [OK] Core tools available"
+      
+      if [[ ''${#MISSING_TOOLS[@]} -eq 0 ]]; then
+        log_status "OK" "Core tools available"
       else
-        echo "  [WARN] Missing:$MISSING"
+        log_status "WARN" "Missing tools: ''${MISSING_TOOLS[*]}"
       fi
 
-      # Compilation test
-      if echo 'int main(){return 0;}' | clang -x c - -o /tmp/clt_test 2>/dev/null && /tmp/clt_test; then
-        echo "  [OK] Compilation working"
-        rm -f /tmp/clt_test
+      TEMP_FILE=$(mktemp)
+      if echo 'int main(){return 0;}' | clang -x c - -o "$TEMP_FILE" 2>/dev/null && "$TEMP_FILE"; then
+        log_status "OK" "Compilation working"
+        rm -f "$TEMP_FILE"
       else
-        echo "  [WARN] Compilation failed"
+        log_status "WARN" "Compilation failed"
+        rm -f "$TEMP_FILE"
       fi
     else
-      echo "  [ERROR] CLT not installed"
+      log_status "ERROR" "CLT not installed"
     fi
 
-    # Update check
     if UPDATES=$(softwareupdate -l 2>/dev/null | grep -i "command line tools\|developer"); then
-      echo "  [WARN] Updates available"
-      echo "${UPDATES//$'\n'/$'\n'    }"
+      log_status "WARN" "Updates available"
+      echo "$UPDATES" | indent_output
     else
-      echo "  [OK] No CLT updates"
+      log_status "OK" "No CLT updates"
     fi
 
-    # Homebrew compatibility
-    if check brew && CLT_STATUS=$(brew config 2>/dev/null | grep "CLT:"); then
-      echo "  [OK] Homebrew: $CLT_STATUS"
-    elif check brew; then
-      echo "  [WARN] Homebrew CLT status unknown"
+    if check_command brew; then
+      if CLT_STATUS=$(brew config 2>/dev/null | grep "CLT:"); then
+        log_status "OK" "Homebrew: $CLT_STATUS"
+      else
+        log_status "WARN" "Homebrew CLT status unknown"
+      fi
     fi
 
     # --- Store Statistics ---------------------------------------------------
     echo "→ Store statistics:"
+    
     STORE_SIZE=$(du -sh /nix/store 2>/dev/null | cut -f1 || echo "unknown")
-    STORE_PATHS=$(find /nix/store -maxdepth 1 -type d 2>/dev/null | wc -l || echo "0")
-    GC_ROOTS=$(find /nix/var/nix/gcroots -type l 2>/dev/null | wc -l || echo "0")
+    STORE_PATHS=$(find /nix/store -maxdepth 1 -type d 2>/dev/null | wc -l | tr -d ' ' || echo "0")
+    GC_ROOTS=$(find /nix/var/nix/gcroots -type l 2>/dev/null | wc -l | tr -d ' ' || echo "0")
 
     echo "  Store size: $STORE_SIZE"
     echo "  Store paths: $STORE_PATHS"
@@ -87,44 +98,54 @@ let
     echo "→ Nix health checks:"
 
     if ${pkgs.nix}/bin/nix store verify --all --no-contents 2>/dev/null; then
-      echo "  [OK] Store integrity verified"
+      log_status "OK" "Store integrity verified"
     else
-      echo "  [WARN] Store verification found issues"
+      log_status "WARN" "Store verification found issues"
     fi
 
-    if pgrep -x "nix-daemon" > /dev/null; then
-      echo "  [OK] Nix daemon is running"
+    if pgrep -x "nix-daemon" >/dev/null; then
+      log_status "OK" "Nix daemon running"
     else
-      echo "  [WARN] Nix daemon is not running"
+      log_status "WARN" "Nix daemon not running"
     fi
 
     # --- Homebrew Maintenance -----------------------------------------------
-    if command -v brew >/dev/null 2>&1; then
+    if check_command brew; then
       echo "→ Homebrew maintenance:"
 
-      if brew cleanup --prune=30 2>/dev/null; then
-        echo "  [OK] Cleaned up old Homebrew versions"
+      if brew cleanup --prune=30 >/dev/null 2>&1; then
+        log_status "OK" "Cleaned old Homebrew versions"
       else
-        echo "  [WARN] Homebrew cleanup encountered issues"
+        log_status "WARN" "Homebrew cleanup failed"
       fi
 
-      if brew doctor 2>/dev/null | head -10; then
-        echo "  [OK] Homebrew doctor check completed"
+      if DOCTOR_OUTPUT=$(brew doctor 2>&1); then
+        if echo "$DOCTOR_OUTPUT" | grep -q "Your system is ready to brew"; then
+          log_status "OK" "Homebrew health check passed"
+        else
+          log_status "WARN" "Homebrew doctor found issues"
+          echo "$DOCTOR_OUTPUT" | head -5 | indent_output
+        fi
       else
-        echo "  [WARN] Homebrew doctor found issues"
+        log_status "WARN" "Homebrew doctor check failed"
       fi
     else
       echo "  → Homebrew not installed, skipping"
     fi
 
     # --- Mac App Store Updates ----------------------------------------------
-    if command -v mas >/dev/null 2>&1; then
+    if check_command mas; then
       echo "→ Mac App Store updates:"
 
-      if mas upgrade 2>/dev/null; then
-        echo "  [OK] Updated all Mac App Store applications"
+      if MAS_OUTPUT=$(mas upgrade 2>&1); then
+        if echo "$MAS_OUTPUT" | grep -q "Everything up-to-date"; then
+          log_status "OK" "All Mac App Store apps up-to-date"
+        else
+          log_status "OK" "Mac App Store apps updated"
+          echo "$MAS_OUTPUT" | indent_output
+        fi
       else
-        echo "  [WARN] Some App Store updates failed or no updates available"
+        log_status "WARN" "Mac App Store update failed"
       fi
     else
       echo "  → mas CLI not installed, skipping App Store updates"
@@ -132,8 +153,14 @@ let
 
     # --- Log Rotation -------------------------------------------------------
     echo "→ Log rotation:"
-    find /var/log -name "*.log" -mtime +60 -delete 2>/dev/null || true
-    echo "  [OK] Rotated old system logs"
+    
+    LOG_COUNT=$(find /var/log -name "*.log" -mtime +60 2>/dev/null | wc -l | tr -d ' ')
+    if [[ "$LOG_COUNT" -gt 0 ]]; then
+      find /var/log -name "*.log" -mtime +60 -delete 2>/dev/null || true
+      log_status "OK" "Rotated $LOG_COUNT old system logs"
+    else
+      log_status "OK" "No old logs to rotate"
+    fi
 
     echo "═══════════════════════════════════════════════════════════════════════"
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] System maintenance completed"
