@@ -118,9 +118,24 @@ rec {
     # Since we're returning the config portion, use PascalCase for launchd plist keys
     mkMerge [
       # --- Core Configuration ---------------------------------------------
-      (mkIf (command != null) {
-        ProgramArguments = [ command ] ++ (args.arguments or [ ]);
-      })
+      (mkIf (command != null) (
+        let
+          # Validate command path to prevent bare scripts
+          commandStr = toString command;
+          isValidExecutable = 
+            (lib.hasInfix "/bin/" commandStr) ||
+            (lib.hasPrefix "/usr/bin/" commandStr) ||
+            (lib.hasPrefix "/bin/" commandStr);
+          
+          warningMsg = ''
+            WARNING: Command '${commandStr}' may create 'sh' login items.
+            Use 'mkNamedExecutable' and '/bin/name' pattern for proper executables.
+          '';
+        in
+        if !isValidExecutable 
+        then builtins.trace warningMsg { ProgramArguments = [ command ] ++ (args.arguments or [ ]); }
+        else { ProgramArguments = [ command ] ++ (args.arguments or [ ]); }
+      ))
       (mkIf (script != null) {
         ProgramArguments = [
           "${pkgs.bash}/bin/bash"

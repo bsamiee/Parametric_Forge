@@ -1,10 +1,10 @@
-# Title         : 01.home/darwin/services/xdg-daemons.nix
+# Title         : home-maintenance-daemon.nix
 # Author        : Bardia Samiee
 # Project       : Parametric Forge
 # License       : MIT
-# Path          : /01.home/darwin/services/xdg-daemons.nix
+# Path          : /01.home/darwin/services/home-maintenance-daemon.nix
 # ----------------------------------------------------------------------------
-# XDG runtime directory maintenance and cache cleanup daemons.
+# Home maintenance daemon: XDG runtime cleanup, cache management, and font cache.
 
 {
   config,
@@ -73,16 +73,16 @@ let
   ];
 in
 {
-  # --- XDG Runtime Directory Maintenance ------------------------------------
-  launchd.agents."org.nixos.xdg-temp-cleanup" = {
+  # --- Home Maintenance Daemon ------------------------------------------
+  launchd.agents."org.nixos.home-maintenance" = {
     enable = true;
     config = mkPeriodicJob {
-      label = "XDG Cleanup Daemon";
+      label = "Home Maintenance Daemon";
       interval = 3600;
       nice = 15;
       command = "${
         pkgs.writeShellApplication {
-          name = "xdg-cleanup-daemon";
+          name = "home-maintenance-daemon";
           text = ''
             echo "[$(date)] Starting runtime and temp directory cleanup..."
 
@@ -125,7 +125,7 @@ in
             echo "[$(date)] Runtime cleanup completed"
           '';
         }
-      }/bin/xdg-cleanup-daemon";
+      }/bin/home-maintenance-daemon";
       logBaseName = "${config.xdg.stateHome}/logs/xdg-runtime";
       runAtLoad = true;
     };

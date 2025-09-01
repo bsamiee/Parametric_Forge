@@ -21,6 +21,58 @@ let
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] Starting system maintenance"
     echo "═══════════════════════════════════════════════════════════════════════"
 
+    # --- Command Line Tools Health Check ------------------------------------
+    echo "→ Command Line Tools health:"
+
+    check() { command -v "$1" >/dev/null 2>&1; }
+
+    if CLT_PATH=$(xcode-select -p 2>/dev/null) && [[ -d "$CLT_PATH" ]]; then
+      echo "  [OK] CLT installed: $CLT_PATH"
+
+      # Version check
+      if CLT_VER=$(pkgutil --pkg-info=com.apple.pkg.CLTools_Executables 2>/dev/null | awk '/version/ {print $2}'); then
+        echo "  [OK] Version: $CLT_VER"
+      else
+        echo "  [WARN] Package corrupted"
+      fi
+
+      # Tool availability
+      MISSING=""
+      for tool in clang git make ld; do
+        check "$tool" || MISSING="$MISSING $tool"
+      done
+      if [[ -z "$MISSING" ]]; then
+        echo "  [OK] Core tools available"
+      else
+        echo "  [WARN] Missing:$MISSING"
+      fi
+
+      # Compilation test
+      if echo 'int main(){return 0;}' | clang -x c - -o /tmp/clt_test 2>/dev/null && /tmp/clt_test; then
+        echo "  [OK] Compilation working"
+        rm -f /tmp/clt_test
+      else
+        echo "  [WARN] Compilation failed"
+      fi
+    else
+      echo "  [ERROR] CLT not installed"
+    fi
+
+    # Update check
+    if UPDATES=$(softwareupdate -l 2>/dev/null | grep -i "command line tools\|developer"); then
+      echo "  [WARN] Updates available"
+      echo "$UPDATES" | sed 's/^/    /'
+    else
+      echo "  [OK] No CLT updates"
+    fi
+
+    # Homebrew compatibility
+    if check brew && CLT_STATUS=$(brew config 2>/dev/null | grep "CLT:"); then
+      echo "  [OK] Homebrew: $CLT_STATUS"
+    elif check brew; then
+      echo "  [WARN] Homebrew CLT status unknown"
+    fi
+
     # --- Store Statistics ---------------------------------------------------
     echo "→ Store statistics:"
     STORE_SIZE=$(du -sh /nix/store 2>/dev/null | cut -f1 || echo "unknown")
