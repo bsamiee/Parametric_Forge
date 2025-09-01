@@ -27,11 +27,29 @@ export LABEL_COLOR=$DRACULA_FG
 
 # Item backgrounds (harmonized with ecosystem transparency)
 export BG_PRIMARY=0xdd6272a4 # 87% comment - readable yet integrated
-export BG_ACTIVE=0xddbd93f9  # 87% purple - maintains vibrancy
+export BG_ACTIVE=0xddbd93f9  # 87% purple - maintains vibrancy  
 export BG_SUCCESS=0xdd50fa7b # 87% green - success visibility
 export BG_WARNING=0xddffb86c # 87% orange - warning clarity
 export BG_ERROR=0xddff5555   # 87% red - error prominence
 export BG_INFO=0xdd8be9fd    # 87% cyan - information calm
+
+# --- Widget State Colors (Extended for Enhanced Functionality) ------------
+export SPACE_ACTIVE_ICON=$DRACULA_BG      # Dark icon on bright background
+export SPACE_ACTIVE_BG=$DRACULA_PURPLE    # Active space background
+export SPACE_OCCUPIED_ICON=$DRACULA_CYAN  # Cyan for spaces with windows
+export SPACE_OCCUPIED_BG=$BG_INFO         # Semi-transparent cyan background
+export SPACE_EMPTY_ICON=$DRACULA_COMMENT  # Subtle comment color for empty spaces
+export SPACE_EMPTY_BG=$TRANSPARENT        # Transparent background for empty spaces
+
+# --- Future Widget Colors (Ready for Phase 2) ----------------------------
+export SYSTEM_CPU_COLOR=$DRACULA_RED      # CPU usage indicator
+export SYSTEM_MEM_COLOR=$DRACULA_YELLOW   # Memory usage indicator  
+export SYSTEM_DISK_COLOR=$DRACULA_ORANGE  # Disk usage indicator
+export BATTERY_NORMAL_COLOR=$DRACULA_GREEN # Battery normal state
+export BATTERY_LOW_COLOR=$DRACULA_ORANGE  # Battery warning state
+export BATTERY_CRITICAL_COLOR=$DRACULA_RED # Battery critical state
+export AUDIO_NORMAL_COLOR=$DRACULA_CYAN   # Audio normal state
+export AUDIO_MUTED_COLOR=$DRACULA_COMMENT # Audio muted state
 
 # --- Transparency Variants -----------------------------------------------
 export TRANSPARENT=0x00000000

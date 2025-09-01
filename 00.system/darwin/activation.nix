@@ -118,14 +118,15 @@
       text = ''
         echo "[Parametric Forge] Ensuring XDG runtime directory exists..."
 
-        RUNTIME_DIR="${context.userHome}/Library/Caches/TemporaryItems"
+        # Use macOS default temporary directory structure
+        RUNTIME_DIR=$(getconf DARWIN_USER_TEMP_DIR 2>/dev/null || echo "/tmp")
 
-        # Create runtime directory with proper permissions
+        # Ensure runtime directory exists with proper permissions
         if [ ! -d "$RUNTIME_DIR" ]; then
           mkdir -pm 700 "$RUNTIME_DIR"
           echo "  [OK] Created XDG runtime directory at $RUNTIME_DIR"
         else
-          echo "  [OK] XDG runtime directory exists"
+          echo "  [OK] XDG runtime directory exists at $RUNTIME_DIR"
         fi
       '';
       deps = [ "users" ];

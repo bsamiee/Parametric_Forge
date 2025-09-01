@@ -11,7 +11,7 @@
 with pkgs;
 [
   # --- Lua Runtime & Package Management -------------------------------------
-  luajit # Just-In-Time Lua compiler (provides 'lua' command)
+  lua5_4 # Standard Lua 5.4 (required for SbarLua compatibility)
   luarocks # Lua package manager
 
   # --- Language Server & Intelligence ---------------------------------------
@@ -19,5 +19,5 @@ with pkgs;
 
   # --- Code Quality Tools ---------------------------------------------------
   stylua # Opinionated Lua code formatter (most modern)
-  luajitPackages.luacheck # Static analyzer and linter for Lua
+  lua54Packages.luacheck # Static analyzer and linter for Lua
 ]

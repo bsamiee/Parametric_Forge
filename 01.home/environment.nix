@@ -28,8 +28,6 @@
     XDG_STATE_HOME = "${config.xdg.stateHome}";
 
     # --- Shell Security & Performance ---------------------------------------
-    TMPDIR =
-      if (context != null && context.isDarwin) then "${config.home.homeDirectory}/Library/Caches/TemporaryItems" else "/tmp";
     KEYTIMEOUT = "1";
 
     # --- Core Utilities -----------------------------------------------------
@@ -238,6 +236,12 @@
     # WHOIS_SERVER = "whois.iana.org"; # Optional: Default WHOIS server
     # IDN_DISABLE = "1"; # Optional: Disable IDN processing for dig
 
+    # --- Terminal Web Browser (w3m) -----------------------------------------
+    # w3m uses ~/.w3m/ directory (not XDG-compliant)
+    # Configuration files are deployed via home.file in file-management.nix
+    W3M_DIR = "${config.home.homeDirectory}/.w3m";
+    WWW_HOME = "https://google.com"; # Default homepage when w3m starts with -v
+
     # --- File Manager Configuration ------------------------------------------
     # Yazi - Blazing fast terminal file manager (XDG-compliant)
     YAZI_CONFIG_HOME = "${config.xdg.configHome}/yazi"; # Config directory
@@ -271,9 +275,6 @@
     # DOTFONTPATH = MAGICK_FONT_PATH; # Uncomment if Graphviz can't find fonts
     # D2 diagram scripting language
     D2_LAYOUT = "dagre"; # Default layout engine (dagre, elk, tala)
-
-    # --- SketchyBar Configuration -------------------------------------------
-    SKETCHYBAR_CONFIG_DIR = "${config.xdg.configHome}/sketchybar"; # Config directory (XDG-compliant)
 
     # --- File & Directory Operations Tools ----------------------------------
     # Eza (modern ls replacement)

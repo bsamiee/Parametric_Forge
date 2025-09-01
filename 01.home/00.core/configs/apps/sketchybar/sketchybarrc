@@ -1,98 +1,61 @@
 #!/bin/bash
-# Title         : sketchybarrc
+# Title         : sketchybarrc  
 # Author        : Bardia Samiee
 # Project       : Parametric Forge
 # License       : MIT
 # Path          : /01.home/00.core/configs/apps/sketchybar/sketchybarrc
 # ----------------------------------------------------------------------------
-# Modular SketchyBar configuration with Dracula theme
+# Clean SketchyBar configuration with Dracula theme
 
 set -euo pipefail
 
-# --- Load Modular Configuration ------------------------------------------
 PLUGIN_DIR="$HOME/.config/sketchybar"
 source "$PLUGIN_DIR/colors.sh"
 source "$PLUGIN_DIR/icons.sh"
 
 # --- Bar Configuration ---------------------------------------------------
-# 32px bar height + 2px y_offset = 34px total vertical space
-bar=(
-  height=32
-  position=top
-  sticky=true
-  y_offset=2
-  corner_radius=8
-  padding_left=12
-  padding_right=12
-  color="$BAR_COLOR"
-  blur_radius=16
-)
+sketchybar --bar height=36 \
+                 position=top \
+                 sticky=true \
+                 y_offset=4 \
+                 corner_radius=8 \
+                 padding_left=12 \
+                 padding_right=12 \
+                 color="$BAR_COLOR" \
+                 blur_radius=16
 
-sketchybar --bar "${bar[@]}"
+# --- Default Properties --------------------------------------------------
+sketchybar --default updates=when_shown \
+                     icon.font="GeistMono Nerd Font:Light:15.0" \
+                     icon.color="$ICON_COLOR" \
+                     icon.padding_left=4 \
+                     icon.padding_right=4 \
+                     label.font="GeistMono Nerd Font:Light:15.0" \
+                     label.color="$LABEL_COLOR" \
+                     label.padding_left=4 \
+                     label.padding_right=4 \
+                     background.corner_radius=8 \
+                     background.height=28 \
+                     padding_left=4 \
+                     padding_right=4
 
-# --- Default Item Properties ---------------------------------------------
-defaults=(
-  updates=when_shown
-  icon.font="GeistMono Nerd Font:Light:15.0"
-  icon.color="$ICON_COLOR"
-  icon.padding_left=4
-  icon.padding_right=4
-  label.font="GeistMono Nerd Font:Light:15.0"
-  label.color="$LABEL_COLOR"
-  label.padding_left=4
-  label.padding_right=4
-  background.color="$BG_PRIMARY"
-  background.corner_radius=8
-  background.height=28
-  padding_left=4
-  padding_right=4
-)
-
-sketchybar --default "${defaults[@]}"
-
-# --- Dynamic Spaces (Managed by Script) ------------------------------------
-# Spaces are dynamically created/removed by spaces_update.sh script
-# No hardcoded space items - adapts to actual yabai spaces
-
-# --- Left Items ----------------------------------------------------------
-sketchybar --add item chevron left \
-           --set chevron icon=$ICON_CHEVRON \
-                         label.drawing=off \
-                         background.drawing=off
-
-sketchybar --add item front_app left \
-           --set front_app icon.drawing=off \
-                           label.color=$LABEL_COLOR \
-                           background.color=$BG_SUCCESS \
-                           script='yabai -m query --windows --window | jq -r ".app" 2>/dev/null || echo "Desktop"' \
-           --subscribe front_app front_app_switched window_focus
-
-# --- Right Items ---------------------------------------------------------
-sketchybar --add item clock right \
-           --set clock update_freq=10 \
-                       icon=$ICON_CLOCK \
-                       script='date "+%a %m/%d %I:%M %p"' \
-                       background.color=$BG_ACTIVE
-
-sketchybar --add item battery right \
-           --set battery update_freq=120 \
-                         icon=$ICON_BATTERY \
-                         script='pmset -g batt | grep -Eo "[0-9]+%" | cut -d% -f1' \
-                         background.color=$BG_INFO \
-           --subscribe battery system_woke power_source_change
-
-sketchybar --add item volume right \
-           --set volume icon=$ICON_VOLUME \
-                        script='osascript -e "output volume of (get volume settings)"' \
-                        background.color=$BG_WARNING \
-           --subscribe volume volume_change
-
-# --- Event Triggers Setup -----------------------------------------------
-# Set up event listeners for yabai integration (future component expansion)
+# --- Core Events ---------------------------------------------------------
 sketchybar --add event window_focus \
            --add event windows_on_spaces
 
+# --- Left Items ----------------------------------------------------------
+sketchybar --add item apple_menu left \
+           --set apple_menu icon="$ICON_APPLE" \
+                           label.drawing=off \
+                           background.drawing=off \
+                           click_script="open -a 'System Settings'"
+
+sketchybar --add item front_app left \
+           --set front_app icon.drawing=off \
+                           label.color="$LABEL_COLOR" \
+                           background.drawing=off \
+                           script='yabai -m query --windows --window | jq -r ".app" 2>/dev/null || echo "Desktop"' \
+           --subscribe front_app front_app_switched window_focus
+
 # --- Initialize ----------------------------------------------------------
 sketchybar --update
-
-echo "SketchyBar: Foundational configuration loaded successfully"

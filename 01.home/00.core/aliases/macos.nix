@@ -47,7 +47,4 @@ _:
   # --- Network & System -----------------------------------------------------
   flushdns = "sudo dscacheutil -flushcache && sudo killall -HUP mDNSResponder"; # Flush DNS cache
 
-  # --- Quick yabai debugging (keep minimal debugging tools)
-  yabai-config = "yabai -m query --spaces && yabai -m query --windows";
-  yabai-logs = "tail -f /tmp/yabai_$USER.*.log";
 }

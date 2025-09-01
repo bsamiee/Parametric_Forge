@@ -31,8 +31,7 @@ in
     };
     # --- Essential Taps -----------------------------------------------------
     taps = [
-      "koekeishiya/formulae" # For yabai and skhd window management
-      "FelixKratz/formulae" # For borders (JankyBorders)
+      "FelixKratz/formulae"
     ];
     # --- GUI Applications (Casks) -------------------------------------------
     casks = [
@@ -57,9 +56,10 @@ in
       "swish" # Trackpad gesture utility
       "transnomino" # File renaming utility
 
-      # Browsers & Internet - ALREADY INSTALLED
+      # Browsers & Internet
       "firefox" # Web browser
       "tor-browser" # Privacy-focused web browser
+      "zen" # Zen Browser - Firefox-based with Arc-like features
 
       # Communication & Social - MIXED
       "discord" # Voice and text communication
@@ -100,6 +100,9 @@ in
       "betterzip" # Preview ZIP/TAR contents without extracting
       "suspicious-package" # Inspect macOS .pkg installers
 
+      # Fonts for SketchyBar
+      "font-hack-nerd-font" # Default SketchyBar font
+
       # Adobe & Creative Suite - ALREADY INSTALLED
       # "adobe-acrobat-pro" # Already installed manually
       # "adobe-creative-cloud" # Already installed manually
@@ -127,11 +130,11 @@ in
       "duti" # Declarative file type associations and UTI management
       # "alerter" # REMOVED - formula doesn't exist in Homebrew
 
-      # Window Management Ecosystem - MOVED TO NIX SYSTEM PACKAGES
-      # "yabai" # Now via environment.systemPackages in darwin.nix
-      # "skhd" # Now via environment.systemPackages in darwin.nix
-      # "borders" # Now via environment.systemPackages in darwin.nix (jankyborders)
-      # "sketchybar" # MOVED - now using nix-darwin services.sketchybar
+      # UI Tools
+      "koekeishiya/formulae/yabai"
+      "koekeishiya/formulae/skhd"
+      "FelixKratz/formulae/sketchybar"
+      "FelixKratz/formulae/borders"
     ];
     # --- Mac App Store Applications -----------------------------------------
     # Disabled: Using smart install/update activation script instead

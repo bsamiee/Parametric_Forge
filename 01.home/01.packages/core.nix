@@ -70,4 +70,5 @@ with pkgs;
   # --- Terminal Essentials --------------------------------------------------
   yazi # Blazing fast terminal file manager (async, image preview)
   neovim # vim → Hyperextensible text editor
+  w3m # Terminal web browser with image support
 ]

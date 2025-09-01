@@ -20,7 +20,7 @@ in
         tilesize = mkDefault 28;
         largesize = mkDefault 128;
         magnification = mkDefault false;
-        autohide = mkDefault false;
+        autohide = mkDefault true; # Hide menubar for SketchyBar replacement
         show-process-indicators = mkDefault true;
         show-recents = mkDefault false;
         static-only = mkDefault false;
@@ -46,7 +46,7 @@ in
           "/Applications/Heptabase.app"
           "/Applications/Drafts.app"
           "/Applications/Visual Studio Code.app"
-          "/Applications/Arc.app"
+          "/Applications/Zen.app"
           "/Applications/WezTerm.app"
           "/Applications/Superhuman.app"
           "/System/Applications/Messages.app"
@@ -100,7 +100,7 @@ in
         AppleFontSmoothing = mkDefault 0;
         AppleICUForce24HourTime = mkDefault true;
         NSTableViewDefaultSizeMode = mkDefault 1;
-        AppleWindowTabbingMode = mkDefault "fullscreen";
+        AppleWindowTabbingMode = mkDefault "manual";
         NSNavPanelExpandedStateForSaveMode = mkDefault true;
         NSNavPanelExpandedStateForSaveMode2 = mkDefault true;
         NSDocumentSaveNewDocumentsToCloud = mkDefault false;
@@ -162,7 +162,7 @@ in
               "com.apple.finder.SRCH"
             ];
           };
-          "NSWindowTabbingShoudShowTabBarKey-com.apple.finder.TBrowserWindow" = mkDefault true;
+          "NSWindowTabbingShoudShowTabBarKey-com.apple.finder.TBrowserWindow" = mkDefault false;
           FXArrangeGroupViewBy = mkDefault "Name";
           FXPreferredGroupBy = mkDefault "None";
         };

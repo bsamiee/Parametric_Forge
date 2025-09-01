@@ -34,8 +34,8 @@
     };
   };
   # --- XDG Runtime Directory ------------------------------------------------
-  # Note: XDG_RUNTIME_DIR is set at system level in 00.system/environment.nix
-  # macOS: ~/Library/Caches/TemporaryItems
+  # Note: XDG_RUNTIME_DIR uses macOS native temporary directory structure
+  # macOS: $(getconf DARWIN_USER_TEMP_DIR) - typically /var/folders/...
   # Linux: /run/user/$UID (default)
 
   # --- Home Activation Scripts ----------------------------------------------
@@ -71,14 +71,6 @@
       mkdir -pm 755 "${config.xdg.configHome}/xh"
       mkdir -pm 755 "${config.xdg.configHome}/yt-dlp"
       mkdir -pm 755 "${config.xdg.configHome}/shellcheck"
-      mkdir -pm 755 "${config.xdg.configHome}/borders"
-      # Window Management
-      mkdir -pm 755 "${config.xdg.configHome}/yabai"
-      mkdir -pm 755 "${config.xdg.configHome}/skhd"
-      mkdir -pm 755 "${config.xdg.configHome}/sketchybar"
-      mkdir -pm 755 "${config.xdg.configHome}/sketchybar/modules"
-      mkdir -pm 755 "${config.xdg.configHome}/sketchybar/helpers"
-      mkdir -pm 755 "${config.xdg.configHome}/sketchybar/providers"
       mkdir -pm 755 "${config.xdg.configHome}/broot"
       mkdir -pm 755 "${config.xdg.configHome}/mcfly"
       mkdir -pm 755 "${config.xdg.configHome}/eza"
@@ -134,6 +126,12 @@
       mkdir -pm 755 "${config.xdg.configHome}/yazi"
       mkdir -pm 755 "${config.xdg.configHome}/yazi/plugins"  # Yazi plugins directory
       mkdir -pm 755 "${config.xdg.configHome}/yazi/flavors"  # Yazi flavors/themes directory
+      # UI Tools
+      mkdir -pm 755 "${config.xdg.configHome}/yabai"
+      mkdir -pm 755 "${config.xdg.configHome}/sketchybar"
+      mkdir -pm 755 "${config.xdg.configHome}/sketchybar/helpers"
+      mkdir -pm 755 "${config.xdg.configHome}/sketchybar/items" 
+      mkdir -pm 755 "${config.xdg.configHome}/sketchybar/plugins"
       mkdir -pm 755 "${config.xdg.dataHome}/applications"
       mkdir -pm 755 "${config.xdg.dataHome}/fonts"
       mkdir -pm 755 "${config.xdg.dataHome}/icons"
@@ -224,7 +222,6 @@
       mkdir -pm 755 "${config.xdg.cacheHome}/sccache"
       mkdir -pm 755 "${config.xdg.cacheHome}/flamegraph" # Performance profiling
       mkdir -pm 755 "${config.xdg.cacheHome}/shellcheck"
-      mkdir -pm 755 "${config.xdg.cacheHome}/sketchybar"
       mkdir -pm 755 "${config.xdg.cacheHome}/starship"
       mkdir -pm 755 "${config.xdg.cacheHome}/nix-index"
       # Container runtime caches
@@ -262,6 +259,8 @@
       # --- Non-XDG Directories ---------------------------------------------
       mkdir -pm 700 "${config.home.homeDirectory}/.ssh"
       mkdir -pm 700 "${config.home.homeDirectory}/.ssh/sockets"
+      # w3m (not XDG-compliant, uses ~/.w3m)
+      mkdir -pm 755 "${config.home.homeDirectory}/.w3m"
       mkdir -pm 755 "${config.home.homeDirectory}/.local/bin"
       mkdir -pm 755 "${config.home.homeDirectory}/.local/lib"
       mkdir -pm 755 "${config.home.homeDirectory}/.local/lib/sqlean"

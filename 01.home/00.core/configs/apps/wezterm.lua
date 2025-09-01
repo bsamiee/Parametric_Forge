@@ -37,7 +37,7 @@ local DOMAINS = {
 -- Appearance Constants ─────────────────────────────────────────────────────
 local APPEARANCE = {
     color_scheme = "Dracula (base16)",
-    background_opacity = 0.85,
+    background_opacity = 1.0,
     blur_radius = 20,
     inactive_pane = { saturation = 0.75, brightness = 0.8 },
 }
@@ -114,6 +114,7 @@ local icons = {
         ["tmux"] = wezterm.nerdfonts.cod_terminal_tmux,
         ["less"] = wezterm.nerdfonts.md_file_document,
         ["man"] = wezterm.nerdfonts.md_book_open_variant,
+        ["w3m"] = wezterm.nerdfonts.md_web,
     },
     directory = {
         home = wezterm.nerdfonts.md_home,
@@ -160,7 +161,7 @@ config.cursor_thickness = 2
 config.cursor_blink_rate = 250
 -- Frame ────────────────────────────────────────────────────────────────────
 config.window_decorations = "RESIZE"
-config.window_padding = { left = 15, right = 15, top = 5, bottom = 5 }
+config.window_padding = { left = 12, right = 12, top = 8, bottom = 8 }
 config.initial_cols = 120
 config.initial_rows = 34
 -- Tab‑bar ──────────────────────────────────────────────────────────────────
@@ -539,7 +540,7 @@ local function get_tab_colors(tab, pane, hover)
             local process_colors = {
                 -- Development tools - cyan family (coordination)
                 ["cargo"] = colors.cyan,
-                ["go"] = colors.cyan, 
+                ["go"] = colors.cyan,
                 ["node"] = colors.cyan,
                 ["python"] = colors.cyan,
                 ["python3"] = colors.cyan,
@@ -563,7 +564,7 @@ local function get_tab_colors(tab, pane, hover)
                 return process_color, colors.bg
             end
         end
-        
+
         if hover then
             return colors.blue, colors.fg
         else
@@ -705,9 +706,9 @@ config.window_close_confirmation = "NeverPrompt"
 config.audible_bell = "Disabled"
 config.visual_bell = {
     fade_in_function = "EaseIn",
-    fade_in_duration_ms = 150,
+    fade_in_duration_ms = 250,
     fade_out_function = "EaseOut",
-    fade_out_duration_ms = 150,
+    fade_out_duration_ms = 250,
     target = "BackgroundColor",
 }
 -- Set default workspace

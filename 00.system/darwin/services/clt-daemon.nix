@@ -33,7 +33,11 @@ let
       for tool in clang git make ld; do
         check "$tool" || MISSING="$MISSING $tool"
       done
-      [[ -z "$MISSING" ]] && log "[OK] Core tools available" || log "[WARN] Missing:$MISSING"
+      if [[ -z "$MISSING" ]]; then
+        log "[OK] Core tools available"
+      else
+        log "[WARN] Missing:$MISSING"
+      fi
 
       # Compilation test
       if echo 'int main(){return 0;}' | clang -x c - -o /tmp/clt_test 2>/dev/null && /tmp/clt_test; then

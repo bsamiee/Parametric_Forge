@@ -34,7 +34,7 @@ let
 in
 {
   aliases = lib.mapAttrs' (name: value: {
-    name = "d${name}";
+    name = "dv${name}";
     inherit value;
   }) devCommands;
 }

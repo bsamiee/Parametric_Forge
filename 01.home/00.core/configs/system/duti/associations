@@ -12,17 +12,17 @@
 com.adobe.Acrobat.Pro	com.adobe.pdf	all
 com.adobe.Acrobat.Pro	.pdf	all
 
-# Web Content -> Arc Browser (commented out - browser change planned)
-# company.thebrowser.Browser	public.html	all
-# company.thebrowser.Browser	public.xhtml	all
-# company.thebrowser.Browser	.html	all
-# company.thebrowser.Browser	.htm	all
-# company.thebrowser.Browser	.xhtml	all
+# Web Content -> Zen Browser
+app.zen-browser.zen	public.html	all
+app.zen-browser.zen	public.xhtml	all
+app.zen-browser.zen	.html	all
+app.zen-browser.zen	.htm	all
+app.zen-browser.zen	.xhtml	all
 
-# URL Schemes -> Arc Browser (commented out - browser change planned)
-# company.thebrowser.Browser	http	all
-# company.thebrowser.Browser	https	all
-# company.thebrowser.Browser	ftp	all
+# URL Schemes -> Zen Browser
+app.zen-browser.zen	http	all
+app.zen-browser.zen	https	all
+app.zen-browser.zen	ftp	all
 
 # Development Files -> Visual Studio Code
 com.microsoft.VSCode	public.plain-text	all

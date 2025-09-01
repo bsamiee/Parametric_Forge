@@ -6,8 +6,8 @@
 -- ----------------------------------------------------------------------------
 -- Global luacheck configuration for consistent Lua code quality
 
--- Standard library globals - "luajit" for LuaJIT-specific environment
-std = "luajit"
+-- Standard library globals - "lua54" for Lua 5.4 environment  
+std = "lua54"
 
 -- Performance optimization
 cache = true

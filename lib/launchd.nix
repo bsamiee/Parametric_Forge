@@ -26,7 +26,9 @@ rec {
   # --- Named Executable Wrapper (exported) ------------------------------------
   inherit mkNamedExecutable;
   # --- Common Paths ---------------------------------------------------------
-  getRuntimeDir = pkgs: if pkgs.stdenv.isDarwin then "\${HOME}/Library/Caches/TemporaryItems" else "/run/user/\$(id -u)";
+  getRuntimeDir =
+    pkgs:
+    if pkgs.stdenv.isDarwin then "\$(getconf DARWIN_USER_TEMP_DIR 2>/dev/null || echo \"/tmp\")" else "/run/user/\$(id -u)";
 
   # --- Universal Service Environment ----------------------------------------
   mkServiceEnvironment =

@@ -51,7 +51,8 @@
       "mcp__filesystem__read_text_file",
       "Read(/private/tmp/**)",
       "Read(/private/tmp/**)",
-      "mcp__perplexity__perplexity_ask"
+      "mcp__perplexity__perplexity_ask",
+      "Read(/Users/bardiasamiee/Library/LaunchAgents/**)"
     ],
     "deny": [
       "WebSearch",

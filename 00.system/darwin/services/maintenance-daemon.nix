@@ -95,8 +95,7 @@ in
     label = "Sys Maintenance Daemon";
     startCalendarInterval = [
       {
-        Weekday = 0;
-        Hour = 5;
+        Hour = 3;
         Minute = 0;
       }
     ];

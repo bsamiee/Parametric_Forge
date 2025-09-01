@@ -26,8 +26,9 @@ let
 
   # --- Executable Detection -----------------------------------------------
   isExecutable =
-    filename:
+    filename: sourcePath:
     let
+      # File extension patterns
       exts = [
         "sh"
         "bash"
@@ -39,8 +40,33 @@ let
         "lua"
         "js"
       ];
+
+      # Known executable config file patterns (no extension)
+      executableConfigs = [
+        "sketchybarrc"
+        "yabairc"
+        "skhdrc"
+        "bordersrc"
+      ];
+
+      # Check file extension
+      hasExecExt = lib.any (ext: lib.hasSuffix ".${ext}" filename) exts;
+
+      # Check known executable config names
+      isExecConfig = lib.any (name: filename == name) executableConfigs;
+
+      # Check for shebang pattern (if file exists and is readable)
+      hasShebang =
+        if builtins.pathExists sourcePath then
+          let
+            content = builtins.readFile sourcePath;
+            firstLine = lib.head (lib.splitString "\n" content);
+          in
+          lib.hasPrefix "#!" firstLine
+        else
+          false;
     in
-    lib.any (ext: lib.hasSuffix ".${ext}" filename) exts;
+    hasExecExt || isExecConfig || hasShebang;
 
   # --- Build-Time Caching (Existing Logic) --------------------------------
   cached =
@@ -94,7 +120,7 @@ let
             {
               source = sourcePath;
             }
-            // lib.optionalAttrs (isExecutable name) {
+            // lib.optionalAttrs (isExecutable name sourcePath) {
               executable = true;
             }
           )
@@ -140,7 +166,7 @@ let
     else
       let
         files = builtins.readDir source;
-        scripts = lib.filterAttrs (n: t: t == "regular" && isExecutable n) files;
+        scripts = lib.filterAttrs (n: t: t == "regular" && isExecutable n "${source}/${n}") files;
       in
       if scripts == { } then
         null

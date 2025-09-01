@@ -26,13 +26,6 @@
   # --- Programs -------------------------------------------------------------
   programs.zsh.enable = true;
 
-  # --- Window Management System Packages -----------------------------------
-  environment.systemPackages = lib.optionals context.isDarwin [
-    pkgs.yabai # Tiling window manager
-    pkgs.skhd # Simple hotkey daemon
-    pkgs.jankyborders # Window borders (borders command)
-  ];
-
   # --- Environment ----------------------------------------------------------
   environment.systemPath = lib.mkIf context.isX86_64 (lib.mkBefore [ "/usr/local/bin" ]);
 }

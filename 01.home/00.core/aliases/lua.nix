@@ -13,13 +13,13 @@ let
   luaCommands = {
     # Core execution
     u = "lua";
-    j = "luajit";
+    j = "lua5.4"; # Future-proof: use latest stable Lua
     r = "luarocks";
 
     # Development environment
     dl = "nix develop .#lua";
-    repl = "f() { if [[ -f .luajitrc || -f luajit.conf ]]; then luajit -i \"\$@\"; else lua -i \"\$@\"; fi; }; f";
-    eval = "f() { if [[ -f .luajitrc || -f luajit.conf ]]; then luajit -e \"\$@\"; else lua -e \"\$@\"; fi; }; f";
+    repl = "lua -i"; # Simple Lua REPL
+    eval = "lua -e"; # Execute Lua expression
 
     # Code quality & formatting
     fmt = "f() { stylua \"\${@:-.}\"; }; f";
@@ -46,11 +46,11 @@ let
     rock = "luarocks write_rockspec";
 
     # Smart interpreter selection
-    run = "f() { if [[ -f .luajitrc || -f luajit.conf ]]; then luajit \"\$@\"; else lua \"\$@\"; fi; }; f";
+    run = "lua"; # Run Lua script
 
     # Documentation & help
     help = "echo 'Lua: lua.org/manual | LuaRocks: luarocks.org'";
-    version = "lua -v 2>&1 && luajit -v 2>&1 && luarocks --version | head -1";
+    version = "lua -v 2>&1 && luarocks --version | head -1";
   };
 
 in

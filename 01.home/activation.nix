@@ -37,7 +37,7 @@
           echo "[Yazi] Synchronizing plugins..."
 
           # Install/update all plugins from package.toml with detailed error output
-          if ya pack -i 2>&1; then
+          if ya pkg install 2>&1; then
             echo "    [OK] Yazi plugins updated"
             echo "$CURRENT_HASH" > "$YAZI_CACHE"
           else

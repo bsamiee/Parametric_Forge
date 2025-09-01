@@ -95,6 +95,12 @@ play = [
   { run = '''mediainfo "$1"; echo "Press enter to exit"; read _''', block = true, desc = "Show media info" },
 ]
 
+# Web browsing with terminal browser
+browse = [
+  { run = 'w3m "$@"', block = true, desc = "w3m (Terminal Browser)" },
+  { run = 'open "$@"', orphan = true, desc = "Default Browser" },
+]
+
 # --- File Association Rules -----------------------------------------------
 [open]
 rules = [
@@ -108,6 +114,18 @@ rules = [
   # Text files - prefer nvim
   { mime = "text/*", use = [
     "edit",
+    "reveal",
+  ] },
+
+  # HTML files - terminal browser first in yazi context
+  { mime = "text/html", use = [
+    "browse",
+    "open",
+    "reveal",
+  ] },
+  { name = "*.{html,htm,xhtml}", use = [
+    "browse",
+    "open",
     "reveal",
   ] },
   { mime = "*/json", use = [

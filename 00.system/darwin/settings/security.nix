@@ -31,9 +31,6 @@ in
     # --- Sudoers Configuration -----------------------------------------------
     sudo = {
       extraConfig = ''
-        # Allow passwordless yabai scripting addition loading (single Nix path)
-        %admin ALL=(root) NOPASSWD: /run/current-system/sw/bin/yabai --load-sa
-
         # Allow passwordless system maintenance commands
         %admin ALL=(root) NOPASSWD: /usr/bin/mdutil *
         %admin ALL=(root) NOPASSWD: /usr/bin/tmutil addexclusion *

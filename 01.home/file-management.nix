@@ -21,45 +21,6 @@
     "wezterm/wezterm.lua".source = ./00.core/configs/apps/wezterm.lua;
     # Note: starship.toml handled by programs.starship.settings in shell-tools.nix
 
-    # Note: skhd config deployed to ~/.skhdrc (see home.file section)
-    "borders/bordersrc".source = ./00.core/configs/apps/borders/bordersrc; # JankyBorders window borders config
-
-    # --- SketchyBar Configuration (Modern SbarLua) --------------------------
-    # Modern Lua-based SketchyBar configuration with XDG Base Directory compliance
-    # Target: ~/.config/sketchybar/ (XDG_CONFIG_HOME/sketchybar/)
-    #
-    # Deployment Structure:
-    # ├── sketchybarrc         - Main bootstrap script (executable)
-    # ├── init.lua             - SbarLua main entry point
-    # ├── modules/             - Lua configuration modules
-    # │   ├── bar.lua          - Bar configuration (position, appearance)
-    # │   ├── colors.lua       - Dracula color scheme definitions
-    # │   ├── icons.lua        - Icon mappings and Nerd Font symbols
-    # │   └── items/           - Individual bar item configurations
-    # │       ├── spaces.lua   - Yabai space indicators
-    # │       ├── battery.lua  - Battery status with charging icons
-    # │       ├── clock.lua    - Date/time display
-    # │       ├── cpu.lua      - CPU usage monitoring
-    # │       └── volume.lua   - Audio control with mute toggle
-    # ├── providers/           - Binary providers for system data
-    # │   └── system-stats     - Native system stats provider
-    # └── helpers/             - Utility scripts and icon mappings
-    #
-    # Bootstrap script - SketchyBar looks for this by default
-    "sketchybar/sketchybarrc" = {
-      source = ./00.core/configs/apps/sketchybar/sketchybarrc;
-      executable = true; # Must be executable for SketchyBar to run it
-    };
-    # Main SbarLua configuration
-    "sketchybar/init.lua".source = ./00.core/configs/apps/sketchybar/init.lua;
-    # Lua modules directory - contains bar, colors, icons, and item modules
-    "sketchybar/modules" = {
-      source = ./00.core/configs/apps/sketchybar/modules;
-      recursive = true;
-    };
-    # Helper scripts directory for utilities and icon mapping
-    "sketchybar/helpers/.keep".text = ""; # Ensure helpers directory exists
-
     # --- System Information -------------------------------------------------
     "fastfetch/config.json".source = ./00.core/configs/apps/fastfetch/config.json;
 
@@ -95,17 +56,12 @@
     "yamllint/config".source = ./00.core/configs/formatting/.yamllint.yml;
 
     # --- File & Directory Operations Tools ----------------------------------
-    # Eza (modern ls replacement)
     "eza/theme.yml".source = ./00.core/configs/system/eza/theme.yml; # Dracula-inspired theme
-    # Fd (modern find replacement)
     "fd/ignore".source = ./00.core/configs/system/fd/ignore; # Global ignore patterns
-    # Duti (file type associations)
     "duti/associations".source = ./00.core/configs/system/duti/associations; # Default application mappings
 
     # --- Text Processing & Search Tools -------------------------------------
-    # Bat (enhanced cat)
     "bat/config".source = ./00.core/configs/system/bat/config; # Bat configuration
-    # Ripgrep (ultra-fast text search)
     "ripgrep/config".source = ./00.core/configs/system/ripgrep/config; # Global ripgrep configuration
 
     # --- File Analysis & Diff Tools ----------------------------------------
@@ -117,7 +73,6 @@
     # Bottom is managed by home-manager's programs.bottom module
 
     # --- Media Processing ---------------------------------------------------
-    # ImageMagick
     "ImageMagick/policy.xml".source = ./00.core/configs/media-tools/imagemagick/policy.xml;
 
     # --- Container Runtime Configurations -----------------------------------
@@ -127,13 +82,20 @@
     "containers/registries.conf".source = ./00.core/configs/containers/registries.conf; # Podman
     "containers/storage.conf".source = ./00.core/configs/containers/storage.conf; # Podman
 
-    # --- Window Management (XDG Compliant) ----------------------------------
-    "yabai/yabairc" = {
-      source = ./00.core/configs/apps/yabairc;
+    # --- UI Tools Configuration (Simple Files) -----------------------------
+    "skhd/skhdrc".source = ./00.core/configs/apps/skhdrc;
+    "borders/bordersrc" = {
+      source = ./00.core/configs/apps/borders/bordersrc;
       executable = true;
     };
-    "skhd/skhdrc" = {
-      source = ./00.core/configs/apps/skhdrc;
+    # --- Yabai Configuration ------------------------------------------------
+    "yabai/yabairc" = {
+      source = ./00.core/configs/apps/yabai/yabairc;
+      executable = true;
+    };
+    "yabai/spacesync.sh" = {
+      source = ./00.core/configs/apps/yabai/spacesync.sh;
+      executable = true;
     };
   };
   # --- Home Files (Non-XDG) -------------------------------------------------
@@ -155,8 +117,14 @@
     ".dockerignore".source = ./00.core/configs/containers/.dockerignore;
     # --- TLDR Configuration -------------------------------------------------
     ".tldrrc".source = ./00.core/configs/system/tldr/.tldrrc;
+    # --- Terminal Web Browser (w3m) -----------------------------------------
+    # w3m is not XDG-compliant and expects configs in ~/.w3m/
+    ".w3m/config".source = ./00.core/configs/apps/w3m/config;
+    ".w3m/keymap".source = ./00.core/configs/apps/w3m/keymap;
 
   }
+  # --- Modular UI Configurations (deployDir) -------------------------------
+  // (myLib.build.deployDir ./00.core/configs/apps/sketchybar ".config/sketchybar")
   # --- Claude Code CLI Configuration ----------------------------------------
   // (myLib.build.deployDir ./00.core/configs/apps/claude ".claude");
 

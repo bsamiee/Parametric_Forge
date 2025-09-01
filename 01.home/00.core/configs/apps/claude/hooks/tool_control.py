@@ -81,11 +81,10 @@ def _modify_response(tool: str, input_data: str, reason: str | None = None) -> N
     response = {"decision": "modify", "modifications": {"tool": tool, "input": input_data}}
     if reason:
         response["reason"] = reason
-    print(json.dumps(response))
 
 
 def _block_response(reason: str) -> None:
-    print(json.dumps({"decision": "block", "reason": reason}))
+    pass
 
 
 # --- Security & Modernization ------------------------------------------------

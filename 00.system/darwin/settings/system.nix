@@ -15,10 +15,10 @@ in
   system.defaults = {
     # --- Login Window -------------------------------------------------------
     loginwindow = {
-      SHOWFULLNAME = false; # Show user list with pre-selected username
+      SHOWFULLNAME = true; # Show username/password fields instead of user icon list
       GuestEnabled = false;
       autoLoginUser = null;
-      # LoginwindowText not used when SHOWFULLNAME = false
+      # LoginwindowText should not be set to avoid duplicate name display
       ShutDownDisabled = false;
       SleepDisabled = false;
       RestartDisabled = false;
@@ -176,34 +176,34 @@ in
       "com.apple.Terminal" = {
         SecureKeyboardEntry = mkDefault false;
       };
-      # --- File Type Associations (Arc Browser) ------------------------------
+      # --- File Type Associations (Zen Browser) ------------------------------
       "com.apple.LaunchServices/com.apple.launchservices.secure" = {
         LSHandlers = [
           # Web URLs
           {
             LSHandlerContentType = "public.url";
-            LSHandlerRoleAll = "company.thebrowser.Browser";
+            LSHandlerRoleAll = "app.zen-browser.zen";
           }
           {
             LSHandlerURLScheme = "http";
-            LSHandlerRoleAll = "company.thebrowser.Browser";
+            LSHandlerRoleAll = "app.zen-browser.zen";
           }
           {
             LSHandlerURLScheme = "https";
-            LSHandlerRoleAll = "company.thebrowser.Browser";
+            LSHandlerRoleAll = "app.zen-browser.zen";
           }
           {
             LSHandlerURLScheme = "ftp";
-            LSHandlerRoleAll = "company.thebrowser.Browser";
+            LSHandlerRoleAll = "app.zen-browser.zen";
           }
           # Web files
           {
             LSHandlerContentType = "public.html";
-            LSHandlerRoleAll = "company.thebrowser.Browser";
+            LSHandlerRoleAll = "app.zen-browser.zen";
           }
           {
             LSHandlerContentType = "public.xhtml";
-            LSHandlerRoleAll = "company.thebrowser.Browser";
+            LSHandlerRoleAll = "app.zen-browser.zen";
           }
           # PDF files
           {

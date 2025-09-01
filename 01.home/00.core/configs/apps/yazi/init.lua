@@ -319,36 +319,51 @@ end
 
 -- --- Plugin Configurations ------------------------------------------------
 
+-- Whoosh advanced bookmark manager configuration
+require("whoosh"):setup({
+    -- Configuration bookmarks (cannot be deleted through plugin) - matches your g-shortcuts
+    bookmarks = {
+        { tag = "Home", path = "~", key = "h" },
+        { tag = "Config", path = "~/.config", key = "c" },
+        { tag = "Downloads", path = "~/Downloads", key = "d" },
+        { tag = "Documents", path = "~/Documents", key = "D" },
+        { tag = "Projects", path = "~/Documents/99.Github", key = "p" },
+        { tag = "Parametric Forge", path = "~/Documents/99.Github/Parametric_Forge", key = "P" },
+        { tag = "Nix Config", path = "~/.config/nix", key = "n" },
+        { tag = "Temp", path = "/tmp", key = "t" },
+    },
 
+    -- Notification and behavior settings
+    jump_notify = false, -- Keep notifications minimal
 
+    -- Path display optimization for macOS
+    path_truncate_enabled = true,
+    path_max_depth = 3,
 
+    -- History settings for tab-based navigation
+    history_size = 15, -- More history for development workflow
 
--- Dracula color palette for reference
-local dracula_colors = {
-    background = "#282a36",
-    current_line = "#44475a",
-    foreground = "#f8f8f2",
-    comment = "#6272a4",
-    cyan = "#8be9fd",
-    green = "#50fa7b",
-    orange = "#ffb86c",
-    pink = "#ff79c6",
-    purple = "#bd93f9",
-    red = "#ff5555",
-    yellow = "#f1fa8c",
-}
+    -- Fuzzy search optimization
+    fzf_path_truncate_enabled = true,
+    fzf_path_max_depth = 4,
+
+    -- Folder name truncation for better readability
+    path_truncate_long_names_enabled = true,
+    path_max_folder_name_length = 25, -- Slightly longer for macOS paths
+    fzf_path_max_folder_name_length = 30,
+})
 
 -- UI/UX Refinement: Dynamic layout adjustment based on terminal width
 function adjust_layout()
-	local width = ya.term_size().cols
-	if width < 80 then
-		-- Minimal layout for narrow terminals
-		ya.manager_emit("layout", { ratio = { 0, 1, 0 } })
-	elseif width < 120 then
-		-- Balanced layout for medium terminals
-		ya.manager_emit("layout", { ratio = { 1, 4, 2 } })
-	else
-		-- Full layout for wide terminals
-		ya.manager_emit("layout", { ratio = { 2, 5, 3 } })
-	end
+    local width = ya.term_size().cols
+    if width < 80 then
+        -- Minimal layout for narrow terminals
+        ya.manager_emit("layout", { ratio = { 0, 1, 0 } })
+    elseif width < 120 then
+        -- Balanced layout for medium terminals
+        ya.manager_emit("layout", { ratio = { 1, 4, 2 } })
+    else
+        -- Full layout for wide terminals
+        ya.manager_emit("layout", { ratio = { 2, 5, 3 } })
+    end
 end

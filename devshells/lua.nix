@@ -12,15 +12,15 @@ pkgs.mkShell {
   name = "lua-dev";
   # --- Package Selection ----------------------------------------------------
   packages = with pkgs; [
-    lua
-    luajitPackages.penlight
-    luajitPackages.busted
-    luajitPackages.luacov
+    lua5_4
+    lua54Packages.penlight
+    lua54Packages.busted
+    lua54Packages.luacov
   ];
   # --- Environment Variables ------------------------------------------------
   env = {
-    LUA_PATH = "${pkgs.luajitPackages.penlight}/share/lua/5.1/?.lua;${pkgs.luajitPackages.penlight}/share/lua/5.1/?/init.lua;./?.lua;./?/init.lua";
-    LUA_CPATH = "${pkgs.luajitPackages.penlight}/lib/lua/5.1/?.so;./?.so";
+    LUA_PATH = "${pkgs.lua54Packages.penlight}/share/lua/5.4/?.lua;${pkgs.lua54Packages.penlight}/share/lua/5.4/?/init.lua;./?.lua;./?/init.lua";
+    LUA_CPATH = "${pkgs.lua54Packages.penlight}/lib/lua/5.4/?.so;./?.so";
     BUSTED_OUTPUT_TYPE = "TAP";
     LUACOV_CONFIG = ".luacov";
     LUACOV_STATSFILE = ".luacov.stats.out";
@@ -35,8 +35,7 @@ pkgs.mkShell {
     ${myLib.devshell.loadSecretsIfFresh}
 
     echo "Core Tools:"
-    echo "  lua               - Lua interpreter"
-    echo "  luajit            - JIT compiler"
+    echo "  lua               - Lua 5.4 interpreter"
     echo "  luarocks          - Package manager"
     echo ""
     echo "Development Tools:"

@@ -62,7 +62,7 @@ in
                 taplo # TOML validation
                 jq # JSON validation
                 stylua # Lua format validation
-                luajitPackages.luacheck # Lua linting
+                lua54Packages.luacheck # Lua linting
               ];
             }
             ''

@@ -34,7 +34,7 @@
       searchDownKey = "^[[B"; # Down arrow
     };
     # --- Shell Aliases ------------------------------------------------------
-    # shellAliases = import ../aliases { inherit lib; }; # TODO: Fix alias conflicts
+    shellAliases = import ../aliases { inherit lib; };
     # --- Zsh Plugins --------------------------------------------------------
     # Note: All plugins now managed via built-in enable flags above
     plugins = [ ];
@@ -107,17 +107,8 @@
           echo "Not in a project"
         }
 
-        # Yazi shell wrapper with cd-on-quit
+        # Official Yazi shell wrapper with cd-on-quit
         y() {
-          local tmp="$(mktemp -t "yazi-cwd.XXXXXX")"
-          yazi "$@" --cwd-file="$tmp"
-          if cwd="$(cat -- "$tmp")" && [ -n "$cwd" ] && [ "$cwd" != "$PWD" ]; then
-            cd -- "$cwd"
-          fi
-          rm -f -- "$tmp"
-        }
-
-        yy() {
           local tmp="$(mktemp -t "yazi-cwd.XXXXXX")" cwd
           yazi "$@" --cwd-file="$tmp"
           if cwd="$(command cat -- "$tmp")" && [ -n "$cwd" ] && [ "$cwd" != "$PWD" ]; then
@@ -180,8 +171,6 @@
           [ -n "$DOCKER_HOST" ] && echo "Ready at $DOCKER_HOST"
         }
         _set_docker_host
-
-        # Note: Yabai sudo setup handled automatically by activation scripts
 
         # Set SSH_AUTH_SOCK for 1Password if available
         ONEPASS_SOCKET="${myLib.secrets.opSSHSocket context}"
