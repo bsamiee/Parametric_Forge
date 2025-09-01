@@ -131,6 +131,23 @@
       '';
       deps = [ "users" ];
     };
+    # --- Window Management Service Restart ----------------------------------
+    restartWindowManagement = {
+      text = ''
+        echo "[Parametric Forge] Restarting window management services..."
+        
+        # Kill running services to force configuration reload
+        /usr/bin/killall yabai 2>/dev/null || true
+        /usr/bin/killall skhd 2>/dev/null || true  
+        /usr/bin/killall sketchybar 2>/dev/null || true
+        /usr/bin/killall borders 2>/dev/null || true
+        
+        sleep 2
+        
+        echo "  [OK] Services restarted - configurations will reload automatically"
+      '';
+      deps = [ "darwinRuntimeDirectory" ];
+    };
     # --- Security Settings Optimization ------------------------------------
     securityOptimization = {
       text = ''
