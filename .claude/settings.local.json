@@ -52,7 +52,8 @@
       "Read(/private/tmp/**)",
       "Read(/private/tmp/**)",
       "mcp__perplexity__perplexity_ask",
-      "Read(/Users/bardiasamiee/Library/LaunchAgents/**)"
+      "Read(/Users/bardiasamiee/Library/LaunchAgents/**)",
+      "Bash(sketchybar:*)"
     ],
     "deny": [
       "WebSearch",

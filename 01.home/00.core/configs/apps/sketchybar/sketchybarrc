@@ -67,15 +67,15 @@ defaults=(
 
 sketchybar --default "${defaults[@]}"
 
-# --- Core Events ---------------------------------------------------------
+# --- Streamlined Events -------------------------------------------------
 sketchybar --add event space_change \
-  --add event window_focus          \
   --add event windows_on_spaces
 
 # --- Dynamic Spaces ------------------------------------------------------
 source "$ITEM_DIR/spaces.sh"
 
 # --- Left Items ----------------------------------------------------------
+# Add yabai indicator and force it to leftmost position
 sketchybar --add item yabai left            \
   --set yabai script="$PLUGIN_DIR/yabai.sh" \
   label.drawing=off                         \
@@ -86,9 +86,16 @@ sketchybar --add item yabai left            \
   --subscribe yabai window_focus            \
   windows_on_spaces                         \
   mouse.clicked                             \
-  space_change                              \
-                                            \
-  --add item front_app left                 \
+  mouse.entered                             \
+  mouse.exited                              \
+  mouse.exited.global                       \
+  space_change
+
+# Force yabai to leftmost position after all spaces are created
+sketchybar --move yabai before space.1
+
+# --- Front App -----------------------------------------------------------
+sketchybar --add item front_app left                 \
   --set front_app icon.drawing=off          \
   label.color="$WHITE"                      \
   background.drawing=off                    \

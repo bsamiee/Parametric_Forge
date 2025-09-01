@@ -175,7 +175,7 @@ case $@ in
 "Tor Browser")
   icon_result=":tor_browser:"
   ;;
-"Zen Browser")
+"Zen Browser" | "Zen")
   icon_result=":zen_browser:"
   ;;
 
@@ -316,6 +316,9 @@ case $@ in
   ;;
 "Raycast")
   icon_result=":raycast:"
+  ;;
+"Rize")
+  icon_result=":default:"
   ;;
 
 # --- Default Fallback --------------------------------------------------------

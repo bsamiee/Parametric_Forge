@@ -5,68 +5,90 @@
 # License       : MIT
 # Path          : /01.home/00.core/configs/apps/sketchybar/items/spaces.sh
 # ----------------------------------------------------------------------------
-# PLACEHOLDER SUMMARY
+# Dynamic space generation with app icon integration
 # shellcheck disable=SC2034 # Used for potential future array operations
+# shellcheck disable=SC1091
 
-# --- Clean up existing spaces when recreating -------------------------------
-sketchybar --remove '/space\..*/' 2>/dev/null || true
-sketchybar --remove spaces 2>/dev/null || true
-sketchybar --remove separator 2>/dev/null || true
+# --- Load Configuration Variables -------------------------------------------
+source "$HOME/.config/sketchybar/colors.sh"
+source "$HOME/.config/sketchybar/icons.sh"
+source "$HOME/.config/sketchybar/constants.sh"
 
-CURRENT_SPACES=$(yabai -m query --spaces --display 2>/dev/null | jq -r '.[].index' | sort -n) # Get current spaces dynamically from yabai
+# --- Atomic Space Management (No Destruction) -------------------------------
+CURRENT_SPACES=$(yabai -m query --spaces --display 2>/dev/null | jq -r '.[].index' | sort -n)
+EXISTING_SPACES=$(sketchybar --query bar 2>/dev/null | jq -r '.items[]' | grep '^space\.' | sed 's/space\.//' 2>/dev/null || echo "")
 
-# --- Dynamic Space Configuration --------------------------------------------
-# Destroy space on right click, focus space on left click. New space by left clicking separator (>)
-spaces=()
+# --- Add New Spaces Only -------------------------------------------------
 for space in $CURRENT_SPACES; do
-  space_config=(
-    associated_space="$space"
-    icon="$space"
-    icon.font="$TEXT_FONT:$MEDIUM_WEIGHT:$SIZE_MEDIUM"
-    icon.padding_left=10
-    icon.padding_right=15
-    padding_left="$PADDINGS_SMALL"
-    padding_right="$PADDINGS_SMALL"
-    label.padding_right=20
-    icon.highlight_color="$RED"
-    label.font="$APP_FONT:$REGULAR_WEIGHT:$SIZE_LARGE"
-    label.background.height=26
-    label.background.drawing=on
-    label.background.color="$FAINT_DARK_GREY"
-    label.background.corner_radius=8
-    label.drawing=off
-    script="$PLUGIN_DIR/space.sh"
-  )
+  if ! echo "$EXISTING_SPACES" | grep -q "^$space$"; then
+    space_config=(
+      associated_space="$space"
+      icon="$space"
+      icon.font="$TEXT_FONT:$MEDIUM_WEIGHT:$SIZE_MEDIUM"
+      icon.color="$WHITE"
+      icon.padding_left=8
+      icon.padding_right=8
+      padding_left="$PADDINGS"
+      padding_right="$PADDINGS"
+      label.padding_left=6
+      label.padding_right=6
+      icon.highlight_color="$CYAN"
+      icon.background.height=2
+      icon.background.y_offset=-14
+      icon.background.color="$TRANSPARENT"
+      icon.background.corner_radius=1
+      icon.background.drawing=on
+      label.font="$APP_FONT"
+      label.background.drawing=off
+      label.drawing=off
+      script="$HOME/.config/sketchybar/plugins/space.sh"
+    )
 
-  sketchybar --add space space."$space" left  \
-    --set space."$space" "${space_config[@]}" \
-    --subscribe space."$space" mouse.clicked
+    sketchybar --add space space."$space" left  \
+      --set space."$space" "${space_config[@]}" \
+      --subscribe space."$space" mouse.clicked mouse.entered mouse.exited
+  fi
 done
 
-# --- Space Grouping ---------------------------------------------------------
-spaces_bracket=(
-  background.color="$LIGHT_DARK_GREY"
-  background.border_color="$DARK_GREY"
-  background.border_width="$BORDER_MEDIUM"
-  background.drawing=on
-)
+# --- Remove Obsolete Spaces ----------------------------------------------
+if [ -n "$EXISTING_SPACES" ]; then
+  for existing_space in $EXISTING_SPACES; do
+    if ! echo "$CURRENT_SPACES" | grep -q "^$existing_space$"; then
+      sketchybar --remove space."$existing_space" 2>/dev/null || true
+    fi
+  done
+fi
 
-separator=(
-  icon="$SEPARATOR"
-  icon.font="$SYMBOL_FONT:$BOLD_WEIGHT:$SIZE_LARGE"
-  padding_left=15
-  padding_right=15
-  label.drawing=off
-  associated_display=active
-  click_script='yabai -m space --create && sketchybar --trigger space_change'
-  icon.color="$WHITE"
-)
+# --- Ensure Bracket & Separator Exist ------------------------------------
+if ! sketchybar --query spaces >/dev/null 2>&1; then
+  spaces_bracket=(
+    background.color="$FAINT_DARK_GREY"
+    background.border_color="$GREY"
+    background.border_width="$BORDER_THIN"
+    background.corner_radius=8
+    background.height=28
+    background.drawing=on
+  )
 
-sketchybar --add bracket spaces '/space\..*/' \
-  --set spaces "${spaces_bracket[@]}"         \
-                                              \
-  --add item separator left                   \
-  --set separator "${separator[@]}"
+  sketchybar --add bracket spaces '/space\..*/' \
+    --set spaces "${spaces_bracket[@]}"
+fi
+
+if ! sketchybar --query separator >/dev/null 2>&1; then
+  separator=(
+    icon="$SEPARATOR"
+    icon.font="$SYMBOL_FONT:$BOLD_WEIGHT:$SIZE_LARGE"
+    padding_left=15
+    padding_right=15
+    label.drawing=off
+    associated_display=active
+    click_script='yabai -m space --create && sketchybar --trigger space_change'
+    icon.color="$WHITE"
+  )
+
+  sketchybar --add item separator left \
+    --set separator "${separator[@]}"
+fi
 
 # --- Trigger app icon updates -----------------------------------------------
 sketchybar --trigger windows_on_spaces

@@ -19,16 +19,35 @@ echo "yabai: Starting configuration..."
 # --- Initialize Companion Tools ---------------------------------------------
 echo "yabai: Starting companion UI tools..."
 
+# Start SketchyBar
 sketchybar --config ~/.config/sketchybar/sketchybarrc &
 SKETCHYBAR_PID=$!
-sleep 0.2
+sleep 0.5
+if pgrep -x sketchybar >/dev/null; then
+  echo "yabai: ✓ SketchyBar ready (PID: $SKETCHYBAR_PID)"
+else
+  echo "yabai: ! SketchyBar failed to start" >&2
+fi
 
+# Start skhd
 skhd &
 SKHD_PID=$!
-sleep 0.1
+sleep 0.3
+if pgrep -x skhd >/dev/null; then
+  echo "yabai: ✓ skhd ready (PID: $SKHD_PID)"
+else
+  echo "yabai: ! skhd failed to start" >&2
+fi
 
+# Start borders
 borders &
 BORDERS_PID=$!
+sleep 0.3
+if pgrep -f borders >/dev/null; then
+  echo "yabai: ✓ borders ready (PID: $BORDERS_PID)"
+else
+  echo "yabai: ! borders failed to start" >&2
+fi
 
 echo "yabai: ✓ UI tools started (PIDs: sketchybar=$SKETCHYBAR_PID skhd=$SKHD_PID borders=$BORDERS_PID)"
 
@@ -141,6 +160,7 @@ yabai -m rule --add app="^Hammerspoon$" manage=off sub-layer=below grid=10:10:2:
 
 # Communication & Media Apps with consistent side positioning
 yabai -m rule --add app="^Discord$" manage=off sub-layer=below grid=10:10:6:0:4:10
+yabai -m rule --add app="^Messages$" manage=off sub-layer=below grid=10:10:7:2:3:6
 yabai -m rule --add app="^Telegram$" manage=off sub-layer=below grid=10:10:7:2:3:6
 yabai -m rule --add app="^WhatsApp$" manage=off sub-layer=below grid=10:10:7:2:3:6
 yabai -m rule --add app="^zoom.us$" manage=off sub-layer=below grid=10:10:2:2:6:6

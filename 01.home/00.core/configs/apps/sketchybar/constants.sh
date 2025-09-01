@@ -20,7 +20,7 @@ export BORDER_THICK=3
 # --- Font System -------------------------------------------------------------
 export TEXT_FONT="GeistMono Nerd Font" # Readable text (time, app names, numbers)
 export SYMBOL_FONT="SF Pro"            # SF Symbols & system icons
-export APP_FONT="sketchybar-app-font"  # App-specific icon library
+export APP_FONT="sketchybar-app-font:Regular:14.0"  # App-specific icon library
 
 # Universal font weights (APP_FONT only supports Regular)
 export LIGHT_WEIGHT="Light"
@@ -29,6 +29,6 @@ export MEDIUM_WEIGHT="Medium"
 export BOLD_WEIGHT="Bold"
 
 # Font sizes
-export SIZE_SMALL=13.0
-export SIZE_MEDIUM=14.0
-export SIZE_LARGE=16.0
+export SIZE_SMALL=8.0
+export SIZE_MEDIUM=10.0
+export SIZE_LARGE=14.0
