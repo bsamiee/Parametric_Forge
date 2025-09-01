@@ -146,7 +146,7 @@
         
         echo "  [OK] Services restarted - configurations will reload automatically"
       '';
-      deps = [ "darwinRuntimeDirectory" ];
+      deps = [ "securityOptimization" ];
     };
     # --- Security Settings Optimization ------------------------------------
     securityOptimization = {
