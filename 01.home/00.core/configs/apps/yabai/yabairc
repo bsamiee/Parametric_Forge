@@ -141,7 +141,6 @@ yabai -m rule --add app="^AlDente$" manage=off sub-layer=below grid=10:10:7:7:3:
 yabai -m rule --add app="^BetterMouse$" manage=off sub-layer=below grid=10:10:2:2:6:6
 yabai -m rule --add app="^BetterTouchTool$" manage=off sub-layer=below grid=10:10:1:1:8:8
 yabai -m rule --add app="^Docker Desktop$" manage=off sub-layer=below grid=10:10:1:1:8:8
-yabai -m rule --add app="^1Password$" manage=off sub-layer=below grid=10:10:2:2:6:6
 yabai -m rule --add app="^Hammerspoon$" manage=off sub-layer=below grid=10:10:2:2:6:6
 
 # Communication & Media Apps with consistent side positioning
