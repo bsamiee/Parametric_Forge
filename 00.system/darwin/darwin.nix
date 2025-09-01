@@ -28,9 +28,9 @@
 
   # --- Window Management System Packages -----------------------------------
   environment.systemPackages = lib.optionals context.isDarwin [
-    pkgs.yabai         # Tiling window manager
-    pkgs.skhd          # Simple hotkey daemon  
-    pkgs.jankyborders  # Window borders (borders command)
+    pkgs.yabai # Tiling window manager
+    pkgs.skhd # Simple hotkey daemon
+    pkgs.jankyborders # Window borders (borders command)
   ];
 
   # --- Environment ----------------------------------------------------------

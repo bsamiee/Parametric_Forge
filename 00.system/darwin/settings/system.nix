@@ -180,13 +180,36 @@ in
       "com.apple.LaunchServices/com.apple.launchservices.secure" = {
         LSHandlers = [
           # Web URLs
-          { LSHandlerContentType = "public.url"; LSHandlerRoleAll = "company.thebrowser.Browser"; }
-          { LSHandlerURLScheme = "http"; LSHandlerRoleAll = "company.thebrowser.Browser"; }
-          { LSHandlerURLScheme = "https"; LSHandlerRoleAll = "company.thebrowser.Browser"; }
-          { LSHandlerURLScheme = "ftp"; LSHandlerRoleAll = "company.thebrowser.Browser"; }
+          {
+            LSHandlerContentType = "public.url";
+            LSHandlerRoleAll = "company.thebrowser.Browser";
+          }
+          {
+            LSHandlerURLScheme = "http";
+            LSHandlerRoleAll = "company.thebrowser.Browser";
+          }
+          {
+            LSHandlerURLScheme = "https";
+            LSHandlerRoleAll = "company.thebrowser.Browser";
+          }
+          {
+            LSHandlerURLScheme = "ftp";
+            LSHandlerRoleAll = "company.thebrowser.Browser";
+          }
           # Web files
-          { LSHandlerContentType = "public.html"; LSHandlerRoleAll = "company.thebrowser.Browser"; }
-          { LSHandlerContentType = "public.xhtml"; LSHandlerRoleAll = "company.thebrowser.Browser"; }
+          {
+            LSHandlerContentType = "public.html";
+            LSHandlerRoleAll = "company.thebrowser.Browser";
+          }
+          {
+            LSHandlerContentType = "public.xhtml";
+            LSHandlerRoleAll = "company.thebrowser.Browser";
+          }
+          # PDF files
+          {
+            LSHandlerContentType = "com.adobe.pdf";
+            LSHandlerRoleAll = "com.adobe.Acrobat.Pro";
+          }
         ];
       };
     };

@@ -1,0 +1,229 @@
+#!/bin/bash
+# Title         : yabairc
+# Author        : Bardia Samiee (adapted from josean-dev)
+# Project       : Parametric Forge
+# License       : MIT
+# Path          : /01.home/00.core/configs/apps/yabairc
+# ----------------------------------------------------------------------------
+# Yabai window manager configuration
+
+# --- WindowManager Integration -------------------------------------------
+# Keep macOS native window manager enabled for minimize/maximize buttons
+# Modern yabai coexists well with native WindowManager
+
+# --- Error Handling & Validation -----------------------------------------
+set -euo pipefail # Strict bash mode: exit on error, undefined vars, pipe failures
+
+# Validate yabai binary availability (safe during startup)
+if ! command -v yabai >/dev/null 2>&1; then
+    echo "ERROR: yabai not found in PATH" >&2
+    exit 1
+fi
+
+# Note: Removed self-referential process check (yabairc runs WITHIN yabai startup)
+# Note: Removed query test (yabai isn't ready to accept queries during config load)
+
+echo "yabai: Starting configuration..."
+
+# --- Start Companion UI Tools (Sequenced) -------------------------------
+# Start UI tools with proper sequencing to avoid race conditions
+echo "yabai: Starting companion UI tools..."
+
+# 1. Start SketchyBar first (provides external bar)
+sketchybar &
+SKETCHYBAR_PID=$!
+sleep 0.2  # Brief pause for bar initialization
+
+# 2. Start skhd (hotkey daemon)
+skhd &
+SKHD_PID=$!
+sleep 0.1  # Brief pause for hotkey setup
+
+# 3. JankyBorders with config file (primary borders)
+borders &
+BORDERS_PID=$!
+
+echo "yabai: Started companion UI tools (PIDs: sketchybar=$SKETCHYBAR_PID skhd=$SKHD_PID borders=$BORDERS_PID)"
+
+# --- Scripting Addition Setup --------------------------------------------
+# Enable advanced window control features (required for borders and opacity)
+# Note: Requires passwordless sudo configuration in /private/etc/sudoers.d/yabai
+echo "yabai: Attempting to load scripting addition..."
+if sudo --non-interactive yabai --load-sa 2>/dev/null; then
+    echo "yabai: Scripting addition loaded successfully"
+    # Auto-reload scripting addition when dock restarts
+    yabai -m signal --add event=dock_did_restart action="sudo yabai --load-sa"
+    # Enable space management signals when SA is loaded
+    echo "yabai: Full feature set available"
+else
+    echo "yabai: Scripting addition failed - running in basic mode" >&2
+    echo "yabai: Window management available, space control disabled" >&2
+    echo "yabai: To enable full features, disable SIP and restart yabai" >&2
+    # Continue without scripting addition - basic window management still works
+fi
+
+# --- Dynamic Space Management (Deferred) --------------------------------
+# Space management moved to after layout configuration
+YABAI_CONFIG_DIR="$HOME/.config/yabai"
+
+# --- Space & Display Signals --------------------------------------------
+# Ensure new spaces inherit global layout and trigger SketchyBar sync
+yabai -m signal --add event=space_created action="yabai -m space --layout bsp; $YABAI_CONFIG_DIR/spacesync.sh"
+yabai -m signal --add event=space_destroyed action="$YABAI_CONFIG_DIR/spacesync.sh"
+
+# Display changes trigger space resync
+yabai -m signal --add event=display_added action="sleep 2 && $YABAI_CONFIG_DIR/spacesync.sh"
+yabai -m signal --add event=display_removed action="sleep 1 && $YABAI_CONFIG_DIR/spacesync.sh"
+
+# --- SketchyBar Integration Signals -------------------------------------
+# Dynamic SketchyBar updates for window and space state changes
+yabai -m signal --add event=window_focused action="sketchybar --trigger window_focus"
+yabai -m signal --add event=window_created action="sketchybar --trigger windows_on_spaces"
+yabai -m signal --add event=window_destroyed action="sketchybar --trigger windows_on_spaces"
+yabai -m signal --add event=space_changed action="$YABAI_CONFIG_DIR/spacesync.sh"
+
+# --- Core Configuration --------------------------------------------------
+# Enable debug output for better troubleshooting (modern best practice)
+yabai -m config debug_output on
+
+# --- Layout Configuration ------------------------------------------------
+yabai -m config layout                     bsp          \
+                window_placement           second_child
+
+# Enforce BSP layout on all existing spaces and cache count
+SPACE_DATA=$(yabai -m query --spaces)
+SPACE_COUNT=$(echo "$SPACE_DATA" | jq length)
+# Use process substitution to avoid subshell issues
+while read -r space; do
+    yabai -m space "$space" --layout bsp 2>/dev/null || true
+done < <(echo "$SPACE_DATA" | jq -r '.[].index')
+
+# --- Refined Spacing System (Subtle Proportions) ------------------------
+# 4:3 ratio: 4px padding, 3px gaps - cleaner, less intrusive
+yabai -m config top_padding                4            \
+                bottom_padding             4            \
+                left_padding               4            \
+                right_padding              4            \
+                window_gap                 4
+
+# Write initial unified state
+echo '{"padding":4,"gap":4,"mode":"windowed","space":1,"window":0}' >/tmp/yabai_state.json
+
+# --- Dynamic Space Synchronization (After Layout) -------------------------
+# Sync SketchyBar with actual spaces AFTER layout is configured
+echo "yabai: Synchronizing SketchyBar with actual spaces..."
+if [ -x "$YABAI_CONFIG_DIR/spacesync.sh" ]; then
+    "$YABAI_CONFIG_DIR/spacesync.sh"
+else
+    echo "  [WARN] spacesync.sh not found or not executable" >&2
+fi
+
+# --- External Bar Integration --------------------------------------------
+# SketchyBar integration - replace menubar entirely
+yabai -m config external_bar all:34:0 # 34px top padding for SketchyBar (32px height + 2px y_offset), 0px bottom
+yabai -m config menubar_opacity 0.0   # Hide native menubar
+
+# --- Window Appearance ---------------------------------------------------
+# JankyBorders primary, native borders disabled to prevent conflicts
+yabai -m config window_border              off          \
+                window_opacity             on           \
+                window_opacity_duration    0.25         \
+                active_window_opacity      0.95         \
+                normal_window_opacity      0.80         \
+                insert_feedback_color      0xff50fa7b
+
+# --- Window Behavior -----------------------------------------------------
+yabai -m config split_ratio               0.50          \
+                split_type                 auto         \
+                auto_balance               on           \
+                window_shadow              float        \
+                window_animation_duration  0.0          \
+                window_zoom_persist        on           \
+                window_origin_display      default
+
+# --- Focus & Mouse Settings ----------------------------------------------
+# Better terminal cooperation - disabled auto focus
+yabai -m config focus_follows_mouse        off          \
+                mouse_follows_focus        off          \
+                mouse_modifier             alt          \
+                mouse_action1              move         \
+                mouse_action2              resize       \
+                mouse_drop_action          swap
+
+# --- Application Rules ---------------------------------------------------
+# System Applications - Core macOS components with centered positioning
+yabai -m rule --add app="^System Settings$" manage=off grid=10:10:2:2:6:6
+yabai -m rule --add app="^System Preferences$" manage=off grid=10:10:2:2:6:6
+yabai -m rule --add app="^System Information$" manage=off grid=10:10:2:2:6:6
+yabai -m rule --add app="^Activity Monitor$" manage=off grid=10:10:2:1:6:8
+yabai -m rule --add app="^Archive Utility$" manage=off grid=10:10:3:3:4:4
+yabai -m rule --add app="^Installer$" manage=off grid=10:10:2:2:6:6
+yabai -m rule --add app="^Software Update$" manage=off grid=10:10:3:3:4:4
+yabai -m rule --add app="^Finder$" manage=off grid=10:10:1:1:8:8
+yabai -m rule --add app="^Migration Assistant$" manage=off grid=10:10:2:2:6:6
+yabai -m rule --add app="^Disk Utility$" manage=off grid=10:10:2:2:6:6
+
+# Utilities - Small tools with consistent grid positioning
+yabai -m rule --add app="^Calculator$" manage=off grid=10:10:7:1:3:4
+yabai -m rule --add app="^Dictionary$" manage=off grid=10:10:2:2:6:6
+yabai -m rule --add app="^Karabiner-Elements$" manage=off grid=10:10:1:1:8:8
+yabai -m rule --add app="^QuickTime Player$" manage=off grid=10:10:2:2:6:6
+yabai -m rule --add app="^Preview$" manage=off grid=10:10:1:1:8:8
+yabai -m rule --add app="^1Password$" manage=off grid=10:10:2:2:6:6
+yabai -m rule --add app="^Digital Colormeter$" manage=off grid=10:10:6:2:4:3
+yabai -m rule --add app="^ColorSync Utility$" manage=off grid=10:10:3:3:4:4
+yabai -m rule --add app="^Font File Browser$" manage=off grid=10:10:2:2:6:6
+
+# Modern productivity tools with smart positioning
+yabai -m rule --add app="^Raycast$" manage=off grid=10:10:3:1:4:6
+yabai -m rule --add app="^CleanShot X$" manage=off grid=10:10:2:2:6:6
+yabai -m rule --add app="^AirBuddy$" manage=off grid=10:10:7:7:3:2
+yabai -m rule --add app="^AlDente$" manage=off grid=10:10:7:7:3:2
+yabai -m rule --add app="^BetterMouse$" manage=off grid=10:10:2:2:6:6
+yabai -m rule --add app="^BetterTouchTool$" manage=off grid=10:10:1:1:8:8
+yabai -m rule --add app="^Docker Desktop$" manage=off grid=10:10:1:1:8:8
+yabai -m rule --add app="^1Password 7$" manage=off grid=10:10:2:2:6:6
+yabai -m rule --add app="^Hammerspoon$" manage=off grid=10:10:2:2:6:6
+
+# Communication & Media Apps with consistent side positioning
+yabai -m rule --add app="^Discord$" manage=off grid=10:10:6:0:4:10
+yabai -m rule --add app="^Telegram$" manage=off grid=10:10:7:2:3:6
+yabai -m rule --add app="^WhatsApp$" manage=off grid=10:10:7:2:3:6
+yabai -m rule --add app="^Zoom$" manage=off grid=10:10:2:2:6:6
+yabai -m rule --add app="^Spotify$" manage=off grid=10:10:2:7:6:3
+
+# Creative & Design Apps
+yabai -m rule --add app="^Blender$" manage=off
+
+# Development Tools
+yabai -m rule --add app="^(Simulator|Console)$" manage=off
+yabai -m rule --add app="^WezTerm$" manage=on
+yabai -m rule --add app="^Creative Cloud$" manage=off
+
+# Universal window rules - catches preference windows, dialogs, and utility windows from any app
+yabai -m rule --add window_type="^(dialog|utility|toolbar|splash)$" manage=off
+yabai -m rule --add title="(Preferences|Settings|Options|Configuration|About|Library|Queue)" manage=off
+yabai -m rule --add title="^(General|(Tab|Password|Website|Extension)s|AutoFill|Se(arch|curity)|Privacy|Advance)$" manage=off
+
+# --- Configuration Validation -------------------------------------------
+echo "[yabai] Validating configuration..."
+
+if yabai -m query --windows >/dev/null 2>&1; then
+    echo "  [OK] Window management operational ($SPACE_COUNT spaces)"
+
+    # Verify companion tools after brief startup delay
+    sleep 0.5
+    pgrep -x sketchybar >/dev/null && echo "  [OK] SketchyBar active" || echo "  [WARN] SketchyBar missing" >&2
+    pgrep -x skhd >/dev/null && echo "  [OK] skhd active" || echo "  [WARN] skhd missing" >&2  
+    pgrep -f borders >/dev/null && echo "  [OK] JankyBorders active" || echo "  [WARN] JankyBorders missing - no borders active" >&2
+    echo "  [OK] Native borders disabled (JankyBorders primary)"
+
+    sketchybar --trigger yabai_ready 2>/dev/null || true
+
+    # Optimize transitions post-startup
+    sleep 1.0 && yabai -m config window_opacity_duration 0.25
+    echo "  [OK] Runtime optimizations applied"
+else
+    echo "  [WARN] Query validation failed - degraded mode" >&2
+fi
+

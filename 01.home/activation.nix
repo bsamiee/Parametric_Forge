@@ -9,7 +9,6 @@
 {
   config,
   lib,
-  myLib,
   context,
   pkgs,
   ...

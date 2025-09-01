@@ -72,6 +72,9 @@
       mkdir -pm 755 "${config.xdg.configHome}/yt-dlp"
       mkdir -pm 755 "${config.xdg.configHome}/shellcheck"
       mkdir -pm 755 "${config.xdg.configHome}/borders"
+      # Window Management
+      mkdir -pm 755 "${config.xdg.configHome}/yabai"
+      mkdir -pm 755 "${config.xdg.configHome}/skhd"
       mkdir -pm 755 "${config.xdg.configHome}/sketchybar"
       mkdir -pm 755 "${config.xdg.configHome}/sketchybar/modules"
       mkdir -pm 755 "${config.xdg.configHome}/sketchybar/helpers"
@@ -80,6 +83,7 @@
       mkdir -pm 755 "${config.xdg.configHome}/mcfly"
       mkdir -pm 755 "${config.xdg.configHome}/eza"
       mkdir -pm 755 "${config.xdg.configHome}/fd"
+      mkdir -pm 755 "${config.xdg.configHome}/duti"
       mkdir -pm 755 "${config.xdg.configHome}/ripgrep"
       mkdir -pm 755 "${config.xdg.configHome}/fastfetch"
       # File Analysis & Diff Tools

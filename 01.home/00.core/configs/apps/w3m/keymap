@@ -1,0 +1,112 @@
+# Title         : w3m keymap
+# Author        : Bardia Samiee
+# Project       : Parametric Forge
+# License       : MIT
+# Path          : /01.home/00.core/configs/apps/w3m/keymap
+# ----------------------------------------------------------------------------
+# Custom keybindings for w3m optimized for vim users and terminal efficiency
+
+# --- Vim-style Navigation ---------------------------------------------------
+# Basic movement (h/j/k/l like vim)
+keymap h MOVE_LEFT
+keymap j MOVE_DOWN
+keymap k MOVE_UP
+keymap l MOVE_RIGHT
+
+# Word navigation
+keymap w NEXT_WORD
+keymap b PREV_WORD
+
+# Line navigation
+keymap 0 LINE_BEGIN
+keymap $ LINE_END
+keymap ^ LINE_BEGIN
+
+# Page navigation
+keymap C-f NEXT_PAGE
+keymap C-b PREV_PAGE
+keymap C-d NEXT_HALF_PAGE
+keymap C-u PREV_HALF_PAGE
+
+# Document navigation
+keymap gg BEGIN
+keymap G END
+keymap H MOVE_LEFT
+keymap L MOVE_RIGHT
+keymap M CENTER_H
+
+# --- Link Navigation ---------------------------------------------------------
+# Tab through links (enhanced for qutebrowser-style)
+keymap TAB NEXT_LINK
+keymap C-i NEXT_LINK
+keymap S-TAB PREV_LINK
+
+# Link hints (number-based navigation)
+keymap f COMMAND "RESHAPE ; LINK_BEGIN ; GOTO_LINK"
+keymap F COMMAND "RESHAPE ; LINK_BEGIN ; TAB_LINK"
+
+# --- History & Navigation ----------------------------------------------------
+keymap u BACK
+keymap C-o BACK
+keymap r RELOAD
+keymap R RELOAD
+
+# --- Search ------------------------------------------------------------------
+keymap / ISEARCH
+keymap ? ISEARCH_BACK
+keymap n SEARCH_NEXT
+keymap N SEARCH_PREV
+
+# --- Bookmarks & URLs --------------------------------------------------------
+keymap a ADD_BOOKMARK
+keymap v VIEW_BOOKMARK
+keymap U GOTO
+keymap o GOTO
+
+# --- Tab Management ----------------------------------------------------------
+keymap t TAB_LINK
+keymap T NEW_TAB
+keymap x CLOSE_TAB
+keymap gt NEXT_TAB
+keymap gT PREV_TAB
+
+# --- External Programs -------------------------------------------------------
+keymap E EXTERN
+keymap C-e EXTERN_LINK
+
+# --- Quick Actions -----------------------------------------------------------
+# Download current page/link
+keymap d DOWNLOAD
+keymap D DOWNLOAD_LINK
+
+# View source
+keymap V SOURCE
+keymap s SAVE_SCREEN
+
+# --- Terminal Integration ----------------------------------------------------
+# Quit (vi-style)
+keymap q QUIT
+keymap ZZ QUIT
+
+# Suspend (return to shell)
+keymap C-z SUSPEND
+
+# --- Copy & Paste ------------------------------------------------------------
+# Copy current URL (enhanced terminal integration)
+keymap y COMMAND "EXTERN_LINK echo %s | pbcopy"
+keymap Y COMMAND "PRINT echo %s | pbcopy"
+
+# --- Form Navigation ---------------------------------------------------------
+# Enhanced form field navigation
+keymap i NEXT_LINK
+keymap I PREV_LINK
+
+# --- Miscellaneous -----------------------------------------------------------
+# Toggle images
+keymap I DISPLAY_IMAGE
+
+# Toggle between HTTP and HTTPS
+keymap S SSL_FORBID_METHOD
+
+# Help
+keymap C-h HELP

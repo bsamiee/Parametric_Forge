@@ -47,19 +47,7 @@ _:
   # --- Network & System -----------------------------------------------------
   flushdns = "sudo dscacheutil -flushcache && sudo killall -HUP mDNSResponder"; # Flush DNS cache
 
-  # --- Window Management Service Control ------------------------------------
-  # Yabai built-in service management
-  yabai-start = "yabai --start-service";
-  yabai-stop = "yabai --stop-service";
-  yabai-restart = "yabai --restart-service";
-  yabai-status = "launchctl list | grep yabai || echo 'yabai service not running'";
-
-  # Window management ecosystem control - using official service management
-  wm-start = "yabai --start-service && skhd --start-service && brew services start sketchybar";
-  wm-stop = "yabai --stop-service && skhd --stop-service && brew services stop sketchybar";
-  wm-restart = "yabai --restart-service && skhd --restart-service && brew services restart sketchybar";
-
-  # Quick yabai debugging
+  # --- Quick yabai debugging (keep minimal debugging tools)
   yabai-config = "yabai -m query --spaces && yabai -m query --windows";
-  yabai-logs = "tail -f /usr/local/var/log/yabai/yabai.*.log || echo 'No yabai logs found'";
+  yabai-logs = "tail -f /tmp/yabai_$USER.*.log";
 }

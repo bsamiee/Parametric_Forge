@@ -107,16 +107,18 @@ let
       }
 
       # Load cached secrets if available (for non-sensitive operations)
-      if (${myLib.secrets.checkCacheFresh config.secrets.paths.cache 60}); then
+      if (${myLib.secrets.checkCacheFresh config.secrets.paths.cache 1440}); then
         source "${config.secrets.paths.cache}" 2>/dev/null || true
       fi
 
-      # Helper to refresh cache manually
+      # Helper to refresh cache manually - ONLY command that requires biometric auth
       op-refresh() {
-        echo "Refreshing 1Password secrets cache..."
+        echo "Refreshing 1Password secrets cache (requires biometric auth)..."
+        echo "This is the ONLY command that should prompt for authentication."
         if (${myLib.secrets.opAuthenticated}); then
           launchctl kickstart -k gui/$(id -u)/com.parametricforge.op-cache-manager
-          echo "Cache refresh triggered"
+          echo "Cache refresh triggered - valid for 24 hours"
+          echo "All other 1Password operations will use cache until next refresh needed"
         else
           echo "Not authenticated. Run: op signin"
         fi
@@ -145,10 +147,10 @@ let
 
         if [ -f "${config.secrets.paths.cache}" ]; then
           echo "  [OK] Cache file exists"
-          if (${myLib.secrets.checkCacheFresh config.secrets.paths.cache 60}); then
-            echo "  [OK] Cache is fresh (<60 minutes)"
+          if (${myLib.secrets.checkCacheFresh config.secrets.paths.cache 1440}); then
+            echo "  [OK] Cache is fresh (<24 hours)"
           else
-            echo "  [WARN] Cache is stale (>60 minutes)"
+            echo "  [WARN] Cache is stale (>24 hours)"
           fi
         else
           echo "  [ERROR] No cache file"
@@ -164,11 +166,16 @@ in
     config = mkPeriodicJob {
       label = "Security Daemon";
       command = "${opCacheManager}/bin/security-daemon";
-      interval = 3600; # Every hour
+      interval = 86400; # Every 24 hours
       runAtLoad = true;
       nice = 10;
       logBaseName = "${config.xdg.stateHome}/op-cache";
-      environmentVariables = serviceEnv;
+      environmentVariables = serviceEnv // {
+        # Enable 1Password CLI caching to reduce auth prompts
+        OP_CACHE = "true";
+        # Set account for consistent behavior
+        OP_ACCOUNT = lib.mkDefault config.secrets.defaultAccount or "";
+      };
       # Additional config that mkPeriodicJob passes through
       WatchPaths = [
         config.secrets.paths.template
@@ -196,12 +203,20 @@ in
               exit 0
             fi
 
-            if ! op account get >/dev/null 2>&1; then
-              echo "[WARN] Not authenticated to 1Password"
+            # Use cached secrets if fresh, otherwise skip until manual refresh
+            if [ -f "${config.secrets.paths.cache}" ] && [ -z "$(find "${config.secrets.paths.cache}" -mmin +1440 2>/dev/null)" ]; then
+              echo "[OK] Using cached 1Password session (fresh)"
+              # shellcheck disable=SC1091
+              source "${config.secrets.paths.cache}" 2>/dev/null || {
+                echo "[WARN] Cache exists but invalid, skipping until manual refresh"
+                exit 0
+              }
+            else
+              echo "[SKIP] Cache stale or missing, requires manual 'op-refresh' command"
               exit 0
             fi
 
-            echo "[OK] 1Password CLI available and authenticated"
+            echo "[OK] 1Password CLI available with cached session"
 
             # Ensure SSH directory exists
             mkdir -p ~/.ssh
@@ -263,11 +278,15 @@ in
           '';
         }
       }/bin/op-ssh-setup";
-      interval = 21600; # Every 6 hours
+      interval = 86400; # Every 24 hours
       runAtLoad = true;
       nice = 10;
       logBaseName = "${config.xdg.stateHome}/logs/op-ssh-setup";
-      environmentVariables = serviceEnv;
+      environmentVariables = serviceEnv // {
+        # Enable 1Password CLI caching
+        OP_CACHE = "true";
+        OP_ACCOUNT = lib.mkDefault config.secrets.defaultAccount or "";
+      };
     };
   };
 

@@ -269,22 +269,8 @@ prepend_keymap = [
     "Z",
   ], run = "shell 'fd . | fzf | xargs -I {} yazi {}' --block", desc = "Jump with fzf" },
 
-  # UI/UX Refinements - Persistent Bookmarks & Command Palette
-  { on = [
-    "'",
-    "a",
-  ], run = "plugin whoosh --args=add", desc = "Add bookmark" },
-  { on = [
-    "'",
-  ], run = "plugin whoosh --args=jump", desc = "Jump to bookmark" },
-  { on = [
-    "'",
-    "d",
-  ], run = "plugin whoosh --args=delete", desc = "Delete bookmark" },
-  { on = [
-    "'",
-    "r",
-  ], run = "plugin whoosh --args=rename", desc = "Rename bookmark" },
+  # UI/UX Refinements - Command Palette
+  # Note: Bookmark functionality handled by built-in g-prefix shortcuts
 
   # --- LEVEL 6: Tabs (CMD+number pattern from wezterm) --------------------
   { on = [
@@ -505,10 +491,7 @@ prepend_keymap = [
   # Note: fazif plugin removed - using native fzf integration
   { on = [
     "z",
-  ], run = "plugin keyjump", desc = "Zoxide jump" },
-  { on = [
-    "i",
-  ], run = "plugin searchjump", desc = "Flash.nvim-style search jump" },
+  ], run = "plugin jump-to-char", desc = "Jump to character" },
   { on = [
     "<A-i>",
   ], run = "plugin easyjump", desc = "Hop.nvim-style easy jump" },
@@ -627,27 +610,9 @@ prepend_keymap = [
     "U",
   ], run = "plugin git-files", desc = "Show git status with untracked" },
 
-  # --- File Tagging (simple-tag plugin) ------------------------------------
-  { on = [
-    "t",
-    "t",
-  ], run = "plugin simple-tag -- toggle-tag", desc = "Toggle tag (press any key)" },
-  { on = [
-    "t",
-    "a",
-  ], run = "plugin simple-tag -- add-tag", desc = "Add tag (press any key)" },
-  { on = [
-    "t",
-    "d",
-  ], run = "plugin simple-tag -- remove-tag", desc = "Remove tag (press any key)" },
-  { on = [
-    "t",
-    "f",
-  ], run = "plugin simple-tag -- filter --mode=or", desc = "Filter by tags" },
-  { on = [
-    "t",
-    "s",
-  ], run = "plugin simple-tag -- select --mode=or", desc = "Select by tags" },
+  # --- File Tagging (mactag - native macOS tagging) -----------------------
+  # Note: mactag plugin provides native macOS tagging integration
+  # Use Finder or mactag commands for file tagging on macOS
 ]
 
 # --- Tasks Manager Layer --------------------------------------------------

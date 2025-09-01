@@ -31,11 +31,27 @@
         echo "  [OK] Migrated npm config (original preserved)"
       fi
     '';
-    # --- Smart Mac App Store Management ------------------------------------
-    smartMasInstall = lib.hm.dag.entryAfter [ "xdgMigration" ] ''
-      # Ensure homebrew PATH is available for mas CLI
+    # --- File Association Management ----------------------------------------
+    dutiFileAssociations = lib.hm.dag.entryAfter [ "xdgMigration" ] ''
       export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
       
+      echo "[Parametric Forge] Applying file associations..."
+      
+      if command -v duti >/dev/null 2>&1; then
+        if duti "${config.xdg.configHome}/duti/associations" 2>/dev/null; then
+          echo "  [OK] File associations configured"
+        else
+          echo "  [WARN] Some associations may have failed"
+        fi
+      else
+        echo "  [SKIP] duti not available"
+      fi
+    '';
+    # --- Smart Mac App Store Management ------------------------------------
+    smartMasInstall = lib.hm.dag.entryAfter [ "dutiFileAssociations" ] ''
+      # Ensure homebrew PATH is available for mas CLI
+      export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
+
       echo "[Parametric Forge] Smart Mac App Store management..."
 
       if command -v mas >/dev/null 2>&1; then
@@ -107,8 +123,37 @@
       fi
     '';
 
+    # --- Window Manager Service Integration ---------------------------------
+    windowManagerServices = lib.hm.dag.entryAfter [ "smartMasInstall" ] ''
+      echo "[Parametric Forge] Initializing window manager services..."
+
+      # Remove conflicting manual plists if they exist
+      rm -f ~/Library/LaunchAgents/com.koekeishiya.yabai.plist
+      rm -f ~/Library/LaunchAgents/com.koekeishiya.skhd.plist
+
+      # Install and load yabai service
+      if command -v yabai >/dev/null 2>&1; then
+        yabai --install-service 2>/dev/null || true
+        if launchctl load ~/Library/LaunchAgents/com.koekeishiya.yabai.plist 2>/dev/null; then
+          echo "  [OK] yabai service installed and loaded"
+        else
+          echo "  [WARN] yabai service install failed"
+        fi
+      fi
+
+      # Install and load skhd service
+      if command -v skhd >/dev/null 2>&1; then
+        skhd --install-service 2>/dev/null || true
+        if launchctl load ~/Library/LaunchAgents/com.koekeishiya.skhd.plist 2>/dev/null; then
+          echo "  [OK] skhd service installed and loaded"
+        else
+          echo "  [WARN] skhd service install failed"
+        fi
+      fi
+    '';
+
     # --- Comprehensive User-Level Spotlight Protection ---------------------
-    spotlightShield = lib.hm.dag.entryAfter [ "smartMasInstall" ] ''
+    spotlightShield = lib.hm.dag.entryAfter [ "windowManagerServices" ] ''
       export PATH="/usr/bin:/bin:/usr/sbin:/sbin:$PATH"
 
       echo "[Parametric Forge] Deploying comprehensive user-level Spotlight protection..."
@@ -231,7 +276,7 @@
       echo "    • Python caches: $PYTHON_CACHE_COUNT"
       echo "    • Node modules: $NODE_MODULES_COUNT"
       echo "    • Git repositories: $GIT_COUNT"
-      
+
       # Only log if meaningful work was done
       TOTAL_PROTECTED=$((APP_SUPPORT_PROTECTED + DEV_PROTECTED + CLOUD_PROTECTED + PYTHON_CACHE_COUNT + NODE_MODULES_COUNT + GIT_COUNT))
       if [ $TOTAL_PROTECTED -gt 0 ]; then

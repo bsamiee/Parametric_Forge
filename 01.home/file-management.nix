@@ -99,6 +99,8 @@
     "eza/theme.yml".source = ./00.core/configs/system/eza/theme.yml; # Dracula-inspired theme
     # Fd (modern find replacement)
     "fd/ignore".source = ./00.core/configs/system/fd/ignore; # Global ignore patterns
+    # Duti (file type associations)
+    "duti/associations".source = ./00.core/configs/system/duti/associations; # Default application mappings
 
     # --- Text Processing & Search Tools -------------------------------------
     # Bat (enhanced cat)
@@ -124,6 +126,15 @@
     "containers/containers.conf".source = ./00.core/configs/containers/containers.conf; # Podman
     "containers/registries.conf".source = ./00.core/configs/containers/registries.conf; # Podman
     "containers/storage.conf".source = ./00.core/configs/containers/storage.conf; # Podman
+
+    # --- Window Management (XDG Compliant) ----------------------------------
+    "yabai/yabairc" = {
+      source = ./00.core/configs/apps/yabairc;
+      executable = true;
+    };
+    "skhd/skhdrc" = {
+      source = ./00.core/configs/apps/skhdrc;
+    };
   };
   # --- Home Files (Non-XDG) -------------------------------------------------
   home.file = {
@@ -145,15 +156,6 @@
     # --- TLDR Configuration -------------------------------------------------
     ".tldrrc".source = ./00.core/configs/system/tldr/.tldrrc;
 
-    # --- Window Management (macOS - Non-XDG) --------------------------------
-    ".yabairc" = {
-      source = ./00.core/configs/apps/yabairc;
-      executable = true; # yabai requires executable config files
-    };
-    ".skhdrc" = {
-      source = ./00.core/configs/apps/skhdrc;
-      executable = true; # skhd requires executable config files
-    };
   }
   # --- Claude Code CLI Configuration ----------------------------------------
   // (myLib.build.deployDir ./00.core/configs/apps/claude ".claude");

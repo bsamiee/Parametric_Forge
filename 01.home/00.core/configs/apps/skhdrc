@@ -72,8 +72,8 @@ shift + opt - return : \
     if [ "$(yabai -m config top_padding)" = "0" ]; then \
         yabai -m config top_padding 4; yabai -m config bottom_padding 4; \
         yabai -m config left_padding 4; yabai -m config right_padding 4; \
-        yabai -m config window_gap 3; \
-        echo '{"padding":4,"gap":3,"mode":"windowed","space":1,"window":0}' >/tmp/yabai_state.json; \
+        yabai -m config window_gap 4; \
+        echo '{"padding":4,"gap":4,"mode":"windowed","space":1,"window":0}' >/tmp/yabai_state.json; \
     else \
         yabai -m config top_padding 0; yabai -m config bottom_padding 0; \
         yabai -m config left_padding 0; yabai -m config right_padding 0; \
@@ -114,21 +114,12 @@ shift + alt + opt - g : yabai -m window --display east; yabai -m display --focus
 shift + alt + opt + cmd - x : yabai -m space --mirror x-axis
 shift + alt + opt + cmd - y : yabai -m space --mirror y-axis
 
+# --- Native macOS shortcuts work automatically with WindowManager enabled ---
+# No explicit passthrough needed - removed unnecessary entries
+
 # --- Utility Operations (Simple Keys) ---------------------------------------
 # Quick navigation and space management
 alt - tab : yabai -m space --focus recent || yabai -m space --focus first
 shift + alt + opt + cmd - c : yabai -m space --create && index="$(yabai -m query --spaces --display | jq '.[-1].index')" && yabai -m space --focus "${index}"
 shift + alt + opt + cmd - d : yabai -m space --destroy
 
-# --- Service Management with Error Recovery ---------------------------------
-# Enhanced service management with validation and recovery
-ctrl + alt - q : launchctl unload ~/Library/LaunchAgents/org.nixos.yabai.plist && echo "yabai: Service stopped"
-ctrl + alt - s : launchctl load ~/Library/LaunchAgents/org.nixos.yabai.plist && echo "yabai: Service started"
-ctrl + alt - r : launchctl kickstart -k "gui/$(id -u)/org.nixos.yabai" && sleep 2 && yabai -m query --spaces >/dev/null 2>&1 && echo "yabai: Service restarted successfully" || echo "yabai: Service restart failed"
-
-# Emergency service recovery (Hold shift for full reset)
-shift + ctrl + alt - r : \
-    echo "Emergency service recovery initiated..."; \
-    launchctl kickstart -k "gui/$(id -u)/org.nixos.yabai"; \
-    launchctl kickstart -k "gui/$(id -u)/org.nixos.skhd"; \
-    echo "Full service recovery completed"

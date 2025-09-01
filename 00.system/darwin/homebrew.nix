@@ -32,7 +32,7 @@ in
     # --- Essential Taps -----------------------------------------------------
     taps = [
       "koekeishiya/formulae" # For yabai and skhd window management
-      "FelixKratz/formulae"  # For borders (JankyBorders)
+      "FelixKratz/formulae" # For borders (JankyBorders)
     ];
     # --- GUI Applications (Casks) -------------------------------------------
     casks = [
@@ -45,25 +45,24 @@ in
       # "wezterm@nightly" # Already have WezTerm manually
 
       # Productivity & Window Management - MOST ALREADY INSTALLED
-      # "airbuddy" # Already installed manually
-      # "aldente" # Already installed manually
-      # "alt-tab" # Already installed manually
-      # "bartender" # Already installed manually
-      # "bettermouse" # Already installed manually
-      # "bettertouchtool" # Already installed manually
-      # "hazel" # Already installed manually
-      # "latest" # Already installed manually
-      # "raycast" # Already installed manually
-      # "superkey" # Already installed manually
-      # "swish" # Already installed manually
-      # "transnomino" # Already installed manually
+      "airbuddy" # AirPods management utility
+      "aldente" # Battery charging limiter
+      "alt-tab" # Window switching utility
+      "bettermouse" # Mouse enhancement utility
+      "bettertouchtool" # Touch/gesture management
+      "hazel" # File organization automation
+      "latest" # App update checker
+      "raycast" # Launcher/productivity app
+      "superkey" # Keyboard enhancement utility
+      "swish" # Trackpad gesture utility
+      "transnomino" # File renaming utility
 
       # Browsers & Internet - ALREADY INSTALLED
-      # "firefox" # Already installed manually
-      # "tor-browser" # Already installed manually
+      "firefox" # Web browser
+      "tor-browser" # Privacy-focused web browser
 
       # Communication & Social - MIXED
-      # "discord" # Already installed manually
+      "discord" # Voice and text communication
       # "microsoft-teams" # Already installed manually
       # "superhuman" # Already installed manually
       "telegram" # MISSING - need homebrew
@@ -86,12 +85,12 @@ in
       # "visual-studio-code" # Already installed manually
 
       # Media & Creative - CORRECTED
-      # "blender" # Already installed manually
-      # "calibre" # Already installed manually
+      "blender" # 3D creation suite
+      "calibre" # E-book management
       "handbrake-app" # MISSING - need homebrew
       # "scrivener" # Already installed manually
-      # "spotify" # Already installed manually
-      # "steam" # Already installed manually
+      "spotify" # Music streaming service
+      "steam" # Gaming platform
 
       # QuickLook Plugins - DELETED FOR CLEAN HOMEBREW INSTALL
       "syntax-highlight" # Code syntax highlighting for 150+ file types
@@ -113,6 +112,9 @@ in
       # "grammarly-desktop" # Already installed manually
       # "parallels" # Already installed manually
       # "rize" # Already installed manually
+
+      # Automation & Productivity
+      "hammerspoon" # Lua-scriptable macOS automation and window management
     ];
 
     # --- CLI Tools (Brews) --------------------------------------------------
@@ -122,6 +124,7 @@ in
       "handbrake" # CLI video transcoder (GUI in casks as handbrake-app)
       # "mono" # .NET runtime - RE-INSTALL AFTER FULL DEPLOYMENT (failed during initial setup)
       "defaultbrowser" # CLI tool for setting default browser properly
+      "duti" # Declarative file type associations and UTI management
       # "alerter" # REMOVED - formula doesn't exist in Homebrew
 
       # Window Management Ecosystem - MOVED TO NIX SYSTEM PACKAGES
@@ -130,7 +133,6 @@ in
       # "borders" # Now via environment.systemPackages in darwin.nix (jankyborders)
       # "sketchybar" # MOVED - now using nix-darwin services.sketchybar
     ];
-    # --- Mac App Store Applications -----------------------------------------
     # --- Mac App Store Applications -----------------------------------------
     # Disabled: Using smart install/update activation script instead
     # masApps causes unnecessary reinstalls of existing apps

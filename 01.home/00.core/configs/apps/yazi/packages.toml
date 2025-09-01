@@ -12,6 +12,10 @@
 [[plugin]]
 use = "yazi-rs/plugins:session" # Session - Cross-instance state synchronization
 
+# Starship Integration
+[[plugin]]
+use = "Rolv-Apneseth/starship.yazi" # Starship prompt integration
+
 # Clipboard & Paste Operations
 [[plugin]]
 use = "orhnk/system-clipboard" # System clipboard - Cross-platform clipboard integration

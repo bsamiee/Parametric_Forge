@@ -48,7 +48,10 @@
       "WebFetch(domain:starship.rs)",
       "mcp__filesystem__read_text_file",
       "mcp__filesystem__read_text_file",
-      "mcp__filesystem__read_text_file"
+      "mcp__filesystem__read_text_file",
+      "Read(/private/tmp/**)",
+      "Read(/private/tmp/**)",
+      "mcp__perplexity__perplexity_ask"
     ],
     "deny": [
       "WebSearch",
