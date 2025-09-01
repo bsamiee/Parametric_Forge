@@ -18,6 +18,7 @@ sketchybar --bar height=36 \
                  position=top \
                  sticky=true \
                  margin=4 \
+                 y_offset=4 \
                  corner_radius=8 \
                  padding_left=12 \
                  padding_right=12 \
