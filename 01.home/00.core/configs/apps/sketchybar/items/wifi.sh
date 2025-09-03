@@ -18,18 +18,13 @@ wifi_config=(
   script="$HOME/.config/sketchybar/plugins/wifi.sh"
   click_script="$HOME/.config/sketchybar/plugins/wifi.sh"
 
-  label="Searching…"
-  label.max_chars=25
-  label.font="$TEXT_FONT:$MEDIUM_WEIGHT:$SIZE_SMALL"
-  label.color="$WHITE"
-  label.padding_left="$PADDINGS_SMALL"
-  label.padding_right="$PADDINGS_MEDIUM"
+  label.drawing=off
 
   icon="$WIFI_ERROR"  # WiFi error icon as default
   icon.font="$SYMBOL_FONT:$REGULAR_WEIGHT:$SIZE_MEDIUM"
   icon.color="$GREY"
   icon.padding_left="$PADDINGS_MEDIUM"
-  icon.padding_right="$PADDINGS_NONE"
+  icon.padding_right="$PADDINGS_MEDIUM"
 
   padding_left="$PADDINGS_NONE"
   padding_right="$PADDINGS_NONE"
@@ -38,8 +33,6 @@ wifi_config=(
 
   updates=on
   update_freq=5
-  scroll_texts=off
-  scroll_duration=100
 )
 
 # --- Create WiFi Item -------------------------------------------------------

@@ -134,6 +134,9 @@ in
       
       # Bluetooth Management
       "blueutil" # CLI for Bluetooth management (power, devices, pairing)
+      
+      # Battery Management
+      "battery" # CLI battery management tool (required for SketchyBar battery plugin)
 
       # UI Tools
       "koekeishiya/formulae/yabai"

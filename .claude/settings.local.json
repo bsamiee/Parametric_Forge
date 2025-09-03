@@ -64,7 +64,9 @@
       "Bash(launchctl:*)",
       "Read(/opt/homebrew/Cellar/sketchybar/2.22.1/bin/**)",
       "Read(/Users/bardiasamiee/Library/LaunchAgents/**)",
-      "WebFetch(domain:www.hammerspoon.org)"
+      "WebFetch(domain:www.hammerspoon.org)",
+      "Bash(system_profiler SPAirPortDataType)",
+      "mcp__github__list_issues"
     ],
     "deny": [
       "WebSearch",

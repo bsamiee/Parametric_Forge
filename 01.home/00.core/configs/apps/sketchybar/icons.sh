@@ -61,7 +61,7 @@ VOLUME_0=􀊣
 # --- WiFi Icons -------------------------------------------------------------
 WIFI_HOTSPOT=􀉤
 WIFI_SIGNAL_3=􀙇        # Full signal (3 bars)
-WIFI_SIGNAL_2=􀙋        # Good signal (2 bars)  
+WIFI_SIGNAL_2=􀙋        # Good signal (2 bars)
 WIFI_SIGNAL_1=􀙍        # Weak signal (1 bar)
 WIFI_ERROR=􀙥
 WIFI_OFF=􀙈
@@ -79,8 +79,23 @@ BELL_DISABLED=􀋞
 # --- Package Icons ----------------------------------------------------------
 PACKAGE=􀐛
 
+# --- Battery Management Icons -----------------------------------------------
+BATTERY_HEALTH=􀍽
+BATTERY_ADAPTER=􀎝
+BATTERY_CALIBRATE=􀆈
+
 # --- Menu & Control Icons ---------------------------------------------------
 CONTROL_CENTER=􀯶
+
+# --- Bluetooth Icons -------------------------------------------------------
+BLUETOOTH_ON=􀟙           # Bluetooth enabled/connected
+BLUETOOTH_OFF=􀟗          # Bluetooth disabled
+BLUETOOTH_SEARCHING=􀷇     # Bluetooth scanning/discoverable
+
+# Device-specific icons (for battery display)
+BLUETOOTH_MOUSE=􀼠        # Mouse device
+BLUETOOTH_KEYBOARD=􀇳     # Keyboard device
+BLUETOOTH_HEADPHONES=􀑈   # Headphones/audio device
 
 # --- Media Control Icons ----------------------------------------------------
 MEDIA_PLAY=􀊆

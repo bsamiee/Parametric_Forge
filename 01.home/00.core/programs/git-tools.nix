@@ -6,7 +6,7 @@
 # ----------------------------------------------------------------------------
 # Git ecosystem tools: Git, GitHub CLI, and Lazygit configuration.
 
-_:
+{ pkgs, ... }:
 
 {
   # --- Git Core Configuration -----------------------------------------------
@@ -104,6 +104,8 @@ _:
         # Commit configuration - SSH signing handled by ssh.nix
         commit.verbose = true;
         help.autocorrect = 20;
+        
+        # Note: GitHub/Gist credential helper automatically configured by programs.gh module
       };
     };
     # --- GitHub CLI Configuration -------------------------------------------
