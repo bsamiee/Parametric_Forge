@@ -5,168 +5,174 @@
 # License       : MIT
 # Path          : /01.home/00.core/configs/apps/sketchybar/plugins/yabai.sh
 # ----------------------------------------------------------------------------
-# Window state management and app icon display for SketchyBar
+# Self-contained window state and space management following SketchyBar patterns
 # shellcheck disable=SC1091
 
-# --- Window State Management ------------------------------------------------
-window_state() {
-  source "$HOME/.config/sketchybar/colors.sh"
-  source "$HOME/.config/sketchybar/icons.sh"
+# --- Configuration Loading --------------------------------------------------
+source "$HOME/.config/sketchybar/colors.sh"
+source "$HOME/.config/sketchybar/icons.sh"
+source "$HOME/.config/sketchybar/constants.sh"
+source "$HOME/.config/sketchybar/plugins/icon_map.sh"
 
-  WINDOW=$(yabai -m query --windows --window)
-  CURRENT=$(echo "$WINDOW" | jq '.["stack-index"]')
+# --- Window State Functions -------------------------------------------------
+update_window_state() {
+  local window_info current_stack
+  window_info=$(yabai -m query --windows --window 2>/dev/null || echo '{}')
+  current_stack=$(echo "$window_info" | jq -r '.["stack-index"] // 0')
 
-  args=()
-  if [[ $CURRENT -gt 0 ]]; then
-    LAST=$(yabai -m query --windows --window stack.last | jq '.["stack-index"]')
-    args+=(--set "$NAME" icon="$YABAI_STACK" icon.color="$RED" label.drawing=on label="$(printf "[%s/%s]" "$CURRENT" "$LAST")")
-    yabai -m config active_window_border_color "$RED" >/dev/null 2>&1 &
+  local args=()
 
+  if [[ $current_stack -gt 0 ]]; then
+    local total_stack
+    total_stack=$(yabai -m query --windows --window stack.last 2>/dev/null | jq -r '.["stack-index"] // 0')
+    args+=(--set "$NAME"
+      icon="$YABAI_STACK"
+      icon.color="$RED"
+      label.drawing=on
+      label="$(printf "[%s/%s]" "$current_stack" "$total_stack")")
+    yabai -m config active_window_border_color "$RED" 2>/dev/null &
   else
     args+=(--set "$NAME" label.drawing=off)
-    case "$(echo "$WINDOW" | jq '.["is-floating"]')" in
-    "false")
-      if [ "$(echo "$WINDOW" | jq '.["has-fullscreen-zoom"]')" = "true" ]; then
-        args+=(--set "$NAME" icon="$YABAI_FULLSCREEN_ZOOM" icon.color="$GREEN")
-        yabai -m config active_window_border_color "$GREEN" >/dev/null 2>&1 &
-      elif [ "$(echo "$WINDOW" | jq '.["has-parent-zoom"]')" = "true" ]; then
-        args+=(--set "$NAME" icon="$YABAI_PARENT_ZOOM" icon.color="$CYAN")
-        yabai -m config active_window_border_color "$CYAN" >/dev/null 2>&1 &
-      else
-        args+=(--set "$NAME" icon="$YABAI_GRID" icon.color="$ORANGE")
-        yabai -m config active_window_border_color "$WHITE" >/dev/null 2>&1 &
-      fi
-      ;;
-    "true")
+    local is_floating has_fullscreen has_parent
+    is_floating=$(echo "$window_info" | jq -r '.["is-floating"] // false')
+    has_fullscreen=$(echo "$window_info" | jq -r '.["has-fullscreen-zoom"] // false')
+    has_parent=$(echo "$window_info" | jq -r '.["has-parent-zoom"] // false')
+
+    if [ "$is_floating" = "true" ]; then
       args+=(--set "$NAME" icon="$YABAI_FLOAT" icon.color="$PURPLE")
-      yabai -m config active_window_border_color "$PURPLE" >/dev/null 2>&1 &
-      ;;
-    esac
+      yabai -m config active_window_border_color "$PURPLE" 2>/dev/null &
+    elif [ "$has_fullscreen" = "true" ]; then
+      args+=(--set "$NAME" icon="$YABAI_FULLSCREEN_ZOOM" icon.color="$GREEN")
+      yabai -m config active_window_border_color "$GREEN" 2>/dev/null &
+    elif [ "$has_parent" = "true" ]; then
+      args+=(--set "$NAME" icon="$YABAI_PARENT_ZOOM" icon.color="$CYAN")
+      yabai -m config active_window_border_color "$CYAN" 2>/dev/null &
+    else
+      args+=(--set "$NAME" icon="$YABAI_GRID" icon.color="$ORANGE")
+      yabai -m config active_window_border_color "$WHITE" 2>/dev/null &
+    fi
   fi
 
-  sketchybar -m "${args[@]}"
+  if ! sketchybar -m "${args[@]}" 2>/dev/null; then
+    echo "Warning: Failed to update window state for $NAME" >&2
+  fi
 }
 
-# --- App Icon Management ----------------------------------------------------
-windows_on_spaces() {
-  source "$HOME/.config/sketchybar/colors.sh"
-  
-  # Single consolidated query for all data
-  SPACE_DATA=$(yabai -m query --spaces --display)
-  ACTIVE_SPACE=$(echo "$SPACE_DATA" | jq -r '.[] | select(.["has-focus"] == true) | .index')
-  CURRENT_SPACES=$(echo "$SPACE_DATA" | jq -r '.[].index')
-  
-  # Batch query all windows once
-  ALL_WINDOWS=$(yabai -m query --windows)
+# --- Space App Icons Management ---------------------------------------------
+update_space_icons() {
+  local space_data all_windows
+  space_data=$(yabai -m query --spaces --display 2>/dev/null || echo '[]')
+  all_windows=$(yabai -m query --windows 2>/dev/null || echo '[]')
 
-  args=()
-  for space in $CURRENT_SPACES; do
-    icon_strip=" "
-    
-    # Filter windows for this space from batch query
-    apps=$(echo "$ALL_WINDOWS" | jq -r --arg space "$space" '.[] | select(.space == ($space | tonumber) and .["has-ax-reference"] == true) | .app')
-    
-    if [ "$apps" != "" ]; then
+  local active_space current_spaces
+  active_space=$(echo "$space_data" | jq -r '.[] | select(.["has-focus"] == true) | .index // ""')
+  current_spaces=$(echo "$space_data" | jq -r '.[].index // empty')
+
+  local args=()
+  for space in $current_spaces; do
+    local icon_strip=" "
+
+    # Get apps for this space with filtering
+    local apps
+    apps=$(echo "$all_windows" | jq -r --arg space "$space" '
+      .[] | select(
+        .space == ($space | tonumber) and 
+        .["has-ax-reference"] == true and
+        .["is-minimized"] == false and
+        .["is-hidden"] == false and
+        (.layer // "") == "normal"
+      ) | .app // empty' | sort -u)
+
+    # Build icon strip
+    if [ -n "$apps" ]; then
       while IFS= read -r app; do
-        icon_strip+=" $("$HOME"/.config/sketchybar/plugins/icon_map.sh "$app")"
+        [ -n "$app" ] && icon_strip+=" $(get_app_icon "$app")"
       done <<<"$apps"
     fi
-    
-    # Apply color based on active state
-    if [ "$space" = "$ACTIVE_SPACE" ]; then
-      args+=(--set space."$space" label="$icon_strip" label.drawing=on label.color="$WHITE")
+
+    # Apply nested bracket styling with proper color logic
+    if [ "$space" = "$active_space" ]; then
+      args+=(--set "space.$space"
+        label="$icon_strip"
+        label.drawing=on
+        label.color="$BLACK"
+        label.background.color="$FAINT_CYAN"
+        icon.color="$BLACK"
+        background.drawing=on
+        background.color="$PRIMARY_CYAN"
+        background.border_color="$CYAN"
+        background.border_width="$BORDER_THIN")
     else
-      args+=(--set space."$space" label="$icon_strip" label.drawing=on label.color="$FAINT_GREY")
+      # Check if space is empty for red indicator
+      if [ -z "$apps" ] || [ "$icon_strip" = " " ]; then
+        args+=(--set "space.$space"
+          label="$icon_strip"
+          label.drawing=on
+          label.color="$WHITE"
+          label.background.color="$TRANSPARENT"
+          icon.color="$PRIMARY_RED"
+          background.drawing=off
+          background.color="$TRANSPARENT"
+          background.border_color="$TRANSPARENT"
+          background.border_width=0)
+      else
+        args+=(--set "space.$space"
+          label="$icon_strip"
+          label.drawing=on
+          label.color="$WHITE"
+          label.background.color="$TRANSPARENT"
+          icon.color="$WHITE"
+          background.drawing=off
+          background.color="$TRANSPARENT"
+          background.border_color="$TRANSPARENT"
+          background.border_width=0)
+      fi
     fi
   done
 
-  sketchybar -m "${args[@]}"
+  if [ ${#args[@]} -gt 0 ] && ! sketchybar -m "${args[@]}" 2>/dev/null; then
+    echo "Warning: Failed to update space icons" >&2
+  fi
+}
+
+# --- Space Recreation -------------------------------------------------------
+recreate_spaces() {
+  source "$HOME/.config/sketchybar/items/spaces.sh" 2>/dev/null || true
 }
 
 # --- Mouse Event Handlers ---------------------------------------------------
-mouse_clicked() {
-  yabai -m window --toggle float
-  window_state
+handle_click() {
+  yabai -m window --toggle float 2>/dev/null || true
+  update_window_state
 }
 
-# --- Centralized Space State Management ------------------------------------
-update_space_indicators() {
-  source "$HOME/.config/sketchybar/colors.sh"
-  
-  # Reuse data from windows_on_spaces if available, otherwise query
-  if [ -z "$SPACE_DATA" ]; then
-    SPACE_DATA=$(yabai -m query --spaces --display)
-  fi
-  
-  ACTIVE_SPACE=$(echo "$SPACE_DATA" | jq -r '.[] | select(.["has-focus"] == true) | .index')
-  CURRENT_SPACES=$(echo "$SPACE_DATA" | jq -r '.[].index')
-  
-  args=()
-  for space in $CURRENT_SPACES; do
-    if [ "$space" = "$ACTIVE_SPACE" ]; then
-      args+=(--set space."$space" icon.color="$WHITE" icon.background.color="$CYAN")
-    else
-      args+=(--set space."$space" icon.color="$FAINT_GREY" icon.background.color="$TRANSPARENT")
-    fi
-  done
-  
-  sketchybar -m "${args[@]}"
-}
 
-# --- Space Management -------------------------------------------------------
-recreate_spaces() {
-  source "$HOME/.config/sketchybar/items/spaces.sh"
-  update_space_indicators
-}
-
-# --- Event Debouncing --------------------------------------------------------
-DEBOUNCE_FILE="/tmp/sketchybar_yabai_debounce"
-DEBOUNCE_DELAY=0.1
-
-debounce() {
-  local current_time=$(date +%s.%N)
-  local last_time=$(cat "$DEBOUNCE_FILE" 2>/dev/null || echo "0")
-  
-  if (( $(echo "$current_time - $last_time > $DEBOUNCE_DELAY" | bc -l) )); then
-    echo "$current_time" > "$DEBOUNCE_FILE"
-    return 0
-  else
-    return 1
-  fi
-}
-
-# --- Event Dispatcher -------------------------------------------------------
+# --- Event Handler ----------------------------------------------------------
 case "$SENDER" in
-"mouse.clicked")
-  mouse_clicked
-  ;;
-"mouse.entered"|"mouse.exited")
-  # Handle tooltip events
-  "$HOME/.config/sketchybar/plugins/tooltip.sh" 2>/dev/null || true
-  ;;
-"forced")
-  exit 0
-  ;;
-"window_focus")
-  if debounce; then
-    window_state
-    SPACE_DATA=$(yabai -m query --spaces --display)
-    update_space_indicators
-  fi
-  ;;
-"windows_on_spaces")
-  if debounce; then
-    windows_on_spaces
-  fi
-  ;;
-"space_change")
-  # Always allow space recreation (important structural changes)
-  recreate_spaces
-  ;;
-*)
-  # Debounced fallback
-  if debounce; then
-    update_space_indicators
-  fi
-  ;;
+  "mouse.clicked")
+    handle_click
+    ;;
+  "mouse.entered")
+    # Mouse entered - no tooltip
+    ;;
+  "mouse.exited")
+    # Mouse exited - no tooltip
+    ;;
+  "window_focus")
+    update_window_state
+    ;;
+  "windows_on_spaces")
+    update_space_icons
+    ;;
+  "space_change")
+    recreate_spaces
+    ;;
+  "forced")
+    exit 0
+    ;;
+  *)
+    # Default: update both window state and space icons
+    update_window_state
+    update_space_icons
+    ;;
 esac

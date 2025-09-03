@@ -55,10 +55,10 @@
       echo "[Parametric Forge] Smart Mac App Store management..."
 
       if command -v mas >/dev/null 2>&1; then
-        # Check if user is signed into App Store
-        if ! mas account >/dev/null 2>&1; then
+        # Check if user is signed into App Store (Sequoia-compatible)
+        if ! mas list >/dev/null 2>&1 || [ -z "$(mas list 2>/dev/null)" ]; then
           echo "  [SKIP] Not signed into Mac App Store"
-          echo "  [INFO] Sign in via System Preferences > Apple ID or run 'mas signin'"
+          echo "  [INFO] Sign in via System Settings > Apple ID or run 'mas signin'"
         else
           # App ID mappings
           declare -A MAS_APPS=(

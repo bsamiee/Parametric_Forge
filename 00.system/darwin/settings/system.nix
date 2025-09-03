@@ -176,42 +176,6 @@ in
       "com.apple.Terminal" = {
         SecureKeyboardEntry = mkDefault false;
       };
-      # --- File Type Associations (Zen Browser) ------------------------------
-      "com.apple.LaunchServices/com.apple.launchservices.secure" = {
-        LSHandlers = [
-          # Web URLs
-          {
-            LSHandlerContentType = "public.url";
-            LSHandlerRoleAll = "app.zen-browser.zen";
-          }
-          {
-            LSHandlerURLScheme = "http";
-            LSHandlerRoleAll = "app.zen-browser.zen";
-          }
-          {
-            LSHandlerURLScheme = "https";
-            LSHandlerRoleAll = "app.zen-browser.zen";
-          }
-          {
-            LSHandlerURLScheme = "ftp";
-            LSHandlerRoleAll = "app.zen-browser.zen";
-          }
-          # Web files
-          {
-            LSHandlerContentType = "public.html";
-            LSHandlerRoleAll = "app.zen-browser.zen";
-          }
-          {
-            LSHandlerContentType = "public.xhtml";
-            LSHandlerRoleAll = "app.zen-browser.zen";
-          }
-          # PDF files
-          {
-            LSHandlerContentType = "com.adobe.pdf";
-            LSHandlerRoleAll = "com.adobe.Acrobat.Pro";
-          }
-        ];
-      };
     };
   };
 }

@@ -493,7 +493,7 @@ wezterm.on("update-right-status", function(window, pane)
     window:set_right_status(wezterm.format({
         { Background = { Color = window_bg } },
         { Foreground = { Color = colors.cyan } },
-        { Text = "  " .. status_text .. "  " },
+        { Text = "  " .. status_text .. " " },
     }))
 end)
 -- Tab Formatting ───────────────────────────────────────────────────────────

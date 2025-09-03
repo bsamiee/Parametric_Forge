@@ -9,14 +9,14 @@
 
 options=(
   style=round
-  width=2.0
+  width=1.0
   hidpi=on
-  active_color="glow(0xffbd93f9)"    # Dracula purple glow - focused window
-  inactive_color=0xff6272a4          # Dracula comment - unfocused windows
-  background_color=0x10282a36        # Very subtle Dracula background (6% opacity) for window separation
+  active_color=0xfff8f8f2            # White from colors.sh - focused window
+  inactive_color=0x80f8f8f2          # Faint white from colors.sh - unfocused windows
+  background_color=0x40282a36        # Subtle Dracula background (25% opacity) for window separation
   ax_focus=on                        # Improved compatibility with yabai/AeroSpace
   order=above                        # Render borders above window shadows for consistent appearance
-  blur_radius=8                      # Subtle blur enhances glow and transparency effects
+  blur_radius=20                     # Consistent blur with SketchyBar and WezTerm
 )
 
 borders "${options[@]}"

@@ -53,7 +53,18 @@
       "Read(/private/tmp/**)",
       "mcp__perplexity__perplexity_ask",
       "Read(/Users/bardiasamiee/Library/LaunchAgents/**)",
-      "Bash(sketchybar:*)"
+      "Bash(sketchybar:*)",
+      "Bash(pgrep:*)",
+      "WebFetch(domain:felixkratz.github.io)",
+      "mcp__filesystem__list_directory_with_sizes",
+      "Read(/opt/homebrew/Cellar/sketchybar/2.22.1/bin/**)",
+      "Bash(brew:*)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Read(/opt/homebrew/Cellar/sketchybar/2.22.1/bin/**)",
+      "Bash(launchctl:*)",
+      "Read(/opt/homebrew/Cellar/sketchybar/2.22.1/bin/**)",
+      "Read(/Users/bardiasamiee/Library/LaunchAgents/**)",
+      "WebFetch(domain:www.hammerspoon.org)"
     ],
     "deny": [
       "WebSearch",

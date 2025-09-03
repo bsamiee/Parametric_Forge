@@ -66,6 +66,7 @@ with pkgs;
   gawk # GNU awk
   bash # Bash shell (newer version than macOS default)
   gnutar # GNU version of tar
+  bc # Calculator for decimal arithmetic (needed by SketchyBar plugins)
 
   # --- Terminal Essentials --------------------------------------------------
   yazi # Blazing fast terminal file manager (async, image preview)

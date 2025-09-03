@@ -17,90 +17,99 @@ source "$HOME/.config/sketchybar/constants.sh"
 ITEM_DIR="$HOME/.config/sketchybar/items"
 PLUGIN_DIR="$HOME/.config/sketchybar/plugins"
 
-# --- Bar Configuration ---------------------------------------------------
+# --- Bar Configuration ------------------------------------------------------
 bar=(
-  height=36
-  color="$LIGHT_BLACK"
-  border_color="$DARK_GREY"
-  border_width="$BORDER_THIN"
-  shadow=on
-  shadow.color="$SHADOW_LIGHT"
-  shadow.angle=30
-  shadow.distance=3
-  position=top
-  sticky=on
-  padding_right=12
-  padding_left=12
-  corner_radius=16
-  y_offset=4
-  margin=4
-  blur_radius=16
-  notch_width=0
-  notch_offset=0
-  font_smoothing=on
+    height="$HEIGHT_BAR"
+    color="$PRIMARY_BLACK"
+    border_color="$PRIMARY_WHITE"
+    border_width="$BORDER_THIN"
+    shadow=on
+    shadow.color="$SHADOW_HEAVY"
+    shadow.angle="$SHADOW_ANGLE"
+    shadow.distance="$SHADOW_DISTANCE"
+    position=top
+    sticky=on
+    padding_right="$PADDINGS_XXLARGE"
+    padding_left="$PADDINGS"
+    corner_radius="$RADIUS_LARGE"
+    y_offset="$OFFSET_BAR"
+    margin="$OFFSET_BAR"
+    blur_radius="$BLUR_RADIUS_STANDARD"
+    notch_width="$PADDINGS_NONE"
+    notch_offset="$PADDINGS_NONE"
+    font_smoothing=on
 )
 
 sketchybar --bar "${bar[@]}"
 
-# --- Default Properties --------------------------------------------------
+# --- Default Properties -----------------------------------------------------
 defaults=(
-  updates=when_shown
-  icon.font="$SYMBOL_FONT:$MEDIUM_WEIGHT:$SIZE_MEDIUM"
-  icon.color="$WHITE"
-  icon.padding_left="$PADDINGS"
-  icon.padding_right="$PADDINGS"
-  label.font="$TEXT_FONT:$REGULAR_WEIGHT:$SIZE_SMALL"
-  label.color="$WHITE"
-  label.padding_left="$PADDINGS"
-  label.padding_right="$PADDINGS"
-  padding_right="$PADDINGS"
-  padding_left="$PADDINGS"
-  background.height=28
-  background.corner_radius=8
-  popup.background.border_width="$BORDER_MEDIUM"
-  popup.background.corner_radius=8
-  popup.background.border_color="$WHITE"
-  popup.background.color="$BLACK"
-  popup.blur_radius=16
-  popup.background.shadow.drawing=on
+    updates=when_shown
+    icon.font="$SYMBOL_FONT:$MEDIUM_WEIGHT:$SIZE_MEDIUM"
+    icon.color="$WHITE"
+    icon.padding_left="$PADDINGS"
+    icon.padding_right="$PADDINGS"
+    label.font="$TEXT_FONT:$REGULAR_WEIGHT:$SIZE_SMALL"
+    label.color="$WHITE"
+    label.padding_left="$PADDINGS"
+    label.padding_right="$PADDINGS"
+    padding_right="$PADDINGS"
+    padding_left="$PADDINGS"
+    background.height="$HEIGHT_ITEM"
+    background.corner_radius="$RADIUS_LARGE"
+    popup.background.border_width="$PADDINGS_NONE"
+    popup.background.corner_radius="$RADIUS_MEDIUM"
+    popup.background.border_color="$TRANSPARENT"
+    popup.background.color="$PRIMARY_BLACK"
+    popup.blur_radius="$PADDINGS_NONE"
+    popup.background.shadow.drawing=on
 )
 
 sketchybar --default "${defaults[@]}"
 
-# --- Streamlined Events -------------------------------------------------
+# --- Streamlined Events -----------------------------------------------------
 sketchybar --add event space_change \
-  --add event windows_on_spaces
+    --add event windows_on_spaces
 
-# --- Dynamic Spaces ------------------------------------------------------
+# --- Dynamic Spaces ---------------------------------------------------------
 source "$ITEM_DIR/spaces.sh"
 
-# --- Left Items ----------------------------------------------------------
-# Add yabai indicator and force it to leftmost position
-sketchybar --add item yabai left            \
-  --set yabai script="$PLUGIN_DIR/yabai.sh" \
-  label.drawing=off                         \
-  icon.width=30                             \
-  icon="$YABAI_GRID"                        \
-  icon.color="$ORANGE"                      \
-  associated_display=active                 \
-  --subscribe yabai window_focus            \
-  windows_on_spaces                         \
-  mouse.clicked                             \
-  mouse.entered                             \
-  mouse.exited                              \
-  mouse.exited.global                       \
-  space_change
+# --- Logo & Menu Discovery ---------------------------------------------------
+source "$ITEM_DIR/logo.sh"
+source "$ITEM_DIR/menu-items.sh"
 
-# Force yabai to leftmost position after all spaces are created
-sketchybar --move yabai before space.1
+# --- Left Items -------------------------------------------------------------
+# Add yabai indicator (positioning handled dynamically in spaces.sh)
+sketchybar --add item yabai left \
+    --set yabai script="$PLUGIN_DIR/yabai.sh" \
+    label.drawing=off \
+    icon.width="$ICON_WIDTH_STANDARD" \
+    icon="$YABAI_GRID" \
+    icon.color="$ORANGE" \
+    associated_display=active \
+    --subscribe yabai window_focus \
+    windows_on_spaces \
+    mouse.clicked \
+    mouse.entered \
+    mouse.exited \
+    space_change
 
-# --- Front App -----------------------------------------------------------
-sketchybar --add item front_app left                 \
-  --set front_app icon.drawing=off          \
-  label.color="$WHITE"                      \
-  background.drawing=off                    \
-  script='yabai -m query --windows --window | jq -r ".app" 2>/dev/null || echo "Desktop"' \
-  --subscribe front_app front_app_switched window_focus
+# --- Enhanced Front App -----------------------------------------------------
+source "$ITEM_DIR/front_app.sh"
 
-# --- Initialize ----------------------------------------------------------
+# --- Center Items -----------------------------------------------------------
+source "$ITEM_DIR/music.sh"
+
+# --- Right Items ------------------------------------------------------------
+source "$ITEM_DIR/system-monitor.sh"
+source "$ITEM_DIR/volume.sh"
+source "$ITEM_DIR/wifi.sh"
+source "$ITEM_DIR/mic.sh"
+source "$ITEM_DIR/notifications.sh"
+source "$ITEM_DIR/packages.sh"
+source "$ITEM_DIR/controls.sh"
+source "$ITEM_DIR/more-menu.sh"
+source "$ITEM_DIR/calendar.sh"
+
+# --- Initialize -------------------------------------------------------------
 sketchybar --update

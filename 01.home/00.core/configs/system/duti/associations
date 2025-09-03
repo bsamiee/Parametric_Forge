@@ -15,6 +15,7 @@ com.adobe.Acrobat.Pro	.pdf	all
 # Web Content -> Zen Browser
 app.zen-browser.zen	public.html	all
 app.zen-browser.zen	public.xhtml	all
+app.zen-browser.zen	public.url	all
 app.zen-browser.zen	.html	all
 app.zen-browser.zen	.htm	all
 app.zen-browser.zen	.xhtml	all
@@ -59,7 +60,7 @@ com.mcneel.rhinoceros.8	.3dm	all
 com.mcneel.rhinoceros.8	.gh	all
 com.mcneel.rhinoceros.8	.ghx	all
 
-# 3D Files -> Blender  
+# 3D Files -> Blender
 org.blenderfoundation.blender	.blend	all
 
 # STL Files -> Rhino (3D printing/manufacturing)

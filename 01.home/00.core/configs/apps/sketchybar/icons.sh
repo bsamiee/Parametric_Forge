@@ -14,9 +14,13 @@ APPLE=􀣺
 PREFERENCES=􀺽
 ACTIVITY=􀒓
 LOCK=􀒳
-BELL=􀋚
-BELL_DOT=􀝗
-SEPARATOR=􀆊
+ADD_SPACE=􀅼
+
+# --- Separator Icons --------------------------------------------------------
+SEPARATOR_LINE=􀤋        # Vertical line separator (proper SF Symbol)
+SEPARATOR_DOT=􀀁         # Dot separator (alternative)
+SEPARATOR_CHEVRON_RIGHT=􀆊
+SEPARATOR_CHEVRON_LEFT=􀆉
 
 # --- Git Icons --------------------------------------------------------------
 GIT_ISSUE=􀍷
@@ -53,3 +57,22 @@ VOLUME_66=􀊧
 VOLUME_33=􀊥
 VOLUME_10=􀊡
 VOLUME_0=􀊣
+
+# --- WiFi Icons -------------------------------------------------------------
+WIFI_HOTSPOT=􀉤
+WIFI_CONNECTED=􀙇
+WIFI_ERROR=􀙥
+WIFI_OFF=􀙈
+
+# --- Microphone Icons -------------------------------------------------------
+MIC_MUTED=􀊲
+MIC_LOW=􀊰
+MIC_HIGH=􀊱
+
+# --- Notification Icons -----------------------------------------------------
+BELL=􀋚
+BELL_DOT=􀝗
+BELL_DISABLED=􀋞
+
+# --- Package Icons ----------------------------------------------------------
+PACKAGE=􀐛

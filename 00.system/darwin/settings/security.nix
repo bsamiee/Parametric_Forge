@@ -35,6 +35,15 @@ in
         %admin ALL=(root) NOPASSWD: /usr/bin/mdutil *
         %admin ALL=(root) NOPASSWD: /usr/bin/tmutil addexclusion *
         %admin ALL=(root) NOPASSWD: /System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister *
+        %admin ALL=(root) NOPASSWD: /usr/bin/defaults write /Library/Preferences/com.apple.security*
+        %admin ALL=(root) NOPASSWD: /usr/sbin/spctl *
+        %admin ALL=(root) NOPASSWD: /usr/bin/killall *
+        %admin ALL=(root) NOPASSWD: /usr/bin/dscacheutil *
+        %admin ALL=(root) NOPASSWD: /usr/sbin/softwareupdate *
+        %admin ALL=(root) NOPASSWD: /usr/bin/xcode-select *
+        %admin ALL=(root) NOPASSWD: /usr/bin/pkgutil *
+        %admin ALL=(root) NOPASSWD: /usr/libexec/ApplicationFirewall/socketfilterfw *
+        %admin ALL=(root) NOPASSWD: /System/Library/PrivateFrameworks/SystemAdministration.framework/Resources/activateSettings *
       '';
     };
   };

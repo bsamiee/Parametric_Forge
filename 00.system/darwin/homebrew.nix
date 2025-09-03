@@ -130,6 +130,9 @@ in
       "duti" # Declarative file type associations and UTI management
       # "alerter" # REMOVED - formula doesn't exist in Homebrew
 
+      # System Monitoring
+      "macmon" # macOS system monitoring tool (for SketchyBar plugins)
+
       # UI Tools
       "koekeishiya/formulae/yabai"
       "koekeishiya/formulae/skhd"

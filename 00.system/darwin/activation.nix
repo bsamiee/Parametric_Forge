@@ -26,6 +26,28 @@
       '';
       deps = [ ];
     };
+    # --- Window Management Dependencies -------------------------------------
+    windowManagerSetup = {
+      text = ''
+        echo "[Parametric Forge] Ensuring window management dependencies..."
+        
+        export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
+        
+        # Install skhd if missing
+        if ! command -v skhd >/dev/null 2>&1; then
+          echo "  → Installing skhd..."
+          if command -v brew >/dev/null 2>&1; then
+            brew install koekeishiya/formulae/skhd
+            echo "  ✓ skhd installed"
+          else
+            echo "  ✗ Homebrew not available - manual install required"
+          fi
+        else
+          echo "  ✓ skhd found"
+        fi
+      '';
+      deps = [ "parametricForge" ];
+    };
     # --- System-Level Spotlight Protection ----------------------------------
     systemSpotlightProtection = {
       text = ''
