@@ -22,7 +22,5 @@
     ./home-maintenance-daemon.nix
     ./op-daemons.nix
     ./npm-check-daemon.nix
-    ./sketchybar.nix
-    ./yabai.nix
   ];
 }
