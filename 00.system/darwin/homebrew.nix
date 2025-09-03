@@ -117,6 +117,9 @@ in
 
       # Automation & Productivity
       "hammerspoon" # Lua-scriptable macOS automation and window management
+      
+      # Battery Management
+      "battery" # Battery management app with CLI (required for SketchyBar battery plugin)
     ];
 
     # --- CLI Tools (Brews) --------------------------------------------------
@@ -135,8 +138,6 @@ in
       # Bluetooth Management
       "blueutil" # CLI for Bluetooth management (power, devices, pairing)
       
-      # Battery Management
-      "battery" # CLI battery management tool (required for SketchyBar battery plugin)
 
       # UI Tools
       "koekeishiya/formulae/yabai"

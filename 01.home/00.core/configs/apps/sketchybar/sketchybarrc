@@ -70,45 +70,47 @@ sketchybar --default "${defaults[@]}"
 
 # --- Events -----------------------------------------------------------------
 sketchybar --add event space_change \
-    --add event windows_on_spaces
+    --add event windows_on_spaces \
+    --add event window_focus
 
-# --- Left Items -------------------------------------------------------------
-source "$ITEM_DIR/logo.sh"
-source "$ITEM_DIR/menu-items.sh"
+# --- Left Items (TESTING: SPACES + CALENDAR) ------------------------------
+source "$ITEM_DIR/spaces.sh"
+
+# --- Right Items (TESTING) -------------------------------------------------
+source "$ITEM_DIR/calendar.sh"
+
+# --- Commented out for testing ---------------------------------------------
+# source "$ITEM_DIR/logo.sh"
+# source "$ITEM_DIR/menu-items.sh"
 
 # Add yabai indicator (positioning handled dynamically in spaces.sh)
-sketchybar --add item yabai left \
-    --set yabai script="$PLUGIN_DIR/yabai.sh" \
-    label.drawing=off \
-    icon.width="$ICON_WIDTH_STANDARD" \
-    icon="$YABAI_GRID" \
-    icon.color="$ORANGE" \
-    associated_display=active \
-    --subscribe yabai window_focus \
-    windows_on_spaces \
-    mouse.clicked \
-    mouse.entered \
-    mouse.exited \
-    space_change
+# sketchybar --add item yabai left \
+#     --set yabai script="$PLUGIN_DIR/yabai.sh" \
+#     label.drawing=off \
+#     icon.width="$ICON_WIDTH_STANDARD" \
+#     icon="$YABAI_GRID" \
+#     icon.color="$ORANGE" \
+#     associated_display=active \
+#     --subscribe yabai window_focus \
+#     windows_on_spaces \
+#     mouse.clicked \
+#     mouse.entered \
+#     mouse.exited \
+#     space_change
 
-source "$ITEM_DIR/spaces.sh"
-source "$ITEM_DIR/front_app.sh"
-
-# --- Center Items -----------------------------------------------------------
-source "$ITEM_DIR/music.sh"
-
-# --- Right Items ------------------------------------------------------------
-source "$ITEM_DIR/system-monitor.sh"
-source "$ITEM_DIR/volume.sh"
-source "$ITEM_DIR/battery.sh"
-source "$ITEM_DIR/wifi.sh"
-source "$ITEM_DIR/bluetooth.sh"
-source "$ITEM_DIR/mic.sh"
-source "$ITEM_DIR/notifications.sh"
-source "$ITEM_DIR/packages.sh"
-source "$ITEM_DIR/controls.sh"
-source "$ITEM_DIR/control-center.sh"
-source "$ITEM_DIR/calendar.sh"
+# source "$ITEM_DIR/front_app.sh"
+# source "$ITEM_DIR/music.sh"
+# source "$ITEM_DIR/system-monitor.sh"
+# source "$ITEM_DIR/volume.sh"
+# source "$ITEM_DIR/battery.sh"
+# source "$ITEM_DIR/wifi.sh"
+# source "$ITEM_DIR/bluetooth.sh"
+# source "$ITEM_DIR/mic.sh"
+# source "$ITEM_DIR/notifications.sh"
+# source "$ITEM_DIR/packages.sh"
+# source "$ITEM_DIR/controls.sh"
+# source "$ITEM_DIR/control-center.sh"
+# source "$ITEM_DIR/calendar.sh"
 
 # --- Initialize -------------------------------------------------------------
 sketchybar --update

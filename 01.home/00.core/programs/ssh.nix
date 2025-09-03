@@ -96,7 +96,7 @@
       format = "ssh";
       ssh.allowedSignersFile = "~/.ssh/allowed_signers";
     };
-    # Point to the actual SSH key file (fetched by activation script)
+    # Point to the SSH key file path (not raw key content)
     user.signingkey = "~/.ssh/github_sign.pub";
 
     # Enable commit and tag signing by default

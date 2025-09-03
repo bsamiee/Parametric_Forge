@@ -16,8 +16,15 @@ source "$HOME/.config/sketchybar/icons.sh"
 source "$HOME/.config/sketchybar/constants.sh"
 
 # --- Space Management -------------------------------------------------------
-CURRENT_SPACES=$(yabai -m query --spaces --display 2>/dev/null | jq -r '.[].index' | sort -n)
-EXISTING_SPACES=$(sketchybar --query bar 2>/dev/null | jq -r '.items[]' | grep '^space\.' | sed 's/space\.//' 2>/dev/null || echo "")
+# Check if yabai is available, fallback to default spaces if not
+if command -v yabai >/dev/null 2>&1 && yabai -m query --spaces >/dev/null 2>&1; then
+  CURRENT_SPACES=$(yabai -m query --spaces --display 2>/dev/null | jq -r '.[].index' | sort -n)
+else
+  # Fallback: create 3 default spaces when yabai is unavailable
+  CURRENT_SPACES="1 2 3"
+fi
+
+EXISTING_SPACES=$(sketchybar --query bar 2>/dev/null | jq -r '.items[]' | /usr/bin/grep '^space\.' | /usr/bin/sed 's/space\.//' 2>/dev/null || echo "")
 
 # --- Space Creation ---------------------------------------------------------
 for space in $CURRENT_SPACES; do
@@ -79,7 +86,7 @@ add_space_button=(
   background.drawing=off
 )
 
-sketchybar --remove add_space 2>/dev/null || true
+sketchybar --query add_space >/dev/null 2>&1 && sketchybar --remove add_space
 sketchybar --add item add_space left \
   --set add_space "${add_space_button[@]}" \
   script="$HOME/.config/sketchybar/plugins/space.sh" \
@@ -97,8 +104,8 @@ spaces_bracket=(
   background.drawing=on
 )
 
-sketchybar --remove spaces 2>/dev/null || true
-BRACKET_ITEMS=$(echo "$CURRENT_SPACES" | sed 's/^/space./' | tr '\n' ' ')
+sketchybar --query spaces >/dev/null 2>&1 && sketchybar --remove spaces
+BRACKET_ITEMS=$(echo "$CURRENT_SPACES" | /usr/bin/sed 's/^/space./' | tr '\n' ' ')
 sketchybar --add bracket spaces $BRACKET_ITEMS add_space \
   --set spaces "${spaces_bracket[@]}"
 

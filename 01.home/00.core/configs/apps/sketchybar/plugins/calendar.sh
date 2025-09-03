@@ -55,13 +55,17 @@ case "$SENDER" in
             # Right-click: Show seconds temporarily
             show_seconds_temporarily &
         else
-            # Left-click: Use unified click feedback
+            # Left-click: Open Notification Center first, then visual feedback
+            open -b com.apple.notificationcenterui &
             handle_mouse_event "$NAME" "$SENDER"
         fi
         ;;
-    *)
-        # Regular update with precise timing
+    "routine")
+        # Routine update with precise timing
         sync_to_minute_boundary
+        ;;
+    *)
+        # Startup or other events - update immediately without sync delay
         ;;
 esac
 

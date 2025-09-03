@@ -78,26 +78,61 @@ sketchybar --add item battery right \
     click_script="$PLUGIN_DIR/battery.sh limit 80"
 
 # --- Battery Charge Limit Presets ------------------------------------------
-declare -A battery_presets=(
-    ["50"]="$BATTERY_50"
-    ["70"]="$BATTERY_75"  
-    ["80"]="$BATTERY_75"
-    ["90"]="$BATTERY_100"
-    ["100"]="$BATTERY_100"
-)
-
-for limit in 50 70 80 90 100; do
-    sketchybar --add item "battery.preset$limit" popup.battery \
-        --set "battery.preset$limit" \
-        icon="${battery_presets[$limit]}" \
-        label="${limit}%" \
-        label.font="$TEXT_FONT:$REGULAR_WEIGHT:$SIZE_SMALL" \
-        label.color="$GREY" \
-        label.padding_left="$PADDINGS_SMALL" \
-        label.padding_right="$PADDINGS_SMALL" \
-        background.drawing=off \
-        click_script="$PLUGIN_DIR/battery.sh limit $limit"
-done
+# Simplified preset creation without function calls during item creation
+sketchybar --add item "battery.preset50" popup.battery \
+    --set "battery.preset50" \
+    icon="$BATTERY_50" \
+    label="50%" \
+    label.font="$TEXT_FONT:$REGULAR_WEIGHT:$SIZE_SMALL" \
+    label.color="$GREY" \
+    label.padding_left="$PADDINGS_SMALL" \
+    label.padding_right="$PADDINGS_SMALL" \
+    background.drawing=off \
+    click_script="$PLUGIN_DIR/battery.sh limit 50" \
+    \
+    --add item "battery.preset70" popup.battery \
+    --set "battery.preset70" \
+    icon="$BATTERY_75" \
+    label="70%" \
+    label.font="$TEXT_FONT:$REGULAR_WEIGHT:$SIZE_SMALL" \
+    label.color="$GREY" \
+    label.padding_left="$PADDINGS_SMALL" \
+    label.padding_right="$PADDINGS_SMALL" \
+    background.drawing=off \
+    click_script="$PLUGIN_DIR/battery.sh limit 70" \
+    \
+    --add item "battery.preset80" popup.battery \
+    --set "battery.preset80" \
+    icon="$BATTERY_75" \
+    label="80%" \
+    label.font="$TEXT_FONT:$REGULAR_WEIGHT:$SIZE_SMALL" \
+    label.color="$GREY" \
+    label.padding_left="$PADDINGS_SMALL" \
+    label.padding_right="$PADDINGS_SMALL" \
+    background.drawing=off \
+    click_script="$PLUGIN_DIR/battery.sh limit 80" \
+    \
+    --add item "battery.preset90" popup.battery \
+    --set "battery.preset90" \
+    icon="$BATTERY_100" \
+    label="90%" \
+    label.font="$TEXT_FONT:$REGULAR_WEIGHT:$SIZE_SMALL" \
+    label.color="$GREY" \
+    label.padding_left="$PADDINGS_SMALL" \
+    label.padding_right="$PADDINGS_SMALL" \
+    background.drawing=off \
+    click_script="$PLUGIN_DIR/battery.sh limit 90" \
+    \
+    --add item "battery.preset100" popup.battery \
+    --set "battery.preset100" \
+    icon="$BATTERY_100" \
+    label="100%" \
+    label.font="$TEXT_FONT:$REGULAR_WEIGHT:$SIZE_SMALL" \
+    label.color="$GREY" \
+    label.padding_left="$PADDINGS_SMALL" \
+    label.padding_right="$PADDINGS_SMALL" \
+    background.drawing=off \
+    click_script="$PLUGIN_DIR/battery.sh limit 100"
 
 sketchybar --add item battery.adapter popup.battery \
     --set battery.adapter \

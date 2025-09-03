@@ -30,7 +30,6 @@ calendar_config=(
   background.drawing=off
 
   script="$HOME/.config/sketchybar/plugins/calendar.sh"
-  click_script="open -b com.apple.notificationcenterui"
 )
 
 # --- Item Creation ----------------------------------------------------------

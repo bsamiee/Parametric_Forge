@@ -23,6 +23,8 @@ is_space_active() {
 
 # --- Click Handler --------------------------------------------------------
 handle_click() {
+  [ -z "$SID" ] && return
+  
   if [ "$BUTTON" = "right" ]; then
     yabai -m space --destroy "$SID" 2>/dev/null || true
     sketchybar --trigger space_change --trigger windows_on_spaces 2>/dev/null || true

@@ -34,7 +34,7 @@
       searchDownKey = "^[[B"; # Down arrow
     };
     # --- Shell Aliases ------------------------------------------------------
-    shellAliases = import ../aliases { inherit lib; };
+    shellAliases = { };
     # --- Zsh Plugins --------------------------------------------------------
     # Note: All plugins now managed via built-in enable flags above
     plugins = [ ];

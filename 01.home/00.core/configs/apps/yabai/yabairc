@@ -16,16 +16,21 @@ fi
 
 echo "yabai: Starting configuration..."
 
-# --- Initialize Companion Tools ---------------------------------------------
-echo "yabai: Starting companion UI tools..."
+# --- Check Companion Tools --------------------------------------------------
+echo "yabai: Checking for companion UI tools..."
 
-# SketchyBar should be managed via brew services, not manually started
-# Check if SketchyBar service is running
-if pgrep -x sketchybar >/dev/null; then
-  echo "yabai: ✓ SketchyBar service active"
+# Check if SketchyBar is available (don't start it)
+if command -v sketchybar >/dev/null 2>&1; then
+  if pgrep -x sketchybar >/dev/null && sketchybar --query bar >/dev/null 2>&1; then
+    echo "yabai: ✓ SketchyBar detected and running"
+    SKETCHYBAR_READY=true
+  else
+    echo "yabai: ○ SketchyBar available but not running - will start independently"
+    SKETCHYBAR_READY=false
+  fi
 else
-  echo "yabai: ! SketchyBar service not running" >&2
-  echo "yabai: ! Start with: brew services start sketchybar" >&2
+  echo "yabai: ! SketchyBar not found in PATH" >&2
+  SKETCHYBAR_READY=false
 fi
 
 # Start skhd with proper path detection
@@ -58,7 +63,7 @@ else
   echo "yabai: ! borders failed to start" >&2
 fi
 
-echo "yabai: ✓ UI tools checked (PIDs: skhd=$SKHD_PID borders=$BORDERS_PID)"
+echo "yabai: ✓ UI tools checked (skhd=$SKHD_PID borders=$BORDERS_PID sketchybar=${SKETCHYBAR_READY:-false})"
 
 # --- Scripting Addition with Detailed Diagnostics --------------------------
 echo "yabai: Loading scripting addition..."
@@ -83,27 +88,34 @@ fi
 # YABAI_CONFIG_DIR="$HOME/.config/yabai"  # Removed - no longer needed
 
 # --- Event Signals ----------------------------------------------------------
-yabai -m signal --add event=space_created action="yabai -m space --layout bsp; sketchybar --trigger space_change"
-yabai -m signal --add event=space_destroyed action="sketchybar --trigger space_change"
-yabai -m signal --add event=space_changed action="sketchybar --trigger space_change"
-yabai -m signal --add event=display_added action="sketchybar --trigger space_change"
-yabai -m signal --add event=display_removed action="sketchybar --trigger space_change"
+# SketchyBar integration - only if SketchyBar is ready
+if [ "${SKETCHYBAR_READY:-false}" = true ]; then
+  echo "yabai: Configuring SketchyBar event integration..."
+  yabai -m signal --add event=space_created action="yabai -m space --layout bsp; sketchybar --trigger space_change"
+  yabai -m signal --add event=space_destroyed action="sketchybar --trigger space_change"
+  yabai -m signal --add event=space_changed action="sketchybar --trigger space_change"
+  yabai -m signal --add event=display_added action="sketchybar --trigger space_change"
+  yabai -m signal --add event=display_removed action="sketchybar --trigger space_change"
 
-# Conditional opacity effects - only if scripting addition loaded
-if [ "$SA_LOADED" = true ]; then
-  yabai -m signal --add event=window_focused action="yabai -m window --opacity 0.5 && sleep 0.1 && yabai -m window --opacity 0.95; sketchybar --trigger window_focus"
+  # Conditional opacity effects - only if scripting addition loaded
+  if [ "$SA_LOADED" = true ]; then
+    yabai -m signal --add event=window_focused action="yabai -m window --opacity 0.5 && sleep 0.1 && yabai -m window --opacity 0.95; sketchybar --trigger window_focus"
+  else
+    yabai -m signal --add event=window_focused action="sketchybar --trigger window_focus"
+  fi
+  yabai -m signal --add event=window_created action="sketchybar --trigger windows_on_spaces"
+  yabai -m signal --add event=window_destroyed action="sketchybar --trigger windows_on_spaces"
+  yabai -m signal --add event=window_moved action="sketchybar --trigger windows_on_spaces"
+  echo "yabai: SketchyBar event signals configured"
 else
-  yabai -m signal --add event=window_focused action="sketchybar --trigger window_focus"
+  echo "yabai: SketchyBar not ready - skipping event integration" >&2
 fi
-yabai -m signal --add event=window_created action="sketchybar --trigger windows_on_spaces"
-yabai -m signal --add event=window_destroyed action="sketchybar --trigger windows_on_spaces"
-yabai -m signal --add event=window_moved action="sketchybar --trigger windows_on_spaces"
 
 # --- Smart Window Management Signals ----------------------------------------
 # Universal non-resizable window detection - handles all apps automatically (with proper escaping)
 yabai -m signal --add event=window_created action="yabai -m query --windows --window \$YABAI_WINDOW_ID | jq -e '.\"can-resize\" == false' >/dev/null && yabai -m window \$YABAI_WINDOW_ID --toggle float"
-# Additional coverage for application launch events
-yabai -m signal --add event=application_launched action="sleep 0.5; for window in \$(yabai -m query --windows --app \$YABAI_PROCESS_ID | jq -r '.[] | select(.\"can-resize\" == false) | .id'); do yabai -m window \$window --toggle float 2>/dev/null || true; done"
+# Application launch events - proper query syntax with PID filtering
+yabai -m signal --add event=application_launched action="sleep 0.5; yabai -m query --windows | jq -r '.[] | select(.pid == '\$YABAI_PROCESS_ID' and (.\"can-resize\" == false or .\"is-floating\" == false)) | .id' | while read -r window_id; do [ -n \"\$window_id\" ] && yabai -m window \"\$window_id\" --toggle float 2>/dev/null || true; done"
 
 # --- Core Configuration -----------------------------------------------------
 yabai -m config debug_output on
@@ -135,7 +147,10 @@ done < <(echo "$SPACE_DATA" | jq -r '.[].index')
 echo "yabai: ✓ Configured $SPACE_COUNT spaces"
 
 # --- Sync SketchyBar --------------------------------------------------------
-sketchybar --trigger space_change
+if [ "${SKETCHYBAR_READY:-false}" = true ]; then
+  sketchybar --trigger space_change
+  echo "yabai: Initial SketchyBar sync completed"
+fi
 
 # --- Window Behavior & Appearance (Conditional) ----------------------------
 # Only enable advanced features if scripting addition is loaded
@@ -219,7 +234,12 @@ yabai -m rule --add app="^Adobe Creative Cloud$" manage=off sub-layer=below grid
 
 # Essential Universal Rules - Minimal PIP fixes only
 yabai -m rule --add subrole="AXSystemFloatingWindow" manage=off sticky=on sub-layer=above
-yabai -m rule --add window_type="^(dialog|utility|toolbar|splash)$" manage=off sub-layer=below
+# FIXED: window_type is not a valid yabai rule property - use subrole for window types
+# OLD: yabai -m rule --add window_type="^(dialog|utility|toolbar|splash)$" manage=off sub-layer=below
+# NEW: Use subrole to catch dialog and utility windows (common accessibility subroles)
+yabai -m rule --add subrole="^AX(Dialog|Sheet)$" manage=off sub-layer=below
+yabai -m rule --add subrole="^AXSystemDialog$" manage=off sub-layer=below
+yabai -m rule --add role="^AXWindow$" subrole="^AXUnknown$" manage=off sub-layer=below
 yabai -m rule --add title="(Preferences|Settings|Options|Configuration|About|Library|Queue)" manage=off sub-layer=below
 yabai -m rule --add title="^(General|(Tab|Password|Website|Extension)s|AutoFill|Se(arch|curity)|Privacy|Advance)$" manage=off sub-layer=below
 
@@ -238,7 +258,9 @@ if yabai -m query --windows >/dev/null 2>&1; then
     pgrep -x skhd >/dev/null && echo "yabai: ✓ skhd active" || echo "yabai: ! skhd missing" >&2
     pgrep -f borders >/dev/null && echo "yabai: ✓ JankyBorders active" || echo "yabai: ! JankyBorders missing" >&2
 
-    sketchybar --trigger yabai_ready 2>/dev/null || true
+    if [ "${SKETCHYBAR_READY:-false}" = true ]; then
+      sketchybar --trigger yabai_ready 2>/dev/null || true
+    fi
     sleep 1.0 && yabai -m config window_opacity_duration 0.25
     echo "yabai: ✓ System ready"
 else
