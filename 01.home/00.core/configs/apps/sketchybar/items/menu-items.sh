@@ -8,11 +8,11 @@
 # Numbered menu items for logo-triggered menu bar discovery
 # shellcheck disable=SC1091
 
-# --- Load Configuration Variables -------------------------------------------
+# --- Configuration ----------------------------------------------------------
 source "$HOME/.config/sketchybar/colors.sh"
 source "$HOME/.config/sketchybar/constants.sh"
 
-# --- Create Menu Items (1-14) -----------------------------------------------
+# --- Menu Item Creation -----------------------------------------------------
 for ((i = 1; i <= 14; ++i)); do
     menu_config=(
         icon="$i"
@@ -30,7 +30,6 @@ for ((i = 1; i <= 14; ++i)); do
         click_script="$HOME/.config/sketchybar/plugins/logo.sh"
     )
 
-    # Special styling for first menu item
     if [[ $i == 1 ]]; then
         menu_config+=(
             icon.font="$TEXT_FONT:$BOLD_WEIGHT:$SIZE_LARGE"
@@ -43,7 +42,7 @@ for ((i = 1; i <= 14; ++i)); do
         --subscribe "menu.$i" mouse.clicked mouse.entered mouse.exited
 done
 
-# --- Create Menu Bracket for Visual Grouping --------------------------------
+# --- Bracket Creation -------------------------------------------------------
 sketchybar --add bracket menus '/menu\..*/' \
     --set menus \
         background.height="$((HEIGHT_BAR - 8))" \

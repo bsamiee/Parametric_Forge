@@ -10,9 +10,10 @@
 
 set -euo pipefail
 
+# --- Configuration ----------------------------------------------------------
 source "$HOME/.config/sketchybar/colors.sh"
 
-# --- Generate Progress Bar --------------------------------------------------
+# --- Progress Bar -----------------------------------------------------------
 generate_progress_bar() {
     local percentage="$1"
     local bar_length="${2:-10}"
@@ -38,7 +39,7 @@ generate_progress_bar() {
     echo "$bar"
 }
 
-# --- Get Health Color -------------------------------------------------------
+# --- Health Color -----------------------------------------------------------
 get_health_color() {
     local percentage="$1"
     local metric_type="${2:-cpu}"  # cpu, memory, disk, network
@@ -84,7 +85,7 @@ get_health_color() {
     esac
 }
 
-# --- Format Metric Line -----------------------------------------------------
+# --- Metric Line ------------------------------------------------------------
 format_metric_line() {
     local label="$1"
     local percentage="$2"

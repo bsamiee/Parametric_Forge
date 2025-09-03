@@ -5,14 +5,14 @@
 # License       : MIT
 # Path          : /01.home/00.core/configs/apps/sketchybar/items/calendar.sh
 # ----------------------------------------------------------------------------
-# Simple calendar item matching screenshot format: "Tue Sep 2 03:03"
+# Calendar display with date, time, and interactive seconds reveal on right-click
 # shellcheck disable=SC1091
 
-# --- Load Configuration Variables -------------------------------------------
+# --- Configuration ----------------------------------------------------------
 source "$HOME/.config/sketchybar/colors.sh"
 source "$HOME/.config/sketchybar/constants.sh"
 
-# --- Calendar Item Configuration --------------------------------------------
+# --- Calendar Configuration -------------------------------------------------
 calendar_config=(
   position=right
   update_freq=60
@@ -33,7 +33,7 @@ calendar_config=(
   click_script="open -b com.apple.notificationcenterui"
 )
 
-# --- Create Calendar Item ---------------------------------------------------
+# --- Item Creation ----------------------------------------------------------
 sketchybar --add item calendar right \
   --set calendar "${calendar_config[@]}" \
   --subscribe calendar system_woke mouse.entered mouse.exited mouse.clicked

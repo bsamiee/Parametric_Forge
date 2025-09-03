@@ -1,20 +1,20 @@
 #!/bin/bash
 # Title         : yabai.sh
-# Author        : Bardia Samiee (adapted from FelixKratz)
+# Author        : Bardia Samiee
 # Project       : Parametric Forge
 # License       : MIT
 # Path          : /01.home/00.core/configs/apps/sketchybar/plugins/yabai.sh
 # ----------------------------------------------------------------------------
-# Self-contained window state and space management following SketchyBar patterns
+# Window state visualization and dynamic space app icon management for yabai integration
 # shellcheck disable=SC1091
 
-# --- Configuration Loading --------------------------------------------------
+# --- Configuration ----------------------------------------------------------
 source "$HOME/.config/sketchybar/colors.sh"
 source "$HOME/.config/sketchybar/icons.sh"
 source "$HOME/.config/sketchybar/constants.sh"
 source "$HOME/.config/sketchybar/plugins/icon_map.sh"
 
-# --- Window State Functions -------------------------------------------------
+# --- Window State Functions -----------------------------------------------
 update_window_state() {
   local window_info current_stack
   window_info=$(yabai -m query --windows --window 2>/dev/null || echo '{}')
@@ -58,7 +58,7 @@ update_window_state() {
   fi
 }
 
-# --- Space App Icons Management ---------------------------------------------
+# --- Space Icon Management -----------------------------------------------
 update_space_icons() {
   local space_data all_windows
   space_data=$(yabai -m query --spaces --display 2>/dev/null || echo '[]')
@@ -135,19 +135,19 @@ update_space_icons() {
   fi
 }
 
-# --- Space Recreation -------------------------------------------------------
+# --- Space Recreation -----------------------------------------------------
 recreate_spaces() {
   source "$HOME/.config/sketchybar/items/spaces.sh" 2>/dev/null || true
 }
 
-# --- Mouse Event Handlers ---------------------------------------------------
+# --- Mouse Handlers -------------------------------------------------------
 handle_click() {
   yabai -m window --toggle float 2>/dev/null || true
   update_window_state
 }
 
 
-# --- Event Handler ----------------------------------------------------------
+# --- Event Handler --------------------------------------------------------
 case "$SENDER" in
   "mouse.clicked")
     handle_click

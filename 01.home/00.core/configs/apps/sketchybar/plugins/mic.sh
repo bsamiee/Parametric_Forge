@@ -1,6 +1,6 @@
 #!/bin/bash
 # Title         : mic.sh
-# Author        : Bardia Samiee (adapted from reference)
+# Author        : Bardia Samiee
 # Project       : Parametric Forge
 # License       : MIT
 # Path          : /01.home/00.core/configs/apps/sketchybar/plugins/mic.sh
@@ -8,18 +8,18 @@
 # Microphone control with volume-based visual states and toggle functionality
 # shellcheck disable=SC1091
 
-# --- Load Configuration Variables -------------------------------------------
+# --- Configuration --------------------------------------------------------
 source "$HOME/.config/sketchybar/colors.sh"
 source "$HOME/.config/sketchybar/constants.sh"
 source "$HOME/.config/sketchybar/icons.sh"
 source "$HOME/.config/sketchybar/helpers/interaction-helpers.sh"
 
-# --- Get Current Mic Volume -------------------------------------------------
+# --- Volume Detection -----------------------------------------------------
 get_mic_volume() {
     osascript -e 'set ivol to input volume of (get volume settings)' 2>/dev/null || echo "0"
 }
 
-# --- Update Mic Icon and Color Based on Volume ------------------------------
+# --- Icon Update ----------------------------------------------------------
 update_icon() {
     local volume icon color
     volume=$(get_mic_volume)
@@ -47,7 +47,7 @@ update_icon() {
     apply_smooth_animation "$NAME" 30 icon="$icon" icon.color="$color"
 }
 
-# --- Update Label with Current Volume (for storage) -------------------------
+# --- Label Update ---------------------------------------------------------
 update_label() {
     local volume
     volume=$(get_mic_volume)
@@ -58,12 +58,12 @@ update_label() {
     fi
 }
 
-# --- Mute Microphone --------------------------------------------------------
+# --- Mute Control ---------------------------------------------------------
 mute_mic() {
     osascript -e 'set volume input volume 0' 2>/dev/null || true
 }
 
-# --- Unmute Microphone (restore from stored volume) ------------------------
+# --- Unmute Control -------------------------------------------------------
 unmute_mic() {
     local stored_volume
     # Get stored volume from label
@@ -77,7 +77,7 @@ unmute_mic() {
     fi
 }
 
-# --- Toggle Mic Mute/Unmute -------------------------------------------------
+# --- Toggle Control -------------------------------------------------------
 toggle_mic() {
     local current_volume
     current_volume=$(get_mic_volume)
@@ -92,9 +92,8 @@ toggle_mic() {
     fi
 }
 
-# --- Handle Click Events ----------------------------------------------------
+# --- Click Handler --------------------------------------------------------
 handle_click() {
-    # Use visual feedback for click
     handle_mouse_event "$NAME" "$SENDER"
 
     # Toggle mic state
@@ -104,7 +103,7 @@ handle_click() {
     update_icon
 }
 
-# --- Main Event Handler -----------------------------------------------------
+# --- Event Handler --------------------------------------------------------
 case "$SENDER" in
     "mouse.clicked")
         handle_click

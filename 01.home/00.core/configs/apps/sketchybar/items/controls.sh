@@ -8,11 +8,11 @@
 # Menu bar controls integration using SketchyBar aliases
 # shellcheck disable=SC1091
 
-# --- Load Configuration Variables -------------------------------------------
+# --- Configuration ----------------------------------------------------------
 source "$HOME/.config/sketchybar/colors.sh"
 source "$HOME/.config/sketchybar/constants.sh"
 
-# --- Menu Controls Array (Add/Remove as needed) ----------------------------
+# --- Menu Controls Array ----------------------------------------------------
 menucontrols=(
     "Control__Center,Bluetooth"
     "Control__Center,AirDrop"
@@ -25,14 +25,14 @@ menucontrols=(
     "BetterMouse"
 )
 
-# --- Convert underscores to spaces for actual menu item names --------------
+# --- Name Conversion --------------------------------------------------------
 menuitem=()
 for item in "${menucontrols[@]}"; do
     new_item=${item//__/ }
     menuitem+=("$new_item")
 done
 
-# --- Create Alias Items for Each Menu Control -------------------------------
+# --- Alias Creation ---------------------------------------------------------
 for item in "${menuitem[@]}"; do
     alias_config=(
         drawing=off

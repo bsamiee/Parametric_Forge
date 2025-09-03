@@ -19,14 +19,13 @@ echo "yabai: Starting configuration..."
 # --- Initialize Companion Tools ---------------------------------------------
 echo "yabai: Starting companion UI tools..."
 
-# Start SketchyBar
-sketchybar --config ~/.config/sketchybar/sketchybarrc &
-SKETCHYBAR_PID=$!
-sleep 0.5
+# SketchyBar should be managed via brew services, not manually started
+# Check if SketchyBar service is running
 if pgrep -x sketchybar >/dev/null; then
-  echo "yabai: ✓ SketchyBar ready (PID: $SKETCHYBAR_PID)"
+  echo "yabai: ✓ SketchyBar service active"
 else
-  echo "yabai: ! SketchyBar failed to start" >&2
+  echo "yabai: ! SketchyBar service not running" >&2
+  echo "yabai: ! Start with: brew services start sketchybar" >&2
 fi
 
 # Start skhd with proper path detection
@@ -59,7 +58,7 @@ else
   echo "yabai: ! borders failed to start" >&2
 fi
 
-echo "yabai: ✓ UI tools started (PIDs: sketchybar=$SKETCHYBAR_PID skhd=$SKHD_PID borders=$BORDERS_PID)"
+echo "yabai: ✓ UI tools checked (PIDs: skhd=$SKHD_PID borders=$BORDERS_PID)"
 
 # --- Scripting Addition with Detailed Diagnostics --------------------------
 echo "yabai: Loading scripting addition..."

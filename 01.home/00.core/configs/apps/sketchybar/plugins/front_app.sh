@@ -5,13 +5,14 @@
 # License       : MIT
 # Path          : /01.home/00.core/configs/apps/sketchybar/plugins/front_app.sh
 # ----------------------------------------------------------------------------
-# Enhanced front app plugin with visual feedback (text-only)
+# Front application display with visual feedback
 # shellcheck disable=SC1091
 
+# --- Configuration --------------------------------------------------------
 source "$HOME/.config/sketchybar/colors.sh"
 source "$HOME/.config/sketchybar/helpers/interaction-helpers.sh"
 
-# --- Get Current Application ------------------------------------------------
+# --- Application Detection -----------------------------------------------
 get_current_app() {
     # Try to get app from yabai, fallback to native methods
     local current_app
@@ -31,20 +32,18 @@ get_current_app() {
     echo "$current_app"
 }
 
-# --- Update Front App Display -----------------------------------------------
+# --- Display Update -------------------------------------------------------
 update_front_app() {
     local app_name
 
-    # Get current application
     app_name=$(get_current_app)
 
     # Update the item display (text-only)
     sketchybar --set "$NAME" label="$app_name" 2>/dev/null || true
 }
 
-# --- Handle Click Events ----------------------------------------------------
+# --- Click Handler --------------------------------------------------------
 handle_click() {
-    # Use visual feedback for click
     handle_mouse_event "$NAME" "$SENDER"
 
     # Toggle window floating state with yabai
@@ -53,7 +52,7 @@ handle_click() {
     fi
 }
 
-# --- Main Event Handler -----------------------------------------------------
+# --- Event Handler --------------------------------------------------------
 case "$SENDER" in
     "front_app_switched"|"window_focus"|"system_woke")
         # Update app display when focus changes

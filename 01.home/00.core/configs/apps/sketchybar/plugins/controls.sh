@@ -1,6 +1,6 @@
 #!/bin/bash
 # Title         : controls.sh
-# Author        : Bardia Samiee (adapted from reference)
+# Author        : Bardia Samiee
 # Project       : Parametric Forge
 # License       : MIT
 # Path          : /01.home/00.core/configs/apps/sketchybar/plugins/controls.sh
@@ -8,16 +8,15 @@
 # Menu bar controls and toggle system handler
 # shellcheck disable=SC1091
 
-# --- Load Configuration Variables -------------------------------------------
+# --- Configuration --------------------------------------------------------
 source "$HOME/.config/sketchybar/colors.sh"
 source "$HOME/.config/sketchybar/constants.sh"
+source "$HOME/.config/sketchybar/icons.sh"
 source "$HOME/.config/sketchybar/helpers/interaction-helpers.sh"
 
-
-# --- Handle Different Item Types --------------------------------------------
+# --- Event Handling -------------------------------------------------------
 case "$NAME" in
-    "more_menu")
-        # Parse arguments: controls_string
+    "control_center")
         controls_string="$1"
 
         # Convert space-delimited string to array
@@ -25,7 +24,7 @@ case "$NAME" in
 
         case "$SENDER" in
             "mouse.clicked")
-                handle_toggle_state "$NAME" "􀯶" "|" "${controls_array[@]}"
+                handle_toggle_state "$NAME" "$CONTROL_CENTER" "$SEPARATOR_LINE" "${controls_array[@]}"
                 ;;
             "mouse.entered"|"mouse.exited")
                 handle_mouse_event "$NAME" "$SENDER"

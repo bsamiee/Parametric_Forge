@@ -1,21 +1,21 @@
 #!/bin/bash
 # Title         : packages.sh
-# Author        : Bardia Samiee (adapted from reference)
+# Author        : Bardia Samiee
 # Project       : Parametric Forge
 # License       : MIT
 # Path          : /01.home/00.core/configs/apps/sketchybar/plugins/packages.sh
 # ----------------------------------------------------------------------------
-# Multi-manager package counter with caching
+# Cross-platform package manager counter with caching (Homebrew, Nix, npm, uv, cargo)
 # shellcheck disable=SC1091
 # shellcheck disable=SC2126 # Complex pipeline needs grep+wc, not grep -c
 
-# --- Load Configuration Variables -------------------------------------------
+# --- Configuration --------------------------------------------------------
 source "$HOME/.config/sketchybar/colors.sh"
 source "$HOME/.config/sketchybar/constants.sh"
 source "$HOME/.config/sketchybar/icons.sh"
 source "$HOME/.config/sketchybar/helpers/interaction-helpers.sh"
 
-# --- Count Nix Packages -----------------------------------------------------
+# --- Nix Counter ----------------------------------------------------------
 count_nix_packages() {
     local profile="$1"
 
@@ -31,7 +31,7 @@ count_nix_packages() {
         wc -l 2>/dev/null || echo "0"
 }
 
-# --- Count Directory Packages -----------------------------------------------
+# --- Directory Counter ----------------------------------------------------
 count_directory_packages() {
     local directory="$1"
 
@@ -42,7 +42,7 @@ count_directory_packages() {
     fi
 }
 
-# --- Calculate Total Package Count ------------------------------------------
+# --- Total Calculator -----------------------------------------------------
 calculate_total_packages() {
     local total=0
     local count
@@ -62,7 +62,7 @@ calculate_total_packages() {
     echo "$total"
 }
 
-# --- Update Package Display -------------------------------------------------
+# --- Display Update -------------------------------------------------------
 update_packages() {
     local total_packages
     total_packages=$(calculate_total_packages)
@@ -71,7 +71,7 @@ update_packages() {
     apply_instant_change "$NAME" label="$total_packages"
 }
 
-# --- Main Event Handler -----------------------------------------------------
+# --- Event Handler --------------------------------------------------------
 case "$SENDER" in
     "mouse.entered"|"mouse.exited")
         # Use unified visual feedback system

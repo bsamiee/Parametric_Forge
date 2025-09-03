@@ -7,7 +7,7 @@
 # ----------------------------------------------------------------------------
 # Application name to sketchybar-app-font icon mapping
 
-# --- Icon Mapping Function (for sourcing) -----------------------------------
+# --- Icon Mapping Function -----------------------------------------------
 get_app_icon() {
   case "$1" in
 
@@ -102,7 +102,7 @@ get_app_icon() {
     icon_result=":obsstudio:"
     ;;
 
-  # --- Media & Entertainment ------------------------------------------------
+  # --- Media & Entertainment --------------------------------------------
   "VLC")
     icon_result=":vlc:"
     ;;
@@ -180,7 +180,7 @@ get_app_icon() {
     icon_result=":zen_browser:"
     ;;
 
-  # --- Productivity & Office ------------------------------------------------
+  # --- Productivity & Office --------------------------------------------
   "ClickUp")
     icon_result=":click_up:"
     ;;
@@ -334,7 +334,7 @@ get_app_icon() {
   echo "$icon_result"
 }
 
-# --- Backward Compatibility (when called as script) ------------------------
+# --- Backward Compatibility -------------------------------------------
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   get_app_icon "$@"
 fi

@@ -8,6 +8,7 @@
 # Visual separator utility for SketchyBar sections
 # shellcheck disable=SC1091
 
+# --- Configuration ----------------------------------------------------------
 source "$HOME/.config/sketchybar/colors.sh"
 source "$HOME/.config/sketchybar/constants.sh"
 source "$HOME/.config/sketchybar/icons.sh"
@@ -61,7 +62,7 @@ remove_separator() {
     sketchybar --remove "separator_$separator_id" 2>/dev/null || true
 }
 
-# --- Main Entry Point (if called directly) ---------------------------------
+# --- Main Entry Point -------------------------------------------------------
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     # Called directly - add separator with provided arguments
     add_separator "$@"

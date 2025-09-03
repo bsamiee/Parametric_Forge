@@ -60,7 +60,9 @@ VOLUME_0=􀊣
 
 # --- WiFi Icons -------------------------------------------------------------
 WIFI_HOTSPOT=􀉤
-WIFI_CONNECTED=􀙇
+WIFI_SIGNAL_3=􀙇        # Full signal (3 bars)
+WIFI_SIGNAL_2=􀙋        # Good signal (2 bars)  
+WIFI_SIGNAL_1=􀙍        # Weak signal (1 bar)
 WIFI_ERROR=􀙥
 WIFI_OFF=􀙈
 
@@ -76,3 +78,10 @@ BELL_DISABLED=􀋞
 
 # --- Package Icons ----------------------------------------------------------
 PACKAGE=􀐛
+
+# --- Menu & Control Icons ---------------------------------------------------
+CONTROL_CENTER=􀯶
+
+# --- Media Control Icons ----------------------------------------------------
+MEDIA_PLAY=􀊆
+MEDIA_PAUSE=􀊄

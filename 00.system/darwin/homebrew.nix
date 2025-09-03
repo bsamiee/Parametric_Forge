@@ -94,7 +94,6 @@ in
 
       # QuickLook Plugins - DELETED FOR CLEAN HOMEBREW INSTALL
       "syntax-highlight" # Code syntax highlighting for 150+ file types
-      "qlmarkdown" # Markdown preview with GitHub-flavored rendering
       "quicklook-json" # JSON formatted preview
       "quicklook-csv" # CSV/TSV table preview
       "betterzip" # Preview ZIP/TAR contents without extracting
@@ -132,6 +131,9 @@ in
 
       # System Monitoring
       "macmon" # macOS system monitoring tool (for SketchyBar plugins)
+      
+      # Bluetooth Management
+      "blueutil" # CLI for Bluetooth management (power, devices, pairing)
 
       # UI Tools
       "koekeishiya/formulae/yabai"

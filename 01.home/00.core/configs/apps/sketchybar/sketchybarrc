@@ -10,6 +10,7 @@
 
 set -euo pipefail
 
+# --- Configuration ----------------------------------------------------------
 source "$HOME/.config/sketchybar/colors.sh"
 source "$HOME/.config/sketchybar/icons.sh"
 source "$HOME/.config/sketchybar/constants.sh"
@@ -30,7 +31,7 @@ bar=(
     position=top
     sticky=on
     padding_right="$PADDINGS_XXLARGE"
-    padding_left="$PADDINGS"
+    padding_left="$PADDINGS_MEDIUM"
     corner_radius="$RADIUS_LARGE"
     y_offset="$OFFSET_BAR"
     margin="$OFFSET_BAR"
@@ -42,19 +43,19 @@ bar=(
 
 sketchybar --bar "${bar[@]}"
 
-# --- Default Properties -----------------------------------------------------
+# --- Defaults ---------------------------------------------------------------
 defaults=(
     updates=when_shown
     icon.font="$SYMBOL_FONT:$MEDIUM_WEIGHT:$SIZE_MEDIUM"
     icon.color="$WHITE"
-    icon.padding_left="$PADDINGS"
-    icon.padding_right="$PADDINGS"
+    icon.padding_left="$PADDINGS_MEDIUM"
+    icon.padding_right="$PADDINGS_MEDIUM"
     label.font="$TEXT_FONT:$REGULAR_WEIGHT:$SIZE_SMALL"
     label.color="$WHITE"
-    label.padding_left="$PADDINGS"
-    label.padding_right="$PADDINGS"
-    padding_right="$PADDINGS"
-    padding_left="$PADDINGS"
+    label.padding_left="$PADDINGS_MEDIUM"
+    label.padding_right="$PADDINGS_MEDIUM"
+    padding_right="$PADDINGS_MEDIUM"
+    padding_left="$PADDINGS_MEDIUM"
     background.height="$HEIGHT_ITEM"
     background.corner_radius="$RADIUS_LARGE"
     popup.background.border_width="$PADDINGS_NONE"
@@ -67,18 +68,14 @@ defaults=(
 
 sketchybar --default "${defaults[@]}"
 
-# --- Streamlined Events -----------------------------------------------------
+# --- Events -----------------------------------------------------------------
 sketchybar --add event space_change \
     --add event windows_on_spaces
 
-# --- Dynamic Spaces ---------------------------------------------------------
-source "$ITEM_DIR/spaces.sh"
-
-# --- Logo & Menu Discovery ---------------------------------------------------
+# --- Left Items -------------------------------------------------------------
 source "$ITEM_DIR/logo.sh"
 source "$ITEM_DIR/menu-items.sh"
 
-# --- Left Items -------------------------------------------------------------
 # Add yabai indicator (positioning handled dynamically in spaces.sh)
 sketchybar --add item yabai left \
     --set yabai script="$PLUGIN_DIR/yabai.sh" \
@@ -94,7 +91,7 @@ sketchybar --add item yabai left \
     mouse.exited \
     space_change
 
-# --- Enhanced Front App -----------------------------------------------------
+source "$ITEM_DIR/spaces.sh"
 source "$ITEM_DIR/front_app.sh"
 
 # --- Center Items -----------------------------------------------------------
@@ -108,7 +105,7 @@ source "$ITEM_DIR/mic.sh"
 source "$ITEM_DIR/notifications.sh"
 source "$ITEM_DIR/packages.sh"
 source "$ITEM_DIR/controls.sh"
-source "$ITEM_DIR/more-menu.sh"
+source "$ITEM_DIR/control-center.sh"
 source "$ITEM_DIR/calendar.sh"
 
 # --- Initialize -------------------------------------------------------------

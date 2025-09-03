@@ -1,12 +1,16 @@
 #!/bin/bash
-# Title         : script-separator.sh
-# Author        : Bardia Samiee (adapted from reference)
+# Title         : separator.sh
+# Author        : Bardia Samiee
 # Project       : Parametric Forge
 # License       : MIT
-# Path          : /01.home/00.core/configs/apps/sketchybar/plugins/music/script-separator.sh
+# Path          : /01.home/00.core/configs/apps/sketchybar/plugins/music/separator.sh
 # ----------------------------------------------------------------------------
-# Center separator visibility management
+# Dynamic center separator visibility based on music and system monitor states
+
+# --- Configuration ----------------------------------------------------------
 export PATH=/opt/homebrew/bin/:$PATH
+
+# --- State Detection --------------------------------------------------------
 GRAPHSTATE="$(sketchybar --query graph | sed 's/\\\\n//g; s/\\\\\\$//g; s/\\\\ //g' | jq -r '.geometry.drawing')"
 MUSICSTATE="$(sketchybar --query music | sed 's/\\\\n//g; s/\\\\\\$//g; s/\\\\ //g' | jq -r '.geometry.drawing')"
 
@@ -15,7 +19,7 @@ activitycount=0
 if [ "$GRAPHSTATE" = "on" ]; then ((activitycount++)); fi
 if [ "$MUSICSTATE" = "on" ]; then ((activitycount++)); fi
 
-### Only show middle separator if an activity is present
+# --- Separator Control ------------------------------------------------------
 
 if [ $activitycount -gt 0 ]; then
   sketchybar --set separator_center drawing=on

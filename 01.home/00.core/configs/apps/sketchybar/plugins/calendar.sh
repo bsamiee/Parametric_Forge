@@ -8,23 +8,23 @@
 # Enhanced calendar script with precise timing and right-click seconds display
 # shellcheck disable=SC1091
 
+# --- Configuration ----------------------------------------------------------
 source "$HOME/.config/sketchybar/colors.sh"
 source "$HOME/.config/sketchybar/helpers/interaction-helpers.sh"
 
-# --- Precise Minute Synchronization -----------------------------------------
+# --- Synchronization --------------------------------------------------------
 sync_to_minute_boundary() {
     local current_seconds
     current_seconds=$(date '+%S')
     if [ "$current_seconds" -ne 0 ]; then
         sleep $((60 - current_seconds))
-        # Additional precision check
         while [[ $(date '+%S') != "00" ]]; do
             sleep 0.1
         done
     fi
 }
 
-# --- Right-Click Seconds Display --------------------------------------------
+# --- Seconds Display --------------------------------------------------------
 show_seconds_temporarily() {
     # Show seconds for 5 seconds on right-click
     for ((i = 0; i <= 4; ++i)); do
@@ -44,7 +44,7 @@ show_seconds_temporarily() {
         background.drawing=off
 }
 
-# --- Handle Mouse Events ----------------------------------------------------
+# --- Mouse Events -----------------------------------------------------------
 case "$SENDER" in
     "mouse.entered"|"mouse.exited")
         # Use unified visual feedback system
@@ -65,5 +65,5 @@ case "$SENDER" in
         ;;
 esac
 
-# --- Update Calendar Display ------------------------------------------------
+# --- Display Update ---------------------------------------------------------
 sketchybar --set "$NAME" label="$(date '+%a %b %-d %H:%M')"

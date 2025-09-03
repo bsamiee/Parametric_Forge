@@ -8,6 +8,7 @@
 # Activity Monitor replacement with popup system
 # shellcheck disable=SC1091
 
+# --- Configuration ----------------------------------------------------------
 source "$HOME/.config/sketchybar/colors.sh"
 source "$HOME/.config/sketchybar/constants.sh"
 
@@ -21,10 +22,10 @@ sketchybar --add graph system_monitor right \
         graph.fill_color="$GREY" \
         graph.line_width=2 \
         \
-        icon="$ACTIVITY_MONITOR" \
+        icon="$ACTIVITY" \
         icon.font="$SYMBOL_FONT:$MEDIUM_WEIGHT:$SIZE_MEDIUM" \
         icon.color="$PRIMARY_CYAN" \
-        icon.padding_left="$PADDINGS" \
+        icon.padding_left="$PADDINGS_MEDIUM" \
         icon.padding_right="$PADDINGS_SMALL" \
         \
         label.drawing=off \
@@ -42,7 +43,7 @@ sketchybar --add graph system_monitor right \
         label.font="$TEXT_FONT:$MEDIUM_WEIGHT:$SIZE_SMALL" \
         label.color="$WHITE" \
         label.padding_left="$PADDINGS_NONE" \
-        label.padding_right="$PADDINGS" \
+        label.padding_right="$PADDINGS_MEDIUM" \
         \
         icon.drawing=off \
         background.drawing=off \
@@ -54,7 +55,7 @@ sketchybar --add graph system_monitor right \
         label.color="$LIGHT_GREY" \
         label.max_chars=25 \
         label.padding_left="$PADDINGS_NONE" \
-        label.padding_right="$PADDINGS" \
+        label.padding_right="$PADDINGS_MEDIUM" \
         \
         icon.drawing=off \
         background.drawing=off
@@ -65,8 +66,8 @@ sketchybar --add item system_monitor.cpu popup.system_monitor \
         label="CPU    [----------]   0%" \
         label.font="$TEXT_FONT:$REGULAR_WEIGHT:$SIZE_SMALL" \
         label.color="$WHITE" \
-        label.padding_left="$PADDINGS" \
-        label.padding_right="$PADDINGS" \
+        label.padding_left="$PADDINGS_MEDIUM" \
+        label.padding_right="$PADDINGS_MEDIUM" \
         \
         icon.drawing=off \
         background.drawing=off \
@@ -76,8 +77,8 @@ sketchybar --add item system_monitor.cpu popup.system_monitor \
         label="Memory [----------]   0%" \
         label.font="$TEXT_FONT:$REGULAR_WEIGHT:$SIZE_SMALL" \
         label.color="$WHITE" \
-        label.padding_left="$PADDINGS" \
-        label.padding_right="$PADDINGS" \
+        label.padding_left="$PADDINGS_MEDIUM" \
+        label.padding_right="$PADDINGS_MEDIUM" \
         \
         icon.drawing=off \
         background.drawing=off \
@@ -87,8 +88,8 @@ sketchybar --add item system_monitor.cpu popup.system_monitor \
         label="Disk   [----------]   0%" \
         label.font="$TEXT_FONT:$REGULAR_WEIGHT:$SIZE_SMALL" \
         label.color="$WHITE" \
-        label.padding_left="$PADDINGS" \
-        label.padding_right="$PADDINGS" \
+        label.padding_left="$PADDINGS_MEDIUM" \
+        label.padding_right="$PADDINGS_MEDIUM" \
         \
         icon.drawing=off \
         background.drawing=off \
@@ -98,8 +99,8 @@ sketchybar --add item system_monitor.cpu popup.system_monitor \
         label="Network[----------]   0%" \
         label.font="$TEXT_FONT:$REGULAR_WEIGHT:$SIZE_SMALL" \
         label.color="$WHITE" \
-        label.padding_left="$PADDINGS" \
-        label.padding_right="$PADDINGS" \
+        label.padding_left="$PADDINGS_MEDIUM" \
+        label.padding_right="$PADDINGS_MEDIUM" \
         \
         icon.drawing=off \
         background.drawing=off \
@@ -109,8 +110,8 @@ sketchybar --add item system_monitor.cpu popup.system_monitor \
         label="Power  [----------]   0W" \
         label.font="$TEXT_FONT:$REGULAR_WEIGHT:$SIZE_SMALL" \
         label.color="$WHITE" \
-        label.padding_left="$PADDINGS" \
-        label.padding_right="$PADDINGS" \
+        label.padding_left="$PADDINGS_MEDIUM" \
+        label.padding_right="$PADDINGS_MEDIUM" \
         \
         icon.drawing=off \
         background.drawing=off

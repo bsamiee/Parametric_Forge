@@ -9,19 +9,20 @@
 # shellcheck disable=SC2034  # Variables sourced by other scripts
 
 # --- Padding System ---------------------------------------------------------
-export PADDINGS=4
+export PADDINGS_NONE=0
 export PADDINGS_SMALL=2
+export PADDINGS_MEDIUM=4
 export PADDINGS_LARGE=8
 export PADDINGS_XLARGE=12
 export PADDINGS_XXLARGE=16
-export PADDINGS_NONE=0
-
 
 # --- Offsets & Effects ------------------------------------------------------
 export OFFSET_BAR=4
 export OFFSET_ICON_BG=-12
+
 export SHADOW_DISTANCE=3
 export SHADOW_ANGLE=30
+
 export BLUR_RADIUS_STANDARD=20
 
 # --- Border Width System ----------------------------------------------------
@@ -34,12 +35,12 @@ export RADIUS_SMALL=4
 export RADIUS_MEDIUM=8
 export RADIUS_LARGE=16
 
-# --- Height System ----------------------------------------------------------
-export HEIGHT_ITEM=26
+# --- Dimensions System ------------------------------------------------------
 export HEIGHT_BAR=36
+
+export HEIGHT_ITEM=26
 export HEIGHT_ICON_BG=2
 
-# --- Icon Dimensions --------------------------------------------------------
 export ICON_WIDTH_STANDARD=30
 
 # --- Font System ------------------------------------------------------------

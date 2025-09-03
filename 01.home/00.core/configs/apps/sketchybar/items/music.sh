@@ -1,38 +1,38 @@
 #!/bin/bash
 # Title         : music.sh
-# Author        : Bardia Samiee (adapted from reference)
+# Author        : Bardia Samiee
 # Project       : Parametric Forge
 # License       : MIT
 # Path          : /01.home/00.core/configs/apps/sketchybar/items/music.sh
 # ----------------------------------------------------------------------------
 # Music player items with artwork, title, and controls
+# shellcheck disable=SC1091
 
-# --- Load Configuration Variables -------------------------------------------
+# --- Configuration ----------------------------------------------------------
 source "$HOME/.config/sketchybar/colors.sh"
 source "$HOME/.config/sketchybar/constants.sh"
 source "$HOME/.config/sketchybar/icons.sh"
 
+# --- Parameters -------------------------------------------------------------
 ARTWORK_MARGIN=5
 TITLE_MARGIN=11
 INFO_WIDTH=80
 
 command -v 'menubar' 2>/dev/null 1>&2 || alias menubar="$HOME/.config/sketchybar/menubar"
 
-SCRIPT_MUSIC="export PATH=$PATH; $HOME/.config/sketchybar/plugins/music/script-artwork.sh $ARTWORK_MARGIN $HEIGHT_BAR #SKETCHYBAR_MEDIASTREAM#"
-
+# --- Script Paths -----------------------------------------------------------
+SCRIPT_MUSIC="export PATH=$PATH; $HOME/.config/sketchybar/plugins/music/artwork.sh $ARTWORK_MARGIN $HEIGHT_BAR #SKETCHYBAR_MEDIASTREAM#"
 SCRIPT_CLICK_MUSIC_ARTWORK="export PATH=$PATH; media-control toggle-play-pause"
-
-SCRIPT_MUSIC_TITLE="export PATH=$PATH; $HOME/.config/sketchybar/plugins/music/script-title.sh"
-
+SCRIPT_MUSIC_TITLE="export PATH=$PATH; $HOME/.config/sketchybar/plugins/music/title.sh"
 SCRIPT_CLICK_MUSIC_TITLE="export PATH=$PATH; menubar -s \"Control Center,NowPlaying\""
+SCRIPT_CENTER_SEP="export PATH=$PATH; $HOME/.config/sketchybar/plugins/music/separator.sh"
 
-SCRIPT_CENTER_SEP="export PATH=$PATH; $HOME/.config/sketchybar/plugins/music/script-separator.sh"
-
+# --- Artwork Configuration --------------------------------------------------
 music_artwork=(
   drawing=off
   script="$SCRIPT_MUSIC"
   click_script="$SCRIPT_CLICK_MUSIC_ARTWORK"
-  icon="􀊆"
+  icon="$MEDIA_PLAY"
   icon.drawing=off
   icon.color="$PINK"
   icon.shadow.drawing=on
@@ -53,6 +53,7 @@ music_artwork=(
   padding_right=8
 )
 
+# --- Title Configuration ----------------------------------------------------
 music_title=(
   label=Title
   drawing=off
@@ -70,6 +71,7 @@ music_title=(
   y_offset=$(($HEIGHT_BAR / 2 - $TITLE_MARGIN))
 )
 
+# --- Subtitle Configuration -------------------------------------------------
 music_subtitle=(
   label=SubTitle
   drawing=off
@@ -87,8 +89,9 @@ music_subtitle=(
   y_offset=$((-($HEIGHT_BAR / 2) + $TITLE_MARGIN))
 )
 
+# --- Separator Configuration ------------------------------------------------
 center_separator=(
-  icon="|"
+  icon="$SEPARATOR_LINE"
   script="$SCRIPT_CENTER_SEP"
   icon.color="$GREY"
   icon.font="$TEXT_FONT:Bold:16.0"
@@ -100,6 +103,7 @@ center_separator=(
   updates=on
 )
 
+# --- Item Creation ----------------------------------------------------------
 sketchybar --add item separator_center center \
   --set separator_center "${center_separator[@]}" \
   --add event activities_update \

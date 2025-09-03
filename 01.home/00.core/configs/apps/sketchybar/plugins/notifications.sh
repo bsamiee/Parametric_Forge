@@ -1,6 +1,6 @@
 #!/bin/bash
 # Title         : notifications.sh
-# Author        : Bardia Samiee (adapted from reference)
+# Author        : Bardia Samiee
 # Project       : Parametric Forge
 # License       : MIT
 # Path          : /01.home/00.core/configs/apps/sketchybar/plugins/notifications.sh
@@ -8,18 +8,18 @@
 # GitHub notifications counter with API integration
 # shellcheck disable=SC1091
 
-# --- Load Configuration Variables -------------------------------------------
+# --- Configuration --------------------------------------------------------
 source "$HOME/.config/sketchybar/colors.sh"
 source "$HOME/.config/sketchybar/constants.sh"
 source "$HOME/.config/sketchybar/icons.sh"
 source "$HOME/.config/sketchybar/helpers/interaction-helpers.sh"
 
-# --- Check GitHub Token Availability ----------------------------------------
+# --- Token Validation -----------------------------------------------------
 check_github_token() {
     [[ -n "$GITHUB_TOKEN" ]] || [[ -n "$GITHUB_CLASSIC_TOKEN" ]]
 }
 
-# --- Fetch GitHub Notifications ---------------------------------------------
+# --- API Request ----------------------------------------------------------
 fetch_notifications() {
     local token
 
@@ -39,7 +39,7 @@ fetch_notifications() {
         "https://api.github.com/notifications" 2>/dev/null
 }
 
-# --- Update Notifications Display -------------------------------------------
+# --- Display Update -------------------------------------------------------
 update_notifications() {
     local icon color label
 
@@ -87,16 +87,15 @@ update_notifications() {
         label="$label"
 }
 
-# --- Handle Click Events ----------------------------------------------------
+# --- Click Handler --------------------------------------------------------
 handle_click() {
-    # Use visual feedback for click
     handle_mouse_event "$NAME" "$SENDER"
 
     # Open GitHub notifications page
     open "https://github.com/notifications" 2>/dev/null || true
 }
 
-# --- Main Event Handler -----------------------------------------------------
+# --- Event Handler --------------------------------------------------------
 case "$SENDER" in
     "mouse.clicked")
         handle_click

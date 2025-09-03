@@ -1,23 +1,24 @@
 #!/bin/bash
 # Title         : volume.sh
-# Author        : Bardia Samiee (adapted from reference)
+# Author        : Bardia Samiee
 # Project       : Parametric Forge
 # License       : MIT
 # Path          : /01.home/00.core/configs/apps/sketchybar/plugins/volume.sh
 # ----------------------------------------------------------------------------
-# Consolidated volume plugin with interactive slider and dynamic icon
+# Volume control with interactive slider, dynamic icons, and Control Center integration
 # shellcheck disable=SC1091
 # shellcheck disable=SC2153 # PERCENTAGE is provided by SketchyBar slider events
 
+# --- Configuration --------------------------------------------------------
 source "$HOME/.config/sketchybar/colors.sh"
 source "$HOME/.config/sketchybar/constants.sh"
 source "$HOME/.config/sketchybar/icons.sh"
 source "$HOME/.config/sketchybar/helpers/interaction-helpers.sh"
 
-# --- Volume Configuration ---------------------------------------------------
+# --- Volume Configuration -------------------------------------------------
 SLIDER_WIDTH=100
 
-# --- Volume Status Update ---------------------------------------------------
+# --- Display Update -------------------------------------------------------
 update_volume_display() {
   local volume_level="$INFO"
   local icon
@@ -63,7 +64,7 @@ update_volume_display() {
   ) &
 }
 
-# --- Slider Interaction -----------------------------------------------------
+# --- Slider Handler -------------------------------------------------------
 handle_slider_click() {
   # Set volume based on slider percentage
   local percentage="$PERCENTAGE"
@@ -81,7 +82,7 @@ handle_slider_hover() {
   esac
 }
 
-# --- Volume Icon Interaction ------------------------------------------------
+# --- Icon Handler ---------------------------------------------------------
 handle_icon_click() {
   if [[ "$BUTTON" == "left" ]]; then
     # Left click: Toggle slider visibility
@@ -104,7 +105,7 @@ handle_icon_click() {
   fi
 }
 
-# --- Main Event Handler -----------------------------------------------------
+# --- Event Handler --------------------------------------------------------
 case "$NAME" in
   "volume")
     # Handle slider events

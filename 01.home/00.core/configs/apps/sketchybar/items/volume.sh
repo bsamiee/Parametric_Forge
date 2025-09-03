@@ -1,6 +1,6 @@
 #!/bin/bash
 # Title         : volume.sh
-# Author        : Bardia Samiee (adapted from reference)
+# Author        : Bardia Samiee
 # Project       : Parametric Forge
 # License       : MIT
 # Path          : /01.home/00.core/configs/apps/sketchybar/items/volume.sh
@@ -8,11 +8,12 @@
 # Volume control with interactive slider and dynamic icon
 # shellcheck disable=SC1091
 
-# --- Load Configuration Variables -------------------------------------------
+# --- Configuration ----------------------------------------------------------
 source "$HOME/.config/sketchybar/colors.sh"
 source "$HOME/.config/sketchybar/constants.sh"
+source "$HOME/.config/sketchybar/icons.sh"
 
-# --- Volume Slider Configuration -------------------------------------------
+# --- Volume Slider Configuration --------------------------------------------
 volume_slider_config=(
   script="$HOME/.config/sketchybar/plugins/volume.sh"
   updates=on
@@ -27,7 +28,7 @@ volume_slider_config=(
   slider.background.height=5
   slider.background.corner_radius=3
   slider.background.color="$LIGHT_DARK_GREY"
-  slider.knob="􀀁"
+  slider.knob="$SEPARATOR_DOT"
   slider.knob.drawing=off
   slider.width=0
 )
@@ -40,7 +41,7 @@ volume_icon_config=(
   icon.font="$SYMBOL_FONT:$REGULAR_WEIGHT:$SIZE_LARGE"
   icon.color="$PRIMARY_PURPLE"
   icon.padding_left="$PADDINGS_LARGE"
-  icon.padding_right="$PADDINGS"
+  icon.padding_right="$PADDINGS_MEDIUM"
 
   label.drawing=off
   label.width=32

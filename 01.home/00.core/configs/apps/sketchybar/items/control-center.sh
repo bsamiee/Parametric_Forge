@@ -1,19 +1,19 @@
 #!/bin/bash
-# Title         : more-menu.sh
-# Author        : Bardia Samiee (adapted from reference)
+# Title         : control-center.sh
+# Author        : Bardia Samiee
 # Project       : Parametric Forge
 # License       : MIT
-# Path          : /01.home/00.core/configs/apps/sketchybar/items/more-menu.sh
+# Path          : /01.home/00.core/configs/apps/sketchybar/items/control-center.sh
 # ----------------------------------------------------------------------------
-# Collapsible menu toggle button using our infrastructure
+# Control Center button with expandable menu for system controls and third-party app shortcuts
 # shellcheck disable=SC1091
 
-# --- Load Configuration Variables -------------------------------------------
+# --- Configuration ----------------------------------------------------------
 source "$HOME/.config/sketchybar/colors.sh"
 source "$HOME/.config/sketchybar/constants.sh"
 source "$HOME/.config/sketchybar/icons.sh"
 
-# --- Menu Controls Array (Must match controls.sh) -------------------------
+# --- Menu Controls Array ----------------------------------------------------
 menucontrols=(
     "Control__Center,Bluetooth"
     "Control__Center,AirDrop"
@@ -21,17 +21,17 @@ menucontrols=(
     "Control__Center,Screen__Mirroring"
     "Control__Center,Do__Not__Disturb"
     "CleanMyMac"
-    "1Password__7"
+    "1Password"
     "AlDente"
     "BetterMouse"
 )
 
-# --- Convert array to space-separated string for plugin --------------------
+# --- String Conversion ------------------------------------------------------
 controls_string=$(printf "%s " "${menucontrols[@]}")
 
-# --- Toggle Button Configuration -------------------------------------------
+# --- Button Configuration ---------------------------------------------------
 separator_config=(
-    icon="􀯶"
+    icon="$CONTROL_CENTER"
     icon.font="$TEXT_FONT:$MEDIUM_WEIGHT:$SIZE_LARGE"
     icon.color="$GREY"
     icon.padding_left="$PADDINGS_LARGE"
@@ -47,10 +47,10 @@ separator_config=(
     click_script="$HOME/.config/sketchybar/plugins/controls.sh \"$controls_string\""
 )
 
-# --- Create Toggle Button --------------------------------------------------
-sketchybar --add item more_menu right \
-    --set more_menu "${separator_config[@]}" \
-    --subscribe more_menu mouse.clicked mouse.entered mouse.exited
+# --- Item Creation ----------------------------------------------------------
+sketchybar --add item control_center right \
+    --set control_center "${separator_config[@]}" \
+    --subscribe control_center mouse.clicked mouse.entered mouse.exited
 
-# --- Create Custom Event ---------------------------------------------------
-sketchybar --add event more_menu_update
+# --- Event Creation ---------------------------------------------------------
+sketchybar --add event control_center_update

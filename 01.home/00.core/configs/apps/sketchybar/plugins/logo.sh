@@ -10,13 +10,13 @@
 
 set -euo pipefail
 
-# --- Load Configuration and Helpers -----------------------------------------
+# --- Configuration --------------------------------------------------------
 source "$HOME/.config/sketchybar/colors.sh"
 source "$HOME/.config/sketchybar/constants.sh"
 source "$HOME/.config/sketchybar/icons.sh"
 source "$HOME/.config/sketchybar/helpers/interaction-helpers.sh"
 
-# --- Logo State Management Functions (DEFINED BEFORE case statement) --------
+# --- State Management -----------------------------------------------------
 logo_menu_on() {
     # Hide spaces and front_app, show menu items
     for space in $(sketchybar --query spaces 2>/dev/null | jq -r '.bracket[]? // empty' 2>/dev/null); do
@@ -33,8 +33,8 @@ logo_menu_on() {
         icon="$APPLE" \
         icon.font="$SYMBOL_FONT:$BOLD_WEIGHT:17.0" \
         icon.y_offset=1 \
-        padding_right="$PADDINGS" \
-        padding_left="$PADDINGS"
+        padding_right="$PADDINGS_MEDIUM" \
+        padding_left="$PADDINGS_MEDIUM"
 
     # Update and show menu items
     update_menu_items
@@ -90,7 +90,7 @@ get_logo_state() {
     sketchybar --query logo 2>/dev/null | jq -r '.geometry.background.drawing // "off"' 2>/dev/null || echo "off"
 }
 
-# --- Logo and Menu Item Events ----------------------------------------------
+# --- Event Handler -------------------------------------------------------
 case "$NAME" in
     "logo")
         case "$SENDER" in

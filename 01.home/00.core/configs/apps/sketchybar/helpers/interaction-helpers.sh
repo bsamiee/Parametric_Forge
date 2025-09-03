@@ -5,12 +5,12 @@
 # License       : MIT
 # Path          : /01.home/00.core/configs/apps/sketchybar/helpers/interaction-helpers.sh
 # ----------------------------------------------------------------------------
-# Comprehensive interaction system for SketchyBar items
-# Consolidates: visual feedback, toggle logic, animations, state queries
+# Unified interaction system providing visual feedback, animations, state queries, and toggle logic
 # shellcheck disable=SC1091
 
 set -euo pipefail
 
+# --- Configuration ----------------------------------------------------------
 source "$HOME/.config/sketchybar/colors.sh"
 source "$HOME/.config/sketchybar/constants.sh"
 
@@ -52,7 +52,7 @@ apply_visual_state() {
     esac
 }
 
-# --- Handle Mouse Events ----------------------------------------------------
+# --- Mouse Events -----------------------------------------------------------
 handle_mouse_event() {
     local item_name="$1"
     local event="$2"
@@ -118,7 +118,7 @@ handle_special_hover_effects() {
     esac
 }
 
-# --- Animation Abstraction --------------------------------------------------
+# --- Animation Effects ------------------------------------------------------
 apply_smooth_animation() {
     local item_name="$1"
     local duration="${2:-15}"  # Default to 15, allow override
@@ -135,7 +135,6 @@ apply_instant_change() {
 
     sketchybar --set "$item_name" "${properties[@]}" 2>/dev/null || true
 }
-
 
 # --- State Query Helpers ----------------------------------------------------
 query_yabai() {
@@ -238,7 +237,7 @@ toggle_items_visibility() {
     done
 
     if [ "$state" = "on" ]; then
-        sketchybar --trigger more_menu_update 2>/dev/null || true
+        sketchybar --trigger control_center_update 2>/dev/null || true
     fi
 }
 

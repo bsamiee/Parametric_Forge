@@ -8,12 +8,12 @@
 # Apple logo with menu discovery and Mission Control integration
 # shellcheck disable=SC1091
 
-# --- Load Configuration Variables -------------------------------------------
+# --- Configuration ----------------------------------------------------------
 source "$HOME/.config/sketchybar/colors.sh"
 source "$HOME/.config/sketchybar/constants.sh"
 source "$HOME/.config/sketchybar/icons.sh"
 
-# --- Logo Configuration ----------------------------------------------------
+# --- Logo Configuration -----------------------------------------------------
 logo_config=(
     icon="$APPLE"
 
@@ -22,8 +22,8 @@ logo_config=(
 
     icon.font="$SYMBOL_FONT:$MEDIUM_WEIGHT:$SIZE_LARGE"
     icon.color="$WHITE"
-    icon.padding_left="$PADDINGS"
-    icon.padding_right="$PADDINGS"
+    icon.padding_left="$PADDINGS_MEDIUM"
+    icon.padding_right="$PADDINGS_MEDIUM"
 
     label.drawing=off
 
@@ -36,7 +36,7 @@ logo_config=(
     click_script="$HOME/.config/sketchybar/plugins/logo.sh"
 )
 
-# --- Create Logo Item -------------------------------------------------------
+# --- Item Creation ----------------------------------------------------------
 sketchybar --add item logo left \
     --set logo "${logo_config[@]}" \
     --subscribe logo front_app_switched mouse.clicked mouse.entered mouse.exited
