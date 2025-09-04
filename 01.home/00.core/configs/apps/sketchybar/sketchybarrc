@@ -88,6 +88,20 @@ add_separator "spaces_to_front_app" left "chevron_right"
 
 source "$ITEM_DIR/front_app.sh"
 
+# --- Window State Integration -----------------------------------------------
+# Lightweight window state monitoring (from yabai.sh functionality)
+sketchybar --add item window_state left \
+    --set window_state drawing=off \
+    script="$PLUGIN_DIR/window_state.sh" \
+    --subscribe window_state window_focus
+
+# --- Space Event Integration ------------------------------------------------
+# Direct space event handling (no routing through window logic)
+sketchybar --add item space_events left \
+    --set space_events drawing=off \
+    script="$ITEM_DIR/spaces.sh" \
+    --subscribe space_events windows_on_spaces space_change
+
 # --- Right Items -----------------------------------------------------------
 source "$ITEM_DIR/calendar.sh"
 # source "$ITEM_DIR/music.sh"

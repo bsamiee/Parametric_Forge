@@ -19,9 +19,9 @@ let
 
     # --- Helper Functions ----------------------------------------------------
     check_command() { command -v "$1" >/dev/null 2>&1; }
-    
+
     log_status() { echo "  [$1] $2"; }
-    
+
     indent_output() {
       while IFS= read -r line; do
         echo "    $line"
@@ -49,7 +49,7 @@ let
       for tool in clang git make ld; do
         check_command "$tool" || MISSING_TOOLS+=("$tool")
       done
-      
+
       if [[ ''${#MISSING_TOOLS[@]} -eq 0 ]]; then
         log_status "OK" "Core tools available"
       else
@@ -85,7 +85,7 @@ let
 
     # --- Store Statistics ---------------------------------------------------
     echo "→ Store statistics:"
-    
+
     STORE_SIZE=$(du -sh /nix/store 2>/dev/null | cut -f1 || echo "unknown")
     STORE_PATHS=$(find /nix/store -maxdepth 1 -type d 2>/dev/null | wc -l | tr -d ' ' || echo "0")
     GC_ROOTS=$(find /nix/var/nix/gcroots -type l 2>/dev/null | wc -l | tr -d ' ' || echo "0")
@@ -153,7 +153,7 @@ let
 
     # --- Log Rotation -------------------------------------------------------
     echo "→ Log rotation:"
-    
+
     LOG_COUNT=$(find /var/log -name "*.log" -mtime +60 2>/dev/null | wc -l | tr -d ' ')
     if [[ "$LOG_COUNT" -gt 0 ]]; then
       find /var/log -name "*.log" -mtime +60 -delete 2>/dev/null || true

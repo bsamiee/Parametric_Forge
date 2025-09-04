@@ -31,7 +31,8 @@ in
     };
     # --- Essential Taps -----------------------------------------------------
     taps = [
-      "FelixKratz/formulae"
+      "koekeishiya/formulae" # For yabai/skhd
+      "FelixKratz/formulae"  # For sketchybar/borders
     ];
     # --- GUI Applications (Casks) -------------------------------------------
     casks = [
@@ -117,7 +118,7 @@ in
 
       # Automation & Productivity
       "hammerspoon" # Lua-scriptable macOS automation and window management
-      
+
       # Battery Management
       "battery" # Battery management app with CLI (required for SketchyBar battery plugin)
     ];
@@ -134,10 +135,9 @@ in
 
       # System Monitoring
       "macmon" # macOS system monitoring tool (for SketchyBar plugins)
-      
+
       # Bluetooth Management
       "blueutil" # CLI for Bluetooth management (power, devices, pairing)
-      
 
       # UI Tools
       "koekeishiya/formulae/yabai"

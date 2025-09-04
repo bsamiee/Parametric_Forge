@@ -77,20 +77,6 @@
       ln -sf "${pkgs.libspatialite}/lib/mod_spatialite.dylib" "$HOME/.local/lib/mod_spatialite.dylib" 2>/dev/null || true
     '';
 
-    # --- Basic 1Password Directory Setup -----------------------------------
-    opDirectories = lib.hm.dag.entryAfter [ "sqliteExtensions" ] ''
-      echo "[1Password] Setting up directories and permissions..."
-
-      # Ensure SSH directory exists with proper permissions
-      mkdir -p ~/.ssh
-      chmod 700 ~/.ssh
-
-      # Ensure 1Password config directory exists
-      mkdir -p ~/.config/op
-
-      echo "  [OK] Basic 1Password directories created"
-    '';
-
   };
   # --- XDG Config Files -----------------------------------------------------
   xdg.configFile."op/env.template" = {

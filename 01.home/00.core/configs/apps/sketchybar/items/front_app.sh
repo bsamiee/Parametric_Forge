@@ -23,7 +23,7 @@ front_app_config=(
   background.corner_radius="$RADIUS_LARGE"
   background.padding_left="$PADDINGS_MEDIUM"
   background.padding_right="$PADDINGS_MEDIUM"
-  background.drawing=on
+  background.drawing=off
 
   icon.drawing=on
   icon.font="$SYMBOL_FONT:$MEDIUM_WEIGHT:$SIZE_MEDIUM"
@@ -39,8 +39,8 @@ front_app_config=(
   padding_left="$PADDINGS_SMALL"
   padding_right="$PADDINGS_MEDIUM"
 
-  script="$HOME/.config/sketchybar/plugins/front_app.sh"
-  click_script="yabai -m window --toggle float"
+  script="$HOME/.config/sketchybar/plugins/window_state.sh"
+  # click_script handled by plugin for integrated visual feedback
 
   associated_display=active
 )
@@ -48,4 +48,4 @@ front_app_config=(
 # --- Item Creation ----------------------------------------------------------
 sketchybar --add item front_app left \
   --set front_app "${front_app_config[@]}" \
-  --subscribe front_app system_woke front_app_switched window_focus mouse.entered mouse.exited mouse.exited.global mouse.clicked
+  --subscribe front_app window_focus mouse.entered mouse.exited mouse.exited.global mouse.clicked

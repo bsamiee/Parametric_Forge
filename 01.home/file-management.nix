@@ -115,14 +115,13 @@
     # --- TLDR Configuration -------------------------------------------------
     ".tldrrc".source = ./00.core/configs/system/tldr/.tldrrc;
     # --- Terminal Web Browser (w3m) -----------------------------------------
-    # w3m is not XDG-compliant and expects configs in ~/.w3m/
     ".w3m/config".source = ./00.core/configs/apps/w3m/config;
     ".w3m/keymap".source = ./00.core/configs/apps/w3m/keymap;
   }
   # --- Modular UI Configurations (deployDir) -------------------------------
-  // (myLib.build.deployDir ./00.core/configs/apps/sketchybar ".config/sketchybar")
+  // (myLib.build.deployDir ./00.core/configs/apps/sketchybar ".config/sketchybar") # THIS IS NOT COMMENTED OUT // IS MERGE IN NIX
   # --- Claude Code CLI Configuration ----------------------------------------
-  // (myLib.build.deployDir ./00.core/configs/apps/claude ".claude");
+  // (myLib.build.deployDir ./00.core/configs/apps/claude ".claude"); # THIS IS NOT COMMENTED OUT // IS MERGE IN NIX
 
   # --- Asset Bin Scripts (Added to PATH) ------------------------------------
   home.packages =

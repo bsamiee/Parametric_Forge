@@ -19,8 +19,8 @@
 # --- TIER 1: Daily Operations (80% usage - Simple & Memorable) -------------
 # Window focus with intuitive arrow keys - no app conflicts
 opt - left : [
-"WezTerm" ~ # Let WezTerm handle its own pane navigation
-"Code" ~    # Preserve VS Code navigation
+"WezTerm" ~
+"Code" ~
 "Visual Studio Code" ~
 "IntelliJ IDEA" ~
 "*" : yabai -m window --focus west
@@ -128,4 +128,3 @@ alt - tab : yabai -m space --focus recent || yabai -m space --focus first
 # Clean space management - signals trigger dynamic sketchybar space recreation
 cmd + alt - n : yabai -m space --create
 cmd + alt - d : yabai -m space --destroy
-

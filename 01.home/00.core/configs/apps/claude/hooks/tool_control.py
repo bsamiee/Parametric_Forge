@@ -26,13 +26,11 @@ import sys
 from functools import lru_cache
 from typing import Final, TypedDict
 
-
 class HookResponse(TypedDict, total=False):
     """Type definition for hook response structure."""
     decision: str
     reason: str
     modifications: dict[str, str]
-
 
 # --- Compiled Patterns -------------------------------------------------------
 _DANGEROUS_COMPILED = [
@@ -69,12 +67,10 @@ FILE_TOOLS = frozenset({
     "mcp__filesystem__edit_file", "mcp__filesystem__read_file", "mcp__filesystem__move_file"
 })
 
-
 # --- Cached Tool Availability ------------------------------------------------
 @lru_cache(maxsize=128)
 def _tool_exists(tool: str) -> bool:
     return bool(shutil.which(tool))
-
 
 # --- Response Helpers --------------------------------------------------------
 def _modify_response(tool: str, input_data: str, reason: str | None = None) -> None:
@@ -82,19 +78,15 @@ def _modify_response(tool: str, input_data: str, reason: str | None = None) -> N
     if reason:
         response["reason"] = reason
 
-
 def _block_response(reason: str) -> None:
     pass
-
 
 # --- Security & Modernization ------------------------------------------------
 def _check_patterns(command: str) -> str | None:
     return next((msg for pattern, msg in _DANGEROUS_COMPILED if pattern.search(command)), None)
 
-
 def _is_protected_file(file_path: str) -> bool:
     return bool(file_path and _PROTECTED_COMPILED.search(file_path))
-
 
 def _modernize_command(command: str) -> str | None:
     for old_cmd, new_cmd in COMMAND_REPLACEMENTS.items():
@@ -102,7 +94,6 @@ def _modernize_command(command: str) -> str | None:
             if (modernized := pattern.sub(new_cmd, command)) != command:
                 return modernized
     return None
-
 
 def main() -> int:
     """Main entry point for tool control hook."""

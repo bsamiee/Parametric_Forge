@@ -26,32 +26,11 @@
       '';
       deps = [ ];
     };
-    # --- Window Management Dependencies -------------------------------------
-    windowManagerSetup = {
-      text = ''
-        echo "[Parametric Forge] Ensuring window management dependencies..."
-        
-        export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
-        
-        # Install skhd if missing
-        if ! command -v skhd >/dev/null 2>&1; then
-          echo "  → Installing skhd..."
-          if command -v brew >/dev/null 2>&1; then
-            brew install koekeishiya/formulae/skhd
-            echo "  ✓ skhd installed"
-          else
-            echo "  ✗ Homebrew not available - manual install required"
-          fi
-        else
-          echo "  ✓ skhd found"
-        fi
-      '';
-      deps = [ "parametricForge" ];
-    };
+    # Window management dependencies handled by homebrew.nix - no activation scripts needed
     # --- System-Level Spotlight Protection ----------------------------------
     systemSpotlightProtection = {
       text = ''
-        # Simplified logging: 0=silent, 1=minimal, 2=verbose (default)  
+        # Simplified logging: 0=silent, 1=minimal, 2=verbose (default)
         LOG_LEVEL=''${PARAMETRIC_FORGE_LOG_LEVEL:-2}
 
         [ "$LOG_LEVEL" -ge 1 ] && echo "[Parametric Forge] Applying system-level Spotlight protection..."
@@ -80,79 +59,8 @@
       '';
       deps = [ "etc" ];
     };
-    # --- Nix Applications Integration ---------------------------------------
-    nixAppsIntegration = {
-      text = ''
-        echo "[Parametric Forge] Setting up Nix applications integration..."
-
-        APPS_DIR="/Applications/Nix Apps"
-        mkdir -p "$APPS_DIR"
-
-        # Clean up broken symlinks from previous generations
-        echo "  Cleaning broken symlinks..."
-        find "$APPS_DIR" -type l ! -exec test -e {} \; -delete 2>/dev/null || true
-
-        # Link applications from user profile
-        if [ -d "${context.userHome}/Applications" ]; then
-          echo "  Linking applications from user profile..."
-          for app in "${context.userHome}/Applications"/*.app;
-          do
-            if [ -e "$app" ]; then
-              app_name=$(basename "$app")
-              ln -sf "$app" "$APPS_DIR/$app_name"
-              echo "  [OK] Linked: $app_name"
-            fi
-          done
-        fi
-
-        # Link applications from system profile
-        if [ -d "/run/current-system/Applications" ]; then
-          echo "  Linking applications from system profile..."
-          for app in /run/current-system/Applications/*.app;
-          do
-            if [ -e "$app" ]; then
-              app_name=$(basename "$app")
-              if [ ! -e "$APPS_DIR/$app_name" ]; then
-                ln -sf "$app" "$APPS_DIR/$app_name"
-                echo "  [OK] Linked: $app_name"
-              fi
-            fi
-          done
-        fi
-
-        # Minimal LaunchServices refresh (only if changes detected)
-        if [ -n "$(find "$APPS_DIR" -newer "$APPS_DIR" -print -quit 2>/dev/null)" ]; then
-          echo "  Changes detected, refreshing LaunchServices for Nix apps..."
-          /System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister \
-            -f -R "$APPS_DIR" 2>/dev/null || true
-          echo "  [OK] LaunchServices updated for new apps only"
-        else
-          echo "  [OK] No app changes detected, skipping LaunchServices refresh"
-        fi
-      '';
-      deps = [
-        "etc"
-        "users"
-      ];
-    };
-    # --- Darwin XDG Runtime Directory ---------------------------------------
-    darwinRuntimeDirectory = {
-      text = ''
-        echo "[Parametric Forge] Ensuring XDG runtime directory exists..."
-
-        # Use macOS default temporary directory structure
-        RUNTIME_DIR=$(getconf DARWIN_USER_TEMP_DIR 2>/dev/null || echo "/tmp")
-
-        # Ensure runtime directory exists with proper permissions
-        if [ ! -d "$RUNTIME_DIR" ]; then
-          mkdir -pm 700 "$RUNTIME_DIR"
-          echo "  [OK] Created XDG runtime directory at $RUNTIME_DIR"
-        else
-          echo "  [OK] XDG runtime directory exists at $RUNTIME_DIR"
-        fi
-      '';
-      deps = [ "users" ];
-    };
+    # Nix app integration simplified - let nix-darwin handle app linking automatically
+    # XDG runtime handled by system defaults - no manual setup needed
     # --- Security Settings Optimization ------------------------------------
     securityOptimization = {
       text = ''
@@ -185,7 +93,7 @@
 
         echo "  [OK] Security optimization complete"
       '';
-      deps = [ "fileProviderOptimization" ];
+      deps = [ "systemSpotlightProtection" ];
     };
     # --- FileProvider Cache Management -------------------------------------
     fileProviderOptimization = {
@@ -198,7 +106,7 @@
 
         echo "  [INFO] FileProvider optimization complete"
       '';
-      deps = [ "systemSpotlightProtection" ];
+      deps = [ "etc" ];
     };
   };
   # --- Shell Initialization -------------------------------------------------
@@ -210,5 +118,4 @@
       eval "$(/usr/local/bin/brew shellenv)"
     fi
   '';
-  # --- Performance environment variables moved to 00.system/environment.nix
 }

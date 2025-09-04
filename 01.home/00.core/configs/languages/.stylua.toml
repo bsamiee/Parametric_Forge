@@ -6,7 +6,6 @@
 # ----------------------------------------------------------------------------
 
 # --- Core Formatting Configuration ------------------------------------------
-# Core formatting (unified 4-space indentation)
 indent_type = "Spaces"              # Use spaces instead of tabs
 indent_width = 4                    # 4-space indentation (unified project standard)
 column_width = 120                  # 120-char line width (matches project standard)

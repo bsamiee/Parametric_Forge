@@ -63,7 +63,7 @@
           # App ID mappings
           declare -A MAS_APPS=(
             ["Microsoft Excel"]="462058435"
-            ["Microsoft PowerPoint"]="462062816" 
+            ["Microsoft PowerPoint"]="462062816"
             ["Microsoft Word"]="462054704"
             ["OneDrive"]="823766827"
             ["Drafts"]="1435957248"
@@ -88,7 +88,7 @@
 
           for app_name in "''${!MAS_APPS[@]}"; do
             app_id="''${MAS_APPS[$app_name]}"
-            
+
             if echo "$INSTALLED_IDS" | grep -q "^$app_id$"; then
               if echo "$OUTDATED_IDS" | grep -q "^$app_id$"; then
                 echo "  [UPDATE] Updating: $app_name"
@@ -126,30 +126,31 @@
     # --- SketchyBar Dependencies Setup -------------------------------------
     sketchybarDependencies = lib.hm.dag.entryAfter [ "dutiFileAssociations" ] ''
       echo "[Parametric Forge] Setting up SketchyBar dependencies..."
-      
+
       # State file to track menubar binary installation
       MENUBAR_STATE="${config.xdg.stateHome}/sketchybar-menubar"
       MENUBAR_TARGET="${config.xdg.configHome}/sketchybar/menubar"
-      MENUBAR_SOURCE="/Users/bardiasamiee/Documents/99.Github/Parametric_Forge/01.home/00.core/configs/apps/sketchybar/menubar"
-      
+      MENUBAR_URL="https://raw.githubusercontent.com/Kcraft059/sketchybar-config/main/menubar"
+      MENUBAR_VERSION="kcraft059-latest"
+
       mkdir -p "$(dirname "$MENUBAR_STATE")" "$(dirname "$MENUBAR_TARGET")"
-      
+
       # Check if menubar binary needs installation/update
-      if [ -f "$MENUBAR_SOURCE" ]; then
-        SOURCE_HASH=$(shasum -a 256 "$MENUBAR_SOURCE" 2>/dev/null | cut -d' ' -f1)
-        INSTALLED_HASH=$(cat "$MENUBAR_STATE" 2>/dev/null || echo "")
-        
-        if [ "$SOURCE_HASH" != "$INSTALLED_HASH" ] || [ ! -f "$MENUBAR_TARGET" ]; then
-          echo "  → Installing menubar binary for menu discovery..."
-          cp "$MENUBAR_SOURCE" "$MENUBAR_TARGET"
+      INSTALLED_VERSION=$(cat "$MENUBAR_STATE" 2>/dev/null || echo "")
+
+      if [ "$MENUBAR_VERSION" != "$INSTALLED_VERSION" ] || [ ! -f "$MENUBAR_TARGET" ]; then
+        echo "  → Downloading menubar binary from Kcraft059 repository..."
+        if /usr/bin/curl -sL "$MENUBAR_URL" -o "$MENUBAR_TARGET.tmp"; then
+          mv "$MENUBAR_TARGET.tmp" "$MENUBAR_TARGET"
           chmod +x "$MENUBAR_TARGET"
-          echo "$SOURCE_HASH" > "$MENUBAR_STATE"
+          echo "$MENUBAR_VERSION" > "$MENUBAR_STATE"
           echo "  [OK] menubar binary installed"
         else
-          echo "  [OK] menubar binary up to date"
+          echo "  [WARN] Failed to download menubar binary"
+          rm -f "$MENUBAR_TARGET.tmp"
         fi
       else
-        echo "  [WARN] menubar binary source not found"
+        echo "  [OK] menubar binary up to date"
       fi
     '';
 
@@ -170,12 +171,12 @@
 
         if [ -d "$dir" ]; then
           local dir_mtime=$(stat -f "%m" "$dir" 2>/dev/null || echo "0")
-          
+
           # Check if already protected and unchanged
           if grep -q "^$dir:$dir_mtime$" "$PROTECTED_STATE" 2>/dev/null; then
             return 0  # Skip already protected directories
           fi
-          
+
           # Layer 1: Modern Spotlight exclusion (macOS 10.4+)
           touch "$dir/.metadata_never_index" 2>/dev/null || true
           # Layer 2: Legacy Spotlight exclusion (backward compatibility)
@@ -184,7 +185,7 @@
           touch "$dir/.nosync" 2>/dev/null || true
 
           echo "  [OK] Protected: $name"
-          
+
           # Mark as protected
           echo "$dir:$dir_mtime" >> "$PROTECTED_STATE"
           return 0
@@ -216,8 +217,6 @@
         "$HOME/Library/Fonts"
         "$HOME/Documents/99.Github"
         "$HOME/.venv"
-        "$HOME/illustrator-mcp-tmp"
-        "$HOME/ladybug_tools"
       )
 
       # Cloud sync directories (prevent cascade at source)
@@ -273,7 +272,7 @@
       echo "  [SUMMARY] Protection deployed:"
       echo "    • Application Support directories: $APP_SUPPORT_PROTECTED"
       echo "    • Development caches: $DEV_PROTECTED"
-      echo "    • Cloud sync folders: $CLOUD_PROTECTED"  
+      echo "    • Cloud sync folders: $CLOUD_PROTECTED"
       echo "    • Python caches: $PYTHON_CACHE_COUNT"
       echo "    • Node modules: $NODE_MODULES_COUNT"
       echo "    • Git repositories: $GIT_COUNT"

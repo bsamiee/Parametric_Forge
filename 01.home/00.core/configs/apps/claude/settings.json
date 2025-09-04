@@ -1,6 +1,9 @@
 {
   "permissions": {
     "allow": [
+      "Read(/private/tmp/**)",
+      "Read(//Users/bardiasamiee/.claude/**)",
+      "Bash(brew:*)",
       "Bash(claude mcp:*)",
       "Bash(sqlite3:*)",
       "Bash(grep:*)",
@@ -10,6 +13,7 @@
       "mcp__rhino__execute_rhinoscript_python_code",
       "mcp__rhino__get_object_info",
       "mcp__rhino__get_document_info",
+      "mcp__perplexity__perplexity_ask",
       "mcp__perplexity-ask__perplexity_ask",
       "mcp__tavily__tavily-search",
       "mcp__tavily__tavily-crawl",
@@ -19,6 +23,7 @@
       "mcp__github__search_code",
       "mcp__github__search_repositories",
       "mcp__github__get_issue",
+      "mcp__github__list_issues",
       "mcp__github__search_issues",
       "mcp__context7__resolve-library-id",
       "mcp__context7__get-library-docs",
@@ -29,6 +34,7 @@
       "mcp__filesystem__directory_tree",
       "mcp__filesystem__search_files",
       "mcp__filesystem__list_directory",
+      "mcp__filesystem__list_directory_with_sizes",
       "mcp__filesystem__list_allowed_directories"
     ],
     "deny": [

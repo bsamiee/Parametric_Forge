@@ -117,13 +117,13 @@ yabai -m signal --add event=window_created action="
   is_floating=\$(echo \"\$info\" | jq -r '.\"is-floating\"')
   can_resize=\$(echo \"\$info\" | jq -r '.\"can-resize\"')
   can_move=\$(echo \"\$info\" | jq -r '.\"can-move\"')
-  
+
   # Trust yabai's default management decision
   [ \"\$is_floating\" = 'false' ] && exit 0
-  
+
   # Skip windows with normal interaction capabilities
   [ \"\$can_resize\" = 'true' ] && [ \"\$can_move\" = 'true' ] && exit 0
-  
+
   # Float truly non-interactive windows only
   [ \"\$can_resize\" = 'false' ] && [ \"\$can_move\" = 'false' ] && yabai -m window \$YABAI_WINDOW_ID --toggle float
 "
@@ -254,7 +254,6 @@ yabai -m rule --add role="^AXWindow$" subrole="^AXUnknown$" manage=off sub-layer
 yabai -m rule --add title="(Preferences|Settings|Options|Configuration|About|Library|Queue)" manage=off sub-layer=below
 yabai -m rule --add title="^(General|(Tab|Password|Website|Extension)s|AutoFill|Se(arch|curity)|Privacy|Advance)$" manage=off sub-layer=below
 
-
 # --- Apply Rules to Existing Windows ----------------------------------------
 # CRITICAL: Rules only apply at window creation time. Force application to existing windows.
 yabai -m rule --apply
@@ -269,12 +268,17 @@ if yabai -m query --windows >/dev/null 2>&1; then
     pgrep -x skhd >/dev/null && echo "yabai: ✓ skhd active" || echo "yabai: ! skhd missing" >&2
     pgrep -f borders >/dev/null && echo "yabai: ✓ JankyBorders active" || echo "yabai: ! JankyBorders missing" >&2
 
-    if [ "${SKETCHYBAR_READY:-false}" = true ]; then
-      sketchybar --trigger yabai_ready 2>/dev/null || true
+    # Critical: Force initial SketchyBar sync after all services are ready
+    sleep 1.0
+    if pgrep -x sketchybar >/dev/null; then
+      sketchybar --trigger space_change 2>/dev/null || true
+      sketchybar --trigger windows_on_spaces 2>/dev/null || true 
+      sketchybar --trigger window_focus 2>/dev/null || true
+      echo "yabai: ✓ SketchyBar events synchronized"
     fi
-    sleep 1.0 && yabai -m config window_opacity_duration 0.25
+
+    yabai -m config window_opacity_duration 0.25
     echo "yabai: ✓ System ready"
 else
     echo "yabai: ! Configuration validation failed" >&2
 fi
-

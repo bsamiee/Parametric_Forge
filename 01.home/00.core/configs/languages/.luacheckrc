@@ -6,7 +6,7 @@
 -- ----------------------------------------------------------------------------
 -- Global luacheck configuration for consistent Lua code quality
 
--- Standard library globals - "lua54" for Lua 5.4 environment  
+-- Standard library globals - "lua54" for Lua 5.4 environment
 std = "lua54"
 
 -- Performance optimization
@@ -48,7 +48,7 @@ files = {
     globals = {
       "ya", "Command", "Child", "cx", "ui", "Status", "Linemode",
       -- Custom functions defined in init.lua
-      "smart_open", "smart_paste", "bookmark_jump", "cd_git_root", 
+      "smart_open", "smart_paste", "bookmark_jump", "cd_git_root",
       "create_archive", "setup_large_dir_handling", "safe_remove",
       "safe_bulk_rename", "sync_session", "enhanced_search", "quick_diff",
       "lazy_git_integration", "smart_sudo_operations", "ecosystem_cd",
@@ -56,7 +56,7 @@ files = {
     },
   },
 
-  -- SketchyBar configuration  
+  -- SketchyBar configuration
   ["**/sketchybar/**/*.lua"] = {
     globals = {
       "sbar",
@@ -75,7 +75,7 @@ files = {
   -- Test files (Busted framework)
   ["**/spec/**/*.lua"] = {
     globals = {
-      "describe", "it", "before_each", "after_each", "setup", 
+      "describe", "it", "before_each", "after_each", "setup",
       "teardown", "pending", "finally",
     },
   },
@@ -83,7 +83,7 @@ files = {
   ["**/test/**/*.lua"] = {
     globals = {
       "describe", "it", "before_each", "after_each", "setup",
-      "teardown", "pending", "finally", 
+      "teardown", "pending", "finally",
     },
   },
 }

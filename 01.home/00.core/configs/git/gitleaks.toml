@@ -6,7 +6,7 @@
 # ----------------------------------------------------------------------------
 # Gitleaks configuration extending defaults with Parametric Forge customizations
 
-title = "Parametric Forge Gitleaks Configuration"
+title = "Standard Gitleaks Configuration"
 
 [extend]
 # Use all default detection rules (3000+ lines of patterns)
@@ -16,7 +16,7 @@ useDefault = true
 # disabledRules = ["generic-api-key"]
 
 [[allowlists]]
-description = "Parametric Forge global exclusions"
+description = "Standard global exclusions"
 paths = [
   '''\.git/''',
   '''node_modules/''',
@@ -47,10 +47,3 @@ paths = [
   '''uv\.lock$''',
   '''poetry\.lock$''',
 ]
-
-# Custom rules for Parametric Forge-specific patterns can be added here
-# [[rules]]
-# id = "forge-secret-key"
-# description = "Parametric Forge secret key pattern"
-# regex = '''(?i)forge[_-]?secret[\s]*[:=][\s]*['"]?([a-zA-Z0-9]{32,})['"]?'''
-# keywords = ["forge", "secret"]

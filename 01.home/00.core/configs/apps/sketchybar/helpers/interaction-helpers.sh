@@ -183,7 +183,7 @@ check_window_state() {
             [[ "$window_value" == "true" ]]
             ;;
         "fullscreen")
-            window_value=$(query_yabai "windows" "has-fullscreen-zoom") 
+            window_value=$(query_yabai "windows" "has-fullscreen-zoom")
             [[ "$window_value" == "true" ]]
             ;;
         "parent_zoom")

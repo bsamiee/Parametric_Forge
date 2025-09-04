@@ -29,4 +29,3 @@ PRAGMA mmap_size = 268435456;
 .mode column
 .headers on
 .nullvalue NULL
-
