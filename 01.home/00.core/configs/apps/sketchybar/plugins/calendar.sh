@@ -5,69 +5,73 @@
 # License       : MIT
 # Path          : /01.home/00.core/configs/apps/sketchybar/plugins/calendar.sh
 # ----------------------------------------------------------------------------
-# Enhanced calendar script with precise timing and right-click seconds display
+# Simple toggle calendar: right-click switches between normal/seconds mode
 # shellcheck disable=SC1091
 
 # --- Configuration ----------------------------------------------------------
 source "$HOME/.config/sketchybar/colors.sh"
 source "$HOME/.config/sketchybar/helpers/interaction-helpers.sh"
 
-# --- Synchronization --------------------------------------------------------
-sync_to_minute_boundary() {
-    local current_seconds
-    current_seconds=$(date '+%S')
-    if [ "$current_seconds" -ne 0 ]; then
-        sleep $((60 - current_seconds))
-        while [[ $(date '+%S') != "00" ]]; do
-            sleep 0.1
-        done
+# Simple state file - just stores "seconds" or "normal"
+STATE_FILE="/tmp/sketchybar_calendar_mode"
+
+# --- State Management -------------------------------------------------------
+get_mode() {
+    if [ -f "$STATE_FILE" ]; then
+        cat "$STATE_FILE"
+    else
+        echo "normal"
     fi
 }
 
-# --- Seconds Display --------------------------------------------------------
-show_seconds_temporarily() {
-    # Show seconds for 5 seconds on right-click
-    for ((i = 0; i <= 4; ++i)); do
-        sketchybar --set "$NAME" \
-            label="$(date '+%a %b %-d %H:%M:%S')" \
-            label.color="$PRIMARY_CYAN" \
-            background.color="$FAINT_DARK_GREY" \
-            background.drawing=on
-        sleep 1
-    done
-
-    # Return to normal display
-    sketchybar --set "$NAME" \
-        label="$(date '+%a %b %-d %H:%M')" \
-        label.color="$WHITE" \
-        background.color="$TRANSPARENT" \
-        background.drawing=off
+toggle_mode() {
+    current=$(get_mode)
+    if [ "$current" = "seconds" ]; then
+        echo "normal" > "$STATE_FILE"
+    else
+        echo "seconds" > "$STATE_FILE"
+    fi
 }
 
-# --- Mouse Events -----------------------------------------------------------
+# --- Display Update ---------------------------------------------------------
+update_display() {
+    local mode="$1"
+
+    case "$mode" in
+        "seconds")
+            sketchybar --set "$NAME" label="$(date '+%a %b %-d %H:%M:%S')"
+            ;;
+        "normal"|*)
+            sketchybar --set "$NAME" label="$(date '+%a %b %-d %H:%M')"
+            ;;
+    esac
+}
+
+# --- Event Handling ---------------------------------------------------------
 case "$SENDER" in
     "mouse.entered"|"mouse.exited")
-        # Use unified visual feedback system
+        # Standard hover behavior
         handle_mouse_event "$NAME" "$SENDER"
         ;;
     "mouse.clicked")
         if [ "$BUTTON" = "right" ]; then
-            # Right-click: Show seconds temporarily
-            show_seconds_temporarily &
+            # Right-click: Toggle mode
+            toggle_mode
+            current_mode=$(get_mode)
+            update_display "$current_mode"
+        elif [ "$BUTTON" = "middle" ]; then
+            # Middle-click: Open system calendar widget
+            osascript -e 'tell application "System Events" to click menu bar item 1 of menu bar 1 of application process "ControlCenter"' &
+            handle_mouse_event "$NAME" "$SENDER"
         else
-            # Left-click: Open Notification Center first, then visual feedback
-            open -b com.apple.notificationcenterui &
+            # Left-click: Open Notification Center
+            osascript -e 'tell application "System Events" to click menu bar item "NotificationCenter" of menu bar 1 of application process "ControlCenter"' &
             handle_mouse_event "$NAME" "$SENDER"
         fi
         ;;
-    "routine")
-        # Routine update with precise timing
-        sync_to_minute_boundary
-        ;;
     *)
-        # Startup or other events - update immediately without sync delay
+        # Regular update - just display current mode
+        current_mode=$(get_mode)
+        update_display "$current_mode"
         ;;
 esac
-
-# --- Display Update ---------------------------------------------------------
-sketchybar --set "$NAME" label="$(date '+%a %b %-d %H:%M')"

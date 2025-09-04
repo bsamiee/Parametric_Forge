@@ -33,15 +33,14 @@ else
   SKETCHYBAR_READY=false
 fi
 
-# Start skhd with proper path detection
+# Check skhd status (managed independently via launchd)
 if command -v skhd >/dev/null 2>&1; then
-  skhd &
-  SKHD_PID=$!
-  sleep 0.3
   if pgrep -x skhd >/dev/null; then
-    echo "yabai: ✓ skhd ready (PID: $SKHD_PID)"
+    SKHD_PID=$(pgrep -x skhd)
+    echo "yabai: ✓ skhd already running (PID: $SKHD_PID)"
   else
-    echo "yabai: ! skhd failed to start" >&2
+    echo "yabai: ○ skhd not running - should be managed by launchd service" >&2
+    SKHD_PID="none"
   fi
 else
   echo "yabai: ! skhd not found in PATH" >&2
@@ -112,10 +111,22 @@ else
 fi
 
 # --- Smart Window Management Signals ----------------------------------------
-# Universal non-resizable window detection - handles all apps automatically (with proper escaping)
-yabai -m signal --add event=window_created action="yabai -m query --windows --window \$YABAI_WINDOW_ID | jq -e '.\"can-resize\" == false' >/dev/null && yabai -m window \$YABAI_WINDOW_ID --toggle float"
-# Application launch events - proper query syntax with PID filtering
-yabai -m signal --add event=application_launched action="sleep 0.5; yabai -m query --windows | jq -r '.[] | select(.pid == '\$YABAI_PROCESS_ID' and (.\"can-resize\" == false or .\"is-floating\" == false)) | .id' | while read -r window_id; do [ -n \"\$window_id\" ] && yabai -m window \"\$window_id\" --toggle float 2>/dev/null || true; done"
+# Filter approach: Only float genuinely non-interactive windows
+yabai -m signal --add event=window_created action="
+  info=\$(yabai -m query --windows --window \$YABAI_WINDOW_ID)
+  is_floating=\$(echo \"\$info\" | jq -r '.\"is-floating\"')
+  can_resize=\$(echo \"\$info\" | jq -r '.\"can-resize\"')
+  can_move=\$(echo \"\$info\" | jq -r '.\"can-move\"')
+  
+  # Trust yabai's default management decision
+  [ \"\$is_floating\" = 'false' ] && exit 0
+  
+  # Skip windows with normal interaction capabilities
+  [ \"\$can_resize\" = 'true' ] && [ \"\$can_move\" = 'true' ] && exit 0
+  
+  # Float truly non-interactive windows only
+  [ \"\$can_resize\" = 'false' ] && [ \"\$can_move\" = 'false' ] && yabai -m window \$YABAI_WINDOW_ID --toggle float
+"
 
 # --- Core Configuration -----------------------------------------------------
 yabai -m config debug_output on

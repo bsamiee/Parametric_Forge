@@ -17,7 +17,7 @@ source "$HOME/.config/sketchybar/helpers/interaction-helpers.sh"
 
 # --- Battery Data Collection ------------------------------------------------
 get_battery_percentage() {
-    pmset -g batt | grep -Eo "\d+%" | cut -d% -f1 || echo "0"
+    pmset -g batt | grep -Eo "[0-9]+%" | cut -d% -f1 || echo "0"
 }
 
 get_charging_status() {
@@ -242,7 +242,14 @@ handle_click() {
     
     case "$event" in
         "mouse.clicked")
-            sketchybar --set battery popup.drawing=toggle
+            # Toggle popup visibility
+            local current_state
+            current_state=$(sketchybar --query battery | jq -r '.popup.drawing // "off"')
+            if [[ "$current_state" == "on" ]]; then
+                sketchybar --set battery popup.drawing=off
+            else
+                sketchybar --set battery popup.drawing=on
+            fi
             ;;
         "mouse.entered")
             apply_visual_state "$NAME" "hover"

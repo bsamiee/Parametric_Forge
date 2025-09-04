@@ -15,11 +15,11 @@ source "$HOME/.config/sketchybar/constants.sh"
 # --- Calendar Configuration -------------------------------------------------
 calendar_config=(
   position=right
-  update_freq=60
+  update_freq=1
 
   icon.drawing=off
 
-  label.font="$TEXT_FONT:$REGULAR_WEIGHT:$SIZE_LARGE"
+  label.font="$TEXT_FONT:$LIGHT_WEIGHT:$SIZE_MEDIUM"
   label.color="$WHITE"
   label.padding_left="$PADDINGS_LARGE"
   label.padding_right="$PADDINGS_LARGE"

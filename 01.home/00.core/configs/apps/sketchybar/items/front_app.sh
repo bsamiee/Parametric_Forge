@@ -16,17 +16,25 @@ source "$HOME/.config/sketchybar/constants.sh"
 front_app_config=(
   position=left
 
-  background.color="$FAINT_DARK_GREY"
+  background.color="$TRANSPARENT"
+  background.border_color="$LIGHT_WHITE"
+  background.border_width="$BORDER_THIN"
   background.height="$HEIGHT_ITEM"
   background.corner_radius="$RADIUS_LARGE"
+  background.padding_left="$PADDINGS_MEDIUM"
+  background.padding_right="$PADDINGS_MEDIUM"
   background.drawing=on
 
-  icon.drawing=off
+  icon.drawing=on
+  icon.font="$SYMBOL_FONT:$MEDIUM_WEIGHT:$SIZE_MEDIUM"
+  icon.color="$ORANGE"
+  icon.padding_left="$PADDINGS_MEDIUM"
+  icon.padding_right="$PADDINGS_MEDIUM"
 
   label.color="$WHITE"
-  label.font="$TEXT_FONT:$MEDIUM_WEIGHT:$SIZE_SMALL"
+  label.font="$TEXT_FONT:$MEDIUM_WEIGHT:$SIZE_MEDIUM"
   label.padding_left="$PADDINGS_SMALL"
-  label.padding_right="$PADDINGS_MEDIUM"
+  label.padding_right="$PADDINGS_LARGE"
 
   padding_left="$PADDINGS_SMALL"
   padding_right="$PADDINGS_MEDIUM"
@@ -40,4 +48,4 @@ front_app_config=(
 # --- Item Creation ----------------------------------------------------------
 sketchybar --add item front_app left \
   --set front_app "${front_app_config[@]}" \
-  --subscribe front_app system_woke front_app_switched window_focus mouse.entered mouse.exited mouse.clicked
+  --subscribe front_app system_woke front_app_switched window_focus mouse.entered mouse.exited mouse.exited.global mouse.clicked

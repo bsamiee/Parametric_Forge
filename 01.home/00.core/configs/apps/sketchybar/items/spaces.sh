@@ -99,7 +99,7 @@ spaces_bracket=(
   background.border_width="$BORDER_THIN"
   background.corner_radius="$RADIUS_LARGE"
   background.height="$HEIGHT_ITEM"
-  background.padding_left="$PADDINGS_MEDIUM"
+  background.padding_left="$PADDINGS_LARGE"
   background.padding_right="$PADDINGS_MEDIUM"
   background.drawing=on
 )
@@ -124,6 +124,7 @@ fi
 if [ ${#positioning_args[@]} -gt 0 ]; then
   sketchybar "${positioning_args[@]}" 2>/dev/null || true
 fi
+
 
 # --- Updates ----------------------------------------------------------------
 sketchybar --trigger windows_on_spaces

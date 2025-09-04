@@ -123,8 +123,38 @@
       fi
     '';
 
+    # --- SketchyBar Dependencies Setup -------------------------------------
+    sketchybarDependencies = lib.hm.dag.entryAfter [ "dutiFileAssociations" ] ''
+      echo "[Parametric Forge] Setting up SketchyBar dependencies..."
+      
+      # State file to track menubar binary installation
+      MENUBAR_STATE="${config.xdg.stateHome}/sketchybar-menubar"
+      MENUBAR_TARGET="${config.xdg.configHome}/sketchybar/menubar"
+      MENUBAR_SOURCE="/Users/bardiasamiee/Documents/99.Github/Parametric_Forge/01.home/00.core/configs/apps/sketchybar/menubar"
+      
+      mkdir -p "$(dirname "$MENUBAR_STATE")" "$(dirname "$MENUBAR_TARGET")"
+      
+      # Check if menubar binary needs installation/update
+      if [ -f "$MENUBAR_SOURCE" ]; then
+        SOURCE_HASH=$(shasum -a 256 "$MENUBAR_SOURCE" 2>/dev/null | cut -d' ' -f1)
+        INSTALLED_HASH=$(cat "$MENUBAR_STATE" 2>/dev/null || echo "")
+        
+        if [ "$SOURCE_HASH" != "$INSTALLED_HASH" ] || [ ! -f "$MENUBAR_TARGET" ]; then
+          echo "  → Installing menubar binary for menu discovery..."
+          cp "$MENUBAR_SOURCE" "$MENUBAR_TARGET"
+          chmod +x "$MENUBAR_TARGET"
+          echo "$SOURCE_HASH" > "$MENUBAR_STATE"
+          echo "  [OK] menubar binary installed"
+        else
+          echo "  [OK] menubar binary up to date"
+        fi
+      else
+        echo "  [WARN] menubar binary source not found"
+      fi
+    '';
+
     # --- Comprehensive User-Level Spotlight Protection ---------------------
-    spotlightShield = lib.hm.dag.entryAfter [ "smartMasInstall" ] ''
+    spotlightShield = lib.hm.dag.entryAfter [ "sketchybarDependencies" ] ''
       export PATH="/usr/bin:/bin:/usr/sbin:/sbin:$PATH"
 
       echo "[Parametric Forge] Deploying comprehensive user-level Spotlight protection..."

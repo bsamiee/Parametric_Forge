@@ -10,6 +10,7 @@
 
 # --- Configuration --------------------------------------------------------
 source "$HOME/.config/sketchybar/colors.sh"
+source "$HOME/.config/sketchybar/icons.sh"
 source "$HOME/.config/sketchybar/helpers/interaction-helpers.sh"
 
 # --- Application Detection -----------------------------------------------
@@ -34,12 +35,18 @@ get_current_app() {
 
 # --- Display Update -------------------------------------------------------
 update_front_app() {
-    local app_name
+    local app_name window_info is_floating
 
     app_name=$(get_current_app)
+    window_info=$(yabai -m query --windows --window 2>/dev/null || echo '{}')
+    is_floating=$(echo "$window_info" | jq -r '.["is-floating"] // false')
 
-    # Update the item display (text-only)
-    sketchybar --set "$NAME" label="$app_name" 2>/dev/null || true
+    # Set ONLY content (icon, label) - let interaction-helpers handle visual feedback
+    if [ "$is_floating" = "true" ]; then
+        sketchybar --set "$NAME" icon="$YABAI_FLOAT" icon.color="$PURPLE" label="$app_name"
+    else
+        sketchybar --set "$NAME" icon="$YABAI_GRID" icon.color="$ORANGE" label="$app_name"
+    fi
 }
 
 # --- Click Handler --------------------------------------------------------

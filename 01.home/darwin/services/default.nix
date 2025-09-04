@@ -19,8 +19,7 @@
 
   # --- Import User Service Modules ------------------------------------------
   imports = [
-    ./home-maintenance-daemon.nix
+    ./maintenance-daemons.nix
     ./op-daemons.nix
-    ./npm-check-daemon.nix
   ];
 }

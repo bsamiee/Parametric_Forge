@@ -16,6 +16,19 @@ source "$HOME/.config/sketchybar/constants.sh"
 source "$HOME/.config/sketchybar/icons.sh"
 source "$HOME/.config/sketchybar/helpers/interaction-helpers.sh"
 
+# Validate essential constants are loaded
+if [[ -z "${WHITE:-}" ]] || [[ -z "${GREEN:-}" ]]; then
+    echo "ERROR: Colors not loaded properly in logo plugin context" >&2
+    exit 1
+fi
+
+# Set up menubar command (use local binary if available)
+MENUBAR_CMD="$HOME/.config/sketchybar/menubar"
+if [[ ! -x "$MENUBAR_CMD" ]]; then
+    echo "ERROR: menubar binary not found at $MENUBAR_CMD" >&2
+    exit 1
+fi
+
 # --- State Management -----------------------------------------------------
 logo_menu_on() {
     # Hide spaces and front_app, show menu items
@@ -33,8 +46,8 @@ logo_menu_on() {
         icon="$APPLE" \
         icon.font="$SYMBOL_FONT:$BOLD_WEIGHT:17.0" \
         icon.y_offset=1 \
-        padding_right="$PADDINGS_MEDIUM" \
-        padding_left="$PADDINGS_MEDIUM"
+        padding_right="$PADDINGS_LARGE" \
+        padding_left="$PADDINGS_LARGE"
 
     # Update and show menu items
     update_menu_items
@@ -60,7 +73,7 @@ logo_menu_off() {
         icon.font="$SYMBOL_FONT:$MEDIUM_WEIGHT:$SIZE_LARGE" \
         icon.y_offset=0 \
         padding_right="$PADDINGS_LARGE" \
-        padding_left="$PADDINGS_XXLARGE"
+        padding_left="$PADDINGS_LARGE"
 
     # Hide all menu items
     for ((i = 1; i <= 14; ++i)); do
@@ -77,7 +90,7 @@ update_menu_items() {
             sketchybar --set "menu.$mid" icon="$menu" drawing=on 2>/dev/null || true
         fi
         ((mid++))
-    done < <(menubar -l 2>/dev/null || true)
+    done < <("$MENUBAR_CMD" -l 2>/dev/null || true)
 
     # Hide remaining unused menu items
     while [[ $mid -le 14 ]]; do
@@ -99,14 +112,14 @@ case "$NAME" in
 
                 state=$(get_logo_state)
 
-                if [[ "$BUTTON" == "right" ]]; then
+                if [[ "${BUTTON:-}" == "right" ]]; then
                     # Right click: Toggle menu
                     if [[ "$state" == "off" ]]; then
                         logo_menu_on
                     else
                         logo_menu_off
                     fi
-                elif [[ "$MODIFIER" == "shift" ]]; then
+                elif [[ "${MODIFIER:-}" == "shift" ]]; then
                     # Shift+click: Reload SketchyBar
                     sketchybar --reload
                 else

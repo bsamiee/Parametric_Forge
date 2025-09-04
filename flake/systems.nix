@@ -79,7 +79,14 @@ in
   flake = {
     # --- Darwin Configurations ----------------------------------------------
     darwinConfigurations = {
+      # Primary stable configuration - hostname independent
       default = mkSystem {
+        system = "aarch64-darwin";
+        user = "bardiasamiee";
+      };
+      
+      # Architecture-specific aliases for explicit targeting
+      aarch64 = mkSystem {
         system = "aarch64-darwin";
         user = "bardiasamiee";
       };
@@ -87,8 +94,13 @@ in
         system = "x86_64-darwin";
         user = "bardiasamiee";
       };
-      # TODO: Remove hostname-specific config once host-file-less deployment working
+      
+      # Legacy hostname fallbacks - will be removed in future versions
       MacBook-Pro-412 = mkSystem {
+        system = "aarch64-darwin";
+        user = "bardiasamiee";
+      };
+      MacBook-Pro-486 = mkSystem {
         system = "aarch64-darwin";
         user = "bardiasamiee";
       };

@@ -17,7 +17,7 @@ source "$HOME/.config/sketchybar/icons.sh"
 logo_config=(
     icon="$APPLE"
 
-    padding_left="$PADDINGS_XXLARGE"
+    padding_left="$PADDINGS_LARGE"
     padding_right="$PADDINGS_LARGE"
 
     icon.font="$SYMBOL_FONT:$MEDIUM_WEIGHT:$SIZE_LARGE"

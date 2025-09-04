@@ -66,7 +66,9 @@
       "Read(/Users/bardiasamiee/Library/LaunchAgents/**)",
       "WebFetch(domain:www.hammerspoon.org)",
       "Bash(system_profiler SPAirPortDataType)",
-      "mcp__github__list_issues"
+      "mcp__github__list_issues",
+      "Read(//private/tmp/**)",
+      "Bash(cat:*)"
     ],
     "deny": [
       "WebSearch",

@@ -26,6 +26,7 @@ export SHADOW_ANGLE=30
 export BLUR_RADIUS_STANDARD=20
 
 # --- Border Width System ----------------------------------------------------
+export BORDER_NONE=0
 export BORDER_THIN=1
 export BORDER_MEDIUM=2
 export BORDER_THICK=3

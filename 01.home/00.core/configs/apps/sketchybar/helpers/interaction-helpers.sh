@@ -15,12 +15,14 @@ source "$HOME/.config/sketchybar/colors.sh"
 source "$HOME/.config/sketchybar/constants.sh"
 
 # --- Feedback States --------------------------------------------------------
-FEEDBACK_HOVER_BG="$LIGHT_DARK_GREY"
+FEEDBACK_HOVER_BG="$LIGHT_BLACK"
 FEEDBACK_HOVER_LABEL="$PRIMARY_CYAN"
-FEEDBACK_CLICK_BG="$PRIMARY_PURPLE"
-FEEDBACK_CLICK_LABEL="$PRIMARY_BLACK"
+FEEDBACK_HOVER_BORDER="$PRIMARY_ORANGE"
+FEEDBACK_CLICK_BG="$LIGHT_PURPLE"
+FEEDBACK_CLICK_LABEL="$PRIMARY_CYAN"
 FEEDBACK_DEFAULT_BG="$TRANSPARENT"
 FEEDBACK_DEFAULT_LABEL="$WHITE"
+FEEDBACK_DEFAULT_BORDER="$TRANSPARENT"
 
 # --- Apply Visual State -----------------------------------------------------
 apply_visual_state() {
@@ -31,21 +33,31 @@ apply_visual_state() {
         "hover")
             sketchybar --set "$item_name" \
                 background.color="$FEEDBACK_HOVER_BG" \
+                background.border_color="$FEEDBACK_HOVER_BORDER" \
+                background.border_width="$BORDER_THIN" \
+                background.border_radius="$RADIUS_LARGE" \
                 label.color="$FEEDBACK_HOVER_LABEL" \
                 background.drawing=on
             ;;
         "click")
+            # Brief visual flash without blocking
             sketchybar --set "$item_name" \
                 background.color="$FEEDBACK_CLICK_BG" \
                 label.color="$FEEDBACK_CLICK_LABEL" \
                 background.drawing=on
-            # Brief flash effect
-            sleep 0.1
-            apply_visual_state "$item_name" "default"
+            # Non-blocking reset using animation
+            sketchybar --animate sin 5 --set "$item_name" \
+                background.color="$FEEDBACK_DEFAULT_BG" \
+                background.border_color="$FEEDBACK_DEFAULT_BORDER" \
+                background.border_width="$BORDER_NONE" \
+                label.color="$FEEDBACK_DEFAULT_LABEL" \
+                background.drawing=off 2>/dev/null || true
             ;;
         "default"|*)
             sketchybar --set "$item_name" \
                 background.color="$FEEDBACK_DEFAULT_BG" \
+                background.border_color="$FEEDBACK_DEFAULT_BORDER" \
+                background.border_width="$BORDER_NONE" \
                 label.color="$FEEDBACK_DEFAULT_LABEL" \
                 background.drawing=off
             ;;
@@ -61,7 +73,8 @@ handle_mouse_event() {
         "mouse.entered")
             apply_visual_state "$item_name" "hover"
             ;;
-        "mouse.exited")
+        "mouse.exited"|"mouse.exited.global")
+            # Handle both regular and global exit events (workaround for SketchyBar bug #613)
             apply_visual_state "$item_name" "default"
             ;;
         "mouse.clicked")
@@ -78,12 +91,12 @@ apply_icon_background_hover() {
 
     apply_instant_change "$item_name" \
         icon.color="$text_color" \
-        icon.background.drawing=on \
-        icon.background.color="$hover_color" \
-        icon.background.corner_radius="$RADIUS_LARGE" \
-        icon.background.height="$HEIGHT_ITEM" \
-        icon.background.padding_left="$PADDINGS_SMALL" \
-        icon.background.padding_right="$PADDINGS_SMALL"
+        background.drawing=on \
+        background.color="$hover_color" \
+        background.border_radius="$RADIUS_LARGE" \
+        background.height="$HEIGHT_ITEM" \
+        background.padding_left="$PADDINGS_SMALL" \
+        background.padding_right="$PADDINGS_SMALL"
 }
 
 remove_icon_background_hover() {
@@ -92,7 +105,7 @@ remove_icon_background_hover() {
 
     apply_instant_change "$item_name" \
         icon.color="$default_color" \
-        icon.background.drawing=off
+        background.drawing=off
 }
 
 handle_special_hover_effects() {

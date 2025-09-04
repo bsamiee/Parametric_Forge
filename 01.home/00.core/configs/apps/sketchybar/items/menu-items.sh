@@ -11,19 +11,20 @@
 # --- Configuration ----------------------------------------------------------
 source "$HOME/.config/sketchybar/colors.sh"
 source "$HOME/.config/sketchybar/constants.sh"
+source "$HOME/.config/sketchybar/icons.sh"
 
 # --- Menu Item Creation -----------------------------------------------------
 for ((i = 1; i <= 14; ++i)); do
     menu_config=(
-        icon="$i"
+        icon="$CMD_KEY"
         label.drawing=off
         drawing=off
 
-        icon.font="$TEXT_FONT:$MEDIUM_WEIGHT:$SIZE_LARGE"
+        icon.font="$SYMBOL_FONT:$MEDIUM_WEIGHT:$SIZE_LARGE"
         icon.color="$WHITE"
 
         padding_left="$PADDINGS_SMALL"
-        padding_right="$PADDINGS_SMALL"
+        padding_right="$PADDINGS_MEDIUM"
 
         background.drawing=off
 
@@ -32,7 +33,7 @@ for ((i = 1; i <= 14; ++i)); do
 
     if [[ $i == 1 ]]; then
         menu_config+=(
-            icon.font="$TEXT_FONT:$BOLD_WEIGHT:$SIZE_LARGE"
+            icon.font="$SYMBOL_FONT:$BOLD_WEIGHT:$SIZE_LARGE"
             icon.color="$GREEN"
         )
     fi

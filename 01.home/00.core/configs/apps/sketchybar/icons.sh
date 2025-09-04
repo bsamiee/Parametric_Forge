@@ -15,6 +15,7 @@ PREFERENCES=􀺽
 ACTIVITY=􀒓
 LOCK=􀒳
 ADD_SPACE=􀅼
+CMD_KEY=􀆔
 
 # --- Separator Icons --------------------------------------------------------
 SEPARATOR_LINE=􀤋        # Vertical line separator (proper SF Symbol)
