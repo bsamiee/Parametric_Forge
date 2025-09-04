@@ -73,7 +73,7 @@ sketchybar --add event space_change \
     --add event windows_on_spaces \
     --add event window_focus
 
-# --- Left Items (Logo → Menu → Spaces → Front App) -----------------------
+# --- Left Items -------------------------------------------------------------
 source "$ITEM_DIR/logo.sh"
 source "$ITEM_DIR/menu-items.sh"
 
@@ -83,22 +83,22 @@ add_separator "menu_to_spaces" left "line"
 
 source "$ITEM_DIR/spaces.sh"
 
-# Add separator between spaces and front_app
-add_separator "spaces_to_front_app" left "chevron_right"
+# Add separator between spaces and focus_app
+add_separator "spaces_to_focus_app" left "chevron_right"
 
-source "$ITEM_DIR/front_app.sh"
+source "$ITEM_DIR/focus_app.sh"
 
-# --- Window State Integration -----------------------------------------------
-# Lightweight window state monitoring (from yabai.sh functionality)
-sketchybar --add item window_state left \
+# --- Invisible Event Handlers -----------------------------------------------
+# These items handle events but don't display anything
+sketchybar --add item window_state right \
     --set window_state drawing=off \
+    position=right \
     script="$PLUGIN_DIR/window_state.sh" \
     --subscribe window_state window_focus
 
-# --- Space Event Integration ------------------------------------------------
-# Direct space event handling (no routing through window logic)
-sketchybar --add item space_events left \
+sketchybar --add item space_events right \
     --set space_events drawing=off \
+    position=right \
     script="$ITEM_DIR/spaces.sh" \
     --subscribe space_events windows_on_spaces space_change
 

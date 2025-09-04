@@ -119,11 +119,11 @@
     ".w3m/keymap".source = ./00.core/configs/apps/w3m/keymap;
   }
   # --- Modular UI Configurations (deployDir) -------------------------------
-  // (myLib.build.deployDir ./00.core/configs/apps/sketchybar ".config/sketchybar") # THIS IS NOT COMMENTED OUT // IS MERGE IN NIX
-  # --- Claude Code CLI Configuration ----------------------------------------
-  // (myLib.build.deployDir ./00.core/configs/apps/claude ".claude"); # THIS IS NOT COMMENTED OUT // IS MERGE IN NIX
+  // (myLib.build.deployDir ./00.core/configs/apps/sketchybar ".config/sketchybar"); # THIS IS NOT COMMENTED OUT // IS MERGE IN NIX
+  # --- Claude Code CLI Configuration (Deprecated) --------------------------
+  # // (myLib.build.deployDir ./00.core/configs/apps/claude ".claude");
 
-  # --- Asset Bin Scripts (Added to PATH) ------------------------------------
+  # --- Asset Bin Scripts (Added to PATH) -----------------------------------
   home.packages =
     let
       binDir = ./02.assets/bin;
@@ -135,7 +135,7 @@
     in
     lib.optionals (binPackage != null) [ binPackage ];
 
-  # --- Platform-Specific Data Files -----------------------------------------
+  # --- Platform-Specific Data Files ----------------------------------------
   xdg.dataFile = {
     "pandoc/defaults/forge.yaml".source = ./00.core/configs/media-tools/pandoc/defaults.yaml;
   }

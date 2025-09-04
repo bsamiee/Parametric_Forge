@@ -14,6 +14,7 @@ set -euo pipefail
 source "$HOME/.config/sketchybar/colors.sh"
 source "$HOME/.config/sketchybar/constants.sh"
 source "$HOME/.config/sketchybar/plugins/icon_map.sh"
+source "$HOME/.config/sketchybar/helpers/interaction-helpers.sh"
 
 # --- Visual State Management ------------------------------------------------
 update_space_visual_state() {
@@ -44,12 +45,12 @@ update_space_visual_state() {
         fi
     fi
 
-    # Apply visual state based on selection and event
+    # Apply visual state based on selection and event using helper
     if [ "$is_selected" = "true" ]; then
         # Active space - cyan system
         if [ -z "$apps" ] || [ "$icon_strip" = " " ]; then
             # Empty active space
-            sketchybar --set "$space_name" \
+            set_item_properties "$space_name" \
                 label="$icon_strip" \
                 label.drawing=on \
                 label.color="$BLACK" \
@@ -61,7 +62,7 @@ update_space_visual_state() {
                 background.border_width="$BORDER_THIN"
         else
             # Active space with apps
-            sketchybar --set "$space_name" \
+            set_item_properties "$space_name" \
                 label="$icon_strip" \
                 label.drawing=on \
                 label.color="$BLACK" \
@@ -77,7 +78,7 @@ update_space_visual_state() {
         case "$event_type" in
             "mouse.entered")
                 # Hover state - purple
-                sketchybar --set "$space_name" \
+                set_item_properties "$space_name" \
                     label="$icon_strip" \
                     label.drawing=on \
                     label.color="$WHITE" \
@@ -91,7 +92,7 @@ update_space_visual_state() {
                 # Default inactive state
                 if [ -z "$apps" ] || [ "$icon_strip" = " " ]; then
                     # Empty inactive space
-                    sketchybar --set "$space_name" \
+                    set_item_properties "$space_name" \
                         label="$icon_strip" \
                         label.drawing=on \
                         label.color="$WHITE" \
@@ -102,7 +103,7 @@ update_space_visual_state() {
                         background.border_width=0
                 else
                     # Inactive space with apps
-                    sketchybar --set "$space_name" \
+                    set_item_properties "$space_name" \
                         label="$icon_strip" \
                         label.drawing=on \
                         label.color="$WHITE" \

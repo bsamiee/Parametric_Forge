@@ -41,7 +41,6 @@ update_space_icons() {
   active_space=$(echo "$space_data" | jq -r '.[] | select(.["has-focus"] == true) | .index // ""')
   current_spaces=$(echo "$space_data" | jq -r '.[].index // empty')
 
-  local args=()
   for space in $current_spaces; do
     local icon_strip=" "
 
@@ -65,47 +64,43 @@ update_space_icons() {
 
     # Apply nested bracket styling with proper color logic
     if [ "$space" = "$active_space" ]; then
-      args+=(--set "space.$space"
-        label="$icon_strip"
-        label.drawing=on
-        label.color="$BLACK"
-        label.background.color="$FAINT_CYAN"
-        icon.color="$BLACK"
-        background.drawing=on
-        background.color="$PRIMARY_CYAN"
-        background.border_color="$CYAN"
-        background.border_width="$BORDER_THIN")
+      set_item_properties "space.$space" \
+        label="$icon_strip" \
+        label.drawing=on \
+        label.color="$BLACK" \
+        label.background.color="$FAINT_CYAN" \
+        icon.color="$BLACK" \
+        background.drawing=on \
+        background.color="$PRIMARY_CYAN" \
+        background.border_color="$CYAN" \
+        background.border_width="$BORDER_THIN"
     else
       # Check if space is empty for red indicator
       if [ -z "$apps" ] || [ "$icon_strip" = " " ]; then
-        args+=(--set "space.$space"
-          label="$icon_strip"
-          label.drawing=on
-          label.color="$WHITE"
-          label.background.color="$TRANSPARENT"
-          icon.color="$PRIMARY_RED"
-          background.drawing=off
-          background.color="$TRANSPARENT"
-          background.border_color="$TRANSPARENT"
-          background.border_width=0)
+        set_item_properties "space.$space" \
+          label="$icon_strip" \
+          label.drawing=on \
+          label.color="$WHITE" \
+          label.background.color="$TRANSPARENT" \
+          icon.color="$PRIMARY_RED" \
+          background.drawing=off \
+          background.color="$TRANSPARENT" \
+          background.border_color="$TRANSPARENT" \
+          background.border_width=0
       else
-        args+=(--set "space.$space"
-          label="$icon_strip"
-          label.drawing=on
-          label.color="$WHITE"
-          label.background.color="$TRANSPARENT"
-          icon.color="$WHITE"
-          background.drawing=off
-          background.color="$TRANSPARENT"
-          background.border_color="$TRANSPARENT"
-          background.border_width=0)
+        set_item_properties "space.$space" \
+          label="$icon_strip" \
+          label.drawing=on \
+          label.color="$WHITE" \
+          label.background.color="$TRANSPARENT" \
+          icon.color="$WHITE" \
+          background.drawing=off \
+          background.color="$TRANSPARENT" \
+          background.border_color="$TRANSPARENT" \
+          background.border_width=0
       fi
     fi
   done
-
-  if [ ${#args[@]} -gt 0 ] && ! sketchybar -m "${args[@]}" 2>/dev/null; then
-    echo "Warning: Failed to update space icons" >&2
-  fi
 }
 
 # --- Space Creation and Management -------------------------------------------
@@ -171,11 +166,13 @@ create_add_space_button() {
     icon.padding_left="$PADDINGS_XLARGE"
     icon.padding_right="$PADDINGS_XLARGE"
     padding_left="$PADDINGS_NONE"
-    padding_right="$PADDINGS_NONE"
+    padding_right="$PADDINGS_SMALL"
     label.drawing=off
     associated_display=active
     click_script='yabai -m space --create && sketchybar --trigger space_change'
     background.drawing=off
+    background.height="$HEIGHT_ITEM"
+    background.corner_radius="$RADIUS_LARGE"
     script="$HOME/.config/sketchybar/items/spaces.sh"
   )
 
@@ -188,7 +185,7 @@ create_add_space_button() {
 # --- Spaces Bracket Management ----------------------------------------------
 create_spaces_bracket() {
   local current_spaces="$1"
-  
+
   spaces_bracket=(
     background.color="$TRANSPARENT"
     background.border_color="$LIGHT_WHITE"
@@ -206,23 +203,94 @@ create_spaces_bracket() {
     --set spaces "${spaces_bracket[@]}"
 }
 
-# --- Mouse Event Handler ----------------------------------------------------
-handle_mouse_events() {
+# --- Event Handlers (Appearance Logic) ------------------------------------
+# Handle space-specific mouse events using helper utilities
+handle_space_mouse_event() {
+  local space_id="${NAME#space.}"
+
   case "$SENDER" in
-    "mouse.entered"|"mouse.exited"|"mouse.clicked")
-      # Check if this is the add_space button
-      if [[ "$NAME" == "add_space" ]]; then
-        handle_special_hover_effects "$NAME" "$SENDER" "add_space"
-      else
-        handle_mouse_event "$NAME" "$SENDER"
-        
-        # Handle space clicks
-        if [[ "$SENDER" == "mouse.clicked" && "$NAME" =~ ^space\. ]]; then
-          space_id="${NAME#space.}"
-          yabai -m space --focus "$space_id" 2>/dev/null || true
+    "space.${space_id}_mouse.entered")
+      # Only hover inactive spaces (check background state)
+      if [ "$(get_item_property "$NAME" "background.drawing")" != "on" ]; then
+        set_item_properties "$NAME" \
+          icon.color="$CYAN" \
+          label.color="$CYAN"
+      fi
+      ;;
+    "space.${space_id}_mouse.exited")
+      # Restore original state for inactive spaces only
+      if [ "$(get_item_property "$NAME" "background.drawing")" != "on" ]; then
+        # Check if space is empty
+        local apps
+        apps=$(yabai -m query --windows 2>/dev/null | jq -r --arg space "$space_id" '
+          .[] | select(
+            .space == ($space | tonumber) and
+            .["has-ax-reference"] == true and
+            .["is-minimized"] == false and
+            .["is-hidden"] == false and
+            (.layer // "") == "normal"
+          ) | .app // empty' | sort -u 2>/dev/null)
+
+        if [ -z "$apps" ]; then
+          set_item_properties "$NAME" icon.color="$PRIMARY_RED" label.color="$WHITE"
+        else
+          set_item_properties "$NAME" icon.color="$WHITE" label.color="$WHITE"
         fi
       fi
       ;;
+    "space.${space_id}_mouse.clicked")
+      yabai -m space --focus "$space_id" 2>/dev/null || true
+      ;;
+  esac
+}
+
+# Handle add_space button events using helper utilities
+handle_add_space_mouse_event() {
+  case "$SENDER" in
+    "add_space_mouse.entered")
+      set_item_properties add_space \
+        icon.color="$WHITE" \
+        background.drawing=on \
+        background.color="$PINK" \
+        background.border_color="$RED" \
+        background.border_width="$BORDER_THIN" \
+        background.padding_left="$PADDINGS_SMALL" \
+        background.padding_right="$PADDINGS_SMALL"
+      ;;
+    "add_space_mouse.exited")
+      set_item_properties add_space \
+        icon.color="$PINK" \
+        background.drawing=off
+      ;;
+    "add_space_mouse.clicked")
+      # Brief visual feedback
+      set_item_properties add_space \
+        icon.color="$BLACK" \
+        background.color="$WHITE" \
+        background.border_color="$RED"
+      sleep 0.1
+      set_item_properties add_space \
+        icon.color="$PINK" \
+        background.drawing=off
+      ;;
+  esac
+}
+
+# --- Mouse Event Handler ----------------------------------------------------
+handle_mouse_events() {
+  case "$SENDER" in
+    # Direct mouse events - delegate to helper system
+    "mouse.entered"|"mouse.exited"|"mouse.clicked")
+      handle_mouse_event "$NAME" "$SENDER"
+      ;;
+    # Dispatched events from helper system
+    space.*_mouse.*)
+      handle_space_mouse_event
+      ;;
+    "add_space_mouse.entered"|"add_space_mouse.exited"|"add_space_mouse.clicked")
+      handle_add_space_mouse_event
+      ;;
+    # Yabai events
     "space_change"|"windows_on_spaces")
       update_space_icons
       ;;
@@ -231,7 +299,7 @@ handle_mouse_events() {
       CURRENT_SPACES=$(create_spaces)
       create_add_space_button
       create_spaces_bracket "$CURRENT_SPACES"
-      
+
       # Position items
       LEFTMOST_SPACE=$(echo "$CURRENT_SPACES" | head -n1)
       RIGHTMOST_SPACE=$(echo "$CURRENT_SPACES" | tail -n1)

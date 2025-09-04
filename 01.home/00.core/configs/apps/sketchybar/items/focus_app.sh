@@ -1,9 +1,9 @@
 #!/bin/bash
-# Title         : front_app.sh
+# Title         : focus_app.sh
 # Author        : Bardia Samiee
 # Project       : Parametric Forge
 # License       : MIT
-# Path          : /01.home/00.core/configs/apps/sketchybar/items/front_app.sh
+# Path          : /01.home/00.core/configs/apps/sketchybar/items/focus_app.sh
 # ----------------------------------------------------------------------------
 # Enhanced front app display with app icons and visual feedback
 # shellcheck disable=SC1091
@@ -11,6 +11,7 @@
 # --- Configuration ----------------------------------------------------------
 source "$HOME/.config/sketchybar/colors.sh"
 source "$HOME/.config/sketchybar/constants.sh"
+source "$HOME/.config/sketchybar/helpers/interaction-helpers.sh"
 
 # --- Front App Configuration ------------------------------------------------
 front_app_config=(
@@ -40,7 +41,6 @@ front_app_config=(
   padding_right="$PADDINGS_MEDIUM"
 
   script="$HOME/.config/sketchybar/plugins/window_state.sh"
-  # click_script handled by plugin for integrated visual feedback
 
   associated_display=active
 )

@@ -43,41 +43,35 @@ update_window_state() {
     window_info=$(get_window_info)
     current_stack=$(echo "$window_info" | jq -r '.["stack-index"] // 0')
 
-    local args=()
-
     if [[ $current_stack -gt 0 ]]; then
         local total_stack
         total_stack=$(yabai -m query --windows --window stack.last 2>/dev/null | jq -r '.["stack-index"] // 0')
-        args+=(--set "$NAME"
-            icon="$YABAI_STACK"
-            icon.color="$RED"
-            label.drawing=on
-            label="$(printf "[%s/%s]" "$current_stack" "$total_stack")")
+        set_item_properties "$NAME" \
+            icon="$YABAI_STACK" \
+            icon.color="$RED" \
+            label.drawing=on \
+            label="$(printf "[%s/%s]" "$current_stack" "$total_stack")"
         yabai -m config active_window_border_color "$RED" 2>/dev/null &
     else
-        args+=(--set "$NAME" label.drawing=off)
+        set_item_properties "$NAME" label.drawing=off
         local is_floating has_fullscreen has_parent
         is_floating=$(echo "$window_info" | jq -r '.["is-floating"] // false')
         has_fullscreen=$(echo "$window_info" | jq -r '.["has-fullscreen-zoom"] // false')
         has_parent=$(echo "$window_info" | jq -r '.["has-parent-zoom"] // false')
 
         if [ "$is_floating" = "true" ]; then
-            args+=(--set "$NAME" icon="$YABAI_FLOAT" icon.color="$PURPLE")
+            set_item_properties "$NAME" icon="$YABAI_FLOAT" icon.color="$PURPLE"
             yabai -m config active_window_border_color "$PURPLE" 2>/dev/null &
         elif [ "$has_fullscreen" = "true" ]; then
-            args+=(--set "$NAME" icon="$YABAI_FULLSCREEN_ZOOM" icon.color="$GREEN")
+            set_item_properties "$NAME" icon="$YABAI_FULLSCREEN_ZOOM" icon.color="$GREEN"
             yabai -m config active_window_border_color "$GREEN" 2>/dev/null &
         elif [ "$has_parent" = "true" ]; then
-            args+=(--set "$NAME" icon="$YABAI_PARENT_ZOOM" icon.color="$CYAN")
+            set_item_properties "$NAME" icon="$YABAI_PARENT_ZOOM" icon.color="$CYAN"
             yabai -m config active_window_border_color "$CYAN" 2>/dev/null &
         else
-            args+=(--set "$NAME" icon="$YABAI_GRID" icon.color="$ORANGE")
+            set_item_properties "$NAME" icon="$YABAI_GRID" icon.color="$ORANGE"
             yabai -m config active_window_border_color "$WHITE" 2>/dev/null &
         fi
-    fi
-
-    if ! sketchybar -m "${args[@]}" 2>/dev/null; then
-        echo "Warning: Failed to update window state for $NAME" >&2
     fi
 }
 
@@ -89,9 +83,9 @@ update_front_app() {
     is_floating=$(echo "$window_info" | jq -r '.["is-floating"] // false')
 
     if [ "$is_floating" = "true" ]; then
-        sketchybar --set front_app icon="$YABAI_FLOAT" icon.color="$PURPLE" label="$app_name"
+        set_item_properties front_app icon="$YABAI_FLOAT" icon.color="$PURPLE" label="$app_name"
     else
-        sketchybar --set front_app icon="$YABAI_GRID" icon.color="$ORANGE" label="$app_name"
+        set_item_properties front_app icon="$YABAI_GRID" icon.color="$ORANGE" label="$app_name"
     fi
 }
 
@@ -104,18 +98,25 @@ handle_window_state_click() {
 handle_front_app_mouse() {
     case "$SENDER" in
         "mouse.entered")
-            apply_visual_state "front_app" "hover"
+            set_item_properties front_app \
+                background.drawing=on \
+                background.color="$LIGHT_WHITE" \
+                background.border_color="$ORANGE"
             ;;
         "mouse.exited")
-            apply_visual_state "front_app" "default"
+            set_item_properties front_app \
+                background.drawing=off
             ;;
         "mouse.clicked")
-            apply_visual_state "front_app" "click"
+            set_item_properties front_app \
+                background.color="$ORANGE" \
+                background.border_color="$WHITE"
             # Toggle float state
             if command -v yabai >/dev/null 2>&1; then
                 yabai -m window --toggle float 2>/dev/null
                 sleep 0.1
                 update_front_app
+                set_item_properties front_app background.drawing=off
             fi
             ;;
     esac
@@ -123,18 +124,18 @@ handle_front_app_mouse() {
 
 # --- Event Handler --------------------------------------------------------
 case "$SENDER" in
-    "mouse.clicked")
-        if [[ "$NAME" == "window_state" ]]; then
-            handle_window_state_click
-        elif [[ "$NAME" == "front_app" ]]; then
-            handle_front_app_mouse
-        fi
+    # Direct mouse events - delegate to helper system
+    "mouse.entered"|"mouse.exited"|"mouse.clicked")
+        handle_mouse_event "$NAME" "$SENDER"
         ;;
-    "mouse.entered"|"mouse.exited")
-        if [[ "$NAME" == "front_app" ]]; then
-            handle_front_app_mouse
-        fi
+    # Dispatched events from helper system
+    "window_state_mouse.clicked")
+        handle_window_state_click
         ;;
+    "front_app_mouse.entered"|"front_app_mouse.exited"|"front_app_mouse.clicked")
+        handle_front_app_mouse
+        ;;
+    # Yabai events
     "window_focus")
         if [[ "$NAME" == "window_state" || -z "$NAME" ]]; then
             update_window_state

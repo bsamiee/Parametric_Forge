@@ -38,7 +38,7 @@ add_separator() {
 
     local separator_config=(
         icon="$icon_symbol"
-        icon.color="$LIGHT_WHITE"
+        icon.color="$WHITE"
         icon.font="$SYMBOL_FONT:$MEDIUM_WEIGHT:$SIZE_MEDIUM"
         icon.y_offset=0
         icon.padding_left="$PADDINGS_SMALL"
