@@ -120,8 +120,6 @@
   }
   # --- Modular UI Configurations (deployDir) -------------------------------
   // (myLib.build.deployDir ./00.core/configs/apps/sketchybar ".config/sketchybar"); # THIS IS NOT COMMENTED OUT // IS MERGE IN NIX
-  # --- Claude Code CLI Configuration (Deprecated) --------------------------
-  # // (myLib.build.deployDir ./00.core/configs/apps/claude ".claude");
 
   # --- Asset Bin Scripts (Added to PATH) -----------------------------------
   home.packages =

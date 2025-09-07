@@ -9,9 +9,9 @@
 # shellcheck disable=SC2034  # Icons sourced by other scripts
 
 # --- General Icons ----------------------------------------------------------
-LOADING=􀖇
+LOADING=􀴽
 APPLE=􀣺
-PREFERENCES=􀺽
+PREFERENCES=􀍟
 ACTIVITY=􀒓
 LOCK=􀒳
 ADD_SPACE=􀅼
@@ -23,12 +23,23 @@ SEPARATOR_DOT=􀀁         # Dot separator (alternative)
 SEPARATOR_CHEVRON_RIGHT=􀆊
 SEPARATOR_CHEVRON_LEFT=􀆉
 
+# --- Menu & Control Icons ---------------------------------------------------
+CONTROL_CENTER=􀜊
+
+# --- Adjustment Icons (Popup Controls) --------------------------------------
+ADJUST_PLUS=􀁍
+ADJUST_MINUS=􀁎
+
 # --- Git Icons --------------------------------------------------------------
 GIT_ISSUE=􀍷
 GIT_DISCUSSION=􀒤
 GIT_PULL_REQUEST=􀙡
 GIT_COMMIT=􀡚
 GIT_INDICATOR=􀂓
+
+# --- Media Control Icons ----------------------------------------------------
+MEDIA_PLAY=􀊕
+MEDIA_PAUSE=􀊗
 
 # --- Spotify Icons ----------------------------------------------------------
 SPOTIFY_BACK=􀊎
@@ -52,6 +63,12 @@ BATTERY_25=􀛩
 BATTERY_0=􀛪
 BATTERY_CHARGING=􀢋
 
+# --- Battery Management Icons -----------------------------------------------
+BATTERY_HEALTH=􀍽
+BATTERY_ADAPTER=􀡸
+BATTERY_CALIBRATE=􀆈
+BATTERY_DISCHARGE=􀄯        # Arrow down to line (discharge to a floor/limit)
+
 # --- Volume Icons -----------------------------------------------------------
 VOLUME_100=􀊩
 VOLUME_66=􀊧
@@ -68,9 +85,11 @@ WIFI_ERROR=􀙥
 WIFI_OFF=􀙈
 
 # --- Microphone Icons -------------------------------------------------------
-MIC_MUTED=􀊲
-MIC_LOW=􀊰
-MIC_HIGH=􀊱
+MIC_ON=􀊱
+MIC_OFF=􀊰
+MIC_MUTED=􀊳
+MIC_LOW=􁎔
+MIC_HIGH=􁎓
 
 # --- Notification Icons -----------------------------------------------------
 BELL=􀋚
@@ -80,24 +99,12 @@ BELL_DISABLED=􀋞
 # --- Package Icons ----------------------------------------------------------
 PACKAGE=􀐛
 
-# --- Battery Management Icons -----------------------------------------------
-BATTERY_HEALTH=􀍽
-BATTERY_ADAPTER=􀎝
-BATTERY_CALIBRATE=􀆈
-
-# --- Menu & Control Icons ---------------------------------------------------
-CONTROL_CENTER=􀯶
-
 # --- Bluetooth Icons -------------------------------------------------------
-BLUETOOTH_ON=􀟙           # Bluetooth enabled/connected
-BLUETOOTH_OFF=􀟗          # Bluetooth disabled
-BLUETOOTH_SEARCHING=􀷇     # Bluetooth scanning/discoverable
+BLUETOOTH_ON=󰂯           # Bluetooth enabled/connected
+BLUETOOTH_OFF=󰂰          # Bluetooth disabled
+BLUETOOTH_SEARCHING=􀤊     # Bluetooth scanning/discoverable
 
 # Device-specific icons (for battery display)
-BLUETOOTH_MOUSE=􀼠        # Mouse device
-BLUETOOTH_KEYBOARD=􀇳     # Keyboard device
+BLUETOOTH_MOUSE=􀺱        # Mouse device
+BLUETOOTH_KEYBOARD=􀺑     # Keyboard device
 BLUETOOTH_HEADPHONES=􀑈   # Headphones/audio device
-
-# --- Media Control Icons ----------------------------------------------------
-MEDIA_PLAY=􀊆
-MEDIA_PAUSE=􀊄

@@ -73,85 +73,88 @@ let
   ];
 in
 {
-  # --- Home Maintenance Daemon ------------------------------------------
-  launchd.agents."org.nixos.home-maintenance" = {
-    enable = true;
-    config = mkPeriodicJob {
-      label = "Home Maintenance Daemon";
-      interval = 3600;
-      nice = 15;
-      command = "${
-        pkgs.writeShellApplication {
-          name = "home-maintenance-daemon";
-          text = ''
-            echo "[$(date)] Starting runtime and temp directory cleanup..."
+  # --- All Maintenance Daemons ----------------------------------------------
+  launchd.agents = {
+    # --- Home Maintenance Daemon --------------------------------------------
+    "org.nixos.home-maintenance" = {
+      enable = true;
+      config = mkPeriodicJob {
+        label = "Home Maintenance Daemon";
+        interval = 3600;
+        nice = 15;
+        runAtLoad = true;
+        command = "${
+          pkgs.writeShellApplication {
+            name = "home-maintenance-daemon";
+            text = ''
+              echo "[$(date)] Starting runtime and temp directory cleanup..."
 
-            # Basic Runtime Directory Cleanup
-            find "${runtimeDir}" -type f -mtime +1 -delete 2>/dev/null || true
-            find "${runtimeDir}" -type d -empty -delete 2>/dev/null || true
+              # Basic Runtime Directory Cleanup
+              find "${runtimeDir}" -type f -mtime +1 -delete 2>/dev/null || true
+              find "${runtimeDir}" -type d -empty -delete 2>/dev/null || true
 
-            # Extended Temp Cleanup (every 2 hours)
-            LAST_RUN_FILE="${config.xdg.stateHome}/temp-cleanup.last"
+              # Extended Temp Cleanup (every 2 hours)
+              LAST_RUN_FILE="${config.xdg.stateHome}/temp-cleanup.last"
 
-            # Only run extended cleanup every 2 hours
-            if [ ! -f "$LAST_RUN_FILE" ] || [ $(( $(date +%s) - $(cat "$LAST_RUN_FILE" 2>/dev/null || echo 0) )) -gt 7200 ]; then
-              echo "  Running extended temp cleanup..."
+              # Only run extended cleanup every 2 hours
+              if [ ! -f "$LAST_RUN_FILE" ] || [ $(( $(date +%s) - $(cat "$LAST_RUN_FILE" 2>/dev/null || echo 0) )) -gt 7200 ]; then
+                echo "  Running extended temp cleanup..."
 
-              # Clean npm temp
-              NPM_TMP="${config.xdg.cacheHome}/npm-tmp"
-              [ -d "$NPM_TMP" ] && {
-                find "$NPM_TMP" -type f -mtime +1 -delete 2>/dev/null || true
-                find "$NPM_TMP" -type d -empty -delete 2>/dev/null || true
-              }
+                # Clean npm temp
+                NPM_TMP="${config.xdg.cacheHome}/npm-tmp"
+                [ -d "$NPM_TMP" ] && {
+                  find "$NPM_TMP" -type f -mtime +1 -delete 2>/dev/null || true
+                  find "$NPM_TMP" -type d -empty -delete 2>/dev/null || true
+                }
 
-              # Clean build artifacts
-              [ -d "${runtimeDir}" ] && {
-                find "${runtimeDir}" -maxdepth 1 -name "nix-*" -type d -mtime +1 -exec rm -rf {} + 2>/dev/null || true
-                find "${runtimeDir}" -maxdepth 1 -name "npm-*" -type d -mtime +1 -exec rm -rf {} + 2>/dev/null || true
-                find "${runtimeDir}" -maxdepth 1 -name "node-*" -type d -mtime +1 -exec rm -rf {} + 2>/dev/null || true
-                find "${runtimeDir}" -maxdepth 1 -name "yarn-*" -type d -mtime +1 -exec rm -rf {} + 2>/dev/null || true
-                find "${runtimeDir}" -maxdepth 1 -name "pip-*" -type d -mtime +1 -exec rm -rf {} + 2>/dev/null || true
+                # Clean build artifacts
+                [ -d "${runtimeDir}" ] && {
+                  find "${runtimeDir}" -maxdepth 1 -name "nix-*" -type d -mtime +1 -exec rm -rf {} + 2>/dev/null || true
+                  find "${runtimeDir}" -maxdepth 1 -name "npm-*" -type d -mtime +1 -exec rm -rf {} + 2>/dev/null || true
+                  find "${runtimeDir}" -maxdepth 1 -name "node-*" -type d -mtime +1 -exec rm -rf {} + 2>/dev/null || true
+                  find "${runtimeDir}" -maxdepth 1 -name "yarn-*" -type d -mtime +1 -exec rm -rf {} + 2>/dev/null || true
+                  find "${runtimeDir}" -maxdepth 1 -name "pip-*" -type d -mtime +1 -exec rm -rf {} + 2>/dev/null || true
 
-                # Clean editor temps and sockets
-                find "${runtimeDir}" -name "vscode-ipc-*" -type f -mtime +1 -delete 2>/dev/null || true
-                find "${runtimeDir}" -name "*.sw[pon]" -mtime +1 -delete 2>/dev/null || true
-                find "${runtimeDir}" -type s -mtime +1 -delete 2>/dev/null || true
-                find "${runtimeDir}" -type p -mtime +1 -delete 2>/dev/null || true
-              }
+                  # Clean editor temps and sockets
+                  find "${runtimeDir}" -name "vscode-ipc-*" -type f -mtime +1 -delete 2>/dev/null || true
+                  find "${runtimeDir}" -name "*.sw[pon]" -mtime +1 -delete 2>/dev/null || true
+                  find "${runtimeDir}" -type s -mtime +1 -delete 2>/dev/null || true
+                  find "${runtimeDir}" -type p -mtime +1 -delete 2>/dev/null || true
+                }
 
-              date +%s > "$LAST_RUN_FILE"
-            fi
+                date +%s > "$LAST_RUN_FILE"
+              fi
 
-            echo "[$(date)] Runtime cleanup completed"
-          '';
-        }
-      }/bin/home-maintenance-daemon";
-      logBaseName = "${config.xdg.stateHome}/logs/xdg-runtime";
-      runAtLoad = true;
+              echo "[$(date)] Runtime cleanup completed"
+            '';
+          }
+        }/bin/home-maintenance-daemon";
+        logBaseName = "${config.xdg.stateHome}/logs/xdg-runtime";
+      };
     };
-  };
-  # --- XDG Cache Cleanup Agent ----------------------------------------------
-  launchd.agents."org.nixos.font-cache-manager" = {
-    enable = true;
-    config = mkCalendarJob {
-      label = "Font Cache Daemon";
-      calendar = [
-        {
-          Weekday = 1;
-          Hour = 3;
-          Minute = 45; # Avoid 3:00 (Nix GC), 3:30 (other services)
-        }
-        {
-          Weekday = 4;
-          Hour = 3;
-          Minute = 45;
-        }
-      ];
-      nice = 19;
-      command = "${
-        pkgs.writeShellApplication {
-          name = "font-cache-daemon";
-          text = ''
+
+    # --- XDG Cache Cleanup Agent --------------------------------------------
+    "org.nixos.font-cache-manager" = {
+      enable = true;
+      config = mkCalendarJob {
+        label = "Font Cache Daemon";
+        calendar = [
+          {
+            Weekday = 1;
+            Hour = 3;
+            Minute = 45; # Avoid 3:00 (Nix GC), 3:30 (other services)
+          }
+          {
+            Weekday = 4;
+            Hour = 3;
+            Minute = 45;
+          }
+        ];
+        nice = 19;
+        command = "${
+          pkgs.writeShellApplication {
+            name = "font-cache-daemon";
+            text = ''
             echo "Starting XDG cache cleanup at $(date)"
 
             find "${config.xdg.cacheHome}" -type f -atime +30 -delete 2>/dev/null || true
@@ -254,22 +257,22 @@ in
               echo "Font cache refresh completed successfully"
             fi
           '';
-        }
-      }/bin/font-cache-daemon";
-      logBaseName = "${config.xdg.stateHome}/logs/xdg-cleanup";
+          }
+        }/bin/font-cache-daemon";
+        logBaseName = "${config.xdg.stateHome}/logs/xdg-cleanup";
+      };
     };
-  };
 
-  # --- NPM Update Check Service ---------------------------------------------
-  launchd.agents.npm-check-updates = {
-    enable = true;
-    config = myLib.launchd.mkCalendarJob pkgs {
-      label = "NPM Daemon";
-      command = "${
-        pkgs.writeShellApplication {
-          name = "npm-daemon";
-          runtimeInputs = [ pkgs.nodePackages.npm-check-updates ];
-          text = ''
+    # --- NPM Update Check Service -------------------------------------------
+    npm-check-updates = {
+      enable = true;
+      config = mkCalendarJob {
+        label = "NPM Daemon";
+        command = "${
+          pkgs.writeShellApplication {
+            name = "npm-daemon";
+            runtimeInputs = [ pkgs.nodePackages.npm-check-updates ];
+            text = ''
             OUTDATED_COUNT=0
             PROJECTS_CHECKED=0
 
@@ -300,20 +303,18 @@ in
               fi
             fi
           '';
-        }
-      }/bin/npm-daemon";
-
-      calendar = [
-        {
-          Hour = 15;
-          Minute = 0;
-        }
-      ];
-
-      logBaseName = "${config.xdg.stateHome}/logs/npm-check-updates";
-
-      nice = 19;
-      processType = "Background";
+          }
+        }/bin/npm-daemon";
+        calendar = [
+          {
+            Hour = 15;
+            Minute = 0;
+          }
+        ];
+        logBaseName = "${config.xdg.stateHome}/logs/npm-check-updates";
+        nice = 19;
+        processType = "Background";
+      };
     };
   };
 }

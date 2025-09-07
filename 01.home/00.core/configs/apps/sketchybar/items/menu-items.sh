@@ -16,11 +16,12 @@ source "$HOME/.config/sketchybar/icons.sh"
 # --- Menu Item Creation -----------------------------------------------------
 for ((i = 1; i <= 14; ++i)); do
     menu_config=(
-        icon="$CMD_KEY"
+        icon="$i"
         label.drawing=off
         drawing=off
 
-        icon.font="$SYMBOL_FONT:$MEDIUM_WEIGHT:$SIZE_LARGE"
+        # Use project text font, light weight, 10pt
+        icon.font="$TEXT_FONT:$LIGHT_WEIGHT:$SIZE_MEDIUM"
         icon.color="$WHITE"
 
         padding_left="$PADDINGS_SMALL"
@@ -28,15 +29,8 @@ for ((i = 1; i <= 14; ++i)); do
 
         background.drawing=off
 
-        click_script="$HOME/.config/sketchybar/plugins/logo.sh"
+        script="$HOME/.config/sketchybar/plugins/logo.sh"
     )
-
-    if [[ $i == 1 ]]; then
-        menu_config+=(
-            icon.font="$SYMBOL_FONT:$BOLD_WEIGHT:$SIZE_LARGE"
-            icon.color="$GREEN"
-        )
-    fi
 
     sketchybar --add item "menu.$i" left \
         --set "menu.$i" "${menu_config[@]}" \
@@ -46,8 +40,9 @@ done
 # --- Bracket Creation -------------------------------------------------------
 sketchybar --add bracket menus '/menu\..*/' \
     --set menus \
-        background.height="$((HEIGHT_BAR - 8))" \
-        background.border_width="$BORDER_MEDIUM" \
-        background.border_color="$GREY" \
-        background.color="$FAINT_BLACK" \
-        background.corner_radius="$RADIUS_MEDIUM"
+        drawing=off \
+        background.height="$HEIGHT_ITEM" \
+        background.border_width="$BORDER_THIN" \
+        background.border_color="$LIGHT_WHITE" \
+        background.color="$TRANSPARENT" \
+        background.corner_radius="$RADIUS_LARGE"

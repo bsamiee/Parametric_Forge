@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env sh
 # Title         : yabairc
 # Author        : Bardia Samiee
 # Project       : Parametric Forge
@@ -7,7 +7,7 @@
 # ----------------------------------------------------------------------------
 # Clean yabai window manager configuration
 
-set -euo pipefail
+set -eu
 
 if ! command -v yabai >/dev/null 2>&1; then
     echo "ERROR: yabai not found in PATH" >&2
@@ -16,12 +16,30 @@ fi
 
 echo "yabai: Starting configuration..."
 
+# --- Resolve Absolute Paths for Binaries (nix-darwin/Homebrew resilient) ----
+find_bin() {
+  name="$1"
+  cand=""
+  if command -v "$name" >/dev/null 2>&1; then
+    cand="$(command -v "$name")"
+  fi
+  if [ -n "$cand" ] && [ -x "$cand" ]; then echo "$cand"; return 0; fi
+  for cand in "/run/current-system/sw/bin/$name" "/opt/homebrew/bin/$name" "/usr/local/bin/$name"; do
+    [ -x "$cand" ] && { echo "$cand"; return 0; }
+  done
+  echo "$name"
+}
+
+YABAI_BIN="$(find_bin yabai)"
+SKETCHYBAR_BIN="$(find_bin sketchybar)"
+JQ_BIN="$(find_bin jq)"
+
 # --- Check Companion Tools --------------------------------------------------
 echo "yabai: Checking for companion UI tools..."
 
 # Check if SketchyBar is available (don't start it)
-if command -v sketchybar >/dev/null 2>&1; then
-  if pgrep -x sketchybar >/dev/null && sketchybar --query bar >/dev/null 2>&1; then
+if command -v sketchybar >/dev/null 2>&1 || [ -x "$SKETCHYBAR_BIN" ]; then
+  if pgrep -x sketchybar >/dev/null && "$SKETCHYBAR_BIN" --query bar >/dev/null 2>&1; then
     echo "yabai: ✓ SketchyBar detected and running"
     SKETCHYBAR_READY=true
   else
@@ -52,137 +70,172 @@ else
   SKHD_PID="none"
 fi
 
-# Start borders
-borders &
-BORDERS_PID=$!
-sleep 0.3
-if pgrep -f borders >/dev/null; then
-  echo "yabai: ✓ borders ready (PID: $BORDERS_PID)"
-else
-  echo "yabai: ! borders failed to start" >&2
-fi
-
-echo "yabai: ✓ UI tools checked (skhd=$SKHD_PID borders=$BORDERS_PID sketchybar=${SKETCHYBAR_READY:-false})"
+echo "yabai: ✓ UI tools checked (skhd=$SKHD_PID sketchybar=${SKETCHYBAR_READY:-false})"
 
 # --- Scripting Addition with Detailed Diagnostics --------------------------
 echo "yabai: Loading scripting addition..."
 SA_LOADED=false
 if [ -f "/Library/ScriptingAdditions/yabai.osax/Contents/Info.plist" ]; then
     echo "yabai: ✓ Scripting addition found at /Library/ScriptingAdditions/"
-    if sudo --non-interactive yabai --load-sa 2>/dev/null; then
+    if command -v timeout >/dev/null 2>&1; then
+      if timeout 10s sudo "$YABAI_BIN" --load-sa 2>/dev/null; then
+          echo "yabai: ✓ Scripting addition loaded - full feature set available"
+          "$YABAI_BIN" -m signal --add event=dock_did_restart action="sudo $YABAI_BIN --load-sa"
+          SA_LOADED=true
+      else
+          echo "yabai: ! Scripting addition failed to load - check sudoers configuration" >&2
+          echo "yabai: ! Run: sudo $YABAI_BIN --install-sa" >&2
+          echo "yabai: ! Advanced features (opacity, space creation, sub-layers) disabled" >&2
+      fi
+    elif sudo "$YABAI_BIN" --load-sa 2>/dev/null; then
         echo "yabai: ✓ Scripting addition loaded - full feature set available"
-        yabai -m signal --add event=dock_did_restart action="sudo yabai --load-sa"
+        "$YABAI_BIN" -m signal --add event=dock_did_restart action="sudo $YABAI_BIN --load-sa"
         SA_LOADED=true
     else
         echo "yabai: ! Scripting addition failed to load - check sudoers configuration" >&2
-        echo "yabai: ! Run: sudo yabai --install-sa" >&2
+        echo "yabai: ! Run: sudo $YABAI_BIN --install-sa" >&2
         echo "yabai: ! Advanced features (opacity, space creation, sub-layers) disabled" >&2
     fi
 else
     echo "yabai: ! Scripting addition not installed" >&2
-    echo "yabai: ! Run: sudo yabai --install-sa" >&2
+    echo "yabai: ! Run: sudo $YABAI_BIN --install-sa" >&2
     echo "yabai: ! Advanced features (opacity, space creation, sub-layers) disabled" >&2
 fi
 
-# YABAI_CONFIG_DIR="$HOME/.config/yabai"  # Removed - no longer needed
-
 # --- Event Signals ----------------------------------------------------------
-# SketchyBar integration - only if SketchyBar is ready
-if [ "${SKETCHYBAR_READY:-false}" = true ]; then
-  echo "yabai: Configuring SketchyBar event integration..."
-  yabai -m signal --add event=space_created action="yabai -m space --layout bsp; sketchybar --trigger space_change"
-  yabai -m signal --add event=space_destroyed action="sketchybar --trigger space_change"
-  yabai -m signal --add event=space_changed action="sketchybar --trigger space_change"
-  yabai -m signal --add event=display_added action="sketchybar --trigger space_change"
-  yabai -m signal --add event=display_removed action="sketchybar --trigger space_change"
+# Always register SketchyBar triggers; use labels and remove before add to avoid duplicates.
+echo "yabai: Configuring SketchyBar event integration..."
 
-  # Conditional opacity effects - only if scripting addition loaded
-  if [ "$SA_LOADED" = true ]; then
-    yabai -m signal --add event=window_focused action="yabai -m window --opacity 0.5 && sleep 0.1 && yabai -m window --opacity 0.95; sketchybar --trigger window_focus"
-  else
-    yabai -m signal --add event=window_focused action="sketchybar --trigger window_focus"
-  fi
-  yabai -m signal --add event=window_created action="sketchybar --trigger windows_on_spaces"
-  yabai -m signal --add event=window_destroyed action="sketchybar --trigger windows_on_spaces"
-  yabai -m signal --add event=window_moved action="sketchybar --trigger windows_on_spaces"
-  echo "yabai: SketchyBar event signals configured"
-else
-  echo "yabai: SketchyBar not ready - skipping event integration" >&2
-fi
+# Remove any previously registered labeled signals
+for label in \
+  sketchybar_space_created \
+  sketchybar_space_destroyed \
+  sketchybar_space_changed \
+  sketchybar_display_added \
+  sketchybar_display_removed \
+  sketchybar_window_focused \
+  sketchybar_window_created \
+  sketchybar_window_destroyed \
+  sketchybar_window_moved \
+  sketchybar_window_minimized \
+  sketchybar_window_deminimized \
+  sketchybar_application_hidden \
+  sketchybar_application_visible; do
+  "$YABAI_BIN" -m signal --remove "$label" >/dev/null 2>&1 || true
+done
+
+# Space/display topology -> SketchyBar
+"$YABAI_BIN" -m signal --add label=sketchybar_space_created   event=space_created   action="$YABAI_BIN -m space --layout bsp; $SKETCHYBAR_BIN --trigger pf_space_change" || true
+"$YABAI_BIN" -m signal --add label=sketchybar_space_destroyed event=space_destroyed action="$SKETCHYBAR_BIN --trigger pf_space_change" || true
+"$YABAI_BIN" -m signal --add label=sketchybar_space_changed   event=space_changed   action="$SKETCHYBAR_BIN --trigger pf_space_change" || true
+"$YABAI_BIN" -m signal --add label=sketchybar_display_added   event=display_added   action="$SKETCHYBAR_BIN --trigger pf_space_change" || true
+"$YABAI_BIN" -m signal --add label=sketchybar_display_removed event=display_removed action="$SKETCHYBAR_BIN --trigger pf_space_change" || true
+
+# Window focus -> SketchyBar (rely on configured opacity to avoid flicker)
+"$YABAI_BIN" -m signal --add label=sketchybar_window_focused event=window_focused action="$SKETCHYBAR_BIN --trigger pf_window_focus" || true
+
+# Window lifecycle/minimize affect per-space app icons; trigger a space refresh
+"$YABAI_BIN" -m signal --add label=sketchybar_window_created    event=window_created    action="$SKETCHYBAR_BIN --trigger pf_space_change" || true
+"$YABAI_BIN" -m signal --add label=sketchybar_window_destroyed  event=window_destroyed  action="$SKETCHYBAR_BIN --trigger pf_space_change" || true
+"$YABAI_BIN" -m signal --add label=sketchybar_window_minimized  event=window_minimized  action="$SKETCHYBAR_BIN --trigger pf_space_change" || true
+"$YABAI_BIN" -m signal --add label=sketchybar_window_deminimized event=window_deminimized action="$SKETCHYBAR_BIN --trigger pf_space_change" || true
+"$YABAI_BIN" -m signal --add label=sketchybar_window_moved      event=window_moved      action="$SKETCHYBAR_BIN --trigger pf_space_change" || true
+"$YABAI_BIN" -m signal --add label=sketchybar_application_hidden  event=application_hidden  action="$SKETCHYBAR_BIN --trigger pf_space_change" || true
+"$YABAI_BIN" -m signal --add label=sketchybar_application_visible event=application_visible action="$SKETCHYBAR_BIN --trigger pf_space_change" || true
+
+# Window topology changes are handled by SketchyBar built-in events
+echo "yabai: SketchyBar event signals configured"
 
 # --- Smart Window Management Signals ----------------------------------------
-# Filter approach: Only float genuinely non-interactive windows
-yabai -m signal --add event=window_created action="
-  info=\$(yabai -m query --windows --window \$YABAI_WINDOW_ID)
-  is_floating=\$(echo \"\$info\" | jq -r '.\"is-floating\"')
-  can_resize=\$(echo \"\$info\" | jq -r '.\"can-resize\"')
-  can_move=\$(echo \"\$info\" | jq -r '.\"can-move\"')
+# Filter approach: Ensure genuinely non-interactive windows become floating
+"$YABAI_BIN" -m signal --add event=window_created action="
+  info=\$($YABAI_BIN -m query --windows --window \$YABAI_WINDOW_ID)
+  is_floating=\$(echo \"\$info\" | $JQ_BIN -r '.\"is-floating\"')
+  can_resize=\$(echo \"\$info\" | $JQ_BIN -r '.\"can-resize\"')
+  can_move=\$(echo \"\$info\" | $JQ_BIN -r '.\"can-move\"')
+  role=\$(echo \"\$info\" | $JQ_BIN -r '.role // \"\"')
+  subrole=\$(echo \"\$info\" | $JQ_BIN -r '.subrole // \"\"')
+  w=\$(echo \"\$info\" | $JQ_BIN -r '.frame.w // 0')
+  h=\$(echo \"\$info\" | $JQ_BIN -r '.frame.h // 0')
 
-  # Trust yabai's default management decision
-  [ \"\$is_floating\" = 'false' ] && exit 0
+  # If already floating, keep as-is
+  [ \"\$is_floating\" = 'true' ] && exit 0
 
-  # Skip windows with normal interaction capabilities
-  [ \"\$can_resize\" = 'true' ] && [ \"\$can_move\" = 'true' ] && exit 0
+  # Float truly non-interactive OR transient/small utility windows
+  if [ \"\$can_resize\" = 'false' ] && [ \"\$can_move\" = 'false' ]; then
+    $YABAI_BIN -m window \$YABAI_WINDOW_ID --toggle float
+    exit 0
+  fi
 
-  # Float truly non-interactive windows only
-  [ \"\$can_resize\" = 'false' ] && [ \"\$can_move\" = 'false' ] && yabai -m window \$YABAI_WINDOW_ID --toggle float
+  # Common dialogs/sheets/system dialogs indicated by Accessibility roles
+  case \"\$role:\$subrole\" in
+    AXWindow:AXDialog|AXWindow:AXSheet|AXWindow:AXSystemDialog)
+      $YABAI_BIN -m window \$YABAI_WINDOW_ID --toggle float
+      exit 0
+      ;;
+  esac
+
+  # Heuristic: very small windows (e.g., rating prompts) should float
+  if [ \"\${w:-0}\" -lt 400 ] || [ \"\${h:-0}\" -lt 260 ]; then
+    $YABAI_BIN -m window \$YABAI_WINDOW_ID --toggle float
+  fi
 "
 
 # --- Core Configuration -----------------------------------------------------
-yabai -m config debug_output on
+"$YABAI_BIN" -m config debug_output on
 
 # --- Layout & Spacing -------------------------------------------------------
-yabai -m config layout bsp                      \
+"$YABAI_BIN" -m config layout bsp                      \
                 window_placement second_child   \
                 split_ratio 0.50                \
                 auto_balance on
 
-yabai -m config top_padding 4       \
+"$YABAI_BIN" -m config top_padding 4       \
                 bottom_padding 4    \
                 left_padding 4      \
                 right_padding 4     \
                 window_gap 4
 
 # --- External Bar Integration -----------------------------------------------
-yabai -m config external_bar all:48:0 \
+"$YABAI_BIN" -m config external_bar all:48:0 \
                 menubar_opacity 1.0
 
 # --- Initialize Spaces ------------------------------------------------------
-SPACE_DATA=$(yabai -m query --spaces)
-SPACE_COUNT=$(echo "$SPACE_DATA" | jq length)
+SPACE_DATA="$("$YABAI_BIN" -m query --spaces)"
+SPACE_COUNT=$(echo "$SPACE_DATA" | "$JQ_BIN" length)
 
-while read -r space; do
-    yabai -m space "$space" --layout bsp 2>/dev/null || true
-done < <(echo "$SPACE_DATA" | jq -r '.[].index')
+echo "$SPACE_DATA" | "$JQ_BIN" -r '.[].index' | while IFS= read -r space; do
+    "$YABAI_BIN" -m space "$space" --layout bsp 2>/dev/null || true
+done
 
 echo "yabai: ✓ Configured $SPACE_COUNT spaces"
 
 # --- Sync SketchyBar --------------------------------------------------------
-if [ "${SKETCHYBAR_READY:-false}" = true ]; then
-  sketchybar --trigger space_change
-  echo "yabai: Initial SketchyBar sync completed"
-fi
+# Fire initial triggers regardless of current SketchyBar state; these are best-effort.
+"$SKETCHYBAR_BIN" --trigger pf_space_change   || true
+"$SKETCHYBAR_BIN" --trigger pf_window_focus   || true
+echo "yabai: Initial SketchyBar sync fired"
 
 # --- Window Behavior & Appearance (Conditional) ----------------------------
 # Only enable advanced features if scripting addition is loaded
 if [ "$SA_LOADED" = true ]; then
-  yabai -m config window_opacity on                   \
+  "$YABAI_BIN" -m config window_opacity on                   \
                   window_opacity_duration 0.25        \
                   active_window_opacity 0.95          \
                   normal_window_opacity 0.80          \
                   window_shadow float                 \
                   window_animation_duration 0.0
 else
-  yabai -m config window_opacity off                  \
+  "$YABAI_BIN" -m config window_opacity off                  \
                   window_shadow on                    \
                   window_animation_duration 0.0
 fi
 
-yabai -m config insert_feedback_color 0xff50fa7b    \
+"$YABAI_BIN" -m config insert_feedback_color 0xff50fa7b    \
                 window_zoom_persist on              \
                 window_origin_display default
 
-yabai -m config focus_follows_mouse off \
+"$YABAI_BIN" -m config focus_follows_mouse off \
                 mouse_follows_focus off \
                 mouse_modifier alt      \
                 mouse_action1 move      \
@@ -191,93 +244,101 @@ yabai -m config focus_follows_mouse off \
 
 # --- Application Rules ------------------------------------------------------
 # System Applications - Core macOS components with centered positioning
-yabai -m rule --add app="^System Settings$" manage=off sub-layer=below grid=10:10:2:2:6:6
-yabai -m rule --add app="^System Preferences$" manage=off sub-layer=below grid=10:10:2:2:6:6
-yabai -m rule --add app="^System Information$" manage=off sub-layer=below grid=10:10:2:2:6:6
-yabai -m rule --add app="^Activity Monitor$" manage=off sub-layer=below grid=10:10:2:1:6:8
-yabai -m rule --add app="^Archive Utility$" manage=off sub-layer=below grid=10:10:3:3:4:4
-yabai -m rule --add app="^Installer$" manage=off sub-layer=below grid=10:10:2:2:6:6
-yabai -m rule --add app="^Software Update$" manage=off sub-layer=below grid=10:10:3:3:4:4
-yabai -m rule --add app="^Finder$" manage=off sub-layer=below grid=10:10:1:1:8:8
-yabai -m rule --add app="^Migration Assistant$" manage=off sub-layer=below grid=10:10:2:2:6:6
-yabai -m rule --add app="^Disk Utility$" manage=off sub-layer=below grid=10:10:2:2:6:6
+"$YABAI_BIN" -m rule --add app="^System Settings$" manage=off sub-layer=below grid=10:10:2:2:6:6
+"$YABAI_BIN" -m rule --add app="^System Preferences$" manage=off sub-layer=below grid=10:10:2:2:6:6
+"$YABAI_BIN" -m rule --add app="^System Information$" manage=off sub-layer=below grid=10:10:2:2:6:6
+"$YABAI_BIN" -m rule --add app="^Activity Monitor$" manage=off sub-layer=below grid=10:10:2:1:6:8
+"$YABAI_BIN" -m rule --add app="^Archive Utility$" manage=off sub-layer=below grid=10:10:3:3:4:4
+"$YABAI_BIN" -m rule --add app="^Installer$" manage=off sub-layer=below grid=10:10:2:2:6:6
+"$YABAI_BIN" -m rule --add app="^Software Update$" manage=off sub-layer=below grid=10:10:3:3:4:4
+"$YABAI_BIN" -m rule --add app="^Finder$" manage=off sub-layer=below grid=10:10:1:1:8:8
+"$YABAI_BIN" -m rule --add app="^Migration Assistant$" manage=off sub-layer=below grid=10:10:2:2:6:6
+"$YABAI_BIN" -m rule --add app="^Disk Utility$" manage=off sub-layer=below grid=10:10:2:2:6:6
 
 # Utilities - Small tools with consistent grid positioning
-yabai -m rule --add app="^Calculator$" manage=off sub-layer=below grid=10:10:7:1:3:4
-yabai -m rule --add app="^Dictionary$" manage=off sub-layer=below grid=10:10:2:2:6:6
-yabai -m rule --add app="^Karabiner-Elements$" manage=off sub-layer=below grid=10:10:1:1:8:8
-yabai -m rule --add app="^QuickTime Player$" manage=off sub-layer=below grid=10:10:2:2:6:6
-yabai -m rule --add app="^Preview$" manage=off sub-layer=below grid=10:10:1:1:8:8
-yabai -m rule --add app="^1Password$" manage=off sub-layer=above sticky=on grid=10:10:3:3:4:4
-yabai -m rule --add app="^Digital Colormeter$" manage=off sub-layer=below grid=10:10:6:2:4:3
-yabai -m rule --add app="^ColorSync Utility$" manage=off sub-layer=below grid=10:10:3:3:4:4
-yabai -m rule --add app="^Font File Browser$" manage=off sub-layer=below grid=10:10:2:2:6:6
+"$YABAI_BIN" -m rule --add app="^Calculator$" manage=off sub-layer=below grid=10:10:7:1:3:4
+"$YABAI_BIN" -m rule --add app="^Dictionary$" manage=off sub-layer=below grid=10:10:2:2:6:6
+"$YABAI_BIN" -m rule --add app="^Karabiner-Elements$" manage=off sub-layer=below grid=10:10:1:1:8:8
+"$YABAI_BIN" -m rule --add app="^QuickTime Player$" manage=off sub-layer=below grid=10:10:2:2:6:6
+"$YABAI_BIN" -m rule --add app="^Preview$" manage=off sub-layer=below grid=10:10:1:1:8:8
+"$YABAI_BIN" -m rule --add app="^1Password$" manage=off sub-layer=above sticky=on grid=10:10:3:3:4:4
+"$YABAI_BIN" -m rule --add app="^Digital Colormeter$" manage=off sub-layer=below grid=10:10:6:2:4:3
+"$YABAI_BIN" -m rule --add app="^ColorSync Utility$" manage=off sub-layer=below grid=10:10:3:3:4:4
+"$YABAI_BIN" -m rule --add app="^Font File Browser$" manage=off sub-layer=below grid=10:10:2:2:6:6
 
 # Modern productivity tools with smart positioning
-yabai -m rule --add app="^Raycast$" manage=off sub-layer=below grid=10:10:3:1:4:6
-yabai -m rule --add app="^CleanShot X$" manage=off sub-layer=above
-yabai -m rule --add app="^AirBuddy$" manage=off sub-layer=below grid=10:10:7:7:3:2
-yabai -m rule --add app="^AlDente$" manage=off sub-layer=below grid=10:10:7:7:3:2
-yabai -m rule --add app="^BetterMouse$" manage=off sub-layer=below grid=10:10:2:2:6:6
-yabai -m rule --add app="^BetterTouchTool$" manage=off sub-layer=below grid=10:10:1:1:8:8
-yabai -m rule --add app="^Docker Desktop$" manage=off sub-layer=below grid=10:10:1:1:8:8
-yabai -m rule --add app="^Hammerspoon$" manage=off sub-layer=below grid=10:10:2:2:6:6
+"$YABAI_BIN" -m rule --add app="^Raycast$" manage=off sub-layer=below grid=10:10:3:1:4:6
+"$YABAI_BIN" -m rule --add app="^CleanShot X$" manage=off sub-layer=above
+"$YABAI_BIN" -m rule --add app="^AirBuddy$" manage=off sub-layer=below grid=10:10:7:7:3:2
+"$YABAI_BIN" -m rule --add app="^AlDente$" manage=off sub-layer=below grid=10:10:7:7:3:2
+"$YABAI_BIN" -m rule --add app="^BetterMouse$" manage=off sub-layer=below grid=10:10:2:2:6:6
+"$YABAI_BIN" -m rule --add app="^BetterTouchTool$" manage=off sub-layer=below grid=10:10:1:1:8:8
+"$YABAI_BIN" -m rule --add app="^Docker Desktop$" manage=off sub-layer=below grid=10:10:1:1:8:8
+"$YABAI_BIN" -m rule --add app="^Hammerspoon$" manage=off sub-layer=below grid=10:10:2:2:6:6
 
 # Communication & Media Apps with consistent side positioning
-yabai -m rule --add app="^Discord$" manage=off sub-layer=below grid=10:10:6:0:4:10
-yabai -m rule --add app="^Messages$" manage=off sub-layer=below grid=10:10:5:0:5:10
-yabai -m rule --add app="^Telegram$" manage=off sub-layer=below grid=10:10:7:2:3:6
-yabai -m rule --add app="^WhatsApp$" manage=off sub-layer=below grid=10:10:7:2:3:6
-yabai -m rule --add app="^zoom.us$" manage=off sub-layer=below grid=10:10:2:2:6:6
-yabai -m rule --add app="^Spotify$" manage=off sub-layer=below grid=10:10:2:7:6:3
+"$YABAI_BIN" -m rule --add app="^Discord$" manage=off sub-layer=below grid=10:10:6:0:4:10
+"$YABAI_BIN" -m rule --add app="^Messages$" manage=off sub-layer=below grid=10:10:5:0:5:10
+"$YABAI_BIN" -m rule --add app="^Telegram$" manage=off sub-layer=below grid=10:10:7:2:3:6
+"$YABAI_BIN" -m rule --add app="^WhatsApp$" manage=off sub-layer=below grid=10:10:7:2:3:6
+"$YABAI_BIN" -m rule --add app="^zoom.us$" manage=off sub-layer=below grid=10:10:2:2:6:6
+"$YABAI_BIN" -m rule --add app="^Spotify$" manage=off sub-layer=below grid=10:10:2:7:6:3
 
 # Creative & Design Apps
-yabai -m rule --add app="^Blender$" manage=off sub-layer=below
-yabai -m rule --add app="^Adobe Photoshop 2025$" manage=off sub-layer=below grid=10:10:0:0:10:10
-yabai -m rule --add app="^Adobe Illustrator 2025$" manage=off sub-layer=below grid=10:10:0:0:10:10
-yabai -m rule --add app="^Adobe After Effects 2025$" manage=off sub-layer=below grid=10:10:0:0:10:10
+"$YABAI_BIN" -m rule --add app="^Blender$" manage=off sub-layer=below
+"$YABAI_BIN" -m rule --add app="^Adobe Photoshop 2025$" manage=off sub-layer=below grid=10:10:0:0:10:10
+"$YABAI_BIN" -m rule --add app="^Adobe Illustrator 2025$" manage=off sub-layer=below grid=10:10:0:0:10:10
+"$YABAI_BIN" -m rule --add app="^Adobe After Effects 2025$" manage=off sub-layer=below grid=10:10:0:0:10:10
 
 # Development Tools
-yabai -m rule --add app="^Console$" manage=off sub-layer=below
-yabai -m rule --add app="^WezTerm$" manage=on
-yabai -m rule --add app="^Visual Studio Code$" manage=on
-yabai -m rule --add app="^Adobe Creative Cloud$" manage=off sub-layer=below grid=10:10:1:1:8:8
+"$YABAI_BIN" -m rule --add app="^Console$" manage=off sub-layer=below
+"$YABAI_BIN" -m rule --add app="^WezTerm$" manage=on
+"$YABAI_BIN" -m rule --add app="^Visual Studio Code$" manage=on
+"$YABAI_BIN" -m rule --add app="^Adobe Creative Cloud$" manage=off sub-layer=below grid=10:10:1:1:8:8
 
 # Essential Universal Rules - Minimal PIP fixes only
-yabai -m rule --add subrole="AXSystemFloatingWindow" manage=off sticky=on sub-layer=above
+"$YABAI_BIN" -m rule --add subrole="AXSystemFloatingWindow" manage=off sticky=on sub-layer=above
 # FIXED: window_type is not a valid yabai rule property - use subrole for window types
 # OLD: yabai -m rule --add window_type="^(dialog|utility|toolbar|splash)$" manage=off sub-layer=below
 # NEW: Use subrole to catch dialog and utility windows (common accessibility subroles)
-yabai -m rule --add subrole="^AX(Dialog|Sheet)$" manage=off sub-layer=below
-yabai -m rule --add subrole="^AXSystemDialog$" manage=off sub-layer=below
-yabai -m rule --add role="^AXWindow$" subrole="^AXUnknown$" manage=off sub-layer=below
-yabai -m rule --add title="(Preferences|Settings|Options|Configuration|About|Library|Queue)" manage=off sub-layer=below
-yabai -m rule --add title="^(General|(Tab|Password|Website|Extension)s|AutoFill|Se(arch|curity)|Privacy|Advance)$" manage=off sub-layer=below
+"$YABAI_BIN" -m rule --add subrole="^AX(Dialog|Sheet)$" manage=off sub-layer=below
+"$YABAI_BIN" -m rule --add subrole="^AXSystemDialog$" manage=off sub-layer=below
+"$YABAI_BIN" -m rule --add role="^AXWindow$" subrole="^AXUnknown$" manage=off sub-layer=below
+"$YABAI_BIN" -m rule --add title="(Preferences|Settings|Options|Configuration|About|Library|Queue)" manage=off sub-layer=below
+"$YABAI_BIN" -m rule --add title="^(General|(Tab|Password|Website|Extension)s|AutoFill|Se(arch|curity)|Privacy|Advance)$" manage=off sub-layer=below
 
 # --- Apply Rules to Existing Windows ----------------------------------------
 # CRITICAL: Rules only apply at window creation time. Force application to existing windows.
-yabai -m rule --apply
+"$YABAI_BIN" -m rule --apply
 echo "yabai: ✓ Rules applied to existing windows"
 
 # --- Validation & Startup ---------------------------------------------------
-if yabai -m query --windows >/dev/null 2>&1; then
+if "$YABAI_BIN" -m query --windows >/dev/null 2>&1; then
     echo "yabai: ✓ Configuration loaded ($SPACE_COUNT spaces configured)"
 
     sleep 0.5
     pgrep -x sketchybar >/dev/null && echo "yabai: ✓ SketchyBar active" || echo "yabai: ! SketchyBar missing" >&2
     pgrep -x skhd >/dev/null && echo "yabai: ✓ skhd active" || echo "yabai: ! skhd missing" >&2
-    pgrep -f borders >/dev/null && echo "yabai: ✓ JankyBorders active" || echo "yabai: ! JankyBorders missing" >&2
+    if pgrep -f borders >/dev/null; then
+      echo "yabai: ✓ JankyBorders active"
+    else
+      if [ -x "$HOME/.config/borders/bordersrc" ]; then
+        PATH="/opt/homebrew/bin:/usr/local/bin:$PATH" "$HOME/.config/borders/bordersrc" >/dev/null 2>&1 &
+        echo "yabai: ✓ JankyBorders started"
+      else
+        echo "yabai: ! JankyBorders missing" >&2
+      fi
+    fi
 
     # Critical: Force initial SketchyBar sync after all services are ready
     sleep 1.0
     if pgrep -x sketchybar >/dev/null; then
-      sketchybar --trigger space_change 2>/dev/null || true
-      sketchybar --trigger windows_on_spaces 2>/dev/null || true 
-      sketchybar --trigger window_focus 2>/dev/null || true
+      "$SKETCHYBAR_BIN" --trigger pf_space_change 2>/dev/null || true
+      "$SKETCHYBAR_BIN" --trigger pf_window_focus 2>/dev/null || true
       echo "yabai: ✓ SketchyBar events synchronized"
     fi
 
-    yabai -m config window_opacity_duration 0.25
+    "$YABAI_BIN" -m config window_opacity_duration 0.25
     echo "yabai: ✓ System ready"
 else
     echo "yabai: ! Configuration validation failed" >&2

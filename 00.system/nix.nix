@@ -16,8 +16,8 @@
 
 {
   nix = {
-    enable = false; # Use Determinate Nix instead of nix-darwin management
-    package = pkgs.nixVersions.latest;
+    enable = false; # Using Determinate Systems Nix (v3.9.1) - installed via nix-installer
+    # package = pkgs.nixVersions.latest; # Commented out - using Determinate Nix
     settings = {
       # --- Features ---------------------------------------------------------
       experimental-features = [
@@ -26,7 +26,6 @@
         "auto-allocate-uids"
         "ca-derivations"
         "recursive-nix"
-        "fetch-tree" # Faster Git fetching with shallow clones
         "pipe-operators" # |> and <| operators for better syntax
         "fetch-closure" # Fast binary cache imports at eval time
         "dynamic-derivations" # Enhanced derivation management

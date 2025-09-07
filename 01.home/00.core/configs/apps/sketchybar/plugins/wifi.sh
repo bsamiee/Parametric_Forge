@@ -1,301 +1,393 @@
 #!/bin/bash
 # Title         : wifi.sh
-# Author        : Bardia Samiee
+# Author        : Parametric Forge
 # Project       : Parametric Forge
 # License       : MIT
 # Path          : /01.home/00.core/configs/apps/sketchybar/plugins/wifi.sh
 # ----------------------------------------------------------------------------
-# WiFi status monitor with signal strength detection and Control Center integration
+# Wi‑Fi status + preferred networks popup in SketchyBar style
+# Proper separation, hover effects, and minimal polling.
 # shellcheck disable=SC1091
 
-# --- Configuration --------------------------------------------------------
+set -euo pipefail
+
+# --- Configuration ----------------------------------------------------------
 source "$HOME/.config/sketchybar/colors.sh"
 source "$HOME/.config/sketchybar/constants.sh"
 source "$HOME/.config/sketchybar/icons.sh"
-source "$HOME/.config/sketchybar/helpers/interaction-helpers.sh"
 
-# --- Signal Strength Detection -------------------------------------------
-get_signal_strength() {
-  local system_data rssi signal_percent signal_quality signal_color signal_icon
+# --- UI Hover Helpers -------------------------------------------------------
+set_item() { local item="$1"; shift; sketchybar --set "$item" "$@" 2>/dev/null || true; }
+hover_on()  { set_item "$1" background.drawing=on  background.color="$FAINT_GREY"; }
+hover_off() { set_item "$1" background.drawing=off background.color="$TRANSPARENT"; }
 
-  # Extract RSSI from system_profiler output (more reliable than wdutil)
-  system_data="$1"
-  rssi=$(echo "$system_data" | awk '/Signal \/ Noise:/ {gsub(/dBm.*/, "", $4); print $4}')
+# --- Paths / State ----------------------------------------------------------
+PREF_MAP_FILE="/tmp/sketchybar_wifi_pref_map"    # slot|ssid
 
-  # Handle no RSSI data
+# --- Wi‑Fi Helpers ----------------------------------------------------------
+wifi_port() {
+  networksetup -listallhardwareports | awk '/Hardware Port: Wi-Fi/{getline; print $2; exit}'
+}
+
+wifi_power_get() {
+  local port; port=$(wifi_port)
+  networksetup -getairportpower "$port" 2>/dev/null | awk '{print $NF}' | tr '[:upper:]' '[:lower:]'
+}
+
+wifi_power_toggle() {
+  local port p; port=$(wifi_port); p=$(wifi_power_get)
+  if [[ "$p" == "on" ]]; then
+    networksetup -setairportpower "$port" off >/dev/null 2>&1 || true
+  else
+    networksetup -setairportpower "$port" on  >/dev/null 2>&1 || true
+  fi
+}
+
+wifi_current_ssid() {
+  # Prefer airport -I to avoid macOS 15 network permission flakiness
+  local ap ssid port out
+  ap=$(airport_info)
+  if [[ -n "$ap" ]]; then
+    ssid=$(echo "$ap" | awk -F': ' '/ SSID/ {print $2; exit}')
+    echo "${ssid:-}"
+    return
+  fi
+  port=$(wifi_port)
+  out=$(networksetup -getairportnetwork "$port" 2>/dev/null || true)
+  if echo "$out" | grep -q 'You are not associated'; then
+    echo ""
+  else
+    echo "$out" | sed 's/^Current Wi-Fi Network: //'
+  fi
+}
+
+airport_bin() {
+  echo "/System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources/airport"
+}
+
+airport_info() {
+  local bin; bin=$(airport_bin)
+  if [[ -x "$bin" ]]; then
+    "$bin" -I 2>/dev/null || true
+  fi
+}
+
+wifi_system_info() {
+  # Fallback full info (slower)
+  system_profiler SPAirPortDataType 2>/dev/null || true
+}
+
+wifi_signal_from_sysinfo() {
+  # Echo: percent|icon|quality|color
+  local info="$1" rssi pct quality color icon
+  rssi=$(echo "$info" | awk '/Signal \/ Noise:/ {gsub(/dBm.*/, "", $4); print $4; exit}')
   if [[ -z "$rssi" || "$rssi" == "0" ]]; then
-    echo "0|$WIFI_SIGNAL_3|Unknown|$GREY"
-    return
+    echo "0|$WIFI_SIGNAL_3|Unknown|$GREY"; return
   fi
-
-  # Convert RSSI to percentage (typical range: -100 to -30 dBm)
-  # Formula: ((rssi + 100) / 70) * 100, clamped to 0-100
-  signal_percent=$(awk "BEGIN {
-    percent = (($rssi + 100) / 70) * 100;
-    if (percent < 0) percent = 0;
-    if (percent > 100) percent = 100;
-    printf \"%.0f\", percent
-  }")
-
-  # Determine signal quality with proper SF Symbol icons
-  if [[ $signal_percent -ge 70 ]]; then
-    signal_quality="Excellent"
-    signal_color="$GREEN"
-    signal_icon="$WIFI_SIGNAL_3"
-  elif [[ $signal_percent -ge 40 ]]; then
-    signal_quality="Good" 
-    signal_color="$YELLOW"
-    signal_icon="$WIFI_SIGNAL_2"
-  elif [[ $signal_percent -ge 10 ]]; then
-    signal_quality="Fair"
-    signal_color="$ORANGE"
-    signal_icon="$WIFI_SIGNAL_1"
-  else
-    signal_quality="Weak"
-    signal_color="$RED"
-    signal_icon="$WIFI_SIGNAL_1"
-  fi
-
-  echo "$signal_percent|$signal_icon|$signal_quality|$signal_color"
+  pct=$(awk -v r="$rssi" 'BEGIN{p=((r+100)/70)*100; if(p<0)p=0; if(p>100)p=100; printf("%d", p+0.5)}')
+  if (( pct >= 70 )); then quality="Excellent"; color="$GREEN";  icon="$WIFI_SIGNAL_3";
+  elif (( pct >= 40 )); then quality="Good";      color="$YELLOW"; icon="$WIFI_SIGNAL_2";
+  elif (( pct >= 10 )); then quality="Fair";      color="$ORANGE"; icon="$WIFI_SIGNAL_1";
+  else                    quality="Weak";      color="$RED";    icon="$WIFI_SIGNAL_1"; fi
+  echo "$pct|$icon|$quality|$color"
 }
 
-# --- Enhanced Status Detection --------------------------------------------
-get_wifi_status() {
-  local wifi_port wifi_network hotspot ip_address public_ip system_info
-  local icon icon_color signal_data signal_percent signal_icon signal_quality signal_color
-  local channel_info band_suffix
+wifi_signal_from_airport() {
+  # Echo: percent|icon|quality|color using airport -I (fast)
+  local info="$1" rssi pct quality color icon
+  rssi=$(echo "$info" | awk -F': ' '/agrCtlRSSI/ {print $2; exit}')
+  if [[ -z "$rssi" ]]; then
+    echo "0|$WIFI_SIGNAL_3|Unknown|$GREY"; return
+  fi
+  pct=$(awk -v r="$rssi" 'BEGIN{p=((r+100)/70)*100; if(p<0)p=0; if(p>100)p=100; printf("%d", p+0.5)}')
+  if (( pct >= 70 )); then quality="Excellent"; color="$GREEN";  icon="$WIFI_SIGNAL_3";
+  elif (( pct >= 40 )); then quality="Good";      color="$YELLOW"; icon="$WIFI_SIGNAL_2";
+  elif (( pct >= 10 )); then quality="Fair";      color="$ORANGE"; icon="$WIFI_SIGNAL_1";
+  else                    quality="Weak";      color="$RED";    icon="$WIFI_SIGNAL_1"; fi
+  echo "$pct|$icon|$quality|$color"
+}
 
-  # Get WiFi hardware port
-  wifi_port=$(networksetup -listallhardwareports | awk '/Hardware Port: Wi-Fi/{getline; print $2}')
+wifi_band_suffix_from_sysinfo() {
+  local info="$1" ch band
+  ch=$(echo "$info" | awk '/Channel:/ {for(i=1;i<=NF;i++) printf $i" "; print ""; exit}')
+  if echo "$ch" | grep -q '6GHz'; then echo "⁶"; return; fi
+  if echo "$ch" | grep -q '5GHz'; then echo "⁵"; return; fi
+  if echo "$ch" | grep -q '2';    then echo "²"; return; fi
+  echo ""
+}
 
-  # Robust network detection with rich data extraction
-  system_info=$(system_profiler SPAirPortDataType 2>/dev/null)
+wifi_band_suffix_from_airport() {
+  local info="$1" ch
+  # airport prints: "channel: 149,80" or "channel: 1" etc.
+  ch=$(echo "$info" | awk -F': ' '/channel/{print $2; exit}' | awk -F',' '{print $1}' | tr -d ' ')
+  [[ -z "$ch" ]] && { echo ""; return; }
+  # 2.4GHz channels 1-14; 5GHz commonly 36-165; 6GHz often > 180
+  if [[ "$ch" =~ ^[0-9]+$ ]]; then
+    if (( ch >= 1 && ch <= 14 )); then echo "²"; return; fi
+    if (( ch >= 36 && ch <= 165 )); then echo "⁵"; return; fi
+    if (( ch > 165 )); then echo "⁶"; return; fi
+  fi
+  echo ""
+}
 
-  # Method 1: system_profiler (primary - richest data with band info)
-  if wifi_network=$(echo "$system_info" | awk '/Current Network Information:/{found=1; next} found && /:$/{gsub(/:$/, ""); gsub(/^[[:space:]]*/, ""); print; exit}' 2>/dev/null) && [[ -n "$wifi_network" ]]; then
-    # Extract band information from channel data
-    channel_info=$(echo "$system_info" | awk '/Channel:/ {print $2 " " $3; exit}')
+wifi_hotspot_name() {
+  local port; port=$(wifi_port)
+  ipconfig getsummary "$port" 2>/dev/null | awk '/sname/ {print $3; exit}'
+}
 
-  # Method 2: ipconfig fallback
-  elif wifi_network=$(ipconfig getsummary "$wifi_port" 2>/dev/null | awk '/SSID/ {print $3; exit}') && [[ -n "$wifi_network" ]]; then
-    channel_info=""
+wifi_ip_addr() {
+  # IP for the Wi‑Fi interface only
+  local port; port=$(wifi_port)
+  ipconfig getifaddr "$port" 2>/dev/null || true
+}
 
-  # Method 3: networksetup fallback
-  elif wifi_network=$(networksetup -getairportnetwork "$wifi_port" 2>/dev/null | cut -d' ' -f4-) && [[ -n "$wifi_network" && "$wifi_network" != "You are not associated with an AirPort network." ]]; then
-    channel_info=""
+has_internet() {
+  # 0 = online, 1 = offline; cheap 204 endpoint
+  xh --timeout 2s --quiet https://connectivitycheck.gstatic.com/generate_204 >/dev/null 2>&1
+}
 
-  # Method 4: Permission/connection detection
+preferred_networks() {
+  local port; port=$(wifi_port)
+  networksetup -listpreferredwirelessnetworks "$port" 2>/dev/null | tail -n +2 | sed 's/^\s*//'
+}
+
+connect_network() {
+  local ssid="$1" port; port=$(wifi_port)
+  networksetup -setairportnetwork "$port" "$ssid" >/dev/null 2>&1 || true
+}
+
+# --- UI Refreshers ----------------------------------------------------------
+refresh_main() {
+  local info_airport info_sys ssid hotspot ip sig pct icon quality color band online icon_main icon_color
+  info_airport=$(airport_info)
+  info_sys=""
+  ssid=$(wifi_current_ssid)
+  hotspot=$(wifi_hotspot_name)
+  ip=$(wifi_ip_addr)
+  if [[ -n "$info_airport" ]]; then
+    read -r pct icon quality color < <(wifi_signal_from_airport "$info_airport" | tr '|' ' ')
+    band=$(wifi_band_suffix_from_airport "$info_airport")
   else
-    wifi_network=""
-    channel_info=""
+    info_sys=$(wifi_system_info)
+    read -r pct icon quality color < <(wifi_signal_from_sysinfo "$info_sys" | tr '|' ' ')
+    band=$(wifi_band_suffix_from_sysinfo "$info_sys")
   fi
+  online=1; has_internet && online=0 || online=1
 
-  # Determine band suffix from channel info (for popup display)
-  if [[ "$channel_info" =~ 6GHz ]]; then
-    band_suffix="⁶"
-  elif [[ "$channel_info" =~ 5GHz ]]; then
-    band_suffix="⁵"
-  elif [[ "$channel_info" =~ 2GHz ]]; then
-    band_suffix="²"
-  else
-    band_suffix=""
-  fi
-
-  # Get hotspot and IP info
-  hotspot=$(ipconfig getsummary "$wifi_port" | grep sname | awk '{print $3}')
-  ip_address=$(scutil --nwi | grep address | sed 's/.*://' | tr -d ' ' | head -1)
-
-  # Check internet connectivity
-  public_ip=1
-  if curl -m 2 https://ipinfo.io >/dev/null 2>&1; then
-    public_ip=0
-  fi
-
-  # Get signal strength data from system_profiler
-  signal_data=$(get_signal_strength "$system_info")
-  IFS='|' read -r signal_percent signal_icon signal_quality signal_color <<< "$signal_data"
-
-  # Set icon and color based on WiFi state (icon-only display)
   if [[ -n "$hotspot" ]]; then
-    # Personal Hotspot active
-    icon="$WIFI_HOTSPOT"
-    icon_color="$CYAN"
-  elif [[ -n "$wifi_network" ]]; then
-    # Connected to WiFi network - show signal strength via icon
-    if [[ $signal_percent -gt 0 ]]; then
-      icon="$signal_icon"
-      icon_color="$signal_color"
-    else
-      icon="$WIFI_SIGNAL_3"
-      icon_color="$GREEN"
-    fi
-  elif [[ -n "$ip_address" ]]; then
-    # Has IP but no network name
-    icon="$WIFI_SIGNAL_3"
-    icon_color="$PINK"
+    icon_main="$WIFI_HOTSPOT"; icon_color="$CYAN"
+  elif [[ -n "$ssid" ]]; then
+    if (( pct > 0 )); then icon_main="$icon"; icon_color="$color"; else icon_main="$WIFI_SIGNAL_3"; icon_color="$GREEN"; fi
+  elif [[ -n "$ip" ]]; then
+    icon_main="$WIFI_SIGNAL_3"; icon_color="$PINK"
   else
-    # No WiFi connection
-    icon="$WIFI_OFF"
-    icon_color="$RED"
+    icon_main="$WIFI_OFF"; icon_color="$RED"
   fi
 
-  # Handle no internet access
-  if [[ $public_ip != "0" && "$icon" != "$WIFI_OFF" ]]; then
-    icon="$WIFI_ERROR"
-    icon_color="$GREY"
+  if (( online != 0 )) && [[ "$icon_main" != "$WIFI_OFF" ]]; then
+    icon_main="$WIFI_ERROR"; icon_color="$GREY"
   fi
 
-  # Update SketchyBar item (icon-only)
-  apply_instant_change "$NAME" \
-    icon="$icon" \
-    icon.color="$icon_color"
+  set_item wifi icon="$icon_main" icon.color="$icon_color"
+  set_item wifi.header icon="$icon_main" icon.color="$icon_color"
 }
 
-# --- WiFi Information Popup ----------------------------------------------
-show_wifi_popup() {
-  local popup_info popup_details band_text
+set_status_line() {
+  local info_airport info_sys ssid hotspot ip pct icon quality color band online text
+  info_airport=$(airport_info)
+  ssid=$(wifi_current_ssid)
+  hotspot=$(wifi_hotspot_name)
+  ip=$(wifi_ip_addr)
+  if [[ -n "$info_airport" ]]; then
+    read -r pct icon quality color < <(wifi_signal_from_airport "$info_airport" | tr '|' ' ')
+    band=$(wifi_band_suffix_from_airport "$info_airport")
+  else
+    info_sys=$(wifi_system_info)
+    read -r pct icon quality color < <(wifi_signal_from_sysinfo "$info_sys" | tr '|' ' ')
+    band=$(wifi_band_suffix_from_sysinfo "$info_sys")
+  fi
+  online=1; has_internet && online=0 || online=1
 
-  # Build comprehensive popup information
   if [[ -n "$hotspot" ]]; then
-    popup_info="Personal Hotspot: $hotspot"
-  elif [[ -n "$wifi_network" ]]; then
-    popup_info="Connected to: $wifi_network$band_suffix"
-    
-    # Add signal details if available
-    if [[ $signal_percent -gt 0 ]]; then
-      popup_details="Signal: ${signal_percent}% ($signal_quality)"
+    text="Personal Hotspot: $hotspot"
+  elif [[ -n "$ssid" ]]; then
+    text="Connected to: $ssid$band"
+    if (( pct > 0 )); then
+      text+=" • Signal ${pct}% (${quality})"
     fi
-    
-    # Add band information if available
-    if [[ -n "$channel_info" ]]; then
-      # Extract just the band part (e.g., "5GHz" from "56 (5GHz,")
-      band_text=$(echo "$channel_info" | sed 's/.*(\([0-9.]*GHz\).*/\1/')
-      if [[ -n "$popup_details" ]]; then
-        popup_details="$popup_details • $band_text"
-      else
-        popup_details="Band: $band_text"
-      fi
-    fi
-    
-    if [[ -n "$popup_details" ]]; then
-      popup_info="$popup_info\n$popup_details"
-    fi
-    
-    # Add internet status if no connectivity
-    if [[ $public_ip != "0" ]]; then
-      popup_info="$popup_info\n⚠️ No Internet Connection"
-    fi
-  elif [[ -n "$ip_address" ]]; then
-    popup_info="Connected (network name unavailable)"
+  elif [[ -n "$ip" ]]; then
+    text="Connected (network name unavailable)"
   else
-    popup_info="WiFi: Offline"
-    return  # No point showing menu when offline
+    text="Wi‑Fi: Offline"
   fi
-
-  # Show native macOS dialog with options
-  local choice
-  choice=$(/usr/bin/osascript << EOF
-    display dialog "$popup_info" buttons {"Control Center", "Select Network", "Cancel"} default button "Cancel" with title "WiFi Status"
-    button returned of result
-EOF
-  2>/dev/null)
-  
-  case "$choice" in
-    "Control Center")
-      if command -v menubar >/dev/null 2>&1; then
-        menubar -s "Control Center,WiFi"
-      else
-        open "x-apple.systempreferences:com.apple.preference.network"
-      fi
-      ;;
-    "Select Network")
-      handle_network_selection
-      ;;
-  esac
+  if (( online != 0 )) && [[ -n "$ssid$ip$hotspot" ]]; then
+    text+=" • No Internet"
+  fi
+  set_item wifi.status label="$text" label.color="$PINK"
 }
 
-# --- Network Selection Handler -------------------------------------------
-handle_network_selection() {
-  local wifi_port networks network_choice
+hide_pref_rows() {
+  for i in $(seq 1 10); do set_item wifi.net."$i" drawing=off; done
+}
 
-  wifi_port=$(networksetup -listallhardwareports | awk '/Hardware Port: Wi-Fi/{getline; print $2}')
-
-  # Get preferred networks list
-  networks=$(networksetup -listpreferredwirelessnetworks "$wifi_port" 2>/dev/null | tail -n +2 | sed 's/^[[:space:]]*//')
-
-  if [[ -z "$networks" ]]; then
-    # No preferred networks found
-    /usr/bin/osascript -e 'display alert "No WiFi Networks" message "No preferred networks found. Use System Settings to add networks." buttons {"OK"} default button "OK"' >/dev/null 2>&1
-    return
-  fi
-
-  # Create network selection menu using native macOS chooser
-  network_choice=$(/usr/bin/osascript << EOF
-    set networkList to paragraphs of "$networks"
-    set chosenNetwork to choose from list networkList with prompt "Select WiFi Network:" with title "WiFi Networks"
-    if chosenNetwork is not false then
-      return item 1 of chosenNetwork
+scan_networks_map() {
+  # Build lines: x|SSID|RSSI using airport -s; keep strongest per SSID
+  local ap line ssid rssi best tmpfile
+  ap=$(airport_bin)
+  [[ ! -x "$ap" ]] && return
+  tmpfile="/tmp/sketchybar_wifi_scan.$USER"
+  : > "$tmpfile" || true
+  "$ap" -s 2>/dev/null | tail -n +2 | while IFS= read -r line; do
+    # SSID can contain spaces; airport aligns columns. Take first 32 chars as SSID field and trim
+    ssid=$(echo "$line" | awk '{print substr($0,1,32)}' | sed 's/[[:space:]]*$//')
+    rssi=$(echo "$line" | awk '{print $(NF-5)}')
+    [[ -z "$ssid" || -z "$rssi" ]] && continue
+    if grep -Fq "|$ssid|" "$tmpfile" 2>/dev/null; then
+      best=$(awk -F'|' -v s="$ssid" '$2==s{print $3}' "$tmpfile" 2>/dev/null)
+      if (( rssi > best )); then
+        sed -i '' -e "/|$ssid|/d" "$tmpfile" 2>/dev/null || true
+        printf "x|%s|%s\n" "$ssid" "$rssi" >> "$tmpfile"
+      fi
     else
-      return ""
-    end if
-EOF
-  2>/dev/null)
+      printf "x|%s|%s\n" "$ssid" "$rssi" >> "$tmpfile"
+    fi
+  done
+  cat "$tmpfile" 2>/dev/null || true
+}
 
-  # Connect to selected network if user made a choice
-  if [[ -n "$network_choice" && "$network_choice" != "false" ]]; then
-    # Attempt connection
-    networksetup -setairportnetwork "$wifi_port" "$network_choice" 2>/dev/null
+wifi_icon_for_pct() {
+  local pct="$1"
+  if (( pct >= 70 )); then echo "$WIFI_SIGNAL_3"; return; fi
+  if (( pct >= 40 )); then echo "$WIFI_SIGNAL_2"; return; fi
+  if (( pct >= 10 )); then echo "$WIFI_SIGNAL_1"; return; fi
+  echo "$WIFI_OFF"
+}
 
-    # Brief pause for connection attempt
-    sleep 2
-
-    # Refresh status display
-    get_wifi_status
+fill_preferred_rows() {
+  : > "$PREF_MAP_FILE" || true
+  local ssid cur i=1 color state rssi pct icon scan
+  cur=$(wifi_current_ssid)
+  scan=$(scan_networks_map || true)
+  while IFS= read -r ssid; do
+    [[ -z "$ssid" ]] && continue
+    rssi=$(echo "$scan" | awk -F'|' -v s="$ssid" '$2==s{print $3; exit}')
+    if [[ -n "$rssi" ]]; then
+      pct=$(awk -v r="$rssi" 'BEGIN{p=((r+100)/70)*100; if(p<0)p=0; if(p>100)p=100; printf("%d", p+0.5)}')
+      icon=$(wifi_icon_for_pct "$pct")
+      color="$WHITE"
+    else
+      pct=0; icon="$WIFI_OFF"; color="$PRIMARY_GREY"
+    fi
+    state=""; [[ "$ssid" == "$cur" ]] && state="Connected"
+    set_item wifi.net.$i \
+      drawing=on \
+      icon="$icon" \
+      icon.color="$color" \
+      icon.font="$SYMBOL_FONT:$MEDIUM_WEIGHT:$SIZE_MEDIUM" \
+      icon.padding_left="$PADDINGS_MEDIUM" \
+      label="${ssid}${state:+  ($state)}" \
+      label.color="$color" \
+      label.padding_left="$PADDINGS_MEDIUM"
+    echo "$i|$ssid" >> "$PREF_MAP_FILE"
+    i=$((i+1)); [[ $i -gt 10 ]] && break
+  done < <(preferred_networks)
+  while (( i <= 10 )); do set_item wifi.net.$i drawing=off; i=$((i+1)); done
+  # Ensure header visibility aligns with content
+  if [[ -s "$PREF_MAP_FILE" ]]; then
+    set_item wifi.prefhdr drawing=on
+  else
+    set_item wifi.prefhdr drawing=off
   fi
 }
 
-# --- Click Handler --------------------------------------------------------
-handle_wifi_click() {
-  local wifi_port wifi_network
+refresh_all() {
+  local info_airport info_sys ssid hotspot ip pct icon quality color band online icon_main icon_color text
+  info_airport=$(airport_info)
+  ssid=$(wifi_current_ssid)
+  hotspot=$(wifi_hotspot_name)
+  ip=$(wifi_ip_addr)
+  if [[ -n "$info_airport" ]]; then
+    read -r pct icon quality color < <(wifi_signal_from_airport "$info_airport" | tr '|' ' ')
+    band=$(wifi_band_suffix_from_airport "$info_airport")
+  else
+    info_sys=$(wifi_system_info)
+    read -r pct icon quality color < <(wifi_signal_from_sysinfo "$info_sys" | tr '|' ' ')
+    band=$(wifi_band_suffix_from_sysinfo "$info_sys")
+  fi
+  online=0
+  if [[ -n "$ssid$hotspot$ip" ]]; then
+    has_internet || online=1
+  fi
 
-  case "$BUTTON" in
-    "left")
-      # Left click: Show rich information popup with actions
-      show_wifi_popup
-      ;;
-    "right")
-      # Right click: Toggle WiFi on/off
-      wifi_port=$(networksetup -listallhardwareports | awk '/Hardware Port: Wi-Fi/{getline; print $2}')
-      wifi_network=$(ipconfig getsummary "$wifi_port" | awk -F': ' '/ SSID : / {print $2}')
+  if [[ -n "$hotspot" ]]; then
+    icon_main="$WIFI_HOTSPOT"; icon_color="$CYAN"; text="Personal Hotspot: $hotspot"
+  elif [[ -n "$ssid" ]]; then
+    if (( pct > 0 )); then icon_main="$icon"; icon_color="$color"; else icon_main="$WIFI_SIGNAL_3"; icon_color="$GREEN"; fi
+    text="Connected to: $ssid$band"; (( pct > 0 )) && text+=" • Signal ${pct}% (${quality})"
+  elif [[ -n "$ip" ]]; then
+    icon_main="$WIFI_SIGNAL_3"; icon_color="$PINK"; text="Connected (network name unavailable)"
+  else
+    icon_main="$WIFI_OFF"; icon_color="$RED"; text="Wi‑Fi: Offline"
+  fi
+  if (( online != 0 )) && [[ "$icon_main" != "$WIFI_OFF" ]]; then
+    icon_main="$WIFI_ERROR"; icon_color="$GREY"; text+=" • No Internet"
+  fi
 
-      if [[ -n "$wifi_network" ]]; then
-        # WiFi is on, turn it off
-        sudo ifconfig "$wifi_port" down 2>/dev/null || networksetup -setairportpower "$wifi_port" off
-      else
-        # WiFi is off, turn it on
-        sudo ifconfig "$wifi_port" up 2>/dev/null || networksetup -setairportpower "$wifi_port" on
-      fi
-
-      # Update status after toggle
-      sleep 1
-      get_wifi_status
-      ;;
-  esac
+  sketchybar \
+    --set wifi icon="$icon_main" icon.color="$icon_color" \
+    --set wifi.header icon="$icon_main" icon.color="$icon_color" \
+    --set wifi.status label="$text" label.color="$PINK"
 }
 
-# --- Event Handler --------------------------------------------------------
-case "$SENDER" in
-  "mouse.entered")
-    handle_mouse_event "$NAME" "$SENDER"
+# --- Entrypoints ------------------------------------------------------------
+case "${1:-}" in
+  power_toggle)
+    wifi_power_toggle
+    sleep 1
+    refresh_all
+    exit 0
     ;;
-  "mouse.exited")
-    handle_mouse_event "$NAME" "$SENDER"
+  populate)
+    fill_preferred_rows
+    exit 0
     ;;
-  "mouse.clicked")
-    handle_mouse_event "$NAME" "$SENDER"
-    handle_wifi_click
+esac
+
+# --- Event Handling ---------------------------------------------------------
+case "$NAME" in
+  wifi)
+    case "${SENDER:-}" in
+      mouse.entered) hover_on "$NAME" ;;
+      mouse.exited)  hover_off "$NAME" ;;
+      *) refresh_all ;;
+    esac
     ;;
-  "wifi_change"|*)
-    get_wifi_status
+  wifi.net.*)
+    case "${SENDER:-}" in
+      mouse.clicked)
+        slot=$(echo "$NAME" | awk -F'.' '{print $3}')
+        ssid=$(awk -F'|' -v s="$slot" '$1==s{print $2}' "$PREF_MAP_FILE" 2>/dev/null || true)
+        if [[ -n "$ssid" ]]; then
+          connect_network "$ssid"
+          sleep 2
+          refresh_all
+          fill_preferred_rows
+        fi
+        ;;
+      mouse.entered) hover_on "$NAME" ;;
+      mouse.exited)  hover_off "$NAME" ;;
+    esac
+    ;;
+  wifi.settings)
+    case "${SENDER:-}" in
+      mouse.entered) hover_on "$NAME" ;;
+      mouse.exited)  hover_off "$NAME" ;;
+    esac
+    ;;
+  wifi.header|wifi.status)
+    # no-op; refreshed by parent
+    ;;
+  *)
+    refresh_all
     ;;
 esac

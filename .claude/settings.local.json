@@ -2,7 +2,11 @@
   "permissions": {
     "allow": [
       "mcp__filesystem__read_text_file",
-      "mcp__filesystem__read_text_file"
+      "mcp__filesystem__read_text_file",
+      "WebFetch(domain:felixkratz.github.io)",
+      "Bash(pgrep:*)",
+      "Bash(launchctl:*)",
+      "Read(//Users/bardiasamiee/Library/LaunchAgents/**)"
     ],
     "deny": [],
     "ask": []

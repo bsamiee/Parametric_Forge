@@ -29,7 +29,6 @@ let
     sysadmin = import ./sysadmin.nix { inherit pkgs; };
     devops = import ./devops.nix { inherit pkgs; };
     media = import ./media-tools.nix { inherit pkgs; };
-    aiTools = import ./ai-tools.nix { inherit pkgs; };
     python = import ./python-tools.nix { inherit pkgs; };
     rust = import ./rust-tools.nix { inherit pkgs; };
     node = import ./node-tools.nix { inherit pkgs; };
@@ -49,7 +48,6 @@ in
     allPackageModules.sysadmin
     allPackageModules.devops
     allPackageModules.media
-    allPackageModules.aiTools
 
     # --- Development Languages -------------------------------------
     allPackageModules.python

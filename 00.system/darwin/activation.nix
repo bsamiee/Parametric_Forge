@@ -26,7 +26,6 @@
       '';
       deps = [ ];
     };
-    # Window management dependencies handled by homebrew.nix - no activation scripts needed
     # --- System-Level Spotlight Protection ----------------------------------
     systemSpotlightProtection = {
       text = ''
@@ -108,6 +107,7 @@
       '';
       deps = [ "etc" ];
     };
+
   };
   # --- Shell Initialization -------------------------------------------------
   environment.shellInit = ''

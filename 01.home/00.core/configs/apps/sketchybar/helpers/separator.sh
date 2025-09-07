@@ -41,14 +41,14 @@ add_separator() {
         icon.color="$WHITE"
         icon.font="$SYMBOL_FONT:$MEDIUM_WEIGHT:$SIZE_MEDIUM"
         icon.y_offset=0
-        icon.padding_left="$PADDINGS_SMALL"
-        icon.padding_right="$PADDINGS_SMALL"
+        icon.padding_left="$PADDINGS_MEDIUM"
+        icon.padding_right="$PADDINGS_MEDIUM"
 
         label.drawing=off
         background.drawing=off
 
-        padding_left="$PADDINGS_SMALL"
-        padding_right="$PADDINGS_SMALL"
+        padding_left="$PADDINGS_MEDIUM"
+        padding_right="$PADDINGS_MEDIUM"
     )
 
     # Create separator item

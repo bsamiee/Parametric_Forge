@@ -8,7 +8,10 @@
 # ----------------------------------------------------------------------------
 # Clean SketchyBar configuration with Dracula theme
 
-set -euo pipefail
+set -e
+
+# Ensure Homebrew tools (jq, blueutil, etc.) are on PATH for scripts
+export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
 
 # --- Configuration ----------------------------------------------------------
 source "$HOME/.config/sketchybar/colors.sh"
@@ -25,13 +28,10 @@ bar=(
     border_color="$PRIMARY_WHITE"
     border_width="$BORDER_THIN"
     shadow=on
-    shadow.color="$SHADOW_HEAVY"
-    shadow.angle="$SHADOW_ANGLE"
-    shadow.distance="$SHADOW_DISTANCE"
     position=top
     sticky=on
     padding_right="$PADDINGS_XXLARGE"
-    padding_left="$PADDINGS_MEDIUM"
+    padding_left="$PADDINGS_XXLARGE"
     corner_radius="$RADIUS_LARGE"
     y_offset="$OFFSET_BAR"
     margin="$OFFSET_BAR"
@@ -69,53 +69,73 @@ defaults=(
 sketchybar --default "${defaults[@]}"
 
 # --- Events -----------------------------------------------------------------
-sketchybar --add event space_change \
-    --add event windows_on_spaces \
-    --add event window_focus
+# Define custom events to avoid colliding with built-ins
+sketchybar --add event pf_space_change \
+    --add event pf_window_focus
 
 # --- Left Items -------------------------------------------------------------
-source "$ITEM_DIR/logo.sh"
-source "$ITEM_DIR/menu-items.sh"
+source "$ITEM_DIR/logo.sh" || true
+source "$ITEM_DIR/menu-items.sh" || true
+source "$ITEM_DIR/spaces.sh" || true
 
-# Add separator between menu and spaces
-source "$HOME/.config/sketchybar/helpers/separator.sh"
-add_separator "menu_to_spaces" left "line"
+# Add spaces separator using helper
+source "$HOME/.config/sketchybar/helpers/separator.sh" || true
+add_separator "spaces" left "chevron_right" || true
 
-source "$ITEM_DIR/spaces.sh"
-
-# Add separator between spaces and focus_app
-add_separator "spaces_to_focus_app" left "chevron_right"
-
-source "$ITEM_DIR/focus_app.sh"
+source "$ITEM_DIR/focus_app.sh" || true
 
 # --- Invisible Event Handlers -----------------------------------------------
 # These items handle events but don't display anything
 sketchybar --add item window_state right \
     --set window_state drawing=off \
-    position=right \
     script="$PLUGIN_DIR/window_state.sh" \
-    --subscribe window_state window_focus
+    --subscribe window_state pf_window_focus front_app_switched
 
 sketchybar --add item space_events right \
     --set space_events drawing=off \
-    position=right \
     script="$ITEM_DIR/spaces.sh" \
-    --subscribe space_events windows_on_spaces space_change
+    --subscribe space_events space_change pf_space_change space_windows_change
 
-# --- Right Items -----------------------------------------------------------
-source "$ITEM_DIR/calendar.sh"
-# source "$ITEM_DIR/music.sh"
-# source "$ITEM_DIR/system-monitor.sh"
-# source "$ITEM_DIR/volume.sh"
-# source "$ITEM_DIR/battery.sh"
-# source "$ITEM_DIR/wifi.sh"
-# source "$ITEM_DIR/bluetooth.sh"
-# source "$ITEM_DIR/mic.sh"
-# source "$ITEM_DIR/notifications.sh"
-# source "$ITEM_DIR/packages.sh"
-# source "$ITEM_DIR/controls.sh"
-# source "$ITEM_DIR/control-center.sh"
-# source "$ITEM_DIR/calendar.sh"
+# --- Right Items ------------------------------------------------------------
+source "$ITEM_DIR/wifi.sh" || true
+source "$ITEM_DIR/system-monitor.sh" || true
+source "$ITEM_DIR/mic.sh" || true
+source "$ITEM_DIR/volume.sh" || true
+source "$ITEM_DIR/bluetooth.sh" || true
+source "$ITEM_DIR/battery.sh" || true
+source "$ITEM_DIR/calendar.sh" || true
 
-# --- Initialize -------------------------------------------------------------
+# Desired visual order (left -> right on the right side):
+# system_monitor -> wifi -> bluetooth -> mic -> volume -> battery -> calendar
+# Note: For right-positioned items, "after" places the item visually to the left of the reference.
+# Place system monitor to the left of wifi if present, else to the left of bluetooth.
+sketchybar --move system_monitor before wifi 2>/dev/null || true
+sketchybar --move system_monitor before bluetooth 2>/dev/null || true
+sketchybar --move battery after calendar 2>/dev/null || true
+sketchybar --move volume  after battery  2>/dev/null || true
+sketchybar --move mic     after volume   2>/dev/null || true
+sketchybar --move bluetooth after mic    2>/dev/null || true
+sketchybar --move wifi      after bluetooth 2>/dev/null || true
+
+# --- Initialize State -------------------------------------------------------
+# Proactively initialize spaces and window state to avoid race conditions
+# with yabai/launchd ordering on boot.
+
+# 1) Ensure spaces are created and bracketed even if yabai hasn't triggered yet
+SENDER=pf_space_change "$ITEM_DIR/spaces.sh" >/dev/null 2>&1 || true
+
+# 2) Initialize window-focused app and window state visuals
+"$PLUGIN_DIR/window_state.sh" >/dev/null 2>&1 || true
+
+# 3) Fire synthetic events so per-space scripts can compute labels/icons
+sketchybar --trigger pf_space_change --trigger pf_window_focus || true
+
+# 4) Final update pass
 sketchybar --update
+
+# Guard: clear any accidental initial hover state on calendar bracket
+sketchybar --set calendar_group background.drawing=off 2>/dev/null || true
+
+# Smooth out early battery state transitions (e.g., charging→charged)
+# by doing a one-shot refresh shortly after startup.
+(sleep 2; "$PLUGIN_DIR"/battery.sh >/dev/null 2>&1 || true) &

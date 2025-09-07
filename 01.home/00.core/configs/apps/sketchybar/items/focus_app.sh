@@ -11,41 +11,39 @@
 # --- Configuration ----------------------------------------------------------
 source "$HOME/.config/sketchybar/colors.sh"
 source "$HOME/.config/sketchybar/constants.sh"
-source "$HOME/.config/sketchybar/helpers/interaction-helpers.sh"
 
 # --- Front App Configuration ------------------------------------------------
-front_app_config=(
+focus_app_config=(
   position=left
 
-  background.color="$TRANSPARENT"
+  # Match active space indicator (cyan background, black text, thin light border)
+  background.drawing=on
+  background.color="$PRIMARY_CYAN"
   background.border_color="$LIGHT_WHITE"
   background.border_width="$BORDER_THIN"
   background.height="$HEIGHT_ITEM"
   background.corner_radius="$RADIUS_LARGE"
-  background.padding_left="$PADDINGS_MEDIUM"
-  background.padding_right="$PADDINGS_MEDIUM"
-  background.drawing=off
 
   icon.drawing=on
   icon.font="$SYMBOL_FONT:$MEDIUM_WEIGHT:$SIZE_MEDIUM"
-  icon.color="$ORANGE"
+  icon.color="$BLACK"  # default icon color for grid
   icon.padding_left="$PADDINGS_MEDIUM"
   icon.padding_right="$PADDINGS_MEDIUM"
 
-  label.color="$WHITE"
-  label.font="$TEXT_FONT:$MEDIUM_WEIGHT:$SIZE_MEDIUM"
+  label.color="$BLACK"
+  label.font="$TEXT_FONT:$LIGHT_WEIGHT:$SIZE_MEDIUM"
   label.padding_left="$PADDINGS_SMALL"
-  label.padding_right="$PADDINGS_LARGE"
+  label.padding_right="$PADDINGS_MEDIUM"
 
-  padding_left="$PADDINGS_SMALL"
+  padding_left="$PADDINGS_NONE"
   padding_right="$PADDINGS_MEDIUM"
 
   script="$HOME/.config/sketchybar/plugins/window_state.sh"
 
-  associated_display=active
+  display=active
 )
 
 # --- Item Creation ----------------------------------------------------------
-sketchybar --add item front_app left \
-  --set front_app "${front_app_config[@]}" \
-  --subscribe front_app window_focus mouse.entered mouse.exited mouse.exited.global mouse.clicked
+sketchybar --add item focus_app left \
+  --set focus_app "${focus_app_config[@]}" \
+  --subscribe focus_app pf_window_focus front_app_switched mouse.clicked

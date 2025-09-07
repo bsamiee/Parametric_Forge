@@ -127,7 +127,9 @@
     sketchybarDependencies = lib.hm.dag.entryAfter [ "dutiFileAssociations" ] ''
       echo "[Parametric Forge] Setting up SketchyBar dependencies..."
 
-      # State file to track menubar binary installation
+      # SF Symbols installation handled at system level (00.system/darwin/activation.nix)
+
+      # --- Menubar Binary Installation ------------------------------------
       MENUBAR_STATE="${config.xdg.stateHome}/sketchybar-menubar"
       MENUBAR_TARGET="${config.xdg.configHome}/sketchybar/menubar"
       MENUBAR_URL="https://raw.githubusercontent.com/Kcraft059/sketchybar-config/main/menubar"
@@ -193,16 +195,18 @@
         return 1
       }
 
-      # CRITICAL: All Application Support directories (browsers cause massive CPU usage)
-      echo "  [PHASE 1] Protecting all browser and app data..."
+      # Application Support directories - UNBLOCKED for Raycast functionality
+      # Note: This may cause some browser indexing overhead but needed for search
+      echo "  [PHASE 1] Skipping Application Support protection for search functionality..."
       APP_SUPPORT_PROTECTED=0
-      if [ -d "$HOME/Library/Application Support" ]; then
-        while IFS= read -r -d $'\0' dir; do
-          if shield_directory "$dir"; then
-            ((APP_SUPPORT_PROTECTED++))
-          fi
-        done < <(find "$HOME/Library/Application Support" -maxdepth 1 -type d ! -name "Application Support" -print0 2>/dev/null)
-      fi
+      # Commented out: Application Support blanket protection
+      # if [ -d "$HOME/Library/Application Support" ]; then
+      #   while IFS= read -r -d $'\0' dir; do
+      #     if shield_directory "$dir"; then
+      #       ((APP_SUPPORT_PROTECTED++))
+      #     fi
+      #   done < <(find "$HOME/Library/Application Support" -maxdepth 1 -type d ! -name "Application Support" -print0 2>/dev/null)
+      # fi
 
       # Development and build directories
       DEV_DIRS=(
@@ -215,7 +219,6 @@
         "$HOME/.nix-profile"
         "$HOME/Library/Developer"
         "$HOME/Library/Fonts"
-        "$HOME/Documents/99.Github"
         "$HOME/.venv"
       )
 
@@ -248,7 +251,6 @@
       echo "  [PHASE 4] Protecting dynamic project caches..."
       PYTHON_CACHE_COUNT=0
       NODE_MODULES_COUNT=0
-      GIT_COUNT=0
 
       # Single find command with multiple conditions (3x faster)
       while IFS= read -r -d $'\0' dir; do
@@ -259,13 +261,10 @@
           node_modules)
             shield_directory "$dir" && ((NODE_MODULES_COUNT++)) || true
             ;;
-          .git)
-            shield_directory "$dir" && ((GIT_COUNT++)) || true
-            ;;
         esac
       done < <(find "$HOME/Documents/99.Github" -maxdepth 4 -type d \( \
         -name ".venv" -o -name "__pycache__" -o -name "*.egg-info" -o -name ".pytest_cache" -o \
-        -name "node_modules" -o -name ".git" \
+        -name "node_modules" \
       \) -print0 2>/dev/null)
 
       # Summary with actual counts
@@ -275,10 +274,9 @@
       echo "    • Cloud sync folders: $CLOUD_PROTECTED"
       echo "    • Python caches: $PYTHON_CACHE_COUNT"
       echo "    • Node modules: $NODE_MODULES_COUNT"
-      echo "    • Git repositories: $GIT_COUNT"
 
       # Only log if meaningful work was done
-      TOTAL_PROTECTED=$((APP_SUPPORT_PROTECTED + DEV_PROTECTED + CLOUD_PROTECTED + PYTHON_CACHE_COUNT + NODE_MODULES_COUNT + GIT_COUNT))
+      TOTAL_PROTECTED=$((APP_SUPPORT_PROTECTED + DEV_PROTECTED + CLOUD_PROTECTED + PYTHON_CACHE_COUNT + NODE_MODULES_COUNT))
       if [ $TOTAL_PROTECTED -gt 0 ]; then
         echo "  [SUCCESS] $TOTAL_PROTECTED directories newly protected"
       else

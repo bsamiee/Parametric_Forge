@@ -46,8 +46,8 @@ export ICON_WIDTH_STANDARD=30
 
 # --- Font System ------------------------------------------------------------
 export TEXT_FONT="GeistMono Nerd Font"             # Readable text (time, app names, numbers)
-export SYMBOL_FONT="SF Pro"                        # SF Symbols & system icons
-export APP_FONT="sketchybar-app-font:Regular:10.0" # App-specific icon library
+export SYMBOL_FONT="SF Symbols"                    # SF Symbols & system icons
+export APP_FONT="sketchybar-app-font:Regular:12.0" # App-specific icon library
 
 # Universal font weights (APP_FONT only supports Regular)
 export LIGHT_WEIGHT="Light"
@@ -56,7 +56,19 @@ export MEDIUM_WEIGHT="Medium"
 export BOLD_WEIGHT="Bold"
 
 # Font sizes
-export SIZE_XSMALL=6.0
-export SIZE_SMALL=8.0
-export SIZE_MEDIUM=10.0
-export SIZE_LARGE=14.0
+export SIZE_XSMALL=8.0
+export SIZE_SMALL=10.0
+export SIZE_MEDIUM=12.0
+export SIZE_LARGE=16.0
+
+# --- Battery Behavior -------------------------------------------------------
+# Sailing range: how far below the set limit charging resumes (in percent)
+export SAILING_RANGE=${SAILING_RANGE:-5}
+
+# Temperature Guard (sane defaults, always-on battery protection)
+# When temperature >= TEMP_GUARD_MAX_C, pause charging (adapter off) until <= TEMP_GUARD_RESUME_C
+# Never force discharge below TEMP_GUARD_MIN_PERCENT to avoid deep discharge when hot
+export TEMP_GUARD_ENABLED=${TEMP_GUARD_ENABLED:-1}
+export TEMP_GUARD_MAX_C=${TEMP_GUARD_MAX_C:-40}
+export TEMP_GUARD_RESUME_C=${TEMP_GUARD_RESUME_C:-38}
+export TEMP_GUARD_MIN_PERCENT=${TEMP_GUARD_MIN_PERCENT:-40}

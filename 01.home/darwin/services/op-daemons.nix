@@ -22,7 +22,7 @@ let
   # --- Universal Service Environment ----------------------------------------
   serviceEnv = myLib.mkServiceEnvironment { inherit config context; };
 
-  # --- Combined Cache Manager Script ----------------------------------------
+  # --- Enhanced Cache Manager Script (Authentication Delegated) -------------
   opCacheManager = pkgs.writeShellApplication {
     name = "security-daemon";
     text = ''
@@ -38,17 +38,20 @@ let
         exit 0
       fi
 
-      # Check authentication
-      if ! op account get >/dev/null 2>&1; then
-        echo "[op-cache] Not authenticated to 1Password"
+      # Check if authenticated (no signin prompt - rely on coordinator)
+      echo "[op-cache] Checking 1Password authentication status..."
+      
+      # Test authentication without triggering signin prompt
+      if ! op account list >/dev/null 2>&1; then
+        echo "[op-cache] Not authenticated - waiting for coordinator service"
         exit 0
       fi
-
-      echo "[op-cache] Connected to 1Password"
+      
+      echo "[op-cache] Authentication confirmed via coordinator"
 
       # Check if template exists
       if [ ! -f "$TEMPLATE_FILE" ]; then
-        echo "[op-cache] No template file found"
+        echo "[op-cache] No template file found at $TEMPLATE_FILE"
         exit 0
       fi
 
@@ -60,7 +63,7 @@ let
       SUCCESS_COUNT=0
       FAIL_COUNT=0
 
-      # Generate cache file with resolved secrets
+      # Generate cache file with resolved secrets - with retry logic
       {
         echo "# 1Password secrets cache - Generated $(date)"
         echo "# DO NOT COMMIT THIS FILE"
@@ -68,12 +71,21 @@ let
           # Skip comments and empty lines
           [[ "$key" =~ ^#.*$ || -z "$key" ]] && continue
 
-          # Try to resolve the secret
-          if resolved=$(op read "$value" 2>/dev/null); then
+          # Try to resolve the secret with retries
+          resolved=""
+          for attempt in 1 2 3; do
+            if resolved=$(op read "$value" 2>/dev/null); then
+              break
+            else
+              [ $attempt -lt 3 ] && sleep 1
+            fi
+          done
+          
+          if [ -n "$resolved" ]; then
             echo "export $key='$resolved'"
             SUCCESS_COUNT=$((SUCCESS_COUNT + 1))
           else
-            echo "# Failed to resolve: $key"
+            echo "# Failed to resolve: $key (after 3 attempts)"
             FAIL_COUNT=$((FAIL_COUNT + 1))
           fi
         done < "$TEMPLATE_FILE"
@@ -83,11 +95,11 @@ let
       mv "$CACHE_FILE.tmp" "$CACHE_FILE"
       chmod 600 "$CACHE_FILE"
 
-      # Send notification
+      # Send notification with better status
       if [ $FAIL_COUNT -eq 0 ]; then
-        echo "[op-cache] Cache refreshed successfully: $SUCCESS_COUNT secrets cached"
+        echo "[op-cache] ✓ Cache refreshed successfully: $SUCCESS_COUNT secrets cached"
       else
-        echo "[op-cache] Cache refresh completed with errors: $SUCCESS_COUNT cached, $FAIL_COUNT failed"
+        echo "[op-cache] ⚠ Cache refresh completed with errors: $SUCCESS_COUNT cached, $FAIL_COUNT failed"
       fi
     '';
   };
@@ -158,23 +170,81 @@ let
       }
     fi
   '';
+
+  # --- Authentication Coordinator (Single Authentication Point) -------------
+  authCoordinator = pkgs.writeShellApplication {
+    name = "op-auth-coordinator";
+    text = ''
+      #!/usr/bin/env bash
+      set -euo pipefail
+
+      echo "[op-auth] Starting 1Password authentication coordinator..."
+
+      # Check if op CLI is available
+      if ! command -v op >/dev/null 2>&1; then
+        echo "[op-auth] 1Password CLI not found"
+        exit 0
+      fi
+
+      # Check if already authenticated
+      if op account list >/dev/null 2>&1; then
+        echo "[op-auth] Already authenticated - triggering dependent services"
+      else
+        echo "[op-auth] Authenticating with 1Password (biometric prompt expected)..."
+        # This is the ONLY place that should call op signin
+        if ! op signin >/dev/null 2>&1; then
+          echo "[op-auth] Authentication failed - services will retry later"
+          exit 0
+        fi
+        echo "[op-auth] ✓ Authentication successful"
+      fi
+
+      # Trigger dependent services with delay to ensure auth propagation
+      sleep 2
+      echo "[op-auth] Triggering cache manager..."
+      launchctl kickstart -k "gui/$(id -u)/com.parametricforge.op-cache-manager" 2>/dev/null || true
+      
+      sleep 1  
+      echo "[op-auth] Triggering SSH setup..."
+      launchctl kickstart -k "gui/$(id -u)/com.parametricforge.op-ssh-setup" 2>/dev/null || true
+      
+      echo "[op-auth] ✓ Coordinator completed successfully"
+    '';
+  };
 in
 {
-  # --- Unified Cache Manager Agent ------------------------------------------
+  # --- Authentication Coordinator Agent (Runs First) -----------------------
+  launchd.agents.onepassword-auth-coordinator = {
+    enable = true;
+    config = mkPeriodicJob {
+      label = "1Password Authentication Coordinator";
+      command = "${authCoordinator}/bin/op-auth-coordinator";
+      interval = 86400; # Every 24 hours  
+      runAtLoad = true;
+      nice = 5; # Higher priority than dependent services
+      logBaseName = "${config.xdg.stateHome}/logs/op-auth-coordinator";
+      environmentVariables = serviceEnv // {
+        OP_CACHE = "true";
+        OP_ACCOUNT = "";
+      };
+    };
+  };
+
+  # --- Enhanced Cache Manager Agent (Authentication Delegated) -------------
   launchd.agents.onepassword-secrets = {
     enable = true;
     config = mkPeriodicJob {
       label = "Security Daemon";
       command = "${opCacheManager}/bin/security-daemon";
       interval = 86400; # Every 24 hours
-      runAtLoad = true;
-      nice = 10;
-      logBaseName = "${config.xdg.stateHome}/op-cache";
+      runAtLoad = false;  # Triggered by coordinator, not at boot
+      nice = 15;  # Lower priority than coordinator
+      logBaseName = "${config.xdg.stateHome}/logs/op-cache";
       environmentVariables = serviceEnv // {
         # Enable 1Password CLI caching to reduce auth prompts
         OP_CACHE = "true";
-        # Set account for consistent behavior
-        OP_ACCOUNT = lib.mkDefault config.secrets.defaultAccount or "";
+        # Set account context for CLI operations
+        OP_ACCOUNT = "";
       };
       # Additional config that mkPeriodicJob passes through
       WatchPaths = [
@@ -197,26 +267,19 @@ in
 
             echo "[$(date)] Starting 1Password SSH key setup..."
 
-            # Check if op CLI is available and authenticated
+            # Check if op CLI is available
             if ! command -v op >/dev/null 2>&1; then
               echo "[WARN] 1Password CLI not found"
               exit 0
             fi
 
-            # Use cached secrets if fresh, otherwise skip until manual refresh
-            if [ -f "${config.secrets.paths.cache}" ] && [ -z "$(find "${config.secrets.paths.cache}" -mmin +1440 2>/dev/null)" ]; then
-              echo "[OK] Using cached 1Password session (fresh)"
-              # shellcheck disable=SC1091
-              source "${config.secrets.paths.cache}" 2>/dev/null || {
-                echo "[WARN] Cache exists but invalid, skipping until manual refresh"
-                exit 0
-              }
-            else
-              echo "[SKIP] Cache stale or missing, requires manual 'op-refresh' command"
+            # Check if authenticated (no signin prompt - rely on coordinator) 
+            if ! op account list >/dev/null 2>&1; then
+              echo "[SKIP] Not authenticated - waiting for coordinator service"
               exit 0
             fi
 
-            echo "[OK] 1Password CLI available with cached session"
+            echo "[OK] Authentication confirmed via coordinator"
 
             # Ensure SSH directory exists
             mkdir -p ~/.ssh
@@ -279,13 +342,14 @@ in
         }
       }/bin/op-ssh-setup";
       interval = 86400; # Every 24 hours
-      runAtLoad = true;
-      nice = 10;
+      runAtLoad = false;  # Triggered by coordinator, not at boot
+      nice = 15;  # Lower priority than coordinator
       logBaseName = "${config.xdg.stateHome}/logs/op-ssh-setup";
       environmentVariables = serviceEnv // {
         # Enable 1Password CLI caching
         OP_CACHE = "true";
-        OP_ACCOUNT = lib.mkDefault config.secrets.defaultAccount or "";
+        # Set account context for CLI operations  
+        OP_ACCOUNT = "";
       };
     };
   };

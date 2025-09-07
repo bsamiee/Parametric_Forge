@@ -102,6 +102,9 @@ in
 
       # Fonts for SketchyBar
       "font-hack-nerd-font" # Default SketchyBar font
+      "font-sf-pro" # SF Pro font family for SketchyBar symbols
+      "font-sf-arabic" # SF Arabic font family
+      "sf-symbols" # SF Symbols 7 - Apple's official symbol library (required for SketchyBar advanced icons)
 
       # Adobe & Creative Suite - ALREADY INSTALLED
       # "adobe-acrobat-pro" # Already installed manually
@@ -126,7 +129,6 @@ in
     # --- CLI Tools (Brews) --------------------------------------------------
     brews = [
       "mas" # Mac App Store CLI for masApps integration
-      "codex" # AI coding assistant (ChatGPT CLI)
       "handbrake" # CLI video transcoder (GUI in casks as handbrake-app)
       # "mono" # .NET runtime - RE-INSTALL AFTER FULL DEPLOYMENT (failed during initial setup)
       "defaultbrowser" # CLI tool for setting default browser properly

@@ -17,23 +17,30 @@ source "$HOME/.config/sketchybar/icons.sh"
 logo_config=(
     icon="$APPLE"
 
-    padding_left="$PADDINGS_LARGE"
-    padding_right="$PADDINGS_LARGE"
+    # Move closer to the bar's left edge (match calendar's outer padding)
+    padding_left="$PADDINGS_NONE"
+    padding_right="$PADDINGS_XXLARGE"
 
     icon.font="$SYMBOL_FONT:$MEDIUM_WEIGHT:$SIZE_LARGE"
     icon.color="$WHITE"
-    icon.padding_left="$PADDINGS_MEDIUM"
-    icon.padding_right="$PADDINGS_MEDIUM"
+    # Widen background by increasing inner icon padding one step
+    icon.padding_left="$PADDINGS_LARGE"
+    icon.padding_right="$PADDINGS_LARGE"
 
     label.drawing=off
 
-    background.height="$((HEIGHT_BAR - 8))"
-    background.border_width="$BORDER_MEDIUM"
-    background.border_color="$GREY"
-    background.color="$FAINT_BLACK"
+    background.color="$TRANSPARENT"
+    background.height="$HEIGHT_ITEM"
+    # Ensure no border/fill is visible by default
+    background.border_width="$BORDER_NONE"
+    background.border_color="$TRANSPARENT"
+    background.corner_radius="$RADIUS_LARGE"
+    # Make hover/active background slightly wider (one step up)
+    background.padding_left="$PADDINGS_LARGE"
+    background.padding_right="$PADDINGS_LARGE"
     background.drawing=off
 
-    click_script="$HOME/.config/sketchybar/plugins/logo.sh"
+    script="$HOME/.config/sketchybar/plugins/logo.sh"
 )
 
 # --- Item Creation ----------------------------------------------------------

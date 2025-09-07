@@ -33,44 +33,44 @@ export PURPLE=$DRACULA_PURPLE
 export RED=$DRACULA_RED
 export YELLOW=$DRACULA_YELLOW
 
-# --- Primary Transparency (95% opacity) -------------------------------------
-export PRIMARY_BLACK=0xf2282a36
-export PRIMARY_WHITE=0xf2f8f8f2
-export PRIMARY_DARK_GREY=0xf244475a
-export PRIMARY_GREY=0xf26272a4
-export PRIMARY_CYAN=0xf28be9fd
-export PRIMARY_GREEN=0xf250fa7b
-export PRIMARY_ORANGE=0xf2ffb86c
-export PRIMARY_PINK=0xf2ff79c6
-export PRIMARY_PURPLE=0xf2bd93f9
-export PRIMARY_RED=0xf2ff5555
-export PRIMARY_YELLOW=0xf2f1fa8c
+# --- Primary Transparency (90% opacity) -------------------------------------
+export PRIMARY_BLACK=0xe6282a36
+export PRIMARY_WHITE=0xe6f8f8f2
+export PRIMARY_DARK_GREY=0xe644475a
+export PRIMARY_GREY=0xe66272a4
+export PRIMARY_CYAN=0xe68be9fd
+export PRIMARY_GREEN=0xe650fa7b
+export PRIMARY_ORANGE=0xe6ffb86c
+export PRIMARY_PINK=0xe6ff79c6
+export PRIMARY_PURPLE=0xe6bd93f9
+export PRIMARY_RED=0xe6ff5555
+export PRIMARY_YELLOW=0xe6f1fa8c
 
-# --- Enhanced Transparency (80% opacity) ------------------------------------
-export LIGHT_BLACK=0xcc282a36
-export LIGHT_WHITE=0xccf8f8f2
-export LIGHT_DARK_GREY=0xcc44475a
-export LIGHT_GREY=0xcc6272a4
-export LIGHT_CYAN=0xcc8be9fd
-export LIGHT_GREEN=0xcc50fa7b
-export LIGHT_ORANGE=0xccffb86c
-export LIGHT_PINK=0xccff79c6
-export LIGHT_PURPLE=0xccbd93f9
-export LIGHT_RED=0xccff5555
-export LIGHT_YELLOW=0xccf1fa8c
+# --- Enhanced Transparency (75% opacity) ------------------------------------
+export LIGHT_BLACK=0xbf282a36
+export LIGHT_WHITE=0xbff8f8f2
+export LIGHT_DARK_GREY=0xbf44475a
+export LIGHT_GREY=0xbf6272a4
+export LIGHT_CYAN=0xbf8be9fd
+export LIGHT_GREEN=0xbf50fa7b
+export LIGHT_ORANGE=0xbfffb86c
+export LIGHT_PINK=0xbfff79c6
+export LIGHT_PURPLE=0xbfbd93f9
+export LIGHT_RED=0xbfff5555
+export LIGHT_YELLOW=0xbff1fa8c
 
-# --- Faint Transparency (50% opacity) ---------------------------------------
-export FAINT_BLACK=0x80282a36
-export FAINT_WHITE=0x80f8f8f2
-export FAINT_DARK_GREY=0x8044475a
-export FAINT_GREY=0x806272a4
-export FAINT_CYAN=0x808be9fd
-export FAINT_GREEN=0x8050fa7b
-export FAINT_ORANGE=0x80ffb86c
-export FAINT_PINK=0x80ff79c6
-export FAINT_PURPLE=0x80bd93f9
-export FAINT_RED=0x80ff5555
-export FAINT_YELLOW=0x80f1fa8c
+# --- Faint Transparency (45% opacity) ---------------------------------------
+export FAINT_BLACK=0x73282a36
+export FAINT_WHITE=0x73f8f8f2
+export FAINT_DARK_GREY=0x7344475a
+export FAINT_GREY=0x736272a4
+export FAINT_CYAN=0x738be9fd
+export FAINT_GREEN=0x7350fa7b
+export FAINT_ORANGE=0x73ffb86c
+export FAINT_PINK=0x73ff79c6
+export FAINT_PURPLE=0x73bd93f9
+export FAINT_RED=0x73ff5555
+export FAINT_YELLOW=0x73f1fa8c
 
 # --- Misc Colors ------------------------------------------------------------
 export TRANSPARENT=0x00000000

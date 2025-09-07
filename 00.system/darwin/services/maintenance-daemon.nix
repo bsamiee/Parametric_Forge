@@ -97,7 +97,7 @@ let
     # --- Nix Health Checks --------------------------------------------------
     echo "→ Nix health checks:"
 
-    if ${pkgs.nix}/bin/nix store verify --all --no-contents 2>/dev/null; then
+    if nix store verify --all --no-contents 2>/dev/null; then
       log_status "OK" "Store integrity verified"
     else
       log_status "WARN" "Store verification found issues"

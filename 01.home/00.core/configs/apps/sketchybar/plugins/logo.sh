@@ -10,46 +10,52 @@
 
 set -euo pipefail
 
-# --- Configuration --------------------------------------------------------
+# --- Configuration ----------------------------------------------------------
 source "$HOME/.config/sketchybar/colors.sh"
 source "$HOME/.config/sketchybar/constants.sh"
 source "$HOME/.config/sketchybar/icons.sh"
-source "$HOME/.config/sketchybar/helpers/interaction-helpers.sh"
 
-# Validate essential constants are loaded
+MENUBAR_CMD="$HOME/.config/sketchybar/menubar"
+STATE_FILE="/tmp/sketchybar_logo_menu_state"
+
 if [[ -z "${WHITE:-}" ]] || [[ -z "${GREEN:-}" ]]; then
     echo "ERROR: Colors not loaded properly in logo plugin context" >&2
     exit 1
 fi
 
-# Set up menubar command (use local binary if available)
-MENUBAR_CMD="$HOME/.config/sketchybar/menubar"
-if [[ ! -x "$MENUBAR_CMD" ]]; then
-    echo "ERROR: menubar binary not found at $MENUBAR_CMD" >&2
-    exit 1
-fi
+# --- Utility Functions ------------------------------------------------------
+set_item_properties() {
+    local item="$1"; shift
+    sketchybar --set "$item" "$@" 2>/dev/null || true
+}
 
-# --- State Management -----------------------------------------------------
+animate_item_properties() {
+    local item="$1" curve="${2:-tanh}" duration="${3:-15}"; shift 3
+    sketchybar --animate "$curve" "$duration" --set "$item" "$@" 2>/dev/null || true
+}
+
+# --- State Management -------------------------------------------------------
 logo_menu_on() {
-    # Hide spaces and front_app, show menu items
+    echo "on" > "$STATE_FILE"
+    # Hide spaces and focus_app, show menu items
     for space in $(sketchybar --query spaces 2>/dev/null | jq -r '.bracket[]? // empty' 2>/dev/null); do
         [[ -n "$space" ]] && sketchybar --set "$space" drawing=off
     done
 
     sketchybar --set spaces drawing=off 2>/dev/null || true
-    sketchybar --set front_app drawing=off 2>/dev/null || true
+    sketchybar --set focus_app drawing=off 2>/dev/null || true
 
-    # Activate logo appearance using existing animation system
-    apply_smooth_animation "logo" 15 \
+    # Activate logo appearance (menu active): show bg with standard hover styling (no border)
+    animate_item_properties "logo" tanh 15 \
         background.drawing=on \
+        background.color="$FAINT_GREY" \
+        background.corner_radius="$RADIUS_LARGE" \
         icon.color="$GREEN" \
         icon="$APPLE" \
-        icon.font="$SYMBOL_FONT:$BOLD_WEIGHT:17.0" \
-        icon.y_offset=1 \
-        padding_right="$PADDINGS_LARGE" \
-        padding_left="$PADDINGS_LARGE"
+        icon.font="$SYMBOL_FONT:$MEDIUM_WEIGHT:$SIZE_LARGE"
 
-    # Update and show menu items
+    # Show menu bracket and items
+    sketchybar --set menus drawing=on 2>/dev/null || true
     update_menu_items
 
     # Auto-hide after 30 seconds
@@ -57,25 +63,28 @@ logo_menu_on() {
 }
 
 logo_menu_off() {
-    # Restore spaces and front_app
+    echo "off" > "$STATE_FILE"
+    # Restore spaces and focus_app
     for space in $(sketchybar --query spaces 2>/dev/null | jq -r '.bracket[]? // empty' 2>/dev/null); do
         [[ -n "$space" ]] && sketchybar --set "$space" drawing=on
     done
 
     sketchybar --set spaces drawing=on 2>/dev/null || true
-    sketchybar --set front_app drawing=on 2>/dev/null || true
+    sketchybar --set focus_app drawing=on 2>/dev/null || true
 
-    # Restore logo appearance using existing animation system
-    apply_smooth_animation "logo" 15 \
+    # Restore logo appearance EXACTLY to item defaults (no border)
+    animate_item_properties "logo" tanh 15 \
         background.drawing=off \
+        background.color="$TRANSPARENT" \
+        background.border_color="$TRANSPARENT" \
+        background.border_width="$BORDER_NONE" \
+        background.corner_radius="$RADIUS_LARGE" \
         icon.color="$WHITE" \
         icon="$APPLE" \
-        icon.font="$SYMBOL_FONT:$MEDIUM_WEIGHT:$SIZE_LARGE" \
-        icon.y_offset=0 \
-        padding_right="$PADDINGS_LARGE" \
-        padding_left="$PADDINGS_LARGE"
+        icon.font="$SYMBOL_FONT:$MEDIUM_WEIGHT:$SIZE_LARGE"
 
-    # Hide all menu items
+    # Hide menu bracket and all menu items
+    sketchybar --set menus drawing=off 2>/dev/null || true
     for ((i = 1; i <= 14; ++i)); do
         sketchybar --set "menu.$i" drawing=off 2>/dev/null || true
     done
@@ -100,16 +109,18 @@ update_menu_items() {
 }
 
 get_logo_state() {
-    sketchybar --query logo 2>/dev/null | jq -r '.geometry.background.drawing // "off"' 2>/dev/null || echo "off"
+    if [ -f "$STATE_FILE" ]; then
+        cat "$STATE_FILE"
+    else
+        echo "off"
+    fi
 }
 
-# --- Event Handler -------------------------------------------------------
+# --- Event Handling ---------------------------------------------------------
 case "$NAME" in
     "logo")
         case "$SENDER" in
             "mouse.clicked")
-                handle_mouse_event "$NAME" "$SENDER"
-
                 state=$(get_logo_state)
 
                 if [[ "${BUTTON:-}" == "right" ]]; then
@@ -140,8 +151,24 @@ case "$NAME" in
                     update_menu_items  # Double update for reliability
                 fi
                 ;;
-            "mouse.entered"|"mouse.exited")
-                handle_mouse_event "$NAME" "$SENDER"
+            "mouse.entered")
+                state=$(get_logo_state)
+                if [[ "$state" == "off" ]]; then
+                    set_item_properties "logo" \
+                        background.drawing=on \
+                        background.color="$FAINT_GREY" \
+                        background.corner_radius="$RADIUS_LARGE"
+                fi
+                ;;
+            "mouse.exited")
+                state=$(get_logo_state)
+                if [[ "$state" == "off" ]]; then
+                    set_item_properties "logo" \
+                        background.drawing=off \
+                        background.border_width="$BORDER_NONE" \
+                        background.border_color="$TRANSPARENT" \
+                        background.color="$TRANSPARENT"
+                fi
                 ;;
         esac
         ;;
@@ -150,10 +177,13 @@ case "$NAME" in
         case "$SENDER" in
             "mouse.clicked")
                 menu_index=$(echo "$NAME" | cut -d '.' -f 2)
-                menubar -s "$menu_index" 2>/dev/null || true
+                # Use the same resolved menubar binary used for listing
+                "$MENUBAR_CMD" -s "$menu_index" 2>/dev/null || true
+                # Collapse menu after selection
+                logo_menu_off
                 ;;
             "mouse.entered"|"mouse.exited")
-                handle_mouse_event "$NAME" "$SENDER"
+                # TODO: Add hover effects for menu items if needed
                 ;;
         esac
         ;;
