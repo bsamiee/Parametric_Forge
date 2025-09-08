@@ -107,8 +107,7 @@
       recursive = true;
     };
     # Karabiner-Elements (keyboard remapping)
-    # Base JSON structure (goku requires existing karabiner.json to modify)
-    "karabiner/karabiner.json".source = ./00.core/configs/apps/karabiner/karabiner.json;
+    # Note: karabiner.json deployed via home.file (not xdg.configFile) so goku can write to it
     "karabiner/assets/complex_modifications/parametric-forge.json".source = ./00.core/configs/apps/karabiner/assets/complex_modifications/parametric-forge.json;
     # --- Yabai Configuration ------------------------------------------------
     "yabai/yabairc" = {
@@ -165,6 +164,7 @@
     ".w3m/keymap".source = ./00.core/configs/apps/w3m/keymap;
     # --- Karabiner/Goku Configuration (copied, not symlinked due to goku limitations) ---
     ".config/karabiner/karabiner.edn".source = ./00.core/configs/apps/karabiner/karabiner.edn;
+    ".config/karabiner/karabiner.json".source = ./00.core/configs/apps/karabiner/karabiner.json;
   };
 
   # --- Asset Bin Scripts (Added to PATH) -----------------------------------
