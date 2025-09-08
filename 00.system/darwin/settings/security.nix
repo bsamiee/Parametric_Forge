@@ -203,6 +203,29 @@ in
       grant_tcc "$USER_TCC_DB" "kTCCServiceAppleEvents" "$tool" 1 "com.apple.systemevents"
     done
 
+    # Karabiner-Elements - input monitoring & accessibility
+    echo "  Configuring Karabiner-Elements permissions..." >&2
+    KARABINER_ENTRIES=(
+      "/Applications/Karabiner-Elements.app"
+      "/Library/Application Support/org.pqrs/Karabiner-Elements/bin/karabiner_grabber"
+      "/Library/Application Support/org.pqrs/Karabiner-Elements/bin/karabiner_observer"
+    )
+
+    for entry in "''${KARABINER_ENTRIES[@]}"; do
+      [ -e "$entry" ] || continue
+      if [[ "$entry" == *.app ]]; then
+        client="org.pqrs.Karabiner-Elements"
+        type=0
+      else
+        client="$entry"
+        type=1
+      fi
+      # Input Monitoring (listen to key events)
+      grant_tcc "$USER_TCC_DB" "kTCCServiceListenEvent" "$client" "$type"
+      # Accessibility (assistive control)
+      grant_tcc "$USER_TCC_DB" "kTCCServiceAccessibility" "$client" "$type"
+    done
+
     # Hammerspoon - automation and window management
     echo "  Configuring Hammerspoon permissions..." >&2
     HAMMERSPOON_PATHS=(

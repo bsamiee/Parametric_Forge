@@ -60,20 +60,20 @@ ctrl + lalt - right : [
 lalt - s : "$HOME/.config/yabai/run-yabai.sh" -m display --focus west
 lalt - g : "$HOME/.config/yabai/run-yabai.sh" -m display --focus east
 
-# Workspace navigation - stable numbers that never change
-shift + ctrl + alt - 1 : "$HOME/.config/yabai/run-yabai.sh" -m space --focus 1
-shift + ctrl + alt - 2 : "$HOME/.config/yabai/run-yabai.sh" -m space --focus 2
-shift + ctrl + alt - 3 : "$HOME/.config/yabai/run-yabai.sh" -m space --focus 3
-shift + ctrl + alt - 4 : "$HOME/.config/yabai/run-yabai.sh" -m space --focus 4
-shift + ctrl + alt - 5 : "$HOME/.config/yabai/run-yabai.sh" -m space --focus 5
-shift + ctrl + alt - 6 : "$HOME/.config/yabai/run-yabai.sh" -m space --focus 6
-shift + ctrl + alt - 7 : "$HOME/.config/yabai/run-yabai.sh" -m space --focus 7
-shift + ctrl + alt - 8 : "$HOME/.config/yabai/run-yabai.sh" -m space --focus 8
-shift + ctrl + alt - 9 : "$HOME/.config/yabai/run-yabai.sh" -m space --focus 9
+# Workspace navigation (Super = ⌘⌥⌃ via Right Option)
+cmd + ctrl + alt - 1 : "$HOME/.config/yabai/run-yabai.sh" -m space --focus 1
+cmd + ctrl + alt - 2 : "$HOME/.config/yabai/run-yabai.sh" -m space --focus 2
+cmd + ctrl + alt - 3 : "$HOME/.config/yabai/run-yabai.sh" -m space --focus 3
+cmd + ctrl + alt - 4 : "$HOME/.config/yabai/run-yabai.sh" -m space --focus 4
+cmd + ctrl + alt - 5 : "$HOME/.config/yabai/run-yabai.sh" -m space --focus 5
+cmd + ctrl + alt - 6 : "$HOME/.config/yabai/run-yabai.sh" -m space --focus 6
+cmd + ctrl + alt - 7 : "$HOME/.config/yabai/run-yabai.sh" -m space --focus 7
+cmd + ctrl + alt - 8 : "$HOME/.config/yabai/run-yabai.sh" -m space --focus 8
+cmd + ctrl + alt - 9 : "$HOME/.config/yabai/run-yabai.sh" -m space --focus 9
 
 # Space cycling within current display
-shift + ctrl + alt - left : "$HOME/.config/yabai/run-yabai.sh" -m space --focus prev || "$HOME/.config/yabai/run-yabai.sh" -m space --focus last
-shift + ctrl + alt - right : "$HOME/.config/yabai/run-yabai.sh" -m space --focus next || "$HOME/.config/yabai/run-yabai.sh" -m space --focus first
+cmd + ctrl + alt - left : "$HOME/.config/yabai/run-yabai.sh" -m space --focus prev || "$HOME/.config/yabai/run-yabai.sh" -m space --focus last
+cmd + ctrl + alt - right : "$HOME/.config/yabai/run-yabai.sh" -m space --focus next || "$HOME/.config/yabai/run-yabai.sh" -m space --focus first
 
 # --- TIER 2: Essential Manual Overrides (SHIFT + OPT) ---------------------
 # Core toggles when you need manual control over auto-balance
@@ -86,14 +86,12 @@ shift + lalt - return : \
         "$HOME/.config/yabai/run-yabai.sh" -m config left_padding 4; \
         "$HOME/.config/yabai/run-yabai.sh" -m config right_padding 4; \
         "$HOME/.config/yabai/run-yabai.sh" -m config window_gap 4; \
-        echo '{"padding":4,"gap":4,"mode":"windowed","ts":"'"$(date +%s)"'"}' > /tmp/yabai_state.json; \
     else \
         "$HOME/.config/yabai/run-yabai.sh" -m config top_padding 0; \
         "$HOME/.config/yabai/run-yabai.sh" -m config bottom_padding 0; \
         "$HOME/.config/yabai/run-yabai.sh" -m config left_padding 0; \
         "$HOME/.config/yabai/run-yabai.sh" -m config right_padding 0; \
         "$HOME/.config/yabai/run-yabai.sh" -m config window_gap 0; \
-        echo '{"padding":0,"gap":0,"mode":"fullscreen","ts":"'"$(date +%s)"'"}' > /tmp/yabai_state.json; \
     fi
 shift + lalt - space : "$HOME/.config/yabai/run-yabai.sh" -m window --toggle float --grid 4:4:1:1:2:2
 shift + lalt - r : "$HOME/.config/yabai/run-yabai.sh" -m space --rotate 270 # Fix layout when messy
@@ -103,48 +101,37 @@ shift + lalt - m : \
     current="$(\"$HOME/.config/yabai/run-yabai.sh\" -m config mouse_drop_action)"; \
     if [ "$current" = "swap" ]; then \
         "$HOME/.config/yabai/run-yabai.sh" -m config mouse_drop_action stack; \
-        echo '{"drop":"stack","ts":"'"$(date +%s)"'"}' > /tmp/yabai_drop.json; \
     else \
         "$HOME/.config/yabai/run-yabai.sh" -m config mouse_drop_action swap; \
-        echo '{"drop":"swap","ts":"'"$(date +%s)"'"}' > /tmp/yabai_drop.json; \
     fi
 
-# --- TIER 3: Power Operations (MEH = shift+ctrl+alt) ------------------------
+# --- TIER 3: Power Operations (Hyper = ⌘⌥⌃⇧ via Right Command) -------------
 # Move window to workspace and follow (stable workspace numbers)
-shift + ctrl + alt - 1 : "$HOME/.config/yabai/run-yabai.sh" -m window --space 1; "$HOME/.config/yabai/run-yabai.sh" -m space --focus 1
-shift + ctrl + alt - 2 : "$HOME/.config/yabai/run-yabai.sh" -m window --space 2; "$HOME/.config/yabai/run-yabai.sh" -m space --focus 2
-shift + ctrl + alt - 3 : "$HOME/.config/yabai/run-yabai.sh" -m window --space 3; "$HOME/.config/yabai/run-yabai.sh" -m space --focus 3
-shift + ctrl + alt - 4 : "$HOME/.config/yabai/run-yabai.sh" -m window --space 4; "$HOME/.config/yabai/run-yabai.sh" -m space --focus 4
-shift + ctrl + alt - 5 : "$HOME/.config/yabai/run-yabai.sh" -m window --space 5; "$HOME/.config/yabai/run-yabai.sh" -m space --focus 5
-shift + ctrl + alt - 6 : "$HOME/.config/yabai/run-yabai.sh" -m window --space 6; "$HOME/.config/yabai/run-yabai.sh" -m space --focus 6
-shift + ctrl + alt - 7 : "$HOME/.config/yabai/run-yabai.sh" -m window --space 7; "$HOME/.config/yabai/run-yabai.sh" -m space --focus 7
-shift + ctrl + alt - 8 : "$HOME/.config/yabai/run-yabai.sh" -m window --space 8; "$HOME/.config/yabai/run-yabai.sh" -m space --focus 8
-shift + ctrl + alt - 9 : "$HOME/.config/yabai/run-yabai.sh" -m window --space 9; "$HOME/.config/yabai/run-yabai.sh" -m space --focus 9
+cmd + ctrl + alt + shift - 1 : "$HOME/.config/yabai/run-yabai.sh" -m window --space 1; "$HOME/.config/yabai/run-yabai.sh" -m space --focus 1
+cmd + ctrl + alt + shift - 2 : "$HOME/.config/yabai/run-yabai.sh" -m window --space 2; "$HOME/.config/yabai/run-yabai.sh" -m space --focus 2
+cmd + ctrl + alt + shift - 3 : "$HOME/.config/yabai/run-yabai.sh" -m window --space 3; "$HOME/.config/yabai/run-yabai.sh" -m space --focus 3
+cmd + ctrl + alt + shift - 4 : "$HOME/.config/yabai/run-yabai.sh" -m window --space 4; "$HOME/.config/yabai/run-yabai.sh" -m space --focus 4
+cmd + ctrl + alt + shift - 5 : "$HOME/.config/yabai/run-yabai.sh" -m window --space 5; "$HOME/.config/yabai/run-yabai.sh" -m space --focus 5
+cmd + ctrl + alt + shift - 6 : "$HOME/.config/yabai/run-yabai.sh" -m window --space 6; "$HOME/.config/yabai/run-yabai.sh" -m space --focus 6
+cmd + ctrl + alt + shift - 7 : "$HOME/.config/yabai/run-yabai.sh" -m window --space 7; "$HOME/.config/yabai/run-yabai.sh" -m space --focus 7
+cmd + ctrl + alt + shift - 8 : "$HOME/.config/yabai/run-yabai.sh" -m window --space 8; "$HOME/.config/yabai/run-yabai.sh" -m space --focus 8
+cmd + ctrl + alt + shift - 9 : "$HOME/.config/yabai/run-yabai.sh" -m window --space 9; "$HOME/.config/yabai/run-yabai.sh" -m space --focus 9
 
-# Right-Option (Meh leader) fast path for space moves (optional parallel binds)
-ralt - 1 : "$HOME/.config/yabai/run-yabai.sh" -m window --space 1; "$HOME/.config/yabai/run-yabai.sh" -m space --focus 1
-ralt - 2 : "$HOME/.config/yabai/run-yabai.sh" -m window --space 2; "$HOME/.config/yabai/run-yabai.sh" -m space --focus 2
-ralt - 3 : "$HOME/.config/yabai/run-yabai.sh" -m window --space 3; "$HOME/.config/yabai/run-yabai.sh" -m space --focus 3
-ralt - 4 : "$HOME/.config/yabai/run-yabai.sh" -m window --space 4; "$HOME/.config/yabai/run-yabai.sh" -m space --focus 4
-ralt - 5 : "$HOME/.config/yabai/run-yabai.sh" -m window --space 5; "$HOME/.config/yabai/run-yabai.sh" -m space --focus 5
-ralt - 6 : "$HOME/.config/yabai/run-yabai.sh" -m window --space 6; "$HOME/.config/yabai/run-yabai.sh" -m space --focus 6
-ralt - 7 : "$HOME/.config/yabai/run-yabai.sh" -m window --space 7; "$HOME/.config/yabai/run-yabai.sh" -m space --focus 7
-ralt - 8 : "$HOME/.config/yabai/run-yabai.sh" -m window --space 8; "$HOME/.config/yabai/run-yabai.sh" -m space --focus 8
-ralt - 9 : "$HOME/.config/yabai/run-yabai.sh" -m window --space 9; "$HOME/.config/yabai/run-yabai.sh" -m space --focus 9
+# (Removed) ralt fast-path: superseded by Super and Hyper mappings
 
-# Window operations - arrows for swapping, hjkl for resizing
-shift + ctrl + alt - left : "$HOME/.config/yabai/run-yabai.sh" -m window --swap west
-shift + ctrl + alt - right : "$HOME/.config/yabai/run-yabai.sh" -m window --swap east
-shift + ctrl + alt - down : "$HOME/.config/yabai/run-yabai.sh" -m window --swap south
-shift + ctrl + alt - up : "$HOME/.config/yabai/run-yabai.sh" -m window --swap north
-shift + ctrl + alt - h : "$HOME/.config/yabai/run-yabai.sh" -m window --resize left:-50:0 || "$HOME/.config/yabai/run-yabai.sh" -m window --resize right:-50:0
-shift + ctrl + alt - l : "$HOME/.config/yabai/run-yabai.sh" -m window --resize right:50:0 || "$HOME/.config/yabai/run-yabai.sh" -m window --resize left:50:0
-shift + ctrl + alt - j : "$HOME/.config/yabai/run-yabai.sh" -m window --resize bottom:0:50 || "$HOME/.config/yabai/run-yabai.sh" -m window --resize top:0:50
-shift + ctrl + alt - k : "$HOME/.config/yabai/run-yabai.sh" -m window --resize top:0:-50 || "$HOME/.config/yabai/run-yabai.sh" -m window --resize bottom:0:-50
+# Window operations (Hyper)
+cmd + ctrl + alt + shift - left  : "$HOME/.config/yabai/run-yabai.sh" -m window --swap west
+cmd + ctrl + alt + shift - right : "$HOME/.config/yabai/run-yabai.sh" -m window --swap east
+cmd + ctrl + alt + shift - down  : "$HOME/.config/yabai/run-yabai.sh" -m window --swap south
+cmd + ctrl + alt + shift - up    : "$HOME/.config/yabai/run-yabai.sh" -m window --swap north
+cmd + ctrl + alt + shift - h : "$HOME/.config/yabai/run-yabai.sh" -m window --resize left:-50:0 || "$HOME/.config/yabai/run-yabai.sh" -m window --resize right:-50:0
+cmd + ctrl + alt + shift - l : "$HOME/.config/yabai/run-yabai.sh" -m window --resize right:50:0 || "$HOME/.config/yabai/run-yabai.sh" -m window --resize left:50:0
+cmd + ctrl + alt + shift - j : "$HOME/.config/yabai/run-yabai.sh" -m window --resize bottom:0:50 || "$HOME/.config/yabai/run-yabai.sh" -m window --resize top:0:50
+cmd + ctrl + alt + shift - k : "$HOME/.config/yabai/run-yabai.sh" -m window --resize top:0:-50 || "$HOME/.config/yabai/run-yabai.sh" -m window --resize bottom:0:-50
 
-# Display management (fixed syntax)
-shift + ctrl + alt - s : "$HOME/.config/yabai/run-yabai.sh" -m window --display west; "$HOME/.config/yabai/run-yabai.sh" -m display --focus west
-shift + ctrl + alt - g : "$HOME/.config/yabai/run-yabai.sh" -m window --display east; "$HOME/.config/yabai/run-yabai.sh" -m display --focus east
+# Display management (Hyper)
+cmd + ctrl + alt + shift - s : "$HOME/.config/yabai/run-yabai.sh" -m window --display west; "$HOME/.config/yabai/run-yabai.sh" -m display --focus west
+cmd + ctrl + alt + shift - g : "$HOME/.config/yabai/run-yabai.sh" -m window --display east; "$HOME/.config/yabai/run-yabai.sh" -m display --focus east
 
 # --- Window Stacking Operations -------------------------------------------
 # Stack windows (create window stacks in BSP layout)
@@ -177,10 +164,10 @@ shift + lalt - t : \
 lalt - grave : \
     pgrep -f "WezTerm.*scratchpad" >/dev/null 2>&1 && pkill -f "WezTerm.*scratchpad" || /Applications/WezTerm.app/Contents/MacOS/wezterm --config "window_background_opacity = 0.9" start --title scratchpad
 
-# --- TIER 4: Expert Overrides (SUPER = shift+ctrl+alt+rcmd) -----------------
+# --- TIER 4: Expert Overrides (Hyper) --------------------------------------
 # Space mirroring for layout corrections
-shift + ctrl + alt + rcmd - x : "$HOME/.config/yabai/run-yabai.sh" -m space --mirror x-axis
-shift + ctrl + alt + rcmd - y : "$HOME/.config/yabai/run-yabai.sh" -m space --mirror y-axis
+cmd + ctrl + alt + shift - x : "$HOME/.config/yabai/run-yabai.sh" -m space --mirror x-axis
+cmd + ctrl + alt + shift - y : "$HOME/.config/yabai/run-yabai.sh" -m space --mirror y-axis
 
 # --- Utility Operations (Simple Keys) ---------------------------------------
 # Quick navigation and space management

@@ -31,6 +31,7 @@ with pkgs;
   graphviz # Graph visualization software (DOT language)
   d2 # Modern diagram scripting language
   resvg # SVG rasterizer - Required by yazi for SVG preview
+  inkscape # Vector graphics editor and SVG to PDF converter
 
   # --- Document Rendering ---------------------------------------------------
   glow # Render markdown in terminal - Beautiful markdown preview

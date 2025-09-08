@@ -6,8 +6,7 @@
 -- ----------------------------------------------------------------------------
 -- Core setup, modals, OSD indicator, borders lifecycle, auto-watchers, and palette.
 -- Purpose: Provide a clean, minimal Hammerspoon setup that:
---  - Defines right-side modifier modals: Super (Right Cmd) and Meh (Right Option)
---  - Avoids adding new keybinds (no actions are bound here)
+--  - Avoids duplicating keybinds (leaders via Karabiner-Elements)
 --  - Exposes helpers for future use and integrates safely with yabai/skhd
 --  - Sets sane defaults (animations off, logging, robust PATH) to match yabai
 
@@ -38,7 +37,7 @@ local function gotoSpaceByIndex(idx)
     if not idx then
         return
     end
-    local json = sh("yabai -m query --spaces 2>/dev/null")
+    local json = shlib.sh("yabai -m query --spaces 2>/dev/null")
     if not json or #json == 0 then
         return
     end
@@ -61,127 +60,10 @@ local function gotoSpaceByIndex(idx)
     end
 end
 
--- --- Modal states for right-side modifiers --------------------------------
--- We detect right-specific modifier keys via flagsChanged and keyCode.
--- KeyCodes (Apple): rCmd=54, lCmd=55, lAlt=58, rAlt=61, lShift=56, rShift=60, lCtrl=59, rCtrl=62
-
-local superModal = hs.hotkey.modal.new()
-local mehModal = hs.hotkey.modal.new()
-
--- Overlay mode for modifier indicators: 'persistent' | 'ephemeral' | 'off'
-local MODS_OVERLAY_MODE = "ephemeral"
-
-superModal.exited = function()
-    log.d("Super: exit")
-end
-mehModal.exited = function()
-    log.d("Meh: exit")
-end
-
-local superActive = false
-local mehActive = false
-
--- Modifier state indicator as persistent OSD (no menubar icon)
-local function updateIndicator()
-    if MODS_OVERLAY_MODE == "persistent" then
-        if superActive and mehActive then
-            osd.showPersistent("mods", "Super / Meh")
-        elseif superActive then
-            osd.showPersistent("mods", "Super")
-        elseif mehActive then
-            osd.showPersistent("mods", "Meh")
-        else
-            osd.hidePersistent("mods")
-        end
-    else
-        -- ephemeral/off: no persistent indicator updates
-        if MODS_OVERLAY_MODE == "off" then
-            osd.hidePersistent("mods")
-        end
-    end
-end
-
-local function enterSuper()
-    if not superActive then
-        superActive = true
-        superModal:enter()
-        log.d("Super: enter")
-        if MODS_OVERLAY_MODE == "ephemeral" then osd.show("Super", { duration = 0.4 }) end
-        updateIndicator()
-    end
-end
-
-local function exitSuper()
-    if superActive then
-        superActive = false
-        superModal:exit()
-        if MODS_OVERLAY_MODE == "ephemeral" then osd.show("Super off", { duration = 0.3 }) end
-        updateIndicator()
-    end
-end
-
-local function enterMeh()
-    if not mehActive then
-        mehActive = true
-        mehModal:enter()
-        log.d("Meh: enter")
-        if MODS_OVERLAY_MODE == "ephemeral" then osd.show("Meh", { duration = 0.4 }) end
-        updateIndicator()
-        -- Temporary stack drop-action while Meh (Right Option) is held
-        local current = (shlib.sh("yabai -m config mouse_drop_action 2>/dev/null"):gsub("\n$", ""))
-        if current == "swap" or current == nil or #current == 0 then
-            shlib.sh("yabai -m config mouse_drop_action stack")
-            osd.show("Drop: Stack (hold)", { duration = 0.6 })
-            _G.__forge_meh_set_stack = true
-        else
-            _G.__forge_meh_set_stack = false
-        end
-    end
-end
-
-local function exitMeh()
-    if mehActive then
-        mehActive = false
-        mehModal:exit()
-        if MODS_OVERLAY_MODE == "ephemeral" then osd.show("Meh off", { duration = 0.3 }) end
-        updateIndicator()
-        -- Restore drop-action if we changed it on enter
-        if _G.__forge_meh_set_stack then
-            shlib.sh("yabai -m config mouse_drop_action swap")
-            osd.show("Drop: Swap", { duration = 0.6 })
-            _G.__forge_meh_set_stack = false
-        end
-    end
-end
-
--- Event tap for right-side modifiers only; no bindings are attached here.
-local flagsTap = hs.eventtap.new({ hs.eventtap.event.types.flagsChanged }, function(ev)
-    local keyCode = ev:getKeyCode()
-    local flags = ev:getFlags()
-
-    -- Right Command (Super)
-    if keyCode == 54 then
-        if flags.cmd then
-            enterSuper()
-        else
-            exitSuper()
-        end
-    end
-
-    -- Right Option (Meh)
-    if keyCode == 61 then
-        if flags.alt then
-            enterMeh()
-        else
-            exitMeh()
-        end
-    end
-
-    return false -- do not consume; just observe
-end)
-
-flagsTap:start()
-updateIndicator()
+-- --- Modifier leaders handled by Karabiner-Elements -----------------------
+-- Right-side leaders (Hyper/Super/Power) are mapped at the OS level via
+-- Karabiner-Elements. Hammerspoon no longer tracks right-modifier state,
+-- avoiding duplication and reducing complexity.
 
 -- --- Spaces watcher (optional sync hooks, no keybinds) ---------------------
 local function onSpaceChange()
@@ -213,22 +95,15 @@ cw:start()
 
 -- --- Public module-like exports (for future use) ---------------------------
 mods = {
-    super = function()
-        return { "cmd" }
-    end, -- semantic alias
-    meh = function()
-        return { "alt" }
-    end, -- semantic alias
+    hyper = function() return { "cmd", "alt", "ctrl", "shift" } end,
+    super = function() return { "cmd", "alt", "ctrl" } end,
+    power = function() return { "alt", "ctrl", "shift" } end,
 }
 
 forge = {
     gotoSpaceByIndex = gotoSpaceByIndex,
-    superActive = function()
-        return superActive
-    end,
-    mehActive = function()
-        return mehActive
-    end,
+    superActive = function() return false end,
+    mehActive = function() return false end,
     yabai = yabai,
 }
 
@@ -249,12 +124,12 @@ exec.refreshSa()
 events.start()
 
 -- Ensure JankyBorders starts promptly after yabai readiness; force a clean restart
-integ.ensureBorders({ forceRestart = true })
-integ.watchYabaiRestart()
-integ.watchYabaiState()
-integ.watchBorders()
+-- Borders lifecycle managed by yabai (see yabairc). Avoid duplicate management here.
 
 -- Start auto-reload watchers for configs (yabai/skhd/hammerspoon/yazi)
 auto.start()
 
-log.i("Hammerspoon ready (policy active; Super=RightCmd, Meh=RightOption)")
+-- Start system menubar (status + ops)
+require("forge.menubar").start()
+
+log.i("Hammerspoon ready (policy active; leaders via Karabiner)")

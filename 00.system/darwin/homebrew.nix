@@ -33,6 +33,7 @@ in
     taps = [
       "koekeishiya/formulae" # For yabai/skhd
       "FelixKratz/formulae" # For borders
+      "yqrashawn/goku" # For GokuRakuJoudo (Karabiner EDN compiler)
     ];
     # --- GUI Applications (Casks) -------------------------------------------
     casks = [
@@ -119,6 +120,7 @@ in
 
       # Automation & Productivity
       "hammerspoon" # Lua-scriptable macOS automation and window management
+      "karabiner-elements" # Keyboard remapping (Hyper/Super/Power leaders)
     ];
 
     # --- CLI Tools (Brews) --------------------------------------------------
@@ -136,6 +138,7 @@ in
       "koekeishiya/formulae/yabai"
       "koekeishiya/formulae/skhd"
       "FelixKratz/formulae/borders"
+      "yqrashawn/goku/goku" # Goku EDN → karabiner.json (goku/gokuw)
     ];
     # --- Mac App Store Applications -----------------------------------------
     # Disabled: Using smart install/update activation script instead

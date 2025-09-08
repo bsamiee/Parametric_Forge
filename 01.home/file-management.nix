@@ -99,6 +99,15 @@
     "hammerspoon/forge/osd.lua".source = ./00.core/configs/apps/hammerspoon/forge/osd.lua;
     "hammerspoon/forge/auto.lua".source = ./00.core/configs/apps/hammerspoon/forge/auto.lua;
     "hammerspoon/forge/palette.lua".source = ./00.core/configs/apps/hammerspoon/forge/palette.lua;
+    # Hammerspoon menubar assets (SF Symbols exported as PDF)
+    "hammerspoon/assets" = {
+      source = ./00.core/configs/apps/hammerspoon/assets;
+      recursive = true;
+    };
+    # Karabiner-Elements (keyboard remapping)
+    # Use Goku to generate karabiner.json from EDN; we do not symlink karabiner.json
+    "karabiner.edn".source = ./00.core/configs/apps/karabiner/karabiner.edn;
+    "karabiner/assets/complex_modifications/parametric-forge.json".source = ./00.core/configs/apps/karabiner/assets/complex_modifications/parametric-forge.json;
     # --- Yabai Configuration ------------------------------------------------
     "yabai/yabairc" = {
       source = ./00.core/configs/apps/yabai/yabairc;
@@ -112,15 +121,26 @@
       source = ./00.core/configs/apps/yabai/rules-signals.sh;
       executable = true;
     };
-    # Yabai robust wrapper for LaunchAgents (used by skhd)
     "yabai/run-yabai.sh" = {
       source = ./00.core/configs/apps/yabai/run-yabai.sh;
       executable = true;
     };
+
   };
 
-  # --- Home Files (Non-XDG) -------------------------------------------------
-  home.file = {
+  # --- Home Activation Scripts ---------------------------------------------
+  home.activation = {
+     gokuCompileKarabiner = lib.hm.dag.entryAfter [ "createXdgDirs" ] ''
+       echo "[Parametric Forge] Compiling karabiner.edn via goku (if available)..." >&2
+       if command -v goku >/dev/null 2>&1; then
+         export GOKU_EDN_CONFIG_FILE="${config.xdg.configHome}/karabiner.edn"
+         goku || true
+       fi
+     '';
+   };
+
+   # --- Home Files (Non-XDG) -------------------------------------------------
+   home.file = {
     # --- DNS Tools ----------------------------------------------------------
     ".digrc".source = ./00.core/configs/system/dig/.digrc;
     # --- SQLite Configuration -----------------------------------------------

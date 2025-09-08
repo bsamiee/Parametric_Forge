@@ -6,7 +6,6 @@
 -- ----------------------------------------------------------------------------
 -- Watches config files (yabai/skhd/hammerspoon/yazi) and triggers restarts with OSD
 
-local integ = require("forge.integration")
 local osd = require("forge.osd")
 local shlib = require("forge.sh")
 
@@ -38,8 +37,6 @@ end
 local function restartYabai()
     sh("yabai --restart-service || true")
     osd.show("Yabai restarted", { duration = 1.0 })
-    -- Borders depends on yabai; ensure it is running again
-    integ.ensureBorders({ forceRestart = true })
 end
 
 local function reloadSkhd()

@@ -12,28 +12,14 @@ set -eu
 
 # Ensure critical anchors exist (fallback if anchors module not loaded)
 : "${GRID_RIGHT_HALF:=1:2:1:0:1:1}"
+: "${GRID_CENTER:=6:6:1:1:4:4}"
+: "${GRID_BOTTOM_BAND:=2:6:1:1:4:1}"
 
 # Coordination: Yabai handles performance-critical rules/signals, Hammerspoon handles complex policies.
 # Both systems work together via state files and events.
 
 # --- signals ---------------------------------------------------------------
-# Window focus coordination with external tools
-"$YABAI_BIN" -m signal --add label=window_focus_changed event=window_focused action="
-  PATH='/opt/homebrew/bin:/usr/local/bin:/run/current-system/sw/bin:'\$PATH; \
-  echo '{\"event\":\"window_focused\",\"window_id\":'\$YABAI_WINDOW_ID',\"ts\":'\$(date +%s)'}' > /tmp/yabai_focus.json
-" || true
-
-# Space change events for multi-display coordination
-"$YABAI_BIN" -m signal --add label=space_changed event=space_changed action="
-  PATH='/opt/homebrew/bin:/usr/local/bin:/run/current-system/sw/bin:'\$PATH; \
-  echo '{\"event\":\"space_changed\",\"space_id\":'\$YABAI_SPACE_ID',\"ts\":'\$(date +%s)'}' > /tmp/yabai_space.json
-" || true
-
-# Display configuration changes
-"$YABAI_BIN" -m signal --add label=display_changed event=display_changed action="
-  PATH='/opt/homebrew/bin:/usr/local/bin:/run/current-system/sw/bin:'\$PATH; \
-  echo '{\"event\":\"display_changed\",\"ts\":'\$(date +%s)'}' > /tmp/yabai_display.json
-" || true
+# Keep signals lean; no /tmp JSON output (SketchyBar removed; no consumer).
 
 # Arc performance optimization - add small delay to reduce polling loops
 "$YABAI_BIN" -m signal --add label=arc_performance_fix event=window_created app="^Arc$" action="sleep 0.1" || true
@@ -80,27 +66,27 @@ fi
 
 # --- rules: applications ----------------------------------------------------
 # System Applications
-"$YABAI_BIN" -m rule --add app="^System Settings$" manage=off sub-layer=below grid="$GRID_CENTER_LARGE" || true
-"$YABAI_BIN" -m rule --add app="^System Preferences$" manage=off sub-layer=below grid="$GRID_CENTER_LARGE" || true
-"$YABAI_BIN" -m rule --add app="^System Information$" manage=off sub-layer=below grid="$GRID_CENTER_LARGE" || true
-"$YABAI_BIN" -m rule --add app="^Activity Monitor$" manage=off sub-layer=below grid="$GRID_CENTER_LARGE" || true
-"$YABAI_BIN" -m rule --add app="^Archive Utility$" manage=off sub-layer=below grid="$GRID_CENTER_LARGE" || true
-"$YABAI_BIN" -m rule --add app="^Installer$" manage=off sub-layer=below grid="$GRID_CENTER_LARGE" || true
-"$YABAI_BIN" -m rule --add app="^Software Update$" manage=off sub-layer=below grid="$GRID_CENTER_LARGE" || true
+"$YABAI_BIN" -m rule --add app="^System Settings$" manage=off sub-layer=below grid="$GRID_CENTER" || true
+"$YABAI_BIN" -m rule --add app="^System Preferences$" manage=off sub-layer=below grid="$GRID_CENTER" || true
+"$YABAI_BIN" -m rule --add app="^System Information$" manage=off sub-layer=below grid="$GRID_CENTER" || true
+"$YABAI_BIN" -m rule --add app="^Activity Monitor$" manage=off sub-layer=below grid="$GRID_CENTER" || true
+"$YABAI_BIN" -m rule --add app="^Archive Utility$" manage=off sub-layer=below grid="$GRID_CENTER" || true
+"$YABAI_BIN" -m rule --add app="^Installer$" manage=off sub-layer=below grid="$GRID_CENTER" || true
+"$YABAI_BIN" -m rule --add app="^Software Update$" manage=off sub-layer=below grid="$GRID_CENTER" || true
 "$YABAI_BIN" -m rule --add app="^Finder$" manage=off sub-layer=below grid="$GRID_LEFT_HALF" || true
-"$YABAI_BIN" -m rule --add app="^Migration Assistant$" manage=off sub-layer=below grid="$GRID_CENTER_LARGE" || true
-"$YABAI_BIN" -m rule --add app="^Disk Utility$" manage=off sub-layer=below grid="$GRID_CENTER_LARGE" || true
+"$YABAI_BIN" -m rule --add app="^Migration Assistant$" manage=off sub-layer=below grid="$GRID_CENTER" || true
+"$YABAI_BIN" -m rule --add app="^Disk Utility$" manage=off sub-layer=below grid="$GRID_CENTER" || true
 
 # Utilities
 "$YABAI_BIN" -m rule --add app="^Calculator$" manage=off sub-layer=below grid="$GRID_TOP_RIGHT_QUARTER" || true
-"$YABAI_BIN" -m rule --add app="^Dictionary$" manage=off sub-layer=below grid="$GRID_CENTER_LARGE" || true
-"$YABAI_BIN" -m rule --add app="^Karabiner-Elements$" manage=off sub-layer=below grid="$GRID_CENTER_LARGE" || true
-"$YABAI_BIN" -m rule --add app="^QuickTime Player$" manage=off sub-layer=below grid="$GRID_CENTER_LARGE" || true
-"$YABAI_BIN" -m rule --add app="^Preview$" manage=off sub-layer=below grid="$GRID_CENTER_LARGE" || true
-"$YABAI_BIN" -m rule --add app="^1Password$" manage=off sub-layer=above sticky=on grid="$GRID_CENTER_LARGE" || true
+"$YABAI_BIN" -m rule --add app="^Dictionary$" manage=off sub-layer=below grid="$GRID_CENTER" || true
+"$YABAI_BIN" -m rule --add app="^Karabiner-Elements$" manage=off sub-layer=below grid="$GRID_CENTER" || true
+"$YABAI_BIN" -m rule --add app="^QuickTime Player$" manage=off sub-layer=below grid="$GRID_CENTER" || true
+"$YABAI_BIN" -m rule --add app="^Preview$" manage=off sub-layer=below grid="$GRID_CENTER" || true
+"$YABAI_BIN" -m rule --add app="^1Password$" manage=off sub-layer=above sticky=on grid="$GRID_CENTER" || true
 "$YABAI_BIN" -m rule --add app="^Digital Colormeter$" manage=off sub-layer=below grid="$GRID_TOP_RIGHT_QUARTER" || true
-"$YABAI_BIN" -m rule --add app="^ColorSync Utility$" manage=off sub-layer=below grid="$GRID_CENTER_LARGE" || true
-"$YABAI_BIN" -m rule --add app="^Font File Browser$" manage=off sub-layer=below grid="$GRID_CENTER_LARGE" || true
+"$YABAI_BIN" -m rule --add app="^ColorSync Utility$" manage=off sub-layer=below grid="$GRID_CENTER" || true
+"$YABAI_BIN" -m rule --add app="^Font File Browser$" manage=off sub-layer=below grid="$GRID_CENTER" || true
 
 # Browsers - Arc requires comprehensive exclusion to prevent CPU performance loops
 "$YABAI_BIN" -m rule --add label=arc_unmanaged app="^Arc$" manage=off || true
@@ -111,11 +97,11 @@ fi
 "$YABAI_BIN" -m rule --add label=arc_notification app="^Arc$" title=".*[Nn]otification.*" manage=off sticky=on sub-layer=above || true
 
 # Productivity / Tools
-"$YABAI_BIN" -m rule --add app="^Raycast$" manage=off sub-layer=below grid="$GRID_CENTER_LARGE" || true
+"$YABAI_BIN" -m rule --add app="^Raycast$" manage=off sub-layer=below grid="$GRID_CENTER" || true
 "$YABAI_BIN" -m rule --add app="^CleanShot X$" manage=off sub-layer=above || true
-"$YABAI_BIN" -m rule --add app="^BetterTouchTool$" manage=off sub-layer=below grid="$GRID_CENTER_LARGE" || true
-"$YABAI_BIN" -m rule --add app="^Docker Desktop$" manage=off sub-layer=below grid="$GRID_CENTER_LARGE" || true
-"$YABAI_BIN" -m rule --add app="^Hammerspoon$" manage=off sub-layer=below grid="$GRID_CENTER_LARGE" || true
+"$YABAI_BIN" -m rule --add app="^BetterTouchTool$" manage=off sub-layer=below grid="$GRID_CENTER" || true
+"$YABAI_BIN" -m rule --add app="^Docker Desktop$" manage=off sub-layer=below grid="$GRID_CENTER" || true
+"$YABAI_BIN" -m rule --add app="^Hammerspoon$" manage=off sub-layer=below grid="$GRID_CENTER" || true
 
 # Communication & Media
 "$YABAI_BIN" -m rule --add app="^Discord$" manage=off sub-layer=below grid="$GRID_RIGHT_HALF" || true
@@ -123,8 +109,8 @@ fi
 "$YABAI_BIN" -m rule --add app="^Telegram$" manage=off sub-layer=below grid="$GRID_RIGHT_HALF" || true
 "$YABAI_BIN" -m rule --add app="^WhatsApp$" manage=off sub-layer=below grid="$GRID_RIGHT_HALF" || true
 "$YABAI_BIN" -m rule --add app="^FaceTime$" manage=off sub-layer=below grid="$GRID_RIGHT_THIRD" || true
-"$YABAI_BIN" -m rule --add app="^zoom.us$" manage=off sub-layer=below grid="$GRID_CENTER_LARGE" || true
-"$YABAI_BIN" -m rule --add app="^Spotify$" manage=off sub-layer=below grid="$GRID_BOTTOM_TWO_THIRDS" || true
+"$YABAI_BIN" -m rule --add app="^zoom.us$" manage=off sub-layer=below grid="$GRID_CENTER" || true
+"$YABAI_BIN" -m rule --add app="^Spotify$" manage=off sub-layer=below grid="$GRID_BOTTOM_BAND" || true
 
 # Creative & Design
 "$YABAI_BIN" -m rule --add app="^Blender$" manage=off sub-layer=below || true
@@ -136,7 +122,7 @@ fi
 "$YABAI_BIN" -m rule --add app="^Console$" manage=off sub-layer=below || true
 "$YABAI_BIN" -m rule --add app="^WezTerm$" manage=on || true
 "$YABAI_BIN" -m rule --add app="^Visual Studio Code$" manage=on || true
-"$YABAI_BIN" -m rule --add app="^Adobe Creative Cloud$" manage=off sub-layer=below grid="$GRID_CENTER_LARGE" || true
+"$YABAI_BIN" -m rule --add app="^Adobe Creative Cloud$" manage=off sub-layer=below grid="$GRID_CENTER" || true
 
 # Scratchpad windows (special terminals/apps for quick access)
 "$YABAI_BIN" -m rule --add app="^WezTerm$" title="^scratchpad$" manage=off sticky=on sub-layer=above grid=6:6:1:1:4:4 || true

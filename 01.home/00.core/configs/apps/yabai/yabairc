@@ -164,6 +164,23 @@ for _cand in \
 done
 [ "$RULES_LOADED" = 1 ] || echo "yabai: rules-signals.sh not found; skipping rules/signals" >&2
 
+# --- external borders: managed by yabai ------------------------------------
+# Use ~/.config/borders/bordersrc as the single source of truth.
+# Start once after core config and ensure reload on Dock restart.
+BORDERS_RC="${XDG_CONFIG_HOME:-$HOME/.config}/borders/bordersrc"
+if [ -x "$BORDERS_RC" ]; then
+  # stop existing instance, then start fresh in background
+  pkill -x borders >/dev/null 2>&1 || true
+  PATH="/opt/homebrew/bin:/usr/local/bin:/run/current-system/sw/bin:$PATH" "$BORDERS_RC" >/dev/null 2>&1 &
+  # ensure Dock restart also restarts borders
+  "$YABAI_BIN" -m signal --remove restart_borders >/dev/null 2>&1 || true
+  "$YABAI_BIN" -m signal --add event=dock_did_restart \
+    action="pkill -x borders >/dev/null 2>&1 || true; PATH='/opt/homebrew/bin:/usr/local/bin:/run/current-system/sw/bin:'\$PATH '$BORDERS_RC' >/dev/null 2>&1 &" \
+    label=restart_borders
+else
+  echo "yabai: bordersrc not found or not executable: $BORDERS_RC" >&2
+fi
+
 # --- startup: diagnostics ---------------------------------------------------
 if "$YABAI_BIN" -m query --windows >/dev/null 2>&1; then
   # skhd status hint
@@ -172,7 +189,6 @@ if "$YABAI_BIN" -m query --windows >/dev/null 2>&1; then
   else
     echo "yabai: skhd not running" >&2
   fi
-  # JankyBorders managed by Hammerspoon integration; do not start here
   if [ "$SA_LOADED" = true ]; then
     "$YABAI_BIN" -m config window_opacity_duration 0.25
   fi

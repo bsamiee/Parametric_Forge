@@ -71,14 +71,14 @@ M.appRules = {
 
     -- Utilities
     { app = "^Calculator$", manage = false, subLayer = "below", gridAnchor = "top_right_quarter" },
-    { app = "^Dictionary$", manage = false, subLayer = "below", gridAnchor = "center_large" },
-    { app = "^Karabiner%-Elements$", manage = false, subLayer = "below", gridAnchor = "center_large" },
-    { app = "^QuickTime Player$", manage = false, subLayer = "below", gridAnchor = "center_large" },
-    { app = "^Preview$", manage = false, subLayer = "below", gridAnchor = "center_large" },
-    { app = "^1Password$", manage = false, sticky = true, subLayer = "above", gridAnchor = "center_large" },
+    { app = "^Dictionary$", manage = false, subLayer = "below", gridAnchor = "center" },
+    { app = "^Karabiner%-Elements$", manage = false, subLayer = "below", gridAnchor = "center" },
+    { app = "^QuickTime Player$", manage = false, subLayer = "below", gridAnchor = "center" },
+    { app = "^Preview$", manage = false, subLayer = "below", gridAnchor = "center" },
+    { app = "^1Password$", manage = false, sticky = true, subLayer = "above", gridAnchor = "center" },
     { app = "^Digital Colormeter$", manage = false, subLayer = "below", gridAnchor = "top_right_quarter" },
-    { app = "^ColorSync Utility$", manage = false, subLayer = "below", gridAnchor = "center_large" },
-    { app = "^Font File Browser$", manage = false, subLayer = "below", gridAnchor = "center_large" },
+    { app = "^ColorSync Utility$", manage = false, subLayer = "below", gridAnchor = "center" },
+    { app = "^Font File Browser$", manage = false, subLayer = "below", gridAnchor = "center" },
 
     -- Browsers - Arc
     { app = "^Arc$", manage = false },
@@ -86,11 +86,11 @@ M.appRules = {
     { app = "^Arc$", title = ".*[Nn]otification.*", manage = false, sticky = true, subLayer = "above" },
 
     -- Productivity / Tools
-    { app = "^Raycast$", manage = false, subLayer = "below", gridAnchor = "center_large" },
+    { app = "^Raycast$", manage = false, subLayer = "below", gridAnchor = "center" },
     { app = "^CleanShot X$", manage = false, subLayer = "above" },
-    { app = "^BetterTouchTool$", manage = false, subLayer = "below", gridAnchor = "center_large" },
-    { app = "^Docker Desktop$", manage = false, subLayer = "below", gridAnchor = "center_large" },
-    { app = "^Hammerspoon$", manage = false, subLayer = "below", gridAnchor = "center_large" },
+    { app = "^BetterTouchTool$", manage = false, subLayer = "below", gridAnchor = "center" },
+    { app = "^Docker Desktop$", manage = false, subLayer = "below", gridAnchor = "center" },
+    { app = "^Hammerspoon$", manage = false, subLayer = "below", gridAnchor = "center" },
 
     -- Communication & Media
     { app = "^Discord$", manage = false, subLayer = "below", gridAnchor = "right_half" },
@@ -98,8 +98,8 @@ M.appRules = {
     { app = "^Telegram$", manage = false, subLayer = "below", gridAnchor = "right_half" },
     { app = "^WhatsApp$", manage = false, subLayer = "below", gridAnchor = "right_half" },
     { app = "^FaceTime$", manage = false, subLayer = "below", gridAnchor = "right_third" },
-    { app = "^zoom%.us$", manage = false, subLayer = "below", gridAnchor = "center_large" },
-    { app = "^Spotify$", manage = false, subLayer = "below", gridAnchor = "bottom_center_two_thirds" },
+    { app = "^zoom%.us$", manage = false, subLayer = "below", gridAnchor = "center" },
+    { app = "^Spotify$", manage = false, subLayer = "below", gridAnchor = "bottom" },
 
     -- Creative & Design
     { app = "^Blender$", manage = false, subLayer = "below" },
@@ -111,7 +111,7 @@ M.appRules = {
     { app = "^Console$", manage = false, subLayer = "below" },
     { app = "^WezTerm$", manage = true },
     { app = "^Visual Studio Code$", manage = true },
-    { app = "^Adobe Creative Cloud$", manage = false, subLayer = "below", gridAnchor = "center_large" },
+    { app = "^Adobe Creative Cloud$", manage = false, subLayer = "below", gridAnchor = "center" },
 }
 
 return M

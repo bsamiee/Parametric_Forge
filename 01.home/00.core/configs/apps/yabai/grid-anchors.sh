@@ -15,28 +15,23 @@ set -eu
 # --- detect script name -----------------------------------------------------
 SCRIPT_BASENAME=${0##*/}
 
-# --- anchors: definitions ---------------------------------------------------
-# halves
+# --- anchors: definitions (KISS, padding-aware via yabai) -------------------
+# All grids operate within the visible screen frame respecting yabai's
+# padding and window gaps (top/bottom/left/right/window_gap). No manual
+# pixel offsets are applied here.
+
+# full
 GRID_FULL="1:1:0:0:1:1"
+
+# halves
 GRID_LEFT_HALF="1:2:0:0:1:1"
 GRID_RIGHT_HALF="1:2:1:0:1:1"
-GRID_TOP_HALF="2:1:0:0:1:1"
-GRID_BOTTOM_HALF="2:1:0:1:1:1"
 
-# thirds
+# vertical thirds (columns)
 GRID_LEFT_THIRD="1:3:0:0:1:1"
 GRID_MIDDLE_THIRD="1:3:1:0:1:1"
 GRID_RIGHT_THIRD="1:3:2:0:1:1"
 GRID_MID_THIRD="$GRID_MIDDLE_THIRD"
-
-# two-thirds (vertical bands)
-GRID_LEFT_TWO_THIRDS="1:3:0:0:2:1"
-GRID_RIGHT_TWO_THIRDS="1:3:1:0:2:1"
-
-# horizontal bands (two-thirds height across full width)
-GRID_TOP_TWO_THIRDS="3:1:0:0:1:2"
-GRID_MIDDLE_TWO_THIRDS="6:1:0:1:1:4"
-GRID_BOTTOM_TWO_THIRDS="3:1:0:1:1:2"
 
 # quarters (2x2)
 GRID_TOP_LEFT_QUARTER="2:2:0:0:1:1"
@@ -44,8 +39,15 @@ GRID_TOP_RIGHT_QUARTER="2:2:1:0:1:1"
 GRID_BOTTOM_LEFT_QUARTER="2:2:0:1:1:1"
 GRID_BOTTOM_RIGHT_QUARTER="2:2:1:1:1:1"
 
-# centered large rectangle (approx 2/3 width x 2/3 height)
-GRID_CENTER_LARGE="6:6:1:1:4:4"
+# minor positions (not edge-to-edge):
+# - top / bottom: centered 2/3 width × 1/2 height bands
+#   use 2 rows × 6 cols; width=4, height=1; x=1 centers horizontally
+GRID_TOP_BAND="2:6:1:0:4:1"
+GRID_BOTTOM_BAND="2:6:1:1:4:1"
+
+# - center: approx 2/3 width × 2/3 height, centered
+#   use 6×6; width=4, height=4; x=1, y=1
+GRID_CENTER="6:6:1:1:4:4"
 
 # if sourced (typical when loaded from yabairc), stop here
 if [ "$SCRIPT_BASENAME" != "grid-anchors.sh" ]; then
@@ -103,24 +105,24 @@ while [ $# -gt 0 ]; do
 done
 
 case "$ANCHOR" in
+# main
 full) GRID="$GRID_FULL" ;;
 left_half) GRID="$GRID_LEFT_HALF" ;;
 right_half) GRID="$GRID_RIGHT_HALF" ;;
-top_half) GRID="$GRID_TOP_HALF" ;;
-bottom_half) GRID="$GRID_BOTTOM_HALF" ;;
 left_third) GRID="$GRID_LEFT_THIRD" ;;
 middle_third | mid_third | middle) GRID="$GRID_MIDDLE_THIRD" ;;
 right_third) GRID="$GRID_RIGHT_THIRD" ;;
-left_two_thirds) GRID="$GRID_LEFT_TWO_THIRDS" ;;
-right_two_thirds) GRID="$GRID_RIGHT_TWO_THIRDS" ;;
 top_left_quarter) GRID="$GRID_TOP_LEFT_QUARTER" ;;
 top_right_quarter) GRID="$GRID_TOP_RIGHT_QUARTER" ;;
 bottom_left_quarter) GRID="$GRID_BOTTOM_LEFT_QUARTER" ;;
 bottom_right_quarter) GRID="$GRID_BOTTOM_RIGHT_QUARTER" ;;
-top_two_thirds) GRID="$GRID_TOP_TWO_THIRDS" ;;
-middle_two_thirds) GRID="$GRID_MIDDLE_TWO_THIRDS" ;;
-bottom_two_thirds) GRID="$GRID_BOTTOM_TWO_THIRDS" ;;
-center_large) GRID="$GRID_CENTER_LARGE" ;;
+# minors
+top) GRID="$GRID_TOP_BAND" ;;
+bottom) GRID="$GRID_BOTTOM_BAND" ;;
+center) GRID="$GRID_CENTER" ;;
+# compatibility aliases (for legacy configs)
+center_large) GRID="$GRID_CENTER" ;;
+bottom_center_two_thirds) GRID="$GRID_BOTTOM_BAND" ;;
 *)
     echo "unknown anchor: $ANCHOR" >&2
     exit 65

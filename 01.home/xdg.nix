@@ -129,8 +129,10 @@
       # UI Tools
       mkdir -pm 755 "${config.xdg.configHome}/hammerspoon"
       mkdir -pm 755 "${config.xdg.configHome}/hammerspoon/forge"
+      mkdir -pm 755 "${config.xdg.configHome}/hammerspoon/assets"
       mkdir -pm 755 "${config.xdg.configHome}/yabai"
       mkdir -pm 755 "${config.xdg.configHome}/borders"
+      mkdir -pm 755 "${config.xdg.configHome}/karabiner"
       mkdir -pm 755 "${config.xdg.dataHome}/applications"
       mkdir -pm 755 "${config.xdg.dataHome}/fonts"
       mkdir -pm 755 "${config.xdg.dataHome}/icons"
