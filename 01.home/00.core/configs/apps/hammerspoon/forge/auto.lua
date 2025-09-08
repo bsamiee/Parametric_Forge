@@ -5,15 +5,16 @@
 -- Path          : /01.home/00.core/configs/apps/hammerspoon/forge/auto.lua
 -- ----------------------------------------------------------------------------
 -- Watches config files (yabai/skhd/hammerspoon/yazi) and triggers restarts with OSD
+
 local integ = require("forge.integration")
 local osd = require("forge.osd")
+local shlib = require("forge.sh")
 
 local M = {}
 local log = hs.logger.new("forge.auto", hs.logger.info)
 
-local PATH = "/opt/homebrew/bin:/usr/local/bin:/run/current-system/sw/bin:" .. os.getenv("PATH")
 local function sh(cmd)
-    return hs.execute("/usr/bin/env PATH='" .. PATH .. "' sh -lc '" .. cmd .. "'", true)
+    return shlib.sh(cmd)
 end
 
 -- Debounced runners -------------------------------------------------------

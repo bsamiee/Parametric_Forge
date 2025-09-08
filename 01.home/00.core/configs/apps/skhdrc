@@ -24,7 +24,7 @@
 
 # --- TIER 1: Daily Operations (80% usage - Simple & Memorable) -------------
 # Window focus with intuitive arrow keys - no app conflicts
-lalt - left : [
+ctrl + lalt - left : [
 "WezTerm" ~
 "Code" ~
 "Visual Studio Code" ~
@@ -32,7 +32,7 @@ lalt - left : [
 "*" : "$HOME/.config/yabai/run-yabai.sh" -m window --focus west
 ]
 
-lalt - down : [
+ctrl + lalt - down : [
 "WezTerm" ~
 "Code" ~
 "Visual Studio Code" ~
@@ -40,7 +40,7 @@ lalt - down : [
 "*" : "$HOME/.config/yabai/run-yabai.sh" -m window --focus south
 ]
 
-lalt - up : [
+ctrl + lalt - up : [
 "WezTerm" ~
 "Code" ~
 "Visual Studio Code" ~
@@ -48,7 +48,7 @@ lalt - up : [
 "*" : "$HOME/.config/yabai/run-yabai.sh" -m window --focus north
 ]
 
-lalt - right : [
+ctrl + lalt - right : [
 "WezTerm" ~
 "Code" ~
 "Visual Studio Code" ~
@@ -185,6 +185,9 @@ shift + ctrl + alt + rcmd - y : "$HOME/.config/yabai/run-yabai.sh" -m space --mi
 # --- Utility Operations (Simple Keys) ---------------------------------------
 # Quick navigation and space management
 lalt - tab : "$HOME/.config/yabai/run-yabai.sh" -m space --focus recent || "$HOME/.config/yabai/run-yabai.sh" -m space --focus first
+
+# Palettes
+shift + lalt - p : open 'hammerspoon://forge/palette/main'
 
 # Dynamic space management with display awareness
 cmd + alt - n : \

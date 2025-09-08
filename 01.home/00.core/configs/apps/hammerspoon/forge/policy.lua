@@ -5,9 +5,11 @@
 -- Path          : /01.home/00.core/configs/apps/hammerspoon/forge/policy.lua
 -- ----------------------------------------------------------------------------
 -- Window and space policy logic (advisory; Yabai owns float)
+
 local config = require("forge.config")
 local exec = require("forge.executor")
 local state = require("forge.state")
+local shlib = require("forge.sh")
 
 local M = {}
 
@@ -38,6 +40,10 @@ end
 -- Called on window created (or when we want to ensure policy)
 function M.applyWindowPolicy(win)
     if not win or not win:id() then
+        return
+    end
+    -- Quick short-circuit when HS is not enforcing float logic
+    if not config.enforceFloatInHS then
         return
     end
     local id = win:id()
@@ -118,14 +124,7 @@ function M.applySpacePolicy(spaceId)
     end
     -- Only normalize BSP spaces, leave stack spaces alone
     local sh = function(cmd)
-        return hs.execute(
-            "/usr/bin/env PATH='/opt/homebrew/bin:/usr/local/bin:/run/current-system/sw/bin:"
-                .. os.getenv("PATH")
-                .. "' sh -lc '"
-                .. cmd
-                .. "'",
-            true
-        )
+        return shlib.sh(cmd)
     end
 
     local spaceInfo = sh(string.format("yabai -m query --spaces --space %s 2>/dev/null", spaceId))
@@ -140,14 +139,7 @@ end
 -- Window stack detection helper
 function M.isWindowStacked(winId)
     local sh = function(cmd)
-        return hs.execute(
-            "/usr/bin/env PATH='/opt/homebrew/bin:/usr/local/bin:/run/current-system/sw/bin:"
-                .. os.getenv("PATH")
-                .. "' sh -lc '"
-                .. cmd
-                .. "'",
-            true
-        )
+        return shlib.sh(cmd)
     end
 
     local winInfo = sh(string.format("yabai -m query --windows --window %s 2>/dev/null", winId))

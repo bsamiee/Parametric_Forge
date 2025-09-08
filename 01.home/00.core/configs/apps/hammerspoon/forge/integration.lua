@@ -5,23 +5,17 @@
 -- Path          : /01.home/00.core/configs/apps/hammerspoon/forge/integration.lua
 -- ----------------------------------------------------------------------------
 -- Borders lifecycle, Yabai state watchers, and coordination
+
 local M = {}
-
-local PATH = "/opt/homebrew/bin:/usr/local/bin:/run/current-system/sw/bin:" .. os.getenv("PATH")
 local log = hs.logger.new("forge.integr", hs.logger.info)
-
-local function sh(cmd)
-    return hs.execute("/usr/bin/env PATH='" .. PATH .. "' sh -lc '" .. cmd .. "'", true)
-end
+local shlib = require("forge.sh")
 
 local function yabaiReady()
-    local out = sh("yabai -m query --windows >/dev/null 2>&1; echo $?")
-    return out and out:match("^0") ~= nil
+    return shlib.isYabaiReady()
 end
 
 local function bordersRunning()
-    local out = sh("pgrep -x borders >/dev/null 2>&1; echo $?")
-    return out and out:match("^0") ~= nil
+    return shlib.isProcessRunning("borders")
 end
 
 local function findBordersBin()
@@ -31,7 +25,7 @@ local function findBordersBin()
     if hs.fs.attributes("/usr/local/bin/borders") then
         return "/usr/local/bin/borders"
     end
-    local out = sh("command -v borders 2>/dev/null | head -n1 | tr -d '\n'")
+    local out = shlib.sh("command -v borders 2>/dev/null | head -n1 | tr -d '\n'")
     if out and #out > 0 then
         return out
     end
@@ -49,13 +43,13 @@ local function startBorders()
         else
             cmd = string.format("'%s' >/dev/null 2>&1 &", bin)
         end
-        sh(cmd)
+        shlib.sh(cmd)
         log.i("borders started (binary)")
         local osd = require("forge.osd")
         osd.show("Borders started", { duration = 0.8 })
     elseif hs.fs.attributes(rc) then
         -- Last resort: execute rc if it's a wrapper script and executable
-        sh(string.format("[ -x '%s' ] && '%s' >/dev/null 2>&1 &", rc, rc))
+        shlib.sh(string.format("[ -x '%s' ] && '%s' >/dev/null 2>&1 &", rc, rc))
         log.i("borders started (rc)")
         local osd = require("forge.osd")
         osd.show("Borders started", { duration = 0.8 })
@@ -65,7 +59,7 @@ local function startBorders()
 end
 
 local function killBorders()
-    sh("pkill -x borders >/dev/null 2>&1 || true")
+    shlib.sh("pkill -x borders >/dev/null 2>&1 || true")
     local osd = require("forge.osd")
     osd.show("Borders stopped", { duration = 0.6 })
 end
@@ -95,7 +89,7 @@ end
 function M.watchYabaiRestart()
     local last = nil
     hs.timer.doEvery(2, function()
-        local pid = sh("pgrep -x yabai | head -n1 | tr -d '\n'")
+        local pid = shlib.sh("pgrep -x yabai | head -n1 | tr -d '\n'")
         if pid and #pid > 0 then
             if last == nil then
                 last = pid
@@ -104,9 +98,21 @@ function M.watchYabaiRestart()
             if pid ~= last then
                 last = pid
                 M.ensureBorders({ forceRestart = true })
+                -- refresh scripting-addition availability state
+                local exec = require("forge.executor")
+                exec.refreshSa()
                 local osd = require("forge.osd")
                 osd.show("Yabai restarted (PID change)", { duration = 0.8 })
             end
+        end
+    end)
+end
+
+-- Periodically ensure borders is running when yabai is ready
+function M.watchBorders()
+    hs.timer.doEvery(10, function()
+        if yabaiReady() and not bordersRunning() then
+            startBorders()
         end
     end)
 end

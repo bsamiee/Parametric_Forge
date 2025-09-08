@@ -5,6 +5,7 @@
 -- Path          : /01.home/00.core/configs/apps/hammerspoon/forge/events.lua
 -- ----------------------------------------------------------------------------
 -- Window/space/screen/wake event subscriptions and handlers
+
 local policy = require("forge.policy")
 
 local M = {}

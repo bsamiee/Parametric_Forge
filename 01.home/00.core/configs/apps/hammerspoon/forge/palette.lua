@@ -5,9 +5,11 @@
 -- Path          : /01.home/00.core/configs/apps/hammerspoon/forge/palette.lua
 -- ----------------------------------------------------------------------------
 -- Window/focus palettes and main action palette with OSD feedback
+
 local auto = require("forge.auto")
 local exec = require("forge.executor")
 local osd = require("forge.osd")
+local shlib = require("forge.sh")
 
 local M = {}
 
@@ -152,9 +154,8 @@ local function handleMainChoice(choice)
         return
     end
     if choice.id == "drop_toggle" then
-        local PATH = "/opt/homebrew/bin:/usr/local/bin:/run/current-system/sw/bin:" .. os.getenv("PATH")
         local function sh(cmd)
-            return hs.execute("/usr/bin/env PATH='" .. PATH .. "' sh -lc '" .. cmd .. "'", true)
+            return shlib.sh(cmd)
         end
         local current = (sh("yabai -m config mouse_drop_action 2>/dev/null"):gsub("\n$", ""))
         if current == "swap" then
@@ -168,9 +169,8 @@ local function handleMainChoice(choice)
     end
 
     if choice.id == "gaps_toggle" then
-        local PATH = "/opt/homebrew/bin:/usr/local/bin:/run/current-system/sw/bin:" .. os.getenv("PATH")
         local function sh(cmd)
-            return hs.execute("/usr/bin/env PATH='" .. PATH .. "' sh -lc '" .. cmd .. "'", true)
+            return shlib.sh(cmd)
         end
         local padding = (sh("yabai -m config top_padding 2>/dev/null"):gsub("\n$", ""))
         if padding == "0" or padding == "" then
@@ -192,9 +192,8 @@ local function handleMainChoice(choice)
             osd.show("Opacity requires SIP/SA", { duration = 1.2 })
             return
         end
-        local PATH = "/opt/homebrew/bin:/usr/local/bin:/run/current-system/sw/bin:" .. os.getenv("PATH")
         local function sh(cmd)
-            return hs.execute("/usr/bin/env PATH='" .. PATH .. "' sh -lc '" .. cmd .. "'", true)
+            return shlib.sh(cmd)
         end
         local status = (sh("yabai -m config window_opacity 2>/dev/null"):gsub("\n$", ""))
         if status == "off" or status == "" then
@@ -226,9 +225,8 @@ local function handleMainChoice(choice)
             if not a or not n then
                 return
             end
-            local PATH = "/opt/homebrew/bin:/usr/local/bin:/run/current-system/sw/bin:" .. os.getenv("PATH")
             local function sh(cmd)
-                return hs.execute("/usr/bin/env PATH='" .. PATH .. "' sh -lc '" .. cmd .. "'", true)
+                return shlib.sh(cmd)
             end
             sh(
                 string.format(

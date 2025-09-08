@@ -5,6 +5,7 @@
 -- Path          : /01.home/00.core/configs/apps/hammerspoon/forge/osd.lua
 -- ----------------------------------------------------------------------------
 -- On-screen display overlays (transient and persistent)
+
 local M = {}
 
 local defaultStyle = {

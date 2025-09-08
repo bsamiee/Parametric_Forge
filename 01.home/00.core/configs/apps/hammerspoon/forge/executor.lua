@@ -5,15 +5,12 @@
 -- Path          : /01.home/00.core/configs/apps/hammerspoon/forge/executor.lua
 -- ----------------------------------------------------------------------------
 -- Debounced Yabai command execution with SA-awareness and grid
+
 local config = require("forge.config")
 local state = require("forge.state")
+local shlib = require("forge.sh")
 
 local M = {}
-
-local PATH = "/opt/homebrew/bin:/usr/local/bin:/run/current-system/sw/bin:" .. os.getenv("PATH")
-local function sh(cmd)
-    return hs.execute("/usr/bin/env PATH='" .. PATH .. "' sh -lc '" .. cmd .. "'", true)
-end
 
 local log = hs.logger.new("forge.exec", hs.logger.info)
 
@@ -26,11 +23,15 @@ function M.isDryRun()
 end
 
 local function saAvailable()
-    local out = sh("[ -d /Library/ScriptingAdditions/yabai.osax ] && echo yes || echo no")
-    return out and out:match("yes") ~= nil
+    return shlib.isSaAvailable()
 end
 
 M.sa = { available = saAvailable() }
+
+function M.refreshSa()
+    M.sa.available = saAvailable()
+    log.d("SA availability refreshed: " .. tostring(M.sa.available))
+end
 
 local function yabai(cmd)
     local full = "yabai -m " .. cmd
@@ -38,13 +39,13 @@ local function yabai(cmd)
         log.d("DRY: " .. full)
         return "", "", 0
     else
-        local out = sh(full)
+        local out = shlib.sh(full)
         return out
     end
 end
 
 local function getWindowInfo(winId)
-    local out = sh(string.format("yabai -m query --windows --window %d 2>/dev/null", winId))
+    local out = shlib.sh(string.format("yabai -m query --windows --window %d 2>/dev/null", winId))
     if not out or #out == 0 then
         return nil
     end
@@ -56,7 +57,7 @@ local function getWindowInfo(winId)
 end
 
 local function getSpaces()
-    local out = sh("yabai -m query --spaces 2>/dev/null")
+    local out = shlib.sh("yabai -m query --spaces 2>/dev/null")
     if not out or #out == 0 then
         return {}
     end
@@ -85,7 +86,7 @@ local function applyGrid(winId, anchor)
     if dryRun then
         log.d("DRY: grid " .. cmd)
     else
-        sh(cmd)
+        shlib.sh(cmd)
     end
 end
 

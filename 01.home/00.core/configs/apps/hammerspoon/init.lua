@@ -19,24 +19,17 @@ hs.hotkey.alertDuration = 0
 
 local log = hs.logger.new("forge", hs.logger.info)
 
--- Load OSD module early (needed by functions below)
+-- Load helpers early
 local osd = require("forge.osd")
-
--- PATH used by shell commands (yabai, jq, etc.)
-local PATH = "/opt/homebrew/bin:/usr/local/bin:/run/current-system/sw/bin:" .. os.getenv("PATH")
-
-local function sh(cmd)
-    return hs.execute("/usr/bin/env PATH='" .. PATH .. "' sh -lc '" .. cmd .. "'", true)
-end
+local shlib = require("forge.sh")
 
 -- --- Yabai helpers (no hard dependency if not installed) -------------------
 local function yabai(cmd)
-    return sh("yabai -m " .. cmd)
+    return shlib.yabai(cmd)
 end
 
 local function yabaiIsRunning()
-    local out = sh("pgrep -x yabai >/dev/null 2>&1; echo $?")
-    return out and out:match("^0") ~= nil
+    return shlib.isProcessRunning("yabai")
 end
 
 -- Goto space by Mission Control index, without assuming SIP state.
@@ -75,6 +68,9 @@ end
 local superModal = hs.hotkey.modal.new()
 local mehModal = hs.hotkey.modal.new()
 
+-- Overlay mode for modifier indicators: 'persistent' | 'ephemeral' | 'off'
+local MODS_OVERLAY_MODE = "ephemeral"
+
 superModal.exited = function()
     log.d("Super: exit")
 end
@@ -87,14 +83,21 @@ local mehActive = false
 
 -- Modifier state indicator as persistent OSD (no menubar icon)
 local function updateIndicator()
-    if superActive and mehActive then
-        osd.showPersistent("mods", "Super / Meh")
-    elseif superActive then
-        osd.showPersistent("mods", "Super")
-    elseif mehActive then
-        osd.showPersistent("mods", "Meh")
+    if MODS_OVERLAY_MODE == "persistent" then
+        if superActive and mehActive then
+            osd.showPersistent("mods", "Super / Meh")
+        elseif superActive then
+            osd.showPersistent("mods", "Super")
+        elseif mehActive then
+            osd.showPersistent("mods", "Meh")
+        else
+            osd.hidePersistent("mods")
+        end
     else
-        osd.hidePersistent("mods")
+        -- ephemeral/off: no persistent indicator updates
+        if MODS_OVERLAY_MODE == "off" then
+            osd.hidePersistent("mods")
+        end
     end
 end
 
@@ -103,6 +106,7 @@ local function enterSuper()
         superActive = true
         superModal:enter()
         log.d("Super: enter")
+        if MODS_OVERLAY_MODE == "ephemeral" then osd.show("Super", { duration = 0.4 }) end
         updateIndicator()
     end
 end
@@ -111,6 +115,7 @@ local function exitSuper()
     if superActive then
         superActive = false
         superModal:exit()
+        if MODS_OVERLAY_MODE == "ephemeral" then osd.show("Super off", { duration = 0.3 }) end
         updateIndicator()
     end
 end
@@ -120,11 +125,12 @@ local function enterMeh()
         mehActive = true
         mehModal:enter()
         log.d("Meh: enter")
+        if MODS_OVERLAY_MODE == "ephemeral" then osd.show("Meh", { duration = 0.4 }) end
         updateIndicator()
         -- Temporary stack drop-action while Meh (Right Option) is held
-        local current = (sh("yabai -m config mouse_drop_action 2>/dev/null"):gsub("\n$", ""))
+        local current = (shlib.sh("yabai -m config mouse_drop_action 2>/dev/null"):gsub("\n$", ""))
         if current == "swap" or current == nil or #current == 0 then
-            sh("yabai -m config mouse_drop_action stack")
+            shlib.sh("yabai -m config mouse_drop_action stack")
             osd.show("Drop: Stack (hold)", { duration = 0.6 })
             _G.__forge_meh_set_stack = true
         else
@@ -137,10 +143,11 @@ local function exitMeh()
     if mehActive then
         mehActive = false
         mehModal:exit()
+        if MODS_OVERLAY_MODE == "ephemeral" then osd.show("Meh off", { duration = 0.3 }) end
         updateIndicator()
         -- Restore drop-action if we changed it on enter
         if _G.__forge_meh_set_stack then
-            sh("yabai -m config mouse_drop_action swap")
+            shlib.sh("yabai -m config mouse_drop_action swap")
             osd.show("Drop: Swap", { duration = 0.6 })
             _G.__forge_meh_set_stack = false
         end
@@ -191,6 +198,9 @@ local function afterWake()
     if yabaiIsRunning() then
         -- Example: ensure consistent opacity duration
         yabai("config window_opacity_duration 0.25")
+        -- Refresh SA availability in case Dock/Yabai changed
+        local exec = require("forge.executor")
+        exec.refreshSa()
     end
 end
 
@@ -235,12 +245,14 @@ require("forge.palette") -- URL handlers registration
 
 -- Step 1: start in dry-run (can be switched off after verification)
 exec.setDryRun(false)
+exec.refreshSa()
 events.start()
 
 -- Ensure JankyBorders starts promptly after yabai readiness; force a clean restart
 integ.ensureBorders({ forceRestart = true })
 integ.watchYabaiRestart()
 integ.watchYabaiState()
+integ.watchBorders()
 
 -- Start auto-reload watchers for configs (yabai/skhd/hammerspoon/yazi)
 auto.start()

@@ -99,7 +99,7 @@ M.appRules = {
     { app = "^WhatsApp$", manage = false, subLayer = "below", gridAnchor = "right_half" },
     { app = "^FaceTime$", manage = false, subLayer = "below", gridAnchor = "right_third" },
     { app = "^zoom%.us$", manage = false, subLayer = "below", gridAnchor = "center_large" },
-    { app = "^Spotify$", manage = false, subLayer = "below", gridAnchor = "bottom_two_thirds" },
+    { app = "^Spotify$", manage = false, subLayer = "below", gridAnchor = "bottom_center_two_thirds" },
 
     -- Creative & Design
     { app = "^Blender$", manage = false, subLayer = "below" },
