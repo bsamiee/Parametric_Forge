@@ -6,7 +6,8 @@
       "WebFetch(domain:felixkratz.github.io)",
       "Bash(pgrep:*)",
       "Bash(launchctl:*)",
-      "Read(//Users/bardiasamiee/Library/LaunchAgents/**)"
+      "Read(//Users/bardiasamiee/Library/LaunchAgents/**)",
+      "WebFetch(domain:github.com)"
     ],
     "deny": [],
     "ask": []

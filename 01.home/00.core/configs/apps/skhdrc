@@ -71,18 +71,23 @@ shift + ctrl + alt - right : yabai -m space --focus next || yabai -m space --foc
 
 # --- TIER 2: Essential Manual Overrides (SHIFT + OPT) ---------------------
 # Core toggles when you need manual control over auto-balance
-# Pure global toggle with cross-tool coordination - windowed (4px) ↔ full (0px) modes
+# Global padding/gap toggle with state coordination
 shift + lalt - return : \
-    if [ "$(yabai -m config top_padding)" = "0" ]; then \
-        yabai -m config top_padding 4; yabai -m config bottom_padding 4; \
-        yabai -m config left_padding 4; yabai -m config right_padding 4; \
+    current_padding=$(yabai -m config top_padding); \
+    if [ "$current_padding" = "0" ]; then \
+        yabai -m config top_padding 4; \
+        yabai -m config bottom_padding 4; \
+        yabai -m config left_padding 4; \
+        yabai -m config right_padding 4; \
         yabai -m config window_gap 4; \
-        echo '{"padding":4,"gap":4,"mode":"windowed","space":1,"window":0}' >/tmp/yabai_state.json; \
+        echo '{"padding":4,"gap":4,"mode":"windowed","ts":'$(date +%s)'}' > /tmp/yabai_state.json; \
     else \
-        yabai -m config top_padding 0; yabai -m config bottom_padding 0; \
-        yabai -m config left_padding 0; yabai -m config right_padding 0; \
+        yabai -m config top_padding 0; \
+        yabai -m config bottom_padding 0; \
+        yabai -m config left_padding 0; \
+        yabai -m config right_padding 0; \
         yabai -m config window_gap 0; \
-        echo '{"padding":0,"gap":0,"mode":"full","space":1,"window":0}' >/tmp/yabai_state.json; \
+        echo '{"padding":0,"gap":0,"mode":"fullscreen","ts":'$(date +%s)'}' > /tmp/yabai_state.json; \
     fi
 shift + lalt - space : yabai -m window --toggle float --grid 4:4:1:1:2:2
 shift + lalt - r : yabai -m space --rotate 270 # Fix layout when messy
@@ -124,6 +129,40 @@ shift + ctrl + alt - k : yabai -m window --resize top:0:-50 || yabai -m window -
 shift + ctrl + alt - s : yabai -m window --display west; yabai -m display --focus west
 shift + ctrl + alt - g : yabai -m window --display east; yabai -m display --focus east
 
+# --- Window Stacking Operations -------------------------------------------
+# Stack windows (create window stacks in BSP layout)
+shift + lalt - w : yabai -m window --stack north
+shift + lalt - s : yabai -m window --stack south  
+shift + lalt - a : yabai -m window --stack west
+shift + lalt - d : yabai -m window --stack east
+
+# Navigate within stacks (fallback to regular navigation)
+lalt - n : yabai -m window --focus stack.next || yabai -m window --focus next
+lalt - p : yabai -m window --focus stack.prev || yabai -m window --focus prev
+lalt - 0x12 : yabai -m window --focus stack.first || yabai -m window --focus first  # key: 1
+lalt - 0x13 : yabai -m window --focus stack.last || yabai -m window --focus last    # key: 2
+
+# Insert stack point (prepare for stacking)
+shift + lalt - i : yabai -m window --insert stack
+
+# Toggle space layout between BSP and Stack
+shift + lalt - t : \
+    layout=$(yabai -m query --spaces --space | jq -r '.type'); \
+    if [ "$layout" = "bsp" ]; then \
+        yabai -m space --layout stack; \
+    else \
+        yabai -m space --layout bsp; \
+    fi
+
+# --- Scratchpad Operations ----------------------------------------------
+# Toggle scratchpad terminal (WezTerm with title "scratchpad")
+lalt - grave : \
+    if pgrep -f "WezTerm.*scratchpad" > /dev/null; then \
+        pkill -f "WezTerm.*scratchpad"; \
+    else \
+        /Applications/WezTerm.app/Contents/MacOS/wezterm --config 'window_background_opacity = 0.9' start --title scratchpad; \
+    fi
+
 # --- TIER 4: Expert Overrides (SUPER = shift+ctrl+alt+rcmd) -----------------
 # Space mirroring for layout corrections
 shift + ctrl + alt + rcmd - x : yabai -m space --mirror x-axis
@@ -136,6 +175,16 @@ shift + ctrl + alt + rcmd - y : yabai -m space --mirror y-axis
 # Quick navigation and space management
 lalt - tab : yabai -m space --focus recent || yabai -m space --focus first
 
-# Clean space management
-cmd + alt - n : yabai -m space --create
-cmd + alt - d : yabai -m space --destroy
+# Dynamic space management with display awareness
+cmd + alt - n : \
+    yabai -m space --create && \
+    index=$(yabai -m query --spaces --display | jq 'map(select(."is-native-fullscreen" == false))[-1].index') && \
+    yabai -m space --focus "$index"
+
+cmd + alt - d : \
+    if [ "$(yabai -m query --spaces --display | jq 'map(select(."is-native-fullscreen" == false)) | length')" -gt 1 ]; then \
+        yabai -m space --destroy; \
+    fi
+
+# Enhanced display focus (already exists as lalt - s/g, adding fallback support)
+# Note: Basic window focus (lalt - arrows) defined in TIER 1 section above

@@ -126,7 +126,7 @@ if [ "$SA_LOADED" = true ]; then
     active_window_opacity 0.95 \
     normal_window_opacity 0.80 \
     window_opacity_duration 0.25 \
-    window_shadow float \
+    window_shadow on \
     window_animation_duration 0.0
 else
   "$YABAI_BIN" -m config window_opacity off \
@@ -171,14 +171,7 @@ if "$YABAI_BIN" -m query --windows >/dev/null 2>&1; then
   else
     echo "yabai: skhd not running" >&2
   fi
-  # JankyBorders optional start
-  if pgrep -f borders >/dev/null 2>&1; then
-    :
-  else
-    if [ -x "$HOME/.config/borders/bordersrc" ]; then
-      PATH="/opt/homebrew/bin:/usr/local/bin:$PATH" "$HOME/.config/borders/bordersrc" >/dev/null 2>&1 &
-    fi
-  fi
+  # JankyBorders managed by Hammerspoon integration; do not start here
   "$YABAI_BIN" -m config window_opacity_duration 0.25
   echo "yabai: ready"
 else

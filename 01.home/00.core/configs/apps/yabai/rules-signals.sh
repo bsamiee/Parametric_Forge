@@ -13,7 +13,25 @@ set -eu
 # Ensure critical anchors exist (fallback if anchors module not loaded)
 : "${GRID_RIGHT_HALF:=1:2:1:0:1:1}"
 
+# Coordination: Yabai handles performance-critical rules/signals, Hammerspoon handles complex policies.
+# Both systems work together via state files and events.
+
 # --- signals ---------------------------------------------------------------
+# Window focus coordination with external tools
+"$YABAI_BIN" -m signal --add label=window_focus_changed event=window_focused action="
+  echo '{\"event\":\"window_focused\",\"window_id\":\$YABAI_WINDOW_ID,\"ts\":'\$(date +%s)'}' > /tmp/yabai_focus.json
+" || true
+
+# Space change events for multi-display coordination  
+"$YABAI_BIN" -m signal --add label=space_changed event=space_changed action="
+  echo '{\"event\":\"space_changed\",\"space_id\":\$YABAI_SPACE_ID,\"ts\":'\$(date +%s)'}' > /tmp/yabai_space.json
+" || true
+
+# Display configuration changes
+"$YABAI_BIN" -m signal --add label=display_changed event=display_changed action="
+  echo '{\"event\":\"display_changed\",\"ts\":'\$(date +%s)'}' > /tmp/yabai_display.json
+" || true
+
 # Arc performance optimization - add small delay to reduce polling loops
 "$YABAI_BIN" -m signal --add label=arc_performance_fix event=window_created app="^Arc$" action="sleep 0.1" || true
 
@@ -100,6 +118,7 @@ fi
 "$YABAI_BIN" -m rule --add app="^Messages$" manage=off sub-layer=below grid="$GRID_RIGHT_HALF" || true
 "$YABAI_BIN" -m rule --add app="^Telegram$" manage=off sub-layer=below grid="$GRID_RIGHT_HALF" || true
 "$YABAI_BIN" -m rule --add app="^WhatsApp$" manage=off sub-layer=below grid="$GRID_RIGHT_HALF" || true
+"$YABAI_BIN" -m rule --add app="^FaceTime$" manage=off sub-layer=below grid="$GRID_RIGHT_THIRD" || true
 "$YABAI_BIN" -m rule --add app="^zoom.us$" manage=off sub-layer=below grid="$GRID_CENTER_SQUARE" || true
 "$YABAI_BIN" -m rule --add app="^Spotify$" manage=off sub-layer=below grid="$GRID_BOTTOM_CENTER_3X3" || true
 
@@ -114,6 +133,10 @@ fi
 "$YABAI_BIN" -m rule --add app="^WezTerm$" manage=on || true
 "$YABAI_BIN" -m rule --add app="^Visual Studio Code$" manage=on || true
 "$YABAI_BIN" -m rule --add app="^Adobe Creative Cloud$" manage=off sub-layer=below grid="$GRID_CENTER_SQUARE" || true
+
+# Scratchpad windows (special terminals/apps for quick access)
+"$YABAI_BIN" -m rule --add app="^WezTerm$" title="^scratchpad$" manage=off sticky=on sub-layer=above grid=6:6:1:1:4:4 || true
+"$YABAI_BIN" -m rule --add app="^Calculator$" manage=off sticky=on sub-layer=above grid="$GRID_TOP_RIGHT_3X3" || true
 
 # --- rules: universal ------------------------------------------------------
 "$YABAI_BIN" -m rule --add label=pip_utility subrole="^AXSystemFloatingWindow$" manage=off sticky=on sub-layer=above || true

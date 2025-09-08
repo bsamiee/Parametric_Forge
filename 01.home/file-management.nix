@@ -90,6 +90,12 @@
     };
     # Hammerspoon (Lua automation)
     "hammerspoon/init.lua".source = ./00.core/configs/apps/hammerspoon/init.lua;
+    "hammerspoon/forge/config.lua".source = ./00.core/configs/apps/hammerspoon/forge/config.lua;
+    "hammerspoon/forge/state.lua".source = ./00.core/configs/apps/hammerspoon/forge/state.lua;
+    "hammerspoon/forge/executor.lua".source = ./00.core/configs/apps/hammerspoon/forge/executor.lua;
+    "hammerspoon/forge/policy.lua".source = ./00.core/configs/apps/hammerspoon/forge/policy.lua;
+    "hammerspoon/forge/events.lua".source = ./00.core/configs/apps/hammerspoon/forge/events.lua;
+    "hammerspoon/forge/integration.lua".source = ./00.core/configs/apps/hammerspoon/forge/integration.lua;
     # --- Yabai Configuration ------------------------------------------------
     "yabai/yabairc" = {
       source = ./00.core/configs/apps/yabai/yabairc;

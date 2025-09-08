@@ -127,6 +127,8 @@
       mkdir -pm 755 "${config.xdg.configHome}/yazi/plugins"  # Yazi plugins directory
       mkdir -pm 755 "${config.xdg.configHome}/yazi/flavors"  # Yazi flavors/themes directory
       # UI Tools
+      mkdir -pm 755 "${config.xdg.configHome}/hammerspoon"
+      mkdir -pm 755 "${config.xdg.configHome}/hammerspoon/forge"
       mkdir -pm 755 "${config.xdg.configHome}/yabai"
       mkdir -pm 755 "${config.xdg.dataHome}/applications"
       mkdir -pm 755 "${config.xdg.dataHome}/fonts"

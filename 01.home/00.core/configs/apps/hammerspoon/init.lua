@@ -180,4 +180,20 @@ forge = {
 }
 
 -- Ready notice
-log.i("Hammerspoon ready (no keybinds; Super=RightCmd, Meh=RightOption)")
+-- Start policy engine modules
+local exec   = require("forge.executor")
+local events = require("forge.events")
+local policy = require("forge.policy")
+local cfg    = require("forge.config")
+local integ  = require("forge.integration")
+
+-- Step 1: start in dry-run (can be switched off after verification)
+exec.setDryRun(false)
+events.start()
+
+-- Ensure JankyBorders starts promptly after yabai readiness; force a clean restart
+integ.ensureBorders({ forceRestart = true })
+integ.watchYabaiRestart()
+integ.watchYabaiState()
+
+log.i("Hammerspoon ready (policy active; Super=RightCmd, Meh=RightOption)")

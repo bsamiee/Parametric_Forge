@@ -201,22 +201,38 @@
         "$HOME/Creative Cloud Files Personal Account b.samiee@mzn-group.com F8CF4DB961A518290A495CCB@AdobeID"
       )
 
-      # PHASE 2: Development directories
-      echo "  [PHASE 2] Protecting development and build caches..."
+      # Arc browser directories (CRITICAL for searchpartyd performance)
+      ARC_DIRS=(
+        "$HOME/Library/Application Support/Arc"
+        "$HOME/Library/Caches/company.thebrowser.Browser"
+        "$HOME/Library/WebKit/company.thebrowser.Browser"
+        "$HOME/Library/HTTPStorages/company.thebrowser.Browser"
+        "$HOME/Library/Saved Application State/company.thebrowser.Browser.savedState"
+      )
+
+      # PHASE 2: Arc browser directories (highest priority for searchpartyd fix)
+      echo "  [PHASE 2] Protecting Arc browser directories (searchpartyd performance fix)..."
+      ARC_PROTECTED=0
+      for dir in "''${ARC_DIRS[@]}"; do
+        shield_directory "$dir" && ((ARC_PROTECTED++)) || true
+      done
+
+      # PHASE 3: Development directories
+      echo "  [PHASE 3] Protecting development and build caches..."
       DEV_PROTECTED=0
       for dir in "''${DEV_DIRS[@]}"; do
         shield_directory "$dir" && ((DEV_PROTECTED++)) || true
       done
 
-      # PHASE 3: Cloud sync directories
-      echo "  [PHASE 3] Protecting cloud sync directories..."
+      # PHASE 4: Cloud sync directories
+      echo "  [PHASE 4] Protecting cloud sync directories..."
       CLOUD_PROTECTED=0
       for dir in "''${CLOUD_DIRS[@]}"; do
         shield_directory "$dir" && ((CLOUD_PROTECTED++)) || true
       done
 
-      # PHASE 4: Dynamic project exclusions (optimized single traversal)
-      echo "  [PHASE 4] Protecting dynamic project caches..."
+      # PHASE 5: Dynamic project exclusions (optimized single traversal)
+      echo "  [PHASE 5] Protecting dynamic project caches..."
       PYTHON_CACHE_COUNT=0
       NODE_MODULES_COUNT=0
 
@@ -238,13 +254,14 @@
       # Summary with actual counts
       echo "  [SUMMARY] Protection deployed:"
       echo "    • Application Support directories: $APP_SUPPORT_PROTECTED"
+      echo "    • Arc browser directories: $ARC_PROTECTED (searchpartyd fix)"
       echo "    • Development caches: $DEV_PROTECTED"
       echo "    • Cloud sync folders: $CLOUD_PROTECTED"
       echo "    • Python caches: $PYTHON_CACHE_COUNT"
       echo "    • Node modules: $NODE_MODULES_COUNT"
 
       # Only log if meaningful work was done
-      TOTAL_PROTECTED=$((APP_SUPPORT_PROTECTED + DEV_PROTECTED + CLOUD_PROTECTED + PYTHON_CACHE_COUNT + NODE_MODULES_COUNT))
+      TOTAL_PROTECTED=$((APP_SUPPORT_PROTECTED + ARC_PROTECTED + DEV_PROTECTED + CLOUD_PROTECTED + PYTHON_CACHE_COUNT + NODE_MODULES_COUNT))
       if [ $TOTAL_PROTECTED -gt 0 ]; then
         echo "  [SUCCESS] $TOTAL_PROTECTED directories newly protected"
       else
