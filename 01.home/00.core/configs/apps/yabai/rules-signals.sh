@@ -19,16 +19,19 @@ set -eu
 # --- signals ---------------------------------------------------------------
 # Window focus coordination with external tools
 "$YABAI_BIN" -m signal --add label=window_focus_changed event=window_focused action="
-  echo '{\"event\":\"window_focused\",\"window_id\":\$YABAI_WINDOW_ID,\"ts\":'\$(date +%s)'}' > /tmp/yabai_focus.json
+  PATH='/opt/homebrew/bin:/usr/local/bin:/run/current-system/sw/bin:'\$PATH; \
+  echo '{\"event\":\"window_focused\",\"window_id\":'\$YABAI_WINDOW_ID',\"ts\":'\$(date +%s)'}' > /tmp/yabai_focus.json
 " || true
 
-# Space change events for multi-display coordination  
+# Space change events for multi-display coordination
 "$YABAI_BIN" -m signal --add label=space_changed event=space_changed action="
-  echo '{\"event\":\"space_changed\",\"space_id\":\$YABAI_SPACE_ID,\"ts\":'\$(date +%s)'}' > /tmp/yabai_space.json
+  PATH='/opt/homebrew/bin:/usr/local/bin:/run/current-system/sw/bin:'\$PATH; \
+  echo '{\"event\":\"space_changed\",\"space_id\":'\$YABAI_SPACE_ID',\"ts\":'\$(date +%s)'}' > /tmp/yabai_space.json
 " || true
 
 # Display configuration changes
 "$YABAI_BIN" -m signal --add label=display_changed event=display_changed action="
+  PATH='/opt/homebrew/bin:/usr/local/bin:/run/current-system/sw/bin:'\$PATH; \
   echo '{\"event\":\"display_changed\",\"ts\":'\$(date +%s)'}' > /tmp/yabai_display.json
 " || true
 
@@ -37,16 +40,17 @@ set -eu
 
 # Float non-interactive/small windows on creation (post-internal handling)
 if command -v "$JQ_BIN" >/dev/null 2>&1; then
-  "$YABAI_BIN" -m signal --add label=float_small_noninteractive \
-    event=window_created action="
-      info=\$($YABAI_BIN -m query --windows --window \$YABAI_WINDOW_ID)
-      is_floating=\$(echo \"\$info\" | $JQ_BIN -r '.\"is-floating\"')
-      can_resize=\$(echo \"\$info\" | $JQ_BIN -r '.\"can-resize\"')
-      can_move=\$(echo \"\$info\" | $JQ_BIN -r '.\"can-move\"')
-      role=\$(echo \"\$info\" | $JQ_BIN -r '.role // \"\"')
-      subrole=\$(echo \"\$info\" | $JQ_BIN -r '.subrole // \"\"')
-      w=\$(echo \"\$info\" | $JQ_BIN -r '.frame.w // 0')
-      h=\$(echo \"\$info\" | $JQ_BIN -r '.frame.h // 0')
+    "$YABAI_BIN" -m signal --add label=float_small_noninteractive \
+        event=window_created action="
+      PATH='/opt/homebrew/bin:/usr/local/bin:/run/current-system/sw/bin:'\$PATH; \
+      info=\$($YABAI_BIN -m query --windows --window \$YABAI_WINDOW_ID); \
+      is_floating=\$(echo \"\$info\" | jq -r '.\"is-floating\"'); \
+      can_resize=\$(echo \"\$info\" | jq -r '.\"can-resize\"'); \
+      can_move=\$(echo \"\$info\" | jq -r '.\"can-move\"'); \
+      role=\$(echo \"\$info\" | jq -r '.role // \"\"'); \
+      subrole=\$(echo \"\$info\" | jq -r '.subrole // \"\"'); \
+      w=\$(echo \"\$info\" | jq -r '.frame.w // 0'); \
+      h=\$(echo \"\$info\" | jq -r '.frame.h // 0'); \
       [ \"\$is_floating\" = 'true' ] && exit 0
       if [ \"\$can_resize\" = 'false' ] && [ \"\$can_move\" = 'false' ]; then
         $YABAI_BIN -m window \$YABAI_WINDOW_ID --toggle float; exit 0; fi
@@ -58,45 +62,45 @@ if command -v "$JQ_BIN" >/dev/null 2>&1; then
         $YABAI_BIN -m window \$YABAI_WINDOW_ID --toggle float; fi
     "
 else
-  echo "yabai: jq not found; skipping float_small_noninteractive signal" >&2
+    echo "yabai: jq not found; skipping float_small_noninteractive signal" >&2
 fi
 
 # --- spaces: normalize existing layouts ------------------------------------
 # Ensure all current spaces use bsp layout; independent of any status bar.
 if command -v "$JQ_BIN" >/dev/null 2>&1; then
-  SPACE_DATA="$("$YABAI_BIN" -m query --spaces)"
-  SPACE_COUNT=$(echo "$SPACE_DATA" | "$JQ_BIN" length)
-  echo "$SPACE_DATA" | "$JQ_BIN" -r '.[].index' | while IFS= read -r space; do
-    "$YABAI_BIN" -m space "$space" --layout bsp 2>/dev/null || true
-  done
-  echo "yabai: normalized layouts on $SPACE_COUNT spaces"
+    SPACE_DATA="$("$YABAI_BIN" -m query --spaces)"
+    SPACE_COUNT=$(echo "$SPACE_DATA" | "$JQ_BIN" length)
+    echo "$SPACE_DATA" | "$JQ_BIN" -r '.[].index' | while IFS= read -r space; do
+        "$YABAI_BIN" -m space "$space" --layout bsp 2>/dev/null || true
+    done
+    echo "yabai: normalized layouts on $SPACE_COUNT spaces"
 else
-  echo "yabai: jq not found; skipping space normalization" >&2
+    echo "yabai: jq not found; skipping space normalization" >&2
 fi
 
 # --- rules: applications ----------------------------------------------------
 # System Applications
-"$YABAI_BIN" -m rule --add app="^System Settings$" manage=off sub-layer=below grid="$GRID_CENTER_SQUARE" || true
-"$YABAI_BIN" -m rule --add app="^System Preferences$" manage=off sub-layer=below grid="$GRID_CENTER_SQUARE" || true
-"$YABAI_BIN" -m rule --add app="^System Information$" manage=off sub-layer=below grid="$GRID_CENTER_SQUARE" || true
-"$YABAI_BIN" -m rule --add app="^Activity Monitor$" manage=off sub-layer=below grid="$GRID_CENTER_SQUARE" || true
-"$YABAI_BIN" -m rule --add app="^Archive Utility$" manage=off sub-layer=below grid="$GRID_CENTER_SQUARE" || true
-"$YABAI_BIN" -m rule --add app="^Installer$" manage=off sub-layer=below grid="$GRID_CENTER_SQUARE" || true
-"$YABAI_BIN" -m rule --add app="^Software Update$" manage=off sub-layer=below grid="$GRID_CENTER_SQUARE" || true
+"$YABAI_BIN" -m rule --add app="^System Settings$" manage=off sub-layer=below grid="$GRID_CENTER_LARGE" || true
+"$YABAI_BIN" -m rule --add app="^System Preferences$" manage=off sub-layer=below grid="$GRID_CENTER_LARGE" || true
+"$YABAI_BIN" -m rule --add app="^System Information$" manage=off sub-layer=below grid="$GRID_CENTER_LARGE" || true
+"$YABAI_BIN" -m rule --add app="^Activity Monitor$" manage=off sub-layer=below grid="$GRID_CENTER_LARGE" || true
+"$YABAI_BIN" -m rule --add app="^Archive Utility$" manage=off sub-layer=below grid="$GRID_CENTER_LARGE" || true
+"$YABAI_BIN" -m rule --add app="^Installer$" manage=off sub-layer=below grid="$GRID_CENTER_LARGE" || true
+"$YABAI_BIN" -m rule --add app="^Software Update$" manage=off sub-layer=below grid="$GRID_CENTER_LARGE" || true
 "$YABAI_BIN" -m rule --add app="^Finder$" manage=off sub-layer=below grid="$GRID_LEFT_HALF" || true
-"$YABAI_BIN" -m rule --add app="^Migration Assistant$" manage=off sub-layer=below grid="$GRID_CENTER_SQUARE" || true
-"$YABAI_BIN" -m rule --add app="^Disk Utility$" manage=off sub-layer=below grid="$GRID_CENTER_SQUARE" || true
+"$YABAI_BIN" -m rule --add app="^Migration Assistant$" manage=off sub-layer=below grid="$GRID_CENTER_LARGE" || true
+"$YABAI_BIN" -m rule --add app="^Disk Utility$" manage=off sub-layer=below grid="$GRID_CENTER_LARGE" || true
 
 # Utilities
-"$YABAI_BIN" -m rule --add app="^Calculator$" manage=off sub-layer=below grid="$GRID_TOP_RIGHT_3X3" || true
-"$YABAI_BIN" -m rule --add app="^Dictionary$" manage=off sub-layer=below grid="$GRID_CENTER_SQUARE" || true
-"$YABAI_BIN" -m rule --add app="^Karabiner-Elements$" manage=off sub-layer=below grid="$GRID_CENTER_SQUARE" || true
-"$YABAI_BIN" -m rule --add app="^QuickTime Player$" manage=off sub-layer=below grid="$GRID_CENTER_SQUARE" || true
-"$YABAI_BIN" -m rule --add app="^Preview$" manage=off sub-layer=below grid="$GRID_CENTER_SQUARE" || true
-"$YABAI_BIN" -m rule --add app="^1Password$" manage=off sub-layer=above sticky=on grid="$GRID_CENTER_SQUARE" || true
-"$YABAI_BIN" -m rule --add app="^Digital Colormeter$" manage=off sub-layer=below grid="$GRID_TOP_RIGHT_3X3" || true
-"$YABAI_BIN" -m rule --add app="^ColorSync Utility$" manage=off sub-layer=below grid="$GRID_CENTER_SQUARE" || true
-"$YABAI_BIN" -m rule --add app="^Font File Browser$" manage=off sub-layer=below grid="$GRID_CENTER_SQUARE" || true
+"$YABAI_BIN" -m rule --add app="^Calculator$" manage=off sub-layer=below grid="$GRID_TOP_RIGHT_QUARTER" || true
+"$YABAI_BIN" -m rule --add app="^Dictionary$" manage=off sub-layer=below grid="$GRID_CENTER_LARGE" || true
+"$YABAI_BIN" -m rule --add app="^Karabiner-Elements$" manage=off sub-layer=below grid="$GRID_CENTER_LARGE" || true
+"$YABAI_BIN" -m rule --add app="^QuickTime Player$" manage=off sub-layer=below grid="$GRID_CENTER_LARGE" || true
+"$YABAI_BIN" -m rule --add app="^Preview$" manage=off sub-layer=below grid="$GRID_CENTER_LARGE" || true
+"$YABAI_BIN" -m rule --add app="^1Password$" manage=off sub-layer=above sticky=on grid="$GRID_CENTER_LARGE" || true
+"$YABAI_BIN" -m rule --add app="^Digital Colormeter$" manage=off sub-layer=below grid="$GRID_TOP_RIGHT_QUARTER" || true
+"$YABAI_BIN" -m rule --add app="^ColorSync Utility$" manage=off sub-layer=below grid="$GRID_CENTER_LARGE" || true
+"$YABAI_BIN" -m rule --add app="^Font File Browser$" manage=off sub-layer=below grid="$GRID_CENTER_LARGE" || true
 
 # Browsers - Arc requires comprehensive exclusion to prevent CPU performance loops
 "$YABAI_BIN" -m rule --add label=arc_unmanaged app="^Arc$" manage=off || true
@@ -107,11 +111,11 @@ fi
 "$YABAI_BIN" -m rule --add label=arc_notification app="^Arc$" title=".*[Nn]otification.*" manage=off sticky=on sub-layer=above || true
 
 # Productivity / Tools
-"$YABAI_BIN" -m rule --add app="^Raycast$" manage=off sub-layer=below grid="$GRID_MIDDLE_CENTER_3X3" || true
+"$YABAI_BIN" -m rule --add app="^Raycast$" manage=off sub-layer=below grid="$GRID_CENTER_LARGE" || true
 "$YABAI_BIN" -m rule --add app="^CleanShot X$" manage=off sub-layer=above || true
-"$YABAI_BIN" -m rule --add app="^BetterTouchTool$" manage=off sub-layer=below grid="$GRID_CENTER_SQUARE" || true
-"$YABAI_BIN" -m rule --add app="^Docker Desktop$" manage=off sub-layer=below grid="$GRID_CENTER_SQUARE" || true
-"$YABAI_BIN" -m rule --add app="^Hammerspoon$" manage=off sub-layer=below grid="$GRID_CENTER_SQUARE" || true
+"$YABAI_BIN" -m rule --add app="^BetterTouchTool$" manage=off sub-layer=below grid="$GRID_CENTER_LARGE" || true
+"$YABAI_BIN" -m rule --add app="^Docker Desktop$" manage=off sub-layer=below grid="$GRID_CENTER_LARGE" || true
+"$YABAI_BIN" -m rule --add app="^Hammerspoon$" manage=off sub-layer=below grid="$GRID_CENTER_LARGE" || true
 
 # Communication & Media
 "$YABAI_BIN" -m rule --add app="^Discord$" manage=off sub-layer=below grid="$GRID_RIGHT_HALF" || true
@@ -119,8 +123,8 @@ fi
 "$YABAI_BIN" -m rule --add app="^Telegram$" manage=off sub-layer=below grid="$GRID_RIGHT_HALF" || true
 "$YABAI_BIN" -m rule --add app="^WhatsApp$" manage=off sub-layer=below grid="$GRID_RIGHT_HALF" || true
 "$YABAI_BIN" -m rule --add app="^FaceTime$" manage=off sub-layer=below grid="$GRID_RIGHT_THIRD" || true
-"$YABAI_BIN" -m rule --add app="^zoom.us$" manage=off sub-layer=below grid="$GRID_CENTER_SQUARE" || true
-"$YABAI_BIN" -m rule --add app="^Spotify$" manage=off sub-layer=below grid="$GRID_BOTTOM_CENTER_3X3" || true
+"$YABAI_BIN" -m rule --add app="^zoom.us$" manage=off sub-layer=below grid="$GRID_CENTER_LARGE" || true
+"$YABAI_BIN" -m rule --add app="^Spotify$" manage=off sub-layer=below grid="$GRID_BOTTOM_TWO_THIRDS" || true
 
 # Creative & Design
 "$YABAI_BIN" -m rule --add app="^Blender$" manage=off sub-layer=below || true
@@ -132,11 +136,11 @@ fi
 "$YABAI_BIN" -m rule --add app="^Console$" manage=off sub-layer=below || true
 "$YABAI_BIN" -m rule --add app="^WezTerm$" manage=on || true
 "$YABAI_BIN" -m rule --add app="^Visual Studio Code$" manage=on || true
-"$YABAI_BIN" -m rule --add app="^Adobe Creative Cloud$" manage=off sub-layer=below grid="$GRID_CENTER_SQUARE" || true
+"$YABAI_BIN" -m rule --add app="^Adobe Creative Cloud$" manage=off sub-layer=below grid="$GRID_CENTER_LARGE" || true
 
 # Scratchpad windows (special terminals/apps for quick access)
 "$YABAI_BIN" -m rule --add app="^WezTerm$" title="^scratchpad$" manage=off sticky=on sub-layer=above grid=6:6:1:1:4:4 || true
-"$YABAI_BIN" -m rule --add app="^Calculator$" manage=off sticky=on sub-layer=above grid="$GRID_TOP_RIGHT_3X3" || true
+"$YABAI_BIN" -m rule --add app="^Calculator$" manage=off sticky=on sub-layer=above grid="$GRID_TOP_RIGHT_QUARTER" || true
 
 # --- rules: universal ------------------------------------------------------
 "$YABAI_BIN" -m rule --add label=pip_utility subrole="^AXSystemFloatingWindow$" manage=off sticky=on sub-layer=above || true

@@ -40,13 +40,13 @@ let
 
       # Check if authenticated (no signin prompt - rely on coordinator)
       echo "[op-cache] Checking 1Password authentication status..."
-      
+
       # Test authentication without triggering signin prompt
       if ! op account list >/dev/null 2>&1; then
         echo "[op-cache] Not authenticated - waiting for coordinator service"
         exit 0
       fi
-      
+
       echo "[op-cache] Authentication confirmed via coordinator"
 
       # Check if template exists
@@ -203,11 +203,11 @@ let
       sleep 2
       echo "[op-auth] Triggering cache manager..."
       launchctl kickstart -k "gui/$(id -u)/com.parametricforge.op-cache-manager" 2>/dev/null || true
-      
+
       sleep 1  
       echo "[op-auth] Triggering SSH setup..."
       launchctl kickstart -k "gui/$(id -u)/com.parametricforge.op-ssh-setup" 2>/dev/null || true
-      
+
       echo "[op-auth] ✓ Coordinator completed successfully"
     '';
   };
@@ -219,7 +219,7 @@ in
     config = mkPeriodicJob {
       label = "1Password Authentication Coordinator";
       command = "${authCoordinator}/bin/op-auth-coordinator";
-      interval = 86400; # Every 24 hours  
+      interval = 86400; # Every 24 hours
       runAtLoad = true;
       nice = 5; # Higher priority than dependent services
       logBaseName = "${config.xdg.stateHome}/logs/op-auth-coordinator";
@@ -237,8 +237,8 @@ in
       label = "Security Daemon";
       command = "${opCacheManager}/bin/security-daemon";
       interval = 86400; # Every 24 hours
-      runAtLoad = false;  # Triggered by coordinator, not at boot
-      nice = 15;  # Lower priority than coordinator
+      runAtLoad = false; # Triggered by coordinator, not at boot
+      nice = 15; # Lower priority than coordinator
       logBaseName = "${config.xdg.stateHome}/logs/op-cache";
       environmentVariables = serviceEnv // {
         # Enable 1Password CLI caching to reduce auth prompts
@@ -342,13 +342,13 @@ in
         }
       }/bin/op-ssh-setup";
       interval = 86400; # Every 24 hours
-      runAtLoad = false;  # Triggered by coordinator, not at boot
-      nice = 15;  # Lower priority than coordinator
+      runAtLoad = false; # Triggered by coordinator, not at boot
+      nice = 15; # Lower priority than coordinator
       logBaseName = "${config.xdg.stateHome}/logs/op-ssh-setup";
       environmentVariables = serviceEnv // {
         # Enable 1Password CLI caching
         OP_CACHE = "true";
-        # Set account context for CLI operations  
+        # Set account context for CLI operations
         OP_ACCOUNT = "";
       };
     };

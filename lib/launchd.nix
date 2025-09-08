@@ -122,19 +122,18 @@ rec {
         let
           # Validate command path to prevent bare scripts
           commandStr = toString command;
-          isValidExecutable = 
-            (lib.hasInfix "/bin/" commandStr) ||
-            (lib.hasPrefix "/usr/bin/" commandStr) ||
-            (lib.hasPrefix "/bin/" commandStr);
-          
+          isValidExecutable =
+            (lib.hasInfix "/bin/" commandStr) || (lib.hasPrefix "/usr/bin/" commandStr) || (lib.hasPrefix "/bin/" commandStr);
+
           warningMsg = ''
             WARNING: Command '${commandStr}' may create 'sh' login items.
             Use 'mkNamedExecutable' and '/bin/name' pattern for proper executables.
           '';
         in
-        if !isValidExecutable 
-        then builtins.trace warningMsg { ProgramArguments = [ command ] ++ (args.arguments or [ ]); }
-        else { ProgramArguments = [ command ] ++ (args.arguments or [ ]); }
+        if !isValidExecutable then
+          builtins.trace warningMsg { ProgramArguments = [ command ] ++ (args.arguments or [ ]); }
+        else
+          { ProgramArguments = [ command ] ++ (args.arguments or [ ]); }
       ))
       (mkIf (script != null) {
         ProgramArguments = [

@@ -104,7 +104,7 @@
         # Commit configuration - SSH signing handled by ssh.nix
         commit.verbose = true;
         help.autocorrect = 20;
-        
+
         # Note: GitHub/Gist credential helper automatically configured by programs.gh module
       };
     };

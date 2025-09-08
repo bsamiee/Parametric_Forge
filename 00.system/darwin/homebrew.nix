@@ -32,7 +32,7 @@ in
     # --- Essential Taps -----------------------------------------------------
     taps = [
       "koekeishiya/formulae" # For yabai/skhd
-      "FelixKratz/formulae"  # For borders
+      "FelixKratz/formulae" # For borders
     ];
     # --- GUI Applications (Casks) -------------------------------------------
     casks = [
@@ -53,7 +53,6 @@ in
       "hazel" # File organization automation
       "latest" # App update checker
       "raycast" # Launcher/productivity app
-      "superkey" # Keyboard enhancement utility
       "swish" # Trackpad gesture utility
       "transnomino" # File renaming utility
 

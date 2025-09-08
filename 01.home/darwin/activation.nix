@@ -123,7 +123,6 @@
       fi
     '';
 
-
     # --- Comprehensive User-Level Spotlight Protection ---------------------
     spotlightShield = lib.hm.dag.entryAfter [ "dutiFileAssociations" ] ''
       export PATH="/usr/bin:/bin:/usr/sbin:/sbin:$PATH"

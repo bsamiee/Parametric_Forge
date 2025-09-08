@@ -79,19 +79,5 @@ in
         description = "Plugin manager for Astute Graphics Illustrator plugins";
         homepage = "https://astutegraphics.com/";
       })
-    ]
-    ++ lib.optionals (!appExists "/Applications/Supercharge.app") [
-      (installMacApp {
-        name = "supercharge";
-        appname = "Supercharge";
-        version = "1.19.0";
-        src = pkgs.fetchurl {
-          url = "https://www.dropbox.com/scl/fi/p4gknv4nho0gfdrxsjsmk/Supercharge-1.19.0-trial-1753461750.zip?rlkey=sksbnms59el6o2bnvm4iv1ftl&dl=1";
-          name = "Supercharge-1.19.0.zip"; # Clean filename for unpacker
-          sha256 = "sha256-p7Kh7wOYUkbzUImu2UzTZU4PXci9Zi+HtlcdM4YfM7E=";
-        };
-        description = "Elevate your Mac experience with useful functionality";
-        homepage = "https://sindresorhus.com/supercharge";
-      })
     ];
 }

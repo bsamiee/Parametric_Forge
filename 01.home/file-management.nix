@@ -96,6 +96,9 @@
     "hammerspoon/forge/policy.lua".source = ./00.core/configs/apps/hammerspoon/forge/policy.lua;
     "hammerspoon/forge/events.lua".source = ./00.core/configs/apps/hammerspoon/forge/events.lua;
     "hammerspoon/forge/integration.lua".source = ./00.core/configs/apps/hammerspoon/forge/integration.lua;
+    "hammerspoon/forge/osd.lua".source = ./00.core/configs/apps/hammerspoon/forge/osd.lua;
+    "hammerspoon/forge/auto.lua".source = ./00.core/configs/apps/hammerspoon/forge/auto.lua;
+    "hammerspoon/forge/palette.lua".source = ./00.core/configs/apps/hammerspoon/forge/palette.lua;
     # --- Yabai Configuration ------------------------------------------------
     "yabai/yabairc" = {
       source = ./00.core/configs/apps/yabai/yabairc;
@@ -107,6 +110,11 @@
     };
     "yabai/rules-signals.sh" = {
       source = ./00.core/configs/apps/yabai/rules-signals.sh;
+      executable = true;
+    };
+    # Yabai robust wrapper for LaunchAgents (used by skhd)
+    "yabai/run-yabai.sh" = {
+      source = ./00.core/configs/apps/yabai/run-yabai.sh;
       executable = true;
     };
   };

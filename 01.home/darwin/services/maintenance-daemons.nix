@@ -155,108 +155,108 @@ in
           pkgs.writeShellApplication {
             name = "font-cache-daemon";
             text = ''
-            echo "Starting XDG cache cleanup at $(date)"
+              echo "Starting XDG cache cleanup at $(date)"
 
-            find "${config.xdg.cacheHome}" -type f -atime +30 -delete 2>/dev/null || true
-            find "${config.xdg.cacheHome}" -type d -empty -delete 2>/dev/null || true
+              find "${config.xdg.cacheHome}" -type f -atime +30 -delete 2>/dev/null || true
+              find "${config.xdg.cacheHome}" -type d -empty -delete 2>/dev/null || true
 
-            # Cache-specific cleanup with size limits
-            ${lib.concatMapStrings (
-              dir:
-              let
-                sizeLimit =
-                  {
-                    npm = "500"; # 500MB limit for npm
-                    cargo = "1000"; # 1GB limit for cargo
-                    pip = "300"; # 300MB limit for pip
-                    mypy = "200"; # 200MB limit for mypy
-                    go-build = "400"; # 400MB limit for go
-                  }
-                  .${dir} or "100"; # Default 100MB limit
-              in
-              ''
-                if [ -d "${config.xdg.cacheHome}/${dir}" ]; then
-                  # Size-based cleanup first
-                  SIZE=$(du -sm "${config.xdg.cacheHome}/${dir}" 2>/dev/null | cut -f1 || echo "0")
-                  if [ "$SIZE" -gt ${sizeLimit} ] 2>/dev/null; then
-                    echo "  ${dir} cache is ''${SIZE}MB (limit: ${sizeLimit}MB), cleaning..."
-                    find "${config.xdg.cacheHome}/${dir}" -type f -atime +7 -delete 2>/dev/null || true
+              # Cache-specific cleanup with size limits
+              ${lib.concatMapStrings (
+                dir:
+                let
+                  sizeLimit =
+                    {
+                      npm = "500"; # 500MB limit for npm
+                      cargo = "1000"; # 1GB limit for cargo
+                      pip = "300"; # 300MB limit for pip
+                      mypy = "200"; # 200MB limit for mypy
+                      go-build = "400"; # 400MB limit for go
+                    }
+                    .${dir} or "100"; # Default 100MB limit
+                in
+                ''
+                  if [ -d "${config.xdg.cacheHome}/${dir}" ]; then
+                    # Size-based cleanup first
+                    SIZE=$(du -sm "${config.xdg.cacheHome}/${dir}" 2>/dev/null | cut -f1 || echo "0")
+                    if [ "$SIZE" -gt ${sizeLimit} ] 2>/dev/null; then
+                      echo "  ${dir} cache is ''${SIZE}MB (limit: ${sizeLimit}MB), cleaning..."
+                      find "${config.xdg.cacheHome}/${dir}" -type f -atime +7 -delete 2>/dev/null || true
+                    fi
+                    # Age-based cleanup
+                    find "${config.xdg.cacheHome}/${dir}" -type f -atime +30 -delete 2>/dev/null || true
+                    find "${config.xdg.cacheHome}/${dir}" -type d -empty -delete 2>/dev/null || true
                   fi
-                  # Age-based cleanup
-                  find "${config.xdg.cacheHome}/${dir}" -type f -atime +30 -delete 2>/dev/null || true
-                  find "${config.xdg.cacheHome}/${dir}" -type d -empty -delete 2>/dev/null || true
+                ''
+              ) cacheDirs}
+
+              # Font Cache Management
+              FONT_CACHE="${config.xdg.cacheHome}/fontconfig"
+              STATE_FILE="${fontStateFile}"
+              FONT_REFRESH=0
+
+              # Fast directory mtime check first (avoid expensive file enumeration)
+              DIR_STATE=""
+              for dir in ${lib.concatStringsSep " " fontDirs}; do
+                if [ -d "$dir" ]; then
+                  DIR_MTIME=$(stat -f "%m" "$dir" 2>/dev/null || echo "0")
+                  DIR_STATE="$DIR_STATE:$dir:$DIR_MTIME"
                 fi
-              ''
-            ) cacheDirs}
+              done
 
-            # Font Cache Management
-            FONT_CACHE="${config.xdg.cacheHome}/fontconfig"
-            STATE_FILE="${fontStateFile}"
-            FONT_REFRESH=0
+              # Read state file once
+              [ -f "$STATE_FILE" ] || touch "$STATE_FILE"
+              {
+                read -r PREV_STATE || PREV_STATE=""
+                read -r PREV_DIR_STATE || PREV_DIR_STATE=""
+              } < "$STATE_FILE"
 
-            # Fast directory mtime check first (avoid expensive file enumeration)
-            DIR_STATE=""
-            for dir in ${lib.concatStringsSep " " fontDirs}; do
-              if [ -d "$dir" ]; then
-                DIR_MTIME=$(stat -f "%m" "$dir" 2>/dev/null || echo "0")
-                DIR_STATE="$DIR_STATE:$dir:$DIR_MTIME"
+              # Only compute expensive hash if directories changed
+              if [ "$DIR_STATE" != "$PREV_DIR_STATE" ]; then
+                echo "Font directory changes detected, computing file hash..."
+                CURRENT_STATE=$(find ${lib.concatStringsSep " " fontDirs} \
+                  -type f \( -name "*.ttf" -o -name "*.otf" -o -name "*.ttc" \) \
+                  -exec stat -f "%m %z %N" {} \; 2>/dev/null \
+                  | sort | ${pkgs.coreutils}/bin/sha256sum | cut -d' ' -f1)
+              else
+                CURRENT_STATE="$PREV_STATE"
               fi
-            done
 
-            # Read state file once
-            [ -f "$STATE_FILE" ] || touch "$STATE_FILE"
-            {
-              read -r PREV_STATE || PREV_STATE=""
-              read -r PREV_DIR_STATE || PREV_DIR_STATE=""
-            } < "$STATE_FILE"
-
-            # Only compute expensive hash if directories changed
-            if [ "$DIR_STATE" != "$PREV_DIR_STATE" ]; then
-              echo "Font directory changes detected, computing file hash..."
-              CURRENT_STATE=$(find ${lib.concatStringsSep " " fontDirs} \
-                -type f \( -name "*.ttf" -o -name "*.otf" -o -name "*.ttc" \) \
-                -exec stat -f "%m %z %N" {} \; 2>/dev/null \
-                | sort | ${pkgs.coreutils}/bin/sha256sum | cut -d' ' -f1)
-            else
-              CURRENT_STATE="$PREV_STATE"
-            fi
-
-            # Content-aware refresh
-            if [ "$CURRENT_STATE" != "$PREV_STATE" ]; then
-              echo "Font changes detected, refreshing cache..."
-              [ -d "$FONT_CACHE" ] && rm -rf "''${FONT_CACHE:?}"/*
-              ${pkgs.fontconfig}/bin/fc-cache -rfv
-              # Save both file hash and directory state for next run
-              echo "$CURRENT_STATE" > "$STATE_FILE"
-              echo "$DIR_STATE" >> "$STATE_FILE"
-              FONT_REFRESH=1
-            elif [ -d "$FONT_CACHE" ]; then
-              # Size-based cleanup as fallback
-              SIZE=$(du -sm "$FONT_CACHE" 2>/dev/null | cut -f1)
-              if [ "$SIZE" -gt 200 ] 2>/dev/null; then
-                echo "Font cache is ''${SIZE}MB, cleaning..."
-                rm -rf "''${FONT_CACHE:?}"/*
+              # Content-aware refresh
+              if [ "$CURRENT_STATE" != "$PREV_STATE" ]; then
+                echo "Font changes detected, refreshing cache..."
+                [ -d "$FONT_CACHE" ] && rm -rf "''${FONT_CACHE:?}"/*
                 ${pkgs.fontconfig}/bin/fc-cache -rfv
+                # Save both file hash and directory state for next run
                 echo "$CURRENT_STATE" > "$STATE_FILE"
+                echo "$DIR_STATE" >> "$STATE_FILE"
                 FONT_REFRESH=1
+              elif [ -d "$FONT_CACHE" ]; then
+                # Size-based cleanup as fallback
+                SIZE=$(du -sm "$FONT_CACHE" 2>/dev/null | cut -f1)
+                if [ "$SIZE" -gt 200 ] 2>/dev/null; then
+                  echo "Font cache is ''${SIZE}MB, cleaning..."
+                  rm -rf "''${FONT_CACHE:?}"/*
+                  ${pkgs.fontconfig}/bin/fc-cache -rfv
+                  echo "$CURRENT_STATE" > "$STATE_FILE"
+                  FONT_REFRESH=1
+                fi
               fi
-            fi
 
-            # Legacy Cache Cleanup
-            if [ -d "${config.home.homeDirectory}/.npm" ]; then
-              find "${config.home.homeDirectory}/.npm" -type f -atime +14 -delete 2>/dev/null || true
-            fi
+              # Legacy Cache Cleanup
+              if [ -d "${config.home.homeDirectory}/.npm" ]; then
+                find "${config.home.homeDirectory}/.npm" -type f -atime +14 -delete 2>/dev/null || true
+              fi
 
-            # Log Rotation
-            find "${config.xdg.stateHome}/logs" -name "*.log" -mtime +30 -delete 2>/dev/null || true
+              # Log Rotation
+              find "${config.xdg.stateHome}/logs" -name "*.log" -mtime +30 -delete 2>/dev/null || true
 
-            echo "XDG cache cleanup completed at $(date)"
+              echo "XDG cache cleanup completed at $(date)"
 
-            # Log significant operations
-            if [ $FONT_REFRESH -eq 1 ]; then
-              echo "Font cache refresh completed successfully"
-            fi
-          '';
+              # Log significant operations
+              if [ $FONT_REFRESH -eq 1 ]; then
+                echo "Font cache refresh completed successfully"
+              fi
+            '';
           }
         }/bin/font-cache-daemon";
         logBaseName = "${config.xdg.stateHome}/logs/xdg-cleanup";
@@ -273,36 +273,36 @@ in
             name = "npm-daemon";
             runtimeInputs = [ pkgs.nodePackages.npm-check-updates ];
             text = ''
-            OUTDATED_COUNT=0
-            PROJECTS_CHECKED=0
+              OUTDATED_COUNT=0
+              PROJECTS_CHECKED=0
 
-            for dir in ~/Documents/*/package.json ~/Documents/*/*/package.json ~/Projects/*/package.json; do
-              if [[ -f "$dir" ]]; then
-                project_dir="$(dirname "$dir")"
-                echo "Checking updates for: $project_dir"
+              for dir in ~/Documents/*/package.json ~/Documents/*/*/package.json ~/Projects/*/package.json; do
+                if [[ -f "$dir" ]]; then
+                  project_dir="$(dirname "$dir")"
+                  echo "Checking updates for: $project_dir"
 
-                # Check for updates
-                if cd "$project_dir" && ncu --color > /tmp/ncu-output 2>&1; then
-                  cat /tmp/ncu-output
-                  if grep -q "Run ncu -u to upgrade" /tmp/ncu-output; then
-                    OUTDATED_COUNT=$((OUTDATED_COUNT + 1))
+                  # Check for updates
+                  if cd "$project_dir" && ncu --color > /tmp/ncu-output 2>&1; then
+                    cat /tmp/ncu-output
+                    if grep -q "Run ncu -u to upgrade" /tmp/ncu-output; then
+                      OUTDATED_COUNT=$((OUTDATED_COUNT + 1))
+                    fi
+                    rm -f /tmp/ncu-output
                   fi
-                  rm -f /tmp/ncu-output
+                  PROJECTS_CHECKED=$((PROJECTS_CHECKED + 1))
+                  echo "---"
                 fi
-                PROJECTS_CHECKED=$((PROJECTS_CHECKED + 1))
-                echo "---"
-              fi
-            done
+              done
 
-            # Send notification
-            if [ $PROJECTS_CHECKED -gt 0 ]; then
-              if [ $OUTDATED_COUNT -gt 0 ]; then
-                echo "NPM Updates Available: $OUTDATED_COUNT of $PROJECTS_CHECKED projects need updates"
-              else
-                echo "NPM Check Complete: All $PROJECTS_CHECKED projects are up to date"
+              # Send notification
+              if [ $PROJECTS_CHECKED -gt 0 ]; then
+                if [ $OUTDATED_COUNT -gt 0 ]; then
+                  echo "NPM Updates Available: $OUTDATED_COUNT of $PROJECTS_CHECKED projects need updates"
+                else
+                  echo "NPM Check Complete: All $PROJECTS_CHECKED projects are up to date"
+                fi
               fi
-            fi
-          '';
+            '';
           }
         }/bin/npm-daemon";
         calendar = [

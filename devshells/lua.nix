@@ -16,6 +16,10 @@ pkgs.mkShell {
     lua54Packages.penlight
     lua54Packages.busted
     lua54Packages.luacov
+    # Development tools referenced in shellHook
+    lua-language-server
+    stylua
+    lua54Packages.luacheck
   ];
   # --- Environment Variables ------------------------------------------------
   env = {

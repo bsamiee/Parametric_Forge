@@ -84,7 +84,7 @@ in
         system = "aarch64-darwin";
         user = "bardiasamiee";
       };
-      
+
       # Architecture-specific aliases for explicit targeting
       aarch64 = mkSystem {
         system = "aarch64-darwin";
@@ -94,7 +94,7 @@ in
         system = "x86_64-darwin";
         user = "bardiasamiee";
       };
-      
+
       # Legacy hostname fallbacks - will be removed in future versions
       MacBook-Pro-412 = mkSystem {
         system = "aarch64-darwin";

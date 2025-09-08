@@ -60,7 +60,7 @@ in
         # Window manager tools (skhd, borders)
         %admin ALL=(root) NOPASSWD: /opt/homebrew/bin/skhd *
         %admin ALL=(root) NOPASSWD: /opt/homebrew/bin/borders *
-        
+
         # Homebrew shell integration (prevents login security prompts)
         %admin ALL=(root) NOPASSWD: /opt/homebrew/bin/brew *
         %admin ALL=(root) NOPASSWD: /usr/local/bin/brew *
@@ -77,7 +77,7 @@ in
         %admin ALL=(root) NOPASSWD: /usr/bin/ditto *
         %admin ALL=(root) NOPASSWD: /usr/bin/installer *
         %admin ALL=(root) NOPASSWD: /usr/sbin/installer *
-        
+
         # Allow environment preservation for installer packages (Adobe, etc.)
         %admin ALL=(root) NOPASSWD,SETENV: /usr/sbin/installer *
 
@@ -147,7 +147,7 @@ in
       "/usr/local/bin/op" 
       "/Applications/1Password.app"
     )
-    
+
     for op_path in "''${OP_PATHS[@]}"; do
       [ -e "$op_path" ] || continue
       
@@ -178,7 +178,7 @@ in
       "security-daemon"
       "sys-maintenance-daemon"
     )
-    
+
     for daemon in "''${DAEMONS[@]}"; do
       grant_tcc "$USER_TCC_DB" "kTCCServiceAccessibility" "$daemon" 1
       grant_tcc "$USER_TCC_DB" "kTCCServiceSystemPolicyAllFiles" "$daemon" 1
@@ -193,7 +193,7 @@ in
       "/opt/homebrew/bin/skhd"
       "/opt/homebrew/bin/borders"
     )
-    
+
     for tool in "''${WM_TOOLS[@]}"; do
       [ -f "$tool" ] || continue
       grant_tcc "$USER_TCC_DB" "kTCCServiceAccessibility" "$tool" 1
@@ -208,7 +208,7 @@ in
     HAMMERSPOON_PATHS=(
       "/Applications/Hammerspoon.app"
     )
-    
+
     for hs_path in "''${HAMMERSPOON_PATHS[@]}"; do
       [ -e "$hs_path" ] || continue
       
@@ -241,7 +241,7 @@ in
       "/Applications/Visual Studio Code.app"
       "/Applications/Parallels Desktop.app"
     )
-    
+
     for tool in "''${DEV_TOOLS[@]}"; do
       [ -e "$tool" ] || continue
       
@@ -266,7 +266,7 @@ in
     PARALLELS_PATHS=(
       "/Applications/Parallels Desktop.app"
     )
-    
+
     for parallels_path in "''${PARALLELS_PATHS[@]}"; do
       [ -e "$parallels_path" ] || continue
       
@@ -287,7 +287,7 @@ in
     (/usr/bin/sudo /usr/bin/killall tccd 2>/dev/null || true) &
     (/usr/bin/sudo /usr/bin/killall ControlCenter 2>/dev/null || true) &
     wait
-    
+
     echo "✓ Comprehensive TCC permissions configured" >&2
   '';
 
@@ -334,7 +334,7 @@ in
 
       # --- Developer Security Settings --------------------------------------
       "com.apple.dt.Xcode" = {
-        "DVTPlugInManagerNonApplePlugIns-Xcode-14.0" = mkDefault {};
+        "DVTPlugInManagerNonApplePlugIns-Xcode-14.0" = mkDefault { };
         DVTTextEditorTrimTrailingWhitespace = mkDefault false;
       };
     };

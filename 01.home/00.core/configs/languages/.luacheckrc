@@ -56,6 +56,16 @@ files = {
     },
   },
 
+  -- Hammerspoon configuration
+  ["**/hammerspoon/**/*.lua"] = {
+    globals = {
+      -- Core Hammerspoon API (available globally in Hammerspoon)
+      "hs", "spoon",
+      -- Intentional global exports from init.lua (module system)
+      "mods", "forge",
+    },
+  },
+
 
   -- LuaRocks configuration
   ["**/luarocks.lua"] = {

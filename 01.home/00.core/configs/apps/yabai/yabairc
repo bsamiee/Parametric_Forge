@@ -129,12 +129,13 @@ if [ "$SA_LOADED" = true ]; then
     window_shadow on \
     window_animation_duration 0.0
 else
-  "$YABAI_BIN" -m config window_opacity off \
-    window_shadow on \
-    window_animation_duration 0.0
+  # Avoid setting SA-required options when scripting-addition is not available
+  # window_opacity/window_shadow/window_animation_duration require SIP partial
+  # and/or screen recording; skip to prevent noisy errors.
+  true
 fi
 
-"$YABAI_BIN" -m config insert_feedback_color 0xff50fa7b \
+  "$YABAI_BIN" -m config insert_feedback_color 0xff50fa7b \
   window_zoom_persist on
 
 # --- config: mouse ----------------------------------------------------------
@@ -172,7 +173,9 @@ if "$YABAI_BIN" -m query --windows >/dev/null 2>&1; then
     echo "yabai: skhd not running" >&2
   fi
   # JankyBorders managed by Hammerspoon integration; do not start here
-  "$YABAI_BIN" -m config window_opacity_duration 0.25
+  if [ "$SA_LOADED" = true ]; then
+    "$YABAI_BIN" -m config window_opacity_duration 0.25
+  fi
   echo "yabai: ready"
 else
   echo "yabai: configuration validation failed" >&2

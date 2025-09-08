@@ -12,8 +12,8 @@ set -euo pipefail
 # --- Authentication Check ---------------------------------------------------
 # Simple idempotent authentication - only prompts if not already authenticated
 if ! op signin >/dev/null 2>&1; then
-  echo "❌ 1Password not available - please unlock 1Password app and try again"
-  exit 1
+    echo "❌ 1Password not available - please unlock 1Password app and try again"
+    exit 1
 fi
 
 # --- Configuration Setup ----------------------------------------------------

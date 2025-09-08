@@ -72,7 +72,6 @@
       # Traditional Arabic naskh style
       # Supports full Arabic Unicode range including Quranic text marks
 
-
       # --- Google Fonts Additions -------------------------------------------
       (google-fonts.override {
         fonts = [
