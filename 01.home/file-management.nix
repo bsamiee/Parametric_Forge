@@ -165,10 +165,7 @@
     };
     # --- Karabiner/Goku Configuration (copied, not symlinked due to goku limitations) ---
     ".config/karabiner/karabiner.edn".source = ./00.core/configs/apps/karabiner/karabiner.edn;
-    ".config/karabiner/karabiner.json" = {
-      source = ./00.core/configs/apps/karabiner/karabiner.json;
-      mode = "0644"; # Make writable for goku
-    };
+    ".config/karabiner/karabiner.json".source = ./00.core/configs/apps/karabiner/karabiner.json;
   };
 
   # --- Asset Bin Scripts (Added to PATH) -----------------------------------
