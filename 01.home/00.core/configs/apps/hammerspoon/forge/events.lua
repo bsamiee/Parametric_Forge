@@ -51,8 +51,8 @@ end
 function M.start()
     -- Windows
     wf:subscribe(hs.window.filter.windowCreated, handleCreated)
+    -- Note: windowMoved also covers resize events in hs.window.filter
     wf:subscribe(hs.window.filter.windowMoved, handleMoved)
-    wf:subscribe(hs.window.filter.windowResized, handleResized)
     wf:subscribe(hs.window.filter.windowTitleChanged, handleTitleChanged)
     wf:subscribe(hs.window.filter.windowUnminimized, handleUnminimized)
 

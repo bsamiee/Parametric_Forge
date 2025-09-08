@@ -163,10 +163,8 @@
       source = ./00.core/configs/apps/hammerspoon/assets;
       recursive = true;
     };
-    # --- Karabiner/Goku Configuration (copied, not symlinked due to goku limitations) ---
-    ".config/karabiner/karabiner.edn".source = ./00.core/configs/apps/karabiner/karabiner.edn;
-    ".config/karabiner/karabiner.json".source = ./00.core/configs/apps/karabiner/karabiner.json;
-  };
+    # --- Karabiner/Goku Configuration (using enhanced build system for proper permissions) ---
+  } // (myLib.build.deployDir ./00.core/configs/apps/karabiner ".config/karabiner");
 
   # --- Asset Bin Scripts (Added to PATH) -----------------------------------
   home.packages =
