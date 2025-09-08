@@ -8,6 +8,7 @@
 # Platform-aware configuration deployment with Darwin/NixOS support
 
 {
+  config,
   lib,
   pkgs,
   myLib,
