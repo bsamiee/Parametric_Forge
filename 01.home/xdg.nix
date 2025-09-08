@@ -126,10 +126,7 @@
       mkdir -pm 755 "${config.xdg.configHome}/yazi"
       mkdir -pm 755 "${config.xdg.configHome}/yazi/plugins"  # Yazi plugins directory
       mkdir -pm 755 "${config.xdg.configHome}/yazi/flavors"  # Yazi flavors/themes directory
-      # UI Tools
-      mkdir -pm 755 "${config.xdg.configHome}/hammerspoon"
-      mkdir -pm 755 "${config.xdg.configHome}/hammerspoon/forge"
-      mkdir -pm 755 "${config.xdg.configHome}/hammerspoon/assets"
+      # UI Tools (hammerspoon uses ~/.hammerspoon, not XDG)
       mkdir -pm 755 "${config.xdg.configHome}/yabai"
       mkdir -pm 755 "${config.xdg.configHome}/borders"
       mkdir -pm 755 "${config.xdg.configHome}/karabiner"
@@ -259,6 +256,10 @@
       # --- Non-XDG Directories ---------------------------------------------
       mkdir -pm 700 "${config.home.homeDirectory}/.ssh"
       mkdir -pm 700 "${config.home.homeDirectory}/.ssh/sockets"
+      # Hammerspoon (not XDG-compliant, uses ~/.hammerspoon)
+      mkdir -pm 755 "${config.home.homeDirectory}/.hammerspoon"
+      mkdir -pm 755 "${config.home.homeDirectory}/.hammerspoon/forge"
+      mkdir -pm 755 "${config.home.homeDirectory}/.hammerspoon/assets"
       # w3m (not XDG-compliant, uses ~/.w3m)
       mkdir -pm 755 "${config.home.homeDirectory}/.w3m"
       mkdir -pm 755 "${config.home.homeDirectory}/.local/bin"
