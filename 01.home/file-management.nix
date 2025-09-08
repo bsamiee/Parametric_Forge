@@ -118,6 +118,8 @@
        echo "[Parametric Forge] Compiling karabiner.edn via goku (if available)..." >&2
        if command -v goku >/dev/null 2>&1; then
          export GOKU_EDN_CONFIG_FILE="${config.home.homeDirectory}/.config/karabiner/karabiner.edn"
+         # Fix permissions for goku to write to karabiner.json
+         chmod 644 "${config.home.homeDirectory}/.config/karabiner/karabiner.json" 2>/dev/null || true
          goku || true
        fi
      '';
@@ -163,8 +165,10 @@
       source = ./00.core/configs/apps/hammerspoon/assets;
       recursive = true;
     };
-    # --- Karabiner/Goku Configuration (using enhanced build system for proper permissions) ---
-  } // (myLib.build.deployDir ./00.core/configs/apps/karabiner ".config/karabiner");
+    # --- Karabiner/Goku Configuration (copied, not symlinked due to goku limitations) ---
+    ".config/karabiner/karabiner.edn".source = ./00.core/configs/apps/karabiner/karabiner.edn;
+    ".config/karabiner/karabiner.json".source = ./00.core/configs/apps/karabiner/karabiner.json;
+  };
 
   # --- Asset Bin Scripts (Added to PATH) -----------------------------------
   home.packages =

@@ -35,9 +35,7 @@ local function handleMoved(win)
     policy.applyWindowPolicy(win)
 end
 
-local function handleResized(win)
-    policy.applyWindowPolicy(win)
-end
+-- Note: removed explicit resize handler; windowMoved covers resize in hs.window.filter
 
 local function handleTitleChanged(win)
     -- Some title-based rules (e.g. Arc notifications) apply here
@@ -51,7 +49,7 @@ end
 function M.start()
     -- Windows
     wf:subscribe(hs.window.filter.windowCreated, handleCreated)
-    -- Note: windowMoved also covers resize events in hs.window.filter
+    -- windowMoved also covers resize events in hs.window.filter
     wf:subscribe(hs.window.filter.windowMoved, handleMoved)
     wf:subscribe(hs.window.filter.windowTitleChanged, handleTitleChanged)
     wf:subscribe(hs.window.filter.windowUnminimized, handleUnminimized)

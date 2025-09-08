@@ -42,7 +42,8 @@ local function findBrew()
   return brewPath
 end
 
-local function green(b) return b and "🟢" or "🔴" end
+-- Note: removed old emoji status indicator 'green()' in favor of
+-- template service icons and native on/off checkmarks.
 
 -- Generic brew-services status (falls back to pgrep if not present)
 local function brewIsStarted(name, pgrepName)
@@ -57,11 +58,8 @@ local function brewIsStarted(name, pgrepName)
   return false
 end
 
-local function brewRestart(name)
-  local brew = findBrew()
-  local cmd = string.format("'%s' services restart '%s' >/dev/null 2>&1 || '%s' services start '%s' >/dev/null 2>&1", brew, name, brew, name)
-  shlib.sh(cmd)
-end
+-- Note: removed old synchronous 'brewRestart' helper.
+-- We now use 'runAsync' per-service to avoid blocking the UI.
 
 -- Async runner for non-blocking UI
 local function runAsync(cmd, onExit)
@@ -225,4 +223,3 @@ function M.start()
 end
 
 return M
-

@@ -116,8 +116,9 @@ fi
   right_padding 4 \
   window_gap 4
 
-# integrate with any external bar (none reserved by default)
-"$YABAI_BIN" -m config external_bar all:0:0 \
+# integrate with any external bar or to ensure grid-placed windows respect top/bottom padding
+# reserve the same top/bottom as our default padding (4)
+"$YABAI_BIN" -m config external_bar all:4:4 \
   menubar_opacity 1.0
 
 # --- config: appearance -----------------------------------------------------

@@ -102,13 +102,6 @@ let
     in
     if manifests == [ ] then drv else cached pkgs drv manifests;
 
-  # --- Special Files Requiring Write Permissions -------------------------
-  writableFiles = [
-    "karabiner.json"  # Goku needs write access to update this file
-  ];
-  
-  isWritableFile = filename: lib.any (f: lib.hasSuffix f filename) writableFiles;
-
   # --- Deployment-Time Logic (From deploy.nix + Selective Enhancement) ----
   deployDirInternal =
     source: target:
@@ -128,9 +121,6 @@ let
             }
             // lib.optionalAttrs (isExecutable name sourcePath) {
               executable = true;
-            }
-            // lib.optionalAttrs (isWritableFile name) {
-              mode = "0644"; # Ensure writable files have proper permissions
             }
           )
         else

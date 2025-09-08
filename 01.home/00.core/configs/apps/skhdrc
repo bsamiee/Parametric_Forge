@@ -86,14 +86,16 @@ shift + lalt - return : \
         "$HOME/.config/yabai/run-yabai.sh" -m config left_padding 4; \
         "$HOME/.config/yabai/run-yabai.sh" -m config right_padding 4; \
         "$HOME/.config/yabai/run-yabai.sh" -m config window_gap 4; \
+        "$HOME/.config/yabai/run-yabai.sh" -m config external_bar all:4:4; \
     else \
         "$HOME/.config/yabai/run-yabai.sh" -m config top_padding 0; \
         "$HOME/.config/yabai/run-yabai.sh" -m config bottom_padding 0; \
         "$HOME/.config/yabai/run-yabai.sh" -m config left_padding 0; \
         "$HOME/.config/yabai/run-yabai.sh" -m config right_padding 0; \
         "$HOME/.config/yabai/run-yabai.sh" -m config window_gap 0; \
+        "$HOME/.config/yabai/run-yabai.sh" -m config external_bar all:0:0; \
     fi
-shift + lalt - space : "$HOME/.config/yabai/run-yabai.sh" -m window --toggle float --grid 4:4:1:1:2:2
+shift + lalt - space : "$HOME/01.home/00.core/configs/apps/yabai/grid-anchors.sh" center --float
 shift + lalt - r : "$HOME/.config/yabai/run-yabai.sh" -m space --rotate 270 # Fix layout when messy
 
 # Toggle mouse drop action between swap and stack (for drag-drop stacking)
