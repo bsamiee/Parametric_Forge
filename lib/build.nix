@@ -43,7 +43,6 @@ let
 
       # Known executable config file patterns (no extension)
       executableConfigs = [
-        "sketchybarrc"
         "yabairc"
         "skhdrc"
         "bordersrc"

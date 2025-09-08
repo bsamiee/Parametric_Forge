@@ -123,41 +123,9 @@
       fi
     '';
 
-    # --- SketchyBar Dependencies Setup -------------------------------------
-    sketchybarDependencies = lib.hm.dag.entryAfter [ "dutiFileAssociations" ] ''
-      echo "[Parametric Forge] Setting up SketchyBar dependencies..."
-
-      # SF Symbols installation handled at system level (00.system/darwin/activation.nix)
-
-      # --- Menubar Binary Installation ------------------------------------
-      MENUBAR_STATE="${config.xdg.stateHome}/sketchybar-menubar"
-      MENUBAR_TARGET="${config.xdg.configHome}/sketchybar/menubar"
-      MENUBAR_URL="https://raw.githubusercontent.com/Kcraft059/sketchybar-config/main/menubar"
-      MENUBAR_VERSION="kcraft059-latest"
-
-      mkdir -p "$(dirname "$MENUBAR_STATE")" "$(dirname "$MENUBAR_TARGET")"
-
-      # Check if menubar binary needs installation/update
-      INSTALLED_VERSION=$(cat "$MENUBAR_STATE" 2>/dev/null || echo "")
-
-      if [ "$MENUBAR_VERSION" != "$INSTALLED_VERSION" ] || [ ! -f "$MENUBAR_TARGET" ]; then
-        echo "  → Downloading menubar binary from Kcraft059 repository..."
-        if /usr/bin/curl -sL "$MENUBAR_URL" -o "$MENUBAR_TARGET.tmp"; then
-          mv "$MENUBAR_TARGET.tmp" "$MENUBAR_TARGET"
-          chmod +x "$MENUBAR_TARGET"
-          echo "$MENUBAR_VERSION" > "$MENUBAR_STATE"
-          echo "  [OK] menubar binary installed"
-        else
-          echo "  [WARN] Failed to download menubar binary"
-          rm -f "$MENUBAR_TARGET.tmp"
-        fi
-      else
-        echo "  [OK] menubar binary up to date"
-      fi
-    '';
 
     # --- Comprehensive User-Level Spotlight Protection ---------------------
-    spotlightShield = lib.hm.dag.entryAfter [ "sketchybarDependencies" ] ''
+    spotlightShield = lib.hm.dag.entryAfter [ "dutiFileAssociations" ] ''
       export PATH="/usr/bin:/bin:/usr/sbin:/sbin:$PATH"
 
       echo "[Parametric Forge] Deploying comprehensive user-level Spotlight protection..."

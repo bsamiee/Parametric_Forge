@@ -57,8 +57,7 @@ in
         # yabai scripting addition (path-restricted, no hash dependency)
         %admin ALL=(root) NOPASSWD: /opt/homebrew/bin/yabai --load-sa
 
-        # Window manager tools (sketchybar, skhd, borders)
-        %admin ALL=(root) NOPASSWD: /opt/homebrew/bin/sketchybar *
+        # Window manager tools (skhd, borders)
         %admin ALL=(root) NOPASSWD: /opt/homebrew/bin/skhd *
         %admin ALL=(root) NOPASSWD: /opt/homebrew/bin/borders *
         
@@ -73,6 +72,14 @@ in
         %admin ALL=(root) NOPASSWD: /usr/bin/security *
         %admin ALL=(root) NOPASSWD: /usr/bin/plutil *
         %admin ALL=(root) NOPASSWD: /usr/libexec/PlistBuddy *
+
+        # Installation tools (for complex app installations like Parallels)
+        %admin ALL=(root) NOPASSWD: /usr/bin/ditto *
+        %admin ALL=(root) NOPASSWD: /usr/bin/installer *
+        %admin ALL=(root) NOPASSWD: /usr/sbin/installer *
+        
+        # Allow environment preservation for installer packages (Adobe, etc.)
+        %admin ALL=(root) NOPASSWD,SETENV: /usr/sbin/installer *
 
         # Allow 1Password CLI operations (no special privileges needed, but for completeness)
         %admin ALL=(root) NOPASSWD: /opt/homebrew/bin/op *
@@ -196,28 +203,43 @@ in
       grant_tcc "$USER_TCC_DB" "kTCCServiceAppleEvents" "$tool" 1 "com.apple.systemevents"
     done
 
-    # SketchyBar comprehensive permissions
-    echo "  Configuring SketchyBar permissions..." >&2
-    SKETCHYBAR_PATH="/opt/homebrew/bin/sketchybar"
+    # Hammerspoon - automation and window management
+    echo "  Configuring Hammerspoon permissions..." >&2
+    HAMMERSPOON_PATHS=(
+      "/Applications/Hammerspoon.app"
+    )
     
-    if [ -f "$SKETCHYBAR_PATH" ]; then
-      grant_tcc "$USER_TCC_DB" "kTCCServiceAccessibility" "$SKETCHYBAR_PATH" 1
-      grant_tcc "$USER_TCC_DB" "kTCCServiceBluetoothAlways" "$SKETCHYBAR_PATH" 1
-      grant_tcc "$USER_TCC_DB" "kTCCServiceScreenCapture" "$SKETCHYBAR_PATH" 1
-      grant_tcc "$USER_TCC_DB" "kTCCServiceSystemPolicyAllFiles" "$SKETCHYBAR_PATH" 1
-      grant_tcc "$USER_TCC_DB" "kTCCServiceAppleEvents" "$SKETCHYBAR_PATH" 1 "com.apple.systemevents"
-      grant_tcc "$USER_TCC_DB" "kTCCServiceAppleEvents" "$SKETCHYBAR_PATH" 1 "com.apple.controlcenter"
-      grant_tcc "$USER_TCC_DB" "kTCCServiceAppleEvents" "$SKETCHYBAR_PATH" 1 "com.apple.finder"
-    fi
-    
-    # Homebrew and development tools
+    for hs_path in "''${HAMMERSPOON_PATHS[@]}"; do
+      [ -e "$hs_path" ] || continue
+      
+      # Use proper bundle identifier for Hammerspoon
+      client="org.hammerspoon.Hammerspoon"
+      type=0
+      
+      grant_tcc "$USER_TCC_DB" "kTCCServiceAccessibility" "$client" "$type"
+      grant_tcc "$USER_TCC_DB" "kTCCServicePostEvent" "$client" "$type"
+      grant_tcc "$USER_TCC_DB" "kTCCServiceListenEvent" "$client" "$type"
+      grant_tcc "$USER_TCC_DB" "kTCCServiceSystemPolicyAllFiles" "$client" "$type"
+      grant_tcc "$USER_TCC_DB" "kTCCServiceAppleEvents" "$client" "$type" "com.apple.systemevents"
+      grant_tcc "$USER_TCC_DB" "kTCCServiceAppleEvents" "$client" "$type" "com.apple.finder"
+      grant_tcc "$USER_TCC_DB" "kTCCServiceAppleEvents" "$client" "$type" "com.apple.controlcenter"
+    done
+
+    # Homebrew and development tools (enhanced for installation permissions)
     echo "  Configuring development tool permissions..." >&2
     DEV_TOOLS=(
       "/opt/homebrew/bin/brew"
       "/usr/local/bin/brew"
+      "/usr/bin/ditto"
+      "/usr/bin/installer"
+      "/usr/sbin/installer" 
       "/usr/bin/codesign"
+      "/usr/bin/hdiutil"
+      "/usr/bin/diskutil"
+      "/usr/bin/mkbom"
       "/Applications/Xcode.app"
       "/Applications/Visual Studio Code.app"
+      "/Applications/Parallels Desktop.app"
     )
     
     for tool in "''${DEV_TOOLS[@]}"; do
@@ -236,6 +258,27 @@ in
       
       grant_tcc "$USER_TCC_DB" "kTCCServiceAccessibility" "$client" "$type"
       grant_tcc "$USER_TCC_DB" "kTCCServiceSystemPolicyAllFiles" "$client" "$type"
+      grant_tcc "$USER_TCC_DB" "kTCCServiceAppleEvents" "$client" "$type" "com.apple.systemevents"
+    done
+
+    # Parallels Desktop - comprehensive virtualization permissions
+    echo "  Configuring Parallels Desktop permissions..." >&2
+    PARALLELS_PATHS=(
+      "/Applications/Parallels Desktop.app"
+    )
+    
+    for parallels_path in "''${PARALLELS_PATHS[@]}"; do
+      [ -e "$parallels_path" ] || continue
+      
+      # Use verified bundle identifier
+      client="com.parallels.desktop.console"
+      type=0
+      
+      grant_tcc "$USER_TCC_DB" "kTCCServiceAccessibility" "$client" "$type"
+      grant_tcc "$USER_TCC_DB" "kTCCServiceSystemPolicyAllFiles" "$client" "$type"
+      grant_tcc "$USER_TCC_DB" "kTCCServiceCamera" "$client" "$type"
+      grant_tcc "$USER_TCC_DB" "kTCCServiceMicrophone" "$client" "$type"
+      grant_tcc "$USER_TCC_DB" "kTCCServiceScreenCapture" "$client" "$type"
       grant_tcc "$USER_TCC_DB" "kTCCServiceAppleEvents" "$client" "$type" "com.apple.systemevents"
     done
 

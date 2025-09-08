@@ -20,7 +20,7 @@ in
         tilesize = mkDefault 28;
         largesize = mkDefault 128;
         magnification = mkDefault false;
-        autohide = mkDefault true; # Hide menubar for SketchyBar replacement
+        autohide = mkDefault false; # Keep Dock visible
         show-process-indicators = mkDefault true;
         show-recents = mkDefault false;
         static-only = mkDefault false;
@@ -46,7 +46,7 @@ in
           "/Applications/Heptabase.app"
           "/Applications/Drafts.app"
           "/Applications/Visual Studio Code.app"
-          "/Applications/Zen.app"
+          "/Applications/Arc.app"
           "/Applications/WezTerm.app"
           "/Applications/Superhuman.app"
           "/System/Applications/Messages.app"

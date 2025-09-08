@@ -128,10 +128,6 @@
       mkdir -pm 755 "${config.xdg.configHome}/yazi/flavors"  # Yazi flavors/themes directory
       # UI Tools
       mkdir -pm 755 "${config.xdg.configHome}/yabai"
-      mkdir -pm 755 "${config.xdg.configHome}/sketchybar"
-      mkdir -pm 755 "${config.xdg.configHome}/sketchybar/helpers"
-      mkdir -pm 755 "${config.xdg.configHome}/sketchybar/items" 
-      mkdir -pm 755 "${config.xdg.configHome}/sketchybar/plugins"
       mkdir -pm 755 "${config.xdg.dataHome}/applications"
       mkdir -pm 755 "${config.xdg.dataHome}/fonts"
       mkdir -pm 755 "${config.xdg.dataHome}/icons"

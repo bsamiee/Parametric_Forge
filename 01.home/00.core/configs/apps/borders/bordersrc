@@ -16,7 +16,7 @@ options=(
   background_color=0x40282a36        # Subtle Dracula background (25% opacity) for window separation
   ax_focus=on                        # Improved compatibility with yabai/AeroSpace
   order=above                        # Render borders above window shadows for consistent appearance
-  blur_radius=20                     # Consistent blur with SketchyBar and WezTerm
+  blur_radius=20                     # Consistent blur with WezTerm
 )
 
 borders "${options[@]}"

@@ -56,14 +56,6 @@ files = {
     },
   },
 
-  -- SketchyBar configuration
-  ["**/sketchybar/**/*.lua"] = {
-    globals = {
-      "sbar",
-      -- Cross-module globals for SketchyBar
-      "events", "performance", "interactions", "ecosystem", "context",
-    },
-  },
 
   -- LuaRocks configuration
   ["**/luarocks.lua"] = {

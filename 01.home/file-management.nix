@@ -88,9 +88,19 @@
       source = ./00.core/configs/apps/borders/bordersrc;
       executable = true;
     };
+    # Hammerspoon (Lua automation)
+    "hammerspoon/init.lua".source = ./00.core/configs/apps/hammerspoon/init.lua;
     # --- Yabai Configuration ------------------------------------------------
     "yabai/yabairc" = {
       source = ./00.core/configs/apps/yabai/yabairc;
+      executable = true;
+    };
+    "yabai/grid-anchors.sh" = {
+      source = ./00.core/configs/apps/yabai/grid-anchors.sh;
+      executable = true;
+    };
+    "yabai/rules-signals.sh" = {
+      source = ./00.core/configs/apps/yabai/rules-signals.sh;
       executable = true;
     };
   };
@@ -117,9 +127,7 @@
     # --- Terminal Web Browser (w3m) -----------------------------------------
     ".w3m/config".source = ./00.core/configs/apps/w3m/config;
     ".w3m/keymap".source = ./00.core/configs/apps/w3m/keymap;
-  }
-  # --- Modular UI Configurations (deployDir) -------------------------------
-  // (myLib.build.deployDir ./00.core/configs/apps/sketchybar ".config/sketchybar"); # THIS IS NOT COMMENTED OUT // IS MERGE IN NIX
+  };
 
   # --- Asset Bin Scripts (Added to PATH) -----------------------------------
   home.packages =

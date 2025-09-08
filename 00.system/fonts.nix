@@ -72,8 +72,6 @@
       # Traditional Arabic naskh style
       # Supports full Arabic Unicode range including Quranic text marks
 
-      # --- SketchyBar Integration --------------------------------------------
-      sketchybar-app-font # App icon font for SketchyBar status bar (v2.0.40)
 
       # --- Google Fonts Additions -------------------------------------------
       (google-fonts.override {

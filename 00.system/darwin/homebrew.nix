@@ -32,14 +32,14 @@ in
     # --- Essential Taps -----------------------------------------------------
     taps = [
       "koekeishiya/formulae" # For yabai/skhd
-      "FelixKratz/formulae"  # For sketchybar/borders
+      "FelixKratz/formulae"  # For borders
     ];
     # --- GUI Applications (Casks) -------------------------------------------
     casks = [
       # System & Core Tools
-      # "1password" # Already installed manually
+      "1password" # Password manager and secure vault
       # "1password-cli" # Moved to nix packages (sysadmin.nix)
-      # "cleanshot" # Already installed manually
+      "cleanshot" # Advanced screenshot and screen recording tool
       "docker-desktop" # Docker Desktop containerization - CRITICAL for deployment
       "dotnet-sdk" # .NET SDK (large, GUI tools)
       # "wezterm@nightly" # Already have WezTerm manually
@@ -58,38 +58,37 @@ in
       "transnomino" # File renaming utility
 
       # Browsers & Internet
+      "arc" # Arc Browser - Chromium-based browser with innovative UI
       "firefox" # Web browser
       "tor-browser" # Privacy-focused web browser
-      "zen" # Zen Browser - Firefox-based with Arc-like features
 
       # Communication & Social - MIXED
       "discord" # Voice and text communication
-      # "microsoft-teams" # Already installed manually
-      # "superhuman" # Already installed manually
+      "microsoft-teams" # Microsoft collaboration platform
+      "superhuman" # High-performance email client
       "telegram" # MISSING - need homebrew
       "whatsapp" # MISSING - need homebrew
       "zoom" # MISSING - need homebrew
 
       # Cloud & Storage - CORRECTED
-      # "google-drive" # Already installed manually
-      # "megasync" # Already installed manually (MEGAsync.app)
+      "google-drive" # Google cloud storage sync client
+      "megasync" # MEGA cloud storage sync client
       "transmission" # MISSING - need homebrew
 
       # Development & Design - MIXED
-      # "heptabase" # Already installed manually
-      # "iconjar" # Already installed manually
-      # "kiro" # Already installed manually
-      # "replacicon" # Already installed manually
+      "heptabase" # Visual knowledge management platform
+      "iconjar" # Icon organization and management tool
+      "kiro" # Design collaboration and feedback tool
       "rhino-app" # Rhino 8 CAD software
-      # "typeface" # Already installed manually
-      # "via" # Already installed manually
-      # "visual-studio-code" # Already installed manually
+      "typeface" # Font management and typography tool
+      "via" # Keyboard configurator for custom keyboards
+      "visual-studio-code" # Microsoft's code editor
 
       # Media & Creative - CORRECTED
       "blender" # 3D creation suite
       "calibre" # E-book management
       "handbrake-app" # MISSING - need homebrew
-      # "scrivener" # Already installed manually
+      "scrivener" # Writing and research tool for authors
       "spotify" # Music streaming service
       "steam" # Gaming platform
 
@@ -100,30 +99,27 @@ in
       "betterzip" # Preview ZIP/TAR contents without extracting
       "suspicious-package" # Inspect macOS .pkg installers
 
-      # Fonts for SketchyBar
-      "font-hack-nerd-font" # Default SketchyBar font
-      "font-sf-pro" # SF Pro font family for SketchyBar symbols
+      # Fonts
+      "font-hack-nerd-font" # Nerd Font with programming symbols
+      "font-sf-pro" # SF Pro font family
       "font-sf-arabic" # SF Arabic font family
-      "sf-symbols" # SF Symbols 7 - Apple's official symbol library (required for SketchyBar advanced icons)
+      "sf-symbols" # SF Symbols 7 - Apple's official symbol library
 
       # Adobe & Creative Suite - ALREADY INSTALLED
-      # "adobe-acrobat-pro" # Already installed manually
-      # "adobe-creative-cloud" # Already installed manually
-      # "colorchecker-camera-calibration" # Already installed manually
+      "adobe-acrobat-pro" # PDF viewer, creator, and editor
+      "adobe-creative-cloud" # Adobe creative suite manager and launcher
+      "colorchecker-camera-calibration" # X-Rite camera profiling software
       "topaz-gigapixel-ai" # MISSING - need homebrew
       "topaz-photo-ai" # MISSING - need homebrew
       "zxpinstaller" # MISSING - need homebrew
 
       # Utilities & System Enhancement - MIXED
-      # "grammarly-desktop" # Already installed manually
-      # "parallels" # Already installed manually
-      # "rize" # Already installed manually
+      "grammarly-desktop" # Grammar and writing assistance tool
+      # "parallels" # Windows virtualization for Mac - INSTALL MANUALLY: Homebrew installation incompatible with macOS security requirements
+      "rize" # Productivity and time tracking app
 
       # Automation & Productivity
       "hammerspoon" # Lua-scriptable macOS automation and window management
-
-      # Battery Management
-      "battery" # Battery management app with CLI (required for SketchyBar battery plugin)
     ];
 
     # --- CLI Tools (Brews) --------------------------------------------------
@@ -133,10 +129,6 @@ in
       # "mono" # .NET runtime - RE-INSTALL AFTER FULL DEPLOYMENT (failed during initial setup)
       "defaultbrowser" # CLI tool for setting default browser properly
       "duti" # Declarative file type associations and UTI management
-      # "alerter" # REMOVED - formula doesn't exist in Homebrew
-
-      # System Monitoring
-      "macmon" # macOS system monitoring tool (for SketchyBar plugins)
 
       # Bluetooth Management
       "blueutil" # CLI for Bluetooth management (power, devices, pairing)
@@ -144,7 +136,6 @@ in
       # UI Tools
       "koekeishiya/formulae/yabai"
       "koekeishiya/formulae/skhd"
-      "FelixKratz/formulae/sketchybar"
       "FelixKratz/formulae/borders"
     ];
     # --- Mac App Store Applications -----------------------------------------

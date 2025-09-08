@@ -286,7 +286,7 @@ setup_large_dir_handling()
 -- --- Ecosystem Integration -----------------------------------------------
 -- Participate in Parametric Forge ecosystem state coordination
 
--- Write current directory for SketchyBar ecosystem coordination (XDG-compliant)
+-- Write current directory for ecosystem coordination (XDG-compliant)
 function notify_ecosystem_directory_change()
     local xdg_state = os.getenv("XDG_STATE_HOME") or os.getenv("HOME") .. "/.local/state"
     local ecosystem_dir = xdg_state .. "/ecosystem"
@@ -297,8 +297,7 @@ function notify_ecosystem_directory_change()
     -- Write current directory to XDG-compliant location
     Command("sh"):arg("-c"):arg("echo '" .. cx.active.current.cwd .. "' > '" .. ecosystem_dir .. "/yazi_cwd'"):spawn()
 
-    -- Notify SketchyBar of directory context change
-    Command("sketchybar"):args({ "--trigger", "ecosystem_file_operation" }):spawn()
+    -- Directory state saved to XDG location
 end
 
 -- Enhanced cd with ecosystem coordination
