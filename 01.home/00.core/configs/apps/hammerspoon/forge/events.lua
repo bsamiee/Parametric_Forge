@@ -12,10 +12,16 @@ local M = {}
 local log = hs.logger.new("forge.events", hs.logger.info)
 
 -- Spaces watcher -----------------------------------------------------------
+local function safeActiveSpaces()
+    if not hs.spaces or not hs.spaces.activeSpaces then return nil end
+    local ok, res = pcall(function() return hs.spaces.activeSpaces() end)
+    return ok and res or nil
+end
+
 local function onSpacesEvent()
-    -- Normalize active spaces across displays
-    local ok, active = pcall(hs.spaces.activeSpaces)
-    if ok and type(active) == "table" then
+    -- Normalize active spaces across displays (guard older builds without hs.spaces)
+    local active = safeActiveSpaces()
+    if active and type(active) == "table" then
         for _, spaceId in pairs(active) do
             policy.applySpacePolicy(spaceId)
         end
@@ -48,15 +54,18 @@ end
 
 function M.start()
     -- Windows
-    wf:subscribe(hs.window.filter.windowCreated, handleCreated)
+    -- Use literal event names for broader compatibility across HS versions
+    wf:subscribe("windowCreated", handleCreated)
     -- windowMoved also covers resize events in hs.window.filter
-    wf:subscribe(hs.window.filter.windowMoved, handleMoved)
-    wf:subscribe(hs.window.filter.windowTitleChanged, handleTitleChanged)
-    wf:subscribe(hs.window.filter.windowUnminimized, handleUnminimized)
+    wf:subscribe("windowMoved", handleMoved)
+    wf:subscribe("windowTitleChanged", handleTitleChanged)
+    wf:subscribe("windowUnminimized", handleUnminimized)
 
-    -- Spaces
-    M.spacesWatcher = hs.spaces.watcher.new(onSpacesEvent)
-    M.spacesWatcher:start()
+    -- Spaces (only if available in this Hammerspoon build)
+    if hs.spaces and hs.spaces.watcher and hs.spaces.watcher.new then
+        M.spacesWatcher = hs.spaces.watcher.new(onSpacesEvent)
+        M.spacesWatcher:start()
+    end
 
     -- Displays
     M.screenWatcher = hs.screen.watcher.new(function()

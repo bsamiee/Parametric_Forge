@@ -16,7 +16,6 @@
 # These apps handle their own keyboard shortcuts or need full keyboard access
 .blacklist [
 "1Password"
-"secure keyboard entry"
 "Activity Monitor"
 "System Settings"
 "System Preferences"
@@ -100,7 +99,7 @@ shift + lalt - r : "$HOME/.config/yabai/run-yabai.sh" -m space --rotate 270 # Fi
 
 # Toggle mouse drop action between swap and stack (for drag-drop stacking)
 shift + lalt - m : \
-    current="$(\"$HOME/.config/yabai/run-yabai.sh\" -m config mouse_drop_action)"; \
+    current="$("$HOME/.config/yabai/run-yabai.sh" -m config mouse_drop_action)"; \
     if [ "$current" = "swap" ]; then \
         "$HOME/.config/yabai/run-yabai.sh" -m config mouse_drop_action stack; \
     else \

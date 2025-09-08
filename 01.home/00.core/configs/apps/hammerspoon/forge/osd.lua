@@ -11,7 +11,8 @@ local M = {}
 local defaultStyle = {
     bgColor = { black = 0, alpha = 0.75 },
     textColor = { white = 1, alpha = 1.0 },
-    font = { name = ".SFNS-Regular", size = 16 },
+    -- Use a ubiquitous system font to avoid missing-font errors
+    font = { name = "Helvetica", size = 16 },
     radius = 8,
     padding = 12,
 }
@@ -75,20 +76,20 @@ function M.show(msg, opts)
     applyCanvas(activeCvs, msg, opts.style)
     activeCvs:alpha(0)
     activeCvs:show()
-    activeCvs:alpha(1, { duration = 0.12 })
+    -- older hs.canvas:alpha does not accept animation tables; set directly
+    activeCvs:alpha(1)
     hideTimer = hs.timer.doAfter(opts.duration or 1.2, function()
         if not activeCvs then
             return
         end
-        activeCvs:alpha(0, {
-            duration = 0.15,
-            completion = function()
-                if activeCvs then
-                    activeCvs:delete()
-                end
-                activeCvs = nil
-            end,
-        })
+        activeCvs:alpha(0)
+        -- delete after a short delay to mimic fade-out completion
+        hs.timer.doAfter(0.16, function()
+            if activeCvs then
+                activeCvs:delete()
+            end
+            activeCvs = nil
+        end)
     end)
 end
 
@@ -122,7 +123,7 @@ local function applyPersistentCanvas(cvs, msg)
             text = msg,
             textColor = { white = 1, alpha = 1 },
             textSize = 13,
-            textFont = ".SFNS-Regular",
+            textFont = "Helvetica",
             frame = { x = 8, y = 5, w = cvs:frame().w - 16, h = cvs:frame().h - 10 },
             textAlignment = "center",
         },

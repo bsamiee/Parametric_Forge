@@ -126,7 +126,7 @@
       mkdir -pm 755 "${config.xdg.configHome}/yazi"
       mkdir -pm 755 "${config.xdg.configHome}/yazi/plugins"  # Yazi plugins directory
       mkdir -pm 755 "${config.xdg.configHome}/yazi/flavors"  # Yazi flavors/themes directory
-      # UI Tools (hammerspoon uses ~/.hammerspoon, not XDG)
+      # UI Tools
       mkdir -pm 755 "${config.xdg.configHome}/yabai"
       mkdir -pm 755 "${config.xdg.configHome}/borders"
       mkdir -pm 755 "${config.xdg.configHome}/karabiner"

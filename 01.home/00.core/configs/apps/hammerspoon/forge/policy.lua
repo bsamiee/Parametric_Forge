@@ -122,16 +122,20 @@ function M.applySpacePolicy(spaceId)
     if not spaceId then
         return
     end
-    -- Only normalize BSP spaces, leave stack spaces alone
-    local sh = function(cmd)
-        return shlib.sh(cmd)
+    -- Only normalize BSP spaces, leave stack spaces alone.
+    -- Note: yabai --space expects an index/label, not an ID. Query all and match by id.
+    local all = shlib.sh("yabai -m query --spaces 2>/dev/null")
+    if not all or #all == 0 or not all:match("^%s*[%[{]") then
+        return
     end
-
-    local spaceInfo = sh(string.format("yabai -m query --spaces --space %s 2>/dev/null", spaceId))
-    if spaceInfo and #spaceInfo > 0 then
-        local ok, space = pcall(hs.json.decode, spaceInfo)
-        if ok and space and space.type == "bsp" then
+    local ok, spaces = pcall(hs.json.decode, all)
+    if not ok or type(spaces) ~= "table" then
+        return
+    end
+    for _, s in ipairs(spaces) do
+        if s.id == spaceId and s.type == "bsp" then
             exec.normalizeSpace(spaceId)
+            break
         end
     end
 end
@@ -143,7 +147,7 @@ function M.isWindowStacked(winId)
     end
 
     local winInfo = sh(string.format("yabai -m query --windows --window %s 2>/dev/null", winId))
-    if winInfo and #winInfo > 0 then
+    if winInfo and #winInfo > 0 and winInfo:match("^%s*[%[{]") then
         local ok, window = pcall(hs.json.decode, winInfo)
         if ok and window and window["stack-index"] then
             return window["stack-index"] > 0

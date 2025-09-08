@@ -9,66 +9,52 @@
 local shlib = require("forge.sh")
 local osd = require("forge.osd")
 local integ = require("forge.integration")
+local auto = require("forge.auto")
 
 local M = {}
 
--- Assets (SF Symbols exported as template PDFs) expected at:
---   ~/.config/hammerspoon/assets/
--- using nix to deploy
-local ASSETS_BASE = (hs.configdir or os.getenv("HOME") .. "/.hammerspoon") .. "/assets"
-
-local function assetImage(name, size)
-  local pathPdf = ASSETS_BASE .. "/" .. name .. ".pdf"
-  local img
-  if hs.fs.attributes(pathPdf) then img = hs.image.imageFromPath(pathPdf) end
-  if img then
-    img = img:template(true)
-    if size then img = img:size(size) end
-  end
-  return img
+-- Resolve assets directory (standard Hammerspoon deploy).
+-- Canonical path: ~/.hammerspoon/assets (hs.configdir()/assets)
+local function hsConfigDir()
+  local v = hs.configdir
+  if type(v) == "function" then return v() end
+  if type(v) == "string" and #v > 0 then return v end
+  return (os.getenv("HOME") or "") .. "/.hammerspoon"
 end
 
-local brewPath -- resolved once
-local function findBrew()
-  if brewPath then return brewPath end
-  if hs.fs.attributes("/opt/homebrew/bin/brew") then
-    brewPath = "/opt/homebrew/bin/brew"
-  elseif hs.fs.attributes("/usr/local/bin/brew") then
-    brewPath = "/usr/local/bin/brew"
-  else
-    local out = shlib.sh([[command -v brew 2>/dev/null | head -n1 | tr -d '\n']])
-    brewPath = (out and #out > 0) and out or "brew"
+local ASSETS_DIR = hsConfigDir() .. "/assets"
+
+local imageCache = {}
+local function assetImage(name, size)
+  local key = name .. (size and (":" .. tostring(size.w) .. "x" .. tostring(size.h)) or "")
+  if imageCache[key] then return imageCache[key] end
+  local img
+  local pathPng = ASSETS_DIR .. "/" .. name .. ".png"
+  if hs.fs.attributes(pathPng) then img = hs.image.imageFromPath(pathPng) end
+  if img then
+    -- ensure size and template are applied; setSize/template often return the image
+    if size then
+      if img.setSize then img = img:setSize(size) end
+    end
+    if img.setTemplate then
+      img = img:setTemplate(true)
+    elseif img.template then
+      img:template(true)
+    end
+    imageCache[key] = img
   end
-  return brewPath
+  return img
 end
 
 -- Note: removed old emoji status indicator 'green()' in favor of
 -- template service icons and native on/off checkmarks.
 
 -- Generic brew-services status (falls back to pgrep if not present)
-local function brewIsStarted(name, pgrepName)
-  local brew = findBrew()
-  local out = shlib.sh(string.format("'%s' services list 2>/dev/null | awk '$1==\"%s\" {print $2}' | tr -d '\n'", brew, name))
-  if out and (out == "started" or out == "startedroot") then
-    return true
-  end
-  if pgrepName and #pgrepName > 0 then
-    return shlib.isProcessRunning(pgrepName)
-  end
-  return false
+local function isProcRunning(name)
+  return shlib.isProcessRunning(name)
 end
 
--- Note: removed old synchronous 'brewRestart' helper.
--- We now use 'runAsync' per-service to avoid blocking the UI.
-
--- Async runner for non-blocking UI
-local function runAsync(cmd, onExit)
-  local escPATH = (shlib.PATH or os.getenv("PATH")):gsub("'", "'\\''")
-  local full = string.format("PATH='%s' %s", escPATH, cmd)
-  hs.task.new("/bin/sh", function(exitCode)
-    if onExit then onExit(exitCode) end
-  end, {"-lc", full}):start()
-end
+-- Note: no Homebrew dependency or async shell helper required
 
 -- Karabiner restart via launchctl kickstart (admin)
 local function restartKarabiner()
@@ -80,27 +66,14 @@ local function restartKarabiner()
   hs.task.new("/usr/bin/osascript", function() end, {"-e", script}):start()
 end
 
--- Darwin rebuild with escalation; finds flake root by walking up to flake.nix
+-- Darwin rebuild with escalation; simplified flake detection
 local function findFlakeRoot()
-  -- Derive from this file path
-  local src = debug.getinfo(1, "S").source or ""
-  local path = src:gsub("^@", "")
-  if path == "" then return os.getenv("HOME") end
-  local dir = path:match("^(.*)/[^/]+$") or path
-  dir = hs.fs.pathToAbsolute(dir) or dir
-  -- ascend a few levels to locate flake.nix
-  for _ = 1, 8 do
-    if hs.fs.attributes(dir .. "/flake.nix") then
-      return dir
-    end
-    local parent = hs.fs.pathToAbsolute(dir .. "/..")
-    if not parent or parent == dir then break end
-    dir = parent
+  local home = os.getenv("HOME") or "/tmp"
+  local flakeRoot = home .. "/Documents/99.Github/Parametric_Forge"
+  if hs.fs.attributes(flakeRoot .. "/flake.nix") then
+    return flakeRoot
   end
-  -- common fallback: repo under Documents
-  local cand = os.getenv("HOME") .. "/Documents/99.Github/Parametric_Forge"
-  if hs.fs.attributes(cand .. "/flake.nix") then return cand end
-  return os.getenv("HOME") or "/"
+  return home
 end
 
 local function darwinRebuild()
@@ -120,6 +93,16 @@ end
 -- Build dynamic menu -----------------------------------------------
 -- track transient restarting states per service for icon presentation
 local restarting = {}
+local flagsWatcher
+
+local function isOptionDown()
+  local mods = hs.eventtap.checkKeyboardModifiers() or {}
+  return mods.alt == true
+end
+
+-- Forward declarations to avoid upvalue/global lookup issues
+local menubar -- hs.menubar instance (created in start())
+local buildMenu -- function value assigned below
 
 local function serviceIcon(service, status)
   -- names: <service>-on/off/restarting
@@ -132,15 +115,16 @@ local function serviceItem(title, serviceKey, running, onClick)
   local img = serviceIcon(serviceKey, status)
   local item = {
     title = title,
-    state = running and not restarting[serviceKey] and "on" or "off",
+    -- Use icons only (checked marks hide images in some setups)
     image = img,
     fn = function()
       -- show restarting while action runs
       restarting[serviceKey] = true
-      if menubar then menubar:setMenu(buildMenu) end
+      -- Rebind menu using our function value (not global) to refresh icons/states
+      if menubar and buildMenu then menubar:setMenu(buildMenu) end
       onClick(function()
         restarting[serviceKey] = false
-        if menubar then
+        if menubar and buildMenu then
           hs.timer.doAfter(0.2, function() menubar:setMenu(buildMenu) end)
         end
       end)
@@ -149,26 +133,26 @@ local function serviceItem(title, serviceKey, running, onClick)
   return item
 end
 
-local function buildMenu()
+function buildMenu()
   local items = {}
   table.insert(items, { title = "Darwin Rebuild…", image = assetImage("forge-rebuild", {w=18,h=18}), fn = darwinRebuild })
   table.insert(items, { title = "-" })
   table.insert(items, { title = "Services", disabled = true })
 
   -- yabai
-  local yabaiUp = brewIsStarted("yabai", "yabai")
+  local yabaiUp = isProcRunning("yabai")
   table.insert(items, serviceItem("yabai", "yabai", yabaiUp, function(done)
-    runAsync(string.format("'%s' services restart yabai >/dev/null 2>&1 || '%s' services start yabai >/dev/null 2>&1", findBrew(), findBrew()), function()
-      osd.show("Restarted: yabai", { duration = 0.9 })
+    hs.timer.doAfter(0.05, function()
+      auto.restartYabai()
       if done then done() end
     end)
   end))
 
   -- skhd
-  local skhdUp = brewIsStarted("skhd", "skhd")
+  local skhdUp = isProcRunning("skhd")
   table.insert(items, serviceItem("skhd", "skhd", skhdUp, function(done)
-    runAsync(string.format("'%s' services restart skhd >/dev/null 2>&1 || '%s' services start skhd >/dev/null 2>&1", findBrew(), findBrew()), function()
-      osd.show("Restarted: skhd", { duration = 0.9 })
+    hs.timer.doAfter(0.05, function()
+      auto.reloadSkhd()
       if done then done() end
     end)
   end))
@@ -203,16 +187,39 @@ local function buildMenu()
     end)
   end))
 
+  -- Advanced items (hold Option to reveal)
+  if isOptionDown() then
+    table.insert(items, { title = "-" })
+    table.insert(items, { title = "Advanced", disabled = true })
+    table.insert(items, {
+      title = "Open Hammerspoon config folder",
+      fn = function() hs.execute(string.format("open '%s'", hsConfigDir()), true) end,
+      image = hs.image.imageFromName("NSFolderSmart")
+    })
+    table.insert(items, {
+      title = "Open assets folder",
+      fn = function() hs.execute(string.format("open '%s'", ASSETS_DIR), true) end,
+      image = hs.image.imageFromName("NSFolderSmart")
+    })
+    table.insert(items, {
+      title = "Open Hammerspoon Console",
+      fn = function() hs.openConsole() end,
+      image = hs.image.imageFromName("NSAdvanced")
+    })
+  end
+
   return items
 end
 
-local menubar
 function M.start()
   if menubar then return end
   menubar = hs.menubar.new()
   if not menubar then return end
   menubar:autosaveName("forge-menubar")
-  local img = assetImage("forge-menu", {w=18,h=18}) or hs.image.imageFromName("NSActionTemplate")
+  local img = assetImage("forge-menu", {w=18,h=18})
+              or hs.image.imageFromName("NSAdvanced")
+              or hs.image.imageFromName("NSPreferencesGeneral")
+              or hs.image.imageFromName("NSActionTemplate")
   if img then
     menubar:setIcon(img, true)
   else
@@ -220,6 +227,19 @@ function M.start()
   end
   menubar:setTooltip("Parametric Forge")
   menubar:setMenu(buildMenu)
+
+  -- Rebuild menu when modifier flags change (to reveal Advanced items)
+  if flagsWatcher then flagsWatcher:stop() end
+  local lastAlt = isOptionDown()
+  flagsWatcher = hs.eventtap.new({ hs.eventtap.event.types.flagsChanged }, function()
+    local nowAlt = isOptionDown()
+    if nowAlt ~= lastAlt then
+      lastAlt = nowAlt
+      menubar:setMenu(buildMenu)
+    end
+    return false
+  end)
+  flagsWatcher:start()
 end
 
 return M

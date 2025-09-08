@@ -14,7 +14,7 @@ local M = {}
 
 local log = hs.logger.new("forge.exec", hs.logger.info)
 
-local dryRun = true
+local dryRun = false
 function M.setDryRun(b)
     dryRun = b and true or false
 end
@@ -49,6 +49,9 @@ local function getWindowInfo(winId)
     if not out or #out == 0 then
         return nil
     end
+    if not out:match("^%s*[%[{]") then
+        return nil
+    end
     local ok, obj = pcall(hs.json.decode, out)
     if ok then
         return obj
@@ -59,6 +62,9 @@ end
 local function getSpaces()
     local out = shlib.sh("yabai -m query --spaces 2>/dev/null")
     if not out or #out == 0 then
+        return {}
+    end
+    if not out:match("^%s*[%[{]") then
         return {}
     end
     local ok, arr = pcall(hs.json.decode, out)

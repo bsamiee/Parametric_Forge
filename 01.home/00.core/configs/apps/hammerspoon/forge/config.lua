@@ -19,27 +19,11 @@ M.debounce = {
 M.floatThreshold = { minW = 400, minH = 260 }
 
 -- Grid anchors via external script (avoid duplicating grids)
--- Resolve grid script path from multiple common locations
 do
-    local home = os.getenv("HOME")
-    local candidates = {
-        home .. "/.config/yabai/grid-anchors.sh",
-        home .. "/01.home/00.core/configs/apps/yabai/grid-anchors.sh",
-        "01.home/00.core/configs/apps/yabai/grid-anchors.sh",
-    }
-    local function exists(p)
-        return p and #p > 0 and (hs.fs.attributes(p) ~= nil)
-    end
-    for _, p in ipairs(candidates) do
-        if exists(p) then
-            M.gridScript = p
-            break
-        end
-    end
-    -- fallback to default even if not found (executor guards actual use)
-    if not M.gridScript then
-        M.gridScript = home .. "/.config/yabai/grid-anchors.sh"
-    end
+    local xdg = os.getenv("XDG_CONFIG_HOME")
+    local home = os.getenv("HOME") or "/tmp"
+    local base = xdg and (xdg .. "/yabai") or (home .. "/.config/yabai")
+    M.gridScript = base .. "/grid-anchors.sh"
 end
 
 -- Space normalization policy

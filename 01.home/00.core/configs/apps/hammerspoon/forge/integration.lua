@@ -119,42 +119,41 @@ end
 
 -- Watch for yabai state changes and coordinate with Hammerspoon
 function M.watchYabaiState()
+    -- Ensure /tmp directory exists and is accessible
+    if not hs.fs.attributes("/tmp") then
+        log.w("Unable to access /tmp directory for yabai state watching")
+        return
+    end
+    
     local stateWatcher = hs.pathwatcher.new("/tmp/", function(files, flagTables)
         for i, file in ipairs(files) do
             if file:match("yabai_.*%.json$") then
                 log.d("yabai state change detected: " .. file)
                 -- Surface actionable OSD for known state files
                 if file:match("yabai_drop%.json$") then
-                    local data
                     local f = io.open(file, "r")
-                    if f then
-                        local txt = f:read("*a")
-                        f:close()
-                        if txt then
-                            data = hs.json.decode(txt)
+                    local txt = f and f:read("*a") or nil
+                    if f then f:close() end
+                    if txt and (#txt > 0) and (txt:find("^{") or txt:find("^%[")) then
+                        local ok, data = pcall(hs.json.decode, txt)
+                        if ok and data and data.drop then
+                            local msg = (data.drop == "stack") and "Drop: Stack" or "Drop: Swap"
+                            if msg then
+                                local osd = require("forge.osd")
+                                osd.show(msg, { duration = 1.0 })
+                            end
                         end
-                    end
-                    local msg
-                    if data and data.drop then
-                        msg = (data.drop == "stack") and "Drop: Stack" or "Drop: Swap"
-                    end
-                    if msg then
-                        local osd = require("forge.osd")
-                        osd.show(msg, { duration = 1.0 })
                     end
                 elseif file:match("yabai_state%.json$") then
-                    local data
                     local f2 = io.open(file, "r")
-                    if f2 then
-                        local txt2 = f2:read("*a")
-                        f2:close()
-                        if txt2 then
-                            data = hs.json.decode(txt2)
+                    local txt2 = f2 and f2:read("*a") or nil
+                    if f2 then f2:close() end
+                    if txt2 and (#txt2 > 0) and (txt2:find("^{") or txt2:find("^%[")) then
+                        local ok2, data = pcall(hs.json.decode, txt2)
+                        if ok2 and data and data.mode then
+                            local osd = require("forge.osd")
+                            osd.show("Layout: " .. tostring(data.mode), { duration = 1.0 })
                         end
-                    end
-                    if data and data.mode then
-                        local osd = require("forge.osd")
-                        osd.show("Layout: " .. tostring(data.mode), { duration = 1.0 })
                     end
                 end
             end

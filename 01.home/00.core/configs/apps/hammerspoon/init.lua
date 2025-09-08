@@ -41,6 +41,9 @@ local function gotoSpaceByIndex(idx)
     if not json or #json == 0 then
         return
     end
+    if not json:match("^%s*[%[{]") then
+        return
+    end
     local ok, spaces = pcall(hs.json.decode, json)
     if not ok or type(spaces) ~= "table" then
         return
@@ -65,14 +68,7 @@ end
 -- Karabiner-Elements. Hammerspoon no longer tracks right-modifier state,
 -- avoiding duplication and reducing complexity.
 
--- --- Spaces watcher (optional sync hooks, no keybinds) ---------------------
-local function onSpaceChange()
-    -- Reserved for future sync (e.g., trigger sketchybar or cache updates)
-    -- Example: sh("sketchybar --trigger space_change")
-end
-
-local sw = hs.spaces.watcher.new(onSpaceChange)
-sw:start()
+-- (Spaces watcher moved to forge.events; avoid duplicate watchers here)
 
 -- --- Wake/launch resilience ------------------------------------------------
 local function afterWake()

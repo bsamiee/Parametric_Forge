@@ -80,21 +80,38 @@ function M.showAll()
     chooser:show()
 end
 
+local function safeActiveSpaces()
+    if not hs.spaces or not hs.spaces.activeSpaces then return nil end
+    local ok, res = pcall(function() return hs.spaces.activeSpaces() end)
+    return ok and res or nil
+end
+
+local function safeWindowSpaces(w)
+    if not hs.spaces or not hs.spaces.windowSpaces then return nil end
+    local ok, res = pcall(function() return hs.spaces.windowSpaces(w) end)
+    return ok and res or nil
+end
+
 function M.showCurrentSpace()
-    local active = hs.spaces.activeSpaces()
+    local active = safeActiveSpaces()
     local thisScr = hs.screen.mainScreen()
     local wins = hs.window.filter.new():getWindows()
     local filtered = {}
-    for _, w in ipairs(wins) do
-        local sp = hs.spaces.windowSpaces(w)
-        if sp and #sp > 0 then
-            for _, s in ipairs(sp) do
-                if active and active[thisScr:getUUID()] == s then
-                    table.insert(filtered, w)
-                    break
+    if active and thisScr then
+        for _, w in ipairs(wins) do
+            local sp = safeWindowSpaces(w)
+            if sp and #sp > 0 then
+                for _, s in ipairs(sp) do
+                    if active[thisScr:getUUID()] == s then
+                        table.insert(filtered, w)
+                        break
+                    end
                 end
             end
         end
+    else
+        -- Fallback: when hs.spaces is unavailable, show all windows
+        filtered = wins
     end
     local chooser = hs.chooser.new(function(choice)
         if choice and choice.win then

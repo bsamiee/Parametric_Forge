@@ -83,16 +83,17 @@
     "containers/registries.conf".source = ./00.core/configs/containers/registries.conf; # Podman
     "containers/storage.conf".source = ./00.core/configs/containers/storage.conf; # Podman
 
-    # --- UI Tools Configuration (Simple Files) -----------------------------
+    # --- UI Tools Configuration -------------------------------------------
     "skhd/skhdrc".source = ./00.core/configs/apps/skhdrc;
     "borders/bordersrc" = {
       source = ./00.core/configs/apps/borders/bordersrc;
       executable = true;
     };
-    # Karabiner-Elements (keyboard remapping)
-    # Note: karabiner.json deployed via home.file (not xdg.configFile) so goku can write to it
-    "karabiner/assets/complex_modifications/parametric-forge.json".source = ./00.core/configs/apps/karabiner/assets/complex_modifications/parametric-forge.json;
-    # --- Yabai Configuration ------------------------------------------------
+
+    # Karabiner complex modifications handled via activation (writable copy)
+    # "karabiner/assets/complex_modifications/parametric-forge.json" moved to activation
+
+    # --- Yabai Configuration -----------------------------------------------
     "yabai/yabairc" = {
       source = ./00.core/configs/apps/yabai/yabairc;
       executable = true;
@@ -111,19 +112,6 @@
     };
 
   };
-
-  # --- Home Activation Scripts ---------------------------------------------
-  home.activation = {
-     gokuCompileKarabiner = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-       echo "[Parametric Forge] Compiling karabiner.edn via goku (if available)..." >&2
-       if command -v goku >/dev/null 2>&1; then
-         export GOKU_EDN_CONFIG_FILE="${config.home.homeDirectory}/.config/karabiner/karabiner.edn"
-         # Fix permissions for goku to write to karabiner.json
-         chmod 644 "${config.home.homeDirectory}/.config/karabiner/karabiner.json" 2>/dev/null || true
-         goku || true
-       fi
-     '';
-   };
 
    # --- Home Files (Non-XDG) -------------------------------------------------
    home.file = {
@@ -147,27 +135,9 @@
     # --- Terminal Web Browser (w3m) -----------------------------------------
     ".w3m/config".source = ./00.core/configs/apps/w3m/config;
     ".w3m/keymap".source = ./00.core/configs/apps/w3m/keymap;
-    # --- Hammerspoon Configuration (uses ~/.hammerspoon, not XDG) -----------
-    ".hammerspoon/init.lua".source = ./00.core/configs/apps/hammerspoon/init.lua;
-    ".hammerspoon/forge/config.lua".source = ./00.core/configs/apps/hammerspoon/forge/config.lua;
-    ".hammerspoon/forge/state.lua".source = ./00.core/configs/apps/hammerspoon/forge/state.lua;
-    ".hammerspoon/forge/executor.lua".source = ./00.core/configs/apps/hammerspoon/forge/executor.lua;
-    ".hammerspoon/forge/policy.lua".source = ./00.core/configs/apps/hammerspoon/forge/policy.lua;
-    ".hammerspoon/forge/events.lua".source = ./00.core/configs/apps/hammerspoon/forge/events.lua;
-    ".hammerspoon/forge/integration.lua".source = ./00.core/configs/apps/hammerspoon/forge/integration.lua;
-    ".hammerspoon/forge/osd.lua".source = ./00.core/configs/apps/hammerspoon/forge/osd.lua;
-    ".hammerspoon/forge/auto.lua".source = ./00.core/configs/apps/hammerspoon/forge/auto.lua;
-    ".hammerspoon/forge/palette.lua".source = ./00.core/configs/apps/hammerspoon/forge/palette.lua;
-    ".hammerspoon/forge/menubar.lua".source = ./00.core/configs/apps/hammerspoon/forge/menubar.lua;
-    ".hammerspoon/forge/sh.lua".source = ./00.core/configs/apps/hammerspoon/forge/sh.lua;
-    # Hammerspoon menubar assets (SF Symbols exported as PDF)
-    ".hammerspoon/assets" = {
-      source = ./00.core/configs/apps/hammerspoon/assets;
-      recursive = true;
-    };
-    # --- Karabiner/Goku Configuration (copied, not symlinked due to goku limitations) ---
-    ".config/karabiner/karabiner.edn".source = ./00.core/configs/apps/karabiner/karabiner.edn;
-    ".config/karabiner/karabiner.json".source = ./00.core/configs/apps/karabiner/karabiner.json;
+    # --- Hammerspoon Configuration (moved to activation to avoid symlinks) ---
+    # init.lua and forge/* + assets deployed via activation scripts
+    # --- Karabiner/Goku Configuration (deployed via activation script) ---
   };
 
   # --- Asset Bin Scripts (Added to PATH) -----------------------------------

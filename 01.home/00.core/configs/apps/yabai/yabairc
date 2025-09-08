@@ -57,14 +57,13 @@ fi
 
 # --- anchors: load ----------------------------------------------------------
 # Source anchor presets so variables like $GRID_RIGHT_HALF are available.
-# Try common locations, including alongside this file.
+# Look alongside this file and within XDG config.
 ANCHORS_LOADED=0
 _YABRC_DIR_CAND="$(dirname "$0" 2>/dev/null || printf .)"
+_XDG_CFG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/yabai"
 for _cand in \
   "$_YABRC_DIR_CAND/grid-anchors.sh" \
-  "$HOME/.config/yabai/grid-anchors.sh" \
-  "$HOME/01.home/00.core/configs/apps/yabai/grid-anchors.sh" \
-  "01.home/00.core/configs/apps/yabai/grid-anchors.sh"; do
+  "$_XDG_CFG_DIR/grid-anchors.sh"; do
   if [ -r "$_cand" ]; then
     # shellcheck source=/dev/null
     . "$_cand"
@@ -151,11 +150,10 @@ fi
 # Source rules & signals module after core config and anchors are loaded
 RULES_LOADED=0
 _YABRC_DIR_CAND="$(dirname "$0" 2>/dev/null || printf .)"
+_XDG_CFG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/yabai"
 for _cand in \
   "$_YABRC_DIR_CAND/rules-signals.sh" \
-  "$HOME/.config/yabai/rules-signals.sh" \
-  "$HOME/01.home/00.core/configs/apps/yabai/rules-signals.sh" \
-  "01.home/00.core/configs/apps/yabai/rules-signals.sh"; do
+  "$_XDG_CFG_DIR/rules-signals.sh"; do
   if [ -r "$_cand" ]; then
     # shellcheck source=/dev/null
     . "$_cand"

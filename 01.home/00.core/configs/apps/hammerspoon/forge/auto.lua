@@ -49,6 +49,30 @@ local function reloadHammerspoon()
     hs.reload()
 end
 
+-- Decide if HS should reload based on changed files (official pattern)
+local function shouldReloadHS(files)
+    if not files or #files == 0 then
+        return false
+    end
+    for _, f in ipairs(files) do
+        -- ignore common non-config changes
+        local name = f:match("[^/]+$") or f
+        if name:match("^%.") or name == ".DS_Store" or name:match("~$") then
+            goto continue
+        end
+        -- ignore assets by default
+        if f:find("/assets/") then
+            goto continue
+        end
+        -- trigger on lua/spoon changes
+        if f:match("%.lua$") or f:match("%.spoon/") then
+            return true
+        end
+        ::continue::
+    end
+    return false
+end
+
 local function notifyYazi()
     osd.show("Yazi config updated", { duration = 1.0 })
 end
@@ -71,11 +95,17 @@ local function normalizePaths(paths)
 end
 
 local function addWatcher(paths, key, onChange)
-    local w = hs.pathwatcher.new(normalizePaths(paths), function(files, flags)
-        debounce(key, 250, onChange)
-    end)
-    table.insert(watchers, w)
-    w:start()
+    -- Support older Hammerspoon that requires a single string path
+    local list = normalizePaths(type(paths) == "table" and paths or { paths })
+    for _, p in ipairs(list) do
+        local w = hs.pathwatcher.new(p, function(files, flags)
+            debounce(key, 250, function()
+                pcall(onChange, files, flags)
+            end)
+        end)
+        table.insert(watchers, w)
+        w:start()
+    end
 end
 
 function M.start()
@@ -86,14 +116,20 @@ function M.start()
     -- skhd config (home)
     addWatcher({ home .. "/.config/skhd/" }, "skhd", reloadSkhd)
 
-    -- Hammerspoon config dir (active one)
+    -- Hammerspoon config dir (active one). Only reload on *.lua or .spoon changes.
     local hsConfigDir = (type(hs.configdir) == "function") and hs.configdir() or hs.configdir
-    addWatcher({ hsConfigDir }, "hs", reloadHammerspoon)
+    addWatcher({ hsConfigDir }, "hs", function(files)
+        if shouldReloadHS(files) then
+            reloadHammerspoon()
+        end
+    end)
 
     -- Yazi config (home)
     addWatcher({ home .. "/.config/yazi/" }, "yazi", notifyYazi)
 
     log.i("forge.auto watchers started")
+    -- Optional: surface a one-time loaded notice similar to docs
+    hs.alert.show("Config loaded")
 end
 
 -- Export helpers for reuse (palette actions)
