@@ -232,6 +232,9 @@
     # --- Claude Code Configuration -------------------------------------------
     CLAUDE_CACHE_DIR = "${config.xdg.cacheHome}/claude";
 
+    # --- Karabiner/Goku Configuration -----------------------------------------
+    GOKU_EDN_CONFIG_FILE = "${config.xdg.configHome}/karabiner/karabiner.edn";
+
     # --- Network Tools ------------------------------------------------------
     # WHOIS_SERVER = "whois.iana.org"; # Optional: Default WHOIS server
     # IDN_DISABLE = "1"; # Optional: Disable IDN processing for dig

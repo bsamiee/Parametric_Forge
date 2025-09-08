@@ -100,14 +100,15 @@
     "hammerspoon/forge/osd.lua".source = ./00.core/configs/apps/hammerspoon/forge/osd.lua;
     "hammerspoon/forge/auto.lua".source = ./00.core/configs/apps/hammerspoon/forge/auto.lua;
     "hammerspoon/forge/palette.lua".source = ./00.core/configs/apps/hammerspoon/forge/palette.lua;
+    "hammerspoon/forge/menubar.lua".source = ./00.core/configs/apps/hammerspoon/forge/menubar.lua;
     # Hammerspoon menubar assets (SF Symbols exported as PDF)
     "hammerspoon/assets" = {
       source = ./00.core/configs/apps/hammerspoon/assets;
       recursive = true;
     };
     # Karabiner-Elements (keyboard remapping)
-    # Use Goku to generate karabiner.json from EDN; we do not symlink karabiner.json
-    "karabiner/karabiner.edn".source = ./00.core/configs/apps/karabiner/karabiner.edn;
+    # Base JSON structure (goku requires existing karabiner.json to modify)
+    "karabiner/karabiner.json".source = ./00.core/configs/apps/karabiner/karabiner.json;
     "karabiner/assets/complex_modifications/parametric-forge.json".source = ./00.core/configs/apps/karabiner/assets/complex_modifications/parametric-forge.json;
     # --- Yabai Configuration ------------------------------------------------
     "yabai/yabairc" = {
@@ -131,10 +132,10 @@
 
   # --- Home Activation Scripts ---------------------------------------------
   home.activation = {
-     gokuCompileKarabiner = lib.hm.dag.entryAfter [ "createXdgDirs" ] ''
+     gokuCompileKarabiner = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
        echo "[Parametric Forge] Compiling karabiner.edn via goku (if available)..." >&2
        if command -v goku >/dev/null 2>&1; then
-         export GOKU_EDN_CONFIG_FILE="${config.xdg.configHome}/karabiner/karabiner.edn"
+         export GOKU_EDN_CONFIG_FILE="${config.home.homeDirectory}/.config/karabiner/karabiner.edn"
          goku || true
        fi
      '';
@@ -162,6 +163,8 @@
     # --- Terminal Web Browser (w3m) -----------------------------------------
     ".w3m/config".source = ./00.core/configs/apps/w3m/config;
     ".w3m/keymap".source = ./00.core/configs/apps/w3m/keymap;
+    # --- Karabiner/Goku Configuration (copied, not symlinked due to goku limitations) ---
+    ".config/karabiner/karabiner.edn".source = ./00.core/configs/apps/karabiner/karabiner.edn;
   };
 
   # --- Asset Bin Scripts (Added to PATH) -----------------------------------

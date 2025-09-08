@@ -111,11 +111,11 @@ in
     grant_tcc() {
       local db="$1" service="$2" client="$3" type="''${4:-0}" target="''${5:-}"
       [ -f "$db" ] || return
-      
+
       # Check if permission already exists and is granted
       existing=$(/usr/bin/sqlite3 "$db" "SELECT auth_value FROM access WHERE service='$service' AND client='$client'" 2>/dev/null || echo "")
       [ "$existing" = "2" ] && return  # Already granted
-      
+
       # Remove any existing entry to avoid conflicts
       /usr/bin/sqlite3 "$db" "DELETE FROM access WHERE service='$service' AND client='$client'" 2>/dev/null || true
 
@@ -144,13 +144,13 @@ in
     echo "  Configuring 1Password permissions..." >&2
     OP_PATHS=(
       "/opt/homebrew/bin/op"
-      "/usr/local/bin/op" 
+      "/usr/local/bin/op"
       "/Applications/1Password.app"
     )
 
     for op_path in "''${OP_PATHS[@]}"; do
       [ -e "$op_path" ] || continue
-      
+
       if [[ "$op_path" == *.app ]]; then
         # App bundle - use proper bundle identifier for 1Password 8
         client="com.1password.1password"
@@ -160,7 +160,7 @@ in
         client="$op_path"
         type=1
       fi
-      
+
       grant_tcc "$USER_TCC_DB" "kTCCServiceAccessibility" "$client" "$type"
       grant_tcc "$USER_TCC_DB" "kTCCServiceSystemPolicyAllFiles" "$client" "$type"
       grant_tcc "$USER_TCC_DB" "kTCCServiceAppleEvents" "$client" "$type" "com.apple.systemevents"
@@ -172,7 +172,7 @@ in
     echo "  Configuring daemon permissions..." >&2
     DAEMONS=(
       "font-cache-daemon"
-      "home-maintenance-daemon" 
+      "home-maintenance-daemon"
       "npm-daemon"
       "op-ssh-setup"
       "security-daemon"
@@ -234,11 +234,11 @@ in
 
     for hs_path in "''${HAMMERSPOON_PATHS[@]}"; do
       [ -e "$hs_path" ] || continue
-      
+
       # Use proper bundle identifier for Hammerspoon
       client="org.hammerspoon.Hammerspoon"
       type=0
-      
+
       grant_tcc "$USER_TCC_DB" "kTCCServiceAccessibility" "$client" "$type"
       grant_tcc "$USER_TCC_DB" "kTCCServicePostEvent" "$client" "$type"
       grant_tcc "$USER_TCC_DB" "kTCCServiceListenEvent" "$client" "$type"
@@ -255,7 +255,7 @@ in
       "/usr/local/bin/brew"
       "/usr/bin/ditto"
       "/usr/bin/installer"
-      "/usr/sbin/installer" 
+      "/usr/sbin/installer"
       "/usr/bin/codesign"
       "/usr/bin/hdiutil"
       "/usr/bin/diskutil"
@@ -267,7 +267,7 @@ in
 
     for tool in "''${DEV_TOOLS[@]}"; do
       [ -e "$tool" ] || continue
-      
+
       if [[ "$tool" == *.app ]]; then
         # App bundle
         bundle_id=$(/usr/bin/mdls -name kMDItemCFBundleIdentifier -r "$tool" 2>/dev/null || echo "")
@@ -278,7 +278,7 @@ in
         client="$tool"
         type=1
       fi
-      
+
       grant_tcc "$USER_TCC_DB" "kTCCServiceAccessibility" "$client" "$type"
       grant_tcc "$USER_TCC_DB" "kTCCServiceSystemPolicyAllFiles" "$client" "$type"
       grant_tcc "$USER_TCC_DB" "kTCCServiceAppleEvents" "$client" "$type" "com.apple.systemevents"
@@ -292,11 +292,11 @@ in
 
     for parallels_path in "''${PARALLELS_PATHS[@]}"; do
       [ -e "$parallels_path" ] || continue
-      
+
       # Use verified bundle identifier
       client="com.parallels.desktop.console"
       type=0
-      
+
       grant_tcc "$USER_TCC_DB" "kTCCServiceAccessibility" "$client" "$type"
       grant_tcc "$USER_TCC_DB" "kTCCServiceSystemPolicyAllFiles" "$client" "$type"
       grant_tcc "$USER_TCC_DB" "kTCCServiceCamera" "$client" "$type"

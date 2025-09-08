@@ -123,7 +123,7 @@ Add `:applications` map and use conditions in rules:
 
 - Karabiner-Elements not responding:
   - Verify System Settings → Privacy & Security: Input Monitoring + Accessibility enabled for Karabiner.
-  - Approve “Karabiner-VirtualHIDDevice-Manager” extension.
+  - Approve "Karabiner-VirtualHIDDevice-Manager" extension.
 - `karabiner.json` missing:
   - Run `goku` manually, or `brew services start goku` to watch.
 - Conflicts:
