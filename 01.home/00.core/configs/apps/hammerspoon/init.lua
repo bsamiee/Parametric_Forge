@@ -29,6 +29,8 @@ end
 -- Load helpers early
 local osd = require("forge.osd")
 local shlib = require("forge.sh")
+-- Clear any stale persistent overlays from previous sessions
+pcall(function() osd.hideAllPersistent() end)
 
 -- --- Yabai helpers (no hard dependency if not installed) -------------------
 local function yabai(cmd)
@@ -110,6 +112,11 @@ exec.setDryRun(false)
 exec.refreshSa()
 events.start()
 
+-- Observe yabai state files for layout/drop OSD when toggled outside HS (e.g., via skhd)
+if integ and type(integ.watchYabaiState) == "function" then
+  integ.watchYabaiState()
+end
+
 -- Ensure JankyBorders starts promptly after yabai readiness; force a clean restart
 -- Borders lifecycle managed by yabai (see yabairc). Avoid duplicate management here.
 
@@ -119,14 +126,7 @@ auto.start()
 require("forge.menubar").start()
 
 -- Start classic Caffeine-style menubar toggle (display idle prevention)
-do
-  local ok, caffeine = pcall(require, "forge.caffeine")
-  if ok and caffeine and type(caffeine.start) == "function" then
-    caffeine.start()
-  else
-    log.w("forge.caffeine not available; skipping Caffeine menubar")
-  end
-end
+require("forge.caffeine").start()
 
 -- Start leader key OSD notifications
 require("forge.leaders").start()

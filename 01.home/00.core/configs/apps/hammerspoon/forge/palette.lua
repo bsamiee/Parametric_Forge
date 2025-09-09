@@ -136,6 +136,12 @@ local function mainChoices()
     return {
         { text = "Windows — All", subText = "Focus any visible window", id = "win_all" },
         { text = "Windows — Current Space", subText = "Focus window on active space", id = "win_space" },
+        { text = "Layout — Toggle BSP/Stack", subText = "Switch current space layout", id = "layout_toggle" },
+        { text = "Layout — Set BSP", subText = "Binary Space Partitioning", id = "layout_bsp" },
+        { text = "Layout — Set Stack", subText = "Stack layout", id = "layout_stack" },
+        { text = "Stack — Next", subText = "Focus next in stack", id = "stack_next" },
+        { text = "Stack — Prev", subText = "Focus previous in stack", id = "stack_prev" },
+        { text = "Stack — Unstack", subText = "Unstack current window", id = "stack_unstack" },
         { text = "Restart Yabai", subText = "Restart service and borders", id = "yabai_restart" },
         { text = "Reload skhd", subText = "Reload hotkeys", id = "skhd_reload" },
         { text = "Reload Hammerspoon", subText = "Reload configuration", id = "hs_reload" },
@@ -166,6 +172,59 @@ local function handleMainChoice(choice)
         auto.reloadSkhd()
         return
     end
+
+    if choice.id == "layout_toggle" or choice.id == "layout_bsp" or choice.id == "layout_stack" then
+        local function sh(cmd) return shlib.sh(cmd) end
+        local js = sh("yabai -m query --spaces 2>/dev/null")
+        local curType = "?"
+        if js and js:match("^[%[{]") then
+            local ok, arr = pcall(hs.json.decode, js)
+            if ok and type(arr) == "table" then
+                for _, s in ipairs(arr) do if s["has-focus"] then curType = s.type or curType end end
+            end
+        end
+        local new
+        if choice.id == "layout_toggle" then
+            if curType == "bsp" then sh("yabai -m space --layout stack"); new = "stack" else sh("yabai -m space --layout bsp"); new = "bsp" end
+        elseif choice.id == "layout_bsp" then
+            sh("yabai -m space --layout bsp"); new = "bsp"
+        else
+            sh("yabai -m space --layout stack"); new = "stack"
+        end
+        -- Persist for watchers (write file directly to avoid shell quoting issues)
+        local f = io.open("/tmp/yabai_state.json", "w")
+        if f then f:write(string.format('{"mode":"%s"}\n', new)); f:close() end
+        osd.show("Layout: " .. new, { duration = 0.8 })
+        return
+    end
+
+    if choice.id == "stack_next" or choice.id == "stack_prev" then
+        local dir = (choice.id == "stack_next") and "stack.next" or "stack.prev"
+        local function sh(cmd) return shlib.sh(cmd) end
+        sh("yabai -m window --focus " .. dir .. " 2>/dev/null")
+        local info = sh("yabai -m query --windows --window 2>/dev/null")
+        if info and info:match("^[%[{]") then
+            local ok, w = pcall(hs.json.decode, info)
+            if ok and w and w["stack-index"] and w["stack-index"] > 0 then
+                osd.show("Stack: " .. tostring(w["stack-index"]), { duration = 0.8 })
+            else
+                osd.show("Not in a stack", { duration = 0.8 })
+            end
+        end
+        return
+    end
+
+    if choice.id == "stack_unstack" then
+        local function sh(cmd) return shlib.sh(cmd) end
+        -- Try to warp in a direction to unstack; fallback through directions
+        local dirs = { "east", "west", "north", "south" }
+        for _, d in ipairs(dirs) do
+            local rc = sh(string.format("yabai -m window --warp %s >/dev/null 2>&1; echo $?", d))
+            if rc and rc:match("^0") then break end
+        end
+        osd.show("Unstacked (if stacked)", { duration = 0.8 })
+        return
+    end
     if choice.id == "hs_reload" then
         auto.reloadHammerspoon()
         return
@@ -175,13 +234,17 @@ local function handleMainChoice(choice)
             return shlib.sh(cmd)
         end
         local current = (sh("yabai -m config mouse_drop_action 2>/dev/null"):gsub("\n$", ""))
+        local new
         if current == "swap" then
-            sh("yabai -m config mouse_drop_action stack")
-            osd.show("Drop: Stack", { duration = 0.8 })
+            new = "stack"
         else
-            sh("yabai -m config mouse_drop_action swap")
-            osd.show("Drop: Swap", { duration = 0.8 })
+            new = "swap"
         end
+        sh(string.format("yabai -m config mouse_drop_action %s", new))
+        -- Persist state for HS OSD watchers and other integrations
+        local fd = io.open("/tmp/yabai_drop.json", "w")
+        if fd then fd:write(string.format('{"drop":"%s"}\n', new)); fd:close() end
+        osd.show("Drop: " .. (new == "stack" and "Stack" or "Swap"), { duration = 0.8 })
         return
     end
 

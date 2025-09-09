@@ -1,4 +1,3 @@
-#!/usr/bin/env bash
 # Title         : skhdrc
 # Author        : Bardia Samiee
 # Project       : Parametric Forge
@@ -94,17 +93,19 @@ shift + lalt - return : \
         "$HOME/.config/yabai/run-yabai.sh" -m config window_gap 0; \
         "$HOME/.config/yabai/run-yabai.sh" -m config external_bar all:0:0; \
     fi
-shift + lalt - space : "$HOME/01.home/00.core/configs/apps/yabai/grid-anchors.sh" center --float
+shift + lalt - space : "$HOME/.config/yabai/grid-anchors.sh" center --float
 shift + lalt - r : "$HOME/.config/yabai/run-yabai.sh" -m space --rotate 270 # Fix layout when messy
 
 # Toggle mouse drop action between swap and stack (for drag-drop stacking)
 shift + lalt - m : \
     current="$("$HOME/.config/yabai/run-yabai.sh" -m config mouse_drop_action)"; \
     if [ "$current" = "swap" ]; then \
-        "$HOME/.config/yabai/run-yabai.sh" -m config mouse_drop_action stack; \
+        new="stack"; \
     else \
-        "$HOME/.config/yabai/run-yabai.sh" -m config mouse_drop_action swap; \
-    fi
+        new="swap"; \
+    fi; \
+    "$HOME/.config/yabai/run-yabai.sh" -m config mouse_drop_action "$new"; \
+    printf '{"drop":"%s"}\n' "$new" > /tmp/yabai_drop.json
 
 # --- TIER 3: Power Operations (Hyper = ⌘⌥⌃⇧ via Right Command) -------------
 # Move window to workspace and follow (stable workspace numbers)
@@ -125,10 +126,10 @@ cmd + ctrl + alt + shift - left  : "$HOME/.config/yabai/run-yabai.sh" -m window 
 cmd + ctrl + alt + shift - right : "$HOME/.config/yabai/run-yabai.sh" -m window --swap east
 cmd + ctrl + alt + shift - down  : "$HOME/.config/yabai/run-yabai.sh" -m window --swap south
 cmd + ctrl + alt + shift - up    : "$HOME/.config/yabai/run-yabai.sh" -m window --swap north
-cmd + ctrl + alt + shift - h : -r "$HOME/.config/yabai/run-yabai.sh" -m window --resize left:-50:0 || "$HOME/.config/yabai/run-yabai.sh" -m window --resize right:-50:0
-cmd + ctrl + alt + shift - l : -r "$HOME/.config/yabai/run-yabai.sh" -m window --resize right:50:0 || "$HOME/.config/yabai/run-yabai.sh" -m window --resize left:50:0
-cmd + ctrl + alt + shift - j : -r "$HOME/.config/yabai/run-yabai.sh" -m window --resize bottom:0:50 || "$HOME/.config/yabai/run-yabai.sh" -m window --resize top:0:50
-cmd + ctrl + alt + shift - k : -r "$HOME/.config/yabai/run-yabai.sh" -m window --resize top:0:-50 || "$HOME/.config/yabai/run-yabai.sh" -m window --resize bottom:0:-50
+cmd + ctrl + alt + shift - h : "$HOME/.config/yabai/run-yabai.sh" -m window --resize left:-50:0 || "$HOME/.config/yabai/run-yabai.sh" -m window --resize right:-50:0
+cmd + ctrl + alt + shift - l : "$HOME/.config/yabai/run-yabai.sh" -m window --resize right:50:0 || "$HOME/.config/yabai/run-yabai.sh" -m window --resize left:50:0
+cmd + ctrl + alt + shift - j : "$HOME/.config/yabai/run-yabai.sh" -m window --resize bottom:0:50 || "$HOME/.config/yabai/run-yabai.sh" -m window --resize top:0:50
+cmd + ctrl + alt + shift - k : "$HOME/.config/yabai/run-yabai.sh" -m window --resize top:0:-50 || "$HOME/.config/yabai/run-yabai.sh" -m window --resize bottom:0:-50
 
 # Display management (Hyper)
 cmd + ctrl + alt + shift - s : "$HOME/.config/yabai/run-yabai.sh" -m window --display west; "$HOME/.config/yabai/run-yabai.sh" -m display --focus west
@@ -155,10 +156,11 @@ shift + lalt - t : \
     PATH="/opt/homebrew/bin:/usr/local/bin:/run/current-system/sw/bin:$PATH"; \
     layout="$("$HOME/.config/yabai/run-yabai.sh" -m query --spaces --space | jq -r '.type')"; \
     if [ "$layout" = "bsp" ]; then \
-        "$HOME/.config/yabai/run-yabai.sh" -m space --layout stack; \
+        "$HOME/.config/yabai/run-yabai.sh" -m space --layout stack; mode="stack"; \
     else \
-        "$HOME/.config/yabai/run-yabai.sh" -m space --layout bsp; \
-    fi
+        "$HOME/.config/yabai/run-yabai.sh" -m space --layout bsp; mode="bsp"; \
+    fi; \
+    printf '{"mode":"%s"}\n' "$mode" > /tmp/yabai_state.json
 
 # --- Scratchpad Operations ----------------------------------------------
 # Toggle scratchpad terminal (WezTerm with title "scratchpad")

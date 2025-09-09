@@ -8,10 +8,12 @@
 
 local shlib = require("forge.sh")
 local osd = require("forge.osd")
-local integ = require("forge.integration")
 local auto = require("forge.auto")
 
 local M = {}
+-- cache for menu status to avoid lag on open
+local menuCache = { layout = nil, drop = nil, gaps = nil, opacity = nil, sa = nil, health = {} }
+local timers = { status = nil, health = nil }
 
 -- Resolve assets directory (standard Hammerspoon deploy).
 -- Canonical path: ~/.hammerspoon/assets (hs.configdir()/assets)
@@ -150,10 +152,100 @@ local function serviceItem(title, serviceKey, onClick)
   return item
 end
 
+-- Background refreshers (decouple shell/JSON cost from click)
+local function refreshStatus()
+  -- layout
+  local js = shlib.sh("yabai -m query --spaces 2>/dev/null")
+  if js and js:match("^[%[{]") then
+    local ok, arr = pcall(hs.json.decode, js)
+    if ok and type(arr) == "table" then
+      for _, s in ipairs(arr) do if s["has-focus"] then menuCache.layout = s.type or menuCache.layout end end
+    end
+  end
+  -- drop
+  local v = shlib.sh("yabai -m config mouse_drop_action 2>/dev/null") or ""
+  menuCache.drop = (v:gsub("\n$", ""))
+  if menuCache.drop == "" then menuCache.drop = "swap" end
+  -- gaps
+  local pad = shlib.sh("yabai -m config top_padding 2>/dev/null") or ""
+  local n = tonumber((pad:gsub("\n$", ""))) or 0
+  menuCache.gaps = n
+  -- opacity
+  local op = shlib.sh("yabai -m config window_opacity 2>/dev/null") or "off"
+  menuCache.opacity = (op:gsub("\n$", ""))
+  -- SA availability
+  menuCache.sa = shlib.isSaAvailable()
+end
+
+local function refreshHealth()
+  local h = {}
+  local function running(p) return shlib.isProcessRunning(p) end
+  h.yabai = running("yabai")
+  h.skhd = running("skhd")
+  h.borders = running("borders")
+  h.goku = running("gokuw") or running("goku")
+  h.karabiner = running("karabiner_grabber") or running("karabiner_console_user_server")
+  menuCache.health = h
+end
+
 -- Simple static menu builder
 function buildMenu()
   local items = {}
-  table.insert(items, { title = "Darwin Rebuild…", image = assetImage("forge-rebuild", {w=18,h=18}, false), fn = darwinRebuild })
+  -- Use cached status only; avoids lag at click time
+  local cache = menuCache
+  local function layout() return cache.layout or "?" end
+  local function toggleLayout()
+    local cur = layout()
+    if cur == "bsp" then shlib.sh("yabai -m space --layout stack") else shlib.sh("yabai -m space --layout bsp") end
+    cache.layout = (cur == "bsp") and "stack" or "bsp"
+    osd.show("Layout: " .. layout(), { duration = 0.8 })
+  end
+
+  local function drop() return cache.drop or "swap" end
+  local function toggleDrop()
+    local cur = drop()
+    if cur == "swap" then shlib.sh("yabai -m config mouse_drop_action stack"); cache.drop = "stack" else shlib.sh("yabai -m config mouse_drop_action swap"); cache.drop = "swap" end
+    osd.show("Drop: " .. drop(), { duration = 0.8 })
+  end
+
+  local function gaps() return cache.gaps or 0 end
+  local function toggleGapsAction()
+    if gaps() == 0 then
+      shlib.sh("yabai -m config top_padding 4; yabai -m config bottom_padding 4; yabai -m config left_padding 4; yabai -m config right_padding 4; yabai -m config window_gap 4")
+      osd.show("Gaps: 4 px", { duration = 0.9 })
+      cache.gaps = 4
+    else
+      shlib.sh("yabai -m config top_padding 0; yabai -m config bottom_padding 0; yabai -m config left_padding 0; yabai -m config right_padding 0; yabai -m config window_gap 0")
+      osd.show("Gaps: 0 px", { duration = 0.9 })
+      cache.gaps = 0
+    end
+  end
+
+  local function opacity() return cache.opacity or "off" end
+  local function toggleOpacity()
+    if not require("forge.executor").sa.available then
+      osd.show("Opacity requires SIP/SA", { duration = 1.2 })
+      return
+    end
+    if opacity() == "off" or opacity() == "" then shlib.sh("yabai -m config window_opacity on"); cache.opacity = "on" else shlib.sh("yabai -m config window_opacity off"); cache.opacity = "off" end
+    osd.show("Opacity: " .. opacity(), { duration = 0.9 })
+  end
+
+  local function saAvail() return cache.sa == true end
+
+  -- icons (optional; falls back gracefully)
+  local function icon(name) return assetImage(name, {w=16,h=16}, false) end
+  local layoutIcon = (layout() == "bsp") and icon("layout-bsp") or icon("layout-stack")
+  local dropIcon = (drop() == "stack") and icon("drop-stack") or icon("drop-swap")
+  local gapsIcon = (gaps() == 0) and icon("gaps-off") or icon("gaps-on")
+  local opacityIcon = (opacity() == "on") and icon("opacity-on") or icon("opacity-off")
+
+  table.insert(items, { title = string.format("Layout: %s", (layout()=="bsp" and "BSP" or "Stack")), image = layoutIcon, fn = toggleLayout })
+  table.insert(items, { title = string.format("Drop: %s", (drop()=="swap" and "Swap" or "Stack")), image = dropIcon, fn = toggleDrop })
+  table.insert(items, { title = string.format("Gaps: %d px", gaps()), image = gapsIcon, fn = toggleGapsAction })
+  table.insert(items, { title = string.format("Opacity: %s", (opacity()=="on" and "On" or "Off")), image = opacityIcon, fn = toggleOpacity, disabled = not saAvail() })
+  table.insert(items, { title = "-" })
+  table.insert(items, { title = "Darwin Rebuild", image = assetImage("forge-rebuild", {w=18,h=18}, false), fn = darwinRebuild })
   table.insert(items, { title = "-" })
   table.insert(items, { title = "Services", disabled = true })
 
@@ -169,11 +261,12 @@ function buildMenu()
     osd.show("Restarted: skhd", { duration = 0.9 })
   end))
 
-  -- JankyBorders (borders)
-  table.insert(items, serviceItem("jankyborders", "jankyborders", function()
-    integ.ensureBorders({ forceRestart = true })
-    osd.show("Restarted: jankyborders", { duration = 0.9 })
+  -- goku (Karabiner EDN watcher)
+  table.insert(items, serviceItem("goku", "goku", function()
+    auto.restartGoku()
+    osd.show("Restarted: goku", { duration = 0.9 })
   end))
+
 
   -- Karabiner-Elements
   table.insert(items, serviceItem("karabiner-elements", "karabiner", function()
@@ -208,6 +301,28 @@ function buildMenu()
     end
   })
 
+  -- Health checks ----------------------------------------------------------
+  table.insert(items, { title = "-" })
+  table.insert(items, { title = "Health", disabled = true })
+  local function statusLine()
+    local function ok(b) return b and "✓" or "✗" end
+    local h = cache.health or {}
+    local st = {
+      string.format("yabai %s", ok(h.yabai)),
+      string.format("skhd %s", ok(h.skhd)),
+      string.format("borders %s", ok(h.borders)),
+      string.format("goku %s", ok(h.goku)),
+      string.format("karabiner %s", ok(h.karabiner)),
+      string.format("SA %s", ok(saAvail())),
+    }
+    return table.concat(st, "  •  ")
+  end
+  table.insert(items, { title = statusLine(), disabled = true })
+  table.insert(items, { title = "Run Health Checks", fn = function()
+    refreshHealth()
+    osd.show("Health: " .. statusLine(), { duration = 1.6 })
+  end })
+
   -- Always-available console shortcut at the end
   table.insert(items, { title = "-" })
   table.insert(items, {
@@ -241,8 +356,8 @@ function M.start()
   if not menubar then return end
   menubar:autosaveName("forge-menubar")
   
-  -- Set icon
-  local img = assetImage("forge-menu", {w=18,h=18}, true) -- Use template for main icon
+  -- Set icon (non-template to render as provided, e.g., pure white)
+  local img = assetImage("forge-menu", {w=18,h=18}, false)
   if not img then
     local fallback = hs.image.imageFromName("NSAdvanced")
                     or hs.image.imageFromName("NSPreferencesGeneral")
@@ -254,7 +369,7 @@ function M.start()
     end
   end
   if img then
-    menubar:setIcon(img, true)
+    menubar:setIcon(img)
   else
     menubar:setTitle("⚙︎")
   end
@@ -262,6 +377,13 @@ function M.start()
   
   -- Set static menu
   menubar:setMenu(buildMenu)
+
+  -- Start background refreshers
+  refreshStatus(); refreshHealth()
+  if timers.status then timers.status:stop() end
+  if timers.health then timers.health:stop() end
+  timers.status = hs.timer.doEvery(1.2, refreshStatus)
+  timers.health = hs.timer.doEvery(3.0, refreshHealth)
 
   -- Simple modifier key monitoring for Advanced menu
   if flagsWatcher then flagsWatcher:stop() end

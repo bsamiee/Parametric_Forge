@@ -29,6 +29,27 @@ local function onSpacesEvent()
             policy.applySpacePolicy(spaceId)
         end
     end
+    -- Update space overlay UI
+    local cfg = require("forge.config")
+    if cfg.ui and cfg.ui.spaceOverlay then
+        local sh = function(cmd) return shlib.sh(cmd) end
+        local js = sh("yabai -m query --spaces 2>/dev/null")
+        local label = nil
+        if js and js:match("^[%[{]") then
+            local ok, arr = pcall(hs.json.decode, js)
+            if ok and type(arr) == "table" then
+                for _, s in ipairs(arr) do
+                    if s["has-focus"] then
+                        label = string.format("Space: %s • %s", tostring(s.index or "?"), tostring(s.type or "?"))
+                        break
+                    end
+                end
+            end
+        end
+        if not label then label = "Space: ?" end
+        local osd = require("forge.osd")
+        osd.showPersistent("space-overlay", label)
+    end
 end
 
 local wf -- created on start only when needed

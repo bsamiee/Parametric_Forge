@@ -39,7 +39,6 @@ in
     casks = [
       # System & Core Tools
       "1password" # Password manager and secure vault
-      # "1password-cli" # Moved to nix packages (sysadmin.nix)
       "cleanshot" # Advanced screenshot and screen recording tool
       "docker-desktop" # Docker Desktop containerization - CRITICAL for deployment
       "dotnet-sdk" # .NET SDK (large, GUI tools)

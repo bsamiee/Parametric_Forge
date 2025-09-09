@@ -188,9 +188,7 @@ if "$YABAI_BIN" -m query --windows >/dev/null 2>&1; then
   else
     echo "yabai: skhd not running" >&2
   fi
-  if [ "$SA_LOADED" = true ]; then
-    "$YABAI_BIN" -m config window_opacity_duration 0.25
-  fi
+  # SA-dependent visuals already configured above; avoid redundant reapply here
   echo "yabai: ready"
 else
   echo "yabai: configuration validation failed" >&2

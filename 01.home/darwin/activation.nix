@@ -282,10 +282,10 @@
     # --- Karabiner Configuration Deployment --------------------------------
     karabinerDeployment = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
       echo "[Parametric Forge] Deploying Karabiner configuration files..."
-      
+
       # Ensure directory exists
       mkdir -p "$HOME/.config/karabiner"
-      
+
       SOURCE_JSON="${config.home.homeDirectory}/Documents/99.Github/Parametric_Forge/01.home/00.core/configs/apps/karabiner/karabiner.json"
       SOURCE_EDN="${config.home.homeDirectory}/Documents/99.Github/Parametric_Forge/01.home/00.core/configs/apps/karabiner/karabiner.edn"
       TARGET_JSON="$HOME/.config/karabiner/karabiner.json"
@@ -325,19 +325,19 @@
     # --- Hammerspoon init.lua Deployment -----------------------------------
     hammerspoonInitDeployment = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
       echo "[Parametric Forge] Deploying Hammerspoon init.lua..."
-      
+
       # Ensure directory exists
       HS_DIR="${config.home.homeDirectory}/.hammerspoon"
       mkdir -p "$HS_DIR"
-      
+
       # Deploy init.lua (writable copy)
       SOURCE_INIT="${config.home.homeDirectory}/Documents/99.Github/Parametric_Forge/01.home/00.core/configs/apps/hammerspoon/init.lua"
       TARGET_INIT="$HS_DIR/init.lua"
-      
+
       # Remove any existing files (no backups)
       rm -f "$TARGET_INIT"
       rm -f "$TARGET_INIT.backup"
-      
+
       # Copy with proper permissions
       if [ -f "$SOURCE_INIT" ]; then
         cp "$SOURCE_INIT" "$TARGET_INIT"
@@ -346,7 +346,7 @@
       else
         echo "  [WARN] Source init.lua not found: $SOURCE_INIT"
       fi
-      
+
       echo "[Parametric Forge] Hammerspoon init.lua deployment complete"
     '';
 
@@ -359,14 +359,12 @@
 
       mkdir -p "$HS_DIR/forge" "$HS_DIR/assets"
 
-      # Copy forge modules (overwrite with writable files)
-      for f in \
-        auto.lua config.lua events.lua executor.lua integration.lua \
-        leaders.lua menubar.lua osd.lua palette.lua policy.lua sh.lua state.lua; do
-        if [ -f "$SRC_BASE/forge/$f" ]; then
-          cp "$SRC_BASE/forge/$f" "$HS_DIR/forge/$f"
-          chmod 644 "$HS_DIR/forge/$f"
-        fi
+      # Copy forge modules (overwrite with writable files) — include all Lua modules
+      for src in "$SRC_BASE"/forge/*.lua; do
+        [ -f "$src" ] || continue
+        f="$(basename "$src")"
+        cp "$src" "$HS_DIR/forge/$f"
+        chmod 644 "$HS_DIR/forge/$f"
       done
 
       # Copy assets directory (images for menubar)
@@ -382,8 +380,6 @@
 
       echo "[Parametric Forge] Hammerspoon forge/assets deployment complete"
     '';
-
-    # (yabai/skhd/borders are managed by xdg.configFile in file-management.nix)
 
     # --- Karabiner assets (complex modifications) --------------------------
     karabinerAssetsDeployment = lib.hm.dag.entryAfter [ "karabinerDeployment" ] ''

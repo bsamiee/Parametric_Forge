@@ -98,4 +98,9 @@ M.appRules = {
     { app = "^Adobe Creative Cloud$", manage = false, subLayer = "below", gridAnchor = "center" },
 }
 
+-- UI options
+M.ui = {
+    spaceOverlay = true, -- show persistent space/layout overlay
+}
+
 return M

@@ -37,13 +37,13 @@
 [{:des  "LEADERS — Right-side physical keys → chords"
    :rules [
     ;; Right Command → Hyper (⌘⌥⌃⇧). We emit a left_shift with COT modifiers to get all four.
-    [:##right_command :!COTleft_shift]
+    [:##right_command [[:hs "forge/leader?name=hyper&down=1"] :!COTleft_shift] nil {:afterup [[:hs "forge/leader?name=hyper&down=0"]]}]
 
     ;; Right Option → Super (⌘⌥⌃)
-    [:##right_option :!CTleft_option]
+    [:##right_option [[:hs "forge/leader?name=super&down=1"] :!CTleft_option] nil {:afterup [[:hs "forge/leader?name=super&down=0"]]}]
 
     ;; Right Shift → Power (⌥⌃⇧)
-    [:##right_shift :!TSleft_option]
+    [:##right_shift [[:hs "forge/leader?name=power&down=1"] :!TSleft_option] nil {:afterup [[:hs "forge/leader?name=power&down=0"]]}]
    ]}
 
   ;; LAYERS — add layer-based rules under :simlayers and here as needed.

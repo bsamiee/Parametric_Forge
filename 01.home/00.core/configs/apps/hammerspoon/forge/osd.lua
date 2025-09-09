@@ -8,11 +8,15 @@
 
 local M = {}
 
+-- Disable persistent overlays globally (top-left pills). They are not used
+-- by our current config and have caused confusing status remnants.
+local PERSISTENT_ENABLED = false
+
 local defaultStyle = {
     bgColor = { black = 0, alpha = 0.75 },
     textColor = { white = 1, alpha = 1.0 },
-    -- Use Geist (from 00.system/fonts.nix geist-font)
-    font = { name = "Geist", size = 16 },
+    -- Use Geist Mono (from 00.system/fonts.nix geist-font)
+    font = { name = "Geist Mono", size = 16 },
     radius = 8,
     padding = 12,
 }
@@ -102,7 +106,11 @@ local function makePersistentCanvas(id, screen)
     local height = 30
     local margin = 10
     local x = frame.x + margin
+    -- stack space overlay at top, leaders just below it to avoid overlap
     local y = frame.y + margin
+    if type(id) == "string" and id:match("^leader_") then
+        y = y + height + 4
+    end
     local cvs = hs.canvas.new({ x = x, y = y, w = width, h = height }):level(hs.canvas.windowLevels.overlay)
     cvs:alpha(0.9)
     return cvs
@@ -123,7 +131,7 @@ local function applyPersistentCanvas(cvs, msg)
             text = msg,
             textColor = { white = 1, alpha = 1 },
             textSize = 13,
-            textFont = "Geist",
+            textFont = "Geist Mono",
             frame = { x = 8, y = 5, w = cvs:frame().w - 16, h = cvs:frame().h - 10 },
             textAlignment = "center",
         },
@@ -131,14 +139,16 @@ local function applyPersistentCanvas(cvs, msg)
 end
 
 function M.showPersistent(id, msg)
-    if not id then
+    if not PERSISTENT_ENABLED then
+        -- Fallback to a short transient notification instead of a sticky pill
+        M.show(msg or "", { duration = 0.9 })
         return
     end
+    if not id then return end
     local rec = persist[id]
     if rec and rec.cvs then
         applyPersistentCanvas(rec.cvs, msg)
-        rec.cvs:show()
-        rec.visible = true
+        rec.cvs:show(); rec.visible = true
         return
     end
     local scr = hs.screen.mainScreen()
@@ -149,18 +159,25 @@ function M.showPersistent(id, msg)
 end
 
 function M.hidePersistent(id)
+    if not PERSISTENT_ENABLED then return end
     local rec = id and persist[id]
-    if rec and rec.cvs then
-        rec.cvs:delete()
-    end
+    if rec and rec.cvs then rec.cvs:delete() end
     persist[id] = nil
 end
 
-function M.updatePersistent(id, msg)
-    local rec = id and persist[id]
-    if rec and rec.cvs then
-        applyPersistentCanvas(rec.cvs, msg)
+function M.hideAllPersistent()
+    for id, rec in pairs(persist) do
+        if rec and rec.cvs then
+            pcall(function() rec.cvs:delete() end)
+        end
+        persist[id] = nil
     end
+end
+
+function M.updatePersistent(id, msg)
+    if not PERSISTENT_ENABLED then return end
+    local rec = id and persist[id]
+    if rec and rec.cvs then applyPersistentCanvas(rec.cvs, msg) end
 end
 
 -- Convenience: Caffeine (display idle) status OSD

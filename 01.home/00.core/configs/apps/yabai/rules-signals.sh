@@ -18,6 +18,13 @@ set -eu
 # Coordination: Yabai handles performance-critical rules/signals, Hammerspoon handles complex policies.
 # Both systems work together via state files and events.
 
+# Write current space layout mode to a temp JSON that Hammerspoon watches
+"$YABAI_BIN" -m signal --remove write_layout_state >/dev/null 2>&1 || true
+"$YABAI_BIN" -m signal --add label=write_layout_state \
+    event=space_changed \
+    action="PATH='/opt/homebrew/bin:/usr/local/bin:/run/current-system/sw/bin:'\$PATH; mode=\$(yabai -m query --spaces --space | jq -r '.type'); printf '{\"mode\":\"%s\"}\n' \"\$mode\" > /tmp/yabai_state.json" \
+    || true
+
 # Arc performance optimization - add small delay to reduce polling loops
 "$YABAI_BIN" -m signal --add label=arc_performance_fix event=window_created app="^Arc$" action="sleep 0.1" || true
 
@@ -80,6 +87,7 @@ fi
 "$YABAI_BIN" -m rule --add app="^Karabiner-Elements$" manage=off sub-layer=below grid="$GRID_CENTER" || true
 "$YABAI_BIN" -m rule --add app="^QuickTime Player$" manage=off sub-layer=below grid="$GRID_CENTER" || true
 "$YABAI_BIN" -m rule --add app="^Preview$" manage=off sub-layer=below grid="$GRID_CENTER" || true
+"$YABAI_BIN" -m rule --add app="^CleanMyMac( X)?$" manage=off sub-layer=below || true
 "$YABAI_BIN" -m rule --add app="^1Password$" manage=off sub-layer=above sticky=on grid="$GRID_CENTER" || true
 "$YABAI_BIN" -m rule --add app="^Digital Colormeter$" manage=off sub-layer=below grid="$GRID_TOP_RIGHT_QUARTER" || true
 "$YABAI_BIN" -m rule --add app="^ColorSync Utility$" manage=off sub-layer=below grid="$GRID_CENTER" || true

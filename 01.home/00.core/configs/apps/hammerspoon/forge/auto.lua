@@ -49,6 +49,25 @@ local function reloadHammerspoon()
     hs.reload()
 end
 
+-- Goku (Karabiner EDN watcher) restart/start via Homebrew services
+local function restartGoku()
+    local function sh(cmd) return shlib.sh(cmd) end
+    -- Resolve brew path
+    local brew = sh("command -v brew 2>/dev/null | head -n1 | tr -d '\n'")
+    if not brew or #brew == 0 then
+        -- Common Homebrew locations
+        if hs.fs.attributes("/opt/homebrew/bin/brew") then brew = "/opt/homebrew/bin/brew"
+        elseif hs.fs.attributes("/usr/local/bin/brew") then brew = "/usr/local/bin/brew" end
+    end
+    if not brew or #brew == 0 then
+        osd.show("goku: brew not found", { duration = 1.2 })
+        return
+    end
+    -- Try restart, then start
+    sh(string.format("'%s' services restart goku >/dev/null 2>&1 || '%s' services start goku >/dev/null 2>&1 || true", brew, brew))
+    osd.show("goku (watcher) restarted", { duration = 1.0 })
+end
+
 -- Decide if HS should reload based on changed files (official pattern)
 local function shouldReloadHS(files)
     if not files or #files == 0 then
@@ -138,5 +157,6 @@ end
 M.restartYabai = restartYabai
 M.reloadSkhd = reloadSkhd
 M.reloadHammerspoon = reloadHammerspoon
+M.restartGoku = restartGoku
 
 return M
