@@ -233,7 +233,7 @@ in
       grant_tcc "$USER_TCC_DB" "kTCCServiceAccessibility" "$client" "$type"
     done
 
-    # Hammerspoon - automation and window management
+    # Hammerspoon - comprehensive automation and system control
     echo "  Configuring Hammerspoon permissions..." >&2
     HAMMERSPOON_PATHS=(
       "/Applications/Hammerspoon.app"
@@ -246,13 +246,30 @@ in
       client="org.hammerspoon.Hammerspoon"
       type=0
 
+      # Core automation permissions
       grant_tcc "$USER_TCC_DB" "kTCCServiceAccessibility" "$client" "$type"
       grant_tcc "$USER_TCC_DB" "kTCCServicePostEvent" "$client" "$type"
       grant_tcc "$USER_TCC_DB" "kTCCServiceListenEvent" "$client" "$type"
       grant_tcc "$USER_TCC_DB" "kTCCServiceSystemPolicyAllFiles" "$client" "$type"
+      
+      # AppleScript control for system automation
       grant_tcc "$USER_TCC_DB" "kTCCServiceAppleEvents" "$client" "$type" "com.apple.systemevents"
       grant_tcc "$USER_TCC_DB" "kTCCServiceAppleEvents" "$client" "$type" "com.apple.finder"
       grant_tcc "$USER_TCC_DB" "kTCCServiceAppleEvents" "$client" "$type" "com.apple.controlcenter"
+      
+      # Enhanced system permissions for advanced automation
+      grant_tcc "$USER_TCC_DB" "kTCCServiceScreenCapture" "$client" "$type"
+      grant_tcc "$USER_TCC_DB" "kTCCServiceSystemPolicyDesktopFolder" "$client" "$type"
+      grant_tcc "$USER_TCC_DB" "kTCCServiceSystemPolicyDocumentsFolder" "$client" "$type"
+      grant_tcc "$USER_TCC_DB" "kTCCServiceSystemPolicyDownloadsFolder" "$client" "$type"
+      
+      # Optional media permissions for rich automation scenarios
+      grant_tcc "$USER_TCC_DB" "kTCCServiceCamera" "$client" "$type"
+      grant_tcc "$USER_TCC_DB" "kTCCServiceMicrophone" "$client" "$type"
+      
+      # Network and location for context-aware automation
+      grant_tcc "$USER_TCC_DB" "kTCCServiceSystemPolicyNetworkVolumes" "$client" "$type"
+      grant_tcc "$USER_TCC_DB" "kTCCServiceLocation" "$client" "$type"
     done
 
     # Homebrew and development tools (enhanced for installation permissions)

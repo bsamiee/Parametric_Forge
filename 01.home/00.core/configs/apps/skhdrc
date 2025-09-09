@@ -85,6 +85,7 @@ shift + lalt - return : \
         "$HOME/.config/yabai/run-yabai.sh" -m config right_padding 4; \
         "$HOME/.config/yabai/run-yabai.sh" -m config window_gap 4; \
         "$HOME/.config/yabai/run-yabai.sh" -m config external_bar all:4:4; \
+        printf '{"gaps":%s}\n' 4 > /tmp/yabai_state.json; \
         open -g "hammerspoon://forge/osd?msg=Gaps%3A%204%20px&center=1&dur=0.9"; \
     else \
         "$HOME/.config/yabai/run-yabai.sh" -m config top_padding 0; \
@@ -93,6 +94,7 @@ shift + lalt - return : \
         "$HOME/.config/yabai/run-yabai.sh" -m config right_padding 0; \
         "$HOME/.config/yabai/run-yabai.sh" -m config window_gap 0; \
         "$HOME/.config/yabai/run-yabai.sh" -m config external_bar all:0:0; \
+        printf '{"gaps":%s}\n' 0 > /tmp/yabai_state.json; \
         open -g "hammerspoon://forge/osd?msg=Gaps%3A%200%20px&center=1&dur=0.9"; \
     fi
 shift + lalt - space : "$HOME/.config/yabai/grid-anchors.sh" center --float

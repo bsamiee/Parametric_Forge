@@ -71,8 +71,8 @@ local function onSpacesEvent()
         until true
         if not label then label = "Space: ?" end
         local osd = require("forge.osd")
-        -- Show as a transient centered notification instead of persistent overlay
-        osd.show(label, { duration = 0.9, centered = true })
+        -- Transient centered notification (osd defaults to centered=true)
+        osd.show(label, { duration = 0.9 })
     end
 end
 
@@ -128,9 +128,8 @@ function M.start()
     -- After wake
     M.caff = hs.caffeinate.watcher.new(function(event)
         if event == hs.caffeinate.watcher.systemDidWake then
-            -- Normalize spaces
+            -- Normalize spaces and ensure overlays are placed correctly after wake
             onSpacesEvent()
-            -- Ensure overlays are placed correctly after wake
             local osd = require("forge.osd")
             pcall(function() osd.repositionAll() end)
             -- Refresh SA availability and re-apply minor visuals (if applicable)

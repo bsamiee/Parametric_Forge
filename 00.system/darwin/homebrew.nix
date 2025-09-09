@@ -51,6 +51,7 @@ in
       "bettermouse" # Mouse enhancement utility
       "bettertouchtool" # Touch/gesture management # TODO: CONFIGURE
       "hazel" # File organization automation # TODO: CONFIGURE
+      "jordanbaird-ice" # Menu bar manager for macOS
       "raycast" # Launcher/productivity app # TODO: CONFIGURE
       "transnomino" # File renaming utility # TODO: CONFIGURE
 

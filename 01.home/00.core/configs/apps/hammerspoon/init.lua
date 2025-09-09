@@ -123,6 +123,9 @@ auto.start()
 
 require("forge.menubar").start()
 
+-- Minimal read-only Space indicator (compact [idx])
+require("forge.space_indicator").start()
+
 -- Start classic Caffeine-style menubar toggle (display idle prevention)
 require("forge.caffeine").start()
 

@@ -27,24 +27,15 @@ local function hsConfigDir()
 end
 local ASSETS_DIR = hsConfigDir() .. "/assets"
 
-local function assetImage(name, size, template)
+local function assetImage(name, size, useTemplate)
     local path = ASSETS_DIR .. "/" .. name .. ".png"
     local img = hs.fs.attributes(path) and hs.image.imageFromPath(path) or nil
-    if not img then
-        -- Fall back to system status icons sized for menu bar
-        local sys = hs.image.imageFromName(template and "NSStatusAvailable" or "NSStatusUnavailable")
-        img = sys
-    end
-    if img and size and img.setSize then
-        img = img:setSize(size)
-    end
-    if img and template then
-        if img.setTemplate then
+    if img then
+        if size and img.setSize then
+            img = img:setSize(size)
+        end
+        if useTemplate and img.setTemplate then
             img = img:setTemplate(true)
-        else
-            if img.template then
-                img:template(true)
-            end
         end
     end
     return img

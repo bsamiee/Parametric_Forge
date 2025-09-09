@@ -12,6 +12,7 @@ local shlib = require("forge.sh")
 local config = require("forge.config")
 local bus = require("forge.bus")
 
+
 local M = {}
 -- Resolve assets directory (standard Hammerspoon deploy).
 -- Canonical path: ~/.hammerspoon/assets (hs.configdir()/assets)
@@ -62,62 +63,23 @@ local function restartKarabiner()
     shlib.sh("sudo -n /bin/launchctl kickstart -k system/org.pqrs.karabiner.karabiner_grabber || true")
 end
 
--- Darwin rebuild with escalation; simplified flake detection
-local function findFlakeRoot()
-    local home = os.getenv("HOME") or "/tmp"
-    local flakeRoot = home .. "/Documents/99.Github/Parametric_Forge"
-    if hs.fs.attributes(flakeRoot .. "/flake.nix") then
-        return flakeRoot
-    end
-    return home
-end
-
-local function findDarwinRebuildPath()
-    -- Prefer stable profile paths that match sudoers entries
-    local candidates = {
-        "/run/current-system/sw/bin/darwin-rebuild",
-        "/nix/var/nix/profiles/default/bin/darwin-rebuild",
-        (os.getenv("HOME") or "") .. "/.nix-profile/bin/darwin-rebuild",
-    }
-    for _, p in ipairs(candidates) do
-        if p and #p > 0 and hs.fs.attributes(p) then
-            return p
-        end
-    end
-    local fromPath = shlib.sh("command -v darwin-rebuild 2>/dev/null | head -n1 | tr -d '\n'")
-    if fromPath and #fromPath > 0 and hs.fs.attributes(fromPath) then
-        return fromPath
-    end
-    return nil
-end
-
 local function darwinRebuild()
-    local flakeRoot = findFlakeRoot()
-    local drPath = findDarwinRebuildPath()
-    if not drPath then
-        osd.show("darwin-rebuild not found", { duration = 1.4 })
+    local flakeRoot = (os.getenv("HOME") or "") .. "/Documents/99.Github/Parametric_Forge"
+    if not hs.fs.attributes(flakeRoot .. "/flake.nix") then
+        osd.show("flake.nix not found", { duration = 1.4 })
         return
     end
-    local log = "/tmp/forge-darwin-rebuild.log"
+    
     osd.show("darwin-rebuild started…", { duration = 1.0 })
-    local cmd = string.format(
-        "cd %q && : > %q && sudo -n env NIX_CONFIG='experimental-features = nix-command flakes' %q switch --flake . > %q 2>&1",
-        flakeRoot,
-        log,
-        drPath,
-        log
-    )
-    local task = hs.task.new("/bin/sh", function(exitCode, _, _)
-        if exitCode == 0 then
-            osd.show("darwin-rebuild completed", { duration = 1.2 })
-        else
-            osd.show("darwin-rebuild failed (see /tmp/forge-darwin-rebuild.log)", { duration = 1.8 })
-        end
-    end, { "-lc", cmd })
-    if task then
-        task:start()
+    
+    -- Simple sudo approach - relies on sudoers configuration
+    local cmd = string.format("cd %q && sudo darwin-rebuild switch --flake .", flakeRoot)
+    local output, status = hs.execute(cmd, true)
+    
+    if status then
+        osd.show("darwin-rebuild completed", { duration = 1.2 })
     else
-        osd.show("Failed to start darwin-rebuild", { duration = 1.2 })
+        osd.show("darwin-rebuild failed", { duration = 1.8 })
     end
 end
 
@@ -127,7 +89,6 @@ end
 -- Forward declarations to avoid upvalue/global lookup issues
 local menubar -- hs.menubar instance (created in start())
 local buildMenu -- function value assigned below
-local unsub -- bus unsubscribe fn
 
 local function serviceIcon(service)
     return assetImage(string.format("%s-on", service), { w = 18, h = 18 }, false)
@@ -197,8 +158,23 @@ buildMenu = function()
         image = assetImage(lay == "bsp" and "layout-bsp" or "layout-stack", { w = 16, h = 16 }, false),
         fn = function()
             hs.timer.doAfter(0.01, function()
-                local next = (lay == "bsp") and "stack" or "bsp"
+                local current = state.layout
+                local next = (current == "bsp") and "stack" or "bsp"
                 shlib.sh("yabai -m space --layout " .. next)
+                -- write minimal state for other producers/consumers (align with skhd/yabai conventions)
+                pcall(function()
+                    shlib.sh("printf '{\"mode\":\"" .. next .. "\"}\\n' > /tmp/yabai_state.json")
+                end)
+                -- immediately update local state/UI (do not wait for yabai signal)
+                state.layout = next
+                local tip = string.format(
+                    "Layout: %s • Gaps: %s • Drop: %s • Opacity: %s",
+                    tostring(state.layout), tostring(state.gaps and 1 or 0), tostring(state.drop), tostring(state.opacity and "on" or "off")
+                )
+                menubar:setTooltip(tip)
+                menubar:setMenu(buildMenu)
+                -- broadcast to other modules
+                bus.emit("yabai-state", { mode = state.layout, gaps = state.gaps and 1 or 0, drop = state.drop, opacity = state.opacity and "on" or "off" })
                 osd.show("Layout: " .. (next == "bsp" and "BSP" or "Stack"), { duration = 0.8 })
             end)
         end,
@@ -209,8 +185,21 @@ buildMenu = function()
         image = assetImage(drop == "stack" and "drop-stack" or "drop-swap", { w = 16, h = 16 }, false),
         fn = function()
             hs.timer.doAfter(0.01, function()
-                local next = (drop == "swap") and "stack" or "swap"
+                local current = state.drop
+                local next = (current == "swap") and "stack" or "swap"
                 shlib.sh("yabai -m config mouse_drop_action " .. next)
+                -- write dedicated drop event file (integration watches yabai_drop.json)
+                pcall(function()
+                    shlib.sh("printf '{\"drop\":\"" .. next .. "\"}\\n' > /tmp/yabai_drop.json")
+                end)
+                state.drop = next
+                local tip = string.format(
+                    "Layout: %s • Gaps: %s • Drop: %s • Opacity: %s",
+                    tostring(state.layout), tostring(state.gaps and 1 or 0), tostring(state.drop), tostring(state.opacity and "on" or "off")
+                )
+                menubar:setTooltip(tip)
+                menubar:setMenu(buildMenu)
+                bus.emit("yabai-state", { mode = state.layout, gaps = state.gaps and 1 or 0, drop = state.drop, opacity = state.opacity and "on" or "off" })
                 osd.show("Drop: " .. (next == "stack" and "Stack" or "Swap"), { duration = 0.8 })
             end)
         end,
@@ -221,13 +210,29 @@ buildMenu = function()
         image = assetImage(gaps and "gaps-on" or "gaps-off", { w = 16, h = 16 }, false),
         fn = function()
             hs.timer.doAfter(0.01, function()
-                if gaps then
-                    shlib.sh("yabai -m config top_padding 0; yabai -m config bottom_padding 0; yabai -m config left_padding 0; yabai -m config right_padding 0; yabai -m config window_gap 0")
+                local current = state.gaps
+                if current then
+                    shlib.sh("yabai -m config top_padding 0; yabai -m config bottom_padding 0; yabai -m config left_padding 0; yabai -m config right_padding 0; yabai -m config window_gap 0; yabai -m config external_bar all:0:0")
+                    pcall(function()
+                        shlib.sh("printf '{\"gaps\":%s}\\n' 0 > /tmp/yabai_state.json")
+                    end)
+                    state.gaps = false
                     osd.show("Gaps: Off", { duration = 0.9 })
                 else
-                    shlib.sh("yabai -m config top_padding 4; yabai -m config bottom_padding 4; yabai -m config left_padding 4; yabai -m config right_padding 4; yabai -m config window_gap 4")
+                    shlib.sh("yabai -m config top_padding 4; yabai -m config bottom_padding 4; yabai -m config left_padding 4; yabai -m config right_padding 4; yabai -m config window_gap 4; yabai -m config external_bar all:4:4")
+                    pcall(function()
+                        shlib.sh("printf '{\"gaps\":%s}\\n' 4 > /tmp/yabai_state.json")
+                    end)
+                    state.gaps = true
                     osd.show("Gaps: On", { duration = 0.9 })
                 end
+                local tip = string.format(
+                    "Layout: %s • Gaps: %s • Drop: %s • Opacity: %s",
+                    tostring(state.layout), tostring(state.gaps and 1 or 0), tostring(state.drop), tostring(state.opacity and "on" or "off")
+                )
+                menubar:setTooltip(tip)
+                menubar:setMenu(buildMenu)
+                bus.emit("yabai-state", { mode = state.layout, gaps = state.gaps and 1 or 0, drop = state.drop, opacity = state.opacity and "on" or "off" })
             end)
         end,
     })
@@ -237,8 +242,19 @@ buildMenu = function()
         image = assetImage(opac and "opacity-on" or "opacity-off", { w = 16, h = 16 }, false),
         fn = function()
             hs.timer.doAfter(0.01, function()
-                local next = opac and "off" or "on"
+                local next = state.opacity and "off" or "on"
                 shlib.sh("yabai -m config window_opacity " .. next)
+                state.opacity = (next == "on")
+                pcall(function()
+                    shlib.sh("printf '{\"opacity\":\"" .. next .. "\"}\\n' > /tmp/yabai_state.json")
+                end)
+                local tip = string.format(
+                    "Layout: %s • Gaps: %s • Drop: %s • Opacity: %s",
+                    tostring(state.layout), tostring(state.gaps and 1 or 0), tostring(state.drop), tostring(state.opacity and "on" or "off")
+                )
+                menubar:setTooltip(tip)
+                menubar:setMenu(buildMenu)
+                bus.emit("yabai-state", { mode = state.layout, gaps = state.gaps and 1 or 0, drop = state.drop, opacity = state.opacity and "on" or "off" })
                 osd.show("Opacity: " .. (next == "on" and "On" or "Off"), { duration = 0.9 })
             end)
         end,
@@ -362,22 +378,25 @@ function M.start()
 
     -- No flagsChanged watcher
 
-    -- Subscribe to yabai state updates and invalidate cache
-    -- Prime state from last known file before any bus events
+    -- Seed initial state from file
     seedStateFromFile()
 
-    -- Subscribe to yabai state updates and update in-memory state
-    unsub = bus.on("yabai-state", function(st)
-        if not menubar or type(st) ~= "table" then return end
-        if st.mode then state.layout = st.mode end
-        if st.drop then state.drop = st.drop end
-        if st.gaps ~= nil then state.gaps = tonumber(st.gaps) and tonumber(st.gaps) > 0 end
-        if st.opacity then state.opacity = (st.opacity == "on") end
+    -- Subscribe to bus updates from integration.lua (single watcher source)
+    bus.on("yabai-state", function(data)
+        if type(data) ~= "table" then return end
+        if data.mode then state.layout = tostring(data.mode) end
+        if data.drop then state.drop = tostring(data.drop) end
+        if data.gaps ~= nil then
+            local g = tonumber(data.gaps)
+            if g ~= nil then state.gaps = g > 0 end
+        end
+        if data.opacity then state.opacity = (tostring(data.opacity) == "on") end
         local tip = string.format(
             "Layout: %s • Gaps: %s • Drop: %s • Opacity: %s",
-            tostring(st.mode or state.layout), tostring(st.gaps or (state.gaps and 1 or 0)), tostring(st.drop or state.drop), tostring(st.opacity or (state.opacity and "on" or "off"))
+            tostring(state.layout), tostring(state.gaps and 1 or 0), tostring(state.drop), tostring(state.opacity and "on" or "off")
         )
         menubar:setTooltip(tip)
+        menubar:setMenu(buildMenu)
     end)
 end
 
@@ -386,10 +405,6 @@ function M.stop()
     if menubar then
         menubar:delete()
         menubar = nil
-    end
-    if unsub then
-        pcall(unsub)
-        unsub = nil
     end
 end
 

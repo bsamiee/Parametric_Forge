@@ -16,19 +16,25 @@ local M = {}
 -- Config -------------------------------------------------------------------
 local CFG = {
   maxConcurrent = 3,        -- Max transient toasts at once
-  stackOffset   = 44,       -- Vertical offset for stacked toasts
-  margins       = { top = 0, left = 20 }, -- top 0 to align to yabai window top by default
   fadeIn        = 0.10,
-  fadeOut       = 0.15,
-  defaultMs     = 1200,
-  centerWidth   = 420,      -- Default width for centered overlays
-  height        = 40,       -- Default height for all overlays
-  font          = { name = "Geist Mono", size = 15 },
+  fadeOut       = 0.25,
+  defaultMs     = 2100,
+  minWidth      = 300,      -- Minimum width for dynamic sizing
+  maxWidth      = 600,      -- Maximum width for dynamic sizing
+  height        = 32,       -- Reduced height for refined appearance
+  topOffset     = 8,        -- y = frame.y + topOffset
+  -- Use Geist Mono Bold face explicitly. Common registered names include
+  -- "GeistMono-Bold" and "Geist Mono Bold"; we select the first, which matches
+  -- the installed OTF screenshot provided.
+  font          = { name = "GeistMono-Bold", size = 12 },
   colors = {
-    -- Dracula palette: bg #282a36, fg #f8f8f2, cyan #8be9fd
-    bg     = { red = 0x28/255, green = 0x2a/255, blue = 0x36/255, alpha = 0.88 },
-    text   = { red = 0xf8/255, green = 0xf8/255, blue = 0xf2/255, alpha = 0.80 },
-    border = { red = 0x8b/255, green = 0xe9/255, blue = 0xfd/255, alpha = 0.50 },
+    -- Dracula palette (official): bg #282a36, comment #6272a4, cyan #8be9fd
+    -- Background at 75% alpha per request
+    bg     = { red = 0x28/255, green = 0x2a/255, blue = 0x36/255, alpha = 0.75 },
+    -- Text color set to Dracula Magenta (aka Pink) #FF79C6
+    text   = { red = 0xFF/255, green = 0x79/255, blue = 0xC6/255, alpha = 1.00 },
+    -- Border color set to Dracula Comment #6272A4
+    border = { red = 0x62/255, green = 0x72/255, blue = 0xA4/255, alpha = 1.00 },
     shadow = { red = 0x00/255, green = 0x00/255, blue = 0x00/255, alpha = 0.40 },
   },
 }
@@ -36,32 +42,9 @@ local CFG = {
 -- State --------------------------------------------------------------------
 local queue = { urgent = {}, normal = {}, info = {} }
 local active = {}
-local persist = {}   -- id -> { canvas, centered }
-
--- Track yabai insets to align overlays with managed window top
-local yabaiInsets = {
-  topPadding = 4,      -- yabai -m config top_padding
-  externalTop = 4,     -- yabai external_bar top padding (we set 4 in yabairc)
-}
+local persist = {}   -- id -> { canvas }
 
 -- Utilities ----------------------------------------------------------------
-local function mainScreenFrames()
-  local s = hs.screen.mainScreen()
-  local f = s and s:frame() or hs.geometry.rect(0,0,1440,900)
-  local ff = s and s:fullFrame() or f
-  return f, ff
-end
-
-local function safeTopY(extraOffset)
-  local f, ff = mainScreenFrames()
-  -- Target alignment: window top used by yabai = frame.y + externalTop + topPadding
-  local base = f.y + (yabaiInsets.externalTop or 0) + (yabaiInsets.topPadding or 0)
-  local desired = base + (extraOffset or 0)
-  -- Safety: never above the physical top line (avoid drawing into notch)
-  local yMin = (ff.y or 0) + 1
-  return math.max(desired, yMin)
-end
-
 local function newCanvas(x, y, w, h)
   local c = hs.canvas.new({ x = x, y = y, w = w, h = h })
   c:level(hs.canvas.windowLevels.overlay)
@@ -70,29 +53,39 @@ local function newCanvas(x, y, w, h)
   return c
 end
 
-local function layoutCentered(w)
-  local f = select(1, mainScreenFrames())
+local function layoutCenteredTop(w)
+  local s = hs.screen.mainScreen()
+  local f = s and s:frame() or hs.geometry.rect(0,0,1440,900)
   local x = f.x + (f.w - w) / 2
-  local y = safeTopY(CFG.margins.top)
+  local y = f.y + CFG.topOffset
   return x, y
 end
 
-local function layoutStack(i, w)
-  local f = select(1, mainScreenFrames())
-  local x = f.x + CFG.margins.left
-  local y = safeTopY((CFG.margins.top or 0) + (i * CFG.stackOffset))
-  return x, y
+local function calculateOptimalWidth(message)
+  -- Use hs.drawing.getTextDrawingSize for robust text measurement
+  local txt = tostring(message or "")
+  local sz = hs.drawing.getTextDrawingSize(txt, { font = CFG.font.name, size = CFG.font.size }) or { w = CFG.minWidth }
+  local w = (sz and sz.w) or CFG.minWidth
+  return math.max(CFG.minWidth, math.min(CFG.maxWidth, w + 48))
+end
+
+-- Ensure consistent formatting for all OSD text without changing font or position
+local function formatMessage(message)
+  -- Always render as uppercase for improved readability
+  local txt = tostring(message or "")
+  -- Lua string.upper covers ASCII reliably; acceptable for our OSD usage
+  return string.upper(txt)
 end
 
 local function applyStyle(c, message, w, h)
-  local radius = 8
+  local radius = 12
   c:replaceElements({
     {
       type = "rectangle",
       action = "fill",
       roundedRectRadii = { xRadius = radius, yRadius = radius },
       fillColor = CFG.colors.bg,
-      shadow = { blurRadius = 8, color = CFG.colors.shadow, offset = { h = 2, w = 0 } },
+      shadow = { blurRadius = 32, color = CFG.colors.shadow, offset = { h = 2, w = 0 } },
     },
     {
       type = "rectangle",
@@ -107,7 +100,7 @@ local function applyStyle(c, message, w, h)
       textColor = CFG.colors.text,
       textSize = CFG.font.size,
       textFont = CFG.font.name,
-      frame = { x = 12, y = 5, w = w - 24, h = h - 10 },
+      frame = { x = 16, y = 6, w = w - 32, h = h - 12 },
       textAlignment = "center",
     },
   })
@@ -122,8 +115,7 @@ local function repositionPersistent(id)
   local p = persist[id]
   if not p or not p.canvas then return end
   local w, h = p.canvas:frame().w, p.canvas:frame().h
-  local x, y
-  if p.centered then x, y = layoutCentered(w) else x, y = layoutStack(0, w) end
+  local x, y = layoutCenteredTop(w)
   p.canvas:frame({ x = x, y = y, w = w, h = h })
 end
 
@@ -140,28 +132,20 @@ local function dismiss(n)
   for i, v in ipairs(active) do
     if v == n then table.remove(active, i) break end
   end
-  -- Reposition remaining stacked items
-  for i, v in ipairs(active) do
-    if v.canvas and not v.centered then
-      local w, h = v.canvas:frame().w, v.canvas:frame().h
-      local x, y = layoutStack(i-1, w)
-      v.canvas:frame({ x = x, y = y, w = w, h = h })
-    end
-  end
   -- Continue queue
   M._process()
 end
 
-local function showNow(message, ms, centered)
-  local idx = #active
-  local w = centered and CFG.centerWidth or 320
+local function showNow(message, ms)
+  local formatted = formatMessage(message)
+  local w = calculateOptimalWidth(formatted)
   local h = CFG.height
-  local x, y = centered and layoutCentered(w) or layoutStack(idx, w)
+  local x, y = layoutCenteredTop(w)
   local c = newCanvas(x, y, w, h)
-  applyStyle(c, message, w, h)
+  applyStyle(c, formatted, w, h)
   showCanvas(c)
 
-  local n = { canvas = c, centered = centered, timer = nil }
+  local n = { canvas = c, timer = nil }
   table.insert(active, n)
 
   n.timer = hs.timer.doAfter((ms or CFG.defaultMs)/1000, function() dismiss(n) end)
@@ -172,68 +156,55 @@ function M._process()
   for _, pri in ipairs({"urgent","normal","info"}) do
     if #queue[pri] > 0 then
       local it = table.remove(queue[pri], 1)
-      showNow(it.message, it.ms, it.centered)
+      showNow(it.message, it.ms)
       break
     end
   end
 end
 
-local function enqueue(message, pri, ms, centered)
+local function enqueue(message, pri, ms)
   if #active < CFG.maxConcurrent then
-    showNow(message, ms, centered)
+    showNow(message, ms)
   else
-    table.insert(queue[pri], { message = message, ms = ms, centered = centered })
+    table.insert(queue[pri], { message = message, ms = ms })
   end
 end
 
 -- Persistent Overlays ------------------------------------------------------
-local function ensurePersistent(id, message, centered, width)
+local function ensurePersistent(id, message, width)
   local p = persist[id]
-  local w = width or CFG.centerWidth
+  local formatted = formatMessage(message)
+  local w = width or calculateOptimalWidth(formatted)
   local h = CFG.height
   if p and p.canvas then
     -- Update content and reposition on every call to avoid stale positions
-    applyStyle(p.canvas, message, w, h)
-    p.centered = centered and true or false
+    applyStyle(p.canvas, formatted, w, h)
     repositionPersistent(id)
     return
   end
-  local x, y = centered and layoutCentered(w) or layoutStack(0, w)
+  local x, y = layoutCenteredTop(w)
   local c = newCanvas(x, y, w, h)
   -- Make persistent overlays visible across all Spaces by default
   if hs and hs.canvas and hs.canvas.windowBehaviors and hs.canvas.windowBehaviors.canJoinAllSpaces then
     c:behavior(hs.canvas.windowBehaviors.canJoinAllSpaces)
   end
-  applyStyle(c, message, w, h)
+  applyStyle(c, formatted, w, h)
   showCanvas(c)
-  persist[id] = { canvas = c, centered = centered and true or false }
+  persist[id] = { canvas = c }
 end
 
--- Subscribe to yabai-state bus to track top padding changes
-pcall(function()
-  local bus = require("forge.bus")
-  bus.on("yabai-state", function(st)
-    if type(st) ~= "table" then return end
-    if st.gaps ~= nil then
-      local n = tonumber(st.gaps)
-      if n then yabaiInsets.topPadding = n end
-    end
-    -- reposition any persistent overlays to reflect the new insets
-    for id, _ in pairs(persist) do repositionPersistent(id) end
-  end)
-end)
+-- Intentionally no external bus/watchers: compute position simply on show
 
 -- Public API ---------------------------------------------------------------
 function M.show(message, opts)
   opts = opts or {}
-  enqueue(message, opts.priority or "normal", opts.duration and (opts.duration*1000) or CFG.defaultMs, opts.centered == true)
+  enqueue(message, opts.priority or "normal", opts.duration and (opts.duration*1000) or CFG.defaultMs)
 end
 
 function M.showPersistent(id, message, opts)
   if not id then return end
   opts = opts or {}
-  local centered = (opts.centered ~= false) -- default true
-  ensurePersistent(id, message, centered, CFG.centerWidth)
+  ensurePersistent(id, message, opts.width)
 end
 
 function M.hidePersistent(id)
@@ -259,4 +230,3 @@ function M.notifyCaffeine(state)
 end
 
 return M
-
