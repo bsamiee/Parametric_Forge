@@ -8,10 +8,19 @@
 
 local M = {}
 
-M.PATH = "/opt/homebrew/bin:/usr/local/bin:/run/current-system/sw/bin:" .. os.getenv("PATH")
+-- Broaden PATH to include common Nix locations to support darwin-rebuild
+-- when run from privileged AppleScript without user shell profiles.
+M.PATH = table.concat({
+  "/opt/homebrew/bin",
+  "/usr/local/bin",
+  "/run/current-system/sw/bin",
+  "/nix/var/nix/profiles/default/bin",
+  os.getenv("PATH") or ""
+}, ":")
 
 function M.sh(cmd)
-  return hs.execute("/usr/bin/env PATH='" .. M.PATH .. "' sh -lc '" .. cmd .. "'", true)
+  -- Use sh -c instead of sh -lc to avoid loading profile/rc files that output env vars
+  return hs.execute("/usr/bin/env PATH='" .. M.PATH .. "' sh -c '" .. cmd .. "'", true)
 end
 
 function M.yabai(args)
@@ -25,7 +34,10 @@ end
 
 function M.isProcessRunning(name)
   local out = M.sh("pgrep -x '" .. name .. "' >/dev/null 2>&1; echo $?")
-  return out and out:match("^0") ~= nil
+  if not out then return false end
+  -- Trim whitespace and check if output equals "0"
+  local trimmed = out:gsub("^%s*(.-)%s*$", "%1")
+  return trimmed == "0"
 end
 
 function M.isSaAvailable()
@@ -34,4 +46,3 @@ function M.isSaAvailable()
 end
 
 return M
-

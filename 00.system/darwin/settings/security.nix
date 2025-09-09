@@ -54,6 +54,12 @@ in
         %admin ALL=(root) NOPASSWD: /bin/launchctl *
         %admin ALL=(root) NOPASSWD: /usr/bin/osascript *
 
+        # Allow darwin-rebuild without password (match absolute paths)
+        # SETENV allows passing NIX_CONFIG for flakes support from HS
+        %admin ALL=(root) NOPASSWD,SETENV: /run/current-system/sw/bin/darwin-rebuild *
+        %admin ALL=(root) NOPASSWD,SETENV: /nix/var/nix/profiles/default/bin/darwin-rebuild *
+        %admin ALL=(root) NOPASSWD,SETENV: /Users/*/.nix-profile/bin/darwin-rebuild *
+
         # yabai scripting addition (path-restricted, no hash dependency)
         %admin ALL=(root) NOPASSWD: /opt/homebrew/bin/yabai --load-sa
 
@@ -192,6 +198,7 @@ in
       "/opt/homebrew/bin/yabai"
       "/opt/homebrew/bin/skhd"
       "/opt/homebrew/bin/borders"
+      "/usr/local/bin/borders"
     )
 
     for tool in "''${WM_TOOLS[@]}"; do

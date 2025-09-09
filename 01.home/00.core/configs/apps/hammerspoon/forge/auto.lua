@@ -128,8 +128,10 @@ function M.start()
     addWatcher({ home .. "/.config/yazi/" }, "yazi", notifyYazi)
 
     log.i("forge.auto watchers started")
-    -- Optional: surface a one-time loaded notice similar to docs
-    hs.alert.show("Config loaded")
+    -- Optional: surface a one-time loaded notice when FORGE_DEBUG is set
+    if os.getenv("FORGE_DEBUG") == "1" then
+        hs.alert.show("Config loaded")
+    end
 end
 
 -- Export helpers for reuse (palette actions)

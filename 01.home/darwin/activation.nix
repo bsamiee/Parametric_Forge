@@ -132,6 +132,8 @@
       # State tracking for protected directories
       PROTECTED_STATE="${config.xdg.stateHome}/spotlight-protected"
       mkdir -p "$(dirname "$PROTECTED_STATE")"
+      : > "$PROTECTED_STATE" 2>/dev/null || true
+      PROTECTED_STATE_TMP="$(mktemp -t pf-spotlight-protected.XXXXXX)"
 
       # Function: Deploy triple-layer exclusion to directory with state tracking
       shield_directory() {
@@ -139,11 +141,13 @@
         local name="$(basename "$dir")"
 
         if [ -d "$dir" ]; then
-          local dir_mtime=$(stat -f "%m" "$dir" 2>/dev/null || echo "0")
+          local dir_mtime
+          dir_mtime=$(stat -f "%m" "$dir" 2>/dev/null || echo "0")
 
-          # Check if already protected and unchanged
+          # If unchanged, record state and signal skip via exit 2
           if grep -q "^$dir:$dir_mtime$" "$PROTECTED_STATE" 2>/dev/null; then
-            return 0  # Skip already protected directories
+            echo "$dir:$dir_mtime" >> "$PROTECTED_STATE_TMP"
+            return 2
           fi
 
           # Layer 1: Modern Spotlight exclusion (macOS 10.4+)
@@ -155,8 +159,8 @@
 
           echo "  [OK] Protected: $name"
 
-          # Mark as protected
-          echo "$dir:$dir_mtime" >> "$PROTECTED_STATE"
+          # Record updated state
+          echo "$dir:$dir_mtime" >> "$PROTECTED_STATE_TMP"
           return 0
         fi
         return 1
@@ -250,7 +254,14 @@
         -name "node_modules" \
       \) -print0 2>/dev/null)
 
-      # Summary with actual counts
+      # Write consolidated state (replaces previous, bounds growth)
+      if [ -s "$PROTECTED_STATE_TMP" ]; then
+        mv "$PROTECTED_STATE_TMP" "$PROTECTED_STATE"
+      else
+        rm -f "$PROTECTED_STATE_TMP"
+      fi
+
+      # Summary with actual counts (newly protected only)
       echo "  [SUMMARY] Protection deployed:"
       echo "    • Application Support directories: $APP_SUPPORT_PROTECTED"
       echo "    • Arc browser directories: $ARC_PROTECTED (searchpartyd fix)"
@@ -275,50 +286,39 @@
       # Ensure directory exists
       mkdir -p "$HOME/.config/karabiner"
       
-      # Deploy karabiner.json (writable copy)
       SOURCE_JSON="${config.home.homeDirectory}/Documents/99.Github/Parametric_Forge/01.home/00.core/configs/apps/karabiner/karabiner.json"
-      TARGET_JSON="$HOME/.config/karabiner/karabiner.json"
-      
-      # Remove any existing files (no backups)
-      rm -f "$TARGET_JSON"
-      rm -f "$TARGET_JSON.backup"
-      
-      # Copy with proper permissions
-      if [ -f "$SOURCE_JSON" ]; then
-        cp "$SOURCE_JSON" "$TARGET_JSON"
-        chmod 644 "$TARGET_JSON"
-        echo "  ✓ karabiner.json deployed with write permissions"
-      else
-        echo "  [WARN] Source karabiner.json not found: $SOURCE_JSON"
-      fi
-      
-      # Deploy karabiner.edn (writable copy)
       SOURCE_EDN="${config.home.homeDirectory}/Documents/99.Github/Parametric_Forge/01.home/00.core/configs/apps/karabiner/karabiner.edn"
+      TARGET_JSON="$HOME/.config/karabiner/karabiner.json"
       TARGET_EDN="$HOME/.config/karabiner/karabiner.edn"
-      
-      rm -f "$TARGET_EDN"
-      rm -f "$TARGET_EDN.backup"
-      
-      if [ -f "$SOURCE_EDN" ]; then
-        cp "$SOURCE_EDN" "$TARGET_EDN"
-        chmod 644 "$TARGET_EDN"
-        echo "  ✓ karabiner.edn deployed with write permissions"
-      else
-        echo "  [WARN] Source karabiner.edn not found: $SOURCE_EDN"
-      fi
-      
-      # Run goku compilation
+
       if command -v goku >/dev/null 2>&1; then
-        export GOKU_EDN_CONFIG_FILE="$TARGET_EDN"
-        if goku 2>/dev/null; then
-          echo "  ✓ Goku compilation successful"
+        # Prefer EDN + Goku as source-of-truth
+        rm -f "$TARGET_EDN" "$TARGET_EDN.backup"
+        if [ -f "$SOURCE_EDN" ]; then
+          cp "$SOURCE_EDN" "$TARGET_EDN"
+          chmod 644 "$TARGET_EDN"
+          echo "  ✓ karabiner.edn deployed with write permissions"
+          export GOKU_EDN_CONFIG_FILE="$TARGET_EDN"
+          if goku 2>/dev/null; then
+            echo "  ✓ Goku compilation successful"
+          else
+            echo "  [WARN] Goku compilation failed (may need manual intervention)"
+          fi
         else
-          echo "  [WARN] Goku compilation failed (may need manual intervention)"
+          echo "  [WARN] Source karabiner.edn not found: $SOURCE_EDN"
         fi
       else
-        echo "  [INFO] Goku not available - karabiner.json will need manual compilation"
+        # Fallback to static karabiner.json when Goku is unavailable
+        rm -f "$TARGET_JSON" "$TARGET_JSON.backup"
+        if [ -f "$SOURCE_JSON" ]; then
+          cp "$SOURCE_JSON" "$TARGET_JSON"
+          chmod 644 "$TARGET_JSON"
+          echo "  ✓ karabiner.json deployed with write permissions"
+        else
+          echo "  [WARN] Source karabiner.json not found: $SOURCE_JSON"
+        fi
       fi
-      
+
       echo "[Parametric Forge] Karabiner deployment complete"
     '';
 
@@ -327,11 +327,12 @@
       echo "[Parametric Forge] Deploying Hammerspoon init.lua..."
       
       # Ensure directory exists
-      mkdir -p "$HOME/.hammerspoon"
+      HS_DIR="${config.home.homeDirectory}/.hammerspoon"
+      mkdir -p "$HS_DIR"
       
       # Deploy init.lua (writable copy)
       SOURCE_INIT="${config.home.homeDirectory}/Documents/99.Github/Parametric_Forge/01.home/00.core/configs/apps/hammerspoon/init.lua"
-      TARGET_INIT="$HOME/.hammerspoon/init.lua"
+      TARGET_INIT="$HS_DIR/init.lua"
       
       # Remove any existing files (no backups)
       rm -f "$TARGET_INIT"
@@ -353,7 +354,7 @@
     hammerspoonForgeDeployment = lib.hm.dag.entryAfter [ "hammerspoonInitDeployment" ] ''
       echo "[Parametric Forge] Deploying Hammerspoon forge modules and assets..."
 
-      HS_DIR="$HOME/.hammerspoon"
+      HS_DIR="${config.home.homeDirectory}/.hammerspoon"
       SRC_BASE="${config.home.homeDirectory}/Documents/99.Github/Parametric_Forge/01.home/00.core/configs/apps/hammerspoon"
 
       mkdir -p "$HS_DIR/forge" "$HS_DIR/assets"
@@ -361,7 +362,7 @@
       # Copy forge modules (overwrite with writable files)
       for f in \
         auto.lua config.lua events.lua executor.lua integration.lua \
-        menubar.lua osd.lua palette.lua policy.lua sh.lua state.lua; do
+        leaders.lua menubar.lua osd.lua palette.lua policy.lua sh.lua state.lua; do
         if [ -f "$SRC_BASE/forge/$f" ]; then
           cp "$SRC_BASE/forge/$f" "$HS_DIR/forge/$f"
           chmod 644 "$HS_DIR/forge/$f"
@@ -370,7 +371,13 @@
 
       # Copy assets directory (images for menubar)
       if [ -d "$SRC_BASE/assets" ]; then
-        rsync -a --delete "$SRC_BASE/assets/" "$HS_DIR/assets/"
+        if command -v rsync >/dev/null 2>&1; then
+          rsync -a --delete "$SRC_BASE/assets/" "$HS_DIR/assets/"
+        else
+          # Fallback to cp -R if rsync is unavailable
+          rm -rf "$HS_DIR/assets"/*
+          cp -R "$SRC_BASE/assets/." "$HS_DIR/assets/"
+        fi
       fi
 
       echo "[Parametric Forge] Hammerspoon forge/assets deployment complete"
@@ -382,7 +389,7 @@
     karabinerAssetsDeployment = lib.hm.dag.entryAfter [ "karabinerDeployment" ] ''
       echo "[Parametric Forge] Deploying Karabiner complex modifications..."
       SRC_JSON="${config.home.homeDirectory}/Documents/99.Github/Parametric_Forge/01.home/00.core/configs/apps/karabiner/assets/complex_modifications/parametric-forge.json"
-      DEST_DIR="$XDG_CONFIG_HOME/karabiner/assets/complex_modifications"
+      DEST_DIR="${config.xdg.configHome}/karabiner/assets/complex_modifications"
       mkdir -p "$DEST_DIR"
       if [ -f "$SRC_JSON" ]; then
         cp "$SRC_JSON" "$DEST_DIR/parametric-forge.json"

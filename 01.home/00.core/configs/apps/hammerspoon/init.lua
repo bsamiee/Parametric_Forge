@@ -18,6 +18,14 @@ hs.hotkey.alertDuration = 0
 
 local log = hs.logger.new("forge", hs.logger.info)
 
+-- Ensure local modules are discoverable regardless of default package.path
+do
+  local cfgdir = (type(hs.configdir) == "function") and hs.configdir() or hs.configdir
+  if type(cfgdir) == "string" and #cfgdir > 0 then
+    package.path = string.format("%s/?.lua;%s/?/init.lua;%s", cfgdir, cfgdir, package.path)
+  end
+end
+
 -- Load helpers early
 local osd = require("forge.osd")
 local shlib = require("forge.sh")
@@ -70,24 +78,7 @@ end
 
 -- (Spaces watcher moved to forge.events; avoid duplicate watchers here)
 
--- --- Wake/launch resilience ------------------------------------------------
-local function afterWake()
-    -- Optional: re-check yabai running state, or refresh timers.
-    if yabaiIsRunning() then
-        -- Example: ensure consistent opacity duration
-        yabai("config window_opacity_duration 0.25")
-        -- Refresh SA availability in case Dock/Yabai changed
-        local exec = require("forge.executor")
-        exec.refreshSa()
-    end
-end
-
-local cw = hs.caffeinate.watcher.new(function(event)
-    if event == hs.caffeinate.watcher.systemDidWake then
-        afterWake()
-    end
-end)
-cw:start()
+-- Wake handling consolidated in forge.events to avoid duplicate watchers
 
 -- --- Public module-like exports (for future use) ---------------------------
 mods = {
@@ -125,7 +116,19 @@ events.start()
 -- Start auto-reload watchers for configs (yabai/skhd/hammerspoon/yazi)
 auto.start()
 
--- Start system menubar (status + ops)
 require("forge.menubar").start()
+
+-- Start classic Caffeine-style menubar toggle (display idle prevention)
+do
+  local ok, caffeine = pcall(require, "forge.caffeine")
+  if ok and caffeine and type(caffeine.start) == "function" then
+    caffeine.start()
+  else
+    log.w("forge.caffeine not available; skipping Caffeine menubar")
+  end
+end
+
+-- Start leader key OSD notifications
+require("forge.leaders").start()
 
 log.i("Hammerspoon ready (policy active; leaders via Karabiner)")

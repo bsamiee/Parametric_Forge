@@ -15,21 +15,8 @@ set -eu
 : "${GRID_CENTER:=6:6:1:1:4:4}"
 : "${GRID_BOTTOM_BAND:=2:6:1:1:4:1}"
 
-# Locate padding-aware grid helper (CLI mode)
-GRID_SCRIPT=""
-_THIS_DIR="$(dirname "$0" 2>/dev/null || printf .)"
-_XDG_CFG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/yabai"
-for _cand in \
-  "$_THIS_DIR/grid-anchors.sh" \
-  "$_XDG_CFG_DIR/grid-anchors.sh"; do
-  if [ -x "$_cand" ]; then GRID_SCRIPT="$_cand"; break; fi
-done
-
 # Coordination: Yabai handles performance-critical rules/signals, Hammerspoon handles complex policies.
 # Both systems work together via state files and events.
-
-# --- signals ---------------------------------------------------------------
-# Keep signals lean; no /tmp JSON output (SketchyBar removed; no consumer).
 
 # Arc performance optimization - add small delay to reduce polling loops
 "$YABAI_BIN" -m signal --add label=arc_performance_fix event=window_created app="^Arc$" action="sleep 0.1" || true
@@ -98,6 +85,11 @@ fi
 "$YABAI_BIN" -m rule --add app="^ColorSync Utility$" manage=off sub-layer=below grid="$GRID_CENTER" || true
 "$YABAI_BIN" -m rule --add app="^Font File Browser$" manage=off sub-layer=below grid="$GRID_CENTER" || true
 
+# Cloud Storage Clients (float/unmanaged)
+"$YABAI_BIN" -m rule --add app="^Google Drive$" manage=off sub-layer=below grid="$GRID_CENTER" || true
+"$YABAI_BIN" -m rule --add app="^OneDrive$" manage=off sub-layer=below grid="$GRID_CENTER" || true
+"$YABAI_BIN" -m rule --add app="^MEGAsync$" manage=off sub-layer=below grid="$GRID_CENTER" || true
+
 # Browsers - Arc requires comprehensive exclusion to prevent CPU performance loops
 "$YABAI_BIN" -m rule --add label=arc_unmanaged app="^Arc$" manage=off || true
 "$YABAI_BIN" -m rule --add label=arc_little app="^Arc$" title="^Little Arc$" manage=off sticky=on sub-layer=above || true
@@ -121,16 +113,6 @@ fi
 "$YABAI_BIN" -m rule --add app="^FaceTime$" manage=off sub-layer=below grid="$GRID_RIGHT_THIRD" || true
 "$YABAI_BIN" -m rule --add app="^zoom.us$" manage=off sub-layer=below grid="$GRID_CENTER" || true
 "$YABAI_BIN" -m rule --add app="^Spotify$" manage=off sub-layer=below grid="$GRID_BOTTOM_BAND" || true
-
-# Post-adjust Spotify to respect per-space padding for bottom placement.
-# This resolves the visual mismatch where floats placed via --grid hug the
-# visible screen bottom instead of the managed work area bottom.
-if [ -n "$GRID_SCRIPT" ]; then
-  "$YABAI_BIN" -m signal --remove spotify_pad_fix >/dev/null 2>&1 || true
-  "$YABAI_BIN" -m signal --add label=spotify_pad_fix \
-    event=window_created app="^Spotify$" \
-    action="PATH='/opt/homebrew/bin:/usr/local/bin:/run/current-system/sw/bin:'\$PATH '$GRID_SCRIPT' bottom --float --window \$YABAI_WINDOW_ID" || true
-fi
 
 # Creative & Design
 "$YABAI_BIN" -m rule --add app="^Blender$" manage=off sub-layer=below || true

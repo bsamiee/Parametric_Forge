@@ -7,6 +7,9 @@
 -- Window/space/screen/wake event subscriptions and handlers
 
 local policy = require("forge.policy")
+local config = require("forge.config")
+local exec = require("forge.executor")
+local shlib = require("forge.sh")
 
 local M = {}
 local log = hs.logger.new("forge.events", hs.logger.info)
@@ -28,9 +31,7 @@ local function onSpacesEvent()
     end
 end
 
--- Window filter ------------------------------------------------------------
-local wf = hs.window.filter.new()
-wf:setDefaultFilter({ visible = true })
+local wf -- created on start only when needed
 
 local function handleCreated(win)
     policy.applyWindowPolicy(win)
@@ -53,13 +54,17 @@ local function handleUnminimized(win)
 end
 
 function M.start()
-    -- Windows
-    -- Use literal event names for broader compatibility across HS versions
-    wf:subscribe("windowCreated", handleCreated)
-    -- windowMoved also covers resize events in hs.window.filter
-    wf:subscribe("windowMoved", handleMoved)
-    wf:subscribe("windowTitleChanged", handleTitleChanged)
-    wf:subscribe("windowUnminimized", handleUnminimized)
+    -- Windows: only subscribe if HS is enforcing float policy
+    if config.enforceFloatInHS then
+        wf = hs.window.filter.new()
+        wf:setDefaultFilter({ visible = true })
+        -- Use literal event names for broader compatibility across HS versions
+        wf:subscribe("windowCreated", handleCreated)
+        -- windowMoved also covers resize events in hs.window.filter
+        wf:subscribe("windowMoved", handleMoved)
+        wf:subscribe("windowTitleChanged", handleTitleChanged)
+        wf:subscribe("windowUnminimized", handleUnminimized)
+    end
 
     -- Spaces (only if available in this Hammerspoon build)
     if hs.spaces and hs.spaces.watcher and hs.spaces.watcher.new then
@@ -76,7 +81,13 @@ function M.start()
     -- After wake
     M.caff = hs.caffeinate.watcher.new(function(event)
         if event == hs.caffeinate.watcher.systemDidWake then
+            -- Normalize spaces
             onSpacesEvent()
+            -- Refresh SA availability and re-apply minor visuals (if applicable)
+            exec.refreshSa()
+            if shlib.isProcessRunning("yabai") and exec.sa.available then
+                shlib.sh("yabai -m config window_opacity_duration 0.25")
+            end
         end
     end)
     M.caff:start()

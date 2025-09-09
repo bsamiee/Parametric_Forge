@@ -11,8 +11,8 @@ local M = {}
 local defaultStyle = {
     bgColor = { black = 0, alpha = 0.75 },
     textColor = { white = 1, alpha = 1.0 },
-    -- Use a ubiquitous system font to avoid missing-font errors
-    font = { name = "Helvetica", size = 16 },
+    -- Use Geist (from 00.system/fonts.nix geist-font)
+    font = { name = "Geist", size = 16 },
     radius = 8,
     padding = 12,
 }
@@ -123,7 +123,7 @@ local function applyPersistentCanvas(cvs, msg)
             text = msg,
             textColor = { white = 1, alpha = 1 },
             textSize = 13,
-            textFont = "Helvetica",
+            textFont = "Geist",
             frame = { x = 8, y = 5, w = cvs:frame().w - 16, h = cvs:frame().h - 10 },
             textAlignment = "center",
         },
@@ -161,6 +161,17 @@ function M.updatePersistent(id, msg)
     if rec and rec.cvs then
         applyPersistentCanvas(rec.cvs, msg)
     end
+end
+
+-- Convenience: Caffeine (display idle) status OSD
+function M.notifyCaffeine(state)
+    local msg
+    if state then
+        msg = "Caffeine: Enabled (display stays awake)"
+    else
+        msg = "Caffeine: Disabled (normal sleep)"
+    end
+    M.show(msg, { duration = 0.9 })
 end
 
 return M

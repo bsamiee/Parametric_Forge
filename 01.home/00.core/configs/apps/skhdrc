@@ -125,10 +125,10 @@ cmd + ctrl + alt + shift - left  : "$HOME/.config/yabai/run-yabai.sh" -m window 
 cmd + ctrl + alt + shift - right : "$HOME/.config/yabai/run-yabai.sh" -m window --swap east
 cmd + ctrl + alt + shift - down  : "$HOME/.config/yabai/run-yabai.sh" -m window --swap south
 cmd + ctrl + alt + shift - up    : "$HOME/.config/yabai/run-yabai.sh" -m window --swap north
-cmd + ctrl + alt + shift - h : "$HOME/.config/yabai/run-yabai.sh" -m window --resize left:-50:0 || "$HOME/.config/yabai/run-yabai.sh" -m window --resize right:-50:0
-cmd + ctrl + alt + shift - l : "$HOME/.config/yabai/run-yabai.sh" -m window --resize right:50:0 || "$HOME/.config/yabai/run-yabai.sh" -m window --resize left:50:0
-cmd + ctrl + alt + shift - j : "$HOME/.config/yabai/run-yabai.sh" -m window --resize bottom:0:50 || "$HOME/.config/yabai/run-yabai.sh" -m window --resize top:0:50
-cmd + ctrl + alt + shift - k : "$HOME/.config/yabai/run-yabai.sh" -m window --resize top:0:-50 || "$HOME/.config/yabai/run-yabai.sh" -m window --resize bottom:0:-50
+cmd + ctrl + alt + shift - h : -r "$HOME/.config/yabai/run-yabai.sh" -m window --resize left:-50:0 || "$HOME/.config/yabai/run-yabai.sh" -m window --resize right:-50:0
+cmd + ctrl + alt + shift - l : -r "$HOME/.config/yabai/run-yabai.sh" -m window --resize right:50:0 || "$HOME/.config/yabai/run-yabai.sh" -m window --resize left:50:0
+cmd + ctrl + alt + shift - j : -r "$HOME/.config/yabai/run-yabai.sh" -m window --resize bottom:0:50 || "$HOME/.config/yabai/run-yabai.sh" -m window --resize top:0:50
+cmd + ctrl + alt + shift - k : -r "$HOME/.config/yabai/run-yabai.sh" -m window --resize top:0:-50 || "$HOME/.config/yabai/run-yabai.sh" -m window --resize bottom:0:-50
 
 # Display management (Hyper)
 cmd + ctrl + alt + shift - s : "$HOME/.config/yabai/run-yabai.sh" -m window --display west; "$HOME/.config/yabai/run-yabai.sh" -m display --focus west

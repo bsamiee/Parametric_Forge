@@ -119,48 +119,65 @@ end
 
 -- Watch for yabai state changes and coordinate with Hammerspoon
 function M.watchYabaiState()
-    -- Ensure /tmp directory exists and is accessible
-    if not hs.fs.attributes("/tmp") then
-        log.w("Unable to access /tmp directory for yabai state watching")
+    -- Observe yabai state files in the system temp dir, but keep the callback
+    -- extremely selective and debounced to avoid unnecessary work.
+    local tmpdir = os.getenv("TMPDIR") or "/tmp/"
+    if not tmpdir:match("/$") then tmpdir = tmpdir .. "/" end
+    if not hs.fs.attributes(tmpdir) then
+        log.w("Unable to access temp directory for yabai state watching: " .. tostring(tmpdir))
         return
     end
-    
-    local stateWatcher = hs.pathwatcher.new("/tmp/", function(files, flagTables)
-        for i, file in ipairs(files) do
-            if file:match("yabai_.*%.json$") then
-                log.d("yabai state change detected: " .. file)
-                -- Surface actionable OSD for known state files
-                if file:match("yabai_drop%.json$") then
-                    local f = io.open(file, "r")
-                    local txt = f and f:read("*a") or nil
-                    if f then f:close() end
-                    if txt and (#txt > 0) and (txt:find("^{") or txt:find("^%[")) then
-                        local ok, data = pcall(hs.json.decode, txt)
-                        if ok and data and data.drop then
-                            local msg = (data.drop == "stack") and "Drop: Stack" or "Drop: Swap"
-                            if msg then
-                                local osd = require("forge.osd")
-                                osd.show(msg, { duration = 1.0 })
-                            end
-                        end
-                    end
-                elseif file:match("yabai_state%.json$") then
-                    local f2 = io.open(file, "r")
-                    local txt2 = f2 and f2:read("*a") or nil
-                    if f2 then f2:close() end
-                    if txt2 and (#txt2 > 0) and (txt2:find("^{") or txt2:find("^%[")) then
-                        local ok2, data = pcall(hs.json.decode, txt2)
-                        if ok2 and data and data.mode then
-                            local osd = require("forge.osd")
-                            osd.show("Layout: " .. tostring(data.mode), { duration = 1.0 })
-                        end
-                    end
-                end
+
+    local osd = require("forge.osd")
+    local debounce = {}
+    local function coalesce(path, fn)
+        -- Coalesce rapid successive updates per path within 120ms
+        if debounce[path] then debounce[path]:stop() end
+        debounce[path] = hs.timer.doAfter(0.12, function()
+            pcall(fn)
+        end)
+    end
+
+    local function handleDrop(file)
+        local f = io.open(file, "r")
+        local txt = f and f:read("*a") or nil
+        if f then f:close() end
+        if not txt or #txt == 0 then return end
+        if not (txt:find("^{") or txt:find("^%[")) then return end
+        local ok, data = pcall(hs.json.decode, txt)
+        if ok and data and data.drop then
+            local msg = (data.drop == "stack") and "Drop: Stack" or (data.drop == "swap" and "Drop: Swap" or nil)
+            if msg then osd.show(msg, { duration = 1.0 }) end
+        end
+    end
+
+    local function handleState(file)
+        local f = io.open(file, "r")
+        local txt = f and f:read("*a") or nil
+        if f then f:close() end
+        if not txt or #txt == 0 then return end
+        if not (txt:find("^{") or txt:find("^%[")) then return end
+        local ok, data = pcall(hs.json.decode, txt)
+        if ok and data and data.mode then
+            osd.show("Layout: " .. tostring(data.mode), { duration = 1.0 })
+        end
+    end
+
+    local watcher = hs.pathwatcher.new(tmpdir, function(files, _)
+        -- Fast path exit when yabai is not running
+        if not shlib.isProcessRunning("yabai") then return end
+        for _, file in ipairs(files) do
+            local name = file:match("([^/]+)$") or file
+            -- React only to known yabai files
+            if name == "yabai_drop.json" then
+                coalesce(file, function() handleDrop(file) end)
+            elseif name == "yabai_state.json" then
+                coalesce(file, function() handleState(file) end)
             end
         end
     end)
-    stateWatcher:start()
-    log.d("yabai state watcher started")
+    watcher:start()
+    log.d("yabai state watcher started at: " .. tmpdir)
 end
 
 return M

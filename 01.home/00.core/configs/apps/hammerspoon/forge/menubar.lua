@@ -25,21 +25,23 @@ end
 local ASSETS_DIR = hsConfigDir() .. "/assets"
 
 local imageCache = {}
-local function assetImage(name, size)
-  local key = name .. (size and (":" .. tostring(size.w) .. "x" .. tostring(size.h)) or "")
+local function assetImage(name, size, useTemplate)
+  local key = name .. (size and (":" .. tostring(size.w) .. "x" .. tostring(size.h)) or "") .. (useTemplate and ":template" or "")
   if imageCache[key] then return imageCache[key] end
   local img
   local pathPng = ASSETS_DIR .. "/" .. name .. ".png"
   if hs.fs.attributes(pathPng) then img = hs.image.imageFromPath(pathPng) end
   if img then
-    -- ensure size and template are applied; setSize/template often return the image
     if size then
       if img.setSize then img = img:setSize(size) end
     end
-    if img.setTemplate then
-      img = img:setTemplate(true)
-    elseif img.template then
-      img:template(true)
+    -- Only use template mode for the main menubar icon, not service status icons
+    if useTemplate then
+      if img.setTemplate then
+        img = img:setTemplate(true)
+      elseif img.template then
+        img:template(true)
+      end
     end
     imageCache[key] = img
   end
@@ -49,21 +51,15 @@ end
 -- Note: removed old emoji status indicator 'green()' in favor of
 -- template service icons and native on/off checkmarks.
 
--- Generic brew-services status (falls back to pgrep if not present)
-local function isProcRunning(name)
-  return shlib.isProcessRunning(name)
-end
-
--- Note: no Homebrew dependency or async shell helper required
+-- Simple service management - no status polling needed
 
 -- Karabiner restart via launchctl kickstart (admin)
 local function restartKarabiner()
-  local script = [[
-    do shell script "launchctl kickstart -k gui/$UID org.pqrs.karabiner.karabiner_console_user_server; \
-                     launchctl kickstart -k system/org.pqrs.karabiner.karabiner_grabber" with administrator privileges
-  ]]
-  -- Run asynchronous to avoid blocking the UI
-  hs.task.new("/usr/bin/osascript", function() end, {"-e", script}):start()
+  -- Restart console user server without sudo (GUI domain)
+  shlib.sh("/bin/launchctl kickstart -k gui/$UID org.pqrs.karabiner.karabiner_console_user_server || true")
+  -- Restart system grabber with passwordless sudo (requires sudoers rule)
+  -- If not permitted, this will fail silently due to -n and || true
+  shlib.sh("sudo -n /bin/launchctl kickstart -k system/org.pqrs.karabiner.karabiner_grabber || true")
 end
 
 -- Darwin rebuild with escalation; simplified flake detection
@@ -76,23 +72,47 @@ local function findFlakeRoot()
   return home
 end
 
+local function findDarwinRebuildPath()
+  -- Prefer stable profile paths that match sudoers entries
+  local candidates = {
+    "/run/current-system/sw/bin/darwin-rebuild",
+    "/nix/var/nix/profiles/default/bin/darwin-rebuild",
+    (os.getenv("HOME") or "") .. "/.nix-profile/bin/darwin-rebuild",
+  }
+  for _, p in ipairs(candidates) do
+    if p and #p > 0 and hs.fs.attributes(p) then return p end
+  end
+  local fromPath = shlib.sh("command -v darwin-rebuild 2>/dev/null | head -n1 | tr -d '\n'")
+  if fromPath and #fromPath > 0 and hs.fs.attributes(fromPath) then
+    return fromPath
+  end
+  return nil
+end
+
 local function darwinRebuild()
   local flakeRoot = findFlakeRoot()
   osd.show("darwin-rebuild started…", { duration = 1.0 })
-  local escPATH = (shlib.PATH or os.getenv("PATH")):gsub("'", "'\\''")
-  local script = string.format([[do shell script "cd '%s' && /usr/bin/env PATH='%s' darwin-rebuild switch --flake ." with administrator privileges]], flakeRoot, escPATH)
-  hs.task.new("/usr/bin/osascript", function(exitCode)
-    if exitCode == 0 then
-      osd.show("darwin-rebuild completed", { duration = 1.2 })
-    else
-      osd.show("darwin-rebuild failed", { duration = 1.5 })
-    end
-  end, {"-e", script}):start()
+  local drPath = findDarwinRebuildPath()
+  if not drPath then
+    osd.show("darwin-rebuild not found", { duration = 1.4 })
+    return
+  end
+  local log = "/tmp/forge-darwin-rebuild.log"
+  -- Run without AppleScript. Use passwordless sudo (-n). Log stdout+stderr.
+  local cmd = string.format(
+    "cd '%s' && : > '%s' && sudo -n env NIX_CONFIG='experimental-features = nix-command flakes' '%s' switch --flake . > '%s' 2>&1; rc=$?; printf '%s' $rc",
+    flakeRoot, log, drPath, log, "%s"
+  )
+  local rc = shlib.sh(cmd)
+  rc = (rc or ""):gsub("%s+$", "")
+  if rc == "0" then
+    osd.show("darwin-rebuild completed", { duration = 1.2 })
+  else
+    osd.show("darwin-rebuild failed (see /tmp/forge-darwin-rebuild.log)", { duration = 1.8 })
+  end
 end
 
--- Build dynamic menu -----------------------------------------------
--- track transient restarting states per service for icon presentation
-local restarting = {}
+-- Build static menu -----------------------------------------------
 local flagsWatcher
 
 local function isOptionDown()
@@ -104,88 +124,97 @@ end
 local menubar -- hs.menubar instance (created in start())
 local buildMenu -- function value assigned below
 
-local function serviceIcon(service, status)
-  -- names: <service>-on/off/restarting
-  local img = assetImage(string.format("%s-%s", service, status), { w = 18, h = 18 })
+local function serviceIcon(service)
+  -- Always use the "on" icon - simple and consistent
+  local img = assetImage(string.format("%s-on", service), { w = 18, h = 18 }, false)
   return img
 end
 
-local function serviceItem(title, serviceKey, running, onClick)
-  local status = restarting[serviceKey] and "restarting" or (running and "on" or "off")
-  local img = serviceIcon(serviceKey, status)
+-- Simple launcher by bundle identifier (no fallbacks)
+local function openBundle(bundleID)
+  hs.application.launchOrFocusByBundleID(bundleID)
+end
+
+-- For apps whose bundle ID varies across versions, prefer LaunchServices by name
+local function openApp(name)
+  hs.execute(string.format("/usr/bin/open -a %q", name), true)
+end
+
+local function serviceItem(title, serviceKey, onClick)
+  local img = serviceIcon(serviceKey)
   local item = {
     title = title,
-    -- Use icons only (checked marks hide images in some setups)
     image = img,
-    fn = function()
-      -- show restarting while action runs
-      restarting[serviceKey] = true
-      -- Rebind menu using our function value (not global) to refresh icons/states
-      if menubar and buildMenu then menubar:setMenu(buildMenu) end
-      onClick(function()
-        restarting[serviceKey] = false
-        if menubar and buildMenu then
-          hs.timer.doAfter(0.2, function() menubar:setMenu(buildMenu) end)
-        end
-      end)
-    end,
+    fn = onClick
   }
   return item
 end
 
+-- Simple static menu builder
 function buildMenu()
   local items = {}
-  table.insert(items, { title = "Darwin Rebuild…", image = assetImage("forge-rebuild", {w=18,h=18}), fn = darwinRebuild })
+  table.insert(items, { title = "Darwin Rebuild…", image = assetImage("forge-rebuild", {w=18,h=18}, false), fn = darwinRebuild })
   table.insert(items, { title = "-" })
   table.insert(items, { title = "Services", disabled = true })
 
   -- yabai
-  local yabaiUp = isProcRunning("yabai")
-  table.insert(items, serviceItem("yabai", "yabai", yabaiUp, function(done)
-    hs.timer.doAfter(0.05, function()
-      auto.restartYabai()
-      if done then done() end
-    end)
+  table.insert(items, serviceItem("yabai", "yabai", function()
+    auto.restartYabai()
+    osd.show("Restarted: yabai", { duration = 0.9 })
   end))
 
   -- skhd
-  local skhdUp = isProcRunning("skhd")
-  table.insert(items, serviceItem("skhd", "skhd", skhdUp, function(done)
-    hs.timer.doAfter(0.05, function()
-      auto.reloadSkhd()
-      if done then done() end
-    end)
+  table.insert(items, serviceItem("skhd", "skhd", function()
+    auto.reloadSkhd()
+    osd.show("Restarted: skhd", { duration = 0.9 })
   end))
 
   -- JankyBorders (borders)
-  local bordersUp = shlib.isProcessRunning("borders")
-  table.insert(items, serviceItem("jankyborders", "jankyborders", bordersUp, function(done)
-    hs.timer.doAfter(0.05, function()
-      integ.ensureBorders({ forceRestart = true })
-      osd.show("Restarted: jankyborders", { duration = 0.9 })
-      if done then done() end
-    end)
+  table.insert(items, serviceItem("jankyborders", "jankyborders", function()
+    integ.ensureBorders({ forceRestart = true })
+    osd.show("Restarted: jankyborders", { duration = 0.9 })
   end))
 
-  -- Hammerspoon (reload config)
+  -- Karabiner-Elements
+  table.insert(items, serviceItem("karabiner-elements", "karabiner", function()
+    restartKarabiner()
+    osd.show("Restarted: Karabiner", { duration = 0.9 })
+  end))
+  -- Karabiner convenience actions (open settings and EventViewer like the menubar)
   table.insert(items, {
-    title = "hammerspoon (reload)",
-    image = assetImage("hammerspoon-reload", {w=18,h=18}),
+    title = "Karabiner Settings",
+    image = assetImage("karabiner-on", {w=18,h=18}, false),
+    fn = function()
+      -- Officially recommended approach in Karabiner docs
+      openApp("Karabiner-Elements")
+    end
+  })
+  table.insert(items, {
+    title = "Karabiner EventViewer",
+    image = assetImage("karabiner-on", {w=18,h=18}, false),
+    fn = function()
+      openBundle("org.pqrs.Karabiner-EventViewer")
+    end
+  })
+
+  -- Hammerspoon reload at bottom
+  table.insert(items, { title = "-" })
+  table.insert(items, {
+    title = "Hammerspoon (reload)",
+    image = assetImage("hammerspoon-reload", {w=18,h=18}, false),
     fn = function()
       osd.show("Reloading Hammerspoon…", { duration = 0.6 })
       hs.reload()
     end
   })
 
-  -- Karabiner-Elements
-  local keUp = shlib.isProcessRunning("karabiner_console_user_server")
-  table.insert(items, serviceItem("karabiner-elements", "karabiner", keUp, function(done)
-    restartKarabiner()
-    hs.timer.doAfter(0.9, function()
-      osd.show("Restarted: Karabiner", { duration = 0.9 })
-      if done then done() end
-    end)
-  end))
+  -- Always-available console shortcut at the end
+  table.insert(items, { title = "-" })
+  table.insert(items, {
+    title = "Hammerspoon Console",
+    image = assetImage("forge-menu", {w=18,h=18}, false),
+    fn = function() hs.openConsole() end
+  })
 
   -- Advanced items (hold Option to reveal)
   if isOptionDown() then
@@ -201,11 +230,6 @@ function buildMenu()
       fn = function() hs.execute(string.format("open '%s'", ASSETS_DIR), true) end,
       image = hs.image.imageFromName("NSFolderSmart")
     })
-    table.insert(items, {
-      title = "Open Hammerspoon Console",
-      fn = function() hs.openConsole() end,
-      image = hs.image.imageFromName("NSAdvanced")
-    })
   end
 
   return items
@@ -216,19 +240,30 @@ function M.start()
   menubar = hs.menubar.new()
   if not menubar then return end
   menubar:autosaveName("forge-menubar")
-  local img = assetImage("forge-menu", {w=18,h=18})
-              or hs.image.imageFromName("NSAdvanced")
-              or hs.image.imageFromName("NSPreferencesGeneral")
-              or hs.image.imageFromName("NSActionTemplate")
+  
+  -- Set icon
+  local img = assetImage("forge-menu", {w=18,h=18}, true) -- Use template for main icon
+  if not img then
+    local fallback = hs.image.imageFromName("NSAdvanced")
+                    or hs.image.imageFromName("NSPreferencesGeneral")
+                    or hs.image.imageFromName("NSActionTemplate")
+    if fallback and fallback.setSize then
+      img = fallback:setSize({w=18,h=18})
+    else
+      img = fallback
+    end
+  end
   if img then
     menubar:setIcon(img, true)
   else
     menubar:setTitle("⚙︎")
   end
   menubar:setTooltip("Parametric Forge")
+  
+  -- Set static menu
   menubar:setMenu(buildMenu)
 
-  -- Rebuild menu when modifier flags change (to reveal Advanced items)
+  -- Simple modifier key monitoring for Advanced menu
   if flagsWatcher then flagsWatcher:stop() end
   local lastAlt = isOptionDown()
   flagsWatcher = hs.eventtap.new({ hs.eventtap.event.types.flagsChanged }, function()
@@ -240,6 +275,18 @@ function M.start()
     return false
   end)
   flagsWatcher:start()
+end
+
+-- Cleanup function
+function M.stop()
+  if flagsWatcher then
+    flagsWatcher:stop()
+    flagsWatcher = nil
+  end
+  if menubar then
+    menubar:delete()
+    menubar = nil
+  end
 end
 
 return M
