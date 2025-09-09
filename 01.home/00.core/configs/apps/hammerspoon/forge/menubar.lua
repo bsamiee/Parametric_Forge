@@ -6,11 +6,12 @@
 -- ----------------------------------------------------------------------------
 -- Minimal ops menubar: direct actions only (no polling, no status caching)
 
+local core = require("forge.core")
 local auto = require("forge.auto")
 local osd = require("forge.osd")
 local shlib = require("forge.sh")
-local config = require("forge.config")
-local bus = require("forge.bus")
+local config = core.config
+local bus = core.bus
 
 
 local M = {}
@@ -163,7 +164,7 @@ buildMenu = function()
                 shlib.sh("yabai -m space --layout " .. next)
                 -- write minimal state for other producers/consumers (align with skhd/yabai conventions)
                 pcall(function()
-                    shlib.sh("printf '{\"mode\":\"" .. next .. "\"}\\n' > /tmp/yabai_state.json")
+                    pcall(shlib.writeYabaiState)
                 end)
                 -- immediately update local state/UI (do not wait for yabai signal)
                 state.layout = next
@@ -188,10 +189,7 @@ buildMenu = function()
                 local current = state.drop
                 local next = (current == "swap") and "stack" or "swap"
                 shlib.sh("yabai -m config mouse_drop_action " .. next)
-                -- write dedicated drop event file (integration watches yabai_drop.json)
-                pcall(function()
-                    shlib.sh("printf '{\"drop\":\"" .. next .. "\"}\\n' > /tmp/yabai_drop.json")
-                end)
+                pcall(shlib.writeYabaiState)
                 state.drop = next
                 local tip = string.format(
                     "Layout: %s • Gaps: %s • Drop: %s • Opacity: %s",
@@ -214,14 +212,14 @@ buildMenu = function()
                 if current then
                     shlib.sh("yabai -m config top_padding 0; yabai -m config bottom_padding 0; yabai -m config left_padding 0; yabai -m config right_padding 0; yabai -m config window_gap 0; yabai -m config external_bar all:0:0")
                     pcall(function()
-                        shlib.sh("printf '{\"gaps\":%s}\\n' 0 > /tmp/yabai_state.json")
+                        pcall(shlib.writeYabaiState)
                     end)
                     state.gaps = false
                     osd.show("Gaps: Off", { duration = 0.9 })
                 else
                     shlib.sh("yabai -m config top_padding 4; yabai -m config bottom_padding 4; yabai -m config left_padding 4; yabai -m config right_padding 4; yabai -m config window_gap 4; yabai -m config external_bar all:4:4")
                     pcall(function()
-                        shlib.sh("printf '{\"gaps\":%s}\\n' 4 > /tmp/yabai_state.json")
+                        pcall(shlib.writeYabaiState)
                     end)
                     state.gaps = true
                     osd.show("Gaps: On", { duration = 0.9 })
@@ -246,7 +244,7 @@ buildMenu = function()
                 shlib.sh("yabai -m config window_opacity " .. next)
                 state.opacity = (next == "on")
                 pcall(function()
-                    shlib.sh("printf '{\"opacity\":\"" .. next .. "\"}\\n' > /tmp/yabai_state.json")
+                    pcall(shlib.writeYabaiState)
                 end)
                 local tip = string.format(
                     "Layout: %s • Gaps: %s • Drop: %s • Opacity: %s",

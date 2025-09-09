@@ -184,19 +184,26 @@ fi
   action="PATH='/opt/homebrew/bin:/usr/local/bin:/run/current-system/sw/bin:'\$PATH; if ! pgrep -x borders >/dev/null 2>&1; then \"$BORDERS_RC\" >/dev/null 2>&1 & fi" \
   || true
 
-# --- seed minimal state file for Hammerspoon -------------------------------
+# --- seed consolidated state file for Hammerspoon -------------------------
 TMP=${TMPDIR:-/tmp}
 STATE_FILE="$TMP/yabai_state.json"
-MODE="?"
+
+# Generate complete state atomically
 if command -v "$JQ_BIN" >/dev/null 2>&1; then
   MODE="$($YABAI_BIN -m query --spaces --space | "$JQ_BIN" -r '.type // "?"' 2>/dev/null || printf '?')"
+  IDX="$($YABAI_BIN -m query --spaces --space | "$JQ_BIN" -r '.index // 0' 2>/dev/null || printf '0')"
+else
+  MODE="?"
+  IDX="0"
 fi
 GAPS="$($YABAI_BIN -m config top_padding | tr -d '\n' 2>/dev/null || printf '0')"
 DROP="$($YABAI_BIN -m config mouse_drop_action | tr -d '\n' 2>/dev/null || printf 'swap')"
 [ -z "$DROP" ] && DROP=swap
 OP="$($YABAI_BIN -m config window_opacity | tr -d '\n' 2>/dev/null || printf 'off')"
 SA="no"; [ "$SA_LOADED" = true ] && SA="yes"
-printf '{"mode":"%s","gaps":%s,"drop":"%s","opacity":"%s","sa":"%s"}\n' "$MODE" "$GAPS" "$DROP" "$OP" "$SA" > "$STATE_FILE"
+
+# Write complete consolidated state
+printf '{"mode":"%s","idx":%s,"gaps":%s,"drop":"%s","opacity":"%s","sa":"%s"}\n' "$MODE" "$IDX" "$GAPS" "$DROP" "$OP" "$SA" > "$STATE_FILE"
 
 # --- startup: diagnostics ---------------------------------------------------
 if "$YABAI_BIN" -m query --windows >/dev/null 2>&1; then

@@ -6,9 +6,10 @@
 -- ----------------------------------------------------------------------------
 -- Debounced Yabai command execution with SA-awareness and grid
 
-local config = require("forge.config")
+local core = require("forge.core")
 local shlib = require("forge.sh")
-local state = require("forge.state")
+local config = core.config
+local state = core.state
 
 local M = {}
 

@@ -8,9 +8,10 @@
 
 local M = {}
 local log = hs.logger.new("forge.integr", hs.logger.info)
+local core = require("forge.core")
 local shlib = require("forge.sh")
-local config = require("forge.config")
-local bus = require("forge.bus")
+local config = core.config
+local bus = core.bus
 
 -- Borders lifecycle is handled by yabai (see yabairc). No HS management.
 
@@ -50,27 +51,6 @@ function M.watchYabaiState()
         end)
     end
 
-    local function handleDrop(file)
-        local f = io.open(file, "r")
-        local txt = f and f:read("*a") or nil
-        if f then
-            f:close()
-        end
-        if not txt or #txt == 0 then
-            return
-        end
-        if not (txt:find("^{") or txt:find("^%[")) then
-            return
-        end
-        local ok, data = pcall(hs.json.decode, txt)
-        if not ok or not data then return end
-        if data.drop then
-            local msg = (data.drop == "stack") and "Drop: Stack" or "Drop: Swap"
-            osd.show(msg, { duration = 1.0, priority = "normal" })
-        end
-        -- Broadcast for UI consumers (menubar, etc.)
-        bus.emit("yabai-state", data)
-    end
 
     local function handleState(file)
         local f = io.open(file, "r")
@@ -86,10 +66,19 @@ function M.watchYabaiState()
         end
         local ok, data = pcall(hs.json.decode, txt)
         if not ok or not data then return end
+        
+        -- Handle layout mode changes
         if data.mode then
             osd.show("Layout: " .. tostring(data.mode), { duration = 1.0, priority = "normal" })
         end
-        -- Broadcast for UI consumers
+        
+        -- Handle drop action changes (consolidated from previous yabai_drop.json)
+        if data.drop then
+            local msg = (data.drop == "stack") and "Drop: Stack" or "Drop: Swap"
+            osd.show(msg, { duration = 1.0, priority = "normal" })
+        end
+        
+        -- Broadcast complete state for UI consumers
         bus.emit("yabai-state", data)
     end
 
@@ -101,11 +90,7 @@ function M.watchYabaiState()
             end
             for _, file in ipairs(files) do
                 local name = file:match("([^/]+)$") or file
-                if name == "yabai_drop.json" then
-                    coalesce(file, function()
-                        handleDrop(file)
-                    end)
-                elseif name == "yabai_state.json" then
+                if name == "yabai_state.json" then
                     coalesce(file, function()
                         handleState(file)
                     end)

@@ -47,4 +47,16 @@ function M.isSaAvailable()
     return out and out:match("yes") ~= nil
 end
 
+function M.writeYabaiState()
+    local cmd = "idx=$(yabai -m query --spaces --space | jq -r '.index // 0' 2>/dev/null || printf '0'); " ..
+               "mode=$(yabai -m query --spaces --space | jq -r '.type // \"?\"' 2>/dev/null || printf '?'); " ..
+               "gaps=$(yabai -m config top_padding 2>/dev/null | tr -d '\\n' || printf '0'); " ..
+               "drop=$(yabai -m config mouse_drop_action 2>/dev/null | tr -d '\\n' || printf 'swap'); " ..
+               "op=$(yabai -m config window_opacity 2>/dev/null | tr -d '\\n' || printf 'off'); " ..
+               "sa=no; [ -d /Library/ScriptingAdditions/yabai.osax ] && sa=yes; " ..
+               "printf '{\"mode\":\"%s\",\"idx\":%s,\"gaps\":%s,\"drop\":\"%s\",\"opacity\":\"%s\",\"sa\":\"%s\"}\\n' " ..
+               "\"$mode\" \"$idx\" \"$gaps\" \"$drop\" \"$op\" \"$sa\" > ${TMPDIR:-/tmp}/yabai_state.json"
+    return M.sh(cmd)
+end
+
 return M

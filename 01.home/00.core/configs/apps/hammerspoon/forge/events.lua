@@ -6,10 +6,11 @@
 -- ----------------------------------------------------------------------------
 -- Window/space/screen/wake event subscriptions and handlers
 
-local config = require("forge.config")
+local core = require("forge.core")
 local exec = require("forge.executor")
 local policy = require("forge.policy")
 local shlib = require("forge.sh")
+local config = core.config
 
 local M = {}
 local log = hs.logger.new("forge.events", hs.logger.info)
@@ -26,15 +27,8 @@ local function safeActiveSpaces()
 end
 
 local function onSpacesEvent()
-    -- Normalize active spaces across displays (guard older builds without hs.spaces)
-    local active = safeActiveSpaces()
-    if active and type(active) == "table" then
-        for _, spaceId in pairs(active) do
-            policy.applySpacePolicy(spaceId)
-        end
-    end
     -- Update space overlay UI (prefer yabai_state.json; fallback to yabai query)
-    local cfg = require("forge.config")
+    local cfg = config
     if cfg.ui and cfg.ui.spaceOverlay then
         local label
         repeat

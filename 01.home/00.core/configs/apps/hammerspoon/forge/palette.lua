@@ -213,12 +213,8 @@ local function handleMainChoice(choice)
             sh("yabai -m space --layout stack")
             new = "stack"
         end
-        -- Persist for watchers (write file directly to avoid shell quoting issues)
-        local f = io.open("/tmp/yabai_state.json", "w")
-        if f then
-            f:write(string.format('{"mode":"%s"}\n', new))
-            f:close()
-        end
+        -- Persist for watchers
+        pcall(shlib.writeYabaiState)
         osd.show("Layout: " .. new, { duration = 0.8 })
         return
     end
@@ -272,12 +268,7 @@ local function handleMainChoice(choice)
             new = "swap"
         end
         sh(string.format("yabai -m config mouse_drop_action %s", new))
-        -- Persist state for HS OSD watchers and other integrations
-        local fd = io.open("/tmp/yabai_drop.json", "w")
-        if fd then
-            fd:write(string.format('{"drop":"%s"}\n', new))
-            fd:close()
-        end
+        pcall(shlib.writeYabaiState)
         osd.show("Drop: " .. (new == "stack" and "Stack" or "Swap"), { duration = 0.8 })
         return
     end
@@ -288,7 +279,7 @@ local function handleMainChoice(choice)
         end
         local padding = (sh("yabai -m config top_padding 2>/dev/null"):gsub("\n$", ""))
         if padding == "0" or padding == "" then
-            local cfg = require("forge.config")
+            local cfg = require("forge.core").config
             local p = cfg.space and cfg.space.padding or { top = 4, bottom = 4, left = 4, right = 4 }
             local gap = (cfg.space and cfg.space.gap) or 4
             sh(string.format(

@@ -6,10 +6,11 @@
 -- ----------------------------------------------------------------------------
 -- Window and space policy logic (advisory; Yabai owns float)
 
-local config = require("forge.config")
+local core = require("forge.core")
 local exec = require("forge.executor")
 local shlib = require("forge.sh")
-local state = require("forge.state")
+local config = core.config
+local state = core.state
 
 local M = {}
 

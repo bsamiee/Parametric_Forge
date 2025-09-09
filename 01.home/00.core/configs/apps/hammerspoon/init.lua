@@ -39,7 +39,6 @@ local function yabai(cmd)
     return shlib.yabai(cmd)
 end
 
-
 -- Goto space by Mission Control index, without assuming SIP state.
 -- Uses yabai query to map index -> space id, then uses hs.spaces.gotoSpace.
 local function gotoSpaceByIndex(idx)
@@ -103,8 +102,8 @@ local events = require("forge.events")
 local exec = require("forge.executor")
 local integ = require("forge.integration")
 -- Load modules for side effects (register handlers, etc.)
+require("forge.core") -- Core infrastructure (state, config, bus)
 require("forge.policy") -- Policy registration
-require("forge.config") -- Config definitions
 require("forge.palette") -- URL handlers registration
 require("forge.url") -- hammerspoon:// one-shot endpoints
 

@@ -23,27 +23,29 @@ set -eu
 : "${GRID_BOTTOM_BAND:=2:6:1:1:4:1}"
 
 # Coordination: Yabai handles performance-critical rules/signals, Hammerspoon handles complex policies.
-# Both systems work together via state files and events.
+# Both systems work together via consolidated state file.
 
-# Write current space layout mode to a temp JSON that Hammerspoon watches
-"$YABAI_BIN" -m signal --remove write_layout_state >/dev/null 2>&1 || true
-"$YABAI_BIN" -m signal --add label=write_layout_state \
-    event=space_changed \
-    action="PATH='/opt/homebrew/bin:/usr/local/bin:/run/current-system/sw/bin:'\\\$PATH; idx=\\\"\\\$YABAI_SPACE_INDEX\\\"; mode=\\\$(yabai -m query --spaces --space | jq -r '.type // \\\"?\\\"'); gaps=\\\$(yabai -m config top_padding | tr -d '\\n'); [ -z \\\"\\\$gaps\\\" ] && gaps=0; drop=\\\$(yabai -m config mouse_drop_action | tr -d '\\n'); [ -z \\\"\\\$drop\\\" ] && drop=swap; op=\\\$(yabai -m config window_opacity | tr -d '\\n'); [ -z \\\"\\\$op\\\" ] && op=off; sa=no; [ -d /Library/ScriptingAdditions/yabai.osax ] && sa=yes; printf '{\\\"mode\\\":\\\"%s\\\",\\\"idx\\\":%s,\\\"gaps\\\":%s,\\\"drop\\\":\\\"%s\\\",\\\"opacity\\\":\\\"%s\\\",\\\"sa\\\":\\\"%s\\\"}\\n' \\\"\\\$mode\\\" \\\"\\\$idx\\\" \\\"\\\$gaps\\\" \\\"\\\$drop\\\" \\\"\\\$op\\\" \\\"\\\$sa\\\" > \${TMPDIR:-/tmp}/yabai_state.json" \
-    || true
+# Consolidated state writer script (used by all signals)
+WRITE_STATE_ACTION="PATH='/opt/homebrew/bin:/usr/local/bin:/run/current-system/sw/bin:'\\\$PATH; \
+idx=\\\$(yabai -m query --spaces --space | jq -r '.index // 0' 2>/dev/null || printf '0'); \
+mode=\\\$(yabai -m query --spaces --space | jq -r '.type // \\\"?\\\"' 2>/dev/null || printf '?'); \
+gaps=\\\$(yabai -m config top_padding 2>/dev/null | tr -d '\\n' || printf '0'); \
+drop=\\\$(yabai -m config mouse_drop_action 2>/dev/null | tr -d '\\n' || printf 'swap'); \
+[ -z \\\"\\\$drop\\\" ] && drop=swap; \
+op=\\\$(yabai -m config window_opacity 2>/dev/null | tr -d '\\n' || printf 'off'); \
+[ -z \\\"\\\$op\\\" ] && op=off; \
+sa=no; [ -d /Library/ScriptingAdditions/yabai.osax ] && sa=yes; \
+printf '{\\\"mode\\\":\\\"%s\\\",\\\"idx\\\":%s,\\\"gaps\\\":%s,\\\"drop\\\":\\\"%s\\\",\\\"opacity\\\":\\\"%s\\\",\\\"sa\\\":\\\"%s\\\"}\\n' \\\"\\\$mode\\\" \\\"\\\$idx\\\" \\\"\\\$gaps\\\" \\\"\\\$drop\\\" \\\"\\\$op\\\" \\\"\\\$sa\\\" > \${TMPDIR:-/tmp}/yabai_state.json"
 
-# Also refresh state on display changes and when Mission Control exits
-"$YABAI_BIN" -m signal --remove write_layout_display >/dev/null 2>&1 || true
-"$YABAI_BIN" -m signal --add label=write_layout_display \
-    event=display_changed \
-    action="PATH='/opt/homebrew/bin:/usr/local/bin:/run/current-system/sw/bin:'\\\$PATH; idx=\\\$(yabai -m query --spaces --space | jq -r '.index // 0'); mode=\\\$(yabai -m query --spaces --space | jq -r '.type // \\\"?\\\"'); gaps=\\\$(yabai -m config top_padding | tr -d '\\n'); [ -z \\\"\\\$gaps\\\" ] && gaps=0; drop=\\\$(yabai -m config mouse_drop_action | tr -d '\\n'); [ -z \\\"\\\$drop\\\" ] && drop=swap; op=\\\$(yabai -m config window_opacity | tr -d '\\n'); [ -z \\\"\\\$op\\\" ] && op=off; sa=no; [ -d /Library/ScriptingAdditions/yabai.osax ] && sa=yes; printf '{\\\"mode\\\":\\\"%s\\\",\\\"idx\\\":%s,\\\"gaps\\\":%s,\\\"drop\\\":\\\"%s\\\",\\\"opacity\\\":\\\"%s\\\",\\\"sa\\\":\\\"%s\\\"}\\n' \\\"\\\$mode\\\" \\\"\\\$idx\\\" \\\"\\\$gaps\\\" \\\"\\\$drop\\\" \\\"\\\$op\\\" \\\"\\\$sa\\\" > \${TMPDIR:-/tmp}/yabai_state.json" \
-    || true
+# Register consolidated state signals (all write complete state)
+"$YABAI_BIN" -m signal --remove write_state_space >/dev/null 2>&1 || true
+"$YABAI_BIN" -m signal --add label=write_state_space event=space_changed action="$WRITE_STATE_ACTION" || true
 
-"$YABAI_BIN" -m signal --remove write_layout_mc >/dev/null 2>&1 || true
-"$YABAI_BIN" -m signal --add label=write_layout_mc \
-    event=mission_control_exit \
-    action="PATH='/opt/homebrew/bin:/usr/local/bin:/run/current-system/sw/bin:'\\\$PATH; idx=\\\$(yabai -m query --spaces --space | jq -r '.index // 0'); mode=\\\$(yabai -m query --spaces --space | jq -r '.type // \\\"?\\\"'); gaps=\\\$(yabai -m config top_padding | tr -d '\\n'); [ -z \\\"\\\$gaps\\\" ] && gaps=0; drop=\\\$(yabai -m config mouse_drop_action | tr -d '\\n'); [ -z \\\"\\\$drop\\\" ] && drop=swap; op=\\\$(yabai -m config window_opacity | tr -d '\\n'); [ -z \\\"\\\$op\\\" ] && op=off; sa=no; [ -d /Library/ScriptingAdditions/yabai.osax ] && sa=yes; printf '{\\\"mode\\\":\\\"%s\\\",\\\"idx\\\":%s,\\\"gaps\\\":%s,\\\"drop\\\":\\\"%s\\\",\\\"opacity\\\":\\\"%s\\\",\\\"sa\\\":\\\"%s\\\"}\\n' \\\"\\\$mode\\\" \\\"\\\$idx\\\" \\\"\\\$gaps\\\" \\\"\\\$drop\\\" \\\"\\\$op\\\" \\\"\\\$sa\\\" > \${TMPDIR:-/tmp}/yabai_state.json" \
-    || true
+"$YABAI_BIN" -m signal --remove write_state_display >/dev/null 2>&1 || true  
+"$YABAI_BIN" -m signal --add label=write_state_display event=display_changed action="$WRITE_STATE_ACTION" || true
+
+"$YABAI_BIN" -m signal --remove write_state_mc >/dev/null 2>&1 || true
+"$YABAI_BIN" -m signal --add label=write_state_mc event=mission_control_exit action="$WRITE_STATE_ACTION" || true
 
 # Arc performance optimization - add small delay to reduce polling loops
 "$YABAI_BIN" -m signal --add label=arc_performance_fix event=window_created app="^Arc$" action="sleep 0.1" || true
@@ -97,7 +99,8 @@ fi
 "$YABAI_BIN" -m rule --add app="^Archive Utility$" manage=off sub-layer=below grid="$GRID_CENTER" || true
 "$YABAI_BIN" -m rule --add app="^Installer$" manage=off sub-layer=below grid="$GRID_CENTER" || true
 "$YABAI_BIN" -m rule --add app="^Software Update$" manage=off sub-layer=below grid="$GRID_CENTER" || true
-"$YABAI_BIN" -m rule --add app="^Finder$" manage=off sub-layer=below grid="$GRID_LEFT_HALF" || true
+"$YABAI_BIN" -m rule --add label=finder_main app="^Finder$" role="^AXWindow$" subrole="^AXStandardWindow$" manage=off sub-layer=below grid="$GRID_LEFT_HALF" || true
+"$YABAI_BIN" -m rule --add label=finder_transients app="^Finder$" subrole="^(AXDialog|AXSheet|AXSystemDialog|AXPopover)$" manage=off sticky=on sub-layer=above || true
 "$YABAI_BIN" -m rule --add app="^Migration Assistant$" manage=off sub-layer=below grid="$GRID_CENTER" || true
 "$YABAI_BIN" -m rule --add app="^Disk Utility$" manage=off sub-layer=below grid="$GRID_CENTER" || true
 
@@ -135,7 +138,7 @@ fi
 
 # Communication & Media
 "$YABAI_BIN" -m rule --add app="^Discord$" manage=off sub-layer=below grid="$GRID_RIGHT_HALF" || true
-"$YABAI_BIN" -m rule --add app="^Messages$" manage=off sub-layer=below || true
+"$YABAI_BIN" -m rule --add label=messages_main app="^Messages$" role="^AXWindow$" subrole="^AXStandardWindow$" manage=off sub-layer=below grid="$GRID_RIGHT_HALF" || true
 "$YABAI_BIN" -m rule --add app="^Telegram$" manage=off sub-layer=below grid="$GRID_RIGHT_HALF" || true
 "$YABAI_BIN" -m rule --add app="^WhatsApp$" manage=off sub-layer=below grid="$GRID_RIGHT_HALF" || true
 "$YABAI_BIN" -m rule --add app="^FaceTime$" manage=off sub-layer=below grid="$GRID_RIGHT_THIRD" || true
@@ -154,19 +157,20 @@ fi
 "$YABAI_BIN" -m rule --add app="^Visual Studio Code$" manage=on || true
 "$YABAI_BIN" -m rule --add app="^Adobe Creative Cloud$" manage=off sub-layer=below grid="$GRID_CENTER" || true
 
-# Scratchpad windows (special terminals/apps for quick access)
-"$YABAI_BIN" -m rule --add app="^WezTerm$" title="^scratchpad$" manage=off sticky=on sub-layer=above grid=6:6:1:1:4:4 || true
-"$YABAI_BIN" -m rule --add app="^Calculator$" manage=off sticky=on sub-layer=above grid="$GRID_TOP_RIGHT_QUARTER" || true
+# (Removed) WezTerm scratchpad rule to avoid scratchpad logic
 
 # --- rules: universal ------------------------------------------------------
 "$YABAI_BIN" -m rule --add label=pip_utility subrole="^AXSystemFloatingWindow$" manage=off sticky=on sub-layer=above || true
-"$YABAI_BIN" -m rule --add label=float_dialogs subrole="^AX(Dialog|Sheet)$" manage=off sub-layer=below || true
-"$YABAI_BIN" -m rule --add label=float_sys_dialog subrole="^AXSystemDialog$" manage=off sub-layer=below || true
-"$YABAI_BIN" -m rule --add label=float_popover subrole="^AXPopover$" manage=off sub-layer=below || true
-"$YABAI_BIN" -m rule --add label=float_inspector subrole="^AXInspector$" manage=off sub-layer=below || true
-"$YABAI_BIN" -m rule --add label=float_unknown role="^AXWindow$" subrole="^AXUnknown$" manage=off sub-layer=below || true
-"$YABAI_BIN" -m rule --add label=float_prefs title="(Preferences|Settings|Options|Configuration|About|Library|Queue)" manage=off sub-layer=below || true
-"$YABAI_BIN" -m rule --add label=float_prefs_tabs title="^(General|(Tab|Password|Website|Extension)s|AutoFill|Se(arch|curity)|Privacy|Advance)$" manage=off sub-layer=below || true
+"$YABAI_BIN" -m rule --add label=float_dialogs subrole="^AX(Dialog|Sheet)$" manage=off sticky=on sub-layer=above || true
+"$YABAI_BIN" -m rule --add label=float_sys_dialog subrole="^AXSystemDialog$" manage=off sticky=on sub-layer=above || true
+"$YABAI_BIN" -m rule --add label=float_popover subrole="^AXPopover$" manage=off sticky=on sub-layer=above || true
+"$YABAI_BIN" -m rule --add label=float_inspector subrole="^AXInspector$" manage=off sticky=on sub-layer=above || true
+"$YABAI_BIN" -m rule --add label=float_unknown role="^AXWindow$" subrole="^AXUnknown$" manage=off sticky=on sub-layer=above || true
+"$YABAI_BIN" -m rule --add label=float_prefs title="(Preferences|Settings|Options|Configuration|About|Library|Queue)" manage=off sticky=on sub-layer=above || true
+"$YABAI_BIN" -m rule --add label=float_prefs_tabs title="^(General|(Tab|Password|Website|Extension)s|AutoFill|Se(arch|curity)|Privacy|Advance)$" manage=off sticky=on sub-layer=above || true
+
+# Common file panels across apps (Open/Save/Attach/Export/Import/Choose)
+"$YABAI_BIN" -m rule --add label=float_file_panels title="^(Open|Save|Choose|Attach|Export|Import|Share|Upload|Download).*" subrole="^(AXDialog|AXSheet)$" manage=off sticky=on sub-layer=above || true
 
 # --- rules: apply to existing ----------------------------------------------
 "$YABAI_BIN" -m rule --apply
