@@ -39,7 +39,7 @@ in
     casks = [
       # System & Core Tools
       "1password" # Password manager and secure vault
-      "cleanshot" # Advanced screenshot and screen recording tool
+      "cleanshot" # Advanced screenshot and screen recording tool # TODO: CONFIGURE
       "docker-desktop" # Docker Desktop containerization - CRITICAL for deployment
       "dotnet-sdk" # .NET SDK (large, GUI tools)
       # "wezterm@nightly" # Already have WezTerm manually
@@ -47,14 +47,12 @@ in
       # Productivity & Window Management - MOST ALREADY INSTALLED
       "airbuddy" # AirPods management utility
       "aldente" # Battery charging limiter
-      "alt-tab" # Window switching utility
+      "alt-tab" # Window switching utility # TODO: REPLACE WITH HAMMERSPOON
       "bettermouse" # Mouse enhancement utility
-      "bettertouchtool" # Touch/gesture management
-      "hazel" # File organization automation
-      "latest" # App update checker
-      "raycast" # Launcher/productivity app
-      "swish" # Trackpad gesture utility
-      "transnomino" # File renaming utility
+      "bettertouchtool" # Touch/gesture management # TODO: CONFIGURE
+      "hazel" # File organization automation # TODO: CONFIGURE
+      "raycast" # Launcher/productivity app # TODO: CONFIGURE
+      "transnomino" # File renaming utility # TODO: CONFIGURE
 
       # Browsers & Internet
       "arc" # Arc Browser - Chromium-based browser with innovative UI
@@ -65,14 +63,14 @@ in
       "discord" # Voice and text communication
       "microsoft-teams" # Microsoft collaboration platform
       "superhuman" # High-performance email client
-      "telegram" # MISSING - need homebrew
-      "whatsapp" # MISSING - need homebrew
-      "zoom" # MISSING - need homebrew
+      "telegram"
+      "whatsapp"
+      "zoom" # Video conferencing
 
       # Cloud & Storage - CORRECTED
       "google-drive" # Google cloud storage sync client
       "megasync" # MEGA cloud storage sync client
-      "transmission" # MISSING - need homebrew
+      "transmission"
 
       # Development & Design - MIXED
       "heptabase" # Visual knowledge management platform

@@ -39,6 +39,7 @@ with pkgs;
   yamllint # YAML linter
   yaml-language-server # YAML language server
   marksman # Markdown LSP with wiki-link support
+  joker # Clojure/EDN linter used by GokuRakuJoudo
 
   # --- Data Processing ------------------------------------------------------
   # jq → Managed by programs.jq in shell-tools.nix

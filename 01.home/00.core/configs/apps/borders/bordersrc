@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 # Title         : bordersrc
 # Author        : Bardia Samiee
 # Project       : Parametric Forge
@@ -19,4 +20,4 @@ options=(
   blur_radius=20                     # Consistent blur with WezTerm
 )
 
-borders "${options[@]}"
+exec borders "${options[@]}"

@@ -87,8 +87,14 @@
         sudo dscacheutil -flushcache 2>/dev/null || true
 
         # Clear Launch Services database to remove stale quarantine references
-        /System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister \
-          -kill -r -domain local -domain system -domain user 2>/dev/null || true
+        # NOTE: Only reset if quarantine issues detected to avoid losing file associations
+        if defaults read com.apple.LaunchServices/com.apple.launchservices.secure LSQuarantine 2>/dev/null | grep -q "true"; then
+          echo "  [INFO] Quarantine detected, clearing LaunchServices database..."
+          /System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister \
+            -kill -r -domain local -domain system -domain user 2>/dev/null || true
+        else
+          echo "  [SKIP] LaunchServices database preserved (no quarantine issues)"
+        fi
 
         echo "  [OK] Security optimization complete"
       '';

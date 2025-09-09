@@ -10,8 +10,15 @@
 
 set -eu
 
+# Ensure YABAI_BIN is available (fallback if not sourced from yabairc)
+: "${YABAI_BIN:=yabai}"
+
 # Ensure critical anchors exist (fallback if anchors module not loaded)
+: "${GRID_FULL:=1:1:0:0:1:1}"
+: "${GRID_LEFT_HALF:=1:2:0:0:1:1}"
 : "${GRID_RIGHT_HALF:=1:2:1:0:1:1}"
+: "${GRID_RIGHT_THIRD:=1:3:2:0:1:1}"
+: "${GRID_TOP_RIGHT_QUARTER:=2:2:1:0:1:1}"
 : "${GRID_CENTER:=6:6:1:1:4:4}"
 : "${GRID_BOTTOM_BAND:=2:6:1:1:4:1}"
 
@@ -22,7 +29,20 @@ set -eu
 "$YABAI_BIN" -m signal --remove write_layout_state >/dev/null 2>&1 || true
 "$YABAI_BIN" -m signal --add label=write_layout_state \
     event=space_changed \
-    action="PATH='/opt/homebrew/bin:/usr/local/bin:/run/current-system/sw/bin:'\$PATH; mode=\$(yabai -m query --spaces --space | jq -r '.type'); printf '{\"mode\":\"%s\"}\n' \"\$mode\" > /tmp/yabai_state.json" \
+    action="PATH='/opt/homebrew/bin:/usr/local/bin:/run/current-system/sw/bin:'\\\$PATH; idx=\\\"\\\$YABAI_SPACE_INDEX\\\"; mode=\\\$(yabai -m query --spaces --space | jq -r '.type // \\\"?\\\"'); gaps=\\\$(yabai -m config top_padding | tr -d '\\n'); [ -z \\\"\\\$gaps\\\" ] && gaps=0; drop=\\\$(yabai -m config mouse_drop_action | tr -d '\\n'); [ -z \\\"\\\$drop\\\" ] && drop=swap; op=\\\$(yabai -m config window_opacity | tr -d '\\n'); [ -z \\\"\\\$op\\\" ] && op=off; sa=no; [ -d /Library/ScriptingAdditions/yabai.osax ] && sa=yes; printf '{\\\"mode\\\":\\\"%s\\\",\\\"idx\\\":%s,\\\"gaps\\\":%s,\\\"drop\\\":\\\"%s\\\",\\\"opacity\\\":\\\"%s\\\",\\\"sa\\\":\\\"%s\\\"}\\n' \\\"\\\$mode\\\" \\\"\\\$idx\\\" \\\"\\\$gaps\\\" \\\"\\\$drop\\\" \\\"\\\$op\\\" \\\"\\\$sa\\\" > \${TMPDIR:-/tmp}/yabai_state.json" \
+    || true
+
+# Also refresh state on display changes and when Mission Control exits
+"$YABAI_BIN" -m signal --remove write_layout_display >/dev/null 2>&1 || true
+"$YABAI_BIN" -m signal --add label=write_layout_display \
+    event=display_changed \
+    action="PATH='/opt/homebrew/bin:/usr/local/bin:/run/current-system/sw/bin:'\\\$PATH; idx=\\\$(yabai -m query --spaces --space | jq -r '.index // 0'); mode=\\\$(yabai -m query --spaces --space | jq -r '.type // \\\"?\\\"'); gaps=\\\$(yabai -m config top_padding | tr -d '\\n'); [ -z \\\"\\\$gaps\\\" ] && gaps=0; drop=\\\$(yabai -m config mouse_drop_action | tr -d '\\n'); [ -z \\\"\\\$drop\\\" ] && drop=swap; op=\\\$(yabai -m config window_opacity | tr -d '\\n'); [ -z \\\"\\\$op\\\" ] && op=off; sa=no; [ -d /Library/ScriptingAdditions/yabai.osax ] && sa=yes; printf '{\\\"mode\\\":\\\"%s\\\",\\\"idx\\\":%s,\\\"gaps\\\":%s,\\\"drop\\\":\\\"%s\\\",\\\"opacity\\\":\\\"%s\\\",\\\"sa\\\":\\\"%s\\\"}\\n' \\\"\\\$mode\\\" \\\"\\\$idx\\\" \\\"\\\$gaps\\\" \\\"\\\$drop\\\" \\\"\\\$op\\\" \\\"\\\$sa\\\" > \${TMPDIR:-/tmp}/yabai_state.json" \
+    || true
+
+"$YABAI_BIN" -m signal --remove write_layout_mc >/dev/null 2>&1 || true
+"$YABAI_BIN" -m signal --add label=write_layout_mc \
+    event=mission_control_exit \
+    action="PATH='/opt/homebrew/bin:/usr/local/bin:/run/current-system/sw/bin:'\\\$PATH; idx=\\\$(yabai -m query --spaces --space | jq -r '.index // 0'); mode=\\\$(yabai -m query --spaces --space | jq -r '.type // \\\"?\\\"'); gaps=\\\$(yabai -m config top_padding | tr -d '\\n'); [ -z \\\"\\\$gaps\\\" ] && gaps=0; drop=\\\$(yabai -m config mouse_drop_action | tr -d '\\n'); [ -z \\\"\\\$drop\\\" ] && drop=swap; op=\\\$(yabai -m config window_opacity | tr -d '\\n'); [ -z \\\"\\\$op\\\" ] && op=off; sa=no; [ -d /Library/ScriptingAdditions/yabai.osax ] && sa=yes; printf '{\\\"mode\\\":\\\"%s\\\",\\\"idx\\\":%s,\\\"gaps\\\":%s,\\\"drop\\\":\\\"%s\\\",\\\"opacity\\\":\\\"%s\\\",\\\"sa\\\":\\\"%s\\\"}\\n' \\\"\\\$mode\\\" \\\"\\\$idx\\\" \\\"\\\$gaps\\\" \\\"\\\$drop\\\" \\\"\\\$op\\\" \\\"\\\$sa\\\" > \${TMPDIR:-/tmp}/yabai_state.json" \
     || true
 
 # Arc performance optimization - add small delay to reduce polling loops
@@ -115,7 +135,7 @@ fi
 
 # Communication & Media
 "$YABAI_BIN" -m rule --add app="^Discord$" manage=off sub-layer=below grid="$GRID_RIGHT_HALF" || true
-"$YABAI_BIN" -m rule --add app="^Messages$" manage=off sub-layer=below grid="$GRID_RIGHT_HALF" || true
+"$YABAI_BIN" -m rule --add app="^Messages$" manage=off sub-layer=below || true
 "$YABAI_BIN" -m rule --add app="^Telegram$" manage=off sub-layer=below grid="$GRID_RIGHT_HALF" || true
 "$YABAI_BIN" -m rule --add app="^WhatsApp$" manage=off sub-layer=below grid="$GRID_RIGHT_HALF" || true
 "$YABAI_BIN" -m rule --add app="^FaceTime$" manage=off sub-layer=below grid="$GRID_RIGHT_THIRD" || true

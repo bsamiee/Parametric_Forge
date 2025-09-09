@@ -13,6 +13,7 @@ M.debounce = {
     window = 80,
     space = 120,
     screen = 150,
+    state = 120,
 }
 
 -- Float policy thresholds

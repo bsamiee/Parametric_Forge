@@ -6,9 +6,9 @@
 -- ----------------------------------------------------------------------------
 -- Window/space/screen/wake event subscriptions and handlers
 
-local policy = require("forge.policy")
 local config = require("forge.config")
 local exec = require("forge.executor")
+local policy = require("forge.policy")
 local shlib = require("forge.sh")
 
 local M = {}
@@ -16,8 +16,12 @@ local log = hs.logger.new("forge.events", hs.logger.info)
 
 -- Spaces watcher -----------------------------------------------------------
 local function safeActiveSpaces()
-    if not hs.spaces or not hs.spaces.activeSpaces then return nil end
-    local ok, res = pcall(function() return hs.spaces.activeSpaces() end)
+    if not hs.spaces or not hs.spaces.activeSpaces then
+        return nil
+    end
+    local ok, res = pcall(function()
+        return hs.spaces.activeSpaces()
+    end)
     return ok and res or nil
 end
 
@@ -29,26 +33,46 @@ local function onSpacesEvent()
             policy.applySpacePolicy(spaceId)
         end
     end
-    -- Update space overlay UI
+    -- Update space overlay UI (prefer yabai_state.json; fallback to yabai query)
     local cfg = require("forge.config")
     if cfg.ui and cfg.ui.spaceOverlay then
-        local sh = function(cmd) return shlib.sh(cmd) end
-        local js = sh("yabai -m query --spaces 2>/dev/null")
-        local label = nil
-        if js and js:match("^[%[{]") then
-            local ok, arr = pcall(hs.json.decode, js)
-            if ok and type(arr) == "table" then
-                for _, s in ipairs(arr) do
-                    if s["has-focus"] then
-                        label = string.format("Space: %s • %s", tostring(s.index or "?"), tostring(s.type or "?"))
-                        break
+        local label
+        repeat
+            local tmp = os.getenv("TMPDIR") or "/tmp/"
+            if tmp:sub(-1) ~= "/" then tmp = tmp .. "/" end
+            local f = io.open(tmp .. "yabai_state.json", "r")
+            if f then
+                local txt = f:read("*a"); f:close()
+                if txt and #txt > 0 and (txt:find("^{") or txt:find("^%[")) then
+                    local ok, data = pcall(hs.json.decode, txt)
+                    if ok and type(data) == "table" then
+                        local idx = data.idx
+                        local mode = data.mode or "?"
+                        if idx then
+                            label = string.format("Space: %s • %s", tostring(idx), tostring(mode))
+                            break
+                        end
                     end
                 end
             end
-        end
+            -- Fallback to yabai (rare)
+            local js = shlib.sh("yabai -m query --spaces 2>/dev/null")
+            if js and js:match("^[%[{]") then
+                local ok, arr = pcall(hs.json.decode, js)
+                if ok and type(arr) == "table" then
+                    for _, s in ipairs(arr) do
+                        if s["has-focus"] then
+                            label = string.format("Space: %s • %s", tostring(s.index or "?"), tostring(s.type or "?"))
+                            break
+                        end
+                    end
+                end
+            end
+        until true
         if not label then label = "Space: ?" end
         local osd = require("forge.osd")
-        osd.showPersistent("space-overlay", label)
+        -- Show as a transient centered notification instead of persistent overlay
+        osd.show(label, { duration = 0.9, centered = true })
     end
 end
 
@@ -96,6 +120,8 @@ function M.start()
     -- Displays
     M.screenWatcher = hs.screen.watcher.new(function()
         onSpacesEvent()
+        local osd = require("forge.osd")
+        pcall(function() osd.repositionAll() end)
     end)
     M.screenWatcher:start()
 
@@ -104,6 +130,9 @@ function M.start()
         if event == hs.caffeinate.watcher.systemDidWake then
             -- Normalize spaces
             onSpacesEvent()
+            -- Ensure overlays are placed correctly after wake
+            local osd = require("forge.osd")
+            pcall(function() osd.repositionAll() end)
             -- Refresh SA availability and re-apply minor visuals (if applicable)
             exec.refreshSa()
             if shlib.isProcessRunning("yabai") and exec.sa.available then
@@ -113,8 +142,10 @@ function M.start()
     end)
     M.caff:start()
 
-    -- Initial normalize pass (active spaces only)
-    onSpacesEvent()
+    -- Initial normalize pass (active spaces only) — defer slightly to avoid notch/menubar geometry race at launch
+    hs.timer.doAfter(0.10, function()
+        onSpacesEvent()
+    end)
 
     log.i("forge.events started")
 end

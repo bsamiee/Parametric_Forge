@@ -81,14 +81,22 @@ function M.showAll()
 end
 
 local function safeActiveSpaces()
-    if not hs.spaces or not hs.spaces.activeSpaces then return nil end
-    local ok, res = pcall(function() return hs.spaces.activeSpaces() end)
+    if not hs.spaces or not hs.spaces.activeSpaces then
+        return nil
+    end
+    local ok, res = pcall(function()
+        return hs.spaces.activeSpaces()
+    end)
     return ok and res or nil
 end
 
 local function safeWindowSpaces(w)
-    if not hs.spaces or not hs.spaces.windowSpaces then return nil end
-    local ok, res = pcall(function() return hs.spaces.windowSpaces(w) end)
+    if not hs.spaces or not hs.spaces.windowSpaces then
+        return nil
+    end
+    local ok, res = pcall(function()
+        return hs.spaces.windowSpaces(w)
+    end)
     return ok and res or nil
 end
 
@@ -174,33 +182,52 @@ local function handleMainChoice(choice)
     end
 
     if choice.id == "layout_toggle" or choice.id == "layout_bsp" or choice.id == "layout_stack" then
-        local function sh(cmd) return shlib.sh(cmd) end
+        local function sh(cmd)
+            return shlib.sh(cmd)
+        end
         local js = sh("yabai -m query --spaces 2>/dev/null")
         local curType = "?"
         if js and js:match("^[%[{]") then
             local ok, arr = pcall(hs.json.decode, js)
             if ok and type(arr) == "table" then
-                for _, s in ipairs(arr) do if s["has-focus"] then curType = s.type or curType end end
+                for _, s in ipairs(arr) do
+                    if s["has-focus"] then
+                        curType = s.type or curType
+                    end
+                end
             end
         end
         local new
         if choice.id == "layout_toggle" then
-            if curType == "bsp" then sh("yabai -m space --layout stack"); new = "stack" else sh("yabai -m space --layout bsp"); new = "bsp" end
+            if curType == "bsp" then
+                sh("yabai -m space --layout stack")
+                new = "stack"
+            else
+                sh("yabai -m space --layout bsp")
+                new = "bsp"
+            end
         elseif choice.id == "layout_bsp" then
-            sh("yabai -m space --layout bsp"); new = "bsp"
+            sh("yabai -m space --layout bsp")
+            new = "bsp"
         else
-            sh("yabai -m space --layout stack"); new = "stack"
+            sh("yabai -m space --layout stack")
+            new = "stack"
         end
         -- Persist for watchers (write file directly to avoid shell quoting issues)
         local f = io.open("/tmp/yabai_state.json", "w")
-        if f then f:write(string.format('{"mode":"%s"}\n', new)); f:close() end
+        if f then
+            f:write(string.format('{"mode":"%s"}\n', new))
+            f:close()
+        end
         osd.show("Layout: " .. new, { duration = 0.8 })
         return
     end
 
     if choice.id == "stack_next" or choice.id == "stack_prev" then
         local dir = (choice.id == "stack_next") and "stack.next" or "stack.prev"
-        local function sh(cmd) return shlib.sh(cmd) end
+        local function sh(cmd)
+            return shlib.sh(cmd)
+        end
         sh("yabai -m window --focus " .. dir .. " 2>/dev/null")
         local info = sh("yabai -m query --windows --window 2>/dev/null")
         if info and info:match("^[%[{]") then
@@ -215,12 +242,16 @@ local function handleMainChoice(choice)
     end
 
     if choice.id == "stack_unstack" then
-        local function sh(cmd) return shlib.sh(cmd) end
+        local function sh(cmd)
+            return shlib.sh(cmd)
+        end
         -- Try to warp in a direction to unstack; fallback through directions
         local dirs = { "east", "west", "north", "south" }
         for _, d in ipairs(dirs) do
             local rc = sh(string.format("yabai -m window --warp %s >/dev/null 2>&1; echo $?", d))
-            if rc and rc:match("^0") then break end
+            if rc and rc:match("^0") then
+                break
+            end
         end
         osd.show("Unstacked (if stacked)", { duration = 0.8 })
         return
@@ -243,7 +274,10 @@ local function handleMainChoice(choice)
         sh(string.format("yabai -m config mouse_drop_action %s", new))
         -- Persist state for HS OSD watchers and other integrations
         local fd = io.open("/tmp/yabai_drop.json", "w")
-        if fd then fd:write(string.format('{"drop":"%s"}\n', new)); fd:close() end
+        if fd then
+            fd:write(string.format('{"drop":"%s"}\n', new))
+            fd:close()
+        end
         osd.show("Drop: " .. (new == "stack" and "Stack" or "Swap"), { duration = 0.8 })
         return
     end
@@ -254,14 +288,16 @@ local function handleMainChoice(choice)
         end
         local padding = (sh("yabai -m config top_padding 2>/dev/null"):gsub("\n$", ""))
         if padding == "0" or padding == "" then
-            sh(
-                "yabai -m config top_padding 4; yabai -m config bottom_padding 4; yabai -m config left_padding 4; yabai -m config right_padding 4; yabai -m config window_gap 4"
-            )
-            osd.show("Gaps/Padding: 4 px", { duration = 0.9 })
+            local cfg = require("forge.config")
+            local p = cfg.space and cfg.space.padding or { top = 4, bottom = 4, left = 4, right = 4 }
+            local gap = (cfg.space and cfg.space.gap) or 4
+            sh(string.format(
+                "yabai -m config top_padding %d; yabai -m config bottom_padding %d; yabai -m config left_padding %d; yabai -m config right_padding %d; yabai -m config window_gap %d",
+                p.top or 4, p.bottom or 4, p.left or 4, p.right or 4, gap
+            ))
+            osd.show(string.format("Gaps/Padding: %d px", gap), { duration = 0.9 })
         else
-            sh(
-                "yabai -m config top_padding 0; yabai -m config bottom_padding 0; yabai -m config left_padding 0; yabai -m config right_padding 0; yabai -m config window_gap 0"
-            )
+            sh("yabai -m config top_padding 0; yabai -m config bottom_padding 0; yabai -m config left_padding 0; yabai -m config right_padding 0; yabai -m config window_gap 0")
             osd.show("Gaps/Padding: 0 px", { duration = 0.9 })
         end
         return

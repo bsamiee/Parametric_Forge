@@ -8,8 +8,8 @@
 
 local config = require("forge.config")
 local exec = require("forge.executor")
-local state = require("forge.state")
 local shlib = require("forge.sh")
+local state = require("forge.state")
 
 local M = {}
 

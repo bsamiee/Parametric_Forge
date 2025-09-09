@@ -85,6 +85,7 @@ shift + lalt - return : \
         "$HOME/.config/yabai/run-yabai.sh" -m config right_padding 4; \
         "$HOME/.config/yabai/run-yabai.sh" -m config window_gap 4; \
         "$HOME/.config/yabai/run-yabai.sh" -m config external_bar all:4:4; \
+        open -g "hammerspoon://forge/osd?msg=Gaps%3A%204%20px&center=1&dur=0.9"; \
     else \
         "$HOME/.config/yabai/run-yabai.sh" -m config top_padding 0; \
         "$HOME/.config/yabai/run-yabai.sh" -m config bottom_padding 0; \
@@ -92,6 +93,7 @@ shift + lalt - return : \
         "$HOME/.config/yabai/run-yabai.sh" -m config right_padding 0; \
         "$HOME/.config/yabai/run-yabai.sh" -m config window_gap 0; \
         "$HOME/.config/yabai/run-yabai.sh" -m config external_bar all:0:0; \
+        open -g "hammerspoon://forge/osd?msg=Gaps%3A%200%20px&center=1&dur=0.9"; \
     fi
 shift + lalt - space : "$HOME/.config/yabai/grid-anchors.sh" center --float
 shift + lalt - r : "$HOME/.config/yabai/run-yabai.sh" -m space --rotate 270 # Fix layout when messy
@@ -160,7 +162,8 @@ shift + lalt - t : \
     else \
         "$HOME/.config/yabai/run-yabai.sh" -m space --layout bsp; mode="bsp"; \
     fi; \
-    printf '{"mode":"%s"}\n' "$mode" > /tmp/yabai_state.json
+    printf '{"mode":"%s"}\n' "$mode" > /tmp/yabai_state.json; \
+    open -g "hammerspoon://forge/osd?msg=Layout%3A%20$mode&center=1&dur=0.9"
 
 # --- Scratchpad Operations ----------------------------------------------
 # Toggle scratchpad terminal (WezTerm with title "scratchpad")

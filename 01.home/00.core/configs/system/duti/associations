@@ -1,5 +1,5 @@
 # Title         : duti/associations
-# Author        : Bardia Samiee  
+# Author        : Bardia Samiee
 # Project       : Parametric Forge
 # License       : MIT
 # Path          : /01.home/00.core/configs/system/duti/associations
@@ -74,3 +74,6 @@ com.apple.Preview	.jpeg	all
 com.apple.Preview	.png	all
 com.apple.Preview	.gif	all
 com.apple.Preview	.webp	all
+
+# Email -> Superhuman
+com.superhuman.electron	mailto	all
