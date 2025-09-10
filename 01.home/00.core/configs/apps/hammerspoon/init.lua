@@ -121,6 +121,7 @@ end
 auto.start()
 
 require("forge.menubar").start()
+require("forge.menubar_automations").start()
 
 -- Minimal read-only Space indicator (compact [idx])
 require("forge.space_indicator").start()
@@ -130,5 +131,8 @@ require("forge.caffeine").start()
 
 -- Start leader key OSD notifications
 require("forge.leaders").start()
+
+-- Start general automations
+require("forge.automations").start()
 
 log.i("Hammerspoon ready (policy active; leaders via Karabiner)")

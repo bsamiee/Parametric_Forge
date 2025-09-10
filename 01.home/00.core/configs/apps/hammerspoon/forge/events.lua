@@ -27,45 +27,37 @@ local function safeActiveSpaces()
 end
 
 local function onSpacesEvent()
-    -- Update space overlay UI (prefer yabai_state.json; fallback to yabai query)
+    -- Update space overlay UI using live yabai query to avoid stale TMPDIR state
     local cfg = config
     if cfg.ui and cfg.ui.spaceOverlay then
         local label
-        repeat
-            local tmp = os.getenv("TMPDIR") or "/tmp/"
-            if tmp:sub(-1) ~= "/" then tmp = tmp .. "/" end
-            local f = io.open(tmp .. "yabai_state.json", "r")
-            if f then
-                local txt = f:read("*a"); f:close()
-                if txt and #txt > 0 and (txt:find("^{") or txt:find("^%[")) then
-                    local ok, data = pcall(hs.json.decode, txt)
-                    if ok and type(data) == "table" then
-                        local idx = data.idx
-                        local mode = data.mode or "?"
-                        if idx then
-                            label = string.format("Space: %s • %s", tostring(idx), tostring(mode))
-                            break
-                        end
-                    end
-                end
+        -- Prefer a direct query for the current space; this is fast and accurate
+        local js = shlib.sh("yabai -m query --spaces --space 2>/dev/null")
+        if js and js:match("^[%[{]") then
+            local ok, s = pcall(hs.json.decode, js)
+            if ok and type(s) == "table" then
+                local idx = s.index or "?"
+                local mode = s.type or "?"
+                label = string.format("Space: %s • %s", tostring(idx), tostring(mode))
             end
-            -- Fallback to yabai (rare)
-            local js = shlib.sh("yabai -m query --spaces 2>/dev/null")
-            if js and js:match("^[%[{]") then
-                local ok, arr = pcall(hs.json.decode, js)
+        end
+        -- Final fallback: scan all spaces for has-focus
+        if not label then
+            local all = shlib.sh("yabai -m query --spaces 2>/dev/null")
+            if all and all:match("^[%[{]") then
+                local ok, arr = pcall(hs.json.decode, all)
                 if ok and type(arr) == "table" then
-                    for _, s in ipairs(arr) do
-                        if s["has-focus"] then
-                            label = string.format("Space: %s • %s", tostring(s.index or "?"), tostring(s.type or "?"))
+                    for _, sp in ipairs(arr) do
+                        if sp["has-focus"] then
+                            label = string.format("Space: %s • %s", tostring(sp.index or "?"), tostring(sp.type or "?"))
                             break
                         end
                     end
                 end
             end
-        until true
+        end
         if not label then label = "Space: ?" end
         local osd = require("forge.osd")
-        -- Transient centered notification (osd defaults to centered=true)
         osd.show(label, { duration = 0.9 })
     end
 end

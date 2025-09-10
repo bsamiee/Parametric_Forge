@@ -26,16 +26,18 @@ set -eu
 # Both systems work together via consolidated state file.
 
 # Consolidated state writer script (used by all signals)
+# Includes space label for consumers that present richer context.
 WRITE_STATE_ACTION="PATH='/opt/homebrew/bin:/usr/local/bin:/run/current-system/sw/bin:'\\\$PATH; \
 idx=\\\$(yabai -m query --spaces --space | jq -r '.index // 0' 2>/dev/null || printf '0'); \
 mode=\\\$(yabai -m query --spaces --space | jq -r '.type // \\\"?\\\"' 2>/dev/null || printf '?'); \
+label=\\\$(yabai -m query --spaces --space | jq -r '.label // \\\"\\\"' 2>/dev/null || printf ''); \
 gaps=\\\$(yabai -m config top_padding 2>/dev/null | tr -d '\\n' || printf '0'); \
 drop=\\\$(yabai -m config mouse_drop_action 2>/dev/null | tr -d '\\n' || printf 'swap'); \
 [ -z \\\"\\\$drop\\\" ] && drop=swap; \
 op=\\\$(yabai -m config window_opacity 2>/dev/null | tr -d '\\n' || printf 'off'); \
 [ -z \\\"\\\$op\\\" ] && op=off; \
 sa=no; [ -d /Library/ScriptingAdditions/yabai.osax ] && sa=yes; \
-printf '{\\\"mode\\\":\\\"%s\\\",\\\"idx\\\":%s,\\\"gaps\\\":%s,\\\"drop\\\":\\\"%s\\\",\\\"opacity\\\":\\\"%s\\\",\\\"sa\\\":\\\"%s\\\"}\\n' \\\"\\\$mode\\\" \\\"\\\$idx\\\" \\\"\\\$gaps\\\" \\\"\\\$drop\\\" \\\"\\\$op\\\" \\\"\\\$sa\\\" > \${TMPDIR:-/tmp}/yabai_state.json"
+printf '{\\\"mode\\\":\\\"%s\\\",\\\"idx\\\":%s,\\\"label\\\":\\\"%s\\\",\\\"gaps\\\":%s,\\\"drop\\\":\\\"%s\\\",\\\"opacity\\\":\\\"%s\\\",\\\"sa\\\":\\\"%s\\\"}\\n' \\\"\\\$mode\\\" \\\"\\\$idx\\\" \\\"\\\$label\\\" \\\"\\\$gaps\\\" \\\"\\\$drop\\\" \\\"\\\$op\\\" \\\"\\\$sa\\\" > \${TMPDIR:-/tmp}/yabai_state.json"
 
 # Register consolidated state signals (all write complete state)
 "$YABAI_BIN" -m signal --remove write_state_space >/dev/null 2>&1 || true
@@ -48,10 +50,12 @@ printf '{\\\"mode\\\":\\\"%s\\\",\\\"idx\\\":%s,\\\"gaps\\\":%s,\\\"drop\\\":\\\
 "$YABAI_BIN" -m signal --add label=write_state_mc event=mission_control_exit action="$WRITE_STATE_ACTION" || true
 
 # Arc performance optimization - add small delay to reduce polling loops
+"$YABAI_BIN" -m signal --remove arc_performance_fix >/dev/null 2>&1 || true
 "$YABAI_BIN" -m signal --add label=arc_performance_fix event=window_created app="^Arc$" action="sleep 0.1" || true
 
 # Float non-interactive/small windows on creation (post-internal handling)
 if command -v "$JQ_BIN" >/dev/null 2>&1; then
+    "$YABAI_BIN" -m signal --remove float_small_noninteractive >/dev/null 2>&1 || true
     "$YABAI_BIN" -m signal --add label=float_small_noninteractive \
         event=window_created action="
       PATH='/opt/homebrew/bin:/usr/local/bin:/run/current-system/sw/bin:'\$PATH; \
@@ -156,8 +160,6 @@ fi
 "$YABAI_BIN" -m rule --add app="^WezTerm$" manage=on || true
 "$YABAI_BIN" -m rule --add app="^Visual Studio Code$" manage=on || true
 "$YABAI_BIN" -m rule --add app="^Adobe Creative Cloud$" manage=off sub-layer=below grid="$GRID_CENTER" || true
-
-# (Removed) WezTerm scratchpad rule to avoid scratchpad logic
 
 # --- rules: universal ------------------------------------------------------
 "$YABAI_BIN" -m rule --add label=pip_utility subrole="^AXSystemFloatingWindow$" manage=off sticky=on sub-layer=above || true

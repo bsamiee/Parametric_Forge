@@ -188,22 +188,23 @@ fi
 TMP=${TMPDIR:-/tmp}
 STATE_FILE="$TMP/yabai_state.json"
 
-# Generate complete state atomically
+# Generate complete state atomically (include space label)
 if command -v "$JQ_BIN" >/dev/null 2>&1; then
-  MODE="$($YABAI_BIN -m query --spaces --space | "$JQ_BIN" -r '.type // "?"' 2>/dev/null || printf '?')"
-  IDX="$($YABAI_BIN -m query --spaces --space | "$JQ_BIN" -r '.index // 0' 2>/dev/null || printf '0')"
+  SPACE_JSON="$($YABAI_BIN -m query --spaces --space 2>/dev/null || printf '')"
+  MODE="$(printf %s "$SPACE_JSON" | "$JQ_BIN" -r '.type // "?"' 2>/dev/null || printf '?')"
+  IDX="$(printf %s "$SPACE_JSON" | "$JQ_BIN" -r '.index // 0' 2>/dev/null || printf '0')"
+  LABEL="$(printf %s "$SPACE_JSON" | "$JQ_BIN" -r '.label // ""' 2>/dev/null || printf '')"
 else
-  MODE="?"
-  IDX="0"
+  MODE="?"; IDX="0"; LABEL=""
 fi
 GAPS="$($YABAI_BIN -m config top_padding | tr -d '\n' 2>/dev/null || printf '0')"
-DROP="$($YABAI_BIN -m config mouse_drop_action | tr -d '\n' 2>/dev/null || printf 'swap')"
-[ -z "$DROP" ] && DROP=swap
+DROP="$($YABAI_BIN -m config mouse_drop_action | tr -d '\n' 2>/dev/null || printf 'swap')"; [ -z "$DROP" ] && DROP=swap
 OP="$($YABAI_BIN -m config window_opacity | tr -d '\n' 2>/dev/null || printf 'off')"
 SA="no"; [ "$SA_LOADED" = true ] && SA="yes"
 
 # Write complete consolidated state
-printf '{"mode":"%s","idx":%s,"gaps":%s,"drop":"%s","opacity":"%s","sa":"%s"}\n' "$MODE" "$IDX" "$GAPS" "$DROP" "$OP" "$SA" > "$STATE_FILE"
+printf '{"mode":"%s","idx":%s,"label":"%s","gaps":%s,"drop":"%s","opacity":"%s","sa":"%s"}\n' \
+  "$MODE" "$IDX" "$LABEL" "$GAPS" "$DROP" "$OP" "$SA" > "$STATE_FILE"
 
 # --- startup: diagnostics ---------------------------------------------------
 if "$YABAI_BIN" -m query --windows >/dev/null 2>&1; then

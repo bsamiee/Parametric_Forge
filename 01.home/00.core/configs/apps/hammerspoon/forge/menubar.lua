@@ -10,6 +10,7 @@ local core = require("forge.core")
 local auto = require("forge.auto")
 local osd = require("forge.osd")
 local shlib = require("forge.sh")
+local autom = require("forge.automations")
 local config = core.config
 local bus = core.bus
 
@@ -70,13 +71,13 @@ local function darwinRebuild()
         osd.show("flake.nix not found", { duration = 1.4 })
         return
     end
-    
+
     osd.show("darwin-rebuild started…", { duration = 1.0 })
-    
+
     -- Simple sudo approach - relies on sudoers configuration
     local cmd = string.format("cd %q && sudo darwin-rebuild switch --flake .", flakeRoot)
     local output, status = hs.execute(cmd, true)
-    
+
     if status then
         osd.show("darwin-rebuild completed", { duration = 1.2 })
     else
@@ -115,6 +116,8 @@ local state = {
     drop = "swap",
     gaps = false,
     opacity = false,
+    label = "",
+    idx = nil,
 }
 
 -- Seed initial state from the last written file, if available
@@ -137,6 +140,8 @@ local function seedStateFromFile()
                     if data.drop then state.drop = tostring(data.drop) end
                     if data.gaps ~= nil then state.gaps = tonumber(data.gaps) and tonumber(data.gaps) > 0 end
                     if data.opacity then state.opacity = (tostring(data.opacity) == "on") end
+                    if data.label then state.label = tostring(data.label) end
+                    if data.idx then state.idx = tonumber(data.idx) end
                     break
                 end
             end
@@ -168,15 +173,24 @@ buildMenu = function()
                 end)
                 -- immediately update local state/UI (do not wait for yabai signal)
                 state.layout = next
+                local spacePart
+                if state.idx then
+                    if state.label and #state.label > 0 then
+                        spacePart = string.format("Space: %d • %s", state.idx, state.label)
+                    else
+                        spacePart = string.format("Space: %d", state.idx)
+                    end
+                else
+                    spacePart = "Space: ?"
+                end
                 local tip = string.format(
-                    "Layout: %s • Gaps: %s • Drop: %s • Opacity: %s",
-                    tostring(state.layout), tostring(state.gaps and 1 or 0), tostring(state.drop), tostring(state.opacity and "on" or "off")
+                    "%s • Layout: %s • Gaps: %s • Drop: %s • Opacity: %s",
+                    spacePart, tostring(state.layout), tostring(state.gaps and 1 or 0), tostring(state.drop), tostring(state.opacity and "on" or "off")
                 )
                 menubar:setTooltip(tip)
                 menubar:setMenu(buildMenu)
                 -- broadcast to other modules
                 bus.emit("yabai-state", { mode = state.layout, gaps = state.gaps and 1 or 0, drop = state.drop, opacity = state.opacity and "on" or "off" })
-                osd.show("Layout: " .. (next == "bsp" and "BSP" or "Stack"), { duration = 0.8 })
             end)
         end,
     })
@@ -198,7 +212,6 @@ buildMenu = function()
                 menubar:setTooltip(tip)
                 menubar:setMenu(buildMenu)
                 bus.emit("yabai-state", { mode = state.layout, gaps = state.gaps and 1 or 0, drop = state.drop, opacity = state.opacity and "on" or "off" })
-                osd.show("Drop: " .. (next == "stack" and "Stack" or "Swap"), { duration = 0.8 })
             end)
         end,
     })
@@ -215,18 +228,26 @@ buildMenu = function()
                         pcall(shlib.writeYabaiState)
                     end)
                     state.gaps = false
-                    osd.show("Gaps: Off", { duration = 0.9 })
                 else
                     shlib.sh("yabai -m config top_padding 4; yabai -m config bottom_padding 4; yabai -m config left_padding 4; yabai -m config right_padding 4; yabai -m config window_gap 4; yabai -m config external_bar all:4:4")
                     pcall(function()
                         pcall(shlib.writeYabaiState)
                     end)
                     state.gaps = true
-                    osd.show("Gaps: On", { duration = 0.9 })
+                end
+                local spacePart
+                if state.idx then
+                    if state.label and #state.label > 0 then
+                        spacePart = string.format("Space: %d • %s", state.idx, state.label)
+                    else
+                        spacePart = string.format("Space: %d", state.idx)
+                    end
+                else
+                    spacePart = "Space: ?"
                 end
                 local tip = string.format(
-                    "Layout: %s • Gaps: %s • Drop: %s • Opacity: %s",
-                    tostring(state.layout), tostring(state.gaps and 1 or 0), tostring(state.drop), tostring(state.opacity and "on" or "off")
+                    "%s • Layout: %s • Gaps: %s • Drop: %s • Opacity: %s",
+                    spacePart, tostring(state.layout), tostring(state.gaps and 1 or 0), tostring(state.drop), tostring(state.opacity and "on" or "off")
                 )
                 menubar:setTooltip(tip)
                 menubar:setMenu(buildMenu)
@@ -246,17 +267,47 @@ buildMenu = function()
                 pcall(function()
                     pcall(shlib.writeYabaiState)
                 end)
+                local spacePart
+                if state.idx then
+                    if state.label and #state.label > 0 then
+                        spacePart = string.format("Space: %d • %s", state.idx, state.label)
+                    else
+                        spacePart = string.format("Space: %d", state.idx)
+                    end
+                else
+                    spacePart = "Space: ?"
+                end
                 local tip = string.format(
-                    "Layout: %s • Gaps: %s • Drop: %s • Opacity: %s",
-                    tostring(state.layout), tostring(state.gaps and 1 or 0), tostring(state.drop), tostring(state.opacity and "on" or "off")
+                    "%s • Layout: %s • Gaps: %s • Drop: %s • Opacity: %s",
+                    spacePart, tostring(state.layout), tostring(state.gaps and 1 or 0), tostring(state.drop), tostring(state.opacity and "on" or "off")
                 )
                 menubar:setTooltip(tip)
                 menubar:setMenu(buildMenu)
                 bus.emit("yabai-state", { mode = state.layout, gaps = state.gaps and 1 or 0, drop = state.drop, opacity = state.opacity and "on" or "off" })
-                osd.show("Opacity: " .. (next == "on" and "On" or "Off"), { duration = 0.9 })
             end)
         end,
     })
+
+    table.insert(items, { title = "-" })
+    table.insert(items, { title = "Automations", disabled = true })
+
+    local function toggleItem(label, key)
+    return {
+        title   = string.format("%s %s", label, autom.isEnabled(key) and "✓" or " "),
+        fn      = function() autom.toggle(key); menubar:setMenu(buildMenu) end
+    }
+    end
+
+    table.insert(items, toggleItem("Auto-unzip (Downloads)", "unzip"))
+    table.insert(items, toggleItem("WEBP → PNG (Downloads)", "webp2png"))
+    table.insert(items, {
+    title = "Install DMGs",
+    menu = {
+        { title = "Off",  checked = autom.getDmgMode()=="off",  fn = function() autom.setDmgMode("off");  menubar:setMenu(buildMenu) end },
+        { title = "Ask",  checked = autom.getDmgMode()=="ask",  fn = function() autom.setDmgMode("ask");  menubar:setMenu(buildMenu) end },
+        { title = "Auto (allow-list)", checked = autom.getDmgMode()=="auto", fn = function() autom.setDmgMode("auto"); menubar:setMenu(buildMenu) end },
+    },
+})
 
     table.insert(
         items,
@@ -389,9 +440,21 @@ function M.start()
             if g ~= nil then state.gaps = g > 0 end
         end
         if data.opacity then state.opacity = (tostring(data.opacity) == "on") end
+        if data.label then state.label = tostring(data.label) end
+        if data.idx then state.idx = tonumber(data.idx) end
+        local spacePart
+        if state.idx then
+            if state.label and #state.label > 0 then
+                spacePart = string.format("Space: %d • %s", state.idx, state.label)
+            else
+                spacePart = string.format("Space: %d", state.idx)
+            end
+        else
+            spacePart = "Space: ?"
+        end
         local tip = string.format(
-            "Layout: %s • Gaps: %s • Drop: %s • Opacity: %s",
-            tostring(state.layout), tostring(state.gaps and 1 or 0), tostring(state.drop), tostring(state.opacity and "on" or "off")
+            "%s • Layout: %s • Gaps: %s • Drop: %s • Opacity: %s",
+            spacePart, tostring(state.layout), tostring(state.gaps and 1 or 0), tostring(state.drop), tostring(state.opacity and "on" or "off")
         )
         menubar:setTooltip(tip)
         menubar:setMenu(buildMenu)

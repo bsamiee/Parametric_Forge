@@ -40,6 +40,7 @@ function M.watchYabaiState()
 
     local osd = require("forge.osd")
     local debounce = {}
+    local last = { mode = nil, drop = nil, gaps = nil, opacity = nil }
     local function coalesce(path, fn)
         -- Coalesce rapid successive updates per path (configurable)
         if debounce[path] then
@@ -66,16 +67,42 @@ function M.watchYabaiState()
         end
         local ok, data = pcall(hs.json.decode, txt)
         if not ok or not data then return end
-        
-        -- Handle layout mode changes
-        if data.mode then
-            osd.show("Layout: " .. tostring(data.mode), { duration = 1.0, priority = "normal" })
+
+        -- Detect and notify on changes only (avoid duplicate OSD when toggled via menubar)
+        local changed = false
+
+        -- Layout mode
+        if data.mode and data.mode ~= last.mode then
+            last.mode = data.mode
+            osd.show("Layout: " .. ((data.mode == "bsp") and "BSP" or "Stack"), { duration = 1.0, priority = "normal" })
+            changed = true
         end
-        
-        -- Handle drop action changes (consolidated from previous yabai_drop.json)
-        if data.drop then
+
+        -- Drop action
+        if data.drop and data.drop ~= last.drop then
+            last.drop = data.drop
             local msg = (data.drop == "stack") and "Drop: Stack" or "Drop: Swap"
             osd.show(msg, { duration = 1.0, priority = "normal" })
+            changed = true
+        end
+
+        -- Gaps (numeric padding > 0 -> On)
+        if data.gaps ~= nil then
+            local g = tonumber(data.gaps)
+            local gapsOn = g and g > 0 or false
+            local lastOn = last.gaps and true or false
+            if gapsOn ~= lastOn then
+                last.gaps = gapsOn
+                osd.show("Gaps: " .. (gapsOn and "On" or "Off"), { duration = 1.0, priority = "normal" })
+                changed = true
+            end
+        end
+
+        -- Opacity ("on"/"off")
+        if data.opacity and data.opacity ~= last.opacity then
+            last.opacity = data.opacity
+            osd.show("Opacity: " .. ((data.opacity == "on") and "On" or "Off"), { duration = 1.0, priority = "normal" })
+            changed = true
         end
         
         -- Broadcast complete state for UI consumers
