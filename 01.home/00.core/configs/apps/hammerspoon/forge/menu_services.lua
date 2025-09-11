@@ -146,6 +146,29 @@ local function seedStateFromFile()
     end
 end
 
+-- Common Hammerspoon section builder
+local function hammerspoonSection()
+    return {
+        { title = "-" },
+        { title = "Hammerspoon", disabled = true },
+        {
+            title = "Hammerspoon (reload)",
+            image = assetImage("hammerspoon-reload", { w = 18, h = 18 }, false),
+            fn = function()
+                osd.show("Reloading Hammerspoon…")
+                hs.reload()
+            end,
+        },
+        {
+            title = "Hammerspoon Console",
+            image = assetImage("forge-menu", { w = 18, h = 18 }, false),
+            fn = function()
+                hs.openConsole()
+            end,
+        }
+    }
+end
+
 -- Simple static menu builder
 buildMenu = function()
     local items = {}
@@ -154,6 +177,10 @@ buildMenu = function()
     local drop = state.drop
     local gaps = state.gaps
     local opac = state.opacity
+
+    -- Configuration section
+    table.insert(items, { title = "Configuration", disabled = true })
+    table.insert(items, { title = "-" })
 
     -- Layout toggle
     table.insert(items, {
@@ -276,10 +303,13 @@ buildMenu = function()
         end,
     })
 
+    table.insert(items, { title = "-" })
+    table.insert(items, { title = "System", disabled = true })
     table.insert(
         items,
         { title = "Darwin Rebuild", image = assetImage("forge-rebuild", { w = 18, h = 18 }, false), fn = darwinRebuild }
     )
+    
     table.insert(items, { title = "-" })
     table.insert(items, { title = "Services", disabled = true })
 
@@ -335,27 +365,10 @@ buildMenu = function()
         end,
     })
 
-    -- Always-available console shortcut at the end
-    table.insert(items, { title = "-" })
-    -- Hammerspoon reload just above console
-    table.insert(items, {
-        title = "Hammerspoon (reload)",
-        image = assetImage("hammerspoon-reload", { w = 18, h = 18 }, false),
-        fn = function()
-            osd.show("Reloading Hammerspoon…")
-            hs.reload()
-        end,
-    })
-    table.insert(items, {
-        title = "Hammerspoon Console",
-        image = assetImage("forge-menu", { w = 18, h = 18 }, false),
-        fn = function()
-            hs.openConsole()
-        end,
-    })
-
-    -- Formerly "Advanced": always visible
-    -- Keep Advanced section minimal; remove folder-opening items to avoid clutter
+    -- Add common Hammerspoon section
+    for _, item in ipairs(hammerspoonSection()) do
+        table.insert(items, item)
+    end
 
     return items
 end

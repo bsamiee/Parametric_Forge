@@ -135,10 +135,13 @@
     # --- Terminal Web Browser (w3m) -----------------------------------------
     ".w3m/config".source = ./00.core/configs/apps/w3m/config;
     ".w3m/keymap".source = ./00.core/configs/apps/w3m/keymap;
-    # --- Hammerspoon Configuration (moved to activation to avoid symlinks) ---
-    # init.lua and forge/* + assets deployed via activation scripts
-    # --- Karabiner/Goku Configuration (deployed via activation script) ---
-  };
+    # --- Hammerspoon Configuration ---------------------------------------------
+    # Note: init.lua deployed via activation (needs to be writable)
+    # forge/ and assets/ deployed here via home-manager using fixed deployDir
+  }
+  # Deploy Hammerspoon forge/ and assets/ directories using lib/build.nix
+  // (myLib.build.deployDir ./00.core/configs/apps/hammerspoon/forge ".hammerspoon/forge")
+  // (myLib.build.deployDir ./00.core/configs/apps/hammerspoon/assets ".hammerspoon/assets");
 
   # --- Asset Bin Scripts (Added to PATH) -----------------------------------
   home.packages =

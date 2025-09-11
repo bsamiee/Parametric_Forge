@@ -1,4 +1,4 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
 # Title         : yabairc
 # Author        : Bardia Samiee
 # Project       : Parametric Forge
@@ -78,10 +78,14 @@ SA_LOADED=false
 if [ -n "$TIMEOUT_BIN" ]; then
   if "$TIMEOUT_BIN" 10s sudo "$YABAI_SA_BIN" --load-sa 2>/dev/null; then
     SA_LOADED=true
+  else
+    SA_LOADED=false
   fi
 else
   if sudo "$YABAI_SA_BIN" --load-sa 2>/dev/null; then
     SA_LOADED=true
+  else
+    SA_LOADED=false
   fi
 fi
 
@@ -127,7 +131,8 @@ if [ "$SA_LOADED" = true ]; then
     normal_window_opacity 0.80 \
     window_opacity_duration 0.25 \
     window_shadow on \
-    window_animation_duration 0.0
+    window_animation_duration 0.15 \
+    window_animation_easing ease_in_out_cubic
 else
   # Avoid setting SA-required options when scripting-addition is not available
   # window_opacity/window_shadow/window_animation_duration require SIP partial
@@ -135,7 +140,7 @@ else
   true
 fi
 
-  "$YABAI_BIN" -m config insert_feedback_color 0xff50fa7b \
+"$YABAI_BIN" -m config insert_feedback_color 0xff50fa7b \
   window_zoom_persist on
 
 # --- config: mouse ----------------------------------------------------------
@@ -179,9 +184,13 @@ fi
 
 # On Dock restart, reload SA (above) and ensure borders is running (start only if missing)
 "$YABAI_BIN" -m signal --remove borders_on_dock_restart >/dev/null 2>&1 || true
+
+# Separate action string for clarity and safer escaping
+BORDERS_RESTART_ACTION="PATH='/opt/homebrew/bin:/usr/local/bin:/run/current-system/sw/bin:'\\$PATH; if ! pgrep -x borders >/dev/null 2>&1; then \\\"$BORDERS_RC\\\" >/dev/null 2>&1 & fi"
+
 "$YABAI_BIN" -m signal --add label=borders_on_dock_restart \
   event=dock_did_restart \
-  action="PATH='/opt/homebrew/bin:/usr/local/bin:/run/current-system/sw/bin:'\$PATH; if ! pgrep -x borders >/dev/null 2>&1; then \"$BORDERS_RC\" >/dev/null 2>&1 & fi" \
+  action="$BORDERS_RESTART_ACTION" \
   || true
 
 # --- seed consolidated state file for Hammerspoon -------------------------
@@ -197,14 +206,21 @@ if command -v "$JQ_BIN" >/dev/null 2>&1; then
 else
   MODE="?"; IDX="0"; LABEL=""
 fi
-GAPS="$($YABAI_BIN -m config top_padding | tr -d '\n' 2>/dev/null || printf '0')"
-DROP="$($YABAI_BIN -m config mouse_drop_action | tr -d '\n' 2>/dev/null || printf 'swap')"; [ -z "$DROP" ] && DROP=swap
-OP="$($YABAI_BIN -m config window_opacity | tr -d '\n' 2>/dev/null || printf 'off')"
+GAPS="$($YABAI_BIN -m config top_padding 2>/dev/null | tr -d '\n' || printf '0')"
+DROP="$($YABAI_BIN -m config mouse_drop_action 2>/dev/null | tr -d '\n' || printf 'swap')"
+[ -z "$DROP" ] && DROP=swap
+OP="$($YABAI_BIN -m config window_opacity 2>/dev/null | tr -d '\n' || printf 'off')"
 SA="no"; [ "$SA_LOADED" = true ] && SA="yes"
 
-# Write complete consolidated state
+# Write complete consolidated state (escape quotes to prevent JSON injection)
+MODE_ESC="${MODE//\"/\\\"}"
+LABEL_ESC="${LABEL//\"/\\\"}"
+DROP_ESC="${DROP//\"/\\\"}"
+OP_ESC="${OP//\"/\\\"}"
+SA_ESC="${SA//\"/\\\"}"
+
 printf '{"mode":"%s","idx":%s,"label":"%s","gaps":%s,"drop":"%s","opacity":"%s","sa":"%s"}\n' \
-  "$MODE" "$IDX" "$LABEL" "$GAPS" "$DROP" "$OP" "$SA" > "$STATE_FILE"
+  "$MODE_ESC" "$IDX" "$LABEL_ESC" "$GAPS" "$DROP_ESC" "$OP_ESC" "$SA_ESC" > "$STATE_FILE"
 
 # --- startup: diagnostics ---------------------------------------------------
 if "$YABAI_BIN" -m query --windows >/dev/null 2>&1; then

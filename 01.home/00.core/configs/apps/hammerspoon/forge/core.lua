@@ -96,4 +96,20 @@ function M.writeYabaiState()
     return M.sh(cmd)
 end
 
+-- Leader key state management for Karabiner integration
+M.leader = {
+    states = {},
+    track = function(name, down)
+        if not name then return end
+        M.leader.states[name] = (tostring(down) == "1")
+        M.bus.emit("leader-change", { name = name, active = (tostring(down) == "1") })
+    end,
+    isActive = function(name)
+        return M.leader.states[name] == true
+    end,
+    getStates = function()
+        return M.leader.states
+    end
+}
+
 return M

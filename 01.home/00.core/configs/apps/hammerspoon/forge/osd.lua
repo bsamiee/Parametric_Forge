@@ -32,6 +32,9 @@ local idCounter = 0
 local updating = false
 local pendingUpdate = false
 
+-- Delegate persistent indicators to specialized module
+local persistentIndicator = require("forge.persistent_indicator")
+
 -- Helpers ------------------------------------------------------------------
 local function now() return hs.timer.secondsSinceEpoch() end
 
@@ -190,6 +193,19 @@ function M.show(message, opts)
       end
     end)
   end)
+end
+
+-- Persistent Indicator API (delegate to specialized module) ---------------
+function M.showPersistent(message, priority)
+  persistentIndicator.show(message, priority)
+end
+
+function M.hidePersistent(priority)
+  persistentIndicator.hide(priority)
+end
+
+function M.hideAllPersistent()
+  persistentIndicator.hideAllPersistent()
 end
 
 return M

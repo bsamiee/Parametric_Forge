@@ -1,4 +1,4 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
 # Title         : rules-signals.sh
 # Author        : Bardia Samiee
 # Project       : Parametric Forge
@@ -21,23 +21,23 @@ set -eu
 : "${GRID_TOP_RIGHT_QUARTER:=2:2:1:0:1:1}"
 : "${GRID_CENTER:=6:6:1:1:4:4}"
 # Keep fallback consistent with grid-anchors.sh to avoid edge-hugging
-: "${GRID_BOTTOM_BAND:=6:6:1:4:4:1}"
+: "${GRID_RIGHT_HALF:=1:2:1:0:1:1}"
 
 # Consolidated state writer script (used by all signals)
 # Includes space label for consumers that present richer context.
-WRITE_STATE_ACTION="PATH='/opt/homebrew/bin:/usr/local/bin:/run/current-system/sw/bin:'\\\$PATH; \
-idx=\\\$(yabai -m query --spaces --space | jq -r '.index // 0' 2>/dev/null || printf '0'); \
-mode=\\\$(yabai -m query --spaces --space | jq -r '.type // \\\"?\\\"' 2>/dev/null || printf '?'); \
-label=\\\$(yabai -m query --spaces --space | jq -r '.label // \\\"\\\"' 2>/dev/null || printf ''); \
-disp=\\\$(yabai -m query --spaces --space | jq -r '.display // 0' 2>/dev/null || printf '0'); \
-count=\\\$(yabai -m query --spaces --display \\\"\\\$disp\\\" | jq 'map(select(.[\\\"is-native-fullscreen\\\"] == false)) | length' 2>/dev/null || printf '0'); \
-gaps=\\\$(yabai -m config top_padding 2>/dev/null | tr -d '\\n' || printf '0'); \
-drop=\\\$(yabai -m config mouse_drop_action 2>/dev/null | tr -d '\\n' || printf 'swap'); \
-[ -z \\\"\\\$drop\\\" ] && drop=swap; \
-op=\\\$(yabai -m config window_opacity 2>/dev/null | tr -d '\\n' || printf 'off'); \
-[ -z \\\"\\\$op\\\" ] && op=off; \
+WRITE_STATE_ACTION="PATH='/opt/homebrew/bin:/usr/local/bin:/run/current-system/sw/bin:\$PATH; \
+idx=\$(yabai -m query --spaces --space | jq -r '.index // 0' 2>/dev/null || printf '0'); \
+mode=\$(yabai -m query --spaces --space | jq -r '.type // \"?\"' 2>/dev/null || printf '?'); \
+label=\$(yabai -m query --spaces --space | jq -r '.label // \"\"' 2>/dev/null || printf ''); \
+disp=\$(yabai -m query --spaces --space | jq -r '.display // 0' 2>/dev/null || printf '0'); \
+count=\$(yabai -m query --spaces --display \"\$disp\" | jq 'map(select(.[\"is-native-fullscreen\"] == false)) | length' 2>/dev/null || printf '0'); \
+gaps=\$(yabai -m config top_padding 2>/dev/null | tr -d '\n' || printf '0'); \
+drop=\$(yabai -m config mouse_drop_action 2>/dev/null | tr -d '\n' || printf 'swap'); \
+[ -z \"\$drop\" ] && drop=swap; \
+op=\$(yabai -m config window_opacity 2>/dev/null | tr -d '\n' || printf 'off'); \
+[ -z \"\$op\" ] && op=off; \
 sa=no; [ -d /Library/ScriptingAdditions/yabai.osax ] && sa=yes; \
-printf '{\\\"mode\\\":\\\"%s\\\",\\\"idx\\\":%s,\\\"label\\\":\\\"%s\\\",\\\"count\\\":%s,\\\"gaps\\\":%s,\\\"drop\\\":\\\"%s\\\",\\\"opacity\\\":\\\"%s\\\",\\\"sa\\\":\\\"%s\\\"}\\n' \\\"\\\$mode\\\" \\\"\\\$idx\\\" \\\"\\\$label\\\" \\\"\\\$count\\\" \\\"\\\$gaps\\\" \\\"\\\$drop\\\" \\\"\\\$op\\\" \\\"\\\$sa\\\" > \${TMPDIR:-/tmp}/yabai_state.json"
+printf '{\"mode\":\"%s\",\"idx\":%s,\"label\":\"%s\",\"count\":%s,\"gaps\":%s,\"drop\":\"%s\",\"opacity\":\"%s\",\"sa\":\"%s\"}\n' \"\$mode\" \"\$idx\" \"\$label\" \"\$count\" \"\$gaps\" \"\$drop\" \"\$op\" \"\$sa\" > \${TMPDIR:-/tmp}/yabai_state.json"
 
 # Register consolidated state signals (all write complete state)
 "$YABAI_BIN" -m signal --remove write_state_space >/dev/null 2>&1 || true
@@ -81,17 +81,38 @@ else
     echo "yabai: jq not found; skipping float_small_noninteractive signal" >&2
 fi
 
-# --- spaces: normalize existing layouts ------------------------------------
-# Ensure all current spaces use bsp layout; independent of any status bar.
+# --- workspace functions ---------------------------------------------------
+setup_workspace() {
+    local idx="$1"
+    local name="$2"
+    echo "setup workspace $idx: $name"
+
+    # Check if space exists, create if missing
+    if ! "$YABAI_BIN" -m query --spaces --space "$idx" >/dev/null 2>&1; then
+        "$YABAI_BIN" -m space --create >/dev/null 2>&1 || true
+    fi
+
+    # Set layout and label
+    "$YABAI_BIN" -m space "$idx" --layout bsp 2>/dev/null || true
+    "$YABAI_BIN" -m space "$idx" --label "$name" 2>/dev/null || true
+}
+
+# --- spaces: setup workspaces and normalize layouts -----------------------
 if command -v "$JQ_BIN" >/dev/null 2>&1; then
+    # Setup labeled workspaces (foundation only - no app assignments yet)
+    setup_workspace 2 coding
+    setup_workspace 3 design
+
+    # Normalize any remaining spaces to bsp layout
     SPACE_DATA="$("$YABAI_BIN" -m query --spaces)"
     SPACE_COUNT=$(echo "$SPACE_DATA" | "$JQ_BIN" length)
     echo "$SPACE_DATA" | "$JQ_BIN" -r '.[].index' | while IFS= read -r space; do
         "$YABAI_BIN" -m space "$space" --layout bsp 2>/dev/null || true
     done
-    echo "yabai: normalized layouts on $SPACE_COUNT spaces"
+
+    echo "yabai: setup workspaces and normalized $SPACE_COUNT spaces"
 else
-    echo "yabai: jq not found; skipping space normalization" >&2
+    echo "yabai: jq not found; skipping workspace setup" >&2
 fi
 
 # --- rules: applications ----------------------------------------------------
@@ -147,7 +168,7 @@ fi
 "$YABAI_BIN" -m rule --add app="^WhatsApp$" manage=off sub-layer=below grid="$GRID_RIGHT_HALF" || true
 "$YABAI_BIN" -m rule --add app="^FaceTime$" manage=off sub-layer=below grid="$GRID_RIGHT_THIRD" || true
 "$YABAI_BIN" -m rule --add app="^zoom.us$" manage=off sub-layer=below grid="$GRID_CENTER" || true
-"$YABAI_BIN" -m rule --add app="^Spotify$" manage=off sub-layer=below grid="$GRID_BOTTOM_BAND" || true
+"$YABAI_BIN" -m rule --add app="^Spotify$" manage=off sub-layer=below grid="$GRID_RIGHT_HALF" || true
 
 # Creative & Design
 "$YABAI_BIN" -m rule --add app="^Blender$" manage=off sub-layer=below || true
