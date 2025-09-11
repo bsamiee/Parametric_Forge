@@ -4,131 +4,96 @@
 -- License       : MIT
 -- Path          : /01.home/00.core/configs/apps/hammerspoon/forge/core.lua
 -- ----------------------------------------------------------------------------
--- Consolidated core infrastructure: state, config, and bus modules
-
--- --- state module (from state.lua) ---------------------------------------------
--- Shared in-memory state and coalescing buckets for operations
-
-local state = {}
-
-state.windows = {} -- cache by win:id() -> { app, title, role, subrole, lastOps = {}, ts = number }
-state.spaces = {} -- cache by spaceId -> { lastNormalizedAt = 0 }
-state.pending = { -- coalesced operations
-    window = {}, -- winId -> { ops = {}, timer = hs.timer }
-    space = {}, -- spaceId -> { ops = {}, timer = hs.timer }
-}
-
-state.scratch = { -- label -> winId
-}
-
-function state.reset()
-    state.windows, state.spaces, state.pending, state.scratch = {}, {}, { window = {}, space = {} }, {}
-end
-
-function state.windowEntry(winId)
-    local e = state.windows[winId]
-    if not e then
-        e = { lastOps = {}, ts = hs.timer.absoluteTime() }
-        state.windows[winId] = e
-    end
-    return e
-end
-
-function state.spaceEntry(spaceId)
-    local e = state.spaces[spaceId]
-    if not e then
-        e = { lastNormalizedAt = 0 }
-        state.spaces[spaceId] = e
-    end
-    return e
-end
-
--- --- config module (from config.lua) -------------------------------------------
--- Config and policy definitions for Hammerspoon policy engine
-
-local config = {}
-
--- Debounce windows/spaces/display updates (milliseconds)
-config.debounce = {
-    window = 80,
-    space = 120,
-    screen = 150,
-    state = 120,
-}
-
--- Float policy thresholds
-config.floatThreshold = { minW = 400, minH = 260 }
-
--- Grid anchors via external script (avoid duplicating grids)
-do
-    local xdg = os.getenv("XDG_CONFIG_HOME")
-    local home = os.getenv("HOME") or "/tmp"
-    local base = xdg and (xdg .. "/yabai") or (home .. "/.config/yabai")
-    config.gridScript = base .. "/grid-anchors.sh"
-end
-
--- Space normalization policy
-config.space = {
-    layout = "bsp",
-    padding = { top = 4, bottom = 4, left = 4, right = 4 },
-    gap = 4,
-    autoBalance = true,
-}
-
--- Avoid overlap: let Yabai handle app-level float/sticky/sublayer/grid.
--- If you need Hammerspoon to enforce floats, set this to true.
-config.enforceFloatInHS = false
-
--- App rules (subset of your Yabai rules, centralized here)
--- Each rule: { app="^Name$", title="optional regex", manage=false, sticky=true|false, subLayer="above|below|normal", gridAnchor="center_square|right_half|..." }
--- Remove duplication: Yabai owns app rules (float/sticky/grid).
--- Keep empty unless Hammerspoon must enforce policies explicitly.
-config.appRules = {}
-
--- UI options
-config.ui = {
-    spaceOverlay = true, -- show persistent space/layout overlay
-}
-
--- --- bus module (from bus.lua) ----------------------------------------------
--- Ultra-light event bus to coordinate modules without polling.
-
-local bus = {}
-
-local subs = {}
-
-function bus.on(event, fn)
-    if not event or type(fn) ~= "function" then
-        return function() end
-    end
-    subs[event] = subs[event] or {}
-    table.insert(subs[event], fn)
-    local idx = #subs[event]
-    return function()
-        if subs[event] and subs[event][idx] == fn then
-            table.remove(subs[event], idx)
-        end
-    end
-end
-
-function bus.emit(event, payload)
-    local list = subs[event]
-    if not list then
-        return
-    end
-    for _, fn in ipairs(list) do
-        pcall(fn, payload)
-    end
-end
-
-
--- --- module exports ----------------------------------------------------------
+-- Core utilities: shell execution, event bus, SA tracking, state management
 
 local M = {}
 
--- Export sub-modules
-M.state = state
-M.config = config  
-M.bus = bus
+-- Broaden PATH to include common Nix locations to support darwin-rebuild
+-- when run from privileged AppleScript without user shell profiles.
+M.PATH = table.concat({
+    "/opt/homebrew/bin",
+    "/usr/local/bin",
+    "/run/current-system/sw/bin",
+    "/nix/var/nix/profiles/default/bin",
+    "/etc/profiles/per-user/" .. (os.getenv("USER") or "bardiasamiee") .. "/bin",
+    os.getenv("PATH") or "",
+}, ":")
+
+function M.sh(cmd)
+    -- Use sh -c instead of sh -lc to avoid loading profile/rc files that output env vars
+    return hs.execute("/usr/bin/env PATH='" .. M.PATH .. "' sh -c '" .. cmd .. "'", true)
+end
+
+function M.yabai(args)
+    return M.sh("yabai -m " .. args)
+end
+
+function M.isYabaiReady()
+    local out = M.sh("yabai -m query --windows >/dev/null 2>&1; echo $?")
+    return out and out:match("^0") ~= nil
+end
+
+function M.isProcessRunning(name)
+    local out = M.sh("pgrep -x '" .. name .. "' >/dev/null 2>&1; echo $?")
+    if not out then
+        return false
+    end
+    -- Trim whitespace and check if output equals "0"
+    local trimmed = out:gsub("^%s*(.-)%s*$", "%1")
+    return trimmed == "0"
+end
+
+function M.isSaAvailable()
+    local out = M.sh("[ -d /Library/ScriptingAdditions/yabai.osax ] && echo yes || echo no")
+    return out and out:match("yes") ~= nil
+end
+
+-- SA state tracking
+M.sa = { available = M.isSaAvailable() }
+
+function M.refreshSa()
+    M.sa.available = M.isSaAvailable()
+end
+
+function M.setDryRun(enabled)
+    -- No-op: dry run not needed in current system
+end
+
+-- Event bus (moved from integration.lua for central access)
+local subs = {}
+M.bus = {
+    on = function(event, fn)
+        if not event or type(fn) ~= "function" then
+            return function() end
+        end
+        subs[event] = subs[event] or {}
+        table.insert(subs[event], fn)
+        local idx = #subs[event]
+        return function()
+            if subs[event] and subs[event][idx] == fn then
+                table.remove(subs[event], idx)
+            end
+        end
+    end,
+    emit = function(event, payload)
+        local list = subs[event]
+        if not list then return end
+        for _, fn in ipairs(list) do
+            pcall(fn, payload)
+        end
+    end
+}
+
+function M.writeYabaiState()
+    local cmd = "idx=$(yabai -m query --spaces --space | jq -r '.index // 0' 2>/dev/null || printf '0'); " ..
+               "mode=$(yabai -m query --spaces --space | jq -r '.type // \"?\"' 2>/dev/null || printf '?'); " ..
+               "gaps=$(yabai -m config top_padding 2>/dev/null | tr -d '\\n' || printf '0'); " ..
+               "drop=$(yabai -m config mouse_drop_action 2>/dev/null | tr -d '\\n' || printf 'swap'); " ..
+               "op=$(yabai -m config window_opacity 2>/dev/null | tr -d '\\n' || printf 'off'); " ..
+               "sa=no; [ -d /Library/ScriptingAdditions/yabai.osax ] && sa=yes; " ..
+               "printf '{\"mode\":\"%s\",\"idx\":%s,\"gaps\":%s,\"drop\":\"%s\",\"opacity\":\"%s\",\"sa\":\"%s\"}\\n' " ..
+               "\"$mode\" \"$idx\" \"$gaps\" \"$drop\" \"$op\" \"$sa\" > ${TMPDIR:-/tmp}/yabai_state.json"
+    return M.sh(cmd)
+end
 
 return M

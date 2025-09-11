@@ -1,232 +1,195 @@
--- Title         : osd.lua
 -- Author        : Bardia Samiee
 -- Project       : Parametric Forge
 -- License       : MIT
 -- Path          : /01.home/00.core/configs/apps/hammerspoon/forge/osd.lua
 -- ----------------------------------------------------------------------------
--- Lightweight, snappy OSD for transient and persistent overlays.
--- Goals:
---  - Centered top overlays by default (space/layout status)
---  - Fast updates with minimal redraws
---  - No stale positions on screen/space changes
---  - Simple API compatible with existing calls
+-- Single shared-canvas OSD feed. Events flow downward from a fixed top anchor.
 
 local M = {}
 
 -- Config -------------------------------------------------------------------
 local CFG = {
-  maxConcurrent = 3,        -- Max transient toasts at once
-  fadeIn        = 0.10,
-  fadeOut       = 0.25,
-  defaultMs     = 2100,
-  minWidth      = 300,      -- Minimum width for dynamic sizing
-  maxWidth      = 600,      -- Maximum width for dynamic sizing
-  height        = 32,       -- Reduced height for refined appearance
-  topOffset     = 8,        -- y = frame.y + topOffset
-  -- Use Geist Mono Bold face explicitly. Common registered names include
-  -- "GeistMono-Bold" and "Geist Mono Bold"; we select the first, which matches
-  -- the installed OTF screenshot provided.
-  font          = { name = "GeistMono-Bold", size = 12 },
+  width        = 520,  -- fixed width to avoid shifting X on new entries
+  rowHeight    = 30,
+  rowSpacing   = 6,
+  maxRows      = 6,
+  topOffset    = 8,    -- distance from top edge to canvas Y (fixed)
+  defaultMs    = 2.5,  -- seconds per entry
+  font         = { name = "GeistMono-Bold", size = 12 },
   colors = {
-    -- Dracula palette (official): bg #282a36, comment #6272a4, cyan #8be9fd
-    -- Background at 75% alpha per request
-    bg     = { red = 0x28/255, green = 0x2a/255, blue = 0x36/255, alpha = 0.75 },
-    -- Text color set to Dracula Magenta (aka Pink) #FF79C6
+    bg     = { red = 0x15/255, green = 0x19/255, blue = 0x2F/255, alpha = 0.75 },
     text   = { red = 0xFF/255, green = 0x79/255, blue = 0xC6/255, alpha = 1.00 },
-    -- Border color set to Dracula Comment #6272A4
-    border = { red = 0x62/255, green = 0x72/255, blue = 0xA4/255, alpha = 1.00 },
-    shadow = { red = 0x00/255, green = 0x00/255, blue = 0x00/255, alpha = 0.40 },
+    border = { red = 0xf8/255, green = 0xf8/255, blue = 0xf2/255, alpha = 0.60 },
+    shadow = { red = 0x00/255, green = 0x00/255, blue = 0x00/255, alpha = 0.75 },
   },
 }
 
 -- State --------------------------------------------------------------------
-local queue = { urgent = {}, normal = {}, info = {} }
-local active = {}
-local persist = {}   -- id -> { canvas }
+local container    -- hs.canvas (shared)
+local anchorX, anchorY -- fixed top-left anchor (computed once)
+local rows = {}    -- { id, text, deadline }
+local idCounter = 0
+local updating = false
+local pendingUpdate = false
 
--- Utilities ----------------------------------------------------------------
-local function newCanvas(x, y, w, h)
-  local c = hs.canvas.new({ x = x, y = y, w = w, h = h })
-  c:level(hs.canvas.windowLevels.overlay)
-  -- Default: transient overlays render on the current space; persistent overlays will set canJoinAllSpaces.
-  c:clickActivating(false)
-  return c
+-- Helpers ------------------------------------------------------------------
+local function now() return hs.timer.secondsSinceEpoch() end
+
+local function nextId()
+  idCounter = idCounter + 1
+  return idCounter
 end
 
-local function layoutCenteredTop(w)
+local function computeAnchor()
+  if anchorX and anchorY then return anchorX, anchorY end
   local s = hs.screen.mainScreen()
   local f = s and s:frame() or hs.geometry.rect(0,0,1440,900)
-  local x = f.x + (f.w - w) / 2
-  local y = f.y + CFG.topOffset
-  return x, y
+  anchorX = f.x + (f.w - CFG.width) / 2
+  anchorY = f.y + CFG.topOffset
+  return anchorX, anchorY
 end
 
-local function calculateOptimalWidth(message)
-  -- Use hs.drawing.getTextDrawingSize for robust text measurement
-  local txt = tostring(message or "")
-  local sz = hs.drawing.getTextDrawingSize(txt, { font = CFG.font.name, size = CFG.font.size }) or { w = CFG.minWidth }
-  local w = (sz and sz.w) or CFG.minWidth
-  return math.max(CFG.minWidth, math.min(CFG.maxWidth, w + 48))
-end
-
--- Ensure consistent formatting for all OSD text without changing font or position
-local function formatMessage(message)
-  -- Always render as uppercase for improved readability
-  local txt = tostring(message or "")
-  -- Lua string.upper covers ASCII reliably; acceptable for our OSD usage
-  return string.upper(txt)
-end
-
-local function applyStyle(c, message, w, h)
-  local radius = 12
-  c:replaceElements({
-    {
-      type = "rectangle",
-      action = "fill",
-      roundedRectRadii = { xRadius = radius, yRadius = radius },
-      fillColor = CFG.colors.bg,
-      shadow = { blurRadius = 32, color = CFG.colors.shadow, offset = { h = 2, w = 0 } },
-    },
-    {
-      type = "rectangle",
-      action = "stroke",
-      roundedRectRadii = { xRadius = radius, yRadius = radius },
-      strokeColor = CFG.colors.border,
-      strokeWidth = 1.0,
-    },
-    {
-      type = "text",
-      text = message,
-      textColor = CFG.colors.text,
-      textSize = CFG.font.size,
-      textFont = CFG.font.name,
-      frame = { x = 16, y = 6, w = w - 32, h = h - 12 },
-      textAlignment = "center",
-    },
-  })
-end
-
-local function showCanvas(c)
-  c:alpha(0):show()
-  c:alpha(1)
-end
-
-local function repositionPersistent(id)
-  local p = persist[id]
-  if not p or not p.canvas then return end
-  local w, h = p.canvas:frame().w, p.canvas:frame().h
-  local x, y = layoutCenteredTop(w)
-  p.canvas:frame({ x = x, y = y, w = w, h = h })
-end
-
--- Transient Toasts ---------------------------------------------------------
-local function dismiss(n)
-  if not n then return end
-  if n.timer then n.timer:stop(); n.timer = nil end
-  if n.canvas then
-    n.canvas:alpha(0)
-    hs.timer.doAfter(CFG.fadeOut, function()
-      pcall(function() n.canvas:delete() end)
-    end)
+local function ensureContainer()
+  if container then return container end
+  local x, y = computeAnchor()
+  container = hs.canvas.new({ x = x, y = y, w = CFG.width, h = 1 })
+  container:level(hs.canvas.windowLevels.overlay)
+  container:clickActivating(false)
+  -- Follow across Spaces at the exact same position
+  if hs.canvas.windowBehaviors and hs.canvas.windowBehaviors.canJoinAllSpaces then
+    container:behavior(hs.canvas.windowBehaviors.canJoinAllSpaces)
   end
-  for i, v in ipairs(active) do
-    if v == n then table.remove(active, i) break end
-  end
-  -- Continue queue
-  M._process()
+  -- Start hidden; we show only when there are rows
+  container:hide()
+  return container
 end
 
-local function showNow(message, ms)
-  local formatted = formatMessage(message)
-  local w = calculateOptimalWidth(formatted)
-  local h = CFG.height
-  local x, y = layoutCenteredTop(w)
-  local c = newCanvas(x, y, w, h)
-  applyStyle(c, formatted, w, h)
-  showCanvas(c)
-
-  local n = { canvas = c, timer = nil }
-  table.insert(active, n)
-
-  n.timer = hs.timer.doAfter((ms or CFG.defaultMs)/1000, function() dismiss(n) end)
+local function formatText(s)
+  return string.upper(tostring(s or ""))
 end
 
-function M._process()
-  if #active >= CFG.maxConcurrent then return end
-  for _, pri in ipairs({"urgent","normal","info"}) do
-    if #queue[pri] > 0 then
-      local it = table.remove(queue[pri], 1)
-      showNow(it.message, it.ms)
-      break
+local function rowCount()
+  local n = 0
+  for _ in ipairs(rows) do n = n + 1 end
+  return n
+end
+
+local function render()
+  local c = ensureContainer()
+
+  -- Clean expired entries first
+  local now_time = now()
+  local filtered = {}
+  for _, r in ipairs(rows) do
+    if r and r.deadline and now_time < r.deadline then
+      table.insert(filtered, r)
     end
   end
-end
+  rows = filtered
 
-local function enqueue(message, pri, ms)
-  if #active < CFG.maxConcurrent then
-    showNow(message, ms)
-  else
-    table.insert(queue[pri], { message = message, ms = ms })
-  end
-end
-
--- Persistent Overlays ------------------------------------------------------
-local function ensurePersistent(id, message, width)
-  local p = persist[id]
-  local formatted = formatMessage(message)
-  local w = width or calculateOptimalWidth(formatted)
-  local h = CFG.height
-  if p and p.canvas then
-    -- Update content and reposition on every call to avoid stale positions
-    applyStyle(p.canvas, formatted, w, h)
-    repositionPersistent(id)
+  local n = #rows
+  if n == 0 then
+    c:hide()
     return
   end
-  local x, y = layoutCenteredTop(w)
-  local c = newCanvas(x, y, w, h)
-  -- Make persistent overlays visible across all Spaces by default
-  if hs and hs.canvas and hs.canvas.windowBehaviors and hs.canvas.windowBehaviors.canJoinAllSpaces then
-    c:behavior(hs.canvas.windowBehaviors.canJoinAllSpaces)
+
+  -- Build fresh elements array (never reuse tables)
+  local totalH = n * CFG.rowHeight + (n - 1) * CFG.rowSpacing
+  c:frame({ x = anchorX, y = anchorY, w = CFG.width, h = totalH })
+
+  local elems = {}
+  local radius = 12
+
+  -- Background rectangle (create fresh table)
+  elems[1] = {
+    type = "rectangle",
+    frame = { x = 0, y = 0, w = CFG.width, h = totalH },
+    roundedRectRadii = { xRadius = radius, yRadius = radius },
+    fillColor = { red = CFG.colors.bg.red, green = CFG.colors.bg.green, blue = CFG.colors.bg.blue, alpha = CFG.colors.bg.alpha },
+    shadow = { blurRadius = 24, color = { red = 0, green = 0, blue = 0, alpha = 0.75 }, offset = { h = 2, w = 0 } },
+  }
+
+  -- Border rectangle (create fresh table)
+  elems[2] = {
+    type = "rectangle",
+    action = "stroke",
+    frame = { x = 0, y = 0, w = CFG.width, h = totalH },
+    roundedRectRadii = { xRadius = radius, yRadius = radius },
+    strokeColor = { red = CFG.colors.border.red, green = CFG.colors.border.green, blue = CFG.colors.border.blue, alpha = CFG.colors.border.alpha },
+    strokeWidth = 1,
+  }
+
+  -- Text elements (create fresh tables)
+  for i, r in ipairs(rows) do
+    local y = (i - 1) * (CFG.rowHeight + CFG.rowSpacing)
+    elems[i + 2] = {
+      type = "text",
+      frame = { x = 16, y = y + 6, w = CFG.width - 32, h = CFG.rowHeight - 12 },
+      text = tostring(r.text or ""),
+      textColor = { red = CFG.colors.text.red, green = CFG.colors.text.green, blue = CFG.colors.text.blue, alpha = 1.0 },
+      textSize = CFG.font.size,
+      textFont = CFG.font.name,
+      textAlignment = "center",
+    }
   end
-  applyStyle(c, formatted, w, h)
-  showCanvas(c)
-  persist[id] = { canvas = c }
+
+  -- Safe atomic update with validation
+  pcall(function()
+    c:replaceElements(table.unpack(elems))
+  end)
+  c:show()
 end
 
--- Intentionally no external bus/watchers: compute position simply on show
+local function updateSafe(modifyFn)
+  if updating then
+    pendingUpdate = true
+    return
+  end
+
+  updating = true
+  pcall(function()
+    if modifyFn then modifyFn() end
+    render()
+  end)
+  updating = false
+
+  if pendingUpdate then
+    pendingUpdate = false
+    updateSafe()
+  end
+end
 
 -- Public API ---------------------------------------------------------------
 function M.show(message, opts)
   opts = opts or {}
-  enqueue(message, opts.priority or "normal", opts.duration and (opts.duration*1000) or CFG.defaultMs)
-end
+  local ttl = tonumber(opts.duration) or CFG.defaultMs
+  local entryId = nextId()
 
-function M.showPersistent(id, message, opts)
-  if not id then return end
-  opts = opts or {}
-  ensurePersistent(id, message, opts.width)
-end
+  updateSafe(function()
+    local entry = {
+      id = entryId,
+      text = formatText(message),
+      deadline = now() + ttl,
+    }
 
-function M.hidePersistent(id)
-  local p = persist[id]
-  if not p then return end
-  if p.canvas then pcall(function() p.canvas:delete() end) end
-  persist[id] = nil
-end
+    table.insert(rows, 1, entry) -- newest on top
+    while #rows > CFG.maxRows do
+      table.remove(rows)
+    end
+  end)
 
-function M.hideAllPersistent()
-  for id, p in pairs(persist) do
-    if p.canvas then pcall(function() p.canvas:delete() end) end
-    persist[id] = nil
-  end
-end
-
-function M.repositionAll()
-  for id, _ in pairs(persist) do repositionPersistent(id) end
-end
-
-function M.notifyCaffeine(state)
-  M.show(state and "Caffeine: Enabled" or "Caffeine: Disabled", { duration = 0.9, centered = true })
+  -- Schedule removal using safe update
+  hs.timer.doAfter(ttl, function()
+    updateSafe(function()
+      for i = #rows, 1, -1 do
+        local r = rows[i]
+        if r and r.id == entryId then
+          table.remove(rows, i)
+          break
+        end
+      end
+    end)
+  end)
 end
 
 return M

@@ -20,6 +20,8 @@ with pkgs;
   # pandoc → Managed by programs.pandoc in media-tools.nix (programs dir)
   poppler_utils # PDF utilities (pdfinfo, pdftotext) - Required by yazi for PDF preview
   djvulibre # DjVu document support - Required by djvu-view.yazi
+  ocrmypdf # PDF OCR and optimization with tesseract integration
+  qpdf # PDF analysis and lossless operations
 
   # --- Media Analysis -------------------------------------------------------
   mediainfo # Detailed media file information - Enhanced yazi preview

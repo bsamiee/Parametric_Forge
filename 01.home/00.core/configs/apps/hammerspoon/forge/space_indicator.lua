@@ -6,7 +6,7 @@
 -- ----------------------------------------------------------------------------
 -- Simple menubar space indicator: shows current space with highlighting.
 
-local shlib = require("forge.sh")
+local core = require("forge.core")
 
 local M = {}
 local log = hs.logger.new("forge.space", hs.logger.info)
@@ -23,7 +23,7 @@ local function updateDisplay()
   if not menuItem then return end
 
   -- Get current space info from yabai
-  local json = shlib.yabai("query --spaces 2>/dev/null")
+  local json = core.yabai("query --spaces 2>/dev/null")
   if not json or not json:match("^%s*%[") then
     menuItem:setTitle("[?]")
     return
@@ -64,7 +64,7 @@ local function updateDisplay()
     local styled = hs.styledtext.new("")
     for i, space in ipairs(displaySpaces) do
       local num = tostring(i)
-      
+
       if space["has-focus"] then
         -- Focused space: yellow brackets with spaces, cyan number
         styled = styled .. hs.styledtext.new("[ ", YELLOW)
@@ -74,7 +74,7 @@ local function updateDisplay()
         -- Inactive space: white number only
         styled = styled .. hs.styledtext.new(num, WHITE)
       end
-      
+
       if i < #displaySpaces then
         styled = styled .. hs.styledtext.new(" ", WHITE)
       end

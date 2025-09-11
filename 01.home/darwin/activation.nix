@@ -74,7 +74,6 @@
             ["Icon Tool for Developers"]="554660130"
             ["Keka"]="470158793"
             ["Parcel"]="639968404"
-            ["Rapidmg"]="6451349778"
             ["MEGAVPN"]="6456784858"
           )
 

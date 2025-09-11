@@ -1,19 +1,19 @@
--- Title         : auto.lua
+-- Title         : config_reload.lua
 -- Author        : Bardia Samiee
 -- Project       : Parametric Forge
 -- License       : MIT
--- Path          : /01.home/00.core/configs/apps/hammerspoon/forge/auto.lua
+-- Path          : /01.home/00.core/configs/apps/hammerspoon/forge/config_reload.lua
 -- ----------------------------------------------------------------------------
 -- Watches config files (yabai/skhd/hammerspoon/yazi) and triggers restarts with OSD
 
 local osd = require("forge.osd")
-local shlib = require("forge.sh")
+local core = require("forge.core")
 
 local M = {}
-local log = hs.logger.new("forge.auto", hs.logger.info)
+local log = hs.logger.new("forge.config_reload", hs.logger.info)
 
 local function sh(cmd)
-    return shlib.sh(cmd)
+    return core.sh(cmd)
 end
 
 -- Debounced runners -------------------------------------------------------
@@ -35,24 +35,24 @@ end
 
 -- Restart helpers ---------------------------------------------------------
 local function restartYabai()
-    sh("yabai --restart-service || true")
-    osd.show("Yabai restarted", { duration = 1.0 })
+    sh("pkill -f yabai; sleep 1; yabai --start-service || yabai &")
+    osd.show("Yabai restarted")
 end
 
 local function reloadSkhd()
-    sh("skhd --reload || skhd --restart-service || true")
-    osd.show("skhd reloaded", { duration = 1.0 })
+    sh("pkill -f skhd; sleep 1; skhd --start-service || skhd -c ~/.config/skhd/skhdrc &")
+    osd.show("skhd reloaded")
 end
 
 local function reloadHammerspoon()
-    osd.show("Hammerspoon reloading…", { duration = 0.8 })
+    osd.show("Hammerspoon reloading…")
     hs.reload()
 end
 
 -- Goku (Karabiner EDN watcher) restart/start via Homebrew services
 local function restartGoku()
     local function sh(cmd)
-        return shlib.sh(cmd)
+        return core.sh(cmd)
     end
     -- Resolve brew path
     local brew = sh("command -v brew 2>/dev/null | head -n1 | tr -d '\n'")
@@ -65,7 +65,7 @@ local function restartGoku()
         end
     end
     if not brew or #brew == 0 then
-        osd.show("goku: brew not found", { duration = 1.2 })
+        osd.show("goku: brew not found")
         return
     end
     -- Try restart, then start
@@ -76,7 +76,7 @@ local function restartGoku()
             brew
         )
     )
-    osd.show("goku (watcher) restarted", { duration = 1.0 })
+    osd.show("goku (watcher) restarted")
 end
 
 -- Decide if HS should reload based on changed files (official pattern)
@@ -104,7 +104,7 @@ local function shouldReloadHS(files)
 end
 
 local function notifyYazi()
-    osd.show("Yazi config updated", { duration = 1.0 })
+    osd.show("Yazi config updated")
 end
 
 -- Watchers ---------------------------------------------------------------
@@ -157,14 +157,14 @@ function M.start()
     -- Yazi config (home)
     addWatcher({ home .. "/.config/yazi/" }, "yazi", notifyYazi)
 
-    log.i("forge.auto watchers started")
+    log.i("forge.config_reload watchers started")
     -- Optional: surface a one-time loaded notice when FORGE_DEBUG is set
     if os.getenv("FORGE_DEBUG") == "1" then
         hs.alert.show("Config loaded")
     end
 end
 
--- Export helpers for reuse (palette actions)
+-- Export helpers for reuse
 M.restartYabai = restartYabai
 M.reloadSkhd = reloadSkhd
 M.reloadHammerspoon = reloadHammerspoon

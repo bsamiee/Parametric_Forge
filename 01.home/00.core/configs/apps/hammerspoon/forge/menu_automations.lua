@@ -1,15 +1,15 @@
--- Title         : menubar_automations.lua
+-- Title         : menu_automations.lua
 -- Author        : Parametric Forge
 -- Project       : Parametric Forge
 -- License       : MIT
--- Path          : /01.home/00.core/configs/apps/hammerspoon/forge/menubar_automations.lua
+-- Path          : /01.home/00.core/configs/apps/hammerspoon/forge/menu_automations.lua
 -- ----------------------------------------------------------------------------
 -- Separate menubar item for Automations toggles (unzip, webp→png, DMG install).
 -- Icons: use checked=true for now; suggest SF Symbols in README/output.
 
 local automations = require("forge.automations")
 local core = require("forge.core")
-local bus  = core.bus
+local bus = core.bus
 
 local M = {}
 local mb
@@ -41,13 +41,13 @@ local function currentState()
   return {
     unzip = automations.isEnabled("unzip"),
     webp  = automations.isEnabled("webp2png"),
-    dmg   = automations.isEnabled("dmg"),
+    pdf   = automations.isEnabled("pdf"),
   }
 end
 
 local function updateIcon()
   local st = currentState()
-  local anyOn = st.unzip or st.webp or st.dmg
+  local anyOn = st.unzip or st.webp or st.pdf
   local icon = assetImage(anyOn and "automations-on" or "automations-off", { w = 18, h = 18 }, false)
   if not icon then
     icon = hs.image.imageFromName("NSActionTemplate")
@@ -65,7 +65,7 @@ local function buildMenu()
   table.insert(items, { title = "-" })
 
   table.insert(items, {
-    title   = "Auto unzip .zip",
+    title   = string.format("Auto Unzip: %s", st.unzip and "Enabled" or "Disabled"),
     checked = st.unzip,
     image   = assetImage(st.unzip and "unzip-on" or "unzip-off", { w = 16, h = 16 }, false),
     fn = function()
@@ -74,7 +74,7 @@ local function buildMenu()
   })
 
   table.insert(items, {
-    title   = "Auto convert .webp → .png",
+    title   = string.format("Auto WebP→PNG: %s", st.webp and "Enabled" or "Disabled"),
     checked = st.webp,
     image   = assetImage(st.webp and "webp2png-on" or "webp2png-off", { w = 16, h = 16 }, false),
     fn = function()
@@ -83,16 +83,22 @@ local function buildMenu()
   })
 
   table.insert(items, {
-    title   = "Auto install .dmg to /Applications",
-    checked = st.dmg,
-    image   = assetImage(st.dmg and "dmg-on" or "dmg-off", { w = 16, h = 16 }, false),
+    title   = string.format("Auto PDF OCR+Optimize: %s", st.pdf and "Enabled" or "Disabled"),
+    checked = st.pdf,
+    image   = assetImage(st.pdf and "pdf-on" or "pdf-off", { w = 16, h = 16 }, false),
     fn = function()
-      automations.setDmgEnabled(not st.dmg)
+      if st.pdf then automations.disable("pdf") else automations.enable("pdf") end
     end,
   })
 
   table.insert(items, { title = "-" })
-  table.insert(items, { title = "Open Hammerspoon Console", fn = function() hs.openConsole() end })
+  table.insert(items, {
+    title = "Hammerspoon Console",
+    image = assetImage("forge-menu", { w = 18, h = 18 }, false),
+    fn = function()
+      hs.openConsole()
+    end,
+  })
 
   return items
 end

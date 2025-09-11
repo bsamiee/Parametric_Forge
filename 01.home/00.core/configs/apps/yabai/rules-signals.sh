@@ -20,10 +20,8 @@ set -eu
 : "${GRID_RIGHT_THIRD:=1:3:2:0:1:1}"
 : "${GRID_TOP_RIGHT_QUARTER:=2:2:1:0:1:1}"
 : "${GRID_CENTER:=6:6:1:1:4:4}"
-: "${GRID_BOTTOM_BAND:=2:6:1:1:4:1}"
-
-# Coordination: Yabai handles performance-critical rules/signals, Hammerspoon handles complex policies.
-# Both systems work together via consolidated state file.
+# Keep fallback consistent with grid-anchors.sh to avoid edge-hugging
+: "${GRID_BOTTOM_BAND:=6:6:1:4:4:1}"
 
 # Consolidated state writer script (used by all signals)
 # Includes space label for consumers that present richer context.
@@ -31,19 +29,21 @@ WRITE_STATE_ACTION="PATH='/opt/homebrew/bin:/usr/local/bin:/run/current-system/s
 idx=\\\$(yabai -m query --spaces --space | jq -r '.index // 0' 2>/dev/null || printf '0'); \
 mode=\\\$(yabai -m query --spaces --space | jq -r '.type // \\\"?\\\"' 2>/dev/null || printf '?'); \
 label=\\\$(yabai -m query --spaces --space | jq -r '.label // \\\"\\\"' 2>/dev/null || printf ''); \
+disp=\\\$(yabai -m query --spaces --space | jq -r '.display // 0' 2>/dev/null || printf '0'); \
+count=\\\$(yabai -m query --spaces --display \\\"\\\$disp\\\" | jq 'map(select(.[\\\"is-native-fullscreen\\\"] == false)) | length' 2>/dev/null || printf '0'); \
 gaps=\\\$(yabai -m config top_padding 2>/dev/null | tr -d '\\n' || printf '0'); \
 drop=\\\$(yabai -m config mouse_drop_action 2>/dev/null | tr -d '\\n' || printf 'swap'); \
 [ -z \\\"\\\$drop\\\" ] && drop=swap; \
 op=\\\$(yabai -m config window_opacity 2>/dev/null | tr -d '\\n' || printf 'off'); \
 [ -z \\\"\\\$op\\\" ] && op=off; \
 sa=no; [ -d /Library/ScriptingAdditions/yabai.osax ] && sa=yes; \
-printf '{\\\"mode\\\":\\\"%s\\\",\\\"idx\\\":%s,\\\"label\\\":\\\"%s\\\",\\\"gaps\\\":%s,\\\"drop\\\":\\\"%s\\\",\\\"opacity\\\":\\\"%s\\\",\\\"sa\\\":\\\"%s\\\"}\\n' \\\"\\\$mode\\\" \\\"\\\$idx\\\" \\\"\\\$label\\\" \\\"\\\$gaps\\\" \\\"\\\$drop\\\" \\\"\\\$op\\\" \\\"\\\$sa\\\" > \${TMPDIR:-/tmp}/yabai_state.json"
+printf '{\\\"mode\\\":\\\"%s\\\",\\\"idx\\\":%s,\\\"label\\\":\\\"%s\\\",\\\"count\\\":%s,\\\"gaps\\\":%s,\\\"drop\\\":\\\"%s\\\",\\\"opacity\\\":\\\"%s\\\",\\\"sa\\\":\\\"%s\\\"}\\n' \\\"\\\$mode\\\" \\\"\\\$idx\\\" \\\"\\\$label\\\" \\\"\\\$count\\\" \\\"\\\$gaps\\\" \\\"\\\$drop\\\" \\\"\\\$op\\\" \\\"\\\$sa\\\" > \${TMPDIR:-/tmp}/yabai_state.json"
 
 # Register consolidated state signals (all write complete state)
 "$YABAI_BIN" -m signal --remove write_state_space >/dev/null 2>&1 || true
 "$YABAI_BIN" -m signal --add label=write_state_space event=space_changed action="$WRITE_STATE_ACTION" || true
 
-"$YABAI_BIN" -m signal --remove write_state_display >/dev/null 2>&1 || true  
+"$YABAI_BIN" -m signal --remove write_state_display >/dev/null 2>&1 || true
 "$YABAI_BIN" -m signal --add label=write_state_display event=display_changed action="$WRITE_STATE_ACTION" || true
 
 "$YABAI_BIN" -m signal --remove write_state_mc >/dev/null 2>&1 || true

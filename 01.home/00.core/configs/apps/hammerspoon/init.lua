@@ -4,9 +4,9 @@
 -- License       : MIT
 -- Path          : /01.home/00.core/configs/apps/hammerspoon/init.lua
 -- ----------------------------------------------------------------------------
--- Core setup, modals, OSD indicator, borders lifecycle, auto-watchers, and palette.
+-- Core setup, modals, OSD indicator, borders lifecycle, and auto-watchers.
 -- Purpose: Provide a clean, minimal Hammerspoon setup that:
---  - Avoids duplicating keybinds (leaders via Karabiner-Elements)
+--  - Avoids duplicating keybinds (uses skhd for system-level hotkeys)
 --  - Exposes helpers for future use and integrates safely with yabai/skhd
 --  - Sets sane defaults (animations off, logging, robust PATH) to match yabai
 
@@ -28,15 +28,24 @@ end
 
 -- Load helpers early
 local osd = require("forge.osd")
-local shlib = require("forge.sh")
+-- Load helpers early
 -- Clear any stale persistent overlays from previous sessions
 pcall(function()
     osd.hideAllPersistent()
 end)
 
+-- Ensure `hs` CLI exists for skhd pipes (hs.ipc); ignore failures gracefully
+pcall(function()
+    local ok, ipc = pcall(require, "hs.ipc")
+    if ok and ipc and type(ipc.cliInstall) == "function" then
+        -- Try default location first; avoid noisy logs if already installed
+        ipc.cliInstall()
+    end
+end)
+
 -- --- Yabai helpers (no hard dependency if not installed) --------------------
 local function yabai(cmd)
-    return shlib.yabai(cmd)
+    return core.yabai(cmd)
 end
 
 -- Goto space by Mission Control index, without assuming SIP state.
@@ -45,7 +54,7 @@ local function gotoSpaceByIndex(idx)
     if not idx then
         return
     end
-    local json = shlib.sh("yabai -m query --spaces 2>/dev/null")
+    local json = core.sh("yabai -m query --spaces 2>/dev/null")
     if not json or #json == 0 then
         return
     end
@@ -96,20 +105,16 @@ forge = {
 }
 
 -- Ready notice
--- Start policy engine modules
-local auto = require("forge.auto")
+-- Start core modules
+local config_reload = require("forge.config_reload")
 local events = require("forge.events")
-local exec = require("forge.executor")
+local core = require("forge.core")
 local integ = require("forge.integration")
 -- Load modules for side effects (register handlers, etc.)
-require("forge.core") -- Core infrastructure (state, config, bus)
-require("forge.policy") -- Policy registration
-require("forge.palette") -- URL handlers registration
-require("forge.url") -- hammerspoon:// one-shot endpoints
 
 -- Step 1: start in dry-run (can be switched off after verification)
-exec.setDryRun(false)
-exec.refreshSa()
+core.setDryRun(false)
+core.refreshSa()
 events.start()
 
 -- Observe yabai state files for layout/drop OSD when toggled outside HS (e.g., via skhd)
@@ -118,21 +123,11 @@ if integ and type(integ.watchYabaiState) == "function" then
 end
 
 -- Start auto-reload watchers for configs (yabai/skhd/hammerspoon/yazi)
-auto.start()
-
-require("forge.menubar").start()
-require("forge.menubar_automations").start()
-
--- Minimal read-only Space indicator (compact [idx])
+config_reload.start()
+require("forge.menu_services").start()
+require("forge.menu_automations").start()
 require("forge.space_indicator").start()
-
--- Start classic Caffeine-style menubar toggle (display idle prevention)
 require("forge.caffeine").start()
-
--- Start leader key OSD notifications
-require("forge.leaders").start()
-
--- Start general automations
 require("forge.automations").start()
 
-log.i("Hammerspoon ready (policy active; leaders via Karabiner)")
+log.i("Hammerspoon ready")

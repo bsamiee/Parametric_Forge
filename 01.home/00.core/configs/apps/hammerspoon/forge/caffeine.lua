@@ -78,7 +78,7 @@ local function setEnabled(on)
     if osd and type(osd.notifyCaffeine) == "function" then
         osd.notifyCaffeine(on)
     else
-        osd.show(on and "Caffeine: ON" or "Caffeine: OFF", { duration = 0.8 })
+        osd.show(on and "Caffeine: ON" or "Caffeine: OFF")
     end
 end
 

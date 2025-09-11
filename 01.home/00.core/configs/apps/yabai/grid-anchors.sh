@@ -23,13 +23,14 @@ GRID_RIGHT_HALF="1:2:1:0:1:1"
 GRID_LEFT_THIRD="1:3:0:0:1:1"
 GRID_MIDDLE_THIRD="1:3:1:0:1:1"
 GRID_RIGHT_THIRD="1:3:2:0:1:1"
-GRID_MID_THIRD="$GRID_MIDDLE_THIRD"
 GRID_TOP_LEFT_QUARTER="2:2:0:0:1:1"
 GRID_TOP_RIGHT_QUARTER="2:2:1:0:1:1"
 GRID_BOTTOM_LEFT_QUARTER="2:2:0:1:1:1"
 GRID_BOTTOM_RIGHT_QUARTER="2:2:1:1:1:1"
 GRID_TOP_BAND="2:6:1:0:4:1"
-GRID_BOTTOM_BAND="2:6:1:1:4:1"
+# Bottom band on a 6x6 grid, lifted one row above the bottom edge
+# Keeps symmetric left/right margins (start at col 1, width 4 of 6)
+GRID_BOTTOM_BAND="6:6:1:4:4:1"
 GRID_CENTER="6:6:1:1:4:4"
 
 # --- CLI (wrapped in main, called only when executed) ----------------------
@@ -56,7 +57,7 @@ main() {
     left_half) GRID=$GRID_LEFT_HALF ;;
     right_half) GRID=$GRID_RIGHT_HALF ;;
     left_third) GRID=$GRID_LEFT_THIRD ;;
-    middle_third|mid_third|middle) GRID=$GRID_MIDDLE_THIRD ;;
+    middle_third|middle) GRID=$GRID_MIDDLE_THIRD ;;
     right_third) GRID=$GRID_RIGHT_THIRD ;;
     top_left_quarter) GRID=$GRID_TOP_LEFT_QUARTER ;;
     top_right_quarter) GRID=$GRID_TOP_RIGHT_QUARTER ;;
@@ -65,8 +66,6 @@ main() {
     top) GRID=$GRID_TOP_BAND ;;
     bottom) GRID=$GRID_BOTTOM_BAND ;;
     center) GRID=$GRID_CENTER ;;
-    center_large) GRID=$GRID_CENTER ;;
-    bottom_center_two_thirds) GRID=$GRID_BOTTOM_BAND ;;
     *) echo "unknown anchor: $ANCHOR" >&2; exit 65 ;;
   esac
 
@@ -93,5 +92,8 @@ main() {
 
 # Only run CLI when executed directly; when sourced, just export variables.
 if [ "${0##*/}" = "grid-anchors.sh" ]; then
+  # Use run-yabai.sh for consistent PATH resolution
+  YABAI_BIN="${YABAI_BIN:-$HOME/.config/yabai/run-yabai.sh}"
+  JQ_BIN="${JQ_BIN:-jq}"
   main "$@"
 fi

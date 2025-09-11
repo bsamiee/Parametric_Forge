@@ -9,14 +9,19 @@
 local M = {}
 local log = hs.logger.new("forge.integr", hs.logger.info)
 local core = require("forge.core")
-local shlib = require("forge.sh")
-local config = core.config
+
+-- Use centralized utilities
 local bus = core.bus
 
 -- Borders lifecycle is handled by yabai (see yabairc). No HS management.
 
 -- Watch for yabai state changes and coordinate with Hammerspoon
+local _started = false
+
 function M.watchYabaiState()
+    if _started then
+        return
+    end
     -- Observe yabai state files in temp locations (/tmp and $TMPDIR), but keep callbacks
     -- extremely selective and debounced to avoid unnecessary work.
     local dirs = {}
@@ -46,7 +51,7 @@ function M.watchYabaiState()
         if debounce[path] then
             debounce[path]:stop()
         end
-        local delay = (config.debounce and config.debounce.state or 120) / 1000
+        local delay = 0.120  -- 120ms debounce (matches core.lua bus timing)
         debounce[path] = hs.timer.doAfter(delay, function()
             pcall(fn)
         end)
@@ -74,7 +79,7 @@ function M.watchYabaiState()
         -- Layout mode
         if data.mode and data.mode ~= last.mode then
             last.mode = data.mode
-            osd.show("Layout: " .. ((data.mode == "bsp") and "BSP" or "Stack"), { duration = 1.0, priority = "normal" })
+            osd.show("Layout: " .. ((data.mode == "bsp") and "BSP" or "Stack"))
             changed = true
         end
 
@@ -82,18 +87,18 @@ function M.watchYabaiState()
         if data.drop and data.drop ~= last.drop then
             last.drop = data.drop
             local msg = (data.drop == "stack") and "Drop: Stack" or "Drop: Swap"
-            osd.show(msg, { duration = 1.0, priority = "normal" })
+            osd.show(msg)
             changed = true
         end
 
-        -- Gaps (numeric padding > 0 -> On)
+        -- Gaps (numeric padding > 0 -> Enabled)
         if data.gaps ~= nil then
             local g = tonumber(data.gaps)
             local gapsOn = g and g > 0 or false
             local lastOn = last.gaps and true or false
             if gapsOn ~= lastOn then
                 last.gaps = gapsOn
-                osd.show("Gaps: " .. (gapsOn and "On" or "Off"), { duration = 1.0, priority = "normal" })
+                osd.show("Gaps: " .. (gapsOn and "Enabled" or "Disabled"))
                 changed = true
             end
         end
@@ -101,10 +106,26 @@ function M.watchYabaiState()
         -- Opacity ("on"/"off")
         if data.opacity and data.opacity ~= last.opacity then
             last.opacity = data.opacity
-            osd.show("Opacity: " .. ((data.opacity == "on") and "On" or "Off"), { duration = 1.0, priority = "normal" })
+            osd.show("Opacity: " .. ((data.opacity == "on") and "Enabled" or "Disabled"))
             changed = true
         end
-        
+
+        -- Space count delta (created/destroyed on current display)
+        if data.count ~= nil then
+            local cnt = tonumber(data.count)
+            local lastCnt = tonumber(last.count)
+            if lastCnt ~= nil and cnt ~= lastCnt then
+                if cnt > lastCnt then
+                    local idx = tonumber(data.idx)
+                    osd.show("Space Created" .. (idx and (": " .. tostring(idx)) or ""))
+                else
+                    osd.show("Space Destroyed")
+                end
+                changed = true
+            end
+            last.count = cnt
+        end
+
         -- Broadcast complete state for UI consumers
         bus.emit("yabai-state", data)
     end
@@ -112,7 +133,7 @@ function M.watchYabaiState()
     local watchers = {}
     local function startWatcher(dir)
         local w = hs.pathwatcher.new(dir, function(files, _)
-            if not shlib.isProcessRunning("yabai") then
+            if not core.isProcessRunning("yabai") then
                 return
             end
             for _, file in ipairs(files) do
@@ -131,6 +152,7 @@ function M.watchYabaiState()
     for _, d in ipairs(dirs) do
         startWatcher(d)
     end
+    _started = true
 end
 
 return M

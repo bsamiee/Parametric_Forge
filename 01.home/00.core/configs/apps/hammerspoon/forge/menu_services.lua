@@ -1,17 +1,14 @@
--- Title         : menubar.lua
+-- Title         : menu_services.lua
 -- Author        : Parametric Forge
 -- Project       : Parametric Forge
 -- License       : MIT
--- Path          : /01.home/00.core/configs/apps/hammerspoon/forge/menubar.lua
+-- Path          : /01.home/00.core/configs/apps/hammerspoon/forge/menu_services.lua
 -- ----------------------------------------------------------------------------
 -- Minimal ops menubar: direct actions only (no polling, no status caching)
 
-local core = require("forge.core")
-local auto = require("forge.auto")
+local config_reload = require("forge.config_reload")
 local osd = require("forge.osd")
-local shlib = require("forge.sh")
-local autom = require("forge.automations")
-local config = core.config
+local core = require("forge.core")
 local bus = core.bus
 
 
@@ -59,10 +56,10 @@ end
 -- Karabiner restart via launchctl kickstart (admin)
 local function restartKarabiner()
     -- Restart console user server without sudo (GUI domain)
-    shlib.sh("/bin/launchctl kickstart -k gui/$UID org.pqrs.karabiner.karabiner_console_user_server || true")
+    core.sh("/bin/launchctl kickstart -k gui/$UID org.pqrs.karabiner.karabiner_console_user_server || true")
     -- Restart system grabber with passwordless sudo (requires sudoers rule)
     -- If not permitted, this will fail silently due to -n and || true
-    shlib.sh("sudo -n /bin/launchctl kickstart -k system/org.pqrs.karabiner.karabiner_grabber || true")
+    core.sh("sudo -n /bin/launchctl kickstart -k system/org.pqrs.karabiner.karabiner_grabber || true")
 end
 
 local function darwinRebuild()
@@ -166,11 +163,8 @@ buildMenu = function()
             hs.timer.doAfter(0.01, function()
                 local current = state.layout
                 local next = (current == "bsp") and "stack" or "bsp"
-                shlib.sh("yabai -m space --layout " .. next)
-                -- write minimal state for other producers/consumers (align with skhd/yabai conventions)
-                pcall(function()
-                    pcall(shlib.writeYabaiState)
-                end)
+                core.sh("yabai -m space --layout " .. next)
+                osd.show("Layout: " .. (next == "bsp" and "BSP" or "Stack"))
                 -- immediately update local state/UI (do not wait for yabai signal)
                 state.layout = next
                 local spacePart
@@ -202,8 +196,8 @@ buildMenu = function()
             hs.timer.doAfter(0.01, function()
                 local current = state.drop
                 local next = (current == "swap") and "stack" or "swap"
-                shlib.sh("yabai -m config mouse_drop_action " .. next)
-                pcall(shlib.writeYabaiState)
+                core.sh("yabai -m config mouse_drop_action " .. next)
+                osd.show("Drop: " .. (next == "stack" and "Stack" or "Swap"))
                 state.drop = next
                 local tip = string.format(
                     "Layout: %s • Gaps: %s • Drop: %s • Opacity: %s",
@@ -223,16 +217,12 @@ buildMenu = function()
             hs.timer.doAfter(0.01, function()
                 local current = state.gaps
                 if current then
-                    shlib.sh("yabai -m config top_padding 0; yabai -m config bottom_padding 0; yabai -m config left_padding 0; yabai -m config right_padding 0; yabai -m config window_gap 0; yabai -m config external_bar all:0:0")
-                    pcall(function()
-                        pcall(shlib.writeYabaiState)
-                    end)
+                    core.sh("yabai -m config top_padding 0; yabai -m config bottom_padding 0; yabai -m config left_padding 0; yabai -m config right_padding 0; yabai -m config window_gap 0; yabai -m config external_bar all:0:0")
+                    osd.show("Gaps: Disabled")
                     state.gaps = false
                 else
-                    shlib.sh("yabai -m config top_padding 4; yabai -m config bottom_padding 4; yabai -m config left_padding 4; yabai -m config right_padding 4; yabai -m config window_gap 4; yabai -m config external_bar all:4:4")
-                    pcall(function()
-                        pcall(shlib.writeYabaiState)
-                    end)
+                    core.sh("yabai -m config top_padding 4; yabai -m config bottom_padding 4; yabai -m config left_padding 4; yabai -m config right_padding 4; yabai -m config window_gap 4; yabai -m config external_bar all:4:4")
+                    osd.show("Gaps: Enabled")
                     state.gaps = true
                 end
                 local spacePart
@@ -262,11 +252,9 @@ buildMenu = function()
         fn = function()
             hs.timer.doAfter(0.01, function()
                 local next = state.opacity and "off" or "on"
-                shlib.sh("yabai -m config window_opacity " .. next)
+                core.sh("yabai -m config window_opacity " .. next)
+                osd.show("Opacity: " .. (next == "on" and "Enabled" or "Disabled"))
                 state.opacity = (next == "on")
-                pcall(function()
-                    pcall(shlib.writeYabaiState)
-                end)
                 local spacePart
                 if state.idx then
                     if state.label and #state.label > 0 then
@@ -288,27 +276,6 @@ buildMenu = function()
         end,
     })
 
-    table.insert(items, { title = "-" })
-    table.insert(items, { title = "Automations", disabled = true })
-
-    local function toggleItem(label, key)
-    return {
-        title   = string.format("%s %s", label, autom.isEnabled(key) and "✓" or " "),
-        fn      = function() autom.toggle(key); menubar:setMenu(buildMenu) end
-    }
-    end
-
-    table.insert(items, toggleItem("Auto-unzip (Downloads)", "unzip"))
-    table.insert(items, toggleItem("WEBP → PNG (Downloads)", "webp2png"))
-    table.insert(items, {
-    title = "Install DMGs",
-    menu = {
-        { title = "Off",  checked = autom.getDmgMode()=="off",  fn = function() autom.setDmgMode("off");  menubar:setMenu(buildMenu) end },
-        { title = "Ask",  checked = autom.getDmgMode()=="ask",  fn = function() autom.setDmgMode("ask");  menubar:setMenu(buildMenu) end },
-        { title = "Auto (allow-list)", checked = autom.getDmgMode()=="auto", fn = function() autom.setDmgMode("auto"); menubar:setMenu(buildMenu) end },
-    },
-})
-
     table.insert(
         items,
         { title = "Darwin Rebuild", image = assetImage("forge-rebuild", { w = 18, h = 18 }, false), fn = darwinRebuild }
@@ -320,8 +287,8 @@ buildMenu = function()
     table.insert(
         items,
         serviceItem("yabai", "yabai", function()
-            auto.restartYabai()
-            osd.show("Restarted: yabai", { duration = 0.9 })
+            config_reload.restartYabai()
+            osd.show("Restarted: yabai")
         end)
     )
 
@@ -329,8 +296,8 @@ buildMenu = function()
     table.insert(
         items,
         serviceItem("skhd", "skhd", function()
-            auto.reloadSkhd()
-            osd.show("Restarted: skhd", { duration = 0.9 })
+            config_reload.reloadSkhd()
+            osd.show("Restarted: skhd")
         end)
     )
 
@@ -338,8 +305,8 @@ buildMenu = function()
     table.insert(
         items,
         serviceItem("goku", "goku", function()
-            auto.restartGoku()
-            osd.show("Restarted: goku", { duration = 0.9 })
+            config_reload.restartGoku()
+            osd.show("Restarted: goku")
         end)
     )
 
@@ -348,7 +315,7 @@ buildMenu = function()
         items,
         serviceItem("karabiner-elements", "karabiner", function()
             restartKarabiner()
-            osd.show("Restarted: Karabiner", { duration = 0.9 })
+            osd.show("Restarted: Karabiner")
         end)
     )
     -- Karabiner convenience actions (open settings and EventViewer like the menubar)
@@ -375,7 +342,7 @@ buildMenu = function()
         title = "Hammerspoon (reload)",
         image = assetImage("hammerspoon-reload", { w = 18, h = 18 }, false),
         fn = function()
-            osd.show("Reloading Hammerspoon…", { duration = 0.6 })
+            osd.show("Reloading Hammerspoon…")
             hs.reload()
         end,
     })
