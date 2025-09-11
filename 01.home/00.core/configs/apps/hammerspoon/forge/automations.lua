@@ -36,13 +36,6 @@ local function ext(p) return (p:lower():match("%.([a-z0-9]+)$") or "") end
 local function base(p) return (p:gsub("/+$",""):match("([^/]+)$") or p) end
 local function dirname(p) return (p:match("^(.*)/[^/]+$") or ".") end
 
-local function isRecentlyCreated(path)
-  local attrs = hs.fs.attributes(path)
-  if not attrs then return false end
-  local now = hs.timer.secondsSinceEpoch()
-  return (now - attrs.creation) < 300 -- 5 minutes
-end
-
 local function stableAfter(path, ms, fn)
   if not exists(path) then return end
   local s0 = sizeOf(path)
@@ -130,7 +123,7 @@ local function startWatcher(key, paths, callback)
   if watchers[key] then return end
   local function onChange(files, _)
     for _, f in ipairs(files) do
-      if exists(f) and not shouldIgnore(f) and isRecentlyCreated(f) then
+      if exists(f) and not shouldIgnore(f) then
         stableAfter(f, 800, function() callback(f) end)
       end
     end

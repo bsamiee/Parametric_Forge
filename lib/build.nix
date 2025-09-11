@@ -54,9 +54,9 @@ let
       # Check known executable config names
       isExecConfig = lib.any (name: filename == name) executableConfigs;
 
-      # Check for shebang pattern (only on potentially text files to avoid binary read errors)
+      # Check for shebang pattern (if file exists and is readable)
       hasShebang =
-        if builtins.pathExists sourcePath && !lib.hasSuffix ".png" filename && !lib.hasSuffix ".jpg" filename && !lib.hasSuffix ".jpeg" filename && !lib.hasSuffix ".gif" filename && !lib.hasSuffix ".ico" filename then
+        if builtins.pathExists sourcePath then
           let
             content = builtins.readFile sourcePath;
             firstLine = lib.head (lib.splitString "\n" content);

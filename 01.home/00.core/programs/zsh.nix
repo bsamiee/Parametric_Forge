@@ -137,9 +137,6 @@
         typeset -U path PATH
         mkdir -p "${config.xdg.cacheHome}/zsh" "${config.xdg.stateHome}/zsh"
 
-        # Generate LS_COLORS using vivid (proper Dracula theme)
-        command -v vivid >/dev/null 2>&1 && export LS_COLORS="$(vivid generate dracula)"
-
         # Context-aware optimizations
         [[ -n "$NVIM$VSCODE_PID" ]] && { zstyle ':completion:*' max-matches-width 0; zstyle ':completion:*' max-matches 10; }
         [[ -n "$SSH_CLIENT$SSH_TTY" ]] && { HISTSIZE=10000; SAVEHIST=10000; }

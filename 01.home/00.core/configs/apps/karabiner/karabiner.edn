@@ -59,13 +59,6 @@
    :rules [
     ;; Example per-app rule (uncomment and define :applications below):
     ;; [:!CT1 [:yabai "space --focus 1"] :vscode]
-   ]}
-
-  ;; SYSTEM OVERRIDES — Disable system shortcuts for custom implementations  
-  {:des  "CMD+TAB Override — Disable system app switcher for Hammerspoon window picker"
-   :rules [
-    ;; Disable CMD+TAB system shortcut and send to Hammerspoon
-    [:!Ctab "/usr/bin/open -g 'hammerspoon://window_picker?show'"]
    ]}]
 
  ;; Placeholders for future per-app conditions

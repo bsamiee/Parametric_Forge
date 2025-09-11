@@ -7,8 +7,7 @@
       "Bash(pgrep:*)",
       "Bash(launchctl:*)",
       "Read(//Users/bardiasamiee/Library/LaunchAgents/**)",
-      "WebFetch(domain:github.com)",
-      "Bash(sudo darwin-rebuild switch:*)"
+      "WebFetch(domain:github.com)"
     ],
     "deny": [],
     "ask": []

@@ -28,6 +28,7 @@ end
 
 -- Load helpers early
 local osd = require("forge.osd")
+-- Load helpers early
 -- Clear any stale persistent overlays from previous sessions
 pcall(function()
     osd.hideAllPersistent()
@@ -37,13 +38,10 @@ end)
 pcall(function()
     local ok, ipc = pcall(require, "hs.ipc")
     if ok and ipc and type(ipc.cliInstall) == "function" then
-        -- Install to /usr/local/bin for skhd compatibility
-        ipc.cliInstall("/usr/local")
+        -- Try default location first; avoid noisy logs if already installed
+        ipc.cliInstall()
     end
 end)
-
--- Load core modules early to avoid undefined references
-local core = require("forge.core")
 
 -- --- Yabai helpers (no hard dependency if not installed) --------------------
 local function yabai(cmd)
@@ -110,8 +108,8 @@ forge = {
 -- Start core modules
 local config_reload = require("forge.config_reload")
 local events = require("forge.events")
+local core = require("forge.core")
 local integ = require("forge.integration")
-local window_picker = require("forge.window_picker")
 -- Load modules for side effects (register handlers, etc.)
 
 -- Step 1: start in dry-run (can be switched off after verification)
@@ -131,16 +129,5 @@ require("forge.menu_automations").start()
 require("forge.space_indicator").start()
 require("forge.caffeine").start()
 require("forge.automations").start()
-
--- URL scheme handlers for Karabiner integration
-hs.urlevent.bind("window_picker", function(eventName, params)
-    if eventName == "show" then
-        window_picker.show()
-    end
-end)
-
-hs.urlevent.bind("forge/leader", function(eventName, params)
-    core.leader.track(params.name, params.down)
-end)
 
 log.i("Hammerspoon ready")

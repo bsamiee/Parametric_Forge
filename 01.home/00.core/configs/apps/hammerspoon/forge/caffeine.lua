@@ -74,7 +74,12 @@ local function setEnabled(on)
         setIcon(on)
         menubar:setTooltip(on and "Caffeine: Display awake" or "Caffeine: Off")
     end
-    osd.show(on and "Caffeine: ON" or "Caffeine: OFF")
+    -- Use unified OSD helper
+    if osd and type(osd.notifyCaffeine) == "function" then
+        osd.notifyCaffeine(on)
+    else
+        osd.show(on and "Caffeine: ON" or "Caffeine: OFF")
+    end
 end
 
 local function toggle()

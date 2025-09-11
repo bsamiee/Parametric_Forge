@@ -27,6 +27,10 @@ GRID_TOP_LEFT_QUARTER="2:2:0:0:1:1"
 GRID_TOP_RIGHT_QUARTER="2:2:1:0:1:1"
 GRID_BOTTOM_LEFT_QUARTER="2:2:0:1:1:1"
 GRID_BOTTOM_RIGHT_QUARTER="2:2:1:1:1:1"
+GRID_TOP_BAND="2:6:1:0:4:1"
+# Bottom band on a 6x6 grid, lifted one row above the bottom edge
+# Keeps symmetric left/right margins (start at col 1, width 4 of 6)
+GRID_BOTTOM_BAND="6:6:1:4:4:1"
 GRID_CENTER="6:6:1:1:4:4"
 
 # --- CLI (wrapped in main, called only when executed) ----------------------
@@ -59,8 +63,8 @@ main() {
     top_right_quarter) GRID=$GRID_TOP_RIGHT_QUARTER ;;
     bottom_left_quarter) GRID=$GRID_BOTTOM_LEFT_QUARTER ;;
     bottom_right_quarter) GRID=$GRID_BOTTOM_RIGHT_QUARTER ;;
-    top) GRID=$GRID_RIGHT_HALF ;;
-    bottom) GRID=$GRID_RIGHT_HALF ;;
+    top) GRID=$GRID_TOP_BAND ;;
+    bottom) GRID=$GRID_BOTTOM_BAND ;;
     center) GRID=$GRID_CENTER ;;
     *) echo "unknown anchor: $ANCHOR" >&2; exit 65 ;;
   esac

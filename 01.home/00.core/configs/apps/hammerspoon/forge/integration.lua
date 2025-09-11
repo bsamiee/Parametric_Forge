@@ -76,27 +76,6 @@ function M.watchYabaiState()
         -- Detect and notify on changes only (avoid duplicate OSD when toggled via menubar)
         local changed = false
 
-        -- Space navigation with workspace context
-        if data.idx and data.idx ~= last.idx then
-            last.idx = data.idx
-            local label = data.label and #data.label > 0 and data.label or nil
-            local message = label and ("Workspace: " .. label:upper()) or ("Space: " .. tostring(data.idx))
-            osd.show(message)
-            changed = true
-        end
-
-        -- Workspace persistent indicator (automatic, lower priority)
-        if data.label ~= last.label then
-            last.label = data.label
-            local label = data.label and #data.label > 0 and data.label or nil
-            if label then
-                osd.showPersistent("[ " .. label:upper() .. " ]", "workspace")
-            else
-                osd.hidePersistent("workspace")
-            end
-            changed = true
-        end
-
         -- Layout mode
         if data.mode and data.mode ~= last.mode then
             last.mode = data.mode

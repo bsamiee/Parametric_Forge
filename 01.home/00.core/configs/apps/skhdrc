@@ -8,7 +8,7 @@
 # Leaders defined in Karabiner: Hyper (⌘⌥⌃⇧), Super (⌘⌥⌃), Power (⌥⌃⇧)
 # State/feedback handled by Hammerspoon via yabai signals
 # shellcheck shell=bash
-# shellcheck disable=SC2288,SC2171,SC2211,SC2154,SC2210,SC2238  # skhd syntax: trailing ], * wildcard, app blocks, multiline vars, modal bindings
+# shellcheck disable=SC2288,SC2171,SC2211,SC2154  # skhd syntax: trailing ], * wildcard, app blocks, multiline vars
 
 # --- APPLICATION BLACKLIST --------------------------------------------------
 # Apps that handle their own shortcuts or need full keyboard access
@@ -26,11 +26,11 @@
 # Space management Superkey: cmd + ctrl + alt
 cmd + ctrl + alt - n : \
     "$HOME/.config/yabai/run-yabai.sh" -m space --create; \
-    index="$("$HOME/.config/yabai/run-yabai.sh" -m query --spaces --display | jq -r 'map(select(.["is-native-fullscreen"] == false)) | .[-1].index // empty')"; \
-    [[ -n "$index" ]] && "$HOME/.config/yabai/run-yabai.sh" -m space --focus "$index"
+    index="$("$HOME/.config/yabai/run-yabai.sh" -m query --spaces --display | jq 'map(select(.[\"is-native-fullscreen\"] == false))[-1].index')"; \
+    "$HOME/.config/yabai/run-yabai.sh" -m space --focus "$index"
 cmd + ctrl + alt - d : \
-    count="$("$HOME/.config/yabai/run-yabai.sh" -m query --spaces --display | jq -r 'map(select(.["is-native-fullscreen"] == false)) | length // 0')"; \
-    [[ "${count:-0}" -gt 1 ]] && "$HOME/.config/yabai/run-yabai.sh" -m space --destroy
+    count="$("$HOME/.config/yabai/run-yabai.sh" -m query --spaces --display | jq 'map(select(.[\"is-native-fullscreen\"] == false)) | length')"; \
+    [[ "$count" -gt 1 ]] && "$HOME/.config/yabai/run-yabai.sh" -m space --destroy
 
 
 # --- FLOATING WINDOW MODAL SYSTEM ------------------------------------------
@@ -39,7 +39,7 @@ cmd + ctrl + alt - d : \
 :: float @ :
 
 # Enter float mode
-shift + cmd - return : echo 'require("forge.osd").showPersistent("[ FLOAT MODE ACTIVE ]", "modal")' | hs ; float
+shift + cmd - return ; float
 
 # Float mode bindings
 float < left  : "$HOME/.config/yabai/grid-anchors.sh" left_half --float && echo 'require("forge.osd").show("Float: Left Half")' | hs ; skhd -k "escape"
@@ -63,8 +63,8 @@ float < c : "$HOME/.config/yabai/grid-anchors.sh" center --float && echo 'requir
 float < f : "$HOME/.config/yabai/grid-anchors.sh" full --float   && echo 'require("forge.osd").show("Float: Full")'   | hs ; skhd -k "escape"
 
 # Exit
-float < escape : echo 'require("forge.osd").hidePersistent("modal"); require("forge.osd").show("Float Mode: Disabled")' | hs ; default
-float < return : echo 'require("forge.osd").hidePersistent("modal"); require("forge.osd").show("Float Mode: Disabled")' | hs ; default
+float < escape ; default
+float < return ; default
 
 # --- TIER 0: No leader: simple modifiers ------------------------------------
 
@@ -106,10 +106,6 @@ ctrl + alt + shift - 7 : "$HOME/.config/yabai/run-yabai.sh" -m space --focus 7
 ctrl + alt + shift - 8 : "$HOME/.config/yabai/run-yabai.sh" -m space --focus 8
 ctrl + alt + shift - 9 : "$HOME/.config/yabai/run-yabai.sh" -m space --focus 9
 
-# Workspace navigation (direct access)
-ctrl + alt + shift - c : "$HOME/.config/yabai/run-yabai.sh" -m space --focus coding
-ctrl + alt + shift - d : "$HOME/.config/yabai/run-yabai.sh" -m space --focus design
-
 # Display focus - NOT BEING USED FOR NOW
 # ctrl + alt + shift - s : "$HOME/.config/yabai/run-yabai.sh" -m display --focus west
 # ctrl + alt + shift - g : "$HOME/.config/yabai/run-yabai.sh" -m display --focus east
@@ -132,10 +128,6 @@ cmd + ctrl + alt - 6 : "$HOME/.config/yabai/run-yabai.sh" -m window --space 6; "
 cmd + ctrl + alt - 7 : "$HOME/.config/yabai/run-yabai.sh" -m window --space 7; "$HOME/.config/yabai/run-yabai.sh" -m space --focus 7
 cmd + ctrl + alt - 8 : "$HOME/.config/yabai/run-yabai.sh" -m window --space 8; "$HOME/.config/yabai/run-yabai.sh" -m space --focus 8
 cmd + ctrl + alt - 9 : "$HOME/.config/yabai/run-yabai.sh" -m window --space 9; "$HOME/.config/yabai/run-yabai.sh" -m space --focus 9
-
-# Move window to workspace and follow
-cmd + ctrl + alt - c : "$HOME/.config/yabai/run-yabai.sh" -m window --space coding; "$HOME/.config/yabai/run-yabai.sh" -m space --focus coding
-cmd + ctrl + alt - d : "$HOME/.config/yabai/run-yabai.sh" -m window --space design; "$HOME/.config/yabai/run-yabai.sh" -m space --focus design
 
 # Move window to display and follow - NOT BEING USED FOR NOW
 # cmd + ctrl + alt - s : "$HOME/.config/yabai/run-yabai.sh" -m window --display west; "$HOME/.config/yabai/run-yabai.sh" -m display --focus west
@@ -162,8 +154,8 @@ cmd + ctrl + alt + shift - l : "$HOME/.config/yabai/run-yabai.sh" -m window --st
 
 # Layout controls
 cmd + ctrl + alt + shift - t : \
-    current="$("$HOME/.config/yabai/run-yabai.sh" -m query --spaces --space | jq -r '.type // "bsp"')"; \
-    if [[ "${current:-bsp}" == "bsp" ]]; then \
+    current="$("$HOME/.config/yabai/run-yabai.sh" -m query --spaces --space | jq -r '.type')"; \
+    if [[ "$current" == "bsp" ]]; then \
         "$HOME/.config/yabai/run-yabai.sh" -m space --layout stack; \
     else \
         "$HOME/.config/yabai/run-yabai.sh" -m space --layout bsp; \
@@ -176,8 +168,8 @@ cmd + ctrl + alt + shift - y : "$HOME/.config/yabai/run-yabai.sh" -m space --mir
 
 # Gaps toggle
 cmd + ctrl + alt + shift - g : \
-    current="$("$HOME/.config/yabai/run-yabai.sh" -m config top_padding 2>/dev/null || echo '0')"; \
-    if [[ "${current:-0}" -eq 0 ]]; then \
+    current="$("$HOME/.config/yabai/run-yabai.sh" -m config top_padding)"; \
+    if [[ "$current" == "0" ]]; then \
         "$HOME/.config/yabai/run-yabai.sh" -m config top_padding 4; \
         "$HOME/.config/yabai/run-yabai.sh" -m config bottom_padding 4; \
         "$HOME/.config/yabai/run-yabai.sh" -m config left_padding 4; \
@@ -196,8 +188,8 @@ cmd + ctrl + alt + shift - g : \
 
 # Mouse drop mode toggle
 cmd + ctrl + alt + shift - m : \
-    current="$("$HOME/.config/yabai/run-yabai.sh" -m config mouse_drop_action 2>/dev/null || echo 'swap')"; \
-    if [[ "${current:-swap}" == "swap" ]]; then \
+    current="$("$HOME/.config/yabai/run-yabai.sh" -m config mouse_drop_action)"; \
+    if [[ "$current" == "swap" ]]; then \
         "$HOME/.config/yabai/run-yabai.sh" -m config mouse_drop_action stack; \
     else \
         "$HOME/.config/yabai/run-yabai.sh" -m config mouse_drop_action swap; \
@@ -206,8 +198,8 @@ cmd + ctrl + alt + shift - m : \
 
 # Opacity toggle
 cmd + ctrl + alt + shift - o : \
-    current="$("$HOME/.config/yabai/run-yabai.sh" -m config window_opacity 2>/dev/null || echo 'off')"; \
-    if [[ "${current:-off}" == "on" ]]; then \
+    current="$("$HOME/.config/yabai/run-yabai.sh" -m config window_opacity)"; \
+    if [[ "$current" == "on" ]]; then \
         "$HOME/.config/yabai/run-yabai.sh" -m config window_opacity off; \
     else \
         "$HOME/.config/yabai/run-yabai.sh" -m config window_opacity on; \

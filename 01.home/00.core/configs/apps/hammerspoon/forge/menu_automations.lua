@@ -8,7 +8,6 @@
 -- Icons: use checked=true for now; suggest SF Symbols in README/output.
 
 local automations = require("forge.automations")
-local osd = require("forge.osd")
 local core = require("forge.core")
 local bus = core.bus
 
@@ -36,29 +35,6 @@ local function assetImage(name, size, useTemplate)
     imageCache[key] = img
   end
   return img
-end
-
--- Common Hammerspoon section builder (consistent with menu_services)
-local function hammerspoonSection()
-  return {
-    { title = "-" },
-    { title = "Hammerspoon", disabled = true },
-    {
-      title = "Hammerspoon (reload)",
-      image = assetImage("hammerspoon-reload", { w = 18, h = 18 }, false),
-      fn = function()
-        osd.show("Reloading Hammerspoon…")
-        hs.reload()
-      end,
-    },
-    {
-      title = "Hammerspoon Console",
-      image = assetImage("forge-menu", { w = 18, h = 18 }, false),
-      fn = function()
-        hs.openConsole()
-      end,
-    }
-  }
 end
 
 local function currentState()
@@ -115,10 +91,14 @@ local function buildMenu()
     end,
   })
 
-  -- Add common Hammerspoon section
-  for _, item in ipairs(hammerspoonSection()) do
-    table.insert(items, item)
-  end
+  table.insert(items, { title = "-" })
+  table.insert(items, {
+    title = "Hammerspoon Console",
+    image = assetImage("forge-menu", { w = 18, h = 18 }, false),
+    fn = function()
+      hs.openConsole()
+    end,
+  })
 
   return items
 end
