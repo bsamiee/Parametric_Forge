@@ -27,18 +27,22 @@ local yabai_bridge = require("integration.yabai_bridge")
 local automations = require("modules.automations")
 local caffeine = require("modules.caffeine")
 local space_indicator = require("modules.space_indicator")
+local space_notifications = require("modules.space_notifications")
 local services_menu = require("modules.services_menu")
 local automations_menu = require("modules.automations_menu")
+local window_manager = require("modules.window_manager")
 
 -- Initialize all systems
 local ok1 = pcall(yabai_bridge.init)
 local ok2 = pcall(automations.init)  
 local ok3 = pcall(caffeine.init)
 local ok4 = pcall(space_indicator.init)
-local ok5 = pcall(services_menu.init)
-local ok6 = pcall(automations_menu.init)
+local ok5 = pcall(space_notifications.init)
+local ok6 = pcall(services_menu.init)
+local ok7 = pcall(automations_menu.init)
+local ok8 = pcall(window_manager.init)
 
-if ok1 and ok2 and ok3 and ok4 and ok5 and ok6 then
+if ok1 and ok2 and ok3 and ok4 and ok5 and ok6 and ok7 and ok8 then
     canvas.show("HAMMERSPOON READY", 2.5)
     log.i("Hammerspoon foundation initialized")
 else

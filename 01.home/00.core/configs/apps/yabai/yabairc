@@ -75,9 +75,3 @@ yabai -m signal --add label=borders_on_dock_restart \
   event=dock_did_restart \
   action="restart_borders"
 
-# --- Space Change Notifications ---------------------------------------------
-yabai -m signal --add label=space_notification \
-  event=space_changed \
-  action="hs -c 'require(\"notifications.canvas\").show(\"SPACE \" .. os.getenv(\"YABAI_SPACE_INDEX\"))'"
-
-

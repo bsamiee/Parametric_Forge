@@ -13,7 +13,6 @@ local M = {}
 local canvas = nil
 local messages = {}
 local idCounter = 0
-local renderQueued = false
 
 -- Initialize canvas with proper settings
 local function ensureCanvas()
@@ -59,9 +58,6 @@ end
 
 -- Render current messages to canvas
 local function render()
-    if renderQueued then return end
-    renderQueued = true
-
     local c = ensureCanvas()
     cleanExpired()
 
@@ -127,8 +123,6 @@ local function render()
         c:replaceElements(table.unpack(elements))
     end
     c:show()
-
-    renderQueued = false
 end
 
 -- Public API

@@ -206,7 +206,7 @@
 
         # WezTerm integration
         [[ -n "$WEZTERM_PANE" ]] && {
-          _wezterm_set_user_var() { printf "\033]1337;SetUserVar=%s=%s\007" "$1" "$(echo -n "$2" | base64)"; }
+          _wezterm_set_user_var() { [[ -t 1 ]] && printf "\033]1337;SetUserVar=%s=%s\007" "$1" "$(echo -n "$2" | base64)"; }
           _wezterm_check_git() { git rev-parse --git-dir >/dev/null 2>&1 && _wezterm_set_user_var "IS_GIT_REPO" "true" || _wezterm_set_user_var "IS_GIT_REPO" "false"; }
           add-zsh-hook chpwd _wezterm_check_git
           add-zsh-hook precmd _wezterm_check_git

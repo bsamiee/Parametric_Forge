@@ -4,7 +4,7 @@
 -- License       : MIT
 -- Path          : /01.home/00.core/configs/apps/hammerspoon/modules/space_indicator.lua
 -- ----------------------------------------------------------------------------
--- Simple menubar space indicator using native hs.spaces.watcher
+-- Simple menubar space indicator using reliable hs.spaces.watcher (proven working pattern)
 
 local process = require("utils.process")
 local config = require("utils.config")
@@ -16,7 +16,7 @@ local log = hs.logger.new("space_indicator", hs.logger.info)
 local menuItem
 local spacesWatcher
 
--- Use shared colors from styles
+-- Use shared colors from styles (matching forge-backup pattern)
 local CYAN = styles.menubarColors.cyan
 local YELLOW = styles.menubarColors.yellow
 local WHITE = styles.menubarColors.white
@@ -24,14 +24,8 @@ local WHITE = styles.menubarColors.white
 local function updateDisplay()
     if not menuItem then return end
 
-    -- Check if yabai is running using our existing infrastructure
-    if not process.isRunning("yabai") then
-        menuItem:setTitle("[offline]")
-        return
-    end
-
-    -- Get current space info from yabai using shared config
-    local json = process.execute(config.getYabaiPath() .. " -m query --spaces 2>/dev/null", true)
+    -- Get current space info from yabai (using direct hs.execute like working version)
+    local json = hs.execute(config.getYabaiPath() .. " -m query --spaces 2>/dev/null", true)
     if not json or not json:match("^%s*%[") then
         menuItem:setTitle("[?]")
         return
@@ -67,17 +61,19 @@ local function updateDisplay()
     end
     table.sort(displaySpaces, function(a, b) return a.index < b.index end)
 
-    -- Build display: "1 2 [ 3 ] 4" with styled text
+    -- Build display: "1 2 [ 3 ] 4" with styled text (exact forge-backup pattern)
     if hs.styledtext then
         local styled = hs.styledtext.new("")
         for i, space in ipairs(displaySpaces) do
             local num = tostring(i)
 
             if space["has-focus"] then
+                -- Focused space: yellow brackets with spaces, cyan number
                 styled = styled .. hs.styledtext.new("[ ", YELLOW)
                 styled = styled .. hs.styledtext.new(num, CYAN)
                 styled = styled .. hs.styledtext.new(" ]", YELLOW)
             else
+                -- Inactive space: white number only
                 styled = styled .. hs.styledtext.new(num, WHITE)
             end
 
@@ -107,7 +103,7 @@ function M.init()
 
     menuItem:setTitle("[1]")
 
-    -- Use native hs.spaces.watcher directly
+    -- Watch for space changes using hs.spaces.watcher (proven working pattern from forge-backup)
     if hs.spaces and hs.spaces.watcher and hs.spaces.watcher.new then
         spacesWatcher = hs.spaces.watcher.new(updateDisplay)
         spacesWatcher:start()

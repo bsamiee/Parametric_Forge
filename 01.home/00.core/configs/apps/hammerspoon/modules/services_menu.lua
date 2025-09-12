@@ -26,22 +26,15 @@ end
 
 local function reloadSkhd()
     canvas.show("RESTARTING SKHD")
-    process.execute("launchctl unload ~/Library/LaunchAgents/com.koekeishiya.skhd.plist && launchctl load ~/Library/LaunchAgents/com.koekeishiya.skhd.plist", true)
+    local plist = config.getSkhdPlist()
+    process.execute("launchctl unload " .. plist .. " && launchctl load " .. plist, true)
     canvas.show("SKHD RESTARTED")
 end
 
 local function restartGoku()
     canvas.show("RESTARTING GOKU")
-    -- Find brew path
-    local brew = process.execute("command -v brew 2>/dev/null | head -n1 | tr -d '\n'", true)
-    if not brew or #brew == 0 then
-        if files.exists("/opt/homebrew/bin/brew") then
-            brew = "/opt/homebrew/bin/brew"
-        elseif files.exists("/usr/local/bin/brew") then
-            brew = "/usr/local/bin/brew"
-        end
-    end
-    if brew and #brew > 0 then
+    local brew = config.getBrewPath()
+    if brew then
         process.execute(string.format("'%s' services restart goku >/dev/null 2>&1 || '%s' services start goku >/dev/null 2>&1", brew, brew), true)
         canvas.show("GOKU RESTARTED")
     else
@@ -52,14 +45,14 @@ end
 local function restartKarabiner()
     canvas.show("RESTARTING KARABINER")
     -- Restart console user server without sudo
-    process.execute("/bin/launchctl kickstart -k gui/$UID org.pqrs.karabiner.karabiner_console_user_server || true", true)
+    process.execute("/bin/launchctl kickstart -k " .. config.getKarabinerConsoleService() .. " || true", true)
     -- Restart system grabber with passwordless sudo
-    process.execute("sudo -n /bin/launchctl kickstart -k system/org.pqrs.karabiner.karabiner_grabber || true", true)
+    process.execute("sudo -n /bin/launchctl kickstart -k " .. config.getKarabinerGrabberService() .. " || true", true)
     canvas.show("KARABINER RESTARTED")
 end
 
 local function darwinRebuild()
-    local flakeRoot = (os.getenv("HOME") or "") .. "/Documents/99.Github/Parametric_Forge"
+    local flakeRoot = config.getFlakeRoot()
     if not files.exists(flakeRoot .. "/flake.nix") then
         canvas.show("FLAKE.NIX NOT FOUND")
         return
@@ -100,7 +93,6 @@ local function buildMenu()
             title = "System",
             disabled = true
         },
-        { title = "-" },
         serviceItem("Darwin Rebuild", "forge-rebuild", darwinRebuild),
         { title = "-" },
         {
@@ -127,12 +119,12 @@ local function buildMenu()
             title = "Hammerspoon",
             disabled = true
         },
-        serviceItem("Hammerspoon Console", "forge-menu", function()
-            hs.openConsole()
-        end),
         serviceItem("Reload Hammerspoon", "hammerspoon-reload", function()
             canvas.show("HAMMERSPOON RELOADING")
             hs.reload()
+        end),
+        serviceItem("Hammerspoon Console", "forge-menu", function()
+            hs.openConsole()
         end)
     }
 end

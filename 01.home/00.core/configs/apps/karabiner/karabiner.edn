@@ -23,7 +23,7 @@
  ;; Optional shell templates (useful when adding app/window/hs actions later)
  :templates
  {:sh ["/usr/bin/env" "sh" "-lc" "%s"]
-  :yabai ["/usr/bin/env" "sh" "-lc" "yabai -m %s"]
+  :yabai ["/usr/bin/env" "sh" "-lc" "/opt/homebrew/bin/yabai -m %s"]
   :hs    ["/usr/bin/env" "open" "-g" "hammerspoon://%s"]}
 
  ;; Modifiers legend (for readability in rules)
@@ -36,14 +36,14 @@
  :main
 [{:des  "LEADERS — Right-side physical keys → chords"
    :rules [
-    ;; Right Command → Hyper (⌘⌥⌃⇧). We emit a left_shift with COT modifiers to get all four.
-    [:##right_command [[:hs "forge/leader?name=hyper&down=1"] :!COTSleft_shift] nil {:afterup [[:hs "forge/leader?name=hyper&down=0"]]}]
+    ;; Right Command → Hyper (⌘⌥⌃⇧). Pure key mapping, no shell commands
+    [:##right_command :!COTleft_shift]
 
     ;; Right Option → Super (⌘⌥⌃)
-    [:##right_option [[:hs "forge/leader?name=super&down=1"] :!CTleft_option] nil {:afterup [[:hs "forge/leader?name=super&down=0"]]}]
+    [:##right_option :!CTleft_option]
 
     ;; Right Shift → Power (⌥⌃⇧)
-    [:##right_shift [[:hs "forge/leader?name=power&down=1"] :!TSleft_option] nil {:afterup [[:hs "forge/leader?name=power&down=0"]]}]
+    [:##right_shift :!TSleft_option]
    ]}
 
   ;; LAYERS — add layer-based rules under :simlayers and here as needed.

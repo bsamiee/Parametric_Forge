@@ -9,8 +9,8 @@
 local M = {}
 
 function M.isRunning(processName)
-    local output = hs.execute("pgrep -x '" .. processName .. "' >/dev/null 2>&1; echo $?", true)
-    return output and output:match("^%s*0%s*$") ~= nil
+    local output, status = hs.execute("pgrep -x '" .. processName .. "'", true)
+    return status == true and output and output:match("%d+") ~= nil
 end
 
 function M.execute(command, waitForCompletion)

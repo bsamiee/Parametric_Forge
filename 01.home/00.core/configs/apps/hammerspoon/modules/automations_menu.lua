@@ -38,7 +38,6 @@ local function buildMenu()
             title = "File Automations",
             disabled = true
         },
-        { title = "-" },
         {
             title = "Auto Unzip: " .. (status.unzip and "Enabled" or "Disabled"),
             checked = status.unzip,
@@ -67,6 +66,10 @@ local function buildMenu()
             end
         },
         { title = "-" },
+        {
+            title = "Hammerspoon",
+            disabled = true
+        },
         {
             title = "Hammerspoon Console",
             image = assets.image("forge-menu", { w = 18, h = 18 }),
