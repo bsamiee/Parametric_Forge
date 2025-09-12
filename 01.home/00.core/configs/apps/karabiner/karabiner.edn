@@ -37,7 +37,7 @@
 [{:des  "LEADERS — Right-side physical keys → chords"
    :rules [
     ;; Right Command → Hyper (⌘⌥⌃⇧). We emit a left_shift with COT modifiers to get all four.
-    [:##right_command [[:hs "forge/leader?name=hyper&down=1"] :!COTleft_shift] nil {:afterup [[:hs "forge/leader?name=hyper&down=0"]]}]
+    [:##right_command [[:hs "forge/leader?name=hyper&down=1"] :!COTSleft_shift] nil {:afterup [[:hs "forge/leader?name=hyper&down=0"]]}]
 
     ;; Right Option → Super (⌘⌥⌃)
     [:##right_option [[:hs "forge/leader?name=super&down=1"] :!CTleft_option] nil {:afterup [[:hs "forge/leader?name=super&down=0"]]}]

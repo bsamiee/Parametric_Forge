@@ -12,9 +12,6 @@ local core = require("forge.core")
 local M = {}
 local log = hs.logger.new("forge.config_reload", hs.logger.info)
 
-local function sh(cmd)
-    return core.sh(cmd)
-end
 
 -- Debounced runners -------------------------------------------------------
 local pending = {}
@@ -35,12 +32,12 @@ end
 
 -- Restart helpers ---------------------------------------------------------
 local function restartYabai()
-    sh("pkill -f yabai; sleep 1; yabai --start-service || yabai &")
+    hs.execute("pkill -f yabai; sleep 1; yabai --start-service || yabai &", true)
     osd.show("Yabai restarted")
 end
 
 local function reloadSkhd()
-    sh("pkill -f skhd; sleep 1; skhd --start-service || skhd -c ~/.config/skhd/skhdrc &")
+    hs.execute("pkill -f skhd; sleep 1; skhd --start-service || skhd -c ~/.config/skhd/skhdrc &", true)
     osd.show("skhd reloaded")
 end
 
@@ -51,11 +48,8 @@ end
 
 -- Goku (Karabiner EDN watcher) restart/start via Homebrew services
 local function restartGoku()
-    local function sh(cmd)
-        return core.sh(cmd)
-    end
     -- Resolve brew path
-    local brew = sh("command -v brew 2>/dev/null | head -n1 | tr -d '\n'")
+    local brew = hs.execute("command -v brew 2>/dev/null | head -n1 | tr -d '\n'", true)
     if not brew or #brew == 0 then
         -- Common Homebrew locations
         if hs.fs.attributes("/opt/homebrew/bin/brew") then
@@ -69,13 +63,7 @@ local function restartGoku()
         return
     end
     -- Try restart, then start
-    sh(
-        string.format(
-            "'%s' services restart goku >/dev/null 2>&1 || '%s' services start goku >/dev/null 2>&1 || true",
-            brew,
-            brew
-        )
-    )
+    hs.execute(string.format("'%s' services restart goku >/dev/null 2>&1 || '%s' services start goku >/dev/null 2>&1 || true", brew, brew), true)
     osd.show("goku (watcher) restarted")
 end
 
@@ -140,8 +128,8 @@ end
 
 function M.start()
     local home = os.getenv("HOME")
-    -- Yabai configs (home)
-    addWatcher({ home .. "/.config/yabai/" }, "yabai", restartYabai)
+    -- Yabai config file only
+    addWatcher({ home .. "/.config/yabai/yabairc" }, "yabai", restartYabai)
 
     -- skhd config (home)
     addWatcher({ home .. "/.config/skhd/" }, "skhd", reloadSkhd)

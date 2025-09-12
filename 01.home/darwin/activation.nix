@@ -346,42 +346,12 @@
         echo "  [WARN] Source init.lua not found: $SOURCE_INIT"
       fi
 
+      echo "  [INFO] forge/ managed by home-manager (read-only symlinks)"
       echo "[Parametric Forge] Hammerspoon init.lua deployment complete"
     '';
 
-    # --- Hammerspoon Forge/Assets Deployment -------------------------------
-    hammerspoonForgeDeployment = lib.hm.dag.entryAfter [ "hammerspoonInitDeployment" ] ''
-      echo "[Parametric Forge] Deploying Hammerspoon forge modules and assets..."
-
-      HS_DIR="${config.home.homeDirectory}/.hammerspoon"
-      SRC_BASE="${config.home.homeDirectory}/Documents/99.Github/Parametric_Forge/01.home/00.core/configs/apps/hammerspoon"
-
-      mkdir -p "$HS_DIR/forge" "$HS_DIR/assets"
-
-      # Copy forge modules (overwrite with writable files) — include all Lua modules
-      for src in "$SRC_BASE"/forge/*.lua; do
-        [ -f "$src" ] || continue
-        f="$(basename "$src")"
-        cp "$src" "$HS_DIR/forge/$f"
-        chmod 644 "$HS_DIR/forge/$f"
-      done
-
-      # Copy assets directory (images for menubar)
-      if [ -d "$SRC_BASE/assets" ]; then
-        if command -v rsync >/dev/null 2>&1; then
-          rsync -a --delete "$SRC_BASE/assets/" "$HS_DIR/assets/"
-        else
-          # Fallback to cp -R if rsync is unavailable
-          rm -rf "$HS_DIR/assets"/*
-          cp -R "$SRC_BASE/assets/." "$HS_DIR/assets/"
-        fi
-      fi
-
-      echo "[Parametric Forge] Hammerspoon forge/assets deployment complete"
-    '';
-
     # --- Karabiner assets (complex modifications) --------------------------
-    karabinerAssetsDeployment = lib.hm.dag.entryAfter [ "karabinerDeployment" ] ''
+    karabinerAssetsDeployment = lib.hm.dag.entryAfter [ "hammerspoonInitDeployment" ] ''
       echo "[Parametric Forge] Deploying Karabiner complex modifications..."
       SRC_JSON="${config.home.homeDirectory}/Documents/99.Github/Parametric_Forge/01.home/00.core/configs/apps/karabiner/assets/complex_modifications/parametric-forge.json"
       DEST_DIR="${config.xdg.configHome}/karabiner/assets/complex_modifications"

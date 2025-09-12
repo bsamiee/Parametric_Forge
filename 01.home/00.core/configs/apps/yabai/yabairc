@@ -5,217 +5,79 @@
 # License       : MIT
 # Path          : /01.home/00.core/configs/apps/yabai/yabairc
 # ----------------------------------------------------------------------------
-# Clean yabai window manager configuration
+# Primary yabai window manager configuration
+# shellcheck disable=SC1091
 
 set -eu
 
-# --- preflight --------------------------------------------------------------
-command -v yabai >/dev/null 2>&1 || {
-  echo "ERROR: yabai not found in PATH" >&2
-  exit 1
-}
+# --- Sourcing ---------------------------------------------------------------
+. "$HOME/.config/yabai/rules.sh"
 
-# --- paths & tools ----------------------------------------------------------
-find_bin() {
-  name="$1"
-  cand=""
-  if command -v "$name" >/dev/null 2>&1; then
-    cand="$(command -v "$name")"
-  fi
-  if [ -n "$cand" ] && [ -x "$cand" ]; then
-    echo "$cand"
-    return 0
-  fi
-  for cand in "/run/current-system/sw/bin/$name" "/opt/homebrew/bin/$name" "/usr/local/bin/$name"; do
-    [ -x "$cand" ] && {
-      echo "$cand"
-      return 0
-    }
-  done
-  echo "$name"
-}
+# --- Scripting Addition -----------------------------------------------------
+sudo /opt/homebrew/bin/yabai --load-sa 2>/dev/null && SA_LOADED=true || SA_LOADED=false
+yabai -m signal --remove reload_sa >/dev/null 2>&1 || true
+[ "$SA_LOADED" = true ] && yabai -m signal --add event=dock_did_restart action="sudo /opt/homebrew/bin/yabai --load-sa" label=reload_sa
 
-YABAI_BIN="$(find_bin yabai)"
-# shellcheck disable=SC2034  # Used by sourced modules
-JQ_BIN="$(find_bin jq)"
+# --- Configuration ----------------------------------------------------------
 
-# For scripting-addition, prefer Homebrew path to match sudoers
-if [ -x "/opt/homebrew/bin/yabai" ]; then
-  YABAI_SA_BIN="/opt/homebrew/bin/yabai"
-else
-  YABAI_SA_BIN="$YABAI_BIN"
-fi
-
-# timeout/gtimeout for robust SA load
-if command -v timeout >/dev/null 2>&1; then
-  TIMEOUT_BIN="$(command -v timeout)"
-elif command -v gtimeout >/dev/null 2>&1; then
-  TIMEOUT_BIN="$(command -v gtimeout)"
-else
-  TIMEOUT_BIN=""
-fi
-
-# --- anchors: load ----------------------------------------------------------
-# Source anchor presets so variables like $GRID_RIGHT_HALF are available.
-# Look alongside this file and within XDG config.
-ANCHORS_LOADED=0
-_YABRC_DIR_CAND="$(dirname "$0" 2>/dev/null || printf .)"
-_XDG_CFG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/yabai"
-for _cand in \
-  "$_YABRC_DIR_CAND/grid-anchors.sh" \
-  "$_XDG_CFG_DIR/grid-anchors.sh"; do
-  if [ -r "$_cand" ]; then
-    # shellcheck source=/dev/null
-    . "$_cand"
-    ANCHORS_LOADED=1
-    break
-  fi
-done
-[ "$ANCHORS_LOADED" = 1 ] || echo "yabai: grid-anchors.sh not found; grid variables unavailable" >&2
-
-# --- scripting addition -----------------------------------------------------
-SA_LOADED=false
-if [ -n "$TIMEOUT_BIN" ]; then
-  if "$TIMEOUT_BIN" 10s sudo "$YABAI_SA_BIN" --load-sa 2>/dev/null; then
-    SA_LOADED=true
-  fi
-else
-  if sudo "$YABAI_SA_BIN" --load-sa 2>/dev/null; then
-    SA_LOADED=true
-  fi
-fi
-
-if [ "$SA_LOADED" = true ]; then
-  # ensure Dock restart reloads SA
-  "$YABAI_BIN" -m signal --remove reload_sa >/dev/null 2>&1 || true
-  "$YABAI_BIN" -m signal --add event=dock_did_restart action="sudo $YABAI_SA_BIN --load-sa" label=reload_sa
-else
-  echo "yabai: scripting-addition not loaded; advanced features disabled" >&2
-fi
-
-# --- config: core -----------------------------------------------------------
-# enable with: YABAI_DEBUG=1 yabai --start-service
-if [ "${YABAI_DEBUG:-0}" = "1" ]; then
-  "$YABAI_BIN" -m config debug_output on
-else
-  "$YABAI_BIN" -m config debug_output off
-fi
-
-# insertion/origin policies
-"$YABAI_BIN" -m config window_insertion_point focused \
+# Core Configuration
+yabai -m config window_insertion_point focused \
   window_origin_display cursor
 
-# --- config: layout & spacing ----------------------------------------------
-"$YABAI_BIN" -m config layout bsp \
+# Layout Configuration
+yabai -m config layout bsp \
   split_ratio 0.50 \
   auto_balance on \
   top_padding 4 \
   bottom_padding 4 \
   left_padding 4 \
   right_padding 4 \
-  window_gap 4
-
-# integrate with any external bar or to ensure grid-placed windows respect top/bottom padding
-# reserve the same top/bottom as our default padding (4)
-"$YABAI_BIN" -m config external_bar all:4:4 \
+  window_gap 4 \
+  external_bar all:4:4 \
   menubar_opacity 1.0
 
-# --- config: appearance -----------------------------------------------------
-if [ "$SA_LOADED" = true ]; then
-  "$YABAI_BIN" -m config window_opacity on \
-    active_window_opacity 0.95 \
-    normal_window_opacity 0.80 \
-    window_opacity_duration 0.25 \
-    window_shadow on \
-    window_animation_duration 0.0
-else
-  # Avoid setting SA-required options when scripting-addition is not available
-  # window_opacity/window_shadow/window_animation_duration require SIP partial
-  # and/or screen recording; skip to prevent noisy errors.
-  true
-fi
-
-  "$YABAI_BIN" -m config insert_feedback_color 0xff50fa7b \
+# Appearance Configuration
+yabai -m config window_opacity on \
+  active_window_opacity 0.95 \
+  normal_window_opacity 0.80 \
+  window_opacity_duration 0.25 \
+  window_shadow on \
+  window_animation_duration 0.15 \
+  window_animation_easing ease_in_out_cubic \
+  insert_feedback_color 0xff50fa7b \
   window_zoom_persist on
 
-# --- config: mouse ----------------------------------------------------------
-"$YABAI_BIN" -m config focus_follows_mouse off \
+# Mouse Configuration
+yabai -m config focus_follows_mouse off \
   mouse_follows_focus off \
   mouse_modifier alt \
   mouse_action1 move \
   mouse_action2 resize \
   mouse_drop_action swap
 
-# --- module: rules & signals load -----------------------------------------
-# Source rules & signals module after core config and anchors are loaded
-RULES_LOADED=0
-_YABRC_DIR_CAND="$(dirname "$0" 2>/dev/null || printf .)"
-_XDG_CFG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/yabai"
-for _cand in \
-  "$_YABRC_DIR_CAND/rules-signals.sh" \
-  "$_XDG_CFG_DIR/rules-signals.sh"; do
-  if [ -r "$_cand" ]; then
-    # shellcheck source=/dev/null
-    . "$_cand"
-    RULES_LOADED=1
-    break
-  fi
-done
-[ "$RULES_LOADED" = 1 ] || echo "yabai: rules-signals.sh not found; skipping rules/signals" >&2
-
-# --- external borders: managed by yabai (start once, no auto-restart) ------
-# Use ~/.config/borders/bordersrc as the single source of truth.
-# Start a single instance if not already running. Do NOT tie to Dock restarts.
+# --- Jankyborders Management ------------------------------------------------
 BORDERS_RC="${XDG_CONFIG_HOME:-$HOME/.config}/borders/bordersrc"
-if [ -x "$BORDERS_RC" ]; then
+if ! pgrep -x borders >/dev/null 2>&1; then
+  "$BORDERS_RC" >/dev/null 2>&1 &
+fi
+
+restart_borders() {
   if ! pgrep -x borders >/dev/null 2>&1; then
-    PATH="/opt/homebrew/bin:/usr/local/bin:/run/current-system/sw/bin:$PATH" "$BORDERS_RC" >/dev/null 2>&1 &
+    "$BORDERS_RC" >/dev/null 2>&1 &
   fi
-  # Remove any legacy restart signal to avoid repeated prompts
-  "$YABAI_BIN" -m signal --remove restart_borders >/dev/null 2>&1 || true
-else
-  echo "yabai: bordersrc not found or not executable: $BORDERS_RC" >&2
-fi
+}
 
-# On Dock restart, reload SA (above) and ensure borders is running (start only if missing)
-"$YABAI_BIN" -m signal --remove borders_on_dock_restart >/dev/null 2>&1 || true
-"$YABAI_BIN" -m signal --add label=borders_on_dock_restart \
+yabai -m signal --add label=restart_borders \
+  event=application_terminated app="borders" \
+  action="restart_borders"
+
+yabai -m signal --add label=borders_on_dock_restart \
   event=dock_did_restart \
-  action="PATH='/opt/homebrew/bin:/usr/local/bin:/run/current-system/sw/bin:'\$PATH; if ! pgrep -x borders >/dev/null 2>&1; then \"$BORDERS_RC\" >/dev/null 2>&1 & fi" \
-  || true
+  action="restart_borders"
 
-# --- seed consolidated state file for Hammerspoon -------------------------
-TMP=${TMPDIR:-/tmp}
-STATE_FILE="$TMP/yabai_state.json"
+# --- Space Change Notifications ---------------------------------------------
+yabai -m signal --add label=space_notification \
+  event=space_changed \
+  action="hs -c 'require(\"notifications.canvas\").show(\"SPACE \" .. os.getenv(\"YABAI_SPACE_INDEX\"))'"
 
-# Generate complete state atomically (include space label)
-if command -v "$JQ_BIN" >/dev/null 2>&1; then
-  SPACE_JSON="$($YABAI_BIN -m query --spaces --space 2>/dev/null || printf '')"
-  MODE="$(printf %s "$SPACE_JSON" | "$JQ_BIN" -r '.type // "?"' 2>/dev/null || printf '?')"
-  IDX="$(printf %s "$SPACE_JSON" | "$JQ_BIN" -r '.index // 0' 2>/dev/null || printf '0')"
-  LABEL="$(printf %s "$SPACE_JSON" | "$JQ_BIN" -r '.label // ""' 2>/dev/null || printf '')"
-else
-  MODE="?"; IDX="0"; LABEL=""
-fi
-GAPS="$($YABAI_BIN -m config top_padding | tr -d '\n' 2>/dev/null || printf '0')"
-DROP="$($YABAI_BIN -m config mouse_drop_action | tr -d '\n' 2>/dev/null || printf 'swap')"; [ -z "$DROP" ] && DROP=swap
-OP="$($YABAI_BIN -m config window_opacity | tr -d '\n' 2>/dev/null || printf 'off')"
-SA="no"; [ "$SA_LOADED" = true ] && SA="yes"
 
-# Write complete consolidated state
-printf '{"mode":"%s","idx":%s,"label":"%s","gaps":%s,"drop":"%s","opacity":"%s","sa":"%s"}\n' \
-  "$MODE" "$IDX" "$LABEL" "$GAPS" "$DROP" "$OP" "$SA" > "$STATE_FILE"
-
-# --- startup: diagnostics ---------------------------------------------------
-if "$YABAI_BIN" -m query --windows >/dev/null 2>&1; then
-  # skhd status hint
-  if pgrep -x skhd >/dev/null 2>&1; then
-    echo "yabai: skhd active"
-  else
-    echo "yabai: skhd not running" >&2
-  fi
-  # SA-dependent visuals already configured above; avoid redundant reapply here
-  echo "yabai: ready"
-else
-  echo "yabai: configuration validation failed" >&2
-fi

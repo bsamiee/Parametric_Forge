@@ -98,19 +98,10 @@
       source = ./00.core/configs/apps/yabai/yabairc;
       executable = true;
     };
-    "yabai/grid-anchors.sh" = {
-      source = ./00.core/configs/apps/yabai/grid-anchors.sh;
+    "yabai/rules.sh" = {
+      source = ./00.core/configs/apps/yabai/rules.sh;
       executable = true;
     };
-    "yabai/rules-signals.sh" = {
-      source = ./00.core/configs/apps/yabai/rules-signals.sh;
-      executable = true;
-    };
-    "yabai/run-yabai.sh" = {
-      source = ./00.core/configs/apps/yabai/run-yabai.sh;
-      executable = true;
-    };
-
   };
 
    # --- Home Files (Non-XDG) -------------------------------------------------
@@ -135,10 +126,16 @@
     # --- Terminal Web Browser (w3m) -----------------------------------------
     ".w3m/config".source = ./00.core/configs/apps/w3m/config;
     ".w3m/keymap".source = ./00.core/configs/apps/w3m/keymap;
-    # --- Hammerspoon Configuration (moved to activation to avoid symlinks) ---
-    # init.lua and forge/* + assets deployed via activation scripts
-    # --- Karabiner/Goku Configuration (deployed via activation script) ---
-  };
+    # --- Hammerspoon Configuration ---------------------------------------------
+    # Note: init.lua deployed via activation (needs to be writable)
+    # New foundation modules deployed here via home-manager using fixed deployDir
+  }
+  # Deploy Hammerspoon new foundation directories using lib/build.nix
+  // (myLib.build.deployDir ./00.core/configs/apps/hammerspoon/notifications ".hammerspoon/notifications")
+  // (myLib.build.deployDir ./00.core/configs/apps/hammerspoon/utils ".hammerspoon/utils")
+  // (myLib.build.deployDir ./00.core/configs/apps/hammerspoon/modules ".hammerspoon/modules")
+  // (myLib.build.deployDir ./00.core/configs/apps/hammerspoon/integration ".hammerspoon/integration")
+  // (myLib.build.deployDir ./00.core/configs/apps/hammerspoon/assets ".hammerspoon/assets");
 
   # --- Asset Bin Scripts (Added to PATH) -----------------------------------
   home.packages =

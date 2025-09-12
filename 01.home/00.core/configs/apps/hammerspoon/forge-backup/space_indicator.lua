@@ -23,7 +23,7 @@ local function updateDisplay()
   if not menuItem then return end
 
   -- Get current space info from yabai
-  local json = core.yabai("query --spaces 2>/dev/null")
+  local json = hs.execute("/opt/homebrew/bin/yabai -m query --spaces 2>/dev/null", true)
   if not json or not json:match("^%s*%[") then
     menuItem:setTitle("[?]")
     return
