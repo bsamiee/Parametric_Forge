@@ -68,10 +68,10 @@ local function updateDisplay()
             local num = tostring(i)
 
             if space["has-focus"] then
-                -- Focused space: yellow brackets with spaces, cyan number
-                styled = styled .. hs.styledtext.new("[ ", YELLOW)
+                -- Focused space: compact brackets, cyan number
+                styled = styled .. hs.styledtext.new("[", YELLOW)
                 styled = styled .. hs.styledtext.new(num, CYAN)
-                styled = styled .. hs.styledtext.new(" ]", YELLOW)
+                styled = styled .. hs.styledtext.new("]", YELLOW)
             else
                 -- Inactive space: white number only
                 styled = styled .. hs.styledtext.new(num, WHITE)

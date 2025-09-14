@@ -19,35 +19,12 @@
   home.activation = {
     # --- Yazi Plugin Installation --------------------------------------------
     yaziPlugins = lib.hm.dag.entryAfter [ "installPackages" ] ''
-      # Ensure full system PATH is available + nix user packages
-      export PATH="$HOME/.nix-profile/bin:/run/current-system/sw/bin:/usr/bin:/bin:/usr/sbin:/sbin:$PATH"
-
-      # Auto-install/update Yazi plugins when package.toml changes
-      YAZI_CONFIG="${config.xdg.configHome}/yazi/package.toml"
-      YAZI_CACHE="${config.xdg.cacheHome}/yazi/plugins.sha256"
-
-      # Check if yazi is available
-      if command -v ya >/dev/null 2>&1; then
-        # Calculate current package.toml checksum
-        CURRENT_HASH=$(shasum -a 256 "$YAZI_CONFIG" | cut -d' ' -f1)
-        CACHED_HASH=$(cat "$YAZI_CACHE" 2>/dev/null || echo "")
-
-        # Install/update plugins only if package.toml changed
-        if [ "$CURRENT_HASH" != "$CACHED_HASH" ]; then
-          echo "[Yazi] Synchronizing plugins..."
-
-          # Install/update all plugins from package.toml with detailed error output
-          if ya pkg install 2>&1; then
-            echo "    [OK] Yazi plugins updated"
-            echo "$CURRENT_HASH" > "$YAZI_CACHE"
-          else
-            echo "    [WARN] Some plugins failed to install (see output above for details)"
-          fi
-        else
-          echo "[Yazi] Plugins up to date (config unchanged)"
-        fi
+      # Run the yazi plugin setup script (auto-deployed to PATH via file-management.nix)
+      if command -v yazi-setup-plugins.sh >/dev/null 2>&1; then
+        echo "[Yazi] Running plugin setup script..."
+        yazi-setup-plugins.sh install
       else
-        echo "[Yazi] Plugin manager 'ya' not found in PATH, skipping plugin installation"
+        echo "[Yazi] Plugin setup script not found - ensure system rebuild completed"
       fi
     '';
 

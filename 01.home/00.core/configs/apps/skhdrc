@@ -35,41 +35,7 @@
 # GRID_BOTTOM_RIGHT_QUARTER="2:2:1:1:1:1"
 # GRID_CENTER="6:6:1:1:4:4"
 
-# --- Floating Window Modal System -------------------------------------------
-
-# Define float mode
-:: float @ :
-
-# Enter float mode
-shift + cmd - return ; float
-
-# Exit float mode
-float < escape ; default
-float < return ; default
-
-# Float mode bindings
-float < left  : /opt/homebrew/bin/yabai -m window --grid 1:2:0:0:1:1 --manage off ; /opt/homebrew/bin/skhd -k "escape"
-float < down  : /opt/homebrew/bin/yabai -m window --grid 2:1:0:1:1:1 --manage off ; /opt/homebrew/bin/skhd -k "escape"
-float < up    : /opt/homebrew/bin/yabai -m window --grid 2:1:0:0:1:1 --manage off ; /opt/homebrew/bin/skhd -k "escape"
-float < right : /opt/homebrew/bin/yabai -m window --grid 1:2:1:0:1:1 --manage off ; /opt/homebrew/bin/skhd -k "escape"
-
-# Thirds
-float < q : /opt/homebrew/bin/yabai -m window --grid 1:3:0:0:1:1 --manage off ; /opt/homebrew/bin/skhd -k "escape"
-float < w : /opt/homebrew/bin/yabai -m window --grid 1:3:1:0:1:1 --manage off ; /opt/homebrew/bin/skhd -k "escape"
-float < e : /opt/homebrew/bin/yabai -m window --grid 1:3:2:0:1:1 --manage off ; /opt/homebrew/bin/skhd -k "escape"
-
-# Quarters
-float < 1 : /opt/homebrew/bin/yabai -m window --grid 2:2:0:0:1:1 --manage off ; /opt/homebrew/bin/skhd -k "escape"
-float < 2 : /opt/homebrew/bin/yabai -m window --grid 2:2:1:0:1:1 --manage off ; /opt/homebrew/bin/skhd -k "escape"
-float < 3 : /opt/homebrew/bin/yabai -m window --grid 2:2:0:1:1:1 --manage off ; /opt/homebrew/bin/skhd -k "escape"
-float < 4 : /opt/homebrew/bin/yabai -m window --grid 2:2:1:1:1:1 --manage off ; /opt/homebrew/bin/skhd -k "escape"
-
-# Center and full
-float < c : /opt/homebrew/bin/yabai -m window --grid 6:6:1:1:4:4 --manage off ; /opt/homebrew/bin/skhd -k "escape"
-float < f : /opt/homebrew/bin/yabai -m window --grid 1:1:0:0:1:1 --manage off ; /opt/homebrew/bin/skhd -k "escape"
-
 # --- TIER 0: No leader: simple modifiers ------------------------------------
-
 
 # --- TIER 1: Powerkey: ctrl + alt + shift -----------------------------------
 

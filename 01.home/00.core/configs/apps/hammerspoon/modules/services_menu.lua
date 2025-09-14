@@ -20,7 +20,8 @@ local menuItem
 -- Service management functions (from working backup patterns)
 local function restartYabai()
     canvas.show("RESTARTING YABAI")
-    process.execute("yabai --stop-service && yabai --start-service", true)
+    local yabai = config.getYabaiPath()
+    process.execute(string.format("%s --stop-service && %s --start-service", yabai, yabai), true)
     canvas.show("YABAI RESTARTED")
 end
 

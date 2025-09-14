@@ -84,7 +84,7 @@ yabai -m rule --add app="^Hammerspoon$" manage=off sub-layer=below grid="$GRID_C
 yabai -m rule --add app="^1Password$" manage=off sub-layer=above sticky=on grid="$GRID_CENTER" || true
 
 # --- rules: browsers --------------------------------------------------------
-yabai -m rule --add app="^Arc$" manage=off || true
+yabai -m rule --add app="^Arc$" manage=on || true
 yabai -m rule --add app="^Arc$" title="^Little Arc$" manage=off sticky=on sub-layer=above || true
 yabai -m rule --add app="^Arc$" subrole="^AXSystemFloatingWindow$" manage=off sticky=on sub-layer=above || true
 yabai -m rule --add app="^Arc$" subrole="^AXSystemDialog$" manage=off sticky=on sub-layer=above || true

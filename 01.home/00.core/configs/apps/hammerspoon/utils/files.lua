@@ -44,10 +44,11 @@ function M.shouldIgnoreFile(path)
     -- Hidden files
     if name:match("^%.") then return true end
 
-    -- Download temporary files
-    if name:match("%.download$") or
-       name:match("%.crdownload$") or
-       name:match("%.part$") then
+    -- Download temporary files (browser-specific)
+    if name:match("%.download$") or     -- Safari/Arc
+       name:match("%.crdownload$") or   -- Chrome
+       name:match("%.part$") or         -- Firefox
+       name:match("%.opdownload$") then -- Opera
         return true
     end
 

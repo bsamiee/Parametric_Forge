@@ -40,6 +40,9 @@ function handlers.leader(params)
     end
 end
 
+-- Modal indicator control from URL (e.g., hammerspoon://modal?name=float&down=1)
+-- (modal URL control removed for simplicity; unused in current setup)
+
 -- System state query handlers
 function handlers.system(params)
     local action = params.action
@@ -77,8 +80,13 @@ end
 
 -- Initialize integration
 function M.init()
-    -- Install CLI tool for skhd communication
-    hs.ipc.cliInstall("/opt/homebrew", true)
+    -- Install CLI tool for skhd communication (derive prefix from brew when available)
+    local brew = config.getBrewPath()
+    local prefix = "/opt/homebrew"
+    if brew and type(brew) == "string" then
+        prefix = brew:gsub("/bin/brew$", "")
+    end
+    hs.ipc.cliInstall(prefix, true)
 
     -- Register URL handler for karabiner leader communication
     hs.urlevent.bind("hammerspoon", handleURL)

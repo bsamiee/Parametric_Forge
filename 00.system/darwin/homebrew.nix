@@ -47,7 +47,7 @@ in
       # Productivity & Window Management - MOST ALREADY INSTALLED
       "airbuddy" # AirPods management utility
       "aldente" # Battery charging limiter
-      "alt-tab" # Window switching utility # TODO: REPLACE WITH HAMMERSPOON
+      "alt-tab" # Window switching utility
       "bettermouse" # Mouse enhancement utility
       "bettertouchtool" # Touch/gesture management # TODO: CONFIGURE
       "jordanbaird-ice" # Menu bar manager for macOS

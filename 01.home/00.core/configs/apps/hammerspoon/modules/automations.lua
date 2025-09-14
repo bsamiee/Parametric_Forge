@@ -47,7 +47,7 @@ function actions.unzip(zipPath)
         zipPath, dir, zipPath
     )
 
-    local success = process.execute(cmd, true)
+    local _, success = process.execute(cmd, true)
     if success then
         canvas.show("UNZIPPED: " .. basename)
         log.i("Unzipped: " .. zipPath)
@@ -62,7 +62,7 @@ function actions.webp2png(webpPath)
     local basename = files.basename(pngPath)
     local cmd = string.format("magick %q %q && rm -f %q", webpPath, pngPath, webpPath)
 
-    local success = process.execute(cmd, true)
+    local _, success = process.execute(cmd, true)
     if success then
         canvas.show("CONVERTED: " .. basename)
         log.i("Converted WebP: " .. webpPath)
@@ -89,7 +89,7 @@ function actions.optimizePdf(pdfPath)
 
     -- OCR and optimize
     local cmd = string.format("ocrmypdf --optimize 3 --skip-text %q %q", pdfPath, pdfPath)
-    local success = process.execute(cmd, true)
+    local _, success = process.execute(cmd, true)
 
     if success then
         canvas.show("PDF OPTIMIZED: " .. basename)
@@ -100,27 +100,33 @@ function actions.optimizePdf(pdfPath)
     end
 end
 
+-- Check if file was just completed (renamed from temp to final)
+local function wasJustCompleted(filePath, flags)
+    -- Look for rename events - this indicates download completion
+    for _, flag in ipairs(flags) do
+        if flag == hs.pathwatcher.flags.itemRenamed then
+            return true
+        end
+    end
+    return false
+end
+
 -- File watcher callback
 local function onFileChange(changedFiles, flagTables)
     for i, filePath in ipairs(changedFiles) do
         if files.exists(filePath) and
            not files.shouldIgnoreFile(filePath) and
-           files.isRecentlyCreated(filePath, 300) then
+           wasJustCompleted(filePath, flagTables[i] or {}) then
 
-            -- Wait for file to stabilize
-            hs.timer.doAfter(0.5, function()
-                if not files.exists(filePath) then return end
+            local ext = files.extension(filePath)
 
-                local ext = files.extension(filePath)
-
-                if ext == "zip" and hs.settings.get(SETTINGS.unzip) then
-                    actions.unzip(filePath)
-                elseif ext == "webp" and hs.settings.get(SETTINGS.webp2png) then
-                    actions.webp2png(filePath)
-                elseif ext == "pdf" and hs.settings.get(SETTINGS.pdf) then
-                    actions.optimizePdf(filePath)
-                end
-            end)
+            if ext == "zip" and hs.settings.get(SETTINGS.unzip) then
+                actions.unzip(filePath)
+            elseif ext == "webp" and hs.settings.get(SETTINGS.webp2png) then
+                actions.webp2png(filePath)
+            elseif ext == "pdf" and hs.settings.get(SETTINGS.pdf) then
+                actions.optimizePdf(filePath)
+            end
         end
     end
 end
