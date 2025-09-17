@@ -4,92 +4,297 @@
 # License       : MIT
 # Path          : /01.home/00.core/configs/apps/yazi/theme.toml
 # ----------------------------------------------------------------------------
+# Consolidated Dracula theme with custom icons
 
-# Schema validation not used in modern yazi
+"$schema" = "https://yazi-rs.github.io/schemas/theme.json"
 
-[flavor]
-dark = "dracula"
-light = "dracula"
+# Dracula Color Palette
+# Background: #282a36, Current Line: #44475a, Selection: #44475a
+# Foreground: #f8f8f2, Comment: #6272a4
+# Cyan: #8be9fd, Green: #50fa7b, Orange: #ffb86c
+# Pink: #ff79c6, Purple: #bd93f9, Red: #ff5555, Yellow: #f1fa8c
 
-[mgr]
-hovered = { fg = "#282a36", bg = "#bd93f9", bold = true }
+# SEMANTIC COLOR SYSTEM
+# =====================
+# PRIMARY INTERACTION - Purple (#bd93f9): Active states, main selections, elevated components
+# SUCCESS/CONFIRMATION - Green (#50fa7b): Success states, positive actions, development files
+# ATTENTION/HIGHLIGHT - Yellow (#f1fa8c): CWD, search highlights, system/config files
+# DANGER/DESTRUCTIVE - Red (#ff5555): Errors, destructive actions, warnings
+# INFORMATION/SECONDARY - Cyan (#8be9fd): Secondary actions, metadata, data files
+# ACCENT/CREATIVE - Pink (#ff79c6): Special highlights, creative/media content
+# NEUTRAL/SUBDUED - Comment (#6272a4): Less important elements, separators
+# STRUCTURE/BORDERS - Current Line (#44475a): Borders for inline components
+
+# Dracula Color Palette
+# Background: #282a36
+# Selection: #44475a
+# Foreground: #f8f8f2
+# Blue: #6272a4
+# Cyan: #8be9fd
+# Green: #50fa7b
+# Orange: #ffb86c
+# Pink: #ff79c6
+# Purple: #bd93f9
+# Red: #ff5555
+# Yellow: #f1fa8c
+
+[mgr] # Done
+cwd = { fg = "#f1fa8c", underline = true }
+hovered = { fg = "#282a36", bg = "#f8f8f2", bold = true }
+preview_hovered = { fg = "#f8f8f2", underline = true }
+find_keyword = { fg = "#282a36", bg = "#f1fa8c", bold = true }
+find_position = { fg = "#282a36", bg = "#ffb86c", bold = true }
+symlink_target = { fg = "#ff5555", bold = true }
+marker_marked = { fg = "#282a36", bg = "#bd93f9", bold = true }
+marker_copied = { fg = "#282a36", bg = "#ffb86c", bold = true }
+marker_cut = { fg = "#282a36", bg = "#ff5555", bold = true }
+marker_selected = { fg = "#282a36", bg = "#8be9fd", bold = true }
+count_copied = { fg = "#282a36", bg = "#ffb86c", bold = true }
+count_cut = { fg = "#282a36", bg = "#ff5555", bold = true }
+count_selected = { fg = "#282a36", bg = "#8be9fd", bold = true }
 border_symbol = "│"
+border_style = { fg = "#44475a" }
+syntect_theme = ""
 
-[tabs]
-sep_inner = { open = " ", close = " " }
+[tabs] # Done
+active = { fg = "#282a36", bg = "#8be9fd", bold = true }
+inactive = { fg = "#f8f8f2", bg = "#6272a4" }
+sep_inner = { open = "", close = "" }
 sep_outer = { open = "", close = "" }
 
-[status]
-sep_left = { open = "", close = " " }
-sep_right = { open = " ", close = "" }
+[mode] # Done
+normal_main = { fg = "#282a36", bg = "#50fa7b", bold = true }
+normal_alt = { fg = "#f8f8f2", bg = "#44475a", bold = true }
+select_main = { fg = "#282a36", bg = "#bd93f9", bold = true }
+select_alt = { fg = "#f8f8f2", bg = "#44475a", bold = true }
+unset_main = { fg = "#282a36", bg = "#ff5555", bold = true }
+unset_alt = { fg = "#f8f8f2", bg = "#44475a", bold = true }
 
-[which]
+[status] # Done
+overall = { bg = "#282a36" }
+sep_left = { open = "", close = "" }
+sep_right = { open = "", close = "" }
+perm_type = { fg = "#50fa7b" }
+perm_read = { fg = "#ffb86c" }
+perm_write = { fg = "#f8f8f2" }
+perm_exec = { fg = "#ff5555" }
+perm_sep = { fg = "#8be9fd" }
+progress_label = { fg = "#282a36", bold = true }
+progress_normal = { fg = "#50fa7b", bg = "#282a36" }
+progress_error = { fg = "#ff5555", bg = "#282a36" }
+
+[which] # Done
 cols = 3
-separator = " → "
+mask = { bg = "#282a36" }
+cand = { fg = "#8be9fd" }
+rest = { fg = "#50fa7b" }
+desc = { fg = "#f8f8f2" }
+separator = ""
+separator_style = { fg = "#f1fa8c" }
 
-[confirm]
-btn_labels = ["Yes", "No"]
+[confirm] # Done
+border = { fg = "#8be9fd" }
+title = { fg = "#8be9fd", bold = true }
+content = { fg = "#f8f8f2" }
+list = {}
+btn_yes = { fg = "#50fa7b", bg = "#282a36", bold = true }
+btn_no = { fg = "#ff5555", bg = "#282a36", bold = true }
+btn_labels = ["[YES]", "[NO]"]
+
+[spot] # Done
+border = { fg = "#8be9fd" }
+title = { fg = "#8be9fd", bold = true }
+tbl_col = { fg = "#8be9fd" }
+tbl_cell = { fg = "#f8f8f2", reversed = true }
+
+[notify]
+title_info = { fg = "#50fa7b" }
+title_warn = { fg = "#f1fa8c" }
+title_error = { fg = "#ff5555" }
+icon_info = ""
+icon_warn = ""
+icon_error = ""
+
+[pick]
+border = { fg = "#8be9fd" }
+active = { fg = "#ff79c6", bold = true }
+inactive = {}
+
+[input]
+border = { fg = "#8be9fd" }
+title = { fg = "#8be9fd", bold = true }
+value = { fg = "#f8f8f2" }
+selected = { bg = "#44475a" }
+
+[cmp]
+border = { fg = "#8be9fd" }
+active = { fg = "#282a36", bg = "#f8f8f2", bold = true }
+# inactive = { fg = "#f8f8f2" }
+icon_file = ""
+icon_folder = ""
+icon_command = ""
+
+[tasks]
+border = { fg = "#8be9fd" }
+title = { fg = "#8be9fd", bold = true }
+hovered = { fg = "#282a36", bg = "#f8f8f2" }
+
+[help] # Done
+on = { fg = "#50fa7b", bold = true }
+run = { fg = "#8be9fd" }
+desc = { fg = "#f8f8f2" }
+hovered = { fg = "#282a36", bg = "#6272a4" }
+footer = { fg = "#f1fa8c" }
+
+[filetype]
+rules = [
+  # Images
+  { mime = "image/*", fg = "#ff79c6" },
+  # Videos and Audio
+  { mime = "video/*", fg = "#bd93f9" },
+  { mime = "audio/*", fg = "#bd93f9" },
+  # Archives
+  { mime = "application/{zip,rar,7z*,tar,gzip,xz,zstd,bzip*,lzma,compress,archive,cpio,arj,xar,ms-cab*}", fg = "#f1fa8c" },
+  # Documents
+  { mime = "application/pdf", fg = "#ff5555" },
+  # Empty files
+  { mime = "inode/empty", fg = "#8be9fd" },
+  # Programming languages
+  { name = "*.py", fg = "#50fa7b" },
+  { name = "*.js", fg = "#f1fa8c" },
+  { name = "*.ts", fg = "#8be9fd" },
+  { name = "*.jsx", fg = "#8be9fd" },
+  { name = "*.tsx", fg = "#8be9fd" },
+  { name = "*.rs", fg = "#ff79c6" },
+  { name = "*.go", fg = "#8be9fd" },
+  { name = "*.nix", fg = "#8be9fd" },
+  # Configuration files
+  { name = "*.{json,toml,yaml,yml,xml}", fg = "#bd93f9" },
+  # Web files
+  { name = "*.{html,css,scss}", fg = "#ff79c6" },
+  # Documentation
+  { name = "*.md", fg = "#f8f8f2" },
+  { name = "README*", fg = "#50fa7b", bold = true },
+  { name = "LICENSE*", fg = "#50fa7b", bold = true },
+  # 3D Parametric & Technical Design
+  { name = "*.{3dm,3dmbak,gh,ghx}", fg = "#8be9fd" },
+  # CAD/Engineering/Architecture
+  { name = "*.{dwg,dxf,dwt,rvt,rfa,rft}", fg = "#bd93f9" },
+  # Creative 3D Modeling
+  { name = "*.{blend,blend1}", fg = "#ff79c6" },
+  # Adobe Creative Suite
+  { name = "*.{psd,psb,ai,ait,indd,idml,indt}", fg = "#ff79c6" },
+  # Shell scripts
+  { name = "*.sh", fg = "#50fa7b" },
+  { name = "*Dockerfile*", fg = "#8be9fd" },
+  { name = "Makefile", fg = "#ff79c6" },
+  # Logs
+  { name = "*.log", fg = "#6272a4" },
+  # Special files
+  { name = "*", is = "orphan", fg = "#ff5555" },
+  { name = "*", is = "exec", fg = "#50fa7b" },
+  { name = "*", is = "dummy", bg = "#ff5555" },
+  { name = "*/", is = "dummy", bg = "#ff5555" },
+  # Fallback
+  { name = "*/", fg = "#8be9fd", bold = true },
+]
 
 [icon]
 prepend_dirs = [
-  { name = ".git", text = "", fg = "#ff79c6" },
-  { name = "node_modules", text = "", fg = "#50fa7b" },
-  { name = "target", text = "", fg = "#ff79c6" },
-  { name = ".venv", text = "", fg = "#f1fa8c" },
-  { name = "__pycache__", text = "", fg = "#f1fa8c" },
-  { name = ".config", text = "", fg = "#bd93f9" },
-  { name = ".ssh", text = "", fg = "#ff79c6" },
-  { name = "src", text = "", fg = "#8be9fd" },
-  { name = "lib", text = "", fg = "#8be9fd" },
-  { name = "bin", text = "", fg = "#50fa7b" },
-  { name = "docs", text = "", fg = "#f8f8f2" },
+  { name = ".git", test = "", fg = "#ff79c6" },
+  { name = "node_modules", test = "", fg = "#50fa7b" },
+  { name = "target", test = "󰟔", fg = "#ff79c6" },
+  { name = ".venv", test = "", fg = "#f1fa8c" },
+  { name = "__pycache__", test = "", fg = "#f1fa8c" },
+  { name = ".config", test = "", fg = "#bd93f9" },
+  { name = ".ssh", test = "", fg = "#ff79c6" },
+  { name = "src", test = "", fg = "#8be9fd" },
+  { name = "bin", test = "", fg = "#50fa7b" },
 ]
 
 prepend_exts = [
-  { name = "nix", text = "❄", fg = "#8be9fd" },
-  { name = "py", text = "", fg = "#f1fa8c" },
-  { name = "rs", text = "", fg = "#ff79c6" },
-  { name = "js", text = "", fg = "#f1fa8c" },
-  { name = "ts", text = "", fg = "#8be9fd" },
-  { name = "go", text = "", fg = "#8be9fd" },
-  { name = "lua", text = "", fg = "#8be9fd" },
-
+  { name = "nix", test = "", fg = "#8be9fd" },
+  { name = "py", test = "", fg = "#f1fa8c" },
+  { name = "rs", test = "", fg = "#ff79c6" },
+  { name = "js", test = "", fg = "#f1fa8c" },
+  { name = "ts", test = "", fg = "#8be9fd" },
+  { name = "go", test = "", fg = "#8be9fd" },
+  { name = "lua", test = "", fg = "#8be9fd" },
+  { name = "jsx", test = "", fg = "#8be9fd" },
+  { name = "tsx", test = "", fg = "#8be9fd" },
+  # Configuration & Data
+  { name = "json", test = "", fg = "#bd93f9" },
+  { name = "toml", test = "", fg = "#bd93f9" },
+  { name = "yaml", test = "", fg = "#bd93f9" },
+  { name = "yml", test = "", fg = "#bd93f9" },
+  { name = "xml", test = "", fg = "#bd93f9" },
+  { name = "env", test = "", fg = "#f1fa8c" },
+  { name = "gitignore", test = "", fg = "#ff79c6" },
+  # Web
+  { name = "html", test = "", fg = "#ff79c6" },
+  { name = "css", test = "", fg = "#8be9fd" },
+  { name = "scss", test = "", fg = "#ff79c6" },
+  # Shell & Scripts
+  { name = "sh", test = "", fg = "#50fa7b" },
+  { name = "bash", test = "", fg = "#50fa7b" },
+  # Documentation
+  { name = "md", test = "", fg = "#f8f8f2" },
+  { name = "pdf", test = "", fg = "#ff5555" },
+  # Office Documents
+  { name = "doc", test = "", fg = "#8be9fd" },
+  { name = "docx", test = "", fg = "#8be9fd" },
+  { name = "xls", test = "", fg = "#50fa7b" },
+  { name = "xlsx", test = "", fg = "#50fa7b" },
+  { name = "ppt", test = "", fg = "#ff5555" },
+  { name = "pptx", test = "", fg = "#ff5555" },
+  # Images
+  { name = "svg", test = "", fg = "#ff79c6" },
+  { name = "jpg", test = "", fg = "#ff79c6" },
+  { name = "jpeg", test = "", fg = "#ff79c6" },
+  { name = "png", test = "", fg = "#ff79c6" },
+  { name = "tiff", test = "", fg = "#ff79c6" },
+  { name = "tif", test = "", fg = "#ff79c6" },
+  # Archives
+  { name = "zip", test = "", fg = "#f1fa8c" },
+  { name = "tar", test = "", fg = "#f1fa8c" },
+  { name = "gz", test = "", fg = "#f1fa8c" },
+  { name = "7z", test = "", fg = "#f1fa8c" },
+  # Database
+  { name = "sql", test = "", fg = "#ffb86c" },
+  { name = "db", test = "", fg = "#ffb86c" },
+  { name = "sqlite", test = "", fg = "#ffb86c" },
   # 3D Parametric & Technical Design
-  { name = "3dm", text = "󰆧", fg = "#8be9fd" },    # Rhino 3D models
-  { name = "3dmbak", text = "󰆧", fg = "#8be9fd" }, # Rhino backup files
-  { name = "gh", text = "󱁤", fg = "#8be9fd" },     # Grasshopper definitions
-  { name = "ghx", text = "󱁤", fg = "#8be9fd" },    # Grasshopper XML
-
+  { name = "3dm", test = "", fg = "#8be9fd" },
+  { name = "3dmbak", test = "", fg = "#8be9fd" },
+  { name = "gh", test = "", fg = "#8be9fd" },
+  { name = "ghx", test = "", fg = "#8be9fd" },
   # CAD/Engineering/Architecture
-  { name = "dwg", text = "󰻫", fg = "#bd93f9" }, # AutoCAD drawings
-  { name = "dxf", text = "󰻫", fg = "#bd93f9" }, # AutoCAD exchange
-  { name = "dwt", text = "󰻫", fg = "#bd93f9" }, # AutoCAD templates
-  { name = "rvt", text = "🏗", fg = "#bd93f9" }, # Revit projects
-  { name = "rfa", text = "🏗", fg = "#bd93f9" }, # Revit families
-  { name = "rft", text = "🏗", fg = "#bd93f9" }, # Revit templates
-
+  { name = "dwg", test = "", fg = "#bd93f9" },
+  { name = "dxf", test = "", fg = "#bd93f9" },
+  { name = "dwt", test = "", fg = "#bd93f9" },
+  { name = "rvt", test = "", fg = "#bd93f9" },
+  { name = "rfa", test = "", fg = "#bd93f9" },
+  { name = "rft", test = "", fg = "#bd93f9" },
   # Creative 3D Modeling
-  { name = "blend", text = "", fg = "#ff79c6" },  # Blender projects
-  { name = "blend1", text = "", fg = "#ff79c6" }, # Blender backup
-
+  { name = "blend", test = "", fg = "#ff79c6" },
+  { name = "blend1", test = "", fg = "#ff79c6" },
   # Adobe Creative Suite
-  { name = "psd", text = "", fg = "#ff79c6" },  # Photoshop documents
-  { name = "psb", text = "", fg = "#ff79c6" },  # Photoshop large docs
-  { name = "ai", text = "", fg = "#bd93f9" },   # Illustrator files
-  { name = "ait", text = "", fg = "#bd93f9" },  # Illustrator templates
-  { name = "indd", text = "", fg = "#ffb86c" }, # InDesign documents
-  { name = "idml", text = "", fg = "#ffb86c" }, # InDesign markup
-  { name = "indt", text = "", fg = "#ffb86c" }, # InDesign templates
-
+  { name = "psd", test = "", fg = "#ff79c6" },
+  { name = "psb", test = "", fg = "#ff79c6" },
+  { name = "ai", test = "", fg = "#bd93f9" },
+  { name = "ait", test = "", fg = "#bd93f9" },
+  { name = "indd", test = "", fg = "#ffb86c" },
+  { name = "idml", test = "", fg = "#ffb86c" },
+  { name = "indt", test = "", fg = "#ffb86c" },
   # Photography & Asset Management
-  { name = "lrcat", text = "", fg = "#f1fa8c" },      # Lightroom catalogs
-  { name = "lrtemplate", text = "", fg = "#f1fa8c" }, # Lightroom templates
-  { name = "xmp", text = "", fg = "#f1fa8c" },        # Adobe metadata
+  { name = "lrcat", test = "", fg = "#f1fa8c" },
+  { name = "lrtemplate", test = "", fg = "#f1fa8c" },
+  { name = "xmp", test = "", fg = "#f1fa8c" },
 ]
 
 prepend_conds = [
-  { if = "hidden & dir", text = "󰜌" },
-  { if = "hidden & !dir", text = "󰘓" },
-  { if = "link & !orphan", text = "" },
-  { if = "orphan", text = "" },
+  { if = "hidden & dir", test = "" },
+  { if = "hidden & !dir", test = "" },
+  { if = "link & !orphan", test = "" },
+  { if = "orphan", test = "" },
 ]

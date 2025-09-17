@@ -54,7 +54,7 @@ with pkgs;
   xz
   lz4
   brotli
-  p7zip # Required by yazi
+  _7zz-rar # 7-Zip with RAR support - Required for Yazi archive preview/extraction
   unar # Archive preview
 
   # --- GNU Core Utilities ---------------------------------------------------

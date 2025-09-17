@@ -16,7 +16,9 @@ local menuItem
 
 -- Set icon based on caffeine state (from working backup pattern)
 local function updateIcon()
-    if not menuItem then return end
+    if not menuItem then
+        return
+    end
 
     local isActive = hs.caffeinate.get("displayIdle")
     local iconName = isActive and "caffeine-on" or "caffeine-off"
@@ -51,19 +53,21 @@ local function buildMenu()
     return {
         {
             title = isActive and "Turn Caffeine Off" or "Turn Caffeine On",
-            fn = M.toggle
+            fn = M.toggle,
         },
         { title = "-" },
         {
             title = "Prevent: Display Sleep",
             checked = isActive,
-            disabled = true
-        }
+            disabled = true,
+        },
     }
 end
 
 function M.init()
-    if menuItem then return end
+    if menuItem then
+        return
+    end
 
     menuItem = hs.menubar.new()
     if not menuItem then

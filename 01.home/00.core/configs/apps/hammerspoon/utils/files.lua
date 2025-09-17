@@ -32,7 +32,9 @@ end
 function M.isRecentlyCreated(path, maxAgeSeconds)
     maxAgeSeconds = maxAgeSeconds or 300 -- 5 minutes default
     local attrs = hs.fs.attributes(path)
-    if not attrs then return false end
+    if not attrs then
+        return false
+    end
 
     local now = hs.timer.secondsSinceEpoch()
     return (now - attrs.creation) < maxAgeSeconds
@@ -42,13 +44,17 @@ function M.shouldIgnoreFile(path)
     local name = M.basename(path)
 
     -- Hidden files
-    if name:match("^%.") then return true end
+    if name:match("^%.") then
+        return true
+    end
 
     -- Download temporary files (browser-specific)
-    if name:match("%.download$") or     -- Safari/Arc
-       name:match("%.crdownload$") or   -- Chrome
-       name:match("%.part$") or         -- Firefox
-       name:match("%.opdownload$") then -- Opera
+    if
+        name:match("%.download$") -- Safari/Arc
+        or name:match("%.crdownload$") -- Chrome
+        or name:match("%.part$") -- Firefox
+        or name:match("%.opdownload$")
+    then -- Opera
         return true
     end
 

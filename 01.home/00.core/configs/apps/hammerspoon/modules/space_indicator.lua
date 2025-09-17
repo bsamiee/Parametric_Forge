@@ -22,7 +22,9 @@ local YELLOW = styles.menubarColors.yellow
 local WHITE = styles.menubarColors.white
 
 local function updateDisplay()
-    if not menuItem then return end
+    if not menuItem then
+        return
+    end
 
     -- Get current space info from yabai (using direct hs.execute like working version)
     local json = hs.execute(config.getYabaiPath() .. " -m query --spaces 2>/dev/null", true)
@@ -59,7 +61,9 @@ local function updateDisplay()
             table.insert(displaySpaces, space)
         end
     end
-    table.sort(displaySpaces, function(a, b) return a.index < b.index end)
+    table.sort(displaySpaces, function(a, b)
+        return a.index < b.index
+    end)
 
     -- Build display: "1 2 [ 3 ] 4" with styled text (exact forge-backup pattern)
     if hs.styledtext then
@@ -93,7 +97,9 @@ local function updateDisplay()
 end
 
 function M.init()
-    if menuItem then return end
+    if menuItem then
+        return
+    end
 
     menuItem = hs.menubar.new()
     if not menuItem then

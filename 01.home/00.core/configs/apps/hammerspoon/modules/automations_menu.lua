@@ -16,7 +16,9 @@ local menuItem
 
 -- Set dynamic icon based on automation status
 local function updateIcon()
-    if not menuItem then return end
+    if not menuItem then
+        return
+    end
     local status = automations.getStatus()
     local anyEnabled = status.unzip or status.webp2png or status.pdf
     local iconName = anyEnabled and "automations-on" or "automations-off"
@@ -36,7 +38,7 @@ local function buildMenu()
     return {
         {
             title = "File Automations",
-            disabled = true
+            disabled = true,
         },
         {
             title = "Auto Unzip: " .. (status.unzip and "Enabled" or "Disabled"),
@@ -45,7 +47,7 @@ local function buildMenu()
             fn = function()
                 automations.toggle("unzip")
                 updateIcon()
-            end
+            end,
         },
         {
             title = "Auto WebP→PNG: " .. (status.webp2png and "Enabled" or "Disabled"),
@@ -54,7 +56,7 @@ local function buildMenu()
             fn = function()
                 automations.toggle("webp2png")
                 updateIcon()
-            end
+            end,
         },
         {
             title = "Auto PDF OCR+Optimize: " .. (status.pdf and "Enabled" or "Disabled"),
@@ -63,25 +65,27 @@ local function buildMenu()
             fn = function()
                 automations.toggle("pdf")
                 updateIcon()
-            end
+            end,
         },
         { title = "-" },
         {
             title = "Hammerspoon",
-            disabled = true
+            disabled = true,
         },
         {
             title = "Hammerspoon Console",
             image = assets.image("forge-menu", { w = 18, h = 18 }),
             fn = function()
                 hs.openConsole()
-            end
-        }
+            end,
+        },
     }
 end
 
 function M.init()
-    if menuItem then return end
+    if menuItem then
+        return
+    end
 
     menuItem = hs.menubar.new()
     if not menuItem then

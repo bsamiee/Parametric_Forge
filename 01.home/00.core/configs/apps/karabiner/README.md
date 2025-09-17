@@ -1,11 +1,6 @@
 # Parametric Forge — Karabiner-Elements + Goku Foundation
 
-Title         : Karabiner README
-Author        : Bardia Samiee
-Project       : Parametric Forge
-License       : MIT
-Path          : /01.home/00.core/configs/apps/karabiner/README.md
------------------------------------------------------------------------------
+## Title : Karabiner README Author : Bardia Samiee Project : Parametric Forge License : MIT Path : /01.home/00.core/configs/apps/karabiner/README.md
 
 This directory provides a complete, production-grade foundation for Karabiner-Elements with GokuRakuJoudo (EDN → JSON). It focuses on clean leader keys and a clear scaffold to extend with layers and app-specific rules without confusion.
 
@@ -14,9 +9,9 @@ This directory provides a complete, production-grade foundation for Karabiner-El
 - Source of truth: `~/.config/karabiner.edn` (managed in repo: `01.home/00.core/configs/apps/karabiner/karabiner.edn`)
 - Generator: GokuRakuJoudo (`goku`/`gokuw`) compiles EDN → `~/.config/karabiner/karabiner.json`
 - Leaders only (no unusual alone behavior):
-  - Hyper  (Right Command) → ⌘⌥⌃⇧ (cmd+opt+ctrl+shift)
-  - Super  (Right Option)  → ⌘⌥⌃   (cmd+opt+ctrl)
-  - Power  (Right Shift)   →  ⌥⌃⇧   (opt+ctrl+shift)
+  - Hyper (Right Command) → ⌘⌥⌃⇧ (cmd+opt+ctrl+shift)
+  - Super (Right Option) → ⌘⌥⌃ (cmd+opt+ctrl)
+  - Power (Right Shift) → ⌥⌃⇧ (opt+ctrl+shift)
 - Optional complex_modifications seed: `assets/complex_modifications/parametric-forge.json` (toggleable in Karabiner UI)
 
 ## Deployment & XDG
@@ -38,11 +33,13 @@ This directory provides a complete, production-grade foundation for Karabiner-El
 ## Security / Permissions
 
 Karabiner-Elements requires:
+
 - Input Monitoring (karabiner_grabber; historically karabiner_observer)
 - Accessibility (Assistive)
 - Virtual HID device manager approval (System Settings → Extensions)
 
 We add TCC entries in `00.system/darwin/settings/security.nix` (scripted injection; requires SIP reduced) for:
+
 - `org.pqrs.Karabiner-Elements` (app bundle)
 - `/Library/Application Support/org.pqrs/Karabiner-Elements/bin/karabiner_grabber`
 - `/Library/Application Support/org.pqrs/Karabiner-Elements/bin/karabiner_observer`
@@ -134,6 +131,6 @@ Add `:applications` map and use conditions in rules:
 - We intentionally do not deploy `karabiner.json` from this repo to avoid symlink overwrite by Karabiner UI. EDN is the source of truth.
 - SKHD and Hammerspoon are refactored to rely solely on the leader chords, eliminating duplication and drift.
 
------------------------------------------------------------------------------
+______________________________________________________________________
 
 This foundation should let you add leaders, layers, and per-app rules quickly and safely without rework.

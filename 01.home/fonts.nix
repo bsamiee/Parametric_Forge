@@ -9,27 +9,44 @@
 { lib, pkgs, ... }:
 
 let
-  # --- Font Names That Get Patched ------------------------------------------
-  patchedFonts = [
-    "Geist"
-    "Geist Mono"
-    "Inter"
-    "DM Sans"
-    "IBM Plex Sans"
-    "IBM Plex Serif"
-    "IBM Plex Mono"
-    "Source Sans 3"
-    "Source Serif 4"
-    "Overpass"
-    "Iosevka"
-  ];
+  # --- Precise Nerd Font fallback mapping (fontconfig) ----------------------
+  # Note: macOS apps use CoreText and ignore fontconfig; this is for Linux/GTK/Qt
+  # The prefer list is used for glyph fallback when the primary family lacks a glyph
+  fontAliases = {
+    # Monospace families with real NF names
+    "Geist Mono" = [
+      "GeistMono Nerd Font"
+      "Symbols Nerd Font Mono"
+    ];
+    "Iosevka" = [
+      "Iosevka Nerd Font"
+      "Symbols Nerd Font Mono"
+    ];
+    "IBM Plex Mono" = [
+      "BlexMono Nerd Font"
+      "Symbols Nerd Font Mono"
+    ];
+    "Overpass" = [
+      "Overpass Nerd Font Mono"
+      "Overpass Nerd Font"
+      "Symbols Nerd Font Mono"
+    ];
 
-  # --- Generate Font Aliases ------------------------------------------------
-  mkFontAlias = fontName: ''
+    # UI/Sans families (no NF variant) → prefer Symbols NF for icons fallback
+    "Geist" = [ "Symbols Nerd Font" ];
+    "Inter" = [ "Symbols Nerd Font" ];
+    "DM Sans" = [ "Symbols Nerd Font" ];
+    "IBM Plex Sans" = [ "Symbols Nerd Font" ];
+    "IBM Plex Serif" = [ "Symbols Nerd Font" ];
+    "Source Sans 3" = [ "Symbols Nerd Font" ];
+    "Source Serif 4" = [ "Symbols Nerd Font" ];
+  };
+
+  mkAliasBlock = name: preferList: ''
     <alias>
-      <family>${fontName}</family>
+      <family>${name}</family>
       <prefer>
-        <family>${fontName} Nerd Font</family>
+        ${lib.concatStrings (map (f: "<family>" + f + "</family>") preferList)}
       </prefer>
     </alias>
   '';
@@ -71,14 +88,24 @@ in
 
   };
 
-  # --- Darwin-Only Font Aliases via XDG File --------------------------------
-  # Redirect original font requests to Nerd Font variants
-  xdg.configFile."fontconfig/conf.d/99-nerd-font-aliases.conf" = lib.mkIf pkgs.stdenv.isDarwin {
+  # --- Linux-only fontconfig aliases (CoreText ignores these on macOS) ------
+  xdg.configFile."fontconfig/conf.d/99-nerd-font-aliases.conf" = lib.mkIf pkgs.stdenv.isLinux {
     text = ''
       <?xml version="1.0"?>
       <!DOCTYPE fontconfig SYSTEM "urn:fontconfig:fonts.dtd">
       <fontconfig>
-        ${lib.concatStrings (map mkFontAlias patchedFonts)}
+        ${lib.concatStrings (lib.mapAttrsToList mkAliasBlock fontAliases)}
+      </fontconfig>
+    '';
+  };
+
+  # --- Ensure fontconfig loads conf.d (needed if FONTCONFIG_FILE is set) ----
+  xdg.configFile."fontconfig/fonts.conf" = {
+    text = ''
+      <?xml version="1.0"?>
+      <!DOCTYPE fontconfig SYSTEM "urn:fontconfig:fonts.dtd">
+      <fontconfig>
+        <include ignore_missing="yes">conf.d</include>
       </fontconfig>
     '';
   };

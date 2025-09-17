@@ -28,7 +28,7 @@ GRID_CENTER="6:6:1:1:4:4"
 # --- signals: performance optimizations ------------------------------------
 yabai -m signal --remove float_small_noninteractive >/dev/null 2>&1 || true
 yabai -m signal --add label=float_small_noninteractive \
-  event=window_created action="
+    event=window_created action="
   info=\$(yabai -m query --windows --window \$YABAI_WINDOW_ID); \
   is_floating=\$(echo \"\$info\" | jq -r '.\"is-floating\"'); \
   can_resize=\$(echo \"\$info\" | jq -r '.\"can-resize\"'); \
@@ -52,7 +52,7 @@ yabai -m signal --add label=float_small_noninteractive \
 SPACE_DATA="$(yabai -m query --spaces)"
 SPACE_COUNT=$(echo "$SPACE_DATA" | jq length)
 echo "$SPACE_DATA" | jq -r '.[].index' | while IFS= read -r space; do
-  yabai -m space "$space" --layout bsp 2>/dev/null || true
+    yabai -m space "$space" --layout bsp 2>/dev/null || true
 done
 echo "yabai: normalized layouts on $SPACE_COUNT spaces"
 
@@ -84,12 +84,23 @@ yabai -m rule --add app="^Hammerspoon$" manage=off sub-layer=below grid="$GRID_C
 yabai -m rule --add app="^1Password$" manage=off sub-layer=above sticky=on grid="$GRID_CENTER" || true
 
 # --- rules: browsers --------------------------------------------------------
+# Main Arc windows should be managed
 yabai -m rule --add app="^Arc$" manage=on || true
+
+# Arc special windows and popups
 yabai -m rule --add app="^Arc$" title="^Little Arc$" manage=off sticky=on sub-layer=above || true
 yabai -m rule --add app="^Arc$" subrole="^AXSystemFloatingWindow$" manage=off sticky=on sub-layer=above || true
 yabai -m rule --add app="^Arc$" subrole="^AXSystemDialog$" manage=off sticky=on sub-layer=above || true
 yabai -m rule --add app="^Arc Helper.*$" manage=off || true
 yabai -m rule --add app="^Arc$" title=".*[Nn]otification.*" manage=off sticky=on sub-layer=above || true
+
+# Arc extension popups often have empty or generic titles
+yabai -m rule --add app="^Arc$" title="^$" manage=off sticky=on sub-layer=above || true
+yabai -m rule --add app="^Arc$" title="^Arc$" manage=off sticky=on sub-layer=above || true
+
+# Catch remaining Arc floating windows (popups, overlays)
+yabai -m rule --add app="^Arc$" subrole="^AXUnknown$" manage=off sticky=on sub-layer=above || true
+yabai -m rule --add app="^Arc$" role="^AXPopUpButton$" manage=off sticky=on sub-layer=above || true
 
 # --- rules: utilities & media ----------------------------------------------
 yabai -m rule --add app="^Calculator$" manage=off sub-layer=below grid="$GRID_TOP_RIGHT_QUARTER" || true

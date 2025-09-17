@@ -46,6 +46,7 @@ in
           "/Applications/Heptabase.app"
           "/Applications/Drafts.app"
           "/Applications/Visual Studio Code.app"
+          "/Applications/Kiro.app"
           "/Applications/Arc.app"
           "/Applications/WezTerm.app"
           "/Applications/Superhuman.app"

@@ -20,35 +20,58 @@ local menuItem
 -- Service management functions (from working backup patterns)
 local function restartYabai()
     canvas.show("RESTARTING YABAI")
-    local yabai = config.getYabaiPath()
-    process.execute(string.format("%s --stop-service && %s --start-service", yabai, yabai), true)
+    -- Kill any existing yabai processes first
+    process.execute("killall -9 yabai 2>/dev/null", true)
+    hs.timer.usleep(500000) -- 0.5 second delay
+    -- Restart via launchctl
+    local plist = os.getenv("HOME") .. "/Library/LaunchAgents/com.koekeishiya.yabai.plist"
+    process.execute(string.format("launchctl unload %q 2>/dev/null; launchctl load %q", plist, plist), true)
     canvas.show("YABAI RESTARTED")
 end
 
 local function reloadSkhd()
     canvas.show("RESTARTING SKHD")
-    local plist = config.getSkhdPlist()
-    process.execute("launchctl unload " .. plist .. " && launchctl load " .. plist, true)
+    -- Kill any existing skhd processes and clean up pid file
+    process.execute("killall -9 skhd 2>/dev/null; rm -f /tmp/skhd_*.pid", true)
+    hs.timer.usleep(500000) -- 0.5 second delay
+    -- Restart via launchctl
+    local plist = os.getenv("HOME") .. "/Library/LaunchAgents/com.koekeishiya.skhd.plist"
+    process.execute(string.format("launchctl unload %q 2>/dev/null; launchctl load %q", plist, plist), true)
     canvas.show("SKHD RESTARTED")
 end
 
 local function restartGoku()
     canvas.show("RESTARTING GOKU")
-    local brew = config.getBrewPath()
-    if brew then
-        process.execute(string.format("'%s' services restart goku >/dev/null 2>&1 || '%s' services start goku >/dev/null 2>&1", brew, brew), true)
+    -- Kill existing gokuw processes
+    process.execute("killall -9 gokuw 2>/dev/null", true)
+    hs.timer.usleep(500000) -- 0.5 second delay
+    -- Try to restart via brew services or launchctl
+    local brew = config.getBrewPath() or "/opt/homebrew/bin/brew"
+    local plist = os.getenv("HOME") .. "/Library/LaunchAgents/homebrew.mxcl.goku.plist"
+    if files.exists(plist) then
+        process.execute(string.format("launchctl unload %q 2>/dev/null; launchctl load %q", plist, plist), true)
         canvas.show("GOKU RESTARTED")
     else
-        canvas.show("GOKU RESTART FAILED: BREW NOT FOUND")
+        process.execute(
+            string.format("%q services restart goku 2>/dev/null || %q services start goku", brew, brew),
+            true
+        )
+        canvas.show("GOKU RESTARTED")
     end
 end
 
 local function restartKarabiner()
     canvas.show("RESTARTING KARABINER")
-    -- Restart console user server without sudo
-    process.execute("/bin/launchctl kickstart -k " .. config.getKarabinerConsoleService() .. " || true", true)
-    -- Restart system grabber with passwordless sudo
-    process.execute("sudo -n /bin/launchctl kickstart -k " .. config.getKarabinerGrabberService() .. " || true", true)
+    -- Quit Karabiner-Elements app first
+    process.execute("osascript -e 'tell application \"Karabiner-Elements\" to quit' 2>/dev/null", true)
+    hs.timer.usleep(1000000) -- 1 second delay
+    -- Restart the services
+    process.execute(
+        "/bin/launchctl kickstart -k gui/$(id -u)/org.pqrs.karabiner.karabiner_console_user_server 2>/dev/null",
+        true
+    )
+    -- Launch the app again
+    process.execute("/usr/bin/open -a 'Karabiner-Elements'", true)
     canvas.show("KARABINER RESTARTED")
 end
 
@@ -75,7 +98,7 @@ local function serviceItem(title, iconName, onClick)
     return {
         title = title,
         image = assets.image(iconName, { w = 18, h = 18 }),
-        fn = onClick
+        fn = onClick,
     }
 end
 
@@ -92,13 +115,13 @@ local function buildMenu()
     return {
         {
             title = "System",
-            disabled = true
+            disabled = true,
         },
         serviceItem("Darwin Rebuild", "forge-rebuild", darwinRebuild),
         { title = "-" },
         {
             title = "Services",
-            disabled = true
+            disabled = true,
         },
         serviceItem("yabai", "yabai", restartYabai),
         serviceItem("skhd", "skhd", reloadSkhd),
@@ -107,7 +130,7 @@ local function buildMenu()
         { title = "-" },
         {
             title = "Karabiner",
-            disabled = true
+            disabled = true,
         },
         serviceItem("Karabiner Settings", "karabiner", function()
             openApp("Karabiner-Elements")
@@ -118,7 +141,7 @@ local function buildMenu()
         { title = "-" },
         {
             title = "Hammerspoon",
-            disabled = true
+            disabled = true,
         },
         serviceItem("Reload Hammerspoon", "hammerspoon-reload", function()
             canvas.show("HAMMERSPOON RELOADING")
@@ -126,12 +149,14 @@ local function buildMenu()
         end),
         serviceItem("Hammerspoon Console", "forge-menu", function()
             hs.openConsole()
-        end)
+        end),
     }
 end
 
 function M.init()
-    if menuItem then return end
+    if menuItem then
+        return
+    end
 
     menuItem = hs.menubar.new()
     if not menuItem then
@@ -147,8 +172,7 @@ function M.init()
     if icon then
         menuItem:setIcon(icon)
     else
-        local fallback = hs.image.imageFromName("NSAdvanced") or
-                        hs.image.imageFromName("NSPreferencesGeneral")
+        local fallback = hs.image.imageFromName("NSAdvanced") or hs.image.imageFromName("NSPreferencesGeneral")
         if fallback and fallback.setSize then
             menuItem:setIcon(fallback:setSize({ w = 18, h = 18 }))
         else

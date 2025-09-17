@@ -1,0 +1,109 @@
+[[plugin.deps]]
+use = "rolv-apneseth/starship"
+rev = "a63550b"
+hash = "c2021386289a0cbb3e152a052f67c177"
+
+[[plugin.deps]]
+use = "rolv-apneseth/bypass"
+rev = "c1e5fcf"
+hash = "208e77480824f62558a5b037c8569d61"
+
+[[plugin.deps]]
+use = "mikavilpas/easyjump.yazi:easyjump"
+rev = "cb7ecdd"
+hash = "5b6933fba319214d24d7699942778fc2"
+
+[[plugin.deps]]
+use = "yazi-rs/plugins:diff"
+rev = "d7588f6"
+hash = "47865a70cade14a0b9b6bc6a54f16bdb"
+
+
+[[plugin.deps]]
+use = "yazi-rs/plugins:smart-paste"
+rev = "d7588f6"
+hash = "a8050052e59f3952abe0b3e27a5843de"
+
+[[plugin.deps]]
+use = "yazi-rs/plugins:git"
+rev = "d7588f6"
+hash = "63b6c222bf2103b3023389dde5e2ecfe"
+
+[[plugin.deps]]
+use = "yazi-rs/plugins:mactag"
+rev = "d7588f6"
+hash = "72dfb25e9d0c015365827431e28df322"
+
+[[plugin.deps]]
+use = "Lil-Dank/lazygit"
+rev = "8f37dc5"
+hash = "ee71543790f0ce3951161045a3787abd"
+
+[[plugin.deps]]
+use = "KKV9/compress"
+rev = "c264639"
+hash = "e17c11b605d989568a1d1741ca17c584"
+
+[[plugin.deps]]
+use = "TD-Sky/sudo"
+rev = "af70636"
+hash = "a94dcbe9266512806c677138e8591ddb"
+
+[[plugin.deps]]
+use = "GianniBYoung/rsync"
+rev = "55631aa"
+hash = "fb38b3c546e6594961b335cee4eaa340"
+
+[[plugin.deps]]
+use = "orhnk/system-clipboard"
+rev = "4f6942d"
+hash = "8e81a147e8ddfd992b10dd957d51a199"
+
+
+[[plugin.deps]]
+use = "boydaihungst/restore"
+rev = "dc40509"
+hash = "e7e377f9b1bbaca4a2e5d9ec9709ac4d"
+
+[[plugin.deps]]
+use = "uhs-robert/sshfs"
+rev = "4a87093"
+hash = "263cafaa248b348568e0e35495f2f78"
+
+[[plugin.deps]]
+use = "uhs-robert/recycle-bin"
+rev = "728c0af"
+hash = "6e6a68328ace9b6369ce16b35116894a"
+
+[[plugin.deps]]
+use = "Mr-Ples/command-palette"
+rev = "e5e6105"
+hash = "fee4f11556df389bd37341584c0fbcaf"
+
+[[plugin.deps]]
+use = "bulletmark/cdhist"
+rev = "db4a161"
+hash = "34b7f05a5591b6280388fbb682669b1a"
+
+[[plugin.deps]]
+use = "ktunprasert/git-files"
+rev = "c7289ad"
+hash = "cdb1a69bed63211c75b72521bbab875d"
+
+[[plugin.deps]]
+use = "yazi-rs/plugins:toggle-pane"
+rev = "d7588f6"
+hash = "d6f60c24d8c0cf57a855bf46115b2502"
+
+[[plugin.deps]]
+use = "WhoSowSee/whoosh"
+rev = "a3bbf95"
+hash = "52cbfa67e300b4090819745eb12629c0"
+
+[[plugin.deps]]
+use = "yazi-rs/plugins:full-border"
+rev = "109b13d"
+hash = "3996fc74044bc44144b323686f887e1"
+
+[flavor]
+deps = []

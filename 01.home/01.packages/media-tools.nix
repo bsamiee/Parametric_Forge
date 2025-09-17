@@ -12,9 +12,10 @@ with pkgs;
 [
   # --- Media Processing -----------------------------------------------------
   ffmpeg # Complete multimedia framework for audio/video
+  mpv # High-performance media player for developers (scriptable, minimal UI)
   imagemagick # Image manipulation and conversion
   vips # High-performance image processing (4-5x faster than ImageMagick)
-  # handbrake → Managed via Homebrew formula (CLI) and cask (GUI)
+  resvg # SVG rendering - Required by Yazi for SVG preview
 
   # --- Document Processing --------------------------------------------------
   # pandoc → Managed by programs.pandoc in media-tools.nix (programs dir)
@@ -28,11 +29,11 @@ with pkgs;
   exiftool # Read/write metadata in media files - Audio preview metadata
   hexyl # hexdump/xxd → Colorful hex viewer for binary analysis
   ffmpegthumbnailer # Faster video thumbnail generation - Required by ffmpegthumbnailer.yazi
+  chafa # Fallback image preview for yazi
 
   # --- Visualization & Diagrams ---------------------------------------------
   graphviz # Graph visualization software (DOT language)
   d2 # Modern diagram scripting language
-  resvg # SVG rasterizer - Required by yazi for SVG preview
   inkscape # Vector graphics editor and SVG to PDF converter
 
   # --- Document Rendering ---------------------------------------------------

@@ -12,7 +12,7 @@ local files = require("utils.files")
 local process = require("utils.process")
 
 local M = {}
-local log = hs.logger.new("automations", hs.logger.info)
+local log = hs.logger.new("automations", "info")
 
 -- Configuration
 local DOWNLOADS_DIR = os.getenv("HOME") .. "/Downloads"
@@ -21,7 +21,7 @@ local DOWNLOADS_DIR = os.getenv("HOME") .. "/Downloads"
 local SETTINGS = {
     unzip = "automations.unzip.enabled",
     webp2png = "automations.webp2png.enabled",
-    pdf = "automations.pdf.enabled"
+    pdf = "automations.pdf.enabled",
 }
 
 -- Watchers storage
@@ -40,35 +40,47 @@ end
 local actions = {}
 
 function actions.unzip(zipPath)
-    local dir = files.dirname(zipPath)
     local basename = files.basename(zipPath)
+
+    -- Use ouch - it automatically creates a folder for multi-file archives
     local cmd = string.format(
-        "/usr/bin/ditto -x -k %q %q && /bin/rm -f %q",
-        zipPath, dir, zipPath
+        'cd "%s" && ouch decompress -y -r "%s" 2>&1',
+        files.dirname(zipPath):gsub('"', '\\"'),
+        basename:gsub('"', '\\"')
     )
 
-    local _, success = process.execute(cmd, true)
+    local output, success = process.execute(cmd, true)
+
     if success then
-        canvas.show("UNZIPPED: " .. basename)
-        log.i("Unzipped: " .. zipPath)
+        canvas.show("UNZIPPED: " .. basename:gsub("%.zip$", ""))
+        log.i("Successfully unzipped: " .. zipPath)
     else
         canvas.show("UNZIP FAILED: " .. basename)
-        log.w("Failed to unzip: " .. zipPath)
+        log.e("Failed to unzip: " .. zipPath .. " - Output: " .. (output or "no output"))
     end
 end
 
 function actions.webp2png(webpPath)
-    local pngPath = webpPath:gsub("[Ww][Ee][Bb][Pp]$", "png")
+    -- More robust extension replacement (case-insensitive)
+    local pngPath = webpPath:gsub("%.webp$", ".png", 1)
+    if pngPath == webpPath then
+        pngPath = webpPath:gsub("%.WEBP$", ".png", 1)
+    end
     local basename = files.basename(pngPath)
-    local cmd = string.format("magick %q %q && rm -f %q", webpPath, pngPath, webpPath)
 
-    local _, success = process.execute(cmd, true)
+    local cmd = string.format('magick "%s" "%s" 2>&1', webpPath:gsub('"', '\\"'), pngPath:gsub('"', '\\"'))
+
+    local output, success = process.execute(cmd, true)
+
     if success then
+        -- Remove original WebP after successful conversion
+        local rmCmd = string.format('/bin/rm -f "%s"', webpPath:gsub('"', '\\"'))
+        process.execute(rmCmd, true)
         canvas.show("CONVERTED: " .. basename)
-        log.i("Converted WebP: " .. webpPath)
+        log.i("Successfully converted: " .. webpPath .. " -> " .. pngPath)
     else
         canvas.show("CONVERT FAILED: " .. basename)
-        log.w("Failed to convert WebP: " .. webpPath)
+        log.e("Failed to convert: " .. webpPath .. " - Output: " .. (output or "no output"))
     end
 end
 
@@ -76,56 +88,82 @@ function actions.optimizePdf(pdfPath)
     local basename = files.basename(pdfPath)
 
     -- Check if PDF has substantial text (skip vector PDFs)
-    local textCheck = process.execute(
-        string.format("pdftotext %q - 2>/dev/null | wc -c", pdfPath),
-        true
-    )
+    local textCheckCmd = string.format('pdftotext "%s" - 2>/dev/null | wc -c', pdfPath:gsub('"', '\\"'))
+    local textCheck = process.execute(textCheckCmd, true)
     local textLength = tonumber(textCheck and textCheck:match("%d+")) or 0
 
     if textLength > 50 then
-        log.i("Skipping vector PDF: " .. pdfPath)
+        log.i("Skipping vector PDF (has text): " .. pdfPath)
         return
     end
 
     -- OCR and optimize
-    local cmd = string.format("ocrmypdf --optimize 3 --skip-text %q %q", pdfPath, pdfPath)
-    local _, success = process.execute(cmd, true)
+    local cmd = string.format(
+        'ocrmypdf --optimize 3 --skip-text "%s" "%s" 2>&1',
+        pdfPath:gsub('"', '\\"'),
+        pdfPath:gsub('"', '\\"')
+    )
+
+    local output, success = process.execute(cmd, true)
 
     if success then
         canvas.show("PDF OPTIMIZED: " .. basename)
-        log.i("Optimized PDF: " .. pdfPath)
+        log.i("Successfully optimized PDF: " .. pdfPath)
     else
         canvas.show("PDF OPTIMIZATION FAILED: " .. basename)
-        log.w("Failed to optimize PDF: " .. pdfPath)
+        log.e("Failed to optimize PDF: " .. pdfPath .. " - Output: " .. (output or "no output"))
     end
 end
 
 -- Check if file was just completed (renamed from temp to final)
-local function wasJustCompleted(filePath, flags)
-    -- Look for rename events - this indicates download completion
-    for _, flag in ipairs(flags) do
-        if flag == hs.pathwatcher.flags.itemRenamed then
-            return true
-        end
+local function wasJustCompleted(filePath, flagTable)
+    -- flagTable is a table where keys are flag names and values are booleans
+    -- Check for events that indicate a new/completed file
+    if not flagTable then
+        return false
     end
-    return false
+
+    -- File creation or rename indicates a new/completed file
+    return flagTable.itemCreated or flagTable.itemRenamed or flagTable.itemModified
 end
 
 -- File watcher callback
 local function onFileChange(changedFiles, flagTables)
     for i, filePath in ipairs(changedFiles) do
-        if files.exists(filePath) and
-           not files.shouldIgnoreFile(filePath) and
-           wasJustCompleted(filePath, flagTables[i] or {}) then
+        local flagTable = flagTables[i]
 
+        if
+            files.exists(filePath)
+            and not files.shouldIgnoreFile(filePath)
+            and wasJustCompleted(filePath, flagTable)
+        then
             local ext = files.extension(filePath)
 
+            -- Add a small delay to ensure file is fully written
             if ext == "zip" and hs.settings.get(SETTINGS.unzip) then
-                actions.unzip(filePath)
+                log.i("Detected ZIP file: " .. filePath)
+                hs.timer.doAfter(0.5, function()
+                    if files.exists(filePath) then
+                        log.i("Processing ZIP file: " .. filePath)
+                        actions.unzip(filePath)
+                    end
+                end)
             elseif ext == "webp" and hs.settings.get(SETTINGS.webp2png) then
-                actions.webp2png(filePath)
+                log.i("Detected WebP file: " .. filePath)
+                hs.timer.doAfter(0.5, function()
+                    if files.exists(filePath) then
+                        log.i("Processing WebP file: " .. filePath)
+                        actions.webp2png(filePath)
+                    end
+                end)
             elseif ext == "pdf" and hs.settings.get(SETTINGS.pdf) then
-                actions.optimizePdf(filePath)
+                log.i("Detected PDF file: " .. filePath)
+                hs.timer.doAfter(0.5, function()
+                    if files.exists(filePath) then
+                        log.i("Processing PDF file: " .. filePath)
+                        actions.optimizePdf(filePath)
+                    end
+                end)
             end
         end
     end
@@ -133,7 +171,9 @@ end
 
 -- Watcher management
 local function startWatcher()
-    if watchers.downloads then return end
+    if watchers.downloads then
+        return
+    end
 
     watchers.downloads = hs.pathwatcher.new(DOWNLOADS_DIR, onFileChange)
     watchers.downloads:start()
@@ -151,7 +191,9 @@ end
 -- Public API
 function M.enable(automationType)
     local setting = SETTINGS[automationType]
-    if not setting then return false end
+    if not setting then
+        return false
+    end
 
     hs.settings.set(setting, true)
     canvas.show("AUTOMATION ON: " .. string.upper(automationType))
@@ -174,7 +216,9 @@ end
 
 function M.disable(automationType)
     local setting = SETTINGS[automationType]
-    if not setting then return false end
+    if not setting then
+        return false
+    end
 
     hs.settings.set(setting, false)
     canvas.show("AUTOMATION OFF: " .. string.upper(automationType))
@@ -197,7 +241,9 @@ end
 
 function M.toggle(automationType)
     local setting = SETTINGS[automationType]
-    if not setting then return false end
+    if not setting then
+        return false
+    end
 
     if hs.settings.get(setting) then
         return M.disable(automationType)
@@ -215,7 +261,7 @@ function M.getStatus()
     return {
         unzip = M.isEnabled("unzip"),
         webp2png = M.isEnabled("webp2png"),
-        pdf = M.isEnabled("pdf")
+        pdf = M.isEnabled("pdf"),
     }
 end
 

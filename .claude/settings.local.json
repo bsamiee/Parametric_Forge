@@ -7,7 +7,16 @@
       "Bash(pgrep:*)",
       "Bash(launchctl:*)",
       "Read(//Users/bardiasamiee/Library/LaunchAgents/**)",
-      "WebFetch(domain:github.com)"
+      "WebFetch(domain:github.com)",
+      "Bash(yazi:*)",
+      "Bash(echo $TERM)",
+      "Read(//Users/bardiasamiee/.config/yazi/**)",
+      "WebFetch(domain:wezterm.org)",
+      "WebFetch(domain:yazi-rs.github.io)",
+      "Bash(nix search:*)",
+      "Bash(nix-env:*)",
+      "Bash(tree:*)",
+      "Bash(goku:*)"
     ],
     "deny": [],
     "ask": []

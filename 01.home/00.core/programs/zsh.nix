@@ -21,13 +21,7 @@
     enable = true;
     enableCompletion = true; # Includes zsh-completions
     autosuggestion.enable = true; # zsh-autosuggestions
-    syntaxHighlighting = {
-      enable = true;
-      styles = {
-        path = "none";
-        path_prefix = "none";
-      };
-    };
+    syntaxHighlighting.enable = true;
     historySubstringSearch = {
       enable = true; # zsh-history-substring-search
       searchUpKey = "^[[A"; # Up arrow
@@ -61,13 +55,14 @@
         setopt SHARE_HISTORY INC_APPEND_HISTORY
         setopt AUTO_PUSHD PUSHD_IGNORE_DUPS PUSHD_SILENT CDABLE_VARS
         setopt CHECK_JOBS HUP LONG_LIST_JOBS
+
       '')
 
       # --- Completion System (order 200) ------------------------------------
       (lib.mkOrder 200 ''
         zstyle ':completion:*' menu select
         zstyle ':completion:*' matcher-list 'm:{[:lower:][:upper:]}={[:upper:][:lower:]}' 'r:|[._-]=* r:|=*' 'l:|=* r:|=*'
-        zstyle ':completion:*' list-colors ''${(s.:.)LS_COLORS}
+        zstyle ':completion:*' list-colors
         zstyle ':completion:*' group-name ""
         zstyle ':completion:*:descriptions' format '%F{yellow}-- %d --%f'
         zstyle ':completion:*:warnings' format '%F{red}No matches found%f'
@@ -90,19 +85,9 @@
       # --- Utility Functions & Helpers (order 300) ---------------------------
       # Helper functions for performance and security
       (lib.mkOrder 300 ''
-        # Enhanced command not found handler
-        command_not_found_handler() {
-          case "$1" in
-            rm|mv|dd|format|fdisk|sudo) echo "Command '$1' not found (dangerous command)"; return 127 ;;
-            *) command -v nix-locate >/dev/null 2>&1 && 
-               { echo "Searching nixpkgs for '$1'..."; nix-locate --minimal --no-group --type x --type s --whole-name --at-root "/bin/$1"; } || 
-               echo "Command '$1' not found"; return 127 ;;
-          esac
-        }
-
         # Project root navigation
         project-root() {
-          cd "$(git rev-parse --show-toplevel 2>/dev/null || 
+          cd "$(git rev-parse --show-toplevel 2>/dev/null ||
                fd -t d '^(.git|.hg|.svn|flake.nix|Cargo.toml|package.json|pyproject.toml)$' --max-depth 3 --exec dirname {} | head -1)" 2>/dev/null || 
           echo "Not in a project"
         }
@@ -115,6 +100,25 @@
             builtin cd -- "$cwd"
           fi
           rm -f -- "$tmp"
+        }
+
+        # WezTerm CLI helper - routes through wezterm-utils.sh script when available
+        weztermctl() {
+          local bin
+          if [ -n "$WEZTERM_UTILS_BIN" ]; then
+            bin="$WEZTERM_UTILS_BIN"
+          else
+            bin=wezterm-utils.sh
+          fi
+
+          if command -v "$bin" >/dev/null 2>&1; then
+            command "$bin" "$@"
+          elif command -v wezterm-utils.sh >/dev/null 2>&1; then
+            command wezterm-utils.sh "$@"
+          else
+            printf 'weztermctl: wezterm-utils.sh not found in PATH\n' >&2
+            return 1
+          fi
         }
       '')
 
@@ -136,9 +140,6 @@
         # Startup optimizations
         typeset -U path PATH
         mkdir -p "${config.xdg.cacheHome}/zsh" "${config.xdg.stateHome}/zsh"
-
-        # Generate LS_COLORS using vivid (proper Dracula theme)
-        command -v vivid >/dev/null 2>&1 && export LS_COLORS="$(vivid generate dracula)"
 
         # Context-aware optimizations
         [[ -n "$NVIM$VSCODE_PID" ]] && { zstyle ':completion:*' max-matches-width 0; zstyle ':completion:*' max-matches 10; }
@@ -193,7 +194,7 @@
 
         project-info() {
           [[ -f "flake.nix" ]] && echo "Nix" && return
-          [[ -f "package.json" ]] && echo "Node" && return  
+          [[ -f "package.json" ]] && echo "Node" && return
           [[ -f "Cargo.toml" ]] && echo "Rust" && return
           [[ -f "pyproject.toml" ]] && echo "Python" && return
         }
@@ -204,14 +205,42 @@
         add-zsh-hook chpwd project-info
         add-zsh-hook chpwd auto-venv
 
-        # WezTerm integration
-        [[ -n "$WEZTERM_PANE" ]] && {
-          _wezterm_set_user_var() { [[ -t 1 ]] && printf "\033]1337;SetUserVar=%s=%s\007" "$1" "$(echo -n "$2" | base64)"; }
-          _wezterm_check_git() { git rev-parse --git-dir >/dev/null 2>&1 && _wezterm_set_user_var "IS_GIT_REPO" "true" || _wezterm_set_user_var "IS_GIT_REPO" "false"; }
-          add-zsh-hook chpwd _wezterm_check_git
-          add-zsh-hook precmd _wezterm_check_git
-          _wezterm_check_git
-        }
+      '')
+      # --- WezTerm Environment Detection (order 950) ------------------------
+      (lib.mkOrder 950 ''
+        # Minimal WezTerm integration - only set user vars from existing env
+        if [[ "$TERM_PROGRAM" == "WezTerm" ]] && [[ -z "$WEZTERM_SHELL_SKIP_ENV" ]]; then
+          # Cache previous values to avoid redundant updates
+          typeset -g __wezterm_prev_nix=""
+          typeset -g __wezterm_prev_venv=""
+          typeset -g __wezterm_prev_node=""
+
+          __wezterm_update_env() {
+            # Only set if changed to minimize escape sequences
+            local current_nix="''${IN_NIX_SHELL:-0}"
+            local current_venv="''${VIRTUAL_ENV##*/}"  # Just basename
+            local current_node="''${FNM_USING_VERSION:-}"  # fnm sets this
+
+            if [[ "$current_nix" != "$__wezterm_prev_nix" ]]; then
+              printf "\033]1337;SetUserVar=%s=%s\007" "WEZTERM_IN_NIX" "$(echo -n "$current_nix" | base64)"
+              __wezterm_prev_nix="$current_nix"
+            fi
+
+            if [[ "$current_venv" != "$__wezterm_prev_venv" ]]; then
+              printf "\033]1337;SetUserVar=%s=%s\007" "WEZTERM_VENV" "$(echo -n "$current_venv" | base64)"
+              __wezterm_prev_venv="$current_venv"
+            fi
+
+            if [[ "$current_node" != "$__wezterm_prev_node" ]]; then
+              printf "\033]1337;SetUserVar=%s=%s\007" "WEZTERM_NODE" "$(echo -n "$current_node" | base64)"
+              __wezterm_prev_node="$current_node"
+            fi
+          }
+
+          # Only update on directory change and initial prompt
+          add-zsh-hook chpwd __wezterm_update_env
+          __wezterm_update_env  # Initial call
+        fi
       '')
       # --- Last-stage integrations (order 1000) -----------------------------
       (lib.mkOrder 1000 ''

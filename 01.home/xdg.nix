@@ -190,6 +190,7 @@
       mkdir -pm 755 "${config.xdg.stateHome}/sqlite"
       mkdir -pm 755 "${config.xdg.stateHome}/ffmpeg"
       mkdir -pm 755 "${config.xdg.stateHome}/wezterm"  # For daemon socket and logs
+      mkdir -pm 755 "${config.xdg.stateHome}/wezterm/resurrect"  # For resurrect plugin state files
       mkdir -pm 755 "${config.xdg.stateHome}/yazi"     # For yazi state and logs
       # --- Cache Directories -----------------------------------------------
       mkdir -pm 755 "${config.xdg.cacheHome}/nix"

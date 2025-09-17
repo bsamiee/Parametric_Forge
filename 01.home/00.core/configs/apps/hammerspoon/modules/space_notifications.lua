@@ -17,7 +17,9 @@ local spacesWatcher
 local function onSpaceChange()
     -- Get current space info
     local currentSpace = hs.spaces.focusedSpace()
-    if not currentSpace then return end
+    if not currentSpace then
+        return
+    end
 
     -- Get all spaces to find the index
     local allSpaces = hs.spaces.allSpaces()
@@ -38,7 +40,9 @@ local function onSpaceChange()
 end
 
 function M.init()
-    if spacesWatcher then return true end
+    if spacesWatcher then
+        return true
+    end
 
     -- Create independent spaces watcher
     if hs.spaces and hs.spaces.watcher and hs.spaces.watcher.new then

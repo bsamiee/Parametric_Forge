@@ -45,7 +45,7 @@ yabai -m config window_opacity on \
   window_animation_duration 0.15 \
   window_animation_easing ease_in_out_cubic \
   insert_feedback_color 0xff50fa7b \
-  window_zoom_persist on
+  window_zoom_persist off
 
 # Mouse Configuration
 yabai -m config focus_follows_mouse off \
@@ -67,11 +67,13 @@ restart_borders() {
   fi
 }
 
+BORDERS_ACTION="\"$BORDERS_RC\" >/dev/null 2>&1 &"
+
 yabai -m signal --add label=restart_borders \
   event=application_terminated app="borders" \
-  action="restart_borders"
+  action="$BORDERS_ACTION"
 
 yabai -m signal --add label=borders_on_dock_restart \
   event=dock_did_restart \
-  action="restart_borders"
+  action="$BORDERS_ACTION"
 

@@ -23,7 +23,6 @@ end
 
 -- Initialize foundation components
 local canvas = require("notifications.canvas")
-local yabai_bridge = require("integration.yabai_bridge")
 local automations = require("modules.automations")
 local caffeine = require("modules.caffeine")
 local space_indicator = require("modules.space_indicator")
@@ -32,17 +31,18 @@ local services_menu = require("modules.services_menu")
 local automations_menu = require("modules.automations_menu")
 local modal_indicator = require("modules.modal_indicator")
 local leader_indicator = require("modules.leader_indicator")
+local yabai_notifications = require("modules.yabai_notifications")
 
 -- Initialize all systems
-local ok1 = pcall(yabai_bridge.init)
-local ok2 = pcall(automations.init)
-local ok3 = pcall(caffeine.init)
-local ok4 = pcall(space_indicator.init)
-local ok5 = pcall(space_notifications.init)
-local ok6 = pcall(services_menu.init)
-local ok7 = pcall(automations_menu.init)
-local ok8 = pcall(modal_indicator.init)
-local ok9 = pcall(leader_indicator.init)
+local ok1 = pcall(automations.init)
+local ok2 = pcall(caffeine.init)
+local ok3 = pcall(space_indicator.init)
+local ok4 = pcall(space_notifications.init)
+local ok5 = pcall(services_menu.init)
+local ok6 = pcall(automations_menu.init)
+local ok7 = pcall(modal_indicator.init)
+local ok8 = pcall(leader_indicator.init)
+local ok9 = pcall(yabai_notifications.init)
 
 if ok1 and ok2 and ok3 and ok4 and ok5 and ok6 and ok7 and ok8 and ok9 then
     canvas.show("HAMMERSPOON READY", 2.5)

@@ -14,12 +14,39 @@ local canvas = nil
 local messages = {}
 local idCounter = 0
 
+-- Resolve a usable screen frame even if called off the main thread
+local function resolveFrame()
+    local screen = hs.screen.mainScreen()
+
+    if not screen then
+        local screens = hs.screen.allScreens()
+        if screens and #screens > 0 then
+            screen = screens[1]
+        end
+    end
+
+    if not screen then
+        return { x = 0, y = 0, w = 1440, h = 900 }
+    end
+
+    local ok, frame = pcall(function()
+        return screen:frame()
+    end)
+
+    if not ok or type(frame) ~= "table" then
+        return { x = 0, y = 0, w = 1440, h = 900 }
+    end
+
+    return frame
+end
+
 -- Initialize canvas with proper settings
 local function ensureCanvas()
-    if canvas then return canvas end
+    if canvas then
+        return canvas
+    end
 
-    local screen = hs.screen.mainScreen()
-    local frame = screen:frame()
+    local frame = resolveFrame()
     local x = frame.x + (frame.w - styles.width) / 2
     local y = frame.y + styles.topOffset
 
@@ -27,7 +54,7 @@ local function ensureCanvas()
         x = x,
         y = y,
         w = styles.width,
-        h = 1
+        h = 1,
     })
 
     canvas:level(hs.canvas.windowLevels.overlay)
@@ -72,7 +99,7 @@ local function render()
         x = c:frame().x,
         y = c:frame().y,
         w = styles.width,
-        h = totalHeight
+        h = totalHeight,
     })
 
     local elements = {}
@@ -86,8 +113,8 @@ local function render()
         shadow = {
             blurRadius = 24,
             color = { red = 0, green = 0, blue = 0, alpha = 0.75 },
-            offset = { h = 2, w = 0 }
-        }
+            offset = { h = 2, w = 0 },
+        },
     }
 
     -- Border
@@ -97,7 +124,7 @@ local function render()
         frame = { x = 0, y = 0, w = styles.width, h = totalHeight },
         roundedRectRadii = { xRadius = styles.radius, yRadius = styles.radius },
         strokeColor = styles.colors.border,
-        strokeWidth = 1
+        strokeWidth = 1,
     }
 
     -- Message text elements (newest on top)
@@ -109,13 +136,13 @@ local function render()
                 x = 16,
                 y = y + 6,
                 w = styles.width - 32,
-                h = styles.rowHeight - 12
+                h = styles.rowHeight - 12,
             },
             text = string.upper(msg.text),
             textColor = styles.colors.text,
             textSize = styles.font.size,
             textFont = styles.font.name,
-            textAlignment = "center"
+            textAlignment = "center",
         }
     end
 
@@ -133,7 +160,7 @@ function M.show(text, duration)
     local message = {
         id = idCounter,
         text = tostring(text),
-        expiry = hs.timer.secondsSinceEpoch() + duration
+        expiry = hs.timer.secondsSinceEpoch() + duration,
     }
 
     -- Add to front (newest on top)

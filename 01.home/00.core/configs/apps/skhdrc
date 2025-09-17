@@ -37,6 +37,7 @@
 
 # --- TIER 0: No leader: simple modifiers ------------------------------------
 
+
 # --- TIER 1: Powerkey: ctrl + alt + shift -----------------------------------
 
 # Window resizing
@@ -135,47 +136,47 @@ cmd + ctrl + alt + shift - y : /opt/homebrew/bin/yabai -m space --mirror y-axis
 
 # --- Yabai Related Mode Toggles ---------------------------------------------
 # Layout toggle
-cmd + ctrl + alt + shift - t : \
-    current="$(/opt/homebrew/bin/yabai -m query --spaces --space | jq -r '.type')"; \
-    if [[ "$current" == "bsp" ]]; then \
-        /opt/homebrew/bin/yabai -m space --layout stack; \
-    else \
-        /opt/homebrew/bin/yabai -m space --layout bsp; \
-    fi; \
+#cmd + ctrl + alt + shift - t : \
+    # current="$(/opt/homebrew/bin/yabai -m query --spaces --space | jq -r '.type')"; \
+    # if [[ "$current" == "bsp" ]]; then \
+        # /opt/homebrew/bin/yabai -m space --layout stack; \
+    # else \
+        # /opt/homebrew/bin/yabai -m space --layout bsp; \
+    # fi; \
 
 # Gaps toggle
-cmd + ctrl + alt + shift - g : \
-    current="$(/opt/homebrew/bin/yabai -m config top_padding)"; \
-    if [[ "$current" == "0" ]]; then \
-        /opt/homebrew/bin/yabai -m config top_padding 4; \
-        /opt/homebrew/bin/yabai -m config bottom_padding 4; \
-        /opt/homebrew/bin/yabai -m config left_padding 4; \
-        /opt/homebrew/bin/yabai -m config right_padding 4; \
-        /opt/homebrew/bin/yabai -m config window_gap 4; \
-        /opt/homebrew/bin/yabai -m config external_bar all:4:4; \
-    else \
-        /opt/homebrew/bin/yabai -m config top_padding 0; \
-        /opt/homebrew/bin/yabai -m config bottom_padding 0; \
-        /opt/homebrew/bin/yabai -m config left_padding 0; \
-        /opt/homebrew/bin/yabai -m config right_padding 0; \
-        /opt/homebrew/bin/yabai -m config window_gap 0; \
-        /opt/homebrew/bin/yabai -m config external_bar all:0:0; \
-    fi; \
+# cmd + ctrl + alt + shift - g : \
+    # current="$(/opt/homebrew/bin/yabai -m config top_padding)"; \
+    # if [[ "$current" == "0" ]]; then \
+        # /opt/homebrew/bin/yabai -m config top_padding 4; \
+        # /opt/homebrew/bin/yabai -m config bottom_padding 4; \
+        # /opt/homebrew/bin/yabai -m config left_padding 4; \
+        # /opt/homebrew/bin/yabai -m config right_padding 4; \
+        # /opt/homebrew/bin/yabai -m config window_gap 4; \
+        # /opt/homebrew/bin/yabai -m config external_bar all:4:4; \
+    # else \
+        # /opt/homebrew/bin/yabai -m config top_padding 0; \
+        # /opt/homebrew/bin/yabai -m config bottom_padding 0; \
+        # /opt/homebrew/bin/yabai -m config left_padding 0; \
+        # /opt/homebrew/bin/yabai -m config right_padding 0; \
+        # /opt/homebrew/bin/yabai -m config window_gap 0; \
+        # /opt/homebrew/bin/yabai -m config external_bar all:0:0; \
+    # fi; \
 
 # Mouse drop mode toggle
-cmd + ctrl + alt + shift - m : \
-    current="$(/opt/homebrew/bin/yabai -m config mouse_drop_action)"; \
-    if [[ "$current" == "swap" ]]; then \
-        /opt/homebrew/bin/yabai -m config mouse_drop_action stack; \
-    else \
-        /opt/homebrew/bin/yabai -m config mouse_drop_action swap; \
-    fi; \
+# cmd + ctrl + alt + shift - m : \
+    # current="$(/opt/homebrew/bin/yabai -m config mouse_drop_action)"; \
+    # if [[ "$current" == "swap" ]]; then \
+        # /opt/homebrew/bin/yabai -m config mouse_drop_action stack; \
+    # else \
+        # /opt/homebrew/bin/yabai -m config mouse_drop_action swap; \
+    # fi; \
 
 # Opacity toggle
-cmd + ctrl + alt + shift - o : \
-    current="$(/opt/homebrew/bin/yabai -m config window_opacity)"; \
-    if [[ "$current" == "on" ]]; then \
-        /opt/homebrew/bin/yabai -m config window_opacity off; \
-    else \
-        /opt/homebrew/bin/yabai -m config window_opacity on; \
-    fi; \
+# cmd + ctrl + alt + shift - o : \
+    # current="$(/opt/homebrew/bin/yabai -m config window_opacity)"; \
+    # if [[ "$current" == "on" ]]; then \
+        # /opt/homebrew/bin/yabai -m config window_opacity off; \
+    # else \
+        # /opt/homebrew/bin/yabai -m config window_opacity on; \
+    # fi; \

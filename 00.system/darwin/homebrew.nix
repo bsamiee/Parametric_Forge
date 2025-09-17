@@ -42,13 +42,12 @@ in
       "cleanshot" # Advanced screenshot and screen recording tool # TODO: CONFIGURE
       "docker-desktop" # Docker Desktop containerization - CRITICAL for deployment
       "dotnet-sdk" # .NET SDK (large, GUI tools)
-      # "wezterm@nightly" # Already have WezTerm manually
+      "wezterm" # Terminal emulator - now via Nix with forced TERM=wezterm
 
       # Productivity & Window Management - MOST ALREADY INSTALLED
       "airbuddy" # AirPods management utility
       "aldente" # Battery charging limiter
       "alt-tab" # Window switching utility
-      "bettermouse" # Mouse enhancement utility
       "bettertouchtool" # Touch/gesture management # TODO: CONFIGURE
       "jordanbaird-ice" # Menu bar manager for macOS
       "raycast" # Launcher/productivity app # TODO: CONFIGURE
@@ -124,6 +123,7 @@ in
     brews = [
       "mas" # Mac App Store CLI for masApps integration
       "handbrake" # CLI video transcoder (GUI in casks as handbrake-app)
+      # "mpv" # TODO: Install separately - homebrew fontconfig permission issue
       # "mono" # .NET runtime - RE-INSTALL AFTER FULL DEPLOYMENT (failed during initial setup)
       "defaultbrowser" # CLI tool for setting default browser properly
       "duti" # Declarative file type associations and UTI management
@@ -136,6 +136,9 @@ in
       "koekeishiya/formulae/skhd"
       "FelixKratz/formulae/borders"
       "yqrashawn/goku/goku" # Goku EDN → karabiner.json (goku/gokuw)
+
+      # File tagging support for Yazi mactag plugin
+      "tag" # macOS file tagging CLI (jdberry/tag)
     ];
     # --- Mac App Store Applications -----------------------------------------
     # Disabled: Using smart install/update activation script instead

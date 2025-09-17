@@ -17,17 +17,6 @@
 {
   # --- Home Activation Scripts ----------------------------------------------
   home.activation = {
-    # --- Yazi Plugin Installation --------------------------------------------
-    yaziPlugins = lib.hm.dag.entryAfter [ "installPackages" ] ''
-      # Run the yazi plugin setup script (auto-deployed to PATH via file-management.nix)
-      if command -v yazi-setup-plugins.sh >/dev/null 2>&1; then
-        echo "[Yazi] Running plugin setup script..."
-        yazi-setup-plugins.sh install
-      else
-        echo "[Yazi] Plugin setup script not found - ensure system rebuild completed"
-      fi
-    '';
-
     # --- SQLite Extensions Setup --------------------------------------------
     sqliteExtensions = lib.hm.dag.entryAfter [ "createXdgDirs" ] ''
       # Install sqlean (not in nixpkgs)

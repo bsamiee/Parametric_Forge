@@ -350,6 +350,26 @@
       echo "[Parametric Forge] Hammerspoon init.lua deployment complete"
     '';
 
+    # --- Yazi package.toml Deployment ---------------------------------------
+    yaziPackageDeployment = lib.hm.dag.entryAfter [ "hammerspoonInitDeployment" ] ''
+      echo "[Parametric Forge] Deploying Yazi package.toml..."
+
+      YAZI_DIR="${config.xdg.configHome}/yazi"
+      mkdir -p "$YAZI_DIR"
+
+      SOURCE="${config.home.homeDirectory}/Documents/99.Github/Parametric_Forge/01.home/00.core/configs/apps/yazi/package.toml"
+      TARGET="$YAZI_DIR/package.toml"
+
+      rm -f "$TARGET"
+      if [ -f "$SOURCE" ]; then
+        cp "$SOURCE" "$TARGET"
+        chmod 644 "$TARGET"
+        echo "  ✓ package.toml deployed with write permissions"
+      else
+        echo "  [WARN] Source package.toml not found"
+      fi
+    '';
+
     # --- Karabiner assets (complex modifications) --------------------------
     karabinerAssetsDeployment = lib.hm.dag.entryAfter [ "hammerspoonInitDeployment" ] ''
       echo "[Parametric Forge] Deploying Karabiner complex modifications..."

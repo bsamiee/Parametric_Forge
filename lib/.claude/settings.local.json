@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//Users/bardiasamiee/Documents/99.Github/Parametric_Forge/01.home/00.core/configs/apps/hammerspoon/**)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

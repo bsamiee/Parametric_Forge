@@ -6,8 +6,24 @@
       "manipulators": [
         {
           "type": "basic",
-          "from": { "key_code": "right_command", "modifiers": { "optional": ["any"] } },
-          "to": [ { "key_code": "left_shift", "modifiers": ["left_command", "left_control", "left_option"] } ]
+          "from": {
+            "key_code": "right_command",
+            "modifiers": {
+              "optional": [
+                "any"
+              ]
+            }
+          },
+          "to": [
+            {
+              "key_code": "left_shift",
+              "modifiers": [
+                "left_command",
+                "left_control",
+                "left_option"
+              ]
+            }
+          ]
         }
       ]
     },
@@ -16,8 +32,23 @@
       "manipulators": [
         {
           "type": "basic",
-          "from": { "key_code": "right_option", "modifiers": { "optional": ["any"] } },
-          "to": [ { "key_code": "left_control", "modifiers": ["left_command", "left_option"] } ]
+          "from": {
+            "key_code": "right_option",
+            "modifiers": {
+              "optional": [
+                "any"
+              ]
+            }
+          },
+          "to": [
+            {
+              "key_code": "left_control",
+              "modifiers": [
+                "left_command",
+                "left_option"
+              ]
+            }
+          ]
         }
       ]
     },
@@ -26,8 +57,23 @@
       "manipulators": [
         {
           "type": "basic",
-          "from": { "key_code": "right_shift", "modifiers": { "optional": ["any"] } },
-          "to": [ { "key_code": "left_option", "modifiers": ["left_control", "left_shift"] } ]
+          "from": {
+            "key_code": "right_shift",
+            "modifiers": {
+              "optional": [
+                "any"
+              ]
+            }
+          },
+          "to": [
+            {
+              "key_code": "left_option",
+              "modifiers": [
+                "left_control",
+                "left_shift"
+              ]
+            }
+          ]
         }
       ]
     }

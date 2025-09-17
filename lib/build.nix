@@ -56,7 +56,14 @@ let
 
       # Check for shebang pattern (only on potentially text files to avoid binary read errors)
       hasShebang =
-        if builtins.pathExists sourcePath && !lib.hasSuffix ".png" filename && !lib.hasSuffix ".jpg" filename && !lib.hasSuffix ".jpeg" filename && !lib.hasSuffix ".gif" filename && !lib.hasSuffix ".ico" filename then
+        if
+          builtins.pathExists sourcePath
+          && !lib.hasSuffix ".png" filename
+          && !lib.hasSuffix ".jpg" filename
+          && !lib.hasSuffix ".jpeg" filename
+          && !lib.hasSuffix ".gif" filename
+          && !lib.hasSuffix ".ico" filename
+        then
           let
             content = builtins.readFile sourcePath;
             firstLine = lib.head (lib.splitString "\n" content);

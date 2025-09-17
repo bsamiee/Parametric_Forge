@@ -27,6 +27,7 @@
     },
     "percent": {
       "type": 3,
+      "ndigits": 0,
       "color": {
         "green": "#50fa7b",
         "yellow": "#f1fa8c",
@@ -63,147 +64,246 @@
       "string": "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     },
     {
+      "type": "custom",
+      "format": "── System ───────────────────────"
+    },
+    {
       "type": "os",
-      "key": "OS",
+      "key": "{icon} OS",
       "format": "{name} {version} {arch}"
     },
     {
       "type": "host",
-      "key": "Host",
+      "key": "󰇅 Host",
       "format": "{name}"
     },
     {
       "type": "kernel",
-      "key": "Kernel",
+      "key": " Kernel",
       "format": "{sysname} {release}"
     },
     {
       "type": "uptime",
-      "key": "Uptime"
+      "key": " Uptime"
     },
     {
-      "type": "command",
-      "key": "Packages",
-      "text": "nix_count=$(nix-store -q --references ~/.nix-profile 2>/dev/null | grep -E '^/nix/store/.+-[^-]+$' | sort -u | wc -l | tr -d ' '); if [ \"$nix_count\" = \"0\" ]; then nix_count=$(nix-store -q --references /etc/profiles/per-user/$USER 2>/dev/null | grep -E '^/nix/store/.+-[^-]+$' | sort -u | wc -l | tr -d ' ' || echo '0'); fi; brew_count=$(brew list --formula 2>/dev/null | wc -l | tr -d ' ' || echo '0'); cask_count=$(brew list --cask 2>/dev/null | wc -l | tr -d ' ' || echo '0'); echo \"$nix_count (nix), $brew_count (brew), $cask_count (cask)\""
-    },
-    {
-      "type": "break"
-    },
-    {
-      "type": "cpu",
-      "key": "CPU",
-      "format": "{name} ({core-count}) @ {freq-max} GHz"
-    },
-    {
-      "type": "cpuusage",
-      "key": "CPU Usage"
-    },
-    {
-      "type": "gpu",
-      "key": "GPU",
-      "format": "{name}"
-    },
-    {
-      "type": "memory",
-      "key": "Memory Usage"
-    },
-    {
-      "type": "disk",
-      "key": "Disk Usage",
-      "folders": "/"
-    },
-    {
-      "type": "display",
-      "key": "Display",
-      "format": "{width}x{height} @ {refresh-rate}Hz"
+      "type": "packages",
+      "key": "󰏖 Packages",
+      "format": "{nix-default} (nix), {brew} (brew), {brew-cask} (cask)"
     },
     {
       "type": "break"
     },
     {
-      "type": "wm",
-      "key": "WM",
+      "type": "custom",
+      "format": "── Desktop ──────────────────────"
+    },
+    {
+      "type": "de",
+      "key": " DE",
       "format": "{pretty-name}"
     },
     {
+      "type": "wm",
+      "key": "󰧨 WM",
+      "format": "{pretty-name}"
+    },
+    {
+      "type": "lm",
+      "key": " Login Manager"
+    },
+    {
       "type": "wmtheme",
-      "key": "WM Theme"
+      "key": "󰉼 WM Theme"
+    },
+    {
+      "type": "theme",
+      "key": " Theme"
+    },
+    {
+      "type": "icons",
+      "key": "󰀻 Icons"
     },
     {
       "type": "shell",
-      "key": "Shell",
+      "key": " Shell",
       "format": "{pretty-name} {version}"
     },
     {
       "type": "terminal",
-      "key": "Terminal",
+      "key": " Terminal",
       "format": "{pretty-name}"
     },
     {
       "type": "terminalfont",
-      "key": "Font",
+      "key": " UI Font",
       "format": "{name} {size}pt"
     },
     {
       "type": "break"
     },
     {
+      "type": "custom",
+      "format": "── Hardware ─────────────────────"
+    },
+    {
+      "type": "chassis",
+      "key": "󰌢 Chassis"
+    },
+    {
+      "type": "board",
+      "key": " Board"
+    },
+    {
+      "type": "bios",
+      "key": "󰨇 BIOS"
+    },
+    {
+      "type": "cpu",
+      "key": " CPU",
+      "temp": true,
+      "freqNdigits": 1,
+      "format": "{name} ({core-count}) @ {freq-max}"
+    },
+    {
+      "type": "cpuusage",
+      "key": " CPU Usage"
+    },
+    {
+      "type": "gpu",
+      "key": "󰍛 GPU",
+      "temp": true,
+      "format": "{name}"
+    },
+    {
+      "type": "gpu",
+      "key": "󰍛 GPU Usage",
+      "format": "{core-usage-bar} ({core-usage-num}%)"
+    },
+    {
+      "type": "memory",
+      "key": " Memory",
+      "format": "{used} / {total}"
+    },
+    {
+      "type": "memory",
+      "key": " Memory Usage",
+      "format": "{percentage-bar} ({percentage}%)"
+    },
+    {
+      "type": "swap",
+      "key": "󰓡 Swap",
+      "format": "{used} / {total} ({percentage}%)"
+    },
+    {
+      "type": "disk",
+      "key": " Disk",
+      "folders": "/",
+      "format": "{size-used} / {size-total}"
+    },
+    {
+      "type": "disk",
+      "key": " Disk Usage",
+      "folders": "/",
+      "format": "{size-percentage-bar} ({size-percentage}%)"
+    },
+    {
+      "type": "display",
+      "key": "󰍹 Display",
+      "format": "{width}x{height} @ {refresh-rate}Hz"
+    },
+    {
+      "type": "opengl",
+      "key": "󰍛 OpenGL"
+    },
+    {
+      "type": "vulkan",
+      "key": "󰍛 Vulkan"
+    },
+    {
+      "type": "break"
+    },
+    {
+      "type": "custom",
+      "format": "── Network ──────────────────────"
+    },
+    {
       "type": "wifi",
-      "key": "WiFi",
+      "key": " WiFi",
       "format": "{ssid}"
     },
     {
       "type": "localip",
-      "key": "Local IP",
+      "key": " Local IP",
       "format": "{ipv4}",
       "showIpv6": false,
-      "showLoop": false
+      "showLoop": false,
+      "compact": true
     },
     {
       "type": "publicip",
-      "key": "Public IP"
+      "key": " Public IP"
+    },
+    {
+      "type": "netio",
+      "key": " Net IO"
     },
     {
       "type": "bluetooth",
-      "key": "Bluetooth"
+      "key": " Bluetooth"
     },
     {
       "type": "break"
     },
     {
+      "type": "custom",
+      "format": "── Software ─────────────────────"
+    },
+    {
       "type": "command",
-      "key": "Git Status",
+      "key": "󰊢 Git Status",
       "text": "if git rev-parse --git-dir > /dev/null 2>&1; then changes=$(git status --porcelain | wc -l | tr -d ' '); if [ \"$changes\" -eq 0 ]; then echo 'Clean'; else echo \"$changes changes\"; fi; else echo 'Not a repo'; fi"
     },
     {
       "type": "command",
-      "key": "Node",
+      "key": "󰎙 Node",
       "text": "node --version 2>/dev/null | sed 's/v//' || echo 'Not installed'"
     },
     {
       "type": "command",
-      "key": "Python",
+      "key": "󰌠 Python",
       "text": "python3 --version 2>/dev/null | cut -d' ' -f2 || echo 'Not installed'"
-    },
-    {
-      "type": "media",
-      "key": "Media"
     },
     {
       "type": "break"
     },
     {
+      "type": "custom",
+      "format": "── Media ───────────────────────"
+    },
+    {
+      "type": "media",
+      "key": " Now Playing"
+    },
+    {
+      "type": "break"
+    },
+    {
+      "type": "custom",
+      "format": "── Status ──────────────────────"
+    },
+    {
       "type": "battery",
-      "key": "Battery",
+      "key": "󰂄 Battery",
       "format": "{capacity}% ({status})"
     },
     {
       "type": "locale",
-      "key": "Locale"
+      "key": " Locale"
     },
     {
       "type": "datetime",
-      "key": "Time",
+      "key": " Time",
       "format": "{month-name-short} {day-pretty}, {year} {hour-pretty}:{minute-pretty}"
     },
     {
