@@ -10,8 +10,118 @@ local wezterm = require("wezterm")
 
 local M = {}
 
+local function build_spawn_actions(config, act)
+    local default_cwd = config.default_cwd
+    if not default_cwd or default_cwd == "" then
+        default_cwd = os.getenv("WEZTERM_FRESH_CWD") or wezterm.home_dir
+    end
+
+    local default_prog = config.default_prog
+    if not default_prog or #default_prog == 0 then
+        local shell = os.getenv("SHELL")
+        if shell and shell ~= "" then
+            default_prog = { shell, "-l" }
+        else
+            default_prog = { "/bin/sh" }
+        end
+    end
+
+    local function is_local(pane)
+        local domain = pane and pane:get_domain_name()
+        return not domain or domain == "" or domain == "local" or domain == "DefaultDomain"
+    end
+
+    local function tab_action()
+        return wezterm.action_callback(function(window, pane)
+            if not pane then
+                return
+            end
+
+            if is_local(pane) then
+                window:perform_action(
+                    act.SpawnCommandInNewTab({ args = default_prog, cwd = default_cwd }),
+                    pane
+                )
+                return
+            end
+
+            local domain = pane:get_domain_name()
+            if domain and domain ~= "" then
+                window:perform_action(act.SpawnTab({ DomainName = domain }), pane)
+            else
+                window:perform_action(act.SpawnTab("CurrentPaneDomain"), pane)
+            end
+        end)
+    end
+
+    local function split_action(direction)
+        return wezterm.action_callback(function(window, pane)
+            if not pane then
+                return
+            end
+
+            local opts = {
+                direction = direction,
+                size = { Percent = 50 },
+                domain = "CurrentPaneDomain",
+            }
+
+            if is_local(pane) then
+                opts.command = { args = default_prog, cwd = default_cwd }
+            end
+
+            window:perform_action(act.SplitPane(opts), pane)
+        end)
+    end
+
+    return {
+        tab = tab_action(),
+        split_right = split_action("Right"),
+        split_down = split_action("Down"),
+    }
+end
+
+
+-- Helper function for smart-splits.nvim integration
+-- Detects if the current pane is running Neovim
+local function is_vim(pane)
+    -- This is set by the smart-splits.nvim plugin
+    return pane:get_user_vars().IS_NVIM == "true"
+end
+
+-- Smart navigation between WezTerm panes and Neovim splits
+local function smart_split_nav(resize_or_move, key)
+    local direction_keys = {
+        h = "Left",
+        j = "Down",
+        k = "Up",
+        l = "Right",
+    }
+
+    return {
+        key = key,
+        mods = resize_or_move == "resize" and "ALT" or "CTRL",
+        action = wezterm.action_callback(function(win, pane)
+            if is_vim(pane) then
+                -- Pass the keys through to Neovim
+                win:perform_action({
+                    SendKey = { key = key, mods = resize_or_move == "resize" and "ALT" or "CTRL" },
+                }, pane)
+            else
+                -- Handle WezTerm pane navigation/resizing
+                if resize_or_move == "resize" then
+                    win:perform_action({ AdjustPaneSize = { direction_keys[key], 3 } }, pane)
+                else
+                    win:perform_action({ ActivatePaneDirection = direction_keys[key] }, pane)
+                end
+            end
+        end),
+    }
+end
+
 function M.setup(config, workspace_switcher, resurrect)
     local act = wezterm.action
+    local spawn_actions = build_spawn_actions(config, act)
 
     -- Key Configuration ────────────────────────────────────────────────────────
     config.send_composed_key_when_left_alt_is_pressed = false
@@ -71,10 +181,10 @@ function M.setup(config, workspace_switcher, resurrect)
             { key = "k", mods = "SHIFT", action = act.AdjustPaneSize({ "Up", 3 }) },
             { key = "l", mods = "SHIFT", action = act.AdjustPaneSize({ "Right", 3 }) },
             -- Split and pane management (mirrors existing Cmd bindings)
-            { key = "s", action = act.SplitVertical({ domain = "CurrentPaneDomain" }) },
-            { key = "v", action = act.SplitHorizontal({ domain = "CurrentPaneDomain" }) },
+            { key = "s", action = spawn_actions.split_down },
+            { key = "v", action = spawn_actions.split_right },
             { key = "c", action = act.ActivateCopyMode },
-            { key = "t", action = act.SpawnTab("CurrentPaneDomain") },
+            { key = "t", action = spawn_actions.tab },
             { key = "y", action = act.SpawnCommandInNewTab({ args = { "yazi" } }) },
             { key = "o", action = act.CloseCurrentPane({ confirm = false }) },
             { key = "z", action = act.TogglePaneZoomState },
@@ -183,7 +293,7 @@ function M.setup(config, workspace_switcher, resurrect)
         return wezterm.action_callback(function(window, pane)
             local tabs = window:mux_window():tabs()
             while #tabs <= target_index do
-                window:perform_action(act.SpawnTab("CurrentPaneDomain"), pane)
+                window:perform_action(spawn_actions.tab, pane)
                 tabs = window:mux_window():tabs()
             end
             window:perform_action(act.ActivateTab(target_index), pane)
@@ -192,15 +302,23 @@ function M.setup(config, workspace_switcher, resurrect)
 
     config.keys = {
         -- Prefix-driven modal tables (single left-hand modifier)
-        { key = "w", mods = "CTRL", action = act.ActivateKeyTable({ name = "window_mode", one_shot = true, timeout_milliseconds = 1000 }) },
-        { key = "g", mods = "CTRL", action = act.ActivateKeyTable({ name = "workspace_mode", one_shot = true, timeout_milliseconds = 1000 }) },
+        {
+            key = "w",
+            mods = "CTRL",
+            action = act.ActivateKeyTable({ name = "window_mode", one_shot = true, timeout_milliseconds = 1000 }),
+        },
+        {
+            key = "g",
+            mods = "CTRL",
+            action = act.ActivateKeyTable({ name = "workspace_mode", one_shot = true, timeout_milliseconds = 1000 }),
+        },
 
         -- Tab cycling
         { key = "Tab", mods = "OPT", action = act.ActivateTabRelative(1) },
         { key = "Tab", mods = "CTRL", action = act.ActivateTabRelative(-1) },
 
         -- macOS standard shortcuts
-        { key = "t", mods = "CMD", action = act.SpawnTab("CurrentPaneDomain") },
+        { key = "t", mods = "CMD", action = spawn_actions.tab },
         { key = "w", mods = "CMD", action = act.CloseCurrentTab({ confirm = false }) },
         -- Clipboard copy/paste
         { key = "c", mods = "CMD", action = act.CopyTo("Clipboard") },
@@ -210,9 +328,20 @@ function M.setup(config, workspace_switcher, resurrect)
         { key = "f", mods = "CMD|SHIFT", action = act.Search({ CaseInSensitiveString = "" }) },
         { key = "k", mods = "CMD|SHIFT", action = act.ClearScrollback("ScrollbackOnly") },
         -- Pane splitting (Cmd+D horizontal, Cmd+Shift+D vertical) like iTerm2
-        { key = "d", mods = "CMD", action = act.SplitHorizontal({ domain = "CurrentPaneDomain" }) },
-        { key = "d", mods = "CMD|SHIFT", action = act.SplitVertical({ domain = "CurrentPaneDomain" }) },
-        -- Pane navigation (Ctrl + arrows) - safer than Option which is used for word jumping
+        { key = "d", mods = "CMD", action = spawn_actions.split_right },
+        { key = "d", mods = "CMD|SHIFT", action = spawn_actions.split_down },
+        -- Smart navigation between WezTerm panes and Neovim splits (smart-splits.nvim integration)
+        -- These will intelligently pass through to Neovim when needed
+        smart_split_nav("move", "h"),
+        smart_split_nav("move", "j"),
+        smart_split_nav("move", "k"),
+        smart_split_nav("move", "l"),
+        -- Smart resizing with Alt+HJKL
+        smart_split_nav("resize", "h"),
+        smart_split_nav("resize", "j"),
+        smart_split_nav("resize", "k"),
+        smart_split_nav("resize", "l"),
+        -- Keep arrow key navigation as fallback (always WezTerm panes)
         { key = "LeftArrow", mods = "CTRL", action = act.ActivatePaneDirection("Left") },
         { key = "DownArrow", mods = "CTRL", action = act.ActivatePaneDirection("Down") },
         { key = "UpArrow", mods = "CTRL", action = act.ActivatePaneDirection("Up") },
@@ -225,8 +354,7 @@ function M.setup(config, workspace_switcher, resurrect)
         -- Pane management
         { key = "w", mods = "CMD|OPT", action = act.CloseCurrentPane({ confirm = false }) },
         { key = "z", mods = "CMD|OPT", action = act.TogglePaneZoomState },
-        -- Alternative vim-style navigation (using Cmd+Option to avoid conflicts)
-        -- CTRL+H/J/K/L conflicts with terminal apps, especially vim
+        -- Alternative navigation (Cmd+Option) - always navigates WezTerm panes, bypasses smart-splits
         { key = "h", mods = "CMD|OPT", action = act.ActivatePaneDirection("Left") },
         { key = "j", mods = "CMD|OPT", action = act.ActivatePaneDirection("Down") },
         { key = "k", mods = "CMD|OPT", action = act.ActivatePaneDirection("Up") },

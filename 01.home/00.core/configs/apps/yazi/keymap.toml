@@ -80,8 +80,14 @@ prepend_keymap = [
   { on = "h", run = "plugin bypass reverse", desc = "Smart leave (skip single-child parents)" },
   { on = "F", run = "plugin easyjump", desc = "Jump to file/directory with fuzzy search" },
   { on = "H", run = "plugin cdhist", desc = "Navigate directory history" },
-  { on = [ "g", "f", ], run = "plugin git-files", desc = "Show only git-tracked files" },
-  { on = [ "g", "b", ], run = "plugin whoosh jump_by_key", desc = "Quick bookmarks - all directories and projects" },
+  { on = [
+    "g",
+    "f",
+  ], run = "plugin git-files", desc = "Show only git-tracked files" },
+  { on = [
+    "g",
+    "b",
+  ], run = "plugin whoosh jump_by_key", desc = "Quick bookmarks - all directories and projects" },
 
   # Trash management (requires: trash-cli)
   { on = [

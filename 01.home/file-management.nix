@@ -8,7 +8,6 @@
 # Platform-aware configuration deployment with Darwin/NixOS support
 
 {
-  config,
   lib,
   pkgs,
   myLib,
@@ -35,7 +34,7 @@
     "git/attributes".source = ./00.core/configs/git/gitattributes;
     "gitleaks/gitleaks.toml".source = ./00.core/configs/git/gitleaks.toml;
     # --- Language Server Configurations -------------------------------------
-    # Python (global configs - work via environment variables)
+    # Python
     "pypoetry/config.toml".source = ./00.core/configs/poetry.toml;
     "ruff/ruff.toml".source = ./00.core/configs/languages/ruff.toml;
     "mypy/mypy.ini".source = ./00.core/configs/languages/mypy.ini;
@@ -57,7 +56,7 @@
     "duti/associations".source = ./00.core/configs/system/duti/associations; # Default application mappings
 
     # --- Text Processing & Search Tools -------------------------------------
-    "bat/config".source = ./00.core/configs/system/bat/config; # Bat configuration
+    "bat/config".source = ./00.core/configs/system/bat/config; # Bat configuration with theme
     "ripgrep/config".source = ./00.core/configs/system/ripgrep/config; # Global ripgrep configuration
 
     # --- File Analysis & Diff Tools ----------------------------------------
@@ -66,7 +65,6 @@
     # --- System Monitoring Tools ---------------------------------------------
     "procs/config.toml".source = ./00.core/configs/system/procs/config.toml; # Process viewer config
     "dust/config.toml".source = ./00.core/configs/system/dust/config.toml; # Directory size analyzer config
-    # Bottom is managed by home-manager's programs.bottom module
 
     # --- Media Processing ---------------------------------------------------
     "ImageMagick/policy.xml".source = ./00.core/configs/media-tools/imagemagick/policy.xml;
@@ -84,11 +82,6 @@
       source = ./00.core/configs/apps/borders/bordersrc;
       executable = true;
     };
-
-    # Karabiner complex modifications handled via activation (writable copy)
-    # "karabiner/assets/complex_modifications/parametric-forge.json" moved to activation
-
-    # --- Yabai Configuration -----------------------------------------------
     "yabai/yabairc" = {
       source = ./00.core/configs/apps/yabai/yabairc;
       executable = true;
@@ -126,6 +119,7 @@
     # New foundation modules deployed here via home-manager using fixed deployDir
   }
   # Deploy following directories using lib/build.nix
+  // (myLib.build.deployDir ./00.core/configs/apps/nvim ".config/nvim")
   // (myLib.build.deployDir ./00.core/configs/apps/wezterm ".config/wezterm")
   // (myLib.build.deployDir ./00.core/configs/apps/yazi/plugins ".config/yazi/plugins")
   // (myLib.build.deployDir ./00.core/configs/apps/hammerspoon/notifications ".hammerspoon/notifications")

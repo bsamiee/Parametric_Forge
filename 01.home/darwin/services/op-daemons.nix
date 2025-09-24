@@ -80,7 +80,7 @@ let
               [ $attempt -lt 3 ] && sleep 1
             fi
           done
-          
+
           if [ -n "$resolved" ]; then
             echo "export $key='$resolved'"
             SUCCESS_COUNT=$((SUCCESS_COUNT + 1))
@@ -204,7 +204,7 @@ let
       echo "[op-auth] Triggering cache manager..."
       launchctl kickstart -k "gui/$(id -u)/com.parametricforge.op-cache-manager" 2>/dev/null || true
 
-      sleep 1  
+      sleep 1
       echo "[op-auth] Triggering SSH setup..."
       launchctl kickstart -k "gui/$(id -u)/com.parametricforge.op-ssh-setup" 2>/dev/null || true
 
@@ -213,143 +213,146 @@ let
   };
 in
 {
-  # --- Authentication Coordinator Agent (Runs First) -----------------------
-  launchd.agents.onepassword-auth-coordinator = {
-    enable = true;
-    config = mkPeriodicJob {
-      label = "1Password Authentication Coordinator";
-      command = "${authCoordinator}/bin/op-auth-coordinator";
-      interval = 86400; # Every 24 hours
-      runAtLoad = true;
-      nice = 5; # Higher priority than dependent services
-      logBaseName = "${config.xdg.stateHome}/logs/op-auth-coordinator";
-      environmentVariables = serviceEnv // {
-        OP_CACHE = "true";
-        OP_ACCOUNT = "";
+  # --- LaunchD Agents Configuration ----------------------------------------
+  launchd.agents = {
+    # --- Authentication Coordinator Agent (Runs First) ---------------------
+    onepassword-auth-coordinator = {
+      enable = true;
+      config = mkPeriodicJob {
+        label = "1Password Authentication Coordinator";
+        command = "${authCoordinator}/bin/op-auth-coordinator";
+        interval = 86400; # Every 24 hours
+        runAtLoad = true;
+        nice = 5; # Higher priority than dependent services
+        logBaseName = "${config.xdg.stateHome}/logs/op-auth-coordinator";
+        environmentVariables = serviceEnv // {
+          OP_CACHE = "true";
+          OP_ACCOUNT = "";
+        };
       };
     };
-  };
 
-  # --- Enhanced Cache Manager Agent (Authentication Delegated) -------------
-  launchd.agents.onepassword-secrets = {
-    enable = true;
-    config = mkPeriodicJob {
-      label = "Security Daemon";
-      command = "${opCacheManager}/bin/security-daemon";
-      interval = 86400; # Every 24 hours
-      runAtLoad = false; # Triggered by coordinator, not at boot
-      nice = 15; # Lower priority than coordinator
-      logBaseName = "${config.xdg.stateHome}/logs/op-cache";
-      environmentVariables = serviceEnv // {
-        # Enable 1Password CLI caching to reduce auth prompts
-        OP_CACHE = "true";
-        # Set account context for CLI operations
-        OP_ACCOUNT = "";
+    # --- Enhanced Cache Manager Agent (Authentication Delegated) -----------
+    onepassword-secrets = {
+      enable = true;
+      config = mkPeriodicJob {
+        label = "Security Daemon";
+        command = "${opCacheManager}/bin/security-daemon";
+        interval = 86400; # Every 24 hours
+        runAtLoad = false; # Triggered by coordinator, not at boot
+        nice = 15; # Lower priority than coordinator
+        logBaseName = "${config.xdg.stateHome}/logs/op-cache";
+        environmentVariables = serviceEnv // {
+          # Enable 1Password CLI caching to reduce auth prompts
+          OP_CACHE = "true";
+          # Set account context for CLI operations
+          OP_ACCOUNT = "";
+        };
+        # Additional config that mkPeriodicJob passes through
+        WatchPaths = [
+          config.secrets.paths.template
+        ];
       };
-      # Additional config that mkPeriodicJob passes through
-      WatchPaths = [
-        config.secrets.paths.template
-      ];
     };
-  };
 
-  # --- SSH Key Management Agent --------------------------------------------
-  launchd.agents.onepassword-ssh-setup = {
-    enable = true;
-    config = mkPeriodicJob {
-      label = "1Password SSH Setup";
-      command = "${
-        pkgs.writeShellApplication {
-          name = "op-ssh-setup";
-          text = ''
-            #!/usr/bin/env bash
-            set -euo pipefail
+    # --- SSH Key Management Agent ------------------------------------------
+    onepassword-ssh-setup = {
+      enable = true;
+      config = mkPeriodicJob {
+        label = "1Password SSH Setup";
+        command = "${
+          pkgs.writeShellApplication {
+            name = "op-ssh-setup";
+            text = ''
+              #!/usr/bin/env bash
+              set -euo pipefail
 
-            echo "[$(date)] Starting 1Password SSH key setup..."
+              echo "[$(date)] Starting 1Password SSH key setup..."
 
-            # Check if op CLI is available
-            if ! command -v op >/dev/null 2>&1; then
-              echo "[WARN] 1Password CLI not found"
-              exit 0
-            fi
+              # Check if op CLI is available
+              if ! command -v op >/dev/null 2>&1; then
+                echo "[WARN] 1Password CLI not found"
+                exit 0
+              fi
 
-            # Check if authenticated (no signin prompt - rely on coordinator) 
-            if ! op account list >/dev/null 2>&1; then
-              echo "[SKIP] Not authenticated - waiting for coordinator service"
-              exit 0
-            fi
+              # Check if authenticated (no signin prompt - rely on coordinator)
+              if ! op account list >/dev/null 2>&1; then
+                echo "[SKIP] Not authenticated - waiting for coordinator service"
+                exit 0
+              fi
 
-            echo "[OK] Authentication confirmed via coordinator"
+              echo "[OK] Authentication confirmed via coordinator"
 
-            # Ensure SSH directory exists
-            mkdir -p ~/.ssh
-            chmod 700 ~/.ssh
+              # Ensure SSH directory exists
+              mkdir -p ~/.ssh
+              chmod 700 ~/.ssh
 
-            SUCCESS_COUNT=0
-            FAIL_COUNT=0
+              SUCCESS_COUNT=0
+              FAIL_COUNT=0
 
-            ${lib.optionalString (config.secrets.references ? sshAuthKey && config.secrets.references ? sshSigningKey) ''
-              # Fetch authentication key with validation
-              echo "Fetching SSH authentication key..."
-              if AUTH_KEY=$(op read "${config.secrets.references.sshAuthKey}" 2>/dev/null) && [[ "$AUTH_KEY" == ssh-* ]]; then
-                echo "$AUTH_KEY" > ~/.ssh/github_auth.pub
-                chmod 644 ~/.ssh/github_auth.pub
-                echo "[OK] Authentication key saved"
-                SUCCESS_COUNT=$((SUCCESS_COUNT + 1))
+              ${lib.optionalString (config.secrets.references ? sshAuthKey && config.secrets.references ? sshSigningKey) ''
+                # Fetch authentication key with validation
+                echo "Fetching SSH authentication key..."
+                if AUTH_KEY=$(op read "${config.secrets.references.sshAuthKey}" 2>/dev/null) && [[ "$AUTH_KEY" == ssh-* ]]; then
+                  echo "$AUTH_KEY" > ~/.ssh/github_auth.pub
+                  chmod 644 ~/.ssh/github_auth.pub
+                  echo "[OK] Authentication key saved"
+                  SUCCESS_COUNT=$((SUCCESS_COUNT + 1))
+                else
+                  echo "[WARN] Failed to fetch valid authentication key"
+                  rm -f ~/.ssh/github_auth.pub
+                  FAIL_COUNT=$((FAIL_COUNT + 1))
+                fi
+
+                # Fetch signing key with validation
+                echo "Fetching SSH signing key..."
+                if SIGN_KEY=$(op read "${config.secrets.references.sshSigningKey}" 2>/dev/null) && [[ "$SIGN_KEY" == ssh-* ]]; then
+                  echo "$SIGN_KEY" > ~/.ssh/github_sign.pub
+                  chmod 644 ~/.ssh/github_sign.pub
+                  echo "[OK] Signing key saved"
+
+                  # Update allowed_signers
+                  EMAIL=$(git config --global user.email 2>/dev/null || echo "${config.home.username}@users.noreply.github.com")
+                  echo "$EMAIL $SIGN_KEY" > ~/.ssh/allowed_signers
+                  chmod 644 ~/.ssh/allowed_signers
+                  echo "[OK] Allowed signers updated"
+                  SUCCESS_COUNT=$((SUCCESS_COUNT + 1))
+                else
+                  echo "[WARN] Failed to fetch valid signing key"
+                  rm -f ~/.ssh/github_sign.pub ~/.ssh/allowed_signers
+                  FAIL_COUNT=$((FAIL_COUNT + 1))
+                fi
+              ''}
+
+              # Configure gh CLI with 1Password plugin
+              echo "Configuring gh CLI with 1Password..."
+              if command -v op-gh-setup.sh >/dev/null 2>&1; then
+                if op-gh-setup.sh >/dev/null 2>&1; then
+                  echo "[OK] gh CLI configured with 1Password"
+                  SUCCESS_COUNT=$((SUCCESS_COUNT + 1))
+                else
+                  echo "[WARN] gh CLI configuration failed"
+                  FAIL_COUNT=$((FAIL_COUNT + 1))
+                fi
               else
-                echo "[WARN] Failed to fetch valid authentication key"
-                rm -f ~/.ssh/github_auth.pub
+                echo "[WARN] op-gh-setup.sh not found in PATH"
                 FAIL_COUNT=$((FAIL_COUNT + 1))
               fi
 
-              # Fetch signing key with validation
-              echo "Fetching SSH signing key..."
-              if SIGN_KEY=$(op read "${config.secrets.references.sshSigningKey}" 2>/dev/null) && [[ "$SIGN_KEY" == ssh-* ]]; then
-                echo "$SIGN_KEY" > ~/.ssh/github_sign.pub
-                chmod 644 ~/.ssh/github_sign.pub
-                echo "[OK] Signing key saved"
-
-                # Update allowed_signers
-                EMAIL=$(git config --global user.email 2>/dev/null || echo "${config.home.username}@users.noreply.github.com")
-                echo "$EMAIL $SIGN_KEY" > ~/.ssh/allowed_signers
-                chmod 644 ~/.ssh/allowed_signers
-                echo "[OK] Allowed signers updated"
-                SUCCESS_COUNT=$((SUCCESS_COUNT + 1))
-              else
-                echo "[WARN] Failed to fetch valid signing key"
-                rm -f ~/.ssh/github_sign.pub ~/.ssh/allowed_signers
-                FAIL_COUNT=$((FAIL_COUNT + 1))
-              fi
-            ''}
-
-            # Configure gh CLI with 1Password plugin
-            echo "Configuring gh CLI with 1Password..."
-            if command -v op-gh-setup.sh >/dev/null 2>&1; then
-              if op-gh-setup.sh >/dev/null 2>&1; then
-                echo "[OK] gh CLI configured with 1Password"
-                SUCCESS_COUNT=$((SUCCESS_COUNT + 1))
-              else
-                echo "[WARN] gh CLI configuration failed"
-                FAIL_COUNT=$((FAIL_COUNT + 1))
-              fi
-            else
-              echo "[WARN] op-gh-setup.sh not found in PATH"
-              FAIL_COUNT=$((FAIL_COUNT + 1))
-            fi
-
-            echo "[SUMMARY] SSH Setup Complete: $SUCCESS_COUNT successful, $FAIL_COUNT failed"
-          '';
-        }
-      }/bin/op-ssh-setup";
-      interval = 86400; # Every 24 hours
-      runAtLoad = false; # Triggered by coordinator, not at boot
-      nice = 15; # Lower priority than coordinator
-      logBaseName = "${config.xdg.stateHome}/logs/op-ssh-setup";
-      environmentVariables = serviceEnv // {
-        # Enable 1Password CLI caching
-        OP_CACHE = "true";
-        # Set account context for CLI operations
-        OP_ACCOUNT = "";
+              echo "[SUMMARY] SSH Setup Complete: $SUCCESS_COUNT successful, $FAIL_COUNT failed"
+            '';
+          }
+        }/bin/op-ssh-setup";
+        interval = 86400; # Every 24 hours
+        runAtLoad = false; # Triggered by coordinator, not at boot
+        nice = 15; # Lower priority than coordinator
+        logBaseName = "${config.xdg.stateHome}/logs/op-ssh-setup";
+        environmentVariables = serviceEnv // {
+          # Enable 1Password CLI caching
+          OP_CACHE = "true";
+          # Set account context for CLI operations
+          OP_ACCOUNT = "";
+        };
       };
     };
   };

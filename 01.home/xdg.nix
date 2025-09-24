@@ -122,7 +122,6 @@
       # Utilities
       mkdir -pm 755 "${config.xdg.configHome}/tldr"
       mkdir -pm 755 "${config.xdg.configHome}/watchexec"
-      mkdir -pm 755 "${config.xdg.configHome}/vivid"
       mkdir -pm 755 "${config.xdg.configHome}/yazi"
       mkdir -pm 755 "${config.xdg.configHome}/yazi/plugins"  # Yazi plugins directory
       mkdir -pm 755 "${config.xdg.configHome}/yazi/flavors"  # Yazi flavors/themes directory
@@ -169,7 +168,6 @@
       mkdir -pm 755 "${config.xdg.dataHome}/file"
       mkdir -pm 755 "${config.xdg.dataHome}/tokei"
       # Tool-specific data directories
-      mkdir -pm 755 "${config.xdg.dataHome}/vivid"
       mkdir -pm 755 "${config.xdg.dataHome}/yazi"
       mkdir -pm 755 "${config.xdg.dataHome}/cargo-audit"
       mkdir -pm 755 "${config.xdg.dataHome}/cargo-generate"
@@ -247,7 +245,6 @@
       mkdir -pm 755 "${config.xdg.cacheHome}/rclone"
       # Utilities caches
       mkdir -pm 755 "${config.xdg.cacheHome}/tldr"
-      mkdir -pm 755 "${config.xdg.cacheHome}/vivid"
       mkdir -pm 755 "${config.xdg.cacheHome}/yazi"
       mkdir -pm 755 "${config.xdg.cacheHome}/yazi/plugins"  # Plugin installation cache
       mkdir -pm 755 "${config.xdg.cacheHome}/cargo-audit"

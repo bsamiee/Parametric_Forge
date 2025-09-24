@@ -16,7 +16,6 @@ with pkgs;
   gitAndTools.git-extras # Extra git commands (use git changelog instead of git-cliff)
 
   # --- Git Security & Secrets Management ------------------------------------
-  git-secret # Encrypt secrets in git repositories
   git-crypt # Transparent file encryption in git
   gitleaks # Secret scanner for git repos - detect leaked credentials
 

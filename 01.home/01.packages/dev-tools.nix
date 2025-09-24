@@ -20,9 +20,8 @@ with pkgs;
   # parallel # GNU parallel processing (TODO: Add after review)
 
   # --- Database Tools -------------------------------------------------------
-  sqlite # Base SQLite (newer than macOS default)
+  sqlite-interactive # Enhanced CLI (includes base sqlite functionality)
   sqlite-vec # Vector search extension
-  sqlite-interactive # Enhanced CLI
   sqlite-utils # Python CLI tool
   libspatialite # Spatial SQL engine
   sqlfluff # SQL linter/formatter

@@ -27,8 +27,4 @@ with pkgs;
   # --- JSON/YAML Tools ------------------------------------------------------
   nodePackages.js-yaml # YAML/JSON converter
   nodePackages.json # JSON manipulation CLI
-
-  # --- AI CLI Tools (Manual Installation) -----------------------------------
-  # Not in nixpkgs - install globally via npm:
-  # npm install -g @google/gemini-cli
 ]

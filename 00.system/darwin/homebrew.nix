@@ -25,9 +25,8 @@ in
     # --- Activation Behavior ------------------------------------------------
     onActivation = {
       autoUpdate = mkDefault false;
-      cleanup = mkDefault "uninstall"; # TESTING: Let Homebrew properly manage apps
-      upgrade = mkDefault false; # TESTING: Disable upgrades during activation
-      # extraFlags removed - parallel is not a valid homebrew option in nix-darwin
+      cleanup = mkDefault "uninstall";
+      upgrade = mkDefault false;
     };
     # --- Essential Taps -----------------------------------------------------
     taps = [
@@ -38,11 +37,12 @@ in
     # --- GUI Applications (Casks) -------------------------------------------
     casks = [
       # System & Core Tools
-      "1password" # Password manager and secure vault
-      "cleanshot" # Advanced screenshot and screen recording tool # TODO: CONFIGURE
-      "docker-desktop" # Docker Desktop containerization - CRITICAL for deployment
+      "1password"
+      "cleanshot"
+      "docker-desktop"
       "dotnet-sdk" # .NET SDK (large, GUI tools)
-      "wezterm" # Terminal emulator - now via Nix with forced TERM=wezterm
+      "wezterm"
+      # "parallels" # Windows virtualization for Mac - INSTALL MANUALLY: Homebrew installation incompatible with macOS security requirements
 
       # Productivity & Window Management - MOST ALREADY INSTALLED
       "airbuddy" # AirPods management utility
@@ -54,39 +54,40 @@ in
       "transnomino" # File renaming utility # TODO: CONFIGURE
 
       # Browsers & Internet
-      "arc" # Arc Browser - Chromium-based browser with innovative UI
-      "firefox" # Web browser
-      "tor-browser" # Privacy-focused web browser
+      "arc"
+      "firefox"
+      "tor-browser"
 
       # Communication & Social - MIXED
-      "discord" # Voice and text communication
-      "microsoft-teams" # Microsoft collaboration platform
-      "superhuman" # High-performance email client
+      "discord"
+      "microsoft-teams"
+      "superhuman" # Email client
       "telegram"
       "whatsapp"
-      "zoom" # Video conferencing
+      "zoom"
 
       # Cloud & Storage - CORRECTED
-      "google-drive" # Google cloud storage sync client
-      "megasync" # MEGA cloud storage sync client
+      "google-drive"
+      "megasync"
       "transmission"
 
-      # Development & Design - MIXED
-      "heptabase" # Visual knowledge management platform
-      "iconjar" # Icon organization and management tool
-      "kiro" # Design collaboration and feedback tool
-      "rhino-app" # Rhino 8 CAD software
-      "typeface" # Font management and typography tool
-      "via" # Keyboard configurator for custom keyboards
-      "visual-studio-code" # Microsoft's code editor
-
-      # Media & Creative - CORRECTED
+      # Development
+      "kiro"
+      "visual-studio-code"
+      "rhino-app"
       "blender" # 3D creation suite
-      "calibre" # E-book management
-      "handbrake-app" # MISSING - need homebrew
-      "scrivener" # Writing and research tool for authors
+      "iconjar"
+      "typeface" # Font management and typography tool
+
+      # Media & Entertainment - CORRECTED
       "spotify" # Music streaming service
+      "handbrake-app" # MISSING - need homebrew
       "steam" # Gaming platform
+
+      # Notes & Reading
+      "calibre" # E-book management
+      "heptabase" # Note-taking and knowledge management
+      "scrivener" # Writing and research tool for authors
 
       # QuickLook Plugins - DELETED FOR CLEAN HOMEBREW INSTALL
       "syntax-highlight" # Code syntax highlighting for 150+ file types
@@ -105,14 +106,14 @@ in
       "adobe-acrobat-pro" # PDF viewer, creator, and editor
       "adobe-creative-cloud" # Adobe creative suite manager and launcher
       "colorchecker-camera-calibration" # X-Rite camera profiling software
-      "topaz-gigapixel-ai" # MISSING - need homebrew
-      "topaz-photo-ai" # MISSING - need homebrew
-      "zxpinstaller" # MISSING - need homebrew
+      "topaz-gigapixel-ai"
+      "topaz-photo-ai"
+      "zxpinstaller"
 
       # Utilities & System Enhancement - MIXED
       "grammarly-desktop" # Grammar and writing assistance tool
-      # "parallels" # Windows virtualization for Mac - INSTALL MANUALLY: Homebrew installation incompatible with macOS security requirements
       "rize" # Productivity and time tracking app
+      "via" # Keyboard configurator for custom keyboards
 
       # Automation & Productivity
       "hammerspoon" # Lua-scriptable macOS automation and window management
@@ -123,12 +124,10 @@ in
     brews = [
       "mas" # Mac App Store CLI for masApps integration
       "handbrake" # CLI video transcoder (GUI in casks as handbrake-app)
-      # "mpv" # TODO: Install separately - homebrew fontconfig permission issue
       # "mono" # .NET runtime - RE-INSTALL AFTER FULL DEPLOYMENT (failed during initial setup)
       "defaultbrowser" # CLI tool for setting default browser properly
       "duti" # Declarative file type associations and UTI management
-
-      # Bluetooth Management
+      "tag" # macOS file tagging CLI (jdberry/tag)
       "blueutil" # CLI for Bluetooth management (power, devices, pairing)
 
       # UI Tools
@@ -137,14 +136,12 @@ in
       "FelixKratz/formulae/borders"
       "yqrashawn/goku/goku" # Goku EDN → karabiner.json (goku/gokuw)
 
-      # File tagging support for Yazi mactag plugin
-      "tag" # macOS file tagging CLI (jdberry/tag)
+      # Shell enhancements
+      "thefuck" # Command correction tool (Python 3.12 incompatible in nixpkgs)
     ];
     # --- Mac App Store Applications -----------------------------------------
-    # Disabled: Using smart install/update activation script instead
-    # masApps causes unnecessary reinstalls of existing apps
     masApps = {
-      # Apps managed via smartMasInstall activation script in activation.nix
+      # Apps managed via smartMasInstall activation script in activation.nix - deprecated for now
     };
     # --- Whalebrew (Docker-based tools) -------------------------------------
     # whalebrews = [ ];

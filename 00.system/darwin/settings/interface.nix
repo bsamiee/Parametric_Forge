@@ -26,7 +26,7 @@ in
         static-only = mkDefault false;
         minimize-to-application = mkDefault true;
         mineffect = mkDefault "scale";
-        launchanim = mkDefault false; # PERFORMANCE: Disable launch animations
+        launchanim = mkDefault false;
         showhidden = mkDefault false;
         expose-group-apps = mkDefault false;
         mru-spaces = mkDefault false;

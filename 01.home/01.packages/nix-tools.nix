@@ -11,7 +11,6 @@
 with pkgs;
 [
   # --- Core Nix Toolchain ---------------------------------------------------
-  # nixVersions.latest → Using Determinate Systems Nix installation instead
   cachix # Binary cache management (used by cachix-manager script)
   deploy-rs # NixOS deployment tool (used by deploy script)
 

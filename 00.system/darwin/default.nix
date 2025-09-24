@@ -13,7 +13,6 @@
     ./darwin.nix
     ./activation.nix
     ./homebrew.nix
-    ./applications.nix
     ./settings/interface.nix
     ./settings/system.nix
     ./settings/input.nix

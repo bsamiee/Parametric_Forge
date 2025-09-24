@@ -6,7 +6,7 @@
 # ----------------------------------------------------------------------------
 # Git ecosystem tools: Git, GitHub CLI, and Lazygit configuration.
 
-{ pkgs, ... }:
+_:
 
 {
   # --- Git Core Configuration -----------------------------------------------
@@ -23,7 +23,7 @@
           # --- Core Features --------------------------------------------------
           navigate = true; # Use n and N to navigate between diff sections
           line-numbers = true; # Show line numbers
-          side-by-side = false; # Set to true for side-by-side view (wider terminals)
+          side-by-side = true; # Side-by-side view for wider terminals
           hyperlinks = true; # Make commit hashes clickable in supported terminals
 
           # --- Dracula Theme Configuration ------------------------------------
@@ -50,7 +50,10 @@
       # --- Core Configuration -----------------------------------------------
       extraConfig = {
         init.defaultBranch = "master";
-        pull.ff = "only";
+        pull = {
+          ff = "only";
+          rebase = true; # Always rebase on pull
+        };
         push = {
           default = "current";
           autoSetupRemote = true;
@@ -72,7 +75,10 @@
           submodule = "log"; # Show submodule changes in diffs
           renames = "copies"; # Detect both renames and copies
         };
-        merge.conflictstyle = "zdiff3";
+        merge = {
+          conflictstyle = "zdiff3";
+          ff = false; # Always create merge commits
+        };
         rerere.enabled = true;
         fetch = {
           prune = true;

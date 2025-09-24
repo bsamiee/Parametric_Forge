@@ -57,7 +57,6 @@ safe_setup("full-border", { -- Full border around Yazi (cleaner visual separatio
     type = ui.Border.ROUNDED,
 })
 
-
 -- macOS tagging support (requires: brew install tag)
 safe_setup("mactag", {
     -- Keys used to add or remove tags
@@ -104,4 +103,3 @@ safe_setup("whoosh", {
     path_truncate_enabled = true,
     path_max_depth = 3,
 })
-

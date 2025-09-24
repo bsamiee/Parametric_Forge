@@ -9,7 +9,6 @@
 {
   context,
   lib,
-  pkgs,
   ...
 }:
 

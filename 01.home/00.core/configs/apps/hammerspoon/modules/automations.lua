@@ -27,6 +27,10 @@ local SETTINGS = {
 -- Watchers storage
 local watchers = {}
 
+-- Track processed files to prevent duplicates (file path -> timestamp)
+local processedFiles = {}
+local PROCESSED_CACHE_TIME = 3600 -- 1 hour cache
+
 -- Initialize default settings
 local function initSettings()
     for _, key in pairs(SETTINGS) do
@@ -34,6 +38,27 @@ local function initSettings()
             hs.settings.set(key, true)
         end
     end
+end
+
+-- Clean old entries from processed files cache
+local function cleanProcessedCache()
+    local now = hs.timer.secondsSinceEpoch()
+    for path, timestamp in pairs(processedFiles) do
+        if now - timestamp > PROCESSED_CACHE_TIME then
+            processedFiles[path] = nil
+        end
+    end
+end
+
+-- Check if file was already processed recently
+local function wasAlreadyProcessed(filePath)
+    cleanProcessedCache()
+    return processedFiles[filePath] ~= nil
+end
+
+-- Mark file as processed
+local function markAsProcessed(filePath)
+    processedFiles[filePath] = hs.timer.secondsSinceEpoch()
 end
 
 -- Automation actions
@@ -87,31 +112,70 @@ end
 function actions.optimizePdf(pdfPath)
     local basename = files.basename(pdfPath)
 
-    -- Check if PDF has substantial text (skip vector PDFs)
+    -- Check if PDF needs OCR (scanned PDFs have little/no text)
     local textCheckCmd = string.format('pdftotext "%s" - 2>/dev/null | wc -c', pdfPath:gsub('"', '\\"'))
     local textCheck = process.execute(textCheckCmd, true)
     local textLength = tonumber(textCheck and textCheck:match("%d+")) or 0
 
-    if textLength > 50 then
-        log.i("Skipping vector PDF (has text): " .. pdfPath)
-        return
-    end
+    -- Determine processing strategy based on text content
+    local needsOCR = textLength < 100 -- Scanned PDFs have minimal text
+    local outputPath = pdfPath:gsub("%.pdf$", "_optimized.pdf")
 
-    -- OCR and optimize
-    local cmd = string.format(
-        'ocrmypdf --optimize 3 --skip-text "%s" "%s" 2>&1',
-        pdfPath:gsub('"', '\\"'),
-        pdfPath:gsub('"', '\\"')
-    )
+    local cmd
+    if needsOCR then
+        -- Scanned PDF: perform OCR + optimization
+        log.i("Detected scanned PDF (text: " .. textLength .. " chars): " .. basename)
+        cmd = string.format(
+            'ocrmypdf --optimize 3 --rotate-pages --deskew "%s" "%s" 2>&1',
+            pdfPath:gsub('"', '\\"'),
+            outputPath:gsub('"', '\\"')
+        )
+    else
+        -- Digital PDF: just optimize images (no OCR needed)
+        log.i("Detected digital PDF (text: " .. textLength .. " chars): " .. basename)
+        cmd = string.format(
+            'ocrmypdf --optimize 3 --skip-text --jpeg-quality 85 "%s" "%s" 2>&1',
+            pdfPath:gsub('"', '\\"'),
+            outputPath:gsub('"', '\\"')
+        )
+    end
 
     local output, success = process.execute(cmd, true)
 
     if success then
-        canvas.show("PDF OPTIMIZED: " .. basename)
-        log.i("Successfully optimized PDF: " .. pdfPath)
+        -- Check if optimization actually reduced size
+        local originalSize = files.size(pdfPath)
+        local optimizedSize = files.size(outputPath)
+
+        if optimizedSize > 0 and optimizedSize < originalSize * 0.95 then
+            -- Significant size reduction, replace original
+            local mvCmd = string.format('/bin/mv -f "%s" "%s"', outputPath:gsub('"', '\\"'), pdfPath:gsub('"', '\\"'))
+            process.execute(mvCmd, true)
+
+            local reduction = math.floor((1 - optimizedSize/originalSize) * 100)
+            canvas.show(string.format("PDF OPTIMIZED: %s (-%d%%)", basename, reduction))
+            log.i(string.format("Optimized %s: %d%% size reduction", basename, reduction))
+        else
+            -- No significant improvement, remove temp file
+            local rmCmd = string.format('/bin/rm -f "%s"', outputPath:gsub('"', '\\"'))
+            process.execute(rmCmd, true)
+
+            canvas.show("PDF ALREADY OPTIMAL: " .. basename)
+            log.i("PDF already optimized, no changes made: " .. basename)
+        end
     else
-        canvas.show("PDF OPTIMIZATION FAILED: " .. basename)
-        log.e("Failed to optimize PDF: " .. pdfPath .. " - Output: " .. (output or "no output"))
+        -- Clean up failed output
+        local rmCmd = string.format('/bin/rm -f "%s"', outputPath:gsub('"', '\\"'))
+        process.execute(rmCmd, true)
+
+        -- Don't show error for expected cases
+        if output and output:match("already has an OCR text layer") then
+            canvas.show("PDF HAS TEXT: " .. basename)
+            log.i("PDF already has OCR layer: " .. basename)
+        else
+            canvas.show("PDF OPTIMIZATION FAILED: " .. basename)
+            log.e("Failed to optimize PDF: " .. pdfPath .. " - Output: " .. (output or "no output"))
+        end
     end
 end
 
@@ -123,8 +187,9 @@ local function wasJustCompleted(filePath, flagTable)
         return false
     end
 
-    -- File creation or rename indicates a new/completed file
-    return flagTable.itemCreated or flagTable.itemRenamed or flagTable.itemModified
+    -- Only trigger on creation or rename (not modification to avoid loops)
+    -- Also check if file was created recently to avoid processing old files
+    return (flagTable.itemCreated or flagTable.itemRenamed) and files.isRecentlyCreated(filePath, 60)
 end
 
 -- File watcher callback
@@ -135,6 +200,7 @@ local function onFileChange(changedFiles, flagTables)
         if
             files.exists(filePath)
             and not files.shouldIgnoreFile(filePath)
+            and not wasAlreadyProcessed(filePath)
             and wasJustCompleted(filePath, flagTable)
         then
             local ext = files.extension(filePath)
@@ -142,6 +208,7 @@ local function onFileChange(changedFiles, flagTables)
             -- Add a small delay to ensure file is fully written
             if ext == "zip" and hs.settings.get(SETTINGS.unzip) then
                 log.i("Detected ZIP file: " .. filePath)
+                markAsProcessed(filePath)
                 hs.timer.doAfter(0.5, function()
                     if files.exists(filePath) then
                         log.i("Processing ZIP file: " .. filePath)
@@ -150,6 +217,7 @@ local function onFileChange(changedFiles, flagTables)
                 end)
             elseif ext == "webp" and hs.settings.get(SETTINGS.webp2png) then
                 log.i("Detected WebP file: " .. filePath)
+                markAsProcessed(filePath)
                 hs.timer.doAfter(0.5, function()
                     if files.exists(filePath) then
                         log.i("Processing WebP file: " .. filePath)
@@ -158,7 +226,8 @@ local function onFileChange(changedFiles, flagTables)
                 end)
             elseif ext == "pdf" and hs.settings.get(SETTINGS.pdf) then
                 log.i("Detected PDF file: " .. filePath)
-                hs.timer.doAfter(0.5, function()
+                markAsProcessed(filePath)
+                hs.timer.doAfter(1.0, function() -- Longer delay for PDFs
                     if files.exists(filePath) then
                         log.i("Processing PDF file: " .. filePath)
                         actions.optimizePdf(filePath)

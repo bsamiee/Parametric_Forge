@@ -16,7 +16,12 @@
       "Bash(nix search:*)",
       "Bash(nix-env:*)",
       "Bash(tree:*)",
-      "Bash(goku:*)"
+      "Bash(goku:*)",
+      "Bash(nix-store:*)",
+      "Bash(bat:*)",
+      "WebFetch(domain:starship.rs)",
+      "Bash(ocrmypdf:*)",
+      "WebFetch(domain:raw.githubusercontent.com)"
     ],
     "deny": [],
     "ask": []

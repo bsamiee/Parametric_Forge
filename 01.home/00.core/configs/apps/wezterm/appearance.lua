@@ -22,7 +22,7 @@ local APPEARANCE = {
 -- Note: All fonts listed below are available via Nix packages in darwin/modules/fonts.nix
 local FONT = {
     family = wezterm.font_with_fallback({
-        { family = "GeistMono Nerd Font", weight = "Regular" }, -- Primary: Correct name from font-patcher
+        { family = "GeistMono Nerd Font", weight = "Regular" }, -- Primary: Correct family name from font metadata
         { family = "Iosevka Nerd Font", weight = "Regular" }, -- Fallback mono
         "Symbols Nerd Font Mono", -- Icon fallback: prefer Mono variant
         "Symbols Nerd Font", -- Secondary fallback

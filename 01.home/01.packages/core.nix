@@ -14,16 +14,14 @@
 with pkgs;
 [
   # --- Modern CLI Replacements ----------------------------------------------
-  # eza/fd/broot → Managed by programs in shell-tools.nix
   trash-cli # rm → Safe deletion
   fcp # cp → Fast parallel copy
   rsync # sync → File synchronization
 
-  # bat/ripgrep → Managed by programs in shell-tools.nix
   sd # sed → Find/replace
   xan # awk → CSV/TSV processor
   choose # cut → Column selector
-  grex # → Regex generator
+  grex # → Regex generator # TODO: RESEARCH
 
   delta # diff → Syntax-aware viewer
   tokei # cloc → Code statistics
@@ -39,12 +37,9 @@ with pkgs;
   # openssh → Managed by programs in ssh.nix
   doggo # dig → DNS client
   gping # ping → Real-time graphs
-  mtr # traceroute+ping
+  mtr # traceroute+ping # TODO: RESEARCH
 
   # --- Shell Enhancements ---------------------------------------------------
-  # zoxide/starship/direnv/fzf/mcfly → Managed by programs in shell-tools.nix
-  # zsh plugins → Managed by programs in zsh.nix
-  vivid # → LS_COLORS generator
 
   # --- Archive & Compression ------------------------------------------------
   ouch # tar/zip → Universal archive tool
