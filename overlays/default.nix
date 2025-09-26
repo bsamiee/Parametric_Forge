@@ -1,0 +1,13 @@
+# Title         : default.nix
+# Author        : Bardia Samiee
+# Project       : Parametric Forge
+# License       : MIT
+# Path          : overlays/default.nix
+# ----------------------------------------------------------------------------
+# Package overlays
+
+{ inputs }:
+
+final: prev: {
+  # Custom package overrides can be added here when needed
+}

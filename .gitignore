@@ -1,3 +1,5 @@
+.archive/
+
 # --- Nix/Darwin Build Artifacts ---
 result
 result-*

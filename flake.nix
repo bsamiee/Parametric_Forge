@@ -7,40 +7,53 @@
 # Pure entry point - delegates all logic to modules
 
 {
-  description = "Parametric Forge • Multi-platform configuration management";
-
-  nixConfig = {
-    warn-dirty = false; # Don't warn about uncommitted changes
-    accept-flake-config = true; # Accept flake config from dependencies
-    # Experimental features are configured system-wide in 00.system/nix.nix
-  };
+  description = "Unified NixOS + nix-darwin + Home Manager";
 
   # --- Inputs ---------------------------------------------------------------
   inputs = {
-    # Primary input
-    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
-    # Flake framework
-    flake-parts.url = "github:hercules-ci/flake-parts";
-    flake-parts.inputs.nixpkgs-lib.follows = "nixpkgs";
-    # Platform-specific
-    darwin.url = "github:LnL7/nix-darwin";
-    darwin.inputs.nixpkgs.follows = "nixpkgs";
-    # Configuration management
-    home-manager.url = "github:nix-community/home-manager";
-    home-manager.inputs.nixpkgs.follows = "nixpkgs";
-    # macOS integration
-    nix-homebrew.url = "github:zhaofengli-wip/nix-homebrew";
-    # Development tools
-    treefmt-nix.url = "github:numtide/treefmt-nix";
-    treefmt-nix.inputs.nixpkgs.follows = "nixpkgs";
-    # Rust toolchain
-    rust-overlay.url = "github:oxalica/rust-overlay";
-    rust-overlay.inputs.nixpkgs.follows = "nixpkgs";
-  };
-  # --- Outputs --------------------------------------------------------------
-  outputs =
-    inputs@{ flake-parts, ... }:
-    flake-parts.lib.mkFlake { inherit inputs; } {
-      imports = [ ./flake ];
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.05";
+
+    nix-darwin = {
+      url = "github:nix-darwin/nix-darwin/nix-darwin-25.05";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    home-manager = {
+      url = "github:nix-community/home-manager/release-25.05";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    stylix = {
+      url = "github:danth/stylix/release-25.05";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    flake-parts.url = "github:hercules-ci/flake-parts";
+    treefmt-nix.url = "github:numtide/treefmt-nix";
+    nix-homebrew.url = "github:zhaofengli-wip/nix-homebrew";
+  };
+
+  # --- Outputs ----------------------------------------------------------------
+  outputs = inputs@{ self, nixpkgs, nix-darwin, home-manager, ... }:
+  let
+    systems = [ "x86_64-darwin" "aarch64-darwin" "x86_64-linux" "aarch64-linux" ];
+    forAllSystems = nixpkgs.lib.genAttrs systems;
+  in {
+    overlays.default = import ./overlays { inherit inputs; };
+    darwinConfigurations = import ./hosts/darwin { inherit inputs nix-darwin home-manager; };
+    # NixOS configurations (placeholder for future)
+    nixosConfigurations = {};
+    # Standalone home configurations (placeholder for future)
+    homeConfigurations = {};
+
+    devShells = forAllSystems (system:
+      let pkgs = nixpkgs.legacyPackages.${system};
+      in {
+        default = pkgs.mkShell {
+          packages = with pkgs; [ git nixfmt-rfc-style statix deadnix ];
+        };
+      });
+
+    formatter = forAllSystems (system: nixpkgs.legacyPackages.${system}.nixfmt-rfc-style);
+  };
 }

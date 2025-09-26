@@ -6,9 +6,6 @@
 
 **ALWAYS**
 - Use latest nixpkgs-unstable
-- Leverage `myLib` functions over reimplementing
-- Platform detection via `context` (never hardcode)
-- Atomic operations only (rollback-safe)
 - Pure functions where possible
 
 **NEVER**
@@ -21,10 +18,8 @@
 ### Code Density
 
 **Target**: 300 LOC max per file. If approaching limit:
-1. Extract to `lib/` if reusable
-2. Split by concern if truly distinct
-3. Refactor for density if neither applies
-EXCEPTION: Some files are justified to be larger than LOC limit (must be justified - long list, single concern files)
+- Split by concern if truly distinct
+- EXCEPTION: Some files are justified to be larger than LOC limit (must be justified - long list, single concern files)
 
 **Patterns**:
 ```nix
@@ -68,10 +63,9 @@ in
 ### YAGNI + KISS
 
 **Before adding ANY code, ask**:
-1. Does `lib/` already provide this?
-2. Does nixpkgs have a solution?
-3. Can I extend existing pattern?
-4. Is this needed NOW (not "might be useful")?
+1. Does nixpkgs have a solution?
+2. Can I extend existing pattern?
+3. Is this needed NOW (not "might be useful")?
 
 If any "no" → don't add it.
 
@@ -97,22 +91,14 @@ someFn = args:
 someFnWithSSL = args: ...  # Function spam
 ```
 
-### Platform Awareness
-
-**Context-driven code**:
-```nix
-# YES: Platform-aware
-home.packages = lib.flatten [
-  commonPackages
-  (lib.optionals context.isDarwin darwinPackages)
-  (lib.optionals context.isLinux linuxPackages)
-];
-
-# NO: Hardcoded assumptions
-home.packages = if pkgs.stdenv.isDarwin then...
-```
-
 ## Language-Specific Standards
+
+
+### Shell Scripts
+- IMPORTANT: CRITICAL: Always add the .sh extension to bash scripts
+- `set -euo pipefail` mandatory
+- ShellCheck must pass
+- Prefer Nix `writeShellScriptBin` over raw scripts
 
 ### Python (Secondary)
 - Python 3.13+ only (never older)
@@ -127,24 +113,6 @@ home.packages = if pkgs.stdenv.isDarwin then...
 - Workspace-first organization
 - `#![deny(warnings)]` always
 
-### Shell Scripts
-- IMPORTANT: CRITICAL: Always add the .sh extension to bash scripts
-- `set -euo pipefail` mandatory
-- ShellCheck must pass
-- Prefer Nix `writeShellScriptBin` over raw scripts
-
-## Testing & Validation
-
-**Every change**:
-```bash
-# Required
-nix flake check         # Must pass
-darwin-rebuild build    # Must succeed
-
-# Before commit
-nix fmt                 # Format all
-nix run .#check-system  # Verify deployment
-```
 
 ## Module Patterns
 
@@ -169,14 +137,6 @@ config = {
 
 # NO: Kitchen sink
 { self, config, lib, pkgs, inputs, ... }:
-```
-
-### Library Extensions
-```nix
-# lib/[new-feature].nix - Only if:
-# 1. Used in 3+ places
-# 2. Complex logic (>10 lines)
-# 3. Platform/context agnostic
 ```
 
 ## Anti-Patterns to Avoid
