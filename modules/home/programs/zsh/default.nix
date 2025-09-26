@@ -19,8 +19,7 @@
 
   programs.zsh = {
     enable = true;
-
-    # --- XDG compliant paths ------------------------------------------------
-    dotDir = ".config/zsh";
+    # Remove dotDir - it causes session variables to be written to .config/zsh/.zprofile
+    # instead of hm-session-vars.sh where they belong
   };
 }
