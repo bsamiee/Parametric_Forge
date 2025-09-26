@@ -20,7 +20,10 @@
     enableCompletion = true;
     autosuggestion.enable = true;
     syntaxHighlighting.enable = true;
-    completionInit = "autoload -U compinit && compinit";
+    completionInit = ''
+      autoload -U compinit
+      compinit -d "$HOME/.cache/zsh/zcompdump-$ZSH_VERSION"
+    '';
 
     # History configuration
     history = {

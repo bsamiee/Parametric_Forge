@@ -36,7 +36,8 @@
       "Bash(nix-instantiate:*)",
       "Bash(for:*)",
       "WebFetch(domain:nix-community.github.io)",
-      "Bash(nix search:*)"
+      "Bash(nix search:*)",
+      "Read(//nix/**)"
     ],
     "deny": [],
     "ask": []
