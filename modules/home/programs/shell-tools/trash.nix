@@ -9,7 +9,5 @@
 { pkgs, ... }:
 
 {
-  home.packages = with pkgs; [
-    trash-cli  # Cross-platform trash utility
-  ];
+  home.packages = with pkgs; [trash-cli];
 }

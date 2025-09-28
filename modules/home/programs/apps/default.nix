@@ -2,16 +2,19 @@
 # Author        : Bardia Samiee
 # Project       : Parametric Forge
 # License       : MIT
-# Path          : modules/darwin/default.nix
+# Path          : modules/home/programs/apps/default.nix
 # ----------------------------------------------------------------------------
-# Darwin module aggregator
+# GUI and terminal applications aggregator
 
 { lib, ... }:
 
 {
   imports = [
-    ./fonts.nix
-    ./homebrew
-    ./settings
+    ./wezterm
+    # Future GUI/TUI apps here:
+    # ./alacritty
+    # ./kitty
+    # ./neovide
+    # ./vscode
   ];
 }

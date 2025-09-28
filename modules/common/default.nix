@@ -11,6 +11,5 @@
 {
   imports = [
     ./nix.nix
-    ./theme.nix
   ];
 }

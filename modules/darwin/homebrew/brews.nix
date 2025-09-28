@@ -13,7 +13,6 @@
     # --- System utilities ---------------------------------------------------
     "mas"                               # Mac App Store CLI
     "defaultbrowser"                    # CLI tool for setting default browser
-    "duti"                              # File type associations
     "tag"                               # macOS file tagging CLI
     "blueutil"                          # Bluetooth management
     "mono"                              # .NET runtime

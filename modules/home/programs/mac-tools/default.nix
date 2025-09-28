@@ -1,0 +1,19 @@
+# Title         : default.nix
+# Author        : Bardia Samiee
+# Project       : Parametric Forge
+# License       : MIT
+# Path          : modules/home/programs/mac-tools/default.nix
+# ----------------------------------------------------------------------------
+# macOS-specific tool configurations
+
+{ lib, ... }:
+
+{
+  imports = [
+    ./duti.nix
+    # Future macOS tools:
+    # ./mas.nix        # Mac App Store CLI
+    # ./raycast.nix    # Raycast configuration
+    # ./shortcuts.nix  # Shortcuts automation
+  ];
+}

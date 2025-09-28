@@ -6,8 +6,8 @@
 # ----------------------------------------------------------------------------
 # Fast Node Manager - Node.js version manager
 
-{ config, lib, pkgs, ... }:
+{ pkgs, ... }:
 
 {
-  home.packages = with pkgs; [ fnm ];
+  home.packages = [ pkgs.fnm ];
 }

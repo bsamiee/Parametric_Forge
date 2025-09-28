@@ -10,6 +10,8 @@
 
 {
   imports = [
+    ./apps
+    ./mac-tools
     ./node-tools
     ./shell-tools
     ./zsh

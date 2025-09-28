@@ -11,8 +11,7 @@
 {
   imports = [
     ./environments
-    ./files
     ./programs
-    ./xdg
+    ./xdg.nix
   ];
 }

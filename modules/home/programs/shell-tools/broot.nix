@@ -12,14 +12,12 @@
   programs.broot = {
     enable = true;
     enableZshIntegration = true;
-    enableBashIntegration = false;
 
     settings = {
       modal = true; # Modal mode for vim-like navigation
       file_sum_threads_count = 4;  # Parallel threads for directory sizes
       date_time_format = "%Y-%m-%d %H:%M:%S";
       default_flags = "";
-      # syntax_theme uses default MochaDark (base16 dark theme)
       icon_theme = "nerdfont";  # Matches our GeistMono Nerd Font
       content_search_max_file_size = "10MB";
       show_hidden = false;  # Toggle with 'h' in broot
@@ -46,7 +44,6 @@
         "**/result-*" = "hide";
       };
     };
-
     settings.verbs = [
       # --- File Operations --------------------------------------------------
       # Open with default system opener

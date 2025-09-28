@@ -13,11 +13,11 @@
     enable = true;
 
     config = {
-      # Theme handled by Stylix auto-theming
-      # Display configuration
+      theme = "Dracula";
       style = "numbers,changes,header,grid";
       wrap = "character";
       tabs = "4";
+      paging = "auto";  # Let pager work normally
 
       # Syntax mappings for unrecognized extensions
       map-syntax = [
@@ -29,12 +29,8 @@
     };
 
     extraPackages = with pkgs.bat-extras; [
-      batdiff      # Diff with syntax highlighting
       batman       # Colored man pages
       batgrep      # Ripgrep wrapper with bat preview
-      batwatch     # Watch files with bat
-      prettybat    # Pretty-print and format code
-      batpipe      # Less preprocessor for bat
     ];
   };
 }

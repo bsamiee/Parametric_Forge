@@ -12,7 +12,6 @@
   programs.zoxide = {
     enable = true;
     enableZshIntegration = true;
-    enableBashIntegration = false;
 
     options = [
       "--cmd=cd"       # Replace cd command entirely

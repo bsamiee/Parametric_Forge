@@ -4,95 +4,62 @@
 # License       : MIT
 # Path          : /modules/home/programs/shell-tools/fzf.nix
 # ----------------------------------------------------------------------------
-# Fuzzy finder configuration - theme handled by Stylix
+# FZF configuration with proper integration
 
 { config, lib, pkgs, ... }:
 
-let
-  # Common exclusions for file/directory searches
-  excludePatterns = ".git,.svn,node_modules,target,dist,build,.DS_Store";
-in
 {
   programs.fzf = {
     enable = true;
-    enableZshIntegration = true;
-    enableBashIntegration = false;
+    enableZshIntegration = true;  # Let home-manager handle base integration
     tmux.enableShellIntegration = false;
 
-    # Stylix will set programs.fzf.colors automatically when autoEnable = true
-    # These colors come from config.stylix.base16Scheme in theme.nix
+    # Default command for FZF (use fd for speed)
+    defaultCommand = "fd --type f --hidden --follow --exclude .git";
 
-    # --- Core Settings ------------------------------------------------------
-    defaultCommand = "fd --type f --hidden --follow --exclude={${excludePatterns}}";
-
+    # Default options for all FZF invocations - Dracula theme with custom styling
     defaultOptions = [
-      # Layout and display
-      "--height=60%"
-      "--min-height=20"
-      "--layout=reverse"
-      "--border=rounded"
-      "--border-label='[ FZF ]'"
-      "--border-label-pos=3"
-      "--padding=1"
-      "--margin=0,2"
-      "--info=inline:'< '"
-
-      # Search behavior
-      "--ansi"                 # Process ANSI color codes
-      "--tabstop=4"            # Tab width
-      "--cycle"                # Cycle through results
-      "--keep-right"           # Keep right side of long lines visible
-      "--exit-0"               # Exit if no match
-      "--select-1"             # Auto-select if only one match
-
-      # Results display
-      "--prompt='❯ '"
-      "--pointer='▶'"
-      "--marker='✓'"
+      # Colors - Dracula theme
+      "--color=fg:#44475a,fg+:#F8F8F2,bg:#15131F,bg+:#44475a"
+      "--color=hl:#94F2E8,hl+:#d82f94,info:#7A71AA,marker:#50FA7B"
+      "--color=prompt:#d82f94,spinner:#50FA7B,pointer:#d82f94,header:#7A71AA"
+      "--color=gutter:#15131F,border:#94F2E8,separator:#E98FBE,scrollbar:#E98FBE"
+      "--color=preview-fg:#F8F8F2,preview-scrollbar:#E98FBE,label:#d82f94,query:#F8F8F2"
+      # Border and styling
+      "--border=sharp"
+      # Note: Border label set per-command in init.nix and shell.nix
+      "--border-label-pos=0"
+      "--preview-window=border-bold"
+      # UI elements
+      "--prompt='> '"
+      "--marker='>'"
+      "--pointer='◆'"
+      "--separator='─'"
       "--scrollbar='│'"
-
-      # Preview window defaults
-      "--preview-window=right:50%:border-left:wrap"
-      "--preview-label='[ Preview ]'"
-      "--preview-label-pos=2"
-
-      # Keybindings for common actions
-      "--bind=ctrl-/:toggle-preview"
-      "--bind=ctrl-a:select-all"
-      "--bind=ctrl-d:deselect-all"
-      "--bind=ctrl-y:preview-up"
-      "--bind=ctrl-e:preview-down"
-      "--bind=ctrl-b:preview-page-up"
-      "--bind=ctrl-f:preview-page-down"
-      "--bind=ctrl-u:preview-half-page-up"
-      "--bind=ctrl-n:preview-half-page-down"
-      "--bind=alt-w:toggle-preview-wrap"
-      "--bind=shift-up:preview-up"
-      "--bind=shift-down:preview-down"
+      "--info=right"
+      # Behavior
+      "--height=60%"
+      "--layout=reverse"
+      "--preview 'bat --color=always --style=numbers --line-range=:500 {} 2>/dev/null || eza --tree --level=2 --color=always {}'"
+      "--preview-window=right:50%:border-bold"
+      "--bind=ctrl-u:preview-page-up"
+      "--bind=ctrl-d:preview-page-down"
     ];
 
-    # --- Widget: File Search (Ctrl+T) ---------------------------------------
-    fileWidgetCommand = "fd --type f --type l --hidden --follow --exclude={${excludePatterns}}";
+    # Ctrl-T: File selection (inherits default preview and window from defaultOptions)
+    fileWidgetCommand = "fd --type f --hidden --follow --exclude .git";
     fileWidgetOptions = [
-      "--prompt='Files❯ '"
-      "--border-label='[ Files ]'"
-      "--border-label-pos=3"
-      "--header='CTRL-O (open) | CTRL-Y (copy path)'"
-      "--preview='([[ -f {} ]] && (bat --line-range=:500 {} || cat {})) || ([[ -d {} ]] && eza {}) || echo {} 2> /dev/null | head -200'"
-      "--bind='ctrl-o:execute(open {} &> /dev/tty)'"
-      "--bind='ctrl-y:execute-silent(echo -n {} | pbcopy)'"
+      "--border-label='[FILES]'"
     ];
 
-    # --- Widget: Directory Navigation (Alt+C) -------------------------------
-    changeDirWidgetCommand = "fd --type d --hidden --follow --exclude={${excludePatterns}}";
+    # Alt-C: Directory navigation (override preview command for directories)
+    changeDirWidgetCommand = "fd --type d --hidden --follow --exclude .git";
     changeDirWidgetOptions = [
-      "--prompt='Dirs❯ '"
-      "--border-label='[ Directories ]'"
-      "--border-label-pos=3"
-      "--header='CTRL-O (open finder) | CTRL-Y (copy path)'"
-      "--preview='eza {}'"
-      "--bind='ctrl-o:execute(open {} &> /dev/tty)'"
-      "--bind='ctrl-y:execute-silent(echo -n {} | pbcopy)'"
+      "--border-label='[DIRECTORIES]'"
+      "--preview='eza --tree --level=2 --color=always {}'"
     ];
+
+    # Note: Ctrl-R (history) disabled - handled by Atuin
+    historyWidgetOptions = [];
   };
 }

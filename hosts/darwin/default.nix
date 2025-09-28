@@ -15,6 +15,7 @@ in
 {
   macbook = nix-darwin.lib.darwinSystem {
     system = "aarch64-darwin";
+    specialArgs = { inherit inputs; };  # Pass inputs to modules
 
     modules = [
       # Common configuration (includes Nix and Theme)
@@ -22,9 +23,6 @@ in
 
       # Darwin-specific modules
       ../../modules/darwin
-
-      # Stylix theming framework
-      inputs.stylix.darwinModules.stylix
 
       # Home Manager integration
       home-manager.darwinModules.home-manager
@@ -51,11 +49,12 @@ in
         home-manager = {
           useGlobalPkgs = true;
           useUserPackages = true;
-          users.${username} = {
+          extraSpecialArgs = { inherit inputs; };  # Pass inputs to home-manager
+          users.${username} = ({ inputs, ... }: {
             imports = [ ../../modules/home ];
             home.stateVersion = "24.05";
             programs.home-manager.enable = true;
-          };
+          });
         };
       }
     ];

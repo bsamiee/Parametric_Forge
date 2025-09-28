@@ -19,7 +19,5 @@
 
   programs.zsh = {
     enable = true;
-    # Remove dotDir - it causes session variables to be written to .config/zsh/.zprofile
-    # instead of hm-session-vars.sh where they belong
   };
 }

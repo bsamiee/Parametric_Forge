@@ -71,34 +71,13 @@
     "suspicious-package"  # .pkg inspector
 
     # --- Fonts --------------------------------------------------------------
-    # Programming/Terminal fonts
-    "font-hack-nerd-font"
-    "font-geist-mono-nerd-font"
-    "font-iosevka-nerd-font"
-    "font-ibm-plex-mono"           # IBM Plex Mono specifically
-    "font-noto-sans-mono"          # Noto monospace variant
-    "font-symbols-only-nerd-font"
-
-    # UI/System fonts
-    "font-sf-pro"
-    "font-sf-arabic"
-    "font-geist"
-    "font-inter"
-    "font-ibm-plex"
-    "font-dm-sans"
-    "font-overpass"
-    "font-source-sans-3"
-    "font-source-serif-4"
-
-    # Arabic/Persian fonts
-    "font-noto-sans-arabic"
-    "font-scheherazade-new"
-    "font-markazi-text"
-    "font-reem-kufi"
-    "font-qahiri"         # Arabic Kufic font
-
-    # Display fonts
-    "font-playfair-display"
+    # Fonts not available in nixpkgs:
+    "font-playfair-display"    # Not available as standalone package
+    "font-sf-pro"              # Apple proprietary
+    "font-sf-arabic"           # Apple proprietary
+    "font-markazi-text"        # Not in nixpkgs
+    "font-reem-kufi"           # Not in nixpkgs
+    "font-qahiri"              # Not in nixpkgs
 
     # --- Adobe & Creative Suite ---------------------------------------------
     "adobe-acrobat-pro"

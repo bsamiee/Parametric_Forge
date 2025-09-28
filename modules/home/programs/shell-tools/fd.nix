@@ -77,9 +77,6 @@ let
   ];
 in
 {
-  # fd doesn't have a programs.fd module - install via packages
   home.packages = [ pkgs.fd ];
-
-  # Global ignore patterns
   xdg.configFile."fd/ignore".text = lib.concatStringsSep "\n" globalIgnorePatterns;
 }

@@ -6,7 +6,7 @@
 # ----------------------------------------------------------------------------
 # Shell configuration environment variables
 
-{ config, pkgs, ... }:
+{ config, lib, pkgs, ... }:
 
 {
   # --- User Session Path ----------------------------------------------------
@@ -27,43 +27,44 @@
     ZSH_COMPDUMP = "${config.xdg.cacheHome}/zsh/zcompdump-$ZSH_VERSION";
     ZSH_AUTOSUGGEST_STRATEGY = "(atuin completion)";
     ZSH_AUTOSUGGEST_BUFFER_MAX_SIZE = "20";
+    ZSH_AUTOSUGGEST_USE_ASYNC = "1";  # Significant performance improvement
     KEYTIMEOUT = "1";
 
     # --- Tool Configurations -------------------------------------------------
-    ATUIN_LOG = "error";
-    ATUIN_CONFIG_DIR = "${config.xdg.configHome}/atuin";
-    BAT_CACHE_PATH = "${config.xdg.cacheHome}/bat";
     BROOT_CONFIG_DIR = "${config.xdg.configHome}/broot";
+    EZA_CONFIG_DIR = "${config.xdg.configHome}/eza";
     RIPGREP_CONFIG_PATH = "${config.xdg.configHome}/ripgrep/config";
-    TLDR_CACHE_DIR = "${config.xdg.cacheHome}/tldr";
+    BAT_CACHE_PATH = "${config.xdg.cacheHome}/bat";
+    # Atuin
+    ATUIN_LOG = "error";
     # Zoxide
     _ZO_DATA_DIR = "${config.xdg.dataHome}/zoxide";
-    _ZO_ECHO = "1";
     _ZO_RESOLVE_SYMLINKS = "1";
-    _ZO_MAXAGE = "10000";
     _ZO_EXCLUDE_DIRS = "/tmp/*:/var/tmp/*:/usr/bin/*:/usr/sbin/*:/sbin/*:/bin/*";
 
-    # --- FZF Integration -----------------------------------------------------
-    # FZF completion settings (these supplement FZF_DEFAULT_OPTS from programs.fzf)
-    FZF_COMPLETION_TRIGGER = "**";
-    FZF_COMPLETION_DIR_COMMANDS = "cd pushd rmdir tree cdi";
-    FZF_COMPLETION_OPTS = "--preview-window=right:hidden";
-    FZF_COMPLETION_PATH_OPTS = "--walker file,dir,follow,hidden";
-    FZF_COMPLETION_DIR_OPTS = "--walker dir,follow";
+    # --- FZF Additional Configuration ---------------------------------------
+    # Forgit Configuration
+    FORGIT_PAGER = "delta";  # Consistent with GIT_PAGER in core.nix
 
-    # Zoxide FZF integration (cdi command)
-    _ZO_FZF_OPTS = "--border-label='[ Zoxide ]' --prompt='Jump❯ ' --header='CTRL-/ (preview) | ENTER (jump) | ESC (cancel)' --preview='eza {2}'";
+    # Forgit-specific FZF options (uppercase labels)
+    FORGIT_ADD_FZF_OPTS = "--border-label='[GIT ADD]'";
+    FORGIT_DIFF_FZF_OPTS = "--border-label='[GIT DIFF]'";
+    FORGIT_LOG_FZF_OPTS = "--border-label='[GIT LOG]'";
+    FORGIT_RESET_HEAD_FZF_OPTS = "--border-label='[GIT RESET]'";
+    FORGIT_CHECKOUT_FILE_FZF_OPTS = "--border-label='[GIT CHECKOUT]'";
+    FORGIT_STASH_FZF_OPTS = "--border-label='[GIT STASH]'";
+    FORGIT_CHERRY_PICK_FZF_OPTS = "--border-label='[GIT CHERRY-PICK]'";
+    FORGIT_REBASE_FZF_OPTS = "--border-label='[GIT REBASE]'";
+    FORGIT_FIXUP_FZF_OPTS = "--border-label='[GIT FIXUP]'";
 
-    # Forgit plugin - inherits FZF_DEFAULT_OPTS automatically
-    FORGIT_FZF_DEFAULT_OPTS = "--border-label='[ Forgit ]'";
-    FORGIT_LOG_FORMAT = "%C(auto)%h%d %C(blue)%an %C(cyan)%cr%C(auto) %s";
-    FORGIT_DIFF_PAGER = "delta";
-    FORGIT_IGNORE_PAGER = "bat -l gitignore";
-    FORGIT_INSTALL_DIR = "${pkgs.zsh-forgit}/share/zsh/zsh-forgit";
+    # General forgit options
+    FORGIT_FZF_DEFAULT_OPTS = ''
+      --height=80%
+      --preview-window=right:60%:border-bold
+    '';
 
     # --- ZSH Plugin Configurations -------------------------------------------
-    # you-should-use - alias reminder settings
-    YSU_MODE = "BESTMATCH";  # Show only the best match alias (default)
+    # you-should-use
     YSU_MESSAGE_POSITION = "before";  # Show message before command execution
   };
 }

@@ -10,26 +10,18 @@
 
 {
   programs.zsh = {
-    # Keymap
-    defaultKeymap = "viins";  # Start in vi insert mode, not command mode
-
-    # Directory navigation
+    # --- Directory navigation -----------------------------------------------
     autocd = true;
 
-    # Completion
+    # --- Completion ---------------------------------------------------------
     enableCompletion = true;
     autosuggestion.enable = true;
     syntaxHighlighting.enable = true;
-    completionInit = ''
-      autoload -U compinit
-      compinit -d "$HOME/.cache/zsh/zcompdump-$ZSH_VERSION"
-    '';
 
-    # History configuration
+    # --- History ------------------------------------------------------------
     history = {
       size = 50000;
       save = 50000;
-      path = "${config.xdg.stateHome}/zsh/history";
       share = true;
       ignoreDups = true;
       ignoreSpace = true;

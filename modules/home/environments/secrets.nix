@@ -9,7 +9,6 @@
 { config, ... }:
 
 let
-  # Define secret references
   secretRefs = {
     # API Tokens
     githubToken = "op://Tokens/Github Token/token";
