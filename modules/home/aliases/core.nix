@@ -10,25 +10,26 @@
 
 {
   programs.zsh.shellAliases = {
-    # --- File Operations -----------------------------------------------------
+    # --- Core Operations ----------------------------------------------------
     ls = "eza -la --header --no-user --time-style=relative";
     tree = "eza --tree";
     du = "dust";
     df = "duf";
-
-    # --- System Operations --------------------------------------------------
-    grep = "rg";
     cat = "bat";
-    find = "fd";
     ps = "procs";
     top = "btm";                  # Modern system monitor
     cloc = "tokei";               # Modern code counter
     tldru = "tldr --update";      # Update tldr cache
     # man handled by batman export-env in zsh/init.nix - DO NOT alias here
-
-    # --- Search Tools -------------------------------------------------------
+    # grep = "rg";                # Causes conflicts with -E and -G
     rgg = "rg --json 2>/dev/null | delta";    # Search with delta syntax highlighting
     batg = "batgrep";                         # Bat-powered ripgrep (via bat-extras)
+    find = "fd";
+
+    # --- JSON Processing ----------------------------------------------------
+    jqr = "jq -r";              # Raw output (no quotes)
+    jqc = "jq -c";              # Compact JSON output
+    jqs = "jq -S";              # Sort object keys
 
     # --- Trash Management ---------------------------------------------------
     trash = "trash-put";        # Send files to trash

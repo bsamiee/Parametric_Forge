@@ -15,12 +15,7 @@ let
     com.adobe.Acrobat.Pro	com.adobe.pdf	all
     com.adobe.Acrobat.Pro	.pdf	all
 
-    # Web Content -> Arc Browser
-    company.thebrowser.Browser	.html	all
-    company.thebrowser.Browser	.htm	all
-    company.thebrowser.Browser	.xhtml	all
-
-    # URL Schemes -> Arc Browser
+    # URL Schemes -> Arc Browser (HTML associations need manual setup due to macOS restrictions)
     company.thebrowser.Browser	http	all
     company.thebrowser.Browser	https	all
     company.thebrowser.Browser	ftp	all

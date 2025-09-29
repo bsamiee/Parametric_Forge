@@ -11,7 +11,7 @@
 {
   home.packages = with pkgs; [
     pnpm
-    nodePackages.npm  # Fallback for legacy projects
+    # nodePackages.npm  # Disabled - was pulling nodejs v22
   ];
 
   # pnpm config file with XDG-compliant paths

@@ -2,20 +2,17 @@
 # Author        : Bardia Samiee
 # Project       : Parametric Forge
 # License       : MIT
-# Path          : modules/home/programs/default.nix
+# Path          : modules/home/programs/nix-tools/default.nix
 # ----------------------------------------------------------------------------
-# Home Manager programs aggregator
+# Nix tools aggregator
 
 { lib, ... }:
 
 {
   imports = [
-    ./apps
-    ./mac-tools
-    ./node-tools
-    ./shell-tools
-    ./git-tools
-    ./nix-tools
-    ./zsh
+    # Add nix tools here as needed
+    # ./nix-index
+    # ./nix-tree
+    # ./nixfmt
   ];
 }

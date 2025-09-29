@@ -1,20 +1,39 @@
-# Title         : delta.nix
+# Title         : git.nix
 # Author        : Bardia Samiee
 # Project       : Parametric Forge
 # License       : MIT
-# Path          : /modules/home/programs/shell-tools/delta.nix
+# Path          : modules/home/programs/git-tools/git.nix
 # ----------------------------------------------------------------------------
-# Syntax-highlighting pager for git diffs
+# Core Git configuration and workflow settings
 
 { config, lib, pkgs, ... }:
+
+# Dracula theme color reference
+# background    #15131F
+# current_line  #2A2640
+# selection     #44475a
+# foreground    #F8F8F2
+# comment       #7A71AA
+# purple        #A072C6
+# cyan          #94F2E8
+# green         #50FA7B
+# yellow        #F1FA8C
+# orange        #F97359
+# red           #ff5555
+# magenta       #d82f94
+# pink          #E98FBE
 
 {
   programs.git = {
     enable = true;
+    userName = "bsamiee";
+    userEmail = "b.samiee93@gmail.com";
+    lfs.enable = true;
+
+    # --- Delta Integration ---------------------------------------------------
     delta = {
       enable = true;
 
-      # --- Delta Configuration ----------------------------------------------
       options = {
         navigate = true;
         light = false;
@@ -92,9 +111,75 @@
     };
 
     extraConfig = {
-      # interactive.diffFilter is set automatically by delta module
-      merge.conflictStyle = "zdiff3";  # Better than diff3
-      diff.colorMoved = "default";
+      init.defaultBranch = "main";
+
+      pull = {
+        rebase = true;  # Always rebase on pull (ff setting ignored with rebase)
+      };
+
+      push = {
+        default = "current";
+        autoSetupRemote = true;
+        useForceIfIncludes = true;
+        followTags = true;
+      };
+
+      core = {
+        autocrlf = "input";
+        whitespace = "trailing-space,space-before-tab";
+        preloadindex = true;
+      };
+
+      feature.manyFiles = true;
+      index.threads = 0;
+      pack.threads = 0;
+
+      diff = {
+        algorithm = "histogram";
+        renames = "copies";
+        colorMoved = "default";
+        submodule = "log";  # Show submodule changes in diffs
+      };
+
+      merge = {
+        conflictstyle = "zdiff3";
+        ff = false;
+      };
+
+      fetch = {
+        prune = true;
+        prunetags = true;
+        fsckObjects = true;
+      };
+      receive.fsckObjects = true;
+      transfer.fsckobjects = true;
+
+      branch = {
+        sort = "-committerdate";
+        autosetupmerge = "always";
+        autosetuprebase = "always";
+      };
+
+      rebase = {
+        autoStash = true;
+        autoSquash = true;
+        updateRefs = true;
+      };
+
+      status = {
+        branch = true;
+        showUntrackedFiles = "all";
+        submoduleSummary = true;  # Show submodule summary in status
+      };
+
+      log = {
+        date = "iso";
+        follow = true;
+      };
+
+      commit.verbose = true;
+      rerere.enabled = true;
+      help.autocorrect = 20;
     };
   };
 }

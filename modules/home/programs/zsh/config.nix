@@ -26,11 +26,6 @@
       if [[ -f "/nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh" ]]; then
         source "/nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh"
       fi
-
-      # --- Node.js Environment (order 60) -----------------------------------
-      if command -v fnm >/dev/null 2>&1; then
-        eval "$(fnm env --use-on-cd --version-file-strategy=recursive --resolve-engines)"
-      fi
     '';
 
     loginExtra = ''

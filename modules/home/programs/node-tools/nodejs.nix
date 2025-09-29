@@ -9,5 +9,5 @@
 { pkgs, ... }:
 
 {
-  home.packages = [ pkgs.nodejs ];
+  home.packages = [ pkgs.nodejs_20 ];  # LTS version - better cache support
 }

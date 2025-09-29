@@ -2,20 +2,17 @@
 # Author        : Bardia Samiee
 # Project       : Parametric Forge
 # License       : MIT
-# Path          : modules/home/programs/default.nix
+# Path          : modules/home/programs/git-tools/default.nix
 # ----------------------------------------------------------------------------
-# Home Manager programs aggregator
+# Git tools aggregator
 
 { lib, ... }:
 
 {
   imports = [
-    ./apps
-    ./mac-tools
-    ./node-tools
-    ./shell-tools
-    ./git-tools
-    ./nix-tools
-    ./zsh
+    ./git.nix
+    ./gh.nix
+    ./lazygit.nix
+    ./gitleaks.nix
   ];
 }

@@ -53,7 +53,8 @@
       "Bash(eza:*)",
       "Bash(bindkey)",
       "mcp__filesystem__search_files",
-      "mcp__github__search_issues"
+      "mcp__github__search_issues",
+      "WebFetch(domain:jqlang.org)"
     ],
     "deny": [],
     "ask": []
