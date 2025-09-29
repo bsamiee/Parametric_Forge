@@ -30,12 +30,12 @@ local dracula = {
 -- Font Configuration ---------------------------------------------------------
 local FONT = {
   family = wezterm.font_with_fallback({
-    { family = "GeistMono Nerd Font", weight = "Regular" },  -- Try with space
-    { family = "GeistMono NF", weight = "Regular" },         -- Try abbreviated
-    { family = "Iosevka Nerd Font", weight = "Regular" },   -- Fallback 1
-    { family = "Hack Nerd Font", weight = "Regular" },      -- Fallback 2
-    "Symbols Nerd Font Mono",                               -- Icon fallback
-    "SF Mono",                                              -- System fallback
+    { family = "GeistMono Nerd Font", weight = "Regular" },   -- Primary
+    { family = "Iosevka Nerd Font", weight = "Regular" },     -- Fallback 1
+    { family = "Hack Nerd Font", weight = "Regular" },        -- Fallback 2
+    "Symbols Nerd Font Mono",                                 -- Icon fallback
+    "Scheherazade New",                                       -- Perso-Arabic font/ligature support
+    "SF Mono",                                                -- System fallback
   }),
   size = 12,
   line_height = 0.85,

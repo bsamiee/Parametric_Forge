@@ -20,9 +20,7 @@
     # Nix
     CACHIX_CACHE = "bsamiee";
     NIX_REMOTE = "daemon";
-
-    # --- Development Utilities -----------------------------------------------
-    XH_CONFIG_DIR = "${config.xdg.configHome}/xh";
+    NIX_INDEX_DATABASE = "${config.xdg.cacheHome}/nix-index";
 
     # --- File Operations -----------------------------------------------------
     # RCLONE_CONFIG = "${config.xdg.configHome}/rclone/rclone.conf";

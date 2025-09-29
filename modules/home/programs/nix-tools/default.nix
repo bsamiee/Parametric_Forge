@@ -10,9 +10,7 @@
 
 {
   imports = [
-    # Add nix tools here as needed
-    # ./nix-index
-    # ./nix-tree
-    # ./nixfmt
+    ./nix-index.nix
+    ./nom.nix
   ];
 }

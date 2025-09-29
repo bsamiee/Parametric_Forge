@@ -10,32 +10,20 @@
 
 {
   programs.zsh.shellAliases = {
-    # --- Darwin Rebuild Operations ------------------------------------------
-    # dr = "sudo darwin-rebuild switch --flake .";
-    # drs = "sudo darwin-rebuild switch --flake .";
-    # drb = "sudo darwin-rebuild build --flake .";
-    # drc = "sudo darwin-rebuild check --flake .";
+# --- Darwin Rebuild Operations ------------------------------------------
+    drs = "sudo darwin-rebuild switch --flake .#macbook |& nom";  # Switch to macbook config
+    drb = "sudo darwin-rebuild build --flake .#macbook |& nom";   # Build macbook config
+    drc = "darwin-rebuild check --flake .#macbook |& nom";        # Check macbook configuration
 
     # --- Nix Operations -----------------------------------------------------
-    # nix-gc = "sudo nix-collect-garbage -d";
-    # nix-clean = "sudo nix-collect-garbage -d && nix-store --optimise";
-    # nix-update = "nix flake update";
+    ns = "nix search nixpkgs";                                    # Search for packages
+    nw = "nix-locate -w";                                         # Find package providing command
+    nc = "sudo nix store gc && sudo nix store optimise";          # Clean store and optimize
 
     # --- Flake Operations ---------------------------------------------------
-    # nf = "nix flake";
-    # nfs = "nix flake show";
-    # nfu = "nix flake update";
-    # nfc = "nix flake check";
-
-    # --- Package Management ------------------------------------------------
-    # ns = "nix search nixpkgs";
-    # ni = "nix profile install";
-    # nr = "nix profile remove";
-    # nl = "nix profile list";
-
-    # --- Development -------------------------------------------------------
-    # ndev = "nix develop";
-    # nrun = "nix run";
-    # nbuild = "nix build";
+    nfu = "nix flake update && nix flake check";                  # Update all inputs + validate
+    nfn = "nix flake lock --update-input nixpkgs && drs";         # Update nixpkgs + rebuild system
+    nfl = "nix flake lock";                                       # Lock missing inputs (safe)
+    nfc = "nix flake check && nix flake show";                    # Validate + explore outputs
   };
 }

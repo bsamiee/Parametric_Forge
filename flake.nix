@@ -45,7 +45,7 @@
       let pkgs = nixpkgs.legacyPackages.${system};
       in {
         default = pkgs.mkShell {
-          packages = with pkgs; [ git nixfmt-rfc-style statix deadnix ];
+          packages = with pkgs; [ git nixfmt-rfc-style statix deadnix nix-output-monitor ];
         };
       });
 

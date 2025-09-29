@@ -35,6 +35,8 @@
     EZA_CONFIG_DIR = "${config.xdg.configHome}/eza";
     RIPGREP_CONFIG_PATH = "${config.xdg.configHome}/ripgrep/config";
     BAT_CACHE_PATH = "${config.xdg.cacheHome}/bat";
+    XH_CONFIG_DIR = "${config.xdg.configHome}/xh";
+    TRIPPY_CONFIG_DIR = "${config.xdg.configHome}/trippy";
     # Atuin
     ATUIN_LOG = "error";
     # Zoxide

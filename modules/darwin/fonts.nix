@@ -37,10 +37,6 @@
         variants = [ "NotoSansArabic" "NotoNaskhArabic" ];
       })
       scheherazade-new      # Arabic script font
-
-      # --- Display fonts -----------------------------------------------------
-      # Playfair Display moved to homebrew casks (not in nixpkgs)
-
     ];
   };
 }

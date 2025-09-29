@@ -54,7 +54,11 @@
       "Bash(bindkey)",
       "mcp__filesystem__search_files",
       "mcp__github__search_issues",
-      "WebFetch(domain:jqlang.org)"
+      "WebFetch(domain:jqlang.org)",
+      "WebFetch(domain:starship.rs)",
+      "WebFetch(domain:gist.github.com)",
+      "WebFetch(domain:direnv.net)",
+      "Bash(script -q /dev/null zsh -c:*)"
     ],
     "deny": [],
     "ask": []

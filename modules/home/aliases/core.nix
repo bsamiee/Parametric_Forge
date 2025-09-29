@@ -17,11 +17,11 @@
     df = "duf";
     cat = "bat";
     ps = "procs";
-    top = "btm";                  # Modern system monitor
-    cloc = "tokei";               # Modern code counter
-    tldru = "tldr --update";      # Update tldr cache
-    # man handled by batman export-env in zsh/init.nix - DO NOT alias here
-    # grep = "rg";                # Causes conflicts with -E and -G
+    top = "btm";                              # Modern system monitor
+    cloc = "tokei";                           # Modern code counter
+    tldru = "tldr --update";                  # Update tldr cache
+    # man = "batman"                          # Handled by batman export-env in zsh/init.nix - DO NOT alias here
+    # grep = "rg";                            # Causes conflicts with -E and -G
     rgg = "rg --json 2>/dev/null | delta";    # Search with delta syntax highlighting
     batg = "batgrep";                         # Bat-powered ripgrep (via bat-extras)
     find = "fd";
@@ -39,8 +39,16 @@
     trashempty = "trash-empty"; # Empty entire trash
 
     # --- Directory Navigation -----------------------------------------------
-    "." = "cd ..";          # Up one level
-    ".." = "cd ../..";      # Up two levels
-    "-" = "cd -";            # Previous directory
+    "." = "cd ..";              # Up one level
+    ".." = "cd ../..";          # Up two levels
+    "-" = "cd -";               # Previous directory
+
+    # --- Network Tools ------------------------------------------------------
+    http = "xh";                # HTTPie compatibility
+    https = "xh --https";       # HTTPS by default
+    bw = "sudo bandwhich";      # Bandwidth monitor (needs sudo)
+    dig = "doggo";              # Modern DNS client
+    nslookup = "doggo";         # DNS lookup replacement
+    speedtest = "speedtest --accept-license"; # Official Ookla speed test
   };
 }
