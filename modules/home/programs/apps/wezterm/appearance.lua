@@ -34,8 +34,10 @@ local FONT = {
     { family = "Iosevka Nerd Font", weight = "Regular" },     -- Fallback 1
     { family = "Hack Nerd Font", weight = "Regular" },        -- Fallback 2
     "Symbols Nerd Font Mono",                                 -- Icon fallback
-    "Scheherazade New",                                       -- Perso-Arabic font/ligature support
-    "SF Mono",                                                -- System fallback
+    -- Perso-Arabic font/ligature support
+    "Scheherazade New",
+    "Noto Naskh Arabic",
+    "Noto Sans Arabic",
   }),
   size = 12,
   line_height = 0.85,
@@ -53,7 +55,7 @@ function M.setup(config)
     selection_fg = dracula.foreground,
     selection_bg = dracula.selection,
 
-    -- ANSI Colors (0-7), These map to what tools like procs expect when using ANSI names
+    -- ANSI Colors (0-7)
     ansi = {
       dracula.background,   -- 0: Black
       dracula.red,          -- 1: Red
@@ -65,21 +67,21 @@ function M.setup(config)
       dracula.foreground,   -- 7: White
     },
 
-    -- Bright ANSI Colors (8-15), these map to "Bright" variants in tools (BrightGreen, BrightCyan, etc.)
+    -- Bright ANSI Colors (8-15)
     brights = {
       dracula.selection,    -- 8: Bright Black
-      dracula.red,          -- 9: Bright Red (same as regular)
-      dracula.green,        -- 10: Bright Green (same as regular)
-      dracula.yellow,       -- 11: Bright Yellow (same as regular)
-      dracula.cyan,         -- 12: Bright Blue (mapped to cyan for consistency)
-      dracula.magenta,      -- 13: Bright Magenta (same as regular)
-      dracula.cyan,         -- 14: Bright Cyan (same as regular)
+      dracula.red,          -- 9: Bright Red
+      dracula.green,        -- 10: Bright Green
+      dracula.yellow,       -- 11: Bright Yellow
+      dracula.cyan,         -- 12: Bright Blue (mapped to cyan)
+      dracula.magenta,      -- 13: Bright Magenta
+      dracula.cyan,         -- 14: Bright Cyan
       dracula.foreground,   -- 15: Bright White
     },
 
     -- Tab Bar
     tab_bar = {
-      background = dracula.background,  -- Use same as main background
+      background = dracula.background,
       active_tab = {
         bg_color = dracula.cyan,
         fg_color = dracula.background,
@@ -107,6 +109,10 @@ function M.setup(config)
   config.font = FONT.family
   config.font_size = FONT.size
   config.line_height = FONT.line_height
+
+  -- Fallback scaling and diagnostics
+  config.use_cap_height_to_scale_fallback_fonts = true
+  config.warn_about_missing_glyphs = true
 
   -- Window Appearance
   config.window_background_opacity = 1.0
