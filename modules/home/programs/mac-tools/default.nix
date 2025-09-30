@@ -11,8 +11,8 @@
 {
   imports = [
     ./duti.nix
+    ./mas.nix
     # Future macOS tools:
-    # ./mas.nix        # Mac App Store CLI
     # ./raycast.nix    # Raycast configuration
     # ./shortcuts.nix  # Shortcuts automation
   ];

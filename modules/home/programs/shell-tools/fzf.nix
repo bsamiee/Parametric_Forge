@@ -14,10 +14,9 @@
     enableZshIntegration = true;  # Let home-manager handle base integration
     tmux.enableShellIntegration = false;
 
-    # Default command for FZF (use fd for speed)
+    # --- Default configuration ----------------------------------------------
     defaultCommand = "fd --type f --hidden --follow --exclude .git";
 
-    # Default options for all FZF invocations - Dracula theme with custom styling
     defaultOptions = [
       # Colors - Dracula theme
       "--color=fg:#44475a,fg+:#F8F8F2,bg:#15131F,bg+:#44475a"
@@ -46,19 +45,20 @@
       "--bind=ctrl-d:preview-page-down"
     ];
 
-    # Ctrl-T: File selection (inherits default preview and window from defaultOptions)
+    # --- Ctrl-T: File selection ---------------------------------------------
     fileWidgetCommand = "fd --type f --hidden --follow --exclude .git";
     fileWidgetOptions = [
       "--border-label='[FILES]'"
     ];
 
-    # Alt-C: Directory navigation (override preview command for directories)
+    # --- Alt-C: Directory navigation ----------------------------------------
     changeDirWidgetCommand = "fd --type d --hidden --follow --exclude .git";
     changeDirWidgetOptions = [
       "--border-label='[DIRECTORIES]'"
       "--preview='eza --tree --level=2 --color=always {}'"
     ];
 
+    # --- Ctrl-R: Command history --------------------------------------------
     # Note: Ctrl-R (history) disabled - handled by Atuin
     historyWidgetOptions = [];
   };

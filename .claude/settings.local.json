@@ -58,7 +58,11 @@
       "WebFetch(domain:starship.rs)",
       "WebFetch(domain:gist.github.com)",
       "WebFetch(domain:direnv.net)",
-      "Bash(script -q /dev/null zsh -c:*)"
+      "Bash(script -q /dev/null zsh -c:*)",
+      "WebFetch(domain:api.github.com)",
+      "Bash(procs:*)",
+      "Bash(aria2c:*)",
+      "WebFetch(domain:ffmpeg.org)"
     ],
     "deny": [],
     "ask": []

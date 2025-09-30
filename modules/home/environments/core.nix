@@ -20,6 +20,7 @@
     VISUAL = "code --wait";
     PAGER = "less";  # Let tools add their own flags
     BAT_PAGER = "less -RFXK";  # Bat pager: -X fixes macOS Terminal.app clearing
+    PROCS_PAGER = "less -SRX";  # Procs pager: -S no wrap for tables, -R colors, -X no clear
     LESS = "-RFX";  # -X prevents screen clearing on macOS
     MANROFFOPT = "-c";
 

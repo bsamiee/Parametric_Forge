@@ -14,12 +14,14 @@
     ls = "eza -la --header --no-user --time-style=relative";
     tree = "eza --tree";
     du = "dust";
+    dfi = "dua i";                            # Interactive disk usage analyzer
     df = "duf";
     cat = "bat";
     ps = "procs";
     top = "btm";                              # Modern system monitor
     cloc = "tokei";                           # Modern code counter
     tldru = "tldr --update";                  # Update tldr cache
+    wget = "aria2c -c";                       # Modern download with resume
     # man = "batman"                          # Handled by batman export-env in zsh/init.nix - DO NOT alias here
     # grep = "rg";                            # Causes conflicts with -E and -G
     rgg = "rg --json 2>/dev/null | delta";    # Search with delta syntax highlighting
@@ -50,5 +52,12 @@
     dig = "doggo";              # Modern DNS client
     nslookup = "doggo";         # DNS lookup replacement
     speedtest = "speedtest --accept-license"; # Official Ookla speed test
+    lssh = "lazyssh";           # Interactive SSH manager
+
+    # --- 1Password Operations -----------------------------------------------
+    ops = "op item list --format=json | jq -r '.[] | \"\\(.id) \\(.title)\"'"; # List items
+    opg = "op item get";        # Get item details
+    opr = "op run --";          # Run command with secrets injected
+    opi = "op inject -i";       # Inject secrets into template
   };
 }

@@ -73,4 +73,17 @@
     mkdir -pm 755 "${config.home.homeDirectory}/.local/bin"
     mkdir -pm 755 "${config.home.homeDirectory}/bin"
   '';
+
+  home.activation.ensureXdgMediaDirs = lib.hm.dag.entryAfter ["writeBoundary"] ''
+    install -d -m 700 "${config.xdg.configHome}/transmission-daemon"
+    mkdir -p "${config.xdg.stateHome}/ffmpeg"
+    mkdir -p "${config.xdg.cacheHome}/ImageMagick"
+    mkdir -p "${config.xdg.configHome}/ImageMagick"
+    mkdir -p "${config.xdg.cacheHome}/mpv"
+    mkdir -p "${config.xdg.dataHome}/mpv/watch_later"
+    mkdir -p "${config.home.homeDirectory}/Pictures/mpv"
+    mkdir -p "${config.xdg.configHome}/pandoc"
+    mkdir -p "${config.xdg.dataHome}/pandoc"
+    mkdir -p "${config.xdg.cacheHome}/ocrmypdf"
+  '';
 }

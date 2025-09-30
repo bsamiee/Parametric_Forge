@@ -80,7 +80,7 @@
           };
           table_header = {
             color = "#94F2E8";                  # Cyan headers
-            bold = true;                        # Bold for emphasis
+            bold = true;                          # Bold for emphasis
           };
           text = {
             color = "#F8F8F2";                  # Bright - primary text
@@ -100,14 +100,14 @@
         tables = {
           headers = {
             color = "#94F2E8";                  # Cyan headers (matches borders)
-            bold = true;                        # Bold for emphasis
+            bold = true;                          # Bold for emphasis
           };
         };
         graphs = {
           graph_color = "#44475a";              # Subtle grid lines
           legend_text = {
             color = "#94F2E8";                  # Cyan legend text (for inline tables)
-            bold = false;                       # Not bold for cleaner look
+            bold = false;                         # Not bold for cleaner look
           };
         };
         cpu = {
@@ -157,7 +157,7 @@
           "Mem%"
           "User"
           "State"
-        ];  # Focused on actionable info, removed cumulative I/O
+        ];
       };
       # --- Disk Configuration --------------------------------------------------
       disk = {
@@ -181,7 +181,7 @@
       # Note: macOS temperature sensors may not be accessible to bottom
       temperature = {
         sensor_filter = {
-          is_list_ignored = true;  # Ignore items in list (show everything else)
+          is_list_ignored = true;   # Ignore items in list (show everything else)
           list = [];                # No sensors to ignore
           regex = false;
           case_sensitive = false;

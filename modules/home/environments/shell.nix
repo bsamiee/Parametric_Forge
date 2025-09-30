@@ -16,8 +16,8 @@
     "${config.xdg.dataHome}/cargo/bin"
     "${config.xdg.dataHome}/go/bin"
     "${config.xdg.dataHome}/pipx/bin"
-    "${config.xdg.dataHome}/npm/bin"
     "${config.xdg.dataHome}/pnpm"
+    "${config.xdg.dataHome}/npm/bin"
   ];
 
   home.sessionVariables = {
@@ -31,7 +31,6 @@
     KEYTIMEOUT = "1";
 
     # --- Tool Configurations -------------------------------------------------
-    BROOT_CONFIG_DIR = "${config.xdg.configHome}/broot";
     EZA_CONFIG_DIR = "${config.xdg.configHome}/eza";
     RIPGREP_CONFIG_PATH = "${config.xdg.configHome}/ripgrep/config";
     BAT_CACHE_PATH = "${config.xdg.cacheHome}/bat";
@@ -68,5 +67,10 @@
     # --- ZSH Plugin Configurations -------------------------------------------
     # you-should-use
     YSU_MESSAGE_POSITION = "before";  # Show message before command execution
+
+    # --- 1Password CLI Configuration ----------------------------------------
+    OP_CONFIG_DIR = "${config.xdg.configHome}/op";  # XDG-compliant config location
+    OP_CACHE = "true";  # Enable caching for better performance
+    OP_BIOMETRIC_UNLOCK_ENABLED = "true";  # Touch ID on macOS
   };
 }

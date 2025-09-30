@@ -10,22 +10,29 @@
 
 {
   imports = [
+    ./aria2.nix
+    ./archivemount.nix
     ./atuin.nix
     ./bandwhich.nix
     ./bat.nix
     ./bottom.nix
-    ./broot.nix
     ./choose.nix
     ./doggo.nix
+    ./dua.nix
     ./duf.nix
     ./dust.nix
     ./eza.nix
+    ./fastfetch.nix
     ./fd.nix
     ./fzf.nix
     ./gping.nix
+    ./hexyl.nix
     ./hyperfine.nix
     ./jq.nix
+    ./lazyssh.nix
+    ./op.nix
     ./ouch.nix
+    ./pik.nix
     ./procs.nix
     ./rclone.nix
     ./ripgrep.nix

@@ -12,6 +12,7 @@
   imports = [
     ./apps
     ./mac-tools
+    ./media-tools
     ./node-tools
     ./shell-tools
     ./git-tools

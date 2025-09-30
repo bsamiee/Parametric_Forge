@@ -37,6 +37,13 @@ let
         align = "Left";
       }
       {
+        kind = "Ppid";
+        style = "Yellow|Yellow";
+        numeric_search = true;
+        nonnumeric_search = false;
+        align = "Left";
+      }
+      {
         kind = "User";
         style = "BrightGreen|Green";
         numeric_search = false;
@@ -131,6 +138,20 @@ let
         align = "Left";
       }
       {
+        kind = "StartTime";
+        style = "BrightMagenta|Magenta";
+        numeric_search = false;
+        nonnumeric_search = false;
+        align = "Left";
+      }
+      {
+        kind = "ElapsedTime";
+        style = "Magenta|Magenta";
+        numeric_search = false;
+        nonnumeric_search = false;
+        align = "Left";
+      }
+      {
         kind = "Command";
         style = "BrightWhite|Black";
         numeric_search = false;
@@ -192,11 +213,11 @@ let
       show_parent_in_tree = true;
       show_children_in_tree = true;
       show_header = true;
-      show_footer = false;
+      show_footer = true;  # Show process counts (useful context)
       cut_to_terminal = true;
       cut_to_pager = false;
       cut_to_pipe = false;
-      color_mode = "Auto";
+      color_mode = "Always";  # Force colors even when piping to pager
       separator = "│";
       ascending = "▲";
       descending = "▼";
@@ -222,7 +243,12 @@ let
       mode = "Auto";
       detect_width = true;
       use_builtin = false;
-      command = "less -SR";
+      command = "less -SRX";  # -S no wrap, -R ANSI colors, -X no screen clear
+    };
+
+    # --- Watch Mode Configuration -------------------------------------------
+    watch = {
+      interval = 2;  # 2 seconds (matches bottom.nix update rate)
     };
   };
 in

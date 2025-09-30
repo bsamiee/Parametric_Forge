@@ -29,6 +29,17 @@
       # --- Tool Integration -------------------------------------------------
       # Batman man page integration
       eval "$(${pkgs.bat-extras.batman}/bin/batman --export-env)"
+
+      # 1Password CLI plugins (for AWS, GitHub CLI, etc.)
+      [ -f "$HOME/.config/op/plugins.sh" ] && source "$HOME/.config/op/plugins.sh"
+
+      # 1Password SSH agent socket
+      OP_SSH_SOCK="$HOME/.1password/agent.sock"
+      [ -S "$OP_SSH_SOCK" ] && export SSH_AUTH_SOCK="$OP_SSH_SOCK"
+      unset OP_SSH_SOCK
+
+      # Procs completion
+      eval "$(${pkgs.procs}/bin/procs --gen-completion-out zsh)"
     '')
 
     (lib.mkOrder 550 ''

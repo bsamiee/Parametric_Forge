@@ -54,6 +54,12 @@ in
             imports = [ ../../modules/home ];
             home.stateVersion = "24.05";
             programs.home-manager.enable = true;
+
+            # Disable manual generation to avoid builtins.toFile warnings
+            manual.html.enable = false;
+            manual.json.enable = false;
+            manual.manpages.enable = false;
+            news.display = "silent";
           });
         };
       }

@@ -11,6 +11,7 @@
 {
   imports = [
     ./core.nix
+    ./media.nix
     ./nix.nix
   ];
 }

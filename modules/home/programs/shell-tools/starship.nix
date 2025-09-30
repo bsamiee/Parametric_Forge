@@ -14,7 +14,7 @@
     # Home-manager handles ZSH integration automatically
 
     settings = {
-      # --- Schema Reference ------------------------------------------------
+      # --- Schema Reference -------------------------------------------------
       "$schema" = "https://starship.rs/config-schema.json";
 
       # --- Global Configuration ---------------------------------------------
@@ -77,7 +77,6 @@
       continuation_prompt = " ";
 
       # --- Core Modules -----------------------------------------------------
-
       username = {
         style_user = "foreground";
         style_root = "red";
@@ -124,7 +123,7 @@
       };
 
       os = {
-        format = "[$symbol]($style)";
+        format = "[$symbol]($style) ";
         style = "cyan";
         disabled = false;
         symbols = {
@@ -176,8 +175,7 @@
         };
       };
 
-      # --- Git Modules --------------------------------------------------------
-
+      # --- Git Modules ------------------------------------------------------
       git_branch = {
         symbol = " ";
         format = "\\[[$symbol$branch]($style)\\]";
@@ -227,8 +225,7 @@
         disabled = false;
       };
 
-      # --- Programming Languages ----------------------------------------------
-
+      # --- Programming Languages --------------------------------------------
       nodejs = {
         format = "\\[[$symbol($version)]($style)\\]";
         version_format = "v$major.$minor.$patch";
@@ -285,8 +282,7 @@
         detect_folders = [ "vendor" ];
       };
 
-      # --- System Information -------------------------------------------------
-
+      # --- System Information -----------------------------------------------
       docker_context = {
         format = "\\[[$symbol$context]($style)\\]";
         style = "cyan";
@@ -326,8 +322,7 @@
         min_time_to_notify = 45000;
       };
 
-      # --- Optional Modules ---------------------------------------------------
-
+      # --- Optional Modules -------------------------------------------------
       jobs = {
         threshold = 1;
         symbol_threshold = 1;
@@ -354,8 +349,7 @@
         disabled = true;                     # Character module handles success/error
       };
 
-      # --- Performance Settings -----------------------------------------------
-
+      # --- Performance Settings ---------------------------------------------
       package = {
         disabled = false;                    # Re-enabled for development workflows
         display_private = false;             # Hide private package versions
