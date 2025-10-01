@@ -9,11 +9,10 @@
 { pkgs, lib, ... }:
 
 let
-  sharedLibExt = pkgs.stdenv.hostPlatform.extensions.sharedLibrary;
   sqleanLibDir = "${pkgs.sqlean}/lib";
-  sqliteVecLib = "${pkgs.sqlite-vec}/lib/sqlite-vec0${sharedLibExt}";
-  spatialiteLib = "${pkgs.libspatialite}/lib/mod_spatialite${sharedLibExt}";
-  loadSqlean = module: ''.load ${sqleanLibDir}/sqlean-${module}${sharedLibExt}'';
+  sqliteVecLib = "${pkgs.sqlite-vec}/lib/sqlite-vec0";
+  spatialiteLib = "${pkgs.libspatialite}/lib/mod_spatialite";
+  loadSqlean = module: ''.load ${sqleanLibDir}/${module}'';
 in
 {
   home.packages = with pkgs; [

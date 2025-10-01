@@ -32,6 +32,8 @@ in
 
       # --- Host-specific configuration --------------------------------------
       {
+        nixpkgs.overlays = [ inputs.self.overlays.default ];
+
         networking.hostName = "macbook";
         networking.computerName = "Bardia's MacBook Pro";
 

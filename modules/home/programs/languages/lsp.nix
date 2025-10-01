@@ -21,7 +21,8 @@
 
     # Python
     basedpyright # Pyright-compatible LSP (fast, config-compatible)
-    ruff-lsp # Ruff-backed linting/autofix LSP
+    python3Packages.python-lsp-server # Pylsp with plugins
+    python3Packages.python-lsp-ruff # Ruff integration for pylsp
 
     # Systems / compiled
     rust-analyzer # Rust
@@ -29,7 +30,7 @@
     gopls # Go toolchain LSP
 
     # Infrastructure
-    dockerfile-language-server-nodejs # Dockerfile syntax & completion
+    dockerfile-language-server # Dockerfile syntax & completion
 
     # Data / markup
     lemminx # XML/XSD support
