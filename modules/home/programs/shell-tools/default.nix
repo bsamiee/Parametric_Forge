@@ -46,7 +46,6 @@
     ./trash.nix
     ./trippy.nix
     ./xh.nix
-    ./yq.nix
     ./zoxide.nix
   ];
 }

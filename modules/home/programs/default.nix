@@ -13,7 +13,7 @@
     ./apps
     ./mac-tools
     ./media-tools
-    ./node-tools
+    ./languages
     ./shell-tools
     ./git-tools
     ./nix-tools

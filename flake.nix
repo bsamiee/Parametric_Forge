@@ -41,6 +41,13 @@
     # Standalone home configurations (placeholder for future)
     homeConfigurations = {};
 
+    packages = forAllSystems (system:
+      let pkgs = nixpkgs.legacyPackages.${system};
+      in {
+        sqlean = pkgs.callPackage (self + "/overlays/sqlean") { };
+        default = pkgs.callPackage (self + "/overlays/sqlean") { };
+      });
+
     devShells = forAllSystems (system:
       let pkgs = nixpkgs.legacyPackages.${system};
       in {

@@ -1,20 +1,22 @@
-# Title         : pnpm.nix
+# Title         : node-tools.nix
 # Author        : Bardia Samiee
 # Project       : Parametric Forge
 # License       : MIT
-# Path          : /modules/home/programs/node-tools/pnpm.nix
+# Path          : modules/home/programs/languages/node-tools.nix
 # ----------------------------------------------------------------------------
-# Performant npm - Fast, disk space efficient package manager
+# Node.js runtime, version manager, and package tooling.
 
 { config, pkgs, ... }:
 
 {
   home.packages = with pkgs; [
-    pnpm
-    # nodePackages.npm  # Disabled - was pulling nodejs v22
+    nodejs_20 # LTS runtime with better cache compatibility
+    fnm       # Fast Node Manager for multi-version workflows
+    pnpm      # Disk-efficient package manager
+    nodePackages.prettier # Code formatter
   ];
 
-  # pnpm config file with XDG-compliant paths
+  # --- pnpm configuration ---------------------------------------------------
   xdg.configFile."pnpm/rc".text = ''
     store-dir=${config.xdg.dataHome}/pnpm/store
     cache-dir=${config.xdg.cacheHome}/pnpm
