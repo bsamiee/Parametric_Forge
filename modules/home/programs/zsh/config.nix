@@ -11,7 +11,7 @@
 {
   programs.zsh = {
     profileExtra = ''
-      # --- PATH initialization (order 50) -----------------------------------
+      # --- PATH initialization (order 50) -----------------------------------------
       # Nix (Determinate Nix)
       if [[ -d "/nix/var/nix/profiles/default/bin" ]]; then
         export PATH="/nix/var/nix/profiles/default/bin:$PATH"

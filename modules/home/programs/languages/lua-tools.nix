@@ -11,11 +11,11 @@
 {
   home.packages = with pkgs; [
     # --- Lua Runtime & Package Management -----------------------------------
-    lua5_4 # Standard Lua 5.4 (required for SbarLua compatibility)
-    luarocks # Lua package manager
+    lua5_4                  # Standard Lua 5.4 (required for SbarLua compatibility)
+    luarocks                # Lua package manager
 
     # --- Code Quality Tools -------------------------------------------------
-    stylua # Opinionated Lua code formatter (most modern)
-    lua54Packages.luacheck # Static analyzer and linter for Lua
+    stylua                  # Opinionated Lua code formatter (most modern)
+    lua54Packages.luacheck  # Static analyzer and linter for Lua
   ];
 }

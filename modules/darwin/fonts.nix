@@ -10,9 +10,8 @@
 
 {
   fonts = {
-    # nix-darwin uses fonts.packages directly, no fontDir needed
     packages = with pkgs; [
-      # --- Programming/Terminal fonts ----------------------------------------
+      # --- Programming/Terminal Fonts ---------------------------------------
       nerd-fonts.geist-mono
       nerd-fonts.hack
       nerd-fonts.iosevka
@@ -24,7 +23,7 @@
         variants = [ "NotoSansMono" ];
       })
 
-      # --- UI/System fonts ---------------------------------------------------
+      # --- UI/System Fonts --------------------------------------------------
       geist-font            # Geist Sans (UI font)
       inter                 # Inter (UI font)
       dm-sans               # DM Sans
@@ -32,7 +31,7 @@
       source-sans           # Source Sans 3
       source-serif          # Source Serif 4
 
-      # --- Arabic/Persian fonts ----------------------------------------------
+      # --- Perso-Arabic Fonts -----------------------------------------------
       (noto-fonts.override {
         variants = [ "NotoSansArabic" "NotoNaskhArabic" ];
       })

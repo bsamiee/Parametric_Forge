@@ -10,11 +10,11 @@
 
 {
   home.sessionVariables = {
-    # --- FFmpeg --------------------------------------------------------------
+    # --- FFmpeg -------------------------------------------------------------
     FFREPORT = "file=${config.xdg.stateHome}/ffmpeg/%p-%t.log:level=32";
     AV_LOG_FORCE_COLOR = "1";  # Enable colored output
 
-    # --- ImageMagick ---------------------------------------------------------
+    # --- ImageMagick --------------------------------------------------------
     MAGICK_FONT_PATH = "/System/Library/Fonts:/Library/Fonts:${config.home.homeDirectory}/Library/Fonts:${config.home.profileDirectory}/share/fonts";
     MAGICK_CONFIGURE_PATH = lib.concatStringsSep ":" [
       "${config.xdg.configHome}/ImageMagick"
@@ -26,7 +26,7 @@
     MAGICK_DISK_LIMIT = "2147483648";
     MAGICK_THREAD_LIMIT = "0";
 
-    # --- Pandoc --------------------------------------------------------------
+    # --- Pandoc -------------------------------------------------------------
     PANDOC_DATA_DIR = "${config.xdg.dataHome}/pandoc";
   };
 }

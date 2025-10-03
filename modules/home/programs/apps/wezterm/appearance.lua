@@ -39,7 +39,7 @@ local FONT = {
     "Noto Naskh Arabic",
     "Noto Sans Arabic",
   }),
-  size = 12,
+  size = 10,
   line_height = 0.85,
 }
 

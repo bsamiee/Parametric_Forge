@@ -12,6 +12,7 @@
   imports = [
     ./environments
     ./programs
+    ./scripts
     ./xdg.nix
   ];
 }

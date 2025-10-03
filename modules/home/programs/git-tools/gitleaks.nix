@@ -19,8 +19,7 @@ let
       useDefault = true;
     };
 
-    # --- Global allowlists --------------------------------------------------
-    # (v8.25.0+ format)
+    # --- Global Allowlists --------------------------------------------------
     allowlists = [
       {
         description = "Global allowlist for common safe patterns";

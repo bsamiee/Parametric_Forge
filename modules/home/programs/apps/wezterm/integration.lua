@@ -11,7 +11,7 @@ local wezterm = require("wezterm")
 local M = {}
 
 function M.setup(config)
-  -- Zellij Integration -------------------------------------------------------
+  -- Core Integration ---------------------------------------------------------
   local home = wezterm.home_dir
   local user = os.getenv("USER") or ""
   local candidates = {
@@ -31,7 +31,9 @@ function M.setup(config)
     end
   end
 
-  config.default_prog = { zellij, "attach", "--create", "main" }
+  -- Launch Zellij in a new WezTerm window with layout
+  local layout = os.getenv("ZELLIJ_DEFAULT_LAYOUT") or "side"
+  config.default_prog = { zellij, "attach", "--create", "main", "--layout", layout }
 
   -- PATH Configuration -------------------------------------------------------
   local path_segments = {}
@@ -50,12 +52,12 @@ function M.setup(config)
     table.insert(path_segments, p)
   end
 
-  -- Potentially remove - let nix/darwin handle this unless errors arise
-  -- config.set_environment_variables = {
-    -- PATH = table.concat(path_segments, ":"),
-  -- }
+  -- Set PATH to ensure Zellij can find all Nix-installed binaries including yazi
+  config.set_environment_variables = {
+    PATH = table.concat(path_segments, ":"),
+  }
 
-  -- Tab Bar Configuration (Zellij handles tabs) ------------------------------
+  -- Tab Bar Configuration ----------------------------------------------------
   config.enable_tab_bar = false -- Zellij will render tabs; hide WezTerm's tab bar
   config.use_fancy_tab_bar = false
 end

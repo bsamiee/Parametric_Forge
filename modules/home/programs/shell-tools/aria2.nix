@@ -43,7 +43,7 @@
       enable-http-pipelining = true;    # HTTP/1.1 pipelining
       user-agent = "aria2";             # Default user agent
 
-      # --- SSL/TLS Settings (macOS AppleTLS workaround) --------------------
+      # --- SSL/TLS Settings (macOS AppleTLS workaround) ---------------------
       check-certificate = false;        # Disable cert check (AppleTLS bug #2277)
 
       # --- BitTorrent Settings ----------------------------------------------

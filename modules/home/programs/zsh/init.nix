@@ -11,11 +11,11 @@
 {
   programs.zsh.initContent = lib.mkMerge [
     (lib.mkBefore ''
-      # --- Completion cache -------------------------------------------------
+      # --- Completion cache -------------------------------------------------------
       command mkdir -p -- "${config.xdg.cacheHome}/zsh"
       export ZSH_COMPDUMP="${config.xdg.cacheHome}/zsh/zcompdump-''${ZSH_VERSION}"
 
-      # --- FZF Configuration ------------------------------------------------
+      # --- FZF Configuration ------------------------------------------------------
       # Custom completion functions
       _fzf_compgen_path() {
         fd --hidden --follow --exclude .git . "$1"
@@ -25,7 +25,7 @@
         fd --type d --hidden --follow --exclude .git . "$1"
       }
 
-      # --- Tool Integration -------------------------------------------------
+      # --- Tool Integration -------------------------------------------------------
       # Batman man page integration
       eval "$(${pkgs.bat-extras.batman}/bin/batman --export-env)"
 
@@ -40,7 +40,7 @@
     '')
 
     (lib.mkOrder 400 ''
-      # --- Custom Completions (before compinit) ----------------------------
+      # --- Custom Completions (before compinit) -----------------------------------
       # Add custom completions directory to fpath
       mkdir -p "${config.xdg.dataHome}/zsh/completions"
       fpath=("${config.xdg.dataHome}/zsh/completions" $fpath)
@@ -76,7 +76,7 @@
     '')
 
     (lib.mkOrder 550 ''
-      # --- Completion zstyle configuration ----------------------------------
+      # --- Completion zstyle configuration ----------------------------------------
       zstyle ':completion:*' matcher-list 'm:{[:lower:][:upper:]}={[:upper:][:lower:]}'
       zstyle ':completion:*' use-cache true
       zstyle ':completion:*' cache-path "$XDG_CACHE_HOME/zsh/zcompcache"
@@ -85,7 +85,7 @@
     '')
 
     (lib.mkOrder 600 ''
-      # --- fzf-tab configuration (after carapace loads) ---------------------
+      # --- fzf-tab configuration (after carapace loads) ---------------------------
       zstyle ':fzf-tab:*' use-fzf-default-opts yes
       zstyle ':fzf-tab:*' fzf-flags --height=80%  # Explicitly set height (not inherited)
       zstyle ':fzf-tab:complete:__zoxide_z:*' fzf-preview 'eza -1 --color=always $realpath'
@@ -93,7 +93,7 @@
     '')
 
     ''
-      # --- Shell Options ----------------------------------------------------
+      # --- Shell Options ----------------------------------------------------------
       # These run after everything
       setopt AUTO_PUSHD PUSHD_IGNORE_DUPS CDABLE_VARS
 
@@ -104,6 +104,16 @@
         else
           pnpm "$@"
         fi
+      }
+
+      # Yazi shell wrapper - cd on quit
+      y() {
+        local tmp="$(mktemp -t "yazi-cwd.XXXXXX")"
+        yazi "$@" --cwd-file="$tmp"
+        if cwd="$(cat -- "$tmp")" && [ -n "$cwd" ] && [ "$cwd" != "$PWD" ]; then
+          cd -- "$cwd"
+        fi
+        rm -f -- "$tmp"
       }
     ''
   ];

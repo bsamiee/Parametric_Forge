@@ -27,7 +27,7 @@ let
   tomlFormat = pkgs.formats.toml { };
 
   procsConfig = {
-    # --- Column Configuration (based on official CONFIG_LARGE) -------------
+    # --- Column Configuration -----------------------------------------------
     columns = [
       {
         kind = "Pid";
@@ -160,7 +160,7 @@ let
       }
     ];
 
-    # --- Style Configuration (Dracula theme-aware) -------------------------
+    # --- Style Configuration ------------------------------------------------
     style = {
       header = "BrightWhite|Black";
       unit = "Blue|Black";
@@ -196,7 +196,7 @@ let
       };
     };
 
-    # --- Search Configuration ----------------------------------------------
+    # --- Search Configuration -----------------------------------------------
     search = {
       numeric_search = "Exact";
       nonnumeric_search = "Partial";
@@ -204,7 +204,7 @@ let
       case = "Smart";
     };
 
-    # --- Display Configuration ---------------------------------------------
+    # --- Display Configuration ----------------------------------------------
     display = {
       show_self = false;
       show_self_parents = false;
@@ -227,18 +227,18 @@ let
       show_kthreads = false;
     };
 
-    # --- Sort Configuration (sort by CPU usage, high to low) ---------------
+    # --- Sort Configuration -------------------------------------------------
     sort = {
       column = 4;
       order = "Descending";
     };
 
-    # --- Docker Configuration ----------------------------------------------
+    # --- Docker Configuration -----------------------------------------------
     docker = {
       path = "unix:///var/run/docker.sock";
     };
 
-    # --- Pager Configuration (with horizontal scrolling) -------------------
+    # --- Pager Configuration ------------------------------------------------
     pager = {
       mode = "Auto";
       detect_width = true;

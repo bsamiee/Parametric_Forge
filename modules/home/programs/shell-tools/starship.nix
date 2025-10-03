@@ -14,7 +14,6 @@
     # Home-manager handles ZSH integration automatically
 
     settings = {
-      # --- Schema Reference -------------------------------------------------
       "$schema" = "https://starship.rs/config-schema.json";
 
       # --- Global Configuration ---------------------------------------------

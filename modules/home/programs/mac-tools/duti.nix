@@ -9,7 +9,6 @@
 { config, lib, pkgs, ... }:
 
 let
-  # File associations configuration - all inline
   dutiConfig = ''
     # PDF Documents -> Adobe Acrobat Pro
     com.adobe.Acrobat.Pro	com.adobe.pdf	all

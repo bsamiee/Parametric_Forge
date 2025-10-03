@@ -1,0 +1,27 @@
+# Title         : keymap.toml
+# Author        : Bardia Samiee
+# Project       : Parametric Forge
+# License       : MIT
+# Path          : modules/home/programs/apps/yazi/keymap.toml
+# ----------------------------------------------------------------------------
+# Custom keybindings for Yazi file manager
+
+[[mgr.append_keymap]]
+on = [ "<C-y>" ]
+run = "quit"
+desc = "Quit Yazi"
+
+[[mgr.append_keymap]]
+on = [ "<A-y>" ]
+run = "shell 'yazi-focus-nvim.sh'"
+desc = "Focus nvim pane"
+
+[[mgr.append_keymap]]
+on = [ "<A-p>" ]
+run = "shell 'yazi-open-dir.sh \"$0\"'"
+desc = "Open directory in new pane"
+
+[[mgr.append_keymap]]
+on = [ "<A-r>" ]
+run = "shell 'yazi-reveal.sh \"$1\"'"
+desc = "Reveal file in sidebar"

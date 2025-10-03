@@ -12,10 +12,10 @@ let
   tomlFormat = pkgs.formats.toml { };
 
   dustConfig = {
-    reverse = true;                  # Normal sort order (largest first)
-    ignore-hidden = true;            # Ignore dotfiles and hidden directories
+    reverse = true;         # Normal sort order (largest first)
+    ignore-hidden = true;   # Ignore dotfiles and hidden directories
     output-format = "si";
-    skip-total = true;               # Show total size
+    skip-total = true;      # Show total size
   };
 in
 {

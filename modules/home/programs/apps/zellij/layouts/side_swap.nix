@@ -4,7 +4,7 @@
 # License       : MIT
 # Path          : modules/home/programs/apps/zellij/layouts/side_swap.nix
 # ----------------------------------------------------------------------------
-# Nix-generated terminal layout for Zellij
+# Swappable layout variants for sidebar mode with different pane configurations
 
 { config, lib, pkgs, ... }:
 
@@ -16,7 +16,7 @@
     // License       : MIT
     // Path          : modules/home/programs/apps/zellij/layouts/side.swap.kdl
     // ----------------------------------------------------------------------------
-    // PLACEHOLDER
+    // Swappable layout variants for sidebar mode with different pane configurations
 
     swap_tiled_layout name="basic" {
         ui exact_panes=4 {

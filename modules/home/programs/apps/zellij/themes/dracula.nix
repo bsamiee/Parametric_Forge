@@ -22,7 +22,7 @@ in
     // ----------------------------------------------------------------------------
     // Zellij theme matching the custom Parametric Forge Dracula palette
 
-    // --- Color Definitions -------------------------------------------------------
+    // --- Color Definitions ------------------------------------------------------
     // Define color variables for zjstatus plugin (these use hex values)
     color_background    "${colors.background.hex}"  // (${toString colors.background.r}, ${toString colors.background.g}, ${toString colors.background.b})
     color_current_line  "${colors.current_line.hex}"  // (${toString colors.current_line.r}, ${toString colors.current_line.g}, ${toString colors.current_line.b})
@@ -38,7 +38,7 @@ in
     color_magenta       "${colors.magenta.hex}"  // (${toString colors.magenta.r}, ${toString colors.magenta.g}, ${toString colors.magenta.b})
     color_pink          "${colors.pink.hex}"  // (${toString colors.pink.r}, ${toString colors.pink.g}, ${toString colors.pink.b})
 
-    // --- Theme Definition --------------------------------------------------------
+    // --- Theme Definition -------------------------------------------------------
     // Zellij themes require RGB decimal values (not hex or variables)
     themes {
       "dracula" {

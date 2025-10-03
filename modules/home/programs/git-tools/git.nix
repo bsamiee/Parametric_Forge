@@ -30,7 +30,7 @@
     userEmail = "b.samiee93@gmail.com";
     lfs.enable = true;
 
-    # --- Git Attributes (LFS and line endings) -------------------------------
+    # --- Git Attributes (LFS and line endings) ------------------------------
     attributes = [
       # Text file normalization
       "* text=auto eol=lf"
@@ -121,7 +121,7 @@
       "*.eot filter=lfs diff=lfs merge=lfs -text"
     ];
 
-    # --- Delta Integration ---------------------------------------------------
+    # --- Delta Integration --------------------------------------------------
     delta = {
       enable = true;
 
@@ -141,11 +141,11 @@
         # File headers
         file-style = "bold";
         file-decoration-style = "none";
-        file-added-label = "[+]";
+        file-added-label = "";
         file-copied-label = "[==]";
-        file-modified-label = "[*]";
-        file-removed-label = "[-]";
-        file-renamed-label = "[->]";
+        file-modified-label = "";
+        file-removed-label = "";
+        file-renamed-label = "";
 
         # Hunk headers
         hunk-header-style = "file line-number";

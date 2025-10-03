@@ -71,7 +71,8 @@
       "WebFetch(domain:search.nixos.org)",
       "WebFetch(domain:fx.wtf)",
       "WebFetch(domain:wezterm.org)",
-      "WebFetch(domain:knezevic.ch)"
+      "WebFetch(domain:knezevic.ch)",
+      "mcp__filesystem__read_text_file"
     ],
     "deny": [],
     "ask": []

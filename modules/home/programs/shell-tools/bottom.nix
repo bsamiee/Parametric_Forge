@@ -12,7 +12,7 @@
   programs.bottom = {
     enable = true;
     settings = {
-      # --- General Flags -------------------------------------------------------
+      # --- General Flags ----------------------------------------------------
       flags = {
         # Display Performance
         avg_cpu = true;              # Show average CPU in addition to per-core
@@ -70,7 +70,7 @@
       # magenta       #d82f94
       # pink          #E98FBE
 
-      # --- Style Configuration (Professional Dracula) ------------------------
+      # --- Style Configuration ----------------------------------------------
       styles = {
         widgets = {
           border_color = "#94F2E8";             # Cyan - default borders
@@ -148,7 +148,7 @@
           low_battery = "#ff5555";    # Red - critical (<10%)
         };
       };
-      # --- Process Configuration -----------------------------------------------
+      # --- Process Configuration --------------------------------------------
       processes = {
         columns = [
           "PID"
@@ -159,7 +159,7 @@
           "State"
         ];
       };
-      # --- Disk Configuration --------------------------------------------------
+      # --- Disk Configuration -----------------------------------------------
       disk = {
         columns = [ "Disk" "Mount" "Used%" "Free" "R/s" "W/s" ];
         name_filter = {
@@ -177,7 +177,7 @@
           whole_word = false;
         };
       };
-      # --- Temperature Configuration -------------------------------------------
+      # --- Temperature Configuration ----------------------------------------
       # Note: macOS temperature sensors may not be accessible to bottom
       temperature = {
         sensor_filter = {
@@ -188,7 +188,7 @@
           whole_word = false;
         };
       };
-      # --- Network Filter ------------------------------------------------------
+      # --- Network Filter ---------------------------------------------------
       network = {
         interface_filter = {
           is_list_ignored = true;
@@ -198,7 +198,7 @@
           whole_word = true;
         };
       };
-      # --- CPU Configuration ---------------------------------------------------
+      # --- CPU Configuration ------------------------------------------------
       cpu = {
         default = "all"; # Show all cores
       };

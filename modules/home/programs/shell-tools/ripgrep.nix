@@ -25,7 +25,7 @@
 
 let
   ripgrepConfig = [
-    # --- Search behavior ----------------------------------------------------
+    # --- Search Behavior ----------------------------------------------------
     "--smart-case"
     "--hidden"
     "--follow"
@@ -46,7 +46,7 @@ let
     "--dfa-size-limit=1G"            # Increase DFA cache for large pattern files
     "--mmap"                         # Use memory-mapped I/O for large files
 
-    # --- Visual formatting (Dracula theme) ---------------------------------
+    # --- Visual formatting --------------------------------------------------
     # Path: Cyan
     "--colors=path:fg:117"         # ANSI 117 = Dracula cyan (#94F2E8)
     "--colors=path:style:bold"
@@ -59,7 +59,7 @@ let
     "--colors=match:fg:84"         # ANSI 84 = Dracula green (#50FA7B)
     "--colors=match:style:bold"
 
-    # --- Type definitions ---------------------------------------------------
+    # --- Type Definitions ---------------------------------------------------
     # Nix ecosystem
     "--type-add=nix:*.nix"
     "--type-add=nix:flake.lock"
@@ -100,7 +100,7 @@ let
     "--type-add=proto:*.proto"
     "--type-add=headers:*.{h,hpp,hxx,hh}"
 
-    # --- Global exclusions --------------------------------------------------
+    # --- Global Exclusions --------------------------------------------------
     "--glob=!.git/"
     "--glob=!node_modules/"
     "--glob=!target/"

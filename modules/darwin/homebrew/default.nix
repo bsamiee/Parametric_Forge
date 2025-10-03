@@ -23,21 +23,21 @@ in
   homebrew = {
     enable = mkDefault true;
 
-    # --- Global settings ----------------------------------------------------
+    # --- Global Settings ----------------------------------------------------
     global = {
       autoUpdate = mkDefault true;
       brewfile = mkDefault false;   # Disable Brewfile (managed via Nix)
       lockfiles = mkDefault false;  # Prevent Nix store write attempts
     };
 
-    # --- Activation behavior ------------------------------------------------
+    # --- Activation Behavior ------------------------------------------------
     onActivation = {
       autoUpdate = mkDefault true;
       cleanup = mkDefault "uninstall";
       upgrade = mkDefault true;
     };
 
-    # --- Cask configuration -------------------------------------------------
+    # --- Cask Configuration -------------------------------------------------
     caskArgs = mkDefault {
       appdir = "/Applications";
       require_sha = false;              # Allow casks without SHA
@@ -50,7 +50,7 @@ in
     };
   };
 
-  # --- Nix-Homebrew bridge integration --------------------------------------
+  # --- Nix-Homebrew Bridge --------------------------------------------------
   nix-homebrew = {
     enable = mkDefault true;
     enableRosetta = mkDefault isAarch64;  # Enable Rosetta for Apple Silicon

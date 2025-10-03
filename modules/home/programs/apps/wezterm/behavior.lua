@@ -18,7 +18,7 @@ function M.apply(config, theme)
     config.command_palette_bg_color = palette.current_line or palette.background
     config.command_palette_fg_color = palette.cyan or palette.foreground
     config.command_palette_rows = 10
-    config.command_palette_font_size = font.size or config.font_size or 12
+    config.command_palette_font_size = font.size or config.font_size or 10
 
     -- Behaviour --------------------------------------------------------------
     config.automatically_reload_config = true

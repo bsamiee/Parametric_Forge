@@ -10,7 +10,7 @@
 
 {
   programs.zsh.shellAliases = {
-    # --- Darwin Rebuild Operations ------------------------------------------
+    # --- Darwin Operations --------------------------------------------------
     drs = "sudo darwin-rebuild switch --flake .#macbook |& nom";  # Switch to macbook config
     drb = "sudo darwin-rebuild build --flake .#macbook |& nom";   # Build macbook config
     drc = "darwin-rebuild check --flake .#macbook |& nom";        # Check macbook configuration

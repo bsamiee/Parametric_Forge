@@ -16,15 +16,10 @@
     settings = {
       git_protocol = "ssh";              # Use SSH for git operations (matches SSH config)
 
-      # --- UI preferences ---------------------------------------------------
+      # --- UI Preferences ---------------------------------------------------
       prompt = "enabled";                # Interactive prompts
       spinner = "enabled";               # Show spinners for long operations
       prefer_editor_prompt = "disabled"; # Use terminal prompts over editor
-
-      # Note: editor, pager, browser inherit from environment variables:
-      # - EDITOR (set in environments/core.nix)
-      # - GH_PAGER = "delta" (set in environments/core.nix)
-      # - BROWSER (if set)
     };
   };
 }

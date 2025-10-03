@@ -21,7 +21,7 @@ in
     // ----------------------------------------------------------------------------
     // Core Zellij options referencing the shared Parametric Forge theme
 
-    // --- Core configuration -----------------------------------------------------
+    // --- Core Configuration -----------------------------------------------------
     theme                       "dracula"
     default_shell               "zsh"
     default_layout              "side"
@@ -34,13 +34,13 @@ in
     copy_command                "pbcopy"
     scroll_buffer_size          100000
 
-    // --- Load plugins -----------------------------------------------------------
+    // --- Load Plugins -----------------------------------------------------------
     load_plugins {
       // zjstatus
       zellij-pane-picker
     }
 
-    // --- Plugin aliases ---------------------------------------------------------
+    // --- Plugin Aliases ---------------------------------------------------------
     plugins {
       configuration location="zellij:configuration"
       compact-bar location="zellij:compact-bar"
@@ -57,7 +57,7 @@ in
         welcome_screen true
       }
 
-      // --- zjstatus configuration -----------------------------------------------
+      // --- zjstatus Configuration -----------------------------------------------
       zjstatus location="file:~/.config/zellij/plugins/zjstatus.wasm" {
         // --- Color Definitions
         color_background    "${colors.background.hex}"
@@ -107,7 +107,7 @@ in
         hide_frame_for_single_pane  "false"
       }
 
-      // --- pane-picker configuration --------------------------------------------
+      // --- pane-picker Configuration --------------------------------------------
       zellij-pane-picker location="file:~/.config/zellij/plugins/zellij-pane-picker.wasm" {
         list_panes          "Alt Tab"
         plugin_select_down  "Down"
@@ -118,10 +118,15 @@ in
     // --- Keybindings ------------------------------------------------------------
     keybinds {
       normal {
-        bind "Alt y" {
+        bind "Alt Tab" {
           LaunchOrFocusPlugin "zellij-pane-picker" {
             floating            true
             move_to_focused_tab true
+          }
+        }
+        bind "Ctrl Alt t" {
+          Run "zellij-toggle-sidebar.sh" {
+            direction "Down"
           }
         }
       }

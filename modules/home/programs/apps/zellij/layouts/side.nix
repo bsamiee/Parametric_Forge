@@ -4,7 +4,7 @@
 # License       : MIT
 # Path          : modules/home/programs/apps/zellij/layouts/side.nix
 # ----------------------------------------------------------------------------
-# Nix-generated terminal layout for Zellij
+# Zellij layout with Yazi sidebar and main workspace area
 
 { config, lib, pkgs, ... }:
 
@@ -16,7 +16,7 @@
     // License       : MIT
     // Path          : modules/home/programs/apps/zellij/layouts/side.kdl
     // ----------------------------------------------------------------------------
-    // PLACEHOLDER
+    // Zellij layout with Yazi sidebar and main workspace area
 
     layout {
         tab_template name="ui" {

@@ -16,7 +16,7 @@
     nodePackages.prettier # Code formatter
   ];
 
-  # --- pnpm configuration ---------------------------------------------------
+  # --- pnpm Configuration ---------------------------------------------------
   xdg.configFile."pnpm/rc".text = ''
     store-dir=${config.xdg.dataHome}/pnpm/store
     cache-dir=${config.xdg.cacheHome}/pnpm

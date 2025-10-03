@@ -9,6 +9,5 @@
 { pkgs, ... }:
 
 {
-  # Inkscape stores user preferences under ~/.config/inkscape by default; no extra
   home.packages = [ pkgs.inkscape ];
 }

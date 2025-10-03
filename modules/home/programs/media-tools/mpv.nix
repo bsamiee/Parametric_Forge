@@ -12,6 +12,7 @@ let
   # Install yt-dlp for video downloading
   yt-dlp = pkgs.yt-dlp;
 in
+
 # Dracula theme color reference
 # background    #15131F
 # current_line  #2A2640
@@ -30,10 +31,8 @@ in
 {
   programs.mpv = {
     enable = true;
-
-    # --- Core Configuration -------------------------------------------------
     config = {
-      # Video settings
+      # --- Video Settings ---------------------------------------------------
       profile = "gpu-hq";                     # High quality GPU rendering
       vo = "gpu-next";                        # Modern GPU rendering (successor to gpu)
       gpu-api = "metal";                      # Apple Metal API for macOS
@@ -42,19 +41,19 @@ in
       interpolation = true;                   # Motion interpolation
       tscale = "over";                        # Temporal scaling (oversample)
 
-      # Audio settings
+      # --- Audio Settings ---------------------------------------------------
       audio-file-auto = "fuzzy";              # Auto-load external audio
       audio-pitch-correction = true;          # Pitch correction when speed changes
       volume = 100;                           # Default volume
       volume-max = 200;                       # Max volume (200%)
 
-      # Subtitle settings
+      # --- Subtitle Settings ------------------------------------------------
       sub-auto = "fuzzy";                                 # Auto-load subtitles
       sub-file-paths = "subs:subtitles:Subs:Subtitles";   # Subtitle directories
       slang = "en,eng";                                   # Preferred subtitle languages
       alang = "en,eng,jpn,ja";                            # Preferred audio languages
 
-      # UI settings
+      # --- UI Settings ------------------------------------------------------
       osc = true;                             # Enable OSC with custom settings
       osd-bar = true;                         # Show OSD bar
       osd-font = "GeistMono Nerd Font";       # Project standard font
@@ -67,32 +66,32 @@ in
       osd-bar-h = 2;
       osd-bar-w = 60;
 
-      # Window settings
+      # --- Window Settings --------------------------------------------------
       keep-open = true;                      # Don't close after playback
       force-window = true;                   # Always show window
       snap-window = true;                    # Snap to screen edges
       autofit-larger = "90%x90%";            # Max initial window size
       geometry = "50%:50%";                  # Center window
 
-      # Cache settings (uses XDG dirs)
+      # --- Cache Settings ---------------------------------------------------
       cache = true;
       cache-dir = "${config.xdg.cacheHome}/mpv";
       cache-default = 150000000;             # 150MB cache (in bytes)
       cache-backbuffer = 25000000;           # 25MB backbuffer (in bytes)
       cache-secs = 10;
 
-      # Network settings
+      # --- Network Settings -------------------------------------------------
       ytdl = true;                           # Enable yt-dlp
       ytdl-path = "${yt-dlp}/bin/yt-dlp";    # Use yt-dlp from Nix
       ytdl-format = "bestvideo[height<=?1080][vcodec!=?vp9]+bestaudio/best";
 
-      # Screenshot settings
+      # --- Screenshot Settings ----------------------------------------------
       screenshot-format = "png";
       screenshot-png-compression = 8;
       screenshot-directory = "${config.home.homeDirectory}/Pictures/mpv";
       screenshot-template = "%F-%P-%n";
 
-      # Other settings
+      # --- Other Settings ---------------------------------------------------
       save-position-on-quit = true;          # Remember playback position
       watch-later-directory = "${config.xdg.dataHome}/mpv/watch_later";
       input-ipc-server = "/tmp/mpvsocket";   # IPC for external control

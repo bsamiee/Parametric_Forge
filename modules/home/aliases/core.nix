@@ -10,7 +10,7 @@
 
 {
   programs.zsh.shellAliases = {
-    # --- Shell Configuration -----------------------------------------------
+    # --- Shell Configuration ------------------------------------------------
     envs = "env | sort";                            # List environment variables sorted
     ezsh = "$EDITOR $HOME/.zshrc";                  # Edit ZSH config
     rzsh = "source $HOME/.zshrc";                   # Reload ZSH config
@@ -87,7 +87,7 @@
     ports = "sudo lsof -iTCP -sTCP:LISTEN -n -P";   # List open ports (needs sudo)
     flushdns = "sudo dscacheutil -flushcache && sudo killall -HUP mDNSResponder"; # Flush DNS cache (macOS)
 
-    # --- Time & Date Operations -----------------------------------------------
+    # --- Time & Date Operations ---------------------------------------------
     timestamp = "date +'%Y%m%d_%H%M%S'";            # Filename-safe timestamp
     epoch = "date +%s";                             # Unix timestamp
     now = "date +'%Y-%m-%d %H:%M:%S'";              # ISO 8601 timestamp

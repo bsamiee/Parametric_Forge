@@ -24,14 +24,14 @@ in
       trusted-users = [ "@admin" "@wheel" "root" ];
       allowed-users = [ "*" ];
 
-      # Performance
+      # --- Performance ------------------------------------------------------
       cores = 0;
       eval-cores = 0;                   # Enable parallel evaluation (Determinate Nix)
       max-substitution-jobs = 32;       # More parallel substitutions
       http-connections = 50;            # More parallel downloads (default 25)
       http2 = true;                     # Use HTTP/2 for better performance
 
-      # Build behavior
+      # --- Build Behavior ---------------------------------------------------
       keep-going = true;
       builders-use-substitutes = true;
       keep-outputs = true;              # Keep build dependencies
@@ -41,18 +41,21 @@ in
       eval-cache = true;                # Cache evaluation results
       min-free-check-interval = 300;    # Check free space every 5 min
       max-silent-time = 3600;           # Kill builds silent >1 hour
-
-      # Store management
-      min-free = lib.mkDefault (5 * 1024 * 1024 * 1024);  # 5GB
-      max-free = lib.mkDefault (50 * 1024 * 1024 * 1024); # 50GB
-
       # Developer experience
       warn-dirty = false;
       accept-flake-config = true;
       show-trace = true;                # Better error messages
       log-lines = 100;                  # More build log context
+      # Network resilience
+      connect-timeout = 10;                 # Connection timeout (seconds)
+      stalled-download-timeout = 300;       # 5 minutes (default)
+      download-attempts = 3;               # Retry failed downloads
 
-      # Binary caches
+      # --- Store Management -------------------------------------------------
+      min-free = lib.mkDefault (5 * 1024 * 1024 * 1024);  # 5GB
+      max-free = lib.mkDefault (50 * 1024 * 1024 * 1024); # 50GB
+
+      # --- Cache Configuration ----------------------------------------------
       substituters = [
         "https://cache.nixos.org"
         "https://nix-community.cachix.org"
@@ -64,19 +67,13 @@ in
         "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Ky7bkq5CX+/rkCWyvRCYg3Fs="
         "bsamiee.cachix.org-1:b/WAIj/ImX6pkDc6SUVYHJoL/yJ7E4MIA+e7uA9rdwQ="
       ];
-
-      # Cache performance (narinfo TTLs)
+      # Cache performance
       narinfo-cache-negative-ttl = 3600;   # 1 hour (default)
       narinfo-cache-positive-ttl = 86400;  # 1 day (vs 1 month default)
-
-      # Network resilience
-      connect-timeout = 10;                 # Connection timeout (seconds)
-      stalled-download-timeout = 300;       # 5 minutes (default)
-      download-attempts = 3;               # Retry failed downloads
     };
   };
 
-  # Post-build hook for Cachix (non-blocking) - moved to settings
+  # --- Post-build Hook Cachix Push ------------------------------------------
   nix.settings.post-build-hook = let
     cachixHook = pkgs.writeShellScript "cachix-hook" ''
       [ -n "''${CACHIX_AUTH_TOKEN:-}" ] && [ -n "''${OUT_PATHS:-}" ] && {
@@ -85,7 +82,7 @@ in
     '';
   in lib.mkDefault cachixHook;
 
-  # Nixpkgs configuration
+  # --- Nixpkgs Configuration ------------------------------------------------
   nixpkgs.config = {
     allowUnfree = true;
     allowBroken = false;

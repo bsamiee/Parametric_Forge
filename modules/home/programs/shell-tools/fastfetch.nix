@@ -30,7 +30,7 @@
     settings = {
       "$schema" = "https://github.com/fastfetch-cli/fastfetch/raw/dev/doc/json_schema.json";
 
-      # --- Display configuration --------------------------------------------
+      # --- Display Configuration --------------------------------------------
       display = {
         size = {
           binaryPrefix = "iec";  # Use IEC (GiB, MiB) not SI (GB, MB)
@@ -74,7 +74,7 @@
         };
       };
 
-      # --- Logo configuration -----------------------------------------------
+      # --- Logo Configuration -----------------------------------------------
       logo = {
         type = "auto";
         width = 28;
@@ -88,7 +88,7 @@
         preserveAspectRatio = true;
       };
 
-      # --- Modules configuration --------------------------------------------
+      # --- Modules Configuration --------------------------------------------
       modules = [
         # Title and separator
         { type = "title"; format = "{user-name-colored}@{host-name-colored}"; }

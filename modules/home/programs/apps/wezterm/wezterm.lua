@@ -9,14 +9,14 @@
 local wezterm = require("wezterm")
 local config = wezterm.config_builder()
 
--- Import modules -------------------------------------------------------------
+-- Import Modules -------------------------------------------------------------
 local appearance = require("appearance")
 local behavior = require("behavior")
 local keys = require("keys")
 local mouse = require("mouse")
 local integration = require("integration")
 
--- Setup configuration --------------------------------------------------------
+-- Setup Configuration --------------------------------------------------------
 local theme = appearance.setup(config)
 behavior.apply(config, theme)
 keys.setup(config)

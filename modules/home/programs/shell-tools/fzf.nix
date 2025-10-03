@@ -29,7 +29,7 @@
     enableZshIntegration = true;  # Let home-manager handle base integration
     tmux.enableShellIntegration = false;
 
-    # --- Default configuration ----------------------------------------------
+    # --- Default Configuration ----------------------------------------------
     defaultCommand = "fd --type f --hidden --follow --exclude .git";
 
     defaultOptions = [
@@ -60,20 +60,20 @@
       "--bind=ctrl-j:preview-page-down"
     ];
 
-    # --- Ctrl-T: File selection ---------------------------------------------
+    # --- Ctrl-T: File Selection ---------------------------------------------
     fileWidgetCommand = "fd --type f --hidden --follow --exclude .git";
     fileWidgetOptions = [
       "--border-label='[FILES]'"
     ];
 
-    # --- Alt-C: Directory navigation ----------------------------------------
+    # --- Alt-C: Directory Navigation ----------------------------------------
     changeDirWidgetCommand = "fd --type d --hidden --follow --exclude .git";
     changeDirWidgetOptions = [
       "--border-label='[DIRECTORIES]'"
       "--preview='eza --tree --level=2 --color=always {}'"
     ];
 
-    # --- Ctrl-R: Command history --------------------------------------------
+    # --- Ctrl-R: Command History --------------------------------------------
     # Note: Ctrl-R (history) disabled - handled by Atuin
     historyWidgetOptions = [];
   };

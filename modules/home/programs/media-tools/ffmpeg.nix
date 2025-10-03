@@ -10,10 +10,7 @@
 
 {
   home.packages = with pkgs; [
-    # Full-featured FFmpeg with maximum codec support
-    ffmpeg-full
-
-    # Lightweight video thumbnailer for Yazi preview (ffmpegthumbnailer.yazi)
-    ffmpegthumbnailer
+    ffmpeg-full # Full-featured FFmpeg with maximum codec support
+    ffmpegthumbnailer # Lightweight video thumbnailer for Yazi preview (ffmpegthumbnailer.yazi)
   ];
 }

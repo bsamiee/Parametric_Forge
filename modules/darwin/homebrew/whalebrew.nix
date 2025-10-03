@@ -10,7 +10,6 @@
 
 {
   homebrew.whalebrews = [
-    # Docker-based CLI tools via Whalebrew
     # Add entries as needed
   ];
 }

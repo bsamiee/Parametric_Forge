@@ -10,7 +10,7 @@
 
 let
   secretRefs = {
-    # API Tokens
+    # --- API Tokens ---------------------------------------------------------
     githubToken = "op://Tokens/Github Token/token";
     githubClassicToken = "op://Tokens/Github Classic Token/token";
     cachixAuthToken = "op://Tokens/Cachix Auth Token - Parametric Forge/token";
@@ -18,7 +18,7 @@ let
     perplexityApiKey = "op://Tokens/Perplexity Sonar API Key/token";
     exaApiKey = "op://Tokens/Exa API Key/token";
 
-    # SSH Keys
+    # --- SSH Keys -----------------------------------------------------------
     sshAuthKey = "op://Tokens/Github Authentication key/public key";
     sshSigningKey = "op://Tokens/Github Signing Key/public key";
   };

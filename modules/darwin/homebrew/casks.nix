@@ -92,6 +92,6 @@
     "rize"                # Time tracking
     "via"                 # Keyboard configurator
     "hammerspoon"         # Lua automation
-    # "karabiner-elements"  # Keyboard remapping
+    "karabiner-elements"  # Keyboard remapping
   ];
 }

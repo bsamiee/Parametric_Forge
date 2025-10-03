@@ -11,7 +11,7 @@
 
 {
   home.packages = with pkgs; [
-    # --- Shell tooling ------------------------------------------------------
+    # --- Shell Tooling ------------------------------------------------------
     shellcheck # POSIX shell static analysis
     shfmt # Shell script formatter
 
@@ -22,8 +22,11 @@
     yamlfmt # YAML formatter (Google)
     yamllint # YAML linter
 
-    # --- General data wrangling ---------------------------------------------
+    # --- JSON ---------------------------------------------------------------
     jq # Lightweight command-line JSON processor
+
+
+    # --- General Data Tools -------------------------------------------------
     yq-go # YAML/JSON/TOML processor (yq)
     miller # CSV/TSV/JSON processor
   ];

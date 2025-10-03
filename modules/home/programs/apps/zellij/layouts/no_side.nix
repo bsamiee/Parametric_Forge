@@ -4,7 +4,7 @@
 # License       : MIT
 # Path          : modules/home/programs/apps/zellij/layouts/no_side.nix
 # ----------------------------------------------------------------------------
-# Nix-generated terminal layout for Zellij
+# Zellij layout with fullscreen Yazi file manager
 
 { config, lib, pkgs, ... }:
 
@@ -16,7 +16,7 @@
     // License       : MIT
     // Path          : modules/home/programs/apps/zellij/layouts/no_side.kdl
     // ----------------------------------------------------------------------------
-    // PLACEHOLDER
+    // Zellij layout with fullscreen Yazi file manager
 
     layout {
         tab_template name="ui" {

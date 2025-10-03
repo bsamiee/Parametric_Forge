@@ -11,29 +11,27 @@
 {
   home.packages = with pkgs; [
     # --- Core ---------------------------------------------------------------
-    nixd # Modern Nix language server
-    lua-language-server # LuaLS for Lua diagnostics & completion
-    bash-language-server # Shell scripts
-    taplo-lsp # TOML
-    yaml-language-server # YAML validation & schema support
-    marksman # Markdown (wiki-style links, frontmatter)
-    nodePackages.vscode-langservers-extracted # HTML/CSS/JSON/ESLint via VS Code extractions
+    nixd                                        # Modern Nix language server
+    lua-language-server                         # LuaLS for Lua diagnostics & completion
+    bash-language-server                        # Shell scripts
+    taplo-lsp                                   # TOML
+    yaml-language-server                        # YAML validation & schema support
+    marksman                                    # Markdown (wiki-style links, frontmatter)
+    nodePackages.vscode-langservers-extracted   # HTML/CSS/JSON/ESLint via VS Code extractions
+    dockerfile-language-server                  # Dockerfile syntax & completion
 
     # --- Python -------------------------------------------------------------
-    basedpyright # Pyright-compatible LSP (fast, config-compatible)
-    python3Packages.python-lsp-server # Pylsp with plugins
-    python3Packages.python-lsp-ruff # Ruff integration for pylsp
+    basedpyright                                # Pyright-compatible LSP (fast, config-compatible)
+    python3Packages.python-lsp-server           # Pylsp with plugins
+    python3Packages.python-lsp-ruff             # Ruff integration for pylsp
 
-    # --- Systems / compiled -------------------------------------------------
-    rust-analyzer # Rust
-    cmake-language-server # CMake projects
-    gopls # Go toolchain LSP
+    # --- Systems / Compiled -------------------------------------------------
+    rust-analyzer                               # Rust
+    cmake-language-server                       # CMake projects
+    gopls                                       # Go toolchain LSP
 
-    # --- Infrastructure -----------------------------------------------------
-    dockerfile-language-server # Dockerfile syntax & completion
-
-    # --- Data / markup ------------------------------------------------------
-    lemminx # XML/XSD support
-    sqls # SQL database-aware completion & linting
+    # --- Data / Markup ------------------------------------------------------
+    lemminx                                     # XML/XSD support
+    sqls                                        # SQL database-aware completion & linting
   ];
 }
