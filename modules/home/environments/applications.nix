@@ -25,7 +25,7 @@
     YAZI_CONFIG_HOME = "${config.xdg.configHome}/yazi";
 
     # --- Neovim --------------------------------------------------------------
-    NVIM_LISTEN_ADDRESS="${XDG_RUNTIME_DIR:-/tmp}/nvim-${ZELLIJ_SESSION_NAME:-main}.sock"
+    # NVIM_LISTEN_ADDRESS="${XDG_RUNTIME_DIR:-/tmp}/nvim-${ZELLIJ_SESSION_NAME:-main}.sock"; #TODO: FIX THE SYNTAX OF -MAIN THIS IS NOT VALID
 
     # --- Serpl ---------------------------------------------------------------
     SERPL_CONFIG = "${config.xdg.configHome}/serpl";
@@ -41,8 +41,5 @@
 
     # --- Claude --------------------------------------------------------------
     CLAUDE_CACHE_DIR = "${config.xdg.cacheHome}/claude";
-
-    # --- Karabiner/Goku ------------------------------------------------------
-    GOKU_EDN_CONFIG_FILE = "${config.xdg.configHome}/karabiner/karabiner.edn";
   };
 }

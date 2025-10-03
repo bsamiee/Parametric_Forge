@@ -20,7 +20,6 @@
     "koekeishiya/formulae/yabai"
     "koekeishiya/formulae/skhd"
     "FelixKratz/formulae/borders"
-    "yqrashawn/goku/goku"               # Karabiner EDN compiler
 
     # --- Media tools --------------------------------------------------------
     "handbrake"                         # CLI video transcoder

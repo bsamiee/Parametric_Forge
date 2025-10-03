@@ -15,9 +15,12 @@ let
 in
 {
   imports = [
-    ./config.nix               # Nix-generated main config
-    ./themes/dracula.nix       # Nix-generated Dracula theme
-    ./layouts/terminal.nix     # Nix-generated terminal layout
+    ./config.nix                # Nix-generated main config
+    ./themes/dracula.nix        # Nix-generated Dracula theme
+    ./layouts/no_side.nix
+    ./layouts/no_side_swap.nix
+    ./layouts/side.nix
+    ./layouts/side_swap.nix
   ];
 
   options.programs.zellij = {
@@ -55,10 +58,6 @@ in
       "zellij/plugins/zjstatus.wasm".source = pkgs.fetchurl {
         url = "https://github.com/dj95/zjstatus/releases/download/v0.21.1/zjstatus.wasm";
         sha256 = "06mfcijmsmvb2gdzsql6w8axpaxizdc190b93s3nczy212i846fw";
-      };
-      "zellij/plugins/zjstatus-hints.wasm".source = pkgs.fetchurl {
-        url = "https://github.com/b0o/zjstatus-hints/releases/download/v0.1.4/zjstatus-hints.wasm";
-        sha256 = "17bir2z85ip7x6zndy94x5wdrpqv2py3wf116kadn3jw0blmav4k";
       };
     };
   };

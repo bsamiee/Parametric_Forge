@@ -12,6 +12,5 @@
   homebrew.taps = [
     "koekeishiya/formulae"  # For yabai/skhd
     "FelixKratz/formulae"   # For borders
-    "yqrashawn/goku"        # For GokuRakuJoudo (Karabiner EDN compiler)
   ];
 }

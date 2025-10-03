@@ -2,17 +2,12 @@
 # Author        : Bardia Samiee
 # Project       : Parametric Forge
 # License       : MIT
-# Path          : modules/home/programs/apps/default.nix
+# Path          : modules/home/programs/apps/yazi
 # ----------------------------------------------------------------------------
-# GUI and terminal applications aggregator
+# Yezi file manager configuration
 
-{ lib, ... }:
+{ pkgs, ... }:
 
 {
-  imports = [
-    ./karabiner
-    ./wezterm
-    ./yazi
-    ./zellij
-  ];
+  home.packages = [ pkgs.yazi ];
 }

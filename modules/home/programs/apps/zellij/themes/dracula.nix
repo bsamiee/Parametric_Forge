@@ -61,7 +61,7 @@ in
         ribbon_unselected {
           base ${rgb colors.foreground}
           background ${rgb colors.current_line}
-          emphasis_0 ${rgb colors.comment}
+          emphasis_0 ${rgb colors.cyan}
           emphasis_1 ${rgb colors.magenta}
           emphasis_2 ${rgb colors.cyan}
           emphasis_3 ${rgb colors.yellow}

@@ -26,8 +26,5 @@
     jq # Lightweight command-line JSON processor
     yq-go # YAML/JSON/TOML processor (yq)
     miller # CSV/TSV/JSON processor
-
-    # --- Misc ---------------------------------------------------------------
-    joker # Clojure/EDN linter (used by Karabiner config tooling)
   ];
 }

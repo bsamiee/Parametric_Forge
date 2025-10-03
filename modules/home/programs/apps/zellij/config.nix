@@ -22,20 +22,21 @@ in
     // Core Zellij options referencing the shared Parametric Forge theme
 
     // --- Core configuration -----------------------------------------------------
-    theme               "dracula"
-    default_shell       "zsh"
-    default_layout      "terminal"
-    simplified_ui       true
-    mouse_mode          true
-    pane_frames         true
-    show_startup_tips   false
-    copy_command        "pbcopy"
-    scroll_buffer_size  100000
+    theme                       "dracula"
+    default_shell               "zsh"
+    default_layout              "side"
+    show_startup_tips           false
+    simplified_ui               true
+    mouse_mode                  true
+    pane_frames                 true
+    session_serialization       true
+    pane_viewport_serialization true
+    copy_command                "pbcopy"
+    scroll_buffer_size          100000
 
     // --- Load plugins -----------------------------------------------------------
     load_plugins {
       // zjstatus
-      zjstatus-hints
       zellij-pane-picker
     }
 
@@ -74,39 +75,36 @@ in
         color_pink          "${colors.pink.hex}"
 
         // --- Format Configuration
-        format_left   "{mode} {tabs}"
-        format_center ""
-        format_right  "{pipe_zjstatus_hints}"
-        format_space  ""
-        pipe_zjstatus_hints_format "{output}"
+        format_left               "{mode} {tabs}"
+        format_center             "{swap_layout}"
+        format_right              "#[bg=$pink,fg=$background] [{session}] "
+        format_space              ""
+
+        // --- Layout Display
+        swap_layout_format        "#[bg=$background,fg=$cyan][layout: {name}]"
+        swap_layout_hide_if_empty "true"
 
         // --- Mode Indicators
         mode_normal "#[bg=$green,fg=$background] [NORMAL] "
         mode_resize "#[bg=$purple,fg=$background] [RESIZE] "
-        mode_tab "#[bg=$magenta,fg=$background] [TABS] "
-        mode_pane "#[bg=$orange,fg=$background] [PANES] "
+        mode_tab    "#[bg=$magenta,fg=$background] [TABS] "
+        mode_pane   "#[bg=$orange,fg=$background] [PANES] "
         mode_scroll "#[bg=$yellow,fg=$background] [SCROLL] "
         mode_locked "#[bg=$selection,fg=$background] [LOCKED] "
         mode_prompt "#[bg=$foreground,fg=$background] [PROMPT] "
         mode_search "#[bg=$pink,fg=$background] [SEARCH] "
 
         // --- Tab Display
-        tab_normal    "#[bg=$comment,fg=$background] {name} "
         tab_active    "#[bg=$cyan,fg=$background] {name} "
+        tab_normal    "#[bg=$comment,fg=$background] {name} "
         tab_separator " "
 
         // --- Border Configuration
-        border_enabled  "false"
-        border_char     "─"
-        border_format   "#[fg=$cyan]{char}"
-        border_position "bottom"
-        hide_frame_for_single_pane "false"
-      }
-
-      // --- zjstatus-hints configuration -----------------------------------------
-      zjstatus-hints location="file:~/.config/zellij/plugins/zjstatus-hints.wasm" {
-        pipe_name "zjstatus_hints"
-        hide_in_base_mode false
+        border_enabled              "false"
+        border_char                 "─"
+        border_format               "#[fg=$cyan]{char}"
+        border_position             "bottom"
+        hide_frame_for_single_pane  "false"
       }
 
       // --- pane-picker configuration --------------------------------------------
@@ -122,7 +120,7 @@ in
       normal {
         bind "Alt y" {
           LaunchOrFocusPlugin "zellij-pane-picker" {
-            floating true
+            floating            true
             move_to_focused_tab true
           }
         }
