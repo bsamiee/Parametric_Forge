@@ -19,7 +19,7 @@ rustPlatform.buildRustPackage rec {
     sha256 = "sha256-10zKOsNEcHb/bNcGC/TJLA738G0cKeMg1vt+PZpiEUI=";
   };
 
-  cargoHash = "sha256-iHJgNzGcA8vN9KpJ35ySKyZi2sJ1x6W3HA4fzT2dv6c=";
+  cargoHash = "sha256-N39JD7qeLzro4+6wSP14uAjH8D7kv6sGuhLomcVw600=";
 
   meta = with lib; {
     description = "Zellij session manager with zoxide integration";

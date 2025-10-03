@@ -50,9 +50,10 @@ function M.setup(config)
     table.insert(path_segments, p)
   end
 
-  config.set_environment_variables = {
-    PATH = table.concat(path_segments, ":"),
-  }
+  -- Potentially remove - let nix/darwin handle this unless errors arise
+  -- config.set_environment_variables = {
+    -- PATH = table.concat(path_segments, ":"),
+  -- }
 
   -- Tab Bar Configuration (Zellij handles tabs) ------------------------------
   config.enable_tab_bar = false -- Zellij will render tabs; hide WezTerm's tab bar

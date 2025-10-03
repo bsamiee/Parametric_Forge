@@ -16,9 +16,6 @@ function M.setup(config)
   config.send_composed_key_when_right_alt_is_pressed = false
   config.use_dead_keys = false
 
-  -- Terminal Type Configuration ----------------------------------------------
-  config.term = "xterm-256color"
-
   -- Future key bindings can be added here
   -- config.keys = {}
 end

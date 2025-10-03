@@ -71,7 +71,7 @@
       fi
 
       if [[ ! -f "${config.xdg.dataHome}/zsh/completions/_op" ]]; then
-        ${pkgs._1password}/bin/op completion zsh > "${config.xdg.dataHome}/zsh/completions/_op"
+        ${pkgs._1password-cli}/bin/op completion zsh > "${config.xdg.dataHome}/zsh/completions/_op"
       fi
     '')
 

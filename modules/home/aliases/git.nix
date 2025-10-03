@@ -17,12 +17,12 @@
     gap = "git add -p";                                 # Interactive patch staging
     gcm = "git commit -m";                              # Commit with message (verbose via config)
     gcq = "git commit --amend --no-edit";               # Quick amend without editing message
+    gm = "git merge --no-ff";                           # Merge with commit (ff=false via config)
     gd = "git diff";                                    # Diff working tree (delta via GIT_PAGER)
     gds = "git diff --staged";                          # Diff staged changes (delta via GIT_PAGER)
 
     # --- Branch & Remote ----------------------------------------------------
-    gb = "git branch -vv";                              # List branches with tracking info
-    gba = "git branch -avv";                            # List all branches with tracking info
+    gb = "git branch -avv";                             # List all branches with tracking info
     gbd = "git branch -d";                              # Delete merged branch (safe)
     gco = "git checkout";                               # Switch branches/restore files
     gcob = "git checkout -b";                           # Create and switch to new branch
@@ -41,7 +41,6 @@
     grsh = "git reset --hard";                          # Reset and discard all changes
     gclean = "git clean -fdx";                          # Remove untracked files and directories
     gcp = "git cherry-pick";                            # Apply specific commits
-    gm = "git merge --no-ff";                           # Merge with commit (ff=false via config)
     groot = "cd $(git rev-parse --show-toplevel)";      # Jump to repository root
 
     # --- External Tools -----------------------------------------------------

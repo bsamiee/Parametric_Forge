@@ -28,6 +28,7 @@ in
     simplified_ui       true
     mouse_mode          true
     pane_frames         true
+    show_startup_tips   false
     copy_command        "pbcopy"
     scroll_buffer_size  100000
 
