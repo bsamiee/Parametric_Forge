@@ -13,6 +13,12 @@
     enable = true;
     enableDefaultConfig = false;  # Explicitly disable default config to suppress warning
 
+    # Use 1Password's stable socket on macOS so SSH pulls keys from the agent
+    extraConfig = lib.mkBefore ''
+      Host *
+        IdentityAgent "~/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
+    '';
+
     matchBlocks = {
       # --- GitHub Configuration ---------------------------------------------
       "github.com" = {
@@ -27,7 +33,7 @@
       "*" = {
         # Connection multiplexing for performance
         controlMaster = "auto";
-        controlPath = "${config.xdg.stateHome}/ssh/master-%r@%n:%p";
+        controlPath = "${config.home.homeDirectory}/.ssh/sockets/%C";
         controlPersist = "10m";
 
         # Keep-alive settings
@@ -37,7 +43,6 @@
         # Security and convenience
         addKeysToAgent = "yes";
         hashKnownHosts = true;
-        userKnownHostsFile = "${config.xdg.configHome}/ssh/known_hosts";
 
         # Performance
         compression = true;

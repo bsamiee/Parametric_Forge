@@ -11,6 +11,7 @@
 {
   imports = [
     ./core.nix
+    ./git.nix
     ./media.nix
     ./nix.nix
   ];

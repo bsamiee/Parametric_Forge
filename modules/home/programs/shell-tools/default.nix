@@ -16,7 +16,9 @@
     ./bandwhich.nix
     ./bat.nix
     ./bottom.nix
+    ./carapace.nix
     ./choose.nix
+    ./curlie.nix
     ./doggo.nix
     ./dua.nix
     ./duf.nix
@@ -28,7 +30,7 @@
     ./gping.nix
     ./hexyl.nix
     ./hyperfine.nix
-    ./jq.nix
+    ./jnv.nix
     ./lazyssh.nix
     ./op.nix
     ./ouch.nix
@@ -38,6 +40,7 @@
     ./ripgrep.nix
     ./rsync.nix
     ./sd.nix
+    ./serpl.nix
     ./speedtest.nix
     ./ssh.nix
     ./starship.nix
@@ -45,7 +48,9 @@
     ./tokei.nix
     ./trash.nix
     ./trippy.nix
+    ./watchexec.nix
     ./xh.nix
+    ./zesh.nix
     ./zoxide.nix
   ];
 }

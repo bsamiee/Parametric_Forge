@@ -11,6 +11,7 @@
 {
   imports = [
     ./wezterm
+    ./zellij
     # Future GUI/TUI apps here:
     # ./alacritty
     # ./kitty

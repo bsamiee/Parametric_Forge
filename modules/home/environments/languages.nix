@@ -11,8 +11,6 @@
 {
   home.sessionVariables = {
     # --- Python --------------------------------------------------------------
-    MYPY_CONFIG_FILE = "${config.xdg.configHome}/mypy/mypy.ini";
-    PYTHONHISTORY = "${config.xdg.stateHome}/python/history";
     PYTEST_CACHE_DIR = "${config.xdg.cacheHome}/pytest";
     RUFF_CACHE_DIR = "${config.xdg.cacheHome}/ruff";
     MYPY_CACHE_DIR = "${config.xdg.cacheHome}/mypy";

@@ -116,23 +116,10 @@ let
       source = { foreground = "#94F2E8"; };
     };
     punctuation = { foreground = "#7A71AA"; };
-    date = {
-      moment = { foreground = "#50FA7B"; };
-      hour_old = { foreground = "#94F2E8"; };
-      day_old = { foreground = "#F1FA8C"; };
-      week_old = { foreground = "#A072C6"; };
-      older = { foreground = "#7A71AA"; is_dimmed = true; };
-    };
-    inode = {
-      valid = { foreground = "#A072C6"; };
-      invalid = { foreground = "#FF5555"; };
-    };
-    overlays = {
-      acl = { foreground = "#F97359"; };
-      extended = { foreground = "#94F2E8"; };
-    };
+    date = { foreground = "#E98FBE"; };
+    inode = { foreground = "#44475a"; };
     broken_symlink = { foreground = "#FF5555"; is_underline = true; };
-    broken_path_overlay = { foreground = "#7A71AA"; };
+    broken_path_overlay = { foreground = "#94F2E8"; };
   };
 in
 {

@@ -23,6 +23,7 @@
     yamllint # YAML linter
 
     # --- General data wrangling ---------------------------------------------
+    jq # Lightweight command-line JSON processor
     yq-go # YAML/JSON/TOML processor (yq)
     miller # CSV/TSV/JSON processor
 

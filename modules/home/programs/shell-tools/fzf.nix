@@ -8,6 +8,21 @@
 
 { config, lib, pkgs, ... }:
 
+# Dracula theme color reference
+# background    #15131F
+# current_line  #2A2640
+# selection     #44475a
+# foreground    #F8F8F2
+# comment       #7A71AA
+# purple        #A072C6
+# cyan          #94F2E8
+# green         #50FA7B
+# yellow        #F1FA8C
+# orange        #F97359
+# red           #ff5555
+# magenta       #d82f94
+# pink          #E98FBE
+
 {
   programs.fzf = {
     enable = true;
@@ -19,8 +34,8 @@
 
     defaultOptions = [
       # Colors - Dracula theme
-      "--color=fg:#44475a,fg+:#F8F8F2,bg:#15131F,bg+:#44475a"
-      "--color=hl:#94F2E8,hl+:#d82f94,info:#7A71AA,marker:#50FA7B"
+      "--color=fg:#F8F8F2,fg+:#15131F,bg:#15131F,bg+:#94F2E8"
+      "--color=hl:#50FA7B,hl+:#d82f94,info:#7A71AA,marker:#50FA7B"
       "--color=prompt:#d82f94,spinner:#50FA7B,pointer:#d82f94,header:#7A71AA"
       "--color=gutter:#15131F,border:#94F2E8,separator:#E98FBE,scrollbar:#E98FBE"
       "--color=preview-fg:#F8F8F2,preview-scrollbar:#E98FBE,label:#d82f94,query:#F8F8F2"
@@ -30,19 +45,19 @@
       "--border-label-pos=0"
       "--preview-window=border-bold"
       # UI elements
-      "--prompt='> '"
-      "--marker='>'"
-      "--pointer='◆'"
+      "--prompt='󰅂 '"
+      "--marker='󰄬'"
+      "--pointer=''"
       "--separator='─'"
       "--scrollbar='│'"
       "--info=right"
       # Behavior
-      "--height=60%"
+      "--height=80%"
       "--layout=reverse"
       "--preview 'bat --color=always --style=numbers --line-range=:500 {} 2>/dev/null || eza --tree --level=2 --color=always {}'"
       "--preview-window=right:50%:border-bold"
-      "--bind=ctrl-u:preview-page-up"
-      "--bind=ctrl-d:preview-page-down"
+      "--bind=ctrl-k:preview-page-up"
+      "--bind=ctrl-j:preview-page-down"
     ];
 
     # --- Ctrl-T: File selection ---------------------------------------------

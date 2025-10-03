@@ -79,30 +79,6 @@ function M.setup(config)
       dracula.foreground,   -- 15: Bright White
     },
 
-    -- Tab Bar
-    tab_bar = {
-      background = dracula.background,
-      active_tab = {
-        bg_color = dracula.cyan,
-        fg_color = dracula.background,
-      },
-      inactive_tab = {
-        bg_color = dracula.current_line,
-        fg_color = dracula.comment,
-      },
-      inactive_tab_hover = {
-        bg_color = dracula.selection,
-        fg_color = dracula.foreground,
-      },
-      new_tab = {
-        bg_color = dracula.current_line,
-        fg_color = dracula.pink,
-      },
-      new_tab_hover = {
-        bg_color = dracula.pink,
-        fg_color = dracula.background,
-      },
-    },
   }
 
   -- Font Configuration
@@ -132,12 +108,6 @@ function M.setup(config)
   config.cursor_thickness = 2
   config.cursor_blink_rate = 250
   config.force_reverse_video_cursor = true
-
-  -- Tab Bar Style
-  config.use_fancy_tab_bar = false
-  config.show_tabs_in_tab_bar = true
-  config.tab_max_width = 240
-  config.hide_tab_bar_if_only_one_tab = false
 
   -- Inactive Pane Dimming
   config.inactive_pane_hsb = {

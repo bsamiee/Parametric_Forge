@@ -1,13 +1,13 @@
-# Title         : jq.nix
+# Title         : zesh.nix
 # Author        : Bardia Samiee
 # Project       : Parametric Forge
 # License       : MIT
-# Path          : /modules/home/programs/shell-tools/jq.nix
+# Path          : modules/home/programs/shell-tools/zesh.nix
 # ----------------------------------------------------------------------------
-# Lightweight command-line JSON processor
+# Zellij session manager with zoxide integration
 
 { pkgs, ... }:
 
 {
-  home.packages = [ pkgs.jq ];
+  home.packages = [ pkgs.zesh ];
 }

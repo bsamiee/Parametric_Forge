@@ -62,7 +62,16 @@
       "WebFetch(domain:api.github.com)",
       "Bash(procs:*)",
       "Bash(aria2c:*)",
-      "WebFetch(domain:ffmpeg.org)"
+      "WebFetch(domain:ffmpeg.org)",
+      "Bash(xargs:*)",
+      "WebFetch(domain:zellij.dev)",
+      "WebFetch(domain:wezfurlong.org)",
+      "WebFetch(domain:rclone.org)",
+      "WebFetch(domain:carapace-sh.github.io)",
+      "WebFetch(domain:search.nixos.org)",
+      "WebFetch(domain:fx.wtf)",
+      "WebFetch(domain:wezterm.org)",
+      "WebFetch(domain:knezevic.ch)"
     ],
     "deny": [],
     "ask": []

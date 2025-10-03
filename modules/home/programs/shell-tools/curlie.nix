@@ -1,13 +1,13 @@
-# Title         : op.nix
+# Title         : curlie.nix
 # Author        : Bardia Samiee
 # Project       : Parametric Forge
 # License       : MIT
-# Path          : modules/home/programs/shell-tools/op.nix
+# Path          : modules/home/programs/shell-tools/curlie.nix
 # ----------------------------------------------------------------------------
-# 1Password CLI for secure secret management and authentication
+# Curl frontend with HTTPie ease of use
 
 { config, lib, pkgs, ... }:
 
 {
-  home.packages = with pkgs; [ _1password-cli ];
+  home.packages = [ pkgs.curlie ];
 }

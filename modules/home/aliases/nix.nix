@@ -10,7 +10,7 @@
 
 {
   programs.zsh.shellAliases = {
-# --- Darwin Rebuild Operations ------------------------------------------
+    # --- Darwin Rebuild Operations ------------------------------------------
     drs = "sudo darwin-rebuild switch --flake .#macbook |& nom";  # Switch to macbook config
     drb = "sudo darwin-rebuild build --flake .#macbook |& nom";   # Build macbook config
     drc = "darwin-rebuild check --flake .#macbook |& nom";        # Check macbook configuration
@@ -18,7 +18,7 @@
     # --- Nix Operations -----------------------------------------------------
     ns = "nix search nixpkgs";                                    # Search for packages
     nw = "nix-locate -w";                                         # Find package providing command
-    nc = "sudo nix store gc && sudo nix store optimise";          # Clean store and optimize
+    nc = "sudo nix-collect-garbage -d && nix store optimise";     # Deep clean + optimize store
 
     # --- Flake Operations ---------------------------------------------------
     nfu = "nix flake update && nix flake check";                  # Update all inputs + validate

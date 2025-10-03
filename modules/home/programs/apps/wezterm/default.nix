@@ -9,11 +9,12 @@
 { config, lib, pkgs, ... }:
 
 {
-  home.packages = [ pkgs.wezterm ];
-
-  # Deploy configuration files
   xdg.configFile = {
     "wezterm/wezterm.lua".source = ./wezterm.lua;
     "wezterm/appearance.lua".source = ./appearance.lua;
+    "wezterm/behavior.lua".source = ./behavior.lua;
+    "wezterm/keys.lua".source = ./keys.lua;
+    "wezterm/mouse.lua".source = ./mouse.lua;
+    "wezterm/integration.lua".source = ./integration.lua;
   };
 }

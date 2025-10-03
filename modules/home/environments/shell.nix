@@ -24,30 +24,28 @@
     # --- Shell Internals -----------------------------------------------------
     SQLITE_HISTORY = "${config.xdg.stateHome}/sqlite/history";
     LESSHISTFILE = "${config.xdg.stateHome}/less/history";
-    ZSH_COMPDUMP = "${config.xdg.cacheHome}/zsh/zcompdump-$ZSH_VERSION";
     ZSH_AUTOSUGGEST_STRATEGY = "(atuin completion)";
     ZSH_AUTOSUGGEST_BUFFER_MAX_SIZE = "20";
     ZSH_AUTOSUGGEST_USE_ASYNC = "1";  # Significant performance improvement
     KEYTIMEOUT = "1";
 
     # --- Tool Configurations -------------------------------------------------
-    EZA_CONFIG_DIR = "${config.xdg.configHome}/eza";
+    WATCHEXEC_IGNORE_FILE = "${config.xdg.configHome}/watchexec/ignore";
     RIPGREP_CONFIG_PATH = "${config.xdg.configHome}/ripgrep/config";
+    TRIPPY_CONFIG_DIR = "${config.xdg.configHome}/trippy";
+    STARSHIP_CACHE = "${config.xdg.cacheHome}/starship";
+    EZA_CONFIG_DIR = "${config.xdg.configHome}/eza";
     BAT_CACHE_PATH = "${config.xdg.cacheHome}/bat";
     XH_CONFIG_DIR = "${config.xdg.configHome}/xh";
-    TRIPPY_CONFIG_DIR = "${config.xdg.configHome}/trippy";
-    # Atuin
     ATUIN_LOG = "error";
+    # CARAPACE_BRIDGES - Prefer framework bridges over shell bridges for better performance, currently using carapace's native completions only
     # Zoxide
     _ZO_DATA_DIR = "${config.xdg.dataHome}/zoxide";
     _ZO_RESOLVE_SYMLINKS = "1";
     _ZO_EXCLUDE_DIRS = "/tmp/*:/var/tmp/*:/usr/bin/*:/usr/sbin/*:/sbin/*:/bin/*";
 
-    # --- FZF Additional Configuration ---------------------------------------
-    # Forgit Configuration
+    # --- FZF Forgit Configuration --------------------------------------------
     FORGIT_PAGER = "delta";  # Consistent with GIT_PAGER in core.nix
-
-    # Forgit-specific FZF options (uppercase labels)
     FORGIT_ADD_FZF_OPTS = "--border-label='[GIT ADD]'";
     FORGIT_DIFF_FZF_OPTS = "--border-label='[GIT DIFF]'";
     FORGIT_LOG_FZF_OPTS = "--border-label='[GIT LOG]'";
@@ -57,8 +55,6 @@
     FORGIT_CHERRY_PICK_FZF_OPTS = "--border-label='[GIT CHERRY-PICK]'";
     FORGIT_REBASE_FZF_OPTS = "--border-label='[GIT REBASE]'";
     FORGIT_FIXUP_FZF_OPTS = "--border-label='[GIT FIXUP]'";
-
-    # General forgit options
     FORGIT_FZF_DEFAULT_OPTS = ''
       --height=80%
       --preview-window=right:60%:border-bold
@@ -67,10 +63,5 @@
     # --- ZSH Plugin Configurations -------------------------------------------
     # you-should-use
     YSU_MESSAGE_POSITION = "before";  # Show message before command execution
-
-    # --- 1Password CLI Configuration ----------------------------------------
-    OP_CONFIG_DIR = "${config.xdg.configHome}/op";  # XDG-compliant config location
-    OP_CACHE = "true";  # Enable caching for better performance
-    OP_BIOMETRIC_UNLOCK_ENABLED = "true";  # Touch ID on macOS
   };
 }

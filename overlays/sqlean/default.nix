@@ -33,7 +33,7 @@ stdenv.mkDerivation {
 
   src = fetchzip {
     inherit (platformAsset) url;
-    sha256 = "sha256-7zH//98V7H3LCa/Z+CH1aldBOMMIjFaoV1sYI3fo3Ac=";
+    sha256 = "sha256-fNmckv/Cz/gA/E3KgqiSWLf8n3y476tTbw5foVFF0pY=";
     stripRoot = false;
   };
 

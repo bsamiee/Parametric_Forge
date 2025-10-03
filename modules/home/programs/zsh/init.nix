@@ -11,6 +11,10 @@
 {
   programs.zsh.initContent = lib.mkMerge [
     (lib.mkBefore ''
+      # --- Completion cache -------------------------------------------------
+      command mkdir -p -- "${config.xdg.cacheHome}/zsh"
+      export ZSH_COMPDUMP="${config.xdg.cacheHome}/zsh/zcompdump-''${ZSH_VERSION}"
+
       # --- FZF Configuration ------------------------------------------------
       # Custom completion functions
       _fzf_compgen_path() {
@@ -20,11 +24,6 @@
       _fzf_compgen_dir() {
         fd --type d --hidden --follow --exclude .git . "$1"
       }
-
-      # fzf-tab configuration
-      zstyle ':fzf-tab:*' use-fzf-default-opts yes
-      zstyle ':fzf-tab:complete:__zoxide_z:*' fzf-preview 'eza -1 --color=always $realpath'
-      zstyle ':fzf-tab:*' switch-group ',' '.'
 
       # --- Tool Integration -------------------------------------------------
       # Batman man page integration
@@ -38,8 +37,42 @@
       [ -S "$OP_SSH_SOCK" ] && export SSH_AUTH_SOCK="$OP_SSH_SOCK"
       unset OP_SSH_SOCK
 
-      # Procs completion
-      eval "$(${pkgs.procs}/bin/procs --gen-completion-out zsh)"
+    '')
+
+    (lib.mkOrder 400 ''
+      # --- Custom Completions (before compinit) ----------------------------
+      # Add custom completions directory to fpath
+      mkdir -p "${config.xdg.dataHome}/zsh/completions"
+      fpath=("${config.xdg.dataHome}/zsh/completions" $fpath)
+
+      # Generate native completions for tools not covered by carapace
+      if [[ ! -f "${config.xdg.dataHome}/zsh/completions/_zellij" ]]; then
+        ${pkgs.zellij}/bin/zellij setup --generate-completion zsh > "${config.xdg.dataHome}/zsh/completions/_zellij"
+      fi
+
+      if [[ ! -f "${config.xdg.dataHome}/zsh/completions/_wezterm" ]]; then
+        wezterm shell-completion --shell zsh > "${config.xdg.dataHome}/zsh/completions/_wezterm"
+      fi
+
+      if [[ ! -f "${config.xdg.dataHome}/zsh/completions/_starship" ]]; then
+        ${pkgs.starship}/bin/starship completions zsh > "${config.xdg.dataHome}/zsh/completions/_starship"
+      fi
+
+      if [[ ! -f "${config.xdg.dataHome}/zsh/completions/_atuin" ]]; then
+        ${pkgs.atuin}/bin/atuin gen-completions --shell zsh > "${config.xdg.dataHome}/zsh/completions/_atuin"
+      fi
+
+      if [[ ! -f "${config.xdg.dataHome}/zsh/completions/_gh" ]]; then
+        ${pkgs.gh}/bin/gh completion -s zsh > "${config.xdg.dataHome}/zsh/completions/_gh"
+      fi
+
+      if [[ ! -f "${config.xdg.dataHome}/zsh/completions/_rclone" ]]; then
+        ${pkgs.rclone}/bin/rclone completion zsh - > "${config.xdg.dataHome}/zsh/completions/_rclone"
+      fi
+
+      if [[ ! -f "${config.xdg.dataHome}/zsh/completions/_op" ]]; then
+        ${pkgs._1password}/bin/op completion zsh > "${config.xdg.dataHome}/zsh/completions/_op"
+      fi
     '')
 
     (lib.mkOrder 550 ''
@@ -51,19 +84,18 @@
       zstyle ':completion:*:descriptions' format '[%d]'
     '')
 
+    (lib.mkOrder 600 ''
+      # --- fzf-tab configuration (after carapace loads) ---------------------
+      zstyle ':fzf-tab:*' use-fzf-default-opts yes
+      zstyle ':fzf-tab:*' fzf-flags --height=80%  # Explicitly set height (not inherited)
+      zstyle ':fzf-tab:complete:__zoxide_z:*' fzf-preview 'eza -1 --color=always $realpath'
+      zstyle ':fzf-tab:*' switch-group ',' '.'
+    '')
+
     ''
       # --- Shell Options ----------------------------------------------------
       # These run after everything
       setopt AUTO_PUSHD PUSHD_IGNORE_DUPS CDABLE_VARS
-
-      # time replacement - use hyperfine with args, builtin without
-      time() {
-        if [ $# -eq 0 ]; then
-          command time
-        else
-          hyperfine "$@"
-        fi
-      }
 
       # npm wrapper - use pnpm by default, real npm for legacy projects
       npm() {

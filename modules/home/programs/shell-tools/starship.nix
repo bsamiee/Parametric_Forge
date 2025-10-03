@@ -203,14 +203,14 @@
         format = "\\[[$all_status$ahead_behind]($style)\\]";
         style = "yellow";
         conflicted = "= ";
-        ahead = "⇡ $count";
-        behind = "⇣ $count";
-        diverged = "⇕⇡ $ahead_count ⇣$behind_count";
+        ahead = " ⇡ $count";
+        behind = " ⇣ $count";
+        diverged = " ⇕⇡ $ahead_count ⇣$behind_count";
         up_to_date = "";
-        untracked = " $count ";
+        untracked = " $count"; # No trailing space - last in order, sometimes no ahead_behind
         stashed = "󰜰 $count ";
         modified = " $count ";
-        staged = " $count ";
+        staged = " $count"; # No trailing space - last in order, sometimes no ahead_behind
         renamed = " $count ";
         deleted = " $count ";
         typechanged = "~ $count ";

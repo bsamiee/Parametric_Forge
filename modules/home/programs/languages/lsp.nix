@@ -10,7 +10,7 @@
 
 {
   home.packages = with pkgs; [
-    # Core / config
+    # --- Core ---------------------------------------------------------------
     nixd # Modern Nix language server
     lua-language-server # LuaLS for Lua diagnostics & completion
     bash-language-server # Shell scripts
@@ -19,20 +19,20 @@
     marksman # Markdown (wiki-style links, frontmatter)
     nodePackages.vscode-langservers-extracted # HTML/CSS/JSON/ESLint via VS Code extractions
 
-    # Python
+    # --- Python -------------------------------------------------------------
     basedpyright # Pyright-compatible LSP (fast, config-compatible)
     python3Packages.python-lsp-server # Pylsp with plugins
     python3Packages.python-lsp-ruff # Ruff integration for pylsp
 
-    # Systems / compiled
+    # --- Systems / compiled -------------------------------------------------
     rust-analyzer # Rust
     cmake-language-server # CMake projects
     gopls # Go toolchain LSP
 
-    # Infrastructure
+    # --- Infrastructure -----------------------------------------------------
     dockerfile-language-server # Dockerfile syntax & completion
 
-    # Data / markup
+    # --- Data / markup ------------------------------------------------------
     lemminx # XML/XSD support
     sqls # SQL database-aware completion & linting
   ];

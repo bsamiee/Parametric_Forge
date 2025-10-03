@@ -23,10 +23,10 @@
     NIX_INDEX_DATABASE = "${config.xdg.cacheHome}/nix-index";
 
     # --- File Operations -----------------------------------------------------
-    # RCLONE_CONFIG = "${config.xdg.configHome}/rclone/rclone.conf";
-    # RESTIC_CACHE_DIR = "${config.xdg.cacheHome}/restic";
-    # PARALLEL = "-j+0 --bar --eta";
-    # RSYNC_RSH = "ssh";
+    RCLONE_CONFIG = "${config.xdg.configHome}/rclone/rclone.conf";
+    RCLONE_TRANSFERS = "4";             # Balanced concurrent transfers
+    RCLONE_CHECKERS = "8";              # Parallel checkers for syncing
+    RSYNC_RSH = "ssh";                  # Explicit SSH transport for rsync
 
     # --- Task Runner ---------------------------------------------------------
     # JUST_TIMESTAMP_FORMAT = "%Y-%m-%d %H:%M:%S";
