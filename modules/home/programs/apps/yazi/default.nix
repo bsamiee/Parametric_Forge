@@ -24,6 +24,6 @@
     "yazi/plugins/full-border.yazi/main.lua".source = ./plugins/full-border.yazi/main.lua;
 
     # --- Unofficial Plugins -------------------------------------------------
-    "yazi/plugins/starship.yazi/main.lua".source = ./plugins/starship.yazi/main.lua;
+    # "yazi/plugins/starship.yazi/main.lua".source = ./plugins/starship.yazi/main.lua; - DO NOT USE - BREAKS ZELLIJ INTEGRATION
   };
 }

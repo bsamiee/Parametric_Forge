@@ -1,5 +1,5 @@
 .archive/
-.claude/
+.claude
 
 # --- Nix/Darwin Build Artifacts ---
 result

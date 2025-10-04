@@ -10,6 +10,11 @@
 
 {
   programs.zsh.shellAliases = {
+    # --- General Aliases ----------------------------------------------------
+    cl = "clear";
+    ex = "exit";
+    vim = "nvim";
+
     # --- Shell Configuration ------------------------------------------------
     envs = "env | sort";                            # List environment variables sorted
     ezsh = "$EDITOR $HOME/.zshrc";                  # Edit ZSH config
