@@ -19,6 +19,7 @@
     syntaxHighlighting.enable = true;
 
     # --- History ------------------------------------------------------------
+    # Fallback history config (Atuin overrides when enabled)
     history = {
       size = 50000;
       save = 50000;

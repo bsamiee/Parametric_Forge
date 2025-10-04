@@ -41,9 +41,10 @@
     ps = "procs";
     pst = "procs --tree";                           # Process tree
     top = "btm";                                    # Modern system monitor
+    df = "duf";
     du = "dust";
     dfi = "dua i";                                  # Interactive disk usage analyzer
-    df = "duf";
+    killi = "pik";                                  # Interactive process killer
     cloc = "tokei";                                 # Modern code counter
     loc = "tokei --compact";                        # Compact code counter
     bench = "hyperfine";                            # Modern benchmarking tool

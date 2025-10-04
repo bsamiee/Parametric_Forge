@@ -12,5 +12,5 @@ require("auto_layout").setup()
 
 -- Official Plugins -----------------------------------------------------------
 require("full-border"):setup {
-	type = ui.Border.PLAIN,     -- Available values: ui.Border.PLAIN, ui.Border.ROUNDED
+	type = ui.Border.ROUNDED,     -- Available values: ui.Border.PLAIN, ui.Border.ROUNDED
 }

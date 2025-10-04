@@ -36,6 +36,7 @@
       update_check = false;
       timezone = "local";  # Uses system TZ (via TZ env var)
       search_mode = "fuzzy";
+      search_mode_shell_up_key_binding = "prefix";
       filter_mode = "global";
       filter_mode_shell_up_key_binding = "session";
       ctrl_n_shortcuts = true;
@@ -66,6 +67,8 @@
       history_filter = [
         "^(rm|kill|pkill|killall|reboot|shutdown|passwd|sudo -i|su -).*"
         "^(ls|cd|pwd|exit|cd \\.\\.|clear|history|bg|fg)$"
+        "^npm (run|start|test|build)$"
+        "^(cat|bat|less|more) "
         "^git.*token"
         "^git.*password"
         "export.*KEY"

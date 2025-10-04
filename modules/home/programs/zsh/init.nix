@@ -54,20 +54,8 @@
         wezterm shell-completion --shell zsh > "${config.xdg.dataHome}/zsh/completions/_wezterm"
       fi
 
-      if [[ ! -f "${config.xdg.dataHome}/zsh/completions/_starship" ]]; then
-        ${pkgs.starship}/bin/starship completions zsh > "${config.xdg.dataHome}/zsh/completions/_starship"
-      fi
-
       if [[ ! -f "${config.xdg.dataHome}/zsh/completions/_atuin" ]]; then
         ${pkgs.atuin}/bin/atuin gen-completions --shell zsh > "${config.xdg.dataHome}/zsh/completions/_atuin"
-      fi
-
-      if [[ ! -f "${config.xdg.dataHome}/zsh/completions/_gh" ]]; then
-        ${pkgs.gh}/bin/gh completion -s zsh > "${config.xdg.dataHome}/zsh/completions/_gh"
-      fi
-
-      if [[ ! -f "${config.xdg.dataHome}/zsh/completions/_rclone" ]]; then
-        ${pkgs.rclone}/bin/rclone completion zsh - > "${config.xdg.dataHome}/zsh/completions/_rclone"
       fi
 
       if [[ ! -f "${config.xdg.dataHome}/zsh/completions/_op" ]]; then
@@ -81,20 +69,24 @@
       zstyle ':completion:*' use-cache true
       zstyle ':completion:*' cache-path "$XDG_CACHE_HOME/zsh/zcompcache"
       zstyle ':completion:*' menu no
+      zstyle ':completion:*:git:*' group-name '''
       zstyle ':completion:*:descriptions' format '[%d]'
+      zstyle ':carapace:*' nospace true  # Better spacing behavior
     '')
 
     (lib.mkOrder 600 ''
       # --- fzf-tab configuration (after carapace loads) ---------------------------
       zstyle ':fzf-tab:*' use-fzf-default-opts yes
+      zstyle ':fzf-tab:*' fzf-pad 4
+      zstyle ':fzf-tab:*' switch-group '<' '>'
       zstyle ':fzf-tab:*' fzf-flags --height=80%  # Explicitly set height (not inherited)
       zstyle ':fzf-tab:complete:__zoxide_z:*' fzf-preview 'eza -1 --color=always $realpath'
-      zstyle ':fzf-tab:*' switch-group ',' '.'
+      zstyle ':fzf-tab:complete:kill:*' fzf-preview 'ps aux | grep -w $word'
+      zstyle ':fzf-tab:complete:systemctl-*:*' fzf-preview 'systemctl status $word'
     '')
 
     ''
-      # --- Shell Options ----------------------------------------------------------
-      # These run after everything
+      # --- Shell Options (these run after everything) -----------------------------
       setopt AUTO_PUSHD PUSHD_IGNORE_DUPS CDABLE_VARS
 
       # npm wrapper - use pnpm by default, real npm for legacy projects
