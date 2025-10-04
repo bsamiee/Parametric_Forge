@@ -22,7 +22,7 @@
         ui exact_panes=2 {
             pane split_direction="vertical" {
                 pane name="yazi" {
-                    command "yazi"
+                    command "yazi" "--client-id" "filemanager"
                     size    "100%"
                 }
             }

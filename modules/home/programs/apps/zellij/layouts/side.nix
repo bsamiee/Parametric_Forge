@@ -34,7 +34,7 @@
           }
           pane split_direction="vertical" {
             pane name="sidebar" {
-              command "yazi"
+              command "yazi" "--client-id" "sidebar"
               size    "20%"
             }
           }

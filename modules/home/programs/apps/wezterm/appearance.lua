@@ -14,15 +14,15 @@ local M = {}
 local dracula = {
   background    = "#15131F",
   current_line  = "#2A2640",
-  selection     = "#44475a",
+  selection     = "#44475A",
   foreground    = "#F8F8F2",
-  comment       = "#7A71AA",
+  comment       = "#6272A4",
   purple        = "#A072C6",
   cyan          = "#94F2E8",
   green         = "#50FA7B",
   yellow        = "#F1FA8C",
   orange        = "#F97359",
-  red           = "#ff5555",
+  red           = "#FF5555",
   magenta       = "#d82f94",
   pink          = "#E98FBE",
 }
@@ -91,7 +91,7 @@ function M.setup(config)
   config.warn_about_missing_glyphs = true
 
   -- Window Appearance
-  config.window_background_opacity = 1.0
+  config.window_background_opacity = 0.85
   config.macos_window_background_blur = 20
   config.window_decorations = "RESIZE"
   config.window_padding = {

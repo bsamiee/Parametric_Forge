@@ -11,15 +11,15 @@
 # Dracula theme color reference
 # background    #15131F
 # current_line  #2A2640
-# selection     #44475a
+# selection     #44475A
 # foreground    #F8F8F2
-# comment       #7A71AA
+# comment       #6272A4
 # purple        #A072C6
 # cyan          #94F2E8
 # green         #50FA7B
 # yellow        #F1FA8C
 # orange        #F97359
-# red           #ff5555
+# red           #FF5555
 # magenta       #d82f94
 # pink          #E98FBE
 
@@ -31,10 +31,10 @@ let
       normal = { foreground = "#F8F8F2"; };
       directory = { foreground = "#94F2E8"; is_bold = true; };
       symlink = { foreground = "#A072C6"; };
-      pipe = { foreground = "#7A71AA"; };
+      pipe = { foreground = "#6272A4"; };
       block_device = { foreground = "#FF5555"; };
       char_device = { foreground = "#FF5555"; };
-      socket = { foreground = "#7A71AA"; };
+      socket = { foreground = "#6272A4"; };
       special = { foreground = "#d82f94"; };
       executable = { foreground = "#50FA7B"; is_bold = true; };
       mount_point = { foreground = "#F97359"; };
@@ -51,7 +51,7 @@ let
       other_write = { foreground = "#F97359"; };
       other_execute = { foreground = "#50FA7B"; };
       special_user_file = { foreground = "#d82f94"; };
-      special_other = { foreground = "#7A71AA"; };
+      special_other = { foreground = "#6272A4"; };
       attribute = { foreground = "#F8F8F2"; };
     };
     size = {
@@ -73,7 +73,7 @@ let
       user_root = { foreground = "#FF5555"; is_bold = true; };
       user_other = { foreground = "#d82f94"; };
       group_yours = { foreground = "#F8F8F2"; };
-      group_other = { foreground = "#7A71AA"; };
+      group_other = { foreground = "#6272A4"; };
       group_root = { foreground = "#FF5555"; };
     };
     links = {
@@ -86,7 +86,7 @@ let
       deleted = { foreground = "#FF5555"; };
       renamed = { foreground = "#94F2E8"; };
       typechange = { foreground = "#d82f94"; };
-      ignored = { foreground = "#7A71AA"; is_dimmed = true; };
+      ignored = { foreground = "#6272A4"; is_dimmed = true; };
       conflicted = { foreground = "#FF5555"; is_bold = true; };
     };
     git_repo = {
@@ -96,10 +96,10 @@ let
       git_dirty = { foreground = "#FF5555"; };
     };
     security_context = {
-      colon = { foreground = "#7A71AA"; };
+      colon = { foreground = "#6272A4"; };
       user = { foreground = "#F8F8F2"; };
       role = { foreground = "#d82f94"; };
-      typ = { foreground = "#7A71AA"; };
+      typ = { foreground = "#6272A4"; };
       range = { foreground = "#d82f94"; };
     };
     file_type = {
@@ -107,17 +107,17 @@ let
       video = { foreground = "#E98FBE"; };
       music = { foreground = "#50FA7B"; };
       lossless = { foreground = "#50FA7B"; };
-      crypto = { foreground = "#7A71AA"; };
+      crypto = { foreground = "#6272A4"; };
       document = { foreground = "#F8F8F2"; };
       compressed = { foreground = "#d82f94"; };
       temp = { foreground = "#FF5555"; };
       compiled = { foreground = "#94F2E8"; };
-      build = { foreground = "#7A71AA"; };
+      build = { foreground = "#6272A4"; };
       source = { foreground = "#94F2E8"; };
     };
-    punctuation = { foreground = "#7A71AA"; };
+    punctuation = { foreground = "#6272A4"; };
     date = { foreground = "#E98FBE"; };
-    inode = { foreground = "#44475a"; };
+    inode = { foreground = "#44475A"; };
     broken_symlink = { foreground = "#FF5555"; is_underline = true; };
     broken_path_overlay = { foreground = "#94F2E8"; };
   };

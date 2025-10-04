@@ -85,7 +85,7 @@
     '';
   };
 
-  # --- Toggle sidebar mode ----------------------------------------------------
+  # --- Toggle sidebar mode --------------------------------------------------
   home.file.".local/bin/zellij-toggle-sidebar.sh" = {
     executable = true;
     text = ''

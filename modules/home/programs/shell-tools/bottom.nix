@@ -58,15 +58,15 @@
       # Dracula theme color reference
       # background    #15131F
       # current_line  #2A2640
-      # selection     #44475a
+      # selection     #44475A
       # foreground    #F8F8F2
-      # comment       #7A71AA
+      # comment       #6272A4
       # purple        #A072C6
       # cyan          #94F2E8
       # green         #50FA7B
       # yellow        #F1FA8C
       # orange        #F97359
-      # red           #ff5555
+      # red           #FF5555
       # magenta       #d82f94
       # pink          #E98FBE
 
@@ -87,10 +87,10 @@
           };
           selected_text = {
             color = "#F8F8F2";                  # Bright text when selected
-            bg_color = "#44475a";               # Selection background
+            bg_color = "#44475A";               # Selection background
           };
           disabled_text = {
-            color = "#7A71AA";                  # Muted - inactive items
+            color = "#6272A4";                  # Muted - inactive items
           };
           thread_text = {
             color = "#A072C6";                  # Purple - thread indicators
@@ -104,7 +104,7 @@
           };
         };
         graphs = {
-          graph_color = "#44475a";              # Subtle grid lines
+          graph_color = "#44475A";              # Subtle grid lines
           legend_text = {
             color = "#94F2E8";                  # Cyan legend text (for inline tables)
             bold = false;                         # Not bold for cleaner look
@@ -120,7 +120,7 @@
             "#F97359"  # Orange - Core 3
             "#E98FBE"  # Pink - Core 4
             "#A072C6"  # Purple - Core 5
-            "#ff5555"  # Red - Core 6
+            "#FF5555"  # Red - Core 6
             "#d82f94"  # Magenta - Core 7+
           ];
         };
@@ -145,7 +145,7 @@
         battery = {
           high_battery = "#50FA7B";   # Green - healthy (50%+)
           medium_battery = "#F1FA8C"; # Yellow - caution (10-50%)
-          low_battery = "#ff5555";    # Red - critical (<10%)
+          low_battery = "#FF5555";    # Red - critical (<10%)
         };
       };
       # --- Process Configuration --------------------------------------------

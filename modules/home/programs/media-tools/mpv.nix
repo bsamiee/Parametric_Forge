@@ -9,26 +9,70 @@
 { config, lib, pkgs, ... }:
 
 let
-  # Install yt-dlp for video downloading
-  yt-dlp = pkgs.yt-dlp;
+  ytdlpPackage = pkgs.yt-dlp;
+  downloadsDir = "${config.home.homeDirectory}/Downloads";
+  ytdlpFormat = "bv*[height<=?1080][fps<=?60]+ba/best[height<=?1080]";
+  ytdlpFormatSort = "res:1080,fps,codec:h264:m4a,size,br,asr";
+  downloadsDirEscaped = lib.escapeShellArg downloadsDir;
+  ytdlpOutputTemplate = lib.escapeShellArg "${downloadsDir}/%(uploader)s/%(upload_date>%Y-%m-%d)s - %(title)s [%(id)s].%(ext)s";
+  ytdlpArchivePath = lib.escapeShellArg "${downloadsDir}/.yt-dlp-archive.txt";
+  ytdlpFormatEscaped = lib.escapeShellArg ytdlpFormat;
+  ytdlpFormatSortEscaped = lib.escapeShellArg ytdlpFormatSort;
+  ytdlpSubLangs = lib.escapeShellArg "en.*,live_chat";
+  ytdlpUserAgent = lib.escapeShellArg "Mozilla/5.0 (compatible; ParametricForge-yt-dlp)";
+  ytdlpRetrySleep = lib.escapeShellArg "1:5";
+  ytdlpConfigLines = [
+    "--paths ${downloadsDirEscaped}"
+    "--output ${ytdlpOutputTemplate}"
+    "--format ${ytdlpFormatEscaped}"
+    "--format-sort ${ytdlpFormatSortEscaped}"
+    "--merge-output-format mp4"
+    "--write-info-json"
+    "--write-description"
+    "--write-thumbnail"
+    "--embed-thumbnail"
+    "--embed-metadata"
+    "--write-subs"
+    "--write-auto-subs"
+    "--embed-subs"
+    "--sub-langs ${ytdlpSubLangs}"
+    "--sub-format best"
+    "--download-archive ${ytdlpArchivePath}"
+    "--no-overwrites"
+    "--continue"
+    "--concurrent-fragments 5"
+    "--retries 3"
+    "--retry-sleep ${ytdlpRetrySleep}"
+    "--fragment-retries 3"
+    "--limit-rate 8M"
+    "--user-agent ${ytdlpUserAgent}"
+    "--no-playlist"
+    "--progress"
+    "--newline"
+  ];
+  ytdlpConfig = lib.concatStringsSep "\n" (ytdlpConfigLines ++ [ "" ]);
 in
 
 # Dracula theme color reference
 # background    #15131F
 # current_line  #2A2640
-# selection     #44475a
+# selection     #44475A
 # foreground    #F8F8F2
-# comment       #7A71AA
+# comment       #6272A4
 # purple        #A072C6
 # cyan          #94F2E8
 # green         #50FA7B
 # yellow        #F1FA8C
 # orange        #F97359
-# red           #ff5555
+# red           #FF5555
 # magenta       #d82f94
 # pink          #E98FBE
 
 {
+  home.packages = [ ytdlpPackage ];
+
+  xdg.configFile."yt-dlp/config".text = ytdlpConfig;
+
   programs.mpv = {
     enable = true;
     config = {
@@ -82,8 +126,9 @@ in
 
       # --- Network Settings -------------------------------------------------
       ytdl = true;                           # Enable yt-dlp
-      ytdl-path = "${yt-dlp}/bin/yt-dlp";    # Use yt-dlp from Nix
-      ytdl-format = "bestvideo[height<=?1080][vcodec!=?vp9]+bestaudio/best";
+      ytdl-path = "${ytdlpPackage}/bin/yt-dlp"; # Use yt-dlp from Nix
+      ytdl-format = ytdlpFormat;
+      ytdl-raw-options = "ignore-config=,no-playlist=,sub-langs=en.*,live_chat";
 
       # --- Screenshot Settings ----------------------------------------------
       screenshot-format = "png";
@@ -200,7 +245,7 @@ in
 
       "web" = {
         profile = "gpu-hq";
-        ytdl-format = "bestvideo[height<=?1080]+bestaudio/best";
+        ytdl-format = ytdlpFormat;
         cache = true;
         cache-secs = 300;
       };

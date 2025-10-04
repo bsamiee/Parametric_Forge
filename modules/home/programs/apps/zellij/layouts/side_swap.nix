@@ -22,7 +22,7 @@
         ui exact_panes=4 {
             pane split_direction="vertical" {
                 pane name="sidebar" {
-                    command "yazi"
+                    command "yazi" "--client-id" "sidebar"
                     size    "20%"
                 }
                 pane
@@ -34,7 +34,7 @@
         ui min_panes=5 {
             pane split_direction="vertical" {
                 pane name="sidebar" {
-                    command "yazi"
+                    command "yazi" "--client-id" "sidebar"
                     size    "20%"
                 }
                 pane stacked=true { children; }
@@ -46,7 +46,7 @@
         ui min_panes=5 {
             pane split_direction="vertical" {
                 pane name="sidebar" {
-                    command "yazi"
+                    command "yazi" "--client-id" "sidebar"
                     size    "20%"
                 }
                 pane stacked=true {
@@ -64,7 +64,7 @@
         ui min_panes=5 {
             pane split_direction="vertical" {
                 pane name="sidebar" {
-                    command "yazi"
+                    command "yazi" "--client-id" "sidebar"
                     size    "1"
                 }
                 pane stacked=true {

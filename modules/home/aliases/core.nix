@@ -101,15 +101,12 @@
     opi = "op inject -i";                           # Inject secrets into template
 
     # --- Zellij Operations --------------------------------------------------
+    zjl = "zellij list-sessions";                   # List all zellij sessions
+    zja = "zellij attach";                          # Attach to session "zja <session_name>"
     zjd = "zellij delete-session";                  # Delete a target session "zjd <session_name>"
     zjda = "zellij delete-all-sessions";            # Delete all zellij sessions
-    zjk = "zellij kill-sessions";                   # Kill a target session "zjk <session_name>"
+    zjk = "zellij kill-session";                    # Kill a target session "zjk <session_name>"
     zjka = "zellij kill-all-sessions";              # Kill all zellij sessions
-    # Zesh (Zellij + Zoxide Session Manager)
-    zjl = "zesh list";                              # List zellij sessions
-    zjc = "zesh connect $(zesh list | fzf)";        # Interactive session selection
-    zci = "cd $(zoxide query --interactive) && zesh connect $(basename $(pwd))"; # Interactive directory session
-    zjcl = "zesh clone";                            # Clone repo and create session
 
     # --- MacOS Specific -----------------------------------------------------
     awake = "caffeinate -dims";                     # Prevent sleep (Ctrl+C to stop)

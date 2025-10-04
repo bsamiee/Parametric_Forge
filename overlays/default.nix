@@ -11,5 +11,4 @@
 final: prev: {
   # Custom package overrides can be added here when needed
   sqlean = prev.callPackage (inputs.self + "/overlays/sqlean") { };
-  zesh = prev.callPackage (inputs.self + "/overlays/zesh") { };
 }

@@ -87,7 +87,7 @@
     '';
   };
 
-  # --- Open directory in new Zellij pane --------------------------------------
+  # --- Open directory in new Zellij pane ------------------------------------
   home.file.".local/bin/yazi-open-dir.sh" = {
     executable = true;
     text = ''
@@ -104,7 +104,7 @@
     '';
   };
 
-  # --- Reveal file in Yazi sidebar -------------------------------------------
+  # --- Reveal file in Yazi sidebar ------------------------------------------
   home.file.".local/bin/yazi-reveal.sh" = {
     executable = true;
     text = ''
@@ -119,15 +119,17 @@
 
       FILE="$1"
 
-      # Check if running inside Yazi (YAZI_ID is set by Yazi itself)
-      if [[ -z "$YAZI_ID" ]]; then
-          echo "Not running inside Yazi - YAZI_ID not set" >&2
-          exit 1
+      # Determine client-id based on sidebar mode
+      SIDEBAR_ENABLED="''${YAZI_ENABLE_SIDEBAR:-true}"
+      if [[ "$SIDEBAR_ENABLED" == "true" ]]; then
+          CLIENT_ID="sidebar"
+      else
+          CLIENT_ID="filemanager"
       fi
 
-      # Use ya emit-to to send reveal command to Yazi instance
+      # Use ya pub-to to send reveal command to Yazi instance
       if command -v ya &>/dev/null; then
-          ya emit-to "$YAZI_ID" reveal "$FILE"
+          ya pub-to "$CLIENT_ID" reveal --str "$FILE"
           ${pkgs.zellij}/bin/zellij action focus-left
       else
           echo "ya command not found - cannot reveal file" >&2

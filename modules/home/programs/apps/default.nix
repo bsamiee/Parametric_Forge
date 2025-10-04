@@ -10,7 +10,7 @@
 
 {
   imports = [
-    ./karabiner
+    #./karabiner - #TODO: Make a proper configuration for Karabiner-Elements
     ./wezterm
     ./yazi
     ./zellij

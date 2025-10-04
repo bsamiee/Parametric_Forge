@@ -11,15 +11,15 @@
 # Dracula theme color reference
 # background    #15131F
 # current_line  #2A2640
-# selection     #44475a
+# selection     #44475A
 # foreground    #F8F8F2
-# comment       #7A71AA
+# comment       #6272A4
 # purple        #A072C6
 # cyan          #94F2E8
 # green         #50FA7B
 # yellow        #F1FA8C
 # orange        #F97359
-# red           #ff5555
+# red           #FF5555
 # magenta       #d82f94
 # pink          #E98FBE
 
@@ -39,35 +39,35 @@ let
     # --- Dracula Theme Configuration ----------------------------------------
     theme-colors = {
       bg-color = "#15131F";
-      border-color = "#44475a";
+      border-color = "#44475A";
       text-color = "#F8F8F2";
-      tab-text-color = "#7A71AA";
+      tab-text-color = "#6272A4";
       hops-table-header-bg-color = "#2A2640";
       hops-table-header-text-color = "#94F2E8";
       hops-table-row-active-text-color = "#F8F8F2";
-      hops-table-row-inactive-text-color = "#7A71AA";
+      hops-table-row-inactive-text-color = "#6272A4";
       hops-chart-selected-color = "#50FA7B";
-      hops-chart-unselected-color = "#7A71AA";
-      hops-chart-axis-color = "#7A71AA";
+      hops-chart-unselected-color = "#6272A4";
+      hops-chart-axis-color = "#6272A4";
       frequency-chart-bar-color = "#A072C6";
       frequency-chart-text-color = "#F8F8F2";
       flows-chart-bar-selected-color = "#50FA7B";
-      flows-chart-bar-unselected-color = "#7A71AA";
+      flows-chart-bar-unselected-color = "#6272A4";
       flows-chart-text-current-color = "#F1FA8C";
-      flows-chart-text-non-current-color = "#7A71AA";
+      flows-chart-text-non-current-color = "#6272A4";
       samples-chart-color = "#E98FBE";
-      samples-chart-lost-color = "#ff5555";
+      samples-chart-lost-color = "#FF5555";
       help-dialog-bg-color = "#2A2640";
       help-dialog-text-color = "#F8F8F2";
       settings-dialog-bg-color = "#2A2640";
-      settings-tab-text-color = "#7A71AA";
+      settings-tab-text-color = "#6272A4";
       settings-table-header-text-color = "#94F2E8";
       settings-table-header-bg-color = "#2A2640";
       settings-table-row-text-color = "#F8F8F2";
       map-world-color = "#F8F8F2";
       map-radius-color = "#F1FA8C";
       map-selected-color = "#50FA7B";
-      map-info-panel-border-color = "#44475a";
+      map-info-panel-border-color = "#44475A";
       map-info-panel-bg-color = "#15131F";
       map-info-panel-text-color = "#F8F8F2";
       info-bar-bg-color = "#2A2640";

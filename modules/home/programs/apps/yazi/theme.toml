@@ -1,0 +1,285 @@
+# Title         : theme.toml
+# Author        : Bardia Samiee
+# Project       : Parametric Forge
+# License       : MIT
+# Path          : modules/home/programs/apps/yazi/theme.toml
+# ----------------------------------------------------------------------------
+# Consolidated Dracula theme with custom icons
+
+"$schema" = "https://yazi-rs.github.io/schemas/theme.json"
+
+# Dracula theme color reference
+# background    #15131F
+# current_line  #2A2640
+# selection     #44475A
+# foreground    #F8F8F2
+# comment       #6272A4
+# purple        #A072C6
+# cyan          #94F2E8
+# green         #50FA7B
+# yellow        #F1FA8C
+# orange        #F97359
+# red           #FF5555
+# magenta       #d82f94
+# pink          #E98FBE
+
+[mgr]
+cwd = { fg = "#F1FA8C", underline = true }
+hovered = { fg = "#15131F", bg = "#F8F8F2", bold = true }
+preview_hovered = { fg = "#d82f94", underline = true }
+find_keyword = { fg = "#15131F", bg = "#F1FA8C" }
+find_position = { fg = "#15131F", bg = "#F97359" }
+symlink_target = { fg = "#FF5555" }
+marker_marked = { fg = "#15131F", bg = "#A072C6" }
+marker_copied = { fg = "#15131F", bg = "#F97359" }
+marker_cut = { fg = "#15131F", bg = "#FF5555" }
+marker_selected = { fg = "#15131F", bg = "#94F2E8" }
+count_copied = { fg = "#15131F", bg = "#F97359" }
+count_cut = { fg = "#15131F", bg = "#FF5555" }
+count_selected = { fg = "#15131F", bg = "#94F2E8" }
+border_symbol = "│"
+border_style = { fg = "#94F2E8" }
+syntect_theme = ""
+
+[tabs]
+active = { fg = "#15131F", bg = "#94F2E8" }
+inactive = { fg = "#15131F", bg = "#6272a4" }
+sep_inner = { open = "", close = "" }
+sep_outer = { open = " ", close = " " }
+
+[mode]
+normal_main = { fg = "#15131F", bg = "#50FA7B", bold = true }
+normal_alt = { fg = "#F8F8F2", bg = "#44475A" }
+select_main = { fg = "#15131F", bg = "#E98FBE", bold = true }
+select_alt = { fg = "#F8F8F2", bg = "#44475A" }
+unset_main = { fg = "#15131F", bg = "#FF5555", bold = true }
+unset_alt = { fg = "#F8F8F2", bg = "#44475A" }
+
+[status]
+# overall = { bg = "#15131F" }  # Remove color to make it blend in with WezTerm transparency
+sep_left = { open = "", close = "" }
+sep_right = { open = "", close = "" }
+perm_type = { fg = "#50FA7B" }
+perm_read = { fg = "#F97359" }
+perm_write = { fg = "#F8F8F2" }
+perm_exec = { fg = "#FF5555" }
+perm_sep = { fg = "#94F2E8" }
+progress_label = { fg = "#15131F", bg = "#F8F8F2" }
+progress_normal = { fg = "#50FA7B", bg = "#15131F" }
+progress_error = { fg = "#FF5555", bg = "#15131F" }
+
+[which]
+cols = 3
+mask = { bg = "#15131F" }
+cand = { fg = "#94F2E8" }
+rest = { fg = "#50FA7B" }
+desc = { fg = "#F8F8F2" }
+separator = ""
+separator_style = { fg = "#F1FA8C" }
+
+[confirm]
+border = { fg = "#94F2E8" }
+title = { fg = "#d82f94" }
+content = { fg = "#F8F8F2" }
+list = {}
+btn_yes = { fg = "#50FA7B", bg = "#15131F" }
+btn_no = { fg = "#FF5555", bg = "#15131F" }
+btn_labels = ["[YES]", "[NO]"]
+
+[spot]
+border = { fg = "#94F2E8" }
+title = { fg = "#d82f94" }
+tbl_col = { fg = "#94F2E8" }
+tbl_cell = { fg = "#F8F8F2", reversed = true }
+
+[notify]
+title_info = { fg = "#50FA7B" }
+title_warn = { fg = "#F1FA8C" }
+title_error = { fg = "#FF5555" }
+icon_info = ""
+icon_warn = ""
+icon_error = ""
+
+[pick]
+border = { fg = "#94F2E8" }
+active = { fg = "#E98FBE" }
+inactive = {}
+
+[input]
+border = { fg = "#94F2E8" }
+title = { fg = "#d82f94" }
+value = { fg = "#F8F8F2" }
+selected = { bg = "#44475A" }
+
+[cmp]
+border = { fg = "#94F2E8" }
+active = { fg = "#15131F", bg = "#F8F8F2" }
+# inactive = { fg = "#F8F8F2" }
+icon_file = ""
+icon_folder = ""
+icon_command = ""
+
+[tasks]
+border = { fg = "#94F2E8" }
+title = { fg = "#d82f94" }
+hovered = { fg = "#15131F", bg = "#94F2E8" }
+
+[help]
+on = { fg = "#50FA7B" }
+run = { fg = "#94F2E8" }
+desc = { fg = "#F8F8F2" }
+hovered = { fg = "#15131F", bg = "#6272a4" }
+footer = { fg = "#F1FA8C" }
+
+[filetype]
+rules = [
+  # Images
+  { mime = "image/*", fg = "#E98FBE" },
+  # Videos and Audio
+  { mime = "video/*", fg = "#A072C6" },
+  { mime = "audio/*", fg = "#A072C6" },
+  # Archives
+  { mime = "application/{zip,rar,7z*,tar,gzip,xz,zstd,bzip*,lzma,compress,archive,cpio,arj,xar,ms-cab*}", fg = "#F1FA8C" },
+  # Documents
+  { mime = "application/pdf", fg = "#FF5555" },
+  # Empty files
+  { mime = "inode/empty", fg = "#94F2E8" },
+  # Programming languages
+  { name = "*.py", fg = "#50FA7B" },
+  { name = "*.js", fg = "#F1FA8C" },
+  { name = "*.ts", fg = "#94F2E8" },
+  { name = "*.jsx", fg = "#94F2E8" },
+  { name = "*.tsx", fg = "#94F2E8" },
+  { name = "*.rs", fg = "#E98FBE" },
+  { name = "*.go", fg = "#94F2E8" },
+  { name = "*.nix", fg = "#94F2E8" },
+  # Configuration files
+  { name = "*.{json,toml,yaml,yml,xml}", fg = "#A072C6" },
+  # Web files
+  { name = "*.{html,css,scss}", fg = "#E98FBE" },
+  # Documentation
+  { name = "*.md", fg = "#F8F8F2" },
+  { name = "README*", fg = "#50FA7B" },
+  { name = "LICENSE*", fg = "#50FA7B" },
+  # 3D Parametric & Technical Design
+  { name = "*.{3dm,3dmbak,gh,ghx}", fg = "#94F2E8" },
+  # CAD/Engineering/Architecture
+  { name = "*.{dwg,dxf,dwt,rvt,rfa,rft}", fg = "#A072C6" },
+  # Creative 3D Modeling
+  { name = "*.{blend,blend1}", fg = "#E98FBE" },
+  # Adobe Creative Suite
+  { name = "*.{psd,psb,ai,ait,indd,idml,indt}", fg = "#E98FBE" },
+  # Shell scripts
+  { name = "*.sh", fg = "#50FA7B" },
+  { name = "*Dockerfile*", fg = "#94F2E8" },
+  { name = "Makefile", fg = "#E98FBE" },
+  # Logs
+  { name = "*.log", fg = "#6272a4" },
+  # Special files
+  { name = "*", is = "orphan", fg = "#FF5555" },
+  { name = "*", is = "exec", fg = "#50FA7B" },
+  { name = "*", is = "dummy", bg = "#FF5555" },
+  { name = "*/", is = "dummy", bg = "#FF5555" },
+  # Fallback
+  { name = "*/", fg = "#94F2E8" },
+]
+
+[icon]
+prepend_dirs = [
+  { name = ".git", text = "󰊢", fg = "#E98FBE" },
+  { name = "node_modules", text = "󰏗", fg = "#50FA7B" },
+  { name = "target", text = "󰀘", fg = "#d82f94" },
+  { name = ".venv", text = "󰅩", fg = "#F1FA8C" },
+  { name = "__pycache__", text = "󰌠", fg = "#F1FA8C" },
+  { name = ".config", text = "", fg = "#A072C6" },
+  { name = ".ssh", text = "", fg = "#E98FBE" },
+  { name = "src", text = "󰈙", fg = "#94F2E8" },
+  { name = "bin", text = "󰞰", fg = "#50FA7B" },
+]
+
+prepend_exts = [
+  { name = "nix", text = "󱄅", fg = "#94F2E8" },
+  { name = "py", text = "󰌠", fg = "#F1FA8C" },
+  { name = "rs", text = "", fg = "#E98FBE" },
+  { name = "js", text = "", fg = "#F1FA8C" },
+  { name = "ts", text = "", fg = "#94F2E8" },
+  { name = "go", text = "", fg = "#94F2E8" },
+  { name = "lua", text = "", fg = "#94F2E8" },
+  { name = "jsx", text = "", fg = "#94F2E8" },
+  { name = "tsx", text = "", fg = "#94F2E8" },
+  # Configuration & Data
+  { name = "json", text = "", fg = "#A072C6" },
+  { name = "toml", text = "", fg = "#A072C6" },
+  { name = "yaml", text = "", fg = "#A072C6" },
+  { name = "yml", text = "", fg = "#A072C6" },
+  { name = "xml", text = "", fg = "#A072C6" },
+  { name = "env", text = "", fg = "#F1FA8C" },
+  { name = "gitignore", text = "", fg = "#E98FBE" },
+  # Web
+  { name = "html", text = "", fg = "#E98FBE" },
+  { name = "css", text = "", fg = "#94F2E8" },
+  { name = "scss", text = "", fg = "#E98FBE" },
+  # Shell & Scripts
+  { name = "sh", text = "", fg = "#50FA7B" },
+  { name = "bash", text = "", fg = "#50FA7B" },
+  # Documentation
+  { name = "md", text = "", fg = "#F8F8F2" },
+  { name = "pdf", text = "", fg = "#FF5555" },
+  # Office Documents
+  { name = "doc", text = "", fg = "#94F2E8" },
+  { name = "docx", text = "", fg = "#94F2E8" },
+  { name = "xls", text = "", fg = "#50FA7B" },
+  { name = "xlsx", text = "", fg = "#50FA7B" },
+  { name = "ppt", text = "", fg = "#FF5555" },
+  { name = "pptx", text = "", fg = "#FF5555" },
+  # Images
+  { name = "svg", text = "󰜡", fg = "#E98FBE" },
+  { name = "jpg", text = "", fg = "#E98FBE" },
+  { name = "jpeg", text = "", fg = "#E98FBE" },
+  { name = "png", text = "", fg = "#E98FBE" },
+  { name = "tiff", text = "", fg = "#E98FBE" },
+  { name = "tif", text = "", fg = "#E98FBE" },
+  # Archives
+  { name = "zip", text = "", fg = "#F1FA8C" },
+  { name = "tar", text = "", fg = "#F1FA8C" },
+  { name = "gz", text = "", fg = "#F1FA8C" },
+  { name = "7z", text = "", fg = "#F1FA8C" },
+  # Database
+  { name = "sql", text = "", fg = "#F97359" },
+  { name = "db", text = "", fg = "#F97359" },
+  { name = "sqlite", text = "", fg = "#F97359" },
+  # 3D Parametric & Technical Design
+  { name = "3dm", text = "", fg = "#94F2E8" },
+  { name = "3dmbak", text = "", fg = "#94F2E8" },
+  { name = "gh", text = "󰮄", fg = "#94F2E8" },
+  { name = "ghx", text = "󰮄", fg = "#94F2E8" },
+  # CAD/Engineering/Architecture
+  { name = "dwg", text = "󰕡", fg = "#A072C6" },
+  { name = "dxf", text = "󰕡", fg = "#A072C6" },
+  { name = "dwt", text = "󰕡", fg = "#A072C6" },
+  { name = "rvt", text = "󰕡", fg = "#A072C6" },
+  { name = "rfa", text = "󰕡", fg = "#A072C6" },
+  { name = "rft", text = "󰕡", fg = "#A072C6" },
+  # Creative 3D Modeling
+  { name = "blend", text = "", fg = "#E98FBE" },
+  { name = "blend1", text = "", fg = "#E98FBE" },
+  # Adobe Creative Suite
+  { name = "psd", text = "", fg = "#E98FBE" },
+  { name = "psb", text = "", fg = "#E98FBE" },
+  { name = "ai", text = "", fg = "#A072C6" },
+  { name = "ait", text = "", fg = "#A072C6" },
+  { name = "indd", text = "󰲋", fg = "#F97359" },
+  { name = "idml", text = "󰲋", fg = "#F97359" },
+  { name = "indt", text = "󰲋", fg = "#F97359" },
+  # Photography & Asset Management
+  { name = "lrcat", text = "󰄄", fg = "#F1FA8C" },
+  { name = "lrtemplate", text = "󰄄", fg = "#F1FA8C" },
+  { name = "xmp", text = "󰄄", fg = "#F1FA8C" },
+]
+
+prepend_conds = [
+  { if = "hidden & dir", text = "󰘓" },
+  { if = "hidden & !dir", text = "󰟦" },
+  { if = "link & !orphan", text = "" },
+  { if = "orphan", text = "󰈂" },
+]

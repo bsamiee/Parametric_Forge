@@ -6,11 +6,12 @@
 # ----------------------------------------------------------------------------
 # Custom keybindings for Yazi file manager
 
-[[mgr.append_keymap]]
-on = [ "<C-y>" ]
-run = "quit"
-desc = "Quit Yazi"
+# --- Custom Keybindings -----------------------------------------------------
+[[mgr.prepend_keymap]] # macOS: Preview files with the system Quick Look
+on = "<C-p>"
+run = 'shell -- qlmanage -p "$@"'
 
+# --- Script Integrated Keybindings ------------------------------------------
 [[mgr.append_keymap]]
 on = [ "<A-y>" ]
 run = "shell 'yazi-focus-nvim.sh'"
@@ -25,3 +26,9 @@ desc = "Open directory in new pane"
 on = [ "<A-r>" ]
 run = "shell 'yazi-reveal.sh \"$1\"'"
 desc = "Reveal file in sidebar"
+
+# --- Standard Keybindings ---------------------------------------------------
+[[mgr.append_keymap]]
+on = [ "<C-y>" ]
+run = "quit"
+desc = "Quit Yazi"

@@ -11,15 +11,15 @@
 # Dracula theme color reference
 # background    #15131F
 # current_line  #2A2640
-# selection     #44475a
+# selection     #44475A
 # foreground    #F8F8F2
-# comment       #7A71AA
+# comment       #6272A4
 # purple        #A072C6
 # cyan          #94F2E8
 # green         #50FA7B
 # yellow        #F1FA8C
 # orange        #F97359
-# red           #ff5555
+# red           #FF5555
 # magenta       #d82f94
 # pink          #E98FBE
 
@@ -78,7 +78,7 @@ let
       };
       null_value = {
         style = {
-          fg = "#7A71AA";  # comment
+          fg = "#6272A4";  # comment
           bold = false;
         };
       };

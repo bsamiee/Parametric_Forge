@@ -34,7 +34,7 @@
           }
           pane split_direction="vertical" {
             pane name="filemanager" {
-              command "yazi"
+              command "yazi" "--client-id" "filemanager"
               size    "100%"
             }
           }

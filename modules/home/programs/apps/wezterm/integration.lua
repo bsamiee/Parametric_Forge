@@ -33,7 +33,7 @@ function M.setup(config)
 
   -- Launch Zellij in a new WezTerm window with layout
   local layout = os.getenv("ZELLIJ_DEFAULT_LAYOUT") or "side"
-  config.default_prog = { zellij, "attach", "--create", "main", "--layout", layout }
+  config.default_prog = { zellij, "--layout", layout, "attach", "--create", "main" }
 
   -- PATH Configuration -------------------------------------------------------
   local path_segments = {}

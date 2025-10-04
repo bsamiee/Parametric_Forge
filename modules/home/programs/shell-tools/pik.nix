@@ -11,15 +11,15 @@
 # Dracula theme color reference
 # background    #15131F
 # current_line  #2A2640
-# selection     #44475a
+# selection     #44475A
 # foreground    #F8F8F2
-# comment       #7A71AA
+# comment       #6272A4
 # purple        #A072C6
 # cyan          #94F2E8
 # green         #50FA7B
 # yellow        #F1FA8C
 # orange        #F97359
-# red           #ff5555
+# red           #FF5555
 # magenta       #d82f94
 # pink          #E98FBE
 
@@ -60,7 +60,7 @@
     selected_symbol = "▶"
     even = { fg = "#F8F8F2" }                             # Normal foreground
     odd = { fg = "#F8F8F2", bg = "#2A2640" }            # Subtle background for zebra striping
-    selected = { fg = "#44475a", bg = "#94F2E8" }       # Selection without BOLD
+    selected = { fg = "#44475A", bg = "#94F2E8" }       # Selection without BOLD
 
     [ui.process_table.cell]
     highlighted = { fg = "#50FA7B", bg = "#15131F" }    # Green for search matches
@@ -92,7 +92,7 @@
     cursor_style = { fg = "#F8F8F2", bg = "#d82f94", add_modifier = "REVERSED" }
 
     [ui.popups]
-    selected_row = { fg = "#44475a", bg = "#94F2E8" }
+    selected_row = { fg = "#44475A", bg = "#94F2E8" }
     primary = { fg = "#94F2E8" }
 
     [ui.popups.border]

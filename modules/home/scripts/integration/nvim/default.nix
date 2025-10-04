@@ -22,11 +22,12 @@
       # ----------------------------------------------------------------------------
       # Called from nvim to reveal current buffer in Yazi
 
-      # Check if sidebar mode is enabled
+      # Determine client-id based on sidebar mode
       SIDEBAR_ENABLED="''${YAZI_ENABLE_SIDEBAR:-true}"
-      if [[ "$SIDEBAR_ENABLED" != "true" ]]; then
-          echo "Reveal in Yazi only works in sidebar mode" >&2
-          exit 1
+      if [[ "$SIDEBAR_ENABLED" == "true" ]]; then
+          CLIENT_ID="sidebar"
+      else
+          CLIENT_ID="filemanager"
       fi
 
       BUFFER="''${1:-$PWD}"
@@ -41,9 +42,9 @@
         PANE_NAME=$(${pkgs.zellij}/bin/zellij action query-tab-names 2>/dev/null | ${pkgs.gnugrep}/bin/grep -o '"name":"[^"]*"' | ${pkgs.gnused}/bin/sed 's/"name":"//;s/"//' || echo "")
 
         if [[ "$PANE_CMD" == *"yazi"* ]] || [[ "$PANE_NAME" == "sidebar" ]] || [[ "$PANE_NAME" == "filemanager" ]]; then
-          # Found Yazi pane - use ya emit-to to reveal file (ya is separate from yazi package)
+          # Found Yazi pane - use ya pub-to to reveal file
           if command -v ya &>/dev/null; then
-            ya emit-to "''${YAZI_ID:-main}" reveal "$BUFFER"
+            ya pub-to "$CLIENT_ID" reveal --str "$BUFFER"
           else
             echo "ya command not found - cannot reveal file" >&2
           fi
@@ -53,6 +54,43 @@
         # Move to next pane
         ${pkgs.zellij}/bin/zellij action focus-next-pane
       done
+    '';
+  };
+
+  # --- Use Yazi as file picker for Nvim -------------------------------------
+  home.file.".local/bin/nvim-yazi-picker.sh" = {
+    executable = true;
+    text = ''
+      #!/usr/bin/env bash
+      # Title         : nvim-yazi-picker.sh
+      # Author        : Bardia Samiee
+      # Project       : Parametric Forge
+      # License       : MIT
+      # Path          : ~/.local/bin/nvim-yazi-picker.sh
+      # ----------------------------------------------------------------------------
+      # Use Yazi as a file picker and open selected file in nvim
+
+      # Create temporary file for Yazi output
+      tmp="$(mktemp -t yazi-picker.XXXXXX)"
+
+      # Launch Yazi in a floating pane with chooser-file option
+      ${pkgs.zellij}/bin/zellij action new-pane --floating -- ${pkgs.yazi}/bin/yazi --chooser-file="$tmp"
+
+      # Wait for Yazi to exit and check if a file was selected
+      if [[ -s "$tmp" ]]; then
+        selected=$(cat "$tmp")
+        if [[ -n "$selected" && -f "$selected" ]]; then
+          # Open the selected file in nvim
+          ${pkgs.neovim}/bin/nvim "$selected"
+        else
+          echo "Selected path is not a valid file: $selected" >&2
+        fi
+      else
+        echo "No file selected" >&2
+      fi
+
+      # Clean up temporary file
+      rm -f "$tmp"
     '';
   };
 }

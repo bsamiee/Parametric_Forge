@@ -11,15 +11,15 @@
 # Dracula theme color reference
 # background    #15131F
 # current_line  #2A2640
-# selection     #44475a
+# selection     #44475A
 # foreground    #F8F8F2
-# comment       #7A71AA
+# comment       #6272A4
 # purple        #A072C6
 # cyan          #94F2E8
 # green         #50FA7B
 # yellow        #F1FA8C
 # orange        #F97359
-# red           #ff5555
+# red           #FF5555
 # magenta       #d82f94
 # pink          #E98FBE
 
@@ -34,9 +34,9 @@
 
     defaultOptions = [
       # Colors - Dracula theme
-      "--color=fg:#F8F8F2,fg+:#15131F,bg:#15131F,bg+:#94F2E8"
-      "--color=hl:#50FA7B,hl+:#d82f94,info:#7A71AA,marker:#50FA7B"
-      "--color=prompt:#d82f94,spinner:#50FA7B,pointer:#d82f94,header:#7A71AA"
+      "--color=fg:#F8F8F2,fg+:#15131F,bg:#15131F,bg+:#94F2E8,selected-fg:#15131F,selected-bg:#94F2E8"
+      "--color=hl:#50FA7B,hl+:#d82f94,info:#6272A4,marker:#50FA7B"
+      "--color=prompt:#d82f94,spinner:#50FA7B,pointer:#d82f94,header:#6272A4"
       "--color=gutter:#15131F,border:#94F2E8,separator:#E98FBE,scrollbar:#E98FBE"
       "--color=preview-fg:#F8F8F2,preview-scrollbar:#E98FBE,label:#d82f94,query:#F8F8F2"
       # Border and styling

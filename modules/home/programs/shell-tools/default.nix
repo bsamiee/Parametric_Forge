@@ -34,6 +34,7 @@
     ./lazyssh.nix
     ./op.nix
     ./ouch.nix
+    ./p7zip.nix
     ./pik.nix
     ./procs.nix
     ./rclone.nix
@@ -50,7 +51,6 @@
     ./trippy.nix
     ./watchexec.nix
     ./xh.nix
-    ./zesh.nix
     ./zoxide.nix
   ];
 }

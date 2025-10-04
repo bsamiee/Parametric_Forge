@@ -77,7 +77,7 @@ in
         // --- Format Configuration
         format_left               "{mode} {tabs}"
         format_center             "{swap_layout}"
-        format_right              "#[bg=$pink,fg=$background] [{session}] "
+        format_right              "#[bg=$pink,fg=$background,bold] [{session}] "
         format_space              ""
 
         // --- Layout Display

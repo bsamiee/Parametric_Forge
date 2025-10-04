@@ -11,15 +11,15 @@
 # Dracula theme color reference
 # background    #15131F
 # current_line  #2A2640
-# selection     #44475a
+# selection     #44475A
 # foreground    #F8F8F2
-# comment       #7A71AA
+# comment       #6272A4
 # purple        #A072C6
 # cyan          #94F2E8
 # green         #50FA7B
 # yellow        #F1FA8C
 # orange        #F97359
-# red           #ff5555
+# red           #FF5555
 # magenta       #d82f94
 # pink          #E98FBE
 
@@ -52,25 +52,25 @@
             right = " ]";
           };
           color = {
-            elapsed = "#50fa7b";   # Dracula green
-            total = "#44475a";      # Dracula selection
+            elapsed = "#50FA7B";   # Dracula green
+            total = "#44475A";      # Dracula selection
           };
         };
         percent = {
           type = 3;
           ndigits = 0;
           color = {
-            green = "#50fa7b";      # Dracula green
-            yellow = "#f1fa8c";     # Dracula yellow
-            red = "#ff5555";        # Dracula red
+            green = "#50FA7B";      # Dracula green
+            yellow = "#F1FA8C";     # Dracula yellow
+            red = "#FF5555";        # Dracula red
           };
         };
         brightColor = true;
         color = {
-          keys = "#8be9fd";         # Dracula cyan (brighter variant)
-          title = "#ff79c6";        # Dracula pink (brighter variant)
+          keys = "#94F2E8";         # Dracula cyan (brighter variant)
+          title = "#E98FBE";        # Dracula pink (brighter variant)
           separator = "#6272a4";    # Dracula comment
-          output = "#f8f8f2";       # Dracula foreground
+          output = "#F8F8F2";       # Dracula foreground
         };
       };
 
@@ -121,10 +121,9 @@
         { type = "chassis"; key = "󰌢 Chassis"; }
         { type = "board"; key = " Board"; }
         { type = "bios"; key = "󰨇 BIOS"; }
-        { type = "cpu"; key = " CPU"; temp = true; freqNdigits = 1; format = "{name} ({core-count}) @ {freq-max}"; }
+        { type = "cpu"; key = " CPU"; temp = true; format = "{name} ({cores-physical}) @ {freqMax}"; }
         { type = "cpuusage"; key = " CPU Usage"; }
         { type = "gpu"; key = "󰍛 GPU"; temp = true; format = "{name}"; }
-        { type = "gpu"; key = "󰍛 GPU Usage"; format = "{core-usage-bar} ({core-usage-num}%)"; }
         { type = "memory"; key = " Memory"; format = "{used} / {total}"; }
         { type = "memory"; key = " Memory Usage"; format = "{percentage-bar} ({percentage}%)"; }
         { type = "swap"; key = "󰓡 Swap"; format = "{used} / {total} ({percentage}%)"; }

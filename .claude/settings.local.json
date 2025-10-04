@@ -72,7 +72,9 @@
       "WebFetch(domain:fx.wtf)",
       "WebFetch(domain:wezterm.org)",
       "WebFetch(domain:knezevic.ch)",
-      "mcp__filesystem__read_text_file"
+      "mcp__filesystem__read_text_file",
+      "WebFetch(domain:yazi-rs.github.io)",
+      "WebFetch(domain:karabiner-elements.pqrs.org)"
     ],
     "deny": [],
     "ask": []

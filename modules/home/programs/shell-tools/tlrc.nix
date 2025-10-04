@@ -42,7 +42,7 @@ let
     strikethrough = false
 
     [style.description]
-    color = { rgb = [189, 147, 249] }  # #bd93f9 (purple)
+    color = { rgb = [189, 147, 249] }  # #A072C6 (purple)
     background = "default"
     bold = false
     underline = false
@@ -78,7 +78,7 @@ let
     strikethrough = false
 
     [style.inline_code]
-    color = { rgb = [241, 250, 140] }  # #f1fa8c (yellow)
+    color = { rgb = [241, 250, 140] }  # #F1FA8C (yellow)
     background = "default"
     bold = false
     underline = false
@@ -87,7 +87,7 @@ let
     strikethrough = false
 
     [style.placeholder]
-    color = { rgb = [255, 85, 85] }  # #ff5555 (red)
+    color = { rgb = [255, 85, 85] }  # #FF5555 (red)
     background = "default"
     bold = false
     underline = false

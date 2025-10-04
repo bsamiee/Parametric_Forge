@@ -10,6 +10,11 @@ local wezterm = require("wezterm")
 
 local M = {}
 
+wezterm.on('gui-startup', function(cmd)
+  local tab, pane, window = wezterm.mux.spawn_window(cmd or {})
+  window:gui_window():maximize()
+end)
+
 function M.apply(config, theme)
     local palette = theme and theme.colors or {}
     local font = theme and theme.font or {}
