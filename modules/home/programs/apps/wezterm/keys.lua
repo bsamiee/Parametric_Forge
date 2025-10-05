@@ -17,7 +17,14 @@ function M.setup(config)
   config.use_dead_keys = false
 
   -- Future key bindings can be added here
-  -- config.keys = {}
+  config.keys = config.keys or {}
+  table.insert(config.keys, {
+    key = "c",
+    mods = "CMD",
+    -- Forward Cmd+C to Zellij so its Copy action (pbcopy) runs instead of
+    -- WezTerm intercepting it for host clipboard handling.
+    action = wezterm.action.SendKey { key = "c", mods = "CMD" },
+  })
 end
 
 return M

@@ -6,7 +6,9 @@
 # ----------------------------------------------------------------------------
 # Custom keybindings for Yazi file manager
 
-# --- Custom Keybindings -----------------------------------------------------
+"$schema" = "https://yazi-rs.github.io/schemas/keymap.json"
+
+# --- Shell Script Keybindings -----------------------------------------------
 [[mgr.prepend_keymap]] # macOS: Preview files with the system Quick Look
 on = "<C-p>"
 run = 'shell -- qlmanage -p "$@"'

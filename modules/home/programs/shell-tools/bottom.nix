@@ -86,8 +86,8 @@
             color = "#F8F8F2";                  # Bright - primary text
           };
           selected_text = {
-            color = "#F8F8F2";                  # Bright text when selected
-            bg_color = "#44475A";               # Selection background
+            color = "#15131F";                  # Bright text when selected
+            bg_color = "#94F2E8";               # Selection background
           };
           disabled_text = {
             color = "#6272A4";                  # Muted - inactive items

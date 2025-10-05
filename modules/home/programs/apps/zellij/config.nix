@@ -32,6 +32,7 @@ in
     session_serialization       true
     pane_viewport_serialization true
     copy_command                "pbcopy"
+    copy_on_select              false
     scroll_buffer_size          100000
 
     // --- Load Plugins -----------------------------------------------------------
@@ -109,11 +110,10 @@ in
 
       // --- pane-picker Configuration --------------------------------------------
       zellij-pane-picker location="file:~/.config/zellij/plugins/zellij-pane-picker.wasm" {
-        list_panes          "Ctrl Alt Super Tab"
+        list_panes          ""
         plugin_select_down  "Down"
         plugin_select_up    "Up"
       }
-
     }
 
     // --- Keybindings ------------------------------------------------------------
@@ -122,25 +122,11 @@ in
     keybinds clear-defaults=true {
       normal {
         // uncomment this and adjust key if using copy_on_select=false
-        // bind "Ctrl Alt Super c" { Copy; }
+        bind "Super c" { Copy; }
 
-        bind "Ctrl Alt Super Tab" {
-          LaunchOrFocusPlugin "zellij-pane-picker" {
-            floating            true
-            move_to_focused_tab true
-          }
-        }
         // Super (⌘⌃⌥) + T → toggle sidebar layout
         bind "Ctrl Alt Super t" {
           Run "zellij-toggle-sidebar.sh"
-        }
-        // Hyper (⌘⌃⌥⇧) + L → launch workspace selector
-        bind "Ctrl Alt Shift Super l" {
-          LaunchOrFocusPlugin "file:~/.config/zellij/plugins/zellij-workspace.wasm" {
-            floating true
-            replace_current_session false
-            debug false
-          }
         }
       }
       locked {
@@ -329,6 +315,11 @@ in
       shared_except "locked" {
         bind "Ctrl Alt Shift Super g" { SwitchToMode "Locked"; }
         bind "Ctrl Alt Shift Super q" { Quit; }
+        bind "Ctrl Alt Shift Super Tab" {
+            LaunchOrFocusPlugin "zellij-pane-picker" {
+                floating true; move_to_focused_tab true;
+            }
+        }
         bind "Ctrl Alt Super f" { ToggleFloatingPanes; }
         bind "Ctrl Alt Super n" { NewPane; }
         bind "Ctrl Alt Super i" { MoveTab "Left"; }

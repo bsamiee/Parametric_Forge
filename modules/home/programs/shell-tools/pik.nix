@@ -60,7 +60,7 @@
     selected_symbol = "▶"
     even = { fg = "#F8F8F2" }                             # Normal foreground
     odd = { fg = "#F8F8F2", bg = "#2A2640" }            # Subtle background for zebra striping
-    selected = { fg = "#44475A", bg = "#94F2E8", add_modifier = "BOLD" }  # Selection without BOLD
+    selected = { fg = "#15131F", bg = "#94F2E8", add_modifier = "BOLD" }  # Selection without BOLD
 
     [ui.process_table.cell]
     highlighted = { fg = "#50FA7B", bg = "#15131F" }    # Green for search matches
@@ -79,7 +79,7 @@
     type = "rounded"
 
     [ui.process_details.border.style]
-    fg = "#F1FA8C"
+    fg = "#d82f94"
 
     [ui.process_details.scrollbar]
     track_symbol = "│"
