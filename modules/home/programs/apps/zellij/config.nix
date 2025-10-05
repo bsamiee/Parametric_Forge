@@ -32,7 +32,6 @@ in
     session_serialization       true
     pane_viewport_serialization true
     copy_command                "pbcopy"
-    copy_on_select              false
     scroll_buffer_size          100000
 
     // --- Load Plugins -----------------------------------------------------------
@@ -78,7 +77,7 @@ in
         // --- Format Configuration
         format_left               "{mode} {tabs}"
         format_center             "{swap_layout}"
-        format_right              "#[bg=$current_line,fg=$yellow,bold] [{session}] "
+        format_right              "#[bg=$pink,fg=$current_line] [{session}] "
         format_space              ""
 
         // --- Layout Display
@@ -86,18 +85,18 @@ in
         swap_layout_hide_if_empty "true"
 
         // --- Mode Indicators
-        mode_normal "#[bg=$current_line,fg=$green,bold] [NORMAL] "
-        mode_resize "#[bg=$current_line,fg=$purple,bold] [RESIZE] "
-        mode_tab    "#[bg=$current_line,fg=$magenta,bold] [TABS] "
-        mode_pane   "#[bg=$current_line,fg=$orange,bold] [PANES] "
-        mode_scroll "#[bg=$current_line,fg=$yellow,bold] [SCROLL] "
-        mode_locked "#[bg=$current_line,fg=$selection,bold] [LOCKED] "
-        mode_prompt "#[bg=$current_line,fg=$foreground,bold] [PROMPT] "
-        mode_search "#[bg=$current_line,fg=$pink,bold] [SEARCH] "
+        mode_normal "#[bg=$green,fg=$current_line] [NORMAL] "
+        mode_resize "#[bg=$purple,fg=$current_line] [RESIZE] "
+        mode_tab    "#[bg=$magenta,fg=$current_line] [TABS] "
+        mode_pane   "#[bg=$orange,fg=$current_line] [PANES] "
+        mode_scroll "#[bg=$yellow,fg=$current_line] [SCROLL] "
+        mode_locked "#[bg=$selection,fg=$current_line] [LOCKED] "
+        mode_prompt "#[bg=$foreground,fg=$current_line] [PROMPT] "
+        mode_search "#[bg=$pink,fg=$current_line] [SEARCH] "
 
         // --- Tab Display
-        tab_active    "#[bg=$current_line,fg=$cyan] {name} "
-        tab_normal    "#[bg=$current_line,fg=$comment] {name} "
+        tab_active    "#[bg=$cyan,fg=$current_line] {name} "
+        tab_normal    "#[bg=$comment,fg=$current_line] {name} "
         tab_separator " "
 
         // --- Border Configuration
@@ -122,7 +121,7 @@ in
     keybinds clear-defaults=true {
       normal {
         // uncomment this and adjust key if using copy_on_select=false
-        bind "Super c" { Copy; }
+        // bind "Super c" { Copy; }
 
         // Super (⌘⌃⌥) + T → toggle sidebar layout
         bind "Ctrl Alt Super t" {

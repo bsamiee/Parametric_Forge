@@ -96,11 +96,21 @@
       # License       : MIT
       # Path          : ~/.local/bin/zellij-toggle-sidebar.sh
       # ----------------------------------------------------------------------------
-      # Cycle to the next swap layout (used to open/close the sidebar variants)
+      # Toggle between sidebar and no-sidebar layouts
 
-      set -euo pipefail
+      CURRENT="''${YAZI_ENABLE_SIDEBAR:-true}"
 
-      ${pkgs.zellij}/bin/zellij action next-swap-layout
+      if [[ "$CURRENT" == "true" ]]; then
+          export YAZI_ENABLE_SIDEBAR="false"
+          ${pkgs.zellij}/bin/zellij action switch-layout "no_side"
+      else
+          export YAZI_ENABLE_SIDEBAR="true"
+          ${pkgs.zellij}/bin/zellij action switch-layout "side"
+      fi
+
+      # Update the environment for child processes
+      echo "Sidebar mode: $YAZI_ENABLE_SIDEBAR"
     '';
   };
 }
+
