@@ -14,7 +14,6 @@
     enableZshIntegration = true;
   };
 
-  # Comma for running commands without installing
   home.packages = with pkgs; [
     comma  # Run software without installing: , cowsay "Hello"
   ];

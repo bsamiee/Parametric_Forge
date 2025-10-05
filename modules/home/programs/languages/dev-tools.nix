@@ -25,7 +25,6 @@
     # --- JSON ---------------------------------------------------------------
     jq # Lightweight command-line JSON processor
 
-
     # --- General Data Tools -------------------------------------------------
     yq-go # YAML/JSON/TOML processor (yq)
     miller # CSV/TSV/JSON processor

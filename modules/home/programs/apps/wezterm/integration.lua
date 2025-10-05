@@ -37,7 +37,11 @@ function M.setup(config)
 
   -- PATH Configuration -------------------------------------------------------
   local path_segments = {}
-  if home then table.insert(path_segments, home .. "/.nix-profile/bin") end
+  if home then
+    table.insert(path_segments, home .. "/.local/bin")
+    table.insert(path_segments, home .. "/bin")
+    table.insert(path_segments, home .. "/.nix-profile/bin")
+  end
   if user ~= "" then table.insert(path_segments, "/etc/profiles/per-user/" .. user .. "/bin") end
   for _, p in ipairs({
     "/run/current-system/sw/bin",
@@ -50,6 +54,11 @@ function M.setup(config)
     "/sbin",
   }) do
     table.insert(path_segments, p)
+  end
+
+  local existing_path = os.getenv("PATH")
+  if existing_path and existing_path ~= "" then
+    table.insert(path_segments, existing_path)
   end
 
   -- Set PATH to ensure Zellij can find all Nix-installed binaries including yazi
