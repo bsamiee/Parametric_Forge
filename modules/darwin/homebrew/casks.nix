@@ -13,6 +13,7 @@
 
     # --- System & Core Tools ------------------------------------------------
     "1password"
+    "1password-cli"
     "cleanshot"
     "docker-desktop"
     "dotnet-sdk"          # .NET SDK

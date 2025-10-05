@@ -9,6 +9,48 @@
 { config, lib, pkgs, ... }:
 
 {
+  # --- Detect active Yazi client id -----------------------------------------
+  home.file.".local/bin/yazi-current-client.sh" = {
+    executable = true;
+    text = ''
+      #!/usr/bin/env bash
+      # Title         : yazi-current-client.sh
+      # Author        : Bardia Samiee
+      # Project       : Parametric Forge
+      # License       : MIT
+      # Path          : ~/.local/bin/yazi-current-client.sh
+      # ----------------------------------------------------------------------------
+      # Determine which Yazi client id is currently active (sidebar vs filemanager)
+
+      set -euo pipefail
+
+      if command -v pgrep >/dev/null 2>&1 && pgrep -f 'yazi --client-id sidebar' >/dev/null 2>&1; then
+        echo "sidebar"
+        exit 0
+      fi
+
+      if command -v pgrep >/dev/null 2>&1 && pgrep -f 'yazi --client-id filemanager' >/dev/null 2>&1; then
+        echo "filemanager"
+        exit 0
+      fi
+
+      # Fallback detection when pgrep is unavailable
+      if ps aux | ${pkgs.gnugrep}/bin/grep -F "yazi --client-id sidebar" | ${pkgs.gnugrep}/bin/grep -v grep >/dev/null 2>&1; then
+        echo "sidebar"
+        exit 0
+      fi
+
+      if ps aux | ${pkgs.gnugrep}/bin/grep -F "yazi --client-id filemanager" | ${pkgs.gnugrep}/bin/grep -v grep >/dev/null 2>&1; then
+        echo "filemanager"
+        exit 0
+      fi
+
+      # Default to sidebar when no process matches; callers should handle fallback
+      echo "sidebar"
+      exit 0
+    '';
+  };
+
   # --- Open nvim with smart pane reuse and tab naming -----------------------
   home.file.".local/bin/yazi-open-nvim.sh" = {
     executable = true;
@@ -25,8 +67,9 @@
       FILE="$1"
       WORKING_DIR=$(dirname "$FILE")
 
-      # Check sidebar mode for different behavior
-      SIDEBAR_ENABLED="''${YAZI_ENABLE_SIDEBAR:-true}"
+      # Detect which Yazi instance is active (defaults to sidebar when absent)
+      YAZI_CLIENT=$(yazi-current-client.sh 2>/dev/null || true)
+      [[ -z "$YAZI_CLIENT" ]] && YAZI_CLIENT="sidebar"
 
       # Try to find existing nvim pane using utility
       if zellij-find-nvim.sh; then
@@ -39,8 +82,8 @@
           ${pkgs.zellij}/bin/zellij action write-chars ":e $FILE"
           ${pkgs.zellij}/bin/zellij action write 13  # Enter key
 
-          # In no-sidebar mode, close Yazi after opening file
-          if [[ "$SIDEBAR_ENABLED" != "true" ]]; then
+          # In full-screen mode (filemanager client), close Yazi after opening file
+          if [[ "$YAZI_CLIENT" == "filemanager" ]]; then
               ${pkgs.zellij}/bin/zellij action focus-previous-pane
               ${pkgs.zellij}/bin/zellij action close-pane
           fi
@@ -70,10 +113,10 @@
       # ----------------------------------------------------------------------------
       # Focus nvim pane via Zellij
 
-      # Check if sidebar mode is enabled
-      SIDEBAR_ENABLED="''${YAZI_ENABLE_SIDEBAR:-true}"
-      if [[ "$SIDEBAR_ENABLED" != "true" ]]; then
-          echo "Focus nvim only works in sidebar mode" >&2
+      # Only operate when the sidebar client is active
+      YAZI_CLIENT=$(yazi-current-client.sh 2>/dev/null || true)
+      if [[ "$YAZI_CLIENT" != "sidebar" ]]; then
+          echo "Focus nvim only works when the sidebar layout is active" >&2
           exit 1
       fi
 
@@ -119,13 +162,9 @@
 
       FILE="$1"
 
-      # Determine client-id based on sidebar mode
-      SIDEBAR_ENABLED="''${YAZI_ENABLE_SIDEBAR:-true}"
-      if [[ "$SIDEBAR_ENABLED" == "true" ]]; then
-          CLIENT_ID="sidebar"
-      else
-          CLIENT_ID="filemanager"
-      fi
+      # Determine target client dynamically (sidebar preferred, fallback to filemanager)
+      CLIENT_ID=$(yazi-current-client.sh 2>/dev/null || true)
+      [[ -z "$CLIENT_ID" ]] && CLIENT_ID="sidebar"
 
       # Use ya pub-to to send reveal command to Yazi instance
       if command -v ya &>/dev/null; then

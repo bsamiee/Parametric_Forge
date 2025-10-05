@@ -13,17 +13,17 @@ run = 'shell -- qlmanage -p "$@"'
 
 # --- Script Integrated Keybindings ------------------------------------------
 [[mgr.append_keymap]]
-on = [ "<A-y>" ]
+on = [ "<C-A-D-y>" ] # Super (⌘⌃⌥) + Y → focus Neovim/editor pane
 run = "shell 'yazi-focus-nvim.sh'"
 desc = "Focus nvim pane"
 
 [[mgr.append_keymap]]
-on = [ "<A-p>" ]
+on = [ "<C-A-D-p>" ] # Super (⌘⌃⌥) + P → open directory in sibling Zellij pane
 run = "shell 'yazi-open-dir.sh \"$0\"'"
 desc = "Open directory in new pane"
 
 [[mgr.append_keymap]]
-on = [ "<A-r>" ]
+on = [ "<C-A-D-r>" ] # Super (⌘⌃⌥) + R → reveal selection in sidebar/fullscreen Yazi
 run = "shell 'yazi-reveal.sh \"$1\"'"
 desc = "Reveal file in sidebar"
 

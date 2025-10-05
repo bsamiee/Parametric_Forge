@@ -43,36 +43,38 @@ in
     themes {
       "dracula" {
         text_unselected {
-          base ${rgb colors.foreground}
-          background ${rgb colors.background}
-          emphasis_0 ${rgb colors.cyan}
-          emphasis_1 ${rgb colors.magenta}
-          emphasis_2 ${rgb colors.yellow}
-          emphasis_3 ${rgb colors.comment}
+          base ${rgb colors.cyan}                 // Color of "CTRL" on left side of status bar
+          background ${rgb colors.current_line}   // BG of left side mod (CTRL) and space between left/right, AND the background of <x> when in a MODE
+          emphasis_0 ${rgb colors.orange}         // Color of "ALT" on right side of status bar - Match with ribbon selected background
+          emphasis_1 ${rgb colors.yellow}         // UNKNOWN
+          emphasis_2 ${rgb colors.cyan}           // Color of secondary key characters when in a "mode" like PANE or TAB <x> <y>
+          emphasis_3 ${rgb colors.orange}         // UNKNOWN
         }
         text_selected {
-          base ${rgb colors.background}
-          background ${rgb colors.cyan}
-          emphasis_0 ${rgb colors.background}
-          emphasis_1 ${rgb colors.current_line}
-          emphasis_2 ${rgb colors.selection}
-          emphasis_3 ${rgb colors.comment}
+          base ${rgb colors.orange}               // Color of text that is highlighted/selected and bottom left helper text when selecting something
+          background ${rgb colors.current_line}   // Selecte text highliter color (background of it)
+          emphasis_0 ${rgb colors.cyan}           // UNKNOWN
+          emphasis_1 ${rgb colors.foreground}     // UNKNOWN
+          emphasis_2 ${rgb colors.foreground}     // UNKNOWN
+          emphasis_3 ${rgb colors.foreground}     // UNKNOWN
         }
+        // Inactive status ribbons (LOCK / TAB labels)
         ribbon_unselected {
-          base ${rgb colors.foreground}
-          background ${rgb colors.current_line}
-          emphasis_0 ${rgb colors.cyan}
-          emphasis_1 ${rgb colors.magenta}
-          emphasis_2 ${rgb colors.cyan}
-          emphasis_3 ${rgb colors.yellow}
+          base ${rgb colors.foreground}           // Color of all ribbon text and <> indicators (not the characters inside <>) both default+active modes
+          background ${rgb colors.current_line}   // Background fill of the ribbon text blocks when in DEFAULT mode NOT an active mode
+          emphasis_0 ${rgb colors.cyan}           // Color of primary key character when in default state <x> <y> etc...
+          emphasis_1 ${rgb colors.foreground}     // UNKNOWN
+          emphasis_2 ${rgb colors.foreground}     // UNKNOWN
+          emphasis_3 ${rgb colors.foreground}     // UNKNOWN
         }
+        // Active ribbon highlight when entering a mode (e.g., PANE mode)
         ribbon_selected {
-          base ${rgb colors.background}
-          background ${rgb colors.cyan}
-          emphasis_0 ${rgb colors.magenta}
-          emphasis_1 ${rgb colors.green}
-          emphasis_2 ${rgb colors.yellow}
-          emphasis_3 ${rgb colors.foreground}
+          base ${rgb colors.current_line}         // Text color of PANE or TAB when in a mode + bar background (small portion)
+          background ${rgb colors.orange}         // Background of primary key character when in a "mode" like PANE or TAB <p> <t>
+          emphasis_0 ${rgb colors.cyan}           // Color of primary key character when in a "mode" like PANE or TAB <p> <t>
+          emphasis_1 ${rgb colors.yellow}         // UNKNOWN
+          emphasis_2 ${rgb colors.magenta}        // UNKNOWN
+          emphasis_3 ${rgb colors.comment}        // UNKNOWN
         }
         table_title {
           base ${rgb colors.foreground}
@@ -115,9 +117,9 @@ in
           emphasis_3 ${rgb colors.comment}
         }
         frame_unselected {
-          base ${rgb colors.selection}
+          base ${rgb colors.comment}
           background ${rgb colors.background}
-          emphasis_0 ${rgb colors.comment}
+          emphasis_0 ${rgb colors.orange}
           emphasis_1 ${rgb colors.cyan}
           emphasis_2 ${rgb colors.yellow}
           emphasis_3 ${rgb colors.magenta}

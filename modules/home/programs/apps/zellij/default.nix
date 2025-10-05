@@ -24,10 +24,9 @@ in
   ];
 
   options.programs.zellij = {
-    colors = mkOption {
+    colors = mkOption {         # Single source of truth for all Zellij color configuration
       type = types.attrs;
       default = {
-        # Single source of truth for all Zellij color configuration
         background = { hex = "#15131F"; r = 21; g = 19; b = 31; };
         current_line = { hex = "#2A2640"; r = 42; g = 38; b = 64; };
         selection = { hex = "#44475A"; r = 68; g = 71; b = 90; };
@@ -58,6 +57,10 @@ in
       "zellij/plugins/zjstatus.wasm".source = pkgs.fetchurl {
         url = "https://github.com/dj95/zjstatus/releases/download/v0.21.1/zjstatus.wasm";
         sha256 = "06mfcijmsmvb2gdzsql6w8axpaxizdc190b93s3nczy212i846fw";
+      };
+      "zellij/plugins/zellij-workspace.wasm".source = pkgs.fetchurl {
+        url = "https://github.com/vdbulcke/zellij-workspace/releases/download/v0.3.0/zellij-workspace.wasm";
+        sha256 = "3d1f04a5af497d05072a0fa3045ffd46cdd30f333ff4861771d9be909b096b73";
       };
     };
   };

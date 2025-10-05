@@ -32,7 +32,6 @@
     ./hyperfine.nix
     ./jnv.nix
     ./lazyssh.nix
-    ./op.nix
     ./ouch.nix
     ./p7zip.nix
     ./pik.nix

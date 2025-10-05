@@ -24,7 +24,7 @@
 
     # --- Yazi ---------------------------------------------------------------
     YAZI_CONFIG_HOME = "${config.xdg.configHome}/yazi";
-    YAZI_ENABLE_SIDEBAR = "true";   # Enable sidebar mode for dynamic layout switching
+    YAZI_ENABLE_SIDEBAR = "true";   # Default value (runtime scripts now auto-detect active client)
 
     # --- Neovim -------------------------------------------------------------
     NVIM_LISTEN_ADDRESS = "\${XDG_RUNTIME_DIR:-/tmp}/nvim-\${ZELLIJ_SESSION_NAME:-main}.sock";

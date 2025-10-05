@@ -22,13 +22,9 @@
       # ----------------------------------------------------------------------------
       # Called from nvim to reveal current buffer in Yazi
 
-      # Determine client-id based on sidebar mode
-      SIDEBAR_ENABLED="''${YAZI_ENABLE_SIDEBAR:-true}"
-      if [[ "$SIDEBAR_ENABLED" == "true" ]]; then
-          CLIENT_ID="sidebar"
-      else
-          CLIENT_ID="filemanager"
-      fi
+      # Detect target client dynamically
+      CLIENT_ID=$(yazi-current-client.sh 2>/dev/null || true)
+      [[ -z "$CLIENT_ID" ]] && CLIENT_ID="sidebar"
 
       BUFFER="''${1:-$PWD}"
 
