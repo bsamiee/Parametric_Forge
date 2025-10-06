@@ -2,18 +2,14 @@
 # Author        : Bardia Samiee
 # Project       : Parametric Forge
 # License       : MIT
-# Path          : modules/home/default.nix
+# Path          : modules/home/assets/default.nix
 # ----------------------------------------------------------------------------
-# Home Manager module aggregator
+# Asset files aggregator - logos, images, fonts, and other binary assets
 
 { lib, ... }:
 
 {
   imports = [
-    ./assets
-    ./environments
-    ./programs
-    ./scripts
-    ./xdg.nix
+    ./ascii
   ];
 }

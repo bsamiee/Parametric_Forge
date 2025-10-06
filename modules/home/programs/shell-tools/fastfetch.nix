@@ -76,7 +76,8 @@
 
       # --- Logo Configuration -----------------------------------------------
       logo = {
-        type = "auto";
+        type = "file";
+        source = "${config.xdg.configHome}/fastfetch/logo.txt";
         width = 28;
         height = 16;
         padding = {
