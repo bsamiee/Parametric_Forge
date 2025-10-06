@@ -23,7 +23,7 @@
       # Called from nvim to reveal current buffer in Yazi
 
       # Detect target client dynamically
-      CLIENT_ID=$(yazi-current-client.sh 2>/dev/null || true)
+      CLIENT_ID=$(''${config.home.homeDirectory}/.local/bin/yazi-current-client.sh 2>/dev/null || true)
       [[ -z "''$CLIENT_ID" ]] && CLIENT_ID="sidebar"
 
       BUFFER="''${1:-''$PWD}"
@@ -34,7 +34,7 @@
       # Find Yazi pane (check for sidebar or filemanager)
       for i in {1..4}; do
         # Get pane info - check if it's running yazi or named appropriately
-        PANE_CMD=$(zellij-get-command.sh)
+        PANE_CMD=$(''${config.home.homeDirectory}/.local/bin/zellij-get-command.sh)
         PANE_NAME=$(${pkgs.zellij}/bin/zellij action query-tab-names 2>/dev/null | ${pkgs.ripgrep}/bin/rg -o '"name":"[^"]*"' | ${pkgs.sd}/bin/sd '"name":"' "" | ${pkgs.sd}/bin/sd '"' "" || echo "")
 
         if [[ "''$PANE_CMD" == *"yazi"* ]] || [[ "''$PANE_NAME" == "sidebar" ]] || [[ "''$PANE_NAME" == "filemanager" ]]; then

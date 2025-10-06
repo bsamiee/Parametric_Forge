@@ -95,8 +95,8 @@
         fi
 
         if ''$IN_ZELLIJ; then
-          if zellij-find-nvim.sh; then
-            zellij-move-pane-top.sh 3
+          if ''${config.home.homeDirectory}/.local/bin/zellij-find-nvim.sh; then
+            ''${config.home.homeDirectory}/.local/bin/zellij-move-pane-top.sh 3
           fi
 
           if [[ "''$YAZI_CLIENT" == "filemanager" ]]; then

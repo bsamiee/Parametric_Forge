@@ -16,6 +16,9 @@
     plays = "mpv --shuffle";                # Shuffle playlist
     yt = "mpv --ytdl-format='bestvideo[height<=?1080]+bestaudio/best'";   # YouTube playback
 
+    # --- Image Processing ---------------------------------------------------
+    ascii = "ascii-image-converter";        # Convert images to ASCII art
+
     # --- FFmpeg Utility -----------------------------------------------------
     ffprobe = "ffprobe -hide_banner";       # Clean media info
     ffplay = "ffplay -hide_banner";         # Clean playback

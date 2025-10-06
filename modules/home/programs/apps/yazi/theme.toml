@@ -50,13 +50,12 @@ sep_outer = { open = " ", close = " " }
 [mode]
 normal_main = { fg = "#15131F", bg = "#50FA7B", bold = true }
 normal_alt = { fg = "#F8F8F2", bg = "#44475A" }
-select_main = { fg = "#15131F", bg = "#E98FBE", bold = true }
-select_alt = { fg = "#F8F8F2", bg = "#44475A" }
+select_main = { fg = "#15131F", bg = "#d82f94", bold = true }
+select_alt = { fg = "#15131F", bg = "#E98FBE" }
 unset_main = { fg = "#15131F", bg = "#FF5555", bold = true }
-unset_alt = { fg = "#F8F8F2", bg = "#44475A" }
+unset_alt = { fg = "#15131F", bg = "#F97359" }
 
 [status]
-# overall = { bg = "#15131F" }  # Remove color to make it blend in with WezTerm transparency
 sep_left = { open = "", close = "" }
 sep_right = { open = "", close = "" }
 perm_type = { fg = "#50FA7B" }
@@ -64,9 +63,9 @@ perm_read = { fg = "#F97359" }
 perm_write = { fg = "#F8F8F2" }
 perm_exec = { fg = "#FF5555" }
 perm_sep = { fg = "#94F2E8" }
-progress_label = { fg = "#15131F", bg = "#F8F8F2" }
-progress_normal = { fg = "#50FA7B", bg = "#15131F" }
-progress_error = { fg = "#FF5555", bg = "#15131F" }
+progress_label = { fg = "#15131F", bg = "#50FA7B" }
+progress_normal = { fg = "#15131F", bg = "#50FA7B" }
+progress_error = { fg = "#15131F", bg = "#FF5555" }
 
 [which]
 cols = 3
@@ -74,7 +73,7 @@ mask = { bg = "#15131F" }
 cand = { fg = "#94F2E8" }
 rest = { fg = "#50FA7B" }
 desc = { fg = "#F8F8F2" }
-separator = ""
+separator = "   "
 separator_style = { fg = "#F1FA8C" }
 
 [confirm]
@@ -96,9 +95,9 @@ tbl_cell = { fg = "#F8F8F2", reversed = true }
 title_info = { fg = "#50FA7B" }
 title_warn = { fg = "#F1FA8C" }
 title_error = { fg = "#FF5555" }
-icon_info = ""
-icon_warn = ""
-icon_error = ""
+icon_info = ""
+icon_warn = ""
+icon_error = ""
 
 [pick]
 border = { fg = "#94F2E8" }
@@ -115,9 +114,9 @@ selected = { bg = "#44475A" }
 border = { fg = "#94F2E8" }
 active = { fg = "#15131F", bg = "#F8F8F2" }
 # inactive = { fg = "#F8F8F2" }
-icon_file = ""
-icon_folder = ""
-icon_command = ""
+icon_file = ""
+icon_folder = ""
+icon_command = ""
 
 [tasks]
 border = { fg = "#94F2E8" }
@@ -128,7 +127,7 @@ hovered = { fg = "#15131F", bg = "#94F2E8" }
 on = { fg = "#50FA7B" }
 run = { fg = "#94F2E8" }
 desc = { fg = "#F8F8F2" }
-hovered = { fg = "#15131F", bg = "#6272a4" }
+hovered = { fg = "#15131F", bg = "#94F2E8" }
 footer = { fg = "#F1FA8C" }
 
 [filetype]

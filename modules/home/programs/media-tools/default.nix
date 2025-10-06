@@ -19,6 +19,7 @@
     ./mediainfo.nix         # Yazi: Enhanced media info preview
     ./exiftool.nix          # Yazi: Audio metadata preview
     ./chafa.nix             # Yazi: Fallback image preview
+    ./ascii-image-converter.nix  # Convert images to ASCII art
     ./glow.nix              # Yazi: Markdown preview
     ./inkscape.nix          # Vector graphics editor
     ./transmission.nix      # Transmission BitTorrent client (CLI/daemon)
