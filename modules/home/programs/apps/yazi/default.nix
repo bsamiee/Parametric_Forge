@@ -20,13 +20,8 @@
     "yazi/plugins/auto_layout.yazi/main.lua".source = ./plugins/auto_layout.yazi/main.lua;
     "yazi/plugins/sidebar_status.yazi/main.lua".source = ./plugins/sidebar_status.yazi/main.lua;
 
-    # --- Official Plugins ---------------------------------------------------
-    "yazi/plugins/full-border.yazi/main.lua".source = ./plugins/full-border.yazi/main.lua;
-
     # --- External Plugins ---------------------------------------------------
+    "yazi/plugins/full-border.yazi/main.lua".source = ./plugins/full-border.yazi/main.lua;
     "yazi/plugins/eza-preview.yazi".source = pkgs.yaziPlugins.eza-preview;
-
-    # --- Unofficial Plugins -------------------------------------------------
-    # "yazi/plugins/starship.yazi/main.lua".source = ./plugins/starship.yazi/main.lua; - DO NOT USE - BREAKS ZELLIJ INTEGRATION
   };
 }

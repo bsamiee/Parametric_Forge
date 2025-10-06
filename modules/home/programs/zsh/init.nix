@@ -98,6 +98,45 @@
         fi
       }
 
+      nhash() {
+        if [[ $# -ne 1 ]]; then
+          printf 'usage: nhash <github-url>\n' >&2
+          return 1
+        }
+
+        local url="$1"
+        local owner repo json rev raw_sha sri_sha
+
+        owner="$(printf '%s' "$url" | sed -E 's#.+github\.com/([^/]+)/([^/]+).*#\1#')"
+        repo="$(printf '%s' "$url" | sed -E 's#.+github\.com/([^/]+)/([^/]+).*#\2#' | sed 's/\.git$//')"
+
+        if [[ -z "$owner" || -z "$repo" || "$owner" == "$url" ]]; then
+          printf 'nhash: expected GitHub repository URL, got %s\n' "$url" >&2
+          return 2
+        fi
+
+        json="$(nix-prefetch-git --no-deepClone --quiet --url "$url")" || {
+          printf 'nhash: nix-prefetch-git failed for %s\n' "$url" >&2
+          return 3
+        }
+
+        rev="$(printf '%s' "$json" | jq -r '.rev // empty')"
+        raw_sha="$(printf '%s' "$json" | jq -r '.sha256 // empty')"
+
+        if [[ -z "$rev" || -z "$raw_sha" ]]; then
+          printf 'nhash: could not parse rev/sha256 from nix-prefetch output\n' >&2
+          return 4
+        fi
+
+        if ! sri_sha="$(nix hash to-sri --type sha256 "$raw_sha")"; then
+          printf 'nhash: failed to convert hash to SRI format\n' >&2
+          return 5
+        fi
+
+        printf 'owner=%s\nrepo=%s\nrev=%s\nsha256=%s\n' "$owner" "$repo" "$rev" "$sri_sha"
+        printf '\n{ owner = "%s"; repo = "%s"; rev = "%s"; sha256 = "%s"; }\n' "$owner" "$repo" "$rev" "$sri_sha"
+      }
+
     ''
   ];
 }

@@ -13,8 +13,7 @@ let
     owner = "sharklasers996";
     repo = "eza-preview.yazi";
     rev = "7ca4c2558e17bef98cacf568f10ec065a1e5fb9b";
-    # TODO: Replace with the real hash after running nix-prefetch
-    sha256 = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
+    sha256 = "sha256-ncOOCj53wXPZvaPSoJ5LjaWSzw1omHadKDrXdIb7G5U=";
   };
 
 in {
