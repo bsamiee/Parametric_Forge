@@ -6,17 +6,17 @@
 # ----------------------------------------------------------------------------
 # Core Yazi configuration with pane ratios and file opener integration
 
-prepend_previewers = [
-  # Archive content preview
-  { name = "*.{tar,tar.gz,tar.bz2,tar.xz,tgz,tbz2,txz}", run = 'piper -- tar tf "$1"' },
-  { name = "*.{7z,zip,rar}", run = 'piper -- 7zz l "$1"' },
+#[[plugin.prepend_previewers]]
+#name = "*"      # Set piper as default previewer
+#run  = 'piper -- echo "$1"'
 
-  # Markdown preview with glow
-  { name = "*.md", run = 'piper -- glow -w $w "$1"' },
+[[plugin.prepend_previewers]]
+name = "*.csv"  # CSV preview with bat
+run  = 'piper -- bat -p --color=always "$1"'
 
-  # Directory preview with eza tree mode (uses existing eza.nix Dracula theme)
-  { name = "*/", run = 'piper -- eza -TL=3 --color=always --icons=always --group-directories-first --no-quotes "$1"' },
-]
+[[plugin.prepend_previewers]]
+name = "*/"     # Directory preview with eza tree mode
+run  = 'piper -- eza -TL=3 --color=always --icons=always --group-directories-first --no-quotes "$1"'
 
 [mgr]
 ratio = [1, 4, 3]

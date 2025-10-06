@@ -11,8 +11,6 @@ require("sidebar_status"):setup()
 require("auto_layout").setup()
 
 -- External Plugins -----------------------------------------------------------
--- require("eza-preview"):setup()               -- Enable tree mode as default - THIS IS BROKEN
-
 require("full-border"):setup {
 	type = ui.Border.ROUNDED,                   -- Available values: ui.Border.PLAIN, ui.Border.ROUNDED
 }
