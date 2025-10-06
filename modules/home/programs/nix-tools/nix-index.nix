@@ -14,7 +14,6 @@
     enableZshIntegration = true;
   };
 
-
   # Download pre-built database on activation (updated weekly)
   home.activation.downloadNixIndexDB = lib.hm.dag.entryAfter ["writeBoundary"] ''
     NIX_INDEX_DIR="${config.xdg.cacheHome}/nix-index"

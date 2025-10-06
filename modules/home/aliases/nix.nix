@@ -19,6 +19,8 @@
     ns = "nix search nixpkgs";                                    # Search for packages
     nw = "nix-locate -w";                                         # Find package providing command
     nc = "sudo nix-collect-garbage -d && nix store optimise";     # Deep clean + optimize store
+    nfetch = "nix-prefetch-github --nix";                       # Prefetch GitHub repos (Nix code output)
+    nfetchj = "nix-prefetch-github --json";                     # Prefetch GitHub repos (JSON output)
 
     # --- Flake Operations ---------------------------------------------------
     nfu = "nix flake update && nix flake check";                  # Update all inputs + validate

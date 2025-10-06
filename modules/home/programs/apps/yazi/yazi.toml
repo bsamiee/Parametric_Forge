@@ -7,7 +7,15 @@
 # Core Yazi configuration with pane ratios and file opener integration
 
 prepend_previewers = [
-  { name = "*/", run = "eza-preview" },
+  # Archive content preview
+  { name = "*.{tar,tar.gz,tar.bz2,tar.xz,tgz,tbz2,txz}", run = 'piper -- tar tf "$1"' },
+  { name = "*.{7z,zip,rar}", run = 'piper -- 7zz l "$1"' },
+
+  # Markdown preview with glow
+  { name = "*.md", run = 'piper -- glow -w $w "$1"' },
+
+  # Directory preview with eza tree mode (uses existing eza.nix Dracula theme)
+  { name = "*/", run = 'piper -- eza -TL=3 --color=always --icons=always --group-directories-first --no-quotes "$1"' },
 ]
 
 [mgr]
@@ -17,6 +25,9 @@ linemode = "mtime"
 [opener]
 edit = [
   { run = 'yazi-open-nvim.sh "$1"', desc = "Open in Neovim" },
+]
+extract = [
+  { run = 'ya pub augmented-extract --list "$@"', desc = "Extract here", for = "unix" },
 ]
 
 [tasks]
