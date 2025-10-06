@@ -10,7 +10,9 @@
 
 {
   imports = [
+    ./comma.nix
     ./nix-index.nix
+    ./nix-prefetch-github.nix
     ./nom.nix
   ];
 }

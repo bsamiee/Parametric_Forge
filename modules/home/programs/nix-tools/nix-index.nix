@@ -14,9 +14,6 @@
     enableZshIntegration = true;
   };
 
-  home.packages = with pkgs; [
-    comma  # Run software without installing: , cowsay "Hello"
-  ];
 
   # Download pre-built database on activation (updated weekly)
   home.activation.downloadNixIndexDB = lib.hm.dag.entryAfter ["writeBoundary"] ''
