@@ -25,8 +25,8 @@
       # Use zellij list-clients to get the running command
       # Format: extract everything after the first two fields (client and session)
       ${pkgs.zellij}/bin/zellij action list-clients 2>/dev/null | \
-        ${pkgs.gnused}/bin/sed -n '2p' | \
-        ${pkgs.gawk}/bin/awk '{$1=$2=""; print $0}' | \
+        head -2 | tail -1 | \
+        ${pkgs.choose}/bin/choose 2:-1 | \
         ${pkgs.findutils}/bin/xargs || echo ""
     '';
   };
@@ -49,7 +49,7 @@
         CMD=$(zellij-get-command.sh)
 
         # Check if command contains nvim/vim or is from nix store
-        if [[ "$CMD" == *"nvim"* ]] || [[ "$CMD" == *"vim"* ]] || [[ "$CMD" == */nix/store/*nvim* ]]; then
+        if [[ "''$CMD" == *"nvim"* ]] || [[ "''$CMD" == *"vim"* ]] || [[ "''$CMD" == */nix/store/*nvim* ]]; then
           exit 0  # Found nvim/vim
         fi
 
@@ -79,7 +79,7 @@
       STEPS="''${1:-3}"
 
       # Move pane up specified number of times
-      for ((i=0; i<$STEPS; i++)); do
+      for ((i=0; i<''$STEPS; i++)); do
         ${pkgs.zellij}/bin/zellij action move-pane up
       done
     '';
@@ -96,20 +96,42 @@
       # License       : MIT
       # Path          : ~/.local/bin/zellij-toggle-sidebar.sh
       # ----------------------------------------------------------------------------
-      # Toggle between sidebar and no-sidebar layouts
+      # Toggle between sidebar and no-sidebar layouts, emit events to Yazi clients
 
-      CURRENT="''${YAZI_ENABLE_SIDEBAR:-true}"
+      set -euo pipefail
 
-      if [[ "$CURRENT" == "true" ]]; then
-          export YAZI_ENABLE_SIDEBAR="false"
-          ${pkgs.zellij}/bin/zellij action switch-layout "no_side"
-      else
-          export YAZI_ENABLE_SIDEBAR="true"
-          ${pkgs.zellij}/bin/zellij action switch-layout "side"
+      CURRENT_MODE="sidebar"
+      if LAYOUT_OUTPUT="$(${pkgs.zellij}/bin/zellij action dump-layout 2>/dev/null)"; then
+        if printf "%s" "''$LAYOUT_OUTPUT" | ${pkgs.ripgrep}/bin/rg -q "pane name=\"sidebar\""; then
+          CURRENT_MODE="sidebar"
+        elif printf "%s" "''$LAYOUT_OUTPUT" | ${pkgs.ripgrep}/bin/rg -q "pane name=\"filemanager\""; then
+          CURRENT_MODE="filemanager"
+        fi
       fi
 
-      # Update the environment for child processes
-      echo "Sidebar mode: $YAZI_ENABLE_SIDEBAR"
+      case "''$CURRENT_MODE" in
+        sidebar)
+          NEXT_MODE="filemanager"
+          ${pkgs.zellij}/bin/zellij action switch-layout "no_side"
+          ;;
+        filemanager)
+          NEXT_MODE="sidebar"
+          ${pkgs.zellij}/bin/zellij action switch-layout "side"
+          ;;
+        *)
+          NEXT_MODE="sidebar"
+          ${pkgs.zellij}/bin/zellij action switch-layout "side"
+          ;;
+      esac
+
+      YA_BIN=${pkgs.yazi}/bin/ya
+      if [[ -x "''$YA_BIN" ]]; then
+        "''$YA_BIN" pub layout --str "''$NEXT_MODE" >/dev/null 2>&1 || true
+        "''$YA_BIN" pub-to sidebar layout --str "''$NEXT_MODE" >/dev/null 2>&1 || true
+        "''$YA_BIN" pub-to filemanager layout --str "''$NEXT_MODE" >/dev/null 2>&1 || true
+      fi
+
+      echo "Sidebar mode: ''$NEXT_MODE"
     '';
   };
 }

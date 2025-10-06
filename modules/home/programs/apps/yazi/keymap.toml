@@ -13,9 +13,6 @@ prepend_keymap = [
   # --- System Integration ---------------------------------------------------
   { on = "<C-p>", run = 'shell -- qlmanage -p "$@"', desc = "macOS Quick Look" },
 
-  # --- Standard Keybinding Overrides ----------------------------------------
-  { on = "<C-y>", run = "plugin augment-command -- quit", desc = "Quit Yazi" },
-
   # --- Custom Shell Keybindings ---------------------------------------------
   { on = "<C-A-D-y>", run = "shell 'yazi-focus-nvim.sh'", desc = "Focus nvim pane" },
   { on = "<C-A-D-p>", run = "shell 'yazi-open-dir.sh \"$0\"'", desc = "Open directory in new pane" },
@@ -24,35 +21,52 @@ prepend_keymap = [
   # --- Plugin Keybindings ---------------------------------------------------
   { on = "F", run = "plugin easyjump", desc = "Jump to file/directory with fuzzy search" },
 
-  # Toggle Pane Plugin
+  # --- Toggle Pane Plugin ----------------------
   { on = "[", run = "plugin toggle-pane min-parent", desc = "Toggle parent pane (left)" },
   { on = "]", run = "plugin toggle-pane min-preview", desc = "Toggle preview pane (right)" },
   { on = "\\", run = "plugin toggle-pane max-current", desc = "Maximize/restore current pane (middle)" },
 
-  # Augment Command Plugin
+  # --- Augment Command Plugin ------------------
+  # Miscellaneous
+  { on = "<C-A-D-e>", run = "plugin augment-command -- editor", desc = "Open in $EDITOR" },
+  { on = "<C-A-D-l>", run = "plugin augment-command -- pager", desc = "Open in $PAGER" },
+  { on = "<C-A-D-a>", run = "plugin augment-command -- archive", desc = "Create archive" },
+  { on = "<C-A-D-m>", run = "plugin augment-command -- emit --augmented", desc = "Augment command palette" },
+
+  { on = ";", run = "plugin augment-command -- shell --interactive", desc = "Run a shell command" },
+  { on = ":", run = "plugin augment-command -- shell --block --interactive", desc = "Run a shell command (block until finishes)" },
+  # Behavior
+  { on = "<C-y>", run = "plugin augment-command -- quit", desc = "Quit Yazi" },
   { on = "q", run = "plugin augment-command -- quit", desc = "Quit the process" },
   { on = "Q", run = "plugin augment-command -- quit --no-cwd-file", desc = "Quit without outputting cwd-file" },
-  { on = "l", run = "plugin augment-command -- enter", desc = "Enter the child directory" },
-  { on = "<Right>", run = "plugin augment-command -- enter", desc = "Enter the child directory" },
-  { on = "h", run = "plugin augment-command -- leave", desc = "Back to the parent directory" },
-  { on = "<Left>", run = "plugin augment-command -- leave", desc = "Back to the parent directory" },
-  { on = "<Enter>", run = "plugin augment-command -- open", desc = "Open selected files" },
-  { on = "o", run = "plugin augment-command -- open", desc = "Open selected files" },
-  { on = "O", run = "plugin augment-command -- open --interactive", desc = "Open selected files interactively" },
-  { on = "j", run = "plugin augment-command -- arrow 1", desc = "Next file" },
-  { on = "k", run = "plugin augment-command -- arrow -1", desc = "Previous file" },
-  { on = "<Down>", run = "plugin augment-command -- arrow 1", desc = "Next file" },
-  { on = "<Up>", run = "plugin augment-command -- arrow -1", desc = "Previous file" },
-  { on = ['g', 'g'], run = "plugin augment-command -- arrow top", desc = "Go to top" },
-  { on = "G", run = "plugin augment-command -- arrow bot", desc = "Go to bottom" },
   { on = "p", run = "plugin augment-command -- paste", desc = "Paste yanked files" },
   { on = "P", run = "plugin augment-command -- paste --force", desc = "Paste yanked files (overwrite if the destination exists)" },
   { on = "d", run = "plugin augment-command -- remove", desc = "Trash selected files" },
   { on = "D", run = "plugin augment-command -- remove --permanently", desc = "Permanently delete selected files" },
   { on = "r", run = "plugin augment-command -- rename --cursor=before_ext", desc = "Rename selected file(s)" },
   { on = "a", run = "plugin augment-command -- create", desc = "Create a file (ends with / for directories)" },
-  { on = ";", run = "plugin augment-command -- shell --interactive", desc = "Run a shell command" },
-  { on = ":", run = "plugin augment-command -- shell --block --interactive", desc = "Run a shell command (block until finishes)" },
+
+  { on = "<Enter>", run = "plugin augment-command -- open", desc = "Open selected files" },
+  { on = "o", run = "plugin augment-command -- open", desc = "Open selected files" },
+  { on = "O", run = "plugin augment-command -- open --interactive", desc = "Open selected files interactively" },
+
+  # Navigation
+  { on = "<C-A-D-f>", run = "plugin augment-command -- first_file", desc = "Jump to first file" },
+  { on = "<C-A-D-h>", run = "plugin augment-command -- parent_arrow -1", desc = "Navigate parent up" },
+  { on = "<C-A-D-j>", run = "plugin augment-command -- parent_arrow 1", desc = "Navigate parent down" },
+  { on = "G", run = "plugin augment-command -- arrow bot", desc = "Go to bottom" },
+  { on = ['g', 'g'], run = "plugin augment-command -- arrow top", desc = "Go to top" },
+
+  { on = "l", run = "plugin augment-command -- enter", desc = "Enter the child directory" },
+  { on = "<Right>", run = "plugin augment-command -- enter", desc = "Enter the child directory" },
+  { on = "h", run = "plugin augment-command -- leave", desc = "Back to the parent directory" },
+  { on = "<Left>", run = "plugin augment-command -- leave", desc = "Back to the parent directory" },
+  { on = "j", run = "plugin augment-command -- arrow 1", desc = "Next file" },
+  { on = "<Down>", run = "plugin augment-command -- arrow 1", desc = "Next file" },
+  { on = "k", run = "plugin augment-command -- arrow -1", desc = "Previous file" },
+  { on = "<Up>", run = "plugin augment-command -- arrow -1", desc = "Previous file" },
+
+  # Tabs
   { on = "t", run = "plugin augment-command -- tab_create --current", desc = "Create a new tab with CWD" },
   { on = "1", run = "plugin augment-command -- tab_switch 0", desc = "Switch to first tab" },
   { on = "2", run = "plugin augment-command -- tab_switch 1", desc = "Switch to second tab" },

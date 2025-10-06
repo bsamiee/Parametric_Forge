@@ -14,6 +14,7 @@
     cl = "clear";
     ex = "exit";
     vim = "nvim";
+    ff = "fastfetch";
 
     # --- Shell Configuration ------------------------------------------------
     envs = "env | sort";                            # List environment variables sorted
@@ -55,6 +56,8 @@
     # grep = "rg";                                  # Causes conflicts with -E and -G
     batg = "batgrep";                               # Bat-powered ripgrep (via bat-extras)
     tldru = "tldr --update";                        # Update tldr cache
+    rgx = "grex -xc";                               # Generate readable regex from test cases
+    rgxf = "grex -xc -f";                           # File input with readable output
 
     # --- Data Processing ----------------------------------------------------
     jqr = "jq -r";                                  # Raw output (no quotes)

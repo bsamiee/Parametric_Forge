@@ -24,23 +24,23 @@
 
       # Detect target client dynamically
       CLIENT_ID=$(yazi-current-client.sh 2>/dev/null || true)
-      [[ -z "$CLIENT_ID" ]] && CLIENT_ID="sidebar"
+      [[ -z "''$CLIENT_ID" ]] && CLIENT_ID="sidebar"
 
-      BUFFER="''${1:-$PWD}"
+      BUFFER="''${1:-''$PWD}"
 
       # Store current pane to return to later
-      CURRENT_PANE=$(${pkgs.zellij}/bin/zellij action list-clients 2>/dev/null | head -1 | awk '{print $1}' || echo "")
+      CURRENT_PANE=$(${pkgs.zellij}/bin/zellij action list-clients 2>/dev/null | head -1 | ${pkgs.choose}/bin/choose 0 || echo "")
 
       # Find Yazi pane (check for sidebar or filemanager)
       for i in {1..4}; do
         # Get pane info - check if it's running yazi or named appropriately
         PANE_CMD=$(zellij-get-command.sh)
-        PANE_NAME=$(${pkgs.zellij}/bin/zellij action query-tab-names 2>/dev/null | ${pkgs.gnugrep}/bin/grep -o '"name":"[^"]*"' | ${pkgs.gnused}/bin/sed 's/"name":"//;s/"//' || echo "")
+        PANE_NAME=$(${pkgs.zellij}/bin/zellij action query-tab-names 2>/dev/null | ${pkgs.ripgrep}/bin/rg -o '"name":"[^"]*"' | ${pkgs.sd}/bin/sd '"name":"' "" | ${pkgs.sd}/bin/sd '"' "" || echo "")
 
-        if [[ "$PANE_CMD" == *"yazi"* ]] || [[ "$PANE_NAME" == "sidebar" ]] || [[ "$PANE_NAME" == "filemanager" ]]; then
+        if [[ "''$PANE_CMD" == *"yazi"* ]] || [[ "''$PANE_NAME" == "sidebar" ]] || [[ "''$PANE_NAME" == "filemanager" ]]; then
           # Found Yazi pane - use ya pub-to to reveal file
           if command -v ya &>/dev/null; then
-            ya pub-to "$CLIENT_ID" reveal --str "$BUFFER"
+            ya pub-to "''$CLIENT_ID" reveal --str "''$BUFFER"
           else
             echo "ya command not found - cannot reveal file" >&2
           fi
@@ -70,23 +70,23 @@
       tmp="$(mktemp -t yazi-picker.XXXXXX)"
 
       # Launch Yazi in a floating pane with chooser-file option
-      ${pkgs.zellij}/bin/zellij action new-pane --floating -- ${pkgs.yazi}/bin/yazi --chooser-file="$tmp"
+      ${pkgs.zellij}/bin/zellij action new-pane --floating -- ${pkgs.yazi}/bin/yazi --chooser-file="''$tmp"
 
       # Wait for Yazi to exit and check if a file was selected
-      if [[ -s "$tmp" ]]; then
-        selected=$(cat "$tmp")
-        if [[ -n "$selected" && -f "$selected" ]]; then
+      if [[ -s "''$tmp" ]]; then
+        selected=$(cat "''$tmp")
+        if [[ -n "''$selected" && -f "''$selected" ]]; then
           # Open the selected file in nvim
-          ${pkgs.neovim}/bin/nvim "$selected"
+          ${pkgs.neovim}/bin/nvim "''$selected"
         else
-          echo "Selected path is not a valid file: $selected" >&2
+          echo "Selected path is not a valid file: ''$selected" >&2
         fi
       else
         echo "No file selected" >&2
       fi
 
       # Clean up temporary file
-      rm -f "$tmp"
+      rm -f "''$tmp"
     '';
   };
 }

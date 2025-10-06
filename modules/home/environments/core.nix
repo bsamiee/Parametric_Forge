@@ -16,7 +16,8 @@
     LC_ALL = "";
 
     # --- Editor  ------------------------------------------------------------
-    EDITOR = "nvim";
+    # Integration script that handles Yazi→Nvim workflow via modern RPC
+    EDITOR = "${config.home.homeDirectory}/.local/bin/yazi-open-nvim.sh";
     VISUAL = "code --wait";
 
     # --- File Type Detection ------------------------------------------------

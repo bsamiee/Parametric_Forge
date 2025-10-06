@@ -82,12 +82,12 @@ let
     };
     git = {
       new = { foreground = "#50FA7B"; };
-      modified = { foreground = "#F97359"; };
+      modified = { foreground = "#F1FA8C"; };
       deleted = { foreground = "#FF5555"; };
       renamed = { foreground = "#94F2E8"; };
       typechange = { foreground = "#d82f94"; };
       ignored = { foreground = "#6272A4"; is_dimmed = true; };
-      conflicted = { foreground = "#FF5555"; is_bold = true; };
+      conflicted = { foreground = "#F97359"; is_bold = true; };
     };
     git_repo = {
       branch_main = { foreground = "#F8F8F2"; };
@@ -99,7 +99,7 @@ let
       colon = { foreground = "#6272A4"; };
       user = { foreground = "#F8F8F2"; };
       role = { foreground = "#d82f94"; };
-      typ = { foreground = "#6272A4"; };
+      typ = { foreground = "#F1FA8C"; };
       range = { foreground = "#d82f94"; };
     };
     file_type = {
@@ -107,19 +107,19 @@ let
       video = { foreground = "#E98FBE"; };
       music = { foreground = "#50FA7B"; };
       lossless = { foreground = "#50FA7B"; };
-      crypto = { foreground = "#6272A4"; };
-      document = { foreground = "#F8F8F2"; };
+      crypto = { foreground = "#A072C6"; };
+      document = { foreground = "#6272A4"; };
       compressed = { foreground = "#d82f94"; };
       temp = { foreground = "#FF5555"; };
       compiled = { foreground = "#94F2E8"; };
-      build = { foreground = "#6272A4"; };
-      source = { foreground = "#94F2E8"; };
+      build = { foreground = "#F1FA8C"; };
+      source = { foreground = "#F97359"; };
     };
     punctuation = { foreground = "#6272A4"; };
     date = { foreground = "#E98FBE"; };
     inode = { foreground = "#44475A"; };
     broken_symlink = { foreground = "#FF5555"; is_underline = true; };
-    broken_path_overlay = { foreground = "#94F2E8"; };
+    broken_path_overlay = { foreground = "#F97359"; };
   };
 in
 {

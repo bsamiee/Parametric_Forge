@@ -24,10 +24,11 @@
 
     # --- Yazi ---------------------------------------------------------------
     YAZI_CONFIG_HOME = "${config.xdg.configHome}/yazi";
-    YAZI_ENABLE_SIDEBAR = "true";   # Default value (runtime scripts now auto-detect active client)
 
     # --- Neovim -------------------------------------------------------------
-    NVIM_LISTEN_ADDRESS = "\${XDG_RUNTIME_DIR:-/tmp}/nvim-\${ZELLIJ_SESSION_NAME:-main}.sock";
+    # Note: Modern Neovim uses --listen flag instead of NVIM_LISTEN_ADDRESS (obsolete)
+    # Socket path format: $XDG_RUNTIME_DIR/nvim-$ZELLIJ_SESSION_NAME.sock
+    # Usage: nvim --listen "$socket_path" (see integration scripts for implementation)
 
     # --- Serpl --------------------------------------------------------------
     SERPL_CONFIG = "${config.xdg.configHome}/serpl";

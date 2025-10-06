@@ -6,17 +6,18 @@
 # ----------------------------------------------------------------------------
 # Core Yazi configuration with pane ratios and file opener integration
 
-[[plugin.prepend_previewers]]
-name = "*.csv"  # CSV preview with bat
-run  = 'piper -- bat -p --color=always "$1"'
-
-[[plugin.prepend_previewers]]
-name = "*/"     # Directory preview with eza tree mode
-run  = 'piper -- eza -TL=3 --color=always --icons=always --group-directories-first --no-quotes "$1"'
-
 [mgr]
 ratio = [1, 4, 3]
-linemode = "mtime"
+sort_by = "natural"                        # Natural sort: 1.md < 2.md < 10.md (better than alphabetical)
+sort_sensitive = false
+sort_reverse = false
+sort_dir_first = true
+sort_translit = true                       # Better handling of international characters
+linemode = "mtime"                         # Show modification time for workflow context
+show_hidden = false
+show_symlink = false
+mouse_events = ["click", "scroll", "drag"] # Full mouse support
+title_format = "Yazi: {cwd}"
 
 [opener]
 edit = [
@@ -25,6 +26,14 @@ edit = [
 extract = [
   { run = 'ya pub augmented-extract --list "$@"', desc = "Extract here", for = "unix" },
 ]
+
+[[plugin.prepend_previewers]]
+name = "*.csv"  # CSV preview with bat
+run  = 'piper -- bat -p --color=always "$1"'
+
+[[plugin.prepend_previewers]]
+name = "*/"     # Directory preview with eza tree mode
+run  = 'piper -- eza -TL=3 --color=always --icons=always --group-directories-first --no-quotes "$1"'
 
 [tasks]
 micro_workers = 10
