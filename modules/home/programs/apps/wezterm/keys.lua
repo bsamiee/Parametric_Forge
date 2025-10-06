@@ -25,6 +25,12 @@ function M.setup(config)
     -- WezTerm intercepting it for host clipboard handling.
     action = wezterm.action.SendKey { key = "c", mods = "CMD" },
   })
+  table.insert(config.keys, {
+    key = "t",
+    mods = "CMD",
+    -- Hand Cmd+T to Zellij (Super) so it opens a new Zellij tab, not a WezTerm tab.
+    action = wezterm.action.SendKey { key = "t", mods = "SUPER" },
+  })
 end
 
 return M

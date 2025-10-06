@@ -11,4 +11,6 @@
 final: prev: {
   # Custom package overrides can be added here when needed
   sqlean = prev.callPackage (inputs.self + "/overlays/sqlean") { };
+
+  yaziPlugins = (prev.yaziPlugins or { }) // (prev.callPackage (inputs.self + "/overlays/yazi") { });
 }

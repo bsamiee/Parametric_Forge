@@ -25,7 +25,7 @@
 
 [mgr]
 cwd = { fg = "#F1FA8C", underline = true }
-hovered = { fg = "#15131F", bg = "#F8F8F2", bold = true }
+hovered = { fg = "#15131F", bg = "#94F2E8", bold = true }
 preview_hovered = { fg = "#d82f94", underline = true }
 find_keyword = { fg = "#15131F", bg = "#F1FA8C" }
 find_position = { fg = "#15131F", bg = "#F97359" }
@@ -33,7 +33,7 @@ symlink_target = { fg = "#FF5555" }
 marker_marked = { fg = "#15131F", bg = "#A072C6" }
 marker_copied = { fg = "#15131F", bg = "#F97359" }
 marker_cut = { fg = "#15131F", bg = "#FF5555" }
-marker_selected = { fg = "#15131F", bg = "#94F2E8" }
+marker_selected = { fg = "#15131F", bg = "#50FA7B" }
 count_copied = { fg = "#15131F", bg = "#F97359" }
 count_cut = { fg = "#15131F", bg = "#FF5555" }
 count_selected = { fg = "#15131F", bg = "#94F2E8" }
@@ -181,7 +181,7 @@ rules = [
   { name = "*", is = "dummy", bg = "#FF5555" },
   { name = "*/", is = "dummy", bg = "#FF5555" },
   # Fallback
-  { name = "*/", fg = "#94F2E8" },
+  { name = "*/", fg = "#F8F8F2" },
 ]
 
 [icon]

@@ -6,8 +6,13 @@
 # ----------------------------------------------------------------------------
 # Core Yazi configuration with pane ratios and file opener integration
 
+prepend_previewers = [
+  { name = "*/", run = "eza-preview" },
+]
+
 [mgr]
 ratio = [1, 4, 3]
+linemode = "mtime"
 
 [opener]
 edit = [

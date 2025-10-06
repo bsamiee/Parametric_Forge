@@ -23,6 +23,9 @@
     # --- Official Plugins ---------------------------------------------------
     "yazi/plugins/full-border.yazi/main.lua".source = ./plugins/full-border.yazi/main.lua;
 
+    # --- External Plugins ---------------------------------------------------
+    "yazi/plugins/eza-preview.yazi".source = pkgs.yaziPlugins.eza-preview;
+
     # --- Unofficial Plugins -------------------------------------------------
     # "yazi/plugins/starship.yazi/main.lua".source = ./plugins/starship.yazi/main.lua; - DO NOT USE - BREAKS ZELLIJ INTEGRATION
   };

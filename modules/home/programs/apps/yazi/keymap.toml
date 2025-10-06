@@ -8,29 +8,19 @@
 
 "$schema" = "https://yazi-rs.github.io/schemas/keymap.json"
 
-# --- Shell Script Keybindings -----------------------------------------------
-[[mgr.prepend_keymap]] # macOS: Preview files with the system Quick Look
-on = "<C-p>"
-run = 'shell -- qlmanage -p "$@"'
+[mgr]
+prepend_keymap = [
+  # --- System Integration ---------------------------------------------------
+  { on = "<C-p>", run = 'shell -- qlmanage -p "$@"', desc = "macOS Quick Look" },
 
-# --- Script Integrated Keybindings ------------------------------------------
-[[mgr.append_keymap]]
-on = [ "<C-A-D-y>" ] # Super (⌘⌃⌥) + Y → focus Neovim/editor pane
-run = "shell 'yazi-focus-nvim.sh'"
-desc = "Focus nvim pane"
+  # --- Custom Shell Keybindings ---------------------------------------------
+  { on = "<C-A-D-y>", run = "shell 'yazi-focus-nvim.sh'", desc = "Focus nvim pane" },
+  { on = "<C-A-D-p>", run = "shell 'yazi-open-dir.sh \"$0\"'", desc = "Open directory in new pane" },
+  { on = "<C-A-D-r>", run = "shell 'yazi-reveal.sh \"$1\"'", desc = "Reveal file in sidebar" },
 
-[[mgr.append_keymap]]
-on = [ "<C-A-D-p>" ] # Super (⌘⌃⌥) + P → open directory in sibling Zellij pane
-run = "shell 'yazi-open-dir.sh \"$0\"'"
-desc = "Open directory in new pane"
+  # --- Plugin Keybindings ---------------------------------------------------
+  { on = "E", run = "plugin eza-preview", desc = "Toggle tree/list dir preview" },
 
-[[mgr.append_keymap]]
-on = [ "<C-A-D-r>" ] # Super (⌘⌃⌥) + R → reveal selection in sidebar/fullscreen Yazi
-run = "shell 'yazi-reveal.sh \"$1\"'"
-desc = "Reveal file in sidebar"
-
-# --- Standard Keybindings ---------------------------------------------------
-[[mgr.append_keymap]]
-on = [ "<C-y>" ]
-run = "quit"
-desc = "Quit Yazi"
+  # --- Standard Keybinding Overrides ----------------------------------------
+  { on = "<C-y>", run = "quit", desc = "Quit Yazi" },
+]

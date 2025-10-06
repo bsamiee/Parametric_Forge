@@ -77,26 +77,26 @@ in
         // --- Format Configuration
         format_left               "{mode} {tabs}"
         format_center             "{swap_layout}"
-        format_right              "#[bg=$pink,fg=$current_line] [{session}] "
+        format_right              "#[bg=$pink,fg=$current_line,bold] [{session}] "
         format_space              ""
 
         // --- Layout Display
-        swap_layout_format        "#[bg=$current_line,fg=$cyan][layout: {name}]"
+        swap_layout_format        "#[bg=$background,fg=$cyan,bold][layout: {name}]"
         swap_layout_hide_if_empty "true"
 
         // --- Mode Indicators
-        mode_normal "#[bg=$green,fg=$current_line] [NORMAL] "
-        mode_resize "#[bg=$purple,fg=$current_line] [RESIZE] "
-        mode_tab    "#[bg=$magenta,fg=$current_line] [TABS] "
-        mode_pane   "#[bg=$orange,fg=$current_line] [PANES] "
-        mode_scroll "#[bg=$yellow,fg=$current_line] [SCROLL] "
-        mode_locked "#[bg=$selection,fg=$current_line] [LOCKED] "
-        mode_prompt "#[bg=$foreground,fg=$current_line] [PROMPT] "
-        mode_search "#[bg=$pink,fg=$current_line] [SEARCH] "
+        mode_normal "#[bg=$green,fg=$current_line,bold] [NORMAL] "
+        mode_resize "#[bg=$purple,fg=$current_line,bold] [RESIZE] "
+        mode_tab    "#[bg=$magenta,fg=$current_line,bold] [TABS] "
+        mode_pane   "#[bg=$orange,fg=$current_line,bold] [PANES] "
+        mode_scroll "#[bg=$yellow,fg=$current_line,bold] [SCROLL] "
+        mode_locked "#[bg=$selection,fg=$current_line,bold] [LOCKED] "
+        mode_prompt "#[bg=$foreground,fg=$current_line,bold] [PROMPT] "
+        mode_search "#[bg=$pink,fg=$current_line,bold] [SEARCH] "
 
         // --- Tab Display
-        tab_active    "#[bg=$cyan,fg=$current_line] {name} "
-        tab_normal    "#[bg=$comment,fg=$current_line] {name} "
+        tab_active    "#[bg=$cyan,fg=$current_line,bold] {name} "
+        tab_normal    "#[bg=$comment,fg=$current_line,bold] {name} "
         tab_separator " "
 
         // --- Border Configuration
@@ -122,6 +122,12 @@ in
       normal {
         // uncomment this and adjust key if using copy_on_select=false
         // bind "Super c" { Copy; }
+
+        // Super (⌘t) → create new tab without entering tab mode
+        bind "Super t" {
+          NewTab;
+          SwitchToMode "Normal";
+        }
 
         // Super (⌘⌃⌥) + T → toggle sidebar layout
         bind "Ctrl Alt Super t" {
@@ -183,7 +189,6 @@ in
         bind "l" "Right" "Down" "j" { GoToNextTab; }
         bind "n" { NewTab; SwitchToMode "Normal"; }
         bind "x" { CloseTab; SwitchToMode "Normal"; }
-        bind "s" { ToggleActiveSyncTab; SwitchToMode "Normal"; }
         bind "b" { BreakPane; SwitchToMode "Normal"; }
         bind "]" { BreakPaneRight; SwitchToMode "Normal"; }
         bind "[" { BreakPaneLeft; SwitchToMode "Normal"; }
