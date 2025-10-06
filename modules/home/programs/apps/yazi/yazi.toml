@@ -6,10 +6,6 @@
 # ----------------------------------------------------------------------------
 # Core Yazi configuration with pane ratios and file opener integration
 
-#[[plugin.prepend_previewers]]
-#name = "*"      # Set piper as default previewer
-#run  = 'piper -- echo "$1"'
-
 [[plugin.prepend_previewers]]
 name = "*.csv"  # CSV preview with bat
 run  = 'piper -- bat -p --color=always "$1"'
