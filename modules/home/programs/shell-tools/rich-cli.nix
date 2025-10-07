@@ -4,12 +4,12 @@
 # License       : MIT
 # Path          : modules/home/programs/shell-tools/rich-cli.nix
 # ----------------------------------------------------------------------------
-# Rich command-line interface for rendering and inspecting content
+# Rich command-line interface for rendering and inspecting content with Dracula theme
 
 { config, lib, pkgs, ... }:
 
 {
   home.packages = with pkgs; [
-    python3Packages."rich-cli"
+    rich-cli # Corrected package name
   ];
 }

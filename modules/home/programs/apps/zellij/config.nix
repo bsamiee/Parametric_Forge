@@ -160,8 +160,8 @@ in
             }
         }
 
-        bind "Super Alt Ctrl [" { MoveTab "Left"; }
-        bind "Super Alt Ctrl ]" { MoveTab "Right"; }
+        bind "Super Alt Ctrl [" { GoToPreviousTab; }
+        bind "Super Alt Ctrl ]" { GoToNextTab; }
         bind "Super Alt Ctrl h" "Super Alt Ctrl Left" { MoveFocusOrTab "Left"; }
         bind "Super Alt Ctrl l" "Super Alt Ctrl Right" { MoveFocusOrTab "Right"; }
         bind "Super Alt Ctrl j" "Super Alt Ctrl Down" { MoveFocus "Down"; }
@@ -232,6 +232,8 @@ in
         bind "Super Alt Ctrl Shift t" { SwitchToMode "Normal"; }                  // Hyper (⌘⌥⌃⇧) | Right Command
         bind "[" "Left" { GoToPreviousTab; }
         bind "]" "Right" { GoToNextTab; }
+        bind ";" { MoveTab "Left"; }
+        bind "'" { MoveTab "Right"; }
         bind "r" { SwitchToMode "RenameTab"; TabNameInput 0; }
         bind "n" { NewTab; }
         bind "x" { CloseTab; }

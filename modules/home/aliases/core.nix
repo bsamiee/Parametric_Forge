@@ -69,11 +69,11 @@
     yaml = "yq eval";                               # Process YAML
 
     # --- Trash Management ---------------------------------------------------
-    trash = "trash-put";                            # Send files to trash
-    restore = "trash-restore";                      # Restore files from trash
-    trashls = "trash-list";                         # List trashed files
-    trashrm = "trash-rm";                           # Remove specific files from trash
-    trashempty = "trash-empty";                     # Empty entire trash
+    tput = "trash-put";                             # Send files to trash
+    trestore = "trash-restore";                     # Restore files from trash
+    tls = "trash-list";                             # List trashed files
+    trm = "trash-rm";                               # Remove specific files from trash
+    tempty = "trash-empty";                         # Empty entire trash
 
     # --- Directory Navigation -----------------------------------------------
     cdr = "cd $(git rev-parse --show-toplevel)";    # Jump to repo root
