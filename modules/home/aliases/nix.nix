@@ -22,6 +22,7 @@
     nparse = "nix-instantiate --parse";                           # Parse Nix expressions
     nfetch = "nix-prefetch-github --nix";                         # Prefetch GitHub repos (Nix code output)
     nfetchj = "nix-prefetch-github --json";                       # Prefetch GitHub repos (JSON output)
+    nhash = "nix hash convert --to-sri";                          # Convert hash to modern SRI format
 
     # --- Flake Operations ---------------------------------------------------
     nfu = "nix flake update && nix flake check";                  # Update all inputs + validate

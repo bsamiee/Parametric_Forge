@@ -21,7 +21,7 @@ title_format = "Yazi: {cwd}"
 
 [opener]
 edit = [
-  { run = 'yazi-open-nvim.sh "$1"', desc = "Open in Neovim" },
+  { run = 'plugin augment-command -- editor', desc = "Open in editor" },
 ]
 extract = [
   { run = 'ya pub augmented-extract --list "$@"', desc = "Extract here", for = "unix" },

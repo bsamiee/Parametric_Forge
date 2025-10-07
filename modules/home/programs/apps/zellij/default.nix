@@ -52,7 +52,7 @@ in
     xdg.configFile = {
       "zellij/plugins/zellij-pane-picker.wasm".source = pkgs.fetchurl {
         url = "https://github.com/shihanng/zellij-pane-picker/releases/download/v0.6.0/zellij-pane-picker.wasm";
-        sha256 = "06lnrgsl5fd0y7w8rdqs3lxz8kdixcvklp74s2h53g6gj94rrva0";
+        hash = "sha256-QO2cSZLPvFGg0ORcOjfrsU30Ox0at4z48aC5QvXLlho=";
       };
       "zellij/plugins/zjstatus.wasm".source = pkgs.fetchurl {
         url = "https://github.com/dj95/zjstatus/releases/download/v0.21.1/zjstatus.wasm";

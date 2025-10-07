@@ -16,12 +16,12 @@ require("full-border"):setup {
 }
 
 require("easyjump"):setup({
-    icon_fg = "#F97359",
-    first_key_fg = "#F97359",
+    icon_fg = "#F1FA8C",
+    first_key_fg = "#50FA7B",
 })
 
 require("augment-command"):setup({
-    prompt = true,                             -- Create prompt to choose between hovered/selected items when both exist
+    prompt = true,                              -- Create prompt to choose between hovered/selected items when both exist
     default_item_group_for_prompt = "hovered",  -- Default item group when prompt submitted without value (hovered/selected/none)
     smart_enter = true,                         -- Use one command to open files or enter directories
     smart_paste = false,                        -- Paste items into directory without entering it

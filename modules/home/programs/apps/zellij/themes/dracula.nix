@@ -109,9 +109,9 @@ in
           emphasis_3 ${rgb colors.magenta}
         }
         list_selected {
-          base ${rgb colors.foreground}
-          background ${rgb colors.selection}
-          emphasis_0 ${rgb colors.cyan}
+          base ${rgb colors.current_line}
+          background ${rgb colors.cyan}
+          emphasis_0 ${rgb colors.orange}
           emphasis_1 ${rgb colors.yellow}
           emphasis_2 ${rgb colors.magenta}
           emphasis_3 ${rgb colors.comment}

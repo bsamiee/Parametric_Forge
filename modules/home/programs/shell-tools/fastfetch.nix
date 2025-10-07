@@ -52,7 +52,7 @@
             right = " ]";
           };
           color = {
-            elapsed = "#50FA7B";   # Dracula green
+            elapsed = "#50FA7B";    # Dracula green
             total = "#44475A";      # Dracula selection
           };
         };
@@ -78,8 +78,8 @@
       logo = {
         type = "file";
         source = "${config.xdg.configHome}/fastfetch/logo.txt";
-        width = 28;
-        height = 16;
+        # width = 28;
+        # height = 16;
         padding = {
           top = 1;
           right = 3;
@@ -92,49 +92,50 @@
       # --- Modules Configuration --------------------------------------------
       modules = [
         # Title and separator
-        { type = "title"; format = "{user-name-colored}"; }
+        { type = "break"; }
+        { type = "title"; format = "{user-name-colored}"; color = { user = "#50FA7B"; }; }
         { type = "break"; }
 
         # System Section
         { type = "os"; key = "OS   "; format = "{name} {version} {arch}"; }
-        { type = "host"; key = " ├ 󰇅 "; format = "{name}"; }
-        { type = "kernel"; key = " ├  "; format = "{sysname} {release}"; }
-        { type = "uptime"; key = " ├  "; }
-        { type = "packages"; key = " └ 󰏖 "; format = "{nix-default} (nix), {brew} (brew), {brew-cask} (cask)"; }
+        { type = "host"; key = " ├ 󰇅  "; format = "{name}"; }
+        { type = "kernel"; key = " ├   "; format = "{sysname} {release}"; }
+        { type = "uptime"; key = " ├   "; }
+        { type = "packages"; key = " └ 󰏖  "; format = "{nix-default} (nix), {brew} (brew), {brew-cask} (cask)"; }
         { type = "break"; }
 
         # Desktop Section
         { type = "de"; key = "UI   "; format = "{pretty-name}"; }
-        { type = "wm"; key = " ├ 󰧨 "; format = "{pretty-name}"; }
-        { type = "lm"; key = " ├  "; }
-        { type = "wmtheme"; key = " ├ 󰉼 "; }
-        { type = "theme"; key = " ├ 󰉼 "; format = "Dracula"; }
-        { type = "icons"; key = " ├ 󰀻 "; format = "Nerd Fonts"; }
-        { type = "shell"; key = " ├  "; format = "{pretty-name} {version}"; }
-        { type = "terminal"; key = " ├  "; format = "WezTerm"; }
-        { type = "terminal"; key = " ├ 󰕰 "; format = "{pretty-name}"; }
-        { type = "terminalfont"; key = " └  "; format = "GeistMono Nerd Font 10pt"; }
+        { type = "wm"; key = " ├ 󰧨  "; format = "{pretty-name}"; }
+        { type = "lm"; key = " ├   "; }
+        { type = "wmtheme"; key = " ├ 󰉼  "; }
+        { type = "theme"; key = " ├ 󰉼  "; format = "Dracula"; }
+        { type = "icons"; key = " ├ 󰀻  "; format = "Nerd Fonts"; }
+        { type = "shell"; key = " ├   "; format = "{pretty-name} {version}"; }
+        { type = "terminal"; key = " ├   "; format = "WezTerm"; }
+        { type = "terminal"; key = " ├ 󰕰  "; format = "{pretty-name}"; }
+        { type = "terminalfont"; key = " └   "; format = "GeistMono Nerd Font 10pt"; }
         { type = "break"; }
 
         # Hardware Section
         { type = "chassis"; key = "HW   "; }
-        { type = "cpu"; key = " ├  "; temp = true; format = "{name} ({cores-physical}) @ {freqMax}"; }
-        { type = "memory"; key = " ├  "; format = "{used} / {total}"; }
-        { type = "swap"; key = " ├ 󰓡 "; format = "{used} / {total} ({percentage}%)"; }
-        { type = "disk"; key = " ├ 󰋊 "; folders = "/"; format = "{size-used} / {size-total} ({size-percentage}%"; }
-        { type = "display"; key = " ├ 󰍹 "; format = "{width}x{height} @ {refresh-rate}Hz"; }
-        { type = "opengl"; key = " └ 󰍛 "; }
+        { type = "cpu"; key = " ├   "; temp = true; format = "{name} ({cores-physical}) @ {freqMax}"; }
+        { type = "memory"; key = " ├   "; format = "{used} / {total}"; }
+        { type = "swap"; key = " ├ 󰓡  "; format = "{used} / {total} ({percentage}%)"; }
+        { type = "disk"; key = " ├ 󰋊  "; folders = "/"; format = "{size-used} / {size-total} ({size-percentage}%"; }
+        { type = "display"; key = " ├ 󰍹  "; format = "{width}x{height} @ {refresh-rate}Hz"; }
+        { type = "opengl"; key = " └ 󰍛  "; }
         { type = "break"; }
 
         # Network Section
         { type = "wifi"; key = "NET  "; format = "{ssid}"; }
-        { type = "localip"; key = " ├  "; format = "{ipv4}"; showIpv6 = false; showLoop = false; compact = true; }
-        { type = "publicip"; key = " ├  "; }
-        { type = "netio"; key = " └  "; }
+        { type = "localip"; key = " ├   "; format = "{ipv4}"; showIpv6 = false; showLoop = false; compact = true; }
+        { type = "publicip"; key = " ├   "; }
+        { type = "netio"; key = " └   "; }
         { type = "break"; }
 
         # Colors display
-        { type = "colors"; symbol = "circle"; paddingLeft = 16; }
+        { type = "colors"; symbol = "circle"; paddingLeft = 8; }
       ];
     };
   };

@@ -38,6 +38,7 @@
     ./pik.nix
     ./procs.nix
     ./rclone.nix
+    ./rich-cli.nix
     ./ripgrep.nix
     ./rsync.nix
     ./sd.nix

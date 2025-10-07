@@ -10,8 +10,8 @@
 
 {
   imports = [
-    ./yazi
+    # ./yazi #TODO: PENDING INTEGRATION
     ./zellij
-    ./nvim
+    # ./nvim #TODO: PENDING INTEGRATION
   ];
 }
