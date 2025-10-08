@@ -4,39 +4,34 @@
 # License       : MIT
 # Path          : modules/home/programs/apps/yazi
 # ----------------------------------------------------------------------------
-# Yazi file manager with declarative plugin management
+# Yazi file manager with nixpkgs plugins
 
 { config, lib, pkgs, ... }:
 
 let
-  yazi-plugins = pkgs.fetchFromGitHub {
-    owner = "yazi-rs";
-    repo = "plugins";
-    rev = "d1c8baab86100afb708694d22b13901b9f9baf00";
-    hash = "sha256-52Zn6OSSsuNNAeqqZidjOvfCSB7qPqUeizYq/gO+UbE=";
+  yaziPkg = pkgs.yazi.override {
+    _7zz = pkgs._7zz-rar;  # Prefer RAR-capable 7zip for archive support
   };
-in
-{
+in {
   programs.yazi = {
     enable = true;
     enableZshIntegration = true;
-    package = pkgs.yazi;
+    package = yaziPkg;
     plugins = {
-      full-border = "${yazi-plugins}/full-border.yazi";
-      piper = "${yazi-plugins}/piper.yazi";
-      toggle-pane = "${yazi-plugins}/toggle-pane.yazi";
+      # Official plugins from nixpkgs (version-matched)
+      full-border = pkgs.yaziPlugins.full-border;
+      piper = pkgs.yaziPlugins.piper;
+      toggle-pane = pkgs.yaziPlugins.toggle-pane;
+      jump-to-char = pkgs.yaziPlugins.jump-to-char;
+      mount = pkgs.yaziPlugins.mount;
+
+      # Third-party plugins (not in nixpkgs)
       augment-command = pkgs.fetchFromGitHub {
         owner = "hankertrix";
         repo = "augment-command.yazi";
         rev = "120406f79b6a5bf4db6120dd99c1106008ada5cf";
         hash = "sha256-t9X7cNrMR3fFqiM13COQbBDHYr8UKgxW708V6ndZVgY=";
       };
-      easyjump = "${pkgs.fetchFromGitHub {
-        owner = "mikavilpas";
-        repo = "easyjump.yazi";
-        rev = "b77e4f0eecf793a324855de47e3e03393190084c";
-        hash = "sha256-QzgnW64XLpm6Vjk6yOBXWWHTJse9pF6ewjEJASAdVu8=";
-      }}/easyjump.yazi";
     };
   };
 

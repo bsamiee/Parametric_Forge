@@ -8,6 +8,18 @@
 
 "$schema" = "https://yazi-rs.github.io/schemas/yazi.json"
 
+[[plugin.prepend_previewers]]
+name = "*.csv"
+run  = 'piper -- bat -p --color=always "$1"'
+
+[[plugin.prepend_previewers]]
+name = "*/"
+run  = 'piper -- /nix/store/4c06vjcn678df5ziwy5jia9msn1pnrpd-eza-0.23.4/bin/eza -TL=3 --color=always --icons=always --group-directories-first --no-quotes "$1"'
+
+[[plugin.prepend_previewers]]
+name = "*.tar*"
+run  = 'piper --format=url -- tar tf "$1"'
+
 [mgr]
 ratio = [1, 4, 3]
 sort_by = "natural"                        # Natural sort: 1.md < 2.md < 10.md (better than alphabetical)
@@ -26,22 +38,6 @@ edit = [{ run = 'plugin augment-command -- editor', desc = "Open in editor" }]
 extract = [
   { run = 'ya pub augmented-extract --list "$@"', desc = "Extract here", for = "unix" },
 ]
-
-[[plugin.prepend_previewers]]
-name = "*/"
-run = 'piper -- eza -TL=3 --color=always --icons=always --group-directories-first --no-quotes "$1"'
-
-[[plugin.prepend_previewers]]
-name = "*.csv"
-run = 'piper -- bat -p --color=always "$1"'
-
-[[plugin.prepend_previewers]]
-name = "*.tar*"
-run = 'piper --format=url -- tar tf "$1"'
-
-[[plugin.prepend_previewers]]
-name = "*.md*"
-run = 'piper -- rich --guides --line-numbers --force-terminal "$1"'
 
 [tasks]
 micro_workers = 10

@@ -15,11 +15,6 @@ require("full-border"):setup {
 	type = ui.Border.ROUNDED,                   -- Available values: ui.Border.PLAIN, ui.Border.ROUNDED
 }
 
-require("easyjump"):setup({
-    icon_fg = "#F1FA8C",
-    first_key_fg = "#50FA7B",
-})
-
 require("augment-command"):setup({
     prompt = true,                              -- Create prompt to choose between hovered/selected items when both exist
     default_item_group_for_prompt = "hovered",  -- Default item group when prompt submitted without value (hovered/selected/none)

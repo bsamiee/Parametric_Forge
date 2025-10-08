@@ -23,7 +23,10 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    yazi.url = "github:sxyazi/yazi";
+    yazi = {
+      url = "github:sxyazi/yazi";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
 
     flake-parts.url = "github:hercules-ci/flake-parts";
     treefmt-nix.url = "github:numtide/treefmt-nix";
@@ -31,7 +34,7 @@
   };
 
   # --- Outputs ----------------------------------------------------------------
-  outputs = inputs@{ self, nixpkgs, nix-darwin, home-manager, yazi, ... }:
+  outputs = inputs@{ self, nixpkgs, nix-darwin, home-manager, ... }:
   let
     systems = [ "x86_64-darwin" "aarch64-darwin" "x86_64-linux" "aarch64-linux" ];
     forAllSystems = nixpkgs.lib.genAttrs systems;

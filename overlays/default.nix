@@ -8,6 +8,12 @@
 
 { inputs }:
 
-final: prev: {
+final: prev:
+let
+  # Pull in the upstream bleeding-edge yazi overlay so every system sees it.
+  yaziOverlay = inputs.yazi.overlays.default final prev;
+in
+yaziOverlay // {
+  # Custom package overrides can be added here when needed
   sqlean = prev.callPackage (inputs.self + "/overlays/sqlean") { };
-} // (inputs.yazi.overlays.default final prev)
+}

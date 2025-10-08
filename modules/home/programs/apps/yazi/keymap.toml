@@ -101,6 +101,8 @@ keymap = [
 	{ on = "9",           run = "plugin augment-command -- tab_switch 8",               desc = "Switch to ninth tab" },
 
 	# --- Operations -----------------------------------------------------------
+	# Mount management
+	{ on = "M",           run = "plugin mount",                                         desc = "Mount manager" },
 	# Exiting & Cancelling
 	{ on = "<A-C-S-w>",   run = "close",                                                desc = "Close current tab (Power+w), or quit if last" },
 	{ on = "<A-C-S-q>",   run = "plugin augment-command -- quit",                       desc = "Quit Yazi (Power+q)" },
@@ -135,7 +137,7 @@ keymap = [
 	{ on = "r",           run = "plugin augment-command -- rename --cursor=before_ext", desc = "Rename selected file(s)" },
 	# Searching
 	{ on = "f",           run = "filter --smart",                                       desc = "Filter files" },
-	{ on = "F",           run = "plugin easyjump",                                      desc = "Jump to file/directory with fuzzy search" },
+	{ on = "F",           run = "plugin jump-to-char",                                  desc = "Jump to file/directory starting with character" },
 	{ on = "C-f",         run = "plugin fzf",                                           desc = "Jump to a file/directory via fzf" },
 	{ on = "s",           run = "search --via=fd",                                      desc = "Search files by name via fd" },
 	{ on = "S",           run = "search --via=rg",                                      desc = "Search files by content via ripgrep" },
