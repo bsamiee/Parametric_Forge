@@ -20,6 +20,7 @@ in
   programs.yazi = {
     enable = true;
     enableZshIntegration = true;
+    package = pkgs.yazi;
     plugins = {
       full-border = "${yazi-plugins}/full-border.yazi";
       piper = "${yazi-plugins}/piper.yazi";
@@ -46,7 +47,7 @@ in
     "yazi/theme.toml".source = ./theme.toml;
 
     # --- Custom Plugins -----------------------------------------------------
-    "yazi/plugins/auto_layout.yazi/main.lua".source = ./plugins/auto_layout.yazi/main.lua;
-    "yazi/plugins/sidebar_status.yazi/main.lua".source = ./plugins/sidebar_status.yazi/main.lua;
+    "yazi/plugins/auto-layout.yazi/main.lua".source = ./plugins/auto-layout.yazi/main.lua;
+    "yazi/plugins/sidebar-status.yazi/main.lua".source = ./plugins/sidebar-status.yazi/main.lua;
   };
 }

@@ -10,6 +10,6 @@
 
 {
   home.packages = with pkgs; [
-    rich-cli # Corrected package name
+    rich-cli
   ];
 }

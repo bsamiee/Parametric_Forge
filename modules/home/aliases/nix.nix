@@ -19,10 +19,14 @@
     ns = "nix search nixpkgs";                                    # Search for packages
     nw = "nix-locate -w";                                         # Find package providing command
     nc = "sudo nix-collect-garbage -d && nix store optimise";     # Deep clean + optimize store
+    nconfig = "nix config show";                                  # Show Nix configuration
+    ncheck = "nix config check";                                  # Check Nix config for potential problems and print a PASS or FAIL for each check
     nparse = "nix-instantiate --parse";                           # Parse Nix expressions
     nfetch = "nix-prefetch-github --nix";                         # Prefetch GitHub repos (Nix code output)
     nfetchj = "nix-prefetch-github --json";                       # Prefetch GitHub repos (JSON output)
     nhash = "nix hash convert --to-sri";                          # Convert hash to modern SRI format
+    nversion = "determinate-nixd version";                        # Show determinate-nixd version
+    nupdate = "sudo determinate-nixd upgrade";                    # Upgrade determinate-nixd version
 
     # --- Flake Operations ---------------------------------------------------
     nfu = "nix flake update && nix flake check";                  # Update all inputs + validate

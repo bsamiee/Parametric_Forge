@@ -85,8 +85,8 @@ keymap = [
 	{ on = [ "g", "z" ],       	run = "plugin zoxide",                                  desc = "Jump to a directory via zoxide" },
 	{ on = [ "g", "f" ],       	run = "follow",                                         desc = "Follow hovered symlink" },
 	# Tabs
-	{ on = "<A-C-S-[",    run = "tab_switch -1 --relative",                       		desc = "Switch to previous tab" },
-	{ on = "<A-C-S-]",    run = "tab_switch 1 --relative",                        		desc = "Switch to next tab" },
+	{ on = "<A-C-S-[>",   run = "tab_switch -1 --relative",                       		desc = "Switch to previous tab" },
+	{ on = "<A-C-S-]>",   run = "tab_switch 1 --relative",                        		desc = "Switch to next tab" },
 	{ on = "<C-[>",       run = "tab_swap -1",                                    		desc = "Swap current tab with previous tab" },
 	{ on = "<C-]>",		  run = "tab_swap 1",                                     		desc = "Swap current tab with next tab" },
 	{ on = "t",           run = "plugin augment-command -- tab_create",                 desc = "Create a new tab from the hovered selection" },
@@ -288,7 +288,7 @@ keymap = [
 	# --- Operations -----------------------------------------------------------
 	# Undo/Redo
 	{ on = "z",           run = "undo",                                                 desc = "Undo the last operation" },
-	{ on = "<Z>",         run = "redo",                                                 desc = "Redo the last operation" },
+	{ on = "Z",           run = "redo",                                                 desc = "Redo the last operation" },
 	# Delete
 	{ on = "<Backspace>", run = "backspace",                                            desc = "Delete the character before the cursor" },
 	{ on = "<Delete>",    run = "backspace --under",                                    desc = "Delete the character under the cursor" },

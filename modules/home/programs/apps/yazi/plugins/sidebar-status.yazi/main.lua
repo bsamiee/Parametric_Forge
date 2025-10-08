@@ -2,7 +2,7 @@
 -- Author        : Bardia Samiee
 -- Project       : Parametric Forge
 -- License       : MIT
--- Path          : modules/home/programs/apps/yazi/plugins/sidebar_status.yazi/main.lua
+-- Path          : modules/home/programs/apps/yazi/plugins/sidebar-status.yazi/main.lua
 -- ----------------------------------------------------------------------------
 -- Clean up Yazi status bar by removing desktop information
 

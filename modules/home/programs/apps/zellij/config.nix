@@ -32,6 +32,7 @@ in
     session_serialization       true
     pane_viewport_serialization true
     copy_command                "pbcopy"
+    copy_on_select              false
     scroll_buffer_size          100000
 
     // --- Load Plugins -----------------------------------------------------------
@@ -123,7 +124,7 @@ in
     keybinds clear-defaults=true {
       normal {
         // uncomment this and adjust key if using copy_on_select=false
-        // bind "Super c" { Copy; }
+        bind "Super c" { Copy; }
 
         //  --- Simple Layer ------------------------------------------------------
         bind "Super t" {            // Create new tab without entering tab mode

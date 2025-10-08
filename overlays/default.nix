@@ -10,4 +10,4 @@
 
 final: prev: {
   sqlean = prev.callPackage (inputs.self + "/overlays/sqlean") { };
-}
+} // (inputs.yazi.overlays.default final prev)

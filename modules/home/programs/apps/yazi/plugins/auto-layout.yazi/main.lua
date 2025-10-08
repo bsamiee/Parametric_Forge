@@ -2,7 +2,7 @@
 -- Author        : Bardia Samiee
 -- Project       : Parametric Forge
 -- License       : MIT
--- Path          : modules/home/programs/apps/yazi/plugins/auto_layout.yazi/main.lua
+-- Path          : modules/home/programs/apps/yazi/plugins/auto-layout.yazi/main.lua
 -- ----------------------------------------------------------------------------
 -- Automatically adjusts Yazi pane layout based on terminal width
 

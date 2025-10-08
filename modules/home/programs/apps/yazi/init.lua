@@ -4,11 +4,11 @@
 -- License       : MIT
 -- Path          : modules/home/programs/apps/yazi/init.lua
 -- ----------------------------------------------------------------------------
--- Initialize Yazi plugins for status bar cleanup and responsive layout
+-- Initialize Yazi plugins
 
 -- Custom Plugins -------------------------------------------------------------
-require("sidebar_status"):setup()
-require("auto_layout").setup()
+require("sidebar-status"):setup()
+require("auto-layout").setup()
 
 -- External Plugins -----------------------------------------------------------
 require("full-border"):setup {

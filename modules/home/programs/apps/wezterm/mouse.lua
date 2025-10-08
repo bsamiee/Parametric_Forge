@@ -19,7 +19,7 @@ function M.setup(config)
   config.mouse_bindings = {
     {
       event = { Up = { streak = 1, button = 'Left' } },
-      mods = 'CMD', -- Require CMD-click to open links to avoid accidental opens
+      -- mods = 'CMD',
       action = wezterm.action.OpenLinkAtMouseCursor,
     },
   }

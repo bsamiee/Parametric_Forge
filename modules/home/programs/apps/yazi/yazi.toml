@@ -6,6 +6,8 @@
 # ----------------------------------------------------------------------------
 # Core Yazi configuration with pane ratios and file opener integration
 
+"$schema" = "https://yazi-rs.github.io/schemas/yazi.json"
+
 [mgr]
 ratio = [1, 4, 3]
 sort_by = "natural"                        # Natural sort: 1.md < 2.md < 10.md (better than alphabetical)
@@ -20,20 +22,26 @@ mouse_events = ["click", "scroll", "drag"] # Full mouse support
 title_format = "Yazi: {cwd}"
 
 [opener]
-edit = [
-  { run = 'plugin augment-command -- editor', desc = "Open in editor" },
-]
+edit = [{ run = 'plugin augment-command -- editor', desc = "Open in editor" }]
 extract = [
   { run = 'ya pub augmented-extract --list "$@"', desc = "Extract here", for = "unix" },
 ]
 
 [[plugin.prepend_previewers]]
-name = "*.csv"  # CSV preview with bat
-run  = 'piper -- bat -p --color=always "$1"'
+name = "*/"
+run = 'piper -- eza -TL=3 --color=always --icons=always --group-directories-first --no-quotes "$1"'
 
 [[plugin.prepend_previewers]]
-name = "*/"     # Directory preview with eza tree mode
-run  = 'piper -- eza -TL=3 --color=always --icons=always --group-directories-first --no-quotes "$1"'
+name = "*.csv"
+run = 'piper -- bat -p --color=always "$1"'
+
+[[plugin.prepend_previewers]]
+name = "*.tar*"
+run = 'piper --format=url -- tar tf "$1"'
+
+[[plugin.prepend_previewers]]
+name = "*.md*"
+run = 'piper -- rich --guides --line-numbers --force-terminal "$1"'
 
 [tasks]
 micro_workers = 10
