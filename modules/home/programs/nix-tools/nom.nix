@@ -10,6 +10,6 @@
 
 {
   home.packages = with pkgs; [
-    nix-output-monitor  # Beautiful nix build output: nom
+    nix-output-monitor
   ];
 }

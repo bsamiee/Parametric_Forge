@@ -18,9 +18,7 @@ in {
     enableZshIntegration = true;
     package = yaziPkg;
     plugins = {
-      # Official plugins from nixpkgs (version-matched)
       full-border = pkgs.yaziPlugins.full-border;
-      piper = pkgs.yaziPlugins.piper;
       toggle-pane = pkgs.yaziPlugins.toggle-pane;
       jump-to-char = pkgs.yaziPlugins.jump-to-char;
       mount = pkgs.yaziPlugins.mount;
@@ -42,6 +40,7 @@ in {
     "yazi/theme.toml".source = ./theme.toml;
 
     # --- Custom Plugins -----------------------------------------------------
+    "yazi/plugins/piper.yazi/main.lua".source = ./plugins/piper.yazi/main.lua;
     "yazi/plugins/auto-layout.yazi/main.lua".source = ./plugins/auto-layout.yazi/main.lua;
     "yazi/plugins/sidebar-status.yazi/main.lua".source = ./plugins/sidebar-status.yazi/main.lua;
   };

@@ -6,14 +6,20 @@
 -- ----------------------------------------------------------------------------
 -- Initialize Yazi plugins
 
+-- Core Plugins ---------------------------------------------------------------
+require("zoxide"):setup {
+	update_db = true,
+}
+
+require("full-border"):setup {
+	type = ui.Border.ROUNDED,                   -- Available values: ui.Border.PLAIN, ui.Border.ROUNDED
+}
+
 -- Custom Plugins -------------------------------------------------------------
 require("sidebar-status"):setup()
 require("auto-layout").setup()
 
 -- External Plugins -----------------------------------------------------------
-require("full-border"):setup {
-	type = ui.Border.ROUNDED,                   -- Available values: ui.Border.PLAIN, ui.Border.ROUNDED
-}
 
 require("augment-command"):setup({
     prompt = true,                              -- Create prompt to choose between hovered/selected items when both exist

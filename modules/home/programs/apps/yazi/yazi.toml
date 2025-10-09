@@ -8,17 +8,13 @@
 
 "$schema" = "https://yazi-rs.github.io/schemas/yazi.json"
 
-[[plugin.prepend_previewers]]
-name = "*.csv"
-run  = 'piper -- bat -p --color=always "$1"'
-
-[[plugin.prepend_previewers]]
-name = "*/"
-run  = 'piper -- /nix/store/4c06vjcn678df5ziwy5jia9msn1pnrpd-eza-0.23.4/bin/eza -TL=3 --color=always --icons=always --group-directories-first --no-quotes "$1"'
-
-[[plugin.prepend_previewers]]
-name = "*.tar*"
-run  = 'piper --format=url -- tar tf "$1"'
+[plugin]
+prepend_previewers = [
+  { url = "*/", run = 'piper -- eza -TL=3 --color=always --icons=always --group-directories-first --no-quotes "$1"' },
+  { url = "*.tar*", run = 'piper --format=url -- tar tf "$1"' },
+  { url = "*.csv", run = 'piper -- rich --line-numbers --force-terminal "$1"' },
+  { url = "*.md", run = 'piper -- rich --line-numbers --force-terminal "$1"' },
+]
 
 [mgr]
 ratio = [1, 4, 3]
@@ -48,7 +44,7 @@ image_bound = [4096, 4096]
 suppress_preload = false   # Enable preloading for better performance
 
 [pick]
-open_title = "Open with:"
+open_title = " [OPEN WITH] "
 open_origin = "hovered"
 open_offset = [0, 1, 50, 7]
 
@@ -62,59 +58,59 @@ sort_translit = false
 cursor_blink = true # Visual feedback for cursor position
 
 # Directory navigation
-cd_title = "Change directory to:"
-cd_origin = "top-center"
-cd_offset = [0, 3, 60, 3]
+cd_title = " [GO TO DIR] "
+cd_origin = "bottom-center"
+cd_offset = [0, -3, 50, 3]
 
 # File/directory creation
-create_title = ["Create file:", "Create directory:"]
-create_origin = "top-center"
-create_offset = [0, 3, 60, 3]
+create_title = [" [CREATE FILE] ", " [CREATE DIR] "]
+create_origin = "bottom-center"
+create_offset = [0, -3, 50, 3]
 
 # File renaming
-rename_title = "Rename to:"
-rename_origin = "hovered"
-rename_offset = [0, 1, 60, 3]
+rename_title = " [RENAME] "
+rename_origin = "bottom-center"
+rename_offset = [0, -3, 50, 3]
 
 # File filtering
-filter_title = "Filter:"
-filter_origin = "top-center"
-filter_offset = [0, 3, 60, 3]
+filter_title = " [FILTER] "
+filter_origin = "bottom-center"
+filter_offset = [0, -3, 50, 3]
 
 # File finding
-find_title = ["Find next:", "Find previous:"]
-find_origin = "top-center"
-find_offset = [0, 3, 60, 3]
+find_title = [" [FIND NEXT] ", " [FIND PREVIOUS] "]
+find_origin = "bottom-center"
+find_offset = [0, -3, 50, 3]
 
 # Content searching
-search_title = "Search via {n}:"
-search_origin = "top-center"
-search_offset = [0, 3, 70, 3]
+search_title = " [SEARCH - {n}] "
+search_origin = "bottom-center"
+search_offset = [0, -3, 50, 3]
 
 # Shell command execution
-shell_title = ["Shell:", "Shell (block):"]
-shell_origin = "top-center"
-shell_offset = [0, 3, 70, 3]
+shell_title = [" [SHELL] ", " [SHELL BLOCK] "]
+shell_origin = "bottom-center"
+shell_offset = [0, -3, 60, 3]
 
 [confirm]
 # Trash confirmation
-trash_title = "Trash {n} selected file{s}?"
+trash_title = " [TRASH {n} FILE{s}] "
 trash_origin = "center"
-trash_offset = [0, 0, 70, 20]
+trash_offset = [0, 0, 50, 10]
 
 # Delete confirmation
-delete_title = "Permanently delete {n} selected file{s}?"
+delete_title = " [DELETE {n} FILE{s}] "
 delete_origin = "center"
-delete_offset = [0, 0, 70, 20]
+delete_offset = [0, 0, 50, 10]
 
 # Overwrite confirmation
-overwrite_title = "Overwrite file?"
+overwrite_title = " [OVERWRITE FILE] "
 overwrite_content = "Will overwrite the following file:"
 overwrite_origin = "center"
-overwrite_offset = [0, 0, 50, 15]
+overwrite_offset = [0, 0, 50, 10]
 
 # Quit confirmation
-quit_title = "Quit?"
+quit_title = " [QUIT] "
 quit_content = "The following tasks are still running, are you sure you want to quit?"
 quit_origin = "center"
-quit_offset = [0, 0, 50, 15]
+quit_offset = [0, 0, 50, 10]

@@ -29,8 +29,8 @@
     nupdate = "sudo determinate-nixd upgrade";                    # Upgrade determinate-nixd version
 
     # --- Flake Operations ---------------------------------------------------
-    nfu = "nix flake update && nix flake check";                  # Update all inputs + validate
-    nfn = "nix flake lock --update-input nixpkgs && drs";         # Update nixpkgs + rebuild system
+    nfu = "nix flake update && nix flake check --all-systems";    # Update all inputs + validate
+    nfn = "nix flake update nixpkgs && drs";                      # Update nixpkgs + rebuild system
     nfl = "nix flake lock";                                       # Lock missing inputs (safe)
     nfc = "nix flake check && nix flake show";                    # Validate + explore outputs
   };
