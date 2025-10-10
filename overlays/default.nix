@@ -15,5 +15,5 @@ let
 in
 yaziOverlay // {
   # Custom package overrides can be added here when needed
-  sqlean = prev.callPackage (inputs.self + "/overlays/sqlean") { };
+  sqlean = prev.callPackage ./sqlean { };
 }

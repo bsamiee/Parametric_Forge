@@ -19,8 +19,6 @@
 [mgr]
 keymap = [
 	# --- Custom Shell Keybindings ---------------------------------------------
-	{ on = "<A-C-S-t>",   run = "shell 'zellij-toggle-sidebar.sh'",                     desc = "Toggle Zellij sidebar layout" },
-
 	# Keybind below is used by integration script for hover preview
 	{ on = "<A-C-S-p>",   run = 'plugin piper -- eza -TL=3 --color=always --icons=always --group-directories-first --no-quotes "$0"', desc = "Preview hovered directory" },
 

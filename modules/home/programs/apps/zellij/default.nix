@@ -50,13 +50,10 @@ in
 
     # --- Plugin Installation ------------------------------------------------
     xdg.configFile = {
-      "zellij/plugins/zellij-pane-picker.wasm".source = pkgs.fetchurl {
-        url = "https://github.com/shihanng/zellij-pane-picker/releases/download/v0.6.0/zellij-pane-picker.wasm";
-        hash = "sha256-QO2cSZLPvFGg0ORcOjfrsU30Ox0at4z48aC5QvXLlho=";
-      };
+      #" zellij-pane-picker.wasm is called by the plugin via url as per documentation
       "zellij/plugins/zjstatus.wasm".source = pkgs.fetchurl {
         url = "https://github.com/dj95/zjstatus/releases/download/v0.21.1/zjstatus.wasm";
-        sha256 = "06mfcijmsmvb2gdzsql6w8axpaxizdc190b93s3nczy212i846fw";
+        hash = "sha256-3BmCogjCf2aHHmmBFFj7savbFeKGYv3bE2tXXWVkrho=";
       };
     };
   };

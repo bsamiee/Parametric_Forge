@@ -32,7 +32,6 @@ in
     session_serialization       true
     pane_viewport_serialization true
     copy_command                "pbcopy"
-    copy_on_select              false
     scroll_buffer_size          100000
 
     // --- Load Plugins -----------------------------------------------------------
@@ -56,6 +55,12 @@ in
       }
       welcome-screen location="zellij:session-manager" {
         welcome_screen true
+      }
+      // --- pane-picker Configuration --------------------------------------------
+      zellij-pane-picker location="https://github.com/shihanng/zellij-pane-picker/releases/download/v0.6.0/zellij-pane-picker.wasm" {
+        list_panes          "Super Alt Ctrl \\"
+        plugin_select_down  "Down"
+        plugin_select_up    "Up"
       }
 
       // --- zjstatus Configuration -----------------------------------------------
@@ -91,14 +96,16 @@ in
         mode_tab    "#[bg=$magenta,fg=$current_line,bold] [TABS] "
         mode_pane   "#[bg=$orange,fg=$current_line,bold] [PANES] "
         mode_scroll "#[bg=$yellow,fg=$current_line,bold] [SCROLL] "
-        mode_locked "#[bg=$selection,fg=$current_line,bold] [LOCKED] "
         mode_prompt "#[bg=$foreground,fg=$current_line,bold] [PROMPT] "
         mode_search "#[bg=$pink,fg=$current_line,bold] [SEARCH] "
+        mode_locked "#[bg=$selection,fg=$current_line,bold] [LOCKED] "
+        mode_tmux   "#[bg=$background,fg=$green,bold] [TMUX] "
 
         // --- Tab Display
         tab_active    "#[bg=$cyan,fg=$current_line,bold] {name} "
         tab_normal    "#[bg=$comment,fg=$current_line,bold] {name} "
         tab_separator " "
+        tab_rename    "#[bg=$red,fg=$current_line,bold] -> {name} <- "
 
         // --- Border Configuration
         border_enabled              "false"
@@ -106,13 +113,6 @@ in
         border_format               "#[fg=$cyan]{char}"
         border_position             "bottom"
         hide_frame_for_single_pane  "false"
-      }
-
-      // --- pane-picker Configuration --------------------------------------------
-      zellij-pane-picker location="file:~/.config/zellij/plugins/zellij-pane-picker.wasm" {
-        list_panes          ""
-        plugin_select_down  "Down"
-        plugin_select_up    "Up"
       }
     }
 
@@ -124,7 +124,7 @@ in
     keybinds clear-defaults=true {
       normal {
         // uncomment this and adjust key if using copy_on_select=false
-        bind "Super c" { Copy; }
+        // bind "Super c" { Copy; }
 
         //  --- Simple Layer ------------------------------------------------------
         bind "Super t" {            // Create new tab without entering tab mode
@@ -134,11 +134,6 @@ in
         bind "Super w" {            // Close pane without entering pane mode
           CloseFocus;
           SwitchToMode "Normal";
-        }
-
-        // --- Super Layer (⌘⌥⌃) | (Right Option) ---------------------------------
-        bind "Super Alt Ctrl /" {   // Toggle between sidebar and no_sidebar layouts
-          Run "zellij-toggle-sidebar.sh"
         }
       }
 
@@ -152,14 +147,15 @@ in
         bind "Super Alt Ctrl Shift ]" { NextSwapLayout; }
 
         // --- Super Layer (⌘⌥⌃) | (Right Option) ---------------------------------
-        bind "Super Alt Ctrl f" { ToggleFloatingPanes; }
-        bind "Super Alt Ctrl n" { NewPane; }
-
-        bind "Super Alt Ctrl Tab" {
+        bind "Super Alt Ctrl \\" {
             LaunchOrFocusPlugin "zellij-pane-picker" {
-                floating true; move_to_focused_tab true;
+                floating            true;
+                move_to_focused_tab true;
             }
         }
+
+        bind "Super Alt Ctrl f" { ToggleFloatingPanes; }
+        bind "Super Alt Ctrl n" { NewPane; }
 
         bind "Super Alt Ctrl [" { GoToPreviousTab; }
         bind "Super Alt Ctrl ]" { GoToNextTab; }
@@ -178,19 +174,26 @@ in
         bind "Super Alt Ctrl Shift l" { SwitchToMode "Normal"; }
       }
 
-      // --- Resize Mode ----------------------------------------------------------
-      resize {
-        bind "Super Alt Ctrl Shift r" { SwitchToMode "Normal"; }                  // Hyper (⌘⌥⌃⇧) | Right Command
-        bind "h" "Left" { Resize "Increase Left"; }
-        bind "j" "Down" { Resize "Increase Down"; }
-        bind "k" "Up" { Resize "Increase Up"; }
-        bind "l" "Right" { Resize "Increase Right"; }
-        bind "H" { Resize "Decrease Left"; }
-        bind "J" { Resize "Decrease Down"; }
-        bind "K" { Resize "Decrease Up"; }
-        bind "L" { Resize "Decrease Right"; }
-        bind "=" "+" { Resize "Increase"; }
-        bind "-" { Resize "Decrease"; }
+      // --- Tab Mode -------------------------------------------------------------
+      tab {
+        bind "Super Alt Ctrl Shift t" { SwitchToMode "Normal"; }                  // Hyper (⌘⌥⌃⇧) | Right Command
+        bind "[" "Left" { GoToPreviousTab; }
+        bind "]" "Right" { GoToNextTab; }
+        bind ";" { MoveTab "Left"; }
+        bind "'" { MoveTab "Right"; }
+        bind "r" { SwitchToMode "RenameTab"; TabNameInput 0; }
+        bind "n" { NewTab; }
+        bind "x" { CloseTab; }
+        bind "1" { GoToTab 1; }
+        bind "2" { GoToTab 2; }
+        bind "3" { GoToTab 3; }
+        bind "4" { GoToTab 4; }
+        bind "5" { GoToTab 5; }
+        bind "6" { GoToTab 6; }
+        bind "7" { GoToTab 7; }
+        bind "8" { GoToTab 8; }
+        bind "9" { GoToTab 9; }
+        bind "Tab" { ToggleTab; }
       }
 
       // --- Pane Mode ------------------------------------------------------------
@@ -228,26 +231,19 @@ in
         bind "l" "Right" { MovePane "Right"; }
       }
 
-      // --- Tab Mode -------------------------------------------------------------
-      tab {
-        bind "Super Alt Ctrl Shift t" { SwitchToMode "Normal"; }                  // Hyper (⌘⌥⌃⇧) | Right Command
-        bind "[" "Left" { GoToPreviousTab; }
-        bind "]" "Right" { GoToNextTab; }
-        bind ";" { MoveTab "Left"; }
-        bind "'" { MoveTab "Right"; }
-        bind "r" { SwitchToMode "RenameTab"; TabNameInput 0; }
-        bind "n" { NewTab; }
-        bind "x" { CloseTab; }
-        bind "1" { GoToTab 1; }
-        bind "2" { GoToTab 2; }
-        bind "3" { GoToTab 3; }
-        bind "4" { GoToTab 4; }
-        bind "5" { GoToTab 5; }
-        bind "6" { GoToTab 6; }
-        bind "7" { GoToTab 7; }
-        bind "8" { GoToTab 8; }
-        bind "9" { GoToTab 9; }
-        bind "Tab" { ToggleTab; }
+      // --- Resize Mode ----------------------------------------------------------
+      resize {
+        bind "Super Alt Ctrl Shift r" { SwitchToMode "Normal"; }                  // Hyper (⌘⌥⌃⇧) | Right Command
+        bind "h" "Left" { Resize "Increase Left"; }
+        bind "j" "Down" { Resize "Increase Down"; }
+        bind "k" "Up" { Resize "Increase Up"; }
+        bind "l" "Right" { Resize "Increase Right"; }
+        bind "H" { Resize "Decrease Left"; }
+        bind "J" { Resize "Decrease Down"; }
+        bind "K" { Resize "Decrease Up"; }
+        bind "L" { Resize "Decrease Right"; }
+        bind "=" "+" { Resize "Increase"; }
+        bind "-" { Resize "Decrease"; }
       }
 
       // --- Scroll Mode ----------------------------------------------------------

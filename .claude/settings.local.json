@@ -74,7 +74,9 @@
       "WebFetch(domain:knezevic.ch)",
       "mcp__filesystem__read_text_file",
       "WebFetch(domain:yazi-rs.github.io)",
-      "WebFetch(domain:karabiner-elements.pqrs.org)"
+      "WebFetch(domain:karabiner-elements.pqrs.org)",
+      "mcp__github__get_issue",
+      "Bash(zellij setup:*)"
     ],
     "deny": [],
     "ask": []
