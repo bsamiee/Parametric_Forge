@@ -17,7 +17,7 @@ require("full-border"):setup {
 
 -- Custom Plugins -------------------------------------------------------------
 require("sidebar-status"):setup()
-require("auto-layout").setup()
+require("auto-layout")
 
 -- External Plugins -----------------------------------------------------------
 

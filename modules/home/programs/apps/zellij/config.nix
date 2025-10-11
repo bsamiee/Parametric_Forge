@@ -24,7 +24,7 @@ in
     // --- Core Configuration -----------------------------------------------------
     theme                       "dracula"
     default_shell               "zsh"
-    default_layout              "side"
+    default_layout              "default"
     show_startup_tips           false
     simplified_ui               true
     mouse_mode                  true
@@ -153,12 +153,12 @@ in
                 move_to_focused_tab true;
             }
         }
+        bind "Super Alt Ctrl [" { GoToPreviousTab; }
+        bind "Super Alt Ctrl ]" { GoToNextTab; }
 
         bind "Super Alt Ctrl f" { ToggleFloatingPanes; }
         bind "Super Alt Ctrl n" { NewPane; }
 
-        bind "Super Alt Ctrl [" { GoToPreviousTab; }
-        bind "Super Alt Ctrl ]" { GoToNextTab; }
         bind "Super Alt Ctrl h" "Super Alt Ctrl Left" { MoveFocusOrTab "Left"; }
         bind "Super Alt Ctrl l" "Super Alt Ctrl Right" { MoveFocusOrTab "Right"; }
         bind "Super Alt Ctrl j" "Super Alt Ctrl Down" { MoveFocus "Down"; }
@@ -250,19 +250,22 @@ in
       scroll {
         bind "Super Alt Ctrl Shift s" { SwitchToMode "Normal"; }                  // Hyper (⌘⌥⌃⇧) | Right Command
         bind "e" { EditScrollback; SwitchToMode "Normal"; }
-        bind "f" { SwitchToMode "EnterSearch"; SearchInput 0; }
+        bind "s" { SwitchToMode "EnterSearch"; SearchInput 0; }
+        bind "Super Alt Ctrl Shift c" { ScrollToBottom; SwitchToMode "Normal"; }
 
         bind "j" "Down" { ScrollDown; }
         bind "k" "Up" { ScrollUp; }
         bind "l" "right" { PageScrollDown; }
         bind "h" "left" { PageScrollUp; }
-        bind "i" { HalfPageScrollDown; }
-        bind "o" { HalfPageScrollUp; }
+        bind "d" { HalfPageScrollDown; }
+        bind "u" { HalfPageScrollUp; }
       }
 
       // --- Search Mode ----------------------------------------------------------
       search {
-        bind "Super Alt Ctrl Shift f" { SwitchToMode "Normal"; }                  // Hyper (⌘⌥⌃⇧) | Right Command
+        bind "Super Alt Ctrl Shift s" { SwitchToMode "Normal"; }                  // Hyper (⌘⌥⌃⇧) | Right Command
+        bind "Super Alt Ctrl Shift c" { ScrollToBottom; SwitchToMode "Normal"; }
+
         bind "c" { SearchToggleOption "CaseSensitivity"; }
         bind "w" { SearchToggleOption "Wrap"; }
         bind "o" { SearchToggleOption "WholeWord"; }
@@ -274,8 +277,8 @@ in
         bind "k" "Up" { ScrollUp; }
         bind "l" "right" { PageScrollDown; }
         bind "h" "left" { PageScrollUp; }
-        bind "i" { HalfPageScrollDown; }
-        bind "o" { HalfPageScrollUp; }
+        bind "d" { HalfPageScrollDown; }
+        bind "u" { HalfPageScrollUp; }
       }
 
       // --- Session Mode ---------------------------------------------------------

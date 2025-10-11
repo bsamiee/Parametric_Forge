@@ -17,10 +17,8 @@ in
   imports = [
     ./config.nix                # Nix-generated main config
     ./themes/dracula.nix        # Nix-generated Dracula theme
-    ./layouts/no_side.nix
-    ./layouts/no_side_swap.nix
-    ./layouts/side.nix
-    ./layouts/side_swap.nix
+    ./layouts/default.nix       # Vertical split with lazygit
+    ./layouts/stacked.nix       # Stacked panes with lazygit
   ];
 
   options.programs.zellij = {

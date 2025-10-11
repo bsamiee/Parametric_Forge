@@ -30,7 +30,7 @@ mouse_events = ["click", "scroll", "drag"] # Full mouse support
 title_format = "Yazi: {cwd}"
 
 [opener]
-edit = [{ run = 'plugin augment-command -- editor', desc = "Open in editor" }]
+edit = [{ run = '$EDITOR "$@"', block = false, for = "unix" }]
 extract = [
   { run = 'ya pub augmented-extract --list "$@"', desc = "Extract here", for = "unix" },
 ]

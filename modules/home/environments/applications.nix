@@ -20,7 +20,7 @@
     ZELLIJ_CONFIG_DIR = "${config.xdg.configHome}/zellij";
     ZELLIJ_AUTO_ATTACH = "false";   # Handled in WezTerm config for auto-loading Zellij
     ZELLIJ_AUTO_EXIT = "false";     # Handled in WezTerm config for auto-loading Zellij
-    ZELLIJ_DEFAULT_LAYOUT = "side"; # Default to sidebar layout
+    ZELLIJ_DEFAULT_LAYOUT = "default";
 
     # --- Yazi ---------------------------------------------------------------
     YAZI_CONFIG_HOME = "${config.xdg.configHome}/yazi";

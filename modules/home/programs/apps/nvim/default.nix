@@ -2,17 +2,15 @@
 # Author        : Bardia Samiee
 # Project       : Parametric Forge
 # License       : MIT
-# Path          : modules/home/programs/apps/default.nix
+# Path          : modules/home/programs/apps/nvim/default.nix
 # ----------------------------------------------------------------------------
-# GUI and terminal applications aggregator
+# Neovim configuration entry point
 
-{ lib, ... }:
+{ config, lib, pkgs, ... }:
 
 {
-  imports = [
-    ./nvim
-    ./wezterm
-    ./yazi
-    ./zellij
+  home.packages = with pkgs; [
+    neovim
+    neovim-remote
   ];
 }

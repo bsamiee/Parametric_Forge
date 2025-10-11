@@ -27,20 +27,27 @@ in
     text = ''
       #!/usr/bin/env bash
       # Title         : yazi-zoxide-cdi.sh
+      # Author        : Bardia Samiee
       # Project       : Parametric Forge
+      # License       : MIT
+      # Path          : modules/home/scripts/integration/yazi/yazi-zoxide-cdi.sh
       # ----------------------------------------------------------------------------
+      # Change directory using zoxide and open in yazi
+
       set -euo pipefail
 
 ${lib.optionalString fzfDefaultOptsNonEmpty ''
       if [[ -z "''${FZF_DEFAULT_OPTS:-}" ]]; then
         FZF_DEFAULT_OPTS=${lib.escapeShellArg fzfDefaultOpts}
       fi
+
       ''}
 
 ${lib.optionalString fzfDefaultCommandNonEmpty ''
       if [[ -z "''${FZF_DEFAULT_COMMAND:-}" ]]; then
         FZF_DEFAULT_COMMAND=${lib.escapeShellArg fzfDefaultCommand}
       fi
+
     ''}
 
       export FZF_DEFAULT_OPTS FZF_DEFAULT_COMMAND
@@ -52,6 +59,7 @@ ${lib.optionalString fzfDefaultCommandNonEmpty ''
       fi
 
       ${pkgs.yazi}/bin/ya cd --str "$selection"
+
     '';
   };
 }
