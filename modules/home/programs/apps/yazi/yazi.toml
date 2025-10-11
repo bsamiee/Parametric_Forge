@@ -17,7 +17,7 @@ prepend_previewers = [
 ]
 
 [mgr]
-ratio = [1, 4, 3]
+ratio = [1, 2, 2]
 sort_by = "natural"                        # Natural sort: 1.md < 2.md < 10.md (better than alphabetical)
 sort_sensitive = false
 sort_reverse = false

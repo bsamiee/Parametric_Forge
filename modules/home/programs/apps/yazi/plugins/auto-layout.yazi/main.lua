@@ -9,7 +9,7 @@
 -- --- Configuration ----------------------------------------------------------
 local plugin_config = {
   breakpoint_large = 200,
-  breakpoint_medium = 100,
+  breakpoint_medium = 150,
 }
 
 -- Fallback Ratios

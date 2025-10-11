@@ -63,7 +63,7 @@
         // --- Layouts ------------------------------------------------------------
         // All layouts are single stacked pane with different expanded states
         // +2 to pane count: 2 status bars
-        swap_tiled_layout_name=" [EDITOR] " {
+        swap_tiled_layout name=" [EDITOR] " {
             tab min_panes=5 {
                 pane stacked=true {
                     pane name=" [YAZI] " {
@@ -80,7 +80,7 @@
             }
         }
 
-        swap_tiled_layout_name=" [YAZI] " {
+        swap_tiled_layout name=" [YAZI] " {
             tab min_panes=5 {
                 pane stacked=true {
                     pane name=" [YAZI] " expanded=true {
@@ -97,7 +97,7 @@
             }
         }
 
-        swap_tiled_layout_name=" [GIT] " {
+        swap_tiled_layout name=" [GIT] " {
             tab min_panes=5 {
                 pane stacked=true {
                     pane name=" [YAZI] " {
@@ -114,7 +114,7 @@
             }
         }
 
-        swap_tiled_layout_name=" [TERMINAL] " {
+        swap_tiled_layout name=" [TERMINAL] " {
             tab min_panes=5 {
                 pane stacked=true expanded=true {
                     pane name=" [YAZI] " {

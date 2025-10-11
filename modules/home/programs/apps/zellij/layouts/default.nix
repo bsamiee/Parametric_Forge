@@ -69,7 +69,7 @@
 
         // --- Layouts ----------------------------------------------------------------
         // All layouts have +3 to the pane count, inherited from default_tab_template and a suspended lazygit floating pane
-        swap_tiled_layout_name=" [DEFAULT] " {
+        swap_tiled_layout name=" [DEFAULT] " {
             tab exact_panes=4 {
                 pane split_direction="vertical" {
                     pane name=" [EDITOR] " {
@@ -79,77 +79,54 @@
             }
         }
 
-        swap_tiled_layout_name=" [TWO_COLUMNS] " {
+        swap_tiled_layout name=" [TWO_COLUMNS] " {
             tab min_panes=5 {
                 pane split_direction="vertical" {
                     pane name=" [EDITOR] " {
                         editor
-                        size    "50%"
                     }
                     pane stacked=true {
                         children
-                        size    "50%"
                     }
                 }
             }
         }
 
-        swap_tiled_layout_name=" [TWO_ROWS] " {
+        swap_tiled_layout name=" [TWO_ROWS] " {
             tab min_panes=5 {
                 pane split_direction="horizontal" {
                     pane name=" [EDITOR] " {
                         editor
-                        size    "50%"
                     }
                     pane stacked=true {
                         children
-                        size    "50%"
                     }
                 }
             }
         }
 
-        swap_tiled_layout_name=" [GRID] " {
+        swap_tiled_layout name=" [GRID] " {
             tab min_panes=7 {
                 pane split_direction="horizontal" {
-                    pane split_direction="vertical" size="50%" {
-                        pane name=" [EDITOR] " size="50%"
-                        pane
-                    }
-                    pane split_direction="vertical" size="50%" {
-                        pane stacked=true size="50%" { children }
-                        pane
-                    }
-                }
-            }
-        }
-
-        swap_tiled_layout_name=" [STACKED] " {
-            tab min_panes=5 {
-                pane split_direction="vertical" {
                     pane name=" [EDITOR] " {
                         editor
-                        children
                     }
+                    pane
                 }
-            }
-        }
-
-        swap_tiled_layout_name=" [SIDEBAR_CLOSED] " {
-            tab min_panes=5 {
                 pane split_direction="vertical" {
-                    pane name=" [YAZI] " {
-                        yazi
-                        size    "1"
-                    }
-                    pane name=" [EDITOR] " {
-                        editor
-                        size    "50%"
-                    }
                     pane stacked=true {
                         children
-                        size    "50%"
                     }
+                    pane
+                }
+            }
+        }
+
+        swap_tiled_layout name=" [STACKED] " {
+            tab min_panes=5 {
+                pane name=" [EDITOR] " stacked=true {
+                    editor
+                    children
                 }
             }
         }
