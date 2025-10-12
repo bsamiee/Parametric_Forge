@@ -6,8 +6,6 @@
 # ----------------------------------------------------------------------------
 # Package overlays
 
-{ inputs }:
-
 final: prev:
 let
   # Pull in the upstream bleeding-edge yazi overlay so every system sees it.

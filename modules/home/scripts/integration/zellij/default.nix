@@ -54,7 +54,7 @@
         ${pkgs.neovim-remote}/bin/nvr --servername "$SOCKET" --remote-silent "$@"
       else
         # Nvim not running, start it in the pane with the files
-        ${pkgs.zellij}/bin/zellij action write-chars "${pkgs.neovim}/bin/nvim --listen $SOCKET $*"
+        ${pkgs.zellij}/bin/zellij action write-chars "${pkgs.neovim}/bin/nvim --listen \$SOCKET \$*"
         ${pkgs.zellij}/bin/zellij action write 13  # Enter key
       fi
 

@@ -104,9 +104,9 @@
     week = "date +%V";                              # Week number
 
     # --- 1Password Operations -----------------------------------------------
-    ops = "op item list --format=json | jq -r '.[] | \"\\(.id) \\(.title)\"'"; # List items
+    opls = "op item list --format=json | jq -r '.[] | \"\\(.id) \\(.title)\"'"; # List items
     opg = "op item get";                            # Get item details
-    opr = "op run --";                              #  Run command with secrets injected
+    opr = "op run --";                              # Run command with secrets injected
     opi = "op inject -i";                           # Inject secrets into template
 
     # --- Zellij Operations --------------------------------------------------
