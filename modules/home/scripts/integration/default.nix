@@ -12,6 +12,6 @@
   imports = [
     ./yazi
     ./zellij
-    # ./nvim #TODO: PENDING INTEGRATION
+    ./nvim
   ];
 }
