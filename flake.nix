@@ -57,10 +57,10 @@
       let pkgs = nixpkgs.legacyPackages.${system};
       in {
         default = pkgs.mkShell {
-          packages = with pkgs; [ git nixfmt-rfc-style statix deadnix nix-output-monitor ];
+          packages = with pkgs; [ git alejandra statix deadnix nix-output-monitor ];
         };
       });
 
-    formatter = forAllSystems (system: nixpkgs.legacyPackages.${system}.nixfmt-rfc-style);
+    formatter = forAllSystems (system: nixpkgs.legacyPackages.${system}.alejandra);
   };
 }

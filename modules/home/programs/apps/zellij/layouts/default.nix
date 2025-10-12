@@ -37,7 +37,17 @@
         }
 
         // --- Tab Templates ----------------------------------------------------------
-        // Applies a universal top/bottom status bar and yazi sidebar to all tabs
+        // Applies a universal top/bottom status bar to all tabs
+        tab_template name="ui" {
+            pane size=1 borderless=true {
+                plugin location="zjstatus"
+            }
+            children
+            pane size=1 borderless=true {
+                plugin location="zellij:status-bar"
+            }
+        }
+
         default_tab_template hide_floating_panes=true {
             floating_panes {
                 lazygit
@@ -50,28 +60,21 @@
                     yazi
                     size    "20%"
                 }
-                children
             }
             pane size=1 borderless=true {
                 plugin location="zellij:status-bar"
             }
         }
 
-        // --- Starting Tab -----------------------------------------------------------
-        // Will automatically trigger "[DEFAULT]" layout with an editor pane that takes 80% of the space
-        tab {
-            pane split_direction="vertical" {
-                pane name=" [EDITOR] " {
-                    editor
-                }
-            }
-        }
-
         // --- Layouts ----------------------------------------------------------------
-        // All layouts have +3 to the pane count, inherited from default_tab_template and a suspended lazygit floating pane
-        swap_tiled_layout name=" [DEFAULT] " {
-            tab exact_panes=4 {
+        // All layouts have +2 to the pane count, inherited from default_tab_template and a suspended lazygit floating pane
+        swap_tiled_layout name="[DEFAULT]" {
+            ui exact_panes=4 {
                 pane split_direction="vertical" {
+                    pane name=" [YAZI] " {
+                        yazi
+                        size    "20%"
+                    }
                     pane name=" [EDITOR] " {
                         editor
                     }
@@ -79,9 +82,13 @@
             }
         }
 
-        swap_tiled_layout name=" [TWO_COLUMNS] " {
-            tab min_panes=5 {
+        swap_tiled_layout name="[TWO_COLUMNS]" {
+            ui min_panes=5 {
                 pane split_direction="vertical" {
+                    pane name=" [YAZI] " {
+                        yazi
+                        size    "20%"
+                    }
                     pane name=" [EDITOR] " {
                         editor
                     }
@@ -92,41 +99,48 @@
             }
         }
 
-        swap_tiled_layout name=" [TWO_ROWS] " {
-            tab min_panes=5 {
-                pane split_direction="horizontal" {
-                    pane name=" [EDITOR] " {
-                        editor
-                    }
-                    pane stacked=true {
-                        children
-                    }
-                }
-            }
-        }
-
-        swap_tiled_layout name=" [GRID] " {
-            tab min_panes=7 {
-                pane split_direction="horizontal" {
-                    pane name=" [EDITOR] " {
-                        editor
-                    }
-                    pane
-                }
+        swap_tiled_layout name="[TWO_ROWS]" {
+            ui min_panes=5 {
                 pane split_direction="vertical" {
-                    pane stacked=true {
-                        children
+                    pane name=" [YAZI] " {
+                        yazi
+                        size    "20%"
                     }
-                    pane
+                    pane split_direction="horizontal" {
+                        pane name=" [EDITOR] " {
+                            editor
+                        }
+                        pane stacked=true {
+                            children
+                        }
+                    }
                 }
             }
         }
 
-        swap_tiled_layout name=" [STACKED] " {
-            tab min_panes=5 {
-                pane name=" [EDITOR] " stacked=true {
-                    editor
-                    children
+        swap_tiled_layout name="[GRID]" {
+            ui min_panes=7 {
+                pane split_direction="vertical" {
+                    pane name=" [YAZI] " {
+                        yazi
+                        size    "20%"
+                    }
+                    pane split_direction="vertical" {
+                        pane split_direction="horizontal" {
+                            pane name=" [EDITOR] " {
+                                editor
+                            }
+                            pane
+                        }
+                    }
+                    pane split_direction="vertical" {
+                        pane split_direction="horizontal" {
+                            pane stacked=true {
+                                children
+                            }
+                            pane
+                        }
+                    }
                 }
             }
         }

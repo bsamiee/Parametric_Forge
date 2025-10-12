@@ -87,7 +87,7 @@ in
         format_space              ""
 
         // --- Layout Display
-        swap_layout_format        "#[bg=$background,fg=$cyan,bold][layout: {name}]"
+        swap_layout_format        "#[bg=$color_background,fg=$yellow,bold] {name} "
         swap_layout_hide_if_empty "true"
 
         // --- Mode Indicators

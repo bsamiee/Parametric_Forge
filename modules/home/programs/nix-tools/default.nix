@@ -10,9 +10,12 @@
 
 {
   imports = [
+    ./alejandra.nix
     ./comma.nix
+    ./deadnix.nix
     ./nix-index.nix
     ./nix-prefetch-github.nix
     ./nom.nix
+    ./statix.nix
   ];
 }

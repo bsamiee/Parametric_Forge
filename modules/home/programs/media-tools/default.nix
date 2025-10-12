@@ -16,6 +16,7 @@
     ./resvg.nix             # Yazi: SVG preview rendering
     ./poppler.nix           # Yazi: PDF preview utilities
     ./djvulibre.nix         # Yazi: DjVu document support
+    ./zathura.nix           # Document viewer with vi-like keybindings
     ./mediainfo.nix         # Yazi: Enhanced media info preview
     ./exiftool.nix          # Yazi: Audio metadata preview
     ./chafa.nix             # Yazi: Fallback image preview
