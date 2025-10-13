@@ -37,7 +37,6 @@ in
         wvous-br-corner = mkDefault 1;
         # Application management
         persistent-apps = mkDefault [
-          "/System/Applications/iPhone Mirroring.app"
           {
             spacer = {
               small = false;

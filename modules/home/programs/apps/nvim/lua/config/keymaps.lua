@@ -30,13 +30,9 @@ map("n", "<C-u>", "<C-u>zz", { desc = "Scroll up and center" })
 map("n", "n", "nzzzv", { desc = "Next search result and center" })
 map("n", "N", "Nzzzv", { desc = "Previous search result and center" })
 
--- DASHBOARD -----------------------------------------------------------------
-map("n", "<leader>d", "<cmd>Alpha<cr>", { desc = "Dashboard" })
-
 -- QUIT/SAVE -----------------------------------------------------------------
 map("n", "<leader>q", "<cmd>qa<cr>", { desc = "Quit all" })
 map("n", "<leader>w", "<cmd>w<cr>", { desc = "Save file" })
 
 -- CLEAR SEARCH HIGHLIGHT ----------------------------------------------------
 map("n", "<Esc>", "<cmd>nohlsearch<cr>", { desc = "Clear search highlight" })
-

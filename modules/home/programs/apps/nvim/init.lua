@@ -10,4 +10,4 @@
 require("config.options")
 require("config.lazy") -- Plugin manager (loads before keymaps for plugin mappings)
 require("config.keymaps")
-require("config.autocmds")
+-- require("config.autocmds")
