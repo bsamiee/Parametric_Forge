@@ -17,5 +17,9 @@ return {
         vim.cmd("highlight Normal guibg=NONE ctermbg=NONE")
         vim.cmd("highlight NormalFloat guibg=NONE ctermbg=NONE")
         vim.cmd("highlight SignColumn guibg=NONE ctermbg=NONE")
+        -- Override dashboard colors to use cyan instead of green
+        vim.cmd("highlight SnacksDashboardHeader guifg=#8be9fd")
+        vim.cmd("highlight SnacksDashboardKey guifg=#8be9fd")
+        vim.cmd("highlight SnacksDashboardIcon guifg=#8be9fd")
     end,
 }

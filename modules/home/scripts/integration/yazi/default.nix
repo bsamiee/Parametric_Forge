@@ -58,7 +58,7 @@ ${lib.optionalString fzfDefaultCommandNonEmpty ''
         exit 0
       fi
 
-      ${pkgs.yazi}/bin/ya pub dds --str "cd $selection"
+      ${pkgs.yazi}/bin/ya emit cd "$(printf %q "$selection")"
 
     '';
   };
