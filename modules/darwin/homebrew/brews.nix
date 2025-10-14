@@ -14,7 +14,6 @@
     "defaultbrowser"                    # CLI tool for setting default browser
     "tag"                               # macOS file tagging CLI
     "blueutil"                          # Bluetooth management
-    "mono"                              # .NET runtime
 
     # --- Window Management Tools --------------------------------------------
     "koekeishiya/formulae/yabai"

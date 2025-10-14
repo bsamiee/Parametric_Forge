@@ -16,7 +16,7 @@
     "1password-cli"
     "cleanshot"
     "docker-desktop"
-    "dotnet-sdk"          # .NET SDK
+    "dotnet-sdk"          # Latest .NET SDK (currently 9.x)
     "wezterm"
 
     # --- Productivity & Window Management -----------------------------------

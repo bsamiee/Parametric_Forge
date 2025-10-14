@@ -18,6 +18,7 @@
     "${config.xdg.dataHome}/pipx/bin"
     "${config.xdg.dataHome}/pnpm"
     "${config.xdg.dataHome}/npm/bin"
+    "/Applications/Rhino 8.app/Contents/Resources/bin"
   ];
 
   home.sessionVariables = {

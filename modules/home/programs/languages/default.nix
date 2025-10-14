@@ -18,6 +18,7 @@
     ./db-tools.nix
 
     # Languages
+    ./dotnet-tools.nix
     ./lua-tools.nix
     ./node-tools.nix
     ./python-tools.nix

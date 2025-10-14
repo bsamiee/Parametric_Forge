@@ -76,7 +76,8 @@
       "WebFetch(domain:yazi-rs.github.io)",
       "WebFetch(domain:karabiner-elements.pqrs.org)",
       "mcp__github__get_issue",
-      "Bash(zellij setup:*)"
+      "Bash(zellij setup:*)",
+      "WebFetch(domain:developer.rhino3d.com)"
     ],
     "deny": [],
     "ask": []
