@@ -117,6 +117,9 @@
     zjk = "zellij kill-session";                    # Kill a target session "zjk <session_name>"
     zjka = "zellij kill-all-sessions";              # Kill all zellij sessions
 
+    # --- Dev Tools ----------------------------------------------------------
+    pyright = "basedpyright";
+
     # --- MacOS Specific -----------------------------------------------------
     awake = "caffeinate -dims";                     # Prevent sleep (Ctrl+C to stop)
     reveal = "open -R";                             # Reveal file in Finder

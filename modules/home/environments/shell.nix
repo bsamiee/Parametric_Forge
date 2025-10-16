@@ -16,7 +16,6 @@
     "$HOME/bin"
     "${config.xdg.dataHome}/cargo/bin"
     "${config.xdg.dataHome}/go/bin"
-    "${config.xdg.dataHome}/pipx/bin"
     "${config.xdg.dataHome}/pnpm"
     "${config.xdg.dataHome}/npm/bin"
     "/Applications/Rhino 8.app/Contents/Resources/bin"
