@@ -119,7 +119,7 @@
 
     # --- Dev Tools ----------------------------------------------------------
     pyright = "basedpyright";
-    ruff fix = "ruff check —fix";
+    rfix = "ruff check —fix";
 
     # --- MacOS Specific -----------------------------------------------------
     awake = "caffeinate -dims";                     # Prevent sleep (Ctrl+C to stop)
