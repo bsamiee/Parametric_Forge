@@ -11,7 +11,7 @@
 {
   # --- User Session Path ----------------------------------------------------
   home.sessionPath = [
-    "$HOME/.nix-profile/bin"                  # Nix profile binaries (dotnet-sdk_7, etc.)
+    "$HOME/.nix-profile/bin"
     "$HOME/.local/bin"
     "$HOME/bin"
     "${config.xdg.dataHome}/cargo/bin"

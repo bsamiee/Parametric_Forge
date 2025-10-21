@@ -16,7 +16,6 @@
     "1password-cli"
     "cleanshot"
     "docker-desktop"
-    "dotnet-sdk"          # Latest .NET SDK (currently 9.x)
     "wezterm"
 
     # --- Productivity & Window Management -----------------------------------
@@ -47,7 +46,6 @@
     # --- Development --------------------------------------------------------
     "kiro"
     "visual-studio-code"
-    "rhino-app"
     "blender"
     "iconjar"
     "typeface"            # Font management
