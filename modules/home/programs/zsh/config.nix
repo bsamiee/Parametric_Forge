@@ -13,7 +13,9 @@
     profileExtra = ''
       # --- PATH initialization (order 50) -----------------------------------------
 
-      export PATH="/Applications/Rhino 8.app/Contents/Resources/bin:$PATH"
+      if [[ -d "/Applications/Rhino 8.app/Contents/Resources/bin" ]]; then
+        export PATH="/Applications/Rhino 8.app/Contents/Resources/bin:$PATH"
+      fi
 
       # Nix (Determinate Nix)
       if [[ -d "/nix/var/nix/profiles/default/bin" ]]; then
@@ -23,6 +25,11 @@
       # Homebrew (Darwin)
       if [[ -d "/opt/homebrew/bin" ]]; then
         export PATH="/opt/homebrew/bin:/opt/homebrew/sbin:$PATH"
+      fi
+
+      # .NET 8 for Rhino (versioned homebrew formula)
+      if [[ -d "/opt/homebrew/opt/dotnet@8/bin" ]]; then
+        export PATH="/opt/homebrew/opt/dotnet@8/bin:$PATH"
       fi
 
       # Nix daemon sourcing for Determinate Nix

@@ -121,6 +121,7 @@
     pyright = "basedpyright";
     rfix = "ruff check --fix";
     rformat = "ruff format";
+    rhproject = "dotnet new rhino --version 8 -sample"; # Initialize new Rhino plugin project template
 
     # --- MacOS Specific -----------------------------------------------------
     awake = "caffeinate -dims";                     # Prevent sleep (Ctrl+C to stop)
