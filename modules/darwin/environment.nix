@@ -9,7 +9,7 @@
 { lib, config, ... }:
 
 let
-  inherit (lib) concatLists concatStringsSep mkBefore mkIf optional unique;
+  inherit (lib) concatLists concatStringsSep mkBefore optional unique;
 
   primaryHome = config.system.primaryUserHome;
   xdgDataHome = if primaryHome != null then "${primaryHome}/Library/Application Support" else null;
@@ -44,7 +44,7 @@ let
 in {
   environment.systemPath = mkBefore pathEntries;
 
-  launchd.user.envVariables = mkIf (renderedPath != "") {
+  launchd.user.envVariables = {
     PATH = renderedPath;
   };
 }
