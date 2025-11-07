@@ -6,31 +6,26 @@
 # ----------------------------------------------------------------------------
 # Secret token reference definitions (safe to commit)
 
-{ config, ... }:
+{ config, pkgs, ... }:
 
 let
-  secretRefs = {
-    # --- API Tokens ---------------------------------------------------------
-    githubToken = "op://Tokens/Github Token/token";
-    githubClassicToken = "op://Tokens/Github Classic Token/token";
-    cachixAuthToken = "op://Tokens/Cachix Auth Token - Parametric Forge/token";
-    tavilyAuthToken = "op://Tokens/Tavily Auth Token/token";
-    perplexityApiKey = "op://Tokens/Perplexity Sonar API Key/token";
-    exaApiKey = "op://Tokens/Exa API Key/token";
-
-    # --- SSH Keys -----------------------------------------------------------
-    sshAuthKey = "op://Tokens/Github Authentication key/public key";
-    sshSigningKey = "op://Tokens/Github Signing Key/public key";
+  envTemplate = "${config.xdg.configHome}/op/env.template";
+  withSecrets = pkgs.writeShellApplication {
+    name = "with-secrets";
+    text = ''
+      set -euo pipefail
+      if [ ! -f "${envTemplate}" ]; then
+        echo "with-secrets: missing ${envTemplate}" >&2
+        exit 1
+      fi
+      exec op run --env-file "${envTemplate}" -- "$@"
+    '';
   };
-in
-{
-  # Export environment variables with 1Password references, these will be resolved by op-run when needed
+in {
+  # Provide a wrapper to inject secrets on-demand instead of exporting unresolved references globally
+  home.packages = [ with-secrets ];
+
   home.sessionVariables = {
-    GITHUB_TOKEN = secretRefs.githubToken;
-    GITHUB_CLASSIC_TOKEN = secretRefs.githubClassicToken;
-    PERPLEXITY_API_KEY = secretRefs.perplexityApiKey;
-    CACHIX_AUTH_TOKEN = secretRefs.cachixAuthToken;
-    TAVILY_API_KEY = secretRefs.tavilyAuthToken;
-    EXA_API_KEY = secretRefs.exaApiKey;
+    OP_DEFAULT_ENV_FILE = envTemplate;
   };
 }
