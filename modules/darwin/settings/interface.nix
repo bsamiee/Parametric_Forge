@@ -65,7 +65,7 @@ in
         AppleShowAllExtensions = mkDefault true;
         _FXSortFoldersFirst = mkDefault true;
         NewWindowTarget = mkDefault "Other";
-        NewWindowTargetPath = mkDefault "file://${config.users.users.${config.system.primaryUser}.home}/Downloads/";
+        NewWindowTargetPath = mkDefault "file://${config.system.primaryUserHome}/Downloads/";
         ShowPathbar = mkDefault true;
         ShowStatusBar = mkDefault false;
         _FXShowPosixPathInTitle = mkDefault false;

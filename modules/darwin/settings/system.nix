@@ -37,7 +37,7 @@ in
     };
     # --- Screenshots --------------------------------------------------------
     screencapture = {
-      location = mkDefault "${config.users.users.${config.system.primaryUser}.home}/Downloads";
+      location = mkDefault "${config.system.primaryUserHome}/Downloads";
       type = mkDefault "png";
       disable-shadow = mkDefault true;
       include-date = mkDefault true;

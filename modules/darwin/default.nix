@@ -11,6 +11,7 @@
 {
   imports = [
     ./fonts.nix
+    ./environment.nix
     ./homebrew
     ./settings
   ];
