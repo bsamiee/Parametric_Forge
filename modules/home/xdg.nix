@@ -33,6 +33,7 @@
       "op/env.template".text = ''
         # 1Password Secret References (auto-generated)
         GITHUB_TOKEN="op://Tokens/Github Token/token"
+        GH_TOKEN="op://Tokens/Github Token/token"
         GITHUB_CLASSIC_TOKEN="op://Tokens/Classic Github Token/token"
         PERPLEXITY_API_KEY="op://Tokens/Perplexity API Key/api key"
         CACHIX_AUTH_TOKEN="op://Tokens/Cachix Token/token"

@@ -75,5 +75,8 @@
     # --- ZSH Plugin Configurations ------------------------------------------
     # you-should-use
     YSU_MESSAGE_POSITION = "before";  # Show message before command execution
+
+    # --- .NET Configuration -------------------------------------------------
+    DOTNET_ROOT = "/opt/homebrew/opt/dotnet@8/libexec";
   };
 }

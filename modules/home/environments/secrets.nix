@@ -27,6 +27,7 @@ in
   # Export environment variables with 1Password references, these will be resolved by op-run when needed
   home.sessionVariables = {
     GITHUB_TOKEN = secretRefs.githubToken;
+    GH_TOKEN = secretRefs.githubToken;
     GITHUB_CLASSIC_TOKEN = secretRefs.githubClassicToken;
     PERPLEXITY_API_KEY = secretRefs.perplexityApiKey;
     CACHIX_AUTH_TOKEN = secretRefs.cachixAuthToken;

@@ -80,7 +80,8 @@
       "WebFetch(domain:developer.rhino3d.com)",
       "WebFetch(domain:formulae.brew.sh)",
       "Read(//opt/homebrew/**)",
-      "Bash(/opt/homebrew/Cellar/dotnet@8/8.0.121/bin/dotnet --version)"
+      "Bash(/opt/homebrew/Cellar/dotnet@8/8.0.121/bin/dotnet --version)",
+      "Bash(dotnet --version)"
     ],
     "deny": [],
     "ask": []
