@@ -37,6 +37,56 @@
       [ -S "$OP_SSH_SOCK" ] && export SSH_AUTH_SOCK="$OP_SSH_SOCK"
       unset OP_SSH_SOCK
 
+      # Transparent GitHub CLI wrapper that hydrates tokens via 1Password
+      if command -v gh >/dev/null 2>&1; then
+        gh() {
+          local gh_bin
+          if ! gh_bin="$(whence -p gh)"; then
+            printf 'parametric-forge: unable to locate gh binary on PATH\n' >&2
+            return 127
+          fi
+
+          local op_template="''${OP_ENV_TEMPLATE:-$HOME/.config/op/env.template}"
+          local gh_config_dir="''${GH_CONFIG_DIR:-''${XDG_CONFIG_HOME:-$HOME/.config}/gh}"
+          local gh_hosts="$gh_config_dir/hosts.yml"
+          local prefer_native=0
+
+          # Always use the native gh authentication flow for auth subcommands.
+          if [[ "$1" == "auth" ]]; then
+            case "''${2:-}" in
+              login|logout|status|refresh|setup-git|token)
+                prefer_native=1
+                ;;
+            esac
+          fi
+
+          # If gh already has a stored OAuth token, keep using it unless forced.
+          if [[ -f "$gh_hosts" ]]; then
+            prefer_native=1
+          fi
+
+          # Manual overrides for edge cases.
+          if [[ "''${GH_FORCE_OP_TOKEN:-0}" == "1" ]]; then
+            prefer_native=0
+          elif [[ "''${GH_BYPASS_OP:-0}" == "1" ]]; then
+            prefer_native=1
+          fi
+
+          if (( prefer_native )); then
+            "$gh_bin" "$@"
+            return $?
+          fi
+
+          if command -v op >/dev/null 2>&1 \
+             && [[ -n "$op_template" ]] \
+             && [[ -f "$op_template" ]]; then
+            op run --env-file "$op_template" -- "$gh_bin" "$@"
+          else
+            "$gh_bin" "$@"
+          fi
+        }
+      fi
+
     '')
 
     (lib.mkOrder 400 ''

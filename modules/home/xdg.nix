@@ -34,11 +34,11 @@
         # 1Password Secret References (auto-generated)
         GITHUB_TOKEN="op://Tokens/Github Token/token"
         GH_TOKEN="op://Tokens/Github Token/token"
-        GITHUB_CLASSIC_TOKEN="op://Tokens/Classic Github Token/token"
-        PERPLEXITY_API_KEY="op://Tokens/Perplexity API Key/api key"
-        CACHIX_AUTH_TOKEN="op://Tokens/Cachix Token/token"
-        TAVILY_API_KEY="op://Tokens/Tavily API Key/api key"
-        EXA_API_KEY="op://Tokens/Exa API Key/api key"
+        GITHUB_CLASSIC_TOKEN="op://Tokens/Github Classic Token/token"
+        PERPLEXITY_API_KEY="op://Tokens/Perplexity Sonar API Key/token"
+        CACHIX_AUTH_TOKEN="op://Tokens/Cachix Auth Token - Parametric Forge/token"
+        TAVILY_API_KEY="op://Tokens/Tavily Auth Token/token"
+        EXA_API_KEY="op://Tokens/Exa API Key/token"
       '';
     };
 

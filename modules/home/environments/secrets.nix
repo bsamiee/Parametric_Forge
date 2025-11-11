@@ -24,11 +24,10 @@ let
   };
 in
 {
-  # Export environment variables with 1Password references, these will be resolved by op-run when needed
+  # Export non-GitHub secret references. GitHub tokens are now only injected
+  # when explicitly running `op run --env-file ~/.config/op/env.template …`
+  # so that `gh auth login` can manage its own OAuth credentials.
   home.sessionVariables = {
-    GITHUB_TOKEN = secretRefs.githubToken;
-    GH_TOKEN = secretRefs.githubToken;
-    GITHUB_CLASSIC_TOKEN = secretRefs.githubClassicToken;
     PERPLEXITY_API_KEY = secretRefs.perplexityApiKey;
     CACHIX_AUTH_TOKEN = secretRefs.cachixAuthToken;
     TAVILY_API_KEY = secretRefs.tavilyAuthToken;

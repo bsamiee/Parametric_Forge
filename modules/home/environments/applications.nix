@@ -39,7 +39,6 @@
     OP_BIOMETRIC_UNLOCK_ENABLED = "true";
     OP_ENV_TEMPLATE = "${config.xdg.configHome}/op/env.template";
     OP_ENV_CACHE = "${config.xdg.cacheHome}/op/env.cache";
-    OP_CONFIG_DIR = "${config.xdg.configHome}/op";
     OP_CACHE = "true";  # Enable caching for better performance
 
     # --- Claude -------------------------------------------------------------
