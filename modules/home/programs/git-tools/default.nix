@@ -12,6 +12,7 @@
   imports = [
     ./git.nix
     ./gh.nix
+    ./git-quick-stats.nix
     ./lazygit.nix
     ./gitleaks.nix
   ];

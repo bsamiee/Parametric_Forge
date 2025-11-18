@@ -45,6 +45,8 @@
 
     # --- External Tools -----------------------------------------------------
     lg = "lazygit";                                     # Launch lazygit TUI
+    gstats = "git-quick-stats";                         # Interactive git statistics menu
+    gstat = "git-quick-stats -r";                       # Quick repository overview
     pr = "gh pr list";                                  # List pull requests
     prc = "gh pr create";                               # Create pull request
     prv = "gh pr view";                                 # View pull request details
