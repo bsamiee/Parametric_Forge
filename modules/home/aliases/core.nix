@@ -71,6 +71,9 @@
     sdi = "sd -i";                                  # In-place find/replace (sed -i pattern)
     sr = "serpl";                                   # TUI search and replace
 
+    # --- Formatting Tools ---------------------------------------------------
+    mdv = "rich --markdown";                        # Markdown viewer (like hex for hexyl)
+
     # --- Data Processing ----------------------------------------------------
     jqr = "jq -r";                                  # Raw output (no quotes)
     jqc = "jq -c";                                  # Compact JSON output
@@ -79,6 +82,10 @@
     j2y = "yq eval -P";                             # JSON to YAML
     y2j = "yq eval -o=json";                        # YAML to JSON
     yaml = "yq eval";                               # Process YAML
+
+    # --- Data Conversion ----------------------------------------------------
+    c2j = "mlr --c2j cat";                          # CSV to JSON (frequent operation)
+    j2c = "mlr --j2c cat";                          # JSON to CSV (frequent operation)
 
     # --- Trash Management ---------------------------------------------------
     tput = "trash-put";                             # Send files to trash
@@ -142,6 +149,16 @@
     ghproject = "dotnet new grasshopper --version 8 -sample";   # Initialize new Grasshopper plugin project template
     watch = "watchexec -c";                         # Clear terminal on file change
     watchr = "watchexec -r";                        # Restart process on file change
+
+    # --- .NET Development ---------------------------------------------------
+    dnr = "dotnet run --";                              # Run with args passthrough
+    dnw = "dotnet watch run --";                        # Hot reload development
+    dnb = "dotnet build -c Release";                    # Production builds for plugins
+    dnt = "dotnet test --logger 'console;verbosity=minimal'"; # Clean test output
+
+    # --- Rhino/Grasshopper Tools -------------------------------------------
+    yakb = "yak build";                                 # Package Rhino plugins
+    rhcode = "rhinocode";                               # Shorter script compiler alias
 
     # --- MacOS Specific -----------------------------------------------------
     awake = "caffeinate -dims";                     # Prevent sleep (Ctrl+C to stop)

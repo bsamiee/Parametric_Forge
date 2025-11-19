@@ -79,5 +79,7 @@
 
     # --- .NET Configuration -------------------------------------------------
     DOTNET_ROOT = "/opt/homebrew/opt/dotnet@8/libexec";
+    DOTNET_NOLOGO = "1";                               # Suppress startup banner
+    DOTNET_CLI_TELEMETRY_OPTOUT = "1";                 # Disable telemetry
   };
 }
