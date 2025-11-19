@@ -28,19 +28,28 @@
     cat = "bat";
     find = "fd";
     fda = "fd --hidden --no-ignore -a";             # Find all files, including hidden and ignored
-    mv = "mv -iv";                                  # Prompt on overwrite, show actions
+    mv = "rsync-mv";                                # Atomic move with directory cleanup
     mkdir  = "mkdir -pv";                           # Always create parent directories
-    cp = "rsync -ahP --info=progress2 --";          # Progress + metadata (local copy)
-    scp = "rsync -ahzP -e ssh";                     # Secure copy with compression
-    sync = "rsync -ahP";                            # Archive with progress
-    backup = "rsync -ahP --delete";                 # Mirror with deletion
+    cp = "rsync -ahPX --info=progress2 --";         # Full preservation, no sparse
+    cpsp = "rsync -ahPSX --";                       # Sparse copy (VMs, disk images)
+    scp = "rsync -ahzPX -e ssh";                    # Remote copy with compression
+    sync = "rsync -ahPX --inplace";                 # In-place update (large files)
+    backup = "rsync -ahPX --delete";                # Mirror with deletion
+    rsyncd = "rsync -ahPn";                         # Dry-run with progress (safety check)
+    rsyncf = "rsync -ahPX --append-verify";         # Resume interrupted transfers
     rcs = "rclone sync --progress --transfers 4";   # Cloud sync with progress
     hex = "hexyl";                                  # Hex viewer
     wget = "aria2c -c";                             # Modern download with resume
+    pack = "ouch compress";                         # Compress files/directories
+    unpack = "ouch decompress";                     # Decompress archives
+    mountar = "archivemount";                       # Mount archives as filesystem
 
     # --- System Monitoring --------------------------------------------------
     ps = "procs";
     pst = "procs --tree";                           # Process tree
+    psc = "procs --sortd 5";                        # Sort processes by CPU usage
+    psm = "procs --sortd 6";                        # Sort processes by memory usage
+    psw = "procs --watch";                          # Watch processes (2s refresh)
     top = "btm";                                    # Modern system monitor
     df = "duf";
     du = "dust";
@@ -48,6 +57,7 @@
     killi = "pik";                                  # Interactive process killer
     cloc = "tokei";                                 # Modern code counter
     loc = "tokei --compact";                        # Compact code counter
+    locj = "tokei --output json";                   # Code stats as JSON for scripting
     bench = "hyperfine";                            # Modern benchmarking tool
 
     # --- Text & Search ------------------------------------------------------
@@ -58,6 +68,8 @@
     tldru = "tldr --update";                        # Update tldr cache
     rgx = "grex -xc";                               # Generate readable regex from test cases
     rgxf = "grex -xc -f";                           # File input with readable output
+    sdi = "sd -i";                                  # In-place find/replace (sed -i pattern)
+    sr = "serpl";                                   # TUI search and replace
 
     # --- Data Processing ----------------------------------------------------
     jqr = "jq -r";                                  # Raw output (no quotes)
@@ -87,6 +99,11 @@
     curl = "curlie";                                # Modern curl with HTTPie-like interface
     http = "xh";                                    # HTTPie compatibility
     https = "xh --https";                           # HTTPS by default
+    POST = "xh POST";                               # RESTful convention
+    PUT = "xh PUT";                                 # RESTful convention
+    ping = "gping";                                 # Visual ping with graph
+    trace = "trippy";                               # Modern traceroute replacement
+    traceu = "trippy --udp --target-port 33434";    # UDP tracing for ECMP paths
     serve = "python3 -m http.server 8000";          # Quick static server
     bw = "sudo bandwhich";                          # Bandwidth monitor (needs sudo)
     dig = "doggo";                                  # Modern DNS client
@@ -123,6 +140,8 @@
     rformat = "ruff format";
     rhproject = "dotnet new rhino --version 8 -sample";         # Initialize new Rhino plugin project template
     ghproject = "dotnet new grasshopper --version 8 -sample";   # Initialize new Grasshopper plugin project template
+    watch = "watchexec -c";                         # Clear terminal on file change
+    watchr = "watchexec -r";                        # Restart process on file change
 
     # --- MacOS Specific -----------------------------------------------------
     awake = "caffeinate -dims";                     # Prevent sleep (Ctrl+C to stop)

@@ -55,6 +55,7 @@
     RCLONE_TRANSFERS = "4";             # Balanced concurrent transfers
     RCLONE_CHECKERS = "8";              # Parallel checkers for syncing
     RSYNC_RSH = "ssh";                  # Explicit SSH transport for rsync
+    RSYNC_PROTECT_ARGS = "1";           # Protect args with spaces/wildcards (pre-3.2.4)
 
     # --- FZF Forgit Configuration -------------------------------------------
     FORGIT_PAGER = "delta";  # Consistent with GIT_PAGER in core.nix
