@@ -74,6 +74,10 @@
     # --- Formatting Tools ---------------------------------------------------
     mdv = "rich --markdown";                                                      # Markdown viewer (like hex for hexyl)
 
+    # --- Code Screenshot ----------------------------------------------------
+    carbonc = "carbon-now --to-clipboard";                                       # Carbon screenshot to clipboard
+    carboni = "carbon-now --interactive";                                        # Carbon interactive mode
+
     # --- Data Processing ----------------------------------------------------
     jqr = "jq -r";                                                                # Raw output (no quotes)
     jqc = "jq -c";                                                                # Compact JSON output

@@ -17,6 +17,7 @@
     ./bat.nix
     ./bottom.nix
     ./carapace.nix
+    ./carbon.nix
     ./choose.nix
     ./curlie.nix
     ./doggo.nix
