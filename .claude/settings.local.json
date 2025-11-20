@@ -85,7 +85,10 @@
       "Bash(/opt/homebrew/opt/dotnet@8/bin/dotnet new rhino --help)",
       "Bash(/opt/homebrew/opt/dotnet@8/bin/dotnet new grasshopper --help)",
       "Read(//Applications/**)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(biome:*)",
+      "WebFetch(domain:prettier.io)",
+      "Bash(prettier --help)"
     ],
     "deny": [],
     "ask": [],

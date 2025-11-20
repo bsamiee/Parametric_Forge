@@ -38,7 +38,7 @@
 
     # --- Node/JavaScript ----------------------------------------------------
     # Node.js runtime
-    NODE_ENV = "production";                      # Production by default - critical for performance
+    NODE_ENV = "development";                      # Production by default - critical for performance
     NODE_OPTIONS = "--max-old-space-size=4096";   # Memory management
     NODE_NO_WARNINGS = "1";                       # Reduce noise from warnings
     NODE_REPL_HISTORY = "${config.xdg.stateHome}/node/repl_history";
