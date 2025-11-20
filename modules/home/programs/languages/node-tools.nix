@@ -10,10 +10,11 @@
 
 {
   home.packages = with pkgs; [
-    nodejs_20 # LTS runtime with better cache compatibility
+    nodejs_22 # Latest LTS for modern TypeScript/React projects
     fnm       # Fast Node Manager for multi-version workflows
     pnpm      # Disk-efficient package manager
     nodePackages.prettier # Code formatter
+    tailwindcss # Utility-first CSS framework
   ];
 
   # --- pnpm Configuration ---------------------------------------------------

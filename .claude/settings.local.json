@@ -84,9 +84,13 @@
       "Bash(dotnet --version)",
       "Bash(/opt/homebrew/opt/dotnet@8/bin/dotnet new rhino --help)",
       "Bash(/opt/homebrew/opt/dotnet@8/bin/dotnet new grasshopper --help)",
-      "Read(//Applications/**)"
+      "Read(//Applications/**)",
+      "Bash(node:*)"
     ],
     "deny": [],
-    "ask": []
+    "ask": [],
+    "additionalDirectories": [
+      "/Users/bardiasamiee/Documents/99.Github/Parametric_Generator"
+    ]
   }
 }

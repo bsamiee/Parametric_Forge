@@ -31,6 +31,11 @@
     # --- YAML/JSON ----------------------------------------------------------
     YAMLLINT_CONFIG_FILE = "${config.xdg.configHome}/yamllint/config";
 
+    # --- TypeScript/JavaScript Tooling -------------------------------------
+    BIOME_CONFIG_PATH = "${config.xdg.configHome}/biome/biome.json";      # Custom Biome config location
+    TAILWIND_MODE = "watch";                                              # JIT compilation for development
+    VITEST_MODE = "run";                                                  # Default test runner mode
+
     # --- Node/JavaScript ----------------------------------------------------
     # Node.js runtime
     NODE_ENV = "production";                      # Production by default - critical for performance

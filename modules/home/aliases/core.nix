@@ -150,6 +150,12 @@
     watch = "watchexec -c";                         # Clear terminal on file change
     watchr = "watchexec -r";                        # Restart process on file change
 
+    # --- TypeScript/React Development --------------------------------------
+    pdev = "pnpm dev";                              # Start Vite dev server
+    pbuild = "pnpm build";                          # Production build with type checking
+    ptest = "pnpm test";                            # Run Vitest tests
+    biome = "biome check --write";                  # Format and lint with Biome
+
     # --- .NET Development ---------------------------------------------------
     dnr = "dotnet run --";                              # Run with args passthrough
     dnw = "dotnet watch run --";                        # Hot reload development
