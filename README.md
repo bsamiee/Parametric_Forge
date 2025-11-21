@@ -1,167 +1,164 @@
 # Parametric Forge
 
-![Nix Flake](https://img.shields.io/badge/Nix-Flake-5277C3?logo=nixos&logoColor=white&style=flat-square)
-![nix-darwin](https://img.shields.io/badge/nix--darwin-activate-5277C3?logo=apple&logoColor=white&style=flat-square)
-![Home Manager](https://img.shields.io/badge/Home_Manager-24.05-5277C3?logo=nixos&logoColor=white&style=flat-square)
-![Cachix](https://img.shields.io/badge/Cachix-bsamiee-00BFA5?logo=cachix&logoColor=white&style=flat-square)
-![1Password SSH](https://img.shields.io/badge/SSH-1Password-0061FF?logo=1password&logoColor=white&style=flat-square)
-![License](https://img.shields.io/badge/License-MIT-2F855A?style=flat-square)
+<div style="padding: 8px 0 12px;">
+  <img alt="Platform" src="https://img.shields.io/badge/Platform-macOS%20(aarch64)-1f2937?style=flat&logo=apple&logoColor=white&labelColor=0b1a2a">
+  <img alt="Nix Flake" src="https://img.shields.io/badge/Nix-Flake-1f2937?style=flat&logo=nixos&logoColor=7e9ad9&labelColor=0b1a2a">
+  <img alt="Host" src="https://img.shields.io/badge/Host-nix--darwin-1f2937?style=flat&logo=apple&logoColor=white&labelColor=0b1a2a">
+  <img alt="Home Manager" src="https://img.shields.io/badge/Home%20Manager-24.05-1f2937?style=flat&logo=nixos&logoColor=7e9ad9&labelColor=0b1a2a">
+  <img alt="nixpkgs" src="https://img.shields.io/badge/nixpkgs-unstable-1f2937?style=flat&logo=nixos&logoColor=7e9ad9&labelColor=0b1a2a">
+  <img alt="Cachix" src="https://img.shields.io/badge/Cachix-bsamiee-1f2937?style=flat&logo=cachix&logoColor=00bfa5&labelColor=0b1a2a">
+  <img alt="Secrets" src="https://img.shields.io/badge/Secrets-1Password%20SSH-1f2937?style=flat&logo=1password&logoColor=0061FF&labelColor=0b1a2a">
+  <img alt="Bridge" src="https://img.shields.io/badge/Bridge-nix--homebrew-1f2937?style=flat&logo=homebrew&logoColor=FBB040&labelColor=0b1a2a">
+  <img alt="License" src="https://img.shields.io/badge/License-MIT-1f2937?style=flat&logo=github&logoColor=white&labelColor=0b1a2a">
+</div>
 
-Parametric Forge is a deterministic macOS environment built on Nix flakes, nix-darwin, and Home Manager. It targets computational design (Rhino/Grasshopper/BIM, heavy media) and modern development (Rust, Lua, Node, Python) with reproducible tooling and strict XDG hygiene.
+Parametric Forge is a deterministic macOS workspace built with Nix flakes, nix-darwin, and Home Manager. It targets computational design (Rhino/Grasshopper/BIM), heavy media, and modern development stacks with reproducible tooling, tuned defaults, and strict XDG hygiene.
 
-**Why it exists**
-- One rebuild defines GUI apps, CLI tools, Git/LFS, shells, fonts, and defaults.
-- 1Password-backed secrets + SSH keep credentials out of the repo.
-- CAD/BIM/media formats are first-class via LFS and tuned defaults.
+<div style="padding: 12px 14px; border: 1px solid #1f2937; border-radius: 12px; background: #0b111a;">
+  <strong>At a glance</strong>
+  <ul style="margin: 0 0 0 18px;">
+    <li><strong>Scope:</strong> One flake drives macOS defaults, GUI apps, CLI tools, fonts, overlays (Yazi + sqlean), and cache policy.</li>
+    <li><strong>Secrets:</strong> 1Password-backed secrets + SSH keep credentials out of the repo; GitHub CLI stays writable.</li>
+    <li><strong>Terminal mesh:</strong> WezTerm → Zellij → Yazi with Neovim remote control, Starship, Atuin, fzf-tab, and carapace.</li>
+    <li><strong>Toolchains:</strong> Python 3.13 (uv/ruff/mypy), Node (fnm + pnpm), Lua + LSPs, SQLite/duckdb with sqlean/spatialite/vec, dotnet 8 for Rhino.</li>
+    <li><strong>Assets:</strong> CAD/BIM/media formats stay versionable via LFS defaults; ffmpeg/imagemagick tuned for previews.</li>
+  </ul>
+</div>
 
-## Quick Start
-- Install Nix (Determinate):
-  `curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix | sh -s -- install`
-- Sign into 1Password CLI so secrets/SSH can resolve: `op signin <account>`
-- Clone wherever you keep configs: `git clone https://github.com/bsamiee/Parametric_Forge.git ~/Parametric_Forge`
-- Apply the mac host: `nix run nix-darwin -- switch --flake ~/Parametric_Forge#macbook`
-- Rebuild after edits: `darwin-rebuild switch --flake ~/Parametric_Forge#macbook`
+---
 
-## Secrets + SSH (1Password)
-- Secrets are referenced, never stored. Template lives at `~/.config/op/env.template`; hydrate commands with:
-  `op run --env-file ~/.config/op/env.template -- <command>`
-- 1Password SSH agent for all hosts (see `modules/home/programs/shell-tools/ssh.nix`). Enable the agent in the 1Password app; SSH points to `~/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock`.
-- GitHub CLI stays writable (`modules/home/programs/git-tools/gh.nix`), so `gh auth login` persists tokens without fighting Home Manager.
-- Secret references (GitHub, Cachix, Tavily, Perplexity, Exa) are defined in `modules/home/environments/secrets.nix` and only resolve when wrapped with `op run ...`.
-
-## Repository Map
+## Layout
 ```text
 .
-├── flake.nix / flake.lock
+├── flake.nix / flake.lock          # Inputs/outputs, overlay export, devshell, formatter
 ├── hosts/
-│   └── darwin/default.nix          # macbook host definition
+│   └── darwin/default.nix          # MacBook host: nix-darwin + nix-homebrew + Home Manager
 ├── modules/
-│   ├── common/                     # shared nix daemon settings
-│   ├── darwin/                     # macOS defaults + Homebrew bridge
-│   └── home/                       # Home Manager modules
-│       ├── assets/                 # ascii art + carbon sources/screenshots
-│       ├── aliases/                # shell aliases (core, git, nix, media)
-│       ├── environments/           # session env + secrets + app vars
-│       ├── programs/               # apps, git-tools, languages, nix-tools, shell-tools, zsh
-│       ├── scripts/                # integration hooks (nvim, yazi, zellij)
-│       └── xdg.nix                 # XDG base directories + scaffolding
-└── overlays/                       # yazi overlay + sqlean package
+│   ├── common/                     # Nix daemon perf/cache + Cachix post-build hook
+│   ├── darwin/                     # macOS defaults, fonts, homebrew taps/brews/casks/whalebrew
+│   └── home/                       # Home Manager: XDG, env, aliases, programs, scripts, assets
+│       ├── assets/                 # ASCII + carbon sources/renders
+│       ├── environments/           # Session vars for shell/languages/media/secrets/containers
+│       ├── programs/               # Apps (wezterm/zellij/yazi), shell-tools, git-tools, nix-tools, zsh
+│       ├── scripts/                # Integration wrappers (nvim/zellij/yazi)
+│       └── xdg.nix                 # XDG base dirs + scaffolding
+├── overlays/                       # Upstream Yazi overlay passthrough + custom sqlean
+└── .archive/                       # Retired configs kept for reference
 ```
 
-## Targets
-- `darwin: macbook (aarch64)` with user `bardiasamiee` (nix-homebrew enabled, Rosetta optional).
-- Placeholders exist for `homeConfigurations` and `nixosConfigurations` when new hosts are added.
+---
 
-## Stacks
-<details>
-<summary>Terminal</summary>
+## Quick Start
+1. **Install Nix (Determinate):**
+   ```sh
+   curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix | sh -s -- install
+   ```
+2. **Sign into 1Password CLI:**
+   ```sh
+   op signin <account>
+   ```
+3. **Clone:**
+   ```sh
+   git clone https://github.com/bsamiee/Parametric_Forge.git ~/Parametric_Forge
+   ```
+4. **Apply mac host:**
+   ```sh
+   nix run nix-darwin -- switch --flake ~/Parametric_Forge#macbook
+   ```
+5. **Rebuild after edits:**
+   ```sh
+   darwin-rebuild switch --flake ~/Parametric_Forge#macbook
+   ```
 
-- WezTerm with modular Lua config (`appearance.lua`, `keys.lua`, `integration.lua`) + auto-attach to zellij.
-- Zellij with Dracula theme, `zjstatus`, and layouts `default` / `stacked`.
-- Yazi with theme, `auto-layout`, `piper`, `sidebar-status`, and cd-on-exit handoff.
-</details>
+---
 
-<details>
-<summary>Shell + prompt</summary>
+## Secrets + SSH
+- **Secret references:** `modules/home/environments/secrets.nix`; template written by `modules/home/xdg.nix` to `~/.config/op/env.template`.
+- **Invocation:** `op run --env-file ~/.config/op/env.template -- <command>` keeps secrets out of git.
+- **SSH agent:** `modules/home/programs/shell-tools/ssh.nix` points to `~/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock`.
+- **GitHub CLI:** stays writable because `~/.config/gh` is unmanaged by Home Manager.
 
-- Zsh with `fzf-tab`, Atuin, carapace completions, Starship prompt.
-- Aliases in `modules/home/aliases/*` cover rsync, networking, data conversion, 1Password helpers.
-- XDG-first defaults: `RIPGREP_CONFIG_PATH`, `BAT_CACHE_PATH`, `STARSHIP_CACHE`, etc.
-</details>
+---
 
-<details>
-<summary>Git, security, transport</summary>
+## Terminal Mesh (WezTerm ↔ Zellij ↔ Yazi ↔ Neovim)
+- **WezTerm:** Lua modules (`modules/home/programs/apps/wezterm`) split appearance/keys/mouse/behavior/integration; auto-attaches to Zellij sessions.
+- **Zellij:** `modules/home/programs/apps/zellij` ships Dracula palette, layouts, and `zjstatus`; one color map reused by theme and plugins.
+- **Yazi:** `modules/home/programs/apps/yazi` themed to match; wrapper scripts (`modules/home/scripts/integration/zellij`) set `EDITOR=forge-edit.sh` so Yazi hands edits to Neovim.
+  - `forge-edit.sh` uses per-session nvr sockets; WezTerm focuses the adjacent pane before sending files.
+- **Shell:** Zsh with fzf-tab, Atuin history, carapace completions, Starship, zoxide, delta pager; session paths/XDG caches tuned in `modules/home/environments/*`.
 
-- Git with delta pager, rebase-on-pull, and broad LFS coverage for CAD/BIM/Adobe/media.
-- GitHub CLI stays writable; gitleaks, git-quick-stats, lazygit included.
-- SSH multiplexing and 1Password SSH agent; sockets in `~/.ssh/sockets`.
-</details>
+---
 
-<details>
-<summary>Languages & editors</summary>
+## Tooling Suite
+<div style="padding: 12px 14px; border: 1px solid #1f2937; border-radius: 12px; background: #0b111a;">
+  <details>
+  <summary>Nix, hosts, cache</summary>
 
-- Neovim via `lazy.nvim` with modular Lua config.
-- Python 3.13 stack (uv, ruff, mypy, numpy/pandas/polars, FastAPI, Textual).
-- Node via `fnm` + pnpm; Lua + LSP tooling; SQLite/duckdb with sqlean/spatialite/vec extensions.
-</details>
+  - **Daemon:** `modules/common/nix.nix` tunes eval/build parallelism, HTTP/2, cache TTLs, and post-build Cachix push.
+  - **Overlay:** `overlays/default.nix` forwards upstream Yazi overlay and adds `sqlean` SQLite extensions.
+  - **Host binding:** `hosts/darwin/default.nix` wires nix-darwin, Home Manager, nix-homebrew, and user state versions.
+  </details>
 
-## Carbon code captures
-- Managed by Nix: preset → `~/.carbon-now.json` (Dracula + GeistMono) and wrapper → `carbon-now` (Node 20).
-- One-time browser download: `carbon-playwright-install` (installs Chromium + headless shell into `~/.cache/ms-playwright`).
-- Curated sources live in `modules/home/assets/carbon/sources/` (e.g., `zsh-gh-wrapper.zsh`, `zellij-dracula.nix`, `wezterm-appearance.lua`). Add more there to keep captures consistent.
-- Generate PNGs into `modules/home/assets/carbon/`. Examples:
-  - `carbon-now modules/home/assets/carbon/sources/zsh-gh-wrapper.zsh --headless --language zsh --save-to modules/home/assets/carbon --save-as zsh-gh-wrapper`
-  - `carbon-now modules/home/assets/carbon/sources/zellij-dracula.nix --headless --language nix --save-to modules/home/assets/carbon --save-as zellij-dracula`
-  - `carbon-now modules/home/assets/carbon/sources/wezterm-appearance.lua --headless --language lua --save-to modules/home/assets/carbon --save-as wezterm-appearance`
+  <details>
+  <summary>Git + security</summary>
 
-## Gallery (add PNGs after running the commands above)
-- Zsh + 1Password-aware gh wrapper  
-  ![zsh gh wrapper](modules/home/assets/carbon/zsh-gh-wrapper.png)
-- Zellij Dracula palette  
-  ![zellij dracula](modules/home/assets/carbon/zellij-dracula.png)
-- WezTerm appearance (Dracula + GeistMono)  
-  ![wezterm appearance](modules/home/assets/carbon/wezterm-appearance.png)
+  - **VCS stack:** Delta pager everywhere, LFS patterns for CAD/BIM/media, lazygit, gitleaks, git-quick-stats (`modules/home/programs/git-tools`).
+  - **SSH:** Multiplexing + sockets in `~/.ssh/sockets`; 1Password agent for keys.
+  </details>
 
-## Featured snippets
-- SSH via 1Password (`modules/home/programs/shell-tools/ssh.nix`):
-```nix
-programs.ssh = {
-  enable = true;
-  extraConfig = ''
-    Host *
-      IdentityAgent "~/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
-  '';
-  matchBlocks.github.com = {
-    user = "git";
-    identitiesOnly = true;
-    addKeysToAgent = "yes";
-  };
-};
-```
+  <details>
+  <summary>Languages</summary>
 
-- Zellij Dracula palette (`modules/home/programs/apps/zellij/themes/dracula.nix`):
-```nix
-colors = {
-  background = { hex = "#15131F"; r = 21; g = 19; b = 31; };
-  purple     = { hex = "#A072C6"; r = 160; g = 114; b = 198; };
-  cyan       = { hex = "#94F2E8"; r = 148; g = 242; b = 232; };
-  green      = { hex = "#50FA7B"; r = 80; g = 250; b = 123; };
-};
-```
+  - **Python:** 3.13 stack with uv, ruff, mypy; caches under XDG (`modules/home/environments/languages.nix`).
+  - **Node/Lua/DB:** Node via fnm + pnpm with memory flags; Lua + LSP tooling; DuckDB/SQLite with sqlean/spatialite/vec (`modules/home/programs/languages/*`).
+  </details>
 
-- LFS coverage for design assets (`modules/home/programs/git-tools/git.nix`):
-```nix
-attributes = [
-  "*.3dm filter=lfs diff=lfs merge=lfs -text"
-  "*.gh filter=lfs diff=lfs merge=lfs -text"
-  "*.rvt filter=lfs diff=lfs merge=lfs -text"
-  "*.dwg filter=lfs diff=lfs merge=lfs -text"
-  "*.psd filter=lfs diff=lfs merge=lfs -text"
-  "*.mp4 filter=lfs diff=lfs merge=lfs -text"
-];
-```
+  <details>
+  <summary>Media + documents</summary>
 
-- XDG scaffolding for secrets and SSH (`modules/home/xdg.nix`):
-```nix
-xdg.configFile."op/env.template".text = ''
-  GITHUB_TOKEN="op://Tokens/Github Token/token"
-  GH_TOKEN="op://Tokens/Github Token/token"
-  PERPLEXITY_API_KEY="op://Tokens/Perplexity Sonar API Key/token"
-  CACHIX_AUTH_TOKEN="op://Tokens/Cachix Auth Token - Parametric Forge/token"
-  TAVILY_API_KEY="op://Tokens/Tavily Auth Token/token"
-  EXA_API_KEY="op://Tokens/Exa API Key/token"
-'';
+  - **Tooling:** ffmpeg, imagemagick, resvg, chafa, mediainfo, ocrmypdf, pandoc with cache/log paths under XDG.
+  - **Config:** Environment knobs in `modules/home/environments/media.nix`.
+  </details>
 
-home.activation.createHomeDirs = lib.hm.dag.entryAfter ["writeBoundary"] ''
-  mkdir -pm 700 "${config.home.homeDirectory}/.ssh/sockets"
-'';
-```
+  <details>
+  <summary>Homebrew bridge</summary>
+
+  - **Bridge:** `modules/darwin/homebrew` enables nix-homebrew, auto-update/cleanup, and installs taps/brews/casks/whalebrew (Raycast, BTT, Arc, Adobe CC, fonts not in nixpkgs, yabai/skhd/borders).
+  </details>
+</div>
+
+---
+
+## Code Examples
+
+
+**SSH via 1Password agent**
+  ![SSH via 1Password agent](modules/home/assets/carbon/ssh-1password.png)
+
+**Zsh gh wrapper with 1Password**
+  ![Zsh gh wrapper with 1Password](modules/home/assets/carbon/zsh-gh-wrapper.png)
+
+**Zellij Dracula palette**
+  ![Zellij Dracula palette](modules/home/assets/carbon/zellij-dracula.png)
+
+**WezTerm appearance**
+  ![WezTerm appearance](modules/home/assets/carbon/wezterm-appearance.png)
+
+**Forge edit/yazi integration**
+  ![Forge edit/yazi integration](modules/home/assets/carbon/forge-edit-wrapper.png)
+
+---
 
 ## Maintenance
-- Format: `nix fmt`.
-- Dev shell with linters: `nix develop` → `deadnix .`, `statix .`.
-- Rebuild: `darwin-rebuild switch --flake ~/Parametric_Forge#macbook` (or `nix run nix-darwin -- switch ...` for fresh installs).
-- Update inputs: `nix flake update`; cache push is automatic if `CACHIX_AUTH_TOKEN` is present.
+<div style="padding: 12px 14px; border: 1px solid #1f2937; border-radius: 12px; background: #0b111a;">
+  <ul style="margin: 0 0 0 18px;">
+    <li><strong>Format:</strong> <code>nix fmt</code></li>
+    <li><strong>Dev shell + lint:</strong> <code>nix develop</code> → <code>deadnix .</code>, <code>statix .</code></li>
+    <li><strong>Rebuild host:</strong> <code>darwin-rebuild switch --flake ~/Parametric_Forge#macbook</code></li>
+    <li><strong>Update inputs:</strong> <code>nix flake update</code></li>
+    <li><strong>Cache push:</strong> automatic via post-build hook when <code>CACHIX_AUTH_TOKEN</code> is present</li>
+  </ul>
+</div>
 
 ## License
 MIT © [Bardia Samiee](https://github.com/bsamiee)

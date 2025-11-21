@@ -29,7 +29,7 @@ let
     latest-preset = {
       backgroundColor = "#15131F";
       theme = "dracula";
-      windowTheme = "none";
+      windowTheme = "macos";
       windowControls = true;
       fontFamily = "GeistMono Nerd Font, Geist Mono, Fira Code";
       fontSize = "16px";
@@ -97,8 +97,28 @@ let
 ${carbonConfigJson}
 JSON
     carbon-playwright-install || true
+    # Derive language from the first non-flag path when --language is not supplied.
+    lang_flag=""
+    for arg in "$@"; do
+      case "$arg" in
+        --language|-l) lang_flag="set"; break ;;
+        --language=*|-l=*) lang_flag="set"; break ;;
+        --*) ;;  # skip flags
+        *)
+          ext="''${arg##*.}"
+          case "$ext" in
+            nix) lang_flag="--language nix" ;;
+            zsh) lang_flag="--language zsh" ;;
+            sh|bash) lang_flag="--language bash" ;;
+            lua) lang_flag="--language lua" ;;
+          esac
+          break
+          ;;
+      esac
+    done
     exec ${pkgs.nodejs_20}/bin/node \
-      ${carbonCli}/lib/node_modules/carbon-now-cli/dist/cli.js "$@"
+      ${carbonCli}/lib/node_modules/carbon-now-cli/dist/cli.js \
+      ''${lang_flag:-} "$@"
   '';
 in
 {
