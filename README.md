@@ -132,19 +132,24 @@ Parametric Forge is a deterministic macOS workspace built with Nix flakes, nix-d
 ## Code Examples
 
 
-**SSH via 1Password agent**
+**SSH via 1Password agent:**
+
   ![SSH via 1Password agent](modules/home/assets/carbon/ssh-1password.png)
 
-**Zsh gh wrapper with 1Password**
+**Zsh gh wrapper with 1Password:**
+
   ![Zsh gh wrapper with 1Password](modules/home/assets/carbon/zsh-gh-wrapper.png)
 
-**Zellij Dracula palette**
+**Zellij Dracula palette:**
+
   ![Zellij Dracula palette](modules/home/assets/carbon/zellij-dracula.png)
 
-**WezTerm appearance**
+**WezTerm appearance:**
+
   ![WezTerm appearance](modules/home/assets/carbon/wezterm-appearance.png)
 
-**Forge edit/yazi integration**
+**Forge edit/yazi integration:**
+
   ![Forge edit/yazi integration](modules/home/assets/carbon/forge-edit-wrapper.png)
 
 ---
