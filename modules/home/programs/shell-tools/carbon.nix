@@ -24,7 +24,6 @@
 # pink          #E98FBE
 
 let
-  # Carbon config with Dracula theme
   carbonConfig = {
     latest-preset = {
       backgroundColor = "#15131F";
@@ -49,7 +48,7 @@ let
       exportSize = "2x";
       type = "png";
 
-      # Custom Dracula color mappings for syntax highlighting
+      # Custom Dracula theme
       custom = {
         background = "rgba(21, 19, 31, 1)";      # #15131F
         text = "rgba(248, 248, 242, 1)";         # #F8F8F2
@@ -74,7 +73,6 @@ let
   carbonCli = pkgs.nodePackages.carbon-now-cli;
 
   # Helper script to download Playwright browsers if missing.
-  # Uses XDG cache to keep things tidy.
   playwrightEnsure = pkgs.writeShellScriptBin "carbon-playwright-install" ''
     set -euo pipefail
     export PLAYWRIGHT_BROWSERS_PATH="''${XDG_CACHE_HOME:-$HOME/.cache}/ms-playwright"
@@ -122,7 +120,5 @@ JSON
   '';
 in
 {
-  # Expose only the wrapper + Playwright helper to avoid duplicate bins.
   home.packages = [ carbonWrapped playwrightEnsure ];
-  # Note: .carbon-now.json is created by the wrapper on each run, not managed declaratively
 }
