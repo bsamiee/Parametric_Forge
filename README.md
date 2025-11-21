@@ -1,14 +1,13 @@
 # Parametric Forge
 
 <div style="padding: 8px 0 12px;">
-  <img alt="Platform" src="https://img.shields.io/badge/Platform-macOS%20(aarch64)-1f2937?style=flat&logo=apple&logoColor=white&labelColor=0b1a2a">
   <img alt="Nix Flake" src="https://img.shields.io/badge/Nix-Flake-1f2937?style=flat&logo=nixos&logoColor=7e9ad9&labelColor=0b1a2a">
-  <img alt="Host" src="https://img.shields.io/badge/Host-nix--darwin-1f2937?style=flat&logo=apple&logoColor=white&labelColor=0b1a2a">
   <img alt="Home Manager" src="https://img.shields.io/badge/Home%20Manager-24.05-1f2937?style=flat&logo=nixos&logoColor=7e9ad9&labelColor=0b1a2a">
   <img alt="nixpkgs" src="https://img.shields.io/badge/nixpkgs-unstable-1f2937?style=flat&logo=nixos&logoColor=7e9ad9&labelColor=0b1a2a">
-  <img alt="Cachix" src="https://img.shields.io/badge/Cachix-bsamiee-1f2937?style=flat&logo=cachix&logoColor=00bfa5&labelColor=0b1a2a">
-  <img alt="Secrets" src="https://img.shields.io/badge/Secrets-1Password%20SSH-1f2937?style=flat&logo=1password&logoColor=0061FF&labelColor=0b1a2a">
   <img alt="Bridge" src="https://img.shields.io/badge/Bridge-nix--homebrew-1f2937?style=flat&logo=homebrew&logoColor=FBB040&labelColor=0b1a2a">
+  <img alt="Host" src="https://img.shields.io/badge/Host-nix--darwin-1f2937?style=flat&logo=apple&logoColor=white&labelColor=0b1a2a">
+  <img alt="Secrets" src="https://img.shields.io/badge/Secrets-1Password%20SSH-1f2937?style=flat&logo=1password&logoColor=0061FF&labelColor=0b1a2a">
+  <img alt="Cachix" src="https://img.shields.io/badge/Cachix-bsamiee-1f2937?style=flat&logo=cachix&logoColor=00bfa5&labelColor=0b1a2a">
   <img alt="License" src="https://img.shields.io/badge/License-MIT-1f2937?style=flat&logo=github&logoColor=white&labelColor=0b1a2a">
 </div>
 
