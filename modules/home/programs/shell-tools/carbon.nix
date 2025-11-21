@@ -124,7 +124,5 @@ in
 {
   # Expose only the wrapper + Playwright helper to avoid duplicate bins.
   home.packages = [ carbonWrapped playwrightEnsure ];
-
-  # Carbon CLI reads ~/.carbon-now.json (non-XDG); keep it declarative here
-  home.file.".carbon-now.json".text = builtins.toJSON carbonConfig;
+  # Note: .carbon-now.json is created by the wrapper on each run, not managed declaratively
 }

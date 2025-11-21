@@ -88,7 +88,8 @@
       "Bash(node:*)",
       "Bash(biome:*)",
       "WebFetch(domain:prettier.io)",
-      "Bash(prettier --help)"
+      "Bash(prettier --help)",
+      "Bash(erdtree:*)"
     ],
     "deny": [],
     "ask": [],

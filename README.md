@@ -7,7 +7,6 @@
   <img alt="Bridge" src="https://img.shields.io/badge/Bridge-nix--homebrew-1f2937?style=flat&logo=homebrew&logoColor=FBB040&labelColor=0b1a2a">
   <img alt="Host" src="https://img.shields.io/badge/Host-nix--darwin-1f2937?style=flat&logo=apple&logoColor=white&labelColor=0b1a2a">
   <img alt="Secrets" src="https://img.shields.io/badge/Secrets-1Password%20SSH-1f2937?style=flat&logo=1password&logoColor=0061FF&labelColor=0b1a2a">
-  <img alt="Cachix" src="https://img.shields.io/badge/Cachix-bsamiee-1f2937?style=flat&logo=cachix&logoColor=00bfa5&labelColor=0b1a2a">
   <img alt="License" src="https://img.shields.io/badge/License-MIT-1f2937?style=flat&logo=github&logoColor=white&labelColor=0b1a2a">
 </div>
 
