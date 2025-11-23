@@ -26,8 +26,6 @@
 {
   programs.git = {
     enable = true;
-    userName = "bsamiee";
-    userEmail = "b.samiee93@gmail.com";
     lfs.enable = true;
 
     # --- Git Attributes (LFS and line endings) ------------------------------
@@ -121,92 +119,12 @@
       "*.eot filter=lfs diff=lfs merge=lfs -text"
     ];
 
-    # --- Delta Integration --------------------------------------------------
-    delta = {
-      enable = true;
-
-      options = {
-        navigate = true;
-        light = false;
-        side-by-side = true;
-
-        # Line numbers
-        line-numbers = true;
-        line-numbers-minus-style = "red";
-        line-numbers-plus-style = "green";
-        line-numbers-zero-style = "dim";
-        line-numbers-left-format = "{nm:>4}⋮";
-        line-numbers-right-format = "{np:>4}│";
-
-        # File headers
-        file-style = "bold";
-        file-decoration-style = "none";
-        file-added-label = "";
-        file-copied-label = "[==]";
-        file-modified-label = "";
-        file-removed-label = "";
-        file-renamed-label = "";
-
-        # Hunk headers
-        hunk-header-style = "file line-number";
-        hunk-header-decoration-style = "box";
-
-        # Commit/blame styles
-        commit-decoration-style = "bold box ul";
-        commit-style = "raw";
-
-        # Blame configuration
-        blame-format = "{timestamp:<15} {author:<15.14} {commit:<8}";
-        blame-palette = "#2e3440 #3b4252 #434c5e #4c566a";
-        blame-separator-format = "│{n:^4}│";
-        blame-separator-style = "dim";
-        blame-timestamp-output-format = "%Y-%m-%d %H:%M";
-
-        # Diff styles
-        minus-style = "syntax";
-        minus-emph-style = "syntax bold";
-        plus-style = "syntax";
-        plus-emph-style = "syntax bold";
-
-        # Grep integration
-        grep-output-type = "ripgrep";
-        grep-match-line-style = "syntax";
-        grep-match-word-style = "bold magenta";
-        grep-line-number-style = "green";
-        grep-file-style = "blue bold";
-        grep-separator-symbol = ":";
-
-        # Advanced diff features
-        word-diff-regex = "\\w+|[^[:space:]]";
-        max-line-distance = "0.6";
-        whitespace-error-style = "magenta reverse";
-        relative-paths = true;
-        default-language = "txt";
-
-        # Line wrapping
-        wrap-max-lines = 2;
-        wrap-left-symbol = "↵";
-        wrap-right-symbol = "↴";
-        wrap-right-prefix-symbol = "…";
-
-        # UI elements
-        keep-plus-minus-markers = false;
-        syntax-theme = "Dracula";  # Match bat theme
-        true-color = "always";
-        zero-style = "dim syntax";
-
-        # Interactive features
-        hyperlinks = true;
-        hyperlinks-file-link-format = "vscode://file/{path}:{line}";
-      };
-    };
-
-    extraConfig = {
+    settings = {
+      user.name = "bsamiee";
+      user.email = "b.samiee93@gmail.com";
       init.defaultBranch = "main";
 
-      pull = {
-        rebase = true;  # Always rebase on pull (ff setting ignored with rebase)
-      };
+      pull.rebase = true;  # Always rebase on pull (ff setting ignored with rebase)
 
       push = {
         default = "current";
@@ -271,6 +189,87 @@
       commit.verbose = true;
       rerere.enabled = true;
       help.autocorrect = 20;
+    };
+  };
+
+  # Delta is now configured via programs.delta, with explicit Git integration
+  programs.delta = {
+    enable = true;
+    enableGitIntegration = true;
+
+    options = {
+      navigate = true;
+      light = false;
+      side-by-side = true;
+
+      # Line numbers
+      line-numbers = true;
+      line-numbers-minus-style = "red";
+      line-numbers-plus-style = "green";
+      line-numbers-zero-style = "dim";
+      line-numbers-left-format = "{nm:>4}⋮";
+      line-numbers-right-format = "{np:>4}│";
+
+      # File headers
+      file-style = "bold";
+      file-decoration-style = "none";
+      file-added-label = "";
+      file-copied-label = "[==]";
+      file-modified-label = "";
+      file-removed-label = "";
+      file-renamed-label = "";
+
+      # Hunk headers
+      hunk-header-style = "file line-number";
+      hunk-header-decoration-style = "box";
+
+      # Commit/blame styles
+      commit-decoration-style = "bold box ul";
+      commit-style = "raw";
+
+      # Blame configuration
+      blame-format = "{timestamp:<15} {author:<15.14} {commit:<8}";
+      blame-palette = "#2e3440 #3b4252 #434c5e #4c566a";
+      blame-separator-format = "│{n:^4}│";
+      blame-separator-style = "dim";
+      blame-timestamp-output-format = "%Y-%m-%d %H:%M";
+
+      # Diff styles
+      minus-style = "syntax";
+      minus-emph-style = "syntax bold";
+      plus-style = "syntax";
+      plus-emph-style = "syntax bold";
+
+      # Grep integration
+      grep-output-type = "ripgrep";
+      grep-match-line-style = "syntax";
+      grep-match-word-style = "bold magenta";
+      grep-line-number-style = "green";
+      grep-file-style = "blue bold";
+      grep-separator-symbol = ":";
+
+      # Advanced diff features
+      word-diff-regex = "\\w+|[^[:space:]]";
+      max-line-distance = "0.6";
+      whitespace-error-style = "magenta reverse";
+      relative-paths = true;
+      default-language = "txt";
+
+      # Line wrapping
+      wrap-max-lines = 2;
+      wrap-left-symbol = "↵";
+      wrap-right-symbol = "↴";
+      wrap-right-prefix-symbol = "…";
+
+      # UI elements
+      keep-plus-minus-markers = false;
+      syntax-theme = "Dracula";  # Match bat theme
+      true-color = "always";
+      zero-style = "dim syntax";
+
+      # Interactive features
+      hyperlinks = true;
+      hyperlinks-file-link-format = "vscode://file/{path}:{line}";
     };
   };
 }

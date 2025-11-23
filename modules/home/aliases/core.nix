@@ -20,8 +20,7 @@
     envs = "env | sort";                                                          # List environment variables sorted
     ezsh = "$EDITOR $HOME/.zshrc";                                                # Edit ZSH config
     rzsh = "source $HOME/.zshrc";                                                 # Reload ZSH config
-    reload = "exec $SHELL";                                                       # Reload shell
-    npm = "pnpm";                                                                 # Keep npm calls consistent
+    reload = "exec $SHELL";                                                       # Reload shell                                                                 # Keep npm calls consistent                                                                # Convenience typo/alias
 
     # --- File Operations ----------------------------------------------------
     ls = "eza -la --header --no-user --time-style=relative";

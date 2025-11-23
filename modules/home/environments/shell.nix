@@ -16,6 +16,7 @@
     "$HOME/bin"
     "${config.xdg.dataHome}/cargo/bin"
     "${config.xdg.dataHome}/go/bin"
+    "${config.xdg.dataHome}/pnpm"
     "/opt/homebrew/opt/dotnet@8/bin"
     "/Applications/Rhino 8.app/Contents/Resources/bin"
   ];
@@ -34,6 +35,7 @@
     LESS = "-RFX";                    # -X prevents screen clearing on macOS
     MANROFFOPT = "-c";
     RICH_THEME = "dracula";
+    PNPM_HOME = "${config.xdg.dataHome}/pnpm";  # Global pnpm bin location
 
     # --- Tool Configurations ------------------------------------------------
     WATCHEXEC_IGNORE_FILE = "${config.xdg.configHome}/watchexec/ignore";
