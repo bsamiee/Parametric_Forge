@@ -1,13 +1,13 @@
 .archive/
 .claude
 
-# --- Nix/Darwin Build Artifacts ---
+# --- Nix/Darwin Build Artifacts ---------------------------------------------
 result
 result-*
 *.drv
 .nixpkgs-review/
 
-# --- Secrets & Credentials (CRITICAL) ---
+# --- Secrets & Credentials --------------------------------------------------
 .secrets/
 *.secret
 *.key
@@ -23,7 +23,7 @@ tokens.local.nix
 op-env.cache
 00.DEPRECATED/
 
-# --- Python ---
+# --- Python -----------------------------------------------------------------
 __pycache__/
 *.py[cod]
 *$py.class
@@ -40,21 +40,19 @@ build/
 .mypy_cache/
 .ruff_cache/
 
-# --- Node/JavaScript ---
+# --- Node/JavaScript --------------------------------------------------------
 node_modules/
-npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-.npm/
 .yarn/
 .pnp.*
 
-# --- Rust ---
+# --- Rust -------------------------------------------------------------------
 target/
 Cargo.lock
 **/*.rs.bk
 
-# --- macOS System Files ---
+# --- macOS System Files -----------------------------------------------------
 .DS_Store
 .AppleDouble
 .LSOverride
@@ -68,7 +66,7 @@ Network Trash Folder
 Temporary Items
 .apdisk
 
-# --- Editor Files ---
+# --- Editor Files -----------------------------------------------------------
 .idea/
 .vscode/
 *.swp
@@ -79,55 +77,54 @@ Temporary Items
 .vim/
 *.sublime-*
 
-# --- Backup Files ---
+# --- Backup Files -----------------------------------------------------------
 *.backup
 *.bak
 *.orig
 *.old
 .zshrc.backup
 
-# --- Temporary Files ---
+# --- Temporary Files --------------------------------------------------------
 *.tmp
 *.temp
 *.cache
 tmp/
 temp/
 
-# --- Logs ---
+# --- Logs -------------------------------------------------------------------
 *.log
 logs/
 *.log.*
 
-# --- direnv ---
+# --- direnv -----------------------------------------------------------------
 .direnv/
 .envrc.local
 
-# --- Local Overrides ---
+# --- Local Overrides --------------------------------------------------------
 local.nix
 *.local.nix
 overrides.nix
 
-# --- Cache Directories ---
+# --- Cache Directories ------------------------------------------------------
 .cache/
-.npm/
 .cargo/
 .rustup/
 
-# --- Test Coverage ---
+# --- Test Coverage ----------------------------------------------------------
 coverage/
 *.lcov
 .nyc_output/
 
-# --- OS Generated ---
+# --- OS Generated -----------------------------------------------------------
 Thumbs.db
 ehthumbs.db
 Desktop.ini
 $RECYCLE.BIN/
 
-# --- Documentation Build ---
+# --- Documentation Build ----------------------------------------------------
 docs/_build/
 site/
 
-# --- Misc ---
+# --- Misc -------------------------------------------------------------------
 .history/
 .vscode-test/

@@ -35,28 +35,5 @@
     TAILWIND_MODE = "watch";                                              # JIT compilation for development
     VITEST_MODE = "run";                                                  # Default test runner mode
 
-    # --- Node/JavaScript ----------------------------------------------------
-    # Node.js runtime
-    NODE_ENV = "development";                      # Production by default - critical for performance
-    NODE_OPTIONS = "--max-old-space-size=4096";   # Memory management
-    NODE_NO_WARNINGS = "1";                       # Reduce noise from warnings
-    NODE_REPL_HISTORY = "${config.xdg.stateHome}/node/repl_history";
-    NODE_V8_COVERAGE = "${config.xdg.cacheHome}/node/coverage";
-    # npm configuration
-    NPM_CONFIG_USERCONFIG = "${config.xdg.configHome}/npm/npmrc";
-    NPM_CONFIG_PREFIX = "${config.xdg.dataHome}/npm";
-    # pnpm paths
-    PNPM_HOME = "${config.xdg.dataHome}/pnpm";
-    npm_config_store_dir = "${config.xdg.dataHome}/pnpm/store";
-    npm_config_cache_dir = "${config.xdg.cacheHome}/pnpm";
-    npm_config_global_dir = "${config.xdg.dataHome}/pnpm/global";
-    npm_config_global_bin_dir = "${config.xdg.dataHome}/pnpm";
-    npm_config_state_dir = "${config.xdg.stateHome}/pnpm";
-    # fnm (Fast Node Manager)
-    FNM_DIR = "${config.xdg.dataHome}/fnm";
-    FNM_COREPACK_ENABLED = "true";
-    FNM_NODE_DIST_MIRROR = "https://nodejs.org/dist";
-    FNM_RESOLVE_ENGINES = "true";
-    FNM_LOGLEVEL = "info";                        # Options: quiet, error, info
   };
 }

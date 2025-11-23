@@ -108,7 +108,7 @@ Parametric Forge is a deterministic macOS workspace built with Nix flakes, nix-d
   <summary>Languages</summary>
 
   - **Python:** 3.13 stack with uv, ruff, mypy; caches under XDG (`modules/home/environments/languages.nix`).
-  - **Node/Lua/DB:** Node via fnm + pnpm with memory flags; Lua + LSP tooling; DuckDB/SQLite with sqlean/spatialite/vec (`modules/home/programs/languages/*`).
+  - **Node/Lua/DB:** Node via fnm + pnpm (npm is aliased to pnpm for consistency); Lua + LSP tooling; DuckDB/SQLite with sqlean/spatialite/vec (`modules/home/programs/languages/*`).
   </details>
 
   <details>

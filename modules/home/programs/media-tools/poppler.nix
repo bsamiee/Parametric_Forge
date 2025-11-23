@@ -9,5 +9,5 @@
 { pkgs, ... }:
 
 {
-  home.packages = [ pkgs.poppler_utils ];
+  home.packages = [ pkgs.poppler-utils ];
 }

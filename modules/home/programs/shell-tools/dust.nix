@@ -19,6 +19,6 @@ let
   };
 in
 {
-  home.packages = [ pkgs.du-dust ];
+  home.packages = [ pkgs.dust ];
   xdg.configFile."dust/config.toml".source = tomlFormat.generate "dust-config" dustConfig;
 }

@@ -30,21 +30,12 @@
 
     # --- Data Science Stack -------------------------------------------------
     python3Packages.numpy               # Numerical computing
-    python3Packages.pandas              # Data analysis
     python3Packages.scipy               # Scientific computing
     python3Packages.sympy               # Symbolic mathematics
-    python3Packages.polars              # Fast DataFrame library
-    python3Packages.pyarrow             # Apache Arrow integration
-    python3Packages.geopandas           # Geospatial data
-    python3Packages.dask                # Parallel computing
-    python3Packages.xarray              # N-D labeled arrays
 
     # --- Notebook & Visualization -------------------------------------------
     python3Packages.nbconvert           # Convert Jupyter notebooks - For nbpreview.yazi
     python3Packages.jupyter-core        # Core Jupyter functionality
-    python3Packages.matplotlib          # Plotting library
-    python3Packages.plotly              # Interactive plots
-    python3Packages.seaborn             # Statistical visualization
 
     # --- Web & API Development ----------------------------------------------
     python3Packages.fastapi             # Modern web framework
@@ -60,7 +51,6 @@
     python3Packages.jsonschema          # JSON validation
     python3Packages.openpyxl            # Excel files
     python3Packages.pillow              # Image processing
-    python3Packages.duckdb              # Analytical SQL
 
     # --- Security & Serialization -------------------------------------------
     python3Packages.cryptography        # Cryptographic recipes

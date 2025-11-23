@@ -21,6 +21,7 @@
     ezsh = "$EDITOR $HOME/.zshrc";                                                # Edit ZSH config
     rzsh = "source $HOME/.zshrc";                                                 # Reload ZSH config
     reload = "exec $SHELL";                                                       # Reload shell
+    npm = "pnpm";                                                                 # Keep npm calls consistent
 
     # --- File Operations ----------------------------------------------------
     ls = "eza -la --header --no-user --time-style=relative";

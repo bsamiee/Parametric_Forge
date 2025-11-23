@@ -6,7 +6,7 @@
 # ----------------------------------------------------------------------------
 # Node.js runtime, version manager, and package tooling.
 
-{ config, pkgs, ... }:
+{ pkgs, ... }:
 
 {
   home.packages = with pkgs; [
@@ -16,13 +16,4 @@
     nodePackages.prettier # Code formatter
     tailwindcss # Utility-first CSS framework
   ];
-
-  # --- pnpm Configuration ---------------------------------------------------
-  xdg.configFile."pnpm/rc".text = ''
-    store-dir=${config.xdg.dataHome}/pnpm/store
-    cache-dir=${config.xdg.cacheHome}/pnpm
-    state-dir=${config.xdg.stateHome}/pnpm
-    global-dir=${config.xdg.dataHome}/pnpm/global
-    global-bin-dir=${config.xdg.dataHome}/pnpm
-  '';
 }

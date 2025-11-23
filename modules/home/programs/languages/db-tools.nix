@@ -21,7 +21,6 @@ in
     sqlite-utils       # Python-based CLI for SQLite database management
     libspatialite      # Spatial SQL extension for geospatial work
     sqlfluff           # SQL linter and formatter supporting multiple dialects
-    sqlcheck           # Static analysis for detecting SQL anti-patterns
     duckdb             # In-memory analytics database with SQL interface
     sqlean             # Extension library bundle (regexp, uuid, stats, etc.)
   ];

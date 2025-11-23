@@ -67,7 +67,7 @@
       history_filter = [
         "^(rm|kill|pkill|killall|reboot|shutdown|passwd|sudo -i|su -).*"
         "^(ls|cd|pwd|exit|cd \\.\\.|clear|history|bg|fg)$"
-        "^npm (run|start|test|build)$"
+        "^pnpm (run|start|test|build)$"
         "^(cat|bat|less|more) "
         "^git.*token"
         "^git.*password"
@@ -92,7 +92,7 @@
       };
       stats = {
         common_prefix = ["sudo" "time" "nohup"];
-        common_subcommands = ["git" "cargo" "npm" "docker" "kubectl"];
+        common_subcommands = ["git" "cargo" "pnpm" "docker" "kubectl"];
         ignored_commands = ["ls" "cd" "pwd" "exit" "clear" "history"];
       };
       theme = {

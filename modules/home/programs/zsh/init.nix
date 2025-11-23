@@ -139,14 +139,8 @@
       # --- Shell Options (these run after everything) -----------------------------
       setopt AUTO_PUSHD PUSHD_IGNORE_DUPS CDABLE_VARS
 
-      # npm wrapper - use pnpm by default, real npm for legacy projects
-      npm() {
-        if [[ -f package-lock.json ]]; then
-          command npm "$@"
-        else
-          pnpm "$@"
-        fi
-      }
+      # Keep npm invocations consistent without extra wrapper logic
+      alias npm=pnpm
 
     ''
   ];

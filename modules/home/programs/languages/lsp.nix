@@ -14,7 +14,7 @@
     nixd                                        # Modern Nix language server
     lua-language-server                         # LuaLS for Lua diagnostics & completion
     bash-language-server                        # Shell scripts
-    taplo-lsp                                   # TOML
+    taplo                                       # TOML (includes LSP)
     yaml-language-server                        # YAML validation & schema support
     marksman                                    # Markdown (wiki-style links, frontmatter)
     nodePackages.vscode-langservers-extracted   # HTML/CSS/JSON/ESLint via VS Code extractions
