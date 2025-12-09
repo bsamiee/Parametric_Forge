@@ -35,12 +35,6 @@
     SERPL_DATA = "${config.xdg.dataHome}/serpl";
     SERPL_LOGLEVEL = "info";
 
-    # --- 1Password ----------------------------------------------------------
-    OP_BIOMETRIC_UNLOCK_ENABLED = "true";
-    OP_ENV_TEMPLATE = "${config.xdg.configHome}/op/env.template";
-    OP_ENV_CACHE = "${config.xdg.cacheHome}/op/env.cache";
-    OP_CACHE = "true";  # Enable caching for better performance
-
     # --- Claude -------------------------------------------------------------
     CLAUDE_CACHE_DIR = "${config.xdg.cacheHome}/claude";
   };

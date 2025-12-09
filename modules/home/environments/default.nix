@@ -17,6 +17,6 @@
     ./applications.nix
     ./containers.nix
     ./media.nix
-    ./secrets.nix
+    # secrets.nix merged into programs/shell-tools/1password.nix
   ];
 }

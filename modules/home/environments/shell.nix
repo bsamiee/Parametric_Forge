@@ -28,7 +28,7 @@
     ZSH_AUTOSUGGEST_STRATEGY = "(atuin completion)";
     ZSH_AUTOSUGGEST_BUFFER_MAX_SIZE = "20";
     ZSH_AUTOSUGGEST_USE_ASYNC = "1";  # Significant performance improvement
-    KEYTIMEOUT = "1";
+    KEYTIMEOUT = "200";
     PAGER = "less";                   # Let tools add their own flags
     BAT_PAGER = "less -RFXK";         # Bat pager: -X fixes macOS Terminal.app clearing
     PROCS_PAGER = "less -SRX";        # Procs pager: -S no wrap for tables, -R colors, -X no clear

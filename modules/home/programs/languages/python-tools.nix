@@ -4,65 +4,17 @@
 # License       : MIT
 # Path          : modules/home/programs/languages/python-tools.nix
 # ----------------------------------------------------------------------------
-# Python development environment and scientific computing tools.
+# Python development environment - Canonical Python 3.14 installation.
 
 { pkgs, ... }:
 
 {
   home.packages = with pkgs; [
-    # --- Python Core --------------------------------------------------------
-    python313                           # Python 3.13
+    # --- Python Runtime (Canonical Source) ----------------------------------
+    python314                           # Python 3.14.0
+
+    # --- Python Tooling -----------------------------------------------------
     ruff                                # Fast Python linter/formatter
     uv                                  # Fast Python package installer and resolver
-    mypy                                # Static type checker
-
-    # --- Core Libraries -----------------------------------------------------
-    python3Packages.rich                # Rich text formatting
-    python3Packages.typer               # CLI creation library
-    python3Packages.pydantic            # Data validation
-    python3Packages.httpx               # Modern HTTP client
-    python3Packages.anyio               # Async I/O abstraction
-    python3Packages.aiofiles            # Async file operations
-    python3Packages.structlog           # Structured logging
-    python3Packages.tenacity            # Retry logic
-    python3Packages.watchdog            # File system monitoring
-    python3Packages.orjson              # Fast JSON serialization
-
-    # --- Data Science Stack -------------------------------------------------
-    python3Packages.numpy               # Numerical computing
-    python3Packages.scipy               # Scientific computing
-    python3Packages.sympy               # Symbolic mathematics
-
-    # --- Notebook & Visualization -------------------------------------------
-    python3Packages.nbconvert           # Convert Jupyter notebooks - For nbpreview.yazi
-    python3Packages.jupyter-core        # Core Jupyter functionality
-
-    # --- Web & API Development ----------------------------------------------
-    python3Packages.fastapi             # Modern web framework
-    python3Packages.uvicorn             # ASGI server
-    python3Packages.sqlalchemy          # SQL toolkit
-    python3Packages.alembic             # Database migrations
-
-    # --- Data Processing & Parsing ------------------------------------------
-    python3Packages.beautifulsoup4      # HTML/XML parsing
-    python3Packages.lxml                # XML processing
-    python3Packages.pyyaml              # YAML parsing
-    python3Packages.tomlkit             # TOML manipulation
-    python3Packages.jsonschema          # JSON validation
-    python3Packages.openpyxl            # Excel files
-    python3Packages.pillow              # Image processing
-
-    # --- Security & Serialization -------------------------------------------
-    python3Packages.cryptography        # Cryptographic recipes
-    python3Packages.msgpack             # Binary serialization
-    python3Packages.cbor2               # CBOR format
-
-    # --- CLI & TUI Development ----------------------------------------------
-    python3Packages.textual             # Terminal UI framework
-    python3Packages.prompt-toolkit      # Interactive CLIs
-
-    # --- System & Integration -----------------------------------------------
-    python3Packages.psutil              # System utilities
-    python3Packages.python-dateutil     # Date handling
   ];
 }

@@ -44,7 +44,6 @@
     "megasync"
 
     # --- Development --------------------------------------------------------
-    "kiro"
     "visual-studio-code"
     "blender"
     "iconjar"

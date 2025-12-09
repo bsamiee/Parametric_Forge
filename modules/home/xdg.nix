@@ -28,19 +28,8 @@
     };
 
     # --- Config directories (XDG_CONFIG_HOME) -------------------------------
-    configFile = {
-      # 1Password secret template
-      "op/env.template".text = ''
-        # 1Password Secret References (auto-generated)
-        GITHUB_TOKEN="op://Tokens/Github Token/token"
-        GH_TOKEN="op://Tokens/Github Token/token"
-        GITHUB_CLASSIC_TOKEN="op://Tokens/Github Classic Token/token"
-        PERPLEXITY_API_KEY="op://Tokens/Perplexity Sonar API Key/token"
-        CACHIX_AUTH_TOKEN="op://Tokens/Cachix Auth Token - Parametric Forge/token"
-        TAVILY_API_KEY="op://Tokens/Tavily Auth Token/token"
-        EXA_API_KEY="op://Tokens/Exa API Key/token"
-      '';
-    };
+    # Note: op/env.template moved to programs/shell-tools/1password.nix
+    configFile = { };
 
     # --- Data directories (XDG_DATA_HOME) -----------------------------------
     dataFile = {

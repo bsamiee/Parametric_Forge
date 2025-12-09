@@ -15,7 +15,10 @@
       command mkdir -p -- "${config.xdg.cacheHome}/zsh"
       export ZSH_COMPDUMP="${config.xdg.cacheHome}/zsh/zcompdump-''${ZSH_VERSION}"
 
-      # --- FZF Configuration ------------------------------------------------------
+      # --- Load injected secrets (populated once at login by launchd) -----------
+      [[ -f "$HOME/.config/hm-op-session.sh" ]] && source "$HOME/.config/hm-op-session.sh"
+
+      # --- FZF Configuration -------------------------------------------------------
       # Custom completion functions
       _fzf_compgen_path() {
         fd --hidden --follow --exclude .git . "$1"
@@ -29,63 +32,8 @@
       # Batman man page integration
       eval "$(${pkgs.bat-extras.batman}/bin/batman --export-env)"
 
-      # 1Password CLI plugins (for AWS, GitHub CLI, etc.)
-      [ -f "$HOME/.config/op/plugins.sh" ] && source "$HOME/.config/op/plugins.sh"
-
-      # 1Password SSH agent socket
-      OP_SSH_SOCK="$HOME/.1password/agent.sock"
-      [ -S "$OP_SSH_SOCK" ] && export SSH_AUTH_SOCK="$OP_SSH_SOCK"
-      unset OP_SSH_SOCK
-
-      # Transparent GitHub CLI wrapper that hydrates tokens via 1Password
-      if command -v gh >/dev/null 2>&1; then
-        gh() {
-          local gh_bin
-          if ! gh_bin="$(whence -p gh)"; then
-            printf 'parametric-forge: unable to locate gh binary on PATH\n' >&2
-            return 127
-          fi
-
-          local op_template="''${OP_ENV_TEMPLATE:-$HOME/.config/op/env.template}"
-          local gh_config_dir="''${GH_CONFIG_DIR:-''${XDG_CONFIG_HOME:-$HOME/.config}/gh}"
-          local gh_hosts="$gh_config_dir/hosts.yml"
-          local prefer_native=0
-
-          # Always use the native gh authentication flow for auth subcommands.
-          if [[ "$1" == "auth" ]]; then
-            case "''${2:-}" in
-              login|logout|status|refresh|setup-git|token)
-                prefer_native=1
-                ;;
-            esac
-          fi
-
-          # If gh already has a stored OAuth token, keep using it unless forced.
-          if [[ -f "$gh_hosts" ]]; then
-            prefer_native=1
-          fi
-
-          # Manual overrides for edge cases.
-          if [[ "''${GH_FORCE_OP_TOKEN:-0}" == "1" ]]; then
-            prefer_native=0
-          elif [[ "''${GH_BYPASS_OP:-0}" == "1" ]]; then
-            prefer_native=1
-          fi
-
-          if (( prefer_native )); then
-            "$gh_bin" "$@"
-            return $?
-          fi
-
-          if command -v op >/dev/null 2>&1 \
-             && [[ -n "$op_template" ]] \
-             && [[ -f "$op_template" ]]; then
-            op run --env-file "$op_template" -- "$gh_bin" "$@"
-          else
-            "$gh_bin" "$@"
-          fi
-        }
-      fi
+      # Note: 1Password Shell Plugins (gh, aws, etc.) handled by programs._1password-shell-plugins
+      # Note: SSH agent configured via ssh.nix IdentityAgent directive
 
     '')
 
@@ -119,7 +67,7 @@
       zstyle ':completion:*' use-cache true
       zstyle ':completion:*' cache-path "$XDG_CACHE_HOME/zsh/zcompcache"
       zstyle ':completion:*' menu no
-      zstyle ':completion:*:git:*' group-name '''
+      zstyle ':completion:*:git:*' group-name ""
       zstyle ':completion:*:descriptions' format '[%d]'
       zstyle ':carapace:*' nospace true  # Better spacing behavior
     '')

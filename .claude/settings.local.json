@@ -89,7 +89,12 @@
       "Bash(biome:*)",
       "WebFetch(domain:prettier.io)",
       "Bash(prettier --help)",
-      "Bash(erdtree:*)"
+      "Bash(erdtree:*)",
+      "Bash(nix flake update:*)",
+      "WebFetch(domain:developer.1password.com)",
+      "mcp__exa__web_search_exa",
+      "mcp__perplexity__perplexity_research",
+      "WebFetch(domain:zsh.sourceforge.io)"
     ],
     "deny": [],
     "ask": [],
