@@ -26,7 +26,7 @@
 {
   programs.atuin = {
     enable = true;
-    enableZshIntegration = true;
+    enableZshIntegration = false;
 
     settings = {
       db_path = "${config.xdg.dataHome}/atuin/history.db";

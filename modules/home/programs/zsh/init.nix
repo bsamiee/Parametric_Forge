@@ -83,6 +83,25 @@
       zstyle ':fzf-tab:complete:systemctl-*:*' fzf-preview 'systemctl status $word'
     '')
 
+    (lib.mkOrder 650 ''
+      # --- FZF Keybindings (suppress read-only option errors) --------------------
+      # FZF 0.67.0 tries to restore the read-only 'zle' option, causing harmless
+      # errors. Suppress stderr to keep output clean; FZF keybindings still register.
+      if [[ $options[zle] = on ]]; then
+        source <(fzf --zsh 2>/dev/null)
+      fi
+    '')
+
+    (lib.mkOrder 700 ''
+      # --- Atuin History Initialization (explicit, after FZF) -------------------
+      # Ensures Atuin's keybindings register properly after FZF's initialization.
+      # FZF's environment is stable at this point, so Atuin's widgets and key
+      # bindings will be registered correctly in a clean state.
+      if [[ $options[zle] = on ]]; then
+        eval "$(${pkgs.atuin}/bin/atuin init zsh)"
+      fi
+    '')
+
     ''
       # --- Shell Options (these run after everything) -----------------------------
       setopt AUTO_PUSHD PUSHD_IGNORE_DUPS CDABLE_VARS

@@ -94,7 +94,16 @@
       "WebFetch(domain:developer.1password.com)",
       "mcp__exa__web_search_exa",
       "mcp__perplexity__perplexity_research",
-      "WebFetch(domain:zsh.sourceforge.io)"
+      "WebFetch(domain:zsh.sourceforge.io)",
+      "Bash(ls:*)",
+      "Bash(grep:*)",
+      "Bash(atuin --version:*)",
+      "Bash(atuin init:*)",
+      "Bash(atuin search:*)",
+      "Bash(zle:*)",
+      "Bash(zsh -ic:*)",
+      "Bash(fzf:*)",
+      "Bash(curl:*)"
     ],
     "deny": [],
     "ask": [],
