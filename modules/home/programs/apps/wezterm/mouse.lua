@@ -22,11 +22,10 @@ function M.setup(config)
   -- Mouse Bindings: Minimal approach - only hyperlink opening
   -- Zellij handles all text selection and copy-on-select
   config.mouse_bindings = {
-    -- CMD+Left-Click: Open hyperlinks (bypass normal selection)
-    -- This is the ONLY left-click binding; regular clicks pass to Zellij
+    -- SHIFT+Left-Click: Open hyperlinks
     {
       event = { Up = { streak = 1, button = 'Left' } },
-      mods = 'CMD',
+      mods = 'SHIFT',
       action = wezterm.action.OpenLinkAtMouseCursor,
     },
   }
