@@ -123,9 +123,6 @@ in
 
     keybinds clear-defaults=true {
       normal {
-        // uncomment this and adjust key if using copy_on_select=false
-        // bind "Super c" { Copy; }
-
         //  --- Simple Layer ------------------------------------------------------
         bind "Super t" {            // Create new tab without entering tab mode
           NewTab;

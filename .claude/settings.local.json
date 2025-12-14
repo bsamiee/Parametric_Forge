@@ -103,7 +103,8 @@
       "Bash(zle:*)",
       "Bash(zsh -ic:*)",
       "Bash(fzf:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "WebFetch(domain:www.alexanderzeitler.com)"
     ],
     "deny": [],
     "ask": [],
