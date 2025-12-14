@@ -120,7 +120,8 @@
     dig = "doggo";                                                                # Modern DNS client
     nslookup = "doggo";                                                           # DNS lookup replacement
     speedtest = "speedtest --accept-license";                                     # Official Ookla speed test
-    lssh = "lazyssh";                                                             # Interactive SSH manager
+    lssh = "sshs";                                                                 # Interactive SSH picker
+    whs = "webhook -hooks $WEBHOOK_HOOKS_DIR/hooks.json -verbose";                # Start webhook server
     ports = "sudo lsof -iTCP -sTCP:LISTEN -n -P";                                 # List open ports (needs sudo)
     flushdns = "sudo dscacheutil -flushcache && sudo killall -HUP mDNSResponder"; # Flush DNS cache (macOS)
 

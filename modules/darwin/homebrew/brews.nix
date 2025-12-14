@@ -24,5 +24,8 @@
     # --- Media Tools --------------------------------------------------------
     "handbrake"                         # CLI video transcoder
 
+    # --- Server Tools -------------------------------------------------------
+    "webhook"                           # HTTP endpoint for triggering scripts (adnanh/webhook)
+
   ];
 }

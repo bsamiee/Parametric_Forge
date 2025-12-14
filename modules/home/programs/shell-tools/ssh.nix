@@ -26,7 +26,19 @@
         hostname = "github.com";
         identitiesOnly = true;
         addKeysToAgent = "yes";
-        # SSH keys managed via 1Password (see environments/secrets.nix)
+      };
+
+      # --- Hostinger VPS (n8n PM Orchestration) -----------------------------
+      "n8n" = {
+        user = "n8n-agent";
+        hostname = "31.97.131.41";
+        identitiesOnly = true;
+        addKeysToAgent = "yes";
+        # Port forwards: webhook (9000), aria2 RPC (6800)
+        localForwards = [
+          { bind.port = 9000; host.address = "localhost"; host.port = 9000; }
+          { bind.port = 6800; host.address = "localhost"; host.port = 6800; }
+        ];
       };
 
       # --- Default Optimizations for All Hosts ------------------------------

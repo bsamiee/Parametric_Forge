@@ -33,7 +33,6 @@
     ./hexyl.nix
     ./hyperfine.nix
     ./jnv.nix
-    ./lazyssh.nix
     ./1password.nix
     ./ouch.nix
     ./p7zip.nix
@@ -47,12 +46,14 @@
     ./serpl.nix
     ./speedtest.nix
     ./ssh.nix
+    ./sshs.nix
     ./starship.nix
     ./tlrc.nix
     ./tokei.nix
     ./trash.nix
     ./trippy.nix
     ./watchexec.nix
+    ./webhook.nix
     ./xh.nix
     ./zoxide.nix
   ];

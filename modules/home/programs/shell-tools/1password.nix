@@ -44,6 +44,7 @@
     export TAVILY_API_KEY="op://Tokens/Tavily Auth Token/token"
     export SONAR_TOKEN="op://Tokens/SONAR_TOKEN/token"
     export CACHIX_AUTH_TOKEN="op://Tokens/Cachix Auth Token - Parametric Forge/token"
+    export HOSTINGER_TOKEN="op://Tokens/HOSTINGER_TOKEN/token"
 
     # GitHub CLI (gh prefers GH_TOKEN, GITHUB_TOKEN is fallback for other tools)
     export GH_TOKEN="op://Tokens/Github Token/token"

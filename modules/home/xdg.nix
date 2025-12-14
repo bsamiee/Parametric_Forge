@@ -65,14 +65,7 @@
   '';
 
   home.activation.ensureXdgMediaDirs = lib.hm.dag.entryAfter ["writeBoundary"] ''
-    install -d -m 700 "${config.xdg.configHome}/ssh"
-    install -d -m 700 "${config.xdg.stateHome}/ssh"
     install -d -m 700 "${config.xdg.configHome}/transmission-daemon"
-
-    if [ ! -f "${config.xdg.configHome}/ssh/known_hosts" ]; then
-      touch "${config.xdg.configHome}/ssh/known_hosts"
-      chmod 600 "${config.xdg.configHome}/ssh/known_hosts"
-    fi
 
     mkdir -p "${config.xdg.stateHome}/ffmpeg"
     mkdir -p "${config.xdg.cacheHome}/ImageMagick"
