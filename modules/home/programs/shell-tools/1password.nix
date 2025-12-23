@@ -38,6 +38,7 @@
     # Update this list when adding new tokens to your 1Password vault
 
     # CLI tools and APIs
+    export ANTHROPIC_API_KEY="op://Tokens/Anthropic API Key/token"
     export RHINO_TOKEN="op://Tokens/RHINO_TOKEN/token"
     export EXA_API_KEY="op://Tokens/Exa API Key/token"
     export PERPLEXITY_API_KEY="op://Tokens/Perplexity Sonar API Key/token"
@@ -49,6 +50,9 @@
     # GitHub CLI (gh prefers GH_TOKEN, GITHUB_TOKEN is fallback for other tools)
     export GH_TOKEN="op://Tokens/Github Token/token"
     export GITHUB_TOKEN="op://Tokens/Github Token/token"
+
+    # GitHub Projects (Classic PAT required - fine-grained PATs don't support Projects API)
+    export GH_PROJECTS_TOKEN="op://Tokens/GH_PROJECTS_TOKEN/token"
   '';
 
   # --- Activation Hook: Generate token cache during rebuild ----------------------

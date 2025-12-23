@@ -32,6 +32,12 @@
       # Batman man page integration
       eval "$(${pkgs.bat-extras.batman}/bin/batman --export-env)"
 
+      # fnm (Fast Node Manager) - prepends managed node to PATH
+      eval "$(fnm env --use-on-cd)"
+
+      # pnpm via fnm's npm (corepack removed - unreliable with fnm)
+      # Run once manually if missing: npm install -g pnpm
+
       # Note: 1Password Shell Plugins (gh, aws, etc.) handled by programs._1password-shell-plugins
       # Note: SSH agent configured via ssh.nix IdentityAgent directive
 

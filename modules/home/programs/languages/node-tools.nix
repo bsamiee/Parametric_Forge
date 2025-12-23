@@ -10,9 +10,9 @@
 
 {
   home.packages = with pkgs; [
-    nodejs_22 # Latest LTS for modern TypeScript/React projects
-    fnm       # Fast Node Manager for multi-version workflows
-    pnpm      # Disk-efficient package manager
+    nodejs_22 # Fallback LTS; fnm manages active version via .node-version
+    fnm       # Fast Node Manager - prepends managed node to PATH
+    # pnpm: install via fnm's npm (npm install -g pnpm)
     nodePackages.prettier # Code formatter
     tailwindcss # Utility-first CSS framework
   ];
