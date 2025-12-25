@@ -7,6 +7,8 @@
 # Shell tools aggregator
 {...}: {
   imports = [
+    ./act.nix
+    ./actionlint.nix
     ./aria2.nix
     ./archivemount.nix
     ./atuin.nix

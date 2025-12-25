@@ -43,6 +43,7 @@
     BAT_CACHE_PATH = "${config.xdg.cacheHome}/bat";
     XH_CONFIG_DIR = "${config.xdg.configHome}/xh";
     ATUIN_LOG = "error";
+    ACT_CACHE_DIR = "${config.xdg.cacheHome}/act";
     # Zoxide
     _ZO_DATA_DIR = "${config.xdg.dataHome}/zoxide";
     _ZO_RESOLVE_SYMLINKS = "1";

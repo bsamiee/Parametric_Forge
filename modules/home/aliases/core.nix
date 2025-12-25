@@ -143,6 +143,11 @@ _: {
     zjk = "zellij kill-session"; # Kill a target session "zjk <session_name>"
     zjka = "zellij kill-all-sessions"; # Kill all zellij sessions
 
+    # --- Workflow Testing -------------------------------------------------
+    act = "act";                                    # Run GitHub Actions locally
+    actl = "act -l";                                # List workflows/jobs
+    alint = "actionlint";                           # Lint workflow files
+
     # --- Dev Tools ----------------------------------------------------------
     pyright = "basedpyright";
     rfix = "ruff check --fix";
