@@ -5,13 +5,9 @@
 # Path          : modules/darwin/settings/security.nix
 # ----------------------------------------------------------------------------
 # Security, PAM, certificates, and firewall configuration for Darwin.
-
-{ lib, ... }:
-
-let
+{lib, ...}: let
   inherit (lib) mkDefault;
-in
-{
+in {
   # --- Security Configuration -----------------------------------------------
   security = {
     # --- PAM Authentication -------------------------------------------------
@@ -24,9 +20,9 @@ in
     # --- Certificate Management ---------------------------------------------
     pki = {
       installCACerts = mkDefault true;
-      certificateFiles = [ ];
-      certificates = [ ];
-      caCertificateBlacklist = [ ];
+      certificateFiles = [];
+      certificates = [];
+      caCertificateBlacklist = [];
     };
   };
   # --- System Security Configuration ----------------------------------------
@@ -37,7 +33,7 @@ in
       askForPasswordDelay = mkDefault 0; # No delay when disabled
     };
     # --- Global System Behavior ---------------------------------------------
-    NSGlobalDomain = { };
+    NSGlobalDomain = {};
     # --- Application Security -----------------------------------------------
     CustomUserPreferences = {
       "com.apple.security" = {
@@ -65,7 +61,7 @@ in
       };
       # --- Developer Security Settings --------------------------------------
       "com.apple.dt.Xcode" = {
-        "DVTPlugInManagerNonApplePlugIns-Xcode-14.0" = mkDefault { };
+        "DVTPlugInManagerNonApplePlugIns-Xcode-14.0" = mkDefault {};
         DVTTextEditorTrimTrailingWhitespace = mkDefault false;
       };
     };

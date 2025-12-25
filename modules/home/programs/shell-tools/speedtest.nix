@@ -5,9 +5,6 @@
 # Path          : modules/home/programs/shell-tools/speedtest.nix
 # ----------------------------------------------------------------------------
 # Official Ookla Speedtest CLI for internet speed testing
-
-{ pkgs, ... }:
-
-{
-  home.packages = [ pkgs.ookla-speedtest ];
+{pkgs, ...}: {
+  home.packages = [pkgs.ookla-speedtest];
 }

@@ -5,13 +5,10 @@
 # Path          : modules/home/programs/languages/node-tools.nix
 # ----------------------------------------------------------------------------
 # Node.js runtime, version manager, and package tooling.
-
-{ pkgs, ... }:
-
-{
+{pkgs, ...}: {
   home.packages = with pkgs; [
     nodejs_22 # Fallback LTS; fnm manages active version via .node-version
-    fnm       # Fast Node Manager - prepends managed node to PATH
+    fnm # Fast Node Manager - prepends managed node to PATH
     # pnpm: install via fnm's npm (npm install -g pnpm)
     nodePackages.prettier # Code formatter
     tailwindcss # Utility-first CSS framework

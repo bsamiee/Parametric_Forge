@@ -5,10 +5,7 @@
 # Path          : modules/home/scripts/integration/zellij/default.nix
 # ----------------------------------------------------------------------------
 # Zellij integration utility scripts
-
-{ config, lib, pkgs, ... }:
-
-{
+{pkgs, ...}: {
   home.file.".local/bin/forge-yazi.sh" = {
     executable = true;
     text = ''

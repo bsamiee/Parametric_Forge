@@ -5,13 +5,9 @@
 # Path          : modules/home/programs/apps/zellij/config.nix
 # ----------------------------------------------------------------------------
 # Nix-generated Zellij configuration
-
-{ config, lib, pkgs, ... }:
-
-let
-  colors = config.programs.zellij.colors; # Use shared colors from module option
-in
-{
+{config, ...}: let
+  inherit (config.programs.zellij) colors; # Use shared colors from module option
+in {
   xdg.configFile."zellij/config.kdl".text = ''
     // Title         : config.kdl
     // Author        : Bardia Samiee

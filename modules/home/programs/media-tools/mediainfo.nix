@@ -5,9 +5,6 @@
 # Path          : modules/home/programs/media-tools/mediainfo.nix
 # ----------------------------------------------------------------------------
 # Detailed media file information for enhanced Yazi preview
-
-{ pkgs, ... }:
-
-{
-  home.packages = [ pkgs.mediainfo ];
+{pkgs, ...}: {
+  home.packages = [pkgs.mediainfo];
 }

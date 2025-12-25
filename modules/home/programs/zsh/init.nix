@@ -5,10 +5,12 @@
 # Path          : modules/home/programs/zsh/init.nix
 # ----------------------------------------------------------------------------
 # Zsh initialization - configuration only, plugins loaded by home-manager
-
-{ config, lib, pkgs, ... }:
-
 {
+  config,
+  lib,
+  pkgs,
+  ...
+}: {
   programs.zsh.initContent = lib.mkMerge [
     (lib.mkBefore ''
       # --- Completion cache -------------------------------------------------------

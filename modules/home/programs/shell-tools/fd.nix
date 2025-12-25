@@ -5,10 +5,11 @@
 # Path          : /modules/home/programs/shell-tools/fd.nix
 # ----------------------------------------------------------------------------
 # Fast file finder configuration
-
-{ config, lib, pkgs, ... }:
-
-let
+{
+  lib,
+  pkgs,
+  ...
+}: let
   globalIgnorePatterns = [
     # Version Control
     ".git/"
@@ -75,8 +76,7 @@ let
     "*.vhd"
     "*.qcow2"
   ];
-in
-{
-  home.packages = [ pkgs.fd ];
+in {
+  home.packages = [pkgs.fd];
   xdg.configFile."fd/ignore".text = lib.concatStringsSep "\n" globalIgnorePatterns;
 }

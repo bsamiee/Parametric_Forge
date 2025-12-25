@@ -5,9 +5,7 @@
 # Path          : modules/home/programs/shell-tools/pik.nix
 # ----------------------------------------------------------------------------
 # Process Interactive Kill - fuzzy process finder and killer
-
-{ config, lib, pkgs, ... }:
-
+{pkgs, ...}:
 # Dracula theme color reference
 # background    #15131F
 # current_line  #2A2640
@@ -22,9 +20,8 @@
 # red           #FF5555
 # magenta       #d82f94
 # pink          #E98FBE
-
 {
-  home.packages = [ pkgs.pik ];
+  home.packages = [pkgs.pik];
 
   home.file."Library/Application Support/pik/config.toml".text = ''
     screen_size = "fullscreen"

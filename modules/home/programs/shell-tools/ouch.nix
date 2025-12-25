@@ -5,9 +5,6 @@
 # Path          : /modules/home/programs/shell-tools/ouch.nix
 # ----------------------------------------------------------------------------
 # Universal compression and decompression CLI tool
-
-{ pkgs, ... }:
-
-{
-  home.packages = [ pkgs.ouch ];
+{pkgs, ...}: {
+  home.packages = [pkgs.ouch];
 }

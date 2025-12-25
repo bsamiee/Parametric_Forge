@@ -5,18 +5,16 @@
 # Path          : modules/home/programs/default.nix
 # ----------------------------------------------------------------------------
 # Home Manager programs aggregator
-
-{ lib, ... }:
-
-{
+{...}: {
   imports = [
     ./apps
+    ./container-tools
+    ./git-tools
+    ./languages
     ./mac-tools
     ./media-tools
-    ./languages
-    ./shell-tools
-    ./git-tools
     ./nix-tools
+    ./shell-tools
     ./zsh
   ];
 }

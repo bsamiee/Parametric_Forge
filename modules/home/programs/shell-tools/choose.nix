@@ -5,9 +5,6 @@
 # Path          : /modules/home/programs/shell-tools/choose.nix
 # ----------------------------------------------------------------------------
 # Human-friendly alternative to cut and awk
-
-{ pkgs, ... }:
-
-{
-  home.packages = [ pkgs.choose ];
+{pkgs, ...}: {
+  home.packages = [pkgs.choose];
 }

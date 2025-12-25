@@ -5,9 +5,7 @@
 # Path          : /modules/home/programs/shell-tools/fzf.nix
 # ----------------------------------------------------------------------------
 # FZF configuration with proper integration
-
-{ config, lib, pkgs, ... }:
-
+_:
 # Dracula theme color reference
 # background    #15131F
 # current_line  #2A2640
@@ -22,11 +20,10 @@
 # red           #FF5555
 # magenta       #d82f94
 # pink          #E98FBE
-
 {
   programs.fzf = {
     enable = true;
-    enableZshIntegration = true;  # Let home-manager handle base integration
+    enableZshIntegration = true; # Let home-manager handle base integration
     tmux.enableShellIntegration = false;
 
     # --- Default Configuration ----------------------------------------------

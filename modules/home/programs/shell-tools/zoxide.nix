@@ -5,17 +5,14 @@
 # Path          : /modules/home/programs/shell-tools/zoxide.nix
 # ----------------------------------------------------------------------------
 # Smart directory navigation with frecency-based learning
-
-{ config, lib, pkgs, ... }:
-
-{
+_: {
   programs.zoxide = {
     enable = true;
     enableZshIntegration = true;
 
     options = [
-      "--cmd=cd"       # Replace cd command entirely
-      "--hook=prompt"  # Update frecency based on time spent (better than pwd)
+      "--cmd=cd" # Replace cd command entirely
+      "--hook=prompt" # Update frecency based on time spent (better than pwd)
     ];
   };
 }

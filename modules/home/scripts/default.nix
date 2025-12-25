@@ -5,10 +5,7 @@
 # Path          : modules/home/scripts/default.nix
 # ----------------------------------------------------------------------------
 # Scripts module aggregator
-
-{ lib, ... }:
-
-{
+{...}: {
   imports = [
     ./integration
   ];

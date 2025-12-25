@@ -5,20 +5,16 @@
 # Path          : /modules/home/programs/shell-tools/dust.nix
 # ----------------------------------------------------------------------------
 # Modern disk usage analyzer (du replacement)
-
-{ config, lib, pkgs, ... }:
-
-let
-  tomlFormat = pkgs.formats.toml { };
+{pkgs, ...}: let
+  tomlFormat = pkgs.formats.toml {};
 
   dustConfig = {
-    reverse = true;         # Normal sort order (largest first)
-    ignore-hidden = true;   # Ignore dotfiles and hidden directories
+    reverse = true; # Normal sort order (largest first)
+    ignore-hidden = true; # Ignore dotfiles and hidden directories
     output-format = "si";
-    skip-total = true;      # Show total size
+    skip-total = true; # Show total size
   };
-in
-{
-  home.packages = [ pkgs.dust ];
+in {
+  home.packages = [pkgs.dust];
   xdg.configFile."dust/config.toml".source = tomlFormat.generate "dust-config" dustConfig;
 }

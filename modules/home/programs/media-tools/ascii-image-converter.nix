@@ -5,9 +5,6 @@
 # Path          : modules/home/programs/media-tools/ascii-image-converter.nix
 # ----------------------------------------------------------------------------
 # Convert images to ASCII art in terminal
-
-{ pkgs, ... }:
-
-{
-  home.packages = [ pkgs.ascii-image-converter ];
+{pkgs, ...}: {
+  home.packages = [pkgs.ascii-image-converter];
 }

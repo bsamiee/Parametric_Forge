@@ -5,10 +5,7 @@
 # Path          : modules/darwin/settings/default.nix
 # ----------------------------------------------------------------------------
 # Darwin settings aggregator
-
-{ lib, ... }:
-
-{
+{...}: {
   imports = [
     ./input.nix
     ./interface.nix

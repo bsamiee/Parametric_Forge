@@ -5,10 +5,7 @@
 # Path          : modules/home/environments/core.nix
 # ----------------------------------------------------------------------------
 # Core system environment variables
-
-{ config, pkgs, ... }:
-
-{
+{pkgs, ...}: {
   home.sessionVariables = {
     # --- Locale & Time ------------------------------------------------------
     TZ = "America/Chicago";

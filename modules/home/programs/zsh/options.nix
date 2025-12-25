@@ -5,10 +5,7 @@
 # Path          : modules/home/programs/zsh/options.nix
 # ----------------------------------------------------------------------------
 # Zsh options and settings
-
-{ config, lib, pkgs, ... }:
-
-{
+_: {
   programs.zsh = {
     # --- Directory Navigation -----------------------------------------------
     autocd = true;

@@ -5,10 +5,7 @@
 # Path          : modules/home/programs/nix-tools/nom.nix
 # ----------------------------------------------------------------------------
 # Nix output monitor for beautiful build output
-
-{ pkgs, ... }:
-
-{
+{pkgs, ...}: {
   home.packages = with pkgs; [
     nix-output-monitor
   ];

@@ -5,10 +5,12 @@
 # Path          : modules/home/xdg.nix
 # ----------------------------------------------------------------------------
 # XDG base directory specification and structure
-
-{ config, lib, pkgs, ... }:
-
 {
+  config,
+  lib,
+  pkgs,
+  ...
+}: {
   # --- Core XDG configuration -----------------------------------------------
   xdg = {
     enable = true;
@@ -29,18 +31,20 @@
 
     # --- Config directories (XDG_CONFIG_HOME) -------------------------------
     # Note: op/env.template moved to programs/shell-tools/1password.nix
-    configFile = { };
+    configFile = {};
 
     # --- Data directories (XDG_DATA_HOME) -----------------------------------
-    dataFile = {
-      # Placeholder comment
-    } // lib.optionalAttrs pkgs.stdenv.isLinux {
-      # Linux desktop integration
-      "applications/.keep".text = "";
-      "icons/.keep".text = "";
-      "Trash/files/.keep".text = "";
-      "Trash/info/.keep".text = "";
-    };
+    dataFile =
+      {
+        # Placeholder comment
+      }
+      // lib.optionalAttrs pkgs.stdenv.isLinux {
+        # Linux desktop integration
+        "applications/.keep".text = "";
+        "icons/.keep".text = "";
+        "Trash/files/.keep".text = "";
+        "Trash/info/.keep".text = "";
+      };
 
     # --- Cache directories (XDG_CACHE_HOME) ---------------------------------
     cacheFile = {

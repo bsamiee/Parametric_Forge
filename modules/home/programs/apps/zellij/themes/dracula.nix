@@ -5,14 +5,10 @@
 # Path          : modules/home/programs/apps/zellij/themes/dracula.nix
 # ----------------------------------------------------------------------------
 # Nix-generated Dracula theme for Zellij
-
-{ config, lib, pkgs, ... }:
-
-let
-  colors = config.programs.zellij.colors;                     # Use shared colors from module option
+{config, ...}: let
+  inherit (config.programs.zellij) colors; # Use shared colors from module option
   rgb = c: "${toString c.r} ${toString c.g} ${toString c.b}"; # Helper to format RGB values for theme definition
-in
-{
+in {
   xdg.configFile."zellij/themes/dracula.kdl".text = ''
     // Title         : dracula.kdl
     // Author        : Bardia Samiee

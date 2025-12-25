@@ -5,10 +5,7 @@
 # Path          : modules/home/environments/shell.nix
 # ----------------------------------------------------------------------------
 # Shell configuration environment variables
-
-{ config, lib, pkgs, ... }:
-
-{
+{config, ...}: {
   # --- User Session Path ----------------------------------------------------
   home.sessionPath = [
     "$HOME/.nix-profile/bin"
@@ -27,15 +24,15 @@
     LESSHISTFILE = "${config.xdg.stateHome}/less/history";
     ZSH_AUTOSUGGEST_STRATEGY = "(atuin completion)";
     ZSH_AUTOSUGGEST_BUFFER_MAX_SIZE = "20";
-    ZSH_AUTOSUGGEST_USE_ASYNC = "1";  # Significant performance improvement
+    ZSH_AUTOSUGGEST_USE_ASYNC = "1"; # Significant performance improvement
     KEYTIMEOUT = "200";
-    PAGER = "less";                   # Let tools add their own flags
-    BAT_PAGER = "less -RFXK";         # Bat pager: -X fixes macOS Terminal.app clearing
-    PROCS_PAGER = "less -SRX";        # Procs pager: -S no wrap for tables, -R colors, -X no clear
-    LESS = "-RFX";                    # -X prevents screen clearing on macOS
+    PAGER = "less"; # Let tools add their own flags
+    BAT_PAGER = "less -RFXK"; # Bat pager: -X fixes macOS Terminal.app clearing
+    PROCS_PAGER = "less -SRX"; # Procs pager: -S no wrap for tables, -R colors, -X no clear
+    LESS = "-RFX"; # -X prevents screen clearing on macOS
     MANROFFOPT = "-c";
     RICH_THEME = "dracula";
-    PNPM_HOME = "${config.xdg.dataHome}/pnpm";  # Global pnpm bin location
+    PNPM_HOME = "${config.xdg.dataHome}/pnpm"; # Global pnpm bin location
 
     # --- Tool Configurations ------------------------------------------------
     WATCHEXEC_IGNORE_FILE = "${config.xdg.configHome}/watchexec/ignore";
@@ -52,13 +49,13 @@
     _ZO_EXCLUDE_DIRS = "/tmp/*:/var/tmp/*:/usr/bin/*:/usr/sbin/*:/sbin/*:/bin/*";
     # Rclone + Rsync
     RCLONE_CONFIG = "${config.xdg.configHome}/rclone/rclone.conf";
-    RCLONE_TRANSFERS = "4";             # Balanced concurrent transfers
-    RCLONE_CHECKERS = "8";              # Parallel checkers for syncing
-    RSYNC_RSH = "ssh";                  # Explicit SSH transport for rsync
-    RSYNC_PROTECT_ARGS = "1";           # Protect args with spaces/wildcards (pre-3.2.4)
+    RCLONE_TRANSFERS = "4"; # Balanced concurrent transfers
+    RCLONE_CHECKERS = "8"; # Parallel checkers for syncing
+    RSYNC_RSH = "ssh"; # Explicit SSH transport for rsync
+    RSYNC_PROTECT_ARGS = "1"; # Protect args with spaces/wildcards (pre-3.2.4)
 
     # --- FZF Forgit Configuration -------------------------------------------
-    FORGIT_PAGER = "delta";  # Consistent with GIT_PAGER in core.nix
+    FORGIT_PAGER = "delta"; # Consistent with GIT_PAGER in core.nix
     FORGIT_ADD_FZF_OPTS = "--border-label='[GIT ADD]'";
     FORGIT_DIFF_FZF_OPTS = "--border-label='[GIT DIFF]'";
     FORGIT_LOG_FZF_OPTS = "--border-label='[GIT LOG]'";
@@ -75,11 +72,11 @@
 
     # --- ZSH Plugin Configurations ------------------------------------------
     # you-should-use
-    YSU_MESSAGE_POSITION = "before";  # Show message before command execution
+    YSU_MESSAGE_POSITION = "before"; # Show message before command execution
 
     # --- .NET Configuration -------------------------------------------------
     DOTNET_ROOT = "/opt/homebrew/opt/dotnet@8/libexec";
-    DOTNET_NOLOGO = "1";                               # Suppress startup banner
-    DOTNET_CLI_TELEMETRY_OPTOUT = "1";                 # Disable telemetry
+    DOTNET_NOLOGO = "1"; # Suppress startup banner
+    DOTNET_CLI_TELEMETRY_OPTOUT = "1"; # Disable telemetry
   };
 }

@@ -5,17 +5,16 @@
 # Path          : hosts/darwin/default.nix
 # ----------------------------------------------------------------------------
 # Darwin host configurations
-
-{ inputs, nix-darwin, home-manager }:
-
-let
-  inherit (inputs) nixpkgs;
-  username = "bardiasamiee";
-in
 {
+  inputs,
+  nix-darwin,
+  home-manager,
+}: let
+  username = "bardiasamiee";
+in {
   macbook = nix-darwin.lib.darwinSystem {
     system = "aarch64-darwin";
-    specialArgs = { inherit inputs; };  # Pass inputs to modules
+    specialArgs = {inherit inputs;}; # Pass inputs to modules
 
     modules = [
       # Common configuration (includes Nix and Theme)
@@ -32,7 +31,7 @@ in
 
       # --- Host-specific configuration --------------------------------------
       {
-        nixpkgs.overlays = [ inputs.self.overlays.default ];
+        nixpkgs.overlays = [inputs.self.overlays.default];
 
         networking.hostName = "macbook";
         networking.computerName = "Bardia's MacBook Pro";
@@ -51,9 +50,9 @@ in
         home-manager = {
           useGlobalPkgs = true;
           useUserPackages = true;
-          extraSpecialArgs = { inherit inputs; };  # Pass inputs to home-manager
-          users.${username} = ({ inputs, ... }: {
-            imports = [ ../../modules/home ];
+          extraSpecialArgs = {inherit inputs;}; # Pass inputs to home-manager
+          users.${username} = {...}: {
+            imports = [../../modules/home];
             home.stateVersion = "24.05";
             programs.home-manager.enable = true;
 
@@ -62,7 +61,7 @@ in
             manual.json.enable = false;
             manual.manpages.enable = false;
             news.display = "silent";
-          });
+          };
         };
       }
     ];

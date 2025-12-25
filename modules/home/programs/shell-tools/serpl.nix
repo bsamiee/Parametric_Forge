@@ -5,10 +5,7 @@
 # Path          : modules/home/programs/shell-tools/serpl.nix
 # ----------------------------------------------------------------------------
 # TUI search and replace powered by ripgrep
-
-{ pkgs, ... }:
-
-let
+{pkgs, ...}: let
   serplConfig = ''
     # Title         : config.toml
     # Author        : Bardia Samiee
@@ -30,8 +27,7 @@ let
     "<Backtab>" = "BackLoopOverTabs"
 
   '';
-in
-{
-  home.packages = [ pkgs.serpl ];
+in {
+  home.packages = [pkgs.serpl];
   xdg.configFile."serpl/config.toml".text = serplConfig;
 }

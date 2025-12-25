@@ -5,10 +5,7 @@
 # Path          : modules/home/programs/languages/default.nix
 # ----------------------------------------------------------------------------
 # Language toolchain aggregator
-
-{ lib, ... }:
-
-{
+{...}: {
   imports = [
     # LSPs
     ./lsp.nix

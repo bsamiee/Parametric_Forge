@@ -5,12 +5,9 @@
 # Path          : modules/home/programs/apps/yazi
 # ----------------------------------------------------------------------------
 # Yazi file manager with nixpkgs plugins
-
-{ config, lib, pkgs, ... }:
-
-let
+{pkgs, ...}: let
   yaziPkg = pkgs.yazi.override {
-    _7zz = pkgs._7zz-rar;  # Prefer RAR-capable 7zip for archive support
+    _7zz = pkgs._7zz-rar; # Prefer RAR-capable 7zip for archive support
   };
 in {
   programs.yazi = {
@@ -18,10 +15,10 @@ in {
     enableZshIntegration = true;
     package = yaziPkg;
     plugins = {
-      full-border = pkgs.yaziPlugins.full-border;
-      toggle-pane = pkgs.yaziPlugins.toggle-pane;
-      jump-to-char = pkgs.yaziPlugins.jump-to-char;
-      mount = pkgs.yaziPlugins.mount;
+      inherit (pkgs.yaziPlugins) full-border;
+      inherit (pkgs.yaziPlugins) toggle-pane;
+      inherit (pkgs.yaziPlugins) jump-to-char;
+      inherit (pkgs.yaziPlugins) mount;
 
       # Third-party plugins (not in nixpkgs)
       augment-command = pkgs.fetchFromGitHub {

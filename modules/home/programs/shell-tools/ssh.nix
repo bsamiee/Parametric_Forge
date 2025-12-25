@@ -5,13 +5,14 @@
 # Path          : modules/home/programs/shell-tools/ssh.nix
 # ----------------------------------------------------------------------------
 # SSH client configuration with GitHub integration and performance optimization
-
-{ config, lib, pkgs, ... }:
-
 {
+  config,
+  lib,
+  ...
+}: {
   programs.ssh = {
     enable = true;
-    enableDefaultConfig = false;  # Explicitly disable default config to suppress warning
+    enableDefaultConfig = false; # Explicitly disable default config to suppress warning
 
     # Use 1Password's stable socket on macOS so SSH pulls keys from the agent
     extraConfig = lib.mkBefore ''
@@ -36,9 +37,21 @@
         addKeysToAgent = "yes";
         # Port forwards: webhook (9000), aria2 RPC (6800), Codex OAuth (1455)
         localForwards = [
-          { bind.port = 9000; host.address = "localhost"; host.port = 9000; }
-          { bind.port = 6800; host.address = "localhost"; host.port = 6800; }
-          { bind.port = 1455; host.address = "localhost"; host.port = 1455; }
+          {
+            bind.port = 9000;
+            host.address = "localhost";
+            host.port = 9000;
+          }
+          {
+            bind.port = 6800;
+            host.address = "localhost";
+            host.port = 6800;
+          }
+          {
+            bind.port = 1455;
+            host.address = "localhost";
+            host.port = 1455;
+          }
         ];
       };
 

@@ -5,10 +5,7 @@
 # Path          : modules/home/environments/default.nix
 # ----------------------------------------------------------------------------
 # Environment aggregator + XDG base directories
-
-{ config, lib, ... }:
-
-{
+{...}: {
   imports = [
     ./core.nix
     ./shell.nix

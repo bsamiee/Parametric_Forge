@@ -5,10 +5,7 @@
 # Path          : modules/home/programs/apps/nvim/default.nix
 # ----------------------------------------------------------------------------
 # Neovim configuration entry point
-
-{ config, lib, pkgs, ... }:
-
-{
+{pkgs, ...}: {
   home.packages = with pkgs; [
     neovim
     neovim-remote

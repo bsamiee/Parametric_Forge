@@ -5,16 +5,13 @@
 # Path          : modules/darwin/homebrew/brews.nix
 # ----------------------------------------------------------------------------
 # Homebrew CLI tools and formulae
-
-{ ... }:
-
-{
+_: {
   homebrew.brews = [
     # --- System Utilities ---------------------------------------------------
-    "defaultbrowser"                    # CLI tool for setting default browser
-    "tag"                               # macOS file tagging CLI
-    "blueutil"                          # Bluetooth management
-    "dotnet@8"                          # .NET 8 runtime for Rhino 8 rhinocode
+    "defaultbrowser" # CLI tool for setting default browser
+    "tag" # macOS file tagging CLI
+    "blueutil" # Bluetooth management
+    "dotnet@8" # .NET 8 runtime for Rhino 8 rhinocode
 
     # --- Window Management Tools --------------------------------------------
     "koekeishiya/formulae/yabai"
@@ -22,10 +19,9 @@
     "FelixKratz/formulae/borders"
 
     # --- Media Tools --------------------------------------------------------
-    "handbrake"                         # CLI video transcoder
+    "handbrake" # CLI video transcoder
 
     # --- Server Tools -------------------------------------------------------
-    "webhook"                           # HTTP endpoint for triggering scripts (adnanh/webhook)
-
+    "webhook" # HTTP endpoint for triggering scripts (adnanh/webhook)
   ];
 }

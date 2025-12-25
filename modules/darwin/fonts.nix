@@ -5,10 +5,7 @@
 # Path          : modules/darwin/fonts.nix
 # ----------------------------------------------------------------------------
 # System font configuration using native Nix packages
-
-{ lib, pkgs, ... }:
-
-{
+{pkgs, ...}: {
   fonts = {
     packages = with pkgs; [
       # --- Programming/Terminal Fonts ---------------------------------------
@@ -18,24 +15,24 @@
       nerd-fonts.symbols-only
 
       # Monospace fonts
-      ibm-plex              # IBM Plex family (includes Mono)
+      ibm-plex # IBM Plex family (includes Mono)
       (noto-fonts.override {
-        variants = [ "NotoSansMono" ];
+        variants = ["NotoSansMono"];
       })
 
       # --- UI/System Fonts --------------------------------------------------
-      geist-font            # Geist Sans (UI font)
-      inter                 # Inter (UI font)
-      dm-sans               # DM Sans
-      overpass              # Overpass
-      source-sans           # Source Sans 3
-      source-serif          # Source Serif 4
+      geist-font # Geist Sans (UI font)
+      inter # Inter (UI font)
+      dm-sans # DM Sans
+      overpass # Overpass
+      source-sans # Source Sans 3
+      source-serif # Source Serif 4
 
       # --- Perso-Arabic Fonts -----------------------------------------------
       (noto-fonts.override {
-        variants = [ "NotoSansArabic" "NotoNaskhArabic" ];
+        variants = ["NotoSansArabic" "NotoNaskhArabic"];
       })
-      scheherazade-new      # Arabic script font
+      scheherazade-new # Arabic script font
     ];
   };
 }

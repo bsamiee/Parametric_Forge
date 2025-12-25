@@ -5,10 +5,7 @@
 # Path          : modules/home/environments/containers.nix
 # ----------------------------------------------------------------------------
 # Container and virtualization environment variables
-
-{ config, ... }:
-
-{
+{config, ...}: {
   home.sessionVariables = {
     # --- Docker -------------------------------------------------------------
     MACHINE_STORAGE_PATH = "${config.xdg.dataHome}/docker-machine";
@@ -22,6 +19,18 @@
 
     # --- Colima -------------------------------------------------------------
     COLIMA_HOME = "${config.xdg.dataHome}/colima";
+
+    # --- Kubernetes ---------------------------------------------------------
+    KUBECONFIG = "${config.xdg.configHome}/kube/config";
+    K9S_CONFIG_DIR = "${config.xdg.configHome}/k9s";
+
+    # --- Helm -----------------------------------------------------------------
+    HELM_CONFIG_HOME = "${config.xdg.configHome}/helm";
+    HELM_DATA_HOME = "${config.xdg.dataHome}/helm";
+    HELM_CACHE_HOME = "${config.xdg.cacheHome}/helm";
+
+    # --- Kubecolor ------------------------------------------------------------
+    KUBECOLOR_FORCE_COLORS = "auto";
 
     # --- Container Tools ----------------------------------------------------
     LAZYDOCKER_CONFIG_DIR = "${config.xdg.configHome}/lazydocker";

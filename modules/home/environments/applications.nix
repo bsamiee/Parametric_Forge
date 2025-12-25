@@ -5,10 +5,7 @@
 # Path          : modules/home/environments/applications.nix
 # ----------------------------------------------------------------------------
 # User application environment variables
-
-{ config, ... }:
-
-{
+{config, ...}: {
   home.sessionVariables = {
     # --- WezTerm ------------------------------------------------------------
     WEZTERM_CONFIG_DIR = "${config.xdg.configHome}/wezterm";
@@ -18,8 +15,8 @@
 
     # --- Zellij -------------------------------------------------------------
     ZELLIJ_CONFIG_DIR = "${config.xdg.configHome}/zellij";
-    ZELLIJ_AUTO_ATTACH = "false";   # Handled in WezTerm config for auto-loading Zellij
-    ZELLIJ_AUTO_EXIT = "false";     # Handled in WezTerm config for auto-loading Zellij
+    ZELLIJ_AUTO_ATTACH = "false"; # Handled in WezTerm config for auto-loading Zellij
+    ZELLIJ_AUTO_EXIT = "false"; # Handled in WezTerm config for auto-loading Zellij
     ZELLIJ_DEFAULT_LAYOUT = "default";
 
     # --- Yazi ---------------------------------------------------------------

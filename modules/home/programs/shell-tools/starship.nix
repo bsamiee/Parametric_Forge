@@ -5,10 +5,7 @@
 # Path          : modules/home/programs/shell-tools/starship.nix
 # ----------------------------------------------------------------------------
 # Dracula themed customizable prompt for any shell
-
-{ config, lib, pkgs, ... }:
-
-{
+{lib, ...}: {
   programs.starship = {
     enable = true;
     # Home-manager handles ZSH integration automatically
@@ -17,11 +14,11 @@
       "$schema" = "https://starship.rs/config-schema.json";
 
       # --- Global Configuration ---------------------------------------------
-      palette = "dracula";                    # Use Dracula color palette
-      add_newline = true;                     # Blank line between prompts
-      scan_timeout = 20;                      # Timeout for scanning files (ms) - optimized
-      command_timeout = 500;                  # Timeout for commands (ms)
-      follow_symlinks = true;                 # Follow symlinks to check git repos
+      palette = "dracula"; # Use Dracula color palette
+      add_newline = true; # Blank line between prompts
+      scan_timeout = 20; # Timeout for scanning files (ms) - optimized
+      command_timeout = 500; # Timeout for commands (ms)
+      follow_symlinks = true; # Follow symlinks to check git repos
 
       # --- Dracula Color Palette --------------------------------------------
       palettes.dracula = {
@@ -81,7 +78,7 @@
         style_root = "red";
         format = "\\[[$user]($style)\\]";
         disabled = false;
-        show_always = false;                # Only show when SSH or root
+        show_always = false; # Only show when SSH or root
       };
 
       hostname = {
@@ -100,7 +97,7 @@
         read_only_style = "red";
         truncation_length = 3;
         truncation_symbol = "…/";
-        truncate_to_repo = true;             # Show path relative to git root
+        truncate_to_repo = true; # Show path relative to git root
 
         substitutions = {
           "Documents" = "󰈙";
@@ -183,7 +180,7 @@
         truncation_symbol = "…";
         only_attached = false;
         always_show_remote = false;
-        ignore_branches = [ ];
+        ignore_branches = [];
       };
 
       git_state = {
@@ -232,9 +229,9 @@
         style = "green";
         disabled = false;
         not_capable_style = "red";
-        detect_extensions = [ "js" "mjs" "cjs" "ts" "mts" "cts" ];
-        detect_files = [ "package.json" ".node-version" ".nvmrc" ];
-        detect_folders = [ "node_modules" ];
+        detect_extensions = ["js" "mjs" "cjs" "ts" "mts" "cts"];
+        detect_files = ["package.json" ".node-version" ".nvmrc"];
+        detect_folders = ["node_modules"];
       };
 
       python = {
@@ -244,9 +241,9 @@
         style = "yellow";
         pyenv_prefix = "pyenv ";
         pyenv_version_name = false;
-        detect_extensions = [ "py" ];
-        detect_files = [ ".python-version" "Pipfile" "pyproject.toml" "requirements.txt" ];
-        detect_folders = [ "__pycache__" ".venv" "venv" ];
+        detect_extensions = ["py"];
+        detect_files = [".python-version" "Pipfile" "pyproject.toml" "requirements.txt"];
+        detect_folders = ["__pycache__" ".venv" "venv"];
       };
 
       lua = {
@@ -256,9 +253,9 @@
         style = "cyan";
         lua_binary = "lua";
         disabled = false;
-        detect_extensions = [ "lua" ];
-        detect_files = [ ".lua-version" ];
-        detect_folders = [ "lua" ];
+        detect_extensions = ["lua"];
+        detect_files = [".lua-version"];
+        detect_folders = ["lua"];
       };
 
       rust = {
@@ -266,9 +263,9 @@
         version_format = "v$major.$minor.$patch";
         symbol = "󱘗 ";
         style = "orange";
-        detect_extensions = [ "rs" ];
-        detect_files = [ "Cargo.toml" "Cargo.lock" ];
-        detect_folders = [ ];
+        detect_extensions = ["rs"];
+        detect_files = ["Cargo.toml" "Cargo.lock"];
+        detect_folders = [];
       };
 
       golang = {
@@ -276,9 +273,9 @@
         version_format = "v$major.$minor.$patch";
         symbol = "󰟓 ";
         style = "cyan";
-        detect_extensions = [ "go" ];
-        detect_files = [ "go.mod" "go.sum" "go.work" ];
-        detect_folders = [ "vendor" ];
+        detect_extensions = ["go"];
+        detect_files = ["go.mod" "go.sum" "go.work"];
+        detect_folders = ["vendor"];
       };
 
       # --- System Information -----------------------------------------------
@@ -288,9 +285,9 @@
         symbol = " ";
         only_with_files = true;
         disabled = false;
-        detect_extensions = [ ];
-        detect_files = [ "docker-compose.yml" "docker-compose.yaml" "compose.yml" "compose.yaml" "Dockerfile" ];
-        detect_folders = [ ];
+        detect_extensions = [];
+        detect_files = ["docker-compose.yml" "docker-compose.yaml" "compose.yml" "compose.yaml" "Dockerfile"];
+        detect_folders = [];
       };
 
       nix_shell = {
@@ -345,13 +342,13 @@
         success_symbol = "";
         format = "[$symbol$common_meaning$signal_name$maybe_int]($style) ";
         map_symbol = true;
-        disabled = true;                     # Character module handles success/error
+        disabled = true; # Character module handles success/error
       };
 
       # --- Performance Settings ---------------------------------------------
       package = {
-        disabled = false;                    # Re-enabled for development workflows
-        display_private = false;             # Hide private package versions
+        disabled = false; # Re-enabled for development workflows
+        display_private = false; # Hide private package versions
       };
     };
   };

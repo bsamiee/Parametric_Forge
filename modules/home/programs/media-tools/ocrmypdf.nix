@@ -5,9 +5,6 @@
 # Path          : modules/home/programs/media-tools/ocrmypdf.nix
 # ----------------------------------------------------------------------------
 # OCRmyPDF - add an OCR text layer to scanned PDFs
-
-{ pkgs, ... }:
-
-{
-  home.packages = [ pkgs.ocrmypdf ];
+{pkgs, ...}: {
+  home.packages = [pkgs.ocrmypdf];
 }

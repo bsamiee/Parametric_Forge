@@ -5,19 +5,15 @@
 # Path          : modules/home/programs/media-tools/glow.nix
 # ----------------------------------------------------------------------------
 # Terminal markdown rendering for beautiful Yazi markdown preview
-
-{ config, pkgs, lib, ... }:
-
-let
-  yamlFormat = pkgs.formats.yaml { };
+{pkgs, ...}: let
+  yamlFormat = pkgs.formats.yaml {};
 
   glowConfig = {
     style = "dark";
     mouse = true;
-    showLineNumbers = true;  # Enables TUI line numbers
+    showLineNumbers = true; # Enables TUI line numbers
   };
-in
-{
-  home.packages = [ pkgs.glow ];
+in {
+  home.packages = [pkgs.glow];
   xdg.configFile."glow/glow.yml".source = yamlFormat.generate "glow-config" glowConfig;
 }

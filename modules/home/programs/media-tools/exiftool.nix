@@ -5,9 +5,6 @@
 # Path          : modules/home/programs/media-tools/exiftool.nix
 # ----------------------------------------------------------------------------
 # Read/write metadata in media files for Yazi audio preview
-
-{ pkgs, ... }:
-
-{
-  home.packages = [ pkgs.exiftool ];
+{pkgs, ...}: {
+  home.packages = [pkgs.exiftool];
 }

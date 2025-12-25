@@ -5,12 +5,9 @@
 # Path          : modules/darwin/homebrew/taps.nix
 # ----------------------------------------------------------------------------
 # Homebrew tap repositories
-
-{ ... }:
-
-{
+_: {
   homebrew.taps = [
-    "koekeishiya/formulae"  # For yabai/skhd
-    "FelixKratz/formulae"   # For borders
+    "koekeishiya/formulae" # For yabai/skhd
+    "FelixKratz/formulae" # For borders
   ];
 }

@@ -5,11 +5,8 @@
 # Path          : modules/home/programs/git-tools/gitleaks.nix
 # ----------------------------------------------------------------------------
 # Gitleaks secrets detection configuration
-
-{ config, lib, pkgs, ... }:
-
-let
-  tomlFormat = pkgs.formats.toml { };
+{pkgs, ...}: let
+  tomlFormat = pkgs.formats.toml {};
 
   gitleaksConfig = {
     title = "Gitleaks Configuration";
@@ -61,9 +58,8 @@ let
       }
     ];
   };
-in
-{
-  home.packages = [ pkgs.gitleaks ];
+in {
+  home.packages = [pkgs.gitleaks];
   xdg.configFile."gitleaks/gitleaks.toml".source =
     tomlFormat.generate "gitleaks-config" gitleaksConfig;
 }

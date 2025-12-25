@@ -5,9 +5,7 @@
 # Path          : modules/home/programs/git-tools/git.nix
 # ----------------------------------------------------------------------------
 # Core Git configuration and workflow settings
-
-{ config, lib, pkgs, ... }:
-
+_:
 # Dracula theme color reference
 # background    #15131F
 # current_line  #2A2640
@@ -22,7 +20,6 @@
 # red           #FF5555
 # magenta       #d82f94
 # pink          #E98FBE
-
 {
   programs.git = {
     enable = true;
@@ -124,7 +121,7 @@
       user.email = "b.samiee93@gmail.com";
       init.defaultBranch = "main";
 
-      pull.rebase = true;  # Always rebase on pull (ff setting ignored with rebase)
+      pull.rebase = true; # Always rebase on pull (ff setting ignored with rebase)
 
       push = {
         default = "current";
@@ -147,7 +144,7 @@
         algorithm = "histogram";
         renames = "copies";
         colorMoved = "default";
-        submodule = "log";  # Show submodule changes in diffs
+        submodule = "log"; # Show submodule changes in diffs
       };
 
       merge = {
@@ -178,7 +175,7 @@
       status = {
         branch = true;
         showUntrackedFiles = "all";
-        submoduleSummary = true;  # Show submodule summary in status
+        submoduleSummary = true; # Show submodule summary in status
       };
 
       log = {
@@ -263,7 +260,7 @@
 
       # UI elements
       keep-plus-minus-markers = false;
-      syntax-theme = "Dracula";  # Match bat theme
+      syntax-theme = "Dracula"; # Match bat theme
       true-color = "always";
       zero-style = "dim syntax";
 

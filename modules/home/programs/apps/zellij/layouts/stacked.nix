@@ -5,11 +5,8 @@
 # Path          : modules/home/programs/apps/zellij/layouts/stacked.nix
 # ----------------------------------------------------------------------------
 # Zellij layout with stacked panes and lazygit floating pane
-
-{ config, lib, pkgs, ... }:
-
-{
-    xdg.configFile."zellij/layouts/stacked.kdl".text = ''
+_: {
+  xdg.configFile."zellij/layouts/stacked.kdl".text = ''
     // Title         : stacked.kdl
     // Author        : Bardia Samiee
     // Project       : Parametric Forge
@@ -132,5 +129,5 @@
         }
     }
 
-    '';
+  '';
 }

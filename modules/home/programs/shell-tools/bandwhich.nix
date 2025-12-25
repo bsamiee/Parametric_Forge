@@ -5,9 +5,6 @@
 # Path          : /modules/home/programs/shell-tools/bandwhich.nix
 # ----------------------------------------------------------------------------
 # Terminal bandwidth utilization monitor
-
-{ pkgs, ... }:
-
-{
-  home.packages = [ pkgs.bandwhich ];
+{pkgs, ...}: {
+  home.packages = [pkgs.bandwhich];
 }

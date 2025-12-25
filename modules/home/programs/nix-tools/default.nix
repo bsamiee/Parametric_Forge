@@ -5,10 +5,7 @@
 # Path          : modules/home/programs/nix-tools/default.nix
 # ----------------------------------------------------------------------------
 # Nix tools aggregator
-
-{ lib, ... }:
-
-{
+{...}: {
   imports = [
     ./alejandra.nix
     ./comma.nix

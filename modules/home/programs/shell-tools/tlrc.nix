@@ -5,10 +5,11 @@
 # Path          : /modules/home/programs/shell-tools/tlrc.nix
 # ----------------------------------------------------------------------------
 # Official tldr client written in Rust
-
-{ config, lib, pkgs, ... }:
-
-let
+{
+  config,
+  pkgs,
+  ...
+}: let
   tlrcConfig = ''
     [cache]
     # XDG-compliant cache directory (overrides macOS default)
@@ -95,8 +96,7 @@ let
     dim = false
     strikethrough = false
   '';
-in
-{
-  home.packages = [ pkgs.tlrc ];
+in {
+  home.packages = [pkgs.tlrc];
   xdg.configFile."tlrc/config.toml".text = tlrcConfig;
 }

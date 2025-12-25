@@ -5,9 +5,6 @@
 # Path          : modules/home/programs/shell-tools/dua.nix
 # ----------------------------------------------------------------------------
 # Disk usage analyzer with interactive deletion mode
-
-{ pkgs, ... }:
-
-{
-  home.packages = [ pkgs.dua ];
+{pkgs, ...}: {
+  home.packages = [pkgs.dua];
 }

@@ -5,9 +5,6 @@
 # Path          : modules/home/programs/nix-tools/deadnix.nix
 # ----------------------------------------------------------------------------
 # Dead code finder for Nix - removes unused variable bindings
-
-{ pkgs, ... }:
-
-{
-  home.packages = [ pkgs.deadnix ];
+{pkgs, ...}: {
+  home.packages = [pkgs.deadnix];
 }

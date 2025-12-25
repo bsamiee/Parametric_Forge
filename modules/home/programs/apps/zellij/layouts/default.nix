@@ -5,11 +5,8 @@
 # Path          : modules/home/programs/apps/zellij/layouts/default.nix
 # ----------------------------------------------------------------------------
 # Zellij layout with yazi file manager, editor, and lazygit floating pane
-
-{ config, lib, pkgs, ... }:
-
-{
-    xdg.configFile."zellij/layouts/default.kdl".text = ''
+_: {
+  xdg.configFile."zellij/layouts/default.kdl".text = ''
     // Title         : default.kdl
     // Author        : Bardia Samiee
     // Project       : Parametric Forge
@@ -146,5 +143,5 @@
         }
     }
 
-    '';
+  '';
 }

@@ -5,10 +5,7 @@
 # Path          : modules/home/scripts/integration/nvim/default.nix
 # ----------------------------------------------------------------------------
 # Minimal Neovim integration helpers
-
-{ config, lib, pkgs, ... }:
-
-{
+{pkgs, ...}: {
   home.file.".local/bin/forge-nvim.sh" = {
     executable = true;
     text = ''

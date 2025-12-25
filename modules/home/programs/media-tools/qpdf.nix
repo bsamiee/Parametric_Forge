@@ -5,9 +5,6 @@
 # Path          : modules/home/programs/media-tools/qpdf.nix
 # ----------------------------------------------------------------------------
 # QPDF - structural, encryption, and linearization operations for PDFs
-
-{ pkgs, ... }:
-
-{
-  home.packages = [ pkgs.qpdf ];
+{pkgs, ...}: {
+  home.packages = [pkgs.qpdf];
 }

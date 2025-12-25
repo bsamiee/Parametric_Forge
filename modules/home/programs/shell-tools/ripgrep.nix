@@ -5,9 +5,11 @@
 # Path          : /modules/home/programs/shell-tools/ripgrep.nix
 # ----------------------------------------------------------------------------
 # Fast recursive search configuration
-
-{ config, lib, pkgs, ... }:
-
+{
+  lib,
+  pkgs,
+  ...
+}:
 # Dracula theme color reference
 # background    #15131F
 # current_line  #2A2640
@@ -22,7 +24,6 @@
 # red           #FF5555
 # magenta       #d82f94
 # pink          #E98FBE
-
 let
   ripgrepConfig = [
     # --- Search Behavior ----------------------------------------------------
@@ -31,32 +32,32 @@ let
     "--follow"
     "--max-columns=150"
     "--max-columns-preview"
-    "--sort=path"                     # Deterministic output (useful for scripts/tests)
-    "--line-number"                   # Show line numbers (essential for code navigation)
-    "--trim"                          # Remove trailing whitespace from output
-    "--no-messages"                   # Suppress file access error messages
-    "--search-zip"                    # Search compressed files (gzip, bzip2, xz, lz4, zstd, brotli)
-    "--ignore-file-case-insensitive"  # macOS case-insensitive filesystem support
-    "--engine=auto"                   # Use PCRE2 only when needed (lookaround/backreferences)
-    "--hyperlink-format=vscode"       # Clickable paths in WezTerm → VSCode
-    "--one-file-system"               # Don't cross mount points (Nix store safety)
+    "--sort=path" # Deterministic output (useful for scripts/tests)
+    "--line-number" # Show line numbers (essential for code navigation)
+    "--trim" # Remove trailing whitespace from output
+    "--no-messages" # Suppress file access error messages
+    "--search-zip" # Search compressed files (gzip, bzip2, xz, lz4, zstd, brotli)
+    "--ignore-file-case-insensitive" # macOS case-insensitive filesystem support
+    "--engine=auto" # Use PCRE2 only when needed (lookaround/backreferences)
+    "--hyperlink-format=vscode" # Clickable paths in WezTerm → VSCode
+    "--one-file-system" # Don't cross mount points (Nix store safety)
 
     # --- Performance --------------------------------------------------------
     "--threads=0"
-    "--dfa-size-limit=1G"            # Increase DFA cache for large pattern files
-    "--mmap"                         # Use memory-mapped I/O for large files
+    "--dfa-size-limit=1G" # Increase DFA cache for large pattern files
+    "--mmap" # Use memory-mapped I/O for large files
 
     # --- Visual formatting --------------------------------------------------
     # Path: Cyan
-    "--colors=path:fg:117"         # ANSI 117 = Dracula cyan (#94F2E8)
+    "--colors=path:fg:117" # ANSI 117 = Dracula cyan (#94F2E8)
     "--colors=path:style:bold"
 
     # Line/Column numbers: Comment gray
-    "--colors=line:fg:8"           # ANSI 8 = Dracula comment (#6272A4)
-    "--colors=column:fg:8"         # Keep consistent with line
+    "--colors=line:fg:8" # ANSI 8 = Dracula comment (#6272A4)
+    "--colors=column:fg:8" # Keep consistent with line
 
     # Match: Green
-    "--colors=match:fg:84"         # ANSI 84 = Dracula green (#50FA7B)
+    "--colors=match:fg:84" # ANSI 84 = Dracula green (#50FA7B)
     "--colors=match:style:bold"
 
     # --- Type Definitions ---------------------------------------------------
@@ -110,8 +111,7 @@ let
     "--glob=!*.swo"
     "--glob=!.DS_Store"
   ];
-in
-{
-  home.packages = [ pkgs.ripgrep ];
+in {
+  home.packages = [pkgs.ripgrep];
   xdg.configFile."ripgrep/config".text = lib.concatStringsSep "\n" ripgrepConfig;
 }

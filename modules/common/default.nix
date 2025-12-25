@@ -5,10 +5,7 @@
 # Path          : modules/common/default.nix
 # ----------------------------------------------------------------------------
 # Common configuration aggregator
-
-{ ... }:
-
-{
+{...}: {
   imports = [
     ./nix.nix
   ];

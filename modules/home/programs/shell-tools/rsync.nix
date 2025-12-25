@@ -5,11 +5,12 @@
 # Path          : /modules/home/programs/shell-tools/rsync.nix
 # ----------------------------------------------------------------------------
 # File synchronization and transfer utility with optimized defaults
-
-{ config, lib, pkgs, ... }:
-
 {
-  home.packages = [ pkgs.rsync ];
+  config,
+  pkgs,
+  ...
+}: {
+  home.packages = [pkgs.rsync];
 
   # --- Rsync Configuration --------------------------------------------------
   xdg.configFile."rsync/filter" = {
@@ -68,7 +69,7 @@
   };
 
   # --- Rsync Wrapper Scripts ------------------------------------------------
-  home.file.".local/bin/rsync-safe" = {
+  home.file.".local/bin/rsync-safe.sh" = {
     executable = true;
     text = ''
       #!/usr/bin/env bash
@@ -77,7 +78,7 @@
     '';
   };
 
-  home.file.".local/bin/rsync-mv" = {
+  home.file.".local/bin/rsync-mv.sh" = {
     executable = true;
     text = ''
       #!/usr/bin/env bash

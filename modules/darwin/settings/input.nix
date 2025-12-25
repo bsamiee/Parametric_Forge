@@ -5,13 +5,9 @@
 # Path          : modules/darwin/settings/input.nix
 # ----------------------------------------------------------------------------
 # Input device configuration for keyboard, mouse, and trackpad.
-
-{ lib, ... }:
-
-let
+{lib, ...}: let
   inherit (lib) mkDefault;
-in
-{
+in {
   system = {
     # --- Keyboard Hardware Remapping ----------------------------------------
     keyboard = {

@@ -5,10 +5,7 @@
 # Path          : /modules/home/programs/shell-tools/default.nix
 # ----------------------------------------------------------------------------
 # Shell tools aggregator
-
-{ lib, ... }:
-
-{
+{...}: {
   imports = [
     ./aria2.nix
     ./archivemount.nix

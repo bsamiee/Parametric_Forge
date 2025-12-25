@@ -5,9 +5,7 @@
 # Path          : /modules/home/programs/shell-tools/trippy.nix
 # ----------------------------------------------------------------------------
 # Modern network diagnostic tool combining traceroute and ping
-
-{ config, lib, pkgs, ... }:
-
+{pkgs, ...}:
 # Dracula theme color reference
 # background    #15131F
 # current_line  #2A2640
@@ -22,9 +20,8 @@
 # red           #FF5555
 # magenta       #d82f94
 # pink          #E98FBE
-
 let
-  tomlFormat = pkgs.formats.toml { };
+  tomlFormat = pkgs.formats.toml {};
 
   trippyConfig = {
     # --- Tracing Configuration ----------------------------------------------
@@ -76,40 +73,126 @@ let
 
     # --- Key Bindings -------------------------------------------------------
     bindings = [
-      { command = "toggle-help"; keys = "h"; }
-      { command = "toggle-help-alt"; keys = "?"; }
-      { command = "toggle-settings"; keys = "s"; }
-      { command = "toggle-settings-tui"; keys = "t"; }
-      { command = "toggle-settings-trace"; keys = "T"; }
-      { command = "toggle-settings-dns"; keys = "r"; }
-      { command = "toggle-settings-geoip"; keys = "g"; }
-      { command = "toggle-settings-bindings"; keys = "b"; }
-      { command = "toggle-settings-theme"; keys = "y"; }
-      { command = "toggle-settings-columns"; keys = "o"; }
-      { command = "next-hop"; keys = "down,j"; }
-      { command = "previous-hop"; keys = "up,k"; }
-      { command = "next-trace"; keys = "right,l"; }
-      { command = "previous-trace"; keys = "left,H"; }
-      { command = "next-hop-address"; keys = ".,>"; }
-      { command = "previous-hop-address"; keys = ","; }
-      { command = "address-mode-ip"; keys = "i"; }
-      { command = "address-mode-host"; keys = "n"; }
-      { command = "address-mode-both"; keys = "B"; }
-      { command = "toggle-freeze"; keys = "ctrl+f"; }
-      { command = "toggle-chart-maximized"; keys = "m"; }
-      { command = "chart-zoom-in"; keys = "="; }
-      { command = "chart-zoom-out"; keys = "-"; }
-      { command = "clear-trace-data"; keys = "ctrl+r"; }
-      { command = "clear-dns-cache"; keys = "ctrl+k"; }
-      { command = "clear-selection"; keys = "esc"; }
-      { command = "toggle-as-info"; keys = "z"; }
-      { command = "toggle-hop-details"; keys = "d"; }
-      { command = "quit"; keys = "q"; }
+      {
+        command = "toggle-help";
+        keys = "h";
+      }
+      {
+        command = "toggle-help-alt";
+        keys = "?";
+      }
+      {
+        command = "toggle-settings";
+        keys = "s";
+      }
+      {
+        command = "toggle-settings-tui";
+        keys = "t";
+      }
+      {
+        command = "toggle-settings-trace";
+        keys = "T";
+      }
+      {
+        command = "toggle-settings-dns";
+        keys = "r";
+      }
+      {
+        command = "toggle-settings-geoip";
+        keys = "g";
+      }
+      {
+        command = "toggle-settings-bindings";
+        keys = "b";
+      }
+      {
+        command = "toggle-settings-theme";
+        keys = "y";
+      }
+      {
+        command = "toggle-settings-columns";
+        keys = "o";
+      }
+      {
+        command = "next-hop";
+        keys = "down,j";
+      }
+      {
+        command = "previous-hop";
+        keys = "up,k";
+      }
+      {
+        command = "next-trace";
+        keys = "right,l";
+      }
+      {
+        command = "previous-trace";
+        keys = "left,H";
+      }
+      {
+        command = "next-hop-address";
+        keys = ".,>";
+      }
+      {
+        command = "previous-hop-address";
+        keys = ",";
+      }
+      {
+        command = "address-mode-ip";
+        keys = "i";
+      }
+      {
+        command = "address-mode-host";
+        keys = "n";
+      }
+      {
+        command = "address-mode-both";
+        keys = "B";
+      }
+      {
+        command = "toggle-freeze";
+        keys = "ctrl+f";
+      }
+      {
+        command = "toggle-chart-maximized";
+        keys = "m";
+      }
+      {
+        command = "chart-zoom-in";
+        keys = "=";
+      }
+      {
+        command = "chart-zoom-out";
+        keys = "-";
+      }
+      {
+        command = "clear-trace-data";
+        keys = "ctrl+r";
+      }
+      {
+        command = "clear-dns-cache";
+        keys = "ctrl+k";
+      }
+      {
+        command = "clear-selection";
+        keys = "esc";
+      }
+      {
+        command = "toggle-as-info";
+        keys = "z";
+      }
+      {
+        command = "toggle-hop-details";
+        keys = "d";
+      }
+      {
+        command = "quit";
+        keys = "q";
+      }
     ];
   };
-in
-{
-  home.packages = [ pkgs.trippy ];
+in {
+  home.packages = [pkgs.trippy];
 
   xdg.configFile."trippy/trippy.toml".source =
     tomlFormat.generate "trippy-config" trippyConfig;

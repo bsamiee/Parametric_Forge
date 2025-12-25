@@ -5,10 +5,12 @@
 # Path          : modules/home/programs/git-tools/gh.nix
 # ----------------------------------------------------------------------------
 # GitHub CLI configuration
-
-{ config, lib, pkgs, ... }:
-
-let
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}: let
   ghDefaultConfig = pkgs.writeText "gh-config.yml" ''
     aliases: {}
     editor: ""
@@ -18,8 +20,7 @@ let
     spinner: enabled
     version: "1"
   '';
-in
-{
+in {
   programs.gh = {
     enable = true;
     gitCredentialHelper.enable = true;
@@ -27,7 +28,7 @@ in
 
   # Temporarily stash an existing writable config before Home Manager checks for
   # collisions so that we can re-instate it after the generation is linked.
-  home.activation.prepareWritableGhConfig = lib.hm.dag.entryBefore [ "checkFilesChanged" ] ''
+  home.activation.prepareWritableGhConfig = lib.hm.dag.entryBefore ["checkFilesChanged"] ''
     cfg="${config.xdg.configHome}/gh/config.yml"
     backup="$cfg.hm-backup"
 
@@ -44,7 +45,7 @@ in
 
   # Ensure GitHub CLI config is a writable file instead of a Nix store symlink so
   # `gh auth login` and other commands can persist credentials.
-  home.activation.ensureWritableGhConfig = lib.hm.dag.entryAfter [ "linkGeneration" ] ''
+  home.activation.ensureWritableGhConfig = lib.hm.dag.entryAfter ["linkGeneration"] ''
     cfg="${config.xdg.configHome}/gh/config.yml"
     backup="$cfg.hm-backup"
     if [ -L "$cfg" ]; then

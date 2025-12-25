@@ -5,10 +5,11 @@
 # Path          : modules/home/programs/shell-tools/webhook.nix
 # ----------------------------------------------------------------------------
 # Webhook server (adnanh/webhook) - lightweight HTTP endpoint for triggering scripts
-
-{ config, lib, ... }:
-
-let
+{
+  config,
+  lib,
+  ...
+}: let
   webhookDir = "${config.xdg.configHome}/webhook";
 
   # Example hooks configuration - user should customize
@@ -17,13 +18,15 @@ let
       id = "health";
       execute-command = "echo";
       pass-arguments-to-command = [
-        { source = "string"; name = "ok"; }
+        {
+          source = "string";
+          name = "ok";
+        }
       ];
       include-command-output-in-response = true;
     }
   ];
-in
-{
+in {
   # --- XDG Config Directory ---------------------------------------------------
   xdg.configFile."webhook/.gitkeep".text = "";
 
@@ -31,7 +34,7 @@ in
   xdg.configFile."webhook/hooks.example.json".text = builtins.toJSON exampleHooks;
 
   # --- Activation: Ensure directory structure ---------------------------------
-  home.activation.ensureWebhookDirs = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+  home.activation.ensureWebhookDirs = lib.hm.dag.entryAfter ["writeBoundary"] ''
     mkdir -p "${webhookDir}/scripts"
     chmod 700 "${webhookDir}"
   '';

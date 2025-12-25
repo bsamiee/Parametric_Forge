@@ -5,10 +5,7 @@
 # Path          : /modules/home/programs/shell-tools/bat.nix
 # ----------------------------------------------------------------------------
 # Cat clone with syntax highlighting and Git integration
-
-{ config, lib, pkgs, ... }:
-
-{
+{pkgs, ...}: {
   programs.bat = {
     enable = true;
 
@@ -17,7 +14,7 @@
       style = "numbers,changes,header,grid";
       wrap = "character";
       tabs = "4";
-      paging = "auto";  # Let pager work normally
+      paging = "auto"; # Let pager work normally
 
       # Syntax mappings for unrecognized extensions
       map-syntax = [
@@ -29,8 +26,8 @@
     };
 
     extraPackages = with pkgs.bat-extras; [
-      batman       # Colored man pages
-      batgrep      # Ripgrep wrapper with bat preview
+      batman # Colored man pages
+      batgrep # Ripgrep wrapper with bat preview
     ];
   };
 }

@@ -5,10 +5,7 @@
 # Path          : /modules/home/programs/shell-tools/rclone.nix
 # ----------------------------------------------------------------------------
 # Cloud storage synchronization and management
-
-{ lib, ... }:
-
-{
+_: {
   programs.rclone = {
     enable = true;
     # Configuration file managed at ~/.config/rclone/rclone.conf

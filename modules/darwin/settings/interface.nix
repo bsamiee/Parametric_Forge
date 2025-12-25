@@ -5,13 +5,13 @@
 # Path          : modules/darwin/settings/interface.nix
 # ----------------------------------------------------------------------------
 # Visual interface and desktop environment settings for Darwin.
-
-{ lib, config, ... }:
-
-let
-  inherit (lib) mkDefault mkMerge;
-in
 {
+  lib,
+  config,
+  ...
+}: let
+  inherit (lib) mkDefault mkMerge;
+in {
   system.defaults = mkMerge [
     {
       # --- Dock Configuration -----------------------------------------------
@@ -50,7 +50,7 @@ in
           "/Applications/Superhuman.app"
           "/System/Applications/Messages.app"
         ];
-        persistent-others = mkDefault [ ];
+        persistent-others = mkDefault [];
       };
       # --- Finder Configuration ---------------------------------------------
       finder = {
@@ -128,7 +128,7 @@ in
         # --- Finder Advanced Settings ---------------------------------------
         "com.apple.finder" = {
           ShowRecentTags = mkDefault false;
-          FavoriteTagNames = mkDefault [ ];
+          FavoriteTagNames = mkDefault [];
           ShowSidebar = mkDefault true;
           SidebarWidth = mkDefault 189;
           SidebarDevicesSectionDisclosedState = mkDefault true;

@@ -5,17 +5,11 @@
 # Path          : modules/home/programs/zsh/config.nix
 # ----------------------------------------------------------------------------
 # Zsh profile and login shell configurations
-
-{ config, lib, pkgs, ... }:
-
-{
+_: {
   programs.zsh = {
     profileExtra = ''
-      # --- PATH initialization (order 50) -----------------------------------------
-
-      if [[ -d "/Applications/Rhino 8.app/Contents/Resources/bin" ]]; then
-        export PATH="/Applications/Rhino 8.app/Contents/Resources/bin:$PATH"
-      fi
+      # --- PATH initialization -------------------------------------------------
+      # Rhino/dotnet@8 paths managed declaratively in environments/shell.nix
 
       # Nix (Determinate Nix)
       if [[ -d "/nix/var/nix/profiles/default/bin" ]]; then
@@ -25,11 +19,6 @@
       # Homebrew (Darwin)
       if [[ -d "/opt/homebrew/bin" ]]; then
         export PATH="/opt/homebrew/bin:/opt/homebrew/sbin:$PATH"
-      fi
-
-      # .NET 8 for Rhino (versioned homebrew formula)
-      if [[ -d "/opt/homebrew/opt/dotnet@8/bin" ]]; then
-        export PATH="/opt/homebrew/opt/dotnet@8/bin:$PATH"
       fi
 
       # Nix daemon sourcing for Determinate Nix

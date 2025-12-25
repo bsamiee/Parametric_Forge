@@ -5,9 +5,6 @@
 # Path          : modules/home/programs/shell-tools/archivemount.nix
 # ----------------------------------------------------------------------------
 # FUSE-based mounting for archives (tar/zip/etc.)
-
-{ pkgs, ... }:
-
-{
-  home.packages = [ pkgs.archivemount ];
+{pkgs, ...}: {
+  home.packages = [pkgs.archivemount];
 }

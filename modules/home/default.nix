@@ -5,10 +5,7 @@
 # Path          : modules/home/default.nix
 # ----------------------------------------------------------------------------
 # Home Manager module aggregator
-
-{ lib, ... }:
-
-{
+{...}: {
   imports = [
     ./assets
     ./environments

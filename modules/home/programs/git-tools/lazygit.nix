@@ -5,9 +5,7 @@
 # Path          : modules/home/programs/git-tools/lazygit.nix
 # ----------------------------------------------------------------------------
 # Lazygit TUI configuration with Dracula theme
-
-{ config, lib, pkgs, ... }:
-
+_:
 # Dracula theme color reference
 # background    #15131F
 # current_line  #2A2640
@@ -22,7 +20,6 @@
 # red           #FF5555
 # magenta       #d82f94
 # pink          #E98FBE
-
 {
   programs.lazygit = {
     enable = true;
@@ -106,7 +103,7 @@
 
       os = {
         # --- Editor Integration ---------------------------------------------
-        editPreset = "nvim";  # Matches EDITOR in core.nix
+        editPreset = "nvim"; # Matches EDITOR in core.nix
         edit = "{{editor}} {{filename}}";
         editAtLine = "{{editor}} +{{line}} {{filename}}";
         openDirInEditor = "{{editor}} {{dir}}";

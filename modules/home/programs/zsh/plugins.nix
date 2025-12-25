@@ -5,10 +5,7 @@
 # Path          : modules/home/programs/zsh/plugins.nix
 # ----------------------------------------------------------------------------
 # Zsh plugin management - home-manager native approach
-
-{ config, lib, pkgs, ... }:
-
-{
+{pkgs, ...}: {
   programs.zsh.plugins = [
     {
       name = "fzf-tab";

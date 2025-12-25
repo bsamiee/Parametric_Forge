@@ -6,9 +6,6 @@
 # ----------------------------------------------------------------------------
 # sshs: Lightweight terminal UI for SSH host selection
 # Reads ~/.ssh/config and provides fuzzy search for quick connections
-
-{ pkgs, ... }:
-
-{
-  home.packages = [ pkgs.sshs ];
+{pkgs, ...}: {
+  home.packages = [pkgs.sshs];
 }

@@ -5,11 +5,8 @@
 # Path          : modules/home/programs/nix-tools/comma.nix
 # ----------------------------------------------------------------------------
 # Run software without installing: , cowsay "Hello"
-
-{ config, lib, pkgs, ... }:
-
-{
+{pkgs, ...}: {
   home.packages = with pkgs; [
-    comma  # Run software without installing: , cowsay "Hello"
+    comma # Run software without installing: , cowsay "Hello"
   ];
 }

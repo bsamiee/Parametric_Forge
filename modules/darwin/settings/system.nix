@@ -5,13 +5,13 @@
 # Path          : modules/darwin/settings/system.nix
 # ----------------------------------------------------------------------------
 # Core system behavior, services, and default application settings.
-
-{ lib, config, ... }:
-
-let
-  inherit (lib) mkDefault;
-in
 {
+  lib,
+  config,
+  ...
+}: let
+  inherit (lib) mkDefault;
+in {
   system.defaults = {
     # --- Login Window -------------------------------------------------------
     loginwindow = {

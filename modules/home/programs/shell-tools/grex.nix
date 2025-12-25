@@ -5,9 +5,6 @@
 # Path          : /modules/home/programs/shell-tools/grex.nix
 # ----------------------------------------------------------------------------
 # Regular expression generator from test cases
-
-{ lib, pkgs, ... }:
-
-{
-  home.packages = [ pkgs.grex ];
+{pkgs, ...}: {
+  home.packages = [pkgs.grex];
 }

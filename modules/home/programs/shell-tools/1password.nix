@@ -5,18 +5,21 @@
 # Path          : modules/home/programs/shell-tools/1password.nix
 # ----------------------------------------------------------------------------
 # 1Password: Shell Plugins (gh), biometric CLI auth, token injection on rebuild
-
-{ config, lib, pkgs, inputs, ... }:
-
 {
-  imports = [ inputs.shell-plugins.hmModules.default ];
+  config,
+  lib,
+  pkgs,
+  inputs,
+  ...
+}: {
+  imports = [inputs.shell-plugins.hmModules.default];
 
   # --- Shell Plugins: Biometric auth for supported CLIs ------------------------
   # NOTE: gh is intentionally excluded - it uses PAT token via GH_TOKEN env var
   # This ensures gh works in non-interactive contexts (Claude Code, CI, scripts)
   programs._1password-shell-plugins = {
     enable = true;
-    plugins = [ ];  # Add other CLIs here if needed (e.g., pkgs.aws-cli)
+    plugins = []; # Add other CLIs here if needed (e.g., pkgs.aws-cli)
   };
 
   # --- Environment: Biometric unlock for CLI ----------------------------------
@@ -26,7 +29,7 @@
 
   # --- Setup: op config directory -----------------------------------------------
   # Run BEFORE writeBoundary (validation phase) - safe for idempotent directory creation
-  home.activation.ensure1PasswordDirs = lib.hm.dag.entryBefore [ "writeBoundary" ] ''
+  home.activation.ensure1PasswordDirs = lib.hm.dag.entryBefore ["writeBoundary"] ''
     mkdir -p "${config.xdg.configHome}/op"
     chmod 700 "${config.xdg.configHome}/op"
   '';
@@ -58,7 +61,7 @@
   # --- Activation Hook: Generate token cache during rebuild ----------------------
   # CRITICAL: Must run AFTER linkGeneration to ensure template file exists
   # linkGeneration writes xdg.configFile entries after writeBoundary
-  home.activation.injectSecretsFromVault = lib.hm.dag.entryAfter [ "linkGeneration" ] ''
+  home.activation.injectSecretsFromVault = lib.hm.dag.entryAfter ["linkGeneration"] ''
     cache_file="$HOME/.config/hm-op-session.sh"
     template_file="$HOME/.config/op/env.template"
 

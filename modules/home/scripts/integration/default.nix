@@ -5,10 +5,7 @@
 # Path          : modules/home/scripts/integration/default.nix
 # ----------------------------------------------------------------------------
 # Integration scripts aggregator
-
-{ lib, ... }:
-
-{
+{...}: {
   imports = [
     ./yazi
     ./zellij

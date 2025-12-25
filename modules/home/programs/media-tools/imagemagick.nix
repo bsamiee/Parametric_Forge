@@ -5,9 +5,6 @@
 # Path          : modules/home/programs/media-tools/imagemagick.nix
 # ----------------------------------------------------------------------------
 # ImageMagick 7 image manipulation suite
-
-{ pkgs, ... }:
-
-{
-  home.packages = [ pkgs.imagemagick ];
+{pkgs, ...}: {
+  home.packages = [pkgs.imagemagick];
 }

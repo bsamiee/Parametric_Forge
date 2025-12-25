@@ -5,10 +5,12 @@
 # Path          : modules/home/programs/nix-tools/nix-index.nix
 # ----------------------------------------------------------------------------
 # Command-not-found with pre-built package database
-
-{ config, lib, pkgs, ... }:
-
 {
+  config,
+  lib,
+  pkgs,
+  ...
+}: {
   programs.nix-index = {
     enable = true;
     enableZshIntegration = true;

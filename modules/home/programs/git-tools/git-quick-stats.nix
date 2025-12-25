@@ -5,9 +5,6 @@
 # Path          : modules/home/programs/git-tools/git-quick-stats.nix
 # ----------------------------------------------------------------------------
 # Git statistics tool for comprehensive repository analytics
-
-{ config, lib, pkgs, ... }:
-
-{
-  home.packages = [ pkgs.git-quick-stats ];
+{pkgs, ...}: {
+  home.packages = [pkgs.git-quick-stats];
 }

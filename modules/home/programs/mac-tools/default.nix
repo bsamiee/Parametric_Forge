@@ -5,10 +5,7 @@
 # Path          : modules/home/programs/mac-tools/default.nix
 # ----------------------------------------------------------------------------
 # macOS-specific tool configurations
-
-{ lib, ... }:
-
-{
+{...}: {
   imports = [
     ./duti.nix
     # Future macOS tools:

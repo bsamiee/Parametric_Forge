@@ -5,9 +5,7 @@
 # Path          : modules/home/programs/shell-tools/jnv.nix
 # ----------------------------------------------------------------------------
 # Interactive JSON filter using jaq (built-in replacement for jq)
-
-{ config, lib, pkgs, ... }:
-
+{pkgs, ...}:
 # Dracula theme color reference
 # background    #15131F
 # current_line  #2A2640
@@ -22,9 +20,8 @@
 # red           #FF5555
 # magenta       #d82f94
 # pink          #E98FBE
-
 let
-  tomlFormat = pkgs.formats.toml { };
+  tomlFormat = pkgs.formats.toml {};
 
   jnvConfig = {
     no_hint = false;
@@ -34,17 +31,17 @@ let
       word_break_chars = " \t\n!\"#$%&'()*+,-./:;<=>?@[\\]^`{|}~";
       prefix = "󰅂 ";
       prefix_style = {
-        fg = "#d82f94";  # magenta
+        fg = "#d82f94"; # magenta
         bold = false;
       };
       active_char_style = {
-        fg = "#F8F8F2";  # foreground
-        bg = "#15131F";  # background
+        fg = "#F8F8F2"; # foreground
+        bg = "#15131F"; # background
         bold = false;
       };
       inactive_char_style = {
-        fg = "#F8F8F2";  # foreground
-        bg = "#15131F";  # background
+        fg = "#F8F8F2"; # foreground
+        bg = "#15131F"; # background
         bold = false;
       };
     };
@@ -54,37 +51,37 @@ let
       indent = "  ";
       brackets = {
         style = {
-          fg = "#94F2E8";  # cyan
+          fg = "#94F2E8"; # cyan
           bold = false;
         };
       };
       key = {
         style = {
-          fg = "#50FA7B";  # green
+          fg = "#50FA7B"; # green
           bold = false;
         };
       };
       string_value = {
         style = {
-          fg = "#F1FA8C";  # yellow
+          fg = "#F1FA8C"; # yellow
           bold = false;
         };
       };
       number_value = {
         style = {
-          fg = "#F97359";  # orange
+          fg = "#F97359"; # orange
           bold = false;
         };
       };
       null_value = {
         style = {
-          fg = "#6272A4";  # comment
+          fg = "#6272A4"; # comment
           bold = false;
         };
       };
       boolean_value = {
         style = {
-          fg = "#d82f94";  # magenta
+          fg = "#d82f94"; # magenta
           bold = false;
         };
       };
@@ -95,15 +92,15 @@ let
       cursor = " ";
       active_item = {
         style = {
-          fg = "#15131F";  # background
-          bg = "#94F2E8";  # cyan
+          fg = "#15131F"; # background
+          bg = "#94F2E8"; # cyan
           bold = false;
         };
       };
       inactive_item = {
         style = {
-          fg = "#F8F8F2";  # foreground
-          bg = "#15131F";  # background
+          fg = "#F8F8F2"; # foreground
+          bg = "#15131F"; # background
           bold = false;
         };
       };
@@ -154,8 +151,7 @@ let
       spinner_interval_ms = 100;
     };
   };
-in
-{
-  home.packages = [ pkgs.jnv ];
+in {
+  home.packages = [pkgs.jnv];
   xdg.configFile."jnv/config.toml".source = tomlFormat.generate "jnv-config" jnvConfig;
 }

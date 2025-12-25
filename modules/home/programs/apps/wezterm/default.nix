@@ -5,10 +5,7 @@
 # Path          : modules/home/programs/apps/wezterm/default.nix
 # ----------------------------------------------------------------------------
 # WezTerm terminal emulator configuration
-
-{ config, lib, pkgs, ... }:
-
-{
+_: {
   xdg.configFile = {
     "wezterm/wezterm.lua".source = ./wezterm.lua;
     "wezterm/appearance.lua".source = ./appearance.lua;

@@ -5,9 +5,7 @@
 # Path          : /modules/home/programs/shell-tools/procs.nix
 # ----------------------------------------------------------------------------
 # Modern ps replacement with Dracula theme
-
-{ config, lib, pkgs, ... }:
-
+{pkgs, ...}:
 # Dracula theme color reference (for understanding color mappings)
 # background    #15131F
 # current_line  #2A2640
@@ -22,9 +20,8 @@
 # red           #FF5555
 # magenta       #d82f94
 # pink          #E98FBE
-
 let
-  tomlFormat = pkgs.formats.toml { };
+  tomlFormat = pkgs.formats.toml {};
 
   procsConfig = {
     # --- Column Configuration -----------------------------------------------
@@ -167,32 +164,32 @@ let
       tree = "Cyan|Black";
 
       by_percentage = {
-        color_000 = "BrightGreen|Green";       # 0% - Green
-        color_025 = "Green|Green";             # 25% - Darker green
-        color_050 = "BrightYellow|Yellow";     # 50% - Yellow
-        color_075 = "Yellow|Yellow";           # 75% - Orange-ish
-        color_100 = "BrightRed|Red";           # 100% - Red
+        color_000 = "BrightGreen|Green"; # 0% - Green
+        color_025 = "Green|Green"; # 25% - Darker green
+        color_050 = "BrightYellow|Yellow"; # 50% - Yellow
+        color_075 = "Yellow|Yellow"; # 75% - Orange-ish
+        color_100 = "BrightRed|Red"; # 100% - Red
       };
 
       by_state = {
-        color_d = "Blue|Blue";                 # Uninterruptible sleep (disk)
-        color_r = "BrightGreen|Green";         # Running
-        color_s = "BrightCyan|Cyan";           # Sleeping
-        color_t = "BrightYellow|Yellow";       # Stopped
-        color_z = "BrightRed|Red";             # Zombie
-        color_x = "BrightMagenta|Magenta";     # Dead
-        color_k = "Yellow|Yellow";             # Wakekill
-        color_w = "BrightBlue|Blue";           # Waking
-        color_p = "BrightYellow|Yellow";       # Parked
+        color_d = "Blue|Blue"; # Uninterruptible sleep (disk)
+        color_r = "BrightGreen|Green"; # Running
+        color_s = "BrightCyan|Cyan"; # Sleeping
+        color_t = "BrightYellow|Yellow"; # Stopped
+        color_z = "BrightRed|Red"; # Zombie
+        color_x = "BrightMagenta|Magenta"; # Dead
+        color_k = "Yellow|Yellow"; # Wakekill
+        color_w = "BrightBlue|Blue"; # Waking
+        color_p = "BrightYellow|Yellow"; # Parked
       };
 
       by_unit = {
-        color_k = "BrightBlue|Blue";           # Kilo
-        color_m = "BrightGreen|Green";         # Mega
-        color_g = "BrightYellow|Yellow";       # Giga
-        color_t = "BrightRed|Red";             # Tera
-        color_p = "BrightRed|Red";             # Peta
-        color_x = "BrightBlue|Blue";           # Other
+        color_k = "BrightBlue|Blue"; # Kilo
+        color_m = "BrightGreen|Green"; # Mega
+        color_g = "BrightYellow|Yellow"; # Giga
+        color_t = "BrightRed|Red"; # Tera
+        color_p = "BrightRed|Red"; # Peta
+        color_x = "BrightBlue|Blue"; # Other
       };
     };
 
@@ -213,15 +210,15 @@ let
       show_parent_in_tree = true;
       show_children_in_tree = true;
       show_header = true;
-      show_footer = true;  # Show process counts (useful context)
+      show_footer = true; # Show process counts (useful context)
       cut_to_terminal = true;
       cut_to_pager = false;
       cut_to_pipe = false;
-      color_mode = "Always";  # Force colors even when piping to pager
+      color_mode = "Always"; # Force colors even when piping to pager
       separator = "│";
       ascending = "▲";
       descending = "▼";
-      tree_symbols = [ "│" "─" "┬" "├" "└" ];
+      tree_symbols = ["│" "─" "┬" "├" "└"];
       abbr_sid = true;
       theme = "Auto";
       show_kthreads = false;
@@ -243,16 +240,15 @@ let
       mode = "Auto";
       detect_width = true;
       use_builtin = false;
-      command = "less -SRX";  # -S no wrap, -R ANSI colors, -X no screen clear
+      command = "less -SRX"; # -S no wrap, -R ANSI colors, -X no screen clear
     };
 
     # --- Watch Mode Configuration -------------------------------------------
     watch = {
-      interval = 2;  # 2 seconds (matches bottom.nix update rate)
+      interval = 2; # 2 seconds (matches bottom.nix update rate)
     };
   };
-in
-{
-  home.packages = [ pkgs.procs ];
+in {
+  home.packages = [pkgs.procs];
   xdg.configFile."procs/config.toml".source = tomlFormat.generate "procs-config" procsConfig;
 }

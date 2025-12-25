@@ -5,11 +5,9 @@
 # Path          : modules/home/aliases/default.nix
 # ----------------------------------------------------------------------------
 # Shell aliases aggregator
-
-{ lib, ... }:
-
-{
+{...}: {
   imports = [
+    ./containers.nix
     ./core.nix
     ./git.nix
     ./media.nix

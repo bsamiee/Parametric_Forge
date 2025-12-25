@@ -6,10 +6,7 @@
 # ----------------------------------------------------------------------------
 # Language-agnostic tooling: linters, formatters, and helpers shared across
 # multiple ecosystems.
-
-{ pkgs, ... }:
-
-{
+{pkgs, ...}: {
   home.packages = with pkgs; [
     # --- Shell Tooling ------------------------------------------------------
     shellcheck # POSIX shell static analysis

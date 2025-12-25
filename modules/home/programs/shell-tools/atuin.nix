@@ -5,9 +5,7 @@
 # Path          : modules/home/programs/shell-tools/atuin.nix
 # ----------------------------------------------------------------------------
 # Modern shell history with SQLite backend and full-text search UI
-
-{ config, lib, pkgs, ... }:
-
+{config, ...}:
 # Dracula theme color reference
 # background    #15131F
 # current_line  #2A2640
@@ -22,7 +20,6 @@
 # red           #FF5555
 # magenta       #d82f94
 # pink          #E98FBE
-
 {
   programs.atuin = {
     enable = true;
@@ -34,7 +31,7 @@
       auto_sync = false;
       sync_frequency = "1h";
       update_check = false;
-      timezone = "local";  # Uses system TZ (via TZ env var)
+      timezone = "local"; # Uses system TZ (via TZ env var)
       search_mode = "fuzzy";
       search_mode_shell_up_key_binding = "prefix";
       filter_mode = "global";
@@ -44,20 +41,20 @@
       workspaces = true;
       style = "full";
       inline_height = 50;
-      invert = true;   # Search bar at top, matching fzf layout
-      prefers_reduced_motion = false;  # Smooth animations
+      invert = true; # Search bar at top, matching fzf layout
+      prefers_reduced_motion = false; # Smooth animations
       preview = {
-        strategy = "fixed";  # Prevents UI jumping
-        max_height = 6;  # Better command visibility
+        strategy = "fixed"; # Prevents UI jumping
+        max_height = 6; # Better command visibility
       };
       show_preview = true;
-      show_help = true;  # Shows keyboard shortcuts
+      show_help = true; # Shows keyboard shortcuts
       show_tabs = true;
       exit_mode = "return-original";
       keymap_mode = "auto";
-      word_jump_mode = "emacs";  # Valid: "emacs" or "subl"
+      word_jump_mode = "emacs"; # Valid: "emacs" or "subl"
       word_chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-";
-      scroll_context_lines = 2;  # Better context when scrolling
+      scroll_context_lines = 2; # Better context when scrolling
       enter_accept = true;
       network_timeout = 30;
       network_connect_timeout = 5;
@@ -99,14 +96,14 @@
         name = "dracula";
       };
       colors = {
-        Base = "#F8F8F2";           # Main text (fg+)
-        Annotation = "#6272A4";     # Secondary text (info)
-        AlertInfo = "#50FA7B";      # Success/info (marker/spinner)
-        AlertWarn = "#F97359";      # Warning (orange)
-        AlertError = "#FF5555";     # Error (red)
-        Important = "#d82f94";      # Highlights (prompt/pointer)
-        Guidance = "#94F2E8";       # Help text (hl/border)
-        Title = "#E98FBE";          # Section titles (separator)
+        Base = "#F8F8F2"; # Main text (fg+)
+        Annotation = "#6272A4"; # Secondary text (info)
+        AlertInfo = "#50FA7B"; # Success/info (marker/spinner)
+        AlertWarn = "#F97359"; # Warning (orange)
+        AlertError = "#FF5555"; # Error (red)
+        Important = "#d82f94"; # Highlights (prompt/pointer)
+        Guidance = "#94F2E8"; # Help text (hl/border)
+        Title = "#E98FBE"; # Section titles (separator)
       };
     };
   };

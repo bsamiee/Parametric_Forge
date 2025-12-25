@@ -5,9 +5,6 @@
 # Path          : /modules/home/programs/shell-tools/duf.nix
 # ----------------------------------------------------------------------------
 # Modern disk usage/free utility (df replacement)
-
-{ pkgs, ... }:
-
-{
-  home.packages = [ pkgs.duf ];
+{pkgs, ...}: {
+  home.packages = [pkgs.duf];
 }

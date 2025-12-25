@@ -5,14 +5,16 @@
 # Path          : modules/home/environments/media.nix
 # ----------------------------------------------------------------------------
 # Media and document processing environment variables
-
-{ config, pkgs, lib, ... }:
-
 {
+  config,
+  pkgs,
+  lib,
+  ...
+}: {
   home.sessionVariables = {
     # --- FFmpeg -------------------------------------------------------------
     FFREPORT = "file=${config.xdg.stateHome}/ffmpeg/%p-%t.log:level=32";
-    AV_LOG_FORCE_COLOR = "1";  # Enable colored output
+    AV_LOG_FORCE_COLOR = "1"; # Enable colored output
 
     # --- ImageMagick --------------------------------------------------------
     MAGICK_FONT_PATH = "/System/Library/Fonts:/Library/Fonts:${config.home.homeDirectory}/Library/Fonts:${config.home.profileDirectory}/share/fonts";

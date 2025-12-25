@@ -5,9 +5,6 @@
 # Path          : modules/home/programs/media-tools/inkscape.nix
 # ----------------------------------------------------------------------------
 # Inkscape vector graphics editor
-
-{ pkgs, ... }:
-
-{
-  home.packages = [ pkgs.inkscape ];
+{pkgs, ...}: {
+  home.packages = [pkgs.inkscape];
 }

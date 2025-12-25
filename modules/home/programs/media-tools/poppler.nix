@@ -5,9 +5,6 @@
 # Path          : modules/home/programs/media-tools/poppler.nix
 # ----------------------------------------------------------------------------
 # PDF utilities (pdfinfo, pdftotext) required by Yazi for PDF preview
-
-{ pkgs, ... }:
-
-{
-  home.packages = [ pkgs.poppler-utils ];
+{pkgs, ...}: {
+  home.packages = [pkgs.poppler-utils];
 }

@@ -5,10 +5,11 @@
 # Path          : /modules/home/programs/shell-tools/watchexec.nix
 # ----------------------------------------------------------------------------
 # File watcher and command executor with intelligent filtering
-
-{ config, lib, pkgs, ... }:
-
-let
+{
+  lib,
+  pkgs,
+  ...
+}: let
   globalIgnorePatterns = [
     # Version Control
     ".git/"
@@ -75,8 +76,7 @@ let
     "*.vhd"
     "*.qcow2"
   ];
-in
-{
-  home.packages = [ pkgs.watchexec ];
+in {
+  home.packages = [pkgs.watchexec];
   xdg.configFile."watchexec/ignore".text = lib.concatStringsSep "\n" globalIgnorePatterns;
 }

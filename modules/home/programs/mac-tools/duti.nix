@@ -5,10 +5,11 @@
 # Path          : /modules/home/programs/duti.nix
 # ----------------------------------------------------------------------------
 # macOS default application associations via UTIs
-
-{ config, lib, pkgs, ... }:
-
-let
+{
+  lib,
+  pkgs,
+  ...
+}: let
   dutiConfig = ''
     # PDF Documents -> Adobe Acrobat Pro
     com.adobe.Acrobat.Pro	com.adobe.pdf	all
@@ -62,9 +63,8 @@ let
     # Email -> Superhuman
     com.superhuman.electron	mailto	all
   '';
-in
-{
-  home.packages = [ pkgs.duti ];
+in {
+  home.packages = [pkgs.duti];
   xdg.configFile."duti/settings".text = dutiConfig;
 
   # Apply on activation

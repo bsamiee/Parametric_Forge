@@ -5,9 +5,6 @@
 # Path          : /modules/home/programs/shell-tools/trash.nix
 # ----------------------------------------------------------------------------
 # Cross-platform trash command
-
-{ pkgs, ... }:
-
-{
+{pkgs, ...}: {
   home.packages = with pkgs; [trash-cli];
 }

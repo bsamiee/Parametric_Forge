@@ -5,10 +5,7 @@
 # Path          : modules/home/programs/apps/default.nix
 # ----------------------------------------------------------------------------
 # GUI and terminal applications aggregator
-
-{ lib, ... }:
-
-{
+{...}: {
   imports = [
     ./nvim
     ./wezterm

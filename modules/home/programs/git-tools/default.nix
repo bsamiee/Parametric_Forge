@@ -5,10 +5,7 @@
 # Path          : modules/home/programs/git-tools/default.nix
 # ----------------------------------------------------------------------------
 # Git tools aggregator
-
-{ lib, ... }:
-
-{
+{...}: {
   imports = [
     ./git.nix
     ./gh.nix

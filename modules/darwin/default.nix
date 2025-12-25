@@ -5,10 +5,7 @@
 # Path          : modules/darwin/default.nix
 # ----------------------------------------------------------------------------
 # Darwin module aggregator
-
-{ lib, ... }:
-
-{
+{...}: {
   imports = [
     ./fonts.nix
     ./homebrew
