@@ -4,12 +4,13 @@
 # License       : MIT
 # Path          : modules/home/programs/container-tools/k8s-debug.nix
 # ----------------------------------------------------------------------------
-# Kubernetes debugging and inspection tools
+# Kubernetes debugging, inspection, and validation tools
 {pkgs, ...}: {
   home.packages = with pkgs; [
     stern # Multi-pod log tailing
     kube-capacity # Resource usage viewer
     kubectl-tree # Object hierarchy visualization
     kubectl-neat # Clean YAML output (removes clutter)
+    kubeconform # Fast K8s manifest validator with CRD support
   ];
 }

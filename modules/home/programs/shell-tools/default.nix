@@ -32,6 +32,7 @@
     ./hexyl.nix
     ./hyperfine.nix
     ./jnv.nix
+    ./mise.nix
     ./1password.nix
     ./ouch.nix
     ./p7zip.nix

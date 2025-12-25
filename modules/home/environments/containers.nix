@@ -8,6 +8,7 @@
 {config, ...}: {
   home.sessionVariables = {
     # --- Docker -------------------------------------------------------------
+    DOCKER_HOST = "unix://${config.xdg.dataHome}/colima/default/docker.sock";
     MACHINE_STORAGE_PATH = "${config.xdg.dataHome}/docker-machine";
     DOCKER_CERT_PATH = "${config.xdg.dataHome}/docker/certs";
     DOCKER_CONFIG = "${config.xdg.configHome}/docker";
