@@ -38,6 +38,7 @@
     ./p7zip.nix
     ./pik.nix
     ./procs.nix
+    ./ratchet.nix
     ./rclone.nix
     ./rich-cli.nix
     ./ripgrep.nix
@@ -55,6 +56,7 @@
     ./watchexec.nix
     ./webhook.nix
     ./xh.nix
+    ./zizmor.nix
     ./zoxide.nix
   ];
 }
