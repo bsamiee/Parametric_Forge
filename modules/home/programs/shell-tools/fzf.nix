@@ -23,7 +23,7 @@ _:
 {
   programs.fzf = {
     enable = true;
-    enableZshIntegration = true; # Let home-manager handle base integration
+    enableZshIntegration = false; # Manual init in zsh/init.nix (before Atuin for proper Ctrl+R)
     tmux.enableShellIntegration = false;
 
     # --- Default Configuration ----------------------------------------------

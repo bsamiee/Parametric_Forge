@@ -7,17 +7,26 @@
 # Shell configuration environment variables
 {config, ...}: {
   # --- User Session Path ----------------------------------------------------
+  # Order matters: nix-darwin paths must be included for non-login shells (VS Code)
   home.sessionPath = [
+    # User paths
     "$HOME/.nix-profile/bin"
     "$HOME/.local/bin"
     "$HOME/bin"
     "${config.xdg.dataHome}/cargo/bin"
     "${config.xdg.dataHome}/go/bin"
     "${config.xdg.dataHome}/pnpm"
-    "${config.xdg.dataHome}/fnm/node-versions/v25.2.1/installation/bin" # fnm default node
+
+    # Nix-darwin managed paths (atuin, zoxide, etc. live here)
+    "/etc/profiles/per-user/${config.home.username}/bin"
+    "/run/current-system/sw/bin"
+    "/nix/var/nix/profiles/default/bin"
+
+    # System tools
     "/opt/homebrew/opt/dotnet@8/bin"
     "/Applications/Rhino 8.app/Contents/Resources/bin"
   ];
+  # Note: fnm PATH managed dynamically via `fnm env --use-on-cd` in zsh/init.nix
 
   home.sessionVariables = {
     # --- Node.js / fnm ------------------------------------------------------
@@ -52,6 +61,7 @@
     _ZO_DATA_DIR = "${config.xdg.dataHome}/zoxide";
     _ZO_RESOLVE_SYMLINKS = "1";
     _ZO_EXCLUDE_DIRS = "/tmp/*:/var/tmp/*:/usr/bin/*:/usr/sbin/*:/sbin/*:/bin/*";
+    _ZO_DOCTOR = "0"; # Suppress false positive hook warnings
     # Rclone + Rsync
     RCLONE_CONFIG = "${config.xdg.configHome}/rclone/rclone.conf";
     RCLONE_TRANSFERS = "4"; # Balanced concurrent transfers

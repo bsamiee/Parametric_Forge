@@ -16,8 +16,8 @@
     kubectx # Context/namespace switcher (includes kubens)
   ];
 
-  # Delegate kubecolor completions to kubectl
-  programs.zsh.initContent = lib.mkOrder 550 ''
+  # Delegate kubecolor completions to kubectl (after carapace loads kubectl completions)
+  programs.zsh.initContent = lib.mkAfter ''
     # --- Kubecolor Completion Delegation ----------------------------------------
     compdef kubecolor=kubectl
   '';

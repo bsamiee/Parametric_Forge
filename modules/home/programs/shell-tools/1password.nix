@@ -42,6 +42,7 @@
 
     # CLI tools and APIs
     export ANTHROPIC_API_KEY="op://Tokens/Anthropic API Key/token"
+    export GREPTILE_TOKEN="op://Tokens/GREPTILE_TOKEN/token"
     export RHINO_TOKEN="op://Tokens/RHINO_TOKEN/token"
     export EXA_API_KEY="op://Tokens/Exa API Key/token"
     export PERPLEXITY_API_KEY="op://Tokens/Perplexity Sonar API Key/token"

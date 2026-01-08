@@ -5,7 +5,7 @@
 # Path          : modules/home/programs/shell-tools/atuin.nix
 # ----------------------------------------------------------------------------
 # Modern shell history with SQLite backend and full-text search UI
-{config, ...}:
+{config, pkgs, ...}:
 # Dracula theme color reference
 # background    #15131F
 # current_line  #2A2640
@@ -35,7 +35,7 @@
       search_mode = "fuzzy";
       search_mode_shell_up_key_binding = "prefix";
       filter_mode = "global";
-      filter_mode_shell_up_key_binding = "session";
+      filter_mode_shell_up_key_binding = "global"; # Up arrow shows all history, not just current session
       ctrl_n_shortcuts = true;
       disable_up_arrow = false;
       workspaces = true;
@@ -95,16 +95,22 @@
       theme = {
         name = "dracula";
       };
-      colors = {
-        Base = "#F8F8F2"; # Main text (fg+)
-        Annotation = "#6272A4"; # Secondary text (info)
-        AlertInfo = "#50FA7B"; # Success/info (marker/spinner)
-        AlertWarn = "#F97359"; # Warning (orange)
-        AlertError = "#FF5555"; # Error (red)
-        Important = "#d82f94"; # Highlights (prompt/pointer)
-        Guidance = "#94F2E8"; # Help text (hl/border)
-        Title = "#E98FBE"; # Section titles (separator)
-      };
     };
   };
+
+  # Dracula theme file (atuin only has "autumn" and "marine" built-in)
+  xdg.configFile."atuin/themes/dracula.toml".text = ''
+    [theme]
+    name = "dracula"
+
+    [colors]
+    Base = "#F8F8F2"
+    Title = "#E98FBE"
+    Annotation = "#6272A4"
+    Guidance = "#94F2E8"
+    Important = "#d82f94"
+    AlertInfo = "#50FA7B"
+    AlertWarn = "#F1FA8C"
+    AlertError = "#FF5555"
+  '';
 }

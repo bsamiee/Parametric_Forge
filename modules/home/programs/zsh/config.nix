@@ -5,8 +5,20 @@
 # Path          : modules/home/programs/zsh/config.nix
 # ----------------------------------------------------------------------------
 # Zsh profile and login shell configurations
-_: {
+{config, ...}: {
   programs.zsh = {
+    # Runs in .zshenv for ALL shells (login, interactive, scripts)
+    # Ensures nix paths are always available, even when hm-session-vars guard triggers
+    envExtra = ''
+      # Ensure nix-darwin paths are in PATH (VS Code inherits guard but not PATH)
+      [[ ":$PATH:" != *":/etc/profiles/per-user/${config.home.username}/bin:"* ]] && \
+        export PATH="/etc/profiles/per-user/${config.home.username}/bin:$PATH"
+      [[ ":$PATH:" != *":/run/current-system/sw/bin:"* ]] && \
+        export PATH="/run/current-system/sw/bin:$PATH"
+      [[ ":$PATH:" != *":/nix/var/nix/profiles/default/bin:"* ]] && \
+        export PATH="/nix/var/nix/profiles/default/bin:$PATH"
+    '';
+
     profileExtra = ''
       # --- PATH initialization -------------------------------------------------
       # Rhino/dotnet@8 paths managed declaratively in environments/shell.nix
