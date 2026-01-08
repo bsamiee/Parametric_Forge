@@ -162,12 +162,12 @@ _: {
     pbuild = "pnpm build"; # Production build with type checking
     ptest = "pnpm test"; # Run Vitest tests
     # Biome
-    bc = "biome check --error-on-warnings"; # Check format + lint + imports
-    bcw = "biome check --write"; # Apply safe fixes + format
-    bcu = "biome check --write --unsafe"; # Apply all fixes including unsafe
-    brage = "biome rage --formatter --linter --verbose"; # Debug configuration
-    bcwatch = "watchexec -c -e js,jsx,ts,tsx,json,css -- biome check"; # Watch and check on changes
-    bfwatch = "watchexec -c -e js,jsx,ts,tsx,json,css -- biome format --write"; # Watch and format on changes
+    bc = "pnpm exec biome check --error-on-warnings"; # Check format + lint + imports
+    bcw = "pnpm exec biome check --write"; # Apply safe fixes + format
+    bcu = "pnpm exec biome check --write --unsafe"; # Apply all fixes including unsafe
+    brage = "pnpm exec biome rage --formatter --linter --verbose"; # Debug configuration
+    bcwatch = "watchexec -c -e js,jsx,ts,tsx,json,css -- pnpm exec biome check"; # Watch and check on changes
+    bfwatch = "watchexec -c -e js,jsx,ts,tsx,json,css -- pnpm exec biome format --write"; # Watch and format on changes
 
     # --- .NET Development ---------------------------------------------------
     dnr = "dotnet run --"; # Run with args passthrough

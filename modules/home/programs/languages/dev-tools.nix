@@ -25,8 +25,5 @@
     # --- General Data Tools -------------------------------------------------
     yq-go # YAML/JSON/TOML processor (yq)
     miller # CSV/TSV/JSON processor
-
-    # --- Modern Code Quality ------------------------------------------------
-    biome # Fast formatter/linter for JS/TS/JSON (ESLint + Prettier replacement)
   ];
 }

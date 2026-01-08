@@ -14,11 +14,15 @@
     "${config.xdg.dataHome}/cargo/bin"
     "${config.xdg.dataHome}/go/bin"
     "${config.xdg.dataHome}/pnpm"
+    "${config.xdg.dataHome}/fnm/node-versions/v25.2.1/installation/bin" # fnm default node
     "/opt/homebrew/opt/dotnet@8/bin"
     "/Applications/Rhino 8.app/Contents/Resources/bin"
   ];
 
   home.sessionVariables = {
+    # --- Node.js / fnm ------------------------------------------------------
+    FNM_DIR = "${config.xdg.dataHome}/fnm"; # Static fnm data dir for VSCode/GUI apps
+
     # --- Shell Internals ----------------------------------------------------
     SQLITE_HISTORY = "${config.xdg.stateHome}/sqlite/history";
     LESSHISTFILE = "${config.xdg.stateHome}/less/history";
