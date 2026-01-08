@@ -50,6 +50,7 @@ in {
         home-manager = {
           useGlobalPkgs = true;
           useUserPackages = true;
+          backupFileExtension = "backup"; # Backup conflicting files instead of failing
           extraSpecialArgs = {inherit inputs;}; # Pass inputs to home-manager
           users.${username} = {...}: {
             imports = [../../modules/home];
