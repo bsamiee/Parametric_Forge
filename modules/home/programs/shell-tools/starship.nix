@@ -8,7 +8,7 @@
 {lib, ...}: {
   programs.starship = {
     enable = true;
-    # Home-manager handles ZSH integration automatically
+    enableTransience = true; # Simplify prompt in terminal scrollback
 
     settings = {
       "$schema" = "https://starship.rs/config-schema.json";
@@ -55,9 +55,6 @@
         "$docker_context"
         "$nix_shell"
         "$line_break"
-        "$status"
-        "$container"
-        "$shell"
         "$character"
       ];
 
@@ -123,51 +120,10 @@
         style = "cyan";
         disabled = false;
         symbols = {
-          Alpaquita = " ";
-          Alpine = " ";
-          AlmaLinux = " ";
-          Amazon = " ";
-          Android = " ";
-          Arch = " ";
-          Artix = " ";
-          CachyOS = " ";
-          CentOS = " ";
-          Debian = " ";
-          DragonFly = " ";
-          Emscripten = " ";
-          EndeavourOS = " ";
-          Fedora = " ";
-          FreeBSD = " ";
-          Garuda = "󰛓 ";
-          Gentoo = " ";
-          HardenedBSD = "󰞌 ";
-          Illumos = "󰈸 ";
-          Kali = " ";
-          Linux = " ";
-          Mabox = " ";
+          Linux = " ";
           Macos = " ";
-          Manjaro = " ";
-          Mariner = " ";
-          MidnightBSD = " ";
-          Mint = " ";
-          NetBSD = " ";
           NixOS = " ";
-          Nobara = " ";
-          OpenBSD = "󰈺 ";
-          openSUSE = " ";
-          OracleLinux = "󰌷 ";
-          Pop = " ";
-          Raspbian = " ";
-          Redhat = " ";
-          RedHatEnterprise = " ";
-          RockyLinux = " ";
-          Redox = "󰀘 ";
-          Solus = "󰠳 ";
-          SUSE = " ";
-          Ubuntu = " ";
           Unknown = " ";
-          Void = " ";
-          Windows = "󰍲 ";
         };
       };
 
@@ -244,18 +200,6 @@
         detect_extensions = ["py"];
         detect_files = [".python-version" "Pipfile" "pyproject.toml" "requirements.txt"];
         detect_folders = ["__pycache__" ".venv" "venv"];
-      };
-
-      lua = {
-        format = "\\[[$symbol($version)]($style)\\]";
-        version_format = "v$major.$minor.$patch";
-        symbol = "󰢱 ";
-        style = "cyan";
-        lua_binary = "lua";
-        disabled = false;
-        detect_extensions = ["lua"];
-        detect_files = [".lua-version"];
-        detect_folders = ["lua"];
       };
 
       rust = {
@@ -336,20 +280,7 @@
         utc_time_offset = "local";
       };
 
-      status = {
-        style = "red";
-        symbol = " ";
-        success_symbol = "";
-        format = "[$symbol$common_meaning$signal_name$maybe_int]($style) ";
-        map_symbol = true;
-        disabled = true; # Character module handles success/error
-      };
 
-      # --- Performance Settings ---------------------------------------------
-      package = {
-        disabled = false; # Re-enabled for development workflows
-        display_private = false; # Hide private package versions
-      };
     };
   };
 }

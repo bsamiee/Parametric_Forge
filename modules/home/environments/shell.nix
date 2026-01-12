@@ -26,11 +26,12 @@
     "/opt/homebrew/opt/dotnet@8/bin"
     "/Applications/Rhino 8.app/Contents/Resources/bin"
   ];
-  # Note: fnm PATH managed dynamically via `fnm env --use-on-cd` in zsh/init.nix
+  # Note: fnm PATH set dynamically via `fnm env --use-on-cd` in zsh/init.nix
+  # Note: pnpm installed via nix for PATH stability; PNPM_HOME for global bins
 
   home.sessionVariables = {
     # --- Node.js / fnm ------------------------------------------------------
-    FNM_DIR = "${config.xdg.dataHome}/fnm"; # Static fnm data dir for VSCode/GUI apps
+    FNM_DIR = "${config.xdg.dataHome}/fnm"; # fnm data dir for VSCode/GUI apps
 
     # --- Shell Internals ----------------------------------------------------
     SQLITE_HISTORY = "${config.xdg.stateHome}/sqlite/history";

@@ -9,7 +9,7 @@
   home.packages = with pkgs; [
     nodejs_22 # Fallback LTS; fnm manages active version via .node-version
     fnm # Fast Node Manager - prepends managed node to PATH
-    # pnpm: install via fnm's npm (npm install -g pnpm)
+    pnpm_10 # Package manager - nix-managed for PATH stability
     nodePackages.prettier # Code formatter
     tailwindcss # Utility-first CSS framework
   ];

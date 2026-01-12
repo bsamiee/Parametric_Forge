@@ -134,6 +134,9 @@ _:
         autocrlf = "input";
         whitespace = "trailing-space,space-before-tab";
         preloadindex = true;
+        fsmonitor = true; # Background daemon for instant git status
+        untrackedCache = true; # 2x faster untracked file detection
+        commitGraph = true; # Cache commit DAG for faster git log
       };
 
       feature.manyFiles = true;
@@ -156,6 +159,7 @@ _:
         prune = true;
         prunetags = true;
         fsckObjects = true;
+        writeCommitGraph = true; # Update commit graph cache on fetch
       };
       receive.fsckObjects = true;
       transfer.fsckobjects = true;
@@ -182,6 +186,9 @@ _:
         date = "iso";
         follow = true;
       };
+
+      column.ui = "auto"; # Multi-column output for branch/tag lists
+      tag.sort = "version:refname"; # Sort tags as semantic versions
 
       commit.verbose = true;
       rerere.enabled = true;

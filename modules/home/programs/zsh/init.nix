@@ -37,9 +37,7 @@
       # fnm (Fast Node Manager) - prepends managed node to PATH
       eval "$(${pkgs.fnm}/bin/fnm env --use-on-cd)"
 
-      # pnpm via fnm's npm (corepack removed - unreliable with fnm)
-      # Run once manually if missing: npm install -g pnpm
-
+      # Note: pnpm installed via nix (node-tools.nix) for PATH stability across all processes
       # Note: 1Password Shell Plugins (gh, aws, etc.) handled by programs._1password-shell-plugins
       # Note: SSH agent configured via ssh.nix IdentityAgent directive
 
@@ -51,26 +49,37 @@
 
     (lib.mkOrder 400 ''
       # --- Custom Completions (before compinit) -----------------------------------
-      # Add custom completions directory to fpath
-      mkdir -p "${config.xdg.dataHome}/zsh/completions"
-      fpath=("${config.xdg.dataHome}/zsh/completions" $fpath)
+      # Completions are version-tracked via Nix store paths. When a tool updates,
+      # its store path changes, triggering regeneration. Completions persist in
+      # ~/.local/share/zsh/completions (not cleared by cache cleanup).
 
-      # Generate native completions for tools not covered by carapace
-      if [[ ! -f "${config.xdg.dataHome}/zsh/completions/_zellij" ]]; then
-        ${pkgs.zellij}/bin/zellij setup --generate-completion zsh > "${config.xdg.dataHome}/zsh/completions/_zellij"
+      _comp_dir="${config.xdg.dataHome}/zsh/completions"
+      _ver_dir="${config.xdg.dataHome}/zsh/.completion-versions"
+      mkdir -p "$_comp_dir" "$_ver_dir"
+      fpath=("$_comp_dir" $fpath)
+
+      # Regenerate completion if store path changed (tool updated)
+      _regen_if_stale() {
+        local name=$1 store_path=$2 gen_cmd=$3
+        local ver_file="$_ver_dir/$name"
+        if [[ ! -f "$_comp_dir/_$name" ]] || [[ ! -f "$ver_file" ]] || [[ "$(< "$ver_file")" != "$store_path" ]]; then
+          eval "$gen_cmd" > "$_comp_dir/_$name" 2>/dev/null && echo "$store_path" > "$ver_file"
+        fi
+      }
+
+      # Nix-installed tools (store path = version)
+      _regen_if_stale zellij "${pkgs.zellij}" "${pkgs.zellij}/bin/zellij setup --generate-completion zsh"
+      _regen_if_stale atuin "${pkgs.atuin}" "${pkgs.atuin}/bin/atuin gen-completions --shell zsh"
+      _regen_if_stale op "${pkgs._1password-cli}" "${pkgs._1password-cli}/bin/op completion zsh"
+
+      # Homebrew-installed tools (use --version output as version)
+      if command -v wezterm &>/dev/null; then
+        _wez_ver=$(wezterm --version 2>/dev/null | head -1)
+        _regen_if_stale wezterm "$_wez_ver" "wezterm shell-completion --shell zsh"
       fi
 
-      if [[ ! -f "${config.xdg.dataHome}/zsh/completions/_wezterm" ]]; then
-        wezterm shell-completion --shell zsh > "${config.xdg.dataHome}/zsh/completions/_wezterm"
-      fi
-
-      if [[ ! -f "${config.xdg.dataHome}/zsh/completions/_atuin" ]]; then
-        ${pkgs.atuin}/bin/atuin gen-completions --shell zsh > "${config.xdg.dataHome}/zsh/completions/_atuin"
-      fi
-
-      if [[ ! -f "${config.xdg.dataHome}/zsh/completions/_op" ]]; then
-        ${pkgs._1password-cli}/bin/op completion zsh > "${config.xdg.dataHome}/zsh/completions/_op"
-      fi
+      unset -f _regen_if_stale
+      unset _comp_dir _ver_dir _wez_ver
     '')
 
     (lib.mkOrder 550 ''
@@ -117,10 +126,6 @@
     ''
       # --- Shell Options (these run after everything) -----------------------------
       setopt AUTO_PUSHD PUSHD_IGNORE_DUPS CDABLE_VARS
-
-      # Keep npm invocations consistent without extra wrapper logic
-      alias npm=pnpm
-
     ''
   ];
 }

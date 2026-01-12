@@ -41,7 +41,8 @@
     # Update this list when adding new tokens to your 1Password vault
 
     # CLI tools and APIs
-    export ANTHROPIC_API_KEY="op://Tokens/Anthropic API Key/token"
+    # NOTE: ANTHROPIC_API_KEY intentionally excluded - use Claude Code OAuth instead
+    # Projects needing API key auth should configure it locally
     export GREPTILE_TOKEN="op://Tokens/GREPTILE_TOKEN/token"
     export RHINO_TOKEN="op://Tokens/RHINO_TOKEN/token"
     export EXA_API_KEY="op://Tokens/Exa API Key/token"
@@ -50,6 +51,7 @@
     export SONAR_TOKEN="op://Tokens/SONAR_TOKEN/token"
     export CACHIX_AUTH_TOKEN="op://Tokens/Cachix Auth Token - Parametric Forge/token"
     export HOSTINGER_TOKEN="op://Tokens/HOSTINGER_TOKEN/token"
+    export CONTEXT7_API_KEY="op://Tokens/CONTEXT7_API_KEY/token"
 
     # GitHub CLI (gh prefers GH_TOKEN, GITHUB_TOKEN is fallback for other tools)
     export GH_TOKEN="op://Tokens/Github Token/token"
