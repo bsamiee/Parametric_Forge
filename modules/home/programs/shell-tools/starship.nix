@@ -248,7 +248,7 @@
       memory_usage = {
         disabled = false;
         threshold = 75;
-        format = "[$symbol[$ram( | $swap)]($style)]";
+        format = "$symbol[$ram( | $swap)]($style)";
         style = "dimmed comment";
         symbol = "󰍛 ";
       };
