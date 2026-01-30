@@ -19,7 +19,7 @@
     ./ascii-image-converter.nix # Convert images to ASCII art
     ./glow.nix # Yazi: Markdown preview
     ./inkscape.nix # Vector graphics editor
-    ./transmission.nix # Transmission BitTorrent client (CLI/daemon)
+    # ./transmission.nix # Transmission BitTorrent client (CLI/daemon) - disabled: fmt build failure
 
     # Document processing
     ./pandoc.nix # Universal document converter
