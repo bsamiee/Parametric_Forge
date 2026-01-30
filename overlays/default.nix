@@ -5,12 +5,7 @@
 # Path          : overlays/default.nix
 # ----------------------------------------------------------------------------
 # Package overlays
-{inputs}: final: prev: let
-  # Pull in the upstream bleeding-edge yazi overlay so every system sees it.
-  yaziOverlay = inputs.yazi.overlays.default final prev;
-in
-  yaziOverlay
-  // {
-    # Custom package overrides can be added here when needed
-    sqlean = prev.callPackage ./sqlean {};
-  }
+{inputs}: final: prev: {
+  # Custom package overrides can be added here when needed
+  sqlean = prev.callPackage ./sqlean {};
+}
