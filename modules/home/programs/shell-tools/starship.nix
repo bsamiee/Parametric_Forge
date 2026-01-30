@@ -60,7 +60,6 @@
 
       # Right-side prompt (session metadata)
       right_format = lib.concatStrings [
-        "$memory_usage"
         "$jobs"
         "$cmd_duration"
         "$time"
@@ -243,14 +242,6 @@
         unknown_msg = "";
         disabled = false;
         heuristic = false;
-      };
-
-      memory_usage = {
-        disabled = false;
-        threshold = 75;
-        format = "$symbol[$ram( | $swap)]($style)";
-        style = "dimmed comment";
-        symbol = "󰍛 ";
       };
 
       cmd_duration = {
