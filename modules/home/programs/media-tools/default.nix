@@ -9,7 +9,6 @@
   imports = [
     ./ffmpeg.nix # FFmpeg + thumbnailer for Yazi
     ./imagemagick.nix
-    ./mpv.nix
     ./resvg.nix # Yazi: SVG preview rendering
     ./poppler.nix # Yazi: PDF preview utilities
     ./djvulibre.nix # Yazi: DjVu document support

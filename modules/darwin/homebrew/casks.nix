@@ -31,9 +31,9 @@ _: {
     "discord"
     "microsoft-teams"
     "superhuman" # Email client
-    "telegram"
+    # "telegram"
     "whatsapp"
-    "zoom"
+    # "zoom"
 
     # --- Cloud & Storage ----------------------------------------------------
     "google-drive"
@@ -41,16 +41,16 @@ _: {
 
     # --- Development --------------------------------------------------------
     "visual-studio-code"
-    "blender"
+    # "blender"
     "iconjar"
     "typeface" # Font management
     "sf-symbols" # Apple's symbol library
 
     # --- Media & Entertainment ----------------------------------------------
     "spotify"
-    "handbrake-app" # GUI video transcoder
-    "transmission"
-    "steam"
+    # "handbrake-app" # GUI video transcoder
+    # "transmission"
+    # "steam"
 
     # --- Notes & Reading ----------------------------------------------------
     "calibre" # E-book management
@@ -74,11 +74,11 @@ _: {
     "font-qahiri" # Not in nixpkgs
 
     # --- Adobe & Creative Suite ---------------------------------------------
-    "adobe-acrobat-pro"
-    "adobe-creative-cloud"
-    "colorchecker-camera-calibration"
-    "topaz-gigapixel-ai"
-    "topaz-photo-ai"
+    # "adobe-acrobat-pro"
+    # "adobe-creative-cloud"
+    # "colorchecker-camera-calibration"
+    # "topaz-gigapixel-ai"
+    # "topaz-photo-ai"
     "zxpinstaller"
 
     # --- Utilities & System Enhancement -------------------------------------
