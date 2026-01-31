@@ -7,7 +7,6 @@
 # GUI and terminal applications aggregator
 {...}: {
   imports = [
-    ./claude-code-statusline.nix
     ./nvim
     ./wezterm
     ./yazi

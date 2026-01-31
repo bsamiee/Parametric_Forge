@@ -18,7 +18,7 @@ Parametric Forge is a deterministic macOS workspace built with Nix flakes, nix-d
     <li><strong>Scope:</strong> One flake drives macOS defaults, GUI apps, CLI tools, fonts, overlays (Yazi + sqlean), and cache policy.</li>
     <li><strong>Secrets:</strong> 1Password-backed secrets + SSH keep credentials out of the repo; GitHub CLI stays writable.</li>
     <li><strong>Terminal mesh:</strong> WezTerm → Zellij → Yazi with Neovim remote control, Starship, Atuin, fzf-tab, and carapace.</li>
-    <li><strong>Toolchains:</strong> Python 3.13 (uv/ruff/mypy), Node (fnm + pnpm), Lua + LSPs, SQLite/duckdb with sqlean/spatialite/vec, dotnet 8 for Rhino.</li>
+    <li><strong>Toolchains:</strong> Python 3.13 (uv/ruff/mypy), Node (nix + pnpm), Lua + LSPs, SQLite/duckdb with sqlean/spatialite/vec, dotnet 8 for Rhino.</li>
     <li><strong>Assets:</strong> CAD/BIM/media formats stay versionable via LFS defaults; ffmpeg/imagemagick tuned for previews.</li>
   </ul>
 </div>
@@ -108,7 +108,7 @@ Parametric Forge is a deterministic macOS workspace built with Nix flakes, nix-d
   <summary>Languages</summary>
 
   - **Python:** 3.13 stack with uv, ruff, mypy; caches under XDG (`modules/home/environments/languages.nix`).
-  - **Node/Lua/DB:** Node via fnm + pnpm (npm is aliased to pnpm for consistency); Lua + LSP tooling; DuckDB/SQLite with sqlean/spatialite/vec (`modules/home/programs/languages/*`).
+  - **Node/Lua/DB:** Node via nix + pnpm (npm is aliased to pnpm for consistency); Lua + LSP tooling; DuckDB/SQLite with sqlean/spatialite/vec (`modules/home/programs/languages/*`).
   </details>
 
   <details>

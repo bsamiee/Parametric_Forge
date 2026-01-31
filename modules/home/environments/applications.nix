@@ -31,8 +31,5 @@
     SERPL_CONFIG = "${config.xdg.configHome}/serpl";
     SERPL_DATA = "${config.xdg.dataHome}/serpl";
     SERPL_LOGLEVEL = "info";
-
-    # --- Claude -------------------------------------------------------------
-    CLAUDE_CACHE_DIR = "${config.xdg.cacheHome}/claude";
   };
 }

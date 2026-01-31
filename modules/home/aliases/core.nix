@@ -15,8 +15,8 @@ _: {
 
     # --- Shell Configuration ------------------------------------------------
     envs = "env | sort"; # List environment variables sorted
-    ezsh = "$EDITOR $HOME/.zshrc"; # Edit ZSH config
-    rzsh = "source $HOME/.zshrc"; # Reload ZSH config
+    ezsh = "$EDITOR \\${ZDOTDIR:-$HOME}/.zshrc"; # Edit ZSH config
+    rzsh = "source \\${ZDOTDIR:-$HOME}/.zshrc"; # Reload ZSH config
     reload = "exec $SHELL"; # Reload shell
 
     # --- File Operations ----------------------------------------------------

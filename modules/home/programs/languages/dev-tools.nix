@@ -12,9 +12,6 @@
     shellcheck # POSIX shell static analysis
     shfmt # Shell script formatter
 
-    # --- TOML ---------------------------------------------------------------
-    taplo # CLI formatter/linter
-
     # --- YAML ---------------------------------------------------------------
     yamlfmt # YAML formatter (Google)
     yamllint # YAML linter

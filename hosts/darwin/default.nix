@@ -54,7 +54,7 @@ in {
           extraSpecialArgs = {inherit inputs;}; # Pass inputs to home-manager
           users.${username} = {...}: {
             imports = [../../modules/home];
-            home.stateVersion = "24.05";
+            home.stateVersion = "26.05";
             programs.home-manager.enable = true;
 
             # Disable manual generation to avoid builtins.toFile warnings

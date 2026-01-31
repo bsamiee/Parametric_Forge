@@ -5,7 +5,7 @@
 # Path          : modules/home/programs/zsh/default.nix
 # ----------------------------------------------------------------------------
 # Zsh configuration orchestrator
-{...}: {
+{config, ...}: {
   imports = [
     ./init.nix
     ./plugins.nix
@@ -16,5 +16,6 @@
 
   programs.zsh = {
     enable = true;
+    dotDir = "${config.xdg.configHome}/zsh";
   };
 }

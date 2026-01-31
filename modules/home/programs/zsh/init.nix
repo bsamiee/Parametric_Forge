@@ -18,7 +18,7 @@
       export ZSH_COMPDUMP="${config.xdg.cacheHome}/zsh/zcompdump-''${ZSH_VERSION}"
 
       # --- Load injected secrets (populated once at login by launchd) -----------
-      [[ -f "$HOME/.config/hm-op-session.sh" ]] && source "$HOME/.config/hm-op-session.sh"
+      [[ -f "${config.xdg.configHome}/hm-op-session.sh" ]] && source "${config.xdg.configHome}/hm-op-session.sh"
 
       # --- FZF Configuration -------------------------------------------------------
       # Custom completion functions
@@ -33,9 +33,6 @@
       # --- Tool Integration -------------------------------------------------------
       # Batman man page integration
       eval "$(${pkgs.bat-extras.batman}/bin/batman --export-env)"
-
-      # fnm (Fast Node Manager) - prepends managed node to PATH
-      eval "$(${pkgs.fnm}/bin/fnm env --use-on-cd)"
 
       # Note: pnpm installed via nix (node-tools.nix) for PATH stability across all processes
       # Note: 1Password Shell Plugins (gh, aws, etc.) handled by programs._1password-shell-plugins

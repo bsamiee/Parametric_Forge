@@ -7,9 +7,6 @@
 # Language toolchain aggregator
 {...}: {
   imports = [
-    # LSPs
-    ./lsp.nix
-
     # Shared tooling
     ./dev-tools.nix
     ./db-tools.nix

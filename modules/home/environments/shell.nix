@@ -23,16 +23,14 @@
     "/nix/var/nix/profiles/default/bin"
 
     # System tools
+    "/opt/homebrew/bin"
+    "/opt/homebrew/sbin"
     "/opt/homebrew/opt/dotnet@8/bin"
     "/Applications/Rhino 8.app/Contents/Resources/bin"
   ];
-  # Note: fnm PATH set dynamically via `fnm env --use-on-cd` in zsh/init.nix
   # Note: pnpm installed via nix for PATH stability; PNPM_HOME for global bins
 
   home.sessionVariables = {
-    # --- Node.js / fnm ------------------------------------------------------
-    FNM_DIR = "${config.xdg.dataHome}/fnm"; # fnm data dir for VSCode/GUI apps
-
     # --- Shell Internals ----------------------------------------------------
     SQLITE_HISTORY = "${config.xdg.stateHome}/sqlite/history";
     LESSHISTFILE = "${config.xdg.stateHome}/less/history";
