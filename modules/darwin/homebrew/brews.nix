@@ -18,24 +18,6 @@ _: {
     "koekeishiya/formulae/skhd"
     "FelixKratz/formulae/borders"
 
-    # --- Language Servers (LSP) ---------------------------------------------
-    "lua-language-server" # Lua
-    "bash-language-server" # Bash
-    "taplo" # TOML
-    "yaml-language-server" # YAML
-    "marksman" # Markdown
-    "vscode-langservers-extracted" # HTML/CSS/JSON/ESLint
-    "dockerfile-language-server" # Dockerfile
-    "basedpyright" # Python
-    "typescript-language-server" # TypeScript/JavaScript
-    "rust-analyzer" # Rust
-    "cmake-language-server" # CMake
-    "gopls" # Go
-    "sql-language-server" # SQL (Homebrew; replaces sqls)
-
-    # --- Media Tools --------------------------------------------------------
-    # "handbrake" # CLI video transcoder
-
     # --- Server Tools -------------------------------------------------------
     "webhook" # HTTP endpoint for triggering scripts (adnanh/webhook)
   ];

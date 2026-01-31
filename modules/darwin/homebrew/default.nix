@@ -26,16 +26,17 @@ in {
 
     # --- Global Settings ----------------------------------------------------
     global = {
-      autoUpdate = mkDefault true;
+      autoUpdate = mkDefault false;
       brewfile = mkDefault false; # Disable Brewfile (managed via Nix)
       lockfiles = mkDefault false; # Prevent Nix store write attempts
     };
 
     # --- Activation Behavior ------------------------------------------------
+    # Keep activation lightweight; avoid automatic updates/upgrades/cleanup.
     onActivation = {
-      autoUpdate = mkDefault true;
-      cleanup = mkDefault "uninstall";
-      upgrade = mkDefault true;
+      autoUpdate = mkDefault false;
+      cleanup = mkDefault "none";
+      upgrade = mkDefault false;
     };
 
     # --- Cask Configuration -------------------------------------------------
@@ -53,9 +54,9 @@ in {
 
   # --- Nix-Homebrew Bridge --------------------------------------------------
   nix-homebrew = {
-    enable = mkDefault true;
+    enable = mkDefault false;
     enableRosetta = mkDefault isAarch64; # Enable Rosetta for Apple Silicon
     user = config.system.primaryUser; # Dynamic from system configuration
-    autoMigrate = mkDefault true;
+    autoMigrate = mkDefault false;
   };
 }

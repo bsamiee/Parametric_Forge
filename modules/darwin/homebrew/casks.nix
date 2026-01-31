@@ -77,8 +77,6 @@ _: {
     # "adobe-acrobat-pro"
     # "adobe-creative-cloud"
     # "colorchecker-camera-calibration"
-    # "topaz-gigapixel-ai"
-    # "topaz-photo-ai"
     "zxpinstaller"
 
     # --- Utilities & System Enhancement -------------------------------------

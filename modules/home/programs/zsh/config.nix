@@ -28,9 +28,10 @@
         export PATH="/nix/var/nix/profiles/default/bin:$PATH"
       fi
 
-      # Homebrew (Darwin)
+      # Homebrew (Darwin) - append so Nix stays ahead in PATH
       if [[ -d "/opt/homebrew/bin" ]]; then
-        export PATH="/opt/homebrew/bin:/opt/homebrew/sbin:$PATH"
+        [[ ":$PATH:" != *":/opt/homebrew/bin:"* ]] && export PATH="$PATH:/opt/homebrew/bin"
+        [[ ":$PATH:" != *":/opt/homebrew/sbin:"* ]] && export PATH="$PATH:/opt/homebrew/sbin"
       fi
 
       # Nix daemon sourcing for Determinate Nix
