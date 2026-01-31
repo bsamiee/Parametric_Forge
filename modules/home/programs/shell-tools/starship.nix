@@ -8,7 +8,7 @@
 {lib, ...}: {
   programs.starship = {
     enable = true;
-    enableTransience = true; # Simplify prompt in terminal scrollback
+    enableTransience = false;
 
     settings = {
       "$schema" = "https://starship.rs/config-schema.json";
@@ -16,9 +16,8 @@
       # --- Global Configuration ---------------------------------------------
       palette = "dracula"; # Use Dracula color palette
       add_newline = true; # Blank line between prompts
-      scan_timeout = 20; # Timeout for scanning files (ms) - optimized
-      command_timeout = 500; # Timeout for commands (ms)
-      follow_symlinks = true; # Follow symlinks to check git repos
+      scan_timeout = 10000;
+      command_timeout = 10000; # Timeout for commands (ms)
 
       # --- Dracula Color Palette --------------------------------------------
       palettes.dracula = {
@@ -60,8 +59,6 @@
 
       # Right-side prompt (session metadata)
       right_format = lib.concatStrings [
-        "$jobs"
-        "$cmd_duration"
         "$time"
       ];
 
@@ -244,24 +241,7 @@
         heuristic = false;
       };
 
-      cmd_duration = {
-        min_time = 2000;
-        format = " took [$duration]($style)";
-        style = "yellow";
-        show_milliseconds = false;
-        show_notifications = false;
-        min_time_to_notify = 45000;
-      };
-
       # --- Optional Modules -------------------------------------------------
-      jobs = {
-        threshold = 1;
-        symbol_threshold = 1;
-        number_threshold = 2;
-        format = "[$symbol$number]($style)";
-        symbol = "󰒓 ";
-        style = "purple";
-      };
 
       time = {
         disabled = false;
