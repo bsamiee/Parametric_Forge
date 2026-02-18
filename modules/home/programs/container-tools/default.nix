@@ -11,7 +11,7 @@
     ./kubectl.nix
     ./kustomize.nix
     ./helm.nix
-    ./argocd.nix
+    # ./argocd.nix  # Temporarily disabled - nixpkgs yarn hash mismatch (2026-02-17)
     ./kubeseal.nix
     ./k9s.nix
     ./k8s-debug.nix

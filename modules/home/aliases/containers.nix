@@ -21,8 +21,9 @@ _: {
     k9 = "k9s"; # Launch TUI
 
     # --- ArgoCD ---------------------------------------------------------------
-    argo = "argocd"; # ArgoCD CLI shorthand
-    argosync = "argocd app sync"; # Sync application
+    # Temporarily disabled - nixpkgs build broken (2026-02-17)
+    # argo = "argocd"; # ArgoCD CLI shorthand
+    # argosync = "argocd app sync"; # Sync application
 
     # --- Debug ----------------------------------------------------------------
     klog = "stern"; # Multi-pod log tailing
