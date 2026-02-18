@@ -22,5 +22,12 @@
     # --- General Data Tools -------------------------------------------------
     yq-go # YAML/JSON/TOML processor (yq)
     miller # CSV/TSV/JSON processor
+
+    # --- .NET ---------------------------------------------------------------
+    (dotnetCorePackages.combinePackages [
+      dotnet-sdk_8
+      dotnet-sdk_9
+      dotnet-sdk_10
+    ])
   ];
 }

@@ -7,7 +7,7 @@
 # Node.js runtime and package tooling.
 {pkgs, ...}: {
   home.packages = with pkgs; [
-    nodejs_22 # LTS Node runtime (nix-managed)
+    nodejs # LTS Node runtime (tracks current LTS)
     pnpm_10 # Package manager - nix-managed for PATH stability
     nodePackages.prettier # Code formatter
     tailwindcss # Utility-first CSS framework

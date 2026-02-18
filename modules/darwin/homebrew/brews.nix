@@ -8,10 +8,10 @@
 _: {
   homebrew.brews = [
     # --- System Utilities ---------------------------------------------------
+    "fnm" # Fast Node version manager (per-project Node versions)
     "defaultbrowser" # CLI tool for setting default browser
     "tag" # macOS file tagging CLI
     "blueutil" # Bluetooth management
-    "dotnet@8" # .NET 8 runtime for Rhino 8 rhinocode
 
     # --- Window Management Tools --------------------------------------------
     "koekeishiya/formulae/yabai"

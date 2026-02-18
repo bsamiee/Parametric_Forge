@@ -21,7 +21,7 @@
 
     profileExtra = ''
       # --- PATH initialization -------------------------------------------------
-      # Rhino/dotnet@8 paths managed declaratively in environments/shell.nix
+      # Rhino and language toolchain paths are managed declaratively in environments/shell.nix
 
       # Nix (Determinate Nix)
       if [[ -d "/nix/var/nix/profiles/default/bin" ]]; then

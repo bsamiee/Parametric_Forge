@@ -152,8 +152,8 @@ _: {
     pyright = "basedpyright";
     rfix = "ruff check --fix";
     rformat = "ruff format";
-    rhproject = "dotnet new rhino --version 8 -sample"; # Initialize new Rhino plugin project template
-    ghproject = "dotnet new grasshopper --version 8 -sample"; # Initialize new Grasshopper plugin project template
+    rhproject = "dotnet new rhino -sample"; # Initialize Rhino plugin template using current installed defaults
+    ghproject = "dotnet new grasshopper -sample"; # Initialize Grasshopper template using current installed defaults
     watch = "watchexec -c"; # Clear terminal on file change
     watchr = "watchexec -r"; # Restart process on file change
 

@@ -13,6 +13,7 @@
     "$HOME/.nix-profile/bin"
     "$HOME/.local/bin"
     "$HOME/bin"
+    "$HOME/.dotnet/tools"
     "${config.xdg.dataHome}/cargo/bin"
     "${config.xdg.dataHome}/go/bin"
     "${config.xdg.dataHome}/pnpm"
@@ -25,7 +26,6 @@
     # System tools
     "/opt/homebrew/bin"
     "/opt/homebrew/sbin"
-    "/opt/homebrew/opt/dotnet@8/bin"
     "/Applications/Rhino 8.app/Contents/Resources/bin"
   ];
   # Note: pnpm installed via nix for PATH stability; PNPM_HOME for global bins
@@ -89,7 +89,7 @@
     YSU_MESSAGE_POSITION = "before"; # Show message before command execution
 
     # --- .NET Configuration -------------------------------------------------
-    DOTNET_ROOT = "/opt/homebrew/opt/dotnet@8/libexec";
+    DOTNET_MULTILEVEL_LOOKUP = "0"; # Prefer deterministic Nix-provided SDK/runtime graph
     DOTNET_NOLOGO = "1"; # Suppress startup banner
     DOTNET_CLI_TELEMETRY_OPTOUT = "1"; # Disable telemetry
   };
