@@ -181,9 +181,11 @@ safe = lambda p: Path(p).resolve().is_relative_to(Path(os.environ.get("CLAUDE_PR
 <br>
 
 ```toml
-[tool.basedpyright]
-typeCheckingMode = "all"
-pythonVersion = "3.14"
+[tool.ty.rules]
+all = "error"
+
+[tool.ty.environment]
+python-version = "3.14"
 
 [tool.ruff]
 target-version = "py314"
@@ -192,5 +194,5 @@ select = ["E", "F", "W", "B", "I", "UP", "ANN", "S", "C90"]
 
 | [GATE] | [COMMAND] |
 |--------|-----------|
-| Type | `basedpyright .` |
+| Type | `ty check .` |
 | Lint | `ruff check --fix . && ruff format .` |

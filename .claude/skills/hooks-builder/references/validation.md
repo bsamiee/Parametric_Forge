@@ -52,7 +52,7 @@ Consolidated checklist for hooks-builder. SKILL.md §VALIDATION contains high-le
 <br>
 
 [VERIFY] Script quality:
-- [ ] `basedpyright` passes with zero errors.
+- [ ] `ty check` passes with zero errors.
 - [ ] `ruff check` passes with zero violations.
 - [ ] No `if/else` chains—use dispatch tables.
 - [ ] No mutable state—use frozen dataclasses.

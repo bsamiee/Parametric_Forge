@@ -12,7 +12,7 @@
 			"Bash(xargs:*)",
 			"Bash(npx tsc:*)",
 			"Bash(claude mcp add:*)",
-			"Bash(basedpyright:*)",
+			"Bash(ty:*)",
 			"WebFetch(domain:arxiv.org)",
 			"WebFetch(domain:www.anthropic.com)",
 			"WebFetch(domain:platform.claude.com)",

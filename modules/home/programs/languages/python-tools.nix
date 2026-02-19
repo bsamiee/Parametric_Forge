@@ -13,5 +13,6 @@
     # --- Python Tooling -----------------------------------------------------
     ruff # Fast Python linter/formatter
     uv # Fast Python package installer and resolver
+    ty # Astral type checker / language server
   ];
 }

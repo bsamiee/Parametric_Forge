@@ -104,7 +104,7 @@ someFnWithSSL = args: ...  # Function spam
 - Python 3.13+ only (never older)
 - `uv` for package management
 - `ruff` for all linting/formatting
-- `basedpyright` over mypy
+- `ty` for type checking
 - `anyio` + `aiofiles` for async
 
 ### Rust (Tertiary)

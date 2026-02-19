@@ -149,7 +149,7 @@ _: {
     alint = "actionlint";                           # Lint workflow files
 
     # --- Dev Tools ----------------------------------------------------------
-    pyright = "basedpyright";
+    ty = "ty check";
     rfix = "ruff check --fix";
     rformat = "ruff format";
     rhproject = "dotnet new rhino -sample"; # Initialize Rhino plugin template using current installed defaults

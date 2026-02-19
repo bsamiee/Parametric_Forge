@@ -60,7 +60,6 @@
     ".coverage"
     ".envrc.cache"
     ".pytest_cache/"
-    ".mypy_cache/"
     ".ruff_cache/"
 
     # Nix
