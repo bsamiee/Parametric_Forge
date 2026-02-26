@@ -47,6 +47,8 @@ in {
           "/Applications/Visual Studio Code.app"
           "/Applications/Arc.app"
           "/Applications/WezTerm.app"
+          "/Applications/Codex.app"
+          "/Applications/Claude.app"
           "/Applications/Superhuman.app"
           "/System/Applications/Messages.app"
         ];

@@ -5,14 +5,8 @@
 # Path          : modules/darwin/homebrew/default.nix
 # ----------------------------------------------------------------------------
 # Homebrew configuration and aggregator
-{
-  config,
-  lib,
-  pkgs,
-  ...
-}: let
+{lib, ...}: let
   inherit (lib) mkDefault;
-  inherit (pkgs.stdenv) isAarch64;
 in {
   imports = [
     ./taps.nix
@@ -52,11 +46,4 @@ in {
     };
   };
 
-  # --- Nix-Homebrew Bridge --------------------------------------------------
-  nix-homebrew = {
-    enable = mkDefault false;
-    enableRosetta = mkDefault isAarch64; # Enable Rosetta for Apple Silicon
-    user = config.system.primaryUser; # Dynamic from system configuration
-    autoMigrate = mkDefault false;
-  };
 }

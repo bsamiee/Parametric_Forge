@@ -26,9 +26,6 @@ in {
       # Home Manager integration
       home-manager.darwinModules.home-manager
 
-      # Nix-Homebrew integration
-      inputs.nix-homebrew.darwinModules.nix-homebrew
-
       # --- Host-specific configuration --------------------------------------
       {
         nixpkgs.overlays = [inputs.self.overlays.default];

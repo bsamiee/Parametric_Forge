@@ -22,7 +22,7 @@
 
     # Document processing
     ./pandoc.nix # Universal document converter
-    ./ocrmypdf.nix # OCR text layer for scanned PDFs
+    # ./ocrmypdf.nix # OCR text layer for scanned PDFs - disabled: upstream patch failure (jbig2enc.py)
     ./qpdf.nix # Structural PDF utility
   ];
 }

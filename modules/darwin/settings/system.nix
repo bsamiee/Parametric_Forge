@@ -100,6 +100,7 @@ in {
     "${primaryUserHome}/.local/share/cargo/bin"
     "${primaryUserHome}/.local/share/go/bin"
     "${primaryUserHome}/.local/share/pnpm"
+    "${primaryUserHome}/Library/Application Support/fnm/aliases/default/bin"
     "/etc/profiles/per-user/${primaryUser}/bin"
     "/run/current-system/sw/bin"
     "/nix/var/nix/profiles/default/bin"

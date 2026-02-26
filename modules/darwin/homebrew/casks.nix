@@ -58,9 +58,9 @@ _: {
     "scrivener" # Writing tool
 
     # --- QuickLook Plugins --------------------------------------------------
-    "syntax-highlight" # Code syntax highlighting
-    "quicklook-json" # JSON preview
-    "quicklook-csv" # CSV/TSV preview
+    # "syntax-highlight" # Deprecated: fails Gatekeeper check
+    # "quicklook-json" # Disabled: no longer meets homebrew criteria
+    # "quicklook-csv" # Deprecated: no longer meets homebrew criteria
     "betterzip" # Archive preview
     "suspicious-package" # .pkg inspector
 

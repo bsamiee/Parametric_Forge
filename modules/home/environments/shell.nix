@@ -18,14 +18,15 @@
     "${config.xdg.dataHome}/go/bin"
     "${config.xdg.dataHome}/pnpm"
 
+    # fnm default Node — stable symlink for non-interactive processes (Claude Code, MCP servers)
+    "$HOME/Library/Application Support/fnm/aliases/default/bin"
+
     # Nix-darwin managed paths (atuin, zoxide, etc. live here)
     "/etc/profiles/per-user/${config.home.username}/bin"
     "/run/current-system/sw/bin"
     "/nix/var/nix/profiles/default/bin"
 
-    # System tools
-    "/opt/homebrew/bin"
-    "/opt/homebrew/sbin"
+    # Application paths
     "/Applications/Rhino 8.app/Contents/Resources/bin"
   ];
   # Note: pnpm installed via nix for PATH stability; PNPM_HOME for global bins

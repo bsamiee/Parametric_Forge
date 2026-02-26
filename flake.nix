@@ -24,8 +24,6 @@
 
     flake-parts.url = "github:hercules-ci/flake-parts";
     treefmt-nix.url = "github:numtide/treefmt-nix";
-    nix-homebrew.url = "github:zhaofengli-wip/nix-homebrew";
-
     # 1Password Shell Plugins - biometric auth for CLI tools (gh, aws, etc.)
     shell-plugins = {
       url = "github:1Password/shell-plugins";

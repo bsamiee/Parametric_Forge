@@ -26,5 +26,8 @@
 
     # --- Build & Pre-commit -------------------------------------------------
     PRE_COMMIT_HOME = "${config.xdg.dataHome}/pre-commit";
+
+    # --- AI / Claude ---------------------------------------------------------
+    CLAUDE_CODE_DISABLE_AUTO_MEMORY = "0"; # Force auto-memory on (double-negative: DISABLE=0)
   };
 }

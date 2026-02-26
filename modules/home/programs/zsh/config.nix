@@ -17,6 +17,11 @@
         export PATH="/run/current-system/sw/bin:$PATH"
       [[ ":$PATH:" != *":/nix/var/nix/profiles/default/bin:"* ]] && \
         export PATH="/nix/var/nix/profiles/default/bin:$PATH"
+
+      # fnm (Fast Node Manager) — .zshenv ensures all zsh processes get node on PATH
+      # (Claude Code MCP servers, VS Code tasks, scripts, not just interactive shells)
+      [[ -z "$FNM_MULTISHELL_PATH" ]] && [[ -x /opt/homebrew/bin/fnm ]] && \
+        eval "$(/opt/homebrew/bin/fnm env --use-on-cd --version-file-strategy=recursive)"
     '';
 
     profileExtra = ''
@@ -28,10 +33,15 @@
         export PATH="/nix/var/nix/profiles/default/bin:$PATH"
       fi
 
-      # Homebrew (Darwin) - append so Nix stays ahead in PATH
-      if [[ -d "/opt/homebrew/bin" ]]; then
+      # Homebrew (Darwin) - full shellenv equivalent with PATH appended (Nix stays first)
+      if [[ -x "/opt/homebrew/bin/brew" ]]; then
+        export HOMEBREW_PREFIX="/opt/homebrew"
+        export HOMEBREW_CELLAR="/opt/homebrew/Cellar"
+        export HOMEBREW_REPOSITORY="/opt/homebrew"
         [[ ":$PATH:" != *":/opt/homebrew/bin:"* ]] && export PATH="$PATH:/opt/homebrew/bin"
         [[ ":$PATH:" != *":/opt/homebrew/sbin:"* ]] && export PATH="$PATH:/opt/homebrew/sbin"
+        export MANPATH="/opt/homebrew/share/man''${MANPATH+:$MANPATH}:"
+        export INFOPATH="/opt/homebrew/share/info:''${INFOPATH:-}"
       fi
 
       # Nix daemon sourcing for Determinate Nix
