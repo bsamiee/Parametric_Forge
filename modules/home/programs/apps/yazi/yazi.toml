@@ -6,8 +6,6 @@
 # ----------------------------------------------------------------------------
 # Core Yazi configuration with pane ratios and file opener integration
 
-"$schema" = "https://yazi-rs.github.io/schemas/yazi.json"
-
 [plugin]
 prepend_previewers = [
   { url = "*/", run = 'piper -- eza -TL=3 --color=always --icons=always --group-directories-first --no-quotes "$1"' },

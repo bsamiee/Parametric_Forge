@@ -14,8 +14,6 @@
 # <C> = Ctrl 	(Control/⌃)
 # <S> = Shift 	(⇧)
 
-"$schema" = "https://yazi-rs.github.io/schemas/keymap.json"
-
 [mgr]
 keymap = [
 	# --- Custom Shell Keybindings ---------------------------------------------

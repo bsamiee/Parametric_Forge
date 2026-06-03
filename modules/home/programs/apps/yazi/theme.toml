@@ -6,8 +6,6 @@
 # ----------------------------------------------------------------------------
 # Consolidated Dracula theme with custom icons
 
-"$schema" = "https://yazi-rs.github.io/schemas/theme.json"
-
 # Dracula theme color reference
 # background    #15131F
 # current_line  #2A2640
@@ -144,43 +142,41 @@ rules = [
   # Empty files
   { mime = "inode/empty", fg = "#94F2E8" },
   # Programming languages
-  { name = "*.py", fg = "#50FA7B" },
-  { name = "*.js", fg = "#F1FA8C" },
-  { name = "*.ts", fg = "#F97359" },
-  { name = "*.jsx", fg = "#F97359" },
-  { name = "*.tsx", fg = "#F97359" },
-  { name = "*.rs", fg = "#E98FBE" },
-  { name = "*.go", fg = "#A072C6" },
-  { name = "*.nix", fg = "#94F2E8" },
+  { url = "*.py", fg = "#50FA7B" },
+  { url = "*.js", fg = "#F1FA8C" },
+  { url = "*.ts", fg = "#F97359" },
+  { url = "*.jsx", fg = "#F97359" },
+  { url = "*.tsx", fg = "#F97359" },
+  { url = "*.rs", fg = "#E98FBE" },
+  { url = "*.go", fg = "#A072C6" },
+  { url = "*.nix", fg = "#94F2E8" },
   # Configuration files
-  { name = "*.{json,toml,yaml,yml,xml}", fg = "#A072C6" },
+  { url = "*.{json,toml,yaml,yml,xml}", fg = "#A072C6" },
   # Web files
-  { name = "*.{html,css,scss}", fg = "#E98FBE" },
+  { url = "*.{html,css,scss}", fg = "#E98FBE" },
   # Documentation
-  { name = "*.md", fg = "#F8F8F2" },
-  { name = "README*", fg = "#50FA7B" },
-  { name = "LICENSE*", fg = "#50FA7B" },
+  { url = "*.md", fg = "#F8F8F2" },
+  { url = "README*", fg = "#50FA7B" },
+  { url = "LICENSE*", fg = "#50FA7B" },
   # 3D Parametric & Technical Design
-  { name = "*.{3dm,3dmbak,gh,ghx}", fg = "#d82f94" },
+  { url = "*.{3dm,3dmbak,gh,ghx}", fg = "#d82f94" },
   # CAD/Engineering/Architecture
-  { name = "*.{dwg,dxf,dwt,rvt,rfa,rft}", fg = "#A072C6" },
+  { url = "*.{dwg,dxf,dwt,rvt,rfa,rft}", fg = "#A072C6" },
   # Creative 3D Modeling
-  { name = "*.{blend,blend1}", fg = "#E98FBE" },
+  { url = "*.{blend,blend1}", fg = "#E98FBE" },
   # Adobe Creative Suite
-  { name = "*.{psd,psb,ai,ait,indd,idml,indt}", fg = "#E98FBE" },
+  { url = "*.{psd,psb,ai,ait,indd,idml,indt}", fg = "#E98FBE" },
   # Shell scripts
-  { name = "*.sh", fg = "#50FA7B" },
-  { name = "*Dockerfile*", fg = "#94F2E8" },
-  { name = "Makefile", fg = "#E98FBE" },
+  { url = "*.sh", fg = "#50FA7B" },
+  { url = "*Dockerfile*", fg = "#94F2E8" },
+  { url = "Makefile", fg = "#E98FBE" },
   # Logs
-  { name = "*.log", fg = "#6272a4" },
+  { url = "*.log", fg = "#6272a4" },
   # Special files
-  { name = "*", is = "orphan", fg = "#FF5555" },
-  { name = "*", is = "exec", fg = "#50FA7B" },
-  { name = "*", is = "dummy", bg = "#FF5555" },
-  { name = "*/", is = "dummy", bg = "#FF5555" },
+  { url = "*", is = "orphan", fg = "#FF5555" },
+  { url = "*", is = "exec", fg = "#50FA7B" },
   # Fallback
-  { name = "*/", fg = "#F8F8F2" },
+  { url = "*/", fg = "#F8F8F2" },
 ]
 
 [icon]
