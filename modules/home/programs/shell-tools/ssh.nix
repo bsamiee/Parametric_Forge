@@ -20,23 +20,23 @@
         IdentityAgent "~/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
     '';
 
-    matchBlocks = {
+    settings = {
       # --- GitHub Configuration ---------------------------------------------
       "github.com" = {
-        user = "git";
-        hostname = "github.com";
-        identitiesOnly = true;
-        addKeysToAgent = "yes";
+        User = "git";
+        HostName = "github.com";
+        IdentitiesOnly = true;
+        AddKeysToAgent = "yes";
       };
 
       # --- Hostinger VPS (n8n PM Orchestration) -----------------------------
       "n8n" = {
-        user = "n8n-agent";
-        hostname = "31.97.131.41";
-        identitiesOnly = true;
-        addKeysToAgent = "yes";
+        User = "n8n-agent";
+        HostName = "31.97.131.41";
+        IdentitiesOnly = true;
+        AddKeysToAgent = "yes";
         # Port forwards: webhook (9000), aria2 RPC (6800), Codex OAuth (1455)
-        localForwards = [
+        LocalForward = [
           {
             bind.port = 9000;
             host.address = "localhost";
@@ -58,20 +58,20 @@
       # --- Default Optimizations for All Hosts ------------------------------
       "*" = {
         # Connection multiplexing for performance
-        controlMaster = "auto";
-        controlPath = "${config.home.homeDirectory}/.ssh/sockets/%C";
-        controlPersist = "10m";
+        ControlMaster = "auto";
+        ControlPath = "${config.home.homeDirectory}/.ssh/sockets/%C";
+        ControlPersist = "10m";
 
         # Keep-alive settings
-        serverAliveInterval = 60;
-        serverAliveCountMax = 3;
+        ServerAliveInterval = 60;
+        ServerAliveCountMax = 3;
 
         # Security and convenience
-        addKeysToAgent = "yes";
-        hashKnownHosts = true;
+        AddKeysToAgent = "yes";
+        HashKnownHosts = true;
 
         # Performance
-        compression = true;
+        Compression = true;
       };
     };
   };

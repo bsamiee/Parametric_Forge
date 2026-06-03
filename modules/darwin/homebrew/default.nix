@@ -12,7 +12,6 @@ in {
     ./taps.nix
     ./brews.nix
     ./casks.nix
-    ./whalebrew.nix
   ];
 
   homebrew = {
@@ -22,7 +21,6 @@ in {
     global = {
       autoUpdate = mkDefault true;
       brewfile = mkDefault false; # Disable Brewfile (managed via Nix)
-      lockfiles = mkDefault false; # Prevent Nix store write attempts
     };
 
     # --- Activation Behavior ------------------------------------------------

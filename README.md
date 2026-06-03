@@ -33,7 +33,7 @@ Parametric Forge is a deterministic macOS workspace built with Nix flakes, nix-d
 │   └── darwin/default.nix          # MacBook host: nix-darwin + nix-homebrew + Home Manager
 ├── modules/
 │   ├── common/                     # Nix daemon perf/cache + Cachix post-build hook
-│   ├── darwin/                     # macOS defaults, fonts, homebrew taps/brews/casks/whalebrew
+│   ├── darwin/                     # macOS defaults, fonts, homebrew taps/brews/casks
 │   └── home/                       # Home Manager: XDG, env, aliases, programs, scripts, assets
 │       ├── assets/                 # ASCII + carbon sources/renders
 │       ├── environments/           # Session vars for shell/languages/media/secrets/containers
@@ -121,7 +121,7 @@ Parametric Forge is a deterministic macOS workspace built with Nix flakes, nix-d
   <details>
   <summary>Homebrew bridge</summary>
 
-  - **Bridge:** `modules/darwin/homebrew` enables nix-homebrew, auto-update/cleanup, and installs taps/brews/casks/whalebrew (Raycast, BTT, Arc, Adobe CC, fonts not in nixpkgs, yabai/skhd/borders).
+  - **Bridge:** `modules/darwin/homebrew` enables nix-homebrew, auto-update/cleanup, and installs taps/brews/casks (Raycast, BTT, Arc, Adobe CC, fonts not in nixpkgs, yabai/skhd/borders).
   </details>
 </div>
 
