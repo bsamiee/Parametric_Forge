@@ -18,10 +18,6 @@
       [[ ":$PATH:" != *":/nix/var/nix/profiles/default/bin:"* ]] && \
         export PATH="/nix/var/nix/profiles/default/bin:$PATH"
 
-      # fnm (Fast Node Manager) — .zshenv ensures all zsh processes get node on PATH
-      # (Claude Code MCP servers, VS Code tasks, scripts, not just interactive shells)
-      [[ -z "$FNM_MULTISHELL_PATH" ]] && [[ -x /opt/homebrew/bin/fnm ]] && \
-        eval "$(/opt/homebrew/bin/fnm env --use-on-cd --version-file-strategy=recursive)"
     '';
 
     profileExtra = ''

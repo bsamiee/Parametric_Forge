@@ -55,9 +55,11 @@ in {
             programs.home-manager.enable = true;
 
             # Disable manual generation to avoid builtins.toFile warnings
-            manual.html.enable = false;
-            manual.json.enable = false;
-            manual.manpages.enable = false;
+            manual = {
+              html.enable = false;
+              json.enable = false;
+              manpages.enable = false;
+            };
             news.display = "silent";
           };
         };

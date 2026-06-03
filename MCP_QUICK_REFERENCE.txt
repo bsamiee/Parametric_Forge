@@ -1,0 +1,180 @@
+================================================================================
+CLAUDE CODE MCP SERVERS - QUICK REFERENCE
+================================================================================
+
+TOTAL INVENTORY: 51 Unique MCP Servers | 21 Configuration Files
+
+PRIMARY CONFIG LOCATIONS:
+  1. /sessions/compassionate-kind-heisenberg/mnt/.claude/.claude.json
+  2. /sessions/compassionate-kind-heisenberg/mnt/Parametric_Forge/.claude/settings.json
+  3. /sessions/compassionate-kind-heisenberg/mnt/Parametric_Forge/.claude/settings.local.json
+
+MCP PLUGIN STRUCTURE:
+  - Cache:        /sessions/compassionate-kind-heisenberg/mnt/.local-plugins/cache/
+  - Marketplace:  /sessions/compassionate-kind-heisenberg/mnt/.local-plugins/marketplaces/
+  - Auth Cache:   /sessions/compassionate-kind-heisenberg/mnt/.claude/mcp-needs-auth-cache.json
+
+================================================================================
+ALL 51 MCP SERVERS (Alphabetically)
+================================================================================
+
+ahrefs                    https://api.ahrefs.com/mcp/mcp
+amplitude                 https://mcp.amplitude.com/mcp
+apollo                    https://api.apollo.io/mcp
+apollo                    https://mcp.apollo.io/mcp (alt)
+asana                     https://mcp.asana.com/v2/mcp
+atlassian                 https://mcp.atlassian.com/v1/mcp
+benchling                 (empty URL)
+bigquery                  https://bigquery.googleapis.com/mcp
+biorender                 https://mcp.services.biorender.com/mcp
+biorxiv                   https://mcp.deepsense.ai/biorxiv/mcp
+box                       https://mcp.box.com
+c-trials                  https://mcp.deepsense.ai/clinical_trials/mcp
+canva                     https://mcp.canva.com/mcp
+chembl                    https://mcp.deepsense.ai/chembl/mcp
+clay                      https://api.clay.com/v3/mcp
+clickup                   https://mcp.clickup.com/mcp
+close                     https://mcp.close.com/mcp
+common-room               https://mcp.commonroom.io/mcp
+databricks                (empty URL)
+datadog                   https://mcp.datadoghq.com/mcp
+docusign                  https://mcp.docusign.com/mcp
+egnyte                    https://mcp-server.egnyte.com/mcp
+figma                     https://mcp.figma.com/mcp
+fireflies                 https://api.fireflies.ai/mcp
+github                    https://api.github.com/mcp
+gmail                     https://gmail.mcp.claude.com/mcp
+gong                      https://mcp.gong.io/mcp
+google-calendar           https://gcal.mcp.claude.com/mcp
+granola                   https://mcp.granola.ai/mcp
+guru                      https://mcp.api.getguru.com/mcp
+hex                       https://app.hex.tech/mcp
+hubspot                   https://mcp.hubspot.com/anthropic
+intercom                  https://mcp.intercom.com/mcp
+klaviyo                   https://mcp.klaviyo.com/mcp
+linear                    https://mcp.linear.app/mcp
+microsoft-365             https://microsoft365.mcp.claude.com/mcp
+monday                    https://mcp.monday.com/mcp
+ms365                     https://microsoft365.mcp.claude.com/mcp
+notion                    https://mcp.notion.com/mcp
+ot                        https://mcp.platform.opentargets.org/mcp
+outreach                  https://mcp.outreach.io/mcp
+owkin                     https://mcp.k.owkin.com/mcp
+pagerduty                 https://mcp.pagerduty.com/mcp
+pendo                     https://app.pendo.io/mcp/v0/shttp
+pubmed                    https://pubmed.mcp.claude.com/mcp
+servicenow                https://mcp.servicenow.com/mcp
+similarweb                https://mcp.similarweb.com
+similarweb                https://mcp.similarweb.com/mcp (alt)
+slack                     https://mcp.slack.com/mcp
+snowflake                 (empty URL)
+synapse                   https://mcp.synapse.org/mcp
+wiley                     https://connector.scholargateway.ai/mcp
+zoominfo                  https://mcp.zoominfo.com/mcp
+
+================================================================================
+PLUGIN CONFIGURATIONS (21 files)
+================================================================================
+
+CACHED PLUGINS (3):
+  - design/1.1.0                  (9 servers)
+  - data/1.0.0                    (6 servers)
+  - engineering/1.1.0             (10 servers)
+
+MARKETPLACE PLUGINS (18+):
+  - customer-support              (9 servers)
+  - design                        (9 servers)
+  - enterprise-search             (8 servers)
+  - sales                         (14 servers)
+  - bio-research                  (8 servers)
+  - human-resources               (12 servers)
+  - operations                    (11 servers)
+  - product-management            (10 servers)
+  - marketing                     (11 servers)
+  - finance                       (7 servers)
+  - legal                         (10 servers)
+  - productivity                  (6 servers)
+  - partner-built/brand-voice
+  - partner-built/apollo
+  - partner-built/slack
+  - partner-built/common-room
+  - cowork-plugin-management
+  - enterprise-search
+
+================================================================================
+AUTHENTICATION STATUS (15 Tracked Plugins)
+================================================================================
+
+plugin:design:linear              (Timestamp: 1772243734854)
+plugin:engineering:gmail          (Timestamp: 1772243734856)
+plugin:design:gmail               (Timestamp: 1772243734855)
+plugin:engineering:linear         (Timestamp: 1772243734840)
+plugin:engineering:google-calendar (Timestamp: 1772243734803)
+plugin:design:google-calendar     (Timestamp: 1772243734788)
+plugin:design:notion              (Timestamp: 1772243734889)
+plugin:design:atlassian           (Timestamp: 1772243735010)
+plugin:design:intercom            (Timestamp: 1772243734942)
+plugin:engineering:notion         (Timestamp: 1772243734890)
+plugin:engineering:atlassian      (Timestamp: 1772243735004)
+plugin:design:figma               (Timestamp: 1772243734926)
+plugin:data:atlassian             (Timestamp: 1772243735491)
+plugin:data:amplitude             (Timestamp: 1772243735643)
+plugin:data:hex                   (Timestamp: 1772243735444)
+
+================================================================================
+SERVICE CATEGORIES
+================================================================================
+
+COMMUNICATION (8):        slack, intercom, common-room, gmail, google-calendar, gong, outreach, pendo
+PROJECT MANAGEMENT (8):   asana, linear, notion, github, atlassian, clickup, monday, servicenow
+SALES/BI (7):            hubspot, outreach, apollo, clay, zoominfo, similarweb, ahrefs
+DEVELOPMENT (6):         github, datadog, pagerduty, servicenow, linear, atlassian
+DATA ANALYTICS (6):       bigquery, hex, amplitude, databricks, snowflake, datadog
+DESIGN/CONTENT (4):       figma, canva, docusign, egnyte, box
+BIOMEDICAL (9):          pubmed, biorender, biorxiv, c-trials, chembl, owkin, synapse, wiley, ot
+HR/PEOPLE (4):           servicenow, pendo, granola, outreach
+DOCUMENTS (3):           box, egnyte, docusign
+PRODUCTIVITY (2):        ms365/microsoft-365, klaviyo
+
+================================================================================
+SYSTEM INTEGRATION
+================================================================================
+
+NIX CONFIGURATION:
+  File: modules/home/programs/languages/dev-tools.nix
+  - .NET SDKs: 8, 9, 10
+  - OmniSharp support via DOTNET_ROOT
+  - Shell tools: shellcheck, shfmt, yamlfmt, yamllint
+  - Data tools: jq, yq-go, miller
+
+CLAUDE SESSION HOOKS:
+  setup-env.sh          - Persists API keys/tokens for sub-agents
+  load-skill-index.py   - Loads custom skills at session start
+  webhook-emit.py       - Tracks tool execution
+
+PERMISSIONS ALLOWED:
+  - Basic tools: Read, Write, Edit, Glob, Grep, Task, TodoWrite, WebSearch, WebFetch
+  - Shell tools: pnpm, nx, git, gh, node, uv
+  - Testing: Playwright (browser automation)
+
+DISABLED SERVERS:
+  - playwright-test (can be re-enabled via settings)
+
+================================================================================
+KEY FINDINGS
+================================================================================
+
+1. Comprehensive coverage of 51 MCP servers
+2. All servers are HTTP-based remote connections
+3. 15 plugins require authentication (tracked in cache)
+4. Configuration hierarchy: System > User > Project > Plugin > Local
+5. No bundled (.mcpb) MCP servers in Parametric_Forge
+6. OmniSharp/LSP support ready via .NET SDK configuration
+7. 3 servers have empty URLs: benchling, databricks, snowflake
+
+================================================================================
+DETAILED AUDIT REPORT
+================================================================================
+
+See: /sessions/compassionate-kind-heisenberg/mnt/Parametric_Forge/MCP_SERVERS_AUDIT.md
+

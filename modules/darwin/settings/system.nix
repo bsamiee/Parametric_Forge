@@ -11,7 +11,7 @@
   ...
 }: let
   inherit (lib) mkDefault;
-  primaryUser = config.system.primaryUser;
+  inherit (config.system) primaryUser;
   primaryUserHome = config.users.users.${primaryUser}.home;
 in {
   system.defaults = {

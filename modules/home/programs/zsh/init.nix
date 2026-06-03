@@ -37,7 +37,10 @@
       # Note: pnpm installed via nix (node-tools.nix) for PATH stability across all processes
       # Note: 1Password Shell Plugins (gh, aws, etc.) handled by programs._1password-shell-plugins
       # Note: SSH agent configured via ssh.nix IdentityAgent directive
-      # Note: fnm init moved to envExtra (config.nix) — runs in .zshenv for all shells
+
+      # fnm (Fast Node Manager) - sets default Node version for interactive shells
+      # Non-interactive processes get node via static path in home.sessionPath + launchd PATH
+      [[ -x /opt/homebrew/bin/fnm ]] && eval "$(/opt/homebrew/bin/fnm env)"
 
       # Alias tools to full paths for generated init scripts that call them by name
       alias atuin="${pkgs.atuin}/bin/atuin"

@@ -5,7 +5,7 @@
 # Path          : modules/home/programs/shell-tools/atuin.nix
 # ----------------------------------------------------------------------------
 # Modern shell history with SQLite backend and full-text search UI
-{config, pkgs, ...}:
+{config, ...}:
 # Dracula theme color reference
 # background    #15131F
 # current_line  #2A2640

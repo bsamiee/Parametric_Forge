@@ -22,17 +22,47 @@
     plugins = []; # Add other CLIs here if needed (e.g., pkgs.aws-cli)
   };
 
-  # --- Environment: Biometric unlock for CLI ----------------------------------
-  home.sessionVariables = {
-    OP_BIOMETRIC_UNLOCK_ENABLED = "true";
-  };
+  home = {
+    # --- Environment: Biometric unlock for CLI ----------------------------------
+    sessionVariables = {
+      OP_BIOMETRIC_UNLOCK_ENABLED = "true";
+    };
 
-  # --- Setup: op config directory -----------------------------------------------
-  # Run BEFORE writeBoundary (validation phase) - safe for idempotent directory creation
-  home.activation.ensure1PasswordDirs = lib.hm.dag.entryBefore ["writeBoundary"] ''
-    mkdir -p "${config.xdg.configHome}/op"
-    chmod 700 "${config.xdg.configHome}/op"
-  '';
+    # --- Setup: op config directory -----------------------------------------------
+    # Run BEFORE writeBoundary (validation phase) - safe for idempotent directory creation
+    activation.ensure1PasswordDirs = lib.hm.dag.entryBefore ["writeBoundary"] ''
+      mkdir -p "${config.xdg.configHome}/op"
+      chmod 700 "${config.xdg.configHome}/op"
+    '';
+
+    # --- Activation Hook: Generate token cache during rebuild ----------------------
+    # CRITICAL: Must run AFTER linkGeneration to ensure template file exists
+    # linkGeneration writes xdg.configFile entries after writeBoundary
+    activation.injectSecretsFromVault = lib.hm.dag.entryAfter ["linkGeneration"] ''
+      cache_file="$HOME/.config/hm-op-session.sh"
+      template_file="$HOME/.config/op/env.template"
+
+      # Fail loudly if template missing (indicates DAG ordering bug)
+      if [[ ! -f "$template_file" ]]; then
+        echo "ERROR: Template file not found: $template_file" >&2
+        echo "This indicates a home-manager activation ordering issue." >&2
+        exit 1
+      fi
+
+      # Create cache file with resolved tokens from 1Password
+      echo "Injecting secrets from 1Password vault..." >&2
+      mkdir -p "$(dirname "$cache_file")"
+      if ${pkgs._1password-cli}/bin/op inject -f -i "$template_file" -o "$cache_file"; then
+        chmod 600 "$cache_file"
+        echo "✓ Tokens cached to $cache_file" >&2
+      else
+        echo "⚠ Warning: op inject failed - 1Password may not be authenticated. Run: op signin" >&2
+        # Create empty file so zsh doesn't fail on source
+        touch "$cache_file"
+        chmod 600 "$cache_file"
+      fi
+    '';
+  };
 
   # --- Secret Template: API keys for op inject -----------------------------------
   xdg.configFile."op/env.template".text = ''
@@ -59,33 +89,5 @@
 
     # GitHub Projects (Classic PAT required - fine-grained PATs don't support Projects API)
     export GH_PROJECTS_TOKEN="op://Tokens/GH_PROJECTS_TOKEN/token"
-  '';
-
-  # --- Activation Hook: Generate token cache during rebuild ----------------------
-  # CRITICAL: Must run AFTER linkGeneration to ensure template file exists
-  # linkGeneration writes xdg.configFile entries after writeBoundary
-  home.activation.injectSecretsFromVault = lib.hm.dag.entryAfter ["linkGeneration"] ''
-    cache_file="$HOME/.config/hm-op-session.sh"
-    template_file="$HOME/.config/op/env.template"
-
-    # Fail loudly if template missing (indicates DAG ordering bug)
-    if [[ ! -f "$template_file" ]]; then
-      echo "ERROR: Template file not found: $template_file" >&2
-      echo "This indicates a home-manager activation ordering issue." >&2
-      exit 1
-    fi
-
-    # Create cache file with resolved tokens from 1Password
-    echo "Injecting secrets from 1Password vault..." >&2
-    mkdir -p "$(dirname "$cache_file")"
-    if ${pkgs._1password-cli}/bin/op inject -f -i "$template_file" -o "$cache_file"; then
-      chmod 600 "$cache_file"
-      echo "✓ Tokens cached to $cache_file" >&2
-    else
-      echo "⚠ Warning: op inject failed - 1Password may not be authenticated. Run: op signin" >&2
-      # Create empty file so zsh doesn't fail on source
-      touch "$cache_file"
-      chmod 600 "$cache_file"
-    fi
   '';
 }

@@ -6,7 +6,13 @@
 # ----------------------------------------------------------------------------
 # Language-agnostic tooling: linters, formatters, and helpers shared across
 # multiple ecosystems.
-{pkgs, ...}: {
+{pkgs, ...}: let
+  dotnet-combined = pkgs.dotnetCorePackages.combinePackages [
+    pkgs.dotnet-sdk_8
+    pkgs.dotnet-sdk_9
+    pkgs.dotnet-sdk_10
+  ];
+in {
   home.packages = with pkgs; [
     # --- Shell Tooling ------------------------------------------------------
     shellcheck # POSIX shell static analysis
@@ -20,14 +26,15 @@
     jq # Lightweight command-line JSON processor
 
     # --- General Data Tools -------------------------------------------------
+    git-lfs # Required by Homebrew update-reset and repos with LFS-backed fixtures
     yq-go # YAML/JSON/TOML processor (yq)
     miller # CSV/TSV/JSON processor
 
     # --- .NET ---------------------------------------------------------------
-    (dotnetCorePackages.combinePackages [
-      dotnet-sdk_8
-      dotnet-sdk_9
-      dotnet-sdk_10
-    ])
+    dotnet-combined
   ];
+
+  # DOTNET_ROOT required for omnisharp and other SDK-discovery tools.
+  # Re-evaluated on every rebuild — store path stays current.
+  home.sessionVariables.DOTNET_ROOT = "${dotnet-combined}";
 }

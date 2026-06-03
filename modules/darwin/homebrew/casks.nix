@@ -58,9 +58,11 @@ _: {
     "scrivener" # Writing tool
 
     # --- QuickLook Plugins --------------------------------------------------
-    # "syntax-highlight" # Deprecated: fails Gatekeeper check
-    # "quicklook-json" # Disabled: no longer meets homebrew criteria
-    # "quicklook-csv" # Deprecated: no longer meets homebrew criteria
+    # All plugins below use the modern App Extension API (Sequoia-compatible).
+    # Legacy .qlgenerator plugins are dead — Sequoia removed support entirely.
+    # Note: .ts files are system-reserved (MPEG-2 UTI) — no QL plugin can override this.
+    "syntax-highlight" # Source code: 150+ languages (py,js,cs,go,rust,nix,yaml,json,dockerfile,lua,etc.)
+    "qlmarkdown" # Rendered markdown preview with GitHub-style formatting
     "betterzip" # Archive preview
     "suspicious-package" # .pkg inspector
 

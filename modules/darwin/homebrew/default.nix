@@ -20,15 +20,15 @@ in {
 
     # --- Global Settings ----------------------------------------------------
     global = {
-      autoUpdate = mkDefault false;
+      autoUpdate = mkDefault true;
       brewfile = mkDefault false; # Disable Brewfile (managed via Nix)
       lockfiles = mkDefault false; # Prevent Nix store write attempts
     };
 
     # --- Activation Behavior ------------------------------------------------
-    # Keep activation lightweight; avoid automatic updates/upgrades/cleanup.
+    # Refresh Homebrew metadata during activation so cask API state does not drift.
     onActivation = {
-      autoUpdate = mkDefault false;
+      autoUpdate = mkDefault true;
       cleanup = mkDefault "none";
       upgrade = mkDefault false;
     };
@@ -45,5 +45,4 @@ in {
       qlplugindir = "~/Library/QuickLook";
     };
   };
-
 }

@@ -7,6 +7,7 @@
 # Scripts module aggregator
 {...}: {
   imports = [
+    ./analysis
     ./integration
   ];
 }

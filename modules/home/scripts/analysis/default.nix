@@ -2,10 +2,11 @@
 # Author        : Bardia Samiee
 # Project       : Parametric Forge
 # License       : MIT
-# Path          : overlays/default.nix
+# Path          : modules/home/scripts/analysis/default.nix
 # ----------------------------------------------------------------------------
-# Package overlays
-_: _final: prev: {
-  # Custom package overrides can be added here when needed
-  sqlean = prev.callPackage ./sqlean {};
+# Code-analysis scripts aggregator
+{...}: {
+  imports = [
+    ./scc
+  ];
 }

@@ -10,7 +10,46 @@
   pkgs,
   ...
 }: {
-  home.packages = [pkgs.rsync];
+  home = {
+    packages = [pkgs.rsync];
+
+    file.".local/bin/rsync-safe.sh" = {
+      executable = true;
+      text = ''
+        #!/usr/bin/env bash
+        # Safe rsync wrapper with default filters
+        exec ${pkgs.rsync}/bin/rsync --filter="merge ${config.xdg.configHome}/rsync/filter" "$@"
+      '';
+    };
+
+    file.".local/bin/rsync-mv.sh" = {
+      executable = true;
+      text = ''
+        #!/usr/bin/env bash
+        set -euo pipefail
+        # Enhanced move: handles directories properly that --remove-source-files doesn't
+
+        if [ $# -lt 2 ]; then
+          echo "Usage: rsync-mv SOURCE... DEST" >&2
+          exit 1
+        fi
+
+        # Store arguments in array
+        args=("$@")
+        # Get last argument (destination)
+        dest="''${args[-1]}"
+
+        # Run rsync with remove-source-files (no sparse, no preallocate)
+        ${pkgs.rsync}/bin/rsync -ahPX --remove-source-files "$@"
+
+        # Clean up empty source directories (rsync only removes files)
+        for ((i=0; i<$((''${#args[@]}-1)); i++)); do
+          src="''${args[i]}"
+          [ -d "$src" ] && find "$src" -type d -empty -delete 2>/dev/null || true
+        done
+      '';
+    };
+  };
 
   # --- Rsync Configuration --------------------------------------------------
   xdg.configFile."rsync/filter" = {
@@ -65,44 +104,6 @@
       - *.pem
       - id_rsa*
       - id_ed25519*
-    '';
-  };
-
-  # --- Rsync Wrapper Scripts ------------------------------------------------
-  home.file.".local/bin/rsync-safe.sh" = {
-    executable = true;
-    text = ''
-      #!/usr/bin/env bash
-      # Safe rsync wrapper with default filters
-      exec ${pkgs.rsync}/bin/rsync --filter="merge ${config.xdg.configHome}/rsync/filter" "$@"
-    '';
-  };
-
-  home.file.".local/bin/rsync-mv.sh" = {
-    executable = true;
-    text = ''
-      #!/usr/bin/env bash
-      set -euo pipefail
-      # Enhanced move: handles directories properly that --remove-source-files doesn't
-
-      if [ $# -lt 2 ]; then
-        echo "Usage: rsync-mv SOURCE... DEST" >&2
-        exit 1
-      fi
-
-      # Store arguments in array
-      args=("$@")
-      # Get last argument (destination)
-      dest="''${args[-1]}"
-
-      # Run rsync with remove-source-files (no sparse, no preallocate)
-      ${pkgs.rsync}/bin/rsync -ahPX --remove-source-files "$@"
-
-      # Clean up empty source directories (rsync only removes files)
-      for ((i=0; i<$((''${#args[@]}-1)); i++)); do
-        src="''${args[i]}"
-        [ -d "$src" ] && find "$src" -type d -empty -delete 2>/dev/null || true
-      done
     '';
   };
 }

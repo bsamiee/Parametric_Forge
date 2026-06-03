@@ -15,8 +15,8 @@ _: {
 
     # --- Shell Configuration ------------------------------------------------
     envs = "env | sort"; # List environment variables sorted
-    ezsh = "$EDITOR \\${ZDOTDIR:-$HOME}/.zshrc"; # Edit ZSH config
-    rzsh = "source \\${ZDOTDIR:-$HOME}/.zshrc"; # Reload ZSH config
+    ezsh = "$EDITOR \\${"ZDOTDIR:-$HOME"}/.zshrc"; # Edit ZSH config
+    rzsh = "source \\${"ZDOTDIR:-$HOME"}/.zshrc"; # Reload ZSH config
     reload = "exec $SHELL"; # Reload shell
 
     # --- File Operations ----------------------------------------------------
@@ -52,10 +52,10 @@ _: {
     du = "dust";
     dfi = "dua i"; # Interactive disk usage analyzer
     killi = "pik"; # Interactive process killer
-    cloc = "tokei"; # Modern code counter
-    loc = "tokei --compact"; #  Compact code counter
-    locj = "tokei --output json"; # Code stats as JSON for scripting
     bench = "hyperfine"; # Modern benchmarking tool
+
+    # --- Code Analysis ------------------------------------------------------
+    loc = "forge-loc.sh"; # Single-pass LOC: per-language totals, per-folder rollup, top-100 files
 
     # --- Text & Search ------------------------------------------------------
     col = "choose"; # Human-friendly column selector
@@ -144,9 +144,9 @@ _: {
     zjka = "zellij kill-all-sessions"; # Kill all zellij sessions
 
     # --- Workflow Testing -------------------------------------------------
-    act = "act";                                    # Run GitHub Actions locally
-    actl = "act -l";                                # List workflows/jobs
-    alint = "actionlint";                           # Lint workflow files
+    act = "act"; # Run GitHub Actions locally
+    actl = "act -l"; # List workflows/jobs
+    alint = "actionlint"; # Lint workflow files
 
     # --- Dev Tools ----------------------------------------------------------
     ty = "ty check";

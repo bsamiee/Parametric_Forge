@@ -8,10 +8,8 @@
 {
   lib,
   pkgs,
-  config,
   ...
-}:
-let
+}: let
   actConfig = [
     # --- Apple Silicon Compatibility ------------------------------------------
     "--container-architecture=linux/amd64"

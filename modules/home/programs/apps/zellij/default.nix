@@ -6,7 +6,6 @@
 # ----------------------------------------------------------------------------
 # Zellij terminal multiplexer configuration
 {
-  config,
   lib,
   pkgs,
   ...

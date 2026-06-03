@@ -50,7 +50,6 @@
     ./sshs.nix
     ./starship.nix
     ./tlrc.nix
-    ./tokei.nix
     ./trash.nix
     ./trippy.nix
     ./watchexec.nix

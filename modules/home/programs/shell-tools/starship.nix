@@ -250,8 +250,6 @@
         time_format = "%T";
         utc_time_offset = "local";
       };
-
-
     };
   };
 }
