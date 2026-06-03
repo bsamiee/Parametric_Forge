@@ -4,7 +4,7 @@
 # License       : MIT
 # Path          : modules/home/scripts/analysis/scc/default.nix
 # ----------------------------------------------------------------------------
-# scc code counter + forge-loc.sh wrapper for per-language / per-folder / per-file LOC
+# scc code counter + forge-loc.sh wrapper for grouped per-file / per-folder LOC
 {pkgs, ...}: {
   home.packages = [pkgs.scc];
 
@@ -18,8 +18,8 @@
       # License       : MIT
       # Path          : modules/home/scripts/analysis/scc/forge-loc.sh
       # ----------------------------------------------------------------------------
-      # Single-pass LOC report: per-language totals, per-folder rollup (one level
-      # under target), and top-100 files by code lines. Hard 100-file cap, no flags.
+      # Single-pass LOC report: files grouped by top-level folder, folder totals,
+      # and one overall target total. Single positional target, no flags.
 
       set -Eeuo pipefail
       shopt -s inherit_errexit
@@ -44,9 +44,9 @@
       )"
       readonly json
 
-      # jq owns $root inside this single-quoted filter prelude.
+      # jq owns $root inside this single-quoted filter.
       # shellcheck disable=SC2016
-      readonly jq_prelude='
+      readonly report_filter='
         def relpath:
           . as $location
           | if $location == $root then
@@ -58,60 +58,59 @@
             end;
         def files:
           [.[] | .Files[]? | . + {RelPath: (.Location | relpath)}];
-      '
-
-      readonly totals_filter='
-        (
-          ["LANGUAGE","FILES","CODE","COMMENT","BLANK","COMPLEXITY"],
-          (.[] | [.Name, .Count, .Code, .Comment, .Blank, .Complexity] | map(tostring))
-        )
-        | @tsv
-      '
-
-      readonly folder_filter='
-        def folder:
+        def sum_by(f): map(f) | add // 0;
+        def folder_name:
           if . == "(root)" or (contains("/") | not) then
-            "(root)"
+            "Root"
           else
             split("/")[0]
           end;
-        (
-          ["FOLDER","FILES","CODE"],
+        def file_name:
+          if . == "(root)" or (contains("/") | not) then
+            .
+          else
+            split("/")[1:] | join("/")
+          end;
+        def language_summary:
+          map(select(.Code > 0) | "\(.Name) \(.Code)")
+          | if length == 0 then "none" else join("; ") end;
+        def folder_groups:
+          files
+          | map({
+              folder: (.RelPath | folder_name),
+              file: (.RelPath | file_name),
+              code: .Code,
+              complexity: .Complexity
+            })
+          | group_by(.folder)
+          | map({
+              folder: .[0].folder,
+              files: length,
+              code: sum_by(.code),
+              complexity: sum_by(.complexity),
+              rows: (sort_by(.code) | reverse)
+            })
+          | sort_by(.code) | reverse;
+        def summary:
+          "LOC " + ($root | split("/") | last),
+          "Target: " + $root,
+          "Languages: " + language_summary,
+          "";
+        def table:
+          ["FOLDER / FILE","FILES","CODE","CPX"],
           (
-            (files | map({folder: (.RelPath | folder), code: .Code}))
-            | group_by(.folder)
-            | map({folder: .[0].folder, files: length, code: (map(.code) | add)})
-            | sort_by(.code) | reverse
-            | .[] | [.folder, .files, .code] | map(tostring)
-          )
-        )
-        | @tsv
+            folder_groups[] as $group
+            | [$group.folder, "", "", ""],
+              ($group.rows[] | ["  " + .file, "", .code, .complexity]),
+              ["  " + $group.folder + " total", $group.files, $group.code, $group.complexity],
+              ["", "", "", ""]
+          ),
+          ["TOTAL", (files | length), (files | sum_by(.Code)), (files | sum_by(.Complexity))];
       '
 
-      readonly top_files_filter='
-        (
-          ["CODE","CPX","PATH"],
-          (
-            (files | map({path: .RelPath, code: .Code, complexity: .Complexity}))
-            | sort_by(.code) | reverse | .[0:100]
-            | .[] | [.code, .complexity, .path] | map(tostring)
-          )
-        )
-        | @tsv
-      '
-
-      render_section() {
-        local -r title="$1"
-        local -r filter="$2"
-
-        printf '\n---- %s ----\n' "$title"
-        ${pkgs.jq}/bin/jq -r --arg root "$target_path" "$jq_prelude $filter" <<<"$json" |
-          ${pkgs.util-linux}/bin/column -t -s "$tab"
-      }
-
-      render_section "TOTALS BY LANGUAGE" "$totals_filter"
-      render_section "PER-FOLDER (one level under target)" "$folder_filter"
-      render_section "TOP 100 FILES BY CODE" "$top_files_filter"
+      ${pkgs.jq}/bin/jq -r --arg root "$target_path" "$report_filter summary" <<<"$json"
+      ${pkgs.jq}/bin/jq -r --arg root "$target_path" "$report_filter table | map(tostring) | @tsv" <<<"$json" |
+        ${pkgs.util-linux}/bin/column -t -s "$tab"
     '';
   };
 }
