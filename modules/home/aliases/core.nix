@@ -39,7 +39,6 @@ _: {
     wget = "aria2c -c"; # Modern download with resume
     pack = "ouch compress"; # Compress files/directories
     unpack = "ouch decompress"; # Decompress archives
-    mountar = "archivemount"; # Mount archives as filesystem
 
     # --- System Monitoring --------------------------------------------------
     ps = "procs";

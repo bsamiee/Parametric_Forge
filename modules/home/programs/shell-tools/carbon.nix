@@ -67,7 +67,7 @@ let
   };
 
   carbonConfigJson = builtins.toJSON carbonConfig;
-  carbonCli = pkgs.nodePackages.carbon-now-cli;
+  carbonCli = pkgs.carbon-now-cli;
 
   # Helper script to download Playwright browsers if missing.
   playwrightEnsure = pkgs.writeShellScriptBin "carbon-playwright-install.sh" ''
@@ -78,12 +78,12 @@ let
     if find "$PLAYWRIGHT_BROWSERS_PATH" -maxdepth 1 -name 'chromium-*' -type d | grep -q .; then
       exit 0
     fi
-    exec ${pkgs.nodejs_20}/bin/node \
+    exec ${pkgs.nodejs}/bin/node \
       ${carbonCli}/lib/node_modules/carbon-now-cli/node_modules/playwright/cli.js \
       install chromium --with-deps
   '';
 
-  # Wrapper that refreshes the preset, ensures Playwright, and runs with Node 20.
+  # Wrapper that refreshes the preset, ensures Playwright, and runs with current Node.
   carbonWrapped = pkgs.writeShellScriptBin "carbon-now.sh" ''
         set -euo pipefail
         export PLAYWRIGHT_BROWSERS_PATH="''${XDG_CACHE_HOME:-$HOME/.cache}/ms-playwright"
@@ -111,7 +111,7 @@ let
               ;;
           esac
         done
-        exec ${pkgs.nodejs_20}/bin/node \
+        exec ${pkgs.nodejs}/bin/node \
           ${carbonCli}/lib/node_modules/carbon-now-cli/dist/cli.js \
           ''${lang_flag:-} "$@"
   '';

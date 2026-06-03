@@ -8,7 +8,7 @@
 {pkgs, ...}: {
   home.packages = with pkgs; [
     pnpm_10 # Package manager - nix-managed for PATH stability
-    nodePackages.prettier # Code formatter
+    prettier # Code formatter
     tailwindcss # Utility-first CSS framework
   ];
 }
