@@ -21,7 +21,6 @@ _: {
 
     # --- File Operations ----------------------------------------------------
     ls = "eza -la --header --no-user --time-style=relative";
-    tree = "eza --tree";
     cat = "bat";
     find = "fd";
     fda = "fd --hidden --no-ignore -a"; # Find all files, including hidden and ignored

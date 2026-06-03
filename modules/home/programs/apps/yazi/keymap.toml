@@ -18,7 +18,7 @@
 keymap = [
 	# --- Custom Shell Keybindings ---------------------------------------------
 	# Keybind below is used by integration script for hover preview
-	{ on = "<A-C-S-p>",   run = 'plugin piper -- eza -TL=3 --color=always --icons=always --group-directories-first --no-quotes "$0"', desc = "Preview hovered directory" },
+	{ on = "<A-C-S-p>",   run = 'plugin piper -- tree --level=3 --color=always --icons=always "$0"', desc = "Preview hovered directory" },
 
 	# --- System Integration ---------------------------------------------------
 	{ on = "<A-C-S-e>",   run = "plugin augment-command -- editor",                     desc = "Open in $EDITOR" },

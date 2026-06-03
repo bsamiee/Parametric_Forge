@@ -51,7 +51,7 @@ _:
       # Behavior
       "--height=80%"
       "--layout=reverse"
-      "--preview 'bat --color=always --style=numbers --line-range=:500 {} 2>/dev/null || eza --tree --level=2 --color=always {}'"
+      "--preview 'bat --color=always --style=numbers --line-range=:500 {} 2>/dev/null || tree --level=2 --color=always --icons=always {}'"
       "--preview-window=right:50%:border-bold"
       "--bind=ctrl-k:preview-page-up"
       "--bind=ctrl-j:preview-page-down"
@@ -67,7 +67,7 @@ _:
     changeDirWidgetCommand = "fd --type d --hidden --follow --exclude .git";
     changeDirWidgetOptions = [
       "--border-label='[DIRECTORIES]'"
-      "--preview='eza --tree --level=2 --color=always {}'"
+      "--preview='tree --level=2 --color=always --icons=always {}'"
     ];
 
     # --- Ctrl-R: Command History --------------------------------------------

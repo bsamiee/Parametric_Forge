@@ -22,6 +22,31 @@
 # pink          #E98FBE
 let
   yamlFormat = pkgs.formats.yaml {};
+  treeIgnoreGlobs = ".git|.direnv|.devenv|.cache|.pytest_cache|.mypy_cache|.ruff_cache|__pycache__|node_modules|bin|obj|dist|build|target|coverage|.next|.nuxt|.turbo|.vite|.parcel-cache|vendor";
+  treeCommand = pkgs.writeShellApplication {
+    name = "tree";
+    runtimeInputs = [pkgs.eza];
+    text = ''
+      exec eza \
+        --tree \
+        --level "''${FORGE_TREE_LEVEL:-4}" \
+        --long \
+        --header \
+        --bytes \
+        --total-size \
+        --git \
+        --git-ignore \
+        --group-directories-first \
+        --icons=auto \
+        --classify=auto \
+        --no-quotes \
+        --no-permissions \
+        --no-user \
+        --time-style=relative \
+        --ignore-glob "''${FORGE_TREE_IGNORE:-${treeIgnoreGlobs}}" \
+        "$@"
+    '';
+  };
 
   ezaTheme = {
     filekinds = {
@@ -111,11 +136,14 @@ let
       git_dirty = {foreground = "#FF5555";};
     };
     security_context = {
-      colon = {foreground = "#6272A4";};
-      user = {foreground = "#F8F8F2";};
-      role = {foreground = "#d82f94";};
-      typ = {foreground = "#F1FA8C";};
-      range = {foreground = "#d82f94";};
+      none = {foreground = "#6272A4";};
+      selinux = {
+        colon = {foreground = "#6272A4";};
+        user = {foreground = "#F8F8F2";};
+        role = {foreground = "#d82f94";};
+        typ = {foreground = "#F1FA8C";};
+        range = {foreground = "#d82f94";};
+      };
     };
     file_type = {
       image = {foreground = "#F97359";};
@@ -133,6 +161,15 @@ let
     punctuation = {foreground = "#6272A4";};
     date = {foreground = "#E98FBE";};
     inode = {foreground = "#44475A";};
+    blocks = {foreground = "#A072C6";};
+    header = {
+      foreground = "#94F2E8";
+      is_bold = true;
+    };
+    octal = {foreground = "#F1FA8C";};
+    flags = {foreground = "#A072C6";};
+    control_char = {foreground = "#F97359";};
+    symlink_path = {foreground = "#A072C6";};
     broken_symlink = {
       foreground = "#FF5555";
       is_underline = true;
@@ -150,4 +187,5 @@ in {
     ];
   };
   xdg.configFile."eza/theme.yml".source = yamlFormat.generate "eza-theme" ezaTheme;
+  home.file.".local/bin/tree".source = "${treeCommand}/bin/tree";
 }
