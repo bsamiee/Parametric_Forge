@@ -4,11 +4,11 @@
 # License       : MIT
 # Path          : modules/home/programs/languages/python-tools.nix
 # ----------------------------------------------------------------------------
-# Python development environment - Canonical Python 3.14 installation.
+# Python development environment - Canonical Python 3.15 installation.
 {pkgs, ...}: {
   home.packages = with pkgs; [
     # --- Python Runtime (Canonical Source) ----------------------------------
-    python314 # Python 3.14.0
+    python315 # Python 3.15
 
     # --- Python Tooling -----------------------------------------------------
     ruff # Fast Python linter/formatter
