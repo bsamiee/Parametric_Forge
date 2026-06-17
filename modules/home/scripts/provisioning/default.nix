@@ -2,13 +2,11 @@
 # Author        : Bardia Samiee
 # Project       : Parametric Forge
 # License       : MIT
-# Path          : modules/home/scripts/default.nix
+# Path          : modules/home/scripts/provisioning/default.nix
 # ----------------------------------------------------------------------------
-# Scripts module aggregator
+# Local provisioning scripts for disposable project spike infrastructure.
 {...}: {
   imports = [
-    ./analysis
-    ./integration
-    ./provisioning
+    ./rasm-spike-stack
   ];
 }

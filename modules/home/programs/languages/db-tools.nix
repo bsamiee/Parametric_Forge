@@ -10,6 +10,23 @@
   lib,
   ...
 }: let
+  rasmPostgres18 = pkgs.postgresql_18.withPackages (
+    ps:
+      builtins.filter (pkg: pkg != null) (
+        [
+          (ps.timescaledb or null)
+          (ps.postgis or null)
+          (ps.pgvector or null)
+          (ps.pg_duckdb or null)
+        ]
+        ++ lib.optionals pkgs.stdenv.isLinux [
+          (ps.pg_search or null)
+          (ps.pgvectorscale or null)
+          (ps.pgaudit or null)
+          (ps.timescaledb_toolkit or null)
+        ]
+      )
+  );
   sqleanLibDir = "${pkgs.sqlean}/lib";
   sqliteVecLib = "${pkgs.sqlite-vec}/lib/sqlite-vec0";
   spatialiteLib = "${pkgs.libspatialite}/lib/mod_spatialite";
@@ -27,6 +44,7 @@ in {
     libspatialite # Spatial SQL extension for geospatial work
     sqlfluff # SQL linter and formatter supporting multiple dialects
     duckdb # In-memory analytics database with SQL interface
+    rasmPostgres18 # PostgreSQL 18 with Rasm spike extensions from the matching package set
     sqlean # Extension library bundle (regexp, uuid, stats, etc.)
     postgrestools # Postgres LSP (postgres-language-server wrapped as `postgrestools`)
   ];

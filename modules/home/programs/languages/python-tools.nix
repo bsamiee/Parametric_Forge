@@ -64,5 +64,6 @@ in {
     ruff # Fast Python linter/formatter
     uv # Fast Python package installer and resolver
     ty # Astral type checker / language server
+    basedpyright # Static type/API surface validation
   ];
 }

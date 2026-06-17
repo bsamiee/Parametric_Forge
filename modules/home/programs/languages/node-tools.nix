@@ -11,5 +11,6 @@
     prettier # Code formatter
     tailwindcss # Utility-first CSS framework
     typescript-go # TypeScript native-preview LSP (provides `tsgo`)
+    dts-lsp # TypeScript declaration navigation for API catalogue work
   ];
 }

@@ -10,6 +10,7 @@
     # Shared tooling
     ./dev-tools.nix
     ./db-tools.nix
+    ./scientific-tools.nix
 
     # Languages
     ./lua-tools.nix

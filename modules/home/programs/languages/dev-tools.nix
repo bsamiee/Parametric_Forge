@@ -43,6 +43,8 @@ in {
 
     # --- .NET ---------------------------------------------------------------
     dotnet-combined
+    ilspycmd # .NET assembly decompiler for NuGet API catalogues
+    nuget-to-json # NuGet package metadata extraction
     roslyn-language-server # C# LSP (roslyn-ls wrapped for clean --stdio)
   ];
 

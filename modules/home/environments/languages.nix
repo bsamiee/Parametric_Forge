@@ -5,7 +5,13 @@
 # Path          : modules/home/environments/languages.nix
 # ----------------------------------------------------------------------------
 # Programming language toolchains and environments
-{config, ...}: {
+{
+  config,
+  pkgs,
+  ...
+}: let
+  darwinMinVersion = pkgs.stdenv.hostPlatform.darwinMinVersion or "14.0";
+in {
   home.sessionVariables = {
     # --- Python -------------------------------------------------------------
     PYTEST_CACHE_DIR = "${config.xdg.cacheHome}/pytest";
@@ -13,7 +19,10 @@
     PYLINTHOME = "${config.xdg.cacheHome}/pylint";
     NOX_CACHE_DIR = "${config.xdg.cacheHome}/nox";
     UV_CACHE_DIR = "${config.xdg.cacheHome}/uv";
+    UV_NO_MANAGED_PYTHON = "1";
+    UV_PYTHON_DOWNLOADS = "never";
     PYTHONDONTWRITEBYTECODE = "1";
+    MACOSX_DEPLOYMENT_TARGET = darwinMinVersion;
 
     # --- Lua ----------------------------------------------------------------
     LUAROCKS_CONFIG = "${config.xdg.configHome}/luarocks/config.lua";
