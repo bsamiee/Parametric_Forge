@@ -14,5 +14,6 @@
     # --- Code Quality Tools -------------------------------------------------
     stylua # Opinionated Lua code formatter (most modern)
     lua54Packages.luacheck # Static analyzer and linter for Lua
+    lua-language-server # Lua LSP (navigation, diagnostics, completion)
   ];
 }

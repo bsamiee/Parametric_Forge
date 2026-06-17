@@ -24,9 +24,11 @@ in {
     };
 
     # --- Activation Behavior ------------------------------------------------
-    # Refresh Homebrew metadata during activation so cask API state does not drift.
+    # Do NOT auto-update Homebrew during activation: the metadata refresh shells out to git
+    # (git-lfs smudge filters) which is absent from the root activation PATH, which aborts
+    # `darwin-rebuild switch` mid-bundle. Refresh cask state with a manual `brew update`.
     onActivation = {
-      autoUpdate = mkDefault true;
+      autoUpdate = mkDefault false;
       cleanup = mkDefault "none";
       upgrade = mkDefault false;
     };

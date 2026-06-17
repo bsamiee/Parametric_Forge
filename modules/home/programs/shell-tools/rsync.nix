@@ -16,7 +16,7 @@
     file.".local/bin/rsync-safe.sh" = {
       executable = true;
       text = ''
-        #!/usr/bin/env bash
+        #!${pkgs.bash}/bin/bash
         # Safe rsync wrapper with default filters
         exec ${pkgs.rsync}/bin/rsync --filter="merge ${config.xdg.configHome}/rsync/filter" "$@"
       '';
@@ -25,7 +25,7 @@
     file.".local/bin/rsync-mv.sh" = {
       executable = true;
       text = ''
-        #!/usr/bin/env bash
+        #!${pkgs.bash}/bin/bash
         set -euo pipefail
         # Enhanced move: handles directories properly that --remove-source-files doesn't
 

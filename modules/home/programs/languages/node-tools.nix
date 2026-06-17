@@ -10,5 +10,6 @@
     pnpm_10 # Package manager - nix-managed for PATH stability
     prettier # Code formatter
     tailwindcss # Utility-first CSS framework
+    typescript-go # TypeScript native-preview LSP (provides `tsgo`)
   ];
 }

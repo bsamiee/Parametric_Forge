@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.15"
+# ///
 """SessionStart hook: Inject skill index and nx targets via XML tags."""
 
 # --- [IMPORTS] ----------------------------------------------------------------

@@ -9,7 +9,7 @@
   home.file.".local/bin/forge-nvim.sh" = {
     executable = true;
     text = ''
-      #!/usr/bin/env bash
+      #!${pkgs.bash}/bin/bash
       # Title         : forge-nvim.sh
       # Author        : Bardia Samiee
       # Project       : Parametric Forge

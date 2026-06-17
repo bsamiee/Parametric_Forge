@@ -9,7 +9,7 @@
   home.file.".local/bin/forge-yazi.sh" = {
     executable = true;
     text = ''
-      #!/usr/bin/env bash
+      #!${pkgs.bash}/bin/bash
       # Title         : forge-yazi.sh
       # Author        : Bardia Samiee
       # Project       : Parametric Forge
@@ -28,7 +28,7 @@
   home.file.".local/bin/forge-edit.sh" = {
     executable = true;
     text = ''
-      #!/usr/bin/env bash
+      #!${pkgs.bash}/bin/bash
       # Title         : forge-edit.sh
       # Author        : Bardia Samiee
       # Project       : Parametric Forge

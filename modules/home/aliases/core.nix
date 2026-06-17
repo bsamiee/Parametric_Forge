@@ -52,9 +52,6 @@ _: {
     killi = "pik"; # Interactive process killer
     bench = "hyperfine"; # Modern benchmarking tool
 
-    # --- Code Analysis ------------------------------------------------------
-    loc = "forge-loc.sh"; # Single-pass LOC: per-language totals, per-folder rollup, top-100 files
-
     # --- Text & Search ------------------------------------------------------
     col = "choose"; # Human-friendly column selector
     # man = "batman"                                                              # Handled by batman export-env in zsh/init.nix - DO NOT alias here

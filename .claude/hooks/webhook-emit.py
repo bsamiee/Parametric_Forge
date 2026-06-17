@@ -1,5 +1,6 @@
 #!/usr/bin/env -S uv run --quiet --script
 # /// script
+# requires-python = ">=3.15"
 # dependencies = ["httpx"]
 # ///
 """PostToolUse hook: Emit tool events to n8n webhook."""

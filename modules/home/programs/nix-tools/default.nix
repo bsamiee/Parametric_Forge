@@ -12,6 +12,7 @@
     ./deadnix.nix
     ./nix-index.nix
     ./nix-prefetch-github.nix
+    ./nixd.nix
     ./nom.nix
     ./statix.nix
   ];

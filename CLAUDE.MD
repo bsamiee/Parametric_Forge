@@ -99,9 +99,11 @@ someFnWithSSL = args: ...  # Function spam
 - `set -euo pipefail` mandatory
 - ShellCheck must pass
 - Prefer Nix `writeShellScriptBin` over raw scripts
+- Non-interactive agent shells do not inherit interactive zsh aliases or functions; invoke real executables on `PATH`, or use `zsh -ic` only when intentionally testing interactive shell configuration.
+- Bash-only snippets using `mapfile`, `readarray`, `shopt`, `BASH_*`, arrays, or Bash 5.3 features must run through `bash -lc`, a Bash heredoc, or an executable with a Bash shebang.
 
 ### Python (Secondary)
-- Python 3.13+ only (never older)
+- Python 3.15+ only (never older)
 - `uv` for package management
 - `ruff` for all linting/formatting
 - `ty` for type checking

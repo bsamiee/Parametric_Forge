@@ -12,15 +12,26 @@
     pkgs.dotnet-sdk_9
     pkgs.dotnet-sdk_10
   ];
+  # roslyn-ls installs the binary as Microsoft.CodeAnalysis.LanguageServer and requires an
+  # explicit log directory; wrap it so consumers invoke `roslyn-language-server --stdio` directly.
+  roslyn-language-server = pkgs.writeShellScriptBin "roslyn-language-server" ''
+    logdir="''${TMPDIR:-/tmp}/roslyn-ls"
+    mkdir -p "$logdir"
+    exec ${pkgs.roslyn-ls}/bin/Microsoft.CodeAnalysis.LanguageServer \
+      --logLevel Information --extensionLogDirectory "$logdir" "$@"
+  '';
 in {
   home.packages = with pkgs; [
     # --- Shell Tooling ------------------------------------------------------
+    bash # Bash 5.3+ runtime for generated scripts and explicit bash sessions
     shellcheck # POSIX shell static analysis
     shfmt # Shell script formatter
+    bash-language-server # Bash LSP (navigation + diagnostics via shellcheck/shfmt)
 
     # --- YAML ---------------------------------------------------------------
     yamlfmt # YAML formatter (Google)
     yamllint # YAML linter
+    yaml-language-server # YAML LSP (SchemaStore-backed validation + completion)
 
     # --- JSON ---------------------------------------------------------------
     jq # Lightweight command-line JSON processor
@@ -32,6 +43,7 @@ in {
 
     # --- .NET ---------------------------------------------------------------
     dotnet-combined
+    roslyn-language-server # C# LSP (roslyn-ls wrapped for clean --stdio)
   ];
 
   # DOTNET_ROOT required for omnisharp and other SDK-discovery tools.

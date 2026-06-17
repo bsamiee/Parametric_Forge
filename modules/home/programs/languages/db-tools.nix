@@ -14,6 +14,11 @@
   sqliteVecLib = "${pkgs.sqlite-vec}/lib/sqlite-vec0";
   spatialiteLib = "${pkgs.libspatialite}/lib/mod_spatialite";
   loadSqlean = module: ''.load ${sqleanLibDir}/${module}'';
+  # nixpkgs renames the binary to postgres-language-server; wrap it back to the
+  # upstream `postgrestools` name so the LSP marketplace command resolves portably.
+  postgrestools = pkgs.writeShellScriptBin "postgrestools" ''
+    exec ${pkgs.postgres-language-server}/bin/postgres-language-server "$@"
+  '';
 in {
   home.packages = with pkgs; [
     sqlite-interactive # Enhanced sqlite3 shell with line editing and metadata helpers
@@ -23,6 +28,7 @@ in {
     sqlfluff # SQL linter and formatter supporting multiple dialects
     duckdb # In-memory analytics database with SQL interface
     sqlean # Extension library bundle (regexp, uuid, stats, etc.)
+    postgrestools # Postgres LSP (postgres-language-server wrapped as `postgrestools`)
   ];
 
   home.file.".sqliterc".text = lib.concatStringsSep "\n" (

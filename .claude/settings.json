@@ -7,11 +7,13 @@
 				"hooks": [
 					{
 						"type": "command",
-						"command": "bash \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/setup-env.sh"
+						"command": "bash \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/setup-env.sh",
+						"timeout": 5
 					},
 					{
 						"type": "command",
-						"command": "python3 \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/load-skill-index.py"
+						"command": "uv run --script \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/load-skill-index.py",
+						"timeout": 5
 					}
 				]
 			}

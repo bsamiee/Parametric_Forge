@@ -4,19 +4,19 @@
 # License       : MIT
 # Path          : modules/home/scripts/analysis/scc/default.nix
 # ----------------------------------------------------------------------------
-# scc code counter + forge-loc.sh wrapper for grouped per-file / per-folder LOC
+# scc code counter + loc wrapper for grouped per-file / per-folder LOC
 {pkgs, ...}: {
   home.packages = [pkgs.scc];
 
-  home.file.".local/bin/forge-loc.sh" = {
+  home.file.".local/bin/loc" = {
     executable = true;
     text = ''
-      #!/usr/bin/env bash
-      # Title         : forge-loc.sh
+      #!${pkgs.bash}/bin/bash
+      # Title         : loc
       # Author        : Bardia Samiee
       # Project       : Parametric Forge
       # License       : MIT
-      # Path          : modules/home/scripts/analysis/scc/forge-loc.sh
+      # Path          : modules/home/scripts/analysis/scc/loc
       # ----------------------------------------------------------------------------
       # Single-pass LOC report: files grouped by top-level folder, folder totals,
       # and one overall target total. Single positional target, no flags.

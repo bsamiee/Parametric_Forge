@@ -26,16 +26,16 @@ in {
   home.file.".local/bin/yazi-zoxide-cdi.sh" = {
     executable = true;
     text = ''
-            #!/usr/bin/env bash
-            # Title         : yazi-zoxide-cdi.sh
-            # Author        : Bardia Samiee
-            # Project       : Parametric Forge
-            # License       : MIT
-            # Path          : modules/home/scripts/integration/yazi/yazi-zoxide-cdi.sh
-            # ----------------------------------------------------------------------------
-            # Change directory using zoxide and open in yazi
+      #!${pkgs.bash}/bin/bash
+      # Title         : yazi-zoxide-cdi.sh
+      # Author        : Bardia Samiee
+      # Project       : Parametric Forge
+      # License       : MIT
+      # Path          : modules/home/scripts/integration/yazi/yazi-zoxide-cdi.sh
+      # ----------------------------------------------------------------------------
+      # Change directory using zoxide and open in yazi
 
-            set -euo pipefail
+      set -euo pipefail
 
       ${lib.optionalString fzfDefaultOptsNonEmpty ''
         if [[ -z "''${FZF_DEFAULT_OPTS:-}" ]]; then
@@ -51,15 +51,15 @@ in {
 
       ''}
 
-            export FZF_DEFAULT_OPTS FZF_DEFAULT_COMMAND
+      export FZF_DEFAULT_OPTS FZF_DEFAULT_COMMAND
 
-            selection="$(${pkgs.zoxide}/bin/zoxide query --interactive -- "$@" || true)"
+      selection="$(${pkgs.zoxide}/bin/zoxide query --interactive -- "$@" || true)"
 
-            if [[ -z "$selection" ]]; then
-              exit 0
-            fi
+      if [[ -z "$selection" ]]; then
+        exit 0
+      fi
 
-            ${pkgs.yazi}/bin/ya emit cd "$(printf %q "$selection")"
+      ${pkgs.yazi}/bin/ya emit cd "$(printf %q "$selection")"
 
     '';
   };
