@@ -10,22 +10,37 @@
   lib,
   ...
 }: let
+  postgres18ExtensionPackageNames = [
+    "timescaledb"
+    "postgis"
+    "pgrouting"
+    "h3-pg"
+    "pointcloud"
+    "pgvector"
+    "pg_textsearch"
+    "pgroonga"
+    "pg_bigm"
+    "rum"
+    "hypopg"
+    "pg_duckdb"
+    "pg_ivm"
+    "pg_partman"
+    "pg_repack"
+    "pg_cron"
+    "pgmq"
+    "tds_fdw"
+    "system_stats"
+  ];
   postgres18WithForgeExtensions = pkgs.postgresql_18.withPackages (
-    ps:
-      builtins.filter (pkg: pkg != null) (
-        [
-          (ps.timescaledb or null)
-          (ps.postgis or null)
-          (ps.pgvector or null)
-          (ps.pg_duckdb or null)
-        ]
-        ++ lib.optionals pkgs.stdenv.isLinux [
-          (ps.pg_search or null)
-          (ps.pgvectorscale or null)
-          (ps.pgaudit or null)
-          (ps.timescaledb_toolkit or null)
-        ]
-      )
+    ps: let
+      admit = name: let
+        attempted = builtins.tryEval ps.${name};
+      in
+        lib.optionals
+        (attempted.success && attempted.value != null && lib.meta.availableOn pkgs.stdenv.hostPlatform attempted.value)
+        [attempted.value];
+    in
+      lib.concatMap admit postgres18ExtensionPackageNames
   );
   postgres18ForgeTools = pkgs.runCommand "postgres18-forge-tools" {nativeBuildInputs = [pkgs.makeWrapper];} ''
     runHook preInstall

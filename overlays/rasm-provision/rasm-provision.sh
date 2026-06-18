@@ -60,6 +60,25 @@ declare -Ar command_mutates=(
   [prune]=1
 )
 
+declare -ar command_order=(
+  up
+  down
+  status
+  env
+  doctor
+  ports
+  inventory
+  prune
+  paths
+  plan
+  extensions
+  verify
+  psql-timescale
+  psql-search
+  psql-pgduckdb
+  self-test
+)
+
 declare -ar service_order=(timescale search pgduckdb)
 declare -Ar service_profile=(
   [timescale]="timescale"
@@ -119,7 +138,7 @@ declare -Ar service_verify_handler=(
 declare -Ar service_disabled_verify_row=(
   [timescale]=""
   [search]=""
-  [pgduckdb]=$'pgduckdb\tpg_duckdb\tdisabled\t-\tanalytics\trequired'
+  [pgduckdb]=$'pgduckdb\tpg_duckdb\tdisabled\t-\tanalytics\toptional'
 )
 readonly extension_catalog_common_rows=$'pg_stat_statements\tobservability\t0\t0\npg_trgm\tsearch\t0\t0\nunaccent\tsearch\t0\t0\nbtree_gin\tindex\t0\t0\nbtree_gist\tindex\t0\t0\nbloom\tindex\t0\t0\nrum\tindex\t0\t0\nhypopg\tplanning\t0\t0\npg_qualstats\tobservability\t0\t0\npg_stat_kcache\tobservability\t0\t0\npg_wait_sampling\tobservability\t0\t0\npg_buffercache\tobservability\t0\t0\npg_prewarm\tperformance\t0\t0\npg_visibility\tobservability\t0\t0\npg_walinspect\tobservability\t0\t0\npg_freespacemap\tobservability\t0\t0\npg_logicalinspect\treplication\t0\t0\npgstattuple\tobservability\t0\t0\npageinspect\tobservability\t0\t0\npg_surgery\tmaintenance\t0\t0\npgrowlocks\tobservability\t0\t0\npg_overexplain\tobservability\t0\t0\namcheck\tmaintenance\t0\t0\npg_repack\tmaintenance\t0\t0\npg_partman\tpartitioning\t0\t0\npglogical\treplication\t0\t0\npg_cron\tautomation\t0\t0\npg_net\tintegration\t0\t0\npgaudit\tobservability\t0\t0\npgcrypto\tcrypto\t0\t0\ncitext\ttext\t0\t0\nltree\ttopology\t0\t0\nfuzzystrmatch\ttext\t0\t0\nintarray\tarray\t0\t0\ntablefunc\tanalytics\t0\t0\npostgres_fdw\tfdw\t0\t0\nfile_fdw\tfdw\t0\t0\nwrappers\tfdw\t0\t0\nogr_fdw\tfdw\t0\t0\npgtap\ttesting\t0\t0\nhll\tanalytics\t0\t0\nsemver\tdata\t0\t0\nunit\tdata\t0\t0\norafce\tcompatibility\t0\t0\npg_tle\textension-management\t0\t0\npg_jsonschema\tvalidation\t0\t0\npg_hashids\tidentity\t0\t0\npgmq\tqueue\t0\t0\npg_later\tautomation\t0\t0\ntsm_system_rows\tsampling\t0\t0\ntsm_system_time\tsampling\t0\t0'
 declare -Ar service_extension_catalog=(
@@ -218,7 +237,7 @@ warnings_json() {
 usage() {
   local command
   printf 'Usage: rasm-provision <command> [args]\n\nCommands:\n'
-  for command in up down status env doctor ports inventory prune paths plan extensions verify psql-timescale psql-search psql-pgduckdb self-test; do
+  for command in "${command_order[@]}"; do
     printf '  %-18s %s\n' "$command" "${command_desc[$command]}"
   done
 }
@@ -1686,35 +1705,73 @@ owned_networks_json() {
   '
 }
 
-service_records_json() {
+service_records_tsv() {
   local service
   for service in "${service_order[@]}"; do
-    jq -nc \
-      --arg service "$service" \
-      --arg profile "${service_profile[$service]}" \
-      --arg image "$(service_image "$service")" \
-      --arg port "$(service_port "$service")" \
-      --arg dsn "$(service_dsn "$service")" \
-      --arg enabled "$(service_enabled_value "$service")" \
-      --arg dsn_env "${service_dsn_env[$service]}" \
-      --arg image_env "${service_image_env[$service]}" \
-      --arg port_env "${service_port_env[$service]}" \
-      '{
-        key: $service,
-        enabled: ($enabled == "1"),
-        connectable: ($enabled == "1"),
-        profile: $profile,
-        image: $image,
-        imageEnv: $image_env,
+    printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+      "$service" \
+      "$(service_enabled_value "$service")" \
+      "${service_profile[$service]}" \
+      "$(service_image "$service")" \
+      "$(service_port "$service")" \
+      "$(service_dsn "$service")" \
+      "${service_dsn_env[$service]}" \
+      "${service_image_env[$service]}" \
+      "${service_port_env[$service]}"
+  done
+}
+
+service_records_json() {
+  service_records_tsv | jq -Rsc '
+    split("\n")
+    | map(select(length > 0) | split("\t"))
+    | map({
+        key: .[0],
+        enabled: (.[1] == "1"),
+        connectable: (.[1] == "1"),
+        profile: .[2],
+        image: .[3],
+        imageEnv: .[7],
         host: "127.0.0.1",
-        port: ($port | tonumber),
-        portEnv: $port_env,
+        port: (.[4] | tonumber),
+        portEnv: .[8],
         containerPort: 5432,
-        dsn: (if $enabled == "1" then $dsn else null end),
-        dsnEnv: $dsn_env,
-        composeService: $service
-      }'
-  done | jq -s 'map({(.key): .}) | add'
+        dsn: (if .[1] == "1" then .[5] else null end),
+        dsnEnv: .[6],
+        composeService: .[0]
+      })
+    | map({
+        (.key): {
+          key,
+          enabled,
+          connectable,
+          profile,
+          image,
+          imageEnv,
+          host,
+          port,
+          portEnv,
+          containerPort,
+          dsn,
+          dsnEnv,
+          composeService
+        }
+      })
+    | add // {}
+  '
+}
+
+configured_images_json() {
+  service_records_tsv | jq -Rsc '
+    split("\n")
+    | map(select(length > 0) | split("\t"))
+    | map({
+        service: .[0],
+        image: .[3],
+        enabled: (.[1] == "1")
+      })
+    | sort_by(.service)
+  '
 }
 
 port_record_json() {
@@ -1856,14 +1913,6 @@ emit_ports_text() {
       ]
     | join("\t")
   ' <<<"$records"
-}
-
-configured_images_json() {
-  local service
-  for service in "${service_order[@]}"; do
-    jq -nc --arg service "$service" --arg image "$(service_image "$service")" --arg enabled "$(service_enabled_value "$service")" \
-      '{service: $service, image: $image, enabled: ($enabled == "1")}'
-  done | jq -s 'sort_by(.service)'
 }
 
 relevant_images_json() {
@@ -2502,12 +2551,20 @@ cmd_self_test() {
   require_root
   validate_static_env
   local command service port ext category required create_on_verify extra
-  local -A seen_commands=() seen_ports=()
+  local -A seen_commands=() seen_order=() seen_ports=()
   local -A seen_extensions=()
   for command in "${!command_handler[@]}"; do
     [[ -n "${command_desc[$command]:-}" ]] || die "command missing description: $command"
     declare -F "${command_handler[$command]}" >/dev/null || die "command handler function missing: $command -> ${command_handler[$command]}"
     seen_commands[$command]=1
+  done
+  for command in "${command_order[@]}"; do
+    [[ -n "${command_handler[$command]:-}" ]] || die "ordered command missing handler: $command"
+    [[ -n "${seen_order[$command]:-}" ]] && die "duplicate command_order entry: $command"
+    seen_order[$command]=1
+  done
+  for command in "${!command_handler[@]}"; do
+    [[ -n "${seen_order[$command]:-}" ]] || die "command handler missing command_order entry: $command"
   done
   for command in "${!command_desc[@]}"; do
     [[ -n "${seen_commands[$command]:-}" ]] || die "description missing handler: $command"
