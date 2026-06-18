@@ -29,6 +29,7 @@ _: {
 
     # --- Communication & Social ---------------------------------------------
     "discord"
+    "microsoft-auto-update"
     "microsoft-teams"
     "superhuman" # Email client
     # "telegram"
@@ -84,7 +85,6 @@ _: {
     # --- Utilities & System Enhancement -------------------------------------
     "grammarly-desktop"
     "rize" # Time tracking
-    "via" # Keyboard configurator
     "hammerspoon" # Lua automation
     "karabiner-elements" # Keyboard remapping
   ];

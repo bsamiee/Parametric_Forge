@@ -14,8 +14,8 @@ _: {
     "blueutil" # Bluetooth management
 
     # --- Window Management Tools --------------------------------------------
-    "koekeishiya/formulae/yabai"
-    "koekeishiya/formulae/skhd"
+    "asmvik/formulae/yabai"
+    "asmvik/formulae/skhd"
     "FelixKratz/formulae/borders"
 
     # --- Server Tools -------------------------------------------------------

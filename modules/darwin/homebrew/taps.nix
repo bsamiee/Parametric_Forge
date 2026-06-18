@@ -7,7 +7,7 @@
 # Homebrew tap repositories
 _: {
   homebrew.taps = [
-    "koekeishiya/formulae" # For yabai/skhd
+    "asmvik/formulae" # For yabai/skhd
     "FelixKratz/formulae" # For borders
   ];
 }

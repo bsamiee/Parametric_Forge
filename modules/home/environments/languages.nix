@@ -19,7 +19,7 @@ in {
     PYLINTHOME = "${config.xdg.cacheHome}/pylint";
     NOX_CACHE_DIR = "${config.xdg.cacheHome}/nox";
     UV_CACHE_DIR = "${config.xdg.cacheHome}/uv";
-    UV_NO_MANAGED_PYTHON = "1";
+    UV_PYTHON_PREFERENCE = "only-system";
     UV_PYTHON_DOWNLOADS = "never";
     PYTHONDONTWRITEBYTECODE = "1";
     MACOSX_DEPLOYMENT_TARGET = darwinMinVersion;
