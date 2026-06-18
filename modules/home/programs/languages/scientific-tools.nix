@@ -5,7 +5,7 @@
 # Path          : modules/home/programs/languages/scientific-tools.nix
 # ----------------------------------------------------------------------------
 # Native scientific build/runtime toolchain for source-built Python packages,
-# geospatial/data libraries, numerical kernels, and local spike probes.
+# geospatial/data libraries, numerical kernels, and local provisioning probes.
 {
   lib,
   pkgs,
@@ -91,6 +91,11 @@
     onnxruntime
   ];
 
+  companionNativeLibs =
+    geoNativeLibs
+    ++ numericNativeLibs
+    ++ pointCloudNativeLibs;
+
   gfortranTool = pkgs.writeShellScriptBin "gfortran" ''
     exec ${pkgs.gfortran}/bin/gfortran "$@"
   '';
@@ -103,6 +108,77 @@
   ];
 
   cmakePrefixPath = lib.concatStringsSep ":" (map toString scientificNativeLibs);
+  companionPkgConfigPath = lib.concatStringsSep ":" [
+    (lib.makeSearchPathOutput "dev" "lib/pkgconfig" companionNativeLibs)
+    (lib.makeSearchPathOutput "out" "lib/pkgconfig" companionNativeLibs)
+    (lib.makeSearchPathOutput "dev" "share/pkgconfig" companionNativeLibs)
+    (lib.makeSearchPathOutput "out" "share/pkgconfig" companionNativeLibs)
+  ];
+  companionCmakePrefixPath = lib.concatStringsSep ":" (map toString companionNativeLibs);
+  forgeScientificEnv = pkgs.writeShellApplication {
+    name = "forge-scientific-env";
+    # python315 is pinned ahead of the ambient project-venv shim so `forge-scientific-env python3` is the deterministic
+    # canonical scientific interpreter (matching UV_PYTHON_PREFERENCE=only-system), not whichever project owns the cwd.
+    runtimeInputs = nativeBuildTools ++ fortranBuildTools ++ scientificNativeLibs ++ scientificRuntimeTools ++ [pkgs.uv pkgs.python315];
+    text = ''
+      export UV_PYTHON_PREFERENCE="only-system"
+      export UV_PYTHON_DOWNLOADS="never"
+      export MACOSX_DEPLOYMENT_TARGET="${darwinMinVersion}"
+
+      export CC="${pkgs.clang}/bin/clang"
+      export CXX="${pkgs.clang}/bin/clang++"
+      export FC="${pkgs.gfortran}/bin/gfortran"
+      export F77="$FC"
+      export F90="$FC"
+
+      export GDAL_CONFIG="${pkgs.gdal}/bin/gdal-config"
+      export GEOS_CONFIG="${pkgs.geos}/bin/geos-config"
+      export GDAL_DATA="${pkgs.gdal}/share/gdal"
+      export PROJ_DIR="${pkgs.proj}"
+      export PROJ_INCDIR="${pkgs.proj.dev}/include"
+      export PROJ_LIBDIR="${pkgs.proj}/lib"
+      export PROJ_DATA="${pkgs.proj}/share/proj"
+
+      export HDF5_PKGCONFIG_NAME="hdf5"
+
+      export ARROW_HOME="${pkgs.arrow-cpp}"
+      export OPENBLAS_DIR="${pkgs.openblas}"
+      export ONNXRUNTIME_DIR="${pkgs.onnxruntime}"
+      if [ -e "${pkgs.onnxruntime}/lib/libonnxruntime.${pkgs.onnxruntime.version}.dylib" ]; then
+        export ONNXRUNTIME_LIB="${pkgs.onnxruntime}/lib/libonnxruntime.${pkgs.onnxruntime.version}.dylib"
+      else
+        export ONNXRUNTIME_LIB="${pkgs.onnxruntime}/lib/libonnxruntime.dylib"
+      fi
+
+      export PKG_CONFIG_PATH="${pkgConfigPath}''${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
+      export CMAKE_PREFIX_PATH="${cmakePrefixPath}''${CMAKE_PREFIX_PATH:+:$CMAKE_PREFIX_PATH}"
+
+      exec "$@"
+    '';
+  };
+  forgeCompanionEnv = pkgs.writeShellApplication {
+    name = "forge-companion-env";
+    runtimeInputs = nativeBuildTools ++ companionNativeLibs ++ [pkgs.uv pkgs.python312];
+    text = ''
+      export UV_PYTHON_PREFERENCE="only-system"
+      export UV_PYTHON_DOWNLOADS="never"
+      export UV_PROJECT_ENVIRONMENT="''${UV_PROJECT_ENVIRONMENT:-.venv-companion}"
+      export MACOSX_DEPLOYMENT_TARGET="${darwinMinVersion}"
+      export CC="${pkgs.clang}/bin/clang"
+      export CXX="${pkgs.clang}/bin/clang++"
+      export PKG_CONFIG_PATH="${companionPkgConfigPath}''${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
+      export CMAKE_PREFIX_PATH="${companionCmakePrefixPath}''${CMAKE_PREFIX_PATH:+:$CMAKE_PREFIX_PATH}"
+      exec "$@"
+    '';
+  };
+  forgeScientificSync = pkgs.writeShellApplication {
+    name = "forge-scientific-sync";
+    runtimeInputs = [forgeScientificEnv pkgs.uv];
+    text = ''
+      export UV_PROJECT_ENVIRONMENT="''${UV_PROJECT_ENVIRONMENT:-.venv-scientific}"
+      exec forge-scientific-env uv sync --only-group scientific "$@"
+    '';
+  };
 in {
   home.packages =
     [
@@ -111,46 +187,8 @@ in {
     ++ scientificProfileNativeLibs
     ++ scientificRuntimeTools
     ++ [
-      (pkgs.writeShellApplication {
-        name = "forge-scientific-env";
-        # python315 is pinned ahead of the ambient project-venv shim so `forge-scientific-env python3` is the deterministic
-        # canonical scientific interpreter (matching UV_PYTHON_PREFERENCE=only-system), not whichever project owns the cwd.
-        runtimeInputs = nativeBuildTools ++ fortranBuildTools ++ scientificNativeLibs ++ scientificRuntimeTools ++ [pkgs.uv pkgs.python315];
-        text = ''
-          export UV_PYTHON_PREFERENCE="only-system"
-          export UV_PYTHON_DOWNLOADS="never"
-          export MACOSX_DEPLOYMENT_TARGET="${darwinMinVersion}"
-
-          export CC="${pkgs.clang}/bin/clang"
-          export CXX="${pkgs.clang}/bin/clang++"
-          export FC="${pkgs.gfortran}/bin/gfortran"
-          export F77="$FC"
-          export F90="$FC"
-
-          export GDAL_CONFIG="${pkgs.gdal}/bin/gdal-config"
-          export GEOS_CONFIG="${pkgs.geos}/bin/geos-config"
-          export GDAL_DATA="${pkgs.gdal}/share/gdal"
-          export PROJ_DIR="${pkgs.proj}"
-          export PROJ_INCDIR="${pkgs.proj.dev}/include"
-          export PROJ_LIBDIR="${pkgs.proj}/lib"
-          export PROJ_DATA="${pkgs.proj}/share/proj"
-
-          export HDF5_PKGCONFIG_NAME="hdf5"
-
-          export ARROW_HOME="${pkgs.arrow-cpp}"
-          export OPENBLAS_DIR="${pkgs.openblas}"
-          export ONNXRUNTIME_DIR="${pkgs.onnxruntime}"
-          if [ -e "${pkgs.onnxruntime}/lib/libonnxruntime.${pkgs.onnxruntime.version}.dylib" ]; then
-            export ONNXRUNTIME_LIB="${pkgs.onnxruntime}/lib/libonnxruntime.${pkgs.onnxruntime.version}.dylib"
-          else
-            export ONNXRUNTIME_LIB="${pkgs.onnxruntime}/lib/libonnxruntime.dylib"
-          fi
-
-          export PKG_CONFIG_PATH="${pkgConfigPath}''${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
-          export CMAKE_PREFIX_PATH="${cmakePrefixPath}''${CMAKE_PREFIX_PATH:+:$CMAKE_PREFIX_PATH}"
-
-          exec "$@"
-        '';
-      })
+      forgeCompanionEnv
+      forgeScientificEnv
+      forgeScientificSync
     ];
 }

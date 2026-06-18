@@ -5,10 +5,13 @@
 # Path          : modules/home/scripts/default.nix
 # ----------------------------------------------------------------------------
 # Scripts module aggregator
-{...}: {
+{pkgs, ...}: {
   imports = [
     ./analysis
     ./integration
-    ./provisioning
+  ];
+
+  home.packages = [
+    pkgs.rasm-provision
   ];
 }

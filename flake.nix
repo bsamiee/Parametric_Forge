@@ -22,8 +22,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    flake-parts.url = "github:hercules-ci/flake-parts";
-    treefmt-nix.url = "github:numtide/treefmt-nix";
     # 1Password Shell Plugins - biometric auth for CLI tools (gh, aws, etc.)
     shell-plugins = {
       url = "github:1Password/shell-plugins";
@@ -39,10 +37,10 @@
     home-manager,
     ...
   }: let
-    systems = ["x86_64-darwin" "aarch64-darwin" "x86_64-linux" "aarch64-linux"];
+    systems = ["aarch64-darwin" "x86_64-linux" "aarch64-linux"];
     forAllSystems = nixpkgs.lib.genAttrs systems;
   in {
-    overlays.default = import ./overlays {inherit inputs;};
+    overlays.default = import ./overlays;
     darwinConfigurations = import ./hosts/darwin {inherit inputs nix-darwin home-manager;};
     # NixOS configurations (placeholder for future)
     nixosConfigurations = {};
@@ -50,10 +48,54 @@
     homeConfigurations = {};
 
     packages = forAllSystems (system: let
-      pkgs = nixpkgs.legacyPackages.${system};
+      pkgs = import nixpkgs {
+        inherit system;
+        overlays = [self.overlays.default];
+      };
     in {
-      sqlean = pkgs.callPackage (self + "/overlays/sqlean") {};
-      default = pkgs.callPackage (self + "/overlays/sqlean") {};
+      inherit (pkgs) rasm-provision sqlean;
+      default = pkgs.rasm-provision;
+    });
+
+    apps = forAllSystems (system: {
+      rasm-provision = {
+        type = "app";
+        program = nixpkgs.lib.getExe self.packages.${system}.rasm-provision;
+      };
+      default = self.apps.${system}.rasm-provision;
+    });
+
+    checks = forAllSystems (system: let
+      pkgs = import nixpkgs {
+        inherit system;
+        overlays = [self.overlays.default];
+      };
+    in {
+      rasm-provision-help = pkgs.runCommand "rasm-provision-help" {} ''
+        ${pkgs.rasm-provision}/bin/rasm-provision --help >out
+        grep -q 'Usage: rasm-provision' out
+        touch "$out"
+      '';
+      rasm-provision-self-test = pkgs.runCommand "rasm-provision-self-test" {} ''
+        mkdir -p fake-root/libs/csharp
+        touch fake-root/pyproject.toml fake-root/Directory.Packages.props
+        RASM_ROOT="$PWD/fake-root" ${pkgs.rasm-provision}/bin/rasm-provision self-test >out
+        grep -q $'self-test\tok' out
+        touch "$out"
+      '';
+      rasm-provision-readonly = pkgs.runCommand "rasm-provision-readonly" {} ''
+        mkdir -p fake-root/libs/csharp
+        touch fake-root/pyproject.toml fake-root/Directory.Packages.props
+        RASM_ROOT="$PWD/fake-root" ${pkgs.rasm-provision}/bin/rasm-provision env --json >env.json
+        RASM_ROOT="$PWD/fake-root" ${pkgs.rasm-provision}/bin/rasm-provision plan >compose.yaml
+        test ! -e fake-root/.artifacts
+        grep -q '"schemaVersion"' env.json
+        grep -q '"RASM_PROVISION_DIR"' env.json
+        grep -q '"services"' env.json
+        grep -q '.artifacts/provisioning/rasm' env.json
+        grep -q 'name: rasm-provision-' compose.yaml
+        touch "$out"
+      '';
     });
 
     devShells = forAllSystems (system: let

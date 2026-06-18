@@ -34,11 +34,24 @@
 
         _main() {
           if [[ "''${FORGE_PYTHON_SHIM_BYPASS:-}" == "1" || "''${FORGE_PYTHON_SHIM_ACTIVE:-}" == "1" ]]; then
+            export UV_PYTHON_PREFERENCE="only-system"
+            export UV_PYTHON_DOWNLOADS="never"
             exec "${python}/bin/${name}" "$@"
           fi
 
           local project_root
           if project_root="$(_find_project_root)"; then
+            export UV_PYTHON_PREFERENCE="only-system"
+            export UV_PYTHON_DOWNLOADS="never"
+            if [[ -n "''${UV_PROJECT_ENVIRONMENT:-}" ]]; then
+              if [[ "$UV_PROJECT_ENVIRONMENT" = /* ]]; then
+                if [[ -x "$UV_PROJECT_ENVIRONMENT/bin/python" ]]; then
+                  exec "$UV_PROJECT_ENVIRONMENT/bin/python" "$@"
+                fi
+              elif [[ -x "$project_root/$UV_PROJECT_ENVIRONMENT/bin/python" ]]; then
+                exec "$project_root/$UV_PROJECT_ENVIRONMENT/bin/python" "$@"
+              fi
+            fi
             if [[ -x "$project_root/.venv/bin/python" ]]; then
               exec "$project_root/.venv/bin/python" "$@"
             fi
@@ -47,6 +60,8 @@
             exec uv --project "$project_root" run python "$@"
           fi
 
+          export UV_PYTHON_PREFERENCE="only-system"
+          export UV_PYTHON_DOWNLOADS="never"
           exec "${python}/bin/${name}" "$@"
         }
 

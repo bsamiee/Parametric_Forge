@@ -10,7 +10,7 @@
   lib,
   ...
 }: let
-  rasmPostgres18 = pkgs.postgresql_18.withPackages (
+  postgres18WithExtensions = pkgs.postgresql_18.withPackages (
     ps:
       builtins.filter (pkg: pkg != null) (
         [
@@ -44,7 +44,7 @@ in {
     libspatialite # Spatial SQL extension for geospatial work
     sqlfluff # SQL linter and formatter supporting multiple dialects
     duckdb # In-memory analytics database with SQL interface
-    rasmPostgres18 # PostgreSQL 18 with Rasm spike extensions from the matching package set
+    postgres18WithExtensions # PostgreSQL 18 with local interactive extensions from the matching package set
     sqlean # Extension library bundle (regexp, uuid, stats, etc.)
     postgrestools # Postgres LSP (postgres-language-server wrapped as `postgrestools`)
   ];

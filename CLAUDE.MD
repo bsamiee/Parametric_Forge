@@ -101,6 +101,13 @@ someFnWithSSL = args: ...  # Function spam
 - Prefer Nix `writeShellScriptBin` over raw scripts
 - Non-interactive agent shells do not inherit interactive zsh aliases or functions; invoke real executables on `PATH`, or use `zsh -ic` only when intentionally testing interactive shell configuration.
 - Bash-only snippets using `mapfile`, `readarray`, `shopt`, `BASH_*`, arrays, or Bash 5.3 features must run through `bash -lc`, a Bash heredoc, or an executable with a Bash shebang.
+- Package shell CLIs with `writeShellApplication` when they need declared runtime tools, ShellCheck integration, or a stable Home Manager-installed binary.
+
+### Local Provisioning
+- `rasm-provision` is the canonical Rasm local provisioning command. The overlay package owns the implementation; Home Manager only installs that derivation.
+- Clean renames are preferred over compatibility shims. Do not keep retired provisioning command names as aliases, wrappers, fallbacks, or silent environment-variable compatibility.
+- Provisioning commands are agent-first and noninteractive: no host `sudo`, no keychain prompt, no DB password prompt, and no Docker credential-helper dependency for public images.
+- Read-only provisioning commands avoid durable repo writes unless the command explicitly documents state creation.
 
 ### Python (Secondary)
 - Python 3.15+ only (never older)

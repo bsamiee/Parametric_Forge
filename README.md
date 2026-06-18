@@ -109,7 +109,7 @@ Parametric Forge is a deterministic macOS workspace built with Nix flakes, nix-d
 
   - **Python:** 3.15 GIL build with uv, ruff, ty, basedpyright, and `forge-scientific-env`; caches under XDG (`modules/home/environments/languages.nix`). `MACOSX_DEPLOYMENT_TARGET` follows the nix-darwin minimum and is currently `14.0`.
   - **Node/Lua/DB:** Node via nix + pnpm (npm is aliased to pnpm for consistency); Lua + LSP tooling; DuckDB/SQLite with sqlean/spatialite/vec; PG18 local probes (`modules/home/programs/languages/*`).
-  - **Scientific + spike:** `forge-scientific-env uv sync --group scientific` exposes clang, gfortran, GDAL, GEOS, PROJ, HDF5, netCDF, Arrow, OpenBLAS, ONNX Runtime, artifact native libraries, Eigen, PDAL, and Boost for source builds. `rasm-spike-stack up|verify|env|down` creates disposable PG18 Timescale/ParadeDB assets under a target repo's `.artifacts/spikes/provisioning`.
+  - **Scientific + provisioning:** `forge-scientific-sync` creates an isolated `.venv-scientific` from the scientific dependency group, while `forge-scientific-env` exposes clang, gfortran, GDAL, GEOS, PROJ, HDF5, netCDF, Arrow, OpenBLAS, ONNX Runtime, artifact native libraries, Eigen, PDAL, and Boost for one-off source builds. `forge-companion-env` provides the Python 3.12 native-build lane for companion tooling. `rasm-provision` is the overlay-owned, Home Manager-installed local Rasm provisioning command; `rasm-provision up|down|status|env|verify` manages local PG18 Timescale/ParadeDB provisioning assets under a target repo's `.artifacts/provisioning/rasm`.
   </details>
 
   <details>

@@ -5,8 +5,23 @@
 # Path          : modules/darwin/homebrew/default.nix
 # ----------------------------------------------------------------------------
 # Homebrew configuration and aggregator
-{lib, ...}: let
-  inherit (lib) mkDefault;
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}: let
+  inherit (lib) concatStringsSep mkDefault;
+  activationPath = concatStringsSep ":" [
+    "/etc/profiles/per-user/${config.system.primaryUser}/bin"
+    "/run/current-system/sw/bin"
+    "${config.homebrew.prefix}/bin"
+    "${pkgs.mas}/bin"
+    "/usr/bin"
+    "/bin"
+    "/usr/sbin"
+    "/sbin"
+  ];
 in {
   imports = [
     ./taps.nix
@@ -24,13 +39,14 @@ in {
     };
 
     # --- Activation Behavior ------------------------------------------------
-    # Do NOT auto-update Homebrew during activation: the metadata refresh shells out to git
-    # (git-lfs smudge filters) which is absent from the root activation PATH, which aborts
-    # `darwin-rebuild switch` mid-bundle. Refresh cask state with a manual `brew update`.
+    # Keep cleanup disabled so Homebrew installs outside this profile remain installed.
     onActivation = {
-      autoUpdate = mkDefault false;
+      autoUpdate = mkDefault true;
       cleanup = mkDefault "none";
-      upgrade = mkDefault false;
+      upgrade = mkDefault true;
+      extraEnv = {
+        PATH = mkDefault activationPath;
+      };
     };
 
     # --- Cask Configuration -------------------------------------------------

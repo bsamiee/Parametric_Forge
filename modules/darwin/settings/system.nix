@@ -92,25 +92,39 @@ in {
 
   # Keep GUI-launched processes aligned with Nix/Home Manager PATH behavior.
   # This avoids "tool exists in shell but not in app-launched subprocesses".
-  launchd.user.envVariables.PATH = [
-    "${primaryUserHome}/.nix-profile/bin"
-    "${primaryUserHome}/.local/bin"
-    "${primaryUserHome}/bin"
-    "${primaryUserHome}/.dotnet/tools"
-    "${primaryUserHome}/.local/share/cargo/bin"
-    "${primaryUserHome}/.local/share/go/bin"
-    "${primaryUserHome}/.local/share/pnpm"
-    "${primaryUserHome}/Library/Application Support/fnm/aliases/default/bin"
-    "/etc/profiles/per-user/${primaryUser}/bin"
-    "/run/current-system/sw/bin"
-    "/nix/var/nix/profiles/default/bin"
-    "/opt/homebrew/bin"
-    "/opt/homebrew/sbin"
-    "/Applications/Rhino 8.app/Contents/Resources/bin"
-    "/usr/local/bin"
-    "/usr/bin"
-    "/bin"
-    "/usr/sbin"
-    "/sbin"
-  ];
+  launchd.user.envVariables = {
+    PATH = [
+      "${primaryUserHome}/.nix-profile/bin"
+      "${primaryUserHome}/.local/bin"
+      "${primaryUserHome}/bin"
+      "${primaryUserHome}/.dotnet/tools"
+      "${primaryUserHome}/.local/share/cargo/bin"
+      "${primaryUserHome}/.local/share/go/bin"
+      "${primaryUserHome}/.local/share/pnpm"
+      "${primaryUserHome}/Library/Application Support/fnm/aliases/default/bin"
+      "/etc/profiles/per-user/${primaryUser}/bin"
+      "/run/current-system/sw/bin"
+      "/nix/var/nix/profiles/default/bin"
+      "/opt/homebrew/bin"
+      "/opt/homebrew/sbin"
+      "/Applications/Rhino 8.app/Contents/Resources/bin"
+      "/usr/local/bin"
+      "/usr/bin"
+      "/bin"
+      "/usr/sbin"
+      "/sbin"
+    ];
+    DOCKER_HOST = "unix://${primaryUserHome}/.local/share/colima/default/docker.sock";
+    COLIMA_HOME = "${primaryUserHome}/.local/share/colima";
+    DOCKER_CONFIG = "${primaryUserHome}/.config/docker";
+    UV_PYTHON_PREFERENCE = "only-system";
+    UV_PYTHON_DOWNLOADS = "never";
+    UV_CACHE_DIR = "${primaryUserHome}/.cache/uv";
+    GH_CONFIG_DIR = "${primaryUserHome}/.config/gh";
+    PNPM_HOME = "${primaryUserHome}/.local/share/pnpm";
+    PAGER = "less";
+    GH_PAGER = "delta";
+    GIT_PAGER = "delta";
+    LESS = "-RFX";
+  };
 }
