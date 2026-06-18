@@ -53,7 +53,7 @@
         overlays = [self.overlays.default];
       };
     in {
-      inherit (pkgs) rasm-provision sqlean;
+      inherit (pkgs) duckdb rasm-provision sqlean;
       default = pkgs.rasm-provision;
     });
 
@@ -94,6 +94,44 @@
         grep -q '"services"' env.json
         grep -q '.artifacts/provisioning/rasm' env.json
         grep -q 'name: rasm-provision-' compose.yaml
+        touch "$out"
+      '';
+      rasm-provision-extensions-readonly = pkgs.runCommand "rasm-provision-extensions-readonly" {} ''
+        mkdir -p fake-root/libs/csharp
+        touch fake-root/pyproject.toml fake-root/Directory.Packages.props
+        RASM_ROOT="$PWD/fake-root" RASM_PROVISION_PGDUCKDB=1 ${pkgs.rasm-provision}/bin/rasm-provision extensions --json >extensions.json
+        ${pkgs.jq}/bin/jq -e '
+          .ok == true
+          and (.extensions | length > 50)
+          and ([.extensions[] | select(.required == true and .createOnVerify == true)] | length >= 7)
+          and ([.extensions[] | select(.service == "pgduckdb" and .extension == "pg_duckdb" and .required == true)] | length == 1)
+        ' extensions.json >/dev/null
+        test ! -e fake-root/.artifacts
+        touch "$out"
+      '';
+      rasm-provision-pgduckdb-readonly = pkgs.runCommand "rasm-provision-pgduckdb-readonly" {} ''
+        mkdir -p fake-root/libs/csharp
+        touch fake-root/pyproject.toml fake-root/Directory.Packages.props
+        RASM_ROOT="$PWD/fake-root" RASM_PROVISION_PGDUCKDB=1 ${pkgs.rasm-provision}/bin/rasm-provision env --json >env.json
+        RASM_ROOT="$PWD/fake-root" RASM_PROVISION_PGDUCKDB=1 ${pkgs.rasm-provision}/bin/rasm-provision plan >compose.yaml
+        ${pkgs.jq}/bin/jq -e '.services.pgduckdb.enabled == true and .RASM_PROVISION_PGDUCKDB == "1"' env.json >/dev/null
+        ${pkgs.docker-compose}/bin/docker-compose -f compose.yaml config >/dev/null
+        test ! -e fake-root/.artifacts
+        touch "$out"
+      '';
+      duckdb-smoke = pkgs.runCommand "duckdb-smoke" {} ''
+        ${pkgs.duckdb}/bin/duckdb --version | grep -q 'v1.5.3'
+        touch "$out"
+      '';
+      sqlite-extension-smoke = pkgs.runCommand "sqlite-extension-smoke" {} ''
+        rc="$TMPDIR/sqliterc"
+        cat >"$rc" <<'SQLITERC'
+        .load ${pkgs.sqlean}/lib/regexp${pkgs.stdenv.hostPlatform.extensions.sharedLibrary}
+        .load ${pkgs.sqlite-vec}/lib/vec0${pkgs.stdenv.hostPlatform.extensions.sharedLibrary}
+        .load ${pkgs.libspatialite}/lib/mod_spatialite${pkgs.stdenv.hostPlatform.extensions.sharedLibrary}
+        SQLITERC
+        ${pkgs.sqlite-interactive}/bin/sqlite3 -init "$rc" :memory: \
+          "select regexp_like('abc','a.c'); select vec_version(); select spatialite_version();" >/dev/null
         touch "$out"
       '';
     });

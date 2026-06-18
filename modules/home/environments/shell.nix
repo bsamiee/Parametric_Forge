@@ -18,9 +18,6 @@
     "${config.xdg.dataHome}/go/bin"
     "${config.xdg.dataHome}/pnpm"
 
-    # fnm default Node — stable symlink for non-interactive processes (Claude Code, MCP servers)
-    "$HOME/Library/Application Support/fnm/aliases/default/bin"
-
     # Nix-darwin managed paths (atuin, zoxide, etc. live here)
     "/etc/profiles/per-user/${config.home.username}/bin"
     "/run/current-system/sw/bin"

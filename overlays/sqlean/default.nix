@@ -11,23 +11,28 @@
   fetchzip,
 }: let
   version = "0.27.2";
+  system = stdenv.hostPlatform.system;
 
   platformAsset =
-    if stdenv.hostPlatform.isDarwin && stdenv.hostPlatform.isAarch64
+    if system == "aarch64-darwin"
     then {
       url = "https://github.com/nalgeon/sqlean/releases/download/${version}/sqlean-macos-arm64.zip";
+      hash = "sha256-7zH//98V7H3LCa/Z+CH1aldBOMMIjFaoV1sYI3fo3Ac=";
     }
-    else if stdenv.hostPlatform.isDarwin
+    else if system == "x86_64-darwin"
     then {
-      url = "https://github.com/nalgeon/sqlean/releases/download/${version}/sqlean-macos-x64.zip";
+      url = "https://github.com/nalgeon/sqlean/releases/download/${version}/sqlean-macos-x86.zip";
+      hash = "sha256-fLTH9zg/UCtp7mL3FB5ffiaiBgGoNTPEs5nAeyk5kos=";
     }
-    else if stdenv.hostPlatform.isLinux && stdenv.hostPlatform.isAarch64
+    else if system == "aarch64-linux"
     then {
       url = "https://github.com/nalgeon/sqlean/releases/download/${version}/sqlean-linux-arm64.zip";
+      hash = "sha256-F0xp9CZGNjW8kv+Gau3Wzah5ZwAFIn56G0yyPVBOZLU=";
     }
-    else if stdenv.hostPlatform.isLinux
+    else if system == "x86_64-linux"
     then {
-      url = "https://github.com/nalgeon/sqlean/releases/download/${version}/sqlean-linux-x64.zip";
+      url = "https://github.com/nalgeon/sqlean/releases/download/${version}/sqlean-linux-x86.zip";
+      hash = "sha256-DY/mLQ7mtyIYfgXRjn9b9ASKBNVxmiVLmpIF7ETKFho=";
     }
     else
       (
@@ -41,8 +46,7 @@ in
     inherit version;
 
     src = fetchzip {
-      inherit (platformAsset) url;
-      hash = "sha256-7zH//98V7H3LCa/Z+CH1aldBOMMIjFaoV1sYI3fo3Ac=";
+      inherit (platformAsset) url hash;
       stripRoot = false;
     };
 
@@ -68,6 +72,11 @@ in
       description = "Bundled SQLite extension libraries from SQLean";
       homepage = "https://github.com/nalgeon/sqlean";
       license = licenses.mit;
-      platforms = platforms.unix;
+      platforms = [
+        "aarch64-darwin"
+        "x86_64-darwin"
+        "aarch64-linux"
+        "x86_64-linux"
+      ];
     };
   }

@@ -12,19 +12,20 @@
   unzip,
 }: let
   version = "1.5.3";
+  system = stdenvNoCC.hostPlatform.system;
 
   platformAsset =
-    if stdenvNoCC.hostPlatform.isDarwin
+    if system == "aarch64-darwin" || system == "x86_64-darwin"
     then {
       url = "https://github.com/duckdb/duckdb/releases/download/v${version}/duckdb_cli-osx-universal.zip";
       hash = "sha256-rnmfEGrKG7dAsEBkSPE7qRVY1ZGXR1y2oPNJ224Xcho=";
     }
-    else if stdenvNoCC.hostPlatform.isLinux && stdenvNoCC.hostPlatform.isAarch64
+    else if system == "aarch64-linux"
     then {
       url = "https://github.com/duckdb/duckdb/releases/download/v${version}/duckdb_cli-linux-arm64.zip";
       hash = "sha256-XiOZQoeTZC6ZTxWExH1J9MWLe07CKX6kpSI1OmxVODU=";
     }
-    else if stdenvNoCC.hostPlatform.isLinux
+    else if system == "x86_64-linux"
     then {
       url = "https://github.com/duckdb/duckdb/releases/download/v${version}/duckdb_cli-linux-amd64.zip";
       hash = "sha256-NcrvH+y8jX4sB95P0s3vxRieybqeHMoij7GhxIzFKoo=";
@@ -64,6 +65,11 @@ in
       homepage = "https://duckdb.org/";
       license = licenses.mit;
       mainProgram = "duckdb";
-      platforms = platforms.unix;
+      platforms = [
+        "aarch64-darwin"
+        "x86_64-darwin"
+        "aarch64-linux"
+        "x86_64-linux"
+      ];
     };
   }

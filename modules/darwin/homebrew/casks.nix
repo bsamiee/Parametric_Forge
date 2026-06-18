@@ -11,7 +11,6 @@ _: {
     "1password"
     "1password-cli"
     "cleanshot"
-    "docker-desktop"
     "wezterm"
 
     # --- Productivity & Window Management -----------------------------------

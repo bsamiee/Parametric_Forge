@@ -12,6 +12,7 @@
   ...
 }: let
   darwinMinVersion = pkgs.stdenv.hostPlatform.darwinMinVersion or "14.0";
+  sharedLibExt = pkgs.stdenv.hostPlatform.extensions.sharedLibrary;
 
   nativeBuildTools = with pkgs; [
     clang
@@ -144,11 +145,20 @@
       export ARROW_HOME="${pkgs.arrow-cpp}"
       export OPENBLAS_DIR="${pkgs.openblas}"
       export ONNXRUNTIME_DIR="${pkgs.onnxruntime}"
-      if [ -e "${pkgs.onnxruntime}/lib/libonnxruntime.${pkgs.onnxruntime.version}.dylib" ]; then
-        export ONNXRUNTIME_LIB="${pkgs.onnxruntime}/lib/libonnxruntime.${pkgs.onnxruntime.version}.dylib"
-      else
-        export ONNXRUNTIME_LIB="${pkgs.onnxruntime}/lib/libonnxruntime.dylib"
-      fi
+      for candidate in \
+        "${pkgs.onnxruntime}/lib/libonnxruntime${sharedLibExt}.${pkgs.onnxruntime.version}" \
+        "${pkgs.onnxruntime}/lib/libonnxruntime.${pkgs.onnxruntime.version}${sharedLibExt}" \
+        "${pkgs.onnxruntime}/lib/libonnxruntime${sharedLibExt}"
+      do
+        if [ -e "$candidate" ]; then
+          export ONNXRUNTIME_LIB="$candidate"
+          break
+        fi
+      done
+      [ -n "''${ONNXRUNTIME_LIB:-}" ] || {
+        printf 'forge-scientific-env: cannot locate ONNX Runtime shared library under %s\n' "${pkgs.onnxruntime}" >&2
+        exit 1
+      }
 
       export PKG_CONFIG_PATH="${pkgConfigPath}''${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
       export CMAKE_PREFIX_PATH="${cmakePrefixPath}''${CMAKE_PREFIX_PATH:+:$CMAKE_PREFIX_PATH}"
@@ -176,7 +186,7 @@
     runtimeInputs = [forgeScientificEnv pkgs.uv];
     text = ''
       export UV_PROJECT_ENVIRONMENT="''${UV_PROJECT_ENVIRONMENT:-.venv-scientific}"
-      exec forge-scientific-env uv sync --only-group scientific "$@"
+      exec forge-scientific-env uv sync --locked --group scientific "$@"
     '';
   };
 in {

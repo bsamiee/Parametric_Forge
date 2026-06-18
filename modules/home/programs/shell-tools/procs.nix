@@ -5,7 +5,11 @@
 # Path          : /modules/home/programs/shell-tools/procs.nix
 # ----------------------------------------------------------------------------
 # Modern ps replacement with Dracula theme
-{pkgs, ...}:
+{
+  config,
+  pkgs,
+  ...
+}:
 # Dracula theme color reference (for understanding color mappings)
 # background    #15131F
 # current_line  #2A2640
@@ -232,7 +236,7 @@ let
 
     # --- Docker Configuration -----------------------------------------------
     docker = {
-      path = "unix:///var/run/docker.sock";
+      path = "unix://${config.xdg.dataHome}/colima/default/docker.sock";
     };
 
     # --- Pager Configuration ------------------------------------------------

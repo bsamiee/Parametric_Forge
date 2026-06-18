@@ -7,6 +7,7 @@
 # Node.js runtime and package tooling.
 {pkgs, ...}: {
   home.packages = with pkgs; [
+    nodejs_24 # Machine default Node runtime for agents and non-interactive tools
     pnpm_10 # Package manager - nix-managed for PATH stability
     prettier # Code formatter
     tailwindcss # Utility-first CSS framework

@@ -11,6 +11,7 @@
     ./actionlint.nix
     ./aria2.nix
     ./atuin.nix
+    ./ast-grep.nix
     ./bandwhich.nix
     ./bat.nix
     ./bottom.nix

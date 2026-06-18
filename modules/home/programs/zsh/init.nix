@@ -39,7 +39,7 @@
       # Note: SSH agent configured via ssh.nix IdentityAgent directive
 
       # fnm (Fast Node Manager) - sets default Node version for interactive shells
-      # Non-interactive processes get node via static path in home.sessionPath + launchd PATH
+      # Non-interactive agents get Node from the Nix-owned node-tools package.
       [[ -x /opt/homebrew/bin/fnm ]] && eval "$(/opt/homebrew/bin/fnm env)"
 
       # Alias tools to full paths for generated init scripts that call them by name
