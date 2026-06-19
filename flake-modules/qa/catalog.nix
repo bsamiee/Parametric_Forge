@@ -21,7 +21,9 @@ _: {
       "duckdb-smoke"
       "duckdb-extension-smoke"
       "sqlite-extension-smoke"
+      "sqlite-forge-smoke"
       "forge-provision-assets"
+      "forge-provision-tools-readonly"
       "forge-new-tool-smoke"
     ];
   };

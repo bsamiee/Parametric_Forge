@@ -38,10 +38,6 @@
       # Note: 1Password Shell Plugins (gh, aws, etc.) handled by programs._1password-shell-plugins
       # Note: SSH agent configured via ssh.nix IdentityAgent directive
 
-      # fnm (Fast Node Manager) - sets default Node version for interactive shells
-      # Non-interactive agents get Node from the Nix-owned node-tools package.
-      [[ -x /opt/homebrew/bin/fnm ]] && eval "$(/opt/homebrew/bin/fnm env)"
-
       # Alias tools to full paths for generated init scripts that call them by name
       alias atuin="${pkgs.atuin}/bin/atuin"
       alias zoxide="${pkgs.zoxide}/bin/zoxide"

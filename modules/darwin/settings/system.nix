@@ -100,7 +100,6 @@ in {
       "${primaryUserHome}/.dotnet/tools"
       "${primaryUserHome}/.local/share/cargo/bin"
       "${primaryUserHome}/.local/share/go/bin"
-      "${primaryUserHome}/.local/share/pnpm"
       "/etc/profiles/per-user/${primaryUser}/bin"
       "/run/current-system/sw/bin"
       "/nix/var/nix/profiles/default/bin"

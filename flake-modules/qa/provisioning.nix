@@ -12,6 +12,14 @@ _: {
         bash -n ${../../overlays/forge-provision/forge-provision.sh}
         bash -n ${../../overlays/forge-provision/bash/docker-projection.sh}
         shellcheck ${../../overlays/forge-provision/forge-provision.sh}
+        cp -R ${../../overlays/forge-provision} source-tree
+        chmod -R u+w source-tree
+        if bash source-tree/forge-provision.sh --json self-test >raw-source.out 2>raw-source.err; then
+          echo "raw source execution unexpectedly succeeded" >&2
+          exit 1
+        fi
+        grep -q 'source-tree execution is unsupported; use the packaged command' raw-source.err
+        grep -q 'From a consumer repo: use that repo' raw-source.err
         awk -v projection=${../../overlays/forge-provision/bash/docker-projection.sh} '
           $0 == "source \"$(catalog_path bash/docker-projection.sh)\"" {
             while ((getline line < projection) > 0) print line
@@ -57,7 +65,8 @@ _: {
           and .auth.agentPromptRequired == false
           and .portPolicy.mode == "auto"
           and (.services.timescale.dsnRedacted | contains("***"))
-          and (.paths.redacted == true)
+          and (.artifacts.generated | type == "array")
+          and (has("FORGE_PROVISION_PROJECT") | not)
         ' env.json >/dev/null
         ${forgePkgs.jq}/bin/jq -e '
           .schemaVersion == 3
@@ -85,12 +94,12 @@ _: {
           |
           .ok == true
           and .schemaVersion == 3
-          and (.extensions | length > 50)
-          and ([.extensions[] | select(.required == true and .createOnApply == true)] | length >= 7)
-          and ([.extensions[] | select(.service == "pgduckdb" and .extension == "pg_duckdb" and .required == true)] | length == 1)
-          and ([.extensions[] | select(.service == "timescale" and .extension == "pg_cron" and .required == true and .createOnApply == true and .preloadRequired == true and .sourcePackage != null)] | length == 1)
-          and ([.extensions[] | select(has("createPolicy") and has("riskClass") and has("sourcePackage"))] | length == ($root.extensions | length))
-          and ([.extensions[] | select(has("sourceRoute") and has("nixStatus") and has("probeKind") and has("capabilityRank") and has("externalAccess") and has("restartClass") and has("serviceProfile") and has("loadPolicy"))] | length == ($root.extensions | length))
+          and (.extensions.catalog | length > 50)
+          and ([.extensions.catalog[] | select(.required == true and .createOnApply == true)] | length >= 6)
+          and ([.extensions.catalog[] | select(.service == "pgduckdb" and .extension == "pg_duckdb" and .required == true)] | length == 1)
+          and ([.extensions.catalog[] | select(.service == "timescale" and .extension == "pg_cron" and .required == true and .createOnApply == true and .preloadRequired == true and .sourcePackage != null)] | length == 1)
+          and ([.extensions.catalog[] | select(has("createPolicy") and has("riskClass") and has("sourcePackage"))] | length == ($root.extensions.catalog | length))
+          and ([.extensions.catalog[] | select(has("sourceRoute") and has("nixStatus") and has("probeKind") and has("capabilityRank") and has("externalAccess") and has("restartClass") and has("serviceProfile") and has("loadPolicy"))] | length == ($root.extensions.catalog | length))
         ' extensions.json >/dev/null
         test ! -e fake-root/.artifacts
         touch "$out"
@@ -101,13 +110,36 @@ _: {
         touch fake-root/pyproject.toml fake-root/Directory.Packages.props
         FORGE_PROVISION_ROOT="$PWD/fake-root" FORGE_PROVISION_ALLOW_EPHEMERAL_PORTS=1 FORGE_PROVISION_PGDUCKDB=1 ${forgePkgs.forge-provision}/bin/forge-provision --json env >env.json
         FORGE_PROVISION_ROOT="$PWD/fake-root" FORGE_PROVISION_ALLOW_EPHEMERAL_PORTS=1 FORGE_PROVISION_PGDUCKDB=1 ${forgePkgs.forge-provision}/bin/forge-provision plan >compose.yaml
-        ${forgePkgs.jq}/bin/jq -e '.services.pgduckdb.enabled == true and .FORGE_PROVISION_PGDUCKDB == "1"' env.json >/dev/null
+        ${forgePkgs.jq}/bin/jq -e '.services.pgduckdb.enabled == true and (has("FORGE_PROVISION_PGDUCKDB") | not)' env.json >/dev/null
         ${forgePkgs.docker-compose}/bin/docker-compose -f compose.yaml config >/dev/null
         test ! -e fake-root/.artifacts
         touch "$out"
       '';
 
-      forge-provision-assets = forgePkgs.runCommand "forge-provision-assets" {nativeBuildInputs = [forgePkgs.duckdb forgePkgs.jq forgePkgs.sqlfluff forgePkgs.sqlite-interactive];} ''
+      forge-provision-tools-readonly = forgePkgs.runCommand "forge-provision-tools-readonly" {} ''
+        mkdir -p fake-root/libs/csharp
+        touch fake-root/pyproject.toml fake-root/Directory.Packages.props
+        FORGE_PROVISION_ROOT="$PWD/fake-root" FORGE_PROVISION_ALLOW_EPHEMERAL_PORTS=1 ${forgePkgs.forge-provision}/bin/forge-provision --json tools >tools.json
+        FORGE_PROVISION_ROOT="$PWD/fake-root" FORGE_PROVISION_ALLOW_EPHEMERAL_PORTS=1 ${forgePkgs.forge-provision}/bin/forge-provision tools --surface duckdb --json >duckdb.json
+        FORGE_PROVISION_ROOT="$PWD/fake-root" FORGE_PROVISION_ALLOW_EPHEMERAL_PORTS=1 ${forgePkgs.forge-provision}/bin/forge-provision --json tools --surface sqlite >sqlite.json
+        ${forgePkgs.jq}/bin/jq -e '
+          .schemaVersion == 3
+          and .command == "tools"
+          and .ok == true
+          and (.tools.surfaces.duckdb.ok == true)
+          and (.tools.surfaces.sqlite.ok == true)
+          and (.tools.summary.catalogRows >= 30)
+          and (has("generated") | not)
+          and (has("owned") | not)
+          and (has("containers") | not)
+        ' tools.json >/dev/null
+        ${forgePkgs.jq}/bin/jq -e '.tools.surfaces | keys == ["duckdb"]' duckdb.json >/dev/null
+        ${forgePkgs.jq}/bin/jq -e '.tools.surfaces | keys == ["sqlite"]' sqlite.json >/dev/null
+        test ! -e fake-root/.artifacts
+        touch "$out"
+      '';
+
+      forge-provision-assets = forgePkgs.runCommand "forge-provision-assets" {nativeBuildInputs = [forgePkgs.duckdb forgePkgs.jq forgePkgs.sqlfluff forgePkgs.sqlite-forge];} ''
         jq empty ${../../overlays/forge-provision/data}/*.json
         jq -s 'add | length == 36 and (map(.surface + ":" + .extension) | unique | length) == 36' \
           ${../../overlays/forge-provision/data/duckdb-extensions.json} \
@@ -118,9 +150,7 @@ _: {
           | jq -Rsc -f ${../../overlays/forge-provision/jq/configured-images.jq} >/dev/null
         printf 'timescale\tpostgis\tok\t3.6\tgeospatial\trequired\n' \
           | jq -Rsc -f ${../../overlays/forge-provision/jq/apply-rows.jq} >/dev/null
-        printf 'timescale\tpostgis\tgeospatial\t1\t1\textension\timage:timescale\t0\t1\ttimescale\tlocal-extension\t1\t0\t0\t0\t0\tapply-create\timage:timescale\timage\truntime-probed\tcreate-extension\trequired\tnone\tnone\ttimescale\timage:tag\tapply-create\n' \
-          | jq -Rsc -f ${../../overlays/forge-provision/jq/extension-catalog.jq} >/dev/null
-        jq -s -f ${../../overlays/forge-provision/jq/tool-surface-extension-catalog.jq} \
+        jq -s 'add | sort_by(.surface, .category, .extension) | all(.[]; .kind == "tool-extension" and .surface != null and .database != null)' \
           ${../../overlays/forge-provision/data/duckdb-extensions.json} \
           ${../../overlays/forge-provision/data/sqlite-extensions.json} >/dev/null
         jq -nc -f ${../../overlays/forge-provision/jq/port-record.jq} \
@@ -146,25 +176,13 @@ _: {
           --argjson diagnostic true \
           | jq -e '.status.kubernetes == false and .status.dockerSocketRedacted == true and .status.containerdSocketRedacted == true and ([.. | scalars? | tostring | select(test("/Users|docker.sock"))] | length == 0)' >/dev/null
         duckdb :memory: <${../../overlays/forge-provision/sql/duckdb-extension-probe.sql} >/dev/null
-        rc="$TMPDIR/sqliterc"
-        cat >"$rc" <<'SQLITERC'
-        .load ${forgePkgs.sqlean}/lib/regexp${forgePkgs.stdenv.hostPlatform.extensions.sharedLibrary}
-        .load ${forgePkgs.sqlean}/lib/uuid${forgePkgs.stdenv.hostPlatform.extensions.sharedLibrary}
-        .load ${forgePkgs.sqlean}/lib/stats${forgePkgs.stdenv.hostPlatform.extensions.sharedLibrary}
-        .load ${forgePkgs.sqlean}/lib/text${forgePkgs.stdenv.hostPlatform.extensions.sharedLibrary}
-        .load ${forgePkgs.sqlean}/lib/time${forgePkgs.stdenv.hostPlatform.extensions.sharedLibrary}
-        .load ${forgePkgs.sqlean}/lib/crypto${forgePkgs.stdenv.hostPlatform.extensions.sharedLibrary}
-        .load ${forgePkgs.sqlean}/lib/math${forgePkgs.stdenv.hostPlatform.extensions.sharedLibrary}
-        .load ${forgePkgs.sqlite-vec}/lib/vec0${forgePkgs.stdenv.hostPlatform.extensions.sharedLibrary}
-        .load ${forgePkgs.libspatialite}/lib/mod_spatialite${forgePkgs.stdenv.hostPlatform.extensions.sharedLibrary}
-        SQLITERC
-        sqlite3 -init "$rc" :memory: <${../../overlays/forge-provision/sql/sqlite-extension-probe.sql} >/dev/null
-        sed -e "s/__FORGE_EXTENSION_VALUES__/(1,'postgis','geospatial',true,true)/" \
+        SQLITE_FORGE_PROFILE=safe sqlite-forge -bail :memory: <${../../overlays/forge-provision/sql/sqlite-extension-probe.sql} >/dev/null
+        sed -e "s/__FORGE_EXTENSION_VALUES__/(1,'postgis','geospatial',true,true,'apply-create','apply-create','postgis-full-version','postgis-full-version',false)/" \
           -e "s/__FORGE_CONTEXT_SQL__/'ctx'/g" \
           -e "s/__FORGE_SERVICE_SQL__/'timescale'/g" \
           ${../../overlays/forge-provision/sql/apply-postgres.sql} >apply-postgres.sql
         sqlfluff parse --dialect postgres apply-postgres.sql >/dev/null
-        sed -e "s/__FORGE_EXTENSION_VALUES__/(1,'postgis','geospatial',true,true)/" \
+        sed -e "s/__FORGE_EXTENSION_VALUES__/(1,'postgis','geospatial',true,true,'apply-create','apply-create','postgis-full-version','postgis-full-version',false)/" \
           -e "s/__FORGE_SERVICE_SQL__/'timescale'/g" \
           ${../../overlays/forge-provision/sql/check-postgres.sql} >check-postgres.sql
         sqlfluff parse --dialect postgres check-postgres.sql >/dev/null

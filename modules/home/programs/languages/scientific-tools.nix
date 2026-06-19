@@ -147,7 +147,8 @@
     }
 
     if [ -z "''${UV_PROJECT_ENVIRONMENT:-}" ]; then
-      export UV_PROJECT_ENVIRONMENT="$(forge_python_env_default)"
+      UV_PROJECT_ENVIRONMENT="$(forge_python_env_default)"
+      export UV_PROJECT_ENVIRONMENT
     fi
   '';
   forgeScientificEnv = pkgs.writeShellApplication {

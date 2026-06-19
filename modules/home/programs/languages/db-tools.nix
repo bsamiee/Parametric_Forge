@@ -18,47 +18,6 @@
     done
     runHook postInstall
   '';
-  sharedLibExt = pkgs.stdenv.hostPlatform.extensions.sharedLibrary;
-  sqleanLibDir = "${pkgs.sqlean}/lib";
-  sqliteVecLib = "${pkgs.sqlite-vec}/lib/vec0${sharedLibExt}";
-  spatialiteLib = "${pkgs.libspatialite}/lib/mod_spatialite${sharedLibExt}";
-  sqliteForge = pkgs.writeShellApplication {
-    name = "sqlite-forge";
-    runtimeInputs = [pkgs.coreutils pkgs.sqlite-interactive];
-    text = ''
-      rc="$(mktemp "''${TMPDIR:-/tmp}/sqlite-forge.XXXXXX")"
-      cleanup() { rm -f -- "$rc"; }
-      trap cleanup EXIT INT TERM
-      profile="''${SQLITE_FORGE_PROFILE:-safe}"
-      case "$profile" in
-        safe) modules=(regexp uuid stats text time crypto math) ;;
-        extended) modules=(regexp uuid stats text time crypto math define vsv fuzzy ipaddr) ;;
-        fileio) modules=(regexp uuid stats text time crypto math fileio) ;;
-        all) modules=(regexp uuid stats text time crypto math define vsv fuzzy ipaddr fileio) ;;
-        *)
-          printf 'sqlite-forge: unknown SQLITE_FORGE_PROFILE=%s; expected safe, extended, fileio, or all\n' "$profile" >&2
-          exit 2
-          ;;
-      esac
-
-      {
-        cat <<'SQLITERC'
-      -- SQLite Forge extension profile
-      SQLITERC
-        for module in "''${modules[@]}"; do
-          printf '.load ${sqleanLibDir}/%s${sharedLibExt}\n' "$module"
-        done
-        cat <<'SQLITERC'
-      .load ${sqliteVecLib}
-      .load ${spatialiteLib}
-      .mode column
-      .headers on
-      .nullvalue NULL
-      SQLITERC
-      } >"$rc"
-      exec sqlite3 -init "$rc" "$@"
-    '';
-  };
 in {
   home.packages = with pkgs; [
     sqlite-interactive # Enhanced sqlite3 shell with line editing and metadata helpers
@@ -84,7 +43,7 @@ in {
     pgmetrics # PostgreSQL metric collection CLI
     sqlean # Extension library bundle (regexp, uuid, stats, etc.)
     postgres-language-server # Postgres LSP; includes postgres-language-server and postgrestools
-    sqliteForge # Explicit SQLite shell with SQLean, sqlite-vec, and SpatiaLite loaded
+    sqlite-forge # Explicit SQLite shell with SQLean, sqlite-vec, and SpatiaLite loaded
   ];
 
   home.file.".sqliterc".text = lib.concatStringsSep "\n" [

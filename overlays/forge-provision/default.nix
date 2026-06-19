@@ -9,20 +9,34 @@
   coreutils,
   docker-client,
   docker-compose,
+  duckdb,
   jq,
   lib,
   lsof,
   runCommand,
+  sqlite-forge,
   writeShellApplication,
 }: let
+  src = lib.fileset.toSource {
+    root = ./.;
+    fileset = lib.fileset.unions [
+      ./forge-provision.sh
+      ./bash
+      ./data
+      ./jq
+      ./sql
+    ];
+  };
   app = writeShellApplication {
     name = "forge-provision";
     runtimeInputs = [
       coreutils
       docker-client
       docker-compose
+      duckdb
       jq
       lsof
+      sqlite-forge
     ];
     bashOptions = ["errexit" "errtrace" "nounset" "pipefail"];
     meta = {
@@ -36,7 +50,7 @@
         "x86_64-linux"
       ];
     };
-    text = builtins.readFile ./forge-provision.sh;
+    text = builtins.readFile "${src}/forge-provision.sh";
   };
 in
   runCommand "forge-provision" {
@@ -45,8 +59,8 @@ in
     mkdir -p "$out"
     cp -R ${app}/. "$out/"
     mkdir -p "$out/share/forge-provision"
-    cp -R ${./bash} "$out/share/forge-provision/bash"
-    cp -R ${./data} "$out/share/forge-provision/data"
-    cp -R ${./jq} "$out/share/forge-provision/jq"
-    cp -R ${./sql} "$out/share/forge-provision/sql"
+    cp -R ${src}/bash "$out/share/forge-provision/bash"
+    cp -R ${src}/data "$out/share/forge-provision/data"
+    cp -R ${src}/jq "$out/share/forge-provision/jq"
+    cp -R ${src}/sql "$out/share/forge-provision/sql"
   ''

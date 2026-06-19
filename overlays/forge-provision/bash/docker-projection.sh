@@ -491,27 +491,25 @@ apply_service_extensions() {
 }
 
 check_rows() {
-  local service disabled_row
+  local service
   for service in "${service_order[@]}"; do
     if service_enabled "$service"; then
       check_service_extensions "$service"
     else
-      disabled_row="${service_disabled_apply_row[$service]}"
-      [[ -z "$disabled_row" ]] || printf '%s\n' "$disabled_row"
+      disabled_service_apply_rows "$service"
     fi
   done
   return 0
 }
 
 apply_rows() {
-  local service handler disabled_row
+  local service handler
   for service in "${service_order[@]}"; do
     if service_enabled "$service"; then
       handler="${service_apply_handler[$service]}"
       "$handler" "$service"
     else
-      disabled_row="${service_disabled_apply_row[$service]}"
-      [[ -z "$disabled_row" ]] || printf '%s\n' "$disabled_row"
+      disabled_service_apply_rows "$service"
     fi
   done
   return 0
@@ -622,7 +620,25 @@ generated_files_json() {
 }
 
 generated_artifacts_json() {
-  jq -nc --argjson generated "$(generated_files_json)" '{generated: $generated}'
+  jq -nc --argjson generated "$(generated_files_json)" '{generated: $generated, plan: null}'
+}
+
+empty_resources_json() {
+  jq -nc '{counts: {}, owned: {containers: [], volumes: [], networks: []}, images: [], dockerDisk: [], runtime: {}}'
+}
+
+extension_envelope_json() {
+  local catalog="${1:-[]}"
+  local results="${2:-[]}"
+  local summary="${3:-{}}"
+  jq -nc --argjson catalog "$catalog" --argjson results "$results" --argjson summary "$summary" \
+    '{catalog: $catalog, results: $results, summary: $summary}'
+}
+
+tools_envelope_json() {
+  local surfaces="${1:-{}}"
+  local summary="${2:-{}}"
+  jq -nc --argjson surfaces "$surfaces" --argjson summary "$summary" '{surfaces: $surfaces, summary: $summary}'
 }
 
 owned_containers_json() {
@@ -862,9 +878,12 @@ emit_stack_json() {
     --argjson portPolicy "$(port_policy_json)" \
     --argjson services "$(service_records_json)" \
     --argjson warnings "$(warnings_json)" \
+    --argjson resources "$(empty_resources_json)" \
     --argjson artifacts "$(generated_artifacts_json)" \
+    --argjson extensionsEnvelope "$(extension_envelope_json)" \
+    --argjson toolsEnvelope "$(tools_envelope_json)" \
     "$@" \
-    "{schemaVersion: \$schemaVersion, command: \$command, ok: \$ok, project: \$project, auth: \$auth, portPolicy: \$portPolicy, services: \$services, warnings: \$warnings, artifacts: \$artifacts} | $extra_filter"
+    "{schemaVersion: \$schemaVersion, command: \$command, ok: \$ok, warnings: \$warnings, error: null, project: \$project, auth: \$auth, portPolicy: \$portPolicy, services: \$services, ports: [], resources: \$resources, artifacts: \$artifacts, extensions: \$extensionsEnvelope, tools: \$toolsEnvelope} | $extra_filter"
   json_result_emitted=true
 }
 

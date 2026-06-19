@@ -8,7 +8,6 @@
 _: {
   homebrew.brews = [
     # --- System Utilities ---------------------------------------------------
-    "fnm" # Fast Node version manager (per-project Node versions)
     "defaultbrowser" # CLI tool for setting default browser
     "tag" # macOS file tagging CLI
     "blueutil" # Bluetooth management

@@ -104,12 +104,12 @@ someFnWithSSL = args: ...  # Function spam
 - Package shell CLIs with `writeShellApplication` when they need declared runtime tools, ShellCheck integration, or a stable Home Manager-installed binary.
 
 ### Local Provisioning
-- `forge-provision` is the canonical Forge-owned local provisioning and debugging command. The overlay package owns the implementation; Home Manager only installs that derivation. Rasm campaign work enters through `uv run python -m tools.assay provision <verb>`; direct `forge-provision`, `psql`, `paths`, `prune`, `self-test`, Docker/Compose, and diagnostic JSON are Forge-level debugging surfaces.
+- `forge-provision` is the canonical Forge-owned local provisioning and debugging command. The overlay package owns the implementation; Home Manager only installs that derivation. Use the packaged executable or `nix run .#forge-provision -- <command>`, never `bash overlays/forge-provision/forge-provision.sh`. Rasm campaign work enters through `uv run python -m tools.assay provision <verb>`; direct `forge-provision`, `psql`, `paths`, `prune`, `self-test`, Docker/Compose, and diagnostic JSON are Forge-level debugging surfaces.
 - Clean renames are preferred over compatibility shims. Do not keep retired provisioning command names as aliases, wrappers, fallbacks, or silent environment-variable compatibility.
 - Provisioning commands are agent-first and noninteractive: no host `sudo`, no keychain prompt, no DB password prompt, and no Docker credential-helper dependency for public images.
 - Read-only provisioning commands avoid durable repo writes unless the command explicitly documents state creation.
-- Home Manager DB tooling is client/tooling-owned: `psql`, `pg_dump`, `pg_restore`, `pg_isready`, optional `pg_config`, SQLFluff/Postgres LSP, DuckDB, SQLite/SQLean, SpatiaLite, and sqlite-vec. PostgreSQL server extensions stay Docker-owned by `forge-provision`; `pg_cron` is required only on the Timescale service unless the service posture changes.
-- Forge provisioning JSON is schema v2 only. Do not add schema-v1 emitters or compatibility adapters. Doctor and extension JSON expose sanitized runtime booleans/kinds and catalog metadata only; raw sockets, Docker config paths, helper names, logs, DSNs, token material, mount paths, and host absolute paths stay out of agent-facing JSON.
+- Home Manager DB tooling is client/tooling-owned: `psql`, `pg_dump`, `pg_restore`, `pg_isready`, optional `pg_config`, SQLFluff/Postgres LSP, DuckDB, SQLite/SQLean, SpatiaLite, and sqlite-vec. PostgreSQL server extensions stay Docker-owned by `forge-provision`; image-specific shared-preload requirements may include pg_cron, but `pg_cron` extension creation stays row-gated and opt-in.
+- Forge provisioning JSON is schema v3 only. Do not add schema-v1/v2 emitters or compatibility adapters. Doctor and extension JSON expose sanitized runtime booleans/kinds and catalog metadata only; raw sockets, Docker config paths, helper names, logs, DSNs, token material, mount paths, and host absolute paths stay out of agent-facing JSON.
 
 ### Python (Secondary)
 - Python 3.15+ only (never older)

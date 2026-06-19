@@ -34,5 +34,10 @@ final: prev: {
   };
   duckdb = prev.callPackage ./duckdb {};
   forge-provision = final.callPackage ./forge-provision {};
+  pnpm = final.pnpm_11;
+  pnpm_11 = import ./pnpm {
+    inherit (prev) fetchurl pnpm_11;
+  };
+  sqlite-forge = final.callPackage ./sqlite-forge {};
   sqlean = prev.callPackage ./sqlean {};
 }

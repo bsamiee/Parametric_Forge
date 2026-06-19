@@ -16,7 +16,6 @@
     "$HOME/.dotnet/tools"
     "${config.xdg.dataHome}/cargo/bin"
     "${config.xdg.dataHome}/go/bin"
-    "${config.xdg.dataHome}/pnpm"
 
     # Nix-darwin managed paths (atuin, zoxide, etc. live here)
     "/etc/profiles/per-user/${config.home.username}/bin"
@@ -26,7 +25,7 @@
     # Application paths
     "/Applications/Rhino 8.app/Contents/Resources/bin"
   ];
-  # Note: pnpm installed via nix for PATH stability; PNPM_HOME for global bins
+  # Note: pnpm installed via nix for PATH stability; PNPM_HOME is data/config only.
 
   home.sessionVariables = {
     # --- Shell Internals ----------------------------------------------------

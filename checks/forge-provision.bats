@@ -56,7 +56,21 @@ write_lock_owner() {
   run --separate-stderr "$FORGE_PROVISION_BIN" --json --diagnostic-json self-test
   [ "$status" -eq 2 ]
   [ "$stderr" = "" ]
-  jq -e '.ok == false and .error.code == "usage"' <<<"$output" >/dev/null
+  jq -e '.ok == false and .error.code == "usage" and (.resources | type == "object") and (.artifacts | type == "object") and (.extensions | type == "object") and (.tools | type == "object")' <<<"$output" >/dev/null
+}
+
+@test "rejects duplicate global json with specific message" {
+  run --separate-stderr "$FORGE_PROVISION_BIN" --json --json env
+  [ "$status" -eq 2 ]
+  [ "$stderr" = "" ]
+  jq -e '.ok == false and .error.code == "usage" and (.error.message | contains("duplicate --json")) and (.resources | type == "object") and (.tools | type == "object")' <<<"$output" >/dev/null
+}
+
+@test "rejects retired verify with corrective command guidance" {
+  run --separate-stderr "$FORGE_PROVISION_BIN" --json verify
+  [ "$status" -eq 2 ]
+  [ "$stderr" = "" ]
+  jq -e '.ok == false and .command == "verify" and (.error.message | contains("verify is retired")) and (.error.message | contains("use check")) and (.error.message | contains("apply"))' <<<"$output" >/dev/null
 }
 
 @test "rejects retired self-test alias" {
@@ -82,11 +96,11 @@ write_lock_owner() {
 }
 
 @test "global json form works for read-only schema-v3 verbs" {
-  for verb in env plan extensions paths doctor ports inventory status self-test; do
+  for verb in env plan extensions tools paths doctor ports inventory status self-test; do
     run --separate-stderr "$FORGE_PROVISION_BIN" --json "$verb"
     [ "$status" -eq 0 ]
     [ "$stderr" = "" ]
-    jq -e --arg verb "$verb" '.schemaVersion == 3 and .command == $verb' <<<"$output" >/dev/null
+    jq -e --arg verb "$verb" '.schemaVersion == 3 and .command == $verb and (.warnings | type == "array") and (.resources | type == "object") and (.artifacts | type == "object") and (.extensions | type == "object") and (.tools | type == "object") and (has("generated") | not) and (has("owned") | not) and (has("containers") | not)' <<<"$output" >/dev/null
     assert_no_litter
   done
 }
@@ -95,7 +109,7 @@ write_lock_owner() {
   run --separate-stderr "$FORGE_PROVISION_BIN" --diagnostic-json paths
   [ "$status" -eq 0 ]
   [ "$stderr" = "" ]
-  jq -e '.schemaVersion == 3 and .command == "paths" and all(.generated[]; has("path") | not) and all(.generated[]; .pathRedacted == true)' <<<"$output" >/dev/null
+  jq -e '.schemaVersion == 3 and .command == "paths" and all(.artifacts.generated[]; has("path") | not) and all(.artifacts.generated[]; .pathRedacted == true)' <<<"$output" >/dev/null
   [[ "$output" != *"$FORGE_PROVISION_ROOT"* ]]
   assert_no_litter
 
@@ -221,7 +235,7 @@ write_lock_owner() {
   [ "$status" -eq 0 ]
   [ "$stderr" = "" ]
   jq -e '
-    [.extensions[] | select(
+    [.extensions.catalog[] | select(
       .service == "timescale"
       and .extension == "pg_cron"
       and .required == true
@@ -232,7 +246,7 @@ write_lock_owner() {
       and .sourcePackage != null
       and .sourceRoute != null
       and .nixStatus != null
-      and .probeKind == "scheduler"
+      and .probeKind == "pg-cron-scheduler"
       and .capabilityRank == "required"
       and .externalAccess == "none"
       and .restartClass == "shared-preload"
@@ -242,7 +256,7 @@ write_lock_owner() {
     )] | length == 1
   ' <<<"$output" >/dev/null
   jq -e '
-    all(.extensions[];
+    all(.extensions.catalog[];
       has("sourceRoute")
       and has("sourceKind")
       and has("nixStatus")
@@ -263,7 +277,7 @@ write_lock_owner() {
   [ "$status" -eq 0 ]
   [ "$stderr" = "" ]
   jq -e '
-    any(.extensions[];
+    any(.extensions.catalog[];
       .service == "search"
       and .extension == "vector"
       and .sourceRoute == "image:paradedb/paradedb"
@@ -277,7 +291,7 @@ write_lock_owner() {
   [ "$status" -eq 0 ]
   [ "$stderr" = "" ]
   jq -e '
-    any(.extensions[];
+    any(.extensions.catalog[];
 	      .service == "duckdb"
 	      and .extension == "ducklake"
 	      and .kind == "tool-extension"
@@ -286,12 +300,12 @@ write_lock_owner() {
       and .admission == "catalog-only"
       and .loadPolicy == "catalog-only"
     )
-	    and any(.extensions[];
+	    and any(.extensions.catalog[];
 	      .service == "duckdb"
 	      and .extension == "postgres_scanner"
 	      and (.aliases | index("postgres"))
 	    )
-	    and any(.extensions[];
+	    and any(.extensions.catalog[];
 	      .service == "sqlite"
 	      and .extension == "sqlite-vec"
 	      and .kind == "tool-extension"
@@ -332,12 +346,56 @@ write_lock_owner() {
   [ "$status" -eq 0 ]
   [ "$stderr" = "" ]
   jq -e '
-    [.extensions[] | select(
+    [.extensions.catalog[] | select(
       .service == "timescale"
       and .extension == "pg_cron"
       and .required == false
       and .createOnApply == false
-      and .probeKind == "scheduler"
+      and .probeKind == "pg-cron-scheduler"
+    )] | length == 1
+  ' <<<"$output" >/dev/null
+  jq -e '
+    [.extensions.catalog[] | select(.service == "search" and .extension == "pg_cron")]
+    | length == 0
+  ' <<<"$output" >/dev/null
+}
+
+@test "pg cron auto mode is rejected instead of silently disabled" {
+  run --separate-stderr env FORGE_PROVISION_PG_CRON=auto "$FORGE_PROVISION_BIN" --json extensions
+  [ "$status" -ne 0 ]
+  [ "$stderr" = "" ]
+  jq -e '.ok == false and (.error.message | contains("FORGE_PROVISION_PG_CRON must be 0 or 1"))' <<<"$output" >/dev/null
+  assert_no_litter
+}
+
+@test "vectorscale catalog is opt-in without shared preload" {
+  run --separate-stderr env FORGE_PROVISION_VECTORSCALE=0 "$FORGE_PROVISION_BIN" --json extensions
+  [ "$status" -eq 0 ]
+  [ "$stderr" = "" ]
+  jq -e '
+    [.extensions.catalog[] | select(
+      .service == "timescale"
+      and .extension == "vectorscale"
+      and .required == false
+      and .createOnApply == false
+      and .requiresSharedPreload == false
+      and .restartClass == "none"
+      and .admission == "env-gated"
+    )] | length == 1
+  ' <<<"$output" >/dev/null
+
+  run --separate-stderr env FORGE_PROVISION_VECTORSCALE=1 "$FORGE_PROVISION_BIN" --json extensions
+  [ "$status" -eq 0 ]
+  [ "$stderr" = "" ]
+  jq -e '
+    [.extensions.catalog[] | select(
+      .service == "timescale"
+      and .extension == "vectorscale"
+      and .required == true
+      and .createOnApply == true
+      and .requiresSharedPreload == false
+      and .createPolicy == "apply-create"
+      and .loadPolicy == "apply-create"
     )] | length == 1
   ' <<<"$output" >/dev/null
 }
@@ -349,7 +407,7 @@ write_lock_owner() {
   jq -e '
     .ok == true
     and .command == "plan"
-    and .plan.composeYaml == "redacted"
+    and .artifacts.plan.composeYaml == "redacted"
     and .portPolicy.seedFingerprint != null
     and (.portPolicy.seed? == null)
     and (.auth.agentPromptRequired == false)
@@ -381,7 +439,7 @@ write_lock_owner() {
   [ "$status" -eq 0 ]
   [ "$stderr" = "" ]
   [[ "$output" != *"postgres://postgres@127.0.0.1"* ]]
-  jq -e '.FORGE_PROVISION_TIMESCALE_DSN | contains("***")' <<<"$output" >/dev/null
+  jq -e '(.services.timescale.dsnRedacted | contains("***")) and (has("FORGE_PROVISION_TIMESCALE_DSN") | not)' <<<"$output" >/dev/null
 }
 
 @test "text plan does not point missing generated secrets at dev null" {
@@ -397,11 +455,11 @@ write_lock_owner() {
   [ "$status" -eq 0 ]
   [ "$stderr" = "" ]
   jq -e '
-    .runtime.forgeProvision.schemaVersion == 3
-    and (.runtime.jq.present == true)
-    and (.runtime.listenerProbeMethod | type == "string")
-    and (.docker.hostConfig.credentialHelperPresent | type == "boolean")
-    and (.docker.hostConfig | has("path") | not)
+    .resources.runtime.forgeProvision.schemaVersion == 3
+    and (.resources.runtime.jq.present == true)
+    and (.resources.runtime.listenerProbeMethod | type == "string")
+    and (.resources.runtime.docker.hostConfig.credentialHelperPresent | type == "boolean")
+    and (.resources.runtime.docker.hostConfig | has("path") | not)
   ' <<<"$output" >/dev/null
   [[ "$output" != *"docker.sock"* ]]
   [[ "$output" != *"DOCKER_CONFIG"* ]]
@@ -423,9 +481,9 @@ EOF
   [ "$stderr" = "" ]
   jq -e '
     .ok == true
-    and .docker.policy.status == "rejected"
-    and .docker.policy.reason == "explicit Docker context cannot be inspected"
-    and .docker.endpointKind == "unknown"
+    and .resources.runtime.docker.policy.status == "rejected"
+    and .resources.runtime.docker.policy.reason == "explicit Docker context cannot be inspected"
+    and .resources.runtime.docker.endpointKind == "unknown"
   ' <<<"$output" >/dev/null
   [[ "$output" != *"docker.sock"* ]]
   [[ "$output" != *"/Users/"* ]]

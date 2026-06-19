@@ -7,8 +7,8 @@
 # Node.js runtime and package tooling.
 {pkgs, ...}: {
   home.packages = with pkgs; [
-    nodejs_24 # Machine default Node runtime for agents and non-interactive tools
-    pnpm_10 # Package manager - nix-managed for PATH stability
+    nodejs_26 # Current nixpkgs Node line for agents and non-interactive tools
+    pnpm_11 # Major-pinned package manager for PATH and store-format stability
     prettier # Code formatter
     tailwindcss # Utility-first CSS framework
     typescript-go # TypeScript native-preview LSP (provides `tsgo`)

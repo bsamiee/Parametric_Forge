@@ -15,7 +15,10 @@
     forgeRequiredCheckNames,
     system,
     ...
-  }: {
+  }: let
+    smokeHasPgloader = system != "x86_64-darwin";
+    smokeHasParquetTools = system != "x86_64-darwin";
+  in {
     checks = {
       duckdb-smoke = forgePkgs.testers.testVersion {
         package = forgePkgs.duckdb;
@@ -32,65 +35,61 @@
       '';
 
       sqlite-extension-smoke = forgePkgs.runCommand "sqlite-extension-smoke" {} ''
-        rc="$TMPDIR/sqliterc"
-        cat >"$rc" <<'SQLITERC'
-        .load ${forgePkgs.sqlean}/lib/regexp${forgePkgs.stdenv.hostPlatform.extensions.sharedLibrary}
-        .load ${forgePkgs.sqlean}/lib/uuid${forgePkgs.stdenv.hostPlatform.extensions.sharedLibrary}
-        .load ${forgePkgs.sqlean}/lib/stats${forgePkgs.stdenv.hostPlatform.extensions.sharedLibrary}
-        .load ${forgePkgs.sqlean}/lib/text${forgePkgs.stdenv.hostPlatform.extensions.sharedLibrary}
-        .load ${forgePkgs.sqlean}/lib/time${forgePkgs.stdenv.hostPlatform.extensions.sharedLibrary}
-        .load ${forgePkgs.sqlean}/lib/crypto${forgePkgs.stdenv.hostPlatform.extensions.sharedLibrary}
-        .load ${forgePkgs.sqlean}/lib/math${forgePkgs.stdenv.hostPlatform.extensions.sharedLibrary}
-        .load ${forgePkgs.sqlite-vec}/lib/vec0${forgePkgs.stdenv.hostPlatform.extensions.sharedLibrary}
-        .load ${forgePkgs.libspatialite}/lib/mod_spatialite${forgePkgs.stdenv.hostPlatform.extensions.sharedLibrary}
-        SQLITERC
-        ${forgePkgs.sqlite-interactive}/bin/sqlite3 -init "$rc" :memory: \
+        ${forgePkgs.sqlite-forge}/bin/sqlite-forge :memory: \
           "select regexp_like('abc','a.c'); select vec_version(); select spatialite_version();" >/dev/null
+        touch "$out"
+      '';
+
+      sqlite-forge-smoke = forgePkgs.runCommand "sqlite-forge-smoke" {} ''
+        SQLITE_FORGE_PROFILE=safe ${forgePkgs.sqlite-forge}/bin/sqlite-forge -bail -json :memory: \
+          "select regexp_like('abc','a.c') as regexp_ok, vec_version() is not null as vec_ok, spatialite_version() is not null as spatialite_ok;" \
+          | ${forgePkgs.jq}/bin/jq -e '.[0].regexp_ok == 1 and .[0].vec_ok == 1 and .[0].spatialite_ok == 1' >/dev/null
         touch "$out"
       '';
 
       forge-new-tool-smoke =
         forgePkgs.runCommand "forge-new-tool-smoke" {
-          nativeBuildInputs = with forgePkgs; [
-            usql
-            pgcli
-            litecli
-            sqruff
-            pgformatter
-            pg_activity
-            pgmetrics
-            qsv
-            miller
-            csvlens
-            atlas
-            pgroll
-            pgloader
-            pgbadger
-            parquet-tools
-            minio-client
-            s5cmd
-            hurl
-            grpcurl
-            taplo
-            typos
-            cosign
-            notation
-            oras
-            regctl
-            syft
-            trivy
-            grype
-            docker-buildx
-            kind
-            kubectl-cnpg
-            pluto
-            kubent
-            conftest
-            kube-score
-            kubescape
-            kube-linter
-            gmsh
-          ];
+          nativeBuildInputs = with forgePkgs;
+            [
+              usql
+              pgcli
+              litecli
+              sqruff
+              pgformatter
+              pg_activity
+              pgmetrics
+              qsv
+              miller
+              csvlens
+              atlas
+              pgroll
+              pgbadger
+              minio-client
+              s5cmd
+              hurl
+              grpcurl
+              taplo
+              typos
+              cosign
+              notation
+              oras
+              regctl
+              syft
+              trivy
+              grype
+              docker-buildx
+              kind
+              kubectl-cnpg
+              pluto
+              kubent
+              conftest
+              kube-score
+              kubescape
+              kube-linter
+              gmsh
+            ]
+            ++ forgePkgs.lib.optionals smokeHasPgloader [pgloader]
+            ++ forgePkgs.lib.optionals smokeHasParquetTools [parquet-tools];
         } ''
           usql --version >/dev/null
           pgcli --version >/dev/null
@@ -104,9 +103,9 @@
            csvlens --version >/dev/null
            atlas version >/dev/null
            pgroll --version >/dev/null
-           pgloader --version >/dev/null
+           ${forgePkgs.lib.optionalString smokeHasPgloader "pgloader --version >/dev/null"}
            pgbadger --version >/dev/null
-           command -v parquet-tools >/dev/null
+           ${forgePkgs.lib.optionalString smokeHasParquetTools "command -v parquet-tools >/dev/null"}
            mc --version >/dev/null
            s5cmd version >/dev/null
            hurl --version >/dev/null
@@ -143,7 +142,7 @@
         expr = ''
           let
             names = builtins.attrNames forge.packages."${system}";
-          in builtins.all (name: builtins.elem name names) ["duckdb" "forge-provision" "sqlean" "default"]
+          in builtins.all (name: builtins.elem name names) ["duckdb" "forge-provision" "sqlite-forge" "sqlean" "default"]
         '';
         expected = "true";
       };
@@ -159,7 +158,7 @@
         expr = ''
           let
             tests = builtins.attrNames (forge.packages."${system}".forge-provision.passthru.tests or {});
-            expected = ["bats" "extensions-readonly" "help" "pgduckdb-readonly" "readonly" "self-test" "shell"];
+            expected = ["bats" "extensions-readonly" "help" "pgduckdb-readonly" "readonly" "self-test" "shell" "tools-readonly"];
           in tests == expected
         '';
         expected = "true";
@@ -177,7 +176,7 @@
               system = "${system}";
               overlays = [forge.overlays.default];
             };
-          in builtins.all (name: builtins.hasAttr name pkgs) ["duckdb" "forge-provision" "sqlean"]
+          in builtins.all (name: builtins.hasAttr name pkgs) ["duckdb" "forge-provision" "sqlite-forge" "sqlean"]
         '';
         expected = "true";
       };
@@ -194,6 +193,7 @@
             && !(builtins.elem "arion" nodes)
             && !(builtins.elem "process-compose" nodes)
             && !(builtins.elem "crane" nodes)
+            && !(builtins.elem "devshell" nodes)
         '';
         expected = "true";
       };
