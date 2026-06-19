@@ -110,7 +110,7 @@
       # FZF 0.67.0 tries to restore the read-only 'zle' option, causing harmless
       # errors. Suppress stderr to keep output clean; FZF keybindings still register.
       if [[ $options[zle] = on ]]; then
-        source <(fzf --zsh 2>/dev/null)
+        source <(fzf --zsh) 2>/dev/null
       fi
     '')
 

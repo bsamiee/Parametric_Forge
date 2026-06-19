@@ -17,6 +17,7 @@
     CONTAINERS_REGISTRIES_CONF = "${config.xdg.configHome}/containers/registries.conf";
     CONTAINERS_STORAGE_CONF = "${config.xdg.configHome}/containers/storage.conf";
     CONTAINERS_CONF = "${config.xdg.configHome}/containers/containers.conf";
+    REGISTRY_AUTH_FILE = "${config.xdg.configHome}/containers/auth.json";
 
     # --- Colima -------------------------------------------------------------
     COLIMA_HOME = "${config.xdg.dataHome}/colima";
@@ -37,5 +38,23 @@
     LAZYDOCKER_CONFIG_DIR = "${config.xdg.configHome}/lazydocker";
     HADOLINT_CONFIG = "${config.xdg.configHome}/hadolint.yaml";
     DIVE_CONFIG = "${config.xdg.configHome}/dive/config.yaml";
+  };
+
+  xdg.configFile = {
+    "containers/registries.conf".text = ''
+      unqualified-search-registries = ["docker.io"]
+
+      [[registry]]
+      prefix = "docker.io"
+      location = "docker.io"
+    '';
+    "containers/storage.conf".text = ''
+      [storage]
+    '';
+    "containers/containers.conf".text = ''
+      [containers]
+
+      [engine]
+    '';
   };
 }

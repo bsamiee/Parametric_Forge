@@ -18,6 +18,8 @@
 in {
   home.packages =
     optionalTool "nvd"
+    ++ optionalTool "nh"
+    ++ optionalTool "flake-checker"
     ++ optionalTool "nix-tree"
     ++ nixDiff;
 }

@@ -10,29 +10,29 @@
   stdenv,
   fetchzip,
 }: let
-  version = "0.27.2";
+  version = "0.28.3";
   system = stdenv.hostPlatform.system;
 
   platformAsset =
     if system == "aarch64-darwin"
     then {
       url = "https://github.com/nalgeon/sqlean/releases/download/${version}/sqlean-macos-arm64.zip";
-      hash = "sha256-7zH//98V7H3LCa/Z+CH1aldBOMMIjFaoV1sYI3fo3Ac=";
+      hash = "sha256-G8qhU4xCuw0qXQhkkJqvV0dbDiuow4BwVXeQsOxaeFo=";
     }
     else if system == "x86_64-darwin"
     then {
-      url = "https://github.com/nalgeon/sqlean/releases/download/${version}/sqlean-macos-x86.zip";
-      hash = "sha256-fLTH9zg/UCtp7mL3FB5ffiaiBgGoNTPEs5nAeyk5kos=";
+      url = "https://github.com/nalgeon/sqlean/releases/download/${version}/sqlean-macos-x64.zip";
+      hash = "sha256-tIao4VRmC8hip+6sA76jOe8dN5n022/COd0M3+AkQww=";
     }
     else if system == "aarch64-linux"
     then {
       url = "https://github.com/nalgeon/sqlean/releases/download/${version}/sqlean-linux-arm64.zip";
-      hash = "sha256-F0xp9CZGNjW8kv+Gau3Wzah5ZwAFIn56G0yyPVBOZLU=";
+      hash = "sha256-B02nNIeQFSF8oQU3uUf5R/qvta8NgFyrQO63KJVOix8=";
     }
     else if system == "x86_64-linux"
     then {
-      url = "https://github.com/nalgeon/sqlean/releases/download/${version}/sqlean-linux-x86.zip";
-      hash = "sha256-DY/mLQ7mtyIYfgXRjn9b9ASKBNVxmiVLmpIF7ETKFho=";
+      url = "https://github.com/nalgeon/sqlean/releases/download/${version}/sqlean-linux-x64.zip";
+      hash = "sha256-vyon1pZ7i+sjrONSq9PkJ7vC2tFHfFNNw8qp0ng0Pdw=";
     }
     else
       (

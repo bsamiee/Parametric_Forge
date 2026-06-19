@@ -32,6 +32,7 @@ in {
     yamlfmt # YAML formatter (Google)
     yamllint # YAML linter
     yaml-language-server # YAML LSP (SchemaStore-backed validation + completion)
+    taplo # TOML formatter, validator, and LSP
 
     # --- JSON ---------------------------------------------------------------
     jq # Lightweight command-line JSON processor
@@ -40,6 +41,10 @@ in {
     git-lfs # Required by Homebrew update-reset and repos with LFS-backed fixtures
     yq-go # YAML/JSON/TOML processor (yq)
     miller # CSV/TSV/JSON processor
+    qsv # High-performance CSV and tabular data toolkit
+    hurl # HTTP request/assertion runner for API probes
+    grpcurl # gRPC server reflection and request CLI
+    typos # Fast source and docs typo checker
 
     # --- .NET ---------------------------------------------------------------
     dotnet-combined

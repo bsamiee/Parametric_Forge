@@ -24,7 +24,7 @@ _: {
     cat = "bat";
     find = "fd";
     fda = "fd --hidden --no-ignore -a"; # Find all files, including hidden and ignored
-    mv = "rsync-mv"; # Atomic move with directory cleanup
+    mv = "rsync-mv.sh"; # Atomic move with directory cleanup
     mkdir = "mkdir -pv"; # Always create parent directories
     cp = "rsync -ahPX --info=progress2 --"; # Full preservation, no sparse
     cpsp = "rsync -ahPSX --"; # Sparse copy (VMs, disk images)
@@ -60,15 +60,15 @@ _: {
     tldru = "tldr --update"; # Update tldr cache
     rgx = "grex -xc"; # Generate readable regex from test cases
     rgxf = "grex -xc -f"; # File input with readable output
-    sdi = "sd -i"; # In-place find/replace (sed -i pattern)
+    sdi = "sd"; # In-place find/replace
     sr = "serpl"; # TUI search and replace
 
     # --- Formatting Tools ---------------------------------------------------
     mdv = "rich --markdown"; # Markdown viewer (like hex for hexyl)
 
     # --- Code Screenshot ----------------------------------------------------
-    carbonc = "carbon-now --to-clipboard"; # Carbon screenshot to clipboard
-    carboni = "carbon-now --interactive"; # Carbon interactive mode
+    carbonc = "carbon-now.sh --to-clipboard"; # Carbon screenshot to clipboard
+    carboni = "carbon-now.sh --interactive"; # Carbon interactive mode
 
     # --- Data Processing ----------------------------------------------------
     jqr = "jq -r"; # Raw output (no quotes)
@@ -84,7 +84,7 @@ _: {
     j2c = "mlr --j2c cat"; # JSON to CSV
 
     # --- Trash Management ---------------------------------------------------
-    tput = "trash-put"; # Send files to trash
+    trash = "trash-put"; # Send files to trash
     trestore = "trash-restore"; # Restore files from trash
     tls = "trash-list"; # List trashed files
     trm = "trash-rm"; # Remove specific files from trash
@@ -105,8 +105,8 @@ _: {
     POST = "xh POST"; # RESTful convention
     PUT = "xh PUT"; # RESTful convention
     ping = "gping"; # Visual ping with graph
-    trace = "trippy"; # Modern traceroute replacement
-    traceu = "trippy --udp --target-port 33434"; # UDP tracing for ECMP paths
+    trace = "trip"; # Modern traceroute replacement
+    traceu = "trip --udp --target-port 33434"; # UDP tracing for ECMP paths
     serve = "python3 -m http.server 8000"; # Quick static server
     bw = "sudo bandwhich"; # Bandwidth monitor (needs sudo)
     dig = "doggo"; # Modern DNS client

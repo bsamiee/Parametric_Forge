@@ -21,142 +21,92 @@ readonly port_policy_requested="${RASM_PROVISION_PORT_POLICY:-auto}"
 readonly port_range_requested="${RASM_PROVISION_PORT_RANGE:-$default_port_range}"
 readonly port_exclude_requested="${RASM_PROVISION_PORT_EXCLUDE:-}"
 readonly auth_mode_requested="${RASM_PROVISION_AUTH:-auto-root}"
-readonly pg_cron_requested="${RASM_PROVISION_PG_CRON:-auto}"
+readonly pg_cron_requested="${RASM_PROVISION_PG_CRON:-0}"
 host_os="$(uname -s 2>/dev/null || printf unknown)"
 readonly host_os
 readonly port_lock_root="${XDG_STATE_HOME:-$HOME/.local/state}/rasm-provision/port-locks"
 readonly session_lock_root="${XDG_STATE_HOME:-$HOME/.local/state}/rasm-provision/sessions"
 
-declare -Ar command_handler=(
-  [up]=cmd_up
-  [down]=cmd_down
-  [status]=cmd_status
-  [env]=cmd_env
-  [doctor]=cmd_doctor
-  [ports]=cmd_ports
-  [inventory]=cmd_inventory
-  [prune]=cmd_prune
-  [paths]=cmd_paths
-  [plan]=cmd_plan
-  [extensions]=cmd_extensions
-  [verify]=cmd_verify
-  [psql]=cmd_psql
-  ["self-test"]=cmd_self_test
-)
+readonly command_route_rows=$'up\tcmd_up\t1\t1\tjson-only\t1\tmutating\tmutation\tStart enabled PostgreSQL provisioning services; accepts --json\ndown\tcmd_down\t1\t1\tjson-only\t1\tmutating\tmutation\tStop owned containers/networks and remove project generated files; preserve volumes; accepts --json\nstatus\tcmd_status\t1\t0\tjson-only\t1\toptional\tnone\tShow owned provisioning service status; accepts --json\nenv\tcmd_env\t1\t0\tjson-only\t1\tnone\tnone\tPrint derived paths and connection environment without writing files; accepts --json\ndoctor\tcmd_doctor\t1\t0\tjson-only\t1\toptional\tnone\tInspect Docker, Colima, paths, locks, and ports; accepts --json\nports\tcmd_ports\t1\t0\tjson-only\t1\toptional\tnone\tReport configured host ports and current listeners; accepts --json\ninventory\tcmd_inventory\t1\t0\tjson-only\t1\toptional\tnone\tReport owned resources, generated files, configured images, and Docker disk state; accepts --json\nprune\tcmd_prune\t1\t1\towned-prune\t1\toptional\tmutation\tRemove current-project owned containers, volumes, networks, and generated files with --owned; accepts --json\npaths\tcmd_paths\t1\t0\tjson-only\t1\tnone\tnone\tPrint derived provisioning paths; accepts --json\nplan\tcmd_plan\t1\t0\tjson-only\t1\tnone\tnone\tRender the compose plan to stdout without writing files; accepts --json\nextensions\tcmd_extensions\t1\t0\tjson-only\t1\tnone\tnone\tPrint the PostgreSQL extension target catalog; accepts --json\nverify\tcmd_verify\t1\t1\tjson-only\t1\tmutating\tmutation\tCreate and verify enabled PostgreSQL provisioning extensions; accepts --json\npsql\tcmd_psql\t0\t0\tpsql-pass-through\t1\tmutating\tpsql-session\tOpen psql inside an owned service: psql <timescale|search|pgduckdb> [-- <psql-args>]\nself-test\tcmd_self_test\t1\t0\tjson-only\t1\tnone\tnone\tValidate local script metadata and configuration; accepts --json'
 
-declare -Ar command_desc=(
-  [up]="Start enabled PostgreSQL provisioning services; accepts --json"
-  [down]="Stop owned containers/networks and remove project generated files; preserve volumes; accepts --json"
-  [status]="Show owned provisioning service status; accepts --json"
-  [env]="Print derived paths and connection environment without writing files; accepts --json"
-  [doctor]="Inspect Docker, Colima, paths, locks, and ports; accepts --json"
-  [ports]="Report configured host ports and current listeners; accepts --json"
-  [inventory]="Report owned resources, generated files, configured images, and Docker disk state; accepts --json"
-  [prune]="Remove current-project owned containers, volumes, networks, and generated files with --owned; accepts --json"
-  [paths]="Print derived provisioning paths; accepts --json"
-  [plan]="Render the compose plan to stdout without writing files; accepts --json"
-  [extensions]="Print the PostgreSQL extension target catalog; accepts --json"
-  [verify]="Create and verify enabled PostgreSQL provisioning extensions; accepts --json"
-  [psql]="Open psql inside an owned service: psql <timescale|search|pgduckdb> [-- <psql-args>]"
-  ["self-test"]="Validate local script metadata and configuration; accepts --json"
-)
+declare -A command_handler=()
+declare -A command_desc=()
+declare -A command_json=()
+declare -A command_mutates=()
+declare -A command_argspec=()
+declare -A command_required_root=()
+declare -A command_required_docker=()
+declare -A command_lock_mode=()
+declare -a command_order=()
 
-declare -Ar command_mutates=(
-  [up]=1
-  [down]=1
-  [verify]=1
-  [prune]=1
-)
+load_command_routes() {
+  local verb handler json_mode mutates argspec required_root required_docker lock_mode desc extra
+  while IFS=$'\t' read -r verb handler json_mode mutates argspec required_root required_docker lock_mode desc extra; do
+    [[ -n "$verb" ]] || continue
+    if [[ -n "${extra:-}" || -z "$handler" || -z "$argspec" || -z "$required_root" || -z "$required_docker" || -z "$lock_mode" || -z "$desc" ]]; then
+      printf 'rasm-provision: invalid command route row for verb=%s\n' "${verb:-unknown}" >&2
+      exit 70
+    fi
+    command_order+=("$verb")
+    command_handler[$verb]="$handler"
+    command_desc[$verb]="$desc"
+    command_argspec[$verb]="$argspec"
+    command_required_root[$verb]="$required_root"
+    command_required_docker[$verb]="$required_docker"
+    command_lock_mode[$verb]="$lock_mode"
+    [[ "$json_mode" == 1 ]] && command_json[$verb]=1
+    [[ "$mutates" == 1 ]] && command_mutates[$verb]=1
+  done <<<"$command_route_rows"
+  return 0
+}
 
-declare -Ar command_json=(
-  [up]=1
-  [down]=1
-  [status]=1
-  [env]=1
-  [doctor]=1
-  [ports]=1
-  [inventory]=1
-  [prune]=1
-  [paths]=1
-  [plan]=1
-  [extensions]=1
-  [verify]=1
-  ["self-test"]=1
-)
+load_command_routes
 
-declare -ar command_order=(
-  up
-  down
-  status
-  env
-  doctor
-  ports
-  inventory
-  prune
-  paths
-  plan
-  extensions
-  verify
-  psql
-  self-test
-)
+readonly service_rows=$'timescale|time|timescale||1|RASM_TIMESCALE_IMAGE|timescale/timescaledb-ha:pg18.4-ts2.27.2-all|RASM_TIMESCALE_PORT|15432|RASM_TIMESCALE_DSN|/home/postgres/pgdata/data|timescaledb|postgres-extension\nsearch|search|pg_search||1|RASM_PARADEDB_IMAGE|paradedb/paradedb:0.24.0-pg18|RASM_SEARCH_PORT|15433|RASM_SEARCH_DSN|/var/lib/postgresql|pg_search|postgres-extension\npgduckdb|analytics|analytics-probe|RASM_PROVISION_PGDUCKDB|0|RASM_PGDUCKDB_IMAGE|pgduckdb/pgduckdb:18-v1.1.1|RASM_PGDUCKDB_PORT|15434|RASM_PGDUCKDB_DSN|/var/lib/postgresql|pg_duckdb|postgres-extension'
 
-declare -ar service_order=(timescale search pgduckdb)
-declare -Ar service_profile=(
-  [timescale]="timescale"
-  [search]="pg_search"
-  [pgduckdb]="analytics-probe"
-)
-declare -Ar service_enabled_env=(
-  [timescale]=""
-  [search]=""
-  [pgduckdb]="RASM_PROVISION_PGDUCKDB"
-)
-declare -Ar service_enabled_default=(
-  [timescale]=1
-  [search]=1
-  [pgduckdb]=0
-)
-declare -Ar service_image_env=(
-  [timescale]="RASM_TIMESCALE_IMAGE"
-  [search]="RASM_PARADEDB_IMAGE"
-  [pgduckdb]="RASM_PGDUCKDB_IMAGE"
-)
-declare -Ar service_image_default=(
-  [timescale]="timescale/timescaledb-ha:pg18.4-ts2.27.2-all"
-  [search]="paradedb/paradedb:0.24.0-pg18"
-  [pgduckdb]="pgduckdb/pgduckdb:18-v1.1.1"
-)
-declare -Ar service_port_env=(
-  [timescale]="RASM_TIMESCALE_PORT"
-  [search]="RASM_SEARCH_PORT"
-  [pgduckdb]="RASM_PGDUCKDB_PORT"
-)
-declare -Ar service_port_default=(
-  [timescale]=15432
-  [search]=15433
-  [pgduckdb]=15434
-)
-declare -Ar service_dsn_env=(
-  [timescale]="RASM_TIMESCALE_DSN"
-  [search]="RASM_SEARCH_DSN"
-  [pgduckdb]="RASM_PGDUCKDB_DSN"
-)
-declare -Ar service_volume_mount=(
-  [timescale]="/home/postgres/pgdata/data"
-  [search]="/var/lib/postgresql"
-  [pgduckdb]="/var/lib/postgresql"
-)
-declare -Ar service_preload_base=(
-  [timescale]="timescaledb"
-  [search]="pg_search"
-  [pgduckdb]="pg_duckdb"
-)
-declare -Ar service_verify_handler=(
-  [timescale]="verify_service_extensions"
-  [search]="verify_service_extensions"
-  [pgduckdb]="verify_service_extensions"
-)
+declare -a service_order=()
+declare -A service_role=()
+declare -A service_profile=()
+declare -A service_enabled_env=()
+declare -A service_enabled_default=()
+declare -A service_image_env=()
+declare -A service_image_default=()
+declare -A service_port_env=()
+declare -A service_port_default=()
+declare -A service_dsn_env=()
+declare -A service_volume_mount=()
+declare -A service_preload_base=()
+declare -A service_verify_sql_key=()
+declare -A service_verify_handler=()
+
+load_service_rows() {
+  local service role profile enabled_env enabled_default image_env image_default port_env port_default dsn_env volume_mount preload verify_sql_key extra
+  while IFS='|' read -r service role profile enabled_env enabled_default image_env image_default port_env port_default dsn_env volume_mount preload verify_sql_key extra; do
+    [[ -n "$service" ]] || continue
+    if [[ -n "${extra:-}" || -z "$role" || -z "$profile" || -z "$enabled_default" || -z "$image_env" || -z "$image_default" || -z "$port_env" || -z "$port_default" || -z "$dsn_env" || -z "$volume_mount" || -z "$preload" || -z "$verify_sql_key" ]]; then
+      printf 'rasm-provision: invalid service row for service=%s\n' "${service:-unknown}" >&2
+      exit 70
+    fi
+    service_order+=("$service")
+    service_role[$service]="$role"
+    service_profile[$service]="$profile"
+    service_enabled_env[$service]="$enabled_env"
+    service_enabled_default[$service]="$enabled_default"
+    service_image_env[$service]="$image_env"
+    service_image_default[$service]="$image_default"
+    service_port_env[$service]="$port_env"
+    service_port_default[$service]="$port_default"
+    service_dsn_env[$service]="$dsn_env"
+    service_volume_mount[$service]="$volume_mount"
+    service_preload_base[$service]="$preload"
+    service_verify_sql_key[$service]="$verify_sql_key"
+    service_verify_handler[$service]="verify_service_extensions"
+  done <<<"$service_rows"
+  return 0
+}
+
+load_service_rows
+
 declare -Ar service_disabled_verify_row=(
   [timescale]=""
   [search]=""
@@ -222,6 +172,7 @@ lock_dir=""
 lock_token=""
 endpoint_lock_dir=""
 docker_endpoint=""
+docker_endpoint_issue=""
 current_command=""
 output_json=false
 diagnostic_json=false
@@ -241,9 +192,11 @@ heartbeat_pid=0
 foreground_child_pid=0
 declare -a json_warnings=()
 declare -a compose_command=()
+declare -a parsed_args=()
 declare -a port_lock_dirs=()
 declare -a auto_port_blacklist=()
 declare -a psql_session_locks=()
+declare -a tracked_tmp_files=()
 declare -A resolved_service_port=()
 declare -A resolved_service_port_source=()
 unpublished_generation=""
@@ -254,6 +207,7 @@ cleanup_assets_on_failed_up=false
 on_err() {
   local rc=$?
   local stack="${FUNCNAME[*]:-main}"
+  cleanup_tracked_tmp_files
   if [[ "$output_json" == true ]]; then
     [[ "$json_result_emitted" == false ]] || exit "$rc"
     emit_error_json "internal-error" "command failed rc=$rc line=${BASH_LINENO[0]:-?} stack=$stack" "$rc"
@@ -269,17 +223,16 @@ emit_error_json() {
   local message="$2"
   local rc="${3:-1}"
   message="$(redact_message "$message")"
-  set +e
-  jq -nc \
+  if ! jq -nc \
     --argjson schemaVersion "$schema_version" \
     --arg command "${current_command:-unknown}" \
     --arg code "$code" \
     --arg message "$message" \
     --argjson exitCode "$rc" \
-    '{schemaVersion: $schemaVersion, command: $command, ok: false, error: {code: $code, message: $message, exitCode: $exitCode}}' ||
+    '{schemaVersion: $schemaVersion, command: $command, ok: false, error: {code: $code, message: $message, exitCode: $exitCode}}'; then
     printf 'rasm-provision: failed to emit JSON error code=%s rc=%s\n' "$code" "$rc" >&2
+  fi
   json_result_emitted=true
-  set -e
 }
 
 die() {
@@ -337,70 +290,79 @@ command_supports_json() {
   [[ -n "${command_json[$command]:-}" ]]
 }
 
-parse_json_args() {
-  local command="$1"
-  shift
-  if [[ "${1:-}" == "--json" ]]; then
-    [[ "$output_json" == false ]] || die_usage "$command received --json both globally and locally"
-    command_supports_json "$command" || die_usage "$command does not support JSON output"
-    output_json=true
-    shift
-  fi
-  if (($# > 0)); then
-    die_usage "$command accepts only --json or no arguments"
-  fi
+command_supports_diagnostic_json() {
+  case "$1" in
+    doctor | paths | inventory) return 0 ;;
+    *) return 1 ;;
+  esac
 }
 
-command_wants_json() {
+validate_json_only_args() {
   local command="$1"
   shift
   if [[ "$output_json" == true ]]; then
+    [[ "${1:-}" != "--json" ]] || die_usage "$command received --json both globally and locally"
     (($# == 0)) || die_usage "$command accepts no arguments when --json is global"
     return 0
   fi
   if [[ "${1:-}" == "--json" ]]; then
     command_supports_json "$command" || die_usage "$command does not support JSON output"
     (($# == 1)) || die_usage "$command --json accepts no additional arguments"
-    output_json=true
     return 0
   fi
   (($# == 0)) || die_usage "$command accepts only --json or no arguments"
-  return 1
 }
 
-prevalidate_mutating_args() {
+parse_json_args() {
+  local command="$1"
+  shift
+  validate_json_only_args "$command" "$@"
+  [[ "$output_json" == false && "${1:-}" == "--json" ]] && output_json=true
+  return 0
+}
+
+command_wants_json() {
+  local command="$1"
+  shift
+  parse_json_args "$command" "$@"
+  [[ "$output_json" == true ]]
+}
+
+normalize_command_args() {
   local command="$1"
   shift
   local arg seen_owned=false
-  case "$command" in
-    up | down)
-      if [[ "$output_json" == true ]]; then
-        (($# == 0)) || die_usage "$command accepts no arguments when --json is global"
-      elif [[ "${1:-}" == "--json" ]]; then
-        (($# == 1)) || die_usage "$command --json accepts no additional arguments"
-      else
-        (($# == 0)) || die_usage "$command accepts only --json or no arguments"
-      fi
+  parsed_args=()
+  case "${command_argspec[$command]}" in
+    json-only)
+      validate_json_only_args "$command" "$@"
+      [[ "$output_json" == false && "${1:-}" == "--json" ]] && output_json=true
+      return 0
       ;;
-    verify)
-      if [[ "$output_json" == true ]]; then
-        (($# == 0)) || die_usage "verify accepts no arguments when --json is global"
-      elif [[ "${1:-}" == "--json" ]]; then
-        (($# == 1)) || die_usage "verify --json accepts no additional arguments"
-      else
-        (($# == 0)) || die_usage "verify accepts only --json or no arguments"
-      fi
-      ;;
-    prune)
+    owned-prune)
       for arg in "$@"; do
         case "$arg" in
-          --owned) seen_owned=true ;;
-          --volumes) ;;
+          --owned)
+            seen_owned=true
+            parsed_args+=("$arg")
+            ;;
+          --volumes)
+            parsed_args+=("$arg")
+            ;;
           --json) [[ "$output_json" == false ]] || die_usage "prune received --json both globally and locally" ;;
           *) die_usage "prune requires --owned and accepts optional --volumes and --json" ;;
         esac
       done
       [[ "$seen_owned" == true ]] || die_usage "prune requires --owned"
+      [[ " $* " == *" --json "* ]] && output_json=true
+      return 0
+      ;;
+    psql-pass-through)
+      parsed_args=("$@")
+      return 0
+      ;;
+    *)
+      die_usage "unknown command argspec for $command: ${command_argspec[$command]}"
       ;;
   esac
 }
@@ -466,11 +428,7 @@ service_dsn() {
 
 service_dsn_redacted() {
   local service="$1"
-  if [[ "$auth_mode" == "auto-root" ]]; then
-    printf 'postgres://postgres:***@127.0.0.1:%s/rasm' "$(service_port "$service")"
-  else
-    service_dsn "$service"
-  fi
+  printf 'postgres://postgres:***@127.0.0.1:%s/rasm' "$(service_port "$service")"
 }
 
 hash_text() {
@@ -635,14 +593,17 @@ combined_excluded_ports() {
 port_allowed_for_auto() {
   local base="$1"
   local excluded="$2"
-  local i port
-  for ((i = 0; i < ${#service_order[@]}; i++)); do
-    port=$((base + i))
+  local offset=0 port service
+  for service in "${service_order[@]}"; do
+    service_enabled "$service" || continue
+    port=$((base + offset))
     ((port >= 1024 && port <= 49151)) || return 1
     port_in_csv_ranges "$port" "$port_range_requested" || return 1
     [[ "$excluded" == "probe-unavailable" ]] && return 1
     port_in_csv_ranges "$port" "$excluded" && return 1
+    ((offset += 1))
   done
+  ((offset > 0)) || return 1
   return 0
 }
 
@@ -653,16 +614,20 @@ port_lock_busy() {
   endpoint_hash="$(printf '%s' "$docker_endpoint" | hash_text)"
   endpoint_hash="${endpoint_hash%% *}"
   lock="$port_lock_root/${endpoint_hash:0:16}-$port.lock.d"
+  [[ -d "$lock" ]] || return 1
+  recover_dead_port_lock "$lock" && return 1
   [[ -d "$lock" ]]
 }
 
 auto_block_busy() {
   local base="$1"
-  local i port
-  for ((i = 0; i < ${#service_order[@]}; i++)); do
-    port=$((base + i))
+  local offset=0 service port
+  for service in "${service_order[@]}"; do
+    service_enabled "$service" || continue
+    port=$((base + offset))
     port_lock_busy "$port" && return 0
     port_busy "$port" && return 0
+    ((offset += 1))
   done
   return 1
 }
@@ -723,11 +688,17 @@ manifest_port_for_service() {
 set_resolved_block() {
   local base="$1"
   local source="$2"
-  local i service
-  for ((i = 0; i < ${#service_order[@]}; i++)); do
-    service="${service_order[$i]}"
-    resolved_service_port[$service]=$((base + i))
+  local active_only="${3:-false}"
+  local offset=0 service
+  for service in "${service_order[@]}"; do
+    if [[ "$active_only" == true ]] && ! service_enabled "$service"; then
+      resolved_service_port[$service]="${service_port_default[$service]}"
+      resolved_service_port_source[$service]="disabled-default"
+      continue
+    fi
+    resolved_service_port[$service]=$((base + offset))
     resolved_service_port_source[$service]="$source"
+    ((offset += 1))
   done
 }
 
@@ -754,7 +725,7 @@ set_resolved_individual_ports() {
 
 resolve_auto_ports() {
   local busy_aware="$1"
-  local excluded hash offset bases=() base range_start range_end spec start end count i service port
+  local excluded hash offset bases=() base range_start range_end spec start end count i service port block_width
   if set_resolved_manifest_ports; then
     if [[ "$busy_aware" != true ]]; then
       port_policy_mode="auto"
@@ -791,11 +762,13 @@ resolve_auto_ports() {
     warn "host TCP listener probe unavailable; read-only auto port plan did not inspect listener occupancy"
   fi
   IFS=',' read -ra __candidate_ranges <<<"$port_range_requested"
+  block_width="$(enabled_service_count)"
+  ((block_width > 0)) || die "no enabled services available for auto port allocation"
   for spec in "${__candidate_ranges[@]}"; do
     [[ "$spec" =~ ^([0-9]+)-([0-9]+)$ ]] || die "invalid RASM_PROVISION_PORT_RANGE segment: $spec"
     range_start="${BASH_REMATCH[1]}"
     range_end="${BASH_REMATCH[2]}"
-    for ((base = range_start; base <= range_end - 2; base++)); do
+    for ((base = range_start; base <= range_end - block_width + 1; base++)); do
       port_allowed_for_auto "$base" "$excluded" && bases+=("$base")
     done
   done
@@ -812,7 +785,7 @@ resolve_auto_ports() {
     if [[ "$busy_aware" == true ]] && auto_block_busy "$base"; then
       continue
     fi
-    set_resolved_block "$base" "auto"
+    set_resolved_block "$base" "auto" true
     port_policy_mode="auto"
     port_policy_source="auto"
     return 0
@@ -870,8 +843,13 @@ reset_resolved_ports() {
 }
 
 current_auto_base() {
-  local first_service="${service_order[0]}"
-  printf '%s\n' "${resolved_service_port[$first_service]}"
+  local service
+  for service in "${service_order[@]}"; do
+    service_enabled "$service" || continue
+    printf '%s\n' "${resolved_service_port[$service]}"
+    return 0
+  done
+  return 1
 }
 
 compose_bind_failed() {
@@ -979,11 +957,112 @@ set_contains_word() {
   esac
 }
 
+extension_source_route() {
+  local source="$1"
+  local route="${source%%|*}"
+  case "$route" in
+    nixpkgs.*) printf 'nixpkgs:%s' "${route#nixpkgs.}" ;;
+    postgresql-contrib-or-image-probed) printf 'runtime-probed' ;;
+    *) printf '%s' "$route" ;;
+  esac
+}
+
+extension_service_source() {
+  local service="$1"
+  local source="$2"
+  local image candidate route
+  image="$(service_image "$service")"
+  IFS='|' read -ra __extension_sources <<<"$source"
+  for candidate in "${__extension_sources[@]}"; do
+    route="${candidate#image:}"
+    if [[ "$candidate" == image:* && ("$image" == "$route" || "$image" == "$route:"* || "$image" == "$route@"*) ]]; then
+      printf '%s' "$candidate"
+      return 0
+    fi
+  done
+  printf '%s' "${__extension_sources[0]:-$source}"
+}
+
+extension_source_kind() {
+  case "$1" in
+    image:*) printf 'image' ;;
+    nixpkgs:*) printf 'nixpkgs' ;;
+    runtime-probed) printf 'runtime-probed' ;;
+    postgresql-contrib) printf 'postgresql-contrib' ;;
+    *) printf 'not-applicable' ;;
+  esac
+}
+
+extension_nix_status() {
+  local ext="$1"
+  local source="$2"
+  case "$ext" in
+    ai | pgai) printf 'retired-probe-only' ;;
+    pg_lakehouse | pg_analytics) printf 'retired-replaced' ;;
+    pg_search | pgaudit | timescaledb_toolkit | vectorscale | vchord | sqlite_fdw) printf 'broken' ;;
+    duckdb_fdw | wrappers | ogr_fdw | pg_jsonschema | pg_hashids | pg_later | mobilitydb | q3c | unit) printf 'missing' ;;
+    pgrx) printf 'source-build-ecosystem' ;;
+    *)
+      if [[ "$source" == *nixpkgs* ]]; then
+        printf 'available'
+      elif [[ "$source" == image:* || "$source" == "postgresql-contrib-or-image-probed" ]]; then
+        printf 'runtime-probed'
+      else
+        printf 'not-applicable'
+      fi
+      ;;
+  esac
+}
+
+extension_probe_kind() {
+  case "$1" in
+    pg_cron) printf 'scheduler' ;;
+    pg_search) printf 'bm25' ;;
+    vectorscale) printf 'diskann' ;;
+    pg_jsonschema) printf 'check-constraint' ;;
+    *) printf 'create-extension' ;;
+  esac
+}
+
+extension_capability_rank() {
+  local ext="$1"
+  local required="$2"
+  if [[ "$required" == 1 ]]; then
+    printf 'required'
+  else
+    case "$ext" in
+      btree_gist) printf 'decision-critical' ;;
+      ai | pgai | pg_lakehouse | pg_analytics) printf 'retired-probe-only' ;;
+      *) printf 'optional' ;;
+    esac
+  fi
+}
+
+extension_external_access() {
+  local file_access="$1"
+  local network_access="$2"
+  if [[ "$file_access" == 1 && "$network_access" == 1 ]]; then
+    printf 'file-network'
+  elif [[ "$file_access" == 1 ]]; then
+    printf 'file'
+  elif [[ "$network_access" == 1 ]]; then
+    printf 'network'
+  else
+    printf 'none'
+  fi
+}
+
 extension_catalog_enriched_tsv() {
-  local service ext category required create_on_verify source risk preload superuser shared_preload file_access network_access background_worker create_policy
+  local service ext category required create_on_verify source source_candidates source_route source_kind nix_status probe_kind capability_rank risk preload superuser shared_preload file_access network_access background_worker external_access restart_class service_profile_value image_tag create_policy
   while IFS=$'\t' read -r service ext category required create_on_verify; do
     [[ -n "$ext" ]] || continue
-    source="$(assoc_value extension_source_package_map "$ext" "postgresql-contrib-or-image-probed")"
+    source_candidates="$(assoc_value extension_source_package_map "$ext" "postgresql-contrib-or-image-probed")"
+    source="$(extension_service_source "$service" "$source_candidates")"
+    source_route="$(extension_source_route "$source")"
+    source_kind="$(extension_source_kind "$source_route")"
+    nix_status="$(extension_nix_status "$ext" "$source_candidates")"
+    probe_kind="$(extension_probe_kind "$ext")"
+    capability_rank="$(extension_capability_rank "$ext" "$required")"
     risk="$(assoc_value extension_risk_class_map "$ext" "local-extension")"
     preload="$(set_contains_word "$ext" "$extension_preload_required_set")"
     superuser="$(set_contains_word "$ext" "$extension_requires_superuser_set")"
@@ -991,8 +1070,12 @@ extension_catalog_enriched_tsv() {
     file_access="$(set_contains_word "$ext" "$extension_file_access_set")"
     network_access="$(set_contains_word "$ext" "$extension_network_access_set")"
     background_worker="$(set_contains_word "$ext" "$extension_background_worker_set")"
+    external_access="$(extension_external_access "$file_access" "$network_access")"
+    [[ "$preload" == 1 ]] && restart_class="shared-preload" || restart_class="none"
+    service_profile_value="${service_profile[$service]}"
+    image_tag="$(service_image "$service")"
     [[ "$create_on_verify" == 1 ]] && create_policy="verify-create" || create_policy="probe-only"
-    printf '%s\t%s\t%s\t%s\t%s\textension\t%s\t%s\t1\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+    printf '%s\t%s\t%s\t%s\t%s\textension\t%s\t%s\t1\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
       "$service" \
       "$ext" \
       "$category" \
@@ -1008,6 +1091,16 @@ extension_catalog_enriched_tsv() {
       "$file_access" \
       "$network_access" \
       "$background_worker" \
+      "$create_policy" \
+      "$source_route" \
+      "$source_kind" \
+      "$nix_status" \
+      "$probe_kind" \
+      "$capability_rank" \
+      "$external_access" \
+      "$restart_class" \
+      "$service_profile_value" \
+      "$image_tag" \
       "$create_policy"
   done < <(extension_catalog_tsv)
   return 0
@@ -1035,7 +1128,17 @@ extension_catalog_json() {
         fileAccess: (.[14] == "1"),
         networkAccess: (.[15] == "1"),
         backgroundWorker: (.[16] == "1"),
-        createPolicy: .[17]
+        createPolicy: .[17],
+        sourceRoute: .[18],
+        sourceKind: .[19],
+        nixStatus: .[20],
+        probeKind: .[21],
+        capabilityRank: .[22],
+        externalAccess: .[23],
+        restartClass: .[24],
+        serviceProfile: .[25],
+        imageTag: .[26],
+        loadPolicy: .[27]
       })
     | sort_by(.service, .category, .extension)
   '
@@ -1047,6 +1150,14 @@ enabled_services() {
     service_enabled "$service" && printf '%s\n' "$service"
   done
   return 0
+}
+
+enabled_service_count() {
+  local service count=0
+  for service in "${service_order[@]}"; do
+    service_enabled "$service" && ((count += 1))
+  done
+  printf '%s\n' "$count"
 }
 
 validate_port() {
@@ -1201,15 +1312,22 @@ assert_safe_project_dir_for_cleanup() {
   fi
 }
 
-lock_owner_field() {
-  local key="$1"
+owner_field() {
+  local lock="$1"
+  local key="$2"
   local line
-  [[ -f "$lock_dir/owner" ]] || return 0
+  [[ -f "$lock/owner" ]] || return 0
   while IFS= read -r line; do
     [[ "${line%%=*}" == "$key" ]] || continue
     printf '%s\n' "${line#*=}"
     return 0
-  done <"$lock_dir/owner"
+  done <"$lock/owner"
+  return 0
+}
+
+lock_owner_field() {
+  owner_field "$lock_dir" "$1" || true
+  return 0
 }
 
 current_host() {
@@ -1231,28 +1349,36 @@ token_file_matches_owner() {
   [[ -n "$owner_token" && "$owner_token" == "$token_file" ]]
 }
 
-write_lock_metadata() {
-  local tmp started_at host
+write_owner_metadata() {
+  local lock="$1"
+  local heartbeat="$2"
+  shift 2
+  local tmp started_at host pair
   host="$(current_host)"
-  started_at="$(lock_owner_field started_at)"
+  started_at="$(owner_field "$lock" started_at)"
   [[ -n "$started_at" ]] || TZ=UTC printf -v started_at '%(%Y-%m-%dT%H:%M:%SZ)T' -1
-  tmp="$(mktemp "$lock_dir/owner.XXXXXX")" || return
+  tmp="$(mktemp "$lock/owner.XXXXXX")" || return
   {
     printf 'pid=%s\n' "$$"
     printf 'host=%s\n' "$host"
     printf 'started_at=%s\n' "$started_at"
-    printf 'last_heartbeat_epoch=%s\n' "$EPOCHSECONDS"
+    [[ "$heartbeat" == true ]] && printf 'last_heartbeat_epoch=%s\n' "$EPOCHSECONDS"
     printf 'token=%s\n' "$lock_token"
     printf 'root_fingerprint=%s\n' "$root_fingerprint"
     printf 'project=%s\n' "$project_name"
-    printf 'command=%s\n' "$current_command"
-    printf 'docker_endpoint_hash=%s\n' "$(docker_endpoint_hash)"
+    for pair in "$@"; do
+      printf '%s\n' "$pair"
+    done
   } >"$tmp" || {
     rm -f "$tmp"
     return 1
   }
   chmod 600 "$tmp" || return 1
-  mv -f "$tmp" "$lock_dir/owner"
+  mv -f "$tmp" "$lock/owner"
+}
+
+write_lock_metadata() {
+  write_owner_metadata "$lock_dir" true "command=$current_command" "docker_endpoint_hash=$(docker_endpoint_hash)"
 }
 
 lock_active_message() {
@@ -1330,39 +1456,14 @@ acquire_mutation_lock() {
 }
 
 session_owner_field() {
-  local lock="$1"
-  local key="$2"
-  local line
-  [[ -f "$lock/owner" ]] || return 0
-  while IFS= read -r line; do
-    [[ "${line%%=*}" == "$key" ]] || continue
-    printf '%s\n' "${line#*=}"
-    return 0
-  done <"$lock/owner"
+  owner_field "$1" "$2" || true
+  return 0
 }
 
 write_psql_session_metadata() {
   local lock="$1"
   local service="$2"
-  local tmp started_at host
-  host="$(current_host)"
-  TZ=UTC printf -v started_at '%(%Y-%m-%dT%H:%M:%SZ)T' -1
-  tmp="$(mktemp "$lock/owner.XXXXXX")" || return
-  {
-    printf 'pid=%s\n' "$$"
-    printf 'host=%s\n' "$host"
-    printf 'started_at=%s\n' "$started_at"
-    printf 'token=%s\n' "$lock_token"
-    printf 'root_fingerprint=%s\n' "$root_fingerprint"
-    printf 'project=%s\n' "$project_name"
-    printf 'command=psql\n'
-    printf 'service=%s\n' "$service"
-  } >"$tmp" || {
-    rm -f "$tmp"
-    return 1
-  }
-  chmod 600 "$tmp" || return 1
-  mv -f "$tmp" "$lock/owner"
+  write_owner_metadata "$lock" false "command=psql" "service=$service"
 }
 
 recover_dead_psql_session_lock() {
@@ -1518,6 +1619,7 @@ release_mutation_lock() {
   [[ "$lock_releasing" == false ]] || return 0
   lock_releasing=true
   stop_lock_heartbeat
+  cleanup_tracked_tmp_files
   [[ -n "$lock_dir" && -d "$lock_dir" ]] || {
     lock_releasing=false
     return 0
@@ -1571,6 +1673,7 @@ with_mutation_lock() {
   trap 'trap - QUIT; forward_foreground_child QUIT; release_mutation_lock || true; kill -QUIT "$$"' QUIT
   trap 'trap - PIPE; release_mutation_lock || true; exit 141' PIPE
   acquire_mutation_lock
+  cleanup_empty_parents_after_lock=true
   assert_no_active_psql_sessions
   "$@"
   release_mutation_lock || cleanup_rc=$?
@@ -1580,43 +1683,15 @@ with_mutation_lock() {
 }
 
 port_lock_owner_field() {
-  local lock="$1"
-  local key="$2"
-  local line
-  [[ -f "$lock/owner" ]] || return 0
-  while IFS= read -r line; do
-    [[ "${line%%=*}" == "$key" ]] || continue
-    printf '%s\n' "${line#*=}"
-    return 0
-  done <"$lock/owner"
+  owner_field "$1" "$2" || true
+  return 0
 }
 
 write_port_lock_metadata() {
   local lock="$1"
   local service="$2"
   local port="$3"
-  local tmp started_at host
-  host="$(current_host)"
-  started_at="$(port_lock_owner_field "$lock" started_at)"
-  [[ -n "$started_at" ]] || TZ=UTC printf -v started_at '%(%Y-%m-%dT%H:%M:%SZ)T' -1
-  tmp="$(mktemp "$lock/owner.XXXXXX")" || return
-  {
-    printf 'pid=%s\n' "$$"
-    printf 'host=%s\n' "$host"
-    printf 'started_at=%s\n' "$started_at"
-    printf 'last_heartbeat_epoch=%s\n' "$EPOCHSECONDS"
-    printf 'token=%s\n' "$lock_token"
-    printf 'docker_endpoint_hash=%s\n' "$(docker_endpoint_hash)"
-    printf 'root_fingerprint=%s\n' "$root_fingerprint"
-    printf 'project=%s\n' "$project_name"
-    printf 'service=%s\n' "$service"
-    printf 'port=%s\n' "$port"
-  } >"$tmp" || {
-    rm -f "$tmp"
-    return 1
-  }
-  chmod 600 "$tmp" || return 1
-  mv -f "$tmp" "$lock/owner"
+  write_owner_metadata "$lock" true "docker_endpoint_hash=$(docker_endpoint_hash)" "service=$service" "port=$port"
 }
 
 recover_dead_port_lock() {
@@ -1691,28 +1766,7 @@ release_port_locks() {
 }
 
 write_endpoint_lock_metadata() {
-  local tmp started_at host
-  host="$(current_host)"
-  started_at="$(port_lock_owner_field "$endpoint_lock_dir" started_at)"
-  [[ -n "$started_at" ]] || TZ=UTC printf -v started_at '%(%Y-%m-%dT%H:%M:%SZ)T' -1
-  tmp="$(mktemp "$endpoint_lock_dir/owner.XXXXXX")" || return
-  {
-    printf 'pid=%s\n' "$$"
-    printf 'host=%s\n' "$host"
-    printf 'started_at=%s\n' "$started_at"
-    printf 'last_heartbeat_epoch=%s\n' "$EPOCHSECONDS"
-    printf 'token=%s\n' "$lock_token"
-    printf 'docker_endpoint_hash=%s\n' "$(docker_endpoint_hash)"
-    printf 'root_fingerprint=%s\n' "$root_fingerprint"
-    printf 'project=%s\n' "$project_name"
-    printf 'command=%s\n' "$current_command"
-    printf 'service=%s\n' "endpoint"
-  } >"$tmp" || {
-    rm -f "$tmp"
-    return 1
-  }
-  chmod 600 "$tmp" || return 1
-  mv -f "$tmp" "$endpoint_lock_dir/owner"
+  write_owner_metadata "$endpoint_lock_dir" true "docker_endpoint_hash=$(docker_endpoint_hash)" "command=$current_command" "service=endpoint"
 }
 
 recover_dead_endpoint_lock() {
@@ -1780,11 +1834,15 @@ release_endpoint_lock() {
 resolve_docker_endpoint() {
   local endpoint=""
   [[ -n "$docker_endpoint" ]] && return 0
+  docker_endpoint_issue=""
   if [[ -n "${DOCKER_HOST:-}" ]]; then
     endpoint="$DOCKER_HOST"
   elif [[ -n "${DOCKER_CONTEXT:-}" ]]; then
-    endpoint="$(env -u DOCKER_HOST docker context inspect "$DOCKER_CONTEXT" --format '{{ .Endpoints.docker.Host }}' 2>/dev/null)" ||
-      die "cannot inspect explicit DOCKER_CONTEXT=$DOCKER_CONTEXT"
+    if ! endpoint="$(env -u DOCKER_HOST docker context inspect "$DOCKER_CONTEXT" --format '{{ .Endpoints.docker.Host }}' 2>/dev/null)"; then
+      docker_endpoint="unavailable://docker-context"
+      docker_endpoint_issue="explicit Docker context cannot be inspected"
+      return 0
+    fi
   elif [[ -S "$default_colima_socket" ]]; then
     endpoint="unix://$default_colima_socket"
   else
@@ -1803,6 +1861,10 @@ docker_endpoint_hash() {
 
 docker_runtime_issue() {
   resolve_docker_endpoint
+  if [[ -n "$docker_endpoint_issue" ]]; then
+    printf '%s' "$docker_endpoint_issue"
+    return 1
+  fi
   if [[ "$docker_endpoint" == tcp://* || "$docker_endpoint" == ssh://* ]]; then
     printf 'remote Docker endpoint rejected for local provisioning'
     return 1
@@ -1933,6 +1995,29 @@ atomic_render() {
   fi
 }
 
+secure_tmp_file() {
+  local prefix="$1"
+  local old_umask tmp rc
+  old_umask="$(umask)"
+  umask 077
+  tmp="$(mktemp "${TMPDIR:-/tmp}/${prefix}.XXXXXX")" || {
+    rc=$?
+    umask "$old_umask"
+    return "$rc"
+  }
+  umask "$old_umask"
+  tracked_tmp_files+=("$tmp")
+  printf '%s\n' "$tmp"
+}
+
+cleanup_tracked_tmp_files() {
+  local file
+  for file in "${tracked_tmp_files[@]}"; do
+    [[ -n "$file" ]] && rm -f -- "$file" 2>/dev/null || true
+  done
+  tracked_tmp_files=()
+}
+
 ensure_docker_config() {
   ensure_project_dir
   atomic_render "$docker_config_dir/config.json" render_empty_json
@@ -2040,7 +2125,7 @@ render_compose_secret() {
   local source
   [[ "$auth_mode" == "auto-root" ]] || return 0
   source="$(auth_secret_file "$service")"
-  [[ -f "$source" ]] || source=/dev/null
+  [[ -f "$source" ]] || source="$auth_secret_dir/<generated-by-up>"
   printf '  %s:\n' "$(auth_secret_name "$service")"
   printf '    file: "%s"\n' "$source"
 }
@@ -2754,39 +2839,45 @@ END
 \$\$;
 CREATE TEMP TABLE rasm_pg_cron_probe_context(
   probe_id text PRIMARY KEY,
-  job_name text NOT NULL
+  job_name text NOT NULL,
+  scratch_schema text NOT NULL
 );
 CREATE TEMP TABLE rasm_pg_cron_job(
   job_id bigint
 );
-INSERT INTO rasm_pg_cron_probe_context(probe_id, job_name)
-SELECT probe_id, 'rasm_pg_cron_' || probe_id
-FROM (SELECT 'probe_' || md5(clock_timestamp()::text || random()::text) AS probe_id) seed
-WHERE EXISTS (SELECT 1 FROM rasm_extension_target WHERE name = 'pg_cron' AND required)
-  AND EXISTS (SELECT 1 FROM pg_extension WHERE extname = 'pg_cron');
-DO \$\$
-DECLARE
-  job_id bigint;
-  probe_id text;
-BEGIN
-  SELECT c.probe_id
-  INTO probe_id
+	INSERT INTO rasm_pg_cron_probe_context(probe_id, job_name, scratch_schema)
+	SELECT probe_id,
+	       'rasm_pg_cron_' || substr(probe_id, 7, 16),
+	       'rasm_verify_' || substr(md5($(sql_quote "$root_fingerprint:$project_name") || probe_id), 1, 10) || '_' || substr(probe_id, 7, 16)
+	FROM (SELECT 'probe_' || md5(clock_timestamp()::text || random()::text) AS probe_id) seed
+	WHERE EXISTS (SELECT 1 FROM rasm_extension_target WHERE name = 'pg_cron' AND required)
+	  AND EXISTS (SELECT 1 FROM pg_extension WHERE extname = 'pg_cron');
+	DO \$\$
+	DECLARE
+	  job_id bigint;
+	  probe_id text;
+	  scratch_schema text;
+	BEGIN
+	  SELECT c.probe_id, c.scratch_schema
+	  INTO probe_id, scratch_schema
   FROM rasm_pg_cron_probe_context c
   LIMIT 1;
 
-  IF probe_id IS NULL THEN
-    RETURN;
-  END IF;
+	  IF probe_id IS NULL THEN
+	    RETURN;
+	  END IF;
 
-  CREATE TABLE IF NOT EXISTS public.rasm_pg_cron_probe(
-    id text PRIMARY KEY,
-    observed_at timestamptz NOT NULL DEFAULT clock_timestamp()
+	  EXECUTE format('DROP SCHEMA IF EXISTS %I CASCADE', scratch_schema);
+	  EXECUTE format('CREATE SCHEMA %I', scratch_schema);
+	  EXECUTE format(
+	    'CREATE TABLE %I.rasm_pg_cron_probe(id text PRIMARY KEY, observed_at timestamptz NOT NULL DEFAULT clock_timestamp())',
+    scratch_schema
   );
 
   SELECT cron.schedule(
            c.job_name,
            '1 seconds',
-           format('INSERT INTO public.rasm_pg_cron_probe(id) VALUES (%L) ON CONFLICT DO NOTHING', c.probe_id)
+           format('INSERT INTO %I.rasm_pg_cron_probe(id) VALUES (%L) ON CONFLICT DO NOTHING', c.scratch_schema, c.probe_id)
          )
   INTO job_id
   FROM rasm_pg_cron_probe_context c
@@ -2796,9 +2887,14 @@ BEGIN
     INSERT INTO rasm_pg_cron_job(job_id) VALUES (job_id);
   END IF;
 EXCEPTION
-  WHEN OTHERS THEN
-    BEGIN
-      DROP TABLE IF EXISTS public.rasm_pg_cron_probe;
+	  WHEN OTHERS THEN
+	    BEGIN
+	      IF job_id IS NOT NULL THEN
+	        PERFORM cron.unschedule(job_id);
+	      END IF;
+	      IF scratch_schema IS NOT NULL THEN
+	        EXECUTE format('DROP SCHEMA IF EXISTS %I CASCADE', scratch_schema);
+	      END IF;
     EXCEPTION
       WHEN OTHERS THEN
         NULL;
@@ -2811,28 +2907,35 @@ DO \$\$
 DECLARE
   probe_id text;
   job_id bigint;
+  scratch_schema text;
+  observed boolean := false;
   deadline timestamptz := clock_timestamp() + interval '20 seconds';
 BEGIN
-  SELECT c.probe_id, j.job_id
-  INTO probe_id, job_id
+  SELECT c.probe_id, j.job_id, c.scratch_schema
+  INTO probe_id, job_id, scratch_schema
   FROM rasm_pg_cron_probe_context c
   CROSS JOIN rasm_pg_cron_job j
   LIMIT 1;
 
   IF job_id IS NULL THEN
-    DROP TABLE IF EXISTS public.rasm_pg_cron_probe;
+    IF scratch_schema IS NOT NULL THEN
+      EXECUTE format('DROP SCHEMA IF EXISTS %I CASCADE', scratch_schema);
+    END IF;
     RETURN;
   END IF;
 
   LOOP
-    EXIT WHEN EXISTS (SELECT 1 FROM public.rasm_pg_cron_probe WHERE id = probe_id);
+    EXECUTE format('SELECT EXISTS (SELECT 1 FROM %I.rasm_pg_cron_probe WHERE id = $1)', scratch_schema)
+    USING probe_id
+    INTO observed;
+    EXIT WHEN observed;
     EXIT WHEN clock_timestamp() >= deadline;
     PERFORM pg_sleep(1);
   END LOOP;
 
   PERFORM cron.unschedule(job_id);
 
-  IF EXISTS (SELECT 1 FROM public.rasm_pg_cron_probe WHERE id = probe_id) THEN
+  IF observed THEN
     INSERT INTO rasm_extension_runtime(name, state) VALUES ('pg_cron', 'ok')
     ON CONFLICT (name) DO UPDATE SET state = excluded.state;
   ELSE
@@ -2840,16 +2943,16 @@ BEGIN
     ON CONFLICT (name) DO UPDATE SET state = excluded.state;
   END IF;
 
-  DELETE FROM public.rasm_pg_cron_probe WHERE id = probe_id;
-  DROP TABLE IF EXISTS public.rasm_pg_cron_probe;
+  EXECUTE format('DROP SCHEMA IF EXISTS %I CASCADE', scratch_schema);
 EXCEPTION
   WHEN OTHERS THEN
     BEGIN
       IF job_id IS NOT NULL THEN
         PERFORM cron.unschedule(job_id);
       END IF;
-      DELETE FROM public.rasm_pg_cron_probe WHERE id = probe_id;
-      DROP TABLE IF EXISTS public.rasm_pg_cron_probe;
+      IF scratch_schema IS NOT NULL THEN
+        EXECUTE format('DROP SCHEMA IF EXISTS %I CASCADE', scratch_schema);
+      END IF;
     EXCEPTION
       WHEN OTHERS THEN
         NULL;
@@ -3107,8 +3210,9 @@ service_records_tsv() {
   resolve_auth
   resolve_ports false
   for service in "${service_order[@]}"; do
-    printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+    printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
       "$service" \
+      "${service_role[$service]}" \
       "$(service_enabled_value "$service")" \
       "${service_profile[$service]}" \
       "$(service_image "$service")" \
@@ -3127,23 +3231,25 @@ service_records_json() {
     | map(select(length > 0) | split("\t"))
     | map({
         key: .[0],
-        enabled: (.[1] == "1"),
-        connectable: (.[1] == "1"),
-        profile: .[2],
-        image: .[3],
-        imageEnv: .[7],
+        role: .[1],
+        enabled: (.[2] == "1"),
+        connectable: (.[2] == "1"),
+        profile: .[3],
+        image: .[4],
+        imageEnv: .[8],
         host: "127.0.0.1",
-        port: (.[4] | tonumber),
-        portEnv: .[8],
-        portSource: .[9],
+        port: (.[5] | tonumber),
+        portEnv: .[9],
+        portSource: .[10],
         containerPort: 5432,
-        dsnRedacted: (if .[1] == "1" then .[5] else null end),
-        dsnEnv: .[6],
+        dsnRedacted: (if .[2] == "1" then .[6] else null end),
+        dsnEnv: .[7],
         composeService: .[0]
       })
     | map({
         (.key): {
           key,
+          role,
           enabled,
           connectable,
           profile,
@@ -3169,8 +3275,8 @@ configured_images_json() {
     | map(select(length > 0) | split("\t"))
     | map({
         service: .[0],
-        image: .[3],
-        enabled: (.[1] == "1")
+        image: .[4],
+        enabled: (.[2] == "1")
       })
     | sort_by(.service)
   '
@@ -3448,9 +3554,9 @@ cmd_up() {
     generation="$(create_generation)"
     unpublished_generation="$generation"
     unpublished_compose_file="$generation/compose.yaml"
-    compose_up_log="$provisioning_dir/.tmp.compose-up-$SRANDOM.log"
+    compose_up_log="$(secure_tmp_file rasm-provision-compose-up)"
     if docker_compose_file "$generation/compose.yaml" up -d --remove-orphans --wait --wait-timeout 180 >"$compose_up_log" 2>&1; then
-      rm -f "$compose_up_log"
+      rm -f -- "$compose_up_log"
       break
     fi
     while IFS= read -r line; do
@@ -3461,7 +3567,8 @@ cmd_up() {
       ((auto_retry_count += 1))
       warn "auto port block conflicted during Docker bind; retrying deterministic next block attempt=$auto_retry_count"
       docker_compose_file "$generation/compose.yaml" down --remove-orphans >/dev/null 2>&1 || true
-      rm -rf -- "$generation" "$compose_up_log"
+      rm -rf -- "$generation"
+      rm -f -- "$compose_up_log"
       unpublished_generation=""
       unpublished_compose_file=""
       release_port_locks || true
@@ -3474,7 +3581,7 @@ cmd_up() {
     while IFS= read -r service; do
       readiness_report "$service"
     done < <(enabled_services)
-    rm -f "$compose_up_log"
+    rm -f -- "$compose_up_log"
     restore_previous_generation "$previous_compose" "$generation/compose.yaml" || true
     return 1
   done
@@ -3546,16 +3653,7 @@ cmd_down() {
 
 cmd_verify() {
   local json=false
-  if [[ "$output_json" == true ]]; then
-    [[ "$#" -eq 0 ]] || die_usage "verify accepts no arguments when --json is global"
-    json=true
-  elif [[ "${1:-}" == "--json" ]]; then
-    [[ "$#" -eq 1 ]] || die_usage "verify --json accepts no additional arguments"
-    output_json=true
-    json=true
-  else
-    [[ "$#" -eq 0 ]] || die_usage "verify accepts only --json or no arguments"
-  fi
+  command_wants_json verify "$@" && json=true
   require_root
   validate_static_env
   require_mutating_docker
@@ -4146,6 +4244,10 @@ cmd_self_test() {
   [[ -z "${command_handler["psql-pgduckdb"]+x}" ]] || die "retired psql-pgduckdb command is still registered"
   for command in "${!command_handler[@]}"; do
     [[ -n "${command_desc[$command]:-}" ]] || die "command missing description: $command"
+    [[ -n "${command_argspec[$command]:-}" ]] || die "command missing argspec: $command"
+    [[ -n "${command_required_root[$command]:-}" ]] || die "command missing root policy: $command"
+    [[ -n "${command_required_docker[$command]:-}" ]] || die "command missing docker policy: $command"
+    [[ -n "${command_lock_mode[$command]:-}" ]] || die "command missing lock mode: $command"
     declare -F "${command_handler[$command]}" >/dev/null || die "command handler function missing: $command -> ${command_handler[$command]}"
     seen_commands[$command]=1
   done
@@ -4162,13 +4264,17 @@ cmd_self_test() {
   done
   for command in "${!command_mutates[@]}"; do
     [[ -n "${command_handler[$command]:-}" ]] || die "mutating command missing handler: $command"
+    [[ "${command_lock_mode[$command]}" == "mutation" ]] || die "mutating command must use mutation lock mode: $command"
   done
   for service in "${service_order[@]}"; do
     known_service "$service" || die "unknown service in service_order: $service"
+    [[ -n "${service_role[$service]}" ]] || die "service missing role: $service"
+    [[ -n "${service_profile[$service]}" ]] || die "service missing profile: $service"
     [[ -n "${service_image_env[$service]}" ]] || die "service missing image env: $service"
     [[ -n "${service_port_env[$service]}" ]] || die "service missing port env: $service"
     [[ -n "${service_dsn_env[$service]}" ]] || die "service missing dsn env: $service"
     [[ -n "${service_verify_handler[$service]}" ]] || die "service missing verify handler: $service"
+    [[ -n "${service_verify_sql_key[$service]}" ]] || die "service missing verify SQL key: $service"
     port="$(service_port "$service")"
     if service_enabled "$service"; then
       [[ -z "${seen_ports[$port]:-}" ]] || die "enabled service port collision: $service and ${seen_ports[$port]}"
@@ -4245,11 +4351,14 @@ main() {
     die_usage "unknown command: $command"
   }
   current_command="$command"
+  if [[ "$diagnostic_json" == true ]] && ! command_supports_diagnostic_json "$command"; then
+    die_usage "--diagnostic-json is allowed only for doctor, paths, and inventory"
+  fi
+  normalize_command_args "$command" "$@"
   if [[ -v command_mutates["$command"] ]]; then
-    prevalidate_mutating_args "$command" "$@"
-    with_mutation_lock "$command" "${command_handler[$command]}" "$@"
+    with_mutation_lock "$command" "${command_handler[$command]}" "${parsed_args[@]}"
   else
-    "${command_handler[$command]}" "$@"
+    "${command_handler[$command]}" "${parsed_args[@]}"
   fi
 }
 

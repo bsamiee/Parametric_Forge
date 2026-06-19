@@ -32,6 +32,7 @@
       "rasm-provision-bats"
       "duckdb-smoke"
       "sqlite-extension-smoke"
+      "forge-new-tool-smoke"
     ];
   in {
     checks = {
@@ -107,7 +108,7 @@
       rasm-provision-extensions-readonly = overlayPkgs.runCommand "rasm-provision-extensions-readonly" {} ''
         mkdir -p fake-root/libs/csharp
         touch fake-root/pyproject.toml fake-root/Directory.Packages.props
-        RASM_ROOT="$PWD/fake-root" RASM_PROVISION_ALLOW_EPHEMERAL_PORTS=1 RASM_PROVISION_PGDUCKDB=1 ${overlayPkgs.rasm-provision}/bin/rasm-provision --json extensions >extensions.json
+        RASM_ROOT="$PWD/fake-root" RASM_PROVISION_ALLOW_EPHEMERAL_PORTS=1 RASM_PROVISION_PGDUCKDB=1 RASM_PROVISION_PG_CRON=1 ${overlayPkgs.rasm-provision}/bin/rasm-provision --json extensions >extensions.json
         ${overlayPkgs.jq}/bin/jq -e '
           . as $root
           |
@@ -118,6 +119,7 @@
           and ([.extensions[] | select(.service == "pgduckdb" and .extension == "pg_duckdb" and .required == true)] | length == 1)
           and ([.extensions[] | select(.service == "timescale" and .extension == "pg_cron" and .required == true and .createOnVerify == true and .preloadRequired == true and .sourcePackage != null)] | length == 1)
           and ([.extensions[] | select(has("createPolicy") and has("riskClass") and has("sourcePackage"))] | length == ($root.extensions | length))
+          and ([.extensions[] | select(has("sourceRoute") and has("nixStatus") and has("probeKind") and has("capabilityRank") and has("externalAccess") and has("restartClass") and has("serviceProfile") and has("loadPolicy"))] | length == ($root.extensions | length))
         ' extensions.json >/dev/null
         test ! -e fake-root/.artifacts
         touch "$out"
@@ -150,6 +152,12 @@
         rc="$TMPDIR/sqliterc"
         cat >"$rc" <<'SQLITERC'
         .load ${overlayPkgs.sqlean}/lib/regexp${overlayPkgs.stdenv.hostPlatform.extensions.sharedLibrary}
+        .load ${overlayPkgs.sqlean}/lib/uuid${overlayPkgs.stdenv.hostPlatform.extensions.sharedLibrary}
+        .load ${overlayPkgs.sqlean}/lib/stats${overlayPkgs.stdenv.hostPlatform.extensions.sharedLibrary}
+        .load ${overlayPkgs.sqlean}/lib/text${overlayPkgs.stdenv.hostPlatform.extensions.sharedLibrary}
+        .load ${overlayPkgs.sqlean}/lib/time${overlayPkgs.stdenv.hostPlatform.extensions.sharedLibrary}
+        .load ${overlayPkgs.sqlean}/lib/crypto${overlayPkgs.stdenv.hostPlatform.extensions.sharedLibrary}
+        .load ${overlayPkgs.sqlean}/lib/math${overlayPkgs.stdenv.hostPlatform.extensions.sharedLibrary}
         .load ${overlayPkgs.sqlite-vec}/lib/vec0${overlayPkgs.stdenv.hostPlatform.extensions.sharedLibrary}
         .load ${overlayPkgs.libspatialite}/lib/mod_spatialite${overlayPkgs.stdenv.hostPlatform.extensions.sharedLibrary}
         SQLITERC
@@ -157,6 +165,52 @@
           "select regexp_like('abc','a.c'); select vec_version(); select spatialite_version();" >/dev/null
         touch "$out"
       '';
+
+      forge-new-tool-smoke =
+        overlayPkgs.runCommand "forge-new-tool-smoke" {
+          nativeBuildInputs = with overlayPkgs; [
+            usql
+            pgcli
+            litecli
+            sqruff
+            pgformatter
+            pg_activity
+            pgmetrics
+            qsv
+            hurl
+            grpcurl
+            taplo
+            typos
+            cosign
+            notation
+            oras
+            regctl
+            syft
+            trivy
+            grype
+          ];
+        } ''
+          usql --version >/dev/null
+          pgcli --version >/dev/null
+          litecli --version >/dev/null
+          sqruff --version >/dev/null
+          pg_format --version >/dev/null
+          pg_activity --version >/dev/null
+          pgmetrics --version >/dev/null
+          qsv --version >/dev/null
+          hurl --version >/dev/null
+          grpcurl --version >/dev/null
+          taplo --version >/dev/null
+          typos --version >/dev/null
+          cosign version >/dev/null
+          notation version >/dev/null
+          oras version >/dev/null
+          regctl version >/dev/null
+          syft version >/dev/null
+          trivy --version >/dev/null
+          grype version >/dev/null
+          touch "$out"
+        '';
     };
 
     nix-unit.inputs = {

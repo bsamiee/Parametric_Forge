@@ -19,6 +19,8 @@ _: {
         deadnix
         nix-output-monitor
         nix-update
+        nix-init
+        nixpkgs-review
         nurl
         nix-fast-build
         bats

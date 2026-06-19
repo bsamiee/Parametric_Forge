@@ -51,6 +51,13 @@ in {
     sqlfluff # SQL linter and formatter supporting multiple dialects
     duckdb # In-memory analytics database with SQL interface
     postgres18ForgeTools # PostgreSQL 18 client commands; server extensions are Docker-owned by rasm-provision
+    usql # Universal SQL CLI for cross-database interactive sessions
+    pgcli # Interactive PostgreSQL shell with completion
+    litecli # Interactive SQLite shell with completion
+    sqruff # Fast SQL linter/formatter for DuckDB-style SQL workflows
+    pgformatter # PostgreSQL SQL formatter
+    pg_activity # PostgreSQL activity monitor
+    pgmetrics # PostgreSQL metric collection CLI
     sqlean # Extension library bundle (regexp, uuid, stats, etc.)
     postgres-language-server # Postgres LSP; includes postgres-language-server and postgrestools
     sqliteForge # Explicit SQLite shell with SQLean, sqlite-vec, and SpatiaLite loaded

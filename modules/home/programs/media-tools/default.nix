@@ -5,7 +5,7 @@
 # Path          : modules/home/programs/media-tools/default.nix
 # ----------------------------------------------------------------------------
 # Media tools aggregator
-{...}: {
+{pkgs, ...}: {
   imports = [
     ./ffmpeg.nix # FFmpeg + thumbnailer for Yazi
     ./imagemagick.nix
@@ -24,5 +24,9 @@
     ./pandoc.nix # Universal document converter
     # ./ocrmypdf.nix # OCR text layer for scanned PDFs - disabled: upstream patch failure (jbig2enc.py)
     ./qpdf.nix # Structural PDF utility
+  ];
+
+  home.packages = [
+    pkgs.mpv # Playback backend for media aliases
   ];
 }

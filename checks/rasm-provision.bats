@@ -62,12 +62,56 @@ write_lock_owner() {
   [ ! -e "$RASM_ROOT/.artifacts" ]
 }
 
+@test "global json form works for read-only schema-v2 verbs" {
+  for verb in env plan extensions doctor ports inventory status self-test; do
+    run --separate-stderr "$RASM_PROVISION_BIN" --json "$verb"
+    [ "$status" -eq 0 ]
+    [ "$stderr" = "" ]
+    jq -e --arg verb "$verb" '.schemaVersion == 2 and .command == $verb' <<<"$output" >/dev/null
+  done
+}
+
+@test "diagnostic json is allowlisted before lifecycle work" {
+  run --separate-stderr "$RASM_PROVISION_BIN" --diagnostic-json up
+  [ "$status" -eq 2 ]
+  [ "$stderr" = "" ]
+  jq -e '.ok == false and .command == "up" and (.error.message | contains("doctor, paths, and inventory"))' <<<"$output" >/dev/null
+  [ ! -e "$RASM_ROOT/.artifacts" ]
+}
+
 @test "handled prune failure emits exactly one json envelope" {
   run --separate-stderr "$RASM_PROVISION_BIN" --json prune --owned
   [ "$status" -ne 0 ]
   [ "$stderr" = "" ]
   [ "$(jq -s 'length' <<<"$output")" -eq 1 ]
   jq -e '.schemaVersion == 2 and .command == "prune" and .ok == false' <<<"$output" >/dev/null
+}
+
+@test "local json flag is active before lifecycle lock acquisition" {
+  env_json="$(provision_env_json)"
+  project="$(jq -r '.project' <<<"$env_json")"
+  lock="$RASM_ROOT/.artifacts/provisioning/rasm/.locks/$project.lock.d"
+  bash -c 'while :; do sleep 1; done' rasm-provision &
+  owner_pid="$!"
+  write_lock_owner "$lock" "$owner_pid" up
+
+  run --separate-stderr "$RASM_PROVISION_BIN" down --json
+  kill "$owner_pid" 2>/dev/null || true
+  wait "$owner_pid" 2>/dev/null || true
+
+  [ "$status" -ne 0 ]
+  [ "$stderr" = "" ]
+  [ "$(jq -s 'length' <<<"$output")" -eq 1 ]
+  jq -e '.ok == false and .command == "down" and (.error.message | contains("mutating command is active"))' <<<"$output" >/dev/null
+}
+
+@test "mutating static validation failures clean empty provisioning parents" {
+  run --separate-stderr env RASM_PROVISION_AUTH=invalid "$RASM_PROVISION_BIN" --json up
+  [ "$status" -ne 0 ]
+  [ "$stderr" = "" ]
+  [ "$(jq -s 'length' <<<"$output")" -eq 1 ]
+  jq -e '.ok == false and .command == "up" and (.error.message | contains("RASM_PROVISION_AUTH"))' <<<"$output" >/dev/null
+  [ ! -e "$RASM_ROOT/.artifacts" ]
 }
 
 @test "active psql session blocks lifecycle mutation before docker work" {
@@ -122,7 +166,7 @@ write_lock_owner() {
 }
 
 @test "extension catalog includes metadata owned by rows" {
-  run --separate-stderr "$RASM_PROVISION_BIN" --json extensions
+  run --separate-stderr env RASM_PROVISION_PG_CRON=1 "$RASM_PROVISION_BIN" --json extensions
   [ "$status" -eq 0 ]
   [ "$stderr" = "" ]
   jq -e '
@@ -135,7 +179,59 @@ write_lock_owner() {
       and .requiresSharedPreload == true
       and .backgroundWorker == true
       and .sourcePackage != null
+      and .sourceRoute != null
+      and .nixStatus != null
+      and .probeKind == "scheduler"
+      and .capabilityRank == "required"
+      and .externalAccess == "none"
+      and .restartClass == "shared-preload"
+      and .serviceProfile == "timescale"
+      and .loadPolicy == "verify-create"
       and .createPolicy == "verify-create"
+    )] | length == 1
+  ' <<<"$output" >/dev/null
+  jq -e '
+    all(.extensions[];
+      has("sourceRoute")
+      and has("sourceKind")
+      and has("nixStatus")
+      and has("probeKind")
+      and has("capabilityRank")
+      and has("externalAccess")
+      and has("restartClass")
+      and has("serviceProfile")
+      and has("loadPolicy")
+    )
+  ' <<<"$output" >/dev/null
+  [[ "$output" != *"nix/store"* ]]
+  [[ "$output" != *"docker.sock"* ]]
+}
+
+@test "service-specific extension source routes match service images" {
+  run --separate-stderr env RASM_PROVISION_PGDUCKDB=1 "$RASM_PROVISION_BIN" --json extensions
+  [ "$status" -eq 0 ]
+  [ "$stderr" = "" ]
+  jq -e '
+    any(.extensions[];
+      .service == "search"
+      and .extension == "vector"
+      and .sourceRoute == "image:paradedb/paradedb"
+      and .sourceKind == "image"
+    )
+  ' <<<"$output" >/dev/null
+}
+
+@test "pg cron catalog is scheduler-profile gated" {
+  run --separate-stderr env RASM_PROVISION_PG_CRON=0 "$RASM_PROVISION_BIN" --json extensions
+  [ "$status" -eq 0 ]
+  [ "$stderr" = "" ]
+  jq -e '
+    [.extensions[] | select(
+      .service == "timescale"
+      and .extension == "pg_cron"
+      and .required == false
+      and .createOnVerify == false
+      and .probeKind == "scheduler"
     )] | length == 1
   ' <<<"$output" >/dev/null
 }
@@ -157,6 +253,39 @@ write_lock_owner() {
   [ ! -e "$RASM_ROOT/.artifacts" ]
 }
 
+@test "auto port allocation uses enabled service count" {
+  run --separate-stderr env RASM_PROVISION_PORT_RANGE=25010-25011 "$RASM_PROVISION_BIN" --json plan
+  [ "$status" -eq 0 ]
+  [ "$stderr" = "" ]
+  jq -e '
+    .services.timescale.port == 25010
+    and .services.search.port == 25011
+    and .services.pgduckdb.enabled == false
+    and .services.pgduckdb.portSource == "disabled-default"
+  ' <<<"$output" >/dev/null
+
+  run --separate-stderr env RASM_PROVISION_PORT_RANGE=25010-25011 RASM_PROVISION_PGDUCKDB=1 "$RASM_PROVISION_BIN" --json plan
+  [ "$status" -ne 0 ]
+  [ "$stderr" = "" ]
+  jq -e '.ok == false and (.error.message | contains("no usable auto port blocks"))' <<<"$output" >/dev/null
+}
+
+@test "trust-loopback json env keeps connection strings redacted" {
+  run --separate-stderr env RASM_PROVISION_AUTH=trust-loopback "$RASM_PROVISION_BIN" --json env
+  [ "$status" -eq 0 ]
+  [ "$stderr" = "" ]
+  [[ "$output" != *"postgres://postgres@127.0.0.1"* ]]
+  jq -e '.RASM_TIMESCALE_DSN | contains("***")' <<<"$output" >/dev/null
+}
+
+@test "text plan does not point missing generated secrets at dev null" {
+  run --separate-stderr "$RASM_PROVISION_BIN" plan
+  [ "$status" -eq 0 ]
+  [[ "$output" != *"/dev/null"* ]]
+  [[ "$output" == *"<generated-by-up>"* ]]
+  [ ! -e "$RASM_ROOT/.artifacts" ]
+}
+
 @test "doctor exposes sanitized runtime facts" {
   run --separate-stderr "$RASM_PROVISION_BIN" --json doctor
   [ "$status" -eq 0 ]
@@ -170,4 +299,29 @@ write_lock_owner() {
   ' <<<"$output" >/dev/null
   [[ "$output" != *"docker.sock"* ]]
   [[ "$output" != *"DOCKER_CONFIG"* ]]
+}
+
+@test "broken explicit docker context degrades to sanitized doctor policy" {
+  mkdir -p "$BATS_TEST_TMPDIR/bin"
+  cat >"$BATS_TEST_TMPDIR/bin/docker" <<'EOF'
+#!/usr/bin/env bash
+if [[ "$1" == "context" && "$2" == "inspect" ]]; then
+  exit 1
+fi
+exit 125
+EOF
+  chmod +x "$BATS_TEST_TMPDIR/bin/docker"
+
+  run --separate-stderr env PATH="$BATS_TEST_TMPDIR/bin:$PATH" DOCKER_CONTEXT=missing "$RASM_PROVISION_BIN" --json doctor
+  [ "$status" -eq 0 ]
+  [ "$stderr" = "" ]
+  jq -e '
+    .ok == true
+    and .docker.policy.status == "rejected"
+    and .docker.policy.reason == "explicit Docker context cannot be inspected"
+    and .docker.endpointKind == "unknown"
+  ' <<<"$output" >/dev/null
+  [[ "$output" != *"docker.sock"* ]]
+  [[ "$output" != *"/Users/"* ]]
+  [ ! -e "$RASM_ROOT/.artifacts" ]
 }
