@@ -21,7 +21,7 @@ _: {
     k9 = "k9s"; # Launch TUI
 
     # --- ArgoCD ---------------------------------------------------------------
-    # Temporarily disabled - nixpkgs build broken (2026-02-17)
+    # Disabled from the default profile; build the current nixpkgs package before re-enabling.
     # argo = "argocd"; # ArgoCD CLI shorthand
     # argosync = "argocd app sync"; # Sync application
 

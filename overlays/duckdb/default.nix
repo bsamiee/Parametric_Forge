@@ -11,24 +11,24 @@
   stdenvNoCC,
   unzip,
 }: let
-  version = "1.5.3";
+  version = "1.5.4";
   system = stdenvNoCC.hostPlatform.system;
 
   platformAsset =
     if system == "aarch64-darwin" || system == "x86_64-darwin"
     then {
       url = "https://github.com/duckdb/duckdb/releases/download/v${version}/duckdb_cli-osx-universal.zip";
-      hash = "sha256-rnmfEGrKG7dAsEBkSPE7qRVY1ZGXR1y2oPNJ224Xcho=";
+      hash = "sha256-xdjLYNfVzra7lPzlrkoXzIFtsZwhtrteDSNIs7IkA1k=";
     }
     else if system == "aarch64-linux"
     then {
       url = "https://github.com/duckdb/duckdb/releases/download/v${version}/duckdb_cli-linux-arm64.zip";
-      hash = "sha256-XiOZQoeTZC6ZTxWExH1J9MWLe07CKX6kpSI1OmxVODU=";
+      hash = "sha256-N38D+58Xq1p48o+CnL/LUzPairPC0HiPJ2lPgd937Sk=";
     }
     else if system == "x86_64-linux"
     then {
       url = "https://github.com/duckdb/duckdb/releases/download/v${version}/duckdb_cli-linux-amd64.zip";
-      hash = "sha256-NcrvH+y8jX4sB95P0s3vxRieybqeHMoij7GhxIzFKoo=";
+      hash = "sha256-Hy+nJPsFSz2+Gpy9E95bdpl9hQ5wh+x2K6iNsE4BgM8=";
     }
     else
       (

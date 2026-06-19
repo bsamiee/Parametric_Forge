@@ -11,7 +11,7 @@
     ./kubectl.nix
     ./kustomize.nix
     ./helm.nix
-    # ./argocd.nix  # Temporarily disabled - nixpkgs yarn hash mismatch (2026-02-17)
+    # ./argocd.nix  # Disabled from the default profile; build the current nixpkgs package before re-enabling.
     ./kubeseal.nix
     ./k9s.nix
     ./k8s-debug.nix

@@ -10,43 +10,11 @@
   lib,
   ...
 }: let
-  postgres18ExtensionPackageNames = [
-    "timescaledb"
-    "postgis"
-    "pgrouting"
-    "h3-pg"
-    "pointcloud"
-    "pgvector"
-    "pg_textsearch"
-    "pgroonga"
-    "pg_bigm"
-    "rum"
-    "hypopg"
-    "pg_duckdb"
-    "pg_ivm"
-    "pg_partman"
-    "pg_repack"
-    "pg_cron"
-    "pgmq"
-    "tds_fdw"
-    "system_stats"
-  ];
-  postgres18WithForgeExtensions = pkgs.postgresql_18.withPackages (
-    ps: let
-      admit = name: let
-        attempted = builtins.tryEval ps.${name};
-      in
-        lib.optionals
-        (attempted.success && attempted.value != null && lib.meta.availableOn pkgs.stdenv.hostPlatform attempted.value)
-        [attempted.value];
-    in
-      lib.concatMap admit postgres18ExtensionPackageNames
-  );
-  postgres18ForgeTools = pkgs.runCommand "postgres18-forge-tools" {nativeBuildInputs = [pkgs.makeWrapper];} ''
+  postgres18ForgeTools = pkgs.runCommand "postgres18-forge-client-tools" {nativeBuildInputs = [pkgs.makeWrapper];} ''
     runHook preInstall
     mkdir -p "$out/bin"
-    for bin in ${postgres18WithForgeExtensions}/bin/*; do
-      makeWrapper "$bin" "$out/bin/$(basename "$bin")"
+    for bin in psql pg_dump pg_restore pg_isready; do
+      makeWrapper "${pkgs.postgresql_18}/bin/$bin" "$out/bin/$bin"
     done
     runHook postInstall
   '';
@@ -82,7 +50,7 @@ in {
     libspatialite # Spatial SQL extension for geospatial work
     sqlfluff # SQL linter and formatter supporting multiple dialects
     duckdb # In-memory analytics database with SQL interface
-    postgres18ForgeTools # PostgreSQL 18 executables wrapped to their store path so server tools find share/postgresql
+    postgres18ForgeTools # PostgreSQL 18 client commands; server extensions are Docker-owned by rasm-provision
     sqlean # Extension library bundle (regexp, uuid, stats, etc.)
     postgres-language-server # Postgres LSP; includes postgres-language-server and postgrestools
     sqliteForge # Explicit SQLite shell with SQLean, sqlite-vec, and SpatiaLite loaded

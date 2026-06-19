@@ -34,16 +34,16 @@ in {
 
     # --- Global Settings ----------------------------------------------------
     global = {
-      autoUpdate = mkDefault true;
+      autoUpdate = mkDefault false;
       brewfile = mkDefault false; # Disable Brewfile (managed via Nix)
     };
 
     # --- Activation Behavior ------------------------------------------------
     # Keep cleanup disabled so Homebrew installs outside this profile remain installed.
     onActivation = {
-      autoUpdate = mkDefault true;
+      autoUpdate = mkDefault false;
       cleanup = mkDefault "none";
-      upgrade = mkDefault true;
+      upgrade = mkDefault false;
       extraEnv = {
         PATH = mkDefault activationPath;
       };

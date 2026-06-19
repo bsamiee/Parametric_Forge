@@ -10,6 +10,7 @@
     ./alejandra.nix
     ./comma.nix
     ./deadnix.nix
+    ./inspection.nix
     ./nix-index.nix
     ./nix-prefetch-github.nix
     ./nixd.nix

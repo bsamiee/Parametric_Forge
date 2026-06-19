@@ -57,7 +57,7 @@ in
       runHook preInstall
       mkdir -p $out/lib $out/bin
 
-      find . -type f -name "*${sharedLibExt}" -maxdepth 1 -exec install -Dm644 {} $out/lib/$(basename {}) \;
+      find . -maxdepth 1 -type f -name "*${sharedLibExt}" -exec install -Dm644 {} $out/lib/$(basename {}) \;
 
       if [ -f sqlean ]; then
         install -Dm755 sqlean $out/bin/sqlean

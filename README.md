@@ -2,9 +2,9 @@
 
 <div style="padding: 8px 0 12px;">
   <img alt="Nix Flake" src="https://img.shields.io/badge/Nix-Flake-1f2937?style=flat&logo=nixos&logoColor=7e9ad9&labelColor=0b1a2a">
-  <img alt="Home Manager" src="https://img.shields.io/badge/Home%20Manager-24.05-1f2937?style=flat&logo=nixos&logoColor=7e9ad9&labelColor=0b1a2a">
+  <img alt="Home Manager" src="https://img.shields.io/badge/Home%20Manager-master-1f2937?style=flat&logo=nixos&logoColor=7e9ad9&labelColor=0b1a2a">
   <img alt="nixpkgs" src="https://img.shields.io/badge/nixpkgs-unstable-1f2937?style=flat&logo=nixos&logoColor=7e9ad9&labelColor=0b1a2a">
-  <img alt="Bridge" src="https://img.shields.io/badge/Bridge-nix--homebrew-1f2937?style=flat&logo=homebrew&logoColor=FBB040&labelColor=0b1a2a">
+  <img alt="Bridge" src="https://img.shields.io/badge/Bridge-nix--darwin%20Homebrew-1f2937?style=flat&logo=homebrew&logoColor=FBB040&labelColor=0b1a2a">
   <img alt="Host" src="https://img.shields.io/badge/Host-nix--darwin-1f2937?style=flat&logo=apple&logoColor=white&labelColor=0b1a2a">
   <img alt="Secrets" src="https://img.shields.io/badge/Secrets-1Password%20SSH-1f2937?style=flat&logo=1password&logoColor=0061FF&labelColor=0b1a2a">
   <img alt="License" src="https://img.shields.io/badge/License-MIT-1f2937?style=flat&logo=github&logoColor=white&labelColor=0b1a2a">
@@ -15,7 +15,7 @@ Parametric Forge is a deterministic macOS workspace built with Nix flakes, nix-d
 <div style="padding: 12px 14px; border: 1px solid #1f2937; border-radius: 12px; background: #0b111a;">
   <strong>At a glance</strong>
   <ul style="margin: 0 0 0 18px;">
-    <li><strong>Scope:</strong> One flake drives macOS defaults, GUI apps, CLI tools, fonts, overlays (Yazi + sqlean), and cache policy.</li>
+    <li><strong>Scope:</strong> One flake drives macOS defaults, GUI apps, CLI tools, fonts, overlays, provisioning, and cache policy.</li>
     <li><strong>Secrets:</strong> 1Password-backed secrets + SSH keep credentials out of the repo; GitHub CLI stays writable.</li>
     <li><strong>Terminal mesh:</strong> WezTerm → Zellij → Yazi with Neovim remote control, Starship, Atuin, fzf-tab, and carapace.</li>
     <li><strong>Toolchains:</strong> Python 3.15 (uv/ruff/ty), Node (nix + pnpm), Lua + LSPs, SQLite/DuckDB with sqlean/spatialite/vec, scientific native libs, Nix-managed dotnet SDKs (8/9/10).</li>
@@ -28,9 +28,11 @@ Parametric Forge is a deterministic macOS workspace built with Nix flakes, nix-d
 ## Layout
 ```text
 .
-├── flake.nix / flake.lock          # Inputs/outputs, overlay export, devshell, formatter
+├── flake.nix / flake.lock          # Inputs, systems, overlays, host exports
+├── flake-modules/                  # Package/app outputs, checks, devshell, formatter
+├── checks/                         # Bats suites for package behavior
 ├── hosts/
-│   └── darwin/default.nix          # MacBook host: nix-darwin + nix-homebrew + Home Manager
+│   └── darwin/default.nix          # MacBook host: nix-darwin + Home Manager
 ├── modules/
 │   ├── common/                     # Nix daemon perf/cache + Cachix post-build hook
 │   ├── darwin/                     # macOS defaults, fonts, homebrew taps/brews/casks
@@ -40,7 +42,7 @@ Parametric Forge is a deterministic macOS workspace built with Nix flakes, nix-d
 │       ├── programs/               # Apps (wezterm/zellij/yazi), shell-tools, git-tools, nix-tools, zsh
 │       ├── scripts/                # Integration wrappers (nvim/zellij/yazi)
 │       └── xdg.nix                 # XDG base dirs + scaffolding
-├── overlays/                       # Upstream Yazi overlay passthrough + custom sqlean
+├── overlays/                       # Upstream passthrough + duckdb, rasm-provision, sqlean
 └── .archive/                       # Retired configs kept for reference
 ```
 
@@ -61,11 +63,12 @@ Parametric Forge is a deterministic macOS workspace built with Nix flakes, nix-d
    ```
 4. **Apply mac host:**
    ```sh
-   nix run nix-darwin -- switch --flake ~/Parametric_Forge#macbook
+  nix run nix-darwin -- switch --flake ~/Parametric_Forge#macbook
    ```
 5. **Rebuild after edits:**
    ```sh
-   darwin-rebuild switch --flake ~/Parametric_Forge#macbook
+  cd ~/Parametric_Forge
+  sudo darwin-rebuild switch --flake .#macbook |& nom
    ```
 
 ---
@@ -93,8 +96,8 @@ Parametric Forge is a deterministic macOS workspace built with Nix flakes, nix-d
   <summary>Nix, hosts, cache</summary>
 
   - **Daemon:** `modules/common/nix.nix` tunes eval/build parallelism, HTTP/2, cache TTLs, and post-build Cachix push.
-  - **Overlay:** `overlays/default.nix` forwards upstream Yazi overlay and adds `sqlean` SQLite extensions.
-  - **Host binding:** `hosts/darwin/default.nix` wires nix-darwin, Home Manager, nix-homebrew, and user state versions.
+  - **Overlay:** `overlays/default.nix` forwards upstream overlays and adds the DuckDB CLI overlay, `rasm-provision`, and `sqlean` SQLite extensions.
+  - **Host binding:** `hosts/darwin/default.nix` wires nix-darwin, Home Manager, the nix-darwin Homebrew module, and user state versions.
   </details>
 
   <details>
@@ -108,8 +111,8 @@ Parametric Forge is a deterministic macOS workspace built with Nix flakes, nix-d
   <summary>Languages</summary>
 
   - **Python:** 3.15 GIL build with uv, ruff, ty, basedpyright, and `forge-scientific-env`; caches under XDG (`modules/home/environments/languages.nix`). `MACOSX_DEPLOYMENT_TARGET` follows the nix-darwin minimum and is currently `14.0`.
-  - **Node/Lua/DB:** Node via nix + pnpm (npm is aliased to pnpm for consistency); Lua + LSP tooling; DuckDB/SQLite with sqlean/spatialite/vec; PG18 host tools include the nixpkgs-buildable Timescale, PostGIS, pgRouting, H3, pointcloud, vector, text-search, maintenance, queue, and FDW extension set. Provisioned service images own image-only extension proof (`modules/home/programs/languages/*`).
-  - **Scientific + provisioning:** `forge-scientific-sync` creates a locked isolated `.venv-scientific` from the scientific dependency group, while `forge-scientific-env` exposes clang, gfortran, GDAL, GEOS, PROJ, HDF5, netCDF, Arrow, OpenBLAS, ONNX Runtime, artifact native libraries, Eigen, PDAL, and Boost for one-off source builds. `forge-companion-env` provides the Python 3.12 native-build lane for companion tooling. `rasm-provision` is the overlay-owned, Home Manager-installed local Rasm provisioning command; use `rasm-provision --help` for the live verb list. The optional `pgduckdb` analytics probe is gated by `RASM_PROVISION_PGDUCKDB=1`.
+  - **Node/Lua/DB:** Node via nix + pnpm (npm is aliased to pnpm for consistency); Lua + LSP tooling; DuckDB/SQLite with sqlean/spatialite/vec; PostgreSQL 18 host tools are client-owned (`psql`, `pg_dump`, `pg_restore`, `pg_isready`, `pg_config`, SQLFluff, and Postgres LSP). PostgreSQL server extensions stay Docker-owned by `rasm-provision`, including Timescale, PostGIS, pgvector/vectorscale, ParadeDB `pg_search`, optional `pg_duckdb`, and Timescale-side `pg_cron` verification.
+  - **Scientific + provisioning:** `forge-scientific-sync` creates a locked isolated `.venv-scientific` from the scientific dependency group, while `forge-scientific-env` exposes clang, gfortran, GDAL, GEOS, PROJ, HDF5, netCDF, Arrow, OpenBLAS, ONNX Runtime, artifact native libraries, Eigen, PDAL, and Boost for one-off source builds. `forge-companion-env` provides the Python 3.12 native-build lane for companion tooling. `rasm-provision` is the overlay-owned, Home Manager-installed local provisioning command with schema v2 safe JSON, auto-root hidden credentials, deterministic auto ports, preserved volumes on `down`, Timescale `pg_cron` verification support, and optional `pgduckdb` behind `RASM_PROVISION_PGDUCKDB=1`; use `rasm-provision --help` for the live verb list.
   </details>
 
   <details>
@@ -122,7 +125,7 @@ Parametric Forge is a deterministic macOS workspace built with Nix flakes, nix-d
   <details>
   <summary>Homebrew bridge</summary>
 
-  - **Bridge:** `modules/darwin/homebrew` enables nix-homebrew, auto-update/cleanup, and installs taps/brews/casks (Raycast, BTT, Arc, Adobe CC, fonts not in nixpkgs, yabai/skhd/borders).
+  - **Bridge:** `modules/darwin/homebrew` uses the nix-darwin Homebrew module for taps/brews/casks (Raycast, BTT, Arc, Adobe CC, fonts not in nixpkgs, yabai/skhd/borders). Activation does not auto-update or upgrade Homebrew; upgrades are explicit operator actions.
   </details>
 </div>
 
@@ -156,9 +159,11 @@ Parametric Forge is a deterministic macOS workspace built with Nix flakes, nix-d
 ## Maintenance
 <div style="padding: 12px 14px; border: 1px solid #1f2937; border-radius: 12px; background: #0b111a;">
   <ul style="margin: 0 0 0 18px;">
-    <li><strong>Format:</strong> <code>nix fmt</code></li>
-    <li><strong>Dev shell + lint:</strong> <code>nix develop</code> → <code>deadnix .</code>, <code>statix .</code></li>
-    <li><strong>Rebuild host:</strong> <code>darwin-rebuild switch --flake ~/Parametric_Forge#macbook</code></li>
+    <li><strong>Format check:</strong> <code>nix fmt -- --check</code></li>
+    <li><strong>Full flake proof:</strong> <code>nix flake check</code></li>
+    <li><strong>Provisioner build:</strong> <code>nix build .#rasm-provision</code></li>
+    <li><strong>Provisioner smoke:</strong> <code>nix run .#rasm-provision -- self-test</code>, plus read-only JSON smoke for <code>env</code>, <code>plan</code>, and <code>extensions</code> when touching provisioning</li>
+    <li><strong>Host activation:</strong> <code>sudo darwin-rebuild switch --flake .#macbook |& nom</code> from the repository root after the system build and closure diff are reviewed</li>
     <li><strong>Update inputs:</strong> <code>nix flake update</code></li>
     <li><strong>Cache push:</strong> automatic via post-build hook when <code>CACHIX_AUTH_TOKEN</code> is present</li>
   </ul>

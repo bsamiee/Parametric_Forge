@@ -98,16 +98,18 @@ someFnWithSSL = args: ...  # Function spam
 - IMPORTANT: CRITICAL: Always add the .sh extension to bash scripts
 - `set -euo pipefail` mandatory
 - ShellCheck must pass
-- Prefer Nix `writeShellScriptBin` over raw scripts
+- Prefer `writeShellApplication` for shell CLIs with declared runtime tools, ShellCheck integration, or stable Home Manager-installed binaries. Use `writeShellScriptBin` only for tiny scripts that do not need a runtime closure.
 - Non-interactive agent shells do not inherit interactive zsh aliases or functions; invoke real executables on `PATH`, or use `zsh -ic` only when intentionally testing interactive shell configuration.
 - Bash-only snippets using `mapfile`, `readarray`, `shopt`, `BASH_*`, arrays, or Bash 5.3 features must run through `bash -lc`, a Bash heredoc, or an executable with a Bash shebang.
 - Package shell CLIs with `writeShellApplication` when they need declared runtime tools, ShellCheck integration, or a stable Home Manager-installed binary.
 
 ### Local Provisioning
-- `rasm-provision` is the canonical Rasm local provisioning command. The overlay package owns the implementation; Home Manager only installs that derivation.
+- `rasm-provision` is the canonical Forge-owned local provisioning and debugging command. The overlay package owns the implementation; Home Manager only installs that derivation. Rasm campaign work enters through `uv run python -m tools.assay provision <verb>`; direct `rasm-provision`, `psql`, `paths`, `prune`, `self-test`, Docker/Compose, and diagnostic JSON are Forge-level debugging surfaces.
 - Clean renames are preferred over compatibility shims. Do not keep retired provisioning command names as aliases, wrappers, fallbacks, or silent environment-variable compatibility.
 - Provisioning commands are agent-first and noninteractive: no host `sudo`, no keychain prompt, no DB password prompt, and no Docker credential-helper dependency for public images.
 - Read-only provisioning commands avoid durable repo writes unless the command explicitly documents state creation.
+- Home Manager DB tooling is client/tooling-owned: `psql`, `pg_dump`, `pg_restore`, `pg_isready`, optional `pg_config`, SQLFluff/Postgres LSP, DuckDB, SQLite/SQLean, SpatiaLite, and sqlite-vec. PostgreSQL server extensions stay Docker-owned by `rasm-provision`; `pg_cron` is required only on the Timescale service unless the service posture changes.
+- Forge provisioning JSON is schema v2 only. Do not add schema-v1 emitters or compatibility adapters. Doctor and extension JSON expose sanitized runtime booleans/kinds and catalog metadata only; raw sockets, Docker config paths, helper names, logs, DSNs, token material, mount paths, and host absolute paths stay out of agent-facing JSON.
 
 ### Python (Secondary)
 - Python 3.15+ only (never older)
