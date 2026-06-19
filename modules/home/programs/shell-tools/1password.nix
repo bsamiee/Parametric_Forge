@@ -41,6 +41,7 @@
     activation.injectSecretsFromVault = lib.hm.dag.entryAfter ["linkGeneration"] ''
       cache_file="$HOME/.config/hm-op-session.sh"
       template_file="$HOME/.config/op/env.template"
+      tmp_file="$cache_file.tmp.$$"
 
       # Fail loudly if template missing (indicates DAG ordering bug)
       if [[ ! -f "$template_file" ]]; then
@@ -52,14 +53,17 @@
       # Create cache file with resolved tokens from 1Password
       echo "Injecting secrets from 1Password vault..." >&2
       mkdir -p "$(dirname "$cache_file")"
-      if ${pkgs._1password-cli}/bin/op inject -f -i "$template_file" -o "$cache_file"; then
-        chmod 600 "$cache_file"
-        echo "✓ Tokens cached to $cache_file" >&2
+      if ${pkgs._1password-cli}/bin/op inject -f -i "$template_file" -o "$tmp_file" >/dev/null; then
+        chmod 600 "$tmp_file"
+        mv -f "$tmp_file" "$cache_file"
+        echo "✓ Tokens cached" >&2
       else
         echo "⚠ Warning: op inject failed - 1Password may not be authenticated. Run: op signin" >&2
-        # Create empty file so zsh doesn't fail on source
-        touch "$cache_file"
-        chmod 600 "$cache_file"
+        rm -f "$tmp_file"
+        if [[ ! -f "$cache_file" ]]; then
+          touch "$cache_file"
+          chmod 600 "$cache_file"
+        fi
       fi
     '';
   };

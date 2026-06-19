@@ -12,6 +12,6 @@
   ];
 
   home.packages = [
-    pkgs.rasm-provision
+    pkgs.forge-provision
   ];
 }

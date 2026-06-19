@@ -1,0 +1,7 @@
+[
+  {"profile":"timescale","database":"postgres","default":true,"service":"timescale","category":"time-series"},
+  {"profile":"pg_search","database":"postgres","default":true,"service":"search","category":"hybrid-search"},
+  {"profile":"analytics-probe","database":"postgres","default":false,"service":"pgduckdb","category":"analytical-lane"},
+  {"profile":"duckdb-tooling","database":"duckdb","default":true,"service":"duckdb","category":"analytical-tool-surface"},
+  {"profile":"sqlite-forge","database":"sqlite","default":true,"service":"sqlite","category":"embedded-tool-surface"}
+]

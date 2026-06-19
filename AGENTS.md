@@ -11,11 +11,11 @@
 - For Python work, use the project or tool owner interpreter (`uv run`, `.venv/bin/python`, or the repo-declared command) rather than ambient `python3` unless the task is explicitly about the machine Python.
 
 ## Local Provisioning
-- `rasm-provision` is the canonical Forge-owned local provisioning and debugging command; it is owned by the overlay package and installed through Home Manager from that derivation. Rasm campaign work enters through `uv run python -m tools.assay provision <verb>`; direct `rasm-provision`, `psql`, `paths`, `prune`, `self-test`, Docker/Compose, and diagnostic JSON are Forge-level debugging surfaces.
+- `forge-provision` is the canonical Forge-owned local provisioning and debugging command; it is owned by the overlay package and installed through Home Manager from that derivation. Rasm campaign work enters through `uv run python -m tools.assay provision <verb>`; direct `forge-provision`, `psql`, `paths`, `prune`, `self-test`, Docker/Compose, and diagnostic JSON are Forge-level debugging surfaces.
 - Do not add compatibility executables, aliases, or fallbacks for retired provisioning names. Rename callers and documentation to the canonical command instead.
 - Provisioning must stay noninteractive for agents: no host `sudo`, no keychain requirement, no password prompt, and no Docker credential helper dependency for public images.
 - Read-only provisioning commands should avoid durable writes unless the command explicitly documents state creation.
-- Home Manager DB tooling is client/tooling-owned: `psql`, `pg_dump`, `pg_restore`, `pg_isready`, optional `pg_config`, SQLFluff/Postgres LSP, DuckDB, SQLite/SQLean, SpatiaLite, and sqlite-vec. PostgreSQL server extensions stay Docker-owned by `rasm-provision`; `pg_cron` is required only on the Timescale service unless the service posture changes.
+- Home Manager DB tooling is client/tooling-owned: `psql`, `pg_dump`, `pg_restore`, `pg_isready`, optional `pg_config`, SQLFluff/Postgres LSP, DuckDB, SQLite/SQLean, SpatiaLite, and sqlite-vec. PostgreSQL server extensions stay Docker-owned by `forge-provision`; `pg_cron` is required only on the Timescale service unless the service posture changes.
 - Forge provisioning JSON is schema v2 only. Do not add schema-v1 emitters or compatibility adapters. Doctor and extension JSON expose sanitized runtime booleans/kinds and catalog metadata only; raw sockets, Docker config paths, helper names, logs, DSNs, token material, mount paths, and host absolute paths stay out of agent-facing JSON.
 
 ## Claude And Codex Runtime Boundaries

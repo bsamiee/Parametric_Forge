@@ -28,6 +28,7 @@
     ./fd.nix
     ./fzf.nix
     ./gping.nix
+    ./forge-tools.nix
     ./grex.nix
     ./hexyl.nix
     ./hyperfine.nix

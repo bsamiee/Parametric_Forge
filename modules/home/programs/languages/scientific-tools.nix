@@ -71,6 +71,10 @@
     pdal
   ];
 
+  aecNativeTools = with pkgs; [
+    gmsh
+  ];
+
   scientificNativeLibs =
     geoNativeLibs
     ++ numericNativeLibs
@@ -88,9 +92,11 @@
     ])
     ++ artifactNativeLibs;
 
-  scientificRuntimeTools = with pkgs; [
-    onnxruntime
-  ];
+  scientificRuntimeTools = with pkgs;
+    [
+      onnxruntime
+    ]
+    ++ aecNativeTools;
 
   companionNativeLibs =
     geoNativeLibs
@@ -116,6 +122,34 @@
     (lib.makeSearchPathOutput "out" "share/pkgconfig" companionNativeLibs)
   ];
   companionCmakePrefixPath = lib.concatStringsSep ":" (map toString companionNativeLibs);
+  forgePythonEnvPrelude = python: profile: ''
+    forge_python_root() {
+      if [ -n "''${FORGE_PROVISION_ROOT:-}" ]; then
+        [ -d "$FORGE_PROVISION_ROOT" ] || {
+          printf '%s: FORGE_PROVISION_ROOT is not a directory: %s\n' "${profile}" "$FORGE_PROVISION_ROOT" >&2
+          exit 1
+        }
+        (cd "$FORGE_PROVISION_ROOT" && pwd -P)
+        return
+      fi
+      git rev-parse --show-toplevel 2>/dev/null || pwd -P
+    }
+
+    forge_python_root_key() {
+      forge_python_root | tr -d '\n' | sha256sum | cut -c1-12
+    }
+
+    forge_python_env_default() {
+      abi="$(${python}/bin/python3 -c 'import sys; print(sys.implementation.cache_tag)')"
+      root_key="$(forge_python_root_key)"
+      state_home="''${XDG_STATE_HOME:-$HOME/.local/state}"
+      printf '%s/forge-python-envs/%s/%s/${profile}\n' "$state_home" "$abi" "$root_key"
+    }
+
+    if [ -z "''${UV_PROJECT_ENVIRONMENT:-}" ]; then
+      export UV_PROJECT_ENVIRONMENT="$(forge_python_env_default)"
+    fi
+  '';
   forgeScientificEnv = pkgs.writeShellApplication {
     name = "forge-scientific-env";
     # python315 is pinned ahead of the ambient project-venv shim so `forge-scientific-env python3` is the deterministic
@@ -168,11 +202,11 @@
   };
   forgeCompanionEnv = pkgs.writeShellApplication {
     name = "forge-companion-env";
-    runtimeInputs = nativeBuildTools ++ companionNativeLibs ++ [pkgs.uv pkgs.python312];
+    runtimeInputs = nativeBuildTools ++ companionNativeLibs ++ [pkgs.coreutils pkgs.git pkgs.uv pkgs.python312];
     text = ''
+      ${forgePythonEnvPrelude pkgs.python312 "companion"}
       export UV_PYTHON_PREFERENCE="only-system"
       export UV_PYTHON_DOWNLOADS="never"
-      export UV_PROJECT_ENVIRONMENT="''${UV_PROJECT_ENVIRONMENT:-.venv-companion}"
       export MACOSX_DEPLOYMENT_TARGET="${darwinMinVersion}"
       export CC="${pkgs.clang}/bin/clang"
       export CXX="${pkgs.clang}/bin/clang++"
@@ -183,9 +217,9 @@
   };
   forgeScientificSync = pkgs.writeShellApplication {
     name = "forge-scientific-sync";
-    runtimeInputs = [forgeScientificEnv pkgs.uv];
+    runtimeInputs = [forgeScientificEnv pkgs.coreutils pkgs.git pkgs.python315 pkgs.uv];
     text = ''
-      export UV_PROJECT_ENVIRONMENT="''${UV_PROJECT_ENVIRONMENT:-.venv-scientific}"
+      ${forgePythonEnvPrelude pkgs.python315 "scientific"}
       exec forge-scientific-env uv sync --locked --group scientific "$@"
     '';
   };

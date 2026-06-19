@@ -8,9 +8,9 @@
 _: {
   programs.zsh.shellAliases = {
     # --- Darwin Operations --------------------------------------------------
-    drs = "sudo darwin-rebuild switch --flake .#macbook |& nom"; # Switch to macbook config
-    drb = "sudo darwin-rebuild build --flake .#macbook |& nom"; # Build macbook config
-    drc = "darwin-rebuild check --flake .#macbook |& nom"; # Check macbook configuration
+    drs = "forge-redeploy --switch"; # Check, build, diff, then switch macbook config
+    drb = "forge-redeploy --build"; # Check and build macbook config
+    drc = "forge-redeploy --check-only"; # Check macbook configuration and build proof
 
     # --- Nix Operations -----------------------------------------------------
     ns = "nix search nixpkgs"; # Search for packages
@@ -27,7 +27,7 @@ _: {
 
     # --- Flake Operations ---------------------------------------------------
     nfu = "nix flake update && nix flake check --all-systems"; # Update all inputs + validate
-    nfn = "nix flake update nixpkgs && drs"; # Update nixpkgs + rebuild system
+    nfn = "nix flake update nixpkgs && forge-redeploy --check-only"; # Update nixpkgs + validate before any switch
     nfl = "nix flake lock"; # Lock missing inputs (safe)
     nfc = "nix flake check && nix flake show"; # Validate + explore outputs
   };

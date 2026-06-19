@@ -9,6 +9,7 @@
   home.packages = with pkgs; [
     colima # VM manager running Docker/containerd
     docker-client # CLI only (connects to Colima daemon)
+    docker-buildx # Docker BuildKit builder subcommand
     docker-compose # Compose v2 plugin
   ];
 }

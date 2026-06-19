@@ -2,49 +2,81 @@
 set -Eeuo pipefail
 shopt -s inherit_errexit array_expand_once nullglob
 
-readonly schema_version=2
-readonly owner_label="dev.bsamiee.rasm-provision"
-readonly service_label="dev.bsamiee.rasm.service"
-readonly root_label="dev.bsamiee.rasm.root"
-readonly project_label="dev.bsamiee.rasm.project"
-readonly resource_label="dev.bsamiee.rasm.resource"
-readonly generation_label="dev.bsamiee.rasm.generation"
-readonly project_override="${RASM_PROVISION_PROJECT:-}"
-readonly lock_wait_seconds="${RASM_PROVISION_LOCK_WAIT_SECONDS:-30}"
-readonly lock_ttl_seconds="${RASM_PROVISION_LOCK_TTL_SECONDS:-900}"
-readonly compose_parallel_limit="${RASM_PROVISION_COMPOSE_PARALLEL_LIMIT:-1}"
-readonly max_active_projects="${RASM_PROVISION_MAX_ACTIVE_PROJECTS:-4}"
+resolve_share_dir() {
+  local source_dir bin_dir
+  source_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)" || return
+  if [[ -d "$source_dir/data" && -d "$source_dir/sql" ]]; then
+    printf '%s\n' "$source_dir"
+    return 0
+  fi
+  bin_dir="$(cd -- "$(dirname -- "$(realpath "${BASH_SOURCE[0]}")")" && pwd -P)" || return
+  printf '%s/share/forge-provision\n' "${bin_dir%/bin}"
+}
+
+readonly forge_provision_share="${FORGE_PROVISION_SHARE:-$(resolve_share_dir)}"
+readonly schema_version=3
+readonly owner_label="dev.bsamiee.forge-provision"
+readonly service_label="dev.bsamiee.forge-provision.service"
+readonly root_label="dev.bsamiee.forge-provision.root"
+readonly project_label="dev.bsamiee.forge-provision.project"
+readonly resource_label="dev.bsamiee.forge-provision.resource"
+readonly generation_label="dev.bsamiee.forge-provision.generation"
+readonly project_override="${FORGE_PROVISION_PROJECT:-}"
+readonly provision_instance="${FORGE_PROVISION_INSTANCE:-default}"
+readonly lock_wait_seconds="${FORGE_PROVISION_LOCK_WAIT_SECONDS:-30}"
+readonly lock_ttl_seconds="${FORGE_PROVISION_LOCK_TTL_SECONDS:-900}"
+readonly compose_parallel_limit="${FORGE_PROVISION_COMPOSE_PARALLEL_LIMIT:-1}"
+readonly max_active_projects="${FORGE_PROVISION_MAX_ACTIVE_PROJECTS:-4}"
 readonly default_colima_socket="$HOME/.local/share/colima/default/docker.sock"
 readonly default_port_range="15364-15554,25010-25099,25101-25470,25472-25575"
-readonly fixed_port_base="${RASM_PROVISION_PORT_BASE:-}"
-readonly port_policy_requested="${RASM_PROVISION_PORT_POLICY:-auto}"
-readonly port_range_requested="${RASM_PROVISION_PORT_RANGE:-$default_port_range}"
-readonly port_exclude_requested="${RASM_PROVISION_PORT_EXCLUDE:-}"
-readonly auth_mode_requested="${RASM_PROVISION_AUTH:-auto-root}"
-readonly pg_cron_requested="${RASM_PROVISION_PG_CRON:-0}"
+readonly fixed_port_base="${FORGE_PROVISION_PORT_BASE:-}"
+readonly port_policy_requested="${FORGE_PROVISION_PORT_POLICY:-auto}"
+readonly port_range_requested="${FORGE_PROVISION_PORT_RANGE:-$default_port_range}"
+readonly port_exclude_requested="${FORGE_PROVISION_PORT_EXCLUDE:-}"
+readonly auth_mode_requested="${FORGE_PROVISION_AUTH:-auto-root}"
+readonly pg_cron_requested="${FORGE_PROVISION_PG_CRON:-0}"
 host_os="$(uname -s 2>/dev/null || printf unknown)"
 readonly host_os
-readonly port_lock_root="${XDG_STATE_HOME:-$HOME/.local/state}/rasm-provision/port-locks"
-readonly session_lock_root="${XDG_STATE_HOME:-$HOME/.local/state}/rasm-provision/sessions"
 
-readonly command_route_rows=$'up\tcmd_up\t1\t1\tjson-only\t1\tmutating\tmutation\tStart enabled PostgreSQL provisioning services; accepts --json\ndown\tcmd_down\t1\t1\tjson-only\t1\tmutating\tmutation\tStop owned containers/networks and remove project generated files; preserve volumes; accepts --json\nstatus\tcmd_status\t1\t0\tjson-only\t1\toptional\tnone\tShow owned provisioning service status; accepts --json\nenv\tcmd_env\t1\t0\tjson-only\t1\tnone\tnone\tPrint derived paths and connection environment without writing files; accepts --json\ndoctor\tcmd_doctor\t1\t0\tjson-only\t1\toptional\tnone\tInspect Docker, Colima, paths, locks, and ports; accepts --json\nports\tcmd_ports\t1\t0\tjson-only\t1\toptional\tnone\tReport configured host ports and current listeners; accepts --json\ninventory\tcmd_inventory\t1\t0\tjson-only\t1\toptional\tnone\tReport owned resources, generated files, configured images, and Docker disk state; accepts --json\nprune\tcmd_prune\t1\t1\towned-prune\t1\toptional\tmutation\tRemove current-project owned containers, volumes, networks, and generated files with --owned; accepts --json\npaths\tcmd_paths\t1\t0\tjson-only\t1\tnone\tnone\tPrint derived provisioning paths; accepts --json\nplan\tcmd_plan\t1\t0\tjson-only\t1\tnone\tnone\tRender the compose plan to stdout without writing files; accepts --json\nextensions\tcmd_extensions\t1\t0\tjson-only\t1\tnone\tnone\tPrint the PostgreSQL extension target catalog; accepts --json\nverify\tcmd_verify\t1\t1\tjson-only\t1\tmutating\tmutation\tCreate and verify enabled PostgreSQL provisioning extensions; accepts --json\npsql\tcmd_psql\t0\t0\tpsql-pass-through\t1\tmutating\tpsql-session\tOpen psql inside an owned service: psql <timescale|search|pgduckdb> [-- <psql-args>]\nself-test\tcmd_self_test\t1\t0\tjson-only\t1\tnone\tnone\tValidate local script metadata and configuration; accepts --json'
+catalog_path() {
+  local relative="$1"
+  local path="$forge_provision_share/$relative"
+  [[ -r "$path" ]] || {
+    printf 'forge-provision: missing packaged catalog: %s\n' "$path" >&2
+    exit 70
+  }
+  printf '%s\n' "$path"
+}
 
-declare -A command_handler=()
-declare -A command_desc=()
-declare -A command_json=()
-declare -A command_mutates=()
-declare -A command_argspec=()
-declare -A command_required_root=()
-declare -A command_required_docker=()
-declare -A command_lock_mode=()
+command_route_tsv() {
+  jq -r '
+    .[]
+    | [
+        .verb,
+        .handler,
+        (if .json then "1" else "0" end),
+        (if .docker then "1" else "0" end),
+        .argspec,
+        (if .root then "1" else "0" end),
+        (if .mutates then "1" else "0" end),
+        .lockMode,
+        (if .diagnosticJson then "1" else "0" end),
+        .description
+      ]
+    | @tsv
+  ' "$(catalog_path data/commands.json)"
+}
+
+declare -A command_handler=() command_desc=() command_json=() command_mutates=() command_argspec=()
+declare -A command_required_root=() command_required_docker=() command_lock_mode=() command_diagnostic_json=()
 declare -a command_order=()
 
 load_command_routes() {
-  local verb handler json_mode mutates argspec required_root required_docker lock_mode desc extra
-  while IFS=$'\t' read -r verb handler json_mode mutates argspec required_root required_docker lock_mode desc extra; do
+  local verb handler json_mode required_docker argspec required_root mutates lock_mode diagnostic desc extra
+  while IFS=$'\t' read -r verb handler json_mode required_docker argspec required_root mutates lock_mode diagnostic desc extra; do
     [[ -n "$verb" ]] || continue
-    if [[ -n "${extra:-}" || -z "$handler" || -z "$argspec" || -z "$required_root" || -z "$required_docker" || -z "$lock_mode" || -z "$desc" ]]; then
-      printf 'rasm-provision: invalid command route row for verb=%s\n' "${verb:-unknown}" >&2
+    if [[ -n "${extra:-}" || -z "$handler" || -z "$argspec" || -z "$required_root" || -z "$required_docker" || -z "$lock_mode" || -z "$diagnostic" || -z "$desc" ]]; then
+      printf 'forge-provision: invalid command route row for verb=%s\n' "${verb:-unknown}" >&2
       exit 70
     fi
     command_order+=("$verb")
@@ -56,37 +88,48 @@ load_command_routes() {
     command_lock_mode[$verb]="$lock_mode"
     [[ "$json_mode" == 1 ]] && command_json[$verb]=1
     [[ "$mutates" == 1 ]] && command_mutates[$verb]=1
-  done <<<"$command_route_rows"
+    [[ "$diagnostic" == 1 ]] && command_diagnostic_json[$verb]=1
+  done < <(command_route_tsv)
   return 0
 }
 
 load_command_routes
-
-readonly service_rows=$'timescale|time|timescale||1|RASM_TIMESCALE_IMAGE|timescale/timescaledb-ha:pg18.4-ts2.27.2-all|RASM_TIMESCALE_PORT|15432|RASM_TIMESCALE_DSN|/home/postgres/pgdata/data|timescaledb|postgres-extension\nsearch|search|pg_search||1|RASM_PARADEDB_IMAGE|paradedb/paradedb:0.24.0-pg18|RASM_SEARCH_PORT|15433|RASM_SEARCH_DSN|/var/lib/postgresql|pg_search|postgres-extension\npgduckdb|analytics|analytics-probe|RASM_PROVISION_PGDUCKDB|0|RASM_PGDUCKDB_IMAGE|pgduckdb/pgduckdb:18-v1.1.1|RASM_PGDUCKDB_PORT|15434|RASM_PGDUCKDB_DSN|/var/lib/postgresql|pg_duckdb|postgres-extension'
+service_tsv() {
+  jq -r '
+    .[]
+    | [
+        .service,
+        .role,
+        .profile,
+        (if .enabledEnv == "" then "-" else .enabledEnv end),
+        .enabledDefault,
+        .imageEnv,
+        .imageDefault,
+        .portEnv,
+        .portDefault,
+        .dsnEnv,
+        .volumeMount,
+        .preload,
+        .applySqlKey
+      ]
+    | @tsv
+  ' "$(catalog_path data/services.json)"
+}
 
 declare -a service_order=()
-declare -A service_role=()
-declare -A service_profile=()
-declare -A service_enabled_env=()
-declare -A service_enabled_default=()
-declare -A service_image_env=()
-declare -A service_image_default=()
-declare -A service_port_env=()
-declare -A service_port_default=()
-declare -A service_dsn_env=()
-declare -A service_volume_mount=()
-declare -A service_preload_base=()
-declare -A service_verify_sql_key=()
-declare -A service_verify_handler=()
+declare -A service_role=() service_profile=() service_enabled_env=() service_enabled_default=()
+declare -A service_image_env=() service_image_default=() service_port_env=() service_port_default=()
+declare -A service_dsn_env=() service_volume_mount=() service_preload_base=() service_apply_sql_key=() service_apply_handler=()
 
 load_service_rows() {
-  local service role profile enabled_env enabled_default image_env image_default port_env port_default dsn_env volume_mount preload verify_sql_key extra
-  while IFS='|' read -r service role profile enabled_env enabled_default image_env image_default port_env port_default dsn_env volume_mount preload verify_sql_key extra; do
+  local service role profile enabled_env enabled_default image_env image_default port_env port_default dsn_env volume_mount preload apply_sql_key extra
+  while IFS=$'\t' read -r service role profile enabled_env enabled_default image_env image_default port_env port_default dsn_env volume_mount preload apply_sql_key extra; do
     [[ -n "$service" ]] || continue
-    if [[ -n "${extra:-}" || -z "$role" || -z "$profile" || -z "$enabled_default" || -z "$image_env" || -z "$image_default" || -z "$port_env" || -z "$port_default" || -z "$dsn_env" || -z "$volume_mount" || -z "$preload" || -z "$verify_sql_key" ]]; then
-      printf 'rasm-provision: invalid service row for service=%s\n' "${service:-unknown}" >&2
+    if [[ -n "${extra:-}" || -z "$role" || -z "$profile" || -z "$enabled_default" || -z "$image_env" || -z "$image_default" || -z "$port_env" || -z "$port_default" || -z "$dsn_env" || -z "$volume_mount" || -z "$preload" || -z "$apply_sql_key" ]]; then
+      printf 'forge-provision: invalid service row for service=%s\n' "${service:-unknown}" >&2
       exit 70
     fi
+    [[ "$enabled_env" == "-" ]] && enabled_env=""
     service_order+=("$service")
     service_role[$service]="$role"
     service_profile[$service]="$profile"
@@ -99,33 +142,27 @@ load_service_rows() {
     service_dsn_env[$service]="$dsn_env"
     service_volume_mount[$service]="$volume_mount"
     service_preload_base[$service]="$preload"
-    service_verify_sql_key[$service]="$verify_sql_key"
-    service_verify_handler[$service]="verify_service_extensions"
-  done <<<"$service_rows"
+    service_apply_sql_key[$service]="$apply_sql_key"
+    service_apply_handler[$service]="apply_service_extensions"
+  done < <(service_tsv)
   return 0
 }
 
 load_service_rows
-
-declare -Ar service_disabled_verify_row=(
+# shellcheck disable=SC2034 # read by the sourced Docker projection owner.
+declare -Ar service_disabled_apply_row=(
   [timescale]=""
   [search]=""
   [pgduckdb]=$'pgduckdb\tpg_duckdb\tdisabled\t-\tanalytics\toptional'
 )
-readonly extension_catalog_common_rows=$'pg_stat_statements\tobservability\t0\t0\nauto_explain\tobservability\t0\t0\npg_trgm\tsearch\t0\t0\nunaccent\tsearch\t0\t0\nbtree_gin\tindex\t0\t0\nbtree_gist\tindex\t0\t0\nbloom\tindex\t0\t0\nrum\tindex\t0\t0\nhypopg\tplanning\t0\t0\npg_qualstats\tobservability\t0\t0\npg_stat_kcache\tobservability\t0\t0\npg_wait_sampling\tobservability\t0\t0\npg_buffercache\tobservability\t0\t0\npg_prewarm\tperformance\t0\t0\npg_visibility\tobservability\t0\t0\npg_walinspect\tobservability\t0\t0\npg_freespacemap\tobservability\t0\t0\npg_logicalinspect\treplication\t0\t0\npgstattuple\tobservability\t0\t0\npageinspect\tobservability\t0\t0\npg_surgery\tmaintenance\t0\t0\npgrowlocks\tobservability\t0\t0\npg_overexplain\tobservability\t0\t0\namcheck\tmaintenance\t0\t0\npg_repack\tmaintenance\t0\t0\npg_partman\tpartitioning\t0\t0\npg_partman_bgw\tpartitioning\t0\t0\npg_squeeze\tmaintenance\t0\t0\npglogical\treplication\t0\t0\npg_net\tintegration\t0\t0\npgaudit\tobservability\t0\t0\npgcrypto\tcrypto\t0\t0\ncitext\ttext\t0\t0\nltree\ttopology\t0\t0\nfuzzystrmatch\ttext\t0\t0\nintarray\tarray\t0\t0\ntablefunc\tanalytics\t0\t0\npostgres_fdw\tfdw\t0\t0\nfile_fdw\tfdw\t0\t0\nwrappers\tfdw\t0\t0\nogr_fdw\tfdw\t0\t0\npgtap\ttesting\t0\t0\nhll\tanalytics\t0\t0\nsemver\tdata\t0\t0\nunit\tdata\t0\t0\norafce\tcompatibility\t0\t0\npg_tle\textension-management\t0\t0\npg_jsonschema\tvalidation\t0\t0\npg_hashids\tidentity\t0\t0\npgmq\tqueue\t0\t0\npg_later\tautomation\t0\t0\ntsm_system_rows\tsampling\t0\t0\ntsm_system_time\tsampling\t0\t0'
-declare -Ar service_extension_catalog=(
-  [timescale]=$'timescaledb\ttime\t1\t1\ntimescaledb_toolkit\ttime\t0\t0\npg_cron\tautomation\t1\t1\npostgis\tgeospatial\t1\t1\npostgis_topology\tgeospatial\t0\t0\npostgis_raster\tgeospatial\t0\t0\npostgis_sfcgal\tgeospatial\t0\t0\npostgis_tiger_geocoder\tgeospatial\t0\t0\naddress_standardizer\tgeospatial\t0\t0\naddress_standardizer_data_us\tgeospatial\t0\t0\npgrouting\tgeospatial\t0\t0\nh3\tgeospatial\t0\t0\nh3_postgis\tgeospatial\t0\t0\nmobilitydb\tgeospatial\t0\t0\npointcloud\tgeospatial\t0\t0\npointcloud_postgis\tgeospatial\t0\t0\nq3c\tgeospatial\t0\t0\nvector\tvector\t1\t1\nvectorscale\tvector\t1\t1\nvchord\tvector\t0\t0\npg_textsearch\tsearch\t0\t0\npgroonga\tsearch\t0\t0\npg_bigm\tsearch\t0\t0\nai\tai\t0\t0'
-  [search]=$'pg_search\tsearch\t1\t1\npg_ivm\tmaterialization\t0\t0\npostgis\tgeospatial\t0\t0\npostgis_topology\tgeospatial\t0\t0\npostgis_tiger_geocoder\tgeospatial\t0\t0\npostgis_sfcgal\tgeospatial\t0\t0\npgrouting\tgeospatial\t0\t0\nh3\tgeospatial\t0\t0\nh3_postgis\tgeospatial\t0\t0\nvector\tvector\t1\t1\npgroonga\tsearch\t0\t0\npg_bigm\tsearch\t0\t0\nzhparser\tsearch\t0\t0'
-  [pgduckdb]=$'pg_duckdb\tanalytics\t1\t1\nduckdb_fdw\tanalytics\t0\t0'
-)
 # shellcheck disable=SC2034
 declare -Ar extension_source_package_map=(
   [timescaledb]="image:timescale/timescaledb-ha"
-  [timescaledb_toolkit]="image:timescale/timescaledb-ha"
+  [timescaledb_toolkit]="image:timescale/timescaledb-ha|nixpkgs.postgresql_18.pkgs.timescaledb_toolkit"
   [postgis]="image:timescale/timescaledb-ha|image:paradedb/paradedb|nixpkgs.postgresql_18.pkgs.postgis"
   [vector]="image:timescale/timescaledb-ha|image:paradedb/paradedb|nixpkgs.postgresql_18.pkgs.pgvector"
   [vectorscale]="image:timescale/timescaledb-ha|nixpkgs.postgresql_18.pkgs.pgvectorscale"
-  [pg_search]="image:paradedb/paradedb"
+  [pg_search]="image:paradedb/paradedb|nixpkgs.postgresql_18.pkgs.pg_search"
   [pg_duckdb]="image:pgduckdb/pgduckdb|nixpkgs.postgresql_18.pkgs.pg_duckdb"
   [pg_cron]="image:timescale/timescaledb-ha|nixpkgs.postgresql_18.pkgs.pg_cron"
   [pgaudit]="nixpkgs.postgresql_18.pkgs.pgaudit"
@@ -138,6 +175,7 @@ declare -Ar extension_source_package_map=(
   [pgroonga]="nixpkgs.postgresql_18.pkgs.pgroonga"
   [pg_bigm]="nixpkgs.postgresql_18.pkgs.pg_bigm"
   [pg_ivm]="image:paradedb/paradedb|nixpkgs.postgresql_18.pkgs.pg_ivm"
+  [vchord]="nixpkgs.postgresql_18.pkgs.vectorchord|source:tensorchord/VectorChord|image:tensorchord/vchord-suite"
 )
 # shellcheck disable=SC2034
 declare -Ar extension_risk_class_map=(
@@ -152,15 +190,17 @@ declare -Ar extension_risk_class_map=(
   [auto_explain]="observability"
   [pg_stat_statements]="observability"
 )
-readonly extension_preload_required_set="timescaledb pg_search auto_explain pg_stat_statements pg_partman_bgw pgaudit pg_cron pg_duckdb"
+readonly extension_preload_required_set="timescaledb pg_search auto_explain pg_stat_statements pg_stat_kcache pg_wait_sampling pg_partman_bgw pgaudit pg_cron pg_duckdb"
 readonly extension_requires_superuser_set="timescaledb postgis vectorscale pg_search pg_duckdb file_fdw pg_cron pgaudit"
 readonly extension_file_access_set="file_fdw pg_read_file"
 readonly extension_network_access_set="postgres_fdw ogr_fdw wrappers pg_net"
 readonly extension_background_worker_set="pg_cron pg_partman_bgw pg_squeeze"
 
-rasm_root=""
+forge_root=""
+project_key=""
 project_name=""
-root_fingerprint=""
+root_key=""
+instance_name=""
 provisioning_root_dir=""
 provisioning_dir=""
 current_link=""
@@ -212,7 +252,7 @@ on_err() {
     [[ "$json_result_emitted" == false ]] || exit "$rc"
     emit_error_json "internal-error" "command failed rc=$rc line=${BASH_LINENO[0]:-?} stack=$stack" "$rc"
   else
-    printf 'rasm-provision: error: command failed rc=%s line=%s stack=%s\n' "$rc" "${BASH_LINENO[0]:-?}" "$stack" >&2
+    printf 'forge-provision: error: command failed rc=%s line=%s stack=%s\n' "$rc" "${BASH_LINENO[0]:-?}" "$stack" >&2
   fi
   exit "$rc"
 }
@@ -222,15 +262,21 @@ emit_error_json() {
   local code="$1"
   local message="$2"
   local rc="${3:-1}"
+  local project="null"
   message="$(redact_message "$message")"
+  if [[ -n "${root_key:-}" && -n "${project_key:-}" && -n "${instance_name:-}" && -n "${project_name:-}" ]]; then
+    project="$(project_json)"
+  fi
   if ! jq -nc \
     --argjson schemaVersion "$schema_version" \
     --arg command "${current_command:-unknown}" \
     --arg code "$code" \
     --arg message "$message" \
     --argjson exitCode "$rc" \
-    '{schemaVersion: $schemaVersion, command: $command, ok: false, error: {code: $code, message: $message, exitCode: $exitCode}}'; then
-    printf 'rasm-provision: failed to emit JSON error code=%s rc=%s\n' "$code" "$rc" >&2
+    --argjson warnings "$(warnings_json)" \
+    --argjson project "$project" \
+    '{schemaVersion: $schemaVersion, command: $command, ok: false, warnings: $warnings, error: {code: $code, message: $message, exitCode: $exitCode}} + if $project == null then {} else {project: $project} end'; then
+    printf 'forge-provision: failed to emit JSON error code=%s rc=%s\n' "$code" "$rc" >&2
   fi
   json_result_emitted=true
 }
@@ -241,7 +287,7 @@ die() {
   if [[ "$output_json" == true ]]; then
     emit_error_json "error" "$message" 1
   else
-    stderr_line "rasm-provision: $message"
+    stderr_line "forge-provision: $message"
   fi
   exit 1
 }
@@ -252,7 +298,7 @@ die_usage() {
   if [[ "$output_json" == true ]]; then
     emit_error_json "usage" "$message" 2
   else
-    stderr_line "rasm-provision: usage: $message"
+    stderr_line "forge-provision: usage: $message"
   fi
   exit 2
 }
@@ -264,19 +310,23 @@ warn() {
     json_warnings+=("$message")
     return 0
   fi
-  stderr_line "rasm-provision: warning: $message"
+  stderr_line "forge-provision: warning: $message"
 }
 
 redact_message() {
   local text="$*"
   local needle
-  for needle in "$auth_secret_dir" "$docker_config_dir" "$provisioning_dir" "$provisioning_root_dir" "$rasm_root" "$default_colima_socket" "$docker_endpoint" "${DOCKER_CONFIG:-}" "${DOCKER_HOST:-}"; do
+  for needle in "$auth_secret_dir" "$docker_config_dir" "$provisioning_dir" "$provisioning_root_dir" "$forge_root" "${FORGE_PROVISION_ROOT:-}" "$default_colima_socket" "$docker_endpoint" "${DOCKER_CONFIG:-}" "${DOCKER_HOST:-}"; do
     [[ -n "$needle" ]] || continue
     text="${text//"$needle"/[redacted]}"
   done
-  text="${text//POSTGRES_PASSWORD=*/POSTGRES_PASSWORD=[redacted]}"
-  text="${text//PGPASSFILE=*/PGPASSFILE=[redacted]}"
-  text="${text//DOCKER_CONFIG=*/DOCKER_CONFIG=[redacted]}"
+  if command -v jq >/dev/null 2>&1; then
+    text="$(printf '%s\n' "$text" | jq -Rr -f "$(catalog_path jq/redact-message.jq)" 2>/dev/null || printf '%s\n' "$text")"
+  else
+    text="${text//POSTGRES_PASSWORD=*/POSTGRES_PASSWORD=[redacted]}"
+    text="${text//PGPASSFILE=*/PGPASSFILE=[redacted]}"
+    text="${text//DOCKER_CONFIG=*/DOCKER_CONFIG=[redacted]}"
+  fi
   printf '%s\n' "$text"
 }
 
@@ -291,10 +341,7 @@ command_supports_json() {
 }
 
 command_supports_diagnostic_json() {
-  case "$1" in
-    doctor | paths | inventory) return 0 ;;
-    *) return 1 ;;
-  esac
+  [[ -n "${command_diagnostic_json[$1]:-}" ]]
 }
 
 validate_json_only_args() {
@@ -313,18 +360,10 @@ validate_json_only_args() {
   (($# == 0)) || die_usage "$command accepts only --json or no arguments"
 }
 
-parse_json_args() {
-  local command="$1"
-  shift
-  validate_json_only_args "$command" "$@"
-  [[ "$output_json" == false && "${1:-}" == "--json" ]] && output_json=true
-  return 0
-}
-
 command_wants_json() {
-  local command="$1"
-  shift
-  parse_json_args "$command" "$@"
+  local _command="$1"
+  shift || true
+  (($# == 0)) || die_usage "$_command received arguments after route normalization"
   [[ "$output_json" == true ]]
 }
 
@@ -376,7 +415,7 @@ warnings_json() {
 
 usage() {
   local command
-  printf 'Usage: rasm-provision [--json | --diagnostic-json] <command> [args]\n\nCommands:\n'
+  printf 'Usage: forge-provision [--json | --diagnostic-json] <command> [args]\n\nCommands:\n'
   for command in "${command_order[@]}"; do
     printf '  %-18s %s\n' "$command" "${command_desc[$command]}"
   done
@@ -423,12 +462,12 @@ service_port_source() {
 
 service_dsn() {
   local service="$1"
-  printf 'postgres://postgres@127.0.0.1:%s/rasm' "$(service_port "$service")"
+  printf 'postgres://postgres@127.0.0.1:%s/forge' "$(service_port "$service")"
 }
 
 service_dsn_redacted() {
   local service="$1"
-  printf 'postgres://postgres:***@127.0.0.1:%s/rasm' "$(service_port "$service")"
+  printf 'postgres://postgres:***@127.0.0.1:%s/forge' "$(service_port "$service")"
 }
 
 hash_text() {
@@ -469,7 +508,7 @@ resolve_auth() {
       auth_risk="local-superuser-trust"
       ;;
     *)
-      die "RASM_PROVISION_AUTH must be auto-root or trust-loopback: $auth_mode_requested"
+      die "FORGE_PROVISION_AUTH must be auto-root or trust-loopback: $auth_mode_requested"
       ;;
   esac
   auth_secret_dir="$provisioning_dir/secrets"
@@ -548,18 +587,16 @@ port_in_csv_ranges() {
 }
 
 os_ephemeral_ranges() {
-  if [[ "${RASM_PROVISION_ALLOW_EPHEMERAL_PORTS:-0}" == "1" ]]; then
+  if [[ "${FORGE_PROVISION_ALLOW_EPHEMERAL_PORTS:-0}" == "1" ]]; then
     printf '\n'
     return 0
   fi
   case "$host_os" in
     Linux)
       if [[ -r /proc/sys/net/ipv4/ip_local_port_range ]]; then
-        local first last reserved
+        local first last
         read -r first last </proc/sys/net/ipv4/ip_local_port_range
-        reserved=""
-        [[ -r /proc/sys/net/ipv4/ip_local_reserved_ports ]] && reserved="$(</proc/sys/net/ipv4/ip_local_reserved_ports)"
-        printf '%s-%s%s%s\n' "$first" "$last" "${reserved:+,}" "$reserved"
+        printf '%s-%s\n' "$first" "$last"
         return 0
       fi
       ;;
@@ -593,11 +630,12 @@ combined_excluded_ports() {
 port_allowed_for_auto() {
   local base="$1"
   local excluded="$2"
-  local offset=0 port service
+  local offset=0 port service max_port=49151
+  [[ "${FORGE_PROVISION_ALLOW_EPHEMERAL_PORTS:-0}" == "1" ]] && max_port=65535
   for service in "${service_order[@]}"; do
     service_enabled "$service" || continue
     port=$((base + offset))
-    ((port >= 1024 && port <= 49151)) || return 1
+    ((port >= 1024 && port <= max_port)) || return 1
     port_in_csv_ranges "$port" "$port_range_requested" || return 1
     [[ "$excluded" == "probe-unavailable" ]] && return 1
     port_in_csv_ranges "$port" "$excluded" && return 1
@@ -610,10 +648,8 @@ port_allowed_for_auto() {
 port_lock_busy() {
   local port="$1"
   [[ -n "$docker_endpoint" ]] || return 1
-  local endpoint_hash lock
-  endpoint_hash="$(printf '%s' "$docker_endpoint" | hash_text)"
-  endpoint_hash="${endpoint_hash%% *}"
-  lock="$port_lock_root/${endpoint_hash:0:16}-$port.lock.d"
+  local lock
+  lock="$(port_lock_root_path)/$port.lock.d"
   [[ -d "$lock" ]] || return 1
   recover_dead_port_lock "$lock" && return 1
   [[ -d "$lock" ]]
@@ -703,23 +739,43 @@ set_resolved_block() {
 }
 
 set_resolved_manifest_ports() {
-  local service port
+  local service port excluded="probe-unavailable"
+  local -A manifest_ports=() seen_active_ports=()
+  combined_excluded_ports >/dev/null 2>&1 && excluded="$(combined_excluded_ports)" || excluded="$port_exclude_requested"
   for service in "${service_order[@]}"; do
     port="$(manifest_port_for_service "$service")" || return 1
     validate_port "manifest port for $service" "$port"
-    resolved_service_port[$service]="$port"
+    manifest_ports[$service]="$port"
+    if service_enabled "$service"; then
+      port_in_csv_ranges "$port" "$port_range_requested" || return 1
+      [[ "$excluded" == "probe-unavailable" ]] || ! port_in_csv_ranges "$port" "$excluded" || return 1
+      [[ -z "${seen_active_ports[$port]:-}" ]] || return 1
+      seen_active_ports[$port]="$service"
+    fi
+  done
+  for service in "${service_order[@]}"; do
+    resolved_service_port[$service]="${manifest_ports[$service]}"
     resolved_service_port_source[$service]="current-manifest"
   done
 }
 
 set_resolved_individual_ports() {
   local service env_name port
+  local -A seen_active_ports=()
   for service in "${service_order[@]}"; do
     env_name="${service_port_env[$service]}"
-    port="${!env_name}"
+    port="${!env_name:-${service_port_default[$service]}}"
     validate_port "$env_name" "$port"
+    if service_enabled "$service"; then
+      [[ -z "${seen_active_ports[$port]:-}" ]] || die_usage "$env_name conflicts with ${seen_active_ports[$port]} on TCP port $port"
+      seen_active_ports[$port]="$env_name"
+    fi
     resolved_service_port[$service]="$port"
-    resolved_service_port_source[$service]="$env_name"
+    if [[ -n "${!env_name:-}" ]]; then
+      resolved_service_port_source[$service]="$env_name"
+    else
+      resolved_service_port_source[$service]="disabled-default"
+    fi
   done
 }
 
@@ -750,7 +806,7 @@ resolve_auto_ports() {
 
   if ! excluded="$(combined_excluded_ports)"; then
     if [[ "$busy_aware" == true ]]; then
-      die "cannot probe OS ephemeral port range for auto allocation; set explicit fixed ports or RASM_PROVISION_ALLOW_EPHEMERAL_PORTS=1"
+      die "cannot probe OS ephemeral port range for auto allocation; set explicit fixed ports or FORGE_PROVISION_ALLOW_EPHEMERAL_PORTS=1"
     fi
     warn "OS ephemeral port range probe unavailable; read-only auto port plan did not subtract ephemeral ranges"
     excluded="$port_exclude_requested"
@@ -765,15 +821,15 @@ resolve_auto_ports() {
   block_width="$(enabled_service_count)"
   ((block_width > 0)) || die "no enabled services available for auto port allocation"
   for spec in "${__candidate_ranges[@]}"; do
-    [[ "$spec" =~ ^([0-9]+)-([0-9]+)$ ]] || die "invalid RASM_PROVISION_PORT_RANGE segment: $spec"
+    [[ "$spec" =~ ^([0-9]+)-([0-9]+)$ ]] || die "invalid FORGE_PROVISION_PORT_RANGE segment: $spec"
     range_start="${BASH_REMATCH[1]}"
     range_end="${BASH_REMATCH[2]}"
     for ((base = range_start; base <= range_end - block_width + 1; base++)); do
       port_allowed_for_auto "$base" "$excluded" && bases+=("$base")
     done
   done
-  ((${#bases[@]} > 0)) || die "no usable auto port blocks in RASM_PROVISION_PORT_RANGE after exclusions"
-  port_policy_seed="rasm-provision:v2:$(docker_endpoint_hash):$root_fingerprint:$project_name:service-order-1"
+  ((${#bases[@]} > 0)) || die "no usable auto port blocks in FORGE_PROVISION_PORT_RANGE after exclusions"
+  port_policy_seed="forge-provision:v2:$(docker_endpoint_hash):$root_key:$project_name:service-order-1"
   hash="$(hash_prefix_decimal "$port_policy_seed")"
   offset=$((hash % ${#bases[@]}))
   count="${#bases[@]}"
@@ -801,32 +857,36 @@ resolve_ports() {
   require_root
   resolved_service_port=()
   resolved_service_port_source=()
-  local explicit_count=0 service env_name base
+  local active_count=0 explicit_count=0 explicit_active_count=0 service env_name base
   for service in "${service_order[@]}"; do
     env_name="${service_port_env[$service]}"
+    if service_enabled "$service"; then
+      ((active_count += 1))
+      [[ -n "${!env_name:-}" ]] && ((explicit_active_count += 1))
+    fi
     [[ -n "${!env_name:-}" ]] && ((explicit_count += 1))
   done
-  [[ -z "$fixed_port_base" || "$explicit_count" -eq 0 ]] || die_usage "RASM_PROVISION_PORT_BASE conflicts with individual service port env vars"
+  [[ -z "$fixed_port_base" || "$explicit_count" -eq 0 ]] || die_usage "FORGE_PROVISION_PORT_BASE conflicts with individual service port env vars"
   if [[ -n "$fixed_port_base" ]]; then
-    validate_port "RASM_PROVISION_PORT_BASE" "$fixed_port_base"
-    set_resolved_block "$fixed_port_base" "RASM_PROVISION_PORT_BASE"
+    validate_port "FORGE_PROVISION_PORT_BASE" "$fixed_port_base"
+    set_resolved_block "$fixed_port_base" "FORGE_PROVISION_PORT_BASE"
     port_policy_mode="fixed-block"
-    port_policy_source="RASM_PROVISION_PORT_BASE"
-  elif ((explicit_count == ${#service_order[@]})); then
+    port_policy_source="FORGE_PROVISION_PORT_BASE"
+  elif ((explicit_active_count == active_count && explicit_count > 0)); then
     set_resolved_individual_ports
     port_policy_mode="fixed-individual"
     port_policy_source="service-env"
   elif ((explicit_count > 0)); then
-    die_usage "partial service port overrides are not supported; set all three service ports or RASM_PROVISION_PORT_BASE"
+    die_usage "ambiguous port configuration: set every enabled service port or FORGE_PROVISION_PORT_BASE"
   elif [[ "$port_policy_requested" == "auto" ]]; then
     resolve_auto_ports "$busy_aware"
   elif [[ "$port_policy_requested" == "fixed" ]]; then
     base="${service_port_default[timescale]}"
-    set_resolved_block "$base" "RASM_PROVISION_PORT_POLICY=fixed"
+    set_resolved_block "$base" "FORGE_PROVISION_PORT_POLICY=fixed"
     port_policy_mode="fixed-block"
     port_policy_source="policy-default"
   else
-    die_usage "RASM_PROVISION_PORT_POLICY must be auto or fixed: $port_policy_requested"
+    die_usage "FORGE_PROVISION_PORT_POLICY must be auto or fixed: $port_policy_requested"
   fi
   ports_resolved=true
   ports_busy_aware="$busy_aware"
@@ -883,6 +943,15 @@ port_policy_json() {
     '{mode: $mode, source: $source, range: $range, exclude: $exclude, seedFingerprint: (if $seedFingerprint == "" then null else $seedFingerprint end)}'
 }
 
+project_json() {
+  jq -nc \
+    --arg rootKey "$root_key" \
+    --arg projectKey "$project_key" \
+    --arg instance "$instance_name" \
+    --arg composeProject "$project_name" \
+    '{rootKey: $rootKey, projectKey: $projectKey, instance: $instance, composeProject: $composeProject}'
+}
+
 sql_quote() {
   local value="${1//\'/\'\'}"
   printf "'%s'" "$value"
@@ -891,32 +960,25 @@ sql_quote() {
 extension_catalog_rows() {
   local service="$1"
   known_service "$service" || die "unknown service: $service"
-  local catalog="${service_extension_catalog[$service]}"
-  [[ -z "$catalog" ]] || emit_extension_catalog_block "$catalog"
-  emit_extension_catalog_block "$extension_catalog_common_rows"
+  jq -r --arg service "$service" --arg pgCron "$(pg_cron_catalog_flag)" '
+    map(select(.service == $service or .service == "*"))
+    | .[]
+    | .extension as $extension
+    | (if $extension == "pg_cron" then $pgCron elif .required then "1" else "0" end) as $required
+    | (if $extension == "pg_cron" then $pgCron elif .createOnApply then "1" else "0" end) as $createOnApply
+    | [$extension, .category, $required, $createOnApply]
+    | @tsv
+  ' "$(catalog_path data/postgres-extensions.json)"
 }
 
 pg_cron_catalog_flag() {
   [[ "$pg_cron_requested" != "0" ]] && printf '1' || printf '0'
 }
 
-emit_extension_catalog_block() {
-  local block="$1"
-  local ext category required create_on_verify extra
-  while IFS=$'\t' read -r ext category required create_on_verify extra; do
-    [[ -n "$ext" ]] || continue
-    if [[ "$ext" == "pg_cron" ]]; then
-      required="$(pg_cron_catalog_flag)"
-      create_on_verify="$required"
-    fi
-    printf '%s\t%s\t%s\t%s%s\n' "$ext" "$category" "$required" "$create_on_verify" "${extra:+	$extra}"
-  done <<<"$block"
-}
-
 extension_sql_values() {
   local service="$1"
-  local ext category required create_on_verify first=true ordinal=0
-  while IFS=$'\t' read -r ext category required create_on_verify; do
+  local ext category required create_on_apply first=true ordinal=0
+  while IFS=$'\t' read -r ext category required create_on_apply; do
     [[ -n "$ext" ]] || continue
     ((++ordinal))
     if [[ "$first" == true ]]; then
@@ -924,17 +986,17 @@ extension_sql_values() {
     else
       printf ',\n'
     fi
-    printf '(%s,%s,%s,%s,%s)' "$ordinal" "$(sql_quote "$ext")" "$(sql_quote "$category")" "$([[ "$required" == 1 ]] && printf true || printf false)" "$([[ "$create_on_verify" == 1 ]] && printf true || printf false)"
+    printf '(%s,%s,%s,%s,%s)' "$ordinal" "$(sql_quote "$ext")" "$(sql_quote "$category")" "$([[ "$required" == 1 ]] && printf true || printf false)" "$([[ "$create_on_apply" == 1 ]] && printf true || printf false)"
   done < <(extension_catalog_rows "$service")
   return 0
 }
 
 extension_catalog_tsv() {
-  local service ext category required create_on_verify
+  local service ext category required create_on_apply
   for service in "${service_order[@]}"; do
-    while IFS=$'\t' read -r ext category required create_on_verify; do
+    while IFS=$'\t' read -r ext category required create_on_apply; do
       [[ -n "$ext" ]] || continue
-      printf '%s\t%s\t%s\t%s\t%s\n' "$service" "$ext" "$category" "$required" "$create_on_verify"
+      printf '%s\t%s\t%s\t%s\t%s\n' "$service" "$ext" "$category" "$required" "$create_on_apply"
     done < <(extension_catalog_rows "$service")
   done
   return 0
@@ -962,6 +1024,7 @@ extension_source_route() {
   local route="${source%%|*}"
   case "$route" in
     nixpkgs.*) printf 'nixpkgs:%s' "${route#nixpkgs.}" ;;
+    source:*) printf '%s' "$route" ;;
     postgresql-contrib-or-image-probed) printf 'runtime-probed' ;;
     *) printf '%s' "$route" ;;
   esac
@@ -987,6 +1050,7 @@ extension_source_kind() {
   case "$1" in
     image:*) printf 'image' ;;
     nixpkgs:*) printf 'nixpkgs' ;;
+    source:*) printf 'source' ;;
     runtime-probed) printf 'runtime-probed' ;;
     postgresql-contrib) printf 'postgresql-contrib' ;;
     *) printf 'not-applicable' ;;
@@ -999,7 +1063,7 @@ extension_nix_status() {
   case "$ext" in
     ai | pgai) printf 'retired-probe-only' ;;
     pg_lakehouse | pg_analytics) printf 'retired-replaced' ;;
-    pg_search | pgaudit | timescaledb_toolkit | vectorscale | vchord | sqlite_fdw) printf 'broken' ;;
+    sqlite_fdw) printf 'broken' ;;
     duckdb_fdw | wrappers | ogr_fdw | pg_jsonschema | pg_hashids | pg_later | mobilitydb | q3c | unit) printf 'missing' ;;
     pgrx) printf 'source-build-ecosystem' ;;
     *)
@@ -1053,8 +1117,8 @@ extension_external_access() {
 }
 
 extension_catalog_enriched_tsv() {
-  local service ext category required create_on_verify source source_candidates source_route source_kind nix_status probe_kind capability_rank risk preload superuser shared_preload file_access network_access background_worker external_access restart_class service_profile_value image_tag create_policy
-  while IFS=$'\t' read -r service ext category required create_on_verify; do
+  local service ext category required create_on_apply source source_candidates source_route source_kind nix_status probe_kind capability_rank risk preload superuser shared_preload file_access network_access background_worker external_access restart_class service_profile_value image_tag create_policy
+  while IFS=$'\t' read -r service ext category required create_on_apply; do
     [[ -n "$ext" ]] || continue
     source_candidates="$(assoc_value extension_source_package_map "$ext" "postgresql-contrib-or-image-probed")"
     source="$(extension_service_source "$service" "$source_candidates")"
@@ -1074,13 +1138,13 @@ extension_catalog_enriched_tsv() {
     [[ "$preload" == 1 ]] && restart_class="shared-preload" || restart_class="none"
     service_profile_value="${service_profile[$service]}"
     image_tag="$(service_image "$service")"
-    [[ "$create_on_verify" == 1 ]] && create_policy="verify-create" || create_policy="probe-only"
+    [[ "$create_on_apply" == 1 ]] && create_policy="apply-create" || create_policy="probe-only"
     printf '%s\t%s\t%s\t%s\t%s\textension\t%s\t%s\t1\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
       "$service" \
       "$ext" \
       "$category" \
       "$required" \
-      "$create_on_verify" \
+      "$create_on_apply" \
       "$source" \
       "$preload" \
       "$([[ "$service" == "pgduckdb" ]] && printf '1' || printf '0')" \
@@ -1107,41 +1171,17 @@ extension_catalog_enriched_tsv() {
 }
 
 extension_catalog_json() {
-  extension_catalog_enriched_tsv | jq -Rsc '
-    split("\n")
-    | map(select(length > 0) | split("\t"))
-    | map({
-        service: .[0],
-        extension: .[1],
-        category: .[2],
-        required: (.[3] == "1"),
-        createOnVerify: (.[4] == "1"),
-        kind: .[5],
-        sourcePackage: .[6],
-        preloadRequired: (.[7] == "1"),
-        selfProvisioned: (.[8] == "1"),
-        devGated: (.[9] == "1"),
-        expectedService: .[10],
-        riskClass: .[11],
-        requiresSuperuser: (.[12] == "1"),
-        requiresSharedPreload: (.[13] == "1"),
-        fileAccess: (.[14] == "1"),
-        networkAccess: (.[15] == "1"),
-        backgroundWorker: (.[16] == "1"),
-        createPolicy: .[17],
-        sourceRoute: .[18],
-        sourceKind: .[19],
-        nixStatus: .[20],
-        probeKind: .[21],
-        capabilityRank: .[22],
-        externalAccess: .[23],
-        restartClass: .[24],
-        serviceProfile: .[25],
-        imageTag: .[26],
-        loadPolicy: .[27]
-      })
-    | sort_by(.service, .category, .extension)
-  '
+  extension_catalog_enriched_tsv | jq -Rsc -f "$(catalog_path jq/extension-catalog.jq)"
+}
+
+tool_surface_extension_catalog_json() {
+  jq -s -f "$(catalog_path jq/tool-surface-extension-catalog.jq)" \
+    "$(catalog_path data/duckdb-extensions.json)" \
+    "$(catalog_path data/sqlite-extensions.json)"
+}
+
+provision_extension_catalog_json() {
+  jq -s 'add | sort_by(.service, .category, .extension)' <(extension_catalog_json) <(tool_surface_extension_catalog_json)
 }
 
 enabled_services() {
@@ -1175,26 +1215,47 @@ validate_image() {
 }
 
 validate_lock_wait_seconds() {
-  [[ "$lock_wait_seconds" =~ ^[0-9]+$ ]] || die "RASM_PROVISION_LOCK_WAIT_SECONDS must be a non-negative integer: $lock_wait_seconds"
-  ((lock_wait_seconds <= 3600)) || die "RASM_PROVISION_LOCK_WAIT_SECONDS must be <= 3600: $lock_wait_seconds"
-  [[ "$lock_ttl_seconds" =~ ^[0-9]+$ ]] || die "RASM_PROVISION_LOCK_TTL_SECONDS must be a non-negative integer: $lock_ttl_seconds"
-  ((lock_ttl_seconds >= 60 && lock_ttl_seconds <= 86400)) || die "RASM_PROVISION_LOCK_TTL_SECONDS must be between 60 and 86400: $lock_ttl_seconds"
-  [[ "$compose_parallel_limit" =~ ^[0-9]+$ ]] || die "RASM_PROVISION_COMPOSE_PARALLEL_LIMIT must be a non-negative integer: $compose_parallel_limit"
-  ((compose_parallel_limit <= 32)) || die "RASM_PROVISION_COMPOSE_PARALLEL_LIMIT must be <= 32: $compose_parallel_limit"
-  [[ "$max_active_projects" =~ ^[0-9]+$ ]] || die "RASM_PROVISION_MAX_ACTIVE_PROJECTS must be a non-negative integer: $max_active_projects"
-  ((max_active_projects <= 64)) || die "RASM_PROVISION_MAX_ACTIVE_PROJECTS must be <= 64: $max_active_projects"
+  [[ "$lock_wait_seconds" =~ ^[0-9]+$ ]] || die "FORGE_PROVISION_LOCK_WAIT_SECONDS must be a non-negative integer: $lock_wait_seconds"
+  ((lock_wait_seconds <= 3600)) || die "FORGE_PROVISION_LOCK_WAIT_SECONDS must be <= 3600: $lock_wait_seconds"
+  [[ "$lock_ttl_seconds" =~ ^[0-9]+$ ]] || die "FORGE_PROVISION_LOCK_TTL_SECONDS must be a non-negative integer: $lock_ttl_seconds"
+  ((lock_ttl_seconds >= 60 && lock_ttl_seconds <= 86400)) || die "FORGE_PROVISION_LOCK_TTL_SECONDS must be between 60 and 86400: $lock_ttl_seconds"
+  [[ "$compose_parallel_limit" =~ ^[0-9]+$ ]] || die "FORGE_PROVISION_COMPOSE_PARALLEL_LIMIT must be a non-negative integer: $compose_parallel_limit"
+  ((compose_parallel_limit <= 32)) || die "FORGE_PROVISION_COMPOSE_PARALLEL_LIMIT must be <= 32: $compose_parallel_limit"
+  [[ "$max_active_projects" =~ ^[0-9]+$ ]] || die "FORGE_PROVISION_MAX_ACTIVE_PROJECTS must be a non-negative integer: $max_active_projects"
+  ((max_active_projects <= 64)) || die "FORGE_PROVISION_MAX_ACTIVE_PROJECTS must be <= 64: $max_active_projects"
 }
 
 validate_project_slug() {
   local value="$1"
-  [[ "$value" =~ ^[a-z0-9][a-z0-9_-]*$ ]] || die "RASM_PROVISION_PROJECT must match ^[a-z0-9][a-z0-9_-]*$: $value"
+  [[ "$value" =~ ^[a-z0-9][a-z0-9_-]*$ ]] || die "FORGE_PROVISION_PROJECT must match ^[a-z0-9][a-z0-9_-]*$: $value"
+}
+
+slug_text() {
+  local value="${1,,}"
+  value="${value//[^a-z0-9_-]/-}"
+  value="${value##[-_]}"
+  value="${value%%[-_]}"
+  [[ -n "$value" ]] || value="project"
+  printf '%s\n' "$value"
+}
+
+compose_project_name() {
+  local raw="$1"
+  local digest
+  if ((${#raw} <= 63)); then
+    printf '%s\n' "$raw"
+    return 0
+  fi
+  digest="$(printf '%s' "$raw" | hash_text)"
+  digest="${digest%% *}"
+  printf '%s-%s\n' "${raw:0:50}" "${digest:0:12}"
 }
 
 validate_static_env() {
   validate_lock_wait_seconds
   validate_project_slug "$project_name"
   [[ "$pg_cron_requested" == "auto" || "$pg_cron_requested" == "0" || "$pg_cron_requested" == "1" ]] ||
-    die "RASM_PROVISION_PG_CRON must be auto, 0, or 1: $pg_cron_requested"
+    die "FORGE_PROVISION_PG_CRON must be auto, 0, or 1: $pg_cron_requested"
   resolve_auth
   resolve_ports false
 
@@ -1220,60 +1281,65 @@ validate_static_env() {
   done
 }
 
-find_rasm_root() {
+find_forge_root() {
+  local -n _out="$1"
   local candidate
-  if [[ -n "${RASM_ROOT:-}" ]]; then
-    candidate="$RASM_ROOT"
-    [[ -d "$candidate" ]] || die "RASM_ROOT is not a directory: $candidate"
-    candidate="$(cd "$candidate" && pwd -P)" || die "cannot resolve RASM_ROOT: $candidate"
-    printf '%s\n' "$candidate"
+  if [[ -n "${FORGE_PROVISION_ROOT:-}" ]]; then
+    candidate="$FORGE_PROVISION_ROOT"
+    [[ -d "$candidate" ]] || die "FORGE_PROVISION_ROOT is not a directory: $candidate"
+    [[ ! -L "$candidate" ]] || die "refusing symlinked FORGE_PROVISION_ROOT: $candidate"
+    candidate="$(cd "$candidate" && pwd -P)" || die "cannot resolve FORGE_PROVISION_ROOT: $candidate"
+    _out="$candidate"
     return
   fi
 
-  candidate="$PWD"
-  while [[ "$candidate" != "/" ]]; do
-    if [[ -f "$candidate/pyproject.toml" && -f "$candidate/Directory.Packages.props" && -d "$candidate/libs/csharp" ]]; then
-      candidate="$(cd "$candidate" && pwd -P)" || die "cannot resolve discovered Rasm root: $candidate"
-      printf '%s\n' "$candidate"
-      return
-    fi
-    candidate="${candidate%/*}"
-    [[ -n "$candidate" ]] || candidate="/"
-  done
-  die "cannot find Rasm root from PWD; run inside Rasm or set RASM_ROOT"
+  candidate="$(git rev-parse --show-toplevel 2>/dev/null)" || die "cannot find VCS root from PWD; run inside a Git worktree or set FORGE_PROVISION_ROOT"
+  [[ -d "$candidate" ]] || die "discovered VCS root is not a directory: $candidate"
+  [[ ! -L "$candidate" ]] || die "refusing symlinked VCS root: $candidate"
+  candidate="$(cd "$candidate" && pwd -P)" || die "cannot resolve discovered VCS root: $candidate"
+  _out="$candidate"
 }
 
-validate_rasm_root() {
+validate_forge_root() {
   local root="$1"
-  [[ -f "$root/pyproject.toml" ]] || die "Rasm root missing pyproject.toml: $root"
-  [[ -f "$root/Directory.Packages.props" ]] || die "Rasm root missing Directory.Packages.props: $root"
-  [[ -d "$root/libs/csharp" ]] || die "Rasm root missing libs/csharp: $root"
+  [[ -d "$root" ]] || die "Forge provision root is not a directory: $root"
+  [[ ! -L "$root" ]] || die "refusing symlinked Forge provision root: $root"
+  if [[ -z "${FORGE_PROVISION_ROOT:-}" ]]; then
+    git -C "$root" rev-parse --is-inside-work-tree >/dev/null 2>&1 || die "Forge provision root is not a Git worktree: $root"
+  fi
 }
 
 init_root() {
-  local fingerprint
-  [[ -n "$rasm_root" ]] && return 0
+  local fingerprint root_slug state_root
+  [[ -n "$forge_root" ]] && return 0
   validate_lock_wait_seconds
-  rasm_root="$(find_rasm_root)"
-  validate_rasm_root "$rasm_root"
-  fingerprint="$(printf '%s' "$rasm_root" | hash_text)"
-  root_fingerprint="${fingerprint%% *}"
+  find_forge_root forge_root
+  validate_forge_root "$forge_root"
+  fingerprint="$(printf '%s' "$forge_root" | hash_text)"
+  root_key="${fingerprint%% *}"
+  root_key="${root_key:0:12}"
   if [[ -n "$project_override" ]]; then
     validate_project_slug "$project_override"
-    project_name="rasm-provision-${root_fingerprint:0:12}-$project_override"
+    project_key="$project_override"
   else
-    project_name="rasm-provision-${root_fingerprint:0:12}"
+    root_slug="$(slug_text "${forge_root##*/}")"
+    project_key="$root_slug-$root_key"
   fi
+  instance_name="$provision_instance"
+  validate_project_slug "$project_key"
+  validate_project_slug "$instance_name"
+  project_name="$(compose_project_name "forge-$project_key-$instance_name")"
   validate_project_slug "$project_name"
-  provisioning_root_dir="$rasm_root/.artifacts/provisioning/rasm"
-  provisioning_dir="$provisioning_root_dir/$project_name"
+  provisioning_root_dir="$forge_root/.artifacts/provisioning/forge/$project_key"
+  provisioning_dir="$provisioning_root_dir/$instance_name"
   current_link="$provisioning_dir/current"
   compose_file="$current_link/compose.yaml"
   env_file="$current_link/.env"
   volume_ledger_file="$provisioning_dir/volume-ledger.json"
   docker_config_dir="$provisioning_dir/docker-config"
-  lock_dir="$provisioning_root_dir/.locks/$project_name.lock.d"
-  readonly rasm_root root_fingerprint project_name provisioning_root_dir provisioning_dir current_link compose_file env_file volume_ledger_file docker_config_dir lock_dir
+  state_root="${XDG_STATE_HOME:-$HOME/.local/state}"
+  lock_dir="$state_root/forge-provision/locks/project/$root_key/$project_key/$instance_name/mutation.lock.d"
+  readonly forge_root root_key project_key instance_name project_name provisioning_root_dir provisioning_dir current_link compose_file env_file volume_ledger_file docker_config_dir lock_dir
 }
 
 require_root() {
@@ -1288,12 +1354,58 @@ ensure_dir_component() {
   chmod 700 "$path" 2>/dev/null || true
 }
 
+ensure_state_lock_root() {
+  local path="$1"
+  local state_root="${XDG_STATE_HOME:-$HOME/.local/state}"
+  [[ "$path" == "$state_root/forge-provision/"* ]] || die "unexpected state lock root: $path"
+  ensure_dir_component "$state_root"
+  ensure_dir_component "$state_root/forge-provision"
+  ensure_dir_component "$path"
+}
+
+project_lock_base() {
+  require_root
+  printf '%s/forge-provision/locks/project/%s/%s/%s\n' "${XDG_STATE_HOME:-$HOME/.local/state}" "$root_key" "$project_key" "$instance_name"
+}
+
+psql_session_lock_root() {
+  printf '%s/session\n' "$(project_lock_base)"
+}
+
+docker_endpoint_lock_base() {
+  local endpoint_hash
+  require_root
+  [[ -n "$docker_endpoint" ]] || die "Docker endpoint must be resolved before endpoint lock path calculation"
+  endpoint_hash="$(docker_endpoint_hash)"
+  printf '%s/forge-provision/locks/%s/%s/%s/%s\n' "${XDG_STATE_HOME:-$HOME/.local/state}" "${endpoint_hash:0:16}" "$root_key" "$project_key" "$instance_name"
+}
+
+port_lock_root_path() {
+  printf '%s/port\n' "$(docker_endpoint_lock_base)"
+}
+
+endpoint_lock_path() {
+  printf '%s/endpoint.lock.d\n' "$(docker_endpoint_lock_base)"
+}
+
+cleanup_project_lock_parents() {
+  local state_root="${XDG_STATE_HOME:-$HOME/.local/state}"
+  rmdir "$state_root/forge-provision/locks/project/$root_key/$project_key/$instance_name" "$state_root/forge-provision/locks/project/$root_key/$project_key" "$state_root/forge-provision/locks/project/$root_key" "$state_root/forge-provision/locks/project" "$state_root/forge-provision/locks" "$state_root/forge-provision" 2>/dev/null || true
+}
+
+cleanup_endpoint_lock_parents() {
+  local endpoint_root endpoint_hash state_root="${XDG_STATE_HOME:-$HOME/.local/state}"
+  [[ -n "$docker_endpoint" ]] || return 0
+  endpoint_root="$(docker_endpoint_lock_base)"
+  endpoint_hash="$(docker_endpoint_hash)"
+  rmdir "$endpoint_root/port" "$endpoint_root" "$state_root/forge-provision/locks/${endpoint_hash:0:16}/$root_key/$project_key" "$state_root/forge-provision/locks/${endpoint_hash:0:16}/$root_key" "$state_root/forge-provision/locks/${endpoint_hash:0:16}" "$state_root/forge-provision/locks" "$state_root/forge-provision" 2>/dev/null || true
+}
+
 ensure_provisioning_root() {
   require_root
-  ensure_dir_component "$rasm_root/.artifacts"
-  ensure_dir_component "$rasm_root/.artifacts/provisioning"
+  ensure_dir_component "$forge_root/.artifacts"
+  ensure_dir_component "$forge_root/.artifacts/provisioning"
   ensure_dir_component "$provisioning_root_dir"
-  ensure_dir_component "$provisioning_root_dir/.locks"
 }
 
 ensure_project_dir() {
@@ -1303,12 +1415,12 @@ ensure_project_dir() {
 
 assert_safe_project_dir_for_cleanup() {
   require_root
-  [[ "$provisioning_dir" == "$provisioning_root_dir/$project_name" ]] || die "unexpected project provisioning dir: $provisioning_dir"
+  [[ "$provisioning_dir" == "$provisioning_root_dir/$instance_name" ]] || die "unexpected project provisioning dir: $provisioning_dir"
   [[ ! -L "$provisioning_dir" ]] || die "refusing symlinked project provisioning dir: $provisioning_dir"
   if [[ -d "$provisioning_dir" ]]; then
     local real
     real="$(cd "$provisioning_dir" && pwd -P)" || die "cannot resolve project provisioning dir: $provisioning_dir"
-    [[ "$real" == "$provisioning_root_dir/$project_name" ]] || die "project provisioning dir escapes canonical root: $real"
+    [[ "$real" == "$provisioning_root_dir/$instance_name" ]] || die "project provisioning dir escapes canonical root: $real"
   fi
 }
 
@@ -1355,7 +1467,7 @@ write_owner_metadata() {
   shift 2
   local tmp started_at host pair
   host="$(current_host)"
-  started_at="$(owner_field "$lock" started_at)"
+  started_at="$(owner_field "$lock" started_at || true)"
   [[ -n "$started_at" ]] || TZ=UTC printf -v started_at '%(%Y-%m-%dT%H:%M:%SZ)T' -1
   tmp="$(mktemp "$lock/owner.XXXXXX")" || return
   {
@@ -1364,7 +1476,7 @@ write_owner_metadata() {
     printf 'started_at=%s\n' "$started_at"
     [[ "$heartbeat" == true ]] && printf 'last_heartbeat_epoch=%s\n' "$EPOCHSECONDS"
     printf 'token=%s\n' "$lock_token"
-    printf 'root_fingerprint=%s\n' "$root_fingerprint"
+    printf 'root_key=%s\n' "$root_key"
     printf 'project=%s\n' "$project_name"
     for pair in "$@"; do
       printf '%s\n' "$pair"
@@ -1387,7 +1499,7 @@ lock_active_message() {
   host="$(lock_owner_field host)"
   started_at="$(lock_owner_field started_at)"
   command="$(lock_owner_field command)"
-  printf 'another rasm-provision mutating command is active: lock=%s pid=%s host=%s command=%s started_at=%s' \
+  printf 'another forge-provision mutating command is active: lock=%s pid=%s host=%s command=%s started_at=%s' \
     "$lock_dir" "${pid:-unknown}" "${host:-unknown}" "${command:-unknown}" "${started_at:-unknown}"
 }
 
@@ -1396,14 +1508,14 @@ path_mtime_epoch() {
   stat -c %Y "$path" 2>/dev/null || stat -f %m "$path" 2>/dev/null
 }
 
-pid_looks_like_rasm_provision() {
+pid_looks_like_forge_provision() {
   local pid="$1"
   [[ "$pid" =~ ^[0-9]+$ ]] || return 1
   kill -0 "$pid" 2>/dev/null || return 1
   command -v ps >/dev/null 2>&1 || return 0
   local command_line
-  command_line="$(ps -p "$pid" -o command= 2>/dev/null || printf rasm-provision)"
-  [[ "$command_line" == *rasm-provision* ]]
+  command_line="$(ps -p "$pid" -o command= 2>/dev/null || printf forge-provision)"
+  [[ "$command_line" == *forge-provision* ]]
 }
 
 recover_ownerless_lock_dir() {
@@ -1423,7 +1535,7 @@ try_recover_dead_lock() {
     recover_ownerless_lock_dir "$lock_dir"
     return
   }
-  pid_looks_like_rasm_provision "$pid" && return 1
+  pid_looks_like_forge_provision "$pid" && return 1
   host="$(lock_owner_field host)"
   [[ "$host" == "$(current_host)" ]] || return 1
   token_file_matches_owner "$lock_dir" || return 1
@@ -1434,6 +1546,7 @@ try_recover_dead_lock() {
 acquire_mutation_lock() {
   require_root
   ensure_provisioning_root
+  ensure_state_lock_root "${lock_dir%/*}"
   local deadline
   ((deadline = EPOCHSECONDS + lock_wait_seconds))
   while true; do
@@ -1486,9 +1599,10 @@ recover_dead_psql_session_lock() {
 }
 
 cleanup_stale_psql_session_locks() {
-  local lock
-  [[ -d "$session_lock_root" ]] || return 0
-  for lock in "$session_lock_root"/*.lock; do
+  local lock root
+  root="$(psql_session_lock_root)"
+  [[ -d "$root" ]] || return 0
+  for lock in "$root"/*.lock.d; do
     [[ -d "$lock" ]] || continue
     recover_dead_psql_session_lock "$lock" || true
   done
@@ -1507,10 +1621,11 @@ active_psql_session_message() {
 }
 
 assert_no_active_psql_sessions() {
-  local lock
+  local lock root
   cleanup_stale_psql_session_locks
-  [[ -d "$session_lock_root" ]] || return 0
-  for lock in "$session_lock_root"/"$root_fingerprint"-"$project_name"-*.lock; do
+  root="$(psql_session_lock_root)"
+  [[ -d "$root" ]] || return 0
+  for lock in "$root"/*.lock.d; do
     [[ -d "$lock" ]] || continue
     recover_dead_psql_session_lock "$lock" && continue
     die "$(active_psql_session_message "$lock")"
@@ -1530,20 +1645,28 @@ assert_no_active_mutation_for_psql() {
 
 acquire_psql_session_lock() {
   local service="$1"
-  local lock
+  local lock root deadline
   assert_no_active_mutation_for_psql
-  mkdir -p "$session_lock_root"
-  chmod 700 "$session_lock_root"
+  root="$(psql_session_lock_root)"
+  ensure_state_lock_root "$root"
   lock_token="$$-${EPOCHREALTIME//[^0-9]/}-$SRANDOM"
-  lock="$session_lock_root/$root_fingerprint-$project_name-$service-$lock_token.lock"
-  mkdir -m 700 "$lock" || die "cannot create psql session lock: service=$service"
-  if ! printf '%s\n' "$lock_token" >"$lock/token" || ! write_psql_session_metadata "$lock" "$service"; then
-    rm -f "$lock/token" "$lock/owner" "$lock"/owner.* 2>/dev/null || true
-    rmdir "$lock" 2>/dev/null || true
-    die "cannot write psql session lock metadata: service=$service"
-  fi
-  chmod 600 "$lock/token"
-  psql_session_locks+=("$lock")
+  lock="$root/$service.lock.d"
+  ((deadline = EPOCHSECONDS + lock_wait_seconds))
+  while true; do
+    if mkdir -m 700 "$lock" 2>/dev/null; then
+      if ! printf '%s\n' "$lock_token" >"$lock/token" || ! write_psql_session_metadata "$lock" "$service"; then
+        rm -f "$lock/token" "$lock/owner" "$lock"/owner.* 2>/dev/null || true
+        rmdir "$lock" 2>/dev/null || true
+        die "cannot write psql session lock metadata: service=$service"
+      fi
+      chmod 600 "$lock/token"
+      psql_session_locks+=("$lock")
+      break
+    fi
+    recover_dead_psql_session_lock "$lock" && continue
+    ((EPOCHSECONDS < deadline)) || die "$(active_psql_session_message "$lock")"
+    sleep 1
+  done
   if mutation_lock_blocks_psql; then
     local message
     message="$(lock_active_message)"
@@ -1553,7 +1676,7 @@ acquire_psql_session_lock() {
 }
 
 release_psql_session_locks() {
-  local lock current_token rc=0 state_root
+  local lock current_token rc=0 root
   for lock in "${psql_session_locks[@]}"; do
     [[ -d "$lock" ]] || continue
     current_token=""
@@ -1564,8 +1687,9 @@ release_psql_session_locks() {
     fi
   done
   psql_session_locks=()
-  state_root="${XDG_STATE_HOME:-$HOME/.local/state}"
-  rmdir "$session_lock_root" "$state_root/rasm-provision" 2>/dev/null || true
+  root="$(psql_session_lock_root)"
+  rmdir "$root" 2>/dev/null || true
+  cleanup_project_lock_parents
   return "$rc"
 }
 
@@ -1658,6 +1782,7 @@ release_mutation_lock() {
     cleanup_empty_provisioning_parents || true
     cleanup_empty_parents_after_lock=false
   fi
+  cleanup_project_lock_parents
   lock_releasing=false
   return "$rc"
 }
@@ -1666,6 +1791,8 @@ with_mutation_lock() {
   current_command="$1"
   shift
   local cleanup_rc=0
+  require_root
+  validate_static_env
   trap 'rc=$?; release_mutation_lock || true; exit "$rc"' EXIT
   trap 'trap - INT; forward_foreground_child INT; release_mutation_lock || true; kill -INT "$$"' INT
   trap 'trap - TERM; forward_foreground_child TERM; release_mutation_lock || true; kill -TERM "$$"' TERM
@@ -1699,7 +1826,7 @@ recover_dead_port_lock() {
   local pid host
   pid="$(port_lock_owner_field "$lock" pid)"
   if [[ -n "$pid" ]]; then
-    pid_looks_like_rasm_provision "$pid" && return 1
+    pid_looks_like_forge_provision "$pid" && return 1
     host="$(port_lock_owner_field "$lock" host)"
     [[ "$host" == "$(current_host)" ]] || return 1
     token_file_matches_owner "$lock" || return 1
@@ -1713,15 +1840,12 @@ recover_dead_port_lock() {
 acquire_port_locks() {
   require_root
   resolve_docker_endpoint
-  mkdir -p "$port_lock_root"
-  chmod 700 "$port_lock_root" 2>/dev/null || true
-  [[ -d "$port_lock_root" && ! -L "$port_lock_root" ]] || die "cannot create safe port lock root: $port_lock_root"
-  local endpoint_hash service port lock deadline pid host started_at lock_service
-  endpoint_hash="$(printf '%s' "$docker_endpoint" | hash_text)"
-  endpoint_hash="${endpoint_hash%% *}"
+  local port_root service port lock deadline pid host started_at lock_service
+  port_root="$(port_lock_root_path)"
+  ensure_state_lock_root "$port_root"
   while IFS= read -r service; do
     port="$(service_port "$service")"
-    lock="$port_lock_root/${endpoint_hash:0:16}-$port.lock.d"
+    lock="$port_root/$port.lock.d"
     ((deadline = EPOCHSECONDS + lock_wait_seconds))
     while true; do
       if mkdir -m 700 "$lock" 2>/dev/null; then
@@ -1749,7 +1873,7 @@ acquire_port_locks() {
 }
 
 release_port_locks() {
-  local lock current_token rc=0 state_root
+  local lock current_token rc=0 port_root endpoint_root
   for lock in "${port_lock_dirs[@]}"; do
     [[ -d "$lock" ]] || continue
     current_token=""
@@ -1760,8 +1884,12 @@ release_port_locks() {
     fi
   done
   port_lock_dirs=()
-  state_root="${XDG_STATE_HOME:-$HOME/.local/state}"
-  rmdir "$port_lock_root" "$state_root/rasm-provision" 2>/dev/null || true
+  if [[ -n "$docker_endpoint" ]]; then
+    port_root="$(port_lock_root_path)"
+    endpoint_root="$(docker_endpoint_lock_base)"
+    rmdir "$port_root" "$endpoint_root" 2>/dev/null || true
+    cleanup_endpoint_lock_parents
+  fi
   return "$rc"
 }
 
@@ -1773,7 +1901,7 @@ recover_dead_endpoint_lock() {
   local pid host
   pid="$(port_lock_owner_field "$endpoint_lock_dir" pid)"
   if [[ -n "$pid" ]]; then
-    pid_looks_like_rasm_provision "$pid" && return 1
+    pid_looks_like_forge_provision "$pid" && return 1
     host="$(port_lock_owner_field "$endpoint_lock_dir" host)"
     [[ "$host" == "$(current_host)" ]] || return 1
     token_file_matches_owner "$endpoint_lock_dir" || return 1
@@ -1787,10 +1915,11 @@ recover_dead_endpoint_lock() {
 acquire_endpoint_lock() {
   require_root
   resolve_docker_endpoint
-  local endpoint_hash deadline pid host started_at owner_project
+  local endpoint_hash endpoint_root deadline pid host started_at owner_project
   endpoint_hash="$(docker_endpoint_hash)"
-  endpoint_lock_dir="$provisioning_root_dir/.locks/endpoint-${endpoint_hash:0:16}.lock.d"
-  ensure_provisioning_root
+  endpoint_root="$(docker_endpoint_lock_base)"
+  endpoint_lock_dir="$(endpoint_lock_path)"
+  ensure_state_lock_root "$endpoint_root"
   ((deadline = EPOCHSECONDS + lock_wait_seconds))
   while true; do
     if mkdir -m 700 "$endpoint_lock_dir" 2>/dev/null; then
@@ -1828,6 +1957,7 @@ release_endpoint_lock() {
   fi
   endpoint_lock_owned=false
   endpoint_lock_dir=""
+  cleanup_endpoint_lock_parents
   return "$rc"
 }
 
@@ -1873,8 +2003,8 @@ docker_runtime_issue() {
     printf 'non-local Docker endpoint rejected'
     return 1
   }
-  if [[ "$host_os" == "Darwin" && "${RASM_PROVISION_ALLOW_NON_COLIMA_DOCKER:-0}" != "1" && "$docker_endpoint" != "unix://$default_colima_socket" ]]; then
-    printf 'non-Colima Docker endpoint rejected; set RASM_PROVISION_ALLOW_NON_COLIMA_DOCKER=1 to override'
+  if [[ "$host_os" == "Darwin" && "${FORGE_PROVISION_ALLOW_NON_COLIMA_DOCKER:-0}" != "1" && "$docker_endpoint" != "unix://$default_colima_socket" ]]; then
+    printf 'non-Colima Docker endpoint rejected; set FORGE_PROVISION_ALLOW_NON_COLIMA_DOCKER=1 to override'
     return 1
   fi
   return 0
@@ -2048,7 +2178,7 @@ service_postgres_command() {
     preload="${preload}${preload:+,}pg_cron"
   fi
   if [[ "$enable_cron" == true ]]; then
-    printf '["postgres","-c","shared_preload_libraries=%s","-c","cron.database_name=rasm","-c","cron.use_background_workers=on","-c","max_worker_processes=20"]\n' "$preload"
+    printf '["postgres","-c","shared_preload_libraries=%s","-c","cron.database_name=forge","-c","cron.use_background_workers=on","-c","max_worker_processes=20"]\n' "$preload"
   else
     printf '["postgres","-c","shared_preload_libraries=%s"]\n' "$preload"
   fi
@@ -2059,7 +2189,7 @@ render_common_labels() {
   local service="$2"
   printf '      %s: "1"\n' "$owner_label"
   printf '      %s: %s\n' "$service_label" "$service"
-  printf '      %s: "%s"\n' "$root_label" "$root_fingerprint"
+  printf '      %s: "%s"\n' "$root_label" "$root_key"
   printf '      %s: "%s"\n' "$project_label" "$project_name"
   printf '      %s: %s\n' "$resource_label" "$resource"
   [[ -z "${unpublished_generation##*/}" ]] || printf '      %s: "%s"\n' "$generation_label" "${unpublished_generation##*/}"
@@ -2068,7 +2198,7 @@ render_common_labels() {
 render_auth_environment() {
   local service="$1"
   resolve_auth
-  printf '      POSTGRES_DB: rasm\n'
+  printf '      POSTGRES_DB: forge\n'
   printf '      POSTGRES_USER: postgres\n'
   if [[ "$auth_mode" == "trust-loopback" ]]; then
     printf '      POSTGRES_HOST_AUTH_METHOD: trust\n'
@@ -2104,7 +2234,7 @@ render_compose_service() {
   printf '    labels:\n'
   render_common_labels container "$service"
   printf '    healthcheck:\n'
-  printf '      test: ["CMD-SHELL", "pg_isready -U postgres -d rasm"]\n'
+  printf '      test: ["CMD-SHELL", "pg_isready -U postgres -d forge"]\n'
   printf '      interval: 5s\n'
   printf '      timeout: 5s\n'
   printf '      start_period: 10s\n'
@@ -2161,13 +2291,15 @@ render_env() {
   local service
   resolve_auth
   resolve_ports false
-  printf 'RASM_ROOT=%s\n' "$rasm_root"
-  printf 'RASM_PROVISION_PROJECT=%s\n' "$project_name"
-  printf 'RASM_PROVISION_DIR=%s\n' "$provisioning_dir"
-  printf 'RASM_PROVISION_COMPOSE=%s\n' "$compose_file"
-  printf 'RASM_PROVISION_ENV=%s\n' "$env_file"
-  printf 'RASM_PROVISION_AUTH=%s\n' "$auth_mode"
-  printf 'RASM_PROVISION_PORT_POLICY=%s\n' "$port_policy_mode"
+  printf 'FORGE_PROVISION_ROOT=%s\n' "$forge_root"
+  printf 'FORGE_PROVISION_PROJECT=%s\n' "$project_key"
+  printf 'FORGE_PROVISION_INSTANCE=%s\n' "$instance_name"
+  printf 'FORGE_PROVISION_COMPOSE_PROJECT=%s\n' "$project_name"
+  printf 'FORGE_PROVISION_DIR=%s\n' "$provisioning_dir"
+  printf 'FORGE_PROVISION_COMPOSE=%s\n' "$compose_file"
+  printf 'FORGE_PROVISION_ENV=%s\n' "$env_file"
+  printf 'FORGE_PROVISION_AUTH=%s\n' "$auth_mode"
+  printf 'FORGE_PROVISION_PORT_POLICY=%s\n' "$port_policy_mode"
   for service in "${service_order[@]}"; do
     printf '%s=%s\n' "${service_image_env[$service]}" "$(service_image "$service")"
     printf '%s=%s\n' "${service_port_env[$service]}" "$(service_port "$service")"
@@ -2175,7 +2307,7 @@ render_env() {
       printf '%s=%s\n' "${service_dsn_env[$service]}" "$(service_dsn "$service")"
     fi
   done
-  printf 'RASM_PROVISION_PGDUCKDB=%s\n' "$(service_enabled_value pgduckdb)"
+  printf 'FORGE_PROVISION_PGDUCKDB=%s\n' "$(service_enabled_value pgduckdb)"
 }
 
 render_generation_manifest() {
@@ -2186,16 +2318,15 @@ render_generation_manifest() {
   jq -n \
     --argjson schemaVersion "$schema_version" \
     --arg generation "$generation_id" \
-    --arg root "$rasm_root" \
-    --arg project "$project_name" \
-    --arg rootFingerprint "$root_fingerprint" \
+    --arg root "$forge_root" \
+    --argjson project "$(project_json)" \
     --arg createdAt "$created_at" \
     --argjson auth "$(auth_json)" \
     --argjson portPolicy "$(port_policy_json)" \
     --argjson services "$services_json" \
     --arg dockerEndpointHash "$(docker_endpoint_hash)" \
     --arg hostOs "$host_os" \
-    '{schemaVersion: $schemaVersion, generation: $generation, root: $root, project: $project, rootFingerprint: $rootFingerprint, createdAt: $createdAt, dockerEndpointHash: $dockerEndpointHash, hostOs: $hostOs, auth: $auth, portPolicy: $portPolicy, services: $services}'
+    '{schemaVersion: $schemaVersion, generation: $generation, root: $root, project: $project, createdAt: $createdAt, dockerEndpointHash: $dockerEndpointHash, hostOs: $hostOs, auth: $auth, portPolicy: $portPolicy, services: $services}'
 }
 
 render_volume_ledger() {
@@ -2205,8 +2336,7 @@ render_volume_ledger() {
   jq -n \
     --argjson schemaVersion "$schema_version" \
     --arg generation "$generation_id" \
-    --arg project "$project_name" \
-    --arg rootFingerprint "$root_fingerprint" \
+    --argjson project "$(project_json)" \
     --arg createdAt "$created_at" \
     --arg authMode "$auth_mode" \
     --arg authRisk "$auth_risk" \
@@ -2215,7 +2345,6 @@ render_volume_ledger() {
     '{
       schemaVersion: $schemaVersion,
       project: $project,
-      rootFingerprint: $rootFingerprint,
       generation: $generation,
       createdAt: $createdAt,
       auth: {mode: $authMode, risk: $authRisk},
@@ -2331,1149 +2460,11 @@ cleanup_transient_assets() {
 
 cleanup_empty_provisioning_parents() {
   require_root
-  rmdir "$provisioning_root_dir/.locks" "$provisioning_root_dir" "$rasm_root/.artifacts/provisioning" "$rasm_root/.artifacts" 2>/dev/null || true
+  rmdir "$provisioning_root_dir" "$forge_root/.artifacts/provisioning/forge" "$forge_root/.artifacts/provisioning" "$forge_root/.artifacts" 2>/dev/null || true
 }
 
-inspect_label() {
-  local id="$1"
-  local label="$2"
-  docker inspect --format "{{ index .Config.Labels \"$label\" }}" "$id" 2>/dev/null || true
-}
-
-inspect_name() {
-  local id="$1"
-  local name
-  name="$(docker inspect --format '{{ .Name }}' "$id")" || return
-  printf '%s\n' "${name#/}"
-}
-
-validate_owned_container_identity() {
-  local id="$1"
-  local service="$2"
-  local mode="${3:-strict}"
-  local owned root project compose_project compose_service image expected_image net volume mount
-  known_service "$service" || die "refusing unknown provision container service=$service id=$id"
-  owned="$(inspect_label "$id" "$owner_label")"
-  root="$(inspect_label "$id" "$root_label")"
-  project="$(inspect_label "$id" "$project_label")"
-  compose_project="$(inspect_label "$id" "com.docker.compose.project")"
-  compose_service="$(inspect_label "$id" "com.docker.compose.service")"
-  [[ "$owned" == "1" ]] || die "refusing unowned container id=$id"
-  [[ "$root" == "$root_fingerprint" ]] || die "refusing container from another Rasm root id=$id root=$root"
-  [[ "$project" == "$project_name" ]] || die "refusing container from another provision project id=$id provision_project=$project"
-  [[ "$compose_project" == "$project_name" ]] || die "refusing container from another Compose project id=$id compose_project=$compose_project"
-  [[ "$compose_service" == "$service" ]] || die "refusing container with wrong Compose service id=$id service=$compose_service expected=$service"
-  [[ "$mode" == "cleanup" ]] && return 0
-  image="$(docker inspect --format '{{ .Config.Image }}' "$id")" || die "cannot inspect container image id=$id"
-  expected_image="$(service_image "$service")"
-  [[ "$image" == "$expected_image" ]] || die "refusing container with wrong image id=$id image=$image expected=$expected_image"
-  net="$(network_name)"
-  volume="$(service_volume_name "$service")"
-  mount="${service_volume_mount[$service]}"
-  docker inspect "$id" | jq -e --arg net "$net" --arg volume "$volume" --arg mount "$mount" '
-    .[0] as $container
-    | ($container.NetworkSettings.Networks[$net] != null)
-    and any($container.Mounts[]?; .Name == $volume and .Destination == $mount)
-  ' >/dev/null || die "refusing container with wrong network or volume mount id=$id service=$service"
-}
-
-collect_owned_container_ids() {
-  # shellcheck disable=SC2178
-  local -n _out="$1"
-  local raw
-  _out=()
-  raw="$(docker ps -aq \
-    --filter "label=com.docker.compose.project=$project_name" \
-    --filter "label=$owner_label=1" \
-    --filter "label=$root_label=$root_fingerprint" \
-    --filter "label=$project_label=$project_name")" || return
-  [[ -z "$raw" ]] || mapfile -t _out <<<"$raw"
-}
-
-collect_owned_volume_names() {
-  # shellcheck disable=SC2178
-  local -n _out="$1"
-  local raw
-  _out=()
-  raw="$(docker volume ls -q \
-    --filter "label=$owner_label=1" \
-    --filter "label=$root_label=$root_fingerprint" \
-    --filter "label=$project_label=$project_name")" || return
-  [[ -z "$raw" ]] || mapfile -t _out <<<"$raw"
-}
-
-collect_owned_network_names() {
-  # shellcheck disable=SC2178
-  local -n _out="$1"
-  local raw
-  _out=()
-  raw="$(docker network ls -q \
-    --filter "label=$owner_label=1" \
-    --filter "label=$root_label=$root_fingerprint" \
-    --filter "label=$project_label=$project_name")" || return
-  [[ -z "$raw" ]] || mapfile -t _out <<<"$raw"
-}
-
-active_other_project_count() {
-  local raw
-  local ids=()
-  raw="$(docker ps -q \
-    --filter "label=$owner_label=1" \
-    --filter "label=$root_label=$root_fingerprint")" || return
-  [[ -z "$raw" ]] || mapfile -t ids <<<"$raw"
-  ((${#ids[@]} > 0)) || {
-    printf '0\n'
-    return 0
-  }
-  docker inspect "${ids[@]}" | jq -r --arg project_label "$project_label" --arg current "$project_name" '
-    [.[] | .Config.Labels[$project_label] // empty | select(. != $current)]
-    | unique
-    | length
-  '
-}
-
-enforce_max_active_projects() {
-  ((max_active_projects == 0)) && return 0
-  local count
-  count="$(active_other_project_count)" || die "cannot inspect active provisioning projects"
-  ((count < max_active_projects)) || die "active provisioning project cap reached: active_other_projects=$count max=$max_active_projects"
-}
-
-service_identity_json() {
-  local service
-  for service in "${service_order[@]}"; do
-    jq -nc \
-      --arg service "$service" \
-      --arg image "$(service_image "$service")" \
-      --arg volume "$(service_volume_name "$service")" \
-      --arg mount "${service_volume_mount[$service]}" \
-      '{key: $service, image: $image, volume: $volume, mount: $mount}'
-  done | jq -s 'map({(.key): {image, volume, mount}}) | add'
-}
-
-container_id_for_service() {
-  local service="$1"
-  local raw
-  raw="$(docker ps -aq \
-    --filter "label=com.docker.compose.project=$project_name" \
-    --filter "label=$owner_label=1" \
-    --filter "label=$service_label=$service" \
-    --filter "label=$root_label=$root_fingerprint" \
-    --filter "label=$project_label=$project_name")" || return
-  printf '%s\n' "${raw%%$'\n'*}"
-}
-
-container_running_for_service() {
-  local service="$1"
-  [[ -n "$(docker ps -q \
-    --filter "label=com.docker.compose.project=$project_name" \
-    --filter "label=$owner_label=1" \
-    --filter "label=$service_label=$service" \
-    --filter "label=$root_label=$root_fingerprint" \
-    --filter "label=$project_label=$project_name")" ]]
-}
-
-container_publishes_loopback_host_port() {
-  local id="$1"
-  local port="$2"
-  docker inspect "$id" | jq -e --arg port "$port" '
-    .[0].NetworkSettings.Ports[]?[]?
-    | select(.HostPort == $port and (.HostIp == "127.0.0.1" or .HostIp == "::1"))
-  ' >/dev/null
-}
-
-containers_publishing_host_port() {
-  local port="$1"
-  local raw
-  local ids=()
-  raw="$(docker ps -q)" || return
-  [[ -z "$raw" ]] || mapfile -t ids <<<"$raw"
-  ((${#ids[@]} > 0)) || return 0
-  docker inspect "${ids[@]}" | jq -r --arg port "$port" '
-    .[]
-    | select([
-        .NetworkSettings.Ports[]?[]?
-        | select(.HostPort == $port and (.HostIp == "127.0.0.1" or .HostIp == "::1" or .HostIp == "0.0.0.0" or .HostIp == "::" or .HostIp == ""))
-      ] | length > 0)
-    | .Id
-  '
-}
-
-collect_published_container_ids() {
-  # shellcheck disable=SC2178
-  local -n _out="$1"
-  local port="$2"
-  local raw
-  _out=()
-  raw="$(containers_publishing_host_port "$port")" || return
-  [[ -z "$raw" ]] || mapfile -t _out <<<"$raw"
-}
-
-port_owned_by_service() {
-  local service="$1"
-  local port="$2"
-  local ids=()
-  local id owned root project compose_project service_value
-  collect_published_container_ids ids "$port"
-  ((${#ids[@]} > 0)) || return 1
-  for id in "${ids[@]}"; do
-    owned="$(inspect_label "$id" "$owner_label")"
-    root="$(inspect_label "$id" "$root_label")"
-    project="$(inspect_label "$id" "$project_label")"
-    service_value="$(inspect_label "$id" "$service_label")"
-    compose_project="$(inspect_label "$id" "com.docker.compose.project")"
-    [[ "$owned" == "1" && "$root" == "$root_fingerprint" && "$project" == "$project_name" && "$service_value" == "$service" && "$compose_project" == "$project_name" ]] || continue
-    validate_owned_container_identity "$id" "$service"
-    container_publishes_loopback_host_port "$id" "$port" && return 0
-  done
-  return 1
-}
-
-host_listener_pair() {
-  local port="$1"
-  local -n __pid="$2"
-  local -n __command="$3"
-  local line
-  __pid=""
-  __command=""
-  if command -v lsof >/dev/null 2>&1; then
-    while IFS= read -r line; do
-      case "$line" in
-        p*) [[ -z "$__pid" ]] && __pid="${line#p}" ;;
-        c*) [[ -z "$__command" ]] && __command="${line#c}" ;;
-      esac
-    done < <(lsof -nP -iTCP:"$port" -sTCP:LISTEN -Fpc 2>/dev/null || true)
-    return 0
-  fi
-  if command -v ss >/dev/null 2>&1; then
-    line="$(ss -H -ltnp 2>/dev/null | awk -v suffix=":$port" '$4 == suffix || $4 ~ suffix "$" {print; exit}')"
-    if [[ "$line" =~ pid=([0-9]+) ]]; then
-      __pid="${BASH_REMATCH[1]}"
-    fi
-    if [[ "$line" =~ users:\(\(\"([^\"]+)\" ]]; then
-      __command="${BASH_REMATCH[1]}"
-    fi
-    return 0
-  fi
-  if proc_net_port_busy "$port"; then
-    __pid="-"
-    __command="/proc/net/tcp"
-  fi
-}
-
-port_busy() {
-  local port="$1"
-  local ids=()
-  collect_published_container_ids ids "$port" || die "docker port inspection failed for port=$port"
-  ((${#ids[@]} > 0)) && return 0
-  host_port_busy "$port"
-}
-
-classify_owner() {
-  local id="$1"
-  local compose_project="$2"
-  local provision_owner="$3"
-  local provision_root="$4"
-  local provision_project="$5"
-  if [[ "$provision_owner" == "1" && "$provision_root" == "$root_fingerprint" && "$provision_project" == "$project_name" ]]; then
-    printf 'provision:this-project'
-  elif [[ "$provision_owner" == "1" && "$provision_root" == "$root_fingerprint" ]]; then
-    printf 'provision:this-root-other-project'
-  elif [[ "$provision_owner" == "1" && -n "$provision_root" ]]; then
-    printf 'provision:other-root'
-  elif [[ "$compose_project" == "$project_name" ]]; then
-    printf 'project:unowned'
-  elif [[ -n "$id" && "$id" != "-" ]]; then
-    printf 'external:docker'
-  else
-    printf 'external:host-listener'
-  fi
-}
-
-published_ports() {
-  local id="$1"
-  local lines=()
-  mapfile -t lines < <(docker port "$id" 2>/dev/null || true)
-  if ((${#lines[@]} == 0)); then
-    printf '-'
-  else
-    local IFS=,
-    printf '%s' "${lines[*]}"
-  fi
-}
-
-port_collision_report() {
-  local service="$1"
-  local env_var="${service_port_env[$service]}"
-  local port
-  port="$(service_port "$service")"
-  local ids=()
-  local id="-" name="-" image="-" compose_project="-" compose_service="-" provision_owner="-" provision_root="-" provision_project="-" owner pid command
-  collect_published_container_ids ids "$port"
-  ((${#ids[@]} == 0)) || id="${ids[0]}"
-  if [[ "$id" != "-" ]]; then
-    name="$(inspect_name "$id" || printf '-')"
-    image="$(docker inspect --format '{{ .Config.Image }}' "$id" || printf '-')"
-    compose_project="$(inspect_label "$id" "com.docker.compose.project")"
-    compose_service="$(inspect_label "$id" "com.docker.compose.service")"
-    provision_owner="$(inspect_label "$id" "$owner_label")"
-    provision_root="$(inspect_label "$id" "$root_label")"
-    provision_project="$(inspect_label "$id" "$project_label")"
-    [[ -n "$compose_project" ]] || compose_project="-"
-    [[ -n "$compose_service" ]] || compose_service="-"
-    [[ -n "$provision_owner" ]] || provision_owner="-"
-    [[ -n "$provision_root" ]] || provision_root="-"
-    [[ -n "$provision_project" ]] || provision_project="-"
-  fi
-  owner="$(classify_owner "$id" "$compose_project" "$provision_owner" "$provision_root" "$provision_project")"
-  host_listener_pair "$port" pid command
-  [[ -n "$pid" ]] || pid="-"
-  [[ -n "$command" ]] || command="-"
-  printf 'port-collision\tservice=%s\tenv=%s\tport=%s\towner=%s\tcontainer_id=%s\tname=%s\timage=%s\tcompose_project=%s\tcompose_service=%s\tprovision_project=%s\thost_listener_pid=%s\thost_listener_command=%s\taction=%s\n' \
-    "$service" "$env_var" "$port" "$owner" "$id" "$name" "$image" "$compose_project" "$compose_service" "$provision_project" "$pid" "$command" "set $env_var to a free port or stop the non-owned listener outside rasm-provision" >&2
-}
-
-preflight_ports() {
-  local service failed=0
-  while IFS= read -r service; do
-    if port_busy "$(service_port "$service")" && ! port_owned_by_service "$service" "$(service_port "$service")"; then
-      port_collision_report "$service"
-      failed=1
-    fi
-  done < <(enabled_services)
-  ((failed == 0)) || die "host port(s) already allocated; see port-collision row(s) above"
-}
-
-assert_owned_project() {
-  local mode="${1:-strict}"
-  local ids id owned root project service
-  ids="$(docker ps -aq --filter "label=com.docker.compose.project=$project_name")"
-  [[ -n "$ids" ]] || return 0
-  while IFS= read -r id; do
-    [[ -n "$id" ]] || continue
-    owned="$(inspect_label "$id" "$owner_label")"
-    [[ "$owned" == "1" ]] || die "refusing to manage unlabeled container in project $project_name: $id"
-    root="$(inspect_label "$id" "$root_label")"
-    [[ "$root" == "$root_fingerprint" ]] || die "refusing to manage container from another Rasm root in project $project_name: $id root=$root"
-    project="$(inspect_label "$id" "$project_label")"
-    [[ "$project" == "$project_name" ]] || die "refusing to manage container from another provision project in project $project_name: $id provision_project=$project"
-    service="$(inspect_label "$id" "$service_label")"
-    validate_owned_container_identity "$id" "$service" "$mode"
-  done <<<"$ids"
-}
-
-assert_owned_named_resources() {
-  local service volume owner root project service_value net name
-  while IFS= read -r service; do
-    volume="$(service_volume_name "$service")"
-    if docker volume inspect "$volume" >/dev/null 2>&1; then
-      owner="$(docker volume inspect --format "{{ index .Labels \"$owner_label\" }}" "$volume")"
-      root="$(docker volume inspect --format "{{ index .Labels \"$root_label\" }}" "$volume")"
-      project="$(docker volume inspect --format "{{ index .Labels \"$project_label\" }}" "$volume")"
-      service_value="$(docker volume inspect --format "{{ index .Labels \"$service_label\" }}" "$volume")"
-      [[ "$owner" == "1" && "$root" == "$root_fingerprint" && "$project" == "$project_name" && "$service_value" == "$service" ]] ||
-        die "refusing to reuse volume with wrong labels: $volume"
-    fi
-  done < <(enabled_services)
-  net="$(network_name)"
-  if docker network inspect "$net" >/dev/null 2>&1; then
-    owner="$(docker network inspect --format "{{ index .Labels \"$owner_label\" }}" "$net")"
-    root="$(docker network inspect --format "{{ index .Labels \"$root_label\" }}" "$net")"
-    project="$(docker network inspect --format "{{ index .Labels \"$project_label\" }}" "$net")"
-    service_value="$(docker network inspect --format "{{ index .Labels \"$service_label\" }}" "$net")"
-    name="$(docker network inspect --format '{{ .Name }}' "$net")"
-    [[ "$owner" == "1" && "$root" == "$root_fingerprint" && "$project" == "$project_name" && "$service_value" == "network" && "$name" == "$net" ]] ||
-      die "refusing to reuse network with wrong labels: $net"
-  fi
-}
-
-require_enabled_service_running() {
-  local service="$1"
-  local id
-  container_running_for_service "$service" || die "owned service is not running service=$service project=$project_name root=$root_fingerprint"
-  id="$(container_id_for_service "$service")"
-  [[ -n "$id" ]] || die "owned service is missing container service=$service project=$project_name"
-  validate_owned_container_identity "$id" "$service"
-}
-
-require_enabled_services() {
-  local service
-  while IFS= read -r service; do
-    require_enabled_service_running "$service"
-  done < <(enabled_services)
-  return 0
-}
-
-require_service_endpoint() {
-  local service="$1"
-  known_service "$service" || die "unknown service: $service"
-  service_enabled "$service" || die "$service is disabled for project=$project_name"
-  port_owned_by_service "$service" "$(service_port "$service")" ||
-    die "configured port is not published by owned service service=$service port=$(service_port "$service") project=$project_name root=$root_fingerprint"
-}
-
-readiness_report() {
-  local service="$1"
-  local id name image state health ports
-  id="$(container_id_for_service "$service")"
-  if [[ -z "$id" ]]; then
-    stderr_line "$(printf 'readiness\tservice=%s\tstatus=missing-container\tport=%s\tproject=%s\troot=%s' "$service" "$(service_port "$service")" "$project_name" "$root_fingerprint")"
-    return 0
-  fi
-  name="$(inspect_name "$id" || printf '-')"
-  image="$(docker inspect --format '{{ .Config.Image }}' "$id" || printf '-')"
-  state="$(docker inspect --format '{{ .State.Status }}' "$id" || printf '-')"
-  health="$(docker inspect --format '{{ if .State.Health }}{{ .State.Health.Status }}{{ else }}none{{ end }}' "$id" || printf '-')"
-  ports="$(published_ports "$id")"
-  stderr_line "$(printf 'readiness\tservice=%s\tstatus=timeout\tport=%s\tcontainer_id=%s\tname=%s\timage=%s\tdocker_status=%s\thealth=%s\tpublished=%s' \
-    "$service" "$(service_port "$service")" "$id" "$name" "$image" "$state" "$health" "$ports")"
-  while IFS= read -r line; do
-    stderr_line "$(printf 'readiness-log\tservice=%s\t%s' "$service" "$line")"
-  done < <(docker logs --tail 20 "$id" 2>&1 || true)
-}
-
-wait_service() {
-  local service="$1"
-  local id attempt=1
-  while ((attempt <= 15)); do
-    id="$(container_id_for_service "$service")"
-    if [[ -n "$id" ]] && port_owned_by_service "$service" "$(service_port "$service")" &&
-      docker exec "$id" pg_isready -U postgres -d rasm >/dev/null 2>&1; then
-      if [[ "$output_json" == true ]]; then
-        stderr_line "$(printf 'readiness\tservice=%s\tstatus=ready\tport=%s' "$service" "$(service_port "$service")")"
-      else
-        printf '%s\tready\t%s\n' "$service" "$(service_port "$service")"
-      fi
-      return 0
-    fi
-    sleep 1
-    ((attempt += 1))
-  done
-  readiness_report "$service"
-  die "$service did not become ready on port $(service_port "$service")"
-}
-
-wait_services() {
-  local service
-  while IFS= read -r service; do
-    wait_service "$service"
-  done < <(enabled_services)
-  return 0
-}
-
-psql_exec() {
-  local service="$1"
-  shift
-  local id
-  require_service_endpoint "$service"
-  id="$(container_id_for_service "$service")"
-  [[ -n "$id" ]] || die "missing container for service=$service"
-  local -a exec_args=()
-  if [[ -t 0 && -t 1 ]]; then
-    exec_args=(-it)
-  else
-    exec_args=(-i)
-  fi
-  if [[ "$auth_mode" == "auto-root" ]]; then
-    # shellcheck disable=SC2016
-    run_foreground_child docker exec "${exec_args[@]}" "$id" sh -c 'PGPASSWORD="$(cat "$1")"; export PGPASSWORD; shift; exec psql "$@"' \
-      sh "/run/secrets/$(auth_secret_name "$service")" -X -w -U postgres -d rasm "$@"
-  else
-    run_foreground_child docker exec "${exec_args[@]}" "$id" psql -X -w -U postgres -d rasm "$@"
-  fi
-}
-
-psql_tsv() {
-  local service="$1"
-  shift
-  local id
-  require_service_endpoint "$service"
-  id="$(container_id_for_service "$service")"
-  [[ -n "$id" ]] || die "missing container for service=$service"
-  if [[ "$auth_mode" == "auto-root" ]]; then
-    docker exec -i "$id" sh -c 'PGPASSWORD="$(cat "$1")"; export PGPASSWORD; shift; exec psql "$@"' \
-      sh "/run/secrets/$(auth_secret_name "$service")" -X -q -w -U postgres -d rasm -v ON_ERROR_STOP=1 -A -F $'\t' -t "$@"
-  else
-    docker exec -i "$id" psql -X -q -w -U postgres -d rasm -v ON_ERROR_STOP=1 -A -F $'\t' -t "$@"
-  fi
-}
-
-verify_service_extensions() {
-  local service="$1"
-  local values
-  values="$(extension_sql_values "$service")"
-  [[ -n "$values" ]] || return 0
-  psql_tsv "$service" <<SQL
-SET client_min_messages TO warning;
-CREATE TEMP TABLE rasm_extension_target(
-  ordinal integer NOT NULL,
-  name text PRIMARY KEY,
-  category text NOT NULL,
-  required boolean NOT NULL,
-  create_on_verify boolean NOT NULL
-);
-CREATE TEMP TABLE rasm_extension_runtime(
-  name text PRIMARY KEY,
-  state text NOT NULL
-);
-INSERT INTO rasm_extension_target(ordinal, name, category, required, create_on_verify) VALUES
-$values;
-DO \$\$
-DECLARE target record;
-BEGIN
-  FOR target IN
-    SELECT name
-    FROM rasm_extension_target
-    WHERE create_on_verify
-      AND EXISTS (SELECT 1 FROM pg_available_extensions WHERE name = rasm_extension_target.name)
-    ORDER BY ordinal
-  LOOP
-    BEGIN
-      EXECUTE format('CREATE EXTENSION IF NOT EXISTS %I', target.name);
-    EXCEPTION
-      WHEN insufficient_privilege OR feature_not_supported OR undefined_file OR undefined_object OR invalid_parameter_value OR object_not_in_prerequisite_state THEN
-        NULL;
-    END;
-  END LOOP;
-END
-\$\$;
-CREATE TEMP TABLE rasm_pg_cron_probe_context(
-  probe_id text PRIMARY KEY,
-  job_name text NOT NULL,
-  scratch_schema text NOT NULL
-);
-CREATE TEMP TABLE rasm_pg_cron_job(
-  job_id bigint
-);
-	INSERT INTO rasm_pg_cron_probe_context(probe_id, job_name, scratch_schema)
-	SELECT probe_id,
-	       'rasm_pg_cron_' || substr(probe_id, 7, 16),
-	       'rasm_verify_' || substr(md5($(sql_quote "$root_fingerprint:$project_name") || probe_id), 1, 10) || '_' || substr(probe_id, 7, 16)
-	FROM (SELECT 'probe_' || md5(clock_timestamp()::text || random()::text) AS probe_id) seed
-	WHERE EXISTS (SELECT 1 FROM rasm_extension_target WHERE name = 'pg_cron' AND required)
-	  AND EXISTS (SELECT 1 FROM pg_extension WHERE extname = 'pg_cron');
-	DO \$\$
-	DECLARE
-	  job_id bigint;
-	  probe_id text;
-	  scratch_schema text;
-	BEGIN
-	  SELECT c.probe_id, c.scratch_schema
-	  INTO probe_id, scratch_schema
-  FROM rasm_pg_cron_probe_context c
-  LIMIT 1;
-
-	  IF probe_id IS NULL THEN
-	    RETURN;
-	  END IF;
-
-	  EXECUTE format('DROP SCHEMA IF EXISTS %I CASCADE', scratch_schema);
-	  EXECUTE format('CREATE SCHEMA %I', scratch_schema);
-	  EXECUTE format(
-	    'CREATE TABLE %I.rasm_pg_cron_probe(id text PRIMARY KEY, observed_at timestamptz NOT NULL DEFAULT clock_timestamp())',
-    scratch_schema
-  );
-
-  SELECT cron.schedule(
-           c.job_name,
-           '1 seconds',
-           format('INSERT INTO %I.rasm_pg_cron_probe(id) VALUES (%L) ON CONFLICT DO NOTHING', c.scratch_schema, c.probe_id)
-         )
-  INTO job_id
-  FROM rasm_pg_cron_probe_context c
-  LIMIT 1;
-
-  IF job_id IS NOT NULL THEN
-    INSERT INTO rasm_pg_cron_job(job_id) VALUES (job_id);
-  END IF;
-EXCEPTION
-	  WHEN OTHERS THEN
-	    BEGIN
-	      IF job_id IS NOT NULL THEN
-	        PERFORM cron.unschedule(job_id);
-	      END IF;
-	      IF scratch_schema IS NOT NULL THEN
-	        EXECUTE format('DROP SCHEMA IF EXISTS %I CASCADE', scratch_schema);
-	      END IF;
-    EXCEPTION
-      WHEN OTHERS THEN
-        NULL;
-    END;
-    INSERT INTO rasm_extension_runtime(name, state) VALUES ('pg_cron', 'scheduler-failed')
-    ON CONFLICT (name) DO UPDATE SET state = excluded.state;
-END
-\$\$;
-DO \$\$
-DECLARE
-  probe_id text;
-  job_id bigint;
-  scratch_schema text;
-  observed boolean := false;
-  deadline timestamptz := clock_timestamp() + interval '20 seconds';
-BEGIN
-  SELECT c.probe_id, j.job_id, c.scratch_schema
-  INTO probe_id, job_id, scratch_schema
-  FROM rasm_pg_cron_probe_context c
-  CROSS JOIN rasm_pg_cron_job j
-  LIMIT 1;
-
-  IF job_id IS NULL THEN
-    IF scratch_schema IS NOT NULL THEN
-      EXECUTE format('DROP SCHEMA IF EXISTS %I CASCADE', scratch_schema);
-    END IF;
-    RETURN;
-  END IF;
-
-  LOOP
-    EXECUTE format('SELECT EXISTS (SELECT 1 FROM %I.rasm_pg_cron_probe WHERE id = $1)', scratch_schema)
-    USING probe_id
-    INTO observed;
-    EXIT WHEN observed;
-    EXIT WHEN clock_timestamp() >= deadline;
-    PERFORM pg_sleep(1);
-  END LOOP;
-
-  PERFORM cron.unschedule(job_id);
-
-  IF observed THEN
-    INSERT INTO rasm_extension_runtime(name, state) VALUES ('pg_cron', 'ok')
-    ON CONFLICT (name) DO UPDATE SET state = excluded.state;
-  ELSE
-    INSERT INTO rasm_extension_runtime(name, state) VALUES ('pg_cron', 'scheduler-timeout')
-    ON CONFLICT (name) DO UPDATE SET state = excluded.state;
-  END IF;
-
-  EXECUTE format('DROP SCHEMA IF EXISTS %I CASCADE', scratch_schema);
-EXCEPTION
-  WHEN OTHERS THEN
-    BEGIN
-      IF job_id IS NOT NULL THEN
-        PERFORM cron.unschedule(job_id);
-      END IF;
-      IF scratch_schema IS NOT NULL THEN
-        EXECUTE format('DROP SCHEMA IF EXISTS %I CASCADE', scratch_schema);
-      END IF;
-    EXCEPTION
-      WHEN OTHERS THEN
-        NULL;
-    END;
-    INSERT INTO rasm_extension_runtime(name, state) VALUES ('pg_cron', 'scheduler-failed')
-    ON CONFLICT (name) DO UPDATE SET state = excluded.state;
-END
-\$\$;
-SELECT $(sql_quote "$service"),
-       t.name,
-       CASE
-         WHEN t.name = 'pg_cron'
-              AND t.required
-              AND e.extname IS NOT NULL
-              AND (
-                current_setting('cron.database_name', true) IS DISTINCT FROM current_database()
-                OR current_setting('cron.use_background_workers', true) IS DISTINCT FROM 'on'
-              ) THEN 'misconfigured'
-         WHEN t.name = 'pg_cron'
-              AND t.required
-              AND e.extname IS NOT NULL
-              AND COALESCE(r.state, 'scheduler-not-run') != 'ok' THEN COALESCE(r.state, 'scheduler-not-run')
-         WHEN e.extname IS NOT NULL THEN 'ok'
-         WHEN a.name IS NULL AND t.required THEN 'missing'
-         WHEN a.name IS NULL THEN 'unavailable'
-         WHEN t.create_on_verify THEN 'not-created'
-         ELSE 'available'
-       END,
-       COALESCE(e.extversion, a.default_version, '-'),
-       t.category,
-       CASE WHEN t.required THEN 'required' ELSE 'optional' END
-FROM rasm_extension_target t
-LEFT JOIN pg_available_extensions a ON a.name = t.name
-LEFT JOIN pg_extension e ON e.extname = t.name
-LEFT JOIN rasm_extension_runtime r ON r.name = t.name
-ORDER BY t.ordinal;
-SQL
-}
-
-verify_rows() {
-  local service handler disabled_row
-  for service in "${service_order[@]}"; do
-    if service_enabled "$service"; then
-      handler="${service_verify_handler[$service]}"
-      "$handler" "$service"
-    else
-      disabled_row="${service_disabled_verify_row[$service]}"
-      [[ -z "$disabled_row" ]] || printf '%s\n' "$disabled_row"
-    fi
-  done
-  return 0
-}
-
-verify_required_rows_ok() {
-  local rows="$1"
-  local service state version category required
-  while IFS=$'\t' read -r service _extension state version category required; do
-    [[ -n "$service" ]] || continue
-    [[ "$required" == "required" && "$state" != "ok" ]] && return 1
-  done <<<"$rows"
-  return 0
-}
-
-verify_rows_json() {
-  jq -Rsc '
-    def dashnull: if . == null or . == "" or . == "-" then null else . end;
-    split("\n")
-    | map(select(length > 0) | split("\t") | select(length >= 4))
-    | map({service: .[0], extension: .[1], state: .[2], version: (.[3] | dashnull), category: (.[4] // null | dashnull), required: ((.[5] // "optional") == "required")})
-  '
-}
-
-remove_owned_containers() {
-  local ids=()
-  local id service project
-  collect_owned_container_ids ids
-  ((${#ids[@]} > 0)) || return 0
-  for id in "${ids[@]}"; do
-    service="$(inspect_label "$id" "$service_label")"
-    project="$(inspect_label "$id" "$project_label")"
-    [[ "$project" == "$project_name" ]] || die "refusing to remove owned container from different project label=$project id=$id"
-    validate_owned_container_identity "$id" "$service" cleanup
-  done
-  docker rm -f "${ids[@]}" >/dev/null
-}
-
-remove_owned_volumes() {
-  local volumes=()
-  local volume service project root
-  collect_owned_volume_names volumes
-  ((${#volumes[@]} > 0)) || return 0
-  for volume in "${volumes[@]}"; do
-    service="$(docker volume inspect --format "{{ index .Labels \"$service_label\" }}" "$volume")" || return
-    root="$(docker volume inspect --format "{{ index .Labels \"$root_label\" }}" "$volume")" || return
-    project="$(docker volume inspect --format "{{ index .Labels \"$project_label\" }}" "$volume")" || return
-    known_service "$service" || die "refusing to remove unexpected owned volume service=$service name=$volume"
-    [[ "$root" == "$root_fingerprint" && "$project" == "$project_name" ]] || die "refusing to remove volume outside current root/project name=$volume root=$root project=$project"
-    docker volume rm "$volume" >/dev/null || return
-  done
-}
-
-remove_owned_networks() {
-  local networks=()
-  local network service root project
-  collect_owned_network_names networks
-  ((${#networks[@]} > 0)) || return 0
-  for network in "${networks[@]}"; do
-    service="$(docker network inspect --format "{{ index .Labels \"$service_label\" }}" "$network")" || return
-    root="$(docker network inspect --format "{{ index .Labels \"$root_label\" }}" "$network")" || return
-    project="$(docker network inspect --format "{{ index .Labels \"$project_label\" }}" "$network")" || return
-    [[ "$service" == "network" ]] || die "refusing to remove unexpected owned network service=$service name=$network"
-    [[ "$root" == "$root_fingerprint" && "$project" == "$project_name" ]] || die "refusing to remove network outside current root/project name=$network root=$root project=$project"
-    docker network rm "$network" >/dev/null || return
-  done
-}
-
-cleanup_runtime_docker_resources() {
-  remove_owned_containers
-  remove_owned_networks
-}
-
-cleanup_owned_docker_resources() {
-  remove_owned_containers
-  remove_owned_volumes
-  remove_owned_networks
-}
-
-file_record_json() {
-  local kind="$1"
-  local type="$2"
-  local path="$3"
-  local exists=false
-  [[ -e "$path" ]] && exists=true
-  if [[ "$diagnostic_json" == true ]]; then
-    jq -nc --arg kind "$kind" --arg type "$type" --arg path "$path" --argjson exists "$exists" \
-      '{kind: $kind, type: $type, path: $path, exists: $exists}'
-  else
-    jq -nc --arg kind "$kind" --arg type "$type" --argjson exists "$exists" \
-      '{kind: $kind, type: $type, exists: $exists}'
-  fi
-}
-
-generated_files_json() {
-  {
-    file_record_json provisioning_root directory "$provisioning_root_dir"
-    file_record_json project_dir directory "$provisioning_dir"
-    file_record_json current symlink "$current_link"
-    file_record_json compose file "$compose_file"
-    file_record_json env file "$env_file"
-    file_record_json volume_ledger file "$volume_ledger_file"
-    file_record_json docker_config_dir directory "$docker_config_dir"
-    file_record_json lock_dir directory "$lock_dir"
-    if [[ -d "$provisioning_dir" && ! -L "$provisioning_dir" ]]; then
-      local path
-      for path in "$provisioning_dir"/.gen-* "$provisioning_dir"/.gen.* "$provisioning_dir"/.current.next "$docker_config_dir"/.tmp.*; do
-        [[ -e "$path" ]] || continue
-        file_record_json generated_artifact path "$path"
-      done
-    fi
-  } | jq -s 'sort_by(.kind, (.path // ""))'
-}
-
-generated_artifacts_json() {
-  jq -nc --argjson generated "$(generated_files_json)" '{generated: $generated}'
-}
-
-owned_containers_json() {
-  local ids=()
-  collect_owned_container_ids ids
-  ((${#ids[@]} > 0)) || {
-    printf '[]\n'
-    return 0
-  }
-  docker inspect "${ids[@]}" | jq -c \
-    --arg owner_label "$owner_label" \
-    --arg service_label "$service_label" \
-    --arg root_label "$root_label" \
-    --arg project_label "$project_label" \
-    --arg net "$(network_name)" \
-    --argjson identities "$(service_identity_json)" '
-    map(
-      (.Config.Labels[$service_label] // "") as $service
-      | ($identities[$service] // null) as $expected
-      | (($expected != null)
-          and (.Config.Image == $expected.image)
-          and ((.NetworkSettings.Networks // {})[$net] != null)
-          and any(.Mounts[]?; .Name == $expected.volume and .Destination == $expected.mount)) as $identityOk
-      | {
-          id: .Id,
-          name: (.Name | ltrimstr("/")),
-          image: .Config.Image,
-          service: $service,
-          owner: (.Config.Labels[$owner_label] // ""),
-          root: (.Config.Labels[$root_label] // ""),
-          project: (.Config.Labels[$project_label] // ""),
-          status: .State.Status,
-          health: (if .State.Health then .State.Health.Status else "none" end),
-          ports: (.NetworkSettings.Ports // {}),
-          identityOk: $identityOk,
-          identityIssue: (
-            if $identityOk then null
-            elif $expected == null then "unknown-service"
-            elif .Config.Image != $expected.image then "image-mismatch"
-            elif ((.NetworkSettings.Networks // {})[$net] == null) then "network-mismatch"
-            else "volume-mount-mismatch"
-            end
-          )
-        }
-    ) | sort_by(.service, .name, .id)
-  '
-}
-
-owned_volumes_json() {
-  local volumes=()
-  collect_owned_volume_names volumes
-  ((${#volumes[@]} > 0)) || {
-    printf '[]\n'
-    return 0
-  }
-  docker volume inspect "${volumes[@]}" | jq -c --arg owner_label "$owner_label" --arg service_label "$service_label" --arg root_label "$root_label" --arg project_label "$project_label" --argjson diagnostic "$([[ "$diagnostic_json" == true ]] && printf true || printf false)" '
-    map({
-      name: .Name,
-      driver: .Driver,
-      service: (.Labels[$service_label] // ""),
-      owner: (.Labels[$owner_label] // ""),
-      root: (.Labels[$root_label] // ""),
-      project: (.Labels[$project_label] // "")
-    } + if $diagnostic then {mountpoint: .Mountpoint} else {} end) | sort_by(.service, .name)
-  '
-}
-
-owned_networks_json() {
-  local networks=()
-  collect_owned_network_names networks
-  ((${#networks[@]} > 0)) || {
-    printf '[]\n'
-    return 0
-  }
-  docker network inspect "${networks[@]}" | jq -c --arg owner_label "$owner_label" --arg service_label "$service_label" --arg root_label "$root_label" --arg project_label "$project_label" --argjson diagnostic "$([[ "$diagnostic_json" == true ]] && printf true || printf false)" '
-    map({
-      id: .Id,
-      name: .Name,
-      driver: .Driver,
-      service: (.Labels[$service_label] // ""),
-      owner: (.Labels[$owner_label] // ""),
-      root: (.Labels[$root_label] // ""),
-      project: (.Labels[$project_label] // ""),
-      attachedContainerCount: ((.Containers // {}) | length)
-    } + if $diagnostic then {attachedContainers: (.Containers // {})} else {} end) | sort_by(.service, .name)
-  '
-}
-
-service_records_tsv() {
-  local service
-  resolve_auth
-  resolve_ports false
-  for service in "${service_order[@]}"; do
-    printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
-      "$service" \
-      "${service_role[$service]}" \
-      "$(service_enabled_value "$service")" \
-      "${service_profile[$service]}" \
-      "$(service_image "$service")" \
-      "$(service_port "$service")" \
-      "$(service_dsn_redacted "$service")" \
-      "${service_dsn_env[$service]}" \
-      "${service_image_env[$service]}" \
-      "${service_port_env[$service]}" \
-      "$(service_port_source "$service")"
-  done
-}
-
-service_records_json() {
-  service_records_tsv | jq -Rsc '
-    split("\n")
-    | map(select(length > 0) | split("\t"))
-    | map({
-        key: .[0],
-        role: .[1],
-        enabled: (.[2] == "1"),
-        connectable: (.[2] == "1"),
-        profile: .[3],
-        image: .[4],
-        imageEnv: .[8],
-        host: "127.0.0.1",
-        port: (.[5] | tonumber),
-        portEnv: .[9],
-        portSource: .[10],
-        containerPort: 5432,
-        dsnRedacted: (if .[2] == "1" then .[6] else null end),
-        dsnEnv: .[7],
-        composeService: .[0]
-      })
-    | map({
-        (.key): {
-          key,
-          role,
-          enabled,
-          connectable,
-          profile,
-          image,
-          imageEnv,
-          host,
-          port,
-          portEnv,
-          portSource,
-          containerPort,
-          dsnRedacted,
-          dsnEnv,
-          composeService
-        }
-      })
-    | add // {}
-  '
-}
-
-configured_images_json() {
-  service_records_tsv | jq -Rsc '
-    split("\n")
-    | map(select(length > 0) | split("\t"))
-    | map({
-        service: .[0],
-        image: .[4],
-        enabled: (.[2] == "1")
-      })
-    | sort_by(.service)
-  '
-}
-
-port_record_json() {
-  local service="$1"
-  local port ids=() id="-" name="-" image="-" compose_project="-" compose_service="-" provision_owner="-" provision_root="-" provision_project="-" owner="none" pid command state occupied=false
-  port="$(service_port "$service")"
-  state="free"
-  service_enabled "$service" || state="disabled"
-  collect_published_container_ids ids "$port" || die "docker port inspection failed for port=$port"
-  host_listener_pair "$port" pid command
-  [[ -n "$pid" ]] || pid="-"
-  [[ -n "$command" ]] || command="-"
-  if ((${#ids[@]} > 0)); then
-    id="${ids[0]}"
-    name="$(inspect_name "$id" || printf '-')"
-    image="$(docker inspect --format '{{ .Config.Image }}' "$id" || printf '-')"
-    compose_project="$(inspect_label "$id" "com.docker.compose.project")"
-    compose_service="$(inspect_label "$id" "com.docker.compose.service")"
-    provision_owner="$(inspect_label "$id" "$owner_label")"
-    provision_root="$(inspect_label "$id" "$root_label")"
-    provision_project="$(inspect_label "$id" "$project_label")"
-    owner="$(classify_owner "$id" "$compose_project" "$provision_owner" "$provision_root" "$provision_project")"
-    occupied=true
-    [[ "$state" == "disabled" ]] || state="busy"
-  elif [[ "$pid" != "-" ]]; then
-    owner="external:host-listener"
-    occupied=true
-    [[ "$state" == "disabled" ]] || state="busy"
-  fi
-  jq -nc \
-    --arg service "$service" \
-    --arg env "${service_port_env[$service]}" \
-    --arg port "$port" \
-    --arg source "$(service_port_source "$service")" \
-    --arg state "$state" \
-    --argjson occupied "$occupied" \
-    --arg owner "$owner" \
-    --arg container_id "$id" \
-    --arg name "$name" \
-    --arg image "$image" \
-    --arg compose_project "$compose_project" \
-    --arg compose_service "$compose_service" \
-    --arg provision_project "$provision_project" \
-    --arg host_listener_pid "$pid" \
-    'def noneish: if . == "" or . == "-" then null else . end;
-    {
-      service: $service,
-      env: $env,
-      value: ($port | tonumber),
-      portSource: $source,
-      state: $state,
-      occupied: $occupied,
-      owner: $owner,
-      ownerClass: $owner,
-      containerId: ($container_id | noneish),
-      name: ($name | noneish),
-      image: ($image | noneish),
-      composeProject: ($compose_project | noneish),
-      composeService: ($compose_service | noneish),
-      provisionProject: ($provision_project | noneish),
-      hostListenerPid: ($host_listener_pid | noneish | if . == null then null else (try tonumber catch null) end)
-    }'
-}
-
-port_record_offline_json() {
-  local service="$1"
-  local port pid command owner="none" state="free" occupied=false
-  port="$(service_port "$service")"
-  service_enabled "$service" || state="disabled"
-  host_listener_pair "$port" pid command
-  [[ -n "$pid" ]] || pid="-"
-  [[ -n "$command" ]] || command="-"
-  if [[ "$pid" != "-" ]]; then
-    owner="external:host-listener"
-    occupied=true
-    [[ "$state" == "disabled" ]] || state="busy"
-  fi
-  jq -nc \
-    --arg service "$service" \
-    --arg env "${service_port_env[$service]}" \
-    --arg port "$port" \
-    --arg source "$(service_port_source "$service")" \
-    --arg state "$state" \
-    --argjson occupied "$occupied" \
-    --arg owner "$owner" \
-    --arg host_listener_pid "$pid" \
-    'def noneish: if . == "" or . == "-" then null else . end;
-    {
-      service: $service,
-      env: $env,
-      value: ($port | tonumber),
-      portSource: $source,
-      state: $state,
-      occupied: $occupied,
-      owner: $owner,
-      ownerClass: $owner,
-      containerId: null,
-      name: null,
-      image: null,
-      composeProject: null,
-      composeService: null,
-      provisionProject: null,
-      hostListenerPid: ($host_listener_pid | noneish | if . == null then null else (try tonumber catch null) end)
-    }'
-}
-
-port_records_json() {
-  local service
-  for service in "${service_order[@]}"; do
-    port_record_json "$service"
-  done | jq -s 'sort_by(.service)'
-}
-
-port_records_offline_json() {
-  local service
-  for service in "${service_order[@]}"; do
-    port_record_offline_json "$service"
-  done | jq -s 'sort_by(.service)'
-}
-
-resource_counts_json() {
-  local containers_json="${1:-[]}"
-  local volumes_json="${2:-[]}"
-  local networks_json="${3:-[]}"
-  local generated_json="${4:-[]}"
-  jq -n \
-    --argjson containers "$containers_json" \
-    --argjson volumes "$volumes_json" \
-    --argjson networks "$networks_json" \
-    --argjson generated "$generated_json" \
-    '{containers: ($containers | length), volumes: ($volumes | length), networks: ($networks | length), generated: ([ $generated[] | select(.exists == true) ] | length), expectedGenerated: ($generated | length)}'
-}
-
-emit_stack_json() {
-  local command="$1"
-  local ok="$2"
-  local extra_filter="${3:-.}"
-  shift 3 || true
-  jq -n \
-    --argjson schemaVersion "$schema_version" \
-    --arg command "$command" \
-    --argjson ok "$ok" \
-    --arg project "$project_name" \
-    --arg rootFingerprint "$root_fingerprint" \
-    --argjson auth "$(auth_json)" \
-    --argjson portPolicy "$(port_policy_json)" \
-    --argjson services "$(service_records_json)" \
-    --argjson warnings "$(warnings_json)" \
-    --argjson artifacts "$(generated_artifacts_json)" \
-    "$@" \
-    "{schemaVersion: \$schemaVersion, command: \$command, ok: \$ok, project: \$project, rootFingerprint: \$rootFingerprint, auth: \$auth, portPolicy: \$portPolicy, services: \$services, warnings: \$warnings, artifacts: \$artifacts} | $extra_filter"
-  json_result_emitted=true
-}
-
-emit_ports_text() {
-  local records="$1"
-  jq -r '
-    .[]
-    | [
-        "port",
-        "service=\(.service)",
-        "env=\(.env)",
-        "value=\(.value)",
-        "state=\(.state)",
-        "occupied=\(.occupied)",
-        "owner=\(.owner)",
-        "container_id=\(.containerId // "-")",
-        "name=\(.name // "-")",
-        "image=\(.image // "-")",
-        "compose_project=\(.composeProject // "-")",
-        "compose_service=\(.composeService // "-")",
-        "provision_project=\(.provisionProject // "-")",
-        "host_listener_pid=\(.hostListenerPid // "-")",
-        "host_listener_command=redacted"
-      ]
-    | join("\t")
-  ' <<<"$records"
-}
-
-relevant_images_json() {
-  local configured
-  configured="$(configured_images_json)"
-  docker image ls --format '{{json .}}' 2>/dev/null |
-    jq -s --argjson configured "$configured" '
-      def ref: .Repository + ":" + .Tag;
-      map({repository: .Repository, tag: .Tag, id: (.ID // null), size: (.Size // null), ref: ref})
-      | map(select(.ref as $ref | any($configured[]; .image == $ref or (.image | startswith($ref + "@")))))
-      | sort_by(.repository, .tag)
-    '
-}
-
-docker_disk_json() {
-  docker system df --format '{{json .}}' 2>/dev/null | jq -s 'sort_by(.Type // "")'
-}
+# shellcheck source=/dev/null
+source "$(catalog_path bash/docker-projection.sh)"
 
 lock_json() {
   local present=false active=false pid="" host="" started_at="" command="" heartbeat="" state="none" pid_alive=false heartbeat_stale=false mtime=""
@@ -3506,24 +2497,19 @@ lock_json() {
       state="foreign-host"
     fi
   fi
-  jq -nc --argjson present "$present" --argjson active "$active" --arg state "$state" --argjson pidAlive "$pid_alive" --argjson heartbeatStale "$heartbeat_stale" --arg path "$lock_dir" --arg pid "$pid" --arg host "$host" --arg startedAt "$started_at" --arg heartbeat "$heartbeat" --arg command "$command" --argjson diagnostic "$([[ "$diagnostic_json" == true ]] && printf true || printf false)" \
+  jq -nc --argjson present "$present" --argjson active "$active" --arg state "$state" --argjson pidAlive "$pid_alive" --argjson heartbeatStale "$heartbeat_stale" --arg command "$command" --argjson diagnostic "$([[ "$diagnostic_json" == true ]] && printf true || printf false)" \
     'def empty_null: if . == "" then null else . end;
-    {present: $present, active: $active, state: $state, pid: ($pid | empty_null | if . == null then null else (try tonumber catch null) end), pidAlive: $pidAlive, host: ($host | empty_null), startedAt: ($startedAt | empty_null), lastHeartbeatEpoch: ($heartbeat | empty_null | if . == null then null else (try tonumber catch null) end), heartbeatStale: $heartbeatStale, command: ($command | empty_null)}
-    + if $diagnostic then {path: $path} else {} end'
+    {present: $present, active: $active, state: $state, pidAlive: $pidAlive, heartbeatStale: $heartbeatStale, command: ($command | empty_null)}
+    + if $diagnostic then {ownerMetadataRedacted: true} else {} end'
 }
 
 colima_json() {
-  local status raw
+  local status
   if command -v colima >/dev/null 2>&1; then
     if status="$(colima status --json 2>/dev/null)"; then
-      if [[ "$diagnostic_json" == true ]]; then
-        jq -nc --argjson status "$status" '{available: true, status: $status, raw: null}'
-      else
-        jq -nc --argjson status "$status" '{available: true, status: {running: ($status.running // null), arch: ($status.arch // null), runtime: ($status.runtime // null)}, raw: null}'
-      fi
+      jq -nc --argjson status "$status" --argjson diagnostic "$([[ "$diagnostic_json" == true ]] && printf true || printf false)" -f "$(catalog_path jq/colima-status.jq)"
     else
-      raw="$(colima status 2>&1 || true)"
-      jq -nc --arg raw "$raw" --argjson diagnostic "$([[ "$diagnostic_json" == true ]] && printf true || printf false)" '{available: true, status: null, raw: (if $diagnostic then $raw else null end)}'
+      jq -nc '{available: true, status: null, raw: null, statusRedacted: true}'
     fi
   else
     jq -nc '{available: false, status: null, raw: null}'
@@ -3531,7 +2517,6 @@ colima_json() {
 }
 
 cmd_up() {
-  parse_json_args up "$@"
   require_root
   validate_static_env
   require_mutating_docker
@@ -3548,13 +2533,13 @@ cmd_up() {
   preflight_ports
   local previous_compose=""
   [[ -f "$compose_file" ]] && previous_compose="$compose_file"
-  local generation verify_output extensions_json compose_up_log service
+  local generation apply_output extensions_json compose_up_log service
   local auto_retry_count=0
   while true; do
     generation="$(create_generation)"
     unpublished_generation="$generation"
     unpublished_compose_file="$generation/compose.yaml"
-    compose_up_log="$(secure_tmp_file rasm-provision-compose-up)"
+    compose_up_log="$(secure_tmp_file forge-provision-compose-up)"
     if docker_compose_file "$generation/compose.yaml" up -d --remove-orphans --wait --wait-timeout 180 >"$compose_up_log" 2>&1; then
       rm -f -- "$compose_up_log"
       break
@@ -3583,21 +2568,21 @@ cmd_up() {
     done < <(enabled_services)
     rm -f -- "$compose_up_log"
     restore_previous_generation "$previous_compose" "$generation/compose.yaml" || true
-    return 1
+    die "Docker Compose up failed; generation was not published"
   done
   require_enabled_services
   wait_services
   release_port_locks || true
-  if ! verify_output="$(verify_rows)"; then
+  if ! apply_output="$(apply_rows)"; then
     restore_previous_generation "$previous_compose" "$generation/compose.yaml" || true
-    return 1
+    die "extension apply command failed; generation was not published"
   fi
-  if ! verify_required_rows_ok "$verify_output"; then
+  if ! apply_required_rows_ok "$apply_output"; then
     if [[ "$output_json" != true || "$diagnostic_json" == true ]]; then
-      printf '%s\n' "$verify_output" >&2
+      printf '%s\n' "$apply_output" >&2
     fi
     restore_previous_generation "$previous_compose" "$generation/compose.yaml" || true
-    die "required extension verification failed; generation was not published"
+    die "required extension apply failed; generation was not published"
   fi
   publish_generation "$generation"
   local generation_id="${generation##*/}"
@@ -3608,19 +2593,18 @@ cmd_up() {
   cleanup_assets_on_failed_up=false
   cleanup_stale_generations
   if [[ "$output_json" == true ]]; then
-    extensions_json="$(printf '%s\n' "$verify_output" | verify_rows_json)"
+    extensions_json="$(printf '%s\n' "$apply_output" | apply_rows_json)"
     # shellcheck disable=SC2016
     emit_stack_json up true \
       '. + {extensions: $extensions, ports: $ports, summary: {requiredOk: ([ $extensions[] | select(.required and .state == "ok") ] | length), requiredMissing: ([ $extensions[] | select(.required and .state != "ok") ] | length)}}' \
       --argjson extensions "$extensions_json" \
       --argjson ports "$(port_records_json)"
   else
-    printf '%s\n' "$verify_output"
+    printf '%s\n' "$apply_output"
   fi
 }
 
 cmd_down() {
-  parse_json_args down "$@"
   require_root
   validate_static_env
   local docker_rc=0 before_containers="[]" before_networks="[]" before_generated
@@ -3651,9 +2635,58 @@ cmd_down() {
   return "$docker_rc"
 }
 
-cmd_verify() {
+emit_extension_run_json() {
+  local command="$1"
+  local rows="$2"
+  local ok_json="${3:-}"
+  local extensions_json
+  extensions_json="$(printf '%s\n' "$rows" | apply_rows_json)"
+  [[ -n "$ok_json" ]] || ok_json="$(jq -r 'all(.[]; (.required | not) or .state == "ok")' <<<"$extensions_json")"
+  jq -n \
+    --argjson schemaVersion "$schema_version" \
+    --arg command "$command" \
+    --argjson project "$(project_json)" \
+    --argjson ok "$ok_json" \
+    --argjson auth "$(auth_json)" \
+    --argjson portPolicy "$(port_policy_json)" \
+    --argjson services "$(service_records_json)" \
+    --argjson extensions "$extensions_json" \
+    --argjson warnings "$(warnings_json)" \
+    '{schemaVersion: $schemaVersion, command: $command, ok: $ok, warnings: $warnings, project: $project, auth: $auth, portPolicy: $portPolicy, services: $services, extensions: $extensions, summary: {ok: ([ $extensions[] | select(.state == "ok") ] | length), requiredOk: ([ $extensions[] | select(.required and .state == "ok") ] | length), requiredMissing: ([ $extensions[] | select(.required and .state != "ok") ] | length), available: ([ $extensions[] | select(.state == "available") ] | length), unavailable: ([ $extensions[] | select(.state == "unavailable") ] | length), disabled: ([ $extensions[] | select(.state == "disabled") ] | length)}}'
+  json_result_emitted=true
+}
+
+cmd_check() {
   local json=false
-  command_wants_json verify "$@" && json=true
+  command_wants_json check "$@" && json=true
+  require_root
+  validate_static_env
+  require_docker
+  assert_owned_project
+  require_enabled_services
+  if [[ "$json" == true ]]; then
+    wait_services >/dev/null
+  else
+    wait_services
+  fi
+  local rows ok_json
+  rows="$(check_rows)"
+  apply_required_rows_ok "$rows" || ok_json=false
+  if [[ "$json" == true ]]; then
+    emit_extension_run_json check "$rows" "${ok_json:-}"
+    if [[ "${ok_json:-true}" == false ]]; then
+      exit 1
+    fi
+    return 0
+  else
+    printf '%s\n' "$rows"
+    apply_required_rows_ok "$rows" || die "required extension check failed"
+  fi
+}
+
+cmd_apply() {
+  local json=false
+  command_wants_json apply "$@" && json=true
   require_root
   validate_static_env
   require_mutating_docker
@@ -3664,27 +2697,18 @@ cmd_verify() {
   else
     wait_services
   fi
-  local rows extensions_json ok_json
-  rows="$(verify_rows)"
-  verify_required_rows_ok "$rows" || ok_json=false
+  local rows ok_json
+  rows="$(apply_rows)"
+  apply_required_rows_ok "$rows" || ok_json=false
   if [[ "$json" == true ]]; then
-    extensions_json="$(printf '%s\n' "$rows" | verify_rows_json)"
-    [[ "${ok_json:-}" == false ]] || ok_json="$(jq -r 'all(.[]; (.required | not) or .state == "ok")' <<<"$extensions_json")"
-    jq -n \
-      --argjson schemaVersion "$schema_version" \
-      --arg project "$project_name" \
-      --arg rootFingerprint "$root_fingerprint" \
-      --argjson ok "$ok_json" \
-      --argjson auth "$(auth_json)" \
-      --argjson portPolicy "$(port_policy_json)" \
-      --argjson services "$(service_records_json)" \
-      --argjson extensions "$extensions_json" \
-      '{schemaVersion: $schemaVersion, command: "verify", ok: $ok, project: $project, rootFingerprint: $rootFingerprint, auth: $auth, portPolicy: $portPolicy, services: $services, extensions: $extensions, summary: {ok: ([ $extensions[] | select(.state == "ok") ] | length), requiredOk: ([ $extensions[] | select(.required and .state == "ok") ] | length), requiredMissing: ([ $extensions[] | select(.required and .state != "ok") ] | length), available: ([ $extensions[] | select(.state == "available") ] | length), unavailable: ([ $extensions[] | select(.state == "unavailable") ] | length), disabled: ([ $extensions[] | select(.state == "disabled") ] | length)}}'
-    json_result_emitted=true
-    [[ "$ok_json" == true ]] || exit 1
+    emit_extension_run_json apply "$rows" "${ok_json:-}"
+    if [[ "${ok_json:-true}" == false ]]; then
+      exit 1
+    fi
+    return 0
   else
     printf '%s\n' "$rows"
-    verify_required_rows_ok "$rows" || die "required extension verification failed"
+    apply_required_rows_ok "$rows" || die "required extension apply failed"
   fi
 }
 
@@ -3694,7 +2718,7 @@ cmd_psql_service() {
   require_root
   validate_static_env
   assert_no_active_mutation_for_psql
-  require_mutating_docker
+  require_docker
   local rc=0 cleanup_rc=0
   acquire_psql_session_lock "$service"
   trap 'rc=$?; release_psql_session_locks || true; exit "$rc"' EXIT
@@ -3733,8 +2757,8 @@ cmd_status() {
   if command_wants_json status "$@"; then
     jq -n \
       --argjson schemaVersion "$schema_version" \
-      --arg project "$project_name" \
-      --arg rootFingerprint "$root_fingerprint" \
+      --argjson project "$(project_json)" \
+      --argjson warnings "$(warnings_json)" \
       --argjson dockerAvailable "$docker_ok" \
       --arg dockerIssue "$docker_issue" \
       --argjson auth "$(auth_json)" \
@@ -3747,8 +2771,8 @@ cmd_status() {
         schemaVersion: $schemaVersion,
         command: "status",
         ok: true,
+        warnings: $warnings,
         project: $project,
-        rootFingerprint: $rootFingerprint,
         auth: $auth,
         portPolicy: $portPolicy,
         dockerAvailable: $dockerAvailable,
@@ -3775,12 +2799,12 @@ cmd_status() {
   local ids=()
   local id service name image state health ports identity_json identity_ok identity_issue
   if [[ "$docker_ok" != true ]]; then
-    printf 'status\tstate=docker-unavailable\tproject=%s\troot=%s\treason=%s\n' "$project_name" "$root_fingerprint" "$docker_issue"
+    printf 'status\tstate=docker-unavailable\tproject=%s\troot=%s\treason=%s\n' "$project_name" "$root_key" "$docker_issue"
     return 0
   fi
   collect_owned_container_ids ids
   if ((${#ids[@]} == 0)); then
-    printf 'status\tstate=empty\tproject=%s\troot=%s\n' "$project_name" "$root_fingerprint"
+    printf 'status\tstate=empty\tproject=%s\troot=%s\n' "$project_name" "$root_key"
     return 0
   fi
   for id in "${ids[@]}"; do
@@ -3805,7 +2829,7 @@ cmd_status() {
       ')"
     IFS=$'\t' read -r identity_ok identity_issue <<<"$identity_json"
     printf 'status\tservice=%s\tcontainer_id=%s\tname=%s\timage=%s\tdocker_status=%s\thealth=%s\tports=%s\tidentity_ok=%s\tidentity_issue=%s\tproject=%s\troot=%s\n' \
-      "$service" "$id" "$name" "$image" "$state" "$health" "$ports" "$identity_ok" "$identity_issue" "$project_name" "$root_fingerprint"
+      "$service" "$id" "$name" "$image" "$state" "$health" "$ports" "$identity_ok" "$identity_issue" "$project_name" "$root_key"
   done
 }
 
@@ -3815,8 +2839,8 @@ cmd_env() {
   if command_wants_json env "$@"; then
     jq -n \
       --argjson schemaVersion "$schema_version" \
-      --arg project "$project_name" \
-      --arg rootFingerprint "$root_fingerprint" \
+      --argjson project "$(project_json)" \
+      --argjson warnings "$(warnings_json)" \
       --arg ownerLabel "$owner_label" \
       --arg serviceLabel "$service_label" \
       --arg rootLabel "$root_label" \
@@ -3832,27 +2856,31 @@ cmd_env() {
         schemaVersion: $schemaVersion,
         command: "env",
         ok: true,
+        warnings: $warnings,
         project: $project,
-        rootFingerprint: $rootFingerprint,
         auth: $auth,
         portPolicy: $portPolicy,
         paths: {redacted: true},
         labels: {owner: $ownerLabel, service: $serviceLabel, root: $rootLabel, project: $projectLabel},
         services: $services,
-        RASM_PROVISION_PROJECT: $project,
-        RASM_TIMESCALE_DSN: $timescaleDsn,
-        RASM_SEARCH_DSN: $searchDsn,
-        RASM_PGDUCKDB_DSN: (if $pgduckdbEnabled == "1" then $pgduckdbDsn else null end),
-        RASM_PROVISION_PGDUCKDB: $pgduckdbEnabled
+        FORGE_PROVISION_PROJECT: $project.projectKey,
+        FORGE_PROVISION_INSTANCE: $project.instance,
+        FORGE_PROVISION_COMPOSE_PROJECT: $project.composeProject,
+        FORGE_PROVISION_TIMESCALE_DSN: $timescaleDsn,
+        FORGE_PROVISION_SEARCH_DSN: $searchDsn,
+        FORGE_PROVISION_PGDUCKDB_DSN: (if $pgduckdbEnabled == "1" then $pgduckdbDsn else null end),
+        FORGE_PROVISION_PGDUCKDB: $pgduckdbEnabled
       }'
     json_result_emitted=true
     return 0
   fi
-  printf 'export RASM_ROOT=%q\n' "$rasm_root"
-  printf 'export RASM_PROVISION_PROJECT=%q\n' "$project_name"
-  printf 'export RASM_PROVISION_DIR=%q\n' "$provisioning_dir"
-  printf 'export RASM_PROVISION_COMPOSE=%q\n' "$compose_file"
-  printf 'export RASM_PROVISION_ENV=%q\n' "$env_file"
+  printf 'export FORGE_PROVISION_ROOT=%q\n' "$forge_root"
+  printf 'export FORGE_PROVISION_PROJECT=%q\n' "$project_key"
+  printf 'export FORGE_PROVISION_INSTANCE=%q\n' "$instance_name"
+  printf 'export FORGE_PROVISION_COMPOSE_PROJECT=%q\n' "$project_name"
+  printf 'export FORGE_PROVISION_DIR=%q\n' "$provisioning_dir"
+  printf 'export FORGE_PROVISION_COMPOSE=%q\n' "$compose_file"
+  printf 'export FORGE_PROVISION_ENV=%q\n' "$env_file"
   local service
   for service in "${service_order[@]}"; do
     if service_enabled "$service"; then
@@ -3861,7 +2889,7 @@ cmd_env() {
       printf 'unset %s\n' "${service_dsn_env[$service]}"
     fi
   done
-  printf 'export RASM_PROVISION_PGDUCKDB=%q\n' "$(service_enabled_value pgduckdb)"
+  printf 'export FORGE_PROVISION_PGDUCKDB=%q\n' "$(service_enabled_value pgduckdb)"
 }
 
 cmd_paths() {
@@ -3869,16 +2897,16 @@ cmd_paths() {
   if command_wants_json paths "$@"; then
     jq -n \
       --argjson schemaVersion "$schema_version" \
-      --arg project "$project_name" \
-      --arg rootFingerprint "$root_fingerprint" \
+      --argjson project "$(project_json)" \
+      --argjson warnings "$(warnings_json)" \
       --argjson generated "$(generated_files_json)" \
-      '{schemaVersion: $schemaVersion, command: "paths", ok: true, project: $project, rootFingerprint: $rootFingerprint, generated: $generated}'
+      '{schemaVersion: $schemaVersion, command: "paths", ok: true, warnings: $warnings, project: $project, generated: $generated}'
     json_result_emitted=true
     return 0
   fi
-  printf 'path\tname=rasm_root\tvalue=%s\texists=%s\n' "$rasm_root" "$([[ -d "$rasm_root" ]] && printf true || printf false)"
+  printf 'path\tname=forge_root\tvalue=%s\texists=%s\n' "$forge_root" "$([[ -d "$forge_root" ]] && printf true || printf false)"
   printf 'path\tname=provisioning_root\tvalue=%s\texists=%s\n' "$provisioning_root_dir" "$([[ -d "$provisioning_root_dir" ]] && printf true || printf false)"
-  printf 'path\tname=provisioning_dir\tvalue=%s\texists=%s\tparent_writable=%s\n' "$provisioning_dir" "$([[ -d "$provisioning_dir" ]] && printf true || printf false)" "$([[ -w "$rasm_root" ]] && printf true || printf false)"
+  printf 'path\tname=provisioning_dir\tvalue=%s\texists=%s\tparent_writable=%s\n' "$provisioning_dir" "$([[ -d "$provisioning_dir" ]] && printf true || printf false)" "$([[ -w "$forge_root" ]] && printf true || printf false)"
   printf 'path\tname=current\tvalue=%s\texists=%s\texpected_written_by=up\n' "$current_link" "$([[ -e "$current_link" ]] && printf true || printf false)"
   printf 'path\tname=compose\tvalue=%s\texists=%s\texpected_written_by=up\n' "$compose_file" "$([[ -f "$compose_file" ]] && printf true || printf false)"
   printf 'path\tname=env\tvalue=%s\texists=%s\texpected_written_by=up\n' "$env_file" "$([[ -f "$env_file" ]] && printf true || printf false)"
@@ -3902,26 +2930,26 @@ cmd_extensions() {
   if command_wants_json extensions "$@"; then
     jq -n \
       --argjson schemaVersion "$schema_version" \
-      --arg project "$project_name" \
-      --arg rootFingerprint "$root_fingerprint" \
+      --argjson project "$(project_json)" \
+      --argjson warnings "$(warnings_json)" \
       --argjson auth "$(auth_json)" \
       --argjson portPolicy "$(port_policy_json)" \
       --argjson services "$(service_records_json)" \
-      --argjson extensions "$(extension_catalog_json)" \
-      '{schemaVersion: $schemaVersion, command: "extensions", ok: true, project: $project, rootFingerprint: $rootFingerprint, auth: $auth, portPolicy: $portPolicy, services: $services, extensions: $extensions}'
+      --argjson extensions "$(provision_extension_catalog_json)" \
+      '{schemaVersion: $schemaVersion, command: "extensions", ok: true, warnings: $warnings, project: $project, auth: $auth, portPolicy: $portPolicy, services: $services, extensions: $extensions}'
     json_result_emitted=true
     return 0
   fi
-  local service ext category required create_on_verify enabled required_bool create_bool
+  local service ext category required create_on_apply enabled required_bool create_bool
   for service in "${service_order[@]}"; do
     enabled="$(service_enabled_value "$service")"
-    while IFS=$'\t' read -r ext category required create_on_verify; do
+    while IFS=$'\t' read -r ext category required create_on_apply; do
       [[ -n "$ext" ]] || continue
       required_bool=false
       create_bool=false
       [[ "$required" == 1 ]] && required_bool=true
-      [[ "$create_on_verify" == 1 ]] && create_bool=true
-      printf 'extension\tservice=%s\tname=%s\tcategory=%s\trequired=%s\tcreate_on_verify=%s\tenabled=%s\n' \
+      [[ "$create_on_apply" == 1 ]] && create_bool=true
+      printf 'extension\tservice=%s\tname=%s\tcategory=%s\trequired=%s\tcreate_on_apply=%s\tenabled=%s\n' \
         "$service" "$ext" "$category" "$required_bool" "$create_bool" "$enabled"
     done < <(extension_catalog_rows "$service")
   done
@@ -3941,14 +2969,14 @@ cmd_ports() {
   if command_wants_json ports "$@"; then
     jq -n \
       --argjson schemaVersion "$schema_version" \
-      --arg project "$project_name" \
-      --arg rootFingerprint "$root_fingerprint" \
+      --argjson project "$(project_json)" \
+      --argjson warnings "$(warnings_json)" \
       --argjson auth "$(auth_json)" \
       --argjson portPolicy "$(port_policy_json)" \
       --argjson dockerAvailable "$docker_ok" \
       --arg dockerIssue "$docker_issue" \
       --argjson ports "$ports_json" \
-      '{schemaVersion: $schemaVersion, command: "ports", ok: true, project: $project, rootFingerprint: $rootFingerprint, auth: $auth, portPolicy: $portPolicy, dockerAvailable: $dockerAvailable, dockerIssue: (if $dockerAvailable then null else $dockerIssue end), ports: $ports}'
+      '{schemaVersion: $schemaVersion, command: "ports", ok: true, warnings: $warnings, project: $project, auth: $auth, portPolicy: $portPolicy, dockerAvailable: $dockerAvailable, dockerIssue: (if $dockerAvailable then null else $dockerIssue end), ports: $ports}'
     json_result_emitted=true
     return 0
   fi
@@ -3998,12 +3026,13 @@ cmd_doctor() {
   if [[ "$json" == true ]]; then
     jq -n \
       --argjson schemaVersion "$schema_version" \
-      --arg project "$project_name" \
-      --arg rootFingerprint "$root_fingerprint" \
+      --argjson project "$(project_json)" \
+      --argjson warnings "$(warnings_json)" \
       --arg dockerPath "$docker_path" \
       --arg policyStatus "$policy_status" \
       --arg policyReason "$policy_reason" \
       --arg resolvedEndpoint "$docker_endpoint" \
+      --arg endpointFingerprint "$(docker_endpoint_hash 2>/dev/null || true)" \
       --arg hostCredsStore "$host_creds_store" \
       --arg hostCredHelpers "$host_cred_helpers" \
       --argjson anonymousConfigExists "$anonymous_config_exists" \
@@ -4021,8 +3050,8 @@ cmd_doctor() {
         schemaVersion: $schemaVersion,
         command: "doctor",
         ok: true,
+        warnings: $warnings,
         project: $project,
-        rootFingerprint: $rootFingerprint,
         auth: $auth,
         portPolicy: $portPolicy,
         docker: {
@@ -4040,7 +3069,7 @@ cmd_doctor() {
           anonymousPullConfig: {exists: $anonymousConfigExists}
         },
         runtime: {
-          rasmProvision: {present: true, schemaVersion: $schemaVersion},
+          forgeProvision: {present: true, schemaVersion: $schemaVersion},
           docker: {present: ($dockerPath != "-")},
           compose: {present: ($composeVersion != "unavailable"), version: (if $composeVersion == "unavailable" then null else $composeVersion end)},
           jq: {present: true},
@@ -4055,14 +3084,14 @@ cmd_doctor() {
         lock: $lock,
         colima: $colima
       }
-      + if $diagnostic then {diagnostic: {resolvedEndpoint: $resolvedEndpoint, dockerPath: $dockerPath}} else {} end'
+	      + if $diagnostic then {diagnostic: {endpointFingerprint: (if $endpointFingerprint == "" then null else $endpointFingerprint end), dockerEndpointRedacted: true, dockerPathRedacted: true}} else {} end'
     json_result_emitted=true
     return 0
   fi
-  printf 'doctor\tcommand=rasm-provision\n'
-  printf 'doctor\trasm_root=%s\n' "$rasm_root"
+  printf 'doctor\tcommand=forge-provision\n'
+  printf 'doctor\tforge_root=%s\n' "$forge_root"
   printf 'doctor\tproject=%s\n' "$project_name"
-  printf 'doctor\troot_fingerprint=%s\n' "$root_fingerprint"
+  printf 'doctor\troot_key=%s\n' "$root_key"
   printf 'doctor\tdocker=%s\n' "$docker_path"
   printf 'doctor\tdocker_policy=%s\n' "$policy_status"
   [[ -z "$policy_reason" ]] || printf 'doctor\tdocker_policy_reason=%s\n' "$policy_reason"
@@ -4107,8 +3136,8 @@ cmd_inventory() {
   if [[ "$json" == true ]]; then
     jq -n \
       --argjson schemaVersion "$schema_version" \
-      --arg project "$project_name" \
-      --arg rootFingerprint "$root_fingerprint" \
+      --argjson project "$(project_json)" \
+      --argjson warnings "$(warnings_json)" \
       --arg ownerLabel "$owner_label" \
       --arg serviceLabel "$service_label" \
       --arg rootLabel "$root_label" \
@@ -4132,8 +3161,8 @@ cmd_inventory() {
         schemaVersion: $schemaVersion,
         command: "inventory",
         ok: true,
+        warnings: $warnings,
         project: $project,
-        rootFingerprint: $rootFingerprint,
         auth: $auth,
         portPolicy: $portPolicy,
         labels: {owner: $ownerLabel, service: $serviceLabel, root: $rootLabel, project: $projectLabel},
@@ -4153,7 +3182,7 @@ cmd_inventory() {
     json_result_emitted=true
     return 0
   fi
-  printf 'inventory\tproject=%s\troot=%s\tpolicy=owned-only\tdocker_available=%s\n' "$project_name" "$root_fingerprint" "$docker_ok"
+  printf 'inventory\tproject=%s\troot=%s\tpolicy=owned-only\tdocker_available=%s\n' "$project_name" "$root_key" "$docker_ok"
   printf 'inventory\towned_containers=%s\n' "$(jq -r length <<<"$containers_json")"
   printf 'inventory\towned_volumes=%s\n' "$(jq -r length <<<"$volumes_json")"
   printf 'inventory\towned_networks=%s\n' "$(jq -r length <<<"$networks_json")"
@@ -4163,22 +3192,15 @@ cmd_inventory() {
 }
 
 cmd_prune() {
-  local json=false include_volumes=false has_owned=false arg
+  local json=false include_volumes=false arg
   [[ "$output_json" == true ]] && json=true
   for arg in "$@"; do
     case "$arg" in
-      --owned) has_owned=true ;;
+      --owned) ;;
       --volumes) include_volumes=true ;;
-      --json)
-        [[ "$output_json" == false ]] || die_usage "prune received --json both globally and locally"
-        command_supports_json prune || die_usage "prune does not support JSON output"
-        output_json=true
-        json=true
-        ;;
       *) die_usage "prune requires --owned and accepts optional --volumes and --json" ;;
     esac
   done
-  [[ "$has_owned" == true ]] || die_usage "prune requires --owned"
   require_root
   validate_static_env
   local docker_ok=false before_containers="[]" before_volumes="[]" before_networks="[]" before_generated rc=0
@@ -4210,8 +3232,7 @@ cmd_prune() {
   if [[ "$json" == true ]]; then
     jq -n \
       --argjson schemaVersion "$schema_version" \
-      --arg project "$project_name" \
-      --arg rootFingerprint "$root_fingerprint" \
+      --argjson project "$(project_json)" \
       --argjson ok "$([[ "$rc" -eq 0 ]] && printf true || printf false)" \
       --argjson dockerAvailable "$docker_ok" \
       --argjson auth "$(auth_json)" \
@@ -4222,23 +3243,22 @@ cmd_prune() {
       --argjson generated "$before_generated" \
       --argjson warnings "$(warnings_json)" \
       --argjson includeVolumes "$include_volumes" \
-      '{schemaVersion: $schemaVersion, command: "prune", ok: $ok, project: $project, rootFingerprint: $rootFingerprint, auth: $auth, portPolicy: $portPolicy, dockerAvailable: $dockerAvailable, includeVolumes: $includeVolumes, warnings: $warnings, matchedBeforePrune: {containers: $containers, volumes: $volumes, networks: $networks, generated: $generated}}'
+      '{schemaVersion: $schemaVersion, command: "prune", ok: $ok, project: $project, auth: $auth, portPolicy: $portPolicy, dockerAvailable: $dockerAvailable, includeVolumes: $includeVolumes, warnings: $warnings, matchedBeforePrune: {containers: $containers, volumes: $volumes, networks: $networks, generated: $generated}}'
     json_result_emitted=true
   else
-    printf 'prune\towned\tok=%s\tproject=%s\troot=%s\n' "$([[ "$rc" -eq 0 ]] && printf true || printf false)" "$project_name" "$root_fingerprint"
+    printf 'prune\towned\tok=%s\tproject=%s\troot=%s\n' "$([[ "$rc" -eq 0 ]] && printf true || printf false)" "$project_name" "$root_key"
   fi
   return "$rc"
 }
 
 cmd_self_test() {
-  parse_json_args self-test "$@"
   require_root
   validate_static_env
-  local command service port ext category required create_on_verify extra tmp_dir tmp_src tmp_dst
+  local command service port ext category required create_on_apply extra tmp_dir tmp_src tmp_dst
   local -A seen_commands=() seen_order=() seen_ports=()
   local -A seen_extensions=()
-  [[ "$schema_version" == 2 ]] || die "unexpected Forge schema version: $schema_version"
-  [[ -z "${command_handler["rasm-spike-stack"]+x}" ]] || die "retired rasm-spike-stack command is still registered"
+  [[ "$schema_version" == 3 ]] || die "unexpected Forge schema version: $schema_version"
+  [[ -z "${command_handler["forge-spike-stack"]+x}" ]] || die "retired forge-spike-stack command is still registered"
   [[ -z "${command_handler["psql-timescale"]+x}" ]] || die "retired psql-timescale command is still registered"
   [[ -z "${command_handler["psql-search"]+x}" ]] || die "retired psql-search command is still registered"
   [[ -z "${command_handler["psql-pgduckdb"]+x}" ]] || die "retired psql-pgduckdb command is still registered"
@@ -4273,28 +3293,28 @@ cmd_self_test() {
     [[ -n "${service_image_env[$service]}" ]] || die "service missing image env: $service"
     [[ -n "${service_port_env[$service]}" ]] || die "service missing port env: $service"
     [[ -n "${service_dsn_env[$service]}" ]] || die "service missing dsn env: $service"
-    [[ -n "${service_verify_handler[$service]}" ]] || die "service missing verify handler: $service"
-    [[ -n "${service_verify_sql_key[$service]}" ]] || die "service missing verify SQL key: $service"
+    [[ -n "${service_apply_handler[$service]}" ]] || die "service missing apply handler: $service"
+    [[ -n "${service_apply_sql_key[$service]}" ]] || die "service missing apply SQL key: $service"
     port="$(service_port "$service")"
     if service_enabled "$service"; then
       [[ -z "${seen_ports[$port]:-}" ]] || die "enabled service port collision: $service and ${seen_ports[$port]}"
       seen_ports[$port]="$service"
     fi
     seen_extensions=()
-    while IFS=$'\t' read -r ext category required create_on_verify extra; do
+    while IFS=$'\t' read -r ext category required create_on_apply extra; do
       [[ -n "$ext" ]] || continue
       [[ -z "${extra:-}" ]] || die "extension catalog row has too many fields service=$service extension=$ext"
       [[ "$ext" =~ ^[A-Za-z0-9_][A-Za-z0-9_-]*$ ]] || die "invalid extension name service=$service extension=$ext"
       [[ "$category" =~ ^[a-z][a-z0-9-]*$ ]] || die "invalid extension category service=$service extension=$ext category=$category"
       [[ "$required" =~ ^[01]$ ]] || die "invalid extension required flag service=$service extension=$ext required=$required"
-      [[ "$create_on_verify" =~ ^[01]$ ]] || die "invalid extension create flag service=$service extension=$ext create_on_verify=$create_on_verify"
-      [[ "$required" == "$create_on_verify" ]] || die "required extensions are the only create-on-verify targets service=$service extension=$ext required=$required create_on_verify=$create_on_verify"
+      [[ "$create_on_apply" =~ ^[01]$ ]] || die "invalid extension create flag service=$service extension=$ext create_on_apply=$create_on_apply"
+      [[ "$required" == "$create_on_apply" ]] || die "required extensions are the only create-on-apply targets service=$service extension=$ext required=$required create_on_apply=$create_on_apply"
       [[ -z "${seen_extensions[$ext]:-}" ]] || die "duplicate extension catalog row service=$service extension=$ext"
       seen_extensions[$ext]=1
     done < <(extension_catalog_rows "$service")
     ((${#seen_extensions[@]} > 0)) || die "service missing extension catalog rows: $service"
   done
-  tmp_dir="$(mktemp -d "${TMPDIR:-/tmp}/rasm-provision-self-test.XXXXXX")" || die "mktemp failed for self-test"
+  tmp_dir="$(mktemp -d "${TMPDIR:-/tmp}/forge-provision-self-test.XXXXXX")" || die "mktemp failed for self-test"
   tmp_src="$tmp_dir/source"
   tmp_dst="$tmp_dir/dest"
   mkdir -p "$tmp_src"
@@ -4303,11 +3323,11 @@ cmd_self_test() {
     die "GNU mv -T unavailable in packaged runtime"
   fi
   rm -rf -- "$tmp_dir"
-  validate_rasm_root "$rasm_root"
+  validate_forge_root "$forge_root"
   if [[ "$output_json" == true ]]; then
     emit_stack_json self-test true '. + {checks: {commands: true, services: true, extensions: true, root: true, gnuCoreutils: true}}'
   else
-    printf 'self-test\tok\t%s\n' "$rasm_root"
+    printf 'self-test\tok\t%s\n' "$forge_root"
   fi
 }
 

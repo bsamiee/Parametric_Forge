@@ -1,0 +1,11 @@
+.
+| gsub("(?i)[a-z][a-z0-9+.-]*://[^/\\s:@]+:[^@\\s]+@"; "uri://***:***@")
+| gsub("(?i)PGPASSFILE=[^\\s]*"; "PGPASSFILE=[redacted]")
+| gsub("(?i)POSTGRES_PASSWORD=[^\\s]*"; "POSTGRES_PASSWORD=[redacted]")
+| gsub("(?i)DOCKER_CONFIG=[^\\s]*"; "DOCKER_CONFIG=[redacted]")
+| gsub("(?i)DOCKER_HOST=[^\\s]*"; "DOCKER_HOST=[redacted]")
+| gsub("unix:///(Users|home|var|tmp|run|private/var)/[^\\s\"]+"; "unix://[redacted]")
+| gsub("/(Users|home|nix/store|private/var|var/folders|tmp|etc|run|var/run)/[^\\s\"]+"; "[redacted-path]")
+| gsub("docker\\.sock"; "[redacted-socket]")
+| gsub("gh[pousr]_[A-Za-z0-9_]+"; "[redacted-token]")
+| gsub("xox[a-z]-[A-Za-z0-9-]+"; "[redacted-token]")

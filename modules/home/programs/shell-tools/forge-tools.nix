@@ -1,0 +1,90 @@
+# Title         : forge-tools.nix
+# Author        : Bardia Samiee
+# Project       : Parametric Forge
+# License       : MIT
+# Path          : modules/home/programs/shell-tools/forge-tools.nix
+# ----------------------------------------------------------------------------
+# Agent-safe Forge maintenance entrypoints.
+{pkgs, ...}: let
+  forgeRedeploy = pkgs.writeShellApplication {
+    name = "forge-redeploy";
+    runtimeInputs = [pkgs.coreutils pkgs.git pkgs.nix pkgs.nix-output-monitor];
+    text = ''
+      mode="check"
+      case "''${1:-}" in
+        --check-only | "")
+          mode="check"
+          ;;
+        --build)
+          mode="build"
+          ;;
+        --switch)
+          mode="switch"
+          ;;
+        --help | -h)
+          printf 'Usage: forge-redeploy [--check-only|--build|--switch]\n'
+          exit 0
+          ;;
+        *)
+          printf 'forge-redeploy: unknown argument: %s\n' "$1" >&2
+          exit 2
+          ;;
+      esac
+
+      forge_root="''${FORGE_ROOT:-$HOME/Documents/99.Github/Parametric_Forge}"
+      [ -f "$forge_root/flake.nix" ] || {
+        printf 'forge-redeploy: missing flake root: %s\n' "$forge_root" >&2
+        exit 1
+      }
+      cd "$forge_root"
+
+      nix flake check --print-build-logs
+      system_path="$(nix build .#darwinConfigurations.macbook.system --no-link --print-out-paths)"
+      if [ -e /run/current-system ]; then
+        nix store diff-closures /run/current-system "$system_path" || true
+      fi
+
+      case "$mode" in
+        check)
+          printf 'forge-redeploy: check-only ok system=%s\n' "$system_path"
+          ;;
+         build)
+           printf 'forge-redeploy: build ok system=%s\n' "$system_path"
+           ;;
+         switch)
+           sudo -n /run/current-system/sw/bin/darwin-rebuild switch --flake "$forge_root#macbook" |& nom
+           ;;
+      esac
+    '';
+  };
+
+  forgeContainerDoctor = pkgs.writeShellApplication {
+    name = "forge-container-doctor";
+    runtimeInputs = [pkgs.coreutils pkgs.docker-client pkgs.docker-compose pkgs.jq];
+    text = ''
+      socket="''${DOCKER_HOST:-unix://$HOME/.local/share/colima/default/docker.sock}"
+      config="''${DOCKER_CONFIG:-$HOME/.config/docker}"
+      printf 'container-doctor\tendpoint_kind=%s\n' "''${socket%%://*}"
+      if [[ "$socket" == unix://* ]]; then
+        socket_path="''${socket#unix://}"
+        [ -S "$socket_path" ] || {
+          printf 'container-doctor\tok=false\treason=missing-socket\n'
+          exit 1
+        }
+      fi
+      if [ -f "$config/config.json" ]; then
+        helper_count="$(jq -r '((.credsStore // .credStore // "") != "") as $store | (($store | if . then 1 else 0 end) + ((.credHelpers // {}) | length))' "$config/config.json")"
+      else
+        helper_count=0
+      fi
+      DOCKER_HOST="$socket" DOCKER_CONFIG="$config" docker version >/dev/null
+      DOCKER_HOST="$socket" DOCKER_CONFIG="$config" docker compose version >/dev/null
+      printf 'container-doctor\tok=true\tcredential_helpers=%s\n' "$helper_count"
+    '';
+  };
+in {
+  home.packages = [
+    forgeRedeploy
+    forgeContainerDoctor
+  ];
+}

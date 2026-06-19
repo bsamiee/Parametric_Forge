@@ -19,7 +19,7 @@
         headless: false
         logoless: false
         crumbsless: false
-        readOnly: false
+        readOnly: true
         noExitOnCtrlC: false
         ui:
           enableSkips: false
@@ -90,33 +90,6 @@
     # --- PLUGINS ----------------------------------------------------------------
     "k9s/plugins.yaml".text = ''
       plugins:
-        # Decode base64 secret
-        decode-secret:
-          shortCut: Ctrl-X
-          description: Decode secret
-          scopes:
-            - secrets
-          command: bash
-          background: false
-          args:
-            - -c
-            - "kubectl get secret $NAME -n $NAMESPACE -o jsonpath='{.data}' | jq -r 'to_entries[] | \"\\(.key): \\(.value | @base64d)\"'"
-        # Restart deployment
-        restart-deploy:
-          shortCut: Ctrl-R
-          description: Restart deployment
-          scopes:
-            - deployments
-          command: kubectl
-          background: false
-          confirm: true
-          args:
-            - rollout
-            - restart
-            - deployment
-            - $NAME
-            - -n
-            - $NAMESPACE
         # View previous logs
         logs-previous:
           shortCut: Shift-L

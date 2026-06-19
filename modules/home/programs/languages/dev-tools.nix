@@ -42,6 +42,7 @@ in {
     yq-go # YAML/JSON/TOML processor (yq)
     miller # CSV/TSV/JSON processor
     qsv # High-performance CSV and tabular data toolkit
+    csvlens # Interactive CSV/TSV inspector
     hurl # HTTP request/assertion runner for API probes
     grpcurl # gRPC server reflection and request CLI
     typos # Fast source and docs typo checker

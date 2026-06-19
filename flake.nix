@@ -53,6 +53,7 @@
       imports = [
         inputs.nix-unit.modules.flake.default
         inputs.treefmt-nix.flakeModule
+        ./flake-modules/nixpkgs.nix
         ./flake-modules/packages.nix
         ./flake-modules/qa.nix
         ./flake-modules/tooling.nix

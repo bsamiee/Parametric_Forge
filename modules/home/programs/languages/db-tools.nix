@@ -13,7 +13,7 @@
   postgres18ForgeTools = pkgs.runCommand "postgres18-forge-client-tools" {nativeBuildInputs = [pkgs.makeWrapper];} ''
     runHook preInstall
     mkdir -p "$out/bin"
-    for bin in psql pg_dump pg_restore pg_isready; do
+    for bin in psql pg_dump pg_restore pg_isready pgbench pg_amcheck createdb dropdb createuser dropuser vacuumdb reindexdb clusterdb; do
       makeWrapper "${pkgs.postgresql_18}/bin/$bin" "$out/bin/$bin"
     done
     runHook postInstall
@@ -22,7 +22,6 @@
   sqleanLibDir = "${pkgs.sqlean}/lib";
   sqliteVecLib = "${pkgs.sqlite-vec}/lib/vec0${sharedLibExt}";
   spatialiteLib = "${pkgs.libspatialite}/lib/mod_spatialite${sharedLibExt}";
-  loadSqlean = module: ''.load ${sqleanLibDir}/${module}${sharedLibExt}'';
   sqliteForge = pkgs.writeShellApplication {
     name = "sqlite-forge";
     runtimeInputs = [pkgs.coreutils pkgs.sqlite-interactive];
@@ -30,15 +29,33 @@
       rc="$(mktemp "''${TMPDIR:-/tmp}/sqlite-forge.XXXXXX")"
       cleanup() { rm -f -- "$rc"; }
       trap cleanup EXIT INT TERM
-      cat >"$rc" <<'SQLITERC'
+      profile="''${SQLITE_FORGE_PROFILE:-safe}"
+      case "$profile" in
+        safe) modules=(regexp uuid stats text time crypto math) ;;
+        extended) modules=(regexp uuid stats text time crypto math define vsv fuzzy ipaddr) ;;
+        fileio) modules=(regexp uuid stats text time crypto math fileio) ;;
+        all) modules=(regexp uuid stats text time crypto math define vsv fuzzy ipaddr fileio) ;;
+        *)
+          printf 'sqlite-forge: unknown SQLITE_FORGE_PROFILE=%s; expected safe, extended, fileio, or all\n' "$profile" >&2
+          exit 2
+          ;;
+      esac
+
+      {
+        cat <<'SQLITERC'
       -- SQLite Forge extension profile
-      ${lib.concatStringsSep "\n" (map loadSqlean ["regexp" "uuid" "stats" "text" "time" "crypto" "math"])}
+      SQLITERC
+        for module in "''${modules[@]}"; do
+          printf '.load ${sqleanLibDir}/%s${sharedLibExt}\n' "$module"
+        done
+        cat <<'SQLITERC'
       .load ${sqliteVecLib}
       .load ${spatialiteLib}
       .mode column
       .headers on
       .nullvalue NULL
       SQLITERC
+      } >"$rc"
       exec sqlite3 -init "$rc" "$@"
     '';
   };
@@ -50,7 +67,14 @@ in {
     libspatialite # Spatial SQL extension for geospatial work
     sqlfluff # SQL linter and formatter supporting multiple dialects
     duckdb # In-memory analytics database with SQL interface
-    postgres18ForgeTools # PostgreSQL 18 client commands; server extensions are Docker-owned by rasm-provision
+    postgres18ForgeTools # PostgreSQL 18 client commands; server extensions are Docker-owned by forge-provision
+    atlas # Declarative schema diff/migration CLI
+    pgroll # Online PostgreSQL schema migration CLI
+    pgloader # Data loading/migration into PostgreSQL
+    pgbadger # PostgreSQL log analyzer
+    parquet-tools # Parquet file inspector
+    minio-client # S3-compatible object storage CLI (mc)
+    s5cmd # Fast S3/object-store batch CLI
     usql # Universal SQL CLI for cross-database interactive sessions
     pgcli # Interactive PostgreSQL shell with completion
     litecli # Interactive SQLite shell with completion

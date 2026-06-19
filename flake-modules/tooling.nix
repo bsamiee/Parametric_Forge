@@ -8,11 +8,11 @@
 _: {
   perSystem = {
     config,
-    pkgs,
+    forgePkgs,
     ...
   }: {
-    devShells.default = pkgs.mkShell {
-      packages = with pkgs; [
+    devShells.default = forgePkgs.mkShell {
+      packages = with forgePkgs; [
         git
         alejandra
         statix
@@ -29,7 +29,7 @@ _: {
       ];
     };
 
-    formatter = pkgs.writeShellApplication {
+    formatter = forgePkgs.writeShellApplication {
       name = "forge-fmt";
       runtimeInputs = [config.treefmt.build.wrapper];
       text = ''
@@ -49,6 +49,15 @@ _: {
       flakeCheck = false;
       projectRootFile = "flake.nix";
       programs.alejandra.enable = true;
+      settings.formatter.shfmt = {
+        command = "${forgePkgs.shfmt}/bin/shfmt";
+        options = ["-w" "-i" "2" "-ci"];
+        includes = [
+          "checks/*.bats"
+          "overlays/forge-provision/*.sh"
+          "overlays/forge-provision/**/*.sh"
+        ];
+      };
     };
   };
 }

@@ -1,0 +1,16 @@
+[
+  {"surface":"sqlite-forge","database":"sqlite","extension":"regexp","loadName":"regexp","category":"text","availability":"sqlean-active","admission":"loaded-by-sqlite-forge","profile":"safe"},
+  {"surface":"sqlite-forge","database":"sqlite","extension":"uuid","loadName":"uuid","category":"identity","availability":"sqlean-active","admission":"loaded-by-sqlite-forge","profile":"safe"},
+  {"surface":"sqlite-forge","database":"sqlite","extension":"stats","loadName":"stats","category":"analytics","availability":"sqlean-active","admission":"loaded-by-sqlite-forge","profile":"safe"},
+  {"surface":"sqlite-forge","database":"sqlite","extension":"text","loadName":"text","category":"text","availability":"sqlean-active","admission":"loaded-by-sqlite-forge","profile":"safe"},
+  {"surface":"sqlite-forge","database":"sqlite","extension":"time","loadName":"time","category":"time","availability":"sqlean-active","admission":"loaded-by-sqlite-forge","profile":"safe"},
+  {"surface":"sqlite-forge","database":"sqlite","extension":"crypto","loadName":"crypto","category":"crypto","availability":"sqlean-active","admission":"loaded-by-sqlite-forge","profile":"safe"},
+  {"surface":"sqlite-forge","database":"sqlite","extension":"math","loadName":"math","category":"math","availability":"sqlean-active","admission":"loaded-by-sqlite-forge","profile":"safe"},
+  {"surface":"sqlite-forge","database":"sqlite","extension":"sqlite-vec","loadName":"vec0","probeFunction":"vec_version","category":"vector","availability":"active-local","admission":"loaded-by-sqlite-forge","profile":"safe"},
+  {"surface":"sqlite-forge","database":"sqlite","extension":"spatialite","loadName":"mod_spatialite","probeFunction":"spatialite_version","category":"geospatial","availability":"active-local","admission":"loaded-by-sqlite-forge","profile":"safe"},
+  {"surface":"sqlite-forge","database":"sqlite","extension":"define","loadName":"define","category":"macro","availability":"sqlean-catalog","admission":"profile-gated","profile":"extended"},
+  {"surface":"sqlite-forge","database":"sqlite","extension":"vsv","loadName":"vsv","category":"csv","availability":"sqlean-catalog","admission":"profile-gated","profile":"extended"},
+  {"surface":"sqlite-forge","database":"sqlite","extension":"fuzzy","loadName":"fuzzy","category":"text","availability":"sqlean-catalog","admission":"profile-gated","profile":"extended"},
+  {"surface":"sqlite-forge","database":"sqlite","extension":"ipaddr","loadName":"ipaddr","category":"network","availability":"sqlean-catalog","admission":"profile-gated","profile":"extended"},
+  {"surface":"sqlite-forge","database":"sqlite","extension":"fileio","loadName":"fileio","category":"file-access","availability":"sqlean-catalog","admission":"profile-gated","profile":"fileio"}
+]

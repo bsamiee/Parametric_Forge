@@ -42,7 +42,7 @@ Parametric Forge is a deterministic macOS workspace built with Nix flakes, nix-d
 │       ├── programs/               # Apps (wezterm/zellij/yazi), shell-tools, git-tools, nix-tools, zsh
 │       ├── scripts/                # Integration wrappers (nvim/zellij/yazi)
 │       └── xdg.nix                 # XDG base dirs + scaffolding
-├── overlays/                       # Upstream passthrough + duckdb, rasm-provision, sqlean
+├── overlays/                       # Upstream passthrough + duckdb, forge-provision, sqlean
 └── .archive/                       # Retired configs kept for reference
 ```
 
@@ -68,13 +68,13 @@ Parametric Forge is a deterministic macOS workspace built with Nix flakes, nix-d
 5. **Rebuild after edits:**
    ```sh
   cd ~/Parametric_Forge
-  sudo darwin-rebuild switch --flake .#macbook |& nom
+  forge-redeploy --switch
    ```
 
 ---
 
 ## Secrets + SSH
-- **Secret references:** `modules/home/environments/secrets.nix`; template written by `modules/home/xdg.nix` to `~/.config/op/env.template`.
+- **Secret references:** `modules/home/programs/shell-tools/1password.nix` owns the `~/.config/op/env.template` template and token cache refresh.
 - **Invocation:** `op run --env-file ~/.config/op/env.template -- <command>` keeps secrets out of git.
 - **SSH agent:** `modules/home/programs/shell-tools/ssh.nix` points to `~/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock`.
 - **GitHub CLI:** stays writable because `~/.config/gh` is unmanaged by Home Manager.
@@ -96,7 +96,7 @@ Parametric Forge is a deterministic macOS workspace built with Nix flakes, nix-d
   <summary>Nix, hosts, cache</summary>
 
   - **Daemon:** `modules/common/nix.nix` tunes eval/build parallelism, HTTP/2, cache TTLs, and post-build Cachix push.
-  - **Overlay:** `overlays/default.nix` forwards upstream overlays and adds the DuckDB CLI overlay, `rasm-provision`, and `sqlean` SQLite extensions.
+  - **Overlay:** `overlays/default.nix` forwards upstream overlays and adds the DuckDB CLI overlay, `forge-provision`, and `sqlean` SQLite extensions.
   - **Host binding:** `hosts/darwin/default.nix` wires nix-darwin, Home Manager, the nix-darwin Homebrew module, and user state versions.
   </details>
 
@@ -111,8 +111,8 @@ Parametric Forge is a deterministic macOS workspace built with Nix flakes, nix-d
   <summary>Languages</summary>
 
   - **Python:** 3.15 GIL build with uv, ruff, ty, basedpyright, and `forge-scientific-env`; caches under XDG (`modules/home/environments/languages.nix`). `MACOSX_DEPLOYMENT_TARGET` follows the nix-darwin minimum and is currently `14.0`.
-  - **Node/Lua/DB:** Node via nix + pnpm (npm is aliased to pnpm for consistency); Lua + LSP tooling; DuckDB/SQLite with sqlean/spatialite/vec; PostgreSQL 18 host tools are client-owned (`psql`, `pg_dump`, `pg_restore`, `pg_isready`, `pg_config`, SQLFluff, and Postgres LSP). PostgreSQL server extensions stay Docker-owned by `rasm-provision`, including Timescale, PostGIS, pgvector/vectorscale, ParadeDB `pg_search`, optional `pg_duckdb`, and Timescale-side `pg_cron` verification.
-  - **Scientific + provisioning:** `forge-scientific-sync` creates a locked isolated `.venv-scientific` from the scientific dependency group, while `forge-scientific-env` exposes clang, gfortran, GDAL, GEOS, PROJ, HDF5, netCDF, Arrow, OpenBLAS, ONNX Runtime, artifact native libraries, Eigen, PDAL, and Boost for one-off source builds. `forge-companion-env` provides the Python 3.12 native-build lane for companion tooling. `rasm-provision` is the overlay-owned, Home Manager-installed local provisioning command with schema v2 safe JSON, auto-root hidden credentials, deterministic auto ports, preserved volumes on `down`, Timescale `pg_cron` verification support, and optional `pgduckdb` behind `RASM_PROVISION_PGDUCKDB=1`; use `rasm-provision --help` for the live verb list.
+  - **Node/Lua/DB:** Node via nix + pnpm (npm is aliased to pnpm for consistency); Lua + LSP tooling; DuckDB/SQLite with sqlean/spatialite/vec; PostgreSQL 18 host tools are client-owned (`psql`, `pg_dump`, `pg_restore`, `pg_isready`, `pg_config`, SQLFluff, and Postgres LSP). PostgreSQL server extensions stay Docker-owned by `forge-provision`, including Timescale, PostGIS, pgvector/vectorscale, ParadeDB `pg_search`, optional `pg_duckdb`, and Timescale-side `pg_cron` verification.
+  - **Scientific + provisioning:** `forge-scientific-sync` creates a locked isolated XDG-state uv environment from the scientific dependency group, while `forge-scientific-env` exposes clang, gfortran, GDAL, GEOS, PROJ, HDF5, netCDF, Arrow, OpenBLAS, ONNX Runtime, artifact native libraries, Eigen, PDAL, and Boost for one-off source builds. `forge-companion-env` provides the Python 3.12 native-build lane for companion tooling. `forge-provision` is the overlay-owned, Home Manager-installed local provisioning command with schema v3 safe JSON, auto-root hidden credentials, deterministic auto ports, preserved volumes on `down`, Timescale `pg_cron` apply support, and optional `pgduckdb` behind `FORGE_PROVISION_PGDUCKDB=1`; use `forge-provision --help` for the live verb list.
   </details>
 
   <details>
@@ -161,9 +161,9 @@ Parametric Forge is a deterministic macOS workspace built with Nix flakes, nix-d
   <ul style="margin: 0 0 0 18px;">
     <li><strong>Format check:</strong> <code>nix fmt -- --check</code></li>
     <li><strong>Full flake proof:</strong> <code>nix flake check</code></li>
-    <li><strong>Provisioner build:</strong> <code>nix build .#rasm-provision</code></li>
-    <li><strong>Provisioner smoke:</strong> <code>nix run .#rasm-provision -- self-test</code>, plus read-only JSON smoke for <code>env</code>, <code>plan</code>, and <code>extensions</code> when touching provisioning</li>
-    <li><strong>Host activation:</strong> <code>sudo darwin-rebuild switch --flake .#macbook |& nom</code> from the repository root after the system build and closure diff are reviewed</li>
+    <li><strong>Provisioner build:</strong> <code>nix build .#forge-provision</code></li>
+    <li><strong>Provisioner smoke:</strong> <code>nix run .#forge-provision -- self-test</code>, plus read-only JSON smoke for <code>env</code>, <code>plan</code>, and <code>extensions</code> when touching provisioning</li>
+    <li><strong>Host activation:</strong> <code>forge-redeploy --switch</code> from the repository root after the wrapper proof and closure diff are reviewed</li>
     <li><strong>Update inputs:</strong> <code>nix flake update</code></li>
     <li><strong>Cache push:</strong> automatic via post-build hook when <code>CACHIX_AUTH_TOKEN</code> is present</li>
   </ul>

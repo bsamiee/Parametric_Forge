@@ -35,8 +35,6 @@ _: {
     grb = "git rebase"; # Rebase current branch (autostash via config)
     grbi = "git rebase -i"; # Interactive rebase
     grs = "git reset"; # Unstage files (keep changes)
-    grsh = "git reset --hard"; # Reset and discard all changes
-    gclean = "git clean -fdx"; # Remove untracked files and directories
     gcp = "git cherry-pick"; # Apply specific commits
     groot = "cd $(git rev-parse --show-toplevel)"; # Jump to repository root
 
