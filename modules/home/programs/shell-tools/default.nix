@@ -30,6 +30,7 @@
     ./gping.nix
     ./forge-tools.nix
     ./grex.nix
+    ./heptabase.nix
     ./hexyl.nix
     ./hyperfine.nix
     ./jnv.nix

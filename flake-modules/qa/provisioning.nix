@@ -141,7 +141,7 @@ _: {
 
       forge-provision-assets = forgePkgs.runCommand "forge-provision-assets" {nativeBuildInputs = [forgePkgs.duckdb forgePkgs.jq forgePkgs.sqlfluff forgePkgs.sqlite-forge];} ''
         jq empty ${../../overlays/forge-provision/data}/*.json
-        jq -s 'add | length == 36 and (map(.surface + ":" + .extension) | unique | length) == 36' \
+        jq -s 'add | length == 37 and (map(.surface + ":" + .extension) | unique | length) == 37' \
           ${../../overlays/forge-provision/data/duckdb-extensions.json} \
           ${../../overlays/forge-provision/data/sqlite-extensions.json} >/dev/null
         printf 'timescale\ttime\t1\ttimescale\timage\t15432\tdsn\tFORGE_DSN\tFORGE_IMAGE\tFORGE_PORT\tauto\n' \

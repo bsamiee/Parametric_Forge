@@ -53,8 +53,11 @@
     freetype
     fribidi
     gdk-pixbuf
+    ghostscript # ocrmypdf
     harfbuzz
     lcms2
+    leptonica # ocrmypdf
+    libheif # ocrmypdf pi-heif (HEIF/HEIC input)
     libjpeg_turbo
     libpng
     libtiff
@@ -63,6 +66,8 @@
     openjpeg
     pango
     qpdf
+    tesseract # ocrmypdf
+    vips # pyvips
     zlib
   ];
 
