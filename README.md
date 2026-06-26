@@ -29,7 +29,7 @@ Parametric Forge is a deterministic macOS workspace built with Nix flakes, nix-d
 ```text
 .
 ├── flake.nix / flake.lock          # Inputs, systems, overlays, host exports
-├── flake-modules/                  # Package/app outputs, checks, devshell, formatter
+├── flake-modules/                  # Package/app outputs, checks, shell, formatter
 ├── checks/                         # Bats suites for package behavior
 ├── hosts/
 │   └── darwin/default.nix          # MacBook host: nix-darwin + Home Manager
@@ -95,8 +95,8 @@ Parametric Forge is a deterministic macOS workspace built with Nix flakes, nix-d
   <details>
   <summary>Nix, hosts, cache</summary>
 
-  - **Daemon:** `modules/common/nix.nix` tunes eval/build parallelism, HTTP/2, cache TTLs, and post-build Cachix push.
-  - **Overlay:** `overlays/default.nix` forwards upstream overlays and adds the DuckDB CLI overlay, `forge-provision`, and `sqlean` SQLite extensions.
+  - **Daemon:** Determinate Nix owns the macOS daemon; `modules/common/nix.nix` keeps shared Nix defaults for non-Determinate hosts.
+  - **Overlay:** `overlays/default.nix` adds local overlays for DuckDB CLI, `forge-provision`, `sqlean` SQLite extensions, `sqlite-forge`, Carbon compatibility, Bats, and the `pnpm_11` pin.
   - **Host binding:** `hosts/darwin/default.nix` wires nix-darwin, Home Manager, the nix-darwin Homebrew module, and user state versions.
   </details>
 
@@ -111,21 +111,21 @@ Parametric Forge is a deterministic macOS workspace built with Nix flakes, nix-d
   <summary>Languages</summary>
 
   - **Python:** 3.15 GIL build with uv, ruff, ty, basedpyright, and `forge-scientific-env`; caches under XDG (`modules/home/environments/languages.nix`). `MACOSX_DEPLOYMENT_TARGET` follows the nix-darwin minimum and is currently `14.0`.
-  - **Node/Lua/DB:** Node via nix + pnpm (npm is aliased to pnpm for consistency); Lua + LSP tooling; DuckDB/SQLite with sqlean/spatialite/vec; PostgreSQL 18 host tools are client-owned (`psql`, `pg_dump`, `pg_restore`, `pg_isready`, `pg_config`, SQLFluff, and Postgres LSP). PostgreSQL server extensions stay Docker-owned by `forge-provision`, including Timescale, PostGIS, pgvector/vectorscale, ParadeDB `pg_search`, optional `pg_duckdb`, and Timescale-side `pg_cron` verification.
-  - **Scientific + provisioning:** `forge-scientific-sync` creates a locked isolated XDG-state uv environment from the scientific dependency group, while `forge-scientific-env` exposes clang, gfortran, GDAL, GEOS, PROJ, HDF5, netCDF, Arrow, OpenBLAS, ONNX Runtime, artifact native libraries, Eigen, PDAL, and Boost for one-off source builds. `forge-companion-env` provides the Python 3.12 native-build lane for companion tooling. `forge-provision` is the overlay-owned, Home Manager-installed local provisioning command with schema v3 safe JSON, auto-root hidden credentials, deterministic auto ports, preserved volumes on `down`, Timescale `pg_cron` apply support, and optional `pgduckdb` behind `FORGE_PROVISION_PGDUCKDB=1`; use `forge-provision --help` for the live verb list.
+  - **Node/Lua/DB:** Node 26 via Nix-owned official Darwin binary + pnpm; Prettier; Lua + LSP tooling; DuckDB/SQLite with sqlean/spatialite/vec; PostgreSQL 18 host tools are client-owned (`psql`, `pg_dump`, `pg_restore`, `pg_isready`, `pg_config`, SQLFluff, pgformatter, and Postgres LSP). PostgreSQL server extensions stay Docker-owned by `forge-provision`, including Timescale, PostGIS, pgvector/vectorscale, ParadeDB `pg_search`, optional `pg_duckdb`, and Timescale-side `pg_cron` verification.
+  - **Scientific + provisioning:** `forge-scientific-sync` creates a locked isolated XDG-state uv environment from the scientific dependency group, while `forge-scientific-env` exposes clang, gfortran, GDAL, GEOS, PROJ, HDF5, netCDF, Arrow, OpenBLAS, ONNX Runtime, artifact native libraries, Eigen, PDAL, and Boost for one-off source builds. `forge-companion-env` uses Python 3.12 for companion tooling that Rasm gates below the Python 3.15 core. `forge-provision` is the overlay-owned, Home Manager-installed local provisioning command with schema v3 safe JSON, auto-root hidden credentials, deterministic auto ports, preserved volumes on `down`, Timescale `pg_cron` apply support, and optional `pgduckdb` behind `FORGE_PROVISION_PGDUCKDB=1`; use `forge-provision --help` for the live verb list.
   </details>
 
   <details>
   <summary>Media + documents</summary>
 
-  - **Tooling:** ffmpeg, imagemagick, resvg, chafa, mediainfo, ocrmypdf, pandoc with cache/log paths under XDG.
+  - **Tooling:** ffmpeg, imagemagick, resvg, chafa, mediainfo, qpdf, poppler, djvulibre, inkscape, and pandoc with cache/log paths under XDG.
   - **Config:** Environment knobs in `modules/home/environments/media.nix`.
   </details>
 
   <details>
   <summary>Homebrew bridge</summary>
 
-  - **Bridge:** `modules/darwin/homebrew` uses the nix-darwin Homebrew module for taps/brews/casks (Raycast, BTT, Arc, Adobe CC, fonts not in nixpkgs, yabai/skhd/borders). Activation does not auto-update or upgrade Homebrew; upgrades are explicit operator actions.
+  - **Bridge:** `modules/darwin/homebrew` uses the nix-darwin Homebrew module for GUI/proprietary/macOS app bundles and fonts not in nixpkgs. Activation does not auto-update, upgrade, uninstall, or zap Homebrew; cleanup is disabled so Homebrew remains available for operator-installed tools.
   </details>
 </div>
 

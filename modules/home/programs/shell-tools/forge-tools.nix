@@ -39,6 +39,7 @@
       cd "$forge_root"
 
       nix flake check --print-build-logs
+      nom build .#darwinConfigurations.macbook.system --no-link
       system_path="$(nix build .#darwinConfigurations.macbook.system --no-link --print-out-paths)"
       if [ -e /run/current-system ]; then
         nix store diff-closures /run/current-system "$system_path" || true

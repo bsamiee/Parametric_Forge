@@ -16,6 +16,7 @@
     syft # SBOM generation for images and filesystems
     trivy # Image/config vulnerability scanner; do not run DB downloads in read-only checks
     grype # Vulnerability scanner; keep DB updates out of provisioning/check paths
+    osv-scanner # Source/dependency vulnerability scanner
     dive # Image layer analyzer
     hadolint # Dockerfile linter
     lazydocker # Docker TUI

@@ -57,7 +57,7 @@ in {
     pulumi # Pulumi CLI engine; Python SDK is managed per-project via uv (Maghz infra Automation API)
   ];
 
-  # DOTNET_ROOT required for omnisharp and other SDK-discovery tools.
+  # DOTNET_ROOT required for Roslyn and other SDK-discovery tools.
   # Re-evaluated on every rebuild — store path stays current.
   home.sessionVariables.DOTNET_ROOT = "${dotnet-combined}";
 }

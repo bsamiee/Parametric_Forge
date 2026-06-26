@@ -85,7 +85,7 @@ in {
       # Allow TCC reset operations
       %admin ALL=(root) NOPASSWD: /usr/bin/tccutil *
 
-      # Allow service management for window managers
+      # Allow service automation used by system maintenance workflows
       %admin ALL=(root) NOPASSWD: /bin/launchctl *
       %admin ALL=(root) NOPASSWD: /usr/bin/osascript *
 
@@ -93,13 +93,6 @@ in {
       # SETENV allows passing NIX_CONFIG for flakes support from HS
       %admin ALL=(root) NOPASSWD: /run/current-system/sw/bin/darwin-rebuild *
       %admin ALL=(root) NOPASSWD: /nix/var/nix/profiles/default/bin/darwin-rebuild *
-
-      # yabai scripting addition (path-restricted, no hash dependency)
-      %admin ALL=(root) NOPASSWD: /opt/homebrew/bin/yabai --load-sa
-
-      # Window manager tools (skhd, borders)
-      %admin ALL=(root) NOPASSWD: /opt/homebrew/bin/skhd *
-      %admin ALL=(root) NOPASSWD: /opt/homebrew/bin/borders *
 
       # Homebrew shell integration (prevents login security prompts)
       %admin ALL=(root) NOPASSWD: /opt/homebrew/bin/brew *
@@ -117,8 +110,6 @@ in {
       %admin ALL=(root) NOPASSWD: /usr/sbin/installer *
       %admin ALL=(root) NOPASSWD,SETENV: /usr/sbin/installer *
 
-      # Allow 1Password CLI operations
-      %admin ALL=(root) NOPASSWD: /opt/homebrew/bin/op *
     '';
   };
 }

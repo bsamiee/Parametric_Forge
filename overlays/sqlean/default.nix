@@ -19,11 +19,6 @@
       url = "https://github.com/nalgeon/sqlean/releases/download/${version}/sqlean-macos-arm64.zip";
       hash = "sha256-G8qhU4xCuw0qXQhkkJqvV0dbDiuow4BwVXeQsOxaeFo=";
     }
-    else if system == "x86_64-darwin"
-    then {
-      url = "https://github.com/nalgeon/sqlean/releases/download/${version}/sqlean-macos-x64.zip";
-      hash = "sha256-tIao4VRmC8hip+6sA76jOe8dN5n022/COd0M3+AkQww=";
-    }
     else if system == "aarch64-linux"
     then {
       url = "https://github.com/nalgeon/sqlean/releases/download/${version}/sqlean-linux-arm64.zip";
@@ -74,7 +69,6 @@ in
       license = licenses.mit;
       platforms = [
         "aarch64-darwin"
-        "x86_64-darwin"
         "aarch64-linux"
         "x86_64-linux"
       ];

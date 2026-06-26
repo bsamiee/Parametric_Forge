@@ -8,7 +8,6 @@
 {...}: {
   imports = [
     ./alejandra.nix
-    ./comma.nix
     ./deadnix.nix
     ./inspection.nix
     ./nix-index.nix

@@ -6,14 +6,5 @@
 # ----------------------------------------------------------------------------
 # Homebrew tap repositories
 _: {
-  homebrew.taps = [
-    {
-      name = "asmvik/formulae"; # For yabai/skhd
-      trusted = true;
-    }
-    {
-      name = "FelixKratz/formulae"; # For borders
-      trusted = true;
-    }
-  ];
+  homebrew.taps = [];
 }

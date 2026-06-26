@@ -50,7 +50,10 @@ in {
           backupFileExtension = "backup"; # Backup conflicting files instead of failing
           extraSpecialArgs = {inherit inputs;}; # Pass inputs to home-manager
           users.${username} = {...}: {
-            imports = [../../modules/home];
+            imports = [
+              inputs.nix-index-database.homeModules.nix-index
+              ../../modules/home
+            ];
             home.stateVersion = "26.05";
             programs.home-manager.enable = true;
 

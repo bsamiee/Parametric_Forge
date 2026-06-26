@@ -32,8 +32,20 @@ final: prev: {
         mainProgram = "bats";
       };
   };
+  carbon-now-cli = prev.carbon-now-cli.overrideAttrs (old: {
+    postInstall =
+      (old.postInstall or "")
+      + ''
+        cli="$out/lib/node_modules/carbon-now-cli/dist/cli.js"
+        if [ -f "$cli" ]; then
+          substituteInPlace "$cli" \
+            --replace-fail "assert { type: 'json' }" "with { type: 'json' }"
+        fi
+      '';
+  });
   duckdb = prev.callPackage ./duckdb {};
   forge-provision = final.callPackage ./forge-provision {};
+  nodejs-bin_26 = final.callPackage ./nodejs-bin {};
   pnpm = final.pnpm_11;
   pnpm_11 = import ./pnpm {
     inherit (prev) fetchurl pnpm_11;

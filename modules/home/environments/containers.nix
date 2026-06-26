@@ -9,11 +9,9 @@
   home.sessionVariables = {
     # --- Docker -------------------------------------------------------------
     DOCKER_HOST = "unix://${config.xdg.dataHome}/colima/default/docker.sock";
-    MACHINE_STORAGE_PATH = "${config.xdg.dataHome}/docker-machine";
-    DOCKER_CERT_PATH = "${config.xdg.dataHome}/docker/certs";
     DOCKER_CONFIG = "${config.xdg.configHome}/docker";
 
-    # --- Podman -------------------------------------------------------------
+    # --- containers/image and OCI tooling ----------------------------------
     CONTAINERS_REGISTRIES_CONF = "${config.xdg.configHome}/containers/registries.conf";
     CONTAINERS_STORAGE_CONF = "${config.xdg.configHome}/containers/storage.conf";
     CONTAINERS_CONF = "${config.xdg.configHome}/containers/containers.conf";

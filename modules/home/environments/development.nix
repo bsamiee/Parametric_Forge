@@ -16,7 +16,6 @@
     # Nix
     CACHIX_CACHE = "bsamiee";
     NIX_REMOTE = "daemon";
-    NIX_INDEX_DATABASE = "${config.xdg.cacheHome}/nix-index";
 
     # --- Git & Version Control ----------------------------------------------
     GITLEAKS_CONFIG = "${config.xdg.configHome}/gitleaks/gitleaks.toml";

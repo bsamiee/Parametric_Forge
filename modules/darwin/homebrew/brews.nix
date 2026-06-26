@@ -12,11 +12,6 @@ _: {
     "tag" # macOS file tagging CLI
     "blueutil" # Bluetooth management
 
-    # --- Window Management Tools --------------------------------------------
-    "asmvik/formulae/yabai"
-    "asmvik/formulae/skhd"
-    "FelixKratz/formulae/borders"
-
     # --- Server Tools -------------------------------------------------------
     "webhook" # HTTP endpoint for triggering scripts (adnanh/webhook)
   ];

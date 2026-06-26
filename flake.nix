@@ -37,6 +37,11 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    nix-index-database = {
+      url = "github:nix-community/nix-index-database";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     shell-plugins = {
       url = "github:1Password/shell-plugins";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -59,7 +64,7 @@
         ./flake-modules/tooling.nix
       ];
 
-      systems = ["aarch64-darwin" "x86_64-darwin" "x86_64-linux" "aarch64-linux"];
+      systems = ["aarch64-darwin" "x86_64-linux" "aarch64-linux"];
 
       flake = {
         overlays.default = import ./overlays;

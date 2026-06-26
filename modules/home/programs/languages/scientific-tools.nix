@@ -53,11 +53,11 @@
     freetype
     fribidi
     gdk-pixbuf
-    ghostscript # ocrmypdf
+    ghostscript
     harfbuzz
     lcms2
-    leptonica # ocrmypdf
-    libheif # ocrmypdf pi-heif (HEIF/HEIC input)
+    leptonica
+    libheif # HEIF/HEIC input
     libjpeg_turbo
     libpng
     libtiff
@@ -66,7 +66,7 @@
     openjpeg
     pango
     qpdf
-    tesseract # ocrmypdf
+    tesseract
     vips # pyvips
     zlib
   ];
@@ -208,6 +208,8 @@
   };
   forgeCompanionEnv = pkgs.writeShellApplication {
     name = "forge-companion-env";
+    # Rasm's Python branch keeps a cp315 core and a cp312 companion lane for
+    # native geometry/IFC and codegen packages gated below Python 3.13/3.15.
     runtimeInputs = nativeBuildTools ++ companionNativeLibs ++ [pkgs.coreutils pkgs.git pkgs.uv pkgs.python312];
     text = ''
       ${forgePythonEnvPrelude pkgs.python312 "companion"}

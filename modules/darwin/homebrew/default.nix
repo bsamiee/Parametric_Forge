@@ -39,7 +39,7 @@ in {
     };
 
     # --- Activation Behavior ------------------------------------------------
-    # Keep cleanup disabled so Homebrew installs outside this profile remain installed.
+    # Keep Homebrew flexible; explicit cleanup/drift checks stay operator-owned.
     onActivation = {
       autoUpdate = mkDefault false;
       cleanup = mkDefault "none";

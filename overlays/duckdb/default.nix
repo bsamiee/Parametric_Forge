@@ -15,7 +15,7 @@
   system = stdenvNoCC.hostPlatform.system;
 
   platformAsset =
-    if system == "aarch64-darwin" || system == "x86_64-darwin"
+    if system == "aarch64-darwin"
     then {
       url = "https://github.com/duckdb/duckdb/releases/download/v${version}/duckdb_cli-osx-universal.zip";
       hash = "sha256-xdjLYNfVzra7lPzlrkoXzIFtsZwhtrteDSNIs7IkA1k=";
@@ -67,7 +67,6 @@ in
       mainProgram = "duckdb";
       platforms = [
         "aarch64-darwin"
-        "x86_64-darwin"
         "aarch64-linux"
         "x86_64-linux"
       ];

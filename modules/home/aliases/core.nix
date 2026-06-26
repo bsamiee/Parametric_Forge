@@ -21,33 +21,23 @@ _: {
 
     # --- File Operations ----------------------------------------------------
     ls = "eza -la --header --no-user --time-style=relative";
-    cat = "bat";
-    find = "fd";
     fda = "fd --hidden --no-ignore -a"; # Find all files, including hidden and ignored
-    mv = "rsync-mv.sh"; # Atomic move with directory cleanup
     mkdir = "mkdir -pv"; # Always create parent directories
-    cp = "rsync -ahPX --info=progress2 --"; # Full preservation, no sparse
+    rsmv = "rsync-mv.sh"; # Atomic move with directory cleanup
     cpsp = "rsync -ahPSX --"; # Sparse copy (VMs, disk images)
-    scp = "rsync -ahzPX -e ssh"; # Remote copy with compression
-    sync = "rsync -ahPX --inplace"; # In-place update (large files)
     backup = "rsync -ahPX --delete"; # Mirror with deletion
     rsyncd = "rsync -ahPn"; # Dry-run with progress (safety check)
     rsyncf = "rsync -ahPX --append-verify"; # Resume interrupted transfers
     rcs = "rclone sync --progress --transfers 4"; # Cloud sync with progress
     hex = "hexyl"; # Hex viewer
-    wget = "aria2c -c"; # Modern download with resume
     pack = "ouch compress"; # Compress files/directories
     unpack = "ouch decompress"; # Decompress archives
 
     # --- System Monitoring --------------------------------------------------
-    ps = "procs";
     pst = "procs --tree"; # Process tree
     psc = "procs --sortd 5"; # Sort processes by CPU usage
     psm = "procs --sortd 6"; # Sort processes by memory usage
     psw = "procs --watch"; # Watch processes (2s refresh)
-    top = "btm"; # Modern system monitor
-    df = "duf";
-    du = "dust";
     dfi = "dua i"; # Interactive disk usage analyzer
     killi = "pik"; # Interactive process killer
     bench = "hyperfine"; # Modern benchmarking tool
@@ -99,18 +89,14 @@ _: {
     "-" = "cd -"; # Previous directory
 
     # --- Network Tools ------------------------------------------------------
-    curl = "curlie"; # Modern curl with HTTPie-like interface
     http = "xh"; # HTTPie compatibility
     https = "xh --https"; # HTTPS by default
     POST = "xh POST"; # RESTful convention
     PUT = "xh PUT"; # RESTful convention
-    ping = "gping"; # Visual ping with graph
     trace = "trip"; # Modern traceroute replacement
     traceu = "trip --udp --target-port 33434"; # UDP tracing for ECMP paths
     serve = "python3 -m http.server 8000"; # Quick static server
     bw = "sudo bandwhich"; # Bandwidth monitor (needs sudo)
-    dig = "doggo"; # Modern DNS client
-    nslookup = "doggo"; # DNS lookup replacement
     speedtest = "speedtest --accept-license"; # Official Ookla speed test
     lssh = "sshs"; # Interactive SSH picker
     whs = "webhook -hooks $WEBHOOK_HOOKS_DIR/hooks.json -verbose"; # Start webhook server
@@ -156,13 +142,6 @@ _: {
     pdev = "pnpm dev"; # Start Vite dev server
     pbuild = "pnpm build"; # Production build with type checking
     ptest = "pnpm test"; # Run Vitest tests
-    # Biome
-    bc = "pnpm exec biome check --error-on-warnings"; # Check format + lint + imports
-    bcw = "pnpm exec biome check --write"; # Apply safe fixes + format
-    bcu = "pnpm exec biome check --write --unsafe"; # Apply all fixes including unsafe
-    brage = "pnpm exec biome rage --formatter --linter --verbose"; # Debug configuration
-    bcwatch = "watchexec -c -e js,jsx,ts,tsx,json,css -- pnpm exec biome check"; # Watch and check on changes
-    bfwatch = "watchexec -c -e js,jsx,ts,tsx,json,css -- pnpm exec biome format --write"; # Watch and format on changes
 
     # --- .NET Development ---------------------------------------------------
     dnr = "dotnet run --"; # Run with args passthrough

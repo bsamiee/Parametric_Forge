@@ -11,9 +11,9 @@
   ...
 }: let
   dutiConfig = ''
-    # PDF Documents -> Adobe Acrobat Pro
-    com.adobe.Acrobat.Pro	com.adobe.pdf	all
-    com.adobe.Acrobat.Pro	.pdf	all
+    # PDF Documents -> Preview
+    com.apple.Preview	com.adobe.pdf	all
+    com.apple.Preview	.pdf	all
 
     # URL Schemes -> Arc Browser (HTML associations need manual setup due to macOS restrictions)
     company.thebrowser.Browser	http	all
@@ -43,10 +43,6 @@
     com.microsoft.VSCode	.csv	all
     com.microsoft.VSCode	com.apple.log	all
     com.microsoft.VSCode	.log	all
-
-    # Torrent Files -> Transmission
-    org.m0k.transmission	org.bittorrent.torrent	all
-    org.m0k.transmission	.torrent	all
 
     # STL Files -> Rhino
     com.mcneel.rhinoceros.8	public.standard-tesselated-geometry-format	all

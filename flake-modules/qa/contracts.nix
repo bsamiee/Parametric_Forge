@@ -15,10 +15,7 @@
     forgeRequiredCheckNames,
     system,
     ...
-  }: let
-    smokeHasPgloader = system != "x86_64-darwin";
-    smokeHasParquetTools = system != "x86_64-darwin";
-  in {
+  }: {
     checks = {
       duckdb-smoke = forgePkgs.testers.testVersion {
         package = forgePkgs.duckdb;
@@ -49,85 +46,100 @@
 
       forge-new-tool-smoke =
         forgePkgs.runCommand "forge-new-tool-smoke" {
-          nativeBuildInputs = with forgePkgs;
-            [
-              usql
-              pgcli
-              litecli
-              sqruff
-              pgformatter
-              pg_activity
-              pgmetrics
-              qsv
-              miller
-              csvlens
-              pgroll
-              pgbadger
-              minio-client
-              s5cmd
-              hurl
-              grpcurl
-              taplo
-              typos
-              cosign
-              notation
-              oras
-              regctl
-              syft
-              trivy
-              grype
-              docker-buildx
-              kind
-              kubectl-cnpg
-              pluto
-              kubent
-              conftest
-              kube-score
-              kubescape
-              kube-linter
-              gmsh
-            ]
-            ++ forgePkgs.lib.optionals smokeHasPgloader [pgloader]
-            ++ forgePkgs.lib.optionals smokeHasParquetTools [parquet-tools];
+          nativeBuildInputs = with forgePkgs; [
+            usql
+            pgcli
+            litecli
+            sqruff
+            pgformatter
+            pg_activity
+            pgmetrics
+            qsv
+            miller
+            csvlens
+            pgroll
+            pgbadger
+            pgloader
+            minio-client
+            s5cmd
+            hurl
+            grpcurl
+            taplo
+            typos
+            cosign
+            notation
+            oras
+            regctl
+            skopeo
+            crane
+            syft
+            trivy
+            grype
+            osv-scanner
+            docker-buildx
+            dive
+            hadolint
+            kind
+            kubectl-cnpg
+            pluto
+            kubeconform
+            conftest
+            kubescape
+            kube-linter
+            stern
+            kube-capacity
+            kubectl-tree
+            kubectl-neat
+            gmsh
+            parquet-tools
+          ];
         } ''
           usql --version >/dev/null
           pgcli --version >/dev/null
           litecli --version >/dev/null
           sqruff --version >/dev/null
           pg_format --version >/dev/null
-           pg_activity --version >/dev/null
-           pgmetrics --version >/dev/null
-           qsv --version >/dev/null
-           mlr --version >/dev/null
-           csvlens --version >/dev/null
-           pgroll --version >/dev/null
-           ${forgePkgs.lib.optionalString smokeHasPgloader "pgloader --version >/dev/null"}
-           pgbadger --version >/dev/null
-           ${forgePkgs.lib.optionalString smokeHasParquetTools "command -v parquet-tools >/dev/null"}
-           mc --version >/dev/null
-           s5cmd version >/dev/null
-           hurl --version >/dev/null
-           grpcurl --version >/dev/null
+          pg_activity --version >/dev/null
+          pgmetrics --version >/dev/null
+          qsv --version >/dev/null
+          mlr --version >/dev/null
+          csvlens --version >/dev/null
+          pgroll --version >/dev/null
+          pgloader --version >/dev/null
+          pgbadger --version >/dev/null
+          command -v parquet-tools >/dev/null
+          mc --version >/dev/null
+          s5cmd version >/dev/null
+          hurl --version >/dev/null
+          grpcurl --version >/dev/null
           taplo --version >/dev/null
           typos --version >/dev/null
           cosign version >/dev/null
           notation version >/dev/null
           oras version >/dev/null
           regctl version >/dev/null
-           syft version >/dev/null
-           trivy --version >/dev/null
-           grype version >/dev/null
-           docker-buildx version >/dev/null
-           kind version >/dev/null
-           command -v kubectl-cnpg >/dev/null
-           pluto version >/dev/null
-           kubent --version >/dev/null
-           conftest --version >/dev/null
-           command -v kube-score >/dev/null
-           kubescape version >/dev/null
-           kube-linter version >/dev/null
-           gmsh -version >/dev/null
-           touch "$out"
+          skopeo --version >/dev/null
+          crane version >/dev/null
+          syft version >/dev/null
+          trivy --version >/dev/null
+          grype version >/dev/null
+          osv-scanner --version >/dev/null
+          docker-buildx version >/dev/null
+          dive --version >/dev/null
+          hadolint --version >/dev/null
+          kind version >/dev/null
+          command -v kubectl-cnpg >/dev/null
+          pluto version >/dev/null
+          kubeconform -v >/dev/null
+          conftest --version >/dev/null
+          kubescape version >/dev/null
+          kube-linter version >/dev/null
+          stern --version >/dev/null
+          command -v kube-capacity >/dev/null
+          command -v kubectl-tree >/dev/null
+          command -v kubectl-neat >/dev/null
+          gmsh -version >/dev/null
+          touch "$out"
         '';
     };
 

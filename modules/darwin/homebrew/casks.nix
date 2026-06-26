@@ -9,7 +9,6 @@ _: {
   homebrew.casks = [
     # --- System & Core Tools ------------------------------------------------
     "1password"
-    "1password-cli"
     "cleanshot"
     "wezterm"
 
@@ -31,9 +30,7 @@ _: {
     "microsoft-auto-update"
     "microsoft-teams"
     "superhuman" # Email client
-    # "telegram"
     "whatsapp"
-    # "zoom"
 
     # --- Cloud & Storage ----------------------------------------------------
     "google-drive"
@@ -41,16 +38,12 @@ _: {
 
     # --- Development --------------------------------------------------------
     "visual-studio-code"
-    # "blender"
     "iconjar"
     "typeface" # Font management
     "sf-symbols" # Apple's symbol library
 
     # --- Media & Entertainment ----------------------------------------------
     "spotify"
-    # "handbrake-app" # GUI video transcoder
-    # "transmission"
-    # "steam"
 
     # --- Notes & Reading ----------------------------------------------------
     "calibre" # E-book management
@@ -76,9 +69,6 @@ _: {
     "font-qahiri" # Not in nixpkgs
 
     # --- Adobe & Creative Suite ---------------------------------------------
-    # "adobe-acrobat-pro"
-    # "adobe-creative-cloud"
-    # "colorchecker-camera-calibration"
     "zxpinstaller"
 
     # --- Utilities & System Enhancement -------------------------------------

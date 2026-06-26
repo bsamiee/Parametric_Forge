@@ -11,7 +11,6 @@
     WEZTERM_CONFIG_DIR = "${config.xdg.configHome}/wezterm";
     WEZTERM_RUNTIME_DIR = "${config.xdg.stateHome}/wezterm";
     WEZTERM_LOG_DIR = "${config.xdg.stateHome}/wezterm";
-    WEZTERM_UTILS_BIN = "${config.xdg.configHome}/wezterm/bin/wezterm-utils.sh";
 
     # --- Zellij -------------------------------------------------------------
     ZELLIJ_CONFIG_DIR = "${config.xdg.configHome}/zellij";
