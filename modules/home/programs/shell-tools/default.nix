@@ -36,6 +36,7 @@
     ./jnv.nix
     ./mise.nix
     ./1password.nix
+    ./notebooklm.nix
     ./ouch.nix
     ./p7zip.nix
     ./pik.nix

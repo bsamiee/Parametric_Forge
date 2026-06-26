@@ -27,7 +27,6 @@ in {
     sqlfluff # SQL linter and formatter supporting multiple dialects
     duckdb # In-memory analytics database with SQL interface
     postgres18ForgeTools # PostgreSQL 18 client commands; server extensions are Docker-owned by forge-provision
-    atlas # Declarative schema diff/migration CLI
     pgroll # Online PostgreSQL schema migration CLI
     pgloader # Data loading/migration into PostgreSQL
     pgbadger # PostgreSQL log analyzer

@@ -1,26 +1,82 @@
-#!/bin/bash
-# SessionStart hook: Persist environment variables for sub-agents via CLAUDE_ENV_FILE.
+#!/usr/bin/env bash
+# SessionStart hook: persist session credentials + tool PATH for sub-agents.
+# Canonical across all repos, owned by Parametric_Forge. Sources the 1Password
+# token cache when present (resilient: absent on non-Forge/remote hosts -> falls
+# back to the ambient login-shell environment), then writes resolved keys to
+# CLAUDE_ENV_FILE so spawned sub-agents inherit them. Per-project extras:
+# CLAUDE_ENV_EXPORT_KEYS (comma/space list) and CLAUDE_TOOL_PATHS (colon list).
+set -Eeuo pipefail
+shopt -s inherit_errexit
+IFS=$'\n\t'
 
-set -e
+# --- [CONSTANTS] --------------------------------------------------------------
 
-# Source token cache if exists (populated by home-manager activation)
-TOKEN_CACHE="$HOME/.config/hm-op-session.sh"
-# shellcheck source=/dev/null
-[[ -f "$TOKEN_CACHE" ]] && source "$TOKEN_CACHE"
+readonly TOKEN_CACHE="${HOME}/.config/hm-op-session.sh"
+declare -ra _ENV_KEYS=(
+    EXA_API_KEY PERPLEXITY_API_KEY TAVILY_API_KEY SONAR_TOKEN
+    CONTEXT7_API_KEY GREPTILE_TOKEN
+    GH_TOKEN GITHUB_TOKEN GH_PROJECTS_TOKEN
+    HOSTINGER_TOKEN CACHIX_AUTH_TOKEN RHINO_TOKEN
+    MAGHZ_MCP__DATABASE_URI
+)
+readonly EXTRA_ENV_KEYS="${CLAUDE_ENV_EXPORT_KEYS:-}"
+readonly TOOL_PATHS="${CLAUDE_TOOL_PATHS:-${CLAUDE_EXTRA_PATH:-${HOME}/.cargo/bin}}"
+readonly ALLOW_MISSING_TOOL_PATHS="${CLAUDE_ALLOW_MISSING_TOOL_PATHS:-0}"
 
-# Persist to CLAUDE_ENV_FILE for sub-agent inheritance
-[[ -n "$CLAUDE_ENV_FILE" ]] && {
-    [[ -n "$ANTHROPIC_API_KEY" ]] && echo "export ANTHROPIC_API_KEY=\"$ANTHROPIC_API_KEY\"" >> "$CLAUDE_ENV_FILE"
-    [[ -n "$EXA_API_KEY" ]] && echo "export EXA_API_KEY=\"$EXA_API_KEY\"" >> "$CLAUDE_ENV_FILE"
-    [[ -n "$PERPLEXITY_API_KEY" ]] && echo "export PERPLEXITY_API_KEY=\"$PERPLEXITY_API_KEY\"" >> "$CLAUDE_ENV_FILE"
-    [[ -n "$TAVILY_API_KEY" ]] && echo "export TAVILY_API_KEY=\"$TAVILY_API_KEY\"" >> "$CLAUDE_ENV_FILE"
-    [[ -n "$SONAR_TOKEN" ]] && echo "export SONAR_TOKEN=\"$SONAR_TOKEN\"" >> "$CLAUDE_ENV_FILE"
-    # gh CLI prefers GH_TOKEN; GITHUB_TOKEN for other tools (Actions, etc.)
-    [[ -n "$GH_TOKEN" ]] && echo "export GH_TOKEN=\"$GH_TOKEN\"" >> "$CLAUDE_ENV_FILE"
-    [[ -n "$GITHUB_TOKEN" ]] && echo "export GITHUB_TOKEN=\"$GITHUB_TOKEN\"" >> "$CLAUDE_ENV_FILE"
-    # GitHub Projects (Classic PAT - fine-grained PATs don't support Projects API)
-    [[ -n "$GH_PROJECTS_TOKEN" ]] && echo "export GH_PROJECTS_TOKEN=\"$GH_PROJECTS_TOKEN\"" >> "$CLAUDE_ENV_FILE"
-    [[ -n "$HOSTINGER_TOKEN" ]] && echo "export HOSTINGER_TOKEN=\"$HOSTINGER_TOKEN\"" >> "$CLAUDE_ENV_FILE"
+# --- [OPERATIONS] -------------------------------------------------------------
+
+_emit_env_key() {
+    local -r key="$1"
+    [[ "${key}" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]] || return 0
+    [[ -n "${!key:-}" ]] && printf 'export %s=%q\n' "${key}" "${!key}"
 }
 
-exit 0
+_emit_extra_env_keys() {
+    [[ -n "${EXTRA_ENV_KEYS}" ]] || return 0
+    local -a keys=()
+    local key
+    read -ra keys <<< "${EXTRA_ENV_KEYS//,/ }"
+    for key in "${keys[@]}"; do
+        _emit_env_key "${key}"
+    done
+}
+
+_emit_tool_paths() {
+    [[ -n "${TOOL_PATHS}" ]] || return 0
+    local -a paths=() selected=()
+    local path path_value
+    IFS=: read -ra paths <<< "${TOOL_PATHS}"
+    for path in "${paths[@]}"; do
+        [[ -n "${path}" ]] || continue
+        [[ -d "${path}" || "${ALLOW_MISSING_TOOL_PATHS}" == "1" ]] && selected+=("${path}")
+    done
+    (( ${#selected[@]} > 0 )) || return 0
+    printf -v path_value '%s:' "${selected[@]}"
+    # shellcheck disable=SC2016  # Single quotes intentional -- expand when Claude sources the env file.
+    printf 'export PATH="%s:${PATH}"\n' "${path_value%:}"
+}
+
+# --- [ENTRY] ------------------------------------------------------------------
+
+if [[ -f "${TOKEN_CACHE}" && "${TOKEN_CACHE}" == "${HOME}/.config/"* ]]; then
+    # shellcheck source=/dev/null  # Path validated above; cache is absent on non-Forge hosts.
+    source "${TOKEN_CACHE}"
+fi
+
+[[ -n "${CLAUDE_ENV_FILE:-}" ]] || exit 0
+ENV_DIR="$(dirname -- "${CLAUDE_ENV_FILE}")"
+readonly ENV_DIR
+[[ -d "${ENV_DIR}" && -w "${ENV_DIR}" && ! -d "${CLAUDE_ENV_FILE}" ]] || exit 0
+umask 077
+_ENV_TMP="$(mktemp "${CLAUDE_ENV_FILE}.tmp.XXXXXX")"
+readonly _ENV_TMP
+trap 'rm -f "${_ENV_TMP}"' EXIT
+{
+    for key in "${_ENV_KEYS[@]}"; do
+        _emit_env_key "${key}"
+    done
+    _emit_extra_env_keys
+    _emit_tool_paths
+} >"${_ENV_TMP}"
+chmod 600 "${_ENV_TMP}"
+mv "${_ENV_TMP}" "${CLAUDE_ENV_FILE}"

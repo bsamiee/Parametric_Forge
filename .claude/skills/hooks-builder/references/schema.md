@@ -1,159 +1,70 @@
 # [H1][SCHEMA]
->**Dictum:** *Declarative automation requires structured configuration.*
 
-<br>
+Three nesting levels: event -> matcher group -> hook handler.
 
-Matchers filter events; commands execute automation.
-
----
-## [1][STRUCTURE]
->**Dictum:** *Layered validation benefits from multiple hooks per event.*
-
-<br>
+## [01]-[STRUCTURE]
 
 ```json
 {
   "hooks": {
     "EventName": [{
       "matcher": "ToolPattern",
-      "hooks": [{ "type": "command", "command": "script-path", "timeout": 60000 }]
+      "hooks": [{ "type": "command", "command": "script-path", "timeout": 600 }]
     }]
   }
 }
 ```
 
-| [INDEX] | [FIELD]   | [TYPE] | [REQ] | [DEFAULT] | [CONSTRAINT]                         |
-| :-----: | --------- | ------ | :---: | :-------: | ------------------------------------ |
-|   [1]   | `matcher` | string |  No   |   `""`    | Regex or exact tool name             |
-|   [2]   | `type`    | string |  Yes  |     —     | `"command"` or `"prompt"`            |
-|   [3]   | `command` | string |  Yes  |     —     | Shell command or script path         |
-|   [4]   | `timeout` | number |  No   |  `60000`  | ms, max 600000; prompt default 30000 |
+**Common fields (all types):** `type` (required: "command"|"prompt"|"agent"), `timeout` (command=600, prompt=30, agent=60), `statusMessage` (spinner text), `once` (boolean, skills only).
+**Command fields:** `command` (shell command/path), `async` (background, no decision control).
+**Prompt/Agent fields:** `prompt` (instructions, `$ARGUMENTS` = hook input JSON), `model` (fast model default).
 
----
-## [2][MATCHERS]
->**Dictum:** *Matchers filter invocations; precision reduces unnecessary execution.*
+## [02]-[MATCHERS]
 
-<br>
+**Tool matchers** (PreToolUse, PermissionRequest, PostToolUse, PostToolUseFailure):
 
-### [2.1][TOOL_MATCHERS]
-Tool events (PreToolUse, PermissionRequest, PostToolUse):
+| [INDEX] | [PATTERN]  | [EXAMPLE]           | [MATCHES]                    |
+| :-----: | ---------- | ------------------- | ---------------------------- |
+|  [01]   | Exact      | `"Bash"`            | Bash tool only               |
+|  [02]   | Regex OR   | `"Edit\|Write"`     | Edit or Write                |
+|  [03]   | Regex wild | `"Notebook.*"`      | NotebookRead, NotebookEdit   |
+|  [04]   | Empty/`*`  | `""`                | All tools (catch-all)        |
+|  [05]   | MCP        | `"mcp__memory__.*"` | All tools from memory server |
 
-| [INDEX] | [PATTERN]  | [EXAMPLE]       | [MATCHES]                  |
-| :-----: | ---------- | --------------- | -------------------------- |
-|   [1]   | Exact      | `"Bash"`        | Bash tool only             |
-|   [2]   | Regex OR   | `"Edit\|Write"` | Edit or Write tools        |
-|   [3]   | Regex wild | `"Notebook.*"`  | NotebookRead, NotebookEdit |
-|   [4]   | Empty/`*`  | `""`            | All tools (catch-all)      |
-|   [5]   | MCP prefix | `"mcp__.*"`     | All MCP tool calls         |
+**Session matchers:** `"startup"`, `"resume"`, `"clear"`, `"compact"` (SessionStart); `"init"`, `"maintenance"` (Setup); `"clear"`, `"logout"`, `"prompt_input_exit"`, `"bypass_permissions_disabled"`, `"other"` (SessionEnd).
+**Other matchers:** Notification: `"permission_prompt"`, `"idle_prompt"`, `"auth_success"`, `"elicitation_dialog"`. SubagentStart/Stop: agent type name. PreCompact: `"manual"|"auto"`.
+**No matcher support:** UserPromptSubmit, Stop, TeammateIdle, TaskCompleted — always fire.
 
-### [2.2][SESSION_MATCHERS]
-Session events (SessionStart, SessionEnd):
+## [03]-[JSON_RESPONSES]
 
-| [INDEX] | [EVENT]      | [MATCHER]             | [TRIGGERS_ON]           |
-| :-----: | ------------ | --------------------- | ----------------------- |
-|   [1]   | SessionStart | `"startup"`           | Fresh session start     |
-|   [2]   | SessionStart | `"resume"`            | Session resumed         |
-|   [3]   | SessionStart | `"clear"`             | After `/clear` command  |
-|   [4]   | SessionStart | `"compact"`           | After context compacted |
-|   [5]   | SessionStart | `"startup\|resume"`   | Common: init or resume  |
-|   [6]   | SessionEnd   | `"logout"`            | User logout             |
-|   [7]   | SessionEnd   | `"prompt_input_exit"` | User exits at prompt    |
+**Universal output (exit 0):** `continue` (false halts Claude), `stopReason` (message on halt), `suppressOutput` (hide stdout), `systemMessage` (warning to user).
 
-### [2.3][NOTIFICATION_MATCHERS]
-Notification events:
+**PreToolUse:** `hookSpecificOutput.permissionDecision` ("allow"|"deny"|"ask"), `permissionDecisionReason`, `updatedInput` (modify tool params), `additionalContext`.
 
-| [INDEX] | [MATCHER]            | [TRIGGERS_ON]              |
-| :-----: | -------------------- | -------------------------- |
-|   [1]   | `permission_prompt`  | Permission dialog shown    |
-|   [2]   | `idle_prompt`        | Idle timeout notification  |
-|   [3]   | `auth_success`       | Authentication completed   |
-|   [4]   | `elicitation_dialog` | Information request dialog |
+**PermissionRequest:** `hookSpecificOutput.decision.behavior` ("allow"|"deny"), `decision.updatedInput`, `decision.updatedPermissions`, `decision.message` (deny reason), `decision.interrupt` (stop Claude on deny).
 
----
-## [3][JSON_RESPONSES]
->**Dictum:** *Structured responses enable fine-grained agent control.*
+**Top-level decision** (UserPromptSubmit, PostToolUse, PostToolUseFailure, Stop, SubagentStop): `decision` ("block"), `reason`, `additionalContext`.
 
-<br>
+**Context injection** (SessionStart, Setup, UserPromptSubmit): Plain stdout or `additionalContext` in JSON. SessionStart supports `CLAUDE_ENV_FILE`. Setup stdout becomes context visible to Claude.
 
-### [3.1][COMMON_OUTPUT]
-Common response fields:
+## [04]-[HOOK_TYPES]
 
-| [INDEX] | [FIELD]          | [TYPE]  | [EFFECT]                                   |
-| :-----: | ---------------- | ------- | ------------------------------------------ |
-|   [1]   | `continue`       | boolean | `false` halts Claude entirely (overrides)  |
-|   [2]   | `stopReason`     | string  | Message shown when `continue: false`       |
-|   [3]   | `suppressOutput` | boolean | Hides hook stdout from transcript (Ctrl-R) |
-|   [4]   | `systemMessage`  | string  | Injects system-level message to Claude     |
+**Command hooks:** Deterministic shell scripts. JSON stdin, exit codes + optional JSON stdout.
+**Prompt hooks:** Single-turn LLM evaluation. Response: `{"ok": true}` or `{"ok": false, "reason": "..."}`.
+**Agent hooks:** Multi-turn subagent with tool access (Read, Grep, Glob). Up to 50 turns. Same response schema as prompt.
 
-### [3.2][PRETOOLUSE_OUTPUT]
+**Eligible events (prompt/agent):** PreToolUse, PostToolUse, PostToolUseFailure, PermissionRequest, UserPromptSubmit, Stop, SubagentStop, TaskCompleted.
 
-| [INDEX] | [FIELD]                    | [VALUES]  | [EFFECT]                      |
-| :-----: | -------------------------- | --------- | ----------------------------- |
-|   [1]   | `permissionDecision`       | `"allow"` | Bypasses permission system    |
-|   [2]   | `permissionDecision`       | `"deny"`  | Blocks tool, reason to Claude |
-|   [3]   | `permissionDecision`       | `"ask"`   | Shows permission dialog       |
-|   [4]   | `permissionDecisionReason` | string    | Explanation shown to Claude   |
-|   [5]   | `updatedInput`             | object    | Modifies tool parameters      |
+[IMPORTANT] TeammateIdle does NOT support prompt or agent hooks — exit codes only.
 
-```json
-{"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "allow"}}
-```
+## [05]-[TESTING]
 
-### [3.3][PERMISSIONREQUEST_OUTPUT]
+| [INDEX] | [METHOD]    | [COMMAND]                                         |
+| :-----: | ----------- | ------------------------------------------------- |
+|  [01]   | List hooks  | `/hooks` interactive manager                      |
+|  [02]   | Debug mode  | `claude --debug` — shows hook match/execution     |
+|  [03]   | Verbose     | `Ctrl+O` toggle — shows hook output in transcript |
+|  [04]   | Direct test | `echo '{"tool_name":"Bash"}' \| python hook.py`   |
+|  [05]   | Disable all | `"disableAllHooks": true` in settings             |
 
-| [INDEX] | [FIELD]        | [VALUES]  | [EFFECT]                      |
-| :-----: | -------------- | --------- | ----------------------------- |
-|   [1]   | `behavior`     | `"allow"` | Grants permission silently    |
-|   [2]   | `behavior`     | `"deny"`  | Denies with optional reason   |
-|   [3]   | `updatedInput` | object    | Modifies tool parameters      |
-|   [4]   | `message`      | string    | Denial reason shown to Claude |
-|   [5]   | `interrupt`    | boolean   | Interrupts current operation  |
-
-```json
-{"hookSpecificOutput": {"hookEventName": "PermissionRequest", "decision": {"behavior": "allow", "updatedInput": {}}}}
-```
-
-### [3.4][POSTTOOLUSE_OUTPUT]
-
-| [INDEX] | [FIELD]             | [VALUES]  | [EFFECT]                   |
-| :-----: | ------------------- | --------- | -------------------------- |
-|   [1]   | `decision`          | `"block"` | Prompts Claude with reason |
-|   [2]   | `additionalContext` | string    | Adds context for Claude    |
-
-### [3.5][SESSION_OUTPUT]
-Session context injection (SessionStart, UserPromptSubmit):
-
-| [INDEX] | [FIELD]             | [EFFECT]                    |
-| :-----: | ------------------- | --------------------------- |
-|   [1]   | `additionalContext` | Injected as context         |
-|   [2]   | Plain stdout        | Also injected (exit code 0) |
-
----
-## [4][PROMPT_HOOKS]
->**Dictum:** *LLM evaluation handles context-dependent decisions beyond static rules.*
-
-<br>
-
-| [INDEX] | [FIELD]   | [TYPE]     | [DEFAULT] | [CONSTRAINT]                                    |
-| :-----: | --------- | ---------- | :-------: | ----------------------------------------------- |
-|   [1]   | `type`    | `"prompt"` |     —     | Required for LLM evaluation                     |
-|   [2]   | `prompt`  | string     |     —     | Custom instructions; use `$ARGUMENTS` for input |
-|   [3]   | `timeout` | number     |  `30000`  | ms, shorter than command                        |
-
-**Eligible events:** Stop, SubagentStop.<br>
-**Response schema:** `{"decision": "approve"|"block", "reason": "..."}`<br>
-**Deprecated:** `"decision": "approve"|"block"` maps to `"allow"|"deny"` in command hooks.
-
----
-## [5][TESTING]
->**Dictum:** *Independent testing validates hook logic before deployment.*
-
-<br>
-
-| [INDEX] | [METHOD]    | [COMMAND]                                       |
-| :-----: | ----------- | ----------------------------------------------- |
-|   [1]   | List hooks  | `/hooks`                                        |
-|   [2]   | Debug mode  | `claude --debug`                                |
-|   [3]   | Direct test | `echo '{"tool_name":"Bash"}' \| python hook.py` |
-
-[REFERENCE] Validation checklist: [→validation.md§1](./validation.md#1schema_gate)
+[REFERENCE] Validation checklist: [->validation.md§01](./validation.md#01-schema_gate)

@@ -1,61 +1,25 @@
 {
-	"model": "claude-opus-4-5-20251101",
-	"hooks": {
-		"SessionStart": [
-			{
-				"matcher": "startup|resume",
-				"hooks": [
-					{
-						"type": "command",
-						"command": "bash \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/setup-env.sh",
-						"timeout": 5
-					},
-					{
-						"type": "command",
-						"command": "uv run --script \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/load-skill-index.py",
-						"timeout": 5
-					}
-				]
-			}
-		],
-		"PostToolUse": [
-			{
-				"matcher": "*",
-				"hooks": [
-					{
-						"type": "command",
-						"command": "uv run \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/webhook-emit.py",
-						"timeout": 5
-					}
-				]
-			}
-		]
-	},
-	"permissions": {
-		"allow": [
-			"Read",
-			"Write",
-			"Edit",
-			"Glob",
-			"Grep",
-			"Task",
-			"TodoWrite",
-			"NotebookEdit",
-			"WebSearch",
-			"WebFetch",
-			"Skill",
-			"SlashCommand",
-			"Bash",
-			"Bash(pnpm:*)",
-			"Bash(nx:*)",
-			"Bash(git:*)",
-			"Bash(gh:*)",
-			"Bash(node:*)",
-			"Bash(uv:*)",
-			"mcp__playwright-test__*",
-			"mcp__playwright__browser_*"
-		],
-		"ask": [],
-		"deny": []
-	}
+    "$schema": "https://json.schemastore.org/claude-code-settings.json",
+    "effortLevel": "xhigh",
+    "claudeMdExcludes": [
+        "**/.cache/**/CLAUDE.md",
+        "**/node_modules/**/CLAUDE.md",
+        "**/bin/**/CLAUDE.md",
+        "**/obj/**/CLAUDE.md",
+        "**/.artifacts/**/CLAUDE.md"
+    ],
+    "hooks": {
+        "SessionStart": [
+            {
+                "matcher": "startup|resume|compact",
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": "bash \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/setup-env.sh",
+                        "timeout": 5
+                    }
+                ]
+            }
+        ]
+    }
 }

@@ -52,6 +52,9 @@ in {
     ilspycmd # .NET assembly decompiler for NuGet API catalogues
     nuget-to-json # NuGet package metadata extraction
     roslyn-language-server # C# LSP (roslyn-ls wrapped for clean --stdio)
+
+    # --- Cloud / IaC --------------------------------------------------------
+    pulumi # Pulumi CLI engine; Python SDK is managed per-project via uv (Maghz infra Automation API)
   ];
 
   # DOTNET_ROOT required for omnisharp and other SDK-discovery tools.

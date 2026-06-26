@@ -23,3 +23,6 @@
 - Persist API tokens through `CLAUDE_ENV_FILE` only when subagents or tools need inherited credentials; Claude may expand that file into shell launch command lines while commands run.
 - Use `CLAUDE_ENV_EXPORT_KEYS` for additional sub-agent credential variables that are required beyond the default `setup-env.sh` key set.
 - For LOC reports, use `loc <path>` when `command -v loc` succeeds.
+
+## Research And Docs
+- The web/docs/repo research tool-selection and chaining law (`Context7` first for any library, package, or platform docs — including Nixpkgs and Home Manager options; `Exa`/`Tavily` over the built-in fetch; the async Exa Agent and slow `Perplexity` for deep questions; `mcp__github__*` versus `gh`; context-isolated bulk reads) is the user-global doctrine. Resolve a package's or option's current behavior through `Context7` or its source, never training-data recall.

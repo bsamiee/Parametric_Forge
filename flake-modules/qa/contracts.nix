@@ -61,7 +61,6 @@
               qsv
               miller
               csvlens
-              atlas
               pgroll
               pgbadger
               minio-client
@@ -101,7 +100,6 @@
            qsv --version >/dev/null
            mlr --version >/dev/null
            csvlens --version >/dev/null
-           atlas version >/dev/null
            pgroll --version >/dev/null
            ${forgePkgs.lib.optionalString smokeHasPgloader "pgloader --version >/dev/null"}
            pgbadger --version >/dev/null

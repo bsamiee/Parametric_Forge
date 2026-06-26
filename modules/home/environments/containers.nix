@@ -56,5 +56,14 @@
 
       [engine]
     '';
+    # Bring the active DOCKER_CONFIG (~/.config/docker) under Forge management so it cannot drift.
+    # NO credsStore: docker-credential-osxkeychain is a Docker-Desktop binary absent on this Nix/Colima
+    # machine, so naming it breaks every `docker pull` (helper-not-found). With no store, docker keeps
+    # the (empty) auths inline — correct for Colima + public images. The legacy ~/.docker/config.json
+    # (Docker-Desktop leftover) was cleared.
+    "docker/config.json".text = builtins.toJSON {
+      auths = {};
+      currentContext = "colima";
+    };
   };
 }
