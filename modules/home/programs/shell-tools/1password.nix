@@ -110,7 +110,8 @@ in {
     # CLI tools and APIs
     # NOTE: ANTHROPIC_API_KEY intentionally excluded - use Claude Code OAuth instead
     # Projects needing API key auth should configure it locally
-    export GREPTILE_TOKEN="op://Tokens/GREPTILE_TOKEN/token"
+    export GREPTILE_API_KEY="op://Tokens/GREPTILE_API_KEY/token"
+    export CODERABBIT_TOKEN="op://Tokens/CODERABBIT_TOKEN/token"
     export RHINO_TOKEN="op://Tokens/RHINO_TOKEN/token"
     export EXA_API_KEY="op://Tokens/Exa API Key/token"
     export PERPLEXITY_API_KEY="op://Tokens/Perplexity Sonar API Key/token"

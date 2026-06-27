@@ -10,6 +10,15 @@
   pkgs,
   ...
 }: let
+  fdWithHidden = pkgs.symlinkJoin {
+    name = "fd-hidden-${pkgs.fd.version}";
+    paths = [pkgs.fd];
+    nativeBuildInputs = [pkgs.makeWrapper];
+    postBuild = ''
+      wrapProgram "$out/bin/fd" --add-flags '--hidden'
+    '';
+  };
+
   globalIgnorePatterns = [
     # Version Control
     ".git/"
@@ -76,6 +85,6 @@
     "*.qcow2"
   ];
 in {
-  home.packages = [pkgs.fd];
+  home.packages = [fdWithHidden];
   xdg.configFile."fd/ignore".text = lib.concatStringsSep "\n" globalIgnorePatterns;
 }

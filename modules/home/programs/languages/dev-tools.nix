@@ -6,7 +6,11 @@
 # ----------------------------------------------------------------------------
 # Language-agnostic tooling: linters, formatters, and helpers shared across
 # multiple ecosystems.
-{pkgs, ...}: let
+{
+  lib,
+  pkgs,
+  ...
+}: let
   dotnet-combined = pkgs.dotnetCorePackages.combinePackages [
     pkgs.dotnet-sdk_8
     pkgs.dotnet-sdk_9
@@ -19,6 +23,22 @@
     mkdir -p "$logdir"
     exec ${pkgs.roslyn-ls}/bin/Microsoft.CodeAnalysis.LanguageServer \
       --logLevel Information --extensionLogDirectory "$logdir" "$@"
+  '';
+  nuget-mcp-server = assert lib.asserts.assertMsg (pkgs.stdenv.hostPlatform.system == "aarch64-darwin") "nuget-mcp packages the osx-arm64 RID and requires aarch64-darwin";
+    pkgs.runCommand "nuget-mcp-server-osx-arm64-1.4.15" {
+      src = pkgs.fetchurl {
+        url = "https://api.nuget.org/v3-flatcontainer/nuget.mcp.server.osx-arm64/1.4.15/nuget.mcp.server.osx-arm64.1.4.15.nupkg";
+        sha256 = "1zl6xxb7al1pydyma4lhd0fj8an5x0fv8g4h65jh65jz5h76grf1";
+      };
+      nativeBuildInputs = [pkgs.unzip];
+    } ''
+      mkdir -p "$out"
+      unzip -q "$src" -d "$out"
+      chmod +x "$out/tools/net10.0/osx-arm64/NuGet.Mcp.Server"
+    '';
+  nuget-mcp = pkgs.writeShellScriptBin "nuget-mcp" ''
+    export DOTNET_ROOT="${dotnet-combined}/share/dotnet"
+    exec ${nuget-mcp-server}/tools/net10.0/osx-arm64/NuGet.Mcp.Server "$@"
   '';
 in {
   home.packages = with pkgs; [
@@ -52,6 +72,7 @@ in {
     ilspycmd # .NET assembly decompiler for NuGet API catalogues
     nuget-to-json # NuGet package metadata extraction
     roslyn-language-server # C# LSP (roslyn-ls wrapped for clean --stdio)
+    nuget-mcp
 
     # --- Cloud / IaC --------------------------------------------------------
     pulumi # Pulumi CLI engine; Python SDK is managed per-project via uv (Maghz infra Automation API)
@@ -59,5 +80,5 @@ in {
 
   # DOTNET_ROOT required for Roslyn and other SDK-discovery tools.
   # Re-evaluated on every rebuild — store path stays current.
-  home.sessionVariables.DOTNET_ROOT = "${dotnet-combined}";
+  home.sessionVariables.DOTNET_ROOT = "${dotnet-combined}/share/dotnet";
 }

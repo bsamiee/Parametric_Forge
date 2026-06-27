@@ -7,6 +7,7 @@
 # Native scientific build/runtime toolchain for source-built Python packages,
 # geospatial/data libraries, numerical kernels, and local provisioning probes.
 {
+  config,
   lib,
   pkgs,
   ...
@@ -127,6 +128,21 @@
     (lib.makeSearchPathOutput "out" "share/pkgconfig" companionNativeLibs)
   ];
   companionCmakePrefixPath = lib.concatStringsSep ":" (map toString companionNativeLibs);
+  forgePythonStateHome = config.xdg.stateHome;
+  forgeJupyterTokenFile = "${config.xdg.configHome}/jupyter/forge-token.env";
+  forgeJupyterLogDir = "${config.xdg.stateHome}/forge-jupyter/log";
+  forgeJupyterTokenPrelude = ''
+    token_file=${lib.escapeShellArg forgeJupyterTokenFile}
+    if [ -z "''${JUPYTER_TOKEN:-}" ] && [ -f "$token_file" ]; then
+      # shellcheck source=/dev/null
+      . "$token_file"
+    fi
+    if [ -z "''${JUPYTER_TOKEN:-}" ]; then
+      printf 'forge-jupyter: missing JUPYTER_TOKEN; expected %s\n' "$token_file" >&2
+      exit 1
+    fi
+    export JUPYTER_TOKEN
+  '';
   forgePythonEnvPrelude = python: profile: ''
     forge_python_root() {
       if [ -n "''${FORGE_PROVISION_ROOT:-}" ]; then
@@ -147,7 +163,7 @@
     forge_python_env_default() {
       abi="$(${python}/bin/python3 -c 'import sys; print(sys.implementation.cache_tag)')"
       root_key="$(forge_python_root_key)"
-      state_home="''${XDG_STATE_HOME:-$HOME/.local/state}"
+      state_home=${lib.escapeShellArg forgePythonStateHome}
       printf '%s/forge-python-envs/%s/%s/${profile}\n' "$state_home" "$abi" "$root_key"
     }
 
@@ -231,16 +247,114 @@
       exec forge-scientific-env uv sync --locked --group scientific "$@"
     '';
   };
+  forgeJupyterServerConfig = pkgs.writeText "forge-jupyter-server-config.py" ''
+    import os
+
+    c = get_config()
+    c.IdentityProvider.token = os.environ["JUPYTER_TOKEN"]
+  '';
+  forgeIfcMcp = pkgs.writeShellScriptBin "forge-ifcmcp" ''
+    exec ${forgeCompanionEnv}/bin/forge-companion-env uvx --from "ifcopenshell-mcp[mcp]==0.8.5" ifcmcp "$@"
+  '';
+  forgeJupyter = pkgs.writeShellScriptBin "forge-jupyter" ''
+    ${forgeJupyterTokenPrelude}
+    exec ${forgeCompanionEnv}/bin/forge-companion-env uvx \
+      --from "jupyterlab==4.6.0" --with "jupyter-collaboration==4.4.1" --with "jupyter-mcp-tools==0.1.6" \
+      jupyter-lab --no-browser --ServerApp.ip=127.0.0.1 --ServerApp.port=8888 \
+      --ServerApp.port_retries=0 \
+      --config=${lib.escapeShellArg forgeJupyterServerConfig} "$@"
+  '';
+  forgeJupyterMcp = pkgs.writeShellScriptBin "forge-jupyter-mcp" ''
+    ${forgeJupyterTokenPrelude}
+    exec ${forgeCompanionEnv}/bin/forge-companion-env uvx --from "jupyter-mcp-server==1.0.2" jupyter-mcp-server "$@"
+  '';
 in {
-  home.packages =
-    [
-      gfortranTool
-    ]
-    ++ scientificProfileNativeLibs
-    ++ scientificRuntimeTools
-    ++ [
-      forgeCompanionEnv
-      forgeScientificEnv
-      forgeScientificSync
-    ];
+  home = {
+    packages =
+      [
+        gfortranTool
+      ]
+      ++ scientificProfileNativeLibs
+      ++ scientificRuntimeTools
+      ++ [
+        forgeCompanionEnv
+        forgeScientificEnv
+        forgeScientificSync
+        forgeIfcMcp
+        forgeJupyter
+        forgeJupyterMcp
+      ];
+
+    file."Applications/Forge Jupyter.app/Contents/Info.plist".text = ''
+      <?xml version="1.0" encoding="UTF-8"?>
+      <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+      <plist version="1.0">
+      <dict>
+        <key>CFBundleIdentifier</key>
+        <string>com.parametric-forge.forge-jupyter</string>
+        <key>CFBundleName</key>
+        <string>Forge Jupyter</string>
+        <key>CFBundleDisplayName</key>
+        <string>Forge Jupyter</string>
+        <key>CFBundleVersion</key>
+        <string>1</string>
+        <key>CFBundleShortVersionString</key>
+        <string>1.0</string>
+        <key>CFBundlePackageType</key>
+        <string>APPL</string>
+        <key>LSUIElement</key>
+        <true/>
+        <key>LSBackgroundOnly</key>
+        <true/>
+      </dict>
+      </plist>
+    '';
+
+    activation = {
+      registerForgeJupyterApp = lib.hm.dag.entryAfter ["linkGeneration"] ''
+        app="$HOME/Applications/Forge Jupyter.app"
+        lsregister="/System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/LaunchServices.framework/Versions/A/Support/lsregister"
+        if [ -d "$app" ] && [ -x "$lsregister" ]; then
+          "$lsregister" -f "$app" || true
+        fi
+      '';
+
+      ensureForgeJupyterToken = lib.hm.dag.entryAfter ["linkGeneration"] ''
+        token_file=${lib.escapeShellArg forgeJupyterTokenFile}
+        tmp_file="$token_file.tmp.$$"
+        mkdir -p "$(dirname "$token_file")"
+        if [ ! -s "$token_file" ]; then
+          token="$(${pkgs.openssl}/bin/openssl rand -hex 32)"
+          ( umask 077; printf 'export JUPYTER_TOKEN=%s\n' "$token" >"$tmp_file" )
+          chmod 600 "$tmp_file"
+          mv -f "$tmp_file" "$token_file"
+        fi
+        chmod 600 "$token_file"
+      '';
+
+      ensureForgeJupyterLogDir = lib.hm.dag.entryAfter ["linkGeneration"] ''
+        ${pkgs.coreutils}/bin/install -d -m 700 ${lib.escapeShellArg forgeJupyterLogDir}
+      '';
+
+      registerJupyterScientificKernel = lib.hm.dag.entryAfter ["linkGeneration"] ''
+        sci_env=$(${pkgs.findutils}/bin/find ${lib.escapeShellArg "${forgePythonStateHome}/forge-python-envs"} -maxdepth 3 -type d -name scientific 2>/dev/null | ${pkgs.coreutils}/bin/head -n 1)
+        if [ -n "$sci_env" ] && [ -x "$sci_env/bin/python" ]; then
+          "$sci_env/bin/python" -m ipykernel install --user --name forge-scientific --display-name "Python 3.15 (forge-scientific)" 2>/dev/null || true
+        fi
+      '';
+    };
+  };
+
+  launchd.agents.forge-jupyter = {
+    enable = true;
+    config = {
+      ProgramArguments = ["${forgeJupyter}/bin/forge-jupyter"];
+      RunAtLoad = true;
+      KeepAlive = true;
+      ThrottleInterval = 30;
+      StandardOutPath = "${forgeJupyterLogDir}/out.log";
+      StandardErrorPath = "${forgeJupyterLogDir}/err.log";
+      AssociatedBundleIdentifiers = ["com.parametric-forge.forge-jupyter"];
+    };
+  };
 }

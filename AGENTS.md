@@ -16,6 +16,7 @@
 - Provisioning must stay noninteractive for agents: no host `sudo`, no keychain requirement, no password prompt, and no Docker credential helper dependency for public images.
 - Read-only provisioning commands should avoid durable writes unless the command explicitly documents state creation.
 - Home Manager DB tooling is client/tooling-owned: `psql`, `pg_dump`, `pg_restore`, `pg_isready`, optional `pg_config`, SQLFluff/Postgres LSP, DuckDB, SQLite/SQLean, SpatiaLite, and sqlite-vec. PostgreSQL server extensions stay Docker-owned by `forge-provision`; image-specific shared-preload requirements may include pg_cron, but `pg_cron` extension creation stays row-gated and opt-in.
+- The MCP and server launchers `forge-ifcmcp` (IfcOpenShell MCP, cp312 companion lane), `forge-jupyter` (a persistent JupyterLab LaunchAgent on loopback `127.0.0.1:8888` with KeepAlive, registered as the "Forge Jupyter" Login Item so it is not a bare `sh` entry), `forge-jupyter-mcp` (the Jupyter MCP connector), and `nuget-mcp` (the NuGet MCP via the .NET 10 SDK) are Home Manager-installed wrappers under `modules/home/programs/languages/`. Sibling-repo `ifc`/`jupyter`/`nuget` skills and MCP configs invoke them; fix launcher behavior here, never in the sibling repo.
 - Forge provisioning JSON is schema v3 only. Do not add schema-v1/v2 emitters or compatibility adapters. Doctor and extension JSON expose sanitized runtime booleans/kinds and catalog metadata only; raw sockets, Docker config paths, helper names, logs, DSNs, token material, mount paths, and host absolute paths stay out of agent-facing JSON.
 
 ## Claude And Codex Runtime Boundaries
@@ -23,6 +24,9 @@
 - Persist API tokens through `CLAUDE_ENV_FILE` only when subagents or tools need inherited credentials; Claude may expand that file into shell launch command lines while commands run.
 - Use `CLAUDE_ENV_EXPORT_KEYS` for additional sub-agent credential variables that are required beyond the default `setup-env.sh` key set.
 - For LOC reports, use `loc <path>` when `command -v loc` succeeds.
+
+## Code Review
+- After implementation and cleanup are complete, run CodeRabbit once on uncommitted work (`cr review --agent -t uncommitted`); wait 3-4 minutes before polling unless the tool emits actionable output; fix all valid findings as one batch. Use the initial actionable finding count as each reviewer's total-run budget for that leg: <10 findings = 1 run, 10-19 = 2 runs, 20-29 = 3 runs, 30-49 = 4 runs, 50+ = 5 runs maximum. Commit the final diff on a short-lived working branch, then run Greptile on the committed branch diff (`greptile review` or `cli-review`); wait 3-4 minutes before polling, fix valid findings as one batch, and stay within the same run budget. After Greptile is clean or the budget is exhausted, merge acceptable work back to `main` and delete the local branch.
 
 ## Research And Docs
 - The web/docs/repo research tool-selection and chaining law (`Context7` first for any library, package, or platform docs — including Nixpkgs and Home Manager options; `Exa`/`Tavily` over the built-in fetch; the async Exa Agent and slow `Perplexity` for deep questions; `mcp__github__*` versus `gh`; context-isolated bulk reads) is the user-global doctrine. Resolve a package's or option's current behavior through `Context7` or its source, never training-data recall.
