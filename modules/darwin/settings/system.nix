@@ -8,11 +8,19 @@
 {
   lib,
   config,
+  pkgs,
   ...
 }: let
   inherit (lib) mkDefault;
   inherit (config.system) primaryUser;
   primaryUserHome = config.users.users.${primaryUser}.home;
+  toolchainEnv = import ../../common/toolchain-env.nix {
+    inherit lib pkgs;
+    home = primaryUserHome;
+    username = primaryUser;
+    xdgCacheHome = "${primaryUserHome}/.cache";
+    xdgDataHome = "${primaryUserHome}/.local/share";
+  };
 in {
   system.defaults = {
     # --- Login Window -------------------------------------------------------
@@ -92,37 +100,18 @@ in {
 
   # Keep GUI-launched processes aligned with Nix/Home Manager PATH behavior.
   # This avoids "tool exists in shell but not in app-launched subprocesses".
-  launchd.user.envVariables = {
-    PATH = [
-      "${primaryUserHome}/.nix-profile/bin"
-      "${primaryUserHome}/.local/bin"
-      "${primaryUserHome}/bin"
-      "${primaryUserHome}/.dotnet/tools"
-      "${primaryUserHome}/.local/share/cargo/bin"
-      "${primaryUserHome}/.local/share/go/bin"
-      "/etc/profiles/per-user/${primaryUser}/bin"
-      "/run/current-system/sw/bin"
-      "/nix/var/nix/profiles/default/bin"
-      "/opt/homebrew/bin"
-      "/opt/homebrew/sbin"
-      "/Applications/Rhino 8.app/Contents/Resources/bin"
-      "/usr/local/bin"
-      "/usr/bin"
-      "/bin"
-      "/usr/sbin"
-      "/sbin"
-    ];
-    DOCKER_HOST = "unix://${primaryUserHome}/.local/share/colima/default/docker.sock";
-    COLIMA_HOME = "${primaryUserHome}/.local/share/colima";
-    DOCKER_CONFIG = "${primaryUserHome}/.config/docker";
-    UV_PYTHON_PREFERENCE = "only-system";
-    UV_PYTHON_DOWNLOADS = "never";
-    UV_CACHE_DIR = "${primaryUserHome}/.cache/uv";
-    GH_CONFIG_DIR = "${primaryUserHome}/.config/gh";
-    PNPM_HOME = "${primaryUserHome}/.local/share/pnpm";
-    PAGER = "less";
-    GH_PAGER = "delta";
-    GIT_PAGER = "delta";
-    LESS = "-RFX";
-  };
+  launchd.user.envVariables =
+    toolchainEnv.scientificSessionEnv
+    // {
+      PATH = toolchainEnv.launchdPathEntries;
+      DOCKER_HOST = "unix://${primaryUserHome}/.local/share/colima/default/docker.sock";
+      COLIMA_HOME = "${primaryUserHome}/.local/share/colima";
+      DOCKER_CONFIG = "${primaryUserHome}/.config/docker";
+      GH_CONFIG_DIR = "${primaryUserHome}/.config/gh";
+      PNPM_HOME = "${primaryUserHome}/.local/share/pnpm";
+      PAGER = "less";
+      GH_PAGER = "delta";
+      GIT_PAGER = "delta";
+      LESS = "-RFX";
+    };
 }

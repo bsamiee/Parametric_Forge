@@ -18,6 +18,7 @@ function M.setup(config)
     home and (home .. "/.nix-profile/bin/zellij") or nil,
     user ~= "" and ("/etc/profiles/per-user/" .. user .. "/bin/zellij") or nil,
     "/run/current-system/sw/bin/zellij",
+    "/nix/var/nix/profiles/default/bin/zellij",
     "/nix/profile/bin/zellij",
     "/opt/homebrew/bin/zellij",
     "/usr/local/bin/zellij",
@@ -45,6 +46,7 @@ function M.setup(config)
   if user ~= "" then table.insert(path_segments, "/etc/profiles/per-user/" .. user .. "/bin") end
   for _, p in ipairs({
     "/run/current-system/sw/bin",
+    "/nix/var/nix/profiles/default/bin",
     "/nix/profile/bin",
     "/opt/homebrew/bin",
     "/usr/local/bin",

@@ -14,6 +14,17 @@
 }: let
   darwinMinVersion = pkgs.stdenv.hostPlatform.darwinMinVersion or "14.0";
   sharedLibExt = pkgs.stdenv.hostPlatform.extensions.sharedLibrary;
+  llvmTools = pkgs.llvmPackages.llvm;
+  openmp = pkgs.llvmPackages.openmp;
+  openmpDev = lib.getDev openmp;
+  openmpLib = lib.getLib openmp;
+  toolchainEnv = import ../../../common/toolchain-env.nix {
+    inherit lib pkgs;
+    home = config.home.homeDirectory;
+    username = config.home.username;
+    xdgCacheHome = config.xdg.cacheHome;
+    xdgDataHome = config.xdg.dataHome;
+  };
 
   nativeBuildTools = with pkgs; [
     clang
@@ -40,13 +51,21 @@
 
   numericNativeLibs = with pkgs; [
     eigen
+    flint
+    gmp
+    libiconv
+    mpfr
+    openmpDev
+    openmpLib
     openblas
     blas
     lapack
+    tbb
   ];
 
   columnarNativeLibs = with pkgs; [
     arrow-cpp
+    crc32c
   ];
 
   artifactNativeLibs = with pkgs; [
@@ -74,11 +93,14 @@
 
   pointCloudNativeLibs = with pkgs; [
     boost
+    flann
     pdal
   ];
 
   aecNativeTools = with pkgs; [
+    energyplus
     gmsh
+    openstudio
   ];
 
   scientificNativeLibs =
@@ -93,7 +115,15 @@
     ++ columnarNativeLibs
     ++ (with pkgs; [
       eigen
+      flint
+      gmp
+      libiconv
+      mpfr
+      openmpDev
+      openmpLib
       openblas
+      flann
+      tbb
       pdal
     ])
     ++ artifactNativeLibs;
@@ -109,6 +139,8 @@
     ++ numericNativeLibs
     ++ pointCloudNativeLibs;
 
+  energyRuntimePrelude = toolchainEnv.shellExports toolchainEnv.energyEnv;
+
   gfortranTool = pkgs.writeShellScriptBin "gfortran" ''
     exec ${pkgs.gfortran}/bin/gfortran "$@"
   '';
@@ -121,6 +153,7 @@
   ];
 
   cmakePrefixPath = lib.concatStringsSep ":" (map toString scientificNativeLibs);
+  libraryPath = lib.makeLibraryPath scientificNativeLibs;
   companionPkgConfigPath = lib.concatStringsSep ":" [
     (lib.makeSearchPathOutput "dev" "lib/pkgconfig" companionNativeLibs)
     (lib.makeSearchPathOutput "out" "lib/pkgconfig" companionNativeLibs)
@@ -128,9 +161,11 @@
     (lib.makeSearchPathOutput "out" "share/pkgconfig" companionNativeLibs)
   ];
   companionCmakePrefixPath = lib.concatStringsSep ":" (map toString companionNativeLibs);
+  companionLibraryPath = lib.makeLibraryPath companionNativeLibs;
   forgePythonStateHome = config.xdg.stateHome;
   forgeJupyterTokenFile = "${config.xdg.configHome}/jupyter/forge-token.env";
   forgeJupyterLogDir = "${config.xdg.stateHome}/forge-jupyter/log";
+  forgeJupyterRootDir = "${config.xdg.stateHome}/forge-jupyter/root";
   forgeJupyterTokenPrelude = ''
     token_file=${lib.escapeShellArg forgeJupyterTokenFile}
     if [ -z "''${JUPYTER_TOKEN:-}" ] && [ -f "$token_file" ]; then
@@ -143,6 +178,9 @@
     fi
     export JUPYTER_TOKEN
   '';
+  forgeJupyterRootPrelude = ''
+    export FORGE_PROVISION_ROOT=${lib.escapeShellArg forgeJupyterRootDir}
+  '';
   forgePythonEnvPrelude = python: profile: ''
     forge_python_root() {
       if [ -n "''${FORGE_PROVISION_ROOT:-}" ]; then
@@ -153,7 +191,17 @@
         (cd "$FORGE_PROVISION_ROOT" && pwd -P)
         return
       fi
-      git rev-parse --show-toplevel 2>/dev/null || pwd -P
+      dir="$PWD"
+      while [ "$dir" != "/" ]; do
+        if [ -f "$dir/pyproject.toml" ] || [ -f "$dir/uv.lock" ] || [ -x "$dir/.venv/bin/python" ]; then
+          (cd "$dir" && pwd -P)
+          return
+        fi
+        dir="''${dir%/*}"
+        [ -n "$dir" ] || dir="/"
+      done
+
+      pwd -P
     }
 
     forge_python_root_key() {
@@ -167,39 +215,41 @@
       printf '%s/forge-python-envs/%s/%s/${profile}\n' "$state_home" "$abi" "$root_key"
     }
 
-    if [ -z "''${UV_PROJECT_ENVIRONMENT:-}" ]; then
+    if [ -n "''${FORGE_PYTHON_ENVIRONMENT:-}" ]; then
+      UV_PROJECT_ENVIRONMENT="$FORGE_PYTHON_ENVIRONMENT"
+    else
       UV_PROJECT_ENVIRONMENT="$(forge_python_env_default)"
-      export UV_PROJECT_ENVIRONMENT
     fi
+    export UV_PROJECT_ENVIRONMENT
   '';
   forgeScientificEnv = pkgs.writeShellApplication {
     name = "forge-scientific-env";
-    # python315 is pinned ahead of the ambient project-venv shim so `forge-scientific-env python3` is the deterministic
-    # canonical scientific interpreter (matching UV_PYTHON_PREFERENCE=only-system), not whichever project owns the cwd.
+    # python315 comes ahead of ambient project shims so `forge-scientific-env python3` is deterministic.
     runtimeInputs = nativeBuildTools ++ fortranBuildTools ++ scientificNativeLibs ++ scientificRuntimeTools ++ [pkgs.uv pkgs.python315];
     text = ''
       export UV_PYTHON_PREFERENCE="only-system"
       export UV_PYTHON_DOWNLOADS="never"
+      export PYO3_USE_ABI3_FORWARD_COMPATIBILITY="1"
       export MACOSX_DEPLOYMENT_TARGET="${darwinMinVersion}"
+      ${energyRuntimePrelude}
 
       export CC="${pkgs.clang}/bin/clang"
       export CXX="${pkgs.clang}/bin/clang++"
+      export AR="${llvmTools}/bin/llvm-ar"
+      export RANLIB="${llvmTools}/bin/llvm-ranlib"
       export FC="${pkgs.gfortran}/bin/gfortran"
       export F77="$FC"
       export F90="$FC"
 
-      export GDAL_CONFIG="${pkgs.gdal}/bin/gdal-config"
-      export GEOS_CONFIG="${pkgs.geos}/bin/geos-config"
-      export GDAL_DATA="${pkgs.gdal}/share/gdal"
-      export PROJ_DIR="${pkgs.proj}"
-      export PROJ_INCDIR="${pkgs.proj.dev}/include"
-      export PROJ_LIBDIR="${pkgs.proj}/lib"
-      export PROJ_DATA="${pkgs.proj}/share/proj"
+      ${toolchainEnv.shellExports toolchainEnv.geoEnv}
 
       export HDF5_PKGCONFIG_NAME="hdf5"
+      export CRC32C_INSTALL_PREFIX="${pkgs.crc32c}"
+      export CRC32C_PURE_PYTHON="0"
 
       export ARROW_HOME="${pkgs.arrow-cpp}"
       export OPENBLAS_DIR="${pkgs.openblas}"
+      export OpenMP_ROOT="${openmpDev}"
       export ONNXRUNTIME_DIR="${pkgs.onnxruntime}"
       for candidate in \
         "${pkgs.onnxruntime}/lib/libonnxruntime${sharedLibExt}.${pkgs.onnxruntime.version}" \
@@ -218,33 +268,64 @@
 
       export PKG_CONFIG_PATH="${pkgConfigPath}''${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
       export CMAKE_PREFIX_PATH="${cmakePrefixPath}''${CMAKE_PREFIX_PATH:+:$CMAKE_PREFIX_PATH}"
+      export LIBRARY_PATH="${libraryPath}''${LIBRARY_PATH:+:$LIBRARY_PATH}"
+      export CFLAGS="-D_DARWIN_C_SOURCE''${CFLAGS:+ $CFLAGS}"
+      export CXXFLAGS="-D_DARWIN_C_SOURCE''${CXXFLAGS:+ $CXXFLAGS}"
+      export CPPFLAGS="-I${openmpDev}/include''${CPPFLAGS:+ $CPPFLAGS}"
+      export LDFLAGS="-L${openmpLib}/lib''${LDFLAGS:+ $LDFLAGS}"
+      export CMAKE_ARGS="-DCMAKE_C_FLAGS=-D_DARWIN_C_SOURCE -DCMAKE_CXX_FLAGS=-D_DARWIN_C_SOURCE -DOpenMP_C_FLAGS=-fopenmp -DOpenMP_CXX_FLAGS=-fopenmp -DOpenMP_C_LIB_NAMES=omp -DOpenMP_CXX_LIB_NAMES=omp -DOpenMP_omp_LIBRARY=${openmpLib}/lib/libomp${sharedLibExt}''${CMAKE_ARGS:+ $CMAKE_ARGS}"
 
       exec "$@"
     '';
   };
   forgeCompanionEnv = pkgs.writeShellApplication {
     name = "forge-companion-env";
-    # Rasm's Python branch keeps a cp315 core and a cp312 companion lane for
-    # native geometry/IFC and codegen packages gated below Python 3.13/3.15.
-    runtimeInputs = nativeBuildTools ++ companionNativeLibs ++ [pkgs.coreutils pkgs.git pkgs.uv pkgs.python312];
+    # Companion tasks run on Python 3.12 for IFC and hosted code-generation tools that ship there.
+    runtimeInputs = nativeBuildTools ++ companionNativeLibs ++ [pkgs.coreutils pkgs.uv pkgs.python312];
     text = ''
       ${forgePythonEnvPrelude pkgs.python312 "companion"}
       export UV_PYTHON_PREFERENCE="only-system"
       export UV_PYTHON_DOWNLOADS="never"
       export MACOSX_DEPLOYMENT_TARGET="${darwinMinVersion}"
+      ${energyRuntimePrelude}
       export CC="${pkgs.clang}/bin/clang"
       export CXX="${pkgs.clang}/bin/clang++"
+      export AR="${llvmTools}/bin/llvm-ar"
+      export RANLIB="${llvmTools}/bin/llvm-ranlib"
       export PKG_CONFIG_PATH="${companionPkgConfigPath}''${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
       export CMAKE_PREFIX_PATH="${companionCmakePrefixPath}''${CMAKE_PREFIX_PATH:+:$CMAKE_PREFIX_PATH}"
+      export LIBRARY_PATH="${companionLibraryPath}''${LIBRARY_PATH:+:$LIBRARY_PATH}"
       exec "$@"
     '';
   };
   forgeScientificSync = pkgs.writeShellApplication {
     name = "forge-scientific-sync";
-    runtimeInputs = [forgeScientificEnv pkgs.coreutils pkgs.git pkgs.python315 pkgs.uv];
+    runtimeInputs = [forgeScientificEnv pkgs.coreutils pkgs.python315 pkgs.uv];
     text = ''
       ${forgePythonEnvPrelude pkgs.python315 "scientific"}
-      exec forge-scientific-env uv sync --locked --group scientific "$@"
+      project_root="$(forge_python_root)"
+      cd "$project_root"
+      forge-scientific-env uv sync --locked --no-default-groups --python "${pkgs.python315}/bin/python3" "$@"
+
+      if [ -x "$UV_PROJECT_ENVIRONMENT/bin/python" ]; then
+        crc32c_version="$("$UV_PROJECT_ENVIRONMENT/bin/python" -c 'from importlib.metadata import version; print(version("google-crc32c"))' 2>/dev/null || true)"
+        if [ -n "$crc32c_version" ]; then
+          forge-scientific-env uv pip install \
+            --python "$UV_PROJECT_ENVIRONMENT/bin/python" \
+            --no-cache \
+            --no-binary google-crc32c \
+            --reinstall \
+            "google-crc32c==$crc32c_version"
+        fi
+      fi
+
+      if [ -x "$UV_PROJECT_ENVIRONMENT/bin/python" ] && "$UV_PROJECT_ENVIRONMENT/bin/python" -c 'import ipykernel' 2>/dev/null; then
+        root_key="$(forge_python_root_key)"
+        project_name="$(basename "$project_root")"
+        "$UV_PROJECT_ENVIRONMENT/bin/python" -m ipykernel install --user \
+          --name "forge-scientific-$root_key" \
+          --display-name "Python 3.15 (forge-scientific: $project_name)"
+      fi
     '';
   };
   forgeJupyterServerConfig = pkgs.writeText "forge-jupyter-server-config.py" ''
@@ -254,11 +335,12 @@
     c.IdentityProvider.token = os.environ["JUPYTER_TOKEN"]
   '';
   forgeIfcMcp = pkgs.writeShellScriptBin "forge-ifcmcp" ''
-    exec ${forgeCompanionEnv}/bin/forge-companion-env uvx --from "ifcopenshell-mcp[mcp]==0.8.5" ifcmcp "$@"
+    exec ${forgeCompanionEnv}/bin/forge-companion-env uvx --python "${pkgs.python312}/bin/python3" --from "ifcopenshell-mcp[mcp]==0.8.5" ifcmcp "$@"
   '';
   forgeJupyter = pkgs.writeShellScriptBin "forge-jupyter" ''
     ${forgeJupyterTokenPrelude}
-    exec ${forgeCompanionEnv}/bin/forge-companion-env uvx \
+    ${forgeJupyterRootPrelude}
+    exec ${forgeCompanionEnv}/bin/forge-companion-env uvx --python "${pkgs.python312}/bin/python3" \
       --from "jupyterlab==4.6.0" --with "jupyter-collaboration==4.4.1" --with "jupyter-mcp-tools==0.1.6" \
       jupyter-lab --no-browser --ServerApp.ip=127.0.0.1 --ServerApp.port=8888 \
       --ServerApp.port_retries=0 \
@@ -266,7 +348,8 @@
   '';
   forgeJupyterMcp = pkgs.writeShellScriptBin "forge-jupyter-mcp" ''
     ${forgeJupyterTokenPrelude}
-    exec ${forgeCompanionEnv}/bin/forge-companion-env uvx --from "jupyter-mcp-server==1.0.2" jupyter-mcp-server "$@"
+    ${forgeJupyterRootPrelude}
+    exec ${forgeCompanionEnv}/bin/forge-companion-env uvx --python "${pkgs.python312}/bin/python3" --from "jupyter-mcp-server==1.0.2" jupyter-mcp-server "$@"
   '';
 in {
   home = {
@@ -336,11 +419,8 @@ in {
         ${pkgs.coreutils}/bin/install -d -m 700 ${lib.escapeShellArg forgeJupyterLogDir}
       '';
 
-      registerJupyterScientificKernel = lib.hm.dag.entryAfter ["linkGeneration"] ''
-        sci_env=$(${pkgs.findutils}/bin/find ${lib.escapeShellArg "${forgePythonStateHome}/forge-python-envs"} -maxdepth 3 -type d -name scientific 2>/dev/null | ${pkgs.coreutils}/bin/head -n 1)
-        if [ -n "$sci_env" ] && [ -x "$sci_env/bin/python" ]; then
-          "$sci_env/bin/python" -m ipykernel install --user --name forge-scientific --display-name "Python 3.15 (forge-scientific)" 2>/dev/null || true
-        fi
+      ensureForgeJupyterRootDir = lib.hm.dag.entryAfter ["linkGeneration"] ''
+        ${pkgs.coreutils}/bin/install -d -m 700 ${lib.escapeShellArg forgeJupyterRootDir}
       '';
     };
   };
@@ -349,6 +429,10 @@ in {
     enable = true;
     config = {
       ProgramArguments = ["${forgeJupyter}/bin/forge-jupyter"];
+      WorkingDirectory = forgeJupyterRootDir;
+      EnvironmentVariables = {
+        FORGE_PROVISION_ROOT = forgeJupyterRootDir;
+      };
       RunAtLoad = true;
       KeepAlive = true;
       ThrottleInterval = 30;

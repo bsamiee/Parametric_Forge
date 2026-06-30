@@ -99,8 +99,6 @@ someFnWithSSL = args: ...  # Function spam
 - `set -euo pipefail` mandatory
 - ShellCheck must pass
 - Prefer `writeShellApplication` for shell CLIs with declared runtime tools, ShellCheck integration, or stable Home Manager-installed binaries. Use `writeShellScriptBin` only for tiny scripts that do not need a runtime closure.
-- Non-interactive agent shells do not inherit interactive zsh aliases or functions; invoke real executables on `PATH`, or use `zsh -ic` only when intentionally testing interactive shell configuration.
-- Bash-only snippets using `mapfile`, `readarray`, `shopt`, `BASH_*`, arrays, or Bash 5.3 features must run through `bash -lc`, a Bash heredoc, or an executable with a Bash shebang.
 - Package shell CLIs with `writeShellApplication` when they need declared runtime tools, ShellCheck integration, or a stable Home Manager-installed binary.
 
 ### Local Provisioning

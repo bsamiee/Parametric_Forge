@@ -5,29 +5,46 @@
 # Path          : modules/home/programs/zsh/config.nix
 # ----------------------------------------------------------------------------
 # Zsh profile and login shell configurations
-{config, ...}: {
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}: let
+  toolchainEnv = import ../../../common/toolchain-env.nix {
+    inherit lib pkgs;
+    home = config.home.homeDirectory;
+    username = config.home.username;
+    xdgCacheHome = config.xdg.cacheHome;
+    xdgDataHome = config.xdg.dataHome;
+  };
+in {
   programs.zsh = {
     # Runs in .zshenv for ALL shells (login, interactive, scripts)
     # Ensures nix paths are always available, even when hm-session-vars guard triggers
     envExtra = ''
-      # Ensure nix-darwin paths are in PATH (VS Code inherits guard but not PATH)
-      [[ ":$PATH:" != *":/nix/var/nix/profiles/default/bin:"* ]] && \
-        export PATH="/nix/var/nix/profiles/default/bin:$PATH"
-      [[ ":$PATH:" != *":/run/current-system/sw/bin:"* ]] && \
-        export PATH="/run/current-system/sw/bin:$PATH"
-      [[ ":$PATH:" != *":/etc/profiles/per-user/${config.home.username}/bin:"* ]] && \
-        export PATH="/etc/profiles/per-user/${config.home.username}/bin:$PATH"
+      if [[ -o interactive && -z "''${TERM:-}" ]]; then
+        export TERM="dumb"
+      fi
+
+      # Ensure Forge session paths exist when GUI-launched shells miss Home Manager session vars.
+      for _forge_path in \
+        ${lib.concatMapStringsSep " \\\n        " lib.escapeShellArg (lib.reverseList toolchainEnv.userPathEntries)}
+      do
+        [[ ":$PATH:" != *":$_forge_path:"* ]] && export PATH="$_forge_path:$PATH"
+      done
+      unset _forge_path
 
       export DOCKER_HOST="''${DOCKER_HOST:-unix://${config.xdg.dataHome}/colima/default/docker.sock}"
       export COLIMA_HOME="''${COLIMA_HOME:-${config.xdg.dataHome}/colima}"
       export DOCKER_CONFIG="''${DOCKER_CONFIG:-${config.xdg.configHome}/docker}"
-      export UV_PYTHON_PREFERENCE="''${UV_PYTHON_PREFERENCE:-only-system}"
-      export UV_PYTHON_DOWNLOADS="''${UV_PYTHON_DOWNLOADS:-never}"
-      export UV_CACHE_DIR="''${UV_CACHE_DIR:-${config.xdg.cacheHome}/uv}"
+      ${toolchainEnv.shellExports toolchainEnv.scientificSessionEnv}
       export GH_CONFIG_DIR="''${GH_CONFIG_DIR:-${config.xdg.configHome}/gh}"
+      export CLOUDSDK_CONFIG="''${CLOUDSDK_CONFIG:-${config.xdg.configHome}/gcloud}"
+      export WORKSPACE_MCP_CREDENTIALS_DIR="''${WORKSPACE_MCP_CREDENTIALS_DIR:-${config.xdg.cacheHome}/workspace-mcp}"
       export PNPM_HOME="''${PNPM_HOME:-${config.xdg.dataHome}/pnpm}"
       export PAGER="''${PAGER:-less}"
-      export GH_PAGER="''${GH_PAGER:-less}"
+      export GH_PAGER="''${GH_PAGER:-delta}"
       export GIT_PAGER="''${GIT_PAGER:-delta}"
       export LESS="''${LESS:--RFX}"
 

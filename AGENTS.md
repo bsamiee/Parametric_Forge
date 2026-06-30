@@ -1,32 +1,22 @@
 # Parametric Forge Agent Policy
 
 ## Project Owner
-- `CLAUDE.MD` is the project execution standard for this repository.
+- Read and follow `CLAUDE.md` before this file; it is the project execution standard for this repository and the single owner of Forge provisioning, Nix, code-density, and language law.
 - Treat this repository as the machine/Home Manager toolchain owner: fix shell, PATH, tool, and wrapper behavior here instead of patching individual sibling projects.
 
 ## Nix And Shell Execution
 - Prefer Nix/Home Manager owned executables and wrappers over aliases or interactive shell functions.
-- Non-interactive agent shells do not inherit interactive zsh aliases or functions; invoke real executables on `PATH`, or use `zsh -ic` only when intentionally testing interactive zsh configuration.
-- Bash-only snippets using `mapfile`, `readarray`, `shopt`, `BASH_*`, arrays, or Bash 5.3 features must run through `bash -lc`, a Bash heredoc, or an executable with a Bash shebang.
 - For Python work, use the project or tool owner interpreter (`uv run`, `.venv/bin/python`, or the repo-declared command) rather than ambient `python3` unless the task is explicitly about the machine Python.
 
 ## Local Provisioning
-- `forge-provision` is the canonical Forge-owned local provisioning and debugging command; it is owned by the overlay package and installed through Home Manager from that derivation. Use the packaged executable or `nix run .#forge-provision -- <command>`, never `bash overlays/forge-provision/forge-provision.sh`. Rasm campaign work enters through `uv run python -m tools.assay provision <verb>`; direct `forge-provision`, `psql`, `paths`, `prune`, `self-test`, Docker/Compose, and diagnostic JSON are Forge-level debugging surfaces.
-- Do not add compatibility executables, aliases, or fallbacks for retired provisioning names. Rename callers and documentation to the canonical command instead.
+- The canonical `forge-provision` mechanism (packaged executable / `nix run .#forge-provision`, the `uv run python -m tools.assay provision <verb>` campaign entry, rename-over-shim policy, DB-tooling ownership, and the schema-v3 JSON contract) is owned by `CLAUDE.md`; follow it there.
 - Provisioning must stay noninteractive for agents: no host `sudo`, no keychain requirement, no password prompt, and no Docker credential helper dependency for public images.
-- Read-only provisioning commands should avoid durable writes unless the command explicitly documents state creation.
-- Home Manager DB tooling is client/tooling-owned: `psql`, `pg_dump`, `pg_restore`, `pg_isready`, optional `pg_config`, SQLFluff/Postgres LSP, DuckDB, SQLite/SQLean, SpatiaLite, and sqlite-vec. PostgreSQL server extensions stay Docker-owned by `forge-provision`; image-specific shared-preload requirements may include pg_cron, but `pg_cron` extension creation stays row-gated and opt-in.
 - The MCP and server launchers `forge-ifcmcp` (IfcOpenShell MCP, cp312 companion lane), `forge-jupyter` (a persistent JupyterLab LaunchAgent on loopback `127.0.0.1:8888` with KeepAlive, registered as the "Forge Jupyter" Login Item so it is not a bare `sh` entry), `forge-jupyter-mcp` (the Jupyter MCP connector), and `nuget-mcp` (the NuGet MCP via the .NET 10 SDK) are Home Manager-installed wrappers under `modules/home/programs/languages/`. Sibling-repo `ifc`/`jupyter`/`nuget` skills and MCP configs invoke them; fix launcher behavior here, never in the sibling repo.
-- Forge provisioning JSON is schema v3 only. Do not add schema-v1/v2 emitters or compatibility adapters. Doctor and extension JSON expose sanitized runtime booleans/kinds and catalog metadata only; raw sockets, Docker config paths, helper names, logs, DSNs, token material, mount paths, and host absolute paths stay out of agent-facing JSON.
 
 ## Claude And Codex Runtime Boundaries
 - Diagnose agent-tool runtime behavior separately from shell behavior. Claude workflow globals such as `args` are owned by Claude's workflow runtime; Nix, zsh, aliases, and PATH only explain subprocess, hook, or shell-command behavior.
 - Persist API tokens through `CLAUDE_ENV_FILE` only when subagents or tools need inherited credentials; Claude may expand that file into shell launch command lines while commands run.
 - Use `CLAUDE_ENV_EXPORT_KEYS` for additional sub-agent credential variables that are required beyond the default `setup-env.sh` key set.
-- For LOC reports, use `loc <path>` when `command -v loc` succeeds.
-
-## Code Review
-- After implementation and cleanup are complete, run CodeRabbit once on uncommitted work (`cr review --agent -t uncommitted`); wait 3-4 minutes before polling unless the tool emits actionable output; fix all valid findings as one batch. Use the initial actionable finding count as each reviewer's total-run budget for that leg: <10 findings = 1 run, 10-19 = 2 runs, 20-29 = 3 runs, 30-49 = 4 runs, 50+ = 5 runs maximum. Commit the final diff on a short-lived working branch, then run Greptile on the committed branch diff (`greptile review` or `cli-review`); wait 3-4 minutes before polling, fix valid findings as one batch, and stay within the same run budget. After Greptile is clean or the budget is exhausted, merge acceptable work back to `main` and delete the local branch.
 
 ## Research And Docs
-- The web/docs/repo research tool-selection and chaining law (`Context7` first for any library, package, or platform docs — including Nixpkgs and Home Manager options; `Exa`/`Tavily` over the built-in fetch; the async Exa Agent and slow `Perplexity` for deep questions; `mcp__github__*` versus `gh`; context-isolated bulk reads) is the user-global doctrine. Resolve a package's or option's current behavior through `Context7` or its source, never training-data recall.
+- The web/docs/repo research tool-selection and chaining law is the user-global doctrine; follow it. Resolve current Nixpkgs and Home Manager option behavior through `Context7` or its source, never training-data recall.

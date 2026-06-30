@@ -19,16 +19,18 @@
     name = "gui-op-secrets";
     runtimeInputs = [pkgs.gnugrep pkgs.gawk];
     text = ''
-      cache="$HOME/.config/hm-op-session.sh"
+      cache="${config.xdg.configHome}/hm-op-session.sh"
       [ -f "$cache" ] || exit 0
       # shellcheck source=/dev/null
       . "$cache"
+      export CLOUDSDK_CONFIG="${config.xdg.configHome}/gcloud"
+      export WORKSPACE_MCP_CREDENTIALS_DIR="${config.xdg.cacheHome}/workspace-mcp"
       while IFS= read -r k; do
         val="''${!k:-}"
         if [ -n "$val" ]; then
           /bin/launchctl setenv "$k" "$val"
         fi
-      done < <(grep -oE '^export [A-Za-z_][A-Za-z0-9_]*' "$cache" | awk '{print $2}')
+      done < <({ grep -oE '^export [A-Za-z_][A-Za-z0-9_]*' "$cache" | awk '{print $2}'; printf '%s\n' CLOUDSDK_CONFIG WORKSPACE_MCP_CREDENTIALS_DIR; })
     '';
   };
 in {
@@ -59,9 +61,10 @@ in {
       # --- Activation Hook: Generate token cache during rebuild ----------------------
       # CRITICAL: Must run AFTER linkGeneration to ensure template file exists
       # linkGeneration writes xdg.configFile entries after writeBoundary
-      injectSecretsFromVault = lib.hm.dag.entryAfter ["linkGeneration"] ''
+      injectSecretsFromVault = lib.hm.dag.entryAfter ["linkGeneration" "ensureForgeJupyterToken"] ''
         cache_file="$HOME/.config/hm-op-session.sh"
         template_file="$HOME/.config/op/env.template"
+        jupyter_token_file="$HOME/.config/jupyter/forge-token.env"
         tmp_file="$cache_file.tmp.$$"
 
         # Fail loudly if template missing (indicates DAG ordering bug)
@@ -75,6 +78,9 @@ in {
         echo "Injecting secrets from 1Password vault..." >&2
         mkdir -p "$(dirname "$cache_file")"
         if ${pkgs._1password-cli}/bin/op inject -f -i "$template_file" -o "$tmp_file" >/dev/null; then
+          if [[ -f "$jupyter_token_file" ]]; then
+            grep -E '^export JUPYTER_TOKEN=' "$jupyter_token_file" >>"$tmp_file"
+          fi
           chmod 600 "$tmp_file"
           mv -f "$tmp_file" "$cache_file"
           echo "✓ Tokens cached" >&2
@@ -111,7 +117,10 @@ in {
     # NOTE: ANTHROPIC_API_KEY intentionally excluded - use Claude Code OAuth instead
     # Projects needing API key auth should configure it locally
     export GREPTILE_API_KEY="op://Tokens/GREPTILE_API_KEY/token"
-    export CODERABBIT_TOKEN="op://Tokens/CODERABBIT_TOKEN/token"
+    export CODERABBIT_API_KEY="op://Tokens/CODERABBIT_API_KEY/token"
+    export OP_SERVICE_ACCOUNT_TOKEN="op://Tokens/OP_SERVICE_ACCOUNT_TOKEN/token"
+    export GOOGLE_OAUTH_CLIENT_ID="op://Tokens/GOOGLE_OAUTH_CLIENT_ID/credential"
+    export GOOGLE_OAUTH_CLIENT_SECRET="op://Tokens/GOOGLE_OAUTH_CLIENT_SECRET/credential"
     export RHINO_TOKEN="op://Tokens/RHINO_TOKEN/token"
     export EXA_API_KEY="op://Tokens/Exa API Key/token"
     export PERPLEXITY_API_KEY="op://Tokens/Perplexity Sonar API Key/token"

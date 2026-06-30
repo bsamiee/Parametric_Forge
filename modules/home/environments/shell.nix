@@ -5,26 +5,23 @@
 # Path          : modules/home/environments/shell.nix
 # ----------------------------------------------------------------------------
 # Shell configuration environment variables
-{config, ...}: {
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}: let
+  toolchainEnv = import ../../common/toolchain-env.nix {
+    inherit lib pkgs;
+    home = config.home.homeDirectory;
+    username = config.home.username;
+    xdgCacheHome = config.xdg.cacheHome;
+    xdgDataHome = config.xdg.dataHome;
+  };
+in {
   # --- User Session Path ----------------------------------------------------
   # Order matters: nix-darwin paths must be included for non-login shells (VS Code)
-  home.sessionPath = [
-    # User paths
-    "$HOME/.nix-profile/bin"
-    "$HOME/.local/bin"
-    "$HOME/bin"
-    "$HOME/.dotnet/tools"
-    "${config.xdg.dataHome}/cargo/bin"
-    "${config.xdg.dataHome}/go/bin"
-
-    # Nix-darwin managed paths (atuin, zoxide, etc. live here)
-    "/etc/profiles/per-user/${config.home.username}/bin"
-    "/run/current-system/sw/bin"
-    "/nix/var/nix/profiles/default/bin"
-
-    # Application paths
-    "/Applications/Rhino 8.app/Contents/Resources/bin"
-  ];
+  home.sessionPath = toolchainEnv.userPathEntries;
   # Note: pnpm installed via nix for PATH stability; PNPM_HOME is data/config only.
 
   home.sessionVariables = {
@@ -53,6 +50,8 @@
     XH_CONFIG_DIR = "${config.xdg.configHome}/xh";
     ATUIN_LOG = "error";
     ACT_CACHE_DIR = "${config.xdg.cacheHome}/act";
+    CLOUDSDK_CONFIG = "${config.xdg.configHome}/gcloud";
+    WORKSPACE_MCP_CREDENTIALS_DIR = "${config.xdg.cacheHome}/workspace-mcp";
     # Zoxide
     _ZO_DATA_DIR = "${config.xdg.dataHome}/zoxide";
     _ZO_RESOLVE_SYMLINKS = "1";

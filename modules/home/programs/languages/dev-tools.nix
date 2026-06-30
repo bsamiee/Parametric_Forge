@@ -7,6 +7,7 @@
 # Language-agnostic tooling: linters, formatters, and helpers shared across
 # multiple ecosystems.
 {
+  config,
   lib,
   pkgs,
   ...
@@ -40,45 +41,76 @@
     export DOTNET_ROOT="${dotnet-combined}/share/dotnet"
     exec ${nuget-mcp-server}/tools/net10.0/osx-arm64/NuGet.Mcp.Server "$@"
   '';
+  workspace-mcp-version = "1.22.0";
+  workspace-mcp-package = "workspace-mcp==${workspace-mcp-version}";
+  workspace-mcp-tool-dir = "${config.xdg.dataHome}/uv/forge-tools";
+  workspace-mcp-bin-dir = "${config.xdg.dataHome}/uv/forge-bin";
+  forge-workspace-mcp = pkgs.writeShellScriptBin "forge-workspace-mcp" ''
+    set -euo pipefail
+    export UV_TOOL_DIR="${workspace-mcp-tool-dir}"
+    export UV_TOOL_BIN_DIR="${workspace-mcp-bin-dir}"
+    export UV_CACHE_DIR="${config.xdg.cacheHome}/uv"
+    export UV_PYTHON_DOWNLOADS=never
+    mkdir -p "$UV_TOOL_DIR" "$UV_TOOL_BIN_DIR" "$UV_CACHE_DIR"
+    if [ ! -x "$UV_TOOL_BIN_DIR/workspace-mcp" ] || ! ${pkgs.uv}/bin/uv tool list --show-version-specifiers | ${pkgs.gnugrep}/bin/grep -qF "workspace-mcp v${workspace-mcp-version} [required: ==${workspace-mcp-version}]"; then
+      ${pkgs.uv}/bin/uv tool install --force --python "${pkgs.python313}/bin/python3" "${workspace-mcp-package}" >/dev/null
+    fi
+    exec "$UV_TOOL_BIN_DIR/workspace-mcp" "$@"
+  '';
 in {
-  home.packages = with pkgs; [
-    # --- Shell Tooling ------------------------------------------------------
-    bash # Bash 5.3+ runtime for generated scripts and explicit bash sessions
-    shellcheck # POSIX shell static analysis
-    shfmt # Shell script formatter
-    bash-language-server # Bash LSP (navigation + diagnostics via shellcheck/shfmt)
+  home = {
+    activation.ensureWorkspaceMcpTool = lib.hm.dag.entryAfter ["linkGeneration"] ''
+      export UV_TOOL_DIR="${workspace-mcp-tool-dir}"
+      export UV_TOOL_BIN_DIR="${workspace-mcp-bin-dir}"
+      export UV_CACHE_DIR="${config.xdg.cacheHome}/uv"
+      export UV_PYTHON_DOWNLOADS=never
+      mkdir -p "$UV_TOOL_DIR" "$UV_TOOL_BIN_DIR" "$UV_CACHE_DIR"
+      if [ ! -x "$UV_TOOL_BIN_DIR/workspace-mcp" ] || ! ${pkgs.uv}/bin/uv tool list --show-version-specifiers | ${pkgs.gnugrep}/bin/grep -qF "workspace-mcp v${workspace-mcp-version} [required: ==${workspace-mcp-version}]"; then
+        ${pkgs.uv}/bin/uv tool install --force --python "${pkgs.python313}/bin/python3" "${workspace-mcp-package}" >/dev/null
+      fi
+    '';
 
-    # --- YAML ---------------------------------------------------------------
-    yamlfmt # YAML formatter (Google)
-    yamllint # YAML linter
-    yaml-language-server # YAML LSP (SchemaStore-backed validation + completion)
-    taplo # TOML formatter, validator, and LSP
+    packages = with pkgs; [
+      # --- Shell Tooling ------------------------------------------------------
+      bash # Bash 5.3+ runtime for generated scripts and explicit bash sessions
+      shellcheck # POSIX shell static analysis
+      shfmt # Shell script formatter
+      bash-language-server # Bash LSP (navigation + diagnostics via shellcheck/shfmt)
 
-    # --- JSON ---------------------------------------------------------------
-    jq # Lightweight command-line JSON processor
+      # --- YAML ---------------------------------------------------------------
+      yamlfmt # YAML formatter (Google)
+      yamllint # YAML linter
+      yaml-language-server # YAML LSP (SchemaStore-backed validation + completion)
+      taplo # TOML formatter, validator, and LSP
 
-    # --- General Data Tools -------------------------------------------------
-    git-lfs # Required by Homebrew update-reset and repos with LFS-backed fixtures
-    yq-go # YAML/JSON/TOML processor (yq)
-    miller # CSV/TSV/JSON processor
-    qsv # High-performance CSV and tabular data toolkit
-    csvlens # Interactive CSV/TSV inspector
-    hurl # HTTP request/assertion runner for API probes
-    grpcurl # gRPC server reflection and request CLI
-    typos # Fast source and docs typo checker
+      # --- JSON ---------------------------------------------------------------
+      jq # Lightweight command-line JSON processor
 
-    # --- .NET ---------------------------------------------------------------
-    dotnet-combined
-    ilspycmd # .NET assembly decompiler for NuGet API catalogues
-    nuget-to-json # NuGet package metadata extraction
-    roslyn-language-server # C# LSP (roslyn-ls wrapped for clean --stdio)
-    nuget-mcp
+      # --- General Data Tools -------------------------------------------------
+      git-lfs # Required by Homebrew update-reset and repos with LFS-backed fixtures
+      yq-go # YAML/JSON/TOML processor (yq)
+      miller # CSV/TSV/JSON processor
+      qsv # High-performance CSV and tabular data toolkit
+      csvlens # Interactive CSV/TSV inspector
+      hurl # HTTP request/assertion runner for API probes
+      grpcurl # gRPC server reflection and request CLI
+      typos # Fast source and docs typo checker
 
-    # --- Cloud / IaC --------------------------------------------------------
-    pulumi # Pulumi CLI engine; Python SDK is managed per-project via uv (Maghz infra Automation API)
-  ];
+      # --- .NET ---------------------------------------------------------------
+      dotnet-combined
+      ilspycmd # .NET assembly decompiler for NuGet API catalogues
+      nuget-to-json # NuGet package metadata extraction
+      roslyn-language-server # C# LSP (roslyn-ls wrapped for clean --stdio)
+      nuget-mcp
 
-  # DOTNET_ROOT required for Roslyn and other SDK-discovery tools.
-  # Re-evaluated on every rebuild — store path stays current.
-  home.sessionVariables.DOTNET_ROOT = "${dotnet-combined}/share/dotnet";
+      # --- Cloud / IaC --------------------------------------------------------
+      google-cloud-sdk # Google Cloud CLI for OAuth/API bootstrap and project administration
+      forge-workspace-mcp # Google Workspace MCP wrapper pinned to a Python 3.13 uv tool environment
+      pulumi # Pulumi CLI engine; Python SDK is managed per-project via uv (Maghz infra Automation API)
+    ];
+
+    # DOTNET_ROOT required for Roslyn and other SDK-discovery tools.
+    # Re-evaluated on every rebuild — store path stays current.
+    sessionVariables.DOTNET_ROOT = "${dotnet-combined}/share/dotnet";
+  };
 }
