@@ -9,9 +9,12 @@ IFS=$'\n\t'
 readonly COMMAND="${1:-check}"
 readonly CARGO_HOME_DIR="${CARGO_HOME:-${HOME}/.cargo}"
 readonly BIN_DIR="${CLAUDE_BOOTSTRAP_BIN_DIR:-${CARGO_HOME_DIR}/bin}"
+readonly PIPX_BIN_DIR="${PIPX_BIN_DIR:-${HOME}/.local/bin}"
+readonly SYSTEM_BIN_DIR="${CLAUDE_BOOTSTRAP_SYSTEM_BIN_DIR:-/usr/local/bin}"
 readonly PROFILE_PATH="${CLAUDE_BOOTSTRAP_PROFILE:-${HOME}/.bashrc}"
 readonly ALLOW_SUDO="${CLAUDE_BOOTSTRAP_ALLOW_SUDO:-0}"
 readonly ALLOW_PROFILE_WRITE="${CLAUDE_BOOTSTRAP_WRITE_PROFILE:-0}"
+readonly ALLOW_SYSTEM_LINKS="${CLAUDE_BOOTSTRAP_SYSTEM_LINKS:-${ALLOW_SUDO}}"
 readonly ALLOW_NETWORK="${CLAUDE_BOOTSTRAP_ALLOW_NETWORK:-0}"
 readonly ALLOW_REMOTE_INSTALLERS="${CLAUDE_BOOTSTRAP_ALLOW_REMOTE_INSTALLERS:-0}"
 readonly BINSTALL_URL='https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh'
@@ -26,10 +29,13 @@ declare -Ar TOOLS=(
     [trip]='trippy:binstall'
     [doggo]='mr-karan/doggo:github-go'
     [trash-put]='trash-cli:pipx'
+    [uv]='uv:pipx'
+    [gws]='googleworkspace/cli:v0.22.5:github-release-sha'
 )
 declare -Ar STRATEGY_DISPATCH=(
     [binstall]=_install_binstall
     [github-go]=_install_github_go
+    [github-release-sha]=_install_github_release_sha
     [pipx]=_install_pipx
 )
 declare -Ar COMMAND_DISPATCH=(
@@ -100,13 +106,45 @@ _ensure_prereqs() {
 
 _ensure_path() {
     mkdir -p "${BIN_DIR}"
-    export PATH="${BIN_DIR}:${PATH}"
+    mkdir -p "${PIPX_BIN_DIR}"
+    export PATH="${BIN_DIR}:${PIPX_BIN_DIR}:${PATH}"
     [[ "${ALLOW_PROFILE_WRITE}" == "1" ]] || return 0
     [[ -f "${PROFILE_PATH}" ]] || : >"${PROFILE_PATH}"
-    grep -qF "${BIN_DIR}" "${PROFILE_PATH}" 2>/dev/null && return 0
-    # shellcheck disable=SC2016  # Single quotes intentional -- expand when shell reads the profile.
-    printf 'export PATH="%s:${PATH}"\n' "${BIN_DIR}" >>"${PROFILE_PATH}"
-    printf '[PATH] Appended %s to %s\n' "${BIN_DIR}" "${PROFILE_PATH}"
+    if ! grep -qF "${BIN_DIR}" "${PROFILE_PATH}" 2>/dev/null; then
+        # shellcheck disable=SC2016  # Single quotes intentional -- expand when shell reads the profile.
+        printf 'export PATH="%s:${PATH}"\n' "${BIN_DIR}" >>"${PROFILE_PATH}"
+        printf '[PATH] Appended %s to %s\n' "${BIN_DIR}" "${PROFILE_PATH}"
+    fi
+    if ! grep -qF "${PIPX_BIN_DIR}" "${PROFILE_PATH}" 2>/dev/null; then
+        # shellcheck disable=SC2016  # Single quotes intentional -- expand when shell reads the profile.
+        printf 'export PATH="%s:${PATH}"\n' "${PIPX_BIN_DIR}" >>"${PROFILE_PATH}"
+        printf '[PATH] Appended %s to %s\n' "${PIPX_BIN_DIR}" "${PROFILE_PATH}"
+    fi
+}
+
+_system_link_source() {
+    local -r binary="$1"
+    if [[ -x "${BIN_DIR}/${binary}" ]]; then
+        printf '%s' "${BIN_DIR}/${binary}"
+        return 0
+    fi
+    if [[ -x "${PIPX_BIN_DIR}/${binary}" ]]; then
+        printf '%s' "${PIPX_BIN_DIR}/${binary}"
+        return 0
+    fi
+    return 1
+}
+
+_ensure_system_links() {
+    [[ "${ALLOW_SYSTEM_LINKS}" == "1" ]] || return 0
+    _require_enabled "${ALLOW_SUDO}" "System bin links require sudo. Set CLAUDE_BOOTSTRAP_ALLOW_SUDO=1."
+    sudo mkdir -p "${SYSTEM_BIN_DIR}"
+    local binary source
+    for binary in "${!TOOLS[@]}"; do
+        source="$(_system_link_source "${binary}")" || continue
+        sudo ln -sfn "${source}" "${SYSTEM_BIN_DIR}/${binary}"
+    done
+    [[ -x "${PIPX_BIN_DIR}/uvx" ]] && sudo ln -sfn "${PIPX_BIN_DIR}/uvx" "${SYSTEM_BIN_DIR}/uvx"
 }
 
 _ensure_binstall() {
@@ -117,6 +155,33 @@ _ensure_binstall() {
     curl -L --proto '=https' --tlsv1.2 -sSf "${BINSTALL_URL}" -o "${tmp}"
     bash "${tmp}"
     rm -f "${tmp}"
+    export PATH="${CARGO_HOME_DIR}/bin:${PATH}"
+    command -v cargo-binstall >/dev/null 2>&1 || _die "cargo-binstall install completed but cargo-binstall is not on PATH"
+}
+
+_cargo_binstall() {
+    if command -v cargo >/dev/null 2>&1 && cargo binstall --version >/dev/null 2>&1; then
+        cargo binstall --no-confirm "$@"
+        return 0
+    fi
+    if command -v cargo-binstall >/dev/null 2>&1; then
+        cargo-binstall --no-confirm "$@"
+        return 0
+    fi
+    _die "cargo-binstall is missing after bootstrap"
+}
+
+_sha256_file() {
+    local -r path="$1"
+    if command -v sha256sum >/dev/null 2>&1; then
+        sha256sum "${path}" | awk '{print $1}'
+        return 0
+    fi
+    if command -v shasum >/dev/null 2>&1; then
+        shasum -a 256 "${path}" | awk '{print $1}'
+        return 0
+    fi
+    _die "No SHA-256 checksum tool found: expected sha256sum or shasum"
 }
 
 # shellcheck disable=SC2329  # invoked indirectly through STRATEGY_DISPATCH
@@ -128,10 +193,49 @@ _emit_post_note() {
 }
 
 # shellcheck disable=SC2329  # invoked indirectly through STRATEGY_DISPATCH
+_install_github_release_sha() {
+    local -r package="$1" binary="$2"
+    _require_enabled "${ALLOW_NETWORK}" "Network install disabled. Set CLAUDE_BOOTSTRAP_ALLOW_NETWORK=1 to install ${binary}."
+    _require_enabled "${ALLOW_REMOTE_INSTALLERS}" "GitHub release install disabled. Set CLAUDE_BOOTSTRAP_ALLOW_REMOTE_INSTALLERS=1 to install ${binary}."
+    [[ "${binary}" == "gws" ]] || _die "github-release-sha is only configured for gws"
+    local repo tag raw_os raw_arch target asset base_url tmp archive checksum_file expected actual
+    IFS=: read -r repo tag <<<"${package}"
+    [[ -n "${repo}" && -n "${tag}" ]] || _die "Invalid GitHub release spec for ${binary}: ${package}"
+    raw_os="$(uname -s)"
+    raw_arch="$(uname -m)"
+    case "${raw_os}:${raw_arch}" in
+        Linux:x86_64) target="x86_64-unknown-linux-gnu" ;;
+        Linux:aarch64 | Linux:arm64) target="aarch64-unknown-linux-gnu" ;;
+        Darwin:arm64 | Darwin:aarch64) target="aarch64-apple-darwin" ;;
+        Darwin:x86_64) target="x86_64-apple-darwin" ;;
+        *) _die "Unsupported platform for ${binary}: ${raw_os}/${raw_arch}" ;;
+    esac
+    asset="google-workspace-cli-${target}.tar.gz"
+    base_url="https://github.com/${repo}/releases/download/${tag}"
+    tmp="$(mktemp -d)"
+    archive="${tmp}/${asset}"
+    checksum_file="${archive}.sha256"
+    curl -sSfL "${base_url}/${asset}" -o "${archive}"
+    curl -sSfL "${base_url}/${asset}.sha256" -o "${checksum_file}"
+    expected="$(awk '{print $1}' "${checksum_file}")"
+    actual="$(_sha256_file "${archive}")"
+    [[ "${expected}" == "${actual}" ]] || {
+        rm -rf "${tmp}"
+        printf '[FAIL] SHA-256 mismatch for %s\n' "${asset}" >&2
+        failed+=("${binary}")
+        return 1
+    }
+    tar -xzf "${archive}" -C "${tmp}"
+    install -m 0755 "${tmp}/${binary}" "${BIN_DIR}/${binary}"
+    rm -rf "${tmp}"
+    installed+=("${binary}")
+}
+
+# shellcheck disable=SC2329  # invoked indirectly through STRATEGY_DISPATCH
 _install_binstall() {
     local -r crate="$1" binary="$2"
     _require_enabled "${ALLOW_NETWORK}" "Network install disabled. Set CLAUDE_BOOTSTRAP_ALLOW_NETWORK=1 to install ${binary}."
-    cargo binstall --no-confirm "${crate}" || {
+    _cargo_binstall "${crate}" || {
         failed+=("${binary}")
         return 1
     }
@@ -177,7 +281,7 @@ _install_pipx() {
         local -r pkg_mgr="$(_detect_pkg_mgr)"
         sudo "${pkg_mgr}" install -y pipx
     }
-    pipx install "${package}" || {
+    pipx install --force "${package}" || {
         failed+=("${binary}")
         return 1
     }
@@ -188,7 +292,8 @@ _provision() {
     local binary spec package strategy
     for binary in "${!TOOLS[@]}"; do
         spec="${TOOLS[${binary}]}"
-        IFS=: read -r package strategy <<<"${spec}"
+        package="${spec%:*}"
+        strategy="${spec##*:}"
         command -v "${binary}" >/dev/null 2>&1 && {
             printf '[SKIP] %s already present\n' "${binary}"
             skipped+=("${binary}")
@@ -218,11 +323,12 @@ _check() {
         command -v "${binary}" >/dev/null 2>&1 && continue
         missing_tools+=("${binary}")
         spec="${TOOLS[${binary}]}"
-        IFS=: read -r package strategy <<<"${spec}"
+        package="${spec%:*}"
+        strategy="${spec##*:}"
         [[ "${strategy}" == "pipx" ]] && {
             command -v pipx >/dev/null 2>&1 || missing_prereqs+=("pipx")
         }
-        [[ "${strategy}" == "github-go" ]] && {
+        [[ "${strategy}" == "github-go" || "${strategy}" == "github-release-sha" ]] && {
             for prereq in curl tar gzip jq; do
                 command -v "${prereq}" >/dev/null 2>&1 || missing_prereqs+=("${prereq}")
             done
@@ -244,6 +350,7 @@ _apply() {
     _ensure_path
     _ensure_binstall
     _provision
+    _ensure_system_links
     _verify
     _report
 }

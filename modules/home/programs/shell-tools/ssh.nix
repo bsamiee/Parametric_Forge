@@ -29,9 +29,9 @@
         AddKeysToAgent = "yes";
       };
 
-      # --- Hostinger VPS (n8n PM Orchestration) -----------------------------
-      "n8n" = {
-        User = "n8n-agent";
+      # --- Hostinger VPS (Maghz remote operator) ----------------------------
+      "maghz-vps maghz" = {
+        User = "maghz-agent";
         HostName = "31.97.131.41";
         IdentitiesOnly = true;
         AddKeysToAgent = "yes";

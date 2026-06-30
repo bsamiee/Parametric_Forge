@@ -105,6 +105,7 @@ in {
 
       # --- Cloud / IaC --------------------------------------------------------
       google-cloud-sdk # Google Cloud CLI for OAuth/API bootstrap and project administration
+      gws # Google Workspace CLI; scripted/batch companion to the google-workspace MCP
       forge-workspace-mcp # Google Workspace MCP wrapper pinned to a Python 3.13 uv tool environment
       pulumi # Pulumi CLI engine; Python SDK is managed per-project via uv (Maghz infra Automation API)
     ];

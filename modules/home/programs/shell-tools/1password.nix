@@ -25,12 +25,17 @@
       . "$cache"
       export CLOUDSDK_CONFIG="${config.xdg.configHome}/gcloud"
       export WORKSPACE_MCP_CREDENTIALS_DIR="${config.xdg.cacheHome}/workspace-mcp"
+      export GOOGLE_WORKSPACE_CLI_CONFIG_DIR="${config.xdg.configHome}/gws"
+      export GOOGLE_WORKSPACE_PROJECT_ID="workspace-mcp-500605"
+      export MAGHZ_REMOTE_HOST="31.97.131.41"
+      export MAGHZ_REMOTE_USER="maghz-agent"
+      export MAGHZ_REMOTE_WORKROOT="/home/maghz-agent/maghz"
       while IFS= read -r k; do
         val="''${!k:-}"
         if [ -n "$val" ]; then
           /bin/launchctl setenv "$k" "$val"
         fi
-      done < <({ grep -oE '^export [A-Za-z_][A-Za-z0-9_]*' "$cache" | awk '{print $2}'; printf '%s\n' CLOUDSDK_CONFIG WORKSPACE_MCP_CREDENTIALS_DIR; })
+      done < <({ grep -oE '^export [A-Za-z_][A-Za-z0-9_]*' "$cache" | awk '{print $2}'; printf '%s\n' CLOUDSDK_CONFIG WORKSPACE_MCP_CREDENTIALS_DIR GOOGLE_WORKSPACE_CLI_CONFIG_DIR GOOGLE_WORKSPACE_PROJECT_ID MAGHZ_REMOTE_HOST MAGHZ_REMOTE_USER MAGHZ_REMOTE_WORKROOT; })
     '';
   };
 in {
@@ -121,6 +126,8 @@ in {
     export OP_SERVICE_ACCOUNT_TOKEN="op://Tokens/OP_SERVICE_ACCOUNT_TOKEN/token"
     export GOOGLE_OAUTH_CLIENT_ID="op://Tokens/GOOGLE_OAUTH_CLIENT_ID/credential"
     export GOOGLE_OAUTH_CLIENT_SECRET="op://Tokens/GOOGLE_OAUTH_CLIENT_SECRET/credential"
+    export GOOGLE_WORKSPACE_CLI_CLIENT_ID="op://Tokens/GOOGLE_OAUTH_CLIENT_ID/credential"
+    export GOOGLE_WORKSPACE_CLI_CLIENT_SECRET="op://Tokens/GOOGLE_OAUTH_CLIENT_SECRET/credential"
     export RHINO_TOKEN="op://Tokens/RHINO_TOKEN/token"
     export EXA_API_KEY="op://Tokens/Exa API Key/token"
     export PERPLEXITY_API_KEY="op://Tokens/Perplexity Sonar API Key/token"

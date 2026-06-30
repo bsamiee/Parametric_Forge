@@ -52,6 +52,11 @@ in {
     ACT_CACHE_DIR = "${config.xdg.cacheHome}/act";
     CLOUDSDK_CONFIG = "${config.xdg.configHome}/gcloud";
     WORKSPACE_MCP_CREDENTIALS_DIR = "${config.xdg.cacheHome}/workspace-mcp";
+    GOOGLE_WORKSPACE_CLI_CONFIG_DIR = "${config.xdg.configHome}/gws";
+    GOOGLE_WORKSPACE_PROJECT_ID = "workspace-mcp-500605";
+    MAGHZ_REMOTE_HOST = "31.97.131.41";
+    MAGHZ_REMOTE_USER = "maghz-agent";
+    MAGHZ_REMOTE_WORKROOT = "/home/maghz-agent/maghz";
     # Zoxide
     _ZO_DATA_DIR = "${config.xdg.dataHome}/zoxide";
     _ZO_RESOLVE_SYMLINKS = "1";
