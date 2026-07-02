@@ -12,31 +12,12 @@ _: {
       # --- General Flags ----------------------------------------------------
       flags = {
         # Display Performance
-        avg_cpu = true; # Show average CPU in addition to per-core
         temperature_type = "c"; # Celsius for temperature
         rate = 2000; # Update rate in milliseconds (2 seconds - balanced)
-        left_legend = false; # Legend on right side for better readability
-        current_usage = true; # Show current usage in process widget
-        group_processes = true; # Group processes with same name for clarity
-        tree = false; # Start with flat view (toggle with 't')
-        hide_table_gap = true; # Cleaner look without gaps
+        table_gap = "none"; # Cleaner look without table header gaps
         disable_click = false; # Enable mouse support
-        enable_cache_memory = true; # Show cache for complete memory picture
-        enable_gpu = false; # Disable GPU (enable if needed)
-        mem_as_value = true; # Show memory as values, not just %
-
-        # Search & Filter
-        case_sensitive = false; # Case-insensitive process search
-        whole_word = false; # Partial word matching in search
-        regex = false; # Simple search by default
         show_table_scroll_position = true; # Show scroll position indicator
-        process_command = false; # Show process name for clarity
-        disable_advanced_kill = false; # Enable advanced kill options
-
-        # Network Display
-        network_use_binary_prefix = true; # Use MiB/s (more accurate)
-        network_use_bytes = false; # Use bits for network
-        network_use_log = false; # Linear scale is more intuitive
+        disable_gpu = true; # Disable GPU collection (enable if needed)
 
         # Data & Performance
         retention = "5m"; # 5 minutes (balanced memory usage)
@@ -48,7 +29,6 @@ _: {
         expanded = false; # Compact view initially
         basic = false; # Full mode for power users
         use_old_network_legend = false; # Modern network legend
-        hide_table_count = false; # Show row counts for context
         battery = true; # Show battery if available
       };
 
@@ -148,6 +128,15 @@ _: {
       };
       # --- Process Configuration --------------------------------------------
       processes = {
+        current_usage = true; # Show current usage in process widget
+        default_grouped = true; # Group processes with same name for clarity
+        default_tree = false; # Start with flat view (toggle with 't')
+        default_memory_value = true; # Show memory as values, not just %
+        case_sensitive = false; # Case-insensitive process search
+        whole_word = false; # Partial word matching in search
+        regex = false; # Simple search by default
+        process_command = false; # Show process name for clarity
+        disable_advanced_kill = false; # Enable advanced kill options
         columns = [
           "PID"
           "Name"
@@ -186,8 +175,15 @@ _: {
           whole_word = false;
         };
       };
+      # --- Memory Graph Configuration ---------------------------------------
+      memory_graph = {
+        cache_memory = true; # Show cache for complete memory picture
+      };
       # --- Network Filter ---------------------------------------------------
-      network = {
+      network_graph = {
+        use_binary_prefix = true; # Use MiB/s (more accurate)
+        use_bytes = false; # Use bits for network
+        use_log = false; # Linear scale is more intuitive
         interface_filter = {
           is_list_ignored = true;
           list = ["lo" "lo0"]; # Ignore loopback interfaces
@@ -199,6 +195,8 @@ _: {
       # --- CPU Configuration ------------------------------------------------
       cpu = {
         default = "all"; # Show all cores
+        hide_avg_cpu = false; # Show average CPU in addition to per-core
+        left_legend = false; # Legend on right side for better readability
       };
     };
   };

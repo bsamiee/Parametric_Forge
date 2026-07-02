@@ -127,6 +127,14 @@
         _main "$@"
       '';
     });
+  # nixpkgs mypy trails majors behind PyPI; the machine fallback resolves the newest mypy through uv's tool cache.
+  mypyLatest = pkgs.writeShellApplication {
+    name = "mypy";
+    runtimeInputs = [pkgs.uv];
+    text = ''
+      exec uv tool run mypy "$@"
+    '';
+  };
 in {
   home.packages = with pkgs; [
     # --- Python Runtime (Canonical Source) ----------------------------------
@@ -138,6 +146,6 @@ in {
     (projectTool "ruff" ruff) # Fast Python linter/formatter
     uv # Fast Python package installer and resolver
     (projectTool "ty" ty) # Astral type checker / language server
-    basedpyright # Static type/API surface validation
+    (projectTool "mypy" mypyLatest) # Strict secondary type gate; project venv first, uv-tool newest fallback
   ];
 }

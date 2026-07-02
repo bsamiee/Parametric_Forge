@@ -57,6 +57,38 @@
     fi
     exec "$UV_TOOL_BIN_DIR/workspace-mcp" "$@"
   '';
+  antigravity-cli-bin-dir = "${config.home.homeDirectory}/.local/bin";
+  forge-install-antigravity-cli = pkgs.writeShellApplication {
+    name = "forge-install-antigravity-cli";
+    runtimeInputs = [
+      pkgs.bash
+      pkgs.coreutils
+      pkgs.curl
+      pkgs.gnused
+      pkgs.gnutar
+      pkgs.gzip
+      pkgs.perl
+    ];
+    text = ''
+      set -euo pipefail
+
+      target_dir="${antigravity-cli-bin-dir}"
+      binary="$target_dir/agy"
+      mkdir -p "$target_dir"
+      export PATH="$target_dir:$PATH"
+
+      if [ -x "$binary" ]; then
+        "$binary" update >/dev/null || printf '[WARN] agy update failed; keeping existing binary\n' >&2
+        exit 0
+      fi
+
+      tmp="$(mktemp -d)"
+      trap 'rm -rf "$tmp"' EXIT
+      curl -fsSL https://antigravity.google/cli/install.sh -o "$tmp/install.sh"
+      ${pkgs.bash}/bin/bash "$tmp/install.sh" --dir "$target_dir"
+      test -x "$binary"
+    '';
+  };
 in {
   home = {
     activation.ensureWorkspaceMcpTool = lib.hm.dag.entryAfter ["linkGeneration"] ''
@@ -68,6 +100,10 @@ in {
       if [ ! -x "$UV_TOOL_BIN_DIR/workspace-mcp" ] || ! ${pkgs.uv}/bin/uv tool list --show-version-specifiers | ${pkgs.gnugrep}/bin/grep -qF "workspace-mcp v${workspace-mcp-version} [required: ==${workspace-mcp-version}]"; then
         ${pkgs.uv}/bin/uv tool install --force --python "${pkgs.python313}/bin/python3" "${workspace-mcp-package}" >/dev/null
       fi
+    '';
+
+    activation.ensureAntigravityCli = lib.hm.dag.entryAfter ["linkGeneration"] ''
+      ${forge-install-antigravity-cli}/bin/forge-install-antigravity-cli
     '';
 
     packages = with pkgs; [

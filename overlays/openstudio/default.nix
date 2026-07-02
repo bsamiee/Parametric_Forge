@@ -50,11 +50,6 @@ in
       export OPENSTUDIO_RUBY_ROOT="$runtime/Ruby"
       export OPENSTUDIO_PYTHON_ROOT="$runtime/Python"
       export OPENSTUDIO_RADIANCE_ROOT="$runtime/Radiance"
-      if [[ "\''${FORGE_OPENSTUDIO_EXTERNAL_ENERGYPLUS:-0}" != "1" ]]; then
-        export ENERGYPLUSDIR="$runtime/EnergyPlus"
-        export ENERGYPLUS_DIR="$runtime/EnergyPlus"
-        export ENERGYPLUS_EXE="$runtime/EnergyPlus/energyplus"
-      fi
       exec "$runtime/bin/openstudio" "\$@"
       EOF
             chmod 0755 "$out/bin/openstudio"
@@ -70,11 +65,6 @@ in
       export OPENSTUDIO_RUBY_ROOT="$runtime/Ruby"
       export OPENSTUDIO_PYTHON_ROOT="$runtime/Python"
       export OPENSTUDIO_RADIANCE_ROOT="$runtime/Radiance"
-      if [[ "\''${FORGE_OPENSTUDIO_EXTERNAL_ENERGYPLUS:-0}" != "1" ]]; then
-        export ENERGYPLUSDIR="$runtime/EnergyPlus"
-        export ENERGYPLUS_DIR="$runtime/EnergyPlus"
-        export ENERGYPLUS_EXE="$runtime/EnergyPlus/energyplus"
-      fi
       exec "$runtime/bin/install_utility" "\$@"
       EOF
               chmod 0755 "$out/bin/openstudio-install-utility"

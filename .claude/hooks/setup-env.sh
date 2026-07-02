@@ -32,7 +32,8 @@ readonly ALLOW_MISSING_TOOL_PATHS="${CLAUDE_ALLOW_MISSING_TOOL_PATHS:-0}"
 _emit_env_key() {
     local -r key="$1"
     [[ "${key}" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]] || return 0
-    [[ -n "${!key:-}" ]] && printf 'export %s=%q\n' "${key}" "${!key}"
+    [[ -n "${!key:-}" ]] || return 0
+    printf 'export %s=%q\n' "${key}" "${!key}"
 }
 
 _emit_extra_env_keys() {
@@ -52,7 +53,9 @@ _emit_tool_paths() {
     IFS=: read -ra paths <<< "${TOOL_PATHS}"
     for path in "${paths[@]}"; do
         [[ -n "${path}" ]] || continue
-        [[ -d "${path}" || "${ALLOW_MISSING_TOOL_PATHS}" == "1" ]] && selected+=("${path}")
+        if [[ -d "${path}" || "${ALLOW_MISSING_TOOL_PATHS}" == "1" ]]; then
+            selected+=("${path}")
+        fi
     done
     (( ${#selected[@]} > 0 )) || return 0
     printf -v path_value '%s:' "${selected[@]}"
@@ -64,7 +67,7 @@ _emit_tool_paths() {
 
 if [[ -f "${TOKEN_CACHE}" && "${TOKEN_CACHE}" == "${HOME}/.config/"* ]]; then
     # shellcheck source=/dev/null  # Path validated above; cache is absent on non-Forge hosts.
-    source "${TOKEN_CACHE}"
+    source "${TOKEN_CACHE}" || true
 fi
 
 [[ -n "${CLAUDE_ENV_FILE:-}" ]] || exit 0

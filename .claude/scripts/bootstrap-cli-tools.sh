@@ -31,8 +31,10 @@ declare -Ar TOOLS=(
     [trash-put]='trash-cli:pipx'
     [uv]='uv:pipx'
     [gws]='googleworkspace/cli:v0.22.5:github-release-sha'
+    [agy]='google-antigravity/official-installer:latest:antigravity-installer'
 )
 declare -Ar STRATEGY_DISPATCH=(
+    [antigravity-installer]=_install_antigravity_installer
     [binstall]=_install_binstall
     [github-go]=_install_github_go
     [github-release-sha]=_install_github_release_sha
@@ -185,6 +187,31 @@ _sha256_file() {
 }
 
 # shellcheck disable=SC2329  # invoked indirectly through STRATEGY_DISPATCH
+_install_antigravity_installer() {
+    local -r package="$1" binary="$2"
+    _require_enabled "${ALLOW_NETWORK}" "Network install disabled. Set CLAUDE_BOOTSTRAP_ALLOW_NETWORK=1 to install ${binary}."
+    _require_enabled "${ALLOW_REMOTE_INSTALLERS}" "Remote installer disabled. Set CLAUDE_BOOTSTRAP_ALLOW_REMOTE_INSTALLERS=1 to install ${binary}."
+    [[ "${binary}" == "agy" ]] || _die "antigravity-installer is only configured for agy"
+    [[ "${package}" == "google-antigravity/official-installer:latest" ]] || _die "Invalid Antigravity installer spec for ${binary}: ${package}"
+    local tmp
+    tmp="$(mktemp -d)"
+    curl -fsSL https://antigravity.google/cli/install.sh -o "${tmp}/install.sh"
+    bash "${tmp}/install.sh" --dir "${BIN_DIR}" || {
+        rm -rf "${tmp}"
+        failed+=("${binary}")
+        return 1
+    }
+    [[ -x "${BIN_DIR}/${binary}" ]] || {
+        rm -rf "${tmp}"
+        printf '[FAIL] Antigravity installer completed but %s is missing\n' "${BIN_DIR}/${binary}" >&2
+        failed+=("${binary}")
+        return 1
+    }
+    rm -rf "${tmp}"
+    installed+=("${binary}")
+}
+
+# shellcheck disable=SC2329  # invoked indirectly through STRATEGY_DISPATCH
 _emit_post_note() {
     local -r binary="$1"
     [[ -v POST_NOTES["${binary}"] ]] || return 0
@@ -295,6 +322,9 @@ _provision() {
         package="${spec%:*}"
         strategy="${spec##*:}"
         command -v "${binary}" >/dev/null 2>&1 && {
+            if [[ "${strategy}" == "antigravity-installer" ]]; then
+                "${binary}" update >/dev/null || printf '[WARN] %s update failed; keeping existing binary\n' "${binary}" >&2
+            fi
             printf '[SKIP] %s already present\n' "${binary}"
             skipped+=("${binary}")
             continue
@@ -327,6 +357,11 @@ _check() {
         strategy="${spec##*:}"
         [[ "${strategy}" == "pipx" ]] && {
             command -v pipx >/dev/null 2>&1 || missing_prereqs+=("pipx")
+        }
+        [[ "${strategy}" == "antigravity-installer" ]] && {
+            for prereq in curl tar gzip; do
+                command -v "${prereq}" >/dev/null 2>&1 || missing_prereqs+=("${prereq}")
+            done
         }
         [[ "${strategy}" == "github-go" || "${strategy}" == "github-release-sha" ]] && {
             for prereq in curl tar gzip jq; do

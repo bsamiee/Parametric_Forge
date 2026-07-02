@@ -38,6 +38,7 @@ _: {
     psc = "procs --sortd 5"; # Sort processes by CPU usage
     psm = "procs --sortd 6"; # Sort processes by memory usage
     psw = "procs --watch"; # Watch processes (2s refresh)
+    top = "btm"; # Modern system monitor
     dfi = "dua i"; # Interactive disk usage analyzer
     killi = "pik"; # Interactive process killer
     bench = "hyperfine"; # Modern benchmarking tool
