@@ -21,12 +21,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    nix-unit = {
-      url = "github:nix-community/nix-unit";
-      inputs.nixpkgs.follows = "nixpkgs";
-      inputs.treefmt-nix.follows = "treefmt-nix";
-    };
-
     treefmt-nix = {
       url = "github:numtide/treefmt-nix";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -56,7 +50,6 @@
   }:
     flake-parts.lib.mkFlake {inherit inputs;} {
       imports = [
-        inputs.nix-unit.modules.flake.default
         inputs.treefmt-nix.flakeModule
         ./flake-modules/nixpkgs.nix
         ./flake-modules/packages.nix

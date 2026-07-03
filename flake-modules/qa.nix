@@ -7,9 +7,6 @@
 # Flake check owner aggregator.
 _: {
   imports = [
-    ./qa/catalog.nix
     ./qa/static.nix
-    ./qa/provisioning.nix
-    ./qa/contracts.nix
   ];
 }

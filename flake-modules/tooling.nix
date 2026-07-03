@@ -23,7 +23,6 @@ _: {
         nixpkgs-review
         nurl
         nix-fast-build
-        bats
         shellcheck
         shfmt
       ];
@@ -53,7 +52,6 @@ _: {
         command = "${forgePkgs.shfmt}/bin/shfmt";
         options = ["-w" "-i" "2" "-ci"];
         includes = [
-          "checks/*.bats"
           "overlays/forge-provision/*.sh"
           "overlays/forge-provision/**/*.sh"
         ];

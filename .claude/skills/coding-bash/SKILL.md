@@ -121,7 +121,6 @@ All code follows five governing principles:
 | [file-operations.md](references/file-operations.md)             | Atomic writes, FD multiplexing, directory traversal        |
 | [script-patterns.md](references/script-patterns.md)             | Arg parsing, help, ERR traps, parallel, retry              |
 | [bash-logging.md](references/bash-logging.md)                   | Structured logging, CI integration, tracing                |
-| [bash-testing.md](references/bash-testing.md)                   | bats-core 1.13+ suites, coverage, hypothesis PBT           |
 | [bash-portability.md](references/bash-portability.md)           | Cross-shell compat, containers, POSIX                      |
 | [text-processing-guide.md](references/text-processing-guide.md) | rg/awk/sd/jq/yq/mlr tool selection                         |
 | [validation.md](references/validation.md)                       | ShellCheck codes, static analysis, CI                      |
@@ -179,8 +178,6 @@ All code follows five governing principles:
 | ------------ | -------- | ------------------------------------------ |
 | `bash`       | 5.2+/5.3 | Shell runtime, builtins, `${ }` (5.3)      |
 | `shellcheck` | 0.11.0+  | Static analysis, SC codes                  |
-| `bats-core`  | 1.13+    | Test framework, TAP output                 |
-| `kcov`       | 43+      | Coverage instrumentation                   |
 | `rg`         | 15+      | Content search, `.gitignore`-aware         |
 | `fd`         | 10+      | File search, `.gitignore`-aware            |
 | `jq`         | 1.8+     | JSON processing, streaming, `trim`, `skip` |

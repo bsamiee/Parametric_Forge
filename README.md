@@ -29,8 +29,7 @@ Parametric Forge is a deterministic macOS workspace built with Nix flakes, nix-d
 ```text
 .
 ├── flake.nix / flake.lock          # Inputs, systems, overlays, host exports
-├── flake-modules/                  # Package/app outputs, checks, shell, formatter
-├── checks/                         # Bats suites for package behavior
+├── flake-modules/                  # Package/app outputs, shell, formatter
 ├── hosts/
 │   └── darwin/default.nix          # MacBook host: nix-darwin + Home Manager
 ├── modules/
@@ -96,7 +95,7 @@ Parametric Forge is a deterministic macOS workspace built with Nix flakes, nix-d
   <summary>Nix, hosts, cache</summary>
 
   - **Daemon:** Determinate Nix owns the macOS daemon; `modules/common/nix.nix` keeps shared Nix defaults for non-Determinate hosts.
-  - **Overlay:** `overlays/default.nix` adds local overlays for DuckDB CLI, `forge-provision`, `sqlean` SQLite extensions, `sqlite-forge`, Carbon compatibility, Bats, and the `pnpm_11` pin.
+  - **Overlay:** `overlays/default.nix` adds local overlays for DuckDB CLI, `forge-provision`, `sqlean` SQLite extensions, `sqlite-forge`, Carbon compatibility, and the `pnpm_11` pin.
   - **Host binding:** `hosts/darwin/default.nix` wires nix-darwin, Home Manager, the nix-darwin Homebrew module, and user state versions.
   </details>
 
