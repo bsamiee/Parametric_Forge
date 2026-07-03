@@ -54,7 +54,9 @@ in {
       }
       // --- pane-picker Configuration --------------------------------------------
       zellij-pane-picker location="https://github.com/shihanng/zellij-pane-picker/releases/download/v0.6.0/zellij-pane-picker.wasm" {
-        list_panes          "Super Alt Ctrl \\"
+        // Empty disables the plugin's global rebind; its KDL template breaks on "\" keys.
+        // Launch stays on the explicit LaunchOrFocusPlugin bind in keybinds.
+        list_panes          ""
         plugin_select_down  "Down"
         plugin_select_up    "Up"
       }

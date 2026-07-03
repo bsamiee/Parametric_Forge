@@ -113,8 +113,8 @@ with lib; {
     xdg.configFile = {
       #" zellij-pane-picker.wasm is called by the plugin via url as per documentation
       "zellij/plugins/zjstatus.wasm".source = pkgs.fetchurl {
-        url = "https://github.com/dj95/zjstatus/releases/download/v0.21.1/zjstatus.wasm";
-        hash = "sha256-3BmCogjCf2aHHmmBFFj7savbFeKGYv3bE2tXXWVkrho=";
+        url = "https://github.com/dj95/zjstatus/releases/download/v0.23.0/zjstatus.wasm";
+        hash = "sha256-4AaQEiNSQjnbYYAh5MxdF/gtxL+uVDKJW6QfA/E4Yf8=";
       };
     };
   };
