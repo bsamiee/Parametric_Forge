@@ -6,5 +6,7 @@
 # ----------------------------------------------------------------------------
 # Homebrew tap repositories
 _: {
-  homebrew.taps = [];
+  homebrew.taps = [
+    "domt4/autoupdate" # brew autoupdate launchd agent; daemon state stays operator-owned
+  ];
 }

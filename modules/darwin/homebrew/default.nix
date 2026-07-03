@@ -34,14 +34,15 @@ in {
 
     # --- Global Settings ----------------------------------------------------
     global = {
-      autoUpdate = mkDefault false;
+      autoUpdate = mkDefault true; # Manual brew ops refresh tap metadata natively
       brewfile = mkDefault false; # Disable Brewfile (managed via Nix)
     };
 
     # --- Activation Behavior ------------------------------------------------
     # Keep Homebrew flexible; explicit cleanup/drift checks stay operator-owned.
+    # Version upgrades are owned by the domt4/autoupdate launchd agent, not activation.
     onActivation = {
-      autoUpdate = mkDefault false;
+      autoUpdate = mkDefault true;
       cleanup = mkDefault "none";
       upgrade = mkDefault false;
       extraEnv = {

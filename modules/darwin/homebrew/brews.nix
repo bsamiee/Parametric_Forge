@@ -11,6 +11,7 @@ _: {
     "defaultbrowser" # CLI tool for setting default browser
     "tag" # macOS file tagging CLI
     "blueutil" # Bluetooth management
+    "pinentry-mac" # GUI sudo prompt for the brew autoupdate agent
 
     # --- Server Tools -------------------------------------------------------
     "webhook" # HTTP endpoint for triggering scripts (adnanh/webhook)
