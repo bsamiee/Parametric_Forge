@@ -36,6 +36,7 @@
     UV_PYTHON_PREFERENCE = "only-system";
     UV_PYTHON_DOWNLOADS = "never";
     PYTHONDONTWRITEBYTECODE = "1";
+    CRC32C_INSTALL_PREFIX = "${pkgs.crc32c}";
     MACOSX_DEPLOYMENT_TARGET = pkgs.stdenv.hostPlatform.darwinMinVersion or "14.0";
   };
   geoEnv = {
