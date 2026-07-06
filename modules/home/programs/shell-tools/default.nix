@@ -36,7 +36,7 @@
     ./jnv.nix
     ./mise.nix
     ./1password.nix
-    ./notebooklm.nix
+    ./mcp-launchers.nix
     ./ouch.nix
     ./p7zip.nix
     ./pik.nix
