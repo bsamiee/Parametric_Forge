@@ -13,14 +13,13 @@
   username = "bardiasamiee";
 in {
   macbook = nix-darwin.lib.darwinSystem {
-    system = "aarch64-darwin";
-    specialArgs = {inherit inputs;}; # Pass inputs to modules
+    specialArgs = {inherit inputs;};
 
     modules = [
       # Determinate Nix owner: forces nix.enable = false, generates /etc/nix/nix.custom.conf
       inputs.determinate.darwinModules.default
 
-      # Common configuration (includes Nix and Theme)
+      # Common configuration (Nix settings + toolchain env factory)
       ../../modules/common
 
       # Darwin-specific modules
@@ -30,15 +29,21 @@ in {
       home-manager.darwinModules.home-manager
 
       # --- Host-specific configuration --------------------------------------
-      {
+      ({forgeToolchainEnvFor, ...}: {
+        nixpkgs.hostPlatform = "aarch64-darwin";
         nixpkgs.overlays = [inputs.self.overlays.default];
 
         networking.hostName = "macbook";
         networking.computerName = "Bardia's MacBook Pro";
 
+        time.timeZone = "America/Chicago";
+
         # System configuration
-        system.stateVersion = 6;
-        system.primaryUser = username;
+        system = {
+          configurationRevision = inputs.self.rev or inputs.self.dirtyRev or null;
+          stateVersion = 7;
+          primaryUser = username;
+        };
 
         # Primary user
         users.users.${username} = {
@@ -51,13 +56,17 @@ in {
           useGlobalPkgs = true;
           useUserPackages = true;
           backupFileExtension = "backup"; # Backup conflicting files instead of failing
-          extraSpecialArgs = {inherit inputs;}; # Pass inputs to home-manager
+          extraSpecialArgs = {inherit inputs forgeToolchainEnvFor;};
           users.${username} = {...}: {
             imports = [
               inputs.nix-index-database.homeModules.nix-index
               ../../modules/home
             ];
-            home.stateVersion = "26.05";
+            home = {
+              inherit username;
+              homeDirectory = "/Users/${username}";
+              stateVersion = "26.05";
+            };
             programs.home-manager.enable = true;
 
             # Disable manual generation to avoid builtins.toFile warnings
@@ -69,7 +78,7 @@ in {
             news.display = "silent";
           };
         };
-      }
+      })
     ];
   };
 }

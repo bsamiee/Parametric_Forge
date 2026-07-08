@@ -65,8 +65,7 @@
       flake = {
         overlays.default = import ./overlays;
         darwinConfigurations = import ./hosts/darwin {inherit inputs nix-darwin home-manager;};
-        nixosConfigurations = {};
-        homeConfigurations = {};
+        nixosConfigurations = import ./hosts/nixos {inherit inputs home-manager;};
       };
     };
 }

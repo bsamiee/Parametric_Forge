@@ -4,24 +4,29 @@
 # License       : MIT
 # Path          : flake-modules/packages.nix
 # ----------------------------------------------------------------------------
-# Public packages and apps.
-{self, ...}: {
+# Public packages and apps. CLI-intended outputs get symmetric apps; sqlean
+# stays package-only (extension library set consumed by sqlite-forge).
+_: {
   perSystem = {
+    config,
     forgePkgs,
-    system,
     ...
-  }: {
+  }: let
+    mkApp = package: {
+      type = "app";
+      program = forgePkgs.lib.getExe package;
+    };
+  in {
     packages = {
       inherit (forgePkgs) duckdb forge-provision sqlite-forge sqlean;
       default = forgePkgs.forge-provision;
     };
 
     apps = {
-      forge-provision = {
-        type = "app";
-        program = forgePkgs.lib.getExe forgePkgs.forge-provision;
-      };
-      default = self.apps.${system}.forge-provision;
+      duckdb = mkApp forgePkgs.duckdb;
+      forge-provision = mkApp forgePkgs.forge-provision;
+      sqlite-forge = mkApp forgePkgs.sqlite-forge;
+      default = config.apps.forge-provision;
     };
   };
 }

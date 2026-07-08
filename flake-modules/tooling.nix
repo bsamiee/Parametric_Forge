@@ -11,20 +11,19 @@ _: {
     forgePkgs,
     ...
   }: {
+    # Repository-maintenance shell: formatter plus flake proof/update helpers.
+    # Machine tooling (git, shellcheck, shfmt, LSPs) is Home Manager-owned.
     devShells.default = forgePkgs.mkShell {
-      packages = with forgePkgs; [
-        git
-        alejandra
-        statix
-        deadnix
-        nix-output-monitor
-        nix-update
-        nix-init
-        nixpkgs-review
-        nurl
-        nix-fast-build
-        shellcheck
-        shfmt
+      packages = [
+        config.formatter
+        forgePkgs.deadnix
+        forgePkgs.statix
+        forgePkgs.nix-fast-build
+        forgePkgs.nix-init
+        forgePkgs.nix-output-monitor
+        forgePkgs.nix-update
+        forgePkgs.nixpkgs-review
+        forgePkgs.nurl
       ];
     };
 
