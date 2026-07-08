@@ -4,12 +4,21 @@
 # License       : MIT
 # Path          : modules/home/programs/shell-tools/ssh.nix
 # ----------------------------------------------------------------------------
-# SSH client configuration with GitHub integration and performance optimization
+# SSH client configuration with GitHub integration and Maghz VPS loopback tunnels.
 {
   config,
   lib,
+  pkgs,
   ...
-}: {
+}: let
+  # Maghz VPS loopback forwards: webhook (9000), aria2 RPC (6800), Codex OAuth
+  # (1455), Postgres (15435), Ollama (11434), n8n (5678).
+  maghzLocalForwards = map (port: {
+    bind.port = port;
+    host.address = "localhost";
+    host.port = port;
+  }) [9000 6800 1455 15435 11434 5678];
+in {
   programs.ssh = {
     enable = true;
     enableDefaultConfig = false; # Explicitly disable default config to suppress warning
@@ -35,24 +44,26 @@
         HostName = "31.97.131.41";
         IdentitiesOnly = true;
         AddKeysToAgent = "yes";
-        # Port forwards: webhook (9000), aria2 RPC (6800), Codex OAuth (1455)
-        LocalForward = [
-          {
-            bind.port = 9000;
-            host.address = "localhost";
-            host.port = 9000;
-          }
-          {
-            bind.port = 6800;
-            host.address = "localhost";
-            host.port = 6800;
-          }
-          {
-            bind.port = 1455;
-            host.address = "localhost";
-            host.port = 1455;
-          }
-        ];
+        LocalForward = maghzLocalForwards;
+      };
+
+      # --- Maghz transport-only tunnel (launchd-managed) --------------------
+      # Fail-fast forwards + tight keepalives; launchd owns restart policy.
+      "maghz-tunnel" = {
+        User = "maghz-agent";
+        HostName = "31.97.131.41";
+        IdentitiesOnly = true;
+        AddKeysToAgent = "yes";
+        BatchMode = true;
+        Compression = false;
+        ControlMaster = "no";
+        ExitOnForwardFailure = true;
+        LocalForward = maghzLocalForwards;
+        ServerAliveInterval = 15;
+        ServerAliveCountMax = 3;
+        SessionType = "none";
+        StdinNull = true;
+        TCPKeepAlive = false;
       };
 
       # --- Default Optimizations for All Hosts ------------------------------
@@ -73,6 +84,20 @@
         # Performance
         Compression = true;
       };
+    };
+  };
+
+  # Durable Maghz tunnel: remote-primary mode kickstarts it; local parity mode
+  # boots it out before compose binds the same loopback ports.
+  launchd.agents.maghz-vps-tunnel = {
+    enable = true;
+    config = {
+      ProgramArguments = ["${pkgs.openssh}/bin/ssh" "-N" "maghz-tunnel"];
+      RunAtLoad = true;
+      KeepAlive = true;
+      ThrottleInterval = 30;
+      StandardOutPath = "${config.home.homeDirectory}/Library/Logs/maghz-vps-tunnel.log";
+      StandardErrorPath = "${config.home.homeDirectory}/Library/Logs/maghz-vps-tunnel.log";
     };
   };
 }

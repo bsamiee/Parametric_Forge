@@ -55,10 +55,8 @@ in {
         voiceOverOnOffKey = mkDefault false;
         keyboardAccessFocusRingTimeout = mkDefault 15;
       };
-      # --- Additional Security Bypasses -------------------------------------
-      "com.apple.LaunchServices" = {
-        LSQuarantine = mkDefault false; # Disable quarantine for downloaded apps
-      };
+      # LSQuarantine stays disabled through the first-class owner:
+      # system.defaults.LaunchServices.LSQuarantine in settings/system.nix.
       # --- Developer Security Settings --------------------------------------
       "com.apple.dt.Xcode" = {
         "DVTPlugInManagerNonApplePlugIns-Xcode-14.0" = mkDefault {};

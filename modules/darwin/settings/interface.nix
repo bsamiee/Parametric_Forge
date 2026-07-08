@@ -35,7 +35,9 @@ in {
         wvous-tr-corner = mkDefault 1;
         wvous-bl-corner = mkDefault 1;
         wvous-br-corner = mkDefault 1;
-        # Application management
+        # Application management: pins require a declared install source
+        # (cask/masApp/system). Drafts/Codex/Claude pins return when their
+        # sources land in modules/darwin/homebrew.
         persistent-apps = mkDefault [
           {
             spacer = {
@@ -43,12 +45,9 @@ in {
             };
           }
           "/Applications/Heptabase.app"
-          "/Applications/Drafts.app"
           "/Applications/Visual Studio Code.app"
           "/Applications/Arc.app"
           "/Applications/WezTerm.app"
-          "/Applications/Codex.app"
-          "/Applications/Claude.app"
           "/Applications/Superhuman.app"
           "/System/Applications/Messages.app"
         ];
@@ -98,7 +97,6 @@ in {
         AppleInterfaceStyleSwitchesAutomatically = mkDefault false;
         AppleShowScrollBars = mkDefault "WhenScrolling";
         AppleScrollerPagingBehavior = mkDefault false;
-        AppleFontSmoothing = mkDefault 0;
         AppleICUForce24HourTime = mkDefault true;
         NSTableViewDefaultSizeMode = mkDefault 1;
         AppleWindowTabbingMode = mkDefault "manual";
@@ -137,8 +135,6 @@ in {
           SidebarPlacesSectionDisclosedState = mkDefault true;
           SidebarShowingiCloudDesktop = mkDefault false;
           SidebarShowingSignedIntoiCloud = mkDefault true;
-          SidebarTagsSctionDisclosedState = mkDefault false;
-          QLEnableTextSelection = mkDefault true;
           FXRemoveOldTrashItems = mkDefault true;
           FXInfoPanesExpanded = {
             General = mkDefault true;
@@ -162,7 +158,6 @@ in {
               "com.apple.finder.SRCH"
             ];
           };
-          "NSWindowTabbingShoudShowTabBarKey-com.apple.finder.TBrowserWindow" = mkDefault false;
           FXArrangeGroupViewBy = mkDefault "Name";
           FXPreferredGroupBy = mkDefault "None";
         };
