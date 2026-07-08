@@ -8,14 +8,13 @@
 {
   lib,
   config,
-  pkgs,
+  forgeToolchainEnvFor,
   ...
 }: let
   inherit (lib) mkDefault;
   inherit (config.system) primaryUser;
   primaryUserHome = config.users.users.${primaryUser}.home;
-  toolchainEnv = import ../../common/toolchain-env.nix {
-    inherit lib pkgs;
+  toolchainEnv = forgeToolchainEnvFor {
     home = primaryUserHome;
     username = primaryUser;
     xdgCacheHome = "${primaryUserHome}/.cache";
