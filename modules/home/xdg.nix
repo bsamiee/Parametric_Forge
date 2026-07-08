@@ -29,31 +29,12 @@
       videos = "${config.home.homeDirectory}/Videos";
     };
 
-    # --- Config directories (XDG_CONFIG_HOME) -------------------------------
-    # Note: op/env.template moved to programs/shell-tools/1password.nix
-    configFile = {};
-
-    # --- Data directories (XDG_DATA_HOME) -----------------------------------
-    dataFile =
-      {
-        # Placeholder comment
-      }
-      // lib.optionalAttrs pkgs.stdenv.isLinux {
-        # Linux desktop integration
-        "applications/.keep".text = "";
-        "icons/.keep".text = "";
-        "Trash/files/.keep".text = "";
-        "Trash/info/.keep".text = "";
-      };
-
-    # --- Cache directories (XDG_CACHE_HOME) ---------------------------------
-    cacheFile = {
-      # Placeholder comment
-    };
-
-    # --- State directories (XDG_STATE_HOME) ---------------------------------
-    stateFile = {
-      # Placeholder comment
+    # --- Linux desktop integration (XDG_DATA_HOME) ---------------------------
+    dataFile = lib.mkIf pkgs.stdenv.isLinux {
+      "applications/.keep".text = "";
+      "icons/.keep".text = "";
+      "Trash/files/.keep".text = "";
+      "Trash/info/.keep".text = "";
     };
   };
 
