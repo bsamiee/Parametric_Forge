@@ -33,6 +33,20 @@
       prelude = "";
     }
     {
+      name = "forge-doppler-mcp";
+      pkg = "@dopplerhq/mcp-server";
+      version = "1.0.5";
+      bin = "doppler-mcp";
+      prelude = "";
+    }
+    {
+      name = "forge-playwright-mcp";
+      pkg = "@playwright/mcp";
+      version = "0.0.77";
+      bin = "playwright-mcp";
+      prelude = "";
+    }
+    {
       # Bare-binary name held stable: the Maghz MCP fleet spells `notebooklm-mcp`.
       name = "notebooklm-mcp";
       pkg = "notebooklm-mcp";

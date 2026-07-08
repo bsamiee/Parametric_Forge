@@ -97,6 +97,10 @@ in {
             chmod 600 "$cache_file"
           fi
         fi
+
+        # Transitional GUI replay: restart the RunAtLoad agent so GUI apps pick up
+        # the just-written cache on this switch instead of at next login.
+        /bin/launchctl kickstart -k "gui/$UID/org.nix-community.home.gui-op-secrets" >/dev/null 2>&1 || true
       '';
 
       # Register the GUI Op Secrets app bundle with Launch Services so macOS Login Items & Extensions
