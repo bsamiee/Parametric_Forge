@@ -6,6 +6,7 @@
 # ----------------------------------------------------------------------------
 # Zellij terminal multiplexer configuration
 {
+  config,
   lib,
   pkgs,
   ...
@@ -13,7 +14,7 @@
   imports = [
     ./config.nix # Nix-generated main config
     ./themes/dracula.nix # Nix-generated Dracula theme
-    ./layouts/default.nix # Editor-first layout with floating lazygit
+    ./layouts/default.nix # Shell-first layout with floating lazygit
   ];
 
   options.programs.zellij = {
@@ -57,6 +58,30 @@
 
   config = {
     home.packages = [pkgs.zellij];
+
+    # Zellij grants plugin permissions interactively; a 1-row bar pane cannot
+    # render the prompt, so grants are seeded declaratively per wasm path.
+    home.activation.zellijPluginGrants = lib.hm.dag.entryAfter ["writeBoundary"] (let
+      grants = {
+        "zjstatus.wasm" = ["ReadApplicationState" "ChangeApplicationState" "RunCommands"];
+        "zellij_forgot.wasm" = ["ReadApplicationState" "ChangeApplicationState"];
+        "zellij-pane-picker.wasm" = ["ReadApplicationState" "Reconfigure" "ChangeApplicationState"];
+      };
+      seed = wasm: perms: ''
+        if ! /usr/bin/grep -qF "plugins/${wasm}" "$permsFile" 2>/dev/null; then
+          {
+            printf '"%s" {\n' "$plugDir/${wasm}"
+            printf '    %s\n' ${lib.escapeShellArgs perms}
+            printf '}\n'
+          } >>"$permsFile"
+        fi
+      '';
+    in ''
+      permsFile="${config.home.homeDirectory}/Library/Caches/org.Zellij-Contributors.Zellij/permissions.kdl"
+      plugDir="${config.xdg.configHome}/zellij/plugins"
+      run /bin/mkdir -p "''${permsFile%/*}"
+      ${lib.concatStrings (lib.mapAttrsToList seed grants)}
+    '');
 
     # --- Plugin Installation ------------------------------------------------
     # Every third-party wasm is file-owned and hash-pinned; aliases resolve

@@ -11,6 +11,7 @@ _: {
     cl = "clear";
     ex = "exit";
     vim = "nvim";
+    nv = "nvim";
     ff = "fastfetch";
 
     # --- Shell Configuration ------------------------------------------------

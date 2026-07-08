@@ -4,7 +4,7 @@
 # License       : MIT
 # Path          : modules/home/programs/apps/zellij/layouts/default.nix
 # ----------------------------------------------------------------------------
-# Editor-first Zellij layout; Yazi lives in an on-demand floating popup only
+# Shell-first Zellij layout; editor and Yazi arrive on demand via the rail
 _: {
   xdg.configFile."zellij/layouts/default.kdl".text = ''
     // Title         : default.kdl
@@ -13,7 +13,7 @@ _: {
     // License       : MIT
     // Path          : modules/home/programs/apps/zellij/layouts/default.kdl
     // ----------------------------------------------------------------------------
-    // Editor-first layout with floating lazygit; Yazi popup arrives via keybind
+    // Shell-first layout with floating lazygit; nvim spawns via forge-edit rail
 
     layout {
         // --- Pane Templates ---------------------------------------------------------
@@ -25,20 +25,15 @@ _: {
             height          "80%"
         }
 
-        // Self-registering Neovim server; owns the tab's editor socket registry
-        pane_template name="editor" {
-            command         "forge-nvim.sh"
-        }
-
         // --- Tab Templates ----------------------------------------------------------
-        // Universal top zjstatus bar and bottom compact-bar (tooltip surface)
+        // Top zjstatus: tabs/layout/session. Bottom zjstatus-hints: mode + key ribbon.
         tab_template name="ui" {
             pane size=1 borderless=true {
                 plugin location="zjstatus"
             }
             children
             pane size=1 borderless=true {
-                plugin location="compact-bar"
+                plugin location="zjstatus-hints"
             }
         }
 
@@ -49,11 +44,9 @@ _: {
             pane size=1 borderless=true {
                 plugin location="zjstatus"
             }
-            pane name=" [EDITOR] " {
-                editor
-            }
+            pane
             pane size=1 borderless=true {
-                plugin location="compact-bar"
+                plugin location="zjstatus-hints"
             }
         }
 
@@ -61,18 +54,14 @@ _: {
         // Pane counts include the two bars from the ui template
         swap_tiled_layout name="[DEFAULT]" {
             ui exact_panes=3 {
-                pane name=" [EDITOR] " {
-                    editor
-                }
+                pane
             }
         }
 
         swap_tiled_layout name="[TWO_COLUMNS]" {
             ui min_panes=4 {
                 pane split_direction="vertical" {
-                    pane name=" [EDITOR] " {
-                        editor
-                    }
+                    pane
                     pane stacked=true {
                         children
                     }
@@ -83,9 +72,7 @@ _: {
         swap_tiled_layout name="[TWO_ROWS]" {
             ui min_panes=4 {
                 pane split_direction="horizontal" {
-                    pane name=" [EDITOR] " {
-                        editor
-                    }
+                    pane
                     pane stacked=true {
                         children
                     }
@@ -97,9 +84,7 @@ _: {
             ui min_panes=6 {
                 pane split_direction="horizontal" {
                     pane split_direction="vertical" {
-                        pane name=" [EDITOR] " {
-                            editor
-                        }
+                        pane
                         pane
                     }
                     pane split_direction="vertical" {

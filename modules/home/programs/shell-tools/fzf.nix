@@ -42,8 +42,8 @@ _:
       "--border-label-pos=0"
       # UI elements
       "--prompt='󰅂 '"
-      "--marker='󰄬'"
-      "--pointer=''"
+      "--marker='✓'"
+      "--pointer='❯'"
       "--separator='─'"
       "--scrollbar='│'"
       "--info=right"
