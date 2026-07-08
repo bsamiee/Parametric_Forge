@@ -40,19 +40,20 @@ import { parseArgs } from 'node:util'
 import { resolve, dirname } from 'node:path'
 
 // --- [CONSTANTS] -------------------------------------------------------------
-const MAX_CONCURRENT = 16   // runtime hard cap; a trace above it is a warning
-const MAX_AGENTS = 1000     // runtime per-run lifetime cap
-const MAX_DEPTH = 1         // a top-level workflow may call workflow() ONCE; a child that itself calls workflow() is the runtime error
-const MAX_SYNTH_DEPTH = 64  // fixture-synthesis recursion bound; a self-referential JSON Schema would otherwise blow the stack (a runtime agent returns finite data, never an infinite shape)
+
+const MAX_CONCURRENT = 16    // runtime hard cap; a trace above it is a warning
+const MAX_AGENTS = 1000      // runtime per-run lifetime cap
+const MAX_DEPTH = 1          // a top-level workflow may call workflow() ONCE; a child that itself calls workflow() is the runtime error
+const MAX_SYNTH_DEPTH = 64   // fixture-synthesis recursion bound; a self-referential JSON Schema would otherwise blow the stack (a runtime agent returns finite data, never an infinite shape)
 const BODY_TIMEOUT_MS = 5000 // wall-clock budget per body run; an unsettled promise/await is reported as a timeout instead of hanging the harness (a deterministic body settles in microseconds under mocked agents)
-// The DSL globals the runtime exposes, then the host names it withholds. Both are passed as
-// named Function params: the DSL set is bound to mocks, the host set to throwers/undefined,
-// so the body sees EXACTLY the runtime surface — host access fails here as it would there.
+// The DSL globals the runtime exposes, then the host names it withholds. Both are passed as  named Function params: the DSL set is bound to mocks,
+// the host set to throwers/undefined, so the body sees EXACTLY the runtime surface — host access fails here as it would there.
 const DSL_GLOBALS = ['args', 'agent', 'parallel', 'pipeline', 'workflow', 'phase', 'log', 'budget', 'setTimeout', 'clearTimeout', 'console', 'Math', 'Date']
 const HOST_GLOBALS = ['process', 'global', 'globalThis', 'require', 'module', 'exports', 'Buffer', '__dirname', '__filename']
 const GLOBALS = [...DSL_GLOBALS, ...HOST_GLOBALS]
 
-// --- [INPUT] -----------------------------------------------------------------
+// --- [INPUTS] ----------------------------------------------------------------
+
 const { values, positionals } = parseArgs({ allowPositionals: true, options: {
   mode: { type: 'string', default: 'sim' }, args: { type: 'string' }, fixtures: { type: 'string' }, scope: { type: 'string' }, json: { type: 'boolean', default: false },
 } })
@@ -64,16 +65,16 @@ if (!FILE || (values.mode !== 'sim' && values.mode !== 'real')) {
 const loadJson = (v, label) => { if (v == null) return undefined; try { return JSON.parse(v.startsWith('@') ? readFileSync(v.slice(1), 'utf8') : v) } catch (e) { console.error(`cannot parse --${label}: ${e.message}`); process.exit(2) } }
 const FIXTURES = loadJson(values.fixtures, 'fixtures') || {}
 
-// --- [OPERATIONS] -- deterministic fixture synthesis from a JSON Schema --------
-// arrays get exactly one element so control flow proceeds past `.length` guards; a
-// `--fixtures` map keyed by an agent label (exact or prefix) overrides per stage.
+// --- [OPERATIONS] ------------------------------------------------------------
+
+// arrays get exactly one element so control flow proceeds past `.length` guards; a `--fixtures` map keyed by an agent label (exact or prefix) overrides per stage.
 const synth = (schema, depth = 0) => {
   if (!schema || typeof schema !== 'object') return null
-  if (depth >= MAX_SYNTH_DEPTH) return null // self-referential schema ($ref-style cycle or node.child=node) bottoms out here instead of overflowing the stack
+  if (depth >= MAX_SYNTH_DEPTH) return null  // self-referential schema ($ref-style cycle or node.child=node) bottoms out here instead of overflowing the stack
   if ('const' in schema) return schema.const
   if (Array.isArray(schema.enum) && schema.enum.length) return schema.enum[0]
   switch (Array.isArray(schema.type) ? schema.type[0] : schema.type) {
-    case 'string': return 'x' // non-empty so a workflow's own `if (!field)` truthiness guards proceed past the fixture
+    case 'string': return 'x'  // non-empty so a workflow's own `if (!field)` truthiness guards proceed past the fixture
     case 'number': case 'integer': return 0
     case 'boolean': return false
     case 'null': return null
@@ -81,13 +82,13 @@ const synth = (schema, depth = 0) => {
     default: { const o = {}, props = schema.properties || {}; for (const k of (schema.required || Object.keys(props))) o[k] = synth(props[k] || {}, depth + 1); return o }
   }
 }
+
 const fixtureFor = (opts) => {
   const label = opts && opts.label
   if (label) { if (label in FIXTURES) return structuredClone(FIXTURES[label]); for (const k of Object.keys(FIXTURES)) if (label.startsWith(k)) return structuredClone(FIXTURES[k]) }
   return opts && opts.schema ? synth(opts.schema) : '<' + (label || 'agent') + '>'
 }
 
-// --- [OPERATIONS] -- mocked DSL globals over a shared recorder -----------------
 const makeGlobals = (rec, absFile) => {
   let inflight = 0
   const agent = async (prompt, opts = {}) => {
@@ -124,16 +125,15 @@ const makeGlobals = (rec, absFile) => {
 
 const runBody = async (src, args, rec, absFile) => {
   const g = makeGlobals(rec, absFile)
-  const stripped = src.replace(/^([ \t]*)export([ \t]+const[ \t]+meta\b)/m, '$1$2') // drop only the `export` on the meta line (handles a leading comment)
-  const fn = new Function(...GLOBALS, 'return (async () => {\n' + stripped + '\n})()') // construction throws on a syntax error — this IS the parse-check
+  const stripped = src.replace(/^([ \t]*)export([ \t]+const[ \t]+meta\b)/m, '$1$2')  // drop only the `export` on the meta line (handles a leading comment)
+  const fn = new Function(...GLOBALS, 'return (async () => {\n' + stripped + '\n})()')  // construction throws on a syntax error — this IS the parse-check
   const argv = [structuredClone(args), g.agent, g.parallel, g.pipeline, g.workflow, g.phase, g.log, g.budget, g.setTimeout, g.clearTimeout, g.console, g.Math, g.Date, ...HOST_GLOBALS.map((k) => g[k])]
-  return fn(...argv) // argv is positional over GLOBALS = [...DSL_GLOBALS, ...HOST_GLOBALS], so host names land on their declared params
+  return fn(...argv)  // argv is positional over GLOBALS = [...DSL_GLOBALS, ...HOST_GLOBALS], so host names land on their declared params
 }
 
 const freshRecorder = () => ({ seq: 0, depth: 0, maxConcurrent: 0, agents: [], phases: [], nested: [], console: [], warnings: new Set() })
 const traceOf = (rec, result) => JSON.stringify({ agents: rec.agents.map((a) => ({ phase: a.phase, label: a.label, model: a.model, effort: a.effort, hasSchema: a.hasSchema })), phases: rec.phases, nested: rec.nested, result })
 
-// --- [OPERATIONS] -- simulate: parse-check + run-twice determinism + report ---
 const simulate = async (absFile, args) => {
   let src
   try { src = readFileSync(absFile, 'utf8') } catch (e) { return { file: absFile, mode: 'sim', parseOk: false, ran: false, deterministic: null, error: `cannot read ${absFile}: ${e.code || e.message}` } }
@@ -162,8 +162,10 @@ const simulate = async (absFile, args) => {
 const firstDiff = (a, b) => { let i = 0; while (i < a.length && i < b.length && a[i] === b[i]) i++; return { at: i, a: a.slice(Math.max(0, i - 30), i + 30), b: b.slice(Math.max(0, i - 30), i + 30) } }
 
 // --- [COMPOSITION] -----------------------------------------------------------
+
 const absFile = resolve(FILE)
 if (values.mode === 'real' && !values.scope) { console.error('--mode real needs --scope <one tiny path> (cheapness is args-scoping, never call rewriting)'); process.exit(2) }
+
 // REAL passes the raw --scope path as the workflow's args (a path string, not JSON); SIM takes --args as JSON
 const report = await simulate(absFile, values.mode === 'real' ? values.scope : loadJson(values.args, 'args'))
 
@@ -192,4 +194,5 @@ else {
     for (const w of report.warnings) console.log('  warn  ' + w)
   }
 }
+
 process.exit(report.parseOk && report.ran !== false && report.deterministic !== false ? 0 : 1)

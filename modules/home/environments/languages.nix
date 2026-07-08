@@ -37,5 +37,9 @@ in {
       # --- TypeScript/JavaScript Tooling -------------------------------------
       TAILWIND_MODE = "watch"; # JIT compilation for development
       VITEST_MODE = "run"; # Default test runner mode
+
+      # --- Headless Render (Puppeteer/Mermaid) -------------------------------
+      # Shared Nix Chrome-for-Testing pin (owned by toolchain-env) so mmdc/puppeteer and the mermaid validator never launch the real Chrome.app or an unstable downloaded shell.
+      PUPPETEER_EXECUTABLE_PATH = toolchainEnv.puppeteerExecutablePath;
     };
 }

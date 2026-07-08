@@ -76,4 +76,7 @@ in {
 
   launchdPathEntries = userPathEntries ++ fallbackPathEntries;
   scientificSessionEnv = pythonEnv // geoEnv // energyEnv;
+
+  # Nix Chrome-for-Testing for headless render (mmdc/puppeteer, the mermaid validator); one owner feeds both the login-shell and launchd surfaces so a GUI-spawned agent never falls to an unpinned browser.
+  puppeteerExecutablePath = "${pkgs.playwright-driver.browsers-chromium}/chromium-${pkgs.playwright-driver.browsersJSON.chromium.revision}/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing";
 }

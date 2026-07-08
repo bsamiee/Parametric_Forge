@@ -1,5 +1,36 @@
 # Parametric Forge • Execution Standards
 
+## Model Dispatch
+
+Rankings, higher = better. Cost reflects what I actually pay (OpenAI is near-free for me due to a deal), not list price. Intelligence is how hard a problem you can hand the model unsupervised. Taste covers UI/UX, code quality, API design, and copy.
+
+| [INDEX] | [MODEL]  | [COST] | [INTELLIGENCE] | [TASTE] |
+| :-----: | :------- | :----: | :------------: | :-----: |
+|  [00]   | gpt-5.5  |   9    |       8        |    5    |
+|  [00]   | sonnet-5 |   5    |       4        |    6    |
+|  [00]   | opus-4.8 |   4    |       7        |    7    |
+|  [00]   | fable-5  |   2    |       9        |    9    |
+
+How to apply:
+- These are defaults, not limits. You have standing permission to override them: if a cheaper model's output doesn't meet the bar, rerun or redo the work with a smarter model without asking. Judge the output, not the price tag. Escalating costs less than shipping mediocre work.
+- Don't let cost prevent you from using the right model for the job. Instead, take advantage of cheaper options to get more information and try things before moving the work to a more expensive option.
+- Bulk/mechanical work (clear-spec implementation, data analysis, migrations): gpt-5.5 - it's effectively free.
+- Heavy exploration, investigation, and research legs: dispatch to gpt-5.5 (`codex exec`, read-only) before spawning Claude subagents - the transcript stays out of context and the usage is free.
+- Anything user-facing (UI, copy, API design) needs taste ≥ 7.
+- Reviews of plans/implementations: fable-5 or opus-4.8, optionally gpt-5.5 as an extra independent perspective.
+- Mechanics: gpt-5.5 is only reachable through the Codex CLI - `codex exec` / `codex review` (my ~/.codex/config.toml defaults to gpt-5.5 at high reasoning).
+- Load the codex skill `.claude/skills/codex/SKILL.md` whenever dispatching work to codex - delegation triggers, invocation mechanics, sandboxing, effort tiers, sessions, and review modes live there.
+- Reasoning effort defaults to high; escalate a single run to xhigh with `codex exec --profile xhigh` (or `-c model_reasoning_effort="xhigh"`) for the hardest research, review, and design legs - multi-minute latency, reserve for depth over throughput.
+- Claude models (sonnet-5, opus-4.8, fable-5) run via the Agent/Workflow model parameter.
+- [NEVER] use Haiku.
+
+Using gpt-5.5 inside workflows and subagents (the model parameter only takes Claude models, so use a wrapper):
+- Spawn a thin Claude wrapper agent with `model: 'sonnet', effort: 'low'` whose prompt instructs it to write a self-contained codex prompt, run `codex exec` via Bash, and return the report (use `schema` on the wrapper to get structured output back).
+- Always label these agents with a `gpt-5.5:` prefix, e.g. `{label: 'gpt-5.5:review-auth'}` - the workflow UI shows the wrapper's Claude model, so the label is the only indication the real worker is gpt-5.5.
+- Codex runs can exceed Bash's 10-minute timeout: pass an explicit timeout, or run in the background and poll for the report file.
+- `codex exec -o <file>` writes the final message to a file (the report artifact to poll in background runs); `--output-schema <schema.json>` constrains the final message to a JSON Schema when the wrapper must return typed results.
+- Workflow token budgets only count Claude tokens; codex work is free and invisible to `budget.spent()`.
+
 ## Code Quality
 
 ### Nix Requirements

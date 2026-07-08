@@ -20,13 +20,22 @@ export const meta = {
   whenToUse: 'Auditing wire-contract parity across the tri-language platform before a release',
   phases: [
     { title: 'List wire types' },
-    { title: 'Check', detail: 'one agent per wire type', model: 'haiku' },
+    { title: 'Check', detail: 'one agent per wire type', model: 'sonnet' },
     { title: 'Open PR' },
   ],
 }
 
+// --- [INPUTS] ----------------------------------------------------------------------------
+
+// `args` arrives as structured data. An object with a `types` list overrides the discovery step; nothing passed lets the kernel enumerate the shared wire types.
+const seedTypes = Array.isArray(args?.types) ? args.types : null
+
+// --- [MODELS] ----------------------------------------------------------------------------
+
+// STRICT everywhere: additionalProperties:false + every property required at every level; a conditional field is required-but-empty ('' / []), never omitted.
 const TYPES = {
   type: 'object',
+  additionalProperties: false,
   required: ['types'],
   properties: {
     types: { type: 'array', items: { type: 'string' } },
@@ -35,20 +44,19 @@ const TYPES = {
 
 const DRIFT = {
   type: 'object',
-  required: ['type', 'hasDrift'],
+  additionalProperties: false,
+  required: ['type', 'hasDrift', 'summary', 'producerRef', 'consumerRefs', 'fix'],
   properties: {
     type: { type: 'string' },
     hasDrift: { type: 'boolean' },
-    summary: { type: 'string' },
+    summary: { type: 'string' },       // empty when hasDrift is false
     producerRef: { type: 'string' },
     consumerRefs: { type: 'array', items: { type: 'string' } },
-    fix: { type: 'string' },
+    fix: { type: 'string' },           // corrected consumer-side snippet, empty when in sync
   },
 }
 
-// `args` arrives as structured data. An object with a `types` list overrides the
-// discovery step; nothing passed lets the kernel enumerate the shared wire types.
-const seedTypes = Array.isArray(args?.types) ? args.types : null
+// --- [COMPOSITION] -----------------------------------------------------------------------
 
 phase('List wire types')
 const { types } = seedTypes
@@ -61,8 +69,7 @@ const { types } = seedTypes
     )
 log(`${types.length} shared wire type(s) to check`)
 
-// Fan out — one checker per wire type, all at once. Barrier on purpose: the PR
-// stage edits every divergence together, so it needs the full set of results.
+// Fan out — one checker per wire type, all at once. Barrier on purpose: the PR stage edits every divergence together, so it needs the full set of results.
 const checks = await parallel(types.map(wt => () =>
   agent(
     `Check the wire type "${wt}" for drift across the three branches. Read the C# producer ` +
@@ -70,7 +77,7 @@ const checks = await parallel(types.map(wt => () =>
     `it. Report whether field names, optionality, enum codes, or ordering have diverged from ` +
     `the producer, cite the file:symbol on each side, and if drift exists give a corrected ` +
     `consumer-side snippet.`,
-    { label: `check:${wt}`, phase: 'Check', model: 'haiku', schema: DRIFT },
+    { label: `check:${wt}`, phase: 'Check', model: 'sonnet', schema: DRIFT },
   ),
 ))
 
@@ -81,6 +88,10 @@ if (drifted.length === 0) {
   return { checked: types.length, drifted: 0, message: 'Wire contracts are in sync across all three branches' }
 }
 
+// --- [OPEN_PR]
+
+// Paste fan-in is small-output-only (drift set bounded by the wire-type roster); past
+// ~50 rows the product moves to a scratch report file + receipt — SKILL.md "Data flow between stages".
 phase('Open PR')
 await agent(
   `Open ONE draft pull request that realigns every drifted wire type to its C# producer ` +
@@ -89,7 +100,7 @@ await agent(
   `untouched. Title the PR for the wire-contract drift it closes:\n\n` +
   drifted.map(d =>
     `### ${d.type}\n${d.summary}\nProducer (reference): ${d.producerRef}\n` +
-    `Consumers: ${(d.consumerRefs ?? []).join(', ')}\n${d.fix ?? ''}`,
+    `Consumers: ${d.consumerRefs.join(', ')}\n${d.fix}`,
   ).join('\n\n'),
   { label: 'open-pr', phase: 'Open PR' },
 )

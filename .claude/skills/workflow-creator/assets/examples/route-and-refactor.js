@@ -14,7 +14,7 @@
  * The dispatch table IS the pattern: adding a language is one ROUTES row, never a
  * branch threaded through the body. An unroutable file (a `.md`, a `.json`) returns
  * null from the thunk and falls out at `.filter(Boolean)` instead of hitting a wrong
- * specialist. The mechanical SQL row runs on Haiku; the rest inherit the session model.
+ * specialist. The mechanical SQL row runs on Sonnet; the rest inherit the session model.
  *
  * Workflow({ name: 'route-and-refactor',
  *            args: ['libs/csharp/Rasm.Compute/Solver.cs',
@@ -33,21 +33,10 @@ export const meta = {
   ],
 }
 
-// The result every specialist returns, whatever the language. Small and required-tight.
-const REFACTOR = {
-  type: 'object',
-  required: ['file', 'changed'],
-  properties: {
-    file: { type: 'string' },
-    changed: { type: 'boolean' },     // false when the file was already canonical
-    summary: { type: 'string' },      // what was collapsed/rewritten, or why nothing was
-    deferred: { type: 'array', items: { type: 'string' } }, // cross-file follow-ups, if any
-  },
-}
+// --- [CONSTANTS] -------------------------------------------------------------------------
 
-// One row per language class: the specialist prompt for a file, and the model it runs on.
-// The three judgement-heavy rows omit `model` — an omitted/undefined model inherits the
-// session model, the capable default. Only the mechanical SQL rewrite drops to Haiku.
+// One row per language class: the specialist prompt for a file, and the model it runs on. The three judgement-heavy rows omit `model` —
+// an omitted/undefined model inherits the session model, the capable default. Only the mechanical SQL rewrite drops to Sonnet.
 const ROUTES = {
   cs: {
     prompt: f =>
@@ -70,7 +59,7 @@ const ROUTES = {
       `and tighten the type annotations. Report what changed and any cross-file follow-up.`,
   },
   sql: {
-    model: 'haiku',
+    model: 'sonnet',
     prompt: f =>
       `Rewrite ${f} set-algebraically per coding-pg: push filters into the query, replace ` +
       `row-by-row logic with set operations, and pin invariants at the schema level. Report ` +
@@ -78,14 +67,33 @@ const ROUTES = {
   },
 }
 
-// Plain-JS classifier — the discriminant is the file extension. Returns the ROUTES
-// key, or null for a file no specialist owns.
+// --- [MODELS] ----------------------------------------------------------------------------
+
+// The result every specialist returns, whatever the language. STRICT: additionalProperties:false
+// + every property required; conditional fields are required-but-empty ('' / []).
+const REFACTOR = {
+  type: 'object',
+  additionalProperties: false,
+  required: ['file', 'changed', 'summary', 'deferred'],
+  properties: {
+    file: { type: 'string' },
+    changed: { type: 'boolean' },     // false when the file was already canonical
+    summary: { type: 'string' },      // what was collapsed/rewritten, or why nothing was
+    deferred: { type: 'array', items: { type: 'string' } }, // cross-file follow-ups; empty attests none
+  },
+}
+
+// --- [OPERATIONS] ------------------------------------------------------------------------
+
+// Plain-JS classifier — the discriminant is the file extension. Returns the ROUTES key, or null for a file no specialist owns.
 const classify = f =>
   f.endsWith('.cs')  ? 'cs'
   : f.endsWith('.ts') || f.endsWith('.tsx') ? 'ts'
   : f.endsWith('.py') ? 'py'
   : f.endsWith('.sql') ? 'sql'
   : null
+
+// --- [COMPOSITION] -----------------------------------------------------------------------
 
 // `args` arrives as structured data — a list of changed paths stays a list, read it
 // directly. Nothing passed falls back to a representative cross-language change set.
@@ -101,10 +109,8 @@ const changed = Array.isArray(args) && args.length
 phase('Refactor')
 log(`${changed.length} changed file(s) to route`)
 
-// Fan out one specialist per file. This is fan-out (the fan-out template skeleton),
-// not a dedup barrier: the specialists are independent and only the terminal Report
-// stage needs them together. The dispatch table is threaded into each thunk — the
-// classifier picks the ROUTES row, an unroutable file returns null.
+// Fan out one specialist per file. This is fan-out (the fan-out template skeleton), not a dedup barrier: the specialists are independent and only the terminal Report
+// stage needs them together. The dispatch table is threaded into each thunk — the classifier picks the ROUTES row, an unroutable file returns null.
 const results = await parallel(changed.map(f => () => {
   const route = ROUTES[classify(f)]
   return route
@@ -123,7 +129,11 @@ if (touched.length === 0) {
 
 // One terminal synthesis agent — a fresh context that never saw the specialists. It
 // learns the outcomes only from the paste, and owns the cross-file follow-ups no
-// single specialist could resolve alone.
+// single specialist could resolve alone. Paste fan-in is small-output-only; a change set
+// past ~50 files moves each result to a scratch report file + thin receipt and hands the
+// reporter the roster — SKILL.md "Data flow between stages".
+
+// --- [REPORT]
 phase('Report')
 const report = await agent(
   `These per-file refactors landed across the tri-language workspace. Write a review ` +

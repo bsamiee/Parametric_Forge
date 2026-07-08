@@ -109,6 +109,7 @@ in {
       DOCKER_CONFIG = "${primaryUserHome}/.config/docker";
       GH_CONFIG_DIR = "${primaryUserHome}/.config/gh";
       PNPM_HOME = "${primaryUserHome}/.local/share/pnpm";
+      PUPPETEER_EXECUTABLE_PATH = toolchainEnv.puppeteerExecutablePath;
       PAGER = "less";
       GH_PAGER = "delta";
       GIT_PAGER = "delta";

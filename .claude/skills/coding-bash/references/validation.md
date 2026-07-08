@@ -9,6 +9,9 @@ Validation is sequential — each gate must pass before the next runs. `bash -n`
 |  [01]   | **Syntax**       | `bash -n script.sh`                           | Parse err, unclosed blocks         | Semantic+runtime defects  |
 |  [02]   | **Static: err**  | `shellcheck -S error -s bash script.sh`       | Unquoted `$@`, parse-adjacent      | Style/info-level patterns |
 |  [03]   | **Static: full** | `shellcheck -s bash script.sh`                | All 4 severity levels              | Runtime/integration bugs  |
+|  [04]   | **Unit tests**   | `bats tests/`                                 | Functional regressions, edge cases | Untested paths            |
+|  [05]   | **Coverage**     | `kcov --include-path=. coverage/ bats tests/` | Dead code, untested branches       | Semantic correctness      |
+|  [06]   | **Quality gate** | Exit 1 on coverage < threshold                | Enforcement                        | -                         |
 
 ## [02]-[CRITICAL_SC_CODES]
 
@@ -185,6 +188,20 @@ jobs:
           shellcheck_version: v0.11.0
           scandir: '.'
           additional_files: '*.bash'
+      - name: Install bats + kcov
+        run: |
+          sudo apt-get install -y kcov
+          npm install -g bats bats-support bats-assert
+      - name: Unit tests with coverage
+        run: |
+          kcov --include-path=. coverage/ bats tests/
+      - name: Coverage gate
+        run: |
+          pct="$(jq -r '.percent_covered' coverage/bats/coverage.json)"
+          awk -v p="${pct}" 'BEGIN { exit (p < 80) ? 1 : 0 }' || {
+            printf 'Coverage %s%% below 80%% threshold\n' "${pct}" >&2
+            exit 1
+          }
 ```
 
 ShellCheck exit codes:

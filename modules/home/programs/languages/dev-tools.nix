@@ -122,6 +122,9 @@ in {
       # --- JSON ---------------------------------------------------------------
       jq # Lightweight command-line JSON processor
 
+      # --- HTML / Markup ------------------------------------------------------
+      validator-nu # W3C HTML5/SVG/CSS conformance validator (vnu); backs the html-studio gate
+
       # --- General Data Tools -------------------------------------------------
       git-lfs # Required by Homebrew update-reset and repos with LFS-backed fixtures
       yq-go # YAML/JSON/TOML processor (yq)

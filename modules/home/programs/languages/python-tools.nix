@@ -100,6 +100,14 @@
           return 1
         }
 
+        ${lib.optionalString (name == "mypy") ''
+          _fallback_env() {
+            if [[ -z "''${MYPY_CACHE_DIR:-}" ]]; then
+              export MYPY_CACHE_DIR="''${XDG_CACHE_HOME:-$HOME/.cache}/mypy"
+            fi
+          }
+        ''}
+
         _main() {
           local active_var="FORGE_PYTHON_TOOL_SHIM_ACTIVE_${name}"
 
@@ -121,6 +129,9 @@
 
           export UV_PYTHON_PREFERENCE="only-system"
           export UV_PYTHON_DOWNLOADS="never"
+          ${lib.optionalString (name == "mypy") ''
+          _fallback_env
+        ''}
           exec "${package}/bin/${name}" "$@"
         }
 

@@ -6,28 +6,28 @@ read it, then adapt it.
 
 | File | Topology | Demonstrates |
 |---|---|---|
-| `review-branch.js` | pipeline + nested `parallel` | structured `schema` on every stage, a Haiku verify stage, `phase` set inside stages |
+| `review-branch.js` | pipeline + nested `parallel` | structured `schema` on every stage, a Sonnet verify stage, `phase` set inside stages |
 | `implement-and-review.js` | `do/while` loop | a round cap, a `schema` with a `passed` boolean that drives the loop, `args` used as a plain task string |
 | `planning-card-triage.js` | list → pipeline | reading `args` fields directly, a priority-rank `.filter()` + early `return`, an `assay` tool call inside an agent |
 | `dead-code-sweep.js` | loop-until-dry | a dry-streak counter, a hard `MAX_ROUNDS` cap, parallel removal under `isolation: 'worktree'` that self-reverts |
-| `api-contract-drift-detector.js` | fan-out with a barrier | a deliberate `parallel()` barrier, an optional `args.types` seed that skips discovery, `model: 'haiku'` on the fan-out |
-| `geometry-parity-audit.js` | parallel → barrier | a barrier because clustering divergences needs the whole set, a Haiku compare stage, an optional `args.ops` seed that skips the discovery agent |
-| `route-and-refactor.js` | routing (dispatch table) | a classifier discriminant, a `ROUTES` table, an unroutable file → `null` → `.filter(Boolean)`, `model: 'haiku'` on the mechanical SQL row, a terminal synthesis stage |
+| `api-contract-drift-detector.js` | fan-out with a barrier | a deliberate `parallel()` barrier, an optional `args.types` seed that skips discovery, `model: 'sonnet'` on the fan-out |
+| `geometry-parity-audit.js` | parallel → barrier | a barrier because clustering divergences needs the whole set, a Sonnet compare stage, an optional `args.ops` seed that skips the discovery agent |
+| `route-and-refactor.js` | routing (dispatch table) | a classifier discriminant, a `ROUTES` table, an unroutable file → `null` → `.filter(Boolean)`, `model: 'sonnet'` on the mechanical SQL row, a terminal synthesis stage |
 | `rebuild-and-reconcile.js` | fan-out → reconcile (cluster → fix → verify) | deferring cross-file work as DATA (a file LIST), union-find clustering by shared file, a separate per-claim adversarial verifier, a count-barrier early-exit |
 
 ## What to copy from them
 
 **Setting a model** (the rule lives in `../../references/api-reference.md` §5).
 `review-branch.js`, `api-contract-drift-detector.js`, and `geometry-parity-audit.js`
-push a whole cheap, mechanical fan-out to `model: 'haiku'` and mirror it on the
+push a whole cheap, mechanical fan-out to `model: 'sonnet'` and mirror it on the
 matching `meta.phases[]` entry. `route-and-refactor.js` tiers per *row* instead of
-per phase: only the mechanical SQL `ROUTES` row carries `model: 'haiku'`, so its one
+per phase: only the mechanical SQL `ROUTES` row carries `model: 'sonnet'`, so its one
 `agent()` call reads `model: route.model` and its phase entry has no `model` —
 a phase that mixes models cannot carry one label.
 
 **Tiering reasoning (`effort`), not the model.** `effort` is the orthogonal axis —
 it tiers how hard the agent reasons, independent of which model runs.
-`review-branch.js` drops the verify stage to `model: 'haiku'` yet keeps
+`review-branch.js` drops the verify stage to `model: 'sonnet'` yet keeps
 `effort: 'high'`, so a cheap model still reasons hard on the adversarial refute;
 `planning-card-triage.js` runs the mechanical card-pull at `effort: 'low'` and the
 adversarial completeness check at `effort: 'high'`; `dead-code-sweep.js` runs its
@@ -38,7 +38,21 @@ cheap *and* needs to think.
 **Structured output (`schema`).** Every example that later reads a field off a
 result defines a JSON Schema `const` and passes it as `schema` — so `agent()`
 returns a parsed object and the next line is plain JavaScript (`review.passed`,
-`issues.filter(...)`). Schemas are kept small and `required`-tight.
+`issues.filter(...)`). Schemas are STRICT at every level: `additionalProperties:
+false` on every object, `required` listing every property, a conditional field
+designed required-but-empty (`''`/`[]`) — the codex `--output-schema` endpoint
+rejects anything looser, and the same shape keeps native agents honest.
+
+**Scratch artifacts (heavy products).** Run scratch is
+`.claude/scratch/<workflow-name>/` — one folder per workflow, gitignored,
+ephemeral; file grammar `<scope>-<lane>-<artifact>.<ext>` (lane = short semantic
+slug like `s0`/`gov`/`rip-python`; artifact = `task`/`schema`/`report`/`stderr`;
+no agent names, timestamps, or run IDs). A lane whose product is heavy (~50+
+rows) writes it there as one JSON file and returns only the thin receipt
+`{ok, report, entries, headline, failure}`; failure lives in the envelope, never
+as sentinel rows in the data. These examples all stay under that line and paste
+inline — `.claude/workflows/realize.js` and `cold-verify.js` are the worked
+receipt pattern, and SKILL.md "Data flow between stages" is the law.
 
 **Reading `args`** (the rule lives in `../../references/api-reference.md` §4).
 `planning-card-triage.js` reads object fields with a literal default

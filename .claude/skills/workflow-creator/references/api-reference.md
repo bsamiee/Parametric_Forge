@@ -102,7 +102,7 @@ export const meta = {
   whenToUse: 'CI is intermittently red',  // optional — shown in the workflow list
   phases: [                            // optional — one entry per phase() call
     { title: 'Scan',  detail: 'grep test logs for retries' },
-    { title: 'Fix',   detail: 'one agent per flaky test', model: 'haiku' },
+    { title: 'Fix',   detail: 'one agent per flaky test', model: 'sonnet' },
   ],
 }
 ```
@@ -117,7 +117,7 @@ export const meta = {
 > **`phases[].model` is a label, not a setting.** The binary stores it and shows
 > it in the permission dialog, but **no code reads it to choose a model**. The
 > model is set *only* by the `model` option on each `agent()` call. If a phase
-> runs on Haiku, put `model: 'haiku'` both on the `phases[]` entry (so the dialog
+> runs on Sonnet, put `model: 'sonnet'` both on the `phases[]` entry (so the dialog
 > is honest) **and** on every `agent()` call in that phase (so it actually
 > happens). The entry alone does nothing.
 
@@ -175,14 +175,18 @@ const task = typeof args === 'string' ? args : 'the change described in TASK.md'
 Never `JSON.parse(args)` — it is already a live value, not JSON text, and parsing
 an object throws. A workflow saved as a `/<name>` command receives input the way
 the user phrases the invocation, parsed into structured data before the script
-runs; the `?? default` is what keeps the file runnable with no args at all.
+runs; the `?? default` is what keeps the file runnable with no args at all. ONE
+narrow carve-out: a saved-command invocation may hand a JSON-LOOKING STRING — a
+single guarded normalizer at `[INPUTS]` only,
+`(typeof args === 'string' && /^\s*[\[{]/.test(args)) ? JSON.parse(args) : args`,
+is admitted; a bare `JSON.parse(args)` anywhere else stays forbidden.
 
 ---
 
 ## 5. `agent()` in full
 
 ```js
-const text = await agent('Summarize the README.')                 // → string
+const text = await agent('Summarize the README.')                   // → string
 const data = await agent('List the deps.', { schema: DEPS_SCHEMA }) // → validated object
 ```
 
@@ -200,7 +204,7 @@ the agent from `/workflows`, `agent()` returns `null` — which is why you
 | `label` | string | Display name for this agent in `/workflows`. Defaults to the first 60 chars of the prompt. Not part of the resume cache key — relabelling never invalidates a cached call. |
 | `phase` | string | Assign this agent to a named progress group. Use inside `pipeline`/`parallel` stages so concurrent calls land in the right group instead of racing on the global `phase()`. Not part of the cache key. |
 | `schema` | object | A JSON Schema. Forces structured output — `agent()` returns the validated object. See **Structured output** below. |
-| `model` | string | Per-agent model. `'haiku'`, `'sonnet'`, `'opus'`, `'fable'`, `'inherit'`, or a full model ID. Omit to inherit the session model. See **Setting the model** below. |
+| `model` | string | Per-agent model. `'sonnet'`, `'opus'`, `'fable'`, `'inherit'`, or a full model ID — `'sonnet'` is the floor. Omit to inherit the session model. See **Setting the model** below. |
 | `effort` | string | Reasoning-effort tier for this call — `'low'`/`'medium'`/`'high'`/`'xhigh'`/`'max'` (mirrors `/effort`). Independent of `model` — it tiers the *reasoning*, not the model. Match it to the stage role: `'max'`/`'xhigh'` for synthesis, authoring, and adversarial judgment; `'low'` for mechanical discovery/classification leaf work; omit it to inherit the session tier. NOT part of the resume cache key. |
 | `isolation` | `'worktree'` | Run the agent in a fresh git worktree. Expensive (~200–500 ms + disk each). Use **only** when parallel agents mutate files and would otherwise collide; the worktree is auto-removed if unchanged. `'worktree'` is the only accepted value; any other value is rejected. |
 | `agentType` | string | Run as a registered subagent type instead of the default workflow subagent. See **Custom agent types** below. |
@@ -217,22 +221,23 @@ Claude Code's normal alias resolver:
 
 | You pass | Resolves to |
 |---|---|
-| `'haiku'` | the current default Haiku |
 | `'sonnet'` | the current default Sonnet |
 | `'opus'` | the current default Opus |
 | `'fable'` | the current default Fable |
 | `'inherit'` | the session's main-loop model (same as omitting `model`) |
-| a full model ID (e.g. `'claude-haiku-4-5'`) | passed through unchanged |
+| a full model ID (e.g. `'claude-sonnet-5'`) | passed through unchanged |
 | *omitted* | the session's main-loop model |
 
-**There is no validation.** An unrecognised string (a typo like `'hauku'`) is
+**There is no validation.** An unrecognised string (a typo like `'sonet'`) is
 **not** rejected at parse time — the resolver passes it through verbatim and the
 agent fails later when the API call is made. Spell the alias exactly.
 
 Guidance: omit `model` for judgement-heavy work so it inherits the capable
 session model; drop **cheap, high-volume, mechanical** leaf work (one-line
-classification, refute-this checks, per-item summaries) to `'haiku'`. A
-verification or fan-out stage is the usual `'haiku'` candidate.
+classification, refute-this checks, per-item summaries) to `'sonnet'` — the
+model floor — or route a self-contained lane to gpt-5.5 through the
+codex wrapper (SKILL.md, "Dispatching gpt-5.5"). A verification or fan-out
+stage is the usual candidate for either.
 
 Two things that are **not** how you set a model:
 
@@ -265,12 +270,21 @@ const DEPS = {
 const { deps } = await agent('List the npm dependencies.', { schema: DEPS })
 ```
 
+Two validators sit behind the two schema surfaces a workflow touches — author
+every schema to the STRICTER profile so one shape serves both without edits:
+
+| Producer | Validator | Requirement |
+|---|---|---|
+| `agent(…, { schema })` | AJV, in the runtime | Tolerates optional properties and open objects — strict is convention, not enforcement |
+| `codex exec --output-schema` | OpenAI strict structured output | `additionalProperties: false` on every object, every key in `properties` listed in `required`, conditional fields required-but-empty (`""`/`[]`) — a violation 400s `invalid_json_schema` and the run silently degrades to unvalidated output |
+
 Rules of thumb for "computing data properly":
 
 - **Use `schema` for anything a later line reads a field off of.** Free text is
   fine only when the result is just passed whole into another agent's prompt.
-- **Keep schemas small and `required`-tight.** The schema is a contract — every
-  `required` field is one the subagent is forced to produce. Define schemas as
+- **Keep schemas small, strict, and `required`-tight.** The schema is a contract —
+  every `required` field is one the subagent is forced to produce, and every name
+  in `required` must exist as a real property (no phantom keys). Define schemas as
   `const`s in the body (never inside `meta`).
 - **To hand data from one stage to the next**, stringify it into the next
   prompt: `agent('Cluster these:\n' + JSON.stringify(items))`. The orchestrator
@@ -468,9 +482,9 @@ edit. If the prior run is still going, stop it first.
 - **No `resumeFromRunId`.** A bare `Workflow({ scriptPath })` or `Workflow({ name })` is a NEW
   run with an empty journal — it never consults a prior run's cache. The most common cause of an
   unexpected restart.
-- **A different session.** The journal lives under the launching session's directory, so a run
-  started in another session (or after exiting Claude Code) cannot be resumed; it starts fresh.
-  This is a hard platform limit — no ledger or saved run ID recovers a cross-session run.
+- **A different session.** The journal lives under the launching session's directory, so a plain
+  resume from a new session (or after a process restart) finds an empty journal and re-runs from
+  zero. The journal itself is portable — recover with the **cross-session journal transplant** below.
 - **A changed cache key from the top.** Editing the script, or changing the `args` that feed the
   first agent's prompt, changes its `key`, misses the cache there, and re-runs from that point.
 
@@ -487,7 +501,32 @@ exact `Workflow({ scriptPath, resumeFromRunId })` command, the completion `<task
 repeats it, `/workflows` lists every run by ID, and each run directory is literally named
 `wf_<id>` under the session's `subagents/workflows/`. So if the ID has scrolled out of context,
 list that directory or open `/workflows`, recover it, and resume — a missing ledger is
-inconvenient, not fatal, within the session. The ledger only keeps the ID somewhere a later turn
-looks first; a run is unrecoverable solely across a session boundary. (For that cross-session
-case the only recourse is manual: read the run's `journal.jsonl` / `agent-<id>.jsonl` to see
-what completed and hand-author a continuation script that skips it.)
+inconvenient, not fatal, within the session.
+
+**Cross-session journal transplant.** The cache key is content-addressed — `v2:<sha256>` over
+the call's prompt plus `schema`/`model`/`isolation`/`agentType`, with no session component — so
+a journal moves between sessions intact as long as the script bytes and `args` are unchanged.
+To carry a run's completed work across a session boundary (a process restart, a background
+fork, a fresh session):
+
+1. If the new session already relaunched the workflow, stop that run first (`TaskStop`) — a
+   `Workflow({ scriptPath, resumeFromRunId })` call adopts the old run ID and creates `wf_<id>`
+   under the new session even when it finds no journal there, so the directory usually exists.
+2. Locate both run directories under
+   `~/.claude/projects/<project>/<session>/subagents/workflows/wf_<id>/` — the old session's
+   holds the populated `journal.jsonl`.
+3. Back up the new directory's `journal.jsonl` if one exists, then concatenate old journal +
+   new journal into the new directory's `journal.jsonl`. Resume matches `result` records by
+   key; duplicate or stale `started` records are inert.
+4. Resume with `Workflow({ scriptPath, resumeFromRunId: 'wf_<id>' })` — unchanged calls return
+   cached, and only genuinely-unfinished calls run live.
+5. Verify the hit before walking away: the journal gains `started` records only for the calls
+   that were unfinished. A burst of new `started` records for already-completed work means a
+   key mismatch — an edited script or changed `args` — so stop and diff against the bytes that
+   ran.
+
+The transplant carries only the result cache; per-agent transcripts (`agent-<id>.jsonl`) stay
+in the old directory and are not needed for resume. When the script or `args` HAVE changed,
+the transplant still replays every call before the first edit; for a diverged script, fall back
+to reading the old `journal.jsonl` and hand-authoring a continuation script that skips the
+completed work.

@@ -1,0 +1,50 @@
+[
+  {
+    "skills": ["workflow-creator"],
+    "query": "Make a workflow that reviews each changed file on this branch for bugs, then adversarially verifies each finding as soon as its review lands.",
+    "expected_behavior": [
+      "Invokes the workflow-creator skill before writing any file",
+      "Writes a .js file under .claude/workflows/ whose first statement is export const meta = {...} as a pure literal with name and description and no backticks",
+      "Uses pipeline() for the review-then-verify stages (no barrier between them) with schema on every cross-stage agent() call",
+      "Runs scripts/validate-workflow.mjs on the file and it exits 0",
+      "Runs scripts/dry-run.mjs on the file and it reports parseOk=true ran=true deterministic=true"
+    ]
+  },
+  {
+    "skills": ["workflow-creator"],
+    "query": "I want a repeatable monthly job: for each of our planning folders, one agent audits it and a second agent fixes what the audit found, all folders in parallel but never more than a dozen agents at once.",
+    "expected_behavior": [
+      "Invokes the workflow-creator skill even though the word workflow never appears",
+      "Produces a fan-out or per-folder pipeline shape with an explicit concurrency governor (slot scheduler or bounded pool), never an unbounded parallel()",
+      "parallel() calls, if any, receive thunk arrays, never bare promises",
+      "Results are .filter(Boolean)-guarded before field access",
+      "Both bundled scripts pass on the produced file"
+    ]
+  },
+  {
+    "skills": ["workflow-creator"],
+    "query": "My workflow file fails to launch with an error saying meta must be the first statement and a template literal was found. Fix it.",
+    "expected_behavior": [
+      "Invokes the workflow-creator skill",
+      "Moves or rebuilds the meta block as the first statement, converts template literals and backticks inside meta to plain single-quoted strings",
+      "Re-runs scripts/validate-workflow.mjs to prove the fix"
+    ]
+  },
+  {
+    "skills": [],
+    "query": "Run the rebuild workflow on libs/python/geometry.",
+    "expected_behavior": [
+      "Does NOT invoke the workflow-creator skill",
+      "Launches the existing workflow by scriptPath via the Workflow tool with the target as args",
+      "Captures the run ID for resume"
+    ]
+  },
+  {
+    "skills": [],
+    "query": "Spawn one subagent to grep the repo for TODO comments and summarize them.",
+    "expected_behavior": [
+      "Does NOT invoke the workflow-creator skill and does NOT author a workflow file",
+      "Uses a single Agent tool call for the one-off task"
+    ]
+  }
+]

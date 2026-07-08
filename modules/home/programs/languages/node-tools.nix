@@ -13,5 +13,6 @@
     pkgs.tailwindcss # Utility-first CSS framework
     pkgs.typescript-go # TypeScript native-preview LSP (provides `tsgo`)
     pkgs.dts-lsp # TypeScript declaration navigation for API catalogue work
+    pkgs.mermaid-cli # Mermaid CLI (mmdc) on PATH; Chromium pinned via PUPPETEER_EXECUTABLE_PATH in languages.nix
   ];
 }

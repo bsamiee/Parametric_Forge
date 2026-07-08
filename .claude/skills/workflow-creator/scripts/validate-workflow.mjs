@@ -33,12 +33,27 @@ const warnings = []
 const lineOf = (idx) => src.slice(0, idx).split('\n').length
 
 // --- 1. size -----------------------------------------------------------------
+
 const bytes = Buffer.byteLength(src, 'utf8')
 if (bytes > MAX_BYTES) {
   errors.push(`script is ${bytes} bytes — over the ${MAX_BYTES}-byte (512 KB) limit`)
 }
 
+// --- 1b. TRUE PARSE — the runtime wraps the body in an async function, so top-level
+// await/return are legal; an AsyncFunction-constructor parse is the exact same grammar.
+// This catches what regex checks cannot: unterminated strings, unescaped quotes,
+// dangling concatenations. Runs first because every later heuristic assumes valid JS.
+
+try {
+  const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor
+  new AsyncFunction('args', 'agent', 'parallel', 'log', 'phase', 'budget', 'workflow',
+    src.replace(/^\s*export\s+const\s+meta/m, 'const meta'))
+} catch (e) {
+  errors.push(`does not parse as a workflow body: ${e.message}`)
+}
+
 // --- 2. comment/string-stripped copy (so checks ignore text in comments/strings)
+
 function strip(code) {
   let out = ''
   let i = 0
@@ -72,6 +87,7 @@ function strip(code) {
 const code = strip(src)
 
 // --- 3. meta must exist, be first, and be a literal --------------------------
+
 const metaMatch = code.match(/export\s+const\s+meta\s*=/)
 if (!metaMatch) {
   errors.push('no `export const meta = {…}` found — every workflow needs it')
@@ -112,6 +128,7 @@ if (!metaMatch) {
 }
 
 // --- 4. banned non-deterministic calls ---------------------------------------
+
 const banned = [
   [/\bDate\s*\.\s*now\b/g, 'Date.now()'],
   [/\bMath\s*\.\s*random\b/g, 'Math.random()'],
@@ -126,6 +143,7 @@ for (const [re, label] of banned) {
 }
 
 // --- 5. host APIs that do not exist in the sandbox ---------------------------
+
 for (const [re, label] of [
   [/\brequire\s*\(/g, 'require()'],
   [/\bimport\s+[^\n]*\bfrom\b/g, 'import … from …'],
@@ -141,10 +159,12 @@ for (const [re, label] of [
 // --- 5b. effort / model values outside the allowed set -----------------------
 // `effort:`/`model:` are matched in the stripped `code` (so prompt/comment mentions
 // never trip this), and the literal VALUE is read from raw `src` at the same offset.
+
 const ALLOWED = {
   effort: new Set(['low', 'medium', 'high', 'xhigh', 'max']),
-  model: new Set(['haiku', 'sonnet', 'opus', 'fable', 'inherit']),
+  model: new Set(['sonnet', 'opus', 'fable', 'inherit']),
 }
+
 for (const key of ['effort', 'model']) {
   const re = new RegExp(`\\b${key}\\s*:`, 'g')
   let m
@@ -161,7 +181,60 @@ for (const key of ['effort', 'model']) {
   }
 }
 
+// --- 5c. unwrapped long prompt strings — wrap with adjacent `+` (advisory) ----
+// Targets the actual anti-pattern: a SINGLE string literal whose own content runs
+// past the column budget. A correctly `+`-wrapped segment is well under it, so it
+// never trips; only a genuinely unwrapped prose string does. Code-overflow lines
+// (long because of trailing `.join()`/opts, not the string) are not the string's
+// problem and are ignored. `meta` is exempt — its `description` is a forced one-liner.
+
+const MAX_COL = 160
+{
+  let metaLo = -1, metaHi = -1
+  if (metaMatch) {
+    const o = code.indexOf('{', metaMatch.index)
+    if (o !== -1) {
+      let d = 0
+      for (let j = o; j < code.length; j++) {
+        if (code[j] === '{') d++
+        else if (code[j] === '}' && --d === 0) { metaLo = lineOf(o); metaHi = lineOf(j); break }
+      }
+    }
+  }
+  // single/double-quoted literals, escape-aware; backtick templates skipped (may be multi-line)
+  const re = /'(?:\\.|[^'\\\n])*'|"(?:\\.|[^"\\\n])*"/g
+  let m
+  while ((m = re.exec(src))) {
+    const content = m[0].slice(1, -1)
+    if (content.length <= MAX_COL || !content.includes(' ')) continue
+    const num = lineOf(m.index)
+    if (metaLo !== -1 && num >= metaLo && num <= metaHi) continue
+    warnings.push(`string literal at line ${num} is ${content.length} chars — wrap it with adjacent \`+\` `
+      + '(split at a space, keep the space on the left segment; the value stays identical)')
+  }
+}
+
+// --- 5d. section divider grammar — `// --- [LABEL]` + dash-fill, no free text -
+// A real divider is a pure-comment line (its stripped form is blank) matching the
+// pattern; in-prompt `[X]` text never qualifies. Flags free text after the bracket
+// and banned drift labels. Phase subsection labels (any UPPER_SNAKE) are allowed.
+
+{
+  const BANNED = new Set(['HARNESS', 'SCHEMAS', 'SCHEMA', 'LAW', 'CONFIG', 'PROMPTS', 'HELPERS', 'UTILS', 'COMMON', 'MISC', 'FUNCTIONS', 'LAYERS', 'IMPORTS', 'INTERFACES', 'ENUMS', 'DTO', 'QUERIES', 'FOLDER', 'SCOPE', 'INPUT'])
+  const srcLines = src.split('\n')
+  const codeLines = code.split('\n')
+  for (let i = 0; i < srcLines.length; i++) {
+    if ((codeLines[i] || '').trim() !== '') continue                 // not a pure comment line
+    const m = srcLines[i].match(/^\s*\/\/\s*---\s*\[([A-Z0-9_]+)\](.*)$/)
+    if (!m) continue
+    const [, label, tail] = m
+    if (/[^\s-]/.test(tail)) warnings.push(`divider \`[${label}]\` at line ${i + 1} has free text after the bracket — use \`// --- [${label}]\` + dash-fill only`)
+    if (BANNED.has(label)) warnings.push(`divider label \`[${label}]\` at line ${i + 1} is a banned drift label — use a canonical section (CONSTANTS/INPUTS/MODELS/DOCTRINE/OPERATIONS/COMPOSITION) or a phase subsection`)
+  }
+}
+
 // --- 6. parallel() should get thunks, not bare promises ----------------------
+
 {
   const re = /\bparallel\s*\(\s*\[/g
   let m
@@ -175,6 +248,7 @@ for (const key of ['effort', 'model']) {
 }
 
 // --- report ------------------------------------------------------------------
+
 const name = path.split('/').pop()
 for (const w of warnings) console.log(`  warn  ${w}`)
 for (const e of errors) console.log(`  ERROR ${e}`)

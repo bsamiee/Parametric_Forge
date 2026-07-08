@@ -27,15 +27,30 @@ export const meta = {
   ],
 }
 
+// --- [CONSTANTS] -------------------------------------------------------------------------
+
+const DRY_STREAK = 2 // stop after this many empty rounds in a row
+const MAX_ROUNDS = 8 // hard cap so the loop always terminates
+
+// --- [INPUTS] ----------------------------------------------------------------------------
+
+// `args` arrives as structured data — read the scope directly, default to all libs.
+const scope = args?.scope ?? 'libs'
+
+// --- [MODELS] ----------------------------------------------------------------------------
+
+// STRICT everywhere: additionalProperties:false + every property required at every level; a conditional field is required-but-empty (''), never omitted.
 const DEAD = {
   type: 'object',
+  additionalProperties: false,
   required: ['items'],
   properties: {
     items: {
       type: 'array',
       items: {
         type: 'object',
-        required: ['file', 'symbol'],
+        additionalProperties: false,
+        required: ['file', 'symbol', 'kind'],
         properties: {
           file: { type: 'string' },
           symbol: { type: 'string' },
@@ -48,23 +63,21 @@ const DEAD = {
 
 const REMOVAL = {
   type: 'object',
-  required: ['file', 'symbol', 'removed'],
+  additionalProperties: false,
+  required: ['file', 'symbol', 'removed', 'note'],
   properties: {
     file: { type: 'string' },
     symbol: { type: 'string' },
     removed: { type: 'boolean' }, // false = the proof gate failed, edit reverted
-    note: { type: 'string' },
+    note: { type: 'string' },     // the revert reason; empty on a clean removal
   },
 }
 
-const DRY_STREAK = 2 // stop after this many empty rounds in a row
-const MAX_ROUNDS = 8 // hard cap so the loop always terminates
-
-// `args` arrives as structured data — read the scope directly, default to all libs.
-const scope = args?.scope ?? 'libs'
+// --- [COMPOSITION] -----------------------------------------------------------------------
 
 const seen = new Set() // file::symbol of every candidate already handled, across rounds
 const removed = []
+
 let emptyRounds = 0
 let round = 0
 
@@ -81,8 +94,7 @@ while (emptyRounds < DRY_STREAK && round < MAX_ROUNDS) {
     { label: `find:round-${round}`, phase: 'Find', schema: DEAD, effort: 'low' },
   )
 
-  // Dedup through the seen set — a symbol any earlier round already handled is dropped,
-  // so a finder that re-reports it cannot trigger a second removal.
+  // Dedup through the seen set — a symbol any earlier round already handled is dropped, so a finder that re-reports it cannot trigger a second removal.
   const fresh = (items ?? []).filter(it => {
     const key = `${it.file}::${it.symbol}`
     return seen.has(key) ? false : (seen.add(key), true)
@@ -97,14 +109,12 @@ while (emptyRounds < DRY_STREAK && round < MAX_ROUNDS) {
   emptyRounds = 0
   log(`Round ${round}: ${fresh.length} new dead symbol(s) found`)
 
-  // Remove each one in parallel. Two removals can collapse into the SAME canonical
-  // owner, so each runs in its own worktree (isolation) to avoid colliding edits;
-  // every agent then runs the changed owner's proof gate and reverts its own edit
-  // if anything fails, so a bad removal cannot land.
+  // Remove each one in parallel. Two removals can collapse into the SAME canonical owner, so each runs in its own worktree (isolation) to avoid colliding edits;
+  // every agent then runs the changed owner's proof gate and reverts its own edit if anything fails, so a bad removal cannot land.
   phase('Remove')
   const outcomes = await parallel(fresh.map(it => () =>
     agent(
-      `Remove the unreferenced ${it.kind ?? 'symbol'} "${it.symbol}" from ${it.file}, collapsing ` +
+      `Remove the unreferenced ${it.kind} "${it.symbol}" from ${it.file}, collapsing ` +
       `into the canonical owner per CLAUDE.md rather than leaving a gap. Then run that owner's ` +
       `proof gate (the assay rail for its language). If anything fails, revert the edit and report ` +
       `removed=false with the reason.`,

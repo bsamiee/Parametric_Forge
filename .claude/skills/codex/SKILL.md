@@ -1,0 +1,93 @@
+---
+name: codex
+description: Dispatch work to the Codex CLI (gpt-5.5) via codex exec / codex review — each run executes in an isolated context and returns only a report, and usage is effectively free, so prefer it over Claude subagents for self-contained legs. Trigger whenever a leg is transcript-heavy or mechanical - repo sweeps, audits, investigation, many-file reads, log or dataset distillation, live web research, bulk clear-spec implementation, migrations - and for an independent second perspective on any plan, diff, or implementation. Also trigger whenever the user references codex, gpt-5.5, OpenAI models, or asks to offload, delegate, or conserve usage.
+---
+
+# Codex Dispatch
+
+`codex exec` runs gpt-5.5 as a non-interactive agent in its own context window and returns one final message. Defaults come from `~/.codex/config.toml` — gpt-5.5 at high reasoning — so a bare invocation is already correctly configured; pass flags only to deviate.
+
+## When to dispatch
+
+- Exploration and investigation legs (repo sweeps, dependency audits, log distillation, data analysis) whose raw transcripts would flood the current context — codex absorbs the reading and returns the conclusion.
+- Bulk mechanical implementation with a clear spec: migrations, renames, format conversions, boilerplate expansion.
+- Independent second perspective on a plan, implementation, or diff — a different model lineage catches different failure modes.
+- Research legs needing live sources: add `-c web_search="live"`.
+- Long-running work that should not occupy this session: run in the background against a report file.
+
+Keep in Claude: work inseparable from conversation context too large to restate, and anything mid-flight with the user where iteration latency dominates.
+
+## Invocation
+
+```bash
+codex exec -s <sandbox> --skip-git-repo-check [-C <dir>] [-o <report>] "<prompt>" </dev/null 2>/dev/null
+```
+
+- `</dev/null` is mandatory from a harness: `codex exec` always reads stdin and blocks forever if it is open but silent. Symptom: zero output, zero CPU, indefinite hang.
+- `2>/dev/null` drops thinking tokens; keep stderr only when diagnosing a failing run.
+- `--skip-git-repo-check` always.
+- Always pass `-s` explicitly — user config sets a global sandbox default, so an unstated sandbox is whatever config last said, not read-only.
+- The final message prints to **stdout**; the banner and reasoning stream go to stderr. Capture a synchronous run's result straight from stdout — `out=$(codex exec -s read-only … "<prompt>" </dev/null 2>/dev/null)` — clean, no banner. Even a heavy read (a full doctrine plus catalogue tiers) returns in a few minutes, well inside the 10-minute Bash ceiling, so synchronous capture is the default; reach for `-o` only when backgrounding.
+- Background a long leg with a bare `&`: `codex exec … -o <report> "<prompt>" </dev/null >/dev/null 2><report>-stderr.log &`. The bare `&` survives the launching shell's exit — do NOT prepend `nohup` (a `nohup` without a redirect writes a stray `nohup.out`), and send stdout to `/dev/null` with stderr to a per-run log file (`2><report>-stderr.log`) — the event stream is noise, but that log's tail IS the crash reason when a run dies with no report. Poll the report by liveness (`pgrep -f "<report-basename>"`); an absent report while the process lives is normal, never relaunch a live run. Liveness is not health: a process alive far past its tier deadline with no report and near-zero CPU accumulation (`ps -p <pid> -o time=`) is WEDGED — kill it (`pkill -f "<report-basename>"`) and relaunch once; a second wedge is the failure.
+- Every `codex exec` spawns the full `~/.codex/config.toml` MCP server fleet as child processes. File-only and fan-out legs pass `-c mcp_servers={}` to skip them — faster startup, no per-lane server fleet, no wedged-handshake hang; keep the fleet only when the task genuinely calls MCP tools.
+- `--output-schema` is STRICT: every key in `properties` must also appear in `required` (`additionalProperties: false`; a conditional field is required-but-empty) — anything less 400s `invalid_json_schema` and the run silently degrades to unvalidated output. Write task and schema files with a real file-write (never a shell heredoc) at ABSOLUTE paths — cwd drift plus heredoc quoting land files where codex cannot find them, and the launch dies instantly on the missing schema.
+- A detached typed leg owns exactly FOUR artifacts, each forced by the interface — `task.md` (quoting-proof prompt channel), `schema.json` (`--output-schema` takes only a file path), `report.json` (`-o`), `stderr.log` (crash reason) — homed together in one ephemeral folder, purged of stale report/stderr before launch (a leftover report reads as instant completion with last run's data). A short SYNCHRONOUS leg needs zero files: inline prompt, stdout capture.
+
+| Need                                          | Flags                                                                      |
+| --------------------------------------------- | -------------------------------------------------------------------------- |
+| Read, analyze, research                       | `-s read-only`                                                             |
+| Edit files in the workspace                   | `-s workspace-write`                                                       |
+| Extra writable roots alongside the workspace  | `--add-dir <dir>`                                                          |
+| Network or system access beyond the workspace | `-s danger-full-access` — only with explicit user authorization            |
+| Run rooted in another directory               | `-C <dir>`                                                                 |
+| Durable report artifact                       | `-o <file>` — an empty file means the process was killed before completion |
+| Typed JSON final message                      | `--output-schema <schema.json>`                                            |
+| Live web search                               | `-c web_search="live"`                                                     |
+| Attach images (screenshots, diagrams)         | `-i <file>` (repeatable)                                                   |
+| Fan-out legs with no session persistence      | `--ephemeral` — not resumable                                              |
+| Streamed JSONL events for live monitoring     | `--json` (thread/turn/item events)                                         |
+
+## Effort
+
+| Tier   | Select                               | Use for                                                           | Timeout |
+| ------ | ------------------------------------ | ----------------------------------------------------------------- | ------- |
+| medium | `-c model_reasoning_effort="medium"` | trivial extraction, reformatting, bulk clear-spec mechanical legs | 300s    |
+| high   | default                              | standard delegation                                               | 600s    |
+| xhigh  | `--profile xhigh`                    | hardest research, review, and design legs                         | 1200s   |
+
+Codex emits its result only at completion — there is no partial output to salvage from a killed run. Run synchronously with the Bash timeout set to the tier; for high and xhigh legs prefer background execution polling the `-o` report file, or `--json` to stream progress events.
+
+## Prompt contract
+
+Codex shares no conversation state — every prompt is self-contained. Include: the goal, absolute paths, scope bounds and what must not be touched, constraints that matter, and an explicit final-message contract ("Final message: a report with sections X, Y, Z" or an `--output-schema` file). For edit runs, name the acceptance signals codex must run before finishing (build, test, lint commands).
+
+## Sessions
+
+Every run prints `session id: <uuid>` in its banner — capture it whenever follow-up is plausible.
+
+- Resume: `codex exec resume <session-id> "<follow-up>" </dev/null 2>/dev/null`. Config flags sit between `exec` and `resume`; a resumed session inherits the original model, effort, and sandbox.
+- `resume --last` resolves to the newest recorded session — valid only when nothing else ran in between; under any concurrency resume by explicit id.
+- Iterative deep work is one session resumed with sharpened prompts, not fresh runs re-paying the exploration cost.
+- `--ephemeral` runs record nothing and cannot be resumed.
+
+## Review
+
+`codex review` runs an independent non-interactive code review; the positional prompt sets focus, omitted for a general pass.
+
+| Scope                         | Command                                  |
+| ----------------------------- | ---------------------------------------- |
+| Staged + unstaged + untracked | `codex review --uncommitted "<focus>"`   |
+| Branch against a base         | `codex review --base <branch> "<focus>"` |
+| One commit                    | `codex review --commit <sha> "<focus>"`  |
+
+## Parallel fan-out
+
+Independent scopes run as concurrent `codex exec` processes, one per scope, each with its own `-o` report file and its session id captured from the banner. Reconcile the reports after all complete. Sandbox isolation is per-process; concurrent workspace-write runs against overlapping paths collide — partition write scopes or serialize them.
+
+## Inside workflows
+
+`agent()` accepts only Claude models — a workflow dispatches codex through a thin wrapper agent (`model: 'sonnet', effort: 'low'`, label prefixed `gpt-5.5:`) whose sole job is dispatch-and-receipt: compose the codex command, run it, and return only the thin receipt {ok, report, entries, headline, failure} for the on-disk product — never relaying, re-doing, or re-judging the work. Pick the sandbox by modality — `-s read-only` for a read/research leg, `-s workspace-write` for a write/edit leg. A short leg runs synchronously under a tier-matched Bash timeout and returns codex's stdout. A long leg launches DETACHED (`… -o <report> "<prompt>" </dev/null >/dev/null 2><report>-stderr.log &` — bare `&`, never `nohup`) and polls the report by liveness across sequential bounded Bash calls: two ceilings force this shape — one Bash call caps at 10 minutes, and the wrapper agent's own stall window aborts it if a single call blocks too long — so bounded polls (each a fresh tool-call) both outlast a long run and keep the agent alive. An absent report while the codex process lives is normal — keep waiting, never relaunch a live run; only a gone process with an empty report is a failure worth one relaunch. Codex tokens never count toward `budget.spent()`.
+
+## Judgment
+
+Codex output is a colleague's, not an oracle's. Verify load-bearing claims against source or current documentation before acting on them; push back through a session resume, identified as Claude, with evidence — either model can be wrong. A non-zero exit is reported verbatim; retry only with a changed command.

@@ -1,115 +1,120 @@
 ---
 name: mermaid-diagramming
 description: >-
-  Generates Mermaid v11+ diagrams with YAML frontmatter, ELK layout, and Dracula theming across 22
-  types: flowcharts, sequence diagrams, state machines, ER diagrams, class diagrams, mindmaps,
-  block diagrams, journey maps, requirement diagrams, pie charts, quadrant charts, sankey diagrams,
-  XY charts, radar charts, gantt charts, treemaps, C4 architecture, architecture-beta,
-  packet-beta, timelines, gitgraph, and kanban boards. Use when visualizing logic flows, system
-  architecture, state transitions, data relationships, temporal sequences, user journeys, project
-  timelines, network protocols, or any structured diagram requiring theming, classDef styling, and
-  WCAG 2.1 accessibility with accTitle and accDescr annotations.
+  Generates and validates Mermaid diagrams with YAML frontmatter, ELK layout, Dracula theme
+  tokens, and a bundled render-plus-graph-logic validator. Owns diagram methodology — when to
+  diagram, node and edge selection, per-type construction, logical soundness — the standard
+  archetype catalog (architecture spine, package seam graph, logic flow, state lifecycle, wire
+  sequence, persistence schema, dependency strata, schedule, board, history, topology,
+  landscape, event flow, profile, decomposition), and the admitted type registry: flowchart,
+  sequence, state, class, ER, gantt, mindmap, timeline, kanban, gitGraph, requirement, C4, and
+  architecture. Use when authoring, editing, or fixing any mermaid fence, choosing a diagram
+  type, or whenever a task asks to draw, diagram, map, or visualize a system, flow, state
+  machine, sequence exchange, database schema, dependency structure, schedule, hierarchy, or
+  workflow board — even when mermaid is never named — distinct from quantitative dataviz marks
+  (charts of data) and interactive HTML pages.
 ---
 
-# [H1][MERMAID-DIAGRAMMING]
+# [MERMAID_DIAGRAMMING]
 
-Mermaid v11+ diagram creation with frontmatter YAML, ELK layout, Dracula palette. 22 diagram types across 5 semantic categories.
+Every committed diagram answers one written question, instantiates one catalog archetype or admitted type, opens with frontmatter carrying its type's Dracula subset, and ships only after the validator and the soundness audit pass. The reasoning discipline and the engine surface load on demand through the reference routes below.
 
-**Scope:**
-- *Create:* New diagrams from requirements. Select category, load syntax reference, apply styling.
-- *Reference:* Syntax lookup for nodes, edges, relationships, charts, architecture.
+## [01]-[QUESTION]
 
-**Domain Navigation:**
-- *[CONFIG]* — Frontmatter YAML, ELK 5-phase layout, direction, limits. Load FIRST for all diagrams.
-- *[STYLING]* — Theme presets, themeVariables, classDef, linkStyle, palette. Load for visual customization.
-- *[GRAPH]* — Flowchart, mindmap, block. Load for: decision trees, hierarchies, system decomposition.
-- *[INTERACTION]* — Sequence, journey. Load for: protocols, request-response, user experience.
-- *[MODELING]* — State, ER, class, requirement. Load for: FSM, data models, OOP structure, traceability.
-- *[CHARTS]* — Pie, quadrant, sankey, xy, radar, gantt, treemap. Load for: data visualization, project timelines.
-- *[ARCHITECTURE]* — C4, architecture-beta, packet-beta, timeline, gitgraph, kanban. Load for: system views, infrastructure, network protocols, version control flow, project boards.
+A diagram earns its fence only when the reader traces a relation across more marks than a clause holds: three or more nodes with at least one branch, cycle, or crossing relation. Below that threshold prose owns the fact, and one diagram owns one question — a diagram needing two legends is two diagrams. The full discipline — investigation traces per archetype, staged growth with the node-annotation-omission ladder, node and edge law, type selection, soundness, multi-diagram composition — is [references/methodology.md](references/methodology.md); what each type's marks must mean, its signal, and its master patterns is [references/construction.md](references/construction.md).
 
-## [01]-[INSTRUCTIONS]
+## [02]-[CATALOG]
 
-**Required Tasks:**
-1. Read [→global-config.md](./references/global-config.md): Frontmatter YAML, ELK layout (required for ALL diagrams).
-2. Read [→styling.md](./references/styling.md): Theme, classDef, palette.
-3. Select diagram category per §2 table, load corresponding syntax reference.
+Select the archetype by intent, copy its template, and refill — a catalog template is self-sufficient, carrying its archetype's construction law in its own prose. An intent outside the catalog selects its type through the methodology decision table and the extended registry, under the same frontmatter, theming, and validation law. The split move partitions a subject the moment a second question appears, and a required legend is itself a split signal.
 
-**References:**
+| [INDEX] | [ARCHETYPE]   | [INTENT]                    | [DECLARATION]       | [SPLIT_MOVE]                     |
+| :-----: | :------------ | :-------------------------- | :------------------ | :------------------------------- |
+|  [01]   | spine         | main path through owners    | `flowchart LR`      | split at the readiness gate      |
+|  [02]   | seam-graph    | shapes across a boundary    | `flowchart LR`      | partition by counterpart package |
+|  [03]   | logic-flow    | one operation dispatch      | `flowchart LR`      | extract an arm subflow           |
+|  [04]   | lifecycle     | guarded state transitions   | `stateDiagram-v2`   | nest a composite state           |
+|  [05]   | wire-sequence | ordered boundary exchange   | `sequenceDiagram`   | split by interaction phase       |
+|  [06]   | schema        | persistent entity relations | `erDiagram`         | split by aggregate root          |
+|  [07]   | strata        | layer dependency direction  | `flowchart TB`      | collapse peer layers             |
+|  [08]   | schedule      | dated committed work        | `gantt`             | split by phase                   |
+|  [09]   | board         | stage-held work now         | `kanban`            | split by workflow segment       |
+|  [10]   | history       | branch and merge truth      | `gitGraph LR:`      | split by release train           |
+|  [11]   | topology      | deployables and reach       | `architecture-beta` | split by zone                    |
+|  [12]   | landscape     | one-zoom system landscape   | `C4Context`         | re-declare at the next zoom      |
+|  [13]   | event-flow    | command-event causality     | `eventmodeling`     | split by stream                  |
+|  [14]   | profile       | two-subject capability compare | `radar-beta`     | one comparison per fence         |
+|  [15]   | decomposition | weighted whole-to-part      | `treemap-beta`      | aggregate the tail               |
 
-| Domain        | File                                                                     |
-| ------------- | ------------------------------------------------------------------------ |
-| Configuration | [global-config.md](references/global-config.md)                          |
-| Styling       | [styling.md](references/styling.md)                                      |
-| Validation    | [validation.md](references/validation.md)                                |
-| Graph         | [graph.md](references/graph.md)                                          |
-| Interaction   | [interaction.md](references/interaction.md)                              |
-| Modeling      | [modeling.md](references/modeling.md)                                    |
-| Charts        | [charts.md](references/charts.md)                                        |
-| Architecture  | [architecture.md](references/architecture.md)                            |
-| Template      | [architecture-beta.template.md](templates/architecture-beta.template.md) |
-| Template      | [c4-container.template.md](templates/c4-container.template.md)           |
+- [01]-[SPINE](templates/spine.mmd.md)
+- [02]-[SEAM-GRAPH](templates/seam-graph.mmd.md)
+- [03]-[LOGIC-FLOW](templates/logic-flow.mmd.md)
+- [04]-[LIFECYCLE](templates/lifecycle.mmd.md)
+- [05]-[WIRE-SEQUENCE](templates/wire-sequence.mmd.md)
+- [06]-[SCHEMA](templates/schema.mmd.md)
+- [07]-[STRATA](templates/strata.mmd.md)
+- [08]-[SCHEDULE](templates/schedule.mmd.md)
+- [09]-[BOARD](templates/board.mmd.md)
+- [10]-[HISTORY](templates/history.mmd.md)
+- [11]-[TOPOLOGY](templates/topology.mmd.md)
+- [12]-[LANDSCAPE](templates/landscape.mmd.md)
+- [13]-[EVENT-FLOW](templates/event-flow.mmd.md)
+- [14]-[PROFILE](templates/profile.mmd.md)
+- [15]-[DECOMPOSITION](templates/decomposition.mmd.md)
 
-**Guidance:**
-- `Config First` — Frontmatter YAML must precede diagram declaration. Mermaid parses config before nodes.
-- `ELK Layout` — ELK provides comprehensive graph layout via five algorithmic phases: cycle breaking, layering, crossing minimization, node placement, edge routing.
-- `Look Options` — Three visual modes: `neo` (default modern), `classic` (traditional), `handDrawn` (sketch aesthetic). Set via `look:` in frontmatter.
+## [03]-[VALIDATE]
 
-**Best-Practices:**
-- *Load Sequence* — global-config.md → styling.md → {category}.md → compose. Never skip configuration.
-- *Frontmatter Only* — `%%{init:...}%%` directives deprecated v10.5.0. Use YAML frontmatter exclusively.
+A diagram is not done until its fence passes both stages: graph-logic checks over the source, then a render whose proof is an actual SVG artifact, never a zero exit alone.
 
-## [02]-[DIAGRAM_SELECTION]
+```bash
+uv run scripts/validate_mermaid.py <file.md ...>
+```
 
-| [CATEGORY]   | [TYPES]                                              | [REFERENCE]                                      |
-| :----------- | ---------------------------------------------------- | ------------------------------------------------ |
-| Graph        | flowchart, mindmap, block                            | [→graph.md](./references/graph.md)               |
-| Interaction  | sequence, journey                                    | [→interaction.md](./references/interaction.md)   |
-| Modeling     | state, ER, class, requirement                        | [→modeling.md](./references/modeling.md)         |
-| Charts       | pie, quadrant, sankey, xy, radar, gantt, treemap     | [→charts.md](./references/charts.md)             |
-| Architecture | C4, architecture, packet, timeline, gitgraph, kanban | [→architecture.md](./references/architecture.md) |
+Each fence emits `file:line: STATUS check detail` rows with check kinds `render`, `frontmatter`, `contract`, `logic`, `setup`, `read`, and `collect`; `--json` emits identical-key NDJSON for tooling. Contract, logic, and frontmatter rows fire only on findings — a clean fence prints its render row alone, and silence from a check is a pass. Graph-logic analysis covers flowchart, state, sequence, ER, class, gantt, requirement, architecture, and C4; any other family emits a `logic-unimplemented` warn instead of silent approval. Logic failures block: orphan node, unreachable state, undefined or unknown class targets, dangling task, group, service, or relation references. Logic warns demand a split or a stated reason: duplicate same-label edges, orphan participants, entities, services, and requirements. Contract warnings cover accessibility presence and order, `theme: base`, the flat-look lock (`look: classic`, `useGradient`, `dropShadow`), the mono-stack floors, `clusterBkg`, label backing, canonical classes, linkStyle index drift, semantic edge rails, sequence grouping, and palette drift including translucent-alpha discipline. `--no-render` runs the logic and frontmatter checks alone for a fast loop; the process exits nonzero when any fence fails. A render failure splits `syntax` from `environment`, so a missing browser never masquerades as a broken diagram.
 
-**Type Headers:**
+The canon checker runs beside the validator as `uv run scripts/check_canon.py <file.md ...>` — a render-free, table-driven enforcement of the theming, styling, and config canon per family (palette closure, alpha tiers, yellow law, micro-scale stamps, per-family floors) emitting the same `file:line: STATUS canon rule detail` row shape with `--json` NDJSON and a nonzero exit on any fail. `--explain <rule-id>` prints a finding's canon sentence and owning reference.
 
-| [INDEX] | [TYPE]       | [HEADER]             | [DIR] | [CATEGORY]   |
-| :-----: | ------------ | -------------------- | :---: | ------------ |
-|  [01]   | Flowchart    | `flowchart LR`       |  LR   | Graph        |
-|  [02]   | Mindmap      | `mindmap`            |   —   | Graph        |
-|  [03]   | Block        | `block-beta`         |   —   | Graph        |
-|  [04]   | Sequence     | `sequenceDiagram`    |  TB   | Interaction  |
-|  [05]   | Journey      | `journey`            |   —   | Interaction  |
-|  [06]   | State        | `stateDiagram-v2`    |  TB   | Modeling     |
-|  [07]   | ER           | `erDiagram`          |  LR   | Modeling     |
-|  [08]   | Class        | `classDiagram`       |  TB   | Modeling     |
-|  [09]   | Requirement  | `requirementDiagram` |   —   | Modeling     |
-|  [10]   | Pie          | `pie`                |   —   | Charts       |
-|  [11]   | Quadrant     | `quadrantChart`      |   —   | Charts       |
-|  [12]   | Sankey       | `sankey-beta`        |   —   | Charts       |
-|  [13]   | XY           | `xychart-beta`       |   —   | Charts       |
-|  [14]   | Radar        | `radar-beta`         |   —   | Charts       |
-|  [15]   | Gantt        | `gantt`              |   —   | Charts       |
-|  [16]   | Treemap      | `treemap-beta`       |   —   | Charts       |
-|  [17]   | C4           | `C4Context`          |   —   | Architecture |
-|  [18]   | Architecture | `architecture-beta`  |   —   | Architecture |
-|  [19]   | Packet       | `packet-beta`        |   —   | Architecture |
-|  [20]   | Timeline     | `timeline`           |   —   | Architecture |
-|  [21]   | GitGraph     | `gitGraph`           |   —   | Architecture |
-|  [22]   | Kanban       | `kanban`             |   —   | Architecture |
+The renderer is `mmdc`, provided on PATH by the machine toolchain (Nix `mermaid-cli` with a pinned Chromium) and preferred from a `pnpm exec mmdc` workspace when a `pnpm-lock.yaml` roots the run; `--renderer CMD` overrides both. Rendering targets the pinned Chromium through `PUPPETEER_EXECUTABLE_PATH`; the real Google Chrome app is never launched.
 
-**Guidance:**
-- `LR Default` — Horizontal flow matches reading order. Sequence/State force TB implicitly.
-- `Beta Status` — block, sankey, xy, radar, treemap, architecture, packet, kanban are beta; syntax may change.
+## [04]-[CONTRACT]
 
-**Best-Practices:**
-- *Category Match* — Select by primary concern: flow→Graph, time→Interaction, structure→Modeling, data→Charts, system→Architecture.
+- Frontmatter opens every fence body before the diagram header, carrying `theme: base` and `look: classic` with the Dracula variable subset the diagram type consumes; the token system, role map, dual-host law, and the types and hosts that carry a local style law instead — packet, C4 element surfaces, host-themed docs — are [references/theming.md](references/theming.md).
+- Every themed fence renders flat by construction: `look: classic`, `useGradient: false`, `dropShadow: "none"`, and the family `themeCSS` filter belt kill gradient borders and node halos on every host, including one that initializes a newer look — the border canon in the theming reference owns the lock, the weight ladder, and the Lavender container boundary.
+- `accTitle` and `accDescr` follow the header on every committed diagram, stating the relation the diagram encodes so the exported SVG stays usable outside its source; `block`, `mindmap`, `sankey`, and `venn` refuse the directives, so there the relation sentence sits beside the fence.
+- Node and edge labels carry concept names, never mechanism detail — the owning page carries the bytes.
+- Semantic node classes and edge rails come from the canonical Dracula `classDef` set with its ruled translucent accent fills; an ad-hoc hex is a defect.
+- The ruled mono stack `fontFamily: "SF Mono, Menlo, Cascadia Mono, Segoe UI Mono, Consolas, monospace"` and the recessed `#21222C` label backing reach every themed fence; per-element sizes ride the theming micro-scale `themeCSS` stamps, and no canvas text renders below 12px.
 
-## [03]-[VALIDATION]
+## [05]-[LEGIBILITY]
 
-[VERIFY] Before diagram creation:
-- [ ] Frontmatter: valid YAML with `config:` key (before diagram declaration).
-- [ ] Direction: LR for flowchart/ER, implicit TB for sequence/state.
-- [ ] Reserved words avoided: `end`, `default`, `subgraph`, `class` in node IDs.
-- [ ] classDef: placed at diagram end, after node definitions.
-- [ ] Accessibility: accTitle/accDescr present after diagram type.
+Legibility bounds a diagram, not syntax capacity. A rendered diagram ships only after it passes every legibility check:
 
-[REFERENCE]: [→validation.md](./references/validation.md) — Full validation checklists and anti-patterns.
+- Labels render untruncated.
+- Edges do not visually dominate nodes.
+- Orientation matches reading order.
+- Node groups stay visually separable.
+- Contrast survives both light and dark hosts.
+- The diagram type matches the subject.
+
+A faulted fence converges on its own source across at most five render-inspect-edit rounds; each correction is a minimal text edit to the fence itself, never a sibling file.
+
+## [06]-[REFERENCES]
+
+- [01]-[METHODOLOGY](references/methodology.md): when to diagram, investigation, node and edge law, type selection, soundness audit, multi-diagram composition
+- [02]-[CONSTRUCTION](references/construction.md): per-type construction — the question each type answers, what its marks assert, failure modes, truth tests
+- [03]-[THEMING](references/theming.md): Dracula palette, role map, the base theme block, canonical classDef rails, dual-host contrast, Alucard
+- [04]-[STYLING](references/styling.md): the full styling grammar — every link and arrow form for every family, link lengths, the complete shape registry, containers and subgraphs, style precedence with its interaction traps, the per-type styling matrix
+- [05]-[CONFIG](references/config.md): frontmatter schema, secure keys, layout engines and ELK tuning, look system, accessibility, mmdc and CI, trap list
+- [06]-[SYNTAX_CORE](references/syntax-core.md): advanced flowchart, sequence, state, class, and ER — node metadata, edge IDs, markdown strings, KaTeX, per-type traps
+- [07]-[SYNTAX_EXTENDED](references/syntax-extended.md): the type registry beyond the core five — admitted rows with working fences and traps, registered rows named
+
+## [07]-[GOTCHAS]
+
+- Frontmatter owns initialization; a fence opening with `%%{init:...}%%` converts to frontmatter.
+- Reserved words `end`, `default`, `subgraph`, `class` break node IDs — quote the label, rename the ID.
+- `layout: elk` outside flowchart needs a host-registered loader and has no dagre fallback — only flowchart fences declare it.
+- Edge labels containing `[`, `]`, or `:` need double quotes: `A -->|"[WIRE]: shape"| B`.
+- Extended-family fences validate whenever touched.
+
+## [08]-[REPO_INTEGRATION]
+
+When the host repo declares a docs gate, that gate consumes `scripts/validate_mermaid.py --json`; the bundled script is the same engine everywhere else.

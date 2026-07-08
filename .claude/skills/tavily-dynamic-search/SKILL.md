@@ -410,8 +410,8 @@ The Python you write IS the filtering logic. There are no fixed templates — yo
 **Print structured output.** Format your output so it's easy to reason over:
 
 ```python
-print(f'## {title}')
-print(f'URL: {url}')
+print(f"## {title}")
+print(f"URL: {url}")
 print(relevant_content)
 print()
 ```
@@ -420,8 +420,7 @@ print()
 
 ```python
 try:
-    raw = subprocess.check_output(['uvx', '--from', 'tavily-cli', 'tvly', 'extract', url, '--json'],
-                                   stderr=subprocess.DEVNULL, timeout=30)
+    raw = subprocess.check_output(["uvx", "--from", "tavily-cli", "tvly", "extract", url, "--json"], stderr=subprocess.DEVNULL, timeout=30)
 except Exception:
     continue
 ```
