@@ -4,7 +4,7 @@
 # License       : MIT
 # Path          : modules/home/assets/default.nix
 # ----------------------------------------------------------------------------
-# Asset files aggregator - logos, images, fonts, and other binary assets
+# Asset files aggregator - fastfetch ASCII art and desktop wallpaper
 {...}: {
   imports = [
     ./ascii

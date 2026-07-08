@@ -19,7 +19,7 @@ Parametric Forge is a deterministic macOS workspace built with Nix flakes, nix-d
     <li><strong>Secrets:</strong> Doppler-first agent env with 1Password SSH + transitional ambient rail; credentials never enter the repo; GitHub CLI stays writable.</li>
     <li><strong>Terminal mesh:</strong> WezTerm → Zellij → Yazi with Neovim remote control, Starship, Atuin, fzf-tab, and carapace.</li>
     <li><strong>Toolchains:</strong> Python 3.15 (uv/ruff/ty), Node (nix + pnpm), Lua + LSPs, SQLite/DuckDB with sqlean/spatialite/vec, scientific native libs and energy-modeling runtimes, Nix-managed dotnet SDKs (8/9/10).</li>
-    <li><strong>Assets:</strong> CAD/BIM/media formats stay versionable via LFS defaults; ffmpeg/imagemagick tuned for previews.</li>
+    <li><strong>Assets:</strong> Git LFS enabled globally; repo binary classes ride declared <code>.gitattributes</code> rows; ffmpeg/imagemagick tuned for previews.</li>
   </ul>
 </div>
 
@@ -29,19 +29,20 @@ Parametric Forge is a deterministic macOS workspace built with Nix flakes, nix-d
 ```text
 .
 ├── flake.nix / flake.lock          # Inputs, systems, overlays, host exports
-├── flake-modules/                  # Package/app outputs, shell, formatter
+├── flake-modules/                  # Package/app outputs, checks, shell, formatter
 ├── hosts/
-│   └── darwin/default.nix          # MacBook host: nix-darwin + Home Manager
+│   ├── darwin/default.nix          # MacBook host: nix-darwin + Home Manager
+│   └── nixos/default.nix           # NixOS host rows (Maghz lands here)
 ├── modules/
 │   ├── common/                     # Determinate Nix custom settings + shared toolchain env
 │   ├── darwin/                     # macOS defaults, fonts, homebrew taps/brews/casks
 │   └── home/                       # Home Manager: XDG, env, aliases, programs, scripts, assets
-│       ├── assets/                 # ASCII + carbon sources/renders
+│       ├── assets/                 # Fastfetch ASCII art + wallpaper (LFS)
 │       ├── environments/           # Session vars for shell/languages/media/secrets/containers
 │       ├── programs/               # Apps (wezterm/zellij/yazi), shell-tools, git-tools, nix-tools, zsh
 │       ├── scripts/                # Integration rail (forge-nvim/edit/yazi) + analysis helpers
-│       └── xdg.nix                 # XDG base dirs + scaffolding
-├── overlays/                       # Upstream passthrough + duckdb, forge-provision, sqlean
+│       └── xdg.nix                 # XDG base dirs + Linux user-dir rows
+├── overlays/                       # Upstream passthrough + duckdb, forge-provision, sqlean, sqlite-forge
 └── .archive/                       # Retired configs kept for reference
 ```
 
@@ -62,7 +63,7 @@ Parametric Forge is a deterministic macOS workspace built with Nix flakes, nix-d
    ```
 4. **Apply mac host:**
    ```sh
-   nix run nix-darwin -- switch --flake ~/Documents/99.Github/Parametric_Forge#macbook
+   sudo nix run nix-darwin/master#darwin-rebuild -- switch --flake ~/Documents/99.Github/Parametric_Forge#macbook
    ```
 5. **Rebuild after edits:**
    ```sh
@@ -103,7 +104,7 @@ Parametric Forge is a deterministic macOS workspace built with Nix flakes, nix-d
   <details>
   <summary>Git + security</summary>
 
-  - **VCS stack:** Delta pager everywhere, LFS patterns for CAD/BIM/media, lazygit, gitleaks, git-quick-stats (`modules/home/programs/git-tools`).
+  - **VCS stack:** Delta pager everywhere, Git LFS enabled, lazygit, gitleaks, git-quick-stats (`modules/home/programs/git-tools`).
   - **SSH:** Multiplexing + sockets in `~/.ssh/sockets`; 1Password agent for keys.
   </details>
 
@@ -125,34 +126,9 @@ Parametric Forge is a deterministic macOS workspace built with Nix flakes, nix-d
   <details>
   <summary>Homebrew bridge</summary>
 
-  - **Bridge:** `modules/darwin/homebrew` uses the nix-darwin Homebrew module for GUI/proprietary/macOS app bundles and fonts not in nixpkgs. Activation does not auto-update, upgrade, uninstall, or zap Homebrew; cleanup is disabled so Homebrew remains available for operator-installed tools.
+  - **Bridge:** `modules/darwin/homebrew` uses the nix-darwin Homebrew module for GUI/proprietary/macOS app bundles and fonts not in nixpkgs. Activation installs and refreshes metadata only; version freshness is a repo-declared schedule — the `forge-brew-autoupdate` reconciler keeps the domt4/autoupdate agent on a daily update+upgrade+cleanup cadence with keychain-backed sudo. Uninstall/zap stays off so operator-installed tools survive.
   </details>
 </div>
-
----
-
-## Code Examples
-
-
-**SSH via 1Password agent:**
-
-  ![SSH via 1Password agent](modules/home/assets/carbon/ssh-1password.png)
-
-**Zsh gh wrapper with 1Password:**
-
-  ![Zsh gh wrapper with 1Password](modules/home/assets/carbon/zsh-gh-wrapper.png)
-
-**Zellij Dracula palette:**
-
-  ![Zellij Dracula palette](modules/home/assets/carbon/zellij-dracula.png)
-
-**WezTerm appearance:**
-
-  ![WezTerm appearance](modules/home/assets/carbon/wezterm-appearance.png)
-
-**Forge edit/yazi integration:**
-
-  ![Forge edit/yazi integration](modules/home/assets/carbon/forge-edit-wrapper.png)
 
 ---
 
