@@ -35,7 +35,7 @@ declare -ra _ENV_KEYS=(
     MAGHZ_REMOTE_HOST MAGHZ_REMOTE_USER MAGHZ_REMOTE_WORKROOT
 )
 readonly EXTRA_ENV_KEYS="${CLAUDE_ENV_EXPORT_KEYS:-}"
-readonly TOOL_PATHS="${CLAUDE_TOOL_PATHS:-${CLAUDE_EXTRA_PATH:-${HOME}/.cargo/bin:${HOME}/.local/bin}}"
+readonly TOOL_PATHS="${CLAUDE_TOOL_PATHS:-${HOME}/.cargo/bin:${HOME}/.local/bin}"
 readonly ALLOW_MISSING_TOOL_PATHS="${CLAUDE_ALLOW_MISSING_TOOL_PATHS:-0}"
 declare -a _TMP_FILES=()
 
@@ -103,7 +103,7 @@ _emit_extra_env_keys() {
     [[ -n "${EXTRA_ENV_KEYS}" ]] || return 0
     local -a keys=()
     local key
-    read -ra keys <<< "${EXTRA_ENV_KEYS//,/ }"
+    IFS=$' \t' read -ra keys <<< "${EXTRA_ENV_KEYS//,/ }"
     for key in "${keys[@]}"; do
         _emit_env_key "${key}"
     done
@@ -129,6 +129,7 @@ _emit_tool_paths() {
 # --- [ENTRY] ------------------------------------------------------------------
 
 trap '[[ ${#_TMP_FILES[@]} -eq 0 ]] || rm -f "${_TMP_FILES[@]}"' EXIT
+trap 'exit 129' HUP INT TERM
 
 [[ -n "${CLAUDE_ENV_FILE:-}" ]] || exit 0
 ENV_DIR="$(dirname -- "${CLAUDE_ENV_FILE}")"
