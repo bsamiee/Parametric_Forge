@@ -4,7 +4,7 @@
 # License       : MIT
 # Path          : modules/home/programs/apps/yazi/yazi.toml
 # ----------------------------------------------------------------------------
-# Core Yazi configuration with pane ratios and file opener integration
+# Popup-first Yazi configuration with deterministic editor handoff
 
 [plugin]
 prepend_previewers = [
@@ -12,6 +12,10 @@ prepend_previewers = [
   { url = "*.tar*", run = 'piper --format=url -- tar tf "$1"' },
   { url = "*.csv", run = 'piper -- rich --line-numbers --force-terminal "$1"' },
   { url = "*.md", run = 'piper -- rich --line-numbers --force-terminal "$1"' },
+]
+prepend_fetchers = [
+  { id = "git", name = "*", run = "git" },
+  { id = "git", name = "*/", run = "git" },
 ]
 
 [mgr]
@@ -23,12 +27,17 @@ sort_dir_first = true
 sort_translit = true                       # Better handling of international characters
 linemode = "mtime"                         # Show modification time for workflow context
 show_hidden = false
-show_symlink = false
+show_symlink = true                        # Popup usage benefits from direct path truth
 mouse_events = ["click", "scroll", "drag"] # Full mouse support
 title_format = "Yazi: {cwd}"
 
+[preview]
+max_width = 1200
+max_height = 900
+
 [opener]
-edit = [{ run = '$EDITOR "$@"', block = false, for = "unix" }]
+# Deterministic host-editor rail; never ambient $EDITOR inside the popup
+edit = [{ run = 'forge-edit.sh "$@"', block = false, for = "unix" }]
 extract = [
   { run = 'ya pub augmented-extract --list "$@"', desc = "Extract here", for = "unix" },
 ]

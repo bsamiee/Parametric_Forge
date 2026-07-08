@@ -11,21 +11,8 @@ local wezterm = require("wezterm")
 local M = {}
 
 -- Dracula Color Palette ------------------------------------------------------
-local dracula = {
-  background    = "#15131F",
-  current_line  = "#2A2640",
-  selection     = "#44475A",
-  foreground    = "#F8F8F2",
-  comment       = "#6272A4",
-  purple        = "#A072C6",
-  cyan          = "#94F2E8",
-  green         = "#50FA7B",
-  yellow        = "#F1FA8C",
-  orange        = "#F97359",
-  red           = "#FF5555",
-  magenta       = "#d82f94",
-  pink          = "#E98FBE",
-}
+-- Nix-generated from the shared Forge palette owner; never hand-edit hexes here.
+local dracula = require("palette")
 
 -- Font Configuration ---------------------------------------------------------
 local FONT = {

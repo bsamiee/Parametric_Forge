@@ -22,9 +22,8 @@
     YAZI_CONFIG_HOME = "${config.xdg.configHome}/yazi";
 
     # --- Neovim -------------------------------------------------------------
-    # Note: Modern Neovim uses --listen flag instead of NVIM_LISTEN_ADDRESS (obsolete)
-    # Socket path format: $XDG_RUNTIME_DIR/nvim-$ZELLIJ_SESSION_NAME.sock
-    # Usage: nvim --listen "$socket_path" (see integration scripts for implementation)
+    # Editor RPC rail uses native `nvim --listen`/`--server`; sockets live under
+    # $XDG_RUNTIME_DIR/forge-edit/<session>/ per the integration script registry.
 
     # --- Serpl --------------------------------------------------------------
     SERPL_CONFIG = "${config.xdg.configHome}/serpl";

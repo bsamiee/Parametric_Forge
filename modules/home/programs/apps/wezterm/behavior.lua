@@ -23,6 +23,7 @@ function M.apply(config, theme)
     config.command_palette_bg_color = palette.current_line or palette.background
     config.command_palette_fg_color = palette.cyan or palette.foreground
     config.command_palette_rows = 10
+    config.command_palette_font = font.family -- Nightly-only: match terminal fallback stack
     config.command_palette_font_size = font.size or config.font_size or 10
 
     -- Behaviour --------------------------------------------------------------
@@ -46,8 +47,6 @@ function M.apply(config, theme)
     -- Terminal Type Configuration --------------------------------------------
     config.hyperlink_rules = wezterm.default_hyperlink_rules()
     config.window_close_confirmation = "NeverPrompt"
-    config.freetype_load_target = "Normal"
-    config.freetype_render_target = "Normal"
 
     -- Performance ------------------------------------------------------------
     config.front_end = "WebGpu"

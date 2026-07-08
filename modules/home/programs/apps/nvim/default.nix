@@ -6,10 +6,7 @@
 # ----------------------------------------------------------------------------
 # Neovim configuration entry point
 {pkgs, ...}: {
-  home.packages = with pkgs; [
-    neovim
-    neovim-remote
-  ];
+  home.packages = [pkgs.neovim];
 
   xdg.configFile = {
     "nvim/init.lua".source = ./init.lua;

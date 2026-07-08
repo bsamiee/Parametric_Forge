@@ -15,9 +15,7 @@ require("full-border"):setup {
 	type = ui.Border.ROUNDED,                   -- Available values: ui.Border.PLAIN, ui.Border.ROUNDED
 }
 
--- Custom Plugins -------------------------------------------------------------
-require("sidebar-status"):setup()
-require("auto-layout").setup()
+require("git"):setup()
 
 -- External Plugins -----------------------------------------------------------
 

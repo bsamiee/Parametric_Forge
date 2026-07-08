@@ -7,6 +7,7 @@
 # GUI and terminal applications aggregator
 {...}: {
   imports = [
+    ./karabiner
     ./nvim
     ./wezterm
     ./yazi

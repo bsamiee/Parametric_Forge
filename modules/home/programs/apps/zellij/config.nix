@@ -39,7 +39,10 @@ in {
     // --- Plugin Aliases ---------------------------------------------------------
     plugins {
       configuration location="zellij:configuration"
-      compact-bar location="zellij:compact-bar"
+      // Tooltip only fires from layout-rendered compact-bar panes, never load_plugins
+      compact-bar location="zellij:compact-bar" {
+        tooltip "F1"
+      }
       tab-bar location="zellij:tab-bar"
       status-bar location="zellij:status-bar"
       strider location="zellij:strider"
@@ -52,6 +55,7 @@ in {
       welcome-screen location="zellij:session-manager" {
         welcome_screen true
       }
+      zellij-forgot location="file:~/.config/zellij/plugins/zellij_forgot.wasm"
       // --- pane-picker Configuration --------------------------------------------
       zellij-pane-picker location="https://github.com/shihanng/zellij-pane-picker/releases/download/v0.6.0/zellij-pane-picker.wasm" {
         // Empty disables the plugin's global rebind; its KDL template breaks on "\" keys.
@@ -140,6 +144,36 @@ in {
         bind "Super Alt Ctrl Shift q" { Quit; }
         bind "Super Alt Ctrl Shift [" { PreviousSwapLayout; }
         bind "Super Alt Ctrl Shift ]" { NextSwapLayout; }
+        bind "Super Alt Ctrl Shift /" {
+          LaunchOrFocusPlugin "zellij-forgot" {
+            "LOAD_ZELLIJ_BINDINGS" "false"
+            "lock" "Hyper g"
+            "unlock (locked)" "Hyper l"
+            "pane mode" "Hyper p"
+            "tab mode" "Hyper t"
+            "resize mode" "Hyper r"
+            "scroll mode" "Hyper s"
+            "session mode" "Hyper o"
+            "move mode" "Hyper m"
+            "tmux mode" "Hyper b"
+            "swap layout prev/next" "Hyper [ / Hyper ]"
+            "quit zellij" "Hyper q"
+            "cheatsheet" "Hyper /"
+            "new tab" "Super t"
+            "close pane" "Super w"
+            "yazi popup" "Super Alt Ctrl y"
+            "pane picker" "Super Alt Ctrl \\"
+            "previous/next tab" "Super Alt Ctrl [ / ]"
+            "new pane" "Super Alt Ctrl n"
+            "toggle floating panes" "Super Alt Ctrl f"
+            "move focus" "Super Alt Ctrl h/j/k/l"
+            "resize" "Super Alt Ctrl = / -"
+            "pane group toggle/mark" "Super Alt Ctrl p / g"
+            floating true
+            move_to_focused_tab true
+          };
+          SwitchToMode "Normal"
+        }
 
         // --- Super Layer (⌘⌥⌃) | (Right Option) ---------------------------------
         bind "Super Alt Ctrl \\" {
@@ -153,6 +187,14 @@ in {
 
         bind "Super Alt Ctrl f" { ToggleFloatingPanes; }
         bind "Super Alt Ctrl n" { NewPane; }
+        // In-place dispatcher: leaves floating visibility readable, then toggles
+        // the per-tab Yazi popup (create / show+focus / hide).
+        bind "Super Alt Ctrl y" {
+          Run "forge-yazi.sh" "toggle" {
+            in_place true
+            close_on_exit true
+          }
+        }
 
         bind "Super Alt Ctrl h" "Super Alt Ctrl Left" { MoveFocusOrTab "Left"; }
         bind "Super Alt Ctrl l" "Super Alt Ctrl Right" { MoveFocusOrTab "Right"; }

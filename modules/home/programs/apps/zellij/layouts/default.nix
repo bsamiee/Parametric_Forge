@@ -4,7 +4,7 @@
 # License       : MIT
 # Path          : modules/home/programs/apps/zellij/layouts/default.nix
 # ----------------------------------------------------------------------------
-# Zellij layout with yazi file manager, editor, and lazygit floating pane
+# Editor-first Zellij layout; Yazi lives in an on-demand floating popup only
 _: {
   xdg.configFile."zellij/layouts/default.kdl".text = ''
     // Title         : default.kdl
@@ -13,7 +13,7 @@ _: {
     // License       : MIT
     // Path          : modules/home/programs/apps/zellij/layouts/default.kdl
     // ----------------------------------------------------------------------------
-    // Zellij layout with yazi file manager, nvim editor, and lazygit floating
+    // Editor-first layout with floating lazygit; Yazi popup arrives via keybind
 
     layout {
         // --- Pane Templates ---------------------------------------------------------
@@ -25,23 +25,20 @@ _: {
             height          "80%"
         }
 
-        pane_template name="yazi" {
-            command         "forge-yazi.sh"
-        }
-
+        // Self-registering Neovim server; owns the tab's editor socket registry
         pane_template name="editor" {
-            // Keep empty, opens default shell and allows scripts to inject editor when needed
+            command         "forge-nvim.sh"
         }
 
         // --- Tab Templates ----------------------------------------------------------
-        // Applies a universal top/bottom status bar to all tabs
+        // Universal top zjstatus bar and bottom compact-bar (tooltip surface)
         tab_template name="ui" {
             pane size=1 borderless=true {
                 plugin location="zjstatus"
             }
             children
             pane size=1 borderless=true {
-                plugin location="zellij:status-bar"
+                plugin location="compact-bar"
             }
         }
 
@@ -52,40 +49,27 @@ _: {
             pane size=1 borderless=true {
                 plugin location="zjstatus"
             }
-            pane split_direction="vertical" {
-                pane name=" [YAZI] " {
-                    yazi
-                    size    "20%"
-                }
+            pane name=" [EDITOR] " {
+                editor
             }
             pane size=1 borderless=true {
-                plugin location="zellij:status-bar"
+                plugin location="compact-bar"
             }
         }
 
         // --- Layouts ----------------------------------------------------------------
-        // All layouts have +2 to the pane count, inherited from default_tab_template and a suspended lazygit floating pane
+        // Pane counts include the two bars from the ui template
         swap_tiled_layout name="[DEFAULT]" {
-            ui exact_panes=4 {
-                pane split_direction="vertical" {
-                    pane name=" [YAZI] " {
-                        yazi
-                        size    "20%"
-                    }
-                    pane name=" [EDITOR] " {
-                        editor
-                    }
+            ui exact_panes=3 {
+                pane name=" [EDITOR] " {
+                    editor
                 }
             }
         }
 
         swap_tiled_layout name="[TWO_COLUMNS]" {
-            ui min_panes=5 {
+            ui min_panes=4 {
                 pane split_direction="vertical" {
-                    pane name=" [YAZI] " {
-                        yazi
-                        size    "20%"
-                    }
                     pane name=" [EDITOR] " {
                         editor
                     }
@@ -97,46 +81,32 @@ _: {
         }
 
         swap_tiled_layout name="[TWO_ROWS]" {
-            ui min_panes=5 {
-                pane split_direction="vertical" {
-                    pane name=" [YAZI] " {
-                        yazi
-                        size    "20%"
+            ui min_panes=4 {
+                pane split_direction="horizontal" {
+                    pane name=" [EDITOR] " {
+                        editor
                     }
-                    pane split_direction="horizontal" {
-                        pane name=" [EDITOR] " {
-                            editor
-                        }
-                        pane stacked=true {
-                            children
-                        }
+                    pane stacked=true {
+                        children
                     }
                 }
             }
         }
 
         swap_tiled_layout name="[GRID]" {
-            ui min_panes=7 {
-                pane split_direction="vertical" {
-                    pane name=" [YAZI] " {
-                        yazi
-                        size    "20%"
+            ui min_panes=6 {
+                pane split_direction="horizontal" {
+                    pane split_direction="vertical" {
+                        pane name=" [EDITOR] " {
+                            editor
+                        }
+                        pane
                     }
                     pane split_direction="vertical" {
-                        pane split_direction="horizontal" {
-                            pane name=" [EDITOR] " {
-                                editor
-                            }
-                            pane
+                        pane stacked=true {
+                            children
                         }
-                    }
-                    pane split_direction="vertical" {
-                        pane split_direction="horizontal" {
-                            pane stacked=true {
-                                children
-                            }
-                            pane
-                        }
+                        pane
                     }
                 }
             }

@@ -4,7 +4,7 @@
 # License       : MIT
 # Path          : modules/home/programs/apps/yazi/theme.toml
 # ----------------------------------------------------------------------------
-# Consolidated Dracula theme with custom icons
+# Dracula flavor base; Forge palette overrides below win over flavor values
 
 # Dracula theme color reference
 # background    #15131F
@@ -20,6 +20,10 @@
 # red           #FF5555
 # magenta       #d82f94
 # pink          #E98FBE
+
+[flavor]
+dark = "dracula"
+light = "dracula"
 
 [mgr]
 cwd = { fg = "#F1FA8C" }
@@ -37,7 +41,6 @@ count_cut = { fg = "#15131F", bg = "#FF5555" }
 count_selected = { fg = "#15131F", bg = "#94F2E8" }
 border_symbol = "│"
 border_style = { fg = "#94F2E8" }
-syntect_theme = ""
 
 [tabs]
 active = { fg = "#15131F", bg = "#94F2E8" }

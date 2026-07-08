@@ -14,8 +14,7 @@ with lib; {
   imports = [
     ./config.nix # Nix-generated main config
     ./themes/dracula.nix # Nix-generated Dracula theme
-    ./layouts/default.nix # Vertical split with lazygit
-    ./layouts/stacked.nix # Stacked panes with lazygit
+    ./layouts/default.nix # Editor-first layout with floating lazygit
   ];
 
   options.programs.zellij = {
@@ -115,6 +114,10 @@ with lib; {
       "zellij/plugins/zjstatus.wasm".source = pkgs.fetchurl {
         url = "https://github.com/dj95/zjstatus/releases/download/v0.23.0/zjstatus.wasm";
         hash = "sha256-4AaQEiNSQjnbYYAh5MxdF/gtxL+uVDKJW6QfA/E4Yf8=";
+      };
+      "zellij/plugins/zellij_forgot.wasm".source = pkgs.fetchurl {
+        url = "https://github.com/karimould/zellij-forgot/releases/download/0.4.2/zellij_forgot.wasm";
+        hash = "sha256-MRlBRVGdvcEoaFtFb5cDdDePoZ/J2nQvvkoyG6zkSds=";
       };
     };
   };
