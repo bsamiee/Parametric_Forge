@@ -49,7 +49,9 @@ _fetch_doppler_source() {
     if [[ "${DOPPLER_OFFLINE}" == "1" ]]; then
         fallback+=(--fallback-only)
     fi
-    doppler secrets download --project "${project}" --config "${config}" \
+    # env -u: an ambient DOPPLER_TOKEN outranks --project/--config and cannot
+    # represent three configs; strip it so each fetch resolves its named source.
+    env -u DOPPLER_TOKEN doppler secrets download --project "${project}" --config "${config}" \
         --no-file --format env --attempts 1 "${fallback[@]}" >"${out}" 2>/dev/null
 }
 
