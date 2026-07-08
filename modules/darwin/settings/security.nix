@@ -94,6 +94,10 @@ in {
       %admin ALL=(root) NOPASSWD: /run/current-system/sw/bin/darwin-rebuild *
       %admin ALL=(root) NOPASSWD: /nix/var/nix/profiles/default/bin/darwin-rebuild *
 
+      # Determinate custom-config adoption: move the installer-written real file
+      # aside so activation's /etc collision guard passes (module owns the symlink)
+      %admin ALL=(root) NOPASSWD: /bin/mv /etc/nix/nix.custom.conf /etc/nix/nix.custom.conf.before-determinate-module
+
       # Homebrew shell integration (prevents login security prompts)
       %admin ALL=(root) NOPASSWD: /opt/homebrew/bin/brew *
 

@@ -26,9 +26,14 @@ in {
         export TERM="dumb"
       fi
 
-      # Nix daemon profile (self-guarded): non-login panes get NIX_* certs/profiles.
+      # Nix daemon profile without PATH authority: non-login panes get NIX_*
+      # certs/profiles; PATH restore keeps home.sessionPath the single owner and
+      # the sourced-guard makes the /etc/zshrc login pass a no-op.
       if [[ -f "/nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh" ]]; then
+        _forge_prenix_path="$PATH"
         source "/nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh"
+        export PATH="$_forge_prenix_path"
+        unset _forge_prenix_path
       fi
 
       # Homebrew metadata without PATH authority; membership guards block nested growth.

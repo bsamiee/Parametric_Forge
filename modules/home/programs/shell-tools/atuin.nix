@@ -24,6 +24,8 @@
   programs.atuin = {
     enable = true;
     enableZshIntegration = false;
+    # Launchd-managed daemon: fast writes plus in-memory daemon-fuzzy search.
+    daemon.enable = true;
 
     settings = {
       db_path = "${config.xdg.dataHome}/atuin/history.db";
@@ -32,9 +34,9 @@
       sync_frequency = "1h";
       update_check = false;
       timezone = "local"; # Uses system TZ (via TZ env var)
-      search_mode = "fuzzy";
+      search_mode = "daemon-fuzzy";
       search_mode_shell_up_key_binding = "prefix";
-      filter_mode = "global";
+      filter_mode = "workspace";
       filter_mode_shell_up_key_binding = "global"; # Up arrow shows all history, not just current session
       ctrl_n_shortcuts = true;
       disable_up_arrow = false;
@@ -60,7 +62,7 @@
       network_connect_timeout = 5;
       local_timeout = 5;
       secrets_filter = true;
-      store_failed = false;
+      store_failed = true;
       # Secrets and destructive host commands only; short/common commands are
       # retrieval material and stay recorded.
       history_filter = [

@@ -1,3 +1,10 @@
+# Title         : toolchain-env.nix
+# Author        : Bardia Samiee
+# Project       : Parametric Forge
+# License       : MIT
+# Path          : modules/common/toolchain-env.nix
+# ----------------------------------------------------------------------------
+# Shared PATH vectors and toolchain env consumed by session, launchd, and zsh owners.
 {
   lib,
   pkgs,

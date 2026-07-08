@@ -61,13 +61,24 @@
   launcher = row:
     pkgs.writeShellApplication {
       inherit (row) name;
-      runtimeInputs = [pkgs.nodejs];
+      runtimeInputs = [pkgs.coreutils pkgs.nodejs];
       text = ''
         ${row.prelude}prefix="''${XDG_CACHE_HOME:-$HOME/.cache}/forge-mcp/${row.pkg}/${row.version}"
         entry="$prefix/node_modules/.bin/${row.bin}"
         if [ ! -x "$entry" ]; then
-          mkdir -p "$prefix"
-          npm install --prefix "$prefix" --no-audit --no-fund --loglevel=error "${row.pkg}@${row.version}" >&2
+          # Stage-then-rename: fleet clients spawn every server at once, so first
+          # installs race. Each racer stages privately; the rename winner owns the
+          # prefix, losers discard their stage and exec the winner's tree.
+          parent="$(dirname "$prefix")"
+          mkdir -p "$parent"
+          stage="$(mktemp -d "$parent/.stage.XXXXXX")"
+          npm install --prefix "$stage" --no-audit --no-fund --loglevel=error "${row.pkg}@${row.version}" >&2
+          if [ ! -x "$entry" ]; then
+            [ ! -e "$prefix" ] || rm -rf "$prefix"
+            mv -T "$stage" "$prefix" 2>/dev/null || rm -rf "$stage"
+          else
+            rm -rf "$stage"
+          fi
         fi
         exec "$entry" "$@"
       '';

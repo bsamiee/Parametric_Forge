@@ -5,7 +5,7 @@
 # Path          : modules/common/nix.nix
 # ----------------------------------------------------------------------------
 # Determinate Nix custom settings; /etc/nix/nix.conf stays Determinate-owned.
-_: let
+{lib, ...}: let
   gib = n: n * 1024 * 1024 * 1024;
 in {
   # Settings land in module-generated /etc/nix/nix.custom.conf at switch.
@@ -29,16 +29,16 @@ in {
       min-free-check-interval = 300;
       max-silent-time = 3600;
       warn-dirty = false;
-      accept-flake-config = true;
+      # accept-flake-config stays default-false: flakes must not auto-apply nixConfig.
       show-trace = true;
       log-lines = 100;
       connect-timeout = 10;
 
       # --- Store Management -------------------------------------------------
-      min-free = gib 5;
-      max-free = gib 50;
+      min-free = lib.mkDefault (gib 5);
+      max-free = lib.mkDefault (gib 50);
 
-      # --- Cache Configuration ------------------------------------------------
+      # --- Cache Configuration ----------------------------------------------
       # Determinate appends FlakeHub/installer caches via extra-* in nix.conf.
       substituters = [
         "https://cache.nixos.org"

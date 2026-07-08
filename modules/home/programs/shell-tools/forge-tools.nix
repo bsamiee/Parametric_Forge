@@ -35,8 +35,8 @@
       forge_root="''${FORGE_ROOT:-$HOME/Documents/99.Github/Parametric_Forge}"
       host="''${FORGE_DARWIN_HOST:-macbook}"
       cache="''${CACHIX_CACHE:-bsamiee}"
-      elevation="''${FORGE_REDEPLOY_ELEVATION:-''${NH_ELEVATION_STRATEGY:-auto}}"
       secrets_file="''${FORGE_SECRETS_FILE:-''${XDG_CONFIG_HOME:-$HOME/.config}/hm-op-session.sh}"
+      custom_conf="/etc/nix/nix.custom.conf"
 
       [ -f "$forge_root/flake.nix" ] || {
         printf 'forge-redeploy: missing flake root: %s\n' "$forge_root" >&2
@@ -53,6 +53,7 @@
 
       # Token via single env indirection: ambient CACHIX_AUTH_TOKEN wins, secrets file
       # (FORGE_SECRETS_FILE) is the fallback, absence degrades to a skipped push.
+      # A present-but-bad token never fails an already-built/switched deploy.
       push_cache() {
         if [ -z "''${CACHIX_AUTH_TOKEN:-}" ] && [ -f "$secrets_file" ]; then
           # shellcheck source=/dev/null
@@ -62,7 +63,8 @@
           printf 'forge-redeploy: cache push skipped: CACHIX_AUTH_TOKEN unset\n' >&2
           return 0
         fi
-        cachix push "$cache" "$1"
+        cachix push "$cache" "$1" \
+          || printf 'forge-redeploy: WARNING cache push failed (token/network); deploy unaffected\n' >&2
       }
 
       diff_closure() {
@@ -70,21 +72,36 @@
         dix /run/current-system "$1" || nvd diff /run/current-system "$1" || true
       }
 
+      # Every mode builds the toplevel through nh and reviews the closure diff.
+      nh darwin build --hostname "$host" --out-link "$out_link" --diff never "$forge_root"
+      system_path="$(readlink -f "$out_link")"
+      diff_closure "$system_path"
+
       case "$mode" in
-        check | build)
-          nh darwin build --hostname "$host" --out-link "$out_link" --diff never "$forge_root"
-          system_path="$(readlink -f "$out_link")"
-          diff_closure "$system_path"
-          if [ "$mode" = "build" ]; then
-            push_cache "$system_path"
-          fi
-          printf 'forge-redeploy: %s ok system=%s\n' "$mode" "$system_path"
+        check)
+          printf 'forge-redeploy: check-only ok system=%s\n' "$system_path"
+          ;;
+        build)
+          push_cache "$system_path"
+          printf 'forge-redeploy: build ok system=%s\n' "$system_path"
           ;;
         switch)
-          nh darwin switch --hostname "$host" --out-link "$out_link" --diff always \
-            --show-activation-logs --elevation-strategy "$elevation" "$forge_root"
-          system_path="$(readlink -f "$out_link")"
+          # Activation stays on the NOPASSWD darwin-rebuild path: nh elevates via
+          # `sudo env ...`, and no sudoers row for env is safely narrow.
+          if [ -f "$custom_conf" ] && [ ! -L "$custom_conf" ]; then
+            sudo -n /bin/mv "$custom_conf" "$custom_conf.before-determinate-module" || {
+              printf 'forge-redeploy: %s is a real file and blocks activation.\n' "$custom_conf" >&2
+              printf 'forge-redeploy: run once: sudo mv %s %s.before-determinate-module\n' "$custom_conf" "$custom_conf" >&2
+              exit 1
+            }
+          fi
+          sudo -n /run/current-system/sw/bin/darwin-rebuild switch --flake "$forge_root#$host" |& nom
+          # Post-activation steps degrade to warnings: the deploy already landed.
+          # Push precedes the kickstart so it never races the daemon restart.
           push_cache "$system_path"
+          # Daemon-side settings (trusted-users, caches) go live only after restart.
+          sudo -n /bin/launchctl kickstart -k system/systems.determinate.nix-daemon \
+            || printf 'forge-redeploy: WARNING daemon kickstart failed; daemon-side settings stay dormant until restart\n' >&2
           printf 'forge-redeploy: switch ok system=%s\n' "$system_path"
           ;;
       esac
