@@ -8,7 +8,9 @@
 
 [plugin]
 prepend_previewers = [
-  { url = "*/", run = 'piper -- tree --level=3 --color=always --icons=always "$1"' },
+  # Direct eza call: the interactive tree wrapper adds --total-size/--git-ignore,
+  # which recursively sizes every hovered directory and hides ignored files.
+  { url = "*/", run = 'piper -- eza -TL=3 --color=always --icons=always --group-directories-first --no-quotes "$1"' },
   { url = "*.tar*", run = 'piper --format=url -- tar tf "$1"' },
   { url = "*.csv", run = 'piper -- rich --line-numbers --force-terminal "$1"' },
   { url = "*.md", run = 'piper -- rich --line-numbers --force-terminal "$1"' },
@@ -36,10 +38,12 @@ max_width = 1200
 max_height = 900
 
 [opener]
-# Deterministic host-editor rail; never ambient $EDITOR inside the popup
-edit = [{ run = 'forge-edit.sh "$@"', block = false, for = "unix" }]
+# Deterministic host-editor rail; never ambient $EDITOR inside the popup.
+# %s is the 26.x splat token; positional "$@" rides a compat rail upstream
+# marks TODO-remove.
+edit = [{ run = 'forge-edit.sh %s', block = false, for = "unix" }]
 extract = [
-  { run = 'ya pub augmented-extract --list "$@"', desc = "Extract here", for = "unix" },
+  { run = 'ya pub augmented-extract --list %s', desc = "Extract here", for = "unix" },
 ]
 
 [tasks]

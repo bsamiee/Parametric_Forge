@@ -5,9 +5,9 @@
 # Path          : modules/home/programs/apps/yazi/keymap.toml
 # ----------------------------------------------------------------------------
 # Custom keybindings for Yazi file manager
-# Primary Modifier:		Right Shift     → Power (⌥⌃⇧)   leader "<A-C-S>"	| Not used by Zellij
-# Secondary Modifier:	Right Option    → Super (⌘⌥⌃)   leader "<D-A-C>" 	| Heavily used by Zellij
-# Tertiary Modifier: 	Right Command   → Hyper (⌘⌥⌃⇧)  leader "<D-A-C-S>" 	| Mainly used by Zellij
+# Primary Modifier:		Right Command   → Hyper (⌘⌥⌃⇧)  leader "<D-A-C-S>"	| Zellij-owned
+# Secondary Modifier:	Right Option    → Super (⌘⌥⌃)   leader "<D-A-C>" 	| Zellij-owned
+# Tertiary Modifier: 	Right Shift     → Power (⌥⌃⇧)   leader "<A-C-S>" 	| Free for Yazi binds
 
 # <D> = Super 	(Command/⌘)
 # <A> = Alt 	(Option/⌥)
@@ -17,16 +17,16 @@
 [mgr]
 keymap = [
 	# --- System Integration ---------------------------------------------------
-	{ on = "<A-C-S-e>",   run = "plugin augment-command -- editor",                     desc = "Open in $EDITOR" },
-	{ on = "<A-C-S-l>",   run = "plugin augment-command -- pager",                      desc = "Open in $PAGER" },
-	{ on = "<C-p>",       run = 'shell -- qlmanage -p "$@"',                            desc = "macOS Quick Look" },
+	{ on = "<A-C-S-e>",   run = "plugin augment-command.editor",                        desc = "Open in $EDITOR" },
+	{ on = "<A-C-S-l>",   run = "plugin augment-command.pager",                         desc = "Open in $PAGER" },
+	{ on = "<C-p>",       run = "shell -- qlmanage -p %s",                              desc = "macOS Quick Look" },
 
 	# --- Special --------------------------------------------------------------
 	# Command Palette
-	{ on = "<A-C-S-k>",   run = "plugin augment-command -- emit --augmented",           desc = "Augment command palette" },
+	{ on = "<A-C-S-k>",   run = "plugin augment-command.emit -- --augmented",           desc = "Augment command palette" },
 	# Shell Related
-	{ on = ";",           run = "plugin augment-command -- shell --interactive",          desc = "Run a shell command" },
-	{ on = ":",           run = "plugin augment-command -- shell --block --interactive",  desc = "Run a shell command (block until finishes)" },
+	{ on = ";",           run = "shell --interactive",                                  desc = "Run a shell command" },
+	{ on = ":",           run = "shell --block --interactive",                          desc = "Run a shell command (block until finishes)" },
 	# Toggle Panes
 	{ on = "[",           run = "plugin toggle-pane min-parent",                        desc = "Toggle parent pane (left)" },
 	{ on = "]",           run = "plugin toggle-pane min-preview",                       desc = "Toggle preview pane (right)" },
@@ -44,32 +44,30 @@ keymap = [
 	{ on = "V",           run = "visual_mode --unset",                                  desc = "Enter visual mode (unset mode)" },
 	# Spotting
 	{ on = "<Tab>",       run = "spot",                                                 desc = "Spot hovered file" },
-	# Tasks
-	# { on = "w",         run = "tasks:show",                                           desc = "Show task manager" },
 	# Help
 	{ on = "`",           run = "help",                                                 desc = "Open help" },
 	{ on = "<F1>",        run = "help",                                                 desc = "Open help" },
 
 	# --- Navigation -----------------------------------------------------------
 	# Commands
-	{ on = "<A-C-S-h>",   run = "plugin augment-command -- parent_arrow -1",            desc = "Navigate parent up" },
-	{ on = "<A-C-S-j>",   run = "plugin augment-command -- parent_arrow 1",             desc = "Navigate parent down" },
+	{ on = "<A-C-S-h>",   run = "plugin augment-command.parent-arrow -- -1",            desc = "Navigate parent up" },
+	{ on = "<A-C-S-j>",   run = "plugin augment-command.parent-arrow -- 1",             desc = "Navigate parent down" },
 	# Seeking
 	{ on = "K",           run = "seek -5",                                              desc = "Seek up 5 units in the preview" },
 	{ on = "J",           run = "seek 5",                                               desc = "Seek down 5 units in the preview" },
 	# Arrow Keys
-	{ on = "<Left>",      run = "plugin augment-command -- leave",                      desc = "Back to the parent directory" },
-	{ on = "<Down>",      run = "plugin augment-command -- arrow 1",                    desc = "Next file" },
-	{ on = "<Up>",        run = "plugin augment-command -- arrow -1",                   desc = "Previous file" },
-	{ on = "<Right>",     run = "plugin augment-command -- enter",                      desc = "Enter the child directory" },
+	{ on = "<Left>",      run = "plugin augment-command.leave",                         desc = "Back to the parent directory" },
+	{ on = "<Down>",      run = "plugin augment-command.arrow -- 1",                    desc = "Next file" },
+	{ on = "<Up>",        run = "plugin augment-command.arrow -- -1",                   desc = "Previous file" },
+	{ on = "<Right>",     run = "plugin augment-command.enter",                         desc = "Enter the child directory" },
 	# VIM Keys
-	{ on = "h",           run = "plugin augment-command -- leave",                      desc = "Back to the parent directory" },
-	{ on = "j",           run = "plugin augment-command -- arrow 1",                    desc = "Next file" },
-	{ on = "k",           run = "plugin augment-command -- arrow -1",                   desc = "Previous file" },
-	{ on = "l",           run = "plugin augment-command -- enter",                      desc = "Enter the child directory" },
+	{ on = "h",           run = "plugin augment-command.leave",                         desc = "Back to the parent directory" },
+	{ on = "j",           run = "plugin augment-command.arrow -- 1",                    desc = "Next file" },
+	{ on = "k",           run = "plugin augment-command.arrow -- -1",                   desc = "Previous file" },
+	{ on = "l",           run = "plugin augment-command.enter",                         desc = "Enter the child directory" },
 	# Goto
-	{ on = [ "g", "t" ],       	run = "plugin augment-command -- arrow top",           	desc = "Go to top" },
-	{ on = [ "g", "b" ],       	run = "plugin augment-command -- arrow bot",            desc = "Go to bottom" },
+	{ on = [ "g", "t" ],       	run = "plugin augment-command.arrow -- top",           	desc = "Go to top" },
+	{ on = [ "g", "b" ],       	run = "plugin augment-command.arrow -- bot",            desc = "Go to bottom" },
 	{ on = [ "g", "h" ],       	run = "cd ~",                                           desc = "Go home" },
 	{ on = [ "g", "c" ],       	run = "cd ~/.config",                                   desc = "Go ~/.config" },
 	{ on = [ "g", "d" ],       	run = "cd ~/Downloads",                                 desc = "Go ~/Downloads" },
@@ -81,30 +79,30 @@ keymap = [
 	{ on = "<A-C-S-]>",   run = "tab_switch 1 --relative",                        		desc = "Switch to next tab" },
 	{ on = "<C-[>",       run = "tab_swap -1",                                    		desc = "Swap current tab with previous tab" },
 	{ on = "<C-]>",		  run = "tab_swap 1",                                     		desc = "Swap current tab with next tab" },
-	{ on = "t",           run = "plugin augment-command -- tab_create",                 desc = "Create a new tab from the hovered selection" },
-	{ on = "1",           run = "plugin augment-command -- tab_switch 0",               desc = "Switch to first tab" },
-	{ on = "2",           run = "plugin augment-command -- tab_switch 1",               desc = "Switch to second tab" },
-	{ on = "3",           run = "plugin augment-command -- tab_switch 2",               desc = "Switch to third tab" },
-	{ on = "4",           run = "plugin augment-command -- tab_switch 3",               desc = "Switch to fourth tab" },
-	{ on = "5",           run = "plugin augment-command -- tab_switch 4",               desc = "Switch to fifth tab" },
-	{ on = "6",           run = "plugin augment-command -- tab_switch 5",               desc = "Switch to sixth tab" },
-	{ on = "7",           run = "plugin augment-command -- tab_switch 6",               desc = "Switch to seventh tab" },
-	{ on = "8",           run = "plugin augment-command -- tab_switch 7",               desc = "Switch to eighth tab" },
-	{ on = "9",           run = "plugin augment-command -- tab_switch 8",               desc = "Switch to ninth tab" },
+	{ on = "t",           run = "plugin augment-command.tab-create",                    desc = "Create a new tab from the hovered selection" },
+	{ on = "1",           run = "plugin augment-command.tab-switch -- 0",               desc = "Switch to first tab" },
+	{ on = "2",           run = "plugin augment-command.tab-switch -- 1",               desc = "Switch to second tab" },
+	{ on = "3",           run = "plugin augment-command.tab-switch -- 2",               desc = "Switch to third tab" },
+	{ on = "4",           run = "plugin augment-command.tab-switch -- 3",               desc = "Switch to fourth tab" },
+	{ on = "5",           run = "plugin augment-command.tab-switch -- 4",               desc = "Switch to fifth tab" },
+	{ on = "6",           run = "plugin augment-command.tab-switch -- 5",               desc = "Switch to sixth tab" },
+	{ on = "7",           run = "plugin augment-command.tab-switch -- 6",               desc = "Switch to seventh tab" },
+	{ on = "8",           run = "plugin augment-command.tab-switch -- 7",               desc = "Switch to eighth tab" },
+	{ on = "9",           run = "plugin augment-command.tab-switch -- 8",               desc = "Switch to ninth tab" },
 
 	# --- Operations -----------------------------------------------------------
 	# Mount management
 	{ on = "M",           run = "plugin mount",                                         desc = "Mount manager" },
 	# Exiting & Cancelling
 	{ on = "<A-C-S-w>",   run = "close",                                                desc = "Close current tab (Power+w), or quit if last" },
-	{ on = "<A-C-S-q>",   run = "plugin augment-command -- quit",                       desc = "Quit Yazi (Power+q)" },
+	{ on = "<A-C-S-q>",   run = "plugin augment-command.quit",                          desc = "Quit Yazi (Power+q)" },
 	{ on = "<Esc>",       run = "escape",                                               desc = "Exit VI mode, clear selection, or cancel search" },
 	{ on = "<C-z>",       run = "suspend",                                              desc = "Suspend the process" },
 	# Opening
-	{ on = "o",           run = "plugin augment-command -- open",                       desc = "Open selected files" },
-	{ on = "O",           run = "plugin augment-command -- open --interactive",         desc = "Open selected files interactively" },
-	{ on = "<Enter>",     run = "plugin augment-command -- open",                       desc = "Open selected files" },
-	{ on = "<S-Enter>",   run = "plugin augment-command -- open --interactive",         desc = "Open selected files interactively" },
+	{ on = "o",           run = "plugin augment-command.open",                          desc = "Open selected files" },
+	{ on = "O",           run = "plugin augment-command.open -- --interactive",         desc = "Open selected files interactively" },
+	{ on = "<Enter>",     run = "plugin augment-command.open",                          desc = "Open selected files" },
+	{ on = "<S-Enter>",   run = "plugin augment-command.open -- --interactive",         desc = "Open selected files interactively" },
 	# Yank/Cut
 	{ on = [ "y", "y" ],  run = "yank",                                                 desc = "Yank selected files (copy)" },
 	{ on = [ "y", "x" ],  run = "yank --cut",                                           desc = "Yank selected files (cut)" },
@@ -118,15 +116,15 @@ keymap = [
 	{ on = [ "c", "f" ],  run = "copy filename",                                        desc = "Copy the filename" },
 	{ on = [ "c", "n" ],  run = "copy name_without_ext",                                desc = "Copy the filename without extension" },
 	# Paste
-	{ on = "p",           run = "plugin augment-command -- paste",                      desc = "Paste yanked files" },
-	{ on = "P",           run = "plugin augment-command -- paste --force",              desc = "Paste yanked files (overwrite if the destination exists)" },
+	{ on = "p",           run = "plugin augment-command.paste",                         desc = "Paste yanked files" },
+	{ on = "P",           run = "plugin augment-command.paste -- --force",              desc = "Paste yanked files (overwrite if the destination exists)" },
 	# Trash/Deleting
-	{ on = "d",           run = "plugin augment-command -- remove",                     desc = "Trash selected files" },
-	{ on = "D",           run = "plugin augment-command -- remove --permanently",       desc = "Permanently delete selected files" },
+	{ on = "d",           run = "plugin augment-command.remove",                        desc = "Trash selected files" },
+	{ on = "D",           run = "plugin augment-command.remove -- --permanently",       desc = "Permanently delete selected files" },
 	# Creation / Naming
-	{ on = "a",           run = "plugin augment-command -- create",                     desc = "Create a file (ends with / for directories)" },
-	{ on = "A",           run = "plugin augment-command -- archive",                    desc = "Create archive" },
-	{ on = "r",           run = "plugin augment-command -- rename --cursor=before_ext", desc = "Rename selected file(s)" },
+	{ on = "a",           run = "plugin augment-command.create",                        desc = "Create a file (ends with / for directories)" },
+	{ on = "A",           run = "plugin augment-command.archive",                       desc = "Create archive" },
+	{ on = "r",           run = "plugin augment-command.rename -- --cursor=before_ext", desc = "Rename selected file(s)" },
 	# Searching
 	{ on = "f",           run = "filter --smart",                                       desc = "Filter files" },
 	{ on = "F",           run = "plugin jump-to-char",                                  desc = "Jump to file/directory starting with character" },

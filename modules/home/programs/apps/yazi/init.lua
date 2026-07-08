@@ -43,6 +43,5 @@ require("augment-command"):setup({
     skip_single_subdirectory_on_leave = true,   -- Skip directories with only one subdirectory when leaving
     smooth_scrolling = true,                    -- Enable smooth scrolling through file list
     scroll_delay = 0.02,                        -- Delay between scroll commands (smaller = faster scrolling)
-    create_item_delay = 0.25,                   -- Delay before revealing created items (filesystem dependent)
     wraparound_file_navigation = true,          -- Wrap from bottom to top or top to bottom when navigating
 })

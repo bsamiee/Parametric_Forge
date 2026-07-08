@@ -9,8 +9,7 @@
   lib,
   pkgs,
   ...
-}:
-with lib; {
+}: {
   imports = [
     ./config.nix # Nix-generated main config
     ./themes/dracula.nix # Nix-generated Dracula theme
@@ -18,9 +17,9 @@ with lib; {
   ];
 
   options.programs.zellij = {
-    colors = mkOption {
+    colors = lib.mkOption {
       # Single source of truth for all Zellij color configuration
-      type = types.attrs;
+      type = lib.types.attrs;
       default = {
         background = {
           hex = "#15131F";
@@ -109,8 +108,9 @@ with lib; {
     home.packages = [pkgs.zellij];
 
     # --- Plugin Installation ------------------------------------------------
+    # Every third-party wasm is file-owned and hash-pinned; aliases resolve
+    # through file: locations, so plugin load never depends on the network.
     xdg.configFile = {
-      #" zellij-pane-picker.wasm is called by the plugin via url as per documentation
       "zellij/plugins/zjstatus.wasm".source = pkgs.fetchurl {
         url = "https://github.com/dj95/zjstatus/releases/download/v0.23.0/zjstatus.wasm";
         hash = "sha256-4AaQEiNSQjnbYYAh5MxdF/gtxL+uVDKJW6QfA/E4Yf8=";
@@ -118,6 +118,10 @@ with lib; {
       "zellij/plugins/zellij_forgot.wasm".source = pkgs.fetchurl {
         url = "https://github.com/karimould/zellij-forgot/releases/download/0.4.2/zellij_forgot.wasm";
         hash = "sha256-MRlBRVGdvcEoaFtFb5cDdDePoZ/J2nQvvkoyG6zkSds=";
+      };
+      "zellij/plugins/zellij-pane-picker.wasm".source = pkgs.fetchurl {
+        url = "https://github.com/shihanng/zellij-pane-picker/releases/download/v0.6.0/zellij-pane-picker.wasm";
+        hash = "sha256-QO2cSZLPvFGg0ORcOjfrsU30Ox0at4z48aC5QvXLlho=";
       };
     };
   };

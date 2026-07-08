@@ -114,7 +114,6 @@ selected = { bg = "#44475A" }
 [cmp]
 border = { fg = "#94F2E8" }
 active = { fg = "#15131F", bg = "#F8F8F2" }
-# inactive = { fg = "#F8F8F2" }
 icon_file = ""
 icon_folder = ""
 icon_command = ""

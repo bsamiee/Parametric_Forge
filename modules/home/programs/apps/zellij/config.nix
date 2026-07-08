@@ -31,8 +31,9 @@ in {
     scroll_buffer_size          100000
 
     // --- Load Plugins -----------------------------------------------------------
+    // zjstatus and compact-bar render from layout panes; only pane-picker needs
+    // a background start for cross-tab pane tracking.
     load_plugins {
-      // zjstatus
       zellij-pane-picker
     }
 
@@ -57,7 +58,7 @@ in {
       }
       zellij-forgot location="file:~/.config/zellij/plugins/zellij_forgot.wasm"
       // --- pane-picker Configuration --------------------------------------------
-      zellij-pane-picker location="https://github.com/shihanng/zellij-pane-picker/releases/download/v0.6.0/zellij-pane-picker.wasm" {
+      zellij-pane-picker location="file:~/.config/zellij/plugins/zellij-pane-picker.wasm" {
         // Empty disables the plugin's global rebind; its KDL template breaks on "\" keys.
         // Launch stays on the explicit LaunchOrFocusPlugin bind in keybinds.
         list_panes          ""
@@ -89,7 +90,7 @@ in {
         format_space              ""
 
         // --- Layout Display
-        swap_layout_format        "#[bg=$color_background,fg=$yellow,bold] {name} "
+        swap_layout_format        "#[bg=$background,fg=$yellow,bold] {name} "
         swap_layout_hide_if_empty "true"
 
         // --- Mode Indicators

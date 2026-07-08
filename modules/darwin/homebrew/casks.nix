@@ -10,8 +10,10 @@ _: {
     # --- System & Core Tools ------------------------------------------------
     "1password"
     "cleanshot"
-    # Nightly channel; version :latest cask. Pin after install (`brew pin --cask
-    # wezterm@nightly`) so the autoupdate daemon never upgrades it implicitly.
+    # Nightly (version :latest) conflicts with the stable "wezterm" cask: hard
+    # prerequisite before the first switch is `brew uninstall --cask wezterm`.
+    # Pin after install (`brew pin --cask wezterm@nightly`) so the autoupdate
+    # daemon never upgrades it implicitly.
     "wezterm@nightly"
 
     # --- Productivity & Window Management -----------------------------------
