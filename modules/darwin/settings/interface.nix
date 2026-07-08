@@ -35,9 +35,8 @@ in {
         wvous-tr-corner = mkDefault 1;
         wvous-bl-corner = mkDefault 1;
         wvous-br-corner = mkDefault 1;
-        # Application management: pins require a declared install source
-        # (cask/masApp/system). Drafts/Codex/Claude pins return when their
-        # sources land in modules/darwin/homebrew.
+        # Pin sources: Drafts is masApp-declared; Claude/Codex are intentional
+        # manual installs pinned by operator ruling.
         persistent-apps = mkDefault [
           {
             spacer = {
@@ -45,9 +44,12 @@ in {
             };
           }
           "/Applications/Heptabase.app"
+          "/Applications/Drafts.app"
           "/Applications/Visual Studio Code.app"
           "/Applications/Arc.app"
           "/Applications/WezTerm.app"
+          "/Applications/Claude.app"
+          "/Applications/Codex.app"
           "/Applications/Superhuman.app"
           "/System/Applications/Messages.app"
         ];

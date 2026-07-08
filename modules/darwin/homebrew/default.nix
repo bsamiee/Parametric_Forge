@@ -32,6 +32,11 @@ in {
   homebrew = {
     enable = mkDefault true;
 
+    # --- Mac App Store ------------------------------------------------------
+    masApps = {
+      Drafts = 1435957248;
+    };
+
     # --- Global Settings ----------------------------------------------------
     global = {
       autoUpdate = mkDefault true; # Manual brew ops refresh tap metadata natively
@@ -47,6 +52,8 @@ in {
       upgrade = mkDefault false;
       extraEnv = {
         PATH = mkDefault activationPath;
+        # Brew 6 dropped the --no-quarantine install flag; env is the only carrier
+        HOMEBREW_CASK_OPTS = mkDefault "--no-quarantine";
       };
     };
 
@@ -54,7 +61,6 @@ in {
     caskArgs = mkDefault {
       appdir = "/Applications";
       require_sha = false; # Allow casks without SHA
-      no_quarantine = true; # Skip Gatekeeper
       no_binaries = false; # Allow cask binaries in PATH
       fontdir = "~/Library/Fonts";
       colorpickerdir = "~/Library/ColorPickers";
