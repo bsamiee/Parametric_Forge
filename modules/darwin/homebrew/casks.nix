@@ -10,7 +10,9 @@ _: {
     # --- System & Core Tools ------------------------------------------------
     "1password"
     "cleanshot"
-    "wezterm"
+    # Nightly channel; version :latest cask. Pin after install (`brew pin --cask
+    # wezterm@nightly`) so the autoupdate daemon never upgrades it implicitly.
+    "wezterm@nightly"
 
     # --- Productivity & Window Management -----------------------------------
     "airbuddy" # AirPods management
