@@ -1,0 +1,12 @@
+{
+  "roslyn": {
+    "command": "roslyn-language-server",
+    "args": ["--stdio"],
+    "extensionToLanguage": {
+      ".cs": "csharp",
+      ".csx": "csharp"
+    },
+    "startupTimeout": 60000,
+    "maxRestarts": 3
+  }
+}

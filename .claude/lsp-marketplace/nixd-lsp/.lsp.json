@@ -1,0 +1,8 @@
+{
+  "nixd": {
+    "command": "nixd",
+    "extensionToLanguage": {
+      ".nix": "nix"
+    }
+  }
+}

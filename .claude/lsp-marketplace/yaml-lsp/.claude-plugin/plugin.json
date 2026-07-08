@@ -1,0 +1,6 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
+  "name": "yaml-lsp",
+  "displayName": "YAML",
+  "description": "yaml-language-server with SchemaStore (.yaml/.yml)"
+}

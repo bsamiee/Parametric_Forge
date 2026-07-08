@@ -121,7 +121,6 @@ All code follows five governing principles:
 | [file-operations.md](references/file-operations.md)             | Atomic writes, FD multiplexing, directory traversal        |
 | [script-patterns.md](references/script-patterns.md)             | Arg parsing, help, ERR traps, parallel, retry              |
 | [bash-logging.md](references/bash-logging.md)                   | Structured logging, CI integration, tracing                |
-| [bash-testing.md](references/bash-testing.md)                   | bats-core 1.13+ suites, coverage, hypothesis PBT           |
 | [bash-portability.md](references/bash-portability.md)           | Cross-shell compat, containers, POSIX                      |
 | [text-processing-guide.md](references/text-processing-guide.md) | rg/awk/sd/jq/yq/mlr tool selection                         |
 | [validation.md](references/validation.md)                       | ShellCheck codes, static analysis, CI                      |

@@ -1,0 +1,6 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
+  "name": "bash-lsp",
+  "displayName": "Bash",
+  "description": "Bash language server with shellcheck/shfmt integration (.sh/.bash)"
+}

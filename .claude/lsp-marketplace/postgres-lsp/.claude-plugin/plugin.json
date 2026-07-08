@@ -1,0 +1,6 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
+  "name": "postgres-lsp",
+  "displayName": "Postgres (SQL)",
+  "description": "postgrestools language server for SQL (.sql)"
+}

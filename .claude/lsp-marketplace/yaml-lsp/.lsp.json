@@ -1,0 +1,18 @@
+{
+  "yaml": {
+    "command": "yaml-language-server",
+    "args": ["--stdio"],
+    "extensionToLanguage": {
+      ".yaml": "yaml",
+      ".yml": "yaml"
+    },
+    "settings": {
+      "yaml": {
+        "schemaStore": {
+          "enable": true
+        },
+        "validate": true
+      }
+    }
+  }
+}

@@ -50,6 +50,8 @@ declare -Ar POST_NOTES=([trip]='requires: sudo setcap cap_net_raw+ep')
 declare -ar PKG_MGRS=(apt-get dnf)
 declare -ar PREREQS=(curl tar gzip jq)
 declare -a installed=() skipped=() failed=()
+declare -a _TMP_PATHS=()
+trap '[[ ${#_TMP_PATHS[@]} -eq 0 ]] || rm -rf "${_TMP_PATHS[@]}"' EXIT
 
 # --- [ERRORS] -----------------------------------------------------------------
 
@@ -153,7 +155,9 @@ _ensure_binstall() {
     command -v cargo-binstall >/dev/null 2>&1 && return 0
     _require_enabled "${ALLOW_NETWORK}" "cargo-binstall is missing. Set CLAUDE_BOOTSTRAP_ALLOW_NETWORK=1 to fetch it."
     _require_enabled "${ALLOW_REMOTE_INSTALLERS}" "Remote installer disabled. Set CLAUDE_BOOTSTRAP_ALLOW_REMOTE_INSTALLERS=1 to install cargo-binstall."
-    local -r tmp="$(mktemp)"
+    local tmp
+    tmp="$(mktemp)"
+    _TMP_PATHS+=("${tmp}")
     curl -L --proto '=https' --tlsv1.2 -sSf "${BINSTALL_URL}" -o "${tmp}"
     bash "${tmp}"
     rm -f "${tmp}"
@@ -195,6 +199,7 @@ _install_antigravity_installer() {
     [[ "${package}" == "google-antigravity/official-installer:latest" ]] || _die "Invalid Antigravity installer spec for ${binary}: ${package}"
     local tmp
     tmp="$(mktemp -d)"
+    _TMP_PATHS+=("${tmp}")
     curl -fsSL https://antigravity.google/cli/install.sh -o "${tmp}/install.sh"
     bash "${tmp}/install.sh" --dir "${BIN_DIR}" || {
         rm -rf "${tmp}"
@@ -240,6 +245,7 @@ _install_github_release_sha() {
     asset="google-workspace-cli-${target}.tar.gz"
     base_url="https://github.com/${repo}/releases/download/${tag}"
     tmp="$(mktemp -d)"
+    _TMP_PATHS+=("${tmp}")
     archive="${tmp}/${asset}"
     checksum_file="${archive}.sha256"
     curl -sSfL "${base_url}/${asset}" -o "${archive}"
@@ -293,6 +299,7 @@ _install_github_go() {
     }
     tmp="$(mktemp -d)"
     readonly tmp
+    _TMP_PATHS+=("${tmp}")
     curl -sSfL "${url}" | tar -xz -C "${tmp}"
     install -m 0755 "${tmp}/${binary}" "${BIN_DIR}/${binary}"
     rm -rf "${tmp}"

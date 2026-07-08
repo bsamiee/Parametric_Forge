@@ -11,11 +11,11 @@
 # ruff: noqa: T201, D101, D102, D103, D107
 """html-studio automation owner.
 
-Verbs: stamp | gate | serve | status | stop | receipts | self-test. `stamp` writes the three
-NOCTURNE byte regions (baseline style, export drawer, runtime kernel) from scripts/nocturne/
-into artifacts and emits fresh shells; `gate` is the static artifact gate and verifies region
-byte-identity; the server verbs run the loopback return channel that injects `artifact-return`
-and `artifact-token` head metas and appends receipts as one tagged JSONL stream.
+Verbs: gate | render | serve | status | stop | receipts | self-test. `gate` is the static
+artifact gate (structure, self-containment, tokens, contrast, script audit, conformance);
+`render` headless-captures a PNG through the pinned Chromium; the server verbs run the
+loopback return channel that injects `artifact-return` and `artifact-token` head metas and
+appends receipts as one tagged JSONL stream.
 """
 
 # --- [RUNTIME_PRELUDE] -------------------------------------------------------------------
@@ -100,11 +100,9 @@ class Check(StrEnum):
     OUTPUT_FOR = "output-for"
     RAW_HEX = "raw-hex"
     READ = "read"
-    REGION = "region"
     RENDER = "render"
     RESIDUE = "residue"
     RETURN_META = "return-meta"
-    RUNTIME_FORK = "runtime-fork"
     SCRIPT_COUNT = "script-count"
     SCRIPT_HAZARD = "script-hazard"
     SECRET = "secret"
@@ -121,12 +119,6 @@ class ScriptKind(StrEnum):
     PAYLOAD = "payload"
 
 
-class Region(StrEnum):
-    BASELINE = "baseline"
-    DRAWER = "drawer"
-    RUNTIME = "runtime"
-
-
 class FaultKind(StrEnum):
     BAD_ARTIFACT = "bad-artifact"
     BAD_ENVELOPE = "bad-envelope"
@@ -141,7 +133,6 @@ class FaultKind(StrEnum):
     PORT_BUSY = "port-busy"
     RECEIPT_IO = "receipt-io"
     SELF_TEST = "self-test"
-    STAMP = "stamp"
     STATE_BUSY = "state-busy"
     STATE_UNREADABLE = "state-unreadable"
     STOP_TIMEOUT = "stop-timeout"
@@ -173,7 +164,6 @@ class OutputMode(StrEnum):
 # --- [CONSTANTS] -------------------------------------------------------------------------
 
 SKILL_DIR = Path(__file__).resolve().parent
-NOCTURNE_DIR = SKILL_DIR / "nocturne"
 
 BAD_REF = re.compile(r"^(?:/|//|[a-z][a-z0-9+.-]*:)", re.IGNORECASE)
 COLOR_REF = re.compile(r"var\((--[\w-]+)\)|oklch\([^)]+\)|#[0-9a-fA-F]{3,8}\b")
@@ -186,7 +176,7 @@ HEX_COLOR = re.compile(r"#[0-9a-fA-F]{3,8}\b")
 JSON_TYPES = frozenset({"application/json"})
 LAYER_NAME = re.compile(r"@layer\s+([-\w]+)\s*$")
 REMOTE_LITERAL = re.compile(r"(?:https?:)?//|^/")
-RESIDUE = re.compile(r"<!--\s*replace:", re.IGNORECASE)
+RESIDUE = re.compile(r"\{\{[^{}]+\}\}")
 RETURN_METAS = re.compile(rb'[ \t]*<meta\s+name="artifact-(?:return|token)"[^>]*>\s*', re.IGNORECASE)
 SCRIPT_HAZARD = re.compile(r"[\u2028\u2029]")
 SCRIPT_SINK_TEXT = re.compile(r"\b(?:fetch|import|Worker|SharedWorker|WebSocket|EventSource|sendBeacon|open)\s*\(", re.IGNORECASE)
@@ -202,6 +192,7 @@ FOCUS_OUTLINE = re.compile(r":focus-visible[^{}]*{(?=[^{}]*outline\s*:\s*none)(?
 PRINT_EXPORT_BAR = re.compile(r"@media print[\s\S]*\.export-bar[^{]*{[^{}]*display\s*:\s*none")
 PRINT_SAFE_LAYERS = frozenset({"print", "overrides"})
 SIZE_WARN = 400 * 1024
+SUBPROCESS_TIMEOUT = {"vnu": 120.0, "render": 300.0}  # seconds; render covers a cold `uv run --with playwright` install
 TEMPLATE_ROOT = str((SKILL_DIR.parent / "templates").resolve())
 MIN_CONTRAST = 4.5
 CHIP_ALPHA = 0.14
@@ -210,65 +201,12 @@ CONTRAST_CHECKS: tuple[tuple[str, str, float], ...] = (
     ("--on-accent", "--accent", 1.0),
     *((token, "--raised", CHIP_ALPHA) for token in ("--ok", "--warn", "--fail", "--info")),
 )
-RUNTIME_FORKS: tuple[tuple[re.Pattern[str], str], ...] = (
-    (re.compile(r"\bconst\s+(?:mdCell|mdLine|line1)\s*="), "markdown escaping belongs to NOCTURNE.md"),
-    (re.compile(r"\bconst\s+(?:verdictSeg|noteControl)\s*="), "capture controls belong to NOCTURNE.capture"),
-    (re.compile(r"\bconst\s+(?:sv|svgEl)\s*="), "SVG construction belongs to NOCTURNE.svg"),
-    (re.compile(r"\bconst\s+dispatch\s*="), "event delegation belongs to NOCTURNE.delegate"),
-)
-
-MARKERS: Mapping[Region, tuple[str, str, str]] = {
-    Region.BASELINE: ("baseline.css", "/* --- [NOCTURNE_BASELINE:BEGIN] --- */", "/* --- [NOCTURNE_BASELINE:END] --- */"),
-    Region.DRAWER: ("drawer.html", "<!-- --- [NOCTURNE_DRAWER:BEGIN] --- -->", "<!-- --- [NOCTURNE_DRAWER:END] --- -->"),
-    Region.RUNTIME: ("runtime.js", "// --- [NOCTURNE_RUNTIME:BEGIN] ---", "// --- [NOCTURNE_RUNTIME:END] ---"),
-}
 
 HOST = "127.0.0.1"
 LOOPBACK = frozenset({"127.0.0.1", "localhost", "::1", "[::1]"})
 MAX_BODY = 256 * 1024
 HEAD_OPEN = re.compile(rb"<head(?=[\s>])[^>]*>", re.IGNORECASE)
 TOKEN_META_RE = re.compile(r'name="artifact-token" content="([0-9a-f]{32})"')
-SHELL = """<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>{title}</title>
-<style>
-{begin_css}
-{baseline}
-{end_css}
-/* --- [TEMPLATE_LOCAL] --- appends tokens, components, utilities, print, and overrides only */
-</style>
-</head>
-<body>
-<a class="skip" href="#main">Skip to content</a>
-<div class="wrap">
-  <header class="masthead">
-    <div class="rowline">
-      <span class="eyebrow" id="doc-eyebrow">{title}</span>
-      <button type="button" class="btn ghost no-print right" data-toggle-theme aria-label="Toggle color theme">Theme</button>
-    </div>
-    <h1 id="doc-title">{title}</h1>
-    <p class="deck" id="doc-deck"></p>
-  </header>
-  <main id="main" tabindex="-1"></main>
-</div>
-{begin_html}
-{drawer}
-{end_html}
-<script type="application/json" id="payload">{{}}</script>
-<script>
-{begin_js}
-{runtime}
-{end_js}
-// --- [MODELS] --- payload, state, derived indexes
-// --- [OPERATIONS] --- projections, renderers, envelope, markdown
-// --- [COMPOSITION] --- delegated actions, observers, boot
-</script>
-</body>
-</html>
-"""
 
 RENDER_SCRIPT = """
 import os
@@ -449,7 +387,6 @@ FAULT_POLICY: Mapping[FaultKind, FaultPolicy] = {
     FaultKind.BAD_ENVELOPE: FaultPolicy(http=422),
     FaultKind.RECEIPT_IO: FaultPolicy(http=500, exit=Exit.IO),
     FaultKind.BAD_ARTIFACT: FaultPolicy(http=500, exit=Exit.IO),
-    FaultKind.STAMP: FaultPolicy(exit=Exit.IO),
     FaultKind.PORT_BUSY: FaultPolicy(exit=Exit.NET),
     FaultKind.SELF_TEST: FaultPolicy(exit=Exit.CONTRACT),
     FaultKind.STATE_BUSY: FaultPolicy(exit=Exit.STATE),
@@ -581,7 +518,8 @@ def srcset_urls(value: str) -> tuple[str, ...]:
         quoted = "" if quoted == char else char if char in "\"'" and not quoted else quoted
         data = data or "".join(token).lower().startswith("data:")
         if char == "," and not quoted and (not data or re.search(r"\s+\d+(?:w|x)\s*$", "".join(token))):
-            urls.append("".join(token).strip().split()[0])
+            if parts := "".join(token).strip().split():  # empty token: trailing/doubled comma in malformed srcset
+                urls.append(parts[0])
             token, data = [], False
         else:
             token.append(char)
@@ -795,20 +733,6 @@ def contrast_rows(artifact: Artifact, colors: Mapping[str, Color]) -> tuple[Row,
     )
 
 
-@cache
-def _baseline_floor() -> tuple[frozenset[str], frozenset[str]]:
-    """Properties defined and read by the canonical NOCTURNE baseline — the constant floor every artifact inherits.
-
-    Returns:
-        `(defined_or_declared, referenced)` property-name sets from the baseline region.
-    """
-    canon = region_canon(Region.BASELINE)
-    plain = css_plain(canon)
-    defined = {match["prop"] for match in CSS_DECL.finditer(plain) if match["prop"].startswith("--")}
-    defined |= {match.group(1) for match in PROP_DEF.finditer(plain)}
-    return frozenset(defined), frozenset(match.group(1) for match in VAR_USE.finditer(canon))
-
-
 def var_graph_rows(artifact: Artifact) -> tuple[Row, ...]:
     plain = artifact.css_flat
     defined = {match["prop"] for match in CSS_DECL.finditer(plain) if match["prop"].startswith("--")}
@@ -818,15 +742,14 @@ def var_graph_rows(artifact: Artifact) -> tuple[Row, ...]:
         name, has_fallback = match.group(1), bool(match.group(2))
         uses[name] = uses.get(name, False) or has_fallback
     js_writes = {match.group(1) for script in artifact.scripts for match in SET_PROPERTY.finditer(script.body)}
-    floor_defined, floor_uses = _baseline_floor()
     rows = [
         Row(artifact.path, artifact.css_base, Check.VAR_GRAPH, "fail", f"var({name}) references an undefined property")
         for name, fallback in sorted(uses.items())
-        if not fallback and name not in defined and name not in js_writes and name not in floor_uses
+        if not fallback and name not in defined and name not in js_writes
     ]
     rows.extend(
         Row(artifact.path, artifact.css_base, Check.VAR_GRAPH, "warn", f"{name} defined but never read")
-        for name in sorted(defined - set(uses) - js_writes - floor_defined)
+        for name in sorted(defined - set(uses) - js_writes)
         if not name.startswith("--series-")
     )
     return tuple(rows)
@@ -892,22 +815,6 @@ def js_tree_rows(artifact: Artifact, script: Script) -> tuple[Row, ...]:
     return tuple(rows)
 
 
-def local_script_body(script: Script) -> tuple[int, str]:
-    marker = MARKERS[Region.RUNTIME][2]
-    offset = script.body.find(marker)
-    start = offset + len(marker) if offset >= 0 else 0
-    return script.line + script.body[:start].count("\n"), script.body[start:]
-
-
-def runtime_fork_rows(artifact: Artifact, script: Script) -> tuple[Row, ...]:
-    base, body = local_script_body(script)
-    return tuple(
-        Row(artifact.path, base + body[: match.start()].count("\n"), Check.RUNTIME_FORK, "fail", detail)
-        for pattern, detail in RUNTIME_FORKS
-        for match in pattern.finditer(body)
-    )
-
-
 def script_rows(artifact: Artifact) -> tuple[Row, ...]:
     executable = tuple(script for script in artifact.scripts if script.kind is ScriptKind.EXECUTABLE)
     rows = [] if len(executable) == 1 else [Row(artifact.path, 1, Check.SCRIPT_COUNT, "fail", f"{len(executable)} executable scripts")]
@@ -921,85 +828,9 @@ def script_rows(artifact: Artifact) -> tuple[Row, ...]:
                 rows.append(Row(artifact.path, script.line, Check.EMBEDDED_STATE, "fail", str(exc).splitlines()[0][:120]))
         else:
             rows.extend(js_tree_rows(artifact, script))
-            rows.extend(runtime_fork_rows(artifact, script))
         if SCRIPT_HAZARD.search(script.body):
             rows.append(Row(artifact.path, script.line, Check.SCRIPT_HAZARD, "warn", "raw U+2028/U+2029 line separator"))
     return tuple(rows)
-
-
-# --- [STAMP]
-
-
-@cache
-def region_canon(region: Region) -> str:
-    asset, _begin, _end = MARKERS[region]
-    return (NOCTURNE_DIR / asset).read_text(encoding="utf-8").rstrip("\n")
-
-
-def region_span(text: str, region: Region) -> Result[tuple[int, int, str], str]:
-    """Locate a region's interior span between its markers.
-
-    Returns:
-        `(start, end, interior)` character offsets of the interior, or the miss reason.
-    """
-    _asset, begin, end = MARKERS[region]
-    opened = text.find(begin)
-    if opened == -1:
-        return Error(f"missing {begin}")
-    closed = text.find(end, opened)
-    if closed == -1:
-        return Error(f"unterminated {begin}")
-    start = opened + len(begin)
-    return Ok((start, closed, text[start:closed].strip("\n")))
-
-
-def region_rows(artifact: Artifact) -> tuple[Row, ...]:
-    rows: list[Row] = []
-    for region in Region:
-        span = region_span(artifact.text, region)
-        if span.is_error():
-            rows.append(Row(artifact.path, 1, Check.REGION, "fail", f"{region}: {span.error}"))
-            continue
-        start, _end, interior = span.ok
-        if interior != region_canon(region):
-            marker_line = artifact.text[: start - len(MARKERS[region][1])].count("\n") + 1
-            rows.append(Row(artifact.path, marker_line, Check.REGION, "fail", f"{region} region drifted from canon; run stamp"))
-    return tuple(rows)
-
-
-def stamp_text(text: str, regions: Sequence[Region] = tuple(Region)) -> Result[tuple[str, tuple[str, ...]], Fault]:
-    """Replace each region's interior with the canonical bytes.
-
-    Returns:
-        The stamped text and the regions that changed.
-    """
-    changed: list[str] = []
-    for region in regions:
-        span = region_span(text, region)
-        if span.is_error():
-            return Error(Fault(FaultKind.STAMP, f"{region}: {span.error}"))
-        start, end, interior = span.ok
-        canon = region_canon(region)
-        if interior != canon:
-            text = f"{text[:start]}\n{canon}\n{text[end:]}"
-            changed.append(str(region))
-    return Ok((text, tuple(changed)))
-
-
-def shell_text(title: str) -> str:
-    parts = {region: MARKERS[region] for region in Region}
-    return SHELL.format(
-        title=title,
-        baseline=region_canon(Region.BASELINE),
-        drawer=region_canon(Region.DRAWER),
-        runtime=region_canon(Region.RUNTIME),
-        begin_css=parts[Region.BASELINE][1],
-        end_css=parts[Region.BASELINE][2],
-        begin_html=parts[Region.DRAWER][1],
-        end_html=parts[Region.DRAWER][2],
-        begin_js=parts[Region.RUNTIME][1],
-        end_js=parts[Region.RUNTIME][2],
-    )
 
 
 # --- [GATE_AUDIT]
@@ -1019,7 +850,6 @@ def audit(path: Path) -> tuple[Row, ...]:
         (len(styles) == 1, Check.STYLE_COUNT, f"{len(styles)} document style blocks"),
     )
     rows = [Row(artifact.path, 1, check, "fail", detail) for ok, check, detail in base if not ok]
-    rows.extend(region_rows(artifact))
     rows.extend(dom_rows(artifact) + reference_rows(artifact) + css_rows(artifact) + script_rows(artifact))
     if artifact.raw_size > SIZE_WARN:
         rows.append(Row(artifact.path, 1, Check.SIZE, "warn", f"{artifact.raw_size // 1024}KB > {SIZE_WARN // 1024}KB"))
@@ -1027,7 +857,7 @@ def audit(path: Path) -> tuple[Row, ...]:
         Row(artifact.path, number, check, "warn", detail)
         for number, value in enumerate(artifact.text.splitlines(), 1)
         for check, pattern, detail in (
-            (Check.RESIDUE, RESIDUE, "template replace-marker remains"),
+            (Check.RESIDUE, RESIDUE, "unfilled {{...}} template placeholder remains"),
             (Check.SECRET, SECRET, "credential-shaped literal"),
         )
         if pattern.search(value)
@@ -1045,12 +875,16 @@ def conformance_rows(path: Path) -> tuple[Row, ...]:
     """
     if shutil.which("vnu") is None:
         return (Row(str(path), 0, Check.CONFORMANCE, "warn", "vnu not on PATH: conformance skipped"),)
-    proc = subprocess.run(
-        ["vnu", "--format", "json", "--stdout", str(path)],
-        capture_output=True,
-        text=True,
-        check=False,
-    )
+    try:
+        proc = subprocess.run(
+            ["vnu", "--format", "json", "--stdout", str(path)],
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=SUBPROCESS_TIMEOUT["vnu"],
+        )
+    except subprocess.TimeoutExpired:
+        return (Row(str(path), 0, Check.CONFORMANCE, "warn", f"vnu stalled past {SUBPROCESS_TIMEOUT['vnu']:.0f}s: conformance skipped"),)
     if not (stdout := proc.stdout.strip()):
         return () if proc.returncode == 0 else (Row(str(path), 0, Check.CONFORMANCE, "warn", f"vnu emitted no output (returncode {proc.returncode})"),)
     try:
@@ -1270,7 +1104,7 @@ async def supervise(server: ThreadingHTTPServer, runtime: Runtime, ttl: float | 
 
 
 def gate(paths: Annotated[Sequence[Path], Parameter(name="paths")], *, json: bool = False) -> int:
-    """Static artifact gate: structure, self-containment, tokens, contrast, regions, script audit.
+    """Static artifact gate: structure, self-containment, tokens, contrast, script audit, conformance.
 
     Returns:
         Process exit code from the closed `Exit` vocabulary.
@@ -1292,13 +1126,18 @@ def render(artifact: Path, *, out: Path | None = None, json: bool = False) -> in
         Process exit code from the closed `Exit` vocabulary.
     """
     target = out or artifact.with_suffix(".png")
-    proc = subprocess.run(
-        ["uv", "run", "--with", "playwright", "python", "-", str(artifact.resolve()), str(target)],
-        input=RENDER_SCRIPT,
-        capture_output=True,
-        text=True,
-        check=False,
-    )
+    try:
+        proc = subprocess.run(
+            ["uv", "run", "--with", "playwright", "python", "-", str(artifact.resolve()), str(target)],
+            input=RENDER_SCRIPT,
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=SUBPROCESS_TIMEOUT["render"],
+        )
+    except subprocess.TimeoutExpired:
+        emit_row(Row(str(artifact), 0, Check.RENDER, "fail", f"render stalled past {SUBPROCESS_TIMEOUT['render']:.0f}s"), json)
+        return int(Exit.GATE)
 
     def render_status(kind: str) -> Status | None:
         return "fail" if kind in {"error", "pageerror"} else "warn" if kind == "warning" else None
@@ -1315,47 +1154,6 @@ def render(artifact: Path, *, out: Path | None = None, json: bool = False) -> in
         emit_row(row, json)
     print(f"SCREENSHOT={target}")
     return int(Exit.GATE) if proc.returncode != 0 else int(Exit.OK)
-
-
-def stamp(
-    paths: Annotated[Sequence[Path], Parameter(name="paths")] = (),
-    *,
-    check: bool = False,
-    new: Path | None = None,
-    title: str = "Untitled artifact",
-) -> int:
-    """Stamp the NOCTURNE byte regions into artifacts, or emit a fresh shell with `--new`.
-
-    Returns:
-        Process exit code from the closed `Exit` vocabulary.
-    """
-    if new is not None:
-        if new.exists():
-            return fail(Fault(FaultKind.STAMP, f"{new} exists"), OutputMode.BANNER)
-        new.write_text(shell_text(title), encoding="utf-8")
-        print(f"STATUS=NEW\nARTIFACT={new}")
-        return int(Exit.OK)
-    drifted = False
-    for path in paths:
-        if not path.is_file():
-            return fail(Fault(FaultKind.STAMP, f"{path} is not a file"), OutputMode.BANNER)
-        source = path.read_text(encoding="utf-8")
-        outcome = stamp_text(source)
-        if outcome.is_error():
-            print(f"{path}: ERROR {outcome.error.kind} {outcome.error.detail}")
-            drifted = True
-            continue
-        stamped, changed = outcome.ok
-        if not changed:
-            print(f"{path}: CLEAN")
-            continue
-        drifted = True
-        if check:
-            print(f"{path}: DRIFT {', '.join(changed)}")
-        else:
-            path.write_text(stamped, encoding="utf-8")
-            print(f"{path}: STAMPED {', '.join(changed)}")
-    return int(Exit.GATE) if check and drifted else int(Exit.OK)
 
 
 def serve(
@@ -1497,7 +1295,7 @@ def receipts(path: Path, *, last: int = 1, kind: str = "", json: bool = False) -
 
 
 def self_test() -> int:
-    """Prove shell-stamp -> gate -> serve -> GET -> POST -> reject -> receipt readback -> stop.
+    """Prove artifact -> serve -> GET -> POST -> reject -> receipt readback -> stop.
 
     Returns:
         Process exit code from the closed `Exit` vocabulary.
@@ -1505,9 +1303,11 @@ def self_test() -> int:
 
     async def circuit() -> Fault | None:
         scratch = APath(tempfile.mkdtemp(prefix="html-studio-selftest-")) / "probe.html"
-        await scratch.write_text(shell_text("Self-test probe"))
-        if any(row.status == "fail" for row in audit(Path(str(scratch)))):
-            return Fault(FaultKind.SELF_TEST, "stamped shell fails its own gate")
+        await scratch.write_text(
+            '<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n'
+            '<title>Self-test probe</title>\n<style>:root{color-scheme:dark light}</style>\n</head>\n'
+            '<body><main><h1>probe</h1></main><script>const probe=1;</script></body>\n</html>\n'
+        )
         env = dict(os.environ) | {"CLAUDE_CODE_SESSION_ID": f"selftest-{os.getpid()}"}
         process = await anyio.open_process([sys.executable, str(APath(__file__)), "serve", str(scratch), "--output", "json"], env=env)
         try:
@@ -1530,7 +1330,7 @@ def self_test() -> int:
                 if served.text.count('<meta name="artifact-return"') != 1:
                     return Fault(FaultKind.SELF_TEST, "served page carries a duplicated return meta")
                 headers = {"X-Artifact-Token": token_match.group(1), "Content-Type": "application/json"}
-                data = {"kind": "self-test", "version": 1, "artifact": {"id": "probe", "title": "probe"}, "decision": {"status": "comment", "at": _utc()}, "decisions": [], "changes": [], "annotations": [], "state": {}}
+                data = {"probe": True, "at": _utc()}
                 envelope = {"kind": "self-test", "artifact": "probe", "version": 1, "data": data}
                 posted = await client.post(f"{banner.url}submit", content=ENC.encode(envelope), headers=headers)
                 reply = msgspec.json.decode(posted.content, type=Reply)
@@ -1561,7 +1361,6 @@ def self_test() -> int:
 # --- [ENTRY] ---------------------------------------------------------------------------------
 
 app = App(name="studio", result_action="return_int_as_exit_code_else_zero")
-app.command(stamp)
 app.command(gate)
 app.command(render)
 app.command(serve)
