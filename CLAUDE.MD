@@ -27,7 +27,7 @@ How to apply:
 Using gpt-5.5 inside workflows and subagents (the model parameter only takes Claude models, so use a wrapper):
 - Spawn a thin Claude wrapper agent with `model: 'sonnet', effort: 'low'` whose prompt instructs it to write a self-contained codex prompt, run `codex exec` via Bash, and return the report (use `schema` on the wrapper to get structured output back).
 - Always label these agents with a `gpt-5.5:` prefix, e.g. `{label: 'gpt-5.5:review-auth'}` - the workflow UI shows the wrapper's Claude model, so the label is the only indication the real worker is gpt-5.5.
-- Codex runs can exceed Bash's 10-minute timeout: pass an explicit timeout, or run in the background and poll for the report file.
+- Codex runs can exceed Bash's 10-minute timeout: pass an explicit timeout, or run in the background and poll for the report file. Inside workflows wrappers are LAUNCH-ONLY - a subagent has no legal wait (foreground sleep is blocked, background tasks never notify it, idle no-ops trip no-progress enforcement and file a false failure while codex runs on): the wrapper returns a launch receipt in seconds, the orchestrator owns time (`await new Promise(r => setTimeout(r, ms))` between harvest rounds), and a short-lived harvester agent per round promotes finished reports mechanically from disk - never relaunch a live run.
 - `codex exec -o <file>` writes the final message to a file (the report artifact to poll in background runs); `--output-schema <schema.json>` constrains the final message to a JSON Schema when the wrapper must return typed results.
 - Workflow token budgets only count Claude tokens; codex work is free and invisible to `budget.spent()`.
 

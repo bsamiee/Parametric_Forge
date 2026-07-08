@@ -984,6 +984,10 @@ const RECEIPT = { type: 'object', additionalProperties: false, required: ['ok', 
 // purge, test -s guard + verbatim detached launch with -c mcp_servers={}, bounded liveness
 // polls with the wedge kill, jq-built mechanical receipt). The `.then()` attaches the
 // ORCHESTRATOR-ASSIGNED scope so a lane that dies before writing still names its territory.
+// Codex wrappers are LAUNCH-ONLY (SKILL.md "Wrappers never wait"): they return a launch
+// receipt in seconds; the orchestrator setTimeout harvest loop owns waiting + promotion.
+// A wrapper that idles for its lane gets force-returned by no-progress enforcement —
+// a false failure while codex keeps running and the report lands with no promoter.
 const lane = (task, o) => (CODEX
   ? agent(codexPrompt(o.label, task, PRODUCT, !!o.writes),
     { label: 'gpt-5.5:' + o.label, phase: o.phase, model: 'sonnet', effort: 'low', schema: RECEIPT, stallMs: STALL })
