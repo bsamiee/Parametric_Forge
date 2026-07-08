@@ -32,8 +32,6 @@ in {
       askForPassword = mkDefault false; # Disable password prompt after screensaver
       askForPasswordDelay = mkDefault 0; # No delay when disabled
     };
-    # --- Global System Behavior ---------------------------------------------
-    NSGlobalDomain = {};
     # --- Application Security -----------------------------------------------
     CustomUserPreferences = {
       "com.apple.security" = {
@@ -59,7 +57,6 @@ in {
       # system.defaults.LaunchServices.LSQuarantine in settings/system.nix.
       # --- Developer Security Settings --------------------------------------
       "com.apple.dt.Xcode" = {
-        "DVTPlugInManagerNonApplePlugIns-Xcode-14.0" = mkDefault {};
         DVTTextEditorTrimTrailingWhitespace = mkDefault false;
       };
     };

@@ -30,8 +30,8 @@
 
       # Idempotence: skip the osascript + agent bounce when already applied.
       current="$("$pb" -c "Print :AllSpacesAndDisplays:Desktop:Content:Choices:0:Files:0:relative" "$index_plist" 2>/dev/null || true)"
-      displays_lines="$("$pb" -c "Print :Displays" "$index_plist" 2>/dev/null | /usr/bin/wc -l || printf 99)"
-      spaces_lines="$("$pb" -c "Print :Spaces" "$index_plist" 2>/dev/null | /usr/bin/wc -l || printf 99)"
+      displays_lines="$("$pb" -c "Print :Displays" "$index_plist" 2>/dev/null | /usr/bin/wc -l)" || displays_lines=99
+      spaces_lines="$("$pb" -c "Print :Spaces" "$index_plist" 2>/dev/null | /usr/bin/wc -l)" || spaces_lines=99
       if [ "$current" = "$wallpaper_uri" ] && [ "$displays_lines" -le 2 ] && [ "$spaces_lines" -le 2 ]; then
         exit 0
       fi
