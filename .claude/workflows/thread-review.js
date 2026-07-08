@@ -56,6 +56,9 @@ const COMMON =
   'HARD SAFETY: never kill/stop/restart/attach zellij or wezterm sessions or any process; no darwin-rebuild switch or forge-redeploy --switch; no brew operations; ' +
   'no git commits or pushes; never edit outside the territory; other threads own other paths concurrently. ' +
   'ROLE LAW: you WRITE. Every defect you can reach is repaired in place the moment you find it; your log records edits ALREADY MADE. ' +
+  'RESEARCH DELEGATION: offload bulk reading/verification to read-only helpers so your own context stays for judgment and writing — synchronous codex legs ' +
+  '(codex exec -s read-only --skip-git-repo-check -c mcp_servers={} "<self-contained question>" </dev/null 2>/dev/null, Bash timeout 600000) for sweeps/upstream checks, ' +
+  'and read-only opus subagents (Agent tool, model opus) for judgment-heavy investigation; roughly half and half by fit. Helpers NEVER write — every edit is yours. ' +
   'A would/should/could sentence about your own scope is a process defect. An item goes to the log as UNREACHABLE only when it genuinely cannot be resolved ' +
   'from the files at hand (needs a deploy, a user decision, or another thread\'s territory) — with the reason. ' +
   'GATES before you finish, all green, failures in YOUR territory fixed by you: alejandra --check ., deadnix --fail flake.nix flake-modules hosts modules overlays, ' +
