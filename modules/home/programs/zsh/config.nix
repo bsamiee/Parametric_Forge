@@ -57,7 +57,6 @@ in {
       export MAGHZ_REMOTE_HOST="''${MAGHZ_REMOTE_HOST:-31.97.131.41}"
       export MAGHZ_REMOTE_USER="''${MAGHZ_REMOTE_USER:-maghz-agent}"
       export MAGHZ_REMOTE_WORKROOT="''${MAGHZ_REMOTE_WORKROOT:-/home/maghz-agent/maghz}"
-      export PNPM_HOME="''${PNPM_HOME:-${config.xdg.dataHome}/pnpm}"
       export PAGER="''${PAGER:-less}"
       export GH_PAGER="''${GH_PAGER:-delta}"
       export GIT_PAGER="''${GIT_PAGER:-delta}"

@@ -1,0 +1,533 @@
+# Title         : chords.nix
+# Author        : Bardia Samiee
+# Project       : Parametric Forge
+# License       : MIT
+# Path          : modules/home/programs/apps/chords.nix
+# ----------------------------------------------------------------------------
+# Single chord-vocabulary owner: physical leader layers, zellij leader binds,
+# mode table, which-key rows, and hint-ribbon rows are ONE parameterized table
+# projected into karabiner JSON, zellij keybind KDL, and zellij-forgot content.
+# A new bind is one row here; consumers never hand-duplicate chords.
+{lib, ...}: let
+  # --- Physical layers --------------------------------------------------------
+  # Karabiner rewrites right-hand modifiers into leader stacks; zellij consumes
+  # each stack as the concrete modifier set named in `zellij`. Power carries no
+  # zellij binds by design: it passes through to terminal apps (yazi owns it).
+  # WezTerm claims NO layer: its outer-terminal keys live on native left-Command
+  # chords only (keys.lua), so every leader chord passes to zellij untouched.
+  layers = {
+    hyper = {
+      name = "Hyper";
+      glyphs = "⌘⌥⌃⇧";
+      physical = "Right Command";
+      chip = "R⌘";
+      from = "right_command";
+      to = {
+        key_code = "left_shift";
+        modifiers = ["left_command" "left_control" "left_option"];
+      };
+      zellij = "Super Alt Ctrl Shift";
+    };
+    super = {
+      name = "Super";
+      glyphs = "⌘⌥⌃";
+      physical = "Right Option";
+      chip = "R⌥";
+      from = "right_option";
+      to = {
+        key_code = "left_control";
+        modifiers = ["left_command" "left_option"];
+      };
+      zellij = "Super Alt Ctrl";
+    };
+    power = {
+      name = "Power";
+      glyphs = "⌥⌃⇧";
+      physical = "Right Shift";
+      chip = "R⇧";
+      from = "right_shift";
+      to = {
+        key_code = "left_option";
+        modifiers = ["left_control" "left_shift"];
+      };
+      zellij = "Alt Ctrl Shift";
+    };
+  };
+
+  # Caps Lock dual-role sits beside the leader layers in the karabiner document.
+  capsRule = {
+    description = "Caps Lock → ⌘⌥ super-modifier (hold) / Caps Lock (tap)";
+    manipulators = [
+      {
+        type = "basic";
+        from = {
+          key_code = "caps_lock";
+          modifiers.optional = ["any"];
+        };
+        to = [
+          {
+            key_code = "left_command";
+            modifiers = ["left_option"];
+          }
+        ];
+        to_if_alone = [
+          {
+            hold_down_milliseconds = 100;
+            key_code = "caps_lock";
+          }
+        ];
+      }
+    ];
+  };
+
+  # Leader-role documentation block interpolated verbatim where consumers need
+  # the vocabulary spelled out (glyph widths defeat programmatic alignment).
+  # Every fragment line carries its full emitted indentation; consumers
+  # interpolate fragments at their template's minimum-indent anchor.
+  headerComment = lib.concatStringsSep "\n" [
+    "    // Primary Modifier:    Right Command   → Hyper (⌘⌥⌃⇧)  leader | Super Alt Ctrl Shift"
+    "    // Secondary Modifier:  Right Option    → Super (⌘⌥⌃)   leader | Super Alt Ctrl"
+    "    // Tertiary Modifier:   Right Shift     → Power (⌥⌃⇧)   leader | Alt Ctrl Shift"
+  ];
+
+  # --- Mode table ---------------------------------------------------------------
+  # One row per zellij mode reachable from a Hyper leader key. `rank` orders the
+  # which-key sheet; `ribbon` labels the normal-mode hint ribbon; `entryOrder`
+  # and `ribbonOrder` are curated presentation sequences over the same rows.
+  modes = {
+    pane = {
+      key = "p";
+      ribbon = "pane";
+      rank = 30;
+    };
+    tab = {
+      key = "t";
+      ribbon = "tab";
+      rank = 40;
+    };
+    resize = {
+      key = "r";
+      ribbon = "resize";
+      rank = 50;
+    };
+    scroll = {
+      key = "s";
+      ribbon = "scroll";
+      rank = 60;
+    };
+    session = {
+      key = "o";
+      ribbon = "session";
+      rank = 70;
+    };
+    move = {
+      key = "m";
+      ribbon = "move";
+      rank = 80;
+    };
+    tmux = {
+      key = "b";
+      rank = 90;
+    };
+    locked = {
+      key = "g";
+      exitKey = "l";
+      ribbon = "lock";
+    };
+  };
+  entryOrder = ["pane" "resize" "scroll" "session" "tab" "move" "tmux"];
+  ribbonOrder = ["pane" "tab" "resize" "move" "scroll" "session" "locked"];
+
+  # --- Bind rows ----------------------------------------------------------------
+  # Row schema: keys (aliases share one row), kdl (single-line body) XOR body
+  # (verbatim multi-line KDL at emitted indentation), pre (verbatim comment
+  # lines), gap (blank line before), forgot {label, display?, rank}, ribbon
+  # {label, key?, rank}. Display strings derive from layer prefixes unless
+  # a curated grouping overrides them.
+  hyperRows = [
+    {
+      keys = ["g"];
+      kdl = ''SwitchToMode "Locked";'';
+    }
+    {
+      keys = ["q"];
+      kdl = "Quit;";
+      forgot = {
+        label = "quit zellij";
+        rank = 110;
+      };
+    }
+    {
+      keys = ["["];
+      kdl = "PreviousSwapLayout;";
+      forgot = {
+        label = "swap layout prev/next";
+        display = "Hyper [ / Hyper ]";
+        rank = 100;
+      };
+    }
+    {
+      keys = ["]"];
+      kdl = "NextSwapLayout;";
+    }
+  ];
+
+  # Normal-mode simple layer: bare macOS Command chords zellij receives because
+  # WezTerm full-passes them (no default keybinds; keys.lua claims neither).
+  normalRows = [
+    {
+      key = "t";
+      action = "NewTab;";
+      comment = "Create new tab without entering tab mode";
+      forgot = {
+        label = "new tab";
+        rank = 130;
+      };
+    }
+    {
+      key = "w";
+      action = "CloseFocus;";
+      comment = "Close pane without entering pane mode";
+      forgot = {
+        label = "close pane";
+        rank = 140;
+      };
+    }
+  ];
+
+  superRows = [
+    {
+      keys = ["\\"];
+      body = lib.concatStringsSep "\n" [
+        "            LaunchOrFocusPlugin \"zellij-pane-picker\" {"
+        "                floating            true;"
+        "                move_to_focused_tab true;"
+        "            }"
+      ];
+      forgot = {
+        label = "pane picker";
+        rank = 160;
+      };
+      ribbon = {
+        label = "jump";
+        rank = 40;
+      };
+    }
+    {
+      keys = ["["];
+      kdl = "GoToPreviousTab;";
+      forgot = {
+        label = "previous/next tab";
+        display = "Super Alt Ctrl [ / ]";
+        rank = 170;
+      };
+      ribbon = {
+        key = "[ ]";
+        label = "tab ±";
+        rank = 50;
+      };
+    }
+    {
+      keys = ["]"];
+      kdl = "GoToNextTab;";
+    }
+    {
+      gap = true;
+      keys = ["f"];
+      kdl = "ToggleFloatingPanes;";
+      forgot = {
+        label = "toggle floating panes";
+        rank = 190;
+      };
+      ribbon = {
+        label = "float";
+        rank = 30;
+      };
+    }
+    {
+      keys = ["n"];
+      kdl = "NewPane;";
+      forgot = {
+        label = "new pane";
+        rank = 180;
+      };
+      ribbon = {
+        label = "pane";
+        rank = 20;
+      };
+    }
+    {
+      pre = lib.concatStringsSep "\n" [
+        "        // In-place dispatcher: leaves floating visibility readable, then toggles"
+        "        // the per-tab Yazi popup (create / show+focus / hide)."
+      ];
+      keys = ["y"];
+      body = lib.concatStringsSep "\n" [
+        "          Run \"forge-yazi.sh\" \"toggle\" {"
+        "            in_place true"
+        "            close_on_exit true"
+        "          }"
+      ];
+      forgot = {
+        label = "yazi popup";
+        rank = 150;
+      };
+      ribbon = {
+        label = "files";
+        rank = 10;
+      };
+    }
+    {
+      gap = true;
+      keys = ["h" "Left"];
+      kdl = ''MoveFocusOrTab "Left";'';
+      forgot = {
+        label = "move focus";
+        display = "Super Alt Ctrl h/j/k/l";
+        rank = 200;
+      };
+    }
+    {
+      keys = ["l" "Right"];
+      kdl = ''MoveFocusOrTab "Right";'';
+    }
+    {
+      keys = ["j" "Down"];
+      kdl = ''MoveFocus "Down";'';
+    }
+    {
+      keys = ["k" "Up"];
+      kdl = ''MoveFocus "Up";'';
+    }
+    {
+      keys = ["=" "+"];
+      kdl = ''Resize "Increase";'';
+      forgot = {
+        label = "resize";
+        display = "Super Alt Ctrl = / -";
+        rank = 210;
+      };
+    }
+    {
+      keys = ["-"];
+      kdl = ''Resize "Decrease";'';
+    }
+    {
+      keys = ["p"];
+      kdl = "TogglePaneInGroup;";
+      forgot = {
+        label = "pane group toggle/mark";
+        display = "Super Alt Ctrl p / g";
+        rank = 220;
+      };
+    }
+    {
+      keys = ["g"];
+      kdl = "ToggleGroupMarking;";
+    }
+  ];
+
+  # Which-key rows with no chord of their own: command vocabulary surfaced in
+  # the cheatsheet beside the chords.
+  forgotExtras = [
+    {
+      rank = 230;
+      label = "editor";
+      display = "nv / vim -> nvim";
+    }
+    {
+      rank = 240;
+      label = "file manager";
+      display = "y -> yazi popup (Super Alt Ctrl y)";
+    }
+    {
+      rank = 250;
+      label = "git ui";
+      display = "lazygit float (pane mode w)";
+    }
+    {
+      rank = 260;
+      label = "json explore";
+      display = "jqi -> jnv";
+    }
+    {
+      rank = 270;
+      label = "loc report";
+      display = "loc <path>";
+    }
+    {
+      rank = 280;
+      label = "folder map";
+      display = "tree <path>";
+    }
+    {
+      rank = 290;
+      label = "deploy";
+      display = "forge-redeploy --check-only / --build / --switch";
+    }
+    {
+      rank = 300;
+      label = "http";
+      display = "GET/POST/PUT -> xh";
+    }
+  ];
+
+  # --- Projections ----------------------------------------------------------------
+  kdlEsc = lib.replaceStrings ["\\"] ["\\\\"];
+  cap = s: lib.toUpper (builtins.substring 0 1 s) + builtins.substring 1 (builtins.stringLength s) s;
+
+  forgotOf = prefix: rows:
+    lib.concatMap (
+      r:
+        lib.optional (r ? forgot) {
+          inherit (r.forgot) label rank;
+          display = r.forgot.display or "${prefix} ${builtins.head r.keys}";
+        }
+    )
+    rows;
+
+  modeForgot =
+    [
+      {
+        rank = 10;
+        label = "lock";
+        display = "${layers.hyper.name} ${modes.locked.key}";
+      }
+      {
+        rank = 20;
+        label = "unlock (locked)";
+        display = "${layers.hyper.name} ${modes.locked.exitKey}";
+      }
+    ]
+    ++ map (m: {
+      inherit (modes.${m}) rank;
+      label = "${m} mode";
+      display = "${layers.hyper.name} ${modes.${m}.key}";
+    }) ["pane" "tab" "resize" "scroll" "session" "move" "tmux"];
+
+  cheatsheetForgot = {
+    rank = 120;
+    label = "cheatsheet";
+    display = "${layers.hyper.name} /";
+  };
+
+  forgotRows =
+    lib.sort (a: b: a.rank < b.rank)
+    (modeForgot
+      ++ [cheatsheetForgot]
+      ++ forgotOf layers.hyper.name hyperRows
+      ++ map (r: r.forgot // {display = "Super ${r.key}";}) normalRows
+      ++ forgotOf layers.super.zellij superRows
+      ++ forgotExtras);
+
+  forgotKdl =
+    lib.concatMapStringsSep "\n"
+    (r: "            \"${r.label}\" \"${kdlEsc r.display}\"")
+    forgotRows;
+
+  renderBind = prefix: row: let
+    keysStr = lib.concatMapStringsSep " " (k: "\"${prefix} ${kdlEsc k}\"") row.keys;
+  in
+    lib.concatStrings [
+      (lib.optionalString (row.gap or false) "\n")
+      (lib.optionalString (row ? pre) (row.pre + "\n"))
+      (
+        if row ? body
+        then "        bind ${keysStr} {\n${row.body}\n        }"
+        else "        bind ${keysStr} { ${row.kdl} }"
+      )
+    ];
+
+  cheatsheetBind = lib.concatStringsSep "\n" [
+    "        bind \"${layers.hyper.zellij} /\" {"
+    "          LaunchOrFocusPlugin \"zellij-forgot\" {"
+    "            \"LOAD_ZELLIJ_BINDINGS\" \"false\""
+    forgotKdl
+    "            floating true"
+    "            move_to_focused_tab true"
+    "          };"
+    "          SwitchToMode \"Normal\""
+    "        }"
+  ];
+
+  hyperBindsKdl =
+    lib.concatMapStringsSep "\n" (renderBind layers.hyper.zellij) hyperRows
+    + "\n"
+    + cheatsheetBind;
+
+  superBindsKdl = lib.concatMapStringsSep "\n" (renderBind layers.super.zellij) superRows;
+
+  normalBindsKdl =
+    lib.concatMapStringsSep "\n" (r:
+      lib.concatStringsSep "\n" [
+        "        bind \"Super ${r.key}\" {            // ${r.comment}"
+        "          ${r.action}"
+        "          SwitchToMode \"Normal\";"
+        "        }"
+      ])
+    normalRows;
+
+  entryBindsKdl =
+    lib.concatMapStringsSep "\n" (m:
+      lib.concatStringsSep "\n" [
+        "      shared_except \"${m}\" \"locked\" {"
+        "        bind \"${layers.hyper.zellij} ${modes.${m}.key}\" { SwitchToMode \"${cap m}\"; }"
+        "      }"
+      ])
+    entryOrder;
+
+  # Hint-ribbon rows for normal mode: the two leader groups in curated order.
+  ribbonHyperGroup =
+    map (m: {
+      k = modes.${m}.key;
+      l = modes.${m}.ribbon;
+    })
+    ribbonOrder
+    ++ [
+      {
+        k = "/";
+        l = "sheet";
+      }
+    ];
+  ribbonSuperGroup = map (r: {
+    k = r.ribbon.key or (kdlEsc (builtins.head r.keys));
+    l = r.ribbon.label;
+  }) (lib.sort (a: b: a.ribbon.rank < b.ribbon.rank)
+    (builtins.filter (r: r ? ribbon) superRows));
+
+  hintsRight =
+    "${layers.hyper.chip} ${lib.toLower layers.hyper.name}"
+    + " · ${layers.super.chip} ${lib.toLower layers.super.name} ";
+in {
+  options.forge.chords = lib.mkOption {
+    type = lib.types.raw;
+    readOnly = true;
+    default = {
+      inherit layers modes;
+      karabiner.rules =
+        [capsRule]
+        ++ map (l: {
+          description = "${l.physical} → ${l.name} (${l.glyphs}) leader";
+          manipulators = [
+            {
+              type = "basic";
+              from = {
+                key_code = l.from;
+                modifiers.optional = ["any"];
+              };
+              to = [l.to];
+            }
+          ];
+        }) [layers.power layers.super layers.hyper];
+      zellij = {
+        inherit headerComment hyperBindsKdl superBindsKdl normalBindsKdl entryBindsKdl hintsRight;
+        prefix = lib.mapAttrs (_: l: l.zellij) layers;
+        ribbon = {
+          hyperGroup = ribbonHyperGroup;
+          superGroup = ribbonSuperGroup;
+        };
+      };
+    };
+    description = "Chord-vocabulary owner: leader layers, zellij binds, which-key and ribbon rows.";
+  };
+}

@@ -35,8 +35,24 @@ in {
       TAILWIND_MODE = "watch"; # JIT compilation for development
       VITEST_MODE = "run"; # Default test runner mode
 
-      # --- Headless Render (Puppeteer/Mermaid) -------------------------------
+      # --- Node / pnpm rail ---------------------------------------------------
+      # pnpm is the sole package-manager verb on PATH; npm_config_* rows contain
+      # any vendored npm run under XDG, COREPACK_* rows neutralize transitive
+      # corepack calls (network off, strict pins, XDG cache).
+      PNPM_HOME = "${config.xdg.dataHome}/pnpm";
+      npm_config_cache = "${config.xdg.cacheHome}/npm";
+      npm_config_userconfig = "${config.xdg.configHome}/npm/npmrc";
+      npm_config_globalconfig = "${config.xdg.configHome}/npm/global-npmrc";
+      npm_config_prefix = "${config.xdg.dataHome}/npm-global";
+      COREPACK_HOME = "${config.xdg.cacheHome}/node/corepack";
+      COREPACK_ENABLE_STRICT = "1";
+      COREPACK_ENABLE_NETWORK = "0";
+
+      # --- Headless Render (Puppeteer/Playwright/Mermaid) ---------------------
       # Shared Nix Chrome-for-Testing pin (owned by toolchain-env) so mmdc/puppeteer and the mermaid validator never launch the real Chrome.app or an unstable downloaded shell.
       PUPPETEER_EXECUTABLE_PATH = toolchainEnv.puppeteerExecutablePath;
+      # One machine-wide browsers path: playwright/patchright default to
+      # ~/Library/Caches/ms-playwright, outside XDG; every repo shares this pin.
+      PLAYWRIGHT_BROWSERS_PATH = "${config.xdg.cacheHome}/ms-playwright";
     };
 }

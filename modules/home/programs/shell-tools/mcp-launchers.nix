@@ -4,47 +4,46 @@
 # License       : MIT
 # Path          : /modules/home/programs/shell-tools/mcp-launchers.nix
 # ----------------------------------------------------------------------------
-# Pinned npm MCP launchers: one row per server, installed once into an
+# Pinned MCP launchers: one row per server, pnpm-installed once into an
 # XDG-cache prefix keyed by version, exec'd locally on every later spawn — no
-# per-spawn npm registry resolution. Bump a row's version to roll its server;
-# `forge-mcp-outdated` reports pinned-vs-latest drift; npm output routes to
+# per-spawn registry resolution. Bump a row's version to roll its server;
+# `forge-mcp-outdated` reports pinned-vs-latest drift; pnpm output routes to
 # stderr so the MCP stdio channel stays clean.
-{pkgs, ...}: let
+{
+  config,
+  pkgs,
+  ...
+}: let
   rows = [
     {
       name = "forge-perplexity-mcp";
       pkg = "@perplexity-ai/mcp-server";
       version = "0.9.0";
       bin = "perplexity-mcp";
-      prelude = "";
     }
     {
       name = "forge-tavily-mcp";
       pkg = "tavily-mcp";
       version = "0.2.20";
       bin = "tavily-mcp";
-      prelude = "";
     }
     {
       name = "forge-hostinger-mcp";
       pkg = "hostinger-api-mcp";
       version = "1.2.1";
       bin = "hostinger-api-mcp";
-      prelude = "";
     }
     {
       name = "forge-doppler-mcp";
       pkg = "@dopplerhq/mcp-server";
       version = "1.0.5";
       bin = "doppler-mcp";
-      prelude = "";
     }
     {
       name = "forge-playwright-mcp";
       pkg = "@playwright/mcp";
       version = "0.0.77";
       bin = "playwright-mcp";
-      prelude = "";
     }
     {
       # Bare-binary name held stable: the Maghz MCP fleet spells `notebooklm-mcp`.
@@ -61,9 +60,9 @@
   launcher = row:
     pkgs.writeShellApplication {
       inherit (row) name;
-      runtimeInputs = [pkgs.coreutils pkgs.nodejs];
+      runtimeInputs = [pkgs.coreutils pkgs.nodejs-bin_26 pkgs.pnpm_11];
       text = ''
-        ${row.prelude}prefix="''${XDG_CACHE_HOME:-$HOME/.cache}/forge-mcp/${row.pkg}/${row.version}"
+        ${row.prelude or ""}prefix="''${XDG_CACHE_HOME:-$HOME/.cache}/forge-mcp/${row.pkg}/${row.version}"
         entry="$prefix/node_modules/.bin/${row.bin}"
         if [ ! -x "$entry" ]; then
           # Stage-then-rename: fleet clients spawn every server at once, so first
@@ -72,12 +71,27 @@
           parent="$(dirname "$prefix")"
           mkdir -p "$parent"
           stage="$(mktemp -d "$parent/.stage.XXXXXX")"
-          npm install --prefix "$stage" --no-audit --no-fund --loglevel=error "${row.pkg}@${row.version}" >&2
-          if [ ! -x "$entry" ]; then
+          # --config rows pin XDG containment for launchd spawns without session
+          # env; prefer-offline lets exact pins cold-start from a warm store.
+          pnpm add --dir "$stage" \
+            --config.loglevel=error \
+            --config.prefer-offline=true \
+            --config.store-dir="''${XDG_DATA_HOME:-$HOME/.local/share}/pnpm/store" \
+            --config.cache-dir="''${XDG_CACHE_HOME:-$HOME/.cache}/pnpm" \
+            --config.state-dir="''${XDG_STATE_HOME:-$HOME/.local/state}/pnpm" \
+            "${row.pkg}@${row.version}" >&2 || true
+          # Success predicate is the staged bin, not pnpm's exit status: a node
+          # teardown crash after full materialization must not kill cold-start,
+          # and a tree missing its bin must never be promoted to the prefix.
+          if [ -x "$entry" ]; then
+            rm -rf "$stage"
+          elif [ -x "$stage/node_modules/.bin/${row.bin}" ]; then
             [ ! -e "$prefix" ] || rm -rf "$prefix"
             mv -T "$stage" "$prefix" 2>/dev/null || rm -rf "$stage"
           else
             rm -rf "$stage"
+            echo "${row.name}: pnpm add ${row.pkg}@${row.version} materialized no executable ${row.bin}" >&2
+            exit 69
           fi
         fi
         exec "$entry" "$@"
@@ -108,6 +122,10 @@
     text = ''
       base="$HOME/Library/Application Support/McNeel/Rhinoceros/packages/9.0/Rhino-MCP-Platform"
       entry="$(printf '%s\n' "$base"/*/router/osx-arm64/rhino-mcp-router | sort -V | tail -1)"
+      if [ ! -x "$entry" ]; then
+        echo "rhino-mcp-router: no Rhino-MCP-Platform package under $base" >&2
+        exit 69
+      fi
       exec "$entry" "$@"
     '';
   };
@@ -154,8 +172,8 @@ in {
           Minute = 0;
         }
       ];
-      StandardOutPath = "/Users/bardiasamiee/Library/Logs/forge-mcp-outdated.log";
-      StandardErrorPath = "/Users/bardiasamiee/Library/Logs/forge-mcp-outdated.log";
+      StandardOutPath = "${config.home.homeDirectory}/Library/Logs/forge-mcp-outdated.log";
+      StandardErrorPath = "${config.home.homeDirectory}/Library/Logs/forge-mcp-outdated.log";
     };
   };
 }

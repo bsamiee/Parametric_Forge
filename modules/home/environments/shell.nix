@@ -35,7 +35,6 @@ in {
     LESS = "-RFX"; # -X prevents screen clearing on macOS
     MANROFFOPT = "-c";
     RICH_THEME = "dracula";
-    PNPM_HOME = "${config.xdg.dataHome}/pnpm"; # Global pnpm bin location
 
     # --- Tool Configurations ------------------------------------------------
     WATCHEXEC_IGNORE_FILE = "${config.xdg.configHome}/watchexec/ignore";
