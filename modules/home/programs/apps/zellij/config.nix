@@ -4,13 +4,17 @@
 # License       : MIT
 # Path          : modules/home/programs/apps/zellij/config.nix
 # ----------------------------------------------------------------------------
-# Nix-generated Zellij configuration
+# Nix-generated Zellij configuration; every chord row projects from the chord
+# owner (modules/home/programs/apps/chords.nix), never hand-duplicated here.
 {
   config,
   lib,
   ...
 }: let
   inherit (config.forge.theme) palette; # Estate palette owner (modules/home/theme.nix)
+  chords = config.forge.chords; # Chord-vocabulary owner (modules/home/programs/apps/chords.nix)
+  pH = chords.zellij.prefix.hyper;
+  inherit (chords) modes;
 
   # Shared color rows for both zjstatus instances; one palette, two surfaces.
   colorRows = lib.concatStrings (map (n: "        color_${n}    \"${palette.${n}.hex}\"\n") [
@@ -31,33 +35,23 @@
 
   # Hint-ribbon grammar: native macOS modifier glyphs; a layer chip (R⌘ Hyper,
   # R⌥ Super) prefixes its key group once. Keys cyan, labels muted, mode chip
-  # carries the state color shared with the top bar.
+  # carries the state color shared with the top bar. Normal-mode rows project
+  # from the chord owner; mode-internal rows document the literal mode bodies.
   seg = c: t: "#[bg=$background,fg=$" + c + "]" + t;
   segB = c: t: "#[bg=$background,fg=$" + c + ",bold]" + t;
   chip = c: t: "#[bg=$" + c + ",fg=$current_line,bold] " + t + " " + seg "comment" " ";
-  lay = c: t: "#[bg=$" + c + ",fg=$current_line,bold] " + t + " " + seg "comment" " ";
   pl = k: l: segB "cyan" k + seg "comment" (" " + l + "  ");
+  plRows = rows: lib.concatStrings (map (r: pl r.k r.l) rows);
   sep = seg "selection" "│ ";
   done = pl "⏎" "done";
   ribbon = {
     normal =
       chip "green" "NORMAL"
-      + lay "magenta" "R⌘"
-      + pl "p" "pane"
-      + pl "t" "tab"
-      + pl "r" "resize"
-      + pl "m" "move"
-      + pl "s" "scroll"
-      + pl "o" "session"
-      + pl "g" "lock"
-      + pl "/" "sheet"
-      + lay "purple" "R⌥"
-      + pl "y" "files"
-      + pl "n" "pane"
-      + pl "f" "float"
-      + pl "\\\\" "jump"
-      + pl "[ ]" "tab ±";
-    locked = chip "selection" "LOCKED" + pl "R⌘l" "unlock";
+      + chip "magenta" chords.layers.hyper.chip
+      + plRows chords.zellij.ribbon.hyperGroup
+      + chip "purple" chords.layers.super.chip
+      + plRows chords.zellij.ribbon.superGroup;
+    locked = chip "selection" "LOCKED" + pl "${chords.layers.hyper.chip}${modes.locked.exitKey}" "unlock";
     pane =
       chip "orange" "PANE"
       + pl "hjkl" "focus"
@@ -94,7 +88,7 @@
       + pl "du" "half"
       + pl "e" "edit"
       + pl "s" "search"
-      + pl "R⌘c" "bottom"
+      + pl "${chords.layers.hyper.chip}c" "bottom"
       + sep
       + done;
     search =
@@ -132,6 +126,8 @@
       + done;
   };
 in {
+  imports = [../chords.nix];
+
   xdg.configFile."zellij/config.kdl".text = ''
         // Title         : config.kdl
         // Author        : Bardia Samiee
@@ -212,7 +208,7 @@ in {
           zjstatus-hints location="file:~/.config/zellij/plugins/zjstatus.wasm" {
     ${colorRows}
             format_left   "{mode}"
-            format_right  "#[bg=$background,fg=$comment]R⌘ hyper · R⌥ super "
+            format_right  "#[bg=$background,fg=$comment]${chords.zellij.hintsRight}"
             format_space  "#[bg=$background]"
 
             mode_normal       "${ribbon.normal}"
@@ -237,109 +233,32 @@ in {
         }
 
         // --- Keybindings ------------------------------------------------------------
-        // Primary Modifier:    Right Command   → Hyper (⌘⌥⌃⇧)  leader | Super Alt Ctrl Shift
-        // Secondary Modifier:  Right Option    → Super (⌘⌥⌃)   leader | Super Alt Ctrl
-        // Tertiary Modifier:   Right Shift     → Power (⌥⌃⇧)   leader | Alt Ctrl Shift
+    ${chords.zellij.headerComment}
 
         keybinds clear-defaults=true {
           normal {
             //  --- Simple Layer ------------------------------------------------------
-            bind "Super t" {            // Create new tab without entering tab mode
-              NewTab;
-              SwitchToMode "Normal";
-            }
-            bind "Super w" {            // Close pane without entering pane mode
-              CloseFocus;
-              SwitchToMode "Normal";
-            }
+    ${chords.zellij.normalBindsKdl}
           }
 
           // --- Universal Bindings (Except Locked Mode) ------------------------------
           shared_except "locked" {
 
             // --- Hyper Layer (⌘⌥⌃⇧) | Right Command ---------------------------------
-            bind "Super Alt Ctrl Shift g" { SwitchToMode "Locked"; }
-            bind "Super Alt Ctrl Shift q" { Quit; }
-            bind "Super Alt Ctrl Shift [" { PreviousSwapLayout; }
-            bind "Super Alt Ctrl Shift ]" { NextSwapLayout; }
-            bind "Super Alt Ctrl Shift /" {
-              LaunchOrFocusPlugin "zellij-forgot" {
-                "LOAD_ZELLIJ_BINDINGS" "false"
-                "lock" "Hyper g"
-                "unlock (locked)" "Hyper l"
-                "pane mode" "Hyper p"
-                "tab mode" "Hyper t"
-                "resize mode" "Hyper r"
-                "scroll mode" "Hyper s"
-                "session mode" "Hyper o"
-                "move mode" "Hyper m"
-                "tmux mode" "Hyper b"
-                "swap layout prev/next" "Hyper [ / Hyper ]"
-                "quit zellij" "Hyper q"
-                "cheatsheet" "Hyper /"
-                "new tab" "Super t"
-                "close pane" "Super w"
-                "yazi popup" "Super Alt Ctrl y"
-                "pane picker" "Super Alt Ctrl \\"
-                "previous/next tab" "Super Alt Ctrl [ / ]"
-                "new pane" "Super Alt Ctrl n"
-                "toggle floating panes" "Super Alt Ctrl f"
-                "move focus" "Super Alt Ctrl h/j/k/l"
-                "resize" "Super Alt Ctrl = / -"
-                "pane group toggle/mark" "Super Alt Ctrl p / g"
-                "editor" "nv / vim -> nvim"
-                "file manager" "y -> yazi popup (Super Alt Ctrl y)"
-                "git ui" "lazygit float (pane mode w)"
-                "json explore" "jqi -> jnv"
-                "loc report" "loc <path>"
-                "folder map" "tree <path>"
-                "deploy" "forge-redeploy --check-only / --build / --switch"
-                "http" "GET/POST/PUT -> xh"
-                floating true
-                move_to_focused_tab true
-              };
-              SwitchToMode "Normal"
-            }
+    ${chords.zellij.hyperBindsKdl}
 
             // --- Super Layer (⌘⌥⌃) | (Right Option) ---------------------------------
-            bind "Super Alt Ctrl \\" {
-                LaunchOrFocusPlugin "zellij-pane-picker" {
-                    floating            true;
-                    move_to_focused_tab true;
-                }
-            }
-            bind "Super Alt Ctrl [" { GoToPreviousTab; }
-            bind "Super Alt Ctrl ]" { GoToNextTab; }
-
-            bind "Super Alt Ctrl f" { ToggleFloatingPanes; }
-            bind "Super Alt Ctrl n" { NewPane; }
-            // In-place dispatcher: leaves floating visibility readable, then toggles
-            // the per-tab Yazi popup (create / show+focus / hide).
-            bind "Super Alt Ctrl y" {
-              Run "forge-yazi.sh" "toggle" {
-                in_place true
-                close_on_exit true
-              }
-            }
-
-            bind "Super Alt Ctrl h" "Super Alt Ctrl Left" { MoveFocusOrTab "Left"; }
-            bind "Super Alt Ctrl l" "Super Alt Ctrl Right" { MoveFocusOrTab "Right"; }
-            bind "Super Alt Ctrl j" "Super Alt Ctrl Down" { MoveFocus "Down"; }
-            bind "Super Alt Ctrl k" "Super Alt Ctrl Up" { MoveFocus "Up"; }
-            bind "Super Alt Ctrl =" "Super Alt Ctrl +" { Resize "Increase"; }
-            bind "Super Alt Ctrl -" { Resize "Decrease"; }
-            bind "Super Alt Ctrl p" { TogglePaneInGroup; }
-            bind "Super Alt Ctrl g" { ToggleGroupMarking; }
+    ${chords.zellij.superBindsKdl}
           }
 
           // --- Locked Mode ----------------------------------------------------------
           locked {
-            bind "Super Alt Ctrl Shift l" { SwitchToMode "Normal"; }
+            bind "${pH} ${modes.locked.exitKey}" { SwitchToMode "Normal"; }
           }
 
           // --- Tab Mode -------------------------------------------------------------
           tab {
-            bind "Super Alt Ctrl Shift t" { SwitchToMode "Normal"; }                  // Hyper (⌘⌥⌃⇧) | Right Command
+            bind "${pH} ${modes.tab.key}" { SwitchToMode "Normal"; }                  // Hyper (⌘⌥⌃⇧) | Right Command
             bind "[" "Left" { GoToPreviousTab; }
             bind "]" "Right" { GoToNextTab; }
             bind ";" { MoveTab "Left"; }
@@ -361,7 +280,7 @@ in {
 
           // --- Pane Mode ------------------------------------------------------------
           pane {
-            bind "Super Alt Ctrl Shift p" { SwitchToMode "Normal"; }                  // Hyper (⌘⌥⌃⇧) | Right Command
+            bind "${pH} ${modes.pane.key}" { SwitchToMode "Normal"; }                  // Hyper (⌘⌥⌃⇧) | Right Command
             bind "h" "Left" { MoveFocus "Left"; }
             bind "l" "Right" { MoveFocus "Right"; }
             bind "j" "Down" { MoveFocus "Down"; }
@@ -385,7 +304,7 @@ in {
 
           // --- Move Mode ------------------------------------------------------------
           move {
-            bind "Super Alt Ctrl Shift m" { SwitchToMode "Normal"; }                  // Hyper (⌘⌥⌃⇧) | Right Command
+            bind "${pH} ${modes.move.key}" { SwitchToMode "Normal"; }                  // Hyper (⌘⌥⌃⇧) | Right Command
             bind "m" "Tab" { MovePane; }
             bind "p" { MovePaneBackwards; }
             bind "h" "Left" { MovePane "Left"; }
@@ -396,7 +315,7 @@ in {
 
           // --- Resize Mode ----------------------------------------------------------
           resize {
-            bind "Super Alt Ctrl Shift r" { SwitchToMode "Normal"; }                  // Hyper (⌘⌥⌃⇧) | Right Command
+            bind "${pH} ${modes.resize.key}" { SwitchToMode "Normal"; }                  // Hyper (⌘⌥⌃⇧) | Right Command
             bind "h" "Left" { Resize "Increase Left"; }
             bind "j" "Down" { Resize "Increase Down"; }
             bind "k" "Up" { Resize "Increase Up"; }
@@ -411,10 +330,10 @@ in {
 
           // --- Scroll Mode ----------------------------------------------------------
           scroll {
-            bind "Super Alt Ctrl Shift s" { SwitchToMode "Normal"; }                  // Hyper (⌘⌥⌃⇧) | Right Command
+            bind "${pH} ${modes.scroll.key}" { SwitchToMode "Normal"; }                  // Hyper (⌘⌥⌃⇧) | Right Command
             bind "e" { EditScrollback; SwitchToMode "Normal"; }
             bind "s" { SwitchToMode "EnterSearch"; SearchInput 0; }
-            bind "Super Alt Ctrl Shift c" { ScrollToBottom; SwitchToMode "Normal"; }
+            bind "${pH} c" { ScrollToBottom; SwitchToMode "Normal"; }
 
             bind "j" "Down" { ScrollDown; }
             bind "k" "Up" { ScrollUp; }
@@ -426,8 +345,8 @@ in {
 
           // --- Search Mode ----------------------------------------------------------
           search {
-            bind "Super Alt Ctrl Shift s" { SwitchToMode "Normal"; }                  // Hyper (⌘⌥⌃⇧) | Right Command
-            bind "Super Alt Ctrl Shift c" { ScrollToBottom; SwitchToMode "Normal"; }
+            bind "${pH} ${modes.scroll.key}" { SwitchToMode "Normal"; }                  // Hyper (⌘⌥⌃⇧) | Right Command
+            bind "${pH} c" { ScrollToBottom; SwitchToMode "Normal"; }
 
             bind "c" { SearchToggleOption "CaseSensitivity"; }
             bind "w" { SearchToggleOption "Wrap"; }
@@ -446,7 +365,7 @@ in {
 
           // --- Session Mode ---------------------------------------------------------
           session {
-            bind "Super Alt Ctrl Shift o" { SwitchToMode "Normal"; }                  // Hyper (⌘⌥⌃⇧) | Right Command
+            bind "${pH} ${modes.session.key}" { SwitchToMode "Normal"; }                  // Hyper (⌘⌥⌃⇧) | Right Command
             bind "d" { Detach; }
 
             bind "s" {
@@ -492,17 +411,17 @@ in {
 
           // --- Prompt Mode ----------------------------------------------------------
           entersearch {
-            bind "Super Alt Ctrl Shift c" "Esc" { SwitchToMode "Scroll"; }            // Hyper (⌘⌥⌃⇧) | Right Command
+            bind "${pH} c" "Esc" { SwitchToMode "Scroll"; }            // Hyper (⌘⌥⌃⇧) | Right Command
             bind "Enter" { SwitchToMode "Search"; }
           }
 
           renametab {
-            bind "Super Alt Ctrl Shift c" { SwitchToMode "Normal"; }                  // Hyper (⌘⌥⌃⇧) | Right Command
+            bind "${pH} c" { SwitchToMode "Normal"; }                  // Hyper (⌘⌥⌃⇧) | Right Command
             bind "Esc" { UndoRenameTab; SwitchToMode "Tab"; }
           }
 
           renamepane {
-            bind "Super Alt Ctrl Shift c" { SwitchToMode "Normal"; }                  // Hyper (⌘⌥⌃⇧) | Right Command
+            bind "${pH} c" { SwitchToMode "Normal"; }                  // Hyper (⌘⌥⌃⇧) | Right Command
             bind "Esc" { UndoRenamePane; SwitchToMode "Pane"; }
           }
 
@@ -510,31 +429,11 @@ in {
           shared_except "normal" "locked" {
             bind "Enter" "Esc" { SwitchToMode "Normal"; }
           }
-          shared_except "pane" "locked" {
-            bind "Super Alt Ctrl Shift p" { SwitchToMode "Pane"; }
-          }
-          shared_except "resize" "locked" {
-            bind "Super Alt Ctrl Shift r" { SwitchToMode "Resize"; }
-          }
-          shared_except "scroll" "locked" {
-            bind "Super Alt Ctrl Shift s" { SwitchToMode "Scroll"; }
-          }
-          shared_except "session" "locked" {
-            bind "Super Alt Ctrl Shift o" { SwitchToMode "Session"; }
-          }
-          shared_except "tab" "locked" {
-            bind "Super Alt Ctrl Shift t" { SwitchToMode "Tab"; }
-          }
-          shared_except "move" "locked" {
-            bind "Super Alt Ctrl Shift m" { SwitchToMode "Move"; }
-          }
-          shared_except "tmux" "locked" {
-            bind "Super Alt Ctrl Shift b" { SwitchToMode "Tmux"; }
-          }
+    ${chords.zellij.entryBindsKdl}
 
           // --- Tmux Mode ------------------------------------------------------------
           tmux {
-            bind "Super Alt Ctrl Shift b" { Write 2; SwitchToMode "Normal"; }         // Hyper (⌘⌥⌃⇧) | Right Command
+            bind "${pH} ${modes.tmux.key}" { Write 2; SwitchToMode "Normal"; }         // Hyper (⌘⌥⌃⇧) | Right Command
             bind "[" { SwitchToMode "Scroll"; }
             bind "\"" { NewPane "Down"; SwitchToMode "Normal"; }
             bind "%" { NewPane "Right"; SwitchToMode "Normal"; }

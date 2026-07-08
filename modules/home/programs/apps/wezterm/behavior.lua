@@ -10,8 +10,13 @@ local wezterm = require("wezterm")
 
 local M = {}
 
-wezterm.on('gui-startup', function(cmd)
-  local tab, pane, window = wezterm.mux.spawn_window(cmd or {})
+-- Single nightly predicate: every nightly-only field in any module gates on
+-- this. Threshold is the pinned build date where each adopted field is
+-- verified; earlier nightlies and any stable load the config warning-free.
+M.has_nightly = wezterm.version:sub(1, 8) >= "20260707"
+
+wezterm.on("gui-startup", function(cmd)
+  local _, _, window = wezterm.mux.spawn_window(cmd or {})
   window:gui_window():maximize()
 end)
 
@@ -24,10 +29,11 @@ function M.apply(config, theme)
     config.command_palette_fg_color = palette.cyan or palette.foreground
     config.command_palette_rows = 10
     config.command_palette_font_size = font.size or config.font_size or 10
-    -- Nightly-only keys stay behind a version gate so the stable binary loads
-    -- this config warning-free during the migration window
-    if wezterm.version:sub(1, 8) > "20240203" then
+    if M.has_nightly then
       config.command_palette_font = font.family
+      -- Quick Select strips pane styling before matching; Dracula contrast
+      -- stays legible under the overlay highlights.
+      config.quick_select_remove_styling = true
     end
 
     -- Behaviour --------------------------------------------------------------

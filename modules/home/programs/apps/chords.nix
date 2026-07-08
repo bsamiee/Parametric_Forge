@@ -15,12 +15,14 @@
   # zellij binds by design: it passes through to terminal apps (yazi owns it).
   # WezTerm claims NO layer: its outer-terminal keys live on native left-Command
   # chords only (keys.lua), so every leader chord passes to zellij untouched.
+  # `rank` orders the emitted karabiner rule document.
   layers = {
     hyper = {
       name = "Hyper";
       glyphs = "⌘⌥⌃⇧";
       physical = "Right Command";
       chip = "R⌘";
+      rank = 30;
       from = "right_command";
       to = {
         key_code = "left_shift";
@@ -33,6 +35,7 @@
       glyphs = "⌘⌥⌃";
       physical = "Right Option";
       chip = "R⌥";
+      rank = 20;
       from = "right_option";
       to = {
         key_code = "left_control";
@@ -45,6 +48,7 @@
       glyphs = "⌥⌃⇧";
       physical = "Right Shift";
       chip = "R⇧";
+      rank = 10;
       from = "right_shift";
       to = {
         key_code = "left_option";
@@ -80,14 +84,14 @@
     ];
   };
 
-  # Leader-role documentation block interpolated verbatim where consumers need
-  # the vocabulary spelled out (glyph widths defeat programmatic alignment).
-  # Every fragment line carries its full emitted indentation; consumers
-  # interpolate fragments at their template's minimum-indent anchor.
+  # Leader-role documentation block: vocabulary interpolates from the layer
+  # table; only the inter-field padding stays curated per row (glyph display
+  # widths defeat programmatic alignment). Every fragment line carries its full
+  # emitted indentation; consumers interpolate at their template's indent anchor.
   headerComment = lib.concatStringsSep "\n" [
-    "    // Primary Modifier:    Right Command   → Hyper (⌘⌥⌃⇧)  leader | Super Alt Ctrl Shift"
-    "    // Secondary Modifier:  Right Option    → Super (⌘⌥⌃)   leader | Super Alt Ctrl"
-    "    // Tertiary Modifier:   Right Shift     → Power (⌥⌃⇧)   leader | Alt Ctrl Shift"
+    "    // Primary Modifier:    ${layers.hyper.physical}   → ${layers.hyper.name} (${layers.hyper.glyphs})  leader | ${layers.hyper.zellij}"
+    "    // Secondary Modifier:  ${layers.super.physical}    → ${layers.super.name} (${layers.super.glyphs})   leader | ${layers.super.zellij}"
+    "    // Tertiary Modifier:   ${layers.power.physical}     → ${layers.power.name} (${layers.power.glyphs})   leader | ${layers.power.zellij}"
   ];
 
   # --- Mode table ---------------------------------------------------------------
@@ -142,11 +146,12 @@
   # Row schema: keys (aliases share one row), kdl (single-line body) XOR body
   # (verbatim multi-line KDL at emitted indentation), pre (verbatim comment
   # lines), gap (blank line before), forgot {label, display?, rank}, ribbon
-  # {label, key?, rank}. Display strings derive from layer prefixes unless
-  # a curated grouping overrides them.
+  # {label, key?, rank}, id (exports the row as zellij.ids.<id> {key, mods}
+  # for runtime chord injection). Display strings derive from layer prefixes
+  # unless a curated grouping overrides them.
   hyperRows = [
     {
-      keys = ["g"];
+      keys = [modes.locked.key];
       kdl = ''SwitchToMode "Locked";'';
     }
     {
@@ -261,6 +266,7 @@
         "        // In-place dispatcher: leaves floating visibility readable, then toggles"
         "        // the per-tab Yazi popup (create / show+focus / hide)."
       ];
+      id = "yaziToggle";
       keys = ["y"];
       body = lib.concatStringsSep "\n" [
         "          Run \"forge-yazi.sh\" \"toggle\" {"
@@ -373,7 +379,9 @@
   ];
 
   # --- Projections ----------------------------------------------------------------
-  kdlEsc = lib.replaceStrings ["\\"] ["\\\\"];
+  # Every table string emitted inside a KDL quoted string passes through this.
+  kdlEsc = lib.replaceStrings ["\\" "\""] ["\\\\" "\\\""];
+  cheatsheetKey = "/";
   cap = s: lib.toUpper (builtins.substring 0 1 s) + builtins.substring 1 (builtins.stringLength s) s;
 
   forgotOf = prefix: rows:
@@ -403,12 +411,12 @@
       inherit (modes.${m}) rank;
       label = "${m} mode";
       display = "${layers.hyper.name} ${modes.${m}.key}";
-    }) ["pane" "tab" "resize" "scroll" "session" "move" "tmux"];
+    }) (lib.filter (m: modes.${m} ? rank) (lib.attrNames modes));
 
   cheatsheetForgot = {
     rank = 120;
     label = "cheatsheet";
-    display = "${layers.hyper.name} /";
+    display = "${layers.hyper.name} ${cheatsheetKey}";
   };
 
   forgotRows =
@@ -422,7 +430,7 @@
 
   forgotKdl =
     lib.concatMapStringsSep "\n"
-    (r: "            \"${r.label}\" \"${kdlEsc r.display}\"")
+    (r: "            \"${kdlEsc r.label}\" \"${kdlEsc r.display}\"")
     forgotRows;
 
   renderBind = prefix: row: let
@@ -439,7 +447,7 @@
     ];
 
   cheatsheetBind = lib.concatStringsSep "\n" [
-    "        bind \"${layers.hyper.zellij} /\" {"
+    "        bind \"${layers.hyper.zellij} ${cheatsheetKey}\" {"
     "          LaunchOrFocusPlugin \"zellij-forgot\" {"
     "            \"LOAD_ZELLIJ_BINDINGS\" \"false\""
     forgotKdl
@@ -457,24 +465,22 @@
 
   superBindsKdl = lib.concatMapStringsSep "\n" (renderBind layers.super.zellij) superRows;
 
-  normalBindsKdl =
-    lib.concatMapStringsSep "\n" (r:
-      lib.concatStringsSep "\n" [
-        "        bind \"Super ${r.key}\" {            // ${r.comment}"
-        "          ${r.action}"
-        "          SwitchToMode \"Normal\";"
-        "        }"
-      ])
-    normalRows;
+  normalBindsKdl = lib.concatMapStringsSep "\n" (r:
+    lib.concatStringsSep "\n" [
+      "        bind \"Super ${r.key}\" {            // ${r.comment}"
+      "          ${r.action}"
+      "          SwitchToMode \"Normal\";"
+      "        }"
+    ])
+  normalRows;
 
-  entryBindsKdl =
-    lib.concatMapStringsSep "\n" (m:
-      lib.concatStringsSep "\n" [
-        "      shared_except \"${m}\" \"locked\" {"
-        "        bind \"${layers.hyper.zellij} ${modes.${m}.key}\" { SwitchToMode \"${cap m}\"; }"
-        "      }"
-      ])
-    entryOrder;
+  entryBindsKdl = lib.concatMapStringsSep "\n" (m:
+    lib.concatStringsSep "\n" [
+      "      shared_except \"${m}\" \"locked\" {"
+      "        bind \"${layers.hyper.zellij} ${modes.${m}.key}\" { SwitchToMode \"${cap m}\"; }"
+      "      }"
+    ])
+  entryOrder;
 
   # Hint-ribbon rows for normal mode: the two leader groups in curated order.
   ribbonHyperGroup =
@@ -485,19 +491,50 @@
     ribbonOrder
     ++ [
       {
-        k = "/";
+        k = cheatsheetKey;
         l = "sheet";
       }
     ];
-  ribbonSuperGroup = map (r: {
-    k = r.ribbon.key or (kdlEsc (builtins.head r.keys));
-    l = r.ribbon.label;
-  }) (lib.sort (a: b: a.ribbon.rank < b.ribbon.rank)
-    (builtins.filter (r: r ? ribbon) superRows));
+  ribbonSuperGroup =
+    map (r: {
+      k = r.ribbon.key or (kdlEsc (builtins.head r.keys));
+      l = r.ribbon.label;
+    }) (lib.sort (a: b: a.ribbon.rank < b.ribbon.rank)
+      (builtins.filter (r: r ? ribbon) superRows));
 
   hintsRight =
     "${layers.hyper.chip} ${lib.toLower layers.hyper.name}"
     + " · ${layers.super.chip} ${lib.toLower layers.super.name} ";
+
+  # Kitty CSI-u modifier field for a zellij prefix (bitmask + 1); id-tagged
+  # rows export {key, mods} so runtime consumers inject the REAL chord bytes
+  # without hand-duplicating the vocabulary.
+  csiMods = prefix:
+    lib.foldl' (a: w:
+      a
+      + {
+        Super = 8;
+        Alt = 2;
+        Ctrl = 4;
+        Shift = 1;
+      }
+      .${
+        w
+      })
+    1 (lib.splitString " " prefix);
+  bindIds = layer: rows:
+    lib.concatMap (
+      r:
+        lib.optional (r ? id) {
+          name = r.id;
+          value = {
+            key = builtins.head r.keys;
+            mods = csiMods layer.zellij;
+          };
+        }
+    )
+    rows;
+  ids = lib.listToAttrs (bindIds layers.hyper hyperRows ++ bindIds layers.super superRows);
 in {
   options.forge.chords = lib.mkOption {
     type = lib.types.raw;
@@ -518,9 +555,9 @@ in {
               to = [l.to];
             }
           ];
-        }) [layers.power layers.super layers.hyper];
+        }) (lib.sort (a: b: a.rank < b.rank) (lib.attrValues layers));
       zellij = {
-        inherit headerComment hyperBindsKdl superBindsKdl normalBindsKdl entryBindsKdl hintsRight;
+        inherit headerComment hyperBindsKdl superBindsKdl normalBindsKdl entryBindsKdl hintsRight ids;
         prefix = lib.mapAttrs (_: l: l.zellij) layers;
         ribbon = {
           hyperGroup = ribbonHyperGroup;
