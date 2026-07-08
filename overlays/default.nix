@@ -47,6 +47,7 @@ final: prev: {
   pnpm = final.pnpm_11;
   pnpm_11 = import ./pnpm {
     inherit (prev) fetchurl pnpm_11;
+    inherit (final) nodejs-bin_26;
   };
   sqlite-forge = final.callPackage ./sqlite-forge {};
   sqlean = prev.callPackage ./sqlean {};

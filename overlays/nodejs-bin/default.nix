@@ -5,13 +5,22 @@
 # Path          : overlays/nodejs-bin/default.nix
 # ----------------------------------------------------------------------------
 # Official Node.js binary distribution for cache-safe Darwin installs.
+# pnpm-only rail: npm/npx never reach the installed output; corepack rows are
+# idempotent guards (upstream bundles corepack only for Node <25).
 {
   fetchurl,
   lib,
   stdenvNoCC,
 }: let
-  version = "26.3.1";
+  version = "26.5.0";
   arch = "darwin-arm64";
+  stripRows = [
+    "bin/npm"
+    "bin/npx"
+    "bin/corepack"
+    "lib/node_modules/npm"
+    "lib/node_modules/corepack"
+  ];
 in
   stdenvNoCC.mkDerivation {
     pname = "nodejs-bin";
@@ -19,7 +28,7 @@ in
 
     src = fetchurl {
       url = "https://nodejs.org/dist/v${version}/node-v${version}-${arch}.tar.xz";
-      hash = "sha256-SayiKowpksFmiLqlEqewDEGkYI6WdfyqgVNHZ78RFs4=";
+      hash = "sha256-SCMdYgTspr4T5sUYTf3/odZK2IiANkzCz7GY+HLLKxM=";
     };
 
     sourceRoot = "node-v${version}-${arch}";
@@ -28,6 +37,7 @@ in
       runHook preInstall
       mkdir -p "$out"
       cp -R . "$out"
+      ${lib.concatMapStringsSep "\n" (row: ''rm -rf "$out/${row}"'') stripRows}
       runHook postInstall
     '';
 
