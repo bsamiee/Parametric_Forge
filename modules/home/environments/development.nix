@@ -9,6 +9,7 @@
   home.sessionVariables = {
     # --- Package Managers ---------------------------------------------------
     # Homebrew
+    HOMEBREW_CASK_OPTS = "--no-quarantine"; # Brew 6 dropped the install flag; env is the only carrier
     HOMEBREW_CLEANUP_MAX_AGE_DAYS = "3";
     HOMEBREW_NO_ANALYTICS = "1";
     HOMEBREW_NO_EMOJI = "1";
