@@ -18,88 +18,39 @@
 
   options.programs.zellij = {
     colors = lib.mkOption {
-      # Single source of truth for all Zellij color configuration
+      # Single source of truth for all Zellij color configuration; r/g/b derive
+      # from hex, so a palette entry is exactly one hex row.
       type = lib.types.attrs;
-      default = {
-        background = {
-          hex = "#15131F";
-          r = 21;
-          g = 19;
-          b = 31;
+      default = let
+        hexVal =
+          lib.listToAttrs (lib.imap0 (i: c: lib.nameValuePair c i)
+            (lib.stringToCharacters "0123456789abcdef"));
+        byte = s: i:
+          16
+          * hexVal.${lib.toLower (builtins.substring i 1 s)}
+          + hexVal.${lib.toLower (builtins.substring (i + 1) 1 s)};
+        mkColor = hex: {
+          inherit hex;
+          r = byte hex 1;
+          g = byte hex 3;
+          b = byte hex 5;
         };
-        current_line = {
-          hex = "#2A2640";
-          r = 42;
-          g = 38;
-          b = 64;
+      in
+        lib.mapAttrs (_: mkColor) {
+          background = "#15131F";
+          current_line = "#2A2640";
+          selection = "#44475A";
+          foreground = "#F8F8F2";
+          comment = "#6272A4";
+          purple = "#A072C6";
+          cyan = "#94F2E8";
+          green = "#50FA7B";
+          yellow = "#F1FA8C";
+          orange = "#F97359";
+          red = "#FF5555";
+          magenta = "#d82f94";
+          pink = "#E98FBE";
         };
-        selection = {
-          hex = "#44475A";
-          r = 68;
-          g = 71;
-          b = 90;
-        };
-        foreground = {
-          hex = "#F8F8F2";
-          r = 248;
-          g = 248;
-          b = 242;
-        };
-        comment = {
-          hex = "#6272A4";
-          r = 122;
-          g = 113;
-          b = 170;
-        };
-        purple = {
-          hex = "#A072C6";
-          r = 160;
-          g = 114;
-          b = 198;
-        };
-        cyan = {
-          hex = "#94F2E8";
-          r = 148;
-          g = 242;
-          b = 232;
-        };
-        green = {
-          hex = "#50FA7B";
-          r = 80;
-          g = 250;
-          b = 123;
-        };
-        yellow = {
-          hex = "#F1FA8C";
-          r = 241;
-          g = 250;
-          b = 140;
-        };
-        orange = {
-          hex = "#F97359";
-          r = 249;
-          g = 115;
-          b = 89;
-        };
-        red = {
-          hex = "#FF5555";
-          r = 255;
-          g = 85;
-          b = 85;
-        };
-        magenta = {
-          hex = "#d82f94";
-          r = 216;
-          g = 47;
-          b = 148;
-        };
-        pink = {
-          hex = "#E98FBE";
-          r = 233;
-          g = 143;
-          b = 190;
-        };
-      };
       description = "Color palette for Zellij theme and plugins";
     };
   };

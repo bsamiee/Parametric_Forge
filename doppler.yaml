@@ -1,0 +1,3 @@
+setup:
+  - project: parametric-forge
+    config: dev_machine

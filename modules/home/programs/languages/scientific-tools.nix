@@ -163,6 +163,7 @@
   companionLibraryPath = lib.makeLibraryPath companionNativeLibs;
   forgePythonStateHome = config.xdg.stateHome;
   forgeJupyterTokenFile = "${config.xdg.configHome}/jupyter/forge-token.env";
+  forgeJupyterPort = 8888;
   forgeJupyterLogDir = "${config.xdg.stateHome}/forge-jupyter/log";
   forgeJupyterRootDir = "${config.xdg.stateHome}/forge-jupyter/root";
   forgeJupyterTokenPrelude = ''
@@ -341,13 +342,16 @@
     ${forgeJupyterRootPrelude}
     exec ${forgeCompanionEnv}/bin/forge-companion-env uvx --python "${pkgs.python312}/bin/python3" \
       --from "jupyterlab==4.6.0" --with "jupyter-collaboration==4.4.1" --with "jupyter-mcp-tools==0.1.6" \
-      jupyter-lab --no-browser --ServerApp.ip=127.0.0.1 --ServerApp.port=8888 \
+      jupyter-lab --no-browser --ServerApp.ip=127.0.0.1 --ServerApp.port=${toString forgeJupyterPort} \
       --ServerApp.port_retries=0 \
       --config=${lib.escapeShellArg forgeJupyterServerConfig} "$@"
   '';
   forgeJupyterMcp = pkgs.writeShellScriptBin "forge-jupyter-mcp" ''
     ${forgeJupyterTokenPrelude}
     ${forgeJupyterRootPrelude}
+    # Connector defaults owned here so both MCP fleets carry no per-client env.
+    export JUPYTER_URL="''${JUPYTER_URL:-http://127.0.0.1:${toString forgeJupyterPort}}"
+    export ALLOW_IMG_OUTPUT="''${ALLOW_IMG_OUTPUT:-true}"
     exec ${forgeCompanionEnv}/bin/forge-companion-env uvx --python "${pkgs.python312}/bin/python3" --from "jupyter-mcp-server==1.0.2" jupyter-mcp-server "$@"
   '';
 in {

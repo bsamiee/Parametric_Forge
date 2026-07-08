@@ -16,7 +16,7 @@ Parametric Forge is a deterministic macOS workspace built with Nix flakes, nix-d
   <strong>At a glance</strong>
   <ul style="margin: 0 0 0 18px;">
     <li><strong>Scope:</strong> One flake drives macOS defaults, GUI apps, CLI tools, fonts, overlays, provisioning, and cache policy.</li>
-    <li><strong>Secrets:</strong> 1Password-backed secrets + SSH keep credentials out of the repo; GitHub CLI stays writable.</li>
+    <li><strong>Secrets:</strong> Doppler-first agent env with 1Password SSH + transitional ambient rail; credentials never enter the repo; GitHub CLI stays writable.</li>
     <li><strong>Terminal mesh:</strong> WezTerm → Zellij → Yazi with Neovim remote control, Starship, Atuin, fzf-tab, and carapace.</li>
     <li><strong>Toolchains:</strong> Python 3.15 (uv/ruff/ty), Node (nix + pnpm), Lua + LSPs, SQLite/DuckDB with sqlean/spatialite/vec, scientific native libs and energy-modeling runtimes, Nix-managed dotnet SDKs (8/9/10).</li>
     <li><strong>Assets:</strong> CAD/BIM/media formats stay versionable via LFS defaults; ffmpeg/imagemagick tuned for previews.</li>
@@ -39,7 +39,7 @@ Parametric Forge is a deterministic macOS workspace built with Nix flakes, nix-d
 │       ├── assets/                 # ASCII + carbon sources/renders
 │       ├── environments/           # Session vars for shell/languages/media/secrets/containers
 │       ├── programs/               # Apps (wezterm/zellij/yazi), shell-tools, git-tools, nix-tools, zsh
-│       ├── scripts/                # Integration wrappers (nvim/zellij/yazi)
+│       ├── scripts/                # Integration rail (forge-nvim/edit/yazi) + analysis helpers
 │       └── xdg.nix                 # XDG base dirs + scaffolding
 ├── overlays/                       # Upstream passthrough + duckdb, forge-provision, sqlean
 └── .archive/                       # Retired configs kept for reference
@@ -56,18 +56,17 @@ Parametric Forge is a deterministic macOS workspace built with Nix flakes, nix-d
    ```sh
    op signin <account>
    ```
-3. **Clone:**
+3. **Clone (the path `forge-redeploy` resolves as `FORGE_ROOT`):**
    ```sh
-   git clone https://github.com/bsamiee/Parametric_Forge.git ~/Parametric_Forge
+   git clone https://github.com/bsamiee/Parametric_Forge.git ~/Documents/99.Github/Parametric_Forge
    ```
 4. **Apply mac host:**
    ```sh
-  nix run nix-darwin -- switch --flake ~/Parametric_Forge#macbook
+   nix run nix-darwin -- switch --flake ~/Documents/99.Github/Parametric_Forge#macbook
    ```
 5. **Rebuild after edits:**
    ```sh
-  cd ~/Parametric_Forge
-  forge-redeploy --switch
+   forge-redeploy --switch
    ```
 
 ---
@@ -75,6 +74,8 @@ Parametric Forge is a deterministic macOS workspace built with Nix flakes, nix-d
 ## Secrets + SSH
 - **Secret references:** `modules/home/programs/shell-tools/1password.nix` owns the `~/.config/op/env.template` template and token cache refresh.
 - **Invocation:** `op run --env-file ~/.config/op/env.template -- <command>` keeps secrets out of git.
+- **Agent sessions:** `.claude/hooks/setup-env.sh` resolves agent env Doppler-first across the project/config sources it declares, writes a mode-600 env file, and refreshes cached fallback snapshots under `~/.cache/doppler`; the 1Password ambient rail coexists until the explicit Doppler cutover.
+- **MCP fleet:** `modules/home/programs/shell-tools/mcp-launchers.nix` owns pinned npm launchers plus the Maghz postgres launcher; `forge-mcp-outdated` reports pin drift.
 - **SSH agent:** `modules/home/programs/shell-tools/ssh.nix` points to `~/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock`.
 - **GitHub CLI:** stays writable because `~/.config/gh` is unmanaged by Home Manager.
 
@@ -83,8 +84,8 @@ Parametric Forge is a deterministic macOS workspace built with Nix flakes, nix-d
 ## Terminal Mesh (WezTerm ↔ Zellij ↔ Yazi ↔ Neovim)
 - **WezTerm:** Lua modules (`modules/home/programs/apps/wezterm`) split appearance/keys/mouse/behavior/integration; auto-attaches to Zellij sessions.
 - **Zellij:** `modules/home/programs/apps/zellij` ships Dracula palette, layouts, and `zjstatus`; one color map reused by theme and plugins.
-- **Yazi:** `modules/home/programs/apps/yazi` themed to match; wrapper scripts (`modules/home/scripts/integration/zellij`) set `EDITOR=forge-edit.sh` so Yazi hands edits to Neovim.
-  - `forge-edit.sh` uses per-session nvr sockets; WezTerm focuses the adjacent pane before sending files.
+- **Yazi:** `modules/home/programs/apps/yazi` themed to match; the integration rail (`modules/home/scripts/integration`) runs Yazi as a floating Zellij popup (`forge-yazi.sh`) and sets `EDITOR=forge-edit.sh` so Yazi hands edits to Neovim.
+  - `forge-edit.sh` reuses the tab's live editor over per-pane `nvim --listen` RPC sockets and ID-based Zellij pane focus, or spawns a fresh `forge-nvim.sh` editor pane.
 - **Shell:** Zsh with fzf-tab, Atuin history, carapace completions, Starship, zoxide, delta pager; session paths/XDG caches tuned in `modules/home/environments/*`.
 
 ---

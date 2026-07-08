@@ -83,6 +83,24 @@
         exec "$entry" "$@"
       '';
     };
+  # Maghz postgres MCP: DSN via MAGHZ_MCP__DATABASE_URI with launchd GUI replay
+  # fallback; loud exit 78 when unresolved so required-server failure is visible.
+  maghzPostgres = pkgs.writeShellApplication {
+    name = "forge-maghz-postgres-mcp";
+    runtimeInputs = [pkgs.uv];
+    text = ''
+      if [ -z "''${MAGHZ_MCP__DATABASE_URI:-}" ] && [ -x /bin/launchctl ]; then
+        MAGHZ_MCP__DATABASE_URI="$(/bin/launchctl getenv MAGHZ_MCP__DATABASE_URI || true)"
+        export MAGHZ_MCP__DATABASE_URI
+      fi
+      if [ -z "''${MAGHZ_MCP__DATABASE_URI:-}" ]; then
+        echo "postgres-mcp: MAGHZ_MCP__DATABASE_URI is unset; replay Forge GUI secrets (gui-op-secrets) and confirm the maghz tunnel" >&2
+        exit 78
+      fi
+      DATABASE_URI="$MAGHZ_MCP__DATABASE_URI" UV_PYTHON_DOWNLOADS=automatic \
+        exec uvx --python 3.13 postgres-mcp --access-mode=restricted "$@"
+    '';
+  };
   # Rhino's package manager owns the router install; version-globbing keeps
   # client configs stable across McNeel package updates.
   rhinoRouter = pkgs.writeShellApplication {
@@ -124,7 +142,7 @@
     '';
   };
 in {
-  home.packages = map launcher rows ++ [rhinoRouter outdated outdatedNotify];
+  home.packages = map launcher rows ++ [maghzPostgres rhinoRouter outdated outdatedNotify];
   launchd.agents.forge-mcp-outdated = {
     enable = true;
     config = {
