@@ -77,7 +77,7 @@ Every run prints `session id: <uuid>` in its banner — capture it whenever foll
 | Scope                         | Command                                  |
 | ----------------------------- | ---------------------------------------- |
 | Staged + unstaged + untracked | `codex review --uncommitted "<focus>"`   |
-| Branch against a base         | `codex review --base <branch> "<focus>"` |
+| Branch against a base             | `codex review --base <branch>` — the CLI rejects a prompt alongside `--base`; a FOCUSED range review routes through `codex exec` with an explicit diff task |
 | One commit                    | `codex review --commit <sha> "<focus>"`  |
 
 ## Parallel fan-out
