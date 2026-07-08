@@ -90,34 +90,45 @@
       zstyle ':carapace:*' nospace true  # Better spacing behavior
     '')
 
+    (lib.mkOrder 580 ''
+      # --- fzf-tab (after compinit at 570, before widget wrappers at 700+) --------
+      source ${pkgs.zsh-fzf-tab}/share/fzf-tab/fzf-tab.plugin.zsh
+    '')
+
     (lib.mkOrder 600 ''
-      # --- fzf-tab configuration (after carapace loads) ---------------------------
-      zstyle ':fzf-tab:*' use-fzf-default-opts yes
+      # --- fzf-tab configuration ---------------------------------------------------
+      # No use-fzf-default-opts: global FZF_DEFAULT_OPTS previews stay out of completion.
+      zstyle ':fzf-tab:*' fzf-flags --height=80% --layout=reverse --border=sharp
       zstyle ':fzf-tab:*' fzf-pad 4
       zstyle ':fzf-tab:*' switch-group '<' '>'
-      zstyle ':fzf-tab:*' fzf-flags --height=80%  # Explicitly set height (not inherited)
-      zstyle ':fzf-tab:complete:__zoxide_z:*' fzf-preview 'eza -1 --color=always $realpath'
-      zstyle ':fzf-tab:complete:kill:*' fzf-preview 'ps aux | grep -w $word'
-      zstyle ':fzf-tab:complete:systemctl-*:*' fzf-preview 'systemctl status $word'
+      zstyle ':fzf-tab:complete:(cd|__zoxide_z):*' fzf-preview 'eza -1 --color=always --icons=always $realpath'
+      zstyle ':fzf-tab:complete:(ls|eza|bat|cat|nvim|vim|code):*' fzf-preview '[[ -d $realpath ]] && eza -la --color=always --icons=always $realpath || bat --color=always --style=numbers --line-range=:200 $realpath 2>/dev/null'
+      zstyle ':fzf-tab:complete:kill:*' fzf-preview 'ps -p $word -o pid,ppid,stat,command 2>/dev/null'
     '')
 
     (lib.mkOrder 650 ''
       # --- FZF Keybindings (suppress read-only option errors) --------------------
       # FZF 0.67.0 tries to restore the read-only 'zle' option, causing harmless
       # errors. Suppress stderr to keep output clean; FZF keybindings still register.
+      # fzf captures the fzf-tab ^I widget as fzf_default_completion: plain Tab
+      # falls through to fzf-tab, the ** trigger keeps fzf path completion.
       if [[ $options[zle] = on ]]; then
         source <(fzf --zsh) 2>/dev/null
       fi
     '')
 
-    (lib.mkOrder 700 ''
-      # --- Atuin History Initialization (explicit, after FZF) -------------------
-      # Ensures Atuin's keybindings register properly after FZF's initialization.
-      # FZF's environment is stable at this point, so Atuin's widgets and key
-      # bindings will be registered correctly in a clean state.
+    (lib.mkOrder 720 ''
+      # --- Atuin History Initialization (after autosuggestions source at 700) ----
       if [[ $options[zle] = on ]]; then
         eval "$(${pkgs.atuin}/bin/atuin init zsh)"
       fi
+    '')
+
+    (lib.mkOrder 730 ''
+      # Final strategy owner: atuin init self-prepends "atuin"; this assignment is
+      # the deterministic end state after all widget wrappers have sourced.
+      typeset -ga ZSH_AUTOSUGGEST_STRATEGY
+      ZSH_AUTOSUGGEST_STRATEGY=(atuin completion)
     '')
 
     ''

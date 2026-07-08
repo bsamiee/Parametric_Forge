@@ -16,24 +16,31 @@
     home = config.home.homeDirectory;
     username = config.home.username;
     xdgCacheHome = config.xdg.cacheHome;
-    xdgDataHome = config.xdg.dataHome;
   };
 in {
   programs.zsh = {
-    # Runs in .zshenv for ALL shells (login, interactive, scripts)
-    # Ensures nix paths are always available, even when hm-session-vars guard triggers
+    # Runs in .zshenv for ALL shells (login, interactive, scripts, zellij panes).
+    # PATH has ONE owner: home.sessionPath via hm-session-vars; no writers here.
     envExtra = ''
       if [[ -o interactive && -z "''${TERM:-}" ]]; then
         export TERM="dumb"
       fi
 
-      # Ensure Forge session paths exist when GUI-launched shells miss Home Manager session vars.
-      for _forge_path in \
-        ${lib.concatMapStringsSep " \\\n        " lib.escapeShellArg (lib.reverseList toolchainEnv.userPathEntries)}
-      do
-        [[ ":$PATH:" != *":$_forge_path:"* ]] && export PATH="$_forge_path:$PATH"
-      done
-      unset _forge_path
+      # Nix daemon profile (self-guarded): non-login panes get NIX_* certs/profiles.
+      if [[ -f "/nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh" ]]; then
+        source "/nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh"
+      fi
+
+      # Homebrew metadata without PATH authority; membership guards block nested growth.
+      if [[ -x "/opt/homebrew/bin/brew" ]]; then
+        export HOMEBREW_PREFIX="/opt/homebrew"
+        export HOMEBREW_CELLAR="/opt/homebrew/Cellar"
+        export HOMEBREW_REPOSITORY="/opt/homebrew"
+        [[ ":''${MANPATH:-}:" != *":/opt/homebrew/share/man:"* ]] && \
+          export MANPATH="/opt/homebrew/share/man''${MANPATH+:$MANPATH}:"
+        [[ ":''${INFOPATH:-}:" != *":/opt/homebrew/share/info:"* ]] && \
+          export INFOPATH="/opt/homebrew/share/info:''${INFOPATH:-}"
+      fi
 
       export DOCKER_HOST="''${DOCKER_HOST:-unix://${config.xdg.dataHome}/colima/default/docker.sock}"
       export COLIMA_HOME="''${COLIMA_HOME:-${config.xdg.dataHome}/colima}"
@@ -53,41 +60,6 @@ in {
       export GIT_PAGER="''${GIT_PAGER:-delta}"
       export LESS="''${LESS:--RFX}"
 
-    '';
-
-    profileExtra = ''
-      # --- PATH initialization -------------------------------------------------
-      # Rhino and language toolchain paths are managed declaratively in environments/shell.nix
-
-      # Nix (Determinate Nix)
-      if [[ -d "/nix/var/nix/profiles/default/bin" ]]; then
-        [[ ":$PATH:" != *":/nix/var/nix/profiles/default/bin:"* ]] && \
-          export PATH="/nix/var/nix/profiles/default/bin:$PATH"
-      fi
-
-      # Homebrew (Darwin) - full shellenv equivalent with PATH appended (Nix stays first)
-      if [[ -x "/opt/homebrew/bin/brew" ]]; then
-        export HOMEBREW_PREFIX="/opt/homebrew"
-        export HOMEBREW_CELLAR="/opt/homebrew/Cellar"
-        export HOMEBREW_REPOSITORY="/opt/homebrew"
-        [[ ":$PATH:" != *":/opt/homebrew/bin:"* ]] && export PATH="$PATH:/opt/homebrew/bin"
-        [[ ":$PATH:" != *":/opt/homebrew/sbin:"* ]] && export PATH="$PATH:/opt/homebrew/sbin"
-        export MANPATH="/opt/homebrew/share/man''${MANPATH+:$MANPATH}:"
-        export INFOPATH="/opt/homebrew/share/info:''${INFOPATH:-}"
-      fi
-
-      # Nix daemon sourcing for Determinate Nix
-      if [[ -f "/nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh" ]]; then
-        source "/nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh"
-      fi
-    '';
-
-    loginExtra = ''
-      # Commands to run on login go here
-    '';
-
-    logoutExtra = ''
-      # Commands to run on logout go here
     '';
   };
 }

@@ -16,8 +16,8 @@
       # --- Global Configuration ---------------------------------------------
       palette = "dracula"; # Use Dracula color palette
       add_newline = true; # Blank line between prompts
-      scan_timeout = 10000;
-      command_timeout = 10000; # Timeout for commands (ms)
+      scan_timeout = 50; # File-scan budget (ms); prompt never blocks on large trees
+      command_timeout = 800; # Command budget (ms); slow git/tool calls get cut, not awaited
 
       # --- Dracula Color Palette --------------------------------------------
       palettes.dracula = {
@@ -43,10 +43,7 @@
         "$username"
         "$hostname"
         "$directory"
-        "$git_branch"
-        "$git_state"
-        "$git_status"
-        "$git_metrics"
+        "$vcs"
         "$nodejs"
         "$python"
         "$rust"
@@ -124,6 +121,14 @@
       };
 
       # --- Git Modules ------------------------------------------------------
+      # vcs composes the git payload with one repo-detection pass per prompt;
+      # git_metrics stays out (per-draw diff cost).
+      vcs = {
+        disabled = false;
+        order = ["git"];
+        git_modules = "$git_branch$git_state$git_status";
+      };
+
       git_branch = {
         symbol = " ";
         format = "\\[[$symbol$branch]($style)\\]";
@@ -163,14 +168,6 @@
         deleted = " $count ";
         typechanged = "~ $count ";
         ignore_submodules = false;
-      };
-
-      git_metrics = {
-        added_style = "green";
-        deleted_style = "red";
-        only_nonzero_diffs = true;
-        format = "\\[[+$added]($added_style) [-$deleted]($deleted_style)\\]";
-        disabled = false;
       };
 
       # --- Programming Languages --------------------------------------------

@@ -6,12 +6,9 @@
 # ----------------------------------------------------------------------------
 # Zsh plugin management - home-manager native approach
 {pkgs, ...}: {
+  # fzf-tab is not listed here: HM sources plugins at order 900, after autosuggestions
+  # wrap widgets. init.nix sources it at 580 (post-compinit, pre-wrappers) instead.
   programs.zsh.plugins = [
-    {
-      name = "fzf-tab";
-      src = pkgs.zsh-fzf-tab;
-      file = "share/fzf-tab/fzf-tab.plugin.zsh";
-    }
     {
       name = "forgit";
       src = pkgs.zsh-forgit;

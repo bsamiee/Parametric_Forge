@@ -16,7 +16,6 @@
     home = config.home.homeDirectory;
     username = config.home.username;
     xdgCacheHome = config.xdg.cacheHome;
-    xdgDataHome = config.xdg.dataHome;
   };
 in {
   # --- User Session Path ----------------------------------------------------
@@ -28,7 +27,7 @@ in {
     # --- Shell Internals ----------------------------------------------------
     SQLITE_HISTORY = "${config.xdg.stateHome}/sqlite/history";
     LESSHISTFILE = "${config.xdg.stateHome}/less/history";
-    ZSH_AUTOSUGGEST_STRATEGY = "(atuin completion)";
+    # ZSH_AUTOSUGGEST_STRATEGY is a zsh array owned by zsh/init.nix, not a session scalar.
     ZSH_AUTOSUGGEST_BUFFER_MAX_SIZE = "20";
     ZSH_AUTOSUGGEST_USE_ASYNC = "1"; # Significant performance improvement
     KEYTIMEOUT = "200";

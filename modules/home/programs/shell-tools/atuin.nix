@@ -61,17 +61,12 @@
       local_timeout = 5;
       secrets_filter = true;
       store_failed = false;
+      # Secrets and destructive host commands only; short/common commands are
+      # retrieval material and stay recorded.
       history_filter = [
-        "^(rm|kill|pkill|killall|reboot|shutdown|passwd|sudo -i|su -).*"
-        "^(ls|cd|pwd|exit|cd \\.\\.|clear|history|bg|fg)$"
-        "^pnpm (run|start|test|build)$"
-        "^(cat|bat|less|more) "
-        "^git.*token"
-        "^git.*password"
-        "export.*KEY"
-        "export.*TOKEN"
-        "export.*SECRET"
-        "^.{1,3}$"
+        "^(rm|kill|pkill|killall|reboot|shutdown|passwd|sudo -i|su -)(\\s|$)"
+        "(?i)(token|password|secret|api[_-]?key|bearer)[^\\n]*="
+        "^export .*(_KEY|_TOKEN|_SECRET|PASSWORD)="
       ];
       cwd_filter = [
         "/tmp/.*"

@@ -12,7 +12,16 @@ _: {
 
     # --- Completion ---------------------------------------------------------
     enableCompletion = true;
-    autosuggestion.enable = true;
+    # Single stable dump under XDG cache; ZSH_COMPDUMP is exported pre-compinit in init.nix.
+    completionInit = ''
+      autoload -U compinit
+      compinit -d "$ZSH_COMPDUMP"
+    '';
+    # strategy = [] suppresses the HM scalar; init.nix owns the final array post-atuin.
+    autosuggestion = {
+      enable = true;
+      strategy = [];
+    };
     syntaxHighlighting.enable = true;
 
     # --- History ------------------------------------------------------------

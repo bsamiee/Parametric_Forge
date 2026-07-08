@@ -40,7 +40,6 @@ _:
       "--border=sharp"
       # Note: Border label set per-command in init.nix and shell.nix
       "--border-label-pos=0"
-      "--preview-window=border-bold"
       # UI elements
       "--prompt='󰅂 '"
       "--marker='󰄬'"
@@ -48,10 +47,9 @@ _:
       "--separator='─'"
       "--scrollbar='│'"
       "--info=right"
-      # Behavior
+      # Behavior; previews are widget-scoped, never a global default
       "--height=80%"
       "--layout=reverse"
-      "--preview 'bat --color=always --style=numbers --line-range=:500 {} 2>/dev/null || tree --level=2 --color=always --icons=always {}'"
       "--preview-window=right:50%:border-bold"
       "--bind=ctrl-k:preview-page-up"
       "--bind=ctrl-j:preview-page-down"
@@ -61,6 +59,7 @@ _:
     fileWidgetCommand = "fd --type f --hidden --follow --exclude .git";
     fileWidgetOptions = [
       "--border-label='[FILES]'"
+      "--preview='bat --color=always --style=numbers --line-range=:500 {} 2>/dev/null || tree --level=2 --color=always --icons=always {}'"
     ];
 
     # --- Alt-C: Directory Navigation ----------------------------------------
