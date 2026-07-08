@@ -4,8 +4,12 @@
 # License       : MIT
 # Path          : modules/home/programs/shell-tools/starship.nix
 # ----------------------------------------------------------------------------
-# Dracula themed customizable prompt for any shell
-{lib, ...}: {
+# Prompt themed from the estate palette owner
+{
+  config,
+  lib,
+  ...
+}: {
   programs.starship = {
     enable = true;
     enableTransience = false;
@@ -20,21 +24,7 @@
       command_timeout = 800; # Command budget (ms); slow git/tool calls get cut, not awaited
 
       # --- Dracula Color Palette --------------------------------------------
-      palettes.dracula = {
-        background = "#15131F";
-        current_line = "#2A2640";
-        selection = "#44475A";
-        foreground = "#F8F8F2";
-        comment = "#6272A4";
-        purple = "#A072C6";
-        cyan = "#94F2E8";
-        green = "#50FA7B";
-        yellow = "#F1FA8C";
-        orange = "#F97359";
-        red = "#FF5555";
-        magenta = "#d82f94";
-        pink = "#E98FBE";
-      };
+      palettes.dracula = lib.mapAttrs (_: c: c.hex) config.forge.theme.palette;
 
       # --- Prompt Format ----------------------------------------------------
       # Left-side prompt (contextual information)

@@ -5,30 +5,17 @@
 # Path          : modules/home/programs/shell-tools/pik.nix
 # ----------------------------------------------------------------------------
 # Process Interactive Kill - fuzzy process finder and killer
-{pkgs, ...}:
-# Dracula theme color reference
-# background    #15131F
-# current_line  #2A2640
-# selection     #44475A
-# foreground    #F8F8F2
-# comment       #6272A4
-# purple        #A072C6
-# cyan          #94F2E8
-# green         #50FA7B
-# yellow        #F1FA8C
-# orange        #F97359
-# red           #FF5555
-# magenta       #d82f94
-# pink          #E98FBE
 {
+  config,
+  pkgs,
+  ...
+}: let
+  inherit (config.forge.theme) palette;
+in {
   home.packages = [pkgs.pik];
 
   home.file."Library/Application Support/pik/config.toml".text = ''
     screen_size = "fullscreen"
-
-    [search]
-    case_sensitive = false
-    whole_word = false
 
     [ignore]
     threads = true
@@ -51,16 +38,16 @@
     type = "rounded"
 
     [ui.process_table.border.style]
-    fg = "#94F2E8"
+    fg = "${palette.cyan.hex}"
 
     [ui.process_table.row]
     selected_symbol = "▶"
-    even = { fg = "#F8F8F2" }                             # Normal foreground
-    odd = { fg = "#F8F8F2", bg = "#2A2640" }            # Subtle background for zebra striping
-    selected = { fg = "#15131F", bg = "#94F2E8", add_modifier = "BOLD" }  # Selection without BOLD
+    even = { fg = "${palette.foreground.hex}" }                             # Normal foreground
+    odd = { fg = "${palette.foreground.hex}", bg = "${palette.current_line.hex}" }            # Subtle background for zebra striping
+    selected = { fg = "${palette.background.hex}", bg = "${palette.cyan.hex}", add_modifier = "BOLD" }  # Selection without BOLD
 
     [ui.process_table.cell]
-    highlighted = { fg = "#50FA7B", bg = "#15131F" }    # Green for search matches
+    highlighted = { fg = "${palette.green.hex}", bg = "${palette.background.hex}" }    # Green for search matches
 
     [ui.process_table.scrollbar]
     track_symbol = "│"
@@ -76,7 +63,7 @@
     type = "rounded"
 
     [ui.process_details.border.style]
-    fg = "#d82f94"
+    fg = "${palette.magenta.hex}"
 
     [ui.process_details.scrollbar]
     track_symbol = "│"
@@ -86,16 +73,16 @@
     margin = { horizontal = 0, vertical = 1 }
 
     [ui.search_bar]
-    cursor_style = { fg = "#F8F8F2", bg = "#d82f94", add_modifier = "REVERSED" }
+    cursor_style = { fg = "${palette.foreground.hex}", bg = "${palette.magenta.hex}", add_modifier = "REVERSED" }
 
     [ui.popups]
-    selected_row = { fg = "#44475A", bg = "#94F2E8" }
-    primary = { fg = "#94F2E8" }
+    selected_row = { fg = "${palette.selection.hex}", bg = "${palette.cyan.hex}" }
+    primary = { fg = "${palette.cyan.hex}" }
 
     [ui.popups.border]
     type = "rounded"
 
     [ui.popups.border.style]
-    fg = "#F97359"
+    fg = "${palette.orange.hex}"
   '';
 }

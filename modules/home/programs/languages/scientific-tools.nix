@@ -8,6 +8,7 @@
 # geospatial/data libraries, numerical kernels, and local provisioning probes.
 {
   config,
+  forgeToolchainEnvFor,
   lib,
   pkgs,
   ...
@@ -18,8 +19,7 @@
   openmp = pkgs.llvmPackages.openmp;
   openmpDev = lib.getDev openmp;
   openmpLib = lib.getLib openmp;
-  toolchainEnv = import ../../../common/toolchain-env.nix {
-    inherit lib pkgs;
+  toolchainEnv = forgeToolchainEnvFor {
     home = config.home.homeDirectory;
     username = config.home.username;
     xdgCacheHome = config.xdg.cacheHome;

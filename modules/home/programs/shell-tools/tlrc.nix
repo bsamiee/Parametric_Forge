@@ -10,6 +10,8 @@
   pkgs,
   ...
 }: let
+  inherit (config.forge.theme) palette;
+  rgb = c: "{ rgb = [${toString c.r}, ${toString c.g}, ${toString c.b}] }";
   tlrcConfig = ''
     [cache]
     # XDG-compliant cache directory (overrides macOS default)
@@ -34,7 +36,7 @@
     example = 4
 
     [style.title]
-    color = { rgb = [255, 66, 180] }  # #FF42B4 (magenta)
+    color = ${rgb palette.magenta}
     background = "default"
     bold = true
     underline = false
@@ -43,7 +45,7 @@
     strikethrough = false
 
     [style.description]
-    color = { rgb = [189, 147, 249] }  # #A072C6 (purple)
+    color = ${rgb palette.purple}
     background = "default"
     bold = false
     underline = false
@@ -52,7 +54,7 @@
     strikethrough = false
 
     [style.bullet]
-    color = { rgb = [80, 250, 123] }  # #50FA7B (green)
+    color = ${rgb palette.green}
     background = "default"
     bold = false
     underline = false
@@ -61,7 +63,7 @@
     strikethrough = false
 
     [style.example]
-    color = { rgb = [164, 255, 255] }  # #a4ffff (cyan)
+    color = ${rgb palette.cyan}
     background = "default"
     bold = false
     underline = false
@@ -70,7 +72,7 @@
     strikethrough = false
 
     [style.url]
-    color = { rgb = [234, 195, 148] }  # #EAC394 (orange)
+    color = ${rgb palette.orange}
     background = "default"
     bold = false
     underline = false
@@ -79,7 +81,7 @@
     strikethrough = false
 
     [style.inline_code]
-    color = { rgb = [241, 250, 140] }  # #F1FA8C (yellow)
+    color = ${rgb palette.yellow}
     background = "default"
     bold = false
     underline = false
@@ -88,7 +90,7 @@
     strikethrough = false
 
     [style.placeholder]
-    color = { rgb = [255, 85, 85] }  # #FF5555 (red)
+    color = ${rgb palette.red}
     background = "default"
     bold = false
     underline = false

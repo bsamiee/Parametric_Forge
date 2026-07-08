@@ -5,22 +5,7 @@
 # Path          : modules/home/programs/git-tools/git.nix
 # ----------------------------------------------------------------------------
 # Core Git configuration and workflow settings
-_:
-# Dracula theme color reference
-# background    #15131F
-# current_line  #2A2640
-# selection     #44475A
-# foreground    #F8F8F2
-# comment       #6272A4
-# purple        #A072C6
-# cyan          #94F2E8
-# green         #50FA7B
-# yellow        #F1FA8C
-# orange        #F97359
-# red           #FF5555
-# magenta       #d82f94
-# pink          #E98FBE
-{
+{config, ...}: {
   programs.git = {
     enable = true;
     lfs.enable = true;
@@ -142,7 +127,7 @@ _:
 
       # Blame configuration
       blame-format = "{timestamp:<15} {author:<15.14} {commit:<8}";
-      blame-palette = "#2e3440 #3b4252 #434c5e #4c566a";
+      blame-palette = config.forge.theme.projections.blameRamp;
       blame-separator-format = "│{n:^4}│";
       blame-separator-style = "dim";
       blame-timestamp-output-format = "%Y-%m-%d %H:%M";
@@ -176,7 +161,7 @@ _:
 
       # UI elements
       keep-plus-minus-markers = false;
-      syntax-theme = "Dracula"; # Match bat theme
+      syntax-theme = "forge-dracula"; # Owner-generated bat theme; delta reads the bat cache
       true-color = "always";
       zero-style = "dim syntax";
 

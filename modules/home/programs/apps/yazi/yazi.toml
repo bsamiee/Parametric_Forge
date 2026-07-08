@@ -16,8 +16,8 @@ prepend_previewers = [
   { url = "*.md", run = 'piper -- rich --line-numbers --force-terminal "$1"' },
 ]
 prepend_fetchers = [
-  { id = "git", name = "*", run = "git" },
-  { id = "git", name = "*/", run = "git" },
+  { url = "*", run = "git", group = "git" },
+  { url = "*/", run = "git", group = "git" },
 ]
 
 [mgr]

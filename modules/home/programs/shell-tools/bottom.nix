@@ -4,8 +4,10 @@
 # License       : MIT
 # Path          : /modules/home/programs/shell-tools/bottom.nix
 # ----------------------------------------------------------------------------
-# Resource monitor with Dracula theme using native home-manager module
-_: {
+# Resource monitor themed from the estate palette owner
+{config, ...}: let
+  inherit (config.forge.theme) palette;
+in {
   programs.bottom = {
     enable = true;
     settings = {
@@ -32,98 +34,83 @@ _: {
         battery = true; # Show battery if available
       };
 
-      # Dracula theme color reference
-      # background    #15131F
-      # current_line  #2A2640
-      # selection     #44475A
-      # foreground    #F8F8F2
-      # comment       #6272A4
-      # purple        #A072C6
-      # cyan          #94F2E8
-      # green         #50FA7B
-      # yellow        #F1FA8C
-      # orange        #F97359
-      # red           #FF5555
-      # magenta       #d82f94
-      # pink          #E98FBE
-
       # --- Style Configuration ----------------------------------------------
       styles = {
         widgets = {
-          border_color = "#94F2E8"; # Cyan - default borders
-          selected_border_color = "#d82f94"; # Magenta - focused widget
+          border_color = palette.cyan.hex; # Default borders
+          selected_border_color = palette.magenta.hex; # Focused widget
           widget_title = {
-            color = "#94F2E8"; # Cyan - consistent with borders
+            color = palette.cyan.hex; # Consistent with borders
           };
           table_header = {
-            color = "#94F2E8"; # Cyan headers
+            color = palette.cyan.hex;
             bold = true; # Bold for emphasis
           };
           text = {
-            color = "#F8F8F2"; # Bright - primary text
+            color = palette.foreground.hex; # Primary text
           };
           selected_text = {
-            color = "#15131F"; # Bright text when selected
-            bg_color = "#94F2E8"; # Selection background
+            color = palette.background.hex; # Inverse text when selected
+            bg_color = palette.cyan.hex; # Selection background
           };
           disabled_text = {
-            color = "#6272A4"; # Muted - inactive items
+            color = palette.comment.hex; # Muted - inactive items
           };
           thread_text = {
-            color = "#A072C6"; # Purple - thread indicators
+            color = palette.purple.hex; # Thread indicators
             bold = false; # Not bold for subtlety
           };
         };
         tables = {
           headers = {
-            color = "#94F2E8"; # Cyan headers (matches borders)
+            color = palette.cyan.hex; # Matches borders
             bold = true; # Bold for emphasis
           };
         };
         graphs = {
-          graph_color = "#44475A"; # Subtle grid lines
+          graph_color = palette.selection.hex; # Subtle grid lines
           legend_text = {
-            color = "#94F2E8"; # Cyan legend text (for inline tables)
+            color = palette.cyan.hex; # Legend text (for inline tables)
             bold = false; # Not bold for cleaner look
           };
         };
         cpu = {
-          all_entry_color = "#94F2E8"; # Cyan - ALL CPU label
-          avg_entry_color = "#E98FBE"; # Pink - AVG CPU (important metric)
+          all_entry_color = palette.cyan.hex; # ALL CPU label
+          avg_entry_color = palette.pink.hex; # AVG CPU (important metric)
           cpu_core_colors = [
-            "#50FA7B" # Green - Core 0
-            "#94F2E8" # Cyan - Core 1
-            "#F1FA8C" # Yellow - Core 2
-            "#F97359" # Orange - Core 3
-            "#E98FBE" # Pink - Core 4
-            "#A072C6" # Purple - Core 5
-            "#FF5555" # Red - Core 6
-            "#d82f94" # Magenta - Core 7+
+            palette.green.hex # Core 0
+            palette.cyan.hex # Core 1
+            palette.yellow.hex # Core 2
+            palette.orange.hex # Core 3
+            palette.pink.hex # Core 4
+            palette.purple.hex # Core 5
+            palette.red.hex # Core 6
+            palette.magenta.hex # Core 7+
           ];
         };
         memory = {
-          ram = "#50FA7B"; # Green - RAM (primary memory)
-          swap = "#F97359"; # Orange - swap (warning state)
-          cache = "#94F2E8"; # Cyan - cache (secondary)
-          arc = "#A072C6"; # Purple - ARC cache
+          ram = palette.green.hex; # RAM (primary memory)
+          swap = palette.orange.hex; # Swap (warning state)
+          cache = palette.cyan.hex; # Cache (secondary)
+          arc = palette.purple.hex; # ARC cache
           gpu_colors = [
             # GPU memory colors
-            "#E98FBE" # Pink - GPU 0
-            "#94F2E8" # Cyan - GPU 1
-            "#50FA7B" # Green - GPU 2
-            "#F97359" # Orange - GPU 3
+            palette.pink.hex # GPU 0
+            palette.cyan.hex # GPU 1
+            palette.green.hex # GPU 2
+            palette.orange.hex # GPU 3
           ];
         };
         network = {
-          rx = "#50FA7B"; # Green - download (incoming)
-          tx = "#E98FBE"; # Pink - upload (outgoing)
-          rx_total = "#94F2E8"; # Cyan - total received
-          tx_total = "#F97359"; # Orange - total transmitted
+          rx = palette.green.hex; # Download (incoming)
+          tx = palette.pink.hex; # Upload (outgoing)
+          rx_total = palette.cyan.hex; # Total received
+          tx_total = palette.orange.hex; # Total transmitted
         };
         battery = {
-          high_battery = "#50FA7B"; # Green - healthy (50%+)
-          medium_battery = "#F1FA8C"; # Yellow - caution (10-50%)
-          low_battery = "#FF5555"; # Red - critical (<10%)
+          high_battery = palette.green.hex; # Healthy (50%+)
+          medium_battery = palette.yellow.hex; # Caution (10-50%)
+          low_battery = palette.red.hex; # Critical (<10%)
         };
       };
       # --- Process Configuration --------------------------------------------

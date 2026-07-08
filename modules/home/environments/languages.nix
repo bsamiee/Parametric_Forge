@@ -7,12 +7,10 @@
 # Programming language toolchains and environments
 {
   config,
-  lib,
-  pkgs,
+  forgeToolchainEnvFor,
   ...
 }: let
-  toolchainEnv = import ../../common/toolchain-env.nix {
-    inherit lib pkgs;
+  toolchainEnv = forgeToolchainEnvFor {
     home = config.home.homeDirectory;
     username = config.home.username;
     xdgCacheHome = config.xdg.cacheHome;

@@ -4,27 +4,19 @@
 # License       : MIT
 # Path          : modules/home/programs/shell-tools/carbon.nix
 # ----------------------------------------------------------------------------
-# Beautiful code screenshot generation with Dracula theme
-{pkgs, ...}:
-# Dracula theme color reference
-# background    #15131F
-# current_line  #2A2640
-# selection     #44475A
-# foreground    #F8F8F2
-# comment       #6272A4
-# purple        #A072C6
-# cyan          #94F2E8
-# green         #50FA7B
-# yellow        #F1FA8C
-# orange        #F97359
-# red           #FF5555
-# magenta       #d82f94
-# pink          #E98FBE
-let
+# Beautiful code screenshot generation themed from the estate palette owner
+{
+  config,
+  pkgs,
+  ...
+}: let
+  inherit (config.forge.theme) palette;
+
   carbonConfig = {
     latest-preset = {
-      backgroundColor = "#15131F";
-      theme = "dracula";
+      backgroundColor = palette.background.hex;
+      # The custom map below is the active theme; the CLI renders it under this id.
+      theme = "carbon-now-cli-theme";
       windowTheme = "macos";
       windowControls = true;
       fontFamily = "GeistMono Nerd Font, Geist Mono, Fira Code";
@@ -45,23 +37,23 @@ let
       exportSize = "2x";
       type = "png";
 
-      # Custom Dracula theme
+      # Custom theme: CodeMirror vocabulary mapped onto the owner's syntax roles
       custom = {
-        background = "rgba(21, 19, 31, 1)"; # #15131F
-        text = "rgba(248, 248, 242, 1)"; # #F8F8F2
-        variable = "rgba(148, 242, 232, 1)"; # #94F2E8 cyan
-        variable2 = "rgba(160, 114, 198, 1)"; # #A072C6 purple
-        variable3 = "rgba(233, 143, 190, 1)"; # #E98FBE pink
-        attribute = "rgba(80, 250, 123, 1)"; # #50FA7B green
-        definition = "rgba(80, 250, 123, 1)"; # #50FA7B green
-        keyword = "rgba(216, 47, 148, 1)"; # #d82f94 magenta
-        operator = "rgba(216, 47, 148, 1)"; # #d82f94 magenta
-        property = "rgba(148, 242, 232, 1)"; # #94F2E8 cyan
-        number = "rgba(160, 114, 198, 1)"; # #A072C6 purple
-        string = "rgba(241, 250, 140, 1)"; # #F1FA8C yellow
-        comment = "rgba(98, 114, 164, 1)"; # #6272A4 comment
-        meta = "rgba(249, 115, 89, 1)"; # #F97359 orange
-        tag = "rgba(255, 85, 85, 1)"; # #FF5555 red
+        background = palette.background.rgba "1";
+        text = palette.foreground.rgba "1";
+        variable = palette.cyan.rgba "1";
+        variable2 = palette.purple.rgba "1";
+        variable3 = palette.pink.rgba "1";
+        attribute = palette.green.rgba "1";
+        definition = palette.green.rgba "1";
+        keyword = palette.magenta.rgba "1";
+        operator = palette.magenta.rgba "1";
+        property = palette.cyan.rgba "1";
+        number = palette.purple.rgba "1";
+        string = palette.yellow.rgba "1";
+        comment = palette.comment.rgba "1";
+        meta = palette.orange.rgba "1";
+        tag = palette.red.rgba "1";
       };
     };
   };

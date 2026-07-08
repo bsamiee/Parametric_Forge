@@ -10,10 +10,10 @@
   lib,
   ...
 }: let
-  inherit (config.programs.zellij) colors; # Use shared colors from module option
+  inherit (config.forge.theme) palette; # Estate palette owner (modules/home/theme.nix)
 
   # Shared color rows for both zjstatus instances; one palette, two surfaces.
-  colorRows = lib.concatStrings (map (n: "        color_${n}    \"${colors.${n}.hex}\"\n") [
+  colorRows = lib.concatStrings (map (n: "        color_${n}    \"${palette.${n}.hex}\"\n") [
     "background"
     "current_line"
     "selection"

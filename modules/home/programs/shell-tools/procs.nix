@@ -9,22 +9,9 @@
   config,
   pkgs,
   ...
-}:
-# Dracula theme color reference (for understanding color mappings)
-# background    #15131F
-# current_line  #2A2640
-# selection     #44475A
-# foreground    #F8F8F2
-# comment       #6272A4
-# purple        #A072C6
-# cyan          #94F2E8
-# green         #50FA7B
-# yellow        #F1FA8C
-# orange        #F97359
-# red           #FF5555
-# magenta       #d82f94
-# pink          #E98FBE
-let
+}: let
+  # Styles are ANSI-16 slots; the terminal palette (forge.theme.ansi16
+  # projected through WezTerm) resolves them to estate colors.
   tomlFormat = pkgs.formats.toml {};
 
   procsConfig = {

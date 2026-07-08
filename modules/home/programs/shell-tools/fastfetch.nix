@@ -4,23 +4,10 @@
 # License       : MIT
 # Path          : modules/home/programs/shell-tools/fastfetch.nix
 # ----------------------------------------------------------------------------
-# System information display with Dracula theme
-{config, ...}:
-# Dracula theme color reference
-# background    #15131F
-# current_line  #2A2640
-# selection     #44475A
-# foreground    #F8F8F2
-# comment       #6272A4
-# purple        #A072C6
-# cyan          #94F2E8
-# green         #50FA7B
-# yellow        #F1FA8C
-# orange        #F97359
-# red           #FF5555
-# magenta       #d82f94
-# pink          #E98FBE
-{
+# System information display themed from the estate palette owner
+{config, ...}: let
+  inherit (config.forge.theme) palette;
+in {
   programs.fastfetch = {
     enable = true;
 
@@ -49,25 +36,25 @@
             right = " ]";
           };
           color = {
-            elapsed = "#50FA7B"; # Dracula green
-            total = "#44475A"; # Dracula selection
+            elapsed = palette.green.hex;
+            total = palette.selection.hex;
           };
         };
         percent = {
           type = 3;
           ndigits = 0;
           color = {
-            green = "#50FA7B"; # Dracula green
-            yellow = "#F1FA8C"; # Dracula yellow
-            red = "#FF5555"; # Dracula red
+            green = palette.green.hex;
+            yellow = palette.yellow.hex;
+            red = palette.red.hex;
           };
         };
         brightColor = true;
         color = {
-          keys = "#94F2E8"; # Dracula cyan (brighter variant)
-          title = "#E98FBE"; # Dracula pink (brighter variant)
-          separator = "#6272a4"; # Dracula comment
-          output = "#F8F8F2"; # Dracula foreground
+          keys = palette.cyan.hex;
+          title = palette.pink.hex;
+          separator = palette.comment.hex;
+          output = palette.foreground.hex;
         };
       };
 
@@ -93,7 +80,7 @@
         {
           type = "title";
           format = "{user-name-colored}";
-          color = {user = "#50FA7B";};
+          color = {user = palette.green.hex;};
         }
         {type = "break";}
 
@@ -200,7 +187,7 @@
           type = "disk";
           key = " ├ 󰋊  ";
           folders = "/";
-          format = "{size-used} / {size-total} ({size-percentage}%";
+          format = "{size-used} / {size-total} ({size-percentage}%)";
         }
         {
           type = "display";

@@ -9,6 +9,7 @@
   imports = [
     ./assets
     ./environments
+    ./theme.nix
     ./programs
     ./scripts
     ./xdg.nix

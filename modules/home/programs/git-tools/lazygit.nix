@@ -4,23 +4,10 @@
 # License       : MIT
 # Path          : modules/home/programs/git-tools/lazygit.nix
 # ----------------------------------------------------------------------------
-# Lazygit TUI configuration with Dracula theme
-_:
-# Dracula theme color reference
-# background    #15131F
-# current_line  #2A2640
-# selection     #44475A
-# foreground    #F8F8F2
-# comment       #6272A4
-# purple        #A072C6
-# cyan          #94F2E8
-# green         #50FA7B
-# yellow        #F1FA8C
-# orange        #F97359
-# red           #FF5555
-# magenta       #d82f94
-# pink          #E98FBE
-{
+# Lazygit TUI configuration themed from the estate palette owner
+{config, ...}: let
+  inherit (config.forge.theme) palette;
+in {
   programs.lazygit = {
     enable = true;
 
@@ -50,17 +37,17 @@ _:
         screenMode = "normal";
 
         theme = {
-          activeBorderColor = ["#d82f94" "bold"];
-          inactiveBorderColor = ["#94F2E8"];
-          searchingActiveBorderColor = ["#F1FA8C" "bold"];
-          optionsTextColor = ["#94F2E8"];
-          selectedLineBgColor = ["#44475A"];
-          defaultFgColor = ["#F8F8F2"];
-          unstagedChangesColor = ["#FF5555"];
-          cherryPickedCommitFgColor = ["#94F2E8"];
-          cherryPickedCommitBgColor = ["#A072C6"];
-          markedBaseCommitFgColor = ["#F1FA8C"];
-          markedBaseCommitBgColor = ["#A072C6"];
+          activeBorderColor = [palette.magenta.hex "bold"];
+          inactiveBorderColor = [palette.cyan.hex];
+          searchingActiveBorderColor = [palette.yellow.hex "bold"];
+          optionsTextColor = [palette.cyan.hex];
+          selectedLineBgColor = [palette.selection.hex];
+          defaultFgColor = [palette.foreground.hex];
+          unstagedChangesColor = [palette.red.hex];
+          cherryPickedCommitFgColor = [palette.cyan.hex];
+          cherryPickedCommitBgColor = [palette.purple.hex];
+          markedBaseCommitFgColor = [palette.yellow.hex];
+          markedBaseCommitBgColor = [palette.purple.hex];
         };
       };
 

@@ -4,23 +4,13 @@
 # License       : MIT
 # Path          : /modules/home/programs/shell-tools/eza.nix
 # ----------------------------------------------------------------------------
-# Modern ls replacement with Dracula theme
-{pkgs, ...}:
-# Dracula theme color reference
-# background    #15131F
-# current_line  #2A2640
-# selection     #44475A
-# foreground    #F8F8F2
-# comment       #6272A4
-# purple        #A072C6
-# cyan          #94F2E8
-# green         #50FA7B
-# yellow        #F1FA8C
-# orange        #F97359
-# red           #FF5555
-# magenta       #d82f94
-# pink          #E98FBE
-let
+# Modern ls replacement themed from the estate palette owner
+{
+  config,
+  pkgs,
+  ...
+}: let
+  inherit (config.forge.theme) palette;
   yamlFormat = pkgs.formats.yaml {};
   treeIgnoreGlobs = ".git|.direnv|.devenv|.cache|.pytest_cache|.mypy_cache|.ruff_cache|__pycache__|node_modules|bin|obj|dist|build|target|coverage|.next|.nuxt|.turbo|.vite|.parcel-cache|vendor";
   treeCommand = pkgs.writeShellApplication {
@@ -50,131 +40,131 @@ let
 
   ezaTheme = {
     filekinds = {
-      normal = {foreground = "#F8F8F2";};
+      normal = {foreground = palette.foreground.hex;};
       directory = {
-        foreground = "#94F2E8";
+        foreground = palette.cyan.hex;
         is_bold = true;
       };
-      symlink = {foreground = "#A072C6";};
-      pipe = {foreground = "#6272A4";};
-      block_device = {foreground = "#FF5555";};
-      char_device = {foreground = "#FF5555";};
-      socket = {foreground = "#6272A4";};
-      special = {foreground = "#d82f94";};
+      symlink = {foreground = palette.purple.hex;};
+      pipe = {foreground = palette.comment.hex;};
+      block_device = {foreground = palette.red.hex;};
+      char_device = {foreground = palette.red.hex;};
+      socket = {foreground = palette.comment.hex;};
+      special = {foreground = palette.magenta.hex;};
       executable = {
-        foreground = "#50FA7B";
+        foreground = palette.green.hex;
         is_bold = true;
       };
-      mount_point = {foreground = "#F97359";};
+      mount_point = {foreground = palette.orange.hex;};
     };
     perms = {
-      user_read = {foreground = "#F8F8F2";};
-      user_write = {foreground = "#F97359";};
-      user_execute_file = {foreground = "#50FA7B";};
-      user_execute_other = {foreground = "#50FA7B";};
-      group_read = {foreground = "#F8F8F2";};
-      group_write = {foreground = "#F97359";};
-      group_execute = {foreground = "#50FA7B";};
-      other_read = {foreground = "#F8F8F2";};
-      other_write = {foreground = "#F97359";};
-      other_execute = {foreground = "#50FA7B";};
-      special_user_file = {foreground = "#d82f94";};
-      special_other = {foreground = "#6272A4";};
-      attribute = {foreground = "#F8F8F2";};
+      user_read = {foreground = palette.foreground.hex;};
+      user_write = {foreground = palette.orange.hex;};
+      user_execute_file = {foreground = palette.green.hex;};
+      user_execute_other = {foreground = palette.green.hex;};
+      group_read = {foreground = palette.foreground.hex;};
+      group_write = {foreground = palette.orange.hex;};
+      group_execute = {foreground = palette.green.hex;};
+      other_read = {foreground = palette.foreground.hex;};
+      other_write = {foreground = palette.orange.hex;};
+      other_execute = {foreground = palette.green.hex;};
+      special_user_file = {foreground = palette.magenta.hex;};
+      special_other = {foreground = palette.comment.hex;};
+      attribute = {foreground = palette.foreground.hex;};
     };
     size = {
       major = {
-        foreground = "#F1FA8C";
+        foreground = palette.yellow.hex;
         is_bold = true;
       };
-      minor = {foreground = "#A072C6";};
-      number_byte = {foreground = "#F8F8F2";};
-      number_kilo = {foreground = "#F8F8F2";};
-      number_mega = {foreground = "#94F2E8";};
-      number_giga = {foreground = "#E98FBE";};
-      number_huge = {foreground = "#E98FBE";};
-      unit_byte = {foreground = "#F8F8F2";};
-      unit_kilo = {foreground = "#94F2E8";};
-      unit_mega = {foreground = "#E98FBE";};
-      unit_giga = {foreground = "#E98FBE";};
-      unit_huge = {foreground = "#F97359";};
+      minor = {foreground = palette.purple.hex;};
+      number_byte = {foreground = palette.foreground.hex;};
+      number_kilo = {foreground = palette.foreground.hex;};
+      number_mega = {foreground = palette.cyan.hex;};
+      number_giga = {foreground = palette.pink.hex;};
+      number_huge = {foreground = palette.pink.hex;};
+      unit_byte = {foreground = palette.foreground.hex;};
+      unit_kilo = {foreground = palette.cyan.hex;};
+      unit_mega = {foreground = palette.pink.hex;};
+      unit_giga = {foreground = palette.pink.hex;};
+      unit_huge = {foreground = palette.orange.hex;};
     };
     users = {
-      user_you = {foreground = "#F8F8F2";};
+      user_you = {foreground = palette.foreground.hex;};
       user_root = {
-        foreground = "#FF5555";
+        foreground = palette.red.hex;
         is_bold = true;
       };
-      user_other = {foreground = "#d82f94";};
-      group_yours = {foreground = "#F8F8F2";};
-      group_other = {foreground = "#6272A4";};
-      group_root = {foreground = "#FF5555";};
+      user_other = {foreground = palette.magenta.hex;};
+      group_yours = {foreground = palette.foreground.hex;};
+      group_other = {foreground = palette.comment.hex;};
+      group_root = {foreground = palette.red.hex;};
     };
     links = {
-      normal = {foreground = "#A072C6";};
-      multi_link_file = {foreground = "#F97359";};
+      normal = {foreground = palette.purple.hex;};
+      multi_link_file = {foreground = palette.orange.hex;};
     };
     git = {
-      new = {foreground = "#50FA7B";};
-      modified = {foreground = "#F1FA8C";};
-      deleted = {foreground = "#FF5555";};
-      renamed = {foreground = "#94F2E8";};
-      typechange = {foreground = "#d82f94";};
+      new = {foreground = palette.green.hex;};
+      modified = {foreground = palette.yellow.hex;};
+      deleted = {foreground = palette.red.hex;};
+      renamed = {foreground = palette.cyan.hex;};
+      typechange = {foreground = palette.magenta.hex;};
       ignored = {
-        foreground = "#6272A4";
+        foreground = palette.comment.hex;
         is_dimmed = true;
       };
       conflicted = {
-        foreground = "#F97359";
+        foreground = palette.orange.hex;
         is_bold = true;
       };
     };
     git_repo = {
-      branch_main = {foreground = "#F8F8F2";};
-      branch_other = {foreground = "#d82f94";};
-      git_clean = {foreground = "#50FA7B";};
-      git_dirty = {foreground = "#FF5555";};
+      branch_main = {foreground = palette.foreground.hex;};
+      branch_other = {foreground = palette.magenta.hex;};
+      git_clean = {foreground = palette.green.hex;};
+      git_dirty = {foreground = palette.red.hex;};
     };
     security_context = {
-      none = {foreground = "#6272A4";};
+      none = {foreground = palette.comment.hex;};
       selinux = {
-        colon = {foreground = "#6272A4";};
-        user = {foreground = "#F8F8F2";};
-        role = {foreground = "#d82f94";};
-        typ = {foreground = "#F1FA8C";};
-        range = {foreground = "#d82f94";};
+        colon = {foreground = palette.comment.hex;};
+        user = {foreground = palette.foreground.hex;};
+        role = {foreground = palette.magenta.hex;};
+        typ = {foreground = palette.yellow.hex;};
+        range = {foreground = palette.magenta.hex;};
       };
     };
     file_type = {
-      image = {foreground = "#F97359";};
-      video = {foreground = "#E98FBE";};
-      music = {foreground = "#50FA7B";};
-      lossless = {foreground = "#50FA7B";};
-      crypto = {foreground = "#A072C6";};
-      document = {foreground = "#6272A4";};
-      compressed = {foreground = "#d82f94";};
-      temp = {foreground = "#FF5555";};
-      compiled = {foreground = "#94F2E8";};
-      build = {foreground = "#F1FA8C";};
-      source = {foreground = "#F97359";};
+      image = {foreground = palette.orange.hex;};
+      video = {foreground = palette.pink.hex;};
+      music = {foreground = palette.green.hex;};
+      lossless = {foreground = palette.green.hex;};
+      crypto = {foreground = palette.purple.hex;};
+      document = {foreground = palette.comment.hex;};
+      compressed = {foreground = palette.magenta.hex;};
+      temp = {foreground = palette.red.hex;};
+      compiled = {foreground = palette.cyan.hex;};
+      build = {foreground = palette.yellow.hex;};
+      source = {foreground = palette.orange.hex;};
     };
-    punctuation = {foreground = "#6272A4";};
-    date = {foreground = "#E98FBE";};
-    inode = {foreground = "#44475A";};
-    blocks = {foreground = "#A072C6";};
+    punctuation = {foreground = palette.comment.hex;};
+    date = {foreground = palette.pink.hex;};
+    inode = {foreground = palette.selection.hex;};
+    blocks = {foreground = palette.purple.hex;};
     header = {
-      foreground = "#94F2E8";
+      foreground = palette.cyan.hex;
       is_bold = true;
     };
-    octal = {foreground = "#F1FA8C";};
-    flags = {foreground = "#A072C6";};
-    control_char = {foreground = "#F97359";};
-    symlink_path = {foreground = "#A072C6";};
+    octal = {foreground = palette.yellow.hex;};
+    flags = {foreground = palette.purple.hex;};
+    control_char = {foreground = palette.orange.hex;};
+    symlink_path = {foreground = palette.purple.hex;};
     broken_symlink = {
-      foreground = "#FF5555";
+      foreground = palette.red.hex;
       is_underline = true;
     };
-    broken_path_overlay = {foreground = "#F97359";};
+    broken_path_overlay = {foreground = palette.orange.hex;};
   };
 in {
   programs.eza = {

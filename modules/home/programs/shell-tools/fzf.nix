@@ -4,23 +4,10 @@
 # License       : MIT
 # Path          : /modules/home/programs/shell-tools/fzf.nix
 # ----------------------------------------------------------------------------
-# FZF configuration with proper integration
-_:
-# Dracula theme color reference
-# background    #15131F
-# current_line  #2A2640
-# selection     #44475A
-# foreground    #F8F8F2
-# comment       #6272A4
-# purple        #A072C6
-# cyan          #94F2E8
-# green         #50FA7B
-# yellow        #F1FA8C
-# orange        #F97359
-# red           #FF5555
-# magenta       #d82f94
-# pink          #E98FBE
-{
+# FZF configuration themed from the estate palette owner
+{config, ...}: let
+  inherit (config.forge.theme) palette;
+in {
   programs.fzf = {
     enable = true;
     enableZshIntegration = false; # Manual init in zsh/init.nix (before Atuin for proper Ctrl+R)
@@ -30,12 +17,12 @@ _:
     defaultCommand = "fd --type f --hidden --follow --exclude .git";
 
     defaultOptions = [
-      # Colors - Dracula theme
-      "--color=fg:#F8F8F2,fg+:#15131F,bg:#15131F,bg+:#94F2E8,selected-fg:#15131F,selected-bg:#94F2E8"
-      "--color=hl:#50FA7B,hl+:#d82f94,info:#6272A4,marker:#50FA7B"
-      "--color=prompt:#d82f94,spinner:#50FA7B,pointer:#d82f94,header:#6272A4"
-      "--color=gutter:#15131F,border:#94F2E8,separator:#E98FBE,scrollbar:#E98FBE"
-      "--color=preview-fg:#F8F8F2,preview-scrollbar:#E98FBE,label:#d82f94,query:#F8F8F2"
+      # Colors from the shared palette tokens
+      "--color=fg:${palette.foreground.hex},fg+:${palette.background.hex},bg:${palette.background.hex},bg+:${palette.cyan.hex},selected-fg:${palette.background.hex},selected-bg:${palette.cyan.hex}"
+      "--color=hl:${palette.green.hex},hl+:${palette.magenta.hex},info:${palette.comment.hex},marker:${palette.green.hex}"
+      "--color=prompt:${palette.magenta.hex},spinner:${palette.green.hex},pointer:${palette.magenta.hex},header:${palette.comment.hex}"
+      "--color=gutter:${palette.background.hex},border:${palette.cyan.hex},separator:${palette.pink.hex},scrollbar:${palette.pink.hex}"
+      "--color=preview-fg:${palette.foreground.hex},preview-scrollbar:${palette.pink.hex},label:${palette.magenta.hex},query:${palette.foreground.hex}"
       # Border and styling
       "--border=sharp"
       # Note: Border label set per-command in init.nix and shell.nix

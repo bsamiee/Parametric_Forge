@@ -9,6 +9,7 @@
   imports = [
     ./karabiner
     ./nvim
+    ./vscode
     ./wezterm
     ./yazi
     ./zellij

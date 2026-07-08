@@ -5,12 +5,16 @@
 # Path          : /modules/home/programs/shell-tools/bat.nix
 # ----------------------------------------------------------------------------
 # Cat clone with syntax highlighting and Git integration
-{pkgs, ...}: {
+{
+  config,
+  pkgs,
+  ...
+}: {
   programs.bat = {
     enable = true;
 
     config = {
-      theme = "Dracula";
+      theme = "forge-dracula";
       style = "numbers,changes,header,grid";
       wrap = "character";
       tabs = "4";
@@ -24,6 +28,10 @@
         "*.jsonc:JSON"
       ];
     };
+
+    # Owner-generated tmTheme; the activation cache build exposes it to bat
+    # and, through the bat cache, to delta's syntax-theme.
+    themes."forge-dracula".src = config.forge.theme.projections.tmThemeFile;
 
     extraPackages = with pkgs.bat-extras; [
       batman # Colored man pages

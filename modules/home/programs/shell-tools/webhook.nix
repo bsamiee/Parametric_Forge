@@ -8,6 +8,7 @@
 {
   config,
   lib,
+  pkgs,
   ...
 }: let
   webhookDir = "${config.xdg.configHome}/webhook";
@@ -33,15 +34,20 @@ in {
   # --- Example Hooks Template -------------------------------------------------
   xdg.configFile."webhook/hooks.example.json".text = builtins.toJSON exampleHooks;
 
-  # --- Activation: Ensure directory structure ---------------------------------
-  home.activation.ensureWebhookDirs = lib.hm.dag.entryAfter ["writeBoundary"] ''
-    mkdir -p "${webhookDir}/scripts"
-    chmod 700 "${webhookDir}"
-  '';
+  home = {
+    # --- Executable -----------------------------------------------------------
+    packages = [pkgs.webhook];
 
-  # --- Environment Variables --------------------------------------------------
-  home.sessionVariables = {
-    WEBHOOK_HOOKS_DIR = webhookDir;
-    WEBHOOK_PORT = "9000";
+    # --- Activation: Ensure directory structure --------------------------------
+    activation.ensureWebhookDirs = lib.hm.dag.entryAfter ["writeBoundary"] ''
+      mkdir -p "${webhookDir}/scripts"
+      chmod 700 "${webhookDir}"
+    '';
+
+    # --- Environment Variables --------------------------------------------------
+    sessionVariables = {
+      WEBHOOK_HOOKS_DIR = webhookDir;
+      WEBHOOK_PORT = "9000";
+    };
   };
 }

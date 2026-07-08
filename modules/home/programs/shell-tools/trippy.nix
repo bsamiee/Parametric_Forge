@@ -5,22 +5,12 @@
 # Path          : /modules/home/programs/shell-tools/trippy.nix
 # ----------------------------------------------------------------------------
 # Modern network diagnostic tool combining traceroute and ping
-{pkgs, ...}:
-# Dracula theme color reference
-# background    #15131F
-# current_line  #2A2640
-# selection     #44475A
-# foreground    #F8F8F2
-# comment       #6272A4
-# purple        #A072C6
-# cyan          #94F2E8
-# green         #50FA7B
-# yellow        #F1FA8C
-# orange        #F97359
-# red           #FF5555
-# magenta       #d82f94
-# pink          #E98FBE
-let
+{
+  config,
+  pkgs,
+  ...
+}: let
+  inherit (config.forge.theme) palette;
   tomlFormat = pkgs.formats.toml {};
 
   trippyConfig = {
@@ -33,42 +23,42 @@ let
     tui-max-samples = 256;
     tui-max-flows = 64;
 
-    # --- Dracula Theme Configuration ----------------------------------------
+    # --- Theme Configuration (estate palette tokens) -------------------------
     theme-colors = {
-      bg-color = "#15131F";
-      border-color = "#44475A";
-      text-color = "#F8F8F2";
-      tab-text-color = "#6272A4";
-      hops-table-header-bg-color = "#2A2640";
-      hops-table-header-text-color = "#94F2E8";
-      hops-table-row-active-text-color = "#F8F8F2";
-      hops-table-row-inactive-text-color = "#6272A4";
-      hops-chart-selected-color = "#50FA7B";
-      hops-chart-unselected-color = "#6272A4";
-      hops-chart-axis-color = "#6272A4";
-      frequency-chart-bar-color = "#A072C6";
-      frequency-chart-text-color = "#F8F8F2";
-      flows-chart-bar-selected-color = "#50FA7B";
-      flows-chart-bar-unselected-color = "#6272A4";
-      flows-chart-text-current-color = "#F1FA8C";
-      flows-chart-text-non-current-color = "#6272A4";
-      samples-chart-color = "#E98FBE";
-      samples-chart-lost-color = "#FF5555";
-      help-dialog-bg-color = "#2A2640";
-      help-dialog-text-color = "#F8F8F2";
-      settings-dialog-bg-color = "#2A2640";
-      settings-tab-text-color = "#6272A4";
-      settings-table-header-text-color = "#94F2E8";
-      settings-table-header-bg-color = "#2A2640";
-      settings-table-row-text-color = "#F8F8F2";
-      map-world-color = "#F8F8F2";
-      map-radius-color = "#F1FA8C";
-      map-selected-color = "#50FA7B";
-      map-info-panel-border-color = "#44475A";
-      map-info-panel-bg-color = "#15131F";
-      map-info-panel-text-color = "#F8F8F2";
-      info-bar-bg-color = "#2A2640";
-      info-bar-text-color = "#F8F8F2";
+      bg-color = palette.background.hex;
+      border-color = palette.selection.hex;
+      text-color = palette.foreground.hex;
+      tab-text-color = palette.comment.hex;
+      hops-table-header-bg-color = palette.current_line.hex;
+      hops-table-header-text-color = palette.cyan.hex;
+      hops-table-row-active-text-color = palette.foreground.hex;
+      hops-table-row-inactive-text-color = palette.comment.hex;
+      hops-chart-selected-color = palette.green.hex;
+      hops-chart-unselected-color = palette.comment.hex;
+      hops-chart-axis-color = palette.comment.hex;
+      frequency-chart-bar-color = palette.purple.hex;
+      frequency-chart-text-color = palette.foreground.hex;
+      flows-chart-bar-selected-color = palette.green.hex;
+      flows-chart-bar-unselected-color = palette.comment.hex;
+      flows-chart-text-current-color = palette.yellow.hex;
+      flows-chart-text-non-current-color = palette.comment.hex;
+      samples-chart-color = palette.pink.hex;
+      samples-chart-lost-color = palette.red.hex;
+      help-dialog-bg-color = palette.current_line.hex;
+      help-dialog-text-color = palette.foreground.hex;
+      settings-dialog-bg-color = palette.current_line.hex;
+      settings-tab-text-color = palette.comment.hex;
+      settings-table-header-text-color = palette.cyan.hex;
+      settings-table-header-bg-color = palette.current_line.hex;
+      settings-table-row-text-color = palette.foreground.hex;
+      map-world-color = palette.foreground.hex;
+      map-radius-color = palette.yellow.hex;
+      map-selected-color = palette.green.hex;
+      map-info-panel-border-color = palette.selection.hex;
+      map-info-panel-bg-color = palette.background.hex;
+      map-info-panel-text-color = palette.foreground.hex;
+      info-bar-bg-color = palette.current_line.hex;
+      info-bar-text-color = palette.foreground.hex;
     };
 
     # --- Key Bindings -------------------------------------------------------

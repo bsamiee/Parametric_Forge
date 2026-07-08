@@ -5,22 +5,9 @@
 # Path          : modules/home/programs/shell-tools/atuin.nix
 # ----------------------------------------------------------------------------
 # Modern shell history with SQLite backend and full-text search UI
-{config, ...}:
-# Dracula theme color reference
-# background    #15131F
-# current_line  #2A2640
-# selection     #44475A
-# foreground    #F8F8F2
-# comment       #6272A4
-# purple        #A072C6
-# cyan          #94F2E8
-# green         #50FA7B
-# yellow        #F1FA8C
-# orange        #F97359
-# red           #FF5555
-# magenta       #d82f94
-# pink          #E98FBE
-{
+{config, ...}: let
+  inherit (config.forge.theme) palette;
+in {
   programs.atuin = {
     enable = true;
     enableZshIntegration = false;
@@ -101,13 +88,13 @@
     name = "dracula"
 
     [colors]
-    Base = "#F8F8F2"
-    Title = "#E98FBE"
-    Annotation = "#6272A4"
-    Guidance = "#94F2E8"
-    Important = "#d82f94"
-    AlertInfo = "#50FA7B"
-    AlertWarn = "#F1FA8C"
-    AlertError = "#FF5555"
+    Base = "${palette.foreground.hex}"
+    Title = "${palette.pink.hex}"
+    Annotation = "${palette.comment.hex}"
+    Guidance = "${palette.cyan.hex}"
+    Important = "${palette.magenta.hex}"
+    AlertInfo = "${palette.green.hex}"
+    AlertWarn = "${palette.yellow.hex}"
+    AlertError = "${palette.red.hex}"
   '';
 }

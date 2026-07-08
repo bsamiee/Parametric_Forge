@@ -6,25 +6,12 @@
 # ----------------------------------------------------------------------------
 # Fast recursive search configuration
 {
+  config,
   lib,
   pkgs,
   ...
-}:
-# Dracula theme color reference
-# background    #15131F
-# current_line  #2A2640
-# selection     #44475A
-# foreground    #F8F8F2
-# comment       #6272A4
-# purple        #A072C6
-# cyan          #94F2E8
-# green         #50FA7B
-# yellow        #F1FA8C
-# orange        #F97359
-# red           #FF5555
-# magenta       #d82f94
-# pink          #E98FBE
-let
+}: let
+  inherit (config.forge.theme) palette;
   ripgrepConfig = [
     # --- Search Behavior ----------------------------------------------------
     "--smart-case"
@@ -48,16 +35,12 @@ let
     "--mmap" # Use memory-mapped I/O for large files
 
     # --- Visual formatting --------------------------------------------------
-    # Path: Cyan
-    "--colors=path:fg:117" # ANSI 117 = Dracula cyan (#94F2E8)
+    # Truecolor RGB triples from the palette tokens
+    "--colors=path:fg:${palette.cyan.csv}"
     "--colors=path:style:bold"
-
-    # Line/Column numbers: Comment gray
-    "--colors=line:fg:8" # ANSI 8 = Dracula comment (#6272A4)
-    "--colors=column:fg:8" # Keep consistent with line
-
-    # Match: Green
-    "--colors=match:fg:84" # ANSI 84 = Dracula green (#50FA7B)
+    "--colors=line:fg:${palette.comment.csv}"
+    "--colors=column:fg:${palette.comment.csv}"
+    "--colors=match:fg:${palette.green.csv}"
     "--colors=match:style:bold"
 
     # --- Type Definitions ---------------------------------------------------

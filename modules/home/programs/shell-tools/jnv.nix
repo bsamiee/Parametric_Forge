@@ -5,153 +5,107 @@
 # Path          : modules/home/programs/shell-tools/jnv.nix
 # ----------------------------------------------------------------------------
 # Interactive JSON filter using jaq (built-in replacement for jq)
-{pkgs, ...}:
-# Dracula theme color reference
-# background    #15131F
-# current_line  #2A2640
-# selection     #44475A
-# foreground    #F8F8F2
-# comment       #6272A4
-# purple        #A072C6
-# cyan          #94F2E8
-# green         #50FA7B
-# yellow        #F1FA8C
-# orange        #F97359
-# red           #FF5555
-# magenta       #d82f94
-# pink          #E98FBE
-let
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}: let
+  inherit (config.forge.theme) palette;
   tomlFormat = pkgs.formats.toml {};
+  # termcfg style strings: "fg=<hex>,bg=<hex>,attr=<token|token...>"
+  fg = c: "fg=${c.hex}";
 
   jnvConfig = {
     no_hint = false;
 
     editor = {
-      mode = "Insert";
-      word_break_chars = " \t\n!\"#$%&'()*+,-./:;<=>?@[\\]^`{|}~";
-      prefix = "󰅂 ";
-      prefix_style = {
-        fg = "#d82f94"; # magenta
-        bold = false;
+      on_focus = {
+        edit_mode = "Insert";
+        word_break_chars = lib.stringToCharacters " !\"#$%&'()*+,-./:;<=>?@[\\]^`{|}~";
+        prefix = "󰅂 ";
+        prefix_style = fg palette.magenta;
+        active_char_style = "fg=${palette.background.hex},bg=${palette.foreground.hex}";
+        inactive_char_style = "";
       };
-      active_char_style = {
-        fg = "#F8F8F2"; # foreground
-        bg = "#15131F"; # background
-        bold = false;
-      };
-      inactive_char_style = {
-        fg = "#F8F8F2"; # foreground
-        bg = "#15131F"; # background
-        bold = false;
+      on_defocus = {
+        prefix = "󰅂 ";
+        prefix_style = "fg=${palette.comment.hex},attr=dim";
+        active_char_style = "attr=dim";
+        inactive_char_style = "attr=dim";
       };
     };
 
     json = {
       max_streams = 1000;
-      indent = "  ";
-      brackets = {
-        style = {
-          fg = "#94F2E8"; # cyan
-          bold = false;
-        };
-      };
-      key = {
-        style = {
-          fg = "#50FA7B"; # green
-          bold = false;
-        };
-      };
-      string_value = {
-        style = {
-          fg = "#F1FA8C"; # yellow
-          bold = false;
-        };
-      };
-      number_value = {
-        style = {
-          fg = "#F97359"; # orange
-          bold = false;
-        };
-      };
-      null_value = {
-        style = {
-          fg = "#6272A4"; # comment
-          bold = false;
-        };
-      };
-      boolean_value = {
-        style = {
-          fg = "#d82f94"; # magenta
-          bold = false;
-        };
+      stream = {
+        indent = 2;
+        curly_brackets_style = fg palette.cyan;
+        square_brackets_style = fg palette.cyan;
+        key_style = fg palette.green;
+        string_value_style = fg palette.yellow;
+        number_value_style = fg palette.orange;
+        boolean_value_style = fg palette.magenta;
+        null_value_style = fg palette.comment;
+        active_item_attribute = "bold";
+        inactive_item_attribute = "dim";
+        overflow_mode = "Wrap";
       };
     };
 
     completion = {
-      lines = 10;
-      cursor = " ";
-      active_item = {
-        style = {
-          fg = "#15131F"; # background
-          bg = "#94F2E8"; # cyan
-          bold = false;
-        };
+      search_result_chunk_size = 100;
+      search_load_chunk_size = 50000;
+      listbox = {
+        lines = 10;
+        cursor = "❯ ";
+        active_item_style = "fg=${palette.background.hex},bg=${palette.cyan.hex}";
+        inactive_item_style = fg palette.foreground;
       };
-      inactive_item = {
-        style = {
-          fg = "#F8F8F2"; # foreground
-          bg = "#15131F"; # background
-          bold = false;
-        };
-      };
-      search_chunk_size = 100;
     };
 
     keybinds = {
-      app = {
-        exit = "Ctrl+C";
-        copy_query = "Ctrl+Q";
-        copy_json = "Ctrl+O";
-        switch_mode_up = "Shift+Up";
-        switch_mode_down = "Shift+Down";
+      exit = ["Ctrl+C"];
+      copy_query = ["Ctrl+Q"];
+      copy_result = ["Ctrl+O"];
+      switch_mode = ["Shift+Up" "Shift+Down"];
+      on_editor = {
+        backward = ["Left"];
+        forward = ["Right"];
+        move_to_head = ["Ctrl+A"];
+        move_to_tail = ["Ctrl+E"];
+        move_to_previous_nearest = ["Alt+B"];
+        move_to_next_nearest = ["Alt+F"];
+        erase = ["Backspace"];
+        erase_all = ["Ctrl+U"];
+        erase_to_previous_nearest = ["Ctrl+W"];
+        erase_to_next_nearest = ["Alt+D"];
+        completion = ["Tab"];
+        on_completion = {
+          up = ["Up"];
+          down = ["Down" "Tab"];
+        };
       };
-      editor = {
-        accept_suggestion = "Tab";
-        move_cursor_left = "Left";
-        move_cursor_right = "Right";
-        move_to_line_start = "Ctrl+A";
-        move_to_line_end = "Ctrl+E";
-        delete_char_backward = "Backspace";
-        clear_line = "Ctrl+U";
-        move_word_backward = "Alt+B";
-        move_word_forward = "Alt+F";
-        delete_word_backward = "Ctrl+W";
-        delete_word_forward = "Alt+D";
-      };
-      suggestion = {
-        next = "Tab";
-        previous = "Up";
-      };
-      json = {
-        move_up = "Up";
-        move_down = "Down";
-        move_up_alt = "Ctrl+K";
-        move_down_alt = "Ctrl+J";
-        move_to_last = "Ctrl+H";
-        move_to_first = "Ctrl+L";
-        toggle_fold = "Enter";
-        expand_all = "Ctrl+P";
-        collapse_all = "Ctrl+N";
+      on_json_viewer = {
+        up = ["Up" "Ctrl+K" "ScrollUp"];
+        down = ["Down" "Ctrl+J" "ScrollDown"];
+        move_to_head = ["Ctrl+L"];
+        move_to_tail = ["Ctrl+H"];
+        toggle = ["Enter"];
+        expand = ["Ctrl+P"];
+        collapse = ["Ctrl+N"];
       };
     };
 
     reactivity_control = {
-      query_debounce_duration_ms = 300;
-      resize_debounce_duration_ms = 100;
-      spinner_interval_ms = 100;
+      query_debounce_duration = "300ms";
+      resize_debounce_duration = "100ms";
+      spin_duration = "100ms";
     };
   };
 in {
   home.packages = [pkgs.jnv];
-  xdg.configFile."jnv/config.toml".source = tomlFormat.generate "jnv-config" jnvConfig;
+  # dirs-crate config location on macOS; the XDG path is never consulted.
+  home.file."Library/Application Support/jnv/config.toml".source =
+    tomlFormat.generate "jnv-config" jnvConfig;
 }

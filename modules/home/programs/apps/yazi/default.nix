@@ -4,7 +4,7 @@
 # License       : MIT
 # Path          : modules/home/programs/apps/yazi/default.nix
 # ----------------------------------------------------------------------------
-# Yazi file manager: pinned official plugin monorepo, dracula flavor, RAR 7zz
+# Yazi file manager: pinned official plugin monorepo, generated theme, RAR 7zz
 {pkgs, ...}: let
   yaziPkg = pkgs.yazi.override {
     _7zz = pkgs._7zz-rar; # Prefer RAR-capable 7zip for archive support
@@ -16,14 +16,9 @@
     rev = "8cd50c622898d3ace3ca821f540241965308289a";
     hash = "sha256-f4y952sUF/lrHMX6enQts/obk2DeatqAcaVHfjTD65k=";
   };
-
-  officialFlavors = pkgs.fetchFromGitHub {
-    owner = "yazi-rs";
-    repo = "flavors";
-    rev = "4770a3467169bfdb0a3b11601921aaf27c100630";
-    hash = "sha256-erZI0H5TxqFu2P917juL5PIB3LC0oJGKPcB1VibJDqo=";
-  };
 in {
+  imports = [./theme.nix];
+
   programs.yazi = {
     enable = true;
     enableZshIntegration = true;
@@ -45,14 +40,11 @@ in {
         hash = "sha256-sB2t3Gg+WdPG6OE8pD6VovD+x9nN21Jn8XydZZdTqCg=";
       };
     };
-
-    flavors.dracula = "${officialFlavors}/dracula.yazi";
   };
 
   xdg.configFile = {
     "yazi/yazi.toml".source = ./yazi.toml;
     "yazi/keymap.toml".source = ./keymap.toml;
     "yazi/init.lua".source = ./init.lua;
-    "yazi/theme.toml".source = ./theme.toml;
   };
 }
