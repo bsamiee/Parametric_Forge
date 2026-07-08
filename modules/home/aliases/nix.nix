@@ -11,11 +11,12 @@ _: {
     drs = "forge-redeploy --switch"; # Check, build, diff, then switch macbook config
     drb = "forge-redeploy --build"; # Check and build macbook config
     drc = "forge-redeploy --check-only"; # Check macbook configuration and build proof
+    drr = "forge-redeploy --rollback"; # Reactivate the previous system generation
+    drg = "forge-redeploy --generations"; # List system generations
 
     # --- Nix Operations -----------------------------------------------------
     ns = "nix search nixpkgs"; # Search for packages
     nw = "nix-locate -w"; # Find package providing command
-    nc = "sudo nix-collect-garbage -d && nix store optimise"; # Deep clean + optimize store
     nconfig = "nix config show"; # Show Nix configuration
     ncheck = "nix config check"; # Check Nix config for potential problems and print a PASS or FAIL for each check
     nparse = "nix-instantiate --parse"; # Parse Nix expressions

@@ -84,10 +84,15 @@ in {
       %admin ALL=(root) NOPASSWD: /bin/launchctl *
       %admin ALL=(root) NOPASSWD: /usr/bin/osascript *
 
-      # Allow darwin-rebuild without password (match absolute paths)
-      # SETENV allows passing NIX_CONFIG for flakes support from HS
-      %admin ALL=(root) NOPASSWD: /run/current-system/sw/bin/darwin-rebuild *
-      %admin ALL=(root) NOPASSWD: /nix/var/nix/profiles/default/bin/darwin-rebuild *
+      # Deploy rail: regex rows pin every argv exactly (arg globs match spaces
+      # and slashes, regex rows do not) — lifecycle verbs on the installed
+      # darwin-rebuild, exact-closure activation, profile registration
+      %admin ALL=(root) NOPASSWD: /run/current-system/sw/bin/darwin-rebuild ^(--list-generations|--rollback|--switch-generation [0-9]+)$
+      %admin ALL=(root) NOPASSWD: ^/nix/store/[a-z0-9]{32}-darwin-system-[^/]+/sw/bin/darwin-rebuild$ activate
+      %admin ALL=(root) NOPASSWD: /nix/var/nix/profiles/default/bin/nix-env ^-p /nix/var/nix/profiles/system --set /nix/store/[a-z0-9]{32}-darwin-system-[^[:space:]/]+$
+
+      # Maintenance rail: bounded system-generation retention (exact args)
+      %admin ALL=(root) NOPASSWD: /nix/var/nix/profiles/default/bin/nix-env -p /nix/var/nix/profiles/system --delete-generations +5
 
       # Determinate custom-config adoption: move the installer-written real file
       # aside so activation's /etc collision guard passes (module owns the symlink)

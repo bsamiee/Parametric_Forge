@@ -14,6 +14,10 @@ in {
   determinateNix = {
     enable = true;
 
+    # Background GC is determinate-nixd-owned (free-space targeted); the
+    # forge-nix-maintenance agent owns generation retention and optimise.
+    determinateNixd.garbageCollector.strategy = "automatic";
+
     customSettings = {
       # Local admin group; @wheel holds only root on this host.
       trusted-users = ["root" "@admin"];
@@ -35,6 +39,7 @@ in {
       connect-timeout = 10;
 
       # --- Store Management -------------------------------------------------
+      # Client-side pressure floor backing the determinate-nixd automatic GC.
       min-free = lib.mkDefault (gib 5);
       max-free = lib.mkDefault (gib 50);
 
