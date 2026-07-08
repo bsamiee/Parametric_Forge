@@ -16,7 +16,6 @@
     home = config.home.homeDirectory;
     username = config.home.username;
     xdgCacheHome = config.xdg.cacheHome;
-    xdgDataHome = config.xdg.dataHome;
   };
 in {
   home.sessionVariables =

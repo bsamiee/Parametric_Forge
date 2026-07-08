@@ -17,6 +17,9 @@ in {
     specialArgs = {inherit inputs;}; # Pass inputs to modules
 
     modules = [
+      # Determinate Nix owner: forces nix.enable = false, generates /etc/nix/nix.custom.conf
+      inputs.determinate.darwinModules.default
+
       # Common configuration (includes Nix and Theme)
       ../../modules/common
 

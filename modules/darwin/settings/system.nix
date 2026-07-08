@@ -19,7 +19,6 @@
     home = primaryUserHome;
     username = primaryUser;
     xdgCacheHome = "${primaryUserHome}/.cache";
-    xdgDataHome = "${primaryUserHome}/.local/share";
   };
 in {
   system.defaults = {

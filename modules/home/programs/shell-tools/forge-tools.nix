@@ -8,7 +8,8 @@
 {pkgs, ...}: let
   forgeRedeploy = pkgs.writeShellApplication {
     name = "forge-redeploy";
-    runtimeInputs = [pkgs.coreutils pkgs.git pkgs.nix pkgs.nix-output-monitor];
+    # No pkgs.nix: Determinate nix resolves from PATH so eval-cores/lazy-trees stay known settings.
+    runtimeInputs = [pkgs.coreutils pkgs.git pkgs.nh pkgs.nix-output-monitor pkgs.dix pkgs.nvd pkgs.cachix];
     text = ''
       mode="check"
       case "''${1:-}" in
@@ -32,29 +33,60 @@
       esac
 
       forge_root="''${FORGE_ROOT:-$HOME/Documents/99.Github/Parametric_Forge}"
+      host="''${FORGE_DARWIN_HOST:-macbook}"
+      cache="''${CACHIX_CACHE:-bsamiee}"
+      elevation="''${FORGE_REDEPLOY_ELEVATION:-''${NH_ELEVATION_STRATEGY:-auto}}"
+      secrets_file="''${FORGE_SECRETS_FILE:-''${XDG_CONFIG_HOME:-$HOME/.config}/hm-op-session.sh}"
+
       [ -f "$forge_root/flake.nix" ] || {
         printf 'forge-redeploy: missing flake root: %s\n' "$forge_root" >&2
         exit 1
       }
       cd "$forge_root"
 
+      printf 'forge-redeploy: nix=%s\n' "$(command -v nix)"
       nix flake check --print-build-logs
-      nom build .#darwinConfigurations.macbook.system --no-link
-      system_path="$(nix build .#darwinConfigurations.macbook.system --no-link --print-out-paths)"
-      if [ -e /run/current-system ]; then
-        nix store diff-closures /run/current-system "$system_path" || true
-      fi
+
+      tmpdir="$(mktemp -d "''${TMPDIR:-/tmp}/forge-redeploy.XXXXXX")"
+      trap 'rm -rf "$tmpdir"' EXIT
+      out_link="$tmpdir/system"
+
+      # Token via single env indirection: ambient CACHIX_AUTH_TOKEN wins, secrets file
+      # (FORGE_SECRETS_FILE) is the fallback, absence degrades to a skipped push.
+      push_cache() {
+        if [ -z "''${CACHIX_AUTH_TOKEN:-}" ] && [ -f "$secrets_file" ]; then
+          # shellcheck source=/dev/null
+          . "$secrets_file" || true
+        fi
+        if [ -z "''${CACHIX_AUTH_TOKEN:-}" ]; then
+          printf 'forge-redeploy: cache push skipped: CACHIX_AUTH_TOKEN unset\n' >&2
+          return 0
+        fi
+        cachix push "$cache" "$1"
+      }
+
+      diff_closure() {
+        [ -e /run/current-system ] || return 0
+        dix /run/current-system "$1" || nvd diff /run/current-system "$1" || true
+      }
 
       case "$mode" in
-        check)
-          printf 'forge-redeploy: check-only ok system=%s\n' "$system_path"
+        check | build)
+          nh darwin build --hostname "$host" --out-link "$out_link" --diff never "$forge_root"
+          system_path="$(readlink -f "$out_link")"
+          diff_closure "$system_path"
+          if [ "$mode" = "build" ]; then
+            push_cache "$system_path"
+          fi
+          printf 'forge-redeploy: %s ok system=%s\n' "$mode" "$system_path"
           ;;
-         build)
-           printf 'forge-redeploy: build ok system=%s\n' "$system_path"
-           ;;
-         switch)
-           sudo -n /run/current-system/sw/bin/darwin-rebuild switch --flake "$forge_root#macbook" |& nom
-           ;;
+        switch)
+          nh darwin switch --hostname "$host" --out-link "$out_link" --diff always \
+            --show-activation-logs --elevation-strategy "$elevation" "$forge_root"
+          system_path="$(readlink -f "$out_link")"
+          push_cache "$system_path"
+          printf 'forge-redeploy: switch ok system=%s\n' "$system_path"
+          ;;
       esac
     '';
   };

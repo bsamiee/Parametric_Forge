@@ -23,7 +23,6 @@
     home = config.home.homeDirectory;
     username = config.home.username;
     xdgCacheHome = config.xdg.cacheHome;
-    xdgDataHome = config.xdg.dataHome;
   };
 
   nativeBuildTools = with pkgs; [

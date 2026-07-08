@@ -33,7 +33,7 @@ Parametric Forge is a deterministic macOS workspace built with Nix flakes, nix-d
 ├── hosts/
 │   └── darwin/default.nix          # MacBook host: nix-darwin + Home Manager
 ├── modules/
-│   ├── common/                     # Nix daemon perf/cache + Cachix post-build hook
+│   ├── common/                     # Determinate Nix custom settings + shared toolchain env
 │   ├── darwin/                     # macOS defaults, fonts, homebrew taps/brews/casks
 │   └── home/                       # Home Manager: XDG, env, aliases, programs, scripts, assets
 │       ├── assets/                 # ASCII + carbon sources/renders
@@ -164,7 +164,7 @@ Parametric Forge is a deterministic macOS workspace built with Nix flakes, nix-d
     <li><strong>Provisioner smoke:</strong> <code>nix run .#forge-provision -- self-test</code>, plus read-only JSON smoke for <code>env</code>, <code>plan</code>, and <code>extensions</code> when touching provisioning</li>
     <li><strong>Host activation:</strong> <code>forge-redeploy --switch</code> from the repository root after the wrapper proof and closure diff are reviewed</li>
     <li><strong>Update inputs:</strong> <code>nix flake update</code></li>
-    <li><strong>Cache push:</strong> automatic via post-build hook when <code>CACHIX_AUTH_TOKEN</code> is present</li>
+    <li><strong>Cache push:</strong> <code>forge-redeploy --build|--switch</code> pushes the system closure to Cachix when <code>CACHIX_AUTH_TOKEN</code> resolves; absent token degrades to a skipped push</li>
   </ul>
 </div>
 

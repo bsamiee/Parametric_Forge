@@ -50,18 +50,4 @@ final: prev: {
   };
   sqlite-forge = final.callPackage ./sqlite-forge {};
   sqlean = prev.callPackage ./sqlean {};
-  uv = prev.uv.overrideAttrs (_old: rec {
-    version = "0.11.25";
-    src = prev.fetchFromGitHub {
-      owner = "astral-sh";
-      repo = "uv";
-      tag = version;
-      hash = "sha256-MtfaDZ6dDuTTBus9KKj5r03IHo48AmEcsU+VlAW3l68=";
-    };
-    cargoHash = "sha256-dtkGj/de34HbdFPQbSWBHZGZmif2xQmUS8qqEyFTnmc=";
-    cargoDeps = prev.rustPlatform.fetchCargoVendor {
-      inherit src;
-      hash = cargoHash;
-    };
-  });
 }

@@ -4,15 +4,13 @@
   home,
   username,
   xdgCacheHome,
-  xdgDataHome,
 }: let
+  # Only provisioned directories: useUserPackages replaces ~/.nix-profile with
+  # /etc/profiles; cargo/go user bins return here only once something provisions them.
   userPathEntries = [
-    "${home}/.nix-profile/bin"
     "${home}/.local/bin"
     "${home}/bin"
     "${home}/.dotnet/tools"
-    "${xdgDataHome}/cargo/bin"
-    "${xdgDataHome}/go/bin"
     "/etc/profiles/per-user/${username}/bin"
     "/run/current-system/sw/bin"
     "/nix/var/nix/profiles/default/bin"
