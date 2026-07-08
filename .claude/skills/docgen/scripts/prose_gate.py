@@ -21,6 +21,7 @@ import msgspec
 # --- [TYPES] -----------------------------------------------------------------------------
 
 type Status = Literal["ok", "warn", "fail"]
+type Align = Literal["center", "left", "right", "none"]
 
 
 class Check(StrEnum):
@@ -39,6 +40,7 @@ class Check(StrEnum):
     READ = "read"
     SELF_COUNT = "self-count"
     SETEXT_HEADING = "setext-heading"
+    TABLE_ALIGN = "table-align"
     TABLE_CELL = "table-cell"
     TABLE_HEADER = "table-header"
     TABLE_INDEX = "table-index"
@@ -127,6 +129,7 @@ class Span(msgspec.Struct, frozen=True):
 class Table(msgspec.Struct, frozen=True):
     line: int
     headers: tuple[str, ...]
+    aligns: tuple[Align, ...]
     rows: tuple[tuple[str, ...], ...]
 
 
@@ -209,6 +212,11 @@ def split_cells(line: str) -> tuple[str, ...]:
     return tuple(cells)
 
 
+def aligned(cell: str) -> Align:
+    left, right = cell.startswith(":"), cell.endswith(":")
+    return "center" if left and right else "left" if left else "right" if right else "none"
+
+
 def prose_spans(line: str, number: int) -> tuple[Span, ...]:
     pieces: list[str] = []
     index = 0
@@ -278,12 +286,13 @@ def lex(path: Path, text: str, cap: int) -> tuple[Document | None, tuple[Row, ..
             rows.append(row(path, number, Check.SETEXT_HEADING, "fail", "setext heading marker"))
         if line.lstrip().startswith("|") and n + 1 < len(raw) and TABLE_SEP.match(raw[n + 1]):
             headers = split_cells(line)
+            aligns = tuple(aligned(cell) for cell in split_cells(raw[n + 1]))
             body: list[tuple[str, ...]] = []
             cursor = n + 2
             while cursor < len(raw) and raw[cursor].lstrip().startswith("|"):
                 body.append(split_cells(raw[cursor]))
                 cursor += 1
-            tables.append(Table(number, headers, tuple(body)))
+            tables.append(Table(number, headers, aligns, tuple(body)))
             n = cursor
             continue
         links.extend(LinkRef(number, link.group(2)) for link in LINK.finditer(line))
@@ -309,15 +318,28 @@ def lex(path: Path, text: str, cap: int) -> tuple[Document | None, tuple[Row, ..
 def table_rows(doc: Document) -> tuple[Row, ...]:
     rows: list[Row] = []
     for table in doc.tables:
+        sep_line = table.line + 1
+        indexed = bool(table.headers) and table.headers[0] == "[INDEX]"
         rows.extend(row(doc.path, table.line, Check.TABLE_HEADER, "fail", cell or "<empty>") for cell in table.headers if not HEADER_CELL.match(cell))
+        if len(table.aligns) != len(table.headers):
+            rows.append(
+                row(doc.path, sep_line, Check.TABLE_ALIGN, "fail", f"separator cells {len(table.aligns)} != header cells {len(table.headers)}")
+            )
+        rows.extend(
+            row(doc.path, sep_line, Check.TABLE_ALIGN, "fail", f"column {position} carries no explicit alignment colon")
+            for position, align in enumerate(table.aligns, 1)
+            if align == "none"
+        )
         for index, body in enumerate(table.rows, 1):
             if len(body) != len(table.headers):
                 rows.append(
                     row(doc.path, table.line + index + 1, Check.TABLE_SHAPE, "fail", f"row cells {len(body)} != header cells {len(table.headers)}")
                 )
-        if len(table.rows) >= 2 and (not table.headers or table.headers[0] != "[INDEX]"):
+        if len(table.rows) >= 2 and not indexed:
             rows.append(row(doc.path, table.line, Check.TABLE_INDEX, "fail", "enumerable table lacks leading [INDEX]"))
-        if table.headers and table.headers[0] == "[INDEX]":
+        if indexed:
+            if table.aligns and table.aligns[0] != "center":
+                rows.append(row(doc.path, sep_line, Check.TABLE_INDEX, "fail", f"[INDEX] column is {table.aligns[0]}-aligned, not centered"))
             for index, body in enumerate(table.rows, 1):
                 expected = f"[{index:02}]"
                 actual = body[0] if body else "<empty>"
