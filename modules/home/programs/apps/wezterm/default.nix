@@ -23,7 +23,7 @@ in {
     "wezterm/palette.lua".text = ''
       -- Generated from programs.zellij.colors, the shared Forge Dracula owner.
       return {
-      ${lib.concatStrings (lib.mapAttrsToList (name: c: "  ${name} = \"${c.hex}\",\n") colors)}}
+      ${lib.concatStrings (lib.mapAttrsToList (name: c: "  [\"${name}\"] = \"${c.hex}\",\n") colors)}}
     '';
   };
 }

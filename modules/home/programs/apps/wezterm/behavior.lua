@@ -23,8 +23,12 @@ function M.apply(config, theme)
     config.command_palette_bg_color = palette.current_line or palette.background
     config.command_palette_fg_color = palette.cyan or palette.foreground
     config.command_palette_rows = 10
-    config.command_palette_font = font.family -- Nightly-only: match terminal fallback stack
     config.command_palette_font_size = font.size or config.font_size or 10
+    -- Nightly-only keys stay behind a version gate so the stable binary loads
+    -- this config warning-free during the migration window
+    if wezterm.version:sub(1, 8) > "20240203" then
+      config.command_palette_font = font.family
+    end
 
     -- Behaviour --------------------------------------------------------------
     config.automatically_reload_config = true

@@ -5,7 +5,9 @@
 # Path          : modules/home/scripts/integration/default.nix
 # ----------------------------------------------------------------------------
 # Yazi -> Zellij -> Neovim rail: popup dispatcher, RPC handoff, server owner.
-# Pane targeting is ID-based via list-panes JSON; never ordinal focus.
+# Pane targeting is ID-based via list-panes JSON; never ordinal focus and
+# never layer-global floating toggles. terminal_command is the spawn command
+# (invoked_with), so exec inside a pane never breaks pane rediscovery.
 {
   config,
   lib,
@@ -30,15 +32,26 @@
       runtime_root="''${XDG_RUNTIME_DIR:-/tmp}/forge-edit/''${session}"
       mkdir -p "$runtime_root"
 
-      tab_id="$(zellij action list-panes --all --json \
-        | jq -r --arg self "$pane_id" \
-          '[.[] | select((.is_plugin | not) and ((.id | tostring) == $self))][0].tab_id // 0')"
+      # Tab resolution can lag pane creation at layout startup; retry briefly
+      # and skip registry publication rather than poisoning a tab-0 entry.
+      tab_id=""
+      for _ in 1 2 3 4 5 6 7 8 9 10; do
+        tab_id="$(zellij action list-panes --all --json 2>/dev/null \
+          | jq -r --arg self "$pane_id" \
+            '[.[] | select((.is_plugin | not) and ((.id | tostring) == $self))][0].tab_id // empty' \
+          || true)"
+        if [[ -n "$tab_id" ]]; then
+          break
+        fi
+        sleep 0.1
+      done
 
-      socket="''${runtime_root}/tab-''${tab_id}-pane-''${pane_id}.sock"
+      socket="''${runtime_root}/pane-''${pane_id}.sock"
       rm -f "$socket"
-      printf '%s\t%s\t%s\n' "$tab_id" "$pane_id" "$socket" \
-        >"''${runtime_root}/editor-tab-''${tab_id}.tsv"
-
+      if [[ -n "$tab_id" ]]; then
+        printf '%s\t%s\t%s\n' "$tab_id" "$pane_id" "$socket" \
+          >"''${runtime_root}/editor-tab-''${tab_id}.tsv"
+      fi
       exec nvim --listen "$socket" "$@"
     '';
   };
@@ -59,10 +72,9 @@
       caller="''${ZELLIJ_PANE_ID:-}"
       runtime_root="''${XDG_RUNTIME_DIR:-/tmp}/forge-edit/''${session}"
       panes="$(zellij action list-panes --all --json)"
-      self_row="$(jq -r --arg self "$caller" \
-        '[.[] | select((.is_plugin | not) and ((.id | tostring) == $self))][0]' <<<"$panes")"
-      tab_id="$(jq -r '.tab_id // 0' <<<"$self_row")"
-      caller_floating="$(jq -r '.is_floating // false' <<<"$self_row")"
+      caller_row="$(jq -c --arg self "$caller" \
+        '[.[] | select((.is_plugin | not) and ((.id | tostring) == $self))][0] // {}' <<<"$panes")"
+      tab_id="$(jq -r '.tab_id // 0' <<<"$caller_row")"
 
       editor_pane=""
       socket=""
@@ -71,19 +83,36 @@
         IFS=$'\t' read -r _ editor_pane socket <"$registry" || true
       fi
 
-      if [[ -n "$socket" && -S "$socket" ]] \
-        && nvim --server "$socket" --remote-expr '1' >/dev/null 2>&1; then
-        nvim --server "$socket" --remote "$@"
-      else
+      # Registry hit counts only if the recorded pane still lives in this tab
+      # AND the socket answers AND the remote open succeeds; any miss or race
+      # falls through to a fresh editor pane.
+      handed_off="false"
+      if [[ -n "$editor_pane" && -n "$socket" && -S "$socket" ]]; then
+        pane_alive="$(jq -r --arg id "$editor_pane" --argjson tab "$tab_id" \
+          '[.[] | select((.is_plugin | not) and ((.id | tostring) == $id)
+            and (.tab_id == $tab) and (.exited | not))] | length > 0' <<<"$panes")"
+        if [[ "$pane_alive" == "true" ]] \
+          && nvim --server "$socket" --remote-expr '1' >/dev/null 2>&1 \
+          && nvim --server "$socket" --remote "$@" >/dev/null 2>&1; then
+          handed_off="true"
+        fi
+      fi
+      if [[ "$handed_off" != "true" ]]; then
         editor_pane="$(zellij action new-pane --name " [EDITOR] " --cwd "$PWD" -- forge-nvim.sh "$@")"
       fi
 
-      # Floating caller means the Yazi popup: dismiss it before focusing the editor
-      if [[ "$caller_floating" == "true" ]]; then
-        zellij action hide-floating-panes >/dev/null 2>&1 || true
-      fi
+      # Focusing the tiled editor lowers the floating layer without touching
+      # other floating panes.
       if [[ -n "$editor_pane" ]]; then
         zellij action focus-pane-id "terminal_''${editor_pane#terminal_}" >/dev/null 2>&1 || true
+      fi
+
+      # Pane-scoped dismissal: close only the Forge popup we ran inside; this
+      # kills our own process tree, so it must stay the final statement.
+      caller_is_popup="$(jq -r \
+        '((.is_floating // false) and ((.terminal_command // "") | test("forge-yazi")))' <<<"$caller_row")"
+      if [[ "$caller_is_popup" == "true" ]]; then
+        zellij action close-pane --pane-id "terminal_''${caller}" >/dev/null 2>&1 || true
       fi
     '';
   };
@@ -107,20 +136,26 @@
       panes="$(zellij action list-panes --all --json)"
       tab_id="$(jq -r --arg self "$self" \
         '[.[] | select((.is_plugin | not) and ((.id | tostring) == $self))][0].tab_id // 0' <<<"$panes")"
-      popup="$(jq -r --arg self "$self" --argjson tab "$tab_id" \
+      popup_row="$(jq -c --arg self "$self" --argjson tab "$tab_id" \
         '[.[] | select((.is_plugin | not) and (.exited | not) and (.tab_id == $tab)
           and ((.id | tostring) != $self)
           and ((.terminal_command // "") | test("forge-yazi"))
-          and (((.terminal_command // "") | test("toggle")) | not))][0].id // empty' <<<"$panes")"
+          and (((.terminal_command // "") | test("toggle")) | not))][0] // {}' <<<"$panes")"
+      popup="$(jq -r '.id // empty' <<<"$popup_row")"
 
       if [[ -z "$popup" ]]; then
-        zellij action new-pane --floating --pinned true \
+        created="$(zellij action new-pane --floating --pinned true \
           -x "8%" -y "6%" --width "84%" --height "86%" \
-          --name " [YAZI] " --close-on-exit --cwd "$PWD" -- forge-yazi.sh
-      elif zellij action are-floating-panes-visible >/dev/null 2>&1; then
-        zellij action hide-floating-panes
+          --name " [YAZI] " --close-on-exit --cwd "$PWD" -- forge-yazi.sh)"
+        zellij action focus-pane-id "$created" >/dev/null 2>&1 || true
+      elif [[ "$(jq -r '.is_suppressed // false' <<<"$popup_row")" == "true" ]]; then
+        # The in-place dispatcher replaced the focused popup: chord means
+        # dismiss. Lower the layer first (restores the hide_floating_panes
+        # baseline), then close only the popup pane.
+        zellij action hide-floating-panes >/dev/null 2>&1 || true
+        zellij action close-pane --pane-id "terminal_''${popup}"
       else
-        zellij action show-floating-panes
+        # Focusing a floating pane surfaces the floating layer
         zellij action focus-pane-id "terminal_''${popup}"
       fi
     '';
@@ -148,7 +183,8 @@
       if [[ -z "$selection" ]]; then
         exit 0
       fi
-      ya emit cd "$(printf %q "$selection")"
+      # ya emit passes argv structurally; the raw path is one argument
+      ya emit cd "$selection"
     '';
   };
 in {

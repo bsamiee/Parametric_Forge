@@ -111,13 +111,27 @@
     rules = chordRules;
   });
 
-  stageFile = target: source: ''
-    tmp="${target}.hm-tmp"
-    if [ -L "${target}" ]; then
-      rm -f "${target}"
-    fi
-    install -m 600 ${source} "$tmp"
-    if [ ! -f "${target}" ] || ! cmp -s "$tmp" "${target}"; then
+  jq = "${pkgs.jq}/bin/jq";
+
+  # Karabiner persists runtime state (profiles[].devices, root global) into
+  # karabiner.json; merge those app-owned subtrees from the live file so the
+  # declarative document owns rules without destroying GUI-side device state.
+  mergeProgram = ''
+    ($live[0]) as $l
+    | . + (if ($l | has("global")) then {global: $l.global} else {} end)
+    | .profiles |= map(
+        . as $p
+        | (first($l.profiles[]? | select(.name == $p.name)) // {}) as $m
+        | $p + (if ($m | has("devices")) then {devices: $m.devices} else {} end)
+      )
+  '';
+
+  # Atomic write-if-changed: mktemp in the target directory, compare, rename.
+  stageFile = target: renderTmp: ''
+    tmp="$(mktemp "${target}.XXXXXX")"
+    ${renderTmp}
+    chmod 600 "$tmp"
+    if ! cmp -s "$tmp" "${target}" 2>/dev/null; then
       mv "$tmp" "${target}"
     else
       rm -f "$tmp"
@@ -125,15 +139,32 @@
     chmod 600 "${target}"
   '';
 in {
-  # Symlinks break Karabiner change detection; refuse a symlinked parent and
-  # stage real writable files in place.
+  # Symlinks anywhere on the config path break Karabiner change detection;
+  # refuse them and stage real writable files in place.
   home.activation.ensureKarabinerConfig = lib.hm.dag.entryAfter ["linkGeneration"] ''
-    if [ -L "${cfgDir}" ]; then
-      echo "refusing symlinked Karabiner config directory: ${cfgDir}" >&2
-      exit 1
-    fi
+    refuse_symlink() {
+      if [ -L "$1" ]; then
+        echo "refusing symlinked Karabiner path: $1" >&2
+        exit 1
+      fi
+    }
+    refuse_symlink "${config.xdg.configHome}"
+    refuse_symlink "${cfgDir}"
     mkdir -p "${assetDir}"
-    ${stageFile "${cfgDir}/karabiner.json" karabinerJson}
-    ${stageFile "${assetDir}/parametric-forge-chords.json" stagedAssetJson}
+    refuse_symlink "${cfgDir}/assets"
+    refuse_symlink "${assetDir}"
+    refuse_symlink "${cfgDir}/karabiner.json"
+    refuse_symlink "${assetDir}/parametric-forge-chords.json"
+
+    ${stageFile "${cfgDir}/karabiner.json" ''
+      if [ -f "${cfgDir}/karabiner.json" ] && ${jq} -e . "${cfgDir}/karabiner.json" >/dev/null 2>&1; then
+        ${jq} --slurpfile live "${cfgDir}/karabiner.json" '${mergeProgram}' ${karabinerJson} >"$tmp"
+      else
+        cat ${karabinerJson} >"$tmp"
+      fi
+    ''}
+    ${stageFile "${assetDir}/parametric-forge-chords.json" ''
+      cat ${stagedAssetJson} >"$tmp"
+    ''}
   '';
 }
