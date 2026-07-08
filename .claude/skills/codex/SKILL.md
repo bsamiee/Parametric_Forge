@@ -90,4 +90,4 @@ Independent scopes run as concurrent `codex exec` processes, one per scope, each
 
 ## Judgment
 
-Codex output is a colleague's, not an oracle's. Verify load-bearing claims against source or current documentation before acting on them; push back through a session resume, identified as Claude, with evidence — either model can be wrong. A non-zero exit is reported verbatim; retry only with a changed command.
+Codex output is a colleague's, not an oracle's. Verify load-bearing claims against source or current documentation before acting on them; push back through a session resume, identified as Claude, with evidence — either model can be wrong. A non-zero exit is reported verbatim; retry only with a changed command. A run that dies with "ran out of room in the model's context window" is OVER-SCOPED, not transient — split the task into narrower sequential lanes (research vs design; sweep vs synthesis) whose later lanes read the earlier lanes' report files; relaunching as-is fails identically.
