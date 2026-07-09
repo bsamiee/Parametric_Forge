@@ -1,26 +1,20 @@
 ---
 name: tavily-research
-description: |
-  Conduct comprehensive AI-powered research with citations via the Tavily CLI. Use this skill when the user wants deep research, a detailed report, a comparison, market analysis, literature review, or says "research", "investigate", "analyze in depth", "compare X vs Y", "what does the market look like for", or needs multi-source synthesis with explicit citations. Returns a structured report grounded in web sources. Takes 30-120 seconds. For quick fact-finding, use tavily-search instead.
+description: >-
+  Comprehensive AI-powered research with citations via the Tavily CLI: a structured report
+  grounded in web sources, taking 30-120 seconds. Use for deep research, detailed reports,
+  comparisons, market analysis, or literature review — "research", "investigate", "analyze
+  in depth", "compare X vs Y", "what does the market look like for" — whenever multi-source
+  synthesis with explicit citations is the deliverable. Quick fact-finding and filtered
+  lookups belong to tavily-dynamic-search.
 allowed-tools: Bash(uvx *)
 ---
 
-# tavily research
+# [TAVILY_RESEARCH]
 
-AI-powered deep research that gathers sources, analyzes them, and produces a cited report. Takes 30-120 seconds.
+AI-powered deep research that gathers sources, analyzes them, and returns a cited report in 30-120 seconds. Invocation rides `uvx --from tavily-cli tvly research …` with ambient `TAVILY_API_KEY`; the tavily-dynamic-search skill owns the family invocation law.
 
-## Invocation
-
-Run the CLI on demand through uv — every `tvly` command below is invoked as `uvx --from tavily-cli tvly …`. No install step: uv resolves and caches the CLI on first use, and auth is read from the ambient `TAVILY_API_KEY` (no `tvly login`).
-
-## When to use
-
-- You need comprehensive, multi-source analysis
-- The user wants a comparison, market report, or literature review
-- Quick searches aren't enough — you need synthesis with citations
-- Step 5 in the [workflow](../tavily-best-practices/SKILL.md): dynamic-search → extract → map → crawl → **research**
-
-## Quick start
+## [01]-[USAGE]
 
 ```bash
 # Basic research (waits for completion)
@@ -29,64 +23,49 @@ uvx --from tavily-cli tvly research "competitive landscape of AI code assistants
 # Pro model for comprehensive analysis
 uvx --from tavily-cli tvly research "electric vehicle market analysis" --model pro
 
-# Stream results in real-time
+# Stream results in real time
 uvx --from tavily-cli tvly research "AI agent frameworks comparison" --stream
 
 # Save report to file
-uvx --from tavily-cli tvly research "fintech trends 2025" --model pro -o fintech-report.md
+uvx --from tavily-cli tvly research "fintech consolidation" --model pro -o fintech-report.md
 
-# JSON output for agents
+# JSON output for agents; stdin query
 uvx --from tavily-cli tvly research "quantum computing breakthroughs" --json
+echo "query" | uvx --from tavily-cli tvly research - --json
 ```
 
-## Options
+## [02]-[OPTIONS]
 
-| Option | Description |
-|--------|-------------|
-| `--model` | `mini`, `pro`, or `auto` (default) |
-| `--stream` | Stream results in real-time |
-| `--no-wait` | Return request_id immediately (async) |
-| `--output-schema` | Path to JSON schema for structured output |
-| `--citation-format` | `numbered`, `mla`, `apa`, `chicago` |
-| `--poll-interval` | Seconds between checks (default: 10) |
-| `--timeout` | Max wait seconds (default: 600) |
-| `-o, --output` | Save output to file |
-| `--json` | Structured JSON output |
+| [INDEX] | [OPTION]            | [EFFECT]                                        |
+| :-----: | :------------------ | :----------------------------------------------- |
+|  [01]   | `--model`           | `mini`, `pro`, or `auto` (default)              |
+|  [02]   | `--stream`          | Stream results in real time                     |
+|  [03]   | `--no-wait`         | Return `request_id` immediately (async)         |
+|  [04]   | `--output-schema`   | Path to a JSON schema for structured output     |
+|  [05]   | `--citation-format` | `numbered`, `mla`, `apa`, `chicago`             |
+|  [06]   | `--poll-interval`   | Seconds between status checks (default 10)      |
+|  [07]   | `--timeout`         | Max wait seconds (default 600)                  |
+|  [08]   | `-o, --output`      | Save output to file                             |
+|  [09]   | `--json`            | Structured JSON output                          |
 
-## Model selection
+## [03]-[MODEL_SELECTION]
 
-| Model | Use for | Speed |
-|-------|---------|-------|
-| `mini` | Single-topic, targeted research | ~30s |
-| `pro` | Comprehensive multi-angle analysis | ~60-120s |
-| `auto` | API chooses based on complexity | Varies |
+| [INDEX] | [MODEL] | [OWNS]                                   | [LATENCY]  |
+| :-----: | :------ | :---------------------------------------- | :--------- |
+|  [01]   | `mini`  | Single-topic, targeted research           | ~30s       |
+|  [02]   | `pro`   | Comprehensive multi-angle analysis        | ~60-120s   |
+|  [03]   | `auto`  | API-chosen by query complexity            | Varies     |
 
-**Rule of thumb:** "What does X do?" → mini. "X vs Y vs Z" or "best way to..." → pro.
+A "what does X do" question rides `mini`; an "X vs Y vs Z" or "best way to" question rides `pro`. `--output-schema` binds the report to a custom JSON shape when a machine consumes it.
 
-## Async workflow
+## [04]-[ASYNC]
 
-For long-running research, you can start and poll separately:
+Long-running research starts detached and polls separately:
 
 ```bash
-# Start without waiting
-uvx --from tavily-cli tvly research "topic" --no-wait --json    # returns request_id
-
-# Check status
+uvx --from tavily-cli tvly research "topic" --no-wait --json          # returns request_id
 uvx --from tavily-cli tvly research status <request_id> --json
-
-# Wait for completion
 uvx --from tavily-cli tvly research poll <request_id> --json -o result.json
 ```
 
-## Tips
-
-- **Research takes 30-120 seconds** — use `--stream` to see progress in real-time.
-- **Use `--model pro`** for complex comparisons or multi-faceted topics.
-- **Use `--output-schema`** to get structured JSON output matching a custom schema.
-- **For quick facts**, use `tvly search` instead — research is for deep synthesis.
-- Read from stdin: `echo "query" | uvx --from tavily-cli tvly research - --json`
-
-## See also
-
-- [tavily-dynamic-search](../tavily-dynamic-search/SKILL.md) — quick web search for simple lookups
-- [tavily-crawl](../tavily-crawl/SKILL.md) — bulk extract from a site for your own analysis
+Quick facts route to tavily-dynamic-search; a self-directed corpus build over one site routes to tavily-crawl.

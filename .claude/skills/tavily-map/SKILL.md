@@ -1,31 +1,26 @@
 ---
 name: tavily-map
-description: |
-  Discover and list all URLs on a website without extracting content, via the Tavily CLI. Use this skill when the user wants to find a specific page on a large site, list all URLs, see the site structure, find where something is on a domain, or says "map the site", "find the URL for", "what pages are on", "list all pages", or "site structure". Faster than crawling — returns URLs only. Essential when you know the site but not the exact page. Combine with extract for targeted content retrieval.
+description: >-
+  Discover and list all URLs on a website without extracting content, via the Tavily CLI —
+  faster than crawling, returns URLs only. Use to find a specific page on a large site, list
+  site structure, or locate where something lives on a domain — "map the site", "find the URL
+  for", "what pages are on", "list all pages", "site structure". Essential when the site is
+  known but the exact page is not; pair with tavily-extract for the content. Bulk content
+  across many pages belongs to tavily-crawl.
 allowed-tools: Bash(uvx *)
 ---
 
-# tavily map
+# [TAVILY_MAP]
 
-Discover URLs on a website without extracting content. Faster than crawling.
+Discover URLs on a website with no content extraction — the reconnaissance step before extracting or crawling. Invocation rides `uvx --from tavily-cli tvly map …` with ambient `TAVILY_API_KEY`; the tavily-dynamic-search skill owns the family invocation law.
 
-## Invocation
-
-Run the CLI on demand through uv — every `tvly` command below is invoked as `uvx --from tavily-cli tvly …`. No install step: uv resolves and caches the CLI on first use, and auth is read from the ambient `TAVILY_API_KEY` (no `tvly login`).
-
-## When to use
-
-- You need to find a specific subpage on a large site
-- You want a list of all URLs before deciding what to extract or crawl
-- Step 3 in the [workflow](../tavily-best-practices/SKILL.md): dynamic-search → extract → **map** → crawl → research
-
-## Quick start
+## [01]-[USAGE]
 
 ```bash
 # Discover all URLs
 uvx --from tavily-cli tvly map "https://docs.example.com" --json
 
-# With natural language filtering
+# Natural-language filtering
 uvx --from tavily-cli tvly map "https://docs.example.com" --instructions "Find API docs and guides" --json
 
 # Filter by path
@@ -35,42 +30,31 @@ uvx --from tavily-cli tvly map "https://example.com" --select-paths "/blog/.*" -
 uvx --from tavily-cli tvly map "https://example.com" --max-depth 3 --limit 200 --json
 ```
 
-## Options
+## [02]-[OPTIONS]
 
-| Option | Description |
-|--------|-------------|
-| `--max-depth` | Levels deep (1-5, default: 1) |
-| `--max-breadth` | Links per page (default: 20) |
-| `--limit` | Max URLs to discover (default: 50) |
-| `--instructions` | Natural language guidance for URL filtering |
-| `--select-paths` | Comma-separated regex patterns to include |
-| `--exclude-paths` | Comma-separated regex patterns to exclude |
-| `--select-domains` | Comma-separated regex for domains to include |
-| `--exclude-domains` | Comma-separated regex for domains to exclude |
-| `--allow-external / --no-external` | Include external links |
-| `--timeout` | Max wait (10-150 seconds) |
-| `-o, --output` | Save output to file |
-| `--json` | Structured JSON output |
+| [INDEX] | [OPTION]                                 | [EFFECT]                                     |
+| :-----: | :--------------------------------------- | :------------------------------------------- |
+|  [01]   | `--max-depth`                            | Levels deep, 1-5 (default 1)                 |
+|  [02]   | `--max-breadth`                          | Links per page (default 20)                  |
+|  [03]   | `--limit`                                | Max URLs to discover (default 50)            |
+|  [04]   | `--instructions`                         | Natural-language guidance for URL discovery  |
+|  [05]   | `--select-paths` / `--exclude-paths`     | Comma-separated path regex include/exclude   |
+|  [06]   | `--select-domains` / `--exclude-domains` | Comma-separated domain regex include/exclude |
+|  [07]   | `--allow-external` / `--no-external`     | Include or drop external-domain links        |
+|  [08]   | `--timeout`                              | Max wait, 10-150 seconds                     |
+|  [09]   | `-o, --output`                           | Save output to file                          |
+|  [10]   | `--json`                                 | Structured JSON output                       |
 
-## Map + Extract pattern
+## [03]-[MAP_THEN_EXTRACT]
 
-Use `map` to find the right page, then `extract` it. This is often more efficient than crawling an entire site:
+Map finds the right page, extract pulls it — cheaper than crawling an entire site when only a few pages matter:
 
 ```bash
-# Step 1: Find the authentication docs
+# Step 1: locate the authentication docs
 uvx --from tavily-cli tvly map "https://docs.example.com" --instructions "authentication" --json
 
-# Step 2: Extract the specific page you found
+# Step 2: extract the specific page found
 uvx --from tavily-cli tvly extract "https://docs.example.com/api/authentication" --json
 ```
 
-## Tips
-
-- **Map is URL discovery only** — no content extraction. Use `extract` or `crawl` for content.
-- **Map + extract beats crawl** when you only need a few specific pages from a large site.
-- **Use `--instructions`** for semantic filtering when path patterns aren't enough.
-
-## See also
-
-- [tavily-extract](../tavily-extract/SKILL.md) — extract content from URLs you discover
-- [tavily-crawl](../tavily-crawl/SKILL.md) — bulk extract when you need many pages
+`--instructions` covers semantic filtering where path patterns fall short. Content for many pages at once routes to tavily-crawl; pages on an unknown site route to tavily-dynamic-search first.

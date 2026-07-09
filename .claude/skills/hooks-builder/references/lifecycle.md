@@ -1,139 +1,109 @@
-# [H1][LIFECYCLE]
+# [LIFECYCLE]
 
-Fifteen lifecycle events span agent execution. Each fires at distinct point with event-specific input.
+Events fall into three cadences: once per session (`SessionStart`, `SessionEnd`), once per turn (`UserPromptSubmit`, `Stop`, `StopFailure`), and per tool call inside the agentic loop (`PreToolUse`, `PostToolUse`). Everything else fires on its named occurrence. When an event fires and a matcher matches, the handler receives JSON context — stdin for command hooks, POST body for HTTP hooks — and optionally returns a decision.
 
 ## [01]-[EVENTS]
 
-| [INDEX] | [EVENT]            | [TRIGGER]                        | [CAN_BLOCK] | [OUTPUT_VISIBILITY]   |
-| :-----: | ------------------ | -------------------------------- | :---------: | --------------------- |
-|  [01]   | SessionStart       | Session begins or resumes        |     No      | Context for Claude    |
-|  [02]   | Setup              | `claude --init` or `--init-only` |     No      | Context for Claude    |
-|  [03]   | UserPromptSubmit   | User submits prompt              |     Yes     | Context for Claude    |
-|  [04]   | PreToolUse         | Before tool execution            |     Yes     | Verbose mode (Ctrl+O) |
-|  [05]   | PermissionRequest  | Permission dialog about to show  |     Yes     | Verbose mode (Ctrl+O) |
-|  [06]   | PostToolUse        | After tool succeeds              |     No      | Verbose mode (Ctrl+O) |
-|  [07]   | PostToolUseFailure | After tool fails                 |     No      | Verbose mode (Ctrl+O) |
-|  [08]   | Notification       | Agent sends notification         |     No      | User only             |
-|  [09]   | SubagentStart      | Subagent spawned                 |     No      | User only             |
-|  [10]   | SubagentStop       | Subagent finishes                |     Yes     | Verbose mode (Ctrl+O) |
-|  [11]   | Stop               | Agent finishes responding        |     Yes     | Verbose mode (Ctrl+O) |
-|  [12]   | TeammateIdle       | Teammate about to go idle        |     Yes     | Feedback to teammate  |
-|  [13]   | TaskCompleted      | Task marked as completed         |     Yes     | Feedback to model     |
-|  [14]   | PreCompact         | Before context compaction        |     No      | User only             |
-|  [15]   | SessionEnd         | Session terminates               |     No      | User only             |
+| [INDEX] | [EVENT]               | [FIRES]                                                                          |
+| :-----: | :-------------------- | :------------------------------------------------------------------------------- |
+|  [01]   | `SessionStart`        | Session begins or resumes                                                        |
+|  [02]   | `Setup`               | `--init-only`, or `--init`/`--maintenance` in `-p` mode; one-time preparation    |
+|  [03]   | `InstructionsLoaded`  | A CLAUDE.md or `.claude/rules/*.md` file loads into context, at start or lazily  |
+|  [04]   | `UserPromptSubmit`    | A prompt is submitted, before Claude processes it                                |
+|  [05]   | `UserPromptExpansion` | A user-typed command expands into a prompt; the expansion is blockable           |
+|  [06]   | `MessageDisplay`      | Assistant message text is displayed                                              |
+|  [07]   | `PreToolUse`          | Before a tool call executes; blockable                                           |
+|  [08]   | `PermissionRequest`   | A permission dialog appears                                                      |
+|  [09]   | `PermissionDenied`    | The auto-mode classifier denies a tool call; `{retry: true}` permits a retry     |
+|  [10]   | `PostToolUse`         | After a tool call succeeds                                                       |
+|  [11]   | `PostToolUseFailure`  | After a tool call fails                                                          |
+|  [12]   | `PostToolBatch`       | A full batch of parallel tool calls resolves, before the next model call         |
+|  [13]   | `Notification`        | Claude Code sends a notification                                                 |
+|  [14]   | `SubagentStart`       | A subagent is spawned                                                            |
+|  [15]   | `SubagentStop`        | A subagent finishes                                                              |
+|  [16]   | `TaskCreated`         | A task is being created via `TaskCreate`                                         |
+|  [17]   | `TaskCompleted`       | A task is being marked completed                                                 |
+|  [18]   | `Stop`                | Claude finishes responding                                                       |
+|  [19]   | `StopFailure`         | The turn ends on an API error; output and exit code are ignored                  |
+|  [20]   | `TeammateIdle`        | An agent-team teammate is about to go idle                                       |
+|  [21]   | `ConfigChange`        | A configuration file changes during a session                                    |
+|  [22]   | `CwdChanged`          | The working directory changes, for example on a `cd`                             |
+|  [23]   | `FileChanged`         | A watched file changes on disk; the matcher names the filenames to watch         |
+|  [24]   | `WorktreeCreate`      | A worktree is being created via `--worktree` or `isolation: "worktree"`          |
+|  [25]   | `WorktreeRemove`      | A worktree is being removed, at session exit or when a subagent finishes         |
+|  [26]   | `PreCompact`          | Before context compaction                                                        |
+|  [27]   | `PostCompact`         | After context compaction completes                                               |
+|  [28]   | `Elicitation`         | An MCP server requests user input during a tool call                             |
+|  [29]   | `ElicitationResult`   | A user responds to an MCP elicitation, before the response returns to the server |
+|  [30]   | `SessionEnd`          | The session terminates                                                           |
 
-[CRITICAL] Exit code 2 blocks action for events marked `Yes` in CAN_BLOCK column. PostToolUse/PostToolUseFailure exit 2 shows stderr to Claude but cannot undo the tool call. Setup runs only on explicit `claude --init` or `claude --init-only` invocation — not on regular session start.
+## [02]-[MATCHER_VALUES]
 
-## [02]-[INPUT_SCHEMAS]
+Each event's matcher filters on a different input field; events absent from this table (`UserPromptSubmit`, `PostToolBatch`, `Stop`, `TeammateIdle`, `TaskCreated`, `TaskCompleted`, `WorktreeCreate`, `WorktreeRemove`, `MessageDisplay`, `CwdChanged`) take no matcher and always fire — a `matcher` field on them is silently ignored. The full `StopFailure` error-type roster: `rate_limit`, `overloaded`, `authentication_failed`, `oauth_org_not_allowed`, `billing_error`, `invalid_request`, `model_not_found`, `server_error`, `max_output_tokens`, `unknown`.
 
-### [2.1]-[COMMON_FIELDS]
+| [INDEX] | [EVENT]                                                                                                  | [FILTERS_ON]            | [VALUES]                                                                                                                                                                            |
+| :-----: | :------------------------------------------------------------------------------------------------------- | :---------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+|  [01]   | Tool events (`PreToolUse`, `PostToolUse`, `PostToolUseFailure`, `PermissionRequest`, `PermissionDenied`) | Tool name               | `Bash`, `Edit\|Write`, `mcp__.*`                                                                                                                                                    |
+|  [02]   | `SessionStart`                                                                                           | How the session started | `startup`, `resume`, `clear`, `compact`                                                                                                                                             |
+|  [03]   | `Setup`                                                                                                  | Triggering CLI flag     | `init`, `maintenance`                                                                                                                                                               |
+|  [04]   | `SessionEnd`                                                                                             | Why the session ended   | `clear`, `resume`, `logout`, `prompt_input_exit`, `bypass_permissions_disabled`, `other`                                                                                            |
+|  [05]   | `Notification`                                                                                           | Notification type       | `permission_prompt`, `idle_prompt`, `auth_success`, `elicitation_dialog`, `elicitation_complete`, `elicitation_response`, `agent_needs_input`, `agent_completed`                    |
+|  [06]   | `SubagentStart` / `SubagentStop`                                                                         | Agent type              | `general-purpose`, `Explore`, `Plan`, custom names, plugin-scoped `^my-plugin:reviewer$`                                                                                            |
+|  [07]   | `PreCompact` / `PostCompact`                                                                             | Compaction trigger      | `manual`, `auto`                                                                                                                                                                    |
+|  [08]   | `ConfigChange`                                                                                           | Configuration source    | `user_settings`, `project_settings`, `local_settings`, `policy_settings`, `skills`                                                                                                  |
+|  [09]   | `FileChanged`                                                                                            | Watched filenames       | `.envrc\|.env` — literal names, `\|`-separated only                                                                                                                                 |
+|  [10]   | `StopFailure`                                                                                            | Error type              | `rate_limit`, `overloaded`, `billing_error`, `server_error`, and peers |
+|  [11]   | `InstructionsLoaded`                                                                                     | Load reason             | `session_start`, `nested_traversal`, `path_glob_match`, `include`, `compact`                                                                                                        |
+|  [12]   | `UserPromptExpansion`                                                                                    | Command name            | Skill or command names                                                                                                                                                              |
+|  [13]   | `Elicitation` / `ElicitationResult`                                                                      | MCP server name         | Configured MCP server names                                                                                                                                                         |
 
-All events receive via stdin JSON:
+## [03]-[INPUT]
 
-| [INDEX] | [FIELD]           | [TYPE] | [DESCRIPTION]                                                    |
-| :-----: | ----------------- | ------ | ---------------------------------------------------------------- |
-|  [01]   | `session_id`      | string | Current session identifier                                       |
-|  [02]   | `transcript_path` | string | Path to session transcript JSONL                                 |
-|  [03]   | `hook_event_name` | string | Event name (e.g., "PreToolUse")                                  |
-|  [04]   | `cwd`             | string | Current working directory                                        |
-|  [05]   | `permission_mode` | string | `default`, `plan`, `acceptEdits`, `dontAsk`, `bypassPermissions` |
+Every event delivers `session_id`, `prompt_id`, `transcript_path`, `cwd`, `hook_event_name`, and — on events that carry it — `permission_mode` (`default`, `plan`, `acceptEdits`, `auto`, `dontAsk`, `bypassPermissions`; the Manual mode arrives as `default`) and `effort` (`{level}` for the turn, also exported as `$CLAUDE_EFFORT`). Inside a subagent or under `--agent`, `agent_id` and `agent_type` ride along; a plugin-shipped subagent reports the plugin-scoped identifier. Tool events add `tool_name`, `tool_input`, and `tool_use_id`; `PostToolUse` adds `tool_response`; `PostToolUseFailure` adds `error` and optional `is_interrupt`; `Stop`/`SubagentStop` add `stop_hook_active` and `last_assistant_message` — the transcript file is written asynchronously and lags the turn, so the final assistant text reads from `last_assistant_message`, never the transcript. `UserPromptSubmit` carries `prompt`; `SessionStart` alone may carry `model`.
 
-### [2.2]-[TOOL_EVENTS]
+## [04]-[EXIT_CODES]
 
-PreToolUse, PermissionRequest, PostToolUse, PostToolUseFailure add:
+Exit 0 is success — stdout parses for JSON output, and on `UserPromptSubmit`, `UserPromptExpansion`, and `SessionStart` plain stdout lands as context Claude sees. Exit 2 is the blocking signal — stdout is ignored, stderr feeds back per the table. Any other exit code is a non-blocking error: the transcript shows a hook-error notice with the first stderr line and execution continues (exit 1 is non-blocking despite the Unix convention; policy enforcement uses exit 2). The exception is `WorktreeCreate`, where any non-zero exit aborts worktree creation.
 
-| [INDEX] | [FIELD]       | [TYPE] | [DESCRIPTION]                         |
-| :-----: | ------------- | ------ | ------------------------------------- |
-|  [01]   | `tool_name`   | string | Tool being invoked (matcher target)   |
-|  [02]   | `tool_input`  | object | Tool parameters (tool-specific shape) |
-|  [03]   | `tool_use_id` | string | Unique tool invocation ID             |
+| [INDEX] | [EVENT]                                                                  | [BLOCKS] | [EXIT_2_EFFECT]                                           |
+| :-----: | :----------------------------------------------------------------------- | :------: | :-------------------------------------------------------- |
+|  [01]   | `PreToolUse`                                                             |   Yes    | Blocks the tool call                                      |
+|  [02]   | `PermissionRequest`                                                      |   Yes    | Denies the permission                                     |
+|  [03]   | `UserPromptSubmit`                                                       |   Yes    | Blocks prompt processing and erases the prompt            |
+|  [04]   | `UserPromptExpansion`                                                    |   Yes    | Blocks the expansion                                      |
+|  [05]   | `Stop` / `SubagentStop`                                                  |   Yes    | Prevents stopping; the conversation continues             |
+|  [06]   | `TeammateIdle`                                                           |   Yes    | Keeps the teammate working; stderr is its feedback        |
+|  [07]   | `TaskCreated`                                                            |   Yes    | Rolls back the task creation                              |
+|  [08]   | `TaskCompleted`                                                          |   Yes    | Prevents completion; stderr feeds back to the model       |
+|  [09]   | `ConfigChange`                                                           |   Yes    | Blocks the change (except `policy_settings`)              |
+|  [10]   | `PostToolBatch`                                                          |   Yes    | Stops the agentic loop before the next model call         |
+|  [11]   | `PreCompact`                                                             |   Yes    | Blocks compaction                                         |
+|  [12]   | `Elicitation`                                                            |   Yes    | Denies the elicitation                                    |
+|  [13]   | `ElicitationResult`                                                      |   Yes    | Blocks the response; the action becomes decline           |
+|  [14]   | `WorktreeCreate`                                                         |   Yes    | Any non-zero exit fails worktree creation                 |
+|  [15]   | `PostToolUse` / `PostToolUseFailure`                                     |    No    | Shows stderr to Claude; the tool already ran or failed    |
+|  [16]   | `PermissionDenied`                                                       |    No    | Ignored; only JSON `hookSpecificOutput.retry: true` acts  |
+|  [17]   | `SessionStart` / `Setup` / `SubagentStart`                               |    No    | Hook-error notice in the transcript; the session proceeds |
+|  [18]   | `Notification`, `SessionEnd`, `CwdChanged`, `FileChanged`, `PostCompact` |    No    | Stderr to user only                                       |
+|  [19]   | `StopFailure`, `InstructionsLoaded`                                      |    No    | Output and exit code ignored                              |
+|  [20]   | `MessageDisplay`                                                         |    No    | The original text displays                                |
+|  [21]   | `WorktreeRemove`                                                         |    No    | Failures log in debug mode only                           |
 
-PostToolUse adds `tool_response` (object). PostToolUseFailure adds `error` (string) and optional `is_interrupt` (boolean).
+## [05]-[DECISION_CONTROL]
 
-### [2.3]-[STOP_EVENTS]
+JSON output on exit 0 gives finer control than exit codes; each event family reads a different decision surface.
 
-Stop and SubagentStop add:
+| [INDEX] | [EVENTS]                                                                                                                                              | [PATTERN]               | [KEY_FIELDS]                                                                                                                                     |
+| :-----: | :---------------------------------------------------------------------------------------------------------------------------------------------------- | :---------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------- |
+|  [01]   | `UserPromptSubmit`, `UserPromptExpansion`, `PostToolUse`, `PostToolUseFailure`, `PostToolBatch`, `Stop`, `SubagentStop`, `ConfigChange`, `PreCompact` | Top-level `decision`    | `decision: "block"`, `reason`; Stop/SubagentStop also take `hookSpecificOutput.additionalContext` for non-error feedback that continues the turn |
+|  [02]   | `TeammateIdle`, `TaskCreated`, `TaskCompleted`                                                                                                        | Exit code or `continue` | Exit 2 blocks with stderr feedback; `{"continue": false, "stopReason"}` stops entirely                                                           |
+|  [03]   | `PreToolUse`                                                                                                                                          | `hookSpecificOutput`    | `permissionDecision` (`allow`/`deny`/`ask`/`defer`), `permissionDecisionReason`                                                                  |
+|  [04]   | `PermissionRequest`                                                                                                                                   | `hookSpecificOutput`    | `decision.behavior` (`allow`/`deny`), `decision.updatedInput`, `decision.updatedPermissions`, `decision.message`, `decision.interrupt`           |
+|  [05]   | `PermissionDenied`                                                                                                                                    | `hookSpecificOutput`    | `retry: true` tells the model it may retry                                                                                                       |
+|  [06]   | `WorktreeCreate`                                                                                                                                      | Path return             | Command hook prints the path on stdout; HTTP returns `hookSpecificOutput.worktreePath`                                                           |
+|  [07]   | `Elicitation` / `ElicitationResult`                                                                                                                   | `hookSpecificOutput`    | `action` (`accept`/`decline`/`cancel`), `content` (form field values)                                                                            |
+|  [08]   | `MessageDisplay`                                                                                                                                      | `hookSpecificOutput`    | `displayContent` replaces on-screen text; transcript and model view keep the original                                                            |
+|  [09]   | `SessionStart`, `Setup`, `SubagentStart`                                                                                                              | Context only            | `additionalContext`; SessionStart also `initialUserMessage`, `watchPaths`, `sessionTitle`, `reloadSkills`                                        |
+|  [10]   | `WorktreeRemove`, `Notification`, `SessionEnd`, `PostCompact`, `InstructionsLoaded`, `StopFailure`, `CwdChanged`, `FileChanged`                       | None                    | Side effects only — logging, cleanup                                                                                                             |
 
-| [INDEX] | [FIELD]            | [TYPE]  | [DESCRIPTION]                                    |
-| :-----: | ------------------ | ------- | ------------------------------------------------ |
-|  [01]   | `stop_hook_active` | boolean | True if a previous Stop hook kept Claude running |
-
-SubagentStop additionally provides `agent_id` (string), `agent_type` (string), and `agent_transcript_path` (string).
-
-### [2.4]-[SESSION_EVENTS]
-
-| [INDEX] | [EVENT]      | [FIELD]  | [VALUES]                                                                       |
-| :-----: | ------------ | -------- | ------------------------------------------------------------------------------ |
-|  [01]   | SessionStart | `source` | `startup`, `resume`, `clear`, `compact`                                        |
-|  [02]   | SessionStart | `model`  | Model identifier string                                                        |
-|  [03]   | Setup        | `source` | `init`, `maintenance`                                                          |
-|  [04]   | SessionEnd   | `reason` | `clear`, `logout`, `prompt_input_exit`, `bypass_permissions_disabled`, `other` |
-
-### [2.5]-[SUBAGENT_EVENTS]
-
-| [INDEX] | [EVENT]       | [FIELD]      | [DESCRIPTION]                      |
-| :-----: | ------------- | ------------ | ---------------------------------- |
-|  [01]   | SubagentStart | `agent_id`   | Unique identifier for the subagent |
-|  [02]   | SubagentStart | `agent_type` | Agent name (matcher target)        |
-
-### [2.6]-[TEAM_EVENTS]
-
-| [INDEX] | [EVENT]       | [FIELD]            | [DESCRIPTION]                            |
-| :-----: | ------------- | ------------------ | ---------------------------------------- |
-|  [01]   | TeammateIdle  | `teammate_name`    | Name of teammate about to go idle        |
-|  [02]   | TeammateIdle  | `team_name`        | Name of the team                         |
-|  [03]   | TaskCompleted | `task_id`          | Identifier of task being completed       |
-|  [04]   | TaskCompleted | `task_subject`     | Title of the task                        |
-|  [05]   | TaskCompleted | `task_description` | Detailed description (may be absent)     |
-|  [06]   | TaskCompleted | `teammate_name`    | Teammate completing task (may be absent) |
-|  [07]   | TaskCompleted | `team_name`        | Team name (may be absent)                |
-
-### [2.7]-[OTHER_EVENTS]
-
-| [INDEX] | [EVENT]          | [FIELD]               | [DESCRIPTION]                                                            |
-| :-----: | ---------------- | --------------------- | ------------------------------------------------------------------------ |
-|  [01]   | UserPromptSubmit | `prompt`              | User's input text                                                        |
-|  [02]   | PreCompact       | `trigger`             | `manual` or `auto`                                                       |
-|  [03]   | PreCompact       | `custom_instructions` | Compaction instructions                                                  |
-|  [04]   | Notification     | `message`             | Notification content                                                     |
-|  [05]   | Notification     | `title`               | Optional notification title                                              |
-|  [06]   | Notification     | `notification_type`   | `permission_prompt`, `idle_prompt`, `auth_success`, `elicitation_dialog` |
-
-## [03]-[EXIT_CODES]
-
-| [INDEX] | [CODE] | [BEHAVIOR]                                              |
-| :-----: | :----: | ------------------------------------------------------- |
-|  [01]   |   0    | Success — stdout parsed for JSON; action proceeds       |
-|  [02]   |   2    | Blocking error — stderr fed to Claude; action prevented |
-|  [03]   | Other  | Non-blocking error — stderr shown in verbose mode only  |
-
-[CRITICAL] Choose one approach per hook: exit codes alone, OR exit 0 with JSON for structured control. JSON is only processed on exit 0.
-
-### [3.1]-[EXIT_2_BEHAVIOR]
-
-| [INDEX] | [EVENT]             | [EXIT_2_EFFECT]                                        |
-| :-----: | ------------------- | ------------------------------------------------------ |
-|  [01]   | PreToolUse          | Blocks tool call; stderr shown to Claude               |
-|  [02]   | PermissionRequest   | Denies the permission                                  |
-|  [03]   | UserPromptSubmit    | Blocks prompt processing; erases prompt from context   |
-|  [04]   | Stop                | Prevents Claude from stopping; continues conversation  |
-|  [05]   | SubagentStop        | Prevents subagent from stopping                        |
-|  [06]   | TeammateIdle        | Prevents teammate from going idle; stderr = feedback   |
-|  [07]   | TaskCompleted       | Prevents task completion; stderr = feedback to model   |
-|  [08]   | PostToolUse         | Shows stderr to Claude (tool already ran, cannot undo) |
-|  [09]   | PostToolUseFailure  | Shows stderr to Claude (tool already failed)           |
-|  [10]   | Non-blocking events | Shows stderr to user only (no effect on execution)     |
-
-## [04]-[EXECUTION]
-
-| [INDEX] | [PROPERTY]      | [VALUE]                                                              |
-| :-----: | --------------- | -------------------------------------------------------------------- |
-|  [01]   | Default timeout | 600s (command), 30s (prompt), 60s (agent)                            |
-|  [02]   | Parallelization | All matching hooks run in parallel                                   |
-|  [03]   | Deduplication   | Identical hook commands deduplicated                                 |
-|  [04]   | Input           | JSON via stdin                                                       |
-|  [05]   | Output          | stdout for JSON responses; stderr for errors                         |
-|  [06]   | Environment     | `$CLAUDE_PROJECT_DIR`, `$CLAUDE_CODE_REMOTE`                         |
-|  [07]   | Snapshot        | Hooks captured at startup; mid-session edits require `/hooks` review |
-
-[REFERENCE] Validation checklist: [->validation.md§02](./validation.md#02-lifecycle_gate)
+Three events rewrite content rather than only allow or block: `PreToolUse` `updatedInput` replaces tool arguments before the run, `PermissionRequest` `updatedInput` inside `decision`, and `PostToolUse` `updatedToolOutput` replaces the tool result. `UserPromptSubmit` never replaces the prompt — it only injects `additionalContext` alongside it. Redaction intercepts at `PreToolUse` for outbound inputs and `PostToolUse` for inbound results.

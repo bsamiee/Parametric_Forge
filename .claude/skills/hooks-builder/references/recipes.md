@@ -1,10 +1,10 @@
-# [H1][RECIPES]
+# [RECIPES]
 
-Six patterns use dispatch tables, frozen state, `B: Final` constants.
+Proven hook implementations built on dispatch tables, frozen state, and `B: Final` constants — each a working seed adapted in place.
 
 ## [01]-[SECURITY_GATE]
 
-**Events:** PreToolUse (Bash|Write|Read matcher)
+[EVENTS]: PreToolUse (Bash|Write|Read matcher)
 
 ```python
 #!/usr/bin/env python3
@@ -47,7 +47,7 @@ if __name__ == "__main__":
 
 ## [02]-[INPUT_TRANSFORMER]
 
-**Events:** PreToolUse (Bash|Write matcher)
+[EVENTS]: PreToolUse (Bash|Write matcher)
 
 ```python
 #!/usr/bin/env python3
@@ -78,7 +78,7 @@ if __name__ == "__main__":
 
 ## [03]-[QUALITY_PIPELINE]
 
-**Events:** PostToolUse (Write|Edit matcher)
+[EVENTS]: PostToolUse (Write|Edit matcher)
 
 ```python
 #!/usr/bin/env python3
@@ -106,7 +106,7 @@ if __name__ == "__main__":
 
 ## [04]-[CONTEXT_BOOTSTRAP]
 
-**Events:** SessionStart (startup|resume|compact matcher)
+[EVENTS]: SessionStart (startup|resume|compact matcher)
 
 ```python
 #!/usr/bin/env python3
@@ -131,7 +131,7 @@ if __name__ == "__main__":
 
 ## [05]-[OBSERVABILITY]
 
-**Events:** All (catch-all matcher)
+[EVENTS]: All (catch-all matcher)
 
 ```python
 #!/usr/bin/env python3
@@ -167,11 +167,9 @@ if __name__ == "__main__":
 
 ## [06]-[STOP_EVALUATOR]
 
-**Events:** Stop, SubagentStop (prompt type)
+[EVENTS]: Stop, SubagentStop (prompt type)
 
-**Eligible Events:** Prompt hooks work with PreToolUse, PostToolUse, PostToolUseFailure, PermissionRequest, UserPromptSubmit, Stop, SubagentStop, TaskCompleted. NOT TeammateIdle.
-
-**Response Schema:** `{"ok": true}` allows action; `{"ok": false, "reason": "..."}` blocks.
+[RESPONSE]: `{"ok": true}` permits the action; `{"ok": false, "reason": "..."}` blocks it. The prompt/agent eligibility roster lives in the schema reference.
 
 ```json
 {
@@ -186,5 +184,3 @@ if __name__ == "__main__":
   }
 }
 ```
-
-[REFERENCE] Validation checklist: [->validation.md§05](./validation.md#05-recipes_gate)

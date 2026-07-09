@@ -1,31 +1,39 @@
 ---
 name: agy
-user-invocable: true
-description: Use Antigravity CLI (`agy`) for bounded Gemini/Google Ultra sub-calls: visual and multimodal reasoning, image prompt work, broad synthesis, ambiguity reduction, alternate approaches, and explicit Gemini or Antigravity requests.
+description: >-
+  Bounded one-shot Gemini sub-calls through the Antigravity CLI (`agy`): multimodal judgment
+  over screenshots, generated images, UI states, and diagrams, image-prompt drafting, broad
+  synthesis across competing designs, ambiguity reduction into crisp constraints, alternate
+  approaches and counterexample hunts, and redacted log or dataset distillation. Use when a
+  task gains from an external second model or names Gemini, Antigravity, Google Ultra, or
+  Nano Banana image judgment. gpt-5.5 offload belongs to the codex skill; delegation across
+  Claude's own surfaces belongs to agent-dispatch.
 ---
 
-# Antigravity (`agy`)
+# [AGY]
 
-Use Antigravity as an external Gemini call when it adds capability to the main agent's local tools. The wrapper is print-only: it asks `agy` for one bounded answer using the default strongest Gemini profile and returns one JSON object.
+Antigravity is an external Gemini call admitted only where it adds capability beyond the local toolchain. The wrapper is print-only: one bounded prompt in, one JSON receipt out, the default profile pinned to the strongest Gemini reasoning tier. Antigravity output is advisory until local source, official docs, MCP output, or user intent confirms it.
 
-## Good Fits
+## [01]-[CAPABILITY]
 
-- Multimodal reasoning over screenshots, generated images, UI states, diagrams, visual diffs, or image-prompt drafts.
-- Broad synthesis across competing ideas, ambiguous tradeoffs, product direction, research notes, or long-context design material.
-- Ambiguity reduction: turn vague requirements into crisp constraints, edge cases, and clarifying questions.
-- Alternative approaches, counterexamples, risk inventories, and blind spots when local source evidence is already gathered.
-- Redacted data or log distillation in a scratch directory when pattern finding benefits from a separate model pass.
-- Isolated proof-of-concept ideation before the main agent writes production code.
-- Explicit user requests for Gemini, Antigravity, Google Ultra, Nano Banana-style image judgment, or a second external model.
+| [INDEX] | [TRIGGER]                                                        | [WHY_GEMINI]                                     |
+| :-----: | :--------------------------------------------------------------- | :----------------------------------------------- |
+|  [01]   | Screenshots, generated images, UI states, visual diffs, diagrams | Native multimodal judgment                       |
+|  [02]   | Image-prompt drafting and critique                               | Image-generation domain knowledge                |
+|  [03]   | Competing designs, ambiguous tradeoffs, long-context synthesis   | Independent perspective outside the main context |
+|  [04]   | Vague requirements needing constraints and edge cases            | Ambiguity reduction as a separate pass           |
+|  [05]   | Counterexamples, risk inventories, blind spots on gathered facts | Adversarial second reading                       |
+|  [06]   | Redacted log or dataset distillation in a scratch directory      | Pattern finding without polluting main context   |
+|  [07]   | Explicit requests for Gemini, Antigravity, or Google Ultra       | User-directed routing                            |
 
-## Avoid
+## [02]-[REFUSAL]
 
-- Secrets, OAuth codes, private tokens, raw credential files, or unredacted sensitive logs.
-- Authoritative facts that should come from local source, official docs, configured MCPs, or repository-owned commands.
-- Routine edits, formatting, git operations, package upgrades, or checks that local tooling already owns.
-- Background task management or shell-login subcommands; this wrapper supports only `prompt` and `models`.
+- [SECRETS]: OAuth codes, tokens, credential files, and unredacted sensitive logs never enter a prompt.
+- [AUTHORITY]: Facts owned by local source, official docs, configured MCPs, or repository commands come from those owners, never from Antigravity recall.
+- [ROUTINE]: Edits, formatting, git operations, package upgrades, and checks the local toolchain owns stay local.
+- [SCOPE]: The wrapper exposes `prompt` and `models` alone; background task management and shell-login subcommands stay outside it.
 
-## Commands
+## [03]-[INVOCATION]
 
 Run from this skill directory:
 
@@ -35,37 +43,25 @@ uv run scripts/agy.py prompt "Compare these two approaches and return the top 3 
 uv run scripts/agy.py prompt "Assess this screenshot and suggest concrete UI changes." --add-dir "$PWD" --timeout 10m
 ```
 
-Normal prompt calls use `Gemini 3.1 Pro (High)` through the wrapper. Agents do not choose models in ordinary use; `models` is for capability accounting, diagnostics, and maintaining this skill. Use `--add-dir` only for bounded directories that help answer the prompt. The wrapper never asks `agy` to edit files.
+The wrapper pins `Gemini 3.1 Pro (High)` — the strongest reasoning tier in the catalog, which spans Gemini 3.5 Flash and 3.1 Pro effort tiers beside hosted Claude and GPT-OSS entries. Agents never choose models in ordinary use; `models` exists for capability accounting and skill maintenance. `--add-dir` grants only bounded directories that answer the prompt, and the wrapper never asks `agy` to edit files.
 
-For native Antigravity sessions, use `agy` directly in a real TTY. Direct CLI surfaces include `--prompt-interactive`, `--continue`, `--conversation`, `--sandbox`, `plugin`, `update`, and `changelog`; the wrapper remains one-shot and print-only.
+`AGY_BIN` overrides the binary path (default `agy`), `AGY_MODEL` overrides the pinned model, and `AGY_PRINT_TIMEOUT` overrides the default `5m` timeout.
 
-## Raw CLI Escalation
+## [04]-[PROMPT_CONTRACT]
 
-Use the wrapper for one-shot answers. Use raw interactive `agy` in a real TTY when the task needs an ongoing conversation, workspace tool permissions, conversation resume, plugin management, or sandboxed project work. Do not bypass tool permissions unless the user explicitly asks for that exact mode.
+- State the task, the relevant context, and the exact output shape in one self-contained prompt; Antigravity sees nothing of the current conversation beyond what the prompt carries.
+- Carry the constraints that bind the answer: audience, files already inspected, limits, and facts not to assume.
+- Ask for ranked options, deltas, or a direct answer; open-ended commentary is never the request.
 
-## Prompt Shape
-
-- State the task, the relevant context, and the exact output shape.
-- Include constraints that matter: target audience, files already inspected, limits, and what not to assume.
-- Ask for ranked options, deltas, concrete recommendations, or a direct answer instead of open-ended commentary.
-- Keep the prompt self-contained; do not assume Antigravity can see the current conversation unless you pass the context explicitly.
-
-## Result Handling
-
-Success:
+## [05]-[RECEIPT]
 
 ```json
 {"op":"prompt","output":"..."}
-```
-
-Failure:
-
-```json
 {"op":"prompt","fault":"auth_required","detail":"..."}
 ```
 
-Faults are `binary_not_found`, `auth_required`, `quota_exceeded`, or `process_error`. Treat output as advisory until local source, official docs, MCP output, or user intent confirms it.
+Faults are `binary_not_found`, `auth_required`, `quota_exceeded`, or `process_error`. `auth_required` resolves through interactive `agy` in a real TTY with Google OAuth as `b.samiee93@gmail.com`.
 
-`AGY_BIN` overrides the binary path and defaults to `agy`. `AGY_MODEL` overrides the hidden default model and defaults to `Gemini 3.1 Pro (High)`. `AGY_PRINT_TIMEOUT` overrides the default timeout and defaults to `5m`.
+## [06]-[RAW_CLI]
 
-Current Antigravity sign-in starts from interactive `agy` in a real TTY. Complete Google OAuth as `b.samiee93@gmail.com`.
+Interactive `agy` in a real TTY owns ongoing conversations, workspace tool permissions, resume, plugin management, and sandboxed project work. The direct surface carries `-p/--print`, `-i/--prompt-interactive`, `-c/--continue`, `--conversation`, `--mode` (`accept-edits`, `plan`), `--sandbox`, `--project`/`--new-project`, and the `models`, `plugin`, `install`, `update`, and `changelog` subcommands. `--dangerously-skip-permissions` binds only on an explicit user request for that exact mode.

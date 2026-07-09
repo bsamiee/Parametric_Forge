@@ -1,38 +1,31 @@
 ---
 name: tavily-dynamic-search
-description: |
-  Programmatic web search with context isolation. Use this skill for any research task where you need to search the web, filter results, and extract specific information — without polluting your context window with raw HTML and boilerplate. This is the default skill for web research. Triggered by "search for", "look up", "find", "research", "what's the latest on", or any query that requires current web information. Also use when asked to "search and filter", "find the important parts", or "extract the key details" — any case where the user wants curated, noise-free content.
+description: >-
+  Programmatic web search with context isolation: search the web, filter results in a local
+  Python process, and let only curated print() output enter the context window. The default
+  skill for web research. Triggered by "search for", "look up", "find", "research", "what's
+  the latest on", or any query needing current web information, and by "search and filter",
+  "find the important parts", or "extract the key details". Deep cited reports belong to
+  tavily-research; pulling known URLs belongs to tavily-extract.
 allowed-tools: Bash(uvx *), Bash(python3 *), Bash(uv run *), Bash(jq *)
 ---
 
-# Tavily Dynamic Search
+# [TAVILY_DYNAMIC_SEARCH]
 
-Search the web, filter results, and extract content so that **raw search data never enters your context window**. Only your curated `print()` output comes back.
+Search the web, filter results, and extract content so that raw search data never enters the context window — only curated `print()` output comes back. A raw search with full page content returns hundreds of kilobytes of navigation, cookie banners, and boilerplate; processed inside a Python sandbox, the same query lands as one to three kilobytes of pure signal. The Python process is the sandbox: variables hold the raw data, `print()` is the only channel into context, and the filtering logic is written fresh per query.
 
-## Why this matters
+Every `tvly` command runs as `uvx --from tavily-cli tvly …` — uv resolves and caches the CLI on first use, and auth reads the ambient `TAVILY_API_KEY` with no install step and no `tvly login`. This law covers the whole tavily family; the sibling skills compose it by name.
 
-A typical `tvly search --include-raw-content` returns 8 results × 30-50K chars each = **~300K characters** of raw page content. If this enters your context window, you burn tokens reading navigation bars, cookie banners, and boilerplate — and your reasoning quality degrades under the noise. By processing results inside a Python script, only your `print()` output enters context — typically **1-3K characters** of pure signal. That's a 100-200x reduction.
+## [01]-[CORE_RULE]
 
-## Background: Programmatic Tool Calling (PTC)
+Never run `tvly` as a bare command; always process output through Python so the context intake stays chosen, not inherited.
 
-This skill replicates the architecture of [Anthropic's Programmatic Tool Calling](https://platform.claude.com/docs/en/agents-and-tools/tool-use/programmatic-tool-calling) (PTC) for web search. PTC lets the model write code that orchestrates tool calls inside a sandbox — intermediate results stay in the sandbox, and only the final `print()` output reaches the model's context window.
+```bash rejected
+uvx --from tavily-cli tvly search "quantum error correction" --json
+```
 
-**This skill applies the same principle using local Python execution.** The Python process is the sandbox. Variables in memory hold the raw data. Only what you `print()` crosses into your context window. You write the filtering logic — you decide what matters for each query.
-
-## Invocation
-
-Run the CLI on demand through uv — every `tvly` command below is invoked as `uvx --from tavily-cli tvly …`. No install step: uv resolves and caches the CLI on first use, and auth is read from the ambient `TAVILY_API_KEY` (no `tvly login`).
-
-## Core Rule
-
-**NEVER** run `tvly` as a bare command. Always process output through Python so you control what enters your context.
-
-```bash
-# WRONG — raw results flood your context
-uvx --from tavily-cli tvly search "quantum computing 2025" --json
-
-# RIGHT — only your print() output enters context
-uvx --from tavily-cli tvly search "quantum computing 2025" --json 2>/dev/null | python3 -c "
+```bash accepted
+uvx --from tavily-cli tvly search "quantum error correction" --json 2>/dev/null | python3 -c "
 import json, sys
 data = json.load(sys.stdin)
 for r in data['results']:
@@ -41,11 +34,11 @@ for r in data['results']:
 "
 ```
 
-## JSON Schemas
+## [02]-[JSON_SCHEMAS]
 
-You need these to write correct filtering code.
+Filtering code binds to these shapes.
 
-### tvly search --json
+`tvly search --json`:
 
 ```json
 {
@@ -56,7 +49,7 @@ You need these to write correct filtering code.
       "url": "string",
       "title": "string",
       "content": "string (snippet, ~500-1500 chars)",
-      "score": 0.0-1.0,
+      "score": 0.0,
       "raw_content": "string | null (full page, only with --include-raw-content)"
     }
   ],
@@ -64,7 +57,7 @@ You need these to write correct filtering code.
 }
 ```
 
-### tvly extract --json
+`tvly extract --json`:
 
 ```json
 {
@@ -81,29 +74,13 @@ You need these to write correct filtering code.
 }
 ```
 
-## How to search
+## [03]-[EXECUTION_MODES]
 
-You have two building blocks and two ways to run them. Compose these however the query demands — there are no fixed patterns. You decide the approach based on what you need.
+Two building blocks compose freely: `tvly search` returns titles, URLs, snippets, and scores, with full pages under `--include-raw-content markdown`; `tvly extract` fetches full content for specific URLs already identified.
 
-### Building blocks
-
-**`tvly search`** — returns titles, URLs, snippets, scores. Optionally includes full page content with `--include-raw-content markdown`.
-
-**`tvly extract`** — fetches full page content for specific URLs. Use when you found a URL from search and need more detail.
-
-### Execution modes
-
-**Pipe mode** — for simple filters (3-5 lines). Pipe tvly output into `python3 -c`:
-
-```bash
-uvx --from tavily-cli tvly search "query" --json 2>/dev/null | python3 -c "
-import json, sys
-data = json.load(sys.stdin)
-# your filtering code here
-"
-```
-
-**Heredoc mode** — for anything more complex. Single Bash call, clean multi-line Python, no escaping, no temp files:
+- [PIPE]: Simple filters of three to five lines pipe `tvly` output into `python3 -c`.
+- [HEREDOC]: Anything more complex rides a single-quoted heredoc — one Bash call, clean multi-line Python, no escaping, no temp files. The default for most tasks.
+- [SCRIPT]: A file on disk only when the same script runs across multiple turns; one-shot code is a heredoc, never a scratch file. Data saved for later turns belongs on disk; code does not.
 
 ```bash
 python3 << 'PYEOF'
@@ -119,38 +96,26 @@ for r in data['results']:
 PYEOF
 ```
 
-Single-quoted heredocs (`<< 'PYEOF'`) don't interpret anything — no escaping needed. This is the default for most tasks.
+## [04]-[MULTI_TURN]
 
-**Script mode** — only when you will reuse the same script across multiple turns. Do NOT write one-shot scripts to `/tmp/`. If you run it once, use a heredoc.
+Open-ended research explores before it extracts: save raw results to a scratch file, triage titles, then write targeted extraction against what the triage revealed. The file is the persistent state between turns; the raw content never enters context. Known-keyword factual queries stay single-turn.
 
-**Important: save DATA to `/tmp/`, not CODE.** Writing `/tmp/tavily_results.json` (data for later turns) = good. Writing `/tmp/my_filter.py` (one-shot code) = wasteful — use a heredoc instead.
-
-## Multi-turn iteration
-
-For complex queries, you often need to **explore before you extract** — just like PTC, where the model searches, sees titles, decides which results to drill into, then extracts.
-
-The key: **save raw results to a file, then process them in separate steps.** The file is your persistent state between turns.
-
-### Turn 1: Search and explore
-
-Search and print only titles + scores. Save raw results to disk for later turns:
+Turn one — search, save, triage:
 
 ```bash
 python3 << 'PYEOF'
 import json, subprocess
 
 raw = subprocess.check_output(
-    ['uvx', '--from', 'tavily-cli', 'tvly', 'search', 'solid-state battery commercialization 2025',
+    ['uvx', '--from', 'tavily-cli', 'tvly', 'search', 'solid-state battery mass production 2026',
      '--include-raw-content', 'markdown', '--max-results', '8', '--json'],
     stderr=subprocess.DEVNULL
 )
 data = json.loads(raw)
 
-# Save raw results — this stays on disk, never enters context
 with open('/tmp/tavily_results.json', 'w') as f:
     json.dump(data, f)
 
-# Print only what you need to decide next steps
 print(f'{len(data["results"])} results saved to /tmp/tavily_results.json\n')
 for i, r in enumerate(data['results']):
     print(f'[{i}] [{r["score"]:.2f}] {r["title"][:90]}')
@@ -160,11 +125,9 @@ for i, r in enumerate(data['results']):
 PYEOF
 ```
 
-Context receives: ~800 tokens of titles + snippets. The 300K of raw page content is in `/tmp/tavily_results.json`, untouched.
+Context receives a few hundred tokens of titles and snippets; the full page content sits on disk untouched.
 
-### Turn 2: Extract based on what you saw
-
-Now you know what's in the results. Write targeted extraction — **you decide** which results to drill into and what to filter for:
+Turn two — extract against the triage, with filtering logic written for this query:
 
 ```bash
 python3 << 'PYEOF'
@@ -172,7 +135,6 @@ import json
 
 data = json.load(open('/tmp/tavily_results.json'))
 
-# You chose these indices based on the titles you saw in turn 1
 for i in [0, 2, 5]:
     r = data['results'][i]
     raw = r.get('raw_content', '') or ''
@@ -182,8 +144,6 @@ for i in [0, 2, 5]:
     print(f'## {r["title"]}')
     print(f'URL: {r["url"]}\n')
 
-    # You write the filtering logic based on the query
-    # This example extracts paragraphs about specific companies
     for para in raw.split('\n\n'):
         para = para.strip()
         if len(para) > 80 and any(kw in para.lower() for kw in
@@ -195,258 +155,60 @@ for i in [0, 2, 5]:
 PYEOF
 ```
 
-Context receives: ~600 tokens of targeted content. You made the decision about what to keep.
-
-### Turn 3 (optional): Fetch more detail
-
-If you need more from a specific source:
+Later turns chase leads the same way — re-search with sharper terms or `--include-domains`, extract a specific URL, keep appending data to disk while context stays lean:
 
 ```bash
 python3 << 'PYEOF'
 import json, subprocess
 
-# Fetch a specific URL you identified
 raw = subprocess.check_output(
     ['uvx', '--from', 'tavily-cli', 'tvly', 'extract', 'https://example.com/article', '--json'],
     stderr=subprocess.DEVNULL
 )
 data = json.loads(raw)
-page = data['results'][0]
-content = page.get('raw_content', '')
+content = data['results'][0].get('raw_content', '')
 
-# Save for potential further processing
 with open('/tmp/page_detail.txt', 'w') as f:
     f.write(content)
 
-# Print only the section you care about
 for line in content.split('\n'):
-    if any(kw in line.lower() for kw in ['timeline', '2025', '2026', 'mass production']):
+    if any(kw in line.lower() for kw in ['timeline', '2026', '2027', 'mass production']):
         print(line.strip())
 PYEOF
 ```
 
-### When to use multi-turn vs single-turn
+## [05]-[FILTERING_LAW]
 
-**Single turn** (pipe mode or one script): when you know upfront what you're looking for. Specific factual queries, known keywords.
+The Python written per query is the filtering logic; there are no fixed templates.
 
-**Multi-turn** (save + explore + extract): when you need to see what's available before deciding what to extract. Open-ended research, complex topics, queries where you don't know the right keywords yet.
+- [TRIAGE_FIRST]: Inspect titles and scores before fetching full pages; blind extraction floods disk and wastes calls.
+- [MATCH_THE_QUERY]: A financial query filters for numbers and financial terms, a technical query for code blocks and specifications, a news query for dates and quotes.
+- [STRUCTURAL_FLOOR]: Lines under roughly 50-80 characters are usually navigation; headings plus their following paragraphs carry the signal — starting points, adapted to what the page shows.
+- [ERROR_RAILS]: Pages 404, extractions time out; `try/except` with `continue` skips failures without killing the pass.
+- [TOKEN_BUDGET]: Target 150-600 printed tokens per source; a page printing thousands of characters is under-filtered unless it carries a critical data table.
 
-## Examples
+A multi-angle pass runs several queries in one heredoc, deduplicates by URL, sorts by score, and prints one indexed triage — the shape in [04]-[MULTI_TURN] extends directly.
 
-### Simple factual lookup (single turn, pipe mode)
+## [06]-[OPTIONS]
 
-```bash
-uvx --from tavily-cli tvly search "Python 3.13 release date" --max-results 5 --json 2>/dev/null | python3 -c "
-import json, sys
-data = json.load(sys.stdin)
-for r in data['results'][:3]:
-    print(f'{r[\"title\"]}')
-    print(f'{r[\"content\"][:300]}')
-    print()
-"
-```
+| [INDEX] | [OPTION]                      | [EFFECT]                                            |
+| :-----: | :---------------------------- | :-------------------------------------------------- |
+|  [01]   | `--max-results`               | Result count, 0-20 (default 5)                      |
+|  [02]   | `--depth`                     | `ultra-fast`, `fast`, `basic` (default), `advanced` |
+|  [03]   | `--topic`                     | `general`, `news`, `finance`                        |
+|  [04]   | `--time-range`                | `day`, `week`, `month`, `year`                      |
+|  [05]   | `--start-date` / `--end-date` | Absolute date bounds, `YYYY-MM-DD`                  |
+|  [06]   | `--include-domains`           | Comma-separated allowlist                           |
+|  [07]   | `--exclude-domains`           | Comma-separated blocklist                           |
+|  [08]   | `--include-raw-content`       | Full page content, `markdown` or `text`             |
+|  [09]   | `--include-answer`            | AI answer, `basic` or `advanced`                    |
+|  [10]   | `--chunks-per-source`         | Chunks per source on `advanced`/`fast` depth        |
+|  [11]   | `--country`                   | Boost results from a country                        |
 
-### Financial data extraction (single turn, heredoc)
+## [07]-[JQ_FALLBACK]
 
-```bash
-python3 << 'PYEOF'
-import json, subprocess
-
-raw = subprocess.check_output(
-    ['uvx', '--from', 'tavily-cli', 'tvly', 'search', 'NVIDIA Q4 2025 earnings revenue',
-     '--include-raw-content', 'markdown', '--max-results', '5',
-     '--json'],
-    stderr=subprocess.DEVNULL
-)
-data = json.loads(raw)
-
-for r in data['results']:
-    raw_content = r.get('raw_content', '') or ''
-    # For financial queries, look for lines with numbers
-    financial_lines = [
-        line.strip() for line in raw_content.split('\n')
-        if any(kw in line.lower() for kw in
-               ['revenue', 'eps', 'earnings', 'margin', 'guidance', 'billion'])
-        and any(c.isdigit() for c in line)
-        and len(line.strip()) > 30
-    ]
-    if financial_lines:
-        print(f'## {r["title"]}')
-        print(f'URL: {r["url"]}')
-        for line in financial_lines[:15]:
-            print(f'  {line}')
-        print()
-PYEOF
-```
-
-### Multi-source research (multi-turn)
-
-**Turn 1** — broad search + triage:
-
-```bash
-python3 << 'PYEOF'
-import json, subprocess
-
-# Search from multiple angles
-queries = [
-    ('broad', 'EU AI Act implementation timeline 2025'),
-    ('specific', 'EU AI Act high-risk AI systems obligations'),
-]
-
-all_results = []
-for label, query in queries:
-    raw = subprocess.check_output(
-        ['uvx', '--from', 'tavily-cli', 'tvly', 'search', query, '--max-results', '8', '--json'],
-        stderr=subprocess.DEVNULL
-    )
-    data = json.loads(raw)
-    for r in data['results']:
-        r['_query'] = label
-    all_results.extend(data['results'])
-
-# Deduplicate by URL
-seen = set()
-unique = []
-for r in all_results:
-    if r['url'] not in seen:
-        seen.add(r['url'])
-        unique.append(r)
-
-# Save all results
-with open('/tmp/eu_ai_results.json', 'w') as f:
-    json.dump(unique, f)
-
-# Print triage
-unique.sort(key=lambda r: r['score'], reverse=True)
-print(f'{len(unique)} unique results from {len(queries)} queries\n')
-for i, r in enumerate(unique[:10]):
-    print(f'[{i}] [{r["score"]:.2f}] ({r["_query"]}) {r["title"][:80]}')
-    print(f'    {r["url"]}')
-    print(f'    {r["content"][:120]}')
-    print()
-PYEOF
-```
-
-**Turn 2** — you see the triage, pick the best sources, and extract:
-
-```bash
-python3 << 'PYEOF'
-import json, subprocess
-
-results = json.load(open('/tmp/eu_ai_results.json'))
-
-# Fetch full content for the top 3 (you chose these based on turn 1)
-for r in [results[0], results[2], results[4]]:
-    try:
-        raw = subprocess.check_output(
-            ['uvx', '--from', 'tavily-cli', 'tvly', 'extract', r['url'], '--json'],
-            stderr=subprocess.DEVNULL, timeout=30
-        )
-        page = json.loads(raw)
-        if not page.get('results'):
-            continue
-        content = page['results'][0].get('raw_content', '')
-
-        # Your filtering logic — tailored to this query
-        print(f'## {r["title"]}')
-        print(f'URL: {r["url"]}\n')
-
-        for para in content.split('\n\n'):
-            para = para.strip()
-            if len(para) > 100 and any(kw in para.lower() for kw in
-                    ['high-risk', 'prohibited', 'deadline', 'obligation',
-                     'compliance', 'penalty', 'fine', 'article']):
-                print(para)
-                print()
-
-        print('---\n')
-    except Exception:
-        continue
-PYEOF
-```
-
-### Following leads across turns
-
-Sometimes turn 2 reveals new URLs or topics to chase. You can keep iterating:
-
-```bash
-python3 << 'PYEOF'
-import json, subprocess
-
-# Read the page you saved earlier
-with open('/tmp/page_detail.txt') as f:
-    content = f.read()
-
-# You noticed a reference to a specific regulation document
-# Search for it specifically
-raw = subprocess.check_output(
-    ['uvx', '--from', 'tavily-cli', 'tvly', 'search', 'EU AI Act Annex III high-risk list',
-     '--include-domains', 'eur-lex.europa.eu',
-     '--max-results', '3', '--json'],
-    stderr=subprocess.DEVNULL
-)
-data = json.loads(raw)
-
-for r in data['results']:
-    print(f'## {r["title"]}')
-    print(f'URL: {r["url"]}')
-    print(r['content'])
-    print()
-PYEOF
-```
-
-Each turn, you save data to `/tmp/`, decide what to explore next, and write new filtering code as heredocs. The raw data accumulates on disk; your context stays lean.
-
-## Writing your filtering code
-
-The Python you write IS the filtering logic. There are no fixed templates — you write code that makes sense for the specific query. Here are principles, not rules:
-
-**Triage first.** Inspect titles and scores before fetching full pages. Don't extract everything blindly.
-
-**Be specific.** A financial query should filter for numbers and financial terms. A technical query should look for code blocks and specifications. A news query should look for dates and quotes. Match your filtering to the query.
-
-**Structural filtering helps.** Skip lines shorter than ~50-80 chars (usually nav elements). Skip common boilerplate phrases. Keep headings and their following paragraphs. But these are starting points — adapt based on what you see.
-
-**Print structured output.** Format your output so it's easy to reason over:
-
-```python
-print(f"## {title}")
-print(f"URL: {url}")
-print(relevant_content)
-print()
-```
-
-**Handle errors.** Pages fail, URLs 404, extractions timeout. Use try/except and skip failures:
-
-```python
-try:
-    raw = subprocess.check_output(["uvx", "--from", "tavily-cli", "tvly", "extract", url, "--json"], stderr=subprocess.DEVNULL, timeout=30)
-except Exception:
-    continue
-```
-
-**Token budget awareness.** Your `print()` output is what enters your context. Target 150-600 tokens per source. If you're printing 5000+ chars from a single page, you're probably not filtering enough. But if a source has a critical data table, it's fine to keep more.
-
-## Options
-
-All standard `tvly search` options work:
-
-| Option | Description |
-|--------|-------------|
-| `--max-results` | Number of results (default: 5, max: 20) |
-| `--depth` | `ultra-fast`, `fast`, `basic` (default), `advanced` |
-| `--time-range` | `day`, `week`, `month`, `year` |
-| `--include-domains` | Comma-separated whitelist |
-| `--exclude-domains` | Comma-separated blacklist |
-| `--include-raw-content` | Full page content (`markdown` or `text`) |
-| `--country` | Boost results from country |
-
-## Fallback: jq
-
-When `python3` is unavailable, use `jq` for basic filtering:
+When `python3` is unavailable, `jq` covers simple lookups only — no multi-step search-then-extract, no complex filtering:
 
 ```bash
 uvx --from tavily-cli tvly search "query" --json 2>/dev/null | jq '[.results[] | select(.score > 0.5) | {title, url, content}]'
 ```
-
-jq can't do multi-step search-then-extract or complex filtering. Use it only for simple lookups.

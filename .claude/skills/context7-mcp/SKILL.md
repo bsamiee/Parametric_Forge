@@ -1,53 +1,37 @@
 ---
 name: context7-mcp
-description: This skill should be used when the user asks about libraries, frameworks, API references, or needs code examples. Activates for setup questions, code generation involving libraries, or mentions of specific frameworks like React, Vue, Next.js, Prisma, Supabase, etc.
+description: >-
+  Current library, framework, and API documentation through the Context7 MCP tools
+  `resolve-library-id` and `query-docs` — signatures, configuration, setup, and code
+  examples from live indexed docs instead of training-data recall. Use for setup or
+  configuration questions, code generation involving a library, API references, or any
+  mention of a specific framework — React, Vue, Next.js, Prisma, Supabase, and peers.
+  General web research beyond indexed library docs belongs to tavily-dynamic-search.
 ---
 
-When the user asks about libraries, frameworks, or needs code examples, use Context7 to fetch current documentation instead of relying on training data.
+# [CONTEXT7]
 
-## When to Use This Skill
+Library questions resolve against live indexed documentation, never training data: `resolve-library-id` maps a library name to a Context7 ID, `query-docs` answers one scoped question against that ID. A known ID in the `/org/project` or `/org/project/version` form passes straight to `query-docs` with no resolution step.
 
-Activate this skill when the user:
+## [01]-[FLOW]
 
-- Asks setup or configuration questions ("How do I configure Next.js middleware?")
-- Requests code involving libraries ("Write a Prisma query for...")
-- Needs API references ("What are the Supabase auth methods?")
-- Mentions specific frameworks (React, Vue, Svelte, Express, Tailwind, etc.)
+- [RESOLVE]: `resolve-library-id` takes `libraryName` plus the full question as `query` for relevance ranking. Selection prefers the exact or closest name match, higher benchmark scores, official or primary packages over community forks, and a version-specific ID whenever the task names a version.
+- [QUERY]: `query-docs` takes the chosen `libraryId` and one specific question. Each call carries a single concept — a question spanning distinct concepts splits into one call per concept, capped at three calls per question.
+- [APPLY]: The fetched signatures and examples land in the answer as verified fact; the library version rides along only when it changes the guidance.
 
-## How to Fetch Documentation
+## [02]-[QUERY_SHAPE]
 
-### Step 1: Resolve the Library ID
+```text rejected
+query: "auth"
+```
 
-Call `resolve-library-id` with:
+```text accepted
+libraryId: /supabase/supabase
+query: "How to verify a JWT and read the authenticated user in a server-side route"
+```
 
-- `libraryName`: The library name extracted from the user's question
-- `query`: The user's full question (improves relevance ranking)
+Specific, task-shaped queries return targeted sections; bare keywords return noise. The user's own phrasing, passed whole, outperforms a paraphrase.
 
-### Step 2: Select the Best Match
+## [03]-[FALLBACK]
 
-From the resolution results, choose based on:
-
-- Exact or closest name match to what the user asked for
-- Higher benchmark scores indicate better documentation quality
-- If the user mentioned a version (e.g., "React 19"), prefer version-specific IDs
-
-### Step 3: Fetch the Documentation
-
-Call `query-docs` with:
-
-- `libraryId`: The selected Context7 library ID (e.g., `/vercel/next.js`)
-- `query`: The user's specific question
-
-### Step 4: Use the Documentation
-
-Incorporate the fetched documentation into your response:
-
-- Answer the user's question using current, accurate information
-- Include relevant code examples from the docs
-- Cite the library version when relevant
-
-## Guidelines
-
-- **Be specific**: Pass the user's full question as the query for better results
-- **Version awareness**: When users mention versions ("Next.js 15", "React 19"), use version-specific library IDs if available from the resolution step
-- **Prefer official sources**: When multiple matches exist, prefer official/primary packages over community forks
+A library or version absent from the index routes to its own repository or documentation site through tavily-dynamic-search — never to memory.

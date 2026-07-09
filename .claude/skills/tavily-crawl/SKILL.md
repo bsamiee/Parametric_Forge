@@ -1,25 +1,20 @@
 ---
 name: tavily-crawl
-description: |
-  Crawl websites and extract content from multiple pages via the Tavily CLI. Use this skill when the user wants to crawl a site, download documentation, extract an entire docs section, bulk-extract pages, save a site as local markdown files, or says "crawl", "get all the pages", "download the docs", "extract everything under /docs", "bulk extract", or needs content from many pages on the same domain. Supports depth/breadth control, path filtering, semantic instructions, and saving each page as a local markdown file.
+description: >-
+  Crawl websites and extract content from many pages via the Tavily CLI, with depth and
+  breadth control, path filtering, semantic instructions, and per-page markdown files on
+  disk. Use to crawl a site, download documentation, extract an entire docs section, or
+  bulk-extract pages — "crawl", "get all the pages", "download the docs", "extract everything
+  under /docs", "bulk extract". Single known URLs belong to tavily-extract; URL discovery
+  without content belongs to tavily-map.
 allowed-tools: Bash(uvx *)
 ---
 
-# tavily crawl
+# [TAVILY_CRAWL]
 
-Crawl a website and extract content from multiple pages. Supports saving each page as a local markdown file.
+Crawl a website and extract content from every discovered page, optionally saving each page as a local markdown file. Invocation rides `uvx --from tavily-cli tvly crawl …` with ambient `TAVILY_API_KEY`; the tavily-dynamic-search skill owns the family invocation law.
 
-## Invocation
-
-Run the CLI on demand through uv — every `tvly` command below is invoked as `uvx --from tavily-cli tvly …`. No install step: uv resolves and caches the CLI on first use, and auth is read from the ambient `TAVILY_API_KEY` (no `tvly login`).
-
-## When to use
-
-- You need content from many pages on a site (e.g., all `/docs/`)
-- You want to download documentation for offline use
-- Step 4 in the [workflow](../tavily-best-practices/SKILL.md): dynamic-search → extract → map → **crawl** → research
-
-## Quick start
+## [01]-[USAGE]
 
 ```bash
 # Basic crawl
@@ -34,59 +29,42 @@ uvx --from tavily-cli tvly crawl "https://docs.example.com" --max-depth 2 --limi
 # Filter to specific paths
 uvx --from tavily-cli tvly crawl "https://example.com" --select-paths "/api/.*,/guides/.*" --exclude-paths "/blog/.*" --json
 
-# Semantic focus (returns relevant chunks, not full pages)
+# Semantic focus — relevant chunks, not full pages
 uvx --from tavily-cli tvly crawl "https://docs.example.com" --instructions "Find authentication docs" --chunks-per-source 3 --json
 ```
 
-## Options
+## [02]-[OPTIONS]
 
-| Option | Description |
-|--------|-------------|
-| `--max-depth` | Levels deep (1-5, default: 1) |
-| `--max-breadth` | Links per page (default: 20) |
-| `--limit` | Total pages cap (default: 50) |
-| `--instructions` | Natural language guidance for semantic focus |
-| `--chunks-per-source` | Chunks per page (1-5, requires `--instructions`) |
-| `--extract-depth` | `basic` (default) or `advanced` |
-| `--format` | `markdown` (default) or `text` |
-| `--select-paths` | Comma-separated regex patterns to include |
-| `--exclude-paths` | Comma-separated regex patterns to exclude |
-| `--select-domains` | Comma-separated regex for domains to include |
-| `--exclude-domains` | Comma-separated regex for domains to exclude |
-| `--allow-external / --no-external` | Include external links (default: allow) |
-| `--include-images` | Include images |
-| `--timeout` | Max wait (10-150 seconds) |
-| `-o, --output` | Save JSON output to file |
-| `--output-dir` | Save each page as a .md file in directory |
-| `--json` | Structured JSON output |
+| [INDEX] | [OPTION]                                 | [EFFECT]                                         |
+| :-----: | :--------------------------------------- | :----------------------------------------------- |
+|  [01]   | `--max-depth`                            | Levels deep, 1-5 (default 1)                     |
+|  [02]   | `--max-breadth`                          | Links per page (default 20)                      |
+|  [03]   | `--limit`                                | Total pages cap (default 50)                     |
+|  [04]   | `--instructions`                         | Natural-language guidance for semantic focus     |
+|  [05]   | `--chunks-per-source`                    | Chunks per page, 1-5 (requires `--instructions`) |
+|  [06]   | `--extract-depth`                        | `basic` (default) or `advanced`                  |
+|  [07]   | `--format`                               | `markdown` (default) or `text`                   |
+|  [08]   | `--select-paths` / `--exclude-paths`     | Comma-separated path regex include/exclude       |
+|  [09]   | `--select-domains` / `--exclude-domains` | Comma-separated domain regex include/exclude     |
+|  [10]   | `--allow-external` / `--no-external`     | Include or drop external-domain links            |
+|  [11]   | `--include-images`                       | Include images                                   |
+|  [12]   | `--timeout`                              | Max wait, 10-150 seconds                         |
+|  [13]   | `-o, --output`                           | Save JSON output to file                         |
+|  [14]   | `--output-dir`                           | Save each page as a `.md` file in this directory |
+|  [15]   | `--json`                                 | Structured JSON output                           |
 
-## Crawl for context vs. data collection
+## [03]-[LANE_SELECTION]
 
-**For agentic use** (feeding results to an LLM):
-
-Always use `--instructions` + `--chunks-per-source`. Returns only relevant chunks instead of full pages — prevents context explosion.
+- [AGENTIC]: Results feeding an LLM always ride `--instructions` plus `--chunks-per-source` — relevant chunks instead of full pages, no context explosion.
+- [COLLECTION]: Data collection to disk rides `--output-dir` without `--chunks-per-source` — full pages as markdown files.
 
 ```bash
 uvx --from tavily-cli tvly crawl "https://docs.example.com" --instructions "API authentication" --chunks-per-source 3 --json
-```
-
-**For data collection** (saving to files):
-
-Use `--output-dir` without `--chunks-per-source` to get full pages as markdown files.
-
-```bash
 uvx --from tavily-cli tvly crawl "https://docs.example.com" --max-depth 2 --output-dir ./docs/
 ```
 
-## Tips
+## [04]-[SCOPE_CONTROL]
 
-- **Start conservative** — `--max-depth 1`, `--limit 20` — and scale up.
-- **Use `--select-paths`** to focus on the section you need.
-- **Use map first** to understand site structure before a full crawl.
-- **Always set `--limit`** to prevent runaway crawls.
-
-## See also
-
-- [tavily-map](../tavily-map/SKILL.md) — discover URLs before deciding to crawl
-- [tavily-extract](../tavily-extract/SKILL.md) — extract individual pages
-- [tavily-dynamic-search](../tavily-dynamic-search/SKILL.md) — find pages when you don't have a URL
+- A crawl starts conservative — `--max-depth 1`, `--limit 20` — and scales only after the shape of the site is known; `--limit` always binds to prevent runaway crawls.
+- `--select-paths` narrows to the section that matters before depth grows.
+- A tavily-map pass first reveals site structure when the target section is uncertain; a few specific pages route to tavily-extract instead of a crawl.

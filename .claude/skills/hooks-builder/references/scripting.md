@@ -1,4 +1,4 @@
-# [H1][SCRIPTING]
+# [SCRIPTING]
 
 ## [01]-[SHEBANG]
 
@@ -117,11 +117,11 @@ def _format_xml(skills: list[SkillEntry], targets: frozenset[str]) -> str:
 
 ## [08]-[SECURITY]
 
-| [FORBIDDEN]                | [REQUIRED]                               |
-| -------------------------- | ---------------------------------------- |
-| `os.system(f"...{input}")` | `subprocess.run([...], shell=False)`     |
-| `eval()` / `exec()`        | `json.load(sys.stdin)`                   |
-| `path.startswith(prefix)`  | `Path(p).resolve().is_relative_to(root)` |
+| [INDEX] | [FORBIDDEN]                | [REQUIRED]                               |
+| :-----: | :------------------------- | :--------------------------------------- |
+|  [01]   | `os.system(f"...{input}")` | `subprocess.run([...], shell=False)`     |
+|  [02]   | `eval()` / `exec()`        | `json.load(sys.stdin)`                   |
+|  [03]   | `path.startswith(prefix)`  | `Path(p).resolve().is_relative_to(root)` |
 
 ## [09]-[TOOLING]
 
@@ -139,7 +139,7 @@ target-version = "py315"
 select = ["E", "F", "W", "B", "I", "UP", "ANN", "S", "C90"]
 ```
 
-| [GATE] | [COMMAND]                             |
-| ------ | ------------------------------------- |
-| Type   | `ty check`                            |
-| Lint   | `ruff check --fix . && ruff format .` |
+| [INDEX] | [GATE] | [COMMAND]                             |
+| :-----: | :----- | :------------------------------------ |
+|  [01]   | Type   | `ty check`                            |
+|  [02]   | Lint   | `ruff check --fix . && ruff format .` |

@@ -1,34 +1,29 @@
 ---
 name: tavily-extract
-description: |
-  Extract clean markdown or text content from specific URLs via the Tavily CLI. Use this skill when the user has one or more URLs and wants their content, says "extract", "grab the content from", "pull the text from", "get the page at", "read this webpage", or needs clean text from web pages. Handles JavaScript-rendered pages, returns LLM-optimized markdown, and supports query-focused chunking for targeted extraction. Can process up to 20 URLs in a single call.
+description: >-
+  Extract clean markdown or text from specific URLs via the Tavily CLI, up to 20 URLs per
+  call, including JavaScript-rendered pages, with query-focused chunking for targeted
+  retrieval. Use when one or more URLs are already in hand and their content is the need —
+  "extract", "grab the content from", "pull the text from", "get the page at", "read this
+  webpage". Finding pages without a URL belongs to tavily-dynamic-search; bulk extraction
+  across a whole site belongs to tavily-crawl.
 allowed-tools: Bash(uvx *)
 ---
 
-# tavily extract
+# [TAVILY_EXTRACT]
 
-Extract clean markdown or text content from one or more URLs.
+Extract clean, LLM-optimized content from URLs already identified. Invocation rides `uvx --from tavily-cli tvly extract …` with ambient `TAVILY_API_KEY`; the tavily-dynamic-search skill owns the family invocation law.
 
-## Invocation
-
-Run the CLI on demand through uv — every `tvly` command below is invoked as `uvx --from tavily-cli tvly …`. No install step: uv resolves and caches the CLI on first use, and auth is read from the ambient `TAVILY_API_KEY` (no `tvly login`).
-
-## When to use
-
-- You have a specific URL and want its content
-- You need text from JavaScript-rendered pages
-- Step 2 in the [workflow](../tavily-best-practices/SKILL.md): dynamic-search → **extract** → map → crawl → research
-
-## Quick start
+## [01]-[USAGE]
 
 ```bash
 # Single URL
 uvx --from tavily-cli tvly extract "https://example.com/article" --json
 
-# Multiple URLs
+# Multiple URLs (max 20 per call; batch larger lists)
 uvx --from tavily-cli tvly extract "https://example.com/page1" "https://example.com/page2" --json
 
-# Query-focused extraction (returns relevant chunks only)
+# Query-focused extraction — relevant chunks only, not full pages
 uvx --from tavily-cli tvly extract "https://example.com/docs" --query "authentication API" --chunks-per-source 3 --json
 
 # JS-heavy pages
@@ -38,35 +33,22 @@ uvx --from tavily-cli tvly extract "https://app.example.com" --extract-depth adv
 uvx --from tavily-cli tvly extract "https://example.com/article" -o article.md
 ```
 
-## Options
+## [02]-[OPTIONS]
 
-| Option | Description |
-|--------|-------------|
-| `--query` | Rerank chunks by relevance to this query |
-| `--chunks-per-source` | Chunks per URL (1-5, requires `--query`) |
-| `--extract-depth` | `basic` (default) or `advanced` (for JS pages) |
-| `--format` | `markdown` (default) or `text` |
-| `--include-images` | Include image URLs |
-| `--timeout` | Max wait time (1-60 seconds) |
-| `-o, --output` | Save output to file |
-| `--json` | Structured JSON output |
+| [INDEX] | [OPTION]              | [EFFECT]                                                                      |
+| :-----: | :-------------------- | :---------------------------------------------------------------------------- |
+|  [01]   | `--query`             | Rerank chunks by relevance to this query                                      |
+|  [02]   | `--chunks-per-source` | Chunks per URL, 1-5 (requires `--query`)                                      |
+|  [03]   | `--extract-depth`     | `basic` (default) or `advanced` for JS-rendered SPAs, dynamic content, tables |
+|  [04]   | `--format`            | `markdown` (default) or `text`                                                |
+|  [05]   | `--include-images`    | Include image URLs                                                            |
+|  [06]   | `--timeout`           | Max wait, 1-60 seconds                                                        |
+|  [07]   | `-o, --output`        | Save output to file                                                           |
+|  [08]   | `--json`              | Structured JSON output                                                        |
 
-## Extract depth
+## [03]-[SELECTION]
 
-| Depth | When to use |
-|-------|-------------|
-| `basic` | Simple pages, fast — try this first |
-| `advanced` | JS-rendered SPAs, dynamic content, tables |
-
-## Tips
-
-- **Max 20 URLs per request** — batch larger lists into multiple calls.
-- **Use `--query` + `--chunks-per-source`** to get only relevant content instead of full pages.
-- **Try `basic` first**, fall back to `advanced` if content is missing.
-- **Set `--timeout`** for slow pages (up to 60s).
-- If search results already contain the content you need (via `--include-raw-content`), skip the extract step.
-
-## See also
-
-- [tavily-dynamic-search](../tavily-dynamic-search/SKILL.md) — find pages when you don't have a URL
-- [tavily-crawl](../tavily-crawl/SKILL.md) — extract content from many pages on a site
+- `basic` depth runs first; `advanced` binds only when content comes back missing — it is slower and costs more.
+- `--query` plus `--chunks-per-source` returns only relevant chunks; full pages are the exception, not the default, when the result feeds an agent.
+- A search that already ran with `--include-raw-content` carries the content; the extract step is skipped, not repeated.
+- Site-wide needs route to tavily-crawl; URL discovery on a known site routes to tavily-map.
