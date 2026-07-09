@@ -1,32 +1,28 @@
+# Title         : default.nix
+# Author        : Bardia Samiee
+# Project       : Parametric Forge
+# License       : MIT
+# Path          : overlays/energyplus/default.nix
+# ----------------------------------------------------------------------------
+# Hand-authored install kernel; overlays/manifest.nix owns every version,
+# asset, and hash fact through the `row` argument.
 {
   bash,
   fetchurl,
   lib,
   stdenvNoCC,
+  row,
 }: let
-  version = "26.1.0";
-  build = "6f2e40d102";
   system = stdenvNoCC.hostPlatform.system;
-  platformAsset =
-    if system == "aarch64-darwin"
-    then {
-      platform = "Darwin-macOS13-arm64";
-      hash = "sha256-fy7EJeZ/XXHGaORQTbGxDZHcTYy4Aumo7nDE8CpG03k=";
-    }
-    else
-      (
-        throw "energyplus: unsupported platform ${system}"
-      );
-  archiveRoot = "EnergyPlus-${version}-${build}-${platformAsset.platform}";
+  asset =
+    row.assets.${system}
+    or (throw "energyplus: no asset row for ${system}");
 in
   stdenvNoCC.mkDerivation {
     pname = "energyplus";
-    inherit version;
+    inherit (row) version;
 
-    src = fetchurl {
-      url = "https://github.com/NatLabRockies/EnergyPlus/releases/download/v${version}/${archiveRoot}.tar.gz";
-      inherit (platformAsset) hash;
-    };
+    src = fetchurl {inherit (asset) url hash;};
 
     nativeBuildInputs = [bash];
 
@@ -49,7 +45,7 @@ in
       export ENERGYPLUSDIR="$runtime"
       export ENERGYPLUS_DIR="$runtime"
       export ENERGYPLUS_EXE="$runtime/energyplus"
-      export ENERGYPLUS_VERSION="${version}"
+      export ENERGYPLUS_VERSION="${row.version}"
       exec "$runtime/$tool" "\$@"
       EOF
               chmod 0755 "$out/bin/$tool"
@@ -57,14 +53,14 @@ in
 
             for tool in \
               energyplus \
-              energyplus-${version} \
+              energyplus-${row.version} \
               runenergyplus \
               runepmacro \
               runreadvars \
               EPMacro \
               ExpandObjects \
               ConvertInputFormat \
-              ConvertInputFormat-${version}
+              ConvertInputFormat-${row.version}
             do
               if [ -x "$runtime/$tool" ]; then
                 install_tool "$tool"
@@ -75,10 +71,8 @@ in
     '';
 
     meta = {
-      description = "Whole building energy simulation runtime";
-      homepage = "https://energyplus.net";
-      license = lib.licenses.bsd3;
-      mainProgram = "energyplus";
-      platforms = ["aarch64-darwin"];
+      inherit (row) description homepage mainProgram;
+      license = lib.licenses.${row.license};
+      platforms = builtins.attrNames row.assets;
     };
   }

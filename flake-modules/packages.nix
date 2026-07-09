@@ -4,29 +4,39 @@
 # License       : MIT
 # Path          : flake-modules/packages.nix
 # ----------------------------------------------------------------------------
-# Public packages and apps. CLI-intended outputs get symmetric apps; sqlean
-# stays package-only (extension library set consumed by sqlite-forge).
-_: {
+# Public packages and apps as folds of overlays/manifest.nix projection rows:
+# `projection.package` publishes the attr, `projection.app` wraps its CLI,
+# `projection.default = true` names the default. forge-package-manifest is the
+# machine-readable ledger and rides the same smoke checks.
+_: let
+  manifest = import ../overlays/manifest.nix;
+in {
   perSystem = {
     config,
     forgePkgs,
     ...
   }: let
+    inherit (forgePkgs) lib;
+    rowsWhere = field:
+      lib.filterAttrs (_: row: row.projection.${field} or false) manifest.packages;
+    defaultName =
+      lib.head (builtins.attrNames (rowsWhere "default"));
     mkApp = package: {
       type = "app";
-      program = forgePkgs.lib.getExe package;
+      program = lib.getExe package;
     };
   in {
-    packages = {
-      inherit (forgePkgs) duckdb forge-provision sqlite-forge sqlean;
-      default = forgePkgs.forge-provision;
-    };
+    packages =
+      lib.mapAttrs (name: _: forgePkgs.${name}) (rowsWhere "package")
+      // {
+        inherit (forgePkgs) forge-package-manifest;
+        default = forgePkgs.${defaultName};
+      };
 
-    apps = {
-      duckdb = mkApp forgePkgs.duckdb;
-      forge-provision = mkApp forgePkgs.forge-provision;
-      sqlite-forge = mkApp forgePkgs.sqlite-forge;
-      default = config.apps.forge-provision;
-    };
+    apps =
+      lib.mapAttrs (name: _: mkApp forgePkgs.${name}) (rowsWhere "app")
+      // {
+        default = config.apps.${defaultName};
+      };
   };
 }

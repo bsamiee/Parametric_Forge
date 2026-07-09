@@ -23,6 +23,11 @@ Apply when writing or reviewing Nix modules, overlays, flake composition, `write
 - Rejected: Home Manager logic inside overlays, convenience wrapper packages, package aliases hiding behavior.
 - Example: `final: prev: { shape = prev.shape.overrideAttrs (old: { postPatch = (old.postPatch or "") + patch; }); }`
 
+[PACKAGE_MANIFEST]:
+- Law: Non-nixpkgs package and extension admission is a manifest row — provenance, version policy, per-platform assets and hashes, license, patch family, cache class, update engine, retention, projection — and overlays, public packages, apps, HM rosters, and extension directories are folds of the rows. Direct-package projection is the default; an overlay-override row names its dependency-graph reason. Nixpkgs-followed admissions carry no frozen version copy — the JSON projection resolves live pins from the package set.
+- Rejected: Version/url/hash triples inside derivation bodies, a second hand-maintained public package list, per-app plugin updater semantics, registry-trust admission of extension corpora, overlay mutation without a named graph reason.
+- Example: `packages = lib.mapAttrs (name: _: forgePkgs.${name}) (lib.filterAttrs (_: row: row.projection.package or false) manifest.packages);`
+
 [COMPOSITION_ROOT]:
 - Law: The flake composition root admits inputs once, and `perSystem` derives packages, apps, checks, and the formatter from one package set.
 - Rejected: Duplicated per-system package attrsets, host conditionals outside `perSystem`, ad hoc system strings inside modules.

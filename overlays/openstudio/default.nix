@@ -1,31 +1,28 @@
+# Title         : default.nix
+# Author        : Bardia Samiee
+# Project       : Parametric Forge
+# License       : MIT
+# Path          : overlays/openstudio/default.nix
+# ----------------------------------------------------------------------------
+# Hand-authored install kernel; overlays/manifest.nix owns every version,
+# asset, and hash fact through the `row` argument.
 {
   bash,
   fetchurl,
   lib,
   stdenvNoCC,
+  row,
 }: let
-  version = "3.11.0";
-  build = "241b8abb4d";
   system = stdenvNoCC.hostPlatform.system;
-  platformAsset =
-    if system == "aarch64-darwin"
-    then {
-      platform = "Darwin-arm64";
-      hash = "sha256-t/hZA44pYjcf8eEv/lCSNfAafVT2MfBLRY37XXvjZGQ=";
-    }
-    else
-      (
-        throw "openstudio: unsupported platform ${system}"
-      );
+  asset =
+    row.assets.${system}
+    or (throw "openstudio: no asset row for ${system}");
 in
   stdenvNoCC.mkDerivation {
     pname = "openstudio";
-    inherit version;
+    inherit (row) version;
 
-    src = fetchurl {
-      url = "https://github.com/NatLabRockies/OpenStudio/releases/download/v${version}/OpenStudio-${version}%2B${build}-${platformAsset.platform}.tar.gz";
-      inherit (platformAsset) hash;
-    };
+    src = fetchurl {inherit (asset) url hash;};
 
     nativeBuildInputs = [bash];
 
@@ -46,7 +43,7 @@ in
       export OPENSTUDIO_ROOT="$runtime"
       export OPENSTUDIO_DIR="$runtime"
       export OPENSTUDIO_EXE="$runtime/bin/openstudio"
-      export OPENSTUDIO_VERSION="${version}"
+      export OPENSTUDIO_VERSION="${row.version}"
       export OPENSTUDIO_RUBY_ROOT="$runtime/Ruby"
       export OPENSTUDIO_PYTHON_ROOT="$runtime/Python"
       export OPENSTUDIO_RADIANCE_ROOT="$runtime/Radiance"
@@ -61,7 +58,7 @@ in
       export OPENSTUDIO_ROOT="$runtime"
       export OPENSTUDIO_DIR="$runtime"
       export OPENSTUDIO_EXE="$runtime/bin/openstudio"
-      export OPENSTUDIO_VERSION="${version}"
+      export OPENSTUDIO_VERSION="${row.version}"
       export OPENSTUDIO_RUBY_ROOT="$runtime/Ruby"
       export OPENSTUDIO_PYTHON_ROOT="$runtime/Python"
       export OPENSTUDIO_RADIANCE_ROOT="$runtime/Radiance"
@@ -74,10 +71,8 @@ in
     '';
 
     meta = {
-      description = "OpenStudio SDK and CLI for whole-building energy modeling";
-      homepage = "https://openstudio.net";
-      license = lib.licenses.bsd3;
-      mainProgram = "openstudio";
-      platforms = ["aarch64-darwin"];
+      inherit (row) description homepage mainProgram;
+      license = lib.licenses.${row.license};
+      platforms = builtins.attrNames row.assets;
     };
   }
