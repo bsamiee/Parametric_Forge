@@ -35,7 +35,7 @@ Choose the container by what the reader retrieves; convert before styling.
 - An entry carries one decision in one to two sentences, three at the hard cap; past the cap the entry is hiding a card, a labeled block, or section prose. Closed enumerations whose payload is the roster itself are registry entries and legal at length.
 - A representation is declared regenerable, verified by tooling where a verifier exists, and never paraphrased back into prose — the paraphrase is a second copy that drifts.
 - Graphical labels carry concept names only: a node, edge, or tree-entry label stays under ten words, and code detail never rides a tree, seam edge, or diagram label.
-- One diagram owns one question; a diagram needing two legends is two diagrams.
+- Diagram fences — question admission, type selection, construction, render validation — ride the mermaid-diagramming skill; a doc admits one only as a declared regenerable representation.
 
 [FENCE_CONTENT]:
 - A fence carries a language tag plus one intent label from the closed set — `copy-safe` runs as written, `template` carries neutral placeholders, `conceptual` illustrates, `generated` and `output-only` carry produced output, `rejected` carries a counterexample — and the body honors its label: a copy-safe body runs, a renderable body renders under the corpus validator.

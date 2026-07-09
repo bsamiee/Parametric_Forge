@@ -6,7 +6,8 @@ description: >-
   skill for web research. Triggered by "search for", "look up", "find", "research", "what's
   the latest on", or any query needing current web information, and by "search and filter",
   "find the important parts", or "extract the key details". Deep cited reports belong to
-  tavily-research; pulling known URLs belongs to tavily-extract.
+  tavily-research; pulling known URLs belongs to tavily-extract; indexed library and
+  framework documentation belongs to context7-mcp.
 allowed-tools: Bash(uvx *), Bash(python3 *), Bash(uv run *), Bash(jq *)
 ---
 

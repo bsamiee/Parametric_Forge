@@ -1,6 +1,6 @@
 ---
 name: codex
-description: Dispatch work to the Codex CLI (gpt-5.5) via `codex exec` / `codex review` — each run executes in an isolated context and returns only a report, and usage is effectively free, so prefer it over Claude subagents for self-contained legs. Trigger whenever a leg is transcript-heavy or mechanical - repo sweeps, audits, investigation, many-file reads, log or dataset distillation, live web research, bulk clear-spec implementation, migrations - and for an independent second perspective on any plan, diff, or implementation. Also trigger whenever the user references codex, gpt-5.5, OpenAI models, or asks to offload work or conserve usage; delegation across Claude's own surfaces belongs to agent-dispatch.
+description: Dispatch work to the Codex CLI (gpt-5.5) via `codex exec` / `codex review` — each run executes in an isolated context and returns only a report, and usage is effectively free, so prefer it over Claude subagents for self-contained legs. Trigger whenever a leg is transcript-heavy or mechanical - repo sweeps, audits, investigation, many-file reads, log or dataset distillation, live web research, bulk clear-spec implementation, migrations - and for an independent second perspective on any plan, diff, or implementation. Also trigger whenever the user references codex, gpt-5.5, OpenAI models, or asks to offload work or conserve usage; delegation across Claude's own surfaces belongs to agent-dispatch, and Gemini second-model calls belong to agy.
 ---
 
 # Codex Dispatch

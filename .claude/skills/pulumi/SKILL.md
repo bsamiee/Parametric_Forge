@@ -10,7 +10,8 @@ description: >-
   migrate Terraform, CloudFormation, CDK, Bicep, or ARM code to Pulumi, Automation API embedding,
   ComponentResource authoring, Output/apply questions, and failed pulumi up or preview debugging.
   Do not trigger for application runtime code that reads or writes data via cloud SDKs; that is
-  application code, not infrastructure.
+  application code, not infrastructure. Interactive Hostinger domain, DNS, and VPS operations
+  belong to the hostinger skill.
 ---
 
 # [PULUMI]
@@ -88,7 +89,7 @@ npx pulumi refresh --preview-only                    # ad-hoc local drift check
 npx pulumi stack schedule new --kind drift --cron "0 0 * * *"
 ```
 
-Where the provider supports it, cloud credentials vend through OIDC rather than static keys in environment YAML. A schedule is standing automation that outlives the session — confirm operation, cadence, and stack with the operator first, and default to detection-only: `--kind drift --auto-remediate` and `--kind ttl` act without a human in the loop.
+A provider with OIDC federation vends cloud credentials through it rather than static keys in environment YAML. A schedule is standing automation that outlives the session — confirm operation, cadence, and stack with the operator first, and default to detection-only: `--kind drift --auto-remediate` and `--kind ttl` act without a human in the loop.
 
 ## [04]-[REFERENCE]
 

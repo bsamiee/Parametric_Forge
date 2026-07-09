@@ -9,9 +9,9 @@ description: >-
   ARCHITECTURE, specs, standards, prompts, tool docs, the prose inside skill files — when
   designing a document schema or marker vocabulary, or when hunting noise, fragility,
   staleness, poison framing, or context anchoring. Skill bundle design — triggers, disclosure,
-  bundled scripts, evals — belongs to the skill-writer skill. Do not trigger for transient chat
-  replies, code-only edits, Mermaid fence construction, interactive HTML artifacts, or research
-  whose deliverable is not durable markdown.
+  bundled scripts, evals — belongs to the skill-writer skill; Mermaid fences to
+  mermaid-diagramming; interactive HTML artifacts to html-studio. Do not trigger for transient
+  chat replies, code-only edits, or research whose deliverable is not durable markdown.
 ---
 
 # [DOCGEN]

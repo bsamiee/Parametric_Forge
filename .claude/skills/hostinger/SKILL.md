@@ -7,7 +7,8 @@ description: >-
   snapshots, recovery mode, malware scanning, PTR records, and metrics. Use when registering or
   transferring domains, editing DNS, deploying or troubleshooting a VPS or its Docker projects,
   configuring firewalls, or managing server infrastructure on Hostinger. Shared web hosting,
-  WordPress, and ecommerce surfaces are outside this skill.
+  WordPress, and ecommerce surfaces are outside this skill; declarative IaC provisioning
+  through the Pulumi Hostinger provider belongs to pulumi.
 ---
 
 # [HOSTINGER]
