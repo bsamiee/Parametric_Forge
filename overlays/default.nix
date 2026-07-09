@@ -30,7 +30,26 @@ final: prev: let
     assert lib.assertMsg (lib.elem row.install voc.installModes) "${name}: install '${row.install}' outside vocabulary";
     assert lib.assertMsg (lib.elem row.roster voc.rosters) "${name}: roster '${row.roster}' outside vocabulary";
     assert lib.assertMsg (lib.elem row.updateEngine voc.updateEngines) "${name}: updateEngine '${row.updateEngine}' outside vocabulary";
-    assert lib.assertMsg (lib.elem row.completion voc.completionKinds) "${name}: completion '${row.completion}' outside vocabulary"; row;
+    assert lib.assertMsg (lib.elem row.completion voc.completionKinds) "${name}: completion '${row.completion}' outside vocabulary";
+    assert lib.assertMsg (lib.elem row.themeCarrier voc.themeCarriers) "${name}: themeCarrier '${row.themeCarrier}' outside vocabulary";
+    assert lib.assertMsg (!(row ? completionArgs) || row.completion == "native") "${name}: completionArgs requires completion = \"native\"";
+    # Attr absence is nixpkgs drift (rename/removal) or a typo, never a
+    # platform fact — nixpkgs attrs exist on every platform; fail loud.
+    assert lib.assertMsg (prev ? ${row.attr}) "${name}: attr '${row.attr}' absent from the package set (nixpkgs drift or typo)"; row;
+
+  # Lane admission contract: a row missing a required field fails the ledger
+  # build; `extensionSecurityFields`-class vocabularies are executable here.
+  checkExtensionLane = lane: def:
+    def
+    // {
+      rows =
+        lib.mapAttrs (
+          name: row:
+            assert lib.assertMsg (lib.all (f: row ? ${f}) (def.requiredFields or []))
+            "${lane}.${name}: row missing required fields (${lib.concatStringsSep " " (lib.filter (f: !(row ? ${f})) (def.requiredFields or []))})"; row
+        )
+        def.rows;
+    };
 
   # Launcher extension rows project live from the fleet manifest owner into
   # the ledger; placeholder args — only family fields cross, never spawn lines.
@@ -157,11 +176,10 @@ in {
     destination = "/share/forge/manifest.json";
     text = builtins.toJSON {
       inherit (manifest) vocabulary;
-      extensions =
-        manifest.extensions
+      extensions = lib.mapAttrs checkExtensionLane (manifest.extensions
         // {
           mcp-launchers = manifest.extensions.mcp-launchers // {rows = fleetLauncherRows;};
-        };
+        });
       # Nixpkgs-followed package rows carry no frozen version copy; the ledger
       # resolves the live pin from the package set, mirroring admissions.
       packages =
@@ -177,13 +195,15 @@ in {
         )
         manifest.packages;
       # Admission pins resolve live from the package set — never frozen copies.
+      # Platform support is a meta.platforms fact (availableOn), not attr
+      # presence; checkAdmission already made a missing attr a loud failure.
       admissions =
         lib.mapAttrs (
           name: row:
             checkAdmission name row
             // {
               resolved =
-                if prev ? ${row.attr}
+                if lib.meta.availableOn prev.stdenv.hostPlatform prev.${row.attr}
                 then {
                   version = prev.${row.attr}.version or null;
                   state = "current";

@@ -38,6 +38,7 @@ in rec {
     installModes = ["hm-roster" "ca1" "landed"]; # roster-installed | CA-1 owns installation/projection | owned by a config module
     rosters = ["data" "git" "monitors" "proof" "picker"];
     completionKinds = ["native" "landed" "none"]; # tool/package provides | owner config module wires | no completion surface
+    themeCarriers = ["ansi" "env" "none" "tape" "toml"]; # how the admission consumes the estate palette
     rowStates = ["current" "no_upstream_release" "hash_mismatch" "unsupported_platform" "patch_drift" "license_drift" "cache_miss" "consumer_conflict"];
     retentionPolicies = ["git-history" "ledger"]; # superseded pins resurrect from repo history unless a generated ledger holds them
     extensionSecurityFields = ["publisher" "registry" "native_code" "postinstall_behavior" "secret_touching" "host_permissions" "runtime_write_policy" "mutable_paths"];
@@ -409,29 +410,36 @@ in rec {
   # Host-runtime extension registries: package-like assets consumed by a host.
   # One family, per-lane sources; CA-4/5/6/7 admit plugin rows here, each
   # carrying the security fields named in the vocabulary. Empty row sets are
-  # lanes with a declared source and no vetted admission yet.
+  # lanes with a declared source and no vetted admission yet. `requiredFields`
+  # is the lane's admission contract: the ledger fold rejects any row missing
+  # one, so an under-specified admission fails the build, never lands silent.
   extensions = {
     vscode = {
       source = "nix-vscode-extensions"; # Marketplace/OpenVSX generated registry; admission is per-row vetting, never registry trust
       forbiddenLanes = ["homebrew-brewfile-vscode"]; # extension presence never splits across Homebrew and the declared source
       liveState = "user-managed extensions dir; a drift row until rows are vetted (per-row security fields required)";
+      requiredFields = vocabulary.extensionSecurityFields;
       rows = {};
     };
     zellij-wasm = {
       source = "fetchFromGitHub"; # pinned derivations + declarative permission-grant rows (CA-5 consumes)
+      requiredFields = ["license" "permissions"];
       rows = {};
     };
     wezterm-plugins = {
       source = "fetchFromGitHub"; # file:// store-path loads only (CA-4 consumes)
+      requiredFields = ["license" "permissions"];
       rows = {};
     };
     yazi-plugins = {
       source = "nixpkgs:yaziPlugins"; # kebab-case <name>.yazi dirs with main.lua entrypoints (CA-5 consumes)
+      requiredFields = ["attr" "license"];
       rows = {};
     };
     mcp-launchers = {
       source = "npm-registry";
       owner = "modules/home/programs/shell-tools/mcp-fleet.nix"; # launcher rows carry upstream + updateEngine family fields
+      requiredFields = ["pkg" "version" "upstream" "updateEngine"];
       rows = {};
     };
   };
