@@ -175,10 +175,14 @@
       # the agent contract (same envelope keys).
       emit() {
         mkdir -p "$(dirname "$receipts")"
-        local ts
+        local ts detail
         TZ=UTC0 printf -v ts '%(%Y-%m-%dT%H:%M:%SZ)T' "$EPOCHSECONDS"
         printf 'ts=%s\ttunnel=%s\tstate=%s\t%s\n' "$ts" "$name" "$1" "''${2:-}" | tee -a "$receipts"
-        jq -cn --arg ts "$ts" --arg tunnel "$name" --arg state "$1" --arg detail "''${2:-}" \
+        # TSV rows carry a detail= column prefix; the JSONL key already names
+        # the field, so the prefix is stripped rather than doubled.
+        detail="''${2:-}"
+        detail="''${detail#detail=}"
+        jq -cn --arg ts "$ts" --arg tunnel "$name" --arg state "$1" --arg detail "$detail" \
           '{ts: $ts, surface: "vps-tunnel", tunnel: $tunnel, state: $state, detail: $detail}' \
           >>"''${receipts%.log}.jsonl"
       }

@@ -19,6 +19,11 @@ in {
   # module default (configHome) would orphan the live VM. Intentional shutdown
   # is `launchctl bootout` of the colima-default agent; a bare `colima stop`
   # re-triggers start.
+  # The VM+engine teardown needs minutes; launchd's default 20s ExitTimeOut
+  # SIGKILLs the stop mid-flight and orphans the VM, so the window is widened
+  # to cover a full 8-container drain.
+  launchd.agents.colima-default.config.ExitTimeOut = 300;
+
   services.colima = {
     enable = isDarwin;
     colimaHomeDir = "${config.xdg.dataHome}/colima";

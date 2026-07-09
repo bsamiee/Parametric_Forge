@@ -304,8 +304,10 @@
           [ ! -f "$tmp/wrappers" ] || cat "$tmp/wrappers"
           for ((f = 0; f < i; f++)); do cat "$tmp/row.$f"; done
         } >"$rows"
+        # Direct file grep: grep -q on the read end of a pipe SIGPIPEs the
+        # writer under pipefail, and the negation would swallow real FAILs.
         rc=0
-        ! cut -f1 "$rows" | grep -qx FAIL || rc=1
+        ! grep -q $'^FAIL\t' "$rows" || rc=1
         if [ "$as_json" = 1 ]; then
           TZ=UTC0 printf -v ts '%(%Y-%m-%dT%H:%M:%SZ)T' "$EPOCHSECONDS"
           jq -Rcs --arg ts "$ts" --arg rc "$rc" '{
