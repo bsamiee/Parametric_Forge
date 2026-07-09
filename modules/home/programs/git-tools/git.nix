@@ -28,6 +28,12 @@ in {
     (principal: "${principal} namespaces=\"git\" ${identity.publicKey}\n")
     trustedPrincipals;
 
+  # Global ignore is an owned row beside git/config: per-session agent-local
+  # settings never enter any repo's index.
+  xdg.configFile."git/ignore".text = ''
+    **/.claude/settings.local.json
+  '';
+
   programs.git = {
     enable = true;
     lfs.enable = true;

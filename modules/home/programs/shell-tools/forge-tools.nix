@@ -481,6 +481,786 @@
       kind = "path";
       target = ".rustup";
     }
+    # --- Seeded litter registries: map-proven candidates the detector re-proves
+    # live before any action; every deletion is trash-first and restorable. ---
+    {
+      name = "wez-sh-save";
+      kind = "path";
+      target = "bin/wez.sh.save";
+    }
+    {
+      name = "zshrc-backups";
+      kind = "glob";
+      root = "";
+      pattern = ".zshrc.backup-*";
+      depth = 1;
+    }
+    {
+      name = "nix-defexpr-channels";
+      kind = "path";
+      target = ".nix-defexpr";
+    }
+    {
+      name = "csharp-history";
+      kind = "path";
+      target = ".config/csharp.history";
+    }
+    {
+      name = "homebrew-trust-lock";
+      kind = "path";
+      target = ".config/homebrew/trust.json.lock";
+    }
+    {
+      name = "crossnote-config";
+      kind = "path";
+      target = ".config/crossnote";
+    }
+    {
+      name = "fish-kiro-hooks";
+      kind = "path";
+      target = ".config/fish";
+    }
+    {
+      name = "opencode-config";
+      kind = "path";
+      target = ".config/opencode";
+    }
+    {
+      # CA-2 admission policy: self-mutating update-notifier state is disabled
+      # at admission; existing configstore rows are unowned litter.
+      name = "update-notifier-configstore";
+      kind = "path";
+      target = ".config/configstore";
+    }
+    {
+      name = "carapace-empty-shell";
+      kind = "path";
+      target = ".config/carapace";
+    }
+    {
+      name = "colima-config-stub";
+      kind = "path";
+      target = ".config/colima";
+    }
+    {
+      name = "colima-root-dot";
+      kind = "path";
+      target = ".colima";
+    }
+    {
+      name = "xdg-ssh-residue";
+      kind = "path";
+      target = ".config/ssh";
+    }
+    {
+      name = "transmission-shell";
+      kind = "path";
+      target = ".config/transmission-daemon";
+    }
+    {
+      name = "sq-shell";
+      kind = "path";
+      target = ".config/sq";
+    }
+    {
+      name = "rest-client-shell";
+      kind = "path";
+      target = ".config/rest-client";
+    }
+    {
+      name = "rest-client-cache";
+      kind = "path";
+      target = ".cache/rest-client";
+    }
+    {
+      name = "ocrmypdf-cache-empty";
+      kind = "path";
+      target = ".cache/ocrmypdf";
+    }
+    {
+      name = "claude-cache-empty";
+      kind = "path";
+      target = ".cache/claude";
+    }
+    {
+      name = "antigravity-cache-empty";
+      kind = "path";
+      target = ".cache/antigravity";
+    }
+    {
+      name = "nx-shell";
+      kind = "path";
+      target = ".config/nx";
+    }
+    {
+      name = "nxcloud-shell";
+      kind = "path";
+      target = ".config/nxcloud";
+    }
+    {
+      name = "ruby-gem-residue";
+      kind = "path";
+      target = ".local/share/gem";
+    }
+    {
+      name = "kiro-root";
+      kind = "path";
+      target = ".kiro";
+    }
+    {
+      name = "kiro-term-bash";
+      kind = "path";
+      target = ".local/bin/bash (kiro-cli-term)";
+    }
+    {
+      name = "kiro-term-zsh";
+      kind = "path";
+      target = ".local/bin/zsh (kiro-cli-term)";
+    }
+    {
+      name = "kiro-term-fish";
+      kind = "path";
+      target = ".local/bin/fish (kiro-cli-term)";
+    }
+    {
+      name = "kiro-term-nu";
+      kind = "path";
+      target = ".local/bin/nu (kiro-cli-term)";
+    }
+    {
+      name = "shell-history-root-zsh";
+      kind = "path";
+      target = ".zsh_history";
+    }
+    {
+      name = "shell-dir-root-zsh";
+      kind = "path";
+      target = ".zsh";
+    }
+    {
+      name = "shell-history-root-bash";
+      kind = "path";
+      target = ".bash_history";
+    }
+    {
+      name = "bash-sessions-root";
+      kind = "path";
+      target = ".bash_sessions";
+    }
+    {
+      name = "browserlock-residue";
+      kind = "path";
+      target = ".BrowserLock";
+    }
+    {
+      name = "pdf-filler-profiles";
+      kind = "path";
+      target = ".pdf-filler-profiles";
+    }
+    {
+      name = "pdf-toolkit-files";
+      kind = "path";
+      target = ".pdf-toolkit-files";
+    }
+    {
+      name = "playwright-daemon-root";
+      kind = "path";
+      target = ".playwright-daemon";
+    }
+    {
+      name = "playwright-skill-root";
+      kind = "path";
+      target = ".playwright-skill";
+    }
+    {
+      name = "library-application-singleton";
+      kind = "path";
+      target = "Library/Application";
+    }
+    {
+      name = "photoshop-crashes";
+      kind = "path";
+      target = "Library/PhotoshopCrashes";
+    }
+    {
+      name = "library-staging";
+      kind = "path";
+      target = "Library/Staging";
+    }
+    {
+      name = "documents-codex-bucket";
+      kind = "path";
+      target = "Documents/Codex";
+    }
+    {
+      name = "documents-adobe-bucket";
+      kind = "path";
+      target = "Documents/Adobe";
+    }
+    {
+      name = "yazi-ds-store";
+      kind = "path";
+      target = ".config/yazi/.DS_Store";
+    }
+    {
+      name = "karabiner-auto-backups";
+      kind = "path";
+      target = ".config/karabiner/automatic_backups";
+    }
+    {
+      name = "vscode-insiders-state";
+      kind = "path";
+      target = "Library/Application Support/Code - Insiders";
+    }
+    {
+      # CA-4 provenance law: every runtime plugin clone must resolve to a
+      # pinned store-path origin; the live cache is empty — regrowth is litter.
+      name = "wezterm-plugin-clone-cache";
+      kind = "glob";
+      root = "Library/Application Support/wezterm/plugins";
+      pattern = "*";
+      depth = 1;
+    }
+    {
+      name = "ipython-root-dot";
+      kind = "path";
+      target = ".ipython";
+    }
+    {
+      name = "matplotlib-root-dot";
+      kind = "path";
+      target = ".matplotlib";
+    }
+    {
+      name = "maven-m2-root-dot";
+      kind = "path";
+      target = ".m2";
+    }
+    {
+      name = "omnisharp-root-dot";
+      kind = "path";
+      target = ".omnisharp";
+    }
+    {
+      name = "templateengine-root-dot";
+      kind = "path";
+      target = ".templateengine";
+    }
+    {
+      name = "vscode-shared-root-dot";
+      kind = "path";
+      target = ".vscode-shared";
+    }
+    {
+      name = "servicehub-root-dot";
+      kind = "path";
+      target = ".ServiceHub";
+    }
+    {
+      name = "puccinialin-ownerless-cache";
+      kind = "path";
+      target = ".cache/puccinialin";
+    }
+    {
+      name = "cycles-ownerless-cache";
+      kind = "path";
+      target = ".cache/cycles";
+    }
+    {
+      name = "downloads-office-locks";
+      kind = "glob";
+      root = "Downloads";
+      pattern = "~$*";
+      depth = 1;
+    }
+    {
+      name = "downloads-desktop-ini";
+      kind = "glob";
+      root = "Downloads";
+      pattern = "desktop.ini";
+      depth = 1;
+    }
+    {
+      name = "documents-desktop-ini";
+      kind = "glob";
+      root = "Documents";
+      pattern = "desktop.ini";
+      depth = 1;
+    }
+    {
+      name = "pause-note-tombstone";
+      kind = "path";
+      target = ".claude/dossiers/forge-rebuild/PAUSE-NOTE.md";
+    }
+    {
+      name = "claude-stale-skills-review-project";
+      kind = "glob";
+      root = ".claude/projects";
+      pattern = "*claude-skills-review*";
+      depth = 1;
+    }
+    {
+      name = "agent-root-ds-store-claude";
+      kind = "glob";
+      root = ".claude";
+      pattern = ".DS_Store";
+    }
+    {
+      name = "agent-root-ds-store-codex";
+      kind = "glob";
+      root = ".codex";
+      pattern = ".DS_Store";
+    }
+    # --- Dead-symlink registries: broken links trashed, live links untouched. ---
+    {
+      name = "wezterm-dead-listeners";
+      kind = "deadlink";
+      root = ".local/share/wezterm";
+      depth = 1;
+    }
+    {
+      # Endpoint-truth guard: only broken Docker Desktop links leave; the
+      # HM-owned config.json and Colima socket facts stay authoritative.
+      name = "docker-desktop-deadlinks";
+      kind = "deadlink";
+      root = ".docker";
+    }
+    {
+      name = "pnpm-project-store-danglers";
+      kind = "deadlink";
+      root = ".local/share/pnpm/store/v11/projects";
+    }
+    {
+      name = "mise-tracked-danglers";
+      kind = "deadlink";
+      root = ".local/state/mise";
+    }
+    {
+      name = "antigravity-bin-deadlinks";
+      kind = "deadlink";
+      root = ".antigravity/antigravity/bin";
+    }
+    {
+      name = "claude-debug-dead-pointer";
+      kind = "deadlink";
+      root = ".claude/debug";
+      depth = 1;
+    }
+    # --- Agent-root retention rows: the age gate IS the live-session guard —
+    # material younger than the row's window is never a candidate. ---
+    {
+      name = "claude-backups-retention";
+      kind = "age";
+      root = ".claude/backups";
+      maxAgeDays = 14;
+    }
+    {
+      name = "claude-file-history-retention";
+      kind = "age";
+      root = ".claude/file-history";
+      maxAgeDays = 30;
+    }
+    {
+      name = "claude-session-env-retention";
+      kind = "age";
+      root = ".claude/session-env";
+      maxAgeDays = 14;
+    }
+    {
+      name = "claude-tasks-retention";
+      kind = "age";
+      root = ".claude/tasks";
+      maxAgeDays = 30;
+    }
+    {
+      name = "codex-dot-tmp-retention";
+      kind = "age";
+      root = ".codex/.tmp";
+      maxAgeDays = 14;
+    }
+    {
+      name = "codex-tmp-retention";
+      kind = "age";
+      root = ".codex/tmp";
+      maxAgeDays = 7;
+    }
+    {
+      name = "codex-sessions-retention";
+      kind = "age";
+      root = ".codex/sessions";
+      maxAgeDays = 60;
+    }
+    {
+      name = "codex-archived-sessions-retention";
+      kind = "age";
+      root = ".codex/archived_sessions";
+      maxAgeDays = 60;
+    }
+    {
+      name = "codex-attachments-retention";
+      kind = "age";
+      root = ".codex/attachments";
+      maxAgeDays = 30;
+    }
+    {
+      name = "codex-previous-binary";
+      kind = "age";
+      root = ".local/bin";
+      pattern = "codex.previous";
+      maxAgeDays = 14;
+    }
+    {
+      # Stale trusted-project rows (nonexistent paths, scratch/Downloads/
+      # CloudStorage prefixes) leave config.toml; durable repo rows stay.
+      name = "codex-trusted-projects";
+      kind = "codex-trust";
+      target = ".codex/config.toml";
+    }
+    # --- Storage-pressure ledger: retention rows with budget, owner, and prune
+    # command as data — report-only, never auto-deleted. ---
+    {
+      name = "ledger-colima";
+      kind = "ledger";
+      target = ".local/share/colima";
+      budgetGb = 100;
+      owner = "environments/containers.nix";
+      prune = "colima delete / docker system prune";
+    }
+    {
+      name = "ledger-uv-cache";
+      kind = "ledger";
+      target = ".cache/uv";
+      budgetGb = 30;
+      owner = "uv";
+      prune = "uv cache prune";
+    }
+    {
+      name = "ledger-nuget-root";
+      kind = "ledger";
+      target = ".nuget";
+      budgetGb = 20;
+      owner = "dotnet";
+      prune = "dotnet nuget locals all --clear";
+    }
+    {
+      name = "ledger-nuget-xdg";
+      kind = "ledger";
+      target = ".local/share/NuGet";
+      budgetGb = 8;
+      owner = "dotnet";
+      prune = "dotnet nuget locals http-cache --clear";
+    }
+    {
+      name = "ledger-gemini";
+      kind = "ledger";
+      target = ".gemini";
+      budgetGb = 5;
+      owner = "antigravity";
+      prune = "operator: clear browser_recordings trees";
+    }
+    {
+      name = "ledger-antigravity";
+      kind = "ledger";
+      target = ".antigravity";
+      budgetGb = 3;
+      owner = "antigravity";
+      prune = "operator: dedupe extension versions";
+    }
+    {
+      name = "ledger-python-envs";
+      kind = "ledger";
+      target = ".local/state/forge-python-envs";
+      budgetGb = 5;
+      owner = "languages/scientific-tools.nix";
+      prune = "forge-scientific-sync";
+    }
+    {
+      name = "ledger-pnpm-store";
+      kind = "ledger";
+      target = ".local/share/pnpm";
+      budgetGb = 4;
+      owner = "environments/languages.nix";
+      prune = "pnpm store prune";
+    }
+    {
+      name = "ledger-pnpm-cache";
+      kind = "ledger";
+      target = ".cache/pnpm";
+      budgetGb = 2;
+      owner = "environments/languages.nix";
+      prune = "pnpm store prune";
+    }
+    {
+      name = "ledger-claude-root";
+      kind = "ledger";
+      target = ".claude";
+      budgetGb = 4;
+      owner = "agent-root retention rows";
+      prune = "forge-cleanup apply (age rows)";
+    }
+    {
+      name = "ledger-codex-root";
+      kind = "ledger";
+      target = ".codex";
+      budgetGb = 3;
+      owner = "agent-root retention rows";
+      prune = "forge-cleanup apply (age rows)";
+    }
+    {
+      name = "ledger-grype-db";
+      kind = "ledger";
+      target = ".cache/grype";
+      budgetGb = 3;
+      owner = "grype";
+      prune = "grype db delete";
+    }
+    {
+      name = "ledger-codex-runtimes";
+      kind = "ledger";
+      target = ".cache/codex-runtimes";
+      budgetGb = 3;
+      owner = "codex";
+      prune = "trash after a codex update proves clean";
+    }
+    {
+      name = "ledger-sonar";
+      kind = "ledger";
+      target = ".sonar";
+      budgetGb = 2;
+      owner = "sonarlint";
+      prune = "operator";
+    }
+    {
+      name = "ledger-sonarlint";
+      kind = "ledger";
+      target = ".sonarlint";
+      budgetGb = 2;
+      owner = "sonarlint";
+      prune = "operator";
+    }
+    {
+      name = "ledger-pulumi-plugins";
+      kind = "ledger";
+      target = ".pulumi";
+      budgetGb = 2;
+      owner = "services/ provider pins";
+      prune = "pulumi plugin rm --all; reinstall pinned";
+    }
+    {
+      name = "ledger-rhinocode";
+      kind = "ledger";
+      target = ".rhinocode";
+      budgetGb = 2;
+      owner = "rhino AEC lane";
+      prune = "operator";
+    }
+    {
+      name = "ledger-npm-global";
+      kind = "ledger";
+      target = ".local/share/npm";
+      budgetGb = 1;
+      owner = "pnpm-only law";
+      prune = "collapse remaining globals onto pnpm";
+    }
+    {
+      name = "ledger-forge-mcp-cache";
+      kind = "ledger";
+      target = ".cache/forge-mcp";
+      budgetGb = 1;
+      owner = "shell-tools/mcp-fleet.nix";
+      prune = "trash; launchers rebuild on next start";
+    }
+    {
+      name = "ledger-docker-root-dot";
+      kind = "ledger";
+      target = ".docker";
+      budgetGb = 1;
+      owner = "environments/containers.nix";
+      prune = "deadlink row + endpoint-truth adjudication";
+    }
+    {
+      name = "ledger-xdg-trash";
+      kind = "ledger";
+      target = ".local/share/Trash";
+      budgetGb = 2;
+      owner = "trash-first cleanup law";
+      prune = "operator empties Trash";
+    }
+    {
+      name = "ledger-colima-cache";
+      kind = "ledger";
+      target = ".cache/colima";
+      budgetGb = 3;
+      owner = "environments/containers.nix";
+      prune = "colima prune cached images";
+    }
+    {
+      name = "ledger-nix-eval-cache";
+      kind = "ledger";
+      target = ".cache/nix";
+      budgetGb = 3;
+      owner = "determinate-nixd";
+      prune = "trash eval/tarball caches; regenerated";
+    }
+    {
+      name = "ledger-claude-desktop";
+      kind = "ledger";
+      target = "Library/Application Support/Claude";
+      budgetGb = 30;
+      owner = "Claude Desktop app";
+      prune = "operator: app-managed state";
+    }
+    {
+      name = "ledger-duckdb-root";
+      kind = "ledger";
+      target = ".duckdb";
+      budgetGb = 1;
+      owner = "duckdb catalog owner";
+      prune = "relocation adjudicated with the catalog owner first";
+    }
+    {
+      name = "ledger-uv-runtimes";
+      kind = "ledger";
+      target = ".local/share/uv";
+      budgetGb = 2;
+      owner = "uv";
+      prune = "uv python uninstall <superseded>";
+    }
+    # --- Unowned-config and policy adjudication rows: named decisions,
+    # receipt-only; a row closes by gaining an owner or a consumer. ---
+    {
+      name = "ccstatusline-config";
+      kind = "adjudicate";
+      target = ".config/ccstatusline";
+      decision = "retention-ignore";
+      note = "app-owned statusline state";
+    }
+    {
+      name = "kube-config-target";
+      kind = "adjudicate";
+      target = ".config/kube";
+      decision = "pending-consumer";
+      note = "declared KUBECONFIG target absent; closes when a cluster lands";
+    }
+    {
+      name = "homebrew-trust-db";
+      kind = "adjudicate";
+      target = ".config/homebrew/trust.json";
+      decision = "keep";
+      note = "live Homebrew 6 trust DB; placement re-adjudication open";
+    }
+    {
+      name = "homebrew-root-dot-trust";
+      kind = "adjudicate";
+      target = ".homebrew";
+      decision = "open";
+      note = "split trust state; collapse rides homebrew ownership re-adjudication";
+    }
+    {
+      name = "jgit-probe-state";
+      kind = "adjudicate";
+      target = ".config/jgit";
+      decision = "retention-ignore";
+      note = "host-probe cache; regrows on JGit use";
+    }
+    {
+      name = "claude-desktop-config";
+      kind = "adjudicate";
+      target = "Library/Application Support/Claude/claude_desktop_config.json";
+      decision = "registry-candidate";
+      note = "joins the five-way MCP registration drift when the generator lands";
+    }
+    {
+      name = "vscode-extensions-root";
+      kind = "adjudicate";
+      target = ".vscode";
+      decision = "keep";
+      note = "live VS Code extension estate; manifest extension lane owns admission";
+    }
+    {
+      name = "cloudstorage-variant-roots";
+      kind = "adjudicate";
+      target = "Library/CloudStorage";
+      decision = "operator-disposal";
+      note = "stale GoogleDrive account-variant roots; FileProvider-managed, never bulk-trashed";
+    }
+    {
+      name = "sqlean-unmanaged-dylibs";
+      kind = "adjudicate";
+      target = ".local/share/sqlean";
+      decision = "operator-disposal";
+      note = "unmanaged copies; live owner overlays/sqlean + sqlite-forge";
+    }
+    {
+      name = "jupyter-root-dot";
+      kind = "adjudicate";
+      target = ".jupyter";
+      decision = "relocation-pending";
+      note = "forge-jupyter probe family owns live state";
+    }
+    {
+      name = "kiro-cli-app-symlinks";
+      kind = "adjudicate";
+      target = ".local/bin/kiro-cli";
+      decision = "gui-removal-open";
+      note = "links into live Kiro CLI.app; app removal is the open GUI class";
+    }
+    {
+      name = "secret-custody-gcloud";
+      kind = "adjudicate";
+      target = ".config/gcloud";
+      decision = "custody-row";
+      note = "credential DBs under config; key-name-only receipts";
+    }
+    {
+      name = "secret-custody-gws";
+      kind = "adjudicate";
+      target = ".config/gws";
+      decision = "custody-row";
+      note = "token cache + client secret under config";
+    }
+    {
+      name = "secret-custody-op-session";
+      kind = "adjudicate";
+      target = ".config/hm-op-session.sh";
+      decision = "custody-row";
+      note = "generated literal-token file; owner shell-tools/1password.nix";
+    }
+    {
+      name = "secret-custody-jupyter-token";
+      kind = "adjudicate";
+      target = ".config/jupyter/forge-token.env";
+      decision = "custody-row";
+      note = "literal JUPYTER_TOKEN; owner languages/scientific-tools.nix";
+    }
+    {
+      name = "secret-custody-gh-hosts";
+      kind = "adjudicate";
+      target = ".config/gh/hosts.yml";
+      decision = "custody-row";
+      note = "live gh auth state; ssh-doctor custody, never an HM target";
+    }
+    {
+      name = "codex-browser-authority";
+      kind = "adjudicate";
+      target = ".codex/browser/config.toml";
+      decision = "declared";
+      note = "never_ask + full CDP ride the operator full-authority grant";
+    }
+    {
+      name = "harness-policy-drift";
+      kind = "adjudicate";
+      target = ".claude/settings.json";
+      decision = "receipted";
+      note = "declared bypassPermissions vs live enforcement; receipt per root";
+    }
+    {
+      name = "rasm-bridge-state";
+      kind = "adjudicate";
+      target = ".rasm";
+      decision = "relocation-pending";
+      note = "rhino-bridge lease/quit journals in a home root dotdir; relocation rides the bridge owner in Rasm";
+    }
     {
       name = "biome-lsp-proxy-orphans";
       kind = "orphan";
@@ -597,6 +1377,9 @@
       # Hard deny for the kill lane: session servers, GUI apps, credential
       # daemons, and system trees are never reaped even on a class match.
       deny_re='/System/|/Applications/|zellij|[Ww]ez[Tt]erm|1[Pp]assword|[Cc]rashpad|loginwindow|(^|/)ssh'
+      # Trust rows on scratch/transient roots are litter by class; durable
+      # repo rows never match this and always survive the prune.
+      scratch_re="^(/private/tmp/|/tmp/|$HOME/Downloads(/|$)|$HOME/Library/CloudStorage/)"
 
       # One live snapshot per run: uid-owned, ppid-1, tty-less processes with
       # age in seconds and RSS KiB; launchd-managed pids drop out first, so a
@@ -644,14 +1427,35 @@
       # One jq projection per row: every field lands in one read. Unit-separator
       # delimited: tab is IFS whitespace and read would collapse empty fields.
       row_fields() {
-        jq -r '[.name, .kind, (.target // ""), (.expect // ""), (.root // ""), (.pattern // ""), (.match // ""), (.exclude // ""), (.minAgeSec // 0 | tostring), (.action // "")] | join("\u001f")' <<<"$1"
+        jq -r '[.name, .kind, (.target // ""), (.expect // ""), (.root // ""), (.pattern // ""), (.match // ""), (.exclude // ""), (.minAgeSec // 0 | tostring), (.action // ""), (.depth // 0 | tostring), (.maxAgeDays // 0 | tostring), (.budgetGb // 0 | tostring), (.owner // ""), (.prune // ""), (.decision // ""), (.note // "")] | join("\u001f")' <<<"$1"
+      }
+
+      # Shared find-argv builders: detection and apply must act on the exact
+      # same predicate set, so both lanes call one builder per row kind.
+      depth_args() {
+        [ "$1" = 0 ] || printf '%s\n' "-maxdepth" "$1"
+      }
+      age_find_args() {
+        printf '%s\n' "-mindepth" "1" "-type" "f"
+        [ -z "$2" ] || printf '%s\n' "-name" "$2"
+        printf '%s\n' "-mtime" "+$1"
+      }
+
+      # Stale trusted-project extraction: a row is stale when its path no
+      # longer exists or sits on a scratch-class prefix.
+      codex_stale_projects() {
+        local p
+        while IFS= read -r p; do
+          if [ ! -e "$p" ] || [[ "$p" =~ $scratch_re ]]; then printf '%s\n' "$p"; fi
+        done < <(awk 'match($0, /^\[projects\."(.*)"\]$/, m) {print m[1]}' "$1")
       }
 
       # One detector owns every row kind; plan and apply both consume it, so
       # apply never acts on a state the detector cannot reproduce live.
       detect_row() {
-        local row="$1" name kind state count kb action safe detail target expect root pattern current match exclude minage oaction opid orss pidlist
-        IFS=$'\x1f' read -r name kind target expect root pattern match exclude minage oaction < <(row_fields "$row")
+        local row="$1" name kind state count kb action safe detail target expect root pattern current match exclude minage oaction opid orss pidlist depth maxage budget owner prune decision note cfg budget_kb
+        local -a fargs=()
+        IFS=$'\x1f' read -r name kind target expect root pattern match exclude minage oaction depth maxage budget owner prune decision note < <(row_fields "$row")
         state=clean count=0 kb=0 action=none safe=true detail=-
         case "$kind" in
           mode)
@@ -677,10 +1481,59 @@
           glob)
             root="$HOME/$root"
             if [ -d "$root" ]; then
-              count="$(find "$root" -name "$pattern" -prune -print 2>/dev/null | wc -l | tr -d ' ')"
+              mapfile -t fargs < <(depth_args "$depth")
+              count="$(find "$root" "''${fargs[@]}" -mindepth 1 -name "$pattern" -prune -print 2>/dev/null | wc -l | tr -d ' ')"
               if [ "$count" -gt 0 ]; then
                 state=litter action=trash
-                kb="$(find "$root" -name "$pattern" -prune -print0 2>/dev/null | xargs -0 du -sk 2>/dev/null | awk '{s += $1} END {print s + 0}')"
+                kb="$(find "$root" "''${fargs[@]}" -mindepth 1 -name "$pattern" -prune -print0 2>/dev/null | xargs -0 du -sk 2>/dev/null | awk '{s += $1} END {print s + 0}')"
+              fi
+            fi
+            ;;
+          age)
+            root="$HOME/$root"
+            if [ -d "$root" ]; then
+              mapfile -t fargs < <(age_find_args "$maxage" "$pattern")
+              count="$(find "$root" "''${fargs[@]}" -print 2>/dev/null | wc -l | tr -d ' ')"
+              if [ "$count" -gt 0 ]; then
+                state=litter action=trash-aged detail="age>''${maxage}d"
+                kb="$(find "$root" "''${fargs[@]}" -print0 2>/dev/null | xargs -0 du -sk 2>/dev/null | awk '{s += $1} END {print s + 0}')"
+              fi
+            fi
+            ;;
+          deadlink)
+            root="$HOME/$root"
+            if [ -d "$root" ]; then
+              mapfile -t fargs < <(depth_args "$depth")
+              count="$(find "$root" "''${fargs[@]}" -type l ! -exec test -e {} \; -print 2>/dev/null | wc -l | tr -d ' ')"
+              [ "$count" = 0 ] || state=litter action=trash-links
+            fi
+            ;;
+          ledger)
+            target="$HOME/$target"
+            safe=false
+            if [ -e "$target" ]; then
+              kb="$(du -sk "$target" 2>/dev/null | cut -f1 || echo 0)"
+              budget_kb=$((budget * 1024 * 1024))
+              if [ "''${kb:-0}" -gt "$budget_kb" ]; then state=over-budget; else state=within-budget; fi
+              detail="owner=$owner budget=''${budget}G prune: $prune"
+            else
+              state=absent detail="owner=$owner"
+            fi
+            ;;
+          adjudicate)
+            safe=false state=adjudicated
+            { [ -e "$HOME/$target" ] || [ -L "$HOME/$target" ]; } || state=absent
+            detail="decision=$decision; $note"
+            ;;
+          codex-trust)
+            cfg="$HOME/$target"
+            if [ -f "$cfg" ]; then
+              detail="$(codex_stale_projects "$cfg" | paste -sd' ' -)"
+              count="$(codex_stale_projects "$cfg" | wc -l | tr -d ' ')"
+              if [ "$count" -gt 0 ]; then
+                state=litter action=prune-trust detail="stale: $detail"
+              else
+                detail=-
               fi
             fi
             ;;
@@ -705,7 +1558,11 @@
 
       trash() {
         mkdir -p "$HOME/.Trash"
-        mv -n -- "$1" "$HOME/.Trash/''${1##*/}.forge-cleanup.$run_ts"
+        local dest="$HOME/.Trash/''${1##*/}.forge-cleanup.$run_ts"
+        # Basename collisions from deep-tree prunes get a unique suffix so no
+        # candidate silently stays behind.
+        while [ -e "$dest" ] || [ -L "$dest" ]; do dest="$dest.$RANDOM"; done
+        mv -- "$1" "$dest"
       }
 
       cmd_plan() {
@@ -735,7 +1592,7 @@
               continue
             fi
             row="$(jq -c --arg n "$name" '.[] | select(.name == $n)' "$rows_json")"
-            IFS=$'\x1f' read -r _ row_kind row_target _ row_root row_pattern row_match row_exclude row_minage _ < <(row_fields "$row")
+            IFS=$'\x1f' read -r _ row_kind row_target _ row_root row_pattern row_match row_exclude row_minage _ row_depth row_maxage _ _ _ _ _ < <(row_fields "$row")
             # Re-verify at act time: a row that drifted since plan is skipped.
             fresh_state="$(detect_row "$row" | cut -f3)"
             if [ "$fresh_state" != litter ]; then
@@ -753,11 +1610,50 @@
                   printf '%s\taction=trash\toutcome=applied\tcount=1\n' "$name"
                 else
                   moved=0
+                  mapfile -t fargs < <(depth_args "$row_depth")
                   while IFS= read -r -d "" match; do
                     trash "$match"
                     moved=$((moved + 1))
-                  done < <(find "$HOME/$row_root" -name "$row_pattern" -prune -print0 2>/dev/null)
+                  done < <(find "$HOME/$row_root" "''${fargs[@]}" -mindepth 1 -name "$row_pattern" -prune -print0 2>/dev/null)
                   printf '%s\taction=trash\toutcome=applied\tcount=%s\n' "$name" "$moved"
+                fi
+                ;;
+              trash-aged)
+                moved=0
+                mapfile -t fargs < <(age_find_args "$row_maxage" "$row_pattern")
+                while IFS= read -r -d "" match; do
+                  trash "$match"
+                  moved=$((moved + 1))
+                done < <(find "$HOME/$row_root" "''${fargs[@]}" -print0 2>/dev/null)
+                printf '%s\taction=trash-aged\toutcome=applied\tcount=%s\n' "$name" "$moved"
+                ;;
+              trash-links)
+                moved=0
+                mapfile -t fargs < <(depth_args "$row_depth")
+                while IFS= read -r -d "" match; do
+                  trash "$match"
+                  moved=$((moved + 1))
+                done < <(find "$HOME/$row_root" "''${fargs[@]}" -type l ! -exec test -e {} \; -print0 2>/dev/null)
+                printf '%s\taction=trash-links\toutcome=applied\tcount=%s\n' "$name" "$moved"
+                ;;
+              prune-trust)
+                cfg="$HOME/$row_target"
+                stale_list="$work/codex-stale"
+                codex_stale_projects "$cfg" >"$stale_list"
+                if [ -s "$stale_list" ]; then
+                  # Backup rides the trash rail like every other mutation.
+                  cp -p "$cfg" "$work/config.toml.pre-prune" && trash "$work/config.toml.pre-prune"
+                  gawk '
+                    NR == FNR { stale[$0] = 1; next }
+                    {
+                      if (match($0, /^\[projects\."(.*)"\]$/, m)) drop = (m[1] in stale)
+                      else if ($0 ~ /^\[/) drop = 0
+                      if (!drop) print
+                    }
+                  ' "$stale_list" "$cfg" >"$cfg.forge-prune" && mv "$cfg.forge-prune" "$cfg"
+                  printf '%s\taction=prune-trust\toutcome=applied\tcount=%s\n' "$name" "$(wc -l <"$stale_list" | tr -d ' ')"
+                else
+                  printf '%s\taction=prune-trust\toutcome=drifted-clean\n' "$name"
                 fi
                 ;;
               kill)
@@ -1146,9 +2042,7 @@
       cache_home="''${XDG_CACHE_HOME:-$HOME/.cache}"
       config_home="''${XDG_CONFIG_HOME:-$HOME/.config}"
       session_cache="$cache_home/forge-secrets/session-env.sh"
-      op_cache="$config_home/hm-op-session.sh"
       gui_manifest="$cache_home/forge-secrets/gui-replay.names"
-      backend="''${CLAUDE_SECRET_BACKEND:-doppler}"
       brew_bin="''${FORGE_BREW:-/opt/homebrew/bin/brew}"
       hook="''${FORGE_ACCEPT_HOOK:-$HOME/.claude/hooks/setup-env.sh}"
       tunnel_receipts="''${FORGE_TUNNEL_RECEIPTS:-$HOME/Library/Logs/forge-maghz-vps-tunnel.receipts.log}"
@@ -1177,10 +2071,7 @@
           | awk '/^\tenvironment = \{/ {f = 1; next} f && /^\t\}/ {exit} f {sub(/^\t\t/, ""); sub(/ =>.*/, ""); print}'
       }
       expected_names() {
-        {
-          key_names "$session_cache"
-          [ "$backend" = "doppler" ] || key_names "$op_cache"
-        } | sort -u
+        key_names "$session_cache" | sort -u
       }
 
       step_preflight() {
@@ -1378,9 +2269,9 @@
         gui_missing="$(comm -23 <(printf '%s\n' "$expected") <(gui_names | sort -u) | paste -sd' ' -)"
         rm -rf "$tmp"
         if [ -z "$cli_missing$tui_missing$gui_missing" ]; then
-          row PASS lanes "backend=$backend; cli/tui/gui all carry the expected key-name set ($(wc -l <<<"$expected" | tr -d ' ') names)"
+          row PASS lanes "cli/tui/gui all carry the expected key-name set ($(wc -l <<<"$expected" | tr -d ' ') names)"
         else
-          row FAIL lanes "backend=$backend missing — cli:[''${cli_missing}] tui:[''${tui_missing}] gui:[''${gui_missing}]"
+          row FAIL lanes "missing — cli:[''${cli_missing}] tui:[''${tui_missing}] gui:[''${gui_missing}]"
         fi
       }
 
@@ -1444,7 +2335,7 @@
       }
 
       mkdir -p "$(dirname "$receipt_log")"
-      printf 'forge-accept: run ts=%s backend=%s from=%s only=%s\n' "$ts" "$backend" "''${from:-first}" "''${only:-all}" >&2
+      printf 'forge-accept: run ts=%s from=%s only=%s\n' "$ts" "''${from:-first}" "''${only:-all}" >&2
       started="false"
       for s in "''${STEPS[@]}"; do
         if [ -n "$only" ]; then
@@ -1464,6 +2355,404 @@
       [ "$result" = ok ]
     '';
   };
+  # ~/.local/bin admission-or-removal decisions: every unmanaged entry carries
+  # a named ruling; an entry absent from this table reports unadjudicated.
+  localBinDecisions = pkgs.writeText "forge-path-doctor-decisions.json" (builtins.toJSON {
+    claude = "admitted: launcher symlink into the versioned install";
+    codex = "admitted-agent: unmanaged binary; manifest admission row open";
+    "codex.previous" = "retention: self-update backup; aged out by forge-cleanup";
+    coderabbit = "reviewer-identity: unmanaged reviewer binary (services matrix)";
+    cr = "reviewer-identity: symlink to coderabbit";
+    greptile = "reviewer-identity: launcher";
+    "greptile.js" = "reviewer-identity: bundle";
+    agy = "admitted-agent: antigravity CLI";
+    "kiro-cli" = "gui-removal-open: link into live Kiro CLI.app";
+    "kiro-cli-chat" = "gui-removal-open: link into live Kiro CLI.app";
+    "kiro-cli-term" = "gui-removal-open: link into live Kiro CLI.app";
+    "pre-commit" = "uv-lane: uv tool shim";
+    "pynvim-python" = "uv-lane: uv tool shim";
+    "python3.12" = "uv-lane: uv runtime shim";
+    "python3.14" = "uv-lane: uv runtime shim";
+    tree = "hm: generation link";
+    loc = "hm: generation link";
+  });
+
+  # PATH and binary provenance doctor: owner classification per PATH segment,
+  # cross-owner shadow detection on resolved targets, the file/MAGIC seed
+  # case, CLT health, brew posture, and the ~/.local/bin decision inventory.
+  # Read-only; one receipt line per run.
+  forgePathDoctor = pkgs.writeShellApplication {
+    name = "forge-path-doctor";
+    runtimeInputs = [pkgs.coreutils pkgs.findutils pkgs.gnugrep pkgs.gawk pkgs.jq];
+    text = ''
+      receipt_log="''${FORGE_PATH_DOCTOR_RECEIPT_LOG:-$HOME/Library/Logs/forge-path-doctor.receipts.log}"
+      TZ=UTC0 printf -v ts '%(%Y-%m-%dT%H:%M:%SZ)T' "$EPOCHSECONDS"
+      shadows=0 mismatches=0 unadjudicated=0
+      brew_bin="''${FORGE_BREW:-/opt/homebrew/bin/brew}"
+
+      owner_of() {
+        case "$1" in
+          /etc/profiles/per-user/* | "$HOME/.nix-profile"*) echo hm ;;
+          /run/current-system/*) echo system ;;
+          /nix/*) echo nix ;;
+          /opt/homebrew/*) echo homebrew ;;
+          "$HOME/.local/bin"*) echo local ;;
+          /usr/bin/* | /bin/* | /usr/sbin/* | /sbin/* | /usr/libexec/*) echo macos ;;
+          /Applications/* | "$HOME/Applications"*) echo app ;;
+          *) echo unknown ;;
+        esac
+      }
+
+      # %b: payload fields carry embedded \t separators.
+      row() { printf 'ts=%s\tfamily=%s\t%b\n' "$ts" "$1" "$2"; }
+
+      # Cross-owner shadow scan: a later PATH segment holding a DIFFERENT
+      # binary under a DIFFERENT owner class than the winning segment.
+      declare -A win
+      IFS=: read -ra segs <<<"$PATH"
+      for d in "''${segs[@]}"; do
+        [ -d "$d" ] || continue
+        for f in "$d"/*; do
+          [ -x "$f" ] || continue
+          n="''${f##*/}"
+          if [ -z "''${win[$n]:-}" ]; then
+            win[$n]="$f"
+          else
+            w="''${win[$n]}"
+            wo="$(owner_of "$w")" so="$(owner_of "$f")"
+            # Store owners (hm/nix/system) winning over macos/homebrew is the
+            # sanctioned PATH order; only an inverted or foreign winner drifts.
+            case "$wo" in hm | nix | system) continue ;; esac
+            if [ "$wo" != "$so" ]; then
+              wt="$(readlink -f "$w" 2>/dev/null || echo "$w")"
+              st="$(readlink -f "$f" 2>/dev/null || echo "$f")"
+              if [ "$wt" != "$st" ]; then
+                shadows=$((shadows + 1))
+                row shadow "command=$n\twinner=$wo:$w\tshadowed=$so:$f"
+              fi
+            fi
+          fi
+        done
+      done
+
+      # Seed case: MAGIC pins a store magic database; the serving binary must
+      # be the store file, never /usr/bin/file 5.41 (v20-magic rejection).
+      f_bin="$(command -v file || true)"
+      f_owner="$(owner_of "''${f_bin:-/dev/null}")"
+      if [ -n "''${MAGIC:-}" ] && [ "$f_owner" = macos ]; then
+        mismatches=$((mismatches + 1))
+        row file-magic "state=mismatch\tfile=$f_bin\tmagic=''${MAGIC}\tfix=install pkgs.file beside the MAGIC export"
+      else
+        row file-magic "state=ok\tfile=''${f_bin:-absent}\towner=$f_owner"
+      fi
+
+      # CLT health: native builds break silently when the CLT tree drifts.
+      clt="$(/usr/bin/xcode-select -p 2>/dev/null || true)"
+      if [ -n "$clt" ] && [ -d "$clt" ]; then
+        cltv="$(/usr/sbin/pkgutil --pkg-info=com.apple.pkg.CLTools_Executables 2>/dev/null | awk '/^version:/ {print $2}' || true)"
+        row clt "state=ok\tpath=$clt\tversion=''${cltv:-unknown}"
+      else
+        mismatches=$((mismatches + 1))
+        row clt "state=missing\tfix=xcode-select --install"
+      fi
+
+      # Brew posture: taps and pins are read-only telemetry rows.
+      if [ -x "$brew_bin" ]; then
+        row brew "taps=$("$brew_bin" tap 2>/dev/null | paste -sd, - || true)"
+        row brew "pinned=$("$brew_bin" list --pinned 2>/dev/null | paste -sd, - || echo none)"
+      else
+        row brew "state=absent\tpath=$brew_bin"
+      fi
+
+      # ~/.local/bin inventory: owner class from the resolved target, decision
+      # from the ruling table; unruled entries surface loudly.
+      for f in "$HOME/.local/bin"/*; do
+        [ -e "$f" ] || [ -L "$f" ] || continue
+        n="''${f##*/}"
+        if [ -L "$f" ]; then
+          tgt="$(readlink -f "$f" 2>/dev/null || echo broken)"
+          case "$tgt" in
+            /nix/*) cls=hm ;;
+            "$HOME/.local/share/uv"*) cls=uv-lane ;;
+            "$HOME/.local/share/claude"*) cls=app-launcher ;;
+            /Applications/*) cls=app ;;
+            broken) cls=broken-link ;;
+            *) cls=other-link ;;
+          esac
+        else
+          cls=unmanaged
+        fi
+        decision="$(jq -r --arg n "$n" '.[$n] // "unadjudicated"' '${localBinDecisions}')"
+        [ "$decision" != "unadjudicated" ] || unadjudicated=$((unadjudicated + 1))
+        row local-bin "entry=$n\tclass=$cls\tdecision=$decision"
+      done
+
+      line="$(printf 'ts=%s\tshadows=%s\tmismatches=%s\tunadjudicated=%s\tresult=%s' \
+        "$ts" "$shadows" "$mismatches" "$unadjudicated" "$([ $((shadows + mismatches)) = 0 ] && echo ok || echo drift)")"
+      { mkdir -p "$(dirname "$receipt_log")" && printf '%s\n' "$line" >>"$receipt_log"; } \
+        || printf 'forge-path-doctor: WARNING receipt not persisted\n' >&2
+      printf 'forge-path-doctor: receipt\t%s\n' "$line"
+    '';
+  };
+
+  # Launchd triage vocabulary: label-prefix rows classifying every non-Apple
+  # agent; unmatched labels report unclassified and demand a row.
+  launchdTriage = pkgs.writeText "forge-launchd-triage.json" (builtins.toJSON [
+    {
+      prefix = "com.parametric-forge.";
+      class = "forge";
+      note = "Forge launchd grammar";
+    }
+    {
+      prefix = "org.nix-community.home.";
+      class = "hm";
+      note = "HM module agents";
+    }
+    {
+      prefix = "com.github.domt4.homebrew-autoupdate";
+      class = "by-design";
+      note = "forge-reconciler-declared updater pair; single-owner collapse open";
+    }
+    {
+      prefix = "com.grammarly.";
+      class = "residue";
+      note = "uninstalled GUI residue; gui-removal open class";
+    }
+    {
+      prefix = "com.adobe.";
+      class = "vendor";
+      note = "Adobe CC estate; retain-or-prune trust row open";
+    }
+    {
+      prefix = "com.amazon.codewhisperer";
+      class = "residue";
+      note = "legacy launcher; gui-removal open class";
+    }
+    {
+      prefix = "mega.mac.";
+      class = "residue";
+      note = "MEGA updater poller; gui-removal open class";
+    }
+    {
+      prefix = "com.lwouis.alt-tab-macos";
+      class = "trust-row-open";
+      note = "AltTab retain-or-prune adjudication open";
+    }
+    {
+      prefix = "com.logi";
+      class = "vendor";
+      note = "Logitech manager; recurring nonzero exits are vendor-owned";
+    }
+    {
+      prefix = "org.pqrs.";
+      class = "vendor";
+      note = "Karabiner services";
+    }
+    {
+      prefix = "com.openssh.";
+      class = "system";
+      note = "ssh-agent";
+    }
+    {
+      prefix = "com.1password.";
+      class = "vendor";
+      note = "1Password agents";
+    }
+    {
+      prefix = "com.bardiasamiee.codex.update";
+      class = "vendor";
+      note = "Codex self-updater";
+    }
+    {
+      prefix = "com.microsoft.";
+      class = "vendor";
+      note = "Microsoft update/agent surfaces";
+    }
+    {
+      prefix = "com.macpaw.";
+      class = "vendor";
+      note = "CleanMyMac MAS agents";
+    }
+    {
+      prefix = "com.spotify.";
+      class = "vendor";
+      note = "Spotify startup helper";
+    }
+    {
+      prefix = "com.google.";
+      class = "vendor";
+      note = "Google updater/drivefs";
+    }
+  ]);
+
+  # Launchd census doctor: declared plists (HM/Forge grammar) reconciled with
+  # the live launchctl table — loaded state, pid, last exit, triage class per
+  # row. Read-only; the reconciliation IS the receipt.
+  forgeLaunchdDoctor = pkgs.writeShellApplication {
+    name = "forge-launchd-doctor";
+    runtimeInputs = [pkgs.coreutils pkgs.gnugrep pkgs.gawk pkgs.jq];
+    text = ''
+      receipt_log="''${FORGE_LAUNCHD_DOCTOR_RECEIPT_LOG:-$HOME/Library/Logs/forge-launchd-doctor.receipts.log}"
+      TZ=UTC0 printf -v ts '%(%Y-%m-%dT%H:%M:%SZ)T' "$EPOCHSECONDS"
+      declared=0 loaded=0 not_loaded=0 unmanaged=0 nonzero=0
+      work="$(mktemp -d)"
+      trap 'rm -rf "$work"' EXIT
+
+      # Tab-split keeps labels with spaces intact (launchctl is TSV).
+      /bin/launchctl list 2>/dev/null | awk -F '\t' 'NR > 1 {print $3 "\t" $1 "\t" $2}' >"$work/observed"
+
+      classify() {
+        jq -r --arg l "$1" 'map(select(.prefix as $p | $l | startswith($p))) | first // {class: "unclassified", note: "no triage row"} | .class + "\t" + .note' '${launchdTriage}'
+      }
+
+      obs() { grep -m1 "^$1	" "$work/observed" || true; }
+
+      # Declared lane: every plist in the user LaunchAgents dir.
+      for plist in "$HOME/Library/LaunchAgents"/*.plist; do
+        [ -e "$plist" ] || continue
+        label="$(/usr/bin/plutil -extract Label raw "$plist" 2>/dev/null || true)"
+        [ -n "$label" ] || continue
+        declared=$((declared + 1))
+        o="$(obs "$label")"
+        IFS=$'\t' read -r _ opid ostatus <<<"$o" || true
+        IFS=$'\t' read -r cls note < <(classify "$label")
+        if [ -n "$o" ]; then
+          loaded=$((loaded + 1))
+          [ "''${ostatus:-0}" = 0 ] || [ "''${ostatus:-0}" = "-" ] || nonzero=$((nonzero + 1))
+          printf 'ts=%s\tlabel=%s\towner=declared\tclass=%s\tloaded=1\tpid=%s\tlast_exit=%s\tnote=%s\n' \
+            "$ts" "$label" "$cls" "''${opid:--}" "''${ostatus:--}" "$note"
+        else
+          not_loaded=$((not_loaded + 1))
+          printf 'ts=%s\tlabel=%s\towner=declared\tclass=%s\tloaded=0\tpid=-\tlast_exit=-\tnote=%s\n' \
+            "$ts" "$label" "$cls" "$note"
+        fi
+        printf '%s\n' "$label" >>"$work/declared"
+      done
+
+      # Observed lane: live labels with no declared plist. Apple system rows
+      # and per-app transient rows stay out of the census.
+      while IFS=$'\t' read -r label opid ostatus; do
+        case "$label" in
+          com.apple.* | application.* | *.anonymous.* | PID | "") continue ;;
+        esac
+        ! grep -qxF "$label" "$work/declared" 2>/dev/null || continue
+        unmanaged=$((unmanaged + 1))
+        [ "''${ostatus:-0}" = 0 ] || nonzero=$((nonzero + 1))
+        IFS=$'\t' read -r cls note < <(classify "$label")
+        printf 'ts=%s\tlabel=%s\towner=live-only\tclass=%s\tloaded=1\tpid=%s\tlast_exit=%s\tnote=%s\n' \
+          "$ts" "$label" "$cls" "''${opid:--}" "''${ostatus:--}" "$note"
+      done <"$work/observed"
+
+      line="$(printf 'ts=%s\tdeclared=%s\tloaded=%s\tnot_loaded=%s\tlive_only=%s\tnonzero_exit=%s\tresult=%s' \
+        "$ts" "$declared" "$loaded" "$not_loaded" "$unmanaged" "$nonzero" \
+        "$([ "$not_loaded" = 0 ] && echo ok || echo drift)")"
+      { mkdir -p "$(dirname "$receipt_log")" && printf '%s\n' "$line" >>"$receipt_log"; } \
+        || printf 'forge-launchd-doctor: WARNING receipt not persisted\n' >&2
+      printf 'forge-launchd-doctor: receipt\t%s\n' "$line"
+    '';
+  };
+
+  # Repeatable parity rail: the one-shot g2-t13 audit as a standing command.
+  # Generation home-files vs live $HOME (store-linked, staged-equal, missing,
+  # drifted), broken store links across managed roots, HM gc-root singleton.
+  forgeParity = pkgs.writeShellApplication {
+    name = "forge-parity";
+    runtimeInputs = [pkgs.coreutils pkgs.diffutils pkgs.findutils pkgs.gnugrep pkgs.gawk];
+    text = ''
+      receipt_log="''${FORGE_PARITY_RECEIPT_LOG:-$HOME/Library/Logs/forge-parity.receipts.log}"
+      TZ=UTC0 printf -v ts '%(%Y-%m-%dT%H:%M:%SZ)T' "$EPOCHSECONDS"
+      # HM rides nix-darwin: the generation resolves through the gc root, not
+      # a nix profile.
+      gen="$(readlink -f "$HOME/.local/state/home-manager/gcroots/current-home" 2>/dev/null || true)"
+      hf="$gen/home-files"
+      ok=0 staged=0 missing=0 drift=0 broken=0
+      [ -d "$hf" ] || {
+        printf 'forge-parity: no home-files at %s\n' "$hf" >&2
+        exit 1
+      }
+
+      while IFS= read -r -d "" f; do
+        rel="''${f#"$hf"/}"
+        tgt="$HOME/$rel"
+        if [ -L "$tgt" ] && [ "$(readlink -f "$tgt" 2>/dev/null || true)" = "$(readlink -f "$f")" ]; then
+          ok=$((ok + 1))
+        elif [ -f "$tgt" ] && cmp -s "$tgt" "$f"; then
+          # Writable-staged class: physical by design, content byte-equal.
+          staged=$((staged + 1))
+        elif [ ! -e "$tgt" ]; then
+          missing=$((missing + 1))
+          printf 'ts=%s\tstate=missing\tpath=%s\n' "$ts" "$rel"
+        else
+          drift=$((drift + 1))
+          printf 'ts=%s\tstate=drift\tpath=%s\n' "$ts" "$rel"
+        fi
+      done < <(find -H "$hf" -mindepth 1 \( -type f -o -type l \) -print0 2>/dev/null)
+
+      # Broken store links across managed roots: a vanished generation target
+      # is HM drift, distinct from the cleanup board's app-litter deadlinks.
+      while IFS= read -r -d "" l; do
+        tgt="$(readlink "$l" 2>/dev/null || true)"
+        case "$tgt" in
+          /nix/store/*)
+            [ -e "$l" ] || {
+              broken=$((broken + 1))
+              printf 'ts=%s\tstate=broken-store-link\tpath=%s\ttarget=%s\n' "$ts" "''${l#"$HOME"/}" "$tgt"
+            }
+            ;;
+        esac
+      done < <(find "$HOME/.config" "$HOME/.local/share" "$HOME/.local/state" "$HOME/.local/bin" "$HOME/.ssh" "$HOME/Library/LaunchAgents" -maxdepth 8 \( -path "$HOME/.local/share/Trash" \) -prune -o -type l -print0 2>/dev/null)
+
+      gcroots="$(find "$HOME/.local/state/home-manager/gcroots" -mindepth 1 -maxdepth 1 2>/dev/null | wc -l | tr -d ' ')"
+      result=ok
+      [ $((missing + drift + broken)) = 0 ] && [ "$gcroots" = 1 ] || result=drift
+      line="$(printf 'ts=%s\tgeneration=%s\tok=%s\tstaged=%s\tmissing=%s\tdrift=%s\tbroken_links=%s\tgcroots=%s\tresult=%s' \
+        "$ts" "''${gen##*/}" "$ok" "$staged" "$missing" "$drift" "$broken" "$gcroots" "$result")"
+      { mkdir -p "$(dirname "$receipt_log")" && printf '%s\n' "$line" >>"$receipt_log"; } \
+        || printf 'forge-parity: WARNING receipt not persisted\n' >&2
+      printf 'forge-parity: receipt\t%s\n' "$line"
+      [ "$result" = ok ]
+    '';
+  };
+
+  # Observation-only update-visibility board: one row per manifest family,
+  # projected from existing receipts and local metadata. Mutation stays with
+  # the per-family owners (forge-nix-drift, manifest engine verbs, brew).
+  forgeUpdateBoard = pkgs.writeShellApplication {
+    name = "forge-update-board";
+    runtimeInputs = [pkgs.coreutils pkgs.gnugrep pkgs.gawk];
+    text = ''
+      receipt_log="''${FORGE_UPDATE_BOARD_RECEIPT_LOG:-$HOME/Library/Logs/forge-update-board.receipts.log}"
+      TZ=UTC0 printf -v ts '%(%Y-%m-%dT%H:%M:%SZ)T' "$EPOCHSECONDS"
+      brew_bin="''${FORGE_BREW:-/opt/homebrew/bin/brew}"
+      logs="$HOME/Library/Logs"
+
+      # %b: payload fields carry embedded \t separators.
+      row() { printf 'ts=%s\tfamily=%s\towner=%s\t%b\n' "$ts" "$1" "$2" "$3"; }
+      tail_receipt() {
+        if [ -f "$1" ]; then tail -1 "$1"; else echo "no-receipt"; fi
+      }
+
+      row flake-inputs forge-nix-drift "$(tail_receipt "$logs/forge-nix-drift.receipts.log")"
+      row deploy forge-redeploy "$(tail_receipt "$logs/forge-redeploy.receipts.log")"
+      row mcp-pins forge-mcp-outdated "$(grep -v '^$' "$logs/forge-mcp-outdated.log" 2>/dev/null | tail -1 || echo no-receipt)"
+      if [ -x "$brew_bin" ]; then
+        formulae="$(HOMEBREW_NO_AUTO_UPDATE=1 "$brew_bin" outdated --quiet 2>/dev/null | wc -l | tr -d ' ')"
+        casks="$(HOMEBREW_NO_AUTO_UPDATE=1 "$brew_bin" outdated --cask --quiet 2>/dev/null | wc -l | tr -d ' ')"
+        row homebrew operator-brew "outdated_formulae=$formulae\toutdated_casks=$casks"
+      else
+        row homebrew operator-brew "state=absent"
+      fi
+      if command -v uv >/dev/null 2>&1; then
+        row uv-tools uv "installed_tools=$(uv tool list 2>/dev/null | grep -c '^[a-z]' || true)"
+      fi
+      row manifest overlays/manifest.nix "engine verbs update|advance|build own mutation; board observes"
+
+      line="$(printf 'ts=%s\tfamilies=6\tresult=ok' "$ts")"
+      { mkdir -p "$(dirname "$receipt_log")" && printf '%s\n' "$line" >>"$receipt_log"; } \
+        || printf 'forge-update-board: WARNING receipt not persisted\n' >&2
+      printf 'forge-update-board: receipt\t%s\n' "$line"
+    '';
+  };
 in {
   home = {
     packages = [
@@ -1473,6 +2762,10 @@ in {
       forgeNixDrift
       forgeActivationSweep
       forgeAccept
+      forgePathDoctor
+      forgeLaunchdDoctor
+      forgeParity
+      forgeUpdateBoard
     ];
 
     # Shared identity bundle for the scheduled agents: Login Items &
