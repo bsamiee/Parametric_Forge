@@ -103,6 +103,11 @@
       path = "Library/Logs/forge-browse.receipts.log";
       emitter = "forge-browse";
     }
+    {
+      kind = "zellij";
+      path = "Library/Logs/forge-zellij.receipts.log";
+      emitter = "forge-zellij";
+    }
   ];
 
   # --- Register JSON projections -------------------------------------------------

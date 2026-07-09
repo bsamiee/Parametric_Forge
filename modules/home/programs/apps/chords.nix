@@ -343,6 +343,48 @@
         rank = 40;
       };
     }
+    {
+      keys = ["s"];
+      body = lib.concatStringsSep "\n" [
+        "          Run \"forge-zellij\" \"graph\" {"
+        "            floating true"
+        "            close_on_exit true"
+        "            x \"18%\""
+        "            y \"12%\""
+        "            width \"64%\""
+        "            height \"72%\""
+        "          }"
+      ];
+      forgot = {
+        label = "workspace graph";
+        rank = 162;
+      };
+      ribbon = {
+        label = "graph";
+        rank = 45;
+      };
+    }
+    {
+      keys = ["w"];
+      body = lib.concatStringsSep "\n" [
+        "          Run \"forge-zellij\" \"watch\" {"
+        "            floating true"
+        "            close_on_exit true"
+        "            x \"22%\""
+        "            y \"18%\""
+        "            width \"56%\""
+        "            height \"56%\""
+        "          }"
+      ];
+      forgot = {
+        label = "watch panels";
+        rank = 164;
+      };
+      ribbon = {
+        label = "watch";
+        rank = 60;
+      };
+    }
   ];
 
   # Which-key rows with no chord of their own: command vocabulary surfaced in
