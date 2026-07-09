@@ -20,6 +20,7 @@ import {
   environments,
   projects,
   repositories,
+  rulesetPolicy,
   rulesets,
   tokens,
   webhooks,
@@ -130,6 +131,7 @@ const estate = (
     ] as const),
   );
   for (const row of rulesets) {
+    const anchor = repository.get(row.repository);
     void new github.RepositoryRuleset(
       `${row.repository}-${row.name}`,
       {
@@ -138,11 +140,11 @@ const estate = (
         target: "branch",
         enforcement: "active",
         conditions: { refName: { includes: ["~DEFAULT_BRANCH"], excludes: [] } },
-        rules: { nonFastForward: true, deletion: true },
+        rules: rulesetPolicy,
       },
       {
         provider: gh,
-        ...(repository.has(row.repository) ? { dependsOn: repository.get(row.repository) } : {}),
+        ...(anchor === undefined ? {} : { dependsOn: anchor }),
         ...(f.adopt && row.origin === "adopt" ? { import: `${row.repository}:${row.importId}` } : {}),
       },
     );

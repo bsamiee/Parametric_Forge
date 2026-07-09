@@ -81,6 +81,19 @@ type RulesetRow = {
   readonly origin: Origin;
 };
 
+type ReviewerRow = {
+  readonly identity: "coderabbit" | "greptile" | "copilot" | "macroscope";
+  /** app = GitHub App with repo-owned config artifacts; ruleset = GitHub-native ruleset rule (no config file). */
+  readonly mechanism: "app" | "ruleset";
+  readonly posture: "active" | "gated";
+  readonly trigger: string;
+  readonly statusCheck: boolean;
+  /** Overlap class partitions review authority so the matrix stays non-redundant by construction. */
+  readonly overlapClass: "line-review" | "semantic-review" | "native-review" | "remediation";
+  /** Repo-relative config artifacts hashed by `driver.ts reviewers`; empty for ruleset-native identities. */
+  readonly artifacts: readonly string[];
+};
+
 /**
  * Live import IDs: projects import by slug, environments by `project.slug`,
  * branch configs by `project.environment.name`.
@@ -192,15 +205,87 @@ const rulesets = [
   { repository: "Maghz", name: "main-guard", importId: 18698899, origin: "adopt" },
 ] as const satisfies readonly RulesetRow[];
 
+/**
+ * One shared main-guard rule policy: history protection plus Copilot review as
+ * the GitHub-native ruleset rule. The bare copilotCodeReview block requests a
+ * Copilot review on every new PR; reviewOnPush stays off because CodeRabbit and
+ * Greptile already re-review each push — a third per-push pass is spend, not
+ * signal. Direct pushes to main stay legal: this is not a pull_request rule.
+ */
+const rulesetPolicy = {
+  nonFastForward: true,
+  deletion: true,
+  copilotCodeReview: { reviewOnPush: false, reviewDraftPullRequests: false },
+} as const;
+
+/**
+ * Reviewer service matrix: each identity is one service row; config custody
+ * stays repo-owned (each repo tunes its own artifacts), and `driver.ts
+ * reviewers` proves presence plus config hash across all repository rows.
+ * Macroscope holds at gated: check-run names, fix authority, and
+ * branch-mutation policy are not typed rows yet.
+ */
+const reviewers = [
+  {
+    identity: "coderabbit",
+    mechanism: "app",
+    posture: "active",
+    trigger: "pr-open+push",
+    statusCheck: true,
+    overlapClass: "line-review",
+    artifacts: [".coderabbit.yaml"],
+  },
+  {
+    identity: "greptile",
+    mechanism: "app",
+    posture: "active",
+    trigger: "pr-open+push",
+    statusCheck: true,
+    overlapClass: "semantic-review",
+    artifacts: [".greptile/config.json", ".greptile/files.json", ".greptile/rules.md"],
+  },
+  {
+    identity: "copilot",
+    mechanism: "ruleset",
+    posture: "active",
+    trigger: "pr-open",
+    statusCheck: false,
+    overlapClass: "native-review",
+    artifacts: [],
+  },
+  {
+    identity: "macroscope",
+    mechanism: "app",
+    posture: "gated",
+    trigger: "pr-open",
+    statusCheck: false,
+    overlapClass: "remediation",
+    artifacts: [],
+  },
+] as const satisfies readonly ReviewerRow[];
+
 // --- [EXPORTS] ------------------------------------------------------------------
 
-export { configs, environments, projects, repositories, rulesets, scopeRoot, scopes, tokens, webhooks };
+export {
+  configs,
+  environments,
+  projects,
+  repositories,
+  reviewers,
+  rulesetPolicy,
+  rulesets,
+  scopeRoot,
+  scopes,
+  tokens,
+  webhooks,
+};
 export type {
   ConfigRow,
   EnvironmentRow,
   Origin,
   ProjectRow,
   RepositoryRow,
+  ReviewerRow,
   RulesetRow,
   ScopeRow,
   SecretSource,

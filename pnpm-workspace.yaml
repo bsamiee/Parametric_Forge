@@ -1,0 +1,27 @@
+cacheDir: .cache/pnpm/cache
+
+stateDir: .cache/pnpm/state
+
+storeDir: .cache/pnpm/store
+
+allowBuilds:
+  '@parcel/watcher': false
+  msgpackr-extract: false
+  protobufjs: false
+
+catalog:
+  # substrate — the Effect core family; moves as one peer-locked wave
+  effect: 3.21.4
+  '@effect/platform': 0.96.2
+  '@effect/platform-node': 0.107.0
+  # services — the Pulumi engine and provider set; pins follow package schema
+  '@pulumi/pulumi': 3.251.0
+  '@pulumi/github': 6.14.0
+  '@pulumiverse/doppler': 0.9.0
+  # toolchain
+  typescript: 6.0.3
+  '@types/node': 26.1.1
+  '@effect/language-service': 0.86.5
+
+minimumReleaseAgeExclude:
+  - '@effect/language-service@0.86.5'

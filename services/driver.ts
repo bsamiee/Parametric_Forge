@@ -10,18 +10,20 @@
 // workspace temp dir. Also owns the machine directory-scope rail (the
 // replacement for per-repo doppler.yaml). Exports nothing; runMain terminates.
 //
-//   node driver.ts preview|up|refresh [--adopt] [--target=<p>/<c>/<token>]
-//   node driver.ts outputs [name] [--reveal]
-//   node driver.ts scopes apply|doctor|strict
+//   node services/driver.ts preview|up|refresh [--adopt] [--target=<p>/<c>/<token>]
+//   node services/driver.ts outputs [name] [--reveal]
+//   node services/driver.ts scopes apply|doctor|strict
+//   node services/driver.ts reviewers
 
 import { LocalWorkspace, type Stack } from "@pulumi/pulumi/automation/index.js";
 import { Command, FileSystem } from "@effect/platform";
 import { NodeContext, NodeRuntime } from "@effect/platform-node";
-import { Config, Console, Data, Effect, Option, Redacted, Schema, Stream } from "effect";
+import { Array as Arr, Config, Console, Data, Effect, Option, Redacted, Schema, Stream } from "effect";
+import { createHash } from "node:crypto";
 import { homedir } from "node:os";
 import * as path from "node:path";
 import { estate } from "./estate.ts";
-import { scopeRoot, scopes, webhooks } from "./topology.ts";
+import { reviewers, rulesetPolicy, scopeRoot, scopes, webhooks } from "./topology.ts";
 
 const PROJECT = "forge-services";
 const STACK = "estate";
@@ -326,13 +328,97 @@ const _scopeVerbs = {
   ),
 } as const;
 
+// --- [REVIEWER MATRIX] ----------------------------------------------------------
+
+type ReviewerRepo = {
+  readonly repo: string;
+  readonly present: boolean;
+  readonly configHash: string;
+};
+
+// App identities hash their repo-owned artifacts per repo root; ruleset-native
+// identities hash the desired rule policy once — drift shows up as a hash
+// change on either side, never as prose. The digest fold is the node:crypto
+// boundary kernel.
+const _artifactHash = (root: string, artifacts: readonly string[]) =>
+  Effect.map(
+    Effect.flatMap(FileSystem.FileSystem, (fs) =>
+      Effect.forEach(
+        artifacts,
+        (artifact) => {
+          const file = path.join(root, artifact);
+          return Effect.flatMap(
+            Effect.orElseSucceed(fs.exists(file), () => false),
+            (exists) =>
+              exists ? Effect.map(fs.readFile(file), Option.some) : Effect.succeed(Option.none<Uint8Array>()),
+          );
+        },
+        { concurrency: 3 },
+      )),
+    (bodies) => {
+      const found = Arr.getSomes(bodies);
+      return {
+        present: artifacts.length > 0 && found.length === artifacts.length,
+        hash: Arr.isNonEmptyArray(found)
+          ? found.reduce((digest, body) => digest.update(body), createHash("sha256")).digest("hex").slice(0, 16)
+          : "",
+      };
+    },
+  );
+
+const _reviewerMatrix = Effect.gen(function* () {
+  const policyHash = createHash("sha256").update(JSON.stringify(rulesetPolicy)).digest("hex").slice(0, 16);
+  const rows = yield* Effect.forEach(
+    reviewers,
+    (row) =>
+      Effect.map(
+        Effect.forEach(
+          scopes,
+          (scope) =>
+            row.mechanism === "ruleset"
+              ? Effect.succeed({
+                  repo: path.basename(scope.dir),
+                  present: row.posture === "active",
+                  configHash: row.posture === "active" ? policyHash : "",
+                } satisfies ReviewerRepo)
+              : Effect.map(
+                  _artifactHash(scope.dir, row.artifacts),
+                  (proof) =>
+                    ({
+                      repo: path.basename(scope.dir),
+                      present: proof.present,
+                      configHash: proof.hash,
+                    }) satisfies ReviewerRepo,
+                ),
+          { concurrency: 3 },
+        ),
+        (repos) => ({
+          identity: row.identity,
+          mechanism: row.mechanism,
+          posture: row.posture,
+          trigger: row.trigger,
+          statusCheck: row.statusCheck,
+          overlapClass: row.overlapClass,
+          repos,
+        }),
+      ),
+    { concurrency: 2 },
+  );
+  // Gated identities prove ABSENCE; active identities prove presence on every repo root.
+  const ok = rows.every((row) =>
+    row.posture === "gated" ? row.repos.every((repo) => !repo.present) : row.repos.every((repo) => repo.present),
+  );
+  return { reviewers: rows, ok };
+});
+
 // --- [ENTRY] --------------------------------------------------------------------
 
 const USAGE =
   "forge-services driver\n" +
   "  preview|up|refresh [--adopt] [--target=<project>/<config>/<token>]\n" +
   "  outputs [name] [--reveal]\n" +
-  "  scopes apply|doctor|strict";
+  "  scopes apply|doctor|strict\n" +
+  "  reviewers";
 
 const FLAG_VOCABULARY = new Set(["--adopt", "--reveal"]);
 
@@ -386,6 +472,8 @@ const _verbs = {
       ? _scopeVerbs[sub as keyof typeof _scopeVerbs]
       : Effect.fail(new UsageFault({ wanted: USAGE }));
   },
+  reviewers: (_flags2: Flags, _positional: ReadonlyArray<string>) =>
+    Effect.flatMap(_reviewerMatrix, (matrix) => Console.log(JSON.stringify(matrix, null, 2))),
 } as const;
 
 const _program = Effect.gen(function* () {

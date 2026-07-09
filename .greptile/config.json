@@ -41,7 +41,7 @@
     "collapsible": true,
     "defaultOpen": false
   },
-  "ignorePatterns": "flake.lock\nservices/pnpm-lock.yaml\n*.wasm\nmodules/home/assets/**\n.claude/scratch/**",
+  "ignorePatterns": "flake.lock\npnpm-lock.yaml\n*.wasm\nmodules/home/assets/**\n.claude/scratch/**",
   "context": {
     "repos": [
       "bsamiee/Rasm",

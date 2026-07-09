@@ -41,7 +41,7 @@ reviews:
     enabled: true
   path_filters:
     - "!flake.lock"
-    - "!services/pnpm-lock.yaml"
+    - "!pnpm-lock.yaml"
     - "!**/*.wasm"
     - "!modules/home/assets/**"
     - "!.claude/scratch/**"

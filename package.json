@@ -1,0 +1,27 @@
+{
+  "name": "parametric-forge",
+  "private": true,
+  "type": "module",
+  "description": "Estate workspace root: services/ is the services-IaC owner (Doppler + GitHub as typed Pulumi rows)",
+  "engines": {
+    "node": ">=26"
+  },
+  "scripts": {
+    "preview": "node services/driver.ts preview",
+    "up": "node services/driver.ts up",
+    "scopes": "node services/driver.ts scopes doctor",
+    "reviewers": "node services/driver.ts reviewers",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "devDependencies": {
+    "@effect/language-service": "catalog:",
+    "@effect/platform": "catalog:",
+    "@effect/platform-node": "catalog:",
+    "@pulumi/github": "catalog:",
+    "@pulumi/pulumi": "catalog:",
+    "@pulumiverse/doppler": "catalog:",
+    "@types/node": "catalog:",
+    "effect": "catalog:",
+    "typescript": "catalog:"
+  }
+}
