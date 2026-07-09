@@ -13,6 +13,7 @@
 
 import * as doppler from "@pulumiverse/doppler";
 import * as github from "@pulumi/github";
+import { secret } from "@pulumi/pulumi";
 import type { CustomResourceOptions, Resource } from "@pulumi/pulumi";
 import {
   configs,
@@ -21,6 +22,7 @@ import {
   repositories,
   rulesets,
   tokens,
+  webhooks,
   type Origin,
 } from "./topology.ts";
 
@@ -53,7 +55,10 @@ const _options = (
   ...(dependsOn ? { dependsOn } : {}),
 });
 
-const estate = (f: EstateFlags) => async (): Promise<Record<string, unknown>> => {
+const estate = (
+  f: EstateFlags,
+  webhookSecrets: ReadonlyMap<string, string> = new Map(),
+) => async (): Promise<Record<string, unknown>> => {
   const project = new Map<string, Resource>(
     projects.map((row) => [
       row.slug,
@@ -86,6 +91,25 @@ const estate = (f: EstateFlags) => async (): Promise<Record<string, unknown>> =>
       ),
     ] as const),
   );
+
+  // Change-notification webhooks: the signing secret arrives driver-brokered
+  // from its Doppler custody row and lands engine-side as a secret input; an
+  // absent broker value plans the webhook unsigned-diff-free by omission.
+  for (const row of webhooks) {
+    const brokered = webhookSecrets.get(row.slug);
+    void new doppler.Webhook(
+      row.slug,
+      {
+        project: row.project,
+        url: row.url,
+        enabled: true,
+        enabledConfigs: [...row.enabledConfigs],
+        payload: row.payload,
+        ...(brokered === undefined ? {} : { secret: secret(brokered) }),
+      },
+      _options(row.origin, row.slug, f, config.get(`${row.project}.${row.enabledConfigs[0]}`)),
+    );
+  }
 
   // GitHub settings surface: token rides the engine env (GITHUB_TOKEN, driver-
   // brokered); repositories carry protect so a row edit can never cascade into

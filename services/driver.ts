@@ -21,7 +21,7 @@ import { Config, Console, Data, Effect, Option, Redacted, Schema, Stream } from 
 import { homedir } from "node:os";
 import * as path from "node:path";
 import { estate } from "./estate.ts";
-import { scopeRoot, scopes } from "./topology.ts";
+import { scopeRoot, scopes, webhooks } from "./topology.ts";
 
 const PROJECT = "forge-services";
 const STACK = "estate";
@@ -71,21 +71,53 @@ class ScopeFault extends Data.TaggedError("ScopeFault")<{
 const _text = <E, R>(stream: Stream.Stream<Uint8Array, E, R>): Effect.Effect<string, E, R> =>
   Stream.runFold(Stream.decodeText(stream), "", (acc, chunk) => acc + chunk);
 
-const _shell = (command: string, ...args: ReadonlyArray<string>) =>
+const _run = (cmd: Command.Command, label: string) =>
   Effect.gen(function* () {
-    const spawned = yield* Command.start(Command.make(command, ...args));
+    const spawned = yield* Command.start(cmd);
     const [code, out, err] = yield* Effect.all(
       [spawned.exitCode, _text(spawned.stdout), _text(spawned.stderr)],
       { concurrency: 3 },
     );
     return yield* (code === 0
       ? Effect.succeed(out)
-      : Effect.fail(new ShellFault({ command: `${command} ${args.join(" ")}`, detail: err.trim() || `exit ${code}` })));
+      : Effect.fail(new ShellFault({ command: label, detail: err.trim() || `exit ${code}` })));
   }).pipe(
     Effect.scoped,
     Effect.mapError((fault) =>
-      fault instanceof ShellFault ? fault : new ShellFault({ command: `${command} ${args.join(" ")}`, detail: String(fault) }),
+      fault instanceof ShellFault ? fault : new ShellFault({ command: label, detail: String(fault) }),
     ),
+  );
+
+const _shell = (command: string, ...args: ReadonlyArray<string>) =>
+  _run(Command.make(command, ...args), `${command} ${args.join(" ")}`);
+
+// Webhook signing secrets brokered from their Doppler custody rows via the IaC
+// token; values pass straight into the inline program as secret inputs.
+const _webhookSecrets = (token: Redacted.Redacted<string>) =>
+  Effect.map(
+    Effect.forEach(
+      webhooks,
+      (row) =>
+        Effect.map(
+          _run(
+            Command.make(
+              "doppler",
+              "secrets",
+              "get",
+              row.secretSource.name,
+              "--project",
+              row.secretSource.project,
+              "--config",
+              row.secretSource.config,
+              "--plain",
+            ).pipe(Command.env({ DOPPLER_TOKEN: Redacted.value(token) })),
+            `doppler secrets get ${row.secretSource.name} (${row.secretSource.project}/${row.secretSource.config})`,
+          ),
+          (raw) => [row.slug, raw.trim()] as const,
+        ),
+      { concurrency: 2 },
+    ),
+    (rows) => new Map(rows),
   );
 
 // nonEmptyString: an empty exported override means unset, per XDG semantics.
@@ -135,12 +167,13 @@ const _openStack = (flags: Flags) =>
       { concurrency: 3 },
     );
     const backendUrl = `file://${cfg.stateDir}`;
+    const webhookSecrets = yield* _webhookSecrets(token);
     return yield* Effect.tryPromise({
       // BOUNDARY ADAPTER: Pulumi Automation API is promise-native; secrets unwrap
       // only into the engine's child process environment.
       try: () =>
         LocalWorkspace.createOrSelectStack(
-          { stackName: STACK, projectName: PROJECT, program: estate(flags) },
+          { stackName: STACK, projectName: PROJECT, program: estate(flags, webhookSecrets) },
           {
             projectSettings: { name: PROJECT, runtime: "nodejs", backend: { url: backendUrl } },
             secretsProvider: "passphrase",

@@ -49,6 +49,24 @@ type ScopeRow = {
   readonly config: string;
 };
 
+type SecretSource = {
+  readonly project: string;
+  readonly config: string;
+  readonly name: string;
+};
+
+type WebhookRow = {
+  readonly project: string;
+  readonly slug: string;
+  readonly url: string;
+  readonly enabledConfigs: readonly string[];
+  /** Static custom payload: no secret names ride the wire; the HMAC signature is the auth boundary. */
+  readonly payload: string;
+  /** Signing-secret custody coordinate; the driver brokers its value at apply time. */
+  readonly secretSource: SecretSource;
+  readonly origin: Origin;
+};
+
 type RepositoryRow = {
   readonly name: string;
   readonly description: string;
@@ -133,6 +151,26 @@ const scopes = [
 ] as const satisfies readonly ScopeRow[];
 
 /**
+ * Change-notification webhooks. maghz-prd-redeploy targets the Maghz VPS hook
+ * container (the stack-owned redeploy consumer) through the stack's Caddy TLS
+ * front — Doppler mandates HTTPS delivery. Doppler signs each delivery with
+ * the brokered secret, the consumer verifies and appends one receipt row as
+ * the durable redeploy demand. The consumer owns idempotency — delivery is
+ * at-least-once.
+ */
+const webhooks = [
+  {
+    project: "maghz",
+    slug: "maghz-prd-redeploy",
+    url: "https://31-97-131-41.sslip.io/hooks/doppler",
+    enabledConfigs: ["prd_host"],
+    payload: JSON.stringify({ event: "maghz.prd_host.secrets.update" }),
+    secretSource: { project: "maghz", config: "prd_host", name: "MAGHZ_HOOK__SIGNING_SECRET" },
+    origin: "mint",
+  },
+] as const satisfies readonly WebhookRow[];
+
+/**
  * GitHub settings-as-code: every owned repo carries the same merge-hygiene
  * policy (estate.ts owns the shared policy values) and one active main-guard
  * ruleset (non-fast-forward + deletion protection on the default branch).
@@ -156,7 +194,7 @@ const rulesets = [
 
 // --- [EXPORTS] ------------------------------------------------------------------
 
-export { configs, environments, projects, repositories, rulesets, scopeRoot, scopes, tokens };
+export { configs, environments, projects, repositories, rulesets, scopeRoot, scopes, tokens, webhooks };
 export type {
   ConfigRow,
   EnvironmentRow,
@@ -165,5 +203,7 @@ export type {
   RepositoryRow,
   RulesetRow,
   ScopeRow,
+  SecretSource,
   TokenRow,
+  WebhookRow,
 };
