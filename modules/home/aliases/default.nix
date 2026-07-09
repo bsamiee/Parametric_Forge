@@ -9,12 +9,13 @@
 # and projects the shell-alias terminal surface from the same rows.
 {lib, ...}: let
   files = ["containers" "core" "git" "media" "nix"];
-  rows = lib.concatMap (
-    f:
-      map (r: {risk = "none";} // r // {owner_file = "aliases/${f}.nix";})
-      (import ./${f}.nix)
-  )
-  files;
+  rows =
+    lib.concatMap (
+      f:
+        map (r: {risk = "none";} // r // {owner_file = "aliases/${f}.nix";})
+        (import ./${f}.nix)
+    )
+    files;
   names = map (r: r.alias) rows;
   dupes = lib.subtractLists (lib.unique names) names;
 in {
