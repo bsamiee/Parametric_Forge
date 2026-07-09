@@ -4,7 +4,7 @@
   "triggerOnUpdates": true,
   "statusCheck": true,
   "fixWithAI": true,
-  "ignorePatterns": "flake.lock\nservices/pnpm-lock.yaml\n*.wasm\nmodules/home/assets/**",
+  "ignorePatterns": "flake.lock\nservices/pnpm-lock.yaml\n*.wasm\nmodules/home/assets/**\n.claude/scratch/**",
   "context": {
     "repos": ["bsamiee/Rasm", "bsamiee/Maghz"]
   },
@@ -16,26 +16,38 @@
     },
     {
       "id": "one-owner-per-axis",
-      "rule": "Extend the canonical owner: new tools are rows in owner tables, colors live only in config.forge.theme, keybinds only in apps/chords.nix, MCP servers only in mcp-fleet.nix. A new singleton file for an owned axis is a defect.",
+      "rule": "Extend the canonical owner: each vocabulary axis (color, keybind, MCP server, tool admission) has exactly one declaring owner per docs/standards/nix-doctrine.md, and new capability lands as a row on that owner. A new singleton file or duplicated value for an owned axis is a defect.",
       "severity": "high"
     },
     {
       "id": "shell-app-bar",
-      "rule": "Shell CLIs are writeShellApplication with declared runtimeInputs, set -euo pipefail, shellcheck-clean, zero '|| true' masks, no embedded repo paths or magic values.",
+      "rule": "Shell bodies — packaged via writeShellApplication or standalone .sh including .claude hooks — declare runtimeInputs where packaged, use set -euo pipefail, pass shellcheck without directives, carry zero '|| true' masks, and embed no repo paths, usernames, or magic values.",
       "severity": "medium",
-      "scope": ["modules/**", "overlays/**"]
+      "scope": ["modules/**", "overlays/**", "flake-modules/**", ".claude/**"]
     },
     {
       "id": "provision-contract",
-      "rule": "forge-provision emits schema-v3 JSON envelopes only; agent-facing JSON never carries socket paths, host absolute paths, or token material; every envelope change lands with its README contract row.",
+      "rule": "forge-provision emits schema-v3 JSON envelopes only; agent-facing JSON never carries socket paths, host absolute paths, or token material; every envelope change lands with its README contract row; jq programs live in jq/ files, never inlined in Bash.",
       "severity": "high",
       "scope": ["overlays/forge-provision/**"]
     },
     {
       "id": "services-effect-rails",
-      "rule": "services/ TypeScript follows the Rasm doctrine: Effect rails, tagged faults, Config.redacted, Schema boundary decodes, typed Pulumi rows, secrets never in unredacted state outputs.",
+      "rule": "services/ TypeScript follows docs/stacks/typescript law: Effect rails, tagged faults, Config.redacted, Schema boundary decodes, typed Pulumi rows, secrets never in unredacted state outputs.",
       "severity": "high",
       "scope": ["services/**"]
+    },
+    {
+      "id": "generated-projection",
+      "rule": "Lua and TOML app config consumes Nix-owned vocabulary projections; a private hex color, ad hoc keybind, or duplicated theme value in consumer config is a defect — the value belongs on the generating owner.",
+      "severity": "medium",
+      "scope": ["modules/home/programs/**"]
+    },
+    {
+      "id": "workflow-determinism",
+      "rule": "Workflow scripts are deterministic orchestration: schema-typed agent outputs, bounded loops, stage products written to disk with path receipts. Bare promises, unbounded polling, wall-clock branching, and subagents instructed to wait are defects.",
+      "severity": "medium",
+      "scope": [".claude/workflows/**"]
     }
   ]
 }
