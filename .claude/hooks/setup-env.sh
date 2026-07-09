@@ -51,6 +51,7 @@ readonly ALLOW_MISSING_TOOL_PATHS="${CLAUDE_ALLOW_MISSING_TOOL_PATHS:-0}"
 declare -a _TMP_FILES=()
 declare -a _RECEIPT=()
 declare -a _ALERTS=()
+_MATERIAL=0
 
 # --- [OPERATIONS] -------------------------------------------------------------
 
@@ -200,7 +201,7 @@ _op_fill() {
         export "${key}"
         filled+=("${key}")
     done <"${OP_CACHE}"
-    (( ${#filled[@]} == 0 )) || _RECEIPT+=("note  op-fill: $(_join "${filled[@]}")")
+    (( ${#filled[@]} == 0 )) || { _MATERIAL=1; _RECEIPT+=("note  op-fill: $(_join "${filled[@]}")"); }
 }
 
 _load_secrets() {
@@ -232,6 +233,7 @@ _load_secrets() {
                 IFS='|' read -r outcome nkeys age auth reason <"${out}.meta" || true
             fi
             if [[ "${outcome}" != "dead" && -s "${out}" ]]; then
+                _MATERIAL=1
                 # NUL-delimited literal assignment, never source/eval: Doppler's
                 # env escaping is server-side and unproven shell-safe, so secret
                 # bytes must not reach the parser. jq decodes json exactly.
@@ -366,11 +368,13 @@ _TMP_FILES+=("${_ENV_TMP}")
 chmod 600 "${_ENV_TMP}"
 mv "${_ENV_TMP}" "${CLAUDE_ENV_FILE}"
 
-# TUI/GUI session cache: key exports only (no PATH), refreshed only when
-# material exists so a total outage never clobbers the last good cache.
+# TUI/GUI session cache: key exports only (no PATH), refreshed only on
+# resolver material (Doppler rows or op-fill) — always-present local keys
+# never count, so a total outage preserves the last good cache; a fresh
+# machine with no cache yet still bootstraps from whatever emitted.
 mkdir -p "${SESSION_CACHE_DIR}"
 chmod 700 "${SESSION_CACHE_DIR}"
-if [[ -s "${_KEYS_TMP}" ]]; then
+if [[ -s "${_KEYS_TMP}" ]] && { (( _MATERIAL == 1 )) || [[ ! -f "${SESSION_CACHE_DIR}/session-env.sh" ]]; }; then
     _CACHE_TMP="$(mktemp "${SESSION_CACHE_DIR}/.session-env.XXXXXX")"
     readonly _CACHE_TMP
     _TMP_FILES+=("${_CACHE_TMP}")
