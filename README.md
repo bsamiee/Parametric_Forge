@@ -91,7 +91,7 @@ One ed25519 key serves everything: custodied in the 1Password Personal vault, se
 
 ## [12]-[GITHUB_AND_SERVICES]
 
-GitHub repository settings for the estate (merge hygiene, rulesets, feature booleans) are `@pulumi/github` rows in `services/topology.ts`; `node driver.ts preview` is the verification surface — repo state is never enumerated in prose or edited in the GitHub UI. Doppler projects, environments, branch configs, and service tokens live as rows in the same file. Code review rides CodeRabbit (`.coderabbit.yaml`) and Greptile (`.greptile/`), with `.macroscope/ignore.md` scoping the Macroscope pilot; the `pr-loop` skill owns hosted-PR round-trips.
+GitHub repository settings for the estate (merge hygiene, rulesets, feature booleans) are `@pulumi/github` rows in `services/topology.ts`; `node driver.ts preview` is the verification surface — repo state is never enumerated in prose or edited in the GitHub UI. Doppler projects, environments, branch configs, and service tokens live as rows in the same file. Code review rides CodeRabbit (`.coderabbit.yaml`) and Greptile (`.greptile/`); the `pr-loop` skill owns hosted-PR round-trips.
 
 ## [13]-[FRESH_MACHINE_BOOTSTRAP]
 
