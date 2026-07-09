@@ -4,66 +4,31 @@
 # License       : MIT
 # Path          : /modules/home/programs/shell-tools/mcp-launchers.nix
 # ----------------------------------------------------------------------------
-# Pinned MCP launchers: one row per server, pnpm-installed once into an
-# XDG-cache prefix keyed by version, exec'd locally on every later spawn — no
-# per-spawn registry resolution. Bump a row's version to roll its server;
-# `forge-mcp-outdated` reports pinned-vs-latest drift; pnpm output routes to
-# stderr so the MCP stdio channel stays clean.
+# MCP fleet owner: builds pinned pnpm launchers from mcp-fleet.nix rows and
+# ships `forge-mcp` (outdated|doctor|drift), the fleet health surface. Bump a
+# row's version to roll its server; drift validates both client registrations
+# against the manifest and only reports; pnpm output routes to stderr so the
+# MCP stdio channel stays clean.
 {
   config,
+  lib,
   pkgs,
   ...
 }: let
-  rows = [
-    {
-      name = "forge-perplexity-mcp";
-      pkg = "@perplexity-ai/mcp-server";
-      version = "0.9.0";
-      bin = "perplexity-mcp";
-    }
-    {
-      name = "forge-tavily-mcp";
-      pkg = "tavily-mcp";
-      version = "0.2.20";
-      bin = "tavily-mcp";
-    }
-    {
-      name = "forge-hostinger-mcp";
-      pkg = "hostinger-api-mcp";
-      version = "1.2.1";
-      bin = "hostinger-api-mcp";
-    }
-    {
-      name = "forge-doppler-mcp";
-      pkg = "@dopplerhq/mcp-server";
-      version = "1.0.5";
-      bin = "doppler-mcp";
-    }
-    {
-      name = "forge-playwright-mcp";
-      pkg = "@playwright/mcp";
-      version = "0.0.77";
-      bin = "playwright-mcp";
-    }
-    {
-      # Bare-binary name held stable: the Maghz MCP fleet spells `notebooklm-mcp`.
-      name = "notebooklm-mcp";
-      pkg = "notebooklm-mcp";
-      version = "2.0.0";
-      bin = "notebooklm-mcp";
-      prelude = ''
-        export NOTEBOOKLM_AI_MARKER="''${NOTEBOOKLM_AI_MARKER:-false}"
-        export SESSION_TIMEOUT="''${SESSION_TIMEOUT:-3600}"
-      '';
-    }
-  ];
-  launcher = row:
+  profileBin = "/etc/profiles/per-user/${config.home.username}/bin";
+  fleet = import ./mcp-fleet.nix {
+    inherit profileBin;
+    homeDir = config.home.homeDirectory;
+  };
+  launcherRows = builtins.filter (r: r ? launcher) fleet;
+  fleetJson = pkgs.writeText "mcp-fleet.json" (builtins.toJSON fleet);
+  mkLauncher = row: name:
     pkgs.writeShellApplication {
-      inherit (row) name;
+      inherit name;
       runtimeInputs = [pkgs.coreutils pkgs.nodejs-bin_26 pkgs.pnpm_11];
       text = ''
-        ${row.prelude or ""}prefix="''${XDG_CACHE_HOME:-$HOME/.cache}/forge-mcp/${row.pkg}/${row.version}"
-        entry="$prefix/node_modules/.bin/${row.bin}"
+        ${row.launcher.prelude or ""}prefix="''${XDG_CACHE_HOME:-$HOME/.cache}/forge-mcp/${row.launcher.pkg}/${row.launcher.version}"
+        entry="$prefix/node_modules/.bin/${row.launcher.bin}"
         if [ ! -x "$entry" ]; then
           # Stage-then-rename: fleet clients spawn every server at once, so first
           # installs race. Each racer stages privately; the rename winner owns the
@@ -79,24 +44,33 @@
             --config.store-dir="''${XDG_DATA_HOME:-$HOME/.local/share}/pnpm/store" \
             --config.cache-dir="''${XDG_CACHE_HOME:-$HOME/.cache}/pnpm" \
             --config.state-dir="''${XDG_STATE_HOME:-$HOME/.local/state}/pnpm" \
-            "${row.pkg}@${row.version}" >&2 || true
+            "${row.launcher.pkg}@${row.launcher.version}" >&2 || true
           # Success predicate is the staged bin, not pnpm's exit status: a node
           # teardown crash after full materialization must not kill cold-start,
           # and a tree missing its bin must never be promoted to the prefix.
           if [ -x "$entry" ]; then
             rm -rf "$stage"
-          elif [ -x "$stage/node_modules/.bin/${row.bin}" ]; then
-            [ ! -e "$prefix" ] || rm -rf "$prefix"
-            mv -T "$stage" "$prefix" 2>/dev/null || rm -rf "$stage"
+          elif [ -x "$stage/node_modules/.bin/${row.launcher.bin}" ]; then
+            # mv first: a prefix a racer just promoted must never be deleted.
+            # Only a still-corrupt prefix is cleared, then one retry.
+            if ! mv -T "$stage" "$prefix" 2>/dev/null; then
+              if [ -x "$entry" ]; then
+                rm -rf "$stage"
+              else
+                rm -rf "$prefix"
+                mv -T "$stage" "$prefix" 2>/dev/null || rm -rf "$stage"
+              fi
+            fi
           else
             rm -rf "$stage"
-            echo "${row.name}: pnpm add ${row.pkg}@${row.version} materialized no executable ${row.bin}" >&2
+            echo "${name}: pnpm add ${row.launcher.pkg}@${row.launcher.version} materialized no executable ${row.launcher.bin}" >&2
             exit 69
           fi
         fi
         exec "$entry" "$@"
       '';
     };
+  launchers = lib.concatMap (row: map (mkLauncher row) row.launcher.names) launcherRows;
   # Maghz postgres MCP: DSN via MAGHZ_MCP__DATABASE_URI with launchd GUI replay
   # fallback; loud exit 78 when unresolved so required-server failure is visible.
   maghzPostgres = pkgs.writeShellApplication {
@@ -119,6 +93,7 @@
   # client configs stable across McNeel package updates.
   rhinoRouter = pkgs.writeShellApplication {
     name = "rhino-mcp-router";
+    runtimeInputs = [pkgs.coreutils];
     text = ''
       base="$HOME/Library/Application Support/McNeel/Rhinoceros/packages/9.0/Rhino-MCP-Platform"
       entry="$(printf '%s\n' "$base"/*/router/osx-arm64/rhino-mcp-router | sort -V | tail -1)"
@@ -129,42 +104,229 @@
       exec "$entry" "$@"
     '';
   };
-  pins = builtins.concatStringsSep "\n" (map (r: "${r.pkg}|${r.version}") rows);
-  outdated = pkgs.writeShellApplication {
-    name = "forge-mcp-outdated";
-    runtimeInputs = [pkgs.curl pkgs.jq];
+  pins = builtins.concatStringsSep "\n" (map (r: "${r.launcher.pkg}|${r.launcher.version}") launcherRows);
+  # Drift program: fleet rows vs live client registrations, key NAMES only.
+  driftJq = pkgs.writeText "mcp-drift.jq" ''
+    ($fleet[0]) as $rows
+    | ($claude[0] // {}) as $cl
+    | ($codex[0] // {}) as $cx
+    | [
+        $rows[] as $row
+        | ($row.clients // ["claude", "codex"]) as $who
+        | ($row.assertLevel // "full") as $lvl
+        | (
+            (if ($who | index("claude")) | not then []
+             elif $cl[$row.name] == null then ["\($row.name): MISSING in claude"]
+             elif $lvl == "presence" then []
+             else ($cl[$row.name]) as $c
+              | (if $row.transport == "stdio" then
+                  (if ($c.type // "stdio") != "stdio" then ["\($row.name): claude type != stdio"] else [] end)
+                  + (if ($c.command // "") != $row.command then ["\($row.name): claude command \($c.command // "absent") != \($row.command)"] else [] end)
+                  + (if ($c.args // []) != ($row.args // []) then ["\($row.name): claude args \($c.args // [])"] else [] end)
+                  + ((($c.env // {}) | keys | sort) as $have
+                     | (($row.claudeEnvNames // $row.envKeys // []) | sort) as $want
+                     | if $have != $want then ["\($row.name): claude env names \($have) != \($want)"] else [] end)
+                else
+                  (if ($c.type // "") != "http" then ["\($row.name): claude type != http"] else [] end)
+                  + (if ($c.url // "") != $row.url then ["\($row.name): claude url \($c.url // "absent")"] else [] end)
+                  + ((($c.headers // {}) | keys | sort) as $have
+                     | (($row.headerNames // []) | sort) as $want
+                     | if $have != $want then ["\($row.name): claude header names \($have) != \($want)"] else [] end)
+                end)
+             end)
+            + (if ($who | index("codex")) | not then []
+               elif $cx[$row.name] == null then ["\($row.name): MISSING in codex"]
+               elif $lvl == "presence" then []
+               else ($cx[$row.name]) as $c
+                | (if ($c.required // false) != ($row.codex.required // false) then ["\($row.name): codex required \($c.required // false) != \($row.codex.required // false)"] else [] end)
+                  + (if ($c.startup_timeout_sec // null) != $row.codex.startupTimeoutSec then ["\($row.name): codex startup_timeout_sec \($c.startup_timeout_sec // "absent")"] else [] end)
+                  + (if ($c.tool_timeout_sec // null) != $row.codex.toolTimeoutSec then ["\($row.name): codex tool_timeout_sec \($c.tool_timeout_sec // "absent")"] else [] end)
+                  + (if $row.transport == "stdio" then
+                      (if ($c.command // "") != $row.command then ["\($row.name): codex command \($c.command // "absent") != \($row.command)"] else [] end)
+                      + (if ($c.args // []) != ($row.args // []) then ["\($row.name): codex args \($c.args // [])"] else [] end)
+                      + ((($c.env_vars // []) | sort) as $have
+                         | (($row.envKeys // []) | sort) as $want
+                         | if $have != $want then ["\($row.name): codex env_vars \($have) != \($want)"] else [] end)
+                    else
+                      (if ($c.url // "") != $row.url then ["\($row.name): codex url \($c.url // "absent")"] else [] end)
+                      + (if ($c.bearer_token_env_var // null) != ($row.codex.bearerEnvVar // null) then ["\($row.name): codex bearer_token_env_var \($c.bearer_token_env_var // "absent")"] else [] end)
+                      + (if ($c.env_http_headers // null) != ($row.codex.headerEnv // null) then ["\($row.name): codex env_http_headers drift"] else [] end)
+                    end)
+               end)
+          )
+      ]
+    | flatten
+    + (($cl | keys) - [$rows[] | select((.clients // ["claude", "codex"]) | index("claude")) | .name] | map("\(.): EXTRA in claude (not in manifest)"))
+    + (($cx | keys) - [$rows[] | select((.clients // ["claude", "codex"]) | index("codex")) | .name] | map("\(.): EXTRA in codex (not in manifest)"))
+    | .[]
+  '';
+  forgeMcp = pkgs.writeShellApplication {
+    name = "forge-mcp";
+    runtimeInputs = [pkgs.coreutils pkgs.curl pkgs.jq pkgs.yq-go];
     text = ''
-      rc=0
-      while IFS="|" read -r pkg version; do
-        latest="$(curl -fsS "https://registry.npmjs.org/$(jq -rn --arg p "$pkg" '$p|@uri')/latest" | jq -r .version)"
-        if [ "$latest" != "$version" ]; then
-          echo "OUTDATED $pkg pinned=$version latest=$latest"
-          rc=1
-        else
-          echo "current  $pkg $version"
+      fleet='${fleetJson}'
+      usage() { echo "usage: forge-mcp outdated [--notify] | doctor [--network] | drift" >&2; exit 64; }
+      verb="''${1:-}"; shift || true
+
+      cmd_outdated() {
+        notify=0; [ "''${1:-}" != "--notify" ] || notify=1
+        rc=0 out=""
+        while IFS="|" read -r pkg version; do
+          if latest="$(curl -fsS --max-time 20 "https://registry.npmjs.org/$(jq -rn --arg p "$pkg" '$p|@uri')/latest" | jq -er .version)"; then
+            if [ "$latest" != "$version" ]; then
+              out="$out"$'\n'"OUTDATED $pkg pinned=$version latest=$latest"; rc=1
+            else
+              out="$out"$'\n'"current  $pkg $version"
+            fi
+          else
+            # Registry/network failure is not drift: report, never notify.
+            out="$out"$'\n'"unknown  $pkg $version (registry unreachable)"
+          fi
+        done < <(printf '%s\n' '${pins}')
+        printf '%s\n' "''${out#?}"
+        if [ "$notify" = 1 ] && [ "$rc" = 1 ]; then
+          n="$(printf '%s\n' "$out" | grep -c '^OUTDATED' || true)"
+          /usr/bin/osascript -e "display notification \"$n MCP pin(s) behind npm latest - run forge-mcp outdated\" with title \"Forge MCP pins\"" || true
         fi
-      done < <(printf '%s\n' '${pins}')
-      exit "$rc"
-    '';
-  };
-  # Weekly drift banner: Notification Center only when a pin is outdated;
-  # silent when current or offline (a registry/network failure never notifies).
-  outdatedNotify = pkgs.writeShellApplication {
-    name = "forge-mcp-outdated-notify";
-    runtimeInputs = [outdated];
-    text = ''
-      out="$(forge-mcp-outdated 2>&1)" && exit 0
-      n="$(printf '%s\n' "$out" | grep -c '^OUTDATED' || true)"
-      [ "$n" -gt 0 ] || exit 0
-      /usr/bin/osascript -e "display notification \"$n MCP pin(s) behind npm latest - run forge-mcp-outdated\" with title \"Forge MCP pins\""
+        exit "$rc"
+      }
+
+      # Side-effect-free health probe: newline-delimited JSON-RPC initialize on
+      # stdio (stdin EOF is the shutdown), POST initialize for http rows. Env
+      # material is asserted by key NAME only; values never print.
+      req='{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"forge-mcp-doctor","version":"1.0.0"}}}'
+      probe_row() {
+        row="$1" network="$2" out="$3"
+        name="$(jq -r '.name' <<<"$row")"
+        probe="$(jq -r '.probe' <<<"$row")"
+        transport="$(jq -r '.transport' <<<"$row")"
+        t="$(jq -r '.codex.startupTimeoutSec // 20' <<<"$row")"
+        missing="$(jq -r '(.envKeys // [])[]' <<<"$row" | while IFS= read -r k; do
+          [ -n "''${!k:-}" ] || printf '%s ' "$k"
+        done)"
+        envnote=""; [ -z "$missing" ] || envnote=" env-missing: $missing"
+        if [ "$probe" = "skip" ]; then
+          printf '[SKIP] %-20s host-private row\n' "$name" >"$out"; return 0
+        fi
+        if [ "$probe" = "network" ] && [ "$network" != 1 ]; then
+          printf '[SKIP] %-20s network class (probe with --network)%s\n' "$name" "$envnote" >"$out"; return 0
+        fi
+        if [ "$transport" = "stdio" ]; then
+          cmdpath="$(jq -r '.command' <<<"$row")"
+          if [ ! -x "$cmdpath" ]; then
+            printf '[FAIL] %-20s command not executable: %s\n' "$name" "$cmdpath" >"$out"; return 0
+          fi
+          mapfile -t argv < <(jq -r '(.args // [])[]' <<<"$row")
+          # FIFO stdin: hold the write end open until the response lands, then
+          # close it — stdin EOF is the shutdown, so no probe outlives its
+          # answer (a sleep-holder would strand every server for the full
+          # timeout after doctor returns). timeout backstops mute servers.
+          mkfifo "$out.fifo"
+          line=""
+          exec 3< <(timeout "$((t + 2))" "$cmdpath" ''${argv[0]+"''${argv[@]}"} <"$out.fifo" 2>/dev/null || true)
+          exec 4>"$out.fifo"
+          printf '%s\n' "$req" >&4
+          IFS= read -r -t "$t" line <&3 || true
+          exec 4>&-
+          exec 3<&-
+          rm -f "$out.fifo"
+          if info="$(jq -er '.result.serverInfo | "\(.name) \(.version // "?")"' <<<"$line" 2>/dev/null)"; then
+            printf '[OK]   %-20s %s%s\n' "$name" "$info" "$envnote" >"$out"
+          else
+            printf '[FAIL] %-20s no initialize response within %ss%s\n' "$name" "$t" "$envnote" >"$out"
+          fi
+        else
+          url="$(jq -r '.url' <<<"$row")"
+          declare -a hdr=()
+          bearer="$(jq -r '.codex.bearerEnvVar // empty' <<<"$row")"
+          if [ -n "$bearer" ]; then
+            [ -n "''${!bearer:-}" ] || { printf '[SKIP] %-20s credential env absent: %s\n' "$name" "$bearer" >"$out"; return 0; }
+            hdr+=(-H "Authorization: Bearer ''${!bearer}")
+          fi
+          while IFS=$'\t' read -r h v; do
+            [ -n "$h" ] || continue
+            [ -n "''${!v:-}" ] || { printf '[SKIP] %-20s credential env absent: %s\n' "$name" "$v" >"$out"; return 0; }
+            hdr+=(-H "$h: ''${!v}")
+          done < <(jq -r '(.codex.headerEnv // {}) | to_entries[] | "\(.key)\t\(.value)"' <<<"$row")
+          body="$(mktemp)"
+          # curl -w still emits its code line on transport failure; a second echo
+          # would corrupt the status, so failures fall through to the 000 default.
+          code="$(curl -sS --max-time "$t" -o "$body" -w '%{http_code}' -X POST "$url" \
+            -H 'Content-Type: application/json' -H 'Accept: application/json, text/event-stream' \
+            -H 'MCP-Protocol-Version: 2025-06-18' ''${hdr[0]+"''${hdr[@]}"} --data "$req" 2>/dev/null || true)"
+          [ -n "$code" ] || code=000
+          if [ "$code" = 200 ]; then
+            payload="$(grep -m1 '^data:' "$body" | cut -c6- || true)"
+            [ -n "$payload" ] || payload="$(cat "$body")"
+            info="$(jq -er '.result.serverInfo | "\(.name) \(.version // "?")"' <<<"$payload" 2>/dev/null || echo "initialize accepted")"
+            printf '[OK]   %-20s %s%s\n' "$name" "$info" "$envnote" >"$out"
+          elif [ "$code" = 401 ] && [ ''${#hdr[@]} -eq 0 ]; then
+            # No credential mechanism on the row (client-managed OAuth): a 401
+            # proves the endpoint is alive; an unauthenticated pass never can.
+            printf '[OK]   %-20s reachable, HTTP 401 (client-managed auth)%s\n' "$name" "$envnote" >"$out"
+          else
+            printf '[FAIL] %-20s HTTP %s from initialize%s\n' "$name" "$code" "$envnote" >"$out"
+          fi
+          rm -f "$body"
+        fi
+      }
+
+      cmd_doctor() {
+        network=0; [ "''${1:-}" != "--network" ] || network=1
+        tmp="$(mktemp -d)"; trap 'rm -rf "$tmp"' EXIT
+        # Wrapper roll-call: every declared fleet wrapper must exist on PATH.
+        rc=0
+        while IFS= read -r w; do
+          if ! command -v "$w" >/dev/null 2>&1; then
+            echo "[FAIL] wrapper absent from PATH: $w"; rc=1
+          fi
+        done < <(jq -r '.[] | (.launcher.names // [])[]' "$fleet")
+        i=0
+        while IFS= read -r row; do
+          probe_row "$row" "$network" "$tmp/$i" &
+          i=$((i + 1))
+        done < <(jq -c '.[]' "$fleet")
+        wait
+        for ((f = 0; f < i; f++)); do cat "$tmp/$f"; done
+        ! grep -qh '^\[FAIL\]' "$tmp"/* || rc=1
+        exit "$rc"
+      }
+
+      cmd_drift() {
+        # An unreadable/unparseable client config is total drift, not a crash.
+        claude_json="$(jq '.mcpServers // {}' "$HOME/.claude.json" 2>/dev/null)" \
+          || { echo "drift: cannot read mcpServers from ~/.claude.json"; exit 1; }
+        codex_json="$(yq -p toml -o json '.mcp_servers // {}' "$HOME/.codex/config.toml" 2>/dev/null)" \
+          || { echo "drift: cannot read mcp_servers from ~/.codex/config.toml"; exit 1; }
+        findings="$(jq -rn \
+          --slurpfile fleet "$fleet" \
+          --slurpfile claude <(printf '%s' "$claude_json") \
+          --slurpfile codex <(printf '%s' "$codex_json") \
+          -f '${driftJq}')"
+        if [ -z "$findings" ]; then
+          echo "drift: clean ($(jq 'length' "$fleet") manifest rows vs claude + codex registrations)"
+          exit 0
+        fi
+        printf '%s\n' "$findings"
+        exit 1
+      }
+
+      case "$verb" in
+        outdated) cmd_outdated "$@" ;;
+        doctor) cmd_doctor "$@" ;;
+        drift) cmd_drift "$@" ;;
+        *) usage ;;
+      esac
     '';
   };
 in {
-  home.packages = map launcher rows ++ [maghzPostgres rhinoRouter outdated outdatedNotify];
+  home.packages = launchers ++ [maghzPostgres rhinoRouter forgeMcp];
+  # Weekly pin-drift banner: Notification Center only when a pin is outdated;
+  # silent when current or offline (a registry failure never notifies).
   launchd.agents.forge-mcp-outdated = {
     enable = true;
     config = {
-      ProgramArguments = ["${outdatedNotify}/bin/forge-mcp-outdated-notify"];
+      ProgramArguments = ["${forgeMcp}/bin/forge-mcp" "outdated" "--notify"];
       StartCalendarInterval = [
         {
           Weekday = 1;

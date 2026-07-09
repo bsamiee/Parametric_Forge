@@ -12,17 +12,34 @@
   inputs,
   ...
 }: let
-  # GUI-session secret replay: source the resolved op cache and re-export each key
-  # into the launchd GUI domain via "launchctl setenv" so GUI-launched apps
-  # (Codex.app, Claude Desktop) inherit the same tokens as interactive shells.
+  # Cutover flip row (t5x's terminal act): "transition" keeps the 1Password
+  # fallback lanes alive; "doppler" dispatches every lane to the doppler-first
+  # session cache alone. One value flips CLI, TUI, and GUI at the next switch.
+  secretBackend = "transition";
+  sessionCache = "${config.xdg.cacheHome}/forge-secrets/session-env.sh";
+  opCache = "${config.xdg.configHome}/hm-op-session.sh";
+  replayConstants = [
+    "CLAUDE_SECRET_BACKEND"
+    "CLOUDSDK_CONFIG"
+    "WORKSPACE_MCP_CREDENTIALS_DIR"
+    "GOOGLE_WORKSPACE_CLI_CONFIG_DIR"
+    "GOOGLE_WORKSPACE_PROJECT_ID"
+    "MAGHZ_REMOTE_HOST"
+    "MAGHZ_REMOTE_USER"
+    "MAGHZ_REMOTE_WORKROOT"
+  ];
+  # GUI-session secret replay: source the backend-dispatched session material
+  # and re-export each key into the launchd GUI domain via "launchctl setenv"
+  # so GUI-launched apps (Codex.app, Claude Desktop) inherit the same tokens
+  # as interactive shells. Key NAMES are enumerated from both caches; a name
+  # whose backend leaves it unset is skipped, so the flip narrows this replay.
   guiOpSecrets = pkgs.writeShellApplication {
     name = "gui-op-secrets";
-    runtimeInputs = [pkgs.gnugrep pkgs.gawk];
+    runtimeInputs = [pkgs.coreutils pkgs.gnugrep pkgs.gawk];
     text = ''
-      cache="${config.xdg.configHome}/hm-op-session.sh"
-      [ -f "$cache" ] || exit 0
       # shellcheck source=/dev/null
-      . "$cache"
+      [ ! -f "${config.xdg.configHome}/forge-session-secrets.sh" ] || . "${config.xdg.configHome}/forge-session-secrets.sh"
+      export CLAUDE_SECRET_BACKEND="''${CLAUDE_SECRET_BACKEND:-${secretBackend}}"
       export CLOUDSDK_CONFIG="${config.xdg.configHome}/gcloud"
       export WORKSPACE_MCP_CREDENTIALS_DIR="${config.xdg.cacheHome}/workspace-mcp"
       export GOOGLE_WORKSPACE_CLI_CONFIG_DIR="${config.xdg.configHome}/gws"
@@ -34,8 +51,49 @@
         val="''${!k:-}"
         if [ -n "$val" ]; then
           /bin/launchctl setenv "$k" "$val"
+        else
+          # Narrowing is real in the launchd domain: a name no backend serves
+          # is cleared, so the cutover flip retires stale GUI values at replay
+          # instead of leaving them pinned until logout.
+          /bin/launchctl unsetenv "$k" || true
         fi
-      done < <({ grep -oE '^export [A-Za-z_][A-Za-z0-9_]*' "$cache" | awk '{print $2}'; printf '%s\n' CLOUDSDK_CONFIG WORKSPACE_MCP_CREDENTIALS_DIR GOOGLE_WORKSPACE_CLI_CONFIG_DIR GOOGLE_WORKSPACE_PROJECT_ID MAGHZ_REMOTE_HOST MAGHZ_REMOTE_USER MAGHZ_REMOTE_WORKROOT; })
+      done < <({ for f in "${sessionCache}" "${opCache}"; do
+        [ -f "$f" ] || continue
+        grep -oE '^export [A-Za-z_][A-Za-z0-9_]*' "$f" | awk '{print $2}'
+      done
+      printf '%s\n' ${lib.concatStringsSep " " replayConstants}; } | sort -u)
+    '';
+  };
+  # Per-lane cutover proof: key NAMES only, never values. CLI runs the
+  # canonical hook against a temp CLAUDE_ENV_FILE and shows its receipt; TUI
+  # probes an interactive login zsh; GUI reads the launchd domain.
+  secretsProof = pkgs.writeShellApplication {
+    name = "forge-secrets-proof";
+    runtimeInputs = [pkgs.bash pkgs.coreutils pkgs.gnugrep pkgs.gnused pkgs.gawk];
+    text = ''
+      echo "backend=''${CLAUDE_SECRET_BACKEND:-${secretBackend}}"
+      keys="$({ for f in "${sessionCache}" "${opCache}"; do
+        [ -f "$f" ] || continue
+        grep -oE '^export [A-Za-z_][A-Za-z0-9_]*' "$f" | awk '{print $2}'
+      done; } | sort -u)"
+      [ -n "$keys" ] || { echo "no session material on disk; run a Claude session first" >&2; exit 1; }
+      tmp="$(mktemp -d)"; trap 'rm -rf "$tmp"' EXIT
+      echo "--- CLI lane (SessionStart hook, fresh env file)"
+      CLAUDE_ENV_FILE="$tmp/env.sh" bash "$HOME/.claude/hooks/setup-env.sh" >"$tmp/alerts" 2>"$tmp/receipt" || true
+      sed 's/^/  receipt: /' "$tmp/receipt"
+      sed 's/^/  ALERT:   /' "$tmp/alerts"
+      echo "  emitted: $(grep -oE '^export [A-Za-z_][A-Za-z0-9_]*' "$tmp/env.sh" 2>/dev/null | awk '{print $2}' | tr '\n' ' ')"
+      echo "--- TUI lane (interactive login zsh)"
+      ZKEYS="$(printf '%s' "$keys" | tr '\n' ' ')" /bin/zsh -il -c \
+        'for k in ''${(s: :)ZKEYS}; do if [ -n "''${(P)k}" ]; then print "  present $k"; else print "  ABSENT  $k"; fi; done' 2>/dev/null
+      echo "--- GUI lane (launchctl getenv)"
+      while IFS= read -r k; do
+        if [ -n "$(/bin/launchctl getenv "$k" 2>/dev/null || true)" ]; then
+          echo "  present $k"
+        else
+          echo "  ABSENT  $k"
+        fi
+      done <<<"$keys"
     '';
   };
 in {
@@ -50,9 +108,12 @@ in {
   };
 
   home = {
+    packages = [secretsProof];
+
     # --- Environment: Biometric unlock for CLI ----------------------------------
     sessionVariables = {
       OP_BIOMETRIC_UNLOCK_ENABLED = "true";
+      CLAUDE_SECRET_BACKEND = secretBackend;
     };
 
     activation = {
@@ -116,6 +177,25 @@ in {
     };
   };
 
+  # --- Session-secrets dispatcher: one sourceable file for TUI and GUI lanes ---
+  # The SessionStart hook maintains the doppler-first session cache; transition
+  # falls back to the 1Password cache until the cache exists. The backend flip
+  # is the secretBackend row above.
+  xdg.configFile."forge-session-secrets.sh".text = ''
+    case "''${CLAUDE_SECRET_BACKEND:-${secretBackend}}" in
+      doppler)
+        [ ! -f "${sessionCache}" ] || . "${sessionCache}"
+        ;;
+      *)
+        if [ -f "${sessionCache}" ]; then
+          . "${sessionCache}"
+        elif [ -f "${opCache}" ]; then
+          . "${opCache}"
+        fi
+        ;;
+    esac
+  '';
+
   # --- Secret Template: API keys for op inject -----------------------------------
   xdg.configFile."op/env.template".text = ''
     # API Keys - resolved during rebuild via "op inject"
@@ -155,11 +235,11 @@ in {
     export MAGHZ_MCP__DATABASE_URI="op://Tokens/MAGHZ_MCP__DATABASE_URI/credential"
   '';
 
-  # --- GUI session secrets: replay the op cache into the launchd domain at login ---
+  # --- GUI session secrets: replay session material into the launchd domain ---
   # GUI apps (Codex.app, Claude Desktop) are launched by launchd and never source
-  # .zshrc, so they miss the op-injected tokens that interactive shells receive. This
-  # RunAtLoad agent replays the already-resolved 600 cache via "launchctl setenv",
-  # keeping op the single source with no secret value in the Nix store.
+  # .zshrc, so they miss the tokens interactive shells receive. This RunAtLoad
+  # agent replays the backend-dispatched mode-600 session material via
+  # "launchctl setenv"; no secret value enters the Nix store.
   #
   # AssociatedBundleIdentifiers causes macOS Login Items & Extensions to show the
   # bundle's CFBundleDisplayName ("GUI Op Secrets") instead of the basename of

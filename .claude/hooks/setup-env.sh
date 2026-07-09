@@ -1,10 +1,15 @@
 #!/usr/bin/env bash
 # SessionStart hook: persist session credentials + tool PATH for sub-agents.
-# Canonical across all repos, owned by Parametric_Forge. Doppler-first: pulls
-# the agent, forge-machine, and maghz-host configs in parallel with encrypted
-# offline fallback snapshots under ~/.cache/doppler; the 1Password cache loads
-# only when Doppler yields nothing and CLAUDE_SECRET_BACKEND is 'transition'.
-# Resolved keys land in CLAUDE_ENV_FILE so spawned sub-agents inherit them.
+# Canonical across all repos, owned by Parametric_Forge. Doppler-first: each
+# DOPPLER_SOURCES row resolves independently — live fetch refreshes its
+# encrypted snapshot under the doppler cache; a failed fetch serves the
+# snapshot; a dead row is loud and names the keys it owes (names only, never
+# values). Under CLAUDE_SECRET_BACKEND=transition the 1Password cache fills
+# only keys still unset — Doppler values win per key. Resolved keys land in
+# CLAUDE_ENV_FILE and refresh the TUI/GUI session cache (key exports, no PATH).
+# Row shape 'project:config:snapshot[:TOKEN_ENV_VAR]': the token var names a
+# config-scoped Doppler service token once the secret rail installs one; empty
+# or unset means ambient CLI auth; a degraded token attempt retries ambient.
 # Per-project extras: CLAUDE_ENV_EXPORT_KEYS (comma/space list) and
 # CLAUDE_TOOL_PATHS (colon list). CLAUDE_DOPPLER_OFFLINE=1 forces fallback-only.
 set -Eeuo pipefail
@@ -13,16 +18,22 @@ IFS=$'\n\t'
 
 # --- [CONSTANTS] --------------------------------------------------------------
 
-readonly TOKEN_CACHE="${HOME}/.config/hm-op-session.sh"
+readonly OP_CACHE="${HOME}/.config/hm-op-session.sh"
 readonly JUPYTER_TOKEN_CACHE="${HOME}/.config/jupyter/forge-token.env"
-readonly DOPPLER_CACHE_DIR="${HOME}/.cache/doppler"
+readonly DOPPLER_CACHE_DIR="${CLAUDE_DOPPLER_CACHE_DIR:-${HOME}/.cache/doppler}"
+readonly SESSION_CACHE_DIR="${XDG_CACHE_HOME:-${HOME}/.cache}/forge-secrets"
 readonly SECRET_BACKEND="${CLAUDE_SECRET_BACKEND:-transition}"
 readonly DOPPLER_OFFLINE="${CLAUDE_DOPPLER_OFFLINE:-0}"
+_stale_days="${CLAUDE_DOPPLER_STALE_DAYS:-14}"
+[[ "${_stale_days}" =~ ^[0-9]+$ ]] || _stale_days=14
+readonly SNAPSHOT_STALE_DAYS="${_stale_days}"
 declare -ra DOPPLER_SOURCES=(
-    'arsenal-machine:dev_agent:agent-runtime.json'
-    'parametric-forge:dev_machine:forge-machine.json'
-    'maghz:prd_host:maghz-host.json'
+    'arsenal-machine:dev_agent:agent-runtime.json:DOPPLER_TOKEN_AGENT_RUNTIME'
+    'parametric-forge:dev_machine:forge-machine.json:DOPPLER_TOKEN_FORGE_MACHINE'
+    'maghz:prd_host:maghz-host.json:DOPPLER_TOKEN_MAGHZ_HOST'
 )
+# Non-hook snapshots that live in the doppler cache dir (fleet-owned rows).
+declare -ra SNAPSHOT_KEEP=('doppler-mcp.json')
 declare -ra _ENV_KEYS=(
     EXA_API_KEY PERPLEXITY_API_KEY TAVILY_API_KEY SONAR_TOKEN
     CONTEXT7_API_KEY GREPTILE_API_KEY CODERABBIT_API_KEY
@@ -31,33 +42,172 @@ declare -ra _ENV_KEYS=(
     OP_SERVICE_ACCOUNT_TOKEN GOOGLE_OAUTH_CLIENT_ID GOOGLE_OAUTH_CLIENT_SECRET
     MAGHZ_MCP__DATABASE_URI JUPYTER_TOKEN CLOUDSDK_CONFIG WORKSPACE_MCP_CREDENTIALS_DIR
     GOOGLE_WORKSPACE_CLI_CLIENT_ID GOOGLE_WORKSPACE_CLI_CLIENT_SECRET
-    GOOGLE_WORKSPACE_CLI_CONFIG_DIR GOOGLE_WORKSPACE_CLI_CREDENTIALS_FILE GOOGLE_WORKSPACE_PROJECT_ID
+    GOOGLE_WORKSPACE_CLI_CONFIG_DIR GOOGLE_WORKSPACE_PROJECT_ID
     MAGHZ_REMOTE_HOST MAGHZ_REMOTE_USER MAGHZ_REMOTE_WORKROOT
 )
 readonly EXTRA_ENV_KEYS="${CLAUDE_ENV_EXPORT_KEYS:-}"
 readonly TOOL_PATHS="${CLAUDE_TOOL_PATHS:-${HOME}/.local/bin}"
 readonly ALLOW_MISSING_TOOL_PATHS="${CLAUDE_ALLOW_MISSING_TOOL_PATHS:-0}"
 declare -a _TMP_FILES=()
+declare -a _RECEIPT=()
+declare -a _ALERTS=()
 
 # --- [OPERATIONS] -------------------------------------------------------------
 
-_fetch_doppler_source() {
-    local -r spec="$1" out="$2"
-    local project config snapshot
-    IFS=: read -r project config snapshot <<< "${spec}"
-    local -a fallback=(--fallback "${DOPPLER_CACHE_DIR}/${snapshot}")
-    if [[ "${DOPPLER_OFFLINE}" == "1" ]]; then
-        fallback+=(--fallback-only)
+_mtime() {
+    # Fractional seconds: a live refresh inside the same wall-clock second must
+    # still classify as live. Output is shape-validated per stat flavor — GNU
+    # stat parses BSD's '-f %Fm' as a file operand and emits multiline junk.
+    local m
+    m="$(stat -f %Fm "$1" 2>/dev/null)" || m=""
+    [[ "${m}" =~ ^[0-9]+(\.[0-9]+)?$ ]] || { m="$(stat -c %.9Y "$1" 2>/dev/null)" || m=""; }
+    [[ "${m}" =~ ^[0-9]+(\.[0-9]+)?$ ]] || m=0
+    printf '%s\n' "${m}"
+}
+
+_newer() {
+    awk -v a="$1" -v b="$2" 'BEGIN { exit !(b > a) }'
+}
+
+_join() {
+    local IFS=' '
+    printf '%s' "$*"
+}
+
+_fetch() {
+    local -r project="$1" config="$2" snap="$3" token="$4" out="$5"
+    # Request budget sits inside the SessionStart hook timeout: a stalled API
+    # degrades to the snapshot instead of killing the whole emission. no-cache
+    # forces a full fetch so every live success rewrites the snapshot — the
+    # mtime advance IS the live verdict; cache-served reads would fake snapshot.
+    # json format: the dump is parsed, never sourced — secret bytes cannot
+    # reach the shell parser, and the snapshot stores json bytes for offline.
+    local -a flags=(--fallback "${snap}" --no-cache --timeout 3s)
+    [[ "${DOPPLER_OFFLINE}" != "1" ]] || flags+=(--fallback-only)
+    if [[ -n "${token}" ]]; then
+        DOPPLER_TOKEN="${token}" doppler secrets download --project "${project}" --config "${config}" \
+            --no-file --format json --attempts 1 "${flags[@]}" >"${out}" 2>>"${out}.err"
+    else
+        # env -u: an ambient DOPPLER_TOKEN outranks --project/--config and cannot
+        # represent three configs; strip it so each fetch resolves its named source.
+        env -u DOPPLER_TOKEN doppler secrets download --project "${project}" --config "${config}" \
+            --no-file --format json --attempts 1 "${flags[@]}" >"${out}" 2>>"${out}.err"
     fi
-    # env -u: an ambient DOPPLER_TOKEN outranks --project/--config and cannot
-    # represent three configs; strip it so each fetch resolves its named source.
-    env -u DOPPLER_TOKEN doppler secrets download --project "${project}" --config "${config}" \
-        --no-file --format env --attempts 1 "${fallback[@]}" >"${out}" 2>/dev/null
+}
+
+_classify() {
+    local -r rc="$1" pre="$2" post="$3"
+    if (( rc != 0 )); then echo dead
+    elif [[ "${DOPPLER_OFFLINE}" == "1" ]]; then echo snapshot
+    elif _newer "${pre}" "${post}"; then echo live
+    else echo snapshot; fi
+}
+
+_resolve_source() {
+    # Background worker: writes ${out} (env dump), ${out}.err, ${out}.meta
+    # (outcome|keys|age_days|auth|reason) and refreshes the per-source key-name
+    # manifest — the derived expected map a dead row is reported against.
+    local -r spec="$1" out="$2"
+    local project config snapshot tokenvar
+    IFS=: read -r project config snapshot tokenvar <<< "${spec}"
+    local -r snap="${DOPPLER_CACHE_DIR}/${snapshot}"
+    local token="" auth=cli
+    if [[ -n "${tokenvar}" && -n "${!tokenvar:-}" ]]; then
+        token="${!tokenvar}"
+        auth=token
+    fi
+    local pre post rc=0 outcome
+    pre="$(_mtime "${snap}")"
+    _fetch "${project}" "${config}" "${snap}" "${token}" "${out}" || rc=$?
+    post="$(_mtime "${snap}")"
+    outcome="$(_classify "${rc}" "${pre}" "${post}")"
+    if [[ "${auth}" == "token" && "${outcome}" != "live" ]]; then
+        # Resilient rail: a degraded token attempt retries ambient CLI auth once,
+        # into a side file so a failed retry can never clobber served material.
+        # Runs offline too — fallback decryption is passphrase-bound to the
+        # fetching auth, so only the ambient retry can read a CLI-written
+        # snapshot. Blame lands on the token only when ambient disproves it: a
+        # live retry, or ambient material where the token lane died (Doppler
+        # never serves fallback on 401/403/404, so a dead token lane IS auth).
+        # Snapshot-for-snapshot keeps auth=token — the snapshot alert covers it.
+        local rc2=0 retry
+        pre="${post}"
+        _fetch "${project}" "${config}" "${snap}" "" "${out}.retry" || rc2=$?
+        post="$(_mtime "${snap}")"
+        retry="$(_classify "${rc2}" "${pre}" "${post}")"
+        if [[ "${retry}" == "live" ]] || { [[ "${outcome}" == "dead" ]] && (( rc2 == 0 )); }; then
+            auth="token-failed-cli-served"
+            outcome="${retry}"
+            cat "${out}.retry.err" >>"${out}.err" 2>/dev/null || true
+            mv -f "${out}.retry" "${out}"
+        fi
+        rm -f "${out}.retry" "${out}.retry.err"
+    fi
+    local nkeys=0 age=0 reason=""
+    if [[ "${outcome}" == "dead" ]]; then
+        : >"${out}"
+        reason="$(tail -n1 "${out}.err" 2>/dev/null | sed -E $'s/\x1b\\[[0-9;]*m//g' || true)"
+    else
+        nkeys="$(jq -r 'length' "${out}" 2>/dev/null)" || nkeys=0
+        jq -r 'keys_unsorted[]' "${out}" >"${snap%.json}.keys.$$" 2>/dev/null || true
+        chmod 600 "${snap%.json}.keys.$$" 2>/dev/null || true
+        mv -f "${snap%.json}.keys.$$" "${snap%.json}.keys" 2>/dev/null || rm -f "${snap%.json}.keys.$$"
+        if [[ "${outcome}" == "snapshot" && -f "${snap}" ]]; then
+            age=$(( ($(date +%s) - ${post%%.*}) / 86400 ))
+        fi
+    fi
+    printf '%s|%s|%s|%s|%s\n' "${outcome}" "${nkeys}" "${age}" "${auth}" "${reason}" >"${out}.meta"
+}
+
+_prune_snapshots() {
+    local f base row spec keep
+    local -a expected=("${SNAPSHOT_KEEP[@]}") pruned=()
+    for spec in "${DOPPLER_SOURCES[@]}"; do
+        IFS=: read -r _ _ row _ <<< "${spec}"
+        expected+=("${row}" "${row%.json}.keys")
+    done
+    # Prune only the file families this hook owns; doppler's own dot-prefixed
+    # fallback/metadata files and foreign material stay untouched.
+    for f in "${DOPPLER_CACHE_DIR}"/*.json "${DOPPLER_CACHE_DIR}"/*.keys; do
+        [[ -f "${f}" ]] || continue
+        base="$(basename "${f}")"
+        keep=0
+        for row in "${expected[@]}"; do
+            [[ "${base}" != "${row}" ]] || { keep=1; break; }
+        done
+        (( keep == 1 )) || { rm -f "${f}"; pruned+=("${base}"); }
+    done
+    (( ${#pruned[@]} == 0 )) || _RECEIPT+=("note  pruned orphan snapshots: $(_join "${pruned[@]}")")
+}
+
+_op_fill() {
+    # Transition backend: fill only keys still unset from the mode-600 op cache;
+    # Doppler-resolved keys never reach this loop, so Doppler wins per key.
+    [[ "${SECRET_BACKEND}" == "transition" ]] || return 0
+    [[ -f "${OP_CACHE}" ]] || return 0
+    local line key val
+    local -a filled=()
+    while IFS= read -r line; do
+        [[ "${line}" =~ ^export\ ([A-Za-z_][A-Za-z0-9_]*)=(.*)$ ]] || continue
+        key="${BASH_REMATCH[1]}"
+        val="${BASH_REMATCH[2]}"
+        [[ -z "${!key:-}" ]] || continue
+        # Literal assignment, never eval/source: secret bytes must not reach the
+        # parser, so $(...) or backticks inside a vault value cannot execute.
+        [[ "${val}" != \"*\" ]] || { val="${val#\"}"; val="${val%\"}"; }
+        printf -v "${key}" '%s' "${val}"
+        # shellcheck disable=SC2163  # Exports the named key assigned above.
+        export "${key}"
+        filled+=("${key}")
+    done <"${OP_CACHE}"
+    (( ${#filled[@]} == 0 )) || _RECEIPT+=("note  op-fill: $(_join "${filled[@]}")")
 }
 
 _load_secrets() {
-    local loaded=0
-    if command -v doppler >/dev/null 2>&1; then
+    local missing_cli=""
+    command -v doppler >/dev/null 2>&1 || missing_cli="doppler"
+    command -v jq >/dev/null 2>&1 || missing_cli="${missing_cli:+${missing_cli} }jq"
+    if [[ -z "${missing_cli}" ]]; then
         mkdir -p "${DOPPLER_CACHE_DIR}"
         chmod 700 "${DOPPLER_CACHE_DIR}"
         local -a outs=() pids=()
@@ -65,33 +215,78 @@ _load_secrets() {
         for spec in "${DOPPLER_SOURCES[@]}"; do
             out="$(mktemp "${TMPDIR:-/tmp}/doppler-env.XXXXXX")"
             outs+=("${out}")
-            _TMP_FILES+=("${out}")
-            _fetch_doppler_source "${spec}" "${out}" &
+            _TMP_FILES+=("${out}" "${out}.err" "${out}.meta")
+            _resolve_source "${spec}" "${out}" &
             pids+=("$!")
         done
         for idx in "${!pids[@]}"; do
-            wait "${pids[${idx}]}" || : >"${outs[${idx}]}"
+            wait "${pids[${idx}]}" || true
         done
-        for out in "${outs[@]}"; do
-            if [[ -s "${out}" ]]; then
-                set -a
-                # shellcheck source=/dev/null  # Doppler env-format dump; values quoted by the CLI.
-                source "${out}" || true
-                set +a
-                loaded=1
+        for idx in "${!outs[@]}"; do
+            out="${outs[${idx}]}"
+            local project config snapshot tokenvar label keysfile owed
+            local outcome=dead nkeys=0 age=0 auth=none reason="resolver died"
+            IFS=: read -r project config snapshot tokenvar <<< "${DOPPLER_SOURCES[${idx}]}"
+            label="${project}/${config}"
+            if [[ -f "${out}.meta" ]]; then
+                IFS='|' read -r outcome nkeys age auth reason <"${out}.meta" || true
             fi
-            rm -f "${out}"
+            if [[ "${outcome}" != "dead" && -s "${out}" ]]; then
+                # NUL-delimited literal assignment, never source/eval: Doppler's
+                # env escaping is server-side and unproven shell-safe, so secret
+                # bytes must not reach the parser. jq decodes json exactly.
+                local k v
+                while IFS= read -r -d '' k && IFS= read -r -d '' v; do
+                    [[ "${k}" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]] || continue
+                    printf -v "${k}" '%s' "${v}"
+                    # shellcheck disable=SC2163  # Exports the named key assigned above.
+                    export "${k}"
+                done < <(jq -j 'to_entries[] | "\(.key)\u0000\(.value)\u0000"' "${out}" 2>/dev/null || true)
+            fi
+            [[ "${auth}" != "token-failed-cli-served" ]] ||
+                _ALERTS+=("setup-env: ${label} service token failed; ambient CLI auth served (${tokenvar:-unset})")
+            case "${outcome}" in
+                live)
+                    _RECEIPT+=("ok    ${label} live keys=${nkeys} auth=${auth}")
+                    ;;
+                snapshot)
+                    local stale=""
+                    (( age < SNAPSHOT_STALE_DAYS )) || stale=" STALE"
+                    _RECEIPT+=("warn  ${label} snapshot keys=${nkeys} age=${age}d auth=${auth}${stale}")
+                    if [[ -n "${stale}" ]]; then
+                        _ALERTS+=("setup-env: ${label} snapshot is STALE (${age}d >= ${SNAPSHOT_STALE_DAYS}d)")
+                    elif [[ "${DOPPLER_OFFLINE}" != "1" ]]; then
+                        _ALERTS+=("setup-env: ${label} live fetch failed; snapshot served (age ${age}d)")
+                    fi
+                    ;;
+                *)
+                    keysfile="${DOPPLER_CACHE_DIR}/${snapshot%.json}.keys"
+                    owed="none-recorded"
+                    if [[ -f "${keysfile}" ]]; then
+                        owed="$(paste -sd' ' - <"${keysfile}")"
+                    fi
+                    _RECEIPT+=("DEAD  ${label} reason: ${reason:-unknown}; owed keys: ${owed}")
+                    _ALERTS+=("setup-env: ${label} DEAD (${reason:-unknown}); owed keys: ${owed}")
+                    ;;
+            esac
         done
+        _prune_snapshots
+    else
+        _RECEIPT+=("DEAD  CLI absent from PATH: ${missing_cli}")
+        _ALERTS+=("setup-env: ${missing_cli} absent — secrets rail down")
     fi
-    if (( loaded == 0 )) && [[ "${SECRET_BACKEND}" == "transition" ]] &&
-        [[ -f "${TOKEN_CACHE}" && "${TOKEN_CACHE}" == "${HOME}/.config/"* ]]; then
-        # shellcheck source=/dev/null  # Transition-only 1Password cache; path validated above.
-        source "${TOKEN_CACHE}" || true
-    fi
+    [[ "${DOPPLER_OFFLINE}" != "1" ]] || _RECEIPT+=("note  offline mode: fallback-only fetches")
+    _op_fill
     if [[ -z "${JUPYTER_TOKEN:-}" && -f "${JUPYTER_TOKEN_CACHE}" ]]; then
         # shellcheck source=/dev/null  # Nix-owned local Jupyter token; not a Doppler-managed key.
         source "${JUPYTER_TOKEN_CACHE}" || true
     fi
+    local key
+    local -a unresolved=()
+    for key in "${_ENV_KEYS[@]}"; do
+        [[ -n "${!key:-}" ]] || unresolved+=("${key}")
+    done
+    (( ${#unresolved[@]} == 0 )) || _RECEIPT+=("warn  unresolved keys: $(_join "${unresolved[@]}")")
 }
 
 _emit_env_key() {
@@ -125,13 +320,23 @@ _emit_tool_paths() {
     (( ${#selected[@]} > 0 )) || return 0
     printf -v path_value '%s:' "${selected[@]}"
     # shellcheck disable=SC2016  # Single quotes intentional -- expand when Claude sources the env file.
-    printf 'export PATH="%s:${PATH}"\n' "${path_value%:}"
+    printf 'export PATH=%q":${PATH}"\n' "${path_value%:}"
 }
 
 # --- [ENTRY] ------------------------------------------------------------------
 
 trap '[[ ${#_TMP_FILES[@]} -eq 0 ]] || rm -f "${_TMP_FILES[@]}"' EXIT
-trap 'exit 129' HUP INT TERM
+# Signal death reaps the parallel resolver workers before the EXIT cleanup.
+_reap() {
+    local pids
+    pids="$(jobs -p)"
+    # shellcheck disable=SC2086  # Intentional split: one PID per line under this IFS.
+    [[ -z "${pids}" ]] || kill ${pids} 2>/dev/null || true
+    exit "$((128 + $1))"
+}
+trap '_reap 1' HUP
+trap '_reap 2' INT
+trap '_reap 15' TERM
 
 [[ -n "${CLAUDE_ENV_FILE:-}" ]] || exit 0
 ENV_DIR="$(dirname -- "${CLAUDE_ENV_FILE}")"
@@ -141,15 +346,50 @@ readonly ENV_DIR
 _load_secrets
 
 umask 077
-_ENV_TMP="$(mktemp "${CLAUDE_ENV_FILE}.tmp.XXXXXX")"
-readonly _ENV_TMP
-_TMP_FILES+=("${_ENV_TMP}")
+_KEYS_TMP="$(mktemp "${TMPDIR:-/tmp}/claude-keys.XXXXXX")"
+readonly _KEYS_TMP
+_TMP_FILES+=("${_KEYS_TMP}")
 {
     for key in "${_ENV_KEYS[@]}"; do
         _emit_env_key "${key}"
     done
     _emit_extra_env_keys
+} >"${_KEYS_TMP}"
+
+_ENV_TMP="$(mktemp "${CLAUDE_ENV_FILE}.tmp.XXXXXX")"
+readonly _ENV_TMP
+_TMP_FILES+=("${_ENV_TMP}")
+{
+    cat "${_KEYS_TMP}"
     _emit_tool_paths
 } >"${_ENV_TMP}"
 chmod 600 "${_ENV_TMP}"
 mv "${_ENV_TMP}" "${CLAUDE_ENV_FILE}"
+
+# TUI/GUI session cache: key exports only (no PATH), refreshed only when
+# material exists so a total outage never clobbers the last good cache.
+mkdir -p "${SESSION_CACHE_DIR}"
+chmod 700 "${SESSION_CACHE_DIR}"
+if [[ -s "${_KEYS_TMP}" ]]; then
+    _CACHE_TMP="$(mktemp "${SESSION_CACHE_DIR}/.session-env.XXXXXX")"
+    readonly _CACHE_TMP
+    _TMP_FILES+=("${_CACHE_TMP}")
+    cat "${_KEYS_TMP}" >"${_CACHE_TMP}"
+    chmod 600 "${_CACHE_TMP}"
+    mv "${_CACHE_TMP}" "${SESSION_CACHE_DIR}/session-env.sh"
+fi
+
+# Receipt: key names only, never values. Full receipt to stderr + file;
+# degraded rows also to stdout so the session context carries them loudly.
+# Atomic rename: concurrent SessionStarts must never interleave one receipt.
+_RECEIPT_TMP="$(mktemp "${SESSION_CACHE_DIR}/.receipt.XXXXXX")"
+readonly _RECEIPT_TMP
+_TMP_FILES+=("${_RECEIPT_TMP}")
+{
+    printf 'setup-env %s backend=%s offline=%s\n' "$(date '+%Y-%m-%dT%H:%M:%S')" "${SECRET_BACKEND}" "${DOPPLER_OFFLINE}"
+    printf '%s\n' "${_RECEIPT[@]}"
+} >"${_RECEIPT_TMP}"
+chmod 600 "${_RECEIPT_TMP}"
+mv -f "${_RECEIPT_TMP}" "${SESSION_CACHE_DIR}/receipt"
+printf '%s\n' "${_RECEIPT[@]}" >&2
+(( ${#_ALERTS[@]} == 0 )) || printf '%s\n' "${_ALERTS[@]}"

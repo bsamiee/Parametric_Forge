@@ -17,8 +17,8 @@
       command mkdir -p -- "${config.xdg.cacheHome}/zsh"
       export ZSH_COMPDUMP="${config.xdg.cacheHome}/zsh/zcompdump-''${ZSH_VERSION}"
 
-      # --- Load injected secrets (cache written by home-manager activation) ------
-      [[ -f "${config.xdg.configHome}/hm-op-session.sh" ]] && source "${config.xdg.configHome}/hm-op-session.sh"
+      # --- Session secrets (backend-dispatched; owner: shell-tools/1password.nix) --
+      [[ ! -f "${config.xdg.configHome}/forge-session-secrets.sh" ]] || source "${config.xdg.configHome}/forge-session-secrets.sh"
 
       # --- FZF Configuration -------------------------------------------------------
       # Custom completion functions
