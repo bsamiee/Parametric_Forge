@@ -4,52 +4,85 @@
 # License       : MIT
 # Path          : /modules/home/programs/shell-tools/rsync.nix
 # ----------------------------------------------------------------------------
-# File synchronization and transfer utility with optimized defaults
+# rsync owner: shared exclusion filter plus two packaged rails. rsync-safe.sh
+# is the transparent filtered transport; rsync-mv.sh is the receipted atomic
+# move (rsync cannot remove source directories, only files).
 {
   config,
   pkgs,
   ...
-}: {
-  home = {
-    packages = [pkgs.rsync];
+}: let
+  filterPath = "${config.xdg.configHome}/rsync/filter";
 
-    file.".local/bin/rsync-safe.sh" = {
-      executable = true;
-      text = ''
-        #!${pkgs.bash}/bin/bash
-        # Safe rsync wrapper with default filters
-        exec ${pkgs.rsync}/bin/rsync --filter="merge ${config.xdg.configHome}/rsync/filter" "$@"
-      '';
-    };
+  rsyncSafe = pkgs.writeShellApplication {
+    name = "rsync-safe.sh";
+    runtimeInputs = [pkgs.rsync];
+    text = ''
+      # Transparent filtered rsync: argv passes through untouched so every
+      # rsync option stays reachable; only the estate filter is injected.
+      filter="''${FORGE_RSYNC_FILTER:-${filterPath}}"
+      exec rsync --filter="merge $filter" "$@"
+    '';
+  };
 
-    file.".local/bin/rsync-mv.sh" = {
-      executable = true;
-      text = ''
-        #!${pkgs.bash}/bin/bash
-        set -euo pipefail
-        # Enhanced move: handles directories properly that --remove-source-files doesn't
+  rsyncMv = pkgs.writeShellApplication {
+    name = "rsync-mv.sh";
+    runtimeInputs = [pkgs.coreutils pkgs.findutils pkgs.jq pkgs.rsync];
+    text = ''
+      if (($# < 2)); then
+        printf 'usage: rsync-mv.sh SOURCE... DEST\n' >&2
+        exit 64
+      fi
 
-        if [ $# -lt 2 ]; then
-          echo "Usage: rsync-mv SOURCE... DEST" >&2
-          exit 1
-        fi
+      args=("$@")
+      dest="''${args[-1]}"
+      sources=("''${args[@]:0:''${#args[@]}-1}")
 
-        # Store arguments in array
-        args=("$@")
-        # Get last argument (destination)
-        dest="''${args[-1]}"
+      if [ -d "$HOME/Library/Logs" ]; then
+        default_receipts="$HOME/Library/Logs/forge-rsync-mv.receipts.jsonl"
+      else
+        default_receipts="''${XDG_STATE_HOME:-$HOME/.local/state}/parametric-forge/rsync-mv.receipts.jsonl"
+      fi
+      receipts="''${FORGE_RSYNC_RECEIPTS:-$default_receipts}"
 
-        # Run rsync with remove-source-files (no sparse, no preallocate)
-        ${pkgs.rsync}/bin/rsync -ahPX --remove-source-files "$@"
+      # -ahPX --remove-source-files moves file content; --itemize-changes and
+      # --info=stats2 feed the receipt; --partial-dir keeps interrupted large
+      # transfers resumable instead of restarting from zero.
+      stats_file="$(mktemp)"
+      trap 'rm -f "$stats_file"' EXIT
+      rc=0
+      rsync -ahPX --remove-source-files --itemize-changes --info=stats2 \
+        --partial-dir=.rsync-partial "$@" | tee "$stats_file" || rc=$?
 
-        # Clean up empty source directories (rsync only removes files)
-        for ((i=0; i<$((''${#args[@]}-1)); i++)); do
-          src="''${args[i]}"
+      # rsync only removes source files; empty source directories are swept
+      # here to complete move semantics.
+      if [ "$rc" = 0 ]; then
+        for src in "''${sources[@]}"; do
           [ -d "$src" ] && find "$src" -type d -empty -delete 2>/dev/null || true
         done
-      '';
-    };
+      fi
+
+      files="$(sed -n 's/^Number of regular files transferred: //p' "$stats_file" | tr -d , | head -1)"
+      bytes="$(sed -n 's/^Total transferred file size: \([0-9.,]*[KMG]*\).*/\1/p' "$stats_file" | tr -d , | head -1)"
+      result=ok
+      [ "$rc" = 0 ] || result=fail
+      mkdir -p "$(dirname "$receipts")"
+      jq -cn \
+        --arg ts "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+        --arg dest "$dest" \
+        --arg files "''${files:-0}" \
+        --arg bytes "''${bytes:-0}" \
+        --arg rc "$rc" \
+        --arg result "$result" \
+        '{ts: $ts, surface: "rsync-mv", sources: $ARGS.positional,
+          dest: $dest, files: $files, bytes: $bytes,
+          rc: ($rc | tonumber), result: $result}' \
+        --args "''${sources[@]}" >>"$receipts"
+      exit "$rc"
+    '';
   };
+in {
+  home.packages = [pkgs.rsync rsyncSafe rsyncMv];
 
   # --- Rsync Configuration --------------------------------------------------
   xdg.configFile."rsync/filter" = {

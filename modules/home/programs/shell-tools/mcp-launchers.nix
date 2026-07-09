@@ -165,7 +165,7 @@
     runtimeInputs = [pkgs.coreutils pkgs.curl pkgs.jq pkgs.yq-go];
     text = ''
       fleet='${fleetJson}'
-      usage() { echo "usage: forge-mcp outdated [--notify] | doctor [--network] | drift" >&2; exit 64; }
+      usage() { echo "usage: forge-mcp outdated [--notify] | doctor [--network] [--json] | drift" >&2; exit 64; }
       verb="''${1:-}"; shift || true
 
       cmd_outdated() {
@@ -193,7 +193,9 @@
 
       # Side-effect-free health probe: newline-delimited JSON-RPC initialize on
       # stdio (stdin EOF is the shutdown), POST initialize for http rows. Env
-      # material is asserted by key NAME only; values never print.
+      # material is asserted by key NAME only; values never print. Each probe
+      # emits one typed row (STATUS<TAB>name<TAB>detail); presentation is the
+      # doctor's, so human and --json render from the same rows.
       req='{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"forge-mcp-doctor","version":"1.0.0"}}}'
       probe_row() {
         row="$1" network="$2" out="$3"
@@ -205,16 +207,17 @@
           [ -n "''${!k:-}" ] || printf '%s ' "$k"
         done)"
         envnote=""; [ -z "$missing" ] || envnote=" env-missing: $missing"
+        emit() { printf '%s\t%s\t%s\n' "$1" "$name" "$2" >"$out"; }
         if [ "$probe" = "skip" ]; then
-          printf '[SKIP] %-20s host-private row\n' "$name" >"$out"; return 0
+          emit SKIP "host-private row"; return 0
         fi
         if [ "$probe" = "network" ] && [ "$network" != 1 ]; then
-          printf '[SKIP] %-20s network class (probe with --network)%s\n' "$name" "$envnote" >"$out"; return 0
+          emit SKIP "network class (probe with --network)$envnote"; return 0
         fi
         if [ "$transport" = "stdio" ]; then
           cmdpath="$(jq -r '.command' <<<"$row")"
           if [ ! -x "$cmdpath" ]; then
-            printf '[FAIL] %-20s command not executable: %s\n' "$name" "$cmdpath" >"$out"; return 0
+            emit FAIL "command not executable: $cmdpath"; return 0
           fi
           mapfile -t argv < <(jq -r '(.args // [])[]' <<<"$row")
           # FIFO stdin: hold the write end open until the response lands, then
@@ -231,21 +234,21 @@
           exec 3<&-
           rm -f "$out.fifo"
           if info="$(jq -er '.result.serverInfo | "\(.name) \(.version // "?")"' <<<"$line" 2>/dev/null)"; then
-            printf '[OK]   %-20s %s%s\n' "$name" "$info" "$envnote" >"$out"
+            emit OK "$info$envnote"
           else
-            printf '[FAIL] %-20s no initialize response within %ss%s\n' "$name" "$t" "$envnote" >"$out"
+            emit FAIL "no initialize response within ''${t}s$envnote"
           fi
         else
           url="$(jq -r '.url' <<<"$row")"
           declare -a hdr=()
           bearer="$(jq -r '.codex.bearerEnvVar // empty' <<<"$row")"
           if [ -n "$bearer" ]; then
-            [ -n "''${!bearer:-}" ] || { printf '[SKIP] %-20s credential env absent: %s\n' "$name" "$bearer" >"$out"; return 0; }
+            [ -n "''${!bearer:-}" ] || { emit SKIP "credential env absent: $bearer"; return 0; }
             hdr+=(-H "Authorization: Bearer ''${!bearer}")
           fi
           while IFS=$'\t' read -r h v; do
             [ -n "$h" ] || continue
-            [ -n "''${!v:-}" ] || { printf '[SKIP] %-20s credential env absent: %s\n' "$name" "$v" >"$out"; return 0; }
+            [ -n "''${!v:-}" ] || { emit SKIP "credential env absent: $v"; return 0; }
             hdr+=(-H "$h: ''${!v}")
           done < <(jq -r '(.codex.headerEnv // {}) | to_entries[] | "\(.key)\t\(.value)"' <<<"$row")
           body="$(mktemp)"
@@ -259,36 +262,59 @@
             payload="$(grep -m1 '^data:' "$body" | cut -c6- || true)"
             [ -n "$payload" ] || payload="$(cat "$body")"
             info="$(jq -er '.result.serverInfo | "\(.name) \(.version // "?")"' <<<"$payload" 2>/dev/null || echo "initialize accepted")"
-            printf '[OK]   %-20s %s%s\n' "$name" "$info" "$envnote" >"$out"
+            emit OK "$info$envnote"
           elif [ "$code" = 401 ] && [ ''${#hdr[@]} -eq 0 ]; then
             # No credential mechanism on the row (client-managed OAuth): a 401
             # proves the endpoint is alive; an unauthenticated pass never can.
-            printf '[OK]   %-20s reachable, HTTP 401 (client-managed auth)%s\n' "$name" "$envnote" >"$out"
+            emit OK "reachable, HTTP 401 (client-managed auth)$envnote"
           else
-            printf '[FAIL] %-20s HTTP %s from initialize%s\n' "$name" "$code" "$envnote" >"$out"
+            emit FAIL "HTTP $code from initialize$envnote"
           fi
           rm -f "$body"
         fi
       }
 
       cmd_doctor() {
-        network=0; [ "''${1:-}" != "--network" ] || network=1
+        network=0 as_json=0
+        for a in "$@"; do
+          case "$a" in
+            --network) network=1 ;;
+            --json) as_json=1 ;;
+            *) usage ;;
+          esac
+        done
         tmp="$(mktemp -d)"; trap 'rm -rf "$tmp"' EXIT
         # Wrapper roll-call: every declared fleet wrapper must exist on PATH.
-        rc=0
         while IFS= read -r w; do
           if ! command -v "$w" >/dev/null 2>&1; then
-            echo "[FAIL] wrapper absent from PATH: $w"; rc=1
+            printf 'FAIL\t%s\twrapper absent from PATH\n' "$w" >>"$tmp/wrappers"
           fi
         done < <(jq -r '.[] | (.launcher.names // [])[]' "$fleet")
         i=0
         while IFS= read -r row; do
-          probe_row "$row" "$network" "$tmp/$i" &
+          probe_row "$row" "$network" "$tmp/row.$i" &
           i=$((i + 1))
         done < <(jq -c '.[]' "$fleet")
         wait
-        for ((f = 0; f < i; f++)); do cat "$tmp/$f"; done
-        ! grep -qh '^\[FAIL\]' "$tmp"/* || rc=1
+        rows="$tmp/rows"
+        {
+          [ ! -f "$tmp/wrappers" ] || cat "$tmp/wrappers"
+          for ((f = 0; f < i; f++)); do cat "$tmp/row.$f"; done
+        } >"$rows"
+        rc=0
+        ! cut -f1 "$rows" | grep -qx FAIL || rc=1
+        if [ "$as_json" = 1 ]; then
+          jq -Rcs --arg rc "$rc" '{
+            surface: "forge-mcp-doctor",
+            result: (if $rc == "0" then "ok" else "fail" end),
+            rows: (split("\n") | map(select(length > 0) | split("\t")
+                   | {status: .[0], name: .[1], detail: .[2]}))
+          }' <"$rows"
+        else
+          while IFS=$'\t' read -r s n d; do
+            printf '[%-4s] %-20s %s\n' "$s" "$n" "$d"
+          done <"$rows"
+        fi
         exit "$rc"
       }
 
@@ -365,6 +391,8 @@ in {
   launchd.agents.forge-mcp-outdated = {
     enable = true;
     config = {
+      # Estate label grammar: com.parametric-forge.<agent> for repo-owned jobs.
+      Label = "com.parametric-forge.forge-mcp-outdated";
       ProgramArguments = ["${forgeMcp}/bin/forge-mcp" "outdated" "--notify"];
       StartCalendarInterval = [
         {

@@ -159,7 +159,7 @@
       row_file="$1"
       name="$(jq -r '.name' "$row_file")"
       ssh_host="$(jq -r '.sshHost' "$row_file")"
-      receipts="''${FORGE_TUNNEL_RECEIPTS:-$HOME/Library/Logs/$name-vps-tunnel.receipts.log}"
+      receipts="''${FORGE_TUNNEL_RECEIPTS:-$HOME/Library/Logs/forge-$name-vps-tunnel.receipts.log}"
       interval="''${FORGE_TUNNEL_PROBE_INTERVAL:-60}"
       bind_grace="''${FORGE_TUNNEL_BIND_GRACE:-20}"
       bind_fail_max="''${FORGE_TUNNEL_BIND_FAILS:-3}"
@@ -172,10 +172,16 @@
 
       mapfile -t ports < <(jq -r '.forwards[].port' "$row_file")
 
+      # Dual receipt: TSV stays the human/log contract, the JSONL sibling is
+      # the agent contract (same envelope keys).
       emit() {
         mkdir -p "$(dirname "$receipts")"
-        printf 'ts=%s\ttunnel=%s\tstate=%s\t%s\n' \
-          "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$name" "$1" "''${2:-}" | tee -a "$receipts"
+        local ts
+        ts="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+        printf 'ts=%s\ttunnel=%s\tstate=%s\t%s\n' "$ts" "$name" "$1" "''${2:-}" | tee -a "$receipts"
+        jq -cn --arg ts "$ts" --arg tunnel "$name" --arg state "$1" --arg detail "''${2:-}" \
+          '{ts: $ts, surface: "vps-tunnel", tunnel: $tunnel, state: $state, detail: $detail}' \
+          >>"''${receipts%.log}.jsonl"
       }
 
       port_open() { (exec 3<>"/dev/tcp/127.0.0.1/$1") 2>/dev/null; }
@@ -346,12 +352,13 @@ in
       lib.nameValuePair "${name}-vps-tunnel" {
         enable = true;
         config = {
+          Label = "com.parametric-forge.${name}-vps-tunnel";
           ProgramArguments = ["${tunnelSupervisor}/bin/forge-vps-tunnel" "${tunnelRowJson name tunnel}"];
           KeepAlive = true;
           ThrottleInterval = 30;
           ProcessType = "Background";
-          StandardOutPath = "${config.home.homeDirectory}/Library/Logs/${name}-vps-tunnel.log";
-          StandardErrorPath = "${config.home.homeDirectory}/Library/Logs/${name}-vps-tunnel.log";
+          StandardOutPath = "${config.home.homeDirectory}/Library/Logs/forge-${name}-vps-tunnel.log";
+          StandardErrorPath = "${config.home.homeDirectory}/Library/Logs/forge-${name}-vps-tunnel.log";
           AssociatedBundleIdentifiers = [(tunnelBundleId name)];
         };
       })

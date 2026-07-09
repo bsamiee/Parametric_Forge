@@ -7,15 +7,20 @@
 # scc code counter + loc wrapper for grouped per-file / per-folder LOC
 {pkgs, ...}: let
   # Single-pass LOC report: files grouped by top-level folder, folder totals,
-  # and one overall target total. Single positional target, no flags.
+  # and one overall target total. --json emits the machine envelope.
   loc = pkgs.writeShellApplication {
     name = "loc";
     runtimeInputs = [pkgs.coreutils pkgs.jq pkgs.scc pkgs.util-linux];
     text = ''
       shopt -s inherit_errexit
 
+      json_mode=0
+      if [ "''${1:-}" = "--json" ]; then
+        json_mode=1
+        shift
+      fi
       if (($# > 1)); then
-        printf 'usage: %s [target]\n' "''${0##*/}" >&2
+        printf 'usage: %s [--json] [target]\n' "''${0##*/}" >&2
         exit 2
       fi
 
@@ -105,6 +110,19 @@
           ),
           ["TOTAL", (files | length), (files | sum_by(.Code)), (files | sum_by(.Complexity))];
       '
+
+      if [ "$json_mode" = 1 ]; then
+        # Machine envelope: same folder grouping the table renders, plus
+        # per-language and overall totals for agent consumption.
+        jq -c --arg root "$target_path" "$report_filter"'
+          {
+            target: $root,
+            languages: (map(select(.Code > 0) | {name: .Name, code: .Code}) | sort_by(-.code)),
+            total: {files: (files | length), code: (files | sum_by(.Code)), complexity: (files | sum_by(.Complexity))},
+            folders: folder_groups
+          }' <<<"$json"
+        exit 0
+      fi
 
       jq -r --arg root "$target_path" "$report_filter summary" <<<"$json"
       jq -r --arg root "$target_path" "$report_filter table | map(tostring) | @tsv" <<<"$json" |
