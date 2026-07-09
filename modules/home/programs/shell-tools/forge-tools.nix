@@ -491,17 +491,21 @@
       usage() { echo "usage: forge-cleanup plan | apply [plan-file]" >&2; exit 64; }
       verb="''${1:-}"; shift || true
 
+      # One jq projection per row: every field lands in one read. Unit-separator
+      # delimited: tab is IFS whitespace and read would collapse empty fields.
+      row_fields() {
+        jq -r '[.name, .kind, (.target // ""), (.expect // ""), (.root // ""), (.pattern // "")] | join("\u001f")' <<<"$1"
+      }
+
       # One detector owns every row kind; plan and apply both consume it, so
       # apply never acts on a state the detector cannot reproduce live.
       detect_row() {
         local row="$1" name kind state count kb action safe detail target expect root pattern current
-        name="$(jq -r '.name' <<<"$row")"
-        kind="$(jq -r '.kind' <<<"$row")"
+        IFS=$'\x1f' read -r name kind target expect root pattern < <(row_fields "$row")
         state=clean count=0 kb=0 action=none safe=true detail=-
         case "$kind" in
           mode)
-            target="$HOME/$(jq -r '.target' <<<"$row")"
-            expect="$(jq -r '.expect' <<<"$row")"
+            target="$HOME/$target"
             if [ ! -d "$target" ]; then
               state=missing safe=false detail="target absent"
             else
@@ -512,7 +516,7 @@
             fi
             ;;
           path)
-            target="$HOME/$(jq -r '.target' <<<"$row")"
+            target="$HOME/$target"
             if [ -L "$target" ]; then
               state=review safe=false detail="symlink, not a residue tree"
             elif [ -e "$target" ]; then
@@ -521,8 +525,7 @@
             fi
             ;;
           glob)
-            root="$HOME/$(jq -r '.root' <<<"$row")"
-            pattern="$(jq -r '.pattern' <<<"$row")"
+            root="$HOME/$root"
             if [ -d "$root" ]; then
               count="$(find "$root" -name "$pattern" -prune -print 2>/dev/null | wc -l | tr -d ' ')"
               if [ "$count" -gt 0 ]; then
@@ -567,6 +570,7 @@
               continue
             fi
             row="$(jq -c --arg n "$name" '.[] | select(.name == $n)' "$rows_json")"
+            IFS=$'\x1f' read -r _ row_kind row_target _ row_root row_pattern < <(row_fields "$row")
             # Re-verify at act time: a row that drifted since plan is skipped.
             fresh_state="$(detect_row "$row" | cut -f3)"
             if [ "$fresh_state" != litter ]; then
@@ -575,19 +579,19 @@
             fi
             case "$action" in
               chmod-*)
-                chmod "''${action#chmod-}" "$HOME/$(jq -r '.target' <<<"$row")"
+                chmod "''${action#chmod-}" "$HOME/$row_target"
                 printf '%s\taction=%s\toutcome=applied\n' "$name" "$action"
                 ;;
               trash)
-                if [ "$(jq -r '.kind' <<<"$row")" = path ]; then
-                  trash "$HOME/$(jq -r '.target' <<<"$row")"
+                if [ "$row_kind" = path ]; then
+                  trash "$HOME/$row_target"
                   printf '%s\taction=trash\toutcome=applied\tcount=1\n' "$name"
                 else
                   moved=0
                   while IFS= read -r -d "" match; do
                     trash "$match"
                     moved=$((moved + 1))
-                  done < <(find "$HOME/$(jq -r '.root' <<<"$row")" -name "$(jq -r '.pattern' <<<"$row")" -prune -print0 2>/dev/null)
+                  done < <(find "$HOME/$row_root" -name "$row_pattern" -prune -print0 2>/dev/null)
                   printf '%s\taction=trash\toutcome=applied\tcount=%s\n' "$name" "$moved"
                 fi
                 ;;
@@ -901,7 +905,7 @@
   # owner orders and asserts. Key material is asserted by NAME only, never value.
   forgeAccept = pkgs.writeShellApplication {
     name = "forge-accept";
-    runtimeInputs = [pkgs.coreutils pkgs.gnugrep pkgs.gawk pkgs.jq pkgs.findutils pkgs.zellij pkgs.flock forgeActivationSweep forgeRedeploy];
+    runtimeInputs = [pkgs.coreutils pkgs.gnugrep pkgs.gawk pkgs.jq pkgs.findutils pkgs.lsof pkgs.zellij pkgs.flock forgeActivationSweep forgeRedeploy];
     text = ''
       declare -ra STEPS=(preflight switch replay outputs zellij terminal fleet lanes maghz relaunch)
       usage() {
@@ -994,8 +998,8 @@
           row FAIL preflight-sweep "rc=$sweep_rc; run forge-activation-sweep --clear before switching"
         fi
         if (
-          exec 9>"$lock_file"
-          flock -n 9
+          exec {probe_fd}>"$lock_file"
+          flock -n "$probe_fd"
         ) 2>/dev/null; then
           row PASS preflight-lock "deploy lock free"
         else
@@ -1079,8 +1083,8 @@
       # clients; user sessions get an instruction row — only WezTerm (launchd
       # env) may spawn the replacement server, never an agent shell.
       step_zellij() {
-        local sys_epoch sessions name pid start attached
-        sys_epoch="$(/usr/bin/stat -f %m /run/current-system 2>/dev/null || echo 0)"
+        local sys_epoch sessions name pid start attached lstart
+        sys_epoch="$(stat -c %Y /run/current-system 2>/dev/null || echo 0)"
         sessions="$(zellij list-sessions -n 2>/dev/null | grep -v 'EXITED' | awk '{print $1}' || true)"
         if [ -z "$sessions" ]; then
           row PASS zellij-respawn "no live sessions; next WezTerm launch spawns fresh servers (legal respawn window)"
@@ -1091,7 +1095,8 @@
           pid="$(pgrep -f -- "zellij.*--server .*/''${name}\$" | head -1 || true)"
           start=0
           if [ -n "$pid" ]; then
-            start="$(ps -o lstart= -p "$pid" 2>/dev/null | xargs -I{} /bin/date -j -f '%a %b %d %T %Y' '{}' +%s 2>/dev/null || echo 0)"
+            lstart="$(ps -o lstart= -p "$pid" 2>/dev/null || true)"
+            [ -z "$lstart" ] || start="$(date -d "$lstart" +%s 2>/dev/null || echo 0)"
           fi
           attached="$(zellij --session "$name" action list-clients 2>/dev/null | tail -n +2 | wc -l | tr -d ' ' || echo 0)"
           if [ "''${start:-0}" != 0 ] && [ "$start" -ge "$sys_epoch" ]; then
@@ -1193,7 +1198,7 @@
             local -a cports=()
             read -ra cports <<<"$(grep -oE 'spawn:[0-9 ]+' <<<"$last" | cut -d: -f2 || true)"
             kinds="$(for p in "''${cports[@]}"; do
-              /usr/sbin/lsof -nP -iTCP:"$p" -sTCP:LISTEN 2>/dev/null | awk 'NR>1 {print $2}'
+              lsof -nP -iTCP:"$p" -sTCP:LISTEN 2>/dev/null | awk 'NR>1 {print $2}'
             done | sort -u | while IFS= read -r hpid; do classify_holder "$hpid"; done | sort -u | paste -sd' ' -)"
             case "$kinds" in
               *ssh-mux*)

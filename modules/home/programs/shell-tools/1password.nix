@@ -51,6 +51,7 @@
       # Replay manifest (key NAMES only, mode 600): the set names forge-accept
       # asserts against the live gui domain for lane parity.
       names_tmp="$(mktemp "''${TMPDIR:-/tmp}/gui-replay.XXXXXX")"
+      trap 'rm -f "$names_tmp"' EXIT
       while IFS= read -r k; do
         val="''${!k:-}"
         if [ -n "$val" ]; then
@@ -64,12 +65,13 @@
         fi
       done < <({ for f in "${sessionCache}" "${opCache}"; do
         [ -f "$f" ] || continue
-        grep -oE '^export [A-Za-z_][A-Za-z0-9_]*' "$f" | awk '{print $2}'
+        awk 'match($0, /^export [A-Za-z_][A-Za-z0-9_]*/) {print substr($0, 8, RLENGTH - 7)}' "$f"
       done
-      printf '%s\n' ${lib.concatStringsSep " " replayConstants}; } | sort -u)
+      printf '%s\n' ${lib.concatMapStringsSep " " (c: "\"${c}\"") replayConstants}; } | sort -u)
       mkdir -p "${config.xdg.cacheHome}/forge-secrets"
       chmod 600 "$names_tmp"
       mv -f "$names_tmp" "${config.xdg.cacheHome}/forge-secrets/gui-replay.names"
+      trap - EXIT
     '';
   };
   # Per-lane cutover proof: key NAMES only, never values. CLI runs the
@@ -79,27 +81,28 @@
     name = "forge-secrets-proof";
     runtimeInputs = [pkgs.bash pkgs.coreutils pkgs.gnugrep pkgs.gnused pkgs.gawk];
     text = ''
-      echo "backend=''${CLAUDE_SECRET_BACKEND:-${secretBackend}}"
-      keys="$({ for f in "${sessionCache}" "${opCache}"; do
-        [ -f "$f" ] || continue
-        grep -oE '^export [A-Za-z_][A-Za-z0-9_]*' "$f" | awk '{print $2}'
-      done; } | sort -u)"
-      [ -n "$keys" ] || { echo "no session material on disk; run a Claude session first" >&2; exit 1; }
+      key_names() {
+        [ -f "$1" ] || return 0
+        awk 'match($0, /^export [A-Za-z_][A-Za-z0-9_]*/) {print substr($0, 8, RLENGTH - 7)}' "$1"
+      }
+      printf 'backend=%s\n' "''${CLAUDE_SECRET_BACKEND:-${secretBackend}}"
+      keys="$({ key_names "${sessionCache}"; key_names "${opCache}"; } | sort -u)"
+      [ -n "$keys" ] || { printf 'no session material on disk; run a Claude session first\n' >&2; exit 1; }
       tmp="$(mktemp -d)"; trap 'rm -rf "$tmp"' EXIT
-      echo "--- CLI lane (SessionStart hook, fresh env file)"
+      printf -- '--- CLI lane (SessionStart hook, fresh env file)\n'
       CLAUDE_ENV_FILE="$tmp/env.sh" bash "$HOME/.claude/hooks/setup-env.sh" >"$tmp/alerts" 2>"$tmp/receipt" || true
       sed 's/^/  receipt: /' "$tmp/receipt"
       sed 's/^/  ALERT:   /' "$tmp/alerts"
-      echo "  emitted: $(grep -oE '^export [A-Za-z_][A-Za-z0-9_]*' "$tmp/env.sh" 2>/dev/null | awk '{print $2}' | tr '\n' ' ')"
-      echo "--- TUI lane (interactive login zsh)"
+      printf '  emitted: %s\n' "$(key_names "$tmp/env.sh" | tr '\n' ' ')"
+      printf -- '--- TUI lane (interactive login zsh)\n'
       ZKEYS="$(printf '%s' "$keys" | tr '\n' ' ')" /bin/zsh -il -c \
         'for k in ''${(s: :)ZKEYS}; do if [ -n "''${(P)k}" ]; then print "  present $k"; else print "  ABSENT  $k"; fi; done' 2>/dev/null
-      echo "--- GUI lane (launchctl getenv)"
+      printf -- '--- GUI lane (launchctl getenv)\n'
       while IFS= read -r k; do
         if [ -n "$(/bin/launchctl getenv "$k" 2>/dev/null || true)" ]; then
-          echo "  present $k"
+          printf '  present %s\n' "$k"
         else
-          echo "  ABSENT  $k"
+          printf '  ABSENT  %s\n' "$k"
         fi
       done <<<"$keys"
     '';
@@ -139,7 +142,6 @@ in {
         cache_file="$HOME/.config/hm-op-session.sh"
         template_file="$HOME/.config/op/env.template"
         jupyter_token_file="$HOME/.config/jupyter/forge-token.env"
-        tmp_file="$cache_file.tmp.$$"
 
         # Fail loudly if template missing (indicates DAG ordering bug)
         if [[ ! -f "$template_file" ]]; then
@@ -148,9 +150,11 @@ in {
           exit 1
         fi
 
-        # Create cache file with resolved tokens from 1Password
+        # Create cache file with resolved tokens from 1Password; temp lives in
+        # the target directory so the publish rename stays same-filesystem.
         echo "Injecting secrets from 1Password vault..." >&2
         mkdir -p "$(dirname "$cache_file")"
+        tmp_file="$(mktemp "$cache_file.XXXXXX")"
         if ${pkgs._1password-cli}/bin/op inject -f -i "$template_file" -o "$tmp_file" >/dev/null; then
           if [[ -f "$jupyter_token_file" ]]; then
             grep -E '^export JUPYTER_TOKEN=' "$jupyter_token_file" >>"$tmp_file"

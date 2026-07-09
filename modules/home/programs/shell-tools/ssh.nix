@@ -154,11 +154,10 @@
   # cannot fix a remote service, and churn would mask real VPS outages.
   tunnelSupervisor = pkgs.writeShellApplication {
     name = "forge-vps-tunnel";
-    runtimeInputs = [pkgs.coreutils pkgs.openssh pkgs.curl pkgs.jq];
+    runtimeInputs = [pkgs.coreutils pkgs.openssh pkgs.curl pkgs.jq pkgs.lsof];
     text = ''
       row_file="$1"
-      name="$(jq -r '.name' "$row_file")"
-      ssh_host="$(jq -r '.sshHost' "$row_file")"
+      IFS=$'\t' read -r name ssh_host < <(jq -r '[.name, .sshHost] | @tsv' "$row_file")
       receipts="''${FORGE_TUNNEL_RECEIPTS:-$HOME/Library/Logs/forge-$name-vps-tunnel.receipts.log}"
       interval="''${FORGE_TUNNEL_PROBE_INTERVAL:-60}"
       bind_grace="''${FORGE_TUNNEL_BIND_GRACE:-20}"
@@ -177,7 +176,7 @@
       emit() {
         mkdir -p "$(dirname "$receipts")"
         local ts
-        ts="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+        TZ=UTC0 printf -v ts '%(%Y-%m-%dT%H:%M:%SZ)T' "$EPOCHSECONDS"
         printf 'ts=%s\ttunnel=%s\tstate=%s\t%s\n' "$ts" "$name" "$1" "''${2:-}" | tee -a "$receipts"
         jq -cn --arg ts "$ts" --arg tunnel "$name" --arg state "$1" --arg detail "''${2:-}" \
           '{ts: $ts, surface: "vps-tunnel", tunnel: $tunnel, state: $state, detail: $detail}' \
@@ -185,6 +184,9 @@
       }
 
       port_open() { (exec 3<>"/dev/tcp/127.0.0.1/$1") 2>/dev/null; }
+
+      # Predicate-to-state projection: any probe command becomes ok|down.
+      state_of() { if "$@" >/dev/null 2>&1; then echo ok; else echo down; fi; }
 
       binds_ok() {
         local p
@@ -196,9 +198,9 @@
         local svc probe port path state
         while IFS=$'\t' read -r svc probe port path; do
           case "$probe" in
-            pg) state="$("${pkgs.postgresql_18}/bin/pg_isready" -q -h 127.0.0.1 -p "$port" -t 5 >/dev/null 2>&1 && echo ok || echo down)" ;;
-            http) state="$(curl -fsS --max-time 5 -o /dev/null "http://127.0.0.1:$port$path" 2>/dev/null && echo ok || echo down)" ;;
-            *) state="$(port_open "$port" && echo ok || echo down)" ;;
+            pg) state="$(state_of "${pkgs.postgresql_18}/bin/pg_isready" -q -h 127.0.0.1 -p "$port" -t 5)" ;;
+            http) state="$(state_of curl -fsS --max-time 5 -o /dev/null "http://127.0.0.1:$port$path")" ;;
+            *) state="$(state_of port_open "$port")" ;;
           esac
           printf '%s=%s ' "$svc" "$state"
         done < <(jq -r '.forwards[] | select(.probe != "none") | [.service, .probe, (.port | tostring), (.path // "")] | @tsv' "$row_file")
@@ -220,7 +222,7 @@
         # parity mode) from regression (a shared ssh mux retaining forwards).
         read -ra cports <<<"$conflicts"
         holders="$(for p in "''${cports[@]}"; do
-          /usr/sbin/lsof -nP -iTCP:"$p" -sTCP:LISTEN 2>/dev/null | awk -v port="$p" 'NR>1 {print port":"$1":"$2}'
+          lsof -nP -iTCP:"$p" -sTCP:LISTEN 2>/dev/null | awk -v port="$p" 'NR>1 {print port":"$1":"$2}'
         done | sort -u | paste -sd, -)"
         emit port-conflict "detail=already bound before spawn:$conflicts holders=''${holders:-unknown}"
         exit 1

@@ -172,8 +172,8 @@
   forgeJupyterTokenPrelude = ''
     token_file=${lib.escapeShellArg forgeJupyterTokenFile}
     if [ -z "''${JUPYTER_TOKEN:-}" ] && [ -f "$token_file" ]; then
-      # shellcheck source=/dev/null
-      . "$token_file"
+      # Typed extraction, never source: a mutable file must not reach the parser.
+      JUPYTER_TOKEN="$(sed -n 's/^export JUPYTER_TOKEN=//p' "$token_file" | head -n1)"
     fi
     if [ -z "''${JUPYTER_TOKEN:-}" ]; then
       printf 'forge-jupyter: missing JUPYTER_TOKEN; expected %s\n' "$token_file" >&2
@@ -208,7 +208,8 @@
     }
 
     forge_python_root_key() {
-      forge_python_root | tr -d '\n' | sha256sum | cut -c1-12
+      hash="$(printf '%s' "$(forge_python_root)" | sha256sum)"
+      printf '%.12s\n' "$hash"
     }
 
     forge_python_env_default() {
@@ -415,11 +416,11 @@ in
         // {
           ensureForgeJupyterToken = lib.hm.dag.entryAfter ["linkGeneration"] ''
             token_file=${lib.escapeShellArg forgeJupyterTokenFile}
-            tmp_file="$token_file.tmp.$$"
             mkdir -p "$(dirname "$token_file")"
             if [ ! -s "$token_file" ]; then
-              token="$(${pkgs.openssl}/bin/openssl rand -hex 32)"
-              ( umask 077; printf 'export JUPYTER_TOKEN=%s\n' "$token" >"$tmp_file" )
+              # mktemp in the target directory: unpredictable name, same-filesystem rename.
+              tmp_file="$(umask 077; mktemp "$token_file.XXXXXX")"
+              printf 'export JUPYTER_TOKEN=%s\n' "$(${pkgs.openssl}/bin/openssl rand -hex 32)" >"$tmp_file"
               chmod 600 "$tmp_file"
               mv -f "$tmp_file" "$token_file"
             fi

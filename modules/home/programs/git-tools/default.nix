@@ -63,7 +63,7 @@
           gh api "repos/$repo/commits/$sha" --jq '.commit.verification | "verified=\(.verified) reason=\(.reason)"'
           ;;
         *)
-          echo "usage: forge-git-doctor [doctor|sign-proof|verify [ref]]" >&2
+          printf 'usage: forge-git-doctor [doctor|sign-proof|verify [ref]]\n' >&2
           exit 2
           ;;
       esac

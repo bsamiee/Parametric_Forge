@@ -50,13 +50,14 @@
   '';
 
   home.activation.ensureXdgMediaDirs = lib.hm.dag.entryAfter ["writeBoundary"] ''
-    mkdir -p "${config.xdg.stateHome}/ffmpeg"
-    mkdir -p "${config.xdg.cacheHome}/ImageMagick"
-    mkdir -p "${config.xdg.configHome}/ImageMagick"
-    mkdir -p "${config.xdg.cacheHome}/mpv"
-    mkdir -p "${config.xdg.dataHome}/mpv/watch_later"
-    mkdir -p "${config.home.homeDirectory}/Pictures/mpv"
-    mkdir -p "${config.xdg.configHome}/pandoc"
-    mkdir -p "${config.xdg.dataHome}/pandoc"
+    mkdir -p \
+      "${config.xdg.stateHome}/ffmpeg" \
+      "${config.xdg.cacheHome}/ImageMagick" \
+      "${config.xdg.configHome}/ImageMagick" \
+      "${config.xdg.cacheHome}/mpv" \
+      "${config.xdg.dataHome}/mpv/watch_later" \
+      "${config.home.homeDirectory}/Pictures/mpv" \
+      "${config.xdg.configHome}/pandoc" \
+      "${config.xdg.dataHome}/pandoc"
   '';
 }

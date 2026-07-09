@@ -89,10 +89,13 @@
     runtimeInputs = [pkgs.coreutils pkgs.nodejs playwrightEnsure];
     text = ''
       ${browsersPath}
-      # Refresh the preset each run so Carbon renders the curated palette map.
-      cat >"$HOME/.carbon-now.json" <<'JSON'
+      # Refresh the preset each run so Carbon renders the curated palette map;
+      # temp-plus-rename keeps a concurrent render off a half-written preset.
+      preset_tmp="$(mktemp "$HOME/.carbon-now.json.XXXXXX")"
+      cat >"$preset_tmp" <<'JSON'
       ${carbonConfigJson}
       JSON
+      mv -f "$preset_tmp" "$HOME/.carbon-now.json"
       # Degraded branch, never a mask: a warm browser cache can still render,
       # and the final Carbon process owns the real exit code.
       if ! carbon-playwright-install.sh; then

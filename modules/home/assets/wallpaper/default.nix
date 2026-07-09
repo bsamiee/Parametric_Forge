@@ -70,7 +70,13 @@
         exit 0
       fi
 
-      /usr/bin/osascript -e "tell application \"System Events\" to tell every desktop to set picture to POSIX file \"$wallpaper_path\""
+      # Setter passes the path through argv like the probe; source-text
+      # interpolation would break on quote-bearing paths.
+      /usr/bin/osascript - "$wallpaper_path" <<'APPLESCRIPT'
+      on run argv
+        tell application "System Events" to tell every desktop to set picture to (POSIX file (item 1 of argv))
+      end run
+      APPLESCRIPT
 
       # Re-probe keeps the receipt truthful; WallpaperAgent can apply
       # asynchronously, so an unconverged re-probe is recorded, never fatal.

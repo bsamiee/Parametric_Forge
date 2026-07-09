@@ -45,16 +45,23 @@
   workspace-mcp-package = "workspace-mcp==${workspace-mcp-version}";
   workspace-mcp-tool-dir = "${config.xdg.dataHome}/uv/forge-tools";
   workspace-mcp-bin-dir = "${config.xdg.dataHome}/uv/forge-bin";
-  forge-workspace-mcp = pkgs.writeShellScriptBin "forge-workspace-mcp" ''
-    set -euo pipefail
+  # One ensure body serves the wrapper and the activation hook. The tool list
+  # is captured, never piped into grep -q: an early-exit grep would SIGPIPE uv
+  # under pipefail and force a spurious reinstall on every launch.
+  workspace-mcp-ensure = ''
     export UV_TOOL_DIR="${workspace-mcp-tool-dir}"
     export UV_TOOL_BIN_DIR="${workspace-mcp-bin-dir}"
     export UV_CACHE_DIR="${config.xdg.cacheHome}/uv"
     export UV_PYTHON_DOWNLOADS=never
     mkdir -p "$UV_TOOL_DIR" "$UV_TOOL_BIN_DIR" "$UV_CACHE_DIR"
-    if [ ! -x "$UV_TOOL_BIN_DIR/workspace-mcp" ] || ! ${pkgs.uv}/bin/uv tool list --show-version-specifiers | ${pkgs.gnugrep}/bin/grep -qF "workspace-mcp v${workspace-mcp-version} [required: ==${workspace-mcp-version}]"; then
+    tool_list="$(${pkgs.uv}/bin/uv tool list --show-version-specifiers 2>/dev/null || true)"
+    if [ ! -x "$UV_TOOL_BIN_DIR/workspace-mcp" ] || [[ "$tool_list" != *"workspace-mcp v${workspace-mcp-version} [required: ==${workspace-mcp-version}]"* ]]; then
       ${pkgs.uv}/bin/uv tool install --force --python "${pkgs.python313}/bin/python3" "${workspace-mcp-package}" >/dev/null
     fi
+  '';
+  forge-workspace-mcp = pkgs.writeShellScriptBin "forge-workspace-mcp" ''
+    set -euo pipefail
+    ${workspace-mcp-ensure}
     exec "$UV_TOOL_BIN_DIR/workspace-mcp" "$@"
   '';
   antigravity-cli-bin-dir = "${config.home.homeDirectory}/.local/bin";
@@ -91,16 +98,7 @@
   };
 in {
   home = {
-    activation.ensureWorkspaceMcpTool = lib.hm.dag.entryAfter ["linkGeneration"] ''
-      export UV_TOOL_DIR="${workspace-mcp-tool-dir}"
-      export UV_TOOL_BIN_DIR="${workspace-mcp-bin-dir}"
-      export UV_CACHE_DIR="${config.xdg.cacheHome}/uv"
-      export UV_PYTHON_DOWNLOADS=never
-      mkdir -p "$UV_TOOL_DIR" "$UV_TOOL_BIN_DIR" "$UV_CACHE_DIR"
-      if [ ! -x "$UV_TOOL_BIN_DIR/workspace-mcp" ] || ! ${pkgs.uv}/bin/uv tool list --show-version-specifiers | ${pkgs.gnugrep}/bin/grep -qF "workspace-mcp v${workspace-mcp-version} [required: ==${workspace-mcp-version}]"; then
-        ${pkgs.uv}/bin/uv tool install --force --python "${pkgs.python313}/bin/python3" "${workspace-mcp-package}" >/dev/null
-      fi
-    '';
+    activation.ensureWorkspaceMcpTool = lib.hm.dag.entryAfter ["linkGeneration"] workspace-mcp-ensure;
 
     activation.ensureAntigravityCli = lib.hm.dag.entryAfter ["linkGeneration"] ''
       ${forge-install-antigravity-cli}/bin/forge-install-antigravity-cli

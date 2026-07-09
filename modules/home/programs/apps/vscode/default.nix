@@ -60,7 +60,7 @@ in {
 
   home.activation.vscodeThemeSeed = lib.hm.dag.entryAfter ["writeBoundary"] ''
     settings=${lib.escapeShellArg settingsPath}
-    FORGE_BLOCK=$(/bin/cat ${config.xdg.configFile."forge/theme/vscode-settings-block.jsonc".source})
+    FORGE_BLOCK=$(<${config.xdg.configFile."forge/theme/vscode-settings-block.jsonc".source})
     export FORGE_BLOCK
     if [ -s "$settings" ]; then
       merged=$(/usr/bin/awk '
@@ -84,9 +84,12 @@ in {
     case "$merged" in
       *"forge-theme:begin"*)
         if [ "$merged" != "$(/bin/cat "$settings" 2>/dev/null)" ]; then
-          tmp=$(/usr/bin/mktemp)
+          # Temp lives beside the target so the publish rename is same-filesystem
+          # atomic; a dry run leaves no litter.
+          tmp=$(/usr/bin/mktemp "$settings.XXXXXX")
           printf '%s\n' "$merged" >"$tmp"
           run /bin/mv "$tmp" "$settings"
+          [ ! -e "$tmp" ] || /bin/rm -f "$tmp"
         fi
         ;;
       *)
