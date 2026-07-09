@@ -17,7 +17,9 @@
 #   envKeys          env key names the server consumes
 #   claudeEnvNames   Claude env-block name set when it differs from envKeys
 #   probe            "stdio" (probed) | "network" (probed only with --network) | "skip"
-#   launcher         { names, pkg, version, bin, prelude? } => Forge-built pnpm wrapper(s)
+#   launcher         { names, pkg, version, bin, prelude?, upstream, updateEngine }
+#                    => Forge-built pnpm wrapper(s); upstream/updateEngine are
+#                    manifest extension-family fields (`forge-mcp outdated` observes)
 #   codex            { required, startupTimeoutSec, toolTimeoutSec, bearerEnvVar?, headerEnv? }
 #   clients          registration expectation, default [ "claude" "codex" ]
 #   assertLevel      "full" (default) | "presence" for host-private rows
@@ -37,6 +39,8 @@
       pkg = "@perplexity-ai/mcp-server";
       version = "0.9.0";
       bin = "perplexity-mcp";
+      upstream = "npm:@perplexity-ai/mcp-server";
+      updateEngine = "manual";
     };
     codex = {
       required = false;
@@ -56,6 +60,8 @@
       pkg = "tavily-mcp";
       version = "0.2.20";
       bin = "tavily-mcp";
+      upstream = "npm:tavily-mcp";
+      updateEngine = "manual";
     };
     codex = {
       required = false;
@@ -75,6 +81,8 @@
       pkg = "hostinger-api-mcp";
       version = "1.5.1";
       bin = "hostinger-api-mcp";
+      upstream = "npm:hostinger-api-mcp";
+      updateEngine = "manual";
     };
     codex = {
       required = false;
@@ -106,6 +114,8 @@
       pkg = "@dopplerhq/mcp-server";
       version = "1.0.5";
       bin = "doppler-mcp";
+      upstream = "npm:@dopplerhq/mcp-server";
+      updateEngine = "manual";
     };
     codex = {
       required = false;
@@ -125,6 +135,8 @@
       pkg = "@playwright/mcp";
       version = "0.0.77";
       bin = "playwright-mcp";
+      upstream = "npm:@playwright/mcp";
+      updateEngine = "manual";
     };
     codex = {
       required = false;
@@ -146,6 +158,8 @@
       pkg = "notebooklm-mcp";
       version = "2.0.0";
       bin = "notebooklm-mcp";
+      upstream = "npm:notebooklm-mcp";
+      updateEngine = "manual";
       prelude = ''
         export NOTEBOOKLM_AI_MARKER="''${NOTEBOOKLM_AI_MARKER:-false}"
         export SESSION_TIMEOUT="''${SESSION_TIMEOUT:-3600}"

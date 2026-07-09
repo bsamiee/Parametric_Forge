@@ -8,6 +8,7 @@
 {
   config,
   lib,
+  pkgs,
   ...
 }: let
   # One universal identity; the unified estate key ("Forge SSH Key" in the
@@ -83,6 +84,13 @@ in {
       merge = {
         conflictstyle = "zdiff3";
         ff = false;
+        # Structural merge driver (manifest admission row): registration is
+        # inert until a repo opts in via gitattributes `merge=mergiraf` —
+        # fixture-proven before any default enablement.
+        mergiraf = {
+          name = "mergiraf";
+          driver = "${lib.getExe pkgs.mergiraf} merge --git %O %A %B -s %S -x %X -y %Y -p %P -l %L";
+        };
       };
 
       fetch = {

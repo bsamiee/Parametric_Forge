@@ -7,6 +7,11 @@
 # VS Code theme consumer: the estate palette owner projects terminal ANSI and
 # textMate token colors into the JSONC user settings through a sentinel-managed
 # block; every other key and comment stays app- and user-owned.
+# Extension-source policy (overlays/manifest.nix `extensions.vscode`): the
+# declared source is the nix-vscode-extensions registry with per-row vetting
+# on the manifest security fields — never registry trust, never a Homebrew
+# Brewfile lane. The live user-managed extensions dir is a drift row until
+# rows are vetted; no second updater semantics land in this module.
 {
   config,
   lib,

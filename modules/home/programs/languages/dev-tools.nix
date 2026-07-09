@@ -12,6 +12,12 @@
   pkgs,
   ...
 }: let
+  manifest = import ../../../../overlays/manifest.nix;
+  # Data-lane admissions from the package manifest (CSV -> xan; relational/Parquet -> DuckDB).
+  dataRoster =
+    map (row: pkgs.${row.attr})
+    (lib.filter (row: row.install == "hm-roster" && row.roster == "data")
+      (lib.attrValues manifest.admissions));
   dotnet-combined = pkgs.dotnetCorePackages.combinePackages [
     pkgs.dotnet-sdk_8
     pkgs.dotnet-sdk_9
@@ -146,6 +152,7 @@ in {
         forge-workspace-mcp # Google Workspace MCP wrapper pinned to a Python 3.13 uv tool environment
         pulumi # Pulumi CLI engine; Python SDK is managed per-project via uv (Maghz infra Automation API)
       ]
+      ++ dataRoster
       # nuget-mcp packages the osx-arm64 RID only; Linux gains a RID row before this gate widens.
       ++ lib.optionals (pkgs.stdenv.hostPlatform.system == "aarch64-darwin") [nuget-mcp];
 
