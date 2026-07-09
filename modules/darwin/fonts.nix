@@ -14,10 +14,13 @@
   ...
 }: let
   # --- Programming/Terminal Fonts -------------------------------------------
+  # Plain upstream families plus the one symbols fallback; the patched
+  # nerd-font trio is retired — icon coverage rides Symbols Nerd Font Mono
+  # through the owner fallback chain at two orders of magnitude less closure.
   programming = with pkgs; [
-    nerd-fonts.geist-mono
-    nerd-fonts.hack
-    nerd-fonts.iosevka
+    geist-font
+    iosevka-bin
+    hack-font
     nerd-fonts.symbols-only
     ibm-plex
     (noto-fonts.override {variants = ["NotoSansMono"];})
@@ -25,7 +28,6 @@
 
   # --- UI/System Fonts -------------------------------------------------------
   interface = with pkgs; [
-    geist-font
     inter
     dm-sans
     overpass
@@ -64,14 +66,26 @@
       manifest="$dst/.forge-fonts-manifest"
       if [[ -f $marker && "$(<"$marker")" == "$src" ]]; then exit 0; fi
       mkdir -p "$dst"
+      pruned=0
       if [[ -f $manifest ]]; then
         while IFS= read -r name; do
-          [[ -e "$src/$name" ]] || rm -f "$dst/$name"
+          [[ -e "$src/$name" ]] || {
+            rm -f "$dst/$name"
+            ((++pruned))
+          }
         done <"$manifest"
       fi
       cp -Lf "$src"/* "$dst/"
       (cd "$src" && printf '%s\n' *) >"$manifest"
       printf '%s' "$src" >"$marker"
+      # Activation invokes this via sudo -u; anchor the log beside the payload,
+      # never through an ambient HOME.
+      logdir="''${dst%/Fonts}/Logs"
+      ts=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+      mkdir -p "$logdir"
+      printf 'ts=%s\towner=forge-project-fonts\tprojected=%s\tpruned=%s\tgeneration=%s\n' \
+        "$ts" "$(wc -l <"$manifest" | tr -d ' ')" "$pruned" "''${src##*/}" \
+        >>"$logdir/forge-fonts.receipts.log"
     '';
   };
 in {

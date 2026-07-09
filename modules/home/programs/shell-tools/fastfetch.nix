@@ -158,7 +158,7 @@ in {
         {
           type = "terminalfont";
           key = " └   ";
-          format = "GeistMono Nerd Font 10pt";
+          format = config.forge.fonts.projections.fastfetchLabel;
         }
         {type = "break";}
 

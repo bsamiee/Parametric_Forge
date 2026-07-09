@@ -305,14 +305,30 @@ local function key_actions(launcher, quick_select)
 end
 
 function M.apply(config)
-  -- Fonts: generated row, constructor-bound (design-language cell metrics).
+  -- Fonts: font-owner rows (modules/home/fonts.nix), constructor-bound. The
+  -- forge-font override file prepends a manifest-proven family and rides the
+  -- config reload watch list, so a swap applies live; leading travels per
+  -- mono family, never as one global value.
   local families = {}
+  local primary = rows.font.chain[1] and rows.font.chain[1].family
+  wezterm.add_to_config_reload_watch_list(rows.font.override_path)
+  local fh = io.open(rows.font.override_path)
+  if fh then
+    local ok, override = pcall(wezterm.json_parse, fh:read("*a"))
+    fh:close()
+    if ok and type(override) == "table" and override.mono then
+      primary = override.mono
+      families[#families + 1] = override.mono
+    end
+  end
   for _, f in ipairs(rows.font.chain) do
-    families[#families + 1] = f.weight and { family = f.family, weight = f.weight } or f.family
+    if f.family ~= primary or #families == 0 then
+      families[#families + 1] = f.weight and { family = f.family, weight = f.weight } or f.family
+    end
   end
   config.font = wezterm.font_with_fallback(families)
   config.font_size = rows.font.size
-  config.line_height = rows.font.line_height
+  config.line_height = rows.font.line_heights[primary] or rows.font.default_line_height
   config.harfbuzz_features = rows.font.harfbuzz_features
   config.use_cap_height_to_scale_fallback_fonts = true
   config.warn_about_missing_glyphs = true

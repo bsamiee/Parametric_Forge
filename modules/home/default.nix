@@ -9,6 +9,7 @@
   imports = [
     ./assets
     ./environments
+    ./fonts.nix
     ./theme.nix
     ./programs
     ./scripts

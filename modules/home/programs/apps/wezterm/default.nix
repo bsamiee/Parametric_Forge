@@ -37,31 +37,10 @@
   syncPanesSrc = pluginSrc manifest.extensions.wezterm-plugins.rows.sync-panes;
   weztermTypesSrc = pluginSrc manifest.extensions.wezterm-plugins.rows.wezterm-types;
 
-  # --- Font row (design-language cell metrics; CA-12 assumes family ownership) -
-  fontRow = {
-    chain = [
-      {
-        family = "GeistMono Nerd Font";
-        weight = "Regular";
-      }
-      {
-        family = "Iosevka Nerd Font";
-        weight = "Regular";
-      }
-      {
-        family = "Hack Nerd Font";
-        weight = "Regular";
-      }
-      {family = "Symbols Nerd Font Mono";}
-      {family = "Scheherazade New";}
-      {family = "Noto Naskh Arabic";}
-      {family = "Noto Sans Arabic";}
-    ];
-    size = 13.0;
-    line_height = 0.95; # below 1.0 clips descenders; 0.85 was the named defect
-    # Literal-safe shaping: contextual alternates on, ligature classes off.
-    harfbuzz_features = ["calt=1" "liga=0" "clig=0" "dlig=0"];
-  };
+  # --- Font row: the font owner's WezTerm projection (modules/home/fonts.nix) --
+  # Chain, per-family leading, shaping features, and the forge-font override
+  # path all arrive from config.forge.fonts; deck.lua interprets them.
+  fontRow = config.forge.fonts.projections.luaFont;
 
   # --- Workspace rows (CA-1 name policy projection) ----------------------------
   workspaceRoot = "${homeDir}/Documents/99.Github";
@@ -360,7 +339,13 @@
     quick_select = quickSelectRows;
     hyperlinks = hyperlinkRows;
     theme = {
-      roles = lib.mapAttrs (_: lib.mapAttrs (_: c: c.hex)) roles;
+      roles = lib.mapAttrs (_: lib.mapAttrs (_: c: c.hex)) {inherit (roles) surface text accent state diff ui;};
+      git =
+        lib.mapAttrs (_: g: {
+          color = g.color.hex;
+          inherit (g) glyph;
+        })
+        roles.git;
       accent = palette.cyan.hex;
     };
   };
