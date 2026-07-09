@@ -45,9 +45,6 @@ in {
           export INFOPATH="/opt/homebrew/share/info:''${INFOPATH:-}"
       fi
 
-      export DOCKER_HOST="''${DOCKER_HOST:-unix://${config.xdg.dataHome}/colima/default/docker.sock}"
-      export COLIMA_HOME="''${COLIMA_HOME:-${config.xdg.dataHome}/colima}"
-      export DOCKER_CONFIG="''${DOCKER_CONFIG:-${config.xdg.configHome}/docker}"
       ${toolchainEnv.shellExports toolchainEnv.scientificSessionEnv}
       export GH_CONFIG_DIR="''${GH_CONFIG_DIR:-${config.xdg.configHome}/gh}"
       export CLOUDSDK_CONFIG="''${CLOUDSDK_CONFIG:-${config.xdg.configHome}/gcloud}"

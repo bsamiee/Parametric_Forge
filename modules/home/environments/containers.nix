@@ -4,48 +4,89 @@
 # License       : MIT
 # Path          : modules/home/environments/containers.nix
 # ----------------------------------------------------------------------------
-# Container and virtualization environment variables. Colima rows are the
-# Darwin runtime seam; Linux talks to the system Docker socket unpointed.
+# Container runtime and OCI environment. services.colima + programs.docker-cli
+# own DOCKER_HOST/COLIMA_HOME/DOCKER_CONFIG on Darwin; Linux talks to the
+# system Docker socket unpointed with docker-cli owning config.json only.
 {
   config,
-  lib,
   pkgs,
   ...
 }: let
   isDarwin = pkgs.stdenv.hostPlatform.isDarwin;
 in {
-  home.sessionVariables =
-    lib.optionalAttrs isDarwin {
-      # --- Docker via Colima (Darwin) ----------------------------------------
-      DOCKER_HOST = "unix://${config.xdg.dataHome}/colima/default/docker.sock";
-      COLIMA_HOME = "${config.xdg.dataHome}/colima";
-    }
-    // {
-      DOCKER_CONFIG = "${config.xdg.configHome}/docker";
-
-      # --- containers/image and OCI tooling ----------------------------------
-      CONTAINERS_REGISTRIES_CONF = "${config.xdg.configHome}/containers/registries.conf";
-      CONTAINERS_STORAGE_CONF = "${config.xdg.configHome}/containers/storage.conf";
-      CONTAINERS_CONF = "${config.xdg.configHome}/containers/containers.conf";
-      REGISTRY_AUTH_FILE = "${config.xdg.configHome}/containers/auth.json";
-
-      # --- Kubernetes ---------------------------------------------------------
-      KUBECONFIG = "${config.xdg.configHome}/kube/config";
-      K9S_CONFIG_DIR = "${config.xdg.configHome}/k9s";
-
-      # --- Helm -----------------------------------------------------------------
-      HELM_CONFIG_HOME = "${config.xdg.configHome}/helm";
-      HELM_DATA_HOME = "${config.xdg.dataHome}/helm";
-      HELM_CACHE_HOME = "${config.xdg.cacheHome}/helm";
-
-      # --- Kubecolor ------------------------------------------------------------
-      KUBECOLOR_FORCE_COLORS = "auto";
-
-      # --- Container Tools ----------------------------------------------------
-      LAZYDOCKER_CONFIG_DIR = "${config.xdg.configHome}/lazydocker";
-      HADOLINT_CONFIG = "${config.xdg.configHome}/hadolint.yaml";
-      DIVE_CONFIG = "${config.xdg.configHome}/dive/config.yaml";
+  # Declarative Colima: store-owned profile, launchd lifecycle (RunAtLoad +
+  # restart-on-clean-exit), session env. colimaHomeDir stays on dataHome — the
+  # module default (configHome) would orphan the live VM. Intentional shutdown
+  # is `launchctl bootout` of the colima-default agent; a bare `colima stop`
+  # re-triggers start.
+  services.colima = {
+    enable = isDarwin;
+    colimaHomeDir = "${config.xdg.dataHome}/colima";
+    profiles.default = {
+      isActive = true; # docker context "colima" stays current
+      isService = true; # launchd agent colima-default
+      setDockerHost = true; # DOCKER_HOST=unix://$COLIMA_HOME/default/docker.sock
+      settings = {
+        cpu = 6;
+        memory = 12;
+        disk = 60; # grow-only resize; applied at next VM restart
+        arch = "aarch64";
+        runtime = "docker";
+        vmType = "vz";
+        rosetta = true;
+        binfmt = true;
+        mountType = "virtiofs";
+        mountInotify = true;
+        # Explicit: the launchd-spawned start skips colima's implicit default
+        # mounts, leaving the guest without the home tree bind mounts resolve in.
+        mounts = [
+          {
+            location = "~";
+            writable = true;
+          }
+          {
+            location = "/tmp/colima";
+            writable = true;
+          }
+        ];
+      };
     };
+  };
+
+  # Owns DOCKER_CONFIG and config.json on both platforms. NO credsStore:
+  # docker-credential-osxkeychain is a Docker-Desktop binary absent here; empty
+  # inline auths are correct for Colima + public images. currentContext is
+  # injected by the colima module when the profile is active; docker context
+  # meta stays Colima-owned — a store-owned meta.json breaks context creation.
+  programs.docker-cli = {
+    enable = true;
+    configDir = "${config.xdg.configHome}/docker";
+    settings.auths = {};
+  };
+
+  home.sessionVariables = {
+    # --- containers/image and OCI tooling ----------------------------------
+    CONTAINERS_REGISTRIES_CONF = "${config.xdg.configHome}/containers/registries.conf";
+    CONTAINERS_STORAGE_CONF = "${config.xdg.configHome}/containers/storage.conf";
+    CONTAINERS_CONF = "${config.xdg.configHome}/containers/containers.conf";
+    # Write-targets: registry login and kind cluster-create materialize these; absent = anonymous/no cluster.
+    REGISTRY_AUTH_FILE = "${config.xdg.configHome}/containers/auth.json";
+    KUBECONFIG = "${config.xdg.configHome}/kube/config";
+
+    # --- Kubernetes ---------------------------------------------------------
+    K9S_CONFIG_DIR = "${config.xdg.configHome}/k9s";
+
+    # --- Helm -----------------------------------------------------------------
+    HELM_CONFIG_HOME = "${config.xdg.configHome}/helm";
+    HELM_DATA_HOME = "${config.xdg.dataHome}/helm";
+    HELM_CACHE_HOME = "${config.xdg.cacheHome}/helm";
+
+    # --- Kubecolor ------------------------------------------------------------
+    KUBECOLOR_FORCE_COLORS = "auto";
+
+    # --- Container Tools ----------------------------------------------------
+    LAZYDOCKER_CONFIG_DIR = "${config.xdg.configHome}/lazydocker";
+  };
 
   xdg.configFile = {
     "containers/registries.conf".text = ''
@@ -63,13 +104,5 @@ in {
 
       [engine]
     '';
-    # Bring the active DOCKER_CONFIG (~/.config/docker) under Forge management so it cannot drift.
-    # NO credsStore: docker-credential-osxkeychain is a Docker-Desktop binary absent on this Nix/Colima
-    # machine, so naming it breaks every `docker pull` (helper-not-found). With no store, docker keeps
-    # the (empty) auths inline — correct for Colima + public images. Linux omits
-    # the context row: the system Docker socket is the default endpoint.
-    "docker/config.json".text =
-      builtins.toJSON ({auths = {};}
-        // lib.optionalAttrs isDarwin {currentContext = "colima";});
   };
 }

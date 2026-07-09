@@ -41,6 +41,12 @@
       command = "${brewPrefix}/bin/wezterm shell-completion --shell zsh";
       gate = "[[ -x ${brewPrefix}/bin/wezterm ]]";
     }
+    {
+      name = "container";
+      version = "$(${brewPrefix}/bin/container --version)";
+      command = "${brewPrefix}/bin/container --generate-completion-script zsh";
+      gate = "[[ -x ${brewPrefix}/bin/container ]]";
+    }
   ];
 
   # Package rows whose share/zsh/site-functions precede compinit on fpath.
