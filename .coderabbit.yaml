@@ -60,6 +60,15 @@ reviews:
         comments. Defects: meta-commentary, provenance or freshness tails, checklist noise,
         restating obligations the instruction chain already carries, project-coupled content
         in reusable surfaces.
+    - path: "**/*.md"
+      instructions: >-
+        Review prose and structure against docs/standards/style-guide.md,
+        docs/standards/formatting.md, and docs/standards/information-structure.md — the
+        docgen discipline. Defects: no-op sentences that change no reader decision, leading
+        filler words, meta-commentary, provenance/freshness tails, checklist tails, heading
+        proliferation for short content, tables carrying explanations instead of enumerable
+        facts, duplicated content an owning doc already carries, drift from the [UPPER_CASE]
+        label convention.
   auto_review:
     enabled: true
   tools:

@@ -15,17 +15,44 @@
     {
       "path": "overlays/forge-provision/README.md",
       "description": "Schema-v3 JSON envelope contract for provisioning commands",
-      "scope": ["overlays/**"]
+      "scope": [
+        "overlays/**"
+      ]
     },
     {
       "path": "docs/stacks/typescript/README.md",
       "description": "TypeScript doctrine: Effect rails, services, boundaries",
-      "scope": ["services/**"]
+      "scope": [
+        "services/**"
+      ]
     },
     {
       "path": "docs/stacks/python/README.md",
       "description": "Python doctrine: typed rails, uv custody",
-      "scope": ["**/*.py"]
+      "scope": [
+        "**/*.py"
+      ]
+    },
+    {
+      "path": "docs/standards/style-guide.md",
+      "description": "Prose law: sentence altitude, register, banned patterns",
+      "scope": [
+        "**/*.md"
+      ]
+    },
+    {
+      "path": "docs/standards/formatting.md",
+      "description": "Formatting law for durable artifacts",
+      "scope": [
+        "**/*.md"
+      ]
+    },
+    {
+      "path": "docs/standards/information-structure.md",
+      "description": "Information architecture law: structure, density, tables vs prose",
+      "scope": [
+        "**/*.md"
+      ]
     }
   ]
 }
