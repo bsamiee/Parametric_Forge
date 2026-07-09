@@ -14,10 +14,7 @@
 }: let
   manifest = import ../../../../overlays/manifest.nix;
   # Data-lane admissions from the package manifest (CSV -> xan; relational/Parquet -> DuckDB).
-  dataRoster =
-    map (row: pkgs.${row.attr})
-    (lib.filter (row: row.install == "hm-roster" && row.roster == "data")
-      (lib.attrValues manifest.admissions));
+  dataRoster = map (row: pkgs.${row.attr}) (manifest.rosterRows "data");
   dotnet-combined = pkgs.dotnetCorePackages.combinePackages [
     pkgs.dotnet-sdk_8
     pkgs.dotnet-sdk_9

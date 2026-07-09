@@ -12,10 +12,14 @@
   ...
 }: let
   manifest = import ../../../../overlays/manifest.nix;
-  rosterPackages = roster:
-    map (row: pkgs.${row.attr})
-    (lib.filter (row: row.install == "hm-roster" && row.roster == roster)
-      (lib.attrValues manifest.admissions));
+  rosterPackages = roster: map (row: pkgs.${row.attr}) (manifest.rosterRows roster);
+  # Completion files for admission rows whose tool generates natively but
+  # whose package ships none; one derivation folds every completionArgs row.
+  completionRows = lib.filter (row: row ? completionArgs) (lib.attrValues manifest.admissions);
+  manifest-completions = pkgs.runCommand "forge-manifest-completions" {nativeBuildInputs = map (row: pkgs.${row.attr}) completionRows;} ''
+    mkdir -p "$out/share/zsh/site-functions"
+    ${lib.concatMapStringsSep "\n" (row: ''${row.attr} ${lib.escapeShellArgs row.completionArgs} > "$out/share/zsh/site-functions/_${row.attr}"'') completionRows}
+  '';
 in {
   imports = [
     ./1password.nix
@@ -58,6 +62,7 @@ in {
   home.packages =
     rosterPackages "monitors"
     ++ rosterPackages "proof"
+    ++ lib.optional (completionRows != []) manifest-completions
     ++ [
       pkgs._7zz-rar # 7-Zip with RAR support for Yazi archive preview/extraction
       pkgs.actionlint # GitHub Actions workflow linter

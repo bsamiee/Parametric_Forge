@@ -5,18 +5,11 @@
 # Path          : modules/home/programs/git-tools/default.nix
 # ----------------------------------------------------------------------------
 # Git tools owner: config modules plus the config-free package table
-{
-  lib,
-  pkgs,
-  ...
-}: let
+{pkgs, ...}: let
   manifest = import ../../../../overlays/manifest.nix;
   # Git-lane admissions from the package manifest: git-cliff (changelog),
   # mergiraf (structural merge driver; registration rides git.nix).
-  gitRoster =
-    map (row: pkgs.${row.attr})
-    (lib.filter (row: row.install == "hm-roster" && row.roster == "git")
-      (lib.attrValues manifest.admissions));
+  gitRoster = map (row: pkgs.${row.attr}) (manifest.rosterRows "git");
   # 1Password agent socket, HOME-relative; matches the IdentityAgent row in shell-tools/ssh.nix.
   opAgentSock = "Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock";
   # Receipt surface for the identity/signing/fsmonitor rail.
