@@ -320,7 +320,46 @@
     '';
   };
 in {
-  home.packages = launchers ++ [maghzPostgres rhinoRouter forgeMcp];
+  home = {
+    packages = launchers ++ [maghzPostgres rhinoRouter forgeMcp];
+
+    # Hidden identity bundle: Login Items & Extensions resolves the agent's
+    # AssociatedBundleIdentifiers to "Forge MCP Drift" instead of the "/bin/sh"
+    # basename home-manager's mutateConfig writes into ProgramArguments[0].
+    file."Applications/Forge MCP Drift.app/Contents/Info.plist".text = ''
+      <?xml version="1.0" encoding="UTF-8"?>
+      <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+      <plist version="1.0">
+      <dict>
+        <key>CFBundleIdentifier</key>
+        <string>com.parametric-forge.forge-mcp-drift</string>
+        <key>CFBundleName</key>
+        <string>Forge MCP Drift</string>
+        <key>CFBundleDisplayName</key>
+        <string>Forge MCP Drift</string>
+        <key>CFBundleVersion</key>
+        <string>1</string>
+        <key>CFBundleShortVersionString</key>
+        <string>1.0</string>
+        <key>CFBundlePackageType</key>
+        <string>APPL</string>
+        <key>LSUIElement</key>
+        <true/>
+        <key>LSBackgroundOnly</key>
+        <true/>
+      </dict>
+      </plist>
+    '';
+
+    activation.registerForgeMcpDriftApp = lib.hm.dag.entryAfter ["linkGeneration"] ''
+      app="$HOME/Applications/Forge MCP Drift.app"
+      lsregister="/System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/LaunchServices.framework/Versions/A/Support/lsregister"
+      if [ -d "$app" ] && [ -x "$lsregister" ]; then
+        "$lsregister" -f "$app" || true
+      fi
+    '';
+  };
+
   # Weekly pin-drift banner: Notification Center only when a pin is outdated;
   # silent when current or offline (a registry failure never notifies).
   launchd.agents.forge-mcp-outdated = {
@@ -334,8 +373,10 @@ in {
           Minute = 0;
         }
       ];
+      ProcessType = "Background";
       StandardOutPath = "${config.home.homeDirectory}/Library/Logs/forge-mcp-outdated.log";
       StandardErrorPath = "${config.home.homeDirectory}/Library/Logs/forge-mcp-outdated.log";
+      AssociatedBundleIdentifiers = ["com.parametric-forge.forge-mcp-drift"];
     };
   };
 }
