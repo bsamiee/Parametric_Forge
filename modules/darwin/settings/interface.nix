@@ -93,6 +93,18 @@ in {
       spaces = {
         spans-displays = mkDefault false;
       };
+      # --- Control Center Menu Bar (ByHost domain) ---------------------------
+      # Minimal menu-bar posture: every optional module hidden, battery
+      # percentage flag kept true for the Control Center pane readout.
+      controlcenter = {
+        AirDrop = mkDefault false;
+        BatteryShowPercentage = mkDefault true;
+        Bluetooth = mkDefault false;
+        Display = mkDefault false;
+        FocusModes = mkDefault false;
+        NowPlaying = mkDefault false;
+        Sound = mkDefault false;
+      };
       # --- Global System Defaults -------------------------------------------
       NSGlobalDomain = {
         AppleInterfaceStyle = mkDefault "Dark";

@@ -5,9 +5,23 @@
 # Path          : modules/darwin/settings/security.nix
 # ----------------------------------------------------------------------------
 # Security, PAM, certificates, and firewall configuration for Darwin.
-{lib, ...}: let
+{
+  lib,
+  config,
+  ...
+}: let
   inherit (lib) mkDefault;
 in {
+  # Debugger/developer-tool authorization without per-launch prompts: developer
+  # mode plus _developer membership are idempotent root activations. TCC stays
+  # reset-only (tccutil); no TCC.db writes, no PPPC on this unmanaged host.
+  system.activationScripts.postActivation.text = ''
+    /usr/sbin/DevToolsSecurity -status | grep -q "currently enabled" \
+      || /usr/sbin/DevToolsSecurity -enable
+    dsmemberutil checkmembership -U ${config.system.primaryUser} -G _developer | grep -q "^user is a member" \
+      || /usr/sbin/dseditgroup -o edit -t user -a ${config.system.primaryUser} _developer
+  '';
+
   # --- Security Configuration -----------------------------------------------
   security = {
     # --- PAM Authentication -------------------------------------------------
