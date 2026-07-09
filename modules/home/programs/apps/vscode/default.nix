@@ -201,12 +201,14 @@ in {
     case "$merged" in
       *"forge-theme:begin"*)
         if [ "$merged" != "$(/bin/cat "$settings" 2>/dev/null)" ]; then
-          # Temp lives beside the target so the publish rename is same-filesystem
-          # atomic; a dry run leaves no litter.
+          # Publish by in-place copy: VS Code's kqueue watcher is bound to the
+          # settings inode, so a rename publishes to an inode it never observes
+          # and the live window keeps stale config until reload. cp truncates
+          # and rewrites the existing inode, which the watcher applies live.
           tmp=$(/usr/bin/mktemp "$settings.XXXXXX")
           printf '%s\n' "$merged" >"$tmp"
-          run /bin/mv "$tmp" "$settings"
-          [ ! -e "$tmp" ] || /bin/rm -f "$tmp"
+          run /bin/cp "$tmp" "$settings"
+          /bin/rm -f "$tmp"
         fi
         ;;
       *)
