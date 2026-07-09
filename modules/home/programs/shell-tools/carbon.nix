@@ -69,11 +69,15 @@
   # to Carbon's embedded Playwright CLI; failure propagates to the caller.
   playwrightEnsure = pkgs.writeShellApplication {
     name = "carbon-playwright-install.sh";
-    runtimeInputs = [pkgs.coreutils pkgs.findutils pkgs.gnugrep pkgs.nodejs];
+    runtimeInputs = [pkgs.coreutils pkgs.findutils pkgs.nodejs];
     text = ''
       ${browsersPath}
       mkdir -p "$PLAYWRIGHT_BROWSERS_PATH"
-      if find "$PLAYWRIGHT_BROWSERS_PATH" -maxdepth 1 -name 'chromium-*' -type d | grep -q .; then
+      # Warm means COMPLETE: key on playwright's own INSTALLATION_COMPLETE
+      # marker (written after extraction), so a signal-killed install never
+      # fakes a warm cache; -print -quit, never a grep pipe (pipefail turns
+      # grep -q's early exit into a SIGPIPE'd find).
+      if [ -n "$(find "$PLAYWRIGHT_BROWSERS_PATH" -maxdepth 2 -path '*/chromium-*/INSTALLATION_COMPLETE' -print -quit)" ]; then
         exit 0
       fi
       exec node ${carbonModules}/node_modules/playwright/cli.js install chromium --with-deps

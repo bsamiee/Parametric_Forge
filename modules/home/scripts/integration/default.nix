@@ -24,11 +24,16 @@
   yaziPopup = config.programs.zellij.popupGeometry.yazi;
   yaziPopupArgs = lib.escapeShellArgs ["-x" yaziPopup.x "-y" yaziPopup.y "--width" yaziPopup.width "--height" yaziPopup.height];
 
+  # One popup-identity vocabulary: production dispatch, caller dismissal, and
+  # the acceptance harness all match this exact jq row predicate, so the
+  # harness can never assert an identity production stopped matching.
+  yaziPopupIdentity = ''(.is_plugin | not) and (.exited | not) and ((.is_floating // false) or (.is_suppressed // false)) and ((.title // "") == " [YAZI] ") and ((.terminal_command // .command // "") == "forge-yazi.sh")'';
+
   # Registry contract: one editor per tab, "<tab_id>\t<pane_id>\t<socket>" under
   # ${XDG_RUNTIME_DIR:-/tmp}/forge-edit/<session>/editor-tab-<tab_id>.tsv
   forgeNvim = pkgs.writeShellApplication {
     name = "forge-nvim.sh";
-    runtimeInputs = [pkgs.neovim pkgs.zellij pkgs.jq];
+    runtimeInputs = [pkgs.neovim pkgs.zellij pkgs.jq pkgs.coreutils];
     text = ''
       # Outside Zellij: plain editor. Inside: per-pane RPC server + tab registry.
       if [[ -z "''${ZELLIJ:-}" ]]; then
@@ -66,7 +71,7 @@
 
   forgeEdit = pkgs.writeShellApplication {
     name = "forge-edit.sh";
-    runtimeInputs = [pkgs.neovim pkgs.zellij pkgs.jq forgeNvim];
+    runtimeInputs = [pkgs.neovim pkgs.zellij pkgs.jq pkgs.coreutils forgeNvim];
     text = ''
       # Yazi opener target: RPC into the tab's registered Neovim, else spawn one.
       if [[ $# -eq 0 ]]; then
@@ -137,12 +142,9 @@
 
       # Pane-scoped dismissal: close only the Forge popup we ran inside; this
       # kills our own process tree, so it must stay the final statement.
-      # Exact identity: floating + exact title + exact spawn command; a yazi
-      # launched WITH args ("forge-yazi.sh <dir>") is never the popup.
-      caller_is_popup="$(jq -r \
-        '((.is_floating // false)
-          and ((.title // "") == " [YAZI] ")
-          and ((.terminal_command // .command // "") == "forge-yazi.sh"))' <<<"$caller_row")"
+      # Shared identity vocabulary; a yazi launched WITH args
+      # ("forge-yazi.sh <dir>") is never the popup.
+      caller_is_popup="$(jq -r '${yaziPopupIdentity}' <<<"$caller_row")"
       if [[ "$caller_is_popup" == "true" ]]; then
         zellij action close-pane --pane-id "terminal_''${caller}" >/dev/null 2>&1 || true
       fi
@@ -151,7 +153,7 @@
 
   forgeYazi = pkgs.writeShellApplication {
     name = "forge-yazi.sh";
-    runtimeInputs = [yaziPkg pkgs.zellij pkgs.jq forgeEdit];
+    runtimeInputs = [yaziPkg pkgs.zellij pkgs.jq pkgs.coreutils pkgs.flock forgeEdit];
     text = ''
       # Polymorphic entry: "toggle" dispatches the per-tab popup; any other argv
       # launches Yazi with the Forge editor handoff, entries forwarded intact.
@@ -168,6 +170,16 @@
       fi
 
       self="''${ZELLIJ_PANE_ID:-}"
+      # Serialize concurrent dispatchers (double-chord): one session-scoped
+      # lock spans snapshot-to-act, so racing toggles never both read a
+      # popup-free tab and create duplicate popups.
+      lock_root="''${XDG_RUNTIME_DIR:-/tmp}/forge-edit/''${ZELLIJ_SESSION_NAME:-default}"
+      mkdir -p "$lock_root"
+      exec 9>"$lock_root/toggle.lock"
+      flock -w 5 9 || {
+        echo "forge-yazi.sh: another toggle holds the dispatch lock" >&2
+        exit 75
+      }
       # list-panes flaps transiently against a busy session; retry to a truthy
       # snapshot so a flap never misreads the tab as popup-free.
       panes="[]"
@@ -181,16 +193,13 @@
       done
       tab_id="$(jq -r --arg self "$self" \
         '[.[] | select((.is_plugin | not) and ((.id | tostring) == $self))][0].tab_id // 0' <<<"$panes")"
-      # Exact row identity: tab + floating-or-suppressed + not-exited + exact
-      # title + exact spawn command. Dispatchers ("forge-yazi.sh toggle") and
-      # yazi-with-args rows never match; the suppressed disjunct keeps the
-      # dismiss branch reachable when an in-place dispatcher covers the popup.
+      # Shared identity vocabulary scoped to this tab, excluding self.
+      # Dispatchers ("forge-yazi.sh toggle") and yazi-with-args rows never
+      # match; the suppressed disjunct keeps the dismiss branch reachable
+      # when an in-place dispatcher covers the popup.
       popup_row="$(jq -c --arg self "$self" --argjson tab "$tab_id" \
-        '[.[] | select((.is_plugin | not) and (.exited | not) and (.tab_id == $tab)
-          and ((.id | tostring) != $self)
-          and ((.is_floating // false) or (.is_suppressed // false))
-          and ((.title // "") == " [YAZI] ")
-          and ((.terminal_command // .command // "") == "forge-yazi.sh"))][0] // {}' <<<"$panes")"
+        '[.[] | select(${yaziPopupIdentity}
+          and (.tab_id == $tab) and ((.id | tostring) != $self))][0] // {}' <<<"$panes")"
       popup="$(jq -r '.id // empty' <<<"$popup_row")"
 
       if [[ -z "$popup" ]]; then
@@ -220,7 +229,7 @@
   # adjudicated runtime residuals surface as receipt rows either way.
   forgeTerminalAccept = pkgs.writeShellApplication {
     name = "forge-terminal-accept.sh";
-    runtimeInputs = [pkgs.zellij pkgs.jq pkgs.neovim forgeNvim forgeEdit forgeYazi];
+    runtimeInputs = [pkgs.zellij pkgs.jq pkgs.neovim pkgs.coreutils pkgs.findutils pkgs.gawk forgeNvim forgeEdit forgeYazi];
     text = ''
       # Usage: forge-terminal-accept.sh [--session <name>] [--keep]
       # JSON receipt on stdout, human rows on stderr; exit 1 on any FAIL.
@@ -294,7 +303,7 @@
             zj close-pane --pane-id "terminal_''${id}" >/dev/null 2>&1 || true
           fi
         done < <(panes | jq -r '.[] | select((.is_plugin | not) and (.exited | not)
-          and (((.terminal_command // "") | startswith("forge-nvim.sh"))
+          and (((.terminal_command // .command // "") | startswith("forge-nvim.sh"))
             or ((.terminal_command // .command // "") == "forge-yazi.sh")
             or ((.terminal_command // .command // "") == "forge-yazi.sh toggle"))) | .id')
         rm -rf "''${XDG_RUNTIME_DIR:-/tmp}/forge-edit/''${session}"
@@ -302,7 +311,7 @@
       fi
 
       # R01: live config loaded — both zjstatus bars plus a shell pane present.
-      if poll '([.[] | select(.is_plugin and (.title | startswith("zjstatus")))] | length >= 2)
+      if poll '([.[] | select(.is_plugin and ((.title // "") | startswith("zjstatus")))] | length >= 2)
         and ([.[] | select(.is_plugin | not)] | length >= 1)'; then
         row R01-session-ready PASS "two zjstatus bars + shell pane in $session"
       else
@@ -318,10 +327,7 @@
         sleep 0.5
       done
 
-      popup_pred='[.[] | select((.is_plugin | not) and (.exited | not)
-        and ((.is_floating // false) or (.is_suppressed // false))
-        and ((.title // "") == " [YAZI] ")
-        and ((.terminal_command // .command // "") == "forge-yazi.sh"))]'
+      popup_pred='[.[] | select(${yaziPopupIdentity})]'
 
       # R02: toggle creates exactly one floating popup titled " [YAZI] ".
       zj new-pane -c -- forge-yazi.sh toggle >/dev/null 2>&1 || true
@@ -346,7 +352,7 @@
       printf 'beta\n' >"$probe_dir/b.txt"
       printf 'gamma\n' >"$probe_dir/c.txt"
       editor_pred='[.[] | select((.is_plugin | not) and (.exited | not)
-        and ((.terminal_command // "") | startswith("forge-nvim.sh")))]'
+        and ((.terminal_command // .command // "") | startswith("forge-nvim.sh")))]'
 
       zj new-pane -c -- forge-edit.sh "$probe_dir/a.txt" >/dev/null 2>&1 || true
       if poll "$editor_pred | length == 1"; then

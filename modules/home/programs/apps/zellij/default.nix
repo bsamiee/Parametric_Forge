@@ -18,15 +18,14 @@
   ];
 
   # One geometry owner per floating popup; the layout KDL and the integration
-  # scripts both render from these rows, never from inline literals.
+  # scripts both render from these rows, never from inline literals. Percent
+  # strings only: both KDL and the zellij CLI accept them verbatim, and a
+  # malformed value fails at eval instead of misrendering a popup.
   options.programs.zellij.popupGeometry = lib.mkOption {
     type = lib.types.attrsOf (lib.types.submodule {
-      options = {
-        x = lib.mkOption {type = lib.types.str;};
-        y = lib.mkOption {type = lib.types.str;};
-        width = lib.mkOption {type = lib.types.str;};
-        height = lib.mkOption {type = lib.types.str;};
-      };
+      options =
+        lib.genAttrs ["x" "y" "width" "height"] (_:
+          lib.mkOption {type = lib.types.strMatching "^[0-9]+%$";});
     });
     default = {
       lazygit = {
@@ -53,7 +52,6 @@
       grants = {
         "zjstatus.wasm" = ["ReadApplicationState" "ChangeApplicationState" "RunCommands"];
         "zellij_forgot.wasm" = ["ReadApplicationState" "ChangeApplicationState"];
-        "zellij-pane-picker.wasm" = ["ReadApplicationState" "Reconfigure" "ChangeApplicationState"];
       };
       seed = wasm: perms: ''
         if ! /usr/bin/grep -qF "plugins/${wasm}" "$permsFile" 2>/dev/null; then
@@ -82,10 +80,6 @@
       "zellij/plugins/zellij_forgot.wasm".source = pkgs.fetchurl {
         url = "https://github.com/karimould/zellij-forgot/releases/download/0.4.2/zellij_forgot.wasm";
         hash = "sha256-MRlBRVGdvcEoaFtFb5cDdDePoZ/J2nQvvkoyG6zkSds=";
-      };
-      "zellij/plugins/zellij-pane-picker.wasm".source = pkgs.fetchurl {
-        url = "https://github.com/shihanng/zellij-pane-picker/releases/download/v0.6.0/zellij-pane-picker.wasm";
-        hash = "sha256-QO2cSZLPvFGg0ORcOjfrsU30Ox0at4z48aC5QvXLlho=";
       };
     };
   };

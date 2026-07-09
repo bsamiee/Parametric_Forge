@@ -150,13 +150,6 @@ in {
         copy_command                "pbcopy"
         scroll_buffer_size          100000
 
-        // --- Load Plugins -----------------------------------------------------------
-        // zjstatus and compact-bar render from layout panes; only pane-picker needs
-        // a background start for cross-tab pane tracking.
-        load_plugins {
-          zellij-pane-picker
-        }
-
         // --- Plugin Aliases ---------------------------------------------------------
         plugins {
           configuration location="zellij:configuration"
@@ -174,14 +167,6 @@ in {
             welcome_screen true
           }
           zellij-forgot location="file:~/.config/zellij/plugins/zellij_forgot.wasm"
-          // --- pane-picker Configuration --------------------------------------------
-          zellij-pane-picker location="file:~/.config/zellij/plugins/zellij-pane-picker.wasm" {
-            // Empty disables the plugin's global rebind; its KDL template breaks on "\" keys.
-            // Launch stays on the explicit LaunchOrFocusPlugin bind in keybinds.
-            list_panes          ""
-            plugin_select_down  "Down"
-            plugin_select_up    "Up"
-          }
 
           // --- zjstatus: top bar — navigation identity (tabs, layout, session) -------
           zjstatus location="file:~/.config/zellij/plugins/zjstatus.wasm" {

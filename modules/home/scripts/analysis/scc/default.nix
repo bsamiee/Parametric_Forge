@@ -15,26 +15,31 @@
       shopt -s inherit_errexit
 
       if (($# > 1)); then
-        printf 'usage: %s [target]\n' "$0" >&2
+        printf 'usage: %s [target]\n' "''${0##*/}" >&2
         exit 2
       fi
 
       readonly target_input="''${1:-.}"
       target_path="$(realpath "$target_input")"
       readonly target_path
+      readonly deadline="''${LOC_SCAN_DEADLINE_SECONDS:-120}"
       readonly tab=$'\t'
       readonly exclude_dirs=".git,.hg,.svn,bin,obj,node_modules,.cursor,.artifacts,dist,build,target,vendor"
 
       # Detached stdin + deadline: a dead invoking session must never strand
       # this command substitution as an orphaned subshell.
       json="$(
-        timeout "''${LOC_SCAN_DEADLINE_SECONDS:-120}" \
+        timeout "$deadline" \
           scc "$target_path" \
           --by-file --format json \
           --no-cocomo --no-size \
           --exclude-dir "$exclude_dirs" \
           --sort code </dev/null
-      )"
+      )" || {
+        rc=$?
+        printf 'loc: scc scan failed (rc=%s, deadline=%ss)\n' "$rc" "$deadline" >&2
+        exit "$rc"
+      }
       readonly json
 
       # jq owns $root inside this single-quoted filter.

@@ -284,8 +284,20 @@
     text = ''
       export PATH="/nix/var/nix/profiles/default/bin:$PATH"
 
-      mode="manual"
-      [ "''${1:-}" != "--scheduled" ] || mode="scheduled"
+      # Reject unknown argv up front: a typo must never silently run as a
+      # manual pass (600s lock wait, no AC gate).
+      case "''${1:-}" in
+        "") mode="manual" ;;
+        --scheduled) mode="scheduled" ;;
+        *)
+          printf 'Usage: forge-nix-maintenance [--scheduled]\n' >&2
+          exit 2
+          ;;
+      esac
+      if [ "$#" -gt 1 ]; then
+        printf 'forge-nix-maintenance: unexpected arguments after %s\n' "$1" >&2
+        exit 2
+      fi
       lock_file="''${FORGE_REDEPLOY_LOCK:-$HOME/.cache/forge-redeploy.lock}"
       receipt_log="''${FORGE_MAINTENANCE_RECEIPT_LOG:-$HOME/Library/Logs/forge-nix-maintenance.receipts.log}"
       nix_env="/nix/var/nix/profiles/default/bin/nix-env"
@@ -293,7 +305,7 @@
       # One typed receipt per run; the EXIT trap emits it even when a phase
       # aborts, so denied trims and failed GC stay visible (result=fail).
       ts="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-      power="ac" lock="-" trim="-" gc="-" optimise="-"
+      power="-" lock="-" trim="-" gc="-" optimise="-"
       gc_s="-" optimise_s="-"
       result="fail"
       emit_receipt() {
@@ -313,6 +325,7 @@
           power="battery" result="skipped"
           exit 0
         }
+        power="ac"
         flock_args=(-n)
       else
         flock_args=(-w 600)
