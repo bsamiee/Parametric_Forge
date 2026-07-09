@@ -10,7 +10,7 @@
 // workspace temp dir. Also owns the machine directory-scope rail (the
 // replacement for per-repo doppler.yaml). Exports nothing; runMain terminates.
 //
-//   node driver.ts preview|up|refresh [--adopt] [--drop-retired] [--drop-cutover] [--target=<p>/<c>/<token>]
+//   node driver.ts preview|up|refresh [--adopt] [--target=<p>/<c>/<token>]
 //   node driver.ts outputs [name] [--reveal]
 //   node driver.ts scopes apply|doctor|strict
 
@@ -28,8 +28,6 @@ const STACK = "estate";
 
 type Flags = {
   readonly adopt: boolean;
-  readonly keepRetired: boolean;
-  readonly keepCutover: boolean;
   readonly reveal: boolean;
   readonly targets: ReadonlyArray<string>;
 };
@@ -100,6 +98,10 @@ const _settings = Config.all({
     Config.nonEmptyString("FORGE_SERVICES_DOPPLER_TOKEN_REF"),
     "op://Tokens/DOPPLER_IAC_TOKEN/token",
   ),
+  githubTokenRef: Config.withDefault(
+    Config.nonEmptyString("FORGE_SERVICES_GITHUB_TOKEN_REF"),
+    "op://Tokens/Github Token/token",
+  ),
   stateDir: Config.nonEmptyString("FORGE_SERVICES_STATE_DIR").pipe(
     Config.orElse(() =>
       Config.map(Config.nonEmptyString("XDG_STATE_HOME"), (root) => path.join(root, "forge-services")),
@@ -108,6 +110,7 @@ const _settings = Config.all({
   ),
   passphrase: Config.option(Config.redacted("PULUMI_CONFIG_PASSPHRASE")),
   token: Config.option(Config.redacted("DOPPLER_TOKEN")),
+  githubToken: Config.option(Config.redacted("GITHUB_TOKEN")),
 });
 
 // Ambient env short-circuits 1Password; otherwise the op reference resolves per run.
@@ -123,9 +126,13 @@ const _openStack = (flags: Flags) =>
     const fs = yield* FileSystem.FileSystem;
     yield* fs.makeDirectory(cfg.stateDir, { recursive: true });
     yield* fs.chmod(cfg.stateDir, 0o700);
-    const [passphrase, token] = yield* Effect.all(
-      [_brokered(cfg.passphrase, cfg.passphraseRef), _brokered(cfg.token, cfg.tokenRef)],
-      { concurrency: 2 },
+    const [passphrase, token, githubToken] = yield* Effect.all(
+      [
+        _brokered(cfg.passphrase, cfg.passphraseRef),
+        _brokered(cfg.token, cfg.tokenRef),
+        _brokered(cfg.githubToken, cfg.githubTokenRef),
+      ],
+      { concurrency: 3 },
     );
     const backendUrl = `file://${cfg.stateDir}`;
     return yield* Effect.tryPromise({
@@ -141,6 +148,7 @@ const _openStack = (flags: Flags) =>
               PULUMI_CONFIG_PASSPHRASE: Redacted.value(passphrase),
               PULUMI_BACKEND_URL: backendUrl,
               DOPPLER_TOKEN: Redacted.value(token),
+              GITHUB_TOKEN: Redacted.value(githubToken),
             },
           },
         ),
@@ -289,16 +297,14 @@ const _scopeVerbs = {
 
 const USAGE =
   "forge-services driver\n" +
-  "  preview|up|refresh [--adopt] [--drop-retired] [--drop-cutover] [--target=<project>/<config>/<token>]\n" +
+  "  preview|up|refresh [--adopt] [--target=<project>/<config>/<token>]\n" +
   "  outputs [name] [--reveal]\n" +
   "  scopes apply|doctor|strict";
 
-const FLAG_VOCABULARY = new Set(["--adopt", "--drop-retired", "--drop-cutover", "--reveal"]);
+const FLAG_VOCABULARY = new Set(["--adopt", "--reveal"]);
 
 const _flags = (argv: ReadonlyArray<string>): Flags => ({
   adopt: argv.includes("--adopt"),
-  keepRetired: !argv.includes("--drop-retired"),
-  keepCutover: !argv.includes("--drop-cutover"),
   reveal: argv.includes("--reveal"),
   targets: argv.filter((arg) => arg.startsWith("--target=")).map((arg) => arg.slice("--target=".length)),
 });
