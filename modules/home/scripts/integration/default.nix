@@ -36,6 +36,17 @@
   # `printf '%s:%s' session pane` through this exact projection.
   cidPipeline = ''cksum | gawk '{ print ($1 % 899999) + 100000 }' '';
 
+  # One runtime-root derivation for every rail script and the harness: RPC
+  # sockets, the dispatch lock, surfaced markers, and DDS state live in a
+  # per-user private namespace (XDG runtime dir on Linux, per-user $TMPDIR on
+  # darwin), never predictable world-writable /tmp; the go-rwx clamp fails
+  # closed if a squatter pre-owns the bare-/tmp fallback.
+  runtimeBaseSh = ''
+    runtime_base="''${XDG_RUNTIME_DIR:-''${TMPDIR:-/tmp}}/forge-edit"
+    mkdir -p "$runtime_base"
+    chmod go-rwx "$runtime_base"
+  '';
+
   # Registry contract: one editor per tab, "<tab_id>\t<pane_id>\t<socket>" under
   # ${XDG_RUNTIME_DIR:-/tmp}/forge-edit/<session>/editor-tab-<tab_id>.tsv
   forgeNvim = pkgs.writeShellApplication {
@@ -49,7 +60,8 @@
 
       session="''${ZELLIJ_SESSION_NAME:-default}"
       pane_id="''${ZELLIJ_PANE_ID:-0}"
-      runtime_root="''${XDG_RUNTIME_DIR:-/tmp}/forge-edit/''${session}"
+      ${runtimeBaseSh}
+      runtime_root="$runtime_base/''${session}"
       mkdir -p "$runtime_root"
 
       # Tab resolution can lag pane creation at layout startup; retry briefly
@@ -90,7 +102,16 @@
 
       session="''${ZELLIJ_SESSION_NAME:-default}"
       caller="''${ZELLIJ_PANE_ID:-}"
-      runtime_root="''${XDG_RUNTIME_DIR:-/tmp}/forge-edit/''${session}"
+      ${runtimeBaseSh}
+      runtime_root="$runtime_base/''${session}"
+      # RPC handoff resolves paths against the server's cwd, and a fresh editor
+      # pane opens at $PWD; pin caller-relative arguments to absolute so both
+      # branches open the caller's files.
+      args=()
+      for f in "$@"; do
+        args+=("$(realpath -m -- "$f")")
+      done
+      set -- "''${args[@]}"
       # list-panes flaps transiently against a busy session; retry to a truthy
       # snapshot, then degrade to the fresh-editor branch on a dead read.
       panes="[]"
@@ -171,7 +192,8 @@
       # DDS client ids derive deterministically from (session, pane_id) so the
       # dispatcher recomputes the popup's id without a registry.
       session="''${ZELLIJ_SESSION_NAME:-default}"
-      runtime_root="''${XDG_RUNTIME_DIR:-/tmp}/forge-edit/''${session}"
+      ${runtimeBaseSh}
+      runtime_root="$runtime_base/''${session}"
       cid_of() { # $1 = pane id; globally unique across sessions via name hash
         printf '%s:%s' "$session" "$1" | ${cidPipeline}
       }
@@ -221,6 +243,13 @@
       target=""
       if [[ "$verb" != "toggle" ]]; then
         target="''${2:?forge-yazi.sh $verb needs a path}"
+        # emit-to resolves paths against the popup's cwd, never the caller's,
+        # and the cd action only accepts a directory — normalize both here so
+        # the create and live-popup branches see one canonical target.
+        target="$(realpath -m -- "$target")"
+        if [[ "$verb" == "cd" && ! -d "$target" ]]; then
+          target="$(dirname "$target")"
+        fi
       fi
 
       self="''${ZELLIJ_PANE_ID:-}"
@@ -342,6 +371,7 @@
         session="forge-accept-$$-$RANDOM"
         owned="true"
       fi
+      ${runtimeBaseSh}
 
       rows="[]"
       fail=0
@@ -382,7 +412,7 @@
           zellij kill-session "$session" >/dev/null 2>&1 || true
           sleep 0.5
           zellij delete-session "$session" >/dev/null 2>&1 || true
-          rm -rf "''${XDG_RUNTIME_DIR:-/tmp}/forge-edit/''${session}"
+          rm -rf "''${runtime_base:?}/''${session}"
         fi
       }
       trap cleanup EXIT
@@ -399,7 +429,7 @@
           and (((.terminal_command // .command // "") | startswith("forge-nvim.sh"))
             or ((.terminal_command // .command // "") == "forge-yazi.sh")
             or ((.terminal_command // .command // "") == "forge-yazi.sh toggle"))) | .id')
-        rm -rf "''${XDG_RUNTIME_DIR:-/tmp}/forge-edit/''${session}"
+        rm -rf "''${runtime_base:?}/''${session}"
         sleep 1
       fi
 
@@ -458,7 +488,7 @@
           fi
           sleep 0.2
         done
-        state="''${XDG_RUNTIME_DIR:-/tmp}/forge-edit/''${session}/dds-cd-pane-''${popup_id}.json"
+        state="$runtime_base/''${session}/dds-cd-pane-''${popup_id}.json"
         cd_seen="false"
         for _ in $(seq 1 25); do
           if [[ -r "$state" ]] && jq -e '.body.url | test("^(/private)?/tmp")' "$state" >/dev/null 2>&1; then
@@ -477,7 +507,9 @@
       fi
 
       # R04-R08: edit rail — spawn, registry, socket, reuse, multi-file.
-      probe_dir="$(mktemp -d "''${TMPDIR:-/tmp}/forge-accept.XXXXXX")"
+      # Canonicalized so bufname comparisons match forge-edit's realpath pin
+      # (macOS /var and /tmp are /private symlinks).
+      probe_dir="$(realpath -- "$(mktemp -d "''${TMPDIR:-/tmp}/forge-accept.XXXXXX")")"
       printf 'alpha\n' >"$probe_dir/a.txt"
       printf 'beta\n' >"$probe_dir/b.txt"
       printf 'gamma\n' >"$probe_dir/c.txt"
@@ -492,7 +524,7 @@
       fi
 
       # Registry publication and socket liveness lag pane creation; poll both.
-      runtime_root="''${XDG_RUNTIME_DIR:-/tmp}/forge-edit/''${session}"
+      runtime_root="$runtime_base/''${session}"
       registry=""
       editor_pane=""
       socket=""

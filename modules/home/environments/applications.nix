@@ -23,7 +23,8 @@
 
     # --- Neovim -------------------------------------------------------------
     # Editor RPC rail uses native `nvim --listen`/`--server`; sockets live under
-    # $XDG_RUNTIME_DIR/forge-edit/<session>/ per the integration script registry.
+    # the private runtime root (XDG runtime dir, else per-user TMPDIR) at
+    # forge-edit/<session>/ per the integration script registry.
 
     # --- Serpl --------------------------------------------------------------
     SERPL_CONFIG = "${config.xdg.configHome}/serpl";
