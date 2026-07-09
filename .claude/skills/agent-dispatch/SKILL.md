@@ -38,6 +38,8 @@ Placement law rides four axes: cost rises down the table, so the cheapest surfac
 
 A non-fork worker sees none of the parent conversation — no prior reads, no invoked skills, no history — so every delegation prompt is decision-complete: objective, territory, exclusions, output contract, and success criteria, with no reliance on mid-run clarification since `AskUserQuestion` is withheld from subagents. Startup context, contract fields, receipt discipline, and meta-delegation prompts are [references/prompting.md](references/prompting.md).
 
+COMMIT DISCIPLINE is a contract field, not an afterthought: a worker that writes to a repo commits each completed unit in scoped, signed commits as it lands — explicit pathspecs, `[scope]: action`, `git status` before staging so a concurrent worker's hunks stay frozen, never `git add -A`/`-u`. A worker that dies mid-run — API drop, kill, context exhaustion — then loses only its uncommitted tail; committed work survives, and the receipt's commit hashes hand the orchestrator or a successor the trail to resume from. The trail RECORDS progress; it never DECIDES work — a successor reads the current tree to know what remains, never the changelog.
+
 ## [03]-[TOPOLOGY]
 
 Result flow is chosen before the first spawn: star for independent fan-out with one consolidator, pipeline for staged transforms with artifact contracts, panel for adversarial judgment, tournament for best-of-N with blind comparison, loop for repeat-until-verified. Shape mechanics, the file-ownership law, and stop-condition law are [references/topologies.md](references/topologies.md).

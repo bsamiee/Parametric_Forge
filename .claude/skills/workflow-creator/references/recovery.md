@@ -116,3 +116,9 @@ Author every workflow for this recovery from day one: each stage writes its prod
 ## [07]-[TRUTH]
 
 Receipts are claims; disk artifacts are truth. An agent's failure report is not ground truth: before re-running or discarding a lane, check its deterministic artifact paths — product file present and valid, process liveness, stderr tail. Forced returns (a stall abort, no-progress enforcement) file FALSE failures while the real work completes; a stale leftover artifact reads as FALSE success — hence the stale-purge law in the patterns reference. Design every lane so its truth is checkable from disk alone, and reconcile the roster against disk before acting on it.
+
+## [08]-[COMMIT_TRAIL]
+
+The journal caches agent RESULTS; git commits durably land FILES — complementary recovery axes. A stage that writes to a repo commits its own scoped work as it completes: explicit pathspecs, signed, `[scope]: action`, `git status` first so a concurrent stage's or a sibling wave's hunks stay frozen, never `git add -A`/`-u`. A run that dies between stages then loses no landed files even where the journal lost its tail, and a successor run or a fresh agent reconstructs where work stopped from the commit trail. Recovery reads BOTH: the journal for cached results, the git log for landed files.
+
+The commit trail is a RECOVERY signal, never a JUDGMENT input. A stage scopes its work from the current tree as-found, not from the history of how the tree got there — this binds the stations hardest: a cold critique and a red-team read the files AS THEY ARE and improve, extend, or rebuild ground-up, never diffing the git log to scope their pass or to defer to a prior commit's intent. Cold means the tree, not the changelog.
