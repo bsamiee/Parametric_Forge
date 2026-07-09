@@ -17,33 +17,47 @@ inspect_name() {
   printf '%s\n' "${name#/}"
 }
 
+# One docker inspect serves every requested container label as one row;
+# absent labels and failed inspects project as empty fields. Unit-separator
+# delimited: tab is IFS whitespace and read would collapse empty fields.
+inspect_labels() {
+  local id="$1" raw
+  shift
+  raw="$(docker inspect --format '{{ json .Config.Labels }}' "$id" 2>/dev/null)" || raw='{}'
+  jq -r '. // {} | [$ARGS.positional[] as $k | (.[$k] // "")] | join("\u001f")' --args -- "$@" <<<"${raw:-null}"
+}
+
 validate_owned_container_identity() {
   local id="$1"
   local service="$2"
   local mode="${3:-strict}"
-  local owned root project compose_project compose_service image expected_image net volume mount
+  local raw owned root project compose_project compose_service image expected_image net volume mount
   if ! known_service "$service"; then
     [[ "$mode" == "cleanup" ]] || die "refusing unknown provision container service=$service id=$id"
     service=""
   fi
-  owned="$(inspect_label "$id" "$owner_label")"
-  root="$(inspect_label "$id" "$root_label")"
-  project="$(inspect_label "$id" "$project_label")"
-  compose_project="$(inspect_label "$id" "com.docker.compose.project")"
-  compose_service="$(inspect_label "$id" "com.docker.compose.service")"
+  # One inspect snapshot backs every identity assertion for this container.
+  raw="$(docker inspect "$id" 2>/dev/null)" || raw=""
+  IFS=$'\x1f' read -r owned root project compose_project compose_service image < <(
+    jq -r --arg owner "$owner_label" --arg root "$root_label" --arg project "$project_label" \
+      '.[0] as $c | ($c.Config.Labels // {}) as $l
+        | [($l[$owner] // ""), ($l[$root] // ""), ($l[$project] // ""),
+           ($l["com.docker.compose.project"] // ""), ($l["com.docker.compose.service"] // ""),
+           ($c.Config.Image // "")] | join("\u001f")' <<<"${raw:-[]}"
+  )
   [[ "$owned" == "1" ]] || die "refusing unowned container id=$id"
   [[ "$root" == "$root_key" ]] || die "refusing container from another provision root id=$id root=$root"
   [[ "$project" == "$project_name" ]] || die "refusing container from another provision project id=$id provision_project=$project"
   [[ "$compose_project" == "$project_name" ]] || die "refusing container from another Compose project id=$id compose_project=$compose_project"
   [[ -z "$service" || "$compose_service" == "$service" ]] || die "refusing container with wrong Compose service id=$id service=$compose_service expected=$service"
   [[ "$mode" == "cleanup" ]] && return 0
-  image="$(docker inspect --format '{{ .Config.Image }}' "$id")" || die "cannot inspect container image id=$id"
+  [[ -n "$image" ]] || die "cannot inspect container image id=$id"
   expected_image="$(service_image "$service")"
   [[ "$image" == "$expected_image" ]] || die "refusing container with wrong image id=$id image=$image expected=$expected_image"
   net="$(network_name)"
   volume="$(service_volume_name "$service")"
   mount="${service_volume_mount[$service]}"
-  docker inspect "$id" | jq -e --arg net "$net" --arg volume "$volume" --arg mount "$mount" -f "$(catalog_path jq/container-identity.jq)" >/dev/null ||
+  jq -e --arg net "$net" --arg volume "$volume" --arg mount "$mount" -f "$(catalog_path jq/container-identity.jq)" <<<"$raw" >/dev/null ||
     die "refusing container with wrong network or volume mount id=$id service=$service"
 }
 
@@ -164,11 +178,9 @@ port_owned_by_service() {
   collect_published_container_ids ids "$port"
   ((${#ids[@]} > 0)) || return 1
   for id in "${ids[@]}"; do
-    owned="$(inspect_label "$id" "$owner_label")"
-    root="$(inspect_label "$id" "$root_label")"
-    project="$(inspect_label "$id" "$project_label")"
-    service_value="$(inspect_label "$id" "$service_label")"
-    compose_project="$(inspect_label "$id" "com.docker.compose.project")"
+    IFS=$'\x1f' read -r owned root project service_value compose_project < <(
+      inspect_labels "$id" "$owner_label" "$root_label" "$project_label" "$service_label" "com.docker.compose.project"
+    )
     [[ "$owned" == "1" && "$root" == "$root_key" && "$project" == "$project_name" && "$service_value" == "$service" && "$compose_project" == "$project_name" ]] || continue
     validate_owned_container_identity "$id" "$service"
     container_publishes_service_host_port "$id" "$port" "${service_host[$service]}" && return 0
@@ -213,15 +225,16 @@ port_busy() {
 # Reads one container's provenance labels into caller-scoped variables, empty fields normalized to "-".
 read_container_provenance() {
   local id="$1"
-  local var
-  name="$(inspect_name "$id" || printf '-')"
-  image="$(docker inspect --format '{{ .Config.Image }}' "$id" || printf '-')"
-  compose_project="$(inspect_label "$id" "com.docker.compose.project")"
-  compose_service="$(inspect_label "$id" "com.docker.compose.service")"
-  provision_owner="$(inspect_label "$id" "$owner_label")"
-  provision_root="$(inspect_label "$id" "$root_label")"
-  provision_project="$(inspect_label "$id" "$project_label")"
-  for var in compose_project compose_service provision_owner provision_root provision_project; do
+  local raw var
+  raw="$(docker inspect "$id" 2>/dev/null)" || raw=""
+  IFS=$'\x1f' read -r name image compose_project compose_service provision_owner provision_root provision_project < <(
+    jq -r --arg owner "$owner_label" --arg root "$root_label" --arg project "$project_label" \
+      '.[0] as $c | ($c.Config.Labels // {}) as $l
+        | [(($c.Name // "") | ltrimstr("/")), ($c.Config.Image // ""),
+           ($l["com.docker.compose.project"] // ""), ($l["com.docker.compose.service"] // ""),
+           ($l[$owner] // ""), ($l[$root] // ""), ($l[$project] // "")] | join("\u001f")' <<<"${raw:-[]}"
+  )
+  for var in name image compose_project compose_service provision_owner provision_root provision_project; do
     [[ -n "${!var}" ]] || printf -v "$var" '%s' '-'
   done
 }
@@ -292,13 +305,12 @@ assert_owned_project() {
   [[ -n "$ids" ]] || return 0
   while IFS= read -r id; do
     [[ -n "$id" ]] || continue
-    owned="$(inspect_label "$id" "$owner_label")"
+    IFS=$'\x1f' read -r owned root project service < <(
+      inspect_labels "$id" "$owner_label" "$root_label" "$project_label" "$service_label"
+    )
     [[ "$owned" == "1" ]] || die "refusing to manage unlabeled container in project $project_name: $id"
-    root="$(inspect_label "$id" "$root_label")"
     [[ "$root" == "$root_key" ]] || die "refusing to manage container from another provision root in project $project_name: $id root=$root"
-    project="$(inspect_label "$id" "$project_label")"
     [[ "$project" == "$project_name" ]] || die "refusing to manage container from another provision project in project $project_name: $id provision_project=$project"
-    service="$(inspect_label "$id" "$service_label")"
     validate_owned_container_identity "$id" "$service" "$mode"
   done <<<"$ids"
 }
@@ -307,12 +319,12 @@ assert_owned_named_resource() {
   local kind="$1"
   local name="$2"
   local expected_service="$3"
-  local owner root project service_value
-  docker "$kind" inspect "$name" >/dev/null 2>&1 || return 0
-  owner="$(docker "$kind" inspect --format "{{ index .Labels \"$owner_label\" }}" "$name")"
-  root="$(docker "$kind" inspect --format "{{ index .Labels \"$root_label\" }}" "$name")"
-  project="$(docker "$kind" inspect --format "{{ index .Labels \"$project_label\" }}" "$name")"
-  service_value="$(docker "$kind" inspect --format "{{ index .Labels \"$service_label\" }}" "$name")"
+  local raw owner root project service_value
+  raw="$(docker "$kind" inspect --format '{{ json .Labels }}' "$name" 2>/dev/null)" || return 0
+  IFS=$'\x1f' read -r owner root project service_value < <(
+    jq -r '. // {} | [$ARGS.positional[] as $k | (.[$k] // "")] | join("\u001f")' \
+      --args -- "$owner_label" "$root_label" "$project_label" "$service_label" <<<"${raw:-null}"
+  )
   [[ "$owner" == "1" && "$root" == "$root_key" && "$project" == "$project_name" && "$service_value" == "$expected_service" ]] ||
     die "refusing to reuse $kind with wrong labels: $name"
 }
@@ -520,7 +532,7 @@ file_record_json() {
   local exists=false
   [[ -e "$path" ]] && exists=true
   jq -nc --arg kind "$kind" --arg type "$type" --argjson exists "$exists" \
-    --argjson diagnostic "$([[ "$diagnostic_json" == true ]] && printf true || printf false)" \
+    --argjson diagnostic "$diagnostic_json" \
     '{kind: $kind, type: $type, exists: $exists} + if $diagnostic then {pathRedacted: true} else {} end'
 }
 
@@ -568,7 +580,7 @@ owned_volumes_json() {
     printf '[]\n'
     return 0
   }
-  docker volume inspect "${volumes[@]}" | jq -c --arg owner_label "$owner_label" --arg service_label "$service_label" --arg root_label "$root_label" --arg project_label "$project_label" --argjson diagnostic "$([[ "$diagnostic_json" == true ]] && printf true || printf false)" \
+  docker volume inspect "${volumes[@]}" | jq -c --arg owner_label "$owner_label" --arg service_label "$service_label" --arg root_label "$root_label" --arg project_label "$project_label" --argjson diagnostic "$diagnostic_json" \
     -f "$(catalog_path jq/owned-volumes.jq)"
 }
 
@@ -579,7 +591,7 @@ owned_networks_json() {
     printf '[]\n'
     return 0
   }
-  docker network inspect "${networks[@]}" | jq -c --arg owner_label "$owner_label" --arg service_label "$service_label" --arg root_label "$root_label" --arg project_label "$project_label" --argjson diagnostic "$([[ "$diagnostic_json" == true ]] && printf true || printf false)" \
+  docker network inspect "${networks[@]}" | jq -c --arg owner_label "$owner_label" --arg service_label "$service_label" --arg root_label "$root_label" --arg project_label "$project_label" --argjson diagnostic "$diagnostic_json" \
     -f "$(catalog_path jq/owned-networks.jq)"
 }
 

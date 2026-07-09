@@ -247,6 +247,11 @@ die_usage() {
   fail usage 2 "usage: " "$@"
 }
 
+# Predicate-to-JSON-boolean projection: bool_json test -d "$dir".
+bool_json() {
+  if "$@"; then printf 'true'; else printf 'false'; fi
+}
+
 warn() {
   local message
   message="$(redact_message "$*")"
@@ -381,10 +386,7 @@ normalize_command_args() {
 }
 
 warnings_json() {
-  local warning
-  for warning in "${json_warnings[@]}"; do
-    jq -nc --arg message "$warning" '{message: $message}'
-  done | jq -s .
+  jq -nc '[$ARGS.positional[] | {message: .}]' --args -- "${json_warnings[@]}"
 }
 
 usage() {
@@ -494,6 +496,7 @@ port_in_csv_ranges() {
   local port="$1"
   local ranges="$2"
   local spec start end
+  local -a __ranges=()
   [[ -n "$ranges" ]] || return 1
   IFS=',' read -ra __ranges <<<"$ranges"
   for spec in "${__ranges[@]}"; do
@@ -661,9 +664,9 @@ set_resolved_block() {
 }
 
 set_resolved_manifest_ports() {
-  local service port excluded="probe-unavailable"
+  local service port excluded
   local -A manifest_ports=() seen_active_ports=()
-  combined_excluded_ports >/dev/null 2>&1 && excluded="$(combined_excluded_ports)" || excluded="$port_exclude_requested"
+  excluded="$(combined_excluded_ports 2>/dev/null)" || excluded="$port_exclude_requested"
   for service in "${service_order[@]}"; do
     port="$(manifest_port_for_service "$service")" || return 1
     validate_port "manifest port for $service" "$port"
@@ -704,6 +707,7 @@ set_resolved_individual_ports() {
 resolve_auto_ports() {
   local busy_aware="$1"
   local excluded hash offset bases=() base range_start range_end spec start end count i service port block_width
+  local -a __candidate_ranges=()
   if set_resolved_manifest_ports; then
     if [[ "$busy_aware" != true ]]; then
       port_policy_mode="auto"
@@ -883,13 +887,13 @@ extension_sql_values() {
       "$ordinal" \
       "$(sql_quote "$ext")" \
       "$(sql_quote "$category")" \
-      "$([[ "$required" == 1 ]] && printf true || printf false)" \
-      "$([[ "$create_on_apply" == 1 ]] && printf true || printf false)" \
+      "$(bool_json test "$required" = 1)" \
+      "$(bool_json test "$create_on_apply" = 1)" \
       "$(sql_quote "$create_policy")" \
       "$(sql_quote "$load_policy")" \
       "$(sql_quote "$probe_kind")" \
       "$(sql_quote "$probe_sql_key")" \
-      "$([[ "$requires_shared_preload" == 1 ]] && printf true || printf false)" \
+      "$(bool_json test "$requires_shared_preload" = 1)" \
       "$(sql_quote "$shared_preload_library")"
   done < <(extension_catalog_rows "$service")
   return 0
@@ -2100,7 +2104,7 @@ lock_json() {
       state="foreign-host"
     fi
   fi
-  jq -nc --argjson present "$present" --argjson active "$active" --arg state "$state" --argjson pidAlive "$pid_alive" --argjson heartbeatStale "$heartbeat_stale" --arg command "$command" --argjson diagnostic "$([[ "$diagnostic_json" == true ]] && printf true || printf false)" \
+  jq -nc --argjson present "$present" --argjson active "$active" --arg state "$state" --argjson pidAlive "$pid_alive" --argjson heartbeatStale "$heartbeat_stale" --arg command "$command" --argjson diagnostic "$diagnostic_json" \
     -f "$(catalog_path jq/lock-state.jq)"
 }
 
@@ -2108,13 +2112,40 @@ colima_json() {
   local status
   if command -v colima >/dev/null 2>&1; then
     if status="$(colima status --json 2>/dev/null)"; then
-      jq -nc --argjson status "$status" --argjson diagnostic "$([[ "$diagnostic_json" == true ]] && printf true || printf false)" -f "$(catalog_path jq/colima-status.jq)"
+      jq -nc --argjson status "$status" --argjson diagnostic "$diagnostic_json" -f "$(catalog_path jq/colima-status.jq)"
     else
       jq -nc '{available: true, status: null, raw: null, statusRedacted: true}'
     fi
   else
     jq -nc '{available: false, status: null, raw: null}'
   fi
+}
+
+apple_container_json() {
+  # Sanitized host-gate telemetry: presence, version line, eligibility facts only.
+  local present=false version="" macos_major=0 arch xcode_kind="none" gate=false dev_dir=""
+  arch="$(uname -m)"
+  if command -v container >/dev/null 2>&1; then
+    present=true
+    version="$(container --version 2>/dev/null || true)"
+    version="${version%%$'\n'*}"
+  fi
+  if [[ -x /usr/bin/sw_vers ]]; then
+    macos_major="$(/usr/bin/sw_vers -productVersion 2>/dev/null || printf '0')"
+    macos_major="${macos_major%%.*}"
+    [[ "$macos_major" =~ ^[0-9]+$ ]] || macos_major=0
+  fi
+  if [[ -x /usr/bin/xcode-select ]] && dev_dir="$(/usr/bin/xcode-select -p 2>/dev/null)"; then
+    case "$dev_dir" in
+      */CommandLineTools*) xcode_kind="command-line-tools" ;;
+      *.app/Contents/Developer*) xcode_kind="xcode" ;;
+      *) xcode_kind="none" ;;
+    esac
+  fi
+  [[ "$macos_major" -ge 26 && "$arch" == "arm64" && "$xcode_kind" == "xcode" ]] && gate=true
+  jq -nc --argjson present "$present" --arg version "$version" \
+    --argjson macosMajor "$macos_major" --arg arch "$arch" --arg xcodeKind "$xcode_kind" --argjson gate "$gate" \
+    '{present: $present, version: (if $version == "" then null else $version end), eligible: {macosMajor: $macosMajor, arch: $arch, xcodeKind: $xcodeKind, gate: $gate}, system: "absent"}'
 }
 
 cmd_up() {
@@ -2222,8 +2253,8 @@ cmd_down() {
     warn "Docker unavailable or rejected; transient generated files were cleaned and durable state retained for reconciliation"
   fi
   if [[ "$output_json" == true ]]; then
-    emit_stack_json down "$([[ "$docker_rc" -eq 0 ]] && printf true || printf false)" "$(envelope_filter envelope-down.jq)" \
-      --argjson dockerAvailable "$([[ "$docker_rc" -eq 0 ]] && printf true || printf false)" \
+    emit_stack_json down "$(bool_json test "$docker_rc" -eq 0)" "$(envelope_filter envelope-down.jq)" \
+      --argjson dockerAvailable "$(bool_json test "$docker_rc" -eq 0)" \
       --argjson containers "$before_containers" \
       --argjson networks "$before_networks" \
       --argjson generated "$before_generated"
@@ -2413,14 +2444,14 @@ cmd_paths() {
     return 0
   fi
   printf 'path\tname=forge_root\tvalue=%s\texists=%s\npath\tname=provisioning_root\tvalue=%s\texists=%s\npath\tname=provisioning_dir\tvalue=%s\texists=%s\tparent_writable=%s\n' \
-    "$forge_root" "$([[ -d "$forge_root" ]] && printf true || printf false)" \
-    "$provisioning_root_dir" "$([[ -d "$provisioning_root_dir" ]] && printf true || printf false)" \
-    "$provisioning_dir" "$([[ -d "$provisioning_dir" ]] && printf true || printf false)" "$([[ -w "$forge_root" ]] && printf true || printf false)"
+    "$forge_root" "$(bool_json test -d "$forge_root")" \
+    "$provisioning_root_dir" "$(bool_json test -d "$provisioning_root_dir")" \
+    "$provisioning_dir" "$(bool_json test -d "$provisioning_dir")" "$(bool_json test -w "$forge_root")"
   printf 'path\tname=current\tvalue=%s\texists=%s\texpected_written_by=up\npath\tname=compose\tvalue=%s\texists=%s\texpected_written_by=up\npath\tname=env\tvalue=%s\texists=%s\texpected_written_by=up\npath\tname=docker_config\tvalue=%s\texists=%s\texpected_written_by=up\n' \
-    "$current_link" "$([[ -e "$current_link" ]] && printf true || printf false)" \
-    "$compose_file" "$([[ -f "$compose_file" ]] && printf true || printf false)" \
-    "$env_file" "$([[ -f "$env_file" ]] && printf true || printf false)" \
-    "$docker_config_dir" "$([[ -d "$docker_config_dir" ]] && printf true || printf false)"
+    "$current_link" "$(bool_json test -e "$current_link")" \
+    "$compose_file" "$(bool_json test -f "$compose_file")" \
+    "$env_file" "$(bool_json test -f "$env_file")" \
+    "$docker_config_dir" "$(bool_json test -d "$docker_config_dir")"
 }
 
 cmd_plan() {
@@ -2544,7 +2575,8 @@ cmd_doctor() {
       --argjson ports "$ports_json" \
       --argjson lock "$(lock_json)" \
       --argjson colima "$(colima_json)" \
-      --argjson diagnostic "$([[ "$diagnostic_json" == true ]] && printf true || printf false)"
+      --argjson appleContainer "$(apple_container_json)" \
+      --argjson diagnostic "$diagnostic_json"
     return 0
   fi
   printf 'doctor\tcommand=forge-provision\ndoctor\tforge_root=%s\ndoctor\tproject=%s\ndoctor\troot_key=%s\ndoctor\tdocker=%s\ndoctor\tdocker_policy=%s\n' \
@@ -2623,7 +2655,7 @@ cmd_prune() {
     warn "Docker unavailable or rejected; transient generated files were cleaned and durable state retained for reconciliation"
   fi
   if [[ "$json" == true ]]; then
-    emit_stack_json prune "$([[ "$rc" -eq 0 ]] && printf true || printf false)" "$(envelope_filter envelope-prune.jq)" \
+    emit_stack_json prune "$(bool_json test "$rc" -eq 0)" "$(envelope_filter envelope-prune.jq)" \
       --argjson dockerAvailable "$prune_docker_ok" \
       --argjson containers "$before_containers" \
       --argjson volumes "$before_volumes" \
@@ -2631,7 +2663,7 @@ cmd_prune() {
       --argjson generated "$before_generated" \
       --argjson includeVolumes "$include_volumes"
   else
-    printf 'prune\towned\tok=%s\tproject=%s\troot=%s\n' "$([[ "$rc" -eq 0 ]] && printf true || printf false)" "$project_name" "$root_key"
+    printf 'prune\towned\tok=%s\tproject=%s\troot=%s\n' "$(bool_json test "$rc" -eq 0)" "$project_name" "$root_key"
   fi
   return "$rc"
 }
@@ -2718,7 +2750,7 @@ main() {
   while (($# > 0)); do
     case "${1:-}" in
       --json | --diagnostic-json)
-        seen_diag_flag="$([[ "$1" == "--diagnostic-json" ]] && printf true || printf false)"
+        seen_diag_flag="$(bool_json test "$1" = --diagnostic-json)"
         if [[ "$output_json" == true ]]; then
           [[ "$seen_diag_flag" == "$diagnostic_json" ]] && die_usage "duplicate $1"
           die_usage "--json and --diagnostic-json are mutually exclusive"

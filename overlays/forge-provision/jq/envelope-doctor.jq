@@ -26,6 +26,7 @@
       blockedPorts: [$ports[] | select(.state != "disabled" and .owner != "none" and .owner != "provision:this-project")],
       lock: $lock,
       colima: $colima,
+      appleContainer: $appleContainer,
       anonymousDockerConfig: $anonymousConfigExists,
       hostCredentialHelperPresent: ($hostCredsStore != "none" or $hostCredHelpers != "0")
     }
