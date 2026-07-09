@@ -4,12 +4,12 @@ Memory is the always-loaded instruction layer: operator-authored files plus mode
 
 ## [01]-[HIERARCHY]
 
-| [INDEX] | [LEVEL]  | [LOCATION]                              | [SCOPE]                                            |
-| :-----: | :------- | :-------------------------------------- | :-------------------------------------------------- |
-|  [01]   | Managed  | OS-level managed path                   | Organization-wide, not excludable                    |
-|  [02]   | User     | `~/.claude/CLAUDE.md`                   | Every project on the machine                         |
-|  [03]   | Project  | `CLAUDE.md` or `.claude/CLAUDE.md`      | Everyone who clones the repository                   |
-|  [04]   | Local    | `CLAUDE.local.md`                       | This checkout only, gitignored                       |
+| [INDEX] | [LEVEL] | [LOCATION]                         | [SCOPE]                            |
+| :-----: | :------ | :--------------------------------- | :--------------------------------- |
+|  [01]   | Managed | OS-level managed path              | Organization-wide, not excludable  |
+|  [02]   | User    | `~/.claude/CLAUDE.md`              | Every project on the machine       |
+|  [03]   | Project | `CLAUDE.md` or `.claude/CLAUDE.md` | Everyone who clones the repository |
+|  [04]   | Local   | `CLAUDE.local.md`                  | This checkout only, gitignored     |
 
 The loader walks upward from the working directory, orders discovered files root to working directory, and appends `CLAUDE.local.md` after its sibling `CLAUDE.md` at each level. Subdirectory memory files lazy-load when work touches files beneath them, so folder conventions live beside the folders they govern instead of bloating the root. Target under 200 lines per file — adherence degrades as memory grows, and overflow moves to path-scoped rules. `claudeMdExcludes` skips matching memory files by glob at any settings scope.
 
@@ -28,6 +28,14 @@ Auto memory is model-authored learning, on by default, stored per project at `~/
 ## [05]-[BOUNDARY]
 
 Every memory level is advisory context delivered as a user message after the system prompt — the model weighs it, and under long-context pressure adherence decays. Blocking a tool, protecting a path, or gating a completion is settings and hooks territory: `permissions.deny` rows block deterministically, lifecycle hooks veto with exit code 2, and neither depends on the model remembering anything. The placement test for any candidate instruction: if violation is acceptable-but-unwanted it rides memory, if violation is unacceptable it rides enforcement.
+
+```markdown rejected
+NEVER run `terraform destroy` or force-push to main. Always be careful with destructive commands.
+```
+
+```json accepted
+{ "permissions": { "deny": ["Bash(terraform destroy:*)", "Bash(git push --force*:*)"] } }
+```
 
 ## [06]-[SUBAGENT_MEMORY]
 

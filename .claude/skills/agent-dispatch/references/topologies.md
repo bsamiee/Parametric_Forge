@@ -4,14 +4,14 @@ Topology is the shape of result flow, fixed before the first spawn: it decides w
 
 ## [01]-[SHAPES]
 
-| [INDEX] | [SHAPE]          | [FLOW]                                                        | [SELECT_WHEN]                                                    |
-| :-----: | :--------------- | :------------------------------------------------------------ | :---------------------------------------------------------------- |
-|  [01]   | Star             | Fan out disjoint lenses, one consolidator merges               | Independent territories, breadth-heavy audit or research           |
-|  [02]   | Pipeline         | Stages transform an artifact under explicit contracts          | Stable ordering; each stage verifies the previous stage's output   |
-|  [03]   | Panel            | Independent verdicts on one question, then adjudication        | Ambiguous or high-stakes judgment where disagreement finds blind spots |
-|  [04]   | Tournament       | N candidates, blind pairwise comparison, unblinded analysis    | Taste-heavy artifacts; comparison grades better than absolute scores |
-|  [05]   | Generate-filter  | Cheap generators flood, a strict gate admits                   | Search problems where candidate cost is low and the gate is sharp  |
-|  [06]   | Loop             | Work, verify, repeat until an external check passes            | Convergent work with a deterministic done-signal                   |
+| [INDEX] | [SHAPE]         | [FLOW]                                                      | [SELECT_WHEN]                                                          |
+| :-----: | :-------------- | :---------------------------------------------------------- | :--------------------------------------------------------------------- |
+|  [01]   | Star            | Fan out disjoint lenses, one consolidator merges            | Independent territories, breadth-heavy audit or research               |
+|  [02]   | Pipeline        | Stages transform an artifact under explicit contracts       | Stable ordering; each stage verifies the previous stage's output       |
+|  [03]   | Panel           | Independent verdicts on one question, then adjudication     | Ambiguous or high-stakes judgment where disagreement finds blind spots |
+|  [04]   | Tournament      | N candidates, blind pairwise comparison, unblinded analysis | Taste-heavy artifacts; comparison grades better than absolute scores   |
+|  [05]   | Generate-filter | Cheap generators flood, a strict gate admits                | Search problems where candidate cost is low and the gate is sharp      |
+|  [06]   | Loop            | Work, verify, repeat until an external check passes         | Convergent work with a deterministic done-signal                       |
 
 ## [02]-[CONSOLIDATION]
 
@@ -23,7 +23,18 @@ Parallel dispatch requires disjoint write territories: no two concurrent workers
 
 ## [04]-[LOOPS]
 
-A loop's stop condition is externally measurable — a passing suite, an empty queue, a zero lint count, a merged PR — never the worker's own judgment of doneness, which stops early under context pressure and late under vague specs. Loop law:
+A loop's stop condition is externally measurable — a passing suite, an empty queue, a zero lint count, a merged PR — never the worker's own judgment of doneness, which stops early under context pressure and late under vague specs.
+
+```markdown rejected
+Keep improving the test suite until it is in good shape.
+```
+
+```markdown accepted
+Loop until `pnpm vitest run` exits 0 with coverage at or above 90%; cap at six rounds;
+two consecutive rounds without a new fix end the run as stuck, returning the evidence.
+```
+
+Loop law:
 
 - [CAP]: every loop carries a maximum iteration count beside its stop condition; the pair prevents both runaway and premature exit.
 - [PROGRESS]: two consecutive rounds without new findings or fixes end the run as converged-or-stuck; a stuck verdict returns evidence, not retries.

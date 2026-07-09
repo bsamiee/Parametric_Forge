@@ -233,6 +233,25 @@ const MAX_COL = 160
   }
 }
 
+// --- 5e. dead interpolation — placeholders and $-escapes ship literal text ----
+// Both patterns live INSIDE string/template content, so they are matched in raw
+// `src`. `${'$'}{…}` evaluates to the literal text `${…}`; a `__TOKEN__` placeholder
+// left for a later patch ships verbatim. Either way a stage prompt fires without
+// its data, silently, hours into the run.
+
+{
+  for (const [re, label] of [
+    [/\$\{\s*['"]\$['"]\s*\}\s*\{/g, "`${'$'}{…}` escape — evaluates to the literal text `${…}`"],
+    [/__[A-Z][A-Z0-9_]*__/g, '`__TOKEN__` placeholder — ships verbatim into the prompt'],
+  ]) {
+    let m
+    while ((m = re.exec(src))) {
+      warnings.push(`dead interpolation at line ${lineOf(m.index)}: ${label}; `
+        + 'interpolate live — `+ JSON.stringify(x) +` or a single-line `${JSON.stringify(x)}`')
+    }
+  }
+}
+
 // --- 6. parallel() should get thunks, not bare promises ----------------------
 
 {

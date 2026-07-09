@@ -3,18 +3,15 @@ name: workflow-creator
 allowed-tools: Bash(node ${CLAUDE_SKILL_DIR}/scripts/*)
 description: >-
   Author runnable workflow scripts for Claude Code's Workflow tool — deterministic
-  multi-agent orchestration files that fan out fresh-context subagents under plain
-  JavaScript control flow. Use this skill whenever the user wants to create, write,
-  build, scaffold, design, or fix a workflow: "make a workflow", "create a workflow
-  for X", "write a workflow", "turn this into a workflow", "scaffold a multi-agent
-  pipeline", "orchestrate this with subagents deterministically", or any request to
-  author or edit a .js file under .claude/workflows/. Also use it when the user is
-  confused about the workflow script format — the meta block, agent()/parallel()/
-  pipeline()/phase(), schemas, the determinism rules — or when a workflow errors and
-  needs debugging. Trigger this even when the user only describes a repeatable
-  multi-step or parallel job and seems to want it packaged as a workflow, even if
-  they never say the word "workflow". Do NOT use it to merely run an existing
-  workflow, or for a one-off single-subagent task.
+  multi-agent orchestration files under `.claude/workflows/` that fan out fresh-context
+  subagents through plain JavaScript control flow: the `meta` block, `agent()`,
+  `pipeline()`, `parallel()`, schemas, budgets, resume. Use whenever the user wants to
+  create, write, scaffold, design, fix, or debug a workflow — "make a workflow", "turn
+  this into a workflow", "orchestrate this with subagents deterministically" — when the
+  script format or an erroring run needs explaining, and when a described repeatable
+  multi-step or parallel job wants packaging as a workflow even though the word never
+  appears. Not for merely running an existing workflow or a one-off single-subagent
+  task; whether a workflow is the right execution surface belongs to agent-dispatch.
 ---
 
 # [WORKFLOW_CREATOR]
@@ -53,6 +50,7 @@ The rules that break runs, each carried in depth by its owning reference:
 - [08]: Every open-ended loop carries a hard stop — a counter, a budget guard (`budget.total && budget.remaining() > N`), or a progress gate; a fix-verify loop gates on file-changing progress, never the round cap alone.
 - [09]: `args` is structured data — read it directly, never `JSON.parse` it, and default the no-args run to a safe no-op, never a full-corpus sweep.
 - [10]: Wrap long prompt strings with adjacent `+` at a space kept on the left segment — never a multi-line template literal, which injects `\n` and changes both the value and the resume key.
+- [11]: A stage prompt that embeds earlier receipts interpolates them live at author time — `+ JSON.stringify(receipts) +` or a single-line `${JSON.stringify(receipts)}` — never a `__TOKEN__` placeholder patched later and never a `${'$'}{…}` escape: both ship literal text the agent reads as its data, and the defect stays silent until that stage fires hours in. The linter flags both shapes; a patched persisted script re-runs it before the launch is trusted.
 
 ## [04]-[FILE]
 

@@ -4,7 +4,7 @@ Every execution surface is a definition plus a runtime: the definition fixes wha
 
 ## [01]-[SUBAGENT_DEFINITION]
 
-A custom subagent is a Markdown file with YAML frontmatter whose body becomes the worker's entire system prompt — the worker never receives the full harness system prompt, only its own body plus environment details. Discovery priority: managed settings, `--agents` JSON, project `.claude/agents/` walking upward with nearest duplicate winning, user `~/.claude/agents/`, plugin `agents/`. Both watched directories hot-reload edits within seconds.
+A custom subagent is a Markdown file with YAML frontmatter whose body becomes the worker's entire system prompt — the worker never receives the full harness system prompt, only its own body plus environment details. Discovery priority: managed settings, `--agents` JSON, project `.claude/agents/` walking upward with nearest duplicate winning, user `~/.claude/agents/`, plugin `agents/`. Both watched directories hot-reload edits within seconds. Built-in types ride beside custom definitions: Explore and Plan are read-only one-shots that skip the memory hierarchy and return no agent ID; general-purpose inherits every tool.
 
 | [INDEX] | [FIELD]           | [EFFECT]                                                                                          |
 | :-----: | :---------------- | :------------------------------------------------------------------------------------------------ |

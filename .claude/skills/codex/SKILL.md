@@ -1,6 +1,6 @@
 ---
 name: codex
-description: Dispatch work to the Codex CLI (gpt-5.5) via codex exec / codex review — each run executes in an isolated context and returns only a report, and usage is effectively free, so prefer it over Claude subagents for self-contained legs. Trigger whenever a leg is transcript-heavy or mechanical - repo sweeps, audits, investigation, many-file reads, log or dataset distillation, live web research, bulk clear-spec implementation, migrations - and for an independent second perspective on any plan, diff, or implementation. Also trigger whenever the user references codex, gpt-5.5, OpenAI models, or asks to offload work or conserve usage; delegation across Claude's own surfaces belongs to agent-dispatch.
+description: Dispatch work to the Codex CLI (gpt-5.5) via `codex exec` / `codex review` — each run executes in an isolated context and returns only a report, and usage is effectively free, so prefer it over Claude subagents for self-contained legs. Trigger whenever a leg is transcript-heavy or mechanical - repo sweeps, audits, investigation, many-file reads, log or dataset distillation, live web research, bulk clear-spec implementation, migrations - and for an independent second perspective on any plan, diff, or implementation. Also trigger whenever the user references codex, gpt-5.5, OpenAI models, or asks to offload work or conserve usage; delegation across Claude's own surfaces belongs to agent-dispatch.
 ---
 
 # Codex Dispatch
@@ -36,38 +36,39 @@ codex exec -s <sandbox> --skip-git-repo-check [-C <dir>] [-o <report>] "<prompt>
 - `--output-schema` is STRICT: every key in `properties` must also appear in `required` (`additionalProperties: false`; a conditional field is required-but-empty) — anything less 400s `invalid_json_schema` and the run silently degrades to unvalidated output. Write task and schema files with a real file-write (never a shell heredoc) at ABSOLUTE paths — cwd drift plus heredoc quoting land files where codex cannot find them, and the launch dies instantly on the missing schema.
 - A detached typed leg owns its artifacts in one ephemeral folder, purged of stale report/stderr before launch (a leftover report reads as instant completion with last run's data): `task.md` (quoting-proof prompt channel), `schema.json` (`--output-schema` takes only a file path), `report.json` (`-o`), `stderr.log` (crash reason), and — on fleet-grade lanes — `events.jsonl` (`--json` stdout). A short SYNCHRONOUS leg needs zero files: inline prompt, stdout capture.
 
-| [INDEX] | [NEED]                                         | [FLAGS]                                                                               |
-| :-----: | :--------------------------------------------- | :------------------------------------------------------------------------------------ |
-|  [01]   | Read, analyze, research                        | `-s read-only`                                                                        |
-|  [02]   | Edit files in the workspace                    | `-s workspace-write`                                                                  |
-|  [03]   | Extra writable roots alongside the workspace   | `--add-dir <dir>`                                                                     |
-|  [04]   | Network or system access beyond the workspace  | `-s danger-full-access` — only with explicit user authorization                       |
-|  [05]   | Run rooted in another directory                | `-C <dir>`                                                                            |
-|  [06]   | Durable report artifact                        | `-o <file>` — an empty file means the process was killed before completion            |
-|  [07]   | Typed JSON final message                       | `--output-schema <schema.json>`                                                       |
-|  [08]   | Live web search                                | `-c web_search="live"` — default `cached` answers from an OpenAI index, no live fetch |
-|  [09]   | Attach images (screenshots, diagrams)          | `-i <file>` (repeatable)                                                              |
-|  [10]   | Zero-config lane (no MCP fleet, no notify)     | `--ignore-user-config` — auth and skills kept; RESTATE the effort tier                |
-|  [11]   | Fan-out legs with no session persistence       | `--ephemeral` — not resumable                                                         |
-|  [12]   | Streamed JSONL events for live monitoring      | `--json` (thread/turn/item events to stdout; composes with `-o`)                      |
-|  [13]   | Per-lane completion push                       | `-c 'notify=["<sink>","<lane>"]'` — fires at turn end with a JSON payload             |
-|  [14]   | Config canary                                  | `--strict-config` — unknown config fields and `-c` keys fail fast                     |
+| [INDEX] | [NEED]                                        | [FLAGS]                                                                               |
+| :-----: | :-------------------------------------------- | :------------------------------------------------------------------------------------ |
+|  [01]   | Read, analyze, research                       | `-s read-only`                                                                        |
+|  [02]   | Edit files in the workspace                   | `-s workspace-write`                                                                  |
+|  [03]   | Extra writable roots alongside the workspace  | `--add-dir <dir>`                                                                     |
+|  [04]   | Network or system access beyond the workspace | `-s danger-full-access` — only with explicit user authorization                       |
+|  [05]   | Run rooted in another directory               | `-C <dir>`                                                                            |
+|  [06]   | Durable report artifact                       | `-o <file>` — an empty file means the process was killed before completion            |
+|  [07]   | Typed JSON final message                      | `--output-schema <schema.json>`                                                       |
+|  [08]   | Live web search                               | `-c web_search="live"` — default `cached` answers from an OpenAI index, no live fetch |
+|  [09]   | Attach images (screenshots, diagrams)         | `-i <file>` (repeatable)                                                              |
+|  [10]   | Zero-config lane (no MCP fleet, no notify)    | `--ignore-user-config` — auth and skills kept; RESTATE the effort tier                |
+|  [11]   | Fan-out legs with no session persistence      | `--ephemeral` — not resumable                                                         |
+|  [12]   | Streamed JSONL events for live monitoring     | `--json` (thread/turn/item events to stdout; composes with `-o`)                      |
+|  [13]   | Per-lane completion push                      | `-c 'notify=["<sink>","<lane>"]'` — fires at turn end with a JSON payload             |
+|  [14]   | Config canary                                 | `--strict-config` — unknown config fields and `-c` keys fail fast                     |
 
 ## [03]-[MCP_SELECTION]
 
 MCP selection is GRADED — pick the tier by what the task actually calls, never default to the full fleet:
 
-| [INDEX] | [TIER]     | [INVOCATION]                                              | [BEHAVIOR]                                                                                              |
-| :-----: | :--------- | :-------------------------------------------------------- | :------------------------------------------------------------------------------------------------------ |
+| [INDEX] | [TIER]     | [INVOCATION]                                              | [BEHAVIOR]                                                                                                |
+| :-----: | :--------- | :-------------------------------------------------------- | :-------------------------------------------------------------------------------------------------------- |
 |  [01]   | FULL FLEET | bare invocation                                           | Every `[mcp_servers]` row plus every plugin server spawns as a child; slowest startup; fail-closed hazard |
-|  [02]   | SELECTED   | `-c 'mcp_servers.<name>.enabled=false'` per unused server  | Disabled servers spawn no child and expose no tools; the rest of config.toml stays live                  |
-|  [03]   | NONE       | `--ignore-user-config -c model_reasoning_effort="<tier>"`  | config.toml skipped wholesale; zero MCP children; effort resets — always restate the tier                |
+|  [02]   | SELECTED   | `-c 'mcp_servers.<name>.enabled=false'` per unused server | Disabled servers spawn no child and expose no tools; the rest of config.toml stays live                   |
+|  [03]   | NONE       | `--ignore-user-config -c model_reasoning_effort="<tier>"` | config.toml skipped wholesale; zero MCP children; effort resets — always restate the tier                 |
 
 - `--ignore-user-config` drops MCP, plugins, notify, and the trust table; auth, the gpt-5.5 default, and ALL skills survive the skip.
 - FAIL-CLOSED HAZARD: a `required = true` server that misses its `startup_timeout_sec` handshake kills the whole run at session creation — `thread/start failed`, exit 1, no model turn, no report, ZERO JSONL events. One unreachable required server (a down VPS behind a stdio bridge) fails every full-fleet lane on the machine; the rescue is `-c 'mcp_servers.<name>.enabled=false'` on lanes that do not call it. Disable required servers first when trimming.
 - `-c 'mcp_servers={}'` is a merge NO-OP — `-c` table overrides deep-merge, so an empty table clears nothing and the fleet still spawns.
 - Tool-level `enabled_tools` allowlists are schema-valid but blank the server's ENTIRE toolset regardless of the names given (probed with both server-side and normalized tool names) — selective granularity stops at the server level.
-- A repo-root `.codex/config.toml` shapes every codex run rooted in a TRUSTED project — trust comes from the `[projects]` table in the user config; a `-c 'projects.….trust_level'` grant does not activate it. Precedence is `-c` flag over project file over user config — a `-c 'mcp_servers.<name>.enabled=…'` override beats a stray repo config row in either direction. Estate repos are all trusted, so lane shaping stays in flags; never land per-repo codex config files.
+- A repo-root `.codex/config.toml` shapes every codex run rooted in a TRUSTED project — trust comes from the `[projects]` table in the user config; a `-c 'projects.….trust_level'` grant does not activate it. Precedence is `-c` flag over project file over user config — a `-c 'mcp_servers.<name>.enabled=…'` override beats a stray repo config row in either direction.
+- Codex configuration is home-only: `~/.codex` owns config, estate repos are all trusted, and lane shaping rides flags. A project-local `.codex/` directory is a defect — port any load-bearing row to `~/.codex`, then delete the directory.
 - Tier overrides compose: `-c 'mcp_servers.<name>.enabled=false'` holds under `--profile`, so SELECTED trimming and the xhigh tier ride one invocation.
 - `--strict-config` validates every config row and `-c` override against the installed binary (`unknown configuration field` fails fast, even under `--ignore-user-config`) — put it on fleet canaries, keep it off steady-state lanes.
 - Fleet startup stderr carries two harmless lines — an rmcp `worker quit with fatal ... AuthRequired` for any OAuth MCP server not logged in, and `failed to install system skills ... Directory not empty (os error 66)` when concurrent codex startups race on reinstalling `~/.codex/skills/.system`. Neither is a run failure; never treat them as a crash reason.
@@ -75,7 +76,7 @@ MCP selection is GRADED — pick the tier by what the task actually calls, never
 ## [04]-[EFFORT]
 
 | [INDEX] | [TIER] | [SELECT]                           | [USE]                                                                          | [TIMEOUT] |
-| :-----: | :----- | :--------------------------------- | :------------------------------------------------------------------------------ | :-------- |
+| :-----: | :----- | :--------------------------------- | :----------------------------------------------------------------------------- | :-------- |
 |  [01]   | medium | default                            | extraction, reformatting, bulk clear-spec mechanical legs, standard delegation | 300s      |
 |  [02]   | high   | `-c model_reasoning_effort="high"` | hard research, review, and design legs                                         | 600s      |
 |  [03]   | xhigh  | `--profile xhigh`                  | the hardest single runs — depth over throughput, multi-minute latency          | 1200s     |
@@ -120,6 +121,8 @@ Every run prints `session id: <uuid>` in its banner (under `--json`, `thread.sta
 |  [01]   | Staged + unstaged + untracked | `codex review --uncommitted "<focus>"`                                                                                                                      |
 |  [02]   | Branch against a base         | `codex review --base <branch>` — the CLI rejects a prompt alongside `--base`; a FOCUSED range review routes through `codex exec` with an explicit diff task |
 |  [03]   | One commit                    | `codex review --commit <sha> "<focus>"`                                                                                                                     |
+
+A fleet-grade review lane runs `codex exec review` instead — the same scope flags plus `--json` events, `-o`, and `--output-schema` typed findings, so a detached review composes with the signals ladder ([06]) like any other lane.
 
 ## [09]-[FAN_OUT]
 

@@ -20,6 +20,20 @@ Every delegation prompt carries five fields; a missing field is filled by the wo
 
 Workers cannot ask questions mid-run, so ambiguity is resolved before dispatch or delegated as an explicit investigation step inside the objective. Constraints that exist in the parent's head — register, conventions, prior decisions — travel in the prompt or die at the boundary.
 
+```markdown rejected
+Fix the flaky auth tests. Be thorough and report back.
+```
+
+```markdown accepted
+OBJECTIVE: `pnpm vitest run tests/auth` passes five consecutive runs.
+TERRITORY: `tests/auth/**` and `src/auth/session.ts`; the flake reproduces with
+`pnpm vitest run tests/auth --retry=0` — `refresh rotates token` fails roughly one run in three.
+EXCLUSIONS: `src/auth/oauth/**` belongs to a concurrent worker; public API signatures stay unchanged.
+CONTRACT: return `{cause, filesChanged, verification}` — `cause` names the race or fixture defect
+with file-line anchors, `verification` the exact commands run.
+ACCEPTANCE: five consecutive green runs, zero skipped tests.
+```
+
 ## [03]-[RECEIPTS]
 
 - [LABEL]: every spawn carries a distinct label naming its lens; a fan-out of unlabeled workers is unreviewable in any progress surface.

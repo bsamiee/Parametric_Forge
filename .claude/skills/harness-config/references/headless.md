@@ -18,7 +18,7 @@ Headless lanes run the agent loop without a terminal operator: `claude -p` for o
 
 - [DYNAMIC]: `--agents '<json>'` defines subagents at launch with the same field names as frontmatter plus `prompt` — the lane for ephemeral worker definitions that never earn a file.
 - [MOUNTED]: `--agent <name>` makes the named definition the main thread: its body replaces the harness system prompt, its `tools` and `model` bind the session, `initialPrompt` auto-submits, and `Agent(type, ...)` allowlists what it spawns. The `agent` setting persists the same choice per project.
-- [BACKGROUND]: `--bg` starts a detached session and prints its ID; `claude agents` opens agent view over every live session — status, last response, input-needed signals, inline reply. `--exec` runs a shell command as a PTY-backed background job under the same management surface.
+- [BACKGROUND]: `--bg` starts a detached session and prints its ID; `claude agents` opens agent view over every live session — status, last response, input-needed signals, inline reply. `--exec` runs a shell command as a PTY-backed background job under the same management surface. `--bg` composes with `--exec` and `--agent`, never with `-p` — a detached lane is interactive-shaped, and a scripted one-shot rides print mode.
 
 ## [05]-[SDK]
 

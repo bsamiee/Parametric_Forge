@@ -1,6 +1,53 @@
 # Run Recovery
 
-Stop, resume, transplant, and reconstruct workflow runs without losing completed work. Completed work is never lost: every agent's result is journaled the instant it finishes, so a pause or stop only ever discards agents still in flight, which re-run on resume. The expensive failure is operator-made — a resumable run re-run from zero.
+Stop, resume, transplant, and reconstruct workflow runs without losing completed work. Completed work is never lost: every agent's result is journaled the instant it finishes, so a pause or stop only ever discards agents still in flight, which re-run on resume. The expensive failure is operator-made — a resumable run re-run from zero. Recovery routes as one dispatch — every edge a condition, every leaf the owning section:
+
+```mermaid
+---
+config:
+  theme: base
+  look: classic
+  layout: elk
+  flowchart:
+    curve: linear
+    padding: 25
+  themeVariables:
+    darkMode: true
+    fontFamily: "SF Mono, Menlo, Cascadia Mono, Segoe UI Mono, Consolas, monospace"
+    useGradient: false
+    dropShadow: "none"
+    background: "#282A36"
+    primaryColor: "#44475A"
+    primaryTextColor: "#F8F8F2"
+    primaryBorderColor: "#BD93F9"
+    lineColor: "#FF79C6"
+    textColor: "#F8F8F2"
+    edgeLabelBackground: "#21222C"
+    labelBackgroundColor: "#21222C"
+  themeCSS: ".nodeLabel{font-size:13px;font-weight:500}.edgeLabel{font-size:12px;font-weight:500}.cluster-label .nodeLabel{font-size:13.5px;font-weight:700;letter-spacing:.08em}.edge-thickness-normal{stroke-width:2px}.edge-thickness-thick{stroke-width:3px}.edge-pattern-dashed,.edge-pattern-dotted{stroke-width:1.5px;stroke-dasharray:4 6}.node rect,.node circle,.node polygon,.node path,.node .outer-path{stroke-width:1.5px;filter:none!important}.cluster rect{stroke-width:1px!important;stroke-dasharray:5 4!important;filter:none!important}.marker path{transform:scale(.8);transform-origin:5px 5px}.marker circle{transform:scale(.48);transform-origin:5px 5px}.edgeLabel rect{transform-box:fill-box;transform-origin:center;transform:scale(1.1,1.2)}"
+---
+flowchart LR
+    accTitle: Run recovery dispatch
+    accDescr: A run to recover discriminating through liveness, session identity, script drift, and the transplant window into controls, resume, transplant, or a continuation script, with every resume verified.
+    In([Run to recover]) --> Live{Still running?}
+    Live -->|"yes"| CT["pause / stop — 01"]
+    Live -->|"no"| Sess{Same session?}
+    Sess -->|"yes"| Bytes{Script and args unchanged?}
+    Sess -->|"no"| Win{Run ID read in this session yet?}
+    Bytes -->|"yes"| RES["resume with resumeFromRunId — 03"]
+    Bytes -->|"edited past a point"| RES
+    Bytes -->|"diverged"| CONT["continuation script — 06"]
+    Win -->|"not yet"| TX["journal transplant — 05"]
+    Win -->|"already read"| CONT
+    RES --> VER["verify the resume — 04"]
+    TX --> VER
+    classDef primary fill:#44475A,stroke:#FF79C6,color:#F8F8F2
+    classDef success fill:#50FA7BBF,stroke:#50FA7B,color:#282A36
+    classDef boundary fill:#282A36,stroke:#BD93F9,color:#F8F8F2
+    class Live,Sess,Bytes,Win primary
+    class CT,RES,TX,CONT,VER success
+    class In boundary
+```
 
 ## [01]-[CONTROLS]
 
