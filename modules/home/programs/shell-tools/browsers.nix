@@ -35,7 +35,7 @@
       domain = "estate-repo";
       collision = "reject";
       previous = [];
-      consumers = ["television-channel-prefix" "receipt-log-prefix" "launchd-agent-name-prefix" "wezterm-workspace-name"];
+      consumers = ["television-channel-prefix" "receipt-log-prefix" "launchd-agent-name-prefix" "wezterm-workspace-name" "zellij-session-name"];
     }
     {
       source = "Rasm";
@@ -44,7 +44,7 @@
       domain = "estate-repo";
       collision = "reject";
       previous = [];
-      consumers = [];
+      consumers = ["zellij-session-name"];
     }
     {
       source = "Maghz";
@@ -53,7 +53,7 @@
       domain = "estate-repo";
       collision = "reject";
       previous = [];
-      consumers = ["tunnel-receipt-partition"];
+      consumers = ["tunnel-receipt-partition" "zellij-session-name"];
     }
   ];
   channelPrefix = (lib.findFirst (r: lib.elem "television-channel-prefix" r.consumers) {slug = "forge";} naming).slug;

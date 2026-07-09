@@ -19,6 +19,41 @@ M.has_nightly = wezterm.version:sub(1, 8) >= rows.nightly_floor
 M.is_macos = wezterm.target_triple:find("apple") ~= nil
 M.sync = nil -- populated in apply(); events.lua reads is_synced for status
 
+local layout = os.getenv("ZELLIJ_DEFAULT_LAYOUT") or "default"
+
+-- Workspace identity crosses the outer-inner seam intact: the zellij session
+-- carries the workspace name (CA-1 slug policy), so windows in different
+-- workspaces never mirror one shared session.
+function M.session_args(name)
+  return { rows.paths.zellij, "--layout", layout, "attach", "--create", name }
+end
+
+function M.workspace_cwd(name)
+  for _, w in ipairs(rows.workspaces) do
+    if w.name == name then
+      return w.cwd
+    end
+  end
+end
+
+-- Destructive-action gate, total across version predicates: nightly prompts
+-- via Confirmation, stable via a two-row InputSelector — the safety row
+-- degrades in form, never in force.
+function M.confirm(message, on_confirm)
+  if M.has_nightly then
+    return act.Confirmation({ message = message, action = on_confirm })
+  end
+  return act.InputSelector({
+    title = message,
+    choices = { { id = "confirm", label = "Confirm" }, { id = "cancel", label = "Cancel" } },
+    action = wezterm.action_callback(function(window, pane, id)
+      if id == "confirm" then
+        window:perform_action(on_confirm, pane)
+      end
+    end),
+  })
+end
+
 -- Receipt rail: kv-tab rows appended to the deck log (forge-receipts parses).
 function M.receipt(fields)
   local parts = {
@@ -74,14 +109,14 @@ end
 -- Command rows dispatch: one handler per kind; unknown kinds fault loudly.
 local command_kinds = {
   float = function(cmd, window, pane)
-    if cmd.destructive and M.has_nightly then
+    if cmd.destructive then
       window:perform_action(
-        act.Confirmation({
-          message = "Run destructive deck command: " .. cmd.label .. "?",
-          action = wezterm.action_callback(function()
+        M.confirm(
+          "Run destructive deck command: " .. cmd.label .. "?",
+          wezterm.action_callback(function()
             M.spawn_float(cmd)
-          end),
-        }),
+          end)
+        ),
         pane
       )
     else
@@ -112,6 +147,12 @@ local select_kinds = {
       return
     end
     local cwd = pane:get_current_working_dir()
+    local host = cwd and cwd.host and cwd.host:gsub("%..*", "") or nil
+    if host and host ~= wezterm.hostname():gsub("%..*", "") then
+      -- Remote pane: a local nvim float cannot reach the remote path.
+      M.receipt({ command = "quick-edit", action = "edit", result = "blocked", detail = "remote pane " .. host })
+      return
+    end
     M.spawn_float({
       id = "quick-edit",
       float = "utility",
@@ -155,12 +196,9 @@ local function workspace_choices()
 end
 
 local function switch_workspace(window, pane, name)
-  local spawn = nil
-  for _, w in ipairs(rows.workspaces) do
-    if w.name == name then
-      spawn = { cwd = w.cwd }
-    end
-  end
+  -- Fresh workspaces land their slug-named inner session at the policy cwd;
+  -- live workspaces ignore spawn, so reattach converges on the same session.
+  local spawn = { args = M.session_args(name), cwd = M.workspace_cwd(name) }
   window:perform_action(act.SwitchToWorkspace({ name = name, spawn = spawn }), pane)
   M.receipt({ command = "workspace-switch", action = "switch", workspace = name, result = "ok" })
 end
@@ -205,17 +243,7 @@ local function guarded_sync_action(sync)
       win:perform_action(sync.toggle, p)
       M.receipt({ command = "sync-toggle", action = "on", result = "ok" })
     end)
-    if M.has_nightly then
-      window:perform_action(
-        act.Confirmation({
-          message = "Broadcast every keystroke to ALL panes in this tab?",
-          action = enable,
-        }),
-        pane
-      )
-    else
-      window:perform_action(enable, pane)
-    end
+    window:perform_action(M.confirm("Broadcast every keystroke to ALL panes in this tab?", enable), pane)
   end)
 end
 
@@ -225,7 +253,10 @@ local function key_actions(launcher, quick_select)
   return {
     ["copy"] = act.CopyTo("Clipboard"),
     ["paste"] = act.PasteFrom("Clipboard"),
-    ["spawn-window"] = act.SpawnWindow,
+    ["spawn-window"] = wezterm.action_callback(function(window, _)
+      local ws = window:active_workspace()
+      wezterm.mux.spawn_window({ workspace = ws, cwd = M.workspace_cwd(ws), args = M.session_args(ws) })
+    end),
     ["quit"] = act.QuitApplication,
     ["hide-app"] = act.HideApplication,
     ["minimize"] = act.Hide,
@@ -292,9 +323,10 @@ function M.apply(config)
     config.quick_select_remove_styling = true
   end
 
-  -- Outer-inner seam: zellij attach + toolchain PATH projection.
-  local layout = os.getenv("ZELLIJ_DEFAULT_LAYOUT") or "default"
-  config.default_prog = { rows.paths.zellij, "--layout", layout, "attach", "--create", "main" }
+  -- Outer-inner seam: zellij attach + toolchain PATH projection. Deck-owned
+  -- spawns carry their workspace session explicitly; this is the fallback for
+  -- panes spawned outside deck control (`wezterm cli spawn` without a prog).
+  config.default_prog = M.session_args(config.default_workspace)
   local ambient = os.getenv("PATH")
   config.set_environment_variables = {
     PATH = (ambient and ambient ~= "") and (rows.paths.path .. ":" .. ambient) or rows.paths.path,

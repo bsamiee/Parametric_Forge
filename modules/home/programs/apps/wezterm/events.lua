@@ -42,20 +42,15 @@ local function cell(fg, text)
   }
 end
 
-local function workspace_cwd(name)
-  for _, w in ipairs(rows.workspaces) do
-    if w.name == name then
-      return w.cwd
-    end
-  end
-end
-
 function M.apply(config) -- luacheck: no unused args
   -- Session persistence is code-defined: GUI and auto-spawned mux servers
-  -- land the default workspace at its name-policy cwd; no session plugin.
+  -- land the default workspace's slug session at its name-policy cwd; an
+  -- explicit `wezterm start -- prog` keeps its own args untouched.
   wezterm.on("gui-startup", function(cmd)
     local spawn = cmd or {}
-    spawn.cwd = spawn.cwd or workspace_cwd(wezterm.mux.get_active_workspace())
+    local ws = wezterm.mux.get_active_workspace()
+    spawn.cwd = spawn.cwd or deck.workspace_cwd(ws)
+    spawn.args = spawn.args or deck.session_args(ws)
     local _, _, window = wezterm.mux.spawn_window(spawn)
     local gui = window:gui_window()
     if gui then
@@ -64,7 +59,8 @@ function M.apply(config) -- luacheck: no unused args
   end)
 
   wezterm.on("mux-startup", function()
-    wezterm.mux.spawn_window({ cwd = workspace_cwd(wezterm.mux.get_active_workspace()) })
+    local ws = wezterm.mux.get_active_workspace()
+    wezterm.mux.spawn_window({ cwd = deck.workspace_cwd(ws), args = deck.session_args(ws) })
   end)
 
   -- Domain attach shaping: one launch receipt per attach.
@@ -115,7 +111,10 @@ function M.apply(config) -- luacheck: no unused args
   end)
 
   wezterm.on("format-window-title", function(tab, _, tabs)
-    local workspace = wezterm.mux.get_active_workspace()
+    -- Per-window truth: a window parked in a background workspace titles as
+    -- its own workspace, never the globally active one.
+    local ok, mux_window = pcall(wezterm.mux.get_window, tab.window_id)
+    local workspace = ok and mux_window and mux_window:get_workspace() or wezterm.mux.get_active_workspace()
     return string.format("%s — %d/%d", workspace, tab.tab_index + 1, #tabs)
   end)
 

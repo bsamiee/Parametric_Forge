@@ -433,6 +433,8 @@
       # with an explicit receipt row — never silent fallthrough.
       rows="${namingJson}"
       wezterm_bin="''${FORGE_WEZTERM_BIN:-/Applications/WezTerm.app/Contents/MacOS/wezterm}"
+      zellij_bin="${pkgs.zellij}/bin/zellij"
+      layout="''${ZELLIJ_DEFAULT_LAYOUT:-default}"
       receipt_log="''${FORGE_WORKSPACE_RECEIPT_LOG:-$HOME/Library/Logs/forge-workspace.receipts.log}"
       provider="''${FORGE_SPACE_PROVIDER:-none}"
 
@@ -446,9 +448,11 @@
           "$ts" "$1" "$2" "$provider" "$5" "$3" "''${4:--}" >>"$receipt_log"
       }
 
+      # --no-auto-start on every cli call: a stale socket must fail the probe,
+      # never fork a daemonized mux server (the recorded litter hazard).
       live_workspaces() {
         if [ -n "''${WEZTERM_UNIX_SOCKET:-}" ] && [ -x "$wezterm_bin" ]; then
-          "$wezterm_bin" cli list --format json 2>/dev/null | jq -r '[.[].workspace] | unique | .[]'
+          "$wezterm_bin" cli --no-auto-start list --format json 2>/dev/null | jq -r '[.[].workspace] | unique | .[]'
         fi
       }
 
@@ -500,7 +504,10 @@
         exit 69
       fi
 
-      pane_id="$("$wezterm_bin" cli spawn --new-window --workspace "$slug" --cwd "$cwd" 2>&1)" || {
+      # Explicit prog mirrors the deck seam: the workspace's slug-named zellij
+      # session, never the shared default_prog session.
+      pane_id="$("$wezterm_bin" cli --no-auto-start spawn --new-window --workspace "$slug" --cwd "$cwd" -- \
+        "$zellij_bin" --layout "$layout" attach --create "$slug" 2>&1)" || {
         emit "$slug" spawn error "$pane_id" "$space_state"
         printf 'forge-workspace: spawn failed: %s\n' "$pane_id" >&2
         exit 1
