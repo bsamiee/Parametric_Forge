@@ -8,6 +8,7 @@
 {config, ...}: {
   imports = [
     ./init.nix
+    ./completions.nix
     ./plugins.nix
     ./options.nix
     ./config.nix

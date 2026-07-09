@@ -4,7 +4,8 @@
 # License       : MIT
 # Path          : modules/home/programs/zsh/init.nix
 # ----------------------------------------------------------------------------
-# Zsh initialization - configuration only, plugins loaded by home-manager
+# Interactive init: session secrets, tool widget wiring, and final widget
+# ordering. Completion surface lives in completions.nix; roster in plugins.nix.
 {
   config,
   lib,
@@ -13,15 +14,10 @@
 }: {
   programs.zsh.initContent = lib.mkMerge [
     (lib.mkBefore ''
-      # --- Completion cache -------------------------------------------------------
-      command mkdir -p -- "${config.xdg.cacheHome}/zsh"
-      export ZSH_COMPDUMP="${config.xdg.cacheHome}/zsh/zcompdump-''${ZSH_VERSION}"
-
       # --- Session secrets (backend-dispatched; owner: shell-tools/1password.nix) --
       [[ ! -f "${config.xdg.configHome}/forge-session-secrets.sh" ]] || source "${config.xdg.configHome}/forge-session-secrets.sh"
 
-      # --- FZF Configuration -------------------------------------------------------
-      # Custom completion functions
+      # --- FZF path/dir generators (fzf ** completion trigger) ---------------------
       _fzf_compgen_path() {
         fd --hidden --follow --exclude .git . "$1"
       }
@@ -44,72 +40,10 @@
 
     '')
 
-    (lib.mkOrder 400 ''
-      # --- Custom Completions (before compinit) -----------------------------------
-      # Completions are version-tracked via Nix store paths. When a tool updates,
-      # its store path changes, triggering regeneration. Completions persist in
-      # ~/.local/share/zsh/completions (not cleared by cache cleanup).
-
-      _comp_dir="${config.xdg.dataHome}/zsh/completions"
-      _ver_dir="${config.xdg.dataHome}/zsh/.completion-versions"
-      mkdir -p "$_comp_dir" "$_ver_dir"
-      fpath=("$_comp_dir" $fpath)
-
-      # Regenerate completion if store path changed (tool updated)
-      _regen_if_stale() {
-        local name=$1 store_path=$2 gen_cmd=$3
-        local ver_file="$_ver_dir/$name"
-        if [[ ! -f "$_comp_dir/_$name" ]] || [[ ! -f "$ver_file" ]] || [[ "$(< "$ver_file")" != "$store_path" ]]; then
-          eval "$gen_cmd" > "$_comp_dir/_$name" 2>/dev/null && echo "$store_path" > "$ver_file"
-        fi
-      }
-
-      # Nix-installed tools (store path = version)
-      _regen_if_stale zellij "${pkgs.zellij}" "${pkgs.zellij}/bin/zellij setup --generate-completion zsh"
-      _regen_if_stale atuin "${pkgs.atuin}" "${pkgs.atuin}/bin/atuin gen-completions --shell zsh"
-      _regen_if_stale op "${pkgs._1password-cli}" "${pkgs._1password-cli}/bin/op completion zsh"
-
-      # Homebrew-installed tools (use --version output as version)
-      if command -v wezterm &>/dev/null; then
-        _wez_ver=$(wezterm --version 2>/dev/null | head -1)
-        _regen_if_stale wezterm "$_wez_ver" "wezterm shell-completion --shell zsh"
-      fi
-
-      unset -f _regen_if_stale
-      unset _comp_dir _ver_dir _wez_ver
-    '')
-
-    (lib.mkOrder 550 ''
-      # --- Completion zstyle configuration ----------------------------------------
-      zstyle ':completion:*' matcher-list 'm:{[:lower:][:upper:]}={[:upper:][:lower:]}'
-      zstyle ':completion:*' use-cache true
-      zstyle ':completion:*' cache-path "$XDG_CACHE_HOME/zsh/zcompcache"
-      zstyle ':completion:*' menu no
-      zstyle ':completion:*:git:*' group-name ""
-      zstyle ':completion:*:descriptions' format '[%d]'
-      zstyle ':carapace:*' nospace true  # Better spacing behavior
-    '')
-
-    (lib.mkOrder 580 ''
-      # --- fzf-tab (after compinit at 570, before widget wrappers at 700+) --------
-      source ${pkgs.zsh-fzf-tab}/share/fzf-tab/fzf-tab.plugin.zsh
-    '')
-
-    (lib.mkOrder 600 ''
-      # --- fzf-tab configuration ---------------------------------------------------
-      # No use-fzf-default-opts: global FZF_DEFAULT_OPTS previews stay out of completion.
-      zstyle ':fzf-tab:*' fzf-flags --height=80% --layout=reverse --border=sharp
-      zstyle ':fzf-tab:*' fzf-pad 4
-      zstyle ':fzf-tab:*' switch-group '<' '>'
-      zstyle ':fzf-tab:complete:(cd|__zoxide_z):*' fzf-preview 'eza -1 --color=always --icons=always $realpath'
-      zstyle ':fzf-tab:complete:(ls|eza|bat|cat|nvim|vim|code):*' fzf-preview '[[ -d $realpath ]] && eza -la --color=always --icons=always $realpath || bat --color=always --style=numbers --line-range=:200 $realpath 2>/dev/null'
-      zstyle ':fzf-tab:complete:kill:*' fzf-preview 'ps -p $word -o pid,ppid,stat,command 2>/dev/null'
-    '')
-
     (lib.mkOrder 650 ''
       # --- FZF Keybindings (suppress read-only option errors) --------------------
-      # FZF 0.67.0 tries to restore the read-only 'zle' option, causing harmless
-      # errors. Suppress stderr to keep output clean; FZF keybindings still register.
+      # FZF tries to restore the read-only 'zle' option, causing harmless errors.
+      # Suppress stderr to keep output clean; FZF keybindings still register.
       # fzf captures the fzf-tab ^I widget as fzf_default_completion: plain Tab
       # falls through to fzf-tab, the ** trigger keeps fzf path completion.
       if [[ $options[zle] = on ]]; then
@@ -130,10 +64,5 @@
       typeset -ga ZSH_AUTOSUGGEST_STRATEGY
       ZSH_AUTOSUGGEST_STRATEGY=(atuin completion)
     '')
-
-    ''
-      # --- Shell Options (these run after everything) -----------------------------
-      setopt AUTO_PUSHD PUSHD_IGNORE_DUPS CDABLE_VARS
-    ''
   ];
 }

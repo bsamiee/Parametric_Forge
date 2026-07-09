@@ -376,6 +376,33 @@
       label = "http";
       display = "GET/POST/PUT -> xh";
     }
+    # WezTerm outer layer (native left-Cmd chords, keys.lua): surfaced here so
+    # the cheatsheet owns discoverability for the whole terminal stack.
+    {
+      rank = 310;
+      label = "wezterm palette";
+      display = "⇧⌘P";
+    }
+    {
+      rank = 320;
+      label = "wezterm quick select";
+      display = "⇧⌘Space";
+    }
+    {
+      rank = 330;
+      label = "wezterm launcher";
+      display = "⇧⌘L";
+    }
+    {
+      rank = 340;
+      label = "wezterm unicode picker";
+      display = "⇧⌘U";
+    }
+    {
+      rank = 350;
+      label = "wezterm debug overlay";
+      display = "⇧⌘D";
+    }
   ];
 
   # --- Projections ----------------------------------------------------------------

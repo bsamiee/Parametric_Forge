@@ -17,8 +17,16 @@ in {
     settings = {
       db_path = "${config.xdg.dataHome}/atuin/history.db";
       key_path = "${config.xdg.dataHome}/atuin/key";
+      # Sync rail: `atuin server` on the Maghz VPS, loopback-only through the
+      # ssh.nix vpsTunnels registry (port 8888 row lands with the VPS peer).
+      # Credential custody is Doppler: ATUIN_SYNC_PASSWORD for the one-time
+      # register/login, ATUIN_SYNC_KEY escrowing `atuin key` — any host with
+      # the tunnel plus Doppler joins; no per-machine roster exists anywhere.
+      # auto_sync flips true in the same change that lands the server row.
       auto_sync = false;
-      sync_frequency = "1h";
+      sync_address = "http://127.0.0.1:8888";
+      sync_frequency = "15m";
+      sync.records = true; # sync v2 store
       update_check = false;
       timezone = "local"; # Uses system TZ (via TZ env var)
       search_mode = "daemon-fuzzy";

@@ -27,13 +27,14 @@ in {
       "--border=sharp"
       # Note: Border label set per-command in init.nix and shell.nix
       "--border-label-pos=0"
-      # UI elements
-      "--prompt='󰅂 '"
+      # UI elements: BMP-only glyphs — PUA codepoints fail fzf width validation
+      "--prompt='❯ '"
       "--marker='✓'"
       "--pointer='❯'"
       "--separator='─'"
       "--scrollbar='│'"
       "--info=right"
+      "--highlight-line"
       # Behavior; previews are widget-scoped, never a global default
       "--height=80%"
       "--layout=reverse"

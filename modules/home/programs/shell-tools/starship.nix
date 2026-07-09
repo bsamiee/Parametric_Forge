@@ -44,8 +44,13 @@
         "$character"
       ];
 
-      # Right-side prompt (session metadata)
+      # Right-side prompt (operational telemetry, verified on starship 1.25.1)
       right_format = lib.concatStrings [
+        "$status"
+        "$cmd_duration"
+        "$jobs"
+        "$shell"
+        "$kubernetes"
         "$time"
       ];
 
@@ -228,7 +233,65 @@
         heuristic = false;
       };
 
-      # --- Optional Modules -------------------------------------------------
+      # --- Operational Modules (right prompt) ---------------------------------
+      # Exit truth: pipestatus-aware, renders only on failure.
+      status = {
+        disabled = false;
+        format = "\\[[$symbol$status]($style)\\]";
+        symbol = "✘ ";
+        style = "red";
+        pipestatus = true;
+        pipestatus_format = "\\[[$pipestatus]($style)\\]";
+        pipestatus_separator = "|";
+        recognize_signal_code = true;
+        map_symbol = false;
+      };
+
+      cmd_duration = {
+        min_time = 2000;
+        format = "\\[[󱎫 $duration]($style)\\]";
+        style = "yellow";
+        show_milliseconds = false;
+        show_notifications = true;
+        min_time_to_notify = 45000;
+      };
+
+      jobs = {
+        format = "\\[[$symbol$number]($style)\\]";
+        symbol = "✦ ";
+        style = "cyan";
+        number_threshold = 1;
+        symbol_threshold = 1;
+      };
+
+      # Shell identity only when NOT zsh (nested bash/fish/nu/sh sessions).
+      shell = {
+        disabled = false;
+        format = "(\\[[$indicator]($style)\\])";
+        style = "comment";
+        zsh_indicator = "";
+        bash_indicator = "bash";
+        fish_indicator = "fish";
+        nu_indicator = "nu";
+        unknown_indicator = "sh";
+      };
+
+      # Context-gated: visible only where kube work is provable (manifests,
+      # chart/kustomize roots, or an explicit KUBECONFIG); prod contexts go red.
+      kubernetes = {
+        disabled = false;
+        format = "\\[[󱃾 $context( \\($namespace\\))]($style)\\]";
+        style = "purple";
+        detect_files = ["skaffold.yaml" "helmfile.yaml" "Chart.yaml" "kustomization.yaml"];
+        detect_folders = ["k8s" "kubernetes" "manifests"];
+        detect_env_vars = ["KUBECONFIG"];
+        contexts = [
+          {
+            context_pattern = ".*(prod|prd).*";
+            style = "red";
+          }
+        ];
+      };
 
       time = {
         disabled = false;

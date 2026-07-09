@@ -4,20 +4,29 @@
 # License       : MIT
 # Path          : modules/home/programs/zsh/plugins.nix
 # ----------------------------------------------------------------------------
-# Zsh plugin management - home-manager native approach
-{pkgs, ...}: {
-  # fzf-tab is not listed here: HM sources plugins at order 900, after autosuggestions
-  # wrap widgets. init.nix sources it at 580 (post-compinit, pre-wrappers) instead.
-  programs.zsh.plugins = [
+# Sourced-plugin roster: HM sources each row at order 900. Widget-order-bound
+# surfaces live elsewhere by design: fzf-tab and zsh-completions belong to
+# completions.nix (pre-wrapper / pre-compinit), autosuggestions and syntax
+# highlighting to HM options in options.nix. A new sourced plugin is one row.
+{pkgs, ...}: let
+  roster = [
     {
       name = "forgit";
-      src = pkgs.zsh-forgit;
+      pkg = pkgs.zsh-forgit;
       file = "share/zsh/zsh-forgit/forgit.plugin.zsh";
     }
     {
+      # Alias coaching kept deliberately: operator-ruled behavioral surface.
       name = "you-should-use";
-      src = pkgs.zsh-you-should-use;
+      pkg = pkgs.zsh-you-should-use;
       file = "share/zsh/plugins/you-should-use/you-should-use.plugin.zsh";
     }
   ];
+in {
+  programs.zsh.plugins =
+    map (r: {
+      inherit (r) name file;
+      src = r.pkg;
+    })
+    roster;
 }
