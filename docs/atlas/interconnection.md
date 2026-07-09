@@ -29,6 +29,8 @@ Consumers never restate hex. WezTerm receives `projections.luaPalette` as `wezte
 
 `modules/common/toolchain-env.nix` (`forgeToolchainEnvFor`) is the single source of PATH vectors, scientific-env exports, and browser path. Its output is consumed by the shell environment, zsh config, the Darwin GUI launchd env (`darwin/settings/system.nix`), and WezTerm. A bad PATH vector makes shells, launchd agents, and GUI-launched subprocesses resolve different tools — the bug class where a command works in the terminal and fails under a GUI-launched agent. Platform reality for this seam is [platform-facts.md](platform-facts.md).
 
+A sibling context-dispatch seam lives in `languages/python-tools.nix`: `python`, `python3`, `ruff`, `ty`, and `mypy` are project-first shims — inside a project root they exec the project's `.venv` or `uv --project run`, otherwise the system interpreter — so the interpreter a bare `python` binds to is a function of the caller's directory, not a fixed PATH entry. `FORGE_PYTHON_SHIM_BYPASS=1` forces the system interpreter when a shim resolves the wrong environment in a sibling repo.
+
 ## [06]-[OWNER_TABLES]
 
 New capability lands as a row on the owning table, never a new file. Each axis has one owner that both installs packages and carries their config.

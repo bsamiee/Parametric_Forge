@@ -5,7 +5,7 @@ Each row is a trap the estate already paid for: the failure shape and the rule t
 ## [01]-[GIT]
 
 | [INDEX] | [TRAP] | [RULE_NOW] |
-|:--:|:--|:--|
+| :-----: | :--- | :--- |
 | [01] | `git reset --soft HEAD~1` after an uncertain commit ate a pushed commit | Inspect the commit graph before any reset near uncertain commit state; recovery from an eaten push is fast-forward, not reset |
 | [02] | `GH_TOKEN`/`GITHUB_TOKEN` shadow the keyring credential carrying `admin:ssh_signing_key` | Strip both env vars when validating signed GitHub SSH auth |
 | [03] | `git add --renormalize` stages immediately and captures unrelated index state | Renormalize only inside the owning commit; there are no LFS attribute rows, so the filter is inert — verify with `git lfs ls-files` before push |
@@ -17,7 +17,7 @@ Each row is a trap the estate already paid for: the failure shape and the rule t
 ## [03]-[DOPPLER]
 
 | [INDEX] | [TRAP] | [RULE_NOW] |
-|:--:|:--|:--|
+| :-----: | :--- | :--- |
 | [01] | MCP `--read-only` is cosmetic relative to token scope | The scoped service token is the auth boundary; read-only is default posture, not enforcement (`mcp-fleet.nix`) |
 | [02] | A snapshot pruner that reaped every non-dotfile destroyed unrelated files in a repointed cache dir | Prune only owned snapshot families (`.claude/hooks/setup-env.sh`) |
 | [03] | `forge-mcp drift` crashed on absent, empty, or malformed `~/.claude.json`/`~/.codex/config.toml` | A parse failure is a drift finding, not a raw crash (`mcp-launchers.nix`) |
@@ -29,7 +29,7 @@ Colima is the Docker API / Compose / Buildx / Pulumi default and never yields `D
 ## [05]-[MCP]
 
 | [INDEX] | [TRAP] | [RULE_NOW] |
-|:--:|:--|:--|
+| :-----: | :--- | :--- |
 | [01] | Project-scoped `mcpServers` blocks shadowed the global fleet with stale servers | An empty `{}` project block is inert; the global fleet governs |
 | [02] | `mcpServers.jupyter.env` carried a literal `JUPYTER_TOKEN`, overriding wrapper token-file resolution | Carry no literal token env; the wrapper resolves the live token |
 | [03] | Required MCP registration proves only startup/registration | `required = true` fails startup/resume when the MCP cannot initialize; tunnel health, env, and wrapper are separate axes |
@@ -38,7 +38,7 @@ Colima is the Docker API / Compose / Buildx / Pulumi default and never yields `D
 ## [06]-[ZELLIJ_TERMINAL]
 
 | [INDEX] | [TRAP] | [RULE_NOW] |
-|:--:|:--|:--|
+| :-----: | :--- | :--- |
 | [01] | Unserialized popup dispatch let concurrent dispatchers create duplicate popups | Popup dispatch is serialized (`scripts/integration/`) |
 | [02] | `startswith("forge-yazi.sh")` predicates matched wrong panes | Pane identity uses exact matching |
 | [03] | An ungranted plugin in a borderless pane rendered blank forever | Plugin grants are seeded per wasm path in the Zellij `permissions.kdl` |
@@ -50,7 +50,7 @@ Colima is the Docker API / Compose / Buildx / Pulumi default and never yields `D
 ## [07]-[DEPLOY]
 
 | [INDEX] | [TRAP] | [RULE_NOW] |
-|:--:|:--|:--|
+| :-----: | :--- | :--- |
 | [01] | A Brew failure killed Home Manager activation while `nh` printed success, so font projection never ran | `forge-redeploy` receipts capture and propagate the activation-phase exit status |
 | [02] | Homebrew removed `--no-quarantine`/`--no-binaries`; the Brewfile `cask_args` killed new cask installs | The dead arg is removed; posture is carried by `HOMEBREW_CASK_OPTS` and session variables (`darwin/homebrew/`) |
 | [03] | `AllSpacesAndDisplays` was a phantom wallpaper schema and PlistBuddy `Add` failed under `set -e` | The wallpaper rail uses System Events `osascript` plus an idempotence probe (`assets/wallpaper/`) |
