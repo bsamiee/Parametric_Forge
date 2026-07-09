@@ -39,7 +39,13 @@ Invocation policy resolves to one of three modes: model-invoked (listed descript
 
 ## [04]-[SHADOWING]
 
-Same-name skills shadow by scope — enterprise over personal, personal over project — so a personal skill silently masks every project master sharing its name. An estate that masters skills inside repos keeps the personal root empty; the repo copy is the single authority and shadowing has nothing to bite. Plugin skills are namespaced and exempt from the contest.
+Same-name skills shadow by scope — enterprise over personal, personal over project — so a personal skill silently masks every project master sharing its name. An estate that masters skills inside repos keeps the personal root empty; the repo copy is the single authority and shadowing has nothing to bite. A project skill likewise replaces a bundled skill sharing its name, and a skill beats a same-named command file. Plugin skills are namespaced and exempt from the contest.
+
+Three residency mechanics complete the placement picture:
+
+- [NESTED]: Skills in `.claude/skills/` directories below the working directory coexist with a same-named root skill instead of shadowing it — the nested bundle lists under a directory-qualified name (`<dir>:<name>`), an unqualified invocation loads the root skill with the qualified variants appended, and the variant whose directory holds the working files still applies. A monorepo package owns its skills without contesting the root's names.
+- [SYMLINK]: A skill entry at any level resolves through a symlink to a directory elsewhere on disk, and one target reachable from several locations loads once — a master bundle can live outside the scan roots with links standing in.
+- [LIVE_RELOAD]: Watched skill directories hot-reload `SKILL.md` adds, edits, and removals within the running session; only a top-level skills directory created mid-session needs a restart. The authoring loop — tune a description, re-test the trigger — runs without session churn.
 
 ## [05]-[FREEDOM]
 

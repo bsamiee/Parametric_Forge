@@ -136,4 +136,4 @@ Worked accepted and rejected instances are [examples/artifacts.md](examples/arti
 
 ## [10]-[REPO_INTEGRATION]
 
-Durable pages home at `docs/atlas/` under `<kind>.<scope>[.<slug>].html`, composed and gated through html-studio; a host instruction chain declaring its own artifact home and naming law binds instead. Corpus grounding routes through the host's search owners — in this repo `uv run python -m tools.assay code` for structural search and LSP for symbol navigation; the portable law is verb-neutral: verify on disk before asking.
+Durable pages home at `docs/atlas/` under `<kind>.<scope>[.<slug>].html`, composed and gated through html-studio; a host instruction chain declaring its own artifact home and naming law binds instead. Corpus grounding routes through the host's declared search owners — structural code search and LSP symbol navigation; the portable law is verb-neutral: verify on disk before asking.
