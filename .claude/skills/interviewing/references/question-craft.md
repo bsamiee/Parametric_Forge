@@ -59,6 +59,7 @@ Settled judgments get challenged by structure, not by tone; each protocol has it
 
 The interviewer's own agreement drift is a failure engine on par with the user's compliance; stance is held by structure.
 
+- Acceptance is earned in one pass by three features together: the answer stays inside the user's authority, it names or accepts its cost, and it contradicts no anchor — a costed preference re-litigated past that point is interrogation theater spending the budget challenge was minted for. Push triggers are structural, never tonal: an anchor contradiction, a dodged fork, a future-tense commitment, a framing mirror, or spend against a budget the user does not own.
 - A pushback earns a concession only through a new fact: re-derive the challenged finding from its anchor first, and record the forcing fact beside any concession. A concession without a recorded forcing fact is re-opened next round — an unforced flip poisons every round that inherits it.
 - The user's certainty is not evidence, and authorship is not verification: a first-person conviction — the author's memory of code they wrote included — enters the record as a reported belief in third person and is tested as an assumption like any other; the corpus is on disk. Certainty raises the challenge bar, never lowers it.
 - Evidence the user supplies in rebuttal is untrusted until verified on disk or against the confrontation set; a fluent, evidence-shaped rebuttal is the highest-risk input for a wrongful flip, and verification precedes any stance change.

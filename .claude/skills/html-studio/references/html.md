@@ -93,7 +93,7 @@ Native disclosure and top-layer elements own open state, dismissal, focus, and s
 
 - `<details>` holds depth in place: `<summary>` stays a short claim with an optional trailing chip or count, and a shared `name` makes a sibling group mutually exclusive with zero script. Load-bearing conclusions render open at rest — disclosure deepens the argument, never gates it.
 - `<dialog>` opened by `showModal()` makes the rest of the page inert automatically; `<form method="dialog">` with valued buttons returns the choice through `returnValue`, so a confirm flow carries no focus-trap plumbing. The least-destructive button carries `autofocus`, so Enter-through never destroys.
-- `popovertarget` pairs a button to its `popover` panel and supplies open, light-dismiss, and `Esc` natively; a timed toast is `<output popover="manual" role="status">` shown and hidden by script alone.
+- `popovertarget` pairs a button to its `popover` panel and supplies open, light-dismiss, and `Esc` natively; a timed toast is a `popover="manual"` div carrying `role="status"`, shown and hidden by script alone — `<output>` stays bound to named inputs through `for`.
 - Dialog and popover split by weight: a `<dialog>` blocks the page for a decision the flow requires; a popover floats context the reader dismisses at will. A blocking popover and a light-dismiss dialog are both the wrong element.
 - The `toggle` event on a popover or `<details>` is the state seam the script listens on — open state reads from the event, never from a click handler inferring it.
 - Nested popovers form one open chain: opening a child keeps its ancestor panels open, and light-dismiss unwinds from the top of the chain.
@@ -104,13 +104,13 @@ Native disclosure and top-layer elements own open state, dismissal, focus, and s
 <button class="drawer-tab" popovertarget="drawer">Export</button>
 <aside id="drawer" class="export-bar" popover aria-label="Export">
   <header><h2>Export</h2><span class="micro" data-dirty></span></header>
-  <section data-send hidden><button class="btn primary" data-export="send">Send to agent</button></section>
-  <section>
+  <div data-send hidden><button class="btn primary" data-export="send">Send to agent</button></div>
+  <div>
     <button class="btn" data-export="markdown">Copy markdown</button>
     <button class="btn" data-export="json">Download JSON</button>
     <button class="btn ghost" data-export="changed">Copy changed only</button>
-  </section>
-  <section data-drawer-fields></section>
+  </div>
+  <div data-drawer-fields></div>
   <textarea readonly aria-label="Outgoing payload"></textarea>
 </aside>
 ```

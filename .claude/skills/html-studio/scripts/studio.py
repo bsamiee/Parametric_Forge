@@ -193,7 +193,6 @@ PRINT_EXPORT_BAR = re.compile(r"@media print[\s\S]*\.export-bar[^{]*{[^{}]*displ
 PRINT_SAFE_LAYERS = frozenset({"print", "overrides"})
 SIZE_WARN = 400 * 1024
 SUBPROCESS_TIMEOUT = {"vnu": 120.0, "render": 300.0}  # seconds; render covers a cold `uv run --with playwright` install
-TEMPLATE_ROOT = str((SKILL_DIR.parent / "templates").resolve())
 MIN_CONTRAST = 4.5
 CHIP_ALPHA = 0.14
 CONTRAST_CHECKS: tuple[tuple[str, str, float], ...] = (
@@ -504,10 +503,6 @@ def emit_row(row: Row, json_mode: bool) -> None:
 
 def bad_reference(value: str) -> bool:
     return bool((ref := value.strip()) and BAD_REF.match(ref) and not ref.lower().startswith(("data:", "blob:", "about:blank")))
-
-
-def template_source(path: str) -> bool:
-    return str(Path(path).resolve()).startswith(TEMPLATE_ROOT + os.sep)
 
 
 def srcset_urls(value: str) -> tuple[str, ...]:
@@ -861,7 +856,6 @@ def audit(path: Path) -> tuple[Row, ...]:
             (Check.SECRET, SECRET, "credential-shaped literal"),
         )
         if pattern.search(value)
-        and not (check is Check.RESIDUE and template_source(artifact.path))
         and not (check is Check.SECRET and ";base64," in value)
     )
     return tuple(sorted(rows, key=lambda row: (row.line, row.check, row.detail)))

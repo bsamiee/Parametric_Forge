@@ -1,6 +1,6 @@
 # [ARTIFACT_CRAFT]
 
-A durable artifact seals a ruling for a future session to consult as law; an instance that hedges its ruling, seals a decision no thread forced, drops a reopen condition, collides two entries on one id, fakes a multi-tier fan, strands a finding with no landing surface, leaks a plan into a horizon, asserts a gap by assumption, or lets its projection fence drift from its rows fails the conformance gate or the cold read a year later. Each entry names one instance defect across the five durable kinds under the fixed Detection / Rejected / Accepted / Reason / Reframe card, grouped by the kind it strikes; the Rejected and Accepted bodies are schema-conformant fragments using each template's leader and field grammar.
+A durable artifact seals a ruling for a future session to consult as law; an instance that hedges its ruling, seals a decision no thread forced, drops a reopen condition, collides two entries on one id, fakes a multi-tier fan, strands a finding with no landing surface, leaks a plan into a horizon, asserts a gap by assumption, or lets its projection fence drift from its rows fails the cold-read seal — now or a year later. Each entry names one content defect across the five durable kinds under the fixed Detection / Rejected / Accepted / Reason / Reframe card, grouped by the kind it strikes; the Rejected and Accepted bodies are conformant fragments in each kind's leader and field grammar, the content the rendered page carries whatever its form.
 
 ## [01]-[HEDGED_RULING]
 
@@ -128,7 +128,7 @@ A direction set dresses one idea in three costumes — three variations at the s
     - Confidence: low
   ```
 - Reason: A set of variations on one thesis hides the real decision — how far to reach — behind a knob nobody needs; a true set spans tiers so the user rules on scope, not on tuning.
-- Reframe: Generate directions across at least two tier tokens with materially different theses — the single-token set is the mechanical tell the conformance gate rejects, the identical-thesis set the tell only the cold read catches — attack each with the evidence inconsistent with it, and record thesis, cost, kills, reversibility, and confidence per direction.
+- Reframe: Generate directions across at least two tier tokens with materially different theses — the single-token set is the mechanical tell, the identical-thesis set the tell only the cold read catches — attack each with the evidence inconsistent with it, and record thesis, cost, kills, reversibility, and confidence per direction.
 
 ## [06]-[DUPLICATE_MINTED_ID]
 
@@ -155,7 +155,7 @@ A section mints the same `[<id>]` on two leaders — a collision that leaves the
   ## [04]-[RULING]
   - Leading: [02] wins on algorithm coverage against a thesis that survived disconfirmation.
   ```
-- Reason: An id is the record's addressable handle — minted once, it lets a later section, a fold-back, or a cross-artifact reference point at exactly one entry; a second mint of the same id inside one section is the mechanical tell the conformance gate rejects, resolving to neither entry, while the same token in a scoring or ruling section is the reference the gate admits.
+- Reason: An id is the record's addressable handle — minted once, it lets a later section, a fold-back, or a cross-artifact reference point at exactly one entry; a second mint of the same id inside one section resolves to neither entry, while the same token in a scoring or ruling section is a legal reference.
 - Reframe: Mint each id once in its owning section and cite it by the same token from later sections; when two entries collide on an id, renumber the second at its mint, never at a reference.
 
 ## [07]-[MISCOVERED_WARGAME]
@@ -189,7 +189,7 @@ A wargame section scores a set that drifted from its directions — a phantom ro
   - [01]: 3 2 = 13
   - [02]: 2 3 = 12
   ```
-- Reason: The wargame is the direction set's own scoring, so its roster is the DIRECTIONS roster by construction — a phantom row smuggles in an unexamined option, and an unscored direction exits the comparison silently; the conformance gate rejects both drift directions.
+- Reason: The wargame is the direction set's own scoring, so its roster is the DIRECTIONS roster by construction — a phantom row smuggles in an unexamined option, and an unscored direction exits the comparison silently; the cold-read seal rejects both drift directions.
 - Reframe: Score exactly the entered directions, one row per direction id in entry order, and let the sensitivity line reason only over rows the set carries.
 
 ## [08]-[DATED_HORIZON]

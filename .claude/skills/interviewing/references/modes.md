@@ -1,6 +1,6 @@
 # [MODES]
 
-Each mode is the operating loop specialized to one extraction; the card carries entry, grounding scope, named stages, and what lands. Stages chain by input: every stage names the prior stage's product as its declared input and carries the exit test that gates the next, so a card reads as a conveyor from grounding to landing. A stage whose input cannot reach its exit diverges by the branch the card names, never an unbounded retry of the same stage. Ephemeral working forms are declared inline; durable kinds route to their templates.
+Each mode is the operating loop specialized to one extraction; the card carries entry, grounding scope, named stages, and what lands. Stages chain by input: every stage names the prior stage's product as its declared input and carries the exit test that gates the next, so a card reads as a conveyor from grounding to landing. A stage whose input cannot reach its exit diverges by the branch the card names, never an unbounded retry of the same stage. Ephemeral working forms are declared inline; durable kinds carry their contracts in the skill entry's kinds table and compose as their html-studio types.
 
 ## [01]-[INTERVIEW]
 

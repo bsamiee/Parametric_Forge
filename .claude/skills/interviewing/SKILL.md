@@ -5,19 +5,19 @@ description: >-
   interviews whose questions confront the user with what exists, blindspot passes along a named
   interrogation-axis catalog, direction brainstorms and wargames, pre-merge comprehension quizzes,
   buy-in packets, mid-build deviation capture, and vocabulary teaching — each terminating in a
-  schema-declared artifact (decision record, direction set, roadmap brief, blindspot ledger,
-  capability entry). Owns the question-threading method, axis catalog, artifact schemas, and the
-  durable-versus-ephemeral ruling; rendering is html-studio. Use when requirements are ambiguous
-  or live in the user's head, before authoring a brief, spec, roadmap, or direction document,
-  when a conversation must produce a durable decision or roadmap artifact, when a mid-build
-  discovery strikes the plan, or when the user says
+  typed html-studio deliverable (decision record, direction set, roadmap brief, blindspot ledger,
+  capability entry). Owns question threading, the push-versus-accept ruling, the axis catalog,
+  kind contracts, and the durable-versus-ephemeral ruling.
+  Use when requirements are ambiguous or live in the user's head, before authoring a brief,
+  spec, roadmap, or direction document, when a conversation must land a durable decision or
+  roadmap artifact, when a mid-build discovery strikes the plan, or when the user says
   "interview me", "find my blindspots", "what am I missing", "wargame this", "brainstorm this",
   "quiz me", or "teach me the domain".
 ---
 
 # [INTERVIEWING]
 
-An interview converts the gap between the request and the territory into visible rulings before work seals: the questions confront the user with what exists, every answer is challenged before it becomes a ruling, and every ruling lands in a schema-declared artifact at its ruled altitude. A stenographer that collects answers without grounding or challenge ships a confident wrong spec.
+An interview converts the gap between the request and the territory into visible rulings before work seals: the questions confront the user with what exists, every answer is challenged before it becomes a ruling, and every ruling lands in a typed deliverable at its ruled altitude. A stenographer that collects answers without grounding or challenge ships a confident wrong spec.
 
 ## [01]-[OPERATING_LOOP]
 
@@ -27,7 +27,7 @@ Elicitation is a hard gate before any brief, spec, roadmap, or direction documen
 - [FRAME]: Classify the unknowns into the knowledge buckets and route each to its technique; exit when every named unknown has a bucket and no bucket with signal has zero coverage.
 - [INTERROGATE]: Descend the planned threads round by round — each stratum's rulings premise the next stratum's questions under the question law; exit when every thread has sealed in a durable ruling or a tracked open item, and a thread advancing two rounds without changing a ruling seals as open.
 - [RULE]: Convert each answer into a marked ruling — fact, assumption, inference, or open — and surface every conflict as its own question; exit when no answer remains unclassified and every conflict is resolved or held as an open entry binding neither ruling.
-- [LAND]: Rule durability and kind by altitude; a durable ruling instantiates its kind's schema, emits the fold-back, and renders to its homed page — exit when fold-back, render, and home stand and a cold read raises no new question; an ephemeral carrier exits by graduating its surviving ruling to the owning durable kind or dying owing nothing.
+- [LAND]: Rule durability and kind by altitude; a durable ruling instantiates its kind's contract, emits the fold-back, and renders as its typed page — exit when fold-back, render, and home stand and a cold read raises no new question; an ephemeral carrier exits by graduating its surviving ruling to the owning durable kind or dying owing nothing.
 
 Pacing is bounded on both ends: one load-bearing question at a time when answers cascade, independent questions batched, roughly ten questions per session with nonessential gaps defaulted and named as defaults in the record. A scope whose threads outrun the session budget partitions by blast radius — the highest-ranked threads run now, the remainder route to tracked cards that seed the next session's frame; a marathon session dilutes every ruling it lands.
 
@@ -80,6 +80,7 @@ The always-hot core; composition depth — thread design, evidence extraction, c
 - Mechanism is the thread's floor, never its head: owner, truth source, and seam type are fixed by the upper strata before any question reaches signature, dispatch form, or member choice.
 - A question earns its stratum only when undetermined, consequential, and ranked: not answerable from the corpus, carrying at least two options that change the work differently, and asked ahead of everything its answer invalidates. Architecture outranks interface outranks wording.
 - Past specifics outrank hypotheticals: a generality is anchored to its most recent occurrence, and a future-tense answer is recorded as an assumption, never as a fact ruling.
+- Accept and push split by authority and evidence: an answer inside the user's authority that names its cost and contradicts no anchor seals on one pass; an answer contradicting an anchor, dodging the fork, arriving future-tense, or mirroring the framing is pushed with the anchor in hand, and the push terminates under the concession law.
 - State the target behavior a question must extract; a prohibition phrased as a question plants the pattern it forbids.
 - Options are probes carrying costs, not a menu of labels; the `(Recommended)` marker leads only where one option dominates.
 - A conflict between rulings surfaces as its own question with the consequence of each resolution spelled out, never silently reconciled.
@@ -95,38 +96,44 @@ Every output lands at exactly one altitude; the altitude rules whether it is dur
 
 The durability test: a future session consults the artifact as law — a standing direction, a ruled decision, a verified finding, a capability fact. Anything consumed by its own execution — transcripts, quizzes, buy-in packets, deviation ledgers, rendered interactive boards — is working material; its surviving ruling graduates to the owning durable kind and the carrier dies. Wargame scoring survives as the direction set's own wargame section; a buy-in acceptance survives as a decision record.
 
-## [07]-[ARTIFACTS]
+## [07]-[KINDS]
 
-Each durable kind is a fixed schema owned by its template: the gate derives the whole contract — section census, leader, field, and mark vocabularies, required section bullets, kind-bound span and coverage laws, the blindspot ledger's axis leaders — from `templates/` at run time, so a schema change is a template edit and a new kind is a template plus one registry row in the gate. Run the gate on every instance before the seal. Entry ids are zero-padded ordinals scoped to the instance, optionally led by one capital kind letter (`[01]`, `[F01]`); an id mints once across the instance's minting sections with numbering continuing in document order — a repeat in a scoring or ruling section is a reference — and is never reused after deletion. An instance is authored in working space named `<kind>.<scope>[.<slug>].md` — the artifact home's naming law with the rendered page's extension swapped — and enters the artifact home only through rendering. Marks carry two enforcement tiers: a missing or out-of-vocabulary mark token fails the gate; a semantically wrong mark — a `[FACT]` no anchor supports, an assumption missing its invalidating condition — fails the cold-read seal.
+Each durable kind is a content contract: the fields in its row are what a future session consults as law, and the kind's page composes through the html-studio type in its row. The contract binds the content; html-studio binds the page — a kind never restates spine, layout, or capture law here.
 
-```bash
-uv run scripts/check_instance.py [--json] <instance.md>...
-```
+| [INDEX] | [KIND]             | [CONTRACT]                                                                                                  | [HTML_STUDIO_TYPE] |
+| :-----: | :----------------- | :----------------------------------------------------------------------------------------------------------- | :----------------- |
+|  [01]   | `decision-record`  | context, drivers, options with costs, one indicative ruling, consequence, confirmation signal, marked premises | decision-doc       |
+|  [02]   | `direction-set`    | constraint frame, directions with thesis and tier, disconfirmation results, leading direction, flip triggers   | decision-doc       |
+|  [03]   | `roadmap-brief`    | confidence horizons, outcomes with owners and gates, promotion conditions, dependencies                       | roadmap            |
+|  [04]   | `blindspot-ledger` | axis-led findings with anchor, blast radius, consequence, and fold-back; clean axes listed                     | report             |
+|  [05]   | `capability-entry` | owner, edges, maturity, refused arms distinguished from gaps                                                   | atlas              |
 
-- [01]-[DECISION-RECORD](templates/decision-record.md): one ruling, options, consequence, lifecycle
-- [02]-[DIRECTION-SET](templates/direction-set.md): competing directions, kills, flip triggers
-- [03]-[ROADMAP-BRIEF](templates/roadmap-brief.md): confidence horizons, outcomes, promotions
-- [04]-[BLINDSPOT-LEDGER](templates/blindspot-ledger.md): verified findings, blast radius, fold-backs
-- [05]-[CAPABILITY-ENTRY](templates/capability-entry.md): owner, edges, maturity, gaps
+Content law binds every instance regardless of kind:
 
-Worked accepted and rejected instances are [examples/artifacts.md](examples/artifacts.md); worked question batches and threads are [examples/batches.md](examples/batches.md) — consult the matching set before instantiating a kind, composing a round, or planning a thread.
+- The ruling is one owning sentence in the indicative; weighing lives in drivers and options, never in the ruling, and a hedged ruling binds nothing.
+- Every rejected option and killed direction carries the observable condition that reopens it; a rejection without one reads as dogma and gets re-argued from zero.
+- Marks are load-bearing: a fact carries its anchor, an assumption its invalidating condition, an inference its named premises, an open item its tracking route.
+- A date renders only at the precision the estimate holds, and a wargame's criteria and weights are declared before any direction is scored.
+- Entry ids are zero-padded ordinals scoped to the instance, optionally led by one capital kind letter (`[01]`, `[F01]`); an id mints once, a repeat in a scoring or ruling section is a reference, and a deleted id is never reused.
+
+Worked accepted and rejected instances are [examples/artifacts.md](examples/artifacts.md); worked question batches and threads are [examples/batches.md](examples/batches.md) — consult the matching set before landing a kind, composing a round, or planning a thread.
 
 ## [08]-[HANDOFF]
 
 - The ruling record binds downstream: the authoring pass honors every ruling and re-litigates none; an entry overturned later is edited in place with its superseding ruling.
-- Landing completes on three inspectable facts: the terminal artifact's fold-back is emitted — the copyable prompt that carries its content into the next task as binding input — the durable instance is rendered to its page, and the page is homed under the repo's naming law. A durable ruling missing any of the three is unlanded, not merely unpolished.
+- Landing completes on three inspectable facts: the terminal deliverable's fold-back is emitted — the copyable prompt that carries its content into the next task as binding input — the durable kind is composed as its typed page, and the page is homed under the repo's naming law. A durable ruling missing any of the three is unlanded, not merely unpolished.
 - A fold-back that seeds a plan orders its rulings by tweak pressure and blast radius, never execution chronology: the decisions most exposed to movement lead, and trusted mechanics collapse below the decision surface.
-- Rendering through html-studio is the default landing for every durable kind — direction set as brainstorm, roadmap brief as roadmap, scored boards as wargame, quiz as quiz, packet as buy-in, deviation ledger as report, capability entries as capability-atlas, decision sets and blindspot ledgers as the nearest type-row spine; the schema instance stays the truth the page renders. A record nobody reads rots regardless of its schema, so render and home are landing, never decoration.
-- A relation an instance carries as three or more interlinked rows — capability edges, roadmap dependency chains, seam findings spanning owners — projects as one mermaid fence beside its rows; the rows stay the truth the fence projects, fence craft routes through mermaid-diagramming, and a fence edge no row carries is a drift defect the seal rejects.
-- An interactive carrier — quiz, scored wargame board, direction picker, decision-surface round, blindspot editor — runs served through the html-studio return channel (`artifact_server.py` serve, receipts, stop); copy-paste is the degraded path, never the default. A receipt's verdicts, scores, and selections are answer material facing the same challenge as any spoken answer, and a receipt diverging from a spoken answer on one question is a conflict with its own question, never resolved by recency.
+- Every durable kind renders as the html-studio type in its kinds row; ephemeral carriers route to the matching html-studio variant — scored boards as wargame, quiz as quiz, packet as buy-in, deviation ledger as report, decision-surface rounds and direction pickers as decision-doc — and die by graduation. A record nobody reads rots regardless of its content, so render and home are landing, never decoration.
+- A relation an instance carries as three or more interlinked rows — capability edges, roadmap dependency chains, seam findings spanning owners — projects as one figure beside its rows; the rows stay the truth the figure projects, and a figure edge no row carries is a drift defect the seal rejects. Mermaid fence craft routes through mermaid-diagramming; in-page SVG figures through html-studio.
+- An interactive carrier — quiz, scored wargame board, direction picker, decision-surface round, blindspot editor — runs served through the html-studio return channel (serve, receipts, stop); copy-paste is the degraded path, never the default. A receipt's verdicts, scores, and selections are answer material facing the same challenge as any spoken answer, and a receipt diverging from a spoken answer on one question is a conflict with its own question, never resolved by recency.
 - The seal is a fresh cold read over a complete landing — fold-back, render, and home present and no new question raised; author satisfaction is not the exit.
 
 ## [09]-[GOTCHAS]
 
 - Agreement is the trap: an answer mirroring the question's framing is re-anchored to a specific instance before it becomes a ruling — compliments and consensus are noise wearing signal.
 - Softening a finding to spare the corpus author loses the finding; the anchor states the fact and the fact is the kindness.
-- An artifact that needs its transcript to be understood failed the seal; the instance carries everything the consumer needs.
+- An artifact that needs its transcript to be understood failed the seal; the page carries everything the consumer needs.
 
 ## [10]-[REPO_INTEGRATION]
 
-Durable pages home at `docs/atlas/` under `<kind>.<scope>[.<slug>].html`, rendered through html-studio; a host instruction chain declaring its own artifact home and naming law binds instead. Corpus grounding routes through the host's search owners — in this repo `uv run python -m tools.assay code` for structural search and LSP for symbol navigation; the portable law is verb-neutral: verify on disk before asking.
+Durable pages home at `docs/atlas/` under `<kind>.<scope>[.<slug>].html`, composed and gated through html-studio; a host instruction chain declaring its own artifact home and naming law binds instead. Corpus grounding routes through the host's search owners — in this repo `uv run python -m tools.assay code` for structural search and LSP for symbol navigation; the portable law is verb-neutral: verify on disk before asking.

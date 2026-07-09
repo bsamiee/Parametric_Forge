@@ -56,7 +56,7 @@ Semantic names only — a consumer reads intent, never hex. The dark registry is
 }
 ```
 
-The light palette is one declaration block carried twice — inside `@media (prefers-color-scheme: light)` scoped to `:root:not([data-theme])`, and under the selector below, so a stamped choice suppresses the media branch and wins in both directions:
+The light palette is one declaration block carried twice — inside `@media (prefers-color-scheme: light)` scoped to `:root:not([data-theme])`, and under the selector below, so a stamped choice suppresses the media branch and wins in both directions. Both light blocks — and the print flip's token rewrites — precede the dark base in source: layer precedence and specificity, not source order, select the palette, and the last-declared registry, the dark base, is the one the artifact gate audits.
 
 ```css copy-safe
 @layer tokens {
