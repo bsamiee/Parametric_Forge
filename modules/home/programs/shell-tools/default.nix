@@ -50,6 +50,7 @@
     pkgs.choose # Human-friendly column extraction
     pkgs.curlie # Curl-compatible HTTP client
     pkgs.doggo # DNS lookup client
+    pkgs.doppler # Doppler secrets CLI; zsh completion ships in share/zsh/site-functions
     pkgs.dua # Interactive disk usage analyzer
     pkgs.duf # Disk free overview
     pkgs.dust # Directory size tree; config owned by dust.nix

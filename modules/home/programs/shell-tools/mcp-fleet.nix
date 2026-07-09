@@ -87,7 +87,7 @@
     # DOPPLER_MCP_AGENT_TOKEN, so no ambient env key is consumed.
     name = "doppler";
     transport = "stdio";
-    command = "/opt/homebrew/bin/doppler";
+    command = "${profileBin}/doppler";
     args = [
       "run"
       "--project"
