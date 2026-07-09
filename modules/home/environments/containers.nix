@@ -9,6 +9,7 @@
 # system Docker socket unpointed with docker-cli owning config.json only.
 {
   config,
+  lib,
   pkgs,
   ...
 }: let
@@ -94,6 +95,23 @@ in {
   };
 
   xdg.configFile = {
+    # Apple Container startup config: read once by the apiserver at system start;
+    # highest-precedence path. kernel/vminit/network/dns stay upstream-owned.
+    "container/config.toml" = lib.mkIf isDarwin {
+      text = ''
+        [build]
+        rosetta = true
+        cpus = 4
+        memory = "8192mb"
+
+        [container]
+        cpus = 4
+        memory = "4g"
+
+        [registry]
+        domain = "docker.io"
+      '';
+    };
     "containers/registries.conf".text = ''
       unqualified-search-registries = ["docker.io"]
 

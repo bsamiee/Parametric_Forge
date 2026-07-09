@@ -12,5 +12,8 @@ _: {
     "tag" # macOS file tagging CLI
     "blueutil" # Bluetooth management
     "pinentry-mac" # Keychain-backed sudo askpass for the brew autoupdate agent
+
+    # --- Container Runtimes ---------------------------------------------------
+    "container" # Apple Container; requires macOS 26 (arm64); coexistence runtime, never DOCKER_HOST owner
   ];
 }
