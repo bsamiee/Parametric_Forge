@@ -270,11 +270,12 @@
       mode = "scratch";
     }
     {
-      # Derivation-level diff of the last two generations; a substituted
-      # build has no local deriver, so absence rails into a typed message.
+      # Derivation-level diff of the last two generations. Substituted builds
+      # leave drv gaps anywhere in the closure: toplevel absence rails before
+      # launch, an inner-drv abort rails into the same typed verdict line.
       id = "nix-diff";
       label = "Generation diff, derivation level (nix-diff)";
-      argv = ["sh" "-c" ''set -- $(ls -d /nix/var/nix/profiles/system-*-link | sort -V | tail -n 2); left=$(nix-store --query --deriver "$1"); right=$(nix-store --query --deriver "$2"); for d in "$left" "$right"; do [ -e "$d" ] || { echo "deriver not in store: $d (substituted build; use the nvd row)"; exit 1; }; done; exec nix-diff "$left" "$right"''];
+      argv = ["sh" "-c" ''set -- $(ls -d /nix/var/nix/profiles/system-*-link | sort -V | tail -n 2); left=$(nix-store --query --deriver "$1"); right=$(nix-store --query --deriver "$2"); for d in "$left" "$right"; do [ -e "$d" ] || { echo "deriver not in store: $d (substituted build; use the nvd row)"; exit 1; }; done; nix-diff "$left" "$right" 2>&1 || printf '\nnix-diff aborted: derivation closure incomplete locally (substituted builds); use the nvd row\n' ''];
       mode = "scratch";
     }
     {
