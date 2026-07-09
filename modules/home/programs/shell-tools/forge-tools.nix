@@ -286,10 +286,12 @@
               system_path="$(nix eval --raw "$forge_root#$attr.drvPath")"
               # Target-built activation: no local Linux builder is assumed;
               # nixos-rebuild-ng evaluates locally and builds on the target.
+              # The -ng package ships its binary as plain nixos-rebuild;
+              # --no-reexec stops the cross-platform local self-rebuild.
               sudo_flag=(--sudo)
               case "$target_host" in root@*) sudo_flag=() ;; esac
               t1=$EPOCHSECONDS
-              nixos-rebuild-ng switch --flake "$forge_root#$host" \
+              nixos-rebuild switch --flake "$forge_root#$host" --no-reexec \
                 --target-host "$target_host" --build-host "$target_host" \
                 "''${sudo_flag[@]}"
               activate_s=$((EPOCHSECONDS - t1))
