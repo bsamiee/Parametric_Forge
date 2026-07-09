@@ -4,57 +4,32 @@
 # License       : MIT
 # Path          : modules/home/programs/git-tools/gitleaks.nix
 # ----------------------------------------------------------------------------
-# Gitleaks secrets detection configuration
+# Machine-global gitleaks policy. Markdown, logs, text, and test trees are
+# fully scanned - they are the highest-probability paste channels. Only
+# generated artifacts that cannot carry authored secrets are allowlisted.
 {pkgs, ...}: let
   tomlFormat = pkgs.formats.toml {};
 
   gitleaksConfig = {
-    title = "Gitleaks Configuration";
+    title = "Forge machine gitleaks policy";
+    extend.useDefault = true;
 
-    # Extend default gitleaks rules for comprehensive coverage
-    extend = {
-      useDefault = true;
-    };
-
-    # --- Global Allowlists --------------------------------------------------
     allowlists = [
       {
-        description = "Global allowlist for common safe patterns";
+        description = "Generated lockfiles and dependency forests";
         paths = [
-          ".gitleaksignore"
-          ".gitignore"
-          "*.md"
-          "*.txt"
-          "*.log"
-          "**/test/**"
-          "**/tests/**"
-          "**/example/**"
-          "**/examples/**"
-          "**/node_modules/**"
-          "**/dist/**"
-          "**/build/**"
-          "**/target/**"
-          "**/.nix-store/**"
-          "**/package-lock.json"
-          "**/yarn.lock"
-          "**/Cargo.lock"
-          "**/flake.lock"
+          ''(^|/)(package-lock\.json|pnpm-lock\.yaml|yarn\.lock|bun\.lockb?|deno\.lock)$''
+          ''(^|/)(Cargo\.lock|flake\.lock|uv\.lock|poetry\.lock|Gemfile\.lock|composer\.lock)$''
+          ''(^|/)(Package\.resolved|packages\.lock\.json|gradle\.lockfile|go\.sum)$''
+          ''(^|/)(node_modules|dist|build|target|\.direnv)/''
         ];
-
-        regexes = [
-          "example[_-]?key"
-          "test[_-]?key"
-          "demo[_-]?key"
-          "fake[_-]?key"
-          "dummy[_-]?key"
-          "placeholder"
-          "your[_-]?key[_-]?here"
-          "/nix/store/[a-z0-9]{32}-.*"
-          "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
-          "^(example|test|demo).*==$"
-        ];
-
-        commits = [];
+      }
+      {
+        description = "Nix store hashes are content addresses, not credentials";
+        condition = "AND";
+        regexTarget = "line";
+        paths = [''\.nix$''];
+        regexes = [''/nix/store/[a-z0-9]{32}-''];
       }
     ];
   };

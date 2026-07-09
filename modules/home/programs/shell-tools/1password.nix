@@ -177,63 +177,75 @@ in {
     };
   };
 
-  # --- Session-secrets dispatcher: one sourceable file for TUI and GUI lanes ---
-  # The SessionStart hook maintains the doppler-first session cache; transition
-  # falls back to the 1Password cache until the cache exists. The backend flip
-  # is the secretBackend row above.
-  xdg.configFile."forge-session-secrets.sh".text = ''
-    case "''${CLAUDE_SECRET_BACKEND:-${secretBackend}}" in
-      doppler)
-        [ ! -f "${sessionCache}" ] || . "${sessionCache}"
-        ;;
-      *)
-        if [ -f "${sessionCache}" ]; then
-          . "${sessionCache}"
-        elif [ -f "${opCache}" ]; then
-          . "${opCache}"
-        fi
-        ;;
-    esac
-  '';
+  xdg.configFile = {
+    # --- op SSH agent seam: one unified key, deterministic offer order ---------
+    # The agent serves exactly the unified estate key; op-ssh-sign (git-tools
+    # signing rail) resolves the same item by public key. Approval posture is
+    # app-level: approve-for-all-applications during active windows.
+    "1Password/ssh/agent.toml".text = ''
+      [[ssh-keys]]
+      item = "Forge SSH Key"
+      vault = "Private"
+    '';
 
-  # --- Secret Template: API keys for op inject -----------------------------------
-  xdg.configFile."op/env.template".text = ''
-    # API Keys - resolved during rebuild via "op inject"
-    # IMPORTANT: export keyword ensures child processes inherit these variables
-    # Update this list when adding new tokens to your 1Password vault
+    # --- Session-secrets dispatcher: one sourceable file for TUI and GUI lanes -
+    # The SessionStart hook maintains the doppler-first session cache; transition
+    # falls back to the 1Password cache until the cache exists. The backend flip
+    # is the secretBackend row above.
+    "forge-session-secrets.sh".text = ''
+      case "''${CLAUDE_SECRET_BACKEND:-${secretBackend}}" in
+        doppler)
+          [ ! -f "${sessionCache}" ] || . "${sessionCache}"
+          ;;
+        *)
+          if [ -f "${sessionCache}" ]; then
+            . "${sessionCache}"
+          elif [ -f "${opCache}" ]; then
+            . "${opCache}"
+          fi
+          ;;
+      esac
+    '';
 
-    # CLI tools and APIs
-    # NOTE: ANTHROPIC_API_KEY intentionally excluded - use Claude Code OAuth instead
-    # Projects needing API key auth should configure it locally
-    export GREPTILE_API_KEY="op://Tokens/GREPTILE_API_KEY/token"
-    export CODERABBIT_API_KEY="op://Tokens/CODERABBIT_API_KEY/token"
-    export OP_SERVICE_ACCOUNT_TOKEN="op://Tokens/OP_SERVICE_ACCOUNT_TOKEN/token"
-    export GOOGLE_OAUTH_CLIENT_ID="op://Tokens/GOOGLE_OAUTH_CLIENT_ID/credential"
-    export GOOGLE_OAUTH_CLIENT_SECRET="op://Tokens/GOOGLE_OAUTH_CLIENT_SECRET/credential"
-    export GOOGLE_WORKSPACE_CLI_CLIENT_ID="op://Tokens/GOOGLE_OAUTH_CLIENT_ID/credential"
-    export GOOGLE_WORKSPACE_CLI_CLIENT_SECRET="op://Tokens/GOOGLE_OAUTH_CLIENT_SECRET/credential"
-    export RHINO_TOKEN="op://Tokens/RHINO_TOKEN/token"
-    export EXA_API_KEY="op://Tokens/Exa API Key/token"
-    export PERPLEXITY_API_KEY="op://Tokens/Perplexity Sonar API Key/token"
-    export TAVILY_API_KEY="op://Tokens/Tavily Auth Token/token"
-    export SONAR_TOKEN="op://Tokens/SONAR_TOKEN/token"
-    export CACHIX_AUTH_TOKEN="op://Tokens/Cachix Auth Token - Parametric Forge/token"
-    export HOSTINGER_TOKEN="op://Tokens/HOSTINGER_TOKEN/token"
-    # HOSTINGER_API_TOKEN is the exact env name the hostinger MCP reads; aliased to the same vault item so
-    # Codex (which cannot remap env names at the MCP boundary) and the GUI domain get it ambient correctly.
-    export HOSTINGER_API_TOKEN="op://Tokens/HOSTINGER_TOKEN/token"
-    export CONTEXT7_API_KEY="op://Tokens/CONTEXT7_API_KEY/token"
+    # --- Secret Template: API keys for op inject --------------------------------
+    "op/env.template".text = ''
+      # API Keys - resolved during rebuild via "op inject"
+      # IMPORTANT: export keyword ensures child processes inherit these variables
+      # Update this list when adding new tokens to your 1Password vault
 
-    # GitHub CLI (gh prefers GH_TOKEN, GITHUB_TOKEN is fallback for other tools)
-    export GH_TOKEN="op://Tokens/Github Token/token"
-    export GITHUB_TOKEN="op://Tokens/Github Token/token"
+      # CLI tools and APIs
+      # NOTE: ANTHROPIC_API_KEY intentionally excluded - use Claude Code OAuth instead
+      # Projects needing API key auth should configure it locally
+      export GREPTILE_API_KEY="op://Tokens/GREPTILE_API_KEY/token"
+      export CODERABBIT_API_KEY="op://Tokens/CODERABBIT_API_KEY/token"
+      export OP_SERVICE_ACCOUNT_TOKEN="op://Tokens/OP_SERVICE_ACCOUNT_TOKEN/token"
+      export GOOGLE_OAUTH_CLIENT_ID="op://Tokens/GOOGLE_OAUTH_CLIENT_ID/credential"
+      export GOOGLE_OAUTH_CLIENT_SECRET="op://Tokens/GOOGLE_OAUTH_CLIENT_SECRET/credential"
+      export GOOGLE_WORKSPACE_CLI_CLIENT_ID="op://Tokens/GOOGLE_OAUTH_CLIENT_ID/credential"
+      export GOOGLE_WORKSPACE_CLI_CLIENT_SECRET="op://Tokens/GOOGLE_OAUTH_CLIENT_SECRET/credential"
+      export RHINO_TOKEN="op://Tokens/RHINO_TOKEN/token"
+      export EXA_API_KEY="op://Tokens/Exa API Key/token"
+      export PERPLEXITY_API_KEY="op://Tokens/Perplexity Sonar API Key/token"
+      export TAVILY_API_KEY="op://Tokens/Tavily Auth Token/token"
+      export SONAR_TOKEN="op://Tokens/SONAR_TOKEN/token"
+      export CACHIX_AUTH_TOKEN="op://Tokens/Cachix Auth Token - Parametric Forge/token"
+      export HOSTINGER_TOKEN="op://Tokens/HOSTINGER_TOKEN/token"
+      # HOSTINGER_API_TOKEN is the exact env name the hostinger MCP reads; aliased to the same vault item so
+      # Codex (which cannot remap env names at the MCP boundary) and the GUI domain get it ambient correctly.
+      export HOSTINGER_API_TOKEN="op://Tokens/HOSTINGER_TOKEN/token"
+      export CONTEXT7_API_KEY="op://Tokens/CONTEXT7_API_KEY/token"
 
-    # GitHub Projects (Classic PAT required - fine-grained PATs don't support Projects API)
-    export GH_PROJECTS_TOKEN="op://Tokens/GH_PROJECTS_TOKEN/token"
+      # GitHub CLI (gh prefers GH_TOKEN, GITHUB_TOKEN is fallback for other tools)
+      export GH_TOKEN="op://Tokens/Github Token/token"
+      export GITHUB_TOKEN="op://Tokens/Github Token/token"
 
-    # Universal local-pg endpoint - single-sourced from the Tokens vault (Maghz + any pg/mcp skill)
-    export MAGHZ_MCP__DATABASE_URI="op://Tokens/MAGHZ_MCP__DATABASE_URI/credential"
-  '';
+      # GitHub Projects (Classic PAT required - fine-grained PATs don't support Projects API)
+      export GH_PROJECTS_TOKEN="op://Tokens/GH_PROJECTS_TOKEN/token"
+
+      # Universal local-pg endpoint - single-sourced from the Tokens vault (Maghz + any pg/mcp skill)
+      export MAGHZ_MCP__DATABASE_URI="op://Tokens/MAGHZ_MCP__DATABASE_URI/credential"
+    '';
+  };
 
   # --- GUI session secrets: replay session material into the launchd domain ---
   # GUI apps (Codex.app, Claude Desktop) are launched by launchd and never source

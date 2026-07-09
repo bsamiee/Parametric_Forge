@@ -21,8 +21,13 @@
     # --- Git & Version Control ----------------------------------------------
     GITLEAKS_CONFIG = "${config.xdg.configHome}/gitleaks/gitleaks.toml";
     GH_CONFIG_DIR = "${config.xdg.configHome}/gh";
-    GH_PAGER = "delta"; # Delta specifically for git/gh diffs
-    GIT_PAGER = "delta"; # Ensure git uses delta
+    # Difftastic brightness follows the estate surface luminance, not a mode literal
+    DFT_BACKGROUND = let
+      surface = config.forge.theme.palette.background;
+    in
+      if surface.r + surface.g + surface.b < 384
+      then "dark"
+      else "light";
 
     # --- Build & Pre-commit -------------------------------------------------
     PRE_COMMIT_HOME = "${config.xdg.dataHome}/pre-commit";

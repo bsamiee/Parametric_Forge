@@ -4,15 +4,42 @@
 # License       : MIT
 # Path          : modules/home/programs/git-tools/git.nix
 # ----------------------------------------------------------------------------
-# Core Git configuration and workflow settings
-{config, ...}: {
+# Git identity, op-backed SSH signing, workflow settings, delta + difftastic
+{
+  config,
+  lib,
+  ...
+}: let
+  # One universal identity; the unified estate key ("Forge SSH Key" in the
+  # Private vault) authenticates and signs. op-ssh-sign resolves it by
+  # public key through the 1Password agent seam in shell-tools/1password.nix.
+  identity = {
+    name = "Bardia Samiee";
+    email = "b.samiee93@gmail.com";
+    publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJ13xqqm/BVTzJNN/V0Cukvk4xAentt3qqE525URRqwS";
+  };
+  # Principal table for local `git log --show-signature` verification.
+  trustedPrincipals = [identity.email];
+in {
+  # Git trust material lives beside the git config, not in xdg.nix.
+  xdg.configFile."git/allowed_signers".text =
+    lib.concatMapStrings
+    (principal: "${principal} namespaces=\"git\" ${identity.publicKey}\n")
+    trustedPrincipals;
+
   programs.git = {
     enable = true;
     lfs.enable = true;
 
+    signing = {
+      key = "key::${identity.publicKey}";
+      format = "ssh";
+      signByDefault = true;
+      signer = "/Applications/1Password.app/Contents/MacOS/op-ssh-sign";
+    };
+
     settings = {
-      user.name = "bsamiee";
-      user.email = "b.samiee93@gmail.com";
+      user = {inherit (identity) name email;};
       init.defaultBranch = "main";
 
       pull.rebase = true; # Always rebase on pull (ff setting ignored with rebase)
@@ -28,7 +55,7 @@
         autocrlf = "input";
         whitespace = "trailing-space,space-before-tab";
         preloadindex = true;
-        fsmonitor = true; # Background daemon for instant git status
+        fsmonitor = true; # Background daemon for instant git status; forge-git-doctor owns the health receipt
         untrackedCache = true; # 2x faster untracked file detection
         commitGraph = true; # Cache commit DAG for faster git log
       };
@@ -42,7 +69,16 @@
         renames = "copies";
         colorMoved = "default";
         submodule = "log"; # Show submodule changes in diffs
+        tool = "difftastic"; # Structural lane: `git difftool` / `git dft`; delta owns the pager lane
       };
+
+      difftool = {
+        prompt = false;
+        # GIT_EXTERNAL_DIFF calling convention: difft renders rename/mode data.
+        difftastic.cmd = ''difft "$MERGED" "$LOCAL" "abcdef1" "100644" "$REMOTE" "abcdef2" "100644"'';
+      };
+      pager.difftool = true;
+      alias.dft = "difftool";
 
       merge = {
         conflictstyle = "zdiff3";
@@ -84,9 +120,11 @@
       column.ui = "auto"; # Multi-column output for branch/tag lists
       tag.sort = "version:refname"; # Sort tags as semantic versions
 
+      gpg.ssh.allowedSignersFile = "${config.xdg.configHome}/git/allowed_signers";
+
       commit.verbose = true;
       rerere.enabled = true;
-      help.autocorrect = 20;
+      help.autocorrect = "prompt"; # Never auto-runs a guessed command in agent lanes
     };
   };
 
@@ -111,11 +149,11 @@
       # File headers
       file-style = "bold";
       file-decoration-style = "none";
-      file-added-label = "";
+      file-added-label = "";
       file-copied-label = "[==]";
-      file-modified-label = "";
-      file-removed-label = "";
-      file-renamed-label = "";
+      file-modified-label = "";
+      file-removed-label = "";
+      file-renamed-label = "";
 
       # Hunk headers
       hunk-header-style = "file line-number";

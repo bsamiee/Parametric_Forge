@@ -52,8 +52,15 @@ in {
       };
 
       git = {
-        # --- Paging Configuration -------------------------------------------
-        paging.colorArg = "always";
+        # --- Paging: delta renders inside lazygit panes -----------------------
+        # Delta inherits its [delta] git-config options; --paging=never is the
+        # in-pane requirement and --navigate does not work inside lazygit.
+        pagers = [
+          {
+            colorArg = "always";
+            pager = "delta --paging=never";
+          }
+        ];
 
         # --- Git Behavior Settings ------------------------------------------
         autoRefresh = true;
@@ -88,26 +95,16 @@ in {
         fetchInterval = 60;
       };
 
-      os = {
-        # --- Editor Integration ---------------------------------------------
-        editPreset = "nvim"; # Matches EDITOR in core.nix
-        edit = "{{editor}} {{filename}}";
-        editAtLine = "{{editor}} +{{line}} {{filename}}";
-        openDirInEditor = "{{editor}} {{dir}}";
+      # Preset owns edit/editAtLine/openDirInEditor ({{filename}}/{{line}} are the
+      # only template vars); the darwin platform default owns open/openLink.
+      os.editPreset = "nvim"; # Matches EDITOR in core.nix
 
-        # --- macOS Integration ----------------------------------------------
-        open = "open {{filename}}";
-        openDirInApp = "open {{dir}}";
-      };
-
-      update = {
-        method = "prompt";
-        days = 14;
-      };
+      # Store-managed binary: self-update writes are impossible.
+      update.method = "never";
 
       confirmOnQuit = false;
       quitOnTopLevelReturn = false;
-      startupPopupVersion = 5;
+      disableStartupPopups = true;
     };
   };
 }
