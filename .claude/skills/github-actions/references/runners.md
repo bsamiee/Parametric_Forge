@@ -105,7 +105,7 @@ Custom labels must be declared for actionlint validation — unlisted labels pro
 |  [01]   | **Public repo + self-hosted** | `[SELF-HOSTED]` | Fork PRs can execute arbitrary code on self-hosted runners.      |
 |  [02]   | **Non-ephemeral runners**     | `[SELF-HOSTED]` | Persistent runners accumulate state — use `--ephemeral` flag.    |
 |  [03]   | **Missing harden-runner**     | `[SELF-HOSTED]` | Self-hosted runners need runtime monitoring (K8s support in v2). |
-|  [04]   | **No runner group isolation** | `[SELF-HOSTED]` | Runner groups should restrict org/repo access boundaries.        |
+|  [04]   | **No runner group isolation** | `[SELF-HOSTED]` | Runner groups left open across org/repo boundaries.               |
 
 ## [09]-[SELECTION_CHECKLIST]
 

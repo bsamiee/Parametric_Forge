@@ -24,13 +24,13 @@ Durable prose is law for an agent that loads it with no memory of why it was wri
 uv run scripts/prose_gate.py [--json] <paths...>
 ```
 
-Run the gate on every touched durable doc before returning. It is the mechanical floor — fence, heading, table, link, and list structure; template residue, bold emphasis, and trailing whitespace; the banned-lexeme roster of hedges, meta-phrases, self-counts, and version anchors — and a skill bundle additionally gates frontmatter shape, name shape and directory identity, description voice and budgets, the root line ceiling, orphan bundle files, and nested reference hops, the mechanical floor beneath the skill-writer skill's authoring law; the full check census is the script's `Check` vocabulary. The gate scans prose spans only: fence bodies, code spans, link destinations, template placeholders, and example-leader rows are structural carriers, not prose findings. Every semantic class and every altitude judgment remains review work against the catalog.
+Run the gate on every touched durable doc before returning. It is the mechanical floor — fence, heading, table, link, and list structure; template residue, bold emphasis, and trailing whitespace; the banned-lexeme roster of hedges, meta-phrases, self-counts, version anchors, freshness deictics, and permission verbs — and a skill bundle additionally gates frontmatter shape, name shape and directory identity, description voice and budgets, the root line ceiling, orphan bundle files, and nested reference hops, the mechanical floor beneath the skill-writer skill's authoring law; the full check census is the script's `Check` vocabulary. The gate scans prose spans only: fence bodies, code spans, link destinations, template placeholders, and example-leader rows are structural carriers, not prose findings. Every semantic class and every altitude judgment remains review work against the catalog.
 
 ## [02]-[REGISTER]
 
 The register's laws produce the voice; every catalog defect is a way of breaking one of them.
 
-[OWNING_SUBJECT] — The owner is the grammatical subject and its verb is an act of ownership over the whole concern: mints, owns, folds, routes, binds, admits, rejects. A total positive claim forecloses every alternative by construction; a surface that merely supports, offers, or provides has not been designed yet. The partition principle is the durable law; a count is a consequence the reader derives, never a ceiling the prose enforces.
+[OWNING_SUBJECT] — The owner is the grammatical subject and its verb is an act of ownership over the whole concern: mints, owns, folds, routes, binds, admits, rejects. A total positive claim forecloses every alternative by construction; a surface that merely `supports`, `offers`, or `provides` has not been designed yet. The partition principle is the durable law; a count is a consequence the reader derives, never a ceiling the prose enforces.
 
 ```markdown rejected
 The package offers an optional graph lane and supports self-hosted deployments.
@@ -62,6 +62,14 @@ The trust gate binds every identifier crossing into engine SQL.
 
 [CAPABILITY] — Capability lands as present-tense owned fact with deep foresight, or the sentence does not exist. Consumer count is never a design axis: nothing is deferred until demand, defended against an imagined objection, or preserved for an old reader. A capability that cannot yet be modeled gets silence; genuinely open work is a tracked card, never a soft sentence.
 
+```markdown rejected
+Incremental rendering is planned once demand justifies it; until then full rebuilds are acceptable for current needs.
+```
+
+```markdown accepted
+The renderer rebuilds only nodes whose content hash changed.
+```
+
 [NAMED_SURFACE] — A nameable surface — member, command, key, flag, token — is written as a code span in its exact verified spelling; verification precedes authoring, an unverifiable member is a tracked open item never settled prose, and a nameable surface paraphrased in prose is a defect: the code span is the instruction.
 
 ```markdown rejected
@@ -84,6 +92,8 @@ Rebuilding an existing document under this register is its own discipline — th
 [REGENERATION_TEST] — Delete the sentence. A fresh agent regenerating the fact from disk plus the document's stated invariants proves it was a mirror: delete it, or demote it to a fenced representation when structure must be shown. A fact that cannot be regenerated is law kept at the altitude that owns it, still answerable to every defect class: surviving regeneration rules out the mirror alone, never a freeze, hedge, or ledger the catalog deletes.
 
 [ONE_OWNER] — A second prose copy of any fact, at any altitude, is a fork waiting to drift. A pointer names the owner and the one consumed symbol, nothing of its internals; a doctrine is stated once at its charter and never recited per page. A corpus's vocabulary, owners, and policy values arrive settled in every later document — composed as given, never re-taught, renamed, or locally re-defined.
+
+[ANCHOR] — Loaded prose is the working model the next agent generates inside, so every shape the prose names becomes a wall: a member roster anchors the rebuild to today's census, a forbidden-alternative litany anchors it to the anti-shape, a frozen count or seal anchors it to the ceiling. The cure is always the extension rule — how one new row, case, or member lands — stated where the anchor stood, with the roster living on the surface tooling keeps true.
 
 Altitude tiers, routing law, representation choice, table design, file-kind schemas, and marker systems are [references/structure.md](references/structure.md).
 

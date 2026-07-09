@@ -16,13 +16,13 @@ Fresh context windows are the point. A single session has one context window; a 
 
 The `Workflow` tool takes at least one of `script`, `name`, or `scriptPath`:
 
-| [INDEX] | [FIELD]           | [TYPE] | [MEANING]                                                                                              |
-| :-----: | :---------------- | :----- | :----------------------------------------------------------------------------------------------------- |
-|  [01]   | `script`          | string | A self-contained workflow script; must begin with `export const meta = {…}`                            |
-|  [02]   | `name`            | string | A predefined workflow — built-in, or a file under a `.claude/workflows/` directory                     |
-|  [03]   | `scriptPath`      | string | Path to a workflow file on disk; takes precedence over `script` and `name`                             |
-|  [04]   | `args`            | any    | Optional input exposed to the script as the global `args`, as structured data; `undefined` if omitted  |
-|  [05]   | `resumeFromRunId` | string | A prior run ID (`wf_…`) to resume from; same session only (recovery reference)                         |
+| [INDEX] | [FIELD]           | [TYPE] | [MEANING]                                                                                             |
+| :-----: | :---------------- | :----- | :---------------------------------------------------------------------------------------------------- |
+|  [01]   | `script`          | string | A self-contained workflow script; must begin with `export const meta = {…}`                           |
+|  [02]   | `name`            | string | A predefined workflow — built-in, or a file under a `.claude/workflows/` directory                    |
+|  [03]   | `scriptPath`      | string | Path to a workflow file on disk; takes precedence over `script` and `name`                            |
+|  [04]   | `args`            | any    | Optional input exposed to the script as the global `args`, as structured data; `undefined` if omitted |
+|  [05]   | `resumeFromRunId` | string | A prior run ID (`wf_…`) to resume from; same session only (recovery reference)                        |
 
 The persist-and-edit loop: every invocation writes the script to a file in the session directory and returns that path. Iterate by editing the saved file with Write/Edit and re-invoking with `{ scriptPath }` — never re-send the full script text after the first run.
 
@@ -117,18 +117,18 @@ Inside a long `[COMPOSITION]`, mark each phase with a bare subsection divider wh
 
 ## [04]-[GLOBALS]
 
-| [INDEX] | [GLOBAL]                     | [SIGNATURE]                                    | [PURPOSE]                                                                   |
-| :-----: | :--------------------------- | :--------------------------------------------- | :--------------------------------------------------------------------------- |
-|  [01]   | `agent`                      | `agent(prompt, opts?) → Promise<string\|object>` | Spawn one fresh-context subagent                                            |
-|  [02]   | `pipeline`                   | `pipeline(items, ...stages) → Promise<any[]>`  | Stream items through stages, no barrier                                     |
-|  [03]   | `parallel`                   | `parallel(thunks) → Promise<any[]>`            | Run thunks concurrently; a barrier                                          |
-|  [04]   | `phase`                      | `phase(title) → void`                          | Start a progress group; later agents join it                                |
-|  [05]   | `log`                        | `log(message) → void`                          | Emit a narrator line above the progress tree                                |
-|  [06]   | `console`                    | `console.log(…)`, `.error(…)`, …               | Output routed into the workflow log                                         |
-|  [07]   | `setTimeout` / `clearTimeout` | the standard timer pair                        | Injected and abort-aware; the one legal clock — there is no `sleep`         |
-|  [08]   | `budget`                     | `{ total, spent(), remaining() }`              | The turn's token target                                                     |
-|  [09]   | `args`                       | any                                            | The tool's `args` input as structured data; `undefined` if none             |
-|  [10]   | `workflow`                   | `workflow(nameOrRef, args?) → Promise<any>`    | Run another workflow inline; one nesting level                              |
+| [INDEX] | [GLOBAL]                      | [SIGNATURE]                                      | [PURPOSE]                                                           |
+| :-----: | :---------------------------- | :----------------------------------------------- | :------------------------------------------------------------------ |
+|  [01]   | `agent`                       | `agent(prompt, opts?) → Promise<string\|object>` | Spawn one fresh-context subagent                                    |
+|  [02]   | `pipeline`                    | `pipeline(items, ...stages) → Promise<any[]>`    | Stream items through stages, no barrier                             |
+|  [03]   | `parallel`                    | `parallel(thunks) → Promise<any[]>`              | Run thunks concurrently; a barrier                                  |
+|  [04]   | `phase`                       | `phase(title) → void`                            | Start a progress group; later agents join it                        |
+|  [05]   | `log`                         | `log(message) → void`                            | Emit a narrator line above the progress tree                        |
+|  [06]   | `console`                     | `console.log(…)`, `.error(…)`, …                 | Output routed into the workflow log                                 |
+|  [07]   | `setTimeout` / `clearTimeout` | the standard timer pair                          | Injected and abort-aware; the one legal clock — there is no `sleep` |
+|  [08]   | `budget`                      | `{ total, spent(), remaining() }`                | The turn's token target                                             |
+|  [09]   | `args`                        | any                                              | The tool's `args` input as structured data; `undefined` if none     |
+|  [10]   | `workflow`                    | `workflow(nameOrRef, args?) → Promise<any>`      | Run another workflow inline; one nesting level                      |
 
 ### Reading `args`
 
@@ -151,16 +151,16 @@ const data = await agent('List the deps.', { schema: DEPS_SCHEMA }) // → valid
 
 Without `schema`, `agent()` returns the subagent's final text verbatim. With `schema`, it returns a validated object. If the user skips the agent from `/workflows`, `agent()` returns `null` — the reason results get `.filter(Boolean)`.
 
-| [INDEX] | [OPTION]    | [TYPE]       | [EFFECT]                                                                                                       |
-| :-----: | :---------- | :----------- | :-------------------------------------------------------------------------------------------------------------- |
-|  [01]   | `label`     | string       | Display name in `/workflows`; defaults to the prompt's first 60 chars; not in the resume cache key             |
-|  [02]   | `phase`     | string       | Assign this agent to a named progress group; set it inside `pipeline`/`parallel` stages; not in the cache key  |
-|  [03]   | `schema`    | object       | JSON Schema forcing structured output; `agent()` returns the validated object                                  |
-|  [04]   | `model`     | string       | Per-agent model: `'sonnet'`/`'opus'`/`'fable'`/`'inherit'` or a full ID; `'sonnet'` is the floor               |
-|  [05]   | `effort`    | string       | Reasoning tier `'low'`…`'max'`, independent of `model`; not in the cache key                                   |
-|  [06]   | `isolation` | `'worktree'` | Fresh git worktree per agent; expensive — only when parallel agents mutate files and would collide             |
-|  [07]   | `agentType` | string       | Run as a registered subagent type; validated against the live registry                                         |
-|  [08]   | `stallMs`   | number       | Per-agent stall override (default 180000 ms); raise for a legitimately slow agent; not in the cache key        |
+| [INDEX] | [OPTION]    | [TYPE]       | [EFFECT]                                                                                                      |
+| :-----: | :---------- | :----------- | :------------------------------------------------------------------------------------------------------------ |
+|  [01]   | `label`     | string       | Display name in `/workflows`; defaults to the prompt's first 60 chars; not in the resume cache key            |
+|  [02]   | `phase`     | string       | Assign this agent to a named progress group; set it inside `pipeline`/`parallel` stages; not in the cache key |
+|  [03]   | `schema`    | object       | JSON Schema forcing structured output; `agent()` returns the validated object                                 |
+|  [04]   | `model`     | string       | Per-agent model: `'sonnet'`/`'opus'`/`'fable'`/`'inherit'` or a full ID; `'sonnet'` is the floor              |
+|  [05]   | `effort`    | string       | Reasoning tier `'low'`…`'max'`, independent of `model`; not in the cache key                                  |
+|  [06]   | `isolation` | `'worktree'` | Fresh git worktree per agent; expensive — only when parallel agents mutate the same files                     |
+|  [07]   | `agentType` | string       | Run as a registered subagent type; validated against the live registry                                        |
+|  [08]   | `stallMs`   | number       | Per-agent stall override (default 180000 ms); raise for a legitimately slow agent; not in the cache key       |
 
 `schema`, `model`, `isolation`, and `agentType` are the four options baked into the resume cache key, and the prompt text is hashed into it too — change any and that call re-runs. `label`, `phase`, `effort`, and `stallMs` never invalidate a cached result.
 
@@ -185,10 +185,10 @@ The runtime compiles the schema with AJV, synthesizes a hidden `StructuredOutput
 
 Two validators sit behind the two schema surfaces a workflow touches — author every schema to the STRICTER profile so one shape serves both without edits:
 
-| [INDEX] | [PRODUCER]                    | [VALIDATOR]                  | [REQUIREMENT]                                                                                      |
-| :-----: | :---------------------------- | :--------------------------- | :-------------------------------------------------------------------------------------------------- |
-|  [01]   | `agent(…, { schema })`        | AJV in the runtime           | Tolerates optional properties and open objects — strict is convention, not enforcement            |
-|  [02]   | `codex exec --output-schema`  | OpenAI strict profile        | `additionalProperties: false` everywhere, every key in `required`, conditional fields required-but-empty |
+| [INDEX] | [PRODUCER]                   | [VALIDATOR]           | [REQUIREMENT]                                                                                            |
+| :-----: | :--------------------------- | :-------------------- | :------------------------------------------------------------------------------------------------------- |
+|  [01]   | `agent(…, { schema })`       | AJV in the runtime    | Tolerates optional properties and open objects — strict is convention, not enforcement                   |
+|  [02]   | `codex exec --output-schema` | OpenAI strict profile | `additionalProperties: false` everywhere, every key in `required`, conditional fields required-but-empty |
 
 Rules for computing data properly: use `schema` for anything a later line reads a field off of — free text only when the result passes whole into another prompt; keep schemas small, strict, and `required`-tight, defined as `const`s in the body (never inside `meta`); hand data between stages by stringifying into the next prompt (the orchestrator shares no memory with the subagent); a skipped or failed agent returns `null` even with a `schema`.
 
@@ -208,11 +208,11 @@ The rule: default to `pipeline()`. Reach for `parallel()` only when a stage genu
 
 `budget` reflects a token target the user sets with a `"+500k"`-style directive.
 
-| [INDEX] | [MEMBER]             | [MEANING]                                                                     |
-| :-----: | :------------------- | :----------------------------------------------------------------------------- |
-|  [01]   | `budget.total`       | The target, or `null` if none was set                                         |
-|  [02]   | `budget.spent()`     | Output tokens spent this turn — main loop and all workflows share one pool    |
-|  [03]   | `budget.remaining()` | `max(0, total − spent())`, or `Infinity` with no target                       |
+| [INDEX] | [MEMBER]             | [MEANING]                                                                  |
+| :-----: | :------------------- | :------------------------------------------------------------------------- |
+|  [01]   | `budget.total`       | The target, or `null` if none was set                                      |
+|  [02]   | `budget.spent()`     | Output tokens spent this turn — main loop and all workflows share one pool |
+|  [03]   | `budget.remaining()` | `max(0, total − spent())`, or `Infinity` with no target                    |
 
 The target is a hard ceiling: once `spent()` reaches `total`, further `agent()` calls throw; in-flight agents finish and their results are kept. Guard budget loops on `budget.total` — with no target, `remaining()` is `Infinity` and the loop runs to the agent cap. Codex tokens are invisible to `budget.spent()`; budget-gated loops meter only their Claude lanes.
 
@@ -222,24 +222,24 @@ The target is a hard ceiling: once `spent()` reaches `total`, further `agent()` 
 
 ## [09]-[LIMITS]
 
-| [INDEX] | [LIMIT]                | [VALUE]                    | [BEHAVIOR_AT_LIMIT]                                                                          |
-| :-----: | :--------------------- | :------------------------- | :-------------------------------------------------------------------------------------------- |
-|  [01]   | Lifetime `agent()` calls | 1000 per run             | Throws `WorkflowAgentCapError`; a runaway-loop backstop — every loop carries its own guard   |
-|  [02]   | Concurrent agents      | up to 16, fewer on small machines | Not an error — excess calls queue and run as slots free                              |
-|  [03]   | Script size            | 524288 bytes               | Rejected before parsing                                                                      |
-|  [04]   | Token budget           | user-set                   | Throws `WorkflowBudgetExceededError`; in-flight agents finish, no new agents start          |
-|  [05]   | Per-agent stall        | 180000 ms, `stallMs` overrides | A no-progress agent is aborted and retried up to 5×, then abandoned — its call resolves |
-|  [06]   | VM synchronous timeout | 30000 ms                   | Bounds synchronous execution only — catches an infinite sync loop, never a wall-clock cap   |
+| [INDEX] | [LIMIT]                  | [VALUE]                           | [BEHAVIOR_AT_LIMIT]                                                                        |
+| :-----: | :----------------------- | :-------------------------------- | :----------------------------------------------------------------------------------------- |
+|  [01]   | Lifetime `agent()` calls | 1000 per run                      | Throws `WorkflowAgentCapError`; a runaway-loop backstop — every loop carries its own guard |
+|  [02]   | Concurrent agents        | up to 16, fewer on small machines | Not an error — excess calls queue and run as slots free                                    |
+|  [03]   | Script size              | 524288 bytes                      | Rejected before parsing                                                                    |
+|  [04]   | Token budget             | user-set                          | Throws `WorkflowBudgetExceededError`; in-flight agents finish, no new agents start         |
+|  [05]   | Per-agent stall          | 180000 ms, `stallMs` overrides    | A no-progress agent is aborted and retried up to 5×, then abandoned — its call resolves    |
+|  [06]   | VM synchronous timeout   | 30000 ms                          | Bounds synchronous execution only — catches an infinite sync loop, never a wall-clock cap  |
 
 ## [10]-[SANDBOX]
 
 Non-reproducible calls throw — they break resume:
 
-| [INDEX] | [BANNED]                     | [USE_INSTEAD]                                                        |
-| :-----: | :--------------------------- | :-------------------------------------------------------------------- |
-|  [01]   | `Math.random()`              | Vary the prompt/label by loop index                                  |
-|  [02]   | `Date.now()`                 | Pass timestamps in via `args`; stamp results after the run returns   |
-|  [03]   | argless `new Date()` / `Date()` | `new Date(specificValue)` still works                             |
+| [INDEX] | [BANNED]                        | [USE_INSTEAD]                                                      |
+| :-----: | :------------------------------ | :----------------------------------------------------------------- |
+|  [01]   | `Math.random()`                 | Vary the prompt/label by loop index                                |
+|  [02]   | `Date.now()`                    | Pass timestamps in via `args`; stamp results after the run returns |
+|  [03]   | argless `new Date()` / `Date()` | `new Date(specificValue)` still works                              |
 
 No host access: the orchestrator has no filesystem and no Node.js APIs — no `require`, `fs`, `process`, network. File and shell work belongs inside an `agent()`; the subagent has the normal tools, the orchestrator does not. This is not a restriction to fight — it is the contract that makes resume work.
 

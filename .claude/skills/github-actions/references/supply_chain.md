@@ -35,9 +35,9 @@
 
 | [INDEX] | [CHECK]                          | [WHAT_TO_FLAG]                                                            |
 | :-----: | -------------------------------- | ------------------------------------------------------------------------- |
-|  [01]   | **OCI `ghcr.io/` action refs**   | Informational — not yet GA; document as experimental if encountered.      |
+|  [01]   | **OCI `ghcr.io/` action refs**   | Informational — not yet GA; record encountered refs with their risk.      |
 |  [02]   | **Org SHA enforcement disabled** | Flag if repo is GHEC/GHES 3.12+ and enforcement not enabled.              |
-|  [03]   | **`publish-immutable-action`**   | Flag as experimental — repo exists but not usable for external consumers. |
+|  [03]   | **`publish-immutable-action`**   | Flag — repo exists but is unusable for external consumers.                |
 
 **Current posture:** SHA pinning + Dependabot/Renovate automated updates. Org setting "Require actions to be pinned to a full-length commit SHA" enforces `@<40-char-SHA>` format, rejects `@v1`/`@main` refs. Available in GitHub Enterprise Cloud and Server 3.12+.
 
@@ -52,7 +52,7 @@
 |  [01]   | **Static cloud credentials**          | `[OIDC]`       | `secrets.AWS_ACCESS_KEY_ID` / `secrets.AWS_SECRET_ACCESS_KEY` in steps. |
 |  [02]   | **Missing `id-token: write`**         | `[OIDC-PERM]`  | OIDC action present but `id-token: write` missing from permissions.     |
 |  [03]   | **Old OIDC action versions**          | `[OIDC-VER]`   | Pre-current major versions of cloud auth actions.                       |
-|  [04]   | **Missing subject claim restriction** | `[OIDC-TRUST]` | Flag if OIDC trust policy review is recommended.                        |
+|  [04]   | **Missing subject claim restriction** | `[OIDC-TRUST]` | Flag when the trust policy lacks subject claims.                         |
 
 ### [2.2]-[PROVIDER_MATRIX]
 

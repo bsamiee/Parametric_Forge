@@ -114,7 +114,7 @@ Wording freezes the current shape against ground-up rebuild: sealed, frozen, fin
 
 ## [12]-[WEAK_VERBS]
 
-Permission verbs — supports, allows, enables, provides, offers — where an owning verb states law. A surviving instance marks a seam where ownership was never decided.
+Permission verbs — `supports`, `allows`, `enables`, `provides`, `offers` — where an owning verb states law. The verb roster is owned by the gate constants; this class is the smuggled form the roster cannot catch, and a surviving instance marks a seam where ownership was never decided.
 
 - Detection: A law sentence whose operative verb grants permission instead of exercising ownership, including a permission verb smuggled into the object of an owning main verb — owns the option to enable, holds the ability to support — where the owner takes a permission rather than the concern.
 - Rejected: The package offers an optional self-hosted graph lane.
@@ -164,7 +164,7 @@ The corpus adopts a foreign authority's posture toward its own ruled standard: a
 
 ## [17]-[VERSION_ANCHOR]
 
-Durable prose anchored to a release point in time: a version number or pin, a version-conditional behavior band (`at 2.3+`), a date, release narration, or deictic freshness vocabulary — newest, latest, modern, currently, recently. The corpus assumes the newest stable release of everything it touches, so every such anchor is stale the day after it is written and orders a rebuild agent to honor a dead boundary.
+Durable prose anchored to a release point in time: a version number or pin, a version-conditional behavior band (`at 2.3+`), a date, release narration, or deictic freshness vocabulary — `newest`, `latest`, `modern`, `currently`, `recently`. The corpus assumes the newest stable release of everything it touches, so every such anchor is stale the day after it is written and orders a rebuild agent to honor a dead boundary; the gate constants own the numeric and deictic floors.
 
 - Detection: A version literal, release band, date, or freshness deictic in prose; the manifest, lockfile, or codec owner is the only surface a version legally inhabits.
 - Rejected: The neo look lands at 2.14.0+; the curve default moved at 2.13.0 — restore the spline with the prior key.

@@ -6,11 +6,12 @@ description: >-
   scripts and templates, frontmatter invocation policy, degrees-of-freedom calibration, and
   the eval loop that proves a skill fires when it must and changes output when it loads. Use
   when creating a skill, rewriting or auditing an existing bundle, writing or tuning a trigger
-  description, splitting an oversized root, deciding whether law belongs in a skill, rule,
-  memory file, or subagent, pricing how rigid an instruction is allowed to be, or measuring
-  trigger and adherence quality. Prose register and the deterministic prose gate belong to the
-  docgen skill; codex-native format and discovery mechanics belong to the codex skill; runnable
-  orchestration scripts belong to workflow-creator.
+  description, splitting an oversized root, deciding whether material earns a skill or a
+  cheaper owner, pricing how rigid an instruction is allowed to be, or measuring trigger and
+  adherence quality. Prose register and the deterministic prose gate belong to the docgen
+  skill; codex-native format and discovery mechanics belong to the codex skill; runnable
+  orchestration scripts belong to workflow-creator; the cross-surface placement law over
+  memory files, rules, settings, and hooks belongs to harness-config.
 ---
 
 # [SKILL_WRITER]

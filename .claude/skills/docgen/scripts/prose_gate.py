@@ -50,10 +50,12 @@ class Check(StrEnum):
     TABLE_CELL = "table-cell"
     TABLE_HEADER = "table-header"
     TABLE_INDEX = "table-index"
+    TABLE_PROSE = "table-prose"
     TABLE_SHAPE = "table-shape"
     TEMPLATE_SLOT = "template-slot"
     TRAILING_WHITESPACE = "trailing-whitespace"
     VERSION_ANCHOR = "version-anchor"
+    WEAK_VERB = "weak-verb"
 
 
 # --- [CONSTANTS] -------------------------------------------------------------------------
@@ -117,13 +119,18 @@ SELF_COUNT = re.compile(
     r"|rows|columns|tokens|markers|vocabularies)\b"
 )
 VERSION_ANCHOR = re.compile(r"\bv?\d+\.\d+(?:\.\d+)+\b|\b\d+\.\d+(?:\.\d+)?\+|\bv\d+\.\d+\b")
-PATTERNS: tuple[tuple[Check, re.Pattern[str]], ...] = (
-    (Check.HEDGE, HEDGE_WORDS),
-    (Check.HEDGE, MARKER_WORDS),
-    (Check.HEDGE, HEDGE_PHRASE),
-    (Check.META_PHRASE, META_PHRASE),
-    (Check.SELF_COUNT, SELF_COUNT),
-    (Check.VERSION_ANCHOR, VERSION_ANCHOR),
+# Deictic freshness and permission verbs warn: both admit context-legal uses review adjudicates.
+FRESHNESS_DEICTIC = re.compile(r"\b(?:currently|recently|nowadays|at\s+present|these\s+days|going\s+forward)\b", re.IGNORECASE)
+WEAK_VERB = re.compile(r"\b(?:supports|provides|offers|allows|enables)\b", re.IGNORECASE)
+PATTERNS: tuple[tuple[Check, re.Pattern[str], Status], ...] = (
+    (Check.HEDGE, HEDGE_WORDS, "fail"),
+    (Check.HEDGE, MARKER_WORDS, "fail"),
+    (Check.HEDGE, HEDGE_PHRASE, "fail"),
+    (Check.META_PHRASE, META_PHRASE, "fail"),
+    (Check.SELF_COUNT, SELF_COUNT, "fail"),
+    (Check.VERSION_ANCHOR, VERSION_ANCHOR, "fail"),
+    (Check.VERSION_ANCHOR, FRESHNESS_DEICTIC, "warn"),
+    (Check.WEAK_VERB, WEAK_VERB, "warn"),
 )
 
 
@@ -190,12 +197,12 @@ def collect(paths: tuple[Path, ...]) -> tuple[tuple[Path, ...], tuple[Row, ...]]
     faults: list[Row] = []
     for target in paths:
         if target.is_dir():
-            found = tuple(sorted(target.rglob("*.md")))
+            found = tuple(sorted(path.resolve() for path in target.rglob("*.md")))
             files.extend(found)
             if not found:
                 faults.append(row(target, 0, Check.COLLECT, "fail", "directory holds no markdown"))
         elif target.suffix == ".md" and target.is_file():
-            files.append(target)
+            files.append(target.resolve())
         else:
             faults.append(row(target, 0, Check.COLLECT, "fail", "not a readable markdown file"))
     return tuple(dict.fromkeys(files)), tuple(faults)
@@ -374,6 +381,13 @@ def table_rows(doc: Document) -> tuple[Row, ...]:
             for cell in body
             if len(cell) > CELL_BUDGET
         )
+        rows.extend(
+            row(doc.path, table.line + index + 1, Check.TABLE_PROSE, "warn", hit.group(0))
+            for index, body in enumerate(table.rows, 1)
+            for cell in body
+            for pattern in (HEDGE_WORDS, MARKER_WORDS, META_PHRASE)
+            for hit in pattern.finditer(QUOTED_SPAN.sub(" ", cell))
+        )
     return tuple(rows)
 
 
@@ -419,7 +433,9 @@ def prose_rows(doc: Document) -> tuple[Row, ...]:
             rows.extend(row(doc.path, span.line, Check.TEMPLATE_SLOT, "fail", hit.group(0)) for hit in PLACEHOLDER.finditer(span.text))
         rows.extend(row(doc.path, span.line, Check.BOLD_EMPHASIS, "fail", hit.group(0)) for hit in BOLD.finditer(span.text))
         rows.extend(
-            row(doc.path, span.line, check, "fail", hit.group(0).lstrip(".!? ")) for check, pattern in PATTERNS for hit in pattern.finditer(span.text)
+            row(doc.path, span.line, check, status, hit.group(0).lstrip(".!? "))
+            for check, pattern, status in PATTERNS
+            for hit in pattern.finditer(span.text)
         )
     return tuple(rows)
 

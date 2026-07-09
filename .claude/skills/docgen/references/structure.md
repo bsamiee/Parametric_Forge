@@ -4,7 +4,7 @@ Universal information-structure law: no document kind owns these concerns — a 
 
 ## [01]-[ALTITUDE]
 
-A fact lands at the lowest tier that owns it; a higher tier states only the invariant the fact instantiates. A sentence that can move one tier down without losing governing force over more than one child is at the wrong altitude.
+A fact lands at the lowest tier that owns it; a higher tier states only the invariant the fact instantiates. A sentence that can move one tier down without losing governing force over more than one child is at the wrong altitude. The failure is two-sided: prose pinned below its tier freezes mechanism a rebuild must be free to re-derive, and prose floated above its tier dissolves into a platitude no rebuild can act on — a sentence whose deletion changes no rebuild fails admission at every tier.
 
 - [CORPUS_ROOT]: Purpose, layer law, entry routes by concern — never inventories of anything below.
 - [AREA_INDEX]: Area invariants, unit-grain topology and boundaries, admission law — never a unit's member roster or file names.
@@ -109,7 +109,7 @@ A closed marker vocabulary plus a templated entry shape is the device that keeps
 - Entry leaders compose identity and state (`[<ID>]-[<STATUS>]:`), so an entry's lifecycle is readable and greppable without parsing its body; status transitions are edits to the leader, never narrated in prose.
 - Field lines under a leader come from the closed field vocabulary in declared order; a field that decides nothing for this entry is omitted, never filled with filler.
 - Compact status glyphs (`[O]` `[X]` `[!]` `[~]`) render only where density matters — checked lists, delta summaries, table cells — with globally declared meanings; a marker never duplicates a field the entry already carries.
-- Invocation markers (`[IMPORTANT]`, `[CRITICAL]`, `[ALWAYS]`, `[NEVER]`) weight constraints in instruction files alone; ordinary documentation carries strength through prose modals, and one concept never carries both.
+- Invocation markers (`[IMPORTANT]`, `[CRITICAL]`, `[ALWAYS]`, `[NEVER]`) weight constraints in instruction files alone; ordinary documentation carries strength through prose modals, and one concept never carries both. Weight is rationed: a page that marks every rule critical re-flattens the hierarchy the markers exist to create.
 
 ```markdown accepted
 - [0042]-[BLOCKED]: <entry title>
