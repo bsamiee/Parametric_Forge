@@ -150,6 +150,11 @@ in {
         copy_command                "pbcopy"
         scroll_buffer_size          100000
 
+        // Host web stance: server off, sharing disabled until reverse-proxy +
+        // token-lifecycle rows exist (annex-gated exposure).
+        web_server                  ${lib.boolToString config.programs.zellij.web.server}
+        web_sharing                 "${config.programs.zellij.web.sharing}"
+
         // --- Plugin Aliases ---------------------------------------------------------
         plugins {
           configuration location="zellij:configuration"
