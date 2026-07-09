@@ -10,6 +10,8 @@
   docker-client,
   docker-compose,
   duckdb,
+  gawk,
+  git,
   jq,
   lib,
   lsof,
@@ -34,6 +36,8 @@
       docker-client
       docker-compose
       duckdb
+      gawk
+      git
       jq
       lsof
       sqlite-forge

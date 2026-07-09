@@ -12,7 +12,6 @@
     .dsnEnv,
     .volumeMount,
     .preload,
-    .applySqlKey,
     .host,
     (.containerPort | tostring),
     .databaseName,

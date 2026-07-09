@@ -41,6 +41,7 @@ readonly service_ready_attempts=15
 readonly healthcheck_interval="5s" healthcheck_timeout="5s" healthcheck_start_period="10s" healthcheck_start_interval="2s" healthcheck_retries=30
 host_os="$(uname -s 2>/dev/null || printf unknown)"
 readonly host_os
+readonly -a tool_surfaces=(duckdb sqlite)
 
 if [[ -f "$forge_provision_share/forge-provision.sh" && -d "$forge_provision_share/data" && -d "$forge_provision_share/sql" ]]; then
   {
@@ -74,7 +75,7 @@ load_command_routes() {
   local verb handler json_mode argspec mutates lock_mode diagnostic desc extra
   while IFS=$'\t' read -r verb handler json_mode argspec mutates lock_mode diagnostic desc extra; do
     [[ -n "$verb" ]] || continue
-    if [[ -n "${extra:-}" || -z "$handler" || -z "$argspec" || -z "$lock_mode" || -z "$diagnostic" || -z "$desc" ]]; then
+    if [[ -n "${extra:-}" || -z "$handler" || -z "$argspec" || -z "$lock_mode" || -z "$desc" ]] || ! [[ "$json_mode$mutates$diagnostic" =~ ^[01]{3}$ ]]; then
       printf 'forge-provision: invalid command route row for verb=%s\n' "${verb:-unknown}" >&2
       exit 70
     fi
@@ -95,14 +96,14 @@ load_command_routes
 declare -a service_order=()
 declare -A service_role=() service_profile=() service_enabled_env=() service_enabled_default=()
 declare -A service_image_env=() service_image_default=() service_port_env=() service_port_default=()
-declare -A service_dsn_env=() service_volume_mount=() service_preload_base=() service_apply_sql_key=() service_apply_handler=()
+declare -A service_dsn_env=() service_volume_mount=() service_preload_base=()
 declare -A service_host=() service_container_port=() service_db_name=() service_db_user=()
 
 load_service_rows() {
-  local service role profile enabled_env enabled_default image_env image_default port_env port_default dsn_env volume_mount preload apply_sql_key host container_port db_name db_user extra
-  while IFS=$'\t' read -r service role profile enabled_env enabled_default image_env image_default port_env port_default dsn_env volume_mount preload apply_sql_key host container_port db_name db_user extra; do
+  local service role profile enabled_env enabled_default image_env image_default port_env port_default dsn_env volume_mount preload host container_port db_name db_user extra
+  while IFS=$'\t' read -r service role profile enabled_env enabled_default image_env image_default port_env port_default dsn_env volume_mount preload host container_port db_name db_user extra; do
     [[ -n "$service" ]] || continue
-    if [[ -n "${extra:-}" || -z "$role" || -z "$profile" || -z "$enabled_default" || -z "$image_env" || -z "$image_default" || -z "$port_env" || -z "$port_default" || -z "$dsn_env" || -z "$volume_mount" || -z "$preload" || -z "$apply_sql_key" || -z "$host" || -z "$container_port" || -z "$db_name" || -z "$db_user" ]]; then
+    if [[ -n "${extra:-}" || -z "$role" || -z "$profile" || -z "$enabled_default" || -z "$image_env" || -z "$image_default" || -z "$port_env" || -z "$port_default" || -z "$dsn_env" || -z "$volume_mount" || -z "$preload" || -z "$host" || -z "$container_port" || -z "$db_name" || -z "$db_user" ]]; then
       printf 'forge-provision: invalid service row for service=%s\n' "${service:-unknown}" >&2
       exit 70
     fi
@@ -119,12 +120,10 @@ load_service_rows() {
     service_dsn_env[$service]="$dsn_env"
     service_volume_mount[$service]="$volume_mount"
     service_preload_base[$service]="$preload"
-    service_apply_sql_key[$service]="$apply_sql_key"
     service_host[$service]="$host"
     service_container_port[$service]="$container_port"
     service_db_name[$service]="$db_name"
     service_db_user[$service]="$db_user"
-    service_apply_handler[$service]="apply_service_extensions"
   done < <(jq -r -f "$(catalog_path jq/service-rows.jq)" "$(catalog_path data/services.json)")
   return 0
 }
@@ -342,7 +341,11 @@ normalize_command_args() {
       return 0
       ;;
     tool-surface-selector)
-      local seen_surface=false
+      local seen_surface=false surface_choices
+      surface_choices="$(
+        IFS='|'
+        printf '%s|all' "${tool_surfaces[*]}"
+      )"
       while (($# > 0)); do
         case "$1" in
           --json)
@@ -353,13 +356,15 @@ normalize_command_args() {
             [[ "$seen_surface" == false ]] || die_usage "tools received duplicate --surface"
             seen_surface=true
             shift
-            case "${1:-}" in
-              duckdb | sqlite | all) tool_surface_selector="$1" ;;
-              "") die_usage "tools --surface requires duckdb, sqlite, or all" ;;
-              *) die_usage "tools --surface must be duckdb, sqlite, or all" ;;
-            esac
+            if [[ -z "${1:-}" ]]; then
+              die_usage "tools --surface requires one of $surface_choices"
+            elif [[ "$1" == "all" || " ${tool_surfaces[*]} " == *" $1 "* ]]; then
+              tool_surface_selector="$1"
+            else
+              die_usage "tools --surface must be one of $surface_choices"
+            fi
             ;;
-          *) die_usage "tools accepts --json and optional --surface duckdb|sqlite|all" ;;
+          *) die_usage "tools accepts --json and optional --surface $surface_choices" ;;
         esac
         shift
       done
@@ -427,14 +432,6 @@ service_dsn() {
 
 service_dsn_redacted() {
   printf 'postgres://%s:***@%s:%s/%s' "${service_db_user[$1]}" "${service_host[$1]}" "$(service_port "$1")" "${service_db_name[$1]}"
-}
-
-hash_text() {
-  if command -v sha256sum >/dev/null 2>&1; then
-    sha256sum
-  else
-    shasum -a 256
-  fi
 }
 
 auth_secret_name() {
@@ -755,7 +752,7 @@ resolve_auto_ports() {
   done
   ((${#bases[@]} > 0)) || die "no usable auto port blocks in FORGE_PROVISION_PORT_RANGE after exclusions"
   port_policy_seed="forge-provision:v2:$(docker_endpoint_hash):$root_key:$project_name:service-order-1"
-  hash="$(printf '%s' "$port_policy_seed" | hash_text)"
+  hash="$(printf '%s' "$port_policy_seed" | sha256sum)"
   hash="${hash%% *}"
   hash="$((16#${hash:0:8}))"
   offset=$((hash % ${#bases[@]}))
@@ -833,7 +830,7 @@ port_policy_json() {
   resolve_ports false
   local seed_fingerprint=""
   if [[ -n "$port_policy_seed" ]]; then
-    seed_fingerprint="$(printf '%s' "$port_policy_seed" | hash_text)"
+    seed_fingerprint="$(printf '%s' "$port_policy_seed" | sha256sum)"
     seed_fingerprint="${seed_fingerprint%% *}"
   fi
   jq -nc \
@@ -939,22 +936,18 @@ tool_surface_json() {
 }
 
 tool_surfaces_json() {
-  local duckdb_json sqlite_json
-  case "$tool_surface_selector" in
-    duckdb)
-      duckdb_json="$(tool_surface_json duckdb)" || return 1
-      jq -nc --argjson duckdb "$duckdb_json" '{duckdb: $duckdb}'
-      ;;
-    sqlite)
-      sqlite_json="$(tool_surface_json sqlite)" || return 1
-      jq -nc --argjson sqlite "$sqlite_json" '{sqlite: $sqlite}'
-      ;;
-    all)
-      duckdb_json="$(tool_surface_json duckdb)" || return 1
-      sqlite_json="$(tool_surface_json sqlite)" || return 1
-      jq -nc --argjson duckdb "$duckdb_json" --argjson sqlite "$sqlite_json" '{duckdb: $duckdb, sqlite: $sqlite}'
-      ;;
-  esac
+  local surface surface_json
+  local -a selected=() jq_args=()
+  if [[ "$tool_surface_selector" == "all" ]]; then
+    selected=("${tool_surfaces[@]}")
+  else
+    selected=("$tool_surface_selector")
+  fi
+  for surface in "${selected[@]}"; do
+    surface_json="$(tool_surface_json "$surface")" || return 1
+    jq_args+=(--argjson "$surface" "$surface_json")
+  done
+  jq -nc "${jq_args[@]}" '$ARGS.named'
 }
 
 enabled_services() {
@@ -1015,7 +1008,7 @@ compose_project_name() {
     printf '%s\n' "$raw"
     return 0
   fi
-  digest="$(printf '%s' "$raw" | hash_text)"
+  digest="$(printf '%s' "$raw" | sha256sum)"
   digest="${digest%% *}"
   printf '%s-%s\n' "${raw:0:50}" "${digest:0:12}"
 }
@@ -1084,7 +1077,7 @@ require_root() {
   validate_lock_wait_seconds
   find_forge_root forge_root
   validate_forge_root "$forge_root"
-  fingerprint="$(printf '%s' "$forge_root" | hash_text)"
+  fingerprint="$(printf '%s' "$forge_root" | sha256sum)"
   root_key="${fingerprint%% *}"
   root_key="${root_key:0:12}"
   if [[ -n "$project_override" ]]; then
@@ -1273,11 +1266,6 @@ lock_active_message() {
     "$lock_dir" "${pid:-unknown}" "${host:-unknown}" "${command:-unknown}" "${started_at:-unknown}"
 }
 
-path_mtime_epoch() {
-  local path="$1"
-  stat -c %Y "$path" 2>/dev/null || stat -f %m "$path" 2>/dev/null
-}
-
 pid_looks_like_forge_provision() {
   local pid="$1"
   [[ "$pid" =~ ^[0-9]+$ ]] || return 1
@@ -1298,7 +1286,7 @@ lock_recover_dead() {
   pid="$(owner_field "$lock" pid)"
   if [[ -z "$pid" ]]; then
     [[ ! -f "$lock/owner" ]] || return 1
-    mtime="$(path_mtime_epoch "$lock" 2>/dev/null || true)"
+    mtime="$(stat -c %Y "$lock" 2>/dev/null || true)"
     [[ -n "$mtime" && $((EPOCHSECONDS - mtime)) -ge "$lock_ttl_seconds" ]] || return 1
   else
     case "$live_test" in
@@ -1589,6 +1577,8 @@ acquire_port_locks() {
     ((rc == 0)) || return 1
     port_lock_dirs+=("$lock")
   done < <(enabled_services)
+  stop_lock_heartbeat
+  start_lock_heartbeat
   return 0
 }
 
@@ -1665,7 +1655,7 @@ resolve_docker_endpoint() {
 docker_endpoint_hash() {
   resolve_docker_endpoint
   local digest
-  digest="$(printf '%s' "$docker_endpoint" | hash_text)"
+  digest="$(printf '%s' "$docker_endpoint" | sha256sum)"
   printf '%s\n' "${digest%% *}"
 }
 
@@ -1924,7 +1914,7 @@ render_env() {
   local service pair
   resolve_auth
   resolve_ports false
-  for pair in "FORGE_PROVISION_ROOT=$forge_root" "FORGE_PROVISION_PROJECT=$project_key" "FORGE_PROVISION_INSTANCE=$instance_name" "FORGE_PROVISION_COMPOSE_PROJECT=$project_name" "FORGE_PROVISION_DIR=$provisioning_dir" "FORGE_PROVISION_COMPOSE=$compose_file" "FORGE_PROVISION_ENV=$env_file" "FORGE_PROVISION_AUTH=$auth_mode" "FORGE_PROVISION_PORT_POLICY=$port_policy_mode"; do
+  for pair in "FORGE_PROVISION_ROOT=$forge_root" "FORGE_PROVISION_PROJECT=$project_key" "FORGE_PROVISION_INSTANCE=$instance_name" "FORGE_PROVISION_COMPOSE_PROJECT=$project_name" "FORGE_PROVISION_DIR=$provisioning_dir" "FORGE_PROVISION_COMPOSE=$compose_file" "FORGE_PROVISION_ENV=$env_file" "FORGE_PROVISION_AUTH=$auth_mode" "FORGE_PROVISION_PORT_POLICY=$([[ "$port_policy_mode" == "auto" ]] && printf auto || printf fixed)"; do
     printf '%s\n' "$pair"
   done
   for service in "${service_order[@]}"; do
@@ -2035,7 +2025,7 @@ restore_previous_generation() {
 cleanup_publication_artifacts() {
   [[ -n "$provisioning_dir" && -d "$provisioning_dir" && ! -L "$provisioning_dir" ]] || return 0
   rm -f "$provisioning_dir/.current.next" "$docker_config_dir"/.tmp.* "$provisioning_dir"/.tmp.* 2>/dev/null || true
-  [[ -n "$auth_secret_dir" && -d "$auth_secret_dir" ]] && rm -f "$auth_secret_dir"/.*.password.* 2>/dev/null || true
+  [[ -n "$auth_secret_dir" && -d "$auth_secret_dir" ]] && rm -f "$auth_secret_dir"/.tmp.* 2>/dev/null || true
   rm -rf -- "$provisioning_dir"/.staging-gen-* 2>/dev/null || true
 }
 
@@ -2044,7 +2034,7 @@ cleanup_stale_generations() {
   local current_target generation
   current_target=""
   [[ -L "$current_link" ]] && current_target="$(readlink "$current_link")"
-  for generation in "$provisioning_dir"/.gen-* "$provisioning_dir"/.gen.*; do
+  for generation in "$provisioning_dir"/.gen-*; do
     [[ -d "$generation" ]] || continue
     [[ "${generation##*/}" == "$current_target" ]] && continue
     rm -rf "$generation"
@@ -2064,7 +2054,7 @@ cleanup_runtime_assets_preserve_state() {
   assert_safe_project_dir_for_cleanup
   [[ -d "$provisioning_dir" && ! -L "$provisioning_dir" ]] || return 0
   rm -f "$current_link" "$provisioning_dir/.current.next" 2>/dev/null || true
-  rm -rf -- "$provisioning_dir"/.gen-* "$provisioning_dir"/.gen.* "$provisioning_dir"/.staging-gen-* "$docker_config_dir" 2>/dev/null || true
+  rm -rf -- "$provisioning_dir"/.gen-* "$provisioning_dir"/.staging-gen-* "$docker_config_dir" 2>/dev/null || true
 }
 
 cleanup_transient_assets() {
@@ -2093,7 +2083,7 @@ lock_json() {
     command="$(owner_field "$lock_dir" command)"
     heartbeat="$(owner_field "$lock_dir" last_heartbeat_epoch)"
     if [[ -z "$pid" ]]; then
-      mtime="$(path_mtime_epoch "$lock_dir" 2>/dev/null || true)"
+      mtime="$(stat -c %Y "$lock_dir" 2>/dev/null || true)"
       state="ownerless"
       [[ -n "$mtime" && $((EPOCHSECONDS - mtime)) -ge "$lock_ttl_seconds" ]] && state="ownerless-expired"
     elif kill -0 "$pid" 2>/dev/null; then
@@ -2252,7 +2242,6 @@ emit_extension_run_json() {
   emit_stack_json "$command" "$ok_json" "$(envelope_filter envelope-extension-run.jq)" \
     --argjson extensions "$extensions_json" \
     --argjson ports "$ports_json"
-  json_result_emitted=true
 }
 
 # One handler owns check and apply; the dispatched verb selects docker posture and row producer.
@@ -2310,7 +2299,10 @@ cmd_psql_service() {
 
 cmd_psql() {
   local service="${1:-}"
-  [[ -n "$service" ]] || die_usage "psql requires a service: timescale, search, or pgduckdb"
+  [[ -n "$service" ]] || die_usage "psql requires a service: $(
+    IFS='|'
+    printf '%s' "${service_order[*]}"
+  )"
   known_service "$service" || die_usage "unknown psql service: $service"
   shift
   [[ "${1:-}" == "--" ]] && shift
@@ -2375,13 +2367,18 @@ cmd_status() {
     state="$(docker inspect --format '{{ .State.Status }}' "$id" || printf '-')"
     health="$(docker inspect --format '{{ if .State.Health }}{{ .State.Health.Status }}{{ else }}none{{ end }}' "$id" || printf '-')"
     ports="$(published_ports "$id")"
-    identity_json="$(docker inspect "$id" | jq -r \
-      --arg image "$(service_image "$service")" \
-      --arg net "$(network_name)" \
-      --arg volume "$(service_volume_name "$service")" \
-      --arg mount "${service_volume_mount[$service]}" \
-      -f "$(catalog_path jq/status-text-identity.jq)")"
-    IFS=$'\t' read -r identity_ok identity_issue <<<"$identity_json"
+    if known_service "$service"; then
+      identity_json="$(docker inspect "$id" | jq -r \
+        --arg image "$(service_image "$service")" \
+        --arg net "$(network_name)" \
+        --arg volume "$(service_volume_name "$service")" \
+        --arg mount "${service_volume_mount[$service]}" \
+        -f "$(catalog_path jq/status-text-identity.jq)")"
+      IFS=$'\t' read -r identity_ok identity_issue <<<"$identity_json"
+    else
+      identity_ok=false
+      identity_issue=unknown-service
+    fi
     printf 'status\tservice=%s\tcontainer_id=%s\tname=%s\timage=%s\tdocker_status=%s\thealth=%s\tports=%s\tidentity_ok=%s\tidentity_issue=%s\tproject=%s\troot=%s\n' \
       "$service" "$id" "$name" "$image" "$state" "$health" "$ports" "$identity_ok" "$identity_issue" "$project_name" "$root_key"
   done
@@ -2536,8 +2533,7 @@ cmd_doctor() {
       --argjson ports "$ports_json" \
       --argjson lock "$(lock_json)" \
       --argjson colima "$(colima_json)" \
-      --argjson diagnostic "$([[ "$diagnostic_json" == true ]] && printf true || printf false)" \
-      --argjson schemaVersion "$schema_version"
+      --argjson diagnostic "$([[ "$diagnostic_json" == true ]] && printf true || printf false)"
     return 0
   fi
   printf 'doctor\tcommand=forge-provision\ndoctor\tforge_root=%s\ndoctor\tproject=%s\ndoctor\troot_key=%s\ndoctor\tdocker=%s\ndoctor\tdocker_policy=%s\n' \
@@ -2670,8 +2666,6 @@ cmd_self_test() {
     [[ -n "${service_image_env[$service]}" ]] || die "service missing image env: $service"
     [[ -n "${service_port_env[$service]}" ]] || die "service missing port env: $service"
     [[ -n "${service_dsn_env[$service]}" ]] || die "service missing dsn env: $service"
-    [[ -n "${service_apply_handler[$service]}" ]] || die "service missing apply handler: $service"
-    [[ -n "${service_apply_sql_key[$service]}" ]] || die "service missing apply SQL key: $service"
     port="$(service_port "$service")"
     if service_enabled "$service"; then
       [[ -z "${seen_ports[$port]:-}" ]] || die "enabled service port collision: $service and ${seen_ports[$port]}"
@@ -2754,7 +2748,11 @@ main() {
   }
   current_command="$command"
   if [[ "$diagnostic_json" == true ]] && ! command_supports_diagnostic_json "$command"; then
-    die_usage "--diagnostic-json is allowed only for doctor, paths, and inventory"
+    local verb diagnostic_verbs=""
+    for verb in "${command_order[@]}"; do
+      ! command_supports_diagnostic_json "$verb" || diagnostic_verbs+="${diagnostic_verbs:+, }$verb"
+    done
+    die_usage "--diagnostic-json is allowed only for: $diagnostic_verbs"
   fi
   normalize_command_args "$command" "$@"
   case "${command_lock_mode[$command]}" in

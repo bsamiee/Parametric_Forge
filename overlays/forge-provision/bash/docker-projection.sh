@@ -88,8 +88,7 @@ active_other_project_count() {
   local raw
   local ids=()
   raw="$(docker ps -q \
-    --filter "label=$owner_label=1" \
-    --filter "label=$root_label=$root_key")" || return
+    --filter "label=$owner_label=1")" || return
   [[ -z "$raw" ]] || mapfile -t ids <<<"$raw"
   ((${#ids[@]} > 0)) || {
     printf '0\n'
@@ -130,10 +129,11 @@ container_running_for_service() {
   [[ -n "$(owned_ps -q "$service")" ]]
 }
 
-container_publishes_loopback_host_port() {
+container_publishes_service_host_port() {
   local id="$1"
   local port="$2"
-  docker inspect "$id" | jq -e --arg port "$port" -f "$(catalog_path jq/loopback-publisher.jq)" >/dev/null
+  local host="$3"
+  docker inspect "$id" | jq -e --arg port "$port" --arg host "$host" -f "$(catalog_path jq/service-host-publisher.jq)" >/dev/null
 }
 
 containers_publishing_host_port() {
@@ -171,7 +171,7 @@ port_owned_by_service() {
     compose_project="$(inspect_label "$id" "com.docker.compose.project")"
     [[ "$owned" == "1" && "$root" == "$root_key" && "$project" == "$project_name" && "$service_value" == "$service" && "$compose_project" == "$project_name" ]] || continue
     validate_owned_container_identity "$id" "$service"
-    container_publishes_loopback_host_port "$id" "$port" && return 0
+    container_publishes_service_host_port "$id" "$port" "${service_host[$service]}" && return 0
   done
   return 1
 }
@@ -315,10 +315,6 @@ assert_owned_named_resource() {
   service_value="$(docker "$kind" inspect --format "{{ index .Labels \"$service_label\" }}" "$name")"
   [[ "$owner" == "1" && "$root" == "$root_key" && "$project" == "$project_name" && "$service_value" == "$expected_service" ]] ||
     die "refusing to reuse $kind with wrong labels: $name"
-  if [[ "$kind" == "network" ]]; then
-    [[ "$(docker network inspect --format '{{ .Name }}' "$name")" == "$name" ]] ||
-      die "refusing to reuse network with wrong labels: $name"
-  fi
 }
 
 assert_owned_named_resources() {
@@ -445,11 +441,7 @@ service_extension_sql() {
   psql_tsv "$service" <<<"$sql"
 }
 
-apply_service_extensions() {
-  service_extension_sql "$1" apply-postgres.sql
-}
-
-# One extension-row producer; mode selects the read-only probe or the mutating apply handler.
+# One extension-row producer; mode selects the read-only probe or the mutating apply SQL.
 extension_rows() {
   local mode="$1"
   local service
@@ -457,7 +449,7 @@ extension_rows() {
     if ! service_enabled "$service"; then
       disabled_service_apply_rows "$service"
     elif [[ "$mode" == "apply" ]]; then
-      "${service_apply_handler[$service]}" "$service"
+      service_extension_sql "$service" apply-postgres.sql
     else
       service_extension_sql "$service" check-postgres.sql
     fi
@@ -544,7 +536,7 @@ generated_files_json() {
     file_record_json lock_dir directory "$lock_dir"
     if [[ -d "$provisioning_dir" && ! -L "$provisioning_dir" ]]; then
       local path
-      for path in "$provisioning_dir"/.gen-* "$provisioning_dir"/.gen.* "$provisioning_dir"/.current.next "$docker_config_dir"/.tmp.*; do
+      for path in "$provisioning_dir"/.gen-* "$provisioning_dir"/.staging-gen-* "$provisioning_dir"/.current.next "$docker_config_dir"/.tmp.*; do
         [[ -e "$path" ]] || continue
         file_record_json generated_artifact path "$path"
       done

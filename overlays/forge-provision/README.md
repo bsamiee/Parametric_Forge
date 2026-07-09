@@ -18,7 +18,7 @@
 
 - Envelopes carry sanitized runtime booleans, kinds, and catalog metadata only; sockets, Docker config paths, credential helper names, DSN passwords, mount paths, and host absolute paths never enter agent-facing JSON, and `redact_message` scrubs every error string.
 - `--diagnostic-json` is admitted only for `doctor`, `paths`, and `inventory`; it adds redaction-marker fields, never raw values.
-- `extensions.catalog` rows pass through `data/postgres-extensions.json`, `data/duckdb-extensions.json`, and `data/sqlite-extensions.json` unmodified plus computed gate fields, so the catalog files are the system of record for extension metadata.
+- `extensions.catalog` rows pass through `data/postgres-extensions.json`, `data/duckdb-extensions.json`, and `data/sqlite-extensions.json` unmodified; PostgreSQL rows additionally carry computed gate fields; the catalog files are the system of record for extension metadata.
 
 ## [03]-[IDENTITY]
 
