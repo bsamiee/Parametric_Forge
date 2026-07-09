@@ -97,7 +97,7 @@ in {
 
       # Preset owns edit/editAtLine/openDirInEditor ({{filename}}/{{line}} are the
       # only template vars); the darwin platform default owns open/openLink.
-      os.editPreset = "nvim"; # Matches EDITOR in core.nix
+      os.editPreset = "nvim"; # Matches EDITOR from programs.neovim.defaultEditor (apps/nvim)
 
       # Store-managed binary: self-update writes are impossible.
       update.method = "never";

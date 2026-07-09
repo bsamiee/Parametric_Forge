@@ -124,7 +124,7 @@ someFnWithSSL = args: ...  # Function spam
 
 ## Language-Specific Standards
 
-Code-generation law lives in the stack atlases: `docs/stacks/python/README.md` and `docs/stacks/typescript/README.md` route every language, shape, rail, and boundary decision to its owning page. Durable Markdown follows the `docs/standards/` owners — `style-guide.md` for language law, `formatting.md` for surface mechanics, `information-structure.md` for container design.
+Code-generation law lives in the stack atlases: `docs/stacks/python/README.md` and `docs/stacks/typescript/README.md` route every language, shape, rail, and boundary decision to its owning page. Design law lives in the `docs/standards/` doctrine pair — `design-doctrine.md` binds every executable surface (rails, dispatch, vocabularies), and `nix-doctrine.md` extends it onto Nix modules, overlays, packaged shell kernels, and generated config. Durable Markdown follows the remaining `docs/standards/` owners — `style-guide.md` for language law, `formatting.md` for surface mechanics, `information-structure.md` for container design.
 
 ### Shell Scripts
 - IMPORTANT: Always add the .sh extension to bash scripts
