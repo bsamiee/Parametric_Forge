@@ -376,13 +376,11 @@
         "            height \"56%\""
         "          }"
       ];
+      # Cheatsheet-only discoverability: the ribbon stays inside ~160 columns,
+      # so watch carries no ribbon chip.
       forgot = {
         label = "watch panels";
         rank = 164;
-      };
-      ribbon = {
-        label = "watch";
-        rank = 60;
       };
     }
   ];
