@@ -4,6 +4,8 @@
 
 - `CLAUDE.md` is the project execution standard — model dispatch, estate law, Nix code law, language routing, provisioning contract, commit standards. This file carries only agent-runtime deltas.
 - This repository is the machine/user toolchain owner for every estate host: shell, PATH, tool, wrapper, launcher, and credential behavior is fixed here, never patched in a sibling project.
+- Apple Container is a coexistence runtime, never a Docker/Compose replacement or `DOCKER_HOST` owner. Install ownership: `modules/darwin/homebrew/brews.nix`; runtime/env ownership: `modules/home/environments/containers.nix`; diagnostics: `forge-provision doctor`.
+- Runtime routing law: Docker Engine API, `DOCKER_HOST`, Compose, Pulumi Docker providers, Docker SDKs, Testcontainers, `docker cp`/`docker exec`, and Buildx-into-daemon run on Colima. Registry/image movement without a runtime uses `skopeo`/`crane`/`oras`/`regctl`. Single isolated OCI run/build, `container machine`, and per-container-VM benchmarking run on Apple Container. Kubernetes stays on the kubectl/kind/helm chain; Apple Container is not a Kubernetes owner.
 - `~/.codex` is the sole Codex configuration home; no file in this repository is Codex configuration source of truth. Repo `.claude/` state serves the Claude harness, and this file carries policy, never configuration.
 
 ## [02]-[SKILL_MASTERS]
