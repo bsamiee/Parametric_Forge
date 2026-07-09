@@ -30,3 +30,9 @@ A skill's value is measured, never assumed, along exactly two axes: trigger — 
 - [GRADUATION]: A capability suite starts hard with low pass rates and marks the frontier; once passing is routine it graduates into the regression suite, which stays near full marks and exists to catch decay.
 - [SEEDING]: The first suite is twenty to fifty tasks harvested from real failures and manual checks, prioritized by impact — never synthetic tasks invented to pass.
 - [TRANSCRIPTS]: Failures are read, not counted. The transcript decides whether a miss is trigger, routing, freedom mismatch, or law, and routes the fix to the description, a route row, a band change, or a body rule. A saturated task teaches nothing and retires.
+
+## [05]-[TOOLING]
+
+- [ROLE_SPLIT]: Grading, comparison, and attribution run as separate fresh-context agents — a grader verifying each run against its task's expectations, a blind comparator ranking the pair, an unblinded analyzer attributing the difference to specific instructions. One agent holding every role leaks run identity into the verdict.
+- [DURABLE_SUITE]: Query sets, verdicts, transcripts, and revision history persist as typed JSON beside the bundle under iteration; a revision measures against recorded baselines, and the suite outlives the session that built it.
+- [ISOLATION]: Each trial runs in a clean environment — no shared state, cached artifacts, or history leaking between the paired runs; an environment-correlated failure indicts the harness, never the skill.

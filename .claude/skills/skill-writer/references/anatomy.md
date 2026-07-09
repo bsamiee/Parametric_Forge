@@ -4,13 +4,13 @@ A bundle is a directory whose every file sits at the lowest tier that owns it: t
 
 ## [01]-[TIERS]
 
-| [INDEX] | [TIER]        | [LOADS]                       | [COST_PROFILE]                                            |
-| :-----: | :------------ | :---------------------------- | :-------------------------------------------------------- |
-|  [01]   | `description` | Every session, budgeted       | Competes with every installed sibling for listing space   |
-|  [02]   | `SKILL.md`    | On selection                  | Persists across turns; rides compaction in a token budget |
-|  [03]   | `references/` | On route, per branch          | Paid only by the task that takes the branch               |
-|  [04]   | `scripts/`    | Never — executes              | Invocation line plus receipt; implementation stays on disk |
-|  [05]   | `assets/`     | Never — consumed by scripts   | Zero context cost at any size                             |
+| [INDEX] | [TIER]        | [LOADS]                     | [COST_PROFILE]                                             |
+| :-----: | :------------ | :-------------------------- | :--------------------------------------------------------- |
+|  [01]   | `description` | Every session, budgeted     | Competes with every installed sibling for listing space    |
+|  [02]   | `SKILL.md`    | On selection                | Persists across turns; rides compaction in a token budget  |
+|  [03]   | `references/` | On route, per branch        | Paid only by the task that takes the branch                |
+|  [04]   | `scripts/`    | Never — executes            | Invocation line plus receipt; implementation stays on disk |
+|  [05]   | `assets/`     | Never — consumed by scripts | Zero context cost at any size                              |
 
 ## [02]-[FILE_KINDS]
 
@@ -18,10 +18,10 @@ Admission test per kind; a fact failing its kind's test moves down a tier or out
 
 - [DESCRIPTION]: The owned deliverable, the concrete objects and verbs that select the skill, and the negative boundary — third person, nothing else. Admission: the sentence changes selection.
 - [ROOT]: The common-path workflow, hard law every activation needs, budget contracts, and one labeled route per branch. Admission: every activation reads it, or it is a route row.
-- [REFERENCES]: Deep doctrine one hop from the root, each file whole on its subject, each route labeled by the task that opens it. Admission: one branch needs it, the common path does not.
-- [EXAMPLES]: Pressure cases at real composed scale, symptom-indexed, each demonstrating its fix. Admission: agents copy the rule incorrectly without the worked pair.
+- [REFERENCES]: Deep doctrine one hop from the root, each file whole on its subject, each route labeled by the task that opens it. Admission: one branch needs it, the common path does not, and the hop repays its route row — the file carries doctrine the root cannot hold and that branch cannot skip. A reference failing the bet folds into the root or dies; the material's existence admits nothing.
+- [EXAMPLES]: Pressure cases at real composed scale, symptom-indexed, each demonstrating its fix. Admission: agents copy the rule incorrectly without the worked pair, and the accepted half drops into a template or live bundle unchanged — every example is an executable seed, never an illustration.
 - [SCRIPTS]: Deterministic checks, conversions, extractions, renders. Admission: the mechanics are deterministic, repeated, drift-prone, or token-heavy as prose. The root carries only the invocation contract and the receipt shape it returns.
-- [TEMPLATES]: File-kind instances copied verbatim with slot fills; a finished instance carries zero residual slot tokens.
+- [TEMPLATES]: File-kind instances copied verbatim with slot fills, each distilled from a proven example; a finished instance carries zero residual slot tokens.
 - [ASSETS]: Binary and data material scripts consume — fonts, schemas, corpora — never read into context.
 
 ## [03]-[FRONTMATTER]
@@ -51,14 +51,18 @@ Three residency mechanics complete the placement picture:
 
 Instruction rigidity is priced per instruction by the cost of deviation, never set once per skill.
 
-| [INDEX] | [BAND]    | [WHEN]                                        | [SHAPE]                                                  |
-| :-----: | :-------- | :-------------------------------------------- | :-------------------------------------------------------- |
-|  [01]   | `PINNED`  | Deviation breaks the run                      | Exact invocation, zero parameters, no narrative retelling |
-|  [02]   | `BOUNDED` | A known-good pattern admits local variation   | Template or worked pair with named slots                  |
-|  [03]   | `OPEN`    | The correct path follows the task's context   | The deliverable and its acceptance gate, no mandated path  |
+| [INDEX] | [BAND]    | [WHEN]                                      | [SHAPE]                                                   |
+| :-----: | :-------- | :------------------------------------------ | :-------------------------------------------------------- |
+|  [01]   | `PINNED`  | Deviation breaks the run                    | Exact invocation, zero parameters, no narrative retelling |
+|  [02]   | `BOUNDED` | A known-good pattern admits local variation | Template or worked pair with named slots                  |
+|  [03]   | `OPEN`    | The correct path follows the task's context | The deliverable and its acceptance gate, no mandated path |
 
 Both inversions are the `DEGREES_OF_FREEDOM` defect: a fragile sequence left as loose guidance breaks runs, and a mandated litany over contextual work produces ritual theater. Within any band, required inclusions are stated and reshaping freedom is granted — a body that pins every sentence of the output forecloses the judgment the model was selected for.
 
 ## [06]-[SCRIPT_THRESHOLD]
 
 Prose mechanics cross into a bundled script at the first of: the procedure is deterministic end to end; the same steps recur across activations; the prose and an existing tool drift independently; or the narration outweighs its own invocation line. A bundled script is self-contained — pinned interpreter contract, declared dependencies, no network fetch, no global install, no credential read. A skill that legitimately owns an install surface names the exact source, its scope, and its verification step in one row; everything else ships in the bundle and runs as shipped.
+
+## [07]-[DIAGRAMS]
+
+A root or reference admits a diagram fence only where shape is the content — a dispatch topology, a state machine, a multi-actor flow whose edge structure prose spends a paragraph per arm to carry. A fence whose nodes map one-to-one onto an adjacent table or roster with no edges beyond reading order is decoration and is deleted; the table already carries the information at lower cost. Type selection, construction, and render validation ride the mermaid-diagramming skill — this test owns admission alone, and the worked pair sits in the repairs file.

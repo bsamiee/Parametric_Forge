@@ -141,3 +141,23 @@ Two sibling descriptions both match one prompt, so selection is a coin flip and 
   ```
 - Reason: The repair is symmetric refusal: each description names the neighbor's deliverable as its own boundary, so the prompt's noun decides the winner instead of chance.
 - Reframe: Repair both descriptions, never a body; add the colliding phrasing to both skills' permanent must-not-fire sets.
+
+## [08]-[DECORATIVE_DIAGRAM]
+
+A fence restates the table beside it, so every activation pays render validation and reader traversal for information the prose already carries.
+
+- Detection: A diagram whose nodes map one-to-one onto an adjacent table's rows, with no edges beyond reading order.
+- Rejected:
+  ```mermaid rejected
+  flowchart LR
+    A[description] --> B[SKILL.md] --> C[references]
+  ```
+- Accepted:
+  ```mermaid accepted
+  flowchart TD
+    M{eval miss} -->|must-fire miss| D[starved discriminant: repair the first clause]
+    M -->|must-not-fire hit| B[collision: repair both descriptions]
+    M -->|adherence tie| L[dead law: delete the body rule]
+  ```
+- Reason: The rejected fence repeats the loading-tier table in reading order and carries no structure; the accepted fence is a dispatch whose labeled edges route each miss class to its repair surface — shape is the content.
+- Reframe: Admit a fence only where edges carry routing, state, or interaction that prose spends a paragraph per arm to state; type selection, construction, and render validation ride the mermaid-diagramming skill.

@@ -54,6 +54,14 @@ The classes here are the failures only an instruction bundle can commit; finding
 - Reason: Multi-hop chains make activation non-deterministic — agents under-read or flood context chasing links.
 - Reframe: Flatten to one hop; a reference that only points is deleted and its routes move to the root.
 
+### [02.3]-[UNEARNED_HOP]
+
+- Detection: A reference no route's task opens, one restating root content a hop down, or one whose whole content fits the root without breaching its ceiling.
+- Rejected: A twelve-line file of general tips behind a route labeled for more detail.
+- Accepted: The route row names the task that opens the file; the file carries doctrine the common path never loads and the root cannot hold.
+- Reason: Every reference bets a permanent route row against depth paid on one branch; a file that loses the bet taxes routing while teaching nothing.
+- Reframe: Fold the content into the root or delete the file; a reference is admitted by the branch that needs it, never by the material's existence.
+
 ## [03]-[BODY_CLASSES]
 
 A body line earns its place by changing trigger selection, routing, execution, or validation; intensity, ceremony, and restated harness obligations change nothing and are deleted.
@@ -169,3 +177,19 @@ A body line earns its place by changing trigger selection, routing, execution, o
 - Accepted: Bundled scripts run as shipped; a skill that owns an install surface names the exact source, its scope, and its verification step.
 - Reason: A skill is an executable supply-chain artifact; an instructed fetch is an injection channel wearing documentation.
 - Reframe: Bundle the mechanics; an owned install surface carries source, scope, and verification in one row.
+
+### [03.15]-[DECORATIVE_DIAGRAM]
+
+- Detection: A diagram fence restating an adjacent table, roster, or two-step sequence — no topology, state, or flow the prose fails to carry.
+- Rejected: A three-node flowchart under the three-row table naming the same tiers.
+- Accepted: A dispatch-topology fence whose labeled edges carry routing prose spends a paragraph per arm to state; construction and validation ride the mermaid-diagramming skill.
+- Reason: A fence costs render validation and reader traversal; decoration spends both on information already cheaper as a table.
+- Reframe: Admit a fence only where shape is the content — dispatch topology, state machine, multi-actor flow — and keep the table otherwise.
+
+### [03.16]-[INERT_EXAMPLE]
+
+- Detection: An example whose accepted half cannot drop into a template or live bundle unchanged — narrative retelling, elided bodies, placeholder residue.
+- Rejected: An entry narrating how a weak description was once improved, with the improved description elided.
+- Accepted: Every example is an executable seed: the accepted half is complete, copyable, and passes the gate as it stands.
+- Reason: Examples exist because agents copy; a pair that resists copying calibrates nothing and feeds no template.
+- Reframe: Rebuild the pair at copyable scale or delete it; templates distill from examples, and an example no template inherits is an illustration.

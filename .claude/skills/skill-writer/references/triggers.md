@@ -29,8 +29,8 @@ Codex-side listing budgets, discovery roots, and format deltas are the codex ski
 
 The mode is chosen by who reliably remembers the skill exists and whether firing has side effects.
 
-| [INDEX] | [MODE]     | [MECHANISM]                      | [WHEN]                                                        |
-| :-----: | :--------- | :------------------------------- | :------------------------------------------------------------- |
+| [INDEX] | [MODE]     | [MECHANISM]                      | [WHEN]                                                          |
+| :-----: | :--------- | :------------------------------- | :-------------------------------------------------------------- |
 |  [01]   | `MODEL`    | Listed description, default      | Task-shaped doctrine the model matches autonomously             |
 |  [02]   | `OPERATOR` | `disable-model-invocation: true` | Side-effect workflows; zero listing cost when the human indexes |
 |  [03]   | `AMBIENT`  | `user-invocable: false`          | Background knowledge that is never a command                    |
@@ -40,3 +40,12 @@ The mode is chosen by who reliably remembers the skill exists and whether firing
 ## [04]-[COLLISION]
 
 Two skills matching one prompt is a boundary defect on both, repaired in both descriptions, never by body edits: each names the deliverable it owns and the neighbor it refuses, and the pair of boundary sentences is symmetric — each side's refusal names the other's deliverable. A must-not-fire miss discovered in evals lands here; the fix is a sharper discriminant or an added boundary, and the eval's query joins the permanent must-not-fire set.
+
+## [05]-[DESCRIPTION_AB]
+
+Description tuning is a measured competition, never a rewrite on taste:
+
+- [CANDIDATES]: Rival descriptions vary the discriminants, utterances, and boundary while holding the first clause fixed — the deliverable claim is identity, not a tuning surface.
+- [MEASUREMENT]: Every candidate runs the same must-fire and must-not-fire sets under the eval loop's holdout split; the adopted winner is the one that wins on the held-out half, and a candidate that wins only its tuning half memorized phrasings.
+- [NEIGHBOR_PROOF]: The winner re-runs every adjacent sibling's must-not-fire set before shipping; a candidate that wins its own suite and fires on a neighbor's queries is a collision, repaired symmetrically on both descriptions.
+- [ACCUMULATION]: Losing candidates' novel misses join the permanent sets; a tuning round grows the suite even when the incumbent survives.
