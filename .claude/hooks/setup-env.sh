@@ -13,6 +13,11 @@
 # Per-project extras: CLAUDE_ENV_EXPORT_KEYS (comma/space list) and
 # CLAUDE_TOOL_PATHS (colon list). CLAUDE_DOPPLER_OFFLINE=1 forces fallback-only.
 set -Eeuo pipefail
+# GUI/TUI launch contexts can resolve `env bash` to Apple Bash 3.2, which
+# rejects inherit_errexit below; re-exec through the per-user profile Bash 5.
+if ((BASH_VERSINFO[0] < 5)) && [[ -x "/etc/profiles/per-user/${USER}/bin/bash" ]]; then
+    exec "/etc/profiles/per-user/${USER}/bin/bash" "$0" "$@"
+fi
 shopt -s inherit_errexit
 IFS=$'\n\t'
 
@@ -154,7 +159,7 @@ _resolve_source() {
         chmod 600 "${snap%.json}.keys.$$" 2>/dev/null || true
         mv -f "${snap%.json}.keys.$$" "${snap%.json}.keys" 2>/dev/null || rm -f "${snap%.json}.keys.$$"
         if [[ "${outcome}" == "snapshot" && -f "${snap}" ]]; then
-            age=$(( ($(date +%s) - ${post%%.*}) / 86400 ))
+            age=$(( (EPOCHSECONDS - ${post%%.*}) / 86400 ))
         fi
     fi
     printf '%s|%s|%s|%s|%s\n' "${outcome}" "${nkeys}" "${age}" "${auth}" "${reason}" >"${out}.meta"
@@ -171,7 +176,7 @@ _prune_snapshots() {
     # fallback/metadata files and foreign material stay untouched.
     for f in "${DOPPLER_CACHE_DIR}"/*.json "${DOPPLER_CACHE_DIR}"/*.keys; do
         [[ -f "${f}" ]] || continue
-        base="$(basename "${f}")"
+        base="${f##*/}"
         keep=0
         for row in "${expected[@]}"; do
             [[ "${base}" != "${row}" ]] || { keep=1; break; }
@@ -390,7 +395,7 @@ _RECEIPT_TMP="$(mktemp "${SESSION_CACHE_DIR}/.receipt.XXXXXX")"
 readonly _RECEIPT_TMP
 _TMP_FILES+=("${_RECEIPT_TMP}")
 {
-    printf 'setup-env %s backend=%s offline=%s\n' "$(date '+%Y-%m-%dT%H:%M:%S')" "${SECRET_BACKEND}" "${DOPPLER_OFFLINE}"
+    printf 'setup-env %(%Y-%m-%dT%H:%M:%S)T backend=%s offline=%s\n' "${EPOCHSECONDS}" "${SECRET_BACKEND}" "${DOPPLER_OFFLINE}"
     printf '%s\n' "${_RECEIPT[@]}"
 } >"${_RECEIPT_TMP}"
 chmod 600 "${_RECEIPT_TMP}"
