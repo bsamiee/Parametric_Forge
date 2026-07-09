@@ -3,16 +3,15 @@ name: mermaid-diagramming
 description: >-
   Generates and validates Mermaid diagrams with YAML frontmatter, ELK layout, Dracula theme
   tokens, and a bundled render-plus-graph-logic validator. Owns diagram methodology — when to
-  diagram, node and edge selection, per-type construction, logical soundness — the standard
-  archetype catalog (architecture spine, package seam graph, logic flow, state lifecycle, wire
-  sequence, persistence schema, dependency strata, schedule, board, history, topology,
-  landscape, event flow, profile, decomposition), and the admitted type registry: flowchart,
-  sequence, state, class, ER, gantt, mindmap, timeline, kanban, gitGraph, requirement, C4, and
-  architecture. Use when authoring, editing, or fixing any mermaid fence, choosing a diagram
-  type, or whenever a task asks to draw, diagram, map, or visualize a system, flow, state
-  machine, sequence exchange, database schema, dependency structure, schedule, hierarchy, or
-  workflow board — even when mermaid is never named — distinct from quantitative dataviz marks
-  (charts of data) and interactive HTML pages.
+  diagram, node and edge selection, per-type construction, logical soundness — the archetype
+  template catalog from architecture spine to weighted decomposition, the concept-to-diagram
+  map that turns state machines, dispatch topologies, dependency graphs, protocol seams, and
+  chronologies into the right fence, and the embedding contract for diagrams inside markdown
+  docs and single-file HTML artifacts. Use when authoring, editing, or fixing any mermaid
+  fence, choosing a diagram type, embedding a rendered diagram in a page, or whenever a task
+  asks to draw, diagram, map, or visualize a system, flow, state machine, sequence exchange,
+  schema, dependency structure, schedule, hierarchy, or workflow board — even when mermaid is
+  never named — distinct from quantitative dataviz marks and interactive HTML pages.
 ---
 
 # [MERMAID_DIAGRAMMING]
@@ -21,29 +20,29 @@ Every committed diagram answers one written question, instantiates one catalog a
 
 ## [01]-[QUESTION]
 
-A diagram earns its fence only when the reader traces a relation across more marks than a clause holds: three or more nodes with at least one branch, cycle, or crossing relation. Below that threshold prose owns the fact, and one diagram owns one question — a diagram needing two legends is two diagrams. The full discipline — investigation traces per archetype, staged growth with the node-annotation-omission ladder, node and edge law, type selection, soundness, multi-diagram composition — is [references/methodology.md](references/methodology.md); what each type's marks must mean, its signal, and its master patterns is [references/construction.md](references/construction.md).
+A diagram earns its fence only when the reader traces a relation across more marks than a clause holds: three or more nodes with at least one branch, cycle, or crossing relation. Below that threshold prose owns the fact, and one diagram owns one question — a diagram needing two legends is two diagrams. The full discipline — investigation traces per archetype, staged growth with the node-annotation-omission ladder, node and edge law, type selection, soundness, multi-diagram composition — is [references/methodology.md](references/methodology.md); what each type's marks must mean, its signal, and its master patterns is [references/construction.md](references/construction.md). A subject that arrives as raw material — code, prose, a plan, an argument — with no written question resolves its shape first through [references/concept-mapping.md](references/concept-mapping.md).
 
 ## [02]-[CATALOG]
 
 Select the archetype by intent, copy its template, and refill — a catalog template is self-sufficient, carrying its archetype's construction law in its own prose. An intent outside the catalog selects its type through the methodology decision table and the extended registry, under the same frontmatter, theming, and validation law. The split move partitions a subject the moment a second question appears, and a required legend is itself a split signal.
 
-| [INDEX] | [ARCHETYPE]   | [INTENT]                    | [DECLARATION]       | [SPLIT_MOVE]                     |
-| :-----: | :------------ | :-------------------------- | :------------------ | :------------------------------- |
-|  [01]   | spine         | main path through owners    | `flowchart LR`      | split at the readiness gate      |
-|  [02]   | seam-graph    | shapes across a boundary    | `flowchart LR`      | partition by counterpart package |
-|  [03]   | logic-flow    | one operation dispatch      | `flowchart LR`      | extract an arm subflow           |
-|  [04]   | lifecycle     | guarded state transitions   | `stateDiagram-v2`   | nest a composite state           |
-|  [05]   | wire-sequence | ordered boundary exchange   | `sequenceDiagram`   | split by interaction phase       |
-|  [06]   | schema        | persistent entity relations | `erDiagram`         | split by aggregate root          |
-|  [07]   | strata        | layer dependency direction  | `flowchart TB`      | collapse peer layers             |
-|  [08]   | schedule      | dated committed work        | `gantt`             | split by phase                   |
-|  [09]   | board         | stage-held work now         | `kanban`            | split by workflow segment       |
-|  [10]   | history       | branch and merge truth      | `gitGraph LR:`      | split by release train           |
-|  [11]   | topology      | deployables and reach       | `architecture-beta` | split by zone                    |
-|  [12]   | landscape     | one-zoom system landscape   | `C4Context`         | re-declare at the next zoom      |
-|  [13]   | event-flow    | command-event causality     | `eventmodeling`     | split by stream                  |
-|  [14]   | profile       | two-subject capability compare | `radar-beta`     | one comparison per fence         |
-|  [15]   | decomposition | weighted whole-to-part      | `treemap-beta`      | aggregate the tail               |
+| [INDEX] | [ARCHETYPE]   | [INTENT]                       | [DECLARATION]       | [SPLIT_MOVE]                     |
+| :-----: | :------------ | :----------------------------- | :------------------ | :------------------------------- |
+|  [01]   | spine         | main path through owners       | `flowchart LR`      | split at the readiness gate      |
+|  [02]   | seam-graph    | shapes across a boundary       | `flowchart LR`      | partition by counterpart package |
+|  [03]   | logic-flow    | one operation dispatch         | `flowchart LR`      | extract an arm subflow           |
+|  [04]   | lifecycle     | guarded state transitions      | `stateDiagram-v2`   | nest a composite state           |
+|  [05]   | wire-sequence | ordered boundary exchange      | `sequenceDiagram`   | split by interaction phase       |
+|  [06]   | schema        | persistent entity relations    | `erDiagram`         | split by aggregate root          |
+|  [07]   | strata        | layer dependency direction     | `flowchart TB`      | collapse peer layers             |
+|  [08]   | schedule      | dated committed work           | `gantt`             | split by phase                   |
+|  [09]   | board         | stage-held work now            | `kanban`            | split by workflow segment        |
+|  [10]   | history       | branch and merge truth         | `gitGraph LR:`      | split by release train           |
+|  [11]   | topology      | deployables and reach          | `architecture-beta` | split by zone                    |
+|  [12]   | landscape     | one-zoom system landscape      | `C4Context`         | re-declare at the next zoom      |
+|  [13]   | event-flow    | command-event causality        | `eventmodeling`     | split by stream                  |
+|  [14]   | profile       | two-subject capability compare | `radar-beta`        | one comparison per fence         |
+|  [15]   | decomposition | weighted whole-to-part         | `treemap-beta`      | aggregate the tail               |
 
 - [01]-[SPINE](templates/spine.mmd.md)
 - [02]-[SEAM-GRAPH](templates/seam-graph.mmd.md)
@@ -73,7 +72,7 @@ Each fence emits `file:line: STATUS check detail` rows with check kinds `render`
 
 The canon checker runs beside the validator as `uv run scripts/check_canon.py <file.md ...>` — a render-free, table-driven enforcement of the theming, styling, and config canon per family (palette closure, alpha tiers, yellow law, micro-scale stamps, per-family floors) emitting the same `file:line: STATUS canon rule detail` row shape with `--json` NDJSON and a nonzero exit on any fail. `--explain <rule-id>` prints a finding's canon sentence and owning reference.
 
-`mmdc` on PATH renders every fence; the machine toolchain provides it (Nix `mermaid-cli`) and `--renderer CMD` overrides it. The render binds the pinned Chromium through `PUPPETEER_EXECUTABLE_PATH`, so the real Google Chrome app never launches.
+`mmdc` on PATH renders every fence; the machine toolchain installs it (Nix `mermaid-cli`) and `--renderer CMD` overrides it. The render binds the pinned Chromium through `PUPPETEER_EXECUTABLE_PATH`, so the real Google Chrome app never launches. A fence the machine renderer rejects re-proves through the pinned current release — `pnpm dlx @mermaid-js/mermaid-cli@11.16.0`, scoped to the pnpm dlx cache, verified by the emitted SVG — so a lagging toolchain never masquerades as broken syntax; the passing row lands as `rendered-release:`, and a fence the current release also rejects stays a real syntax failure. `--export DIR` writes every passing fence as an embed-ready SVG — unique root id, aria title and description preserved, Dracula canvas baked — the mechanical arm of the embedding contract.
 
 ## [04]-[CONTRACT]
 
@@ -106,6 +105,8 @@ A faulted fence converges on its own source across at most five render-inspect-e
 - [05]-[CONFIG](references/config.md): frontmatter schema, secure keys, layout engines and ELK tuning, look system, accessibility, mmdc and CI, trap list
 - [06]-[SYNTAX_CORE](references/syntax-core.md): advanced flowchart, sequence, state, class, and ER — node metadata, edge IDs, markdown strings, KaTeX, per-type traps
 - [07]-[SYNTAX_EXTENDED](references/syntax-extended.md): the type registry beyond the core five — admitted rows with working fences and traps, registered rows named
+- [08]-[CONCEPT_MAP](references/concept-mapping.md): recognizing the diagram shape inside raw material — code, prose, plans, arguments — shape signals, archetype routes, misfit shapes, composite subjects
+- [09]-[EMBEDDING](references/embedding.md): the embedding contract — fence law in markdown hosts, inline-SVG law in single-file HTML artifacts, export surfaces, source-beside-render
 
 ## [07]-[GOTCHAS]
 

@@ -85,7 +85,7 @@ Every visual channel is spent deliberately; a channel spent twice on one meaning
 - Node labels are noun phrases with the discriminating word first; edge labels are verb phrases; direct labels beat legends — a legend is a lookup jump forced on every read.
 - Dashed and dotted strokes carry modality — optional, planned, inferred — never primary direction; direction rides the arrowhead.
 - Dense many-to-many interiors defeat node-link reading; the repair is a summarizing node, a split, or a table, never a bigger canvas.
-- Peers declare contiguously and flows declare in walk order — declaration order is the author's one lever over layout stability wherever the engine offers no stronger one; where it does, the stronger lever is spent: ELK model order and rank edges on flowcharts, `align row|column` plus edge ports on architecture, boundary homing on C4, adjacent-cell linking on block grids.
+- Peers declare contiguously and flows declare in walk order — declaration order is the author's one lever over layout stability wherever the engine carries no stronger one; where it does, the stronger lever is spent: ELK model order and rank edges on flowcharts, `align row|column` plus edge ports on architecture, boundary homing on C4, adjacent-cell linking on block grids.
 - A crossing found in the render is repaired at the source — reorder declarations, re-home a member, re-port an edge, or split the figure — never accepted as engine fate; the render is re-proven after the repair.
 - A diagram read by an agent keeps its source fence beside the render, names nodes uniquely, and states every relation as an explicit labeled edge — spatial implication is invisible to a machine reader.
 

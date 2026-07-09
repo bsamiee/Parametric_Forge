@@ -206,7 +206,7 @@ A subgraph names its id and title as `subgraph id [Title]`, nests, and takes an 
 Node styling resolves in application order, later and more specific winning.
 
 - Theme variables and theme CSS set the diagram defaults.
-- `classDef default` sets the fallback class where the type supports it — verified for flowchart, ER, and requirement.
+- `classDef default` sets the fallback class where the type honors it — verified for flowchart, ER, and requirement.
 - A named `classDef` layers through `class` or `:::` assignments; among conflicting classes on one node the later `classDef` definition wins, never the assignment order. The `classDef` declares at diagram root after the nodes it styles — declared above them it renders unstyled.
 - Inline `style id ...` is the direct override and wins last — the engine emits it as an inline `!important` declaration; its property set is `fill`, `stroke`, `stroke-width`, `color`, and `stroke-dasharray`.
 - `classDef` rules emit with `!important`, so a `themeCSS` rule without `!important` loses to any class on the same node.

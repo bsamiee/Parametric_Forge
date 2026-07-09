@@ -138,7 +138,7 @@ Each diagram type answers one question with a bounded mark vocabulary; per type,
   - Trim attributes to identifying and discriminating columns; the full column roster is the DDL's property.
 - Failure modes:
   - value objects promoted to entities.
-  - cardinality drawn from hope — the code allows many, the diagram says one.
+  - cardinality drawn from hope — the code admits many, the diagram says one.
   - an FK attribute shown without its relationship edge, or the edge without the FK.
   - attribute dumps past the identifying and discriminating columns.
 - Logic checks:
@@ -245,7 +245,7 @@ Each diagram type answers one question with a bounded mark vocabulary; per type,
 
 - Question: which decision domain each item occupies and what movement between domains is claimed.
 - Item: one situated practice quoted under exactly one domain, a transition asserting a real reclassification event.
-- Signal: the sort itself — which practices the team treats as known versus emergent, and what recently moved.
+- Signal: the sort itself — which practices the team treats as known versus emergent, and what last moved.
 - Method: two or three items per occupied domain, at most two labeled transitions; the tip of a transition lands beside the target caption, so few arrows keep the field readable.
 - Failure modes: items placed by mood rather than the domain's definition — clear holds known practice, complicated expert analysis, complex an emergent probe, chaotic act-first — or transitions drawn as decoration.
 - Logic checks: every transition names its trigger in the label.
