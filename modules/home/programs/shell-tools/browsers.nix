@@ -25,12 +25,16 @@
   # --- Name policy rows -------------------------------------------------------
   # One repo/workroot identity resolves to stable slugs across consumers; the
   # channel prefix and receipt-log grammar are the live consumers today.
+  # `collision` is the slug-clash policy (reject = eval assertion below);
+  # `previous` carries retired slugs so renames keep receipt-partition history.
   naming = [
     {
       source = "Parametric_Forge";
       slug = "forge";
       display = "[FORGE]";
       domain = "estate-repo";
+      collision = "reject";
+      previous = [];
       consumers = ["television-channel-prefix" "receipt-log-prefix" "launchd-label-prefix"];
     }
     {
@@ -38,6 +42,8 @@
       slug = "rasm";
       display = "[RASM]";
       domain = "estate-repo";
+      collision = "reject";
+      previous = [];
       consumers = [];
     }
     {
@@ -45,10 +51,14 @@
       slug = "maghz";
       display = "[MAGHZ]";
       domain = "estate-repo";
+      collision = "reject";
+      previous = [];
       consumers = ["tunnel-receipt-partition"];
     }
   ];
   channelPrefix = (lib.findFirst (r: lib.elem "television-channel-prefix" r.consumers) {slug = "forge";} naming).slug;
+  slugClaims = lib.concatMap (r: [r.slug] ++ r.previous) naming;
+  slugConflicts = lib.attrNames (lib.filterAttrs (_: c: c > 1) (lib.foldl' (acc: s: acc // {${s} = (acc.${s} or 0) + 1;}) {} slugClaims));
 
   # --- Receipt source register --------------------------------------------------
   # Declared kv-receipt emitters; paths are $HOME-relative and may not exist yet.
@@ -324,12 +334,14 @@
         printf '\npreview_rc=0 source=%s\n' "$(basename "$json")"
       }
 
-      emit_receipt() { # $1=domain $2=query $3=row_id $4=action $5=result $6=duration_ms
-        local ts
+      emit_receipt() { # $1=domain $2=query $3=row_id $4=selection $5=action $6=result $7=exit $8=duration_ms
+        local ts sel
         TZ=UTC0 printf -v ts '%(%Y-%m-%dT%H:%M:%SZ)T' "$EPOCHSECONDS"
+        sel="''${4//$'\t'/ }"
         mkdir -p "$(dirname "$receipt_log")"
-        printf 'ts=%s\towner=forge-browse\tscope=%s\tmutation=none\thost=fzf\tquery=%s\trow_id=%s\taction=%s\tduration_ms=%s\tresult=%s\n' \
-          "$ts" "$1" "''${2:--}" "''${3:--}" "$4" "$6" "$5" >>"$receipt_log"
+        printf 'ts=%s\towner=forge-browse\tbrowser_id=forge-browse\tscope=%s\trow_kind=%s\tmutation=none\thost=fzf\tsession_id=%s\tpane_id=%s\tcwd=%s\tquery=%s\trow_id=%s\tselection=%s\taction=%s\texit=%s\tduration_ms=%s\tstdout_path=-\tstderr_path=-\tnext_row=-\tresult=%s\n' \
+          "$ts" "$1" "$1" "''${ZELLIJ_SESSION_NAME:--}" "''${ZELLIJ_PANE_ID:--}" "$PWD" \
+          "''${2:--}" "''${3:--}" "''${sel:--}" "$5" "$7" "$8" "$6" >>"$receipt_log"
       }
 
       case "''${1:-}" in
@@ -387,10 +399,12 @@
       sel="$(sed -n 2p <<<"$out")"
       id="''${sel%%$'\t'*}"
       if [ "$rc" -ne 0 ] || [ -z "$id" ]; then
-        emit_receipt "$domain" "$query" "-" "cancel" "cancel" "$duration_ms"
+        # A clean user abort is a successful run that selected nothing: the
+        # cancel rides `action`, result stays ok so --failures triage is faults only.
+        emit_receipt "$domain" "$query" "-" "-" "cancel" "ok" "$rc" "$duration_ms"
         exit 0
       fi
-      emit_receipt "$domain" "$query" "$id" "print" "ok" "$duration_ms"
+      emit_receipt "$domain" "$query" "$id" "$sel" "print" "ok" "0" "$duration_ms"
       row_by_id "$json" "$id"
     '';
   };
@@ -469,6 +483,13 @@ in {
   };
 
   config = {
+    assertions = [
+      {
+        assertion = slugConflicts == [];
+        message = "forge.registers.naming: colliding slug claims: ${lib.concatStringsSep ", " slugConflicts}";
+      }
+    ];
+
     home.packages = [forgeBrowse forgeReceipts browseCompletion receiptsCompletion];
 
     # Television 0.15.9: durable channel host. Shell integration stays off —
