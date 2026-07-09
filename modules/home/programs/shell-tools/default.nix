@@ -15,10 +15,12 @@
   rosterPackages = roster: map (row: pkgs.${row.attr}) (manifest.rosterRows roster);
   # Completion files for admission rows whose tool generates natively but
   # whose package ships none; one derivation folds every completionArgs row.
-  completionRows = lib.filter (row: row ? completionArgs) (lib.attrValues manifest.admissions);
-  manifest-completions = pkgs.runCommand "forge-manifest-completions" {nativeBuildInputs = map (row: pkgs.${row.attr}) completionRows;} ''
+  # Scope: rows this manifest installs (hm-roster) — ca1/landed rows own their
+  # completion surface. getExe resolves mainProgram; attr is not a binary name.
+  completionRows = lib.filter (row: row ? completionArgs && row.install == "hm-roster") (lib.attrValues manifest.admissions);
+  manifest-completions = pkgs.runCommand "forge-manifest-completions" {} ''
     mkdir -p "$out/share/zsh/site-functions"
-    ${lib.concatMapStringsSep "\n" (row: ''${row.attr} ${lib.escapeShellArgs row.completionArgs} > "$out/share/zsh/site-functions/_${row.attr}"'') completionRows}
+    ${lib.concatMapStringsSep "\n" (row: ''${lib.getExe pkgs.${row.attr}} ${lib.escapeShellArgs row.completionArgs} > "$out/share/zsh/site-functions/_${row.attr}"'') completionRows}
   '';
 in {
   imports = [

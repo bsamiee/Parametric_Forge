@@ -193,7 +193,11 @@
       done
     '';
   };
-  pins = builtins.concatStringsSep "\n" (map (r: "${r.launcher.pkg}|${r.launcher.version}") launcherRows);
+  # The row's updateEngine selects the probe set: only npm-registry rows feed
+  # the npm-latest check; a manual/other engine row never emits a false pin row.
+  pins =
+    builtins.concatStringsSep "\n" (map (r: "${r.launcher.pkg}|${r.launcher.version}")
+      (builtins.filter (r: r.launcher.updateEngine == "npm-registry") launcherRows));
   # Drift program: fleet rows vs live client registrations, key NAMES only.
   driftJq = pkgs.writeText "mcp-drift.jq" ''
     ($fleet[0]) as $rows
