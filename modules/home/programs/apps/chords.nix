@@ -13,9 +13,9 @@
   # Karabiner rewrites right-hand modifiers into leader stacks; zellij consumes
   # each stack as the concrete modifier set named in `zellij`. Power carries no
   # zellij binds by design: it passes through to terminal apps (yazi owns it).
-  # WezTerm claims NO layer: its outer-terminal keys live on native left-Command
-  # chords only (keys.lua), so every leader chord passes to zellij untouched.
-  # `rank` orders the emitted karabiner rule document.
+  # WezTerm claims NO layer: its outer-terminal keys live in the typed
+  # weztermRows vocabulary below, so every leader chord passes to zellij
+  # untouched. `rank` orders the emitted karabiner rule document.
   layers = {
     hyper = {
       name = "Hyper";
@@ -180,7 +180,7 @@
   ];
 
   # Normal-mode simple layer: bare macOS Command chords zellij receives because
-  # WezTerm full-passes them (no default keybinds; keys.lua claims neither).
+  # WezTerm full-passes them (no default keybinds; weztermRows claims neither).
   normalRows = [
     {
       key = "t";
@@ -430,40 +430,477 @@
       label = "http";
       display = "GET/POST/PUT -> xh";
     }
-    # WezTerm outer layer (native left-Cmd chords, keys.lua): surfaced here so
-    # the cheatsheet owns discoverability for the whole terminal stack; `kind`
-    # tags these rows as register chords, not command vocabulary.
+  ];
+
+  # --- WezTerm outer layer ------------------------------------------------------
+  # Typed outer-terminal rows: WezTerm claims native left-Command chords plus
+  # the CMD|SHIFT overlay/deck layer and pass-through-aware CTRL pane nav; the
+  # wezterm owner projects them into generated key rows (rows.lua), `action` is
+  # the semantic id its dispatch table resolves. `destructive` rows confirm
+  # before acting; `forgot` rows surface in the cheatsheet; every leader chord
+  # still passes to zellij untouched.
+  weztermModGlyph = {
+    CMD = "⌘";
+    SHIFT = "⇧";
+    CTRL = "⌃";
+    ALT = "⌥";
+  };
+  weztermDisplay = row: let
+    glyphs = lib.concatMapStrings (m: weztermModGlyph.${m}) (lib.reverseList (lib.splitString "|" row.mods));
+    keyLabel =
+      if lib.stringLength row.key == 1
+      then lib.toUpper row.key
+      else row.key;
+  in "${glyphs}${keyLabel}";
+  weztermRows = [
+    # Native macOS vocabulary (left Command).
     {
-      rank = 310;
+      id = "copy";
+      key = "c";
+      mods = "CMD";
+      action = "copy";
+      label = "copy";
+      class = "native";
+    }
+    {
+      id = "paste";
+      key = "v";
+      mods = "CMD";
+      action = "paste";
+      label = "paste";
+      class = "native";
+    }
+    {
+      id = "spawn-window";
+      key = "n";
+      mods = "CMD";
+      action = "spawn-window";
+      label = "new window";
+      class = "native";
+    }
+    {
+      id = "quit";
+      key = "q";
+      mods = "CMD";
+      action = "quit";
+      label = "quit wezterm";
+      class = "native";
+    }
+    {
+      id = "hide-app";
+      key = "h";
+      mods = "CMD";
+      action = "hide-app";
+      label = "hide app";
+      class = "native";
+    }
+    {
+      id = "minimize";
+      key = "m";
+      mods = "CMD";
+      action = "minimize";
+      label = "minimize";
+      class = "native";
+    }
+    {
+      id = "font-inc";
+      key = "=";
+      mods = "CMD";
+      action = "font-inc";
+      label = "font size +";
+      class = "native";
+    }
+    {
+      id = "font-dec";
+      key = "-";
+      mods = "CMD";
+      action = "font-dec";
+      label = "font size -";
+      class = "native";
+    }
+    {
+      id = "font-reset";
+      key = "0";
+      mods = "CMD";
+      action = "font-reset";
+      label = "font size reset";
+      class = "native";
+    }
+    {
+      id = "reload";
+      key = "r";
+      mods = "CMD";
+      action = "reload";
+      label = "reload config";
+      class = "native";
+    }
+    # Overlay layer: native pickers and diagnostics.
+    {
+      id = "palette";
+      key = "p";
+      mods = "CMD|SHIFT";
+      action = "palette";
       label = "wezterm palette";
-      display = "⇧⌘P";
-      kind = "wezterm";
+      class = "overlay";
+      forgot.rank = 310;
     }
     {
-      rank = 320;
+      id = "quick-select";
+      key = "Space";
+      mods = "CMD|SHIFT";
+      action = "quick-select";
       label = "wezterm quick select";
-      display = "⇧⌘Space";
-      kind = "wezterm";
+      class = "overlay";
+      forgot.rank = 320;
     }
     {
-      rank = 330;
+      id = "launcher";
+      key = "l";
+      mods = "CMD|SHIFT";
+      action = "launcher";
       label = "wezterm launcher";
-      display = "⇧⌘L";
-      kind = "wezterm";
+      class = "overlay";
+      forgot.rank = 330;
     }
     {
-      rank = 340;
+      id = "char-select";
+      key = "u";
+      mods = "CMD|SHIFT";
+      action = "char-select";
       label = "wezterm unicode picker";
-      display = "⇧⌘U";
-      kind = "wezterm";
+      class = "overlay";
+      forgot.rank = 340;
     }
     {
-      rank = 350;
+      id = "debug-overlay";
+      key = "d";
+      mods = "CMD|SHIFT";
+      action = "debug-overlay";
       label = "wezterm debug overlay";
-      display = "⇧⌘D";
-      kind = "wezterm";
+      class = "overlay";
+      forgot.rank = 350;
+    }
+    # Command deck: workspace router and guarded broadcast.
+    {
+      id = "workspace-switch";
+      key = "o";
+      mods = "CMD|SHIFT";
+      action = "workspace-switch";
+      label = "wezterm workspace switch";
+      class = "deck";
+      forgot.rank = 360;
+    }
+    {
+      id = "workspace-new";
+      key = "n";
+      mods = "CMD|SHIFT";
+      action = "workspace-new";
+      label = "wezterm workspace new";
+      class = "deck";
+      requiresNightly = true;
+      forgot.rank = 365;
+    }
+    {
+      id = "sync-toggle";
+      key = "e";
+      mods = "CMD|SHIFT";
+      action = "sync-toggle";
+      label = "wezterm sync panes";
+      class = "deck";
+      destructive = true;
+      forgot.rank = 370;
+    }
+    # Pass-through-aware pane nav: Neovim window motion inside nvim panes,
+    # raw bytes into zellij panes, WezTerm pane motion in plain splits.
+    {
+      id = "nav-left";
+      key = "h";
+      mods = "CTRL";
+      action = "nav-left";
+      label = "pane nav left";
+      class = "nav";
+      forgot = {
+        rank = 380;
+        label = "wezterm pane nav";
+        display = "⌃H/J/K/L (plain splits)";
+      };
+    }
+    {
+      id = "nav-down";
+      key = "j";
+      mods = "CTRL";
+      action = "nav-down";
+      label = "pane nav down";
+      class = "nav";
+    }
+    {
+      id = "nav-up";
+      key = "k";
+      mods = "CTRL";
+      action = "nav-up";
+      label = "pane nav up";
+      class = "nav";
+    }
+    {
+      id = "nav-right";
+      key = "l";
+      mods = "CTRL";
+      action = "nav-right";
+      label = "pane nav right";
+      class = "nav";
     }
   ];
+  weztermForgot =
+    lib.concatMap (
+      r:
+        lib.optional (r ? forgot) {
+          rank = r.forgot.rank;
+          label = r.forgot.label or r.label;
+          display = r.forgot.display or (weztermDisplay r);
+        }
+    )
+    weztermRows;
+
+  # --- Neovim editor domain table ---------------------------------------------
+  # One editor chord vocabulary keyed by domain; the nvim module projects it
+  # into lua/forge/chords.lua. `action` carries a native command string; `fn`
+  # names a row in the editor dispatch table (nvim config/keymaps.lua binds
+  # both). Plugin README maps never leak in: every editor chord is a row here.
+  nvimDomains = {
+    files = [
+      {
+        keys = "<leader>ff";
+        fn = "pick_files";
+        desc = "Find files";
+      }
+      {
+        keys = "<leader>fr";
+        fn = "pick_recent";
+        desc = "Recent files";
+      }
+      {
+        keys = "<leader>fb";
+        fn = "pick_buffers";
+        desc = "Pick buffer";
+      }
+    ];
+    search = [
+      {
+        keys = "<leader>sg";
+        fn = "pick_grep";
+        desc = "Live grep";
+      }
+      {
+        keys = "<leader>sw";
+        fn = "pick_grep_word";
+        mode = ["n" "x"];
+        desc = "Grep word/selection";
+      }
+      {
+        keys = "<leader>sr";
+        fn = "pick_resume";
+        desc = "Resume last picker";
+      }
+      {
+        keys = "<leader>sh";
+        fn = "pick_help";
+        desc = "Help pages";
+      }
+      {
+        keys = "<leader>sk";
+        fn = "pick_keymaps";
+        desc = "Keymaps";
+      }
+    ];
+    buffers = [
+      {
+        keys = "<leader>bn";
+        action = "<cmd>bnext<cr>";
+        desc = "Next buffer";
+      }
+      {
+        keys = "<leader>bp";
+        action = "<cmd>bprevious<cr>";
+        desc = "Previous buffer";
+      }
+      {
+        keys = "<leader>bb";
+        action = "<cmd>e #<cr>";
+        desc = "Switch to other buffer";
+      }
+      {
+        keys = "<leader>bd";
+        fn = "bufdelete";
+        desc = "Delete buffer";
+      }
+      {
+        keys = "<A-w>";
+        fn = "bufdelete";
+        desc = "Delete buffer";
+      }
+      {
+        keys = "<leader>ba";
+        fn = "bufdelete_all";
+        desc = "Delete all buffers";
+      }
+      {
+        keys = "<leader>bo";
+        fn = "bufdelete_other";
+        desc = "Delete other buffers";
+      }
+      {
+        keys = "<leader>bz";
+        fn = "zen";
+        desc = "Toggle zen mode";
+      }
+    ];
+    diagnostics = [
+      {
+        keys = "<leader>xx";
+        action = "<cmd>Trouble diagnostics toggle<cr>";
+        desc = "Diagnostics (Trouble)";
+      }
+      {
+        keys = "<leader>xb";
+        action = "<cmd>Trouble diagnostics toggle filter.buf=0<cr>";
+        desc = "Buffer diagnostics (Trouble)";
+      }
+      {
+        keys = "<leader>xs";
+        action = "<cmd>Trouble symbols toggle focus=false<cr>";
+        desc = "Symbols (Trouble)";
+      }
+      {
+        keys = "<leader>xq";
+        action = "<cmd>Trouble qflist toggle<cr>";
+        desc = "Quickfix (Trouble)";
+      }
+      {
+        keys = "<leader>xl";
+        action = "<cmd>Trouble loclist toggle<cr>";
+        desc = "Location list (Trouble)";
+      }
+    ];
+    lsp = [
+      {
+        keys = "gd";
+        fn = "lsp_definitions";
+        desc = "Goto definition";
+      }
+      {
+        keys = "gr";
+        fn = "lsp_references";
+        desc = "References";
+      }
+      {
+        keys = "gI";
+        fn = "lsp_implementations";
+        desc = "Goto implementation";
+      }
+      {
+        keys = "gy";
+        fn = "lsp_type_definitions";
+        desc = "Goto type definition";
+      }
+      {
+        keys = "<leader>cs";
+        fn = "lsp_symbols";
+        desc = "Document symbols";
+      }
+      {
+        keys = "<leader>cS";
+        fn = "lsp_workspace_symbols";
+        desc = "Workspace symbols";
+      }
+      {
+        keys = "<leader>cr";
+        fn = "lsp_rename";
+        desc = "Rename symbol";
+      }
+      {
+        keys = "<leader>ca";
+        fn = "code_action";
+        mode = ["n" "x"];
+        desc = "Code action";
+      }
+      {
+        keys = "<leader>cf";
+        fn = "format";
+        mode = ["n" "x"];
+        desc = "Format buffer/range";
+      }
+    ];
+    estate = [
+      {
+        keys = "<leader>ee";
+        fn = "pick_estate";
+        desc = "Nix estate actions";
+      }
+    ];
+    refactor = [
+      {
+        keys = "<leader>rr";
+        fn = "grug_open";
+        mode = ["n" "x"];
+        desc = "Search and replace (grug-far)";
+      }
+      {
+        keys = "<leader>rw";
+        fn = "grug_word";
+        desc = "Replace word under cursor";
+      }
+    ];
+    tasks = [
+      {
+        keys = "<leader>tt";
+        action = "<cmd>OverseerToggle<cr>";
+        desc = "Task list (overseer)";
+      }
+      {
+        keys = "<leader>tr";
+        action = "<cmd>OverseerRun<cr>";
+        desc = "Run task (overseer)";
+      }
+    ];
+    git = [
+      {
+        keys = "<leader>gb";
+        fn = "git_blame_line";
+        desc = "Blame line";
+      }
+      {
+        keys = "<leader>gB";
+        fn = "git_browse";
+        mode = ["n" "x"];
+        desc = "Open repo in browser";
+      }
+    ];
+  };
+  nvimRows =
+    lib.concatLists
+    (lib.mapAttrsToList
+      (domain: rows: map (r: r // {inherit domain;} // {mode = r.mode or ["n"];}) rows)
+      nvimDomains);
+  nvimMods = keys:
+    if lib.hasPrefix "<leader>" keys
+    then "Leader"
+    else if lib.hasPrefix "<A-" keys
+    then "Alt"
+    else "";
+  nvimRegRows =
+    map (r: {
+      chord_id = "nvim:${r.domain}:${r.keys}";
+      consumer = "nvim";
+      physical_layer = "none";
+      mods = nvimMods r.keys;
+      key = r.keys;
+      label = r.desc;
+      action = r.action or r.fn;
+      scope = "editor:${lib.concatStringsSep "," r.mode}";
+      projection_path = ".config/nvim/lua/forge/chords.lua";
+      rendered = builtins.toJSON r;
+    })
+    nvimRows;
 
   # --- Projections ----------------------------------------------------------------
   # Every table string emitted inside a KDL quoted string passes through this.
@@ -513,7 +950,8 @@
       ++ forgotOf layers.hyper.name hyperRows
       ++ map (r: r.forgot // {display = "Super ${r.key}";}) normalRows
       ++ forgotOf layers.super.zellij superRows
-      ++ forgotExtras);
+      ++ forgotExtras
+      ++ weztermForgot);
 
   forgotKdl =
     lib.concatMapStringsSep "\n"
@@ -743,26 +1181,32 @@
       rendered = builtins.toJSON l.to;
     }) (lib.attrValues layers)
     ++ map (r: {
-      chord_id = "wezterm:${lib.replaceStrings [" "] ["-"] (lib.removePrefix "wezterm " r.label)}";
+      chord_id = "wezterm:${r.id}";
       consumer = "wezterm";
       physical_layer = "none";
-      mods = "SHIFT|CMD";
-      key = r.display;
-      inherit (r) label;
-      action = "native overlay";
-      scope = "app";
-      projection_path = ".config/wezterm/keys.lua";
-      rendered = r.display;
-    }) (builtins.filter (r: r.kind or "" == "wezterm") forgotExtras);
+      inherit (r) mods key label action;
+      scope =
+        if r.class == "nav"
+        then "app passthrough:nvim,zellij"
+        else "app";
+      projection_path = ".config/wezterm/rows.lua";
+      rendered = weztermDisplay r;
+    })
+    weztermRows
+    ++ nvimRegRows;
 
   # Intra-consumer conflict ledger: every emitted (consumer, chord) claim must
   # be unique; shift-glyph expansion rides the same bindKeys the KDL uses.
+  # WezTerm claims carry their modifier set — the outer layer stacks CMD and
+  # CMD|SHIFT chords on the same letters by design.
   dupesOf = xs: lib.attrNames (lib.filterAttrs (_: c: c > 1) (lib.foldl' (acc: x: acc // {${x} = (acc.${x} or 0) + 1;}) {} xs));
   claims = lib.concatMap (r:
     map (c: "${r.consumer}|${c}")
     (
       if r.consumer == "zellij"
       then lib.concatMap (bindKeys r.mods) (lib.splitString "," r.key)
+      else if r.consumer == "wezterm"
+      then ["${r.mods} ${r.key}"]
       else [r.key]
     ))
   register;
@@ -774,6 +1218,14 @@ in {
     readOnly = true;
     default = {
       inherit layers modes register;
+      nvim = {
+        domains = nvimDomains;
+        rows = nvimRows;
+      };
+      wezterm = {
+        rows = weztermRows;
+        display = weztermDisplay;
+      };
       karabiner.rules =
         [capsRule]
         ++ map (l: {

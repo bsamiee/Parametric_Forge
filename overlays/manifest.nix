@@ -429,12 +429,79 @@ in rec {
     wezterm-plugins = {
       source = "fetchFromGitHub"; # file:// store-path loads only (CA-4 consumes)
       requiredFields = ["license" "permissions"];
-      rows = {};
+      rows = {
+        sync-panes = {
+          owner = "annie444";
+          repo = "sync-panes.wez";
+          rev = "1fe41d994df9dcb86fd6c469d39754d7917befe3";
+          hash = "sha256-AP20DyGQlOHMi8mw3pgZWg3KLEbyjj5PQWL61p41Pfk=";
+          license = "mit";
+          permissions = ["broadcast-input-active-tab" "clipboard-paste" "window-frame-overrides"];
+          surface = "runtime"; # wezterm.plugin.require(file://) load; toggle chord guarded by the deck
+          apply = "apply_to_config";
+        };
+        wezterm-types = {
+          owner = "DrKJeff16";
+          repo = "wezterm-types";
+          rev = "cc55e88946cb326ea930631b4b03754410eb0436"; # v4.3.0-1
+          hash = "sha256-H3EL4/UWFipnVJPSS/NsX+AOm3KKn8kQhQ0PfP6wj2k=";
+          license = "mit";
+          permissions = ["none"]; # LuaCATS annotations only; never loaded at runtime
+          surface = "luals"; # .luarc.json workspace library for the wezterm config tree
+          apply = "none";
+        };
+      };
     };
     yazi-plugins = {
       source = "nixpkgs:yaziPlugins"; # kebab-case <name>.yazi dirs with main.lua entrypoints (CA-5 consumes)
       requiredFields = ["attr" "license"];
       rows = {};
+    };
+    nvim-plugins = {
+      source = "nixpkgs:vimPlugins"; # HM programs.neovim pack deployment; store-owned, runtime fetch unspellable (CA-6 consumes)
+      requiredFields = ["attr" "license"];
+      rows = {
+        dracula-vim = {
+          attr = "dracula-vim";
+          license = "MIT";
+        };
+        snacks-nvim = {
+          attr = "snacks-nvim";
+          license = "Apache-2.0";
+        };
+        nvim-treesitter = {
+          attr = "nvim-treesitter";
+          license = "Apache-2.0"; # main branch; one compat unit with the neovim pin, tree-sitter-cli floor, parsers, queries
+        };
+        hmts-nvim = {
+          attr = "hmts-nvim";
+          license = "MIT"; # embedded-language injections inside Home Manager Nix strings
+        };
+        conform-nvim = {
+          attr = "conform-nvim";
+          license = "MIT"; # formatter orchestration over Forge-owned binaries
+        };
+        nvim-lint = {
+          attr = "nvim-lint";
+          license = "GPL-3.0-only"; # non-LSP diagnostic lane (deadnix/statix/shellcheck/ruff/yamllint/actionlint/zizmor/hadolint/typos)
+        };
+        grug-far-nvim = {
+          attr = "grug-far-nvim";
+          license = "MIT"; # rg + ast-grep search/replace workbench
+        };
+        render-markdown-nvim = {
+          attr = "render-markdown-nvim";
+          license = "MIT"; # in-buffer agent-doc rendering
+        };
+        overseer-nvim = {
+          attr = "overseer-nvim";
+          license = "MIT"; # task graph over mise/just/npm
+        };
+        trouble-nvim = {
+          attr = "trouble-nvim";
+          license = "Apache-2.0"; # the one diagnostics/references surface
+        };
+      };
     };
     mcp-launchers = {
       source = "npm-registry";
