@@ -69,6 +69,12 @@
     trouble-nvim = pkgs.vimPlugins.trouble-nvim;
   };
 
+  # One Lua fact inventory serves lua_ls settings (any workspace root, the
+  # repo sources included) and the generated .luarc.json in the config dir.
+  luaLibrary =
+    ["${pkgs.neovim-unwrapped}/share/nvim/runtime/lua"]
+    ++ lib.mapAttrsToList (_: p: "${p}/lua") plugins;
+
   # --- LSP inventory: one row family, two consumers ---------------------------
   # `cmd`/`filetypes`/`root_markers`/`settings` feed vim.lsp.config rows;
   # `claude` is the marketplace identity (plugin dir, command, args, extension
@@ -76,7 +82,7 @@
   # are bare names resolving through the Forge per-user profile — never
   # per-project shells (tool-resolution policy).
   servers = {
-    nixd = {
+    nixd = rec {
       cmd = ["nixd"];
       filetypes = ["nix"];
       root_markers = ["flake.nix" ".git"];
@@ -85,13 +91,26 @@
         plugin = "nixd-lsp";
         command = "nixd";
         extensions.".nix" = "nix";
+        inherit settings;
       };
     };
     lua_ls = {
       cmd = ["lua-language-server"];
       filetypes = ["lua"];
       root_markers = [".luarc.json" "stylua.toml" ".git"];
-      settings = {};
+      # The generated .luarc.json only reaches the deployed config dir; the
+      # settings row carries the same facts to every root — the repo sources
+      # resolve at apps/nvim (stylua.toml) and keep vim/plugin awareness.
+      # Claude side stays settings-free: store paths in a tracked .lsp.json
+      # would drift on every plugin bump.
+      settings.Lua = {
+        runtime.version = "LuaJIT";
+        workspace = {
+          checkThirdParty = false;
+          library = luaLibrary;
+        };
+        diagnostics.globals = ["vim" "Snacks"];
+      };
       claude = {
         plugin = "lua-lsp";
         command = "lua-language-server";
@@ -115,6 +134,10 @@
         extensions = {
           ".sh" = "shellscript";
           ".bash" = "shellscript";
+        };
+        settings.bashIde = {
+          shellcheckPath = "shellcheck";
+          shfmt.path = "shfmt";
         };
       };
     };
@@ -168,7 +191,7 @@
         extensions.".sql" = "sql";
       };
     };
-    yamlls = {
+    yamlls = rec {
       cmd = ["yaml-language-server" "--stdio"];
       filetypes = ["yaml"];
       root_markers = [".git"];
@@ -184,6 +207,7 @@
           ".yaml" = "yaml";
           ".yml" = "yaml";
         };
+        inherit settings;
       };
     };
     roslyn_ls = {
@@ -239,9 +263,18 @@
       mode = "scratch";
     }
     {
+      # sort -V: lexicographic ls misorders generations across digit widths.
       id = "generation-diff";
       label = "Generation diff (nvd)";
-      argv = ["sh" "-c" "nvd diff $(ls -d /nix/var/nix/profiles/system-*-link | tail -n 2 | tr '\\n' ' ')"];
+      argv = ["sh" "-c" "nvd diff $(ls -d /nix/var/nix/profiles/system-*-link | sort -V | tail -n 2)"];
+      mode = "scratch";
+    }
+    {
+      # Derivation-level diff of the last two generations; a substituted
+      # build has no local deriver, so absence rails into a typed message.
+      id = "nix-diff";
+      label = "Generation diff, derivation level (nix-diff)";
+      argv = ["sh" "-c" ''set -- $(ls -d /nix/var/nix/profiles/system-*-link | sort -V | tail -n 2); left=$(nix-store --query --deriver "$1"); right=$(nix-store --query --deriver "$2"); for d in "$left" "$right"; do [ -e "$d" ] || { echo "deriver not in store: $d (substituted build; use the nvd row)"; exit 1; }; done; exec nix-diff "$left" "$right"''];
       mode = "scratch";
     }
     {
@@ -256,6 +289,12 @@
       label = "forge-redeploy --check-only";
       argv = ["forge-redeploy" "--check-only"];
       cwd = flakeRoot;
+      mode = "pane";
+    }
+    {
+      id = "nh-dry";
+      label = "Switch dry run (nh darwin --dry)";
+      argv = ["nh" "darwin" "switch" "--dry" flakeRoot];
       mode = "pane";
     }
     {
@@ -352,6 +391,8 @@
     Link = ["markup.link" "markup.link.url" "string.special.url"];
     Inserted = ["diff.plus"];
     Deleted = ["diff.minus"];
+    # Diagnostics own invalid code in the editor; no treesitter capture.
+    Invalid = [];
   };
   syntaxFacts = {
     scopes =
@@ -359,23 +400,16 @@
         inherit (row) name;
         color = row.color.hex;
         style = row.style or "";
-        captures = captureMap.${row.name} or [];
+        # Total lookup: a theme scope without a captureMap row faults at eval.
+        captures = captureMap.${row.name};
       })
       config.forge.theme.syntaxScopes;
     roles = lib.mapAttrs (_: lib.mapAttrs (_: c: c.hex)) config.forge.theme.roles;
   };
 
-  luarc = {
-    "$schema" = "https://raw.githubusercontent.com/LuaLS/vscode-lua/master/setting/schema.json";
-    runtime.version = "LuaJIT";
-    workspace = {
-      checkThirdParty = false;
-      library =
-        ["${pkgs.neovim-unwrapped}/share/nvim/runtime/lua"]
-        ++ lib.mapAttrsToList (_: p: "${p}/lua") plugins;
-    };
-    diagnostics.globals = ["vim" "Snacks"];
-  };
+  luarc =
+    {"$schema" = "https://raw.githubusercontent.com/LuaLS/vscode-lua/master/setting/schema.json";}
+    // servers.lua_ls.settings.Lua;
 
   genLuaModule = value: "-- Generated from the Forge Nix owner (apps/nvim/default.nix).\nreturn ${toLua value}\n";
 in {
@@ -420,7 +454,8 @@ in {
             command = row.claude.command;
             extensionToLanguage = row.claude.extensions;
           }
-          // lib.optionalAttrs (row.claude ? args) {inherit (row.claude) args;}))
+          // lib.optionalAttrs (row.claude ? args) {inherit (row.claude) args;}
+          // lib.optionalAttrs (row.claude ? settings) {inherit (row.claude) settings;}))
       servers
     );
   };

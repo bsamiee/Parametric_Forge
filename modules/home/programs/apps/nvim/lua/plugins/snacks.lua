@@ -122,7 +122,9 @@ local function run(row)
             vim.notify(("estate row %q needs a zellij session"):format(row.id), vim.log.levels.WARN)
             return
         end
-        local argv = { "zellij", "run", "--floating", "--close-on-exit", "--name", row.id }
+        -- No --close-on-exit: non-interactive rows must keep their output
+        -- visible after exit; zellij's pending-close banner owns dismissal.
+        local argv = { "zellij", "run", "--floating", "--name", row.id }
         if row.cwd then
             vim.list_extend(argv, { "--cwd", row.cwd })
         end

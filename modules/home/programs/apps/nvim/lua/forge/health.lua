@@ -103,10 +103,11 @@ function M.check()
                 local same = live.command == want.command
                     and vim.deep_equal(live.args or {}, want.args or {})
                     and vim.deep_equal(live.extensionToLanguage, want.extensionToLanguage)
+                    and vim.deep_equal(live.settings, want.settings)
                 if same then
                     health.ok(plugin)
                 else
-                    health.error(("identity drift: %s (command/args/extensions differ from generated rows)"):format(plugin))
+                    health.error(("identity drift: %s (command/args/extensions/settings differ from generated rows)"):format(plugin))
                 end
             end
         end
