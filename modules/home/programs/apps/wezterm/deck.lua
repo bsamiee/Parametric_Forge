@@ -16,6 +16,7 @@ local M = {}
 
 M.rows = rows
 M.has_nightly = wezterm.version:sub(1, 8) >= rows.nightly_floor
+M.is_macos = wezterm.target_triple:find("apple") ~= nil
 M.sync = nil -- populated in apply(); events.lua reads is_synced for status
 
 -- Receipt rail: kv-tab rows appended to the deck log (forge-receipts parses).
@@ -35,18 +36,29 @@ function M.receipt(fields)
 end
 
 -- Floating utility deck: mux-spawn then shape the GUI window from float rows.
+-- Cell metrics derive from the live window; window level is a macOS platform
+-- row — other hosts degrade with an explicit receipt, never silently.
 function M.spawn_float(cmd)
   local float = rows.floats[cmd.float] or rows.floats.utility
-  local _, pane, window = wezterm.mux.spawn_window({ args = cmd.args })
+  local _, pane, window = wezterm.mux.spawn_window({ args = cmd.args, cwd = cmd.cwd })
   local gui = window:gui_window()
+  local level = "degrade:platform"
   if gui then
-    gui:set_inner_size(float.width * 9, float.height * 20)
+    local dims = gui:get_dimensions()
+    local size = pane:get_dimensions()
+    gui:set_inner_size(
+      math.floor(float.width * dims.pixel_width / math.max(size.cols, 1)),
+      math.floor(float.height * dims.pixel_height / math.max(size.viewport_rows, 1))
+    )
     gui:set_config_overrides({
       window_background_opacity = float.opacity,
       window_decorations = float.decorations,
       enable_tab_bar = false,
     })
-    gui:perform_action(act.SetWindowLevel(float.level), pane)
+    if M.is_macos then
+      gui:perform_action(act.SetWindowLevel(float.level), pane)
+      level = float.level
+    end
   end
   M.receipt({
     command = cmd.id,
@@ -54,6 +66,7 @@ function M.spawn_float(cmd)
     domain = pane:get_domain_name(),
     window_id = window:window_id(),
     pane_id = pane:pane_id(),
+    level = level,
     result = "ok",
   })
 end
@@ -88,6 +101,42 @@ function M.run_command(cmd, window, pane)
   else
     wezterm.log_error("deck: no handler for command kind " .. tostring(cmd.kind))
   end
+end
+
+-- Quick-select action bus: per-row `select` arms convert the selected span
+-- into a Forge action; rows without an arm keep the native clipboard default.
+local select_kinds = {
+  ["edit"] = function(_, pane, sel)
+    local file, line = sel:match("^(.-):(%d+)")
+    if not file then
+      return
+    end
+    local cwd = pane:get_current_working_dir()
+    M.spawn_float({
+      id = "quick-edit",
+      float = "utility",
+      cwd = cwd and cwd.file_path or nil,
+      args = { rows.paths.nvim, "+" .. line, file },
+    })
+  end,
+  ["domain"] = function(window, pane, sel)
+    local domain = rows.host_domains[sel]
+    if not domain then
+      return
+    end
+    window:perform_action(act.SpawnCommandInNewWindow({ domain = { DomainName = domain } }), pane)
+    M.receipt({ command = "quick-domain", action = "domain", domain = domain, result = "ok" })
+  end,
+}
+
+function M.select_action(row)
+  local kind = select_kinds[row.select]
+  if not kind then
+    return nil
+  end
+  return wezterm.action_callback(function(window, pane)
+    kind(window, pane, window:get_selection_text_for_pane(pane))
+  end)
 end
 
 -- Workspace switcher: configured name-policy rows plus live mux workspaces.
@@ -306,8 +355,10 @@ function M.apply(config)
   -- Store-owned plugin rail: direct store-path load. plugin.require would
   -- git-clone into the runtime cache (and a fetchFromGitHub tree is not a
   -- repo); dofile consumes the pin with zero cache mutation, so the cache
-  -- stays empty and update_all() has nothing to touch.
-  local sync = dofile(rows.plugins.sync_panes .. "/plugin/init.lua")
+  -- stays empty and update_all() has nothing to touch. The env row swaps the
+  -- pin for a dev checkout without touching generated config.
+  local sync_src = os.getenv("FORGE_WEZTERM_PLUGIN_SYNC_PANES") or rows.plugins.sync_panes
+  local sync = dofile(sync_src .. "/plugin/init.lua")
   M.sync = sync
   if sync_row then
     sync.apply_to_config(config, {

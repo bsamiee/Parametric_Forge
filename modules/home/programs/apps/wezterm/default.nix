@@ -86,9 +86,15 @@
     (lib.attrValues sshHosts);
 
   # --- Action-bus rows: quick-select patterns + hyperlink rules ----------------
+  # `select` names a deck.lua action arm for the captured span (edit opens the
+  # span in an editor float, domain opens the aliased SSH window); rows
+  # without it keep the native clipboard default.
   hostAliasAlternation =
     lib.concatStringsSep "|"
     (lib.concatMap (h: h.aliases ++ [h.tunnelHost]) (lib.attrValues sshHosts));
+  hostDomains = lib.listToAttrs (lib.concatMap (
+    h: map (a: lib.nameValuePair a "SSH:${h.name}") (lib.unique (h.aliases ++ [h.tunnelHost]))
+  ) (lib.attrValues sshHosts));
   quickSelectRows = [
     {
       id = "nix-store-path";
@@ -104,6 +110,7 @@
       id = "file-span";
       regex = "[A-Za-z0-9~._/-]+[.][a-z]+:[0-9]+(:[0-9]+)?";
       priority = 30;
+      select = "edit";
     }
     {
       id = "issue-id";
@@ -114,6 +121,7 @@
       id = "host-alias";
       regex = "\\b(${hostAliasAlternation})\\b";
       priority = 50;
+      select = "domain";
     }
   ];
   hyperlinkRows = [
@@ -277,11 +285,14 @@
     tab_max_width = 32;
     show_new_tab_button_in_tab_bar = false;
 
-    # Command palette chrome
+    # Command palette + char-select chrome
     command_palette_bg_color = roles.surface.raised.hex;
     command_palette_fg_color = roles.accent.primary.hex;
     command_palette_rows = 10;
     command_palette_font_size = fontRow.size;
+    char_select_bg_color = roles.surface.raised.hex;
+    char_select_fg_color = roles.accent.primary.hex;
+    char_select_font_size = fontRow.size;
 
     # Performance
     front_end = "WebGpu";
@@ -305,7 +316,7 @@
     "use_cap_height_to_scale_fallback_fonts"
     "warn_about_missing_glyphs"
     "keys"
-    "key_tables"
+    "key_tables" # sync-panes writes its broadcast table here
     "mouse_bindings"
     "default_prog"
     "set_environment_variables"
@@ -319,6 +330,8 @@
   dupesOf = xs: lib.attrNames (lib.filterAttrs (_: c: c > 1) (lib.foldl' (acc: x: acc // {${x} = (acc.${x} or 0) + 1;}) {} xs));
   commandDupes = dupesOf (map (r: r.id) commandRows);
   patternDupes = dupesOf (map (r: r.id) quickSelectRows) ++ dupesOf (map (r: toString r.priority) quickSelectRows);
+  selectIds = lib.unique (builtins.filter (s: s != null) (map (r: r.select or null) quickSelectRows));
+  badSelects = builtins.filter (s: !(lib.elem s ["edit" "domain"])) selectIds;
 
   # --- Generated Lua data + entry point -------------------------------------------
   rows = {
@@ -328,7 +341,9 @@
     paths = {
       path = lib.concatStringsSep ":" toolchainEnv.launchdPathEntries;
       zellij = "${pkgs.zellij}/bin/zellij";
+      nvim = "${profileBin}/nvim";
     };
+    host_domains = hostDomains;
     plugins.sync_panes = "${syncPanesSrc}";
     font = fontRow;
     keys =
@@ -380,11 +395,12 @@
   });
   actionIds = map (r: r.action) chordRows;
 
-  # Build-time validator: Lua syntax, plugin payload shape, dispatch totality.
+  # Build-time validator: Lua syntax, plugin payload shape, dispatch totality
+  # (chord actions AND quick-select select arms both resolve in deck.lua).
   configDir =
     pkgs.runCommand "wezterm-config" {
       nativeBuildInputs = [pkgs.lua5_4];
-      actions = lib.concatStringsSep " " (lib.unique actionIds);
+      actions = lib.concatStringsSep " " (lib.unique (actionIds ++ selectIds));
     } ''
       mkdir -p "$out/colors"
       cp ${./deck.lua} "$out/deck.lua"
@@ -410,7 +426,7 @@
   namingJson = pkgs.writeText "forge-workspace-rows.json" (builtins.toJSON workspaceRows);
   forgeWorkspace = pkgs.writeShellApplication {
     name = "forge-workspace";
-    runtimeInputs = [pkgs.coreutils pkgs.jq];
+    runtimeInputs = [pkgs.coreutils pkgs.jq pkgs.gawk pkgs.gnugrep];
     text = ''
       # Resolves a CA-1 name-policy slug to WezTerm workspace + mux window and
       # the desktop-Space bridge. Provider dispatch: none (default) degrades
@@ -447,14 +463,15 @@
           exit 0
           ;;
         --list | "")
+          live_set="$(live_workspaces)"
           {
             printf 'SLUG\tLABEL\tCWD\tLIVE\n'
             while IFS=$'\t' read -r slug label cwd; do
               live=no
-              live_workspaces | grep -qx "$slug" && live=yes
+              grep -qx "$slug" <<<"$live_set" && live=yes
               printf '%s\t%s\t%s\t%s\n' "$slug" "$label" "$cwd" "$live"
             done < <(jq -r '.[] | [.name, .label, .cwd] | @tsv' "$rows")
-          } | column -t -s $'\t'
+          } | awk -F'\t' '{printf "%-16s %-24s %-56s %s\n", $1, $2, $3, $4}'
           exit 0
           ;;
       esac
@@ -513,6 +530,10 @@ in {
       {
         assertion = patternDupes == [];
         message = "wezterm: quick-select id/priority collisions: ${lib.concatStringsSep ", " patternDupes}";
+      }
+      {
+        assertion = badSelects == [];
+        message = "wezterm: quick-select rows carry unknown select arms: ${lib.concatStringsSep ", " badSelects}";
       }
     ];
 

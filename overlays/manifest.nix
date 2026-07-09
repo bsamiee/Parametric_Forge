@@ -437,7 +437,7 @@ in rec {
           hash = "sha256-AP20DyGQlOHMi8mw3pgZWg3KLEbyjj5PQWL61p41Pfk=";
           license = "mit";
           permissions = ["broadcast-input-active-tab" "clipboard-paste" "window-frame-overrides"];
-          surface = "runtime"; # wezterm.plugin.require(file://) load; toggle chord guarded by the deck
+          surface = "runtime"; # direct store-path dofile (fetched trees are not git repos; plugin.require cannot clone them); toggle chord guarded by the deck
           apply = "apply_to_config";
         };
         wezterm-types = {

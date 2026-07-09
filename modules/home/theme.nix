@@ -276,6 +276,16 @@
       selection_fg = palette.foreground.hex;
       selection_bg = palette.selection.hex;
       split = palette.comment.hex;
+      # Overlay label chrome: quick-select chips and picker/launcher labels
+      # bind semantic roles, matching the command-palette surface rows.
+      quick_select_label_bg = {Color = roles.state.attention.hex;};
+      quick_select_label_fg = {Color = roles.text.inverse.hex;};
+      quick_select_match_bg = {Color = roles.surface.selected.hex;};
+      quick_select_match_fg = {Color = roles.text.primary.hex;};
+      input_selector_label_bg = {Color = roles.surface.raised.hex;};
+      input_selector_label_fg = {Color = roles.accent.primary.hex;};
+      launcher_label_bg = {Color = roles.surface.raised.hex;};
+      launcher_label_fg = {Color = roles.accent.primary.hex;};
       ansi = map (c: c.hex) [
         ansi16.black
         ansi16.red

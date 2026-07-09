@@ -595,7 +595,6 @@
       action = "workspace-new";
       label = "wezterm workspace new";
       class = "deck";
-      requiresNightly = true;
       forgot.rank = 365;
     }
     {

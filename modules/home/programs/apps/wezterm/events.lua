@@ -42,13 +42,34 @@ local function cell(fg, text)
   }
 end
 
+local function workspace_cwd(name)
+  for _, w in ipairs(rows.workspaces) do
+    if w.name == name then
+      return w.cwd
+    end
+  end
+end
+
 function M.apply(config) -- luacheck: no unused args
+  -- Session persistence is code-defined: GUI and auto-spawned mux servers
+  -- land the default workspace at its name-policy cwd; no session plugin.
   wezterm.on("gui-startup", function(cmd)
-    local _, _, window = wezterm.mux.spawn_window(cmd or {})
+    local spawn = cmd or {}
+    spawn.cwd = spawn.cwd or workspace_cwd(wezterm.mux.get_active_workspace())
+    local _, _, window = wezterm.mux.spawn_window(spawn)
     local gui = window:gui_window()
     if gui then
       gui:maximize()
     end
+  end)
+
+  wezterm.on("mux-startup", function()
+    wezterm.mux.spawn_window({ cwd = workspace_cwd(wezterm.mux.get_active_workspace()) })
+  end)
+
+  -- Domain attach shaping: one launch receipt per attach.
+  wezterm.on("gui-attached", function(domain)
+    deck.receipt({ action = "attach", domain = domain:name(), result = "ok" })
   end)
 
   -- Outer facts only: key table, sync state, domain, workspace, cached agent
@@ -117,6 +138,7 @@ function M.apply(config) -- luacheck: no unused args
         action = act.QuickSelectArgs({
           label = pattern.id,
           patterns = { pattern.regex },
+          action = deck.select_action(pattern),
         }),
       }
     end
