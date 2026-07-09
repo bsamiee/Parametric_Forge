@@ -4,100 +4,279 @@
 # License       : MIT
 # Path          : modules/home/programs/shell-tools/ssh.nix
 # ----------------------------------------------------------------------------
-# SSH client configuration with GitHub integration and Maghz VPS loopback tunnels.
+# SSH client configuration with GitHub integration and VPS loopback tunnels.
+# One tunnel row projects everything: interactive host block, transport-only
+# tunnel block, launchd agent, and service-health receipts. A future VPS is a
+# new row here, never a new agent module.
 {
   config,
   lib,
   pkgs,
   ...
 }: let
-  # Maghz VPS loopback forwards: webhook (9000), aria2 RPC (6800), Codex OAuth
-  # (1455), Postgres (15435), Ollama (11434), n8n (5678).
-  maghzLocalForwards = map (port: {
-    bind.port = port;
-    host.address = "localhost";
-    host.port = port;
-  }) [9000 6800 1455 15435 11434 5678];
+  # Probe classes drive the health receipts: pg (pg_isready), http (GET path),
+  # none (forward only, bind-checked but never service-probed).
+  vpsTunnels = {
+    maghz = {
+      user = "maghz-agent";
+      hostName = "31.97.131.41";
+      forwards = [
+        {
+          port = 9000;
+          service = "webhook";
+          probe = "none";
+        }
+        {
+          port = 6800;
+          service = "aria2-rpc";
+          probe = "none";
+        }
+        {
+          port = 1455;
+          service = "codex-oauth";
+          probe = "none";
+        }
+        {
+          port = 15435;
+          service = "postgres";
+          probe = "pg";
+        }
+        {
+          port = 11434;
+          service = "ollama";
+          probe = "http";
+          path = "/api/version";
+        }
+        {
+          port = 5678;
+          service = "n8n";
+          probe = "http";
+          path = "/healthz";
+        }
+      ];
+    };
+  };
+
+  forwardsFor = tunnel:
+    map (f: {
+      bind.port = f.port;
+      host.address = "localhost";
+      host.port = f.port;
+    })
+    tunnel.forwards;
+
+  # Interactive operator hosts: `ssh maghz` opens a session with all forwards.
+  interactiveHosts = lib.mapAttrs' (name: tunnel:
+    lib.nameValuePair "${name}-vps ${name}" {
+      User = tunnel.user;
+      HostName = tunnel.hostName;
+      IdentitiesOnly = true;
+      AddKeysToAgent = "yes";
+      LocalForward = forwardsFor tunnel;
+    })
+  vpsTunnels;
+
+  # Transport-only tunnel hosts: fail-fast forwards + tight keepalives; the
+  # supervisor owns lifecycle, launchd owns restart policy.
+  tunnelHosts = lib.mapAttrs' (name: tunnel:
+    lib.nameValuePair "${name}-tunnel" {
+      User = tunnel.user;
+      HostName = tunnel.hostName;
+      IdentitiesOnly = true;
+      AddKeysToAgent = "yes";
+      BatchMode = true;
+      Compression = false;
+      ControlMaster = "no";
+      ExitOnForwardFailure = true;
+      LocalForward = forwardsFor tunnel;
+      ServerAliveInterval = 15;
+      ServerAliveCountMax = 3;
+      SessionType = "none";
+      StdinNull = true;
+      TCPKeepAlive = false;
+    })
+  vpsTunnels;
+
+  tunnelRowJson = name: tunnel:
+    pkgs.writeText "vps-tunnel-${name}.json" (builtins.toJSON {
+      inherit name;
+      sshHost = "${name}-tunnel";
+      inherit (tunnel) forwards;
+    });
+
+  # Health-gated supervisor: spawns ssh -N, proves every local bind, then
+  # emits service-health receipts on state transitions. Restart-worthy states
+  # are transport-scoped only (port-conflict, vps-unreachable, bind-failed,
+  # bind-lost) — service-down is receipted, never restarted: a local restart
+  # cannot fix a remote service, and churn would mask real VPS outages.
+  tunnelSupervisor = pkgs.writeShellApplication {
+    name = "forge-vps-tunnel";
+    runtimeInputs = [pkgs.coreutils pkgs.openssh pkgs.curl pkgs.jq];
+    text = ''
+      row_file="$1"
+      name="$(jq -r '.name' "$row_file")"
+      ssh_host="$(jq -r '.sshHost' "$row_file")"
+      receipts="''${FORGE_TUNNEL_RECEIPTS:-$HOME/Library/Logs/$name-vps-tunnel.receipts.log}"
+      interval="''${FORGE_TUNNEL_PROBE_INTERVAL:-60}"
+      bind_grace="''${FORGE_TUNNEL_BIND_GRACE:-20}"
+      bind_fail_max="''${FORGE_TUNNEL_BIND_FAILS:-3}"
+
+      # Knobs are positive integers or the defaults — a stray override must
+      # never crash the supervisor into a receiptless restart loop.
+      case "$interval" in "" | *[!0-9]* | 0) interval=60 ;; esac
+      case "$bind_grace" in "" | *[!0-9]* | 0) bind_grace=20 ;; esac
+      case "$bind_fail_max" in "" | *[!0-9]* | 0) bind_fail_max=3 ;; esac
+
+      mapfile -t ports < <(jq -r '.forwards[].port' "$row_file")
+
+      emit() {
+        mkdir -p "$(dirname "$receipts")"
+        printf 'ts=%s\ttunnel=%s\tstate=%s\t%s\n' \
+          "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$name" "$1" "''${2:-}" | tee -a "$receipts"
+      }
+
+      port_open() { (exec 3<>"/dev/tcp/127.0.0.1/$1") 2>/dev/null; }
+
+      binds_ok() {
+        local p
+        for p in "''${ports[@]}"; do port_open "$p" || return 1; done
+      }
+
+      # One receipt field per probed service: svc=ok|down through the forward.
+      service_vector() {
+        local svc probe port path state
+        while IFS=$'\t' read -r svc probe port path; do
+          case "$probe" in
+            pg) state="$("${pkgs.postgresql_18}/bin/pg_isready" -q -h 127.0.0.1 -p "$port" -t 5 >/dev/null 2>&1 && echo ok || echo down)" ;;
+            http) state="$(curl -fsS --max-time 5 -o /dev/null "http://127.0.0.1:$port$path" 2>/dev/null && echo ok || echo down)" ;;
+            *) state="$(port_open "$port" && echo ok || echo down)" ;;
+          esac
+          printf '%s=%s ' "$svc" "$state"
+        done < <(jq -r '.forwards[] | select(.probe != "none") | [.service, .probe, (.port | tostring), (.path // "")] | @tsv' "$row_file")
+      }
+
+      # A row with zero forwards proves nothing — refuse the vacuous up state.
+      if [ "''${#ports[@]}" -eq 0 ]; then
+        emit row-invalid "detail=no forward ports in $row_file"
+        exit 1
+      fi
+
+      # Loopback parity guard: a port accepting before ssh spawns belongs to
+      # another owner (compose local mode) — receipt the truth, never let the
+      # collision masquerade as vps-unreachable or bind-failed.
+      conflicts=""
+      for p in "''${ports[@]}"; do port_open "$p" && conflicts="$conflicts $p"; done
+      if [ -n "$conflicts" ]; then
+        emit port-conflict "detail=already bound before spawn:$conflicts"
+        exit 1
+      fi
+
+      # Traps precede the spawn: TERM in the spawn window must still reap ssh,
+      # and untrapped SIGTERM would skip the EXIT trap on launchd unload.
+      ssh_pid=""
+      trap '{ [ -n "$ssh_pid" ] && kill "$ssh_pid" 2>/dev/null && wait "$ssh_pid" 2>/dev/null; } || true' EXIT
+      trap 'exit 143' TERM INT
+      ssh -N "$ssh_host" &
+      ssh_pid=$!
+
+      # Bind proof: ssh death before binds is vps-unreachable; a live ssh whose
+      # forwards never accept within the grace window is bind-failed.
+      deadline=$((SECONDS + bind_grace))
+      until binds_ok; do
+        if ! kill -0 "$ssh_pid" 2>/dev/null; then
+          emit vps-unreachable "detail=ssh exited before local binds"
+          exit 1
+        fi
+        if [ "$SECONDS" -ge "$deadline" ]; then
+          emit bind-failed "detail=forwards not accepting within ''${bind_grace}s"
+          exit 1
+        fi
+        sleep 1
+      done
+
+      last=""
+      bind_fails=0
+      while :; do
+        if ! kill -0 "$ssh_pid" 2>/dev/null; then
+          emit vps-unreachable "detail=ssh transport exited"
+          exit 1
+        fi
+        if binds_ok; then
+          bind_fails=0
+          vector="$(service_vector)"
+          current="services=''${vector% }"
+          if [ "$current" != "$last" ]; then
+            emit up "$current"
+            last="$current"
+          fi
+        else
+          # Hysteresis: only consecutive bind losses restart the transport.
+          bind_fails=$((bind_fails + 1))
+          if [ "$bind_fails" -ge "$bind_fail_max" ]; then
+            emit bind-lost "detail=$bind_fails consecutive bind probes failed"
+            exit 1
+          fi
+        fi
+        # Backgrounded sleep keeps the interval interruptible by TERM/INT.
+        sleep "$interval" &
+        wait "$!" || true
+      done
+    '';
+  };
 in {
   programs.ssh = {
     enable = true;
     enableDefaultConfig = false; # Explicitly disable default config to suppress warning
 
-    # Use 1Password's stable socket on macOS so SSH pulls keys from the agent
-    extraConfig = lib.mkBefore ''
-      Host *
-        IdentityAgent "~/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
-    '';
+    settings =
+      {
+        # --- GitHub Configuration -------------------------------------------
+        "github.com" = {
+          User = "git";
+          HostName = "github.com";
+          IdentitiesOnly = true;
+          AddKeysToAgent = "yes";
+        };
 
-    settings = {
-      # --- GitHub Configuration ---------------------------------------------
-      "github.com" = {
-        User = "git";
-        HostName = "github.com";
-        IdentitiesOnly = true;
-        AddKeysToAgent = "yes";
-      };
+        # --- Default Optimizations for All Hosts ----------------------------
+        "*" = {
+          # 1Password's stable agent socket is the identity source everywhere
+          IdentityAgent = "\"~/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock\"";
 
-      # --- Hostinger VPS (Maghz remote operator) ----------------------------
-      "maghz-vps maghz" = {
-        User = "maghz-agent";
-        HostName = "31.97.131.41";
-        IdentitiesOnly = true;
-        AddKeysToAgent = "yes";
-        LocalForward = maghzLocalForwards;
-      };
+          # Connection multiplexing for performance
+          ControlMaster = "auto";
+          ControlPath = "${config.home.homeDirectory}/.ssh/sockets/%C";
+          ControlPersist = "10m";
 
-      # --- Maghz transport-only tunnel (launchd-managed) --------------------
-      # Fail-fast forwards + tight keepalives; launchd owns restart policy.
-      "maghz-tunnel" = {
-        User = "maghz-agent";
-        HostName = "31.97.131.41";
-        IdentitiesOnly = true;
-        AddKeysToAgent = "yes";
-        BatchMode = true;
-        Compression = false;
-        ControlMaster = "no";
-        ExitOnForwardFailure = true;
-        LocalForward = maghzLocalForwards;
-        ServerAliveInterval = 15;
-        ServerAliveCountMax = 3;
-        SessionType = "none";
-        StdinNull = true;
-        TCPKeepAlive = false;
-      };
+          # Keep-alive settings
+          ServerAliveInterval = 60;
+          ServerAliveCountMax = 3;
 
-      # --- Default Optimizations for All Hosts ------------------------------
-      "*" = {
-        # Connection multiplexing for performance
-        ControlMaster = "auto";
-        ControlPath = "${config.home.homeDirectory}/.ssh/sockets/%C";
-        ControlPersist = "10m";
+          # Security and convenience
+          AddKeysToAgent = "yes";
+          HashKnownHosts = true;
 
-        # Keep-alive settings
-        ServerAliveInterval = 60;
-        ServerAliveCountMax = 3;
-
-        # Security and convenience
-        AddKeysToAgent = "yes";
-        HashKnownHosts = true;
-
-        # Performance
-        Compression = true;
-      };
-    };
+          # Performance
+          Compression = true;
+        };
+      }
+      // interactiveHosts
+      // tunnelHosts;
   };
 
-  # Durable Maghz tunnel: remote-primary mode kickstarts it; local parity mode
-  # boots it out before compose binds the same loopback ports.
-  launchd.agents.maghz-vps-tunnel = {
-    enable = true;
-    config = {
-      ProgramArguments = ["${pkgs.openssh}/bin/ssh" "-N" "maghz-tunnel"];
-      RunAtLoad = true;
-      KeepAlive = true;
-      ThrottleInterval = 30;
-      StandardOutPath = "${config.home.homeDirectory}/Library/Logs/maghz-vps-tunnel.log";
-      StandardErrorPath = "${config.home.homeDirectory}/Library/Logs/maghz-vps-tunnel.log";
-    };
-  };
+  # Durable per-row tunnel agents: remote-primary mode kickstarts them; local
+  # parity mode boots them out before compose binds the same loopback ports.
+  launchd.agents = lib.mapAttrs' (name: tunnel:
+    lib.nameValuePair "${name}-vps-tunnel" {
+      enable = true;
+      config = {
+        ProgramArguments = ["${tunnelSupervisor}/bin/forge-vps-tunnel" "${tunnelRowJson name tunnel}"];
+        RunAtLoad = true;
+        KeepAlive = true;
+        ThrottleInterval = 30;
+        StandardOutPath = "${config.home.homeDirectory}/Library/Logs/${name}-vps-tunnel.log";
+        StandardErrorPath = "${config.home.homeDirectory}/Library/Logs/${name}-vps-tunnel.log";
+      };
+    })
+  vpsTunnels;
 }

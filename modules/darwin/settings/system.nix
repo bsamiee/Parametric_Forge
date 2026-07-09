@@ -23,7 +23,7 @@ in {
   system.defaults = {
     # --- Login Window -------------------------------------------------------
     loginwindow = {
-      SHOWFULLNAME = false; # User icon list instead of username/password fields
+      SHOWFULLNAME = true; # Name+password fields, never the user icon list
       GuestEnabled = false;
       autoLoginUser = null;
       # LoginwindowText should not be set to avoid duplicate name display
