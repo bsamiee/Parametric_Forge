@@ -89,6 +89,7 @@
       "panelTitle.inactiveForeground" = s.text.subtle;
       "badge.background" = s.accent.secondary;
       "badge.foreground" = s.text.inverse;
+      "list.foreground" = s.text.primary;
       "list.activeSelectionBackground" = s.surface.selected;
       "list.inactiveSelectionBackground" = s.surface.raised;
       "list.hoverBackground" = s.surface.raised;
@@ -101,9 +102,11 @@
       "diffEditor.removedLineBackground" = s.diff.del;
       "diffEditor.removedTextBackground" = s.diff.delEmph;
       "gitDecoration.addedResourceForeground" = s.state.success;
-      "gitDecoration.modifiedResourceForeground" = s.state.info;
+      "gitDecoration.modifiedResourceForeground" = s.accent.primary;
       "gitDecoration.deletedResourceForeground" = s.state.danger;
-      "gitDecoration.untrackedResourceForeground" = s.text.subtle;
+      "gitDecoration.untrackedResourceForeground" = s.state.success;
+      "gitDecoration.ignoredResourceForeground" = s.text.muted;
+      "gitDecoration.renamedResourceForeground" = s.accent.tertiary;
       "gitDecoration.conflictingResourceForeground" = s.accent.secondary;
       "terminal.background" = t.palette.background.hex;
       "terminal.foreground" = t.palette.foreground.hex;
