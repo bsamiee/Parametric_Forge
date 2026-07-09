@@ -105,8 +105,8 @@
 
       # --- Discriminated inventory: one row grammar, nine kinds ----------------
       inventory() {
-        # sessions: live and resurrectable
-        zellij list-sessions --no-formatting 2>/dev/null | gawk '
+        # sessions: live and resurrectable (list-sessions exits 1 when none)
+        (zellij list-sessions --no-formatting 2>/dev/null || true) | gawk '
           {
             name = $1
             kind = ($0 ~ /EXITED/) ? "session-exited" : "session"
@@ -118,7 +118,6 @@
           zj_json list-tabs | jq -c '.[] | {row_id: ("tab:" + (.tab_id | tostring)), kind: "tab",
             label: .name, detail: ("swap=" + (.active_swap_layout_name // "-") + (if .active then " active" else "" end)),
             target: (.tab_id | tostring)}'
-          zj_json list-panes--all | jq -c 'empty' 2>/dev/null || true
           zellij action list-panes --all --json 2>/dev/null | jq -c '.[]? | select((.is_plugin | not) and (.exited | not))
             | {row_id: ("pane:" + (.id | tostring)), kind: "pane",
                label: ((.title // "") | if . == "" then "pane" else . end),
@@ -226,7 +225,7 @@
           pane="''${3:-''${ZELLIJ_PANE_ID:-}}"
           if [[ "''${2:-}" == "--pane" ]]; then pane="''${3:?--pane needs an id}"; fi
           title="$(zellij action list-panes --all --json 2>/dev/null \
-            | jq -r --arg id "$pane" '[.[] | select((.id | tostring) == $id)][0].title // "pane"')"
+            | jq -r --arg id "$pane" '[.[] | select((.is_plugin | not) and ((.id | tostring) == $id))][0].title // "pane"')"
           if ! gawk -F'\t' -v s="$session" -v p="$pane" '$1 == s && $2 == p {found = 1} END {exit !found}' "$stars_file" 2>/dev/null; then
             TZ=UTC0 printf -v ts '%(%Y-%m-%dT%H:%M:%SZ)T' "$EPOCHSECONDS"
             printf '%s\t%s\t%s\t%s\n' "$session" "$pane" "$title" "$ts" >>"$stars_file"
