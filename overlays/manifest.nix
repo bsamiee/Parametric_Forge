@@ -9,8 +9,9 @@
 # engine, retention, and projection for every non-nixpkgs package and every
 # host-runtime extension family. overlays/default.nix folds `packages` rows
 # into derivations; flake-modules/packages.nix folds `projection.package/app`
-# into public outputs; HM rosters consume `admissions` rows by roster group.
-# Pure data — no pkgs, no lib; validation runs in the overlay fold.
+# into public outputs; HM rosters consume `admissions` rows via `rosterRows`.
+# Pure data plus builtins-only accessors — no pkgs, no lib; validation runs in
+# the overlay fold.
 let
   v = rec {
     duckdb = "1.5.4";
@@ -25,7 +26,7 @@ let
     duckdbBase = "https://github.com/duckdb/duckdb/releases/download/v${duckdb}";
     sqleanBase = "https://github.com/nalgeon/sqlean/releases/download/${sqlean}";
   };
-in {
+in rec {
   vocabulary = {
     sourceKinds = ["source-build" "binary-archive" "npm-tarball" "github-release" "extension-bundle" "nixpkgs" "repo"];
     patchFamilies = ["none" "darwin-install-name" "auto-patchelf" "shebang-retarget" "npm-tool-strip" "source-substitute"];
@@ -33,7 +34,10 @@ in {
     updateEngines = ["nix-update" "nvfetcher" "npins" "manual" "nixpkgs-follows" "npm-registry"];
     engineVerbs = ["update" "advance" "build"]; # bump revisions | move upstream ref only | prove the locked set builds
     versionPolicies = ["fast" "slow-scientific" "nixpkgs" "repo-owned"];
-    projectionKinds = ["overlay-new" "overlay-override" "package" "app" "hm-roster" "extension-dir"];
+    overlayModes = ["new" "override"]; # projection.overlay values; package/app/default are boolean projection fields
+    installModes = ["hm-roster" "ca1" "landed"]; # roster-installed | CA-1 owns installation/projection | owned by a config module
+    rosters = ["data" "git" "monitors" "proof" "picker"];
+    completionKinds = ["native" "landed" "none"]; # tool/package provides | owner config module wires | no completion surface
     rowStates = ["current" "no_upstream_release" "hash_mismatch" "unsupported_platform" "patch_drift" "license_drift" "cache_miss" "consumer_conflict"];
     retentionPolicies = ["git-history" "ledger"]; # superseded pins resurrect from repo history unless a generated ledger holds them
     extensionSecurityFields = ["publisher" "registry" "native_code" "postinstall_behavior" "secret_touching" "host_permissions" "runtime_write_policy" "mutable_paths"];
@@ -72,7 +76,7 @@ in {
         package = true;
         app = true;
       };
-      overlayReason = "pythonPackagesExtensions rebinds python duckdb (Harlequin engine) onto the CLI lineage; the graph must see one duckdb";
+      overlayReason = "the top-level attr becomes the upstream binary CLI for every consumer; pythonPackagesExtensions pins python duckdb (Harlequin engine) back to the nixpkgs source-built lineage the header-less binary cannot satisfy";
       consumers = ["db-tools" "forge-provision" "pythonPackages.duckdb"];
       description = "DuckDB command line client";
       homepage = "https://duckdb.org/";
@@ -299,7 +303,8 @@ in {
       install = "hm-roster";
       capability = "CSV lane: SIMD parser, expression language, frequency/plot tooling; routing: CSV -> xan, relational/Parquet -> DuckDB";
       updateEngine = "nixpkgs-follows";
-      completion = "native"; # `xan completions zsh`
+      completion = "native";
+      completionArgs = ["completions" "zsh"]; # package ships no file; the shell-tools roster materializes `_xan` from this argv
       themeCarrier = "ansi";
       proof = "xan --version";
       chords = ["inspect" "sample" "aggregate" "join"];
@@ -310,7 +315,7 @@ in {
       install = "hm-roster";
       capability = "structural merge driver; registered in git config, inert until a repo opts in via gitattributes `merge=mergiraf`";
       updateEngine = "nixpkgs-follows";
-      completion = "native";
+      completion = "none";
       themeCarrier = "none";
       proof = "mergiraf --version";
       chords = ["semantic-merge" "conflict-resolve"];
@@ -394,6 +399,12 @@ in {
       chords = [];
     };
   };
+
+  # One roster fold serves every HM consumer: rows for one roster group whose
+  # installation this manifest owns; consumers map their package set over it.
+  rosterRows = roster:
+    builtins.filter (row: row.install == "hm-roster" && row.roster == roster)
+    (builtins.attrValues admissions);
 
   # Host-runtime extension registries: package-like assets consumed by a host.
   # One family, per-lane sources; CA-4/5/6/7 admit plugin rows here, each

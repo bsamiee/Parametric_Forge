@@ -22,7 +22,26 @@ final: prev: let
     assert lib.assertMsg (lib.elem row.updateEngine voc.updateEngines) "${name}: updateEngine '${row.updateEngine}' outside vocabulary";
     assert lib.assertMsg (lib.elem row.versionPolicy voc.versionPolicies) "${name}: versionPolicy '${row.versionPolicy}' outside vocabulary";
     assert lib.assertMsg (lib.elem row.retention voc.retentionPolicies) "${name}: retention '${row.retention}' outside vocabulary";
+    assert lib.assertMsg (!(row.projection ? overlay) || lib.elem row.projection.overlay voc.overlayModes) "${name}: projection.overlay '${row.projection.overlay or ""}' outside vocabulary";
+    assert lib.assertMsg (lib.licenses ? ${row.license}) "${name}: license '${row.license}' not a lib.licenses key";
     assert lib.assertMsg ((row.projection.overlay or null) != "override" || row ? overlayReason) "${name}: overlay-override projection requires overlayReason"; row;
+
+  checkAdmission = name: row:
+    assert lib.assertMsg (lib.elem row.install voc.installModes) "${name}: install '${row.install}' outside vocabulary";
+    assert lib.assertMsg (lib.elem row.roster voc.rosters) "${name}: roster '${row.roster}' outside vocabulary";
+    assert lib.assertMsg (lib.elem row.updateEngine voc.updateEngines) "${name}: updateEngine '${row.updateEngine}' outside vocabulary";
+    assert lib.assertMsg (lib.elem row.completion voc.completionKinds) "${name}: completion '${row.completion}' outside vocabulary"; row;
+
+  # Launcher extension rows project live from the fleet manifest owner into
+  # the ledger; placeholder args — only family fields cross, never spawn lines.
+  fleetLauncherRows = lib.listToAttrs (map (
+      r:
+        assert lib.assertMsg (lib.elem r.launcher.updateEngine voc.updateEngines) "${r.name}: launcher updateEngine '${r.launcher.updateEngine}' outside vocabulary";
+          lib.nameValuePair r.name {inherit (r.launcher) pkg version upstream updateEngine;}
+    ) (lib.filter (r: r ? launcher) (import ../modules/home/programs/shell-tools/mcp-fleet.nix {
+      profileBin = "";
+      homeDir = "";
+    })));
 
   rowOf = name: checkRow name manifest.packages.${name};
   assetOf = name: row:
@@ -105,14 +124,13 @@ final: prev: let
 in {
   carbon-now-cli = prev.carbon-now-cli.overrideAttrs (old: {
     # patchFamily source-substitute: Node 26 rejects `assert { type: 'json' }`.
+    # No existence guard — an upstream layout or syntax change must fail the
+    # build loudly (patch_drift), never ship an unpatched binary.
     postInstall =
       (old.postInstall or "")
       + ''
-        cli="$out/lib/node_modules/carbon-now-cli/dist/cli.js"
-        if [ -f "$cli" ]; then
-          substituteInPlace "$cli" \
-            --replace-fail "assert { type: 'json' }" "with { type: 'json' }"
-        fi
+        substituteInPlace "$out/lib/node_modules/carbon-now-cli/dist/cli.js" \
+          --replace-fail "assert { type: 'json' }" "with { type: 'json' }"
       '';
     # Update-notifier policy row: self-mutating configstore state is
     # disabled at admission, never left as unowned config litter.
@@ -138,13 +156,31 @@ in {
     name = "forge-package-manifest";
     destination = "/share/forge/manifest.json";
     text = builtins.toJSON {
-      inherit (manifest) vocabulary extensions;
-      packages = lib.mapAttrs checkRow manifest.packages;
+      inherit (manifest) vocabulary;
+      extensions =
+        manifest.extensions
+        // {
+          mcp-launchers = manifest.extensions.mcp-launchers // {rows = fleetLauncherRows;};
+        };
+      # Nixpkgs-followed package rows carry no frozen version copy; the ledger
+      # resolves the live pin from the package set, mirroring admissions.
+      packages =
+        lib.mapAttrs (
+          name: row:
+            checkRow name row
+            // lib.optionalAttrs (row.sourceKind == "nixpkgs") {
+              resolved = {
+                version = prev.${name}.version or null;
+                state = "current";
+              };
+            }
+        )
+        manifest.packages;
       # Admission pins resolve live from the package set — never frozen copies.
       admissions =
         lib.mapAttrs (
-          _: row:
-            row
+          name: row:
+            checkAdmission name row
             // {
               resolved =
                 if prev ? ${row.attr}
