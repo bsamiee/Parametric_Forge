@@ -1041,8 +1041,9 @@
             }' >"$meta.tmp.$$"
         mv "$meta.tmp.$$" "$meta"
 
-        summary="needs=''${needs:-0} run=$run_n cx_stale=$(jq -r '.quota.codex.stale // true' "$cache") cl_stale=$(jq -r '.quota.claude.stale // true' "$cache")"
-        prev_summary="$(jq -r '"needs=\(.attention.needs_input // 0) run=\(.lanes.running // 0) cx_stale=\(.quota.codex.stale // true) cl_stale=\(.quota.claude.stale // true)"' <<<"$prev" 2>/dev/null || echo "")"
+        # jq's // coerces false to the alternative; != false keeps a real false.
+        summary="needs=''${needs:-0} run=$run_n cx_stale=$(jq -r '.quota.codex.stale != false' "$cache") cl_stale=$(jq -r '.quota.claude.stale != false' "$cache")"
+        prev_summary="$(jq -r '"needs=\(.attention.needs_input // 0) run=\(.lanes.running // 0) cx_stale=\(.quota.codex.stale != false) cl_stale=\(.quota.claude.stale != false)"' <<<"$prev" 2>/dev/null || echo "")"
         if [ "$summary" != "$prev_summary" ] || [ "$notified" = 1 ]; then
           mkdir -p "$(dirname "$receipt_log")"
           printf 'ts=%s\towner=forge-agents\tverb=collect\tresult=ok\t%s\tnotified=%s\n' \
