@@ -68,7 +68,9 @@
       "activityBarBadge.background" = s.accent.secondary;
       "activityBarBadge.foreground" = s.text.inverse;
       "sideBar.background" = s.surface.crust;
-      "sideBar.foreground" = s.text.subtle;
+      # Undecorated explorer rows inherit sideBar.foreground (no list.foreground
+      # token exists); primary keeps unchanged files bright, git states recolor.
+      "sideBar.foreground" = s.text.primary;
       "sideBarTitle.foreground" = s.text.primary;
       "sideBarSectionHeader.background" = s.surface.crust;
       "statusBar.background" = s.surface.surface;
@@ -89,7 +91,6 @@
       "panelTitle.inactiveForeground" = s.text.subtle;
       "badge.background" = s.accent.secondary;
       "badge.foreground" = s.text.inverse;
-      "list.foreground" = s.text.primary;
       "list.activeSelectionBackground" = s.surface.selected;
       "list.inactiveSelectionBackground" = s.surface.raised;
       "list.hoverBackground" = s.surface.raised;
