@@ -83,7 +83,7 @@
     };
   }
   {
-    # Registration is the doppler-run indirection: dev_readonly injects
+    # Registration is the doppler-run indirection: agent-runtime/dev injects
     # DOPPLER_MCP_AGENT_TOKEN, so no ambient env key is consumed.
     name = "doppler";
     transport = "stdio";
@@ -91,13 +91,13 @@
     args = [
       "run"
       "--project"
-      "arsenal-mcp"
+      "agent-runtime"
       "--config"
-      "dev_readonly"
+      "dev"
       "--fallback"
       "${homeDir}/.cache/doppler/doppler-mcp.json"
       "--command"
-      "DOPPLER_TOKEN=$DOPPLER_MCP_AGENT_TOKEN exec ${profileBin}/forge-doppler-mcp --read-only --project arsenal-machine --config dev_agent"
+      "DOPPLER_TOKEN=$DOPPLER_MCP_AGENT_TOKEN exec ${profileBin}/forge-doppler-mcp --read-only --project agent-runtime --config dev"
     ];
     envKeys = [];
     probe = "network";

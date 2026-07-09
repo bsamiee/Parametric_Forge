@@ -28,7 +28,7 @@ _stale_days="${CLAUDE_DOPPLER_STALE_DAYS:-14}"
 [[ "${_stale_days}" =~ ^[0-9]+$ ]] || _stale_days=14
 readonly SNAPSHOT_STALE_DAYS="${_stale_days}"
 declare -ra DOPPLER_SOURCES=(
-    'arsenal-machine:dev_agent:agent-runtime.json:DOPPLER_TOKEN_AGENT_RUNTIME'
+    'agent-runtime:dev:agent-runtime.json:DOPPLER_TOKEN_AGENT_RUNTIME'
     'parametric-forge:dev_machine:forge-machine.json:DOPPLER_TOKEN_FORGE_MACHINE'
     'maghz:prd_host:maghz-host.json:DOPPLER_TOKEN_MAGHZ_HOST'
 )

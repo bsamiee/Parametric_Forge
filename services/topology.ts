@@ -32,6 +32,7 @@ type EnvironmentRow = {
   readonly slug: string;
   readonly name: string;
   readonly disposition: Disposition;
+  readonly origin: Origin;
 };
 
 type ConfigRow = {
@@ -39,6 +40,7 @@ type ConfigRow = {
   readonly environment: string;
   readonly name: string;
   readonly disposition: Disposition;
+  readonly origin: Origin;
 };
 
 type TokenRow = {
@@ -56,35 +58,35 @@ type ScopeRow = {
 
 /**
  * Live import IDs: projects import by slug, environments by `project.slug`,
- * branch configs by `project.environment.name`. The legacy machine projects
- * are deliberately unmodeled: their secrets migrate into `agent-runtime` and
- * the sources are destroyed imperatively per the runway, never declared here.
+ * branch configs by `project.environment.name`.
  */
 const projects = [
   { slug: "agent-runtime", description: "AI agent runtime secrets", disposition: "steady", origin: "mint" },
   { slug: "parametric-forge", description: "macOS machine and Home Manager toolchain secrets", disposition: "steady", origin: "adopt" },
   { slug: "maghz", description: "Maghz VPS runtime secrets", disposition: "steady", origin: "adopt" },
   { slug: "rasm", description: "Rasm repo and service secrets", disposition: "steady", origin: "adopt" },
-  { slug: "example-project", description: "Dead onboarding scaffold", disposition: "retire", origin: "adopt" },
 ] as const satisfies readonly ProjectRow[];
 
 /**
- * Adopted environments only. agent-runtime's dev/stg/prd auto-create with the
- * project and stay unmanaged until a later adopt tranche; retiring projects'
+ * API-minted projects carry zero environments, so agent-runtime's ride as mint
+ * rows; each environment creates its same-slug root config. Retiring projects'
  * environments die with the project row. Personal-configs posture is applied
  * imperatively at migration: the provider omits the field from reads, so a
  * declared `false` here could never plan.
  */
 const environments = [
-  { project: "parametric-forge", slug: "dev", name: "Development", disposition: "steady" },
-  { project: "parametric-forge", slug: "stg", name: "Staging", disposition: "steady" },
-  { project: "parametric-forge", slug: "prd", name: "Production", disposition: "steady" },
-  { project: "maghz", slug: "dev", name: "Development", disposition: "steady" },
-  { project: "maghz", slug: "stg", name: "Staging", disposition: "steady" },
-  { project: "maghz", slug: "prd", name: "Production", disposition: "steady" },
-  { project: "rasm", slug: "dev", name: "Development", disposition: "steady" },
-  { project: "rasm", slug: "stg", name: "Staging", disposition: "steady" },
-  { project: "rasm", slug: "prd", name: "Production", disposition: "steady" },
+  { project: "agent-runtime", slug: "dev", name: "Development", disposition: "steady", origin: "mint" },
+  { project: "agent-runtime", slug: "stg", name: "Staging", disposition: "steady", origin: "mint" },
+  { project: "agent-runtime", slug: "prd", name: "Production", disposition: "steady", origin: "mint" },
+  { project: "parametric-forge", slug: "dev", name: "Development", disposition: "steady", origin: "adopt" },
+  { project: "parametric-forge", slug: "stg", name: "Staging", disposition: "steady", origin: "adopt" },
+  { project: "parametric-forge", slug: "prd", name: "Production", disposition: "steady", origin: "adopt" },
+  { project: "maghz", slug: "dev", name: "Development", disposition: "steady", origin: "adopt" },
+  { project: "maghz", slug: "stg", name: "Staging", disposition: "steady", origin: "adopt" },
+  { project: "maghz", slug: "prd", name: "Production", disposition: "steady", origin: "adopt" },
+  { project: "rasm", slug: "dev", name: "Development", disposition: "steady", origin: "adopt" },
+  { project: "rasm", slug: "stg", name: "Staging", disposition: "steady", origin: "adopt" },
+  { project: "rasm", slug: "prd", name: "Production", disposition: "steady", origin: "adopt" },
 ] as const satisfies readonly EnvironmentRow[];
 
 /**
@@ -94,10 +96,10 @@ const environments = [
  * maghz dev config serves local and remote work.
  */
 const configs = [
-  { project: "parametric-forge", environment: "dev", name: "dev_machine", disposition: "steady" },
-  { project: "maghz", environment: "prd", name: "prd_host", disposition: "steady" },
-  { project: "maghz", environment: "dev", name: "dev_local", disposition: "cutover" },
-  { project: "rasm", environment: "dev", name: "dev_repo", disposition: "steady" },
+  { project: "parametric-forge", environment: "dev", name: "dev_machine", disposition: "steady", origin: "adopt" },
+  { project: "maghz", environment: "prd", name: "prd_host", disposition: "steady", origin: "adopt" },
+  { project: "maghz", environment: "dev", name: "dev_local", disposition: "cutover", origin: "adopt" },
+  { project: "rasm", environment: "dev", name: "dev_repo", disposition: "steady", origin: "adopt" },
 ] as const satisfies readonly ConfigRow[];
 
 /**

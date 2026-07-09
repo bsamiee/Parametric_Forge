@@ -62,7 +62,7 @@ const estate = (f: EstateFlags) => async (): Promise<Record<string, unknown>> =>
         new doppler.Environment(
           `${row.project}-${row.slug}`,
           { project: row.project, slug: row.slug, name: row.name },
-          _options("adopt", `${row.project}.${row.slug}`, f, project.get(row.project)),
+          _options(row.origin, `${row.project}.${row.slug}`, f, project.get(row.project)),
         ),
       ] as const),
   );
@@ -75,7 +75,7 @@ const estate = (f: EstateFlags) => async (): Promise<Record<string, unknown>> =>
         new doppler.BranchConfig(
           `${row.project}-${row.name}`,
           { project: row.project, environment: row.environment, name: row.name },
-          _options("adopt", `${row.project}.${row.environment}.${row.name}`, f, environment.get(`${row.project}.${row.environment}`)),
+          _options(row.origin, `${row.project}.${row.environment}.${row.name}`, f, environment.get(`${row.project}.${row.environment}`)),
         ),
       ] as const),
   );
@@ -84,8 +84,11 @@ const estate = (f: EstateFlags) => async (): Promise<Record<string, unknown>> =>
     tokens
       .filter((row) => config.has(`${row.project}.${row.config}`) || project.has(row.project))
       .map((row) => {
-        // Root-config tokens anchor on the project; branch-config tokens on their config row.
-        const anchor = config.get(`${row.project}.${row.config}`) ?? project.get(row.project);
+        // Root-config tokens anchor on their environment (same-slug root config
+        // exists once the environment does); branch-config tokens on their config row.
+        const anchor = config.get(`${row.project}.${row.config}`) ??
+          environment.get(`${row.project}.${row.config}`) ??
+          project.get(row.project);
         const token = new doppler.ServiceToken(
           `${row.project}-${row.config}-${row.name}`,
           { project: row.project, config: row.config, name: row.name, access: row.access },
