@@ -51,7 +51,7 @@ Render cost binds to row count — the artifact holds a view, never a corpus:
 |  [02]   | 1k–10k    | paginate or pre-aggregate the render; filter the full model     |
 |  [03]   | above 10k | the data lives in a linked file; the artifact keeps a view only |
 
-A filter acts in two modalities and never deletes from the model: a scope filter hides non-matching rows through `hidden`, and an attention filter dims them with a class, keeping the misses scannable as context. Visible aggregates recompute from shown rows — a total ignoring the active filter lies — and the filter input debounces. Sort re-appends existing nodes, since `append` moves a node with its handlers intact. An active filter is always visible with its match count, and an empty result offers reset — never a dead end.
+A filter acts in two modalities and never deletes from the model: a scope filter hides non-matching rows through `hidden`, and an attention filter dims them with a class, keeping the misses scannable as context. Visible aggregates recompute from shown rows — a total ignoring the active filter lies — and the filter input debounces. Sort re-appends existing nodes, since `append` moves a node with its handlers intact. An active filter is always visible with its match count, and an empty result carries a reset control — never a dead end.
 
 ## [03]-[RENDER]
 

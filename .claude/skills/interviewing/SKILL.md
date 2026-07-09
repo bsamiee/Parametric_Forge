@@ -56,6 +56,8 @@ Every request decomposes into knowledge buckets; the bucket selects the techniqu
 
 Two degenerate signals re-route before any decision question: a user who cannot describe the target supplies a reference — source code outranks any screenshot or description of it, and a ruling premising on the reference passes the reference-confirmation protocol before it seals; a user who cannot evaluate options enters teach-me — fanning variations at someone who cannot judge them wastes the fan.
 
+A grounding pass that indicts the request's own framing — the FRAMING axis returning a pain the stated ask leaves standing — re-frames before any thread plans: the extracted goal replaces the stated ask as the interview's subject, and the original ask enters the record as one candidate resolution among its rivals.
+
 ## [04]-[MODES]
 
 Every mode obeys the operating loop and differs in what it extracts and lands; staged procedures with per-stage exit tests are [references/modes.md](references/modes.md), loaded when a mode begins.
@@ -100,11 +102,11 @@ The durability test: a future session consults the artifact as law — a standin
 
 Each durable kind is a content contract: the fields in its row are what a future session consults as law, and the kind's page composes through the html-studio type in its row. The contract binds the content; html-studio binds the page — a kind never restates spine, layout, or capture law here.
 
-| [INDEX] | [KIND]             | [CONTRACT]                                                                                                  | [HTML_STUDIO_TYPE] |
-| :-----: | :----------------- | :----------------------------------------------------------------------------------------------------------- | :----------------- |
+| [INDEX] | [KIND]             | [CONTRACT]                                                                                                     | [HTML_STUDIO_TYPE] |
+| :-----: | :----------------- | :------------------------------------------------------------------------------------------------------------- | :----------------- |
 |  [01]   | `decision-record`  | context, drivers, options with costs, one indicative ruling, consequence, confirmation signal, marked premises | decision-doc       |
 |  [02]   | `direction-set`    | constraint frame, directions with thesis and tier, disconfirmation results, leading direction, flip triggers   | decision-doc       |
-|  [03]   | `roadmap-brief`    | confidence horizons, outcomes with owners and gates, promotion conditions, dependencies                       | roadmap            |
+|  [03]   | `roadmap-brief`    | confidence horizons, outcomes with owners and gates, promotion conditions, dependencies                        | roadmap            |
 |  [04]   | `blindspot-ledger` | axis-led findings with anchor, blast radius, consequence, and fold-back; clean axes listed                     | report             |
 |  [05]   | `capability-entry` | owner, edges, maturity, refused arms distinguished from gaps                                                   | atlas              |
 
@@ -116,7 +118,7 @@ Content law binds every instance regardless of kind:
 - A date renders only at the precision the estimate holds, and a wargame's criteria and weights are declared before any direction is scored.
 - Entry ids are zero-padded ordinals scoped to the instance, optionally led by one capital kind letter (`[01]`, `[F01]`); an id mints once, a repeat in a scoring or ruling section is a reference, and a deleted id is never reused.
 
-Worked accepted and rejected instances are [examples/artifacts.md](examples/artifacts.md); worked question batches and threads are [examples/batches.md](examples/batches.md) — consult the matching set before landing a kind, composing a round, or planning a thread.
+Worked accepted and rejected instances are [examples/artifacts.md](examples/artifacts.md); worked question batches and threads are [examples/batches.md](examples/batches.md) — consult the matching set before landing a kind, composing a round, or planning a thread. One complete descent — request, re-frame, thread plan, strata, record, landing — is [examples/thread.md](examples/thread.md), consulted before a first thread plans.
 
 ## [08]-[HANDOFF]
 

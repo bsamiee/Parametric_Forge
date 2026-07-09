@@ -60,7 +60,7 @@ A question asks how the user hopes to handle an event that has not happened, har
 
 ## [04]-[STATEMENT_AS_QUESTION]
 
-A question offers one sane answer, spending a round to extract a foregone conclusion instead of a real fork.
+A question carries one sane answer, spending a round to extract a foregone conclusion instead of a real fork.
 
 - Detection: A stem whose options do not lead to materially different work — strict typing over `Any`, a working seam over a broken one — where one branch is house law.
 - Rejected:
@@ -319,7 +319,7 @@ A gating answer invalidates the pre-planned branch, and the thread pushes the de
 
 ## [14]-[BAR_LOWERED_BY_ABSENCE]
 
-A question offers a scope cut as the default because no consumer exists yet, so the round ratifies a thin owner the capability bar forbids instead of forcing the refused-versus-gap ruling.
+A question frames a scope cut as the default because no consumer exists yet, so the round ratifies a thin owner the capability bar forbids instead of forcing the refused-versus-gap ruling.
 
 - Detection: A stem framing missing demand as license to build less — the options are cut-now against keep-just-in-case — and the concept's full arm census was never taken, so neither option names what the owner actually omits.
 - Rejected:

@@ -127,28 +127,35 @@ The catalog reads in families — ownership; identity, inverse, and seam; topolo
 - Question: `<claim>:<line>` names the right owner — which executable guard proves it, and when `<source-a>` and `<source-b>` disagree which outranks.
 - Evidence: A seam or capability claim with no guard, or two proof sources asserting different facts with no stated precedence.
 
-## [17]-[SCOPE_NAIVETY]
+## [17]-[FRAMING]
+
+- Definition: A request naming a solution or sub-problem whose motivating problem the territory contradicts or serves better elsewhere — the stated ask is a means already chosen, the goal behind it unstated, and the unit of success undefined.
+- Probe: Extract the request's implied goal and trace the pain to its origin — the episode, cost, or constraint that produced the ask; check whether the corpus already serves that goal by another surface and whether the ask's success leaves the pain standing; a leg returns each ask whose motivating pain a different change resolves more directly.
+- Question: The request asks for `<solution>`; the pain anchors at `<anchor>` — does `<solution>` retire that pain, or does `<other-change>` retire it at lower cost, and which outcome is the unit of success.
+- Evidence: A motivating pain the stated ask leaves standing, or a corpus surface that already serves the extracted goal.
+
+## [18]-[SCOPE_NAIVETY]
 
 - Definition: Goals assuming without stating an external precondition outside the design's control — an environment always present, a single user, a happy path, an unnamed dependency's availability.
 - Probe: For each goal sentence extract what must be true for it to hold and sweep for external dependencies carried by convention rather than declared contract; a leg returns each must-be-true condition with no declared owner.
 - Question: `<goal>` holds only while `<condition>` does — what is the story when it fails.
 - Evidence: A must-be-true condition with no declared owner, fallback, or refusal.
 
-## [18]-[ASSUMPTION]
+## [19]-[ASSUMPTION]
 
 - Definition: Unstated premises internal to the design's own reasoning, warranted or not by evidence the author can produce on request — the roster a key-assumptions check produces, ranked by importance against evidence.
 - Probe: Write each settled line, articulate its stated and unstated premises, and place each on the importance-by-evidence quadrant; a leg returns the high-importance low-evidence corner as its row set.
 - Question: The design rests on `<premise>` — what evidence carries it, and does the judgment survive its failure.
 - Evidence: A load-bearing premise whose supporting evidence cannot be produced on request.
 
-## [19]-[COUNTERFACTUAL]
+## [20]-[COUNTERFACTUAL]
 
 - Definition: The unexamined inverse — what failure looks like with the goal met, a surface success (a render, a green test, a passing demo) reached off the owned rail, which trigger chains nobody mapped.
 - Probe: Take each settled judgment and each success signal, assume the negation or the bypass happened, build the backward pathway, and name the observables that mark each stage; a leg returns each pathway with the constraint that fails to block it.
 - Question: `<goal>` is met and the result still counts as failure — what happened, and which owned rail did the success signal bypass.
 - Evidence: A plausible pathway to the negated outcome that no stated constraint blocks, or a success signal that clears while a canonical path is skipped.
 
-## [20]-[OVERSIGHT]
+## [21]-[OVERSIGHT]
 
 - Definition: Skipped stages and unnamed parties — teardown, recovery, observation, migration nobody mentions; consumers the request never names.
 - Probe: Walk the stage roster (create, operate, observe, recover, migrate, retire) against the request and enumerate consumers from the seam registers, diffing against the named set; a leg returns each absent stage and each unnamed consumer with its register anchor.

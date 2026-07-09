@@ -14,7 +14,7 @@ Every artifact is one self-contained file: a deliverable type fixes its composit
 1. Load the five references.
 2. Select the deliverable type from the deliverables reference by the reader's first question; the type fixes the measure, the section spine, the envelope kind, and whether a drawer ships. A page serving two types splits or subordinates.
 3. Model the content before rendering it: the payload block carries every fact, stable ids on every capturable item, and markup states nothing the model lacks.
-4. Compose answer-first down the type's spine: real controls, real data rows, real rendered rivals — never prose describing an unbuilt surface — with every element inheriting the token registry.
+4. Compose answer-first down the type's spine, starting from [templates/artifact.template.html](templates/artifact.template.html) — the gate-clean shell with the registry, layers, body order, drawer, and script kernels; [examples/decision-record.html](examples/decision-record.html) is the worked decision-doc instance at composed scale. Real controls, real data rows, real rendered rivals — never prose describing an unbuilt surface — with every element inheriting the token registry.
 5. Validate the finalized artifact with `uv run ${CLAUDE_SKILL_DIR}/scripts/studio.py` and fix until clean: `gate <file.html>` checks self-containment, accessibility, style-doctrine conformance, and W3C markup; `render <file.html>` returns a headless screenshot and the console through the machine's pinned Chromium. `--help` lists every verb.
 6. An artifact whose value is the user's judgment runs served, not just opened: `serve <file.html>` hosts it with the return channel, the user acts, and `receipts <file.html>` reads the submissions; the interaction reference owns the envelope.
 
@@ -36,4 +36,4 @@ Every artifact is one self-contained file: a deliverable type fixes its composit
 ## [04]-[INTEGRATION]
 
 - A durable artifact homes at `docs/atlas/` as `<kind>.<scope>[.<slug>].html`; a session artifact stays in scratch and never commits.
-- Chart marks and palettes defer to the `dataviz` skill; mermaid fences to `mermaid-diagramming`; interview method, kind contracts, and the durable-versus-ephemeral ruling to the `interviewing` skill.
+- Chart marks and palettes defer to the `dataviz` skill; mermaid fences to `mermaid-diagramming`, whose render lane delivers a mermaid-sourced figure as pre-rendered inline SVG the page hosts; interview method, kind contracts, and the durable-versus-ephemeral ruling to the `interviewing` skill.

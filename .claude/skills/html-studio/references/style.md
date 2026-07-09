@@ -34,7 +34,7 @@ Semantic names only — a consumer reads intent, never hex. The dark registry is
   --accent:oklch(0.72 0.185 292); --accent-hover:oklch(0.78 0.18 292); --accent-active:oklch(0.655 0.175 292);
   --accent-weak:oklch(0.72 0.185 292/.16); --on-accent:oklch(0.16 0.02 292); --focus:var(--accent);
   --editorial:oklch(0.71 0.13 55); --editorial-weak:oklch(0.71 0.13 55/.14);
-  --ok:oklch(0.76 0.15 150); --warn:oklch(0.8 0.14 78); --fail:oklch(0.68 0.2 25); --info:oklch(0.79 0.12 225);
+  --ok:oklch(0.76 0.15 150); --warn:oklch(0.8 0.14 78); --fail:oklch(0.7 0.2 25); --info:oklch(0.79 0.12 225);
   --series-1:oklch(0.72 0.185 292); --series-2:oklch(0.72 0.17 350); --series-3:oklch(0.74 0.12 225);
   --series-4:oklch(0.74 0.15 150); --series-5:oklch(0.78 0.13 65); --series-6:oklch(0.8 0.11 110);
   --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:24px; --s6:32px; --s7:48px; --s8:64px;
@@ -69,7 +69,7 @@ color-scheme: light;
 --accent:oklch(0.52 0.19 292); --accent-hover:oklch(0.47 0.19 292); --accent-active:oklch(0.44 0.18 292);
 --accent-weak:oklch(0.52 0.19 292/.12); --on-accent:oklch(0.99 0 0);
 --editorial:oklch(0.55 0.12 55); --editorial-weak:oklch(0.55 0.12 55/.1);
---ok:oklch(0.52 0.15 150); --warn:oklch(0.56 0.13 70); --fail:oklch(0.54 0.2 25); --info:oklch(0.52 0.12 235);
+--ok:oklch(0.52 0.15 150); --warn:oklch(0.56 0.13 70); --fail:oklch(0.53 0.2 25); --info:oklch(0.52 0.12 235);
 --series-1:oklch(0.52 0.19 292); --series-2:oklch(0.54 0.17 350); --series-3:oklch(0.54 0.12 225);
 --series-4:oklch(0.55 0.13 150); --series-5:oklch(0.58 0.12 65); --series-6:oklch(0.6 0.11 110);
 --shadow-1:0 1px 2px oklch(0 0 0/.08),0 1px 1px oklch(0 0 0/.05);

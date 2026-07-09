@@ -160,7 +160,37 @@ Every axis and micro mark declares its domain law: ticks land on the 1–2–5�
 - [DIAL] — the arc gauge at micro scale over `[-120, 120]`, background arc at 16% opacity, value as adjacent HTML text.
 - [STRIP_PLOT] — spread beyond a center: value to x, deterministic hash jitter `y = mid + ((hash(id) % 100)/100 - 0.5) × jitterH` — never `Math.random`, since diffs must reproduce; the beeswarm variant resolves collisions by trying y offsets `0, ±r, ±2r…` against prior points within `2r + 1` horizontally; the box-lite overlay is a min–max whisker, an IQR rect, and a 2px median line.
 
-## [10]-[INTERACTION_AND_A11Y]
+## [10]-[CHARTS]
+
+A quantitative figure is hand-authored from the same kernels as every diagram — scales, ticks, and axes are generated geometry, never a runtime charting library. Chart-form selection and palette law ride the `dataviz` skill; this section owns the SVG realization once the form is chosen, and the domain law above binds every scale it builds.
+
+```js copy-safe
+const linear = (d0, d1, r0, r1) => v => r0 + (d1 - d0 < 1e-9 ? 0.5 : (v - d0) / (d1 - d0)) * (r1 - r0);
+const band = (n, r0, r1, padIn = 0.15, padOut = 0.1) => {
+  const step = (r1 - r0) / Math.max(1e-9, n - padIn + 2 * padOut);
+  return { x: i => r0 + step * (padOut + i), w: step * (1 - padIn), step };
+};
+const ticks = (lo, hi, target = 5) => {
+  if (hi - lo < 1e-9) return [lo];
+  const raw = (hi - lo) / Math.max(1, target - 1);
+  const mag = 10 ** Math.floor(Math.log10(raw));
+  const step = [1, 2, 5, 10].map(s => s * mag).find(s => s >= raw);
+  const t0 = Math.ceil(lo / step) * step;
+  return Array.from({ length: Math.floor((hi - t0) / step) + 1 }, (_, i) => +(t0 + i * step).toFixed(10));
+};
+```
+
+- [FRAME] — the plot rect insets from the canvas by measured label budgets, never guessed margins: left is the widest formatted y label plus 8, bottom 30, top 14 of headroom so the topmost tick label never clips, right 8 or the direct-label gutter when series label at line end. A time domain rides `linear` over UTC milliseconds with ticks landed on calendar boundaries — day, week, month, quarter — never on raw 1–2–5 steps.
+- [AXES] — layer order is gridlines, marks, then axis furniture: gridlines run the plot width at every y tick in 1px `--line`, the zero baseline steps to `--line-strong`, and vertical gridlines ship only under dense scatter. Tick stubs are 4px outside the plot edge; y labels right-align at one shared x so magnitudes align digit-for-digit, x labels center under their ticks — all mono 11px `tabular-nums` through one `Intl.NumberFormat` per axis, the unit stated once in the axis title.
+- [TITLES] — axis titles are horizontal sans 12px `--text-muted`: the y title sits above the axis at the plot's top-left, the x title below the label row. Nothing on a chart rotates: a crowded x axis thins to every nth tick, shortens its format, or the chart flips to horizontal bars.
+- [BARS] — categorical bars ride the band scale and grow from the zero baseline, one `--series-*` fill at full opacity with no stroke, `rx` ≤ 2; value labels sit just past the bar end in mono 11px, inside only when the bar holds the label plus padding at the contrast floor. Long category names flip the chart horizontal; grouped bars cap at four series before small multiples, and a stack is legal only when the total is the subject, splitting at zero when it diverges.
+- [LINES] — a series line is 2px on its `--series-*` token, straight or monotone per [SMOOTH_LINE]; up to five series label directly at the line's right end under the anchor ring, and past that the chart splits into small multiples before it grows a legend. A missing point breaks the line — a visible gap or a dashed `4 6` bridge, never a silent interpolation — and the area variant fills to the zero baseline at 18%, single-series or stacked only.
+- [SCATTER] — dots at `r` 3–4 filled at 75% opacity so overplot reads as density; a highlighted point takes full opacity and a 2px ring; a trend, threshold, or cluster claim enters as an explicit annotated mark, never left for the reader to infer.
+- [MULTIPLES] — sibling panels lock one shared domain per the shared-domain law, tile at equal size with a mono panel title at each top-left, and render axis labels on the bottom rank and left file alone.
+- [ANNOTATION] — the chart states its takeaway on the canvas: one callout or labeled reference line naming the claim the figure argues. A target, threshold, or event line is a first-class mark — dashed `4 6` with its label on a backing chip — and never a caption-only fact.
+- [TABLE_TWIN] — a data chart pairs with its data as a table, visible beside dense evidence or `.sr-only` otherwise, and the SVG `<desc>` states the takeaway: the chart argues, the table is the record.
+
+## [11]-[INTERACTION_AND_A11Y]
 
 Detail lives outboard, never crammed into boxes; animation exists to show flow, and `prefers-reduced-motion` stills it while preserving the state it showed.
 
@@ -191,7 +221,7 @@ const setFlow = key => {
 - Animation routes: CSS owns transform, opacity, dash, and `@property`-typed custom properties — one registered number drives stroke, glow, and emphasis together; draw-in normalizes with `pathLength="1"`; SMIL `<animate>` is legal for attribute animation CSS cannot portably reach (a `d` morph with matching command lists, an animated mask wipe, gradient stops), with `fill="freeze"` holding the end state. Animate a parent group or one variable, never hundreds of children.
 - A token riding an edge travels by `offset-path: path(...)` with `offset-distance` animated `0%` to `100%` and `offset-rotate` tracking the tangent — the CSS-only flow mark beside dash offset; its travel time binds the duration tokens, so `prefers-reduced-motion` stills it with the page.
 
-## [11]-[EXPORT]
+## [12]-[EXPORT]
 
 A figure sheet delivers standalone illustrations — doc headers, README figures — each exportable alone, its download filename derived from the figure's `<title>` slug so sibling figures export distinct names. The standalone frame is `viewBox="0 0 720 320"`, rects at `rx="10"`, strokes 1.5px neutral and 2px emphasis, flat fills only. Export is a pipeline, never a bare serialize: the clone carries `xmlns`, explicit `width`/`height`, `<title>`/`<desc>`, every `var(--token)` resolved to its literal, ids rewritten with the figure slug, interactive-only state stripped, and its own `<style>` in `<defs>` — page CSS does not travel, and a `<foreignObject>` label dies outside the page.
 
