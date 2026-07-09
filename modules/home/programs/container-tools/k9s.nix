@@ -2,12 +2,10 @@
 # Author        : Bardia Samiee
 # Project       : Parametric Forge
 # License       : MIT
-# Path          : modules/home/programs/container-tools/k9s.nix
+# Path          : /modules/home/programs/container-tools/k9s.nix
 # ----------------------------------------------------------------------------
-# Terminal UI for Kubernetes cluster management
-{pkgs, ...}: {
-  home.packages = [pkgs.k9s];
-
+# Terminal UI for Kubernetes cluster management; package row lives in the owner table.
+_: {
   xdg.configFile = {
     # --- CONFIG -----------------------------------------------------------------
     "k9s/config.yaml".text = ''

@@ -2,7 +2,7 @@
 # Author        : Bardia Samiee
 # Project       : Parametric Forge
 # License       : MIT
-# Path          : modules/home/aliases/media.nix
+# Path          : /modules/home/aliases/media.nix
 # ----------------------------------------------------------------------------
 # Media processing aliases for video, audio, and image operations
 _: {
@@ -17,7 +17,7 @@ _: {
     ascii = "ascii-image-converter"; # Convert images to ASCII art
 
     # --- FFmpeg Utility -----------------------------------------------------
-    ffprobe = "ffprobe -hide_banner"; # Clean media info
-    ffplay = "ffplay -hide_banner"; # Clean playback
+    ffprobeh = "ffprobe -hide_banner"; # Clean media info; bare ffprobe stays upstream
+    ffplayh = "ffplay -hide_banner"; # Clean playback; bare ffplay stays upstream
   };
 }

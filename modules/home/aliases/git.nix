@@ -2,14 +2,14 @@
 # Author        : Bardia Samiee
 # Project       : Parametric Forge
 # License       : MIT
-# Path          : modules/home/aliases/git.nix
+# Path          : /modules/home/aliases/git.nix
 # ----------------------------------------------------------------------------
 # Git workflow aliases with tool integrations
 _: {
   programs.zsh.shellAliases = {
     # --- Daily Operations ---------------------------------------------------
     g = "git"; # Git shorthand
-    gs = "git status -sb"; # Short status with branch info
+    gstatus = "git status -sb"; # Short status with branch info; gs stays Ghostscript
     ga = "git add -A"; # Stage all changes (new, modified, deleted)
     gap = "git add -p"; # Interactive patch staging
     gcm = "git commit -m"; # Commit with message (verbose via config)
@@ -35,14 +35,13 @@ _: {
     grb = "git rebase"; # Rebase current branch (autostash via config)
     grbi = "git rebase -i"; # Interactive rebase
     grs = "git reset"; # Unstage files (keep changes)
-    gcp = "git cherry-pick"; # Apply specific commits
-    groot = "cd $(git rev-parse --show-toplevel)"; # Jump to repository root
+    gcp = "git cherry-pick"; # Apply specific commits; repo-root jump is cdr in core.nix
 
     # --- External Tools -----------------------------------------------------
     lg = "lazygit"; # Launch lazygit TUI
     gstats = "git-quick-stats"; # Interactive git statistics menu
-    gstat = "git-quick-stats -r"; # Quick repository overview
-    pr = "gh pr list"; # List pull requests
+    gstat = "git-quick-stats -T"; # Detailed per-author contribution stats
+    ghpr = "gh pr list"; # List pull requests; pr stays the paginate binary
     prc = "gh pr create"; # Create pull request
     prv = "gh pr view"; # View pull request details
     prco = "gh pr checkout"; # Checkout pull request locally

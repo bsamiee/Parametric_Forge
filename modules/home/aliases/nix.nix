@@ -2,7 +2,7 @@
 # Author        : Bardia Samiee
 # Project       : Parametric Forge
 # License       : MIT
-# Path          : modules/home/aliases/nix.nix
+# Path          : /modules/home/aliases/nix.nix
 # ----------------------------------------------------------------------------
 # Nix and Darwin-specific aliases
 _: {
@@ -13,6 +13,7 @@ _: {
     drc = "forge-redeploy --check-only"; # Check macbook configuration and build proof
     drr = "forge-redeploy --rollback"; # Reactivate the previous system generation
     drg = "forge-redeploy --generations"; # List system generations
+    ngc = "forge-nix-maintenance"; # Generation trim + GC + store optimise via the rail
 
     # --- Nix Operations -----------------------------------------------------
     ns = "nix search nixpkgs"; # Search for packages
@@ -22,7 +23,7 @@ _: {
     nparse = "nix-instantiate --parse"; # Parse Nix expressions
     nfetch = "nix-prefetch-github --nix"; # Prefetch GitHub repos (Nix code output)
     nfetchj = "nix-prefetch-github --json"; # Prefetch GitHub repos (JSON output)
-    nhash = "nix hash convert --to-sri"; # Convert hash to modern SRI format
+    nhash = "nix hash convert --to sri"; # Convert hash to modern SRI format
     nversion = "determinate-nixd version"; # Show determinate-nixd version
     nupdate = "sudo determinate-nixd upgrade"; # Upgrade determinate-nixd version
 

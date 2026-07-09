@@ -2,18 +2,25 @@
 # Author        : Bardia Samiee
 # Project       : Parametric Forge
 # License       : MIT
-# Path          : modules/home/programs/nix-tools/default.nix
+# Path          : /modules/home/programs/nix-tools/default.nix
 # ----------------------------------------------------------------------------
-# Nix tools aggregator
-{...}: {
+# Nix tool inventory; imports carry real configuration only.
+{pkgs, ...}: {
   imports = [
-    ./alejandra.nix
-    ./deadnix.nix
-    ./inspection.nix
     ./nix-index.nix
-    ./nix-prefetch-github.nix
-    ./nixd.nix
-    ./nom.nix
-    ./statix.nix
+  ];
+
+  home.packages = [
+    pkgs.alejandra # Uncompromising Nix code formatter
+    pkgs.deadnix # Dead Nix code detector
+    pkgs.flake-checker # Flake input health checks
+    pkgs.nh # Nix build/switch/clean helper
+    pkgs.nix-diff # Derivation-level diff explanation
+    pkgs.nix-output-monitor # Nix build output monitor
+    pkgs.nix-prefetch-github # GitHub source prefetching for fetchFromGitHub
+    pkgs.nix-tree # Interactive closure browser
+    pkgs.nixd # Nix language server
+    pkgs.nvd # Closure diff between generations
+    pkgs.statix # Nix antipattern linter
   ];
 }

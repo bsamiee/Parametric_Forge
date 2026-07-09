@@ -2,22 +2,21 @@
 # Author        : Bardia Samiee
 # Project       : Parametric Forge
 # License       : MIT
-# Path          : modules/home/aliases/core.nix
+# Path          : /modules/home/aliases/core.nix
 # ----------------------------------------------------------------------------
 # Core system aliases for common operations
 _: {
   programs.zsh.shellAliases = {
     # --- General Aliases ----------------------------------------------------
     cl = "clear";
-    ex = "exit";
     vim = "nvim";
     nv = "nvim";
     ff = "fastfetch";
 
     # --- Shell Configuration ------------------------------------------------
     envs = "env | sort"; # List environment variables sorted
-    ezsh = "$EDITOR \\${"ZDOTDIR:-$HOME"}/.zshrc"; # Edit ZSH config
-    rzsh = "source \\${"ZDOTDIR:-$HOME"}/.zshrc"; # Reload ZSH config
+    ezsh = "$EDITOR \${ZDOTDIR:-$HOME}/.zshrc"; # Edit ZSH config
+    rzsh = "source \${ZDOTDIR:-$HOME}/.zshrc"; # Reload ZSH config
     reload = "exec $SHELL"; # Reload shell
 
     # --- File Operations ----------------------------------------------------
@@ -36,8 +35,8 @@ _: {
 
     # --- System Monitoring --------------------------------------------------
     pst = "procs --tree"; # Process tree
-    psc = "procs --sortd 5"; # Sort processes by CPU usage
-    psm = "procs --sortd 6"; # Sort processes by memory usage
+    psc = "procs --sortd cpu"; # Sort processes by CPU usage
+    psm = "procs --sortd mem"; # Sort processes by memory usage
     psw = "procs --watch"; # Watch processes (2s refresh)
     top = "btm"; # Modern system monitor
     dfi = "dua i"; # Interactive disk usage analyzer
@@ -45,14 +44,12 @@ _: {
     bench = "hyperfine"; # Modern benchmarking tool
 
     # --- Text & Search ------------------------------------------------------
-    col = "choose"; # Human-friendly column selector
-    # man = "batman"                                                              # Handled by batman export-env in zsh/init.nix - DO NOT alias here
-    # grep = "rg";                                                                # Causes conflicts with -E and -G
+    chs = "choose"; # Human-friendly column selector
+    # man is owned by batman export-env in zsh/init.nix; grep stays upstream (rg flag semantics differ).
     batg = "batgrep"; # Bat-powered ripgrep (via bat-extras)
     tldru = "tldr --update"; # Update tldr cache
     rgx = "grex -xc"; # Generate readable regex from test cases
     rgxf = "grex -xc -f"; # File input with readable output
-    sdi = "sd"; # In-place find/replace
     sr = "serpl"; # TUI search and replace
 
     # --- Formatting Tools ---------------------------------------------------
@@ -76,7 +73,6 @@ _: {
     j2c = "mlr --j2c cat"; # JSON to CSV
 
     # --- Trash Management ---------------------------------------------------
-    trash = "trash-put"; # Send files to trash
     trestore = "trash-restore"; # Restore files from trash
     tls = "trash-list"; # List trashed files
     trm = "trash-rm"; # Remove specific files from trash
@@ -95,11 +91,10 @@ _: {
     https = "xh --https"; # HTTPS by default
     POST = "xh POST"; # RESTful convention
     PUT = "xh PUT"; # RESTful convention
-    trace = "trip"; # Modern traceroute replacement
-    traceu = "trip --udp --target-port 33434"; # UDP tracing for ECMP paths
+    tripu = "trip --udp --target-port 33434"; # UDP tracing for ECMP paths
     serve = "python3 -m http.server 8000"; # Quick static server
     bw = "sudo bandwhich"; # Bandwidth monitor (needs sudo)
-    speedtest = "speedtest --accept-license"; # Official Ookla speed test
+    speedtestl = "speedtest --accept-license"; # Ookla speed test with license pre-accepted
     lssh = "sshs"; # Interactive SSH picker
     whs = "webhook -hooks $WEBHOOK_HOOKS_DIR/hooks.json -verbose"; # Start webhook server
     ports = "sudo lsof -iTCP -sTCP:LISTEN -n -P"; # List open ports (needs sudo)
@@ -127,12 +122,11 @@ _: {
     zjka = "zellij kill-all-sessions"; # Kill all zellij sessions
 
     # --- Workflow Testing -------------------------------------------------
-    act = "act"; # Run GitHub Actions locally
     actl = "act -l"; # List workflows/jobs
     alint = "actionlint"; # Lint workflow files
 
     # --- Dev Tools ----------------------------------------------------------
-    ty = "ty check";
+    tyc = "ty check"; # Type-check shorthand; bare ty stays the CLI/LSP surface
     rfix = "ruff check --fix";
     rformat = "ruff format";
     rhproject = "dotnet new rhino -sample"; # Initialize Rhino plugin template using current installed defaults

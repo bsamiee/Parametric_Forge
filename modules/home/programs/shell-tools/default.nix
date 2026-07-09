@@ -4,61 +4,65 @@
 # License       : MIT
 # Path          : /modules/home/programs/shell-tools/default.nix
 # ----------------------------------------------------------------------------
-# Shell tools aggregator
-{...}: {
+# Shell tool inventory; imports carry real configuration only.
+{pkgs, ...}: {
   imports = [
+    ./1password.nix
     ./act.nix
-    ./actionlint.nix
     ./aria2.nix
     ./atuin.nix
-    ./ast-grep.nix
-    ./bandwhich.nix
     ./bat.nix
     ./bottom.nix
     ./carapace.nix
     ./carbon.nix
-    ./choose.nix
-    ./curlie.nix
-    ./doggo.nix
-    ./dua.nix
-    ./duf.nix
     ./dust.nix
     ./eza.nix
     ./fastfetch.nix
     ./fd.nix
-    ./fzf.nix
-    ./gping.nix
     ./forge-tools.nix
-    ./grex.nix
+    ./fzf.nix
     ./heptabase.nix
-    ./hexyl.nix
-    ./hyperfine.nix
     ./jnv.nix
-    ./mise.nix
-    ./1password.nix
     ./mcp-launchers.nix
-    ./ouch.nix
-    ./p7zip.nix
     ./pik.nix
     ./procs.nix
-    ./ratchet.nix
     ./rclone.nix
-    ./rich-cli.nix
     ./ripgrep.nix
     ./rsync.nix
-    ./sd.nix
     ./serpl.nix
-    ./speedtest.nix
     ./ssh.nix
-    ./sshs.nix
     ./starship.nix
     ./tlrc.nix
-    ./trash.nix
     ./trippy.nix
     ./watchexec.nix
     ./webhook.nix
     ./xh.nix
-    ./zizmor.nix
     ./zoxide.nix
+  ];
+
+  home.packages = [
+    pkgs._7zz-rar # 7-Zip with RAR support for Yazi archive preview/extraction
+    pkgs.actionlint # GitHub Actions workflow linter
+    pkgs.ast-grep # Structural code search and rewrite
+    pkgs.bandwhich # Per-process bandwidth monitor
+    pkgs.choose # Human-friendly column extraction
+    pkgs.curlie # Curl-compatible HTTP client
+    pkgs.doggo # DNS lookup client
+    pkgs.dua # Interactive disk usage analyzer
+    pkgs.duf # Disk free overview
+    pkgs.dust # Directory size tree; config owned by dust.nix
+    pkgs.gping # Graphing ping
+    pkgs.grex # Regex generator from test cases
+    pkgs.hexyl # Hex viewer
+    pkgs.hyperfine # Command benchmarking
+    pkgs.mise # Runtime version manager
+    pkgs.ookla-speedtest # Official Ookla speed test CLI
+    pkgs.ouch # Archive compression and extraction
+    pkgs.ratchet # GitHub Actions version pinning
+    pkgs.rich-cli # Rich terminal rendering
+    pkgs.sd # Structural find and replace
+    pkgs.sshs # Interactive SSH host picker
+    pkgs.trash-cli # FreeDesktop trash suite
+    pkgs.zizmor # GitHub Actions security auditor
   ];
 }

@@ -2,9 +2,9 @@
 # Author        : Bardia Samiee
 # Project       : Parametric Forge
 # License       : MIT
-# Path          : modules/home/aliases/containers.nix
+# Path          : /modules/home/aliases/containers.nix
 # ----------------------------------------------------------------------------
-# Container and Kubernetes workflow aliases (surgical, no bloat)
+# Container and Kubernetes workflow aliases
 _: {
   programs.zsh.shellAliases = {
     # --- Docker ---------------------------------------------------------------
@@ -19,11 +19,6 @@ _: {
     kgp = "kubectl get pods"; # List pods
     kl = "kubectl logs -f"; # Follow pod logs
     k9 = "k9s"; # Launch TUI
-
-    # --- ArgoCD ---------------------------------------------------------------
-    # Disabled from the default profile; build the current nixpkgs package before re-enabling.
-    # argo = "argocd"; # ArgoCD CLI shorthand
-    # argosync = "argocd app sync"; # Sync application
 
     # --- Debug ----------------------------------------------------------------
     klog = "stern"; # Multi-pod log tailing

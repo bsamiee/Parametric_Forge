@@ -2,7 +2,7 @@
 # Author        : Bardia Samiee
 # Project       : Parametric Forge
 # License       : MIT
-# Path          : modules/home/programs/nix-tools/nix-index.nix
+# Path          : /modules/home/programs/nix-tools/nix-index.nix
 # ----------------------------------------------------------------------------
 # Command-not-found with pre-built package database
 _: {

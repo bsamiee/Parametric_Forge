@@ -2,7 +2,7 @@
 # Author        : Bardia Samiee
 # Project       : Parametric Forge
 # License       : MIT
-# Path          : modules/home/default.nix
+# Path          : /modules/home/default.nix
 # ----------------------------------------------------------------------------
 # Home Manager module aggregator
 {...}: {
