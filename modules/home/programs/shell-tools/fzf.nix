@@ -33,7 +33,9 @@ in {
       "--marker='✓'"
       "--pointer='❯'"
       "--separator='─'"
-      "--scrollbar='│'"
+      # Unquoted: literal quotes survive naive re-splitting of FZF_DEFAULT_OPTS
+      # and trip fzf's one-or-two-character scrollbar validation.
+      "--scrollbar=│"
       "--info=right"
       "--highlight-line"
       # Behavior; previews are widget-scoped, never a global default

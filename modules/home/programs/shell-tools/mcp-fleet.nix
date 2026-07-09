@@ -138,7 +138,7 @@
     launcher = {
       names = ["forge-playwright-mcp"];
       pkg = "@playwright/mcp";
-      version = "0.0.77";
+      version = "0.0.78";
       bin = "playwright-mcp";
       upstream = "npm:@playwright/mcp";
       updateEngine = "npm-registry";

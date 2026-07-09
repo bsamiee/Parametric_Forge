@@ -278,9 +278,11 @@
     hide_mouse_cursor_when_typing = true;
 
     # Outer identity chrome: retro tab bar, theme-projected via the scheme TOML.
+    # Hidden at one tab — the zellij zjstatus bar is the ONE standing top bar;
+    # this bar exists only when a second WezTerm tab makes it informative.
     enable_tab_bar = true;
     use_fancy_tab_bar = false;
-    hide_tab_bar_if_only_one_tab = false;
+    hide_tab_bar_if_only_one_tab = true;
     tab_bar_at_bottom = false;
     tab_max_width = 32;
     show_new_tab_button_in_tab_bar = false;
@@ -337,7 +339,6 @@
   rows = {
     nightly_floor = "20260707";
     receipts_log = "${homeDir}/Library/Logs/forge-wezterm.receipts.log";
-    status_cache = "${config.xdg.stateHome}/wezterm/status-cache.json";
     paths = {
       path = lib.concatStringsSep ":" toolchainEnv.launchdPathEntries;
       zellij = "${pkgs.zellij}/bin/zellij";

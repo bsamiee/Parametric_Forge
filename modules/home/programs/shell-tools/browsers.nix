@@ -131,8 +131,9 @@
   ];
 
   # --- Register JSON projections -------------------------------------------------
-  # MCP rows are sanitized at the seam: endpoint basename, key NAMES, pin —
-  # never argv (host paths) or values.
+  # MCP rows are sanitized at the seam: endpoint basename, key NAMES, pin,
+  # doctor family (label/port/exec names) — never argv (host paths), token
+  # custody paths, or values.
   mcpRegister =
     map (r: {
       inherit (r) name transport probe;
@@ -145,6 +146,14 @@
         then {inherit (r.launcher) pkg version;}
         else null;
       codex = r.codex or null;
+      doctor =
+        if r ? doctor
+        then {
+          launchdLabel = r.doctor.launchdLabel or null;
+          port = r.doctor.port or null;
+          execs = r.doctor.execs or [];
+        }
+        else null;
     })
     fleet;
   registerJson = domain: rows: pkgs.writeText "forge-register-${domain}.json" (builtins.toJSON rows);

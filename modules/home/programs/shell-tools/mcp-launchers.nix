@@ -8,8 +8,8 @@
 # and ships the fleet/agent observability surface — `forge-mcp` (outdated |
 # doctor | drift | generate | roots | snoop), all verbs emitting
 # schema=forge-mcp/v1 JSON receipts, plus `forge-agents`, the one collector
-# turning agent lanes, attention, and AI quota into cached facts the bars
-# render. Drift reconciles five registries against the manifest owner
+# turning agent lanes, attention, and AI quota into cached facts the zjstatus
+# bar renders. Drift reconciles five registries against the manifest owner
 # (claude, codex, vscode, maghz-claude, maghz-codex) and only reports;
 # `generate` is the one desired-registration generator. Bar code never
 # touches providers or credentials; the collector owns that boundary.
@@ -21,6 +21,7 @@
 }: let
   profileBin = "/etc/profiles/per-user/${config.home.username}/bin";
   stateHome = config.xdg.stateHome;
+  inherit (config.forge.theme) roles; # Estate palette owner (modules/home/theme.nix)
   fleet = import ./mcp-fleet.nix {
     inherit profileBin;
     homeDir = config.home.homeDirectory;
@@ -838,12 +839,12 @@
 
   # --- forge-agents: the CA-7 collector -------------------------------------
   # One data owner turns agent lanes, attention, and AI quota into one cached
-  # fact set; bars render cells from the cache and never poll providers.
+  # fact set; the zjstatus top bar is the ONE surface rendering the cells.
   # Quota lanes: Codex from provider rate_limit snapshots in session rollouts;
   # Claude from local transcript/stats estimation (source-labeled). Failed
   # lanes preserve the previous value with stale=true and back off
-  # exponentially. Projections: WezTerm status cache, zjstatus pipe cells,
-  # policy-gated desktop notification.
+  # exponentially. Projections: role-styled zjstatus pipe cells, workspace-
+  # graph lane rows, policy-gated desktop notification.
   forgeAgents = pkgs.writeShellApplication {
     name = "forge-agents";
     runtimeInputs = [pkgs.coreutils pkgs.jq pkgs.findutils pkgs.gawk pkgs.gnugrep];
@@ -852,7 +853,7 @@
       cache="$state_root/agent-state.json"
       meta="$state_root/agent-collect.meta.json"
       feed="$state_root/agent-attention.jsonl"
-      wez_cache="''${XDG_STATE_HOME:-$HOME/.local/state}/wezterm/status-cache.json"
+      lanes_out="''${XDG_CACHE_HOME:-$HOME/.cache}/forge/agent-lanes.json"
       receipt_log="''${FORGE_AGENTS_RECEIPT_LOG:-$HOME/Library/Logs/forge-agents.receipts.log}"
       usage() { echo "usage: forge-agents collect | status [--json]" >&2; exit 64; }
       verb="''${1:-status}"; shift || true
@@ -878,7 +879,7 @@
       }
 
       cmd_collect() {
-        mkdir -p "$state_root" "$(dirname "$wez_cache")"
+        mkdir -p "$state_root" "$(dirname "$lanes_out")"
         now="$EPOCHSECONDS"
         ts="$(iso_now)"
         prev="$(cat "$cache" 2>/dev/null || echo '{}')"
@@ -979,6 +980,9 @@
         mv "$tmp_cache" "$cache"
 
         # --- projections ------------------------------------------------------
+        # The zjstatus top bar is the ONE render surface; the collector owns
+        # role->palette styling (build-time hexes from the theme owner) and
+        # ships fully formatted payloads the bar renders verbatim (dynamic).
         run_n="$(jq -r '.lanes.running' "$cache")"
         wait_n="$(jq -r '.lanes.waiting' "$cache")"
         agents_text="AI ''${run_n}▸ ''${wait_n}⋯"
@@ -994,25 +998,33 @@
         fi
         [ -n "$quota_text" ] || quota_text="quota -"
 
-        agents_role="info"
-        [ "''${needs:-0}" = 0 ] || agents_role="attention"
-        [ "$run_n" = 0 ] || [ "$agents_role" = attention ] || agents_role="success"
-        quota_role="info"
+        # Cell state colors: agents muted when idle, success while lanes run,
+        # attention on needs_input; quota escalates on the codex 5h window.
+        agents_fg="${roles.text.muted.hex}"
+        [ "$run_n" = 0 ] || agents_fg="${roles.state.success.hex}"
+        [ "''${needs:-0}" = 0 ] || agents_fg="${roles.state.attention.hex}"
+        quota_fg="${roles.text.muted.hex}"
         if [ -n "$cx_p" ]; then
           p="''${cx_p%.*}"
-          if [ "$p" -ge 90 ]; then quota_role="danger"; elif [ "$p" -ge 70 ]; then quota_role="warning"; fi
+          if [ "$p" -ge 90 ]; then quota_fg="${roles.state.danger.hex}"
+          elif [ "$p" -ge 70 ]; then quota_fg="${roles.state.warning.hex}"; fi
         fi
+        mk_cell() { # $1=fg $2=attrs("" or ",bold") $3=text -> raised chip + base gap
+          printf '#[bg=${roles.surface.raised.hex},fg=%s%s] %s #[bg=${roles.surface.base.hex}] ' "$1" "$2" "$3"
+        }
+        agents_cell="$(mk_cell "$agents_fg" ",bold" "$agents_text")"
+        quota_cell="$(mk_cell "$quota_fg" "" "$quota_text")"
 
-        tmp_wez="$wez_cache.tmp.$$"
-        jq -cn --arg at "$agents_text" --arg ar "$agents_role" --arg qt "$quota_text" --arg qr "$quota_role" \
-          '{cells: [{role: $ar, text: $at}, {role: $qr, text: $qt}]}' >"$tmp_wez"
-        mv "$tmp_wez" "$wez_cache"
+        # Workspace-graph lane rows: the forge-zellij agent-lane arm reads this.
+        jq -c '[.lanes.rows[] | {lane: "\(.agent)-\(.pid)", status: .state, pane_id: ""}]' \
+          "$cache" >"$lanes_out.tmp.$$"
+        mv "$lanes_out.tmp.$$" "$lanes_out"
 
         # zjstatus pipe cells into every live session; a dead server is benign.
         while IFS= read -r s; do
           [ -n "$s" ] || continue
-          ${profileBin}/zellij --session "$s" pipe "zjstatus::pipe::pipe_agents::$agents_text" 2>/dev/null || true
-          ${profileBin}/zellij --session "$s" pipe "zjstatus::pipe::pipe_quota::$quota_text" 2>/dev/null || true
+          ${profileBin}/zellij --session "$s" pipe "zjstatus::pipe::pipe_agents::$agents_cell" 2>/dev/null || true
+          ${profileBin}/zellij --session "$s" pipe "zjstatus::pipe::pipe_quota::$quota_cell" 2>/dev/null || true
         done < <(${profileBin}/zellij list-sessions -ns 2>/dev/null || true)
 
         # Policy-gated desktop notification on a needs_input rise.

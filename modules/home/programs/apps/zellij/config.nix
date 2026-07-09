@@ -173,9 +173,11 @@ in {
           }
           zellij-forgot location="file:~/.config/zellij/plugins/zellij_forgot.wasm"
 
-          // --- zjstatus: top bar — navigation identity (tabs, layout, session) -------
-          // Agent/quota cells are pipe-fed by the forge-agents collector; the
-          // bar renders cached text and never polls a provider itself.
+          // --- zjstatus: THE one top bar — tabs, layout, agent/quota cells, session --
+          // Cells are pipe-fed by the forge-agents collector, which owns the
+          // role->palette styling and ships formatted payloads; the bar renders
+          // them verbatim and never polls a provider itself. WezTerm's tab bar
+          // hides at one tab, so no second bar ever stacks above this one.
           zjstatus location="file:~/.config/zellij/plugins/zjstatus.wasm" {
     ${colorRows}
             format_left               " {tabs}"
@@ -183,10 +185,10 @@ in {
             format_right              "{pipe_agents}{pipe_quota}#[bg=$pink,fg=$current_line,bold] {session} "
             format_space              "#[bg=$background]"
 
-            pipe_agents_format        "#[bg=$background,fg=$orange,bold] {output} "
-            pipe_agents_rendermode    "static"
-            pipe_quota_format         "#[bg=$background,fg=$comment] {output} "
-            pipe_quota_rendermode     "static"
+            pipe_agents_format        "{output}"
+            pipe_agents_rendermode    "dynamic"
+            pipe_quota_format         "{output}"
+            pipe_quota_rendermode     "dynamic"
 
             swap_layout_format        "#[bg=$background,fg=$yellow,bold] {name} "
             swap_layout_hide_if_empty "true"

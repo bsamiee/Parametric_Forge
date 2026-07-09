@@ -6,7 +6,7 @@
 -- ----------------------------------------------------------------------------
 -- Event plane: startup shaping, outer-fact status cells, tab/window titles,
 -- palette augmentation, and the forge:// open-uri handoff. Status reads cheap
--- pane/window state plus cached JSON only; every probe writes elsewhere.
+-- pane/window state only; every probe writes elsewhere.
 
 local wezterm = require("wezterm")
 local act = wezterm.action
@@ -16,24 +16,6 @@ local deck = require("deck")
 local M = {}
 
 local roles = rows.theme.roles
-
--- Cached-JSON reader: nightly serde, json_parse fallback; absent cache is a
--- silent no-cell (the CA-7 collector owns writing it).
-local function read_cache(path)
-  local f = io.open(path, "r")
-  if not f then
-    return nil
-  end
-  local body = f:read("*a")
-  f:close()
-  local ok, parsed
-  if deck.has_nightly and wezterm.serde then
-    ok, parsed = pcall(wezterm.serde.json_decode, body)
-  else
-    ok, parsed = pcall(wezterm.json_parse, body)
-  end
-  return ok and parsed or nil
-end
 
 local function cell(fg, text)
   return {
@@ -68,8 +50,9 @@ function M.apply(config) -- luacheck: no unused args
     deck.receipt({ action = "attach", domain = domain:name(), result = "ok" })
   end)
 
-  -- Outer facts only: key table, sync state, domain, workspace, cached agent
-  -- cell. Inner facts (mode, cwd, git) stay with zjstatus/starship.
+  -- Outer facts only: key table, sync state, non-local domain. Agent/quota
+  -- cells and location live on the zellij zjstatus bar — the one top bar;
+  -- this strip surfaces only when a second WezTerm tab raises the tab bar.
   wezterm.on("update-status", function(window, pane)
     local items = {}
     local function push(fragments)
@@ -91,14 +74,6 @@ function M.apply(config) -- luacheck: no unused args
       push(cell(roles.state.info, domain))
     end
 
-    local cache = read_cache(rows.status_cache)
-    if cache and cache.cells then
-      for _, c in ipairs(cache.cells) do
-        push(cell(roles.state[c.role] or roles.text.muted, c.text))
-      end
-    end
-
-    push(cell(roles.accent.tertiary, window:active_workspace()))
     window:set_right_status(wezterm.format(items))
     window:set_left_status("")
   end)
