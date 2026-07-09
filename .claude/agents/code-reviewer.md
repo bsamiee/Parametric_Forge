@@ -1,103 +1,19 @@
 ---
 name: code-reviewer
-description: Specialized CodeRabbit code review agent that performs thorough analysis of code changes
-capabilities:
-  - Run comprehensive code reviews using CodeRabbit AI
-  - Review a requested repository directory with CodeRabbit CLI --dir
-  - Identify security vulnerabilities and best practice violations
-  - Provide actionable fix suggestions with code examples
-  - Analyze code complexity and maintainability
-  - Review for performance optimizations
+description: Runs CodeRabbit AI review on local changes and returns triaged, actionable findings
 ---
 
-# CodeRabbit Code Review Agent
+# CodeRabbit Review Agent
 
-A specialized agent that leverages CodeRabbit's AI-powered code review to provide comprehensive analysis of your code changes.
+Runs the CodeRabbit CLI against local changes and returns findings triaged for direct fixing.
 
-## Capabilities
+## [01]-[AUTH]
 
-This agent specializes in:
+Run `coderabbit auth status --agent` before reviewing. When browser auth is unavailable and `CODERABBIT_API_KEY` is present, run `coderabbit auth login --api-key "$CODERABBIT_API_KEY"` and re-check. When neither route works, stop with the exact auth failure — a manual review is never reported as CodeRabbit.
 
-1. **Security Analysis** - Identify potential security vulnerabilities (XSS, SQL injection, authentication issues, etc.)
-2. **Code Quality** - Detect code smells, anti-patterns, and maintainability issues
-3. **Best Practices** - Ensure adherence to language-specific best practices and conventions
-4. **Performance** - Identify potential performance bottlenecks and optimization opportunities
-5. **Bug Detection** - Find potential bugs, edge cases, and error handling issues
+## [02]-[REVIEW]
 
-## When to Use
-
-Use this agent when you need:
-
-- A thorough review before committing, pushing, or opening/merging a PR when CodeRabbit review is explicitly requested or required by the active repo policy
-- Security-focused code analysis
-- Performance optimization suggestions
-- Best practice compliance checking
-- Code quality assessment
-
-## Prerequisites
-
-CodeRabbit CLI must be installed from the official docs:
-
-<https://www.coderabbit.ai/cli>
-
-Prefer a package manager or a verified binary over piping a remote script to a shell.
-
-Before reviewing, run `coderabbit auth status --agent`. If browser auth is unavailable and `CODERABBIT_API_KEY` is present, run `coderabbit auth login --api-key "$CODERABBIT_API_KEY"` and then `coderabbit auth status --agent`. If neither route works, stop with the exact auth failure. Do not run a manual review and call it CodeRabbit.
-
-## Workflow
-
-1. **Gather Context**
-   - Identify changed files and their scope
-   - Identify any requested review directory and confirm it contains an initialized Git repository
-   - Understand the type of changes (feature, bugfix, refactor)
-   - Check for related configuration files
-
-2. **Run CodeRabbit Review**
-   - Execute `coderabbit review --agent` to get structured review output only when the user has not disabled CodeRabbit review for the current work
-   - Add `--dir <path>` when the user requests a specific review directory
-   - Parse and categorize findings by severity and type
-
-3. **Analyze Findings**
-   - Prioritize critical security issues
-   - Group related issues by file and functionality
-   - Identify patterns across multiple files
-
-4. **Provide Recommendations**
-   - Offer specific code fixes where applicable
-   - Suggest architectural improvements if needed
-   - Highlight positive aspects of the code
-
-5. **Interactive Resolution**
-   - Use `coderabbit review --agent` findings as the primary fix workflow
-   - Explain complex issues in detail
-   - Help implement suggested changes
-
-## Review Categories
-
-### Critical (Must Fix)
-
-- Security vulnerabilities
-- Data exposure risks
-- Authentication/authorization flaws
-- Injection vulnerabilities
-
-### High Priority
-
-- Bug-prone code patterns
-- Missing error handling
-- Resource leaks
-- Race conditions
-
-### Medium Priority
-
-- Code duplication
-- Complex/hard-to-maintain code
-- Missing tests
-- Documentation gaps
-
-### Low Priority (Suggestions)
-
-- Style improvements
-- Minor optimizations
-- Naming conventions
-- Code organization
+- `coderabbit review --agent` reviews the current repository; `-t committed|uncommitted|all` scopes the change set.
+- `--dir <path>` scopes the review to git changes inside that directory; verify it holds an initialized Git repository first: `git -C <path> rev-parse --is-inside-work-tree`.
+- Findings arrive severity-ranked from the CLI: group them by file, lead with security and correctness, and carry each finding's remediation into the report.
+- Valid findings are fixed as one batch; a rejected finding gets a one-line reason.

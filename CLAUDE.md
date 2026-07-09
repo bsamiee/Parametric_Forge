@@ -18,9 +18,9 @@ How to apply:
 - Heavy exploration, investigation, and research legs: dispatch to gpt-5.5 (`codex exec`, read-only) before spawning Claude subagents - the transcript stays out of context and the usage is free.
 - Anything user-facing (UI, copy, API design) needs taste ≥ 7.
 - Reviews of plans/implementations: fable-5 or opus-4.8, optionally gpt-5.5 as an extra independent perspective.
-- Mechanics: gpt-5.5 is only reachable through the Codex CLI - `codex exec` / `codex review` (my ~/.codex/config.toml defaults to gpt-5.5 at high reasoning).
+- Mechanics: gpt-5.5 is only reachable through the Codex CLI - `codex exec` / `codex review` (my ~/.codex/config.toml defaults to gpt-5.5 at medium reasoning).
 - Load the codex skill `.claude/skills/codex/SKILL.md` whenever dispatching work to codex - delegation triggers, invocation mechanics, sandboxing, effort tiers, sessions, and review modes live there.
-- Reasoning effort defaults to high; escalate a single run to xhigh with `codex exec --profile xhigh` (or `-c model_reasoning_effort="xhigh"`) for the hardest research, review, and design legs - multi-minute latency, reserve for depth over throughput.
+- Reasoning effort defaults to medium; escalate a single run with `codex exec -c model_reasoning_effort="high"` (or `"xhigh"`) for the hardest research, review, and design legs - multi-minute latency, reserve for depth over throughput.
 - Claude models (sonnet-5, opus-4.8, fable-5) run via the Agent/Workflow model parameter.
 - [NEVER] use Haiku.
 
@@ -74,11 +74,11 @@ mkServiceWithDeps = name: exec: after: { inherit exec after; };
 # Author        : Bardia Samiee
 # Project       : Parametric Forge
 # License       : MIT
-# Path          : /[relative-path]
+# Path          : [relative-path]
 # ----------------------------------------------------------------------------
 # [One-line description if complex]
 
-{ lib, pkgs, myLib, context, ... }:
+{ lib, pkgs, ... }:
 
 let
   # Minimal let bindings (prefer inline)
@@ -124,13 +124,13 @@ someFnWithSSL = args: ...  # Function spam
 
 ## Language-Specific Standards
 
+Code-generation law lives in the stack atlases: `docs/stacks/python/README.md` and `docs/stacks/typescript/README.md` route every language, shape, rail, and boundary decision to its owning page. Durable Markdown follows the `docs/standards/` owners — `style-guide.md` for language law, `formatting.md` for surface mechanics, `information-structure.md` for container design.
 
 ### Shell Scripts
-- IMPORTANT: CRITICAL: Always add the .sh extension to bash scripts
+- IMPORTANT: Always add the .sh extension to bash scripts
 - `set -euo pipefail` mandatory
 - ShellCheck must pass
-- Prefer `writeShellApplication` for shell CLIs with declared runtime tools, ShellCheck integration, or stable Home Manager-installed binaries. Use `writeShellScriptBin` only for tiny scripts that do not need a runtime closure.
-- Package shell CLIs with `writeShellApplication` when they need declared runtime tools, ShellCheck integration, or a stable Home Manager-installed binary.
+- Package shell CLIs with `writeShellApplication` when they need declared runtime tools, ShellCheck integration, or a stable Home Manager-installed binary; `writeShellScriptBin` only for tiny scripts with no runtime closure.
 
 ### Local Provisioning
 - `forge-provision` is the canonical Forge-owned local provisioning and debugging command. The overlay package owns the implementation; Home Manager only installs that derivation. Use the packaged executable or `nix run .#forge-provision -- <command>`, never `bash overlays/forge-provision/forge-provision.sh`. Rasm campaign work enters through `uv run python -m tools.assay provision <verb>`; direct `forge-provision`, `psql`, `paths`, `prune`, `self-test`, Docker/Compose, and diagnostic JSON are Forge-level debugging surfaces.
@@ -144,15 +144,7 @@ someFnWithSSL = args: ...  # Function spam
 - Python 3.15+ only (never older)
 - `uv` for package management
 - `ruff` for all linting/formatting
-- `ty` for type checking
-- `anyio` + `aiofiles` for async
-
-### Rust (Tertiary)
-- Latest stable toolchain
-- `cargo-deny` for security
-- Workspace-first organization
-- `#![deny(warnings)]` always
-
+- `ty` for type checking; `mypy` is the strict secondary gate — both resolve the project environment first; `ty` falls back to the Nix build, `mypy` to the newest release through uv's tool cache
 
 ## Module Patterns
 
@@ -172,11 +164,11 @@ config = {
 
 ### Imports
 ```nix
-# YES: Specific imports
-{ lib, pkgs, myLib, context, ... }:
+# YES: Specific imports — only what the module reads
+{ lib, pkgs, config, ... }:
 
 # NO: Kitchen sink
-{ self, config, lib, pkgs, inputs, ... }:
+{ self, inputs, options, lib, pkgs, config, ... }:
 ```
 
 ## Anti-Patterns to Avoid
@@ -199,7 +191,7 @@ config = {
 - Specific change 2
 ```
 
-**Scopes**: `nix`, `darwin`, `home`, `lib`, `flake`
+**Scopes**: `nix`, `darwin`, `home`, `flake`, `tooling`, `services`
 **Actions**: `add`, `fix`, `refactor`, `remove` (never "update" or "improve")
 
 ## Performance
@@ -216,9 +208,9 @@ config = {
 
 ## Remember
 
-IMPORTANT: CRITICAL:This is Nix configuration, not application code. Every line either:
+IMPORTANT: The Nix estate is machine configuration, not application code. Every Nix line either:
 1. Configures the system/user environment
 2. Deploys files/packages
 3. Enables services
 
-If it doesn't do one of these, it doesn't belong here.
+If a Nix line does none of these, it doesn't belong here. `services/` owns the Doppler estate and its Pulumi driver; `docs/` owns durable law.

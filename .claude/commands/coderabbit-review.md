@@ -6,48 +6,34 @@ allowed-tools: "Bash(coderabbit:*), Bash(cr:*), Bash(git:*)"
 
 # CodeRabbit Code Review
 
-Run an AI-powered code review using CodeRabbit.
+Runs an AI-powered code review using the CodeRabbit CLI. Review target: `$ARGUMENTS`.
 
-## Context
+## [01]-[CONTEXT]
 
 - Current directory: !`pwd`
 - Git repo: !`git rev-parse --is-inside-work-tree 2>/dev/null && echo "Yes" || echo "No"`
 - Branch: !`git branch --show-current 2>/dev/null || echo "detached HEAD"`
 - Has changes: !`git status --porcelain 2>/dev/null | head -1 | grep -q . && echo "Yes" || echo "No"`
 
-## Instructions
+## [02]-[PREREQUISITES]
 
-Review code based on: **$ARGUMENTS**
-
-### Prerequisites Check
-
-**Skip these checks if you already verified them earlier in this session.**
-
-Otherwise, run:
+Skip when already verified earlier in this session; otherwise run:
 
 ```bash
 coderabbit --version 2>/dev/null && coderabbit auth status --agent 2>&1 | head -3
 ```
 
-**If CLI not found**, tell user:
-> CodeRabbit CLI is not installed. Install it from the official docs:
->
-> <https://www.coderabbit.ai/cli>
->
-> Prefer a package manager or a verified binary, then restart your shell and try again.
-
-**If browser auth is unavailable and `CODERABBIT_API_KEY` is present**, authenticate headlessly:
+- CLI absent: report that the CodeRabbit CLI is not installed, route to <https://www.coderabbit.ai/cli> with a package manager or verified binary, then stop.
+- Browser auth unavailable with `CODERABBIT_API_KEY` present: authenticate headlessly, then re-check status.
 
 ```bash
 coderabbit auth login --api-key "$CODERABBIT_API_KEY"
 coderabbit auth status --agent
 ```
 
-If neither auth route works, stop with the exact auth failure. Do not run a manual review and call it CodeRabbit.
+- Neither route works: stop with the exact auth failure — a manual review is never reported as CodeRabbit.
 
-### Run Review
-
-Once prerequisites are met:
+## [03]-[RUN]
 
 ```bash
 # type defaults to "all"; add --base and --dir only when specified
@@ -57,25 +43,16 @@ args=(review --agent -t "${type:-all}")
 coderabbit "${args[@]}"
 ```
 
-Where `type`, `base`, and `dir` come from `$ARGUMENTS`:
+`type`, `base`, and `dir` come from `$ARGUMENTS`:
 
-- `all` (default) - All changes
-- `committed` - Committed changes only
-- `uncommitted` - Uncommitted only
-
-Add `--base <branch>` only when a base branch is specified.
-Add `--dir <path>` only when a review directory is specified. The directory must contain an initialized Git repository; verify it first:
+- `type`: `all` (default), `committed`, or `uncommitted`.
+- `--base <branch>`: only when a base branch is specified.
+- `--dir <path>`: only when a review directory is specified; the directory must hold an initialized Git repository — verify first:
 
 ```bash
 git -C "$dir" rev-parse --is-inside-work-tree
 ```
 
-### Present Results
+## [04]-[RESULTS]
 
-Group findings by severity:
-
-1. **Critical** - Security vulnerabilities, data loss risks, crashes
-2. **Warning** - Bugs, performance issues, anti-patterns
-3. **Info** - Style issues, suggestions, minor improvements
-
-Offer to apply fixes from the `--agent` findings when the output includes actionable remediation details.
+Group findings by severity: Critical (security vulnerabilities, data loss, crashes), Warning (bugs, performance issues, anti-patterns), Info (style, minor improvements). Offer to apply fixes from the `--agent` findings when the output carries actionable remediation detail.
