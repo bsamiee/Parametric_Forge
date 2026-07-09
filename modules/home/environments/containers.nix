@@ -22,6 +22,22 @@
       exec /opt/homebrew/bin/container system start --enable-kernel-install
     '';
   };
+  # Apple Container startup config. `container system start` snapshots this
+  # into its app root and re-saves it, so the file must be a real writable
+  # file — a store symlink fails the save and aborts the start.
+  containerConfigToml = pkgs.writeText "container-config.toml" ''
+    [build]
+    rosetta = true
+    cpus = 4
+    memory = "8192mb"
+
+    [container]
+    cpus = 4
+    memory = "4g"
+
+    [registry]
+    domain = "docker.io"
+  '';
 in {
   # Declarative Colima: store-owned profile, launchd lifecycle (RunAtLoad +
   # restart-on-clean-exit), session env. colimaHomeDir stays on dataHome — the
@@ -113,24 +129,21 @@ in {
     LAZYDOCKER_CONFIG_DIR = "${config.xdg.configHome}/lazydocker";
   };
 
+  # Forge owns the Apple Container config content; the file lands writable.
+  # A drifted app-root snapshot is cleared so the next start re-copies it.
+  # kernel/vminit/network/dns stay upstream-owned.
+  home.activation.appleContainerConfig = lib.mkIf isDarwin (lib.hm.dag.entryAfter ["writeBoundary"] ''
+    run mkdir -p "${config.xdg.configHome}/container"
+    run rm -f "${config.xdg.configHome}/container/config.toml"
+    run cp ${containerConfigToml} "${config.xdg.configHome}/container/config.toml"
+    run chmod 0644 "${config.xdg.configHome}/container/config.toml"
+    appRootConfig="$HOME/Library/Application Support/com.apple.container/config/config.toml"
+    if [[ -e "$appRootConfig" || -L "$appRootConfig" ]] && ! cmp -s ${containerConfigToml} "$appRootConfig"; then
+      run rm -f "$appRootConfig"
+    fi
+  '');
+
   xdg.configFile = {
-    # Apple Container startup config: read once by the apiserver at system start;
-    # highest-precedence path. kernel/vminit/network/dns stay upstream-owned.
-    "container/config.toml" = lib.mkIf isDarwin {
-      text = ''
-        [build]
-        rosetta = true
-        cpus = 4
-        memory = "8192mb"
-
-        [container]
-        cpus = 4
-        memory = "4g"
-
-        [registry]
-        domain = "docker.io"
-      '';
-    };
     "containers/registries.conf".text = ''
       unqualified-search-registries = ["docker.io"]
 
