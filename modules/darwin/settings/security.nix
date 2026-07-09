@@ -48,9 +48,6 @@ in {
     };
     # --- Application Security -----------------------------------------------
     CustomUserPreferences = {
-      "com.apple.security" = {
-        GKAutoRearm = mkDefault false; # PERFORMANCE: Disable Gatekeeper auto-rearm
-      };
       # --- Privacy & Telemetry Settings -------------------------------------
       "com.apple.assistant.support" = {
         "Assistant Enabled" = mkDefault false;

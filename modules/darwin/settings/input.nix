@@ -30,6 +30,17 @@ in {
         Dragging = mkDefault false;
         TrackpadThreeFingerDrag = mkDefault false;
         TrackpadThreeFingerTapGesture = mkDefault 0;
+        TrackpadPinch = mkDefault true;
+        TrackpadRotate = mkDefault true;
+        TrackpadThreeFingerVertSwipeGesture = mkDefault 2;
+        TrackpadFourFingerVertSwipeGesture = mkDefault 2;
+        TrackpadFourFingerHorizSwipeGesture = mkDefault 2;
+        TrackpadFourFingerPinchGesture = mkDefault 2;
+        TrackpadTwoFingerFromRightEdgeSwipeGesture = mkDefault 3;
+        TrackpadMomentumScroll = mkDefault true;
+        ActuateDetents = mkDefault false;
+        ForceSuppressed = mkDefault true;
+        DragLock = mkDefault false;
       };
       # --- Magic Mouse Settings ---------------------------------------------
       magicmouse = {
@@ -40,7 +51,7 @@ in {
         InitialKeyRepeat = mkDefault 15;
         KeyRepeat = mkDefault 2;
         ApplePressAndHoldEnabled = mkDefault false;
-        AppleKeyboardUIMode = mkDefault 3;
+        AppleKeyboardUIMode = mkDefault 2; # 2 = full keyboard access on Sonoma+
         "com.apple.keyboard.fnState" = mkDefault false;
         NSAutomaticCapitalizationEnabled = mkDefault true;
         NSAutomaticSpellingCorrectionEnabled = mkDefault true;
@@ -59,22 +70,12 @@ in {
       };
       # --- Advanced Input Customizations ------------------------------------
       CustomUserPreferences = {
-        # --- Trackpad Gestures ----------------------------------------------
+        # Trackpad keys without first-class nix-darwin owners at pinned rev;
+        # the rest migrated to system.defaults.trackpad.* above.
         "com.apple.AppleMultitouchTrackpad" = {
-          TrackpadPinch = mkDefault true;
-          TrackpadRotate = mkDefault true;
-          TrackpadThreeFingerVertSwipeGesture = mkDefault 2;
-          TrackpadFourFingerVertSwipeGesture = mkDefault 2;
-          TrackpadFourFingerHorizSwipeGesture = mkDefault 2;
-          TrackpadFourFingerPinchGesture = mkDefault 2;
+          TrackpadTwoFingerDoubleTapGesture = mkDefault 1; # first-class owner is bool-only; keep int here
           TrackpadFiveFingerPinchGesture = mkDefault 2;
-          TrackpadTwoFingerDoubleTapGesture = mkDefault 1;
-          TrackpadTwoFingerFromRightEdgeSwipeGesture = mkDefault 3;
           TrackpadHandResting = mkDefault true;
-          TrackpadMomentumScroll = mkDefault true;
-          ActuateDetents = mkDefault false;
-          ForceSuppressed = mkDefault true;
-          DragLock = mkDefault false;
         };
         # --- Bluetooth Mouse Configuration ----------------------------------
         "com.apple.driver.AppleBluetoothMultitouch.mouse" = {

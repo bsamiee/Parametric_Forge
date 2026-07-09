@@ -73,6 +73,9 @@ in {
         _FXShowPosixPathInTitle = mkDefault false;
         QuitMenuItem = mkDefault false;
         FXEnableExtensionChangeWarning = mkDefault false;
+        FXRemoveOldTrashItems = mkDefault true;
+        _FXSortFoldersFirstOnDesktop = mkDefault true;
+        _FXEnableColumnAutoSizing = mkDefault true;
       };
       # --- Window Management ------------------------------------------------
       WindowManager = {
@@ -109,6 +112,8 @@ in {
       NSGlobalDomain = {
         AppleInterfaceStyle = mkDefault "Dark";
         AppleInterfaceStyleSwitchesAutomatically = mkDefault false;
+        AppleIconAppearanceTheme = mkDefault "RegularDark"; # Tahoe icon/widget dark style
+        _HIHideMenuBar = mkDefault false; # Pin menu bar visible under Tahoe
         AppleShowScrollBars = mkDefault "WhenScrolling";
         AppleScrollerPagingBehavior = mkDefault false;
         AppleICUForce24HourTime = mkDefault true;
@@ -149,7 +154,6 @@ in {
           SidebarPlacesSectionDisclosedState = mkDefault true;
           SidebarShowingiCloudDesktop = mkDefault false;
           SidebarShowingSignedIntoiCloud = mkDefault true;
-          FXRemoveOldTrashItems = mkDefault true;
           FXInfoPanesExpanded = {
             General = mkDefault true;
             OpenWith = mkDefault true;

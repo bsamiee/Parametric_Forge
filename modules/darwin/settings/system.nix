@@ -77,7 +77,7 @@ in {
       closeViewZoomFollowsFocus = mkDefault false;
       reduceMotion = mkDefault false;
       reduceTransparency = mkDefault false;
-      mouseDriverCursorSize = mkDefault 0.85;
+      mouseDriverCursorSize = mkDefault 1.0; # 1.0 is the floor; 0.85 was clamped
     };
     # --- Software Updates ---------------------------------------------------
     SoftwareUpdate = {
