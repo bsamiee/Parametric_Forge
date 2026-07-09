@@ -162,8 +162,8 @@ Apply when writing or reviewing Nix modules, overlays, flake composition, `write
 - Example: `Label = "com.<estate>.<agent>"; StandardOutPath = "~/Library/Logs/<estate>-<agent>.log";`
 
 [AGENT_LIFECYCLE]:
-- Law: `KeepAlive = true` implies launch-at-load, so the pair never coexists; every row declares `ProcessType` (`Background` for schedulers and supervisors, `Interactive` for user-facing compute); scheduled work uses calendar triggers for wake coalescing; the writer of a state change kickstarts its consumer; intentional shutdown of a keep-alive agent is `bootout`.
-- Rejected: `RunAtLoad` beside `KeepAlive = true`, rows without `ProcessType`, `StartInterval` for wall-clock schedules, `WatchPaths` as an event source, in-band stop commands against keep-alive supervisors.
+- Law: `KeepAlive = true` implies launch-at-load, so the pair never coexists; every row declares `ProcessType` (`Background` for schedulers and supervisors, `Interactive` for user-facing compute); scheduled work uses calendar triggers for wake coalescing; the writer of a state change kickstarts its consumer; intentional shutdown of a keep-alive agent is `bootout`, and an agent whose TERM handler tears down real state pins `ExitTimeOut` past its worst-case drain — the 20-second default SIGKILLs the teardown mid-flight and orphans the state it supervises.
+- Rejected: `RunAtLoad` beside `KeepAlive = true`, rows without `ProcessType`, `StartInterval` for wall-clock schedules, `WatchPaths` as an event source, in-band stop commands against keep-alive supervisors, default `ExitTimeOut` on agents owning slow-drain teardowns.
 - Example: `KeepAlive = true; ThrottleInterval = 30; ProcessType = "Background";`
 
 [DUAL_OS_ROWS]:
