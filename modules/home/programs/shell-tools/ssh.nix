@@ -284,104 +284,123 @@
       done
     '';
   };
-in
-  {
-    programs.ssh = {
-      enable = true;
-      enableDefaultConfig = false; # Explicitly disable default config to suppress warning
+in {
+  # Host rows projected for downstream consumers (WezTerm ssh_domains,
+  # pickers): transport facts only, forwards reduced to service/port pairs.
+  options.forge.ssh.hosts = lib.mkOption {
+    type = lib.types.raw;
+    readOnly = true;
+    default =
+      lib.mapAttrs (name: tunnel: {
+        inherit name;
+        inherit (tunnel) user hostName;
+        aliases = ["${name}-vps" name];
+        tunnelHost = "${name}-tunnel";
+        forwards = map (f: {inherit (f) port service;}) tunnel.forwards;
+      })
+      vpsTunnels;
+    description = "SSH estate host rows: interactive aliases, transport identity, declared forwards.";
+  };
 
-      settings =
-        {
-          # --- GitHub Configuration -------------------------------------------
-          "github.com" = {
-            User = "git";
-            HostName = "github.com";
-            IdentitiesOnly = true;
-            AddKeysToAgent = "yes";
-          };
-
-          # --- Default Optimizations for All Hosts ----------------------------
-          "*" =
-            lib.optionalAttrs pkgs.stdenv.hostPlatform.isDarwin {
-              # 1Password's stable agent socket is the identity source on Darwin;
-              # Linux hosts authenticate inbound through authorized keys.
-              IdentityAgent = "\"~/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock\"";
-            }
-            // {
-              # Connection multiplexing for performance
-              ControlMaster = "auto";
-              ControlPath = "${config.home.homeDirectory}/.ssh/sockets/%C";
-              ControlPersist = "10m";
-
-              # Keep-alive settings
-              ServerAliveInterval = 60;
-              ServerAliveCountMax = 3;
-
-              # Security and convenience
-              AddKeysToAgent = "yes";
-              HashKnownHosts = true;
-
-              # Performance
-              Compression = true;
-            };
-        }
-        // interactiveHosts
-        // tunnelHosts;
-    };
-
-    home.file = lib.optionalAttrs pkgs.stdenv.hostPlatform.isDarwin (
-      lib.mapAttrs' (
-        name: _:
-          lib.nameValuePair
-          "Applications/${tunnelTitle name}.app/Contents/Info.plist"
-          {text = tunnelInfoPlist name;}
-      )
-      vpsTunnels
-    );
-
-    home.activation.registerVpsTunnelApps = lib.hm.dag.entryAfter ["linkGeneration"] ''
-      lsregister="/System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/LaunchServices.framework/Versions/A/Support/lsregister"
-      ${lib.concatMapStrings (name: ''
-        app="$HOME/Applications/${tunnelTitle name}.app"
-        if [ -d "$app" ] && [ -x "$lsregister" ]; then
-          "$lsregister" -f "$app" || true
-        fi
-      '') (builtins.attrNames vpsTunnels)}
-    '';
-
-    # Durable per-row tunnel agents: remote-primary mode kickstarts them; local
-    # parity mode boots them out before compose binds the same loopback ports.
-    # KeepAlive=true implies RunAtLoad per launchd.plist(5). One row registry
-    # projects both supervisors: launchd (Darwin) and lingering systemd user
-    # services (Linux) run the identical health-gated supervisor.
-    launchd.agents = lib.mapAttrs' (name: tunnel:
-      lib.nameValuePair "${name}-vps-tunnel" {
+  config =
+    {
+      programs.ssh = {
         enable = true;
-        config = {
-          Label = "com.parametric-forge.${name}-vps-tunnel";
-          ProgramArguments = ["${tunnelSupervisor}/bin/forge-vps-tunnel" "${tunnelRowJson name tunnel}"];
-          KeepAlive = true;
-          ThrottleInterval = 30;
-          ProcessType = "Background";
-          StandardOutPath = "${config.home.homeDirectory}/Library/Logs/forge-${name}-vps-tunnel.log";
-          StandardErrorPath = "${config.home.homeDirectory}/Library/Logs/forge-${name}-vps-tunnel.log";
-          AssociatedBundleIdentifiers = [(tunnelBundleId name)];
-        };
-      })
-    vpsTunnels;
-  }
-  # Static host gate: top-level attr names must never depend on pkgs (fixpoint).
-  // lib.optionalAttrs (host.os == "nixos") {
-    systemd.user.services = lib.mapAttrs' (name: tunnel:
-      lib.nameValuePair "${name}-vps-tunnel" {
-        Unit.Description = "Forge VPS tunnel ${name}";
-        Service = {
-          ExecStart = "${tunnelSupervisor}/bin/forge-vps-tunnel ${tunnelRowJson name tunnel}";
-          Environment = ["FORGE_TUNNEL_RECEIPTS=%h/.local/state/forge-tunnels/${name}-vps-tunnel.receipts.log"];
-          Restart = "always";
-          RestartSec = 30;
-        };
-        Install.WantedBy = ["default.target"];
-      })
-    vpsTunnels;
-  }
+        enableDefaultConfig = false; # Explicitly disable default config to suppress warning
+
+        settings =
+          {
+            # --- GitHub Configuration -------------------------------------------
+            "github.com" = {
+              User = "git";
+              HostName = "github.com";
+              IdentitiesOnly = true;
+              AddKeysToAgent = "yes";
+            };
+
+            # --- Default Optimizations for All Hosts ----------------------------
+            "*" =
+              lib.optionalAttrs pkgs.stdenv.hostPlatform.isDarwin {
+                # 1Password's stable agent socket is the identity source on Darwin;
+                # Linux hosts authenticate inbound through authorized keys.
+                IdentityAgent = "\"~/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock\"";
+              }
+              // {
+                # Connection multiplexing for performance
+                ControlMaster = "auto";
+                ControlPath = "${config.home.homeDirectory}/.ssh/sockets/%C";
+                ControlPersist = "10m";
+
+                # Keep-alive settings
+                ServerAliveInterval = 60;
+                ServerAliveCountMax = 3;
+
+                # Security and convenience
+                AddKeysToAgent = "yes";
+                HashKnownHosts = true;
+
+                # Performance
+                Compression = true;
+              };
+          }
+          // interactiveHosts
+          // tunnelHosts;
+      };
+
+      home.file = lib.optionalAttrs pkgs.stdenv.hostPlatform.isDarwin (
+        lib.mapAttrs' (
+          name: _:
+            lib.nameValuePair
+            "Applications/${tunnelTitle name}.app/Contents/Info.plist"
+            {text = tunnelInfoPlist name;}
+        )
+        vpsTunnels
+      );
+
+      home.activation.registerVpsTunnelApps = lib.hm.dag.entryAfter ["linkGeneration"] ''
+        lsregister="/System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/LaunchServices.framework/Versions/A/Support/lsregister"
+        ${lib.concatMapStrings (name: ''
+          app="$HOME/Applications/${tunnelTitle name}.app"
+          if [ -d "$app" ] && [ -x "$lsregister" ]; then
+            "$lsregister" -f "$app" || true
+          fi
+        '') (builtins.attrNames vpsTunnels)}
+      '';
+
+      # Durable per-row tunnel agents: remote-primary mode kickstarts them; local
+      # parity mode boots them out before compose binds the same loopback ports.
+      # KeepAlive=true implies RunAtLoad per launchd.plist(5). One row registry
+      # projects both supervisors: launchd (Darwin) and lingering systemd user
+      # services (Linux) run the identical health-gated supervisor.
+      launchd.agents = lib.mapAttrs' (name: tunnel:
+        lib.nameValuePair "${name}-vps-tunnel" {
+          enable = true;
+          config = {
+            Label = "com.parametric-forge.${name}-vps-tunnel";
+            ProgramArguments = ["${tunnelSupervisor}/bin/forge-vps-tunnel" "${tunnelRowJson name tunnel}"];
+            KeepAlive = true;
+            ThrottleInterval = 30;
+            ProcessType = "Background";
+            StandardOutPath = "${config.home.homeDirectory}/Library/Logs/forge-${name}-vps-tunnel.log";
+            StandardErrorPath = "${config.home.homeDirectory}/Library/Logs/forge-${name}-vps-tunnel.log";
+            AssociatedBundleIdentifiers = [(tunnelBundleId name)];
+          };
+        })
+      vpsTunnels;
+    }
+    # Static host gate: config attr names must never depend on pkgs (fixpoint).
+    // lib.optionalAttrs (host.os == "nixos") {
+      systemd.user.services = lib.mapAttrs' (name: tunnel:
+        lib.nameValuePair "${name}-vps-tunnel" {
+          Unit.Description = "Forge VPS tunnel ${name}";
+          Service = {
+            ExecStart = "${tunnelSupervisor}/bin/forge-vps-tunnel ${tunnelRowJson name tunnel}";
+            Environment = ["FORGE_TUNNEL_RECEIPTS=%h/.local/state/forge-tunnels/${name}-vps-tunnel.receipts.log"];
+            Restart = "always";
+            RestartSec = 30;
+          };
+          Install.WantedBy = ["default.target"];
+        })
+      vpsTunnels;
+    };
+}

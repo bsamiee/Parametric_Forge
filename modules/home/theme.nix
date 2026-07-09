@@ -36,7 +36,8 @@
   mix = a: b:
     mkColor "#${pad2 ((a.r + b.r) / 2)}${pad2 ((a.g + b.g) / 2)}${pad2 ((a.b + b.b) / 2)}";
 
-  # The 13 canonical Dracula-variant rows; customized values are canon.
+  # The 13 canonical Dracula-variant rows plus the semantic blue pair; the
+  # blue rows end the faked ANSI blue (comment slate) and blue==cyan aliasing.
   palette = lib.mapAttrs (_: mkColor) {
     background = "#15131F";
     current_line = "#2A2640";
@@ -51,6 +52,8 @@
     red = "#FF5555";
     magenta = "#D82F94";
     pink = "#E98FBE";
+    blue = "#7AA2F7";
+    brightBlue = "#A9C7FF";
   };
 
   roles = {
@@ -76,21 +79,23 @@
       warning = palette.yellow;
       attention = palette.orange;
       danger = palette.red;
+      info = palette.blue;
     };
   };
 
   # Canonical hex->ANSI-16 assignment; terminal palettes and ANSI-slot
   # consumers (procs, delta named styles) agree with truecolor consumers.
+  # Slot 4 carries a real blue and slot 12 its bright companion — the
+  # comment-slate fake and the blue==cyan duplication are closed defects.
   ansi16 = {
-    inherit (palette) red green yellow magenta cyan;
+    inherit (palette) red green yellow magenta cyan blue;
     black = palette.background;
-    blue = palette.comment;
     white = palette.foreground;
     brightBlack = palette.selection;
     brightRed = palette.red;
     brightGreen = palette.green;
     brightYellow = palette.yellow;
-    brightBlue = palette.cyan;
+    inherit (palette) brightBlue;
     brightMagenta = palette.magenta;
     brightCyan = palette.cyan;
     brightWhite = palette.foreground;
@@ -260,6 +265,71 @@
       return {
       ${lib.concatStrings (lib.mapAttrsToList (name: c: "  [\"${name}\"] = \"${c.hex}\",\n") palette)}}
     '';
+    # Role hexes as a Lua return-table: the shared visible-state vocabulary for
+    # status cells, segment labels, and destructive-confirmation styling.
+    luaRoles = ''
+      -- Generated from the Forge theme owner (modules/home/theme.nix).
+      return {
+      ${lib.concatStrings (lib.mapAttrsToList (
+          ns: rows: "  [\"${ns}\"] = {\n${lib.concatStrings (lib.mapAttrsToList (name: c: "    [\"${name}\"] = \"${c.hex}\",\n") rows)}  },\n"
+        )
+        roles)}}
+    '';
+    # WezTerm color-scheme rows in the colors-TOML shape; the wezterm owner
+    # writes them under wezterm/colors and binds `color_scheme`.
+    weztermColorScheme = {
+      foreground = palette.foreground.hex;
+      background = palette.background.hex;
+      cursor_bg = palette.foreground.hex;
+      cursor_fg = palette.background.hex;
+      cursor_border = palette.foreground.hex;
+      selection_fg = palette.foreground.hex;
+      selection_bg = palette.selection.hex;
+      split = palette.comment.hex;
+      ansi = map (c: c.hex) [
+        ansi16.black
+        ansi16.red
+        ansi16.green
+        ansi16.yellow
+        ansi16.blue
+        ansi16.magenta
+        ansi16.cyan
+        ansi16.white
+      ];
+      brights = map (c: c.hex) [
+        ansi16.brightBlack
+        ansi16.brightRed
+        ansi16.brightGreen
+        ansi16.brightYellow
+        ansi16.brightBlue
+        ansi16.brightMagenta
+        ansi16.brightCyan
+        ansi16.brightWhite
+      ];
+      tab_bar = {
+        background = roles.surface.base.hex;
+        active_tab = {
+          bg_color = roles.surface.selected.hex;
+          fg_color = roles.text.primary.hex;
+        };
+        inactive_tab = {
+          bg_color = roles.surface.base.hex;
+          fg_color = roles.text.muted.hex;
+        };
+        inactive_tab_hover = {
+          bg_color = roles.surface.raised.hex;
+          fg_color = roles.text.primary.hex;
+        };
+        new_tab = {
+          bg_color = roles.surface.base.hex;
+          fg_color = roles.text.muted.hex;
+        };
+        new_tab_hover = {
+          bg_color = roles.surface.raised.hex;
+          fg_color = roles.text.primary.hex;
+        };
+      };
+    };
     # Four-step surface ramp for delta blame backgrounds.
     blameRamp = lib.concatMapStringsSep " " (c: c.hex) [
       roles.surface.base

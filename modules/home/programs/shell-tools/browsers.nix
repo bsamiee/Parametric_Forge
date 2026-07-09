@@ -35,7 +35,7 @@
       domain = "estate-repo";
       collision = "reject";
       previous = [];
-      consumers = ["television-channel-prefix" "receipt-log-prefix" "launchd-agent-name-prefix"];
+      consumers = ["television-channel-prefix" "receipt-log-prefix" "launchd-agent-name-prefix" "wezterm-workspace-name"];
     }
     {
       source = "Rasm";
@@ -102,6 +102,16 @@
       kind = "browse";
       path = "Library/Logs/forge-browse.receipts.log";
       emitter = "forge-browse";
+    }
+    {
+      kind = "workspace";
+      path = "Library/Logs/forge-workspace.receipts.log";
+      emitter = "forge-workspace";
+    }
+    {
+      kind = "wezterm";
+      path = "Library/Logs/forge-wezterm.receipts.log";
+      emitter = "wezterm command deck";
     }
     {
       kind = "zellij";

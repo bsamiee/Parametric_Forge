@@ -106,6 +106,11 @@ in {
       COLIMA_HOME = "${primaryUserHome}/.local/share/colima";
       DOCKER_CONFIG = "${primaryUserHome}/.config/docker";
       GH_CONFIG_DIR = "${primaryUserHome}/.config/gh";
+      # Dock/Finder-launched WezTerm never sees shell sessionVariables; without
+      # these rows the GUI runtime (gui-sock, agent links, logs) lands in XDG
+      # data instead of the declared XDG state root.
+      WEZTERM_RUNTIME_DIR = "${primaryUserHome}/.local/state/wezterm";
+      WEZTERM_LOG_DIR = "${primaryUserHome}/.local/state/wezterm";
       PNPM_HOME = "${primaryUserHome}/.local/share/pnpm";
       PUPPETEER_EXECUTABLE_PATH = toolchainEnv.puppeteerExecutablePath;
       PAGER = "less";
