@@ -45,13 +45,14 @@
       fi
       receipts="''${FORGE_RSYNC_RECEIPTS:-$default_receipts}"
 
-      # -ahPX --remove-source-files moves file content; --itemize-changes and
-      # --info=stats2 feed the receipt; --partial-dir keeps interrupted large
-      # transfers resumable instead of restarting from zero.
+      # -aPX --remove-source-files moves file content; --itemize-changes and
+      # --info=stats2 feed the receipt (unhumanized, so the numbers stay
+      # machine-typed); --partial-dir keeps interrupted large transfers
+      # resumable instead of restarting from zero.
       stats_file="$(mktemp)"
       trap 'rm -f "$stats_file"' EXIT
       rc=0
-      rsync -ahPX --remove-source-files --itemize-changes --info=stats2 \
+      rsync -aPX --remove-source-files --itemize-changes --info=stats2 \
         --partial-dir=.rsync-partial "$@" | tee "$stats_file" || rc=$?
 
       # rsync only removes source files; empty source directories are swept
@@ -62,21 +63,25 @@
         done
       fi
 
-      files="$(sed -n 's/^Number of regular files transferred: //p' "$stats_file" | tr -d , | head -1)"
-      bytes="$(sed -n 's/^Total transferred file size: \([0-9.,]*[KMG]*\).*/\1/p' "$stats_file" | tr -d , | head -1)"
+      # One awk pass owns both stats fields; digits only, defaults on no-match.
+      read -r files bytes < <(awk -F': ' '
+        /^Number of regular files transferred:/ { gsub(/[^0-9]/, "", $2); f = $2 }
+        /^Total transferred file size:/         { gsub(/[^0-9]/, "", $2); b = $2 }
+        END { print (f == "" ? 0 : f), (b == "" ? 0 : b) }' "$stats_file")
       result=ok
       [ "$rc" = 0 ] || result=fail
+      TZ=UTC0 printf -v ts '%(%Y-%m-%dT%H:%M:%SZ)T' "$EPOCHSECONDS"
       mkdir -p "$(dirname "$receipts")"
       jq -cn \
-        --arg ts "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+        --arg ts "$ts" \
         --arg dest "$dest" \
-        --arg files "''${files:-0}" \
-        --arg bytes "''${bytes:-0}" \
-        --arg rc "$rc" \
+        --argjson files "''${files:-0}" \
+        --argjson bytes "''${bytes:-0}" \
+        --argjson rc "$rc" \
         --arg result "$result" \
         '{ts: $ts, surface: "rsync-mv", sources: $ARGS.positional,
           dest: $dest, files: $files, bytes: $bytes,
-          rc: ($rc | tonumber), result: $result}' \
+          rc: $rc, result: $result}' \
         --args "''${sources[@]}" >>"$receipts"
       exit "$rc"
     '';

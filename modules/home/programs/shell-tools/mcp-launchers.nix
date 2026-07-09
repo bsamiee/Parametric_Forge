@@ -36,6 +36,9 @@
           parent="$(dirname "$prefix")"
           mkdir -p "$parent"
           stage="$(mktemp -d "$parent/.stage.XXXXXX")"
+          # Failure litter guard: an errexit death mid-install must not strand
+          # the stage; every success path removes or promotes it first.
+          trap 'rm -rf "$stage"' EXIT
           # --config rows pin XDG containment for launchd spawns without session
           # env; prefer-offline lets exact pins cold-start from a warm store.
           pnpm add --dir "$stage" \
@@ -199,10 +202,10 @@
       req='{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"forge-mcp-doctor","version":"1.0.0"}}}'
       probe_row() {
         row="$1" network="$2" out="$3"
-        name="$(jq -r '.name' <<<"$row")"
-        probe="$(jq -r '.probe' <<<"$row")"
-        transport="$(jq -r '.transport' <<<"$row")"
-        t="$(jq -r '.codex.startupTimeoutSec // 20' <<<"$row")"
+        # One jq projection owns the row header; unit-separator join survives
+        # empty fields where tab-IFS reads would collapse them.
+        IFS=$'\x1f' read -r name probe transport t < <(jq -r \
+          '[.name, .probe, .transport, (.codex.startupTimeoutSec // 20 | tostring)] | join("\u001f")' <<<"$row")
         missing="$(jq -r '(.envKeys // [])[]' <<<"$row" | while IFS= read -r k; do
           [ -n "''${!k:-}" ] || printf '%s ' "$k"
         done)"
@@ -304,7 +307,9 @@
         rc=0
         ! cut -f1 "$rows" | grep -qx FAIL || rc=1
         if [ "$as_json" = 1 ]; then
-          jq -Rcs --arg rc "$rc" '{
+          TZ=UTC0 printf -v ts '%(%Y-%m-%dT%H:%M:%SZ)T' "$EPOCHSECONDS"
+          jq -Rcs --arg ts "$ts" --arg rc "$rc" '{
+            ts: $ts,
             surface: "forge-mcp-doctor",
             result: (if $rc == "0" then "ok" else "fail" end),
             rows: (split("\n") | map(select(length > 0) | split("\t")

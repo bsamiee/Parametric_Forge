@@ -24,10 +24,10 @@
   # client verb (state/logs/attach/down) reattachable and JSON-first.
   forgePc = pkgs.writeShellApplication {
     name = "forge-pc";
-    runtimeInputs = [pkgs.coreutils pkgs.process-compose];
+    runtimeInputs = [pkgs.coreutils pkgs.jq pkgs.process-compose];
     text = ''
       usage() {
-        printf 'usage: forge-pc up [ARGS...] | down | attach | state | ports PROC | logs PROC | restart PROC | graph | doctor\n' >&2
+        printf 'usage: forge-pc up [ARGS...] | down | attach | state | ports PROC | logs PROC | restart PROC | graph | doctor [--json]\n' >&2
         exit 64
       }
       verb="''${1:-}"; shift || true
@@ -53,12 +53,25 @@
         restart) exec "''${client[@]}" process restart "''${1:?usage: forge-pc restart PROC}" ;;
         graph) exec process-compose graph "$@" ;;
         doctor)
+          live=0
           if [ -S "$sock" ] && "''${client[@]}" project state >/dev/null 2>&1; then
-            printf '[OK]   %s live on %s\n' "$(basename "$PWD")" "$sock"
-          else
-            printf '[DOWN] %s no server on %s\n' "$(basename "$PWD")" "$sock"
-            exit 1
+            live=1
           fi
+          if [ "''${1:-}" = "--json" ]; then
+            # Same receipt envelope as the estate JSONL rails: ts + surface +
+            # payload + result, one grammar for every doctor.
+            TZ=UTC0 printf -v ts '%(%Y-%m-%dT%H:%M:%SZ)T' "$EPOCHSECONDS"
+            jq -cn --arg ts "$ts" --arg project "''${PWD##*/}" --arg sock "$sock" \
+              --argjson live "$([ "$live" = 1 ] && printf true || printf false)" \
+              '{ts: $ts, surface: "forge-pc-doctor", project: $project,
+                socket: $sock, live: $live,
+                result: (if $live then "ok" else "down" end)}'
+          elif [ "$live" = 1 ]; then
+            printf '[OK]   %s live on %s\n' "''${PWD##*/}" "$sock"
+          else
+            printf '[DOWN] %s no server on %s\n' "''${PWD##*/}" "$sock"
+          fi
+          [ "$live" = 1 ] || exit 1
           ;;
         *) usage ;;
       esac
