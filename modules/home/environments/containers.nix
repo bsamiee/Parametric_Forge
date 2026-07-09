@@ -14,6 +14,14 @@
   ...
 }: let
   isDarwin = pkgs.stdenv.hostPlatform.isDarwin;
+  # Guard keeps the agent inert when the Homebrew binary is absent.
+  containerSystemStart = pkgs.writeShellApplication {
+    name = "container-system-start";
+    text = ''
+      [[ -x /opt/homebrew/bin/container ]] || exit 0
+      exec /opt/homebrew/bin/container system start --enable-kernel-install
+    '';
+  };
 in {
   # Declarative Colima: store-owned profile, launchd lifecycle (RunAtLoad +
   # restart-on-clean-exit), session env. colimaHomeDir stays on dataHome — the
@@ -24,6 +32,17 @@ in {
   # SIGKILLs the stop mid-flight and orphans the VM, so the window is widened
   # to cover a full 8-container drain.
   launchd.agents.colima-default.config.ExitTimeOut = 300;
+
+  # Apple Container autostart: `system start` registers the apiserver and
+  # helpers under the com.apple.container. launchd prefix and returns — no
+  # keep-alive. Colima stays the DOCKER_HOST owner; this runtime is additive.
+  launchd.agents.container-system = {
+    enable = isDarwin;
+    config = {
+      ProgramArguments = [(lib.getExe containerSystemStart)];
+      RunAtLoad = true;
+    };
+  };
 
   services.colima = {
     enable = isDarwin;

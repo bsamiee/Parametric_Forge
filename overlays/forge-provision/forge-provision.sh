@@ -2122,13 +2122,19 @@ colima_json() {
 }
 
 apple_container_json() {
-  # Sanitized host-gate telemetry: presence, version line, eligibility facts only.
-  local present=false version="" macos_major=0 arch xcode_kind="none" gate=false dev_dir=""
+  # Sanitized host-gate telemetry: presence, version line, eligibility facts, service state only.
+  local present=false version="" macos_major=0 arch xcode_kind="none" gate=false dev_dir="" system="absent" status=""
   arch="$(uname -m)"
   if command -v container >/dev/null 2>&1; then
     present=true
     version="$(container --version 2>/dev/null || true)"
     version="${version%%$'\n'*}"
+    status="$(container system status --format json 2>/dev/null | jq -r '.status // empty' 2>/dev/null || true)"
+    if [[ "$status" == "running" ]]; then
+      system="running"
+    else
+      system="not-running"
+    fi
   fi
   if [[ -x /usr/bin/sw_vers ]]; then
     macos_major="$(/usr/bin/sw_vers -productVersion 2>/dev/null || printf '0')"
@@ -2142,10 +2148,11 @@ apple_container_json() {
       *) xcode_kind="none" ;;
     esac
   fi
-  [[ "$macos_major" -ge 26 && "$arch" == "arm64" && "$xcode_kind" == "xcode" ]] && gate=true
+  # xcodeKind is reported, never gating: the bottled formula runs on CLT-only hosts.
+  [[ "$macos_major" -ge 26 && "$arch" == "arm64" ]] && gate=true
   jq -nc --argjson present "$present" --arg version "$version" \
-    --argjson macosMajor "$macos_major" --arg arch "$arch" --arg xcodeKind "$xcode_kind" --argjson gate "$gate" \
-    '{present: $present, version: (if $version == "" then null else $version end), eligible: {macosMajor: $macosMajor, arch: $arch, xcodeKind: $xcodeKind, gate: $gate}, system: "absent"}'
+    --argjson macosMajor "$macos_major" --arg arch "$arch" --arg xcodeKind "$xcode_kind" --argjson gate "$gate" --arg system "$system" \
+    '{present: $present, version: (if $version == "" then null else $version end), eligible: {macosMajor: $macosMajor, arch: $arch, xcodeKind: $xcodeKind, gate: $gate}, system: $system}'
 }
 
 cmd_up() {
