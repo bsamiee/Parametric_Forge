@@ -319,6 +319,28 @@
       keys = ["g"];
       kdl = "ToggleGroupMarking;";
     }
+    {
+      gap = true;
+      keys = ["b"];
+      body = lib.concatStringsSep "\n" [
+        "          Run \"forge-browse\" {"
+        "            floating true"
+        "            close_on_exit true"
+        "            x \"20%\""
+        "            y \"15%\""
+        "            width \"60%\""
+        "            height \"70%\""
+        "          }"
+      ];
+      forgot = {
+        label = "register browser";
+        rank = 160;
+      };
+      ribbon = {
+        label = "browse";
+        rank = 40;
+      };
+    }
   ];
 
   # Which-key rows with no chord of their own: command vocabulary surfaced in
@@ -365,31 +387,37 @@
       display = "GET/POST/PUT -> xh";
     }
     # WezTerm outer layer (native left-Cmd chords, keys.lua): surfaced here so
-    # the cheatsheet owns discoverability for the whole terminal stack.
+    # the cheatsheet owns discoverability for the whole terminal stack; `kind`
+    # tags these rows as register chords, not command vocabulary.
     {
       rank = 310;
       label = "wezterm palette";
       display = "⇧⌘P";
+      kind = "wezterm";
     }
     {
       rank = 320;
       label = "wezterm quick select";
       display = "⇧⌘Space";
+      kind = "wezterm";
     }
     {
       rank = 330;
       label = "wezterm launcher";
       display = "⇧⌘L";
+      kind = "wezterm";
     }
     {
       rank = 340;
       label = "wezterm unicode picker";
       display = "⇧⌘U";
+      kind = "wezterm";
     }
     {
       rank = 350;
       label = "wezterm debug overlay";
       display = "⇧⌘D";
+      kind = "wezterm";
     }
   ];
 
@@ -495,14 +523,14 @@
 
   superBindsKdl = lib.concatMapStringsSep "\n" (renderBind layers.super.zellij) superRows;
 
-  normalBindsKdl = lib.concatMapStringsSep "\n" (r:
+  renderNormal = r:
     lib.concatStringsSep "\n" [
       "        bind \"Super ${r.key}\" {            // ${r.comment}"
       "          ${r.action}"
       "          SwitchToMode \"Normal\";"
       "        }"
-    ])
-  normalRows;
+    ];
+  normalBindsKdl = lib.concatMapStringsSep "\n" renderNormal normalRows;
 
   entryBindsKdl = lib.concatMapStringsSep "\n" (m:
     lib.concatStringsSep "\n" [
@@ -565,12 +593,117 @@
     )
     rows;
   ids = lib.listToAttrs (bindIds layers.hyper hyperRows ++ bindIds layers.super superRows);
+
+  # --- Register projection ----------------------------------------------------
+  # Typed chord rows for the CA-1 register rail: every consumer's chords in one
+  # vocabulary — chord_id, consumer, physical_layer, mods, key, label, action,
+  # projection_path, rendered evidence, and CSI-u injection where exported.
+  zjRegRow = layer: row:
+    {
+      chord_id = "zellij:${lib.toLower layer.name}:${builtins.head row.keys}";
+      consumer = "zellij";
+      physical_layer = layer.name;
+      mods = layer.zellij;
+      key = lib.concatStringsSep "," row.keys;
+      label = row.forgot.label or row.ribbon.label or row.kdl or "bound action";
+      action = row.kdl or row.body or "";
+      projection_path = ".config/zellij/config.kdl";
+      rendered = renderBind layer.zellij row;
+    }
+    // lib.optionalAttrs (row ? id) {injection = ids.${row.id};};
+  modeRegRows =
+    map (m: {
+      chord_id = "zellij:hyper:${modes.${m}.key}";
+      consumer = "zellij";
+      physical_layer = layers.hyper.name;
+      mods = layers.hyper.zellij;
+      key = modes.${m}.key;
+      label = "${m} mode";
+      action = "SwitchToMode \"${cap m}\";";
+      projection_path = ".config/zellij/config.kdl";
+      rendered = "bind \"${layers.hyper.zellij} ${modes.${m}.key}\" { SwitchToMode \"${cap m}\"; }";
+    }) (entryOrder ++ ["locked"]);
+  register =
+    map (zjRegRow layers.hyper) hyperRows
+    ++ map (zjRegRow layers.super) superRows
+    ++ map (r: {
+      chord_id = "zellij:normal:${r.key}";
+      consumer = "zellij";
+      physical_layer = "none";
+      mods = "Super";
+      key = r.key;
+      label = r.forgot.label or r.comment;
+      action = r.action;
+      projection_path = ".config/zellij/config.kdl";
+      rendered = renderNormal r;
+    })
+    normalRows
+    ++ modeRegRows
+    ++ [
+      {
+        chord_id = "zellij:hyper:${cheatsheetKey}";
+        consumer = "zellij";
+        physical_layer = layers.hyper.name;
+        mods = layers.hyper.zellij;
+        key = cheatsheetKey;
+        label = "cheatsheet";
+        action = "LaunchOrFocusPlugin \"zellij-forgot\"";
+        projection_path = ".config/zellij/config.kdl";
+        rendered = cheatsheetBind;
+      }
+      {
+        chord_id = "karabiner:caps_lock";
+        consumer = "karabiner";
+        physical_layer = "Caps Lock";
+        mods = "";
+        key = "caps_lock";
+        label = "⌘⌥ super-modifier (hold) / Caps Lock (tap)";
+        action = builtins.toJSON capsRule.manipulators;
+        projection_path = ".config/karabiner/karabiner.json";
+        rendered = builtins.toJSON capsRule;
+      }
+    ]
+    ++ map (l: {
+      chord_id = "karabiner:${l.from}";
+      consumer = "karabiner";
+      physical_layer = l.physical;
+      mods = "";
+      key = l.from;
+      label = "${l.physical} → ${l.name} (${l.glyphs}) leader";
+      action = builtins.toJSON l.to;
+      projection_path = ".config/karabiner/karabiner.json";
+      rendered = builtins.toJSON l.to;
+    }) (lib.attrValues layers)
+    ++ map (r: {
+      chord_id = "wezterm:${lib.replaceStrings [" "] ["-"] (lib.removePrefix "wezterm " r.label)}";
+      consumer = "wezterm";
+      physical_layer = "none";
+      mods = "SHIFT|CMD";
+      key = r.display;
+      inherit (r) label;
+      action = "native overlay";
+      projection_path = ".config/wezterm/keys.lua";
+      rendered = r.display;
+    }) (builtins.filter (r: r.kind or "" == "wezterm") forgotExtras);
+
+  # Intra-consumer conflict ledger: every emitted (consumer, chord) claim must
+  # be unique; shift-glyph expansion rides the same bindKeys the KDL uses.
+  claims =
+    lib.concatMap (r:
+      map (c: "${r.consumer}|${c}")
+      (
+        if r.consumer == "zellij"
+        then lib.concatMap (bindKeys r.mods) (lib.splitString "," r.key)
+        else [r.key]
+      ))
+    register;
+  conflictClaims = lib.subtractLists (lib.unique claims) claims;
 in {
   options.forge.chords = lib.mkOption {
     type = lib.types.raw;
     readOnly = true;
     default = {
-      inherit layers modes;
+      inherit layers modes register;
       karabiner.rules =
         [capsRule]
         ++ map (l: {
@@ -595,6 +728,13 @@ in {
         };
       };
     };
-    description = "Chord-vocabulary owner: leader layers, zellij binds, which-key and ribbon rows.";
+    description = "Chord-vocabulary owner: leader layers, zellij binds, which-key, ribbon, and register rows.";
   };
+
+  config.assertions = [
+    {
+      assertion = conflictClaims == [];
+      message = "forge.chords: conflicting chord claims: ${lib.concatStringsSep ", " conflictClaims}";
+    }
+  ];
 }
