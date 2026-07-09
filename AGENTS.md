@@ -1,24 +1,35 @@
 # Parametric Forge Agent Policy
 
 ## [01]-[PROJECT_OWNER]
-- `CLAUDE.md` is the project execution standard and the single owner of Forge provisioning, Nix, code-density, and language law; this file carries only agent-runtime deltas.
-- Code-generation law lives in the `docs/stacks/python` and `docs/stacks/typescript` atlases; durable Markdown follows the `docs/standards/` owners.
-- Treat this repository as the machine/Home Manager toolchain owner: fix shell, PATH, tool, and wrapper behavior here instead of patching individual sibling projects.
 
-## [02]-[NIX_SHELL_EXECUTION]
+- `CLAUDE.md` is the project execution standard — model dispatch, estate law, Nix code law, language routing, provisioning contract, commit standards. This file carries only agent-runtime deltas.
+- This repository is the machine/user toolchain owner for every estate host: shell, PATH, tool, wrapper, launcher, and credential behavior is fixed here, never patched in a sibling project.
+- `~/.codex` is the sole Codex configuration home; no file in this repository is Codex configuration source of truth. Repo `.claude/` state serves the Claude harness, and this file carries policy, never configuration.
+
+## [02]-[SKILL_MASTERS]
+
+- `.claude/skills/` here are the estate masters for harness skills; `~/.codex/skills/` and sibling-repo copies are mirrors. A skill edit lands in the master and propagates by copy — never edit a mirror, never build sync tooling.
+- `.claude/hooks/setup-env.sh` is the canonical SessionStart hook, byte-identical in every estate repo and mastered here; hook fixes land here first.
+
+## [03]-[NIX_SHELL_EXECUTION]
+
 - Prefer Nix/Home Manager owned executables and wrappers over aliases or interactive shell functions.
-- For Python work, use the project or tool owner interpreter (`uv run`, `.venv/bin/python`, or the repo-declared command) rather than ambient `python3` unless the task is explicitly about the machine Python.
+- Python work uses the project or tool-owner interpreter (`uv run`, `.venv/bin/python`, or the repo-declared command), never ambient `python3`, unless the task is explicitly the machine Python.
+- Resolve current nixpkgs and Home Manager option behavior through `Context7` or module source, never recall.
 
-## [03]-[LOCAL_PROVISIONING]
-- The canonical `forge-provision` mechanism (packaged executable / `nix run .#forge-provision`, the `uv run python -m tools.assay provision <verb>` campaign entry, rename-over-shim policy, DB-tooling ownership, and the schema-v3 JSON contract) is owned by `CLAUDE.md`; follow it there.
-- Provisioning must stay noninteractive for agents: no host `sudo`, no keychain requirement, no password prompt, and no Docker credential helper dependency for public images.
-- The MCP and server launchers are Home Manager-installed wrappers under `modules/home/programs/languages/`: `forge-ifcmcp` (IfcOpenShell MCP on the cp312 companion lane), `forge-jupyter` (persistent JupyterLab LaunchAgent on loopback `127.0.0.1:8888`, registered as the "Forge Jupyter" Login Item), `forge-jupyter-mcp` (the Jupyter MCP connector), and `nuget-mcp` (the NuGet MCP via the .NET 10 SDK).
-- Sibling-repo `ifc`/`jupyter`/`nuget` skills and MCP configs invoke these launchers; fix launcher behavior here, never in a sibling repo.
+## [04]-[PROVISIONING_AND_LAUNCHERS]
 
-## [04]-[AGENT_RUNTIME]
+- The `forge-provision` mechanism — packaged executable, campaign entry, rename-over-shim policy, DB-tooling ownership, schema-v3 JSON contract — is owned by `CLAUDE.md`; provisioning stays noninteractive for agents by contract.
+- MCP and server launchers are Home Manager-installed wrappers: the `forge-*-mcp` fleet wrappers project from `modules/home/programs/shell-tools/mcp-launchers.nix` rows, while `forge-ifcmcp`, `forge-jupyter` (persistent JupyterLab LaunchAgent on loopback `127.0.0.1:8888`), and `forge-jupyter-mcp` live in `modules/home/programs/languages/scientific-tools.nix` and `nuget-mcp` in `modules/home/programs/languages/dev-tools.nix`.
+- Sibling-repo `ifc`/`jupyter`/`nuget` skills and MCP configs invoke these launchers; launcher behavior is fixed here, never in a sibling repo.
+
+## [05]-[AGENT_RUNTIME]
+
 - Diagnose agent-tool runtime behavior separately from shell behavior. Claude workflow globals such as `args` are owned by Claude's workflow runtime; Nix, zsh, aliases, and PATH only explain subprocess, hook, or shell-command behavior.
 - Persist API tokens through `CLAUDE_ENV_FILE` only when subagents or tools need inherited credentials; Claude may expand that file into shell launch command lines while commands run.
-- Use `CLAUDE_ENV_EXPORT_KEYS` for additional sub-agent credential variables that are required beyond the default `setup-env.sh` key set.
+- Use `CLAUDE_ENV_EXPORT_KEYS` (comma/space list) for additional sub-agent credential variables required beyond the default `setup-env.sh` key set.
 
-## [05]-[RESEARCH_DOCS]
-- The web/docs/repo research tool-selection and chaining law is the user-global doctrine; follow it. Resolve current Nixpkgs and Home Manager option behavior through `Context7` or its source, never training-data recall.
+## [06]-[DEPLOY_SEAM]
+
+- Any change to a module, overlay, or launcher lands through `forge-redeploy --switch` and proves through `forge-accept`; an edited `.nix` file without a switch is invisible to the running estate.
+- The `maghz` NixOS host deploys over SSH from this repo (`forge-redeploy --os nixos --host maghz --target-host <ssh>`); its services stay loopback-bound and are reached through the `vpsTunnels` rows, never by opening ports.
