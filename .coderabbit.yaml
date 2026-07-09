@@ -55,6 +55,11 @@ reviews:
         External packages are first-class implementation material used at full power, newest
         stable versions. Everything is agent-first: composable, receipt-bearing,
         self-describing, no interactive-only paths. Collapse spam relentlessly.
+        Fix-to-root is a review demand: a PR that patches a symptom while its root cause
+        stands, leaves a known defect unfixed because it sits outside the change's scope, or
+        defers a residual for a later pass is defective — the root fix belongs in the same
+        change, and a genuinely blocked item is an explicit unreachable naming its owner,
+        never a silent residual.
     - path: "**/*.nix"
       instructions: >-
         Machine-owner repo on nix-darwin + Home Manager, Determinate Nix, nixpkgs-unstable.

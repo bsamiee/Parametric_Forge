@@ -10,6 +10,7 @@ Machine-owner repo: nix-darwin + Home Manager flake for one macOS Apple Silicon 
 - Service estate is IaC: external service state lives as typed Pulumi rows under services/; container provisioning rides the schema-v3 JSON envelope contract under overlays/forge-provision.
 - Deploy rail: forge-redeploy owns switch lifecycle with typed receipts and exact-closure activation; its deploy arm is proven — treat edits there as high-risk.
 - Receipts over narration: lifecycle commands emit typed receipt lines; scripts that print prose status instead of structured receipts are below the bar.
+- Fix-to-root completeness: a change that patches a symptom while its root cause stands, leaves a known defect unfixed because it sits outside the diff's scope, or defers a residual for a later pass is a defect — the root fix belongs in the same change, and a genuinely blocked item is an explicit unreachable naming its owner, never a silent residual.
 
 ## Universal bar
 

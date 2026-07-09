@@ -40,6 +40,8 @@ A non-fork worker sees none of the parent conversation — no prior reads, no in
 
 COMMIT DISCIPLINE is a contract field, not an afterthought: a worker that writes to a repo commits each completed unit in scoped, signed commits as it lands — explicit pathspecs, `[scope]: action`, `git status` before staging so a concurrent worker's hunks stay frozen, never `git add -A`/`-u`. A worker that dies mid-run — API drop, kill, context exhaustion — then loses only its uncommitted tail; committed work survives, and the receipt's commit hashes hand the orchestrator or a successor the trail to resume from. The trail RECORDS progress; it never DECIDES work — a successor reads the current tree to know what remains, never the changelog.
 
+ROOT DISCIPLINE is a contract field beside commit discipline: a worker resolves every defect it touches at the cause, not the symptom, and a quirk it notices beyond its stated territory is fixed in the same run — never deferred to a later pass, never annotated as another worker's scope. A defect genuinely beyond reach — a contended file, a locked seam, an absent credential — travels back in the receipt as an explicit unreachable naming the owner that closes it, never a silent residual a successor must rediscover. A worker that leaves a known defect unfixed because it sits outside the brief has broken the contract.
+
 ## [03]-[TOPOLOGY]
 
 Result flow is chosen before the first spawn: star for independent fan-out with one consolidator, pipeline for staged transforms with artifact contracts, panel for adversarial judgment, tournament for best-of-N with blind comparison, loop for repeat-until-verified. Shape mechanics, the file-ownership law, and stop-condition law are [references/topologies.md](references/topologies.md).
@@ -58,3 +60,4 @@ Workers run in the background by default and drop to the foreground only when th
 - Offload to gpt-5.5 through `codex exec` belongs to the codex skill; this skill's placement table names the trigger.
 - Hook construction for `SubagentStart`, `SubagentStop`, `TeammateIdle`, and task gates belongs to hooks-builder; this skill names where a gate pays for itself.
 - Memory files, rules, settings, model and effort defaults, and headless lanes belong to harness-config; a subagent definition's frontmatter stays here.
+- A delegation smell, orchestration error, or superior pattern surfaced mid-run is codified into its owning skill — codex for offload mechanics, workflow-creator for script shapes, this skill for placement and contract law, harness-config for settings and hooks — in the same session, then propagated byte-identical to every project, reviewer configs included; a lesson left as session knowledge is a regression.

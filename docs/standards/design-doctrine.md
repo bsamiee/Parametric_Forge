@@ -82,3 +82,14 @@ A bounded vocabulary is an executable owner: one declaration carries identity, b
 ```python conceptual
 ROUTE: frozendict[Route, Policy] = frozendict({Route.PRIMARY: Policy(step=run, attempts=5)})
 ```
+
+## [09]-[EXECUTION]
+
+Every agent and workflow producing or reviewing an executable surface lands its change at the root cause and leaves no residual: the fix targets the cause, not the symptom, and a defect noticed anywhere in the working tree — inside the stated territory or beyond it — is resolved in the same pass, never deferred to a later one and never annotated as another owner's problem. A defect genuinely out of reach lands as an explicit unreachable naming the owner that closes it — the escalation seam — never a silent residual a successor rediscovers. A pattern, smell, or defect-class a run reveals becomes durable law in its owning surface and propagates byte-identical to every project the same session; a lesson kept as session memory is a regression.
+
+- Rejected: a symptom patched over a standing root cause, a noticed defect left because it sits outside the stated scope, a residual queued for a later pass, an orchestration lesson kept as session knowledge, a fix landed in one project while its mirrors drift.
+- Accepted: root-cause resolution with every affected site updated in the same change, out-of-scope defects fixed in-tree, genuinely blocked items recorded as explicit unreachables naming an owner, discovered patterns codified into their owning surface and mirrored byte-identical across projects the same session.
+
+```json conceptual
+{ "unreachable": { "defect": "<root-cause>", "owner": "<owning-surface>", "reason": "<blocking-seam>" } }
+```
