@@ -20,13 +20,13 @@ Skill instructions for Codex to follow.
 
 ## [02]-[DISCOVERY_ROOTS]
 
-| [INDEX] | [SCOPE]  | [LOCATION]                                        | [NOTES]                                                  |
-| :-----: | :------- | :------------------------------------------------- | :-------------------------------------------------------- |
-|  [01]   | `REPO`   | `.agents/skills` in cwd, parents, and repo root     | Checked-in team skills; nearest-directory scoping           |
-|  [02]   | `USER`   | `$HOME/.agents/skills`                              | Current user root                                          |
-|  [03]   | `USER`   | `$CODEX_HOME/skills` (`~/.codex/skills`)            | Deprecated root, still loaded — the estate's codex host     |
-|  [04]   | `ADMIN`  | `/etc/codex/skills`                                 | Machine-shared                                             |
-|  [05]   | `SYSTEM` | Bundled, cached at `$CODEX_HOME/skills/.system`     | `skill-creator`, `skill-installer`, plan — never edited     |
+| [INDEX] | [SCOPE]  | [LOCATION]                                      | [NOTES]                                                 |
+| :-----: | :------- | :---------------------------------------------- | :------------------------------------------------------ |
+|  [01]   | `REPO`   | `.agents/skills` in cwd, parents, and repo root | Checked-in team skills; nearest-directory scoping       |
+|  [02]   | `USER`   | `$HOME/.agents/skills`                          | Current user root                                       |
+|  [03]   | `USER`   | `$CODEX_HOME/skills` (`~/.codex/skills`)        | Deprecated root, still loaded — the estate's codex host |
+|  [04]   | `ADMIN`  | `/etc/codex/skills`                             | Machine-shared                                          |
+|  [05]   | `SYSTEM` | Bundled, cached at `$CODEX_HOME/skills/.system` | `skill-creator`, `skill-installer`, plan — never edited |
 
 Symlinked skill folders resolve to their targets. Two skills sharing a `name` do not merge and do not shadow — both list, unlike Claude Code where personal beats project. Codex detects skill changes automatically; a missing update means restart.
 
