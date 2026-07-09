@@ -8,6 +8,7 @@
 {pkgs, ...}: {
   imports = [
     ./nix-index.nix
+    ./nixd.nix
   ];
 
   home.packages = [

@@ -11,6 +11,13 @@ local opt = vim.opt
 -- LEADER ---------------------------------------------------------------------
 vim.g.mapleader = " "
 
+-- PROVIDERS ------------------------------------------------------------------
+-- Python rides the uv tool lane (generated fact); the rest are owned-off rows.
+vim.g.python3_host_prog = require("forge.tools").provider.python3
+vim.g.loaded_ruby_provider = 0
+vim.g.loaded_perl_provider = 0
+vim.g.loaded_node_provider = 0
+
 -- UI/DISPLAY -----------------------------------------------------------------
 opt.termguicolors = true
 opt.number = true

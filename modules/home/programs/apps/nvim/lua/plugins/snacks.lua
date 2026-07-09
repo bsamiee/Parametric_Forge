@@ -6,6 +6,9 @@
 -- ----------------------------------------------------------------------------
 -- Snacks.nvim: the one rich editor surface. Terminal, lazygit, explorer, and
 -- input stay off -- Zellij owns terminals/lazygit, Yazi owns file navigation.
+-- The estate picker is the CA-1 projection inside the editor: typed action
+-- rows arrive from forge/tools.lua; scratch rows render into a float, pane
+-- rows hand off to a Zellij floating pane.
 
 require("snacks").setup({
     bigfile = { enabled = true },
@@ -85,20 +88,70 @@ require("snacks").setup({
 -- Zen consumes this by id; false projects "no", state restores on close.
 Snacks.toggle.option("signcolumn", { on = "yes", off = "no", name = "Sign Column" })
 
--- Buffer lifecycle is Snacks-owned; core keymaps keep navigation only.
-local map = vim.keymap.set
-map("n", "<A-w>", function()
-    Snacks.bufdelete()
-end, { desc = "Delete buffer" })
-map("n", "<leader>bd", function()
-    Snacks.bufdelete()
-end, { desc = "Delete buffer" })
-map("n", "<leader>ba", function()
-    Snacks.bufdelete.all()
-end, { desc = "Delete all buffers" })
-map("n", "<leader>bo", function()
-    Snacks.bufdelete.other()
-end, { desc = "Delete other buffers" })
-map("n", "<leader>bz", function()
-    Snacks.zen()
-end, { desc = "Toggle Zen Mode" })
+-- ESTATE PICKER ---------------------------------------------------------------
+-- Chords live in apps/chords.nix (fn = "pick_estate"); rows are generated
+-- facts. Buffer-lifecycle chords moved to the same owner: no keymaps here.
+local M = {}
+local tools = require("forge.tools")
+
+local function scratch_show(row, out)
+    local text = out.stdout or ""
+    if out.stderr and out.stderr ~= "" then
+        text = text .. "\n" .. out.stderr
+    end
+    vim.schedule(function()
+        local buf = vim.api.nvim_create_buf(false, true)
+        vim.api.nvim_buf_set_lines(buf, 0, -1, false, vim.split(text, "\n"))
+        vim.bo[buf].filetype = row.ft or "text"
+        vim.bo[buf].modifiable = false
+        Snacks.win({
+            buf = buf,
+            width = 0.85,
+            height = 0.85,
+            border = "rounded",
+            title = " " .. row.label .. " ",
+            wo = { wrap = false },
+        })
+    end)
+end
+
+local function run(row)
+    if row.mode == "pane" then
+        if not vim.env.ZELLIJ then
+            vim.notify(("estate row %q needs a zellij session"):format(row.id), vim.log.levels.WARN)
+            return
+        end
+        local argv = { "zellij", "run", "--floating", "--close-on-exit", "--name", row.id }
+        if row.cwd then
+            vim.list_extend(argv, { "--cwd", row.cwd })
+        end
+        table.insert(argv, "--")
+        vim.list_extend(argv, row.argv)
+        vim.system(argv)
+        return
+    end
+    vim.system(row.argv, { cwd = row.cwd, text = true }, function(out)
+        scratch_show(row, out)
+    end)
+end
+
+function M.pick_estate()
+    local items = {}
+    for idx, row in ipairs(tools.estate) do
+        items[#items + 1] = { idx = idx, text = row.label, row = row }
+    end
+    Snacks.picker({
+        title = "Nix Estate",
+        items = items,
+        format = "text",
+        layout = { preset = "select" },
+        confirm = function(picker, item)
+            picker:close()
+            if item then
+                run(item.row)
+            end
+        end,
+    })
+end
+
+return M

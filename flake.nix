@@ -67,6 +67,10 @@
 
       systems = ["aarch64-darwin" "x86_64-linux" "aarch64-linux"];
 
+      # Lazy debug output feeds the generated nixd flake-parts option rows
+      # (modules/home/programs/nix-tools/nixd.nix); zero eval cost until read.
+      debug = true;
+
       flake = {
         overlays.default = import ./overlays;
         darwinConfigurations = import ./hosts/darwin {inherit inputs nix-darwin home-manager;};

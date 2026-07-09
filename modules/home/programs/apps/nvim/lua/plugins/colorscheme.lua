@@ -4,9 +4,13 @@
 -- License       : MIT
 -- Path          : modules/home/programs/apps/nvim/lua/plugins/colorscheme.lua
 -- ----------------------------------------------------------------------------
--- Dracula colorscheme remapped to the Forge palette (forge/palette.lua)
+-- Dracula colorscheme remapped to the Forge palette, then the generated
+-- syntax projection (forge/syntax.lua: owner scope table -> treesitter
+-- captures, role rows -> diagnostics/floats/Pmenu/statuscolumn) applies on
+-- top. No hex lives here; every value arrives from the theme owner.
 
 local palette = require("forge.palette")
+local syntax = require("forge.syntax")
 
 local int = function(hex)
     return tonumber(hex:sub(2), 16)
@@ -26,6 +30,13 @@ local remap = {
     [0xFF79C6] = int(palette.magenta),
 }
 
+local function style_flags(style)
+    return {
+        italic = style:find("italic") and true or nil,
+        bold = style:find("bold") and true or nil,
+    }
+end
+
 local apply = function()
     for name, def in pairs(vim.api.nvim_get_hl(0, {})) do
         if not def.link then
@@ -42,6 +53,41 @@ local apply = function()
             end
         end
     end
+
+    -- Treesitter captures project from the owner scope table; a hue rebind in
+    -- the theme owner lands here with zero edits. Hierarchical fallback covers
+    -- capture subgroups (@keyword.return -> @keyword).
+    for _, row in ipairs(syntax.scopes) do
+        local flags = style_flags(row.style)
+        for _, capture in ipairs(row.captures) do
+            vim.api.nvim_set_hl(0, "@" .. capture, { fg = row.color, italic = flags.italic, bold = flags.bold })
+        end
+    end
+
+    -- Role rows: diagnostics, floats, completion menu, statuscolumn.
+    local roles = syntax.roles
+    local info = roles.state.info or roles.accent.primary
+    for name, def in pairs({
+        DiagnosticError = { fg = roles.state.danger },
+        DiagnosticWarn = { fg = roles.state.warning },
+        DiagnosticInfo = { fg = info },
+        DiagnosticHint = { fg = roles.text.muted },
+        DiagnosticUnderlineError = { undercurl = true, sp = roles.state.danger },
+        DiagnosticUnderlineWarn = { undercurl = true, sp = roles.state.warning },
+        DiagnosticUnderlineInfo = { undercurl = true, sp = info },
+        DiagnosticUnderlineHint = { undercurl = true, sp = roles.text.muted },
+        FloatBorder = { fg = roles.text.muted },
+        FloatTitle = { fg = roles.accent.primary, bold = true },
+        Pmenu = { bg = roles.surface.raised, fg = roles.text.primary },
+        PmenuSel = { bg = roles.surface.selected },
+        PmenuSbar = { bg = roles.surface.raised },
+        PmenuThumb = { bg = roles.surface.selected },
+        LineNr = { fg = roles.text.muted },
+        CursorLineNr = { fg = roles.accent.primary, bold = true },
+    }) do
+        vim.api.nvim_set_hl(0, name, def)
+    end
+
     -- Transparency
     vim.cmd("highlight Normal guibg=NONE ctermbg=NONE")
     vim.cmd("highlight NormalFloat guibg=NONE ctermbg=NONE")
