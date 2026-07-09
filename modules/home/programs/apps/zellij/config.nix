@@ -174,12 +174,19 @@ in {
           zellij-forgot location="file:~/.config/zellij/plugins/zellij_forgot.wasm"
 
           // --- zjstatus: top bar — navigation identity (tabs, layout, session) -------
+          // Agent/quota cells are pipe-fed by the forge-agents collector; the
+          // bar renders cached text and never polls a provider itself.
           zjstatus location="file:~/.config/zellij/plugins/zjstatus.wasm" {
     ${colorRows}
             format_left               " {tabs}"
             format_center             "{swap_layout}"
-            format_right              "#[bg=$pink,fg=$current_line,bold] {session} "
+            format_right              "{pipe_agents}{pipe_quota}#[bg=$pink,fg=$current_line,bold] {session} "
             format_space              "#[bg=$background]"
+
+            pipe_agents_format        "#[bg=$background,fg=$orange,bold] {output} "
+            pipe_agents_rendermode    "static"
+            pipe_quota_format         "#[bg=$background,fg=$comment] {output} "
+            pipe_quota_rendermode     "static"
 
             swap_layout_format        "#[bg=$background,fg=$yellow,bold] {name} "
             swap_layout_hide_if_empty "true"

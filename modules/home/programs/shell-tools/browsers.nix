@@ -118,6 +118,16 @@
       path = "Library/Logs/forge-zellij.receipts.log";
       emitter = "forge-zellij";
     }
+    {
+      kind = "mcp";
+      path = "Library/Logs/forge-mcp.receipts.log";
+      emitter = "forge-mcp";
+    }
+    {
+      kind = "agents";
+      path = "Library/Logs/forge-agents.receipts.log";
+      emitter = "forge-agents collector";
+    }
   ];
 
   # --- Register JSON projections -------------------------------------------------

@@ -23,6 +23,11 @@
 #   codex            { required, startupTimeoutSec, toolTimeoutSec, bearerEnvVar?, headerEnv? }
 #   clients          registration expectation, default [ "claude" "codex" ]
 #   assertLevel      "full" (default) | "presence" for host-private rows
+#   doctor           named probe-family checks beyond initialize: the Forge
+#                    launcher name IS the probe row. Fields (all optional):
+#                    launchdLabel (live agent state), port (loopback bind),
+#                    tokenFile (custody presence, key NAME only), execs
+#                    (companion binaries that must resolve on PATH)
 {
   profileBin,
   homeDir,
@@ -218,6 +223,9 @@
     args = [];
     envKeys = [];
     probe = "stdio";
+    doctor = {
+      execs = ["forge-companion-env" "forge-ifcmcp"];
+    };
     codex = {
       required = false;
       startupTimeoutSec = 120;
@@ -231,6 +239,12 @@
     args = [];
     envKeys = [];
     probe = "stdio";
+    doctor = {
+      launchdLabel = "com.parametric-forge.forge-jupyter";
+      port = 8888;
+      tokenFile = "${homeDir}/.config/jupyter/forge-token.env";
+      execs = ["forge-companion-env" "forge-jupyter" "forge-jupyter-mcp"];
+    };
     codex = {
       required = false;
       startupTimeoutSec = 60;
