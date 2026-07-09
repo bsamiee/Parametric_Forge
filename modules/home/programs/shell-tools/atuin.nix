@@ -5,9 +5,52 @@
 # Path          : modules/home/programs/shell-tools/atuin.nix
 # ----------------------------------------------------------------------------
 # Modern shell history with SQLite backend and full-text search UI
-{config, ...}: let
+{
+  config,
+  lib,
+  ...
+}: let
   inherit (config.forge.theme) palette;
 in {
+  # Hidden identity bundle: Login Items & Extensions resolves the HM-owned
+  # atuin-daemon agent to "Atuin Daemon" instead of the "/bin/sh" basename
+  # home-manager's mutateConfig writes into ProgramArguments[0].
+  home.file."Applications/Atuin Daemon.app/Contents/Info.plist".text = ''
+    <?xml version="1.0" encoding="UTF-8"?>
+    <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+    <plist version="1.0">
+    <dict>
+      <key>CFBundleIdentifier</key>
+      <string>com.parametric-forge.atuin-daemon</string>
+      <key>CFBundleName</key>
+      <string>Atuin Daemon</string>
+      <key>CFBundleDisplayName</key>
+      <string>Atuin Daemon</string>
+      <key>CFBundleVersion</key>
+      <string>1</string>
+      <key>CFBundleShortVersionString</key>
+      <string>1.0</string>
+      <key>CFBundlePackageType</key>
+      <string>APPL</string>
+      <key>LSUIElement</key>
+      <true/>
+      <key>LSBackgroundOnly</key>
+      <true/>
+    </dict>
+    </plist>
+  '';
+
+  home.activation.registerAtuinDaemonApp = lib.hm.dag.entryAfter ["linkGeneration"] ''
+    app="$HOME/Applications/Atuin Daemon.app"
+    lsregister="/System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/LaunchServices.framework/Versions/A/Support/lsregister"
+    if [ -d "$app" ] && [ -x "$lsregister" ]; then
+      "$lsregister" -f "$app" || true
+    fi
+  '';
+
+  # Identity row merges into the HM module's agent config (freeform schema).
+  launchd.agents.atuin-daemon.config.AssociatedBundleIdentifiers = ["com.parametric-forge.atuin-daemon"];
+
   programs.atuin = {
     enable = true;
     enableZshIntegration = false;
@@ -17,13 +60,13 @@ in {
     settings = {
       db_path = "${config.xdg.dataHome}/atuin/history.db";
       key_path = "${config.xdg.dataHome}/atuin/key";
-      # Sync rail: `atuin server` on the Maghz VPS, loopback-only through the
-      # ssh.nix vpsTunnels registry (port 8888 row lands with the VPS peer).
+      # Sync rail: services.atuin on the maghz NixOS host (modules/nixos),
+      # loopback-only through the ssh.nix vpsTunnels registry (atuin row, 8888).
       # Credential custody is Doppler: ATUIN_SYNC_PASSWORD for the one-time
       # register/login, ATUIN_SYNC_KEY escrowing `atuin key` — any host with
       # the tunnel plus Doppler joins; no per-machine roster exists anywhere.
-      # auto_sync flips true in the same change that lands the server row.
-      auto_sync = false;
+      # auto_sync stays inert until the cutover-runbook login lands a session.
+      auto_sync = true;
       sync_address = "http://127.0.0.1:8888";
       sync_frequency = "15m";
       sync.records = true; # sync v2 store

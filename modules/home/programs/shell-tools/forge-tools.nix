@@ -7,6 +7,7 @@
 # Agent-safe Forge maintenance entrypoints.
 {
   config,
+  lib,
   pkgs,
   ...
 }: let
@@ -14,61 +15,83 @@
     name = "forge-redeploy";
     # No pkgs.nix: the Determinate profile is force-prepended below so every
     # nix/nix-env call (incl. nh's) resolves the daemon-matched client.
-    runtimeInputs = [pkgs.coreutils pkgs.gawk pkgs.git pkgs.nh pkgs.nix-output-monitor pkgs.dix pkgs.nvd pkgs.cachix pkgs.flock];
+    runtimeInputs = [pkgs.coreutils pkgs.gawk pkgs.git pkgs.nh pkgs.nix-output-monitor pkgs.dix pkgs.nvd pkgs.cachix pkgs.flock pkgs.nixos-rebuild-ng];
     text = ''
       export PATH="/nix/var/nix/profiles/default/bin:$PATH"
 
+      # Polymorphic OS dispatch: one deploy rail, per-OS execution. Darwin
+      # builds/switches locally; NixOS check is eval-only (no Linux builder
+      # assumed), build proves a closure, switch activates locally on a NixOS
+      # host or remotely through nixos-rebuild-ng --target-host.
       mode="check"
       gen=""
-      case "''${1:-}" in
-        --check-only | "")
-          mode="check"
-          ;;
-        --build)
-          mode="build"
-          ;;
-        --switch)
-          mode="switch"
-          ;;
-        --rollback)
-          mode="rollback"
-          gen="''${2:-}"
-          if [ -n "$gen" ] && ! [[ "$gen" =~ ^[0-9]+$ ]]; then
-            printf 'forge-redeploy: --rollback takes an optional generation number, got: %s\n' "$gen" >&2
+      os="''${FORGE_OS:-darwin}"
+      host="''${FORGE_HOST:-}"
+      target_host="''${FORGE_TARGET_HOST:-}"
+      usage() {
+        printf 'Usage: forge-redeploy [--os darwin|nixos] [--host NAME] [--target-host SSH]\n'
+        printf '                      [--check-only|--build|--switch|--rollback [gen]|--generations]\n'
+      }
+      while [ "$#" -gt 0 ]; do
+        case "$1" in
+          --check-only) mode="check" ;;
+          --build) mode="build" ;;
+          --switch) mode="switch" ;;
+          --rollback)
+            mode="rollback"
+            if [[ "''${2:-}" =~ ^[0-9]+$ ]]; then
+              gen="$2"
+              shift
+            fi
+            ;;
+          --generations) mode="generations" ;;
+          --os)
+            os="''${2:?forge-redeploy: --os requires darwin|nixos}"
+            shift
+            ;;
+          --host)
+            host="''${2:?forge-redeploy: --host requires a flake host name}"
+            shift
+            ;;
+          --target-host)
+            target_host="''${2:?forge-redeploy: --target-host requires an ssh destination}"
+            shift
+            ;;
+          --help | -h)
+            usage
+            exit 0
+            ;;
+          *)
+            printf 'forge-redeploy: unknown argument: %s\n' "$1" >&2
             exit 2
-          fi
-          ;;
-        --generations)
-          mode="generations"
-          ;;
-        --help | -h)
-          printf 'Usage: forge-redeploy [--check-only|--build|--switch|--rollback [gen]|--generations]\n'
-          exit 0
-          ;;
+            ;;
+        esac
+        shift
+      done
+      case "$os" in
+        darwin | nixos) ;;
         *)
-          printf 'forge-redeploy: unknown argument: %s\n' "$1" >&2
+          printf 'forge-redeploy: --os must be darwin or nixos, got: %s\n' "$os" >&2
           exit 2
           ;;
       esac
+      if [ -z "$host" ]; then
+        if [ "$os" = "darwin" ]; then host="macbook"; else host="maghz"; fi
+      fi
+      if [ "$os" = "nixos" ] && { [ "$mode" = "generations" ] || [ "$mode" = "rollback" ]; }; then
+        printf 'forge-redeploy: %s is Darwin-local; NixOS generations live on the target (nixos-rebuild-ng list-generations / --rollback over ssh)\n' "$mode" >&2
+        exit 2
+      fi
 
       forge_root="''${FORGE_ROOT:-$HOME/Documents/99.Github/Parametric_Forge}"
-      host="''${FORGE_DARWIN_HOST:-macbook}"
       cache="''${CACHIX_CACHE:-bsamiee}"
-      secrets_file="''${FORGE_SECRETS_FILE:-''${XDG_CONFIG_HOME:-$HOME/.config}/hm-op-session.sh}"
+      secrets_file="''${FORGE_SECRETS_FILE:-''${XDG_CONFIG_HOME:-$HOME/.config}/forge-session-secrets.sh}"
       receipt_log="''${FORGE_RECEIPT_LOG:-$HOME/Library/Logs/forge-redeploy.receipts.log}"
       lock_file="''${FORGE_REDEPLOY_LOCK:-$HOME/.cache/forge-redeploy.lock}"
       custom_conf="/etc/nix/nix.custom.conf"
       profile="/nix/var/nix/profiles/system"
       nix_env="/nix/var/nix/profiles/default/bin/nix-env"
       rebuild="/run/current-system/sw/bin/darwin-rebuild"
-
-      # Modes take no trailing arguments; --rollback takes at most one.
-      limit=1
-      [ "$mode" != "rollback" ] || limit=2
-      if [ "$#" -gt "$limit" ]; then
-        printf 'forge-redeploy: unexpected arguments after %s\n' "$1" >&2
-        exit 2
-      fi
 
       # Generation listing is a pure read; no lock, no receipt, no flake needed.
       if [ "$mode" = "generations" ]; then
@@ -97,8 +120,8 @@
       mux="''${ZELLIJ_SESSION_NAME:+zellij}"
       result="fail"
       emit_receipt() {
-        line="$(printf 'ts=%s\tmode=%s\thost=%s\tsystem=%s\tgen=%s\teval_s=%s\tbuild_s=%s\tactivate_s=%s\tto_build=%s\tto_fetch=%s\tdiff_lines=%s\tpush=%s\tverify=%s\tkickstart=%s\tcurrent=%s\tmux=%s\tresult=%s' \
-          "$ts" "$mode" "$host" "$system_path" "$gen_live" "$eval_s" "$build_s" "$activate_s" \
+        line="$(printf 'ts=%s\tmode=%s\tos=%s\thost=%s\ttarget=%s\tsystem=%s\tgen=%s\teval_s=%s\tbuild_s=%s\tactivate_s=%s\tto_build=%s\tto_fetch=%s\tdiff_lines=%s\tpush=%s\tverify=%s\tkickstart=%s\tcurrent=%s\tmux=%s\tresult=%s' \
+          "$ts" "$mode" "$os" "$host" "''${target_host:--}" "$system_path" "$gen_live" "$eval_s" "$build_s" "$activate_s" \
           "$to_build" "$to_fetch" "$diff_lines" "$push" "$verify" "$kickstart" \
           "$current" "''${mux:-none}" "$result")"
         # An unwritable log must never fail the trap or mask a landed deploy.
@@ -111,9 +134,10 @@
       trap 'emit_receipt; rm -rf "$tmpdir"' EXIT
       out_link="$tmpdir/system"
 
-      # Token via single env indirection: ambient CACHIX_AUTH_TOKEN wins, secrets file
-      # (FORGE_SECRETS_FILE) is the fallback, absence degrades to a skipped push.
-      # A present-but-bad token never fails an already-built/switched deploy.
+      # Backend-dispatched token resolution: ambient CACHIX_AUTH_TOKEN wins, the
+      # session-secrets dispatcher (FORGE_SECRETS_FILE) resolves the machine rail
+      # per CLAUDE_SECRET_BACKEND, absence degrades to a skipped push. A
+      # present-but-bad token never fails an already-built/switched deploy.
       push_cache() {
         if [ -z "''${CACHIX_AUTH_TOKEN:-}" ] && [ -f "$secrets_file" ]; then
           # shellcheck source=/dev/null
@@ -207,10 +231,16 @@
       t0=$EPOCHSECONDS
       nix flake check --print-build-logs
 
+      if [ "$os" = "darwin" ]; then
+        attr="darwinConfigurations.$host.system"
+      else
+        attr="nixosConfigurations.$host.config.system.build.toplevel"
+      fi
+
       # Pre-build proof: to-build/to-fetch counts expose derivation-identity
       # drift (the 1h local-rebuild class) the day it appears. Parsing is
       # version-sensitive and degrades to unknown, never fails the deploy.
-      if nix build --dry-run --no-link "$forge_root#darwinConfigurations.$host.system" 2>"$tmpdir/dryrun"; then
+      if nix build --dry-run --no-link "$forge_root#$attr" 2>"$tmpdir/dryrun"; then
         # Store paths outside a recognized section mean the wording drifted:
         # report unknown instead of a false-clean 0/0.
         read -r to_build to_fetch < <(awk '
@@ -224,7 +254,55 @@
       fi
       eval_s=$((EPOCHSECONDS - t0))
 
-      # Every mode builds the toplevel through nh and reviews the closure diff.
+      # NixOS dispatch: eval-only check (drv identity), real-closure build,
+      # local nh switch on a NixOS host, remote target-built switch otherwise.
+      if [ "$os" = "nixos" ]; then
+        t0=$EPOCHSECONDS
+        case "$mode" in
+          check)
+            system_path="$(nix eval --raw "$forge_root#$attr.drvPath")"
+            build_s=$((EPOCHSECONDS - t0))
+            result="ok"
+            printf 'forge-redeploy: check-only ok (eval) drv=%s\n' "$system_path"
+            ;;
+          build)
+            system_path="$(nix build --no-link --print-out-paths "$forge_root#$attr")"
+            build_s=$((EPOCHSECONDS - t0))
+            push_cache "$system_path"
+            result="ok"
+            printf 'forge-redeploy: build ok system=%s\n' "$system_path"
+            ;;
+          switch)
+            if [ "$(uname -s)" = "Linux" ] && [ -z "$target_host" ]; then
+              nh os switch --hostname "$host" "$forge_root"
+              build_s=$((EPOCHSECONDS - t0))
+              system_path="$(readlink -f /run/current-system)"
+            else
+              [ -n "$target_host" ] || {
+                printf 'forge-redeploy: --switch --os nixos from Darwin needs --target-host\n' >&2
+                exit 2
+              }
+              system_path="$(nix eval --raw "$forge_root#$attr.drvPath")"
+              # Target-built activation: no local Linux builder is assumed;
+              # nixos-rebuild-ng evaluates locally and builds on the target.
+              sudo_flag=(--sudo)
+              case "$target_host" in root@*) sudo_flag=() ;; esac
+              t1=$EPOCHSECONDS
+              nixos-rebuild-ng switch --flake "$forge_root#$host" \
+                --target-host "$target_host" --build-host "$target_host" \
+                "''${sudo_flag[@]}"
+              activate_s=$((EPOCHSECONDS - t1))
+              build_s=$((EPOCHSECONDS - t0))
+            fi
+            result="ok"
+            printf 'forge-redeploy: switch ok os=nixos host=%s target=%s system=%s\n' \
+              "$host" "''${target_host:-local}" "$system_path"
+            ;;
+        esac
+        exit 0
+      fi
+
+      # Every Darwin mode builds the toplevel through nh and reviews the diff.
       t0=$EPOCHSECONDS
       nh darwin build --hostname "$host" --out-link "$out_link" --diff never "$forge_root"
       build_s=$((EPOCHSECONDS - t0))
@@ -815,14 +893,404 @@
       [ "$remaining" = 0 ] || exit 4
     '';
   };
+  # First-switch and first-session acceptance choreography: one ordered,
+  # receipt-bearing rail from preflight through the maghz codex gate, idempotent
+  # and re-enterable from any step (--from/--only). Probes stay thread-owned
+  # (forge-redeploy receipts, forge-terminal-accept, forge-mcp doctor); this
+  # owner orders and asserts. Key material is asserted by NAME only, never value.
+  forgeAccept = pkgs.writeShellApplication {
+    name = "forge-accept";
+    runtimeInputs = [pkgs.coreutils pkgs.gnugrep pkgs.gawk pkgs.jq pkgs.findutils pkgs.zellij pkgs.flock forgeActivationSweep forgeRedeploy];
+    text = ''
+      declare -ra STEPS=(preflight switch replay outputs zellij terminal fleet lanes maghz relaunch)
+      usage() {
+        printf 'Usage: forge-accept [--from STEP | --only STEP | --list]\n  steps: %s\n' "''${STEPS[*]}" >&2
+        exit 64
+      }
+      from="" only=""
+      case "''${1:-}" in
+        "") ;;
+        --list) printf '%s\n' "''${STEPS[@]}"; exit 0 ;;
+        --from) from="''${2:?--from requires a step}" ;;
+        --only) only="''${2:?--only requires a step}" ;;
+        *) usage ;;
+      esac
+      if [ -n "$from$only" ]; then
+        printf '%s\n' "''${STEPS[@]}" | grep -qx "''${from:-$only}" || usage
+      fi
+
+      uid="$(id -u)"
+      forge_root="''${FORGE_ROOT:-$HOME/Documents/99.Github/Parametric_Forge}"
+      custom_conf="/etc/nix/nix.custom.conf"
+      lock_file="''${FORGE_REDEPLOY_LOCK:-$HOME/.cache/forge-redeploy.lock}"
+      receipt_log="''${FORGE_ACCEPT_RECEIPT_LOG:-$HOME/Library/Logs/forge-accept.receipts.log}"
+      cache_home="''${XDG_CACHE_HOME:-$HOME/.cache}"
+      config_home="''${XDG_CONFIG_HOME:-$HOME/.config}"
+      session_cache="$cache_home/forge-secrets/session-env.sh"
+      op_cache="$config_home/hm-op-session.sh"
+      gui_manifest="$cache_home/forge-secrets/gui-replay.names"
+      backend="''${CLAUDE_SECRET_BACKEND:-doppler}"
+      brew_bin="''${FORGE_BREW:-/opt/homebrew/bin/brew}"
+      hook="''${FORGE_ACCEPT_HOOK:-$HOME/.claude/hooks/setup-env.sh}"
+      tunnel_receipts="''${FORGE_TUNNEL_RECEIPTS:-$HOME/Library/Logs/maghz-vps-tunnel.receipts.log}"
+      ts="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+      pass=0 warn=0 fail=0 instruct=0 skip=0
+
+      row() {
+        printf 'ts=%s\tstep=%s\tstatus=%s\tdetail=%s\n' "$ts" "$2" "$1" "$3" >>"$receipt_log"
+        printf '%-8s | %-22s | %s\n' "$1" "$2" "$3" >&2
+        case "$1" in
+          PASS) pass=$((pass + 1)) ;;
+          WARN) warn=$((warn + 1)) ;;
+          FAIL) fail=$((fail + 1)) ;;
+          INSTRUCT) instruct=$((instruct + 1)) ;;
+          SKIP) skip=$((skip + 1)) ;;
+        esac
+      }
+      key_names() {
+        [ -f "$1" ] || return 0
+        grep -oE '^export [A-Za-z_][A-Za-z0-9_]*' "$1" | awk '{print $2}'
+      }
+      # GUI-domain env NAMES only: values are stripped before anything prints;
+      # launchctl getenv false-negatives make raw print the only truthful read.
+      gui_names() {
+        /bin/launchctl print "gui/$uid" 2>/dev/null \
+          | awk '/^\tenvironment = \{/ {f = 1; next} f && /^\t\}/ {exit} f {sub(/^\t\t/, ""); sub(/ =>.*/, ""); print}'
+      }
+      expected_names() {
+        {
+          key_names "$session_cache"
+          [ "$backend" = "doppler" ] || key_names "$op_cache"
+        } | sort -u
+      }
+
+      step_preflight() {
+        if [ -f "$forge_root/flake.nix" ]; then
+          row PASS preflight-flake "flake root $forge_root"
+        else
+          row FAIL preflight-flake "missing flake root $forge_root"
+          return 0
+        fi
+        local casks nightly="absent" stable="absent"
+        casks="$("$brew_bin" list --cask 2>/dev/null || true)"
+        ! grep -qx 'wezterm@nightly' <<<"$casks" || nightly="installed"
+        ! grep -qx 'wezterm' <<<"$casks" || stable="installed"
+        if [ "$nightly" = "installed" ] && [ "$stable" = "absent" ]; then
+          row PASS preflight-cask "wezterm@nightly=$nightly stable=$stable"
+        else
+          row FAIL preflight-cask "wezterm@nightly=$nightly stable=$stable; conflicts_with kills brew bundle under activation — uninstall stable first"
+        fi
+        if [ ! -e "$custom_conf" ] || [ -L "$custom_conf" ]; then
+          row PASS preflight-customconf "$custom_conf $([ -L "$custom_conf" ] && echo symlink || echo absent)"
+        else
+          row FAIL preflight-customconf "real file blocks activation; forge-redeploy --switch adopts it"
+        fi
+        local sweep_rc=0
+        forge-activation-sweep >/dev/null 2>&1 || sweep_rc=$?
+        if [ "$sweep_rc" = 0 ]; then
+          row PASS preflight-sweep "no root-owned in-the-way HM targets"
+        else
+          row FAIL preflight-sweep "rc=$sweep_rc; run forge-activation-sweep --clear before switching"
+        fi
+        if (
+          exec 9>"$lock_file"
+          flock -n 9
+        ) 2>/dev/null; then
+          row PASS preflight-lock "deploy lock free"
+        else
+          row WARN preflight-lock "deploy/maintenance run holds $lock_file"
+        fi
+      }
+
+      step_switch() {
+        local rc=0
+        forge-redeploy --switch || rc=$?
+        if [ "$rc" = 0 ]; then
+          row PASS switch "forge-redeploy --switch ok; system=$(readlink /run/current-system)"
+        else
+          row FAIL switch "forge-redeploy --switch rc=$rc; receipt in forge-redeploy.receipts.log"
+        fi
+      }
+
+      step_replay() {
+        /bin/launchctl kickstart -k "gui/$uid/org.nix-community.home.gui-op-secrets" 2>/dev/null || true
+        sleep 3
+        if [ ! -f "$gui_manifest" ]; then
+          row WARN replay "no gui-replay manifest at $gui_manifest; the agent has not replayed on this generation"
+          return 0
+        fi
+        local missing
+        missing="$(comm -23 <(sort -u "$gui_manifest") <(gui_names | sort -u) | paste -sd' ' -)"
+        if [ -z "$missing" ]; then
+          row PASS replay "gui domain carries all $(wc -l <"$gui_manifest" | tr -d ' ') replayed key names (new spawns only; running apps keep their env)"
+        else
+          row FAIL replay "gui domain missing replayed names: $missing"
+        fi
+      }
+
+      step_outputs() {
+        # Clean-env INTERACTIVE login shell: the terminal lane. typeset -U
+        # dedup lives in .zshrc, which non-interactive login shells skip, and
+        # an inherited caller PATH would fake duplicate segments.
+        local path_out dup
+        # shellcheck disable=SC2016  # $PATH expands inside the probed zsh, not here.
+        path_out="$(env -i HOME="$HOME" USER="$USER" LOGNAME="$USER" SHELL=/bin/zsh TERM=xterm \
+          /bin/zsh -il -c 'printf %s "$PATH"' 2>/dev/null || true)"
+        dup="$(tr ':' '\n' <<<"$path_out" | grep -v '^$' | sort | uniq -d | paste -sd' ' -)"
+        if [ -n "$path_out" ] && [ -z "$dup" ] && grep -q "/etc/profiles/per-user/" <<<"$path_out"; then
+          row PASS outputs-path "login PATH single-owner: per-user profile present, no duplicate segments"
+        else
+          row FAIL outputs-path "dup segments: ''${dup:-none}; per-user profile $(grep -q '/etc/profiles/per-user/' <<<"$path_out" && echo present || echo ABSENT)"
+        fi
+        if [ -L "$config_home/zsh/.zshrc" ] && [[ "$(readlink "$config_home/zsh/.zshrc")" == /nix/store/* ]]; then
+          row PASS outputs-zshrc "generated .zshrc is store-linked"
+        else
+          row FAIL outputs-zshrc ".zshrc is not a store symlink; the generation did not land"
+        fi
+        local dumps
+        dumps="$(find "$config_home/zsh" -maxdepth 1 -name '.zcompdump*' 2>/dev/null | wc -l | tr -d ' ')"
+        if [ "$dumps" = 0 ]; then
+          row PASS outputs-compdump "no compdump litter in ZDOTDIR"
+        else
+          row WARN outputs-compdump "$dumps .zcompdump file(s) in ZDOTDIR; forge-cleanup plan/apply clears them"
+        fi
+        # Background-limited agents (LimitLoadToSessionType) address as
+        # user/$uid; plain gui agents as gui/$uid — probe both domains.
+        if { /bin/launchctl print "user/$uid/org.nix-community.home.atuin-daemon" \
+          || /bin/launchctl print "gui/$uid/org.nix-community.home.atuin-daemon"; } 2>/dev/null \
+          | grep -q 'state = running'; then
+          row PASS outputs-atuin "atuin daemon agent running"
+        else
+          row FAIL outputs-atuin "atuin daemon agent not running"
+        fi
+        local zwarn
+        zwarn="$(/bin/zsh -il -c 'exit 0' 2>&1 | grep -i 'fzf' | head -1 || true)"
+        if [ -z "$zwarn" ]; then
+          row PASS outputs-fzf "interactive zsh emits no fzf width warnings"
+        else
+          row FAIL outputs-fzf "fzf warning: $zwarn"
+        fi
+      }
+
+      # Server-respawn legality: a zellij server inherits its spawner's env, so
+      # a server predating the live generation serves stale session variables.
+      # Respawn is legal ONLY for forge-owned sessions with zero attached
+      # clients; user sessions get an instruction row — only WezTerm (launchd
+      # env) may spawn the replacement server, never an agent shell.
+      step_zellij() {
+        local sys_epoch sessions name pid start attached
+        sys_epoch="$(/usr/bin/stat -f %m /run/current-system 2>/dev/null || echo 0)"
+        sessions="$(zellij list-sessions -n 2>/dev/null | grep -v 'EXITED' | awk '{print $1}' || true)"
+        if [ -z "$sessions" ]; then
+          row PASS zellij-respawn "no live sessions; next WezTerm launch spawns fresh servers (legal respawn window)"
+          return 0
+        fi
+        while IFS= read -r name; do
+          [ -n "$name" ] || continue
+          pid="$(pgrep -f -- "zellij.*--server .*/''${name}\$" | head -1 || true)"
+          start=0
+          if [ -n "$pid" ]; then
+            start="$(ps -o lstart= -p "$pid" 2>/dev/null | xargs -I{} /bin/date -j -f '%a %b %d %T %Y' '{}' +%s 2>/dev/null || echo 0)"
+          fi
+          attached="$(zellij --session "$name" action list-clients 2>/dev/null | tail -n +2 | wc -l | tr -d ' ' || echo 0)"
+          if [ "''${start:-0}" != 0 ] && [ "$start" -ge "$sys_epoch" ]; then
+            row PASS zellij-respawn "session '$name' server postdates the live generation (clients=''${attached:-0})"
+          elif [[ "$name" == forge-accept-* ]] && [ "''${attached:-0}" = 0 ]; then
+            zellij kill-session "$name" >/dev/null 2>&1 || true
+            zellij delete-session "$name" >/dev/null 2>&1 || true
+            row PASS zellij-respawn "disposable '$name' (stale server) reaped; respawn legal: forge-owned, zero clients"
+          else
+            row INSTRUCT zellij-respawn "session '$name' server predates the live generation (clients=''${attached:-0}); close it and relaunch from WezTerm — respawn is legal only at zero attached clients, and only WezTerm may spawn the server"
+          fi
+        done <<<"$sessions"
+      }
+
+      step_terminal() {
+        command -v forge-terminal-accept.sh >/dev/null 2>&1 || {
+          row SKIP terminal "forge-terminal-accept.sh not on PATH"
+          return 0
+        }
+        local out rc=0 p f d
+        out="$(forge-terminal-accept.sh 2>/dev/null)" || rc=$?
+        p="$(jq -r '.summary.pass // 0' <<<"$out" 2>/dev/null || echo 0)"
+        f="$(jq -r '.summary.fail // 0' <<<"$out" 2>/dev/null || echo 0)"
+        d="$(jq -r '.summary.defer // 0' <<<"$out" 2>/dev/null || echo 0)"
+        if [ "$rc" = 0 ] && [ "''${f:-1}" = 0 ]; then
+          row PASS terminal "keystone harness pass=$p defer=$d (deferred rows run in the attached leg)"
+        else
+          row FAIL terminal "keystone harness rc=$rc pass=$p fail=$f defer=$d"
+        fi
+      }
+
+      step_fleet() {
+        command -v forge-mcp >/dev/null 2>&1 || {
+          row SKIP fleet-doctor "forge-mcp not on PATH"
+          return 0
+        }
+        local out rc=0 drc=0
+        out="$(forge-mcp doctor --network 2>&1)" || rc=$?
+        if [ "$rc" = 0 ]; then
+          row PASS fleet-doctor "all probed fleet rows green"
+        else
+          row FAIL fleet-doctor "failing rows: $(grep '^\[FAIL\]' <<<"$out" | awk '{print $2}' | paste -sd' ' - || true)"
+        fi
+        forge-mcp drift >/dev/null 2>&1 || drc=$?
+        if [ "$drc" = 0 ]; then
+          row PASS fleet-drift "manifest matches both client registrations"
+        else
+          row FAIL fleet-drift "registration drift; run forge-mcp drift"
+        fi
+      }
+
+      step_lanes() {
+        local expected tmp cli_names cli_missing tui_missing gui_missing
+        expected="$(expected_names)"
+        [ -n "$expected" ] || {
+          row WARN lanes "no session material on disk; run a Claude session first"
+          return 0
+        }
+        tmp="$(mktemp -d)"
+        CLAUDE_ENV_FILE="$tmp/env.sh" bash "$hook" >/dev/null 2>"$tmp/receipt" || true
+        cli_names="$(key_names "$tmp/env.sh" | sort -u)"
+        cli_missing="$(comm -23 <(printf '%s\n' "$expected") <(printf '%s\n' "$cli_names") | paste -sd' ' -)"
+        tui_missing="$(ZKEYS="$(paste -sd' ' - <<<"$expected")" /bin/zsh -il -c \
+          'for k in ''${(s: :)ZKEYS}; do [ -n "''${(P)k}" ] || print "$k"; done' 2>/dev/null | paste -sd' ' -)"
+        gui_missing="$(comm -23 <(printf '%s\n' "$expected") <(gui_names | sort -u) | paste -sd' ' -)"
+        rm -rf "$tmp"
+        if [ -z "$cli_missing$tui_missing$gui_missing" ]; then
+          row PASS lanes "backend=$backend; cli/tui/gui all carry the expected key-name set ($(wc -l <<<"$expected" | tr -d ' ') names)"
+        else
+          row FAIL lanes "backend=$backend missing — cli:[''${cli_missing}] tui:[''${tui_missing}] gui:[''${gui_missing}]"
+        fi
+      }
+
+      # Holder classification separates routine (colima local-parity mode)
+      # from regression (a shared ssh mux retaining tunnel forwards).
+      classify_holder() {
+        local cmd
+        cmd="$(ps -o command= -p "$1" 2>/dev/null || true)"
+        case "$cmd" in
+          *colima* | *lima*) echo colima ;;
+          *ssh*) echo ssh-mux ;;
+          *) echo other ;;
+        esac
+      }
+
+      step_maghz() {
+        local last state kinds
+        last="$(tail -1 "$tunnel_receipts" 2>/dev/null || true)"
+        [ -n "$last" ] || {
+          row WARN maghz "no tunnel receipts at $tunnel_receipts"
+          return 0
+        }
+        state="$(grep -oE 'state=[a-z-]+' <<<"$last" | cut -d= -f2 || true)"
+        case "$state" in
+          up)
+            row PASS maghz "tunnel up: ''${last#*state=up}"
+            ;;
+          port-conflict)
+            local -a cports=()
+            read -ra cports <<<"$(grep -oE 'spawn:[0-9 ]+' <<<"$last" | cut -d: -f2 || true)"
+            kinds="$(for p in "''${cports[@]}"; do
+              /usr/sbin/lsof -nP -iTCP:"$p" -sTCP:LISTEN 2>/dev/null | awk 'NR>1 {print $2}'
+            done | sort -u | while IFS= read -r hpid; do classify_holder "$hpid"; done | sort -u | paste -sd' ' -)"
+            case "$kinds" in
+              *ssh-mux*)
+                row FAIL maghz "port-conflict regression: a shared ssh ControlMaster retains the forwards; exit the mux (ssh -O exit maghz) — ControlPath=none on the tunnel host prevents recurrence"
+                ;;
+              colima)
+                row WARN maghz "port-conflict routine: local compose parity mode holds the forwards; boot the tunnel agent out while local mode runs"
+                ;;
+              *)
+                row WARN maghz "port-conflict: holder kinds=''${kinds:-unknown}"
+                ;;
+            esac
+            ;;
+          *)
+            row WARN maghz "tunnel state=''${state:-unknown}: ''${last#*state=}"
+            ;;
+        esac
+        if [ "$state" = "up" ]; then
+          row PASS maghz-codex "tunnel up; codex-required postgres MCP startup gate clear"
+        else
+          row INSTRUCT maghz-codex "postgres MCP is codex-required: codex startup hard-fails while the tunnel is ''${state:-down}; sequence tunnel-up (or local compose with a repointed DSN) before launching codex"
+        fi
+      }
+
+      step_relaunch() {
+        row INSTRUCT relaunch-chords "operator: in a fresh WezTerm window, verify karabiner leader chords fire — letter chords AND shifted-punctuation binds (key-identity law)"
+        row INSTRUCT relaunch-popup "operator: verify the yazi popup rail — toggle chord opens one popup, repeat chord dismisses, F1 tooltip renders"
+        row INSTRUCT relaunch-ui "operator: verify fzf/atuin interactive UI and VSCode glyph render after relaunch"
+      }
+
+      mkdir -p "$(dirname "$receipt_log")"
+      printf 'forge-accept: run ts=%s backend=%s from=%s only=%s\n' "$ts" "$backend" "''${from:-first}" "''${only:-all}" >&2
+      started="false"
+      for s in "''${STEPS[@]}"; do
+        if [ -n "$only" ]; then
+          [ "$s" = "$only" ] || continue
+        elif [ -n "$from" ]; then
+          [ "$s" = "$from" ] && started="true"
+          [ "$started" = "true" ] || continue
+        fi
+        "step_$s"
+      done
+      result=ok
+      [ "$fail" = 0 ] || result=fail
+      line="$(printf 'ts=%s\tsummary=pass:%s,warn:%s,fail:%s,instruct:%s,skip:%s\tresult=%s' \
+        "$ts" "$pass" "$warn" "$fail" "$instruct" "$skip" "$result")"
+      printf '%s\n' "$line" >>"$receipt_log"
+      printf 'forge-accept: receipt\t%s\n' "$line"
+      [ "$result" = ok ]
+    '';
+  };
 in {
-  home.packages = [
-    forgeRedeploy
-    forgeNixMaintenance
-    forgeCleanup
-    forgeNixDrift
-    forgeActivationSweep
-  ];
+  home = {
+    packages = [
+      forgeRedeploy
+      forgeNixMaintenance
+      forgeCleanup
+      forgeNixDrift
+      forgeActivationSweep
+      forgeAccept
+    ];
+
+    # Shared identity bundle for both scheduled nix agents: Login Items &
+    # Extensions shows one "Forge Nix Automation" row (one toggle governs the
+    # drift + maintenance pair) instead of two generic "/bin/sh" entries.
+    file."Applications/Forge Nix Automation.app/Contents/Info.plist".text = ''
+      <?xml version="1.0" encoding="UTF-8"?>
+      <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+      <plist version="1.0">
+      <dict>
+        <key>CFBundleIdentifier</key>
+        <string>com.parametric-forge.forge-nix-automation</string>
+        <key>CFBundleName</key>
+        <string>Forge Nix Automation</string>
+        <key>CFBundleDisplayName</key>
+        <string>Forge Nix Automation</string>
+        <key>CFBundleVersion</key>
+        <string>1</string>
+        <key>CFBundleShortVersionString</key>
+        <string>1.0</string>
+        <key>CFBundlePackageType</key>
+        <string>APPL</string>
+        <key>LSUIElement</key>
+        <true/>
+        <key>LSBackgroundOnly</key>
+        <true/>
+      </dict>
+      </plist>
+    '';
+
+    activation.registerForgeNixAutomationApp = lib.hm.dag.entryAfter ["linkGeneration"] ''
+      app="$HOME/Applications/Forge Nix Automation.app"
+      lsregister="/System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/LaunchServices.framework/Versions/A/Support/lsregister"
+      if [ -d "$app" ] && [ -x "$lsregister" ]; then
+        "$lsregister" -f "$app" || true
+      fi
+    '';
+  };
 
   # Weekly off-peak cadence; the shared flock serializes against deploys.
   launchd.agents.forge-nix-maintenance = {
@@ -839,6 +1307,7 @@ in {
       ProcessType = "Background";
       StandardOutPath = "${config.home.homeDirectory}/Library/Logs/forge-nix-maintenance.log";
       StandardErrorPath = "${config.home.homeDirectory}/Library/Logs/forge-nix-maintenance.log";
+      AssociatedBundleIdentifiers = ["com.parametric-forge.forge-nix-automation"];
     };
   };
 
@@ -857,6 +1326,7 @@ in {
       ProcessType = "Background";
       StandardOutPath = "${config.home.homeDirectory}/Library/Logs/forge-nix-drift.log";
       StandardErrorPath = "${config.home.homeDirectory}/Library/Logs/forge-nix-drift.log";
+      AssociatedBundleIdentifiers = ["com.parametric-forge.forge-nix-automation"];
     };
   };
 }
