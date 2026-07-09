@@ -4,161 +4,701 @@
 # License       : MIT
 # Path          : /modules/home/aliases/core.nix
 # ----------------------------------------------------------------------------
-# Core system aliases for common operations
-_: {
-  programs.zsh.shellAliases = {
-    # --- General Aliases ----------------------------------------------------
-    cl = "clear";
-    vim = "nvim";
-    nv = "nvim";
-    ff = "fastfetch";
-
-    # --- Shell Configuration ------------------------------------------------
-    envs = "env | sort"; # List environment variables sorted
-    ezsh = "$EDITOR \${ZDOTDIR:-$HOME}/.zshrc"; # Edit ZSH config
-    rzsh = "source \${ZDOTDIR:-$HOME}/.zshrc"; # Reload ZSH config
-    reload = "exec $SHELL"; # Reload shell
-
-    # --- File Operations ----------------------------------------------------
-    ls = "eza -la --header --no-user --time-style=relative";
-    fda = "fd --hidden --no-ignore -a"; # Find all files, including hidden and ignored
-    mkdir = "mkdir -pv"; # Always create parent directories
-    rsmv = "rsync-mv.sh"; # Atomic move with directory cleanup
-    cpsp = "rsync -ahPSX --"; # Sparse copy (VMs, disk images)
-    backup = "rsync -ahPX --delete"; # Mirror with deletion
-    rsyncd = "rsync -ahPn"; # Dry-run with progress (safety check)
-    rsyncf = "rsync -ahPX --append-verify"; # Resume interrupted transfers
-    rcs = "rclone sync --progress --transfers 4"; # Cloud sync with progress
-    hex = "hexyl"; # Hex viewer
-    pack = "ouch compress"; # Compress files/directories
-    unpack = "ouch decompress"; # Decompress archives
-
-    # --- System Monitoring --------------------------------------------------
-    pst = "procs --tree"; # Process tree
-    psc = "procs --sortd cpu"; # Sort processes by CPU usage
-    psm = "procs --sortd mem"; # Sort processes by memory usage
-    psw = "procs --watch"; # Watch processes (2s refresh)
-    top = "btm"; # Modern system monitor
-    dfi = "dua i"; # Interactive disk usage analyzer
-    killi = "pik"; # Interactive process killer
-    bench = "hyperfine"; # Modern benchmarking tool
-
-    # --- Text & Search ------------------------------------------------------
-    chs = "choose"; # Human-friendly column selector
-    # man is owned by batman export-env in zsh/init.nix; grep stays upstream (rg flag semantics differ).
-    batg = "batgrep"; # Bat-powered ripgrep (via bat-extras)
-    tldru = "tldr --update"; # Update tldr cache
-    rgx = "grex -xc"; # Generate readable regex from test cases
-    rgxf = "grex -xc -f"; # File input with readable output
-    sr = "serpl"; # TUI search and replace
-
-    # --- Formatting Tools ---------------------------------------------------
-    mdv = "rich --markdown"; # Markdown viewer (like hex for hexyl)
-
-    # --- Code Screenshot ----------------------------------------------------
-    carbonc = "carbon-now.sh --to-clipboard"; # Carbon screenshot to clipboard
-    carboni = "carbon-now.sh --interactive"; # Carbon interactive mode
-
-    # --- Data Processing ----------------------------------------------------
-    jqr = "jq -r"; # Raw output (no quotes)
-    jqc = "jq -c"; # Compact JSON output
-    jqs = "jq -S"; # Sort object keys
-    jqi = "jnv"; # Interactive JSON viewer/filter
-    hq = "harlequin"; # Terminal SQL IDE (DuckDB default profile)
-    fqd = "fq d"; # Decode and display binary file structure
-    j2y = "yq eval -P"; # JSON to YAML
-    y2j = "yq eval -o=json"; # YAML to JSON
-    yaml = "yq eval"; # Process YAML
-
-    # --- Data Conversion ----------------------------------------------------
-    c2j = "mlr --c2j cat"; # CSV to JSON
-    j2c = "mlr --j2c cat"; # JSON to CSV
-
-    # --- Trash Management ---------------------------------------------------
-    trestore = "trash-restore"; # Restore files from trash
-    tls = "trash-list"; # List trashed files
-    trm = "trash-rm"; # Remove specific files from trash
-    tempty = "trash-empty"; # Empty entire trash
-
-    # --- Directory Navigation -----------------------------------------------
-    cdr = "cd $(git rev-parse --show-toplevel)"; # Jump to repo root
-    ".." = "cd .."; # Up one level
-    "..." = "cd ../.."; # Up two levels
-    "...." = "cd ../../.."; # Up three levels
-    "....." = "cd ../../../.."; # Up four levels
-    "-" = "cd -"; # Previous directory
-
-    # --- Network Tools ------------------------------------------------------
-    http = "xh"; # HTTPie compatibility
-    https = "xh --https"; # HTTPS by default
-    POST = "xh POST"; # RESTful convention
-    PUT = "xh PUT"; # RESTful convention
-    tripu = "trip --udp --target-port 33434"; # UDP tracing for ECMP paths
-    ohaj = "oha --no-tui --output-format json"; # HTTP load run with JSON report
-    serve = "python3 -m http.server 8000"; # Quick static server
-    bw = "sudo bandwhich"; # Bandwidth monitor (needs sudo)
-    speedtestl = "speedtest --accept-license"; # Ookla speed test with license pre-accepted
-    lssh = "sshs"; # Interactive SSH picker
-    whs = "webhook -hooks $WEBHOOK_HOOKS_DIR/hooks.json -verbose"; # Start webhook server
-    ports = "sudo lsof -iTCP -sTCP:LISTEN -n -P"; # List open ports (needs sudo)
-    flushdns = "sudo dscacheutil -flushcache && sudo killall -HUP mDNSResponder"; # Flush DNS cache (macOS)
-
-    # --- Time & Date Operations ---------------------------------------------
-    timestamp = "date +'%Y%m%d_%H%M%S'"; # Filename-safe timestamp
-    epoch = "date +%s"; # Unix timestamp
-    now = "date +'%Y-%m-%d %H:%M:%S'"; # ISO 8601 timestamp
-    today = "date +'%Y-%m-%d'"; # ISO date for filenames
-    week = "date +%V"; # Week number
-
-    # --- 1Password Operations -----------------------------------------------
-    opls = "op item list --format=json | jq -r '.[] | \"\\(.id) \\(.title)\"'"; # List items
-    opg = "op item get"; # Get item details
-    opr = "op run --"; # Run command with secrets injected
-    opi = "op inject -i"; # Inject secrets into template
-
-    # --- Zellij Operations --------------------------------------------------
-    zjl = "zellij list-sessions"; # List all zellij sessions
-    zja = "zellij attach"; # Attach to session "zja <session_name>"
-    zjd = "zellij delete-session"; # Delete a target session "zjd <session_name>"
-    zjda = "zellij delete-all-sessions"; # Delete all zellij sessions
-    zjk = "zellij kill-session"; # Kill a target session "zjk <session_name>"
-    zjka = "zellij kill-all-sessions"; # Kill all zellij sessions
-
-    # --- Workflow Testing -------------------------------------------------
-    actl = "act -l"; # List workflows/jobs
-    alint = "actionlint"; # Lint workflow files
-
-    # --- Dev Tools ----------------------------------------------------------
-    tyc = "ty check"; # Type-check shorthand; bare ty stays the CLI/LSP surface
-    rfix = "ruff check --fix";
-    rformat = "ruff format";
-    rhproject = "dotnet new rhino -sample"; # Initialize Rhino plugin template using current installed defaults
-    ghproject = "dotnet new grasshopper -sample"; # Initialize Grasshopper template using current installed defaults
-    watch = "watchexec -c"; # Clear terminal on file change
-    watchr = "watchexec -r"; # Restart process on file change
-    pc = "process-compose"; # Project-local process mesh (process-compose.yaml)
-
-    # --- TypeScript/React Development --------------------------------------
-    pdev = "pnpm dev"; # Start Vite dev server
-    pbuild = "pnpm build"; # Production build with type checking
-    ptest = "pnpm test"; # Run Vitest tests
-
-    # --- .NET Development ---------------------------------------------------
-    dnr = "dotnet run --"; # Run with args passthrough
-    dnw = "dotnet watch run --"; # Hot reload development
-    dnb = "dotnet build -c Release"; # Production builds for plugins
-    dnt = "dotnet test --logger 'console;verbosity=minimal'"; # Clean test output
-
-    # --- Rhino/Grasshopper Tools -------------------------------------------
-    yakb = "yak build"; # Package Rhino plugins
-    rhcode = "rhinocode"; # Shorter script compiler alias
-
-    # --- MacOS Specific -----------------------------------------------------
-    awake = "caffeinate -dims"; # Prevent sleep (Ctrl+C to stop)
-    reveal = "open -R"; # Reveal file in Finder
-    lsapps = "ls /Applications"; # List installed applications
-    o = "open"; # Open file/URL with default app
-    oo = "open ."; # Open current directory in Finder
-    qq = "qlmanage -p 2>/dev/null"; # Preview without opening app
-  };
-}
+# Core register rows: system, files, monitoring, data, network, dev. Raw row
+# list consumed by ../aliases/default.nix; desc/category/risk are row data.
+[
+  # --- general ---------------------------------------------------------------
+  {
+    alias = "cl";
+    expansion = "clear";
+    desc = "Clear screen";
+    category = "general";
+  }
+  {
+    alias = "vim";
+    expansion = "nvim";
+    desc = "Neovim as vim";
+    category = "general";
+  }
+  {
+    alias = "nv";
+    expansion = "nvim";
+    desc = "Neovim shorthand";
+    category = "general";
+  }
+  {
+    alias = "ff";
+    expansion = "fastfetch";
+    desc = "System summary";
+    category = "general";
+  }
+  # --- shell -----------------------------------------------------------------
+  {
+    alias = "envs";
+    expansion = "env | sort";
+    desc = "Environment variables sorted";
+    category = "shell";
+  }
+  {
+    alias = "ezsh";
+    expansion = "$EDITOR \${ZDOTDIR:-$HOME}/.zshrc";
+    desc = "Edit zsh config";
+    category = "shell";
+  }
+  {
+    alias = "rzsh";
+    expansion = "source \${ZDOTDIR:-$HOME}/.zshrc";
+    desc = "Reload zsh config";
+    category = "shell";
+  }
+  {
+    alias = "reload";
+    expansion = "exec $SHELL";
+    desc = "Replace shell process";
+    category = "shell";
+  }
+  # --- files -----------------------------------------------------------------
+  {
+    alias = "ls";
+    expansion = "eza -la --header --no-user --time-style=relative";
+    desc = "Long listing via eza";
+    category = "files";
+  }
+  {
+    alias = "fda";
+    expansion = "fd --hidden --no-ignore -a";
+    desc = "Find all files incl. hidden/ignored";
+    category = "files";
+  }
+  {
+    alias = "mkdir";
+    expansion = "mkdir -pv";
+    desc = "Create parents verbosely";
+    category = "files";
+  }
+  {
+    alias = "rsmv";
+    expansion = "rsync-mv.sh";
+    desc = "Atomic move with directory cleanup";
+    category = "files";
+  }
+  {
+    alias = "cpsp";
+    expansion = "rsync -ahPSX --";
+    desc = "Sparse copy (VMs, disk images)";
+    category = "files";
+  }
+  {
+    alias = "backup";
+    expansion = "rsync -ahPX --delete";
+    desc = "Mirror with deletion";
+    category = "files";
+    risk = "destructive";
+  }
+  {
+    alias = "rsyncd";
+    expansion = "rsync -ahPn";
+    desc = "Dry-run transfer preview";
+    category = "files";
+  }
+  {
+    alias = "rsyncf";
+    expansion = "rsync -ahPX --append-verify";
+    desc = "Resume interrupted transfers";
+    category = "files";
+  }
+  {
+    alias = "rcs";
+    expansion = "rclone sync --progress --transfers 4";
+    desc = "Cloud sync with progress";
+    category = "files";
+    risk = "destructive";
+  }
+  {
+    alias = "hex";
+    expansion = "hexyl";
+    desc = "Hex viewer";
+    category = "files";
+  }
+  {
+    alias = "pack";
+    expansion = "ouch compress";
+    desc = "Compress files/directories";
+    category = "files";
+  }
+  {
+    alias = "unpack";
+    expansion = "ouch decompress";
+    desc = "Decompress archives";
+    category = "files";
+  }
+  # --- monitoring ------------------------------------------------------------
+  {
+    alias = "pst";
+    expansion = "procs --tree";
+    desc = "Process tree";
+    category = "monitoring";
+  }
+  {
+    alias = "psc";
+    expansion = "procs --sortd cpu";
+    desc = "Processes by CPU";
+    category = "monitoring";
+  }
+  {
+    alias = "psm";
+    expansion = "procs --sortd mem";
+    desc = "Processes by memory";
+    category = "monitoring";
+  }
+  {
+    alias = "psw";
+    expansion = "procs --watch";
+    desc = "Watch processes";
+    category = "monitoring";
+  }
+  {
+    alias = "top";
+    expansion = "btm";
+    desc = "System monitor";
+    category = "monitoring";
+  }
+  {
+    alias = "dfi";
+    expansion = "dua i";
+    desc = "Interactive disk usage";
+    category = "monitoring";
+  }
+  {
+    alias = "killi";
+    expansion = "pik";
+    desc = "Interactive process killer";
+    category = "monitoring";
+    risk = "destructive";
+  }
+  {
+    alias = "bench";
+    expansion = "hyperfine";
+    desc = "Command benchmarking";
+    category = "monitoring";
+  }
+  # --- text-search -----------------------------------------------------------
+  {
+    alias = "chs";
+    expansion = "choose";
+    desc = "Column selector";
+    category = "text-search";
+  }
+  {
+    alias = "batg";
+    expansion = "batgrep";
+    desc = "Bat-powered ripgrep";
+    category = "text-search";
+  }
+  {
+    alias = "tldru";
+    expansion = "tldr --update";
+    desc = "Update tldr cache";
+    category = "text-search";
+  }
+  {
+    alias = "rgx";
+    expansion = "grex -xc";
+    desc = "Regex from test cases";
+    category = "text-search";
+  }
+  {
+    alias = "rgxf";
+    expansion = "grex -xc -f";
+    desc = "Regex from file input";
+    category = "text-search";
+  }
+  {
+    alias = "sr";
+    expansion = "serpl";
+    desc = "TUI search and replace";
+    category = "text-search";
+  }
+  {
+    alias = "mdv";
+    expansion = "rich --markdown";
+    desc = "Markdown viewer";
+    category = "text-search";
+  }
+  # --- screenshot ------------------------------------------------------------
+  {
+    alias = "carbonc";
+    expansion = "carbon-now.sh --to-clipboard";
+    desc = "Code screenshot to clipboard";
+    category = "screenshot";
+  }
+  {
+    alias = "carboni";
+    expansion = "carbon-now.sh --interactive";
+    desc = "Code screenshot interactive";
+    category = "screenshot";
+  }
+  # --- data ------------------------------------------------------------------
+  {
+    alias = "jqr";
+    expansion = "jq -r";
+    desc = "Raw jq output";
+    category = "data";
+  }
+  {
+    alias = "jqc";
+    expansion = "jq -c";
+    desc = "Compact JSON output";
+    category = "data";
+  }
+  {
+    alias = "jqs";
+    expansion = "jq -S";
+    desc = "Sort object keys";
+    category = "data";
+  }
+  {
+    alias = "jqi";
+    expansion = "jnv";
+    desc = "Interactive JSON explorer";
+    category = "data";
+  }
+  {
+    alias = "hq";
+    expansion = "harlequin";
+    desc = "Terminal SQL IDE";
+    category = "data";
+  }
+  {
+    alias = "fqd";
+    expansion = "fq d";
+    desc = "Decode binary file structure";
+    category = "data";
+  }
+  {
+    alias = "j2y";
+    expansion = "yq eval -P";
+    desc = "JSON to YAML";
+    category = "data";
+  }
+  {
+    alias = "y2j";
+    expansion = "yq eval -o=json";
+    desc = "YAML to JSON";
+    category = "data";
+  }
+  {
+    alias = "yaml";
+    expansion = "yq eval";
+    desc = "Process YAML";
+    category = "data";
+  }
+  {
+    alias = "c2j";
+    expansion = "mlr --c2j cat";
+    desc = "CSV to JSON";
+    category = "data";
+  }
+  {
+    alias = "j2c";
+    expansion = "mlr --j2c cat";
+    desc = "JSON to CSV";
+    category = "data";
+  }
+  # --- trash -----------------------------------------------------------------
+  {
+    alias = "trestore";
+    expansion = "trash-restore";
+    desc = "Restore from trash";
+    category = "trash";
+  }
+  {
+    alias = "tls";
+    expansion = "trash-list";
+    desc = "List trashed files";
+    category = "trash";
+  }
+  {
+    alias = "trm";
+    expansion = "trash-rm";
+    desc = "Remove specific trashed files";
+    category = "trash";
+    risk = "destructive";
+  }
+  {
+    alias = "tempty";
+    expansion = "trash-empty";
+    desc = "Empty entire trash";
+    category = "trash";
+    risk = "destructive";
+  }
+  # --- navigation ------------------------------------------------------------
+  {
+    alias = "cdr";
+    expansion = "cd $(git rev-parse --show-toplevel)";
+    desc = "Jump to repo root";
+    category = "navigation";
+  }
+  {
+    alias = "..";
+    expansion = "cd ..";
+    desc = "Up one level";
+    category = "navigation";
+  }
+  {
+    alias = "...";
+    expansion = "cd ../..";
+    desc = "Up two levels";
+    category = "navigation";
+  }
+  {
+    alias = "....";
+    expansion = "cd ../../..";
+    desc = "Up three levels";
+    category = "navigation";
+  }
+  {
+    alias = ".....";
+    expansion = "cd ../../../..";
+    desc = "Up four levels";
+    category = "navigation";
+  }
+  {
+    alias = "-";
+    expansion = "cd -";
+    desc = "Previous directory";
+    category = "navigation";
+  }
+  # --- network ---------------------------------------------------------------
+  {
+    alias = "http";
+    expansion = "xh";
+    desc = "HTTPie-compatible client";
+    category = "network";
+  }
+  {
+    alias = "https";
+    expansion = "xh --https";
+    desc = "HTTPS by default";
+    category = "network";
+  }
+  {
+    alias = "POST";
+    expansion = "xh POST";
+    desc = "RESTful POST";
+    category = "network";
+  }
+  {
+    alias = "PUT";
+    expansion = "xh PUT";
+    desc = "RESTful PUT";
+    category = "network";
+  }
+  {
+    alias = "tripu";
+    expansion = "trip --udp --target-port 33434";
+    desc = "UDP tracing for ECMP paths";
+    category = "network";
+  }
+  {
+    alias = "ohaj";
+    expansion = "oha --no-tui --output-format json";
+    desc = "HTTP load run with JSON report";
+    category = "network";
+  }
+  {
+    alias = "serve";
+    expansion = "python3 -m http.server 8000";
+    desc = "Quick static server";
+    category = "network";
+  }
+  {
+    alias = "bw";
+    expansion = "sudo bandwhich";
+    desc = "Bandwidth monitor";
+    category = "network";
+    risk = "sudo";
+  }
+  {
+    alias = "speedtestl";
+    expansion = "speedtest --accept-license";
+    desc = "Ookla speed test, license pre-accepted";
+    category = "network";
+  }
+  {
+    alias = "lssh";
+    expansion = "sshs";
+    desc = "Interactive SSH picker";
+    category = "network";
+  }
+  {
+    alias = "whs";
+    expansion = "webhook -hooks $WEBHOOK_HOOKS_DIR/hooks.json -verbose";
+    desc = "Start webhook server";
+    category = "network";
+  }
+  {
+    alias = "ports";
+    expansion = "sudo lsof -iTCP -sTCP:LISTEN -n -P";
+    desc = "List listening TCP ports";
+    category = "network";
+    risk = "sudo";
+  }
+  {
+    alias = "flushdns";
+    expansion = "sudo dscacheutil -flushcache && sudo killall -HUP mDNSResponder";
+    desc = "Flush macOS DNS cache";
+    category = "network";
+    risk = "sudo";
+  }
+  # --- time ------------------------------------------------------------------
+  {
+    alias = "timestamp";
+    expansion = "date +'%Y%m%d_%H%M%S'";
+    desc = "Filename-safe timestamp";
+    category = "time";
+  }
+  {
+    alias = "epoch";
+    expansion = "date +%s";
+    desc = "Unix timestamp";
+    category = "time";
+  }
+  {
+    alias = "now";
+    expansion = "date +'%Y-%m-%d %H:%M:%S'";
+    desc = "ISO 8601 timestamp";
+    category = "time";
+  }
+  {
+    alias = "today";
+    expansion = "date +'%Y-%m-%d'";
+    desc = "ISO date";
+    category = "time";
+  }
+  {
+    alias = "week";
+    expansion = "date +%V";
+    desc = "Week number";
+    category = "time";
+  }
+  # --- 1password -------------------------------------------------------------
+  {
+    alias = "opls";
+    expansion = "op item list --format=json | jq -r '.[] | \"\\(.id) \\(.title)\"'";
+    desc = "List 1Password items";
+    category = "1password";
+  }
+  {
+    alias = "opg";
+    expansion = "op item get";
+    desc = "Get item details";
+    category = "1password";
+  }
+  {
+    alias = "opr";
+    expansion = "op run --";
+    desc = "Run with secrets injected";
+    category = "1password";
+  }
+  {
+    alias = "opi";
+    expansion = "op inject -i";
+    desc = "Inject secrets into template";
+    category = "1password";
+  }
+  # --- zellij ----------------------------------------------------------------
+  {
+    alias = "zjl";
+    expansion = "zellij list-sessions";
+    desc = "List sessions";
+    category = "zellij";
+  }
+  {
+    alias = "zja";
+    expansion = "zellij attach";
+    desc = "Attach to session";
+    category = "zellij";
+  }
+  {
+    alias = "zjd";
+    expansion = "zellij delete-session";
+    desc = "Delete a session";
+    category = "zellij";
+    risk = "session-destructive";
+  }
+  {
+    alias = "zjda";
+    expansion = "zellij delete-all-sessions";
+    desc = "Delete all sessions";
+    category = "zellij";
+    risk = "session-destructive";
+  }
+  {
+    alias = "zjk";
+    expansion = "zellij kill-session";
+    desc = "Kill a session";
+    category = "zellij";
+    risk = "session-destructive";
+  }
+  {
+    alias = "zjka";
+    expansion = "zellij kill-all-sessions";
+    desc = "Kill all sessions";
+    category = "zellij";
+    risk = "session-destructive";
+  }
+  # --- actions ---------------------------------------------------------------
+  {
+    alias = "actl";
+    expansion = "act -l";
+    desc = "List workflows/jobs";
+    category = "actions";
+  }
+  {
+    alias = "alint";
+    expansion = "actionlint";
+    desc = "Lint workflow files";
+    category = "actions";
+  }
+  # --- dev -------------------------------------------------------------------
+  {
+    alias = "tyc";
+    expansion = "ty check";
+    desc = "Type-check shorthand";
+    category = "dev";
+  }
+  {
+    alias = "rfix";
+    expansion = "ruff check --fix";
+    desc = "Ruff autofix";
+    category = "dev";
+  }
+  {
+    alias = "rformat";
+    expansion = "ruff format";
+    desc = "Ruff format";
+    category = "dev";
+  }
+  {
+    alias = "rhproject";
+    expansion = "dotnet new rhino -sample";
+    desc = "Rhino plugin template";
+    category = "dev";
+  }
+  {
+    alias = "ghproject";
+    expansion = "dotnet new grasshopper -sample";
+    desc = "Grasshopper template";
+    category = "dev";
+  }
+  {
+    alias = "watch";
+    expansion = "watchexec -c";
+    desc = "Clear terminal on file change";
+    category = "dev";
+  }
+  {
+    alias = "watchr";
+    expansion = "watchexec -r";
+    desc = "Restart process on file change";
+    category = "dev";
+  }
+  {
+    alias = "pc";
+    expansion = "process-compose";
+    desc = "Project-local process mesh";
+    category = "dev";
+  }
+  {
+    alias = "pdev";
+    expansion = "pnpm dev";
+    desc = "Vite dev server";
+    category = "dev";
+  }
+  {
+    alias = "pbuild";
+    expansion = "pnpm build";
+    desc = "Production build";
+    category = "dev";
+  }
+  {
+    alias = "ptest";
+    expansion = "pnpm test";
+    desc = "Run Vitest tests";
+    category = "dev";
+  }
+  {
+    alias = "dnr";
+    expansion = "dotnet run --";
+    desc = "dotnet run with args";
+    category = "dev";
+  }
+  {
+    alias = "dnw";
+    expansion = "dotnet watch run --";
+    desc = "dotnet hot reload";
+    category = "dev";
+  }
+  {
+    alias = "dnb";
+    expansion = "dotnet build -c Release";
+    desc = "dotnet release build";
+    category = "dev";
+  }
+  {
+    alias = "dnt";
+    expansion = "dotnet test --logger 'console;verbosity=minimal'";
+    desc = "dotnet clean test output";
+    category = "dev";
+  }
+  {
+    alias = "yakb";
+    expansion = "yak build";
+    desc = "Package Rhino plugins";
+    category = "dev";
+  }
+  {
+    alias = "rhcode";
+    expansion = "rhinocode";
+    desc = "Rhino script compiler";
+    category = "dev";
+  }
+  # --- macos -----------------------------------------------------------------
+  {
+    alias = "awake";
+    expansion = "caffeinate -dims";
+    desc = "Prevent sleep";
+    category = "macos";
+  }
+  {
+    alias = "reveal";
+    expansion = "open -R";
+    desc = "Reveal in Finder";
+    category = "macos";
+  }
+  {
+    alias = "lsapps";
+    expansion = "ls /Applications";
+    desc = "List installed applications";
+    category = "macos";
+  }
+  {
+    alias = "o";
+    expansion = "open";
+    desc = "Open with default app";
+    category = "macos";
+  }
+  {
+    alias = "oo";
+    expansion = "open .";
+    desc = "Open cwd in Finder";
+    category = "macos";
+  }
+  {
+    alias = "qq";
+    expansion = "qlmanage -p 2>/dev/null";
+    desc = "Quick Look preview";
+    category = "macos";
+  }
+]
