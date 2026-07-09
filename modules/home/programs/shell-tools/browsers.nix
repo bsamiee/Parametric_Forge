@@ -35,7 +35,7 @@
       domain = "estate-repo";
       collision = "reject";
       previous = [];
-      consumers = ["television-channel-prefix" "receipt-log-prefix" "launchd-label-prefix"];
+      consumers = ["television-channel-prefix" "receipt-log-prefix" "launchd-agent-name-prefix"];
     }
     {
       source = "Rasm";
@@ -335,13 +335,14 @@
       }
 
       emit_receipt() { # $1=domain $2=query $3=row_id $4=selection $5=action $6=result $7=exit $8=duration_ms
-        local ts sel
+        local ts q sel
         TZ=UTC0 printf -v ts '%(%Y-%m-%dT%H:%M:%SZ)T' "$EPOCHSECONDS"
+        q="''${2//$'\t'/ }"
         sel="''${4//$'\t'/ }"
         mkdir -p "$(dirname "$receipt_log")"
         printf 'ts=%s\towner=forge-browse\tbrowser_id=forge-browse\tscope=%s\trow_kind=%s\tmutation=none\thost=fzf\tsession_id=%s\tpane_id=%s\tcwd=%s\tquery=%s\trow_id=%s\tselection=%s\taction=%s\texit=%s\tduration_ms=%s\tstdout_path=-\tstderr_path=-\tnext_row=-\tresult=%s\n' \
           "$ts" "$1" "$1" "''${ZELLIJ_SESSION_NAME:--}" "''${ZELLIJ_PANE_ID:--}" "$PWD" \
-          "''${2:--}" "''${3:--}" "''${sel:--}" "$5" "$7" "$8" "$6" >>"$receipt_log"
+          "''${q:--}" "''${3:--}" "''${sel:--}" "$5" "$7" "$8" "$6" >>"$receipt_log"
       }
 
       case "''${1:-}" in
@@ -386,26 +387,38 @@
       while IFS= read -r b; do [ -n "$b" ] && binds+=(--bind "$b"); done < <(jq -r '.binds[]?' <<<"$crow")
       binds+=(--bind "ctrl-y:execute-silent(printf '%s' {} | /usr/bin/pbcopy)")
 
-      start="''${EPOCHREALTIME/./}"
+      start="''${EPOCHREALTIME//[.,]/}"
       rc=0
       out="$(jq -r "$filter" "$json" | fzf --delimiter=$'\t' --border-label="$label" \
         --print-query --height=100% \
         --preview="$self --preview $domain {1}" --preview-window=right:55%:border-bold \
         "''${binds[@]}" "''${fzf_base[@]}")" || rc=$?
-      end="''${EPOCHREALTIME/./}"
+      end="''${EPOCHREALTIME//[.,]/}"
       duration_ms=$(((end - start) / 1000))
 
       query="$(head -n 1 <<<"$out")"
       sel="$(sed -n 2p <<<"$out")"
       id="''${sel%%$'\t'*}"
-      if [ "$rc" -ne 0 ] || [ -z "$id" ]; then
-        # A clean user abort is a successful run that selected nothing: the
-        # cancel rides `action`, result stays ok so --failures triage is faults only.
-        emit_receipt "$domain" "$query" "-" "-" "cancel" "ok" "$rc" "$duration_ms"
-        exit 0
-      fi
-      emit_receipt "$domain" "$query" "$id" "$sel" "print" "ok" "0" "$duration_ms"
-      row_by_id "$json" "$id"
+      # fzf exit classes: 0 select, 1 no-match, 130 user abort — benign runs;
+      # any other rc is a browser fault: result=error survives --failures
+      # triage and the rc propagates to the caller.
+      case "$rc" in
+        0)
+          if [ -n "$id" ]; then
+            emit_receipt "$domain" "$query" "$id" "$sel" "print" "ok" "0" "$duration_ms"
+            row_by_id "$json" "$id"
+          else
+            emit_receipt "$domain" "$query" "-" "-" "cancel" "ok" "0" "$duration_ms"
+          fi
+          ;;
+        1 | 130)
+          emit_receipt "$domain" "$query" "-" "-" "cancel" "ok" "$rc" "$duration_ms"
+          ;;
+        *)
+          emit_receipt "$domain" "$query" "-" "-" "browse" "error" "$rc" "$duration_ms"
+          exit "$rc"
+          ;;
+      esac
     '';
   };
 

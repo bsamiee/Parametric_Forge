@@ -599,7 +599,9 @@
   # --- Register projection ----------------------------------------------------
   # Typed chord rows for the CA-1 register rail: every consumer's chords in one
   # vocabulary — chord_id, consumer, physical_layer, mods, key, label, action,
-  # projection_path, rendered evidence, and CSI-u injection where exported.
+  # scope (the KDL mode block or OS/app plane the claim is active in), toggle
+  # (re-press of the same chord exits the mode), projection_path, rendered
+  # evidence, and CSI-u injection where exported.
   zjRegRow = layer: row:
     {
       chord_id = "zellij:${lib.toLower layer.name}:${builtins.head row.keys}";
@@ -609,6 +611,7 @@
       key = lib.concatStringsSep "," row.keys;
       label = row.label or row.forgot.label or row.ribbon.label or row.kdl or "bound action";
       action = row.kdl or row.body or "";
+      scope = "shared_except locked";
       projection_path = ".config/zellij/config.kdl";
       rendered = renderBind layer.zellij row;
     }
@@ -622,10 +625,26 @@
       key = modes.${m}.key;
       label = "${m} mode";
       action = "SwitchToMode \"${cap m}\";";
+      scope = "shared_except ${m} locked";
+      toggle = true;
       projection_path = ".config/zellij/config.kdl";
       rendered = "bind \"${layers.hyper.zellij} ${modes.${m}.key}\" { SwitchToMode \"${cap m}\"; }";
     })
     entryOrder;
+  # The unlock chord lives only in the locked block (config.nix consumes
+  # modes.locked.exitKey); without this row the register misses a live bind.
+  lockedExitRow = {
+    chord_id = "zellij:hyper:${modes.locked.exitKey}";
+    consumer = "zellij";
+    physical_layer = layers.hyper.name;
+    mods = layers.hyper.zellij;
+    key = modes.locked.exitKey;
+    label = "unlock (locked mode)";
+    action = "SwitchToMode \"Normal\";";
+    scope = "locked";
+    projection_path = ".config/zellij/config.kdl";
+    rendered = "bind \"${layers.hyper.zellij} ${modes.locked.exitKey}\" { SwitchToMode \"Normal\"; }";
+  };
   register =
     map (zjRegRow layers.hyper) hyperRows
     ++ map (zjRegRow layers.super) superRows
@@ -636,12 +655,14 @@
       mods = "Super";
       label = r.forgot.label or r.comment;
       inherit (r) key action;
+      scope = "normal";
       projection_path = ".config/zellij/config.kdl";
       rendered = renderNormal r;
     })
     normalRows
     ++ modeRegRows
     ++ [
+      lockedExitRow
       {
         chord_id = "zellij:hyper:${cheatsheetKey}";
         consumer = "zellij";
@@ -650,6 +671,7 @@
         key = cheatsheetKey;
         label = "cheatsheet";
         action = "LaunchOrFocusPlugin \"zellij-forgot\"";
+        scope = "shared_except locked";
         projection_path = ".config/zellij/config.kdl";
         rendered = cheatsheetBind;
       }
@@ -661,6 +683,7 @@
         key = "caps_lock";
         label = "⌘⌥ super-modifier (hold) / Caps Lock (tap)";
         action = builtins.toJSON capsRule.manipulators;
+        scope = "os";
         projection_path = ".config/karabiner/karabiner.json";
         rendered = builtins.toJSON capsRule;
       }
@@ -673,6 +696,7 @@
       key = l.from;
       label = "${l.physical} → ${l.name} (${l.glyphs}) leader";
       action = builtins.toJSON l.to;
+      scope = "os";
       projection_path = ".config/karabiner/karabiner.json";
       rendered = builtins.toJSON l.to;
     }) (lib.attrValues layers)
@@ -684,6 +708,7 @@
       key = r.display;
       inherit (r) label;
       action = "native overlay";
+      scope = "app";
       projection_path = ".config/wezterm/keys.lua";
       rendered = r.display;
     }) (builtins.filter (r: r.kind or "" == "wezterm") forgotExtras);
