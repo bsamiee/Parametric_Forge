@@ -93,7 +93,7 @@ Recurring machine work is launchd-owned under the `com.parametric-forge.<name>` 
 | :-----: | :--------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 |  [01]   | Nix        | `docs/standards/nix-doctrine.md`; density target ~300 LOC by polymorphic collapse; `alejandra`/`deadnix`/`statix` gate via `nix flake check`.                                        |
 |  [02]   | Shell      | `writeShellApplication` for any body with a runtime closure (ShellCheck in the build); `writeShellScriptBin` only for closure-free one-liners; `.sh` extension, `set -euo pipefail`. |
-|  [03]   | TypeScript | `docs/stacks/typescript/` (Rasm doctrine) — `services/` code is held to it in full.                                                                                                  |
+|  [03]   | TypeScript | `docs/stacks/typescript/` — `services/` code is held to it in full.                                                                                                                  |
 |  [04]   | Python     | `docs/stacks/python/`; 3.15, `uv`-managed, `ruff` + `ty`.                                                                                                                            |
 |  [05]   | Markdown   | `docs/standards/` owners: style-guide, formatting, information-structure; agent-facing declarative register.                                                                         |
 |  [06]   | launchd    | Declared agent rows with receipts and health gates; never ad-hoc `launchctl` state.                                                                                                  |

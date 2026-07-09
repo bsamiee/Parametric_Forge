@@ -27,7 +27,7 @@ opt.fillchars = { eob = " " }
 opt.showmode = false
 opt.cmdheight = 2
 opt.laststatus = 3
-opt.colorcolumn = "120"
+opt.colorcolumn = "150"
 
 -- EDITING --------------------------------------------------------------------
 opt.clipboard = vim.env.SSH_TTY and "" or "unnamedplus"

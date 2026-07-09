@@ -87,7 +87,7 @@ function M.setup(config)
     top = 5,
     bottom = 10
   }
-  config.initial_cols = 120
+  config.initial_cols = 150
   config.initial_rows = 34
 
   -- Cursor
