@@ -224,6 +224,9 @@
     };
   }
   {
+    # Lifecycle-gated wrapper: the vendor router spawns only while Rhino 9
+    # WIP runs; otherwise a stdio shim serves one rhino_status tool that
+    # instructs start-then-reconnect. mcp-launchers.nix owns the gate.
     name = "rhino-mcp-platform";
     transport = "stdio";
     command = "${profileBin}/rhino-mcp-router";

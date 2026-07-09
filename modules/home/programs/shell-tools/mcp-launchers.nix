@@ -93,18 +93,104 @@
     '';
   };
   # Rhino's package manager owns the router install; version-globbing keeps
-  # client configs stable across McNeel package updates.
+  # client configs stable across McNeel package updates. Lifecycle gate: the
+  # heavy vendor router spawns only while Rhino 9 WIP runs; otherwise a stdio
+  # shim serves one rhino_status tool (start Rhino, then reconnect). The
+  # supervised lane owns the router's process group — client TERM/HUP or a
+  # dead client (wrapper reparented to launchd) tears the subtree down, so no
+  # session exit strands a router; the vendor binary exposes no idle-exit.
   rhinoRouter = pkgs.writeShellApplication {
     name = "rhino-mcp-router";
-    runtimeInputs = [pkgs.coreutils];
+    runtimeInputs = [pkgs.coreutils pkgs.jq];
     text = ''
-      base="$HOME/Library/Application Support/McNeel/Rhinoceros/packages/9.0/Rhino-MCP-Platform"
-      entry="$(printf '%s\n' "$base"/*/router/osx-arm64/rhino-mcp-router | sort -V | tail -1)"
-      if [ ! -x "$entry" ]; then
-        echo "rhino-mcp-router: no Rhino-MCP-Platform package under $base" >&2
-        exit 69
+      rhino_bin="''${RHINO_MCP_HOST_BINARY:-/Applications/RhinoWIP.app/Contents/MacOS/Rhinoceros}"
+
+      if /usr/bin/pgrep -qf "$rhino_bin"; then
+        base="$HOME/Library/Application Support/McNeel/Rhinoceros/packages/9.0/Rhino-MCP-Platform"
+        entry="$(printf '%s\n' "$base"/*/router/osx-arm64/rhino-mcp-router | sort -V | tail -1)"
+        if [ ! -x "$entry" ]; then
+          echo "rhino-mcp-router: no Rhino-MCP-Platform package under $base" >&2
+          exit 69
+        fi
+        set -m
+        "$entry" "$@" <&0 &
+        router=$!
+        set +m
+        reap() {
+          kill -TERM -- "-$router" 2>/dev/null || kill -TERM "$router" 2>/dev/null || true
+        }
+        trap reap TERM INT HUP
+        # Orphan watchdog: an empty or launchd ppid means the MCP client died
+        # without reaping the wrapper; take the router subtree down with it.
+        (
+          while kill -0 "$router" 2>/dev/null; do
+            pp="$(/bin/ps -o ppid= -p $$ 2>/dev/null | tr -d ' ')"
+            if [ -z "$pp" ] || [ "$pp" = 1 ]; then
+              kill -TERM -- "-$router" 2>/dev/null || true
+              sleep 2
+              kill -KILL -- "-$router" 2>/dev/null || true
+              exit 0
+            fi
+            sleep 15
+          done
+        ) &
+        wdog=$!
+        rc=0
+        wait "$router" || rc=$?
+        reap
+        for _ in 1 2 3; do
+          kill -0 "$router" 2>/dev/null || break
+          sleep 1
+        done
+        kill -KILL -- "-$router" 2>/dev/null || true
+        kill "$wdog" 2>/dev/null || true
+        exit "$rc"
       fi
-      exec "$entry" "$@"
+
+      # Thin responder: newline-delimited JSON-RPC over stdio at near-zero
+      # cost. tools/call re-probes Rhino so an agent that started it mid-
+      # session reads live state plus the reconnect instruction; stdin EOF
+      # is the shutdown, so the shim can never outlive its client.
+      status_text() {
+        if /usr/bin/pgrep -qf "$rhino_bin"; then
+          printf 'Rhino is running but this MCP connection predates it. Reconnect the rhino-mcp-platform server (/mcp -> reconnect, or restart the session) to spawn the router and load the full toolset.'
+        else
+          printf 'Rhino 9 WIP is not running; the rhino-mcp-platform router spawns only against a live Rhino. Start it (open -a RhinoWIP), wait for the app to finish loading, then reconnect the rhino-mcp-platform server (/mcp -> reconnect, or restart the session) to load the full toolset.'
+        fi
+      }
+      tools_json='{"tools":[{"name":"rhino_status","description":"Reports the Rhino MCP gate: the full rhino-mcp-platform toolset loads only while Rhino 9 WIP runs. Call this to learn how to bring the toolset up.","inputSchema":{"type":"object","properties":{}}}]}'
+      while IFS= read -r line; do
+        [ -n "$line" ] || continue
+        method="$(jq -r '.method // empty' <<<"$line" 2>/dev/null || true)"
+        id="$(jq -c 'if has("id") then .id else empty end' <<<"$line" 2>/dev/null || true)"
+        case "$method" in
+          initialize)
+            [ -n "$id" ] || continue
+            pv="$(jq -r '.params.protocolVersion // "2025-06-18"' <<<"$line" 2>/dev/null || printf '2025-06-18')"
+            jq -cn --argjson id "$id" --arg pv "$pv" \
+              '{jsonrpc: "2.0", id: $id, result: {protocolVersion: $pv, capabilities: {tools: {}}, serverInfo: {name: "rhino-mcp-gate", version: "1.0.0"}}}'
+            ;;
+          tools/list)
+            [ -n "$id" ] || continue
+            jq -cn --argjson id "$id" --argjson t "$tools_json" '{jsonrpc: "2.0", id: $id, result: $t}'
+            ;;
+          tools/call)
+            [ -n "$id" ] || continue
+            jq -cn --argjson id "$id" --arg text "$(status_text)" \
+              '{jsonrpc: "2.0", id: $id, result: {content: [{type: "text", text: $text}], isError: true}}'
+            ;;
+          ping)
+            [ -n "$id" ] || continue
+            jq -cn --argjson id "$id" '{jsonrpc: "2.0", id: $id, result: {}}'
+            ;;
+          notifications/* | "") : ;;
+          *)
+            [ -n "$id" ] || continue
+            jq -cn --argjson id "$id" \
+              '{jsonrpc: "2.0", id: $id, error: {code: -32601, message: "rhino-mcp-gate: method unavailable while Rhino is down; call rhino_status"}}'
+            ;;
+        esac
+      done
     '';
   };
   pins = builtins.concatStringsSep "\n" (map (r: "${r.launcher.pkg}|${r.launcher.version}") launcherRows);

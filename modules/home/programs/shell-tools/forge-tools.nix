@@ -440,10 +440,13 @@
     '';
   };
 
-  # Cleanup row registry: HOME-relative targets, one row per litter class.
-  # mode rows converge a directory mode; path rows trash a whole residue tree;
-  # glob rows trash pattern matches under a root. cargo/rustup rows carry the
-  # closed retirement decision: the toolchains are retired, regrowth is litter.
+  # Cleanup row registry: one row per litter class. mode rows converge a
+  # directory mode; path rows trash a whole residue tree; glob rows trash
+  # pattern matches under a root; orphan rows match agent-lane processes that
+  # lost their session (ppid 1, no tty, uid-owned, not launchd-managed, older
+  # than minAgeSec). action=kill rows are the evidence-gated reap set;
+  # action=report rows stay receipt-only. cargo/rustup rows carry the closed
+  # retirement decision: the toolchains are retired, regrowth is litter.
   cleanupRows = pkgs.writeText "forge-cleanup-rows.json" (builtins.toJSON [
     {
       name = "launchagents-mode";
@@ -478,11 +481,107 @@
       kind = "path";
       target = ".rustup";
     }
+    {
+      name = "biome-lsp-proxy-orphans";
+      kind = "orphan";
+      match = "biome lsp-proxy";
+      minAgeSec = 300;
+      action = "kill";
+    }
+    {
+      # Backstop: --stop-on-disconnect self-stops a clean daemon; a scanning-
+      # wedged one reparented to launchd is litter.
+      name = "biome-daemon-orphans";
+      kind = "orphan";
+      match = "biome __run_server";
+      minAgeSec = 300;
+      action = "kill";
+    }
+    {
+      name = "mcp-fleet-orphans";
+      kind = "orphan";
+      match = "[.]cache/forge-mcp/";
+      minAgeSec = 300;
+      action = "kill";
+    }
+    {
+      name = "mcp-uv-orphans";
+      kind = "orphan";
+      match = "(postgres-mcp|workspace-mcp|jupyter-mcp|notebooklm-mcp|ifcmcp|nuget-mcp)";
+      minAgeSec = 300;
+      action = "kill";
+    }
+    {
+      name = "rhino-router-orphans";
+      kind = "orphan";
+      match = "rhino-mcp-router";
+      minAgeSec = 300;
+      action = "kill";
+    }
+    {
+      name = "lsp-server-orphans";
+      kind = "orphan";
+      match = "(tsgo --lsp|bash-language-server|yaml-language-server|lua-language-server|(^|/)nixd|dts-lsp|postgrestools|roslyn-language-server|Microsoft[.]CodeAnalysis[.]LanguageServer|(^|/)ty server)";
+      minAgeSec = 300;
+      action = "kill";
+    }
+    {
+      name = "csharp-buildhost-orphans";
+      kind = "orphan";
+      match = "(BuildHost-netcore|MSBuild[.]BuildHost[.]dll)";
+      minAgeSec = 600;
+      action = "kill";
+    }
+    {
+      name = "forge-edit-nvim-orphans";
+      kind = "orphan";
+      match = "nvim.*(forge-edit|forge-accept)";
+      minAgeSec = 1800;
+      action = "kill";
+    }
+    {
+      # Detached codex lanes write report files after their launcher exits by
+      # design; only lanes far past every effort-tier deadline are litter.
+      name = "codex-lane-orphans";
+      kind = "orphan";
+      match = "(^|/)codex (exec|e) ";
+      exclude = "Codex[.]app";
+      minAgeSec = 14400;
+      action = "kill";
+    }
+    {
+      # Daemon-by-design classes stay receipt-only: git config owns fsmonitor,
+      # 1Password owns op; visibility without lifecycle theft.
+      name = "git-fsmonitor-census";
+      kind = "orphan";
+      match = "fsmonitor--daemon";
+      minAgeSec = 604800;
+      action = "report";
+    }
+    {
+      name = "op-daemon-census";
+      kind = "orphan";
+      match = "(^|/)op daemon";
+      minAgeSec = 86400;
+      action = "report";
+    }
+    {
+      # Visibility net for new node_modules daemon classes before they earn a
+      # kill row of their own.
+      name = "node-modules-daemon-census";
+      kind = "orphan";
+      match = "/node_modules/";
+      exclude = "biome";
+      minAgeSec = 3600;
+      action = "report";
+    }
   ]);
 
   # Guarded cleanup rail: `plan` emits a durable precheck receipt, `apply`
   # executes only rows the plan proved safe, re-verified at act time and
-  # trash-first, so every deletion stays recoverable from ~/.Trash.
+  # trash-first, so every deletion stays recoverable from ~/.Trash. `sweep`
+  # is the orphan lane: fresh detection plus evidence-gated reaping of
+  # ppid-1 agent-lane processes, one receipt row per pid.
   forgeCleanup = pkgs.writeShellApplication {
     name = "forge-cleanup";
     runtimeInputs = [pkgs.coreutils pkgs.findutils pkgs.gawk pkgs.jq];
@@ -490,20 +589,69 @@
       rows_json='${cleanupRows}'
       state_dir="''${XDG_STATE_HOME:-$HOME/.local/state}/forge-cleanup"
       TZ=UTC0 printf -v run_ts '%(%Y%m%dT%H%M%SZ)T' "$EPOCHSECONDS"
-      usage() { echo "usage: forge-cleanup plan | apply [plan-file]" >&2; exit 64; }
+      work="$(mktemp -d)"
+      trap 'rm -rf "$work"' EXIT
+      usage() { echo "usage: forge-cleanup plan | apply [plan-file] | sweep [--report-only]" >&2; exit 64; }
       verb="''${1:-}"; shift || true
+
+      # Hard deny for the kill lane: session servers, GUI apps, credential
+      # daemons, and system trees are never reaped even on a class match.
+      deny_re='/System/|/Applications/|zellij|[Ww]ez[Tt]erm|1[Pp]assword|[Cc]rashpad|loginwindow|(^|/)ssh'
+
+      # One live snapshot per run: uid-owned, ppid-1, tty-less processes with
+      # age in seconds and RSS KiB; launchd-managed pids drop out first, so a
+      # sanctioned agent (KeepAlive services included) is never a candidate.
+      proc_snapshot() {
+        if [ ! -e "$work/procs" ]; then
+          /bin/launchctl list 2>/dev/null | awk 'NR > 1 && $1 ~ /^[0-9]+$/ {print $1}' >"$work/managed"
+          /bin/ps -axo pid=,ppid=,uid=,tty=,etime=,rss=,command= 2>/dev/null | awk -v uid="$(id -u)" -v self="$$" '
+            function esecs(e,  a, n, d, hms) {
+              d = 0
+              if (index(e, "-") > 0) { split(e, a, "-"); d = a[1]; e = a[2] }
+              n = split(e, hms, ":")
+              if (n == 3) return ((d * 24 + hms[1]) * 60 + hms[2]) * 60 + hms[3]
+              if (n == 2) return (d * 24 * 60 + hms[1]) * 60 + hms[2]
+              return hms[1] + 0
+            }
+            NR == FNR { managed[$1] = 1; next }
+            $2 == 1 && $3 == uid && $4 == "??" && !($1 in managed) && $1 != self {
+              cmd = ""
+              for (i = 7; i <= NF; i++) cmd = cmd (i > 7 ? " " : "") $i
+              printf "%s\t%s\t%s\t%s\n", $1, esecs($5), $6, cmd
+            }
+          ' "$work/managed" - >"$work/procs"
+        fi
+        cat "$work/procs"
+      }
+
+      # args: match exclude min-age action. Deny applies to the kill lane
+      # only; report rows keep daemon-by-design classes visible.
+      orphan_matches() {
+        proc_snapshot | awk -F '\t' -v m="$1" -v x="$2" -v g="$3" -v a="$4" -v d="$deny_re" '
+          $2 >= g && $4 ~ m && (x == "" || $4 !~ x) && (a != "kill" || $4 !~ d) {print}'
+      }
+
+      # TERM, bounded wait, KILL residue.
+      reap_pid() {
+        kill -TERM "$1" 2>/dev/null || return 1
+        for _ in 1 2 3; do
+          kill -0 "$1" 2>/dev/null || return 0
+          sleep 1
+        done
+        kill -KILL "$1" 2>/dev/null || true
+      }
 
       # One jq projection per row: every field lands in one read. Unit-separator
       # delimited: tab is IFS whitespace and read would collapse empty fields.
       row_fields() {
-        jq -r '[.name, .kind, (.target // ""), (.expect // ""), (.root // ""), (.pattern // "")] | join("\u001f")' <<<"$1"
+        jq -r '[.name, .kind, (.target // ""), (.expect // ""), (.root // ""), (.pattern // ""), (.match // ""), (.exclude // ""), (.minAgeSec // 0 | tostring), (.action // "")] | join("\u001f")' <<<"$1"
       }
 
       # One detector owns every row kind; plan and apply both consume it, so
       # apply never acts on a state the detector cannot reproduce live.
       detect_row() {
-        local row="$1" name kind state count kb action safe detail target expect root pattern current
-        IFS=$'\x1f' read -r name kind target expect root pattern < <(row_fields "$row")
+        local row="$1" name kind state count kb action safe detail target expect root pattern current match exclude minage oaction opid orss pidlist
+        IFS=$'\x1f' read -r name kind target expect root pattern match exclude minage oaction < <(row_fields "$row")
         state=clean count=0 kb=0 action=none safe=true detail=-
         case "$kind" in
           mode)
@@ -533,6 +681,21 @@
               if [ "$count" -gt 0 ]; then
                 state=litter action=trash
                 kb="$(find "$root" -name "$pattern" -prune -print0 2>/dev/null | xargs -0 du -sk 2>/dev/null | awk '{s += $1} END {print s + 0}')"
+              fi
+            fi
+            ;;
+          orphan)
+            pidlist=""
+            while IFS=$'\t' read -r opid _ orss _; do
+              count=$((count + 1))
+              kb=$((kb + orss))
+              pidlist="$pidlist,$opid"
+            done < <(orphan_matches "$match" "$exclude" "$minage" "$oaction")
+            if [ "$count" -gt 0 ]; then
+              if [ "$oaction" = kill ]; then
+                state=litter action=kill detail="pids=''${pidlist#,}"
+              else
+                state=review safe=false detail="pids=''${pidlist#,}"
               fi
             fi
             ;;
@@ -572,7 +735,7 @@
               continue
             fi
             row="$(jq -c --arg n "$name" '.[] | select(.name == $n)' "$rows_json")"
-            IFS=$'\x1f' read -r _ row_kind row_target _ row_root row_pattern < <(row_fields "$row")
+            IFS=$'\x1f' read -r _ row_kind row_target _ row_root row_pattern row_match row_exclude row_minage _ < <(row_fields "$row")
             # Re-verify at act time: a row that drifted since plan is skipped.
             fresh_state="$(detect_row "$row" | cut -f3)"
             if [ "$fresh_state" != litter ]; then
@@ -597,6 +760,18 @@
                   printf '%s\taction=trash\toutcome=applied\tcount=%s\n' "$name" "$moved"
                 fi
                 ;;
+              kill)
+                killed=0
+                while IFS=$'\t' read -r opid oage orss ocmd; do
+                  if reap_pid "$opid"; then
+                    killed=$((killed + 1))
+                    printf '%s\tkilled\tpid=%s\tage_s=%s\trss_kb=%s\tcmd=%.140s\n' "$name" "$opid" "$oage" "$orss" "$ocmd"
+                  else
+                    printf '%s\tgone\tpid=%s\n' "$name" "$opid"
+                  fi
+                done < <(orphan_matches "$row_match" "$row_exclude" "$row_minage" kill)
+                printf '%s\taction=kill\toutcome=applied\tcount=%s\n' "$name" "$killed"
+                ;;
               *)
                 printf '%s\taction=%s\toutcome=unknown-action\n' "$name" "$action"
                 ;;
@@ -606,9 +781,46 @@
         printf 'forge-cleanup: apply receipt %s\n' "$apply_file"
       }
 
+      # Orphan-only lane for the scheduled agent: fresh detection each run,
+      # kill rows reaped, report rows logged; per-pid receipt plus one
+      # summary line on the receipts log.
+      cmd_sweep() {
+        report_only=0
+        [ "''${1:-}" != "--report-only" ] || report_only=1
+        receipt_log="''${FORGE_SWEEP_RECEIPT_LOG:-$HOME/Library/Logs/forge-orphan-sweep.receipts.log}"
+        mkdir -p "$state_dir"
+        sweep_file="$state_dir/sweep-$run_ts.tsv"
+        {
+          printf '# forge-cleanup sweep\tts=%s\treport_only=%s\n' "$run_ts" "$report_only"
+          while IFS= read -r row; do
+            IFS=$'\x1f' read -r name kind _ _ _ _ match exclude minage oaction < <(row_fields "$row")
+            [ "$kind" = orphan ] || continue
+            while IFS=$'\t' read -r opid oage orss ocmd; do
+              if [ "$oaction" = kill ] && [ "$report_only" = 0 ]; then
+                if reap_pid "$opid"; then
+                  printf '%s\tkilled\tpid=%s\tage_s=%s\trss_kb=%s\tcmd=%.140s\n' "$name" "$opid" "$oage" "$orss" "$ocmd"
+                else
+                  printf '%s\tgone\tpid=%s\n' "$name" "$opid"
+                fi
+              else
+                printf '%s\treport\tpid=%s\tage_s=%s\trss_kb=%s\tcmd=%.140s\n' "$name" "$opid" "$oage" "$orss" "$ocmd"
+              fi
+            done < <(orphan_matches "$match" "$exclude" "$minage" "$oaction")
+          done < <(jq -c '.[]' "$rows_json")
+        } >"$sweep_file"
+        cat "$sweep_file"
+        read -r killed reported gone < <(awk -F '\t' 'NR > 1 {c[$2]++} END {printf "%d %d %d\n", c["killed"] + 0, c["report"] + 0, c["gone"] + 0}' "$sweep_file")
+        line="$(printf 'ts=%s\tkilled=%s\treported=%s\tgone=%s\treport_only=%s\treceipt=%s\tresult=ok' \
+          "$run_ts" "$killed" "$reported" "$gone" "$report_only" "$sweep_file")"
+        { mkdir -p "$(dirname "$receipt_log")" && printf '%s\n' "$line" >>"$receipt_log"; } \
+          || printf 'forge-cleanup: WARNING sweep receipt not persisted to %s\n' "$receipt_log" >&2
+        printf 'forge-cleanup: sweep receipt\t%s\n' "$line"
+      }
+
       case "$verb" in
         plan) cmd_plan ;;
         apply) cmd_apply "$@" ;;
+        sweep) cmd_sweep "$@" ;;
         *) usage ;;
       esac
     '';
@@ -1263,9 +1475,10 @@ in {
       forgeAccept
     ];
 
-    # Shared identity bundle for both scheduled nix agents: Login Items &
-    # Extensions shows one "Forge Nix Automation" row (one toggle governs the
-    # drift + maintenance pair) instead of two generic "/bin/sh" entries.
+    # Shared identity bundle for the scheduled agents: Login Items &
+    # Extensions shows one "Forge Nix Automation" row (one toggle governs
+    # drift, maintenance, and the orphan sweep) instead of generic "/bin/sh"
+    # entries.
     file."Applications/Forge Nix Automation.app/Contents/Info.plist".text = ''
       <?xml version="1.0" encoding="UTF-8"?>
       <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -1300,43 +1513,60 @@ in {
     '';
   };
 
-  # Weekly off-peak cadence; the shared flock serializes against deploys.
-  launchd.agents.forge-nix-maintenance = {
-    enable = true;
-    config = {
-      Label = "com.parametric-forge.forge-nix-maintenance";
-      ProgramArguments = ["${forgeNixMaintenance}/bin/forge-nix-maintenance" "--scheduled"];
-      StartCalendarInterval = [
-        {
-          Weekday = 6;
-          Hour = 12;
-          Minute = 0;
-        }
-      ];
-      ProcessType = "Background";
-      StandardOutPath = "${config.home.homeDirectory}/Library/Logs/forge-nix-maintenance.log";
-      StandardErrorPath = "${config.home.homeDirectory}/Library/Logs/forge-nix-maintenance.log";
-      AssociatedBundleIdentifiers = ["com.parametric-forge.forge-nix-automation"];
+  launchd.agents = {
+    # Weekly off-peak cadence; the shared flock serializes against deploys.
+    forge-nix-maintenance = {
+      enable = true;
+      config = {
+        Label = "com.parametric-forge.forge-nix-maintenance";
+        ProgramArguments = ["${forgeNixMaintenance}/bin/forge-nix-maintenance" "--scheduled"];
+        StartCalendarInterval = [
+          {
+            Weekday = 6;
+            Hour = 12;
+            Minute = 0;
+          }
+        ];
+        ProcessType = "Background";
+        StandardOutPath = "${config.home.homeDirectory}/Library/Logs/forge-nix-maintenance.log";
+        StandardErrorPath = "${config.home.homeDirectory}/Library/Logs/forge-nix-maintenance.log";
+        AssociatedBundleIdentifiers = ["com.parametric-forge.forge-nix-automation"];
+      };
     };
-  };
 
-  # Daily 10:00 currency cadence (operator ruling); calendar-only, no
-  # RunAtLoad: login must never race a live campaign with a lock bump.
-  launchd.agents.forge-nix-drift = {
-    enable = true;
-    config = {
-      Label = "com.parametric-forge.forge-nix-drift";
-      ProgramArguments = ["${forgeNixDrift}/bin/forge-nix-drift" "--scheduled"];
-      StartCalendarInterval = [
-        {
-          Hour = 10;
-          Minute = 0;
-        }
-      ];
-      ProcessType = "Background";
-      StandardOutPath = "${config.home.homeDirectory}/Library/Logs/forge-nix-drift.log";
-      StandardErrorPath = "${config.home.homeDirectory}/Library/Logs/forge-nix-drift.log";
-      AssociatedBundleIdentifiers = ["com.parametric-forge.forge-nix-automation"];
+    # Hourly orphan sweep: evidence-gated reaping of ppid-1 agent-lane litter;
+    # kill classes are allowlisted rows, everything ambiguous stays receipt-only.
+    forge-orphan-sweep = {
+      enable = true;
+      config = {
+        Label = "com.parametric-forge.forge-orphan-sweep";
+        ProgramArguments = ["${forgeCleanup}/bin/forge-cleanup" "sweep"];
+        StartInterval = 3600;
+        ProcessType = "Background";
+        StandardOutPath = "${config.home.homeDirectory}/Library/Logs/forge-orphan-sweep.log";
+        StandardErrorPath = "${config.home.homeDirectory}/Library/Logs/forge-orphan-sweep.log";
+        AssociatedBundleIdentifiers = ["com.parametric-forge.forge-nix-automation"];
+      };
+    };
+
+    # Daily 10:00 currency cadence (operator ruling); calendar-only, no
+    # RunAtLoad: login must never race a live campaign with a lock bump.
+    forge-nix-drift = {
+      enable = true;
+      config = {
+        Label = "com.parametric-forge.forge-nix-drift";
+        ProgramArguments = ["${forgeNixDrift}/bin/forge-nix-drift" "--scheduled"];
+        StartCalendarInterval = [
+          {
+            Hour = 10;
+            Minute = 0;
+          }
+        ];
+        ProcessType = "Background";
+        StandardOutPath = "${config.home.homeDirectory}/Library/Logs/forge-nix-drift.log";
+        StandardErrorPath = "${config.home.homeDirectory}/Library/Logs/forge-nix-drift.log";
+        AssociatedBundleIdentifiers = ["com.parametric-forge.forge-nix-automation"];
+      };
     };
   };
 }
