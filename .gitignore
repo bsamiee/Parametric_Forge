@@ -6,6 +6,9 @@ result-*
 *.drv
 .nixpkgs-review/
 
+# --- Local provisioning state (forge-provision generations, secrets) ---------
+.artifacts/
+
 # --- Secrets & Credentials --------------------------------------------------
 .secrets/
 *.secret
