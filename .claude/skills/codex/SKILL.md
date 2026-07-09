@@ -7,6 +7,8 @@ description: Dispatch work to the Codex CLI (gpt-5.5) via codex exec / codex rev
 
 `codex exec` runs gpt-5.5 as a non-interactive agent in its own context window and returns one final message. Defaults come from `~/.codex/config.toml` — gpt-5.5 at high reasoning — so a bare invocation is already correctly configured; pass flags only to deviate.
 
+Authoring skills FOR codex — the on-disk format, discovery roots, trigger mechanics, `agents/openai.yaml`, and the deltas from Claude-side skills — is [references/authoring-skills.md](references/authoring-skills.md); open it when creating or porting a skill into `~/.codex/skills`, `~/.agents/skills`, or a repo `.agents/skills`.
+
 ## When to dispatch
 
 - Exploration and investigation legs (repo sweeps, dependency audits, log distillation, data analysis) whose raw transcripts would flood the current context — codex absorbs the reading and returns the conclusion.

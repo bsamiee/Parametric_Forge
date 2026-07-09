@@ -18,7 +18,9 @@ Platform loading mechanics, field limits, and install surfaces belong to the pla
 
 ## [02]-[TRIGGER]
 
-The description is written for selection among a hundred siblings: it names what the skill produces, the objects and verbs that demand it, and the adjacent work it refuses. A trigger earns precision from discriminating nouns — file kinds, fence kinds, commands, artifact names — never from breadth or synonym volume.
+The description is written for selection among a hundred siblings: it names what the skill produces, the objects and verbs that demand it, and the adjacent work it refuses. A trigger earns precision from discriminating nouns — file kinds, fence kinds, commands, artifact names — never from breadth or synonym volume. Selection listings truncate crowded descriptions from the tail, so the owned deliverable and its primary triggers ride the first clause and the negative boundary closes; a description that opens on preamble loses its discriminants first.
+
+The name is the directory name: a lowercase hyphenated noun or gerund phrase naming the deliverable — `processing-pdfs`, `mermaid-diagramming` — never a vague stem such as helper, utils, or tools, and never a platform's reserved words. The gate binds name shape, directory identity, description budgets, and bundle link geometry mechanically.
 
 ### [02.1]-[OVER_BROAD_TRIGGER]
 
@@ -156,7 +158,15 @@ A body line earns its place by changing trigger selection, routing, execution, o
 - Reason: A fixed skeleton spends context on format where the consumer defines the product.
 - Reframe: Route output shape by consumer; mandate a skeleton only where that artifact is the skill's deliverable.
 
-### [04.11]-[SUPPLY_CHAIN]
+### [04.11]-[DEGREES_OF_FREEDOM]
+
+- Detection: Instruction rigidity mismatched to task variance — a fragile deterministic sequence left as loose heuristics, or an exact command sequence and fixed depth mandated over work whose correct shape varies by context.
+- Rejected: Migrate the schema however fits the situation. Run exactly these four commands for every review, in order, every time.
+- Accepted: The migration runs `scripts/migrate.py --verify --backup` unchanged; review depth follows the diff, and only the acceptance gate is fixed.
+- Reason: Freedom is a design axis: an operation that breaks on deviation needs rails with no parameters, and work whose best path is contextual needs the goal and the gate, not a script.
+- Reframe: Classify each instruction by the cost of deviation — deviation breaks it: pin the exact invocation; deviation is legitimate: state the deliverable and its gate, delete the mandated path.
+
+### [04.12]-[SUPPLY_CHAIN]
 
 - Detection: A network fetch, global install, credential read, or broad filesystem grant instructed inside a skill body.
 - Rejected: Install the helper globally and fetch the newest script from the vendor URL at run time.

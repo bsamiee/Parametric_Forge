@@ -79,3 +79,21 @@ A closing checklist of reminders stands where a machine gate belongs, so complet
   ```
 - Reason: A reminder is skipped or paraphrased under pressure; a gate command with an exit code is executed or visibly failed.
 - Reframe: Replace the tail with the concrete gate invocation, or delete it.
+
+## [05]-[FREEDOM_MISMATCH]
+
+Instruction rigidity contradicts task variance: fragile mechanics float free while contextual judgment is pinned to a script.
+
+- Detection: A deterministic, breaks-on-deviation operation described as open guidance, or a fixed command litany mandated over work whose right depth follows the input.
+- Rejected:
+  ```markdown rejected
+  Migrate the schema in whatever way fits.
+  Every review runs the same four commands in the same order regardless of the diff.
+  ```
+- Accepted:
+  ```markdown accepted
+  The migration runs `scripts/migrate.py --verify --backup` unchanged.
+  Review depth follows the diff; completion binds only on the acceptance gate.
+  ```
+- Reason: Rails belong where deviation breaks the run; goals and gates belong where the best path is contextual — each inversion produces broken runs or ritual theater.
+- Reframe: Price each instruction by its cost of deviation, then pin the invocation or free the path.

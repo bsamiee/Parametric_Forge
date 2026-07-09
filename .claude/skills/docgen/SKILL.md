@@ -24,7 +24,7 @@ Durable prose is law for an agent that loads it with no memory of why it was wri
 uv run scripts/prose_gate.py [--json] <paths...>
 ```
 
-Run the gate on every touched durable doc before returning. It is the mechanical floor — fence, heading, table, link, and list structure; template residue, bold emphasis, and trailing whitespace; the banned-lexeme roster of hedges, meta-phrases, self-counts, and version anchors — and a `SKILL.md` file additionally gates frontmatter shape, description voice and budget, and the root line ceiling; the full check census is the script's `Check` vocabulary. The gate scans prose spans only: fence bodies, code spans, link destinations, template placeholders, and example-leader rows are structural carriers, not prose findings. Every semantic class and every altitude judgment remains review work against the catalog.
+Run the gate on every touched durable doc before returning. It is the mechanical floor — fence, heading, table, link, and list structure; template residue, bold emphasis, and trailing whitespace; the banned-lexeme roster of hedges, meta-phrases, self-counts, and version anchors — and a skill bundle additionally gates frontmatter shape, name shape and directory identity, description voice and budgets, the root line ceiling, orphan bundle files, and nested reference hops; the full check census is the script's `Check` vocabulary. The gate scans prose spans only: fence bodies, code spans, link destinations, template placeholders, and example-leader rows are structural carriers, not prose findings. Every semantic class and every altitude judgment remains review work against the catalog.
 
 ## [02]-[REGISTER]
 
@@ -93,7 +93,7 @@ The defect classes are the review vocabulary; findings cite class and line. Defi
 
 [STRUCTURAL]: `ENUMERATION_ANCHOR` `STALE_MIRROR` `MECHANISM_LEAK` `META_FRAME` `TWIN_TRUTH` `REPORT_FRAME` `COUPLING`
 [SEMANTIC]: `HEDGE` `CAPABILITY_GATE` `LEGACY_COMPAT` `IMPORTED_POSTURE` `VERSION_ANCHOR` `SET_IN_STONE` `WEAK_VERBS` `PROCESS_LEDGER` `ASSERTED_IMPOSSIBILITY` `DELETED_FORM_LITANY`
-[SKILL]: `OVER_BROAD_TRIGGER` `STARVED_TRIGGER` `KEYWORD_STUFFING` `SELF_VOICED_DISCOVERY` `MONOLITH_ROOT` `REFERENCE_MAZE` `NO_OP_INTENSIFIER` `FILLER_LEAD` `CHAIN_RESTATEMENT` `QUALITY_LADDER` `COMMAND_CATALOG` `LIFECYCLE_SCRIPT` `CHECKLIST_TAIL` `SCRIPT_AS_PROSE` `BARE_ABSTRACTION` `FIXED_OUTPUT` `SUPPLY_CHAIN` — skill-bundle classes owned by [references/skills.md](references/skills.md)
+[SKILL]: `OVER_BROAD_TRIGGER` `STARVED_TRIGGER` `KEYWORD_STUFFING` `SELF_VOICED_DISCOVERY` `MONOLITH_ROOT` `REFERENCE_MAZE` `NO_OP_INTENSIFIER` `FILLER_LEAD` `CHAIN_RESTATEMENT` `QUALITY_LADDER` `COMMAND_CATALOG` `LIFECYCLE_SCRIPT` `CHECKLIST_TAIL` `SCRIPT_AS_PROSE` `BARE_ABSTRACTION` `FIXED_OUTPUT` `DEGREES_OF_FREEDOM` `SUPPLY_CHAIN` — skill-bundle classes owned by [references/skills.md](references/skills.md)
 
 ## [05]-[TEMPLATES]
 

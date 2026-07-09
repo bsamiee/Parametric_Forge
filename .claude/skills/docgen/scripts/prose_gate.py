@@ -40,8 +40,11 @@ class Check(StrEnum):
     READ = "read"
     SELF_COUNT = "self-count"
     SETEXT_HEADING = "setext-heading"
+    SKILL_BUNDLE_ORPHAN = "skill-bundle-orphan"
     SKILL_DESCRIPTION = "skill-description"
     SKILL_FRONTMATTER = "skill-frontmatter"
+    SKILL_NAME = "skill-name"
+    SKILL_REFERENCE_HOP = "skill-reference-hop"
     SKILL_ROOT_BUDGET = "skill-root-budget"
     TABLE_ALIGN = "table-align"
     TABLE_CELL = "table-cell"
@@ -60,8 +63,10 @@ CELL_BUDGET = 160
 LIST_CHAR_CAP = 500
 LIST_SENTENCE_CAP = 3
 ROSTER_SPAN_SHARE = 0.6
-SKILL_DESCRIPTION_CAP = 1200
+SKILL_DESCRIPTION_CAP = 1024
+SKILL_DESCRIPTION_CEILING = 1536
 SKILL_DESCRIPTION_FLOOR = 60
+SKILL_NAME_CAP = 64
 SKILL_ROOT_CAP = 500
 APP = App(help="Gate durable markdown prose.")
 ENCODER = msgspec.json.Encoder()
@@ -102,6 +107,8 @@ META_PHRASE = re.compile(
 )
 # Quoted user utterances and code spans are trigger material, not voice.
 QUOTED_SPAN = re.compile(r"\"[^\"]*\"|“[^”]*”|`[^`]*`")
+SKILL_NAME_SHAPE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
+SKILL_NAME_RESERVED = re.compile(r"(?:^|-)(?:claude|anthropic)(?:-|$)")
 SKILL_VOICE = re.compile(r"\b(?:I|me|my|mine|we|our|you|your)\b", re.IGNORECASE)
 SELF_COUNT = re.compile(
     r"(?:^|[.!?]\s+)(Two|Three|Four|Five|Six|Seven|Eight|Nine|Ten|Eleven|Twelve|Thirteen|Fourteen|Fifteen|Sixteen"
@@ -457,16 +464,53 @@ def skill_rows(path: Path, text: str) -> tuple[Row, ...]:
         for required in ("name", "description")
         if not fields.get(required, (0, ""))[1]
     )
+    name_anchor, name = fields.get("name", (1, ""))
+    if name:
+        if not SKILL_NAME_SHAPE.match(name) or len(name) > SKILL_NAME_CAP:
+            rows.append(row(path, name_anchor, Check.SKILL_NAME, "fail", f"{name} breaks lowercase-hyphen shape or cap {SKILL_NAME_CAP}"))
+        if SKILL_NAME_RESERVED.search(name):
+            rows.append(row(path, name_anchor, Check.SKILL_NAME, "fail", f"{name} carries a reserved word"))
+        if name != path.parent.name:
+            rows.append(row(path, name_anchor, Check.SKILL_NAME, "fail", f"{name} != directory {path.parent.name}"))
     anchor, description = fields.get("description", (1, ""))
     if description:
         voiced = QUOTED_SPAN.sub(" ", description)
         rows.extend(row(path, anchor, Check.SKILL_DESCRIPTION, "fail", hit.group(0)) for hit in SKILL_VOICE.finditer(voiced))
         if len(description) < SKILL_DESCRIPTION_FLOOR:
             rows.append(row(path, anchor, Check.SKILL_DESCRIPTION, "fail", f"{len(description)} chars carries no discriminating triggers"))
+        elif len(description) > SKILL_DESCRIPTION_CEILING:
+            rows.append(row(path, anchor, Check.SKILL_DESCRIPTION, "fail", f"{len(description)} chars > listing ceiling {SKILL_DESCRIPTION_CEILING}"))
         elif len(description) > SKILL_DESCRIPTION_CAP:
-            rows.append(row(path, anchor, Check.SKILL_DESCRIPTION, "warn", f"{len(description)} chars > metadata budget {SKILL_DESCRIPTION_CAP}"))
+            rows.append(row(path, anchor, Check.SKILL_DESCRIPTION, "warn", f"{len(description)} chars > portability budget {SKILL_DESCRIPTION_CAP}"))
     if len(lines) > SKILL_ROOT_CAP:
         rows.append(row(path, len(lines), Check.SKILL_ROOT_BUDGET, "fail", f"root {len(lines)} lines > cap {SKILL_ROOT_CAP}"))
+    return tuple(rows)
+
+
+def bundle_root(path: Path) -> Path | None:
+    for ancestor in tuple(path.parents)[:4]:
+        if (ancestor / "SKILL.md").is_file():
+            return ancestor
+    return None
+
+
+def bundle_rows(path: Path, text: str) -> tuple[Row, ...]:
+    rows: list[Row] = []
+    if path.name == "SKILL.md":
+        for sibling in sorted(path.parent.rglob("*.md")):
+            relative = sibling.relative_to(path.parent).as_posix()
+            if sibling == path or relative in text or sibling.name in text:
+                continue
+            rows.append(row(path, 0, Check.SKILL_BUNDLE_ORPHAN, "warn", f"{relative} unreachable from root"))
+    elif (root := bundle_root(path)) is not None:
+        for number, line in enumerate(text.splitlines(), 1):
+            for link in LINK.finditer(line):
+                target = link.group(2).split("#", 1)[0]
+                if not target or re.match(r"^[a-z][a-z0-9+.-]*:", target, re.IGNORECASE):
+                    continue
+                resolved = (path.parent / target).resolve(strict=False)
+                if resolved.suffix == ".md" and resolved.exists() and resolved.is_relative_to(root.resolve()) and resolved != (root / "SKILL.md").resolve():
+                    rows.append(row(path, number, Check.SKILL_REFERENCE_HOP, "warn", f"nested hop to {target}; depth rides one hop from the root"))
     return tuple(rows)
 
 
@@ -476,7 +520,7 @@ def scan(path: Path, cap: int) -> tuple[Row, ...]:
         return (text,)
     doc, lexer_rows = lex(path, text, cap)
     checks = lexer_rows + table_rows(doc) + heading_rows(doc) + link_rows(doc) + prose_rows(doc) + list_rows(doc) if doc else lexer_rows
-    return checks + skill_rows(path, text)
+    return checks + skill_rows(path, text) + bundle_rows(path, text)
 
 
 def emit(rows: Iterable[Row], json_mode: bool) -> None:
