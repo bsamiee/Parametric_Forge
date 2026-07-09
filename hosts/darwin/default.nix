@@ -4,16 +4,17 @@
 # License       : MIT
 # Path          : hosts/darwin/default.nix
 # ----------------------------------------------------------------------------
-# Darwin host configurations
+# Darwin host configurations projected from the host-context factory.
 {
   inputs,
   nix-darwin,
   home-manager,
 }: let
-  username = "bardiasamiee";
+  context = import ../context.nix;
+  host = context.macbook;
 in {
-  macbook = nix-darwin.lib.darwinSystem {
-    specialArgs = {inherit inputs;};
+  ${host.name} = nix-darwin.lib.darwinSystem {
+    specialArgs = {inherit inputs host;};
 
     modules = [
       # Determinate Nix owner: forces nix.enable = false, generates /etc/nix/nix.custom.conf
@@ -30,10 +31,10 @@ in {
 
       # --- Host-specific configuration --------------------------------------
       ({forgeToolchainEnvFor, ...}: {
-        nixpkgs.hostPlatform = "aarch64-darwin";
+        nixpkgs.hostPlatform = host.system;
         nixpkgs.overlays = [inputs.self.overlays.default];
 
-        networking.hostName = "macbook";
+        networking.hostName = host.name;
         networking.computerName = "Bardia's MacBook Pro";
 
         time.timeZone = "America/Chicago";
@@ -44,14 +45,13 @@ in {
         # System configuration
         system = {
           configurationRevision = inputs.self.rev or inputs.self.dirtyRev or null;
-          stateVersion = 7;
-          primaryUser = username;
+          stateVersion = host.stateVersion.system;
+          primaryUser = host.user.name;
         };
 
         # Primary user
-        users.users.${username} = {
-          name = username;
-          home = "/Users/${username}";
+        users.users.${host.user.name} = {
+          inherit (host.user) name home;
         };
 
         # Home Manager configuration
@@ -59,16 +59,16 @@ in {
           useGlobalPkgs = true;
           useUserPackages = true;
           backupFileExtension = "backup"; # Backup conflicting files instead of failing
-          extraSpecialArgs = {inherit inputs forgeToolchainEnvFor;};
-          users.${username} = {...}: {
+          extraSpecialArgs = {inherit inputs host forgeToolchainEnvFor;};
+          users.${host.user.name} = {...}: {
             imports = [
               inputs.nix-index-database.homeModules.nix-index
               ../../modules/home
             ];
             home = {
-              inherit username;
-              homeDirectory = "/Users/${username}";
-              stateVersion = "26.05";
+              username = host.user.name;
+              homeDirectory = host.user.home;
+              stateVersion = host.stateVersion.home;
             };
             programs.home-manager.enable = true;
 

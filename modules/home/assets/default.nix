@@ -5,9 +5,12 @@
 # Path          : modules/home/assets/default.nix
 # ----------------------------------------------------------------------------
 # Asset files aggregator - fastfetch ASCII art and desktop wallpaper
-{...}: {
-  imports = [
-    ./ascii
-    ./wallpaper
-  ];
+{
+  host,
+  lib,
+  ...
+}: {
+  imports =
+    [./ascii]
+    ++ lib.optionals (host.os == "darwin") [./wallpaper];
 }

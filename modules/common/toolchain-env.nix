@@ -66,7 +66,9 @@
       PROJ_LIB = "${pkgs.proj}/share/proj";
       PROJ_LIBDIR = "${pkgs.proj}/lib";
     };
-    energyEnv = {
+    # EnergyPlus/OpenStudio are macOS-only (operator ruling); Linux hosts get
+    # an empty energy row, so downstream folds and exports stay polymorphic.
+    energyEnv = lib.optionalAttrs isDarwin {
       ENERGYPLUSDIR = "${pkgs.energyplus}/opt/energyplus";
       ENERGYPLUS_DIR = "${pkgs.energyplus}/opt/energyplus";
       ENERGYPLUS_EXE = "${pkgs.energyplus}/bin/energyplus";

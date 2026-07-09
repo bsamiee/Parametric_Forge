@@ -4,7 +4,7 @@
 # License       : MIT
 # Path          : overlays/nodejs-bin/default.nix
 # ----------------------------------------------------------------------------
-# Official Node.js binary distribution for cache-safe Darwin installs.
+# Official Node.js binary distribution for cache-safe installs on every host.
 # pnpm-only rail: npm/npx never reach the installed output; corepack rows are
 # idempotent guards (upstream bundles corepack only for Node <25).
 {
@@ -13,7 +13,23 @@
   stdenvNoCC,
 }: let
   version = "26.5.0";
-  arch = "darwin-arm64";
+  dists = {
+    aarch64-darwin = {
+      arch = "darwin-arm64";
+      hash = "sha256-SCMdYgTspr4T5sUYTf3/odZK2IiANkzCz7GY+HLLKxM=";
+    };
+    x86_64-linux = {
+      arch = "linux-x64";
+      hash = "sha256-n2GVKPHbXdxB3M9UIRBm+0IijWmhVnM8acudbMkuNYw=";
+    };
+    aarch64-linux = {
+      arch = "linux-arm64";
+      hash = "sha256-A23wtJZi67NQ61bxysYDaZsentHiYD7hKf79pHNHkDA=";
+    };
+  };
+  dist =
+    dists.${stdenvNoCC.hostPlatform.system}
+    or (throw "nodejs-bin: no official distribution row for ${stdenvNoCC.hostPlatform.system}");
   stripRows = [
     "bin/npm"
     "bin/npx"
@@ -27,11 +43,11 @@ in
     inherit version;
 
     src = fetchurl {
-      url = "https://nodejs.org/dist/v${version}/node-v${version}-${arch}.tar.xz";
-      hash = "sha256-SCMdYgTspr4T5sUYTf3/odZK2IiANkzCz7GY+HLLKxM=";
+      url = "https://nodejs.org/dist/v${version}/node-v${version}-${dist.arch}.tar.xz";
+      inherit (dist) hash;
     };
 
-    sourceRoot = "node-v${version}-${arch}";
+    sourceRoot = "node-v${version}-${dist.arch}";
 
     installPhase = ''
       runHook preInstall
@@ -46,6 +62,6 @@ in
       homepage = "https://nodejs.org/";
       license = lib.licenses.mit;
       mainProgram = "node";
-      platforms = ["aarch64-darwin"];
+      platforms = builtins.attrNames dists;
     };
   }

@@ -9,10 +9,12 @@
 {
   config,
   forgeToolchainEnvFor,
+  host,
   lib,
   pkgs,
   ...
 }: let
+  isDarwin = pkgs.stdenv.hostPlatform.isDarwin;
   darwinMinVersion = pkgs.stdenv.hostPlatform.darwinMinVersion or "14.0";
   sharedLibExt = pkgs.stdenv.hostPlatform.extensions.sharedLibrary;
   llvmTools = pkgs.llvmPackages.llvm;
@@ -96,11 +98,13 @@
     pdal
   ];
 
-  aecNativeTools = with pkgs; [
-    energyplus
-    gmsh
-    openstudio
-  ];
+  # EnergyPlus/OpenStudio stay macOS-only (operator ruling); gmsh generalizes.
+  aecNativeTools =
+    [pkgs.gmsh]
+    ++ lib.optionals isDarwin [
+      pkgs.energyplus
+      pkgs.openstudio
+    ];
 
   scientificNativeLibs =
     geoNativeLibs
@@ -354,94 +358,115 @@
     export ALLOW_IMG_OUTPUT="''${ALLOW_IMG_OUTPUT:-true}"
     exec ${forgeCompanionEnv}/bin/forge-companion-env uvx --python "${pkgs.python312}/bin/python3" --from "jupyter-mcp-server==1.0.2" jupyter-mcp-server "$@"
   '';
-in {
-  home = {
-    packages =
-      [
-        gfortranTool
-      ]
-      ++ scientificProfileNativeLibs
-      ++ scientificRuntimeTools
-      ++ [
-        forgeCompanionEnv
-        forgeScientificEnv
-        forgeScientificSync
-        forgeIfcMcp
-        forgeJupyter
-        forgeJupyterMcp
-      ];
+in
+  {
+    home = {
+      packages =
+        [
+          gfortranTool
+        ]
+        ++ scientificProfileNativeLibs
+        ++ scientificRuntimeTools
+        ++ [
+          forgeCompanionEnv
+          forgeScientificEnv
+          forgeScientificSync
+          forgeIfcMcp
+          forgeJupyter
+          forgeJupyterMcp
+        ];
 
-    file."Applications/Forge Jupyter.app/Contents/Info.plist".text = ''
-      <?xml version="1.0" encoding="UTF-8"?>
-      <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-      <plist version="1.0">
-      <dict>
-        <key>CFBundleIdentifier</key>
-        <string>com.parametric-forge.forge-jupyter</string>
-        <key>CFBundleName</key>
-        <string>Forge Jupyter</string>
-        <key>CFBundleDisplayName</key>
-        <string>Forge Jupyter</string>
-        <key>CFBundleVersion</key>
-        <string>1</string>
-        <key>CFBundleShortVersionString</key>
-        <string>1.0</string>
-        <key>CFBundlePackageType</key>
-        <string>APPL</string>
-        <key>LSUIElement</key>
-        <true/>
-        <key>LSBackgroundOnly</key>
-        <true/>
-      </dict>
-      </plist>
-    '';
-
-    activation = {
-      registerForgeJupyterApp = lib.hm.dag.entryAfter ["linkGeneration"] ''
-        app="$HOME/Applications/Forge Jupyter.app"
-        lsregister="/System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/LaunchServices.framework/Versions/A/Support/lsregister"
-        if [ -d "$app" ] && [ -x "$lsregister" ]; then
-          "$lsregister" -f "$app" || true
-        fi
-      '';
-
-      ensureForgeJupyterToken = lib.hm.dag.entryAfter ["linkGeneration"] ''
-        token_file=${lib.escapeShellArg forgeJupyterTokenFile}
-        tmp_file="$token_file.tmp.$$"
-        mkdir -p "$(dirname "$token_file")"
-        if [ ! -s "$token_file" ]; then
-          token="$(${pkgs.openssl}/bin/openssl rand -hex 32)"
-          ( umask 077; printf 'export JUPYTER_TOKEN=%s\n' "$token" >"$tmp_file" )
-          chmod 600 "$tmp_file"
-          mv -f "$tmp_file" "$token_file"
-        fi
-        chmod 600 "$token_file"
-      '';
-
-      ensureForgeJupyterLogDir = lib.hm.dag.entryAfter ["linkGeneration"] ''
-        ${pkgs.coreutils}/bin/install -d -m 700 ${lib.escapeShellArg forgeJupyterLogDir}
-      '';
-
-      ensureForgeJupyterRootDir = lib.hm.dag.entryAfter ["linkGeneration"] ''
-        ${pkgs.coreutils}/bin/install -d -m 700 ${lib.escapeShellArg forgeJupyterRootDir}
-      '';
-    };
-  };
-
-  launchd.agents.forge-jupyter = {
-    enable = true;
-    config = {
-      ProgramArguments = ["${forgeJupyter}/bin/forge-jupyter"];
-      WorkingDirectory = forgeJupyterRootDir;
-      EnvironmentVariables = {
-        FORGE_PROVISION_ROOT = forgeJupyterRootDir;
+      file = lib.optionalAttrs isDarwin {
+        "Applications/Forge Jupyter.app/Contents/Info.plist".text = ''
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>CFBundleIdentifier</key>
+            <string>com.parametric-forge.forge-jupyter</string>
+            <key>CFBundleName</key>
+            <string>Forge Jupyter</string>
+            <key>CFBundleDisplayName</key>
+            <string>Forge Jupyter</string>
+            <key>CFBundleVersion</key>
+            <string>1</string>
+            <key>CFBundleShortVersionString</key>
+            <string>1.0</string>
+            <key>CFBundlePackageType</key>
+            <string>APPL</string>
+            <key>LSUIElement</key>
+            <true/>
+            <key>LSBackgroundOnly</key>
+            <true/>
+          </dict>
+          </plist>
+        '';
       };
-      RunAtLoad = true;
-      KeepAlive = true;
-      ThrottleInterval = 30;
-      StandardOutPath = "${forgeJupyterLogDir}/out.log";
-      StandardErrorPath = "${forgeJupyterLogDir}/err.log";
-      AssociatedBundleIdentifiers = ["com.parametric-forge.forge-jupyter"];
+
+      activation =
+        lib.optionalAttrs isDarwin {
+          registerForgeJupyterApp = lib.hm.dag.entryAfter ["linkGeneration"] ''
+            app="$HOME/Applications/Forge Jupyter.app"
+            lsregister="/System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/LaunchServices.framework/Versions/A/Support/lsregister"
+            if [ -d "$app" ] && [ -x "$lsregister" ]; then
+              "$lsregister" -f "$app" || true
+            fi
+          '';
+        }
+        // {
+          ensureForgeJupyterToken = lib.hm.dag.entryAfter ["linkGeneration"] ''
+            token_file=${lib.escapeShellArg forgeJupyterTokenFile}
+            tmp_file="$token_file.tmp.$$"
+            mkdir -p "$(dirname "$token_file")"
+            if [ ! -s "$token_file" ]; then
+              token="$(${pkgs.openssl}/bin/openssl rand -hex 32)"
+              ( umask 077; printf 'export JUPYTER_TOKEN=%s\n' "$token" >"$tmp_file" )
+              chmod 600 "$tmp_file"
+              mv -f "$tmp_file" "$token_file"
+            fi
+            chmod 600 "$token_file"
+          '';
+
+          ensureForgeJupyterLogDir = lib.hm.dag.entryAfter ["linkGeneration"] ''
+            ${pkgs.coreutils}/bin/install -d -m 700 ${lib.escapeShellArg forgeJupyterLogDir}
+          '';
+
+          ensureForgeJupyterRootDir = lib.hm.dag.entryAfter ["linkGeneration"] ''
+            ${pkgs.coreutils}/bin/install -d -m 700 ${lib.escapeShellArg forgeJupyterRootDir}
+          '';
+        };
     };
-  };
-}
+
+    # Persistent Jupyter rides both supervisors (operator ruling: local AND VPS):
+    # launchd on Darwin, a lingering systemd user service on Linux.
+    launchd.agents.forge-jupyter = {
+      enable = true;
+      config = {
+        ProgramArguments = ["${forgeJupyter}/bin/forge-jupyter"];
+        WorkingDirectory = forgeJupyterRootDir;
+        EnvironmentVariables = {
+          FORGE_PROVISION_ROOT = forgeJupyterRootDir;
+        };
+        RunAtLoad = true;
+        KeepAlive = true;
+        ThrottleInterval = 30;
+        StandardOutPath = "${forgeJupyterLogDir}/out.log";
+        StandardErrorPath = "${forgeJupyterLogDir}/err.log";
+        AssociatedBundleIdentifiers = ["com.parametric-forge.forge-jupyter"];
+      };
+    };
+  }
+  # Static host gate: top-level attr names must never depend on pkgs (fixpoint).
+  // lib.optionalAttrs (host.os == "nixos") {
+    systemd.user.services.forge-jupyter = {
+      Unit.Description = "Forge JupyterLab (loopback, token-gated)";
+      Service = {
+        ExecStart = "${forgeJupyter}/bin/forge-jupyter";
+        WorkingDirectory = forgeJupyterRootDir;
+        Environment = ["FORGE_PROVISION_ROOT=${forgeJupyterRootDir}"];
+        Restart = "always";
+        RestartSec = 30;
+      };
+      Install.WantedBy = ["default.target"];
+    };
+  }

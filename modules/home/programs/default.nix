@@ -4,17 +4,24 @@
 # License       : MIT
 # Path          : modules/home/programs/default.nix
 # ----------------------------------------------------------------------------
-# Home Manager programs aggregator
-{...}: {
-  imports = [
-    ./apps
-    ./container-tools
-    ./git-tools
-    ./languages
-    ./mac-tools
-    ./media-tools
-    ./nix-tools
-    ./shell-tools
-    ./zsh
-  ];
+# Home Manager programs aggregator; GUI/mac surfaces gate on the host context.
+{
+  host,
+  lib,
+  ...
+}: {
+  imports =
+    [
+      ./container-tools
+      ./git-tools
+      ./languages
+      ./media-tools
+      ./nix-tools
+      ./shell-tools
+      ./zsh
+    ]
+    ++ lib.optionals (host.os == "darwin") [
+      ./apps
+      ./mac-tools
+    ];
 }

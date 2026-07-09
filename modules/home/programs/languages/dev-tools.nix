@@ -106,48 +106,50 @@ in {
       ${forge-install-antigravity-cli}/bin/forge-install-antigravity-cli
     '';
 
-    packages = with pkgs; [
-      # --- Shell Tooling ------------------------------------------------------
-      bash # Bash 5.3+ runtime for generated scripts and explicit bash sessions
-      shellcheck # POSIX shell static analysis
-      shfmt # Shell script formatter
-      bash-language-server # Bash LSP (navigation + diagnostics via shellcheck/shfmt)
+    packages = with pkgs;
+      [
+        # --- Shell Tooling ------------------------------------------------------
+        bash # Bash 5.3+ runtime for generated scripts and explicit bash sessions
+        shellcheck # POSIX shell static analysis
+        shfmt # Shell script formatter
+        bash-language-server # Bash LSP (navigation + diagnostics via shellcheck/shfmt)
 
-      # --- YAML ---------------------------------------------------------------
-      yamlfmt # YAML formatter (Google)
-      yamllint # YAML linter
-      yaml-language-server # YAML LSP (SchemaStore-backed validation + completion)
-      taplo # TOML formatter, validator, and LSP
+        # --- YAML ---------------------------------------------------------------
+        yamlfmt # YAML formatter (Google)
+        yamllint # YAML linter
+        yaml-language-server # YAML LSP (SchemaStore-backed validation + completion)
+        taplo # TOML formatter, validator, and LSP
 
-      # --- JSON ---------------------------------------------------------------
-      jq # Lightweight command-line JSON processor
+        # --- JSON ---------------------------------------------------------------
+        jq # Lightweight command-line JSON processor
 
-      # --- HTML / Markup ------------------------------------------------------
-      validator-nu # W3C HTML5/SVG/CSS conformance validator (vnu); backs the html-studio gate
+        # --- HTML / Markup ------------------------------------------------------
+        validator-nu # W3C HTML5/SVG/CSS conformance validator (vnu); backs the html-studio gate
 
-      # --- General Data Tools -------------------------------------------------
-      git-lfs # Required by Homebrew update-reset and repos with LFS-backed fixtures
-      yq-go # YAML/JSON/TOML processor (yq)
-      miller # CSV/TSV/JSON processor
-      qsv # High-performance CSV and tabular data toolkit
-      csvlens # Interactive CSV/TSV inspector
-      hurl # HTTP request/assertion runner for API probes
-      grpcurl # gRPC server reflection and request CLI
-      typos # Fast source and docs typo checker
+        # --- General Data Tools -------------------------------------------------
+        git-lfs # Required by Homebrew update-reset and repos with LFS-backed fixtures
+        yq-go # YAML/JSON/TOML processor (yq)
+        miller # CSV/TSV/JSON processor
+        qsv # High-performance CSV and tabular data toolkit
+        csvlens # Interactive CSV/TSV inspector
+        hurl # HTTP request/assertion runner for API probes
+        grpcurl # gRPC server reflection and request CLI
+        typos # Fast source and docs typo checker
 
-      # --- .NET ---------------------------------------------------------------
-      dotnet-combined
-      ilspycmd # .NET assembly decompiler for NuGet API catalogues
-      nuget-to-json # NuGet package metadata extraction
-      roslyn-language-server # C# LSP (roslyn-ls wrapped for clean --stdio)
-      nuget-mcp
+        # --- .NET ---------------------------------------------------------------
+        dotnet-combined
+        ilspycmd # .NET assembly decompiler for NuGet API catalogues
+        nuget-to-json # NuGet package metadata extraction
+        roslyn-language-server # C# LSP (roslyn-ls wrapped for clean --stdio)
 
-      # --- Cloud / IaC --------------------------------------------------------
-      google-cloud-sdk # Google Cloud CLI for OAuth/API bootstrap and project administration
-      gws # Google Workspace CLI; scripted/batch companion to the google-workspace MCP
-      forge-workspace-mcp # Google Workspace MCP wrapper pinned to a Python 3.13 uv tool environment
-      pulumi # Pulumi CLI engine; Python SDK is managed per-project via uv (Maghz infra Automation API)
-    ];
+        # --- Cloud / IaC --------------------------------------------------------
+        google-cloud-sdk # Google Cloud CLI for OAuth/API bootstrap and project administration
+        gws # Google Workspace CLI; scripted/batch companion to the google-workspace MCP
+        forge-workspace-mcp # Google Workspace MCP wrapper pinned to a Python 3.13 uv tool environment
+        pulumi # Pulumi CLI engine; Python SDK is managed per-project via uv (Maghz infra Automation API)
+      ]
+      # nuget-mcp packages the osx-arm64 RID only; Linux gains a RID row before this gate widens.
+      ++ lib.optionals (pkgs.stdenv.hostPlatform.system == "aarch64-darwin") [nuget-mcp];
 
     # DOTNET_ROOT required for Roslyn and other SDK-discovery tools.
     # Re-evaluated on every rebuild — store path stays current.
