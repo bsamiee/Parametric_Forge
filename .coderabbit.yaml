@@ -1,0 +1,85 @@
+language: en-US
+tone_instructions: "Senior-to-senior register. Dense, declarative, evidence-anchored findings. No praise, no emojis, no hedging. Doctrine violations (CLAUDE.md/AGENTS.md) are defects, not suggestions. Prefer polymorphic collapse over additive patches."
+reviews:
+  profile: assertive
+  high_level_summary: true
+  collapse_walkthrough: true
+  sequence_diagrams: false
+  suggested_labels: false
+  suggested_reviewers: false
+  in_progress_fortune: false
+  poem: false
+  path_filters:
+    - "!flake.lock"
+    - "!services/pnpm-lock.yaml"
+    - "!**/*.wasm"
+    - "!modules/home/assets/**"
+  path_instructions:
+    - path: "**"
+      instructions: >-
+        Universal bar: anticipate 10x functionality growth — surfaces absorb new modalities
+        as rows, cases, or dispatch arms, never as new files, flags, or knobs. Defects:
+        knob/param/flag spam, hardcoded values, fragile string plumbing, naive happy-path
+        logic, hand-rolled reimplementations of capability the ecosystem already provides.
+        External packages are first-class implementation material used at full power, newest
+        stable versions. Everything is agent-first: composable, receipt-bearing,
+        self-describing, no interactive-only paths. Collapse spam relentlessly.
+    - path: "**/*.nix"
+      instructions: >-
+        Machine-owner repo on nix-darwin + Home Manager, Determinate Nix, nixpkgs-unstable.
+        Defects: new wrapper modules, compat shims, aliases for retired names, anticipatory
+        options, `with pkgs;` at file level, singleton per-tool files where an owner table
+        exists, hex colors outside config.forge.theme, keybinds outside apps/chords.nix,
+        version pins without a recorded reason. One owner per axis; a new capability is a row
+        on the owning surface, never a new file. Files trend toward 300 LOC via polymorphic
+        collapse, never by deleting capability.
+    - path: "overlays/**"
+      instructions: >-
+        Overlay packages are contract-bearing: forge-provision emits schema-v3 JSON envelopes
+        only — flag any new envelope field lacking a README contract row, any raw socket path,
+        host absolute path, or token material in agent-facing JSON, and any jq program inlined
+        in bash instead of a jq/ file. Catalog-driven projections over hardcoded service or
+        verb lists.
+    - path: "services/**"
+      instructions: >-
+        TypeScript under the Rasm doctrine: Effect rails with tagged faults, Config.redacted
+        for secret-bearing config, Schema decodes at boundaries, no any, no class-based
+        services, pnpm-only. Pulumi rows are typed and declarative; imperative provider calls
+        outside the driver are defects. Secret values must never reach state outputs
+        unredacted.
+    - path: "modules/home/scripts/**"
+      instructions: >-
+        Shell bodies are writeShellApplication with declared runtimeInputs, set -euo pipefail,
+        shellcheck-clean without directives. Defects: `|| true` failure masks, command
+        substitution that can block on session death (stdin undetached, no deadline), embedded
+        repo paths, usernames, or magic geometry numbers — parameters or model-derived values
+        only.
+    - path: ".claude/**"
+      instructions: >-
+        Agent-facing declarative artifacts: implicit agentic prose, active voice, 1-2 line
+        comments. Defects: meta-commentary, provenance or freshness tails, checklist noise,
+        restating obligations the instruction chain already carries, project-coupled content
+        in reusable surfaces.
+  auto_review:
+    enabled: true
+  tools:
+    shellcheck:
+      enabled: true
+    ruff:
+      enabled: true
+    actionlint:
+      enabled: true
+    gitleaks:
+      enabled: true
+    yamllint:
+      enabled: true
+knowledge_base:
+  web_search:
+    enabled: true
+  learnings:
+    scope: local
+  pull_requests:
+    scope: local
+issue_enrichment:
+  auto_enrich:
+    enabled: false

@@ -1,0 +1,41 @@
+{
+  "strictness": 2,
+  "commentTypes": ["logic", "syntax"],
+  "triggerOnUpdates": true,
+  "statusCheck": true,
+  "fixWithAI": true,
+  "ignorePatterns": "flake.lock\nservices/pnpm-lock.yaml\n*.wasm\nmodules/home/assets/**",
+  "context": {
+    "repos": ["bsamiee/Rasm", "bsamiee/Maghz"]
+  },
+  "rules": [
+    {
+      "id": "greenfield-only",
+      "rule": "No compat shims, wrapper modules, aliases for retired names, migration helpers, or anticipatory code. A rename replaces every call site in the same change.",
+      "severity": "high"
+    },
+    {
+      "id": "one-owner-per-axis",
+      "rule": "Extend the canonical owner: new tools are rows in owner tables, colors live only in config.forge.theme, keybinds only in apps/chords.nix, MCP servers only in mcp-fleet.nix. A new singleton file for an owned axis is a defect.",
+      "severity": "high"
+    },
+    {
+      "id": "shell-app-bar",
+      "rule": "Shell CLIs are writeShellApplication with declared runtimeInputs, set -euo pipefail, shellcheck-clean, zero '|| true' masks, no embedded repo paths or magic values.",
+      "severity": "medium",
+      "scope": ["modules/**", "overlays/**"]
+    },
+    {
+      "id": "provision-contract",
+      "rule": "forge-provision emits schema-v3 JSON envelopes only; agent-facing JSON never carries socket paths, host absolute paths, or token material; every envelope change lands with its README contract row.",
+      "severity": "high",
+      "scope": ["overlays/forge-provision/**"]
+    },
+    {
+      "id": "services-effect-rails",
+      "rule": "services/ TypeScript follows the Rasm doctrine: Effect rails, tagged faults, Config.redacted, Schema boundary decodes, typed Pulumi rows, secrets never in unredacted state outputs.",
+      "severity": "high",
+      "scope": ["services/**"]
+    }
+  ]
+}
