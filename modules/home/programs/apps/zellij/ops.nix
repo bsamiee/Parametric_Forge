@@ -62,13 +62,17 @@
   fzfBaseArgs = fzfColorRows ++ ["--border=sharp" "--layout=reverse" "--info=right" "--highlight-line" "--prompt=❯ " "--pointer=❯"];
   fzfArgsBash = "fzf_base=(\n${lib.concatMapStringsSep "\n" (a: "        ${lib.escapeShellArg a}") fzfBaseArgs}\n      )";
 
+  watchPanel = config.programs.zellij.popupGeometry.watchPanel;
+
   forgeZellij = pkgs.writeShellApplication {
     name = "forge-zellij";
-    runtimeInputs = [pkgs.zellij pkgs.jq pkgs.fzf pkgs.coreutils pkgs.gawk pkgs.findutils pkgs.git];
+    runtimeInputs = [pkgs.zellij pkgs.jq pkgs.fzf pkgs.coreutils pkgs.gawk pkgs.findutils pkgs.git pkgs.bash];
     text = ''
       # Usage: forge-zellij [graph [--json]] | row ID | state | star [--pane ID]
       #        | unstar | layout record NAME | layout apply NAME|PATH
-      #        | watch [ROW] | watch --list
+      #        | watch [ROW] | watch --list | macro add NAME CMD... | macro rm NAME
+      # watch-exec ROW is the monitor-pane body: it wraps the row command with
+      # start/exit receipts so panels carry exit transitions, never bare bash.
       self="''${BASH_SOURCE[0]}"
       watch_catalog="${watchJson}"
       state_root="''${XDG_STATE_HOME:-$HOME/.local/state}/forge"
@@ -90,17 +94,27 @@
           "$ts" "$1" "''${2:--}" "''${3:--}" "$4" "''${session:--}" "''${ZELLIJ_PANE_ID:--}" "$PWD" "$6" "$7" "$5" >>"$receipt_log"
       }
 
-      zj_json() { # $1 = action; retry a flapping snapshot to a truthy array
-        local out
+      zj_json() { # zellij action "$@" --json; retry a flapping snapshot to a truthy array
+        local out=""
         for _ in 1 2 3 4 5; do
-          out="$(zellij action "$1" --json 2>/dev/null || true)"
-          if jq -e 'type == "array"' <<<"$out" >/dev/null 2>&1; then
+          out="$(zellij action "$@" --json 2>/dev/null || true)"
+          if jq -e 'type == "array" and length > 0' <<<"$out" >/dev/null 2>&1; then
             printf '%s' "$out"
             return 0
           fi
           sleep 0.2
         done
-        echo '[]'
+        if jq -e 'type == "array"' <<<"$out" >/dev/null 2>&1; then printf '%s' "$out"; else echo '[]'; fi
+      }
+
+      pane_arg() { # normalize a pane reference: raw id, pane:N, star:N row_ids
+        local p="''${1#pane:}"
+        p="''${p#star:}"
+        if [[ ! "$p" =~ ^[0-9]+$ ]]; then
+          echo "not a pane row: $1" >&2
+          return 64
+        fi
+        printf '%s' "$p"
       }
 
       # --- Discriminated inventory: one row grammar, nine kinds ----------------
@@ -118,13 +132,13 @@
           zj_json list-tabs | jq -c '.[] | {row_id: ("tab:" + (.tab_id | tostring)), kind: "tab",
             label: .name, detail: ("swap=" + (.active_swap_layout_name // "-") + (if .active then " active" else "" end)),
             target: (.tab_id | tostring)}'
-          zellij action list-panes --all --json 2>/dev/null | jq -c '.[]? | select((.is_plugin | not) and (.exited | not))
+          zj_json list-panes --all | jq -c '.[]? | select((.is_plugin | not) and (.exited | not))
             | {row_id: ("pane:" + (.id | tostring)), kind: "pane",
                label: ((.title // "") | if . == "" then "pane" else . end),
                detail: ("tab=" + (.tab_id | tostring) + " cmd=" + ((.terminal_command // .command // "-") | .[0:40])),
-               target: (.id | tostring)}' || true
+               target: (.id | tostring)}'
           if [[ -r "$stars_file" ]]; then
-            live="$(zellij action list-panes --all --json 2>/dev/null | jq -c '[.[] | select(.is_plugin | not) | (.id | tostring)]' || echo '[]')"
+            live="$(zj_json list-panes --all | jq -c '[.[] | select(.is_plugin | not) | (.id | tostring)]')"
             gawk -F'\t' -v s="$session" '$1 == s {printf "%s\t%s\n", $2, $3}' "$stars_file" \
               | while IFS=$'\t' read -r pid title; do
                   jq -cn --arg pid "$pid" --arg title "$title" --argjson live "$live" \
@@ -200,6 +214,7 @@
         --help | -h)
           printf 'Usage: forge-zellij [graph [--json]] | row ID | state | star [--pane ID] | unstar\n'
           printf '       | layout record NAME | layout apply NAME|PATH | watch [ROW] | watch --list\n'
+          printf '       | macro add NAME CMD... | macro rm NAME | macro list\n'
           exit 0
           ;;
 
@@ -212,7 +227,7 @@
           # Read-only session/pane snapshot (the forge-zellij-state graph row)
           jq -n --arg session "''${session:--}" \
             --argjson tabs "$([[ -n "$session" ]] && zj_json list-tabs || echo '[]')" \
-            --argjson panes "$([[ -n "$session" ]] && zellij action list-panes --all --json 2>/dev/null || echo '[]')" \
+            --argjson panes "$([[ -n "$session" ]] && zj_json list-panes --all || echo '[]')" \
             --arg sessions "$(zellij list-sessions --no-formatting 2>/dev/null || true)" \
             '{schema: "forge-zellij-state/v1", session: $session,
               sessions: ($sessions | split("\n") | map(select(. != ""))),
@@ -222,9 +237,10 @@
 
         star)
           [[ -n "$session" ]] || { echo "star requires a Zellij session" >&2; exit 1; }
-          pane="''${3:-''${ZELLIJ_PANE_ID:-}}"
+          pane="''${ZELLIJ_PANE_ID:-}"
           if [[ "''${2:-}" == "--pane" ]]; then pane="''${3:?--pane needs an id}"; fi
-          title="$(zellij action list-panes --all --json 2>/dev/null \
+          pane="$(pane_arg "$pane")" || exit 64
+          title="$(zj_json list-panes --all \
             | jq -r --arg id "$pane" '[.[] | select((.is_plugin | not) and ((.id | tostring) == $id))][0].title // "pane"')"
           if ! gawk -F'\t' -v s="$session" -v p="$pane" '$1 == s && $2 == p {found = 1} END {exit !found}' "$stars_file" 2>/dev/null; then
             TZ=UTC0 printf -v ts '%(%Y-%m-%dT%H:%M:%SZ)T' "$EPOCHSECONDS"
@@ -236,12 +252,47 @@
 
         unstar)
           [[ -n "$session" ]] || { echo "unstar requires a Zellij session" >&2; exit 1; }
-          pane="''${2:-''${ZELLIJ_PANE_ID:-}}"
+          pane="$(pane_arg "''${2:-''${ZELLIJ_PANE_ID:-}}")" || exit 64
           if [[ -r "$stars_file" ]]; then
             gawk -F'\t' -v s="$session" -v p="$pane" '!($1 == s && $2 == p)' "$stars_file" >"$stars_file.tmp"
             mv "$stars_file.tmp" "$stars_file"
           fi
           emit_receipt unstar starred-pane "star:$pane" remove ok 0 0
+          exit 0
+          ;;
+
+        macro)
+          # Macro rows are rail-owned, never a hand-edited TSV: add replaces an
+          # existing NAME row, rm deletes it, list projects the row set.
+          sub="''${2:?macro needs add|rm|list}"
+          case "$sub" in
+            add)
+              name="''${3:?macro add needs NAME}"
+              [[ "$name" =~ ^[A-Za-z0-9._-]+$ ]] || { echo "macro add: NAME must be [A-Za-z0-9._-]+" >&2; exit 64; }
+              shift 3
+              [[ $# -gt 0 ]] || { echo "macro add: needs a command" >&2; exit 64; }
+              cmd="$*"
+              gawk -F'\t' -v n="$name" '$1 != n' "$macros_file" 2>/dev/null >"$macros_file.tmp" || true
+              printf '%s\t%s\n' "$name" "$cmd" >>"$macros_file.tmp"
+              mv "$macros_file.tmp" "$macros_file"
+              emit_receipt macro macro "macro:$name" add ok 0 0
+              ;;
+            rm)
+              name="''${3:?macro rm needs NAME}"
+              [[ -r "$macros_file" ]] || { echo "macro rm: no macros recorded" >&2; exit 66; }
+              gawk -F'\t' -v n="$name" '$1 == n {found = 1} END {exit !found}' "$macros_file" \
+                || { echo "macro rm: unknown macro $name" >&2; exit 66; }
+              gawk -F'\t' -v n="$name" '$1 != n' "$macros_file" >"$macros_file.tmp"
+              mv "$macros_file.tmp" "$macros_file"
+              emit_receipt macro macro "macro:$name" remove ok 0 0
+              ;;
+            list)
+              if [[ -r "$macros_file" ]]; then
+                gawk -F'\t' 'NF >= 2 {printf "%s\t%s\n", $1, $2}' "$macros_file"
+              fi
+              ;;
+            *) echo "macro: add|rm|list" >&2; exit 64 ;;
+          esac
           exit 0
           ;;
 
@@ -303,14 +354,38 @@
               exit 0
             fi
           fi
-          cmd="$(jq -r --arg r "$arg" '.[$r].cmd // empty' "$watch_catalog")"
-          [[ -n "$cmd" ]] || { echo "watch: unknown row $arg" >&2; exit 64; }
+          jq -e --arg r "$arg" 'has($r)' "$watch_catalog" >/dev/null || { echo "watch: unknown row $arg" >&2; exit 64; }
           [[ -n "$session" ]] || { echo "watch requires a Zellij session" >&2; exit 1; }
           zellij action new-pane --floating --name " [WATCH:$arg] " \
-            -x "12%" -y "10%" --width "76%" --height "78%" \
-            --cwd "$PWD" -- bash -c "$cmd" >/dev/null
+            -x "${watchPanel.x}" -y "${watchPanel.y}" --width "${watchPanel.width}" --height "${watchPanel.height}" \
+            --cwd "$PWD" -- forge-zellij watch-exec "$arg" >/dev/null
           emit_receipt watch monitor "watch:$arg" float-pane ok 0 0
           exit 0
+          ;;
+
+        watch-exec)
+          # Monitor-pane body: run the row command and close the receipt loop
+          # with the exit transition — panels carry linkage, never bare bash.
+          # The HUP/TERM trap keeps the exit receipt alive through close-pane.
+          arg="''${2:?watch-exec needs a row}"
+          cmd="$(jq -r --arg r "$arg" '.[$r].cmd // empty' "$watch_catalog")"
+          [[ -n "$cmd" ]] || { echo "watch-exec: unknown row $arg" >&2; exit 64; }
+          start="''${EPOCHREALTIME//[.,]/}"
+          rc=0
+          emitted=0
+          finish() {
+            if [[ "$emitted" == 1 ]]; then return 0; fi
+            emitted=1
+            local end result=ok
+            end="''${EPOCHREALTIME//[.,]/}"
+            [[ "$rc" == 0 || "$rc" == 129 || "$rc" == 130 || "$rc" == 143 ]] || result=error
+            emit_receipt watch-exec monitor "watch:$arg" run "$result" "$rc" $(((end - start) / 1000))
+          }
+          trap 'rc=129; finish' HUP
+          trap 'rc=143; finish' TERM
+          bash -c "$cmd" || rc=$?
+          finish
+          exit "$rc"
           ;;
 
         graph) ;;
@@ -384,17 +459,19 @@
     '';
   };
 
+  # The _arguments (...) action is a literal word list — parameter references
+  # inside it never expand, so the verb row renders inline from Nix.
   watchNames = lib.attrNames watchRows;
+  opsVerbs = ["graph" "row" "state" "star" "unstar" "layout" "watch" "macro"];
   opsCompletion = pkgs.writeTextDir "share/zsh/site-functions/_forge-zellij" ''
     #compdef forge-zellij
-    local -a verbs
-    verbs=(graph row state star unstar layout watch)
     _arguments \
-      '1:verb:(''${verbs[@]})' \
+      '1:verb:(${lib.concatStringsSep " " opsVerbs})' \
       '*::arg:->args'
     case "''${words[2]:-}" in
       layout) _values 'layout' record apply ;;
       watch) _values 'watch row' ${lib.concatStringsSep " " watchNames} ;;
+      macro) _values 'macro' add rm list ;;
     esac
   '';
 in {

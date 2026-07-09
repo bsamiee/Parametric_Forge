@@ -31,6 +31,11 @@
   # harness can never assert an identity production stopped matching.
   yaziPopupIdentity = ''(.is_plugin | not) and (.exited | not) and ((.is_floating // false) or (.is_suppressed // false)) and ((.title // "") == " [YAZI] ") and ((.terminal_command // .command // "") == "forge-yazi.sh")'';
 
+  # One DDS client-id derivation: (session, pane_id) -> deterministic 6-digit
+  # id; the popup body, the dispatcher, and the acceptance harness all pipe
+  # `printf '%s:%s' session pane` through this exact projection.
+  cidPipeline = ''cksum | gawk '{ print ($1 % 899999) + 100000 }' '';
+
   # Registry contract: one editor per tab, "<tab_id>\t<pane_id>\t<socket>" under
   # ${XDG_RUNTIME_DIR:-/tmp}/forge-edit/<session>/editor-tab-<tab_id>.tsv
   forgeNvim = pkgs.writeShellApplication {
@@ -168,7 +173,7 @@
       session="''${ZELLIJ_SESSION_NAME:-default}"
       runtime_root="''${XDG_RUNTIME_DIR:-/tmp}/forge-edit/''${session}"
       cid_of() { # $1 = pane id; globally unique across sessions via name hash
-        printf '%s:%s' "$session" "$1" | cksum | awk '{ print ($1 % 899999) + 100000 }'
+        printf '%s:%s' "$session" "$1" | ${cidPipeline}
       }
 
       if [[ $# -eq 0 && -n "''${ZELLIJ:-}" ]]; then
@@ -444,7 +449,7 @@
       fi
       popup_id="$(panes | jq -r "$popup_pred | .[0].id // empty")"
       if [[ -n "$popup_id" ]]; then
-        cid="$(printf '%s:%s' "$session" "$popup_id" | cksum | awk '{ print ($1 % 899999) + 100000 }')"
+        cid="$(printf '%s:%s' "$session" "$popup_id" | ${cidPipeline})"
         dds_sent="false"
         for _ in $(seq 1 25); do
           if ya emit-to "$cid" cd /tmp 2>/dev/null; then

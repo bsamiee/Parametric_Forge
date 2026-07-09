@@ -65,6 +65,39 @@ in {
           width = "84%";
           height = "86%";
         };
+        # Chord-launched pickers and panels (chords.nix + ops.nix consumers).
+        graph = {
+          x = "18%";
+          y = "12%";
+          width = "64%";
+          height = "72%";
+        };
+        watchPicker = {
+          x = "22%";
+          y = "18%";
+          width = "56%";
+          height = "56%";
+        };
+        watchPanel = {
+          x = "12%";
+          y = "10%";
+          width = "76%";
+          height = "78%";
+        };
+        browse = {
+          x = "20%";
+          y = "15%";
+          width = "60%";
+          height = "70%";
+        };
+        # Toggle-dispatcher stub: a deliberately tiny short-lived pane that
+        # runs the popup dispatch logic and reaps itself.
+        dispatcher = {
+          x = "45%";
+          y = "45%";
+          width = "10%";
+          height = "10%";
+        };
       };
     };
 
@@ -97,21 +130,36 @@ in {
   config = {
     home.packages = [pkgs.zellij];
 
+    # Grant reconcile, not append: plugDir-scoped rows PROJECT from the declared
+    # set every activation — stale plugin rows are pruned, grant edits propagate,
+    # rows outside plugDir (interactive grants for foreign paths) stay untouched.
     home.activation.zellijPluginGrants = lib.hm.dag.entryAfter ["writeBoundary"] (let
-      seed = wasm: perms: ''
-        if ! /usr/bin/grep -qF "plugins/${wasm}" "$permsFile" 2>/dev/null; then
-          {
-            printf '"%s" {\n' "$plugDir/${wasm}"
-            printf '    %s\n' ${lib.escapeShellArgs perms}
-            printf '}\n'
-          } >>"$permsFile"
-        fi
+      plugDir = "${config.xdg.configHome}/zellij/plugins";
+      permsFile = "${config.home.homeDirectory}/Library/Caches/org.Zellij-Contributors.Zellij/permissions.kdl";
+      grantBlocks = pkgs.writeText "zellij-plugin-grants.kdl" (lib.concatStrings (lib.mapAttrsToList (wasm: perms: ''
+          "${plugDir}/${wasm}" {
+          ${lib.concatMapStrings (p: "    ${p}\n") perms}}
+        '')
+        config.programs.zellij.pluginGrants));
+      pruneAwk = pkgs.writeText "zellij-grant-prune.awk" ''
+        /^"/ { drop = (index($0, q dir) == 1) }
+        !drop { print }
+        /^}/ { drop = 0 }
       '';
     in ''
-      permsFile="${config.home.homeDirectory}/Library/Caches/org.Zellij-Contributors.Zellij/permissions.kdl"
-      plugDir="${config.xdg.configHome}/zellij/plugins"
-      run /bin/mkdir -p "''${permsFile%/*}"
-      ${lib.concatStrings (lib.mapAttrsToList seed config.programs.zellij.pluginGrants)}
+      run /bin/sh -c ${lib.escapeShellArg ''
+        set -eu
+        permsFile="${permsFile}"
+        tmp="$permsFile.forge-tmp"
+        /bin/mkdir -p "''${permsFile%/*}"
+        if [ -f "$permsFile" ]; then
+          /usr/bin/awk -v dir="${plugDir}/" -v q='"' -f ${pruneAwk} "$permsFile" >"$tmp"
+        else
+          : >"$tmp"
+        fi
+        /bin/cat ${grantBlocks} >>"$tmp"
+        /bin/mv "$tmp" "$permsFile"
+      ''}
     '');
 
     # --- Plugin Installation ------------------------------------------------

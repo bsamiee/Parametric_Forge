@@ -8,7 +8,11 @@
 # mode table, which-key rows, and hint-ribbon rows are ONE parameterized table
 # projected into karabiner JSON, zellij keybind KDL, and zellij-forgot content.
 # A new bind is one row here; consumers never hand-duplicate chords.
-{lib, ...}: let
+{
+  config,
+  lib,
+  ...
+}: let
   # --- Physical layers --------------------------------------------------------
   # Karabiner rewrites right-hand modifiers into leader stacks; zellij consumes
   # each stack as the concrete modifier set named in `zellij`. Power carries no
@@ -150,6 +154,20 @@
   # {label, key?, rank}, id (exports the row as zellij.ids.<id> {key, mods}
   # for runtime chord injection). Display strings derive from layer prefixes
   # unless a curated grouping overrides them.
+  # Floating-popup Run bodies render geometry from the zellij popup-geometry
+  # owner (programs.zellij.popupGeometry), never inline percent literals.
+  popupGeometry = config.programs.zellij.popupGeometry;
+  runFloat = cmdWords: g:
+    lib.concatStringsSep "\n" [
+      "          Run ${lib.concatMapStringsSep " " (w: "\"${w}\"") cmdWords} {"
+      "            floating true"
+      "            close_on_exit true"
+      "            x \"${g.x}\""
+      "            y \"${g.y}\""
+      "            width \"${g.width}\""
+      "            height \"${g.height}\""
+      "          }"
+    ];
   hyperRows = [
     {
       keys = [modes.locked.key];
@@ -254,16 +272,7 @@
       ];
       id = "yaziToggle";
       keys = ["y"];
-      body = lib.concatStringsSep "\n" [
-        "          Run \"forge-yazi.sh\" \"toggle\" {"
-        "            floating true"
-        "            close_on_exit true"
-        "            x \"45%\""
-        "            y \"45%\""
-        "            width \"10%\""
-        "            height \"10%\""
-        "          }"
-      ];
+      body = runFloat ["forge-yazi.sh" "toggle"] popupGeometry.dispatcher;
       forgot = {
         label = "yazi popup";
         rank = 150;
@@ -324,16 +333,7 @@
     {
       gap = true;
       keys = ["b"];
-      body = lib.concatStringsSep "\n" [
-        "          Run \"forge-browse\" {"
-        "            floating true"
-        "            close_on_exit true"
-        "            x \"20%\""
-        "            y \"15%\""
-        "            width \"60%\""
-        "            height \"70%\""
-        "          }"
-      ];
+      body = runFloat ["forge-browse"] popupGeometry.browse;
       forgot = {
         label = "register browser";
         rank = 160;
@@ -345,16 +345,7 @@
     }
     {
       keys = ["s"];
-      body = lib.concatStringsSep "\n" [
-        "          Run \"forge-zellij\" \"graph\" {"
-        "            floating true"
-        "            close_on_exit true"
-        "            x \"18%\""
-        "            y \"12%\""
-        "            width \"64%\""
-        "            height \"72%\""
-        "          }"
-      ];
+      body = runFloat ["forge-zellij" "graph"] popupGeometry.graph;
       forgot = {
         label = "workspace graph";
         rank = 162;
@@ -366,16 +357,7 @@
     }
     {
       keys = ["w"];
-      body = lib.concatStringsSep "\n" [
-        "          Run \"forge-zellij\" \"watch\" {"
-        "            floating true"
-        "            close_on_exit true"
-        "            x \"22%\""
-        "            y \"18%\""
-        "            width \"56%\""
-        "            height \"56%\""
-        "          }"
-      ];
+      body = runFloat ["forge-zellij" "watch"] popupGeometry.watchPicker;
       # Cheatsheet-only discoverability: the ribbon stays inside ~160 columns,
       # so watch carries no ribbon chip.
       forgot = {
