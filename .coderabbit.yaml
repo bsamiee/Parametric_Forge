@@ -65,7 +65,8 @@ reviews:
         Config.redacted for secret-bearing config, Schema decodes at boundaries, no any,
         no class-based services, pnpm-only. Pulumi rows are typed and declarative;
         imperative provider calls outside the driver are defects. Secret values must never
-        reach state outputs unredacted.
+        reach state outputs unredacted. Dependency movement is forward-only — a downgrade
+        or stale pin without a recorded reason is a defect.
     - path: "modules/home/programs/**"
       instructions: >-
         App config consumers (Lua, TOML) project from Nix-owned vocabularies: private hex

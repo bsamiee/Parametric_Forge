@@ -33,7 +33,7 @@
     },
     {
       "id": "services-effect-rails",
-      "rule": "services/ TypeScript follows docs/stacks/typescript law: Effect rails, tagged faults, Config.redacted, Schema boundary decodes, typed Pulumi rows, secrets never in unredacted state outputs.",
+      "rule": "services/ TypeScript follows docs/stacks/typescript law: Effect rails, tagged faults, Config.redacted, Schema boundary decodes, typed Pulumi rows, secrets never in unredacted state outputs. Dependency movement is forward-only: a downgrade or stale pin without a recorded reason is a defect.",
       "severity": "high",
       "scope": ["services/**"]
     },
