@@ -981,7 +981,7 @@ const RECEIPT = { type: 'object', additionalProperties: false, required: ['ok', 
 
 // Dispatch helper: codex wrapper when CODEX, native lane otherwise. `codexPrompt` is the
 // four-step template in SKILL.md "Dispatching gpt-5.5" (Write-tool task/schema files + stale
-// purge, test -s guard + verbatim detached launch with -c mcp_servers={}, bounded liveness
+// purge, test -s guard + verbatim detached launch with --ignore-user-config, bounded liveness
 // polls with the wedge kill, jq-built mechanical receipt). The `.then()` attaches the
 // ORCHESTRATOR-ASSIGNED scope so a lane that dies before writing still names its territory.
 // Codex wrappers are LAUNCH-ONLY (SKILL.md "Wrappers never wait"): they return a launch
