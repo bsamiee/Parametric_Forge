@@ -217,7 +217,7 @@
   };
   openRules = [
     {
-      name = "*/";
+      url = "*/";
       use = ["edit" "open" "reveal"];
     }
     {
@@ -237,7 +237,7 @@
       use = ["extract" "reveal"];
     }
     {
-      name = "*.{dwg,dxf,3dm,skp,ifc,rvt,rfa,step,stp,iges,igs,stl,obj,fbx,glb,gltf}";
+      url = "*.{dwg,dxf,3dm,skp,ifc,rvt,rfa,step,stp,iges,igs,stl,obj,fbx,glb,gltf}";
       use = ["open" "reveal"];
     }
     {
