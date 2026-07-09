@@ -126,7 +126,7 @@ keymap = [
 	{ on = "A",           run = "plugin augment-command.archive",                       desc = "Create archive" },
 	{ on = "r",           run = "plugin augment-command.rename -- --cursor=before_ext", desc = "Rename selected file(s)" },
 	# Searching
-	{ on = "f",           run = "filter --smart",                                       desc = "Filter files" },
+	{ on = "f",           run = "plugin smart-filter",                                  desc = "Smart filter (continuous, auto-enter, open-on-submit)" },
 	{ on = "F",           run = "plugin jump-to-char",                                  desc = "Jump to file/directory starting with character" },
 	{ on = "<C-f>",       run = "plugin fzf",                                           desc = "Jump to a file/directory via fzf" },
 	{ on = "s",           run = "search --via=fd",                                      desc = "Search files by name via fd" },
@@ -151,6 +151,10 @@ keymap = [
 	{ on = [ ",", "s" ],  run = [ "sort size --reverse=no", "linemode size" ],          desc = "Sort by size" },
 	{ on = [ ",", "S" ],  run = [ "sort size --reverse", "linemode size" ],             desc = "Sort by size (reverse)" },
 	{ on = [ ",", "r" ],  run = "sort random --reverse=no",                             desc = "Sort randomly" },
+	# Preview zoom (image lane; magick-backed)
+	{ on = "+",           run = "plugin zoom 1",                                        desc = "Zoom in hovered image" },
+	{ on = "=",           run = "plugin zoom 1",                                        desc = "Zoom in hovered image" },
+	{ on = "-",           run = "plugin zoom -1",                                       desc = "Zoom out hovered image" },
 	# Linemode
 	{ on = [ "L", "s" ],  run = "linemode size",                                        desc = "Linemode: size" },
 	{ on = [ "L", "p" ],  run = "linemode permissions",                                 desc = "Linemode: permissions" },

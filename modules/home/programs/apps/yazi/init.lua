@@ -11,6 +11,11 @@ require("zoxide"):setup {
 	update_db = true,
 }
 
+-- Cross-instance yank state rides DDS, not an external clipboard hack
+require("session"):setup {
+	sync_yanked = true,
+}
+
 require("full-border"):setup {
 	type = ui.Border.ROUNDED,                   -- Available values: ui.Border.PLAIN, ui.Border.ROUNDED
 }
@@ -18,6 +23,9 @@ require("full-border"):setup {
 require("git"):setup()
 
 -- External Plugins -----------------------------------------------------------
+
+-- DuckDB data-preview lane: csv/tsv/parquet/xlsx/duckdb previewer rows
+require("duckdb"):setup()
 
 require("augment-command"):setup({
     prompt = true,                              -- Create prompt to choose between hovered/selected items when both exist
