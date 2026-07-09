@@ -59,5 +59,21 @@ in {
     };
     ssh = {inherit authorizedKeys;};
     disk.device = "/dev/sda";
+    # Hostinger serves no DHCP: addressing is static, live-verified from the
+    # provider recovery image (proto static route, /24 + /48 scopes).
+    network = {
+      interface = "eth0";
+      ipv4 = {
+        address = "31.97.131.41";
+        prefixLength = 24;
+        gateway = "31.97.131.254";
+      };
+      ipv6 = {
+        address = "2a02:4780:2d:23df::1";
+        prefixLength = 48;
+        gateway = "2a02:4780:2d::1";
+      };
+      nameservers = ["153.92.2.6" "1.1.1.1"];
+    };
   };
 }

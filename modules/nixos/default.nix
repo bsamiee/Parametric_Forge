@@ -10,9 +10,12 @@
 {
   host,
   pkgs,
+  modulesPath,
   ...
 }: {
-  imports = [./disko.nix];
+  # qemu-guest profile carries the virtio initrd modules the KVM hypervisor
+  # needs to expose the boot disk; without them initrd never finds root.
+  imports = [(modulesPath + "/profiles/qemu-guest.nix") ./disko.nix];
 
   # --- Boot -------------------------------------------------------------------
   # BIOS GRUB; disko projects the install device from the EF02 partition row.
@@ -25,11 +28,30 @@
   i18n.defaultLocale = "en_US.UTF-8";
 
   # --- Network ------------------------------------------------------------------
-  # SSH only on day one; every service stays loopback behind the ssh.nix
-  # vpsTunnels registry (webhook, postgres, ollama, n8n, atuin).
-  networking.firewall = {
-    enable = true;
-    allowedTCPPorts = [22];
+  # Static addressing projected from the host-context network row — the
+  # provider serves no DHCP. SSH only on day one; every service stays loopback
+  # behind the ssh.nix vpsTunnels registry (webhook, postgres, ollama, n8n, atuin).
+  networking = {
+    usePredictableInterfaceNames = false;
+    useDHCP = false;
+    interfaces.${host.network.interface} = {
+      ipv4.addresses = [{inherit (host.network.ipv4) address prefixLength;}];
+      ipv6.addresses = [{inherit (host.network.ipv6) address prefixLength;}];
+    };
+    defaultGateway = {
+      address = host.network.ipv4.gateway;
+      inherit (host.network) interface;
+    };
+    defaultGateway6 = {
+      address = host.network.ipv6.gateway;
+      inherit (host.network) interface;
+    };
+    inherit (host.network) nameservers;
+
+    firewall = {
+      enable = true;
+      allowedTCPPorts = [22];
+    };
   };
 
   # --- Services --------------------------------------------------------------
