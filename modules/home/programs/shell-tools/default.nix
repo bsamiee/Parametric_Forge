@@ -24,6 +24,7 @@ in {
     ./atuin.nix
     ./bat.nix
     ./bottom.nix
+    ./browsers.nix
     ./carapace.nix
     ./carbon.nix
     ./dust.nix
