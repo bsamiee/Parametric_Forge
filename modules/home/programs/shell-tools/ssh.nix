@@ -73,14 +73,15 @@
     })
     tunnel.forwards;
 
-  # Interactive operator hosts: `ssh maghz` opens a session with all forwards.
+  # Interactive operator hosts: `ssh maghz` opens a plain session. Forwards
+  # belong solely to the launchd tunnel agent — an interactive mux that also
+  # binds them would hold the loopback ports and starve the durable owner.
   interactiveHosts = lib.mapAttrs' (name: tunnel:
     lib.nameValuePair "${name}-vps ${name}" {
       User = tunnel.user;
       HostName = tunnel.hostName;
       IdentitiesOnly = true;
       AddKeysToAgent = "yes";
-      LocalForward = forwardsFor tunnel;
     })
   vpsTunnels;
 
