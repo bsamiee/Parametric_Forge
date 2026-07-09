@@ -30,6 +30,10 @@
         ]
     },
     "permissions": {
+        "allow": [
+            "Bash(container run *)",
+            "Bash(docker run *)"
+        ],
         "deny": [
             "Bash(git push --force:*)",
             "Bash(git push -f:*)",
