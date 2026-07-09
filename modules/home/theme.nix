@@ -265,16 +265,6 @@
       return {
       ${lib.concatStrings (lib.mapAttrsToList (name: c: "  [\"${name}\"] = \"${c.hex}\",\n") palette)}}
     '';
-    # Role hexes as a Lua return-table: the shared visible-state vocabulary for
-    # status cells, segment labels, and destructive-confirmation styling.
-    luaRoles = ''
-      -- Generated from the Forge theme owner (modules/home/theme.nix).
-      return {
-      ${lib.concatStrings (lib.mapAttrsToList (
-          ns: rows: "  [\"${ns}\"] = {\n${lib.concatStrings (lib.mapAttrsToList (name: c: "    [\"${name}\"] = \"${c.hex}\",\n") rows)}  },\n"
-        )
-        roles)}}
-    '';
     # WezTerm color-scheme rows in the colors-TOML shape; the wezterm owner
     # writes them under wezterm/colors and binds `color_scheme`.
     weztermColorScheme = {
