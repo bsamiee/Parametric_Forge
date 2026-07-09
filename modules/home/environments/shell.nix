@@ -34,7 +34,7 @@ in {
     PROCS_PAGER = "less -SRX"; # Procs pager: -S no wrap for tables, -R colors, -X no clear
     LESS = "-RFX"; # -X prevents screen clearing on macOS
     MANROFFOPT = "-c";
-    RICH_THEME = "dracula";
+    RICH_THEME = "dracula"; # rich accepts named Pygments styles only; dracula matches the estate palette variant
 
     # --- Tool Configurations ------------------------------------------------
     WATCHEXEC_IGNORE_FILE = "${config.xdg.configHome}/watchexec/ignore";

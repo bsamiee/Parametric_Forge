@@ -15,9 +15,9 @@
     "--container-architecture=linux/amd64"
 
     # --- Runner Images --------------------------------------------------------
-    "-P ubuntu-latest=catthehacker/ubuntu:act-latest"
-    "-P ubuntu-22.04=catthehacker/ubuntu:act-22.04"
-    "-P ubuntu-20.04=catthehacker/ubuntu:act-20.04"
+    "-P ubuntu-latest=ghcr.io/catthehacker/ubuntu:act-latest"
+    "-P ubuntu-24.04=ghcr.io/catthehacker/ubuntu:act-24.04"
+    "-P ubuntu-22.04=ghcr.io/catthehacker/ubuntu:act-22.04"
 
     # --- Performance ----------------------------------------------------------
     "--action-offline-mode"

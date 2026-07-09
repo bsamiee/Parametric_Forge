@@ -18,6 +18,15 @@ final: prev: {
       '';
   });
   duckdb = prev.callPackage ./duckdb {};
+  # The CLI overlay above has no source tree or pythonHash; python duckdb
+  # (harlequin's engine) keeps the nixpkgs source-built duckdb lineage.
+  pythonPackagesExtensions =
+    (prev.pythonPackagesExtensions or [])
+    ++ [
+      (_pyFinal: pyPrev: {
+        duckdb = pyPrev.duckdb.override {inherit (prev) duckdb;};
+      })
+    ];
   energyplus = prev.callPackage ./energyplus {};
   forge-provision = final.callPackage ./forge-provision {};
   google-cloud-sdk =

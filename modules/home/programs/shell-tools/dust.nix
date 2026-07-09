@@ -15,6 +15,5 @@
     skip-total = true; # Show total size
   };
 in {
-  home.packages = [pkgs.dust];
   xdg.configFile."dust/config.toml".source = tomlFormat.generate "dust-config" dustConfig;
 }

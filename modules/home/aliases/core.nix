@@ -64,6 +64,8 @@ _: {
     jqc = "jq -c"; # Compact JSON output
     jqs = "jq -S"; # Sort object keys
     jqi = "jnv"; # Interactive JSON viewer/filter
+    hq = "harlequin"; # Terminal SQL IDE (DuckDB default profile)
+    fqd = "fq d"; # Decode and display binary file structure
     j2y = "yq eval -P"; # JSON to YAML
     y2j = "yq eval -o=json"; # YAML to JSON
     yaml = "yq eval"; # Process YAML
@@ -92,6 +94,7 @@ _: {
     POST = "xh POST"; # RESTful convention
     PUT = "xh PUT"; # RESTful convention
     tripu = "trip --udp --target-port 33434"; # UDP tracing for ECMP paths
+    ohaj = "oha --no-tui --output-format json"; # HTTP load run with JSON report
     serve = "python3 -m http.server 8000"; # Quick static server
     bw = "sudo bandwhich"; # Bandwidth monitor (needs sudo)
     speedtestl = "speedtest --accept-license"; # Ookla speed test with license pre-accepted
@@ -133,6 +136,7 @@ _: {
     ghproject = "dotnet new grasshopper -sample"; # Initialize Grasshopper template using current installed defaults
     watch = "watchexec -c"; # Clear terminal on file change
     watchr = "watchexec -r"; # Restart process on file change
+    pc = "process-compose"; # Project-local process mesh (process-compose.yaml)
 
     # --- TypeScript/React Development --------------------------------------
     pdev = "pnpm dev"; # Start Vite dev server

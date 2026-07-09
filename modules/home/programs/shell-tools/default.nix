@@ -25,6 +25,8 @@
     ./jnv.nix
     ./mcp-launchers.nix
     ./pik.nix
+    ./posting.nix
+    ./process-compose.nix
     ./procs.nix
     ./rclone.nix
     ./ripgrep.nix
@@ -51,13 +53,17 @@
     pkgs.dua # Interactive disk usage analyzer
     pkgs.duf # Disk free overview
     pkgs.dust # Directory size tree; config owned by dust.nix
+    pkgs.fq # jq for binary formats; structured decode of media, executables, captures
     pkgs.gping # Graphing ping
     pkgs.grex # Regex generator from test cases
     pkgs.hexyl # Hex viewer
     pkgs.hyperfine # Command benchmarking
     pkgs.mise # Runtime version manager
+    pkgs.oha # HTTP load generator with real-time TUI and JSON/CSV output
     pkgs.ookla-speedtest # Official Ookla speed test CLI
     pkgs.ouch # Archive compression and extraction
+    pkgs.posting # Terminal API workspace; config owned by posting.nix
+    pkgs.process-compose # Non-container process orchestrator; config owned by process-compose.nix
     pkgs.ratchet # GitHub Actions version pinning
     pkgs.rich-cli # Rich terminal rendering
     pkgs.sd # Structural find and replace

@@ -31,6 +31,10 @@ in {
       # --- YAML/JSON ----------------------------------------------------------
       YAMLLINT_CONFIG_FILE = "${config.xdg.configHome}/yamllint/config";
 
+      # --- Database Front Doors -----------------------------------------------
+      # Harlequin discovers config through platformdirs (~/Library on darwin); pin it to XDG.
+      HARLEQUIN_CONFIG_PATH = "${config.xdg.configHome}/harlequin/config.toml";
+
       # --- TypeScript/JavaScript Tooling -------------------------------------
       TAILWIND_MODE = "watch"; # JIT compilation for development
       VITEST_MODE = "run"; # Default test runner mode
