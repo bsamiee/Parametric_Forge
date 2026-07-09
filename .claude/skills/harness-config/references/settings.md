@@ -1,6 +1,6 @@
 # [SETTINGS]
 
-Settings are the enforcement and defaults layer: they bind regardless of what the model believes. Scope precedence runs managed, command line, local (`.claude/settings.local.json`), project (`.claude/settings.json`), user (`~/.claude/settings.json`) — arrays merge, scalars override, managed rows are immovable. Files hot-reload except `model` and `outputStyle`.
+Settings are the enforcement and defaults layer: they bind regardless of what the model believes. Scope precedence runs managed, command line, local (`.claude/settings.local.json`), project (`.claude/settings.json`), user (`~/.claude/settings.json`); a narrower scope's value REPLACES the broader scope's wholesale — scalar, array, and object alike — and only `permissions` rules accumulate across scopes. Managed rows are immovable; files hot-reload except `model` and `outputStyle`. The override-not-merge rule is a silent trap for object-valued keys: a project `enabledPlugins: {}` does not "add nothing," it disables every user-scope plugin — to inherit, OMIT the key; to extend, restate the FULL set.
 
 ## [01]-[PERMISSIONS]
 
