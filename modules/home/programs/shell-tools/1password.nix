@@ -12,10 +12,11 @@
   inputs,
   ...
 }: let
-  # Cutover flip row (t5x's terminal act): "transition" keeps the 1Password
-  # fallback lanes alive; "doppler" dispatches every lane to the doppler-first
-  # session cache alone. One value flips CLI, TUI, and GUI at the next switch.
-  secretBackend = "transition";
+  # Backend row: "doppler" dispatches every lane (CLI, TUI, GUI) to the
+  # doppler-first session cache alone; "transition" re-arms the 1Password
+  # fallback lanes. The op cache stays written on every switch, so the
+  # fallback is dormant, never dismantled. One value flips all lanes.
+  secretBackend = "doppler";
   sessionCache = "${config.xdg.cacheHome}/forge-secrets/session-env.sh";
   opCache = "${config.xdg.configHome}/hm-op-session.sh";
   replayConstants = [
@@ -47,10 +48,14 @@
       export MAGHZ_REMOTE_HOST="31.97.131.41"
       export MAGHZ_REMOTE_USER="maghz-agent"
       export MAGHZ_REMOTE_WORKROOT="/home/maghz-agent/maghz"
+      # Replay manifest (key NAMES only, mode 600): the set names forge-accept
+      # asserts against the live gui domain for lane parity.
+      names_tmp="$(mktemp "''${TMPDIR:-/tmp}/gui-replay.XXXXXX")"
       while IFS= read -r k; do
         val="''${!k:-}"
         if [ -n "$val" ]; then
           /bin/launchctl setenv "$k" "$val"
+          printf '%s\n' "$k" >>"$names_tmp"
         else
           # Narrowing is real in the launchd domain: a name no backend serves
           # is cleared, so the cutover flip retires stale GUI values at replay
@@ -62,6 +67,9 @@
         grep -oE '^export [A-Za-z_][A-Za-z0-9_]*' "$f" | awk '{print $2}'
       done
       printf '%s\n' ${lib.concatStringsSep " " replayConstants}; } | sort -u)
+      mkdir -p "${config.xdg.cacheHome}/forge-secrets"
+      chmod 600 "$names_tmp"
+      mv -f "$names_tmp" "${config.xdg.cacheHome}/forge-secrets/gui-replay.names"
     '';
   };
   # Per-lane cutover proof: key NAMES only, never values. CLI runs the

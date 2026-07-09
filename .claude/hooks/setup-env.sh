@@ -22,7 +22,7 @@ readonly OP_CACHE="${HOME}/.config/hm-op-session.sh"
 readonly JUPYTER_TOKEN_CACHE="${HOME}/.config/jupyter/forge-token.env"
 readonly DOPPLER_CACHE_DIR="${CLAUDE_DOPPLER_CACHE_DIR:-${HOME}/.cache/doppler}"
 readonly SESSION_CACHE_DIR="${XDG_CACHE_HOME:-${HOME}/.cache}/forge-secrets"
-readonly SECRET_BACKEND="${CLAUDE_SECRET_BACKEND:-transition}"
+readonly SECRET_BACKEND="${CLAUDE_SECRET_BACKEND:-doppler}"
 readonly DOPPLER_OFFLINE="${CLAUDE_DOPPLER_OFFLINE:-0}"
 _stale_days="${CLAUDE_DOPPLER_STALE_DAYS:-14}"
 [[ "${_stale_days}" =~ ^[0-9]+$ ]] || _stale_days=14
