@@ -104,15 +104,15 @@
 
       # One flock serializes deploys, rollbacks, and the maintenance agent.
       mkdir -p "$(dirname "$lock_file")"
-      exec 9>"$lock_file"
-      flock -n 9 || {
+      exec {lock_fd}>"$lock_file"
+      flock -n "$lock_fd" || {
         printf 'forge-redeploy: another deploy/maintenance run holds %s\n' "$lock_file" >&2
         exit 75
       }
 
       # One typed receipt per state-touching run; the EXIT trap emits it even
       # when a phase aborts, so failed activations stay visible (result=fail).
-      ts="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+      TZ=UTC0 printf -v ts '%(%Y-%m-%dT%H:%M:%SZ)T' "$EPOCHSECONDS"
       system_path="-" gen_live="-"
       eval_s="-" build_s="-" activate_s="-"
       to_build="-" to_fetch="-" diff_lines="-"
@@ -182,9 +182,10 @@
         gen_live="$(readlink "$profile" 2>/dev/null)" || gen_live="-"
         gen_live="''${gen_live##*system-}"
         gen_live="''${gen_live%-link}"
-        if [ "$(readlink /run/current-system)" != "$1" ]; then
+        live_system="$(readlink /run/current-system)"
+        if [ "$live_system" != "$1" ]; then
           current="mismatch"
-          printf 'forge-redeploy: FATAL live system %s != %s %s\n' "$(readlink /run/current-system)" "$2" "$1" >&2
+          printf 'forge-redeploy: FATAL live system %s != %s %s\n' "$live_system" "$2" "$1" >&2
           exit 1
         fi
         current="match"
@@ -215,7 +216,7 @@
         }
         activate_s=$((EPOCHSECONDS - t0))
         system_path="$(readlink /run/current-system)"
-        assert_live "$(cat "$profile/systemConfig")" "rolled-back profile"
+        assert_live "$(<"$profile/systemConfig")" "rolled-back profile"
         result="ok"
         printf 'forge-redeploy: rollback ok system=%s\n' "$system_path"
         exit 0
@@ -382,7 +383,7 @@
 
       # One typed receipt per run; the EXIT trap emits it even when a phase
       # aborts, so denied trims and failed GC stay visible (result=fail).
-      ts="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+      TZ=UTC0 printf -v ts '%(%Y-%m-%dT%H:%M:%SZ)T' "$EPOCHSECONDS"
       power="-" lock="-" trim="-" gc="-" optimise="-"
       gc_s="-" optimise_s="-"
       result="fail"
@@ -409,8 +410,8 @@
         flock_args=(-w 600)
       fi
       mkdir -p "$(dirname "$lock_file")"
-      exec 9>"$lock_file"
-      flock "''${flock_args[@]}" 9 || {
+      exec {lock_fd}>"$lock_file"
+      flock "''${flock_args[@]}" "$lock_fd" || {
         lock="held" result="skipped"
         printf 'forge-nix-maintenance: deploy in flight holds %s; skipped\n' "$lock_file" >&2
         exit 75
@@ -486,7 +487,7 @@
     text = ''
       rows_json='${cleanupRows}'
       state_dir="''${XDG_STATE_HOME:-$HOME/.local/state}/forge-cleanup"
-      run_ts="$(date -u +%Y%m%dT%H%M%SZ)"
+      TZ=UTC0 printf -v run_ts '%(%Y%m%dT%H%M%SZ)T' "$EPOCHSECONDS"
       usage() { echo "usage: forge-cleanup plan | apply [plan-file]" >&2; exit 64; }
       verb="''${1:-}"; shift || true
 
@@ -536,7 +537,7 @@
 
       trash() {
         mkdir -p "$HOME/.Trash"
-        mv -n "$1" "$HOME/.Trash/$(basename "$1").forge-cleanup.$run_ts"
+        mv -n -- "$1" "$HOME/.Trash/''${1##*/}.forge-cleanup.$run_ts"
       }
 
       cmd_plan() {
@@ -636,7 +637,7 @@
 
       # One typed receipt per run; the EXIT trap emits it even when a phase
       # aborts, so failed bumps and builds stay visible (result=fail).
-      ts="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+      TZ=UTC0 printf -v ts '%(%Y-%m-%dT%H:%M:%SZ)T' "$EPOCHSECONDS"
       power="-" lock="-" worktree="-" inputs="-" bump="-"
       build="-" commit="-" deployed="-" nixd="-"
       result="fail"
@@ -669,8 +670,8 @@
       # Own lock serializes drift runs; the deploy flock stays redeploy-owned,
       # so an in-flight deploy surfaces as build=deploy-in-flight, not deadlock.
       mkdir -p "$(dirname "$lock_file")"
-      exec 8>"$lock_file"
-      flock "''${flock_args[@]}" 8 || {
+      exec {lock_fd}>"$lock_file"
+      flock "''${flock_args[@]}" "$lock_fd" || {
         lock="held" result="skipped"
         printf 'forge-nix-drift: another drift run holds %s; skipped\n' "$lock_file" >&2
         exit 75
@@ -827,7 +828,7 @@
           ;;
       esac
       receipt_log="''${FORGE_SWEEP_RECEIPT_LOG:-$HOME/Library/Logs/forge-activation-sweep.receipts.log}"
-      ts="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+      TZ=UTC0 printf -v ts '%(%Y-%m-%dT%H:%M:%SZ)T' "$EPOCHSECONDS"
       findings=0 cleared="-" result="fail"
       emit_receipt() {
         line="$(printf 'ts=%s\tmode=%s\tfindings=%s\tcleared=%s\tresult=%s' \
@@ -932,8 +933,8 @@
       backend="''${CLAUDE_SECRET_BACKEND:-doppler}"
       brew_bin="''${FORGE_BREW:-/opt/homebrew/bin/brew}"
       hook="''${FORGE_ACCEPT_HOOK:-$HOME/.claude/hooks/setup-env.sh}"
-      tunnel_receipts="''${FORGE_TUNNEL_RECEIPTS:-$HOME/Library/Logs/maghz-vps-tunnel.receipts.log}"
-      ts="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+      tunnel_receipts="''${FORGE_TUNNEL_RECEIPTS:-$HOME/Library/Logs/forge-maghz-vps-tunnel.receipts.log}"
+      TZ=UTC0 printf -v ts '%(%Y-%m-%dT%H:%M:%SZ)T' "$EPOCHSECONDS"
       pass=0 warn=0 fail=0 instruct=0 skip=0
 
       row() {
@@ -1013,7 +1014,7 @@
       }
 
       step_replay() {
-        /bin/launchctl kickstart -k "gui/$uid/org.nix-community.home.gui-op-secrets" 2>/dev/null || true
+        /bin/launchctl kickstart -k "gui/$uid/com.parametric-forge.gui-op-secrets" 2>/dev/null || true
         sleep 3
         if [ ! -f "$gui_manifest" ]; then
           row WARN replay "no gui-replay manifest at $gui_manifest; the agent has not replayed on this generation"
@@ -1296,6 +1297,7 @@ in {
   launchd.agents.forge-nix-maintenance = {
     enable = true;
     config = {
+      Label = "com.parametric-forge.forge-nix-maintenance";
       ProgramArguments = ["${forgeNixMaintenance}/bin/forge-nix-maintenance" "--scheduled"];
       StartCalendarInterval = [
         {
@@ -1316,6 +1318,7 @@ in {
   launchd.agents.forge-nix-drift = {
     enable = true;
     config = {
+      Label = "com.parametric-forge.forge-nix-drift";
       ProgramArguments = ["${forgeNixDrift}/bin/forge-nix-drift" "--scheduled"];
       StartCalendarInterval = [
         {

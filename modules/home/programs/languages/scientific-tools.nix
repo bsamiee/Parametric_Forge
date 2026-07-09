@@ -168,7 +168,6 @@
   forgePythonStateHome = config.xdg.stateHome;
   forgeJupyterTokenFile = "${config.xdg.configHome}/jupyter/forge-token.env";
   forgeJupyterPort = 8888;
-  forgeJupyterLogDir = "${config.xdg.stateHome}/forge-jupyter/log";
   forgeJupyterRootDir = "${config.xdg.stateHome}/forge-jupyter/root";
   forgeJupyterTokenPrelude = ''
     token_file=${lib.escapeShellArg forgeJupyterTokenFile}
@@ -427,10 +426,6 @@ in
             chmod 600 "$token_file"
           '';
 
-          ensureForgeJupyterLogDir = lib.hm.dag.entryAfter ["linkGeneration"] ''
-            ${pkgs.coreutils}/bin/install -d -m 700 ${lib.escapeShellArg forgeJupyterLogDir}
-          '';
-
           ensureForgeJupyterRootDir = lib.hm.dag.entryAfter ["linkGeneration"] ''
             ${pkgs.coreutils}/bin/install -d -m 700 ${lib.escapeShellArg forgeJupyterRootDir}
           '';
@@ -438,20 +433,23 @@ in
     };
 
     # Persistent Jupyter rides both supervisors (operator ruling: local AND VPS):
-    # launchd on Darwin, a lingering systemd user service on Linux.
+    # launchd on Darwin, a lingering systemd user service on Linux. KeepAlive
+    # implies launch-at-load; Interactive classification exempts user-facing
+    # kernel compute from Background throttling per launchd.plist(5).
     launchd.agents.forge-jupyter = {
       enable = true;
       config = {
+        Label = "com.parametric-forge.forge-jupyter";
         ProgramArguments = ["${forgeJupyter}/bin/forge-jupyter"];
         WorkingDirectory = forgeJupyterRootDir;
         EnvironmentVariables = {
           FORGE_PROVISION_ROOT = forgeJupyterRootDir;
         };
-        RunAtLoad = true;
         KeepAlive = true;
         ThrottleInterval = 30;
-        StandardOutPath = "${forgeJupyterLogDir}/out.log";
-        StandardErrorPath = "${forgeJupyterLogDir}/err.log";
+        ProcessType = "Interactive";
+        StandardOutPath = "${config.home.homeDirectory}/Library/Logs/forge-jupyter.log";
+        StandardErrorPath = "${config.home.homeDirectory}/Library/Logs/forge-jupyter.log";
         AssociatedBundleIdentifiers = ["com.parametric-forge.forge-jupyter"];
       };
     };

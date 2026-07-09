@@ -48,8 +48,14 @@ in {
     fi
   '';
 
-  # Identity row merges into the HM module's agent config (freeform schema).
-  launchd.agents.atuin-daemon.config.AssociatedBundleIdentifiers = ["com.parametric-forge.atuin-daemon"];
+  # Identity + log rows merge into the HM module's agent config (freeform
+  # schema). The label stays upstream (org.nix-community.home.atuin-daemon):
+  # the job is HM-module-generated, not repo-owned.
+  launchd.agents.atuin-daemon.config = {
+    AssociatedBundleIdentifiers = ["com.parametric-forge.atuin-daemon"];
+    StandardOutPath = "${config.home.homeDirectory}/Library/Logs/forge-atuin-daemon.log";
+    StandardErrorPath = "${config.home.homeDirectory}/Library/Logs/forge-atuin-daemon.log";
+  };
 
   programs.atuin = {
     enable = true;

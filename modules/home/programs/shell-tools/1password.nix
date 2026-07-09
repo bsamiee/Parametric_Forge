@@ -169,7 +169,7 @@ in {
 
         # Transitional GUI replay: restart the RunAtLoad agent so GUI apps pick up
         # the just-written cache on this switch instead of at next login.
-        /bin/launchctl kickstart -k "gui/$UID/org.nix-community.home.gui-op-secrets" >/dev/null 2>&1 || true
+        /bin/launchctl kickstart -k "gui/$UID/com.parametric-forge.gui-op-secrets" >/dev/null 2>&1 || true
       '';
 
       # Register the GUI Op Secrets app bundle with Launch Services so macOS Login Items & Extensions
@@ -290,12 +290,18 @@ in {
     </plist>
   '';
 
+  # RunAtLoad + writer-side kickstart is the event source; WatchPaths on the
+  # cache file was adjudicated out — launchd.plist(5) marks it race-prone, and
+  # the cache writer already owns the deterministic replay trigger.
   launchd.agents.gui-op-secrets = {
     enable = true;
     config = {
+      Label = "com.parametric-forge.gui-op-secrets";
       ProgramArguments = ["${guiOpSecrets}/bin/gui-op-secrets"];
       RunAtLoad = true;
-      StandardErrorPath = "${config.xdg.cacheHome}/gui-op-secrets.err.log";
+      ProcessType = "Background";
+      StandardOutPath = "${config.home.homeDirectory}/Library/Logs/forge-gui-op-secrets.log";
+      StandardErrorPath = "${config.home.homeDirectory}/Library/Logs/forge-gui-op-secrets.log";
       AssociatedBundleIdentifiers = ["com.parametric-forge.gui-op-secrets"];
     };
   };

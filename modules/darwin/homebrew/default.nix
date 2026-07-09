@@ -113,8 +113,14 @@ in {
 
   # Reconcile at login and daily at 10:00; converged runs are read-only and
   # exit 0. Logged: a failed regeneration must never hide until the next day.
+  # The reconciled agent itself keeps its upstream tap label
+  # (com.github.domt4.homebrew-autoupdate) — external job, recorded, not ours
+  # to rename. nix-darwin's strict launchd schema has no
+  # AssociatedBundleIdentifiers key, so this row shows a generic Login Items
+  # entry; known upstream gap, carried.
   launchd.user.agents.forge-brew-autoupdate = {
     serviceConfig = {
+      Label = "com.parametric-forge.forge-brew-autoupdate";
       ProgramArguments = ["${autoupdateReconcile}/bin/forge-brew-autoupdate-reconcile"];
       RunAtLoad = true;
       StartCalendarInterval = [
