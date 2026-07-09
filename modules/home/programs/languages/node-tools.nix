@@ -11,7 +11,7 @@
     pkgs.pnpm_11 # Sole package-manager verb on PATH; major-pinned for store-format stability
     pkgs.prettier # Code formatter
     pkgs.tailwindcss # Utility-first CSS framework
-    pkgs.typescript-go # TypeScript native-preview LSP (provides `tsgo`)
+    pkgs.typescript-go # TypeScript 7 (`typescript@7` upstream identity); nixpkgs still ships the dev snapshot as `tsgo` — a package-drift row until stable TS7 packaging lands
     pkgs.dts-lsp # TypeScript declaration navigation for API catalogue work
     pkgs.mermaid-cli # Mermaid CLI (mmdc) on PATH; Chromium pinned via PUPPETEER_EXECUTABLE_PATH in languages.nix
   ];
