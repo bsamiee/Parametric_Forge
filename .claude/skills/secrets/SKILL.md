@@ -18,8 +18,8 @@ Doppler is the single secret backend; 1Password is transitional root custody and
 | [INDEX] | [TASK]                              | [COMMAND]                                                                                                      |
 | :-----: | :---------------------------------- | :------------------------------------------------------------------------------------------------------------- |
 |  [01]   | Binary and version proof            | `doppler --version`                                                                                            |
-|  [02]   | Effective options and their sources | `doppler configure debug`                                                                                      |
-|  [03]   | Every scope row                     | `doppler configure --all --json`                                                                               |
+|  [02]   | Effective options, token stripped   | `doppler configure debug --json \| jq 'with_entries(.value \|= del(.token))'`                                  |
+|  [03]   | Every scope row, token stripped     | `doppler configure --all --json \| jq 'with_entries(.value \|= del(.token))'`                                  |
 |  [04]   | One directory's scope               | `doppler configure get project config --scope <dir> --json` — keys land as `enclave.project`, `enclave.config` |
 |  [05]   | Set a scope row                     | `doppler configure set project=<p> config=<c> --scope <dir>` — driver-owned; scope `/` stays untouched         |
 |  [06]   | Unset a scope row                   | `doppler configure unset project config --scope <dir>`                                                         |
@@ -27,7 +27,7 @@ Doppler is the single secret backend; 1Password is transitional root custody and
 |  [08]   | Inject env into a process           | `doppler run --project <p> --config <c> --command '<cmd>'`                                                     |
 |  [09]   | Render a template                   | `doppler secrets substitute <template>`                                                                        |
 
-Secret downloads pipe to `jq 'keys'` or `jq 'length'`: receipts, transcripts, and logs carry key names and counts, never values.
+Secret downloads pipe to `jq 'keys'` or `jq 'length'`; configure reads strip the root CLI token with `del(.token)` — a bare `configure debug` or `configure --all` prints it. Receipts, transcripts, and logs carry key names and counts, never values or tokens.
 
 ## [03]-[PULL_RAIL]
 
