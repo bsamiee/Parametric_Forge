@@ -25,7 +25,8 @@ in {
       "--color=preview-fg:${palette.foreground.hex},preview-scrollbar:${palette.pink.hex},label:${palette.magenta.hex},query:${palette.foreground.hex}"
       # Border and styling
       "--border=sharp"
-      # Note: Border label set per-command in init.nix and shell.nix
+      # Border labels are widget-scoped below; forgit rows carry theirs in
+      # environments/shell.nix.
       "--border-label-pos=0"
       # UI elements: BMP-only glyphs — PUA codepoints fail fzf width validation
       "--prompt='❯ '"

@@ -202,23 +202,6 @@
 
   superRows = [
     {
-      keys = ["\\"];
-      body = lib.concatStringsSep "\n" [
-        "            LaunchOrFocusPlugin \"zellij-pane-picker\" {"
-        "                floating            true;"
-        "                move_to_focused_tab true;"
-        "            }"
-      ];
-      forgot = {
-        label = "pane picker";
-        rank = 160;
-      };
-      ribbon = {
-        label = "jump";
-        rank = 40;
-      };
-    }
-    {
       keys = ["["];
       kdl = "GoToPreviousTab;";
       forgot = {
@@ -460,8 +443,23 @@
     (r: "            \"${kdlEsc r.label}\" \"${kdlEsc r.display}\"")
     forgotRows;
 
+  # KEY IDENTITY: a Shift-carrying layer receives shifted punctuation as the
+  # SHIFTED character, so its binds emit that glyph both with and without the
+  # Shift modifier listed; letter keys and Shift-free layers pass through.
+  shiftedGlyph = {
+    "/" = "?";
+    "[" = "{";
+    "]" = "}";
+    "\\" = "|";
+  };
+  stripShift = prefix: lib.concatStringsSep " " (lib.filter (w: w != "Shift") (lib.splitString " " prefix));
+  bindKeys = prefix: k:
+    if lib.hasInfix "Shift" prefix && shiftedGlyph ? ${k}
+    then ["${prefix} ${shiftedGlyph.${k}}" "${stripShift prefix} ${shiftedGlyph.${k}}"]
+    else ["${prefix} ${kdlEsc k}"];
+
   renderBind = prefix: row: let
-    keysStr = lib.concatMapStringsSep " " (k: "\"${prefix} ${kdlEsc k}\"") row.keys;
+    keysStr = lib.concatMapStringsSep " " (s: "\"${s}\"") (lib.concatMap (bindKeys prefix) row.keys);
   in
     lib.concatStrings [
       (lib.optionalString (row.gap or false) "\n")
@@ -474,7 +472,7 @@
     ];
 
   cheatsheetBind = lib.concatStringsSep "\n" [
-    "        bind \"${layers.hyper.zellij} ${cheatsheetKey}\" {"
+    "        bind ${lib.concatMapStringsSep " " (s: "\"${s}\"") (bindKeys layers.hyper.zellij cheatsheetKey)} {"
     "          LaunchOrFocusPlugin \"zellij-forgot\" {"
     "            \"LOAD_ZELLIJ_BINDINGS\" \"false\""
     forgotKdl

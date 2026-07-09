@@ -13,6 +13,7 @@
   pkgs,
   ...
 }: let
+  inherit (config.forge.theme) palette;
   brewPrefix = "/opt/homebrew";
 
   # Generator rows: `version` is the staleness key — a Nix store path for
@@ -45,15 +46,39 @@
   # Package rows whose share/zsh/site-functions precede compinit on fpath.
   completionPackages = [pkgs.zsh-completions];
 
-  # Dump key: any change to the completion file set retires every old dump at
+  # Dump key: the full pre-compinit fpath surface — generator rows, completion
+  # packages, sourced-plugin srcs, and the profile package set (NIX_PROFILES
+  # site-functions enter fpath at 520). Any change retires every old dump at
   # activation; compinit -C rebuilds once per fingerprint, never per shell.
-  fingerprint =
-    builtins.substring 0 12 (builtins.hashString "sha256"
-      (builtins.toJSON (map (g: g.version) generators ++ map toString completionPackages)));
+  fingerprint = builtins.substring 0 12 (builtins.hashString "sha256"
+    (builtins.toJSON (map (g: g.version) generators
+      ++ map toString (completionPackages
+        ++ map (p: p.src) config.programs.zsh.plugins
+        ++ config.home.packages))));
 
   compDir = "${config.xdg.dataHome}/zsh/completions";
   verDir = "${config.xdg.dataHome}/zsh/.completion-versions";
   cacheDir = "${config.xdg.cacheHome}/zsh";
+
+  # File-kind completion colors: theme truecolor per type, consumed by both
+  # zsh complist and fzf-tab's colorize path. A new file kind is one row.
+  tc = c: "38;2;${toString c.r};${toString c.g};${toString c.b}";
+  listColors = lib.concatStringsSep ":" [
+    "di=1;${tc palette.cyan}"
+    "ln=${tc palette.magenta}"
+    "or=${tc palette.red}"
+    "mi=${tc palette.red}"
+    "ex=${tc palette.green}"
+    "so=${tc palette.yellow}"
+    "pi=${tc palette.yellow}"
+    "bd=${tc palette.yellow}"
+    "cd=${tc palette.yellow}"
+    "su=${tc palette.orange}"
+    "sg=${tc palette.orange}"
+    "tw=${tc palette.orange}"
+    "ow=${tc palette.orange}"
+    "st=${tc palette.orange}"
+  ];
 
   # zstyle rows: `value` lands verbatim after the key. Completion behavior,
   # carapace bridge spacing, and fzf-tab UI are one vocabulary.
@@ -106,7 +131,7 @@
     {
       context = ":completion:*";
       key = "list-colors";
-      value = "\${(s.:.)LS_COLORS}";
+      value = "'${listColors}'";
     }
     {
       context = ":carapace:*";
@@ -116,7 +141,21 @@
     {
       context = ":fzf-tab:*";
       key = "fzf-flags";
-      value = "--height=80% --layout=reverse --border=sharp";
+      # Palette lands here explicitly: fzf-tab clears FZF_DEFAULT_OPTS for its
+      # child fzf, so the completion UI must carry the theme tokens itself.
+      value = lib.concatStringsSep " " [
+        "--height=80%"
+        "--layout=reverse"
+        "--border=sharp"
+        "--highlight-line"
+        "--prompt='❯ '"
+        "--pointer='❯'"
+        "--marker='✓'"
+        "--color=fg:${palette.foreground.hex},fg+:${palette.background.hex},bg:${palette.background.hex},bg+:${palette.cyan.hex},selected-fg:${palette.background.hex},selected-bg:${palette.cyan.hex}"
+        "--color=hl:${palette.green.hex},hl+:${palette.magenta.hex},info:${palette.comment.hex},marker:${palette.green.hex},prompt:${palette.magenta.hex},pointer:${palette.magenta.hex}"
+        "--color=gutter:${palette.background.hex},header:${palette.comment.hex},border:${palette.cyan.hex},separator:${palette.pink.hex},scrollbar:${palette.pink.hex}"
+        "--color=preview-fg:${palette.foreground.hex},preview-scrollbar:${palette.pink.hex},label:${palette.magenta.hex},query:${palette.foreground.hex}"
+      ];
     }
     {
       context = ":fzf-tab:*";
@@ -163,6 +202,9 @@
       cache_dir=${lib.escapeShellArg cacheDir}
       mkdir -p "$comp_dir" "$ver_dir" "$cache_dir"
 
+      # Orphaned mktemp files from an interrupted prior run are litter.
+      find "$comp_dir" -maxdepth 1 -name '.forge-*' -delete
+
       regen() {
         local name="$1" version="$2" tmp
         shift 2
@@ -171,7 +213,8 @@
           return 0
         fi
         tmp="$(mktemp "$comp_dir/.forge-$name.XXXXXX")"
-        if "$@" >"$tmp" 2>/dev/null; then
+        # Empty output on exit 0 is a broken generator, never a completion file.
+        if "$@" >"$tmp" 2>/dev/null && [[ -s "$tmp" ]]; then
           mv -f "$tmp" "$comp_dir/_$name"
           printf '%s\n' "$version" >"$ver_file"
         else
@@ -179,16 +222,18 @@
         fi
       }
 
+      # One owner: rows earn membership per run — gate-false rows retire below
+      # exactly like files outside the table.
+      managed=" ${lib.concatMapStringsSep " " (g: g.name) (builtins.filter (g: !(g ? gate)) generators)} "
+
       ${lib.concatMapStringsSep "\n" (
           g:
             if g ? gate
-            then "if ${g.gate}; then\n        regen ${g.name} \"${g.version}\" ${g.command}\n      fi"
+            then "if ${g.gate}; then\n        regen ${g.name} \"${g.version}\" ${g.command}\n        managed+=\"${g.name} \"\n      fi"
             else "regen ${g.name} \"${g.version}\" ${g.command}"
         )
         generators}
 
-      # One owner: files outside the generator table are retired litter.
-      managed=" ${lib.concatMapStringsSep " " (g: g.name) generators} "
       for f in "$comp_dir"/_*; do
         [[ -e "$f" ]] || continue
         name="''${f##*/_}"
@@ -198,6 +243,8 @@
       done
 
       find "$cache_dir" -maxdepth 1 -name 'zcompdump-*' ! -name '*-${fingerprint}*' -delete
+      # Pre-fingerprint generations dumped into ZDOTDIR; those dumps are litter.
+      rm -f ${lib.escapeShellArg config.programs.zsh.dotDir}/.zcompdump*
     '';
   };
 in {
@@ -222,7 +269,7 @@ in {
     initContent = lib.mkMerge [
       (lib.mkOrder 400 ''
         # --- Completion fpath + fingerprint-keyed dump (before compinit) ----------
-        command mkdir -p -- "${cacheDir}"
+        [[ -d "${cacheDir}" ]] || command mkdir -p -- "${cacheDir}"
         export ZSH_COMPDUMP="${cacheDir}/zcompdump-''${ZSH_VERSION}-${fingerprint}"
         fpath=("${compDir}" ${lib.concatMapStringsSep " " (p: "${p}/share/zsh/site-functions") completionPackages} $fpath)
       '')
