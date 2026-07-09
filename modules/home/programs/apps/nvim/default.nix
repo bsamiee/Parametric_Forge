@@ -61,7 +61,6 @@
     dracula-vim = pkgs.vimPlugins.dracula-vim;
     snacks-nvim = pkgs.vimPlugins.snacks-nvim;
     nvim-treesitter = treesitter;
-    hmts-nvim = pkgs.vimPlugins.hmts-nvim;
     conform-nvim = pkgs.vimPlugins.conform-nvim;
     nvim-lint = pkgs.vimPlugins.nvim-lint;
     grug-far-nvim = pkgs.vimPlugins.grug-far-nvim;

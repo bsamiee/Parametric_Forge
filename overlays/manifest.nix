@@ -473,10 +473,9 @@ in rec {
           attr = "nvim-treesitter";
           license = "Apache-2.0"; # main branch; one compat unit with the neovim pin, tree-sitter-cli floor, parsers, queries
         };
-        hmts-nvim = {
-          attr = "hmts-nvim";
-          license = "MIT"; # embedded-language injections inside Home Manager Nix strings
-        };
+        # hmts-nvim admission reverted: 1.3.0 crashes on Neovim 0.12 +
+        # nvim-treesitter main (LanguageTree parent API drift) against real
+        # Forge files; re-admits only on an upstream compatibility release.
         conform-nvim = {
           attr = "conform-nvim";
           license = "MIT"; # formatter orchestration over Forge-owned binaries

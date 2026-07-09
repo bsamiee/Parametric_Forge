@@ -57,8 +57,9 @@ require("snacks").setup({
             { title = "[QUICK ACTIONS]", padding = 1 },
             { section = "keys", padding = 1 },
             { title = "[RECENT FILES]", padding = 1 },
+            -- No lazy.nvim on this rail: the "startup" section requires
+            -- lazy.stats and faults at UIEnter; recent_files closes the board.
             { section = "recent_files", indent = 1, padding = 2, limit = 8 },
-            { section = "startup" },
         },
     },
     explorer = { enabled = false },
