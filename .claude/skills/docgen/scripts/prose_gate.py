@@ -40,6 +40,9 @@ class Check(StrEnum):
     READ = "read"
     SELF_COUNT = "self-count"
     SETEXT_HEADING = "setext-heading"
+    SKILL_DESCRIPTION = "skill-description"
+    SKILL_FRONTMATTER = "skill-frontmatter"
+    SKILL_ROOT_BUDGET = "skill-root-budget"
     TABLE_ALIGN = "table-align"
     TABLE_CELL = "table-cell"
     TABLE_HEADER = "table-header"
@@ -57,6 +60,9 @@ CELL_BUDGET = 160
 LIST_CHAR_CAP = 500
 LIST_SENTENCE_CAP = 3
 ROSTER_SPAN_SHARE = 0.6
+SKILL_DESCRIPTION_CAP = 1200
+SKILL_DESCRIPTION_FLOOR = 60
+SKILL_ROOT_CAP = 500
 APP = App(help="Gate durable markdown prose.")
 ENCODER = msgspec.json.Encoder()
 
@@ -90,9 +96,13 @@ MARKER_WORDS = re.compile(r"\b(TBD|TODO|FIXME)\b", re.IGNORECASE)
 META_PHRASE = re.compile(
     r"\b(?:this\s+document|this\s+file\s+describes|this\s+page\s+describes|as\s+mentioned\s+above|as\s+described\s+above"
     r"|note\s+that|it\s+is\s+worth|in\s+this\s+section|the\s+following\s+sections|as\s+of\s+20|per\s+research"
-    r"|at\s+the\s+time\s+of\s+writing)\b",
+    r"|at\s+the\s+time\s+of\s+writing|make\s+sure\s+to|be\s+sure\s+to|keep\s+in\s+mind|remember\s+to"
+    r"|it\s+is\s+important\s+to)\b",
     re.IGNORECASE,
 )
+# Quoted user utterances and code spans are trigger material, not voice.
+QUOTED_SPAN = re.compile(r"\"[^\"]*\"|“[^”]*”|`[^`]*`")
+SKILL_VOICE = re.compile(r"\b(?:I|me|my|mine|we|our|you|your)\b", re.IGNORECASE)
 SELF_COUNT = re.compile(
     r"(?:^|[.!?]\s+)(Two|Three|Four|Five|Six|Seven|Eight|Nine|Ten|Eleven|Twelve|Thirteen|Fourteen|Fifteen|Sixteen"
     r"|Seventeen|Eighteen|Nineteen|Twenty|\d+)\s+(named\s+)?(classes|laws|rules|sections|types|axes|fields|modes"
@@ -423,12 +433,50 @@ def list_rows(doc: Document) -> tuple[Row, ...]:
     return tuple(rows)
 
 
+def skill_rows(path: Path, text: str) -> tuple[Row, ...]:
+    if path.name != "SKILL.md":
+        return ()
+    lines = tuple(text.splitlines())
+    rows: list[Row] = []
+    end = frontmatter_end(lines)
+    if end == 0:
+        return (row(path, 1, Check.SKILL_FRONTMATTER, "fail", "missing or keyless frontmatter"),)
+    body = lines[1 : end - 1]
+    fields: dict[str, tuple[int, str]] = {}
+    current: str | None = None
+    for offset, line in enumerate(body, 2):
+        key = YAML_KEY.match(line)
+        if key and not line.startswith((" ", "\t")):
+            current = line.split(":", 1)[0].strip()
+            fields[current] = (offset, line.split(":", 1)[1].strip().lstrip(">|-").strip())
+        elif current and line.startswith((" ", "\t")):
+            anchor, value = fields[current]
+            fields[current] = (anchor, f"{value} {line.strip()}".strip())
+    rows.extend(
+        row(path, 1, Check.SKILL_FRONTMATTER, "fail", f"frontmatter lacks {required}")
+        for required in ("name", "description")
+        if not fields.get(required, (0, ""))[1]
+    )
+    anchor, description = fields.get("description", (1, ""))
+    if description:
+        voiced = QUOTED_SPAN.sub(" ", description)
+        rows.extend(row(path, anchor, Check.SKILL_DESCRIPTION, "fail", hit.group(0)) for hit in SKILL_VOICE.finditer(voiced))
+        if len(description) < SKILL_DESCRIPTION_FLOOR:
+            rows.append(row(path, anchor, Check.SKILL_DESCRIPTION, "fail", f"{len(description)} chars carries no discriminating triggers"))
+        elif len(description) > SKILL_DESCRIPTION_CAP:
+            rows.append(row(path, anchor, Check.SKILL_DESCRIPTION, "warn", f"{len(description)} chars > metadata budget {SKILL_DESCRIPTION_CAP}"))
+    if len(lines) > SKILL_ROOT_CAP:
+        rows.append(row(path, len(lines), Check.SKILL_ROOT_BUDGET, "fail", f"root {len(lines)} lines > cap {SKILL_ROOT_CAP}"))
+    return tuple(rows)
+
+
 def scan(path: Path, cap: int) -> tuple[Row, ...]:
     text = read(path)
     if isinstance(text, Row):
         return (text,)
     doc, lexer_rows = lex(path, text, cap)
-    return lexer_rows if doc is None else lexer_rows + table_rows(doc) + heading_rows(doc) + link_rows(doc) + prose_rows(doc) + list_rows(doc)
+    checks = lexer_rows + table_rows(doc) + heading_rows(doc) + link_rows(doc) + prose_rows(doc) + list_rows(doc) if doc else lexer_rows
+    return checks + skill_rows(path, text)
 
 
 def emit(rows: Iterable[Row], json_mode: bool) -> None:

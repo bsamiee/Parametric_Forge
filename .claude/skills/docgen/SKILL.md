@@ -7,13 +7,16 @@ description: >-
   legacy-compat, imported upstream posture, process-ledger, deleted-form litanies, coupling),
   and a deterministic prose gate. Use when authoring, editing, reviewing, or rewriting any durable markdown — README,
   ARCHITECTURE, specs, standards, skills, prompts, tool docs — when designing a document schema
-  or marker vocabulary, or when hunting noise, fragility, staleness, poison framing, or context
-  anchoring.
+  or marker vocabulary, when authoring or repairing a skill bundle (trigger description, root
+  routing, references, bundled scripts), or when hunting noise, fragility, staleness, poison
+  framing, or context anchoring. Do not trigger for transient chat replies, code-only edits,
+  Mermaid fence construction, interactive HTML artifacts, or research whose deliverable is not
+  durable markdown.
 ---
 
 # [DOCGEN]
 
-Durable prose is law for an agent that loads it with no memory of why it was written, and every line either changes that agent's next action or poisons it. One register, one owner per fact, one schema per file kind, one decision per line — everything else is deleted, never softened. Structure, tables, markers, and schemas are [references/structure.md](references/structure.md); the defect catalog is [references/defects.md](references/defects.md); rebuilding existing documents is [references/rewriting.md](references/rewriting.md).
+Durable prose is law for an agent that loads it with no memory of why it was written, and every line either changes that agent's next action or poisons it. One register, one owner per fact, one schema per file kind, one decision per line — everything else is deleted, never softened. Structure, tables, markers, and schemas are [references/structure.md](references/structure.md); the defect catalog is [references/defects.md](references/defects.md); rebuilding existing documents is [references/rewriting.md](references/rewriting.md); skill bundles — trigger descriptions, root routing, progressive disclosure, bundled scripts — are [references/skills.md](references/skills.md).
 
 ## [01]-[GATE]
 
@@ -21,7 +24,7 @@ Durable prose is law for an agent that loads it with no memory of why it was wri
 uv run scripts/prose_gate.py [--json] <paths...>
 ```
 
-Run the gate on every touched durable doc before returning. It is the mechanical floor: fence geometry, fence language, fence closure, heading order, setext markers, table headers, separator alignment, enumerable table indexes, row width, relative links, template residue, bold emphasis, trailing whitespace, banned-word roster, meta-phrases, sentence-initial self-counts, and list-entry budgets. The gate scans prose spans only: fence bodies, code spans, link destinations, template placeholders, and example-leader rows are structural carriers, not prose findings. Every semantic class and every altitude judgment remains review work against the catalog.
+Run the gate on every touched durable doc before returning. It is the mechanical floor — fence, heading, table, link, and list structure; template residue, bold emphasis, and trailing whitespace; the banned-lexeme roster of hedges, meta-phrases, self-counts, and version anchors — and a `SKILL.md` file additionally gates frontmatter shape, description voice and budget, and the root line ceiling; the full check census is the script's `Check` vocabulary. The gate scans prose spans only: fence bodies, code spans, link destinations, template placeholders, and example-leader rows are structural carriers, not prose findings. Every semantic class and every altitude judgment remains review work against the catalog.
 
 ## [02]-[REGISTER]
 
@@ -90,6 +93,7 @@ The defect classes are the review vocabulary; findings cite class and line. Defi
 
 [STRUCTURAL]: `ENUMERATION_ANCHOR` `STALE_MIRROR` `MECHANISM_LEAK` `META_FRAME` `TWIN_TRUTH` `REPORT_FRAME` `COUPLING`
 [SEMANTIC]: `HEDGE` `CAPABILITY_GATE` `LEGACY_COMPAT` `IMPORTED_POSTURE` `VERSION_ANCHOR` `SET_IN_STONE` `WEAK_VERBS` `PROCESS_LEDGER` `ASSERTED_IMPOSSIBILITY` `DELETED_FORM_LITANY`
+[SKILL]: `OVER_BROAD_TRIGGER` `STARVED_TRIGGER` `KEYWORD_STUFFING` `SELF_VOICED_DISCOVERY` `MONOLITH_ROOT` `REFERENCE_MAZE` `NO_OP_INTENSIFIER` `FILLER_LEAD` `CHAIN_RESTATEMENT` `QUALITY_LADDER` `COMMAND_CATALOG` `LIFECYCLE_SCRIPT` `CHECKLIST_TAIL` `SCRIPT_AS_PROSE` `BARE_ABSTRACTION` `FIXED_OUTPUT` `SUPPLY_CHAIN` — skill-bundle classes owned by [references/skills.md](references/skills.md)
 
 ## [05]-[TEMPLATES]
 
@@ -112,6 +116,7 @@ Consult the matching set before building or repairing the container; entries are
 - [02]-[LISTS]: [examples/lists.md](examples/lists.md) — mega bullets, shredded splits, and the classified repair.
 - [03]-[MARKERS]: [examples/markers.md](examples/markers.md) — entry leaders, status vocabularies, glyphs.
 - [04]-[INTROS]: [examples/intros.md](examples/intros.md) — leads that legislate and the rejected frames.
+- [05]-[SKILLS]: [examples/skills.md](examples/skills.md) — broad triggers, lifecycle bodies, monolith roots, soft gates.
 
 ## [07]-[COMMENTS]
 

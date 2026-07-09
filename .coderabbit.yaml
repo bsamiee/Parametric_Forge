@@ -68,7 +68,26 @@ reviews:
         filler words, meta-commentary, provenance/freshness tails, checklist tails, heading
         proliferation for short content, tables carrying explanations instead of enumerable
         facts, duplicated content an owning doc already carries, drift from the [UPPER_CASE]
-        label convention.
+        label convention, quality ladders (good/better/best tiers) where a contract gate
+        belongs, restated obligations the instruction chain already carries (follow
+        CLAUDE.md, use available tools), and defensive caveats softening settled rules.
+    - path: ".claude/skills/**"
+      instructions: >-
+        Skill bundles under the docgen skill-craft law. Defects: first- or second-person
+        voice in frontmatter descriptions — quoted user-utterance trigger phrases are not
+        voice; over-broad triggers spanning unrelated domains or keyword-stuffed synonym
+        lists; SKILL.md over 500 lines or carrying reference
+        banks, troubleshooting ledgers, or example floods that belong one hop down;
+        references that only route to other references; no-op intensifiers with no owner,
+        action, or gate; filler lead-ins (note that, make sure to, remember to);
+        good/better/best quality ladders instead of contract gates; command catalogs
+        without task triggers; generic think/plan/implement lifecycle steps; closing
+        checklists with no machine-checkable gate; deterministic multi-step procedures
+        narrated in prose where a bundled script belongs; three or more abstract guidance
+        bullets with no paired rejected/accepted example or gate; one mandated output
+        skeleton regardless of consumer; instructed network fetches or global installs
+        inside skill bodies, except an owned install surface naming exact source, scope,
+        and verification.
   auto_review:
     enabled: true
   tools:

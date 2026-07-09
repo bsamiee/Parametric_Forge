@@ -138,6 +138,54 @@ Before using `--dir`, confirm the directory exists and contains an initialized G
 git -C path/to/directory rev-parse --is-inside-work-tree
 ```
 
+## Repository Configuration
+
+`.coderabbit.yaml` at the repository root owns review behavior for hosted and CLI reviews; organization and workspace global overrides outrank it, and it outranks every UI setting.
+
+### Inheritance
+
+- Top-level `inheritance: true` opts the repository into a central `.coderabbit.yaml` kept in a repository named `coderabbit`; the chain stops at the first parent without `inheritance: true`.
+- Merge semantics: objects deep-merge with child fields winning; arrays place child items first and append unique parent items, deduplicated by the first stable key among `path`, `label`, `name`, `id`, `key`; scalars take the child value.
+- Self-hosted resolution order: repository YAML, central YAML, `YAML_CONFIG` environment variable, schema defaults.
+
+### Path Instructions
+
+`reviews.path_instructions` is an array of `{path, instructions}` rows: `path` is a minimatch glob (`**/*.ts`, `src/controllers/**`), `instructions` carries up to 20000 characters of review guidance for matching files. On a PR, `@coderabbitai emit path instructions` opens a PR merging suggested rows learned over the prior seven days without overwriting existing entries.
+
+### Knowledge Base
+
+`knowledge_base` controls persistent review context:
+
+| Key | Shape and effect |
+| --- | --- |
+| `opt_out` | `true` disables retention-backed features and removes stored data |
+| `web_search.enabled` | web context during reviews |
+| `code_guidelines` | `enabled` plus `filePatterns`; default patterns pick up `CLAUDE.md`, `AGENTS.md`, `.cursorrules`, `copilot-instructions.md`, and sibling agent rule files |
+| `learnings.scope` | `local` / `global` / `auto`; `approval_delay` 0-30 days gates auto-apply |
+| `issues.scope`, `pull_requests.scope` | `local` / `global` / `auto` |
+| `jira.usage`, `linear.usage` | `auto` / `enabled` / `disabled`, scoped by `project_keys` / `team_keys` |
+| `mcp.usage` | `auto` / `enabled` / `disabled`; `disabled_servers` excludes server labels |
+| `linked_repositories` | `{repository, instructions}` rows for cross-repo context; `automatic_repository_linking` auto-detects related repos |
+
+### Pre-merge Checks
+
+`reviews.pre_merge_checks` gates merges. Each check runs in mode `off`, `warning`, or `error`; `error` blocks the PR when `reviews.request_changes_workflow: true`.
+
+- `docstrings`: `mode` plus coverage `threshold` (0-100, default 80).
+- `title`: `mode` plus free-text `requirements`.
+- `description.mode` and `issue_assessment.mode`.
+- `custom_checks`: rows of `{mode, name, instructions}`; `instructions` states deterministic pass/fail criteria, up to 10000 characters.
+- `override_requested_reviewers_only: true` restricts overriding failing checks to requested reviewers.
+
+### Other High-leverage Fields
+
+- `reviews.profile`: `quiet` / `chill` / `assertive`.
+- `tone_instructions`: reviewer register, up to 250 characters.
+- `reviews.path_filters`: include/exclude globs (`!` excludes) scoping both review and sparse checkout.
+- `reviews.auto_review`: `enabled`, `drafts`, `base_branches` (regex list), `ignore_title_keywords`, `ignore_usernames`, `auto_incremental_review`, `auto_pause_after_reviewed_commits`.
+- `reviews.tools.<tool>.enabled`: per-tool static analysis (`ast-grep`, `shellcheck`, `ruff`, `actionlint`, `gitleaks`, `semgrep`, `trivy`, `hadolint`, `markdownlint`, and the wider catalog).
+- `reviews.labeling_instructions` (`{label, instructions}` rows), `reviews.finishing_touches` (`docstrings`, `unit_tests`, `simplify`, `autofix`, `custom` recipes), `reviews.enable_prompt_for_ai_agents` (AI-agent fix prompts in inline comments).
+
 ## Security
 
 - **Installation**: install the CLI via a package manager or verified binary. Do not pipe remote scripts to a shell.
