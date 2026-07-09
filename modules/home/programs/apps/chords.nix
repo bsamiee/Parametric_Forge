@@ -611,18 +611,17 @@
       rendered = renderBind layer.zellij row;
     }
     // lib.optionalAttrs (row ? id) {injection = ids.${row.id};};
-  modeRegRows =
-    map (m: {
-      chord_id = "zellij:hyper:${modes.${m}.key}";
-      consumer = "zellij";
-      physical_layer = layers.hyper.name;
-      mods = layers.hyper.zellij;
-      key = modes.${m}.key;
-      label = "${m} mode";
-      action = "SwitchToMode \"${cap m}\";";
-      projection_path = ".config/zellij/config.kdl";
-      rendered = "bind \"${layers.hyper.zellij} ${modes.${m}.key}\" { SwitchToMode \"${cap m}\"; }";
-    }) (entryOrder ++ ["locked"]);
+  modeRegRows = map (m: {
+    chord_id = "zellij:hyper:${modes.${m}.key}";
+    consumer = "zellij";
+    physical_layer = layers.hyper.name;
+    mods = layers.hyper.zellij;
+    key = modes.${m}.key;
+    label = "${m} mode";
+    action = "SwitchToMode \"${cap m}\";";
+    projection_path = ".config/zellij/config.kdl";
+    rendered = "bind \"${layers.hyper.zellij} ${modes.${m}.key}\" { SwitchToMode \"${cap m}\"; }";
+  }) (entryOrder ++ ["locked"]);
   register =
     map (zjRegRow layers.hyper) hyperRows
     ++ map (zjRegRow layers.super) superRows
@@ -631,9 +630,8 @@
       consumer = "zellij";
       physical_layer = "none";
       mods = "Super";
-      key = r.key;
       label = r.forgot.label or r.comment;
-      action = r.action;
+      inherit (r) key action;
       projection_path = ".config/zellij/config.kdl";
       rendered = renderNormal r;
     })
@@ -688,15 +686,14 @@
 
   # Intra-consumer conflict ledger: every emitted (consumer, chord) claim must
   # be unique; shift-glyph expansion rides the same bindKeys the KDL uses.
-  claims =
-    lib.concatMap (r:
-      map (c: "${r.consumer}|${c}")
-      (
-        if r.consumer == "zellij"
-        then lib.concatMap (bindKeys r.mods) (lib.splitString "," r.key)
-        else [r.key]
-      ))
-    register;
+  claims = lib.concatMap (r:
+    map (c: "${r.consumer}|${c}")
+    (
+      if r.consumer == "zellij"
+      then lib.concatMap (bindKeys r.mods) (lib.splitString "," r.key)
+      else [r.key]
+    ))
+  register;
   conflictClaims = lib.subtractLists (lib.unique claims) claims;
 in {
   options.forge.chords = lib.mkOption {
