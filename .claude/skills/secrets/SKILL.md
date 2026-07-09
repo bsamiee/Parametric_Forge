@@ -15,17 +15,17 @@ Doppler is the single secret backend; 1Password is transitional root custody and
 
 ## [02]-[CLI]
 
-| [INDEX] | [TASK]                              | [COMMAND]                                                                                                             |
-| :-----: | :---------------------------------- | :-------------------------------------------------------------------------------------------------------------------- |
-|  [01]   | Binary and version proof            | `doppler --version`                                                                                                    |
-|  [02]   | Effective options and their sources | `doppler configure debug`                                                                                              |
-|  [03]   | Every scope row                     | `doppler configure --all --json`                                                                                       |
-|  [04]   | One directory's scope               | `doppler configure get project config --scope <dir> --json` — keys land as `enclave.project`, `enclave.config`         |
-|  [05]   | Set a scope row                     | `doppler configure set project=<p> config=<c> --scope <dir>` — driver-owned; scope `/` stays untouched                 |
-|  [06]   | Unset a scope row                   | `doppler configure unset project config --scope <dir>`                                                                 |
-|  [07]   | Key inventory                       | `doppler secrets download --project <p> --config <c> --no-file --format json \| jq 'keys'`                             |
-|  [08]   | Inject env into a process           | `doppler run --project <p> --config <c> --command '<cmd>'`                                                             |
-|  [09]   | Render a template                   | `doppler secrets substitute <template>`                                                                                |
+| [INDEX] | [TASK]                              | [COMMAND]                                                                                                      |
+| :-----: | :---------------------------------- | :------------------------------------------------------------------------------------------------------------- |
+|  [01]   | Binary and version proof            | `doppler --version`                                                                                            |
+|  [02]   | Effective options and their sources | `doppler configure debug`                                                                                      |
+|  [03]   | Every scope row                     | `doppler configure --all --json`                                                                               |
+|  [04]   | One directory's scope               | `doppler configure get project config --scope <dir> --json` — keys land as `enclave.project`, `enclave.config` |
+|  [05]   | Set a scope row                     | `doppler configure set project=<p> config=<c> --scope <dir>` — driver-owned; scope `/` stays untouched         |
+|  [06]   | Unset a scope row                   | `doppler configure unset project config --scope <dir>`                                                         |
+|  [07]   | Key inventory                       | `doppler secrets download --project <p> --config <c> --no-file --format json \| jq 'keys'`                     |
+|  [08]   | Inject env into a process           | `doppler run --project <p> --config <c> --command '<cmd>'`                                                     |
+|  [09]   | Render a template                   | `doppler secrets substitute <template>`                                                                        |
 
 Secret downloads pipe to `jq 'keys'` or `jq 'length'`: receipts, transcripts, and logs carry key names and counts, never values.
 
@@ -41,13 +41,13 @@ The SessionStart hook (`.claude/hooks/setup-env.sh`, canonical in Parametric_For
 
 ## [04]-[CUSTODY]
 
-| [INDEX] | [CLASS]                          | [CUSTODY]                                                            | [USE]                                                                                                                            |
-| :-----: | :------------------------------- | :------------------------------------------------------------------- | :-------------------------------------------------------------------------------------------------------------------------------- |
-|  [01]   | User CLI token                   | Keychain login, root `/` scope                                        | Operator local work; never enters op, files, or scope rows                                                                         |
-|  [02]   | Config-scoped service token      | Hook `TOKEN_ENV_VAR` rows; minted by topology rows                    | Hook and runtime reads; static Developer-plan tokens are revoked and reminted, never rotated in place                              |
-|  [03]   | IaC admin token                  | `op://Tokens/DOPPLER_IAC_TOKEN/token`, brokered by `services/driver.ts` | Topology writes via Pulumi only                                                                                                    |
+| [INDEX] | [CLASS]                          | [CUSTODY]                                                                  | [USE]                                                                                                                             |
+| :-----: | :------------------------------- | :------------------------------------------------------------------------- | :-------------------------------------------------------------------------------------------------------------------------------- |
+|  [01]   | User CLI token                   | Keychain login, root `/` scope                                             | Operator local work; never enters op, files, or scope rows                                                                        |
+|  [02]   | Config-scoped service token      | Hook `TOKEN_ENV_VAR` rows; minted by topology rows                         | Hook and runtime reads; static Developer-plan tokens are revoked and reminted, never rotated in place                             |
+|  [03]   | IaC admin token                  | `op://Tokens/DOPPLER_IAC_TOKEN/token`, brokered by `services/driver.ts`    | Topology writes via Pulumi only                                                                                                   |
 |  [04]   | MCP token                        | Injected as `DOPPLER_TOKEN` inside the fleet row's doppler-run indirection | Read-only agent MCP; the token's grants are the boundary — `--read-only --project --config` narrow the tool surface, never access |
-|  [05]   | Provider PATs (GitHub and peers) | Secret values inside configs                                          | Consumed through the pull rail; never topology identity                                                                            |
+|  [05]   | Provider PATs (GitHub and peers) | Secret values inside configs                                               | Consumed through the pull rail; never topology identity                                                                           |
 
 ## [05]-[OP_BOUNDARY]
 
