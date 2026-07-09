@@ -33,16 +33,16 @@ docs/                     stacks/ (python, typescript atlases) + standards/ (des
 
 Rulings derive from principles, not precedent lists. A new situation resolves from these axes without a new ruling:
 
-| [INDEX] | [AXIS]                 | [LAW]                                                                                                       |
-| :-----: | :--------------------- | :----------------------------------------------------------------------------------------------------------- |
-|  [01]   | Greenfield-only        | Every touched surface rebuilds to the best current shape; shims, aliases, compat wrappers, and migration helpers never exist. |
-|  [02]   | One owner per axis     | Each concern has exactly one declaring file; a second copy of any fact is a fork. Extend the owner before adding files. |
-|  [03]   | Rows over hardcodes    | Capability lands as a parameterized row on the owning table — host, tunnel, chord, fleet member, overlay pin, service. |
+| [INDEX] | [AXIS]                 | [LAW]                                                                                                                                                               |
+| :-----: | :--------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+|  [01]   | Greenfield-only        | Every touched surface rebuilds to the best current shape; shims, aliases, compat wrappers, and migration helpers never exist.                                       |
+|  [02]   | One owner per axis     | Each concern has exactly one declaring file; a second copy of any fact is a fork. Extend the owner before adding files.                                             |
+|  [03]   | Rows over hardcodes    | Capability lands as a parameterized row on the owning table — host, tunnel, chord, fleet member, overlay pin, service.                                              |
 |  [04]   | Polymorphic collapse   | Density rises inside the owning file — merged types, dispatch tables, folds — never by extraction. ~300 LOC per file; justified single-concern lists may exceed it. |
-|  [05]   | IaC over YAML          | Service state (Doppler topology, GitHub settings) is typed Pulumi rows in `services/`, never per-repo config files or click-ops. |
-|  [06]   | Currency as review     | Newest stable everything; a pin exists only with a named incompatibility and dies when compatibility lands.  |
-|  [07]   | No LFS                 | Repo media ships as plain git blobs kept preview-small; the Git LFS client serves external repos only.       |
-|  [08]   | Aesthetics first-class | Visual surfaces (theme, prompt, TUI, fonts) are designed systems with single palette ownership.              |
+|  [05]   | IaC over YAML          | Service state (Doppler topology, GitHub settings) is typed Pulumi rows in `services/`, never per-repo config files or click-ops.                                    |
+|  [06]   | Currency as review     | Newest stable everything; a pin exists only with a named incompatibility and dies when compatibility lands.                                                         |
+|  [07]   | No LFS                 | Repo media ships as plain git blobs kept preview-small; the Git LFS client serves external repos only.                                                              |
+|  [08]   | Aesthetics first-class | Visual surfaces (theme, prompt, TUI, fonts) are designed systems with single palette ownership.                                                                     |
 
 ## [04]-[DETERMINATE_NIX]
 
@@ -73,7 +73,7 @@ One ed25519 key serves everything: custodied in the 1Password Personal vault, se
 
 `forge-redeploy [--os darwin|nixos] [--host NAME] [--target-host SSH] --check-only|--build|--switch|--rollback [gen]|--generations` is the only sanctioned activation path: it locks against concurrent runs, builds, diffs the closure, activates, appends a receipt row (timings, generation, diff size), and pushes the system closure to Cachix when `CACHIX_AUTH_TOKEN` resolves. Darwin activates locally under the sudoers allowlist; NixOS targets deploy over SSH, and NixOS generations live on the target. `forge-accept [--from STEP|--only STEP|--list]` is the post-switch acceptance rail: an ordered, resumable step pipeline from preflight through fleet, lane, and maghz probes to relaunch, receipting pass/warn/fail per step — a switch is done when `forge-accept` exits ok, not when activation returns.
 
-Recurring machine work is launchd-owned under the `com.parametric-forge.<name>` label grammar, each agent declared beside the surface it serves: `launchctl list | grep com.parametric-forge` is the live census, `launchctl print gui/$UID/com.parametric-forge.<name>` the per-agent probe. The scheduled nix rails double as manual commands — `forge-nix-maintenance` (GC/store), `forge-nix-drift` (input currency), `forge-cleanup plan|apply` (declared-row litter sweep), `forge-activation-sweep [--clear]` (activation residue) — every rail writes receipts. Ad-hoc background processes are a defect; a new job is a new agent declaration.
+Recurring machine work is launchd-owned under the `com.parametric-forge.<name>` label grammar, each agent declared beside the surface it serves: `launchctl list | grep com.parametric-forge` is the live census, `launchctl print gui/$UID/com.parametric-forge.<name>` the per-agent probe. The scheduled nix rails double as manual commands — `forge-nix-maintenance` (GC/store), `forge-nix-drift` (input currency), `forge-cleanup plan|apply` (declared-row litter sweep), `forge-activation-sweep [--clear]` (activation residue) — every rail appends receipts under `~/Library/Logs/forge-<name>.receipts.log`, and the receipt is read before a failed rail reruns. Ad-hoc background processes are a defect; a new job is a new agent declaration.
 
 ## [10]-[TOOLCHAINS]
 
@@ -89,14 +89,14 @@ Recurring machine work is launchd-owned under the `com.parametric-forge.<name>` 
 
 ## [12]-[QUALITY_BAR]
 
-| [INDEX] | [SURFACE]  | [STANDARD]                                                                                                    |
-| :-----: | :--------- | :-------------------------------------------------------------------------------------------------------------- |
-|  [01]   | Nix        | `docs/standards/nix-doctrine.md`; density target ~300 LOC by polymorphic collapse; `alejandra`/`deadnix`/`statix` gate via `nix flake check`. |
+| [INDEX] | [SURFACE]  | [STANDARD]                                                                                                                                                                           |
+| :-----: | :--------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+|  [01]   | Nix        | `docs/standards/nix-doctrine.md`; density target ~300 LOC by polymorphic collapse; `alejandra`/`deadnix`/`statix` gate via `nix flake check`.                                        |
 |  [02]   | Shell      | `writeShellApplication` for any body with a runtime closure (ShellCheck in the build); `writeShellScriptBin` only for closure-free one-liners; `.sh` extension, `set -euo pipefail`. |
-|  [03]   | TypeScript | `docs/stacks/typescript/` (Rasm doctrine) — `services/` code is held to it in full.                             |
-|  [04]   | Python     | `docs/stacks/python/`; 3.15, `uv`-managed, `ruff` + `ty`.                                                      |
-|  [05]   | Markdown   | `docs/standards/` owners: style-guide, formatting, information-structure; agent-facing declarative register.    |
-|  [06]   | launchd    | Declared agent rows with receipts and health gates; never ad-hoc `launchctl` state.                            |
+|  [03]   | TypeScript | `docs/stacks/typescript/` (Rasm doctrine) — `services/` code is held to it in full.                                                                                                  |
+|  [04]   | Python     | `docs/stacks/python/`; 3.15, `uv`-managed, `ruff` + `ty`.                                                                                                                            |
+|  [05]   | Markdown   | `docs/standards/` owners: style-guide, formatting, information-structure; agent-facing declarative register.                                                                         |
+|  [06]   | launchd    | Declared agent rows with receipts and health gates; never ad-hoc `launchctl` state.                                                                                                  |
 
 ## [13]-[GITHUB_AND_SERVICES]
 
@@ -106,15 +106,15 @@ GitHub repository settings for the estate (merge hygiene, rulesets, feature bool
 
 Everything lands declaratively with the first switch; only these steps are manual, each with its proof:
 
-| [INDEX] | [ACTION]                                                                                             | [VERIFY]                                        |
-| :----: | :------------------------------------------------------------------------------------------------------ | :----------------------------------------------- |
-|  [01]  | Install Determinate Nix: `curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix \| sh -s -- install` | `nix --version` reports Determinate              |
-|  [02]  | Sign into the 1Password app; enable Settings → Developer → SSH agent + CLI integration (GUI-only by vendor design; key custody syncs from the cloud — zero key handling) | `SSH_AUTH_SOCK=~/Library/Group\ Containers/2BUA8C4S2C.com.1password/t/agent.sock ssh-add -L` lists the key |
-|  [03]  | Clone to the path the deploy rail resolves — the agent socket is explicit until the first switch projects `~/.ssh/config`: `SSH_AUTH_SOCK=~/Library/Group\ Containers/2BUA8C4S2C.com.1password/t/agent.sock git clone git@github.com:bsamiee/Parametric_Forge.git ~/Documents/99.Github/Parametric_Forge` | repo present at `FORGE_ROOT`                     |
-|  [04]  | `gh auth login` (keyring, SSH protocol)                                                                 | `gh auth status`                                 |
-|  [05]  | `doppler login`                                                                                         | `doppler me`                                     |
-|  [06]  | First switch: `sudo nix run nix-darwin/master#darwin-rebuild -- switch --flake .#macbook` — this installs the sudoers allowlist every later `forge-redeploy --switch` rides | `forge-redeploy --check-only`                    |
-|  [07]  | Approve the TCC/automation prompts macOS raises on first agent launches                                 | affected agents run without prompting            |
+| [INDEX] | [ACTION]                                                                                                                                                                                                                                                                                                  | [VERIFY]                                                                                                   |
+| :-----: | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :--------------------------------------------------------------------------------------------------------- |
+|  [01]   | Install Determinate Nix: `curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix \| sh -s -- install`                                                                                                                                                                            | `nix --version` reports Determinate                                                                        |
+|  [02]   | Sign into the 1Password app; enable Settings → Developer → SSH agent + CLI integration (GUI-only by vendor design; key custody syncs from the cloud — zero key handling)                                                                                                                                  | `SSH_AUTH_SOCK=~/Library/Group\ Containers/2BUA8C4S2C.com.1password/t/agent.sock ssh-add -L` lists the key |
+|  [03]   | Clone to the path the deploy rail resolves — the agent socket is explicit until the first switch projects `~/.ssh/config`: `SSH_AUTH_SOCK=~/Library/Group\ Containers/2BUA8C4S2C.com.1password/t/agent.sock git clone git@github.com:bsamiee/Parametric_Forge.git ~/Documents/99.Github/Parametric_Forge` | repo present at `FORGE_ROOT`                                                                               |
+|  [04]   | `gh auth login` (keyring, SSH protocol)                                                                                                                                                                                                                                                                   | `gh auth status`                                                                                           |
+|  [05]   | `doppler login`                                                                                                                                                                                                                                                                                           | `doppler me`                                                                                               |
+|  [06]   | First switch: `sudo nix run nix-darwin/master#darwin-rebuild -- switch --flake .#macbook` — this installs the sudoers allowlist every later `forge-redeploy --switch` rides                                                                                                                               | `forge-redeploy --check-only`                                                                              |
+|  [07]   | Approve the TCC/automation prompts macOS raises on first agent launches                                                                                                                                                                                                                                   | affected agents run without prompting                                                                      |
 
 Day-2 rebuilds: `forge-redeploy --switch`. A fresh NixOS host bootstraps with nixos-anywhere + disko from its `hosts/nixos` row; day-2 is the same rail with `--os nixos --target-host`.
 
