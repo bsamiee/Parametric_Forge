@@ -5,11 +5,13 @@
 # Path          : modules/home/scripts/integration/default.nix
 # ----------------------------------------------------------------------------
 # Yazi -> Zellij -> Neovim rail: popup dispatcher, RPC handoff, server owner.
-# Pane targeting is ID-based via list-panes JSON; never ordinal focus. Dismiss
-# lowers the layer, then the bind's close_on_exit drops the suppressed popup
-# with the dispatcher (close-pane cannot reach a suppressed pane on 0.44.3).
-# terminal_command is the spawn command (invoked_with), so exec inside a pane
-# never breaks pane rediscovery.
+# Pane targeting is ID-based via list-panes JSON; never ordinal focus. The
+# dispatcher is a floating pane, never in_place: an attached client on 0.44.3
+# strands exited in-place panes and their suppressed hosts. Dismiss hides the
+# floating layer and keeps the popup (and its yazi state) alive; a per-tab
+# marker carries pre-spawn visibility, since the dispatcher's own floating
+# spawn surfaces the layer. terminal_command is the spawn command
+# (invoked_with), so exec inside a pane never breaks pane rediscovery.
 {
   config,
   lib,
@@ -195,35 +197,39 @@
         '[.[] | select((.is_plugin | not) and ((.id | tostring) == $self))][0].tab_id // 0' <<<"$panes")"
       # Shared identity vocabulary scoped to this tab, excluding self.
       # Dispatchers ("forge-yazi.sh toggle") and yazi-with-args rows never
-      # match; the suppressed disjunct keeps the dismiss branch reachable
-      # when an in-place dispatcher covers the popup.
+      # match; hidden floating popups keep is_floating, so identity holds
+      # through the hide cycle.
       popup_row="$(jq -c --arg self "$self" --argjson tab "$tab_id" \
         '[.[] | select(${yaziPopupIdentity}
           and (.tab_id == $tab) and ((.id | tostring) != $self))][0] // {}' <<<"$panes")"
       popup="$(jq -r '.id // empty' <<<"$popup_row")"
 
+      # Per-tab surfaced marker: the dispatcher's own floating spawn surfaces
+      # the layer, so live layer state cannot discriminate show from hide.
+      # An out-of-band layer toggle desyncs it by at most one keypress.
+      marker="$lock_root/surfaced-tab-''${tab_id}"
       if [[ -z "$popup" ]]; then
         created="$(zellij action new-pane --floating --pinned true \
           ${yaziPopupArgs} \
           --name " [YAZI] " --close-on-exit --cwd "$PWD" -- forge-yazi.sh)"
         zellij action focus-pane-id "$created" >/dev/null 2>&1 || true
-      elif [[ "$(jq -r '.is_suppressed // false' <<<"$popup_row")" == "true" ]]; then
-        # The in-place dispatcher replaced the focused popup: chord means
-        # dismiss. hide-floating-panes restores the layer baseline; the bind's
-        # close_on_exit then drops the dispatcher AND the replaced popup, so
-        # dismissal destroys the popup like a pane-scoped close (close-pane
-        # cannot reach a suppressed pane on zellij 0.44.3).
+        : >"$marker"
+      elif [[ -e "$marker" ]]; then
+        # Chord means hide: lower the layer, keep the popup and its yazi
+        # state alive for the next surface.
         zellij action hide-floating-panes
+        rm -f "$marker"
       else
         # Focusing a floating pane surfaces the floating layer
         zellij action focus-pane-id "terminal_''${popup}"
+        : >"$marker"
       fi
     '';
   };
 
   # Runtime acceptance harness: drives the popup/edit rail in a disposable
   # detached session against the live generated config and asserts invariants
-  # from list-panes/list-tabs JSON. In-place and focus semantics need an
+  # from list-panes/list-tabs JSON. Dismiss and focus semantics need an
   # attached client (zellij 0.44.3 routes them per-client), so those legs run
   # only when the target session has one and DEFER otherwise — the two
   # adjudicated runtime residuals surface as receipt rows either way.
@@ -330,15 +336,15 @@
       popup_pred='[.[] | select(${yaziPopupIdentity})]'
 
       # R02: toggle creates exactly one floating popup titled " [YAZI] ".
-      zj new-pane -c -- forge-yazi.sh toggle >/dev/null 2>&1 || true
+      zj new-pane --floating -c -- forge-yazi.sh toggle >/dev/null 2>&1 || true
       if poll "$popup_pred | (length == 1) and (.[0].title == \" [YAZI] \")"; then
         row R02-popup-create PASS "one floating ' [YAZI] ' pane, exact title + spawn-command identity"
       else
         row R02-popup-create FAIL "popup row: $(panes | jq -c "$popup_pred")"
       fi
 
-      # R03: second toggle never duplicates the popup.
-      zj new-pane -c -- forge-yazi.sh toggle >/dev/null 2>&1 || true
+      # R03: second toggle never duplicates the popup (marker-gated hide).
+      zj new-pane --floating -c -- forge-yazi.sh toggle >/dev/null 2>&1 || true
       sleep 1.5
       if [[ "$(panes | jq -r "$popup_pred | length")" == "1" ]]; then
         row R03-popup-single PASS "popup count stays 1 after repeat toggle"
@@ -417,21 +423,23 @@
         row R08-editor-multifile FAIL "editors=$(panes | jq -r "$editor_pred | length") buflisted=$buflisted"
       fi
 
-      # R09/R10: the two adjudicated runtime residuals. The dismiss gesture
-      # (in-place over the FOCUSED FLOATING popup) only exists on the real
-      # keybind path: zellij's CLI in-place cannot target a floating pane, so
-      # R09 needs the chord injected through an attached wezterm pty
-      # (FORGE_ACCEPT_WEZTERM_SOCK + FORGE_ACCEPT_WEZTERM_PANE). The create
-      # gesture replaces a TILED pane, which the CLI reproduces faithfully.
+      # R09/R10: the two adjudicated runtime residuals. The dismiss gesture is
+      # a marker-gated HIDE on the real keybind path: the popup persists with
+      # its yazi state and the floating dispatcher reaps itself. R09 needs the
+      # chord injected through an attached wezterm pty
+      # (FORGE_ACCEPT_WEZTERM_SOCK + FORGE_ACCEPT_WEZTERM_PANE).
       # Default chord bytes are the kitty CSI-u projection of the chord
       # owner's yaziToggle row; the env override still accepts %b escapes.
       dismiss_chord="''${FORGE_ACCEPT_DISMISS_CHORD:-$(printf '\x1b[%d;%du' "$(printf '%d' "'${yaziToggle.key}")" ${toString yaziToggle.mods})}"
       wezterm_bin="''${FORGE_ACCEPT_WEZTERM_BIN:-/Applications/WezTerm.app/Contents/MacOS/wezterm}"
+      dispatcher_pred='[.[] | select((.exited | not) and ((.terminal_command // .command // "") == "forge-yazi.sh toggle"))]'
       popup_id="$(panes | jq -r "$popup_pred | .[0].id // empty")"
       if [[ "$attached" == "true" && -n "$popup_id" && -n "''${FORGE_ACCEPT_WEZTERM_SOCK:-}" \
         && -n "''${FORGE_ACCEPT_WEZTERM_PANE:-}" && -x "$wezterm_bin" ]]; then
-        zj focus-pane-id "terminal_''${popup_id}" >/dev/null 2>&1 || true
-        sleep 0.5
+        # Surface + focus through the real dispatcher so the marker records
+        # pre-chord visibility; the chord then means hide.
+        zj new-pane --floating -c -- forge-yazi.sh toggle >/dev/null 2>&1 || true
+        sleep 1.5
         printf '%b' "$dismiss_chord" | WEZTERM_UNIX_SOCKET="$FORGE_ACCEPT_WEZTERM_SOCK" \
           "$wezterm_bin" cli send-text --no-paste --pane-id "$FORGE_ACCEPT_WEZTERM_PANE" || true
         layer_vis="unknown"
@@ -440,24 +448,26 @@
           if [[ "$layer_vis" == "false" ]]; then break; fi
           sleep 0.2
         done
-        if [[ "$(panes | jq -r "$popup_pred | length")" == "0" && "$layer_vis" == "false" ]]; then
-          row R09-dismiss-suppressed PASS "chord on focused popup dropped it and hid the layer"
+        sleep 1
+        dispatchers="$(panes | jq -r "$dispatcher_pred | length")"
+        if [[ "$(panes | jq -r "$popup_pred | length")" == "1" && "$layer_vis" == "false" && "$dispatchers" == "0" ]]; then
+          row R09-dismiss-hide PASS "chord hid the layer; popup persists, dispatcher reaped"
         else
-          row R09-dismiss-suppressed FAIL "popups=$(panes | jq -r "$popup_pred | length") layer_visible=$layer_vis"
+          row R09-dismiss-hide FAIL "popups=$(panes | jq -r "$popup_pred | length") layer_visible=$layer_vis dispatchers=$dispatchers"
         fi
       else
-        row R09-dismiss-suppressed DEFER "dismiss gesture needs a pty-injected chord; set FORGE_ACCEPT_WEZTERM_SOCK/_PANE on an attached probe"
+        row R09-dismiss-hide DEFER "dismiss gesture needs a pty-injected chord; set FORGE_ACCEPT_WEZTERM_SOCK/_PANE on an attached probe"
       fi
 
       if [[ "$attached" == "true" ]]; then
         # Create-branch focus retention: fresh popup must hold focus after
-        # the dispatcher pane exit-restores its replaced shell pane.
+        # the floating dispatcher reaps itself.
         popup_id="$(panes | jq -r "$popup_pred | .[0].id // empty")"
         if [[ -n "$popup_id" ]]; then
           zj close-pane --pane-id "terminal_''${popup_id}" >/dev/null 2>&1 || true
           sleep 1
         fi
-        zj new-pane --in-place -c -- forge-yazi.sh toggle >/dev/null 2>&1 || true
+        zj new-pane --floating -c -- forge-yazi.sh toggle >/dev/null 2>&1 || true
         if poll "$popup_pred | length == 1"; then
           new_popup="$(panes | jq -r "$popup_pred | .[0].id")"
           focused=""

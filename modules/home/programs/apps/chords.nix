@@ -246,15 +246,20 @@
     }
     {
       pre = lib.concatStringsSep "\n" [
-        "        // In-place dispatcher: leaves floating visibility readable, then toggles"
-        "        // the per-tab Yazi popup (create / show+focus / hide)."
+        "        // Floating dispatcher: toggles the per-tab Yazi popup (create /"
+        "        // show+focus / hide). Never in_place: an attached client on 0.44.3"
+        "        // strands exited in-place panes and their suppressed hosts."
       ];
       id = "yaziToggle";
       keys = ["y"];
       body = lib.concatStringsSep "\n" [
         "          Run \"forge-yazi.sh\" \"toggle\" {"
-        "            in_place true"
+        "            floating true"
         "            close_on_exit true"
+        "            x \"45%\""
+        "            y \"45%\""
+        "            width \"10%\""
+        "            height \"10%\""
         "          }"
       ];
       forgot = {
