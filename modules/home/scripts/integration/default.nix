@@ -155,11 +155,52 @@
 
   forgeYazi = pkgs.writeShellApplication {
     name = "forge-yazi.sh";
-    runtimeInputs = [yaziPkg pkgs.zellij pkgs.jq pkgs.coreutils pkgs.flock forgeEdit];
+    runtimeInputs = [yaziPkg pkgs.zellij pkgs.jq pkgs.coreutils pkgs.flock pkgs.gawk forgeEdit];
     text = ''
-      # Polymorphic entry: "toggle" dispatches the per-tab popup; any other argv
-      # launches Yazi with the Forge editor handoff, entries forwarded intact.
-      if [[ "''${1:-}" != "toggle" ]]; then
+      # Polymorphic entry — one command owns every popup modality:
+      #   (no args)          popup body: yazi + DDS bridge (client-id, local-events)
+      #   toggle             per-tab popup dispatch (create / show+focus / hide)
+      #   reveal|cd <path>   semantic DDS action against the tab popup (ya emit-to),
+      #                      creating the popup when absent — never key simulation
+      #   <entries...>       plain yazi with the Forge editor handoff
+      # DDS client ids derive deterministically from (session, pane_id) so the
+      # dispatcher recomputes the popup's id without a registry.
+      session="''${ZELLIJ_SESSION_NAME:-default}"
+      runtime_root="''${XDG_RUNTIME_DIR:-/tmp}/forge-edit/''${session}"
+      cid_of() { # $1 = pane id; globally unique across sessions via name hash
+        printf '%s:%s' "$session" "$1" | cksum | awk '{ print ($1 % 899999) + 100000 }'
+      }
+
+      if [[ $# -eq 0 && -n "''${ZELLIJ:-}" ]]; then
+        # Popup body: pin the DDS client id and bridge local events. Events
+        # stream as `kind,receiver,sender,{json}`; cd lands in a compact state
+        # cache AND the event log, hover only in the cache (render-hot path
+        # reads caches, never the stream). TUI renders on the pty untouched.
+        pane_id="''${ZELLIJ_PANE_ID:-0}"
+        mkdir -p "$runtime_root"
+        cid="$(cid_of "$pane_id")"
+        EDITOR="forge-edit.sh" exec yazi "$PWD" \
+          --client-id "$cid" \
+          --local-events=cd,hover,rename,bulk,@yank,move,trash,delete \
+          > >(exec gawk -F, -v root="$runtime_root" -v pane="$pane_id" '
+            {
+              kind = $1
+              sender = $3
+              body = substr($0, index($0, "{"))
+              ts = strftime("%Y-%m-%dT%H:%M:%SZ", systime(), 1)
+              if (kind == "cd" || kind == "hover") {
+                state = root "/dds-" kind "-pane-" pane ".json"
+                printf "{\"ts\":\"%s\",\"kind\":\"%s\",\"sender\":\"%s\",\"body\":%s}\n", ts, kind, sender, body > state
+                close(state)
+                if (kind == "hover") next
+              }
+              log_file = root "/dds-events.log"
+              printf "ts=%s\towner=forge-yazi\tkind=%s\tsender=%s\tbody=%s\n", ts, kind, sender, body >> log_file
+              close(log_file)
+            }')
+      fi
+
+      if [[ "''${1:-}" != "toggle" && "''${1:-}" != "reveal" && "''${1:-}" != "cd" ]]; then
         if [[ $# -eq 0 ]]; then
           set -- "$PWD"
         fi
@@ -167,15 +208,21 @@
       fi
 
       if [[ -z "''${ZELLIJ:-}" ]]; then
-        echo "forge-yazi.sh toggle requires a Zellij session" >&2
+        echo "forge-yazi.sh ''${1}: requires a Zellij session" >&2
         exit 1
+      fi
+
+      verb="$1"
+      target=""
+      if [[ "$verb" != "toggle" ]]; then
+        target="''${2:?forge-yazi.sh $verb needs a path}"
       fi
 
       self="''${ZELLIJ_PANE_ID:-}"
       # Serialize concurrent dispatchers (double-chord): one session-scoped
       # lock spans snapshot-to-act, so racing toggles never both read a
       # popup-free tab and create duplicate popups.
-      lock_root="''${XDG_RUNTIME_DIR:-/tmp}/forge-edit/''${ZELLIJ_SESSION_NAME:-default}"
+      lock_root="$runtime_root"
       mkdir -p "$lock_root"
       exec 9>"$lock_root/toggle.lock"
       flock -w 5 9 || {
@@ -208,22 +255,57 @@
       # the layer, so live layer state cannot discriminate show from hide.
       # An out-of-band layer toggle desyncs it by at most one keypress.
       marker="$lock_root/surfaced-tab-''${tab_id}"
-      if [[ -z "$popup" ]]; then
+      spawn_popup() { # $1 = cwd for the new popup
         created="$(zellij action new-pane --floating --pinned true \
           ${yaziPopupArgs} \
-          --name " [YAZI] " --close-on-exit --cwd "$PWD" -- forge-yazi.sh)"
+          --name " [YAZI] " --close-on-exit --cwd "$1" -- forge-yazi.sh)"
         zellij action focus-pane-id "$created" >/dev/null 2>&1 || true
         : >"$marker"
-      elif [[ -e "$marker" ]]; then
-        # Chord means hide: lower the layer, keep the popup and its yazi
-        # state alive for the next surface.
-        zellij action hide-floating-panes
-        rm -f "$marker"
-      else
-        # Focusing a floating pane surfaces the floating layer
+      }
+      surface_popup() {
         zellij action focus-pane-id "terminal_''${popup}"
         : >"$marker"
-      fi
+      }
+
+      case "$verb" in
+        toggle)
+          if [[ -z "$popup" ]]; then
+            spawn_popup "$PWD"
+          elif [[ -e "$marker" ]]; then
+            # Chord means hide: lower the layer, keep the popup and its yazi
+            # state alive for the next surface.
+            zellij action hide-floating-panes
+            rm -f "$marker"
+          else
+            # Focusing a floating pane surfaces the floating layer
+            surface_popup
+          fi
+          ;;
+        reveal | cd)
+          # Semantic DDS action: retarget the live popup through ya emit-to
+          # (keymap-equivalent action grammar), creating it when absent. A
+          # fresh popup needs no emit for cd (it opens at the target); reveal
+          # retries until the instance's DDS endpoint answers.
+          if [[ -z "$popup" ]]; then
+            dir="$target"
+            [[ "$verb" == "reveal" || ! -d "$target" ]] && dir="$(dirname "$target")"
+            spawn_popup "$dir"
+            if [[ "$verb" == "reveal" ]]; then
+              cid="$(cid_of "''${created#terminal_}")"
+              for _ in 1 2 3 4 5 6 7 8 9 10; do
+                if ya emit-to "$cid" reveal "$target" 2>/dev/null; then
+                  break
+                fi
+                sleep 0.3
+              done
+            fi
+          else
+            cid="$(cid_of "$popup")"
+            ya emit-to "$cid" "$verb" "$target"
+            surface_popup
+          fi
+          ;;
+      esac
     '';
   };
 
@@ -235,7 +317,7 @@
   # adjudicated runtime residuals surface as receipt rows either way.
   forgeTerminalAccept = pkgs.writeShellApplication {
     name = "forge-terminal-accept.sh";
-    runtimeInputs = [pkgs.zellij pkgs.jq pkgs.neovim pkgs.coreutils pkgs.findutils pkgs.gawk forgeNvim forgeEdit forgeYazi];
+    runtimeInputs = [yaziPkg pkgs.zellij pkgs.jq pkgs.neovim pkgs.coreutils pkgs.findutils pkgs.gawk forgeNvim forgeEdit forgeYazi];
     text = ''
       # Usage: forge-terminal-accept.sh [--session <name>] [--keep]
       # JSON receipt on stdout, human rows on stderr; exit 1 on any FAIL.
@@ -350,6 +432,43 @@
         row R03-popup-single PASS "popup count stays 1 after repeat toggle"
       else
         row R03-popup-single FAIL "popup count $(panes | jq -r "$popup_pred | length") after repeat toggle"
+      fi
+
+      # R12/R13: DDS spine — ya rides version-matched in the closure; emit-to
+      # retargets the popup by its derived client id and the cd state cache
+      # materializes (the bridge's compact-state contract).
+      if [[ "$(yazi --version | awk '{print $2}')" == "$(ya --version | awk '{print $2}')" ]]; then
+        row R12-ya-version PASS "ya $(ya --version | awk '{print $2}') matches yazi in the wrapper closure"
+      else
+        row R12-ya-version FAIL "yazi=$(yazi --version | awk '{print $2}') ya=$(ya --version | awk '{print $2}')"
+      fi
+      popup_id="$(panes | jq -r "$popup_pred | .[0].id // empty")"
+      if [[ -n "$popup_id" ]]; then
+        cid="$(printf '%s:%s' "$session" "$popup_id" | cksum | awk '{ print ($1 % 899999) + 100000 }')"
+        dds_sent="false"
+        for _ in $(seq 1 25); do
+          if ya emit-to "$cid" cd /tmp 2>/dev/null; then
+            dds_sent="true"
+            break
+          fi
+          sleep 0.2
+        done
+        state="''${XDG_RUNTIME_DIR:-/tmp}/forge-edit/''${session}/dds-cd-pane-''${popup_id}.json"
+        cd_seen="false"
+        for _ in $(seq 1 25); do
+          if [[ -r "$state" ]] && jq -e '.body.url | test("^(/private)?/tmp")' "$state" >/dev/null 2>&1; then
+            cd_seen="true"
+            break
+          fi
+          sleep 0.2
+        done
+        if [[ "$dds_sent" == "true" && "$cd_seen" == "true" ]]; then
+          row R13-dds-bridge PASS "emit-to cid=$cid retargeted the popup; cd state cache landed"
+        else
+          row R13-dds-bridge FAIL "sent=$dds_sent state_seen=$cd_seen state=$state"
+        fi
+      else
+        row R13-dds-bridge DEFER "no live popup for the DDS probe"
       fi
 
       # R04-R08: edit rail — spawn, registry, socket, reuse, multi-file.
