@@ -14,7 +14,7 @@
 
   xhConfig = {
     default_options = [
-      "--style=fruity" # Dark theme (Dracula-adjacent)
+      "--style=dracula" # xh accepts named Pygments styles only; dracula matches the estate palette variant
       "--print=hbH" # Headers, body, request Headers
       "--follow" # Follow redirects by default
       "--timeout=30" # 30 second timeout
