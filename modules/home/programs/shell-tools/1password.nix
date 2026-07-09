@@ -105,12 +105,11 @@
 in {
   imports = [inputs.shell-plugins.hmModules.default];
 
-  # --- Shell Plugins: Biometric auth for supported CLIs ------------------------
-  # NOTE: gh is intentionally excluded - it uses PAT token via GH_TOKEN env var
-  # This ensures gh works in non-interactive contexts (Claude Code, CI, scripts)
+  # --- Shell Plugins: biometric auth for supported CLIs -----------------------
+  # gh stays excluded: GH_TOKEN keeps it working in non-interactive contexts.
   programs._1password-shell-plugins = {
     enable = true;
-    plugins = []; # Add other CLIs here if needed (e.g., pkgs.aws-cli)
+    plugins = [];
   };
 
   home = {
@@ -130,21 +129,20 @@ in {
       '';
 
       # --- Activation Hook: Generate token cache during rebuild ----------------------
-      # CRITICAL: Must run AFTER linkGeneration to ensure template file exists
-      # linkGeneration writes xdg.configFile entries after writeBoundary
+      # Runs AFTER linkGeneration: xdg.configFile entries (the template) land
+      # after writeBoundary, so an earlier run would read a stale template.
       injectSecretsFromVault = lib.hm.dag.entryAfter ["linkGeneration" "ensureForgeJupyterToken"] ''
         cache_file="$HOME/.config/hm-op-session.sh"
         template_file="$HOME/.config/op/env.template"
         jupyter_token_file="$HOME/.config/jupyter/forge-token.env"
 
-        # Fail loudly if template missing (indicates DAG ordering bug)
+        # A missing template is a DAG-ordering defect; fail loudly.
         if [[ ! -f "$template_file" ]]; then
-          echo "ERROR: Template file not found: $template_file" >&2
-          echo "This indicates a home-manager activation ordering issue." >&2
+          echo "ERROR: template not found: $template_file (activation ordering defect)" >&2
           exit 1
         fi
 
-        # Create cache file with resolved tokens from 1Password; temp lives in
+        # Resolve tokens from 1Password into a mode-600 cache; temp lives in
         # the target directory so the publish rename stays same-filesystem.
         echo "Injecting secrets from 1Password vault..." >&2
         mkdir -p "$(dirname "$cache_file")"
@@ -155,9 +153,9 @@ in {
           fi
           chmod 600 "$tmp_file"
           mv -f "$tmp_file" "$cache_file"
-          echo "✓ Tokens cached" >&2
+          echo "Tokens cached" >&2
         else
-          echo "⚠ Warning: op inject failed - 1Password may not be authenticated. Run: op signin" >&2
+          echo "WARNING: op inject failed - 1Password may not be authenticated. Run: op signin" >&2
           rm -f "$tmp_file"
           if [[ ! -f "$cache_file" ]]; then
             touch "$cache_file"
@@ -207,13 +205,9 @@ in {
 
     # --- Secret Template: API keys for op inject --------------------------------
     "op/env.template".text = ''
-      # API Keys - resolved during rebuild via "op inject"
-      # IMPORTANT: export keyword ensures child processes inherit these variables
-      # Update this list when adding new tokens to your 1Password vault
-
-      # CLI tools and APIs
-      # NOTE: ANTHROPIC_API_KEY intentionally excluded - use Claude Code OAuth instead
-      # Projects needing API key auth should configure it locally
+      # API keys resolved during rebuild via "op inject"; the export keyword
+      # makes child processes inherit each variable.
+      # ANTHROPIC_API_KEY stays excluded: Claude Code OAuth owns that auth.
       export GREPTILE_API_KEY="op://Tokens/GREPTILE_API_KEY/token"
       export CODERABBIT_API_KEY="op://Tokens/CODERABBIT_API_KEY/token"
       export OP_SERVICE_ACCOUNT_TOKEN="op://Tokens/OP_SERVICE_ACCOUNT_TOKEN/token"
@@ -255,30 +249,16 @@ in {
   # ProgramArguments[0], which home-manager's mutateConfig unconditionally sets to
   # "/bin/sh" (producing the generic "sh" entry). The key passes through mutateConfig
   # unchanged; the freeformType in the launchd schema accepts it.
-  home.file."Applications/GUI Op Secrets.app/Contents/Info.plist".text = ''
-    <?xml version="1.0" encoding="UTF-8"?>
-    <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-    <plist version="1.0">
-    <dict>
-      <key>CFBundleIdentifier</key>
-      <string>com.parametric-forge.gui-op-secrets</string>
-      <key>CFBundleName</key>
-      <string>GUI Op Secrets</string>
-      <key>CFBundleDisplayName</key>
-      <string>GUI Op Secrets</string>
-      <key>CFBundleVersion</key>
-      <string>1</string>
-      <key>CFBundleShortVersionString</key>
-      <string>1.0</string>
-      <key>CFBundlePackageType</key>
-      <string>APPL</string>
-      <key>LSUIElement</key>
-      <true/>
-      <key>LSBackgroundOnly</key>
-      <true/>
-    </dict>
-    </plist>
-  '';
+  home.file."Applications/GUI Op Secrets.app/Contents/Info.plist".text = lib.generators.toPlist {escape = true;} {
+    CFBundleIdentifier = "com.parametric-forge.gui-op-secrets";
+    CFBundleName = "GUI Op Secrets";
+    CFBundleDisplayName = "GUI Op Secrets";
+    CFBundleVersion = "1";
+    CFBundleShortVersionString = "1.0";
+    CFBundlePackageType = "APPL";
+    LSUIElement = true;
+    LSBackgroundOnly = true;
+  };
 
   # RunAtLoad + writer-side kickstart is the event source; WatchPaths on the
   # cache file was adjudicated out — launchd.plist(5) marks it race-prone, and
