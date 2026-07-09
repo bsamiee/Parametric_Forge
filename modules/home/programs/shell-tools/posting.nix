@@ -45,12 +45,26 @@
       json_null = palette.comment.hex;
     };
     # HTTP-verb semantics: read=success green, create=accent cyan,
-    # mutate=attention orange, destroy=danger red.
+    # mutate=attention orange (patch=warning yellow), destroy=danger red,
+    # introspection (options/head)=structural purple / muted comment.
     method = {
       get = palette.green.hex;
       post = palette.cyan.hex;
       put = palette.orange.hex;
+      patch = palette.yellow.hex;
       delete = palette.red.hex;
+      options = palette.purple.hex;
+      head = palette.comment.hex;
+    };
+    # Rich style strings; mirrors the tmTheme editor surface (caret=primary,
+    # line highlight=raised, selection=selected).
+    text_area = {
+      gutter = roles.text.muted.hex;
+      cursor = "${roles.text.inverse.hex} on ${roles.text.primary.hex}";
+      cursor_line = "on ${roles.surface.raised.hex}";
+      cursor_line_gutter = "${roles.text.muted.hex} on ${roles.surface.raised.hex}";
+      matched_bracket = "on ${roles.surface.selected.hex}";
+      selection = "on ${roles.surface.selected.hex}";
     };
   };
 in {

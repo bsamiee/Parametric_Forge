@@ -30,6 +30,7 @@
     stat_table = {
       keyFgColor = roles.accent.structural.hex;
       valueFgColor = roles.text.primary.hex;
+      bgColor = roles.surface.base.hex;
       logoColor = roles.accent.secondary.hex;
     };
     proc_table = {
@@ -38,17 +39,21 @@
       fgPending = roles.text.muted.hex;
       fgCompleted = roles.state.success.hex;
       fgError = roles.state.danger.hex;
+      bgColor = roles.surface.base.hex;
       headerFgColor = roles.accent.primary.hex;
     };
     help = {
       fgColor = roles.text.primary.hex;
       keyColor = roles.accent.primary.hex;
       hlColor = roles.state.success.hex;
+      buttonBgColor = palette.comment.hex;
       categoryFgColor = roles.accent.structural.hex;
     };
     dialog = {
       fgColor = roles.text.primary.hex;
       bgColor = roles.surface.raised.hex;
+      contrastBgColor = roles.surface.overlay.hex;
+      attentionBgColor = roles.state.attention.hex;
       buttonFgColor = roles.text.inverse.hex;
       buttonBgColor = palette.comment.hex;
       buttonFocusFgColor = roles.text.inverse.hex;

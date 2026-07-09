@@ -19,15 +19,26 @@
       fgColor = roles.text.primary.hex;
       bgColor = roles.surface.base.hex;
       logoColor = roles.accent.secondary.hex;
+      logoColorMsg = roles.accent.primary.hex;
+      logoColorInfo = roles.state.success.hex;
+      logoColorWarn = roles.state.warning.hex;
+      logoColorError = roles.state.danger.hex;
     };
     prompt = {
       fgColor = roles.text.primary.hex;
       bgColor = roles.surface.base.hex;
       suggestColor = roles.text.muted.hex;
+      border = {
+        command = roles.accent.primary.hex;
+        default = roles.surface.selected.hex;
+      };
     };
     info = {
       fgColor = roles.text.muted.hex;
       sectionColor = roles.text.primary.hex;
+      cpuColor = palette.cyan.hex;
+      memColor = palette.purple.hex;
+      k9sRevColor = roles.accent.secondary.hex;
     };
     dialog = {
       fgColor = roles.text.primary.hex;
@@ -58,6 +69,7 @@
         newColor = palette.cyan.hex;
         modifyColor = palette.purple.hex;
         addColor = palette.green.hex;
+        pendingColor = roles.text.muted.hex;
         errorColor = palette.red.hex;
         highlightColor = palette.orange.hex;
         killColor = palette.comment.hex;
@@ -74,6 +86,8 @@
     views = {
       charts = {
         bgColor = roles.surface.base.hex;
+        dialBgColor = roles.surface.base.hex;
+        chartBgColor = roles.surface.base.hex;
         defaultDialColors = [palette.green.hex palette.red.hex];
         defaultChartColors = [palette.green.hex palette.red.hex];
       };
@@ -87,12 +101,14 @@
           fgColor = roles.accent.primary.hex;
           bgColor = roles.surface.base.hex;
           sorterColor = palette.orange.hex;
+          selectedSortColumnColor = palette.yellow.hex;
         };
       };
       xray = {
         fgColor = roles.text.primary.hex;
         bgColor = roles.surface.base.hex;
         cursorColor = roles.surface.selected.hex;
+        cursorTextColor = roles.text.primary.hex;
         graphicColor = roles.accent.secondary.hex;
       };
       yaml = {
@@ -106,111 +122,81 @@
         indicator = {
           fgColor = roles.text.inverse.hex;
           bgColor = roles.accent.structural.hex;
+          toggleOnColor = roles.state.success.hex;
+          toggleOffColor = roles.text.muted.hex;
         };
       };
     };
   };
+  # Mouse/chrome toggles live under k9s.ui only; top-level twins are ignored.
+  forgeConfig.k9s = {
+    liveViewAutoRefresh = true;
+    refreshRate = 2;
+    maxConnRetry = 5;
+    readOnly = true;
+    noExitOnCtrlC = false;
+    ui = {
+      enableMouse = true;
+      headless = false;
+      logoless = false;
+      crumbsless = false;
+      noIcons = false;
+      skin = "forge";
+    };
+    logger = {
+      tail = 200;
+      buffer = 5000;
+      sinceSeconds = 300;
+      textWrap = false;
+      showTime = true;
+    };
+  };
+
+  # CRD front doors; a new hotkey/alias/plugin is one attrset row.
+  hotKey = shortCut: description: command: {inherit shortCut description command;};
+  forgeHotkeys.hotKeys = {
+    shift-a = hotKey "Shift-A" "ArgoCD Applications" "applications.argoproj.io";
+    shift-k = hotKey "Shift-K" "Kyverno PolicyReports" "policyreports.wgpolicyk8s.io";
+    shift-d = hotKey "Shift-D" "CloudNativePG Clusters" "clusters.postgresql.cnpg.io";
+    shift-i = hotKey "Shift-I" "Traefik IngressRoutes" "ingressroutes.traefik.io";
+    shift-s = hotKey "Shift-S" "SealedSecrets" "sealedsecrets.bitnami.com";
+  };
+
+  forgeAliases.aliases = {
+    # ArgoCD
+    app = "argoproj.io/v1alpha1/applications";
+    appproj = "argoproj.io/v1alpha1/appprojects";
+    # Kyverno
+    cpol = "kyverno.io/v1/clusterpolicies";
+    pol = "kyverno.io/v1/policies";
+    pr = "wgpolicyk8s.io/v1alpha2/policyreports";
+    cpr = "wgpolicyk8s.io/v1alpha2/clusterpolicyreports";
+    # CloudNativePG
+    pg = "postgresql.cnpg.io/v1/clusters";
+    backup = "postgresql.cnpg.io/v1/backups";
+    # Traefik
+    ir = "traefik.io/v1alpha1/ingressroutes";
+    mw = "traefik.io/v1alpha1/middlewares";
+    # SealedSecrets
+    ss = "bitnami.com/v1alpha1/sealedsecrets";
+  };
+
+  forgePlugins.plugins = {
+    logs-previous = {
+      shortCut = "Shift-L";
+      description = "Previous container logs";
+      scopes = ["pods"];
+      command = "kubectl";
+      background = false;
+      args = ["logs" "$NAME" "-n" "$NAMESPACE" "--previous" "--tail=100"];
+    };
+  };
 in {
   xdg.configFile = {
-    # --- SKIN -------------------------------------------------------------------
     "k9s/skins/forge.yaml".source = yamlFormat.generate "k9s-forge-skin" forgeSkin;
-
-    # --- CONFIG -----------------------------------------------------------------
-    "k9s/config.yaml".text = ''
-      k9s:
-        liveViewAutoRefresh: true
-        refreshRate: 2
-        maxConnRetry: 5
-        enableMouse: true
-        headless: false
-        logoless: false
-        crumbsless: false
-        readOnly: true
-        noExitOnCtrlC: false
-        ui:
-          enableSkips: false
-          headless: false
-          logoless: false
-          crumbsless: false
-          noIcons: false
-          skin: forge
-        logger:
-          tail: 200
-          buffer: 5000
-          sinceSeconds: 300
-          textWrap: false
-          showTime: true
-    '';
-
-    # --- HOTKEYS ----------------------------------------------------------------
-    "k9s/hotkeys.yaml".text = ''
-      hotKeys:
-        # ArgoCD Applications
-        shift-a:
-          shortCut: Shift-A
-          description: ArgoCD Applications
-          command: applications.argoproj.io
-        # Kyverno PolicyReports
-        shift-k:
-          shortCut: Shift-K
-          description: Kyverno PolicyReports
-          command: policyreports.wgpolicyk8s.io
-        # CloudNativePG Clusters
-        shift-d:
-          shortCut: Shift-D
-          description: CloudNativePG Clusters
-          command: clusters.postgresql.cnpg.io
-        # IngressRoutes (Traefik)
-        shift-i:
-          shortCut: Shift-I
-          description: Traefik IngressRoutes
-          command: ingressroutes.traefik.io
-        # SealedSecrets
-        shift-s:
-          shortCut: Shift-S
-          description: SealedSecrets
-          command: sealedsecrets.bitnami.com
-    '';
-
-    # --- ALIASES ----------------------------------------------------------------
-    "k9s/aliases.yaml".text = ''
-      aliases:
-        # ArgoCD CRDs
-        app: argoproj.io/v1alpha1/applications
-        appproj: argoproj.io/v1alpha1/appprojects
-        # Kyverno CRDs
-        cpol: kyverno.io/v1/clusterpolicies
-        pol: kyverno.io/v1/policies
-        pr: wgpolicyk8s.io/v1alpha2/policyreports
-        cpr: wgpolicyk8s.io/v1alpha2/clusterpolicyreports
-        # CloudNativePG CRDs
-        pg: postgresql.cnpg.io/v1/clusters
-        backup: postgresql.cnpg.io/v1/backups
-        # Traefik CRDs
-        ir: traefik.io/v1alpha1/ingressroutes
-        mw: traefik.io/v1alpha1/middlewares
-        # SealedSecrets
-        ss: bitnami.com/v1alpha1/sealedsecrets
-    '';
-
-    # --- PLUGINS ----------------------------------------------------------------
-    "k9s/plugins.yaml".text = ''
-      plugins:
-        # View previous logs
-        logs-previous:
-          shortCut: Shift-L
-          description: Previous container logs
-          scopes:
-            - pods
-          command: kubectl
-          background: false
-          args:
-            - logs
-            - $NAME
-            - -n
-            - $NAMESPACE
-            - --previous
-            - --tail=100
-    '';
+    "k9s/config.yaml".source = yamlFormat.generate "k9s-config" forgeConfig;
+    "k9s/hotkeys.yaml".source = yamlFormat.generate "k9s-hotkeys" forgeHotkeys;
+    "k9s/aliases.yaml".source = yamlFormat.generate "k9s-aliases" forgeAliases;
+    "k9s/plugins.yaml".source = yamlFormat.generate "k9s-plugins" forgePlugins;
   };
 }

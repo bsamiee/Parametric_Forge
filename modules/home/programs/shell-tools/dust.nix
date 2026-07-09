@@ -9,10 +9,10 @@
   tomlFormat = pkgs.formats.toml {};
 
   dustConfig = {
-    reverse = true; # Normal sort order (largest first)
+    reverse = true; # Largest entries print first
     ignore-hidden = true; # Ignore dotfiles and hidden directories
     output-format = "si";
-    skip-total = true; # Show total size
+    skip-total = true; # Suppress the root total row
   };
 in {
   xdg.configFile."dust/config.toml".source = tomlFormat.generate "dust-config" dustConfig;

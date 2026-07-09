@@ -31,7 +31,7 @@ in {
     KEYTIMEOUT = "200";
     PAGER = "less"; # Let tools add their own flags
     BAT_PAGER = "less -RFXK"; # Bat pager: -X fixes macOS Terminal.app clearing
-    PROCS_PAGER = "less -SRX"; # Procs pager: -S no wrap for tables, -R colors, -X no clear
+    # procs reads no pager env var; its pager command is owned by procs.nix config.
     LESS = "-RFX"; # -X prevents screen clearing on macOS
     MANROFFOPT = "-c";
     RICH_THEME = "dracula"; # rich accepts named Pygments styles only; dracula matches the estate palette variant
@@ -45,7 +45,7 @@ in {
     BAT_CACHE_PATH = "${config.xdg.cacheHome}/bat";
     XH_CONFIG_DIR = "${config.xdg.configHome}/xh";
     ATUIN_LOG = "error";
-    ACT_CACHE_DIR = "${config.xdg.cacheHome}/act";
+    # act caches under XDG_CACHE_HOME/act natively; it reads no ACT_* path var.
     CLOUDSDK_CONFIG = "${config.xdg.configHome}/gcloud";
     WORKSPACE_MCP_CREDENTIALS_DIR = "${config.xdg.cacheHome}/workspace-mcp";
     GOOGLE_WORKSPACE_CLI_CONFIG_DIR = "${config.xdg.configHome}/gws";

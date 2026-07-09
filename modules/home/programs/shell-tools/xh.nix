@@ -5,16 +5,14 @@
 # Path          : /modules/home/programs/shell-tools/xh.nix
 # ----------------------------------------------------------------------------
 # Friendly and fast HTTP client (HTTPie reimplementation in Rust)
-{
-  config,
-  pkgs,
-  ...
-}: let
+{pkgs, ...}: let
   jsonFormat = pkgs.formats.json {};
 
+  # default_options is the ONLY key xh reads from config.json; named sessions
+  # live under XH_CONFIG_DIR/sessions as user state (--session per invocation).
   xhConfig = {
     default_options = [
-      "--style=dracula" # xh accepts named Pygments styles only; dracula matches the estate palette variant
+      "--style=fruity" # xh bundles four syntect themes only (auto/solarized/monokai/fruity); fruity is the closest dark match to the estate palette
       "--print=hbH" # Headers, body, request Headers
       "--follow" # Follow redirects by default
       "--timeout=30" # 30 second timeout
@@ -22,29 +20,8 @@
       "--pretty=all" # Pretty print with colors and formatting
       "--max-redirects=5" # Reasonable redirect limit
     ];
-
-    # Session configuration for API testing workflows
-    session = {
-      default_dir = "${config.xdg.dataHome}/xh/sessions";
-      auto_save = false; # Explicit session saving only
-    };
-
-    # Response handling
-    response = {
-      charset = "utf-8"; # Default charset for responses
-      mime = {
-        json = "application/json";
-        xml = "application/xml";
-        html = "text/html";
-      };
-    };
   };
 in {
   home.packages = [pkgs.xh];
-
-  # Main configuration
   xdg.configFile."xh/config.json".source = jsonFormat.generate "xh-config" xhConfig;
-
-  # Session storage directory
-  xdg.dataFile."xh/sessions/.keep".text = "";
 }

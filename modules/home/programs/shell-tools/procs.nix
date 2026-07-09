@@ -119,6 +119,15 @@
         align = "Left";
       }
       {
+        # Insertion slot: --sortd/--sorta/--insert land their column here and
+        # hard-fail without one.
+        kind = "Slot";
+        style = "BrightWhite|Black";
+        numeric_search = false;
+        nonnumeric_search = false;
+        align = "Left";
+      }
+      {
         kind = "CpuTime";
         style = "BrightCyan|Cyan";
         numeric_search = false;
@@ -216,8 +225,9 @@
     };
 
     # --- Sort Configuration -------------------------------------------------
+    # Index counts every column row incl. separators: 5 = UsageCpu (top-CPU default).
     sort = {
-      column = 4;
+      column = 5;
       order = "Descending";
     };
 

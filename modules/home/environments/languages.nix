@@ -34,6 +34,10 @@ in {
       # --- Database Front Doors -----------------------------------------------
       # Harlequin discovers config through platformdirs (~/Library on darwin); pin it to XDG.
       HARLEQUIN_CONFIG_PATH = "${config.xdg.configHome}/harlequin/config.toml";
+      # VisiData's vendored appdirs resolves darwin config to ~/Library/Preferences;
+      # VD_CONFIG pins the generated config, VD_DIR keeps cmdlog/macros in XDG state.
+      VD_CONFIG = "${config.xdg.configHome}/visidata/config.py";
+      VD_DIR = "${config.xdg.stateHome}/visidata";
 
       # --- TypeScript/JavaScript Tooling -------------------------------------
       TAILWIND_MODE = "watch"; # JIT compilation for development
