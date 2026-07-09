@@ -7,6 +7,9 @@
 # GitHub CLI: declarative config.yml; hosts.yml stays mutable for auth state.
 # Headless auth is env-token owned (GH_TOKEN via the secrets rail), so a
 # store-symlinked config.yml loses nothing.
+# Posture: gh is operator/discovery/breakglass only. Durable GitHub state
+# (repo settings, rulesets, reviewer rules) lives in services/ Pulumi rows;
+# `gh api` mutation of surfaces a row owns is retired.
 _: {
   programs.gh = {
     enable = true;

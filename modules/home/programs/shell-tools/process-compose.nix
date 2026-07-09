@@ -78,6 +78,63 @@
     '';
   };
 
+  # Cockpit: the machine-scoped operator mesh — signed-event inbox, receipt
+  # tailer, MCP fleet drift probe — as one foreground process-compose project.
+  # Probes are processes with restart cadence, never launchd agents; the
+  # webhook port projects from the webhook.nix session variable.
+  webhookPort = lib.toInt config.home.sessionVariables.WEBHOOK_PORT;
+  receiptsFile = "${config.xdg.stateHome}/forge-webhook/receipts.jsonl";
+
+  cockpitConfig = {
+    version = "0.5";
+    processes = {
+      inbox = {
+        command = "forge-webhook";
+        readiness_probe = {
+          http_get = {
+            host = "127.0.0.1";
+            port = webhookPort;
+            path = "/hooks/ping";
+          };
+          initial_delay_seconds = 1;
+          period_seconds = 10;
+          failure_threshold = 3;
+        };
+        availability = {
+          restart = "always";
+          backoff_seconds = 2;
+        };
+      };
+      inbox-tail = {
+        command = "touch ${receiptsFile} && exec tail -n 40 -F ${receiptsFile}";
+        depends_on.inbox.condition = "process_started";
+        availability = {
+          restart = "always";
+          backoff_seconds = 2;
+        };
+      };
+      fleet-drift = {
+        command = "forge-mcp drift";
+        availability = {
+          restart = "always";
+          backoff_seconds = 900;
+        };
+      };
+    };
+  };
+
+  cockpitYaml = yamlFormat.generate "forge-cockpit" cockpitConfig;
+
+  forgeCockpit = pkgs.writeShellApplication {
+    name = "forge-cockpit";
+    runtimeInputs = [pkgs.coreutils pkgs.process-compose];
+    text = ''
+      sock_dir="''${XDG_STATE_HOME:-$HOME/.local/state}/process-compose"
+      mkdir -p "$sock_dir"
+      exec process-compose up -f ${cockpitYaml} -U -u "$sock_dir/pc-cockpit.sock" --ordered-shutdown "$@"
+    '';
+  };
+
   # theme.yaml backs the TUI "Custom Style" selector entry.
   forgeStyle.style = {
     body = {
@@ -124,7 +181,7 @@
     };
   };
 in {
-  home.packages = [forgePc];
+  home.packages = [forgePc forgeCockpit];
 
   xdg.configFile."process-compose/theme.yaml".source = yamlFormat.generate "process-compose-theme" forgeStyle;
 
