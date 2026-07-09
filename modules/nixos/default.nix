@@ -45,11 +45,11 @@
     };
 
     # Atuin sync server: loopback-only, reached exclusively through the client
-    # tunnel row (port 8888); registration rides the cutover runbook.
+    # tunnel row. Port 8788 — 8888 belongs to forge-jupyter on every host.
     atuin = {
       enable = true;
       host = "127.0.0.1";
-      port = 8888;
+      port = 8788;
       openRegistration = true;
     };
 

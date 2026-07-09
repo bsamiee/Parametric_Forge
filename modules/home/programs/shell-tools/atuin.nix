@@ -61,13 +61,14 @@ in {
       db_path = "${config.xdg.dataHome}/atuin/history.db";
       key_path = "${config.xdg.dataHome}/atuin/key";
       # Sync rail: services.atuin on the maghz NixOS host (modules/nixos),
-      # loopback-only through the ssh.nix vpsTunnels registry (atuin row, 8888).
-      # Credential custody is Doppler: ATUIN_SYNC_PASSWORD for the one-time
-      # register/login, ATUIN_SYNC_KEY escrowing `atuin key` — any host with
-      # the tunnel plus Doppler joins; no per-machine roster exists anywhere.
-      # auto_sync stays inert until the cutover-runbook login lands a session.
+      # loopback-only through the ssh.nix vpsTunnels registry (atuin row, 8788
+      # — the Jupyter loopback owns 8888 on both ends). Credential custody is
+      # Doppler: ATUIN_SYNC_PASSWORD for the one-time register/login,
+      # ATUIN_SYNC_KEY escrowing `atuin key` — any host with the tunnel plus
+      # Doppler joins; no per-machine roster exists anywhere. auto_sync stays
+      # inert until the cutover-runbook login lands a session.
       auto_sync = true;
-      sync_address = "http://127.0.0.1:8888";
+      sync_address = "http://127.0.0.1:8788";
       sync_frequency = "15m";
       sync.records = true; # sync v2 store
       update_check = false;

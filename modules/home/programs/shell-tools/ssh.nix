@@ -55,7 +55,8 @@
           path = "/healthz";
         }
         {
-          port = 8888;
+          # 8788: the Jupyter loopback owns 8888 on both ends of the tunnel.
+          port = 8788;
           service = "atuin";
           probe = "http";
           path = "/";
