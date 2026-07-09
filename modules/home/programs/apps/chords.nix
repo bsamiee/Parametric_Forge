@@ -145,7 +145,8 @@
   # --- Bind rows ----------------------------------------------------------------
   # Row schema: keys (aliases share one row), kdl (single-line body) XOR body
   # (verbatim multi-line KDL at emitted indentation), pre (verbatim comment
-  # lines), gap (blank line before), forgot {label, display?, rank}, ribbon
+  # lines), gap (blank line before), label (register label when no forgot/
+  # ribbon row carries one), forgot {label, display?, rank}, ribbon
   # {label, key?, rank}, id (exports the row as zellij.ids.<id> {key, mods}
   # for runtime chord injection). Display strings derive from layer prefixes
   # unless a curated grouping overrides them.
@@ -153,6 +154,7 @@
     {
       keys = [modes.locked.key];
       kdl = ''SwitchToMode "Locked";'';
+      label = "locked mode";
     }
     {
       keys = ["q"];
@@ -605,23 +607,25 @@
       physical_layer = layer.name;
       mods = layer.zellij;
       key = lib.concatStringsSep "," row.keys;
-      label = row.forgot.label or row.ribbon.label or row.kdl or "bound action";
+      label = row.label or row.forgot.label or row.ribbon.label or row.kdl or "bound action";
       action = row.kdl or row.body or "";
       projection_path = ".config/zellij/config.kdl";
       rendered = renderBind layer.zellij row;
     }
     // lib.optionalAttrs (row ? id) {injection = ids.${row.id};};
-  modeRegRows = map (m: {
-    chord_id = "zellij:hyper:${modes.${m}.key}";
-    consumer = "zellij";
-    physical_layer = layers.hyper.name;
-    mods = layers.hyper.zellij;
-    key = modes.${m}.key;
-    label = "${m} mode";
-    action = "SwitchToMode \"${cap m}\";";
-    projection_path = ".config/zellij/config.kdl";
-    rendered = "bind \"${layers.hyper.zellij} ${modes.${m}.key}\" { SwitchToMode \"${cap m}\"; }";
-  }) (entryOrder ++ ["locked"]);
+  modeRegRows =
+    map (m: {
+      chord_id = "zellij:hyper:${modes.${m}.key}";
+      consumer = "zellij";
+      physical_layer = layers.hyper.name;
+      mods = layers.hyper.zellij;
+      key = modes.${m}.key;
+      label = "${m} mode";
+      action = "SwitchToMode \"${cap m}\";";
+      projection_path = ".config/zellij/config.kdl";
+      rendered = "bind \"${layers.hyper.zellij} ${modes.${m}.key}\" { SwitchToMode \"${cap m}\"; }";
+    })
+    entryOrder;
   register =
     map (zjRegRow layers.hyper) hyperRows
     ++ map (zjRegRow layers.super) superRows
@@ -686,6 +690,7 @@
 
   # Intra-consumer conflict ledger: every emitted (consumer, chord) claim must
   # be unique; shift-glyph expansion rides the same bindKeys the KDL uses.
+  dupesOf = xs: lib.attrNames (lib.filterAttrs (_: c: c > 1) (lib.foldl' (acc: x: acc // {${x} = (acc.${x} or 0) + 1;}) {} xs));
   claims = lib.concatMap (r:
     map (c: "${r.consumer}|${c}")
     (
@@ -694,7 +699,8 @@
       else [r.key]
     ))
   register;
-  conflictClaims = lib.subtractLists (lib.unique claims) claims;
+  conflictClaims = dupesOf claims;
+  conflictIds = dupesOf (map (r: r.chord_id) register);
 in {
   options.forge.chords = lib.mkOption {
     type = lib.types.raw;
@@ -732,6 +738,10 @@ in {
     {
       assertion = conflictClaims == [];
       message = "forge.chords: conflicting chord claims: ${lib.concatStringsSep ", " conflictClaims}";
+    }
+    {
+      assertion = conflictIds == [];
+      message = "forge.chords: duplicate chord_id rows: ${lib.concatStringsSep ", " conflictIds}";
     }
   ];
 }

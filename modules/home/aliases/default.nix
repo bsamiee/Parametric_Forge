@@ -17,7 +17,7 @@
     )
     files;
   names = map (r: r.alias) rows;
-  dupes = lib.subtractLists (lib.unique names) names;
+  dupes = lib.attrNames (lib.filterAttrs (_: c: c > 1) (lib.foldl' (acc: n: acc // {${n} = (acc.${n} or 0) + 1;}) {} names));
 in {
   options.forge.registers.aliases = lib.mkOption {
     type = lib.types.raw;
