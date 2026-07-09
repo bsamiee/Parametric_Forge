@@ -29,7 +29,9 @@ local function names_for(buf)
     return names
 end
 
-vim.api.nvim_create_autocmd({ "BufReadPost", "BufWritePost", "InsertLeave" }, {
+-- FileType (not BufReadPost): init-registered read autocmds run before
+-- filetype detection, so the filetype lane would resolve empty on open.
+vim.api.nvim_create_autocmd({ "FileType", "BufWritePost", "InsertLeave" }, {
     group = vim.api.nvim_create_augroup("forge_lint", { clear = true }),
     callback = function(ev)
         if vim.bo[ev.buf].modifiable and vim.bo[ev.buf].buftype == "" then
