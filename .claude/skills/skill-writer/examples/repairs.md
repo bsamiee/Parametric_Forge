@@ -1,6 +1,6 @@
-# [SKILL_CRAFT]
+# [REPAIRS]
 
-Skill repair is symptom-indexed: each entry names one defect an agent already sees in a skill bundle, carries the fixed Detection / Rejected / Accepted / Reason / Reframe card, and shows both shapes as tiny fences. The trigger is repaired before the body — a body no task selects is dead law.
+Skill repair is symptom-indexed: each entry names one defect an agent already sees in a bundle, carries the fixed Detection / Rejected / Accepted / Reason / Reframe card, and shows both shapes as tiny fences. The trigger is repaired before the body — a body no task selects is dead law.
 
 ## [01]-[BROAD_TRIGGER]
 
@@ -97,3 +97,47 @@ Instruction rigidity contradicts task variance: fragile mechanics float free whi
   ```
 - Reason: Rails belong where deviation breaks the run; goals and gates belong where the best path is contextual — each inversion produces broken runs or ritual theater.
 - Reframe: Price each instruction by its cost of deviation, then pin the invocation or free the path.
+
+## [06]-[SEDIMENT_BODY]
+
+The body accretes one guard per past incident until dead threats outweigh live law.
+
+- Detection: Rules that answer no property of the deliverable — each one a scar from a failure the current tooling already forecloses.
+- Rejected:
+  ```markdown rejected
+  Never run the formatter twice in one pass.
+  Always re-read the file after every edit before continuing.
+  Double-check that the output directory exists before writing.
+  ```
+- Accepted:
+  ```markdown accepted
+  Run `scripts/render.py <file>`; it creates the output directory, formats once, and exits nonzero on drift.
+  ```
+- Reason: Every scar taxes every activation forever, and the pile buries the branch the skill exists to teach; the mechanized guard costs nothing and cannot be skipped.
+- Reframe: Fold each guard into the script or gate that makes the failure unspellable, then delete the sentence; a guard that cannot be mechanized names its live failure condition or dies.
+
+## [07]-[COLLIDING_TRIGGERS]
+
+Two sibling descriptions both match one prompt, so selection is a coin flip and both skills lose attribution.
+
+- Detection: A realistic task phrasing that selects either of two installed skills; a must-not-fire query from one skill's eval set fires it anyway.
+- Rejected:
+  ```yaml rejected
+  # skill A
+  description: Builds dashboards, charts, and data visualizations for any output medium.
+  # skill B
+  description: Creates interactive HTML pages including dashboards and visual reports.
+  ```
+- Accepted:
+  ```yaml accepted
+  # skill A
+  description: >-
+    Owns chart and graph construction — mark selection, palettes, axes — in any medium.
+    Page layout, tabs, and interactivity around the charts belong to the HTML page owner.
+  # skill B
+  description: >-
+    Owns interactive HTML pages — layout, navigation, controls, export. Chart internals
+    (marks, scales, palettes) belong to the chart owner.
+  ```
+- Reason: The repair is symmetric refusal: each description names the neighbor's deliverable as its own boundary, so the prompt's noun decides the winner instead of chance.
+- Reframe: Repair both descriptions, never a body; add the colliding phrasing to both skills' permanent must-not-fire sets.
