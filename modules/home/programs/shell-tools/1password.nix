@@ -227,7 +227,6 @@ in {
       export EXA_API_KEY="op://Tokens/Exa API Key/token"
       export PERPLEXITY_API_KEY="op://Tokens/Perplexity Sonar API Key/token"
       export TAVILY_API_KEY="op://Tokens/Tavily Auth Token/token"
-      export SONAR_TOKEN="op://Tokens/SONAR_TOKEN/token"
       export CACHIX_AUTH_TOKEN="op://Tokens/Cachix Auth Token - Parametric Forge/token"
       export HOSTINGER_TOKEN="op://Tokens/HOSTINGER_TOKEN/token"
       # HOSTINGER_API_TOKEN is the exact env name the hostinger MCP reads; aliased to the same vault item so
