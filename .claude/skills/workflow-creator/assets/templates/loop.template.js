@@ -45,12 +45,12 @@ const collected = []
 //     burns rounds verifying nothing: skip the verify when the fix changed no file (or
 //     returned verdict 'clean'); re-queue only NEW residuals via a cumulative seen-set;
 //     break the round nothing changed a file. Still log + return any genuinely-open
-//     residual, never drop it. Worked law: references/patterns.md section 13.
+//     residual, never drop it. Worked law: the patterns reference reconcile shape.
 //
 // effort: 'low' suits a mechanical collect/discovery round; raise it if each
-// round demands real reasoning (effort guidance: references/api-reference.md).
+// round demands real reasoning (effort guidance: references/api.md).
 // The dedup paste below grows per round — small-output-only; a heavy accumulator
-// moves to a run-scratch report file + receipt (SKILL.md "Data flow between stages").
+// moves to a run-scratch report file + receipt (the patterns reference report-file shape).
 
 while (budget.total && budget.remaining() > 50_000 && collected.length < 200) {
   const r = await agent(

@@ -131,7 +131,7 @@ if (touched.length === 0) {
 // learns the outcomes only from the paste, and owns the cross-file follow-ups no
 // single specialist could resolve alone. Paste fan-in is small-output-only; a change set
 // past ~50 files moves each result to a scratch report file + thin receipt and hands the
-// reporter the roster — SKILL.md "Data flow between stages".
+// reporter the roster — the patterns reference report-file shape.
 
 // --- [REPORT]
 phase('Report')

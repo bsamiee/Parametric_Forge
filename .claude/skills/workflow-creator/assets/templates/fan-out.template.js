@@ -31,7 +31,7 @@ const ITEM_SCHEMA = {
 
 // PHASE 1 — one fresh-context subagent per item, all at once. parallel() is a barrier: it waits for every thunk. Note the shape — () => agent(...), a thunk.
 // Pin each agent to the phase via the option (concurrent calls would otherwise race on the global phase()). effort: 'low' suits a mechanical per-item pass;
-// drop it for a judgement-heavy worker (effort guidance: references/api-reference.md).
+// drop it for a judgement-heavy worker (effort guidance: references/api.md).
 phase('Work')
 log(`Processing ${items.length} item(s)...`)
 const results = await parallel(
@@ -47,7 +47,7 @@ const clean = results
 log(`${clean.length}/${items.length} returned usable results.`)
 
 // PHASE 2 — one synthesis agent. It is a fresh context: it never saw the workers. It learns the results only because we paste them into its prompt.
-// Paste fan-in is the SMALL-output shape; past ~50 rows the product moves to a run-scratch report file + thin receipt — SKILL.md "Data flow between stages".
+// Paste fan-in is the SMALL-output shape; past ~50 rows the product moves to a run-scratch report file + thin receipt — the patterns reference report-file shape.
 
 // --- [SYNTHESIZE]
 phase('Synthesize')

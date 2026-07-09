@@ -91,7 +91,7 @@ if (drifted.length === 0) {
 // --- [OPEN_PR]
 
 // Paste fan-in is small-output-only (drift set bounded by the wire-type roster); past
-// ~50 rows the product moves to a scratch report file + receipt — SKILL.md "Data flow between stages".
+// ~50 rows the product moves to a scratch report file + receipt — the patterns reference report-file shape.
 phase('Open PR')
 await agent(
   `Open ONE draft pull request that realigns every drifted wire type to its C# producer ` +

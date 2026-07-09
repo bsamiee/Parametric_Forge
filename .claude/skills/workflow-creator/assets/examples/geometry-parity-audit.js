@@ -84,7 +84,7 @@ if (divergent.length === 0) {
 // --- [CLUSTER_DIVERGENCES]
 
 // Paste fan-in is small-output-only (divergences bounded by the op roster); past ~50 rows
-// the product moves to a scratch report file + receipt — SKILL.md "Data flow between stages".
+// the product moves to a scratch report file + receipt — the patterns reference report-file shape.
 phase('Cluster divergences')
 const report = await agent(
   `Here are ${divergent.length} cross-runtime geometry divergences. Cluster them into ` +

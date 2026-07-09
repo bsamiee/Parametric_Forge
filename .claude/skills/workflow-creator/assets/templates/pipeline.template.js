@@ -29,7 +29,7 @@ const STAGE1_SCHEMA = {
 // item A can be in Stage2 while item B is still in Stage1.
 // effort: 'low' fits a mechanical classify/extract first stage; let the later
 // stage inherit the session tier for the heavier reasoning over its result
-// (effort guidance: references/api-reference.md).
+// (effort guidance: references/api.md).
 const out = await pipeline(
   items,
 
