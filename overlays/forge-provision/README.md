@@ -17,6 +17,7 @@
 `--json` emits one schema-v3 envelope per invocation: `schemaVersion`, `command`, `ok`, `warnings`, `error`, `project`, `auth`, `portPolicy`, `services`, `ports`, `resources`, `artifacts`, `extensions`, `tools`. Failures emit the same envelope with `ok: false` and a populated `error` row, exit code preserved; `project` appears once identity resolution has succeeded.
 
 - Envelopes carry sanitized runtime booleans, kinds, and catalog metadata only; sockets, Docker config paths, credential helper names, DSN passwords, mount paths, and host absolute paths never enter agent-facing JSON, and `redact_message` scrubs every error string.
+- `doctor` reports unix-socket presence as the boolean `resources.runtime.docker.endpointPathExists` (`null` for non-unix endpoints); the socket path itself stays out of the envelope.
 - `--diagnostic-json` is admitted only for `doctor`, `paths`, and `inventory`; it adds redaction-marker fields, never raw values.
 - `extensions.catalog` rows pass through `data/postgres-extensions.json`, `data/duckdb-extensions.json`, and `data/sqlite-extensions.json` unmodified; PostgreSQL rows additionally carry computed gate fields; the catalog files are the system of record for extension metadata.
 

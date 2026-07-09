@@ -5,7 +5,9 @@
 # Path          : modules/home/programs/apps/zellij/layouts/default.nix
 # ----------------------------------------------------------------------------
 # Shell-first Zellij layout; editor and Yazi arrive on demand via the rail
-_: {
+{config, ...}: let
+  lazygitPopup = config.programs.zellij.popupGeometry.lazygit;
+in {
   xdg.configFile."zellij/layouts/default.kdl".text = ''
     // Title         : default.kdl
     // Author        : Bardia Samiee
@@ -19,10 +21,10 @@ _: {
         // --- Pane Templates ---------------------------------------------------------
         pane_template name="lazygit" start_suspended=true {
             command         "lazygit"
-            x               "10%"
-            y               "5%"
-            width           "80%"
-            height          "80%"
+            x               "${lazygitPopup.x}"
+            y               "${lazygitPopup.y}"
+            width           "${lazygitPopup.width}"
+            height          "${lazygitPopup.height}"
         }
 
         // --- Tab Templates ----------------------------------------------------------

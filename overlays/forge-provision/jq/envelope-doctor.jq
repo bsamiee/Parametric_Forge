@@ -8,6 +8,7 @@
         executableKind: (if $dockerPath == "-" then null elif ($dockerPath | startswith("/nix/store/")) then "nix-store" else "host-path" end),
         policy: {status: $policyStatus, reason: (if $policyReason == "" then null else $policyReason end)},
         endpointKind: (if $resolvedEndpoint | startswith("unix://") then "unix" elif $resolvedEndpoint | startswith("tcp://") then "tcp" elif $resolvedEndpoint | startswith("ssh://") then "ssh" else "unknown" end),
+        endpointPathExists: $endpointPathExists,
         compose: $composeVersion,
         server: $dockerServer,
         hostConfig: {

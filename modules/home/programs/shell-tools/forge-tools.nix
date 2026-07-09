@@ -284,14 +284,33 @@
     text = ''
       export PATH="/nix/var/nix/profiles/default/bin:$PATH"
 
+      mode="manual"
+      [ "''${1:-}" != "--scheduled" ] || mode="scheduled"
       lock_file="''${FORGE_REDEPLOY_LOCK:-$HOME/.cache/forge-redeploy.lock}"
+      receipt_log="''${FORGE_MAINTENANCE_RECEIPT_LOG:-$HOME/Library/Logs/forge-nix-maintenance.receipts.log}"
       nix_env="/nix/var/nix/profiles/default/bin/nix-env"
+
+      # One typed receipt per run; the EXIT trap emits it even when a phase
+      # aborts, so denied trims and failed GC stay visible (result=fail).
+      ts="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+      power="ac" lock="-" trim="-" gc="-" optimise="-"
+      gc_s="-" optimise_s="-"
+      result="fail"
+      emit_receipt() {
+        line="$(printf 'ts=%s\tmode=%s\tpower=%s\tlock=%s\ttrim=%s\tgc=%s\tgc_s=%s\toptimise=%s\toptimise_s=%s\tresult=%s' \
+          "$ts" "$mode" "$power" "$lock" "$trim" "$gc" "$gc_s" "$optimise" "$optimise_s" "$result")"
+        # An unwritable log must never fail the trap or mask a finished run.
+        { mkdir -p "$(dirname "$receipt_log")" && printf '%s\n' "$line" >>"$receipt_log"; } \
+          || printf 'forge-nix-maintenance: WARNING receipt not persisted to %s\n' "$receipt_log" >&2
+        printf 'forge-nix-maintenance: receipt\t%s\n' "$line"
+      }
+      trap emit_receipt EXIT
 
       # Scheduled runs stay AC-gated and yield to a live deploy; manual runs wait.
       # No grep -q: consuming all input avoids the pipefail/SIGPIPE false skip.
-      if [ "''${1:-}" = "--scheduled" ]; then
+      if [ "$mode" = "scheduled" ]; then
         /usr/bin/pmset -g batt | grep "AC Power" >/dev/null || {
-          printf 'forge-nix-maintenance: on battery; skipped\n'
+          power="battery" result="skipped"
           exit 0
         }
         flock_args=(-n)
@@ -301,53 +320,206 @@
       mkdir -p "$(dirname "$lock_file")"
       exec 9>"$lock_file"
       flock "''${flock_args[@]}" 9 || {
+        lock="held" result="skipped"
         printf 'forge-nix-maintenance: deploy in flight holds %s; skipped\n' "$lock_file" >&2
         exit 75
       }
+      lock="ok"
 
-      # System generations: keep the newest five for the rollback window.
-      status="ok"
+      # System generations: keep the newest five for the rollback window; the
+      # NOPASSWD row pins these exact args, so a denial signals policy drift.
+      trim="ok"
       sudo -n "$nix_env" -p /nix/var/nix/profiles/system --delete-generations +5 || {
-        status="partial"
+        trim="denied"
         printf 'forge-nix-maintenance: WARNING system generation trim denied; rerun after a switch lands the sudoers row\n' >&2
       }
       # User profiles: drop stale generations and collect what they unpinned;
       # continuous free-space GC stays determinate-nixd-owned.
+      t0=$EPOCHSECONDS
       nix-collect-garbage --delete-older-than 14d
+      gc="ok" gc_s=$((EPOCHSECONDS - t0))
+      t0=$EPOCHSECONDS
       nix store optimise
-      printf 'forge-nix-maintenance: %s ts=%s\n' "$status" "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+      optimise="ok" optimise_s=$((EPOCHSECONDS - t0))
+      result="ok"
+      [ "$trim" = "ok" ] || result="partial"
     '';
   };
 
-  forgeContainerDoctor = pkgs.writeShellApplication {
-    name = "forge-container-doctor";
-    runtimeInputs = [pkgs.coreutils pkgs.docker-client pkgs.docker-compose pkgs.jq];
+  # Cleanup row registry: HOME-relative targets, one row per litter class.
+  # mode rows converge a directory mode; path rows trash a whole residue tree;
+  # glob rows trash pattern matches under a root. cargo/rustup rows carry the
+  # closed retirement decision: the toolchains are retired, regrowth is litter.
+  cleanupRows = pkgs.writeText "forge-cleanup-rows.json" (builtins.toJSON [
+    {
+      name = "launchagents-mode";
+      kind = "mode";
+      target = "Library/LaunchAgents";
+      expect = "700";
+    }
+    {
+      name = "zdotdir-compdump";
+      kind = "glob";
+      root = ".config/zsh";
+      pattern = ".zcompdump*";
+    }
+    {
+      name = "mcp-stage-litter";
+      kind = "glob";
+      root = ".cache/forge-mcp";
+      pattern = ".stage.*";
+    }
+    {
+      name = "pyenv-residue";
+      kind = "path";
+      target = ".pyenv";
+    }
+    {
+      name = "cargo-residue";
+      kind = "path";
+      target = ".cargo";
+    }
+    {
+      name = "rustup-residue";
+      kind = "path";
+      target = ".rustup";
+    }
+  ]);
+
+  # Guarded cleanup rail: `plan` emits a durable precheck receipt, `apply`
+  # executes only rows the plan proved safe, re-verified at act time and
+  # trash-first, so every deletion stays recoverable from ~/.Trash.
+  forgeCleanup = pkgs.writeShellApplication {
+    name = "forge-cleanup";
+    runtimeInputs = [pkgs.coreutils pkgs.findutils pkgs.gawk pkgs.jq];
     text = ''
-      socket="''${DOCKER_HOST:-unix://$HOME/.local/share/colima/default/docker.sock}"
-      config="''${DOCKER_CONFIG:-$HOME/.config/docker}"
-      printf 'container-doctor\tendpoint_kind=%s\n' "''${socket%%://*}"
-      if [[ "$socket" == unix://* ]]; then
-        socket_path="''${socket#unix://}"
-        [ -S "$socket_path" ] || {
-          printf 'container-doctor\tok=false\treason=missing-socket\n'
-          exit 1
-        }
-      fi
-      if [ -f "$config/config.json" ]; then
-        helper_count="$(jq -r '((.credsStore // .credStore // "") != "") as $store | (($store | if . then 1 else 0 end) + ((.credHelpers // {}) | length))' "$config/config.json")"
-      else
-        helper_count=0
-      fi
-      DOCKER_HOST="$socket" DOCKER_CONFIG="$config" docker version >/dev/null
-      DOCKER_HOST="$socket" DOCKER_CONFIG="$config" docker compose version >/dev/null
-      printf 'container-doctor\tok=true\tcredential_helpers=%s\n' "$helper_count"
+      rows_json='${cleanupRows}'
+      state_dir="''${XDG_STATE_HOME:-$HOME/.local/state}/forge-cleanup"
+      run_ts="$(date -u +%Y%m%dT%H%M%SZ)"
+      usage() { echo "usage: forge-cleanup plan | apply [plan-file]" >&2; exit 64; }
+      verb="''${1:-}"; shift || true
+
+      # One detector owns every row kind; plan and apply both consume it, so
+      # apply never acts on a state the detector cannot reproduce live.
+      detect_row() {
+        local row="$1" name kind state count kb action safe detail target expect root pattern current
+        name="$(jq -r '.name' <<<"$row")"
+        kind="$(jq -r '.kind' <<<"$row")"
+        state=clean count=0 kb=0 action=none safe=true detail=-
+        case "$kind" in
+          mode)
+            target="$HOME/$(jq -r '.target' <<<"$row")"
+            expect="$(jq -r '.expect' <<<"$row")"
+            if [ ! -d "$target" ]; then
+              state=missing safe=false detail="target absent"
+            else
+              current="$(stat -c '%a' "$target")"
+              if [ "$current" != "$expect" ]; then
+                state=litter action="chmod-$expect" count=1 detail="mode=$current"
+              fi
+            fi
+            ;;
+          path)
+            target="$HOME/$(jq -r '.target' <<<"$row")"
+            if [ -L "$target" ]; then
+              state=review safe=false detail="symlink, not a residue tree"
+            elif [ -e "$target" ]; then
+              state=litter action=trash count=1
+              kb="$(du -sk "$target" 2>/dev/null | cut -f1 || echo 0)"
+            fi
+            ;;
+          glob)
+            root="$HOME/$(jq -r '.root' <<<"$row")"
+            pattern="$(jq -r '.pattern' <<<"$row")"
+            if [ -d "$root" ]; then
+              count="$(find "$root" -name "$pattern" -prune -print 2>/dev/null | wc -l | tr -d ' ')"
+              if [ "$count" -gt 0 ]; then
+                state=litter action=trash
+                kb="$(find "$root" -name "$pattern" -prune -print0 2>/dev/null | xargs -0 du -sk 2>/dev/null | awk '{s += $1} END {print s + 0}')"
+              fi
+            fi
+            ;;
+        esac
+        printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' "$name" "$kind" "$state" "$count" "$kb" "$action" "$safe" "$detail"
+      }
+
+      trash() {
+        mkdir -p "$HOME/.Trash"
+        mv -n "$1" "$HOME/.Trash/$(basename "$1").forge-cleanup.$run_ts"
+      }
+
+      cmd_plan() {
+        mkdir -p "$state_dir"
+        plan_file="$state_dir/plan-$run_ts.tsv"
+        {
+          printf '# forge-cleanup plan\tts=%s\thome=%s\n' "$run_ts" "$HOME"
+          printf '# name\tkind\tstate\tcount\tkb\taction\tsafe\tdetail\n'
+          while IFS= read -r row; do detect_row "$row"; done < <(jq -c '.[]' "$rows_json")
+        } | tee "$plan_file"
+        printf 'forge-cleanup: plan receipt %s\n' "$plan_file"
+      }
+
+      cmd_apply() {
+        plan_file="''${1:-$(find "$state_dir" -maxdepth 1 -name 'plan-*.tsv' 2>/dev/null | sort | tail -1)}"
+        if [ -z "$plan_file" ] || [ ! -f "$plan_file" ]; then
+          echo "forge-cleanup: no plan receipt; run forge-cleanup plan first" >&2
+          exit 66
+        fi
+        apply_file="$state_dir/apply-$run_ts.tsv"
+        {
+          printf '# forge-cleanup apply\tts=%s\tplan=%s\n' "$run_ts" "$plan_file"
+          while IFS=$'\t' read -r name _kind state _count _kb action safe _detail; do
+            case "$name" in '#'* | "") continue ;; esac
+            if [ "$safe" != true ] || [ "$state" != litter ]; then
+              printf '%s\taction=none\toutcome=skipped-%s\n' "$name" "$state"
+              continue
+            fi
+            row="$(jq -c --arg n "$name" '.[] | select(.name == $n)' "$rows_json")"
+            # Re-verify at act time: a row that drifted since plan is skipped.
+            fresh_state="$(detect_row "$row" | cut -f3)"
+            if [ "$fresh_state" != litter ]; then
+              printf '%s\taction=none\toutcome=drifted-%s\n' "$name" "$fresh_state"
+              continue
+            fi
+            case "$action" in
+              chmod-*)
+                chmod "''${action#chmod-}" "$HOME/$(jq -r '.target' <<<"$row")"
+                printf '%s\taction=%s\toutcome=applied\n' "$name" "$action"
+                ;;
+              trash)
+                if [ "$(jq -r '.kind' <<<"$row")" = path ]; then
+                  trash "$HOME/$(jq -r '.target' <<<"$row")"
+                  printf '%s\taction=trash\toutcome=applied\tcount=1\n' "$name"
+                else
+                  moved=0
+                  while IFS= read -r -d "" match; do
+                    trash "$match"
+                    moved=$((moved + 1))
+                  done < <(find "$HOME/$(jq -r '.root' <<<"$row")" -name "$(jq -r '.pattern' <<<"$row")" -prune -print0 2>/dev/null)
+                  printf '%s\taction=trash\toutcome=applied\tcount=%s\n' "$name" "$moved"
+                fi
+                ;;
+              *)
+                printf '%s\taction=%s\toutcome=unknown-action\n' "$name" "$action"
+                ;;
+            esac
+          done <"$plan_file"
+        } | tee "$apply_file"
+        printf 'forge-cleanup: apply receipt %s\n' "$apply_file"
+      }
+
+      case "$verb" in
+        plan) cmd_plan ;;
+        apply) cmd_apply "$@" ;;
+        *) usage ;;
+      esac
     '';
   };
 in {
   home.packages = [
     forgeRedeploy
     forgeNixMaintenance
-    forgeContainerDoctor
+    forgeCleanup
   ];
 
   # Weekly off-peak cadence; the shared flock serializes against deploys.

@@ -2506,6 +2506,16 @@ cmd_doctor() {
   else
     apply_docker_endpoint
   fi
+  # Sanitized existence boolean for unix endpoints only; the socket path itself
+  # never enters agent-facing JSON (--diagnostic-json owns fingerprints).
+  local endpoint_path_exists="null"
+  if [[ "$docker_endpoint" == unix://* ]]; then
+    if [[ -S "${docker_endpoint#unix://}" ]]; then
+      endpoint_path_exists="true"
+    else
+      endpoint_path_exists="false"
+    fi
+  fi
   [[ -f "$host_docker_config" ]] && host_creds_store="$(jq -r '.credsStore // .credStore // "none"' "$host_docker_config" 2>/dev/null || printf 'unreadable')"
   [[ -f "$host_docker_config" ]] && host_cred_helpers="$(jq -r '(.credHelpers // {}) | length' "$host_docker_config" 2>/dev/null || printf 'unreadable')"
   [[ -f "$docker_config_dir/config.json" ]] && anonymous_config_exists=true
@@ -2522,6 +2532,7 @@ cmd_doctor() {
       --arg policyStatus "$policy_status" \
       --arg policyReason "$policy_reason" \
       --arg resolvedEndpoint "$docker_endpoint" \
+      --argjson endpointPathExists "$endpoint_path_exists" \
       --arg endpointFingerprint "$(docker_endpoint_hash 2>/dev/null || true)" \
       --arg hostCredsStore "$host_creds_store" \
       --arg hostCredHelpers "$host_cred_helpers" \
@@ -2539,8 +2550,8 @@ cmd_doctor() {
   printf 'doctor\tcommand=forge-provision\ndoctor\tforge_root=%s\ndoctor\tproject=%s\ndoctor\troot_key=%s\ndoctor\tdocker=%s\ndoctor\tdocker_policy=%s\n' \
     "$forge_root" "$project_name" "$root_key" "$docker_path" "$policy_status"
   [[ -z "$policy_reason" ]] || printf 'doctor\tdocker_policy_reason=%s\n' "$policy_reason"
-  printf 'doctor\tresolved_endpoint=%s\ndoctor\tincoming_docker_host=%s\ndoctor\tincoming_docker_context=%s\ndoctor\tactive_docker_host=%s\ndoctor\tactive_docker_context=%s\ndoctor\tdocker_config=%s\n' \
-    "$docker_endpoint" "$incoming_host" "$incoming_context" "${DOCKER_HOST:-}" "${DOCKER_CONTEXT:-}" "${DOCKER_CONFIG:-$HOME/.docker}"
+  printf 'doctor\tresolved_endpoint=%s\ndoctor\tendpoint_path_exists=%s\ndoctor\tincoming_docker_host=%s\ndoctor\tincoming_docker_context=%s\ndoctor\tactive_docker_host=%s\ndoctor\tactive_docker_context=%s\ndoctor\tdocker_config=%s\n' \
+    "$docker_endpoint" "$endpoint_path_exists" "$incoming_host" "$incoming_context" "${DOCKER_HOST:-}" "${DOCKER_CONTEXT:-}" "${DOCKER_CONFIG:-$HOME/.docker}"
   printf 'doctor\thost_docker_config=%s\ndoctor\thost_docker_config_credsStore=%s\ndoctor\thost_docker_config_credHelpers=%s\ndoctor\tanonymous_pull_config=%s\texists=%s\ndoctor\tdocker_compose=%s\ndoctor\tdocker_server=%s\n' \
     "$host_docker_config" "$host_creds_store" "$host_cred_helpers" "$docker_config_dir/config.json" "$anonymous_config_exists" "$compose_version" "$docker_server"
   printf 'doctor\tports_inspectable=%s\ndoctor\tports_usable=%s\n' \

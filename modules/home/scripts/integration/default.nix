@@ -20,6 +20,9 @@
   # Chord-vocabulary owner projection: the harness injects the REAL dismiss
   # chord, so its bytes derive from the same row that emits the zellij bind.
   yaziToggle = config.forge.chords.zellij.ids.yaziToggle;
+  # Geometry-owner projection: popup flags render from the zellij option rows.
+  yaziPopup = config.programs.zellij.popupGeometry.yazi;
+  yaziPopupArgs = lib.escapeShellArgs ["-x" yaziPopup.x "-y" yaziPopup.y "--width" yaziPopup.width "--height" yaziPopup.height];
 
   # Registry contract: one editor per tab, "<tab_id>\t<pane_id>\t<socket>" under
   # ${XDG_RUNTIME_DIR:-/tmp}/forge-edit/<session>/editor-tab-<tab_id>.tsv
@@ -134,8 +137,12 @@
 
       # Pane-scoped dismissal: close only the Forge popup we ran inside; this
       # kills our own process tree, so it must stay the final statement.
+      # Exact identity: floating + exact title + exact spawn command; a yazi
+      # launched WITH args ("forge-yazi.sh <dir>") is never the popup.
       caller_is_popup="$(jq -r \
-        '((.is_floating // false) and ((.terminal_command // "") | startswith("forge-yazi.sh")))' <<<"$caller_row")"
+        '((.is_floating // false)
+          and ((.title // "") == " [YAZI] ")
+          and ((.terminal_command // .command // "") == "forge-yazi.sh"))' <<<"$caller_row")"
       if [[ "$caller_is_popup" == "true" ]]; then
         zellij action close-pane --pane-id "terminal_''${caller}" >/dev/null 2>&1 || true
       fi
@@ -174,18 +181,21 @@
       done
       tab_id="$(jq -r --arg self "$self" \
         '[.[] | select((.is_plugin | not) and ((.id | tostring) == $self))][0].tab_id // 0' <<<"$panes")"
-      # Prefix-anchored on the spawn command: a rediscovered popup is exactly a
-      # forge-yazi.sh process, never an editor holding a forge-yazi* file arg.
+      # Exact row identity: tab + floating-or-suppressed + not-exited + exact
+      # title + exact spawn command. Dispatchers ("forge-yazi.sh toggle") and
+      # yazi-with-args rows never match; the suppressed disjunct keeps the
+      # dismiss branch reachable when an in-place dispatcher covers the popup.
       popup_row="$(jq -c --arg self "$self" --argjson tab "$tab_id" \
         '[.[] | select((.is_plugin | not) and (.exited | not) and (.tab_id == $tab)
           and ((.id | tostring) != $self)
-          and ((.terminal_command // "") | startswith("forge-yazi.sh"))
-          and (((.terminal_command // "") | startswith("forge-yazi.sh toggle")) | not))][0] // {}' <<<"$panes")"
+          and ((.is_floating // false) or (.is_suppressed // false))
+          and ((.title // "") == " [YAZI] ")
+          and ((.terminal_command // .command // "") == "forge-yazi.sh"))][0] // {}' <<<"$panes")"
       popup="$(jq -r '.id // empty' <<<"$popup_row")"
 
       if [[ -z "$popup" ]]; then
         created="$(zellij action new-pane --floating --pinned true \
-          -x "8%" -y "6%" --width "84%" --height "86%" \
+          ${yaziPopupArgs} \
           --name " [YAZI] " --close-on-exit --cwd "$PWD" -- forge-yazi.sh)"
         zellij action focus-pane-id "$created" >/dev/null 2>&1 || true
       elif [[ "$(jq -r '.is_suppressed // false' <<<"$popup_row")" == "true" ]]; then
@@ -285,7 +295,8 @@
           fi
         done < <(panes | jq -r '.[] | select((.is_plugin | not) and (.exited | not)
           and (((.terminal_command // "") | startswith("forge-nvim.sh"))
-            or ((.terminal_command // "") | startswith("forge-yazi.sh")))) | .id')
+            or ((.terminal_command // .command // "") == "forge-yazi.sh")
+            or ((.terminal_command // .command // "") == "forge-yazi.sh toggle"))) | .id')
         rm -rf "''${XDG_RUNTIME_DIR:-/tmp}/forge-edit/''${session}"
         sleep 1
       fi
@@ -307,14 +318,15 @@
         sleep 0.5
       done
 
-      popup_pred='[.[] | select((.is_plugin | not) and (.exited | not) and .is_floating
-        and ((.terminal_command // "") | startswith("forge-yazi.sh"))
-        and (((.terminal_command // "") | startswith("forge-yazi.sh toggle")) | not))]'
+      popup_pred='[.[] | select((.is_plugin | not) and (.exited | not)
+        and ((.is_floating // false) or (.is_suppressed // false))
+        and ((.title // "") == " [YAZI] ")
+        and ((.terminal_command // .command // "") == "forge-yazi.sh"))]'
 
       # R02: toggle creates exactly one floating popup titled " [YAZI] ".
       zj new-pane -c -- forge-yazi.sh toggle >/dev/null 2>&1 || true
       if poll "$popup_pred | (length == 1) and (.[0].title == \" [YAZI] \")"; then
-        row R02-popup-create PASS "one floating ' [YAZI] ' pane, prefix-matched spawn command"
+        row R02-popup-create PASS "one floating ' [YAZI] ' pane, exact title + spawn-command identity"
       else
         row R02-popup-create FAIL "popup row: $(panes | jq -c "$popup_pred")"
       fi

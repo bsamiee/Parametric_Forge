@@ -5,23 +5,13 @@
 # Path          : modules/home/scripts/analysis/scc/default.nix
 # ----------------------------------------------------------------------------
 # scc code counter + loc wrapper for grouped per-file / per-folder LOC
-{pkgs, ...}: {
-  home.packages = [pkgs.scc];
-
-  home.file.".local/bin/loc" = {
-    executable = true;
+{pkgs, ...}: let
+  # Single-pass LOC report: files grouped by top-level folder, folder totals,
+  # and one overall target total. Single positional target, no flags.
+  loc = pkgs.writeShellApplication {
+    name = "loc";
+    runtimeInputs = [pkgs.coreutils pkgs.jq pkgs.scc pkgs.util-linux];
     text = ''
-      #!${pkgs.bash}/bin/bash
-      # Title         : loc
-      # Author        : Bardia Samiee
-      # Project       : Parametric Forge
-      # License       : MIT
-      # Path          : modules/home/scripts/analysis/scc/loc
-      # ----------------------------------------------------------------------------
-      # Single-pass LOC report: files grouped by top-level folder, folder totals,
-      # and one overall target total. Single positional target, no flags.
-
-      set -Eeuo pipefail
       shopt -s inherit_errexit
 
       if (($# > 1)); then
@@ -30,17 +20,20 @@
       fi
 
       readonly target_input="''${1:-.}"
-      target_path="$(${pkgs.coreutils}/bin/realpath "$target_input")"
+      target_path="$(realpath "$target_input")"
       readonly target_path
       readonly tab=$'\t'
       readonly exclude_dirs=".git,.hg,.svn,bin,obj,node_modules,.cursor,.artifacts,dist,build,target,vendor"
 
+      # Detached stdin + deadline: a dead invoking session must never strand
+      # this command substitution as an orphaned subshell.
       json="$(
-        ${pkgs.scc}/bin/scc "$target_path" \
+        timeout "''${LOC_SCAN_DEADLINE_SECONDS:-120}" \
+          scc "$target_path" \
           --by-file --format json \
           --no-cocomo --no-size \
           --exclude-dir "$exclude_dirs" \
-          --sort code
+          --sort code </dev/null
       )"
       readonly json
 
@@ -108,9 +101,11 @@
           ["TOTAL", (files | length), (files | sum_by(.Code)), (files | sum_by(.Complexity))];
       '
 
-      ${pkgs.jq}/bin/jq -r --arg root "$target_path" "$report_filter summary" <<<"$json"
-      ${pkgs.jq}/bin/jq -r --arg root "$target_path" "$report_filter table | map(tostring) | @tsv" <<<"$json" |
-        ${pkgs.util-linux}/bin/column -t -s "$tab"
+      jq -r --arg root "$target_path" "$report_filter summary" <<<"$json"
+      jq -r --arg root "$target_path" "$report_filter table | map(tostring) | @tsv" <<<"$json" |
+        column -t -s "$tab"
     '';
   };
+in {
+  home.packages = [pkgs.scc loc];
 }

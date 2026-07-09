@@ -60,53 +60,60 @@
 
   carbonConfigJson = builtins.toJSON carbonConfig;
   carbonCli = pkgs.carbon-now-cli;
+  carbonModules = "${carbonCli}/lib/node_modules/carbon-now-cli";
 
-  # Helper script to download Playwright browsers if missing.
-  playwrightEnsure = pkgs.writeShellScriptBin "carbon-playwright-install.sh" ''
-    set -euo pipefail
-    export PLAYWRIGHT_BROWSERS_PATH="''${XDG_CACHE_HOME:-$HOME/.cache}/ms-playwright"
-    mkdir -p "$PLAYWRIGHT_BROWSERS_PATH"
-    # Detect any chromium build that playwright installs
-    if find "$PLAYWRIGHT_BROWSERS_PATH" -maxdepth 1 -name 'chromium-*' -type d | grep -q .; then
-      exit 0
-    fi
-    exec ${pkgs.nodejs}/bin/node \
-      ${carbonCli}/lib/node_modules/carbon-now-cli/node_modules/playwright/cli.js \
-      install chromium --with-deps
-  '';
+  # One browser-provisioning vocabulary: every Playwright consumer exports this.
+  browsersPath = ''export PLAYWRIGHT_BROWSERS_PATH="''${XDG_CACHE_HOME:-$HOME/.cache}/ms-playwright"'';
 
-  # Wrapper that refreshes the preset, ensures Playwright, and runs with current Node.
-  carbonWrapped = pkgs.writeShellScriptBin "carbon-now.sh" ''
-        set -euo pipefail
-        export PLAYWRIGHT_BROWSERS_PATH="''${XDG_CACHE_HOME:-$HOME/.cache}/ms-playwright"
-        # Refresh preset each run so Carbon uses the curated Dracula config.
-        cat > "$HOME/.carbon-now.json" <<'JSON'
-    ${carbonConfigJson}
-    JSON
-        carbon-playwright-install.sh || true
-        # Derive language from the first non-flag path when --language is not supplied.
-        lang_flag=""
-        for arg in "$@"; do
-          case "$arg" in
-            --language|-l) lang_flag="set"; break ;;
-            --language=*|-l=*) lang_flag="set"; break ;;
-            --*) ;;  # skip flags
-            *)
-              ext="''${arg##*.}"
-              case "$ext" in
-                nix) lang_flag="--language nix" ;;
-                zsh) lang_flag="--language zsh" ;;
-                sh|bash) lang_flag="--language bash" ;;
-                lua) lang_flag="--language lua" ;;
-              esac
-              break
-              ;;
-          esac
-        done
-        exec ${pkgs.nodejs}/bin/node \
-          ${carbonCli}/lib/node_modules/carbon-now-cli/dist/cli.js \
-          ''${lang_flag:-} "$@"
-  '';
+  # Idempotent Chromium provisioner: exits 0 on a warm cache, otherwise defers
+  # to Carbon's embedded Playwright CLI; failure propagates to the caller.
+  playwrightEnsure = pkgs.writeShellApplication {
+    name = "carbon-playwright-install.sh";
+    runtimeInputs = [pkgs.coreutils pkgs.findutils pkgs.gnugrep pkgs.nodejs];
+    text = ''
+      ${browsersPath}
+      mkdir -p "$PLAYWRIGHT_BROWSERS_PATH"
+      if find "$PLAYWRIGHT_BROWSERS_PATH" -maxdepth 1 -name 'chromium-*' -type d | grep -q .; then
+        exit 0
+      fi
+      exec node ${carbonModules}/node_modules/playwright/cli.js install chromium --with-deps
+    '';
+  };
+
+  carbonWrapped = pkgs.writeShellApplication {
+    name = "carbon-now.sh";
+    runtimeInputs = [pkgs.coreutils pkgs.nodejs playwrightEnsure];
+    text = ''
+      ${browsersPath}
+      # Refresh the preset each run so Carbon renders the curated palette map.
+      cat >"$HOME/.carbon-now.json" <<'JSON'
+      ${carbonConfigJson}
+      JSON
+      # Degraded branch, never a mask: a warm browser cache can still render,
+      # and the final Carbon process owns the real exit code.
+      if ! carbon-playwright-install.sh; then
+        printf 'carbon-now.sh: warning: Playwright Chromium install failed; continuing with existing browser cache\n' >&2
+      fi
+      # Derive language from the first non-flag path when --language is absent.
+      lang_args=()
+      for arg in "$@"; do
+        case "$arg" in
+          --language | -l | --language=* | -l=*) break ;;
+          --*) ;;
+          *)
+            case "''${arg##*.}" in
+              nix) lang_args=(--language nix) ;;
+              zsh) lang_args=(--language zsh) ;;
+              sh | bash) lang_args=(--language bash) ;;
+              lua) lang_args=(--language lua) ;;
+            esac
+            break
+            ;;
+        esac
+      done
+      exec node ${carbonModules}/dist/cli.js "''${lang_args[@]}" "$@"
+    '';
+  };
 in {
   home.packages = [carbonWrapped playwrightEnsure];
 }
