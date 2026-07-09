@@ -38,6 +38,9 @@ in {
 
         time.timeZone = "America/Chicago";
 
+        # HM owns compinit (fingerprinted -C); the stock /etc/zshrc global compinit double-inits every shell
+        programs.zsh.enableGlobalCompInit = false;
+
         # System configuration
         system = {
           configurationRevision = inputs.self.rev or inputs.self.dirtyRev or null;
