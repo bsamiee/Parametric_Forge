@@ -2,12 +2,12 @@
 -- Author        : Bardia Samiee
 -- Project       : Parametric Forge
 -- License       : MIT
--- Path          : /01.home/00.core/configs/apps/nvim/init.lua
+-- Path          : modules/home/programs/apps/nvim/init.lua
 -- ----------------------------------------------------------------------------
--- Neovim entry point
+-- Deterministic startup: options, keymaps, then direct plugin setup. Plugins
+-- arrive store-owned via Home Manager pack/hm; no runtime bootstrap exists.
 
--- Load core configuration
 require("config.options")
-require("config.lazy") -- Plugin manager (loads before keymaps for plugin mappings)
 require("config.keymaps")
--- require("config.autocmds")
+require("plugins.colorscheme")
+require("plugins.snacks")

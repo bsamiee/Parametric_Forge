@@ -1,0 +1,11 @@
+# Title         : stylua.toml
+# Author        : Bardia Samiee
+# Project       : Parametric Forge
+# License       : MIT
+# Path          : modules/home/programs/apps/nvim/stylua.toml
+# ----------------------------------------------------------------------------
+# Formatting contract for the store-owned Lua tree.
+
+indent_type = "Spaces"
+indent_width = 4
+column_width = 120

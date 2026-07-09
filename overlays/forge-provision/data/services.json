@@ -13,16 +13,10 @@
     "volumeMount": "/home/postgres/pgdata/data",
     "preload": "timescaledb",
     "applySqlKey": "postgres-extension",
-    "portBlockAnchor": false,
-    "connectable": true,
     "containerPort": 5432,
     "host": "127.0.0.1",
     "databaseName": "forge",
-    "databaseUser": "postgres",
-    "enabledExportEnv": null,
-    "disabledExtensionRows": [],
-    "psqlEnabled": true,
-    "imageTagPolicy": "explicit"
+    "databaseUser": "postgres"
   },
   {
     "service": "search",
@@ -38,16 +32,10 @@
     "volumeMount": "/var/lib/postgresql",
     "preload": "pg_search,pg_cron",
     "applySqlKey": "postgres-extension",
-    "portBlockAnchor": false,
-    "connectable": true,
     "containerPort": 5432,
     "host": "127.0.0.1",
     "databaseName": "forge",
-    "databaseUser": "postgres",
-    "enabledExportEnv": null,
-    "disabledExtensionRows": [],
-    "psqlEnabled": true,
-    "imageTagPolicy": "explicit"
+    "databaseUser": "postgres"
   },
   {
     "service": "pgduckdb",
@@ -63,15 +51,9 @@
     "volumeMount": "/var/lib/postgresql",
     "preload": "pg_duckdb",
     "applySqlKey": "postgres-extension",
-    "portBlockAnchor": false,
-    "connectable": true,
     "containerPort": 5432,
     "host": "127.0.0.1",
     "databaseName": "forge",
-    "databaseUser": "postgres",
-    "enabledExportEnv": null,
-    "disabledExtensionRows": [],
-    "psqlEnabled": true,
-    "imageTagPolicy": "explicit"
+    "databaseUser": "postgres"
   }
 ]

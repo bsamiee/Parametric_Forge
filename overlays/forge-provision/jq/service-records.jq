@@ -8,11 +8,11 @@ split("\n")
     profile: .[3],
     image: .[4],
     imageEnv: .[8],
-    host: "127.0.0.1",
+    host: .[11],
     port: (.[5] | tonumber),
     portEnv: .[9],
     portSource: .[10],
-    containerPort: 5432,
+    containerPort: (.[12] | tonumber),
     dsnRedacted: (if .[2] == "1" then .[6] else null end),
     dsnEnv: .[7],
     composeService: .[0]

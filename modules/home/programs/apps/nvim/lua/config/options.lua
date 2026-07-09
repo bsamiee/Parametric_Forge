@@ -2,12 +2,11 @@
 -- Author        : Bardia Samiee
 -- Project       : Parametric Forge
 -- License       : MIT
--- Path          : /01.home/00.core/configs/apps/nvim/lua/config/options.lua
+-- Path          : modules/home/programs/apps/nvim/lua/config/options.lua
 -- ----------------------------------------------------------------------------
 -- Core Neovim options - the foundation of editor behavior
 
 local opt = vim.opt
-
 
 -- LEADER ---------------------------------------------------------------------
 vim.g.mapleader = " "
@@ -46,3 +45,11 @@ opt.shiftwidth = 4
 opt.shiftround = true
 opt.smartindent = true
 opt.breakindent = true
+
+-- FOLDING --------------------------------------------------------------------
+-- Native Tree-sitter fold rail; buffers without a parser stay unfolded.
+opt.foldmethod = "expr"
+opt.foldexpr = "v:lua.vim.treesitter.foldexpr()"
+opt.foldtext = ""
+opt.foldlevel = 99
+opt.foldlevelstart = 99

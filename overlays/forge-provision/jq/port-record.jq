@@ -14,5 +14,5 @@ def noneish: if . == "" or . == "-" or . == "<no value>" then null else . end;
   composeProject: ($compose_project | noneish),
   composeService: ($compose_service | noneish),
   provisionProject: ($provision_project | noneish),
-  hostListenerPid: ($host_listener_pid | noneish | if . == null then null else (try tonumber catch null) end)
+  hostListenerPid: null
 }

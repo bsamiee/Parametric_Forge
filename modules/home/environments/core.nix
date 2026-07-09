@@ -12,9 +12,7 @@
     LANG = "en_US.UTF-8";
     LC_ALL = "";
 
-    # --- Editor  ------------------------------------------------------------
-    EDITOR = "nvim";
-    VISUAL = "code --wait";
+    # EDITOR/VISUAL are owned by programs.neovim.defaultEditor (apps/nvim).
 
     # --- File Type Detection ------------------------------------------------
     MAGIC = "${pkgs.file}/share/misc/magic.mgc";

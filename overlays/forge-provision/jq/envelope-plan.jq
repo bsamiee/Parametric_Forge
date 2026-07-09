@@ -1,0 +1,1 @@
+. + {artifacts: (.artifacts + {plan: {composeYaml: "redacted", authMode: .auth.mode, cleanupPolicy: "down-preserves-volumes", rollbackPolicy: "best-effort-compose-generation", imageStability: "best-effort-image-tag"}}), ports: ([.services | to_entries[] | {service: .key, value: .value.port, env: .value.portEnv, portSource: .value.portSource}])}
