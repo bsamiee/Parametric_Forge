@@ -111,13 +111,21 @@ in {
     };
   };
 
-  # Reconcile at login and daily; converged runs are read-only and exit 0.
+  # Reconcile at login and daily at 10:00; converged runs are read-only and
+  # exit 0. Logged: a failed regeneration must never hide until the next day.
   launchd.user.agents.forge-brew-autoupdate = {
     serviceConfig = {
       ProgramArguments = ["${autoupdateReconcile}/bin/forge-brew-autoupdate-reconcile"];
       RunAtLoad = true;
-      StartInterval = autoupdateIntervalSeconds;
+      StartCalendarInterval = [
+        {
+          Hour = 10;
+          Minute = 0;
+        }
+      ];
       ProcessType = "Background";
+      StandardOutPath = "/Users/${config.system.primaryUser}/Library/Logs/forge-brew-autoupdate.log";
+      StandardErrorPath = "/Users/${config.system.primaryUser}/Library/Logs/forge-brew-autoupdate.log";
     };
   };
 }
