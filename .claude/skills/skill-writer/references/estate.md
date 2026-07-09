@@ -7,6 +7,7 @@ An installed fleet is one selection system: every description competes in a shar
 - [STANDING_SETS]: Every skill's must-not-fire set is an estate asset — it runs against the live estate, not the authoring-time neighbor list, and a new skill's arrival re-runs the sets of every sibling whose domain it touches.
 - [SYMMETRY]: A collision found anywhere repairs on both descriptions, and both permanent must-not-fire sets grow by the colliding phrasing.
 - [CADENCE]: The audit fires on every new skill, every description revision, and every listing-budget change; a fleet audited only at authoring time drifts one bundle at a time.
+- [LISTING_SURFACE]: The collision surface is the live listing, never the scanned roots alone — loader-bundled and plugin descriptions compete in the same budget yet never appear under an audit root, so their seams surface only through utterance-level derivation against the full listing; a collision with an immutable sibling repairs on the estate description alone, naming the composition split where both legitimately load.
 
 ## [02]-[BUDGET_STEWARDSHIP]
 
@@ -17,7 +18,7 @@ An installed fleet is one selection system: every description competes in a shar
 ## [03]-[SHADOW_AND_FORK]
 
 - [SHADOW]: Same-name bundles across scopes resolve to one authority; an estate that masters skills inside repos keeps the personal root empty, and any surviving duplicate names its master.
-- [MIRRORS]: A mirrored bundle is byte-identical to its master and proven by digest; a mirror that drifts is a fork with a deployment story.
+- [MIRRORS]: A mirrored bundle is byte-identical to its master and proven by digest over authored content — regenerable caches and bytecode inside a bundle are purged before proof, never mirrored; a mirror that drifts is a fork with a deployment story.
 - [FORK_SWEEP]: The sweep hunts duplicated prose lines across bundles; a hit names one owning bundle, and every sibling composes the doctrine by name.
 - [PORTS]: A port to another loader keeps the body identical and moves only frontmatter and routing deltas; the target loader's format law lives with that loader's owning skill, and divergent bodies across loaders are forks, not adaptations.
 
