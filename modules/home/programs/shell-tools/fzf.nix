@@ -45,21 +45,25 @@ in {
     ];
 
     # --- Ctrl-T: File Selection ---------------------------------------------
-    fileWidgetCommand = "fd --type f --hidden --follow --exclude .git";
-    fileWidgetOptions = [
-      "--border-label='[FILES]'"
-      "--preview='bat --color=always --style=numbers --line-range=:500 {} 2>/dev/null || tree --level=2 --color=always --icons=always {}'"
-    ];
+    fileWidget = {
+      command = "fd --type f --hidden --follow --exclude .git";
+      options = [
+        "--border-label='[FILES]'"
+        "--preview='bat --color=always --style=numbers --line-range=:500 {} 2>/dev/null || tree --level=2 --color=always --icons=always {}'"
+      ];
+    };
 
     # --- Alt-C: Directory Navigation ----------------------------------------
-    changeDirWidgetCommand = "fd --type d --hidden --follow --exclude .git";
-    changeDirWidgetOptions = [
-      "--border-label='[DIRECTORIES]'"
-      "--preview='tree --level=2 --color=always --icons=always {}'"
-    ];
+    changeDirWidget = {
+      command = "fd --type d --hidden --follow --exclude .git";
+      options = [
+        "--border-label='[DIRECTORIES]'"
+        "--preview='tree --level=2 --color=always --icons=always {}'"
+      ];
+    };
 
     # --- Ctrl-R: Command History --------------------------------------------
     # Note: Ctrl-R (history) disabled - handled by Atuin
-    historyWidgetOptions = [];
+    historyWidget.options = [];
   };
 }
