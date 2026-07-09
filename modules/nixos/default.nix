@@ -123,6 +123,8 @@
 
   # --- Root-visible tooling -----------------------------------------------
   # Flake operations and remote activation need git at the system layer; the
-  # full CLI estate is Home Manager-owned per user.
-  environment.systemPackages = [pkgs.git];
+  # full CLI estate is Home Manager-owned per user. doppler serves the
+  # maghz-agent service user (no HM graph): the /srv/maghz-scoped read-only
+  # token is the VPS runtime secret consumer.
+  environment.systemPackages = [pkgs.git pkgs.doppler];
 }
