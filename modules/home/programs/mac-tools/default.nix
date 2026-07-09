@@ -8,8 +8,5 @@
 {...}: {
   imports = [
     ./duti.nix
-    # Future macOS tools:
-    # ./raycast.nix    # Raycast configuration
-    # ./shortcuts.nix  # Shortcuts automation
   ];
 }
