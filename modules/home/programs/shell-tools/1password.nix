@@ -185,7 +185,7 @@ in {
     "1Password/ssh/agent.toml".text = ''
       [[ssh-keys]]
       item = "Forge SSH Key"
-      vault = "Private"
+      vault = "Personal"
     '';
 
     # --- Session-secrets dispatcher: one sourceable file for TUI and GUI lanes -
