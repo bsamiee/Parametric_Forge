@@ -178,11 +178,12 @@ in {
       blame-separator-style = "dim";
       blame-timestamp-output-format = "%Y-%m-%d %H:%M";
 
-      # Diff styles
-      minus-style = "syntax";
-      minus-emph-style = "syntax bold";
-      plus-style = "syntax";
-      plus-emph-style = "syntax bold";
+      # Diff styles: owner-derived fills tint the background and hold the
+      # code foreground neutral; word-level emphasis is the same hue lifted.
+      minus-style = "syntax ${config.forge.theme.roles.diff.del.hex}";
+      minus-emph-style = "syntax bold ${config.forge.theme.roles.diff.delEmph.hex}";
+      plus-style = "syntax ${config.forge.theme.roles.diff.add.hex}";
+      plus-emph-style = "syntax bold ${config.forge.theme.roles.diff.addEmph.hex}";
 
       # Grep integration
       grep-output-type = "ripgrep";

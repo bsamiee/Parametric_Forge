@@ -149,7 +149,7 @@
 
       git_status = {
         format = "(\\[[$all_status$ahead_behind]($style)\\])";
-        style = "yellow";
+        style = "amber"; # pending/attention is the warning hue, never string-yellow
         conflicted = "= ";
         ahead = "⇡ $count";
         behind = "⇣ $count";
@@ -250,7 +250,7 @@
       cmd_duration = {
         min_time = 2000;
         format = "\\[[󱎫 $duration]($style)\\]";
-        style = "yellow";
+        style = "amber";
         show_milliseconds = false;
         show_notifications = true;
         min_time_to_notify = 45000;

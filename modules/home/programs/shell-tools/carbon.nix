@@ -11,6 +11,7 @@
   ...
 }: let
   inherit (config.forge.theme) palette;
+  fonts = config.forge.fonts;
 
   carbonConfig = {
     latest-preset = {
@@ -19,7 +20,7 @@
       theme = "carbon-now-cli-theme";
       windowTheme = "macos";
       windowControls = true;
-      fontFamily = "GeistMono Nerd Font, Geist Mono, Fira Code";
+      fontFamily = fonts.projections.cssMono;
       fontSize = "16px";
       lineNumbers = false;
       firstLineNumber = 1;
@@ -29,7 +30,7 @@
       dropShadowBlurRadius = "68px";
       widthAdjustment = true;
       width = "680px";
-      lineHeight = "140%";
+      lineHeight = fonts.metrics.cssLineHeight;
       paddingVertical = "48px";
       paddingHorizontal = "48px";
       squaredImage = false;
@@ -37,23 +38,24 @@
       exportSize = "2x";
       type = "png";
 
-      # Custom theme: CodeMirror vocabulary mapped onto the owner's syntax roles
+      # Custom theme: CodeMirror vocabulary on the master scope map — keyword
+      # pink, operator/punctuation subtle, variable blue, tag magenta.
       custom = {
         background = palette.background.rgba "1";
         text = palette.foreground.rgba "1";
-        variable = palette.cyan.rgba "1";
-        variable2 = palette.purple.rgba "1";
-        variable3 = palette.pink.rgba "1";
-        attribute = palette.green.rgba "1";
+        variable = palette.blue.rgba "1";
+        variable2 = palette.blue.rgba "1";
+        variable3 = palette.purple.rgba "1";
+        attribute = palette.magenta.rgba "1";
         definition = palette.green.rgba "1";
-        keyword = palette.magenta.rgba "1";
-        operator = palette.magenta.rgba "1";
-        property = palette.cyan.rgba "1";
+        keyword = palette.pink.rgba "1";
+        operator = palette.subtle.rgba "1";
+        property = palette.blue.rgba "1";
         number = palette.purple.rgba "1";
         string = palette.yellow.rgba "1";
         comment = palette.comment.rgba "1";
         meta = palette.orange.rgba "1";
-        tag = palette.red.rgba "1";
+        tag = palette.magenta.rgba "1";
       };
     };
   };

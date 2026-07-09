@@ -371,44 +371,20 @@
     estate = estateRows;
   };
 
-  # --- Syntax projection: theme owner scopes -> treesitter captures -----------
-  # config.forge.theme.syntaxScopes is the pivot (design-language master scope
-  # map); this correspondence is editor-projection knowledge only — hue and
-  # style stay owner-decided, a rebind there lands here with zero edits.
-  captureMap = {
-    Comment = ["comment"];
-    String = ["string" "character"];
-    Escape = ["string.escape" "character.special"];
-    Number = ["number" "number.float"];
-    Constant = ["constant" "constant.builtin" "boolean"];
-    Keyword = ["keyword"];
-    Operator = ["operator" "keyword.operator"];
-    Function = ["function" "function.method" "function.macro" "function.builtin"];
-    Type = ["type" "type.builtin" "constructor"];
-    Variable = ["variable" "variable.member" "property"];
-    Parameter = ["variable.parameter"];
-    Attribute = ["attribute"];
-    Tag = ["tag"];
-    Heading = ["markup.heading"];
-    Bold = ["markup.strong"];
-    Italic = ["markup.italic"];
-    Link = ["markup.link" "markup.link.url" "string.special.url"];
-    Inserted = ["diff.plus"];
-    Deleted = ["diff.minus"];
-    # Diagnostics own invalid code in the editor; no treesitter capture.
-    Invalid = [];
-  };
+  # --- Syntax projection: the owner scope table carries its own treesitter
+  # captures (design-language master scope map); hue, style, and capture
+  # binding all live in theme.nix — a rebind there lands here with zero edits.
   syntaxFacts = {
     scopes =
       map (row: {
-        inherit (row) name;
+        inherit (row) name captures;
         color = row.color.hex;
         style = row.style or "";
-        # Total lookup: a theme scope without a captureMap row faults at eval.
-        captures = captureMap.${row.name};
       })
       config.forge.theme.syntaxScopes;
-    roles = lib.mapAttrs (_: lib.mapAttrs (_: c: c.hex)) config.forge.theme.roles;
+    roles =
+      lib.mapAttrs (_: lib.mapAttrs (_: c: c.hex))
+      {inherit (config.forge.theme.roles) surface text accent state diff ui;};
   };
 
   luarc =

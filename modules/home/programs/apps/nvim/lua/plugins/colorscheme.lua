@@ -64,7 +64,9 @@ local apply = function()
         end
     end
 
-    -- Role rows: diagnostics, floats, completion menu, statuscolumn.
+    -- Role rows: diagnostics, floats, completion menu, statuscolumn, diff
+    -- fills (background tint, neutral code foreground), and search fills
+    -- (warm, distinct from the cool selection slate).
     local roles = syntax.roles
     local info = roles.state.info or roles.accent.primary
     for name, def in pairs({
@@ -76,14 +78,23 @@ local apply = function()
         DiagnosticUnderlineWarn = { undercurl = true, sp = roles.state.warning },
         DiagnosticUnderlineInfo = { undercurl = true, sp = info },
         DiagnosticUnderlineHint = { undercurl = true, sp = roles.text.muted },
-        FloatBorder = { fg = roles.text.muted },
+        FloatBorder = { fg = roles.ui.border },
         FloatTitle = { fg = roles.accent.primary, bold = true },
-        Pmenu = { bg = roles.surface.raised, fg = roles.text.primary },
+        Pmenu = { bg = roles.surface.overlay, fg = roles.text.primary },
         PmenuSel = { bg = roles.surface.selected },
-        PmenuSbar = { bg = roles.surface.raised },
+        PmenuSbar = { bg = roles.surface.overlay },
         PmenuThumb = { bg = roles.surface.selected },
-        LineNr = { fg = roles.text.muted },
+        LineNr = { fg = roles.text.subtle },
         CursorLineNr = { fg = roles.accent.primary, bold = true },
+        DiffAdd = { bg = roles.diff.add },
+        DiffDelete = { bg = roles.diff.del, fg = roles.state.danger },
+        DiffChange = { bg = roles.diff.change },
+        DiffText = { bg = roles.diff.changeEmph },
+        Search = { bg = roles.ui.search },
+        IncSearch = { bg = roles.ui.match, fg = roles.text.primary },
+        CurSearch = { bg = roles.ui.match, fg = roles.text.primary },
+        Whitespace = { fg = roles.ui.whitespace },
+        IndentLine = { fg = roles.ui.indent },
     }) do
         vim.api.nvim_set_hl(0, name, def)
     end

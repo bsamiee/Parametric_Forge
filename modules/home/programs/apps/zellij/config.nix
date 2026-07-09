@@ -18,28 +18,34 @@
 
   # Shared color rows for both zjstatus instances; one palette, two surfaces.
   colorRows = lib.concatStrings (map (n: "        color_${n}    \"${palette.${n}.hex}\"\n") [
+    "crust"
     "background"
+    "surface"
     "current_line"
     "selection"
     "foreground"
+    "subtle"
     "comment"
     "purple"
     "cyan"
     "green"
     "yellow"
+    "amber"
     "orange"
     "red"
     "magenta"
     "pink"
+    "blue"
   ]);
 
   # Hint-ribbon grammar: native macOS modifier glyphs; a layer chip (R⌘ Hyper,
-  # R⌥ Super) prefixes its key group once. Keys cyan, labels muted, mode chip
-  # carries the state color shared with the top bar. Normal-mode rows project
-  # from the chord owner; mode-internal rows document the literal mode bodies.
-  seg = c: t: "#[bg=$background,fg=$" + c + "]" + t;
-  segB = c: t: "#[bg=$background,fg=$" + c + ",bold]" + t;
-  chip = c: t: "#[bg=$" + c + ",fg=$current_line,bold] " + t + " " + seg "comment" " ";
+  # R⌥ Super) prefixes its key group once. Both bars sit on the surface
+  # elevation step; chips carry inverse text on accent fills. Keys cyan,
+  # labels muted, mode chip carries the state color shared with the top bar.
+  seg = c: t: "#[bg=$surface,fg=$" + c + "]" + t;
+  segB = c: t: "#[bg=$surface,fg=$" + c + ",bold]" + t;
+  chipOn = bgc: fgc: t: "#[bg=$" + bgc + ",fg=$" + fgc + ",bold] " + t + " " + seg "comment" " ";
+  chip = c: chipOn c "background";
   pl = k: l: segB "cyan" k + seg "comment" (" " + l + "  ");
   plRows = rows: lib.concatStrings (map (r: pl r.k r.l) rows);
   sep = seg "selection" "│ ";
@@ -51,7 +57,7 @@
       + plRows chords.zellij.ribbon.hyperGroup
       + chip "purple" chords.layers.super.chip
       + plRows chords.zellij.ribbon.superGroup;
-    locked = chip "selection" "LOCKED" + pl "${chords.layers.hyper.chip}${modes.locked.exitKey}" "unlock";
+    locked = chipOn "selection" "foreground" "LOCKED" + pl "${chords.layers.hyper.chip}${modes.locked.exitKey}" "unlock";
     pane =
       chip "orange" "PANE"
       + pl "hjkl" "focus"
@@ -180,23 +186,23 @@ in {
           // hides at one tab, so no second bar ever stacks above this one.
           zjstatus location="file:~/.config/zellij/plugins/zjstatus.wasm" {
     ${colorRows}
-            format_left               " {tabs}"
+            format_left               "#[bg=$surface] {tabs}"
             format_center             "{swap_layout}"
-            format_right              "{pipe_agents}{pipe_quota}#[bg=$pink,fg=$current_line,bold] {session} "
-            format_space              "#[bg=$background]"
+            format_right              "{pipe_agents}{pipe_quota}#[bg=$pink,fg=$background,bold] {session} "
+            format_space              "#[bg=$surface]"
 
             pipe_agents_format        "{output}"
             pipe_agents_rendermode    "dynamic"
             pipe_quota_format         "{output}"
             pipe_quota_rendermode     "dynamic"
 
-            swap_layout_format        "#[bg=$background,fg=$yellow,bold] {name} "
+            swap_layout_format        "#[bg=$surface,fg=$purple,bold] {name} "
             swap_layout_hide_if_empty "true"
 
-            tab_active    "#[bg=$cyan,fg=$current_line,bold] {name} "
-            tab_normal    "#[bg=$background,fg=$comment] {name} "
+            tab_active    "#[bg=$cyan,fg=$background,bold] {name} "
+            tab_normal    "#[bg=$surface,fg=$subtle] {name} "
             tab_separator " "
-            tab_rename    "#[bg=$red,fg=$current_line,bold] {name} "
+            tab_rename    "#[bg=$red,fg=$background,bold] {name} "
 
             border_enabled              "false"
             hide_frame_for_single_pane  "false"
@@ -207,8 +213,8 @@ in {
           zjstatus-hints location="file:~/.config/zellij/plugins/zjstatus.wasm" {
     ${colorRows}
             format_left   "{mode}"
-            format_right  "#[bg=$background,fg=$comment]${chords.zellij.hintsRight}"
-            format_space  "#[bg=$background]"
+            format_right  "#[bg=$surface,fg=$comment]${chords.zellij.hintsRight}"
+            format_space  "#[bg=$surface]"
 
             mode_normal       "${ribbon.normal}"
             mode_locked       "${ribbon.locked}"

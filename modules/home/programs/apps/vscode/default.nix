@@ -4,25 +4,107 @@
 # License       : MIT
 # Path          : modules/home/programs/apps/vscode/default.nix
 # ----------------------------------------------------------------------------
-# VS Code theme consumer: the estate palette owner projects terminal ANSI and
-# textMate token colors into the JSONC user settings through a sentinel-managed
-# block; every other key and comment stays app- and user-owned.
+# VS Code as a first-class theme+font consumer: the palette owner projects
+# workbench colors, terminal ANSI, textMate scopes, AND semantic-token rules;
+# the font owner projects editor+terminal typography (family chain, ligature
+# features, line metrics). Everything lands through a sentinel-managed block
+# in the JSONC user settings; managed keys are stripped from the user region
+# so later-wins JSONC resolution cannot shadow the owners. Every other key
+# and comment stays app- and user-owned.
 # Extension-source policy (overlays/manifest.nix `extensions.vscode`): the
 # declared source is the nix-vscode-extensions registry with per-row vetting
 # on the manifest security fields — never registry trust, never a Homebrew
-# Brewfile lane. The live user-managed extensions dir is a drift row until
-# rows are vetted; no second updater semantics land in this module.
+# Brewfile lane. File icons adopt the live material-icon-theme decision;
+# product icons stay default until an extension row is vetted (CA-2 lane).
 {
   config,
   lib,
   ...
 }: let
   t = config.forge.theme;
+  f = config.forge.fonts;
   hexOf = lib.mapAttrs (_: c: c.hex);
   ansi = hexOf t.ansi16;
+  s = lib.mapAttrs (_: lib.mapAttrs (_: c: c.hex)) {inherit (t.roles) surface text accent state diff ui;};
 
   forgeSettings = {
+    # --- Typography: generated from the font owner -----------------------------
+    "editor.fontFamily" = f.projections.vscodeFamily;
+    "editor.fontSize" = builtins.floor f.metrics.size;
+    "editor.fontLigatures" = f.features.vscode;
+    "editor.fontVariations" = false; # static primary; fractional axes are a variable-font lever
+    "editor.lineHeight" = f.metrics.editorLineHeight;
+    "terminal.integrated.fontFamily" = f.projections.vscodeFamily;
+    "terminal.integrated.fontSize" = builtins.floor f.metrics.size;
+    "terminal.integrated.fontLigatures.enabled" = false;
+    "terminal.integrated.lineHeight" = 1.0;
+    "terminal.integrated.fontWeight" = "normal";
+    "terminal.integrated.fontWeightBold" = "bold";
+    "workbench.iconTheme" = "material-icon-theme";
+
+    # --- Workbench: elevation ladder + role projection --------------------------
     "workbench.colorCustomizations" = {
+      "editor.background" = s.surface.base;
+      "editor.foreground" = s.text.primary;
+      "editorLineNumber.foreground" = s.text.subtle;
+      "editorLineNumber.activeForeground" = s.accent.primary;
+      "editorCursor.foreground" = s.ui.cursor;
+      "editor.lineHighlightBackground" = s.surface.raised;
+      "editor.selectionBackground" = s.surface.selected;
+      "editor.findMatchBackground" = s.ui.match;
+      "editor.findMatchHighlightBackground" = s.ui.search;
+      "editorIndentGuide.background1" = s.surface.selected;
+      "editorIndentGuide.activeBackground1" = s.text.subtle;
+      "editorWhitespace.foreground" = s.ui.whitespace;
+      "editorWidget.background" = s.surface.overlay;
+      "editorWidget.border" = s.ui.border;
+      "editorHoverWidget.background" = s.surface.overlay;
+      "editorSuggestWidget.background" = s.surface.overlay;
+      "editorSuggestWidget.selectedBackground" = s.surface.selected;
+      "quickInput.background" = s.surface.overlay;
+      "activityBar.background" = s.surface.crust;
+      "activityBar.foreground" = s.accent.primary;
+      "activityBar.inactiveForeground" = s.text.subtle;
+      "activityBarBadge.background" = s.accent.secondary;
+      "activityBarBadge.foreground" = s.text.inverse;
+      "sideBar.background" = s.surface.crust;
+      "sideBar.foreground" = s.text.subtle;
+      "sideBarTitle.foreground" = s.text.primary;
+      "sideBarSectionHeader.background" = s.surface.crust;
+      "statusBar.background" = s.surface.surface;
+      "statusBar.foreground" = s.text.subtle;
+      "statusBar.noFolderBackground" = s.surface.surface;
+      "statusBar.debuggingBackground" = s.state.attention;
+      "statusBar.debuggingForeground" = s.text.inverse;
+      "titleBar.activeBackground" = s.surface.crust;
+      "titleBar.activeForeground" = s.text.subtle;
+      "editorGroupHeader.tabsBackground" = s.surface.surface;
+      "tab.activeBackground" = s.surface.base;
+      "tab.activeForeground" = s.text.primary;
+      "tab.inactiveBackground" = s.surface.surface;
+      "tab.inactiveForeground" = s.text.subtle;
+      "tab.activeBorderTop" = s.accent.primary;
+      "panel.background" = s.surface.base;
+      "panelTitle.activeForeground" = s.accent.primary;
+      "panelTitle.inactiveForeground" = s.text.subtle;
+      "badge.background" = s.accent.secondary;
+      "badge.foreground" = s.text.inverse;
+      "list.activeSelectionBackground" = s.surface.selected;
+      "list.inactiveSelectionBackground" = s.surface.raised;
+      "list.hoverBackground" = s.surface.raised;
+      "input.background" = s.surface.crust;
+      "input.border" = s.surface.selected;
+      "dropdown.background" = s.surface.overlay;
+      "focusBorder" = s.accent.primary;
+      "diffEditor.insertedLineBackground" = s.diff.add;
+      "diffEditor.insertedTextBackground" = s.diff.addEmph;
+      "diffEditor.removedLineBackground" = s.diff.del;
+      "diffEditor.removedTextBackground" = s.diff.delEmph;
+      "gitDecoration.addedResourceForeground" = s.state.success;
+      "gitDecoration.modifiedResourceForeground" = s.state.info;
+      "gitDecoration.deletedResourceForeground" = s.state.danger;
+      "gitDecoration.untrackedResourceForeground" = s.text.subtle;
+      "gitDecoration.conflictingResourceForeground" = s.accent.secondary;
       "terminal.background" = t.palette.background.hex;
       "terminal.foreground" = t.palette.foreground.hex;
       "terminal.selectionBackground" = t.palette.selection.hex;
@@ -44,13 +126,39 @@
       "terminal.ansiBrightCyan" = ansi.brightCyan;
       "terminal.ansiBrightWhite" = ansi.brightWhite;
     };
+
+    # --- Tokens: textMate scopes + semantic rules from the one pivot ------------
     "editor.tokenColorCustomizations".textMateRules = t.projections.vscodeTokenRules;
+    "editor.semanticTokenColorCustomizations" = {
+      enabled = true;
+      rules = t.projections.vscodeSemanticRules;
+    };
   };
 
+  # Managed keys are stripped from the user region (single-line scalars only);
+  # the sentinel block at the top then owns them without later-wins shadowing.
+  managedScalarKeys = [
+    "editor.fontFamily"
+    "editor.fontSize"
+    "editor.fontLigatures"
+    "editor.fontVariations"
+    "editor.lineHeight"
+    "editor.letterSpacing"
+    "terminal.integrated.fontFamily"
+    "terminal.integrated.fontSize"
+    "terminal.integrated.fontLigatures.enabled"
+    "terminal.integrated.lineHeight"
+    "terminal.integrated.letterSpacing"
+    "terminal.integrated.fontWeight"
+    "terminal.integrated.fontWeightBold"
+    "workbench.iconTheme"
+  ];
+  managedKeyRegex = "^[[:space:]]*\"(${lib.concatMapStringsSep "|" (k: lib.replaceStrings ["."] ["\\."] k) managedScalarKeys})\"[[:space:]]*:";
+
   # JSONC block asserted after the root brace; sentinels make replacement
-  # idempotent and duplicate keys resolve in the user's favor (later wins).
+  # idempotent and user keys outside the managed set stay untouched.
   forgeBlock = lib.concatStrings [
-    "  // forge-theme:begin generated from modules/home/theme.nix; reasserted on switch\n"
+    "  // forge-theme:begin generated from modules/home/{theme,fonts}.nix; reasserted on switch\n"
     (lib.concatStrings (lib.mapAttrsToList (k: v: "  ${builtins.toJSON k}: ${builtins.toJSON v},\n") forgeSettings))
     "  // forge-theme:end"
   ];
@@ -80,6 +188,7 @@ in {
           inserted = 1
           next
         }
+        inserted && $0 ~ /${managedKeyRegex}/ { next }
         { print }
       ' "$settings")
     else

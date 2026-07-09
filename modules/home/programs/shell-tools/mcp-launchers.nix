@@ -1009,8 +1009,8 @@
           if [ "$p" -ge 90 ]; then quota_fg="${roles.state.danger.hex}"
           elif [ "$p" -ge 70 ]; then quota_fg="${roles.state.warning.hex}"; fi
         fi
-        mk_cell() { # $1=fg $2=attrs("" or ",bold") $3=text -> raised chip + base gap
-          printf '#[bg=${roles.surface.raised.hex},fg=%s%s] %s #[bg=${roles.surface.base.hex}] ' "$1" "$2" "$3"
+        mk_cell() { # $1=fg $2=attrs("" or ",bold") $3=text -> raised chip + surface gap (the bar plane)
+          printf '#[bg=${roles.surface.raised.hex},fg=%s%s] %s #[bg=${roles.surface.surface.hex}] ' "$1" "$2" "$3"
         }
         agents_cell="$(mk_cell "$agents_fg" ",bold" "$agents_text")"
         quota_cell="$(mk_cell "$quota_fg" "" "$quota_text")"
