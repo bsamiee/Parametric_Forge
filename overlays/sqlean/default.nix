@@ -50,14 +50,14 @@ in
 
     installPhase = ''
       runHook preInstall
-      mkdir -p $out/lib $out/bin
+      mkdir -p "$out/lib" "$out/bin"
 
-      find . -maxdepth 1 -type f -name "*${sharedLibExt}" -exec install -Dm644 {} $out/lib/$(basename {}) \;
+      install -Dm644 -t "$out/lib" ./*${sharedLibExt}
 
       if [ -f sqlean ]; then
-        install -Dm755 sqlean $out/bin/sqlean
+        install -Dm755 sqlean "$out/bin/sqlean"
       elif [ -f sqlite3 ]; then
-        install -Dm755 sqlite3 $out/bin/sqlean-sqlite3
+        install -Dm755 sqlite3 "$out/bin/sqlean-sqlite3"
       fi
 
       runHook postInstall

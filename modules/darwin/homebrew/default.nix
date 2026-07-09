@@ -32,7 +32,7 @@
   autoupdateStartArgs = "--upgrade --cleanup --sudo --immediate --no-notify";
   autoupdateReconcile = pkgs.writeShellApplication {
     name = "forge-brew-autoupdate-reconcile";
-    runtimeInputs = [pkgs.gnugrep];
+    runtimeInputs = [pkgs.gawk];
     text = ''
       plist="$HOME/Library/LaunchAgents/com.github.domt4.homebrew-autoupdate.plist"
       updater="$HOME/Library/Application Support/com.github.domt4.homebrew-autoupdate/brew_autoupdate"
@@ -42,14 +42,17 @@
         interval="$(/usr/libexec/PlistBuddy -c 'Print :StartInterval' "$plist" 2>/dev/null || true)"
         if [ "$interval" != "${toString autoupdateIntervalSeconds}" ]; then return 1; fi
         /usr/libexec/PlistBuddy -c 'Print :RunAtLoad' "$plist" >/dev/null 2>&1 || return 1
-        grep -q -- '--no-ask --formula' "$updater" || return 1
-        grep -q -- '--no-ask --cask' "$updater" || return 1
-        grep -q 'brew cleanup' "$updater" || return 1
-        grep -q 'SUDO_ASKPASS' "$updater" || return 1
-        grep -q 'HOMEBREW_CASK_OPTS' "$updater" || return 1
-        grep -q 'HOMEBREW_NO_ANALYTICS' "$updater" || return 1
-        if grep -E 'notify\.sh .+ (always|error) ' "$updater" >/dev/null; then return 1; fi
-        return 0
+        # One pass proves every updater marker: six required, notifier absent.
+        awk '
+          /--no-ask --formula/ {formula = 1}
+          /--no-ask --cask/ {cask = 1}
+          /brew cleanup/ {cleanup = 1}
+          /SUDO_ASKPASS/ {askpass = 1}
+          /HOMEBREW_CASK_OPTS/ {caskopts = 1}
+          /HOMEBREW_NO_ANALYTICS/ {analytics = 1}
+          /notify\.sh .+ (always|error) / {notify = 1}
+          END {exit !(formula && cask && cleanup && askpass && caskopts && analytics && !notify)}
+        ' "$updater"
       }
 
       if converged; then exit 0; fi

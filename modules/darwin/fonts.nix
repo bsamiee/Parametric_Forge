@@ -70,7 +70,7 @@
         done <"$manifest"
       fi
       cp -Lf "$src"/* "$dst/"
-      ls "$src" >"$manifest"
+      (cd "$src" && printf '%s\n' *) >"$manifest"
       printf '%s' "$src" >"$marker"
     '';
   };
