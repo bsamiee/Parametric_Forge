@@ -10,6 +10,12 @@
 
 require("conform").setup({
     formatters_by_ft = require("forge.tools").format,
+    -- Bare-name law: the builtin prettier definition prefers the repo's
+    -- node_modules/.bin, executing a repo-owned binary on save; pin the
+    -- per-user profile binary instead.
+    formatters = {
+        prettier = { command = "prettier" },
+    },
     format_on_save = {
         timeout_ms = 1500,
         lsp_format = "fallback",

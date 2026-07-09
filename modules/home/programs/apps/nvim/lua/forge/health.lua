@@ -5,8 +5,10 @@
 -- Path          : modules/home/programs/apps/nvim/lua/forge/health.lua
 -- ----------------------------------------------------------------------------
 -- :checkhealth forge — proves plugin store paths, server commands, parsers,
--- formatter/linter binaries, Claude LSP marketplace parity, generated nixd
--- expressions, and provider resolution against the generated fact modules.
+-- formatter/linter binaries, estate action rows, Claude LSP marketplace
+-- parity (tracked file AND the installed cache copy Claude actually loads),
+-- generated nixd expressions, and provider resolution against the generated
+-- fact modules.
 
 local M = {}
 local health = vim.health
@@ -24,6 +26,24 @@ local function check_commands(title, names)
             health.error(("%s not resolvable on PATH"):format(name))
         end
     end
+end
+
+local function read_json(path)
+    local fd = io.open(path, "r")
+    if not fd then
+        return nil
+    end
+    local ok, doc = pcall(vim.json.decode, fd:read("*a"))
+    fd:close()
+    return ok and doc or nil
+end
+
+-- Identity dimensions of one marketplace server entry vs the generated row.
+local function identity_match(live, want)
+    return live.command == want.command
+        and vim.deep_equal(live.args or {}, want.args or {})
+        and vim.deep_equal(live.extensionToLanguage, want.extensionToLanguage)
+        and vim.deep_equal(live.settings, want.settings)
 end
 
 function M.check()
@@ -83,31 +103,53 @@ function M.check()
         end
     end
 
+    health.start("estate action rows")
+    local estate_bins = {}
+    for _, row in ipairs(tools.estate) do
+        for _, bin in ipairs(row.probes or { row.argv[1] }) do
+            estate_bins[bin] = true
+        end
+    end
+    for bin in pairs(estate_bins) do
+        if executable(bin) then
+            health.ok(bin)
+        else
+            health.error(("%s not resolvable on PATH"):format(bin))
+        end
+    end
+
+    -- Two consumed surfaces per plugin: the tracked marketplace file and the
+    -- installed cache copy Claude Code actually loads (directory marketplaces
+    -- copy on install; only an explicit marketplace update refreshes them).
     health.start("claude lsp parity")
     local generated = vim.fn.stdpath("config"):gsub("/nvim$", "") .. "/forge/lsp/claude-marketplace.json"
-    local gen_fd = io.open(generated, "r")
-    if not gen_fd then
+    local rows = read_json(generated)
+    if not rows then
         health.error("generated parity projection missing: " .. generated)
     else
-        local rows = vim.json.decode(gen_fd:read("*a"))
-        gen_fd:close()
+        local installed = read_json(vim.env.HOME .. "/.claude/plugins/installed_plugins.json")
         for plugin, want in pairs(rows) do
-            local path = ("%s/.claude/lsp-marketplace/%s/.lsp.json"):format(tools.flake_root, plugin)
-            local fd = io.open(path, "r")
-            if not fd then
-                health.error(("marketplace entry missing: %s"):format(path))
+            local tracked = read_json(("%s/.claude/lsp-marketplace/%s/.lsp.json"):format(tools.flake_root, plugin))
+            if not tracked then
+                health.error(("marketplace entry missing: %s/.claude/lsp-marketplace/%s/.lsp.json"):format(tools.flake_root, plugin))
             else
-                local doc = vim.json.decode(fd:read("*a"))
-                fd:close()
-                local _, live = next(doc)
-                local same = live.command == want.command
-                    and vim.deep_equal(live.args or {}, want.args or {})
-                    and vim.deep_equal(live.extensionToLanguage, want.extensionToLanguage)
-                    and vim.deep_equal(live.settings, want.settings)
-                if same then
-                    health.ok(plugin)
+                local _, live = next(tracked)
+                if identity_match(live, want) then
+                    health.ok(plugin .. " (tracked)")
                 else
-                    health.error(("identity drift: %s (command/args/extensions/settings differ from generated rows)"):format(plugin))
+                    health.error(("identity drift: %s tracked file differs from generated rows"):format(plugin))
+                end
+            end
+            local record = installed and installed.plugins and installed.plugins[plugin .. "@forge-lsp"]
+            local cached = record and record[1] and read_json(record[1].installPath .. "/.lsp.json")
+            if not cached then
+                health.warn(("%s not installed in Claude Code (claude plugin install %s@forge-lsp)"):format(plugin, plugin))
+            else
+                local _, live = next(cached)
+                if identity_match(live, want) then
+                    health.ok(plugin .. " (installed cache)")
+                else
+                    health.error(("stale consumed cache: %s — run `claude plugin update %s@forge-lsp`"):format(plugin, plugin))
                 end
             end
         end

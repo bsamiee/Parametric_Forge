@@ -117,6 +117,12 @@ local function scratch_show(row, out)
 end
 
 local function run(row)
+    -- ENOENT rail: vim.system throws on a missing executable; fault as a
+    -- typed notification instead of a stack trace in the picker confirm.
+    if vim.fn.executable(row.argv[1]) == 0 then
+        vim.notify(("estate row %q: %s not resolvable on PATH"):format(row.id, row.argv[1]), vim.log.levels.ERROR)
+        return
+    end
     if row.mode == "pane" then
         if not vim.env.ZELLIJ then
             vim.notify(("estate row %q needs a zellij session"):format(row.id), vim.log.levels.WARN)

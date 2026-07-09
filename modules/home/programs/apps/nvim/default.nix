@@ -229,9 +229,10 @@
 
   # --- Tool rows: formatters, linters, search, provider, estate actions -------
   # Bare names resolve through the per-user profile; the health surface proves
-  # resolution. Estate rows are the CA-1 projection inside the editor: `mode`
-  # selects the dispatch arm (scratch = capture into a float, pane = zellij
-  # floating pane for TUI/long-running commands).
+  # resolution (`probes` names the real tools behind sh-wrapped rows). Estate
+  # rows are the CA-1 projection inside the editor: `mode` selects the
+  # dispatch arm (scratch = capture into a float, pane = zellij floating pane
+  # for TUI/long-running commands).
   estateRows = [
     {
       id = "flake-inputs";
@@ -267,6 +268,7 @@
       id = "generation-diff";
       label = "Generation diff (nvd)";
       argv = ["sh" "-c" "nvd diff $(ls -d /nix/var/nix/profiles/system-*-link | sort -V | tail -n 2)"];
+      probes = ["nvd"];
       mode = "scratch";
     }
     {
@@ -276,6 +278,7 @@
       id = "nix-diff";
       label = "Generation diff, derivation level (nix-diff)";
       argv = ["sh" "-c" ''set -- $(ls -d /nix/var/nix/profiles/system-*-link | sort -V | tail -n 2); left=$(nix-store --query --deriver "$1"); right=$(nix-store --query --deriver "$2"); for d in "$left" "$right"; do [ -e "$d" ] || { echo "deriver not in store: $d (substituted build; use the nvd row)"; exit 1; }; done; nix-diff "$left" "$right" 2>&1 || printf '\nnix-diff aborted: derivation closure incomplete locally (substituted builds); use the nvd row\n' ''];
+      probes = ["nix-diff" "nix-store"];
       mode = "scratch";
     }
     {

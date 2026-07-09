@@ -455,7 +455,48 @@ in rec {
     yazi-plugins = {
       source = "nixpkgs:yaziPlugins"; # kebab-case <name>.yazi dirs with main.lua entrypoints (CA-5 consumes)
       requiredFields = ["attr" "license"];
-      rows = {};
+      rows = {
+        full-border = {
+          attr = "full-border";
+          license = "MIT";
+        };
+        toggle-pane = {
+          attr = "toggle-pane";
+          license = "MIT";
+        };
+        jump-to-char = {
+          attr = "jump-to-char";
+          license = "MIT";
+        };
+        mount = {
+          attr = "mount";
+          license = "MIT";
+        };
+        piper = {
+          attr = "piper";
+          license = "MIT";
+        };
+        git = {
+          attr = "git";
+          license = "MIT";
+        };
+        smart-filter = {
+          attr = "smart-filter";
+          license = "MIT";
+        };
+        mime-ext = {
+          attr = "mime-ext";
+          license = "MIT";
+        };
+        duckdb = {
+          attr = "duckdb";
+          license = "MIT";
+        };
+        zoom = {
+          attr = "zoom";
+          license = "MIT";
+        };
+      };
     };
     nvim-plugins = {
       source = "nixpkgs:vimPlugins"; # HM programs.neovim pack deployment; store-owned, runtime fetch unspellable (CA-6 consumes)
