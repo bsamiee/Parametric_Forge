@@ -12,15 +12,12 @@
   inputs,
   ...
 }: let
-  # Backend row: "doppler" dispatches every lane (CLI, TUI, GUI) to the
-  # doppler-first session cache alone; "transition" re-arms the 1Password
-  # fallback lanes. The op cache stays written on every switch, so the
-  # fallback is dormant, never dismantled. One value flips all lanes.
-  secretBackend = "doppler";
+  # Doppler owns every lane (CLI, TUI, GUI) through the session cache. The op
+  # cache stays written on every switch as the 1Password custody/bootstrap
+  # anchor — a fresh machine emits from it before Doppler tokens exist.
   sessionCache = "${config.xdg.cacheHome}/forge-secrets/session-env.sh";
   opCache = "${config.xdg.configHome}/hm-op-session.sh";
   replayConstants = [
-    "CLAUDE_SECRET_BACKEND"
     "CLOUDSDK_CONFIG"
     "WORKSPACE_MCP_CREDENTIALS_DIR"
     "GOOGLE_WORKSPACE_CLI_CONFIG_DIR"
@@ -40,7 +37,6 @@
     text = ''
       # shellcheck source=/dev/null
       [ ! -f "${config.xdg.configHome}/forge-session-secrets.sh" ] || . "${config.xdg.configHome}/forge-session-secrets.sh"
-      export CLAUDE_SECRET_BACKEND="''${CLAUDE_SECRET_BACKEND:-${secretBackend}}"
       export CLOUDSDK_CONFIG="${config.xdg.configHome}/gcloud"
       export WORKSPACE_MCP_CREDENTIALS_DIR="${config.xdg.cacheHome}/workspace-mcp"
       export GOOGLE_WORKSPACE_CLI_CONFIG_DIR="${config.xdg.configHome}/gws"
@@ -85,7 +81,6 @@
         [ -f "$1" ] || return 0
         awk 'match($0, /^export [A-Za-z_][A-Za-z0-9_]*/) {print substr($0, 8, RLENGTH - 7)}' "$1"
       }
-      printf 'backend=%s\n' "''${CLAUDE_SECRET_BACKEND:-${secretBackend}}"
       keys="$({ key_names "${sessionCache}"; key_names "${opCache}"; } | sort -u)"
       [ -n "$keys" ] || { printf 'no session material on disk; run a Claude session first\n' >&2; exit 1; }
       tmp="$(mktemp -d)"; trap 'rm -rf "$tmp"' EXIT
@@ -124,7 +119,6 @@ in {
     # --- Environment: Biometric unlock for CLI ----------------------------------
     sessionVariables = {
       OP_BIOMETRIC_UNLOCK_ENABLED = "true";
-      CLAUDE_SECRET_BACKEND = secretBackend;
     };
 
     activation = {
@@ -171,7 +165,7 @@ in {
           fi
         fi
 
-        # Transitional GUI replay: restart the RunAtLoad agent so GUI apps pick up
+        # GUI replay: restart the RunAtLoad agent so GUI apps pick up
         # the just-written cache on this switch instead of at next login.
         /bin/launchctl kickstart -k "gui/$UID/com.parametric-forge.gui-op-secrets" >/dev/null 2>&1 || true
       '';
@@ -201,22 +195,14 @@ in {
     '';
 
     # --- Session-secrets dispatcher: one sourceable file for TUI and GUI lanes -
-    # The SessionStart hook maintains the doppler-first session cache; transition
-    # falls back to the 1Password cache until the cache exists. The backend flip
-    # is the secretBackend row above.
+    # The SessionStart hook maintains the doppler-first session cache; the op
+    # cache serves only a fresh machine where no session cache exists yet.
     "forge-session-secrets.sh".text = ''
-      case "''${CLAUDE_SECRET_BACKEND:-${secretBackend}}" in
-        doppler)
-          [ ! -f "${sessionCache}" ] || . "${sessionCache}"
-          ;;
-        *)
-          if [ -f "${sessionCache}" ]; then
-            . "${sessionCache}"
-          elif [ -f "${opCache}" ]; then
-            . "${opCache}"
-          fi
-          ;;
-      esac
+      if [ -f "${sessionCache}" ]; then
+        . "${sessionCache}"
+      elif [ -f "${opCache}" ]; then
+        . "${opCache}"
+      fi
     '';
 
     # --- Secret Template: API keys for op inject --------------------------------

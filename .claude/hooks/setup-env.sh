@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
 # SessionStart hook: persist session credentials + tool PATH for sub-agents.
-# Canonical across all repos, owned by Parametric_Forge. Doppler-first: each
-# DOPPLER_SOURCES row resolves independently — live fetch refreshes its
-# encrypted snapshot under the doppler cache; a failed fetch serves the
-# snapshot; a dead row is loud and names the keys it owes (names only, never
-# values). Under CLAUDE_SECRET_BACKEND=transition the 1Password cache fills
-# only keys still unset — Doppler values win per key. Resolved keys land in
-# CLAUDE_ENV_FILE and refresh the TUI/GUI session cache (key exports, no PATH).
+# Canonical across all repos, owned by Parametric_Forge. Two lanes keep the
+# network out of the hook budget: a session with a warm cache REPLAYS it into
+# CLAUDE_ENV_FILE instantly and dispatches a detached `--refresh`; the refresh
+# lane (or a cold first boot, inline) resolves Doppler and rewrites the cache
+# for the next session. Doppler-first: each DOPPLER_SOURCES row resolves
+# independently — live fetch refreshes its encrypted snapshot under the
+# doppler cache; a failed fetch serves the snapshot; a dead row is loud and
+# names the keys it owes (names only, never values).
 # Row shape 'project:config:snapshot[:TOKEN_ENV_VAR]': the token var names a
 # config-scoped Doppler service token once the secret rail installs one; empty
 # or unset means ambient CLI auth; a degraded token attempt retries ambient.
@@ -23,11 +24,11 @@ IFS=$'\n\t'
 
 # --- [CONSTANTS] --------------------------------------------------------------
 
-readonly OP_CACHE="${HOME}/.config/hm-op-session.sh"
 readonly JUPYTER_TOKEN_CACHE="${HOME}/.config/jupyter/forge-token.env"
 readonly DOPPLER_CACHE_DIR="${CLAUDE_DOPPLER_CACHE_DIR:-${HOME}/.cache/doppler}"
 readonly SESSION_CACHE_DIR="${XDG_CACHE_HOME:-${HOME}/.cache}/forge-secrets"
-readonly SECRET_BACKEND="${CLAUDE_SECRET_BACKEND:-doppler}"
+readonly SESSION_CACHE="${SESSION_CACHE_DIR}/session-env.sh"
+readonly REFRESH_LOCK="${SESSION_CACHE_DIR}/.refresh.lock"
 readonly DOPPLER_OFFLINE="${CLAUDE_DOPPLER_OFFLINE:-0}"
 _stale_days="${CLAUDE_DOPPLER_STALE_DAYS:-14}"
 [[ "${_stale_days}" =~ ^[0-9]+$ ]] || _stale_days=14
@@ -186,29 +187,6 @@ _prune_snapshots() {
     (( ${#pruned[@]} == 0 )) || _RECEIPT+=("note  pruned orphan snapshots: $(_join "${pruned[@]}")")
 }
 
-_op_fill() {
-    # Transition backend: fill only keys still unset from the mode-600 op cache;
-    # Doppler-resolved keys never reach this loop, so Doppler wins per key.
-    [[ "${SECRET_BACKEND}" == "transition" ]] || return 0
-    [[ -f "${OP_CACHE}" ]] || return 0
-    local line key val
-    local -a filled=()
-    while IFS= read -r line; do
-        [[ "${line}" =~ ^export\ ([A-Za-z_][A-Za-z0-9_]*)=(.*)$ ]] || continue
-        key="${BASH_REMATCH[1]}"
-        val="${BASH_REMATCH[2]}"
-        [[ -z "${!key:-}" ]] || continue
-        # Literal assignment, never eval/source: secret bytes must not reach the
-        # parser, so $(...) or backticks inside a vault value cannot execute.
-        [[ "${val}" != \"*\" ]] || { val="${val#\"}"; val="${val%\"}"; }
-        printf -v "${key}" '%s' "${val}"
-        # shellcheck disable=SC2163  # Exports the named key assigned above.
-        export "${key}"
-        filled+=("${key}")
-    done <"${OP_CACHE}"
-    (( ${#filled[@]} == 0 )) || { _MATERIAL=1; _RECEIPT+=("note  op-fill: $(_join "${filled[@]}")"); }
-}
-
 _load_secrets() {
     local missing_cli=""
     command -v doppler >/dev/null 2>&1 || missing_cli="doppler"
@@ -283,7 +261,6 @@ _load_secrets() {
         _ALERTS+=("setup-env: ${missing_cli} absent — secrets rail down")
     fi
     [[ "${DOPPLER_OFFLINE}" != "1" ]] || _RECEIPT+=("note  offline mode: fallback-only fetches")
-    _op_fill
     if [[ -z "${JUPYTER_TOKEN:-}" && -f "${JUPYTER_TOKEN_CACHE}" ]]; then
         # shellcheck source=/dev/null  # Nix-owned local Jupyter token; not a Doppler-managed key.
         source "${JUPYTER_TOKEN_CACHE}" || true
@@ -330,6 +307,64 @@ _emit_tool_paths() {
     printf 'export PATH=%q":${PATH}"\n' "${path_value%:}"
 }
 
+# --- [PUBLISH] ------------------------------------------------------------------
+
+# Resolve Doppler, then publish: keys into CLAUDE_ENV_FILE (env mode only),
+# the TUI/GUI session cache on resolver material, and the key-name receipt.
+# A total outage preserves the last good cache; a fresh machine with no cache
+# yet still bootstraps from whatever emitted.
+_resolve_and_publish() {
+    local publish_env="$1" key
+    _load_secrets
+    umask 077
+    local keys_tmp
+    keys_tmp="$(mktemp "${TMPDIR:-/tmp}/claude-keys.XXXXXX")"
+    _TMP_FILES+=("${keys_tmp}")
+    {
+        for key in "${_ENV_KEYS[@]}"; do
+            _emit_env_key "${key}"
+        done
+        _emit_extra_env_keys
+    } >"${keys_tmp}"
+
+    if [[ "${publish_env}" == "env" ]]; then
+        local env_tmp
+        env_tmp="$(mktemp "${CLAUDE_ENV_FILE}.tmp.XXXXXX")"
+        _TMP_FILES+=("${env_tmp}")
+        {
+            cat "${keys_tmp}"
+            _emit_tool_paths
+        } >"${env_tmp}"
+        chmod 600 "${env_tmp}"
+        mv "${env_tmp}" "${CLAUDE_ENV_FILE}"
+    fi
+
+    mkdir -p "${SESSION_CACHE_DIR}"
+    chmod 700 "${SESSION_CACHE_DIR}"
+    if [[ -s "${keys_tmp}" ]] && { (( _MATERIAL == 1 )) || [[ ! -f "${SESSION_CACHE}" ]]; }; then
+        local cache_tmp
+        cache_tmp="$(mktemp "${SESSION_CACHE_DIR}/.session-env.XXXXXX")"
+        _TMP_FILES+=("${cache_tmp}")
+        cat "${keys_tmp}" >"${cache_tmp}"
+        chmod 600 "${cache_tmp}"
+        mv "${cache_tmp}" "${SESSION_CACHE}"
+    fi
+
+    # Receipt: key names only, never values. Full receipt to stderr + file;
+    # degraded rows also to stdout so the session context carries them loudly.
+    local receipt_tmp
+    receipt_tmp="$(mktemp "${SESSION_CACHE_DIR}/.receipt.XXXXXX")"
+    _TMP_FILES+=("${receipt_tmp}")
+    {
+        printf 'setup-env %(%Y-%m-%dT%H:%M:%S)T offline=%s\n' "${EPOCHSECONDS}" "${DOPPLER_OFFLINE}"
+        printf '%s\n' "${_RECEIPT[@]}"
+    } >"${receipt_tmp}"
+    chmod 600 "${receipt_tmp}"
+    mv -f "${receipt_tmp}" "${SESSION_CACHE_DIR}/receipt"
+    printf '%s\n' "${_RECEIPT[@]}" >&2
+    (( ${#_ALERTS[@]} == 0 )) || printf '%s\n' "${_ALERTS[@]}"
+}
+
 # --- [ENTRY] ------------------------------------------------------------------
 
 trap '[[ ${#_TMP_FILES[@]} -eq 0 ]] || rm -f "${_TMP_FILES[@]}"' EXIT
@@ -339,66 +374,55 @@ _reap() {
     pids="$(jobs -p)"
     # shellcheck disable=SC2086  # Intentional split: one PID per line under this IFS.
     [[ -z "${pids}" ]] || kill ${pids} 2>/dev/null || true
+    [[ -z "${_LOCKED:-}" ]] || rm -rf "${REFRESH_LOCK}"
     exit "$((128 + $1))"
 }
 trap '_reap 1' HUP
 trap '_reap 2' INT
 trap '_reap 15' TERM
 
+# Refresh lane: detached network resolve rewriting the cache for the NEXT
+# session. Single-flight via lock dir; a stale lock (>3 min) is taken over.
+if [[ "${1:-}" == "--refresh" ]]; then
+    mkdir -p "${SESSION_CACHE_DIR}"
+    chmod 700 "${SESSION_CACHE_DIR}"
+    if ! mkdir "${REFRESH_LOCK}" 2>/dev/null; then
+        [[ -n "$(find "${REFRESH_LOCK}" -maxdepth 0 -mmin +3 2>/dev/null)" ]] || exit 0
+        rm -rf "${REFRESH_LOCK}"
+        mkdir "${REFRESH_LOCK}" 2>/dev/null || exit 0
+    fi
+    _LOCKED=1
+    trap 'rm -rf "${REFRESH_LOCK}"; [[ ${#_TMP_FILES[@]} -eq 0 ]] || rm -f "${_TMP_FILES[@]}"' EXIT
+    _resolve_and_publish cache
+    exit 0
+fi
+
 [[ -n "${CLAUDE_ENV_FILE:-}" ]] || exit 0
 ENV_DIR="$(dirname -- "${CLAUDE_ENV_FILE}")"
 readonly ENV_DIR
 [[ -d "${ENV_DIR}" && -w "${ENV_DIR}" && ! -d "${CLAUDE_ENV_FILE}" ]] || exit 0
 
-_load_secrets
-
-umask 077
-_KEYS_TMP="$(mktemp "${TMPDIR:-/tmp}/claude-keys.XXXXXX")"
-readonly _KEYS_TMP
-_TMP_FILES+=("${_KEYS_TMP}")
-{
-    for key in "${_ENV_KEYS[@]}"; do
-        _emit_env_key "${key}"
-    done
-    _emit_extra_env_keys
-} >"${_KEYS_TMP}"
-
-_ENV_TMP="$(mktemp "${CLAUDE_ENV_FILE}.tmp.XXXXXX")"
-readonly _ENV_TMP
-_TMP_FILES+=("${_ENV_TMP}")
-{
-    cat "${_KEYS_TMP}"
-    _emit_tool_paths
-} >"${_ENV_TMP}"
-chmod 600 "${_ENV_TMP}"
-mv "${_ENV_TMP}" "${CLAUDE_ENV_FILE}"
-
-# TUI/GUI session cache: key exports only (no PATH), refreshed only on
-# resolver material (Doppler rows or op-fill) — always-present local keys
-# never count, so a total outage preserves the last good cache; a fresh
-# machine with no cache yet still bootstraps from whatever emitted.
-mkdir -p "${SESSION_CACHE_DIR}"
-chmod 700 "${SESSION_CACHE_DIR}"
-if [[ -s "${_KEYS_TMP}" ]] && { (( _MATERIAL == 1 )) || [[ ! -f "${SESSION_CACHE_DIR}/session-env.sh" ]]; }; then
-    _CACHE_TMP="$(mktemp "${SESSION_CACHE_DIR}/.session-env.XXXXXX")"
-    readonly _CACHE_TMP
-    _TMP_FILES+=("${_CACHE_TMP}")
-    cat "${_KEYS_TMP}" >"${_CACHE_TMP}"
-    chmod 600 "${_CACHE_TMP}"
-    mv "${_CACHE_TMP}" "${SESSION_CACHE_DIR}/session-env.sh"
+# Warm lane: replay the cache into the env file instantly — no network inside
+# the hook budget — and dispatch the detached refresh.
+if [[ -s "${SESSION_CACHE}" ]]; then
+    umask 077
+    _ENV_TMP="$(mktemp "${CLAUDE_ENV_FILE}.tmp.XXXXXX")"
+    readonly _ENV_TMP
+    _TMP_FILES+=("${_ENV_TMP}")
+    {
+        cat "${SESSION_CACHE}"
+        _emit_extra_env_keys
+        _emit_tool_paths
+    } >"${_ENV_TMP}"
+    chmod 600 "${_ENV_TMP}"
+    mv "${_ENV_TMP}" "${CLAUDE_ENV_FILE}"
+    # Last refresh verdicts stay loud: degraded rows reach the session context.
+    grep -E 'DEAD|STALE' "${SESSION_CACHE_DIR}/receipt" 2>/dev/null || true
+    printf 'setup-env: replay served from session cache; refresh dispatched\n' >&2
+    (/usr/bin/nohup "$0" --refresh >/dev/null 2>>"${SESSION_CACHE_DIR}/refresh.err" &)
+    exit 0
 fi
 
-# Receipt: key names only, never values. Full receipt to stderr + file;
-# degraded rows also to stdout so the session context carries them loudly.
-# Atomic rename: concurrent SessionStarts must never interleave one receipt.
-_RECEIPT_TMP="$(mktemp "${SESSION_CACHE_DIR}/.receipt.XXXXXX")"
-readonly _RECEIPT_TMP
-_TMP_FILES+=("${_RECEIPT_TMP}")
-{
-    printf 'setup-env %(%Y-%m-%dT%H:%M:%S)T backend=%s offline=%s\n' "${EPOCHSECONDS}" "${SECRET_BACKEND}" "${DOPPLER_OFFLINE}"
-    printf '%s\n' "${_RECEIPT[@]}"
-} >"${_RECEIPT_TMP}"
-chmod 600 "${_RECEIPT_TMP}"
-mv -f "${_RECEIPT_TMP}" "${SESSION_CACHE_DIR}/receipt"
-printf '%s\n' "${_RECEIPT[@]}" >&2
-(( ${#_ALERTS[@]} == 0 )) || printf '%s\n' "${_ALERTS[@]}"
+# Cold lane (first boot, no cache): resolve inline so the first session still
+# receives keys; every later session rides the warm lane.
+_resolve_and_publish env
