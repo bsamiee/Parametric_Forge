@@ -44,6 +44,9 @@ in {
     indent_size = ${i}
     max_line_length = ${w}
 
+    [*.{sh,bash}]
+    switch_case_indent = true
+
     [{Makefile,*.mk,*.go}]
     indent_style = tab
   '';
