@@ -2,7 +2,7 @@
 # Author        : Bardia Samiee
 # Project       : Parametric Forge
 # License       : MIT
-# Path          : /modules/home/programs/shell-tools/trippy.nix
+# Path          : modules/home/programs/shell-tools/trippy.nix
 # ----------------------------------------------------------------------------
 # Modern network diagnostic tool combining traceroute and ping
 {

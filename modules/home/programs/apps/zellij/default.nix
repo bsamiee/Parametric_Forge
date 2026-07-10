@@ -111,20 +111,6 @@ in {
         "zellij_forgot.wasm" = ["ReadApplicationState" "ChangeApplicationState"];
       };
     };
-
-    # Web packaging host row: this darwin host ships the full-web build with
-    # the server OFF and sharing disabled; exposure needs reverse-proxy plus
-    # token-lifecycle rows first. A future NixOS host row may flip these.
-    web = {
-      server = lib.mkOption {
-        type = lib.types.bool;
-        default = false;
-      };
-      sharing = lib.mkOption {
-        type = lib.types.enum ["on" "off" "disabled"];
-        default = "disabled";
-      };
-    };
   };
 
   config = {

@@ -2,7 +2,7 @@
 # Author        : Bardia Samiee
 # Project       : Parametric Forge
 # License       : MIT
-# Path          : /modules/home/programs/shell-tools/xh.nix
+# Path          : modules/home/programs/shell-tools/xh.nix
 # ----------------------------------------------------------------------------
 # Friendly and fast HTTP client (HTTPie reimplementation in Rust)
 {pkgs, ...}: let

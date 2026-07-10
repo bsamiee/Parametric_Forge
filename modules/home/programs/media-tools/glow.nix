@@ -2,7 +2,7 @@
 # Author        : Bardia Samiee
 # Project       : Parametric Forge
 # License       : MIT
-# Path          : /modules/home/programs/media-tools/glow.nix
+# Path          : modules/home/programs/media-tools/glow.nix
 # ----------------------------------------------------------------------------
 # Terminal markdown rendering for beautiful Yazi markdown preview
 {pkgs, ...}: let

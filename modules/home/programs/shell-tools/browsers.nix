@@ -2,12 +2,10 @@
 # Author        : Bardia Samiee
 # Project       : Parametric Forge
 # License       : MIT
-# Path          : /modules/home/programs/shell-tools/browsers.nix
+# Path          : modules/home/programs/shell-tools/browsers.nix
 # ----------------------------------------------------------------------------
-# Register rail owner: one row grammar (aliases, chords, MCP, naming, receipt
-# sources) projected to fzf browse commands, Television durable channels, XDG
-# register JSON, and zsh completions. fzf owns disposable one-shot browse;
-# Television owns durable semantic channels; neither replaces the other.
+# Register rail owner: one row grammar projected to fzf browse commands,
+# Television durable channels, XDG register JSON, and zsh completions.
 # Previews are read-only evidence; every browse run emits one typed receipt.
 {
   config,
@@ -62,73 +60,77 @@
 
   # --- Receipt source register --------------------------------------------------
   # Declared kv-receipt emitters; paths are $HOME-relative and may not exist yet.
-  receiptSources = [
-    {
-      kind = "redeploy";
-      path = "Library/Logs/forge-redeploy.receipts.log";
-      emitter = "forge-redeploy";
-    }
-    {
-      kind = "maintenance";
-      path = "Library/Logs/forge-nix-maintenance.receipts.log";
-      emitter = "forge-nix-maintenance";
-    }
-    {
-      kind = "drift";
-      path = "Library/Logs/forge-nix-drift.receipts.log";
-      emitter = "forge-nix-drift";
-    }
-    {
-      kind = "orphan-sweep";
-      path = "Library/Logs/forge-orphan-sweep.receipts.log";
-      emitter = "forge-orphan-sweep";
-    }
-    {
-      kind = "activation-sweep";
-      path = "Library/Logs/forge-activation-sweep.receipts.log";
-      emitter = "forge-activation-sweep";
-    }
-    {
-      kind = "accept";
-      path = "Library/Logs/forge-accept.receipts.log";
-      emitter = "forge-accept";
-    }
-    {
-      kind = "tunnel-maghz";
-      path = "Library/Logs/forge-maghz-vps-tunnel.receipts.log";
-      emitter = "maghz-vps-tunnel launchd agent";
-    }
-    {
-      kind = "browse";
-      path = "Library/Logs/forge-browse.receipts.log";
-      emitter = "forge-browse";
-    }
-    {
-      kind = "workspace";
-      path = "Library/Logs/forge-workspace.receipts.log";
-      emitter = "forge-workspace";
-    }
-    {
-      kind = "wezterm";
-      path = "Library/Logs/forge-wezterm.receipts.log";
-      emitter = "wezterm command deck";
-    }
-    {
-      kind = "zellij";
-      path = "Library/Logs/forge-zellij.receipts.log";
-      emitter = "forge-zellij";
-    }
-    {
-      kind = "mcp";
-      path = "Library/Logs/forge-mcp.receipts.log";
-      emitter = "forge-mcp";
-    }
-    {
-      kind = "agents";
-      path = "Library/Logs/forge-agents.receipts.log";
-      emitter = "forge-agents collector";
-    }
-  ];
+  receiptSources =
+    [
+      {
+        kind = "redeploy";
+        path = "Library/Logs/forge-redeploy.receipts.log";
+        emitter = "forge-redeploy";
+      }
+      {
+        kind = "maintenance";
+        path = "Library/Logs/forge-nix-maintenance.receipts.log";
+        emitter = "forge-nix-maintenance";
+      }
+      {
+        kind = "drift";
+        path = "Library/Logs/forge-nix-drift.receipts.log";
+        emitter = "forge-nix-drift";
+      }
+      {
+        kind = "orphan-sweep";
+        path = "Library/Logs/forge-orphan-sweep.receipts.log";
+        emitter = "forge-orphan-sweep";
+      }
+      {
+        kind = "activation-sweep";
+        path = "Library/Logs/forge-activation-sweep.receipts.log";
+        emitter = "forge-activation-sweep";
+      }
+      {
+        kind = "accept";
+        path = "Library/Logs/forge-accept.receipts.log";
+        emitter = "forge-accept";
+      }
+      {
+        kind = "browse";
+        path = "Library/Logs/forge-browse.receipts.log";
+        emitter = "forge-browse";
+      }
+      {
+        kind = "workspace";
+        path = "Library/Logs/forge-workspace.receipts.log";
+        emitter = "forge-workspace";
+      }
+      {
+        kind = "wezterm";
+        path = "Library/Logs/forge-wezterm.receipts.log";
+        emitter = "wezterm command deck";
+      }
+      {
+        kind = "zellij";
+        path = "Library/Logs/forge-zellij.receipts.log";
+        emitter = "forge-zellij";
+      }
+      {
+        kind = "mcp";
+        path = "Library/Logs/forge-mcp.receipts.log";
+        emitter = "forge-mcp";
+      }
+      {
+        kind = "agents";
+        path = "Library/Logs/forge-agents.receipts.log";
+        emitter = "forge-agents collector";
+      }
+    ]
+    # Tunnel receipt rows derive from the ssh tunnel registry: a new VPS row
+    # appears in the receipts browser without touching this file.
+    ++ lib.mapAttrsToList (name: _: {
+      kind = "tunnel-${name}";
+      path = "Library/Logs/forge-${name}-vps-tunnel.receipts.log";
+      emitter = "${name}-vps-tunnel launchd agent";
+    })
+    config.forge.ssh.hosts;
 
   # --- Register JSON projections -------------------------------------------------
   # MCP rows are sanitized at the seam: endpoint basename, key NAMES, pin,
@@ -159,7 +161,7 @@
   registerJson = domain: rows: pkgs.writeText "forge-register-${domain}.json" (builtins.toJSON rows);
   registers = {
     aliases = registerJson "aliases" config.forge.registers.aliases;
-    chords = registerJson "chords" config.forge.chords.register;
+    chords = registerJson "chords" (config.forge.chords.register or []);
     mcp = registerJson "mcp" mcpRegister;
     naming = registerJson "naming" naming;
     receipts = registerJson "receipts" receiptSources;
@@ -247,13 +249,19 @@
         esac
         shift
       done
+      # --limit feeds --argjson, --since Nh/Nd feeds arithmetic: both reject
+      # non-numeric input at the option seam instead of a bash math abort.
+      case "$limit" in "" | *[!0-9]*) usage >&2; exit 64 ;; esac
+      case "$since" in
+        *h | *d) case "''${since%?}" in "" | *[!0-9]*) usage >&2; exit 64 ;; esac ;;
+      esac
 
       threshold=""
       if [ -n "$since" ]; then
         case "$since" in
-          *h) threshold="$(date -u -d "-''${since%h} hours" +%Y%m%dT%H%M%SZ)" ;;
-          *d) threshold="$(date -u -d "-''${since%d} days" +%Y%m%dT%H%M%SZ)" ;;
-          *) threshold="$(printf '%s' "$since" | tr -d ':-')" ;;
+          *h) TZ=UTC0 printf -v threshold '%(%Y%m%dT%H%M%SZ)T' "$((EPOCHSECONDS - ''${since%h} * 3600))" ;;
+          *d) TZ=UTC0 printf -v threshold '%(%Y%m%dT%H%M%SZ)T' "$((EPOCHSECONDS - ''${since%d} * 86400))" ;;
+          *) threshold="''${since//[:-]/}" ;;
         esac
       fi
 
@@ -315,7 +323,8 @@
           sel="$(to_tsv | fzf --delimiter=$'\t' --border-label='[RECEIPTS]' \
             --preview="$self --pick {1}@{2} | jq ." --preview-window=right:55%:border-bold \
             "''${fzf_base[@]}")" || exit 0
-          [ -n "$sel" ] && "$self" --pick "$(cut -f1 <<<"$sel")@$(cut -f2 <<<"$sel")"
+          IFS=$'\t' read -r sel_kind sel_ts _ <<<"$sel"
+          [ -n "$sel_kind" ] && "$self" --pick "$sel_kind@$sel_ts"
           ;;
         *) usage >&2; exit 64 ;;
       esac
@@ -339,7 +348,7 @@
       }
 
       row_by_id() { # $1=register json  $2=id
-        jq --arg id "$2" '[.[] | select((.alias // .chord_id // .name // .slug // .kind) == $id)] | first // empty' "$1"
+        jq --arg id "$2" 'first(.[] | select((.alias // .chord_id // .name // .slug // .kind) == $id)) // empty' "$1"
       }
 
       preview() { # $1=domain  $2=id
@@ -410,16 +419,17 @@
       crow="$(jq -c --arg d "$domain" '.[$d] // empty' "$catalog")"
       [ -n "$crow" ] || { usage >&2; exit 64; }
 
-      if [ "$(jq -r '.delegate // ""' <<<"$crow")" = "receipts" ]; then
+      # One projection per catalog-row snapshot; 0x1f join survives empties.
+      IFS=$'\x1f' read -r delegate json label filter < <(jq -r \
+        '[(.delegate // ""), (.json // ""), (.label // ""), (.tsv // "")] | join("\u001f")' <<<"$crow")
+
+      if [ "$delegate" = "receipts" ]; then
         exec ${forgeReceipts}/bin/forge-receipts --fzf
       fi
 
-      json="$(jq -r '.json' <<<"$crow")"
-      label="$(jq -r '.label' <<<"$crow")"
-      filter="$(jq -r '.tsv' <<<"$crow")"
       binds=()
       while IFS= read -r b; do [ -n "$b" ] && binds+=(--bind "$b"); done < <(jq -r '.binds[]?' <<<"$crow")
-      binds+=(--bind "ctrl-y:execute-silent(printf '%s' {} | /usr/bin/pbcopy)")
+      ${lib.optionalString pkgs.stdenv.hostPlatform.isDarwin ''binds+=(--bind "ctrl-y:execute-silent(printf '%s' {} | /usr/bin/pbcopy)")''}
 
       start="''${EPOCHREALTIME//[.,]/}"
       rc=0
@@ -430,8 +440,10 @@
       end="''${EPOCHREALTIME//[.,]/}"
       duration_ms=$(((end - start) / 1000))
 
-      query="$(head -n 1 <<<"$out")"
-      sel="$(sed -n 2p <<<"$out")"
+      # fzf --print-query contract: line 1 query, line 2 selection.
+      mapfile -t out_lines <<<"$out"
+      query="''${out_lines[0]:-}"
+      sel="''${out_lines[1]:-}"
       id="''${sel%%$'\t'*}"
       # fzf exit classes: 0 select, 1 no-match, 130 user abort — benign runs;
       # any other rc is a browser fault: result=error survives --failures

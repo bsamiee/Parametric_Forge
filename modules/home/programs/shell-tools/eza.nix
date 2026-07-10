@@ -2,7 +2,7 @@
 # Author        : Bardia Samiee
 # Project       : Parametric Forge
 # License       : MIT
-# Path          : /modules/home/programs/shell-tools/eza.nix
+# Path          : modules/home/programs/shell-tools/eza.nix
 # ----------------------------------------------------------------------------
 # Modern ls replacement themed from the estate palette owner
 {

@@ -2,7 +2,7 @@
 # Author        : Bardia Samiee
 # Project       : Parametric Forge
 # License       : MIT
-# Path          : /modules/home/programs/shell-tools/rsync.nix
+# Path          : modules/home/programs/shell-tools/rsync.nix
 # ----------------------------------------------------------------------------
 # rsync owner: shared exclusion filter plus two packaged rails. rsync-safe.sh
 # is the transparent filtered transport; rsync-mv.sh is the receipted atomic

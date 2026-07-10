@@ -4,8 +4,9 @@
 # License       : MIT
 # Path          : modules/home/programs/apps/zellij/config.nix
 # ----------------------------------------------------------------------------
-# Nix-generated Zellij configuration; every chord row projects from the chord
-# owner (modules/home/programs/apps/chords.nix), never hand-duplicated here.
+# Nix-generated Zellij configuration. Leader, entry, and normal-mode chord
+# rows project from the chord owner (chords.nix); mode-interior binds and
+# their hint ribbons are owned here as paired surfaces.
 {
   config,
   lib,
@@ -15,6 +16,18 @@
   chords = config.forge.chords; # Chord-vocabulary owner (modules/home/programs/apps/chords.nix)
   pH = chords.zellij.prefix.hyper;
   inherit (chords) modes;
+
+  # Shared mode-interior fragments: one declaration renders identically at
+  # every consuming mode block.
+  exitBind = key: ''bind "${pH} ${key}" { SwitchToMode "Normal"; }                  // Hyper (⌘⌥⌃⇧) | Right Command'';
+  scrollNavKdl = lib.concatStringsSep "\n        " [
+    ''bind "j" "Down" { ScrollDown; }''
+    ''bind "k" "Up" { ScrollUp; }''
+    ''bind "l" "Right" { PageScrollDown; }''
+    ''bind "h" "Left" { PageScrollUp; }''
+    ''bind "d" { HalfPageScrollDown; }''
+    ''bind "u" { HalfPageScrollUp; }''
+  ];
 
   # Shared color rows for both zjstatus instances; one palette, two surfaces.
   colorRows = lib.concatStrings (map (n: "        color_${n}    \"${palette.${n}.hex}\"\n") [
@@ -152,14 +165,14 @@ in {
         mouse_mode                  true
         pane_frames                 true
         session_serialization       true
-        pane_viewport_serialization true
+        serialize_pane_viewport     true
         copy_command                "pbcopy"
         scroll_buffer_size          100000
 
         // Host web stance: server off, sharing disabled until reverse-proxy +
         // token-lifecycle rows exist (annex-gated exposure).
-        web_server                  ${lib.boolToString config.programs.zellij.web.server}
-        web_sharing                 "${config.programs.zellij.web.sharing}"
+        web_server                  false
+        web_sharing                 "disabled"
 
         // --- Plugin Aliases ---------------------------------------------------------
         plugins {
@@ -263,7 +276,7 @@ in {
 
           // --- Tab Mode -------------------------------------------------------------
           tab {
-            bind "${pH} ${modes.tab.key}" { SwitchToMode "Normal"; }                  // Hyper (⌘⌥⌃⇧) | Right Command
+            ${exitBind modes.tab.key}
             bind "[" "Left" { GoToPreviousTab; }
             bind "]" "Right" { GoToNextTab; }
             bind ";" { MoveTab "Left"; }
@@ -271,21 +284,13 @@ in {
             bind "r" { SwitchToMode "RenameTab"; TabNameInput 0; }
             bind "n" { NewTab; }
             bind "x" { CloseTab; }
-            bind "1" { GoToTab 1; }
-            bind "2" { GoToTab 2; }
-            bind "3" { GoToTab 3; }
-            bind "4" { GoToTab 4; }
-            bind "5" { GoToTab 5; }
-            bind "6" { GoToTab 6; }
-            bind "7" { GoToTab 7; }
-            bind "8" { GoToTab 8; }
-            bind "9" { GoToTab 9; }
-            bind "Tab" { ToggleTab; }
+    ${lib.concatMapStrings (i: ''        bind "${toString i}" { GoToTab ${toString i}; }
+      '') (lib.range 1 9)}        bind "Tab" { ToggleTab; }
           }
 
           // --- Pane Mode ------------------------------------------------------------
           pane {
-            bind "${pH} ${modes.pane.key}" { SwitchToMode "Normal"; }                  // Hyper (⌘⌥⌃⇧) | Right Command
+            ${exitBind modes.pane.key}
             bind "h" "Left" { MoveFocus "Left"; }
             bind "l" "Right" { MoveFocus "Right"; }
             bind "j" "Down" { MoveFocus "Down"; }
@@ -309,7 +314,7 @@ in {
 
           // --- Move Mode ------------------------------------------------------------
           move {
-            bind "${pH} ${modes.move.key}" { SwitchToMode "Normal"; }                  // Hyper (⌘⌥⌃⇧) | Right Command
+            ${exitBind modes.move.key}
             bind "m" "Tab" { MovePane; }
             bind "p" { MovePaneBackwards; }
             bind "h" "Left" { MovePane "Left"; }
@@ -320,7 +325,7 @@ in {
 
           // --- Resize Mode ----------------------------------------------------------
           resize {
-            bind "${pH} ${modes.resize.key}" { SwitchToMode "Normal"; }                  // Hyper (⌘⌥⌃⇧) | Right Command
+            ${exitBind modes.resize.key}
             bind "h" "Left" { Resize "Increase Left"; }
             bind "j" "Down" { Resize "Increase Down"; }
             bind "k" "Up" { Resize "Increase Up"; }
@@ -335,22 +340,17 @@ in {
 
           // --- Scroll Mode ----------------------------------------------------------
           scroll {
-            bind "${pH} ${modes.scroll.key}" { SwitchToMode "Normal"; }                  // Hyper (⌘⌥⌃⇧) | Right Command
+            ${exitBind modes.scroll.key}
             bind "e" { EditScrollback; SwitchToMode "Normal"; }
             bind "s" { SwitchToMode "EnterSearch"; SearchInput 0; }
             bind "${pH} c" { ScrollToBottom; SwitchToMode "Normal"; }
 
-            bind "j" "Down" { ScrollDown; }
-            bind "k" "Up" { ScrollUp; }
-            bind "l" "right" { PageScrollDown; }
-            bind "h" "left" { PageScrollUp; }
-            bind "d" { HalfPageScrollDown; }
-            bind "u" { HalfPageScrollUp; }
+            ${scrollNavKdl}
           }
 
           // --- Search Mode ----------------------------------------------------------
           search {
-            bind "${pH} ${modes.scroll.key}" { SwitchToMode "Normal"; }                  // Hyper (⌘⌥⌃⇧) | Right Command
+            ${exitBind modes.scroll.key}
             bind "${pH} c" { ScrollToBottom; SwitchToMode "Normal"; }
 
             bind "c" { SearchToggleOption "CaseSensitivity"; }
@@ -360,17 +360,12 @@ in {
             bind "n" { Search "down"; }
             bind "p" { Search "up"; }
 
-            bind "j" "Down" { ScrollDown; }
-            bind "k" "Up" { ScrollUp; }
-            bind "l" "right" { PageScrollDown; }
-            bind "h" "left" { PageScrollUp; }
-            bind "d" { HalfPageScrollDown; }
-            bind "u" { HalfPageScrollUp; }
+            ${scrollNavKdl}
           }
 
           // --- Session Mode ---------------------------------------------------------
           session {
-            bind "${pH} ${modes.session.key}" { SwitchToMode "Normal"; }                  // Hyper (⌘⌥⌃⇧) | Right Command
+            ${exitBind modes.session.key}
             bind "d" { Detach; }
 
             bind "s" {

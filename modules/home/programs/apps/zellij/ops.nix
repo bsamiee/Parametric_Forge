@@ -425,7 +425,9 @@
                 "''${fzf_base[@]}")" || rc=$?
             end="''${EPOCHREALTIME//[.,]/}"
             duration_ms=$(((end - start) / 1000))
-            line="$(sed -n 2p <<<"$sel")"
+            # fzf --print-query contract: line 1 query, line 2 selection.
+            mapfile -t sel_lines <<<"$sel"
+            line="''${sel_lines[1]:-}"
             if [[ "$rc" != 0 || -z "$line" ]]; then
               case "$rc" in
                 0 | 1 | 130) emit_receipt graph - - cancel ok "$rc" "$duration_ms"; exit 0 ;;
@@ -452,7 +454,9 @@
                 emit_receipt graph tab "$row_id" go-to-tab ok 0 "$duration_ms"
                 ;;
               pane | starred-pane | agent-lane)
-                [[ -n "$target" ]] && zellij action focus-pane-id "terminal_''${target}" >/dev/null 2>&1
+                # Best-effort focus: the pane may vanish between snapshot and
+                # click; a dead id must not kill the run before its receipt.
+                [[ -z "$target" ]] || zellij action focus-pane-id "terminal_''${target}" >/dev/null 2>&1 || true
                 emit_receipt graph "$kind" "$row_id" focus-pane ok 0 "$duration_ms"
                 ;;
               project | worktree)

@@ -2,7 +2,7 @@
 # Author        : Bardia Samiee
 # Project       : Parametric Forge
 # License       : MIT
-# Path          : /modules/home/programs/shell-tools/zoxide.nix
+# Path          : modules/home/programs/shell-tools/zoxide.nix
 # ----------------------------------------------------------------------------
 # Smart directory navigation with frecency-based learning
 _: {

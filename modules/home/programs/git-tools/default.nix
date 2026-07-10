@@ -18,7 +18,7 @@
   # verify [ref]: GitHub-side verification status for a pushed commit.
   forge-git-doctor = pkgs.writeShellApplication {
     name = "forge-git-doctor";
-    runtimeInputs = [pkgs.git pkgs.gh pkgs.coreutils pkgs.gnugrep pkgs.openssh];
+    runtimeInputs = [pkgs.git pkgs.gh pkgs.coreutils pkgs.openssh];
     text = ''
       mode="''${1:-doctor}"
       case "$mode" in
@@ -38,10 +38,14 @@
             printf '%-26s %s\n' "signer-binary" "MISSING at $signer (1Password.app absent or path stale)"
           fi
           # Signing goes live only when the op agent serves the configured key.
+          # Captured, never piped into grep -q: an early-exit grep would SIGPIPE
+          # ssh-add under pipefail and falsely report the key unserved.
           sock="$HOME/${opAgentSock}"
           pubkey="$(git config get user.signingkey || true)"
           pubkey="''${pubkey#key::}"
-          if [ -S "$sock" ] && [ -n "$pubkey" ] && SSH_AUTH_SOCK="$sock" ssh-add -L 2>/dev/null | grep -qF "$pubkey"; then
+          served=""
+          [ -S "$sock" ] && served="$(SSH_AUTH_SOCK="$sock" ssh-add -L 2>/dev/null || true)"
+          if [[ -n "$pubkey" && "$served" == *"$pubkey"* ]]; then
             printf '%-26s %s\n' "op-agent" "serves signing key"
           else
             printf '%-26s %s\n' "op-agent" "signing key NOT served (agent off or vault item missing)"

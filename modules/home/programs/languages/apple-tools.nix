@@ -22,7 +22,7 @@
   # .swift-version files still win, and no toolchain means no injection.
   swiftformat = pkgs.writeShellApplication {
     name = "swiftformat";
-    runtimeInputs = [pkgs.coreutils pkgs.gnused];
+    runtimeInputs = [pkgs.coreutils];
     text = ''
       for arg in "$@"; do
         case "$arg" in
@@ -34,9 +34,11 @@
       tmp="$(mktemp -d)"
       trap 'rm -rf "$tmp"' EXIT
       cat "${swiftformatConfig}" >"$tmp/config"
-      ver="$({ /usr/bin/swift --version 2>/dev/null || true; } | sed -n 's/.*Swift version \([0-9][0-9]*\.[0-9][0-9]*\).*/\1/p' | head -n1)"
-      if [ -n "$ver" ]; then
-        printf -- '--swift-version %s\n' "$ver" >>"$tmp/config"
+      # BASH_REMATCH, never sed|head: head's early exit would SIGPIPE sed under
+      # pipefail and drop the version injection on a race.
+      ver_re='Swift version ([0-9]+\.[0-9]+)'
+      if [[ "$(/usr/bin/swift --version 2>/dev/null || true)" =~ $ver_re ]]; then
+        printf -- '--swift-version %s\n' "''${BASH_REMATCH[1]}" >>"$tmp/config"
       fi
       ${pkgs.swiftformat}/bin/swiftformat --base-config "$tmp/config" "$@"
     '';

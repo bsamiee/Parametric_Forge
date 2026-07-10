@@ -2,7 +2,7 @@
 # Author        : Bardia Samiee
 # Project       : Parametric Forge
 # License       : MIT
-# Path          : /modules/home/programs/shell-tools/ripgrep.nix
+# Path          : modules/home/programs/shell-tools/ripgrep.nix
 # ----------------------------------------------------------------------------
 # Fast recursive search configuration
 {

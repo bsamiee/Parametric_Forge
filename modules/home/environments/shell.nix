@@ -66,7 +66,7 @@ in {
     RSYNC_PROTECT_ARGS = "1"; # Protect args with spaces/wildcards (pre-3.2.4)
 
     # --- FZF Forgit Configuration -------------------------------------------
-    FORGIT_PAGER = "delta"; # Consistent with GIT_PAGER in core.nix
+    FORGIT_PAGER = "delta"; # Consistent with GIT_PAGER (zsh/config.nix envExtra)
     FORGIT_ADD_FZF_OPTS = "--border-label='[GIT ADD]'";
     FORGIT_DIFF_FZF_OPTS = "--border-label='[GIT DIFF]'";
     FORGIT_LOG_FZF_OPTS = "--border-label='[GIT LOG]'";

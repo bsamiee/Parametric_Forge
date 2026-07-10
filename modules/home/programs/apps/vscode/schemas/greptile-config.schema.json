@@ -39,7 +39,10 @@
         "ignoreKeywords": { "type": "string", "description": "Newline-separated keywords; skip PRs with these in title/description" },
         "ignorePatterns": { "type": "string", "description": "Newline-separated file patterns to skip (.gitignore syntax)" },
         "triggerOnUpdates": { "type": "boolean", "description": "Re-run the review when the PR is updated. Default false." },
-        "triggerOnDrafts": { "type": "boolean", "description": "Review draft PRs. Documented for root greptile.json; undocumented for .greptile/config.json — verify effect before relying on it." },
+        "triggerOnDrafts": {
+            "type": "boolean",
+            "description": "Review draft PRs. Documented for root greptile.json; undocumented for .greptile/config.json — verify effect before relying on it."
+        },
         "statusCheck": { "type": "boolean", "description": "Post a GitHub status check with the review result. Default false." },
         "statusCommentsEnabled": { "type": "boolean", "description": "Enable status comments on PRs" },
         "skipReview": { "const": "AUTOMATIC", "description": "Skip auto-review entirely for files in this directory; manual triggers still work" },

@@ -17,36 +17,33 @@
   # anchor — a fresh machine emits from it before Doppler tokens exist.
   sessionCache = "${config.xdg.cacheHome}/forge-secrets/session-env.sh";
   opCache = "${config.xdg.configHome}/hm-op-session.sh";
-  replayConstants = [
-    "CLOUDSDK_CONFIG"
-    "WORKSPACE_MCP_CREDENTIALS_DIR"
-    "GOOGLE_WORKSPACE_CLI_CONFIG_DIR"
-    "GOOGLE_WORKSPACE_PROJECT_ID"
-    "MAGHZ_REMOTE_HOST"
-    "MAGHZ_REMOTE_USER"
-    "MAGHZ_REMOTE_WORKROOT"
-  ];
-  # GUI-session secret replay: source the backend-dispatched session material
-  # and re-export each key into the launchd GUI domain via "launchctl setenv"
-  # so GUI-launched apps (Codex.app, Claude Desktop) inherit the same tokens
-  # as interactive shells. Key NAMES are enumerated from both caches; a name
-  # whose backend leaves it unset is skipped, so the flip narrows this replay.
+  # Replay constants as rows: one declaration owns name AND value; the export
+  # block and the replay-manifest name set both derive from it.
+  replayRows = {
+    CLOUDSDK_CONFIG = "${config.xdg.configHome}/gcloud";
+    WORKSPACE_MCP_CREDENTIALS_DIR = "${config.xdg.cacheHome}/workspace-mcp";
+    GOOGLE_WORKSPACE_CLI_CONFIG_DIR = "${config.xdg.configHome}/gws";
+    GOOGLE_WORKSPACE_PROJECT_ID = "workspace-mcp-500605";
+    MAGHZ_REMOTE_HOST = "31.97.131.41";
+    MAGHZ_REMOTE_USER = "maghz-agent";
+    MAGHZ_REMOTE_WORKROOT = "/home/maghz-agent/maghz";
+  };
+  # GUI-session secret replay: re-export each session key into the launchd
+  # GUI domain via "launchctl setenv" so GUI-launched apps inherit the same
+  # tokens as interactive shells. Key NAMES enumerate from both caches; a
+  # name no backend serves is cleared, narrowing the replay.
   guiOpSecrets = pkgs.writeShellApplication {
     name = "gui-op-secrets";
     runtimeInputs = [pkgs.coreutils pkgs.gnugrep pkgs.gawk];
     text = ''
       # shellcheck source=/dev/null
       [ ! -f "${config.xdg.configHome}/forge-session-secrets.sh" ] || . "${config.xdg.configHome}/forge-session-secrets.sh"
-      export CLOUDSDK_CONFIG="${config.xdg.configHome}/gcloud"
-      export WORKSPACE_MCP_CREDENTIALS_DIR="${config.xdg.cacheHome}/workspace-mcp"
-      export GOOGLE_WORKSPACE_CLI_CONFIG_DIR="${config.xdg.configHome}/gws"
-      export GOOGLE_WORKSPACE_PROJECT_ID="workspace-mcp-500605"
-      export MAGHZ_REMOTE_HOST="31.97.131.41"
-      export MAGHZ_REMOTE_USER="maghz-agent"
-      export MAGHZ_REMOTE_WORKROOT="/home/maghz-agent/maghz"
+      ${lib.concatStringsSep "\n      " (lib.mapAttrsToList (k: v: ''export ${k}="${v}"'') replayRows)}
       # Replay manifest (key NAMES only, mode 600): the set names forge-accept
-      # asserts against the live gui domain for lane parity.
-      names_tmp="$(mktemp "''${TMPDIR:-/tmp}/gui-replay.XXXXXX")"
+      # asserts against the live gui domain for lane parity. The temp lives
+      # beside its rename target so the publish stays same-filesystem atomic.
+      mkdir -p "${config.xdg.cacheHome}/forge-secrets"
+      names_tmp="$(mktemp "${config.xdg.cacheHome}/forge-secrets/gui-replay.names.XXXXXX")"
       trap 'rm -f "$names_tmp"' EXIT
       while IFS= read -r k; do
         val="''${!k:-}"
@@ -63,8 +60,7 @@
         [ -f "$f" ] || continue
         awk 'match($0, /^export [A-Za-z_][A-Za-z0-9_]*/) {print substr($0, 8, RLENGTH - 7)}' "$f"
       done
-      printf '%s\n' ${lib.concatMapStringsSep " " (c: "\"${c}\"") replayConstants}; } | sort -u)
-      mkdir -p "${config.xdg.cacheHome}/forge-secrets"
+      printf '%s\n' ${lib.concatMapStringsSep " " (c: "\"${c}\"") (lib.attrNames replayRows)}; } | sort -u)
       chmod 600 "$names_tmp"
       mv -f "$names_tmp" "${config.xdg.cacheHome}/forge-secrets/gui-replay.names"
       trap - EXIT
@@ -85,7 +81,9 @@
       [ -n "$keys" ] || { printf 'no session material on disk; run a Claude session first\n' >&2; exit 1; }
       tmp="$(mktemp -d)"; trap 'rm -rf "$tmp"' EXIT
       printf -- '--- CLI lane (SessionStart hook, fresh env file)\n'
-      CLAUDE_ENV_FILE="$tmp/env.sh" bash "$HOME/.claude/hooks/setup-env.sh" >"$tmp/alerts" 2>"$tmp/receipt" || true
+      hook_rc=0
+      CLAUDE_ENV_FILE="$tmp/env.sh" bash "$HOME/.claude/hooks/setup-env.sh" >"$tmp/alerts" 2>"$tmp/receipt" || hook_rc=$?
+      printf '  hook rc: %s\n' "$hook_rc"
       sed 's/^/  receipt: /' "$tmp/receipt"
       sed 's/^/  ALERT:   /' "$tmp/alerts"
       printf '  emitted: %s\n' "$(key_names "$tmp/env.sh" | tr '\n' ' ')"
@@ -149,7 +147,8 @@ in {
         tmp_file="$(mktemp "$cache_file.XXXXXX")"
         if ${pkgs._1password-cli}/bin/op inject -f -i "$template_file" -o "$tmp_file" >/dev/null; then
           if [[ -f "$jupyter_token_file" ]]; then
-            grep -E '^export JUPYTER_TOKEN=' "$jupyter_token_file" >>"$tmp_file"
+            # No-match is a valid empty append; grep rc=1 must not kill the switch.
+            grep -E '^export JUPYTER_TOKEN=' "$jupyter_token_file" >>"$tmp_file" || true
           fi
           chmod 600 "$tmp_file"
           mv -f "$tmp_file" "$cache_file"
@@ -238,17 +237,12 @@ in {
     '';
   };
 
-  # --- GUI session secrets: replay session material into the launchd domain ---
-  # GUI apps (Codex.app, Claude Desktop) are launched by launchd and never source
-  # .zshrc, so they miss the tokens interactive shells receive. This RunAtLoad
-  # agent replays the backend-dispatched mode-600 session material via
-  # "launchctl setenv"; no secret value enters the Nix store.
-  #
-  # AssociatedBundleIdentifiers causes macOS Login Items & Extensions to show the
-  # bundle's CFBundleDisplayName ("GUI Op Secrets") instead of the basename of
-  # ProgramArguments[0], which home-manager's mutateConfig unconditionally sets to
-  # "/bin/sh" (producing the generic "sh" entry). The key passes through mutateConfig
-  # unchanged; the freeformType in the launchd schema accepts it.
+  # --- GUI session secrets -----------------------------------------------------
+  # launchd-launched GUI apps never source .zshrc; this RunAtLoad agent replays
+  # the mode-600 session material, and no secret value enters the Nix store.
+  # AssociatedBundleIdentifiers makes Login Items & Extensions show the bundle
+  # display name instead of the "/bin/sh" basename home-manager's mutateConfig
+  # writes into ProgramArguments[0]; the launchd freeformType passes it through.
   home.file."Applications/GUI Op Secrets.app/Contents/Info.plist".text = lib.generators.toPlist {escape = true;} {
     CFBundleIdentifier = "com.parametric-forge.gui-op-secrets";
     CFBundleName = "GUI Op Secrets";

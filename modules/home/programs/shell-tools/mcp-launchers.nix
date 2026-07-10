@@ -2,17 +2,14 @@
 # Author        : Bardia Samiee
 # Project       : Parametric Forge
 # License       : MIT
-# Path          : /modules/home/programs/shell-tools/mcp-launchers.nix
+# Path          : modules/home/programs/shell-tools/mcp-launchers.nix
 # ----------------------------------------------------------------------------
-# CA-7 data-plane owner: builds pinned pnpm launchers from mcp-fleet.nix rows
-# and ships the fleet/agent observability surface — `forge-mcp` (outdated |
-# doctor | drift | generate | roots | snoop), all verbs emitting
-# schema=forge-mcp/v1 JSON receipts, plus `forge-agents`, the one collector
-# turning agent lanes, attention, and AI quota into cached facts the zjstatus
-# bar renders. Drift reconciles five registries against the manifest owner
-# (claude, codex, vscode, maghz-claude, maghz-codex) and only reports;
-# `generate` is the one desired-registration generator. Bar code never
-# touches providers or credentials; the collector owns that boundary.
+# Data-plane owner: builds pinned pnpm launchers from mcp-fleet.nix rows and
+# ships the fleet/agent observability surface — `forge-mcp` (outdated |
+# doctor | drift | generate | roots | snoop) emitting schema=forge-mcp/v1
+# receipts, plus `forge-agents`, the collector turning agent lanes,
+# attention, and AI quota into cached facts the zjstatus bar renders. Bar
+# code never touches providers or credentials; the collector owns that seam.
 {
   config,
   lib,
@@ -21,6 +18,9 @@
 }: let
   profileBin = "/etc/profiles/per-user/${config.home.username}/bin";
   stateHome = config.xdg.stateHome;
+  # Darwin-only package: interpolating it unconditionally breaks the NixOS
+  # eval, and shell-tools imports on both hosts. Empty string = no notifier.
+  tnBin = lib.optionalString pkgs.stdenv.hostPlatform.isDarwin "${pkgs.terminal-notifier}/bin/terminal-notifier";
   inherit (config.forge.theme) roles; # Estate palette owner (modules/home/theme.nix)
   fleet = import ./mcp-fleet.nix {
     inherit profileBin;
@@ -42,6 +42,8 @@
     needsInput = true;
     minIntervalSec = 300;
   };
+  # Agent-lane roster: process basenames the collector counts as agent lanes.
+  agentLanes = ["claude" "codex"];
   mkLauncher = row: name:
     pkgs.writeShellApplication {
       inherit name;
@@ -179,14 +181,17 @@
         fi
       }
       tools_json='{"tools":[{"name":"rhino_status","description":"Reports the Rhino MCP gate: the full rhino-mcp-platform toolset loads only while Rhino 9 WIP runs. Call this to learn how to bring the toolset up.","inputSchema":{"type":"object","properties":{}}}]}'
+      # Streaming boundary: one jq projection per message; the 0x1f join
+      # survives absent fields, and a malformed line skips without output.
       while IFS= read -r line; do
         [ -n "$line" ] || continue
-        method="$(jq -r '.method // empty' <<<"$line" 2>/dev/null || true)"
-        id="$(jq -c 'if has("id") then .id else empty end' <<<"$line" 2>/dev/null || true)"
+        IFS=$'\x1f' read -r method id pv < <(jq -r '
+          [(.method // ""), (if has("id") then (.id | tojson) else "" end),
+           (.params.protocolVersion // "2025-06-18")] | join("\u001f")' \
+          <<<"$line" 2>/dev/null) || continue
         case "$method" in
           initialize)
             [ -n "$id" ] || continue
-            pv="$(jq -r '.params.protocolVersion // "2025-06-18"' <<<"$line" 2>/dev/null || printf '2025-06-18')"
             jq -cn --argjson id "$id" --arg pv "$pv" \
               '{jsonrpc: "2.0", id: $id, result: {protocolVersion: $pv, capabilities: {tools: {}}, serverInfo: {name: "rhino-mcp-gate", version: "1.0.0"}}}'
             ;;
@@ -426,6 +431,7 @@
         done
         rc=0 rows=""
         while IFS="|" read -r pkg version; do
+          [ -n "$pkg" ] || continue
           if latest="$(curl -fsS --max-time 20 "https://registry.npmjs.org/$(jq -rn --arg p "$pkg" '$p|@uri')/latest" | jq -er .version)"; then
             if [ "$latest" != "$version" ]; then
               rows="$rows"$'\n'"OUTDATED"$'\t'"$pkg"$'\t'"$version"$'\t'"$latest"; rc=1
@@ -451,8 +457,11 @@
             printf '%-9s %s pinned=%s latest=%s\n' "$s" "$p" "$v" "$l"
           done
         fi
-        if [ "$notify" = 1 ] && [ "$rc" = 1 ]; then
-          /usr/bin/osascript -e "display notification \"$n MCP pin(s) behind npm latest - run forge-mcp outdated\" with title \"Forge MCP pins\"" || true
+        tn='${tnBin}'
+        if [ "$notify" = 1 ] && [ "$rc" = 1 ] && [ -n "$tn" ]; then
+          "$tn" -title "Forge MCP pins" \
+            -message "$n MCP pin(s) behind npm latest - run forge-mcp outdated" \
+            -group forge-mcp-pins >/dev/null 2>&1 || true
         fi
         receipt outdated "$([ "$rc" = 0 ] && echo ok || echo outdated)" "outdated=$n"
         exit "$rc"
@@ -469,7 +478,7 @@
         # One jq projection owns the row header; unit-separator join survives
         # empty fields where tab-IFS reads would collapse them.
         IFS=$'\x1f' read -r name probe transport t < <(jq -r \
-          '[.name, .probe, .transport, (.codex.startupTimeoutSec // 20 | tostring)] | join("")' <<<"$row")
+          '[.name, .probe, .transport, (.codex.startupTimeoutSec // 20 | tostring)] | join("\u001f")' <<<"$row")
         missing="$(jq -r '(.envKeys // [])[]' <<<"$row" | while IFS= read -r k; do
           [ -n "''${!k:-}" ] || printf '%s ' "$k"
         done)"
@@ -493,12 +502,12 @@
           # timeout after doctor returns). timeout backstops mute servers.
           mkfifo "$out.fifo"
           line=""
-          exec 3< <(timeout "$((t + 2))" "$cmdpath" ''${argv[0]+"''${argv[@]}"} <"$out.fifo" 2>/dev/null || true)
-          exec 4>"$out.fifo"
-          printf '%s\n' "$req" >&4
-          IFS= read -r -t "$t" line <&3 || true
-          exec 4>&-
-          exec 3<&-
+          exec {rfd}< <(timeout "$((t + 2))" "$cmdpath" ''${argv[0]+"''${argv[@]}"} <"$out.fifo" 2>/dev/null || true)
+          exec {wfd}>"$out.fifo"
+          printf '%s\n' "$req" >&"$wfd"
+          IFS= read -r -t "$t" line <&"$rfd" || true
+          exec {wfd}>&-
+          exec {rfd}<&-
           rm -f "$out.fifo"
           if info="$(jq -er '.result.serverInfo | "\(.name) \(.version // "?")"' <<<"$line" 2>/dev/null)"; then
             emit OK "$info$envnote"
@@ -546,14 +555,13 @@
       family_rows() { # $1=outfile
         local out="$1"
         while IFS= read -r row; do
-          local name label port token
-          name="$(jq -r '.name' <<<"$row")"
-          label="$(jq -r '.doctor.launchdLabel // empty' <<<"$row")"
-          port="$(jq -r '.doctor.port // empty' <<<"$row")"
-          token="$(jq -r '.doctor.tokenFile // empty' <<<"$row")"
+          local name label port token lctl pid
+          # One projection per doctor-row snapshot; 0x1f join survives empties.
+          IFS=$'\x1f' read -r name label port token < <(jq -r \
+            '[.name, (.doctor.launchdLabel // ""), (.doctor.port // "" | tostring), (.doctor.tokenFile // "")] | join("\u001f")' <<<"$row")
           if [ -n "$label" ]; then
-            if /bin/launchctl print "gui/$(id -u)/$label" >/dev/null 2>&1; then
-              pid="$(/bin/launchctl print "gui/$(id -u)/$label" 2>/dev/null | awk '/^\s*pid = /{print $3; exit}')"
+            if lctl="$(/bin/launchctl print "gui/$(id -u)/$label" 2>/dev/null)"; then
+              pid="$(awk '/^\s*pid = /{print $3; exit}' <<<"$lctl")"
               if [ -n "''${pid:-}" ]; then
                 printf 'OK\t%s/launchd\t%s running pid=%s\n' "$name" "$label" "$pid" >>"$out"
               else
@@ -564,8 +572,7 @@
             fi
           fi
           if [ -n "$port" ]; then
-            if (exec 3<>"/dev/tcp/127.0.0.1/$port") 2>/dev/null; then
-              exec 3>&- 3<&- || true
+            if (exec {tcp_fd}<>"/dev/tcp/127.0.0.1/$port" && exec {tcp_fd}>&-) 2>/dev/null; then
               printf 'OK\t%s/port\tloopback %s bound\n' "$name" "$port" >>"$out"
             else
               printf 'FAIL\t%s/port\tloopback %s not listening\n' "$name" "$port" >>"$out"
@@ -675,33 +682,26 @@
           drift_lines="$(grep -cv '^INFO ' "$f" || true)"
           printf '%s|subset|1|%s|%s\n' "$name" "$([ "$drift_lines" = 0 ] && echo 1 || echo 0)" "$f" >>"$tmp/registries"
         }
-        if [ -f "$vscode_mcp" ]; then
-          if v_json="$(jq '.servers // {}' "$vscode_mcp" 2>/dev/null)"; then
-            subset_lane vscode "$v_json" '${subsetClaudeJq}'
+        # Projection registries are rows (name|file|format|extract|program):
+        # a new registry is one row, never a new if/else block.
+        extract_reg() { # $1=json|toml $2=filter $3=file
+          case "$1" in
+            json) jq "$2" "$3" 2>/dev/null ;;
+            toml) yq -p toml -o json "$2" "$3" 2>/dev/null ;;
+          esac
+        }
+        while IFS='|' read -r rname rfile rfmt rfilter rprog; do
+          if [ ! -f "$rfile" ]; then
+            printf '%s|subset|0|1|%s\n' "$rname" /dev/null >>"$tmp/registries"
+          elif r_json="$(extract_reg "$rfmt" "$rfilter" "$rfile")"; then
+            subset_lane "$rname" "$r_json" "$rprog"
           else
-            printf 'vscode|subset|1|0|%s\n' /dev/null >>"$tmp/registries"
+            printf '%s|subset|1|0|%s\n' "$rname" /dev/null >>"$tmp/registries"
           fi
-        else
-          printf 'vscode|subset|0|1|%s\n' /dev/null >>"$tmp/registries"
-        fi
-        if [ -f "$maghz_root/.mcp.json" ]; then
-          if m_json="$(jq '.mcpServers // {}' "$maghz_root/.mcp.json" 2>/dev/null)"; then
-            subset_lane maghz-claude "$m_json" '${subsetClaudeJq}'
-          else
-            printf 'maghz-claude|subset|1|0|%s\n' /dev/null >>"$tmp/registries"
-          fi
-        else
-          printf 'maghz-claude|subset|0|1|%s\n' /dev/null >>"$tmp/registries"
-        fi
-        if [ -f "$maghz_root/.codex/config.toml" ]; then
-          if mc_json="$(yq -p toml -o json '.mcp_servers // {}' "$maghz_root/.codex/config.toml" 2>/dev/null)"; then
-            subset_lane maghz-codex "$mc_json" '${subsetCodexJq}'
-          else
-            printf 'maghz-codex|subset|1|0|%s\n' /dev/null >>"$tmp/registries"
-          fi
-        else
-          printf 'maghz-codex|subset|0|1|%s\n' /dev/null >>"$tmp/registries"
-        fi
+        done < <(printf '%s\n' \
+          "vscode|$vscode_mcp|json|.servers // {}|${subsetClaudeJq}" \
+          "maghz-claude|$maghz_root/.mcp.json|json|.mcpServers // {}|${subsetClaudeJq}" \
+          "maghz-codex|$maghz_root/.codex/config.toml|toml|.mcp_servers // {}|${subsetCodexJq}")
 
         rc=0
         while IFS='|' read -r _ _ present clean _; do
@@ -735,7 +735,7 @@
             fi
           done <"$tmp/registries"
         fi
-        receipt drift "$([ "$rc" = 0 ] && echo clean || echo drift)" "registries=5"
+        receipt drift "$([ "$rc" = 0 ] && echo clean || echo drift)" "registries=$(wc -l <"$tmp/registries" | tr -d ' ')"
         exit "$rc"
       }
 
@@ -751,7 +751,7 @@
       }
 
       # Agent-root observability: runtime corpus facts (counts + sizes) for the
-      # CA-9 retention board. Read-only; class names are the retention rows.
+      # retention board. Read-only; class names are the retention rows.
       cmd_roots() {
         as_json=0; [ "''${1:-}" != "--json" ] || as_json=1
         scan() { # $1=root $2=class $3=path
@@ -807,7 +807,8 @@
         logdir="${snoopPolicy.logDir}"
         mkdir -p "$logdir"
         find "$logdir" -type f -mtime +${toString snoopPolicy.retentionDays} -delete 2>/dev/null || true
-        log="$logdir/$server.$(date -u +%Y%m%dT%H%M%SZ).jsonl"
+        TZ=UTC0 printf -v snap '%(%Y%m%dT%H%M%SZ)T' "$EPOCHSECONDS"
+        log="$logdir/$server.$snap.jsonl"
         cmdpath="$(jq -r '.command' <<<"$row")"
         mapfile -t argv < <(jq -r '(.args // [])[]' <<<"$row")
         meta() { # $1=direction
@@ -836,15 +837,11 @@
     '';
   };
 
-  # --- forge-agents: the CA-7 collector -------------------------------------
+  # --- forge-agents ----------------------------------------------------------
   # One data owner turns agent lanes, attention, and AI quota into one cached
   # fact set; the zjstatus top bar is the ONE surface rendering the cells.
-  # Quota lanes: Codex from provider rate_limit snapshots in session rollouts;
-  # Claude from local transcript/stats estimation (source-labeled). Failed
-  # lanes preserve the previous value with stale=true and back off
-  # exponentially. Projections: role-styled zjstatus pipe cells, workspace-
-  # graph lane rows, policy-gated desktop notification whose click routes
-  # back to the raising pane via the `focus` verb.
+  # Failed provider lanes keep the previous value with stale=true and back off
+  # exponentially; a notification click routes back via the `focus` verb.
   forgeAgents = pkgs.writeShellApplication {
     name = "forge-agents";
     runtimeInputs = [pkgs.coreutils pkgs.jq pkgs.findutils pkgs.gawk pkgs.gnugrep];
@@ -894,10 +891,11 @@
               }
 
               # --- agent lanes: process facts -----------------------------------
+              # The lane filter derives from the Nix-owned agentLanes roster.
               lanes_rows="$(/bin/ps -axo pid=,pcpu=,tt=,etime=,args= | awk '
                 {
                   n = split($5, parts, "/"); base = parts[n]
-                  if (base == "claude" || base == "codex")
+                  if (base ~ /^(${lib.concatStringsSep "|" agentLanes})$/)
                     printf "%s\t%s\t%s\t%s\t%s\n", $1, $2, $3, $4, base
                 }' | jq -Rcs 'split("\n") | map(select(length > 0) | split("\t")
                   | {pid: (.[0] | tonumber), cpu: (.[1] | tonumber), tty: .[2], etime: .[3], agent: .[4],
@@ -908,7 +906,7 @@
               # within the window AND its recorded tty still hosts an idle claude
               # lane; one row per tty so stacked tabs never inflate the count, and
               # the newest row keeps its identity so `focus` can route the click --
-              att_cut="$(date -u -d '-60 minutes' +%Y-%m-%dT%H:%M:%SZ)"
+              TZ=UTC0 printf -v att_cut '%(%Y-%m-%dT%H:%M:%SZ)T' "$((now - 3600))"
               att="$(tail -n 500 "$feed" 2>/dev/null | jq -cs --arg cut "$att_cut" --argjson lanes "$lanes_rows" '
                 def pty: sub("^tty"; "");
                 ([$lanes[] | select(.agent == "claude" and .state == "waiting") | .tty | pty] | unique) as $idle
@@ -926,7 +924,9 @@
               if should_run codex; then
                 cx_ok=0
                 while IFS= read -r f; do
-                  rl="$(jq -c 'select(.payload.rate_limits.primary) | .payload.rate_limits' "$f" 2>/dev/null | tail -1)"
+                  # A torn tail line in a live-appended session file aborts jq
+                  # mid-stream; the rows it already emitted stay the evidence.
+                  rl="$(jq -c 'select(.payload.rate_limits.primary) | .payload.rate_limits' "$f" 2>/dev/null | tail -1 || true)"
                   if [ -n "$rl" ]; then
                     cx="$(jq -c --arg ts "$ts" '{
                       provider: "codex", source: "provider", as_of: $ts, stale: false, error: null,
@@ -950,18 +950,25 @@
               cl="$cl_prev"; cl_ok=1
               if should_run claude; then
                 cl_ok=0
-                cutoff="$(date -u -d '-5 hours' +%Y-%m-%dT%H:%M:%SZ)"
+                TZ=UTC0 printf -v cutoff '%(%Y-%m-%dT%H:%M:%SZ)T' "$((now - 18000))"
                 win_tok="$(
                   find "$HOME/.claude/projects" -type f -name '*.jsonl' -newermt '-5 hours' -print0 2>/dev/null \
                     | while IFS= read -r -d "" f; do tail -n 2000 "$f" 2>/dev/null | grep '"usage"' || true; done \
-                    | jq -n --arg c "$cutoff" \
-                      '[inputs | select(type == "object" and .message.usage and ((.timestamp // "") >= $c))
+                    | jq -Rn --arg c "$cutoff" \
+                      '[inputs | fromjson?
+                        | select(type == "object" and (.message | type) == "object"
+                                 and .message.usage and ((.timestamp // "") >= $c))
                         | .message.usage | ((.input_tokens // 0) + (.output_tokens // 0))] | add // 0' 2>/dev/null
                 )" || win_tok=""
-                week_tok="$(jq --arg d "$(date -u -d '-7 days' +%Y-%m-%d)" \
-                  '[.dailyModelTokens[]? | select(.date >= $d) | .tokensByModel | add] | add // 0' \
-                  "$HOME/.claude/stats-cache.json" 2>/dev/null)" || week_tok=""
-                week_asof="$(jq -r '.lastComputedDate // "-"' "$HOME/.claude/stats-cache.json" 2>/dev/null || echo -)"
+                TZ=UTC0 printf -v week_cut '%(%Y-%m-%d)T' "$((now - 604800))"
+                # One projection per stats snapshot; a missing cache leaves both
+                # fields at their fallbacks.
+                week_tok="" week_asof=""
+                IFS=$'\x1f' read -r week_tok week_asof < <(jq -r --arg d "$week_cut" \
+                  '[([.dailyModelTokens[]? | select(.date >= $d) | .tokensByModel | add] | add // 0 | tostring),
+                    (.lastComputedDate // "-")] | join("\u001f")' \
+                  "$HOME/.claude/stats-cache.json" 2>/dev/null) || true
+                [ -n "$week_asof" ] || week_asof="-"
                 if [ -n "$win_tok" ]; then
                   cl="$(jq -cn --arg ts "$ts" --argjson w "$win_tok" --argjson wk "''${week_tok:-0}" --arg wa "$week_asof" '{
                     provider: "claude", source: "local-estimate", as_of: $ts, stale: false, error: null,
@@ -993,13 +1000,16 @@
               # The zjstatus top bar is the ONE render surface; the collector owns
               # role->palette styling (build-time hexes from the theme owner) and
               # ships fully formatted payloads the bar renders verbatim (dynamic).
-              run_n="$(jq -r '.lanes.running' "$cache")"
-              wait_n="$(jq -r '.lanes.waiting' "$cache")"
+              # One projection per cache snapshot; 0x1f join survives empties.
+              IFS=$'\x1f' read -r run_n wait_n cx_p cx_s cl_w cx_stale cl_stale < <(jq -r '
+                [(.lanes.running | tostring), (.lanes.waiting | tostring),
+                 (.quota.codex.primary_used_percent // "" | tostring),
+                 (.quota.codex.secondary_used_percent // "" | tostring),
+                 (.quota.claude.window_tokens // "" | tostring),
+                 (.quota.codex.stale != false | tostring),
+                 (.quota.claude.stale != false | tostring)] | join("\u001f")' "$cache")
               agents_text="AI ''${run_n}▸ ''${wait_n}⋯"
               [ "''${needs:-0}" = 0 ] || agents_text="$agents_text ''${needs}✋"
-              cx_p="$(jq -r '.quota.codex.primary_used_percent // empty' "$cache")"
-              cx_s="$(jq -r '.quota.codex.secondary_used_percent // empty' "$cache")"
-              cl_w="$(jq -r '.quota.claude.window_tokens // empty' "$cache")"
               quota_text=""
               if [ -n "$cx_p" ]; then quota_text="CX ''${cx_p%.*}%·''${cx_s%.*}%"; fi
               if [ -n "$cl_w" ]; then
@@ -1043,10 +1053,11 @@
               prev_needs="$(jq -r '.attention.needs_input // 0' <<<"$prev")"
               last_notify="$(jq -r '.last_notify // 0' <<<"$m")"
               notified=0
-              if ${lib.boolToString notifyPolicy.needsInput} \
+              tn='${tnBin}'
+              if ${lib.boolToString notifyPolicy.needsInput} && [ -n "$tn" ] \
                 && [ "''${needs:-0}" -gt "''${prev_needs:-0}" ] \
                 && [ $((now - last_notify)) -ge ${toString notifyPolicy.minIntervalSec} ]; then
-                ${pkgs.terminal-notifier}/bin/terminal-notifier -title "Forge Agents" \
+                "$tn" -title "Forge Agents" \
                   -message "''${needs} agent session(s) waiting for input" \
                   -group forge-agents -execute "${profileBin}/forge-agents focus" >/dev/null 2>&1 || true
                 notified=1
@@ -1068,7 +1079,7 @@
               mv "$meta.tmp.$$" "$meta"
 
               # jq's // coerces false to the alternative; != false keeps a real false.
-              summary="needs=''${needs:-0} run=$run_n cx_stale=$(jq -r '.quota.codex.stale != false' "$cache") cl_stale=$(jq -r '.quota.claude.stale != false' "$cache")"
+              summary="needs=''${needs:-0} run=$run_n cx_stale=$cx_stale cl_stale=$cl_stale"
               prev_summary="$(jq -r '"needs=\(.attention.needs_input // 0) run=\(.lanes.running // 0) cx_stale=\(.quota.codex.stale != false) cl_stale=\(.quota.claude.stale != false)"' <<<"$prev" 2>/dev/null || echo "")"
               if [ "$summary" != "$prev_summary" ] || [ "$notified" = 1 ]; then
                 mkdir -p "$(dirname "$receipt_log")"
@@ -1077,26 +1088,95 @@
               fi
             }
 
-            # Click-routing: land the operator on the pane that raised attention.
-            # Inner hop focuses the zellij pane; outer hop resolves the attached
-            # client's pty to its hosting wezterm pane or Terminal tab and raises it.
-            # Every run leaves a lane receipt: notification clicks execute headless,
-            # so the receipt log is the only witness when routing goes sideways.
+            # Click-routing: the inner hop focuses the zellij pane and chases
+            # the attached client's pty; the outer hop resolves pty -> hosting
+            # app through process ancestry and dispatches that app's focus row
+            # (unknown app: bare raise). Clicks run headless, so lane receipts
+            # are the only witness when routing goes sideways.
             focus_receipt() {
               mkdir -p "$(dirname "$receipt_log")"
               printf 'ts=%s\towner=forge-agents\tverb=focus\tlane=%s\ttty=%s\n' \
                 "$(iso_now)" "$1" "''${tty:-.}" >>"$receipt_log" 2>/dev/null || true
             }
+            # Generic resolver: the lowest pid on the pty is its session leader;
+            # walk ancestry to the first command inside an .app bundle. macOS
+            # `ps -o comm=` prints full executable paths, so the bundle names
+            # the host deterministically for any terminal, present or future.
+            host_app_for_tty() { # $1=tty (ttysNNN) -> app basename on stdout
+              local pid cmd
+              pid="$(/bin/ps -t "$1" -o pid= 2>/dev/null | sort -n | head -1 | tr -d ' ')"
+              while [ -n "$pid" ] && [ "$pid" -gt 1 ]; do
+                cmd="$(/bin/ps -o comm= -p "$pid" 2>/dev/null)"
+                case "$cmd" in
+                  *.app/*)
+                    basename "''${cmd%%.app/*}"
+                    return 0
+                    ;;
+                esac
+                pid="$(/bin/ps -o ppid= -p "$pid" 2>/dev/null | tr -d ' ')"
+              done
+              return 1
+            }
+            focus_wezterm() { # $1=tty $2=recorded-pane-id
+              [ -n "$wezbin" ] || return 1
+              local pane=""
+              if [ -n "$1" ]; then
+                pane="$("$wezbin" cli list --format json 2>/dev/null \
+                  | jq -r --arg t "/dev/$1" 'first(.[] | select(.tty_name == $t) | .pane_id) // empty' || true)"
+              fi
+              if [ -n "$pane" ]; then
+                "$wezbin" cli activate-pane --pane-id "$pane" 2>/dev/null || true
+                /usr/bin/open -a WezTerm 2>/dev/null || true
+                focus_receipt "wezterm-pty"
+                return 0
+              fi
+              if [ -n "$2" ] && "$wezbin" cli activate-pane --pane-id "$2" 2>/dev/null; then
+                /usr/bin/open -a WezTerm 2>/dev/null || true
+                focus_receipt "wezterm-pane"
+                return 0
+              fi
+              return 1
+            }
+            focus_terminal() { # $1=tty (Terminal.app tab match by pty)
+              [ -n "$1" ] || return 1
+              local hit
+              # Timeout budget: a hung Apple Event must never wedge the click.
+              hit="$(/usr/bin/osascript 2>/dev/null <<OSA
+      with timeout of 5 seconds
+        tell application "Terminal"
+          repeat with w in windows
+            repeat with t in tabs of w
+              if (tty of t) is "/dev/$1" then
+                set selected of t to true
+                set index of w to 1
+                activate
+                return "hit"
+              end if
+            end repeat
+          end repeat
+        end tell
+      end timeout
+      return ""
+      OSA
+              )" || hit=""
+              [ "$hit" = "hit" ] || return 1
+              focus_receipt "terminal-tab"
+              return 0
+            }
             cmd_focus() {
+              local row zs zp wp tp app handler live_sessions ctty
+              declare -A focus_row=([WezTerm]=focus_wezterm [Terminal]=focus_terminal)
               row="$(jq -c '.attention.latest // empty' "$cache" 2>/dev/null || true)"
               [ -n "$row" ] || row="$(tail -n 500 "$feed" 2>/dev/null | jq -cs '
                 [group_by(.session_id)[] | max_by(.ts) | select(.event == "Notification")]
                 | max_by(.ts) // empty' 2>/dev/null || true)"
-              zs="$(jq -r '.zellij_session // ""' <<<"$row" 2>/dev/null || true)"
-              zp="$(jq -r '.zellij_pane // ""' <<<"$row" 2>/dev/null || true)"
-              wp="$(jq -r '.wezterm_pane // ""' <<<"$row" 2>/dev/null || true)"
-              tp="$(jq -r '.term // ""' <<<"$row" 2>/dev/null || true)"
-              tty="$(jq -r '.tty // ""' <<<"$row" 2>/dev/null || true)"
+              # One projection per row snapshot; the 0x1f join survives empties.
+              IFS=$'\x1f' read -r zs zp wp tp tty < <(jq -r \
+                '[.zellij_session // "", .zellij_pane // "", .wezterm_pane // "", .term // "", .tty // ""] | join("\u001f")' \
+                <<<"''${row:-null}" 2>/dev/null) || true
+              # Feed rows are foreign material: tty crosses into ps and an
+              # AppleScript literal, so a non-pty spelling drops at the seam.
+              [[ "''${tty:-}" =~ ^[A-Za-z0-9]*$ ]] || tty=""
               wezbin="/Applications/WezTerm.app/Contents/MacOS/wezterm"
               [ -x "$wezbin" ] || wezbin="$(command -v wezterm || true)"
 
@@ -1110,54 +1190,24 @@
                 [ -z "$ctty" ] || tty="$ctty"
               fi
 
-              # Outer hop: wezterm pane by pty, recorded wezterm pane, Terminal tab
-              # by pty, then a bare app raise as the last resort.
-              if [ -n "$wezbin" ] && [ -n "$tty" ]; then
-                pane="$("$wezbin" cli list --format json 2>/dev/null \
-                  | jq -r --arg t "/dev/$tty" '.[] | select(.tty_name == $t) | .pane_id' | head -n1 || true)"
-                if [ -n "$pane" ]; then
-                  "$wezbin" cli activate-pane --pane-id "$pane" 2>/dev/null || true
-                  /usr/bin/open -a WezTerm 2>/dev/null || true
-                  focus_receipt "wezterm-pty"
-                  return 0
-                fi
+              # Outer hop: ancestry-resolved host app first, the recorded term
+              # program as fallback vocabulary, WezTerm as the estate default.
+              app=""
+              [ -z "''${tty:-}" ] || app="$(host_app_for_tty "$tty" || true)"
+              if [ -z "$app" ]; then
+                case "$tp" in
+                  Apple_Terminal) app="Terminal" ;;
+                  *) app="WezTerm" ;;
+                esac
               fi
-              if [ -n "$wp" ] && [ -n "$wezbin" ] && "$wezbin" cli activate-pane --pane-id "$wp" 2>/dev/null; then
-                /usr/bin/open -a WezTerm 2>/dev/null || true
-                focus_receipt "wezterm-pane"
+              handler="''${focus_row[$app]:-}"
+              if [ -n "$handler" ] && "$handler" "''${tty:-}" "$wp"; then
                 return 0
               fi
-              if [ "$tp" = "Apple_Terminal" ] && [ -n "$tty" ]; then
-                hit="$(/usr/bin/osascript 2>/dev/null <<OSA
-      tell application "Terminal"
-        repeat with w in windows
-          repeat with t in tabs of w
-            if (tty of t) is "/dev/$tty" then
-              set selected of t to true
-              set index of w to 1
-              activate
-              return "hit"
-            end if
-          end repeat
-        end repeat
-      end tell
-      return ""
-      OSA
-                )" || hit=""
-                if [ "$hit" = "hit" ]; then
-                  focus_receipt "terminal-tab"
-                  return 0
-                fi
-              fi
-              # App-level fallback honors the recorded host app; a TCC-blocked
-              # tab match still lands the operator on the right application.
-              if [ "$tp" = "Apple_Terminal" ]; then
-                /usr/bin/open -a Terminal 2>/dev/null || true
-                focus_receipt "terminal-app"
-              else
-                /usr/bin/open -a WezTerm 2>/dev/null || true
-                focus_receipt "wezterm-app"
-              fi
+              # Bare raise honors the resolved app; a TCC-blocked tab match
+              # still lands the operator on the right application.
+              /usr/bin/open -a "$app" 2>/dev/null || true
+              focus_receipt "$(printf '%s-app' "$app" | tr '[:upper:]' '[:lower:]')"
             }
 
             case "$verb" in

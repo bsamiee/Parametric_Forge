@@ -2,13 +2,9 @@
 # Author        : Bardia Samiee
 # Project       : Parametric Forge
 # License       : MIT
-# Path          : /modules/home/programs/shell-tools/rclone.nix
+# Path          : modules/home/programs/shell-tools/rclone.nix
 # ----------------------------------------------------------------------------
 # Cloud storage synchronization and management
 _: {
-  programs.rclone = {
-    enable = true;
-    # Configuration file managed at ~/.config/rclone/rclone.conf
-    # Additional remotes and settings can be configured declaratively here
-  };
+  programs.rclone.enable = true;
 }

@@ -122,8 +122,6 @@
       pkgs.perl
     ];
     text = ''
-      set -euo pipefail
-
       target_dir="${antigravity-cli-bin-dir}"
       binary="$target_dir/agy"
       mkdir -p "$target_dir"

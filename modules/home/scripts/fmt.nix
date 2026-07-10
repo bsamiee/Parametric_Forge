@@ -11,7 +11,7 @@
 {pkgs, ...}: let
   fmt = pkgs.writeShellApplication {
     name = "fmt";
-    runtimeInputs = [pkgs.coreutils pkgs.fd pkgs.gnused pkgs.jq];
+    runtimeInputs = [pkgs.coreutils pkgs.fd pkgs.gawk pkgs.jq];
     text = ''
       shopt -s inherit_errexit
 
@@ -359,9 +359,7 @@
             detail="rc=''${lane_rc[$lane]}"
             [[ "''${lane_state[$lane]}" == timeout ]] && detail="timed out after ''${deadline}s"
             printf '[FAIL] %-8s %3d file(s) via %s (%s)\n' "$lane" "''${lane_count[$lane]}" "''${_LANE_TOOL[$lane]}" "$detail"
-            head -n 40 "$tmp/out.$lane" | sed 's/^/    /'
-            out_lines=$(wc -l <"$tmp/out.$lane")
-            ((out_lines > 40)) && printf '    [+%d more lines]\n' "$((out_lines - 40))"
+            gawk 'NR <= 40 { print "    " $0 } END { if (NR > 40) printf "    [+%d more lines]\n", NR - 40 }' "$tmp/out.$lane"
             ;;
         esac
       done

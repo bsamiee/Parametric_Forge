@@ -42,12 +42,12 @@ in {
 
     [ui.process_table.row]
     selected_symbol = "▶"
-    even = { fg = "${palette.foreground.hex}" }                             # Normal foreground
-    odd = { fg = "${palette.foreground.hex}", bg = "${palette.current_line.hex}" }            # Subtle background for zebra striping
-    selected = { fg = "${palette.background.hex}", bg = "${palette.cyan.hex}", add_modifier = "BOLD" }  # Selection without BOLD
+    even = { fg = "${palette.foreground.hex}" } # Normal foreground
+    odd = { fg = "${palette.foreground.hex}", bg = "${palette.current_line.hex}" } # Subtle background for zebra striping
+    selected = { fg = "${palette.background.hex}", bg = "${palette.cyan.hex}", add_modifier = "BOLD" }
 
     [ui.process_table.cell]
-    highlighted = { fg = "${palette.green.hex}", bg = "${palette.background.hex}" }    # Green for search matches
+    highlighted = { fg = "${palette.green.hex}", bg = "${palette.background.hex}" } # Green for search matches
 
     [ui.process_table.scrollbar]
     track_symbol = "│"

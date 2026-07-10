@@ -2,7 +2,7 @@
 # Author        : Bardia Samiee
 # Project       : Parametric Forge
 # License       : MIT
-# Path          : /modules/home/programs/container-tools/k9s.nix
+# Path          : modules/home/programs/container-tools/k9s.nix
 # ----------------------------------------------------------------------------
 # Terminal UI for Kubernetes cluster management; package row lives in the owner
 # table. The forge skin is projected from the estate palette owner.

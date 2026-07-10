@@ -1056,7 +1056,7 @@
   ids = lib.listToAttrs (bindIds layers.hyper hyperRows ++ bindIds layers.super superRows);
 
   # --- Register projection ----------------------------------------------------
-  # Typed chord rows for the CA-1 register rail: every consumer's chords in one
+  # Typed chord rows for the register rail: every consumer's chords in one
   # vocabulary — chord_id, consumer, physical_layer, mods, key, label, action,
   # scope (the KDL mode block or OS/app plane the claim is active in), toggle
   # (re-press of the same chord exits the mode), projection_path, rendered

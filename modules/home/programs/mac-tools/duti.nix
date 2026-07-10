@@ -2,10 +2,11 @@
 # Author        : Bardia Samiee
 # Project       : Parametric Forge
 # License       : MIT
-# Path          : /modules/home/programs/duti.nix
+# Path          : modules/home/programs/mac-tools/duti.nix
 # ----------------------------------------------------------------------------
 # macOS default application associations via UTIs
 {
+  config,
   lib,
   pkgs,
   ...
@@ -63,10 +64,8 @@ in {
   home.packages = [pkgs.duti];
   xdg.configFile."duti/settings".text = dutiConfig;
 
-  # Apply on activation
+  # Apply on activation; the settings path derives from the XDG owner above.
   home.activation.setDefaultApplications = lib.hm.dag.entryAfter ["writeBoundary"] ''
-    if [[ -f "$HOME/.config/duti/settings" ]]; then
-      $DRY_RUN_CMD ${pkgs.duti}/bin/duti "$HOME/.config/duti/settings"
-    fi
+    run ${pkgs.duti}/bin/duti ${lib.escapeShellArg "${config.xdg.configHome}/duti/settings"}
   '';
 }

@@ -29,7 +29,7 @@
     xdgCacheHome = config.xdg.cacheHome;
   };
 
-  # --- Plugin pins (CA-2 manifest rows; file:// store-path loads only) ---------
+  # --- Plugin pins (manifest rows; file:// store-path loads only) ---------
   pluginSrc = row:
     pkgs.fetchFromGitHub {
       inherit (row) owner repo rev hash;
@@ -42,7 +42,7 @@
   # path all arrive from config.forge.fonts; deck.lua interprets them.
   fontRow = config.forge.fonts.projections.luaFont;
 
-  # --- Workspace rows (CA-1 name policy projection) ----------------------------
+  # --- Workspace rows (name-policy projection) ----------------------------
   workspaceRoot = "${homeDir}/Documents/99.Github";
   workspaceRows =
     map (r: {
@@ -54,7 +54,7 @@
   defaultWorkspace =
     (lib.findFirst (r: lib.elem "wezterm-workspace-name" r.consumers) {slug = "forge";} naming).slug;
 
-  # --- SSH domain rows (CA-3 host rows; transport-only, never persistence) -----
+  # --- SSH domain rows (ssh registry rows; transport-only, never persistence) -----
   sshDomainRows =
     map (h: {
       name = "SSH:${h.name}";
@@ -414,7 +414,7 @@
     name = "forge-workspace";
     runtimeInputs = [pkgs.coreutils pkgs.jq pkgs.gawk pkgs.gnugrep];
     text = ''
-      # Resolves a CA-1 name-policy slug to WezTerm workspace + mux window and
+      # Resolves a name-policy slug to WezTerm workspace + mux window and
       # the desktop-Space bridge. Provider dispatch: none (default) degrades
       # with an explicit receipt row — never silent fallthrough.
       rows="${namingJson}"
@@ -435,10 +435,11 @@
       }
 
       # --no-auto-start on every cli call: a stale socket must fail the probe,
-      # never fork a daemonized mux server (the recorded litter hazard).
+      # never fork a daemonized mux server (the recorded litter hazard). The
+      # failed probe degrades to an empty live set, never a pipefail abort.
       live_workspaces() {
         if [ -n "''${WEZTERM_UNIX_SOCKET:-}" ] && [ -x "$wezterm_bin" ]; then
-          "$wezterm_bin" cli --no-auto-start list --format json 2>/dev/null | jq -r '[.[].workspace] | unique | .[]'
+          "$wezterm_bin" cli --no-auto-start list --format json 2>/dev/null | jq -r '[.[].workspace] | unique | .[]' || true
         fi
       }
 

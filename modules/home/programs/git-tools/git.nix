@@ -11,6 +11,7 @@
   pkgs,
   ...
 }: let
+  isDarwin = pkgs.stdenv.hostPlatform.isDarwin;
   # One universal identity; the unified estate key ("Forge SSH Key" in the
   # Private vault) authenticates and signs. op-ssh-sign resolves it by
   # public key through the 1Password agent seam in shell-tools/1password.nix.
@@ -32,12 +33,17 @@ in {
     enable = true;
     lfs.enable = true;
 
-    signing = {
-      key = "key::${identity.publicKey}";
-      format = "ssh";
-      signByDefault = true;
-      signer = "/Applications/1Password.app/Contents/MacOS/op-ssh-sign";
-    };
+    # The op agent (and its signer binary) exists on Darwin only; maghz holds
+    # no private key, so signing stays off there instead of faulting per commit.
+    signing =
+      {
+        key = "key::${identity.publicKey}";
+        format = "ssh";
+        signByDefault = isDarwin;
+      }
+      // lib.optionalAttrs isDarwin {
+        signer = "/Applications/1Password.app/Contents/MacOS/op-ssh-sign";
+      };
 
     settings = {
       user = {inherit (identity) name email;};

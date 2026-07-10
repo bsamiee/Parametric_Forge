@@ -8,6 +8,7 @@
 {
   config,
   forgeToolchainEnvFor,
+  lib,
   ...
 }: let
   toolchainEnv = forgeToolchainEnvFor {
@@ -15,6 +16,29 @@
     username = config.home.username;
     xdgCacheHome = config.xdg.cacheHome;
   };
+  # Never-clobber .zshenv floor mirroring the session-variable rows: shells
+  # whose parent scrubbed the env behind __HM_SESS_VARS_SOURCED still recover
+  # these. A new resilient var is one row; the fold owns the :- idiom.
+  fallbackEnv = {
+    GH_CONFIG_DIR = "${config.xdg.configHome}/gh";
+    CLOUDSDK_CONFIG = "${config.xdg.configHome}/gcloud";
+    WORKSPACE_MCP_CREDENTIALS_DIR = "${config.xdg.cacheHome}/workspace-mcp";
+    GOOGLE_WORKSPACE_CLI_CONFIG_DIR = "${config.xdg.configHome}/gws";
+    GOOGLE_WORKSPACE_PROJECT_ID = "workspace-mcp-500605";
+    MAGHZ_REMOTE_HOST = "31.97.131.41";
+    MAGHZ_REMOTE_USER = "maghz-agent";
+    MAGHZ_REMOTE_WORKROOT = "/home/maghz-agent/maghz";
+    PAGER = "less";
+    GH_PAGER = "delta";
+    GIT_PAGER = "delta";
+    LESS = "-RFX";
+  };
+  fallbackExports =
+    lib.concatMapStrings
+    (name: ''
+      export ${name}="''${${name}:-${fallbackEnv.${name}}}"
+    '')
+    (lib.attrNames fallbackEnv);
 in {
   programs.zsh = {
     # Runs in .zshenv for ALL shells (login, interactive, scripts, zellij panes).
@@ -46,19 +70,7 @@ in {
       fi
 
       ${toolchainEnv.shellExports toolchainEnv.scientificSessionEnv}
-      export GH_CONFIG_DIR="''${GH_CONFIG_DIR:-${config.xdg.configHome}/gh}"
-      export CLOUDSDK_CONFIG="''${CLOUDSDK_CONFIG:-${config.xdg.configHome}/gcloud}"
-      export WORKSPACE_MCP_CREDENTIALS_DIR="''${WORKSPACE_MCP_CREDENTIALS_DIR:-${config.xdg.cacheHome}/workspace-mcp}"
-      export GOOGLE_WORKSPACE_CLI_CONFIG_DIR="''${GOOGLE_WORKSPACE_CLI_CONFIG_DIR:-${config.xdg.configHome}/gws}"
-      export GOOGLE_WORKSPACE_PROJECT_ID="''${GOOGLE_WORKSPACE_PROJECT_ID:-workspace-mcp-500605}"
-      export MAGHZ_REMOTE_HOST="''${MAGHZ_REMOTE_HOST:-31.97.131.41}"
-      export MAGHZ_REMOTE_USER="''${MAGHZ_REMOTE_USER:-maghz-agent}"
-      export MAGHZ_REMOTE_WORKROOT="''${MAGHZ_REMOTE_WORKROOT:-/home/maghz-agent/maghz}"
-      export PAGER="''${PAGER:-less}"
-      export GH_PAGER="''${GH_PAGER:-delta}"
-      export GIT_PAGER="''${GIT_PAGER:-delta}"
-      export LESS="''${LESS:--RFX}"
-
+      ${fallbackExports}
     '';
   };
 }

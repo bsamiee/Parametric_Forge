@@ -59,7 +59,9 @@
       # host or remotely through nixos-rebuild-ng --target-host.
       mode="check"
       gen=""
-      os="''${FORGE_OS:-darwin}"
+      # Default --os keys on the running kernel: a NixOS host must never ride
+      # the darwin rail by default; FORGE_OS and --os stay explicit overrides.
+      os="''${FORGE_OS:-$(case "$(uname -s)" in Linux) echo nixos ;; *) echo darwin ;; esac)}"
       host="''${FORGE_HOST:-}"
       target_host="''${FORGE_TARGET_HOST:-}"
       usage() {
@@ -492,8 +494,8 @@
     # Map-proven residue candidates the detector re-proves live before any
     # action; every deletion is trash-first and restorable. cargo/rustup carry
     # the closed retirement decision: the toolchains are retired, regrowth is
-    # litter. update-notifier configstore rows are unowned litter by CA-2
-    # admission policy (self-mutating state disabled at admission).
+    # litter. update-notifier configstore rows are unowned litter by admission
+    # policy (self-mutating state disabled at admission).
     path = {
       pyenv-residue = ".pyenv";
       cargo-residue = ".cargo";
@@ -547,7 +549,7 @@
       cycles-ownerless-cache = ".cache/cycles";
       pause-note-tombstone = ".claude/dossiers/forge-rebuild/PAUSE-NOTE.md";
     };
-    # wezterm-plugin-clone-cache enforces CA-4 provenance law: every runtime
+    # wezterm-plugin-clone-cache enforces provenance law: every runtime
     # plugin clone must resolve to a pinned store-path origin; the live cache
     # is empty — regrowth is litter.
     glob = {
@@ -767,10 +769,17 @@
             ;;
           deadlink) args+=(-type l ! -exec test -e "{}" ";") ;;
         esac
-        find "$2" "''${args[@]}" -print0 2>/dev/null
+        # Partial traversal (an unreadable subtree) keeps its yield; find's rc
+        # is not evidence and must not kill the detector under pipefail.
+        find "$2" "''${args[@]}" -print0 2>/dev/null || true
       }
       count0() { tr -cd '\0' | wc -c | tr -d ' '; }
-      sum_kb0() { xargs -0 du -sk 2>/dev/null | awk '{s += $1} END {print s + 0}'; }
+      # -r: empty stdin must never run du against the CWD; du's rc on a
+      # vanished or unreadable entry is noise the awk fold absorbs.
+      sum_kb0() { { xargs -0 -r du -sk 2>/dev/null || true; } | awk '{s += $1} END {print s + 0}'; }
+      # Single-target size: one line always (END fold), never a du rc or a
+      # multi-line partial that would shift TSV columns downstream.
+      kb_of() { { du -sk "$1" 2>/dev/null || true; } | awk 'NR == 1 {s = $1} END {print s + 0}'; }
 
       # Stale trusted-project extraction: a row is stale when its path no
       # longer exists or sits on a scratch-class prefix.
@@ -805,7 +814,7 @@
               state=review safe=false detail="symlink, not a residue tree"
             elif [ -e "$target" ]; then
               state=litter action=trash count=1
-              kb="$(du -sk "$target" 2>/dev/null | cut -f1 || echo 0)"
+              kb="$(kb_of "$target")"
             fi
             ;;
           glob | age | deadlink)
@@ -827,7 +836,7 @@
             target="$HOME/$target"
             safe=false
             if [ -e "$target" ]; then
-              kb="$(du -sk "$target" 2>/dev/null | cut -f1 || echo 0)"
+              kb="$(kb_of "$target")"
               budget_kb=$((budget * 1024 * 1024))
               if [ "''${kb:-0}" -gt "$budget_kb" ]; then state=over-budget; else state=within-budget; fi
               detail="owner=$owner budget=''${budget}G prune: $prune"
@@ -876,7 +885,7 @@
         local dest="$HOME/.Trash/''${1##*/}.forge-cleanup.$run_ts"
         # Basename collisions from deep-tree prunes get a unique suffix so no
         # candidate silently stays behind.
-        while [ -e "$dest" ] || [ -L "$dest" ]; do dest="$dest.$RANDOM"; done
+        while [ -e "$dest" ] || [ -L "$dest" ]; do dest="$dest.$SRANDOM"; done
         mv -- "$1" "$dest"
       }
 
@@ -907,6 +916,12 @@
               continue
             fi
             row="$(jq -c --arg n "$name" '.[] | select(.name == $n)' "$rows_json")"
+            # A plan row absent from the live registry (stale plan across a
+            # generation change) is a typed skip, never an errexit mid-apply.
+            if [ -z "$row" ]; then
+              printf '%s\taction=none\toutcome=skipped-unknown-row\n' "$name"
+              continue
+            fi
             IFS=$'\x1f' read -r _ row_kind row_target _ row_root row_pattern row_match row_exclude row_minage _ row_depth row_maxage _ _ _ _ _ < <(row_fields "$row")
             # Re-verify at act time: a row that drifted since plan is skipped.
             fresh_state="$(detect_row "$row" | cut -f3)"
@@ -1035,8 +1050,13 @@
       }
       trap emit_receipt EXIT
 
+      # terminal-notifier over osascript: OSA notifications attribute to Script
+      # Editor and a click opens its document dialog. Darwin-only package —
+      # empty interpolation on NixOS makes notify a no-op there.
       notify() {
-        /usr/bin/osascript -e "display notification \"$1\" with title \"Forge Nix drift\"" >/dev/null 2>&1 || true
+        tn='${lib.optionalString pkgs.stdenv.hostPlatform.isDarwin "${pkgs.terminal-notifier}/bin/terminal-notifier"}'
+        [ -z "$tn" ] || "$tn" -title "Forge Nix drift" \
+          -message "$1" -group forge-nix-drift >/dev/null 2>&1 || true
       }
 
       # Scheduled runs stay AC-gated: a moved input triggers a full host build.
@@ -1072,7 +1092,7 @@
 
       # Installed daemon vs pinned artifact: Determinate version drift is a
       # separate object from flake-input drift and only ever notifies.
-      pinned="$(jq -r '.nodes."determinate-nixd-aarch64-darwin".locked.url // ""' flake.lock | grep -o 'v[0-9.]*' || true)"
+      pinned="$(jq -r '[.nodes | to_entries[] | select(.key | startswith("determinate-nixd-")) | .value.locked.url // ""] | first // ""' flake.lock | grep -o 'v[0-9.]*' || true)"
       installed="$(/usr/local/bin/determinate-nixd version 2>/dev/null | awk '/daemon version:/ {print "v" $NF; exit}' || true)"
       nixd="''${installed:--}:''${pinned:--}"
 
@@ -1140,7 +1160,11 @@
       fi
 
       if [ "$build" = "ok" ]; then
-        system_path="$(awk -F 'system=' '/forge-redeploy: build ok system=/ {print $2; exit}' "$tmpdir/redeploy")"
+        # The typed receipt row is the contract; human stdout wording is not.
+        redeploy_receipts="''${FORGE_REDEPLOY_RECEIPT_LOG:-$HOME/Library/Logs/forge-redeploy.receipts.log}"
+        system_path="$(tail -1 "$redeploy_receipts" 2>/dev/null | awk -F '\t' '
+          {for (i = 1; i <= NF; i++) if ($i ~ /^system=/) {sub(/^system=/, "", $i); print $i; exit}}')"
+        [ "$system_path" != "-" ] || system_path=""
         if [ -n "$system_path" ] && [ -e /run/current-system ]; then
           if [ "$(readlink /run/current-system)" = "$system_path" ]; then deployed="match"; else deployed="drift"; fi
         fi
@@ -1183,8 +1207,8 @@
       "Library/LaunchAgents" = [];
     }));
 
-  # Pre-activation guard for the gen-810 class: detect root-owned in-the-way
-  # HM targets, clear them in one sudo batch, prove the clear with a receipt.
+  # Pre-activation guard: detect root-owned in-the-way HM targets, clear them
+  # in one sudo batch, prove the clear with a receipt.
   forgeActivationSweep = mkTool {
     name = "forge-activation-sweep";
     inputs = [pkgs.coreutils pkgs.findutils pkgs.jq];
@@ -1262,7 +1286,7 @@
 
   # First-switch and first-session acceptance choreography: one ordered,
   # receipt-bearing rail from preflight through the maghz codex gate, idempotent
-  # and re-enterable from any step (--from/--only). Probes stay thread-owned
+  # and re-enterable from any step (--from/--only). Probes stay owner-local
   # (forge-redeploy receipts, forge-terminal-accept, forge-mcp doctor); this
   # owner orders and asserts. Key material is asserted by NAME only, never value.
   forgeAccept = mkTool {
@@ -1296,8 +1320,9 @@
       gui_manifest="$cache_home/forge-secrets/gui-replay.names"
       brew_bin="''${FORGE_BREW:-/opt/homebrew/bin/brew}"
       hook="''${FORGE_ACCEPT_HOOK:-$HOME/.claude/hooks/setup-env.sh}"
-      tunnel_receipts="''${FORGE_TUNNEL_RECEIPTS:-$HOME/Library/Logs/forge-maghz-vps-tunnel.receipts.log}"
       pass=0 warn=0 fail=0 instruct=0 skip=0
+      work="$(mktemp -d)"
+      trap 'rm -rf "$work"' EXIT
 
       row() {
         printf 'ts=%s\tstep=%s\tstatus=%s\tdetail=%s\n' "$ts" "$2" "$1" "$3" >>"$receipt_log"
@@ -1312,7 +1337,8 @@
       }
       key_names() {
         [ -f "$1" ] || return 0
-        grep -oE '^export [A-Za-z_][A-Za-z0-9_]*' "$1" | awk '{print $2}'
+        # No-match is a valid empty set; grep's rc=1 must not kill the rail.
+        grep -oE '^export [A-Za-z_][A-Za-z0-9_]*' "$1" | awk '{print $2}' || true
       }
       # GUI-domain env NAMES only: values are stripped before anything prints;
       # launchctl getenv false-negatives make raw print the only truthful read.
@@ -1447,10 +1473,10 @@
         fi
         while IFS= read -r name; do
           [ -n "$name" ] || continue
-          pid="$(pgrep -f -- "zellij.*--server .*/''${name}\$" | head -1 || true)"
+          pid="$(/usr/bin/pgrep -f -- "zellij.*--server .*/''${name}\$" | head -1 || true)"
           start=0
           if [ -n "$pid" ]; then
-            lstart="$(ps -o lstart= -p "$pid" 2>/dev/null || true)"
+            lstart="$(/bin/ps -o lstart= -p "$pid" 2>/dev/null || true)"
             [ -z "$lstart" ] || start="$(date -d "$lstart" +%s 2>/dev/null || echo 0)"
           fi
           attached="$(zellij --session "$name" action list-clients 2>/dev/null | tail -n +2 | wc -l | tr -d ' ' || echo 0)"
@@ -1477,9 +1503,9 @@
         f="$(jq -r '.summary.fail // 0' <<<"$out" 2>/dev/null || echo 0)"
         d="$(jq -r '.summary.defer // 0' <<<"$out" 2>/dev/null || echo 0)"
         if [ "$rc" = 0 ] && [ "''${f:-1}" = 0 ]; then
-          row PASS terminal "keystone harness pass=$p defer=$d (deferred rows run in the attached leg)"
+          row PASS terminal "terminal harness pass=$p defer=$d (deferred rows run in the attached leg)"
         else
-          row FAIL terminal "keystone harness rc=$rc pass=$p fail=$f defer=$d"
+          row FAIL terminal "terminal harness rc=$rc pass=$p fail=$f defer=$d"
         fi
       }
 
@@ -1510,14 +1536,14 @@
           row WARN lanes "no session material on disk; run a Claude session first"
           return 0
         }
-        tmp="$(mktemp -d)"
+        tmp="$work/lanes"
+        mkdir -p "$tmp"
         CLAUDE_ENV_FILE="$tmp/env.sh" bash "$hook" >/dev/null 2>"$tmp/receipt" || true
         cli_names="$(key_names "$tmp/env.sh" | sort -u)"
         cli_missing="$(comm -23 <(printf '%s\n' "$expected") <(printf '%s\n' "$cli_names") | paste -sd' ' -)"
         tui_missing="$(ZKEYS="$(paste -sd' ' - <<<"$expected")" /bin/zsh -il -c \
           'for k in ''${(s: :)ZKEYS}; do [ -n "''${(P)k}" ] || print "$k"; done' 2>/dev/null | paste -sd' ' -)"
         gui_missing="$(comm -23 <(printf '%s\n' "$expected") <(gui_names | sort -u) | paste -sd' ' -)"
-        rm -rf "$tmp"
         if [ -z "$cli_missing$tui_missing$gui_missing" ]; then
           row PASS lanes "cli/tui/gui all carry the expected key-name set ($(wc -l <<<"$expected" | tr -d ' ') names)"
         else
@@ -1529,7 +1555,7 @@
       # from regression (a shared ssh mux retaining tunnel forwards).
       classify_holder() {
         local cmd
-        cmd="$(ps -o command= -p "$1" 2>/dev/null || true)"
+        cmd="$(/bin/ps -o command= -p "$1" 2>/dev/null || true)"
         case "$cmd" in
           *colima* | *lima*) echo colima ;;
           *ssh*) echo ssh-mux ;;
@@ -1537,45 +1563,56 @@
         esac
       }
 
+      # One iteration per ssh-registry tunnel row: a new vpsTunnels row lands in
+      # acceptance untouched. The codex gate stays keyed to maghz — the postgres
+      # MCP DSN rides that tunnel specifically.
       step_maghz() {
-        local last state kinds
-        last="$(tail -1 "$tunnel_receipts" 2>/dev/null || true)"
-        [ -n "$last" ] || {
-          row WARN maghz "no tunnel receipts at $tunnel_receipts"
-          return 0
-        }
-        state="$(grep -oE 'state=[a-z-]+' <<<"$last" | cut -d= -f2 || true)"
-        case "$state" in
-          up)
-            row PASS maghz "tunnel up: ''${last#*state=up}"
-            ;;
-          port-conflict)
-            local -a cports=()
-            read -ra cports <<<"$(grep -oE 'spawn:[0-9 ]+' <<<"$last" | cut -d: -f2 || true)"
-            kinds="$(for p in "''${cports[@]}"; do
-              lsof -nP -iTCP:"$p" -sTCP:LISTEN 2>/dev/null | awk 'NR>1 {print $2}'
-            done | sort -u | while IFS= read -r hpid; do classify_holder "$hpid"; done | sort -u | paste -sd' ' -)"
-            case "$kinds" in
-              *ssh-mux*)
-                row FAIL maghz "port-conflict regression: a shared ssh ControlMaster retains the forwards; exit the mux (ssh -O exit maghz) — ControlPath=none on the tunnel host prevents recurrence"
+        local name last state kinds receipts
+        local -a tunnel_names=(${lib.concatStringsSep " " (lib.attrNames config.forge.ssh.hosts)})
+        for name in "''${tunnel_names[@]}"; do
+          receipts="''${FORGE_TUNNEL_RECEIPTS:-$HOME/Library/Logs/forge-$name-vps-tunnel.receipts.log}"
+          state=""
+          last="$(tail -1 "$receipts" 2>/dev/null || true)"
+          if [ -z "$last" ]; then
+            row WARN "$name" "no tunnel receipts at $receipts"
+          else
+            state="$(grep -oE 'state=[a-z-]+' <<<"$last" | cut -d= -f2 || true)"
+            case "$state" in
+              up)
+                row PASS "$name" "tunnel up: ''${last#*state=up}"
                 ;;
-              colima)
-                row WARN maghz "port-conflict routine: local compose parity mode holds the forwards; boot the tunnel agent out while local mode runs"
+              port-conflict)
+                local -a cports=()
+                read -ra cports <<<"$(grep -oE 'spawn:[0-9 ]+' <<<"$last" | cut -d: -f2 || true)"
+                # lsof exits 1 when a holder vanished between probes; under
+                # pipefail that rc would kill the step before the row lands.
+                kinds="$(for p in "''${cports[@]}"; do
+                  lsof -nP -iTCP:"$p" -sTCP:LISTEN 2>/dev/null | awk 'NR>1 {print $2}' || true
+                done | sort -u | while IFS= read -r hpid; do classify_holder "$hpid"; done | sort -u | paste -sd' ' -)"
+                case "$kinds" in
+                  *ssh-mux*)
+                    row FAIL "$name" "port-conflict regression: a shared ssh ControlMaster retains the forwards; exit the mux (ssh -O exit $name) — ControlPath=none on the tunnel host prevents recurrence"
+                    ;;
+                  colima)
+                    row WARN "$name" "port-conflict routine: local compose parity mode holds the forwards; boot the tunnel agent out while local mode runs"
+                    ;;
+                  *)
+                    row WARN "$name" "port-conflict: holder kinds=''${kinds:-unknown}"
+                    ;;
+                esac
                 ;;
               *)
-                row WARN maghz "port-conflict: holder kinds=''${kinds:-unknown}"
+                row WARN "$name" "tunnel state=''${state:-unknown}: ''${last#*state=}"
                 ;;
             esac
-            ;;
-          *)
-            row WARN maghz "tunnel state=''${state:-unknown}: ''${last#*state=}"
-            ;;
-        esac
-        if [ "$state" = "up" ]; then
-          row PASS maghz-codex "tunnel up; codex-required postgres MCP startup gate clear"
-        else
-          row INSTRUCT maghz-codex "postgres MCP is codex-required: codex startup hard-fails while the tunnel is ''${state:-down}; sequence tunnel-up (or local compose with a repointed DSN) before launching codex"
-        fi
+          fi
+          [ "$name" = maghz ] || continue
+          if [ "$state" = "up" ]; then
+            row PASS maghz-codex "tunnel up; codex-required postgres MCP startup gate clear"
+          else
+            row INSTRUCT maghz-codex "postgres MCP is codex-required: codex startup hard-fails while the tunnel is ''${state:-down}; sequence tunnel-up (or local compose with a repointed DSN) before launching codex"
+          fi
+        done
       }
 
       step_relaunch() {
@@ -1709,7 +1746,10 @@
       fi
 
       # ~/.local/bin inventory: owner class from the resolved target, decision
-      # from the ruling table; unruled entries surface loudly.
+      # from the ruling table (loaded once); unruled entries surface loudly.
+      declare -A decision_row
+      while IFS=$'\t' read -r dk dv; do decision_row[$dk]="$dv"; done \
+        < <(jq -r 'to_entries[] | [.key, .value] | @tsv' '${localBinDecisions}')
       for f in "$HOME/.local/bin"/*; do
         [ -e "$f" ] || [ -L "$f" ] || continue
         n="''${f##*/}"
@@ -1726,7 +1766,7 @@
         else
           cls=unmanaged
         fi
-        decision="$(jq -r --arg n "$n" '.[$n] // "unadjudicated"' '${localBinDecisions}')"
+        decision="''${decision_row[$n]:-unadjudicated}"
         [ "$decision" != "unadjudicated" ] || unadjudicated=$((unadjudicated + 1))
         row local-bin "entry=$n\tclass=$cls\tdecision=$decision"
       done
@@ -1778,8 +1818,17 @@
       # Tab-split keeps labels with spaces intact (launchctl is TSV).
       /bin/launchctl list 2>/dev/null | awk -F '\t' 'NR > 1 {print $3 "\t" $1 "\t" $2}' >"$work/observed"
 
-      classify() {
-        jq -r --arg l "$1" 'map(select(.prefix as $p | $l | startswith($p))) | first // {class: "unclassified", note: "no triage row"} | .class + "\t" + .note' '${launchdTriage}'
+      # Triage rows load once; classify is a pure prefix scan in row order.
+      mapfile -t triage_rows < <(jq -r '.[] | [.prefix, .class, .note] | @tsv' '${launchdTriage}')
+      classify() { # $1=label -> class<TAB>note
+        local r
+        for r in "''${triage_rows[@]}"; do
+          if [[ "$1" == "''${r%%$'\t'*}"* ]]; then
+            printf '%s\n' "''${r#*$'\t'}"
+            return 0
+          fi
+        done
+        printf 'unclassified\tno triage row\n'
       }
 
       obs() { grep -m1 "^$1	" "$work/observed" || true; }
@@ -1826,9 +1875,9 @@
     '';
   };
 
-  # Repeatable parity rail: the one-shot g2-t13 audit as a standing command.
-  # Generation home-files vs live $HOME (store-linked, staged-equal, missing,
-  # drifted), broken store links across managed roots, HM gc-root singleton.
+  # Repeatable parity rail: generation home-files vs live $HOME (store-linked,
+  # staged-equal, missing, drifted), broken store links across managed roots,
+  # HM gc-root singleton.
   forgeParity = mkTool {
     name = "forge-parity";
     inputs = [pkgs.coreutils pkgs.diffutils pkgs.findutils pkgs.gnugrep pkgs.gawk];
@@ -1993,7 +2042,7 @@ in {
     forge-orphan-sweep = mkAgent "forge-orphan-sweep" {StartInterval = 3600;} ["${forgeCleanup}/bin/forge-cleanup" "sweep"];
 
     # Daily 10:00 currency cadence (operator ruling); calendar-only, no
-    # RunAtLoad: login must never race a live campaign with a lock bump.
+    # RunAtLoad: login must never race live agent work with a lock bump.
     forge-nix-drift = mkAgent "forge-nix-drift" {
       StartCalendarInterval = [
         {

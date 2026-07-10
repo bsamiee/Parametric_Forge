@@ -4,10 +4,42 @@
 # License       : MIT
 # Path          : modules/home/programs/apps/zellij/themes/dracula.nix
 # ----------------------------------------------------------------------------
-# Nix-generated Zellij component theme from the estate palette owner
-{config, ...}: let
+# Nix-generated Zellij component theme from the estate palette owner. One row
+# per component: [ base background emphasis_0 emphasis_1 emphasis_2 emphasis_3 ]
+# as palette role names; the renderer is one fold over the rows.
+{
+  config,
+  lib,
+  ...
+}: let
   inherit (config.forge.theme) palette;
-  rgb = c: c.triple; # Component theme rows take decimal RGB triples
+  rgb = role: palette.${role}.triple; # Component theme rows take decimal RGB triples
+  slots = ["base" "background" "emphasis_0" "emphasis_1" "emphasis_2" "emphasis_3"];
+  components = [
+    ["text_unselected" ["cyan" "current_line" "orange" "yellow" "cyan" "orange"]]
+    ["text_selected" ["orange" "current_line" "cyan" "foreground" "foreground" "foreground"]]
+    # Inactive status ribbons: bright keys on raised surface.
+    ["ribbon_unselected" ["foreground" "current_line" "cyan" "foreground" "foreground" "foreground"]]
+    # Active ribbon highlight when a mode is entered.
+    ["ribbon_selected" ["current_line" "orange" "cyan" "yellow" "magenta" "comment"]]
+    ["table_title" ["foreground" "current_line" "cyan" "yellow" "magenta" "comment"]]
+    ["table_cell_unselected" ["foreground" "background" "comment" "cyan" "yellow" "magenta"]]
+    ["table_cell_selected" ["foreground" "selection" "cyan" "yellow" "pink" "comment"]]
+    ["list_unselected" ["foreground" "background" "comment" "cyan" "yellow" "magenta"]]
+    ["list_selected" ["current_line" "cyan" "orange" "yellow" "magenta" "comment"]]
+    ["frame_unselected" ["comment" "background" "orange" "cyan" "yellow" "magenta"]]
+    ["frame_selected" ["cyan" "background" "green" "yellow" "magenta" "foreground"]]
+    ["frame_highlight" ["magenta" "background" "cyan" "yellow" "foreground" "green"]]
+    ["exit_code_success" ["green" "background" "foreground" "cyan" "yellow" "comment"]]
+    ["exit_code_error" ["red" "background" "foreground" "cyan" "yellow" "comment"]]
+  ];
+  playerRoles = ["cyan" "yellow" "magenta" "green" "pink" "orange" "comment" "red" "purple" "cyan"];
+  renderComponent = pair: let
+    name = builtins.elemAt pair 0;
+    roleRows = builtins.elemAt pair 1;
+  in ''
+    ${name} {
+    ${lib.concatStrings (lib.zipListsWith (slot: role: "      ${slot} ${rgb role}\n") slots roleRows)}    }'';
 in {
   xdg.configFile."zellij/themes/dracula.kdl".text = ''
     // Title         : dracula.kdl
@@ -20,132 +52,9 @@ in {
 
     themes {
       "dracula" {
-        text_unselected {
-          base ${rgb palette.cyan}
-          background ${rgb palette.current_line}
-          emphasis_0 ${rgb palette.orange}
-          emphasis_1 ${rgb palette.yellow}
-          emphasis_2 ${rgb palette.cyan}
-          emphasis_3 ${rgb palette.orange}
-        }
-        text_selected {
-          base ${rgb palette.orange}
-          background ${rgb palette.current_line}
-          emphasis_0 ${rgb palette.cyan}
-          emphasis_1 ${rgb palette.foreground}
-          emphasis_2 ${rgb palette.foreground}
-          emphasis_3 ${rgb palette.foreground}
-        }
-        // Inactive status ribbons: bright keys on raised surface
-        ribbon_unselected {
-          base ${rgb palette.foreground}
-          background ${rgb palette.current_line}
-          emphasis_0 ${rgb palette.cyan}
-          emphasis_1 ${rgb palette.foreground}
-          emphasis_2 ${rgb palette.foreground}
-          emphasis_3 ${rgb palette.foreground}
-        }
-        // Active ribbon highlight when a mode is entered
-        ribbon_selected {
-          base ${rgb palette.current_line}
-          background ${rgb palette.orange}
-          emphasis_0 ${rgb palette.cyan}
-          emphasis_1 ${rgb palette.yellow}
-          emphasis_2 ${rgb palette.magenta}
-          emphasis_3 ${rgb palette.comment}
-        }
-        table_title {
-          base ${rgb palette.foreground}
-          background ${rgb palette.current_line}
-          emphasis_0 ${rgb palette.cyan}
-          emphasis_1 ${rgb palette.yellow}
-          emphasis_2 ${rgb palette.magenta}
-          emphasis_3 ${rgb palette.comment}
-        }
-        table_cell_unselected {
-          base ${rgb palette.foreground}
-          background ${rgb palette.background}
-          emphasis_0 ${rgb palette.comment}
-          emphasis_1 ${rgb palette.cyan}
-          emphasis_2 ${rgb palette.yellow}
-          emphasis_3 ${rgb palette.magenta}
-        }
-        table_cell_selected {
-          base ${rgb palette.foreground}
-          background ${rgb palette.selection}
-          emphasis_0 ${rgb palette.cyan}
-          emphasis_1 ${rgb palette.yellow}
-          emphasis_2 ${rgb palette.pink}
-          emphasis_3 ${rgb palette.comment}
-        }
-        list_unselected {
-          base ${rgb palette.foreground}
-          background ${rgb palette.background}
-          emphasis_0 ${rgb palette.comment}
-          emphasis_1 ${rgb palette.cyan}
-          emphasis_2 ${rgb palette.yellow}
-          emphasis_3 ${rgb palette.magenta}
-        }
-        list_selected {
-          base ${rgb palette.current_line}
-          background ${rgb palette.cyan}
-          emphasis_0 ${rgb palette.orange}
-          emphasis_1 ${rgb palette.yellow}
-          emphasis_2 ${rgb palette.magenta}
-          emphasis_3 ${rgb palette.comment}
-        }
-        frame_unselected {
-          base ${rgb palette.comment}
-          background ${rgb palette.background}
-          emphasis_0 ${rgb palette.orange}
-          emphasis_1 ${rgb palette.cyan}
-          emphasis_2 ${rgb palette.yellow}
-          emphasis_3 ${rgb palette.magenta}
-        }
-        frame_selected {
-          base ${rgb palette.cyan}
-          background ${rgb palette.background}
-          emphasis_0 ${rgb palette.green}
-          emphasis_1 ${rgb palette.yellow}
-          emphasis_2 ${rgb palette.magenta}
-          emphasis_3 ${rgb palette.foreground}
-        }
-        frame_highlight {
-          base ${rgb palette.magenta}
-          background ${rgb palette.background}
-          emphasis_0 ${rgb palette.cyan}
-          emphasis_1 ${rgb palette.yellow}
-          emphasis_2 ${rgb palette.foreground}
-          emphasis_3 ${rgb palette.green}
-        }
-        exit_code_success {
-          base ${rgb palette.green}
-          background ${rgb palette.background}
-          emphasis_0 ${rgb palette.foreground}
-          emphasis_1 ${rgb palette.cyan}
-          emphasis_2 ${rgb palette.yellow}
-          emphasis_3 ${rgb palette.comment}
-        }
-        exit_code_error {
-          base ${rgb palette.red}
-          background ${rgb palette.background}
-          emphasis_0 ${rgb palette.foreground}
-          emphasis_1 ${rgb palette.cyan}
-          emphasis_2 ${rgb palette.yellow}
-          emphasis_3 ${rgb palette.comment}
-        }
+        ${lib.concatMapStringsSep "\n    " renderComponent components}
         multiplayer_user_colors {
-          player_1 ${rgb palette.cyan}
-          player_2 ${rgb palette.yellow}
-          player_3 ${rgb palette.magenta}
-          player_4 ${rgb palette.green}
-          player_5 ${rgb palette.pink}
-          player_6 ${rgb palette.orange}
-          player_7 ${rgb palette.comment}
-          player_8 ${rgb palette.red}
-          player_9 ${rgb palette.purple}
-          player_10 ${rgb palette.cyan}
-        }
+    ${lib.concatStrings (lib.imap1 (i: role: "          player_${toString i} ${rgb role}\n") playerRoles)}        }
       }
     }
 

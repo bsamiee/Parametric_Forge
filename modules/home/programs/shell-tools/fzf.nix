@@ -2,7 +2,7 @@
 # Author        : Bardia Samiee
 # Project       : Parametric Forge
 # License       : MIT
-# Path          : /modules/home/programs/shell-tools/fzf.nix
+# Path          : modules/home/programs/shell-tools/fzf.nix
 # ----------------------------------------------------------------------------
 # FZF configuration themed from the estate palette owner
 {config, ...}: let

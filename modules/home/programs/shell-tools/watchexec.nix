@@ -2,13 +2,13 @@
 # Author        : Bardia Samiee
 # Project       : Parametric Forge
 # License       : MIT
-# Path          : /modules/home/programs/shell-tools/watchexec.nix
+# Path          : modules/home/programs/shell-tools/watchexec.nix
 # ----------------------------------------------------------------------------
 # watchexec owner: global ignore estate plus forge-watch, the packaged
 # event rail. --events streams kernel filesystem events as JSON lines for
 # agent consumption; run mode owns busy-policy, debounce, and origin knobs.
 {
-  lib,
+  config,
   pkgs,
   ...
 }: let
@@ -55,73 +55,8 @@
       exec watchexec "''${argv[@]}" --on-busy-update "$busy" -- "''${cmd[@]}"
     '';
   };
-
-  globalIgnorePatterns = [
-    # Version Control
-    ".git/"
-    ".svn/"
-    ".hg/"
-
-    # Build Artifacts
-    "target/"
-    "dist/"
-    "build/"
-    "out/"
-    "_build/"
-    "*.o"
-    "*.pyc"
-    "__pycache__/"
-
-    # Dependencies
-    "node_modules/"
-    "vendor/"
-    ".bundle/"
-
-    # IDE & Editor
-    ".idea/"
-    ".vscode/"
-    "*.swp"
-    "*.swo"
-    "*~"
-
-    # macOS System
-    ".DS_Store"
-    ".Spotlight-V100/"
-    ".Trashes/"
-    ".fseventsd/"
-    ".VolumeIcon.icns"
-    ".AppleDouble/"
-    ".LSOverride"
-    "Thumbs.db"
-
-    # Linux System
-    ".Trash-*/"
-    "lost+found/"
-
-    # Cache & Temporary
-    "*.tmp"
-    "*.log"
-    ".cache/"
-    ".direnv/"
-    ".coverage"
-    ".envrc.cache"
-    ".pytest_cache/"
-    ".ruff_cache/"
-
-    # Nix
-    "result"
-    "result-*"
-
-    # Large Files (disk images, VMs)
-    "*.iso"
-    "*.dmg"
-    "*.img"
-    "*.vmdk"
-    "*.vdi"
-    "*.vhd"
-    "*.qcow2"
-  ];
 in {
   home.packages = [pkgs.watchexec forgeWatch];
-  xdg.configFile."watchexec/ignore".text = lib.concatStringsSep "\n" globalIgnorePatterns;
+  # The noise taxonomy and its rendering are owned by config.forge.ignoreEstate.
+  xdg.configFile."watchexec/ignore".text = config.forge.ignoreEstate.text;
 }

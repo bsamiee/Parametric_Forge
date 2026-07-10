@@ -132,6 +132,10 @@
       "gitDecoration.addedResourceForeground" = s.state.success;
       "gitDecoration.modifiedResourceForeground" = s.accent.primary;
       "gitDecoration.deletedResourceForeground" = s.state.danger;
+      # Staged variants track their unstaged hue (VS Code SCM convention) so a
+      # staged file never falls back to a non-palette default.
+      "gitDecoration.stageModifiedResourceForeground" = s.accent.primary;
+      "gitDecoration.stageDeletedResourceForeground" = s.state.danger;
       "gitDecoration.untrackedResourceForeground" = s.state.success;
       "gitDecoration.ignoredResourceForeground" = s.text.muted;
       "gitDecoration.renamedResourceForeground" = s.accent.tertiary;
@@ -200,6 +204,8 @@ in {
   xdg.configFile = {
     "forge/theme/vscode.json".text = builtins.toJSON forgeSettings;
     "forge/theme/vscode-settings-block.jsonc".text = forgeBlock;
+    "forge/schemas/greptile-config.schema.json".source = ./schemas/greptile-config.schema.json;
+    "forge/schemas/greptile-files.schema.json".source = ./schemas/greptile-files.schema.json;
   };
 
   home.activation.vscodeThemeSeed = lib.hm.dag.entryAfter ["writeBoundary"] ''

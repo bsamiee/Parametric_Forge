@@ -2,7 +2,7 @@
 # Author        : Bardia Samiee
 # Project       : Parametric Forge
 # License       : MIT
-# Path          : /modules/home/programs/media-tools/default.nix
+# Path          : modules/home/programs/media-tools/default.nix
 # ----------------------------------------------------------------------------
 # Media tool inventory; imports carry real configuration only.
 {pkgs, ...}: let

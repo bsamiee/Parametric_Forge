@@ -148,23 +148,19 @@
     exec ${pkgs.gfortran}/bin/gfortran "$@"
   '';
 
-  pkgConfigPath = lib.concatStringsSep ":" [
-    (lib.makeSearchPathOutput "dev" "lib/pkgconfig" scientificNativeLibs)
-    (lib.makeSearchPathOutput "out" "lib/pkgconfig" scientificNativeLibs)
-    (lib.makeSearchPathOutput "dev" "share/pkgconfig" scientificNativeLibs)
-    (lib.makeSearchPathOutput "out" "share/pkgconfig" scientificNativeLibs)
-  ];
-
-  cmakePrefixPath = lib.concatStringsSep ":" (map toString scientificNativeLibs);
-  libraryPath = lib.makeLibraryPath scientificNativeLibs;
-  companionPkgConfigPath = lib.concatStringsSep ":" [
-    (lib.makeSearchPathOutput "dev" "lib/pkgconfig" companionNativeLibs)
-    (lib.makeSearchPathOutput "out" "lib/pkgconfig" companionNativeLibs)
-    (lib.makeSearchPathOutput "dev" "share/pkgconfig" companionNativeLibs)
-    (lib.makeSearchPathOutput "out" "share/pkgconfig" companionNativeLibs)
-  ];
-  companionCmakePrefixPath = lib.concatStringsSep ":" (map toString companionNativeLibs);
-  companionLibraryPath = lib.makeLibraryPath companionNativeLibs;
+  # One search-path projection per lib set; dev outputs precede out per key.
+  mkSearchPaths = libs: {
+    pkgconfig = lib.concatStringsSep ":" [
+      (lib.makeSearchPathOutput "dev" "lib/pkgconfig" libs)
+      (lib.makeSearchPathOutput "out" "lib/pkgconfig" libs)
+      (lib.makeSearchPathOutput "dev" "share/pkgconfig" libs)
+      (lib.makeSearchPathOutput "out" "share/pkgconfig" libs)
+    ];
+    cmake = lib.concatStringsSep ":" (map toString libs);
+    library = lib.makeLibraryPath libs;
+  };
+  scientificPaths = mkSearchPaths scientificNativeLibs;
+  companionPaths = mkSearchPaths companionNativeLibs;
   forgePythonStateHome = config.xdg.stateHome;
   forgeJupyterTokenFile = "${config.xdg.configHome}/jupyter/forge-token.env";
   forgeJupyterPort = 8888;
@@ -173,7 +169,9 @@
     token_file=${lib.escapeShellArg forgeJupyterTokenFile}
     if [ -z "''${JUPYTER_TOKEN:-}" ] && [ -f "$token_file" ]; then
       # Typed extraction, never source: a mutable file must not reach the parser.
-      JUPYTER_TOKEN="$(sed -n 's/^export JUPYTER_TOKEN=//p' "$token_file" | head -n1)"
+      # First-match-quit sed, never sed|head: head's early exit would SIGPIPE
+      # sed under pipefail.
+      JUPYTER_TOKEN="$(sed -n '/^export JUPYTER_TOKEN=/{s///p;q;}' "$token_file")"
     fi
     if [ -z "''${JUPYTER_TOKEN:-}" ]; then
       printf 'forge-jupyter: missing JUPYTER_TOKEN; expected %s\n' "$token_file" >&2
@@ -270,9 +268,9 @@
         exit 1
       }
 
-      export PKG_CONFIG_PATH="${pkgConfigPath}''${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
-      export CMAKE_PREFIX_PATH="${cmakePrefixPath}''${CMAKE_PREFIX_PATH:+:$CMAKE_PREFIX_PATH}"
-      export LIBRARY_PATH="${libraryPath}''${LIBRARY_PATH:+:$LIBRARY_PATH}"
+      export PKG_CONFIG_PATH="${scientificPaths.pkgconfig}''${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
+      export CMAKE_PREFIX_PATH="${scientificPaths.cmake}''${CMAKE_PREFIX_PATH:+:$CMAKE_PREFIX_PATH}"
+      export LIBRARY_PATH="${scientificPaths.library}''${LIBRARY_PATH:+:$LIBRARY_PATH}"
       export CFLAGS="-D_DARWIN_C_SOURCE''${CFLAGS:+ $CFLAGS}"
       export CXXFLAGS="-D_DARWIN_C_SOURCE''${CXXFLAGS:+ $CXXFLAGS}"
       export CPPFLAGS="-I${openmpDev}/include''${CPPFLAGS:+ $CPPFLAGS}"
@@ -296,9 +294,9 @@
       export CXX="${pkgs.clang}/bin/clang++"
       export AR="${llvmTools}/bin/llvm-ar"
       export RANLIB="${llvmTools}/bin/llvm-ranlib"
-      export PKG_CONFIG_PATH="${companionPkgConfigPath}''${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
-      export CMAKE_PREFIX_PATH="${companionCmakePrefixPath}''${CMAKE_PREFIX_PATH:+:$CMAKE_PREFIX_PATH}"
-      export LIBRARY_PATH="${companionLibraryPath}''${LIBRARY_PATH:+:$LIBRARY_PATH}"
+      export PKG_CONFIG_PATH="${companionPaths.pkgconfig}''${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
+      export CMAKE_PREFIX_PATH="${companionPaths.cmake}''${CMAKE_PREFIX_PATH:+:$CMAKE_PREFIX_PATH}"
+      export LIBRARY_PATH="${companionPaths.library}''${LIBRARY_PATH:+:$LIBRARY_PATH}"
       exec "$@"
     '';
   };
@@ -341,23 +339,33 @@
   forgeIfcMcp = pkgs.writeShellScriptBin "forge-ifcmcp" ''
     exec ${forgeCompanionEnv}/bin/forge-companion-env uvx --python "${pkgs.python312}/bin/python3" --from "ifcopenshell-mcp[mcp]==0.8.5" ifcmcp "$@"
   '';
-  forgeJupyter = pkgs.writeShellScriptBin "forge-jupyter" ''
-    ${forgeJupyterTokenPrelude}
-    ${forgeJupyterRootPrelude}
-    exec ${forgeCompanionEnv}/bin/forge-companion-env uvx --python "${pkgs.python312}/bin/python3" \
-      --from "jupyterlab==4.6.0" --with "jupyter-collaboration==4.4.1" --with "jupyter-mcp-tools==0.1.6" \
-      jupyter-lab --no-browser --ServerApp.ip=127.0.0.1 --ServerApp.port=${toString forgeJupyterPort} \
-      --ServerApp.port_retries=0 \
-      --config=${lib.escapeShellArg forgeJupyterServerConfig} "$@"
-  '';
-  forgeJupyterMcp = pkgs.writeShellScriptBin "forge-jupyter-mcp" ''
-    ${forgeJupyterTokenPrelude}
-    ${forgeJupyterRootPrelude}
-    # Connector defaults owned here so both MCP fleets carry no per-client env.
-    export JUPYTER_URL="''${JUPYTER_URL:-http://127.0.0.1:${toString forgeJupyterPort}}"
-    export ALLOW_IMG_OUTPUT="''${ALLOW_IMG_OUTPUT:-true}"
-    exec ${forgeCompanionEnv}/bin/forge-companion-env uvx --python "${pkgs.python312}/bin/python3" --from "jupyter-mcp-server==1.0.2" jupyter-mcp-server "$@"
-  '';
+  # writeShellApplication: the token prelude runs sed under launchd/systemd
+  # minimal PATH, so the tool arrives via runtimeInputs, never ambient lookup.
+  forgeJupyter = pkgs.writeShellApplication {
+    name = "forge-jupyter";
+    runtimeInputs = [pkgs.gnused];
+    text = ''
+      ${forgeJupyterTokenPrelude}
+      ${forgeJupyterRootPrelude}
+      exec ${forgeCompanionEnv}/bin/forge-companion-env uvx --python "${pkgs.python312}/bin/python3" \
+        --from "jupyterlab==4.6.0" --with "jupyter-collaboration==4.4.1" --with "jupyter-mcp-tools==0.1.6" \
+        jupyter-lab --no-browser --ServerApp.ip=127.0.0.1 --ServerApp.port=${toString forgeJupyterPort} \
+        --ServerApp.port_retries=0 \
+        --config=${lib.escapeShellArg forgeJupyterServerConfig} "$@"
+    '';
+  };
+  forgeJupyterMcp = pkgs.writeShellApplication {
+    name = "forge-jupyter-mcp";
+    runtimeInputs = [pkgs.gnused];
+    text = ''
+      ${forgeJupyterTokenPrelude}
+      ${forgeJupyterRootPrelude}
+      # Connector defaults owned here so both MCP fleets carry no per-client env.
+      export JUPYTER_URL="''${JUPYTER_URL:-http://127.0.0.1:${toString forgeJupyterPort}}"
+      export ALLOW_IMG_OUTPUT="''${ALLOW_IMG_OUTPUT:-true}"
+      exec ${forgeCompanionEnv}/bin/forge-companion-env uvx --python "${pkgs.python312}/bin/python3" --from "jupyter-mcp-server==1.0.2" jupyter-mcp-server "$@"
+    '';
+  };
 in
   {
     home = {

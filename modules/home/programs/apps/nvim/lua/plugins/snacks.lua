@@ -6,7 +6,7 @@
 -- ----------------------------------------------------------------------------
 -- Snacks.nvim: the one rich editor surface. Terminal, lazygit, explorer, and
 -- input stay off -- Zellij owns terminals/lazygit, Yazi owns file navigation.
--- The estate picker is the CA-1 projection inside the editor: typed action
+-- The estate picker is the register-rail projection inside the editor: typed action
 -- rows arrive from forge/tools.lua; scratch rows render into a float, pane
 -- rows hand off to a Zellij floating pane.
 

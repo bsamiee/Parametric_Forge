@@ -2,7 +2,7 @@
 # Author        : Bardia Samiee
 # Project       : Parametric Forge
 # License       : MIT
-# Path          : /modules/home/programs/shell-tools/mcp-fleet.nix
+# Path          : modules/home/programs/shell-tools/mcp-fleet.nix
 # ----------------------------------------------------------------------------
 # Declarative MCP fleet manifest: one row is the whole definition of a fleet
 # member. mcp-launchers.nix builds wrappers from `launcher` rows; `forge-mcp

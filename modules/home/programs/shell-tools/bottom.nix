@@ -2,7 +2,7 @@
 # Author        : Bardia Samiee
 # Project       : Parametric Forge
 # License       : MIT
-# Path          : /modules/home/programs/shell-tools/bottom.nix
+# Path          : modules/home/programs/shell-tools/bottom.nix
 # ----------------------------------------------------------------------------
 # Resource monitor themed from the estate palette owner
 {config, ...}: let

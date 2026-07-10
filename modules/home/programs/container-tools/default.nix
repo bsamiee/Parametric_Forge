@@ -2,7 +2,7 @@
 # Author        : Bardia Samiee
 # Project       : Parametric Forge
 # License       : MIT
-# Path          : /modules/home/programs/container-tools/default.nix
+# Path          : modules/home/programs/container-tools/default.nix
 # ----------------------------------------------------------------------------
 # Container and Kubernetes tool inventory; imports carry real configuration only.
 {

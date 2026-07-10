@@ -17,7 +17,13 @@
     AV_LOG_FORCE_COLOR = "1"; # Enable colored output
 
     # --- ImageMagick --------------------------------------------------------
-    MAGICK_FONT_PATH = "/System/Library/Fonts:/Library/Fonts:${config.home.homeDirectory}/Library/Fonts:${config.home.profileDirectory}/share/fonts";
+    # System font dirs are a Darwin fact; the profile share is portable.
+    MAGICK_FONT_PATH = lib.concatStringsSep ":" (lib.optionals pkgs.stdenv.hostPlatform.isDarwin [
+        "/System/Library/Fonts"
+        "/Library/Fonts"
+        "${config.home.homeDirectory}/Library/Fonts"
+      ]
+      ++ ["${config.home.profileDirectory}/share/fonts"]);
     MAGICK_CONFIGURE_PATH = lib.concatStringsSep ":" [
       "${config.xdg.configHome}/ImageMagick"
       "${pkgs.imagemagick}/etc/ImageMagick-7"

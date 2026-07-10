@@ -5,13 +5,7 @@
 # Path          : modules/home/scripts/terminal.nix
 # ----------------------------------------------------------------------------
 # Yazi -> Zellij -> Neovim rail: popup dispatcher, RPC handoff, server owner.
-# Pane targeting is ID-based via list-panes JSON; never ordinal focus. The
-# dispatcher is a floating pane, never in_place: an attached client on 0.44.3
-# strands exited in-place panes and their suppressed hosts. Dismiss hides the
-# floating layer and keeps the popup (and its yazi state) alive; a per-tab
-# marker carries pre-spawn visibility, since the dispatcher's own floating
-# spawn surfaces the layer. terminal_command is the spawn command
-# (invoked_with), so exec inside a pane never breaks pane rediscovery.
+# Pane targeting is ID-based via list-panes JSON; never ordinal focus.
 {
   config,
   lib,
@@ -29,7 +23,24 @@
   # One popup-identity vocabulary: production dispatch, caller dismissal, and
   # the acceptance harness all match this exact jq row predicate, so the
   # harness can never assert an identity production stopped matching.
+  # terminal_command is the spawn command (invoked_with), so exec inside the
+  # pane never breaks rediscovery.
   yaziPopupIdentity = ''(.is_plugin | not) and (.exited | not) and ((.is_floating // false) or (.is_suppressed // false)) and ((.title // "") == " [YAZI] ") and ((.terminal_command // .command // "") == "forge-yazi.sh")'';
+
+  # One truthy-snapshot kernel: list-panes flaps transiently against a busy
+  # session; every reader retries to a non-empty array so a flap never
+  # misreads the session as pane-free.
+  panesSnapshotSh = listCmd: ''
+    panes="[]"
+    for _ in {1..5}; do
+      panes="$(${listCmd} 2>/dev/null || true)"
+      if jq -e 'type == "array" and length > 0' <<<"$panes" >/dev/null 2>&1; then
+        break
+      fi
+      panes="[]"
+      sleep 0.2
+    done
+  '';
 
   # One DDS client-id derivation: (session, pane_id) -> deterministic 6-digit
   # id; the popup body, the dispatcher, and the acceptance harness all pipe
@@ -67,7 +78,7 @@
       # Tab resolution can lag pane creation at layout startup; retry briefly
       # and skip registry publication rather than poisoning a tab-0 entry.
       tab_id=""
-      for _ in 1 2 3 4 5 6 7 8 9 10; do
+      for _ in {1..10}; do
         tab_id="$(zellij action list-panes --all --json 2>/dev/null \
           | jq -r --arg self "$pane_id" \
             '[.[] | select((.is_plugin | not) and ((.id | tostring) == $self))][0].tab_id // empty' \
@@ -81,8 +92,11 @@
       socket="''${runtime_root}/pane-''${pane_id}.sock"
       rm -f "$socket"
       if [[ -n "$tab_id" ]]; then
-        printf '%s\t%s\t%s\n' "$tab_id" "$pane_id" "$socket" \
-          >"''${runtime_root}/editor-tab-''${tab_id}.tsv"
+        # Rename-atomic publication: forge-edit reads this row concurrently,
+        # so a direct write would expose a torn registry line.
+        registry="''${runtime_root}/editor-tab-''${tab_id}.tsv"
+        printf '%s\t%s\t%s\n' "$tab_id" "$pane_id" "$socket" >"''${registry}.$$"
+        mv -f "''${registry}.$$" "$registry"
       fi
       exec nvim --listen "$socket" "$@"
     '';
@@ -107,22 +121,10 @@
       # RPC handoff resolves paths against the server's cwd, and a fresh editor
       # pane opens at $PWD; pin caller-relative arguments to absolute so both
       # branches open the caller's files.
-      args=()
-      for f in "$@"; do
-        args+=("$(realpath -m -- "$f")")
-      done
+      mapfile -d "" -t args < <(realpath -zm -- "$@")
       set -- "''${args[@]}"
-      # list-panes flaps transiently against a busy session; retry to a truthy
-      # snapshot, then degrade to the fresh-editor branch on a dead read.
-      panes="[]"
-      for _ in 1 2 3 4 5; do
-        panes="$(zellij action list-panes --all --json 2>/dev/null || true)"
-        if jq -e 'type == "array" and length > 0' <<<"$panes" >/dev/null 2>&1; then
-          break
-        fi
-        panes="[]"
-        sleep 0.2
-      done
+      # A dead snapshot degrades to the fresh-editor branch.
+      ${panesSnapshotSh "zellij action list-panes --all --json"}
       caller_row="$(jq -c --arg self "$caller" \
         '[.[] | select((.is_plugin | not) and ((.id | tostring) == $self))][0] // {}' <<<"$panes")"
       tab_id="$(jq -r '.tab_id // 0' <<<"$caller_row")"
@@ -145,7 +147,7 @@
             and (.tab_id == $tab) and (.exited | not))] | length > 0' <<<"$panes")"
         rpc_alive="false"
         if [[ "$pane_alive" == "true" ]]; then
-          for _ in 1 2 3 4 5; do
+          for _ in {1..5}; do
             if nvim --server "$socket" --remote-expr '1' >/dev/null 2>&1; then
               rpc_alive="true"
               break
@@ -194,6 +196,7 @@
       session="''${ZELLIJ_SESSION_NAME:-default}"
       ${runtimeBaseSh}
       runtime_root="$runtime_base/''${session}"
+      mkdir -p "$runtime_root"
       cid_of() { # $1 = pane id; globally unique across sessions via name hash
         printf '%s:%s' "$session" "$1" | ${cidPipeline}
       }
@@ -203,8 +206,9 @@
         # stream as `kind,receiver,sender,{json}`; cd lands in a compact state
         # cache AND the event log, hover only in the cache (render-hot path
         # reads caches, never the stream). TUI renders on the pty untouched.
+        # State writes truncate in place — rename-atomicity would fork per
+        # hover event — so cache readers poll with jq -e and retry torn JSON.
         pane_id="''${ZELLIJ_PANE_ID:-0}"
-        mkdir -p "$runtime_root"
         cid="$(cid_of "$pane_id")"
         EDITOR="forge-edit.sh" exec yazi "$PWD" \
           --client-id "$cid" \
@@ -227,15 +231,16 @@
             }')
       fi
 
-      if [[ "''${1:-}" != "toggle" && "''${1:-}" != "reveal" && "''${1:-}" != "cd" ]]; then
-        if [[ $# -eq 0 ]]; then
-          set -- "$PWD"
-        fi
-        EDITOR="forge-edit.sh" exec yazi "$@"
-      fi
+      case "''${1:-}" in
+        toggle | reveal | cd) ;;
+        *)
+          (($#)) || set -- "$PWD"
+          EDITOR="forge-edit.sh" exec yazi "$@"
+          ;;
+      esac
 
       if [[ -z "''${ZELLIJ:-}" ]]; then
-        echo "forge-yazi.sh ''${1}: requires a Zellij session" >&2
+        printf 'forge-yazi.sh %s: requires a Zellij session\n' "$1" >&2
         exit 1
       fi
 
@@ -256,24 +261,12 @@
       # Serialize concurrent dispatchers (double-chord): one session-scoped
       # lock spans snapshot-to-act, so racing toggles never both read a
       # popup-free tab and create duplicate popups.
-      lock_root="$runtime_root"
-      mkdir -p "$lock_root"
-      exec 9>"$lock_root/toggle.lock"
-      flock -w 5 9 || {
-        echo "forge-yazi.sh: another toggle holds the dispatch lock" >&2
+      exec {lock_fd}>"$runtime_root/toggle.lock"
+      flock -w 5 "$lock_fd" || {
+        printf 'forge-yazi.sh: another toggle holds the dispatch lock\n' >&2
         exit 75
       }
-      # list-panes flaps transiently against a busy session; retry to a truthy
-      # snapshot so a flap never misreads the tab as popup-free.
-      panes="[]"
-      for _ in 1 2 3 4 5; do
-        panes="$(zellij action list-panes --all --json 2>/dev/null || true)"
-        if jq -e 'type == "array" and length > 0' <<<"$panes" >/dev/null 2>&1; then
-          break
-        fi
-        panes="[]"
-        sleep 0.2
-      done
+      ${panesSnapshotSh "zellij action list-panes --all --json"}
       tab_id="$(jq -r --arg self "$self" \
         '[.[] | select((.is_plugin | not) and ((.id | tostring) == $self))][0].tab_id // 0' <<<"$panes")"
       # Shared identity vocabulary scoped to this tab, excluding self.
@@ -288,7 +281,9 @@
       # Per-tab surfaced marker: the dispatcher's own floating spawn surfaces
       # the layer, so live layer state cannot discriminate show from hide.
       # An out-of-band layer toggle desyncs it by at most one keypress.
-      marker="$lock_root/surfaced-tab-''${tab_id}"
+      marker="$runtime_root/surfaced-tab-''${tab_id}"
+      # Floating, never in_place: an attached client (zellij 0.44.3) strands
+      # exited in-place panes and their suppressed hosts.
       spawn_popup() { # $1 = cwd for the new popup
         created="$(zellij action new-pane --floating --pinned true \
           ${yaziPopupArgs} \
@@ -297,8 +292,21 @@
         : >"$marker"
       }
       surface_popup() {
-        zellij action focus-pane-id "terminal_''${popup}"
+        # Best-effort focus: the popup can exit between snapshot and focus;
+        # the marker stays authoritative and self-heals within one chord.
+        zellij action focus-pane-id "terminal_''${popup}" >/dev/null 2>&1 || true
         : >"$marker"
+      }
+      emit_popup() { # $1 = client id, $2 = action, $3 = path
+        # A popup's DDS endpoint binds after its pane appears; retry until it
+        # answers instead of failing on the startup race.
+        for _ in {1..10}; do
+          if ya emit-to "$1" "$2" "$3" 2>/dev/null; then
+            return 0
+          fi
+          sleep 0.3
+        done
+        return 1
       }
 
       case "$verb" in
@@ -308,7 +316,7 @@
           elif [[ -e "$marker" ]]; then
             # Chord means hide: lower the layer, keep the popup and its yazi
             # state alive for the next surface.
-            zellij action hide-floating-panes
+            zellij action hide-floating-panes >/dev/null 2>&1 || true
             rm -f "$marker"
           else
             # Focusing a floating pane surfaces the floating layer
@@ -316,26 +324,21 @@
           fi
           ;;
         reveal | cd)
-          # Semantic DDS action: retarget the live popup through ya emit-to
+          # Semantic DDS action: retarget the popup through ya emit-to
           # (keymap-equivalent action grammar), creating it when absent. A
-          # fresh popup needs no emit for cd (it opens at the target); reveal
-          # retries until the instance's DDS endpoint answers.
+          # fresh popup needs no emit for cd — it opens at the target.
           if [[ -z "$popup" ]]; then
             dir="$target"
             [[ "$verb" == "reveal" || ! -d "$target" ]] && dir="$(dirname "$target")"
             spawn_popup "$dir"
             if [[ "$verb" == "reveal" ]]; then
-              cid="$(cid_of "''${created#terminal_}")"
-              for _ in 1 2 3 4 5 6 7 8 9 10; do
-                if ya emit-to "$cid" reveal "$target" 2>/dev/null; then
-                  break
-                fi
-                sleep 0.3
-              done
+              emit_popup "$(cid_of "''${created#terminal_}")" reveal "$target" || true
             fi
           else
-            cid="$(cid_of "$popup")"
-            ya emit-to "$cid" "$verb" "$target"
+            emit_popup "$(cid_of "$popup")" "$verb" "$target" || {
+              printf 'forge-yazi.sh: DDS %s to the tab popup did not land\n' "$verb" >&2
+              exit 1
+            }
             surface_popup
           fi
           ;;
@@ -363,12 +366,15 @@
         case "$1" in
           --session) session="''${2:?--session requires a name}"; shift 2 ;;
           --keep) keep="true"; shift ;;
-          *) echo "unknown flag: $1" >&2; exit 2 ;;
+          *) printf 'unknown flag: %s\n' "$1" >&2; exit 2 ;;
         esac
       done
+      # Owned probe names stay short: the zellij IPC socket path rides
+      # $TMPDIR/zellij-<uid>/contract_version_N/<session> under a 103-byte
+      # sun_path cap, and the darwin $TMPDIR alone spends ~79 of it.
       owned="false"
       if [[ -z "$session" ]]; then
-        session="forge-accept-$$-$RANDOM"
+        session="fa-$$-$((SRANDOM % 10000))"
         owned="true"
       fi
       ${runtimeBaseSh}
@@ -383,23 +389,14 @@
       }
 
       zj() { zellij --session "$session" action "$@"; }
-      # list-panes flaps transiently against a busy session; retry to a truthy
-      # snapshot so single-shot reads never act on an empty flap.
       panes() {
-        local out
-        for _ in 1 2 3 4 5; do
-          out="$(zj list-panes --all --json 2>/dev/null || true)"
-          if jq -e 'type == "array" and length > 0' <<<"$out" >/dev/null 2>&1; then
-            printf '%s' "$out"
-            return 0
-          fi
-          sleep 0.2
-        done
-        echo '[]'
+        local panes
+        ${panesSnapshotSh "zj list-panes --all --json"}
+        printf '%s' "$panes"
       }
       poll() {
         local pred="$1"
-        for _ in $(seq 1 50); do
+        for _ in {1..50}; do
           if [[ "$(panes | jq -r "$pred" 2>/dev/null)" == "true" ]]; then return 0; fi
           sleep 0.2
         done
@@ -418,9 +415,15 @@
       trap cleanup EXIT
 
       if [[ "$owned" == "true" ]]; then
-        zellij attach --create-background "$session" >/dev/null 2>&1 || true
+        # A dead probe session fails every row with misleading detail; make
+        # the bootstrap fault (socket path, server refusal) the one loud exit.
+        if ! err="$(zellij attach --create-background "$session" 2>&1 >/dev/null)"; then
+          printf 'forge-terminal-accept.sh: probe session %s failed to start: %s\n' "$session" "$err" >&2
+          exit 1
+        fi
       else
         # Reused probe session: reset rail state so invariants start from zero.
+        # Streaming boundary: close each stale rail pane as its id arrives.
         while IFS= read -r id; do
           if [[ -n "$id" ]]; then
             zj close-pane --pane-id "terminal_''${id}" >/dev/null 2>&1 || true
@@ -442,8 +445,8 @@
       fi
 
       attached="false"
-      for _ in 1 2 3; do
-        if [[ "$(zj list-clients 2>/dev/null | tail -n +2 | wc -l | tr -d ' ')" -gt 0 ]]; then
+      for _ in {1..3}; do
+        if [[ "$(zj list-clients 2>/dev/null | awk 'NR > 1 { n++ } END { print n + 0 }')" -gt 0 ]]; then
           attached="true"
           break
         fi
@@ -472,16 +475,18 @@
       # R12/R13: DDS spine — ya rides version-matched in the closure; emit-to
       # retargets the popup by its derived client id and the cd state cache
       # materializes (the bridge's compact-state contract).
-      if [[ "$(yazi --version | awk '{print $2}')" == "$(ya --version | awk '{print $2}')" ]]; then
-        row R12-ya-version PASS "ya $(ya --version | awk '{print $2}') matches yazi in the wrapper closure"
+      yazi_ver="$(yazi --version | awk '{print $2}')"
+      ya_ver="$(ya --version | awk '{print $2}')"
+      if [[ "$yazi_ver" == "$ya_ver" ]]; then
+        row R12-ya-version PASS "ya $ya_ver matches yazi in the wrapper closure"
       else
-        row R12-ya-version FAIL "yazi=$(yazi --version | awk '{print $2}') ya=$(ya --version | awk '{print $2}')"
+        row R12-ya-version FAIL "yazi=$yazi_ver ya=$ya_ver"
       fi
       popup_id="$(panes | jq -r "$popup_pred | .[0].id // empty")"
       if [[ -n "$popup_id" ]]; then
         cid="$(printf '%s:%s' "$session" "$popup_id" | ${cidPipeline})"
         dds_sent="false"
-        for _ in $(seq 1 25); do
+        for _ in {1..25}; do
           if ya emit-to "$cid" cd /tmp 2>/dev/null; then
             dds_sent="true"
             break
@@ -490,7 +495,7 @@
         done
         state="$runtime_base/''${session}/dds-cd-pane-''${popup_id}.json"
         cd_seen="false"
-        for _ in $(seq 1 25); do
+        for _ in {1..25}; do
           if [[ -r "$state" ]] && jq -e '.body.url | test("^(/private)?/tmp")' "$state" >/dev/null 2>&1; then
             cd_seen="true"
             break
@@ -529,7 +534,7 @@
       editor_pane=""
       socket=""
       reg_ok="false"
-      for _ in $(seq 1 150); do
+      for _ in {1..150}; do
         registry="$(find "$runtime_root" -name 'editor-tab-*.tsv' 2>/dev/null | head -1 || true)"
         if [[ -n "$registry" ]]; then
           IFS=$'\t' read -r reg_tab editor_pane socket <"$registry" || true
@@ -548,7 +553,7 @@
       fi
 
       rpc_ok="false"
-      for _ in $(seq 1 75); do
+      for _ in {1..75}; do
         if [[ -S "$socket" ]] && nvim --server "$socket" --remote-expr '1' >/dev/null 2>&1; then
           rpc_ok="true"
           break
@@ -562,8 +567,13 @@
       fi
 
       zj new-pane -c -- forge-edit.sh "$probe_dir/b.txt" >/dev/null 2>&1 || true
-      sleep 2
-      bufname="$(nvim --server "$socket" --remote-expr 'bufname("%")' 2>/dev/null || true)"
+      # The RPC hand-off is async; poll the buffer instead of a fixed sleep.
+      bufname=""
+      for _ in {1..25}; do
+        bufname="$(nvim --server "$socket" --remote-expr 'bufname("%")' 2>/dev/null || true)"
+        [[ "$bufname" == "$probe_dir/b.txt" ]] && break
+        sleep 0.2
+      done
       if [[ "$(panes | jq -r "$editor_pred | length")" == "1" && "$bufname" == "$probe_dir/b.txt" ]]; then
         row R07-editor-reuse PASS "second open reused the tab editor; current buffer is b.txt"
       else
@@ -571,8 +581,13 @@
       fi
 
       zj new-pane -c -- forge-edit.sh "$probe_dir/c.txt" >/dev/null 2>&1 || true
-      sleep 2
-      buflisted="$(nvim --server "$socket" --remote-expr 'len(getbufinfo({"buflisted":1}))' 2>/dev/null || echo 0)"
+      buflisted=0
+      for _ in {1..25}; do
+        buflisted="$(nvim --server "$socket" --remote-expr 'len(getbufinfo({"buflisted":1}))' 2>/dev/null || printf '0')"
+        [[ "$buflisted" =~ ^[0-9]+$ ]] || buflisted=0
+        [[ "$buflisted" -ge 3 ]] && break
+        sleep 0.2
+      done
       if [[ "$(panes | jq -r "$editor_pred | length")" == "1" && "$buflisted" -ge 3 ]]; then
         row R08-editor-multifile PASS "one editor holds all $buflisted probe buffers"
       else
@@ -599,7 +614,7 @@
         printf '%b' "$dismiss_chord" | WEZTERM_UNIX_SOCKET="$FORGE_ACCEPT_WEZTERM_SOCK" \
           "$wezterm_bin" cli send-text --no-paste --pane-id "$FORGE_ACCEPT_WEZTERM_PANE" || true
         layer_vis="unknown"
-        for _ in $(seq 1 25); do
+        for _ in {1..25}; do
           layer_vis="$(zj list-tabs --json 2>/dev/null | jq -r '.[0].are_floating_panes_visible' 2>/dev/null || true)"
           if [[ "$layer_vis" == "false" ]]; then break; fi
           sleep 0.2
@@ -627,7 +642,7 @@
         if poll "$popup_pred | length == 1"; then
           new_popup="$(panes | jq -r "$popup_pred | .[0].id")"
           focused=""
-          for _ in $(seq 1 10); do
+          for _ in {1..10}; do
             focused="$(zj list-clients 2>/dev/null | awk 'NR==2 {print $2}')"
             if [[ "$focused" == "terminal_''${new_popup}" ]]; then break; fi
             sleep 0.5
@@ -657,7 +672,7 @@
 
       rm -rf "$probe_dir"
       jq -n --argjson rows "$rows" --arg session "$session" \
-        --argjson attached "$([[ "$attached" == "true" ]] && echo true || echo false)" \
+        --argjson attached "$attached" \
         '{schema: "forge-terminal-accept/v1", session: $session, attached: $attached, rows: $rows,
           summary: (reduce $rows[] as $r ({pass: 0, fail: 0, defer: 0};
             .[$r.status | ascii_downcase] += 1))}'

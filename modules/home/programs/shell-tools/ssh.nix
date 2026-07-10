@@ -65,6 +65,10 @@
     };
   };
 
+  # Supervisors project only onto client hosts: a tunnel row whose name is the
+  # running host would tunnel the machine to itself and flap on port-conflict.
+  clientTunnels = lib.filterAttrs (name: _: name != host.name) vpsTunnels;
+
   forwardsFor = tunnel:
     map (f: {
       bind.port = f.port;
@@ -187,7 +191,7 @@
           >>"''${receipts%.log}.jsonl"
       }
 
-      port_open() { (exec 3<>"/dev/tcp/127.0.0.1/$1") 2>/dev/null; }
+      port_open() { (exec {tcp_fd}<>"/dev/tcp/127.0.0.1/$1" && exec {tcp_fd}>&-) 2>/dev/null; }
 
       # Predicate-to-state projection: any probe command becomes ok|down.
       state_of() { if "$@" >/dev/null 2>&1; then echo ok; else echo down; fi; }
@@ -225,8 +229,10 @@
         # Holder identification at the receipt separates routine (colima local
         # parity mode) from regression (a shared ssh mux retaining forwards).
         read -ra cports <<<"$conflicts"
+        # lsof exits 1 when a holder vanished between probes; under pipefail
+        # that rc would kill the run before the receipt lands.
         holders="$(for p in "''${cports[@]}"; do
-          lsof -nP -iTCP:"$p" -sTCP:LISTEN 2>/dev/null | awk -v port="$p" 'NR>1 {print port":"$1":"$2}'
+          lsof -nP -iTCP:"$p" -sTCP:LISTEN 2>/dev/null | awk -v port="$p" 'NR>1 {print port":"$1":"$2}' || true
         done | sort -u | paste -sd, -)"
         emit port-conflict "detail=already bound before spawn:$conflicts holders=''${holders:-unknown}"
         exit 1
@@ -367,11 +373,9 @@ in {
         '') (builtins.attrNames vpsTunnels)}
       '';
 
-      # Durable per-row tunnel agents: remote-primary mode kickstarts them; local
-      # parity mode boots them out before compose binds the same loopback ports.
-      # KeepAlive=true implies RunAtLoad per launchd.plist(5). One row registry
-      # projects both supervisors: launchd (Darwin) and lingering systemd user
-      # services (Linux) run the identical health-gated supervisor.
+      # Durable per-row tunnel agents; local parity mode boots them out before
+      # compose binds the same loopback ports. KeepAlive=true implies
+      # RunAtLoad, so the pair never coexists.
       launchd.agents = lib.mapAttrs' (name: tunnel:
         lib.nameValuePair "${name}-vps-tunnel" {
           enable = true;
@@ -386,7 +390,7 @@ in {
             AssociatedBundleIdentifiers = [(tunnelBundleId name)];
           };
         })
-      vpsTunnels;
+      clientTunnels;
     }
     # Static host gate: config attr names must never depend on pkgs (fixpoint).
     // lib.optionalAttrs (host.os == "nixos") {
@@ -401,6 +405,6 @@ in {
           };
           Install.WantedBy = ["default.target"];
         })
-      vpsTunnels;
+      clientTunnels;
     };
 }

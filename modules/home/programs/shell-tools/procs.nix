@@ -2,7 +2,7 @@
 # Author        : Bardia Samiee
 # Project       : Parametric Forge
 # License       : MIT
-# Path          : /modules/home/programs/shell-tools/procs.nix
+# Path          : modules/home/programs/shell-tools/procs.nix
 # ----------------------------------------------------------------------------
 # Modern ps replacement with Dracula theme
 {

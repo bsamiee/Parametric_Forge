@@ -2,7 +2,7 @@
 # Author        : Bardia Samiee
 # Project       : Parametric Forge
 # License       : MIT
-# Path          : /modules/home/programs/shell-tools/default.nix
+# Path          : modules/home/programs/shell-tools/default.nix
 # ----------------------------------------------------------------------------
 # Shell tool inventory; imports carry real configuration only. Monitor and
 # proof-lane admissions arrive as manifest roster rows, never bare entries.

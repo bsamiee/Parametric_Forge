@@ -2,7 +2,7 @@
 # Author        : Bardia Samiee
 # Project       : Parametric Forge
 # License       : MIT
-# Path          : /modules/home/programs/shell-tools/tlrc.nix
+# Path          : modules/home/programs/shell-tools/tlrc.nix
 # ----------------------------------------------------------------------------
 # Official tldr client written in Rust
 {

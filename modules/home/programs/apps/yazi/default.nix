@@ -69,109 +69,68 @@
   };
 
   # --- Previewer rows ---------------------------------------------------------
-  # Order is precedence: directory tree, config-language diagnostics, archives,
-  # markdown, then the DuckDB data lane. JSON stays on the jq diagnostic lane;
-  # DuckDB owns tabular/columnar formats (ledger 30 keeps Yazi file-domain).
-  previewerRows = [
-    {
-      url = "*/";
-      run = ''piper -- eza -TL=3 --color=always --icons=always --group-directories-first --no-quotes "$1"'';
-    }
-    {
-      url = "*.nix";
-      run = ''piper -- yazi-diag-preview.sh nix "$1"'';
-    }
-    {
-      url = "*.kdl";
-      run = ''piper -- yazi-diag-preview.sh kdl "$1"'';
-    }
-    {
-      url = "*.toml";
-      run = ''piper -- yazi-diag-preview.sh toml "$1"'';
-    }
-    {
-      url = "*.json";
-      run = ''piper -- yazi-diag-preview.sh json "$1"'';
-    }
-    {
-      url = "*.{yaml,yml}";
-      run = ''piper -- yazi-diag-preview.sh yaml "$1"'';
-    }
-    {
-      url = "*.tar*";
-      run = ''piper --format=url -- tar tf "$1"'';
-    }
-    {
-      url = "*.md";
-      run = ''piper -- rich --line-numbers --force-terminal "$1"'';
-    }
-    {
-      url = "*.{csv,tsv}";
+  # Directory tree, config-language diagnostics (one lane per row), archives,
+  # markdown, then the DuckDB data lane; all globs are disjoint. JSON stays on
+  # the jq diagnostic lane; DuckDB owns tabular/columnar formats.
+  diagLanes = {
+    nix = "*.nix";
+    kdl = "*.kdl";
+    toml = "*.toml";
+    json = "*.json";
+    yaml = "*.{yaml,yml}";
+  };
+  duckdbGlobs = ["*.{csv,tsv}" "*.parquet" "*.xlsx" "*.duckdb"];
+  previewerRows =
+    [
+      {
+        url = "*/";
+        run = ''piper -- eza -TL=3 --color=always --icons=always --group-directories-first --no-quotes "$1"'';
+      }
+    ]
+    ++ lib.mapAttrsToList (lane: url: {
+      inherit url;
+      run = ''piper -- yazi-diag-preview.sh ${lane} "$1"'';
+    })
+    diagLanes
+    ++ [
+      {
+        url = "*.tar*";
+        run = ''piper --format=url -- tar tf "$1"'';
+      }
+      {
+        url = "*.md";
+        run = ''piper -- rich --line-numbers --force-terminal "$1"'';
+      }
+    ]
+    ++ map (url: {
+      inherit url;
       run = "duckdb";
-    }
-    {
-      url = "*.parquet";
-      run = "duckdb";
-    }
-    {
-      url = "*.xlsx";
-      run = "duckdb";
-    }
-    {
-      url = "*.duckdb";
-      run = "duckdb";
-    }
-  ];
+    })
+    duckdbGlobs;
 
   # Preload opt-outs: remote mounts, caches, and generated trees never burn
   # preview bandwidth eagerly; hover still previews on demand.
-  preloaderRows = [
-    {
-      url = "/Volumes/**";
-      run = "noop";
-    }
-    {
-      url = "**/Library/Caches/**";
-      run = "noop";
-    }
-    {
-      url = "**/node_modules/**";
-      run = "noop";
-    }
-    {
-      url = "**/.git/**";
-      run = "noop";
-    }
-  ];
+  preloaderRows = map (url: {
+    inherit url;
+    run = "noop";
+  }) ["/Volumes/**" "**/Library/Caches/**" "**/node_modules/**" "**/.git/**"];
 
   # Fetcher rows: mime-ext extension-database MIME (speed over file(1) on huge
-  # or remote trees) + first-party git status. `id = "mime"/"git"` rows are the
-  # <=26.1.22 compatibility spelling; this owner pins 26.x semantics.
+  # or remote trees) + first-party git status; the version assert pins the
+  # `run`/`group` row grammar these rows spell.
   fetcherRows = assert lib.assertMsg (lib.versionAtLeast yaziPkg.version "26.2")
-  "yazi ${yaziPkg.version}: mime-ext fetcher rows assume the >26.1.22 grammar"; [
-    {
-      url = "local://*";
-      run = "mime-ext.local";
+  "yazi ${yaziPkg.version}: mime-ext fetcher rows assume the >26.1.22 grammar";
+    map (side: {
+      url = "${side}://*";
+      run = "mime-ext.${side}";
       prio = "high";
       group = "mime";
-    }
-    {
-      url = "remote://*";
-      run = "mime-ext.remote";
-      prio = "high";
-      group = "mime";
-    }
-    {
-      url = "*";
+    }) ["local" "remote"]
+    ++ map (url: {
+      inherit url;
       run = "git";
       group = "git";
-    }
-    {
-      url = "*/";
-      run = "git";
-      group = "git";
-    }
-  ];
+    }) ["*" "*/"];
 
   # --- Opener policy rows -------------------------------------------------------
   # Typed opener table + routing rules; the archive owner is the augment-command
@@ -306,9 +265,15 @@ in {
       opener = openers;
       open.prepend_rules = openRules;
 
+      # 26.5.6 split the single micro/macro worker pair into per-lane pools;
+      # this owner's preview-heavy surface (previewer + fetcher rows above)
+      # lifts the fetch/preload lanes, the rest hold the upstream preset five.
       tasks = {
-        micro_workers = 10;
-        macro_workers = 10;
+        file_workers = 3;
+        plugin_workers = 5;
+        fetch_workers = 8;
+        preload_workers = 5;
+        process_workers = 5;
         bizarre_retry = 3;
         image_alloc = 536870912; # 512MB; WezTerm handles large images
         image_bound = [4096 4096];
@@ -328,46 +293,45 @@ in {
         sort_translit = false;
       };
 
-      input = {
-        cursor_blink = true;
-        cd_title = " [GO TO DIR] ";
-        cd_origin = "bottom-center";
-        cd_offset = [0 (-3) 50 3];
-        create_title = [" [CREATE FILE] " " [CREATE DIR] "];
-        create_origin = "bottom-center";
-        create_offset = [0 (-3) 50 3];
-        rename_title = " [RENAME] ";
-        rename_origin = "bottom-center";
-        rename_offset = [0 (-3) 50 3];
-        filter_title = " [FILTER] ";
-        filter_origin = "bottom-center";
-        filter_offset = [0 (-3) 50 3];
-        find_title = [" [FIND NEXT] " " [FIND PREVIOUS] "];
-        find_origin = "bottom-center";
-        find_offset = [0 (-3) 50 3];
-        search_title = " [SEARCH - {n}] ";
-        search_origin = "bottom-center";
-        search_offset = [0 (-3) 50 3];
-        shell_title = [" [SHELL] " " [SHELL BLOCK] "];
-        shell_origin = "bottom-center";
-        shell_offset = [0 (-3) 60 3];
-      };
+      # Popup geometry as rows: every input popup shares bottom-center at
+      # [0 (-3) 50 3] unless its row overrides; confirms share center at
+      # [0 0 50 10] and optionally carry a content line.
+      input =
+        {cursor_blink = true;}
+        // lib.concatMapAttrs (name: row: {
+          "${name}_title" = row.title;
+          "${name}_origin" = "bottom-center";
+          "${name}_offset" = row.offset or [0 (-3) 50 3];
+        }) {
+          cd.title = " [GO TO DIR] ";
+          create.title = [" [CREATE FILE] " " [CREATE DIR] "];
+          rename.title = " [RENAME] ";
+          filter.title = " [FILTER] ";
+          find.title = [" [FIND NEXT] " " [FIND PREVIOUS] "];
+          search.title = " [SEARCH - {n}] ";
+          shell = {
+            title = [" [SHELL] " " [SHELL BLOCK] "];
+            offset = [0 (-3) 60 3];
+          };
+        };
 
-      confirm = {
-        trash_title = " [TRASH {n} FILE{s}] ";
-        trash_origin = "center";
-        trash_offset = [0 0 50 10];
-        delete_title = " [DELETE {n} FILE{s}] ";
-        delete_origin = "center";
-        delete_offset = [0 0 50 10];
-        overwrite_title = " [OVERWRITE FILE] ";
-        overwrite_content = "Will overwrite the following file:";
-        overwrite_origin = "center";
-        overwrite_offset = [0 0 50 10];
-        quit_title = " [QUIT] ";
-        quit_content = "The following tasks are still running, are you sure you want to quit?";
-        quit_origin = "center";
-        quit_offset = [0 0 50 10];
+      confirm = lib.concatMapAttrs (name: row:
+        {
+          "${name}_title" = row.title;
+          "${name}_origin" = "center";
+          "${name}_offset" = [0 0 50 10];
+        }
+        // lib.optionalAttrs (row ? content) {"${name}_content" = row.content;}) {
+        trash.title = " [TRASH {n} FILE{s}] ";
+        delete.title = " [DELETE {n} FILE{s}] ";
+        overwrite = {
+          title = " [OVERWRITE FILE] ";
+          content = "Will overwrite the following file:";
+        };
+        quit = {
+          title = " [QUIT] ";
+          content = "The following tasks are still running, are you sure you want to quit?";
+        };
       };
     };
   };

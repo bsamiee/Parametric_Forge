@@ -230,7 +230,7 @@
   # --- Tool rows: formatters, linters, search, provider, estate actions -------
   # Bare names resolve through the per-user profile; the health surface proves
   # resolution (`probes` names the real tools behind sh-wrapped rows). Estate
-  # rows are the CA-1 projection inside the editor: `mode` selects the
+  # rows are the register-rail projection inside the editor: `mode` selects the
   # dispatch arm (scratch = capture into a float, pane = zellij floating pane
   # for TUI/long-running commands).
   estateRows = [

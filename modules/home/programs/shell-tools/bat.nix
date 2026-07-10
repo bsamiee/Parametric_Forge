@@ -2,7 +2,7 @@
 # Author        : Bardia Samiee
 # Project       : Parametric Forge
 # License       : MIT
-# Path          : /modules/home/programs/shell-tools/bat.nix
+# Path          : modules/home/programs/shell-tools/bat.nix
 # ----------------------------------------------------------------------------
 # Cat clone with syntax highlighting and Git integration
 {

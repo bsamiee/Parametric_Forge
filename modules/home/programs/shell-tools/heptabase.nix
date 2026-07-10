@@ -2,7 +2,7 @@
 # Author        : Bardia Samiee
 # Project       : Parametric Forge
 # License       : MIT
-# Path          : /modules/home/programs/shell-tools/heptabase.nix
+# Path          : modules/home/programs/shell-tools/heptabase.nix
 # ----------------------------------------------------------------------------
 # Durable Heptabase CLI wrapper backed by the Homebrew-managed app bundle.
 {pkgs, ...}: let

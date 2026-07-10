@@ -2,7 +2,7 @@
 # Author        : Bardia Samiee
 # Project       : Parametric Forge
 # License       : MIT
-# Path          : /modules/home/programs/shell-tools/dust.nix
+# Path          : modules/home/programs/shell-tools/dust.nix
 # ----------------------------------------------------------------------------
 # Modern disk usage analyzer (du replacement)
 {pkgs, ...}: let

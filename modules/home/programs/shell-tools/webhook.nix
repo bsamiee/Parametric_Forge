@@ -53,19 +53,36 @@
       state_dir="''${XDG_STATE_HOME:-$HOME/.local/state}/forge-webhook"
       mkdir -p "$state_dir"
       lock="$state_dir/.lock"
-      tries=0
+      tries=0 total=0
       until mkdir "$lock" 2>/dev/null; do
-        tries=$((tries + 1))
-        if [ "$tries" -ge 100 ]; then rmdir "$lock" 2>/dev/null || true; fi
+        tries=$((tries + 1)) total=$((total + 1))
+        if [ "$total" -ge 600 ]; then
+          echo "forge-webhook-inbox: cannot acquire $lock after 30s" >&2
+          exit 75
+        fi
+        if [ "$tries" -ge 100 ]; then
+          tries=0
+          # Stale-holder break: the section is milliseconds, so a 10s-old lock
+          # is a dead holder. One rmdir per window, then the loop re-races; a
+          # live peer that recreates the lock restarts the wait cleanly.
+          lock_age=$((EPOCHSECONDS - $(stat -c %Y "$lock" 2>/dev/null || echo "$EPOCHSECONDS")))
+          [ "$lock_age" -lt 10 ] || rmdir "$lock" 2>/dev/null || true
+        fi
         sleep 0.05
       done
-      trap 'rmdir "$lock"' EXIT
+      trap 'rmdir "$lock" 2>/dev/null || true' EXIT
 
       dedupe="fresh"
       if grep -qxF "$source_id:$event_id" "$state_dir/seen.ids" 2>/dev/null; then
         dedupe="duplicate"
       else
         printf '%s:%s\n' "$source_id" "$event_id" >>"$state_dir/seen.ids"
+      fi
+      # Dedupe-index retention: a bounded recent window stays authoritative;
+      # rotation runs under the lock, so no reader observes a partial index.
+      if [ -f "$state_dir/seen.ids" ] && [ "$(wc -l <"$state_dir/seen.ids")" -gt 10000 ]; then
+        tail -n 5000 "$state_dir/seen.ids" >"$state_dir/seen.ids.new"
+        mv -f "$state_dir/seen.ids.new" "$state_dir/seen.ids"
       fi
 
       TZ=UTC0 printf -v ts '%(%Y-%m-%dT%H:%M:%SZ)T' "$EPOCHSECONDS"

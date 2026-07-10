@@ -62,8 +62,6 @@ in {
       logo = {
         type = "file";
         source = "${config.xdg.configHome}/fastfetch/logo.txt";
-        # width = 28;
-        # height = 16;
         padding = {
           top = 1;
           right = 3;

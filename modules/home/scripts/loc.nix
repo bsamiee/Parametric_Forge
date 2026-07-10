@@ -15,7 +15,7 @@
       shopt -s inherit_errexit
 
       json_mode=0
-      if [ "''${1:-}" = "--json" ]; then
+      if [[ "''${1:-}" == "--json" ]]; then
         json_mode=1
         shift
       fi
@@ -25,7 +25,7 @@
       fi
 
       readonly target_input="''${1:-.}"
-      target_path="$(realpath "$target_input")"
+      target_path="$(realpath -- "$target_input")"
       readonly target_path
       readonly deadline="''${LOC_SCAN_DEADLINE_SECONDS:-120}"
       readonly tab=$'\t'
@@ -111,7 +111,7 @@
           ["TOTAL", (files | length), (files | sum_by(.Code)), (files | sum_by(.Complexity))];
       '
 
-      if [ "$json_mode" = 1 ]; then
+      if [[ "$json_mode" == 1 ]]; then
         # Machine envelope: same folder grouping the table renders, plus
         # per-language and overall totals for agent consumption.
         jq -c --arg root "$target_path" "$report_filter"'

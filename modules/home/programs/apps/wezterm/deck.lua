@@ -22,7 +22,7 @@ M.sync = nil -- populated in apply(); events.lua reads is_synced for status
 local layout = os.getenv("ZELLIJ_DEFAULT_LAYOUT") or "default"
 
 -- Workspace identity crosses the outer-inner seam intact: the zellij session
--- carries the workspace name (CA-1 slug policy), so windows in different
+-- carries the workspace name (estate slug policy), so windows in different
 -- workspaces never mirror one shared session.
 function M.session_args(name)
     return { rows.paths.zellij, "--layout", layout, "attach", "--create", name }
