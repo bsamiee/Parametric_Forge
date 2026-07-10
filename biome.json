@@ -16,7 +16,8 @@
             "!**/.cache/**",
             "!**/.history/**",
             "!.claude/workflows/**",
-            "!.claude/skills/workflow-creator/assets/**"
+            "!.claude/skills/workflow-creator/assets/**",
+            "!**/*.html"
         ]
     },
     "formatter": {
@@ -37,6 +38,32 @@
             "allowComments": true
         }
     },
+    "overrides": [
+        {
+            "includes": [".claude/skills/applescript/assets/**"],
+            "linter": {
+                "rules": {
+                    "correctness": {
+                        "noUnusedVariables": "off"
+                    },
+                    "suspicious": {
+                        "noRedundantUseStrict": "off"
+                    }
+                }
+            }
+        },
+        {
+            "includes": [".claude/skills/workflow-creator/scripts/**"],
+            "linter": {
+                "rules": {
+                    "suspicious": {
+                        "noAssignInExpressions": "off",
+                        "noTemplateCurlyInString": "off"
+                    }
+                }
+            }
+        }
+    ],
     "assist": {
         "enabled": true,
         "actions": {

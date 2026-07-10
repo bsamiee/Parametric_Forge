@@ -47,7 +47,7 @@ if (bytes > MAX_BYTES) {
 // dangling concatenations. Runs first because every later heuristic assumes valid JS.
 
 try {
-    const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
+    const AsyncFunction = Object.getPrototypeOf(async () => {}).constructor;
     new AsyncFunction('args', 'agent', 'parallel', 'log', 'phase', 'budget', 'workflow', src.replace(/^\s*export\s+const\s+meta/m, 'const meta'));
 } catch (e) {
     errors.push(`does not parse as a workflow body: ${e.message}`);
@@ -114,7 +114,7 @@ if (!metaMatch) {
 } else {
     const before = code.slice(0, metaMatch.index).trim();
     if (before.length > 0) {
-        errors.push(`\`export const meta\` must be the FIRST statement ` + `(line ${lineOf(metaMatch.index)}) — code precedes it`);
+        errors.push(`\`export const meta\` must be the FIRST statement (line ${lineOf(metaMatch.index)}) — code precedes it`);
     }
     // crude object span: from the `{` after = to its matching `}`
     const open = code.indexOf('{', metaMatch.index);
@@ -160,7 +160,7 @@ const banned = [
 for (const [re, label] of banned) {
     let m;
     while ((m = re.exec(code))) {
-        errors.push(`banned non-deterministic call \`${label}\` at line ${lineOf(m.index)} ` + '— it throws inside a workflow (breaks resume)');
+        errors.push(`banned non-deterministic call \`${label}\` at line ${lineOf(m.index)} — it throws inside a workflow (breaks resume)`);
     }
 }
 
@@ -174,7 +174,7 @@ for (const [re, label] of [
     let m;
     while ((m = re.exec(code))) {
         warnings.push(
-            `\`${label}\` at line ${lineOf(m.index)} — no Node/host APIs in the ` + 'orchestrator; do file/shell work inside an agent() instead',
+            `\`${label}\` at line ${lineOf(m.index)} — no Node/host APIs in the orchestrator; do file/shell work inside an agent() instead`,
         );
     }
 }
@@ -296,18 +296,16 @@ const MAX_COL = 160;
 // left for a later patch ships verbatim. Either way a stage prompt fires without
 // its data, silently, hours into the run.
 
-{
-    for (const [re, label] of [
-        [/\$\{\s*['"]\$['"]\s*\}\s*\{/g, "`${'$'}{…}` escape — evaluates to the literal text `${…}`"],
-        [/__[A-Z][A-Z0-9_]*__/g, '`__TOKEN__` placeholder — ships verbatim into the prompt'],
-    ]) {
-        let m;
-        while ((m = re.exec(src))) {
-            warnings.push(
-                `dead interpolation at line ${lineOf(m.index)}: ${label}; ` +
-                    'interpolate live — `+ JSON.stringify(x) +` or a single-line `${JSON.stringify(x)}`',
-            );
-        }
+for (const [re, label] of [
+    [/\$\{\s*['"]\$['"]\s*\}\s*\{/g, "`${'$'}{…}` escape — evaluates to the literal text `${…}`"],
+    [/__[A-Z][A-Z0-9_]*__/g, '`__TOKEN__` placeholder — ships verbatim into the prompt'],
+]) {
+    let m;
+    while ((m = re.exec(src))) {
+        warnings.push(
+            `dead interpolation at line ${lineOf(m.index)}: ${label}; ` +
+                'interpolate live — `+ JSON.stringify(x) +` or a single-line `${JSON.stringify(x)}`',
+        );
     }
 }
 
@@ -320,7 +318,7 @@ const MAX_COL = 160;
         const tail = code.slice(m.index + m[0].length, m.index + m[0].length + 40);
         if (/^\s*agent\s*\(/.test(tail)) {
             warnings.push(
-                `parallel([...]) at line ${lineOf(m.index)} looks like it holds bare ` + 'agent(...) calls — wrap each as a thunk: () => agent(...)',
+                `parallel([...]) at line ${lineOf(m.index)} looks like it holds bare agent(...) calls — wrap each as a thunk: () => agent(...)`,
             );
         }
     }

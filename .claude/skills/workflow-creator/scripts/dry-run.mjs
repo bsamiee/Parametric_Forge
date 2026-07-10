@@ -36,8 +36,8 @@
 // `--fixtures` override mapping that label to `null` if that branch is load-bearing.
 
 import { readFileSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
 import { parseArgs } from 'node:util';
-import { resolve, dirname } from 'node:path';
 
 // --- [CONSTANTS] -----------------------------------------------------------------------
 
@@ -126,17 +126,17 @@ const synth = (schema, depth = 0) => {
 };
 
 const fixtureFor = (opts) => {
-    const label = opts && opts.label;
+    const label = opts?.label;
     if (label) {
         if (label in FIXTURES) return structuredClone(FIXTURES[label]);
         for (const k of Object.keys(FIXTURES)) if (label.startsWith(k)) return structuredClone(FIXTURES[k]);
     }
-    return opts && opts.schema ? synth(opts.schema) : '<' + (label || 'agent') + '>';
+    return opts?.schema ? synth(opts.schema) : `<${label || 'agent'}>`;
 };
 
 const makeGlobals = (rec, absFile) => {
     let inflight = 0;
-    const agent = async (prompt, opts = {}) => {
+    const agent = async (_prompt, opts = {}) => {
         const seq = ++rec.seq;
         inflight++;
         if (inflight > rec.maxConcurrent) rec.maxConcurrent = inflight;
@@ -199,7 +199,7 @@ const makeGlobals = (rec, absFile) => {
         rec.nested.push(String(name));
         let childSrc;
         try {
-            childSrc = readFileSync(resolve(dirname(absFile), String(name) + '.js'), 'utf8');
+            childSrc = readFileSync(resolve(dirname(absFile), `${String(name)}.js`), 'utf8');
         } catch {
             rec.warnings.add(
                 `nested workflow '${name}' not resolvable beside ${absFile} — returned {} (supply via --fixtures if its result drives control flow)`,
@@ -208,7 +208,7 @@ const makeGlobals = (rec, absFile) => {
         }
         rec.depth++;
         try {
-            return await runBody(childSrc, wargs, rec, resolve(dirname(absFile), String(name) + '.js'));
+            return await runBody(childSrc, wargs, rec, resolve(dirname(absFile), `${String(name)}.js`));
         } finally {
             rec.depth--;
         }
@@ -223,7 +223,7 @@ const makeGlobals = (rec, absFile) => {
     };
     const con = new Proxy(console, {
         get:
-            (t, k) =>
+            (_t, k) =>
             (...a) => {
                 if (k === 'log' || k === 'error' || k === 'warn' || k === 'info') rec.console.push(a.map(String).join(' '));
                 return undefined;
@@ -278,7 +278,7 @@ const makeGlobals = (rec, absFile) => {
 const runBody = async (src, args, rec, absFile) => {
     const g = makeGlobals(rec, absFile);
     const stripped = src.replace(/^([ \t]*)export([ \t]+const[ \t]+meta\b)/m, '$1$2'); // drop only the `export` on the meta line (handles a leading comment)
-    const fn = new Function(...GLOBALS, 'return (async () => {\n' + stripped + '\n})()'); // construction throws on a syntax error — this IS the parse-check
+    const fn = new Function(...GLOBALS, `return (async () => {\n${stripped}\n})()`); // construction throws on a syntax error — this IS the parse-check
     const argv = [
         structuredClone(args),
         g.agent,
@@ -398,7 +398,7 @@ const simulate = async (absFile, args) => {
     }
     if (a.rec.maxConcurrent > MAX_CONCURRENT)
         a.rec.warnings.add(`observed ${a.rec.maxConcurrent} concurrent agents — the runtime caps at ${MAX_CONCURRENT}`);
-    if (a.err) a.rec.warnings.add('runtime error: ' + a.err);
+    if (a.err) a.rec.warnings.add(`runtime error: ${a.err}`);
     return {
         file: absFile,
         mode: 'sim',
@@ -442,7 +442,7 @@ const report = await simulate(absFile, values.mode === 'real' ? values.scope : l
 
 if (values.mode === 'real') {
     if (!report.parseOk || !report.ran) {
-        console.error('refusing a real run: the file does not simulate clean (' + (report.error || report.runtimeError) + ')');
+        console.error(`refusing a real run: the file does not simulate clean (${report.error || report.runtimeError})`);
         process.exit(1);
     }
     console.log('REAL-RUN PRE-FLIGHT (no agent spawned)\n');
@@ -460,7 +460,7 @@ if (values.mode === 'real') {
     if (report.totalAgents === 0)
         console.log('  WARNING: the scope produced 0 agents under fixtures — widen --scope or supply --fixtures so a real run does real work.');
     console.log('\n  Authorize the real run yourself (it spends tokens and may WRITE):');
-    console.log("    Workflow({ scriptPath: '" + absFile + "', args: " + JSON.stringify(values.scope) + ' })');
+    console.log(`    Workflow({ scriptPath: '${absFile}', args: ${JSON.stringify(values.scope)} })`);
     console.log('\n  SAFETY: commit a clean base first; if a phase writes, revert with `git checkout . && git clean -fd` afterward.');
     process.exit(0);
 }
@@ -475,9 +475,9 @@ else {
         console.log(
             `  ${name}: parseOk=true  ran=true  deterministic=${report.deterministic}  agents=${report.totalAgents}  maxConcurrent=${report.maxConcurrentObserved}/${MAX_CONCURRENT}`,
         );
-        console.log('  phases: ' + (report.phaseSequence.join(' -> ') || '(none)'));
-        console.log('  perPhase: ' + JSON.stringify(report.perPhase));
-        if (report.nestedWorkflows.length) console.log('  nested: ' + report.nestedWorkflows.join(', '));
+        console.log(`  phases: ${report.phaseSequence.join(' -> ') || '(none)'}`);
+        console.log(`  perPhase: ${JSON.stringify(report.perPhase)}`);
+        if (report.nestedWorkflows.length) console.log(`  nested: ${report.nestedWorkflows.join(', ')}`);
         if (report.determinismDiff)
             console.log(
                 '  DIVERGENCE at char ' +
@@ -488,7 +488,7 @@ else {
                     report.determinismDiff.b +
                     '…',
             );
-        for (const w of report.warnings) console.log('  warn  ' + w);
+        for (const w of report.warnings) console.log(`  warn  ${w}`);
     }
 }
 
