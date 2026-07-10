@@ -105,8 +105,7 @@
   };
 in {
   home.packages = [pkgs.jnv];
-  # dirs-crate config resolution: ~/Library/Application Support on macOS (the
-  # XDG path is never consulted there), $XDG_CONFIG_HOME on Linux.
+  # dirs-crate config resolution: ~/Library/Application Support on macOS (the XDG path is never consulted there), $XDG_CONFIG_HOME on Linux.
   home.file = lib.optionalAttrs pkgs.stdenv.hostPlatform.isDarwin {
     "Library/Application Support/jnv/config.toml".source = tomlFormat.generate "jnv-config" jnvConfig;
   };

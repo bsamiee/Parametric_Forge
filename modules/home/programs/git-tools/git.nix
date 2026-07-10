@@ -12,8 +12,7 @@
   ...
 }: let
   isDarwin = pkgs.stdenv.hostPlatform.isDarwin;
-  # One universal identity; the unified estate key ("Forge SSH Key" in the
-  # Private vault) authenticates and signs. op-ssh-sign resolves it by
+  # One universal identity; the unified estate key ("Forge SSH Key" in the Private vault) authenticates and signs. op-ssh-sign resolves it by
   # public key through the 1Password agent seam in shell-tools/1password.nix.
   identity = {
     name = "Bardia Samiee";
@@ -33,8 +32,7 @@ in {
     enable = true;
     lfs.enable = true;
 
-    # The op agent (and its signer binary) exists on Darwin only; maghz holds
-    # no private key, so signing stays off there instead of faulting per commit.
+    # The op agent (and its signer binary) is Darwin-only; maghz holds no private key, so signing stays off there instead of faulting per commit.
     signing =
       {
         key = "key::${identity.publicKey}";
@@ -90,8 +88,7 @@ in {
       merge = {
         conflictstyle = "zdiff3";
         ff = false;
-        # Structural merge driver (manifest admission row): registration is
-        # inert until a repo opts in via gitattributes `merge=mergiraf` —
+        # Structural merge driver (manifest admission row): registration is inert until a repo opts in via gitattributes `merge=mergiraf` —
         # fixture-proven before any default enablement.
         mergiraf = {
           name = "mergiraf";
@@ -142,7 +139,6 @@ in {
     };
   };
 
-  # Delta is now configured via programs.delta, with explicit Git integration
   programs.delta = {
     enable = true;
     enableGitIntegration = true;
@@ -184,8 +180,7 @@ in {
       blame-separator-style = "dim";
       blame-timestamp-output-format = "%Y-%m-%d %H:%M";
 
-      # Diff styles: owner-derived fills tint the background and hold the
-      # code foreground neutral; word-level emphasis is the same hue lifted.
+      # Diff styles: owner-derived fills tint the background and hold the code foreground neutral; word-level emphasis is the same hue lifted.
       minus-style = "syntax ${config.forge.theme.roles.diff.del.hex}";
       minus-emph-style = "syntax bold ${config.forge.theme.roles.diff.delEmph.hex}";
       plus-style = "syntax ${config.forge.theme.roles.diff.add.hex}";

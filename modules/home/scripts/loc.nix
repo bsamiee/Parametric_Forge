@@ -6,8 +6,7 @@
 # ----------------------------------------------------------------------------
 # scc code counter + loc wrapper for grouped per-file / per-folder LOC
 {pkgs, ...}: let
-  # Single-pass LOC report: files grouped by top-level folder, folder totals,
-  # and one overall target total. --json emits the machine envelope.
+  # Single-pass LOC report: files grouped by top-level folder, folder totals, and one overall target total. --json emits the machine envelope.
   loc = pkgs.writeShellApplication {
     name = "loc";
     runtimeInputs = [pkgs.coreutils pkgs.jq pkgs.scc pkgs.util-linux];
@@ -38,8 +37,7 @@
       readonly tab=$'\t'
       readonly exclude_dirs=".git,.hg,.svn,bin,obj,node_modules,.cursor,.artifacts,dist,build,target,vendor"
 
-      # Detached stdin + deadline: a dead invoking session must never strand
-      # this command substitution as an orphaned subshell. TERM first, KILL
+      # Detached stdin + deadline: a dead invoking session must never strand this command substitution as an orphaned subshell. TERM first, KILL
       # after a 10s grace — a scan wedged on a dead mount ignores TERM.
       json="$(
         timeout -k 10 "$deadline" \
@@ -50,8 +48,7 @@
           --sort code </dev/null
       )" || {
         rc=$?
-        # Failure keeps the envelope rail: machine consumers get one typed
-        # error shape, never empty stdout beside a human stderr line.
+        # Failure keeps the envelope rail: machine consumers get one typed error shape, never empty stdout beside a human stderr line.
         if [[ "$json_mode" == 1 ]]; then
           jq -nc --argjson rc "$rc" --argjson deadline "$deadline" \
             '{error: {surface: "loc", kind: "scan", rc: $rc, deadline: $deadline}}'
@@ -126,8 +123,7 @@
       '
 
       if [[ "$json_mode" == 1 ]]; then
-        # Machine envelope: same folder grouping the table renders, plus
-        # per-language and overall totals for agent consumption.
+        # Machine envelope: same folder grouping the table renders, plus per-language and overall totals for agent consumption.
         jq -c --arg root "$target_path" "$report_filter"'
           {
             target: $root,

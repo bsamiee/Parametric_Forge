@@ -10,8 +10,7 @@ inspect_label() {
     printf '%s\n' "$value"
 }
 
-# One docker inspect serves every requested container label as one row;
-# absent labels and failed inspects project as empty fields. Unit-separator
+# One docker inspect serves every requested container label as one row; absent labels and failed inspects project as empty fields. Unit-separator
 # delimited: tab is IFS whitespace and read would collapse empty fields.
 inspect_labels() {
     local id="$1" raw
@@ -427,9 +426,8 @@ service_extension_sql() {
     psql_tsv "$service" <<<"$sql"
 }
 
-# One extension-row producer; mode selects the read-only probe or the mutating apply SQL.
-# A failed per-service SQL run fails the whole producer: silently dropped rows would
-# evade apply_required_rows_ok, which only inspects rows that exist.
+# One extension-row producer; mode selects the read-only probe or the mutating apply SQL. A failed per-service SQL run fails the whole producer:
+# silently dropped rows would evade apply_required_rows_ok, which only inspects rows that exist.
 extension_rows() {
     local mode="$1"
     local service rc=0

@@ -4,18 +4,15 @@
 # License       : MIT
 # Path          : modules/home/programs/nix-tools/nixd.nix
 # ----------------------------------------------------------------------------
-# nixd estate-portal owner (nix-community/nixd, the LSP — distinct from the
-# determinate-nixd daemon). Option-completion expressions are generated once
-# from the host context; every LSP client (Neovim rows, Claude marketplace)
-# consumes these rows instead of hand-maintained strings.
+# nixd estate-portal owner (nix-community/nixd, the LSP — distinct from the determinate-nixd daemon). Option-completion expressions are generated
+# once from the host context; every LSP client (Neovim rows, Claude marketplace) consumes these rows instead of hand-maintained strings.
 {
   host,
   lib,
   ...
 }: let
   flakeRoot = "${host.user.home}/Documents/99.Github/Parametric_Forge";
-  # git+file:// forces the git-tree fetcher (never walks .git), so nixd's
-  # upstream nix-2.34 fetchers skip the core.fsmonitor unix socket at
+  # git+file:// forces the git-tree fetcher (never walks .git), so nixd's upstream nix-2.34 fetchers skip the core.fsmonitor unix socket at
   # .git/fsmonitor--daemon.ipc a plain-path copy would choke on.
   flake = ''(builtins.getFlake "git+file://${flakeRoot}")'';
   configClass =

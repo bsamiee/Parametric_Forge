@@ -27,8 +27,10 @@ type Align = Literal["center", "left", "right", "none"]
 class Check(StrEnum):
     BOLD_EMPHASIS = "bold-emphasis"
     COLLECT = "collect"
+    COMMENT_RUNT = "comment-runt"
     COMMENT_SHRED = "comment-shred"
     COMMENT_STACK = "comment-stack"
+    COMMENT_WIDTH = "comment-width"
     COUPLED_LINK = "coupled-link"
     DEAD_RELATIVE_LINK = "dead-relative-link"
     FENCE_GEOMETRY = "fence-geometry"
@@ -45,11 +47,11 @@ class Check(StrEnum):
     LIST_LEADER = "list-leader"
     LIST_MARKER = "list-marker"
     META_PHRASE = "meta-phrase"
+    PROSE_WRAP = "prose-wrap"
     READ = "read"
     SECTION_DIVIDER = "section-divider"
     SECTION_WIDTH = "section-width"
     SELF_COUNT = "self-count"
-    PROSE_WRAP = "prose-wrap"
     SETEXT_HEADING = "setext-heading"
     SKILL_BUNDLE_ORPHAN = "skill-bundle-orphan"
     SKILL_BUNDLE_ROUTER = "skill-bundle-router"
@@ -77,8 +79,12 @@ class Check(StrEnum):
 CAP = 150
 CELL_BUDGET = 160
 COLUMN_FLOOR = 5
+COMMENT_RUNT_FLOOR = 50
 COMMENT_SHRED_FLOOR = 100
 COMMENT_STACK_CAP = 4
+# Guidance fills toward CAP; the gate grants slack above it before failing the line. Widths measure from column 1
+# of the source: Nix ''-string stripping only narrows the artifact, so the slack band absorbs the embedding indent.
+COMMENT_WIDTH_CAP = 165
 LIST_CHAR_CAP = 500
 LIST_SENTENCE_CAP = 3
 ROSTER_SPAN_SHARE = 0.6
@@ -105,10 +111,12 @@ FENCE_INTENTS = frozenset({
 TABLE_COLUMN_CEILING = 15
 TABLE_ROW_CEILING = 20
 MARKERS: dict[str, str] = (
-    dict.fromkeys((".py", ".sh", ".bash", ".zsh", ".nix", ".toml"), "#")
+    dict.fromkeys((".py", ".sh", ".bash", ".zsh", ".nix", ".toml", ".jq"), "#")
     | dict.fromkeys((".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs", ".cs", ".jsonc"), "//")
     | dict.fromkeys((".lua", ".sql"), "--")
 )
+# Teaching surfaces carry comments and dividers as taught pattern; the exemption binds only inside skill and docs trees.
+TEACHING = frozenset({"templates", "examples", "assets"})
 PRUNED = frozenset({".git", "node_modules", ".venv", ".cache", ".direnv", "result", "dist", "coverage", ".archive", ".history"})
 # Routing is a file class: only these filenames carry file links; a relative link anywhere else is coupling.
 ROUTING_FILES = frozenset({"README.md", "SKILL.md", "CLAUDE.md", "AGENTS.md", "MEMORY.md"})
@@ -125,15 +133,24 @@ DIVIDER_BODY = re.compile(r"^\[(?P<label>[A-Z][A-Z0-9_]*)\](?P<tail>.*)$")
 DIVIDER_LOOSE = re.compile(r"^\[(?P<raw>[^\]]+)\](?P<tail>.*)$")
 CHECKBOX = re.compile(r"^\[[ xX]\]\s")
 CARD_ROW = re.compile(r"^\s*-\s+`[^`]+`\s+-\s+")
-# Structural comment forms: shebangs, dash fills, doc-comment glyphs, and tool pragmas never count as prose comment lines.
-COMMENT_DIRECTIVE = re.compile(r"[!/-]|(?:shellcheck|noqa|ruff:|type:|mypy:|pyright:|fmt:|eslint|@ts-|biome-ignore|prettier|luacheck)\b")
+# Doc-comment glyphs bind only marker-adjacent (`///`, `//!`, `#!`, `--[[`, `#:schema`, `//#region`); a spaced glyph opens prose.
+COMMENT_GLYPH = re.compile(r"[!/@:#\[-]")
+# Tool pragmas count as structural only in pragma spelling — a bare tool name opening prose stays countable.
+COMMENT_DIRECTIVE = re.compile(
+    r"shellcheck\s+[a-z-]+=|noqa\b|ruff:|type:\s*ignore|mypy:|pyright:|fmt:\s*(?:off|on|skip)|eslint-|@ts-"
+    r"|biome-ignore\b|prettier-ignore\b|luacheck:|stylua:|%%(?:\s|$)|#?(?:end)?region\b|-\*-"
+)
+# Label-plus-dash-fill divider rows and column-aligned topology rows (continuation indents, 3+-space columns) are structural carriers.
+COMMENT_LABEL_FILL = re.compile(r"^\[?[A-Za-z][A-Za-z0-9_ .]{0,40}\]?\s*-{4,}\s*$")
+COMMENT_ALIGNED = re.compile(r"^\s{2,}|\S\s{3,}\S")
 EXAMPLE_LINE = re.compile(
     r"^\s*(?:>\s*)?(?:[-+*]|\d+[.)])?\s*(?:Detection|Reject(?:ed)?|Accept(?:ed)?|Near miss|Banned|Survivors|Reason|Reframe)"
     r"(?:\s*\([^)]*\))?:"
 )
 # Any-indent fences: list-nested fences open at the item's content column; close indent is bounded at the check site.
-FENCE = re.compile(r"^(?P<indent> *)(?P<marker>`{3,}|~{3,})(?P<info>.*)$")
-EMOJI = re.compile(r"[\U0001F000-\U0001FAFF\u2705\u274C\u2713\u2714\u2717\u2718\u2B50\u2728]")
+FENCE = re.compile(r"^(?P<indent>[ \t]*)(?P<marker>`{3,}|~{3,})(?P<info>.*)$")
+# The 2600-27BF block covers warning/exclamation/info pictographs; the arrow blocks stay legal for codemap glyphs.
+EMOJI = re.compile(r"[\U0001F000-\U0001FAFF\u2600-\u27BF\u2B50\u2139\uFE0F]")
 PROMPT_LINE = re.compile(r"^\s*(?:\$|\u276F|PS>)\s+\S")
 GROUP_LABEL = re.compile(r"^\[[A-Z][A-Z0-9_]*\]:\s*$")
 GLYPHS = ("│", "├", "└", "⇄")
@@ -141,7 +158,12 @@ HEADER_CELL = re.compile(r"^\[[A-Z][A-Z0-9_]*\]$")
 HEADING = re.compile(r"^(?P<level>#{1,6})\s+(?P<title>.+?)\s*$")
 LIST_ITEM = re.compile(r"^(?P<indent>\s*)(?P<mark>[-+*]|\d+[.)])\s+(?P<body>\S.*)$")
 LIST_LEADER = re.compile(r"^\s*(?:[-+*]|\d+[.)])\s+\[(?:\d{2}(?:-[A-Z0-9_]+)?|[A-Z0-9_]+|[OX!~ ])\](?:\s+[—-]|[-:]\s*|:)")
-LINK = re.compile(r"(?<!!)\[([^\]\n]+)\]\(([^)\s]+)(?:\s+\"[^\"]*\")?\)")
+# A `- Field: value` record field answers to the earned-field law at card altitude; the entry budget binds peer bullets.
+FIELD_LINE = re.compile(r"^[A-Z][A-Za-z-]*(?: [A-Za-z-]+){0,2}: \S")
+# Hard-wrap detection: a flush-left prose line whose predecessor is also flush-left prose; structural leads are excluded.
+PLAIN_EXCLUDED = ("#", "-", "*", "+", ">", "|", "<", "=", "[")
+NUMBERED_LEAD = re.compile(r"^\d+[.)]\s")
+LINK = re.compile(r"(?<!!)\[([^\]\n]+)\]\(((?:[^()\s]|\([^()\s]*\))+)(?:\s+\"[^\"]*\")?\)")
 NUMBERED_SECTION = re.compile(r"^\[(?P<n>\d{2})\]-\[(?P<token>[A-Z][A-Z0-9_]*)\](?:-\[[A-Z][A-Z0-9_]*\])*$")
 PLACEHOLDER = re.compile(r"<[a-z][a-z0-9]*(?:[-_][a-z0-9]+)+>")
 SENTENCE_END = re.compile(r"[.!?](?:\s|$)")
@@ -153,7 +175,7 @@ INDEX_ALIASES = frozenset({"INDEX", "IDX", "NN", "NO", "NUM", "ROW"})
 NUMBER_ENTRY = re.compile(r"^\[?\s*0*(\d{1,3})\s*\]?$")
 H2_NUMBERED = re.compile(r"^\[(\d{2})\]-(\[[A-Z][A-Z0-9_]*\](?:-\[[A-Z][A-Z0-9_]*\])*)$")
 H3_NUMBERED = re.compile(r"^\[(\d{2})\.(\d+)\]-(\[[A-Z][A-Z0-9_]*\](?:-\[[A-Z][A-Z0-9_]*\])*)$")
-LEADER_BARE = re.compile(r"^(?P<indent>\s*)- \[(?P<token>\d{2,3}|[A-Z][A-Z0-9_]*)\]\s+(?![-\u2013\u2014:(])(?P<rest>\S.*)$")
+LEADER_BARE = re.compile(r"^(?P<indent>\s*)- \[(?P<token>\d{1,3}|[A-Z][A-Z0-9_]*)\]\s+(?![-\u2013\u2014:(])(?P<rest>\S.*)$")
 LEADER_LOOSE = re.compile(
     r"^(?P<indent>\s*)-\s+\[?\s*(?P<n>\d{1,3})\s*\]?\s*[-\u2013\u2014]\s*\[?\s*(?P<label>[A-Za-z][A-Za-z0-9_ ]*?)\s*\]?\s*:(?P<rest>.*)$"
 )
@@ -183,7 +205,8 @@ SELF_COUNT = re.compile(
     r"|tests|checks|steps|entries|forms|tiers|bands|devices|archetypes|templates|references|tables|diagrams|cards"
     r"|rows|columns|tokens|markers|vocabularies)\b"
 )
-VERSION_ANCHOR = re.compile(r"\bv?\d+\.\d+(?:\.\d+)+\b|\b\d+\.\d+(?:\.\d+)?\+|\bv\d+\.\d+\b")
+# The lookahead spares dotted-quad network literals; the lookbehind blocks interior re-matches inside them.
+VERSION_ANCHOR = re.compile(r"(?<![\d.])\b(?!(?:\d{1,3}\.){3}\d{1,3}\b)v?\d+\.\d+(?:\.\d+)+\b|\b\d+\.\d+(?:\.\d+)?\+|\bv\d+\.\d+\b")
 # Deictic freshness and permission verbs warn: both admit context-legal uses review adjudicates.
 FRESHNESS_DEICTIC = re.compile(r"\b(?:currently|recently|nowadays|at\s+present|these\s+days|going\s+forward|modern)\b", re.IGNORECASE)
 WEAK_VERB = re.compile(r"\b(?:supports|provides|offers|allows|enables)\b", re.IGNORECASE)
@@ -393,9 +416,14 @@ def prose_spans(line: str, number: int) -> tuple[Span, ...]:
 
 def read(path: Path) -> str | Row:
     try:
-        return path.read_text(encoding="utf-8")
+        return path.read_text(encoding="utf-8-sig")
     except (OSError, UnicodeDecodeError) as exc:
         return row(path, 0, Check.READ, "fail", type(exc).__name__)
+
+
+def teaching(path: Path) -> bool:
+    parts = set(path.parts)
+    return bool(TEACHING & parts) and bool({".claude", "skills", "docs"} & parts)
 
 
 def lex(path: Path, text: str, cap: int) -> tuple[Document, tuple[Row, ...]]:
@@ -409,16 +437,19 @@ def lex(path: Path, text: str, cap: int) -> tuple[Document, tuple[Row, ...]]:
     rows: list[Row] = []
     fence: tuple[str, int, int, str, int] | None = None
     mermaid_access = True
+    plain_run = False
     n = 0
     while n < len(raw):
         number, line = n + 1, raw[n]
         if line.endswith((" ", "\t")):
             rows.append(row(path, number, Check.TRAILING_WHITESPACE, "fail", "line ends with space or tab"))
         if number <= skip_until:
+            plain_run = False
             n += 1
             continue
         matched = FENCE.match(line)
         if fence is None and matched:
+            plain_run = False
             marker, info = matched.group("marker"), matched.group("info").strip()
             tokens = info.lower().split()
             template = "templates" in path.parts
@@ -435,6 +466,7 @@ def lex(path: Path, text: str, cap: int) -> tuple[Document, tuple[Row, ...]]:
             n += 1
             continue
         if fence is not None:
+            plain_run = False
             glyph, width, start, info, margin = fence
             if (
                 matched
@@ -472,6 +504,7 @@ def lex(path: Path, text: str, cap: int) -> tuple[Document, tuple[Row, ...]]:
                 body.append(split_cells(raw[cursor]))
                 cursor += 1
             tables.append(Table(number, cursor, indent, headers, aligns, tuple(body)))
+            plain_run = False
             n = cursor
             continue
         links.extend(LinkRef(number, link.group(2)) for link in LINK.finditer(re.sub(r"`[^`]*`", "", line)))
@@ -490,6 +523,13 @@ def lex(path: Path, text: str, cap: int) -> tuple[Document, tuple[Row, ...]]:
             lists.append(ListEntry(number, text_joined, stripped, share))
         if not line.lstrip().startswith("|"):
             prose.extend(prose_spans(line, number))
+        stripped = line.strip()
+        plain = (
+            bool(stripped) and not line.startswith((" ", "\t")) and not stripped.startswith(PLAIN_EXCLUDED) and NUMBERED_LEAD.match(stripped) is None
+        )
+        if plain and plain_run:
+            rows.append(row(path, number, Check.PROSE_WRAP, "warn", "hard-wrapped paragraph; write the paragraph as one logical line"))
+        plain_run = plain
         n += 1
     if fence is not None:
         rows.append(row(path, fence[2], Check.FENCE_UNCLOSED, "fail", "opening fence has no closing fence"))
@@ -531,7 +571,8 @@ def table_rows(doc: Document) -> tuple[Row, ...]:
                 if actual.strip() != expected:
                     rows.append(row(doc.path, table.line + index + 1, Check.TABLE_INDEX, "fail", f"{actual or '<empty>'} != {expected}"))
         fat = len(table.headers) > 4 or any(len(cell) > 100 for body in table.rows for cell in body)
-        registry = len(table.headers) <= 3
+        # A registry table — a closed roster of atomic rows in four columns or fewer — is legal past the row ceiling.
+        registry = len(table.headers) <= 4
         if len(table.headers) > TABLE_COLUMN_CEILING or (len(table.rows) > TABLE_ROW_CEILING and fat and not registry):
             rows.append(
                 row(
@@ -539,7 +580,7 @@ def table_rows(doc: Document) -> tuple[Row, ...]:
                     table.line,
                     Check.TABLE_BOUNDS,
                     "warn",
-                    f"{len(table.headers)} columns x {len(table.rows)} rows exceeds the 15x20 ceiling",
+                    f"{len(table.headers)} columns x {len(table.rows)} rows exceeds the 15x20 ceiling; decompose on the dominant axis, never to prose",
                 )
             )
         linked = any(LINK.search(QUOTED_SPAN.sub("", cell)) for body in table.rows for cell in body)
@@ -558,14 +599,14 @@ def table_rows(doc: Document) -> tuple[Row, ...]:
                 table.line + index + 1,
                 Check.TABLE_CELL,
                 "warn",
-                f"prose-crammed cell ({len(cell)} chars); rows stay atomic, nuance moves to prose",
+                f"prose-crammed cell ({len(cell)} chars); hoist repeats into the header or relieve the clause into the lead — the grid stays",
             )
             for index, body in enumerate(table.rows, 1)
             for cell in body
             if len(cell) > CELL_BUDGET
         )
         rows.extend(
-            row(doc.path, table.line + index + 1, Check.TABLE_PROSE, "warn", hit.group(0))
+            row(doc.path, table.line + index + 1, Check.TABLE_PROSE, "warn", f"{hit.group(0)} rides a cell; reword the cell in place, the grid stays")
             for index, body in enumerate(table.rows, 1)
             for cell in body
             for pattern in (HEDGE_WORDS, MARKER_WORDS, META_PHRASE)
@@ -669,7 +710,7 @@ def list_rows(doc: Document) -> tuple[Row, ...]:
             rows.append(row(doc.path, entry.line, Check.LIST_LEADER, "fail", f"router card deviates from - [NN]-[TOKEN](path): {entry.text[:50]}"))
         elif entry.text.startswith("[") and not CHECKBOX.match(entry.text) and not LIST_LEADER.match(f"- {entry.text}"):
             rows.append(row(doc.path, entry.line, Check.LIST_LEADER, "fail", entry.text.split(":", 1)[0]))
-        if entry.span_share < ROSTER_SPAN_SHARE and not entry.text.startswith("`"):
+        if entry.span_share < ROSTER_SPAN_SHARE and not entry.text.startswith("`") and FIELD_LINE.match(entry.text) is None:
             sentences = len(SENTENCE_END.findall(entry.prose))
             if sentences > LIST_SENTENCE_CAP:
                 rows.append(row(doc.path, entry.line, Check.LIST_BLOAT, "warn", f"{sentences} sentences > cap {LIST_SENTENCE_CAP}"))
@@ -744,29 +785,53 @@ def comment_rows(path: Path, text: str) -> tuple[Row, ...]:
     marker = MARKERS[path.suffix]
     rows: list[Row] = []
     run: list[tuple[int, int]] = []
-    leading = True
+    # Header identity rows are frozen; the charter docstring below the header's dash divider carries shred, runt,
+    # and width discipline but never the stack cap; the first code line opens the body zone for good.
+    zone = "header"
 
     def close() -> None:
-        if len(run) > COMMENT_STACK_CAP:
+        if zone == "body" and len(run) > COMMENT_STACK_CAP:
             detail = f"{len(run)} stacked comment lines > cap {COMMENT_STACK_CAP}; merge toward the {CAP}-column width"
             rows.append(row(path, run[0][0], Check.COMMENT_STACK, "fail", detail))
         elif len(run) >= 2 and all(width < COMMENT_SHRED_FLOOR for _, width in run):
             detail = f"{len(run)} stacked comment lines all under {COMMENT_SHRED_FLOOR} columns; merge toward the {CAP}-column width"
             rows.append(row(path, run[0][0], Check.COMMENT_SHRED, "warn", detail))
+        elif len(run) >= 2 and run[-1][1] < COMMENT_RUNT_FLOOR:
+            detail = f"trailing runt line {run[-1][1]} < floor {COMMENT_RUNT_FLOOR}; re-flow the block into fewer or balanced lines"
+            rows.append(row(path, run[-1][0], Check.COMMENT_RUNT, "warn", detail))
         run.clear()
 
     for number, line in enumerate(text.splitlines(), 1):
         body = line.strip()
         if not body.startswith(marker):
-            leading = False
+            # The leading zones survive the shebang (`#!` opens every marker language's line 1) and interior blanks.
+            close()
+            if body and not (number == 1 and body.startswith("#!")):
+                zone = "body"
+            continue
+        # Width is absolute geometry: it binds in every zone, structural lines included.
+        width = len(line.rstrip())
+        if width > COMMENT_WIDTH_CAP:
+            rows.append(row(path, number, Check.COMMENT_WIDTH, "fail", f"comment line {width} > cap {COMMENT_WIDTH_CAP}"))
+        glyphed = body.removeprefix(marker)
+        tail = glyphed.removeprefix(" ")
+        dash_fill = re.fullmatch(r"-{4,}", tail.strip()) is not None
+        if zone == "header":
+            if dash_fill:
+                zone = "charter"
+            continue
+        if (
+            DIVIDER.match(line)
+            or dash_fill
+            or (bool(glyphed) and not glyphed.startswith(" ") and COMMENT_GLYPH.match(glyphed) is not None)
+            or COMMENT_DIRECTIVE.match(tail.lstrip()) is not None
+            or COMMENT_LABEL_FILL.match(tail.strip()) is not None
+            or COMMENT_ALIGNED.search(tail) is not None
+        ):
             close()
             continue
-        if leading:
-            continue
-        if DIVIDER.match(line) or COMMENT_DIRECTIVE.match(body.removeprefix(marker).lstrip()):
-            close()
-            continue
-        run.append((number, len(line.rstrip())))
+        rows.extend(row(path, number, Check.HEDGE, "warn", hit.group(0)) for hit in MARKER_WORDS.finditer(tail))
+        run.append((number, width))
     close()
     return tuple(rows)
 
@@ -793,7 +858,7 @@ def scan(path: Path, cap: int) -> tuple[Row, ...]:
     if isinstance(text, Row):
         return (text,)
     if path.suffix != ".md":
-        return divider_rows(path, text) + comment_rows(path, text)
+        return () if teaching(path) else divider_rows(path, text) + comment_rows(path, text)
     doc, lexer_rows = lex(path, text, cap)
     checks = lexer_rows + table_rows(doc) + heading_rows(doc) + link_rows(doc) + prose_rows(doc) + list_rows(doc)
     return checks + skill_rows(path, text) + bundle_rows(path, text)
@@ -935,7 +1000,8 @@ def repaired_lines(lines: list[str], skip_until: int) -> tuple[list[str], tuple[
                 changes.append(Change(number, Repair.LEADER, line.strip()[:60], wanted.strip()[:60]))
                 line = wanted
         elif (bare := LEADER_BARE.match(line)) is not None:
-            wanted = f"{bare['indent']}- [{bare['token']}]: {bare['rest']}"
+            token = bare["token"]
+            wanted = f"{bare['indent']}- [{f'{int(token):02}' if token.isdigit() else token}]: {bare['rest']}"
             changes.append(Change(number, Repair.LEADER, line.strip(), wanted.strip()))
             line = wanted
         elif (loose := LEADER_LOOSE.match(line)) is not None:
@@ -965,11 +1031,12 @@ def repaired_source(path: Path, text: str) -> tuple[str, tuple[Change, ...]]:
         label = rubric(loose["raw"])
         tail = loose["tail"]
         head = f"{matched['indent']}{marker} --- {label}"
-        if not HEADER_CELL.match(label) or (tail and not DASH_TAIL.match(tail)) or (tail and len(head) > DIVIDER_WIDTH - 2):
+        fill = re.fullmatch(r"\s*-+\s*", tail) is not None if tail else False
+        if not HEADER_CELL.match(label) or (tail and not fill) or (tail and len(head) > DIVIDER_WIDTH - 2):
             changes.append(Change(number, Repair.SKIP, line.strip()[:60], "divider resists mechanical repair; review"))
             out.append(line)
             continue
-        wanted = head if not tail else f"{head} " + "-" * (DIVIDER_WIDTH - len(head) - 1)
+        wanted = f"{head} " + "-" * (DIVIDER_WIDTH - len(head) - 1) if fill else head
         if wanted != line:
             changes.append(Change(number, Repair.DIVIDER, line.strip()[:60], wanted.strip()[:60]))
         out.append(wanted)
@@ -978,7 +1045,7 @@ def repaired_source(path: Path, text: str) -> tuple[str, tuple[Change, ...]]:
 
 def repaired_text(path: Path, text: str, cap: int) -> tuple[str, tuple[Change, ...]]:
     if path.suffix != ".md":
-        return repaired_source(path, text)
+        return (text, ()) if teaching(path) else repaired_source(path, text)
     template = "templates" in path.parts
     lines = list(text.splitlines())
     changes: list[Change] = []

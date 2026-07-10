@@ -4,11 +4,9 @@
 # License       : MIT
 # Path          : modules/home/programs/apps/nvim/default.nix
 # ----------------------------------------------------------------------------
-# Store-owned Neovim rail and Lua fact generator. Home Manager deploys the
-# pinned plugin set (zero network at first start) and one server/tool/chord/
-# syntax inventory projects into generated forge/*.lua modules, the Claude LSP
-# marketplace parity rows, and .luarc.json — editor and Claude LSP never
-# drift. Lua owns runtime behavior; Nix owns packages, paths, and facts.
+# Store-owned Neovim rail and Lua fact generator. Home Manager deploys the pinned plugin set (zero network at first start) and one
+# server/tool/chord/syntax inventory projects into generated forge/*.lua modules, the Claude LSP marketplace parity rows, and .luarc.json —
+# editor and Claude LSP never drift. Lua owns runtime behavior; Nix owns packages, paths, and facts.
 {
   config,
   lib,
@@ -56,8 +54,7 @@
   ];
   treesitter = pkgs.vimPlugins.nvim-treesitter.withPlugins (p: map (n: p.${n}) grammars);
 
-  # Plugin admissions ride overlays/manifest.nix extensions.nvim-plugins rows;
-  # a new plugin is one name here plus its setup owner in lua/plugins/.
+  # Plugin admissions ride overlays/manifest.nix extensions.nvim-plugins rows; a new plugin is one name here plus its setup owner in lua/plugins/.
   plugins =
     lib.genAttrs [
       "dracula-vim"
@@ -74,19 +71,15 @@
     ] (name: pkgs.vimPlugins.${name})
     // {nvim-treesitter = treesitter;};
 
-  # One Lua fact inventory serves lua_ls settings (any workspace root, the
-  # repo sources included) and the generated .luarc.json in the config dir.
+  # One Lua fact inventory serves lua_ls settings (any workspace root, the repo sources included) and the generated .luarc.json in the config dir.
   luaLibrary =
     ["${pkgs.neovim-unwrapped}/share/nvim/runtime/lua"]
     ++ lib.mapAttrsToList (_: p: "${p}/lua") plugins;
 
   # --- [LSP_INVENTORY_ONE_ROW_FAMILY_TWO_CONSUMERS]
-  # `cmd`/`filetypes`/`root_markers`/`settings` feed vim.lsp.config rows;
-  # `claude` is the marketplace identity (plugin dir, extension map, optional
-  # settings override) the health surface proves against
-  # .claude/lsp-marketplace — command/args derive from `cmd` at projection.
-  # Commands are bare names resolving through the Forge per-user profile —
-  # never per-project shells (tool-resolution policy).
+  # `cmd`/`filetypes`/`root_markers`/`settings` feed vim.lsp.config rows; `claude` is the marketplace identity (plugin dir, extension map,
+  # optional settings override) the health surface proves against .claude/lsp-marketplace — command/args derive from `cmd` at projection.
+  # Commands are bare names resolving through the Forge per-user profile — never per-project shells (tool-resolution policy).
   servers = {
     nixd = rec {
       cmd = ["nixd"];
@@ -103,11 +96,9 @@
       cmd = ["lua-language-server"];
       filetypes = ["lua"];
       root_markers = [".luarc.json" "stylua.toml" ".git"];
-      # The generated .luarc.json only reaches the deployed config dir; the
-      # settings row carries the same facts to every root — the repo sources
-      # resolve at apps/nvim (stylua.toml) and keep vim/plugin awareness.
-      # Claude side stays settings-free: store paths in a tracked .lsp.json
-      # would drift on every plugin bump.
+      # The generated .luarc.json only reaches the deployed config dir; the settings row carries the same facts to every root — the repo sources
+      # resolve at apps/nvim (stylua.toml) and keep vim/plugin awareness. Claude side stays settings-free: store paths in a
+      # tracked .lsp.json would drift on every plugin bump.
       settings.Lua = {
         runtime.version = "LuaJIT";
         workspace = {
@@ -125,8 +116,7 @@
       cmd = ["bash-language-server" "start"];
       filetypes = ["sh" "bash"];
       root_markers = [".git"];
-      # Editor side disables the LSP shellcheck lane: nvim-lint owns shellcheck
-      # (namespace separation, one diagnostic per fault); Claude keeps it.
+      # Editor side disables the LSP shellcheck lane: nvim-lint owns shellcheck (namespace separation, one diagnostic per fault); Claude keeps it.
       settings.bashIde = {
         shellcheckPath = "";
         shfmt.path = "shfmt";
@@ -156,8 +146,7 @@
         };
       };
     };
-    # TypeScript 7 (`typescript@7` upstream identity); nixpkgs typescript-go
-    # still ships the dev snapshot binary as `tsgo` — a package-drift row.
+    # TypeScript 7 (`typescript@7` upstream identity); nixpkgs typescript-go still ships the dev snapshot binary as `tsgo` — a package-drift row.
     tsgo = {
       cmd = ["tsgo" "--lsp" "-stdio"];
       filetypes = ["typescript" "typescriptreact" "javascript" "javascriptreact"];
@@ -220,11 +209,9 @@
   };
 
   # --- [TOOL_ROWS_FORMATTERS_LINTERS_SEARCH_PROVIDER_ESTATE_ACTIONS]
-  # Bare names resolve through the per-user profile; the health surface proves
-  # resolution (`probes` names the real tools behind sh-wrapped rows). Estate
-  # rows are the register-rail projection inside the editor: `mode` selects the
-  # dispatch arm (scratch = capture into a float, pane = zellij floating pane
-  # for TUI/long-running commands).
+  # Bare names resolve through the per-user profile; the health surface proves resolution (`probes` names the real tools behind sh-wrapped rows).
+  # Estate rows are the register-rail projection inside the editor: `mode` selects the dispatch arm (scratch = capture into a float,
+  # pane = zellij floating pane for TUI/long-running commands).
   estateRows = [
     {
       id = "flake-inputs";
@@ -264,9 +251,8 @@
       mode = "scratch";
     }
     {
-      # Derivation-level diff of the last two generations. Substituted builds
-      # leave drv gaps anywhere in the closure: toplevel absence rails before
-      # launch, an inner-drv abort rails into the same typed verdict line.
+      # Derivation-level diff of the last two generations. Substituted builds leave drv gaps anywhere in the closure: toplevel absence rails
+      # before launch, an inner-drv abort rails into the same typed verdict line.
       id = "nix-diff";
       label = "Generation diff, derivation level (nix-diff)";
       argv = ["sh" "-c" ''set -- $(ls -d /nix/var/nix/profiles/system-*-link | sort -V | tail -n 2); left=$(nix-store --query --deriver "$1"); right=$(nix-store --query --deriver "$2"); for d in "$left" "$right"; do [ -e "$d" ] || { echo "deriver not in store: $d (substituted build; use the nvd row)"; exit 1; }; done; nix-diff "$left" "$right" 2>&1 || printf '\nnix-diff aborted: derivation closure incomplete locally (substituted builds); use the nvd row\n' ''];
@@ -345,8 +331,7 @@
       // lib.genAttrs
       ["css" "html" "javascript" "javascriptreact" "json" "jsonc" "markdown" "typescript" "typescriptreact"]
       (_: ["prettier"]);
-    # Lane shape is the contract: `ft` rows index by filetype, `workflow`
-    # attaches path-gated, `global` rides every buffer (plugins/lint.lua).
+    # Lane shape is the contract: `ft` rows index by filetype, `workflow` attaches path-gated, `global` rides every buffer (plugins/lint.lua).
     lint = {
       ft = {
         nix = ["deadnix" "statix"];
@@ -363,9 +348,8 @@
   };
 
   # --- [SYNTAX_PROJECTION]
-  # The owner scope table carries its own treesitter captures (design-language
-  # master scope map); hue, style, and capture binding all live in theme.nix —
-  # a rebind there lands here with zero edits.
+  # The owner scope table carries its own treesitter captures (design-language master scope map); hue, style, and capture binding all live in
+  # theme.nix — a rebind there lands here with zero edits.
   syntaxFacts = {
     scopes =
       map (row: {
@@ -376,8 +360,7 @@
       config.forge.theme.syntaxScopes;
     roles =
       config.forge.theme.projections.rolesHex
-      # Git-state vocabulary: the same hues the VS Code and WezTerm gutters
-      # read; the glyph half of the row stays with its terminal consumers.
+      # Git-state vocabulary: the same hues the VS Code and WezTerm gutters read; the glyph half of the row stays with its terminal consumers.
       // {git = lib.mapAttrs (_: g: g.color) config.forge.theme.projections.gitHex;};
   };
 
@@ -395,16 +378,14 @@ in {
     plugins = lib.attrValues plugins;
   };
 
-  # Python provider through the uv tool lane: pynvim's own interpreter shim,
-  # isolated from ambient virtualenvs — never ambient discovery.
+  # Python provider through the uv tool lane: pynvim's own interpreter shim, isolated from ambient virtualenvs — never ambient discovery.
   home.activation.pynvimProvider = lib.hm.dag.entryAfter ["writeBoundary"] ''
     [ -x "$HOME/.local/bin/pynvim-python" ] \
       || run ${pkgs.uv}/bin/uv tool install pynvim >/dev/null 2>&1 \
       || echo "pynvim provider install deferred; :checkhealth forge proves the lane" >&2
   '';
 
-  # Recursive tree link merges tracked sources with the generated fact modules
-  # in one home-files derivation; new tracked Lua files deploy with zero rows.
+  # Recursive tree link merges tracked sources with generated fact modules in one home-files derivation; new tracked Lua files deploy with zero rows.
   xdg.configFile = {
     "nvim/lua" = {
       source = ./lua;
@@ -422,9 +403,8 @@ in {
     };
     "nvim/lua/forge/tools.lua".text = genLuaModule toolFacts;
     "nvim/lua/forge/chords.lua".text = genLuaModule config.forge.chords.nvim.rows;
-    # Claude marketplace parity projection: identity rows the health surface
-    # compares against <flake_root>/.claude/lsp-marketplace/<plugin>/.lsp.json.
-    # command/args are one fact — the server `cmd` row — projected here.
+    # Claude marketplace parity projection: identity rows the health surface compares against <flake_root>/.claude/lsp-marketplace/<plugin>/
+    # .lsp.json. command/args are one fact — the server `cmd` row — projected here.
     "forge/lsp/claude-marketplace.json".text = builtins.toJSON (
       lib.mapAttrs' (_: row:
         lib.nameValuePair row.claude.plugin ({

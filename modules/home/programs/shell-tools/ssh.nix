@@ -4,12 +4,9 @@
 # License       : MIT
 # Path          : modules/home/programs/shell-tools/ssh.nix
 # ----------------------------------------------------------------------------
-# SSH client configuration with GitHub integration and VPS loopback tunnels.
-# One tunnel row projects everything: interactive host block, transport-only
-# tunnel block, launchd tunnel agent, rclone mount agents, service-health
-# receipts, and the remote-surface rows every consumer folds (WezTerm SSH
-# domains, Yazi VFS, workspace picker). A future VPS is a new row here, never
-# a new agent module.
+# SSH client configuration with GitHub integration and VPS loopback tunnels. One tunnel row projects everything: interactive host block,
+# transport-only tunnel block, launchd tunnel agent, rclone mount agents, service-health receipts, and the remote-surface rows every consumer
+# folds (WezTerm SSH domains, Yazi VFS, workspace picker). A future VPS is a new row here, never a new agent module.
 {
   config,
   host,
@@ -19,17 +16,14 @@
 }: let
   homeDir = config.home.homeDirectory;
 
-  # One identity agent for every remote surface: ssh client, WezTerm mux,
-  # Yazi VFS, and the rclone mount lane all pin this socket — the ambient
+  # One identity agent for every remote surface: ssh client, WezTerm mux, Yazi VFS, and the rclone mount lane all pin this socket — the ambient
   # SSH_AUTH_SOCK is the identity-less Apple launchd agent.
   identityAgent = "${homeDir}/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock";
   mountRoot = "${homeDir}/Volumes";
 
-  # Probe classes drive the health receipts: pg (pg_isready), http (GET path),
-  # none (forward only, bind-checked but never service-probed). Mount rows are
-  # the F12 mount-policy vocabulary: path (remote, "" = user home), readOnly,
-  # and cache posture (off|minimal|writes|full) — cache sinks ONLY into the
-  # rclone lane; Yazi's ServiceSftp has no cache knob by design.
+  # Probe classes drive the health receipts: pg (pg_isready), http (GET path), none (forward only, bind-checked but never service-probed). Mount
+  # rows are the F12 mount-policy vocabulary: path (remote, "" = user home), readOnly, and cache posture (off|minimal|writes|full) — cache sinks
+  # ONLY into the rclone lane; Yazi's ServiceSftp has no cache knob by design.
   vpsTunnels = {
     maghz = {
       user = "maghz-agent";
@@ -76,8 +70,7 @@
           path = "/healthz";
         }
         {
-          # 8788: the Jupyter loopback owns 8888 on both ends of the tunnel.
-          port = 8788;
+          port = 8788; # Jupyter owns 8888 on both tunnel ends
           service = "atuin";
           probe = "http";
           path = "/";
@@ -92,8 +85,7 @@
     };
   };
 
-  # Supervisors project only onto client hosts: a tunnel row whose name is the
-  # running host would tunnel the machine to itself and flap on port-conflict.
+  # Supervisors project only onto client hosts: a self-named row would tunnel the machine to itself and flap on port-conflict.
   clientTunnels = lib.filterAttrs (name: _: name != host.name) vpsTunnels;
 
   forwardsFor = tunnel:
@@ -104,9 +96,8 @@
     })
     tunnel.forwards;
 
-  # Interactive operator hosts: `ssh maghz` opens a plain session. Forwards
-  # belong solely to the launchd tunnel agent — an interactive mux that also
-  # binds them would hold the loopback ports and starve the durable owner.
+  # Interactive operator hosts: `ssh maghz` opens a plain session. Forwards belong solely to the launchd tunnel agent — an interactive mux that
+  # also binds them would hold the loopback ports and starve the durable owner.
   interactiveHosts = lib.mapAttrs' (name: tunnel:
     lib.nameValuePair "${name}-vps ${name}" {
       User = tunnel.user;
@@ -116,8 +107,7 @@
     })
   vpsTunnels;
 
-  # Transport-only tunnel hosts: fail-fast forwards + tight keepalives; the
-  # supervisor owns lifecycle, launchd owns restart policy.
+  # Transport-only tunnel hosts: fail-fast forwards + tight keepalives; the supervisor owns lifecycle, launchd owns restart policy.
   tunnelHosts = lib.mapAttrs' (name: tunnel:
     lib.nameValuePair "${name}-tunnel" {
       User = tunnel.user;
@@ -126,8 +116,7 @@
       AddKeysToAgent = "yes";
       BatchMode = true;
       Compression = false;
-      # ControlPath none: ControlMaster no alone still JOINS an existing mux,
-      # whose master then retains the forwards after the supervisor dies —
+      # ControlPath none: ControlMaster no alone still JOINS an existing mux, whose master then retains the forwards after the supervisor dies —
       # the port-conflict loop. The transport must never touch the estate mux.
       ControlMaster = "no";
       ControlPath = "none";
@@ -148,8 +137,7 @@
       inherit (tunnel) forwards;
     });
 
-  # (host, mount) pairs on client hosts: each pair projects one supervisor
-  # agent, one receipt log, one receipt-registry row, and one mountpoint.
+  # (host, mount) pairs on client hosts: each pair projects one supervisor agent, one receipt log, one receipt-registry row, and one mountpoint.
   mountPairs = lib.concatLists (lib.mapAttrsToList (
       name: tunnel:
         map (m: {
@@ -170,18 +158,15 @@
       authSock = identityAgent;
     });
 
-  # Per-row identity bundle rows on the shared owner (bundle-apps.nix): Login
-  # Items & Extensions resolves the agent's AssociatedBundleIdentifiers to
+  # Per-row identity bundle rows on the shared owner: Login Items & Extensions resolves the agent's AssociatedBundleIdentifiers to
   # "<Name> VPS Tunnel" instead of the "/bin/sh" basename.
   tunnelTitle = name: "${lib.toSentenceCase name} VPS Tunnel";
   tunnelBundleId = name: "com.parametric-forge.${name}-vps-tunnel";
   receiptsFold = import ./receipts.nix;
 
-  # Health-gated supervisor: spawns ssh -N, proves every local bind, then
-  # emits service-health receipts on state transitions. Restart-worthy states
-  # are transport-scoped only (port-conflict, vps-unreachable, bind-failed,
-  # bind-lost) — service-down is receipted, never restarted: a local restart
-  # cannot fix a remote service, and churn would mask real VPS outages.
+  # Health-gated supervisor: spawns ssh -N, proves every local bind, then emits service-health receipts on state transitions. Restart-worthy
+  # states are transport-scoped only (port-conflict, vps-unreachable, bind-failed, bind-lost) — service-down is receipted, never restarted: a
+  # local restart cannot fix a remote service, and churn would mask real VPS outages.
   tunnelSupervisor = pkgs.writeShellApplication {
     name = "forge-vps-tunnel";
     runtimeInputs = [pkgs.coreutils pkgs.openssh pkgs.curl pkgs.jq pkgs.lsof];
@@ -193,17 +178,15 @@
       bind_grace="''${FORGE_TUNNEL_BIND_GRACE:-20}"
       bind_fail_max="''${FORGE_TUNNEL_BIND_FAILS:-3}"
 
-      # Knobs are positive integers or the defaults — a stray override must
-      # never crash the supervisor into a receiptless restart loop.
+      # Knobs are positive integers or the defaults — a stray override must never crash the supervisor into a receiptless restart loop.
       case "$interval" in "" | *[!0-9]* | 0) interval=60 ;; esac
       case "$bind_grace" in "" | *[!0-9]* | 0) bind_grace=20 ;; esac
       case "$bind_fail_max" in "" | *[!0-9]* | 0) bind_fail_max=3 ;; esac
 
       mapfile -t ports < <(jq -r '.forwards[].port' "$row_file")
 
-      # Dual receipt through the shared fold: TSV stays the human/log
-      # contract, the JSONL sibling carries the identical keys — including
-      # the services vector the handcrafted emit used to collapse.
+      # Dual receipt through the shared fold: TSV stays the human/log contract, the JSONL sibling carries the identical keys — including the
+      # services vector the handcrafted emit used to collapse.
       receipt_log="$receipts"
       receipt_surface="vps-tunnel"
       ${receiptsFold}
@@ -244,17 +227,14 @@
         exit 1
       fi
 
-      # Loopback parity guard: a port accepting before ssh spawns belongs to
-      # another owner (compose local mode) — receipt the truth, never let the
-      # collision masquerade as vps-unreachable or bind-failed.
+      # Loopback parity guard: a port accepting before ssh spawns belongs to another owner (compose local mode) — receipt the truth, never let
+      # the collision masquerade as vps-unreachable or bind-failed.
       conflicts=""
       for p in "''${ports[@]}"; do port_open "$p" && conflicts="$conflicts $p"; done
       if [ -n "$conflicts" ]; then
-        # Holder identification at the receipt separates routine (colima local
-        # parity mode) from regression (a shared ssh mux retaining forwards).
+        # Holder identification at the receipt separates routine (colima local parity mode) from regression (a shared ssh mux retaining forwards).
         read -ra cports <<<"$conflicts"
-        # lsof exits 1 when a holder vanished between probes; under pipefail
-        # that rc would kill the run before the receipt lands.
+        # lsof exits 1 when a holder vanished between probes; under pipefail that rc would kill the run before the receipt lands.
         holders="$(for p in "''${cports[@]}"; do
           lsof -nP -iTCP:"$p" -sTCP:LISTEN 2>/dev/null | awk -v port="$p" 'NR>1 {print port":"$1":"$2}' || true
         done | sort -u | paste -sd, -)"
@@ -262,16 +242,14 @@
         exit 1
       fi
 
-      # Traps precede the spawn: TERM in the spawn window must still reap ssh,
-      # and untrapped SIGTERM would skip the EXIT trap on launchd unload.
+      # Traps precede the spawn: TERM in the spawn window must still reap ssh, and untrapped SIGTERM would skip the EXIT trap on launchd unload.
       ssh_pid=""
       trap '{ [ -n "$ssh_pid" ] && kill "$ssh_pid" 2>/dev/null && wait "$ssh_pid" 2>/dev/null; } || true' EXIT
       trap 'exit 143' TERM INT
       ssh -N "$ssh_host" &
       ssh_pid=$!
 
-      # Bind proof: ssh death before binds is vps-unreachable; a live ssh whose
-      # forwards never accept within the grace window is bind-failed.
+      # Bind proof: ssh death before binds is vps-unreachable; a live ssh whose forwards never accept within the grace window is bind-failed.
       deadline=$((SECONDS + bind_grace))
       until binds_ok; do
         if ! kill -0 "$ssh_pid" 2>/dev/null; then
@@ -315,17 +293,10 @@
     '';
   };
 
-  # Mount supervisor: one rclone process per (host, mount) row — nfsmount on
-  # Darwin (userspace NFS + native mount -t nfs: no kext, no sudo), FUSE mount
-  # on Linux. The remote is a config-file-free connection string; identity is
-  # the 1Password agent socket; host keys validate against ~/.ssh/known_hosts.
-  # Lifecycle law: rclone survives a backend drop (lazy reconnect) while the
-  # OS ejects the volume, so readiness is proven continuously, never once — a
-  # health loop probes process, device, and statfs-through-the-mount, and any
-  # failed verdict drains + receipts + exits so KeepAlive/Restart relaunch
-  # into a fresh mount. Drain order is the clean-eject guarantee: detach the
-  # volume while the NFS server still answers, THEN reap rclone — the reverse
-  # order is the macOS "server connections interrupted" dialog.
+  # Mount supervisor: one rclone per (host, mount) row — nfsmount on Darwin (userspace NFS + native mount, no kext, no sudo), FUSE on Linux. The
+  # remote is a config-free connection string; identity is the 1Password agent socket. rclone survives a backend drop (lazy reconnect) while the
+  # OS ejects the volume, so readiness is proven continuously: a health loop probes process, device, and statfs; a failed verdict drains, receipts, and exits;
+  # KeepAlive relaunches. Drain order is the clean-eject law: detach while the NFS server answers, THEN reap rclone; reverse is the interrupted-server dialog.
   mountSupervisor = pkgs.writeShellApplication {
     name = "forge-vps-mount";
     runtimeInputs = [pkgs.coreutils pkgs.jq pkgs.rclone pkgs.openssh] ++ lib.optionals pkgs.stdenv.hostPlatform.isLinux [pkgs.util-linux pkgs.procps];
@@ -352,14 +323,12 @@
         printf '%s\n' "$row"
       }
 
-      # Mountpoint truth is the device number: a mounted dir sits on a
-      # different device than its parent — no mount-table parsing, both OS.
+      # Mountpoint truth is the device number: a mounted dir sits on a different device than its parent — no mount-table parsing, both OS.
       mounted() {
         [ "$(stat -c %d "$mountpoint" 2>/dev/null || echo x)" != "$(stat -c %d "''${mountpoint%/*}" 2>/dev/null || echo y)" ]
       }
 
-      # Volume detach while the NFS server still answers: plain umount asks
-      # the OS for a clean eject, the fallback forces a busy volume. The
+      # Volume detach while the NFS server still answers: plain umount asks the OS for a clean eject, the fallback forces a busy volume. The
       # verdict (absent|clean|forced|lazy|failed) is receipt data.
       detach() {
         mounted || { printf 'absent'; return 0; }
@@ -389,8 +358,7 @@
         kill -9 "$@" 2>/dev/null || true
       }
 
-      # Stale-owner recovery: a prior rclone outlives both its supervisor and
-      # the volume (an external eject never stops the NFS server). Reap by
+      # Stale-owner recovery: a prior rclone outlives both its supervisor and the volume (an external eject never stops the NFS server). Reap by
       # volname before this instance serves the same mountpoint twice.
       case "$(uname -s)" in Darwin) pgrep_bin=/usr/bin/pgrep ;; *) pgrep_bin=pgrep ;; esac
       mapfile -t stale < <("$pgrep_bin" -U "$(id -u)" -f -- "rclone (nfsmount|mount) .*--volname $volname( |$)" 2>/dev/null || true)
@@ -402,28 +370,24 @@
       mkdir -p "$mountpoint"
       export SSH_AUTH_SOCK="$auth_sock"
 
-      # Stale-mount reclaim: anything still on the mountpoint after the reap
-      # belongs to another owner — receipt the conflict, never mount over it.
+      # Stale-mount reclaim: anything still on the mountpoint after the reap belongs to another owner — receipt the conflict, never mount over it.
       stale_detach="$(detach)"
       if mounted; then
         emit mount-conflict "detail=$mountpoint held by another owner (detach=$stale_detach)"
         exit 1
       fi
 
-      # External openssh transport: rclone's internal ssh library sends no
-      # keepalives, so NAT/idle drops silently killed the warm session and the
-      # next statfs rode a doomed handshake — macOS answers with the
-      # interrupted-server dialog. ServerAlive keepalives (the tunnel posture)
-      # hold the standing connection; auth/known-hosts ride openssh + agent.
+      # External openssh transport: rclone's internal ssh library sends no keepalives, so NAT/idle drops silently killed the warm session and the
+      # next statfs rode a doomed handshake — macOS answers with the interrupted-server dialog. ServerAlive keepalives (the tunnel posture) hold
+      # the standing connection; auth/known-hosts ride openssh + agent.
       remote=":sftp,ssh='ssh -o BatchMode=yes -o ServerAliveInterval=15 -o ServerAliveCountMax=3 -l $user $addr',idle_timeout=0:$rpath"
       sub=nfsmount
       [ "$(uname -s)" = "Darwin" ] || sub=mount
       flags=(--config "" --volname "$volname" --vfs-cache-mode "$cache")
       [ "$ro" != "true" ] || flags+=(--read-only)
 
-      # Traps precede the spawn; drain emits `down` only after a landed mount
-      # (pre-mount failures carry their own states). ExitTimeOut (45s) on the
-      # agent row outlives the worst-case detach + reap.
+      # Traps precede the spawn; drain emits `down` only after a landed mount (pre-mount failures carry their own states). ExitTimeOut (45s) on
+      # the agent row outlives the worst-case detach + reap.
       rclone_pid=""
       mounted_once=""
       drained=""
@@ -456,11 +420,9 @@
       mounted_once=1
       emit mounted "detail=$mountpoint ro=$ro cache=$cache"
 
-      # Health loop: process, device, then statfs through the mount — statfs
-      # reaches the SFTP backend via the NFS server (the exact call the live
-      # incident saw fail), and timeout bounds an NFS stall. Consecutive
-      # backend failures get tunnel-style hysteresis; eject and exit drain
-      # immediately. Every exit relaunches under KeepAlive/Restart=always.
+      # Health loop: process, device, then statfs through the mount — statfs reaches the SFTP backend via the NFS server, and timeout bounds an
+      # NFS stall. Consecutive backend failures get tunnel-style hysteresis; eject and exit drain immediately.
+      # Every exit relaunches under KeepAlive/Restart=always.
       probe_fails=0
       while :; do
         # Backgrounded sleep keeps the interval interruptible by TERM/INT.
@@ -490,8 +452,7 @@
     '';
   };
 in {
-  # Host rows projected for downstream consumers (WezTerm ssh_domains, Yazi
-  # VFS, workspace picker, receipt registry): transport facts, forwards
+  # Host rows projected for downstream consumers (WezTerm ssh_domains, Yazi VFS, workspace picker, receipt registry): transport facts, forwards
   # reduced to service/port pairs, and mount rows carrying their mountpoints.
   options.forge.ssh = {
     hosts = lib.mkOption {
@@ -527,7 +488,7 @@ in {
     {
       programs.ssh = {
         enable = true;
-        enableDefaultConfig = false; # Explicitly disable default config to suppress warning
+        enableDefaultConfig = false; # suppress the default-config deprecation warning
 
         settings =
           {
@@ -542,25 +503,20 @@ in {
             # --- [DEFAULT_OPTIMIZATIONS_FOR_ALL_HOSTS]
             "*" =
               lib.optionalAttrs pkgs.stdenv.hostPlatform.isDarwin {
-                # 1Password's stable agent socket is the identity source on Darwin;
-                # Linux hosts authenticate inbound through authorized keys.
+                # 1Password's stable agent socket is the identity source on Darwin; Linux hosts authenticate inbound through authorized keys.
                 IdentityAgent = "\"${identityAgent}\"";
               }
               // {
-                # Connection multiplexing for performance
                 ControlMaster = "auto";
                 ControlPath = "${config.home.homeDirectory}/.ssh/sockets/%C";
                 ControlPersist = "10m";
 
-                # Keep-alive settings
                 ServerAliveInterval = 60;
                 ServerAliveCountMax = 3;
 
-                # Security and convenience
                 AddKeysToAgent = "yes";
                 HashKnownHosts = true;
 
-                # Performance
                 Compression = true;
               };
           }
@@ -572,11 +528,9 @@ in {
         lib.mapAttrs' (name: _: lib.nameValuePair "${name}-vps-tunnel" (tunnelTitle name)) vpsTunnels
         // lib.listToAttrs (map (p: lib.nameValuePair p.agent "${lib.toSentenceCase p.name} Mount ${lib.toSentenceCase p.m.name}") mountPairs);
 
-      # Durable per-row tunnel + mount agents; local parity mode boots the
-      # tunnels out before compose binds the same loopback ports.
-      # KeepAlive=true implies RunAtLoad, so the pair never coexists.
-      # ExitTimeOut on mounts outlives the rclone unmount drain — the launchd
-      # 20s default SIGKILLs the teardown and strands a dead NFS mountpoint.
+      # Durable per-row tunnel + mount agents; local parity mode boots the tunnels out before compose binds the same loopback ports.
+      # KeepAlive=true implies RunAtLoad, so the pair never coexists. ExitTimeOut on mounts outlives the rclone unmount drain — the launchd 20s
+      # default SIGKILLs the teardown and strands a dead NFS mountpoint.
       launchd.agents =
         lib.mapAttrs' (name: tunnel:
           lib.nameValuePair "${name}-vps-tunnel" {

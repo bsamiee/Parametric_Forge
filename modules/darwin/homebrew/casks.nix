@@ -4,16 +4,14 @@
 # License       : MIT
 # Path          : modules/darwin/homebrew/casks.nix
 # ----------------------------------------------------------------------------
-# Homebrew GUI applications
+# Homebrew GUI applications, and fonts not available in nixpkgs.
 _: {
   homebrew.casks = [
     # --- [SYSTEM_CORE_TOOLS]
     "1password"
     "cleanshot"
-    # Nightly (version :latest) conflicts with the stable "wezterm" cask: hard
-    # prerequisite before the first switch is `brew uninstall --cask wezterm`.
-    # Pin after install (`brew pin --cask wezterm@nightly`) so the autoupdate
-    # daemon never upgrades it implicitly.
+    # Nightly (version :latest) conflicts with the stable "wezterm" cask: hard prerequisite before the first switch is `brew uninstall --cask wezterm`.
+    # Pin after install (`brew pin --cask wezterm@nightly`) so the autoupdate daemon never upgrades it implicitly.
     "wezterm@nightly"
 
     # --- [PRODUCTIVITY_WINDOW_MANAGEMENT]
@@ -55,22 +53,20 @@ _: {
     "scrivener" # Writing tool
 
     # --- [QUICKLOOK_PLUGINS]
-    # All plugins below use the modern App Extension API (Sequoia-compatible).
-    # Legacy .qlgenerator plugins are dead — Sequoia removed support entirely.
-    # Note: .ts files are system-reserved (MPEG-2 UTI) — no QL plugin can override this.
+    # Plugins below use the App Extension API (Sequoia-compatible); legacy .qlgenerator plugins are dead — Sequoia removed support entirely.
+    # .ts files are system-reserved (MPEG-2 UTI), so no QL plugin can override them.
     "syntax-highlight" # Source code: 150+ languages (py,js,cs,go,rust,nix,yaml,json,dockerfile,lua,etc.)
     "qlmarkdown" # Rendered markdown preview with GitHub-style formatting
     "betterzip" # Archive preview
     "suspicious-package" # .pkg inspector
 
     # --- [FONTS]
-    # Fonts not available in nixpkgs:
-    "font-playfair-display" # Not available as standalone package
+    "font-playfair-display"
     "font-sf-pro" # Apple proprietary
     "font-sf-arabic" # Apple proprietary
-    "font-markazi-text" # Not in nixpkgs
-    "font-reem-kufi" # Not in nixpkgs
-    "font-qahiri" # Not in nixpkgs
+    "font-markazi-text"
+    "font-reem-kufi"
+    "font-qahiri"
 
     # --- [ADOBE_CREATIVE_SUITE]
     "zxpinstaller"

@@ -17,9 +17,8 @@ _: {
       enable = true;
       strategy = [];
     };
-    # zsh-syntax-highlighting retained over fast-syntax-highlighting: both
-    # upstreams idle at 0.8.0/1.56, so a swap buys no currency; HM owns z-sy-h
-    # natively at order 1200. Terminal ANSI palette carries the theme tokens.
+    # zsh-syntax-highlighting over fast-syntax-highlighting: both upstreams idle, so a swap buys no currency; HM owns z-sy-h natively at order
+    # 1200. Terminal ANSI palette carries the theme tokens.
     syntaxHighlighting.enable = true;
 
     # --- [HISTORY]

@@ -18,7 +18,7 @@
       style = "numbers,changes,header,grid";
       wrap = "character";
       tabs = "4";
-      paging = "auto"; # Let pager work normally
+      paging = "auto";
 
       # Syntax mappings for unrecognized extensions
       map-syntax = [
@@ -29,8 +29,7 @@
       ];
     };
 
-    # Owner-generated tmTheme; the activation cache build exposes it to bat
-    # and, through the bat cache, to delta's syntax-theme.
+    # Owner-generated tmTheme; the activation cache build exposes it to bat and, through the bat cache, to delta's syntax-theme.
     themes."forge-dracula".src = config.forge.theme.projections.tmThemeFile;
 
     extraPackages = with pkgs.bat-extras; [

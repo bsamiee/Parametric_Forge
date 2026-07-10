@@ -8,9 +8,8 @@
 _: {
   homebrew.taps = [
     {
-      # brew autoupdate agent; schedule reconciled by forge-brew-autoupdate.
-      # Brew 6 gates untrusted-tap external commands (HOMEBREW_REQUIRE_TAP_TRUST);
-      # trusted = true persists tap trust at activation so the agent can run.
+      # brew autoupdate agent; schedule reconciled by forge-brew-autoupdate. Brew 6 gates untrusted-tap external commands
+      # (HOMEBREW_REQUIRE_TAP_TRUST); trusted = true persists tap trust at activation so the agent can run.
       name = "domt4/autoupdate";
       trusted = true;
     }

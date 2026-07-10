@@ -4,8 +4,7 @@
 # License       : MIT
 # Path          : modules/home/programs/shell-tools/forge-tools.nix
 # ----------------------------------------------------------------------------
-# Agent-safe Forge maintenance entrypoints: deploy rail, hygiene board,
-# doctors, parity, acceptance choreography.
+# Agent-safe Forge maintenance entrypoints: deploy rail, hygiene board, doctors, parity, acceptance choreography.
 {
   config,
   lib,
@@ -15,17 +14,14 @@
   logs = "${config.home.homeDirectory}/Library/Logs";
   bundleId = "com.parametric-forge.forge-nix-automation";
   receiptsFold = import ./receipts.nix;
-  # Platform ps dispatch: /bin/ps is a Darwin fact; NixOS gets procps by
-  # store path so a manual run on the Linux host degrades typed, never 127.
+  # Platform ps dispatch: /bin/ps is a Darwin fact; NixOS gets procps by store path so a manual run on the Linux host degrades typed, never 127.
   psBin =
     if pkgs.stdenv.hostPlatform.isDarwin
     then "/bin/ps"
     else "${pkgs.procps}/bin/ps";
 
-  # One builder owns the shared tool rail: UTC stamp, per-tool receipt-log
-  # override (FORGE_<NAME>_RECEIPT_LOG), and the dual-receipt fold — every
-  # persist_receipt row lands as one TSV line plus a JSONL sibling with
-  # identical keys. storePath prepends the Determinate profile so every
+  # One builder owns the shared tool rail: UTC stamp, per-tool receipt-log override (FORGE_<NAME>_RECEIPT_LOG), and the dual-receipt fold — every
+  # persist_receipt row lands as one TSV line plus a JSONL sibling with identical keys. storePath prepends the Determinate profile so every
   # nix/nix-env call (incl. nh's) resolves the daemon-matched client.
   mkTool = {
     name,
@@ -63,14 +59,11 @@
     storePath = true;
     inputs = [pkgs.coreutils pkgs.gawk pkgs.git pkgs.nh pkgs.nix-output-monitor pkgs.dix pkgs.nvd pkgs.cachix pkgs.flock pkgs.nixos-rebuild-ng];
     text = ''
-      # Polymorphic OS dispatch: one deploy rail, per-OS execution. Darwin
-      # builds/switches locally; NixOS check is eval-only (no Linux builder
-      # assumed), build proves a closure, switch activates locally on a NixOS
-      # host or remotely through nixos-rebuild-ng --target-host.
+      # Polymorphic OS dispatch: one deploy rail, per-OS execution. Darwin builds/switches locally; NixOS check is eval-only (no Linux builder
+      # assumed), build proves a closure, switch activates locally on a NixOS host or remotely through nixos-rebuild-ng --target-host.
       mode="check"
       gen=""
-      # Default --os keys on the running kernel: a NixOS host must never ride
-      # the darwin rail by default; FORGE_OS and --os stay explicit overrides.
+      # Default --os keys on the running kernel: a NixOS host must never ride the darwin rail by default; FORGE_OS and --os stay explicit overrides.
       os="''${FORGE_OS:-$(case "$(uname -s)" in Linux) echo nixos ;; *) echo darwin ;; esac)}"
       host="''${FORGE_HOST:-}"
       target_host="''${FORGE_TARGET_HOST:-}"
@@ -155,8 +148,7 @@
         exit 75
       }
 
-      # One typed receipt per state-touching run; the EXIT trap emits it even
-      # when a phase aborts, so failed activations stay visible (result=fail).
+      # One typed receipt per state-touching run; the EXIT trap emits it even when a phase aborts, so failed activations stay visible (result=fail).
       system_path="-" gen_live="-"
       eval_s="-" build_s="-" activate_s="-"
       to_build="-" to_fetch="-" diff_lines="-"
@@ -174,10 +166,8 @@
       trap 'emit_receipt; rm -rf "$tmpdir"' EXIT
       out_link="$tmpdir/system"
 
-      # Backend-dispatched token resolution: ambient CACHIX_AUTH_TOKEN wins, the
-      # session-secrets dispatcher (FORGE_SECRETS_FILE) resolves the machine
-      # rail, absence degrades to a skipped push. A present-but-bad token never
-      # fails an already-built/switched deploy.
+      # Backend-dispatched token resolution: ambient CACHIX_AUTH_TOKEN wins, the session-secrets dispatcher (FORGE_SECRETS_FILE) resolves the machine
+      # rail, absence degrades to a skipped push. A present-but-bad token never fails an already-built/switched deploy.
       push_cache() {
         if [ -z "''${CACHIX_AUTH_TOKEN:-}" ] && [ -f "$secrets_file" ]; then
           # shellcheck source=/dev/null
@@ -190,9 +180,8 @@
         fi
         if cachix push "$cache" "$1"; then
           push="ok"
-          # Narinfo round-trip proves the closure is servable, not just sent.
-          # negative-ttl 0: the dry-run proof phase caches a pre-push miss for
-          # this exact path; an unexpired entry would fake verify=missing.
+          # Narinfo round-trip proves the closure is servable, not just sent. negative-ttl 0: the dry-run proof caches a pre-push miss for this exact
+          # path; an unexpired entry would fake verify=missing.
           if nix path-info --store "https://$cache.cachix.org" --narinfo-cache-negative-ttl 0 "$1" >/dev/null 2>&1; then
             verify="ok"
           else
@@ -215,9 +204,8 @@
         fi
       }
 
-      # Single owner of the post-activation contract: generation capture,
-      # live-system equality, then the daemon kickstart. $1 = expected store
-      # path, $2 = its label.
+      # Single owner of the post-activation contract: generation capture, live-system equality, then the daemon kickstart. $1 = expected store path,
+      # $2 = its label.
       assert_live() {
         gen_live="$(readlink "$profile" 2>/dev/null)" || gen_live="-"
         gen_live="''${gen_live##*system-}"
@@ -232,8 +220,7 @@
         run_kickstart
       }
 
-      # Activation's /etc collision guard exits 2 on an installer-written real
-      # file; one adoption owner covers both switch and rollback activations.
+      # Activation's /etc collision guard exits 2 on an installer-written real file; one adoption owner covers both switch and rollback activations.
       adopt_custom_conf() {
         { [ -f "$custom_conf" ] && [ ! -L "$custom_conf" ]; } || return 0
         sudo -n /bin/mv "$custom_conf" "$custom_conf.before-determinate-module" || {
@@ -278,12 +265,10 @@
         attr="nixosConfigurations.$host.config.system.build.toplevel"
       fi
 
-      # Pre-build proof: to-build/to-fetch counts expose derivation-identity
-      # drift (the 1h local-rebuild class) the day it appears. Parsing is
+      # Pre-build proof: to-build/to-fetch counts expose derivation-identity drift (the 1h local-rebuild class) the day it appears. Parsing is
       # version-sensitive and degrades to unknown, never fails the deploy.
       if nix build --dry-run --no-link "$forge_root#$attr" 2>"$tmpdir/dryrun"; then
-        # Store paths outside a recognized section mean the wording drifted:
-        # report unknown instead of a false-clean 0/0.
+        # Store paths outside a recognized section mean the wording drifted: report unknown instead of a false-clean 0/0.
         read -r to_build to_fetch < <(awk '
           /will be built:?$/ { s = 1; next }
           /will be fetched/  { s = 2; next }
@@ -295,8 +280,7 @@
       fi
       eval_s=$((EPOCHSECONDS - t0))
 
-      # NixOS dispatch: eval-only check (drv identity), real-closure build,
-      # local nh switch on a NixOS host, remote target-built switch otherwise.
+      # NixOS dispatch: eval-only check (drv identity), real-closure build, local nh switch on a NixOS host, remote target-built switch otherwise.
       if [ "$os" = "nixos" ]; then
         t0=$EPOCHSECONDS
         case "$mode" in
@@ -324,10 +308,8 @@
                 exit 2
               }
               system_path="$(nix eval --raw "$forge_root#$attr.drvPath")"
-              # Target-built activation: no local Linux builder is assumed;
-              # nixos-rebuild-ng evaluates locally and builds on the target.
-              # The -ng package ships its binary as plain nixos-rebuild;
-              # --no-reexec stops the cross-platform local self-rebuild.
+              # Target-built activation: no local Linux builder is assumed; nixos-rebuild-ng evaluates locally and builds on the target. The -ng
+              # package ships its binary as plain nixos-rebuild; --no-reexec stops the cross-platform local self-rebuild.
               sudo_flag=(--sudo)
               case "$target_host" in root@*) sudo_flag=() ;; esac
               t1=$EPOCHSECONDS
@@ -370,8 +352,7 @@
           ;;
         switch)
           adopt_custom_conf
-          # Exact-closure activation: the reviewed store path is registered and
-          # activated directly -- no second evaluation that could drift.
+          # Exact-closure activation: the reviewed store path is registered and activated directly, never re-evaluated.
           t0=$EPOCHSECONDS
           sudo -n "$nix_env" -p "$profile" --set "$system_path" || {
             activate_s=$((EPOCHSECONDS - t0))
@@ -386,8 +367,7 @@
             exit 1
           }
           activate_s=$((EPOCHSECONDS - t0))
-          # Post-activation steps degrade to warnings: the deploy already landed.
-          # Push precedes the kickstart so it never races the daemon restart.
+          # Post-activation steps degrade to warnings: the deploy already landed. Push precedes the kickstart so it never races the daemon restart.
           push_cache "$system_path"
           assert_live "$system_path" "built"
           result="ok"
@@ -397,15 +377,13 @@
     '';
   };
 
-  # Scheduled lifecycle owner for what determinate-nixd does not schedule:
-  # generation retention and store optimise; background GC stays daemon-owned.
+  # Scheduled lifecycle owner for what determinate-nixd does not schedule: generation retention and store optimise; background GC stays daemon-owned.
   forgeNixMaintenance = mkTool {
     name = "forge-nix-maintenance";
     storePath = true;
     inputs = [pkgs.coreutils pkgs.gnugrep pkgs.flock];
     text = ''
-      # Reject unknown argv up front: a typo must never silently run as a
-      # manual pass (600s lock wait, no AC gate).
+      # Reject unknown argv up front: a typo must never silently run as a manual pass (600s lock wait, no AC gate).
       case "''${1:-}" in
         "") mode="manual" ;;
         --scheduled) mode="scheduled" ;;
@@ -421,8 +399,7 @@
       lock_file="''${FORGE_REDEPLOY_LOCK:-$HOME/.cache/forge-redeploy.lock}"
       nix_env="/nix/var/nix/profiles/default/bin/nix-env"
 
-      # One typed receipt per run; the EXIT trap emits it even when a phase
-      # aborts, so denied trims and failed GC stay visible (result=fail).
+      # One typed receipt per run; the EXIT trap emits it even when a phase aborts, so denied trims and failed GC stay visible (result=fail).
       power="-" lock="-" trim="-" gc="-" optimise="-"
       gc_s="-" optimise_s="-"
       result="fail"
@@ -432,11 +409,9 @@
       }
       trap emit_receipt EXIT
 
-      # Scheduled runs stay AC-gated and yield to a live deploy; manual runs wait.
-      # No grep -q: consuming all input avoids the pipefail/SIGPIPE false skip.
+      # Scheduled runs stay AC-gated and yield to a live deploy; manual runs wait. Consume-all grep avoids the -q pipefail/SIGPIPE false skip.
       if [ "$mode" = "scheduled" ]; then
-        # pmset is a Darwin fact; a host without it is mains-powered and
-        # skips the battery gate instead of dying under pipefail.
+        # pmset is a Darwin fact; a host without it is mains-powered and skips the battery gate instead of dying under pipefail.
         if [ -x /usr/bin/pmset ]; then
           /usr/bin/pmset -g batt | grep "AC Power" >/dev/null || {
             power="battery" result="skipped"
@@ -459,15 +434,13 @@
       }
       lock="ok"
 
-      # System generations: keep the newest five for the rollback window; the
-      # NOPASSWD row pins these exact args, so a denial signals policy drift.
+      # System generations: keep the newest five for the rollback window; the NOPASSWD row pins these exact args, so a denial signals policy drift.
       trim="ok"
       sudo -n "$nix_env" -p /nix/var/nix/profiles/system --delete-generations +5 || {
         trim="denied"
         printf 'forge-nix-maintenance: WARNING system generation trim denied; rerun after a switch lands the sudoers row\n' >&2
       }
-      # User profiles: drop stale generations and collect what they unpinned;
-      # continuous free-space GC stays determinate-nixd-owned.
+      # User profiles: drop stale generations and collect what they unpinned; continuous free-space GC stays determinate-nixd-owned.
       t0=$EPOCHSECONDS
       nix-collect-garbage --delete-older-than 14d
       gc="ok" gc_s=$((EPOCHSECONDS - t0))
@@ -479,13 +452,10 @@
     '';
   };
 
-  # Cleanup registry as a tuple grammar: one row per line, projected to typed
-  # JSON through rowGrammar. Kinds — mode: converge a directory mode; path:
-  # trash a residue tree; glob: trash matches under a root; age: retention
-  # window (the age gate IS the live-session guard); deadlink: trash broken
-  # links only; ledger: report-only storage budget; adjudicate: named
-  # decision, receipt-only; codex-trust: prune stale trusted-project rows;
-  # orphan: ppid-1 agent-lane census — kill rows reap, report rows observe.
+  # Cleanup registry as a tuple grammar: one row per line, projected to typed JSON through rowGrammar. Kinds — mode: converge a directory mode; path:
+  # trash a residue tree; glob: trash matches under a root; age: retention window (the age gate IS the live-session guard); deadlink: trash broken
+  # links only; ledger: report-only storage budget; adjudicate: named decision, receipt-only; codex-trust: prune stale trusted-project rows; orphan:
+  # ppid-1 agent-lane census — kill rows reap, report rows observe.
   rowGrammar = {
     mode = ["target" "expect"];
     path = ["target"];
@@ -507,10 +477,8 @@
 
   cleanupRows = pkgs.writeText "forge-cleanup-rows.json" (builtins.toJSON (projectRows {
     mode.launchagents-mode = ["Library/LaunchAgents" "700"];
-    # Map-proven residue candidates the detector re-proves live before any
-    # action; every deletion is trash-first and restorable. cargo/rustup carry
-    # the closed retirement decision: the toolchains are retired, regrowth is
-    # litter. update-notifier configstore rows are unowned litter by admission
+    # Map-proven residue candidates the detector re-proves live before any action; every deletion is trash-first and restorable. cargo/rustup carry
+    # the closed retirement decision: the toolchains are retired, regrowth is litter. update-notifier configstore rows are unowned litter by admission
     # policy (self-mutating state disabled at admission).
     path = {
       pyenv-residue = ".pyenv";
@@ -565,9 +533,8 @@
       cycles-ownerless-cache = ".cache/cycles";
       pause-note-tombstone = ".claude/dossiers/forge-rebuild/PAUSE-NOTE.md";
     };
-    # wezterm-plugin-clone-cache enforces provenance law: every runtime
-    # plugin clone must resolve to a pinned store-path origin; the live cache
-    # is empty — regrowth is litter.
+    # wezterm-plugin-clone-cache enforces provenance law: every runtime plugin clone must resolve to a pinned store-path origin; the live cache is
+    # empty — regrowth is litter.
     glob = {
       zdotdir-compdump = [".config/zsh" ".zcompdump*" 0];
       mcp-stage-litter = [".cache/forge-mcp" ".stage.*" 0];
@@ -580,8 +547,7 @@
       agent-root-ds-store-claude = [".claude" ".DS_Store" 0];
       agent-root-ds-store-codex = [".codex" ".DS_Store" 0];
     };
-    # Broken links trashed, live links untouched. docker-desktop rides the
-    # endpoint-truth guard: HM-owned config.json and Colima socket facts stay
+    # Broken links trashed, live links untouched. docker-desktop rides the endpoint-truth guard: HM-owned config.json and Colima socket facts stay
     # authoritative; only broken Docker Desktop links leave.
     deadlink = {
       wezterm-dead-listeners = [".local/share/wezterm" 1];
@@ -591,8 +557,7 @@
       antigravity-bin-deadlinks = [".antigravity/antigravity/bin" 0];
       claude-debug-dead-pointer = [".claude/debug" 1];
     };
-    # Agent-root retention: material younger than the window is never a
-    # candidate, so a live session's working files stay untouchable.
+    # Agent-root retention: material younger than the window is never a candidate, so a live session's working files stay untouchable.
     age = {
       claude-backups-retention = [".claude/backups" 14 ""];
       claude-file-history-retention = [".claude/file-history" 30 ""];
@@ -605,11 +570,9 @@
       codex-attachments-retention = [".codex/attachments" 30 ""];
       codex-previous-binary = [".local/bin" 14 "codex.previous"];
     };
-    # Stale trusted-project rows (nonexistent paths, scratch-class prefixes)
-    # leave config.toml; durable repo rows stay.
+    # Stale trusted-project rows (nonexistent paths, scratch-class prefixes) leave config.toml; durable repo rows stay.
     codex-trust.codex-trusted-projects = ".codex/config.toml";
-    # Storage-pressure ledger: budget, owner, prune command as data —
-    # report-only, never auto-deleted.
+    # Storage-pressure ledger: budget, owner, prune command as data — report-only, never auto-deleted.
     ledger = {
       ledger-colima = [".local/share/colima" 100 "environments/containers.nix" "colima delete / docker system prune"];
       ledger-colima-cache = [".cache/colima" 3 "environments/containers.nix" "colima prune cached images"];
@@ -636,8 +599,7 @@
       ledger-claude-desktop = ["Library/Application Support/Claude" 30 "Claude Desktop app" "operator: app-managed state"];
       ledger-duckdb-root = [".duckdb" 1 "duckdb catalog owner" "relocation adjudicated with the catalog owner first"];
     };
-    # Named decisions, receipt-only; a row closes by gaining an owner or a
-    # consumer. secret-custody rows report key-name-only, never values.
+    # Named decisions, receipt-only; a row closes by gaining an owner or a consumer. secret-custody rows report key-name-only, never values.
     adjudicate = {
       ccstatusline-config = [".config/ccstatusline" "retention-ignore" "app-owned statusline state"];
       kube-config-target = [".config/kube" "pending-consumer" "declared KUBECONFIG target absent; closes when a cluster lands"];
@@ -658,11 +620,9 @@
       harness-policy-drift = [".claude/settings.json" "receipted" "declared bypassPermissions vs live enforcement; receipt per root"];
       rasm-bridge-state = [".rasm" "relocation-pending" "rhino-bridge lease/quit journals in a home root dotdir; relocation rides the bridge owner in Rasm"];
     };
-    # kill rows are the evidence-gated reap set; report rows keep
-    # daemon-by-design classes (git fsmonitor, op) visible without lifecycle
-    # theft. codex lanes detach by design; only lanes far past every
-    # effort-tier deadline are litter. node-modules census is the visibility
-    # net for new daemon classes before they earn a kill row.
+    # kill rows are the evidence-gated reap set; report rows keep daemon-by-design classes (git fsmonitor, op) visible without lifecycle theft. codex
+    # lanes detach by design; only lanes far past every effort-tier deadline are litter. node-modules census is the visibility net for new daemon
+    # classes before they earn a kill row.
     orphan = {
       biome-lsp-proxy-orphans = ["biome lsp-proxy" "" 300 "kill"];
       biome-daemon-orphans = ["biome __run_server" "" 300 "kill"];
@@ -679,11 +639,9 @@
     };
   }));
 
-  # Guarded cleanup rail: `plan` emits a durable precheck receipt, `apply`
-  # executes only rows the plan proved safe, re-verified at act time and
-  # trash-first, so every deletion stays recoverable from ~/.Trash. `sweep`
-  # is the orphan lane: fresh detection plus evidence-gated reaping of
-  # ppid-1 agent-lane processes, one receipt row per pid.
+  # Guarded cleanup rail: `plan` emits a durable precheck receipt, `apply` executes only rows the plan proved safe, re-verified at act time and
+  # trash-first, so every deletion stays recoverable from ~/.Trash. `sweep` is the orphan lane: fresh detection plus evidence-gated reaping of ppid-1
+  # agent-lane processes, one receipt row per pid.
   forgeCleanup = mkTool {
     name = "forge-cleanup";
     receiptName = "forge-orphan-sweep";
@@ -697,8 +655,7 @@
       usage() { echo "usage: forge-cleanup plan | apply [plan-file] | sweep [--report-only]" >&2; exit 64; }
       verb="''${1:-}"; shift || true
 
-      # Mutating verbs serialize on one lock: an apply racing the scheduled
-      # sweep must never double-trash a candidate or double-reap a pid.
+      # Mutating verbs serialize on one lock: an apply racing the scheduled sweep must never double-trash a candidate or double-reap a pid.
       lock_file="''${FORGE_CLEANUP_LOCK:-$HOME/.cache/forge-cleanup.lock}"
       case "$verb" in
         apply | sweep)
@@ -711,20 +668,16 @@
           ;;
       esac
 
-      # Hard deny for the kill lane: session servers, GUI apps, credential
-      # daemons, and system trees are never reaped even on a class match.
+      # Hard deny for the kill lane: session servers, GUI apps, credential daemons, and system trees are never reaped even on a class match.
       deny_re='/System/|/Applications/|zellij|[Ww]ez[Tt]erm|1[Pp]assword|[Cc]rashpad|loginwindow|(^|/)ssh'
-      # Trust rows on scratch/transient roots are litter by class; durable
-      # repo rows never match this and always survive the prune.
+      # Trust rows on scratch/transient roots are litter by class; durable repo rows never match this and always survive the prune.
       scratch_re="^(/private/tmp/|/tmp/|$HOME/Downloads(/|$)|$HOME/Library/CloudStorage/)"
 
-      # One live snapshot per run: uid-owned, ppid-1, tty-less processes with
-      # age in seconds and RSS KiB; launchd-managed pids drop out first, so a
+      # One live snapshot per run: uid-owned, ppid-1, tty-less processes with age in seconds and RSS KiB; launchd-managed pids drop out first, so a
       # sanctioned agent (KeepAlive services included) is never a candidate.
       proc_snapshot() {
         if [ ! -e "$work/procs" ]; then
-          # launchd exclusion is a Darwin fact; on a systemd host the managed
-          # set is empty (user services carry a non-1 ppid and drop anyway).
+          # launchd exclusion is a Darwin fact; on a systemd host the managed set is empty (user services carry a non-1 ppid and drop anyway).
           { /bin/launchctl list 2>/dev/null || true; } | awk 'NR > 1 && $1 ~ /^[0-9]+$/ {print $1}' >"$work/managed"
           ${psBin} -axo pid=,ppid=,uid=,tty=,etime=,rss=,command= 2>/dev/null | awk -v uid="$(id -u)" -v self="$$" '
             function esecs(e,  a, n, d, hms) {
@@ -746,8 +699,7 @@
         cat "$work/procs"
       }
 
-      # args: match exclude min-age action. Deny applies to the kill lane
-      # only; report rows keep daemon-by-design classes visible.
+      # args: match exclude min-age action. Deny applies to the kill lane only; report rows keep daemon-by-design classes visible.
       orphan_matches() {
         proc_snapshot | awk -F '\t' -v m="$1" -v x="$2" -v g="$3" -v a="$4" -v d="$deny_re" '
           $2 >= g && $4 ~ m && (x == "" || $4 !~ x) && (a != "kill" || $4 !~ d) {print}'
@@ -763,8 +715,7 @@
         kill -KILL "$1" 2>/dev/null || true
       }
 
-      # Shared reap/report emitter for apply and sweep: $5 is the row action
-      # (deny-lane gate), $6 the behavior this run applies (kill|report).
+      # Shared reap/report emitter for apply and sweep: $5 is the row action (deny-lane gate), $6 the behavior this run applies (kill|report).
       reap_matches() { # name match exclude minage row-action act
         reaped=0
         while IFS=$'\t' read -r opid oage orss ocmd; do
@@ -781,14 +732,13 @@
         done < <(orphan_matches "$2" "$3" "$4" "$5")
       }
 
-      # One jq projection per row: every field lands in one read. Unit-separator
-      # delimited: tab is IFS whitespace and read would collapse empty fields.
+      # One jq projection per row: every field lands in one read. Unit-separator delimited: tab is IFS whitespace and read would collapse empty
+      # fields.
       row_fields() {
         jq -r '[.name, .kind, (.target // ""), (.expect // ""), (.root // ""), (.pattern // ""), (.match // ""), (.exclude // ""), (.minAgeSec // 0 | tostring), (.action // ""), (.depth // 0 | tostring), (.maxAgeDays // 0 | tostring), (.budgetGb // 0 | tostring), (.owner // ""), (.prune // ""), (.decision // ""), (.note // "")] | join("\u001f")' <<<"$1"
       }
 
-      # One NUL-emitting candidate enumerator per find-shaped kind; detect and
-      # apply consume the same predicates, so lane drift is unspellable.
+      # One NUL-emitting candidate enumerator per find-shaped kind; detect and apply consume the same predicates, so lane drift is unspellable.
       candidates() { # kind root pattern depth maxAgeDays
         local -a args=()
         [ "$4" = 0 ] || args+=(-maxdepth "$4")
@@ -801,20 +751,16 @@
             ;;
           deadlink) args+=(-type l ! -exec test -e "{}" ";") ;;
         esac
-        # Partial traversal (an unreadable subtree) keeps its yield; find's rc
-        # is not evidence and must not kill the detector under pipefail.
+        # Partial traversal (an unreadable subtree) keeps its yield; find's rc is not evidence and must not kill the detector under pipefail.
         find "$2" "''${args[@]}" -print0 2>/dev/null || true
       }
       count0() { tr -cd '\0' | wc -c | tr -d ' '; }
-      # -r: empty stdin must never run du against the CWD; du's rc on a
-      # vanished or unreadable entry is noise the awk fold absorbs.
+      # -r: empty stdin must never run du against the CWD; du's rc on a vanished or unreadable entry is noise the awk fold absorbs.
       sum_kb0() { { xargs -0 -r du -sk 2>/dev/null || true; } | awk '{s += $1} END {print s + 0}'; }
-      # Single-target size: one line always (END fold), never a du rc or a
-      # multi-line partial that would shift TSV columns downstream.
+      # Single-target size: one line always (END fold), never a du rc or a multi-line partial that would shift TSV columns downstream.
       kb_of() { { du -sk "$1" 2>/dev/null || true; } | awk 'NR == 1 {s = $1} END {print s + 0}'; }
 
-      # Stale trusted-project extraction: a row is stale when its path no
-      # longer exists or sits on a scratch-class prefix.
+      # Stale trusted-project extraction: a row is stale when its path no longer exists or sits on a scratch-class prefix.
       codex_stale_projects() {
         local p
         while IFS= read -r p; do
@@ -822,8 +768,7 @@
         done < <(gawk 'match($0, /^\[projects\."(.*)"\]$/, m) {print m[1]}' "$1")
       }
 
-      # One detector owns every row kind; plan and apply both consume it, so
-      # apply never acts on a state the detector cannot reproduce live.
+      # One detector owns every row kind; plan and apply both consume it, so apply never acts on a state the detector cannot reproduce live.
       detect_row() {
         local row="$1" name kind state count kb action safe detail target expect root pattern current match exclude minage oaction opid orss pidlist depth maxage budget owner prune decision note cfg budget_kb
         IFS=$'\x1f' read -r name kind target expect root pattern match exclude minage oaction depth maxage budget owner prune decision note < <(row_fields "$row")
@@ -915,8 +860,7 @@
       trash() {
         mkdir -p "$HOME/.Trash"
         local dest="$HOME/.Trash/''${1##*/}.forge-cleanup.$run_ts"
-        # Basename collisions from deep-tree prunes get a unique suffix so no
-        # candidate silently stays behind.
+        # Basename collisions from deep-tree prunes get a unique suffix so no candidate silently stays behind.
         while [ -e "$dest" ] || [ -L "$dest" ]; do dest="$dest.$SRANDOM"; done
         mv -- "$1" "$dest"
       }
@@ -949,8 +893,7 @@
               continue
             fi
             row="$(jq -c --arg n "$name" '.[] | select(.name == $n)' "$rows_json")"
-            # A plan row absent from the live registry (stale plan across a
-            # generation change) is a typed skip, never an errexit mid-apply.
+            # A plan row absent from the live registry (stale plan across a generation change) is a typed skip, never an errexit mid-apply.
             if [ -z "$row" ]; then
               printf '%s\taction=none\toutcome=skipped-unknown-row\n' "$name"
               continue
@@ -985,8 +928,7 @@
                 stale_list="$work/codex-stale"
                 codex_stale_projects "$cfg" >"$stale_list"
                 if [ -s "$stale_list" ]; then
-                  # Backup rides the trash rail like every other mutation; the
-                  # rename temp lives beside its target and dies with the trap.
+                  # Backup rides the trash rail like every other mutation; the rename temp lives beside its target and dies with the trap.
                   prune_tmp="$cfg.forge-prune"
                   cp -p "$cfg" "$work/config.toml.pre-prune" && trash "$work/config.toml.pre-prune"
                   gawk '
@@ -1016,9 +958,8 @@
           "$ts" "$(grep -c 'outcome=applied' "$apply_file" || true)" "$plan_file" "$apply_file")"
       }
 
-      # Orphan-only lane for the scheduled agent: fresh detection each run,
-      # kill rows reaped, report rows logged; per-pid receipt plus one
-      # summary line on the receipts log.
+      # Orphan-only lane for the scheduled agent: fresh detection each run, kill rows reaped, report rows logged; per-pid receipt plus one summary
+      # line on the receipts log.
       cmd_sweep() {
         report_only=0
         [ "''${1:-}" != "--report-only" ] || report_only=1
@@ -1049,10 +990,8 @@
     '';
   };
 
-  # Daily currency rail: flake-input bump plus declared-vs-deployed detection.
-  # Builds run through forge-redeploy --build, so receipts, flock, and cache
-  # push stay single-owner; a landed bump auto-commits (operator ruling: full
-  # automation, no branches) and never switches unattended.
+  # Daily currency rail: flake-input bump plus declared-vs-deployed detection. Builds run through forge-redeploy --build, so receipts, flock, and
+  # cache push stay single-owner; a landed bump auto-commits (operator ruling: full automation, no branches) and never switches unattended.
   forgeNixDrift = mkTool {
     name = "forge-nix-drift";
     storePath = true;
@@ -1074,8 +1013,7 @@
       forge_root="''${FORGE_ROOT:-$HOME/Documents/99.Github/Parametric_Forge}"
       lock_file="''${FORGE_NIX_DRIFT_LOCK:-$HOME/.cache/forge-nix-drift.lock}"
 
-      # One typed receipt per run; the EXIT trap emits it even when a phase
-      # aborts, so failed bumps and builds stay visible (result=fail).
+      # One typed receipt per run; the EXIT trap emits it even when a phase aborts, so failed bumps and builds stay visible (result=fail).
       power="-" lock="-" worktree="-" inputs="-" bump="-"
       build="-" commit="-" deployed="-" nixd="-"
       result="fail"
@@ -1086,8 +1024,7 @@
       }
       trap emit_receipt EXIT
 
-      # terminal-notifier over osascript: OSA notifications attribute to Script
-      # Editor and a click opens its document dialog. The shared notifier rail
+      # terminal-notifier over osascript: OSA notifications attribute to Script Editor and a click opens its document dialog. The shared notifier rail
       # (bundle-apps.nix) is empty on hosts without one — notify no-ops there.
       notify() {
         tn='${config.forge.notifier}'
@@ -1097,8 +1034,7 @@
 
       # Scheduled runs stay AC-gated: a moved input triggers a full host build.
       if [ "$mode" = "scheduled" ]; then
-        # pmset is a Darwin fact; a host without it is mains-powered and
-        # skips the battery gate instead of dying under pipefail.
+        # pmset is a Darwin fact; a host without it is mains-powered and skips the battery gate instead of dying under pipefail.
         if [ -x /usr/bin/pmset ]; then
           /usr/bin/pmset -g batt | grep "AC Power" >/dev/null || {
             power="battery" result="skipped"
@@ -1112,8 +1048,8 @@
       else
         flock_args=(-w 600)
       fi
-      # Own lock serializes drift runs; the deploy flock stays redeploy-owned,
-      # so an in-flight deploy surfaces as build=deploy-in-flight, not deadlock.
+      # Own lock serializes drift runs; the deploy flock stays redeploy-owned, so an in-flight deploy surfaces as build=deploy-in-flight, not
+      # deadlock.
       mkdir -p "$(dirname "$lock_file")"
       exec {lock_fd}>"$lock_file"
       flock "''${flock_args[@]}" "$lock_fd" || {
@@ -1132,8 +1068,7 @@
       tmpdir="$(mktemp -d "''${TMPDIR:-/tmp}/forge-nix-drift.XXXXXX")"
       trap 'emit_receipt; rm -rf "$tmpdir"' EXIT
 
-      # Installed daemon vs pinned artifact: Determinate version drift is a
-      # separate object from flake-input drift and only ever notifies.
+      # Installed daemon vs pinned artifact: Determinate version drift is a separate object from flake-input drift and only ever notifies.
       pinned="$(jq -r '[.nodes | to_entries[] | select(.key | startswith("determinate-nixd-")) | .value.locked.url // ""] | first // ""' flake.lock | grep -o 'v[0-9.]*' || true)"
       installed="$(/usr/local/bin/determinate-nixd version 2>/dev/null | awk '/daemon version:/ {print "v" $NF; exit}' || true)"
       nixd="''${installed:--}:''${pinned:--}"
@@ -1147,11 +1082,9 @@
       dirty_total="$(git status --porcelain | wc -l | tr -d ' ')"
       if [ "$dirty_total" = 0 ]; then worktree="clean"; else worktree="dirty-$dirty_total"; fi
 
-      # Bump only when the flake pair is untouched: uncommitted operator or
-      # thread edits to flake.nix/flake.lock must never be entangled. The
-      # mutation window rides the DEPLOY lock so a redeploy evaluating
-      # mid-update never reads a half-written flake.lock; the window closes
-      # before the build, which re-takes that lock itself.
+      # Bump only when the flake pair is untouched: uncommitted operator or thread edits to flake.nix/flake.lock must never be entangled. The mutation
+      # window rides the DEPLOY lock so a redeploy evaluating mid-update never reads a half-written flake.lock; the window closes before the build,
+      # which re-takes that lock itself.
       deploy_lock="''${FORGE_REDEPLOY_LOCK:-$HOME/.cache/forge-redeploy.lock}"
       mkdir -p "''${deploy_lock%/*}"
       if [ -n "$(git status --porcelain -- flake.nix flake.lock)" ]; then
@@ -1162,8 +1095,7 @@
           bump="skipped-deploy-in-flight"
         else
           snap >"$tmpdir/pre"
-          # A failed update (network/registry) is withdrawn and notified; a
-          # partially written lock must never wedge later runs into skipped-dirty.
+          # A failed update (network/registry) is withdrawn and notified; a partially written lock must never wedge later runs into skipped-dirty.
           if ! nix flake update; then
             git checkout -- flake.lock
             bump="fail"
@@ -1184,8 +1116,7 @@
         exec {deploy_fd}>&-
       fi
 
-      # Receipt-proved build through the deploy owner; --build also owns the
-      # cache push, so drift keeps one cache-publication rail (no dual paths).
+      # Receipt-proved build through the deploy owner; --build also owns the cache push, so drift keeps one cache-publication rail (no dual paths).
       if forge-redeploy --build >"$tmpdir/redeploy" 2>&1; then
         build="ok"
       else
@@ -1194,8 +1125,7 @@
       fi
       cat "$tmpdir/redeploy"
 
-      # Post-build adjudication under the deploy lock: an unproven bump is
-      # withdrawn (HEAD's lock stays last known-good), a proven bump commits.
+      # Post-build adjudication under the deploy lock: an unproven bump is withdrawn (HEAD's lock stays last known-good), a proven bump commits.
       if [ "$bump" = "moved" ]; then
         exec {deploy_fd}>"$deploy_lock"
         flock -w 600 "$deploy_fd" || true
@@ -1206,8 +1136,7 @@
           commit="ok"
         else
           commit="failed"
-          # An uncommitted bump gates every later run into skipped-dirty;
-          # notify once here so the wedge never accrues silently.
+          # An uncommitted bump gates every later run into skipped-dirty; notify once here so the wedge never accrues silently.
           notify "Lock bump built but commit failed; flake.lock left uncommitted."
           printf 'forge-nix-drift: WARNING lock bump built but commit failed; flake.lock left uncommitted\n' >&2
         fi
@@ -1250,8 +1179,7 @@
     '';
   };
 
-  # Sweep rows: HM-managed roots where a stale root-owned store hardlink from
-  # a prior generation blocks the user-mode backup/relink during activation;
+  # Sweep rows: HM-managed roots where a stale root-owned store hardlink from a prior generation blocks the user-mode backup/relink during activation;
   # exempt basenames are root-owned by design (daemon state), never in-the-way.
   sweepRows = pkgs.writeText "forge-activation-sweep-rows.json" (builtins.toJSON (lib.mapAttrsToList
     (root: exempt: {inherit root exempt;})
@@ -1263,8 +1191,7 @@
       "Library/LaunchAgents" = [];
     }));
 
-  # Pre-activation guard: detect root-owned in-the-way HM targets, clear them
-  # in one sudo batch, prove the clear with a receipt.
+  # Pre-activation guard: detect root-owned in-the-way HM targets, clear them in one sudo batch, prove the clear with a receipt.
   forgeActivationSweep = mkTool {
     name = "forge-activation-sweep";
     inputs = [pkgs.coreutils pkgs.findutils pkgs.jq];
@@ -1285,8 +1212,7 @@
       tmpdir="$(mktemp -d "''${TMPDIR:-/tmp}/forge-activation-sweep.XXXXXX")"
       trap 'emit_receipt; rm -rf "$tmpdir"' EXIT
 
-      # Topmost root-owned entries only: -prune stops descent so one finding
-      # covers a whole in-the-way tree; rm -rf clears its children with it.
+      # Topmost root-owned entries only: -prune stops descent so one finding covers a whole in-the-way tree; rm -rf clears its children with it.
       scan() {
         while IFS= read -r row; do
           root="$(jq -r '.root' <<<"$row")"
@@ -1314,10 +1240,8 @@
         exit 4
       fi
 
-      # One sudo batch per approval (Touch ID); cleared trees are store
-      # hardlinks, so the next switch regenerates them user-owned. A scan
-      # root itself is never bulk-deleted: it stays a reported finding for
-      # manual repair, so --clear cannot become rm -rf of a whole home root.
+      # One sudo batch per approval (Touch ID); cleared trees are store hardlinks, so the next switch regenerates them user-owned. A scan root itself
+      # is never bulk-deleted: it stays a reported finding for manual repair, so --clear cannot become rm -rf of a whole home root.
       paths=()
       while IFS= read -r -d "" p; do
         if jq -e --arg h "$HOME" --arg p "$p" 'map($h + "/" + .root) | index($p)' '${sweepRows}' >/dev/null; then
@@ -1334,16 +1258,13 @@
       cleared=$((findings - remaining))
       if [ "$remaining" = 0 ]; then result="ok"; else result="partial"; fi
       printf 'forge-activation-sweep: cleared %s of %s\n' "$cleared" "$findings"
-      # A partial clear must fail loudly: a chained switch would still hit
-      # the remaining in-the-way targets.
+      # A partial clear must fail loudly: a chained switch would still hit the remaining in-the-way targets.
       [ "$remaining" = 0 ] || exit 4
     '';
   };
 
-  # First-switch and first-session acceptance choreography: one ordered,
-  # receipt-bearing rail from preflight through the maghz codex gate, idempotent
-  # and re-enterable from any step (--from/--only). Probes stay owner-local
-  # (forge-redeploy receipts, forge-terminal-accept, forge-mcp doctor); this
+  # First-switch and first-session acceptance choreography: one ordered, receipt-bearing rail from preflight through the maghz codex gate, idempotent
+  # and re-enterable from any step (--from/--only). Probes stay owner-local (forge-redeploy receipts, forge-terminal-accept, forge-mcp doctor); this
   # owner orders and asserts. Key material is asserted by NAME only, never value.
   forgeAccept = mkTool {
     name = "forge-accept";
@@ -1396,8 +1317,7 @@
         # No-match is a valid empty set; grep's rc=1 must not kill the rail.
         grep -oE '^export [A-Za-z_][A-Za-z0-9_]*' "$1" | awk '{print $2}' || true
       }
-      # GUI-domain env NAMES only: values are stripped before anything prints;
-      # launchctl getenv false-negatives make raw print the only truthful read.
+      # GUI-domain env NAMES only: values are stripped before anything prints; launchctl getenv false-negatives make raw print the only truthful read.
       gui_names() {
         /bin/launchctl print "gui/$uid" 2>/dev/null \
           | awk '/^\tenvironment = \{/ {f = 1; next} f && /^\t\}/ {exit} f {sub(/^\t\t/, ""); sub(/ =>.*/, ""); print}'
@@ -1471,9 +1391,8 @@
       }
 
       step_outputs() {
-        # Clean-env INTERACTIVE login shell: the terminal lane. typeset -U
-        # dedup lives in .zshrc, which non-interactive login shells skip, and
-        # an inherited caller PATH would fake duplicate segments.
+        # Clean-env INTERACTIVE login shell: the terminal lane. typeset -U dedup lives in .zshrc, which non-interactive login shells skip, and an
+        # inherited caller PATH would fake duplicate segments.
         local path_out dup
         # shellcheck disable=SC2016  # $PATH expands inside the probed zsh, not here.
         path_out="$(env -i HOME="$HOME" USER="$USER" LOGNAME="$USER" SHELL=/bin/zsh TERM=xterm \
@@ -1496,9 +1415,8 @@
         else
           row WARN outputs-compdump "$dumps .zcompdump file(s) in ZDOTDIR; forge-cleanup plan/apply clears them"
         fi
-        # Background-limited agents (LimitLoadToSessionType) address as
-        # user/$uid; plain gui agents as gui/$uid — probe both domains.
-        # Consume-all grep: -q's early exit SIGPIPEs launchctl under pipefail.
+        # Background-limited agents (LimitLoadToSessionType) address as user/$uid; plain gui agents as gui/$uid — probe both domains. Consume-all
+        # grep: -q's early exit SIGPIPEs launchctl under pipefail.
         if { /bin/launchctl print "user/$uid/org.nix-community.home.atuin-daemon" \
           || /bin/launchctl print "gui/$uid/org.nix-community.home.atuin-daemon"; } 2>/dev/null \
           | grep 'state = running' >/dev/null; then
@@ -1515,11 +1433,9 @@
         fi
       }
 
-      # Server-respawn legality: a zellij server inherits its spawner's env, so
-      # a server predating the live generation serves stale session variables.
-      # Respawn is legal ONLY for forge-owned sessions with zero attached
-      # clients; user sessions get an instruction row — only WezTerm (launchd
-      # env) may spawn the replacement server, never an agent shell.
+      # Server-respawn legality: a zellij server inherits its spawner's env, so a server predating the live generation serves stale session variables.
+      # Respawn is legal ONLY for forge-owned sessions with zero attached clients; user sessions get an instruction row — only WezTerm (launchd env)
+      # may spawn the replacement server, never an agent shell.
       step_zellij() {
         local sys_epoch sessions name pid start attached lstart
         sys_epoch="$(stat -c %Y /run/current-system 2>/dev/null || echo 0)"
@@ -1608,8 +1524,7 @@
         fi
       }
 
-      # Holder classification separates routine (colima local-parity mode)
-      # from regression (a shared ssh mux retaining tunnel forwards).
+      # Holder classification separates routine (colima local-parity mode) from regression (a shared ssh mux retaining tunnel forwards).
       classify_holder() {
         local cmd
         cmd="$(/bin/ps -o command= -p "$1" 2>/dev/null || true)"
@@ -1620,9 +1535,8 @@
         esac
       }
 
-      # One iteration per ssh-registry tunnel row: a new vpsTunnels row lands in
-      # acceptance untouched. The codex gate stays keyed to maghz — the postgres
-      # MCP DSN rides that tunnel specifically.
+      # One iteration per ssh-registry tunnel row: a new vpsTunnels row lands in acceptance untouched. The codex gate stays keyed to maghz — the
+      # postgres MCP DSN rides that tunnel specifically.
       step_maghz() {
         local name last state kinds receipts
         local -a tunnel_names=(${lib.concatStringsSep " " (lib.attrNames config.forge.ssh.hosts)})
@@ -1641,8 +1555,7 @@
               port-conflict)
                 local -a cports=()
                 read -ra cports <<<"$(grep -oE 'spawn:[0-9 ]+' <<<"$last" | cut -d: -f2 || true)"
-                # lsof exits 1 when a holder vanished between probes; under
-                # pipefail that rc would kill the step before the row lands.
+                # lsof exits 1 when a holder vanished between probes; under pipefail that rc would kill the step before the row lands.
                 kinds="$(for p in "''${cports[@]}"; do
                   lsof -nP -iTCP:"$p" -sTCP:LISTEN 2>/dev/null | awk 'NR>1 {print $2}' || true
                 done | sort -u | while IFS= read -r hpid; do classify_holder "$hpid"; done | sort -u | paste -sd' ' -)"
@@ -1698,8 +1611,7 @@
     '';
   };
 
-  # ~/.local/bin admission-or-removal decisions: every unmanaged entry carries
-  # a named ruling; an entry absent from this table reports unadjudicated.
+  # ~/.local/bin admission-or-removal decisions: every unmanaged entry carries a named ruling; an entry absent from this table reports unadjudicated.
   localBinDecisions = pkgs.writeText "forge-path-doctor-decisions.json" (builtins.toJSON {
     claude = "admitted: launcher symlink into the versioned install";
     codex = "admitted-agent: unmanaged binary; manifest admission row open";
@@ -1717,10 +1629,8 @@
     loc = "hm: generation link";
   });
 
-  # PATH and binary provenance doctor: owner classification per PATH segment,
-  # cross-owner shadow detection on resolved targets, the file/MAGIC seed
-  # case, CLT health, brew posture, and the ~/.local/bin decision inventory.
-  # Read-only; one receipt line per run.
+  # PATH and binary provenance doctor: owner classification per PATH segment, cross-owner shadow detection on resolved targets, the file/MAGIC seed
+  # case, CLT health, brew posture, and the ~/.local/bin decision inventory. Read-only; one receipt line per run.
   forgePathDoctor = mkTool {
     name = "forge-path-doctor";
     inputs = [pkgs.coreutils pkgs.findutils pkgs.gnugrep pkgs.gawk pkgs.jq];
@@ -1744,8 +1654,7 @@
       # %b: payload fields carry embedded \t separators.
       row() { printf 'ts=%s\tfamily=%s\t%b\n' "$ts" "$1" "$2"; }
 
-      # Cross-owner shadow scan: a later PATH segment holding a DIFFERENT
-      # binary under a DIFFERENT owner class than the winning segment.
+      # Cross-owner shadow scan: a later PATH segment holding a DIFFERENT binary under a DIFFERENT owner class than the winning segment.
       declare -A win
       IFS=: read -ra segs <<<"$PATH"
       for d in "''${segs[@]}"; do
@@ -1758,8 +1667,7 @@
           else
             w="''${win[$n]}"
             wo="$(owner_of "$w")" so="$(owner_of "$f")"
-            # Store owners (hm/nix/system) winning over macos/homebrew is the
-            # sanctioned PATH order; only an inverted or foreign winner drifts.
+            # Store owners (hm/nix/system) winning over macos/homebrew is the sanctioned PATH order; only an inverted or foreign winner drifts.
             case "$wo" in hm | nix | system) continue ;; esac
             if [ "$wo" != "$so" ]; then
               wt="$(readlink -f "$w" 2>/dev/null || echo "$w")"
@@ -1773,8 +1681,7 @@
         done
       done
 
-      # Seed case: MAGIC pins a store magic database; the serving binary must
-      # be the store file, never /usr/bin/file 5.41 (v20-magic rejection).
+      # Seed case: MAGIC pins a store magic database; the serving binary must be the store file, never /usr/bin/file 5.41 (v20-magic rejection).
       f_bin="$(command -v file || true)"
       f_owner="$(owner_of "''${f_bin:-/dev/null}")"
       if [ -n "''${MAGIC:-}" ] && [ "$f_owner" = macos ]; then
@@ -1802,8 +1709,7 @@
         row brew "state=absent\tpath=$brew_bin"
       fi
 
-      # ~/.local/bin inventory: owner class from the resolved target, decision
-      # from the ruling table (loaded once); unruled entries surface loudly.
+      # ~/.local/bin inventory: owner class from the resolved target, decision from the ruling table (loaded once); unruled entries surface loudly.
       declare -A decision_row
       while IFS=$'\t' read -r dk dv; do decision_row[$dk]="$dv"; done \
         < <(jq -r 'to_entries[] | [.key, .value] | @tsv' '${localBinDecisions}')
@@ -1833,8 +1739,7 @@
     '';
   };
 
-  # Launchd triage vocabulary: label-prefix rows classifying every non-Apple
-  # agent; unmatched labels report unclassified and demand a row.
+  # Launchd triage vocabulary: label-prefix rows classifying every non-Apple agent; unmatched labels report unclassified and demand a row.
   launchdTriage = pkgs.writeText "forge-launchd-triage.json" (builtins.toJSON (lib.mapAttrsToList
     (prefix: t: {
       inherit prefix;
@@ -1861,9 +1766,8 @@
       "com.google." = ["vendor" "Google updater/drivefs"];
     }));
 
-  # Launchd census doctor: declared plists (HM/Forge grammar) reconciled with
-  # the live launchctl table — loaded state, pid, last exit, triage class per
-  # row. Read-only; the reconciliation IS the receipt.
+  # Launchd census doctor: declared plists (HM/Forge grammar) reconciled with the live launchctl table — loaded state, pid, last exit, triage class
+  # per row. Read-only; the reconciliation IS the receipt.
   forgeLaunchdDoctor = mkTool {
     name = "forge-launchd-doctor";
     inputs = [pkgs.coreutils pkgs.gnugrep pkgs.gawk pkgs.jq];
@@ -1872,8 +1776,7 @@
       work="$(mktemp -d)"
       trap 'rm -rf "$work"' EXIT
 
-      # Tab-split keeps labels with spaces intact (launchctl is TSV); a host
-      # without launchd yields an empty census instead of a pipefail kill.
+      # Tab-split keeps labels with spaces intact (launchctl is TSV); a host without launchd yields an empty census instead of a pipefail kill.
       { /bin/launchctl list 2>/dev/null || true; } | awk -F '\t' 'NR > 1 {print $3 "\t" $1 "\t" $2}' >"$work/observed"
 
       # Triage rows load once; classify is a pure prefix scan in row order.
@@ -1914,8 +1817,7 @@
         printf '%s\n' "$label" >>"$work/declared"
       done
 
-      # Observed lane: live labels with no declared plist. Apple system rows
-      # and per-app transient rows stay out of the census.
+      # Observed lane: live labels with no declared plist. Apple system rows and per-app transient rows stay out of the census.
       while IFS=$'\t' read -r label opid ostatus; do
         case "$label" in
           com.apple.* | application.* | *.anonymous.* | PID | "") continue ;;
@@ -1934,15 +1836,13 @@
     '';
   };
 
-  # Repeatable parity rail: generation home-files vs live $HOME (store-linked,
-  # staged-equal, missing, drifted), broken store links across managed roots,
-  # HM gc-root singleton.
+  # Repeatable parity rail: generation home-files vs live $HOME (store-linked, staged-equal, missing, drifted), broken store links across managed
+  # roots, HM gc-root singleton.
   forgeParity = mkTool {
     name = "forge-parity";
     inputs = [pkgs.coreutils pkgs.diffutils pkgs.findutils pkgs.gnugrep pkgs.gawk];
     text = ''
-      # HM rides nix-darwin: the generation resolves through the gc root, not
-      # a nix profile.
+      # HM rides nix-darwin: the generation resolves through the gc root, not a nix profile.
       gen="$(readlink -f "$HOME/.local/state/home-manager/gcroots/current-home" 2>/dev/null || true)"
       hf="$gen/home-files"
       ok=0 staged=0 missing=0 drift=0 broken=0
@@ -1968,8 +1868,7 @@
         fi
       done < <(find -H "$hf" -mindepth 1 \( -type f -o -type l \) -print0 2>/dev/null)
 
-      # Broken store links across managed roots: a vanished generation target
-      # is HM drift, distinct from the cleanup board's app-litter deadlinks.
+      # Broken store links across managed roots: a vanished generation target is HM drift, distinct from the cleanup board's app-litter deadlinks.
       while IFS= read -r -d "" l; do
         tgt="$(readlink "$l" 2>/dev/null || true)"
         case "$tgt" in
@@ -1991,8 +1890,7 @@
     '';
   };
 
-  # Observation-only update-visibility board: one row per manifest family,
-  # projected from existing receipts and local metadata. Mutation stays with
+  # Observation-only update-visibility board: one row per manifest family, projected from existing receipts and local metadata. Mutation stays with
   # the per-family owners (forge-nix-drift, manifest engine verbs, brew).
   forgeUpdateBoard = mkTool {
     name = "forge-update-board";
@@ -2030,8 +1928,7 @@
     '';
   };
 
-  # Scheduled-agent fold: one Login Items identity (the automation bundle),
-  # one log per agent, schedule and argv as the only per-row facts.
+  # Scheduled-agent fold: one Login Items identity (the automation bundle), one log per agent, schedule and argv as the only per-row facts.
   mkAgent = name: schedule: argv: {
     enable = true;
     config =
@@ -2059,8 +1956,7 @@ in {
     forgeUpdateBoard
   ];
 
-  # Shared identity bundle for the scheduled agents (bundle-apps.nix): Login
-  # Items & Extensions shows one "Forge Nix Automation" row — one toggle
+  # Shared identity bundle for the scheduled agents (bundle-apps.nix): Login Items & Extensions shows one "Forge Nix Automation" row — one toggle
   # governs drift, maintenance, and the orphan sweep.
   forge.bundleApps.forge-nix-automation = "Forge Nix Automation";
 
@@ -2076,13 +1972,11 @@ in {
       ];
     } ["${forgeNixMaintenance}/bin/forge-nix-maintenance" "--scheduled"];
 
-    # Hourly orphan sweep (calendar trigger for wake coalescing): evidence-gated
-    # reaping of ppid-1 agent-lane litter; kill classes are allowlisted rows,
-    # everything ambiguous stays receipt-only.
+    # Hourly orphan sweep (calendar trigger for wake coalescing): evidence-gated reaping of ppid-1 agent-lane litter; kill classes are allowlisted
+    # rows, everything ambiguous stays receipt-only.
     forge-orphan-sweep = mkAgent "forge-orphan-sweep" {StartCalendarInterval = [{Minute = 0;}];} ["${forgeCleanup}/bin/forge-cleanup" "sweep"];
 
-    # Daily 10:00 currency cadence (operator ruling); calendar-only, no
-    # RunAtLoad: login must never race live agent work with a lock bump.
+    # Daily 10:00 currency cadence (operator ruling); calendar-only, no RunAtLoad: login must never race live agent work with a lock bump.
     forge-nix-drift = mkAgent "forge-nix-drift" {
       StartCalendarInterval = [
         {

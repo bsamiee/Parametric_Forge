@@ -4,9 +4,8 @@
 -- License       : MIT
 -- Path          : modules/home/programs/apps/wezterm/events.lua
 -- ----------------------------------------------------------------------------
--- Event plane: one handler row per event, registered in a single fold. Status
--- reads cheap pane/window state only; every probe writes elsewhere. Bodies
--- read deck state at fire time, so registration never races the deck build.
+-- Event plane: one handler row per event, registered in a single fold. Status reads cheap pane/window state only; every probe writes elsewhere.
+-- Bodies read deck state at fire time, so registration never races the deck build.
 
 local wezterm = require("wezterm")
 local rows = require("rows")
@@ -24,8 +23,7 @@ local function cell(fg, text)
 end
 
 local handlers = {
-    -- Session persistence is code-defined: GUI and auto-spawned mux servers
-    -- land the default workspace's slug session at its name-policy cwd; an
+    -- Session persistence is code-defined: GUI and auto-spawned mux servers land the default workspace's slug session at its name-policy cwd; an
     -- explicit `wezterm start -- prog` keeps its own args untouched.
     ["gui-startup"] = function(cmd)
         local spawn = cmd or {}
@@ -49,12 +47,10 @@ local handlers = {
         deck.receipt({ action = "attach", domain = domain:name(), result = "ok" })
     end,
 
-    -- Bell rings are structured attention: a receipt row always; a toast plus
-    -- an attention-feed row only when the ring lands outside the focused view
-    -- (background pane or unfocused window) — a watched pane's bell is already
-    -- seen. audible_bell is Disabled; this arm is the surface. The feed row
-    -- makes any process ending with \a a first-class attention emitter: the
-    -- collector folds it, the bar counts it, `forge-agents focus` routes it.
+    -- Bell rings are structured attention: a receipt row always; a toast plus an attention-feed row only when the ring lands outside the focused
+    -- view (background pane or unfocused window) — a watched pane's bell is already seen. audible_bell is Disabled; this arm is the surface. The
+    -- feed row makes any process ending with \a a first-class attention emitter: the collector folds it,
+    -- the bar counts it, `forge-agents focus` routes it.
     ["bell"] = function(window, pane)
         local background = not window:is_focused() or pane:pane_id() ~= window:active_pane():pane_id()
         if background then
@@ -74,9 +70,8 @@ local handlers = {
         })
     end,
 
-    -- Outer facts only: key table, sync state, non-local domain. Agent/quota
-    -- cells and location live on the zellij zjstatus bar — the one top bar;
-    -- this strip surfaces only when a second WezTerm tab raises the tab bar.
+    -- Outer facts only: key table, sync state, non-local domain. Agent/quota cells and location live on the zellij zjstatus bar — the one top
+    -- bar; this strip surfaces only when a second WezTerm tab raises the tab bar.
     ["update-status"] = function(window, pane)
         local items = {}
         local function push(fragments)
@@ -110,21 +105,18 @@ local handlers = {
     end,
 
     ["format-window-title"] = function(tab, _, tabs)
-        -- Per-window truth: a window parked in a background workspace titles as
-        -- its own workspace, never the globally active one.
+        -- Per-window truth: a window parked in a background workspace titles as its own workspace, never the globally active one.
         local ok, mux_window = pcall(wezterm.mux.get_window, tab.window_id)
         local workspace = ok and mux_window and mux_window:get_workspace() or wezterm.mux.get_active_workspace()
         return string.format("%s — %d/%d", workspace, tab.tab_index + 1, #tabs)
     end,
 
-    -- Command deck rows land in the native palette without replacing it; the
-    -- deck builds the entry table once per generation and this replays it.
+    -- Command deck rows land in the native palette without replacing it; the deck builds the entry table once per generation and this replays it.
     ["augment-command-palette"] = function()
         return deck.palette
     end,
 
-    -- forge://<register-domain>[/...] opens the register browser float scoped
-    -- to the domain (forge-browse takes one DOMAIN argument).
+    -- forge://<register-domain>[/...] opens the register browser float scoped to the domain (forge-browse takes one DOMAIN argument).
     ["open-uri"] = function(_, _, uri)
         local domain = uri:match("^forge://([%w-]+)")
         local browse = domain and deck.commands["browse-registers"]

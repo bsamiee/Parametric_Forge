@@ -4,9 +4,8 @@
 # License       : MIT
 # Path          : modules/common/toolchain-env.nix
 # ----------------------------------------------------------------------------
-# Shared PATH vectors and toolchain env factory installed as the
-# forgeToolchainEnvFor module argument; session, launchd, and zsh owners
-# call it with their own home/username/cache context.
+# Shared PATH vectors and toolchain env factory installed as the forgeToolchainEnvFor module argument; session, launchd,
+# and zsh owners call it with their own home/username/cache context.
 {
   host,
   lib,
@@ -20,8 +19,7 @@
   }: let
     # OS branch keys on the static host context, never on pkgs (fixpoint safety).
     isDarwin = host.os == "darwin";
-    # Only provisioned directories: useUserPackages replaces ~/.nix-profile with
-    # /etc/profiles; cargo/go user bins return here only once something provisions them.
+    # Only provisioned directories: useUserPackages replaces ~/.nix-profile with /etc/profiles; cargo/go user bins return here only once something provisions them.
     userPathEntries =
       [
         "${home}/.local/bin"
@@ -68,10 +66,8 @@
       PROJ_LIB = "${pkgs.proj}/share/proj";
       PROJ_LIBDIR = "${pkgs.proj}/lib";
     };
-    # EnergyPlus/OpenStudio are macOS-only (operator ruling); Linux hosts get
-    # an empty energy row, so downstream folds and exports stay polymorphic.
-    # Layout facts fold from each package's manifest-derived runtimeEnv; the
-    # session EXE keys re-point at the env-exporting wrappers.
+    # EnergyPlus/OpenStudio are macOS-only (operator ruling); Linux hosts get an empty energy row, so downstream folds and exports stay
+    # polymorphic. Layout facts fold from each package's manifest-derived runtimeEnv; the session EXE keys re-point at the env-exporting wrappers.
     energyEnv = lib.optionalAttrs isDarwin (
       pkgs.energyplus.runtimeEnv
       // pkgs.openstudio.runtimeEnv
@@ -84,8 +80,7 @@
       lib.concatStringsSep "\n" (
         lib.mapAttrsToList (name: value: "export ${name}=${lib.escapeShellArg (toString value)}") env
       );
-    # Nix Chrome-for-Testing for headless render (mmdc/puppeteer, the mermaid
-    # validator); one owner feeds login-shell and launchd surfaces so a
+    # Nix Chrome-for-Testing for headless render (mmdc/puppeteer, the mermaid validator); one owner feeds login-shell and launchd surfaces so a
     # GUI-spawned agent never falls to an unpinned browser.
     chromiumShell =
       if isDarwin

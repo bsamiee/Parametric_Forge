@@ -4,9 +4,8 @@
 -- License       : MIT
 -- Path          : modules/home/programs/apps/nvim/lua/config/lsp.lua
 -- ----------------------------------------------------------------------------
--- Native LSP control plane over generated forge/lsp.lua rows (owner:
--- apps/nvim/default.nix). Native completion with autotrigger is the decided
--- lane (blink.cmp stays annex-gated); diagnostics render through one config.
+-- Native LSP control plane over generated forge/lsp.lua rows (owner: apps/nvim/default.nix). Native completion with autotrigger is the decided lane
+-- (blink.cmp stays annex-gated); diagnostics render through one config.
 
 for name, row in pairs(require("forge.lsp").servers) do
     vim.lsp.config(name, {
@@ -18,8 +17,7 @@ for name, row in pairs(require("forge.lsp").servers) do
     vim.lsp.enable(name)
 end
 
--- Builtin gr*/gO LSP maps retire: chord rows (apps/chords.nix) are the one
--- LSP dispatch surface, and dropping the prefix family unblocks instant gr.
+-- Builtin gr*/gO LSP maps retire: chord rows (apps/chords.nix) are the one LSP dispatch surface, and dropping the prefix family unblocks instant gr.
 for lhs, mode in pairs({ grn = "n", gra = { "n", "x" }, grr = "n", gri = "n", grt = "n", gO = "n" }) do
     vim.keymap.del(mode, lhs)
 end

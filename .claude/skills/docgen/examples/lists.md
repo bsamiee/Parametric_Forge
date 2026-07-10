@@ -1,6 +1,6 @@
 # [LIST_CRAFT]
 
-List repair is symptom-indexed: each entry names one defect an agent already sees in a bullet run, carries the fixed Detection / Rejected / Accepted / Reason / Reframe card, and shows both list shapes as tiny fences. A mega bullet is a compressed section wearing a hyphen — repair classifies its fragments and routes each to its container; a closed roster whose payload is the enumeration is a registry entry, legal at length.
+List repair is symptom-indexed: each entry names one defect an agent already sees in a bullet run, carries the fixed Detection / Rejected / Accepted / Reason / Reframe card, and shows both list shapes as tiny fences. A mega bullet is a compressed section wearing a hyphen — repair classifies its fragments and routes each to its container; a closed roster whose payload is the enumeration is a registry entry, legal at length, and a `- Field: value` record field answers to the card economy — its defect class is fragment fusion, never length.
 
 ## [01]-[MEGA_BULLET]
 

@@ -20,7 +20,7 @@ in {
         tilesize = mkDefault 28;
         largesize = mkDefault 128;
         magnification = mkDefault false;
-        autohide = mkDefault false; # Keep Dock visible
+        autohide = mkDefault false;
         show-process-indicators = mkDefault true;
         show-recents = mkDefault false;
         static-only = mkDefault false;
@@ -30,13 +30,12 @@ in {
         showhidden = mkDefault false;
         expose-group-apps = mkDefault false;
         mru-spaces = mkDefault false;
-        # Hot corners - all disabled
+        # Hot corners disabled: corner action 1 is the no-op.
         wvous-tl-corner = mkDefault 1;
         wvous-tr-corner = mkDefault 1;
         wvous-bl-corner = mkDefault 1;
         wvous-br-corner = mkDefault 1;
-        # Pin sources: Drafts is masApp-declared; Claude/Codex are intentional
-        # manual installs pinned by operator ruling.
+        # Pin sources: Drafts is masApp-declared; Claude and ChatGPT are intentional manual installs pinned by operator ruling.
         persistent-apps = mkDefault [
           {
             spacer = {
@@ -97,8 +96,7 @@ in {
         spans-displays = mkDefault false;
       };
       # --- [CONTROL_CENTER_MENU_BAR_BYHOST_DOMAIN]
-      # Minimal menu-bar posture: every optional module hidden, battery
-      # percentage flag kept true for the Control Center pane readout.
+      # Minimal menu-bar posture: every optional module hidden, battery percentage flag kept true for the Control Center pane readout.
       controlcenter = {
         AirDrop = mkDefault false;
         BatteryShowPercentage = mkDefault true;
@@ -122,7 +120,7 @@ in {
         NSNavPanelExpandedStateForSaveMode = mkDefault true;
         NSNavPanelExpandedStateForSaveMode2 = mkDefault true;
         NSDocumentSaveNewDocumentsToCloud = mkDefault false;
-        NSWindowResizeTime = mkDefault 0.001; # PERFORMANCE: Instant window resize
+        NSWindowResizeTime = mkDefault 0.001; # instant window resize
         NSWindowShouldDragOnGesture = mkDefault false;
         NSAutomaticWindowAnimationsEnabled = mkDefault false;
         NSUseAnimatedFocusRing = mkDefault false;

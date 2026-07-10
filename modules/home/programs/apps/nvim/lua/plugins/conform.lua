@@ -4,17 +4,13 @@
 -- License       : MIT
 -- Path          : modules/home/programs/apps/nvim/lua/plugins/conform.lua
 -- ----------------------------------------------------------------------------
--- Formatter orchestration over Forge-owned global binaries; the per-filetype
--- table is a generated fact (forge/tools.lua). Availability rows feed
+-- Formatter orchestration over Forge-owned global binaries; the per-filetype table is a generated fact (forge/tools.lua). Availability rows feed
 -- :checkhealth forge.
 
 require("conform").setup({
     formatters_by_ft = require("forge.tools").format,
-    -- Bare-name law: the builtin prettier definition prefers the repo's
-    -- node_modules/.bin, executing a repo-owned binary on save; pin the
-    -- per-user profile binary instead. Same law for csharpier: the builtin
-    -- probes `dotnet csharpier` (cwd-dependent, session-cached) — pin the
-    -- profile binary the estate fmt router's cs lane owns.
+    -- Bare-name law: the builtin prettier def prefers the repo's node_modules/.bin (a repo-owned binary runs on save) and the builtin csharpier
+    -- probes cwd-dependent, session-cached `dotnet csharpier`; pin the profile binaries the estate fmt router's lanes own.
     formatters = {
         prettier = { command = "prettier" },
         csharpier = { command = "csharpier", args = { "format" } },

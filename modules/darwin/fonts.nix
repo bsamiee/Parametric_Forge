@@ -4,8 +4,7 @@
 # License       : MIT
 # Path          : modules/darwin/fonts.nix
 # ----------------------------------------------------------------------------
-# Font inventory plus direct-file projection into the user font domain. macOS
-# registers ~/Library/Fonts payloads deterministically; the nested
+# Font inventory plus direct-file projection into the user font domain. macOS registers ~/Library/Fonts payloads deterministically; the nested
 # "/Library/Fonts/Nix Fonts" package tree depends on lazy fontd rescans.
 {
   config,
@@ -14,9 +13,8 @@
   ...
 }: let
   # --- [PROGRAMMING_TERMINAL_FONTS]
-  # Plain upstream families plus the one symbols fallback; the patched
-  # nerd-font trio is retired — icon coverage rides Symbols Nerd Font Mono
-  # through the owner fallback chain at two orders of magnitude less closure.
+  # Plain upstream families plus the one symbols fallback; icon coverage rides Symbols Nerd Font Mono through the owner fallback chain at two orders
+  # of magnitude less closure than a patched nerd-font set.
   programming = with pkgs; [
     geist-font
     iosevka-bin
@@ -55,9 +53,7 @@
     )
   '';
 
-  # Shared dual-receipt emit fold (home/programs/shell-tools/receipts.nix):
-  # a scope-free shell fragment, so the system-scope kernel composes the same
-  # receipt grammar every home kernel carries.
+  # Shared dual-receipt emit fold: a scope-free shell fragment, so the system-scope kernel composes the receipt grammar every home kernel carries.
   receiptsFold = import ../home/programs/shell-tools/receipts.nix;
 
   # Generation-marked copy: prune stale managed files via manifest, never touch unmanaged fonts.
@@ -83,8 +79,7 @@
       cp -Lf "$src"/* "$dst/"
       (cd "$src" && printf '%s\n' *) >"$manifest"
       printf '%s' "$src" >"$marker"
-      # Activation invokes this via sudo -u; anchor the log beside the payload,
-      # never through an ambient HOME.
+      # Activation invokes this via sudo -u; anchor the log beside the payload, never through an ambient HOME.
       receipt_log="''${dst%/Fonts}/Logs/forge-fonts.receipts.log"
       receipt_surface="forge-project-fonts"
       ${receiptsFold}

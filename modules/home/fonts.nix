@@ -4,11 +4,9 @@
 # License       : MIT
 # Path          : modules/home/fonts.nix
 # ----------------------------------------------------------------------------
-# Estate font owner mirroring theme.nix: family catalog, typography roles,
-# fallback chains, per-family metrics, and renderer projections. Every type
-# consumer interpolates these rows; no consumer carries a private family
-# string. The darwin module installs files; this owner names families and
-# drives renderers — it never reads config.fonts.packages.
+# Estate font owner mirroring theme.nix: family catalog, typography roles, fallback chains, per-family metrics, and renderer projections. Every
+# type consumer interpolates these rows; no consumer carries a private family string. The darwin module installs files; this owner names families
+# and drives renderers — it never reads config.fonts.packages.
 {
   config,
   host,
@@ -20,10 +18,8 @@
   notoMono = pkgs.noto-fonts.override {variants = ["NotoSansMono"];};
 
   # --- [FAMILY_CATALOG]
-  # The attr name is the CoreText family; the manifest derivation opens each
-  # representative file with fonttools and fails the build when the internal
-  # name table disagrees (manifest-vs-payload parity at build time). `class`:
-  # static | variable | patched. `sample` overrides the shaping-receipt text.
+  # The attr name is the CoreText family; the manifest derivation opens each representative file with fonttools and fails the build when the internal
+  # name table disagrees (manifest-vs-payload parity at build time). `class`: static | variable | patched. `sample` overrides the shaping-receipt text.
   catalog = {
     "Geist Mono" = {
       package = pkgs.geist-font;
@@ -103,9 +99,8 @@
   };
 
   # --- [ROLES_CHAINS_METRICS_FEATURES]
-  # Roles are the swap surface: one family per role, scripts ordered by shaping
-  # preference. The mono chain is the only fallback expression on macOS —
-  # fontconfig is inert against CoreText and Chromium renderers.
+  # Roles are the swap surface: one family per role, scripts ordered by shaping preference. The mono chain is the only fallback expression on
+  # macOS — fontconfig is inert against CoreText and Chromium renderers.
   roles = {
     mono = "Geist Mono"; # forge-font:mono
     sans = "Geist";
@@ -118,8 +113,7 @@
 
   metrics = {
     size = 13.0;
-    # Terminal leading travels per mono family: 0.95 is tuned for Geist and
-    # clips Monaspace/JetBrains descenders; below 1.0 is family-proven only.
+    # Terminal leading travels per mono family: 0.95 is tuned for Geist and clips Monaspace/JetBrains descenders; below 1.0 is family-proven only.
     lineHeights = lib.mapAttrs (_: row: row.lineHeight) (lib.filterAttrs (_: row: row ? lineHeight) catalog);
     editorLineHeight = 1.5;
     cssLineHeight = "140%";
@@ -135,8 +129,7 @@
   receiptsFold = import ./programs/shell-tools/receipts.nix;
 
   # --- [BUILD_TIME_MANIFEST_NAME_TABLE_IDENTITY_FEATURE_SHAPING_RECEIPTS]
-  # fonttools is the metadata oracle, hb-shape the shaping oracle; feature
-  # claims are proven by receipts, never by settings presence. Script rows
+  # fonttools is the metadata oracle, hb-shape the shaping oracle; feature claims are proven by receipts, never by settings presence. Script rows
   # additionally assert zero .notdef over the Perso-Arabic sample.
   catalogJson = pkgs.writeText "forge-font-catalog.json" (builtins.toJSON (lib.mapAttrs (_: row: {
       path = "${row.package}/${row.file}";
@@ -194,9 +187,8 @@
   '';
 
   # --- [FORGE_FONT_ONE_POLYMORPHIC_DISPATCH_OVER_THE_OWNER]
-  # pick (default) | list | set <role> <family> | commit | reset. The runtime
-  # override prepends a manifest-proven family; WezTerm hot-reloads through its
-  # watch list. commit folds the override into this file and switches.
+  # pick (default) | list | set <role> <family> | commit | reset. The runtime override prepends a manifest-proven family; WezTerm hot-reloads
+  # through its watch list. commit folds the override into this file and switches.
   forgeFont = pkgs.writeShellApplication {
     name = "forge-font";
     runtimeInputs = [pkgs.jq pkgs.fzf pkgs.sd pkgs.gnugrep pkgs.coreutils];
@@ -267,8 +259,7 @@
             emit commit result fail marker-drift
             exit 65
           }
-          # Transition receipt at the edit, terminal receipt only after the
-          # switch lands — a failed redeploy leaves state=edited on record.
+          # Transition receipt at the edit, terminal receipt only after the switch lands — a failed redeploy leaves state=edited on record.
           emit commit state edited "mono=$fam"
           forge-redeploy --switch
           rm -f "$override"
@@ -288,17 +279,15 @@
   };
 
   # --- [FORGE_FONT_DOCTOR_MANIFEST_VS_OBSERVED_PROOF]
-  # Rows: payload parity against the darwin projection manifest, CoreText
-  # registration through system_profiler enumeration, per-role presence, and
-  # the Electron lane note. fc-* stays a separate Pango-only lane, never mixed.
+  # Rows: payload parity against the darwin projection manifest, CoreText registration through system_profiler enumeration, per-role presence,
+  # and the Electron lane note. fc-* stays a separate Pango-only lane, never mixed.
   forgeFontDoctor = pkgs.writeShellApplication {
     name = "forge-font-doctor";
     runtimeInputs = [pkgs.jq pkgs.coreutils];
     text = ''
       manifest="''${XDG_CONFIG_HOME:-$HOME/.config}/forge/fonts/manifest.json"
       payload="$HOME/Library/Fonts/.forge-fonts-manifest"
-      # Admission gate: the manifest crosses once, shape-asserted — a missing
-      # or torn projection fails typed, never as a raw jq slurpfile error.
+      # Admission gate: the manifest crosses once, shape-asserted — a missing or torn projection fails typed, never as a raw jq slurpfile error.
       jq -e '(.families | type == "object") and (.roles | type == "object")' "$manifest" >/dev/null 2>&1 || {
         printf 'forge-font-doctor: manifest missing or malformed: %s\n' "$manifest" >&2
         exit 66
@@ -310,10 +299,8 @@
         payload_result=fail
         payload_detail="darwin projection manifest missing"
       fi
-      # One projection: CoreText enumeration joins the manifest role chain in a
-      # single jq pass over the system_profiler snapshot. A dead profiler
-      # degrades typed — an empty snapshot fails every CoreText row, never the
-      # kernel. One row stream renders both the human table and --json.
+      # One projection: CoreText enumeration joins the manifest role chain in a single jq pass over the system_profiler snapshot. A dead profiler
+      # degrades typed — an empty snapshot fails every CoreText row, never the kernel. One row stream renders both the human table and --json.
       snapshot="$(/usr/sbin/system_profiler SPFontsDataType -json 2>/dev/null || true)"
       [[ -n $snapshot ]] || snapshot='{}'
       report="$(jq -c --slurpfile m "$manifest" --arg pr "$payload_result" --arg pd "$payload_detail" '
@@ -344,8 +331,7 @@ in {
       inherit catalog roles chains metrics features overridePath;
       manifest = manifestJson;
       projections = {
-        # WezTerm rows: deck.lua walks the chain, applies per-family leading,
-        # and prepends the override family when the override file exists.
+        # WezTerm rows: deck.lua walks the chain, applies per-family leading, and prepends the override family when the override file exists.
         luaFont = {
           chain = map (f: {family = f;}) chains.mono;
           inherit (metrics) size;

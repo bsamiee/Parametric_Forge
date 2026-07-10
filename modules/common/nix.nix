@@ -4,11 +4,9 @@
 # License       : MIT
 # Path          : modules/common/nix.nix
 # ----------------------------------------------------------------------------
-# Determinate Nix custom settings; /etc/nix/nix.conf stays Determinate-owned.
-# One settings vocabulary, two projections: Darwin rides determinateNix
-# customSettings, NixOS rides the thin determinate module plus nix.settings —
-# both land the values in /etc/nix/nix.custom.conf at switch. The OS branch
-# keys on the static host context, never on pkgs (module fixpoint safety).
+# Determinate Nix custom settings; /etc/nix/nix.conf stays Determinate-owned. One settings vocabulary, two projections: Darwin rides
+# determinateNix customSettings, NixOS rides the thin determinate module plus nix.settings — both land the values in /etc/nix/nix.custom.conf at
+# switch. The OS branch keys on the static host context, never on pkgs (module fixpoint safety).
 {
   host,
   lib,
@@ -22,8 +20,7 @@
     nixos = ["@wheel"];
   };
 
-  # Determinate owns /etc/nix/nix.conf (eval-cores, lazy-trees, caches,
-  # experimental-features); the darwin module asserts against netrc-file and
+  # Determinate owns /etc/nix/nix.conf (eval-cores, lazy-trees, caches, experimental-features); the darwin module asserts against netrc-file and
   # ssl-cert-file here — auth rides determinateNixd.authentication rows.
   customSettings = {
     trusted-users = ["root"] ++ adminGroups.${host.os};
@@ -64,17 +61,14 @@
     narinfo-cache-positive-ttl = 86400;
   };
 
-  # OS projection rows: Darwin rides determinateNix customSettings; NixOS
-  # rides nix.settings — determinate.enable defaults true and the module
-  # reroutes generated nix.conf to nix.custom.conf and swaps the daemon
-  # for determinate-nixd.
+  # OS projection rows: Darwin rides determinateNix customSettings; NixOS rides nix.settings — determinate.enable defaults true and the module
+  # reroutes generated nix.conf to nix.custom.conf and swaps the daemon for determinate-nixd.
   osProjections = {
     darwin = {
       determinateNix = {
         enable = true;
 
-        # Background GC is determinate-nixd-owned (free-space targeted); the
-        # forge-nix-maintenance agent owns generation retention and optimise.
+        # Background GC is determinate-nixd-owned (free-space targeted); the forge-nix-maintenance agent owns generation retention and optimise.
         determinateNixd.garbageCollector.strategy = "automatic";
 
         inherit customSettings;

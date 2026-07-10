@@ -4,11 +4,9 @@
 -- License       : MIT
 -- Path          : modules/home/programs/apps/nvim/lua/plugins/snacks.lua
 -- ----------------------------------------------------------------------------
--- Snacks.nvim: the one rich editor surface. Terminal, lazygit, explorer, and
--- input stay off -- Zellij owns terminals/lazygit, Yazi owns file navigation.
--- The estate picker is the register-rail projection inside the editor: typed action
--- rows arrive from forge/tools.lua; scratch rows render into a float, pane
--- rows hand off to a Zellij floating pane.
+-- Snacks.nvim: the one rich editor surface. Terminal, lazygit, explorer, and input stay off -- Zellij owns terminals/lazygit, Yazi owns file
+-- navigation. The estate picker is the register-rail projection inside the editor: typed action rows arrive from forge/tools.lua; scratch rows render
+-- into a float, pane rows hand off to a Zellij floating pane.
 
 require("snacks").setup({
     bigfile = { enabled = true },
@@ -58,8 +56,7 @@ require("snacks").setup({
             { title = "[QUICK ACTIONS]", padding = 1 },
             { section = "keys", padding = 1 },
             { title = "[RECENT FILES]", padding = 1 },
-            -- No lazy.nvim on this rail: the "startup" section requires
-            -- lazy.stats and faults at UIEnter; recent_files closes the board.
+            -- No lazy.nvim on this rail: the "startup" section requires lazy.stats and faults at UIEnter; recent_files closes the board.
             { section = "recent_files", indent = 1, padding = 2, limit = 8 },
         },
     },
@@ -75,8 +72,7 @@ require("snacks").setup({
     rename = { enabled = true },
     zen = {
         enabled = true,
-        -- Every id resolves to a registered toggle: dim/diagnostics/line_number/
-        -- indent are Snacks factories; signcolumn is the option toggle below.
+        -- Every id resolves to a registered toggle: dim/diagnostics/line_number/indent are Snacks factories; signcolumn is the option toggle below.
         toggles = {
             dim = true,
             diagnostics = false,
@@ -90,9 +86,8 @@ require("snacks").setup({
 -- Zen consumes this by id; false projects "no", state restores on close.
 Snacks.toggle.option("signcolumn", { on = "yes", off = "no", name = "Sign Column" })
 
--- ESTATE PICKER ---------------------------------------------------------------
--- Chords live in apps/chords.nix (fn = "pick_estate"); rows are generated
--- facts. Buffer-lifecycle chords moved to the same owner: no keymaps here.
+-- --- [ESTATE_PICKER]
+-- Chords live in apps/chords.nix (fn = "pick_estate"); rows are generated facts. Buffer-lifecycle chords ride the same owner — no keymaps here.
 local M = {}
 local tools = require("forge.tools")
 
@@ -118,8 +113,7 @@ local function scratch_show(row, out)
 end
 
 local function run(row)
-    -- ENOENT rail: vim.system throws on a missing executable; fault as a
-    -- typed notification instead of a stack trace in the picker confirm.
+    -- ENOENT rail: vim.system throws on a missing executable; fault as a typed notification instead of a stack trace in the picker confirm.
     -- `probes` names the real tools behind sh-wrapped rows (health vocabulary).
     for _, bin in ipairs(row.probes or { row.argv[1] }) do
         if vim.fn.executable(bin) == 0 then
@@ -132,8 +126,7 @@ local function run(row)
             vim.notify(("estate row %q needs a zellij session"):format(row.id), vim.log.levels.WARN)
             return
         end
-        -- No --close-on-exit: non-interactive rows must keep their output
-        -- visible after exit; zellij's pending-close banner owns dismissal.
+        -- No --close-on-exit: non-interactive rows must keep their output visible after exit; zellij's pending-close banner owns dismissal.
         local argv = { "zellij", "run", "--floating", "--name", row.id }
         if row.cwd then
             vim.list_extend(argv, { "--cwd", row.cwd })

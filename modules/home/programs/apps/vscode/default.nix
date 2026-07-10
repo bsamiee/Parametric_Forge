@@ -105,28 +105,26 @@
         "result" = true;
         "result-*" = true;
       };
-      "files.watcherExclude" = {
-        "**/.archive/**" = true;
-        "**/.cache/**" = true;
-        "**/.direnv/**" = true;
-        "**/.venv/**" = true;
-        "**/__pycache__/**" = true;
-        "result/**" = true;
-      };
+      "files.watcherExclude" =
+        lib.genAttrs (map (d: "**/${d}/**") style.transientDirs) (_: true)
+        // {
+          "**/.direnv/**" = true;
+          "**/__pycache__/**" = true;
+          "result/**" = true;
+        };
       "files.readonlyInclude" = {
         "**/flake.lock" = true;
         "**/pnpm-lock.yaml" = true;
         "**/uv.lock" = true;
         "**/node_modules/**" = true;
       };
-      "search.exclude" = {
-        "**/.archive/**" = true;
-        "**/.cache/**" = true;
-        "**/.venv/**" = true;
-        "**/flake.lock" = true;
-        "**/pnpm-lock.yaml" = true;
-        "**/uv.lock" = true;
-      };
+      "search.exclude" =
+        lib.genAttrs (map (d: "**/${d}/**") style.transientDirs) (_: true)
+        // {
+          "**/flake.lock" = true;
+          "**/pnpm-lock.yaml" = true;
+          "**/uv.lock" = true;
+        };
       "search.smartCase" = true;
       "search.followSymlinks" = false;
       "search.useGlobalIgnoreFiles" = true;

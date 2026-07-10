@@ -70,8 +70,7 @@ in {
       };
       # --- [ADVANCED_INPUT_CUSTOMIZATIONS]
       CustomUserPreferences = {
-        # Trackpad keys without first-class nix-darwin owners at pinned rev;
-        # the rest migrated to system.defaults.trackpad.* above.
+        # Trackpad keys without first-class nix-darwin owners at the pinned rev; the rest live on system.defaults.trackpad.* above.
         "com.apple.AppleMultitouchTrackpad" = {
           TrackpadTwoFingerDoubleTapGesture = mkDefault 1; # first-class owner is bool-only; keep int here
           TrackpadFiveFingerPinchGesture = mkDefault 2;

@@ -10,8 +10,7 @@
   pkgs,
   ...
 }: let
-  # Styles are ANSI-16 slots; the terminal palette (forge.theme.ansi16
-  # projected through WezTerm) resolves them to estate colors.
+  # Styles are ANSI-16 slots; the terminal palette (forge.theme.ansi16 projected through WezTerm) resolves them to estate colors.
   tomlFormat = pkgs.formats.toml {};
 
   procsConfig = {
@@ -119,8 +118,7 @@
         align = "Left";
       }
       {
-        # Insertion slot: --sortd/--sorta/--insert land their column here and
-        # hard-fail without one.
+        # Insertion slot: --sortd/--sorta/--insert land their column here and hard-fail without one.
         kind = "Slot";
         style = "BrightWhite|Black";
         numeric_search = false;

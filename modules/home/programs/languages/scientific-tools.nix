@@ -4,8 +4,7 @@
 # License       : MIT
 # Path          : modules/home/programs/languages/scientific-tools.nix
 # ----------------------------------------------------------------------------
-# Native scientific build/runtime toolchain for source-built Python packages,
-# geospatial/data libraries, numerical kernels, and local provisioning probes.
+# Native scientific build/runtime toolchain for source-built Python packages, geospatial/data libraries, numerical kernels, and local provisioning probes.
 {
   config,
   forgeToolchainEnvFor,
@@ -168,9 +167,8 @@
   forgeJupyterTokenPrelude = ''
     token_file=${lib.escapeShellArg forgeJupyterTokenFile}
     if [ -z "''${JUPYTER_TOKEN:-}" ] && [ -f "$token_file" ]; then
-      # Typed extraction, never source: a mutable file must not reach the parser.
-      # First-match-quit sed, never sed|head: head's early exit would SIGPIPE
-      # sed under pipefail.
+      # Typed extraction, never source: a mutable file must not reach the parser. First-match-quit sed, never sed|head:
+      # head's early exit would SIGPIPE sed under pipefail.
       JUPYTER_TOKEN="$(sed -n '/^export JUPYTER_TOKEN=/{s///p;q;}' "$token_file")"
     fi
     if [ -z "''${JUPYTER_TOKEN:-}" ]; then
@@ -182,9 +180,8 @@
   forgeJupyterRootPrelude = ''
     export FORGE_PROVISION_ROOT=${lib.escapeShellArg forgeJupyterRootDir}
   '';
-  # Supervised stdio lane, mirroring the rhino-mcp-router lane: uvx pythons
-  # that ignore stdin EOF (jupyter-mcp-server) strand under a hard-killed MCP
-  # client; the watchdog ties the server subtree to client liveness.
+  # Supervised stdio lane, mirroring the rhino-mcp-router lane: uvx pythons that ignore stdin EOF (jupyter-mcp-server) strand under a hard-killed
+  # MCP client; the watchdog ties the server subtree to client liveness.
   superviseStdio = server: ''
     client=$PPID
     set -m
@@ -371,8 +368,7 @@
     name = "forge-ifcmcp";
     text = superviseStdio ''${forgeCompanionEnv}/bin/forge-companion-env uvx --python "${pkgs.python312}/bin/python3" --from "ifcopenshell-mcp[mcp]==0.8.5" ifcmcp'';
   };
-  # writeShellApplication: the token prelude runs sed under launchd/systemd
-  # minimal PATH, so the tool arrives via runtimeInputs, never ambient lookup.
+  # writeShellApplication: the token prelude runs sed under launchd/systemd minimal PATH, so the tool arrives via runtimeInputs, never ambient lookup.
   forgeJupyter = pkgs.writeShellApplication {
     name = "forge-jupyter";
     runtimeInputs = [pkgs.gnused];
@@ -473,10 +469,8 @@ in
         };
     };
 
-    # Persistent Jupyter rides both supervisors (operator ruling: local AND VPS):
-    # launchd on Darwin, a lingering systemd user service on Linux. KeepAlive
-    # implies launch-at-load; Interactive classification exempts user-facing
-    # kernel compute from Background throttling per launchd.plist(5).
+    # Persistent Jupyter rides both supervisors (operator ruling: local AND VPS): launchd on Darwin, a lingering systemd user service on Linux.
+    # KeepAlive implies launch-at-load; Interactive classification exempts user-facing kernel compute from Background throttling per launchd.plist(5).
     launchd.agents.forge-jupyter = {
       enable = true;
       config = {

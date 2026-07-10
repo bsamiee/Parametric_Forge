@@ -4,11 +4,9 @@
 # License       : MIT
 # Path          : modules/home/programs/shell-tools/posting.nix
 # ----------------------------------------------------------------------------
-# Terminal API workspace with versionable request collections; the package row
-# lives in the owner table. Theme is projected from the estate palette owner;
-# user collections stay mutable state, while the forge-services collection is a
-# generated probe surface over service-row credential NAMES — `forge-console`
-# brokers values into a mode-600 launch-time env file, never a durable file.
+# Terminal API workspace with versionable request collections; the package row lives in the owner table. Theme is projected from the estate
+# palette owner; user collections stay mutable state, while the forge-services collection is a generated probe surface over service-row
+# credential NAMES — `forge-console` brokers values into a mode-600 launch-time env file, never a durable file.
 {
   config,
   lib,
@@ -129,8 +127,7 @@
     })
     probes);
 
-  # Launch-time credential materialization: one env render per distinct custody
-  # coordinate, mode-600 tmpfile, removed on exit — no secret at rest.
+  # Launch-time credential materialization: one env render per distinct custody coordinate, mode-600 tmpfile, removed on exit — no secret at rest.
   forgeConsole = pkgs.writeShellApplication {
     name = "forge-console";
     runtimeInputs = [pkgs.coreutils pkgs.doppler pkgs.posting];
@@ -173,8 +170,7 @@
       json_boolean = palette.magenta.hex;
       json_null = palette.comment.hex;
     };
-    # HTTP-verb semantics: read=success green, create=accent cyan,
-    # mutate=attention orange (patch=warning yellow), destroy=danger red,
+    # HTTP-verb semantics: read=success green, create=accent cyan, mutate=attention orange (patch=warning yellow), destroy=danger red,
     # introspection (options/head)=structural purple / muted comment.
     method = {
       get = palette.green.hex;
@@ -185,8 +181,7 @@
       options = palette.purple.hex;
       head = palette.comment.hex;
     };
-    # Rich style strings; mirrors the tmTheme editor surface (caret=primary,
-    # line highlight=raised, selection=selected).
+    # Rich style strings; mirrors the tmTheme editor surface (caret=primary, line highlight=raised, selection=selected).
     text_area = {
       gutter = roles.text.muted.hex;
       cursor = "${roles.text.inverse.hex} on ${roles.text.primary.hex}";

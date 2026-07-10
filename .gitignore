@@ -122,10 +122,18 @@ lerna-debug.log*
 .LSOverride
 Thumbs.db
 
-# --- [AI_TOOLING] -------------------------------------------------------------
+# --- [TRANSIENT_TREES] ---------------------------------------------------------
 
 .archive/
-.archive
+_archive/
+scratch/
+.scratch/
+_tmp/
+.tmp/
+.history/
+
+# --- [AI_TOOLING] -------------------------------------------------------------
+
 .claude/agent-memory-local/
 .claude/skills/**/.cache/
 .claude/settings.local.json
@@ -145,4 +153,3 @@ Thumbs.db
 *.cert
 *.crt
 credentials.json
-.claude/scratch/

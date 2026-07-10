@@ -17,7 +17,7 @@ export const meta = {
         { title: 'Review', detail: 'one reviewer per dimension' },
         { title: 'Verify', detail: 'try to refute each finding', model: 'sonnet' },
     ],
-}
+};
 
 // --- [CONSTANTS] -----------------------------------------------------------------------
 
@@ -25,7 +25,7 @@ const DIMENSIONS = [
     { key: 'bugs', prompt: 'Find logic bugs in the files changed on this branch vs main.' },
     { key: 'security', prompt: 'Find security issues in the files changed on this branch vs main.' },
     { key: 'tests', prompt: 'Find missing or weak test coverage in the changes on this branch.' },
-]
+];
 
 // --- [MODELS] --------------------------------------------------------------------------
 
@@ -49,7 +49,7 @@ const FINDINGS = {
             },
         },
     },
-}
+};
 
 const VERDICT = {
     type: 'object',
@@ -59,28 +59,33 @@ const VERDICT = {
         isReal: { type: 'boolean' },
         reason: { type: 'string' }, // the refutation when isReal is false; empty when confirmed
     },
-}
+};
 
 // --- [COMPOSITION] ---------------------------------------------------------------------
 
 const results = await pipeline(
     DIMENSIONS,
     // Stage 1 — review one dimension.
-    d => agent(d.prompt, { label: `review:${d.key}`, phase: 'Review', schema: FINDINGS }),
+    (d) => agent(d.prompt, { label: `review:${d.key}`, phase: 'Review', schema: FINDINGS }),
     // Stage 2 — verify every finding from that dimension, in parallel.
-    (review, d) => parallel(
-        (review?.findings ?? []).map(f => () =>
-            agent(
-                `Adversarially verify this finding. Try hard to refute it; if you cannot, it is real.\n` +
-                `Finding: ${f.title}\nFile: ${f.file}\nSeverity: ${f.severity}`,
-                { label: `verify:${d.key}:${f.file}`, phase: 'Verify', model: 'sonnet', effort: 'high', schema: VERDICT },
-            ).then(v => ({ ...f, dimension: d.key, verdict: v })),
+    (review, d) =>
+        parallel(
+            (review?.findings ?? []).map(
+                (f) => () =>
+                    agent(
+                        `Adversarially verify this finding. Try hard to refute it; if you cannot, it is real.\n` +
+                            `Finding: ${f.title}\nFile: ${f.file}\nSeverity: ${f.severity}`,
+                        { label: `verify:${d.key}:${f.file}`, phase: 'Verify', model: 'sonnet', effort: 'high', schema: VERDICT },
+                    ).then((v) => ({ ...f, dimension: d.key, verdict: v })),
+            ),
         ),
-    ),
-)
+);
 
 // pipeline() returns one array per dimension → flatten, drop null slots.
-const confirmed = results.flat().filter(Boolean).filter(f => f.verdict?.isReal)
-log(`${confirmed.length} confirmed findings`)
+const confirmed = results
+    .flat()
+    .filter(Boolean)
+    .filter((f) => f.verdict?.isReal);
+log(`${confirmed.length} confirmed findings`);
 
-return { confirmedCount: confirmed.length, confirmed }
+return { confirmedCount: confirmed.length, confirmed };

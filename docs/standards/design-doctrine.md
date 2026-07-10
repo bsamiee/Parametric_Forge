@@ -30,7 +30,7 @@ request.Switch(open: x => ledger.Open(x), amend: x => ledger.Amend(x), close: x 
 
 ## [04]-[STACKING]
 
-Admitted libraries, platform APIs, generated surfaces, and ecosystem algebras are first-class implementation material; local code composes at the deepest operator level the admitted owner provides.
+Admitted libraries, platform APIs, generated surfaces, and ecosystem algebras are first-class implementation material; local code composes at the deepest operator level the admitted owner reaches.
 
 - Rejected: Hand-rolled reimplementation, provider rename wrappers, helper shells, standard-library reflex where a richer admitted package owns the invariant, consumer-side reassembly of retry, telemetry, codec, validation, derivation, or storage behavior.
 - Accepted: Native combinators, generated dispatch, schema derivation, algebra instances, codecs, schedulers, and boundary APIs used directly; provider capability internalized behind the owning local surface only where that preserves provider depth and stops downstream rediscovery.

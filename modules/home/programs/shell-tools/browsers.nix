@@ -4,8 +4,7 @@
 # License       : MIT
 # Path          : modules/home/programs/shell-tools/browsers.nix
 # ----------------------------------------------------------------------------
-# Register rail owner: one row grammar projected to fzf browse commands,
-# Television durable channels, XDG register JSON, and zsh completions.
+# Register rail owner: one row grammar projected to fzf browse commands, Television durable channels, XDG register JSON, and zsh completions.
 # Previews are read-only evidence; every browse run emits one typed receipt.
 {
   config,
@@ -15,8 +14,7 @@
   ...
 }: let
   inherit (config.forge.theme) palette;
-  # Shared dual-receipt emit fold (receipts.nix) + the F01 attention
-  # vocabulary (attention.nix): urgency ladder, kv parser, spine, alert rows.
+  # Shared dual-receipt emit fold (receipts.nix) + the F01 attention vocabulary (attention.nix): urgency ladder, kv parser, spine, alert rows.
   receiptsFold = import ./receipts.nix;
   attention = import ./attention.nix {sshHosts = config.forge.ssh.hosts;};
   profileBin = "/etc/profiles/per-user/${config.home.username}/bin";
@@ -26,8 +24,7 @@
   };
 
   # --- [NAME_POLICY_ROWS]
-  # One repo/workroot identity per row — [source slug consumers previous?];
-  # display derives from slug; slug claims (current + retired `previous`,
+  # One repo/workroot identity per row — [source slug consumers previous?]; display derives from slug; slug claims (current + retired `previous`,
   # which keep receipt-partition history across renames) collide at eval.
   naming =
     map (t: {
@@ -48,10 +45,8 @@
   slugConflicts = lib.attrNames (lib.filterAttrs (_: c: c > 1) (lib.foldl' (acc: s: acc // {${s} = (acc.${s} or 0) + 1;}) {} slugClaims));
 
   # --- [RECEIPT_SOURCE_REGISTER]
-  # Declared receipt emitters at $HOME-relative paths that may not exist yet;
-  # tuple grammar "kind[|stem[|emitter]]" defaults stem=kind and
-  # emitter=forge-<stem>; grain is kv (TSV k=v) unless a literal row says
-  # json (JSONL). Query plane, audit verb, and push bus dispatch on the rows
+  # Declared receipt emitters at $HOME-relative paths that may not exist yet; tuple grammar "kind[|stem[|emitter]]" defaults stem=kind and
+  # emitter=forge-<stem>; grain is kv (TSV k=v) unless a literal row says json (JSONL). Query plane, audit verb, and push bus dispatch on the rows
   # — an unregistered emitter is invisible to all three; --audit flags it.
   osPath = darwin: linux:
     if host.os == "darwin"
@@ -78,8 +73,7 @@
           grain = "json";
         }
       ]
-      # Tunnel and mount rows derive from the ssh host registry: a new VPS or
-      # mount row appears here untouched; paths follow each supervisor's
+      # Tunnel and mount rows derive from the ssh host registry: a new VPS or mount row appears here untouched; paths follow each supervisor's
       # per-OS write target (launchd logs on Darwin, systemd state on Linux).
       ++ lib.mapAttrsToList (name: _: {
         kind = "tunnel-${name}";
@@ -98,9 +92,8 @@
         config.forge.ssh.hosts));
 
   # --- [REGISTER_JSON_PROJECTIONS]
-  # MCP rows sanitize at the seam — endpoint basename, key NAMES, pin, doctor
-  # family — never argv, token custody paths, or values; `sub` projects an
-  # optional sub-attrset onto its closed key family, null when absent.
+  # MCP rows sanitize at the seam — endpoint basename, key NAMES, pin, doctor family — never argv, token custody paths, or values; `sub` projects
+  # an optional sub-attrset onto its closed key family, null when absent.
   sub = keys: v:
     if v == null
     then null
@@ -127,8 +120,7 @@
   };
 
   # --- [BROWSE_CATALOG]
-  # One tuple per domain — [tsvProjection desc binds?]; label and json derive
-  # from the name; the receipts domain delegates to forge-receipts.
+  # One tuple per domain — [tsvProjection desc binds?]; label and json derive from the name; the receipts domain delegates to forge-receipts.
   catalogRows =
     lib.mapAttrs (d: t:
       {
@@ -152,8 +144,7 @@
     };
   catalogJson = pkgs.writeText "forge-browse-catalog.json" (builtins.toJSON catalogRows);
 
-  # Per-browser fzf projection: theme rides each generated command, never a
-  # global default (global fzf options stay theme-only in fzf.nix).
+  # Per-browser fzf projection: theme rides each generated command, never a global default (global fzf options stay theme-only in fzf.nix).
   fzfColorRows = [
     "--color=fg:${palette.foreground.hex},fg+:${palette.background.hex},bg:${palette.background.hex},bg+:${palette.cyan.hex},selected-fg:${palette.background.hex},selected-bg:${palette.cyan.hex}"
     "--color=hl:${palette.green.hex},hl+:${palette.magenta.hex},info:${palette.comment.hex},marker:${palette.green.hex}"
@@ -162,8 +153,7 @@
     "--color=preview-fg:${palette.foreground.hex},preview-scrollbar:${palette.pink.hex},label:${palette.magenta.hex},query:${palette.foreground.hex}"
   ];
   fzfBaseArgs = fzfColorRows ++ ["--border=sharp" "--layout=reverse" "--info=right" "--highlight-line" "--prompt=❯ " "--pointer=❯"];
-  # Bash array literal injected into each generated script; consumers expand
-  # "''${fzf_base[@]}" so every browser carries the theme per command.
+  # Bash array literal injected into each generated script; consumers expand "''${fzf_base[@]}" so every browser carries the theme per command.
   fzfArgsBash = "fzf_base=(\n${lib.concatMapStringsSep "\n" (a: "        ${lib.escapeShellArg a}") fzfBaseArgs}\n      )";
 
   # --- [RECEIPT_VERB_ROWS]

@@ -14,17 +14,17 @@
 
     # --- [ZELLIJ]
     ZELLIJ_CONFIG_DIR = "${config.xdg.configHome}/zellij";
-    ZELLIJ_AUTO_ATTACH = "false"; # Handled in WezTerm config for auto-loading Zellij
-    ZELLIJ_AUTO_EXIT = "false"; # Handled in WezTerm config for auto-loading Zellij
+    # WezTerm config owns Zellij auto-load; both flags stay false.
+    ZELLIJ_AUTO_ATTACH = "false";
+    ZELLIJ_AUTO_EXIT = "false";
     ZELLIJ_DEFAULT_LAYOUT = "default";
 
     # --- [YAZI]
     YAZI_CONFIG_HOME = "${config.xdg.configHome}/yazi";
 
     # --- [NEOVIM]
-    # Editor RPC rail uses native `nvim --listen`/`--server`; sockets live under
-    # the private runtime root (XDG runtime dir, else per-user TMPDIR) at
-    # forge-edit/<session>/ per the integration script registry.
+    # Editor RPC rail uses native `nvim --listen`/`--server`; sockets live under the private runtime root (XDG runtime dir, else per-user TMPDIR)
+    # at forge-edit/<session>/ per the integration script registry.
 
     # --- [SERPL]
     SERPL_CONFIG = "${config.xdg.configHome}/serpl";

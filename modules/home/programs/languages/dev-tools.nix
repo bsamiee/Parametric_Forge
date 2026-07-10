@@ -4,8 +4,7 @@
 # License       : MIT
 # Path          : modules/home/programs/languages/dev-tools.nix
 # ----------------------------------------------------------------------------
-# Language-agnostic tooling: linters, formatters, and helpers shared across
-# multiple ecosystems.
+# Language-agnostic tooling: linters, formatters, and helpers shared across multiple ecosystems.
 {
   config,
   lib,
@@ -14,10 +13,8 @@
 }: let
   manifest = import ../../../../overlays/manifest.nix;
   style = import ../../../style.nix;
-  # shfmt reads .editorconfig only when invoked without style flags; the
-  # wrapper injects the house style solely when the caller passes no style
-  # flag and no .editorconfig governs the working tree, so project law wins.
-  # Go's flag parser accepts -flag, --flag, and both =value forms alike.
+  # shfmt reads .editorconfig only when invoked without style flags; the wrapper injects the house style solely when the caller passes no style flag
+  # and no .editorconfig governs the working tree, so project law wins. Go's flag parser accepts -flag, --flag, and both =value forms alike.
   shfmt = pkgs.writeShellApplication {
     name = "shfmt";
     text = ''
@@ -37,10 +34,8 @@
     '';
   };
 
-  # taplo has no user-level lookup and TAPLO_CONFIG overrides project configs;
-  # the wrapper reaches the house config only when upward discovery finds no
-  # project taplo.toml and the caller passes neither flag nor env. -c* covers
-  # clap's attached and equals value forms.
+  # taplo has no user-level lookup and TAPLO_CONFIG overrides project configs; the wrapper reaches the house config only when upward discovery finds
+  # no project taplo.toml and the caller passes neither flag nor env. -c* covers clap's attached and equals value forms.
   taplo = pkgs.writeShellApplication {
     name = "taplo";
     text = ''
@@ -62,8 +57,8 @@
     pkgs.dotnet-sdk_9
     pkgs.dotnet-sdk_10
   ];
-  # roslyn-ls installs the binary as Microsoft.CodeAnalysis.LanguageServer and requires an
-  # explicit log directory; wrap it so consumers invoke `roslyn-language-server --stdio` directly.
+  # roslyn-ls installs the binary as Microsoft.CodeAnalysis.LanguageServer and requires an explicit log directory; wrap it so consumers invoke
+  # `roslyn-language-server --stdio` directly.
   roslyn-language-server = pkgs.writeShellScriptBin "roslyn-language-server" ''
     logdir="''${TMPDIR:-/tmp}/roslyn-ls"
     mkdir -p "$logdir"
@@ -90,9 +85,8 @@
   workspace-mcp-package = "workspace-mcp==${workspace-mcp-version}";
   workspace-mcp-tool-dir = "${config.xdg.dataHome}/uv/forge-tools";
   workspace-mcp-bin-dir = "${config.xdg.dataHome}/uv/forge-bin";
-  # One ensure body serves the wrapper and the activation hook. The tool list
-  # is captured, never piped into grep -q: an early-exit grep would SIGPIPE uv
-  # under pipefail and force a spurious reinstall on every launch.
+  # One ensure body serves the wrapper and the activation hook. The tool list is captured, never piped into grep -q: an early-exit grep would SIGPIPE
+  # uv under pipefail and force a spurious reinstall on every launch.
   workspace-mcp-ensure = ''
     export UV_TOOL_DIR="${workspace-mcp-tool-dir}"
     export UV_TOOL_BIN_DIR="${workspace-mcp-bin-dir}"
@@ -140,21 +134,17 @@
     '';
   };
 in {
-  # Machine-level fallback style for the YAML pair. yamlfmt walks the working
-  # tree upward for a project .yamlfmt before touching
-  # $XDG_CONFIG_HOME/yamlfmt/.yamlfmt; yamllint discovery rides
-  # YAMLLINT_CONFIG_FILE (environments/languages.nix) behind project-local
-  # .yamllint files, so project law always wins.
+  # Machine-level fallback style for the YAML pair. yamlfmt walks the working tree upward for a project .yamlfmt before touching
+  # $XDG_CONFIG_HOME/yamlfmt/.yamlfmt; yamllint discovery rides YAMLLINT_CONFIG_FILE (environments/languages.nix) behind project-local .yamllint
+  # files, so project law always wins.
   xdg.configFile = {
-    # shellcheck resolves rc files from the script's directory upward, then
-    # ~/.shellcheckrc, then this file; a project rc fully shadows it. Keep
+    # shellcheck resolves rc files from the script's directory upward, then ~/.shellcheckrc, then this file; a project rc fully shadows it. Keep
     # ~/.shellcheckrc absent — it would shadow this row.
     "shellcheckrc".text = ''
       external-sources=true
       enable=deprecate-which
     '';
-    # taplo has no user-level lookup and TAPLO_CONFIG overrides project
-    # configs; only the wrapper above may reference this file.
+    # taplo has no user-level lookup and TAPLO_CONFIG overrides project configs; only the wrapper above may reference this file.
     "taplo/taplo.toml".text = ''
       [formatting]
       indent_string = "${style.indentString}"
@@ -162,14 +152,12 @@ in {
       allowed_blank_lines = 2
       reorder_keys = false
     '';
-    # Projected from the style vocabulary (modules/style.nix); the treefmt
-    # row reads the same value, so every yamlfmt consumer shares one source.
+    # Projected from the style vocabulary (modules/style.nix); the treefmt row reads the same value, so every yamlfmt consumer shares one source.
     "yamlfmt/.yamlfmt".text = style.yamlfmt;
     "yamllint/config".text = ''
       extends: default
 
-      # yamlfmt owns shape: its sequence-item nesting is engine-fixed and no
-      # indentation rule can describe it, so the linter cedes that dimension.
+      # yamlfmt owns shape: its sequence-item nesting is engine-fixed and no indentation rule can describe it, so the linter cedes that dimension.
       rules:
         line-length:
           max: ${toString style.width}
@@ -180,6 +168,9 @@ in {
           check-keys: false
     '';
   };
+
+  # Machine editor law from the style vocabulary: nearest-first resolution means any repo-local .editorconfig fully outranks this fallback.
+  home.file.".editorconfig".text = style.editorconfig;
 
   home = {
     activation.ensureWorkspaceMcpTool = lib.hm.dag.entryAfter ["linkGeneration"] workspace-mcp-ensure;
@@ -235,8 +226,7 @@ in {
       # nuget-mcp packages the osx-arm64 RID only; Linux gains a RID row before this gate widens.
       ++ lib.optionals (pkgs.stdenv.hostPlatform.system == "aarch64-darwin") [nuget-mcp];
 
-    # DOTNET_ROOT required for Roslyn and other SDK-discovery tools.
-    # Re-evaluated on every rebuild — store path stays current.
+    # DOTNET_ROOT required for Roslyn and other SDK-discovery tools; re-evaluated on every rebuild, store path stays current.
     sessionVariables.DOTNET_ROOT = "${dotnet-combined}/share/dotnet";
   };
 }

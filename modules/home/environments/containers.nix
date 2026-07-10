@@ -4,9 +4,8 @@
 # License       : MIT
 # Path          : modules/home/environments/containers.nix
 # ----------------------------------------------------------------------------
-# Container runtime and OCI environment. services.colima + programs.docker-cli
-# own DOCKER_HOST/COLIMA_HOME/DOCKER_CONFIG on Darwin; Linux talks to the
-# system Docker socket unpointed with docker-cli owning config.json only.
+# Container runtime and OCI environment. services.colima + programs.docker-cli own DOCKER_HOST/COLIMA_HOME/DOCKER_CONFIG on Darwin; Linux talks
+# to the system Docker socket unpointed with docker-cli owning config.json only.
 {
   config,
   lib,
@@ -23,9 +22,8 @@
       exec /opt/homebrew/bin/container system start --enable-kernel-install
     '';
   };
-  # Apple Container startup config. `container system start` snapshots this
-  # into its app root and re-saves it, so the file must be a real writable
-  # file — a store symlink fails the save and aborts the start.
+  # Apple Container startup config. `container system start` snapshots this into its app root and re-saves it, so the file must be a real
+  # writable file — a store symlink fails the save and aborts the start.
   containerConfigToml = toml.generate "container-config.toml" {
     build = {
       rosetta = true;
@@ -39,19 +37,14 @@
     registry.domain = "docker.io";
   };
 in {
-  # Declarative Colima: store-owned profile, launchd lifecycle (RunAtLoad +
-  # restart-on-clean-exit), session env. colimaHomeDir stays on dataHome — the
-  # module default (configHome) would orphan the live VM. Intentional shutdown
-  # is `launchctl bootout` of the colima-default agent; a bare `colima stop`
-  # re-triggers start.
-  # The VM+engine teardown needs minutes; launchd's default 20s ExitTimeOut
-  # SIGKILLs the stop mid-flight and orphans the VM, so the window is widened
-  # to cover a full 8-container drain.
+  # Declarative Colima: store-owned profile, launchd lifecycle (RunAtLoad + restart-on-clean-exit), session env. colimaHomeDir stays on dataHome —
+  # the module default (configHome) would orphan the live VM. Intentional shutdown is `launchctl bootout` of the colima-default agent; a bare
+  # `colima stop` re-triggers start. The VM+engine teardown needs minutes; launchd's default 20s ExitTimeOut SIGKILLs the stop mid-flight and
+  # orphans the VM, so the window is widened to cover a full 8-container drain.
   launchd.agents.colima-default.config.ExitTimeOut = 300;
 
-  # Apple Container autostart: `system start` registers the apiserver and
-  # helpers under the com.apple.container. launchd prefix and returns — no
-  # keep-alive. Colima stays the DOCKER_HOST owner; this runtime is additive.
+  # Apple Container autostart: `system start` registers the apiserver and helpers under the com.apple.container. launchd prefix and returns —
+  # no keep-alive. Colima stays the DOCKER_HOST owner; this runtime is additive.
   launchd.agents.container-system = {
     enable = isDarwin;
     config = {
@@ -78,8 +71,7 @@ in {
         binfmt = true;
         mountType = "virtiofs";
         mountInotify = true;
-        # Explicit: the launchd-spawned start skips colima's implicit default
-        # mounts, leaving the guest without the home tree bind mounts resolve in.
+        # Explicit: the launchd-spawned start skips colima's implicit default mounts, leaving the guest without the home tree bind mounts resolve in.
         mounts = [
           {
             location = "~";
@@ -94,11 +86,9 @@ in {
     };
   };
 
-  # Owns DOCKER_CONFIG and config.json on both platforms. NO credsStore:
-  # docker-credential-osxkeychain is a Docker-Desktop binary absent here; empty
-  # inline auths are correct for Colima + public images. currentContext is
-  # injected by the colima module when the profile is active; docker context
-  # meta stays Colima-owned — a store-owned meta.json breaks context creation.
+  # Owns DOCKER_CONFIG and config.json on both platforms. NO credsStore: docker-credential-osxkeychain is a Docker-Desktop binary absent here;
+  # empty inline auths are correct for Colima + public images. currentContext is injected by the colima module when the profile is active;
+  # docker context meta stays Colima-owned — a store-owned meta.json breaks context creation.
   programs.docker-cli = {
     enable = true;
     configDir = "${config.xdg.configHome}/docker";
@@ -129,9 +119,8 @@ in {
     LAZYDOCKER_CONFIG_DIR = "${config.xdg.configHome}/lazydocker";
   };
 
-  # Forge owns the Apple Container config content; the file lands writable.
-  # A drifted app-root snapshot is cleared so the next start re-copies it.
-  # kernel/vminit/network/dns stay upstream-owned.
+  # Forge owns the Apple Container config content; the file lands writable. A drifted app-root snapshot is cleared so the next start re-copies
+  # it. kernel/vminit/network/dns stay upstream-owned.
   home.activation.appleContainerConfig = lib.mkIf isDarwin (lib.hm.dag.entryAfter ["writeBoundary"] ''
     run mkdir -p "${config.xdg.configHome}/container"
     run rm -f "${config.xdg.configHome}/container/config.toml"

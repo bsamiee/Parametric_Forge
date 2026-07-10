@@ -4,8 +4,7 @@
 # License       : MIT
 # Path          : modules/home/scripts/terminal.nix
 # ----------------------------------------------------------------------------
-# Yazi -> Zellij -> Neovim rail: popup dispatcher, RPC handoff, server owner.
-# Pane targeting is ID-based via list-panes JSON; never ordinal focus.
+# Yazi -> Zellij -> Neovim rail: popup dispatcher, RPC handoff, server owner. Pane targeting is ID-based via list-panes JSON; never ordinal focus.
 {
   config,
   lib,
@@ -13,29 +12,22 @@
   ...
 }: let
   yaziPkg = config.programs.yazi.package;
-  # HM-installed cross-module kernels (forge-zellij, forge-workspace) enter
-  # the harness through the per-user profile — the estate spelling for
-  # kernels owned by sibling modules.
+  # HM-installed cross-module kernels (forge-zellij, forge-workspace) reach the harness through the per-user profile — sibling-module owners.
   profileBin = "/etc/profiles/per-user/${config.home.username}/bin";
-  # Shared dual-receipt emit fold (shell-tools/receipts.nix): one grammar for
-  # every receipt-bearing kernel, TSV plus JSONL with identical keys.
+  # Shared dual-receipt emit fold: one grammar for every receipt-bearing kernel, TSV plus JSONL with identical keys.
   receiptsFold = import ../programs/shell-tools/receipts.nix;
-  # Chord-vocabulary owner projection: the harness injects the REAL dismiss
-  # chord, so its bytes derive from the same row that emits the zellij bind.
+  # Chord-vocabulary projection: the injected dismiss chord's bytes derive from the same row that emits the zellij bind.
   yaziToggle = config.forge.chords.zellij.ids.yaziToggle;
   # Geometry-owner projection: popup flags render from the zellij option rows.
   yaziPopup = config.programs.zellij.popupGeometry.yazi;
   yaziPopupArgs = lib.escapeShellArgs ["-x" yaziPopup.x "-y" yaziPopup.y "--width" yaziPopup.width "--height" yaziPopup.height];
 
-  # One popup-identity vocabulary: production dispatch, caller dismissal, and
-  # the acceptance harness all match this exact jq row predicate, so the
-  # harness can never assert an identity production stopped matching.
-  # terminal_command is the spawn command (invoked_with), so exec inside the
-  # pane never breaks rediscovery.
+  # One popup-identity vocabulary: production dispatch, caller dismissal, and the acceptance harness all match this exact jq row predicate, so the
+  # harness can never assert an identity production stopped matching. terminal_command is the spawn command (invoked_with), so exec inside the pane
+  # never breaks rediscovery.
   yaziPopupIdentity = ''(.is_plugin | not) and (.exited | not) and ((.is_floating // false) or (.is_suppressed // false)) and ((.title // "") == " [YAZI] ") and ((.terminal_command // .command // "") == "forge-yazi.sh")'';
 
-  # One truthy-snapshot kernel: list-panes flaps transiently against a busy
-  # session; every reader retries to a non-empty array so a flap never
+  # One truthy-snapshot kernel: list-panes flaps transiently against a busy session; every reader retries to a non-empty array so a flap never
   # misreads the session as pane-free.
   panesSnapshotSh = listCmd: ''
     panes="[]"
@@ -49,15 +41,12 @@
     done
   '';
 
-  # One DDS client-id derivation: (session, pane_id) -> deterministic 6-digit
-  # id; the popup body, the dispatcher, and the acceptance harness all pipe
+  # One DDS client-id derivation: (session, pane_id) -> deterministic 6-digit id; the popup body, dispatcher, and acceptance harness all pipe
   # `printf '%s:%s' session pane` through this exact projection.
   cidPipeline = ''cksum | gawk '{ print ($1 % 899999) + 100000 }' '';
 
-  # One runtime-root derivation for every rail script and the harness: RPC
-  # sockets, the dispatch lock, surfaced markers, and DDS state live in a
-  # per-user private namespace (XDG runtime dir on Linux, per-user $TMPDIR on
-  # darwin), never predictable world-writable /tmp; the go-rwx clamp fails
+  # One runtime-root derivation for every rail script and the harness: RPC sockets, the dispatch lock, surfaced markers, and DDS state live in a
+  # per-user private namespace (XDG runtime dir on Linux, per-user $TMPDIR on darwin), never predictable world-writable /tmp; the go-rwx clamp fails
   # closed if a squatter pre-owns the bare-/tmp fallback.
   runtimeBaseSh = ''
     runtime_base="''${XDG_RUNTIME_DIR:-''${TMPDIR:-/tmp}}/forge-edit"
@@ -65,8 +54,7 @@
     chmod go-rwx "$runtime_base"
   '';
 
-  # Registry contract: one editor per tab, "<tab_id>\t<pane_id>\t<socket>" under
-  # ${XDG_RUNTIME_DIR:-/tmp}/forge-edit/<session>/editor-tab-<tab_id>.tsv
+  # Registry contract: one editor per tab, "<tab_id>\t<pane_id>\t<socket>" under ${XDG_RUNTIME_DIR:-/tmp}/forge-edit/<session>/editor-tab-<tab_id>.tsv
   forgeNvim = pkgs.writeShellApplication {
     name = "forge-nvim.sh";
     runtimeInputs = [pkgs.neovim pkgs.zellij pkgs.jq pkgs.coreutils];
@@ -82,8 +70,7 @@
       runtime_root="$runtime_base/''${session}"
       mkdir -p "$runtime_root"
 
-      # Tab resolution can lag pane creation at layout startup; retry briefly
-      # and skip registry publication rather than poisoning a tab-0 entry.
+      # Tab resolution can lag pane creation at layout startup; retry briefly and skip registry publication rather than poisoning a tab-0 entry.
       tab_id=""
       for _ in {1..10}; do
         tab_id="$(zellij action list-panes --all --json 2>/dev/null \
@@ -99,8 +86,7 @@
       socket="''${runtime_root}/pane-''${pane_id}.sock"
       rm -f "$socket"
       if [[ -n "$tab_id" ]]; then
-        # Rename-atomic publication: forge-edit reads this row concurrently,
-        # so a direct write would expose a torn registry line.
+        # Rename-atomic publication: forge-edit reads this row concurrently, so a direct write would expose a torn registry line.
         registry="''${runtime_root}/editor-tab-''${tab_id}.tsv"
         printf '%s\t%s\t%s\n' "$tab_id" "$pane_id" "$socket" >"''${registry}.$$"
         mv -f "''${registry}.$$" "$registry"
@@ -125,8 +111,7 @@
       caller="''${ZELLIJ_PANE_ID:-}"
       ${runtimeBaseSh}
       runtime_root="$runtime_base/''${session}"
-      # RPC handoff resolves paths against the server's cwd, and a fresh editor
-      # pane opens at $PWD; pin caller-relative arguments to absolute so both
+      # RPC handoff resolves paths against the server's cwd, and a fresh editor pane opens at $PWD; pin caller-relative arguments to absolute so both
       # branches open the caller's files.
       mapfile -d "" -t args < <(realpath -zm -- "$@")
       set -- "''${args[@]}"
@@ -143,10 +128,8 @@
         IFS=$'\t' read -r _ editor_pane socket <"$registry" || true
       fi
 
-      # Registry hit counts only if the recorded pane still lives in this tab
-      # AND the socket answers AND the remote open succeeds; any miss or race
-      # falls through to a fresh editor pane. The RPC probe retries briefly:
-      # a plugin-busy nvim misses one poll without being dead.
+      # Registry hit counts only if the recorded pane still lives in this tab AND the socket answers AND the remote open succeeds; any miss or race
+      # falls through to a fresh editor pane. The RPC probe retries briefly: a plugin-busy nvim misses one poll without being dead.
       handed_off="false"
       if [[ -n "$editor_pane" && -n "$socket" && -S "$socket" ]]; then
         pane_alive="$(jq -r --arg id "$editor_pane" --argjson tab "$tab_id" \
@@ -171,16 +154,13 @@
         editor_pane="$(zellij action new-pane --name " [EDITOR] " --cwd "$PWD" -- forge-nvim.sh "$@")"
       fi
 
-      # Focusing the tiled editor lowers the floating layer without touching
-      # other floating panes.
+      # Focusing the tiled editor lowers the floating layer without touching other floating panes.
       if [[ -n "$editor_pane" ]]; then
         zellij action focus-pane-id "terminal_''${editor_pane#terminal_}" >/dev/null 2>&1 || true
       fi
 
-      # Pane-scoped dismissal: close only the Forge popup we ran inside; this
-      # kills our own process tree, so it must stay the final statement.
-      # Shared identity vocabulary; a yazi launched WITH args
-      # ("forge-yazi.sh <dir>") is never the popup.
+      # Pane-scoped dismissal: close only the Forge popup this ran inside, killing its own process tree, so it must stay the final statement. Shared
+      # identity vocabulary; a yazi launched WITH args ("forge-yazi.sh <dir>") is never the popup.
       caller_is_popup="$(jq -r '${yaziPopupIdentity}' <<<"$caller_row")"
       if [[ "$caller_is_popup" == "true" ]]; then
         zellij action close-pane --pane-id "terminal_''${caller}" >/dev/null 2>&1 || true
@@ -195,11 +175,9 @@
       # Polymorphic entry — one command owns every popup modality:
       #   (no args)          popup body: yazi + DDS bridge (client-id, local-events)
       #   toggle             per-tab popup dispatch (create / show+focus / hide)
-      #   reveal|cd <path>   semantic DDS action against the tab popup (ya emit-to),
-      #                      creating the popup when absent — never key simulation
+      #   reveal|cd <path>   semantic DDS action on the tab popup via ya emit-to, creating the popup when absent — never key simulation
       #   <entries...>       plain yazi with the Forge editor handoff
-      # DDS client ids derive deterministically from (session, pane_id) so the
-      # dispatcher recomputes the popup's id without a registry.
+      # DDS client ids derive deterministically from (session, pane_id), so the dispatcher recomputes the popup's id without a registry.
       session="''${ZELLIJ_SESSION_NAME:-default}"
       ${runtimeBaseSh}
       runtime_root="$runtime_base/''${session}"
@@ -209,12 +187,9 @@
       }
 
       if [[ $# -eq 0 && -n "''${ZELLIJ:-}" ]]; then
-        # Popup body: pin the DDS client id and bridge local events. Events
-        # stream as `kind,receiver,sender,{json}`; cd lands in a compact state
-        # cache AND the event log, hover only in the cache (render-hot path
-        # reads caches, never the stream). TUI renders on the pty untouched.
-        # State writes truncate in place — rename-atomicity would fork per
-        # hover event — so cache readers poll with jq -e and retry torn JSON.
+        # Popup body: pin the DDS client id and bridge local events. Events stream as `kind,receiver,sender,{json}`; cd lands in a compact state
+        # cache AND the event log, hover only in the cache (render-hot path reads caches, never the stream). TUI renders on the pty untouched. State
+        # writes truncate in place — rename-atomicity would fork per hover event — so cache readers poll with jq -e and retry torn JSON.
         pane_id="''${ZELLIJ_PANE_ID:-0}"
         cid="$(cid_of "$pane_id")"
         EDITOR="forge-edit.sh" exec yazi "$PWD" \
@@ -255,9 +230,8 @@
       target=""
       if [[ "$verb" != "toggle" ]]; then
         target="''${2:?forge-yazi.sh $verb needs a path}"
-        # emit-to resolves paths against the popup's cwd, never the caller's,
-        # and the cd action only accepts a directory — normalize both here so
-        # the create and live-popup branches see one canonical target.
+        # emit-to resolves paths against the popup's cwd, never the caller's, and the cd action only accepts a directory — normalize both here so the
+        # create and live-popup branches see one canonical target.
         target="$(realpath -m -- "$target")"
         if [[ "$verb" == "cd" && ! -d "$target" ]]; then
           target="$(dirname "$target")"
@@ -265,9 +239,8 @@
       fi
 
       self="''${ZELLIJ_PANE_ID:-}"
-      # Serialize concurrent dispatchers (double-chord): one session-scoped
-      # lock spans snapshot-to-act, so racing toggles never both read a
-      # popup-free tab and create duplicate popups.
+      # Serialize concurrent dispatchers (double-chord): one session-scoped lock spans snapshot-to-act, so racing toggles never both read a popup-free
+      # tab and create duplicate popups.
       exec {lock_fd}>"$runtime_root/toggle.lock"
       flock -w 5 "$lock_fd" || {
         printf 'forge-yazi.sh: another toggle holds the dispatch lock\n' >&2
@@ -276,21 +249,17 @@
       ${panesSnapshotSh "zellij action list-panes --all --json"}
       tab_id="$(jq -r --arg self "$self" \
         '[.[] | select((.is_plugin | not) and ((.id | tostring) == $self))][0].tab_id // 0' <<<"$panes")"
-      # Shared identity vocabulary scoped to this tab, excluding self.
-      # Dispatchers ("forge-yazi.sh toggle") and yazi-with-args rows never
-      # match; hidden floating popups keep is_floating, so identity holds
-      # through the hide cycle.
+      # Shared identity vocabulary scoped to this tab, excluding self. Dispatchers ("forge-yazi.sh toggle") and yazi-with-args rows never match;
+      # hidden floating popups keep is_floating, so identity holds through the hide cycle.
       popup_row="$(jq -c --arg self "$self" --argjson tab "$tab_id" \
         '[.[] | select(${yaziPopupIdentity}
           and (.tab_id == $tab) and ((.id | tostring) != $self))][0] // {}' <<<"$panes")"
       popup="$(jq -r '.id // empty' <<<"$popup_row")"
 
-      # Per-tab surfaced marker: the dispatcher's own floating spawn surfaces
-      # the layer, so live layer state cannot discriminate show from hide.
-      # An out-of-band layer toggle desyncs it by at most one keypress.
+      # Per-tab surfaced marker: the dispatcher's own floating spawn surfaces the layer, so live layer state cannot discriminate show from hide. An
+      # out-of-band layer toggle desyncs it by at most one keypress.
       marker="$runtime_root/surfaced-tab-''${tab_id}"
-      # Floating, never in_place: an attached client (zellij 0.44.3) strands
-      # exited in-place panes and their suppressed hosts.
+      # Floating, never in_place: an attached client (zellij 0.44.3) strands exited in-place panes and their suppressed hosts.
       spawn_popup() { # $1 = cwd for the new popup
         created="$(zellij action new-pane --floating --pinned true \
           ${yaziPopupArgs} \
@@ -299,14 +268,12 @@
         : >"$marker"
       }
       surface_popup() {
-        # Best-effort focus: the popup can exit between snapshot and focus;
-        # the marker stays authoritative and self-heals within one chord.
+        # Best-effort focus: the popup can exit between snapshot and focus; the marker stays authoritative and self-heals within one chord.
         zellij action focus-pane-id "terminal_''${popup}" >/dev/null 2>&1 || true
         : >"$marker"
       }
       emit_popup() { # $1 = client id, $2 = action, $3 = path
-        # A popup's DDS endpoint binds after its pane appears; retry until it
-        # answers instead of failing on the startup race.
+        # A popup's DDS endpoint binds after its pane appears; retry until it answers instead of failing on the startup race.
         for _ in {1..10}; do
           if ya emit-to "$1" "$2" "$3" 2>/dev/null; then
             return 0
@@ -321,8 +288,7 @@
           if [[ -z "$popup" ]]; then
             spawn_popup "$PWD"
           elif [[ -e "$marker" ]]; then
-            # Chord means hide: lower the layer, keep the popup and its yazi
-            # state alive for the next surface.
+            # Chord means hide: lower the layer, keep the popup and its yazi state alive for the next surface.
             zellij action hide-floating-panes >/dev/null 2>&1 || true
             rm -f "$marker"
           else
@@ -331,9 +297,8 @@
           fi
           ;;
         reveal | cd)
-          # Semantic DDS action: retarget the popup through ya emit-to
-          # (keymap-equivalent action grammar), creating it when absent. A
-          # fresh popup needs no emit for cd — it opens at the target.
+          # Semantic DDS action: retarget the popup through ya emit-to (keymap-equivalent action grammar), creating it when absent. A fresh popup
+          # needs no emit for cd — it opens at the target.
           if [[ -z "$popup" ]]; then
             dir="$target"
             [[ "$verb" == "reveal" || ! -d "$target" ]] && dir="$(dirname "$target")"
@@ -353,20 +318,15 @@
     '';
   };
 
-  # Runtime acceptance harness: drives the popup/edit rail in a disposable
-  # detached session against the live generated config and asserts invariants
-  # from list-panes/list-tabs JSON. Focus is server state — is_focused rides
-  # the panes snapshot and focus-pane-id mutates it detached — so the focus
-  # leg runs everywhere. Only the dismiss chord needs an attached client:
-  # send-keys/write on 0.44.3 are pane-pty writes (dump-screen proof), never
-  # keybind-engine input, so that one leg DEFERs without a client and the
-  # residual surfaces as a receipt row either way.
+  # Runtime acceptance harness: drives the popup/edit rail in a disposable detached session against the live generated config and asserts invariants
+  # from list-panes/list-tabs JSON. Focus is server state — is_focused rides the panes snapshot and focus-pane-id mutates it detached — so the focus
+  # leg runs everywhere. Only the dismiss chord needs an attached client: send-keys/write on 0.44.3 are pane-pty writes (dump-screen proof), never
+  # keybind-engine input, so that one leg DEFERs without a client and the residual surfaces as a receipt row either way.
   forgeTerminalAccept = pkgs.writeShellApplication {
     name = "forge-terminal-accept.sh";
     runtimeInputs = [yaziPkg pkgs.zellij pkgs.jq pkgs.neovim pkgs.coreutils pkgs.findutils pkgs.gawk forgeNvim forgeEdit forgeYazi];
     text = ''
-      # Usage: forge-terminal-accept.sh [--session <name>] [--keep]
-      # JSON receipt on stdout, human rows on stderr; exit 1 on any FAIL.
+      # Usage: forge-terminal-accept.sh [--session <name>] [--keep]; JSON receipt on stdout, human rows on stderr; exit 1 on any FAIL.
       unset ZELLIJ ZELLIJ_SESSION_NAME ZELLIJ_PANE_ID
 
       session=""
@@ -378,9 +338,8 @@
           *) printf 'unknown flag: %s\n' "$1" >&2; exit 2 ;;
         esac
       done
-      # Owned probe names stay short: the zellij IPC socket path rides
-      # $TMPDIR/zellij-<uid>/contract_version_N/<session> under a 103-byte
-      # sun_path cap, and the darwin $TMPDIR alone spends ~79 of it.
+      # Owned probe names stay short: the zellij IPC socket path rides $TMPDIR/zellij-<uid>/contract_version_N/<session> under a 103-byte sun_path
+      # cap, and the darwin $TMPDIR alone spends ~79 of it.
       owned="false"
       if [[ -z "$session" ]]; then
         session="fa-$$-$((SRANDOM % 10000))"
@@ -426,15 +385,13 @@
       trap cleanup EXIT
 
       if [[ "$owned" == "true" ]]; then
-        # A dead probe session fails every row with misleading detail; make
-        # the bootstrap fault (socket path, server refusal) the one loud exit.
+        # A dead probe session fails every row with misleading detail; make the bootstrap fault (socket path, server refusal) the one loud exit.
         if ! err="$(zellij attach --create-background "$session" 2>&1 >/dev/null)"; then
           printf 'forge-terminal-accept.sh: probe session %s failed to start: %s\n' "$session" "$err" >&2
           exit 1
         fi
       else
-        # Reused probe session: reset rail state so invariants start from zero.
-        # Streaming boundary: close each stale rail pane as its id arrives.
+        # Reused probe session: reset rail state so invariants start from zero. Streaming boundary: close each stale rail pane as its id arrives.
         while IFS= read -r id; do
           if [[ -n "$id" ]]; then
             zj close-pane --pane-id "terminal_''${id}" >/dev/null 2>&1 || true
@@ -483,8 +440,7 @@
         row R03-popup-single FAIL "popup count $(panes | jq -r "$popup_pred | length") after repeat toggle"
       fi
 
-      # R12/R13: DDS spine — ya rides version-matched in the closure; emit-to
-      # retargets the popup by its derived client id and the cd state cache
+      # R12/R13: DDS spine — ya rides version-matched in the closure; emit-to retargets the popup by its derived client id and the cd state cache
       # materializes (the bridge's compact-state contract).
       yazi_ver="$(yazi --version | awk '{print $2}')"
       ya_ver="$(ya --version | awk '{print $2}')"
@@ -522,8 +478,7 @@
         row R13-dds-bridge DEFER "no live popup for the DDS probe"
       fi
 
-      # R14: opener-seam config truth — the deployed yazi config must wire the
-      # Forge editor opener and the zoxide picker; a rename on either edge is
+      # R14: opener-seam config truth — the deployed yazi config must wire the Forge editor opener and the zoxide picker; a rename on either edge is
       # the four-file-edit trap this harness exists to catch.
       yazi_conf="''${XDG_CONFIG_HOME:-$HOME/.config}/yazi"
       if grep -q 'forge-edit\.sh %s' "$yazi_conf/yazi.toml" 2>/dev/null \
@@ -533,9 +488,8 @@
         row R14-opener-seam FAIL "opener/picker rows missing under $yazi_conf"
       fi
 
-      # R15: session-fabric state envelope — forge-zellij state emits schema
-      # v2 with classified session rows (the resurrection-receipts join), and
-      # the probe session classifies live.
+      # R15: session-fabric state envelope — forge-zellij state emits schema v2 with classified session rows (the resurrection-receipts join), and the
+      # probe session classifies live.
       state_json="$(${profileBin}/forge-zellij state 2>/dev/null || true)"
       if jq -e --arg s "$session" '
           (.schema == "forge-zellij-state/v2")
@@ -556,9 +510,8 @@
         row R16-workspace-lifecycle FAIL "rows: $(jq -c 'map({name, lifecycle}) | .[:6]' <<<"$ws_json" 2>/dev/null || printf 'unparseable')"
       fi
 
-      # R04-R08: edit rail — spawn, registry, socket, reuse, multi-file.
-      # Canonicalized so bufname comparisons match forge-edit's realpath pin
-      # (macOS /var and /tmp are /private symlinks).
+      # R04-R08: edit rail — spawn, registry, socket, reuse, multi-file. Canonicalized so bufname comparisons match forge-edit's realpath pin (macOS
+      # /var and /tmp are /private symlinks).
       probe_dir="$(realpath -- "$(mktemp -d "''${TMPDIR:-/tmp}/forge-accept.XXXXXX")")"
       printf 'alpha\n' >"$probe_dir/a.txt"
       printf 'beta\n' >"$probe_dir/b.txt"
@@ -639,23 +592,17 @@
         row R08-editor-multifile FAIL "editors=$(panes | jq -r "$editor_pred | length") buflisted=$buflisted"
       fi
 
-      # R09: the one adjudicated runtime residual. The dismiss gesture is a
-      # marker-gated HIDE on the real keybind path: the popup persists with
-      # its yazi state and the floating dispatcher reaps itself. The chord
-      # must enter as client input — zellij 0.44.3 has no zero-client route
-      # (send-keys/write land in the pane pty) — so R09 needs the chord
-      # injected through an attached wezterm pty
-      # (FORGE_ACCEPT_WEZTERM_SOCK + FORGE_ACCEPT_WEZTERM_PANE).
-      # Default chord bytes are the kitty CSI-u projection of the chord
-      # owner's yaziToggle row; the env override still accepts %b escapes.
+      # R09: the adjudicated runtime residual. The dismiss gesture is a marker-gated HIDE on the real keybind path: the popup persists with its yazi
+      # state and the floating dispatcher reaps itself. The chord must enter as client input — zellij 0.44.3 has no zero-client route
+      # (send-keys/write land in the pane pty) — so the chord is injected through an attached wezterm pty (FORGE_ACCEPT_WEZTERM_SOCK +
+      # FORGE_ACCEPT_WEZTERM_PANE). Default bytes are the kitty CSI-u projection of the chord owner's yaziToggle row; env override takes %b escapes.
       dismiss_chord="''${FORGE_ACCEPT_DISMISS_CHORD:-$(printf '\x1b[%d;%du' "$(printf '%d' "'${yaziToggle.key}")" ${toString yaziToggle.mods})}"
       wezterm_bin="''${FORGE_ACCEPT_WEZTERM_BIN:-/Applications/WezTerm.app/Contents/MacOS/wezterm}"
       dispatcher_pred='[.[] | select((.exited | not) and ((.terminal_command // .command // "") == "forge-yazi.sh toggle"))]'
       popup_id="$(panes | jq -r "$popup_pred | .[0].id // empty")"
       if [[ "$attached" == "true" && -n "$popup_id" && -n "''${FORGE_ACCEPT_WEZTERM_SOCK:-}" \
         && -n "''${FORGE_ACCEPT_WEZTERM_PANE:-}" && -x "$wezterm_bin" ]]; then
-        # Surface + focus through the real dispatcher so the marker records
-        # pre-chord visibility; the chord then means hide.
+        # Surface + focus through the real dispatcher so the marker records pre-chord visibility; the chord then means hide.
         zj new-pane --floating -c -- forge-yazi.sh toggle >/dev/null 2>&1 || true
         sleep 1.5
         printf '%b' "$dismiss_chord" | WEZTERM_UNIX_SOCKET="$FORGE_ACCEPT_WEZTERM_SOCK" \
@@ -677,9 +624,8 @@
         row R09-dismiss-hide DEFER "chord needs client input (send-keys is a pane-pty write); set FORGE_ACCEPT_WEZTERM_SOCK/_PANE on an attached probe"
       fi
 
-      # R10: create-branch focus retention — the fresh popup must hold focus
-      # after the floating dispatcher reaps itself. is_focused is server
-      # state in the panes snapshot, so this leg runs attached or detached.
+      # R10: create-branch focus retention — the fresh popup must hold focus after the floating dispatcher reaps itself. is_focused is server state in
+      # the panes snapshot, so this leg runs attached or detached.
       popup_id="$(panes | jq -r "$popup_pred | .[0].id // empty")"
       if [[ -n "$popup_id" ]]; then
         zj close-pane --pane-id "terminal_''${popup_id}" >/dev/null 2>&1 || true
@@ -711,8 +657,7 @@
             .[$r.status | ascii_downcase] += 1))}')"
       printf '%s\n' "$receipt"
 
-      # Dual receipts through the shared fold: one TSV row plus a JSONL
-      # sibling with identical envelope keys, numerics as numbers.
+      # Dual receipts through the shared fold: one TSV row plus a JSONL sibling with identical envelope keys, numerics as numbers.
       receipt_log="''${FORGE_TERMINAL_ACCEPT_RECEIPT_LOG:-$HOME/Library/Logs/forge-terminal-accept.receipts.log}"
       receipt_surface="forge-terminal-accept"
       ${receiptsFold}

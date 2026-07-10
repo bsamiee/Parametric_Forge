@@ -4,11 +4,12 @@
 # License       : MIT
 # Path          : modules/home/scripts/fmt.nix
 # ----------------------------------------------------------------------------
-# fmt: polymorphic formatter front door — one command routes every file type
-# to its owning formatter. Formatters resolve from PATH so the Home Manager
-# fallback wrappers keep their never-shadow project-config semantics; those
-# wrappers probe $PWD, so run fmt from inside the project the targets live in.
+# fmt: polymorphic formatter front door — one command routes every file type to its owning formatter. Formatters resolve from PATH so the Home
+# Manager fallback wrappers keep their never-shadow project-config semantics; those wrappers probe $PWD, so run
+# fmt from inside the project the targets live in.
 {pkgs, ...}: let
+  style = import ../../style.nix;
+  fdExcludes = builtins.concatStringsSep " " (map (d: "--exclude " + d) style.transientDirs);
   fmt = pkgs.writeShellApplication {
     name = "fmt";
     runtimeInputs = [pkgs.coreutils pkgs.fd pkgs.gawk pkgs.jq];
@@ -16,16 +17,15 @@
       shopt -s inherit_errexit
 
       # --- [LANE_VOCABULARY]
-      # One row per lane — 'tool|write argv|check argv'; subscripts quoted
-      # (shfmt parses bare hyphenated subscripts as arithmetic).
+      # One row per lane — 'tool|write argv|check argv'; subscripts quoted (shfmt parses bare hyphenated subscripts as arithmetic).
       declare -Ar _LANE=(
         ["nix"]='alejandra|alejandra -q --|alejandra -c --'
         ["shell"]='shfmt|shfmt -w|shfmt -d'
         ["python"]='ruff|ruff format --|ruff format --check --'
         ["web"]='biome|biome format --write|biome format'
         ["prose"]='prettier|prettier --log-level warn --write|prettier --log-level warn --check'
+        ["workflow"]='prettier|prettier --log-level warn --write|prettier --log-level warn --check'
         ["yaml"]='yamlfmt|yamlfmt|yamlfmt -lint'
-        ["toml"]='taplo|taplo fmt|taplo fmt --check'
         ["lua"]='stylua|stylua --|stylua --check --'
         ["sql"]='sqruff|sqruff fix|sqruff lint'
         ["sql-duckdb"]='sqruff|sqruff fix|sqruff lint'
@@ -47,7 +47,6 @@
         ["json"]=web ["jsonc"]=web ["css"]=web
         ["md"]=prose ["markdown"]=prose ["html"]=prose
         ["yml"]=yaml ["yaml"]=yaml
-        ["toml"]=toml
         ["lua"]=lua
         ["sql"]=sql
         ["swift"]=swift
@@ -63,11 +62,9 @@
       readonly _SHEBANG_SHELL='^#!.*[/[:space:]](env[[:space:]]+)?(ba|da|mk)?sh([[:space:]]|$)'
       readonly _SHEBANG_PYTHON='^#!.*[/[:space:]](env[[:space:]]+(-S[[:space:]]+)?)?python[0-9.]*([[:space:]]|$)'
 
-      # jq has no safe formatter (jqfmt drops top-level defs); the compile
-      # gate is the whole static surface: empty stdin, body never runs, so
-      # the gate cannot hang and needs no deadline. Programs written for
-      # `jq --arg` reference variables that are compile errors when unbound,
-      # so every referenced $var is pre-defined before the compile.
+      # jq has no safe formatter (jqfmt drops top-level defs); the compile gate is the whole static surface: empty stdin, body never runs, so the
+      # gate cannot hang and needs no deadline. Programs written for `jq --arg` reference variables that are compile errors when unbound, so every
+      # referenced $var is pre-defined before the compile.
       # shellcheck disable=SC2329  # invoked through the lane dispatch tables
       _gate_jq() {
         local -i bad=0
@@ -96,13 +93,10 @@
         exit 2
       }
 
-      # Pure classification: deny rows first, then the extension row; unowned
-      # readable files fall through to a bounded shebang probe. A dotfile's
-      # whole name is not an extension; a bare trailing dot owns nothing.
-      # SQL dialect is a filename fact (estate law): duckdb-* rides its own
-      # lane so batches stay dialect-homogeneous for the sqruff wrapper;
-      # sqlite-* is unowned — sqruff's sqlite dialect rewrites virtual-table
-      # module arguments (float[2] -> float [2]), which extensions parse verbatim.
+      # Pure classification: deny rows first, then the extension row; unowned readable files fall through to a bounded shebang probe. A dotfile's
+      # whole name is not an extension; a bare trailing dot owns nothing. SQL dialect is a filename fact (estate law): duckdb-* rides its own lane
+      # so batches stay dialect-homogeneous for the sqruff wrapper; sqlite-* is unowned — sqruff's sqlite dialect rewrites virtual-table module
+      # arguments (float[2] -> float [2]), which extensions parse verbatim.
       _lane_for() {
         local -r path="$1"
         local -n _out="$2"
@@ -116,6 +110,12 @@
           case "''${base,,}" in
             sqlite-*) _out="" ;;
             duckdb-*) _out=sql-duckdb ;;
+          esac
+        fi
+        # Workflow-DSL scripts (top-level await/return) reroute to the prettier lane: biome's grammar rejects them, prettier's babel parser does not.
+        if [[ "$_out" == web ]]; then
+          case "/$path" in
+            */.claude/workflows/*.js | */workflow-creator/assets/*.js) _out=workflow ;;
           esac
         fi
         if [[ -z "$_out" && -f "$path" && -r "$path" ]]; then
@@ -140,8 +140,7 @@
             return 1
           }
         done
-        # Every row carries three non-empty fields; the PATH probe reads the
-        # check field's head token for both modes, so the heads must agree.
+        # Every row carries three non-empty fields; the PATH probe reads the check field's head token for both modes, so the heads must agree.
         for lane in "''${!_LANE[@]}"; do
           _lane_row "$lane" lrow
           [[ ''${#lrow[@]} -eq 3 && -n "''${lrow[0]}" && -n "''${lrow[1]}" && -n "''${lrow[2]}" ]] || {
@@ -169,6 +168,9 @@
           ["obj/packages.lock.json"]=""
           ["sql/apply-postgres.sql"]=sql ["sql/duckdb-probe.sql"]=sql-duckdb
           ["sql/SQLite-probe.sql"]="" ["sql/duck.sql"]=sql
+          [".claude/workflows/estate.js"]=workflow
+          ["repo/.claude/skills/workflow-creator/assets/templates/loop.template.js"]=workflow
+          [".claude/skills/applescript/assets/examples/probe.js"]=web
         )
         local path got
         for path in "''${!probes[@]}"; do
@@ -221,12 +223,10 @@
       # --- [COLLECTION_EXPLICIT_FILES_AS_GIVEN_DIRECTORIES_VIA_FD]
       tmp="$(mktemp -d)"
       trap 'rm -rf "$tmp"' EXIT
-      # Abort rail: async lanes inherit SIGINT-ignored, so Ctrl-C or TERM on the
-      # parent would orphan running formatters. Each lane records its spawned
-      # tool pid — timeout setpgids itself away, so only a direct TERM reaches
-      # it, and it forwards the TERM to its child group before exiting. A
-      # formatter that ignores TERM holds _abort in wait — the traps are already
-      # cleared, so a second Ctrl-C kills the shell and the EXIT trap still runs.
+      # Abort rail: async lanes inherit SIGINT-ignored, so Ctrl-C or TERM on the parent would orphan running formatters. Each lane records its
+      # spawned tool pid — timeout setpgids itself away, so only a direct TERM reaches it, and it forwards the TERM to its child group before
+      # exiting. A formatter that ignores TERM holds _abort in wait — the traps are already cleared, so a second Ctrl-C
+      # kills the shell and the EXIT trap still runs.
       declare -A lane_pid=() lane_rc=() lane_state=()
       # shellcheck disable=SC2329  # invoked through the INT/TERM trap
       _abort() {
@@ -264,14 +264,14 @@
         if [[ -f "$target" ]]; then
           _assign "$target"
         elif [[ -d "$target" ]]; then
-          # Streaming boundary: fd emits NUL-delimited paths; the pinned fd is
-          # unwrapped, so hidden trees (.github/workflows) need -H here. The
-          # second pass surfaces extensionless executables for shebang probing.
+          # Streaming boundary: fd emits NUL-delimited paths; the pinned fd is unwrapped, so hidden trees (.github/workflows) need -H here. The
+          # second pass surfaces extensionless executables for shebang probing. Transient trees (style.nix transientDirs) never route to a lane —
+          # gitignore covers checkouts, these excludes cover non-git trees.
           while IFS= read -r -d $'\0' path; do
             _assign "$path"
           done < <(
-            fd -0 -t f -H --exclude .git "''${fd_exts[@]}" . "$target"
-            fd -0 -t x -H --exclude .git . "$target"
+            fd -0 -t f -H --exclude .git ${fdExcludes} "''${fd_exts[@]}" . "$target"
+            fd -0 -t x -H --exclude .git ${fdExcludes} . "$target"
           )
         else
           printf 'fmt: no such target: %s\n' "$target" >&2
@@ -289,9 +289,8 @@
         read -r -a cmd <<<"''${lrow[''${_MODE_FIELD[$mode]}]}"
         local -i wrap=0
         ((deadline > 0)) && ! declare -F "''${cmd[0]}" >/dev/null && wrap=1
-        # Argv per spawn rides a 128KiB byte budget: a huge tree chunks into
-        # repeat spawns instead of dying E2BIG, and the one lane deadline
-        # spans every chunk.
+        # Argv per spawn rides a 128KiB byte budget: a huge tree chunks into repeat spawns instead of dying E2BIG, and
+        # the one lane deadline spans every chunk.
         local -ri t0="$BASH_MONOSECONDS" n="''${#files[@]}" budget=131072
         local -i rc=0 crc i=0 bytes remaining
         while ((i < n)); do
@@ -311,8 +310,7 @@
               rc=124
               break
             }
-            # TERM first, KILL after a 10s grace; a write-mode kill can leave
-            # an in-place rewrite half-applied — atomicity stays tool-owned.
+            # TERM first, KILL after a 10s grace; a write-mode kill can leave an in-place rewrite half-applied — atomicity stays tool-owned.
             run=(timeout -k 10 "$remaining" "''${run[@]}")
           fi
           # The recorded pid is the abort rail's direct handle on timeout/tool.
@@ -322,8 +320,7 @@
           wait "$!" || crc=$?
           if ((crc)); then
             rc="$crc"
-            # A deadline kill ends the lane; other failures keep going so the
-            # capture accumulates every chunk's diagnostics.
+            # A deadline kill ends the lane; other failures keep going so the capture accumulates every chunk's diagnostics.
             ((wrap && (crc == 124 || crc == 137))) && break
           fi
         done
@@ -339,8 +336,7 @@
           lane_state[$lane]=missing
           continue
         fi
-        # Lane-shell stderr rides the lane's output capture: a KILL-escalated
-        # tool's job-death notice lands in the FAIL snippet, not on fmt's stderr.
+        # Lane-shell stderr rides the lane's output capture: a KILL-escalated tool's job-death notice lands in the FAIL snippet, not on fmt's stderr.
         _run_lane "$lane" 2>>"$tmp/out.$lane" &
         lane_pid[$lane]=$!
       done
@@ -352,8 +348,7 @@
         else
           lane_rc[$lane]=$?
           lane_state[$lane]=fail
-          # 124 = timeout sent TERM; 137 = the -k grace expired and KILL landed.
-          # Both read as deadline kills only while the wrapper is armed.
+          # 124 = timeout sent TERM; 137 = the -k grace expired and KILL landed. Both read as deadline kills only while the wrapper is armed.
           ((deadline > 0 && (lane_rc[$lane] == 124 || lane_rc[$lane] == 137))) \
             && lane_state[$lane]=timeout
           status=1
@@ -371,8 +366,7 @@
       if ((json_mode)); then
         for lane in "''${!lane_count[@]}"; do
           _lane_row "$lane" lrow
-          # tr drops NULs before capture (bash warns on them); jq itself maps
-          # invalid UTF-8 — including a head-split multibyte char — to U+FFFD.
+          # tr drops NULs before capture (bash warns on them); jq itself maps invalid UTF-8 — including a head-split multibyte char — to U+FFFD.
           snippet=""
           case "''${lane_state[$lane]:-missing}" in
             fail | timeout) snippet="$(head -c 2048 "$tmp/out.$lane" | tr -d '\0')" ;;

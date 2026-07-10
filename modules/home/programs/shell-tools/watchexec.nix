@@ -4,8 +4,7 @@
 # License       : MIT
 # Path          : modules/home/programs/shell-tools/watchexec.nix
 # ----------------------------------------------------------------------------
-# watchexec owner: global ignore estate plus forge-watch, the packaged
-# event rail. --events streams kernel filesystem events as JSON lines for
+# watchexec owner: global ignore estate plus forge-watch, the packaged event rail. --events streams kernel filesystem events as JSON lines for
 # agent consumption; run mode owns busy-policy, debounce, and origin knobs.
 {
   config,
@@ -47,8 +46,7 @@
       for p in ''${paths[0]+"''${paths[@]}"}; do argv+=(--watch "$p"); done
 
       if [ "$events" = 1 ]; then
-        # Pure event stream: one JSON object per kernel event batch, no child
-        # process — the agent-facing form of the file-event rail.
+        # Pure event stream: one JSON object per kernel event batch, no child process — the agent-facing form of the file-event rail.
         exec watchexec "''${argv[@]}" --only-emit-events --emit-events-to=json-stdio
       fi
       [ "''${#cmd[@]}" -gt 0 ] || usage

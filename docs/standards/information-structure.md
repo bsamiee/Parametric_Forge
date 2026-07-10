@@ -34,7 +34,7 @@ Use the smallest carrier that preserves the reader job; a carrier earns its plac
 
 ## [02]-[TABLE_LAW]
 
-Tables enumerate, cards legislate. A table is a lookup grid, not a prose container; it earns its place only when a reader crosses one row against one column to retrieve a single atomic fact. The instant any column holds a sentence, the table is the wrong container — convert before styling.
+Tables enumerate, cards legislate. A table is a lookup grid, not a prose container; it earns its place only when a reader crosses one row against one column to retrieve a single atomic fact. A column that wants a sentence marks the wrong container at authoring; a standing table repairs in place — conversion is the last resort a failed relief earns.
 
 [TRUTH] — A table's strength is dense cross-row comparison at a glance: many rows, few atomic columns, one comparison question. Its weaknesses are structural: cells resist prose, columns multiply ceremony, a wide row hides its own reading order, and a half-empty grid asserts a rigor it does not have. A table is the strongest container in its narrow lane and the worst container one step outside it; the chooser decides the lane, and the surrounding prose absorbs what cells cannot hold.
 
@@ -150,7 +150,7 @@ A type standard narrows this vocabulary only when it declares exact casing, acti
 - Use `-` for bullets; never `*` or `+`. Bullets carry equivalent items; numbered lists carry true sequence; never mix ordered and unordered items in one logical block.
 - A bullet is one atomic entry: one fact, one rule, one member. A bullet whose content is a run of parallel values is a mis-container — either each value takes its own bullet, or the set collapses out of list form entirely.
 - An entry carries one decision in one to two sentences, three at the hard cap; past the cap the entry is hiding a card, a labeled block, or section prose. A law and its mechanism, consequences, and exceptions packed into one bullet is a compressed section wearing a hyphen.
-- Closed enumerations whose payload is the member roster itself — banned-word lists, generated member sets, fault-code ledgers, package rows — are registry entries and legal at length; everything else obeys the budget.
+- Closed enumerations whose payload is the member roster itself — banned-word lists, generated member sets, fault-code ledgers, package rows — are registry entries and legal at length, and a `- Field: value` record field answers to the earned-field law at card altitude, its defect class fragment fusion rather than length; every other entry obeys the budget.
 - A closed token set that is referenced rather than defined rides inline after its group label — ``[SET_LABEL]: `TOKEN_A` `TOKEN_B` `TOKEN_C` `` — one line, no list; the list form is earned only when members carry per-member content.
 - Split lists past seven items into named sets; keep nesting to two levels with four-space child indentation.
 - A complete lead sentence ending in a colon introduces a list with no blank gap; a section may open directly with its primary rule list after the heading blank line.

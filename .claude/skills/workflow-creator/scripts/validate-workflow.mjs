@@ -10,6 +10,7 @@
 // Date.now()/Math.random()/new Date() written inside a prompt or comment are
 // intentionally allowed — only real calls in code throw.
 
+import { spawnSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 
 const MAX_BYTES = 524288; // 512 KB — scripts above this are rejected before parsing.
@@ -322,6 +323,18 @@ const MAX_COL = 160;
                 `parallel([...]) at line ${lineOf(m.index)} looks like it holds bare ` + 'agent(...) calls — wrap each as a thunk: () => agent(...)',
             );
         }
+    }
+}
+
+// --- [FORMAT]
+// prettier is the one JS formatter whose babel grammar accepts the workflow DSL
+// (biome rejects top-level await/return). Structural errors suppress the probe so
+// format noise never buries a real defect; a machine without prettier stays silent.
+
+if (errors.length === 0) {
+    const probe = spawnSync('prettier', ['--log-level', 'warn', '--check', path], { encoding: 'utf8' });
+    if (probe.status === 1) {
+        warnings.push(`not house-formatted — run \`prettier --write ${path}\` (or \`fmt ${path}\`)`);
     }
 }
 

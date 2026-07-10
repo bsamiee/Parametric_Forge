@@ -12,9 +12,8 @@
 }: let
   inherit (lib) mkDefault;
 in {
-  # Debugger/developer-tool authorization without per-launch prompts: developer
-  # mode plus _developer membership are idempotent root activations. TCC stays
-  # reset-only (tccutil); no TCC.db writes, no PPPC on this unmanaged host.
+  # Debugger/developer-tool authorization without per-launch prompts: developer mode plus _developer membership are idempotent root activations. TCC
+  # stays reset-only (tccutil); no TCC.db writes, no PPPC on this unmanaged host.
   system.activationScripts.postActivation.text = ''
     /usr/sbin/DevToolsSecurity -status | grep -q "currently enabled" \
       || /usr/sbin/DevToolsSecurity -enable
@@ -64,8 +63,7 @@ in {
         voiceOverOnOffKey = mkDefault false;
         keyboardAccessFocusRingTimeout = mkDefault 15;
       };
-      # LSQuarantine stays disabled through the first-class owner:
-      # system.defaults.LaunchServices.LSQuarantine in settings/system.nix.
+      # LSQuarantine stays disabled through the first-class owner: system.defaults.LaunchServices.LSQuarantine in settings/system.nix.
       # --- [DEVELOPER_SECURITY_SETTINGS]
       "com.apple.dt.Xcode" = {
         DVTTextEditorTrimTrailingWhitespace = mkDefault false;
@@ -95,8 +93,7 @@ in {
       %admin ALL=(root) NOPASSWD: /bin/launchctl *
       %admin ALL=(root) NOPASSWD: /usr/bin/osascript *
 
-      # Deploy rail: regex rows pin every argv exactly (arg globs match spaces
-      # and slashes, regex rows do not) — lifecycle verbs on the installed
+      # Deploy rail: regex rows pin every argv exactly (arg globs match spaces and slashes, regex rows do not) — lifecycle verbs on the installed
       # darwin-rebuild, exact-closure activation, profile registration
       %admin ALL=(root) NOPASSWD: /run/current-system/sw/bin/darwin-rebuild ^(--list-generations|--rollback|--switch-generation [0-9]+)$
       %admin ALL=(root) NOPASSWD: ^/nix/store/[a-z0-9]{32}-darwin-system-[^/]+/sw/bin/darwin-rebuild$ activate
@@ -105,8 +102,7 @@ in {
       # Maintenance rail: bounded system-generation retention (exact args)
       %admin ALL=(root) NOPASSWD: /nix/var/nix/profiles/default/bin/nix-env -p /nix/var/nix/profiles/system --delete-generations +5
 
-      # Determinate custom-config adoption: move the installer-written real file
-      # aside so activation's /etc collision guard passes (module owns the symlink)
+      # Determinate custom-config adoption: move the installer-written real file aside so activation's /etc collision guard passes (module owns the symlink)
       %admin ALL=(root) NOPASSWD: /bin/mv /etc/nix/nix.custom.conf /etc/nix/nix.custom.conf.before-determinate-module
 
       # Homebrew shell integration (prevents login security prompts)

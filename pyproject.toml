@@ -43,10 +43,12 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "lxml", # html-studio skill scripts import it; the env must resolve every mirrored-skill import for ty
     "mypy",
     "ruff>=0.15.20,<0.16", # preview rule set moves per minor; the band holds the vetted gate stable
     "sqlfluff",
     "ty",
+    "types-lxml",
 ]
 
 # --- [UV] -------------------------------------------------------------------------------
@@ -69,17 +71,21 @@ respect-type-ignore-comments = false
 
 [tool.ty.src]
 exclude = [
+    ".archive",
     ".artifacts",
     ".cache",
-    ".claude/scratch",
-    ".claude/skills/**/.cache",
     ".claude/worktrees",
     ".history",
     ".nx",
+    ".scratch",
+    ".tmp",
     ".venv",
+    "_archive",
+    "_tmp",
     "coverage",
     "dist",
     "node_modules",
+    "scratch",
     "test-results",
     "tmp",
 ]
@@ -114,12 +120,10 @@ enable_error_code = [
     "unused-awaitable",
 ]
 exclude = [
+    "(^|/)(\\.archive|_archive|scratch|\\.scratch|_tmp|\\.tmp|\\.cache|\\.history)/",
     "^\\.artifacts/",
-    "^\\.cache/",
-    "^\\.claude/skills/.*/\\.cache/",
     "^\\.claude/worktrees/",
     "^\\.git/",
-    "^\\.history/",
     "^\\.nx/",
     "^\\.venv/",
     "^build/",
@@ -150,14 +154,18 @@ line-length = 150
 required-version = ">=0.15.20,<0.16"
 target-version = "py315"
 extend-exclude = [
+    "**/.archive/**",
     "**/.artifacts/**",
     "**/.cache/**",
-    "**/.claude/scratch/**",
-    "**/.claude/skills/**/.cache/**",
     "**/.claude/worktrees/**",
-    "**/test-results/**",
-    "**/coverage/**",
     "**/.history/**",
+    "**/.scratch/**",
+    "**/.tmp/**",
+    "**/_archive/**",
+    "**/_tmp/**",
+    "**/coverage/**",
+    "**/scratch/**",
+    "**/test-results/**",
 ]
 
 [tool.ruff.format]

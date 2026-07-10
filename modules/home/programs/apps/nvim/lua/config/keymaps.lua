@@ -4,10 +4,8 @@
 -- License       : MIT
 -- Path          : modules/home/programs/apps/nvim/lua/config/keymaps.lua
 -- ----------------------------------------------------------------------------
--- Chord binder: motion primitives stay native rows here; every domain chord
--- is a generated forge/chords.lua row (owner: apps/chords.nix). `fn` rows
--- resolve through the dispatch table: explicit verbs, then the picker
--- grammar; ids outside both fault at startup.
+-- Chord binder: motion primitives stay native rows here; every domain chord is a generated forge/chords.lua row (owner: apps/chords.nix). `fn`
+-- rows resolve through the dispatch table: explicit verbs, then the picker grammar; ids outside both fault at startup.
 
 local map = vim.keymap.set
 
@@ -40,13 +38,10 @@ map("n", "<leader>w", "<cmd>w<cr>", { desc = "Save file" })
 map("n", "<Esc>", "<cmd>nohlsearch<cr>", { desc = "Clear search highlight" })
 
 -- DOMAIN CHORD DISPATCH ------------------------------------------------------
--- Action identity lives in the chord row; this table owns the callbacks.
--- Picker actions derive from the fn grammar (pick_<source>, lsp_<source>)
--- over one factory, so a new picker chord is one chords.nix row with zero
--- edits here; explicit rows own the non-picker verbs and grammar overrides.
--- Closures defer Snacks resolution to press time (the global lands at
--- setup); Snacks.picker returns nil for an unregistered source, so a bad
--- source name faults typed at press while ungrammatical ids fault at bind.
+-- Action identity lives in the chord row; this table owns the callbacks. Picker actions derive from the fn grammar (pick_<source>, lsp_<source>)
+-- over one factory, so a new picker chord is one chords.nix row with zero edits here; explicit rows own the non-picker verbs and grammar
+-- overrides. Closures defer Snacks resolution to press time (the global lands at setup); Snacks.picker returns nil for an unregistered source,
+-- so a bad source name faults typed at press while ungrammatical ids fault at bind.
 local pick = function(source)
     return function()
         local open = Snacks.picker[source]

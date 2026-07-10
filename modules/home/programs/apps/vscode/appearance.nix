@@ -4,12 +4,9 @@
 # License       : MIT
 # Path          : modules/home/programs/apps/vscode/appearance.nix
 # ----------------------------------------------------------------------------
-# VS Code visual projection: one function of the theme and font owners
-# returning the asserted design scalars and the structured appearance rows.
-# The base theme is builtin Dark Modern — always present, never an extension
-# dependency — and every visible family is overridden from the palette owner,
-# so the rendered workbench carries zero third-party color. Git hues bind the
-# owner git vocabulary (roles.git), never per-app conventions.
+# VS Code visual projection: one function of the theme and font owners returning the asserted design scalars and the structured appearance rows.
+# The base theme is builtin Dark Modern — always present, never an extension dependency — and every visible family is overridden from the palette
+# owner, so the rendered workbench carries zero third-party color. Git hues bind the owner git vocabulary (roles.git), never per-app conventions.
 {
   lib,
   t,
@@ -22,8 +19,7 @@
   ansi = hexOf t.ansi16;
   a = hex: alpha: hex + alpha; # #RRGGBB -> #RRGGBBAA
 
-  # Bracket-pair cycle: six palette hues, depth-distinct, never the subtle
-  # punctuation tier (colorization paints over the token rule).
+  # Bracket-pair cycle: six palette hues, depth-distinct, never the subtle punctuation tier (colorization paints over the token rule).
   brackets = [p.cyan p.purple p.blue p.magenta p.green p.amber];
   bracketRows = prefix: alpha:
     lib.listToAttrs (lib.imap1 (i: c: lib.nameValuePair "${prefix}${toString i}" (a c alpha)) brackets);
@@ -36,8 +32,7 @@
     )
     ansi;
 
-  # Suggest/outline/breadcrumb icon hues mirror the syntax scope pivot: types
-  # cyan, callables green, values blue, constants purple, keywords pink.
+  # Suggest/outline/breadcrumb icon hues mirror the syntax scope pivot: types cyan, callables green, values blue, constants purple, keywords pink.
   symbolIcons = lib.mapAttrs' (kind: c: lib.nameValuePair "symbolIcon.${kind}Foreground" c) {
     class = p.cyan;
     struct = p.cyan;
@@ -74,8 +69,7 @@
   };
 in {
   # --- [ASSERTED] ---------------------------------------------------------------------------
-  # Scalar design law: stripped from the user region so the owners govern
-  # estate-wide. Values must stay scalar (the strip regex is single-line).
+  # Scalar design law: stripped from the user region so the owners govern estate-wide. Values must stay scalar (the strip regex is single-line).
   asserted = {
     # --- [TYPOGRAPHY]
     "editor.fontFamily" = f.projections.vscodeFamily;
@@ -91,34 +85,27 @@ in {
     "terminal.integrated.fontWeight" = "normal";
     "terminal.integrated.fontWeightBold" = "bold";
     # --- [THEME_OWNERSHIP]
-    # Builtin substrate: every visible family is overridden below, so the
-    # base theme contributes fallback values only, never a rendered color.
-    # Product icons ride the one finalist that restyles the full codicon
-    # registry (651 defs over 603 ids) — same publisher family as the file
-    # icons, one visual vocabulary across both icon planes; product glyphs
-    # are single-color fonts, so the palette above still owns every hue.
+    # Builtin substrate: every visible family is overridden below, so the base theme contributes fallback values only, never a rendered color.
+    # Product icons ride the one finalist restyling the full codicon registry — same publisher family as the file icons, one visual vocabulary
+    # across both icon planes; product glyphs are single-color fonts, so the palette above still owns every hue.
     "workbench.colorTheme" = "Default Dark Modern";
     "workbench.iconTheme" = "material-icon-theme";
     "workbench.productIconTheme" = "material-product-icons";
     "material-icon-theme.folders.color" = s.accent.structural;
     # --- [RENDER]
-    # The ANSI projection is contrast-verified at the palette owner; the
-    # runtime contrast mutator would repaint owned hues. Motion stays app
+    # The ANSI projection is contrast-verified at the palette owner; the runtime contrast mutator would repaint owned hues. Motion stays app
     # default — animated caret/scroll rows read out-of-sync on this machine.
     "terminal.integrated.minimumContrastRatio" = 1;
     "terminal.integrated.customGlyphs" = true;
     "terminal.integrated.rescaleOverlappingGlyphs" = true;
     # --- [CHROME_DENSITY]
-    # +0.25 zoom (1.2^0.25, ~4.7%) is the one truthful lever for workbench text
-    # scale — fractional levels pass to Electron unrounded, no finer sidebar or
-    # title font key exists, and hover text follows editor font x zoom (the
-    # hover registry carries enabled/delay/sticky/hidingDelay/above only; no
-    # size or heading-scale keys). Manual zoom stays per-window (zoomPerWindow).
+    # +0.25 zoom (1.2^0.25, ~4.7%) is the one truthful lever for workbench text scale — fractional levels pass to Electron unrounded, no finer
+    # sidebar or title font key exists, and hover text follows editor font x zoom (the hover registry carries enabled/delay/sticky/hidingDelay/above
+    # only; no size or heading-scale keys). Manual zoom stays per-window (zoomPerWindow).
     "window.zoomLevel" = 0.25;
     "workbench.tree.indent" = 12;
-    # Gutter and tab-row density: 3 line-number chars cover every file under
-    # 10k lines without the 5-char default's dead margin; compact is the one
-    # registered step below default tab height.
+    # Gutter and tab-row density: 3 line-number chars cover every file under 10k lines without the 5-char default's dead margin; compact is
+    # the one registered step below default tab height.
     "editor.lineNumbersMinChars" = 3;
     "window.density.editorTabHeight" = "compact";
   };
@@ -140,7 +127,7 @@ in {
     "editor.stickyScroll.maxLineCount" = 5;
     "terminal.integrated.stickyScroll.enabled" = true;
     "editor.guides.bracketPairs" = "active";
-    # Palette-bound TODO decorations: state hues, glyph-redundant via the tree.
+    # Palette-bound tag-highlight decorations: state hues, glyph-redundant via the tree.
     "todo-tree.general.tags" = ["TODO" "FIXME" "HACK" "NOTE" "XXX"];
     "todo-tree.highlights.defaultHighlight" = {
       type = "tag";
@@ -156,18 +143,10 @@ in {
     };
 
     # --- [TOKENS]: textMate + semantic rules from the one scope pivot.
-    # Markdown scheme rides precise scopes, never the text.html.markdown base:
-    # prose falls to editor.foreground (text.primary); [BRACKET] markers parse
-    # as shortcut link references — labels read magenta-bold as status chips
-    # while the bracket sigils recede to the structural tier beside list and
-    # quote markers, so a `]-[` connector run stays typographic, never a
-    # magenta smear; headings own every token inside themselves via deeper
-    # selectors. fontStyle REPLACES on the deepest match (never merges), so
-    # nested emphasis restates the outer weight. Raw spans are ONE literal
-    # tier: sigils and content both ride string-yellow (the sigil row exists
-    # because the generic punctuation rule would out-match the span rule on
-    # the deeper punctuation.definition.raw scope); fence chrome recedes with
-    # the info-string language id riding the attribute vocabulary.
+    # Markdown scheme rides precise scopes, never the text.html.markdown base: prose falls to editor.foreground (text.primary); [BRACKET] markers
+    # parse as shortcut link references — labels read magenta-bold as status chips while the bracket sigils recede to the structural tier beside
+    # list and quote markers, so a `]-[` connector run stays typographic, never a magenta smear; headings own every token inside themselves via
+    # deeper selectors. fontStyle REPLACES on the deepest match (never merges), so nested emphasis restates the outer weight.
     "editor.tokenColorCustomizations".textMateRules =
       t.projections.vscodeTokenRules
       ++ [
@@ -193,9 +172,9 @@ in {
           };
         }
         {
-          # Whole raw span — content and both sigils — is one string-yellow
-          # literal; known-language fences still override through their own
-          # embedded grammars (deeper scopes always win).
+          # Whole raw span — content and both sigils — is one string-yellow literal; known-language fences still override through their own
+          # embedded grammars (deeper scopes always win). The sigil row exists because the generic punctuation rule would out-match the span
+          # rule on the deeper punctuation.definition.raw scope.
           name = "Markdown raw span";
           scope = "markup.inline.raw, markup.raw.block";
           settings.foreground = p.yellow;
@@ -206,8 +185,7 @@ in {
           settings.foreground = p.yellow;
         }
         {
-          # Fence chrome recedes to the punctuation tier; embedded code keeps
-          # its own grammar and the body of unknown fences stays prose.
+          # Fence chrome recedes to the punctuation tier; embedded code keeps its own grammar and the body of unknown fences stays prose.
           name = "Markdown fence delimiter";
           scope = "markup.fenced_code.block.markdown punctuation.definition.markdown";
           settings.foreground = s.text.subtle;
@@ -234,8 +212,7 @@ in {
           };
         }
         {
-          # Replacement semantics would render ***x*** italic-only without
-          # this row; foreground still resolves from the italic rule above.
+          # Replacement semantics would render ***x*** italic-only without this row; foreground still resolves from the italic rule above.
           name = "Markdown emphasis stack";
           scope = "markup.bold markup.italic, markup.italic markup.bold";
           settings.fontStyle = "bold italic";
@@ -431,8 +408,7 @@ in {
         "activityBarBadge.background" = s.accent.secondary;
         "activityBarBadge.foreground" = s.text.inverse;
         "sideBar.background" = s.surface.crust;
-        # Undecorated explorer rows inherit sideBar.foreground (no list.foreground
-        # token exists); primary keeps unchanged files bright, git states recolor.
+        # Undecorated explorer rows inherit sideBar.foreground (no list.foreground token); primary keeps unchanged files bright, git states recolor.
         "sideBar.foreground" = s.text.primary;
         "sideBar.border" = s.surface.crust;
         "sideBarTitle.foreground" = s.text.primary;
@@ -557,9 +533,8 @@ in {
         "banner.background" = s.surface.raised;
         "banner.foreground" = s.text.primary;
         "banner.iconForeground" = s.state.info;
-        # --- [GIT_SCM]: bound to the owner git vocabulary; the modified pair
-        # rides the cyan accent role (operator law) — the blue git hue reads
-        # too dark as explorer text on crust.
+        # --- [GIT_SCM]
+        # Bound to the owner git vocabulary; the modified pair rides the cyan accent role (operator law) — the blue git hue is too dark as explorer text on crust.
         "gitDecoration.addedResourceForeground" = g.added;
         "gitDecoration.modifiedResourceForeground" = s.accent.primary;
         "gitDecoration.deletedResourceForeground" = g.deleted;

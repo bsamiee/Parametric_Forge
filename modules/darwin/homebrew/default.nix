@@ -24,10 +24,8 @@
   ];
 
   # --- [SCHEDULED_UPDATE_POLICY_DOMT4_AUTOUPDATE]
-  # Daily update+upgrade+cleanup, keychain-backed sudo askpass (pinentry-mac),
-  # notifier off (TCC denies the notification permission). The reconciler
-  # regenerates the tap-owned agent whenever live state drifts from this row,
-  # so the schedule is repo-declared, never hidden operator state.
+  # Daily update+upgrade+cleanup, keychain-backed sudo askpass (pinentry-mac), notifier off (TCC denies the notification permission). The reconciler
+  # regenerates the tap-owned agent whenever live state drifts from this row, so the schedule is repo-declared, never hidden operator state.
   autoupdateIntervalSeconds = 86400;
   autoupdateStartArgs = "--upgrade --cleanup --sudo --immediate --no-notify";
   autoupdateReconcile = pkgs.writeShellApplication {
@@ -57,8 +55,7 @@
 
       if converged; then exit 0; fi
 
-      # Regenerate from a clean context: the tap embeds the invoking PATH,
-      # HOMEBREW_CASK_OPTS, and HOMEBREW_NO_ANALYTICS into the updater script.
+      # Regenerate from a clean context: the tap embeds the invoking PATH, HOMEBREW_CASK_OPTS, and HOMEBREW_NO_ANALYTICS into the updater script.
       export PATH="${config.homebrew.prefix}/bin:${config.homebrew.prefix}/sbin:/usr/bin:/bin:/usr/sbin:/sbin"
       export HOMEBREW_CASK_OPTS="--no-quarantine"
       export HOMEBREW_NO_ANALYTICS=1
@@ -85,28 +82,26 @@ in {
     # --- [GLOBAL_SETTINGS]
     global = {
       autoUpdate = mkDefault true; # Manual brew ops refresh tap metadata natively
-      brewfile = mkDefault false; # Disable Brewfile (managed via Nix)
+      brewfile = mkDefault false; # Brewfile managed via Nix, not brew
     };
 
     # --- [ACTIVATION_BEHAVIOR]
-    # Activation stays install/metadata only; version freshness is owned by the
-    # domt4/autoupdate agent under the reconciled schedule declared above.
+    # Activation stays install/metadata only; version freshness is owned by the domt4/autoupdate agent under the reconciled schedule declared above.
     onActivation = {
       autoUpdate = mkDefault true;
       cleanup = mkDefault "none";
       upgrade = mkDefault false;
       extraEnv = {
         PATH = mkDefault activationPath;
-        # Brew 6 dropped the --no-quarantine install flag; env is the only carrier
-        HOMEBREW_CASK_OPTS = mkDefault "--no-quarantine";
+        HOMEBREW_CASK_OPTS = mkDefault "--no-quarantine"; # Brew 6 dropped the --no-quarantine flag; env is the only carrier
       };
     };
 
     # --- [CASK_CONFIGURATION]
     caskArgs = mkDefault {
       appdir = "/Applications";
-      require_sha = false; # Allow casks without SHA
-      no_binaries = false; # Allow cask binaries in PATH
+      require_sha = false;
+      no_binaries = false;
       fontdir = "~/Library/Fonts";
       colorpickerdir = "~/Library/ColorPickers";
       prefpanedir = "~/Library/PreferencePanes";
@@ -114,13 +109,9 @@ in {
     };
   };
 
-  # Reconcile at login and daily at 10:00; converged runs are read-only and
-  # exit 0. Logged: a failed regeneration must never hide until the next day.
-  # The reconciled agent itself keeps its upstream tap label
-  # (com.github.domt4.homebrew-autoupdate) — external job, recorded, not ours
-  # to rename. nix-darwin's strict launchd schema has no
-  # AssociatedBundleIdentifiers key, so this row shows a generic Login Items
-  # entry; known upstream gap, carried.
+  # Reconcile at login and daily at 10:00; converged runs are read-only and exit 0, logged so a failed regeneration never hides until the next
+  # day. The reconciled agent keeps its upstream tap label (com.github.domt4.homebrew-autoupdate) — external job, not ours to rename.
+  # nix-darwin's strict launchd schema has no AssociatedBundleIdentifiers key, so this row shows a generic Login Items entry.
   launchd.user.agents.forge-brew-autoupdate = {
     serviceConfig = {
       Label = "com.parametric-forge.forge-brew-autoupdate";

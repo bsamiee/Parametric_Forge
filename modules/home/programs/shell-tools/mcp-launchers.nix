@@ -4,12 +4,9 @@
 # License       : MIT
 # Path          : modules/home/programs/shell-tools/mcp-launchers.nix
 # ----------------------------------------------------------------------------
-# Data-plane owner: builds pinned pnpm launchers from mcp-fleet.nix rows and
-# ships the fleet/agent observability surface — `forge-mcp` (outdated |
-# doctor | drift | generate | roots | snoop) emitting schema=forge-mcp/v1
-# receipts, plus `forge-agents`, the collector turning agent lanes,
-# attention, and AI quota into cached facts the zjstatus bar renders. Bar
-# code never touches providers or credentials; the collector owns that seam.
+# Data-plane owner: builds pinned pnpm launchers from mcp-fleet.nix rows and ships the fleet/agent observability surface — `forge-mcp` (outdated |
+# doctor | drift | generate | roots | snoop) emitting schema=forge-mcp/v1 receipts, plus `forge-agents`, the collector turning agent lanes, attention,
+# and AI quota into cached facts the zjstatus bar renders. Bar code never touches providers or credentials; the collector owns that seam.
 {
   config,
   lib,
@@ -18,16 +15,13 @@
 }: let
   profileBin = "/etc/profiles/per-user/${config.home.username}/bin";
   stateHome = config.xdg.stateHome;
-  # Shared owners: notifier + alerter rails and identity bundles
-  # (bundle-apps.nix), the dual-receipt emit fold (receipts.nix), the F01
-  # attention vocabulary (attention.nix), and the platform ps dispatch —
-  # /bin/ps is a Darwin fact; NixOS gets procps by store path.
+  # Shared owners: notifier + alerter rails and identity bundles (bundle-apps.nix), the dual-receipt emit fold (receipts.nix), the F01 attention
+  # vocabulary (attention.nix), and the platform ps dispatch — /bin/ps is a Darwin fact; NixOS gets procps by store path.
   tnBin = config.forge.notifier;
   alerterBin = config.forge.alerter;
   receiptsFold = import ./receipts.nix;
   attention = import ./attention.nix {sshHosts = config.forge.ssh.hosts;};
-  # Standing-alert rows joined to their receipt-registry paths at eval: an
-  # alert row naming an unregistered kind is a wiring defect, not a runtime skip.
+  # Standing-alert rows join their receipt-registry paths at eval; an alert row naming an unregistered kind is a wiring defect, not a runtime skip.
   alertRows =
     map (
       row: let
@@ -50,20 +44,16 @@
   launcherRows = builtins.filter (r: r ? launcher) fleet;
   fleetJson = pkgs.writeText "mcp-fleet.json" (builtins.toJSON fleet);
 
-  # Traffic-capture policy rows (annex-gated surface): capture is unreachable
-  # without the opt-in env, frames log metadata only, and files age out.
+  # Traffic-capture policy rows (annex-gated): capture is unreachable without the opt-in env, frames log metadata only, and files age out.
   snoopPolicy = {
     optInEnv = "FORGE_MCP_DEBUG";
     redaction = "frame-metadata-only"; # direction, method, id, kind, bytes — never params/results
     retentionDays = 7;
     logDir = "${stateHome}/forge-mcp-snoop";
   };
-  # Notification policy rows for the collector projections: per-source arms
-  # select the renderer by interaction contract — a needs-input rise posts a
-  # replaceable banner whose click opens the alerter answer channel (falling
-  # back to bare focus off-Darwin), a standing-alert rise posts a banner plus
-  # the in-bar toast, and bell rows render as a bar count only (the WezTerm
-  # bell arm already owns the bell toast).
+  # Notification policy rows for the collector projections: per-source arms select the renderer by interaction contract. A needs-input rise posts a
+  # replaceable banner whose click opens the alerter answer channel (bare focus off-Darwin); a standing-alert rise posts a banner plus the in-bar
+  # toast; bell rows render as a bar count only, since the WezTerm bell arm already owns the bell toast.
   notifyPolicy = {
     needsInput = true;
     alerts = true;
@@ -74,10 +64,8 @@
       if alerterBin != ""
       then "answer"
       else "focus";
-    # Cross-device tier (ntfy): per-class publish rows the same rise gates
-    # drive; the target rides the NTFY_URL/NTFY_TOPIC/NTFY_TOKEN Doppler rows
-    # (ntfy.sh topic-as-capability today, the maghz self-hosted server once
-    # its public ingress lands) and absent custody degrades to local-only.
+    # Cross-device tier (ntfy): per-class publish rows the same rise gates drive; the target rides the NTFY_URL/NTFY_TOPIC/NTFY_TOKEN Doppler rows
+    # (ntfy.sh topic-as-capability today, the maghz self-hosted server once its public ingress lands), and absent custody degrades to local-only.
     remote = {
       needsInput = {
         priority = "high";
@@ -99,14 +87,12 @@
         ${row.launcher.prelude or ""}prefix="''${XDG_CACHE_HOME:-$HOME/.cache}/forge-mcp/${row.launcher.pkg}/${row.launcher.version}"
         entry="$prefix/node_modules/.bin/${row.launcher.bin}"
         if [ ! -x "$entry" ]; then
-          # Stage-then-rename: fleet clients spawn every server at once, so first
-          # installs race. Each racer stages privately; the rename winner owns the
-          # prefix, losers discard their stage and exec the winner's tree.
+          # Stage-then-rename: fleet clients spawn every server at once, so first installs race; each racer stages privately, the rename winner owns
+          # the prefix, and losers discard their stage and exec the winner's tree.
           parent="$(dirname "$prefix")"
           mkdir -p "$parent"
           stage="$(mktemp -d "$parent/.stage.XXXXXX")"
-          # Failure litter guard: an errexit death mid-install must not strand
-          # the stage; every success path removes or promotes it first.
+          # Failure litter guard: an errexit death mid-install must not strand the stage, so every success path removes or promotes it first.
           trap 'rm -rf "$stage"' EXIT
           # --config rows pin XDG containment for launchd spawns without session
           # env; prefer-offline lets exact pins cold-start from a warm store.
@@ -117,14 +103,12 @@
             --config.cache-dir="''${XDG_CACHE_HOME:-$HOME/.cache}/pnpm" \
             --config.state-dir="''${XDG_STATE_HOME:-$HOME/.local/state}/pnpm" \
             "${row.launcher.pkg}@${row.launcher.version}" >&2 || true
-          # Success predicate is the staged bin, not pnpm's exit status: a node
-          # teardown crash after full materialization must not kill cold-start,
+          # Success predicate is the staged bin, not pnpm's exit status: a node teardown crash after full materialization must not kill cold-start,
           # and a tree missing its bin must never be promoted to the prefix.
           if [ -x "$entry" ]; then
             rm -rf "$stage"
           elif [ -x "$stage/node_modules/.bin/${row.launcher.bin}" ]; then
-            # mv first: a prefix a racer just promoted must never be deleted.
-            # Only a still-corrupt prefix is cleared, then one retry.
+            # mv first: a prefix a racer just promoted must never be deleted; only a still-corrupt prefix is cleared, then one retry.
             if ! mv -T "$stage" "$prefix" 2>/dev/null; then
               if [ -x "$entry" ]; then
                 rm -rf "$stage"
@@ -143,8 +127,7 @@
       '';
     };
   launchers = lib.concatMap (row: map (mkLauncher row) row.launcher.names) launcherRows;
-  # Maghz postgres MCP: DSN via MAGHZ_MCP__DATABASE_URI with launchd GUI replay
-  # fallback; loud exit 78 when unresolved so required-server failure is visible.
+  # Maghz postgres DSN via MAGHZ_MCP__DATABASE_URI, launchd GUI replay fallback; loud exit 78 when unresolved so required-server failure is visible.
   maghzPostgres = pkgs.writeShellApplication {
     name = "forge-maghz-postgres-mcp";
     runtimeInputs = [pkgs.uv];
@@ -161,13 +144,10 @@
         exec uvx --python 3.13 postgres-mcp --access-mode=restricted "$@"
     '';
   };
-  # Rhino's package manager owns the router install; version-globbing keeps
-  # client configs stable across McNeel package updates. Lifecycle gate: the
-  # heavy vendor router spawns only while Rhino 9 WIP runs; otherwise a stdio
-  # shim serves one rhino_status tool (start Rhino, then reconnect). The
-  # supervised lane owns the router's process group — client TERM/HUP or a
-  # dead client (wrapper reparented to launchd) tears the subtree down, so no
-  # session exit strands a router; the vendor binary exposes no idle-exit.
+  # Rhino's package manager owns the router install; version-globbing keeps client configs stable across McNeel package updates. Lifecycle gate: the
+  # heavy vendor router spawns only while Rhino 9 WIP runs; otherwise a stdio shim serves one rhino_status tool (start Rhino, then reconnect). The
+  # supervised lane owns the router's process group, so client TERM/HUP or a dead client (wrapper reparented to launchd) tears the subtree down; no
+  # session exit strands a router, and the vendor binary exposes no idle-exit.
   rhinoRouter = pkgs.writeShellApplication {
     name = "rhino-mcp-router";
     runtimeInputs = [pkgs.coreutils pkgs.jq];
@@ -189,8 +169,7 @@
           kill -TERM -- "-$router" 2>/dev/null || kill -TERM "$router" 2>/dev/null || true
         }
         trap reap TERM INT HUP
-        # Orphan watchdog: an empty or launchd ppid means the MCP client died
-        # without reaping the wrapper; take the router subtree down with it.
+        # Orphan watchdog: an empty or launchd ppid means the MCP client died without reaping the wrapper; take the router subtree down with it.
         (
           while kill -0 "$router" 2>/dev/null; do
             pp="$(/bin/ps -o ppid= -p $$ 2>/dev/null | tr -d ' ')"
@@ -216,10 +195,8 @@
         exit "$rc"
       fi
 
-      # Thin responder: newline-delimited JSON-RPC over stdio at near-zero
-      # cost. tools/call re-probes Rhino so an agent that started it mid-
-      # session reads live state plus the reconnect instruction; stdin EOF
-      # is the shutdown, so the shim can never outlive its client.
+      # Thin responder: newline-delimited JSON-RPC over stdio at near-zero cost. tools/call re-probes Rhino so an agent that started it mid-session
+      # reads live state plus the reconnect instruction; stdin EOF is the shutdown, so the shim can never outlive its client.
       status_text() {
         if /usr/bin/pgrep -qf "$rhino_bin"; then
           printf 'Rhino is running but this MCP connection predates it. Reconnect the rhino-mcp-platform server (/mcp -> reconnect, or restart the session) to spawn the router and load the full toolset.'
@@ -228,8 +205,7 @@
         fi
       }
       tools_json='{"tools":[{"name":"rhino_status","description":"Reports the Rhino MCP gate: the full rhino-mcp-platform toolset loads only while Rhino 9 WIP runs. Call this to learn how to bring the toolset up.","inputSchema":{"type":"object","properties":{}}}]}'
-      # Streaming boundary: one jq projection per message; the 0x1f join
-      # survives absent fields, and a malformed line skips without output.
+      # Streaming boundary: one jq projection per message; the 0x1f join survives absent fields, and a malformed line skips without output.
       while IFS= read -r line; do
         [ -n "$line" ] || continue
         IFS=$'\x1f' read -r method id pv < <(jq -r '
@@ -265,13 +241,11 @@
       done
     '';
   };
-  # The row's updateEngine selects the probe set: only npm-registry rows feed
-  # the npm-latest check; a manual/other engine row never emits a false pin row.
+  # updateEngine selects the probe set: only npm-registry rows feed the npm-latest check; a manual or other engine row never emits a false pin row.
   pins =
     builtins.concatStringsSep "\n" (map (r: "${r.launcher.pkg}|${r.launcher.version}")
       (builtins.filter (r: r.launcher.updateEngine == "npm-registry") launcherRows));
-  # Full-parity drift program: fleet rows vs the two user-owned client
-  # registrations, key NAMES only.
+  # Full-parity drift program: fleet rows vs the two user-owned client registrations, key NAMES only.
   driftJq = pkgs.writeText "mcp-drift.jq" ''
     ($fleet[0]) as $rows
     | ($claude[0] // {}) as $cl
@@ -326,9 +300,8 @@
     + (($cx | keys) - [$rows[] | select((.clients // ["claude", "codex"]) | index("codex")) | .name] | map("codex\t\(.): EXTRA in codex (not in manifest)"))
     | .[]
   '';
-  # Subset drift for projection registries (claude-shaped JSON: vscode servers
-  # map, maghz .mcp.json). Registered rows naming a fleet row must honor its
-  # contract; commands may spell the launcher basename; unknown rows are INFO.
+  # Subset drift for projection registries (claude-shaped JSON: vscode servers map, maghz .mcp.json). Registered rows naming a fleet row must honor
+  # its contract; commands may spell the launcher basename, and unknown rows are INFO.
   subsetClaudeJq = pkgs.writeText "mcp-drift-subset-claude.jq" ''
     ($fleet[0]) as $rows
     | (INDEX($rows[]; .name)) as $byName
@@ -342,8 +315,7 @@
           elif $row.transport == "stdio" then
             (if (($c.command // "") != $row.command) and (($c.command // "") != ($row.command | split("/") | last)) then ["\($n): command \($c.command // "absent") != \($row.command | split("/") | last)"] else [] end)
             + (if ($c.args // []) != ($row.args // []) then ["\($n): args \($c.args // [])"] else [] end)
-            # Projections pass env explicitly (no ambient session env), so the
-            # expectation is envKeys, never the claudeEnvNames mirror override.
+            # Projections pass env explicitly (no ambient session env), so the expectation is envKeys, never the claudeEnvNames mirror override.
             + ((($c.env // {}) | keys | sort) as $have
                | (($row.envKeys // []) | sort) as $want
                | if $have != $want then ["\($n): env names \($have) != \($want)"] else [] end)
@@ -356,8 +328,7 @@
       ]
     | flatten | .[]
   '';
-  # Subset drift for codex-shaped projections (maghz .codex/config.toml):
-  # timeouts are host-local rows there, so only identity fields compare.
+  # Subset drift for codex-shaped projections (maghz .codex/config.toml): timeouts are host-local rows there, so only identity fields compare.
   subsetCodexJq = pkgs.writeText "mcp-drift-subset-codex.jq" ''
     ($fleet[0]) as $rows
     | (INDEX($rows[]; .name)) as $byName
@@ -382,8 +353,7 @@
       ]
     | flatten | .[]
   '';
-  # Desired-registration generator: one program per client shape, all reading
-  # the same fleet rows — the "one generator" behind the five-way drift.
+  # Desired-registration generator: one program per client shape, all reading the same fleet rows — the "one generator" behind the five-way drift.
   generateClaudeJq = pkgs.writeText "mcp-generate-claude.jq" ''
     {
       mcpServers: ([
@@ -516,16 +486,13 @@
         exit "$rc"
       }
 
-      # Side-effect-free health probe: newline-delimited JSON-RPC initialize on
-      # stdio (stdin EOF is the shutdown), POST initialize for http rows. Env
-      # material is asserted by key NAME only; values never print. Each probe
-      # emits one typed row (STATUS<TAB>name<TAB>detail); presentation is the
+      # Side-effect-free health probe: newline-delimited JSON-RPC initialize on stdio (stdin EOF is the shutdown), POST initialize for http rows. Env
+      # material is asserted by key NAME only, so values never print. Each probe emits one typed row (STATUS<TAB>name<TAB>detail); presentation is the
       # doctor's, so human and --json render from the same rows.
       req='{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"forge-mcp-doctor","version":"1.0.0"}}}'
       probe_row() {
         row="$1" network="$2" out="$3"
-        # One jq projection owns the row header; unit-separator join survives
-        # empty fields where tab-IFS reads would collapse them.
+        # One jq projection owns the row header; the unit-separator join survives empty fields where tab-IFS reads would collapse them.
         IFS=$'\x1f' read -r name probe transport t cmdpath url bearer < <(jq -r \
           '[.name, .probe, .transport, (.codex.startupTimeoutSec // 20 | tostring),
             (.command // ""), (.url // ""), (.codex.bearerEnvVar // "")] | join("\u001f")' <<<"$row")
@@ -545,10 +512,8 @@
             emit FAIL "command not executable: $cmdpath"; return 0
           fi
           mapfile -t argv < <(jq -r '(.args // [])[]' <<<"$row")
-          # FIFO stdin: hold the write end open until the response lands, then
-          # close it — stdin EOF is the shutdown, so no probe outlives its
-          # answer (a sleep-holder would strand every server for the full
-          # timeout after doctor returns). timeout backstops mute servers.
+          # FIFO stdin: hold the write end open until the response lands, then close it — stdin EOF is the shutdown, so no probe outlives its answer
+          # (a sleep-holder would strand every server for the full timeout after doctor returns); timeout backstops mute servers.
           mkfifo "$out.fifo"
           line=""
           exec {rfd}< <(timeout "$((t + 2))" "$cmdpath" ''${argv[0]+"''${argv[@]}"} <"$out.fifo" 2>/dev/null || true)
@@ -574,11 +539,9 @@
             [ -n "''${!v:-}" ] || { emit SKIP "credential env absent: $v"; return 0; }
             hdr+=(-H "$h: ''${!v}")
           done < <(jq -r '(.codex.headerEnv // {}) | to_entries[] | "\(.key)\t\(.value)"' <<<"$row")
-          # Body temp lives beside the row outfile inside the doctor's trapped
-          # tmpdir, so an aborted probe leaves no $TMPDIR litter.
+          # Body temp lives beside the row outfile inside the doctor's trapped tmpdir, so an aborted probe leaves no $TMPDIR litter.
           body="$out.body"
-          # curl -w still emits its code line on transport failure; a second echo
-          # would corrupt the status, so failures fall through to the 000 default.
+          # curl -w still emits its code line on transport failure; a second echo would corrupt status, so failures fall through to the 000 default.
           code="$(curl -sS --max-time "$t" -o "$body" -w '%{http_code}' -X POST "$url" \
             -H 'Content-Type: application/json' -H 'Accept: application/json, text/event-stream' \
             -H 'MCP-Protocol-Version: 2025-06-18' ''${hdr[0]+"''${hdr[@]}"} --data "$req" 2>/dev/null || true)"
@@ -589,8 +552,7 @@
             info="$(jq -er '.result.serverInfo | "\(.name) \(.version // "?")"' <<<"$payload" 2>/dev/null || echo "initialize accepted")"
             emit OK "$info$envnote"
           elif [ "$code" = 401 ] && [ ''${#hdr[@]} -eq 0 ]; then
-            # No credential mechanism on the row (client-managed OAuth): a 401
-            # proves the endpoint is alive; an unauthenticated pass never can.
+            # No credential mechanism on the row (client-managed OAuth): a 401 proves the endpoint is alive; an unauthenticated pass never can.
             emit OK "reachable, HTTP 401 (client-managed auth)$envnote"
           else
             emit FAIL "HTTP $code from initialize$envnote"
@@ -599,8 +561,7 @@
         fi
       }
 
-      # Named probe families: launcher rows declaring `doctor` get local checks
-      # beyond initialize — the Forge launcher name IS the probe row.
+      # Named probe families: launcher rows declaring `doctor` get local checks beyond initialize — the Forge launcher name IS the probe row.
       family_rows() { # $1=outfile
         local out="$1"
         while IFS= read -r row; do
@@ -677,8 +638,7 @@
           for ((f = 0; f < i; f++)); do cat "$tmp/row.$f"; done
           [ ! -f "$tmp/families" ] || cat "$tmp/families"
         } >"$rows"
-        # Direct file grep: grep -q on the read end of a pipe SIGPIPEs the
-        # writer under pipefail, and the negation would swallow real FAILs.
+        # Direct file grep: grep -q on the read end of a pipe SIGPIPEs the writer under pipefail, and the negation would swallow real FAILs.
         rc=0
         ! grep -q $'^FAIL\t' "$rows" || rc=1
         if [ "$as_json" = 1 ]; then
@@ -697,8 +657,7 @@
         exit "$rc"
       }
 
-      # Five-way registration drift: the manifest is the owner; every registry
-      # is validated as a full mirror (claude, codex) or a declared projection
+      # Five-way registration drift: the manifest is the owner; every registry is validated as a full mirror (claude, codex) or a declared projection
       # subset (vscode, maghz-claude, maghz-codex). Report-only, never mutates.
       cmd_drift() {
         as_json=0
@@ -712,8 +671,7 @@
         # registry rows: name|class|present|clean|findings-file
         : >"$tmp/registries"
 
-        # Registry admission: parse per format, then require an object shape —
-        # an absent, unparseable, or wrong-shaped registry is a total-drift
+        # Registry admission: parse per format, then require an object shape — an absent, unparseable, or wrong-shaped registry is a total-drift
         # finding, never a crash and never a false clean.
         extract_reg() { # $1=json|toml $2=filter $3=file
           case "$1" in
@@ -730,8 +688,7 @@
         claude_ok=1 codex_ok=1
         claude_json="$(admit_reg json '.mcpServers // {}' "$HOME/.claude.json")" || { claude_json='{}'; claude_ok=0; }
         codex_json="$(admit_reg toml '.mcp_servers // {}' "$HOME/.codex/config.toml")" || { codex_json='{}'; codex_ok=0; }
-        # A drift-program failure on admitted registries is itself a finding;
-        # a swallowed rc here would render empty lanes as false-clean.
+        # A drift-program failure on admitted registries is itself a finding; a swallowed rc here would render empty lanes as false-clean.
         jq -rn \
           --slurpfile fleet "$fleet" \
           --slurpfile claude <(printf '%s' "$claude_json") \
@@ -753,8 +710,7 @@
           drift_lines="$(grep -cv '^INFO ' "$f" || true)"
           printf '%s|subset|1|%s|%s\n' "$name" "$([ "$drift_lines" = 0 ] && echo 1 || echo 0)" "$f" >>"$tmp/registries"
         }
-        # Projection registries are rows (name|file|format|extract|program):
-        # a new registry is one row, never a new if/else block.
+        # Projection registries are rows (name|file|format|extract|program): a new registry is one row, never a new if/else block.
         while IFS='|' read -r rname rfile rfmt rfilter rprog; do
           if [ ! -f "$rfile" ]; then
             printf '%s|subset|0|1|%s\n' "$rname" /dev/null >>"$tmp/registries"
@@ -804,8 +760,8 @@
         exit "$rc"
       }
 
-      # Desired-registration generator: emits the manifest-derived fragment for
-      # one client shape; values are env NAMES or empty strings, never secrets.
+      # Desired-registration generator: emits the manifest-derived fragment for one client shape; values are env NAMES or empty strings, never
+      # secrets.
       cmd_generate() {
         case "''${1:-}" in
           claude) jq -f '${generateClaudeJq}' "$fleet" ;;
@@ -815,15 +771,13 @@
         esac
       }
 
-      # Agent-root observability: runtime corpus facts (counts + sizes) for the
-      # retention board. Read-only; class names are the retention rows.
+      # Agent-root observability: runtime corpus facts (counts + sizes) for the retention board. Read-only; class names are the retention rows.
       cmd_roots() {
         as_json=0; [ "''${1:-}" != "--json" ] || as_json=1
         scan() { # $1=root $2=class $3=path
           local files kb
           [ -e "$3" ] || return 0
-          # Guarded folds: a root vanishing or turning unreadable mid-scan is
-          # expected non-zero, one scalar per probe, never a killed verb.
+          # Guarded folds: a root vanishing or turning unreadable mid-scan is expected non-zero, one scalar per probe, never a killed verb.
           files="$({ find "$3" -type f 2>/dev/null || true; } | wc -l | tr -d ' ')"
           kb="$({ du -sk "$3" 2>/dev/null || true; } | awk 'NR == 1 {s = $1} END {print s + 0}')"
           printf '%s\t%s\t%s\t%s\t%s\n' "$1" "$2" "''${3/#"$HOME"/\~}" "$files" "$kb"
@@ -857,10 +811,8 @@
         receipt roots ok "rows=$(printf '%s\n' "$rows" | grep -c . || true)"
       }
 
-      # Gated traffic capture: opt-in env required, frame metadata only
-      # (direction, kind, method, id, bytes — params/results never persist),
-      # logs age out at ${toString snoopPolicy.retentionDays}d. Capture without
-      # the policy gate is unreachable.
+      # Gated traffic capture: opt-in env required, frame metadata only (direction, kind, method, id, bytes — params/results never persist), logs age
+      # out at ${toString snoopPolicy.retentionDays}d; capture without the policy gate is unreachable.
       cmd_snoop() {
         server="''${1:-}"; shift || true
         [ "''${1:-}" != "--" ] || shift
@@ -905,13 +857,10 @@
   };
 
   # --- [FORGE_AGENTS]
-  # One data owner turns agent lanes, attention (hook + bell feed rows),
-  # standing estate alerts, and AI quota into one cached fact set; the
-  # zjstatus top bar renders the cells and the {notifications} toast, the
-  # desktop banner rides terminal-notifier, and the alerter answer channel
-  # closes the loop — one fold, four renderers, per-source policy rows.
-  # Failed provider lanes keep the previous value with stale=true and back
-  # off exponentially; a banner click routes back via `answer`/`focus`.
+  # One data owner turns agent lanes, attention (hook + bell feed rows), standing estate alerts, and AI quota into one cached fact set; the zjstatus
+  # top bar renders the cells and the {notifications} toast, the desktop banner rides terminal-notifier, and the alerter answer channel closes the
+  # loop — one fold, four renderers, per-source policy rows. Failed provider lanes keep the previous value with stale=true and back off exponentially;
+  # a banner click routes back via `answer`/`focus`.
   forgeAgents = pkgs.writeShellApplication {
     name = "forge-agents";
     runtimeInputs = [pkgs.coreutils pkgs.curl pkgs.jq pkgs.findutils pkgs.gawk pkgs.gnugrep pkgs.flock];
@@ -928,9 +877,7 @@
             iso_now() { TZ=UTC0 printf '%(%Y-%m-%dT%H:%M:%SZ)T' "$EPOCHSECONDS"; }
             receipt_surface="forge-agents"
             ${receiptsFold}
-            # Shared F01 vocabulary (attention.nix): urgency ladder, kv
-            # parser, latest-needs fold — $-bearing jq text as single-quoted
-            # data by design.
+            # Shared F01 vocabulary (attention.nix): urgency ladder, kv parser, latest-needs fold — $-bearing jq text as single-quoted data by design.
             # shellcheck disable=SC2016
             jq_defs=${lib.escapeShellArg (attention.urgencyJq + attention.kvJq + attention.latestNeedsJq)}
             alerts_catalog='${alertsJson}'
@@ -956,14 +903,12 @@
 
             cmd_collect() {
               mkdir -p "$state_root" "$(dirname "$lanes_out")"
-              # One collector at a time: an overlapping interval run must not
-              # race the cache, the backoff meta, or the notification dedupe.
+              # One collector at a time: an overlapping interval run must not race the cache, the backoff meta, or the notification dedupe.
               exec {collect_fd}>"$state_root/.collect.lock"
               flock -n "$collect_fd" || exit 0
               now="$EPOCHSECONDS"
               ts="$(iso_now)"
-              # Tolerant admission: a torn or foreign cache/meta file folds to
-              # {} instead of killing the collector under set -e.
+              # Tolerant admission: a torn or foreign cache/meta file folds to {} instead of killing the collector under set -e.
               prev="$(jq -c 'if type == "object" then . else {} end' "$cache" 2>/dev/null)" || prev='{}'
               m="$(jq -c 'if type == "object" then . else {} end' "$meta" 2>/dev/null)" || m='{}'
 
@@ -987,15 +932,10 @@
                      state: (if (.[1] | tonumber) >= 5 then "running" else "waiting" end)})')"
 
               # --- [ATTENTION_AND_BELLS]
-              # ONE feed snapshot, ONE jq: hook rows join live process facts —
-              # a session needs input only when its latest event is
-              # Notification within the window AND its recorded tty still
-              # hosts an idle claude lane; one row per tty so stacked tabs
-              # never inflate the count, and the newest row keeps its identity
-              # so `focus`/`answer` route the click. source=bell rows (WezTerm
-              # bell arm) count inside their own policy window — the deck
-              # toast owns the bell's desktop surface. fromjson? rails the
-              # live-appended, lock-free-rotated feed.
+              # ONE feed snapshot, ONE jq: hook rows join live process facts — a session needs input only when its latest event is Notification within
+              # the window AND its recorded tty still hosts an idle claude lane; one row per tty so stacked tabs never inflate the count, and the
+              # newest row keeps its identity so `focus`/`answer` route the click. source=bell rows (WezTerm bell arm) count inside their own policy
+              # window — the deck toast owns the bell's desktop surface, and fromjson? rails the live-appended, lock-free-rotated feed.
               TZ=UTC0 printf -v att_cut '%(%Y-%m-%dT%H:%M:%SZ)T' "$((now - 3600))"
               TZ=UTC0 printf -v bell_cut '%(%Y-%m-%dT%H:%M:%SZ)T' "$((now - ${toString notifyPolicy.bellWindowSec}))"
               feed_facts="$(tail -n 500 "$feed" 2>/dev/null | jq -Rcn \
@@ -1020,10 +960,8 @@
               bells_n="$(jq -r '.bells.count' <<<"$feed_facts")"
 
               # --- [ALERTS_STANDING_ESTATE_CONDITIONS]
-              # Catalog rows (attention.nix joined to the receipt registry):
-              # each predicate judges the LAST receipt row of its kind, so an
-              # alert stands until a newer row clears it — estate state, not a
-              # windowed event. One jq per row; rows are Nix-owned data.
+              # Catalog rows (attention.nix joined to the receipt registry): each predicate judges the LAST receipt row of its kind, so an alert
+              # stands until a newer row clears it — estate state, not a windowed event. One jq per row; rows are Nix-owned data.
               alerts="$(while IFS=$'\x1f' read -r a_source a_kind a_pred a_label a_path a_grain; do
                 f="$HOME/$a_path"
                 [ -f "$f" ] || continue
@@ -1047,8 +985,7 @@
               if should_run codex; then
                 cx_ok=0
                 while IFS= read -r f; do
-                  # fromjson? rail: a torn tail line in a live-appended session
-                  # file skips instead of aborting the stream mid-file.
+                  # fromjson? rail: a torn tail line in a live-appended session file skips instead of aborting the stream mid-file.
                   rl="$(jq -Rc 'fromjson? | select(.payload.rate_limits.primary) | .payload.rate_limits' "$f" 2>/dev/null | tail -1 || true)"
                   if [ -n "$rl" ]; then
                     cx="$(jq -c --arg ts "$ts" '{
@@ -1084,8 +1021,7 @@
                         | .message.usage | ((.input_tokens // 0) + (.output_tokens // 0))] | add // 0' 2>/dev/null
                 )" || win_tok=""
                 TZ=UTC0 printf -v week_cut '%(%Y-%m-%d)T' "$((now - 604800))"
-                # One projection per stats snapshot; a missing cache leaves both
-                # fields at their fallbacks.
+                # One projection per stats snapshot; a missing cache leaves both fields at their fallbacks.
                 week_tok="" week_asof=""
                 IFS=$'\x1f' read -r week_tok week_asof < <(jq -r --arg d "$week_cut" \
                   '[([.dailyModelTokens[]? | select(.date >= $d) | .tokensByModel | add] | add // 0 | tostring),
@@ -1123,10 +1059,8 @@
               mv "$tmp_cache" "$cache"
 
               # --- [PROJECTIONS]
-              # The zjstatus top bar is the ONE render surface; the collector owns
-              # role->palette styling (build-time hexes from the theme owner) and
-              # ships fully formatted payloads the bar renders verbatim (dynamic).
-              # One projection per cache snapshot; 0x1f join survives empties.
+              # The zjstatus top bar is the ONE render surface; the collector owns role->palette styling (build-time hexes from the theme owner) and
+              # ships fully formatted payloads the bar renders verbatim (dynamic). One projection per cache snapshot; 0x1f join survives empties.
               IFS=$'\x1f' read -r run_n wait_n cx_p cx_s cl_w cx_stale cl_stale < <(jq -r '
                 [(.lanes.running | tostring), (.lanes.waiting | tostring),
                  (.quota.codex.primary_used_percent // "" | tostring),
@@ -1146,9 +1080,8 @@
               fi
               [ -n "$quota_text" ] || quota_text="quota -"
 
-              # Cell state colors: agents muted when idle, success while lanes
-              # run, attention on needs_input, danger while a standing estate
-              # alert is active; quota escalates on the codex 5h window.
+              # Cell state colors: agents muted when idle, success while lanes run, attention on needs_input, danger while a standing estate alert is
+              # active; quota escalates on the codex 5h window.
               agents_fg="${roles.text.muted.hex}"
               [ "$run_n" = 0 ] || agents_fg="${roles.state.success.hex}"
               [ "''${needs:-0}" = 0 ] || agents_fg="${roles.state.attention.hex}"
@@ -1177,18 +1110,10 @@
                 ${profileBin}/zellij --session "$s" pipe "zjstatus::pipe::pipe_quota::$quota_cell" 2>/dev/null || true
               done < <(${profileBin}/zellij list-sessions -ns 2>/dev/null || true)
 
-              # One rise contract for every notification class: rise_gate is
-              # the predicate (count above previous, per-class throttle),
-              # notify_post the renderer fan — terminal-notifier banner with
-              # an optional click verb, the in-bar toast broadcast, and the
-              # ntfy cross-device publish (policy rows carry priority/tags;
-              # absent custody degrades to local-only). The {notifications}
-              # widget renders payloads literally (no #[..] path), so urgency
-              # rides the text prefix — "?" needs-input, "!!" failure;
-              # per-urgency color stays on the pipe_agents cell. A new
-              # notification class is one gate + one post, never a new
-              # hand-spelled block; a dead zellij, absent notifier, or
-              # unreachable ntfy target is benign.
+              # Rise contract per notification class: rise_gate is the predicate (count rise + per-class throttle); notify_post fans terminal-notifier
+              # banner (optional click verb), in-bar toast, ntfy publish (priority/tags; absent custody → local-only). The {notifications} widget
+              # renders payloads literally, so urgency rides the text prefix ("?" needs-input, "!!" failure) and per-urgency color stays on the
+              # pipe_agents cell. A new class is one gate + one post; a dead zellij, absent notifier, or unreachable ntfy target is benign.
               notify_bars() { # $1 = one-line message
                 local msg
                 msg="$(tr -d '\n' <<<"$1")"
@@ -1198,8 +1123,7 @@
                   ${profileBin}/zellij --session "$s" pipe "zjstatus::notify::$msg" 2>/dev/null || true
                 done < <(${profileBin}/zellij list-sessions -ns 2>/dev/null || true)
               }
-              # Cross-device custody: session env first, launchd GUI replay
-              # second (the collector runs under launchd with no session env).
+              # Cross-device custody: session env first, launchd GUI replay second (the collector runs under launchd with no session env).
               ntfy_url="''${NTFY_URL:-}" ntfy_topic="''${NTFY_TOPIC:-}" ntfy_token="''${NTFY_TOKEN:-}"
               if [ -z "$ntfy_url" ] && [ -x /bin/launchctl ]; then
                 ntfy_url="$(/bin/launchctl getenv NTFY_URL || true)"
@@ -1228,11 +1152,9 @@
                 notify_remote "$6" "$7" "$2" "$3"
               }
 
-              # needs-input rise: the banner carries the waiting pane's last
-              # line via peek, and its click runs the policy verb — `answer`
-              # (alerter reply routed into the waiting pane) where the alerter
-              # rail exists, bare `focus` elsewhere (osascript clicks opened
-              # Script Editor — the scar that keeps posting on terminal-notifier).
+              # needs-input rise: the banner carries the waiting pane's last line via peek, and its click runs the policy verb — `answer` (alerter
+              # reply routed into the waiting pane) where the alerter rail exists, bare `focus` elsewhere (osascript clicks opened Script Editor — the
+              # scar that keeps posting on terminal-notifier).
               prev_needs="$(jq -r '.attention.needs_input // 0' <<<"$prev")"
               last_notify="$(jq -r '.last_notify // 0' <<<"$m")"
               notified=0
@@ -1254,9 +1176,7 @@
                 notified=1
               fi
 
-              # standing-alert rise: banner in its own group, no click verb —
-              # the receipts plane (forge-receipts --verb failures) is the
-              # follow-up surface.
+              # standing-alert rise: banner in its own group, no click verb; forge-receipts --verb failures is the follow-up surface.
               prev_alerts="$(jq -r '.alerts.count // 0' <<<"$prev")"
               last_alert_notify="$(jq -r '.last_alert_notify // 0' <<<"$m")"
               alert_notified=0
@@ -1297,21 +1217,17 @@
               fi
             }
 
-            # Click-routing: the inner hop focuses the zellij pane and chases
-            # the attached client's pty; the outer hop resolves pty -> hosting
-            # app through process ancestry and dispatches that app's focus row
-            # (unknown app: bare raise). Clicks run headless, so lane receipts
-            # are the only witness when routing goes sideways.
+            # Click-routing: the inner hop focuses the zellij pane and chases the attached client's pty; the outer hop resolves pty -> hosting app
+            # through process ancestry and dispatches that app's focus row (unknown app: bare raise). Clicks run headless, so lane receipts are the
+            # only witness when routing goes sideways.
             focus_receipt() {
               local row
               printf -v row 'ts=%s\tverb=focus\tlane=%s\ttty=%s\tresult=ok' \
                 "$(iso_now)" "$1" "''${tty:-.}"
               append_receipt "$row" 2>/dev/null || true
             }
-            # Generic resolver: the lowest pid on the pty is its session leader;
-            # walk ancestry to the first command inside an .app bundle. macOS
-            # `ps -o comm=` prints full executable paths, so the bundle names
-            # the host deterministically for any terminal, present or future.
+            # Generic resolver: the lowest pid on the pty is its session leader; walk ancestry to the first command inside an .app bundle. macOS `ps
+            # -o comm=` prints full executable paths, so the bundle names the host deterministically for any terminal, present or future.
             host_app_for_tty() { # $1=tty (ttysNNN) -> app basename on stdout
               local pid cmd
               pid="$(${psBin} -t "$1" -o pid= 2>/dev/null | sort -n | head -1 | tr -d ' ')"
@@ -1383,14 +1299,12 @@
               IFS=$'\x1f' read -r zs zp wp tp tty < <(jq -r \
                 '[.zellij_session // "", .zellij_pane // "", .wezterm_pane // "", .term // "", .tty // ""] | join("\u001f")' \
                 <<<"''${row:-null}" 2>/dev/null) || true
-              # Feed rows are foreign material: tty crosses into ps and an
-              # AppleScript literal, so a non-pty spelling drops at the seam.
+              # Feed rows are foreign material: tty crosses into ps and an AppleScript literal, so a non-pty spelling drops at the seam.
               [[ "''${tty:-}" =~ ^[A-Za-z0-9]*$ ]] || tty=""
               wezbin="/Applications/WezTerm.app/Contents/MacOS/wezterm"
               [ -x "$wezbin" ] || wezbin="$(command -v wezterm || true)"
 
-              # Inner hop: focus the exact zellij pane, then chase the attached
-              # client's pty (reattachment moves it, so the row's tty is advisory).
+              # Inner hop: focus the exact zellij pane, then chase the attached client's pty (reattachment moves it, so the row's tty is advisory).
               live_sessions="$(${profileBin}/zellij list-sessions -ns 2>/dev/null || true)"
               if [ -n "$zs" ] && grep -qxF "$zs" <<<"$live_sessions"; then
                 [ -z "$zp" ] || ${profileBin}/zellij --session "$zs" action focus-pane-id "$zp" 2>/dev/null || true
@@ -1399,8 +1313,7 @@
                 [ -z "$ctty" ] || tty="$ctty"
               fi
 
-              # Outer hop: ancestry-resolved host app first, the recorded term
-              # program as fallback vocabulary, WezTerm as the estate default.
+              # Outer hop: ancestry-resolved host app first, the recorded term program as fallback vocabulary, WezTerm as the estate default.
               app=""
               [ -z "''${tty:-}" ] || app="$(host_app_for_tty "$tty" || true)"
               if [ -z "$app" ]; then
@@ -1413,17 +1326,14 @@
               if [ -n "$handler" ] && "$handler" "''${tty:-}" "$wp"; then
                 return 0
               fi
-              # Bare raise honors the resolved app; a TCC-blocked tab match
-              # still lands the operator on the right application.
+              # Bare raise honors the resolved app; a TCC-blocked tab match still lands the operator on the right application.
               /usr/bin/open -a "$app" 2>/dev/null || true
               focus_receipt "$(printf '%s-app' "$app" | tr '[:upper:]' '[:lower:]')"
             }
 
-            # Answer channel: the needs-input banner click lands here. Resolve
-            # the latest attention row, carry the waiting pane's tail into a
-            # blocking alerter question, and write the typed reply back into
-            # the exact pane by pane-id — the notification answers the agent
-            # without a window switch. Every degraded leg falls back to focus.
+            # Answer channel: the needs-input banner click lands here. Resolve the latest attention row, carry the waiting pane's tail into a blocking
+            # alerter question, and write the typed reply back into the exact pane by pane-id — the notification answers the agent without a window
+            # switch. Every degraded leg falls back to focus.
             answer_receipt() { # $1=result $2=reply_len
               local row
               printf -v row 'ts=%s\tverb=answer\treply_len=%s\tresult=%s' \
@@ -1498,16 +1408,14 @@
 in {
   home.packages = launchers ++ [maghzPostgres rhinoRouter forgeMcp forgeAgents mcpCompletion agentsCompletion];
 
-  # Identity bundle rows on the shared owner (bundle-apps.nix): Login Items &
-  # Extensions resolves each agent's AssociatedBundleIdentifiers to a real name.
+  # Identity bundle rows on the shared owner (bundle-apps.nix): Login Items & Extensions resolves each agent's AssociatedBundleIdentifiers to a name.
   forge.bundleApps = {
     forge-mcp-drift = "Forge MCP Drift";
     forge-agents = "Forge Agents";
   };
 
   launchd.agents = {
-    # Weekly pin-drift banner: Notification Center only when a pin is outdated;
-    # silent when current or offline (a registry failure never notifies).
+    # Weekly pin-drift banner: Notification Center only when a pin is outdated; silent when current or offline (a registry failure never notifies).
     forge-mcp-outdated = {
       enable = true;
       config = {
@@ -1527,8 +1435,7 @@ in {
         AssociatedBundleIdentifiers = ["com.parametric-forge.forge-mcp-drift"];
       };
     };
-    # Minute-cadence collector: cached facts for the bar cells; receipts land
-    # only on state transitions so the log stays quiet.
+    # Minute-cadence collector: cached facts for the bar cells; receipts land only on state transitions so the log stays quiet.
     forge-agents = {
       enable = true;
       config = {

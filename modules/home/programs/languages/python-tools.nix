@@ -61,8 +61,7 @@
               exec "$project_root/.venv/bin/python" "$@"
             fi
 
-            # The uv lane needs a locked project; a config-only pyproject
-            # (no lock) must not trigger dependency resolution or venv creation.
+            # The uv lane needs a locked project; a config-only pyproject (no lock) must not trigger dependency resolution or venv creation.
             if [[ -f "$project_root/uv.lock" ]]; then
               export FORGE_PYTHON_SHIM_ACTIVE=1
               exec uv --project "$project_root" run python "$@"
@@ -130,8 +129,7 @@
             if tool_path="$(_resolve_project_tool "$project_root")"; then
               exec "$tool_path" "$@"
             fi
-            # The uv lane needs a locked project; a config-only pyproject
-            # (no lock) falls through to the store binary, which still reads
+            # The uv lane needs a locked project; a config-only pyproject (no lock) falls through to the store binary, which still reads
             # the project's [tool.*] law from the working tree.
             if [[ -f "$project_root/uv.lock" ]]; then
               exec uv --project "$project_root" run "${name}" "$@"
@@ -158,18 +156,16 @@
     '';
   };
 in {
-  # Machine-level fallback style: ruff and mypy resolve their XDG user config
-  # only when upward discovery finds no project config, so project law always
-  # wins and ad-hoc scripts inherit the house style. ty needs no user row —
-  # strictness is project law and its user-level config merges rather than yields.
-  # uv needs no user row — its defaults (managed pythons, automatic downloads)
-  # already are the house policy, and a row restating defaults is dead config.
+  # Machine-level fallback style: ruff and mypy resolve their XDG user config only when upward discovery finds no project config, so project law
+  # always wins and ad-hoc scripts inherit the house style. ty needs no user row — strictness is project law and its user-level config merges rather
+  # than yields. uv needs no user row — its defaults (managed pythons, automatic downloads) already are the
+  # house policy, and a row restating defaults is dead config.
   xdg.configFile = {
     "ruff/ruff.toml".text = ''
-      # Ad-hoc contexts have no project root; without this row `ruff check`
-      # drops a .ruff_cache into the working directory.
+      # Ad-hoc contexts have no project root; without this row `ruff check` drops a .ruff_cache into the working directory.
       cache-dir = "${config.xdg.cacheHome}/ruff"
 
+      preview = true
       line-length = ${toString style.width}
       indent-width = ${toString style.indent}
 
@@ -181,8 +177,7 @@ in {
       [lint]
       select = ["E4", "E7", "E9", "F", "B", "I", "SIM", "UP", "RUF"]
 
-      # The formatter owns trailing commas; default-true here fights
-      # skip-magic-trailing-comma and warns on every format run.
+      # The formatter owns trailing commas; default-true here fights skip-magic-trailing-comma and warns on every format run.
       [lint.isort]
       split-on-trailing-comma = false
     '';
@@ -196,7 +191,7 @@ in {
     # --- [PYTHON_RUNTIME_CANONICAL_SOURCE]
     (projectPython "python")
     (projectPython "python3")
-    python315 # Python 3.15
+    python315
 
     # --- [PYTHON_TOOLING]
     (projectTool "ruff" ruff) # Fast Python linter/formatter

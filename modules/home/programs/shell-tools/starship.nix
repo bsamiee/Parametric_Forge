@@ -18,8 +18,8 @@
       "$schema" = "https://starship.rs/config-schema.json";
 
       # --- [GLOBAL_CONFIGURATION]
-      palette = "dracula"; # Use Dracula color palette
-      add_newline = true; # Blank line between prompts
+      palette = "dracula";
+      add_newline = true;
       scan_timeout = 50; # File-scan budget (ms); prompt never blocks on large trees
       command_timeout = 800; # Command budget (ms); slow git/tool calls get cut, not awaited
 
@@ -44,7 +44,7 @@
         "$character"
       ];
 
-      # Right-side prompt (operational telemetry, verified on starship 1.25.1)
+      # Right-side prompt: operational telemetry.
       right_format = lib.concatStrings [
         "$status"
         "$cmd_duration"
@@ -54,7 +54,6 @@
         "$time"
       ];
 
-      # Continuation prompt for incomplete commands
       continuation_prompt = " ";
 
       # --- [CORE_MODULES]
@@ -116,8 +115,7 @@
       };
 
       # --- [GIT_MODULES]
-      # vcs composes the git payload with one repo-detection pass per prompt;
-      # git_metrics stays out (per-draw diff cost).
+      # vcs composes the git payload with one repo-detection pass per prompt; git_metrics stays out (per-draw diff cost).
       vcs = {
         disabled = false;
         order = ["git"];
@@ -276,8 +274,7 @@
         unknown_indicator = "sh";
       };
 
-      # Context-gated: visible only where kube work is provable (manifests,
-      # chart/kustomize roots, or an explicit KUBECONFIG); prod contexts go red.
+      # Context-gated: visible only where kube work is provable (manifests, chart/kustomize roots, or an explicit KUBECONFIG); prod contexts go red.
       kubernetes = {
         disabled = false;
         format = "\\[[󱃾 $context( \\($namespace\\))]($style)\\]";

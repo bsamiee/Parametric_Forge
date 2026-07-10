@@ -4,11 +4,9 @@
 # License       : MIT
 # Path          : modules/home/programs/apps/wezterm/default.nix
 # ----------------------------------------------------------------------------
-# WezTerm outer-command-deck owner: typed rows (keys, deck commands, quick-
-# select patterns, hyperlink rules, floats, ssh domains, workspaces, fonts,
-# plugin pins) project into generated Lua data + a colors TOML; deck.lua and
-# events.lua are the only static interpreters. A build-time validator gates
-# activation on Lua syntax, plugin payloads, and action-dispatch totality.
+# WezTerm outer-command-deck owner: typed rows (keys, deck commands, quick-select patterns, hyperlink rules, floats, ssh domains, workspaces,
+# fonts, plugin pins) project into generated Lua data + a colors TOML; deck.lua and events.lua are the only static interpreters. A build-time
+# validator gates activation on Lua syntax, plugin payloads, and action-dispatch totality.
 {
   config,
   forgeToolchainEnvFor,
@@ -39,18 +37,14 @@
   weztermTypesSrc = pluginSrc manifest.extensions.wezterm-plugins.rows.wezterm-types;
 
   # --- [FONT_ROW]
-  # The font owner's WezTerm projection (modules/home/fonts.nix): chain,
-  # per-family leading, shaping features, and the forge-font override path
-  # all arrive from config.forge.fonts; deck.lua interprets them.
+  # The font owner's WezTerm projection: chain, per-family leading, shaping features, and the forge-font override path all arrive
+  # from config.forge.fonts; deck.lua interprets them.
   fontRow = config.forge.fonts.projections.luaFont;
 
   # --- [WORKSPACE_ROWS_ONE_SESSION_FABRIC_VOCABULARY]
-  # One row = picker entry + zellij session identity + cwd + float policy +
-  # warm posture. Local rows project from the name-policy register; remote
-  # rows derive from ssh-host mount rows (cwd = the rclone mountpoint), so a
-  # second VPS lights the picker with zero edits here. `warm` rows resurrect
-  # in the background at login (forge-workspace --warm); `float` names the
-  # shape workspace-scoped floats take while the workspace is active.
+  # One row = picker entry + zellij session identity + cwd + float policy + warm posture. Local rows project from the name-policy register; remote
+  # rows derive from ssh-host mount rows (cwd = the rclone mountpoint), so a second VPS lights the picker with zero edits here. `warm` rows
+  # resurrect in the background at login (forge-workspace --warm); `float` names the shape workspace-scoped floats take while the workspace is active.
   workspaceRoot = "${homeDir}/Documents/99.Github";
   workspaceRows =
     map (r: {
@@ -90,9 +84,8 @@
     (lib.attrValues sshHosts);
 
   # --- [ACTION_BUS_ROWS_QUICK_SELECT_PATTERNS_HYPERLINK_RULES]
-  # `select` names a deck.lua action arm for the captured span (edit opens the
-  # span in an editor float, domain opens the aliased SSH window); rows
-  # without it keep the native clipboard default.
+  # `select` names a deck.lua action arm for the captured span (edit opens the span in an editor float, domain opens the aliased SSH window);
+  # rows without it keep the native clipboard default.
   hostAliasAlternation =
     lib.concatStringsSep "|"
     (map lib.escapeRegex (lib.unique (lib.concatMap (h: h.aliases ++ [h.tunnelHost]) (lib.attrValues sshHosts))));
@@ -130,8 +123,7 @@
       select = "domain";
     };
   hyperlinkRows = [
-    # Semantic estate links: forge://<register-domain>[/...] opens the register
-    # browser float scoped to the domain (forge-browse takes one DOMAIN arg).
+    # Semantic estate links: forge://<register-domain>[/...] opens the register browser float scoped to the domain (forge-browse takes one DOMAIN arg).
     {
       id = "forge-scheme";
       regex = "forge://[A-Za-z0-9/@._:-]+";
@@ -140,8 +132,7 @@
   ];
 
   # --- [FLOATING_UTILITY_DECK_ROWS]
-  # `remote` is the workspace-scoped shape remote workspaces select: near-
-  # opaque so a remote-context float never reads as a local one.
+  # `remote` is the workspace-scoped shape remote workspaces select: near-opaque so a remote-context float never reads as a local one.
   floatRows = {
     utility = {
       width = 120;
@@ -167,11 +158,9 @@
   };
 
   # --- [COMMAND_DECK_ROWS]
-  # One registry feeds the command palette, the launcher menu, and key rows.
-  # kind: float (spawn command in shaped window) | domain (spawn in mux
-  # domain); `destructive` rows pass the deck confirm gate before acting;
-  # `scope = "workspace"` keys the float singleton per workspace and takes
-  # the active workspace row's float shape.
+  # One registry feeds the command palette, the launcher menu, and key rows. kind: float (spawn command in shaped window) | domain (spawn in mux domain);
+  # `destructive` rows pass the deck confirm gate before acting; `scope = "workspace"` keys the float singleton per workspace
+  # and takes the active workspace row's float shape.
   commandRows =
     [
       {
@@ -240,8 +229,7 @@
         args = ["${profileBin}/zsh" "-l"];
       }
       {
-        # Pane-capture float: the waiting agent pane's tail (forge-zellij
-        # peek --attention) pinned in a pager — F10 capture on the float rail.
+        # Pane-capture float: the waiting agent pane's tail (forge-zellij peek --attention) pinned in a pager — F10 capture on the float rail.
         id = "peek-attention";
         label = "forge: peek waiting agent pane";
         kind = "float";
@@ -256,9 +244,8 @@
       domain = d.name;
     })
     sshDomainRows
-    # Remote state through the VFS: one float per host browses sftp://<host>/
-    # in Yazi — remote registers and logs inspected through the same themed
-    # file UI as local state, identity via the pinned agent socket.
+    # Remote state through the VFS: one float per host browses sftp://<host>/ in Yazi — remote registers and logs inspected through the same
+    # themed file UI as local state, identity via the pinned agent socket.
     ++ map (h: {
       id = "sftp-${h.name}";
       label = "remote: browse ${h.name} files (sftp)";
@@ -268,8 +255,7 @@
     }) (lib.attrValues sshHosts);
 
   # --- [PURE_DATA_SETTINGS_RENDERED_VIA_LIB_GENERATORS_TOLUA]
-  # Constructor/env-dependent values live in deck.lua; the two sets stay
-  # disjoint (validated below) so the single-writer merge never collides.
+  # Constructor/env-dependent values live in deck.lua; the two sets stay disjoint (validated below) so the single-writer merge never collides.
   settings = {
     color_scheme = "forge-dracula";
     check_for_updates = false; # the cask pin owns updates; check_update state stays inert
@@ -307,8 +293,7 @@
     skip_close_confirmation_for_processes_named = ["bash" "sh" "zsh" "fish" "tmux" "nu"];
     use_cap_height_to_scale_fallback_fonts = true;
     warn_about_missing_glyphs = true;
-    # Bell rings are structured attention: the events.lua bell arm owns the
-    # surface (receipt row always, toast when background), never a beep.
+    # Bell rings are structured attention: the events.lua bell arm owns the surface (receipt row always, toast when background), never a beep.
     audible_bell = "Disabled";
 
     # Input seam
@@ -318,9 +303,8 @@
     bypass_mouse_reporting_modifiers = "SHIFT";
     hide_mouse_cursor_when_typing = true;
 
-    # Outer identity chrome: retro tab bar, theme-projected via the scheme TOML.
-    # Hidden at one tab — the zellij zjstatus bar is the ONE standing top bar;
-    # this bar exists only when a second WezTerm tab makes it informative.
+    # Outer identity chrome: retro tab bar, theme-projected via the scheme TOML. Hidden at one tab — the zellij zjstatus bar is the ONE standing
+    # top bar; this bar exists only when a second WezTerm tab makes it informative.
     enable_tab_bar = true;
     use_fancy_tab_bar = false;
     hide_tab_bar_if_only_one_tab = true;
@@ -349,8 +333,7 @@
     quick_select_patterns = map (r: r.regex) (lib.sort (a: b: a.priority < b.priority) quickSelectRows);
   };
 
-  # Config keys the interpreters own; a settings row on this list is a
-  # shallow-merge collision and fails eval.
+  # Config keys the interpreters own; a settings row on this list is a shallow-merge collision and fails eval.
   luaOwnedKeys = [
     "font"
     "font_size"
@@ -384,26 +367,22 @@
   rows = {
     nightly_floor = "20260707";
     receipts_log = "${homeDir}/Library/Logs/forge-wezterm.receipts.log";
-    # Attention-feed seam (interconnection [01]-[ATTENTION]): the bell arm
-    # appends source=bell rows on the hook-feed schema for the collector fold.
+    # Attention-feed seam: the bell arm appends source=bell rows on the hook-feed schema for the collector fold.
     attention_feed = "${config.xdg.stateHome}/forge/agent-attention.jsonl";
     paths = {
       path = lib.concatStringsSep ":" toolchainEnv.launchdPathEntries;
       zellij = "${pkgs.zellij}/bin/zellij";
       nvim = "${profileBin}/nvim";
       forge_agents = "${profileBin}/forge-agents";
-      # Frozen-layout assets (forge-zellij layout record): session_args and
-      # forge-workspace both resolve <slug>.kdl here before the default.
+      # Frozen-layout assets (forge-zellij layout record): session_args and forge-workspace both resolve <slug>.kdl here before the default.
       recorded_layouts = "${homeDir}/.local/state/forge/zellij-layouts";
-      # Nightly-only mux pin: without it the mux inherits the identity-less
-      # Apple launchd SSH_AUTH_SOCK (deck.lua applies it under has_nightly).
+      # Nightly-only mux pin: without it the mux inherits the identity-less Apple launchd SSH_AUTH_SOCK (deck.lua applies it under has_nightly).
       auth_sock = config.forge.ssh.identityAgent;
     };
     host_domains = hostDomains;
     plugins.sync_panes = "${syncPanesSrc}";
     font = fontRow;
-    # Registry float rows are singletons: a live float focuses instead of
-    # duplicating. Synthesized floats (quick-edit, open-uri) never set reuse.
+    # Registry float rows are singletons: a live float focuses instead of duplicating. Synthesized floats (quick-edit, open-uri) never set reuse.
     commands = map (r: r // {reuse = r.kind == "float";}) commandRows;
     keys =
       map (r: {
@@ -427,8 +406,7 @@
     return ${lib.generators.toLua {} rows}
   '';
   weztermLua = pkgs.writeText "wezterm-entry.lua" ''
-    -- Generated entry point: pure-data settings land first, interpreters own
-    -- constructors, callbacks, and event handlers.
+    -- Generated entry point: pure-data settings land first, interpreters own constructors, callbacks, and event handlers.
     local wezterm = require("wezterm")
     local config = wezterm.config_builder()
     local settings = ${lib.generators.toLua {} settings}
@@ -454,10 +432,8 @@
   });
   actionIds = map (r: r.action) chordRows;
 
-  # Build-time validator: Lua syntax, plugin payload shape, dispatch totality
-  # (chord actions AND quick-select select arms both resolve in deck.lua). The
-  # grep proves the arm shape itself — a ["id"] table key or an == "id"
-  # equality dispatch — so a receipt/log string literal never false-passes.
+  # Build-time validator: Lua syntax, plugin payload shape, dispatch totality (chord actions AND quick-select select arms both resolve in deck.lua).
+  # The grep proves the arm shape itself — a ["id"] table key or an == "id" equality dispatch — so a receipt/log string literal never false-passes.
   configDir =
     pkgs.runCommand "wezterm-config" {
       nativeBuildInputs = [pkgs.lua5_4];
@@ -489,10 +465,8 @@
     name = "forge-workspace";
     runtimeInputs = [pkgs.coreutils pkgs.jq pkgs.gawk pkgs.gnugrep];
     text = ''
-      # Resolves a workspace-row slug (or wildcard project root) to a WezTerm
-      # workspace + slug-named zellij session; --json/--list carry the session
-      # lifecycle (live | resurrectable | cold) joined from zellij truth;
-      # --warm resurrects warm rows in the background (login rail). Provider
+      # Resolves a workspace-row slug (or wildcard project root) to a WezTerm workspace + slug-named zellij session; --json/--list carry the session
+      # lifecycle (live | resurrectable | cold) joined from zellij truth; --warm resurrects warm rows in the background (login rail). Provider
       # dispatch: none (default) degrades with an explicit receipt row.
       rows="${namingJson}"
       wezterm_bin="''${FORGE_WEZTERM_BIN:-/Applications/WezTerm.app/Contents/MacOS/wezterm}"
@@ -520,19 +494,16 @@
           || printf 'forge-workspace: WARNING receipt not persisted to %s\n' "$receipt_log" >&2
       }
 
-      # --no-auto-start on every cli call: a stale socket must fail the probe,
-      # never fork a daemonized mux server (the recorded litter hazard). The
-      # failed probe degrades to an empty live set, never a pipefail abort.
+      # --no-auto-start on every cli call: a stale socket must fail the probe, never fork a daemonized mux server (the recorded litter hazard).
+      # The failed probe degrades to an empty live set, never a pipefail abort.
       live_workspaces() {
         if [ -n "''${WEZTERM_UNIX_SOCKET:-}" ] && [ -x "$wezterm_bin" ]; then
           "$wezterm_bin" cli --no-auto-start list --format json 2>/dev/null | jq -r '[.[].workspace] | unique | .[]' || true
         fi
       }
 
-      # Lifecycle join: zellij session truth per row — live (session up),
-      # resurrectable (EXITED, serialized), cold (no session); `gui` carries
-      # the wezterm workspace presence separately (a session can outlive its
-      # window). One list-sessions text parse feeds both classifications.
+      # Lifecycle join: zellij session truth per row — live (session up), resurrectable (EXITED, serialized), cold (no session); `gui` carries the
+      # wezterm workspace presence separately (a session can outlive its window). One list-sessions text parse feeds both classifications.
       lifecycle_rows() {
         local sess
         sess="$("$zellij_bin" list-sessions --no-formatting 2>/dev/null || true)"
@@ -557,8 +528,7 @@
           exit 0
           ;;
         --warm)
-          # Login rail: warm rows that are not live attach in the background —
-          # resurrectable sessions replay their serialized layout, cold rows
+          # Login rail: warm rows that are not live attach in the background — resurrectable sessions replay their serialized layout, cold rows
           # land their frozen (or default) layout at the row cwd.
           lifecycle_rows | jq -r '.[] | select(.warm and .lifecycle != "live") | [.name, .cwd, .lifecycle] | @tsv' \
             | while IFS=$'\t' read -r slug cwd was; do # streaming boundary: warm rows as they arrive
@@ -582,8 +552,7 @@
       slug="$1"
       row="$(jq -c --arg s "$slug" '.[] | select(.name == $s)' "$rows")"
       if [ -z "$row" ] && [ -d "$workspace_root/$slug" ]; then
-        # Wildcard admission: any project root is a latent workspace with the
-        # default layout; explicit registry rows always win over the pattern.
+        # Wildcard admission: any project root is a latent workspace with the default layout; explicit registry rows always win over the pattern.
         row="$(jq -cn --arg s "$slug" --arg cwd "$workspace_root/$slug" \
           '{name: $s, label: ("[" + ($s | ascii_upcase) + "]"), cwd: $cwd, kind: "wildcard"}')"
       fi
@@ -594,8 +563,7 @@
       fi
       IFS=$'\x1f' read -r cwd kind < <(jq -r '[.cwd, .kind] | join("\u001f")' <<<"$row")
 
-      # Remote rows ride a mountpoint: device-diff against the parent proves
-      # the mount answers before a session lands on a dead directory.
+      # Remote rows ride a mountpoint: device-diff against the parent proves the mount answers before a session lands on a dead directory.
       if [ "$kind" = "remote" ] \
         && [ "$(stat -c %d "$cwd" 2>/dev/null || echo x)" = "$(stat -c %d "''${cwd%/*}" 2>/dev/null || echo y)" ]; then
         emit "$slug" spawn error "mount absent at $cwd (forge-vps-mount agent down?)" "-"
@@ -618,8 +586,7 @@
         exit 69
       fi
 
-      # Explicit prog mirrors the deck seam: the workspace's slug-named zellij
-      # session, never the shared default_prog session. Stderr lands in a
+      # Explicit prog mirrors the deck seam: the workspace's slug-named zellij session, never the shared default_prog session. Stderr lands in a
       # trap-registered temp so warning noise never corrupts the pane id.
       err="$(mktemp)"
       trap 'rm -f "$err"' EXIT
@@ -681,10 +648,8 @@ in {
 
     home.packages = [forgeWorkspace workspaceCompletion];
 
-    # Warm rail: at login the warm workspace rows resurrect or create their
-    # sessions in the background, so the first interactive attach is instant;
-    # every warm emits a forge-workspace receipt. Row-gated: the agent exists
-    # only while a warm row does.
+    # Warm rail: at login the warm workspace rows resurrect or create their sessions in the background, so the first interactive attach is instant;
+    # every warm emits a forge-workspace receipt. Row-gated: the agent exists only while a warm row does.
     forge.bundleApps = lib.mkIf (warmSlugs != []) {forge-workspace-warm = "Forge Workspace Warm";};
     launchd.agents.forge-workspace-warm = lib.mkIf (warmSlugs != []) {
       enable = true;

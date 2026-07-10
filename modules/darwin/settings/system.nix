@@ -26,7 +26,7 @@ in {
       SHOWFULLNAME = true; # Name+password fields, never the user icon list
       GuestEnabled = false;
       autoLoginUser = null;
-      # LoginwindowText should not be set to avoid duplicate name display
+      # LoginwindowText stays unset — a set value duplicates the name display
       ShutDownDisabled = false;
       SleepDisabled = false;
       RestartDisabled = false;
@@ -96,8 +96,7 @@ in {
     };
   };
 
-  # Keep GUI-launched processes aligned with Nix/Home Manager PATH behavior.
-  # This avoids "tool exists in shell but not in app-launched subprocesses".
+  # Keep GUI-launched processes aligned with Nix/Home Manager PATH, so a tool in the shell also resolves in app-launched subprocesses.
   launchd.user.envVariables =
     toolchainEnv.scientificSessionEnv
     // {
@@ -106,9 +105,8 @@ in {
       COLIMA_HOME = "${primaryUserHome}/.local/share/colima";
       DOCKER_CONFIG = "${primaryUserHome}/.config/docker";
       GH_CONFIG_DIR = "${primaryUserHome}/.config/gh";
-      # Dock/Finder-launched WezTerm never sees shell sessionVariables; without
-      # these rows the GUI runtime (gui-sock, agent links, logs) lands in XDG
-      # data instead of the declared XDG state root.
+      # Dock/Finder-launched WezTerm never sees shell sessionVariables; without these rows the GUI runtime (gui-sock, agent links, logs) lands in
+      # XDG data instead of the declared XDG state root.
       WEZTERM_RUNTIME_DIR = "${primaryUserHome}/.local/state/wezterm";
       WEZTERM_LOG_DIR = "${primaryUserHome}/.local/state/wezterm";
       PNPM_HOME = "${primaryUserHome}/.local/share/pnpm";

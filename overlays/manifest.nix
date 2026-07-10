@@ -4,14 +4,10 @@
 # License       : MIT
 # Path          : overlays/manifest.nix
 # ----------------------------------------------------------------------------
-# Package-admission row registry: one row owns provenance, version policy,
-# per-platform assets and hashes, license, patch family, cache class, update
-# engine, retention, and projection for every non-nixpkgs package and every
-# host-runtime extension family. overlays/default.nix folds `packages` rows
-# into derivations; flake-modules/packages.nix folds `projection.package/app`
-# into public outputs; HM rosters consume `admissions` rows via `rosterRows`.
-# Pure data plus builtins-only accessors — no pkgs, no lib; validation runs in
-# the overlay fold.
+# Package-admission row registry: one row owns provenance, version policy, per-platform assets and hashes, license, patch family, cache class,
+# update engine, retention, and projection for every non-nixpkgs package and every host-runtime extension family. overlays/default.nix folds
+# `packages` rows into derivations; flake-modules/packages.nix folds `projection.package/app` into public outputs; HM rosters consume
+# `admissions` rows via `rosterRows`. Pure data plus builtins-only accessors — no pkgs, no lib; validation runs in the overlay fold.
 let
   v = rec {
     alerter = "26.5";
@@ -30,9 +26,8 @@ let
     sqleanBase = "https://github.com/nalgeon/sqlean/releases/download/${sqlean}";
   };
 
-  # VS Code extension admission builder: every security field is explicit in
-  # the effective row; defaults name the benign common case and a row that
-  # deviates overrides the exact field, so per-row vetting stays readable.
+  # VS Code extension admission builder: every security field is explicit in the effective row; defaults name the benign common case and a row
+  # that deviates overrides the exact field, so per-row vetting stays readable.
   vsxRow = {
     publisher,
     name,
@@ -67,8 +62,7 @@ in rec {
     extensionSecurityFields = ["publisher" "registry" "native_code" "postinstall_behavior" "secret_touching" "host_permissions" "runtime_write_policy" "mutable_paths"];
   };
 
-  # Overlay/package rows. `projection.overlay = "override"` requires
-  # `overlayReason` — overlay mutation transitively overrides consumer
+  # Overlay/package rows. `projection.overlay = "override"` requires `overlayReason` — overlay mutation transitively overrides consumer
   # dependencies and re-keys fixed-output hashes; "new" attrs are inert.
   packages = {
     alerter = {
@@ -76,10 +70,8 @@ in rec {
       version = v.alerter;
       versionPolicy = "fast";
       sourceKind = "github-release";
-      # Notarized Developer ID binary posting under fr.vjeantet.alerter: the
-      # macOS notification (TCC) identity rides the embedded signature, so
-      # admission fetches the release artifact unmodified — a source rebuild
-      # or binary patch forfeits the identity and every --reply/--actions path.
+      # Notarized Developer ID binary posting under fr.vjeantet.alerter: the macOS notification (TCC) identity rides the embedded signature, so admission
+      # fetches the release artifact unmodified — a source rebuild or binary patch forfeits the identity and every --reply/--actions path.
       assets.aarch64-darwin = {
         url = "https://github.com/vjeantet/alerter/releases/download/v${v.alerter}/alerter-${v.alerter}.zip";
         fetch = "zip";
@@ -102,8 +94,7 @@ in rec {
       version = v.biome;
       versionPolicy = "fast";
       sourceKind = "github-release";
-      # Linux rows pin the musl static builds: they run on NixOS with no
-      # interpreter or patchelf dependency; glibc assets would need auto-patchelf.
+      # Linux rows pin the musl static builds: they run on NixOS with no interpreter or patchelf dependency; glibc assets would need auto-patchelf.
       assets = {
         aarch64-darwin = {
           url = "${v.biomeBase}/biome-darwin-arm64";
@@ -305,9 +296,8 @@ in rec {
       updateEngine = "manual";
       retention = "git-history";
       projection.overlay = "new";
-      # Opt-runtime spec: the shared overlay recipe folds these layout, env,
-      # and wrapper facts into the derivation; a next platform runtime is one
-      # row, never a new kernel file.
+      # Opt-runtime spec: the shared overlay recipe folds these layout, env, and wrapper facts into the derivation; a next platform
+      # runtime is one row, never a new kernel file.
       runtime = {
         root = "opt/openstudio";
         shebangDirs = ["bin"];
@@ -409,8 +399,7 @@ in rec {
         package = true;
         app = true;
       };
-      # Shell-kernel data: base modules load on every profile, a profile row
-      # adds extras, and `all` derives in the fold as the union of every row.
+      # Shell-kernel data: base modules load on every profile, a profile row adds extras, and `all` derives in the fold as the union of every row.
       shell = {
         baseModules = ["regexp" "uuid" "stats" "text" "time" "crypto" "math"];
         profiles = {
@@ -423,12 +412,9 @@ in rec {
     };
   };
 
-  # CLI tool admissions (ADMISSION_IS_A_ROW): nixpkgs-sourced tools whose pin
-  # follows the flake input — rows carry no frozen version copy; the JSON
-  # projection resolves the live version from the package set at build time.
-  # `chords` are candidate DATA for the CA-1 register; projection is CA-1's.
-  # `install`: hm-roster (a roster group below consumes it) | ca1 (CA-1 owns
-  # installation and projection) | landed (already owned by a config module).
+  # CLI tool admissions (ADMISSION_IS_A_ROW): nixpkgs-sourced tools whose pin follows the flake input — rows carry no frozen version copy; the JSON
+  # projection resolves the live version from the package set at build time. `chords` are candidate DATA for the CA-1 register; projection is CA-1's.
+  # `install`: hm-roster (a roster group below consumes it) | ca1 (CA-1 owns installation and projection) | landed (already owned by a config module).
   admissions = {
     xan = {
       attr = "xan";
@@ -533,18 +519,14 @@ in rec {
     };
   };
 
-  # One roster fold serves every HM consumer: rows for one roster group whose
-  # installation this manifest owns; consumers map their package set over it.
+  # One roster fold serves every HM consumer: rows for one roster group whose installation this manifest owns; consumers map their package set over it.
   rosterRows = roster:
     builtins.filter (row: row.install == "hm-roster" && row.roster == roster)
     (builtins.attrValues admissions);
 
-  # Host-runtime extension registries: package-like assets consumed by a host.
-  # One family, per-lane sources; CA-4/5/6/7 admit plugin rows here, each
-  # carrying the security fields named in the vocabulary. Empty row sets are
-  # lanes with a declared source and no vetted admission yet. `requiredFields`
-  # is the lane's admission contract: the ledger fold rejects any row missing
-  # one, so an under-specified admission fails the build, never lands silent.
+  # Host-runtime extension registries: package-like assets consumed by a host. One family, per-lane sources; CA-4/5/6/7 admit plugin rows here, each
+  # carrying the security fields named in the vocabulary. Empty row sets are lanes with a declared source and no vetted admission yet. `requiredFields`
+  # is the lane's admission contract: the ledger fold rejects any row missing one, so an under-specified admission fails the build, never lands silent.
   extensions = {
     vscode = {
       source = "marketplace-cli"; # Homebrew-cask VS Code + mutable user extensions dir: rows reconcile through `code --install-extension`, never a Nix-linked dir
@@ -633,8 +615,7 @@ in rec {
           postinstall_behavior = "starts-language-server";
           host_permissions = "workspace-fs+network"; # schema downloads from schemastore; telemetry pinned off in settings
         };
-        # Slow upstream accepted: taplo is feature-complete for TOML 1.0 and
-        # no fresher equivalent exists in this capability class.
+        # Slow upstream accepted: taplo is feature-complete for TOML 1.0 and no fresher equivalent exists in this capability class.
         even-better-toml = vsxRow {
           publisher = "tamasfe";
           name = "even-better-toml";
@@ -668,14 +649,8 @@ in rec {
           license = "MIT";
           capability = "file icon vocabulary; asserted workbench.iconTheme";
         };
-        # Product-icon finalist by completeness: 651 iconDefinitions over the
-        # 603-glyph codicon registry — the only candidate restyling the full
-        # set — with publisher symmetry beside the file-icon row above. Pure
-        # declarative payload: main null, zero deps, no lifecycle scripts.
-        # Freshness ruling: the 2024-07 upstream date is accepted — a font
-        # exceeding the registry is a closed deliverable, staleness surfaces
-        # only as a visibly missing glyph, and the fresh alternative
-        # (icons-carbon, 2026-01) covers 36% with unproven codicon fallback.
+        # Product-icon theme restyling the full codicon registry, publisher-symmetric with the file-icon row; pure declarative payload (main null, zero
+        # deps). icons-carbon covers only a fraction of the set with unproven codicon fallback, so this row holds despite the older upstream.
         material-product-icons = vsxRow {
           publisher = "PKief";
           name = "material-product-icons";
@@ -841,9 +816,8 @@ in rec {
           attr = "nvim-treesitter";
           license = "Apache-2.0"; # main branch; one compat unit with the neovim pin, tree-sitter-cli floor, parsers, queries
         };
-        # hmts-nvim admission reverted: 1.3.0 crashes on Neovim 0.12 +
-        # nvim-treesitter main (LanguageTree parent API drift) against real
-        # Forge files; re-admits only on an upstream compatibility release.
+        # hmts-nvim admission reverted: 1.3.0 crashes on Neovim 0.12 + nvim-treesitter main (LanguageTree parent API drift) against real Forge
+        # files; re-admits only on an upstream compatibility release.
         conform-nvim = {
           attr = "conform-nvim";
           license = "MIT"; # formatter orchestration over Forge-owned binaries

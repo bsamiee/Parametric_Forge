@@ -4,8 +4,7 @@
 # License       : MIT
 # Path          : modules/home/programs/shell-tools/default.nix
 # ----------------------------------------------------------------------------
-# Shell tool inventory; imports carry real configuration only. Monitor and
-# proof-lane admissions arrive as manifest roster rows, never bare entries.
+# Shell tool inventory; imports carry real configuration only. Monitor and proof-lane admissions arrive as manifest roster rows, never bare entries.
 {
   lib,
   pkgs,
@@ -13,10 +12,9 @@
 }: let
   manifest = import ../../../../overlays/manifest.nix;
   rosterPackages = roster: map (row: pkgs.${row.attr}) (manifest.rosterRows roster);
-  # Completion files for admission rows whose tool generates natively but
-  # whose package ships none; one derivation folds every completionArgs row.
-  # Scope: rows this manifest installs (hm-roster) — ca1/landed rows own their
-  # completion surface. getExe resolves mainProgram; attr is not a binary name.
+  # Completion files for admission rows whose tool generates natively but whose package ships none; one derivation folds every completionArgs
+  # row. Scope: rows this manifest installs (hm-roster) — ca1/landed rows own their completion surface.
+  # getExe resolves mainProgram; attr is not a binary name.
   completionRows = lib.filter (row: row ? completionArgs && row.install == "hm-roster") (lib.attrValues manifest.admissions);
   manifest-completions = pkgs.runCommand "forge-manifest-completions" {} ''
     mkdir -p "$out/share/zsh/site-functions"

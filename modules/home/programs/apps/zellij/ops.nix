@@ -4,17 +4,11 @@
 # License       : MIT
 # Path          : modules/home/programs/apps/zellij/ops.nix
 # ----------------------------------------------------------------------------
-# Inner-ops owner: forge-zellij is ONE polymorphic command over the
-# discriminated workspace graph (session, tab, pane, starred pane, project
-# root, worktree, layout, macro, agent lane), layout live assets (record — a
-# bare record freezes the session under its own slug — and apply, both behind
-# a disposable-session parse gate), watch-with-memory monitor rows, and two
-# read-only inspectors — state (forge-zellij-state/v2: sessions classified
-# live|resurrectable with serialization freshness and the newest fabric
-# receipt joined per session) and peek (typed single-frame pane capture over
-# `subscribe`, attention-joined). Every
-# mutating verb emits one typed kv receipt; fzf fronts the graph, state lives
-# external (no plugin store).
+# Inner-ops owner: forge-zellij is ONE polymorphic command over the discriminated workspace graph (session, tab, pane, starred pane, project root,
+# worktree, layout, macro, agent lane), layout live assets (record — a bare record freezes the session under its own slug — and apply, both behind a
+# disposable-session parse gate), watch-with-memory monitor rows, and two read-only inspectors — state (forge-zellij-state/v2: sessions classified
+# live|resurrectable with serialization freshness and the newest fabric receipt joined per session) and peek (typed single-frame pane capture over
+# `subscribe`, attention-joined). Every mutating verb emits one typed kv receipt; fzf fronts the graph, state lives external (no plugin store).
 {
   config,
   lib,
@@ -22,15 +16,13 @@
   ...
 }: let
   inherit (config.forge.theme) palette;
-  # Shared dual-receipt emit fold (shell-tools/receipts.nix) and the F01
-  # latest-needs fold (shell-tools/attention.nix) the peek verb resolves with.
+  # Shared dual-receipt emit fold and the F01 latest-needs fold the peek verb resolves with.
   receiptsFold = import ../../shell-tools/receipts.nix;
   attention = import ../../shell-tools/attention.nix {};
 
   # --- [WATCH_ROWS]
-  # Monitor panels as data: viddy owns history/diff memory, gping owns latency
-  # graphs. Rows launch as floating panes, never prompt/status hot paths; the
-  # command runs in the pane's own PATH (user env), not this script's closure.
+  # Monitor panels as data: viddy owns history/diff memory, gping owns latency graphs. Rows launch as floating panes, never prompt/status hot
+  # paths; the command runs in the pane's own PATH (user env), not this script's closure.
   watchRows = {
     git-status = {
       cmd = "viddy --differences --interval 5 -- git status --short --branch";
@@ -59,20 +51,16 @@
   };
   watchJson = pkgs.writeText "forge-zellij-watch.json" (builtins.toJSON watchRows);
 
-  # Project-root ingress: one parent directory owns the estate repos; worktree
-  # rows derive from each root's git state at runtime.
+  # Project-root ingress: one parent directory owns the estate repos; worktree rows derive from each root's git state at runtime.
   projectRootParents = ["${config.home.homeDirectory}/Documents/99.Github"];
 
-  # Inner session identity rides the name-policy register: the outer plane
-  # (forge-workspace) attaches estate repos by slug, so the graph's project arm
-  # resolves the same row — one repo never forks into basename- and slug-named
-  # sessions. Unregistered roots keep their basename.
+  # Inner session identity rides the name-policy register: the outer plane (forge-workspace) attaches estate repos by slug, so the graph's project
+  # arm resolves the same row — one repo never forks into basename- and slug-named sessions. Unregistered roots keep their basename.
   sessionSlugArms =
     lib.concatMapStrings (r: "          ${lib.escapeShellArg r.source}) printf '%s' ${lib.escapeShellArg r.slug} ;;\n")
     (lib.filter (r: lib.elem "zellij-session-name" r.consumers) config.forge.registers.naming);
 
-  # Per-command fzf theme projection from the palette owner (same pattern as
-  # the register rail; global fzf options stay theme-only in fzf.nix).
+  # Per-command fzf theme projection from the palette owner (same pattern as the register rail; global fzf options stay theme-only in fzf.nix).
   fzfColorRows = [
     "--color=fg:${palette.foreground.hex},fg+:${palette.background.hex},bg:${palette.background.hex},bg+:${palette.cyan.hex},selected-fg:${palette.background.hex},selected-bg:${palette.cyan.hex}"
     "--color=hl:${palette.green.hex},hl+:${palette.magenta.hex},info:${palette.comment.hex},marker:${palette.green.hex}"
@@ -89,12 +77,6 @@
     name = "forge-zellij";
     runtimeInputs = [pkgs.zellij pkgs.jq pkgs.fzf pkgs.coreutils pkgs.gawk pkgs.findutils pkgs.git pkgs.bash];
     text = ''
-            # Usage: forge-zellij [graph [--json]] | row ID | state | star [--pane ID]
-            #        | unstar | layout record [NAME] | layout apply NAME|PATH
-            #        | watch [ROW] | watch --list | macro add NAME CMD... | macro rm NAME
-            #        | peek [--session S] [--pane N] [--lines N] [--attention] [--text]
-            # watch-exec ROW is the monitor-pane body: it wraps the row command with
-            # start/exit receipts so panels carry exit transitions, never bare bash.
             self="''${BASH_SOURCE[0]}"
             watch_catalog="${watchJson}"
             state_root="''${XDG_STATE_HOME:-$HOME/.local/state}/forge"
@@ -105,8 +87,7 @@
             layouts_dir="''${XDG_CONFIG_HOME:-$HOME/.config}/zellij/layouts"
             receipt_log="''${FORGE_ZELLIJ_RECEIPT_LOG:-$HOME/Library/Logs/forge-zellij.receipts.log}"
             session="''${ZELLIJ_SESSION_NAME:-}"
-            # Session routing for detached callers: verbs that target another
-            # session (peek --session) fill this vector; every zellij action
+            # Session routing for detached callers: verbs that target another session (peek --session) fill this vector; every zellij action
             # then rides it, so one snapshot kernel serves attached + detached.
             session_args=()
             mkdir -p "$state_root" "$recorded_dir"
@@ -154,11 +135,9 @@
               esac
             }
 
-            # Resurrection-with-cause fold: the newest fabric receipt per
-            # session (forge-zellij session_id + forge-workspace slug JSONL
-            # tails) becomes a name -> "last: verb result ts" map, so an
-            # EXITED row says WHY it matters, not merely that it died. Torn
-            # tail lines skip via fromjson? (live-appended JSONL law).
+            # Resurrection-with-cause fold: the newest fabric receipt per session (forge-zellij session_id + forge-workspace slug JSONL tails)
+            # becomes a name -> "last: verb result ts" map, so an EXITED row says WHY it matters, not merely that it died. Torn tail lines skip
+            # via fromjson? (live-appended JSONL law).
             exited_cause_map() {
               local ws_log="''${FORGE_WORKSPACE_RECEIPT_LOG:-$HOME/Library/Logs/forge-workspace.receipts.log}"
               { tail -qn 400 "''${receipt_log%.log}.jsonl" "''${ws_log%.log}.jsonl" 2>/dev/null || true; } \
@@ -172,8 +151,7 @@
 
             # --- [DISCRIMINATED_INVENTORY_ONE_ROW_GRAMMAR_NINE_KINDS]
             inventory() {
-              # sessions: live and resurrectable (list-sessions exits 1 when
-              # none); jq owns escaping, the cause map enriches EXITED rows.
+              # sessions: live and resurrectable (list-sessions exits 1 when none); jq owns escaping, the cause map enriches EXITED rows.
               (zellij list-sessions --no-formatting 2>/dev/null || true) | jq -Rc --argjson causes "$(exited_cause_map)" '
                 select(length > 0)
                 | (split(" ")[0]) as $name
@@ -187,8 +165,7 @@
                 zj_json list-tabs | jq -c '.[] | {row_id: ("tab:" + (.tab_id | tostring)), kind: "tab",
                   label: .name, detail: ("swap=" + (.active_swap_layout_name // "-") + (if .active then " active" else "" end)),
                   target: (.tab_id | tostring)}'
-                # ONE pane snapshot feeds pane rows and star liveness: two
-                # probes could disagree mid-mutation and star a vanished pane.
+                # ONE pane snapshot feeds pane rows and star liveness: two probes could disagree mid-mutation and star a vanished pane.
                 panes="$(zj_json list-panes --all)"
                 jq -c '.[]? | select((.is_plugin | not) and (.exited | not))
                   | {row_id: ("pane:" + (.id | tostring)), kind: "pane",
@@ -211,8 +188,7 @@
                     '{row_id: ("project:" + ($root | split("/") | last)), kind: "project",
                       label: ($root | split("/") | last), detail: $root, target: $root}'
                   if [[ -e "$root/.git" ]]; then
-                    # sub() keeps the whole path ($2 truncates at a space); the
-                    # rail treats a worktree-less or odd repo as empty, not fatal.
+                    # sub() keeps the whole path ($2 truncates at a space); the rail treats a worktree-less or odd repo as empty, not fatal.
                     (git -C "$root" worktree list --porcelain 2>/dev/null || true) | gawk '/^worktree /{sub(/^worktree /, ""); print}' \
                       | tail -n +2 \
                       | jq -Rc --arg root "$root" '(split("/") | last) as $n
@@ -241,16 +217,14 @@
               fi
             }
 
-            # first() stops inside jq: a head(1) sibling would EPIPE the writer
-            # under pipefail once the inventory outgrows the pipe buffer.
+            # first() stops inside jq: a head(1) sibling would EPIPE the writer under pipefail once the inventory outgrows the pipe buffer.
             row_of() { inventory | jq -cn --arg id "$1" 'first(inputs | select(.row_id == $id))'; }
 
             preview_row() { # $1 = row_id — read-only evidence only
               local row kind target
               row="$(row_of "$1")"
               [[ -n "$row" ]] || { printf 'no row: %s\n' "$1"; return 1; }
-              # One projection per row snapshot: evidence lines plus a 0x1f
-              # kind/target tail line, split shell-side — no per-field jq forks.
+              # One projection per row snapshot: evidence lines plus a 0x1f kind/target tail line, split shell-side — no per-field jq forks.
               local proj
               proj="$(jq -r '(to_entries[] | "\(.key): \(.value)"), ([.kind, .target] | join("\u001f"))' <<<"$row")"
               printf '%s\n' "''${proj%$'\n'*}"
@@ -284,11 +258,9 @@
                 ;;
 
               state)
-                # Read-only fabric snapshot, schema v2: sessions classify
-                # live|resurrectable and carry serialization freshness (the
-                # per-session cache mtime as serialized_ts) plus the newest
-                # fabric receipt (exited_cause_map) — resurrection joined to
-                # the receipts plane as one queryable envelope.
+                # Read-only fabric snapshot, schema v2: sessions classify live|resurrectable and carry serialization freshness (the per-session
+                # cache mtime as serialized_ts) plus the newest fabric receipt (exited_cause_map) — resurrection joined to the
+                # receipts plane as one queryable envelope.
                 srows="$( (zellij list-sessions --no-formatting 2>/dev/null || true) | jq -Rcn '
                   [inputs | select(length > 0)
                    | {name: (split(" ")[0]),
@@ -297,8 +269,7 @@
                 ser_rows=""
                 while IFS= read -r n; do # streaming boundary: one stat pass per session name
                   [[ -n "$n" ]] || continue
-                  # Newest metadata wins across contract-version dirs (glob order
-                  # is lexicographic, so version 10 would sort under version 2).
+                  # Newest metadata wins across contract-version dirs (glob order is lexicographic, so version 10 would sort under version 2).
                   ts="$( (stat -c %Y "$HOME/Library/Caches/org.Zellij-Contributors.Zellij"/contract_version_*/session_info/"$n"/session-metadata.kdl 2>/dev/null || true) | sort -rn | head -1)"
                   [[ -z "$ts" ]] || ser_rows+="$n"$'\t'"$ts"$'\n'
                 done < <(jq -r '.[].name' <<<"$srows")
@@ -315,12 +286,9 @@
                 ;;
 
               peek)
-                # Typed pane capture without temp files: one `subscribe` initial
-                # frame (NDJSON pane_update: viewport + scrollback, ANSI-stripped)
-                # becomes a JSON envelope. --attention resolves the collector's
-                # latest attention row so "what does the waiting pane say" is one
-                # command; --session targets any live session from a detached
-                # shell. Read-only inspector — no receipt, like `state`.
+                # Typed pane capture without temp files: one `subscribe` initial frame (NDJSON pane_update: viewport + scrollback, ANSI-stripped)
+                # becomes a JSON envelope. --attention resolves the collector's latest attention row so "what does the waiting pane say" is one
+                # command; --session targets any live session from a detached shell. Read-only inspector — no receipt, like `state`.
                 shift
                 peek_session="$session" peek_pane="" lines=20 render=json
                 while [[ "$#" -gt 0 ]]; do
@@ -344,8 +312,7 @@
                   shift
                 done
                 case "$lines" in "" | *[!0-9]*) echo "peek: --lines must be numeric" >&2; exit 64 ;; esac
-                # Session routing lands BEFORE pane resolution: a detached
-                # `peek --session S` must resolve S's focused pane, not fail
+                # Session routing lands BEFORE pane resolution: a detached `peek --session S` must resolve S's focused pane, not fail
                 # against the caller's absent session.
                 [[ -z "$peek_session" || "$peek_session" == "$session" ]] || session_args=(--session "$peek_session")
                 if [[ -z "$peek_pane" ]]; then
@@ -355,8 +322,7 @@
                   [[ -n "$peek_pane" ]] || { echo "peek: no focused terminal pane" >&2; exit 66; }
                 fi
                 peek_pane="$(pane_arg "$peek_pane")" || exit 64
-                # First NDJSON frame only: head closes the pipe after the initial
-                # pane_update; timeout backstops a dead session or renamed pane.
+                # First NDJSON frame only: head closes the pipe after the initial pane_update; timeout backstops a dead session or renamed pane.
                 frame="$({ timeout 5 zellij "''${session_args[@]}" subscribe \
                   --pane-id "terminal_$peek_pane" -s "$lines" -f json 2>/dev/null || true; } | head -n1)"
                 [[ -n "$frame" ]] || { echo "peek: no frame from terminal_$peek_pane (dead session or pane?)" >&2; exit 69; }
@@ -403,8 +369,7 @@
                 ;;
 
               macro)
-                # Macro rows are rail-owned, never a hand-edited TSV: add replaces an
-                # existing NAME row, rm deletes it, list projects the row set.
+                # Macro rows are rail-owned, never a hand-edited TSV: add replaces an existing NAME row, rm deletes it, list projects the row set.
                 sub="''${2:?macro needs add|rm|list}"
                 case "$sub" in
                   add)
@@ -442,19 +407,16 @@
                 sub="''${2:?layout needs record|apply}"
                 case "$sub" in
                   record)
-                    # NAME defaults to the session: a bare `layout record` is
-                    # the freeze verb — the live composition lands under the
-                    # slug, and the workspace spawn seam picks it up next run.
+                    # NAME defaults to the session: a bare `layout record` is the freeze verb — the live composition lands under the slug, and
+                    # the workspace spawn seam picks it up next run.
                     [[ -n "$session" ]] || { echo "layout record requires a Zellij session" >&2; exit 1; }
                     name="''${3:-$session}"
-                    # Dump to a trap-reaped temp beside the target: a failed
-                    # re-record must never eat the prior asset under the name.
+                    # Dump to a trap-reaped temp beside the target: a failed re-record must never eat the prior asset under the name.
                     out="$recorded_dir/''${name}.kdl"
                     tmp_out="$recorded_dir/.gate-$$.kdl"
                     trap 'rm -f "$tmp_out"' EXIT
                     zellij action dump-layout >"$tmp_out"
-                    # Parse gate: a disposable background session must accept the
-                    # recorded asset before it replaces the graph row.
+                    # Parse gate: a disposable background session must accept the recorded asset before it replaces the graph row.
                     gate="forge-layout-gate-$$"
                     gate_ok="false"
                     if zellij attach --create-background "$gate" >/dev/null 2>&1; then
@@ -513,9 +475,8 @@
                 ;;
 
               watch-exec)
-                # Monitor-pane body: run the row command and close the receipt loop
-                # with the exit transition — panels carry linkage, never bare bash.
-                # The HUP/TERM trap keeps the exit receipt alive through close-pane.
+                # Monitor-pane body: run the row command and close the receipt loop with the exit transition — panels carry linkage, never bare
+                # bash. The HUP/TERM trap keeps the exit receipt alive through close-pane.
                 arg="''${2:?watch-exec needs a row}"
                 cmd="$(jq -r --arg r "$arg" '.[$r].cmd // empty' "$watch_catalog")"
                 [[ -n "$cmd" ]] || { echo "watch-exec: unknown row $arg" >&2; exit 64; }
@@ -546,10 +507,8 @@
               exit 0
             fi
 
-            # One inventory snapshot feeds the picker AND target resolution: a
-            # re-scan after selection could miss a vanished row and dispatch an
-            # empty target. fzf reads a fully rendered list — a pick made while
-            # jq still streamed would EPIPE jq and fail a valid selection.
+            # One inventory snapshot feeds the picker AND target resolution: a re-scan after selection could miss a vanished row and dispatch an
+            # empty target. fzf reads a fully rendered list — a pick made while jq still streamed would EPIPE jq and fail a valid selection.
             start="''${EPOCHREALTIME//[.,]/}"
             rc=0
             inv="$(inventory)"
@@ -573,8 +532,7 @@
             IFS=$'\t' read -r kind row_id _ <<<"$line"
             target="$(jq -rn --arg id "$row_id" 'first(inputs | select(.row_id == $id) | .target)' <<<"$inv")"
 
-            # Selection dispatch: total over the kind family; unreachable actions
-            # (attach from inside) degrade to printed evidence, never a nested client.
+            # Selection dispatch: total over the kind family; unreachable actions (attach from inside) degrade to printed evidence, never a nested client.
             case "$kind" in
               session | session-exited)
                 if [[ -z "$session" ]]; then
@@ -589,8 +547,7 @@
                 emit_receipt graph tab "$row_id" go-to-tab ok 0 "$duration_ms"
                 ;;
               pane | starred-pane | agent-lane)
-                # Best-effort focus: the pane may vanish between snapshot and
-                # click; a dead id must not kill the run before its receipt.
+                # Best-effort focus: the pane may vanish between snapshot and click; a dead id must not kill the run before its receipt.
                 [[ -z "$target" ]] || zellij action focus-pane-id "terminal_''${target}" >/dev/null 2>&1 || true
                 emit_receipt graph "$kind" "$row_id" focus-pane ok 0 "$duration_ms"
                 ;;
@@ -615,8 +572,7 @@
     '';
   };
 
-  # The _arguments (...) action is a literal word list — parameter references
-  # inside it never expand, so the verb row renders inline from Nix.
+  # The _arguments (...) action is a literal word list — parameter references inside it never expand, so the verb row renders inline from Nix.
   watchNames = lib.attrNames watchRows;
   opsVerbs = ["graph" "row" "state" "peek" "star" "unstar" "layout" "watch" "macro"];
   opsCompletion = pkgs.writeTextDir "share/zsh/site-functions/_forge-zellij" ''

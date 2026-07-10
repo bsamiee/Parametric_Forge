@@ -4,12 +4,9 @@
 # License       : MIT
 # Path          : modules/home/theme.nix
 # ----------------------------------------------------------------------------
-# Estate palette owner: enriched Dracula-variant rows, semantic roles, ANSI-16
-# projection, the master syntax scope table (tmTheme, treesitter, textMate,
-# and semantic tokens project from one pivot), derived diff/search/git roles,
-# the shared icon vocabulary, the target registry with its coverage
-# projection, and the rendered proof lane. Every color consumer interpolates
-# these tokens; no consumer carries a private hex.
+# Estate palette owner: enriched Dracula-variant rows, semantic roles, ANSI-16 projection, the master syntax scope table (tmTheme, treesitter,
+# textMate, and semantic tokens project from one pivot), derived diff/search/git roles, the shared icon vocabulary, the target registry with its
+# coverage projection, and the rendered proof lane. Every color consumer interpolates these tokens; no consumer carries a private hex.
 {
   lib,
   pkgs,
@@ -31,32 +28,26 @@
   };
 
   # --- [ROW_GRAMMAR]
-  # Positional tuples zip against a field schema: a short tuple drops trailing
-  # fields, null skips a slot, and an oversized tuple faults — zipListsWith
-  # would truncate silently otherwise. byName keys a row list on its `name`.
+  # Positional tuples zip against a field schema: a short tuple drops trailing fields, null skips a slot, and an oversized tuple faults —
+  # zipListsWith would truncate silently otherwise. byName keys a row list on its `name`.
   row = fields: t:
     lib.throwIf (builtins.length t > builtins.length fields)
     "theme row '${toString (builtins.head t)}' exceeds schema [${lib.concatStringsSep " " fields}]"
     (lib.filterAttrs (_: v: v != null) (lib.listToAttrs (lib.zipListsWith lib.nameValuePair fields t)));
   byName = rows: lib.listToAttrs (map (r: lib.nameValuePair r.name (removeAttrs r ["name"])) rows);
 
-  # Enriched palette: the canonical rows plus the design-language growth —
-  # crust/surface complete the elevation ladder, subtle is the third fg tier
-  # and the structural-UI hue, amber splits warning from string-yellow, blue
-  # ends the faked ANSI blue, brightBlue ends blue==cyan. current_line is
-  # retuned (chroma pulled to kill the muddy active line) and magenta is
-  # AA-lifted; every row is contrast-verified against the base. Rows spell as
-  # name=#HEX tokens folded through mkColor — one vector, one constructor.
+  # Enriched palette: the canonical rows plus the design-language growth — crust/surface complete the elevation ladder, subtle is the third fg
+  # tier and the structural-UI hue, amber splits warning from string-yellow, blue ends the faked ANSI blue, brightBlue ends blue==cyan.
+  # current_line is retuned (chroma pulled to kill the muddy active line) and magenta is AA-lifted; every row is contrast-verified against the
+  # base. Rows spell as name=#HEX tokens folded through mkColor — one vector, one constructor.
   hexRows = s: lib.listToAttrs (map (t: let p = lib.splitString "=" t; in lib.nameValuePair (builtins.head p) (mkColor (builtins.elemAt p 1))) (lib.splitString " " s));
   palette = hexRows "crust=#0E0D16 background=#15131F surface=#201E30 current_line=#2A2A3A selection=#44475A foreground=#F8F8F2 subtle=#8E91A5 comment=#6272A4 purple=#A072C6 cyan=#94F2E8 green=#50FA7B yellow=#F1FA8C amber=#F3AE51 orange=#F97359 red=#FF5555 magenta=#EE55A8 pink=#E98FBE blue=#7AA2F7 brightBlue=#A9C7FF";
 
-  # Derived roles: computed fills, never palette rows. Diff and search tint
-  # the background and hold the code foreground neutral (fg clears 7.7+ on
-  # every fill); emphasis is the same hue at +0.06 OKLCH L.
+  # Derived roles: computed fills, never palette rows. Diff and search tint the background and hold the code foreground neutral (fg clears 7.7+
+  # on every fill); emphasis is the same hue at +0.06 OKLCH L.
   derived = hexRows "overlay=#37364D diffAdd=#122A18 diffAddEmph=#213926 diffDel=#3B1818 diffDelEmph=#4C2726 diffChange=#152539 diffChangeEmph=#233449 search=#3A3418 searchCurrent=#5A4E1E";
 
-  # Role families as [name color] pair rows folded per family; git rows carry
-  # a redundant glyph so meaning never rides hue alone ([name color glyph]).
+  # Role families as [name color] pair rows folded per family; git rows carry a redundant glyph so meaning never rides hue alone ([name color glyph]).
   pairs = ps: lib.listToAttrs (map (p: lib.nameValuePair (builtins.elemAt p 0) (builtins.elemAt p 1)) ps);
   roles =
     lib.mapAttrs (_: pairs) {
@@ -79,12 +70,9 @@
       ]);
     };
 
-  # Canonical hex->ANSI-16 assignment; terminal palettes and ANSI-slot
-  # consumers agree with truecolor consumers. Slot 4 carries a real blue,
-  # slot 12 its bright companion, and both magenta slots ride the AA lift.
-  # Brights derive from the normal octet with the two real divergences
-  # (brightBlack -> selection, brightBlue -> the dedicated bright row) as
-  # override rows.
+  # Canonical hex->ANSI-16 assignment; terminal palettes and ANSI-slot consumers agree with truecolor consumers. Slot 4 carries a real blue,
+  # slot 12 its bright companion, and both magenta slots ride the AA lift. Brights derive from the normal octet with the two real divergences
+  # (brightBlack -> selection, brightBlue -> the dedicated bright row) as override rows.
   ansi16 = let
     base = {
       inherit (palette) red green yellow blue magenta cyan;
@@ -100,14 +88,10 @@
         blue = palette.brightBlue;
       });
 
-  # Master scope table: the one scope-to-role-to-hue pivot. tmTheme (bat,
-  # delta, yazi syntect), VS Code textMate + semantic tokens, and the nvim
-  # treesitter projection all derive from these rows; `captures` names the
-  # treesitter side so a hue rebind lands everywhere with zero edits.
-  # Rebinds vs stock Dracula: keyword->pink (AA), operator/punctuation->subtle,
-  # escape->orange, variable/parameter->blue (ends type==variable), tag keeps
-  # magenta, warning splits to amber so a diagnostic is never a string.
-  # Row tuple: [name scope color style captures background].
+  # Master scope table: the one scope-to-role-to-hue pivot. tmTheme (bat, delta, yazi syntect), VS Code textMate + semantic tokens, and the nvim
+  # treesitter projection all derive from these rows; `captures` names the treesitter side so a hue rebind lands everywhere with zero edits.
+  # Rebinds vs stock Dracula: keyword->pink (AA), operator/punctuation->subtle, escape->orange, variable/parameter->blue (ends type==variable),
+  # tag keeps magenta, warning splits to amber so a diagnostic is never a string. Row tuple: [name scope color style captures background].
   syntaxScopes = map (row ["name" "scope" "color" "style" "captures" "background"]) [
     ["Comment" "comment, punctuation.definition.comment" palette.comment "italic" ["comment"]]
     ["String" "string" palette.yellow null ["string" "character"]]
@@ -132,13 +116,10 @@
     ["Invalid" "invalid" palette.foreground null [] palette.red]
   ];
 
-  # Semantic-token projection: language-server styling VS Code textMate rules
-  # miss. Same pivot hues folded per family; modifiers express sub-distinction,
-  # never new hues. Server-specific rows below the generic fold are keyed to
-  # what each live server actually emits (verified against nixd, ty, Roslyn,
-  # and the builtin TS provider); a rule nothing emits is dead weight, and
-  # nixd's overloaded standard legend actively mis-colors Nix under unscoped
-  # generic rules.
+  # Semantic-token projection: language-server styling VS Code textMate rules miss. Same pivot hues folded per family; modifiers express
+  # sub-distinction, never new hues. Server-specific rows below the generic fold are keyed to what each live server actually emits (verified
+  # against nixd, ty, Roslyn, and the builtin TS provider); a rule nothing emits is dead weight, and nixd's overloaded standard
+  # legend actively mis-colors Nix under unscoped generic rules.
   it = c: {
     foreground = c.hex;
     fontStyle = "italic";
@@ -155,19 +136,16 @@
       comment = it palette.comment;
       decorator = palette.magenta.hex;
       operator = palette.subtle.hex;
-      # nixd overloads a standard legend: booleans ride `macro`, attr names
-      # `method`, with-scoped vars `interface`, lambda formals and null
-      # `regexp`, select paths `type`, builtins `keyword.static`, unresolved
-      # names `variable.abstract` — every correction is language-scoped so the
-      # generic rows above keep their real meaning elsewhere.
+      # nixd overloads a standard legend: booleans ride `macro`, attr names `method`, with-scoped vars `interface`, lambda formals and null
+      # `regexp`, select paths `type`, builtins `keyword.static`, unresolved names `variable.abstract` — every correction is language-scoped
+      # so the generic rows above keep their real meaning elsewhere.
       "interface:nix" = it palette.blue;
       "regexp:nix" = it palette.blue;
       "variable.abstract:nix" = palette.red.hex;
       # ty (Python): pyright-lineage custom token types.
       "selfParameter:python" = it palette.pink;
       "clsParameter:python" = it palette.pink;
-      # Roslyn (C#): custom token family; ReassignedVariable is its
-      # mutable-variable signal (boolean form adds the flag without
+      # Roslyn (C#): custom token family; ReassignedVariable is its mutable-variable signal (boolean form adds the flag without
       # replacing weight or slant from other rules).
       "stringVerbatim:csharp" = palette.yellow.hex;
       "stringEscapeCharacter:csharp" = palette.orange.hex;
@@ -175,12 +153,9 @@
       "*.deprecated".strikethrough = true;
     };
 
-  # Shared icon vocabulary: one directory/process glyph table projected into
-  # consumers (Yazi dirs today; tab titles, prompts, and dashboards adopt
-  # through their register rows) — never app-local maps.
-  # Dir row tuple: [name glyph color]. glyphsProved fails eval on any empty
-  # glyph: the harness edit path can silently strip BMP private-use glyphs,
-  # and an empty glyph is a dead icon row every consumer renders as nothing.
+  # Shared icon vocabulary: one directory/process glyph table projected into consumers (Yazi dirs today; tab titles, prompts, and dashboards
+  # adopt through their register rows) — never app-local maps. Dir row tuple: [name glyph color]. glyphsProved fails eval on any empty glyph:
+  # the harness edit path can silently strip BMP private-use glyphs, and an empty glyph is a dead icon row every consumer renders as nothing.
   glyphsProved = v: let
     dead =
       lib.attrNames (lib.filterAttrs (_: r: r.glyph == "") v.dirs)
@@ -215,11 +190,9 @@
   };
 
   # --- [TARGET_REGISTRY_THE_STYLIX_CLASS_CAPABILITY_MATRIX]
-  # One row per rendering consumer; verdicts: bound (interpolates owner
-  # tokens), gap (adoption pending), defer (no config surface to own).
-  # coverage.json projects from these rows so gaps surface before drift.
-  # Row tuple: [id owner carrier binds verdict]; binds admits as a space-
-  # joined token string and lands typed so JSON consumers never re-split.
+  # One row per rendering consumer; verdicts: bound (interpolates owner tokens), gap (adoption pending), defer (no config surface to own).
+  # coverage.json projects from these rows so gaps surface before drift. Row tuple: [id owner carrier binds verdict]; binds admits as a
+  # space-joined token string and lands typed so JSON consumers never re-split.
   targets = let
     apps = "modules/home/programs/apps";
     st = "modules/home/programs/shell-tools";
@@ -266,9 +239,8 @@
       ["dock-controlcenter" "system-owned" "-" "-" "defer"]
     ];
 
-  # Registry rows are proven at eval: every owner path must exist on disk and
-  # ids stay unique, so a moved consumer or a copy-pasted row breaks loudly.
-  # "system-owned" rows carry no file.
+  # Registry rows are proven at eval: every owner path must exist on disk and ids stay unique, so a moved consumer or a
+  # copy-pasted row breaks loudly. "system-owned" rows carry no file.
   targetsProved = let
     missing = builtins.filter (t: t.owner != "system-owned" && !builtins.pathExists (../.. + "/${t.owner}")) targets;
     dupes = lib.attrNames (lib.filterAttrs (_: c: c > 1) (lib.foldl' (acc: t: acc // {${t.id} = (acc.${t.id} or 0) + 1;}) {} targets));
@@ -292,8 +264,7 @@
     ${lib.optionalString (background != null) "        <key>background</key><string>${background.hex}</string>\n"}${lib.optionalString (style != null) "        <key>fontStyle</key><string>${style}</string>\n"}      </dict>
         </dict>'';
 
-  # Global editor settings rows: [key role] pairs folded into the leading
-  # settings dict; scope rules follow from the master pivot.
+  # Global editor settings rows: [key role] pairs folded into the leading settings dict; scope rules follow from the master pivot.
   tmSetting = p: "        <key>${builtins.elemAt p 0}</key><string>${(builtins.elemAt p 1).hex}</string>";
   tmTheme = ''
     <?xml version="1.0" encoding="UTF-8"?>
@@ -317,9 +288,8 @@
   '';
   tmThemeFile = pkgs.writeText "forge-dracula.tmTheme" tmTheme;
 
-  # Deep hex projection: a color record (any attrset carrying `hex`) collapses
-  # to its hex, every other leaf (glyphs, labels) passes through — so a new
-  # role family lands in palette.json with zero edits here.
+  # Deep hex projection: a color record (any attrset carrying `hex`) collapses to its hex, every other leaf (glyphs, labels) passes through —
+  # so a new role family lands in palette.json with zero edits here.
   project = v:
     if lib.isAttrs v && v ? hex
     then v.hex
@@ -342,8 +312,7 @@
     syntaxScopes;
   };
 
-  # Base16/Base24 export adapter (Tinted scheme exchange); slot names derive
-  # from the ordered palette-row vector (base00..base17). The canonical
+  # Base16/Base24 export adapter (Tinted scheme exchange); slot names derive from the ordered palette-row vector (base00..base17). The canonical
   # palette stays runtime truth, this is the ecosystem egress.
   base24Slots = lib.listToAttrs (lib.imap0 (
       i: p: lib.nameValuePair "base${lib.fixedWidthString 2 "0" (lib.toHexString i)}" palette.${p}
@@ -358,9 +327,8 @@
   };
 
   # --- [RENDERED_PROOF_BOARD]
-  # palette.html: swatches, elevation ladder, fg tiers, ANSI-16, syntax scopes
-  # over a live sample, diff/search fills, git glyphs, and a WCAG contrast
-  # matrix computed in the page against base/surface/overlay landings.
+  # palette.html: swatches, elevation ladder, fg tiers, ANSI-16, syntax scopes over a live sample, diff/search fills, git glyphs, and a WCAG
+  # contrast matrix computed in the page against base/surface/overlay landings.
   paletteHtml = pkgs.writeText "forge-palette.html" ''
     <!doctype html><html><head><meta charset="utf-8"><title>Forge Theme Proof Board</title>
     <style>
@@ -416,9 +384,8 @@
 
   receiptsFold = import ./programs/shell-tools/receipts.nix;
 
-  # forge-theme-proof: the terminal-native proof lane. Renders every claim in
-  # the live renderer and stamps a dual receipt (source hash, geometry, font,
-  # TERM) through the shared receipts fold; NO_COLOR=1 rerun is the strip test.
+  # forge-theme-proof: the terminal-native proof lane. Renders every claim in the live renderer and stamps a dual receipt (source hash, geometry,
+  # font, TERM) through the shared receipts fold; NO_COLOR=1 rerun is the strip test.
   forgeThemeProof = pkgs.writeShellApplication {
     name = "forge-theme-proof";
     runtimeInputs = [pkgs.jq pkgs.coreutils];
@@ -428,8 +395,7 @@
       receipt_log="''${FORGE_THEME_PROOF_RECEIPT_LOG:-$HOME/Library/Logs/forge-theme-proof.receipts.log}"
       receipt_surface="forge-theme-proof"
       ${receiptsFold}
-      # Admission gate: the palette snapshot crosses once, shape-asserted — a
-      # missing or torn projection fails typed, never as an unbound-var crash.
+      # Admission gate: the palette snapshot crosses once, shape-asserted — a missing or torn projection fails typed, never as an unbound-var crash.
       jq -e '(.palette | type == "object") and (.derived | type == "object")
         and (.roles.git | type == "object") and (.syntax | type == "array")' "$p" >/dev/null 2>&1 || {
         printf 'forge-theme-proof: palette projection missing or malformed: %s\n' "$p" >&2
@@ -439,8 +405,7 @@
       font="$(jq -r '.roles.mono + " " + (.metrics.size|tostring)' "$f" 2>/dev/null || true)"
       font="''${font:-unknown}"
 
-      # One projection over the palette snapshot: color, syntax, and git rows
-      # cross on a unit-separator rail; hex decodes in shell arithmetic.
+      # One projection over the palette snapshot: color, syntax, and git rows cross on a unit-separator rail; hex decodes in shell arithmetic.
       declare -A RGB HEX
       syntax_rows=()
       git_rows=()
@@ -516,28 +481,23 @@
 
   projections = {
     inherit tmThemeFile;
-    # Flat hex mirror of the semantic role tree — the one roles->hex fold
-    # every themed app composes instead of re-deriving privately.
+    # Flat hex mirror of the semantic role tree — the one roles->hex fold every themed app composes instead of re-deriving privately.
     rolesHex = lib.mapAttrs (_: lib.mapAttrs (_: c: c.hex)) {inherit (roles) surface text accent state diff ui;};
-    # Git-state vocabulary rows (hex + glyph); gutter and status consumers
-    # project the fields they render.
+    # Git-state vocabulary rows (hex + glyph); gutter and status consumers project the fields they render.
     gitHex =
       lib.mapAttrs (_: g: {
         color = g.color.hex;
         inherit (g) glyph;
       })
       roles.git;
-    # Lua return-table behind the generated Neovim palette; derived fills
-    # ride along snake_cased for highlight consumers.
+    # Lua return-table behind the generated Neovim palette; derived fills ride along snake_cased for highlight consumers.
     luaPalette = ''
       -- Generated from the Forge theme owner (modules/home/theme.nix).
       return {
       ${lib.concatStrings (lib.mapAttrsToList (name: c: "  [\"${name}\"] = \"${c.hex}\",\n") palette)}${lib.concatStrings (lib.mapAttrsToList (name: c: "  [\"${name}\"] = \"${c.hex}\",\n") derived)}}
     '';
-    # WezTerm color-scheme rows in the colors-TOML shape; the tab bar sits on
-    # the surface step and inactive chrome reads through the subtle tier.
-    # Label quads and tab rows fold from [bg fg] pairs; ANSI vectors derive
-    # from the slot-name order.
+    # WezTerm color-scheme rows in the colors-TOML shape; the tab bar sits on the surface step and inactive chrome reads through the subtle tier.
+    # Label quads and tab rows fold from [bg fg] pairs; ANSI vectors derive from the slot-name order.
     weztermColorScheme = let
       labeled = lib.concatMapAttrs (n: p: {
         "${n}_bg" = {Color = (builtins.elemAt p 0).hex;};
@@ -601,8 +561,7 @@ in {
   config = {
     home.packages = [forgeThemeProof];
 
-    # Machine-readable projections for consumers outside Home Manager modules,
-    # the ecosystem exchange adapter, the proof board, and the coverage ledger.
+    # Machine-readable projections for consumers outside Home Manager, the ecosystem exchange adapter, the proof board, and the coverage ledger.
     xdg.configFile = {
       "forge/theme/palette.json".text = paletteJson;
       "forge/theme/forge-dracula.tmTheme".source = tmThemeFile;

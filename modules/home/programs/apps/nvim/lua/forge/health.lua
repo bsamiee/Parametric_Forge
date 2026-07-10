@@ -4,11 +4,9 @@
 -- License       : MIT
 -- Path          : modules/home/programs/apps/nvim/lua/forge/health.lua
 -- ----------------------------------------------------------------------------
--- :checkhealth forge — proves plugin store paths, server commands, parsers,
--- formatter/linter binaries, estate action rows, Claude LSP marketplace
--- parity (tracked file AND the installed cache copy Claude actually loads),
--- generated nixd expressions, and provider resolution against the generated
--- fact modules.
+-- :checkhealth forge — proves plugin store paths, server commands, parsers, formatter/linter binaries, estate action rows, Claude LSP marketplace
+-- parity (tracked file AND the installed cache copy Claude actually loads), generated nixd expressions, and
+-- provider resolution against the generated fact modules.
 
 local M = {}
 local health = vim.health
@@ -66,9 +64,7 @@ function M.check()
         end
     end
 
-    -- Formatter rows resolve through conform's own definitions (command +
-    -- availability), so name/binary divergence (ruff_format -> ruff) never
-    -- needs restating here.
+    -- Formatter rows resolve through conform's own definitions (command + availability), so name/binary divergence (ruff_format -> ruff) never needs restating.
     health.start("formatter binaries")
     local formatters = {}
     for _, names in pairs(tools.format) do
@@ -123,9 +119,8 @@ function M.check()
         end
     end
 
-    -- Two consumed surfaces per plugin: the tracked marketplace file and the
-    -- installed cache copy Claude Code actually loads (directory marketplaces
-    -- copy on install; only an explicit marketplace update refreshes them).
+    -- Two consumed surfaces per plugin: the tracked marketplace file and the installed cache copy Claude Code actually loads (directory
+    -- marketplaces copy on install; only an explicit marketplace update refreshes them).
     health.start("claude lsp parity")
     local generated = vim.fn.stdpath("config"):gsub("/nvim$", "") .. "/forge/lsp/claude-marketplace.json"
     local rows = read_json(generated)

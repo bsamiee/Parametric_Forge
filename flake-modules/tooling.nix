@@ -13,16 +13,13 @@ _: {
     ...
   }: let
     style = import ../modules/style.nix;
-    # Repo law files are the single source: the biome row carries biome.json's
-    # bytes, its treefmt excludes are the same file's negation rows, and the
-    # ruff row projects pyproject [tool.ruff] — a value changed in the law
-    # file busts the treefmt cache and lands in the row with zero edits here.
+    # Repo law files are the single source: the biome row carries biome.json's bytes, its treefmt excludes are the same file's negation rows, and the
+    # ruff row projects pyproject [tool.ruff] — a value changed in the law file busts the treefmt cache and lands in the row with zero edits here.
     biomeLaw = builtins.fromJSON (builtins.readFile ../biome.json);
     biomeExcludes = map (lib.removePrefix "!") (builtins.filter (lib.hasPrefix "!") biomeLaw.files.includes);
     ruffLaw = (fromTOML (builtins.readFile ../pyproject.toml)).tool.ruff;
-    # SQL dialect is a per-file fact; each row binds its files to a generated
-    # config projected from the style vocabulary. sqruff discovery is cwd-only,
-    # so the explicit --config keeps rows hermetic inside the sandboxed check.
+    # SQL dialect is a per-file fact; each row binds its files to a generated config projected from the style vocabulary. sqruff discovery is
+    # cwd-only, so the explicit --config keeps rows hermetic inside the sandboxed check.
     sqruffRow = dialect: includes: {
       command = "${forgePkgs.sqruff}/bin/sqruff";
       options = [
@@ -33,8 +30,7 @@ _: {
       inherit includes;
     };
   in {
-    # Repository-maintenance shell: formatter plus flake proof/update helpers.
-    # Machine tooling (git, shellcheck, shfmt, LSPs) is Home Manager-owned.
+    # Repository-maintenance shell: formatter plus flake proof/update helpers. Machine tooling (git, shellcheck, shfmt, LSPs) is Home Manager-owned.
     devShells.default = forgePkgs.mkShell {
       packages = [
         config.formatter
@@ -68,15 +64,11 @@ _: {
     treefmt = {
       flakeCheck = false;
       projectRootFile = "flake.nix";
-      # Rows carry the house style (4-space indent, 150 width) explicitly:
-      # the formatting flake check runs sandboxed, where the machine-level
-      # XDG tool configs are invisible.
+      # Rows carry the house style (4-space indent, 150 width) explicitly: the formatting flake check runs sandboxed, where machine-level XDG tool configs are invisible.
       programs = {
         alejandra.enable = true;
-        # The repo-root biome.json is the single law for treefmt, the PATH
-        # wrapper, and the VSCode extension. The row must carry its bytes:
-        # treefmt-nix always pins --config-path, which disables biome's own
-        # root discovery, and an out-of-row config never busts the cache.
+        # The repo-root biome.json is the single law for treefmt, the PATH wrapper, and the VSCode extension. The row must carry its bytes:
+        # treefmt-nix always pins --config-path, which disables biome's own root discovery, and an out-of-row config never busts the cache.
         biome = {
           enable = true;
           formatCommand = "format";
@@ -84,12 +76,9 @@ _: {
         };
       };
       settings.formatter = {
-        # biome.json's negation rows verbatim, so treefmt never even offers
-        # biome the paths its own config ignores (an all-ignored batch is a
-        # biome error, not a no-op).
+        # biome.json's negation rows verbatim, so treefmt never offers biome the paths its own config ignores (an all-ignored batch is a biome error, not a no-op).
         biome.excludes = biomeExcludes;
-        # --isolated makes the row hermetic: identical bytes with or without
-        # the machine-level XDG ruff config the sandboxed check cannot see.
+        # --isolated makes the row hermetic: identical bytes with or without the machine-level XDG ruff config the sandboxed check cannot see.
         ruff-format = {
           command = "${forgePkgs.ruff}/bin/ruff";
           options = [
@@ -110,10 +99,8 @@ _: {
           ];
           includes = ["*.py" "*.pyi"];
         };
-        # The style vocabulary (modules/style.nix) is the single law; its
-        # bytes ride the row so the sandboxed check needs no XDG config and
-        # the treefmt cache busts whenever the law changes. pnpm owns its
-        # lockfile pair and rewrites both in its own layout.
+        # The style vocabulary is the single law; its bytes ride the row so the sandboxed check needs no XDG config and the treefmt cache busts
+        # whenever the law changes. pnpm owns its lockfile pair and rewrites both in its own layout.
         yamlfmt = {
           command = "${forgePkgs.yamlfmt}/bin/yamlfmt";
           options = ["-conf" (toString (forgePkgs.writeText "yamlfmt-conf" style.yamlfmt))];
@@ -125,16 +112,24 @@ _: {
           options = ["-w" "-i" (toString style.indent) "-ci"];
           includes = ["*.sh"];
         };
-        # Leading * crosses directories in treefmt globs; a bare `duckdb-*.sql`
-        # anchors at the tree root and matches nothing nested. No sqlite row:
-        # sqruff's sqlite dialect rewrites virtual-table module arguments
-        # (float[2] -> float [2]), which extensions parse verbatim — sqlite
-        # SQL stays formatter-unowned until that dialect matures, and fmt's
-        # sql classification skips the same basenames.
+        # Leading * crosses directories in treefmt globs; a bare `duckdb-*.sql` anchors at the tree root and matches nothing nested. No sqlite
+        # row: sqruff's sqlite dialect rewrites virtual-table module arguments (float[2] -> float [2]), which extensions parse verbatim, so
+        # sqlite SQL stays formatter-unowned until that dialect matures, and fmt's sql classification skips the same basenames.
         sqruff-postgres = sqruffRow "postgres" ["*postgres*.sql"];
         sqruff-duckdb = sqruffRow "duckdb" ["*duckdb-*.sql"];
-        # stylua discovery is cwd/upward only; the row carries the house style
-        # so the sandboxed check needs no repo-root config file.
+        # Workflow-DSL scripts ride prettier's babel parser (biome's grammar rejects top-level await/return); config bytes from the style owner.
+        prettier-workflow = {
+          command = "${forgePkgs.prettier}/bin/prettier";
+          options = [
+            "--log-level"
+            "warn"
+            "--config"
+            (toString (forgePkgs.writeText "prettierrc.json" (builtins.toJSON style.prettierrc)))
+            "--write"
+          ];
+          includes = style.workflowScriptGlobs;
+        };
+        # stylua discovery is cwd/upward only; the row carries the house style so the sandboxed check needs no repo-root config file.
         stylua = {
           command = "${forgePkgs.stylua}/bin/stylua";
           options = ["--indent-type" "Spaces" "--indent-width" (toString style.indent) "--column-width" (toString style.width)];

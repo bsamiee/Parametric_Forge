@@ -16,9 +16,8 @@
     username = config.home.username;
     xdgCacheHome = config.xdg.cacheHome;
   };
-  # Never-clobber .zshenv floor mirroring the session-variable rows: shells
-  # whose parent scrubbed the env behind __HM_SESS_VARS_SOURCED still recover
-  # these. A new resilient var is one row; the fold owns the :- idiom.
+  # Never-clobber .zshenv floor mirroring the session-variable rows: shells whose parent scrubbed the env behind __HM_SESS_VARS_SOURCED still
+  # recover these. A new resilient var is one row; the fold owns the :- idiom.
   fallbackEnv = {
     GH_CONFIG_DIR = "${config.xdg.configHome}/gh";
     CLOUDSDK_CONFIG = "${config.xdg.configHome}/gcloud";
@@ -41,16 +40,14 @@
     (lib.attrNames fallbackEnv);
 in {
   programs.zsh = {
-    # Runs in .zshenv for ALL shells (login, interactive, scripts, zellij panes).
-    # PATH has ONE owner: home.sessionPath via hm-session-vars; no writers here.
+    # Runs in .zshenv for ALL shells (login, interactive, scripts, zellij panes). PATH has ONE owner: home.sessionPath via hm-session-vars; no writers here.
     envExtra = ''
       if [[ -o interactive && -z "''${TERM:-}" ]]; then
         export TERM="dumb"
       fi
 
-      # Nix daemon profile without PATH authority: non-login panes get NIX_*
-      # certs/profiles; PATH restore keeps home.sessionPath the single owner and
-      # the sourced-guard makes the /etc/zshrc login pass a no-op.
+      # Nix daemon profile without PATH authority: non-login panes get NIX_* certs/profiles; PATH restore keeps home.sessionPath the single owner
+      # and the sourced-guard makes the /etc/zshrc login pass a no-op.
       if [[ -f "/nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh" ]]; then
         _forge_prenix_path="$PATH"
         source "/nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh"

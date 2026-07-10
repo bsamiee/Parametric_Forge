@@ -11,14 +11,11 @@
   ...
 }: let
   style = import ../../../style.nix;
-  # Neither tool has user-level config discovery, so each wrapper injects the
-  # house style only when upward discovery finds no project config and the
-  # caller passes none — project law always wins.
+  # Neither tool has user-level config discovery, so each wrapper injects the house style only when upward discovery finds no project config
+  # and the caller passes none — project law always wins.
   prettierConfig = "${config.xdg.configHome}/prettier/prettierrc.json";
-  # Prettier resolves config from each file's directory upward, so the probe
-  # rides --find-config-path on the last positional: option values precede
-  # trailing file lists, so the last positional is a real target, never a
-  # value like the `warn` in `--log-level warn`.
+  # Prettier resolves config from each file's directory upward, so the probe rides --find-config-path on the last positional: option values precede
+  # trailing file lists, so the last positional is a real target, never a value like the `warn` in `--log-level warn`.
   prettier = pkgs.writeShellApplication {
     name = "prettier";
     text = ''
@@ -41,9 +38,8 @@
     name = "biome";
     text = ''
       ${style.walkUp}
-      # BIOME_CONFIG_PATH is the env twin of the global --config-path option and
-      # disables discovery outright; either spelling is explicit caller config,
-      # so both pass through before discovery can shadow or be shadowed.
+      # BIOME_CONFIG_PATH is the env twin of the global --config-path option and disables discovery outright; either spelling is explicit caller
+      # config, so both pass through before discovery can shadow or be shadowed.
       [[ -n "''${BIOME_CONFIG_PATH:-}" ]] && exec ${pkgs.biome}/bin/biome "$@"
       for arg in "$@"; do
         case "$arg" in
@@ -68,14 +64,18 @@ in {
   ];
 
   xdg.configFile = {
-    "prettier/prettierrc.json".text = builtins.toJSON {
-      tabWidth = style.indent;
-      printWidth = style.width;
-    };
-    # Full Rasm-grade house law: formatter + JS style + organize-imports
-    # assist, so config-less directories get the same quality as project law.
+    "prettier/prettierrc.json".text = builtins.toJSON style.prettierrc;
+    # Full Rasm-grade house law: formatter + JS style + organize-imports assist, so config-less directories get the same quality as project law.
+    # Transient trees stay excluded even when passed explicitly (!! rows); workflow scripts are a top-level-await/return DSL no JS parser mode
+    # accepts, so they stay grammar-excluded, never policy-excluded.
     "biome/biome.json".text = builtins.toJSON {
-      files.ignoreUnknown = true;
+      files = {
+        ignoreUnknown = true;
+        includes =
+          ["**"]
+          ++ map (d: "!!**/${d}") style.transientDirs
+          ++ ["!!**/.claude/workflows/**" "!!**/workflow-creator/assets/**"];
+      };
       formatter = {
         enabled = true;
         indentStyle = "space";

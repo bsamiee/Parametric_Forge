@@ -4,8 +4,7 @@
 # License       : MIT
 # Path          : modules/home/programs/zsh/init.nix
 # ----------------------------------------------------------------------------
-# Interactive init: session secrets, tool widget wiring, and final widget
-# ordering. Completion surface lives in completions.nix; roster in plugins.nix.
+# Interactive init: session secrets, tool widget wiring, final widget ordering. Completion surface lives in completions.nix; roster in plugins.nix.
 {
   config,
   lib,
@@ -27,12 +26,7 @@
       }
 
       # --- [TOOL_INTEGRATION]
-      # Batman man page integration
       eval "$(${pkgs.bat-extras.batman}/bin/batman --export-env)"
-
-      # Note: pnpm installed via nix (node-tools.nix) for PATH stability across all processes
-      # Note: 1Password Shell Plugins (gh, aws, etc.) handled by programs._1password-shell-plugins
-      # Note: SSH agent configured via ssh.nix IdentityAgent directive
 
       # Alias tools to full paths for generated init scripts that call them by name
       alias atuin="${pkgs.atuin}/bin/atuin"
@@ -42,10 +36,8 @@
 
     (lib.mkOrder 650 ''
       # --- [FZF_KEYBINDINGS_SUPPRESS_READ_ONLY_OPTION_ERRORS]
-      # FZF tries to restore the read-only 'zle' option, causing harmless errors.
-      # Suppress stderr to keep output clean; FZF keybindings still register.
-      # fzf captures the fzf-tab ^I widget as fzf_default_completion: plain Tab
-      # falls through to fzf-tab, the ** trigger keeps fzf path completion.
+      # FZF restores the read-only 'zle' option and emits harmless errors, so stderr is suppressed; keybindings still register. fzf captures the
+      # fzf-tab ^I widget as fzf_default_completion, so plain Tab falls through to fzf-tab and the ** trigger keeps fzf path completion.
       if [[ $options[zle] = on ]]; then
         source <(fzf --zsh) 2>/dev/null
       fi
@@ -59,8 +51,7 @@
     '')
 
     (lib.mkOrder 730 ''
-      # Final strategy owner: atuin init self-prepends "atuin"; this assignment is
-      # the deterministic end state after all widget wrappers have sourced.
+      # Final strategy owner: atuin init self-prepends "atuin", so this assignment is the deterministic end state after all widget wrappers source.
       typeset -ga ZSH_AUTOSUGGEST_STRATEGY
       ZSH_AUTOSUGGEST_STRATEGY=(atuin completion)
     '')

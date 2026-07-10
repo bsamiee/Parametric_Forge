@@ -104,7 +104,7 @@ node ${CLAUDE_SKILL_DIR}/scripts/validate-workflow.mjs <file.js>
 node ${CLAUDE_SKILL_DIR}/scripts/dry-run.mjs <file.js> [--args '<json>'] [--fixtures '<json>']
 ```
 
-The linter enforces the parser's hard rules — errors exit 1 and every one gets fixed; warnings are real runtime bugs, cleared too. The dry-run re-hosts the unmodified file under mocked globals for zero tokens: `parseOk=true ran=true deterministic=true` is the bar, and per-phase agent counts expose fan-out bugs and guard-dropped phases. A green simulation validates the machine, never the meaning — close that gap with a narrow real run on one tiny scope before the full spend. Signals, fixtures, and narrow-run mechanics: api reference, validation section. Trigger and adherence proof for this bundle rides the skill-writer eval loop, with the linter and dry-run as its deterministic graders.
+The linter enforces the parser's hard rules — errors exit 1 and every one gets fixed; warnings are real defects (runtime bugs, unformatted source), cleared too. The dry-run re-hosts the unmodified file under mocked globals for zero tokens: `parseOk=true ran=true deterministic=true` is the bar, and per-phase agent counts expose fan-out bugs and guard-dropped phases. A green simulation validates the machine, never the meaning — close that gap with a narrow real run on one tiny scope before the full spend. Signals, fixtures, and narrow-run mechanics: api reference, validation section. Trigger and adherence proof for this bundle rides the skill-writer eval loop, with the linter and dry-run as its deterministic graders.
 
 ## [07]-[RUN]
 

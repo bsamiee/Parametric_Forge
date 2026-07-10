@@ -4,17 +4,15 @@
 # License       : MIT
 # Path          : modules/nixos/default.nix
 # ----------------------------------------------------------------------------
-# NixOS system surface: boot, network, SSH, users, container runtime, and the
-# Atuin sync server. Owns nothing Darwin owns — Homebrew, launchd, and macOS
-# defaults never generalize here.
+# NixOS system surface: boot, network, SSH, users, container runtime, and the Atuin sync server. Owns nothing Darwin owns —
+# Homebrew, launchd, and macOS defaults never generalize here.
 {
   host,
   pkgs,
   modulesPath,
   ...
 }: {
-  # qemu-guest profile carries the virtio initrd modules the KVM hypervisor
-  # needs to expose the boot disk; without them initrd never finds root.
+  # qemu-guest profile carries the virtio initrd modules the KVM hypervisor needs to expose the boot disk; without them initrd never finds root.
   imports = [(modulesPath + "/profiles/qemu-guest.nix") ./disko.nix];
 
   # --- [BOOT]
@@ -28,9 +26,8 @@
   i18n.defaultLocale = "en_US.UTF-8";
 
   # --- [NETWORK]
-  # Static addressing projected from the host-context network row — the
-  # provider serves no DHCP. SSH only on day one; every service stays loopback
-  # behind the ssh.nix vpsTunnels registry (webhook, postgres, ollama, n8n, atuin).
+  # Static addressing projected from the host-context network row — the provider serves no DHCP. SSH only on day one; every service stays
+  # loopback behind the ssh.nix vpsTunnels registry (webhook, postgres, ollama, n8n, atuin).
   networking = {
     usePredictableInterfaceNames = false;
     useDHCP = false;
@@ -66,8 +63,7 @@
       };
     };
 
-    # Atuin sync server: loopback-only, reached exclusively through the client
-    # tunnel row. Port 8788 — 8888 belongs to forge-jupyter on every host.
+    # Atuin sync server: loopback-only, reached exclusively through the client tunnel row. Port 8788 — 8888 belongs to forge-jupyter on every host.
     atuin = {
       enable = true;
       host = "127.0.0.1";
@@ -75,15 +71,12 @@
       openRegistration = true;
     };
 
-    # ntfy push server: the estate-private notification tier, loopback-only
-    # behind the maghz tunnel row (SSH is the auth boundary while no public
-    # ingress exists). The Mac publish arm selects its target through the
-    # NTFY_URL Doppler row; pointing that row here requires the Maghz compose
+    # ntfy push server: the estate-private notification tier, loopback-only behind the maghz tunnel row (SSH is the auth boundary while no public
+    # ingress exists). The Mac publish arm selects its target through the NTFY_URL Doppler row; pointing that row here requires the Maghz compose
     # Caddy site plus deny-all token auth landing together.
     ntfy-sh = {
       enable = true;
-      # base-url is loopback-truthful on BOTH tunnel ends (the forward maps
-      # port-to-port); it flips to the public URL with the ingress landing.
+      # base-url is loopback-truthful on BOTH tunnel ends (the forward maps port-to-port); it flips to the public URL with the ingress landing.
       settings = {
         base-url = "http://127.0.0.1:2586";
         listen-http = "127.0.0.1:2586";
@@ -94,8 +87,7 @@
   };
 
   # --- [IDENTITY]
-  # Declarative users only; key-based access, passwordless wheel (agent-first
-  # frictionless posture, parity with the Darwin Touch-ID rail).
+  # Declarative users only; key-based access, passwordless wheel (agent-first frictionless posture, parity with the Darwin Touch-ID rail).
   security.sudo.wheelNeedsPassword = false;
   users.mutableUsers = false;
   users.users =
@@ -106,8 +98,7 @@
         inherit (host.user) home;
         extraGroups = ["wheel" "docker"];
         openssh.authorizedKeys.keys = host.ssh.authorizedKeys;
-        # Lingering keeps HM systemd user services (Jupyter, tunnels) alive
-        # without an interactive session — the launchd RunAtLoad analogue.
+        # Lingering keeps HM systemd user services (Jupyter, tunnels) alive without an interactive session — the launchd RunAtLoad analogue.
         linger = true;
       };
     }
@@ -122,8 +113,7 @@
       (host.serviceUsers or []));
 
   # --- [CONTAINER_RUNTIME]
-  # System Docker daemon (Maghz compose plane); the nixpkgs docker CLI bundles
-  # the compose plugin, so `docker compose` works without extra rows.
+  # System Docker daemon (Maghz compose plane); the nixpkgs docker CLI bundles the compose plugin, so `docker compose` works without extra rows.
   virtualisation.docker = {
     enable = true;
     autoPrune.enable = true;
@@ -137,9 +127,7 @@
   };
 
   # --- [ROOT_VISIBLE_TOOLING]
-  # Flake operations and remote activation need git at the system layer; the
-  # full CLI estate is Home Manager-owned per user. doppler serves the
-  # maghz-agent service user (no HM graph): the /srv/maghz-scoped read-only
-  # token is the VPS runtime secret consumer.
+  # Flake operations and remote activation need git at the system layer; the full CLI estate is Home Manager-owned per user. doppler serves the
+  # maghz-agent service user (no HM graph): the /srv/maghz-scoped read-only token is the VPS runtime secret consumer.
   environment.systemPackages = [pkgs.git pkgs.doppler];
 }

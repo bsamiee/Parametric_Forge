@@ -4,11 +4,9 @@
 # License       : MIT
 # Path          : hosts/default.nix
 # ----------------------------------------------------------------------------
-# Host factory: every context row becomes a system through one OS dispatch
-# table; the per-host module and Home Manager projection are shared verbatim
-# across OS classes. A new machine is one context row — nothing here changes
-# shape. Bootstrap for NixOS rows is nixos-anywhere + disko; day-2 for every
-# row is forge-redeploy.
+# Host factory: every context row becomes a system through one OS dispatch table; the per-host module and Home Manager projection are shared verbatim
+# across OS classes. A new machine is one context row — nothing here changes shape.
+# Bootstrap for NixOS rows is nixos-anywhere + disko; day-2 for every row is forge-redeploy.
 {
   inputs,
   nix-darwin,
@@ -17,8 +15,7 @@
   inherit (inputs.nixpkgs) lib;
   context = import ./context.nix;
 
-  # Shared per-host module: platform, overlay admission, identity, and the
-  # Home Manager projection every OS carries identically.
+  # Shared per-host module: platform, overlay admission, identity, and the Home Manager projection every OS carries identically.
   hostModule = host: {forgeToolchainEnvFor, ...}: {
     nixpkgs.hostPlatform = host.system;
     nixpkgs.overlays = [inputs.self.overlays.default];
@@ -59,23 +56,18 @@
     };
   };
 
-  # OS dispatch rows: the system builder plus the module set an OS admits.
-  # Darwin rides its own per-host row for surfaces NixOS never grows.
+  # OS dispatch rows: the system builder plus the module set an OS admits; Darwin rides its own per-host row for surfaces NixOS never grows.
   os = {
     darwin = {
       mkSystem = nix-darwin.lib.darwinSystem;
       modules = host: [
-        # Determinate Nix owner: forces nix.enable = false, generates /etc/nix/nix.custom.conf
-        inputs.determinate.darwinModules.default
-        # Common configuration (Nix settings + toolchain env factory)
-        ../modules/common
-        # Darwin-specific system surface
+        inputs.determinate.darwinModules.default # Determinate Nix owner: forces nix.enable = false, generates /etc/nix/nix.custom.conf
+        ../modules/common # Common config: Nix settings + toolchain env factory
         ../modules/darwin
         home-manager.darwinModules.home-manager
         {
           networking.computerName = host.label;
-          # HM owns compinit (fingerprinted -C); the stock /etc/zshrc global compinit double-inits every shell
-          programs.zsh.enableGlobalCompInit = false;
+          programs.zsh.enableGlobalCompInit = false; # HM owns compinit (fingerprinted -C); stock /etc/zshrc global compinit double-inits every shell
           system.primaryUser = host.user.name;
           users.users.${host.user.name} = {inherit (host.user) name home;};
         }
@@ -84,13 +76,9 @@
     nixos = {
       mkSystem = lib.nixosSystem;
       modules = _: [
-        # Determinate Nix owner: generates /etc/nix/nix.custom.conf
-        inputs.determinate.nixosModules.default
-        # Declarative disk layout (nixos-anywhere consumes this at bootstrap)
-        inputs.disko.nixosModules.disko
-        # Common configuration (Nix settings + toolchain env factory)
-        ../modules/common
-        # NixOS-specific system surface
+        inputs.determinate.nixosModules.default # Determinate Nix owner: generates /etc/nix/nix.custom.conf
+        inputs.disko.nixosModules.disko # Declarative disk layout; nixos-anywhere consumes this at bootstrap
+        ../modules/common # Common config: Nix settings + toolchain env factory
         ../modules/nixos
         home-manager.nixosModules.home-manager
       ];
@@ -105,8 +93,7 @@
       modules = class.modules host ++ [(hostModule host)];
     };
 in
-  # One flake output attr per dispatch row: a new OS class lands its
-  # `<os>Configurations` output from its row alone — zero shape edits here.
+  # One flake output attr per dispatch row: a new OS class lands its `<os>Configurations` output from its row alone — zero shape edits here.
   lib.mapAttrs' (
     osName: _:
       lib.nameValuePair "${osName}Configurations"

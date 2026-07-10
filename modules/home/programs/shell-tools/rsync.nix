@@ -4,9 +4,8 @@
 # License       : MIT
 # Path          : modules/home/programs/shell-tools/rsync.nix
 # ----------------------------------------------------------------------------
-# rsync owner: shared exclusion filter plus two packaged rails. rsync-safe.sh
-# is the transparent filtered transport; rsync-mv.sh is the receipted atomic
-# move (rsync cannot remove source directories, only files).
+# rsync owner: shared exclusion filter plus two packaged rails. rsync-safe.sh is the transparent filtered transport; rsync-mv.sh is the receipted
+# atomic move (rsync cannot remove source directories, only files).
 {
   config,
   pkgs,
@@ -18,8 +17,7 @@
     name = "rsync-safe.sh";
     runtimeInputs = [pkgs.rsync];
     text = ''
-      # Transparent filtered rsync: argv passes through untouched so every
-      # rsync option stays reachable; only the estate filter is injected.
+      # Transparent filtered rsync: argv passes through untouched so every rsync option stays reachable; only the estate filter is injected.
       filter="''${FORGE_RSYNC_FILTER:-${filterPath}}"
       exec rsync --filter="merge $filter" "$@"
     '';
@@ -45,18 +43,15 @@
       fi
       receipts="''${FORGE_RSYNC_RECEIPTS:-$default_receipts}"
 
-      # -aPX --remove-source-files moves file content; --itemize-changes and
-      # --info=stats2 feed the receipt (unhumanized, so the numbers stay
-      # machine-typed); --partial-dir keeps interrupted large transfers
-      # resumable instead of restarting from zero.
+      # -aPX --remove-source-files moves file content; --itemize-changes and --info=stats2 feed the receipt (unhumanized, so the numbers stay
+      # machine-typed); --partial-dir keeps interrupted large transfers resumable instead of restarting from zero.
       stats_file="$(mktemp)"
       trap 'rm -f "$stats_file"' EXIT
       rc=0
       rsync -aPX --remove-source-files --itemize-changes --info=stats2 \
         --partial-dir=.rsync-partial "$@" | tee "$stats_file" || rc=$?
 
-      # rsync only removes source files; empty source directories are swept
-      # here to complete move semantics.
+      # rsync only removes source files; empty source directories are swept here to complete move semantics.
       if [ "$rc" = 0 ]; then
         for src in "''${sources[@]}"; do
           [ -d "$src" ] && find "$src" -type d -empty -delete 2>/dev/null || true
