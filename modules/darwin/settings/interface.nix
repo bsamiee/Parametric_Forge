@@ -14,7 +14,7 @@
 in {
   system.defaults = mkMerge [
     {
-      # --- Dock Configuration -----------------------------------------------
+      # --- [DOCK_CONFIGURATION]
       dock = {
         orientation = mkDefault "bottom";
         tilesize = mkDefault 28;
@@ -49,13 +49,13 @@ in {
           "/Applications/Arc.app"
           "/Applications/WezTerm.app"
           "/Applications/Claude.app"
-          "/Applications/Codex.app"
+          "/Applications/ChatGPT.app"
           "/Applications/Superhuman.app"
           "/System/Applications/Messages.app"
         ];
         persistent-others = mkDefault [];
       };
-      # --- Finder Configuration ---------------------------------------------
+      # --- [FINDER_CONFIGURATION]
       finder = {
         CreateDesktop = mkDefault true;
         ShowExternalHardDrivesOnDesktop = mkDefault true;
@@ -77,7 +77,7 @@ in {
         _FXSortFoldersFirstOnDesktop = mkDefault true;
         _FXEnableColumnAutoSizing = mkDefault true;
       };
-      # --- Window Management ------------------------------------------------
+      # --- [WINDOW_MANAGEMENT]
       WindowManager = {
         GloballyEnabled = mkDefault false;
         EnableStandardClickToShowDesktop = mkDefault false;
@@ -92,11 +92,11 @@ in {
         EnableTilingOptionAccelerator = mkDefault false;
         EnableTiledWindowMargins = mkDefault false;
       };
-      # --- Spaces Configuration ---------------------------------------------
+      # --- [SPACES_CONFIGURATION]
       spaces = {
         spans-displays = mkDefault false;
       };
-      # --- Control Center Menu Bar (ByHost domain) ---------------------------
+      # --- [CONTROL_CENTER_MENU_BAR_BYHOST_DOMAIN]
       # Minimal menu-bar posture: every optional module hidden, battery
       # percentage flag kept true for the Control Center pane readout.
       controlcenter = {
@@ -108,7 +108,7 @@ in {
         NowPlaying = mkDefault false;
         Sound = mkDefault false;
       };
-      # --- Global System Defaults -------------------------------------------
+      # --- [GLOBAL_SYSTEM_DEFAULTS]
       NSGlobalDomain = {
         AppleInterfaceStyle = mkDefault "Dark";
         AppleInterfaceStyleSwitchesAutomatically = mkDefault false;
@@ -135,16 +135,16 @@ in {
         AppleSpacesSwitchOnActivate = mkDefault false;
       };
     }
-    # --- Advanced Interface Customizations ----------------------------------
+    # --- [ADVANCED_INTERFACE_CUSTOMIZATIONS]
     {
       CustomUserPreferences = {
-        # --- NSGlobalDomain Interface Settings ------------------------------
+        # --- [NSGLOBALDOMAIN_INTERFACE_SETTINGS]
         NSGlobalDomain = {
           AppleActionOnDoubleClick = mkDefault "Maximize";
           AppleMiniaturizeOnDoubleClick = mkDefault false;
           AppleMenuBarVisibleInFullscreen = mkDefault true;
         };
-        # --- Finder Advanced Settings ---------------------------------------
+        # --- [FINDER_ADVANCED_SETTINGS]
         "com.apple.finder" = {
           ShowRecentTags = mkDefault false;
           FavoriteTagNames = mkDefault [];
@@ -179,7 +179,7 @@ in {
           FXArrangeGroupViewBy = mkDefault "Name";
           FXPreferredGroupBy = mkDefault "None";
         };
-        # --- Dock Hidden Settings -------------------------------------------
+        # --- [DOCK_HIDDEN_SETTINGS]
         "com.apple.dock" = {
           "no-bouncing" = mkDefault false;
           "enable-spring-load-actions-on-all-items" = mkDefault true;

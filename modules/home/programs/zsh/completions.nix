@@ -277,19 +277,19 @@ in {
 
     initContent = lib.mkMerge [
       (lib.mkOrder 400 ''
-        # --- Completion fpath + fingerprint-keyed dump (before compinit) ----------
+        # --- [COMPLETION_FPATH_FINGERPRINT_KEYED_DUMP_BEFORE_COMPINIT]
         [[ -d "${cacheDir}" ]] || command mkdir -p -- "${cacheDir}"
         export ZSH_COMPDUMP="${cacheDir}/zcompdump-''${ZSH_VERSION}-${fingerprint}"
         fpath=("${compDir}" ${lib.concatMapStringsSep " " (p: "${p}/share/zsh/site-functions") completionPackages} "/etc/profiles/per-user/${config.home.username}/share/zsh/site-functions" $fpath)
       '')
 
       (lib.mkOrder 550 ''
-        # --- Completion + fzf-tab zstyle rows (rendered from the style table) -----
+        # --- [COMPLETION_FZF_TAB_ZSTYLE_ROWS_RENDERED_FROM_THE_STYLE_TABLE]
         ${zstyleLines}
       '')
 
       (lib.mkOrder 580 ''
-        # --- fzf-tab (after compinit at 570, before widget wrappers at 700+) ------
+        # --- [FZF_TAB_AFTER_COMPINIT_AT_570_BEFORE_WIDGET_WRAPPERS_AT_700]
         # No use-fzf-default-opts: global FZF_DEFAULT_OPTS previews stay out of
         # completion; the fzf-flags row above is the whole completion-UI surface.
         source ${pkgs.zsh-fzf-tab}/share/fzf-tab/fzf-tab.plugin.zsh

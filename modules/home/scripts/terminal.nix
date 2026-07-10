@@ -13,6 +13,9 @@
   ...
 }: let
   yaziPkg = config.programs.yazi.package;
+  # Shared dual-receipt emit fold (shell-tools/receipts.nix): one grammar for
+  # every receipt-bearing kernel, TSV plus JSONL with identical keys.
+  receiptsFold = import ../programs/shell-tools/receipts.nix;
   # Chord-vocabulary owner projection: the harness injects the REAL dismiss
   # chord, so its bytes derive from the same row that emits the zellij bind.
   yaziToggle = config.forge.chords.zellij.ids.yaziToggle;
@@ -226,7 +229,7 @@
                 if (kind == "hover") next
               }
               log_file = root "/dds-events.log"
-              printf "ts=%s\towner=forge-yazi\tkind=%s\tsender=%s\tbody=%s\n", ts, kind, sender, body >> log_file
+              printf "ts=%s\tsurface=forge-yazi\tkind=%s\tsender=%s\tbody=%s\n", ts, kind, sender, body >> log_file
               close(log_file)
             }')
       fi
@@ -515,6 +518,17 @@
         row R13-dds-bridge DEFER "no live popup for the DDS probe"
       fi
 
+      # R14: opener-seam config truth — the deployed yazi config must wire the
+      # Forge editor opener and the zoxide picker; a rename on either edge is
+      # the four-file-edit trap this harness exists to catch.
+      yazi_conf="''${XDG_CONFIG_HOME:-$HOME/.config}/yazi"
+      if grep -q 'forge-edit\.sh %s' "$yazi_conf/yazi.toml" 2>/dev/null \
+        && grep -q 'yazi-zoxide-cdi\.sh' "$yazi_conf/keymap.toml" 2>/dev/null; then
+        row R14-opener-seam PASS "yazi.toml edit opener + keymap zoxide picker spell the Forge scripts"
+      else
+        row R14-opener-seam FAIL "opener/picker rows missing under $yazi_conf"
+      fi
+
       # R04-R08: edit rail — spawn, registry, socket, reuse, multi-file.
       # Canonicalized so bufname comparisons match forge-edit's realpath pin
       # (macOS /var and /tmp are /private symlinks).
@@ -670,21 +684,18 @@
             .[$r.status | ascii_downcase] += 1))}')"
       printf '%s\n' "$receipt"
 
-      # Dual receipts: every forge-* kernel persists its run — one TSV row and
-      # one JSONL sibling with identical envelope keys, numerics as numbers.
+      # Dual receipts through the shared fold: one TSV row plus a JSONL
+      # sibling with identical envelope keys, numerics as numbers.
       receipt_log="''${FORGE_TERMINAL_ACCEPT_RECEIPT_LOG:-$HOME/Library/Logs/forge-terminal-accept.receipts.log}"
-      mkdir -p "''${receipt_log%/*}"
+      receipt_surface="forge-terminal-accept"
+      ${receiptsFold}
       TZ=UTC0 printf -v ts '%(%Y-%m-%dT%H:%M:%SZ)T' "$EPOCHSECONDS"
       result=ok
       ((fail)) && result=fail
-      IFS=$'\x1f' read -r pass_n fail_n defer_n < <(jq -r \
-        '[.summary.pass, .summary.fail, .summary.defer] | join("\u001f")' <<<"$receipt")
-      printf 'ts=%s\tsurface=forge-terminal-accept\tsession=%s\tattached=%s\tpass=%s\tfail=%s\tdefer=%s\tresult=%s\n' \
-        "$ts" "$session" "$attached" "$pass_n" "$fail_n" "$defer_n" "$result" >>"$receipt_log"
-      jq -cn --arg ts "$ts" --arg session "$session" --argjson attached "$attached" \
-        --argjson pass "$pass_n" --argjson fail "$fail_n" --argjson defer "$defer_n" --arg result "$result" \
-        '{ts: $ts, surface: "forge-terminal-accept", session: $session, attached: $attached,
-          pass: $pass, fail: $fail, defer: $defer, result: $result}' >>"''${receipt_log%.log}.jsonl"
+      append_receipt "$(jq -c --arg ts "$ts" --arg result "$result" \
+        '{ts: $ts, session: .session, attached: .attached,
+          pass: .summary.pass, fail: .summary.fail, defer: .summary.defer, result: $result}' <<<"$receipt")" \
+        || printf 'forge-terminal-accept.sh: WARNING receipt not persisted to %s\n' "$receipt_log" >&2
       exit "$fail"
     '';
   };

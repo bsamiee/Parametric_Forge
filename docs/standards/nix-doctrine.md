@@ -34,7 +34,7 @@ Apply when writing or reviewing Nix modules, overlays, flake composition, `write
 
 [UPSTREAM_LAYOUT_GUARDS]:
 
-- Law: Every install step that depends on upstream layout — a strip, a wrapper target, a conditional install branch — carries an existence guard that fails the build with a named drift error; a package's layout vocabulary is single-owner, read by consumers through `passthru` projections; a kernel file is admitted only when install logic differs — a data-only delta is a manifest row.
+- Law: Every install step that depends on upstream layout — a strip, a wrapper target, a conditional install branch — carries an existence guard that fails the build with a named drift error; a package's layout vocabulary is single-owner, read by consumers through `passthru` projections; a kernel file is admitted only when install logic differs — a data-only delta is a manifest row; a pure refactor of package derivations proves identity by out-path equality, and `passthru` projections of row data at the installed root ride `finalAttrs.finalPackage` (`placeholder "out"` serves only build-time text).
 - Rejected: Silent `rm -rf` of expected paths (drift ships a fatter output), silent-skip wrapper guards (drift ships a thinner one), consumer-side re-spelling of package subpaths, branches upstream facts prove dead, registry-derived regex alternations without `lib.escapeRegex` and an empty-set guard.
 - Example: `[ -x "$runtime/$tool" ] || { echo "patch_drift: $tool missing" >&2; exit 1; }`
 

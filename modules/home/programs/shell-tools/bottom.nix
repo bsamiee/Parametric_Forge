@@ -11,7 +11,7 @@ in {
   programs.bottom = {
     enable = true;
     settings = {
-      # --- General Flags ----------------------------------------------------
+      # --- [GENERAL_FLAGS]
       flags = {
         # Display Performance
         temperature_type = "c"; # Celsius for temperature
@@ -34,7 +34,7 @@ in {
         battery = true; # Show battery if available
       };
 
-      # --- Style Configuration ----------------------------------------------
+      # --- [STYLE_CONFIGURATION]
       styles = {
         widgets = {
           border_color = palette.cyan.hex; # Default borders
@@ -113,7 +113,7 @@ in {
           low_battery = palette.red.hex; # Critical (<10%)
         };
       };
-      # --- Process Configuration --------------------------------------------
+      # --- [PROCESS_CONFIGURATION]
       processes = {
         current_usage = true; # Show current usage in process widget
         default_grouped = true; # Group processes with same name for clarity
@@ -133,7 +133,7 @@ in {
           "State"
         ];
       };
-      # --- Disk Configuration -----------------------------------------------
+      # --- [DISK_CONFIGURATION]
       disk = {
         columns = ["Disk" "Mount" "Used%" "Free" "R/s" "W/s"];
         name_filter = {
@@ -151,7 +151,7 @@ in {
           whole_word = false;
         };
       };
-      # --- Temperature Configuration ----------------------------------------
+      # --- [TEMPERATURE_CONFIGURATION]
       # Note: macOS temperature sensors may not be accessible to bottom
       temperature = {
         sensor_filter = {
@@ -162,11 +162,11 @@ in {
           whole_word = false;
         };
       };
-      # --- Memory Graph Configuration ---------------------------------------
+      # --- [MEMORY_GRAPH_CONFIGURATION]
       memory_graph = {
         cache_memory = true; # Show cache for complete memory picture
       };
-      # --- Network Filter ---------------------------------------------------
+      # --- [NETWORK_FILTER]
       network_graph = {
         use_binary_prefix = true; # Use MiB/s (more accurate)
         use_bytes = false; # Use bits for network
@@ -179,7 +179,7 @@ in {
           whole_word = true;
         };
       };
-      # --- CPU Configuration ------------------------------------------------
+      # --- [CPU_CONFIGURATION]
       cpu = {
         default = "all"; # Show all cores
         hide_avg_cpu = false; # Show average CPU in addition to per-core

@@ -89,7 +89,7 @@
 in {
   home.packages = [pkgs.rsync rsyncSafe rsyncMv];
 
-  # --- Rsync Configuration --------------------------------------------------
+  # --- [RSYNC_CONFIGURATION]
   xdg.configFile."rsync/filter" = {
     text = ''
       # System and editor artifacts

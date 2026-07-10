@@ -2,11 +2,11 @@
 # Author        : Bardia Samiee
 # Project       : Parametric Forge
 # License       : MIT
-# Path          : /modules/home/aliases/nix.nix
+# Path          : modules/home/aliases/nix.nix
 # ----------------------------------------------------------------------------
 # Nix and Darwin register rows: deploy rail, nix ops, flake ops.
 [
-  # --- darwin ------------------------------------------------------------------
+  # --- [DARWIN]
   {
     alias = "drs";
     expansion = "forge-redeploy --switch";
@@ -45,7 +45,7 @@
     category = "darwin";
     risk = "destructive";
   }
-  # --- nix ---------------------------------------------------------------------
+  # --- [NIX]
   {
     alias = "ns";
     expansion = "nix search nixpkgs";
@@ -107,7 +107,7 @@
     category = "nix";
     risk = "sudo";
   }
-  # --- flake ---------------------------------------------------------------------
+  # --- [FLAKE]
   {
     alias = "nfu";
     expansion = "nix flake update && nix flake check --all-systems --no-build && nix flake check";

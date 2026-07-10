@@ -15,7 +15,7 @@
   tomlFormat = pkgs.formats.toml {};
 
   procsConfig = {
-    # --- Column Configuration -----------------------------------------------
+    # --- [COLUMN_CONFIGURATION]
     columns = [
       {
         kind = "Pid";
@@ -157,7 +157,7 @@
       }
     ];
 
-    # --- Style Configuration ------------------------------------------------
+    # --- [STYLE_CONFIGURATION]
     style = {
       header = "BrightWhite|Black";
       unit = "Blue|Black";
@@ -193,7 +193,7 @@
       };
     };
 
-    # --- Search Configuration -----------------------------------------------
+    # --- [SEARCH_CONFIGURATION]
     search = {
       numeric_search = "Exact";
       nonnumeric_search = "Partial";
@@ -201,7 +201,7 @@
       case = "Smart";
     };
 
-    # --- Display Configuration ----------------------------------------------
+    # --- [DISPLAY_CONFIGURATION]
     display = {
       show_self = false;
       show_self_parents = false;
@@ -224,14 +224,14 @@
       show_kthreads = false;
     };
 
-    # --- Sort Configuration -------------------------------------------------
+    # --- [SORT_CONFIGURATION]
     # Index counts every column row incl. separators: 5 = UsageCpu (top-CPU default).
     sort = {
       column = 5;
       order = "Descending";
     };
 
-    # --- Docker Configuration -----------------------------------------------
+    # --- [DOCKER_CONFIGURATION]
     # Colima owns the Darwin socket; the NixOS host serves the system default.
     docker = {
       path =
@@ -240,7 +240,7 @@
         else "unix:///var/run/docker.sock";
     };
 
-    # --- Pager Configuration ------------------------------------------------
+    # --- [PAGER_CONFIGURATION]
     pager = {
       mode = "Auto";
       detect_width = true;
@@ -248,7 +248,7 @@
       command = "less -SRX"; # -S no wrap, -R ANSI colors, -X no screen clear
     };
 
-    # --- Watch Mode Configuration -------------------------------------------
+    # --- [WATCH_MODE_CONFIGURATION]
     watch = {
       interval = 2; # 2 seconds (matches bottom.nix update rate)
     };

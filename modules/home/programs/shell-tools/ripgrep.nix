@@ -13,7 +13,7 @@
 }: let
   inherit (config.forge.theme) palette;
   ripgrepConfig = [
-    # --- Search Behavior ----------------------------------------------------
+    # --- [SEARCH_BEHAVIOR]
     "--smart-case"
     "--hidden"
     "--follow"
@@ -29,12 +29,12 @@
     "--hyperlink-format=vscode" # Clickable paths in WezTerm → VSCode
     "--one-file-system" # Don't cross mount points (Nix store safety)
 
-    # --- Performance --------------------------------------------------------
+    # --- [PERFORMANCE]
     "--threads=0"
     "--dfa-size-limit=1G" # Increase DFA cache for large pattern files
     "--mmap" # Use memory-mapped I/O for large files
 
-    # --- Visual formatting --------------------------------------------------
+    # --- [VISUAL_FORMATTING]
     # Truecolor RGB triples from the palette tokens
     "--colors=path:fg:${palette.cyan.csv}"
     "--colors=path:style:bold"
@@ -43,7 +43,7 @@
     "--colors=match:fg:${palette.green.csv}"
     "--colors=match:style:bold"
 
-    # --- Type Definitions ---------------------------------------------------
+    # --- [TYPE_DEFINITIONS]
     # Nix ecosystem
     "--type-add=nix:*.nix"
     "--type-add=nix:flake.lock"
@@ -84,7 +84,7 @@
     "--type-add=proto:*.proto"
     "--type-add=headers:*.{h,hpp,hxx,hh}"
 
-    # --- Global Exclusions --------------------------------------------------
+    # --- [GLOBAL_EXCLUSIONS]
     "--glob=!.git/"
     "--glob=!node_modules/"
     "--glob=!target/"

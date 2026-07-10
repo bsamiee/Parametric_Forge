@@ -16,7 +16,7 @@
   pkgs,
   ...
 }: let
-  inherit (config.forge.theme) palette roles projections;
+  inherit (config.forge.theme) roles projections;
   chordRows = config.forge.chords.wezterm.rows;
   naming = config.forge.registers.naming;
   sshHosts = config.forge.ssh.hosts;
@@ -30,7 +30,7 @@
     xdgCacheHome = config.xdg.cacheHome;
   };
 
-  # --- Plugin pins (manifest rows; file:// store-path loads only) ---------
+  # --- [PLUGIN_PINS_MANIFEST_ROWS_FILE_STORE_PATH_LOADS_ONLY]
   pluginSrc = row:
     pkgs.fetchFromGitHub {
       inherit (row) owner repo rev hash;
@@ -38,12 +38,13 @@
   syncPanesSrc = pluginSrc manifest.extensions.wezterm-plugins.rows.sync-panes;
   weztermTypesSrc = pluginSrc manifest.extensions.wezterm-plugins.rows.wezterm-types;
 
-  # --- Font row: the font owner's WezTerm projection (modules/home/fonts.nix) --
-  # Chain, per-family leading, shaping features, and the forge-font override
-  # path all arrive from config.forge.fonts; deck.lua interprets them.
+  # --- [FONT_ROW]
+  # The font owner's WezTerm projection (modules/home/fonts.nix): chain,
+  # per-family leading, shaping features, and the forge-font override path
+  # all arrive from config.forge.fonts; deck.lua interprets them.
   fontRow = config.forge.fonts.projections.luaFont;
 
-  # --- Workspace rows (name-policy projection) ----------------------------
+  # --- [WORKSPACE_ROWS_NAME_POLICY_PROJECTION]
   workspaceRoot = "${homeDir}/Documents/99.Github";
   workspaceRows =
     map (r: {
@@ -55,7 +56,7 @@
   defaultWorkspace =
     (lib.findFirst (r: lib.elem "wezterm-workspace-name" r.consumers) {slug = "forge";} naming).slug;
 
-  # --- SSH domain rows (ssh registry rows; transport-only, never persistence) -----
+  # --- [SSH_DOMAIN_ROWS_SSH_REGISTRY_ROWS_TRANSPORT_ONLY_NEVER_PERSISTENCE]
   sshDomainRows =
     map (h: {
       name = "SSH:${h.name}";
@@ -65,7 +66,7 @@
     })
     (lib.attrValues sshHosts);
 
-  # --- Action-bus rows: quick-select patterns + hyperlink rules ----------------
+  # --- [ACTION_BUS_ROWS_QUICK_SELECT_PATTERNS_HYPERLINK_RULES]
   # `select` names a deck.lua action arm for the captured span (edit opens the
   # span in an editor float, domain opens the aliased SSH window); rows
   # without it keep the native clipboard default.
@@ -115,7 +116,7 @@
     }
   ];
 
-  # --- Floating utility deck rows -----------------------------------------------
+  # --- [FLOATING_UTILITY_DECK_ROWS]
   floatRows = {
     utility = {
       width = 120;
@@ -133,7 +134,7 @@
     };
   };
 
-  # --- Command deck rows ----------------------------------------------------------
+  # --- [COMMAND_DECK_ROWS]
   # One registry feeds the command palette, the launcher menu, and key rows.
   # kind: float (spawn command in shaped window) | domain (spawn in mux
   # domain); `destructive` rows pass the deck confirm gate before acting.
@@ -212,7 +213,7 @@
     })
     sshDomainRows;
 
-  # --- Pure-data settings (rendered via lib.generators.toLua) --------------------
+  # --- [PURE_DATA_SETTINGS_RENDERED_VIA_LIB_GENERATORS_TOLUA]
   # Constructor/env-dependent values live in deck.lua; the two sets stay
   # disjoint (validated below) so the single-writer merge never collides.
   settings = {
@@ -322,7 +323,7 @@
   badFloatRefs = map (r: r.id) (builtins.filter (r: r.kind == "float" && !(floatRows ? ${r.float})) commandRows);
   chordDupes = dupesOf (map (r: "${r.mods}+${r.key}") chordRows);
 
-  # --- Generated Lua data + entry point -------------------------------------------
+  # --- [GENERATED_LUA_DATA_ENTRY_POINT]
   rows = {
     nightly_floor = "20260707";
     receipts_log = "${homeDir}/Library/Logs/forge-wezterm.receipts.log";
@@ -349,14 +350,9 @@
     quick_select = quickSelectRows;
     hyperlinks = hyperlinkRows;
     theme = {
-      roles = lib.mapAttrs (_: lib.mapAttrs (_: c: c.hex)) {inherit (roles) surface text accent state diff ui;};
-      git =
-        lib.mapAttrs (_: g: {
-          color = g.color.hex;
-          inherit (g) glyph;
-        })
-        roles.git;
-      accent = palette.cyan.hex;
+      roles = projections.rolesHex;
+      git = projections.gitHex;
+      accent = roles.accent.primary.hex;
     };
   };
   rowsLua = pkgs.writeText "wezterm-rows.lua" ''
@@ -420,7 +416,7 @@
       done
     '';
 
-  # --- forge-workspace: name-policy router (workspace + domain + Space bridge) ---
+  # --- [FORGE_WORKSPACE_NAME_POLICY_ROUTER_WORKSPACE_DOMAIN_SPACE_BRIDGE]
   namingJson = pkgs.writeText "forge-workspace-rows.json" (builtins.toJSON workspaceRows);
   forgeWorkspace = pkgs.writeShellApplication {
     name = "forge-workspace";

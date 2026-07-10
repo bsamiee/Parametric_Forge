@@ -19,7 +19,7 @@
   notoArabic = pkgs.noto-fonts.override {variants = ["NotoSansArabic" "NotoNaskhArabic"];};
   notoMono = pkgs.noto-fonts.override {variants = ["NotoSansMono"];};
 
-  # --- Family catalog ---------------------------------------------------------
+  # --- [FAMILY_CATALOG]
   # The attr name is the CoreText family; the manifest derivation opens each
   # representative file with fonttools and fails the build when the internal
   # name table disagrees (manifest-vs-payload parity at build time). `class`:
@@ -102,7 +102,7 @@
     };
   };
 
-  # --- Roles, chains, metrics, features ----------------------------------------
+  # --- [ROLES_CHAINS_METRICS_FEATURES]
   # Roles are the swap surface: one family per role, scripts ordered by shaping
   # preference. The mono chain is the only fallback expression on macOS —
   # fontconfig is inert against CoreText and Chromium renderers.
@@ -134,7 +134,7 @@
   overridePath = "${config.xdg.configHome}/forge/fonts/override.json";
   receiptsFold = import ./programs/shell-tools/receipts.nix;
 
-  # --- Build-time manifest: name-table identity + feature + shaping receipts ---
+  # --- [BUILD_TIME_MANIFEST_NAME_TABLE_IDENTITY_FEATURE_SHAPING_RECEIPTS]
   # fonttools is the metadata oracle, hb-shape the shaping oracle; feature
   # claims are proven by receipts, never by settings presence. Script rows
   # additionally assert zero .notdef over the Perso-Arabic sample.
@@ -193,7 +193,7 @@
        ${fontManifest}/families.json >$out
   '';
 
-  # --- forge-font: one polymorphic dispatch over the owner ---------------------
+  # --- [FORGE_FONT_ONE_POLYMORPHIC_DISPATCH_OVER_THE_OWNER]
   # pick (default) | list | set <role> <family> | commit | reset. The runtime
   # override prepends a manifest-proven family; WezTerm hot-reloads through its
   # watch list. commit folds the override into this file and switches.
@@ -287,7 +287,7 @@
     '';
   };
 
-  # --- forge-font-doctor: manifest-vs-observed proof ---------------------------
+  # --- [FORGE_FONT_DOCTOR_MANIFEST_VS_OBSERVED_PROOF]
   # Rows: payload parity against the darwin projection manifest, CoreText
   # registration through system_profiler enumeration, per-role presence, and
   # the Electron lane note. fc-* stays a separate Pango-only lane, never mixed.

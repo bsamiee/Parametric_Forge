@@ -13,7 +13,7 @@ in {
     enableZshIntegration = false; # Manual init in zsh/init.nix (before Atuin for proper Ctrl+R)
     tmux.enableShellIntegration = false;
 
-    # --- Default Configuration ----------------------------------------------
+    # --- [DEFAULT_CONFIGURATION]
     defaultCommand = "fd --type f --hidden --follow --exclude .git";
 
     defaultOptions = [
@@ -46,7 +46,7 @@ in {
       "--bind=ctrl-j:preview-page-down"
     ];
 
-    # --- Ctrl-T: File Selection ---------------------------------------------
+    # --- [CTRL_T_FILE_SELECTION]
     fileWidget = {
       command = "fd --type f --hidden --follow --exclude .git";
       options = [
@@ -55,7 +55,7 @@ in {
       ];
     };
 
-    # --- Alt-C: Directory Navigation ----------------------------------------
+    # --- [ALT_C_DIRECTORY_NAVIGATION]
     changeDirWidget = {
       command = "fd --type d --hidden --follow --exclude .git";
       options = [
@@ -64,7 +64,7 @@ in {
       ];
     };
 
-    # --- Ctrl-R: Command History --------------------------------------------
+    # --- [CTRL_R_COMMAND_HISTORY]
     # Note: Ctrl-R (history) disabled - handled by Atuin
     historyWidget.options = [];
   };

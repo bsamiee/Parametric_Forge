@@ -13,7 +13,7 @@
   lib,
   ...
 }: let
-  # --- Physical layers --------------------------------------------------------
+  # --- [PHYSICAL_LAYERS]
   # Karabiner rewrites right-hand modifiers into leader stacks; zellij consumes
   # each stack as the derived `zellij` modifier set. Power carries no zellij
   # binds by design: it passes through to terminal apps (yazi owns it).
@@ -160,7 +160,7 @@
   in
     lib.concatStringsSep "\n" (lib.zipListsWith line roles rows);
 
-  # --- Mode table ---------------------------------------------------------------
+  # --- [MODE_TABLE]
   # One row per zellij mode reachable from a Hyper leader key. `rank` orders the
   # which-key sheet; `ribbon` labels the normal-mode hint ribbon; `entryOrder`
   # and `ribbonOrder` are curated presentation sequences over the same rows.
@@ -208,7 +208,7 @@
   entryOrder = ["pane" "resize" "scroll" "session" "tab" "move" "tmux"];
   ribbonOrder = ["pane" "tab" "resize" "move" "scroll" "session" "locked"];
 
-  # --- Bind rows ----------------------------------------------------------------
+  # --- [BIND_ROWS]
   # Row schema: keys (aliases share one row), kdl (single-line body) XOR body
   # (verbatim multi-line KDL at emitted indentation), pre (verbatim comment
   # lines), gap (blank line before), label (register label when no forgot/
@@ -496,7 +496,7 @@
     }
   ];
 
-  # --- WezTerm outer layer ------------------------------------------------------
+  # --- [WEZTERM_OUTER_LAYER]
   # Typed outer-terminal rows: WezTerm claims native left-Command chords plus
   # the CMD|SHIFT overlay/deck layer and pass-through-aware CTRL pane nav; the
   # wezterm owner projects them into generated key rows (rows.lua), `action` is
@@ -719,7 +719,7 @@
     )
     weztermRows;
 
-  # --- Neovim editor domain table ---------------------------------------------
+  # --- [NEOVIM_EDITOR_DOMAIN_TABLE]
   # One editor chord vocabulary keyed by domain; the nvim module projects it
   # into lua/forge/chords.lua. `action` carries a native command string; `fn`
   # names a row in the editor dispatch table (nvim config/keymaps.lua binds
@@ -960,7 +960,7 @@
     })
     nvimRows;
 
-  # --- Projections ----------------------------------------------------------------
+  # --- [PROJECTIONS]
   # Every table string emitted inside a KDL quoted string passes through this.
   kdlEsc = lib.replaceStrings ["\\" "\""] ["\\\\" "\\\""];
   cheatsheetKey = "/";
@@ -1121,7 +1121,7 @@
     rows;
   ids = lib.listToAttrs (lib.concatLists (lib.mapAttrsToList (n: bindIds layers.${n}) bindRows));
 
-  # --- Register projection ----------------------------------------------------
+  # --- [REGISTER_PROJECTION]
   # Typed chord rows for the register rail: every consumer's chords in one
   # vocabulary — chord_id, consumer, physical_layer, mods, key, label, action,
   # scope (the KDL mode block or OS/app plane the claim is active in), toggle

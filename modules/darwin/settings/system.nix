@@ -21,7 +21,7 @@
   };
 in {
   system.defaults = {
-    # --- Login Window -------------------------------------------------------
+    # --- [LOGIN_WINDOW]
     loginwindow = {
       SHOWFULLNAME = true; # Name+password fields, never the user icon list
       GuestEnabled = false;
@@ -35,7 +35,7 @@ in {
       RestartDisabledWhileLoggedIn = false;
       DisableConsoleAccess = false;
     };
-    # --- Activity Monitor ---------------------------------------------------
+    # --- [ACTIVITY_MONITOR]
     ActivityMonitor = {
       ShowCategory = mkDefault 100;
       IconType = mkDefault 0;
@@ -43,7 +43,7 @@ in {
       SortDirection = mkDefault 0;
       OpenMainWindow = mkDefault true;
     };
-    # --- Screenshots --------------------------------------------------------
+    # --- [SCREENSHOTS]
     screencapture = {
       location = mkDefault "${primaryUserHome}/Downloads";
       type = mkDefault "png";
@@ -52,7 +52,7 @@ in {
       show-thumbnail = mkDefault false;
       target = mkDefault "file";
     };
-    # --- Menu Bar Clock -----------------------------------------------------
+    # --- [MENU_BAR_CLOCK]
     menuExtraClock = {
       Show24Hour = mkDefault true;
       ShowAMPM = mkDefault null;
@@ -63,7 +63,7 @@ in {
       FlashDateSeparators = mkDefault false;
       IsAnalog = mkDefault false;
     };
-    # --- System Services ----------------------------------------------------
+    # --- [SYSTEM_SERVICES]
     smb = {
       NetBIOSName = mkDefault null;
       ServerDescription = mkDefault null;
@@ -71,7 +71,7 @@ in {
     LaunchServices = {
       LSQuarantine = mkDefault false;
     };
-    # --- Accessibility ------------------------------------------------------
+    # --- [ACCESSIBILITY]
     universalaccess = {
       closeViewScrollWheelToggle = mkDefault false;
       closeViewZoomFollowsFocus = mkDefault false;
@@ -79,16 +79,16 @@ in {
       reduceTransparency = mkDefault false;
       mouseDriverCursorSize = mkDefault 1.0; # 1.0 is the floor; 0.85 was clamped
     };
-    # --- Software Updates ---------------------------------------------------
+    # --- [SOFTWARE_UPDATES]
     SoftwareUpdate = {
       AutomaticallyInstallMacOSUpdates = mkDefault true;
     };
-    # --- Global System Behavior ---------------------------------------------
+    # --- [GLOBAL_SYSTEM_BEHAVIOR]
     NSGlobalDomain = {
       "com.apple.sound.beep.volume" = mkDefault null;
       "com.apple.sound.beep.feedback" = mkDefault 0;
     };
-    # --- Application-Specific System Settings -------------------------------
+    # --- [APPLICATION_SPECIFIC_SYSTEM_SETTINGS]
     CustomUserPreferences = {
       "com.apple.Terminal" = {
         SecureKeyboardEntry = mkDefault false;

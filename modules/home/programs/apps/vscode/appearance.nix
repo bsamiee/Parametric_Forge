@@ -16,8 +16,8 @@
   f,
 }: let
   hexOf = lib.mapAttrs (_: c: c.hex);
-  s = lib.mapAttrs (_: hexOf) {inherit (t.roles) surface text accent state diff ui;};
-  g = lib.mapAttrs (_: r: r.color.hex) t.roles.git;
+  s = t.projections.rolesHex;
+  g = lib.mapAttrs (_: r: r.color) t.projections.gitHex;
   p = hexOf t.palette;
   ansi = hexOf t.ansi16;
   a = hex: alpha: hex + alpha; # #RRGGBB -> #RRGGBBAA
@@ -146,21 +146,50 @@ in {
     };
 
     # --- [TOKENS]: textMate + semantic rules from the one scope pivot.
-    # Markdown body rides the magenta accent (operator law) — the base scope
-    # rule catches plain text only; raw/code spans pin back to primary so no
-    # other rendered color moves, and deeper markup rules keep winning.
+    # Markdown scheme rides precise scopes, never the text.html.markdown base:
+    # prose falls to editor.foreground (text.primary); [BRACKET] markers parse
+    # as shortcut link references and pin back to prose so string-yellow never
+    # leaks; headings own every token inside themselves via deeper selectors.
     "editor.tokenColorCustomizations".textMateRules =
       t.projections.vscodeTokenRules
       ++ [
         {
-          name = "Markdown body";
-          scope = "text.html.markdown";
+          name = "Markdown bracket markers";
+          scope = "meta.link.reference string.other.link.title, meta.link.reference punctuation.definition.link.title, meta.link.reference constant.other.reference.link, meta.link.reference punctuation.definition.constant, meta.link.reference.def constant.other.reference.link, meta.link.reference.def punctuation.definition.constant";
           settings.foreground = s.accent.secondary;
         }
         {
-          name = "Markdown raw";
-          scope = "markup.raw, markup.inline.raw, markup.fenced_code";
-          settings.foreground = s.text.primary;
+          name = "Markdown heading";
+          scope = "markup.heading, markup.heading punctuation.definition.heading, markup.heading meta.link.reference string.other.link.title, markup.heading meta.link.reference punctuation.definition.link.title, markup.heading meta.link.reference constant.other.reference.link, markup.heading meta.link.reference punctuation.definition.constant";
+          settings = {
+            foreground = s.accent.structural;
+            fontStyle = "bold";
+          };
+        }
+        {
+          name = "Markdown inline raw";
+          scope = "markup.inline.raw";
+          settings.foreground = s.accent.secondary;
+        }
+        {
+          # Sigil/content split: the backtick punctuation rides string-yellow
+          # while the span content keeps the magenta accent above.
+          name = "Markdown raw sigils";
+          scope = "markup.inline.raw punctuation.definition.raw, markup.fenced_code punctuation.definition.markdown, markup.raw punctuation.definition.markdown";
+          settings.foreground = p.yellow;
+        }
+        {
+          name = "Markdown link";
+          scope = "text.html.markdown markup.underline.link, meta.link.inline string.other.link.title, string.other.link.description";
+          settings.foreground = s.accent.primary;
+        }
+        {
+          name = "Markdown italic";
+          scope = "text.html.markdown markup.italic";
+          settings = {
+            foreground = s.accent.tertiary;
+            fontStyle = "italic";
+          };
         }
       ];
     "editor.semanticTokenColorCustomizations" = {

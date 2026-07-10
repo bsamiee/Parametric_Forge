@@ -21,11 +21,11 @@
       HOMEBREW_NO_ENV_HINTS = "1";
     }
     // {
-      # --- Nix ------------------------------------------------------------------
+      # --- [NIX]
       CACHIX_CACHE = "bsamiee";
       NIX_REMOTE = "daemon";
 
-      # --- Git & Version Control ----------------------------------------------
+      # --- [GIT_VERSION_CONTROL]
       GITLEAKS_CONFIG = "${config.xdg.configHome}/gitleaks/gitleaks.toml";
       GH_CONFIG_DIR = "${config.xdg.configHome}/gh";
       # Difftastic brightness follows the estate surface luminance, not a mode literal
@@ -36,10 +36,10 @@
         then "dark"
         else "light";
 
-      # --- Build & Pre-commit -------------------------------------------------
+      # --- [BUILD_PRE_COMMIT]
       PRE_COMMIT_HOME = "${config.xdg.dataHome}/pre-commit";
 
-      # --- AI / Claude ---------------------------------------------------------
+      # --- [AI_CLAUDE]
       CLAUDE_CODE_DISABLE_AUTO_MEMORY = "0"; # Force auto-memory on (double-negative: DISABLE=0)
     };
 }

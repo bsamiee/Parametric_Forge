@@ -424,7 +424,7 @@
       receipt() { # $1=verb $2=result $3=detail
         local ts row
         ts="$(iso_now)"
-        printf -v row 'ts=%s\towner=forge-mcp\tverb=%s\tresult=%s\tdetail=%s' "$ts" "$1" "$2" "$3"
+        printf -v row 'ts=%s\tverb=%s\tresult=%s\tdetail=%s' "$ts" "$1" "$2" "$3"
         append_receipt "$row" || true
       }
 
@@ -485,8 +485,9 @@
         row="$1" network="$2" out="$3"
         # One jq projection owns the row header; unit-separator join survives
         # empty fields where tab-IFS reads would collapse them.
-        IFS=$'\x1f' read -r name probe transport t < <(jq -r \
-          '[.name, .probe, .transport, (.codex.startupTimeoutSec // 20 | tostring)] | join("\u001f")' <<<"$row")
+        IFS=$'\x1f' read -r name probe transport t cmdpath url bearer < <(jq -r \
+          '[.name, .probe, .transport, (.codex.startupTimeoutSec // 20 | tostring),
+            (.command // ""), (.url // ""), (.codex.bearerEnvVar // "")] | join("\u001f")' <<<"$row")
         missing="$(jq -r '(.envKeys // [])[]' <<<"$row" | while IFS= read -r k; do
           [ -n "''${!k:-}" ] || printf '%s ' "$k"
         done)"
@@ -499,7 +500,6 @@
           emit SKIP "network class (probe with --network)$envnote"; return 0
         fi
         if [ "$transport" = "stdio" ]; then
-          cmdpath="$(jq -r '.command' <<<"$row")"
           if [ ! -x "$cmdpath" ]; then
             emit FAIL "command not executable: $cmdpath"; return 0
           fi
@@ -523,9 +523,7 @@
             emit FAIL "no initialize response within ''${t}s$envnote"
           fi
         else
-          url="$(jq -r '.url' <<<"$row")"
           declare -a hdr=()
-          bearer="$(jq -r '.codex.bearerEnvVar // empty' <<<"$row")"
           if [ -n "$bearer" ]; then
             [ -n "''${!bearer:-}" ] || { emit SKIP "credential env absent: $bearer"; return 0; }
             hdr+=(-H "Authorization: Bearer ''${!bearer}")
@@ -535,7 +533,9 @@
             [ -n "''${!v:-}" ] || { emit SKIP "credential env absent: $v"; return 0; }
             hdr+=(-H "$h: ''${!v}")
           done < <(jq -r '(.codex.headerEnv // {}) | to_entries[] | "\(.key)\t\(.value)"' <<<"$row")
-          body="$(mktemp)"
+          # Body temp lives beside the row outfile inside the doctor's trapped
+          # tmpdir, so an aborted probe leaves no $TMPDIR litter.
+          body="$out.body"
           # curl -w still emits its code line on transport failure; a second echo
           # would corrupt the status, so failures fall through to the 000 default.
           code="$(curl -sS --max-time "$t" -o "$body" -w '%{http_code}' -X POST "$url" \
@@ -863,7 +863,7 @@
     '';
   };
 
-  # --- forge-agents ----------------------------------------------------------
+  # --- [FORGE_AGENTS]
   # One data owner turns agent lanes, attention, and AI quota into one cached
   # fact set; the zjstatus top bar is the ONE surface rendering the cells.
   # Failed provider lanes keep the previous value with stale=true and back off
@@ -913,8 +913,8 @@
               ts="$(iso_now)"
               # Tolerant admission: a torn or foreign cache/meta file folds to
               # {} instead of killing the collector under set -e.
-              prev="$(jq -c 'if type == "object" then . else {} end' "$cache" 2>/dev/null || echo '{}')"
-              m="$(jq -c 'if type == "object" then . else {} end' "$meta" 2>/dev/null || echo '{}')"
+              prev="$(jq -c 'if type == "object" then . else {} end' "$cache" 2>/dev/null)" || prev='{}'
+              m="$(jq -c 'if type == "object" then . else {} end' "$meta" 2>/dev/null)" || m='{}'
 
               # Lane backoff: a failing provider lane is skipped for min(60*2^n, 3600)s.
               should_run() { # $1=lane
@@ -924,7 +924,7 @@
                 ' <<<"$m" >/dev/null
               }
 
-              # --- agent lanes: process facts -----------------------------------
+              # --- [AGENT_LANES_PROCESS_FACTS]
               # The lane filter derives from the Nix-owned agentLanes roster.
               lanes_rows="$(${psBin} -axo pid=,pcpu=,tt=,etime=,args= | awk '
                 {
@@ -935,11 +935,12 @@
                   | {pid: (.[0] | tonumber), cpu: (.[1] | tonumber), tty: .[2], etime: .[3], agent: .[4],
                      state: (if (.[1] | tonumber) >= 5 then "running" else "waiting" end)})')"
 
-              # --- attention: hook-feed fold joined against live process facts.
-              # A session needs input only when its latest event is Notification
-              # within the window AND its recorded tty still hosts an idle claude
-              # lane; one row per tty so stacked tabs never inflate the count, and
-              # the newest row keeps its identity so `focus` can route the click --
+              # --- [ATTENTION]
+              # Hook-feed fold joined against live process facts. A session needs
+              # input only when its latest event is Notification within the window
+              # AND its recorded tty still hosts an idle claude lane; one row per
+              # tty so stacked tabs never inflate the count, and the newest row
+              # keeps its identity so `focus` can route the click.
               TZ=UTC0 printf -v att_cut '%(%Y-%m-%dT%H:%M:%SZ)T' "$((now - 3600))"
               # fromjson? rail: the feed is live-appended and rotated lock-free,
               # so a torn line skips instead of collapsing the whole fold to 0.
@@ -951,19 +952,19 @@
                    | select(.event == "Notification" and .ts >= $cut
                             and ((.tty // "") as $t | $t != "" and ($idle | index($t | pty))))]
                 | unique_by(.tty)
-                | {needs_input: length, latest: (max_by(.ts) // null)}' 2>/dev/null \
-                || echo '{"needs_input": 0, "latest": null}')"
+                | {needs_input: length, latest: (max_by(.ts) // null)}' 2>/dev/null)" \
+                || att='{"needs_input": 0, "latest": null}'
               needs="$(jq -r '.needs_input' <<<"$att")"
 
-              # --- quota: codex provider snapshots --------------------------------
+              # --- [QUOTA_CODEX_PROVIDER_SNAPSHOTS]
               cx_prev="$(jq -c '.quota.codex // {}' <<<"$prev")"
               cx="$cx_prev"; cx_ok=1
               if should_run codex; then
                 cx_ok=0
                 while IFS= read -r f; do
-                  # A torn tail line in a live-appended session file aborts jq
-                  # mid-stream; the rows it already emitted stay the evidence.
-                  rl="$(jq -c 'select(.payload.rate_limits.primary) | .payload.rate_limits' "$f" 2>/dev/null | tail -1 || true)"
+                  # fromjson? rail: a torn tail line in a live-appended session
+                  # file skips instead of aborting the stream mid-file.
+                  rl="$(jq -Rc 'fromjson? | select(.payload.rate_limits.primary) | .payload.rate_limits' "$f" 2>/dev/null | tail -1 || true)"
                   if [ -n "$rl" ]; then
                     cx="$(jq -c --arg ts "$ts" '{
                       provider: "codex", source: "provider", as_of: $ts, stale: false, error: null,
@@ -982,7 +983,7 @@
                 fi
               fi
 
-              # --- quota: claude local estimation ---------------------------------
+              # --- [QUOTA_CLAUDE_LOCAL_ESTIMATION]
               cl_prev="$(jq -c '.quota.claude // {}' <<<"$prev")"
               cl="$cl_prev"; cl_ok=1
               if should_run claude; then
@@ -1018,7 +1019,7 @@
                 fi
               fi
 
-              # --- cache assembly --------------------------------------------------
+              # --- [CACHE_ASSEMBLY]
               tmp_cache="$cache.tmp.$$"
               jq -cn --arg ts "$ts" --argjson lanes "$lanes_rows" --argjson att "$att" \
                 --argjson cx "$cx" --argjson cl "$cl" '{
@@ -1033,7 +1034,7 @@
               }' >"$tmp_cache"
               mv "$tmp_cache" "$cache"
 
-              # --- projections ------------------------------------------------------
+              # --- [PROJECTIONS]
               # The zjstatus top bar is the ONE render surface; the collector owns
               # role->palette styling (build-time hexes from the theme owner) and
               # ships fully formatted payloads the bar renders verbatim (dynamic).
@@ -1100,7 +1101,7 @@
                 notified=1
               fi
 
-              # --- meta + transition receipt ---------------------------------------
+              # --- [META_TRANSITION_RECEIPT]
               jq -cn --argjson now "$now" --argjson m "$m" \
                 --argjson cx_ok "$cx_ok" --argjson cl_ok "$cl_ok" --argjson notified "$notified" '
                 ($m.lanes // {}) as $l
@@ -1117,9 +1118,9 @@
 
               # jq's // coerces false to the alternative; != false keeps a real false.
               summary="needs=''${needs:-0} run=$run_n cx_stale=$cx_stale cl_stale=$cl_stale"
-              prev_summary="$(jq -r '"needs=\(.attention.needs_input // 0) run=\(.lanes.running // 0) cx_stale=\(.quota.codex.stale != false) cl_stale=\(.quota.claude.stale != false)"' <<<"$prev" 2>/dev/null || echo "")"
+              prev_summary="$(jq -r '"needs=\(.attention.needs_input // 0) run=\(.lanes.running // 0) cx_stale=\(.quota.codex.stale != false) cl_stale=\(.quota.claude.stale != false)"' <<<"$prev" 2>/dev/null)" || prev_summary=""
               if [ "$summary" != "$prev_summary" ] || [ "$notified" = 1 ]; then
-                printf -v receipt_row 'ts=%s\towner=forge-agents\tverb=collect\tresult=ok\t%s\tnotified=%s' \
+                printf -v receipt_row 'ts=%s\tverb=collect\tresult=ok\t%s\tnotified=%s' \
                   "$ts" "''${summary// /$'\t'}" "$notified"
                 append_receipt "$receipt_row" || true
               fi
@@ -1132,7 +1133,7 @@
             # are the only witness when routing goes sideways.
             focus_receipt() {
               local row
-              printf -v row 'ts=%s\towner=forge-agents\tverb=focus\tlane=%s\ttty=%s\tresult=ok' \
+              printf -v row 'ts=%s\tverb=focus\tlane=%s\ttty=%s\tresult=ok' \
                 "$(iso_now)" "$1" "''${tty:-.}"
               append_receipt "$row" 2>/dev/null || true
             }

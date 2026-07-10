@@ -17,16 +17,16 @@
     settings = {
       "$schema" = "https://starship.rs/config-schema.json";
 
-      # --- Global Configuration ---------------------------------------------
+      # --- [GLOBAL_CONFIGURATION]
       palette = "dracula"; # Use Dracula color palette
       add_newline = true; # Blank line between prompts
       scan_timeout = 50; # File-scan budget (ms); prompt never blocks on large trees
       command_timeout = 800; # Command budget (ms); slow git/tool calls get cut, not awaited
 
-      # --- Dracula Color Palette --------------------------------------------
+      # --- [DRACULA_COLOR_PALETTE]
       palettes.dracula = lib.mapAttrs (_: c: c.hex) config.forge.theme.palette;
 
-      # --- Prompt Format ----------------------------------------------------
+      # --- [PROMPT_FORMAT]
       # Left-side prompt (contextual information)
       format = lib.concatStrings [
         "$os"
@@ -57,7 +57,7 @@
       # Continuation prompt for incomplete commands
       continuation_prompt = " ";
 
-      # --- Core Modules -----------------------------------------------------
+      # --- [CORE_MODULES]
       username = {
         style_user = "foreground";
         style_root = "red";
@@ -115,7 +115,7 @@
         };
       };
 
-      # --- Git Modules ------------------------------------------------------
+      # --- [GIT_MODULES]
       # vcs composes the git payload with one repo-detection pass per prompt;
       # git_metrics stays out (per-draw diff cost).
       vcs = {
@@ -165,7 +165,7 @@
         ignore_submodules = false;
       };
 
-      # --- Programming Languages --------------------------------------------
+      # --- [PROGRAMMING_LANGUAGES]
       nodejs = {
         format = "\\[[$symbol($version)]($style)\\]";
         version_format = "v$major.$minor.$patch";
@@ -210,7 +210,7 @@
         detect_folders = ["vendor"];
       };
 
-      # --- System Information -----------------------------------------------
+      # --- [SYSTEM_INFORMATION]
       docker_context = {
         format = "\\[[$symbol$context]($style)\\]";
         style = "cyan";
@@ -233,7 +233,7 @@
         heuristic = false;
       };
 
-      # --- Operational Modules (right prompt) ---------------------------------
+      # --- [OPERATIONAL_MODULES_RIGHT_PROMPT]
       # Exit truth: pipestatus-aware, renders only on failure.
       status = {
         disabled = false;

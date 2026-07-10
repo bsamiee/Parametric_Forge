@@ -2,7 +2,7 @@
 # Author        : Bardia Samiee
 # Project       : Parametric Forge
 # License       : MIT
-# Path          : /modules/home/aliases/media.nix
+# Path          : modules/home/aliases/media.nix
 # ----------------------------------------------------------------------------
 # Media register rows: playback, image, ffmpeg.
 [

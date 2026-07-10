@@ -10,17 +10,17 @@
   home.packages = [pkgs.file];
 
   home.sessionVariables = {
-    # --- Locale & Time ------------------------------------------------------
+    # --- [LOCALE_TIME]
     TZ = "America/Chicago";
     LANG = "en_US.UTF-8";
     LC_ALL = "";
 
     # EDITOR/VISUAL are owned by programs.neovim.defaultEditor (apps/nvim).
 
-    # --- File Type Detection ------------------------------------------------
+    # --- [FILE_TYPE_DETECTION]
     MAGIC = "${pkgs.file}/share/misc/magic.mgc";
 
-    # --- Privacy & Telemetry Opt-Outs ---------------------------------------
+    # --- [PRIVACY_TELEMETRY_OPT_OUTS]
     CARGO_BINSTALL_DISABLE_TELEMETRY = "1";
     AZURE_CORE_COLLECT_TELEMETRY = "0";
     POWERSHELL_TELEMETRY_OPTOUT = "1";

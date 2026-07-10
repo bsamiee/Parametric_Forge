@@ -17,17 +17,17 @@
   # needs to expose the boot disk; without them initrd never finds root.
   imports = [(modulesPath + "/profiles/qemu-guest.nix") ./disko.nix];
 
-  # --- Boot -------------------------------------------------------------------
+  # --- [BOOT]
   # BIOS GRUB; disko projects the install device from the EF02 partition row.
   boot.loader.grub.enable = true;
   boot.tmp.cleanOnBoot = true;
   zramSwap.enable = true;
 
-  # --- Locale -------------------------------------------------------------------
+  # --- [LOCALE]
   # Time zone projects from the host-context row through the host factory.
   i18n.defaultLocale = "en_US.UTF-8";
 
-  # --- Network ------------------------------------------------------------------
+  # --- [NETWORK]
   # Static addressing projected from the host-context network row — the
   # provider serves no DHCP. SSH only on day one; every service stays loopback
   # behind the ssh.nix vpsTunnels registry (webhook, postgres, ollama, n8n, atuin).
@@ -54,7 +54,7 @@
     };
   };
 
-  # --- Services --------------------------------------------------------------
+  # --- [SERVICES]
   services = {
     openssh = {
       enable = true;
@@ -78,7 +78,7 @@
     journald.extraConfig = "SystemMaxUse=500M";
   };
 
-  # --- Identity -------------------------------------------------------------
+  # --- [IDENTITY]
   # Declarative users only; key-based access, passwordless wheel (agent-first
   # frictionless posture, parity with the Darwin Touch-ID rail).
   security.sudo.wheelNeedsPassword = false;
@@ -106,7 +106,7 @@
       })
       (host.serviceUsers or []));
 
-  # --- Container runtime ---------------------------------------------------
+  # --- [CONTAINER_RUNTIME]
   # System Docker daemon (Maghz compose plane); the nixpkgs docker CLI bundles
   # the compose plugin, so `docker compose` works without extra rows.
   virtualisation.docker = {
@@ -121,7 +121,7 @@
     options = "--delete-older-than 14d";
   };
 
-  # --- Root-visible tooling -----------------------------------------------
+  # --- [ROOT_VISIBLE_TOOLING]
   # Flake operations and remote activation need git at the system layer; the
   # full CLI estate is Home Manager-owned per user. doppler serves the
   # maghz-agent service user (no HM graph): the /srv/maghz-scoped read-only

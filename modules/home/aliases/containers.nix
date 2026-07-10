@@ -2,11 +2,11 @@
 # Author        : Bardia Samiee
 # Project       : Parametric Forge
 # License       : MIT
-# Path          : /modules/home/aliases/containers.nix
+# Path          : modules/home/aliases/containers.nix
 # ----------------------------------------------------------------------------
 # Container and Kubernetes register rows.
 [
-  # --- docker ------------------------------------------------------------------
+  # --- [DOCKER]
   {
     alias = "dps";
     expansion = "docker ps";
@@ -25,7 +25,7 @@
     desc = "Compose shorthand";
     category = "docker";
   }
-  # --- kubernetes ----------------------------------------------------------------
+  # --- [KUBERNETES]
   {
     alias = "k";
     expansion = "kubecolor";
@@ -62,7 +62,7 @@
     desc = "Kubernetes TUI";
     category = "kubernetes";
   }
-  # --- kube-debug ----------------------------------------------------------------
+  # --- [KUBE_DEBUG]
   {
     alias = "klog";
     expansion = "stern";

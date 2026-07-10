@@ -17,7 +17,7 @@
       # --- Session secrets (backend-dispatched; owner: shell-tools/1password.nix) --
       [[ ! -f "${config.xdg.configHome}/forge-session-secrets.sh" ]] || source "${config.xdg.configHome}/forge-session-secrets.sh"
 
-      # --- FZF path/dir generators (fzf ** completion trigger) ---------------------
+      # --- [FZF_PATH_DIR_GENERATORS_FZF_COMPLETION_TRIGGER]
       _fzf_compgen_path() {
         fd --hidden --follow --exclude .git . "$1"
       }
@@ -26,7 +26,7 @@
         fd --type d --hidden --follow --exclude .git . "$1"
       }
 
-      # --- Tool Integration -------------------------------------------------------
+      # --- [TOOL_INTEGRATION]
       # Batman man page integration
       eval "$(${pkgs.bat-extras.batman}/bin/batman --export-env)"
 
@@ -41,7 +41,7 @@
     '')
 
     (lib.mkOrder 650 ''
-      # --- FZF Keybindings (suppress read-only option errors) --------------------
+      # --- [FZF_KEYBINDINGS_SUPPRESS_READ_ONLY_OPTION_ERRORS]
       # FZF tries to restore the read-only 'zle' option, causing harmless errors.
       # Suppress stderr to keep output clean; FZF keybindings still register.
       # fzf captures the fzf-tab ^I widget as fzf_default_completion: plain Tab
@@ -52,7 +52,7 @@
     '')
 
     (lib.mkOrder 720 ''
-      # --- Atuin History Initialization (after autosuggestions source at 700) ----
+      # --- [ATUIN_HISTORY_INITIALIZATION_AFTER_AUTOSUGGESTIONS_SOURCE_AT_700]
       if [[ $options[zle] = on ]]; then
         eval "$(${pkgs.atuin}/bin/atuin init zsh)"
       fi

@@ -103,7 +103,7 @@
 in {
   imports = [inputs.shell-plugins.hmModules.default];
 
-  # --- Shell Plugins: biometric auth for supported CLIs -----------------------
+  # --- [SHELL_PLUGINS_BIOMETRIC_AUTH_FOR_SUPPORTED_CLIS]
   # gh stays excluded: GH_TOKEN keeps it working in non-interactive contexts.
   programs._1password-shell-plugins = {
     enable = true;
@@ -113,20 +113,20 @@ in {
   home = {
     packages = [secretsProof];
 
-    # --- Environment: Biometric unlock for CLI ----------------------------------
+    # --- [ENVIRONMENT_BIOMETRIC_UNLOCK_FOR_CLI]
     sessionVariables = {
       OP_BIOMETRIC_UNLOCK_ENABLED = "true";
     };
 
     activation = {
-      # --- Setup: op config directory -----------------------------------------------
+      # --- [SETUP_OP_CONFIG_DIRECTORY]
       # Run BEFORE writeBoundary (validation phase) - safe for idempotent directory creation
       ensure1PasswordDirs = lib.hm.dag.entryBefore ["writeBoundary"] ''
         mkdir -p "${config.xdg.configHome}/op"
         chmod 700 "${config.xdg.configHome}/op"
       '';
 
-      # --- Activation Hook: Generate token cache during rebuild ----------------------
+      # --- [ACTIVATION_HOOK_GENERATE_TOKEN_CACHE_DURING_REBUILD]
       # Runs AFTER linkGeneration: xdg.configFile entries (the template) land
       # after writeBoundary, so an earlier run would read a stale template.
       injectSecretsFromVault = lib.hm.dag.entryAfter ["linkGeneration" "ensureForgeJupyterToken"] ''
@@ -170,7 +170,7 @@ in {
   };
 
   xdg.configFile = {
-    # --- op SSH agent seam: one unified key, deterministic offer order ---------
+    # --- [OP_SSH_AGENT_SEAM_ONE_UNIFIED_KEY_DETERMINISTIC_OFFER_ORDER]
     # The agent serves exactly the unified estate key; op-ssh-sign (git-tools
     # signing rail) resolves the same item by public key. Approval posture is
     # app-level: approve-for-all-applications during active windows.
@@ -191,7 +191,7 @@ in {
       fi
     '';
 
-    # --- Secret Template: API keys for op inject --------------------------------
+    # --- [SECRET_TEMPLATE_API_KEYS_FOR_OP_INJECT]
     "op/env.template".text = ''
       # API keys resolved during rebuild via "op inject"; the export keyword
       # makes child processes inherit each variable.
@@ -226,7 +226,7 @@ in {
     '';
   };
 
-  # --- GUI session secrets -----------------------------------------------------
+  # --- [GUI_SESSION_SECRETS]
   # launchd-launched GUI apps never source .zshrc; this RunAtLoad agent replays
   # the mode-600 session material, and no secret value enters the Nix store.
   # The bundle-apps row makes Login Items & Extensions show the display name

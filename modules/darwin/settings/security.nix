@@ -22,16 +22,16 @@ in {
       || /usr/sbin/dseditgroup -o edit -t user -a ${config.system.primaryUser} _developer
   '';
 
-  # --- Security Configuration -----------------------------------------------
+  # --- [SECURITY_CONFIGURATION]
   security = {
-    # --- PAM Authentication -------------------------------------------------
+    # --- [PAM_AUTHENTICATION]
     pam.services.sudo_local = {
       enable = mkDefault true;
       touchIdAuth = mkDefault true;
       watchIdAuth = mkDefault false;
       reattach = mkDefault false;
     };
-    # --- Certificate Management ---------------------------------------------
+    # --- [CERTIFICATE_MANAGEMENT]
     pki = {
       installCACerts = mkDefault true;
       certificateFiles = [];
@@ -39,23 +39,23 @@ in {
       caCertificateBlacklist = [];
     };
   };
-  # --- System Security Configuration ----------------------------------------
+  # --- [SYSTEM_SECURITY_CONFIGURATION]
   system.defaults = {
-    # --- Screensaver Security -----------------------------------------------
+    # --- [SCREENSAVER_SECURITY]
     screensaver = {
       askForPassword = mkDefault false; # Disable password prompt after screensaver
       askForPasswordDelay = mkDefault 0; # No delay when disabled
     };
-    # --- Application Security -----------------------------------------------
+    # --- [APPLICATION_SECURITY]
     CustomUserPreferences = {
-      # --- Privacy & Telemetry Settings -------------------------------------
+      # --- [PRIVACY_TELEMETRY_SETTINGS]
       "com.apple.assistant.support" = {
         "Assistant Enabled" = mkDefault false;
       };
       "com.apple.Siri" = {
         StatusMenuVisible = mkDefault false;
       };
-      # --- Accessibility Security Settings ----------------------------------
+      # --- [ACCESSIBILITY_SECURITY_SETTINGS]
       "com.apple.universalaccess" = {
         slowKey = mkDefault false;
         stickyKey = mkDefault false;
@@ -66,13 +66,13 @@ in {
       };
       # LSQuarantine stays disabled through the first-class owner:
       # system.defaults.LaunchServices.LSQuarantine in settings/system.nix.
-      # --- Developer Security Settings --------------------------------------
+      # --- [DEVELOPER_SECURITY_SETTINGS]
       "com.apple.dt.Xcode" = {
         DVTTextEditorTrimTrailingWhitespace = mkDefault false;
       };
     };
   };
-  # --- Sudoers Configuration -----------------------------------------------
+  # --- [SUDOERS_CONFIGURATION]
   security.sudo = {
     extraConfig = ''
       # Allow passwordless system maintenance commands

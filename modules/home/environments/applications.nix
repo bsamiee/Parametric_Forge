@@ -7,26 +7,26 @@
 # User application environment variables
 {config, ...}: {
   home.sessionVariables = {
-    # --- WezTerm ------------------------------------------------------------
+    # --- [WEZTERM]
     WEZTERM_CONFIG_DIR = "${config.xdg.configHome}/wezterm";
     WEZTERM_RUNTIME_DIR = "${config.xdg.stateHome}/wezterm";
     WEZTERM_LOG_DIR = "${config.xdg.stateHome}/wezterm";
 
-    # --- Zellij -------------------------------------------------------------
+    # --- [ZELLIJ]
     ZELLIJ_CONFIG_DIR = "${config.xdg.configHome}/zellij";
     ZELLIJ_AUTO_ATTACH = "false"; # Handled in WezTerm config for auto-loading Zellij
     ZELLIJ_AUTO_EXIT = "false"; # Handled in WezTerm config for auto-loading Zellij
     ZELLIJ_DEFAULT_LAYOUT = "default";
 
-    # --- Yazi ---------------------------------------------------------------
+    # --- [YAZI]
     YAZI_CONFIG_HOME = "${config.xdg.configHome}/yazi";
 
-    # --- Neovim -------------------------------------------------------------
+    # --- [NEOVIM]
     # Editor RPC rail uses native `nvim --listen`/`--server`; sockets live under
     # the private runtime root (XDG runtime dir, else per-user TMPDIR) at
     # forge-edit/<session>/ per the integration script registry.
 
-    # --- Serpl --------------------------------------------------------------
+    # --- [SERPL]
     SERPL_CONFIG = "${config.xdg.configHome}/serpl";
     SERPL_DATA = "${config.xdg.dataHome}/serpl";
     SERPL_LOGLEVEL = "info";

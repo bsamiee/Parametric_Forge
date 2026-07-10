@@ -23,7 +23,7 @@
     "/sbin"
   ];
 
-  # --- Scheduled update policy (domt4/autoupdate) ---------------------------
+  # --- [SCHEDULED_UPDATE_POLICY_DOMT4_AUTOUPDATE]
   # Daily update+upgrade+cleanup, keychain-backed sudo askpass (pinentry-mac),
   # notifier off (TCC denies the notification permission). The reconciler
   # regenerates the tap-owned agent whenever live state drifts from this row,
@@ -77,18 +77,18 @@ in {
   homebrew = {
     enable = mkDefault true;
 
-    # --- Mac App Store ------------------------------------------------------
+    # --- [MAC_APP_STORE]
     masApps = {
       Drafts = 1435957248;
     };
 
-    # --- Global Settings ----------------------------------------------------
+    # --- [GLOBAL_SETTINGS]
     global = {
       autoUpdate = mkDefault true; # Manual brew ops refresh tap metadata natively
       brewfile = mkDefault false; # Disable Brewfile (managed via Nix)
     };
 
-    # --- Activation Behavior ------------------------------------------------
+    # --- [ACTIVATION_BEHAVIOR]
     # Activation stays install/metadata only; version freshness is owned by the
     # domt4/autoupdate agent under the reconciled schedule declared above.
     onActivation = {
@@ -102,7 +102,7 @@ in {
       };
     };
 
-    # --- Cask Configuration -------------------------------------------------
+    # --- [CASK_CONFIGURATION]
     caskArgs = mkDefault {
       appdir = "/Applications";
       require_sha = false; # Allow casks without SHA

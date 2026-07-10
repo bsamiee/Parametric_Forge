@@ -83,7 +83,7 @@
     '';
   };
 
-  # --- Previewer rows ---------------------------------------------------------
+  # --- [PREVIEWER_ROWS]
   # Directory tree, config-language diagnostics (one lane per row), archives,
   # markdown, the DuckDB data lane, then a hexyl lane for the true-binary
   # residue (mime-ext classifies unknown extensions via file(1); what remains
@@ -161,7 +161,7 @@
       group = "git";
     }) ["local://*" "local://*/"];
 
-  # --- Opener policy rows -------------------------------------------------------
+  # --- [OPENER_POLICY_ROWS]
   # Typed opener table + routing rules; the archive owner is the augment-command
   # event family (augmented-extract) over the shared _7zz-rar runtime — native
   # `extract` and ad-hoc archive commands never route beside it. Preset openers

@@ -19,7 +19,7 @@
   home = config.home.homeDirectory;
   flakeRoot = config.forge.lsp.flakeRoot;
 
-  # --- Treesitter compat unit: neovim pin + nvim-treesitter main + parsers ----
+  # --- [TREESITTER_COMPAT_UNIT_NEOVIM_PIN_NVIM_TREESITTER_MAIN_PARSERS]
   grammars = [
     "bash"
     "c_sharp"
@@ -80,7 +80,7 @@
     ["${pkgs.neovim-unwrapped}/share/nvim/runtime/lua"]
     ++ lib.mapAttrsToList (_: p: "${p}/lua") plugins;
 
-  # --- LSP inventory: one row family, two consumers ---------------------------
+  # --- [LSP_INVENTORY_ONE_ROW_FAMILY_TWO_CONSUMERS]
   # `cmd`/`filetypes`/`root_markers`/`settings` feed vim.lsp.config rows;
   # `claude` is the marketplace identity (plugin dir, extension map, optional
   # settings override) the health surface proves against
@@ -219,7 +219,7 @@
     };
   };
 
-  # --- Tool rows: formatters, linters, search, provider, estate actions -------
+  # --- [TOOL_ROWS_FORMATTERS_LINTERS_SEARCH_PROVIDER_ESTATE_ACTIONS]
   # Bare names resolve through the per-user profile; the health surface proves
   # resolution (`probes` names the real tools behind sh-wrapped rows). Estate
   # rows are the register-rail projection inside the editor: `mode` selects the
@@ -362,9 +362,10 @@
     estate = estateRows;
   };
 
-  # --- Syntax projection: the owner scope table carries its own treesitter
-  # captures (design-language master scope map); hue, style, and capture
-  # binding all live in theme.nix — a rebind there lands here with zero edits.
+  # --- [SYNTAX_PROJECTION]
+  # The owner scope table carries its own treesitter captures (design-language
+  # master scope map); hue, style, and capture binding all live in theme.nix —
+  # a rebind there lands here with zero edits.
   syntaxFacts = {
     scopes =
       map (row: {
@@ -374,11 +375,10 @@
       })
       config.forge.theme.syntaxScopes;
     roles =
-      lib.mapAttrs (_: lib.mapAttrs (_: c: c.hex))
-      {inherit (config.forge.theme.roles) surface text accent state diff ui;}
+      config.forge.theme.projections.rolesHex
       # Git-state vocabulary: the same hues the VS Code and WezTerm gutters
       # read; the glyph half of the row stays with its terminal consumers.
-      // {git = lib.mapAttrs (_: g: g.color.hex) config.forge.theme.roles.git;};
+      // {git = lib.mapAttrs (_: g: g.color) config.forge.theme.projections.gitHex;};
   };
 
   luarc =

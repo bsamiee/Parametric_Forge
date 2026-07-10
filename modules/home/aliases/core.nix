@@ -2,12 +2,12 @@
 # Author        : Bardia Samiee
 # Project       : Parametric Forge
 # License       : MIT
-# Path          : /modules/home/aliases/core.nix
+# Path          : modules/home/aliases/core.nix
 # ----------------------------------------------------------------------------
 # Core register rows: system, files, monitoring, data, network, dev. Raw row
 # list consumed by ../aliases/default.nix; desc/category/risk are row data.
 [
-  # --- general ---------------------------------------------------------------
+  # --- [GENERAL]
   {
     alias = "cl";
     expansion = "clear";
@@ -32,7 +32,7 @@
     desc = "System summary";
     category = "general";
   }
-  # --- shell -----------------------------------------------------------------
+  # --- [SHELL]
   {
     alias = "envs";
     expansion = "env | sort";
@@ -57,7 +57,7 @@
     desc = "Replace shell process";
     category = "shell";
   }
-  # --- files -----------------------------------------------------------------
+  # --- [FILES]
   {
     alias = "ls";
     expansion = "eza -la --header --no-user --time-style=relative";
@@ -80,6 +80,18 @@
     alias = "rsmv";
     expansion = "rsync-mv.sh";
     desc = "Atomic move with directory cleanup";
+    category = "files";
+  }
+  {
+    alias = "yz";
+    expansion = "forge-yazi.sh reveal";
+    desc = "Reveal a path in the tab's yazi popup (creates it when absent)";
+    category = "files";
+  }
+  {
+    alias = "yzd";
+    expansion = "forge-yazi.sh cd";
+    desc = "Retarget the tab's yazi popup to a directory";
     category = "files";
   }
   {
@@ -132,7 +144,7 @@
     desc = "Decompress archives";
     category = "files";
   }
-  # --- monitoring ------------------------------------------------------------
+  # --- [MONITORING]
   {
     alias = "pst";
     expansion = "procs --tree";
@@ -182,7 +194,7 @@
     desc = "Command benchmarking";
     category = "monitoring";
   }
-  # --- text-search -----------------------------------------------------------
+  # --- [TEXT_SEARCH]
   {
     alias = "chs";
     expansion = "choose";
@@ -225,7 +237,7 @@
     desc = "Markdown viewer";
     category = "text-search";
   }
-  # --- screenshot ------------------------------------------------------------
+  # --- [SCREENSHOT]
   {
     alias = "carbonc";
     expansion = "carbon-now.sh --to-clipboard";
@@ -238,7 +250,7 @@
     desc = "Code screenshot interactive";
     category = "screenshot";
   }
-  # --- data ------------------------------------------------------------------
+  # --- [DATA]
   {
     alias = "jqr";
     expansion = "jq -r";
@@ -305,7 +317,7 @@
     desc = "JSON to CSV";
     category = "data";
   }
-  # --- trash -----------------------------------------------------------------
+  # --- [TRASH]
   {
     alias = "trestore";
     expansion = "trash-restore";
@@ -332,7 +344,7 @@
     category = "trash";
     risk = "destructive";
   }
-  # --- navigation ------------------------------------------------------------
+  # --- [NAVIGATION]
   {
     alias = "cdr";
     expansion = "cd $(git rev-parse --show-toplevel)";
@@ -369,7 +381,7 @@
     desc = "Previous directory";
     category = "navigation";
   }
-  # --- network ---------------------------------------------------------------
+  # --- [NETWORK]
   {
     alias = "http";
     expansion = "xh";
@@ -451,7 +463,7 @@
     category = "network";
     risk = "sudo";
   }
-  # --- time ------------------------------------------------------------------
+  # --- [TIME]
   {
     alias = "timestamp";
     expansion = "date +'%Y%m%d_%H%M%S'";
@@ -482,7 +494,7 @@
     desc = "Week number";
     category = "time";
   }
-  # --- 1password -------------------------------------------------------------
+  # --- [1PASSWORD]
   {
     alias = "opls";
     expansion = "op item list --format=json | jq -r '.[] | \"\\(.id) \\(.title)\"'";
@@ -507,7 +519,7 @@
     desc = "Inject secrets into template";
     category = "1password";
   }
-  # --- zellij ----------------------------------------------------------------
+  # --- [ZELLIJ]
   {
     alias = "zjl";
     expansion = "zellij list-sessions";
@@ -548,7 +560,7 @@
     category = "zellij";
     risk = "session-destructive";
   }
-  # --- actions ---------------------------------------------------------------
+  # --- [ACTIONS]
   {
     alias = "actl";
     expansion = "act -l";
@@ -561,7 +573,7 @@
     desc = "Lint workflow files";
     category = "actions";
   }
-  # --- dev -------------------------------------------------------------------
+  # --- [DEV]
   {
     alias = "tyc";
     expansion = "ty check";
@@ -664,7 +676,7 @@
     desc = "Rhino script compiler";
     category = "dev";
   }
-  # --- macos -----------------------------------------------------------------
+  # --- [MACOS]
   {
     alias = "awake";
     expansion = "caffeinate -dims";

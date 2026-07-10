@@ -106,7 +106,7 @@ in {
   };
 
   home.sessionVariables = {
-    # --- containers/image and OCI tooling ----------------------------------
+    # --- [CONTAINERS_IMAGE_AND_OCI_TOOLING]
     CONTAINERS_REGISTRIES_CONF = "${config.xdg.configHome}/containers/registries.conf";
     CONTAINERS_STORAGE_CONF = "${config.xdg.configHome}/containers/storage.conf";
     CONTAINERS_CONF = "${config.xdg.configHome}/containers/containers.conf";
@@ -114,18 +114,18 @@ in {
     REGISTRY_AUTH_FILE = "${config.xdg.configHome}/containers/auth.json";
     KUBECONFIG = "${config.xdg.configHome}/kube/config";
 
-    # --- Kubernetes ---------------------------------------------------------
+    # --- [KUBERNETES]
     K9S_CONFIG_DIR = "${config.xdg.configHome}/k9s";
 
-    # --- Helm -----------------------------------------------------------------
+    # --- [HELM]
     HELM_CONFIG_HOME = "${config.xdg.configHome}/helm";
     HELM_DATA_HOME = "${config.xdg.dataHome}/helm";
     HELM_CACHE_HOME = "${config.xdg.cacheHome}/helm";
 
-    # --- Kubecolor ------------------------------------------------------------
+    # --- [KUBECOLOR]
     KUBECOLOR_FORCE_COLORS = "auto";
 
-    # --- Container Tools ----------------------------------------------------
+    # --- [CONTAINER_TOOLS]
     LAZYDOCKER_CONFIG_DIR = "${config.xdg.configHome}/lazydocker";
   };
 

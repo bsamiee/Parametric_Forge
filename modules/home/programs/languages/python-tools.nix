@@ -193,12 +193,12 @@ in {
   };
 
   home.packages = with pkgs; [
-    # --- Python Runtime (Canonical Source) ----------------------------------
+    # --- [PYTHON_RUNTIME_CANONICAL_SOURCE]
     (projectPython "python")
     (projectPython "python3")
     python315 # Python 3.15
 
-    # --- Python Tooling -----------------------------------------------------
+    # --- [PYTHON_TOOLING]
     (projectTool "ruff" ruff) # Fast Python linter/formatter
     uv # Fast Python package installer and resolver
     (projectTool "ty" ty) # Astral type checker / language server

@@ -190,25 +190,25 @@ in {
 
     packages = with pkgs;
       [
-        # --- Shell Tooling ------------------------------------------------------
+        # --- [SHELL_TOOLING]
         bash # Bash 5.3+ runtime for generated scripts and explicit bash sessions
         shellcheck # POSIX shell static analysis
         shfmt # Shell formatter (let-bound house-style fallback wrapper)
         bash-language-server # Bash LSP (navigation + diagnostics via shellcheck/shfmt)
 
-        # --- YAML ---------------------------------------------------------------
+        # --- [YAML]
         yamlfmt # YAML formatter (Google)
         yamllint # YAML linter
         yaml-language-server # YAML LSP (SchemaStore-backed validation + completion)
         taplo # TOML formatter/validator/LSP (let-bound house-config fallback wrapper)
 
-        # --- JSON ---------------------------------------------------------------
+        # --- [JSON]
         jq # Lightweight command-line JSON processor
 
-        # --- HTML / Markup ------------------------------------------------------
+        # --- [HTML_MARKUP]
         validator-nu # W3C HTML5/SVG/CSS conformance validator (vnu); backs the html-studio gate
 
-        # --- General Data Tools -------------------------------------------------
+        # --- [GENERAL_DATA_TOOLS]
         git-lfs # Required by Homebrew update-reset and repos with LFS-backed fixtures
         yq-go # YAML/JSON/TOML processor (yq)
         miller # CSV/TSV/JSON processor
@@ -218,14 +218,14 @@ in {
         grpcurl # gRPC server reflection and request CLI
         typos # Fast source and docs typo checker
 
-        # --- .NET ---------------------------------------------------------------
+        # --- [NET]
         dotnet-combined
         csharpier # C# formatter; reads project .csharpierrc/.editorconfig
         ilspycmd # .NET assembly decompiler for NuGet API catalogues
         nuget-to-json # NuGet package metadata extraction
         roslyn-language-server # C# LSP (roslyn-ls wrapped for clean --stdio)
 
-        # --- Cloud / IaC --------------------------------------------------------
+        # --- [CLOUD_IAC]
         google-cloud-sdk # Google Cloud CLI for OAuth/API bootstrap and project administration
         gws # Google Workspace CLI; scripted/batch companion to the google-workspace MCP
         forge-workspace-mcp # Google Workspace MCP wrapper pinned to a Python 3.13 uv tool environment

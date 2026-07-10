@@ -163,11 +163,11 @@ in
     };
 
     home.packages = [
-      # --- Swift Code Quality ---------------------------------------------------
+      # --- [SWIFT_CODE_QUALITY]
       swiftformat # Swift formatter (nicklockwood; house base-config injected)
       swiftlint # Swift linter (project config promoted, house config fallback)
 
-      # --- AppleScript / JXA ------------------------------------------------------
+      # --- [APPLESCRIPT_JXA]
       forge-osa # OSA syntax gate + canonical AppleScript formatter
     ];
   }

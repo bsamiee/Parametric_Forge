@@ -7,7 +7,7 @@
 # Homebrew GUI applications
 _: {
   homebrew.casks = [
-    # --- System & Core Tools ------------------------------------------------
+    # --- [SYSTEM_CORE_TOOLS]
     "1password"
     "cleanshot"
     # Nightly (version :latest) conflicts with the stable "wezterm" cask: hard
@@ -16,7 +16,7 @@ _: {
     # daemon never upgrades it implicitly.
     "wezterm@nightly"
 
-    # --- Productivity & Window Management -----------------------------------
+    # --- [PRODUCTIVITY_WINDOW_MANAGEMENT]
     "airbuddy" # AirPods management
     "aldente" # Battery charging limiter
     "alt-tab" # Window switching
@@ -24,37 +24,37 @@ _: {
     "jordanbaird-ice" # Menu bar manager
     "raycast" # Launcher/productivity
 
-    # --- Browsers & Internet ------------------------------------------------
+    # --- [BROWSERS_INTERNET]
     "arc"
     "firefox"
     "tor-browser"
 
-    # --- Communication & Social ---------------------------------------------
+    # --- [COMMUNICATION_SOCIAL]
     "discord"
     "microsoft-auto-update"
     "microsoft-teams"
     "superhuman" # Email client
     "whatsapp"
 
-    # --- Cloud & Storage ----------------------------------------------------
+    # --- [CLOUD_STORAGE]
     "google-drive"
     "megasync"
 
-    # --- Development --------------------------------------------------------
+    # --- [DEVELOPMENT]
     "visual-studio-code"
     "iconjar"
     "typeface" # Font management
     "sf-symbols" # Apple's symbol library
 
-    # --- Media & Entertainment ----------------------------------------------
+    # --- [MEDIA_ENTERTAINMENT]
     "spotify"
 
-    # --- Notes & Reading ----------------------------------------------------
+    # --- [NOTES_READING]
     "calibre" # E-book management
     "heptabase" # Knowledge management
     "scrivener" # Writing tool
 
-    # --- QuickLook Plugins --------------------------------------------------
+    # --- [QUICKLOOK_PLUGINS]
     # All plugins below use the modern App Extension API (Sequoia-compatible).
     # Legacy .qlgenerator plugins are dead — Sequoia removed support entirely.
     # Note: .ts files are system-reserved (MPEG-2 UTI) — no QL plugin can override this.
@@ -63,7 +63,7 @@ _: {
     "betterzip" # Archive preview
     "suspicious-package" # .pkg inspector
 
-    # --- Fonts --------------------------------------------------------------
+    # --- [FONTS]
     # Fonts not available in nixpkgs:
     "font-playfair-display" # Not available as standalone package
     "font-sf-pro" # Apple proprietary
@@ -72,10 +72,10 @@ _: {
     "font-reem-kufi" # Not in nixpkgs
     "font-qahiri" # Not in nixpkgs
 
-    # --- Adobe & Creative Suite ---------------------------------------------
+    # --- [ADOBE_CREATIVE_SUITE]
     "zxpinstaller"
 
-    # --- Utilities & System Enhancement -------------------------------------
+    # --- [UTILITIES_SYSTEM_ENHANCEMENT]
     "grammarly-desktop"
     "rize" # Time tracking
     "hammerspoon" # Lua automation

@@ -2,7 +2,7 @@
 # Author        : Bardia Samiee
 # Project       : Parametric Forge
 # License       : MIT
-# Path          : /modules/home/aliases/default.nix
+# Path          : modules/home/aliases/default.nix
 # ----------------------------------------------------------------------------
 # Alias register owner: sibling files are typed row lists; this module stamps
 # owner_file/risk, asserts alias uniqueness, exposes forge.registers.aliases,

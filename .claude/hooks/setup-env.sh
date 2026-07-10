@@ -152,8 +152,9 @@ _resolve_source() {
         : >"${out}"
         reason="$(tail -n1 "${out}.err" 2>/dev/null | sed -E $'s/\x1b\\[[0-9;]*m//g' || true)"
     else
-        nkeys="$(jq -r 'length' "${out}" 2>/dev/null)" || nkeys=0
+        # One projection per snapshot: the keys manifest is the count's source.
         jq -r 'keys_unsorted[]' "${out}" >"${snap%.json}.keys.$$" 2>/dev/null || true
+        nkeys="$(wc -l <"${snap%.json}.keys.$$" | tr -d ' ')"
         chmod 600 "${snap%.json}.keys.$$" 2>/dev/null || true
         mv -f "${snap%.json}.keys.$$" "${snap%.json}.keys" 2>/dev/null || rm -f "${snap%.json}.keys.$$"
         if [[ "${outcome}" == "snapshot" && -f "${snap}" ]]; then

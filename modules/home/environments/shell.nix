@@ -16,13 +16,13 @@
     xdgCacheHome = config.xdg.cacheHome;
   };
 in {
-  # --- User Session Path ----------------------------------------------------
+  # --- [USER_SESSION_PATH]
   # Order matters: nix-darwin paths must be included for non-login shells (VS Code)
   home.sessionPath = toolchainEnv.userPathEntries;
   # Note: pnpm installed via nix for PATH stability; PNPM_HOME is data/config only.
 
   home.sessionVariables = {
-    # --- Shell Internals ----------------------------------------------------
+    # --- [SHELL_INTERNALS]
     SQLITE_HISTORY = "${config.xdg.stateHome}/sqlite/history";
     LESSHISTFILE = "${config.xdg.stateHome}/less/history";
     # ZSH_AUTOSUGGEST_STRATEGY is a zsh array owned by zsh/init.nix, not a session scalar.
@@ -36,7 +36,7 @@ in {
     MANROFFOPT = "-c";
     RICH_THEME = "dracula"; # rich accepts named Pygments styles only; dracula matches the estate palette variant
 
-    # --- Tool Configurations ------------------------------------------------
+    # --- [TOOL_CONFIGURATIONS]
     WATCHEXEC_IGNORE_FILE = "${config.xdg.configHome}/watchexec/ignore";
     RIPGREP_CONFIG_PATH = "${config.xdg.configHome}/ripgrep/config";
     TRIPPY_CONFIG_DIR = "${config.xdg.configHome}/trippy";
@@ -65,7 +65,7 @@ in {
     RSYNC_RSH = "ssh"; # Explicit SSH transport for rsync
     RSYNC_PROTECT_ARGS = "1"; # Protect args with spaces/wildcards (pre-3.2.4)
 
-    # --- FZF Forgit Configuration -------------------------------------------
+    # --- [FZF_FORGIT_CONFIGURATION]
     FORGIT_PAGER = "delta"; # Consistent with GIT_PAGER (zsh/config.nix envExtra)
     FORGIT_ADD_FZF_OPTS = "--border-label='[GIT ADD]'";
     FORGIT_DIFF_FZF_OPTS = "--border-label='[GIT DIFF]'";
@@ -81,11 +81,11 @@ in {
       --preview-window=right:60%:border-bold
     '';
 
-    # --- ZSH Plugin Configurations ------------------------------------------
+    # --- [ZSH_PLUGIN_CONFIGURATIONS]
     # you-should-use
     YSU_MESSAGE_POSITION = "before"; # Show message before command execution
 
-    # --- .NET Configuration -------------------------------------------------
+    # --- [NET_CONFIGURATION]
     DOTNET_MULTILEVEL_LOOKUP = "0"; # Prefer deterministic Nix-provided SDK/runtime graph
     DOTNET_NOLOGO = "1"; # Suppress startup banner
     DOTNET_CLI_TELEMETRY_OPTOUT = "1"; # Disable telemetry

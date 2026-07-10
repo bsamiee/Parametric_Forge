@@ -396,7 +396,7 @@
     };
   };
 
-  # --- Target registry: the Stylix-class capability matrix ---------------------
+  # --- [TARGET_REGISTRY_THE_STYLIX_CLASS_CAPABILITY_MATRIX]
   # One row per rendering consumer; verdicts: bound (interpolates owner
   # tokens), gap (adoption pending), defer (no config surface to own).
   # coverage.json projects from these rows so gaps surface before drift.
@@ -564,7 +564,7 @@
     palette = lib.mapAttrs (_: c: lib.toLower (lib.removePrefix "#" c.hex)) base24Slots;
   };
 
-  # --- Rendered proof board -----------------------------------------------------
+  # --- [RENDERED_PROOF_BOARD]
   # palette.html: swatches, elevation ladder, fg tiers, ANSI-16, syntax scopes
   # over a live sample, diff/search fills, git glyphs, and a WCAG contrast
   # matrix computed in the page against base/surface/overlay landings.
@@ -723,8 +723,19 @@
 
   projections = {
     inherit tmThemeFile;
-    # Lua return-table shared by WezTerm and Neovim generated palettes;
-    # derived fills ride along snake_cased for highlight consumers.
+    # Flat hex mirror of the semantic role tree — the one roles->hex fold
+    # every themed app composes instead of re-deriving privately.
+    rolesHex = lib.mapAttrs (_: lib.mapAttrs (_: c: c.hex)) {inherit (roles) surface text accent state diff ui;};
+    # Git-state vocabulary rows (hex + glyph); gutter and status consumers
+    # project the fields they render.
+    gitHex =
+      lib.mapAttrs (_: g: {
+        color = g.color.hex;
+        inherit (g) glyph;
+      })
+      roles.git;
+    # Lua return-table behind the generated Neovim palette; derived fills
+    # ride along snake_cased for highlight consumers.
     luaPalette = ''
       -- Generated from the Forge theme owner (modules/home/theme.nix).
       return {

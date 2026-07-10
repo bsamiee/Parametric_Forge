@@ -18,7 +18,7 @@ in {
     // Shell-first layout with floating lazygit; nvim spawns via forge-edit rail
 
     layout {
-        // --- Pane Templates ---------------------------------------------------------
+        // --- [PANE_TEMPLATES]
         pane_template name="lazygit" start_suspended=true {
             command         "lazygit"
             x               "${lazygitPopup.x}"
@@ -27,7 +27,7 @@ in {
             height          "${lazygitPopup.height}"
         }
 
-        // --- Tab Templates ----------------------------------------------------------
+        // --- [TAB_TEMPLATES]
         // Top zjstatus: tabs/layout/session. Bottom zjstatus-hints: mode + key ribbon.
         tab_template name="ui" {
             pane size=1 borderless=true {
@@ -52,7 +52,7 @@ in {
             }
         }
 
-        // --- Layouts ----------------------------------------------------------------
+        // --- [LAYOUTS]
         // Pane counts include the two bars from the ui template
         swap_tiled_layout name="[DEFAULT]" {
             ui exact_panes=3 {

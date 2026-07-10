@@ -12,13 +12,13 @@ in {
     enable = true;
 
     settings = {
-      # --- Internationalization ---------------------------------------------
+      # --- [INTERNATIONALIZATION]
       language = "auto";
       timeFormat = "02 Jan 06";
       shortTimeFormat = "3:04PM";
 
       gui = {
-        # --- Display Settings -----------------------------------------------
+        # --- [DISPLAY_SETTINGS]
         showFileTree = true;
         showCommandLog = false;
         showBottomLine = false;
@@ -28,7 +28,7 @@ in {
         sidePanelWidth = 0.3333;
         nerdFontsVersion = "3";
 
-        # --- Enhanced Display Options ---------------------------------------
+        # --- [ENHANCED_DISPLAY_OPTIONS]
         commitAuthorLongLength = 17;
         commitHashLength = 8;
         showRandomTip = true;
@@ -52,7 +52,7 @@ in {
       };
 
       git = {
-        # --- Paging: delta renders inside lazygit panes -----------------------
+        # --- [PAGING_DELTA_RENDERS_INSIDE_LAZYGIT_PANES]
         # Delta inherits its [delta] git-config options; --paging=never is the
         # in-pane requirement and --navigate does not work inside lazygit.
         pagers = [
@@ -62,7 +62,7 @@ in {
           }
         ];
 
-        # --- Git Behavior Settings ------------------------------------------
+        # --- [GIT_BEHAVIOR_SETTINGS]
         autoRefresh = true;
         autoFetch = true;
         autoForwardBranches = "onlyMainBranches";
@@ -70,20 +70,20 @@ in {
         mainBranches = ["main" "master" "develop" "dev"];
         skipHookPrefix = "WIP";
 
-        # --- Log Display Settings -------------------------------------------
+        # --- [LOG_DISPLAY_SETTINGS]
         log = {
           order = "topo-order";
           showGraph = "always";
         };
 
-        # --- Commit Settings ------------------------------------------------
+        # --- [COMMIT_SETTINGS]
         commit = {
           signOff = false;
           autoWrapCommitMessage = true;
           autoWrapWidth = 72;
         };
 
-        # --- Merging Configuration ------------------------------------------
+        # --- [MERGING_CONFIGURATION]
         merging = {
           manualCommit = false;
           args = "";

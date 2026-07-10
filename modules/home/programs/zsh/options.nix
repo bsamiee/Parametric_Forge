@@ -7,11 +7,11 @@
 # Zsh options and settings; completion surface is owned by completions.nix
 _: {
   programs.zsh = {
-    # --- Directory Navigation -----------------------------------------------
+    # --- [DIRECTORY_NAVIGATION]
     autocd = true;
     setOptions = ["AUTO_PUSHD" "PUSHD_IGNORE_DUPS" "CDABLE_VARS" "COMPLETE_IN_WORD"];
 
-    # --- Suggestion + Highlighting --------------------------------------------
+    # --- [SUGGESTION_HIGHLIGHTING]
     # strategy = [] suppresses the HM scalar; init.nix owns the final array post-atuin.
     autosuggestion = {
       enable = true;
@@ -22,7 +22,7 @@ _: {
     # natively at order 1200. Terminal ANSI palette carries the theme tokens.
     syntaxHighlighting.enable = true;
 
-    # --- History ------------------------------------------------------------
+    # --- [HISTORY]
     # Fallback history config (Atuin overrides when enabled)
     history = {
       size = 50000;

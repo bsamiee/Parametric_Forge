@@ -28,11 +28,11 @@
   customSettings = {
     trusted-users = ["root"] ++ adminGroups.${host.os};
 
-    # --- Performance ------------------------------------------------------
+    # --- [PERFORMANCE]
     max-substitution-jobs = 32;
     http-connections = 50;
 
-    # --- Build Behavior ---------------------------------------------------
+    # --- [BUILD_BEHAVIOR]
     keep-going = true;
     builders-use-substitutes = true;
     keep-outputs = true;
@@ -44,12 +44,12 @@
     log-lines = 100;
     connect-timeout = 10;
 
-    # --- Store Management -------------------------------------------------
+    # --- [STORE_MANAGEMENT]
     # Client-side pressure floor backing the determinate-nixd automatic GC.
     min-free = lib.mkDefault (gib 5);
     max-free = lib.mkDefault (gib 50);
 
-    # --- Cache Configuration ----------------------------------------------
+    # --- [CACHE_CONFIGURATION]
     # Determinate appends FlakeHub/installer caches via extra-* in nix.conf.
     substituters = [
       "https://cache.nixos.org"
@@ -86,7 +86,7 @@
   };
 in
   {
-    # --- Nixpkgs Configuration ------------------------------------------------
+    # --- [NIXPKGS_CONFIGURATION]
     nixpkgs.config = {
       allowUnfree = true;
       allowBroken = false;

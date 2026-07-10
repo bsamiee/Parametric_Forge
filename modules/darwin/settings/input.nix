@@ -9,7 +9,7 @@
   inherit (lib) mkDefault;
 in {
   system = {
-    # --- Keyboard Hardware Remapping ----------------------------------------
+    # --- [KEYBOARD_HARDWARE_REMAPPING]
     keyboard = {
       enableKeyMapping = mkDefault false;
       nonUS.remapTilde = mkDefault false;
@@ -18,9 +18,9 @@ in {
       swapLeftCommandAndLeftAlt = mkDefault false;
       swapLeftCtrlAndFn = mkDefault false;
     };
-    # --- System Input Defaults ----------------------------------------------
+    # --- [SYSTEM_INPUT_DEFAULTS]
     defaults = {
-      # --- Trackpad Configuration -------------------------------------------
+      # --- [TRACKPAD_CONFIGURATION]
       trackpad = {
         Clicking = mkDefault false;
         TrackpadRightClick = mkDefault true;
@@ -42,11 +42,11 @@ in {
         ForceSuppressed = mkDefault true;
         DragLock = mkDefault false;
       };
-      # --- Magic Mouse Settings ---------------------------------------------
+      # --- [MAGIC_MOUSE_SETTINGS]
       magicmouse = {
         MouseButtonMode = mkDefault "TwoButton";
       };
-      # --- Global Input Behavior --------------------------------------------
+      # --- [GLOBAL_INPUT_BEHAVIOR]
       NSGlobalDomain = {
         InitialKeyRepeat = mkDefault 15;
         KeyRepeat = mkDefault 2;
@@ -68,7 +68,7 @@ in {
         AppleEnableSwipeNavigateWithScrolls = mkDefault false;
         "com.apple.swipescrolldirection" = mkDefault null;
       };
-      # --- Advanced Input Customizations ------------------------------------
+      # --- [ADVANCED_INPUT_CUSTOMIZATIONS]
       CustomUserPreferences = {
         # Trackpad keys without first-class nix-darwin owners at pinned rev;
         # the rest migrated to system.defaults.trackpad.* above.
@@ -77,7 +77,7 @@ in {
           TrackpadFiveFingerPinchGesture = mkDefault 2;
           TrackpadHandResting = mkDefault true;
         };
-        # --- Bluetooth Mouse Configuration ----------------------------------
+        # --- [BLUETOOTH_MOUSE_CONFIGURATION]
         "com.apple.driver.AppleBluetoothMultitouch.mouse" = {
           MouseButtonMode = mkDefault "TwoButton";
           MouseVerticalScroll = mkDefault true;

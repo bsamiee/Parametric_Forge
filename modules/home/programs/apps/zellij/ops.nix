@@ -17,8 +17,10 @@
   ...
 }: let
   inherit (config.forge.theme) palette;
+  # Shared dual-receipt emit fold (shell-tools/receipts.nix).
+  receiptsFold = import ../../shell-tools/receipts.nix;
 
-  # --- Watch rows -------------------------------------------------------------
+  # --- [WATCH_ROWS]
   # Monitor panels as data: viddy owns history/diff memory, gping owns latency
   # graphs. Rows launch as floating panes, never prompt/status hot paths; the
   # command runs in the pane's own PATH (user env), not this script's closure.
@@ -94,12 +96,15 @@
             mkdir -p "$state_root" "$recorded_dir"
             ${fzfArgsBash}
 
+            receipt_surface="forge-zellij"
+            ${receiptsFold}
             emit_receipt() { # $1=verb $2=row_kind $3=row_id $4=action $5=result $6=exit $7=duration_ms
-              local ts
+              local ts row
               TZ=UTC0 printf -v ts '%(%Y-%m-%dT%H:%M:%SZ)T' "$EPOCHSECONDS"
-              mkdir -p "$(dirname "$receipt_log")"
-              printf 'ts=%s\towner=forge-zellij\tverb=%s\trow_kind=%s\trow_id=%s\taction=%s\tsession_id=%s\tpane_id=%s\tcwd=%s\texit=%s\tduration_ms=%s\tresult=%s\n' \
-                "$ts" "$1" "''${2:--}" "''${3:--}" "$4" "''${session:--}" "''${ZELLIJ_PANE_ID:--}" "$PWD" "$6" "$7" "$5" >>"$receipt_log"
+              printf -v row 'ts=%s\tverb=%s\trow_kind=%s\trow_id=%s\taction=%s\tsession_id=%s\tpane_id=%s\tcwd=%s\texit=%s\tduration_ms=%s\tresult=%s' \
+                "$ts" "$1" "''${2:--}" "''${3:--}" "$4" "''${session:--}" "''${ZELLIJ_PANE_ID:--}" "$PWD" "$6" "$7" "$5"
+              append_receipt "$row" \
+                || printf 'forge-zellij: WARNING receipt not persisted to %s\n' "$receipt_log" >&2
             }
 
             zj_json() { # zellij action "$@" --json; retry a flapping snapshot to a truthy array
@@ -131,7 +136,7 @@
               esac
             }
 
-            # --- Discriminated inventory: one row grammar, nine kinds ----------------
+            # --- [DISCRIMINATED_INVENTORY_ONE_ROW_GRAMMAR_NINE_KINDS]
             inventory() {
               # sessions: live and resurrectable (list-sessions exits 1 when none)
               (zellij list-sessions --no-formatting 2>/dev/null || true) | gawk '
@@ -209,9 +214,12 @@
               local row kind target
               row="$(row_of "$1")"
               [[ -n "$row" ]] || { printf 'no row: %s\n' "$1"; return 1; }
-              jq -r 'to_entries[] | "\(.key): \(.value)"' <<<"$row"
-              kind="$(jq -r '.kind' <<<"$row")"
-              target="$(jq -r '.target' <<<"$row")"
+              # One projection per row snapshot: evidence lines plus a 0x1f
+              # kind/target tail line, split shell-side — no per-field jq forks.
+              local proj
+              proj="$(jq -r '(to_entries[] | "\(.key): \(.value)"), ([.kind, .target] | join("\u001f"))' <<<"$row")"
+              printf '%s\n' "''${proj%$'\n'*}"
+              IFS=$'\x1f' read -r kind target <<<"''${proj##*$'\n'}"
               case "$kind" in
                 layout)
                   printf '\n'
@@ -224,7 +232,7 @@
               esac
             }
 
-            # --- Verb dispatch ---------------------------------------------------------
+            # --- [VERB_DISPATCH]
             verb="''${1:-graph}"
             case "$verb" in
               --help | -h)

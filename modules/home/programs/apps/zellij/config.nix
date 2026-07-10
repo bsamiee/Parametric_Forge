@@ -53,7 +53,7 @@
   sep = seg "selection" "│ ";
   done = pl "⏎" "done";
 
-  # --- Mode-interior row table --------------------------------------------------
+  # --- [MODE_INTERIOR_ROW_TABLE]
   # One row per bind renders BOTH the mode's KDL block and its zjstatus ribbon,
   # so a bind and its hint cannot drift. Constructors keep rows single-line:
   # bind keys kdl | bindH keys kdl [l rank]|[k l rank] (k defaults to the first
@@ -298,7 +298,7 @@
     };
   };
 
-  # --- Renderers ------------------------------------------------------------------
+  # --- [RENDERERS]
   # KDL fold: rows render at their full emitted indentation; tagged exit rows
   # align the layer comment at byte 83; headers dash-fill to width 83.
   hyperTag = "// ${layers.hyper.name} (${layers.hyper.glyphs}) | ${layers.hyper.physical}";
@@ -381,7 +381,7 @@ in {
         // ----------------------------------------------------------------------------
         // Core Zellij options referencing the shared Parametric Forge theme
 
-        // --- Core Configuration -----------------------------------------------------
+        // --- [CORE_CONFIGURATION]
         theme                       "dracula"
         default_shell               "zsh"
         default_layout              "default"
@@ -400,7 +400,7 @@ in {
         web_server                  false
         web_sharing                 "disabled"
 
-        // --- Plugin Aliases ---------------------------------------------------------
+        // --- [PLUGIN_ALIASES]
         plugins {
           configuration location="zellij:configuration"
           compact-bar location="zellij:compact-bar"
@@ -452,7 +452,7 @@ in {
             hide_frame_for_single_pane  "false"
           }
 
-          // --- zjstatus-hints: bottom bar — mode chip + always-visible key ribbon ----
+          // --- [ZJSTATUS_HINTS_BOTTOM_BAR_MODE_CHIP_ALWAYS_VISIBLE_KEY_RIBBON]
           // Same wasm, second instance; layer chips R⌘ (Hyper) and R⌥ (Super).
           zjstatus-hints location="file:~/.config/zellij/plugins/zjstatus.wasm" {
     ${colorRows}
@@ -472,7 +472,7 @@ in {
           }
         }
 
-        // --- Keybindings ------------------------------------------------------------
+        // --- [KEYBINDINGS]
     ${chords.zellij.headerComment}
 
         keybinds clear-defaults=true {
@@ -481,19 +481,19 @@ in {
     ${chords.zellij.normalBindsKdl}
           }
 
-          // --- Universal Bindings (Except Locked Mode) ------------------------------
+          // --- [UNIVERSAL_BINDINGS_EXCEPT_LOCKED_MODE]
           shared_except "locked" {
 
-            // --- Hyper Layer (⌘⌥⌃⇧) | Right Command ---------------------------------
+            // --- [HYPER_LAYER_RIGHT_COMMAND]
     ${chords.zellij.hyperBindsKdl}
 
-            // --- Super Layer (⌘⌥⌃) | (Right Option) ---------------------------------
+            // --- [SUPER_LAYER_RIGHT_OPTION]
     ${chords.zellij.superBindsKdl}
           }
 
     ${modeBlocksKdl}
 
-          // --- General bindings -----------------------------------------------------
+          // --- [GENERAL_BINDINGS]
           shared_except "normal" "locked" {
             bind "Enter" "Esc" { SwitchToMode "Normal"; }
           }

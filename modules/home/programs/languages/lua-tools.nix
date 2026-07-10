@@ -29,11 +29,11 @@
   };
 in {
   home.packages = [
-    # --- Lua Runtime & Package Management -----------------------------------
+    # --- [LUA_RUNTIME_PACKAGE_MANAGEMENT]
     pkgs.lua5_4 # Standard Lua 5.4 (required for SbarLua compatibility)
     pkgs.luarocks # Lua package manager
 
-    # --- Code Quality Tools -------------------------------------------------
+    # --- [CODE_QUALITY_TOOLS]
     stylua # Opinionated Lua formatter (house-config floor via -s)
     pkgs.lua54Packages.luacheck # Static analyzer and linter for Lua
     pkgs.lua-language-server # Lua LSP (navigation, diagnostics, completion)

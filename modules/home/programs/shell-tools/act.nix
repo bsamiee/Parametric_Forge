@@ -11,15 +11,15 @@
   ...
 }: let
   actConfig = [
-    # --- Apple Silicon Compatibility ------------------------------------------
+    # --- [APPLE_SILICON_COMPATIBILITY]
     "--container-architecture=linux/amd64"
 
-    # --- Runner Images --------------------------------------------------------
+    # --- [RUNNER_IMAGES]
     "-P ubuntu-latest=ghcr.io/catthehacker/ubuntu:act-latest"
     "-P ubuntu-24.04=ghcr.io/catthehacker/ubuntu:act-24.04"
     "-P ubuntu-22.04=ghcr.io/catthehacker/ubuntu:act-22.04"
 
-    # --- Performance ----------------------------------------------------------
+    # --- [PERFORMANCE]
     "--action-offline-mode"
   ];
 in {

@@ -14,16 +14,16 @@
   tomlFormat = pkgs.formats.toml {};
 
   trippyConfig = {
-    # --- Tracing Configuration ----------------------------------------------
+    # --- [TRACING_CONFIGURATION]
     addr-family = "system";
     max-ttl = 64;
     icmp-extensions = false;
 
-    # --- TUI Configuration --------------------------------------------------
+    # --- [TUI_CONFIGURATION]
     tui-max-samples = 256;
     tui-max-flows = 64;
 
-    # --- Theme Configuration (estate palette tokens) -------------------------
+    # --- [THEME_CONFIGURATION_ESTATE_PALETTE_TOKENS]
     theme-colors = {
       bg-color = palette.background.hex;
       border-color = palette.selection.hex;
@@ -61,7 +61,7 @@
       info-bar-text-color = palette.foreground.hex;
     };
 
-    # --- Key Bindings -------------------------------------------------------
+    # --- [KEY_BINDINGS]
     bindings = [
       {
         command = "toggle-help";

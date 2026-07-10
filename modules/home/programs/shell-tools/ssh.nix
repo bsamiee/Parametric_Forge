@@ -291,7 +291,7 @@ in {
 
         settings =
           {
-            # --- GitHub Configuration -------------------------------------------
+            # --- [GITHUB_CONFIGURATION]
             "github.com" = {
               User = "git";
               HostName = "github.com";
@@ -299,7 +299,7 @@ in {
               AddKeysToAgent = "yes";
             };
 
-            # --- Default Optimizations for All Hosts ----------------------------
+            # --- [DEFAULT_OPTIMIZATIONS_FOR_ALL_HOSTS]
             "*" =
               lib.optionalAttrs pkgs.stdenv.hostPlatform.isDarwin {
                 # 1Password's stable agent socket is the identity source on Darwin;

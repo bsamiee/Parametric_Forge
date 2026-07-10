@@ -15,48 +15,50 @@
     text = ''
       shopt -s inherit_errexit
 
-      # --- Lane vocabulary: one row per lane — 'tool|write argv|check argv' --
+      # --- [LANE_VOCABULARY]
+      # One row per lane — 'tool|write argv|check argv'; subscripts quoted
+      # (shfmt parses bare hyphenated subscripts as arithmetic).
       declare -Ar _LANE=(
-        [nix]='alejandra|alejandra -q --|alejandra -c --'
-        [shell]='shfmt|shfmt -w|shfmt -d'
-        [python]='ruff|ruff format --|ruff format --check --'
-        [web]='biome|biome format --write|biome format'
-        [prose]='prettier|prettier --log-level warn --write|prettier --log-level warn --check'
-        [yaml]='yamlfmt|yamlfmt|yamlfmt -lint'
-        [toml]='taplo|taplo fmt|taplo fmt --check'
-        [lua]='stylua|stylua --|stylua --check --'
-        [sql]='sqruff|sqruff fix|sqruff lint'
-        [sql-duckdb]='sqruff|sqruff fix|sqruff lint'
-        [swift]='swiftformat|swiftformat --quiet|swiftformat --quiet --lint'
-        [csharp]='csharpier|csharpier format|csharpier check'
-        [osa]='forge-osa|forge-osa fmt|forge-osa check'
-        [jq]='jq|_gate_jq|_gate_jq'
+        ["nix"]='alejandra|alejandra -q --|alejandra -c --'
+        ["shell"]='shfmt|shfmt -w|shfmt -d'
+        ["python"]='ruff|ruff format --|ruff format --check --'
+        ["web"]='biome|biome format --write|biome format'
+        ["prose"]='prettier|prettier --log-level warn --write|prettier --log-level warn --check'
+        ["yaml"]='yamlfmt|yamlfmt|yamlfmt -lint'
+        ["toml"]='taplo|taplo fmt|taplo fmt --check'
+        ["lua"]='stylua|stylua --|stylua --check --'
+        ["sql"]='sqruff|sqruff fix|sqruff lint'
+        ["sql-duckdb"]='sqruff|sqruff fix|sqruff lint'
+        ["swift"]='swiftformat|swiftformat --quiet|swiftformat --quiet --lint'
+        ["csharp"]='csharpier|csharpier format|csharpier check'
+        ["osa"]='forge-osa|forge-osa fmt|forge-osa check'
+        ["jq"]='jq|_gate_jq|_gate_jq'
       )
-      declare -Ar _MODE_FIELD=([write]=1 [check]=2)
+      declare -Ar _MODE_FIELD=(["write"]=1 ["check"]=2)
       _lane_row() { # $1 = lane, $2 = out array name -> (tool, write argv, check argv)
         local -n _row="$2"
         IFS='|' read -r -a _row <<<"''${_LANE[$1]}"
       }
       declare -Ar _EXT_LANE=(
-        [nix]=nix
-        [sh]=shell [bash]=shell
-        [py]=python [pyi]=python
-        [ts]=web [tsx]=web [js]=web [jsx]=web [mjs]=web [cjs]=web [mts]=web [cts]=web
-        [json]=web [jsonc]=web [css]=web
-        [md]=prose [markdown]=prose [html]=prose
-        [yml]=yaml [yaml]=yaml
-        [toml]=toml
-        [lua]=lua
-        [sql]=sql
-        [swift]=swift
-        [cs]=csharp
-        [applescript]=osa
-        [jq]=jq
+        ["nix"]=nix
+        ["sh"]=shell ["bash"]=shell
+        ["py"]=python ["pyi"]=python
+        ["ts"]=web ["tsx"]=web ["js"]=web ["jsx"]=web ["mjs"]=web ["cjs"]=web ["mts"]=web ["cts"]=web
+        ["json"]=web ["jsonc"]=web ["css"]=web
+        ["md"]=prose ["markdown"]=prose ["html"]=prose
+        ["yml"]=yaml ["yaml"]=yaml
+        ["toml"]=toml
+        ["lua"]=lua
+        ["sql"]=sql
+        ["swift"]=swift
+        ["cs"]=csharp
+        ["applescript"]=osa
+        ["jq"]=jq
       )
       # Package-manager lockfiles are machine-owned; formatting one is corruption.
       declare -Ar _DENY_BASE=(
-        [pnpm-lock.yaml]=1 [package-lock.json]=1 [packages.lock.json]=1
-        [yarn.lock]=1 [bun.lock]=1 [composer.lock]=1 [Gemfile.lock]=1
+        ["pnpm-lock.yaml"]=1 ["package-lock.json"]=1 ["packages.lock.json"]=1
+        ["yarn.lock"]=1 ["bun.lock"]=1 ["composer.lock"]=1 ["Gemfile.lock"]=1
       )
       readonly _SHEBANG_SHELL='^#!.*[/[:space:]](env[[:space:]]+)?(ba|da|mk)?sh([[:space:]]|$)'
       readonly _SHEBANG_PYTHON='^#!.*[/[:space:]](env[[:space:]]+(-S[[:space:]]+)?)?python[0-9.]*([[:space:]]|$)'
@@ -192,7 +194,7 @@
           "''${#_EXT_LANE[@]}" "''${#_LANE[@]}" "''${#probes[@]}"
       }
 
-      # --- Arguments ----------------------------------------------------------
+      # --- [ARGUMENTS]
       mode="write"
       json_mode=0
       targets=()
@@ -216,7 +218,7 @@
         exit 2
       }
 
-      # --- Collection: explicit files as given, directories via fd -----------
+      # --- [COLLECTION_EXPLICIT_FILES_AS_GIVEN_DIRECTORIES_VIA_FD]
       tmp="$(mktemp -d)"
       trap 'rm -rf "$tmp"' EXIT
       # Abort rail: async lanes inherit SIGINT-ignored, so Ctrl-C or TERM on the
@@ -277,7 +279,8 @@
         fi
       done
 
-      # --- Lanes run concurrently; each lane chunks batched, deadlined calls -
+      # --- [LANE_RUNNER]
+      # Lanes run concurrently; each lane chunks batched, deadlined calls.
       _run_lane() {
         local -r lane="$1"
         local -a files lrow cmd run batch
@@ -357,7 +360,7 @@
         fi
       done
 
-      # --- Report: missing tools inform, only fail/timeout drive exit 1 ------
+      # --- [REPORT_MISSING_TOOLS_INFORM_ONLY_FAIL_TIMEOUT_DRIVE_EXIT_1]
       if ((''${#lane_count[@]} == 0)); then
         printf 'fmt: no formattable files under: %s\n' "''${targets[*]}" >&2
         ((json_mode)) && jq -nc --arg mode "$mode" --argjson skipped "$skipped" \

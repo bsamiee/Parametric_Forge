@@ -9,18 +9,21 @@
 # Previews are read-only evidence; every browse run emits one typed receipt.
 {
   config,
+  host,
   lib,
   pkgs,
   ...
 }: let
   inherit (config.forge.theme) palette;
+  # Shared dual-receipt emit fold (receipts.nix).
+  receiptsFold = import ./receipts.nix;
   profileBin = "/etc/profiles/per-user/${config.home.username}/bin";
   fleet = import ./mcp-fleet.nix {
     inherit profileBin;
     homeDir = config.home.homeDirectory;
   };
 
-  # --- Name policy rows -------------------------------------------------------
+  # --- [NAME_POLICY_ROWS]
   # One repo/workroot identity resolves to stable slugs across consumers; the
   # channel prefix and receipt-log grammar are the live consumers today.
   # `collision` is the slug-clash policy (reject = eval assertion below);
@@ -58,7 +61,7 @@
   slugClaims = lib.concatMap (r: [r.slug] ++ r.previous) naming;
   slugConflicts = lib.attrNames (lib.filterAttrs (_: c: c > 1) (lib.foldl' (acc: s: acc // {${s} = (acc.${s} or 0) + 1;}) {} slugClaims));
 
-  # --- Receipt source register --------------------------------------------------
+  # --- [RECEIPT_SOURCE_REGISTER]
   # Declared kv-receipt emitters; paths are $HOME-relative and may not exist yet.
   receiptSources =
     [
@@ -122,17 +125,47 @@
         path = "Library/Logs/forge-agents.receipts.log";
         emitter = "forge-agents collector";
       }
+      {
+        kind = "terminal-accept";
+        path = "Library/Logs/forge-terminal-accept.receipts.log";
+        emitter = "forge-terminal-accept.sh";
+      }
+      {
+        kind = "path-doctor";
+        path = "Library/Logs/forge-path-doctor.receipts.log";
+        emitter = "forge-path-doctor";
+      }
+      {
+        kind = "launchd-doctor";
+        path = "Library/Logs/forge-launchd-doctor.receipts.log";
+        emitter = "forge-launchd-doctor";
+      }
+      {
+        kind = "parity";
+        path = "Library/Logs/forge-parity.receipts.log";
+        emitter = "forge-parity";
+      }
+      {
+        kind = "update-board";
+        path = "Library/Logs/forge-update-board.receipts.log";
+        emitter = "forge-update-board";
+      }
     ]
     # Tunnel receipt rows derive from the ssh tunnel registry: a new VPS row
-    # appears in the receipts browser without touching this file.
+    # appears in the receipts browser without touching this file. The path
+    # follows the supervisor's per-OS write target (launchd logs on Darwin,
+    # the systemd state dir on Linux — ssh.nix FORGE_TUNNEL_RECEIPTS row).
     ++ lib.mapAttrsToList (name: _: {
       kind = "tunnel-${name}";
-      path = "Library/Logs/forge-${name}-vps-tunnel.receipts.log";
-      emitter = "${name}-vps-tunnel launchd agent";
+      path =
+        if host.os == "darwin"
+        then "Library/Logs/forge-${name}-vps-tunnel.receipts.log"
+        else ".local/state/forge-tunnels/${name}-vps-tunnel.receipts.log";
+      emitter = "${name}-vps-tunnel supervisor";
     })
     config.forge.ssh.hosts;
 
-  # --- Register JSON projections -------------------------------------------------
+  # --- [REGISTER_JSON_PROJECTIONS]
   # MCP rows are sanitized at the seam: endpoint basename, key NAMES, pin,
   # doctor family (label/port/exec names) — never argv (host paths), token
   # custody paths, or values.
@@ -167,7 +200,7 @@
     receipts = registerJson "receipts" receiptSources;
   };
 
-  # --- Browse catalog --------------------------------------------------------------
+  # --- [BROWSE_CATALOG]
   # Catalog-driven dispatch: one row per domain — source JSON, TSV projection,
   # label, per-domain binds. The receipts domain delegates to forge-receipts.
   catalogRows = {
@@ -218,7 +251,7 @@
   # "''${fzf_base[@]}" so every browser carries the theme per command.
   fzfArgsBash = "fzf_base=(\n${lib.concatMapStringsSep "\n" (a: "        ${lib.escapeShellArg a}") fzfBaseArgs}\n      )";
 
-  # --- forge-receipts ------------------------------------------------------------
+  # --- [FORGE_RECEIPTS]
   forgeReceipts = pkgs.writeShellApplication {
     name = "forge-receipts";
     runtimeInputs = [pkgs.coreutils pkgs.jq pkgs.fzf pkgs.gawk];
@@ -331,7 +364,7 @@
     '';
   };
 
-  # --- forge-browse ---------------------------------------------------------------
+  # --- [FORGE_BROWSE]
   forgeBrowse = pkgs.writeShellApplication {
     name = "forge-browse";
     runtimeInputs = [pkgs.coreutils pkgs.jq pkgs.fzf pkgs.gawk pkgs.gnused];
@@ -377,15 +410,18 @@
         printf '\npreview_rc=0 source=%s\n' "$(basename "$json")"
       }
 
+      receipt_surface="forge-browse"
+      ${receiptsFold}
       emit_receipt() { # $1=domain $2=query $3=row_id $4=selection $5=action $6=result $7=exit $8=duration_ms
-        local ts q sel
+        local ts row q sel
         TZ=UTC0 printf -v ts '%(%Y-%m-%dT%H:%M:%SZ)T' "$EPOCHSECONDS"
         q="''${2//$'\t'/ }"
         sel="''${4//$'\t'/ }"
-        mkdir -p "$(dirname "$receipt_log")"
-        printf 'ts=%s\towner=forge-browse\tbrowser_id=forge-browse\tscope=%s\trow_kind=%s\tmutation=none\thost=fzf\tsession_id=%s\tpane_id=%s\tcwd=%s\tquery=%s\trow_id=%s\tselection=%s\taction=%s\texit=%s\tduration_ms=%s\tstdout_path=-\tstderr_path=-\tnext_row=-\tresult=%s\n' \
-          "$ts" "$1" "$1" "''${ZELLIJ_SESSION_NAME:--}" "''${ZELLIJ_PANE_ID:--}" "$PWD" \
-          "''${q:--}" "''${3:--}" "''${sel:--}" "$5" "$7" "$8" "$6" >>"$receipt_log"
+        printf -v row 'ts=%s\tdomain=%s\tsession_id=%s\tpane_id=%s\tcwd=%s\tquery=%s\trow_id=%s\tselection=%s\taction=%s\texit=%s\tduration_ms=%s\tresult=%s' \
+          "$ts" "$1" "''${ZELLIJ_SESSION_NAME:--}" "''${ZELLIJ_PANE_ID:--}" "$PWD" \
+          "''${q:--}" "''${3:--}" "''${sel:--}" "$5" "$7" "$8" "$6"
+        append_receipt "$row" \
+          || printf 'forge-browse: WARNING receipt not persisted to %s\n' "$receipt_log" >&2
       }
 
       case "''${1:-}" in
@@ -468,7 +504,7 @@
     '';
   };
 
-  # --- Completions ------------------------------------------------------------------
+  # --- [COMPLETIONS]
   # Projections of the same catalog/registry rows; profile site-functions
   # enter fpath through the completion owner's fingerprint.
   domains = lib.attrNames catalogRows;
@@ -495,7 +531,7 @@
       '--pick[one row]:row:'
   '';
 
-  # --- Television channels -------------------------------------------------------
+  # --- [TELEVISION_CHANNELS]
   # Durable semantic channels over the same registers; source/preview commands
   # are store-path exact so channels never depend on ambient PATH.
   mkChannel = domain: row: {

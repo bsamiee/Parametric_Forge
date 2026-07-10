@@ -21,7 +21,7 @@
     pkgs.docker-compose # Compose v2 plugin
     pkgs.lazydocker # Docker TUI
 
-    # --- Kubernetes Core --------------------------------------------------------
+    # --- [KUBERNETES_CORE]
     (pkgs.wrapHelm pkgs.kubernetes-helm {plugins = [pkgs.kubernetes-helmPlugins.helm-diff];}) # Helm with the diff plugin registered on HELM_PLUGINS
     pkgs.k9s # Cluster TUI; config owned by k9s.nix
     pkgs.kind # Local Kubernetes clusters for disposable integration proof
@@ -31,7 +31,7 @@
     pkgs.kubeseal # SealedSecrets client for encrypting secrets in git
     pkgs.kustomize # Kubernetes native manifest composition
 
-    # --- Kubernetes Debug and Validation ----------------------------------------
+    # --- [KUBERNETES_DEBUG_AND_VALIDATION]
     pkgs.conftest # OPA/Rego policy checks for config and manifests
     pkgs.kube-capacity # Resource usage viewer
     pkgs.kube-linter # Kubernetes manifest linter
@@ -43,7 +43,7 @@
     pkgs.pluto # Kubernetes API deprecation scanner
     pkgs.stern # Multi-pod log tailing
 
-    # --- OCI Registry and Supply Chain ------------------------------------------
+    # --- [OCI_REGISTRY_AND_SUPPLY_CHAIN]
     pkgs.cosign # OCI image and artifact signing
     pkgs.crane # Fast registry operations
     pkgs.dive # Image layer analyzer
@@ -60,7 +60,7 @@
 
   # Delegate kubecolor completions to kubectl (after carapace loads kubectl completions)
   programs.zsh.initContent = lib.mkAfter ''
-    # --- Kubecolor Completion Delegation ----------------------------------------
+    # --- [KUBECOLOR_COMPLETION_DELEGATION]
     compdef kubecolor=kubectl
   '';
 }

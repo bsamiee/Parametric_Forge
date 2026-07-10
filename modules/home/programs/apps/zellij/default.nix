@@ -148,7 +148,7 @@ in {
       ''}
     '');
 
-    # --- Plugin Installation ------------------------------------------------
+    # --- [PLUGIN_INSTALLATION]
     # Every third-party wasm is file-owned and hash-pinned; aliases resolve
     # through file: locations, so plugin load never depends on the network.
     xdg.configFile = {

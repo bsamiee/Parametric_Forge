@@ -6,7 +6,7 @@
 # ----------------------------------------------------------------------------
 # ASCII art assets for terminal applications
 _: {
-  # --- Fastfetch ASCII Art ------------------------------------------------
+  # --- [FASTFETCH_ASCII_ART]
   xdg.configFile = {
     "fastfetch/logo.txt".source = ./irgc-ascii-art.txt;
   };

@@ -2,11 +2,11 @@
 # Author        : Bardia Samiee
 # Project       : Parametric Forge
 # License       : MIT
-# Path          : /modules/home/aliases/git.nix
+# Path          : modules/home/aliases/git.nix
 # ----------------------------------------------------------------------------
 # Git register rows: daily ops, branch/remote, history, external tools.
 [
-  # --- git-daily ---------------------------------------------------------------
+  # --- [GIT_DAILY]
   {
     alias = "g";
     expansion = "git";
@@ -61,7 +61,7 @@
     desc = "Diff staged changes";
     category = "git-daily";
   }
-  # --- git-branch --------------------------------------------------------------
+  # --- [GIT_BRANCH]
   {
     alias = "gb";
     expansion = "git branch -avv";
@@ -105,7 +105,7 @@
     category = "git-branch";
     risk = "destructive";
   }
-  # --- git-history -------------------------------------------------------------
+  # --- [GIT_HISTORY]
   {
     alias = "gl";
     expansion = "git log --oneline --graph --decorate --all";
@@ -154,7 +154,7 @@
     desc = "Apply specific commits";
     category = "git-history";
   }
-  # --- git-tools ---------------------------------------------------------------
+  # --- [GIT_TOOLS]
   {
     alias = "lg";
     expansion = "lazygit";

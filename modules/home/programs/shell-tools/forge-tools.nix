@@ -2076,9 +2076,10 @@ in {
       ];
     } ["${forgeNixMaintenance}/bin/forge-nix-maintenance" "--scheduled"];
 
-    # Hourly orphan sweep: evidence-gated reaping of ppid-1 agent-lane litter;
-    # kill classes are allowlisted rows, everything ambiguous stays receipt-only.
-    forge-orphan-sweep = mkAgent "forge-orphan-sweep" {StartInterval = 3600;} ["${forgeCleanup}/bin/forge-cleanup" "sweep"];
+    # Hourly orphan sweep (calendar trigger for wake coalescing): evidence-gated
+    # reaping of ppid-1 agent-lane litter; kill classes are allowlisted rows,
+    # everything ambiguous stays receipt-only.
+    forge-orphan-sweep = mkAgent "forge-orphan-sweep" {StartCalendarInterval = [{Minute = 0;}];} ["${forgeCleanup}/bin/forge-cleanup" "sweep"];
 
     # Daily 10:00 currency cadence (operator ruling); calendar-only, no
     # RunAtLoad: login must never race live agent work with a lock bump.

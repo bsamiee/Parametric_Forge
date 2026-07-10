@@ -13,7 +13,7 @@
   pkgs,
   ...
 }: let
-  # --- Programming/Terminal Fonts -------------------------------------------
+  # --- [PROGRAMMING_TERMINAL_FONTS]
   # Plain upstream families plus the one symbols fallback; the patched
   # nerd-font trio is retired — icon coverage rides Symbols Nerd Font Mono
   # through the owner fallback chain at two orders of magnitude less closure.
@@ -26,7 +26,7 @@
     (noto-fonts.override {variants = ["NotoSansMono"];})
   ];
 
-  # --- UI/System Fonts -------------------------------------------------------
+  # --- [UI_SYSTEM_FONTS]
   interface = with pkgs; [
     inter
     dm-sans
@@ -35,7 +35,7 @@
     source-serif
   ];
 
-  # --- Perso-Arabic Fonts ----------------------------------------------------
+  # --- [PERSO_ARABIC_FONTS]
   persoArabic = with pkgs; [
     (noto-fonts.override {variants = ["NotoSansArabic" "NotoNaskhArabic"];})
     scheherazade-new
@@ -55,10 +55,15 @@
     )
   '';
 
+  # Shared dual-receipt emit fold (home/programs/shell-tools/receipts.nix):
+  # a scope-free shell fragment, so the system-scope kernel composes the same
+  # receipt grammar every home kernel carries.
+  receiptsFold = import ../home/programs/shell-tools/receipts.nix;
+
   # Generation-marked copy: prune stale managed files via manifest, never touch unmanaged fonts.
   projectFonts = pkgs.writeShellApplication {
     name = "forge-project-fonts";
-    runtimeInputs = [pkgs.coreutils];
+    runtimeInputs = [pkgs.coreutils pkgs.jq];
     text = ''
       src=${fontPayloads}
       dst=${lib.escapeShellArg userFontDir}
@@ -80,12 +85,13 @@
       printf '%s' "$src" >"$marker"
       # Activation invokes this via sudo -u; anchor the log beside the payload,
       # never through an ambient HOME.
-      logdir="''${dst%/Fonts}/Logs"
-      ts=$(date -u +%Y-%m-%dT%H:%M:%SZ)
-      mkdir -p "$logdir"
-      printf 'ts=%s\towner=forge-project-fonts\tprojected=%s\tpruned=%s\tgeneration=%s\n' \
-        "$ts" "$(wc -l <"$manifest" | tr -d ' ')" "$pruned" "''${src##*/}" \
-        >>"$logdir/forge-fonts.receipts.log"
+      receipt_log="''${dst%/Fonts}/Logs/forge-fonts.receipts.log"
+      receipt_surface="forge-project-fonts"
+      ${receiptsFold}
+      TZ=UTC0 printf -v ts '%(%Y-%m-%dT%H:%M:%SZ)T' "$EPOCHSECONDS"
+      append_receipt "$(printf 'ts=%s\tprojected=%s\tpruned=%s\tgeneration=%s\tresult=ok' \
+        "$ts" "$(wc -l <"$manifest" | tr -d ' ')" "$pruned" "''${src##*/}")" \
+        || printf 'forge-project-fonts: WARNING receipt not persisted to %s\n' "$receipt_log" >&2
     '';
   };
 in {

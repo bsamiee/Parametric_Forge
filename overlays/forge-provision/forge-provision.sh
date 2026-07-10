@@ -321,7 +321,12 @@ redact_message() {
         [[ -n "$needle" ]] || continue
         text="${text//"$needle"/[redacted]}"
     done
-    text="$(printf '%s\n' "$text" | jq -Rr -f "$(catalog_path jq/redact-message.jq)" 2>/dev/null || printf '%s\n' "$text")"
+    # Guarded fold: a failed redact program keeps the pre-redaction text whole,
+    # never a partial-output-plus-fallback concatenation.
+    local redacted
+    if redacted="$(printf '%s\n' "$text" | jq -Rr -f "$(catalog_path jq/redact-message.jq)" 2>/dev/null)"; then
+        text="$redacted"
+    fi
     printf '%s\n' "$text"
 }
 

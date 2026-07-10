@@ -10,13 +10,6 @@ inspect_label() {
     printf '%s\n' "$value"
 }
 
-inspect_name() {
-    local id="$1"
-    local name
-    name="$(docker inspect --format '{{ .Name }}' "$id")" || return
-    printf '%s\n' "${name#/}"
-}
-
 # One docker inspect serves every requested container label as one row;
 # absent labels and failed inspects project as empty fields. Unit-separator
 # delimited: tab is IFS whitespace and read would collapse empty fields.

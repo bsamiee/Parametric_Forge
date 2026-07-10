@@ -12,11 +12,11 @@
   ...
 }: {
   home.sessionVariables = {
-    # --- FFmpeg -------------------------------------------------------------
+    # --- [FFMPEG]
     FFREPORT = "file=${config.xdg.stateHome}/ffmpeg/%p-%t.log:level=32";
     AV_LOG_FORCE_COLOR = "1"; # Enable colored output
 
-    # --- ImageMagick --------------------------------------------------------
+    # --- [IMAGEMAGICK]
     # System font dirs are a Darwin fact; the profile share is portable.
     MAGICK_FONT_PATH = lib.concatStringsSep ":" (lib.optionals pkgs.stdenv.hostPlatform.isDarwin [
         "/System/Library/Fonts"
@@ -34,7 +34,7 @@
     MAGICK_DISK_LIMIT = "2147483648";
     MAGICK_THREAD_LIMIT = "0";
 
-    # --- Pandoc -------------------------------------------------------------
+    # --- [PANDOC]
     PANDOC_DATA_DIR = "${config.xdg.dataHome}/pandoc";
   };
 }
