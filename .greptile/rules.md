@@ -10,6 +10,7 @@ Machine-owner repo: nix-darwin + Home Manager flake for one macOS Apple Silicon 
 - Service estate is IaC: external service state lives as typed Pulumi rows under services/; container provisioning rides the schema-v3 JSON envelope contract under overlays/forge-provision.
 - Deploy rail: forge-redeploy owns switch lifecycle with typed receipts and exact-closure activation; its deploy arm is proven — treat edits there as high-risk.
 - Receipts over narration: lifecycle commands emit typed receipt lines; scripts that print prose status instead of structured receipts are below the bar.
+- Formatters and gates own mechanics (the fmt router, alejandra/deadnix/statix, shellcheck, ruff, biome, stylua) — never restate their law as findings; flag suppressions and bypasses. A shellcheck directive, `noqa`, or `biome-ignore` in a diff demands the ownership justification; suppression-as-fix is the defect.
 - Fix-to-root completeness: a change that patches a symptom while its root cause stands, leaves a known defect unfixed because it sits outside the diff's scope, or defers a residual for a later pass is a defect — the root fix belongs in the same change, and a genuinely blocked item is an explicit unreachable naming its owner, never a silent residual.
 
 ## [02]-[UNIVERSAL_BAR]
@@ -52,7 +53,7 @@ Durable markdown — docs, standards, skills, prompts — is agent-facing law. F
 - Mirror sentences: prose a fresh agent regenerates from disk plus the document's stated invariants — restated topology, member rosters, tool inventories — is a stale copy, deleted or demoted to a regenerable fence.
 - Table teardowns: a table converted to cards, lists, or prose when in-place relief (header hoists, lead-sentence relief, row splits) was available; conversion is earned only by rows sharing no comparison question or a type-standard-owned shape.
 - File-kind drift: sibling files of one kind (a bundle's references, atlas pages, templates) diverging in section vocabulary, card field sets, or marker tokens — consistency across the kind outranks local optimization.
-- Skill bundles (.claude/skills/**): first/second-person frontmatter descriptions — quoted user-utterance trigger phrases are not voice; over-broad or keyword-stuffed trigger descriptions; SKILL.md over 500 lines or carrying reference banks inline; references that only route to other references; deterministic multi-step procedures narrated in prose where a bundled script belongs; instructed network fetches or global installs inside skill bodies, except an owned install surface naming exact source, scope, and verification.
+- Skill bundles (.claude/skills/\*\*): first/second-person frontmatter descriptions — quoted user-utterance trigger phrases are not voice; over-broad or keyword-stuffed trigger descriptions; SKILL.md over 500 lines or carrying reference banks inline; references that only route to other references; deterministic multi-step procedures narrated in prose where a bundled script belongs; instructed network fetches or global installs inside skill bodies, except an owned install surface naming exact source, scope, and verification.
 
 ## [06]-[COMMENT_DISCIPLINE]
 

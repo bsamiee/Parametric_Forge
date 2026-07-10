@@ -2,22 +2,12 @@
     "strictness": 2,
     "commentTypes": ["logic", "syntax"],
     "triggerOnUpdates": true,
-    "triggerOnDrafts": true,
     "statusCheck": true,
     "statusCommentsEnabled": true,
     "fixWithAI": true,
     "shouldUpdateDescription": false,
     "updateSummaryOnly": false,
     "hideFooter": false,
-    "labels": [],
-    "disabledLabels": [],
-    "includeAuthors": [],
-    "excludeAuthors": [],
-    "includeBranches": [],
-    "excludeBranches": [],
-    "includeKeywords": "",
-    "ignoreKeywords": "",
-    "disabledRules": [],
     "summarySection": {
         "included": true,
         "collapsible": true,
@@ -38,7 +28,7 @@
         "collapsible": true,
         "defaultOpen": false
     },
-    "ignorePatterns": "flake.lock\npnpm-lock.yaml\n*.wasm\nmodules/home/assets/**\n.claude/scratch/**",
+    "ignorePatterns": "flake.lock\npnpm-lock.yaml\nmodules/home/assets/**",
     "context": {
         "repos": ["bsamiee/Rasm", "bsamiee/Maghz"]
     },

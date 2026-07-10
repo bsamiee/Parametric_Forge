@@ -12,7 +12,6 @@ reviews:
     high_level_summary_placeholder: "@coderabbitai summary"
     high_level_summary_in_walkthrough: false
     auto_title_placeholder: "@coderabbitai"
-    auto_title_instructions: ""
     review_status: true
     review_details: true
     commit_status: true
@@ -25,12 +24,9 @@ reviews:
     related_issues: true
     related_prs: true
     suggested_labels: true
-    labeling_instructions: []
-    mutually_exclusive_groups: {}
     auto_apply_labels: true
-    suggested_reviewers: true
-    auto_assign_reviewers: true
-    suggested_reviewers_instructions: []
+    suggested_reviewers: false
+    auto_assign_reviewers: false
     in_progress_fortune: false
     poem: false
     enable_prompt_for_ai_agents: true
@@ -41,13 +37,11 @@ reviews:
     path_filters:
         - "!flake.lock"
         - "!pnpm-lock.yaml"
-        - "!**/*.wasm"
         - "!modules/home/assets/**"
-        - "!.claude/scratch/**"
     path_instructions:
         - path: "**"
           instructions: >-
-            Universal bar: anticipate 10x functionality growth — surfaces absorb new modalities as rows, cases, or dispatch arms, never as new files, flags, or knobs. Defects: knob/param/flag spam, hardcoded values, fragile string plumbing, naive happy-path logic, hand-rolled reimplementations of capability the ecosystem already provides. External packages are first-class implementation material used at full power, newest stable versions. Everything is agent-first: composable, receipt-bearing, self-describing, no interactive-only paths. Collapse spam relentlessly. Fix-to-root is a review demand: a PR that patches a symptom while its root cause stands, leaves a known defect unfixed because it sits outside the change's scope, or defers a residual for a later pass is defective — the root fix belongs in the same change, and a genuinely blocked item is an explicit unreachable naming its owner, never a silent residual. Comment discipline: a comment exists only for the in-situ constraint the code cannot show — the why, the invariant, the trap — one line as the target, inlined onto its statement when short, two lines the usual ceiling; what-comments, narration, and restated code are defects, and every pass that touches a file prunes its stale or drifted comments in the same pass.
+            Universal bar: anticipate 10x functionality growth — surfaces absorb new modalities as rows, cases, or dispatch arms, never as new files, flags, or knobs. Defects: knob/param/flag spam, hardcoded values, fragile string plumbing, naive happy-path logic, hand-rolled reimplementations of capability the ecosystem already provides. External packages are first-class implementation material used at full power, newest stable versions. Everything is agent-first: composable, receipt-bearing, self-describing, no interactive-only paths. Collapse spam relentlessly. Never restate law the formatters and gates already enforce (the fmt router, alejandra/deadnix/statix, shellcheck, ruff, biome, stylua); flag their suppressions and bypasses — a shellcheck directive, noqa, or biome-ignore in a diff demands the ownership justification, and suppression-as-fix is the defect. Fix-to-root is a review demand: a PR that patches a symptom while its root cause stands, leaves a known defect unfixed because it sits outside the change's scope, or defers a residual for a later pass is defective — the root fix belongs in the same change, and a genuinely blocked item is an explicit unreachable naming its owner, never a silent residual. Comment discipline: a comment exists only for the in-situ constraint the code cannot show — the why, the invariant, the trap — one line as the target, inlined onto its statement when short, two lines the usual ceiling; what-comments, narration, and restated code are defects, and every pass that touches a file prunes its stale or drifted comments in the same pass.
         - path: "**/*.nix"
           instructions: >-
             Machine-owner repo on nix-darwin + Home Manager, Determinate Nix, nixpkgs-unstable. Review against docs/standards/nix-doctrine.md and docs/standards/design-doctrine.md. Defects: new wrapper modules, compat shims, aliases for retired names, anticipatory options, `with pkgs;` at file level, mixed system/home scope, singleton per-tool files where an owner table exists, vocabulary values (color, keybind, tool admission, MCP server) placed outside their single declared owner, host facts duplicated instead of projected from the host context owner, generated config built by string templates where a native generator exists, version pins without a recorded reason. Embedded shell bodies are reviewed as Bash: set -euo pipefail, declared runtimeInputs, shellcheck-clean, no hardcoded repo paths or usernames; an `|| true` survives only as a pipefail rail where non-zero exit is expected data. A darwin-only package interpolated in a module both hosts import is an eval break — it rides `lib.optionalString pkgs.stdenv.hostPlatform.isDarwin` with a runtime guard. One owner per axis; a new capability is a row on the owning surface, never a new file. Files trend toward 300 LOC via polymorphic collapse, never by deleting capability.
@@ -77,43 +71,30 @@ reviews:
             Skill bundles under the docgen skill-craft law. Defects: first- or second-person voice in frontmatter descriptions — quoted user-utterance trigger phrases are not voice; over-broad triggers spanning unrelated domains or keyword-stuffed synonym lists; SKILL.md over 500 lines or carrying reference banks, troubleshooting ledgers, or example floods that belong one hop down; references that only route to other references; no-op intensifiers with no owner, action, or gate; filler lead-ins (note that, make sure to, remember to); good/better/best quality ladders instead of contract gates; command catalogs without task triggers; generic think/plan/implement lifecycle steps; closing checklists with no machine-checkable gate; deterministic multi-step procedures narrated in prose where a bundled script belongs; three or more abstract guidance bullets with no paired rejected/accepted example or gate; one mandated output skeleton regardless of consumer; instructed network fetches or global installs inside skill bodies, except an owned install surface naming exact source, scope, and verification. The SKILL.md root follows the declared schema: H1 is the bare [SKILL_TOKEN], routable bundles open with [01]-[ROUTING] router cards (- [NN]-[TOKEN](path): phrase), group labels are [TOKEN]: lines never bold, and a body rule that would change no agent output if deleted is dead weight regardless of its register.
     auto_review:
         enabled: true
-        description_keyword: ""
         auto_incremental_review: true
         auto_pause_after_reviewed_commits: 0
-        ignore_title_keywords: []
-        labels: []
         drafts: true
-        base_branches: []
-        ignore_usernames: []
     finishing_touches:
         docstrings:
-            enabled: true
+            enabled: false
         unit_tests:
             enabled: false
         simplify:
             enabled: false
         autofix:
             enabled: true
-        custom: []
     pre_merge_checks:
-        override_requested_reviewers_only: false
         docstrings:
             mode: "off"
-            threshold: 80
         title:
             mode: "off"
-            requirements: ""
         description:
             mode: "off"
         issue_assessment:
             mode: "off"
-        custom_checks: []
     tools:
         ast-grep:
             essential_rules: true
-            rule_dirs: []
-            util_dirs: []
-            packages: []
         shellcheck:
             enabled: true
         ruff:
@@ -125,27 +106,20 @@ reviews:
             timeout_ms: 90000
         languagetool:
             enabled: false
-            enabled_rules: []
-            disabled_rules: []
-            enabled_categories: []
-            disabled_categories: []
-            enabled_only: false
-            level: default
         biome:
             enabled: true
         hadolint:
-            enabled: true
+            enabled: false
         swiftlint:
-            enabled: true
+            enabled: false
         phpstan:
-            enabled: true
-            level: default
+            enabled: false
         phpmd:
-            enabled: true
+            enabled: false
         phpcs:
-            enabled: true
+            enabled: false
         golangci-lint:
-            enabled: true
+            enabled: false
         yamllint:
             enabled: true
         gitleaks:
@@ -153,88 +127,87 @@ reviews:
         trufflehog:
             enabled: true
         checkov:
-            enabled: true
+            enabled: false
         tflint:
-            enabled: true
+            enabled: false
         detekt:
-            enabled: true
+            enabled: false
         eslint:
-            enabled: true
+            enabled: false
         flake8:
-            enabled: true
+            enabled: false
         fbinfer:
-            enabled: true
-            enable_java: false
+            enabled: false
         fortitudeLint:
-            enabled: true
+            enabled: false
         rubocop:
-            enabled: true
+            enabled: false
         buf:
-            enabled: true
+            enabled: false
         regal:
-            enabled: true
+            enabled: false
         actionlint:
-            enabled: true
+            enabled: false
         zizmor:
-            enabled: true
+            enabled: false
         pmd:
-            enabled: true
+            enabled: false
         clang:
-            enabled: true
+            enabled: false
         cppcheck:
-            enabled: true
+            enabled: false
         opengrep:
-            enabled: true
+            enabled: false
         semgrep:
-            enabled: true
+            enabled: false
         circleci:
-            enabled: true
+            enabled: false
         clippy:
-            enabled: true
+            enabled: false
         sqlfluff:
             enabled: true
         squawk:
-            enabled: true
+            enabled: false
         trivy:
-            enabled: true
+            enabled: false
         prismaLint:
-            enabled: true
+            enabled: false
         pylint:
-            enabled: true
+            enabled: false
         oxc:
-            enabled: true
+            enabled: false
         shopifyThemeCheck:
-            enabled: true
+            enabled: false
         luacheck:
             enabled: true
         brakeman:
-            enabled: true
+            enabled: false
         dotenvLint:
-            enabled: true
+            enabled: false
         htmlhint:
-            enabled: true
+            enabled: false
         stylelint:
-            enabled: true
+            enabled: false
         checkmake:
-            enabled: true
+            enabled: false
         osvScanner:
             enabled: true
         oasdiff:
-            enabled: true
+            enabled: false
         reactDoctor:
-            enabled: true
+            enabled: false
         presidio:
-            enabled: true
+            enabled: false
         blinter:
-            enabled: true
+            enabled: false
         smartyLint:
-            enabled: true
+            enabled: false
         emberTemplateLint:
-            enabled: true
+            enabled: false
         skillspector:
             enabled: true
         psscriptanalyzer:
-            enabled: true
+            enabled: false
 chat:
     art: false
     allow_non_org_members: true
@@ -260,15 +233,12 @@ knowledge_base:
         scope: local
     jira:
         usage: disabled
-        project_keys: []
     linear:
         usage: disabled
-        team_keys: []
     pull_requests:
         scope: local
     mcp:
         usage: auto
-        disabled_servers: []
     automatic_repository_linking: false
     linked_repositories:
         - repository: bsamiee/Rasm
@@ -277,20 +247,10 @@ knowledge_base:
         - repository: bsamiee/Maghz
           instructions: >-
             VPS second-brain consumer of Forge machine rails; provisioning contract and launcher changes ripple here.
-code_generation:
-    docstrings:
-        language: en-US
-        path_instructions: []
-    unit_tests:
-        path_instructions: []
 issue_enrichment:
     auto_enrich:
         enabled: true
     planning:
         enabled: false
-        auto_planning:
-            enabled: false
-            labels: []
     labeling:
-        labeling_instructions: []
         auto_apply_labels: true
