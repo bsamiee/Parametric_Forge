@@ -8,12 +8,12 @@ A high-column table that passes eligibility is the correct carrier; column count
 
 - Detection: Rows share one comparison question, every column resolves to an atomic value, and more than one row exists.
 - Rejected:
-  ```markdown
+  ```markdown rejected
   `Alpha` is a scalar of arity one defaulting to `"zero"`, while `Beta`is a many-arity vector defaulting to `"unit"` and `Gamma` a many-arity
   tensor defaulting to `"eye"`.
   ```
 - Accepted:
-  ```markdown
+  ```markdown accepted
   | [INDEX] | [VARIANT] | [KIND] | [ARITY] | [DEFAULT] |
   | :-----: | :-------- | :----- | :-----: | :-------- |
   |  [01]   | `Alpha`   | scalar |   one   | `"zero"`  |
@@ -29,11 +29,11 @@ A cell joins two or more lookup values, so one index no longer maps to one membe
 
 - Detection: A cell joining lookup values with a slash, a comma, or a conjunction.
 - Rejected:
-  ```markdown
+  ```markdown rejected
   | [08] | `Alpha` / `Beta` / `Gamma` / `Delta` / `Epsilon` | hosted | provider-run |
   ```
 - Accepted:
-  ```markdown
+  ```markdown accepted
   Every hosted provider tool is one row.
 
   | [INDEX] | [SYMBOL] | [CAPABILITY] |
@@ -51,7 +51,7 @@ A column carries one identical value down every row, restating a universal fact 
 
 - Detection: A column whose cells all hold one identical value.
 - Rejected:
-  ```markdown
+  ```markdown rejected
   | [INDEX] | [SYMBOL] | [RAIL]        |
   | :-----: | :------- | :------------ |
   |  [01]   | `Alpha`  | serialization |
@@ -59,7 +59,7 @@ A column carries one identical value down every row, restating a universal fact 
   |  [03]   | `Gamma`  | serialization |
   ```
 - Accepted:
-  ```markdown
+  ```markdown accepted
   - [RAIL]: serialization
 
   | [INDEX] | [SYMBOL] |
@@ -76,7 +76,7 @@ A boolean column mixes truthy and falsy spellings, forcing a per-row normalizati
 
 - Detection: A boolean column spelled inconsistently down the rows.
 - Rejected:
-  ```markdown
+  ```markdown rejected
   | [INDEX] | [SYMBOL] | [PURE]  |
   | :-----: | :------- | :-----: |
   |  [01]   | `Alpha`  |    Y    |
@@ -84,7 +84,7 @@ A boolean column mixes truthy and falsy spellings, forcing a per-row normalizati
   |  [03]   | `Gamma`  | enabled |
   ```
 - Accepted:
-  ```markdown
+  ```markdown accepted
   | [INDEX] | [SYMBOL] | [PURE] |
   | :-----: | :------- | :----: |
   |  [01]   | `Alpha`  |  yes   |
@@ -100,14 +100,14 @@ Every cell restates a word the header already owns, widening the row for nothing
 
 - Detection: Every cell in a column repeats a word the header implies, or opens with the same lead word.
 - Rejected:
-  ```markdown
+  ```markdown rejected
   | [INDEX] | [MODE]         | [WHEN]         |
   | :-----: | :------------- | :------------- |
   |  [01]   | mode interview | when ambiguous |
   |  [02]   | mode plan      | when settled   |
   ```
 - Accepted:
-  ```markdown
+  ```markdown accepted
   | [INDEX] | [MODE]      | [WHEN]    |
   | :-----: | :---------- | :-------- |
   |  [01]   | `interview` | ambiguous |
@@ -122,13 +122,13 @@ A cell packs a multi-clause caveat, a signature, and behavior into a slot the co
 
 - Detection: A cell packing signatures and behavior clauses into one slot.
 - Rejected:
-  ```markdown
+  ```markdown rejected
   | [INDEX] | [SYMBOL] | [ROLE]                                                                                                      |
   | :-----: | :------- | :---------------------------------------------------------------------------------------------------------- |
   |  [02]   | `Shape`  | stacked layers via `from_profile(...)`, then `refine()` instances them, and `peel()` strips the outer shell |
   ```
 - Accepted:
-  ```markdown
+  ```markdown accepted
   `Shape` stacks layers; `from_profile` extrudes a profile and `peel`
   strips the outer shell.
 
@@ -146,14 +146,14 @@ Every row needs a comma-bearing sentence to explain itself, so the table is the 
 
 - Detection: Every row needs a sentence with internal commas; the rows share no atomic column.
 - Rejected:
-  ```markdown
+  ```markdown rejected
   | [INDEX] | [MODE]      | [NOTE]                                                      |
   | :-----: | :---------- | :---------------------------------------------------------- |
   |  [01]   | `interview` | ask when requirements are ambiguous, unstated, or contested |
   |  [02]   | `plan`      | emit a decisions table plus a ready-to-run prompt           |
   ```
 - Accepted:
-  ```markdown
+  ```markdown accepted
   [interview]:
   - Trigger: Requirements ambiguous, unstated, or contested
   - Output: Decisions table plus implementation prompt
@@ -171,14 +171,14 @@ The rows carry exactly an index, a label, and one prose clause — the indexed-l
 
 - Detection: The table holds exactly an index, a bracketed label, and one prose clause per row.
 - Rejected:
-  ```markdown
+  ```markdown rejected
   | [INDEX] | [LABEL]  | [DETAIL]                                   |
   | :-----: | :------- | :----------------------------------------- |
   |  [01]   | `QUEUED` | accepted for the sequence, not yet running |
   |  [02]   | `ACTIVE` | executing inside the record scope          |
   ```
 - Accepted:
-  ```markdown
+  ```markdown accepted
   - [01]-[QUEUED]: Accepted for the sequence, not yet running.
   - [02]-[ACTIVE]: Executing inside the record scope.
   ```
@@ -191,18 +191,18 @@ A row family resists every table fix, and the teardown flattens it to mega-prose
 
 - Detection: A row family resists split, hoist, extract, and relief, and the fix reaches for a paragraph flood or an unkeyed dump.
 - Rejected:
-  ```markdown
+  ```markdown rejected
   `Shape` extrudes a profile into stacked layers and instances the
   refined ones; `Variant` peels the outer and inner shells while `Region`
   detaches the mid layers and re-solves adjacency across the body.
   ```
-  ```markdown
+  ```markdown rejected
   - `Shape` extrude stack instance
   - `Variant` peel outer inner
   - `Region` detach mid resolve
   ```
 - Accepted:
-  ```markdown
+  ```markdown accepted
   - [01]-[EXTRUDE]: `Shape` stacks layers from a profile.
   - [02]-[PEEL]: `Variant` separates outer and inner shells.
   - [03]-[DETACH]: `Region` re-solves mid-layer adjacency.
@@ -216,14 +216,14 @@ A link rides inside a comparison cell, so it drifts with the attribute grid inst
 
 - Detection: A `[label](path)` link inside a cell of a table that also compares attributes.
 - Rejected:
-  ```markdown
+  ```markdown rejected
   | [INDEX] | [MODE]      | [DOC]                             |
   | :-----: | :---------- | :-------------------------------- |
   |  [01]   | `interview` | ambiguous scope [modes](modes.md) |
   |  [02]   | `plan`      | settled scope [build](build.md)   |
   ```
 - Accepted:
-  ```markdown
+  ```markdown accepted
   | [INDEX] | [MODE]      | [WHEN]    |
   | :-----: | :---------- | :-------- |
   |  [01]   | `interview` | ambiguous |
@@ -241,14 +241,14 @@ The rows are ordered steps a reader executes in order — a sequence wearing a g
 
 - Detection: Rows are steps with an execution order; the action column carries imperative commands; row order is the payload.
 - Rejected:
-  ```markdown
+  ```markdown rejected
   | [INDEX] | [ACTION]                                     | [VERIFY]          |
   | :-----: | :------------------------------------------- | :---------------- |
   |  [01]   | Install the runtime: `<command-a>`           | `<check-a>` lists |
   |  [02]   | Authenticate: `<command-b>` (keyring, SSH)   | `<check-b>`       |
   ```
 - Accepted:
-  ```markdown
+  ```markdown accepted
   1. Install the runtime.
      - Command: `<command-a>`
      - Verify: `<check-a>` lists the runtime
@@ -265,14 +265,14 @@ An enumerable table drops the leading `[INDEX]` column or carries bare-word head
 
 - Detection: An enumerable table over two rows lacks the centered `[INDEX]` column, or a header is not a bracketed rubric.
 - Rejected:
-  ```markdown
+  ```markdown rejected
   | Mode      | When      | Output |
   | :-------- | :-------- | :----- |
   | interview | ambiguous | prompt |
   | plan      | settled   | steps  |
   ```
 - Accepted:
-  ```markdown
+  ```markdown accepted
   | [INDEX] | [MODE]      | [WHEN]    | [OUTPUT] |
   | :-----: | :---------- | :-------- | :------- |
   |  [01]   | `interview` | ambiguous | `prompt` |

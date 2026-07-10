@@ -6,7 +6,7 @@ Proven hook implementations built on dispatch tables, frozen state, and `B: Fina
 
 [EVENTS]: PreToolUse (Bash|Write|Read matcher)
 
-```python
+```python conceptual
 #!/usr/bin/env python3
 from typing import Callable, Final
 import json, sys, os, re
@@ -49,7 +49,7 @@ if __name__ == "__main__":
 
 [EVENTS]: PreToolUse (Bash|Write matcher)
 
-```python
+```python conceptual
 #!/usr/bin/env python3
 from typing import Callable, Final
 import json, sys, os
@@ -80,7 +80,7 @@ if __name__ == "__main__":
 
 [EVENTS]: PostToolUse (Write|Edit matcher)
 
-```python
+```python conceptual
 #!/usr/bin/env python3
 from typing import Final
 import json, sys, subprocess
@@ -108,7 +108,7 @@ if __name__ == "__main__":
 
 [EVENTS]: SessionStart (startup|resume|compact matcher)
 
-```python
+```python conceptual
 #!/usr/bin/env python3
 from typing import Final
 import json, sys, subprocess, os
@@ -133,7 +133,7 @@ if __name__ == "__main__":
 
 [EVENTS]: All (catch-all matcher)
 
-```python
+```python conceptual
 #!/usr/bin/env python3
 from dataclasses import dataclass, asdict
 from typing import Final
@@ -171,7 +171,7 @@ if __name__ == "__main__":
 
 [RESPONSE]: `{"ok": true}` permits the action; `{"ok": false, "reason": "..."}` blocks it. The prompt/agent eligibility roster lives in the schema reference.
 
-```json
+```json template
 {
   "hooks": {
     "Stop": [{

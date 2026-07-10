@@ -4,21 +4,21 @@
 
 1. Find audio and video card IDs:
 
-```bash
+```bash template
 heptabase card list --card-types audio,video --limit 20
 heptabase card list -q "<keyword>" --card-types audio,video --limit 20
 ```
 
 2. Read metadata before transcript content:
 
-```bash
+```bash template
 heptabase audio metadata <audioCardId>
 heptabase video metadata <videoCardId>
 ```
 
 3. Read small time ranges:
 
-```bash
+```bash template
 heptabase audio read <audioCardId> --start-seconds 0 --end-seconds 300
 heptabase video read <videoCardId> --start-seconds 0 --end-seconds 300
 ```

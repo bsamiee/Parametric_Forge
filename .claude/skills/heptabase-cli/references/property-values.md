@@ -2,7 +2,7 @@
 
 Read property definitions and current values before writing:
 
-```bash
+```bash template
 heptabase tag properties <tagId>
 heptabase card properties <cardIdOrDate>
 heptabase tag cards <tagId> --include-properties
@@ -10,7 +10,7 @@ heptabase tag cards <tagId> --include-properties
 
 Use `card set-property` to replace one property value on one card:
 
-```bash
+```bash template
 heptabase card set-property <cardIdOrDate> --property-id <propertyId> (--value <value> | --json-value <json>)
 ```
 
@@ -22,7 +22,7 @@ Pass exactly one of `--value` or `--json-value`.
 
 Read commands return property values as:
 
-```json
+```json output-only
 {
   "id": "property-id",
   "name": "Status",
@@ -33,7 +33,7 @@ Read commands return property values as:
 
 Relation property reads return an array of populated relation objects, not a plain ID array:
 
-```json
+```json output-only
 {
   "id": "property-id",
   "name": "Related",
@@ -74,7 +74,7 @@ Relation writes are not self-contained. You must first discover the relation pro
 4. Run `heptabase tag cards <relationTargetTagId>` to list related-card candidates. Do not use source-type cards as relation values; relation writes reject them even when they belong to the target tag database.
 5. Set the relation with the selected card IDs or journal dates:
 
-```bash
+```bash template
 heptabase card set-property <cardIdOrDate> --property-id <relationPropertyId> --json-value '["related-card-id"]'
 ```
 
@@ -82,7 +82,7 @@ Do not guess related card IDs from unrelated searches. If a card is not under `r
 
 ## [03]-[EXAMPLES]
 
-```bash
+```bash template
 # Set select by option name
 heptabase card set-property <cardIdOrDate> --property-id <propertyId> --value "Published"
 

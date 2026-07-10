@@ -1,6 +1,6 @@
 # [H1][BASH-PORTABILITY]
 
-Cross-platform shell compatibility for Bash 5.2+/5.3, zsh, dash, and container-minimal shells. Platform detection, GNU/BSD coreutil divergence, capability probing, container environments, POSIX 2024 adoption reality.
+Cross-platform shell compatibility for Bash `5.2+`/5.3, zsh, dash, and container-minimal shells. Platform detection, GNU/BSD coreutil divergence, capability probing, container environments, POSIX 2024 adoption reality.
 
 | [INDEX] | [PATTERN]               |  [S]  | [USE_WHEN]                                                |
 | :-----: | :---------------------- | :---: | :-------------------------------------------------------- |
@@ -19,9 +19,9 @@ Cross-platform shell compatibility for Bash 5.2+/5.3, zsh, dash, and container-m
 |  [02]   | `#!/bin/bash`         | Security policy mandates abs paths  |
 |  [03]   | `#!/bin/sh`           | POSIX-only, system init, containers |
 
-`env -S` (GNU coreutils 8.30+) supports flag passthrough — macOS and busybox `env` lack it entirely. Avoid in cross-platform shebangs; handle flags in the script body.
+`env -S` (GNU coreutils `8.30+`) supports flag passthrough — macOS and busybox `env` lack it entirely. Avoid in cross-platform shebangs; handle flags in the script body.
 
-```bash
+```bash conceptual
 # macOS: /bin/bash is 3.2.57 permanently (Apple GPLv3 refusal)
 # Homebrew: /opt/homebrew/bin/bash (ARM) | /usr/local/bin/bash (Intel)
 # Version gate pattern owned by version-features.md — use _BASH_V from there
@@ -36,7 +36,7 @@ Cross-platform shell compatibility for Bash 5.2+/5.3, zsh, dash, and container-m
 
 ## [02]-[SHELL_COMPATIBILITY_MATRIX]
 
-Cross-shell semantic divergences against Bash 5.2+, zsh 5.9+, and dash/ash — not feature presence but behavioral differences that cause silent bugs:
+Cross-shell semantic divergences against Bash `5.2+`, zsh `5.9+`, and dash/ash — not feature presence but behavioral differences that cause silent bugs:
 
 | [INDEX] | [FEATURE]            | [BASH]             | [ZSH]                 | [DASH_ASH]         |
 | :-----: | :------------------- | :----------------- | :-------------------- | :----------------- |
@@ -54,15 +54,15 @@ Cross-shell semantic divergences against Bash 5.2+, zsh 5.9+, and dash/ash — n
 |  [12]   | `${ cmd; }` (nofork) | **5.3+ only**      | No                    | No                 |
 |  [13]   | `GLOBSORT`           | **5.3+ only**      | No                    | No — alpha default |
 
-Decision rule: dash/ash restricts to POSIX `[ ]`, no arrays, no namerefs, no here-strings. Bash 5.2+ means full feature set. zsh requires testing — array indexing, `$0`, option names diverge silently. `${ cmd; }` and `GLOBSORT` are 5.3-only — gate with `(( _BASH_V >= 503 ))`. `coproc` is 4.0+ only, not POSIX — use `mkfifo` for portable bidirectional IPC.
+Decision rule: dash/ash restricts to POSIX `[ ]`, no arrays, no namerefs, no here-strings. Bash `5.2+` means full feature set. zsh requires testing — array indexing, `$0`, option names diverge silently. `${ cmd; }` and `GLOBSORT` are 5.3-only — gate with `(( _BASH_V >= 503 ))`. `coproc` is `4.0+` only, not POSIX — use `mkfifo` for portable bidirectional IPC.
 
 ### [02.1]-[POSIX_2024_ISSUE_8]
 
-IEEE 1003.1-2024 standardized `pipefail`, `sed -E`, `realpath`, `readlink`, `printf` numbered args (`%2$s%1$s`), `rm -d`. Explicitly **deferred**: `local` (reserved identifier, not standardized). `find -print0` / `xargs -0` remain non-standard.
+IEEE 1003.1-2024 standardized `pipefail`, `sed -E`, `realpath`, `readlink`, `printf` numbered args (`%2$s%1$s`), `rm -d`. Explicitly deferred: `local` (reserved identifier, not standardized). `find -print0` / `xargs -0` remain non-standard.
 
 Adoption bottleneck: dash (Debian/Ubuntu `/bin/sh`) has not shipped `pipefail`. Until dash implements Issue 8, `set -o pipefail` in `#!/bin/sh` scripts breaks on the most common container base images. Gate on runtime probe, not spec publication:
 
-```bash
+```bash conceptual
 _has_pipefail() { (set -o pipefail 2>/dev/null); }
 ```
 
@@ -83,7 +83,7 @@ GNU coreutils and BSD coreutils, the macOS default, diverge on flag behavior for
 |  [09]   | `xargs`    | `xargs -r` (skip-empty)    | No `-r`                         | `xargs` + empty guard                  |
 |  [10]   | `cp`       | `cp --reflink=auto`        | `cp -c` (APFS clone)            | `cp` (plain)                           |
 
-```bash
+```bash conceptual
 _sed_inplace() {
     local -r pattern="$1" replacement="$2" file="$3"
     local -r tmp="$(mktemp "${file}.XXXXXX")"
@@ -114,7 +114,7 @@ _parse_date() {
 
 Resolve platform at init. Bind OS-specific functions once. All call sites dispatch through a uniform key — zero runtime branching after initialization. Tool probes (`_HAS_RG`, `_resolve_tool`) and bash version probes (`_HAS_INSITU`) are owned by `variable-features.md` and `version-features.md` respectively.
 
-```bash
+```bash conceptual
 readonly _PLATFORM="$(uname -s)"
 readonly _CAN_NAMEREF="$(
     (eval 'local -n _t=BASH_VERSION' 2>/dev/null && printf '1') || printf '0'
@@ -164,7 +164,7 @@ _clipboard() { _platform clipboard; }
 
 Multi-axis dispatch — keys compose `action_platform_toolchain` for GNU/BSD/busybox:
 
-```bash
+```bash conceptual
 declare -Ar _GREP_DISPATCH=(
     [pcre_Linux_gnu]='grep -P'  [pcre_Darwin_bsd]='rg'  [pcre_Linux_busybox]='rg'
 )
@@ -197,7 +197,7 @@ Wolfi-base ships bash by default — more predictable than Alpine for build stag
 
 Kernel does NOT deliver default SIGTERM to PID 1 — without explicit handling, SIGTERM is ignored and k8s escalates to SIGKILL after `terminationGracePeriodSeconds` (30s default).
 
-```dockerfile
+```dockerfile conceptual
 FROM alpine:3.21                          # Alpine: install bash explicitly
 RUN apk add --no-cache bash>=5.2
 SHELL ["/bin/bash", "-c"]
@@ -207,7 +207,7 @@ FROM cgr.dev/chainguard/wolfi-base:latest   # Wolfi: bash pre-installed
 ENTRYPOINT ["/bin/bash", "/entrypoint.sh"]
 ```
 
-```bash
+```bash conceptual
 # Pattern 1: exec replacement — single-process containers (preferred)
 _exec_service() { exec "$@"; }
 
@@ -219,7 +219,7 @@ _exec_service() { exec "$@"; }
 
 ## [06]-[SIGNAL_AND_TRAP_PORTABILITY]
 
-Signal and trap semantics diverge across Bash 5.2+, dash/ash, and zsh 5.9+:
+Signal and trap semantics diverge across Bash `5.2+`, dash/ash, and zsh `5.9+`:
 
 | [INDEX] | [BEHAVIOR]           | [BASH]                  | [DASH_ASH]       | [ZSH]       |
 | :-----: | :------------------- | :---------------------- | :--------------- | :---------- |
@@ -235,7 +235,7 @@ Signal and trap semantics diverge across Bash 5.2+, dash/ash, and zsh 5.9+:
 
 Critical gap: dash and zsh do NOT fire EXIT on signal death. Trapped signals reset in subshells and across `exec`; ignored signals (`trap ''`) inherit both (POSIX SIG_IGN requirement) — `_critical_section` below exploits this for child-safe signal masking. Portable scripts must explicitly trap each signal with re-raise to preserve 128+N exit codes for orchestrator classification:
 
-```bash
+```bash conceptual
 # Portable signal registration — re-raise preserves 128+N for orchestrators
 _register_signal_traps() {
     local _sig; for _sig in INT TERM HUP QUIT; do
@@ -264,10 +264,10 @@ Cleanup implementation (`_cleanup`, `_CLEANUP_STACK`, `_CLEANING` guard) is owne
 - `[ ]` for POSIX scripts, `[[ ]]` for bash-only — NEVER mix in same script.
 - Alpine/busybox: install bash explicitly (`apk add bash>=5.2`) when arrays, namerefs, or dispatch tables required.
 - Wolfi-base over Alpine for build stages when bash is required — ships bash by default.
-- Container PID 1: prefer `exec` replacement; K8s 1.33+ `shareProcessNamespace: true` for signal forwarding.
+- Container PID 1: prefer `exec` replacement; K8s `1.33+` `shareProcessNamespace: true` for signal forwarding.
 - EXIT trap + explicit INT/TERM/HUP/QUIT traps with re-raise — dash/zsh skip EXIT on signal death.
 - POSIX 2024 `pipefail`: probe at runtime (`set -o pipefail 2>/dev/null`) — dash has not shipped it yet.
 - `${ cmd; }` and `GLOBSORT` are Bash 5.3-only — gate with `(( _BASH_V >= 503 ))`, NEVER use in cross-shell scripts.
-- `coproc` is Bash 4.0+, not POSIX — use `mkfifo` named pipes for portable bidirectional IPC.
+- `coproc` is Bash `4.0+`, not POSIX — use `mkfifo` named pipes for portable bidirectional IPC.
 - Trapped signals reset in subshells/exec; ignored signals (`trap ''`) inherit — use SIG_IGN for critical sections that spawn children.
 - Loadable builtins are distribution-dependent — NEVER assume availability; probe or fall back.

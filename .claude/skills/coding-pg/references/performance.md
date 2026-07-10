@@ -7,7 +7,7 @@ AIO, JIT, parallel query, vacuum optimization, cost model tuning, connection poo
 
 Asynchronous I/O can materially improve sequential scans, bitmap heap scans, and vacuum on Linux with io_uring; verify gains with workload-specific `EXPLAIN (ANALYZE, BUFFERS, SETTINGS)`.
 
-```ini
+```ini conceptual
 io_method = io_uring                      # Linux 5.6+ (IORING_FEAT_NODROP); 'worker' is compile-time only, not a runtime fallback
 io_max_concurrency = 0                    # 0 = auto (based on max_parallel_workers)
 io_combine_limit = 128kB                  # combine adjacent page reads into single I/O
@@ -17,7 +17,7 @@ maintenance_io_concurrency = 100          # vacuum, CREATE INDEX prefetch
 
 AIO contracts:
 - Primary benefit: sequential scans, bitmap heap scans, VACUUM. Index point lookups usually see only modest improvement under high-concurrency prefetch conditions because they are already single-page I/O
-- `io_uring` requires Linux 5.6+ with `IORING_FEAT_NODROP`; non-Linux platforms degrade to synchronous I/O (no thread-based fallback). `worker` mode is a compile-time option, not automatic
+- `io_uring` requires Linux `5.6+` with `IORING_FEAT_NODROP`; non-Linux platforms degrade to synchronous I/O (no thread-based fallback). `worker` mode is a compile-time option, not automatic
 - Breakeven: AIO overhead (submission queue management) exceeds benefit for queries returning <100 rows via index scan — disable per-session with `SET LOCAL io_max_concurrency = 1` for OLTP-heavy connections
 
 
@@ -25,7 +25,7 @@ AIO contracts:
 
 JIT compiles query expressions to native code. Beneficial for complex expressions on large datasets; overhead for simple queries.
 
-```ini
+```ini conceptual
 jit = on                                  # enable JIT (default on since PG 12)
 jit_above_cost = 100000                   # JIT kicks in above this estimated cost
 jit_inline_above_cost = 500000            # inline functions above this cost
@@ -42,7 +42,7 @@ JIT contracts:
 
 ## [03]-[PARALLEL_QUERY]
 
-```ini
+```ini conceptual
 max_parallel_workers_per_gather = 4       # workers per Gather node
 max_parallel_workers = 8                  # total across all queries; each consumes a connection slot
 max_parallel_maintenance_workers = 4      # CREATE INDEX, VACUUM, parallel GIN build (PG 18)
@@ -65,7 +65,7 @@ Parallel contracts:
 
 Vacuum reclaims dead tuples, updates visibility map, and freezes old transactions.
 
-```ini
+```ini conceptual
 autovacuum_vacuum_cost_delay = 2ms        # pause between cost-limited work (default 2ms, was 20ms)
 autovacuum_vacuum_cost_limit = 200        # cost limit per round (default 200)
 autovacuum_vacuum_scale_factor = 0.05     # trigger at 5% dead tuples (default 0.2 is too conservative)
@@ -90,7 +90,7 @@ Vacuum contracts:
 
 The planner's cost model determines whether it chooses index scans or sequential scans. Incorrect cost parameters directly undermine index strategy.
 
-```ini
+```ini conceptual
 random_page_cost = 1.1                    # SSD (default 4.0 assumes spinning disk)
 seq_page_cost = 1.0                       # sequential page read cost (baseline)
 cpu_tuple_cost = 0.01                     # per-tuple processing cost (default)
@@ -109,7 +109,7 @@ Cost model contracts:
 
 ## [06]-[CONNECTION_AND_MEMORY_TUNING]
 
-```ini
+```ini conceptual
 shared_buffers = '8GB'                    # 25% of RAM for dedicated DB server
 work_mem = '64MB'                         # per-operation sort/hash memory
 maintenance_work_mem = '2GB'              # for VACUUM, CREATE INDEX
@@ -141,7 +141,7 @@ PgBouncer transaction-mode prepared statement strategies:
 
 Primary diagnostic tool. Always use `EXPLAIN (ANALYZE, BUFFERS, VERBOSE, SETTINGS)` -- never wall-clock time alone. Add `FORMAT JSON` for programmatic parsing. Add `WAL` to measure WAL generation per statement (write queries).
 
-```sql
+```sql template
 BEGIN;
 EXPLAIN (ANALYZE, BUFFERS, VERBOSE, SETTINGS, WAL) <query>;
 ROLLBACK;  -- wrap write queries to prevent side effects
@@ -195,7 +195,7 @@ I/O statistics: see `observability.md` pg_stat_io section.
 
 Batch processing: `FOR UPDATE SKIP LOCKED` for concurrent worker queue.
 
-```sql
+```sql conceptual
 WITH batch AS (
     SELECT id FROM task_queue
     WHERE status = 'pending'
@@ -210,7 +210,7 @@ RETURNING task_queue.*;
 
 Planner override escape hatch (requires pg_hint_plan):
 
-```sql
+```sql conceptual
 /*+ HashJoin(t1 t2) SeqScan(t1) Leading((t2 t1)) */
 SELECT ... FROM t1 JOIN t2 ON ...;
 ```
@@ -221,7 +221,7 @@ Analytical acceleration: for OLAP workloads (GROUP BY, window functions, large a
 
 Advisory locks for distributed coordination:
 
-```sql
+```sql conceptual
 -- Session-level advisory lock: held until explicit release or session end
 SELECT pg_advisory_lock(hashtext('migration_v42'));
 -- ... run migration ...
@@ -248,7 +248,7 @@ Optimization contracts:
 
 ## [10]-[WAL_AND_CHECKPOINT_TUNING]
 
-```ini
+```ini conceptual
 wal_level = replica                       # minimum for replication; 'logical' for CDC
 max_wal_size = '4GB'                      # trigger checkpoint after this much WAL
 min_wal_size = '1GB'                      # reclaim WAL below this threshold
@@ -267,7 +267,7 @@ WAL contracts:
 
 Partition pruning eliminates irrelevant partitions at plan time and execution time.
 
-```ini
+```ini conceptual
 enable_partition_pruning = on             # default on; planner eliminates non-matching partitions
 ```
 

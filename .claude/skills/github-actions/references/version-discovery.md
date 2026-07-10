@@ -7,7 +7,7 @@
 - [ALWAYS]: Verify tags exist before pinning.
 - [ALWAYS]: Dereference annotated tags with `^{}` — lightweight tags resolve directly.
 
-```bash
+```bash template
 # Fetch latest release tag
 gh api repos/{owner}/{repo}/releases/latest --jq '.tag_name'
 
@@ -26,7 +26,7 @@ done
 
 Format: `owner/repo@<40-char-SHA> # vX.Y.Z`
 
-**Incident: tj-actions/changed-files (CVE-2025-30066, March 2025):**
+[INCIDENT_TJ_ACTIONS_CHANGED_FILES]:
 - Attacker retargeted ALL existing version tags to malicious commit.
 - 23,000+ repos affected — secrets extracted from Runner Worker process memory.
 - Cascading supply chain: enabled by prior compromise of `reviewdog/action-setup@v1` (CVE-2025-30154).
@@ -39,7 +39,7 @@ Format: `owner/repo@<40-char-SHA> # vX.Y.Z`
 
 ## [03]-[AUTOMATED_MAINTENANCE]
 
-```yaml
+```yaml conceptual
 # .github/dependabot.yml — automated SHA updates
 version: 2
 updates:
@@ -52,7 +52,7 @@ updates:
 
 Dependabot natively parses `# v4.2.2` comments after SHA pins — updates both SHA and comment on new release.
 
-```json
+```json conceptual
 // renovate.json — alternative with pinDigests
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
@@ -64,11 +64,11 @@ Renovate resolves version tag from comment, fetches new SHA, updates both. `help
 
 ## [04]-[IMMUTABLE_ACTIONS]
 
-**Status:** OCI immutable publishing **paused** (not progressing to GA). GitHub pivoted to org-level SHA pinning enforcement as the primary supply chain control.
+[STATUS]: OCI immutable publishing paused (not progressing to GA). GitHub pivoted to org-level SHA pinning enforcement as the primary supply chain control.
 
-- **Original plan:** Actions packaged as immutable OCI containers in GHCR with version tags that cannot be retargeted. Registry stability issues blocked rollout.
-- **Current approach:** Org/repo setting **"Require actions to be pinned to a full-length commit SHA"** — enforces `@<40-char-SHA>` format, rejects `@v1`/`@main` refs. Available in GitHub Enterprise Cloud and Server 3.12+.
-- `actions/publish-immutable-action` repo exists but is **not usable** for external consumers.
+- [ORIGINAL_PLAN]: Actions packaged as immutable OCI containers in GHCR with version tags that cannot be retargeted. Registry stability issues blocked rollout.
+- [CURRENT_APPROACH]: Org/repo setting "Require actions to be pinned to a full-length commit SHA" — enforces `@<40-char-SHA>` format, rejects `@v1`/`@main` refs. Available in GitHub Enterprise Cloud and Server `3.12+`.
+- `actions/publish-immutable-action` repo exists but is not usable for external consumers.
 - SHA pinning + Dependabot/Renovate automated updates is the recommended supply chain posture until immutable actions reach GA.
 
 ## [05]-[COMMON_ACTIONS_INDEX]
@@ -127,7 +127,7 @@ Renovate resolves version tag from comment, fetches new SHA, updates both. `help
 |  [05]   | **Cross-workflow** | Download via `run-id` from `workflow_run` trigger.          |
 |  [06]   | **Versions**       | upload-artifact v6, download-artifact v7 (current stable).  |
 
-```yaml
+```yaml template
 - uses: actions/upload-artifact@<SHA> # v6
   with:
     name: build-output
@@ -140,7 +140,7 @@ Renovate resolves version tag from comment, fetches new SHA, updates both. `help
 
 **`gh attestation verify`** — GA in GitHub CLI. Verifies Sigstore-signed build provenance and SBOM attestations.
 
-```bash
+```bash template
 # Verify binary against repo attestations
 gh attestation verify <file-path> --repo owner/repo
 

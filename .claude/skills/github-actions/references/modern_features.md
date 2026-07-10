@@ -1,4 +1,4 @@
-# [H1][MODERN-FEATURES]
+# [H1][WORKFLOW-FEATURES]
 
 ## [01]-[REUSABLE_WORKFLOWS]
 
@@ -22,7 +22,7 @@
 |  [04]   | **Circular call chain**       | `[REUSABLE]`   | Workflow A calls B which calls A (loop detection).                      |
 |  [05]   | **SLSA L3 without reusable**  | `[PROVENANCE]` | `job_workflow_ref` claim requires reusable workflow for isolated build. |
 
-[REFERENCE] Reusable workflow orchestration: [advanced-triggers.md](./advanced-triggers.md).
+[REFERENCE] Reusable workflow orchestration: `advanced-triggers.md`.
 
 ## [02]-[DEPLOYMENT_ENVIRONMENTS]
 
@@ -38,7 +38,7 @@
 
 ### [02.2]-[CUSTOM_PROTECTION_RULES]
 
-**Status:** GA for public repos (all plans) and private/internal repos (Enterprise only).
+[STATUS]: GA for public repos (all plans) and private/internal repos (Enterprise only).
 
 Custom deployment protection rules use GitHub Apps subscribing to the `deployment_protection_rule` webhook. External service approves/rejects based on health metrics, ITSM tickets, vulnerability scans, or other criteria.
 
@@ -58,7 +58,7 @@ Custom deployment protection rules use GitHub Apps subscribing to the `deploymen
 |  [03]   | **Content format**        | GitHub-flavored Markdown | Tables, badges, `<details>` sections, HTML tables. |
 |  [04]   | **Secret masking**        | Auto-applied             | Same masking rules as log output.                  |
 
-```yaml
+```yaml conceptual
 # Correct: quote the env file variable
 - run: |
     echo "## Build Results" >> "$GITHUB_STEP_SUMMARY"
@@ -88,7 +88,7 @@ Custom deployment protection rules use GitHub Apps subscribing to the `deploymen
 |  [04]   | **Missing credentials**     | `[CONTAINER]` | Private registry image without `credentials:` block.             |
 |  [05]   | **Port conflict**           | `[CONTAINER]` | Multiple services mapping to same host port.                     |
 
-```yaml
+```yaml conceptual
 # Correct: container job with service health check
 jobs:
   test:
@@ -107,7 +107,7 @@ jobs:
 
 ## [05]-[CONCURRENCY_CONTROL]
 
-```yaml
+```yaml conceptual
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
@@ -119,11 +119,11 @@ concurrency:
 |  [02]   | **Static group name**            | `[CONCURRENCY]` | Group without `${{ }}` context serializes ALL runs of the workflow. |
 |  [03]   | **Missing concurrency on CI**    | `[CONCURRENCY]` | PR-triggered workflow without concurrency wastes runner minutes.    |
 
-**Semantics:** Max 1 running + 1 pending per group. When a third run enters, the pending run is cancelled (not the running one). `cancel-in-progress: true` cancels the running job instead. Use `false` for deployments to avoid partial state.
+[SEMANTICS]: Max 1 running + 1 pending per group. When a third run enters, the pending run is cancelled (not the running one). `cancel-in-progress: true` cancels the running job instead. Use `false` for deployments to avoid partial state.
 
 ## [06]-[YAML_ANCHORS]
 
-**Status:** Supported since September 2025. Basic YAML 1.2.2 anchors (`&name`) and aliases (`*name`) only.
+[STATUS]: Basic YAML anchors (`&name`) and aliases (`*name`) only.
 
 ### [06.1]-[LIMITATIONS]
 
@@ -142,7 +142,7 @@ concurrency:
 |  [02]   | **Unused anchor**   | `[YAML]` | `&name` defined but never referenced via `*name`. |
 |  [03]   | **Merge key `<<:`** | `[YAML]` | GitHub Actions does not support YAML merge keys.  |
 
-```yaml
+```yaml template
 # Correct: anchor and alias for shared step sequences
 x-setup: &setup
   - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -166,7 +166,7 @@ jobs:
 |  [02]   | `max-parallel`      | Unlimited (runner pool) | Limits concurrent matrix jobs. Omit for maximum parallelism.                         |
 |  [03]   | `continue-on-error` | `false`                 | Per-job: `true` masks failure from `fail-fast` and downstream `needs:` sees success. |
 
-**Interaction semantics:** `continue-on-error: true` on a matrix job masks its failure from `fail-fast` — remaining matrix jobs continue. Downstream `needs:` jobs see the failed job's result as `success`, hiding real failures. **Recommended:** Use `fail-fast: false` without `continue-on-error`, then aggregate results via `needs.*.result` in a downstream job.
+[INTERACTION_SEMANTICS]: `continue-on-error: true` on a matrix job masks its failure from `fail-fast` — remaining matrix jobs continue. Downstream `needs:` jobs see the failed job's result as `success`, hiding real failures. Recommended: Use `fail-fast: false` without `continue-on-error`, then aggregate results via `needs.*.result` in a downstream job.
 
 | [INDEX] | [CHECK]                         | [TAG]      | [WHAT_TO_FLAG]                                                       |
 | :-----: | :------------------------------ | :--------- | :------------------------------------------------------------------- |

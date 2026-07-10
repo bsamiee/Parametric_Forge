@@ -16,7 +16,7 @@ Crawl a website and extract content from every discovered page, optionally savin
 
 ## [01]-[USAGE]
 
-```bash
+```bash template
 # Basic crawl
 uvx --from tavily-cli tvly crawl "https://docs.example.com" --json
 
@@ -58,7 +58,7 @@ uvx --from tavily-cli tvly crawl "https://docs.example.com" --instructions "Find
 - [AGENTIC]: Results feeding an LLM always ride `--instructions` plus `--chunks-per-source` — relevant chunks instead of full pages, no context explosion.
 - [COLLECTION]: Data collection to disk rides `--output-dir` without `--chunks-per-source` — full pages as markdown files.
 
-```bash
+```bash template
 uvx --from tavily-cli tvly crawl "https://docs.example.com" --instructions "API authentication" --chunks-per-source 3 --json
 uvx --from tavily-cli tvly crawl "https://docs.example.com" --max-depth 2 --output-dir ./docs/
 ```

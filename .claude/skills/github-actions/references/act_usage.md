@@ -2,9 +2,7 @@
 
 ## [01]-[ACTIONLINT]
 
-**Current version:** 1.7.10 (December 30, 2025).
-
-```bash
+```bash copy-safe
 # Installation
 bash <(curl https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash)
 
@@ -16,13 +14,13 @@ actionlint -format '{{json .}}'              # JSON output
 actionlint -format sarif                     # SARIF (code scanning integration)
 ```
 
-**Validates:** YAML syntax, schema, expressions, runner labels, action inputs/outputs, job dependencies, CRON syntax, glob patterns, shell scripts (shellcheck integration), security vulnerabilities, YAML anchors/aliases, deprecated inputs, constant conditions.
+[VALIDATES]: YAML syntax, schema, expressions, runner labels, action inputs/outputs, job dependencies, CRON syntax, glob patterns, shell scripts (shellcheck integration), security vulnerabilities, YAML anchors/aliases, deprecated inputs, constant conditions.
 
-**Exit codes:** `0` = success, `1` = errors found, `2` = fatal error.
+[EXIT_CODES]: `0` = success, `1` = errors found, `2` = fatal error.
 
 ### [01.1]-[CONFIGURATION]
 
-```yaml
+```yaml copy-safe
 # .github/actionlint.yaml
 shellcheck:
   enable: true
@@ -37,7 +35,7 @@ self-hosted-runner:
 
 ### [01.2]-[CI_INTEGRATION]
 
-```yaml
+```yaml conceptual
 name: Lint Workflows
 on:
   pull_request:
@@ -73,9 +71,7 @@ jobs:
 
 ## [02]-[ACT]
 
-**Current version:** v0.2.84 (January 1, 2026).
-
-```bash
+```bash copy-safe
 # Installation
 brew install act                               # macOS
 curl -s https://raw.githubusercontent.com/nektos/act/master/install.sh | bash  # Linux
@@ -91,7 +87,7 @@ act -v                                         # Verbose output
 act workflow_dispatch --input version=1.2.3    # Trigger with inputs
 ```
 
-**Exit codes:** `0` = success, `1` = job failed, `2` = parse/execution error.
+[EXIT_CODES]: `0` = success, `1` = job failed, `2` = parse/execution error.
 
 ### [02.1]-[OPTIONS]
 
@@ -108,7 +104,7 @@ act workflow_dispatch --input version=1.2.3    # Trigger with inputs
 
 ### [02.2]-[CONFIGURATION_FILE]
 
-```bash
+```bash copy-safe
 # .actrc (project root or $HOME)
 --container-architecture=linux/amd64
 --action-offline-mode

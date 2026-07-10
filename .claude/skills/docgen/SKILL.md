@@ -20,11 +20,11 @@ Durable prose is law for an agent that loads it with no memory of why it was wri
 
 ## [01]-[GATE]
 
-```bash
+```bash template
 uv run scripts/prose_gate.py [--json] <paths...>
 ```
 
-```bash
+```bash template
 uv run scripts/prose_gate.py fix [--write] <paths...>
 ```
 

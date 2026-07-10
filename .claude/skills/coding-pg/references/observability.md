@@ -10,7 +10,7 @@ Query fingerprinting and execution statistics. Primary tool for identifying regr
 Enable: `shared_preload_libraries = 'pg_stat_statements'` + `CREATE EXTENSION pg_stat_statements`.
 
 Top queries by total time with cache efficiency:
-```sql
+```sql conceptual
 SELECT queryid, query, calls, total_exec_time / 1000 AS total_sec,
        mean_exec_time AS avg_ms, stddev_exec_time AS stddev_ms,
        rows, shared_blks_hit, shared_blks_read,
@@ -59,7 +59,7 @@ Real-time session and query monitoring.
 
 Lock graph detection --- blocked sessions with full blocking chain:
 
-```sql
+```sql conceptual
 WITH RECURSIVE lock_chain AS (
     SELECT pid, pg_blocking_pids(pid) AS blockers, query, wait_event_type, wait_event,
            now() - query_start AS duration, 0 AS depth
@@ -79,7 +79,7 @@ ORDER BY depth, duration DESC;
 
 Wait event correlation --- aggregate wait events across active backends to identify systemic bottleneck:
 
-```sql
+```sql conceptual
 SELECT wait_event_type, wait_event, count(*) AS sessions,
        array_agg(DISTINCT usename) AS users,
        min(now() - query_start) AS shortest, max(now() - query_start) AS longest
@@ -115,7 +115,7 @@ Diagnostic patterns with actionable thresholds:
 
 I/O statistics disaggregated by backend type, object, and context --- identifies the source of I/O bottlenecks.
 
-```sql
+```sql conceptual
 SELECT backend_type, object, context,
        reads, read_time, writes, write_time,
        writebacks, writeback_time, extends, extend_time,
@@ -142,7 +142,7 @@ Diagnostic patterns:
 
 WAL generation rate monitoring for replication lag prediction and write-volume analysis.
 
-```sql
+```sql conceptual
 SELECT wal_records, wal_fpi, wal_bytes,
        wal_buffers_full, wal_write, wal_sync,
        wal_write_time, wal_sync_time, stats_reset
@@ -174,7 +174,7 @@ Progress monitoring for long-running maintenance operations.
 ## [08]-[TABLE_STATISTICS]
 
 Bloat detection --- tables with highest dead tuple ratio (filter noise with `n_dead_tup > 1000`):
-```sql
+```sql conceptual
 SELECT schemaname, relname, n_live_tup, n_dead_tup,
        ROUND(n_dead_tup::numeric / NULLIF(n_live_tup + n_dead_tup, 0) * 100, 2) AS dead_pct,
        last_autovacuum, last_autoanalyze

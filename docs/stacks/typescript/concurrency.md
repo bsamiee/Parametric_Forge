@@ -49,7 +49,7 @@ A fork is an ownership statement, not a scheduling detail: the parent selected a
 - Law: `FiberSet.makeRuntime<R>()` — with the `FiberMap`/`FiberHandle` twins — materializes the registry's fork as a plain function, the sanctioned spelling for a platform callback seam that must fork per event without re-entering the rail; the forks stay owned members, so the seam inherits scope-close interruption instead of leaking runtime fibers.
 - Reject: `Map<string, Fiber.Fiber<void, never>>` with hand eviction; an "already running" boolean beside a fork; per-member interrupt loops where closing the owning scope already interrupts the set.
 
-```typescript
+```typescript conceptual
 import { Data, Effect, type Exit, Fiber, FiberHandle, FiberMap, type Scope } from "effect"
 
 class SpawnFault extends Data.TaggedError("SpawnFault")<{ readonly key: string }> {}
@@ -97,7 +97,7 @@ Interruption is the third outcome — distinct from success and from every fault
 - Law: an uninterruptible interior outlives its deadline by design — the timeout on a shielded region waits, which is correct and is the reason the shield must be minimal; where the deadline must settle on time regardless, `Effect.disconnect` severs the interior onto its own fiber so the owner's clock is honored while the shielded work finishes in background.
 - Reject: `Cause.TimeoutException` caught downstream where `timeoutFail` mints the typed fault at the owner; racing a hand-rolled `Effect.sleep` against work a `timeout` member already owns.
 
-```typescript
+```typescript conceptual
 import { Data, type Duration, Effect, type Option } from "effect"
 
 class ExpiredFault extends Data.TaggedError("ExpiredFault")<{ readonly stage: string }> {}
@@ -145,7 +145,7 @@ Fibers coordinate through typed primitives whose topology is fixed at constructi
 - Law: `PartitionedSemaphore.make<K>({ permits })` (`@experimental`) shares one permit budget across keyed partitions and serves waiting partitions round-robin — `fair.withPermits(key, n)` brackets exactly like the flat form while a saturated hot key cannot starve quiet keys; both naive alternatives are wrong on the same axis: a semaphore per key fragments the budget, one flat semaphore lets arrival order starve a tenant.
 - Reject: a counter `Ref` incremented by hand; bare `take`/`release` pairs where `withPermits` brackets them; a semaphore standing where the bound belongs to one fan-out's `{ concurrency }` option.
 
-```typescript
+```typescript conceptual
 import { Array, type Chunk, Data, Deferred, Effect, Mailbox, PartitionedSemaphore, type Scope } from "effect"
 
 class MintFault extends Data.TaggedError("MintFault")<{ readonly at: string }> {}
@@ -203,7 +203,7 @@ Shared mutation is a cell with an owner: the update shape selects the cell, and 
 - Law: `TReentrantLock` names shared-versus-exclusive, never who reads — the exclusive side (`withWriteLock`) owns a section that spans multiple commits or a non-STM effect, the shared side (`withReadLock`) brackets the single commits that must not interleave it, `readLock`/`writeLock` are the `Scope`-bound acquisitions, and reentrancy lets a holder re-enter its own lock; a single commit takes the shared side only to be excludable by that section, never for its own atomicity, because a transaction is already atomic alone.
 - Reject: two `Ref`s updated in sequence under a shared invariant; lock-ordering discipline where a transaction owns the cells; polling a cell for a threshold `STM.check` suspends on; an exclusive lock over a pure snapshot-then-remove — one `TMap.removeIf` transaction owns that, and the lock is earned by the non-STM effect between the commits.
 
-```typescript
+```typescript conceptual
 import { Chunk, Effect, Number, Ref, STM, TMap, TReentrantLock, TRef, TSemaphore } from "effect"
 
 type Claim = readonly [slot: string, weight: number]
@@ -311,7 +311,7 @@ Contention is a closed owner matrix: keyed, keyless, fungible, windowed, durable
 - Law: write discipline: `add`/`addMany`/`remove` mutate the ring in place and return it — the ring is build-then-read, so membership change builds a fresh ring and swaps it through the owning cell, never mutates a ring concurrent readers hold; `get`/`getShards` return `undefined` only when no weighted member is enrolled, so the read converts through `Option.fromNullable` at the seam into the typed fault and an unpopulated ring is an admission failure, never a per-read branch.
 - Reject: `hash(key) % members.length` — every membership change re-homes everything; a hand-maintained range-to-member map; sharing one ring across fibers while mutating it.
 
-```typescript
+```typescript conceptual
 import { Array, Cache, Data, Duration, Effect, Exit, HashRing, Option, PrimaryKey, RateLimiter, RcMap, Resource, Schedule, type Scope } from "effect"
 
 class Member extends Data.Class<{ readonly slot: string; readonly share: number }> implements PrimaryKey.PrimaryKey {
@@ -393,7 +393,7 @@ Fan-out degree and racing are declared decisions on the combinator, never emerge
 - Law: losers are interrupted, so a raced effect is admissible only when its teardown is already owned by a bracket or scope — racing un-bracketed acquisition leaks on every losing arm, and the hedge's cost is the loser's finalizers running to completion.
 - Reject: `Promise.race` at the seam; a hand-rolled first-wins where both arms settle one `Deferred` — `race` already owns loser interruption; a race against `Effect.sleep` where the deadline family owns expiry.
 
-```typescript
+```typescript conceptual
 import { Array, Effect, type Exit, Fiber } from "effect"
 
 const hedged = <A, E, R>(

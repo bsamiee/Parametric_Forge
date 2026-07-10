@@ -12,6 +12,7 @@
   pkgs,
   ...
 }: let
+  style = import ../../../style.nix;
   swiftformatConfig = "${config.xdg.configHome}/swiftformat/config";
   swiftlintConfig = "${config.xdg.configHome}/swiftlint/config.yml";
   # --base-config seeds house style while every discovered project .swiftformat
@@ -59,6 +60,7 @@
         done
       fi
 
+      ${style.walkUp}
       _lint() {
         [[ -f "$PWD/.swiftlint.yml" ]] && exec ${pkgs.swiftlint}/bin/swiftlint "$@"
         for arg in "$@"; do
@@ -66,13 +68,9 @@
             --config | --config=*) exec ${pkgs.swiftlint}/bin/swiftlint "$@" ;;
           esac
         done
-        local dir="''${PWD%/*}"
-        while [[ -n "$dir" ]]; do
-          if [[ -f "$dir/.swiftlint.yml" ]]; then
-            exec ${pkgs.swiftlint}/bin/swiftlint "$@" --config "$dir/.swiftlint.yml"
-          fi
-          dir="''${dir%/*}"
-        done
+        local cfg
+        cfg="$(_walk_up .swiftlint.yml)" \
+          && exec ${pkgs.swiftlint}/bin/swiftlint "$@" --config "$cfg"
         exec ${pkgs.swiftlint}/bin/swiftlint "$@" --config "${swiftlintConfig}"
       }
 
@@ -146,8 +144,8 @@ in
     xdg.configFile = {
       # Style only — the wrapper appends the toolchain-derived --swift-version.
       "swiftformat/config".text = ''
-        --indent 4
-        --max-width 150
+        --indent ${toString style.indent}
+        --max-width ${toString style.width}
         --linebreaks lf
       '';
       # indentation_width is opt-in; line_length warns at the house width.
@@ -155,10 +153,10 @@ in
         opt_in_rules:
           - indentation_width
         line_length:
-          warning: 150
+          warning: ${toString style.width}
           error: 200
         indentation_width:
-          indentation_width: 4
+          indentation_width: ${toString style.indent}
       '';
     };
 

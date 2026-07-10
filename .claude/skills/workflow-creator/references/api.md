@@ -49,7 +49,7 @@ Two parts, in this order; the parser is strict about both.
 
 The very first statement must be `export const meta = {…}`, and the object must be a pure literal: no variables, no function calls, no spreads, no template interpolation. The parser walks the syntax tree and rejects anything else, along with reserved keys (`__proto__`, `constructor`, `prototype`). A backtick anywhere in the literal is rejected — the parser reads any backtick as a template literal, even inside a single-quoted string — so `name`, `description`, and `phases` stay free of code-fenced spans.
 
-```js
+```js conceptual
 export const meta = {
   name: 'find-flaky-tests',                          // required — non-empty string
   description: 'Find flaky tests and propose fixes', // required — shown in the permission dialog
@@ -71,7 +71,7 @@ Everything after `meta` is the body. It runs inside an `async` function, so `awa
 
 Prompts are the bulk of a workflow. Keep source lines near 150 columns by splitting one string across lines with adjacent `+` concatenation — JavaScript folds adjacent string operands into one value:
 
-```js
+```js conceptual
 const PROMPT =
   'TASK: realize the open cards of `' + folder + '` into design fences ' +
   'at the doctrine bar. Read each card body, the pages it seams to, and ' +
@@ -87,7 +87,7 @@ const PROMPT =
 
 A workflow reads top-to-bottom as the `meta` manifest, then the body in this fixed section order (omit any a file does not need). Mark each with a divider `// --- [LABEL]` plus dash-fill:
 
-```js
+```js conceptual
 // --- [CONSTANTS] ---------------------------------------------------------------------
 // dependency-free knobs: CAP, BATCH, STALL, static tier/config tables (group the concurrency knobs)
 
@@ -137,7 +137,7 @@ Inside a long `[COMPOSITION]`, mark each phase with a bare subsection divider wh
 
 `args` arrives as structured data, exactly as the caller supplied it — no serialization to undo. `Workflow({ args: { minUsers: 5 } })` yields the object; an array stays an array; a string stays a string; nothing passed yields `undefined`. The only handling a script needs is a default for the omitted case plus a shape check when one workflow accepts both a config object and a free-text task:
 
-```js
+```js conceptual
 const threshold = args?.minUsers ?? 20            // object input
 const scope = Array.isArray(args) ? args : []     // array input
 const task = typeof args === 'string' ? args : 'the change described in TASK.md'
@@ -147,7 +147,7 @@ Never `JSON.parse(args)` — it is already a live value, and parsing an object t
 
 ## [05]-[AGENT]
 
-```js
+```js conceptual
 const text = await agent('Summarize the README.')                   // → string
 const data = await agent('List the deps.', { schema: DEPS_SCHEMA }) // → validated object
 ```
@@ -260,7 +260,7 @@ Bundled checks gate every workflow before it spends a token. Run both; reach for
 
 The linter enforces the parser's hard rules:
 
-```bash
+```bash template
 node ${CLAUDE_SKILL_DIR}/scripts/validate-workflow.mjs <file.js>
 ```
 
@@ -268,7 +268,7 @@ A missing or non-first `meta`, a non-literal `meta` (a stray backtick included),
 
 The dry-run is the syntax, control-flow, and determinism check, for zero tokens:
 
-```bash
+```bash template
 node ${CLAUDE_SKILL_DIR}/scripts/dry-run.mjs <file.js> [--args '<json>'] [--fixtures '<json>']
 ```
 

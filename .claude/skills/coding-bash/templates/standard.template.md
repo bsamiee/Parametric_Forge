@@ -196,8 +196,8 @@ _main "$@"
 
 ## Customization
 
-- **Add domain flags**: one entry in `_OPT_META` + one `case` branch in `_parse_args` per flag. Extend `_OPT_DISPLAY_ORDER` to control help ordering.
-- **Dispatch tables**: for CLI tools, add `declare -Ar _DISPATCH`, `_USAGE_MAP`, `_REQUIRED_ARGS` after `[OPTIONS]` and wire `_dispatch()` from `_main`. See `../examples/cli-tool.sh` for the two-dimensional verb:resource pattern.
-- **Signal forwarding**: for container entrypoints, replace `_signal_dispatch` with a drain + child-forwarding handler. See `../examples/service-wrapper.sh` for `BASH_TRAPSIG` dispatch with `_CHILD_PID` tracking.
-- **Env contracts**: add `declare -Ar _ENV_CONTRACT=([VAR]='^regex$')` with `_validate_env` in `_main` before core logic. See `SKILL.md` Resources section.
-- **Dependency gating**: call `_require jq rg fd` early in `_main` to fail fast on missing tools. Extend with `_TOOL_FALLBACKS` dispatch for graceful degradation.
+- [ADD_DOMAIN_FLAGS]: one entry in `_OPT_META` + one `case` branch in `_parse_args` per flag. Extend `_OPT_DISPLAY_ORDER` to control help ordering.
+- [DISPATCH_TABLES]: for CLI tools, add `declare -Ar _DISPATCH`, `_USAGE_MAP`, `_REQUIRED_ARGS` after `[OPTIONS]` and wire `_dispatch()` from `_main`. See `../examples/cli-tool.sh` for the two-dimensional verb:resource pattern.
+- [SIGNAL_FORWARDING]: for container entrypoints, replace `_signal_dispatch` with a drain + child-forwarding handler. See `../examples/service-wrapper.sh` for `BASH_TRAPSIG` dispatch with `_CHILD_PID` tracking.
+- [ENV_CONTRACTS]: add `declare -Ar _ENV_CONTRACT=([VAR]='^regex$')` with `_validate_env` in `_main` before core logic. See `SKILL.md` Resources section.
+- [DEPENDENCY_GATING]: call `_require jq rg fd` early in `_main` to fail fast on missing tools. Extend with `_TOOL_FALLBACKS` dispatch for graceful degradation.

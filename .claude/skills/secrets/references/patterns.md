@@ -27,7 +27,7 @@ key: {{tojson .PRIVATE_KEY}}
 
 Shell operators require the quoted `--command` form:
 
-```bash
+```bash template
 doppler run --project <p> --config <c> --command='<preflight> && exec <process>; <cleanup>'
 ```
 

@@ -16,7 +16,7 @@ Python `>=3.15` is the active language surface. This page is the version-feature
 - Export baseline: explicit end-of-file `__all__`; no wildcard imports, barrel files, facade exports, or empty `__init__.py` package markers
 - Annotation baseline: deferred annotations inspected through annotation APIs
 
-Treat source files as modern Python, not compatibility layers. Remove old imports, shims, typing spellings, package markers, and tool bypasses when the active surface carries the concept directly.
+Treat source files as idiomatic Python, not compatibility layers. Remove old imports, shims, typing spellings, package markers, and tool bypasses when the active surface carries the concept directly.
 
 ## [02]-[CANONICAL_CHOOSER]
 

@@ -17,7 +17,7 @@ The runtime runs up to 16 agents at once (fewer on machines with few CPU cores) 
 
 For a large list of long multi-stage chains, `parallel()` enqueues all N at once and leans on the limiter; a bounded pool holds a true steady state of at most `cap` chains — what heavy multi-minute chains want:
 
-```js
+```js conceptual
 const sleep = ms => new Promise(r => setTimeout(r, ms))
 const pool = async (items, cap, worker) => {
   const out = new Array(items.length)
@@ -35,7 +35,7 @@ The `launch()` gate spaces the roll-out: each worker awaits the shared gate befo
 
 Slot the agents, never the chains, when chains have uneven stage widths. The pool above holds at most `cap` CHAINS; a chain whose current stage is one agent still occupies a whole slot, and a chain that bursts several concurrent agents in one stage overshoots the cap. Moving the semaphore to the individual `agent()` call — each call acquires a slot, chains launch freely via `Promise.all` — keeps the true in-flight agent count exactly at cap with work-conserving backfill. The cost is FIFO ordering across stages; throughput is unchanged because the cap stays saturated:
 
-```js
+```js conceptual
 const makeSlots = (cap) => {
   let active = 0
   let gate = Promise.resolve()
@@ -65,7 +65,7 @@ When per-item outputs are themselves a corpus too large to combine in one prompt
 
 Bounded buckets — balance by WORK, never count, and cap atomicity at the fair share. When heterogeneous clusters must consolidate into at most N agents, two packer defects each recreate the same 2x-plus long pole. First, a count-balanced packer overloads bucket 0: descending count-sort drops the largest connected component into the first empty bucket, then count-parity tops that bucket up while it already holds the largest distinct-file union — an agent's load is the files it must read and reconcile, never how many claims it carries. Second — worse and easier to miss — UNBOUNDED cluster atomicity: on an interlinked corpus, union-find by shared file fuses most claims into ONE connected component (a measured 125-of-134), and a clusters-never-split packer hands one agent nearly everything while its siblings finish in minutes. Atomicity is a BUDGET, never an absolute: component-atomic while a cluster fits the fair share (`totalWork / n`); above that, sub-shard the component FILE-atomically — rows sharing a lead file never split (the hard edit-collision floor) — and accept the cross-shard seams deliberately, because the verify or terminal stage owns them. Two concurrent shards of one component may share a secondary page, so shard-carrying prompts add: edit pages a sibling may share with surgical anchored Edits only, re-reading and re-applying on an edit conflict — never a whole-file rewrite. Log per-bucket weights so the long pole is visible, never silent:
 
-```js
+```js conceptual
 const clusterWork = (c) => { const files = new Set(); for (const r of c) for (const f of r.files ?? []) files.add(f); return files.size * 2 + c.length }
 // The atomicity budget: a component over the fair share sub-shards by lead file — same-lead-file
 // rows stay together; heaviest groups first-fit into shards under the cap; an oversized

@@ -1,6 +1,6 @@
 # [H1][STRING-TRANSFORMS]
 
-Multi-stage transform pipelines, regex extraction with BASH_REMATCH, codec patterns (URL/hex/base64), printf formatting, and template expansion. Single-operator PE reference in [bash-scripting-guide.md S5](./bash-scripting-guide.md).
+Multi-stage transform pipelines, regex extraction with BASH_REMATCH, codec patterns (URL/hex/base64), printf formatting, and template expansion. Single-operator PE reference in `bash-scripting-guide.md` S5.
 
 | [INDEX] | [PATTERN]          |  [S]  | [USE_WHEN]                                    |
 | :-----: | :----------------- | :---: | :-------------------------------------------- |
@@ -14,7 +14,7 @@ Multi-stage transform pipelines, regex extraction with BASH_REMATCH, codec patte
 
 Each `${}` produces a new string without mutating the variable — reassignment is explicit. In a loop processing N strings with M transforms, chained PE costs 0 forks vs `sed`/`awk` costing N*M process spawns. The `${var,,}` / `${var^^}` case transforms are locale-dependent — under `LC_CTYPE=tr_TR.UTF-8`, `${var^^}` maps `i` to `I` (dotless), not `İ`. Pin `LC_ALL=C` when ASCII-only case folding is required.
 
-```bash
+```bash conceptual
 # Multi-stage path normalization: 5 transforms, 0 forks
 _normalize_url() {
     local -r raw="$1"
@@ -66,15 +66,15 @@ _safe_filename_53() {
 }
 ```
 
-`+( )` and `+(-)` require `shopt -s extglob` (set in strict mode header). `set -- ${result}` without quotes splits on IFS, then `"$*"` rejoins with the first character of IFS. `${ cmd; }` (Bash 5.3+) runs in current shell — side effects propagate; see [version-features.md S1](./version-features.md) for semantics and perf benchmarks.
+`+( )` and `+(-)` require `shopt -s extglob` (set in strict mode header). `set -- ${result}` without quotes splits on IFS, then `"$*"` rejoins with the first character of IFS. `${ cmd; }` (Bash `5.3+`) runs in current shell — side effects propagate; see `version-features.md` S1 for semantics and perf benchmarks.
 
-**Edge cases**: `${var:-default}` substitutes when var is unset OR empty; `${var-default}` substitutes only when unset. `${var:+alt}` substitutes when var is set AND non-empty; `${var+alt}` substitutes when set (even if empty). Critical distinction for optional parameter pipelines.
+[EDGE_CASES]: `${var:-default}` substitutes when var is unset OR empty; `${var-default}` substitutes only when unset. `${var:+alt}` substitutes when var is set AND non-empty; `${var+alt}` substitutes when set (even if empty). Critical distinction for optional parameter pipelines.
 
 ## [02]-[REGEX_EXTRACTION]
 
 `[[ str =~ regex ]]` populates `BASH_REMATCH` — index 0 is the full match, indices 1+ are capture groups. ERE only (no PCRE) — no lookahead, no `\d`/`\w`, use `[0-9]` and `[[:alpha:]]`. Bash does NOT support named capture groups (`(?P<name>...)`) — use positional indices only. Each `=~` match is O(1) process cost vs `grep -oP` spawning a subprocess per invocation.
 
-```bash
+```bash conceptual
 # Structured log parsing: 3 captures in one match, 0 forks
 _parse_log() {
     local -r line="$1"
@@ -121,9 +121,9 @@ Regex pattern must be unquoted on RHS of `=~` — quoting forces literal string 
 
 ## [03]-[PRINTF_FORMATTING]
 
-`printf -v var` assigns directly to the named variable — no subshell, no `$()`, O(0) fork cost. In a loop of 10,000 iterations, `printf -v ts '%(%F %T)T' -1` vs `ts=$(date +"%F %T")` is ~50x faster (builtin vs fork+exec+wait per iteration). `%q` produces shell-quoted output safe for `eval`-free reuse. `%(%T)T` (Bash 5.0+) formats epoch timestamps without `$(date)`.
+`printf -v var` assigns directly to the named variable — no subshell, no `$()`, O(0) fork cost. In a loop of 10,000 iterations, `printf -v ts '%(%F %T)T' -1` vs `ts=$(date +"%F %T")` is ~50x faster (builtin vs fork+exec+wait per iteration). `%q` produces shell-quoted output safe for `eval`-free reuse. `%(%T)T` (Bash `5.0+`) formats epoch timestamps without `$(date)`.
 
-```bash
+```bash conceptual
 # Fork-free timestamp capture: 0 forks vs $(date) spawning /usr/bin/date
 _timestamp() {
     local -n _out=$1
@@ -162,13 +162,13 @@ _build_key() {
 }
 ```
 
-`printf -v` writes to the variable in the CURRENT scope — not a subshell. This means `local -n` namerefs compose with `printf -v` for zero-allocation output. `${var@Q}` is the PE equivalent of `printf '%q'` — use PE form in expansion contexts, `printf -v` form when building into a separate variable. Bash 5.3+ `${ cmd; }` is the third fork-free capture mechanism — use when the producer is a function (not a format string), since `printf -v` cannot capture another function's stdout; see [version-features.md S1](./version-features.md) for benchmarks. See service-wrapper.sh `_init_trace` for a production pattern: `printf -v TRACE_ID '%08x%08x%08x%08x' "${SRANDOM}" "${SRANDOM}" "${SRANDOM}" "${SRANDOM}"` generates 128-bit hex identifiers from CSPRNG without forking `uuidgen` or reading `/dev/urandom`.
+`printf -v` writes to the variable in the CURRENT scope — not a subshell. This means `local -n` namerefs compose with `printf -v` for zero-allocation output. `${var@Q}` is the PE equivalent of `printf '%q'` — use PE form in expansion contexts, `printf -v` form when building into a separate variable. Bash `5.3+` `${ cmd; }` is the third fork-free capture mechanism — use when the producer is a function (not a format string), since `printf -v` cannot capture another function's stdout; see `version-features.md` S1 for benchmarks. See service-wrapper.sh `_init_trace` for a production pattern: `printf -v TRACE_ID '%08x%08x%08x%08x' "${SRANDOM}" "${SRANDOM}" "${SRANDOM}" "${SRANDOM}"` generates 128-bit hex identifiers from CSPRNG without forking `uuidgen` or reading `/dev/urandom`.
 
 ## [04]-[CODEC_PATTERNS]
 
 Bidirectional encoding projections: unsafe-in-context to safe-representation and back. `_urlencode` is byte-level via `printf '%%%02X'` with the `'` prefix (POSIX numeric extraction). `_urldecode` is fork-free: single PE replaces `%` with `\x`, then `printf '%b'` interprets the escapes. Hex/base64 require external tools (no pure-bash byte-level I/O for arbitrary binary).
 
-```bash
+```bash conceptual
 # URL encode: RFC 3986 unreserved pass through, rest → %XX
 # Note: for(()) loop is unavoidable — PE cannot iterate bytes
 _urlencode() {
@@ -220,7 +220,7 @@ _json_escape() {
 
 Two expansion levels: parameter expansion inside unquoted heredocs (shell-level), and `envsubst` for external template files (environment-level). `<<'EOF'` (quoted delimiter) suppresses ALL expansion — the most common heredoc bug is mixing quoted/unquoted delimiters.
 
-```bash
+```bash conceptual
 # Heredoc template: variables expand inline
 # Note: $(printf ...) inside heredoc forks a subshell — use printf -v
 # before the heredoc to capture the timestamp fork-free
@@ -267,7 +267,7 @@ _render_row() {
 - `printf -v var` over `var=$(printf ...)` — eliminates subshell fork for variable capture.
 - `printf '%q'` or `${var@Q}` for shell-safe quoting — never `eval` with unquoted strings.
 - `printf '%(%F %T)T' -1` over `$(date)` — builtin timestamp, no fork.
-- `${var@Q}` / `${var@E}` / `${var@A}` / `${var@a}` — Bash 5.2+ parameter transformation operators.
+- `${var@Q}` / `${var@E}` / `${var@A}` / `${var@a}` — Bash `5.2+` parameter transformation operators.
 - `${var,,}` / `${var^^}` are locale-dependent — pin `LC_ALL=C` for ASCII-only case folding.
 - `${var:-default}` (unset OR empty) vs `${var-default}` (unset only) — know the distinction.
 - BASH_REMATCH indices follow group nesting depth — no named capture groups in bash.
@@ -281,4 +281,4 @@ _render_row() {
 - `envsubst` with explicit variable list — without it, all env vars expand (security risk).
 - `printf -v var '%08x' "${SRANDOM}"` for fork-free hex ID generation from kernel CSPRNG — replaces `uuidgen`/`od -x` forks.
 - `${k%%+([[:space:]])}` / `${v##+([[:space:]])}` for extglob whitespace trim in config parsing (cli-tool.sh pattern).
-- Bash 5.3+ `${ cmd; }` for fork-free function capture — use when producer is a function, not a format string (`printf -v` cannot capture another function's stdout).
+- Bash `5.3+` `${ cmd; }` for fork-free function capture — use when producer is a function, not a format string (`printf -v` cannot capture another function's stdout).

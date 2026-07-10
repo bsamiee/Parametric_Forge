@@ -6,7 +6,7 @@ VPS fleet law: VM lifecycle, Docker Manager projects, firewalls, SSH keys, provi
 
 A VM moves `initial` → `running` → `stopped`; a VM in `initial` state needs setup before anything else. Purchase takes an `item_id` from the billing catalog, an OS `template_id` (`GET /api/vps/v1/templates`), and a `data_center_id` (`GET /api/vps/v1/data-centers`).
 
-```bash
+```bash copy-safe
 # Purchase, then setup when the VM lands in initial state
 curl -X POST "https://developers.hostinger.com/api/vps/v1/virtual-machines" \
   -H "Authorization: Bearer $HOSTINGER_API_TOKEN" -H "Content-Type: application/json" \
@@ -26,7 +26,7 @@ curl -X POST "https://developers.hostinger.com/api/vps/v1/virtual-machines/12345
 
 Docker Manager deploys Compose projects through the API from inline content, a GitHub repo URL (auto-resolves `docker-compose.yaml` on the master branch), or any URL returning raw compose content. Deploying under an existing project name replaces that project — the zero-config redeploy path. Hostinger marks these endpoints subject to change; production deployments with existing compose files take the SSH lane in `references/deployment.md`, routed from the root.
 
-```bash
+```bash copy-safe
 curl -X POST "https://developers.hostinger.com/api/vps/v1/virtual-machines/12345/docker" \
   -H "Authorization: Bearer $HOSTINGER_API_TOKEN" -H "Content-Type: application/json" \
   -d '{ "project_name": "my-app", "url": "https://github.com/user/repo" }'
@@ -44,7 +44,7 @@ Troubleshooting rows: a restart-looping container reads its `logs` first (missin
 
 Firewalls are account-level resources activated per VM. Default policy drops all inbound traffic; one firewall binds per VM; every rule change requires an explicit sync to take effect — an unsynced firewall is the first suspect when SSH or a service is unreachable.
 
-```bash
+```bash copy-safe
 curl -X POST "https://developers.hostinger.com/api/vps/v1/firewall" \
   -H "Authorization: Bearer $HOSTINGER_API_TOKEN" -H "Content-Type: application/json" -d '{ "name": "web-server" }'
 curl -X POST "https://developers.hostinger.com/api/vps/v1/firewall/1/rules" \
@@ -69,7 +69,7 @@ Hardening rows: SSH narrows to known IPs where feasible; database ports never op
 
 Keys register at account level and attach per VM; a key in the account but unattached does not authenticate. Attachment is the first check when SSH refuses a key, firewall sync the second.
 
-```bash
+```bash copy-safe
 curl -X POST "https://developers.hostinger.com/api/vps/v1/public-keys" \
   -H "Authorization: Bearer $HOSTINGER_API_TOKEN" -H "Content-Type: application/json" \
   -d '{ "name": "deploy-key", "key": "ssh-ed25519 AAAA... user@host" }'

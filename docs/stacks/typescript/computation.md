@@ -49,7 +49,7 @@ A body that needs several quantities from one sequence folds them in one pass in
 - Law: `Array.scan(values, SEED, step)` shares the fold's exact `(step, SEED)` pair and keeps every intermediate seed the fold discards — the return is `NonEmptyArray` with the seed first, so the origin's presence is a type fact, and a consumer that must not see it drops it at the read, never by patching the step; `Array.scanRight` threads the suffix trace from the right.
 - Boundary: a fold whose accumulator is `Option`/`Either` or whose faults must accumulate is `rails-and-effects.md`'s carrier algebra, and the same trace over a live feed is `Stream.scan`, `streams.md`'s — this seed is a pure value, total over admitted elements.
 
-```typescript
+```typescript conceptual
 import * as Semigroup from "@effect/typeclass/Semigroup"
 import * as NumberInstances from "@effect/typeclass/data/Number"
 import { Array, Number, Option } from "effect"
@@ -112,7 +112,7 @@ A multi-stage transform selects eager or lazy by materialization cost, and its w
 - Law: a per-element verdict never earns two passes — `Array.partitionMap(values, verdict)` routes every element through one `Either`-returning classifier into `[lefts, rights]`, `Array.separate` splits an already-classified collection, and the harvest tier `Array.getSomes`/`Array.getLefts`/`Array.getRights` collapses partial projections without a filter-then-unwrap re-walk; the harvest tier rides the `Iterable` module lazily, while the two-lane split is eager by nature — both lanes materialize, so no lazy twin exists to reach for.
 - Reject: `values[index + 1]` window arithmetic; a `for i`/`for j` cross product; a run accumulator tracking a `last` variable; index-keyed objects standing where `groupBy` owns the keying; a `filter` pass re-walked by a `map` unwrapping its survivors.
 
-```typescript
+```typescript conceptual
 import { Array, Either, Iterable, Number, Option, Record, pipe } from "effect"
 
 declare namespace Sieve {
@@ -192,7 +192,7 @@ State that threads element-to-element is a Mealy step — one `(state, element) 
 - Boundary: the actor exists because its state outlives one traversal and answers a request surface — state shared across arbitrary fibers with no request surface is `concurrency.md`'s cell selection.
 - Reject: a class of mutable fields and methods; a `switch` over phases mutating an outer variable; a bare `Effect.fork` inside a handler; a reply table declared beside the `(next, emit)` rows it duplicates.
 
-```typescript
+```typescript conceptual
 import { Machine } from "@effect/experimental"
 import { Array, Duration, Effect, type ParseResult, pipe, Schedule, Schema, type Scope } from "effect"
 
@@ -292,7 +292,7 @@ A computation over a recursive structure is one algebra applied by one traversal
 - Law: an effectful step at depth rides the rail's own trampoline — `Effect.iterate(initial, { while, body })` advances a state heap-bound, `Effect.loop` collects per step, and `Effect.suspend` defers a recursive definition so constructing the effect does not itself recurse.
 - Reject: a recursion or `Match` pipeline re-authored per reduction over a family one algebra value already serves; a depth flag threaded through signatures; a result array mutated by a recursive helper; a raised stack budget standing where the frontier folds.
 
-```typescript
+```typescript conceptual
 import { Array, Effect, Either, List, Number, Option } from "effect"
 
 type Limb =
@@ -365,7 +365,7 @@ export { Limb, chased }
 - Law: path, condensation, and rendering questions are owner reads — `Graph.dijkstra`/`Graph.astar`/`Graph.bellmanFord` return `Option` of a `PathResult` carrying `path`, `distance`, and `costs`, `Graph.floydWarshall` answers all pairs, `Graph.stronglyConnectedComponents`/`Graph.isAcyclic` answer condensation, and `Graph.toMermaid`/`Graph.toGraphViz` project the same owner to a diagram — a hand Dijkstra over adjacency state or a hand-walked serializer restates the family.
 - Boundary: graph construction, the `Graph.mutate` write discipline, and `Trie` prefix reads are `values.md`'s owners — this page owns only the algorithmic consumption.
 
-```typescript
+```typescript conceptual
 import { Array, Graph, Option } from "effect"
 
 const charted = (plan: Graph.DirectedGraph<string, number>, source: Graph.NodeIndex, target: Graph.NodeIndex): {
@@ -400,7 +400,7 @@ No pure memoization combinator ships, and that absence is the law: a pure recurr
 - Law: the draft is scoped and the return detaches — `MutableHashMap` batches structural-keyed writes, `MutableList` the append lane, a `TypedArray` the numeric lane — and the kernel returns an immutable projection with no live reference escaping; the mark's legality and the cast algebra inside it are `language.md`'s.
 - Reject: a `Map` or object cache in domain flow; a `TypedArray` view escaping its kernel; mutation justified by style where no measurement exists.
 
-```typescript
+```typescript conceptual
 import { Array, Chunk, type Duration, Effect, HashMap, MutableHashMap, Number, Option, pipe } from "effect"
 
 const _BASE: Chunk.Chunk<number> = Chunk.of(1)                // the solved table's origin row: one path reaches zero

@@ -37,7 +37,7 @@ Antigravity is an external Gemini call admitted only where it adds capability be
 
 Run from this skill directory:
 
-```sh
+```sh copy-safe
 uv run scripts/agy.py models
 uv run scripts/agy.py prompt "Compare these two approaches and return the top 3 tradeoffs." --timeout 5m
 uv run scripts/agy.py prompt "Assess this screenshot and suggest concrete UI changes." --add-dir "$PWD" --timeout 10m
@@ -55,7 +55,7 @@ The wrapper pins `Gemini 3.1 Pro (High)` — the strongest reasoning tier in the
 
 ## [05]-[RECEIPT]
 
-```json
+```json generated
 {"op":"prompt","output":"..."}
 {"op":"prompt","fault":"auth_required","detail":"..."}
 ```

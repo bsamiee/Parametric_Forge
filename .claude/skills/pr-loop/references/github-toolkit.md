@@ -6,7 +6,7 @@ Copyable `gh`/GraphQL/REST patterns, labeled by the loop step each serves. `{own
 
 Identify the PR and pin the head SHA — first thing, every iteration.
 
-```bash
+```bash template
 read -r PR PRID HEAD BRANCH <<<"$(gh pr view --json number,id,headRefOid,headRefName \
   -q '[.number,.id,.headRefOid,.headRefName]|@tsv')"
 # Branch->PR without relying on current-branch inference (detached HEAD / CI):
@@ -20,7 +20,7 @@ gh pr list --state open --head "$(git branch --show-current)" \
 
 Snapshot all feedback in one pass. Four orthogonal sources; none subsumes another. Threads are the only source carrying resolution state.
 
-```bash
+```bash template
 # (a) Review verdicts. state in APPROVED|CHANGES_REQUESTED|COMMENTED|DISMISSED|PENDING.
 gh api repos/{owner}/{repo}/pulls/$PR/reviews --paginate \
   -q '.[]|{id,user:.user.login,state,commit_id,submitted_at,body}'
@@ -46,7 +46,7 @@ In-place-edit detection: keep a high-water mark `SINCE=$(max updated_at across (
 
 Per-reviewer check-run / status state — who finished versus still running. Two disjoint systems coexist on a commit; read both. Both are keyed on the SHA, so passing `$HEAD` keeps them fresh.
 
-```bash
+```bash template
 # Modern Checks API — grouped by producing app => per-reviewer finished state.
 # status in queued|in_progress|completed ; conclusion in success|failure|neutral|cancelled|
 #   skipped|timed_out|action_required|stale|startup_failure (null until completed)
@@ -65,7 +65,7 @@ gh pr checks "$PR" --json name,state,bucket,workflow,completedAt,link   # bucket
 
 Re-trigger a specific bot, idempotently. Detect "already running" before posting; guard against duplicate triggers on the same head.
 
-```bash
+```bash template
 BOT=coderabbitai
 RUNNING=$(gh api repos/{owner}/{repo}/commits/$HEAD/check-runs \
   -q "[.check_runs[]|select((.app.slug==\"$BOT\") or (.name|ascii_downcase|contains(\"$BOT\")))
@@ -83,7 +83,7 @@ Per-reviewer trigger strings live in `reviewers.md`. Re-request a human/team rev
 
 Batch-resolve review threads in one GraphQL round-trip. `resolveReviewThread` takes only `threadId: ID!`; resolving an already-resolved thread is a no-op (safe to over-include).
 
-```bash
+```bash template
 IDS=$(gh api graphql -F owner='{owner}' -F repo='{repo}' -F pr="$PR" -f query='
   query($owner:String!,$repo:String!,$pr:Int!){repository(owner:$owner,name:$repo){
     pullRequest(number:$pr){reviewThreads(first:100){nodes{id isResolved isOutdated}}}}}' \
@@ -98,7 +98,7 @@ Reply instead of resolving (false positive): GraphQL `addPullRequestReviewThread
 
 Push, then detect reviews targeting the latest commit. After push the head advances; re-pin `$HEAD` and treat every prior review/comment as stale until proven by SHA equality.
 
-```bash
+```bash template
 git push origin "$BRANCH"
 HEAD=$(gh pr view "$PR" --json headRefOid -q .headRefOid)   # re-pin AFTER push
 gh api repos/{owner}/{repo}/pulls/$PR/reviews --paginate \
@@ -111,7 +111,7 @@ Never act on a `CHANGES_REQUESTED` whose `commit_id != $HEAD` — it predates th
 
 Convergence read plus merge surface — read only; the loop never merges.
 
-```bash
+```bash template
 gh pr view "$PR" --json reviewDecision,mergeable,mergeStateStatus,statusCheckRollup \
   -q '{decision:.reviewDecision, mergeable:.mergeable, state:.mergeStateStatus,
        failing:[.statusCheckRollup[]|select((.conclusion//.state)
@@ -126,7 +126,7 @@ gh pr view "$PR" --json reviewDecision,mergeable,mergeStateStatus,statusCheckRol
 
 Polling discipline — wait without busy-spinning.
 
-```bash
+```bash template
 gh pr checks "$PR" --watch --fail-fast --interval 30; RC=$?   # 0=all pass, 1=a check failed
 ```
 

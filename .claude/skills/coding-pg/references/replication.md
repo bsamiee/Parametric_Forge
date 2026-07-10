@@ -7,7 +7,7 @@ Logical replication topology, publication/subscription patterns, and conflict ma
 
 Publications define which tables and operations are replicated.
 
-```sql
+```sql conceptual
 -- All tables
 CREATE PUBLICATION all_changes FOR ALL TABLES;
 
@@ -39,7 +39,7 @@ Publication contracts:
 
 Subscriptions connect to publisher and apply changes.
 
-```sql
+```sql conceptual
 -- Basic
 CREATE SUBSCRIPTION order_replica
     CONNECTION 'host=publisher dbname=app'
@@ -76,23 +76,23 @@ Subscription contracts:
 
 ## [03]-[RLS_BYPASS_IN_LOGICAL_REPLICATION]
 
-**SECURITY CRITICAL**: The apply worker executes as the subscription owner (typically superuser), which **bypasses all RLS policies**. Row-level security is not evaluated during logical replication apply.
+[SECURITY_CRITICAL]: The apply worker executes as the subscription owner (typically superuser), which bypasses all RLS policies. Row-level security is not evaluated during logical replication apply.
 
 Impact: if publisher replicates all rows and subscriber relies on RLS for tenant isolation, every tenant's data is visible to the apply worker and written without RLS checks.
 
 Mitigations:
-- **Filtered publications**: `CREATE PUBLICATION ... WHERE (tenant_id = $X)` — publish only rows belonging to target tenant, enforced at publisher before data leaves
-- **Dedicated replication user**: create a non-superuser subscription owner with minimal privileges (`GRANT INSERT, UPDATE, DELETE ON target_tables TO repl_user`); avoids superuser bypass but still skips RLS unless `FORCE ROW LEVEL SECURITY` is set on the role
-- **Separate databases per tenant**: physical isolation eliminates cross-tenant leakage entirely
-- **Application-level validation on subscriber**: trigger or constraint on subscriber tables validates tenant_id matches expected value — defense-in-depth
-- **Column filtering**: exclude sensitive columns from cross-environment replication publications
+- [FILTERED_PUBLICATIONS]: `CREATE PUBLICATION ... WHERE (tenant_id = $X)` — publish only rows belonging to target tenant, enforced at publisher before data leaves
+- [DEDICATED_REPLICATION_USER]: create a non-superuser subscription owner with minimal privileges (`GRANT INSERT, UPDATE, DELETE ON target_tables TO repl_user`); avoids superuser bypass but still skips RLS unless `FORCE ROW LEVEL SECURITY` is set on the role
+- [SEPARATE_DATABASES_PER_TENANT]: physical isolation eliminates cross-tenant leakage entirely
+- [APPLICATION_LEVEL_VALIDATION_ON_SUBSCRIBER]: trigger or constraint on subscriber tables validates tenant_id matches expected value — defense-in-depth
+- [COLUMN_FILTERING]: exclude sensitive columns from cross-environment replication publications
 
 
 ## [04]-[CONFLICT_TRACKING_PG_15]
 
 `pg_stat_subscription_stats` (introduced PG 15) tracks logical replication conflicts per subscription.
 
-```sql
+```sql conceptual
 -- Conflict statistics per subscription
 SELECT subname,
        confl_insert_exists,
@@ -126,7 +126,7 @@ Conflict contracts:
 
 Two publications + two subscriptions with `origin = none` on both sides. Origin tracking prevents infinite loops: changes arriving via replication carry the publisher's origin, and `origin = none` filters them out on re-publish.
 
-```sql
+```sql conceptual
 -- Node A
 CREATE PUBLICATION pub_a FOR TABLE shared_data
     WITH (publish_via_partition_root = true);
@@ -145,20 +145,20 @@ CREATE SUBSCRIPTION sub_from_a
 ```
 
 Conflict resolution strategies:
-- **Partition writes by node**: node A owns tenant 1-1000, node B owns 1001-2000 — eliminates write-write conflicts entirely
-- **Last-write-wins**: application-level `updated_at` comparison in ON CONFLICT handler on subscriber — requires subscriber-side trigger or BEFORE INSERT/UPDATE function
-- **Application-level merge**: subscriber writes to staging table; application logic resolves conflicts before promoting to main table
+- [PARTITION_WRITES_BY_NODE]: node A owns tenant 1-1000, node B owns 1001-2000 — eliminates write-write conflicts entirely
+- [LAST_WRITE_WINS]: application-level `updated_at` comparison in ON CONFLICT handler on subscriber — requires subscriber-side trigger or BEFORE INSERT/UPDATE function
+- [APPLICATION_LEVEL_MERGE]: subscriber writes to staging table; application logic resolves conflicts before promoting to main table
 
 Pitfalls:
-- **Sequence collisions**: both nodes generating from same sequence causes PK collisions — use UUIDv7 PKs or odd/even sequence allocation (`INCREMENT BY 2, START WITH 1` on A, `START WITH 2` on B)
-- **Schema changes**: DDL is NOT replicated — apply identical migrations on both nodes before DML changes arrive
-- **Initial sync**: use `copy_data = false` on both sides; manually ensure tables are synchronized before enabling subscriptions
-- **Partitioned tables**: `publish_via_partition_root = true` required on both sides — otherwise partition-level changes carry partition OID, not root OID, breaking origin filtering
+- [SEQUENCE_COLLISIONS]: both nodes generating from same sequence causes PK collisions — use UUIDv7 PKs or odd/even sequence allocation (`INCREMENT BY 2, START WITH 1` on A, `START WITH 2` on B)
+- [SCHEMA_CHANGES]: DDL is NOT replicated — apply identical migrations on both nodes before DML changes arrive
+- [INITIAL_SYNC]: use `copy_data = false` on both sides; manually ensure tables are synchronized before enabling subscriptions
+- [PARTITIONED_TABLES]: `publish_via_partition_root = true` required on both sides — otherwise partition-level changes carry partition OID, not root OID, breaking origin filtering
 
 
 ## [06]-[REPLICATION_SLOTS]
 
-```sql
+```sql conceptual
 -- Create logical slot
 SELECT pg_create_logical_replication_slot('my_slot', 'pgoutput');
 
@@ -183,7 +183,7 @@ Slot contracts:
 
 Using logical replication as CDC for event-driven architectures.
 
-```sql
+```sql conceptual
 -- Publication as event source: filtered for domain events
 CREATE PUBLICATION domain_events
     FOR TABLE events
@@ -192,11 +192,11 @@ CREATE PUBLICATION domain_events
 ```
 
 Patterns:
-- **Outbox pattern**: application writes to `outbox` table; logical replication delivers to consumers; subscriber deletes after processing
-- **Event consumer**: dedicated database/service subscribes and processes events via standard subscription
-- **WAL-level CDC**: use `pgoutput` plugin directly via `pg_logical_slot_get_changes()` for custom consumers without full subscription
+- [OUTBOX_PATTERN]: application writes to `outbox` table; logical replication delivers to consumers; subscriber deletes after processing
+- [EVENT_CONSUMER]: dedicated database/service subscribes and processes events via standard subscription
+- [WAL_LEVEL_CDC]: use `pgoutput` plugin directly via `pg_logical_slot_get_changes()` for custom consumers without full subscription
 
-```sql
+```sql conceptual
 -- Direct WAL consumption for custom CDC consumers
 SELECT lsn, xid, data
 FROM pg_logical_slot_get_changes('my_slot', NULL, NULL,
@@ -227,7 +227,7 @@ Publisher requires `pg_hba.conf` entries allowing replication connections from s
 
 ## [09]-[MONITORING]
 
-```sql
+```sql conceptual
 -- Subscription worker status and lag (pg_stat_subscription: PG 15+)
 SELECT s.subname, s.subenabled,
        sr.received_lsn, sr.latest_end_lsn,

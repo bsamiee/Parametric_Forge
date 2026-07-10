@@ -21,7 +21,7 @@ Every artifact is one self-contained file: a deliverable type fixes its composit
 ## [02]-[REFERENCES]
 
 - [01]-[DELIVERABLES](references/deliverables.md): the type registry — per-type spine, layout class, element set, capture contract, and the variant table that resolves every named deliverable onto a core type.
-- [02]-[HTML](references/html.md): advanced modern HTML — semantic structure, density, and the coding patterns every artifact composes from.
+- [02]-[HTML](references/html.md): advanced HTML — semantic structure, density, and the coding patterns every artifact composes from.
 - [03]-[SVG](references/svg.md): advanced inline SVG for HTML — the element vocabulary, construction patterns, and figure and diagram craft.
 - [04]-[STYLE](references/style.md): the design language and styling doctrine — the token system, layout, theming, and legibility law every artifact inherits.
 - [05]-[INTERACTION](references/interaction.md): interaction and the return channel — the data-to-presentation mapping, the drawer, and how a page returns the user's adjustments as data.

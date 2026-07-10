@@ -42,7 +42,6 @@
     needsInput = true;
     minIntervalSec = 300;
   };
-
   mkLauncher = row: name:
     pkgs.writeShellApplication {
       inherit name;
@@ -911,10 +910,11 @@
               # the newest row keeps its identity so `focus` can route the click --
               att_cut="$(date -u -d '-60 minutes' +%Y-%m-%dT%H:%M:%SZ)"
               att="$(tail -n 500 "$feed" 2>/dev/null | jq -cs --arg cut "$att_cut" --argjson lanes "$lanes_rows" '
-                ([$lanes[] | select(.agent == "claude" and .state == "waiting") | .tty] | unique) as $idle
+                def pty: sub("^tty"; "");
+                ([$lanes[] | select(.agent == "claude" and .state == "waiting") | .tty | pty] | unique) as $idle
                 | [group_by(.session_id)[] | max_by(.ts)
                    | select(.event == "Notification" and .ts >= $cut
-                            and ((.tty // "") as $t | $t != "" and ($idle | index($t))))]
+                            and ((.tty // "") as $t | $t != "" and ($idle | index($t | pty))))]
                 | unique_by(.tty)
                 | {needs_input: length, latest: (max_by(.ts) // null)}' 2>/dev/null \
                 || echo '{"needs_input": 0, "latest": null}')"

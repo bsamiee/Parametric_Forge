@@ -14,7 +14,7 @@ Durable markdown carries the source lane: the fence itself, opened with the `mer
 
 A single-file HTML artifact — an html-studio deliverable or any page under a strict content-security policy — carries the render lane: the pre-rendered SVG inlined into the document, never a CDN script tag and never a bundled runtime spent on a static picture.
 
-```bash
+```bash template
 uv run scripts/validate_mermaid.py --export <dir> <file.md ...>
 ```
 

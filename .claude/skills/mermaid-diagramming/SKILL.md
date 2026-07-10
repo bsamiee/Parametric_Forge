@@ -64,7 +64,7 @@ Select the archetype by intent, copy its template, and refill — a catalog temp
 
 A diagram is not done until its fence passes both stages: graph-logic checks over the source, then a render whose proof is an actual SVG artifact, never a zero exit alone.
 
-```bash
+```bash template
 uv run scripts/validate_mermaid.py <file.md ...>
 ```
 

@@ -6,7 +6,7 @@ The Foundation embedding lane hosts Open Scripting Architecture inside a Cocoa o
 
 `AEKeyword`, `AEEventClass`, `AEEventID`, `DescType`, and `OSType` are 32-bit integers folded from four ASCII bytes, never string literals coerced at call time; `NSAppleEventDescriptor(bundleIdentifier:)` binds a target through Launch Services identity, immune to path relocation and PID churn, while `descriptorWithApplicationURL:` binds one specific bundle instance or an `eppc:` remote target instead. A parameter carries command payload keyed by `AEKeyword` under `paramDescriptor(forKeyword:)`; an attribute carries transport metadata under `attributeDescriptor(forKeyword:)` — `keyDirectObject` is a parameter, `keyAddressAttr` is an attribute. `isRecordDescriptor` gates a lossless field walk through `numberOfItems`, `keywordForDescriptor(at:)`, and `descriptor(forKeyword:)`; descriptor lists are one-based, so `insert(_:at:)` called with `0` appends and a read walks `1...numberOfItems`.
 
-```swift
+```swift conceptual
 import Carbon
 import Foundation
 func fourCharCode(_ value: StaticString) -> OSType {
@@ -33,7 +33,7 @@ func descriptorList(_ values: [String]) -> NSAppleEventDescriptor {
 
 `init(aeDescNoCopy:)` transfers disposal of a raw `AEDesc` to Foundation, so a descriptor borrowed from a Carbon callback carries a duplicate through `AEDuplicateDesc` first. A reply descriptor exists on every dispatched event; its `descriptorType` reads `typeNull` exactly when the sender requested none, and only past that check does a handler write `keyErrorNumber` and `keyErrorString`. Custom descriptor-type coercion is a Carbon Apple Event Manager surface with no Cocoa equivalent — the only Cocoa-side coercion is the one-shot `coerceToDescriptorType:` call — and `AEInstallCoercionHandler(fromType:toType:handler:refcon:fromTypeIsDesc:isSysHandler:)` registers a standing, thread-safe handler in the calling process's own application coercion table for every event it sends or receives; `isSysHandler: true` targets a system-wide table macOS documents as non-functional.
 
-```objc
+```objc conceptual
 static NSAppleEventDescriptor *WrapOwnedAEDesc(AEDesc source) {
     AEDesc copy = { typeNull, NULL };
     return AEDuplicateDesc(&source, &copy) == noErr ? [[NSAppleEventDescriptor alloc] initWithAEDescNoCopy:&copy] : nil;
@@ -59,7 +59,7 @@ static void InstallHexCoercion(void) { AEInstallCoercionHandler('hex ', typeSInt
 |  [04]   | `NSAppleScriptErrorAppName`      | offending application name          |
 |  [05]   | `NSAppleScriptErrorRange`        | source range of the fault           |
 
-```swift
+```swift conceptual
 func callHandler(_ script: NSAppleScript, name: String, arguments: [NSAppleEventDescriptor]) throws -> NSAppleEventDescriptor {
     let event = NSAppleEventDescriptor(eventClass: AEEventClass(kASAppleScriptSuite), eventID: AEEventID(kASSubroutineEvent),
         targetDescriptor: nil, returnID: AEReturnID(kAutoGenerateReturnID), transactionID: AETransactionID(kAnyTransactionID))
@@ -83,7 +83,7 @@ func callHandler(_ script: NSAppleScript, name: String, arguments: [NSAppleEvent
 |  [04]   | `OSAStorageApplicationBundleType` | applet bundle with resources   |
 |  [05]   | `OSAStorageTextType`              | plain source text              |
 
-```objc
+```objc conceptual
 static OSAScript *Compile(NSString *source, NSURL *origin, OSALanguageInstance *instance, NSDictionary **info) {
     OSAScript *script = [[OSAScript alloc] initWithSource:source fromURL:origin languageInstance:instance usingStorageOptions:OSANull];
     return [script compileAndReturnError:info] ? script : nil;
@@ -104,7 +104,7 @@ static BOOL WriteCompiledBundle(OSAScript *script, NSURL *url, NSDictionary **in
 
 `NSAppleScript` executes only on the main thread, and `@synchronized` around a call does not lift the restriction. `executeAndReturnError:` spins the run loop while blocked, so a script that itself sends Apple events re-enters the calling code before the outer call returns. `OSALanguage.isThreadSafe` reports `true` for the stock AppleScript component (2.8) and the JavaScript component on macOS 26, which authorizes sharing `sharedLanguageInstance()` across callers but never makes one script object safe to run concurrently; a host confines all `NSAppleScript` work to the main actor and dedicates one serial queue to each `OSALanguageInstance` for its lifetime.
 
-```swift
+```swift conceptual
 actor ScriptExecutor {
     private let language = OSALanguage(forName: "AppleScript")!
     private lazy var instance = language.isThreadSafe
@@ -123,7 +123,7 @@ actor ScriptExecutor {
 
 `NSAppleEventManager.setEventHandler(_:andSelector:forEventClass:andEventID:)` dispatches an incoming event to a selector shaped `(event:reply:)`; the reply's `descriptorType` reads `typeNull` exactly when no reply was requested. `suspendCurrentAppleEvent()` detaches the active event for async completion, `setCurrentAppleEventAndReplyEvent(withSuspensionID:)` rebinds thread-local command context on the completing thread, and `resume(withSuspensionID:)` invalidates the token and releases the reply. `dispatchRawAppleEvent(_:withRawReply:handlerRefCon:)` routes an already-received raw `AppleEvent` through the registered handler table and never sends to another process.
 
-```swift
+```swift conceptual
 final class EventRouter: NSObject {
     @objc func handle(event: NSAppleEventDescriptor, reply: NSAppleEventDescriptor) {
         let manager = NSAppleEventManager.shared()
@@ -142,7 +142,7 @@ final class EventRouter: NSObject {
 
 A scriptable app declares `NSAppleScriptEnabled` true, names its `OSAScriptingDefinition`, and ships the `.sdef` inside the bundle resources — the one dictionary AppleScript, JXA, Cocoa Scripting, and ScriptingBridge all consume; `<cocoa key="...">` binds terminology to key-value coding, where an `element` maps an array-backed class-extension, a `property` maps a scalar or to-one value, and a command's `<cocoa key>` parameter matches the key `NSScriptCommand.arguments` exposes. A custom verb subclasses `NSScriptCommand` and overrides `performDefaultImplementation()`, reading `evaluatedArguments` and `evaluatedReceivers`; a validation failure sets `scriptErrorNumber` and `scriptErrorString` and returns `nil`, `suspendExecution()` keeps a command's slot alive across asynchronous work, `resumeExecution(withResult:)` injects the result back into the suspended evaluation, and `scriptingProperties` admits bulk `properties` get and set validated against the class's declared properties before invocation.
 
-```xml
+```xml template
 <?xml version="1.0" encoding="UTF-8"?><!DOCTYPE dictionary SYSTEM "file://localhost/System/Library/DTDs/sdef.dtd">
 <dictionary title="Shape Terminology"><suite name="Shape Suite" code="Shap" description="Shape automation.">
     <class-extension extends="application"><element type="shape" access="rw"><cocoa key="scriptableShapes"/></element></class-extension>
@@ -155,7 +155,7 @@ A scriptable app declares `NSAppleScriptEnabled` true, names its `OSAScriptingDe
 </suite></dictionary>
 ```
 
-```swift
+```swift conceptual
 final class ShapeExportCommand: NSScriptCommand {
     override func performDefaultImplementation() -> Any? {
         guard let destination = evaluatedArguments?["DestinationURL"] as? URL, let shape = evaluatedReceivers as? Shape else {
@@ -190,7 +190,7 @@ A scriptable object publishes its own address through `objectSpecifier`, choosin
 |  [07]   | `NSRandomSpecifier`   | random element             |
 |  [08]   | `NSPropertySpecifier` | to-one property            |
 
-```swift
+```swift conceptual
 override var objectSpecifier: NSScriptObjectSpecifier? {
     guard let document, let container = document.objectSpecifier,
           let classDescription = NSScriptClassDescription(for: ShapeDocument.self) else { return nil }
@@ -208,7 +208,7 @@ override func indicesOfObjects(byEvaluating specifier: NSScriptObjectSpecifier) 
 
 `NSScriptSuiteRegistry` loads `.scriptSuite` declaration dictionaries, registers class and command descriptions, and emits AETE data for legacy consumers; runtime registry loading serves plugin-style scriptability, while ordinary bundle resources register automatically, and an sdef `access-group` annotation names the same vocabulary a sandboxed app's `scripting-targets` entitlement consumes. The `NSUserScriptTask` family — `NSUserAppleScriptTask`, `NSUserAutomatorTask`, `NSUserUnixTask` — executes a user-supplied script out of process from `applicationScriptsDirectory`, which a sandboxed app only reads; each task instance executes exactly once, and `NSUserAppleScriptTask.execute(withAppleEvent:)` takes `nil` for a plain `run` or a fully formed handler-invocation event. An app-owned send is authorized by TCC consent, `NSAppleEventsUsageDescription`, the hardened-runtime `com.apple.security.automation.apple-events` entitlement, and `com.apple.security.scripting-targets`; a script run through `NSUserAppleScriptTask` executes outside the app process, so it carries its own TCC identity rather than the app's automation entitlement.
 
-```swift
+```swift conceptual
 func runUserHandler(scriptURL: URL, handler: String, argument: String) async throws -> NSAppleEventDescriptor? {
     let task = try NSUserAppleScriptTask(url: scriptURL)
     let event = NSAppleEventDescriptor(eventClass: AEEventClass(kASAppleScriptSuite), eventID: AEEventID(kASSubroutineEvent),
@@ -222,7 +222,7 @@ func runUserHandler(scriptURL: URL, handler: String, argument: String) async thr
 }
 ```
 
-```xml
+```xml template
 <key>NSAppleEventsUsageDescription</key><string>Shape sends Apple events to export selected assets through configured target applications.</string>
 <key>com.apple.security.automation.apple-events</key><true/>
 <key>com.apple.security.scripting-targets</key><dict><key>com.example.TargetApp</key><array><string>shape.export</string></array></dict>
@@ -232,7 +232,7 @@ func runUserHandler(scriptURL: URL, handler: String, argument: String) async thr
 
 `sdef` extracts a target's dictionary and `sdp -fh --basename Name` emits Objective-C glue that a Swift caller imports through a bridging header, configuring `delegate`, `sendMode`, `timeout`, and `launchFlags` on the resulting `SBApplication` instance; `SBObject` and `SBElementArray` carry an object specifier lazily until `get()` forces evaluation, so chained property access composes references and only the terminal call produces a concrete Foundation value, and `sendEvent(_:id:parameters:)` is the escape hatch for a target event shape the generated header loses. `UTType.appleScript`, `.osaScript`, and `.osaScriptBundle` classify source, compiled script, and script bundle files across the extensions `.applescript`, `.scpt`, and `.scptd`, and `OSACopyScriptingDefinitionFromURL` extracts sdef XML directly from a local bundle or an `eppc:` remote target without shelling to `sdef`, returning the raw dictionary payload as `CFData` for a validator or header-generation rail running on a Command Line Tools-only host. A sandbox or target-policy rejection surfaces as a negative Apple Event Manager status rather than a generic failure.
 
-```objc
+```objc conceptual
 @interface BridgeErrors : NSObject <SBApplicationDelegate>
 @end
 @implementation BridgeErrors
@@ -257,7 +257,7 @@ static NSData *CopySDEF(NSURL *url, OSAError *status) {
 |  [02]   | `errAEEventNotPermitted`         | target rejects the event for this sender    |
 |  [03]   | `errAETimeout`                   | target did not reply within the send budget |
 
-```swift
+```swift conceptual
 func scriptKind(for url: URL) -> UTType? {
     UTType(filenameExtension: url.pathExtension).flatMap { type in
         [UTType.appleScript, .osaScript, .osaScriptBundle].first { type.conforms(to: $0) || type == $0 }

@@ -32,14 +32,15 @@ const errors = [];
 const warnings = [];
 const lineOf = (idx) => src.slice(0, idx).split('\n').length;
 
-// --- 1. size -----------------------------------------------------------------
+// --- [SIZE] ----------------------------------------------------------------------------
 
 const bytes = Buffer.byteLength(src, 'utf8');
 if (bytes > MAX_BYTES) {
     errors.push(`script is ${bytes} bytes — over the ${MAX_BYTES}-byte (512 KB) limit`);
 }
 
-// --- 1b. TRUE PARSE — the runtime wraps the body in an async function, so top-level
+// --- [TRUE_PARSE]
+// the runtime wraps the body in an async function, so top-level
 // await/return are legal; an AsyncFunction-constructor parse is the exact same grammar.
 // This catches what regex checks cannot: unterminated strings, unescaped quotes,
 // dangling concatenations. Runs first because every later heuristic assumes valid JS.
@@ -51,7 +52,7 @@ try {
     errors.push(`does not parse as a workflow body: ${e.message}`);
 }
 
-// --- 2. comment/string-stripped copy (so checks ignore text in comments/strings)
+// --- [COMMENT_STRING_STRIPPED_COPY] ----------------------------------------------------
 
 function strip(code) {
     let out = '';
@@ -104,7 +105,7 @@ function strip(code) {
 }
 const code = strip(src);
 
-// --- 3. meta must exist, be first, and be a literal --------------------------
+// --- [META_LITERAL] --------------------------------------------------------------------
 
 const metaMatch = code.match(/export\s+const\s+meta\s*=/);
 if (!metaMatch) {
@@ -148,7 +149,7 @@ if (!metaMatch) {
     }
 }
 
-// --- 4. banned non-deterministic calls ---------------------------------------
+// --- [BANNED_NONDETERMINISTIC_CALLS] ---------------------------------------------------
 
 const banned = [
     [/\bDate\s*\.\s*now\b/g, 'Date.now()'],
@@ -162,7 +163,7 @@ for (const [re, label] of banned) {
     }
 }
 
-// --- 5. host APIs that do not exist in the sandbox ---------------------------
+// --- [SANDBOX_HOST_APIS] ---------------------------------------------------------------
 
 for (const [re, label] of [
     [/\brequire\s*\(/g, 'require()'],
@@ -177,7 +178,7 @@ for (const [re, label] of [
     }
 }
 
-// --- 5b. effort / model values outside the allowed set -----------------------
+// --- [EFFORT_MODEL_VALUES]
 // `effort:`/`model:` are matched in the stripped `code` (so prompt/comment mentions
 // never trip this), and the literal VALUE is read from raw `src` at the same offset.
 
@@ -204,7 +205,7 @@ for (const key of ['effort', 'model']) {
     }
 }
 
-// --- 5c. unwrapped long prompt strings — wrap with adjacent `+` (advisory) ----
+// --- [LONG_PROMPT_STRINGS]
 // Targets the actual anti-pattern: a SINGLE string literal whose own content runs
 // past the column budget. A correctly `+`-wrapped segment is well under it, so it
 // never trips; only a genuinely unwrapped prose string does. Code-overflow lines
@@ -244,7 +245,7 @@ const MAX_COL = 160;
     }
 }
 
-// --- 5d. section divider grammar — `// --- [LABEL]` + dash-fill, no free text -
+// --- [SECTION_DIVIDER_GRAMMAR]
 // A real divider is a pure-comment line (its stripped form is blank) matching the
 // pattern; in-prompt `[X]` text never qualifies. Flags free text after the bracket
 // and banned drift labels. Phase subsection labels (any UPPER_SNAKE) are allowed.
@@ -288,7 +289,7 @@ const MAX_COL = 160;
     }
 }
 
-// --- 5e. dead interpolation — placeholders and $-escapes ship literal text ----
+// --- [DEAD_INTERPOLATION]
 // Both patterns live INSIDE string/template content, so they are matched in raw
 // `src`. `${'$'}{…}` evaluates to the literal text `${…}`; a `__TOKEN__` placeholder
 // left for a later patch ships verbatim. Either way a stage prompt fires without
@@ -309,7 +310,7 @@ const MAX_COL = 160;
     }
 }
 
-// --- 6. parallel() should get thunks, not bare promises ----------------------
+// --- [PARALLEL_THUNKS] -----------------------------------------------------------------
 
 {
     const re = /\bparallel\s*\(\s*\[/g;
@@ -324,7 +325,7 @@ const MAX_COL = 160;
     }
 }
 
-// --- report ------------------------------------------------------------------
+// --- [REPORT] --------------------------------------------------------------------------
 
 const name = path.split('/').pop();
 for (const w of warnings) console.log(`  warn  ${w}`);

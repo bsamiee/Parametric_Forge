@@ -10,10 +10,15 @@
   pkgs,
   ...
 }: let
+  style = import ../../../style.nix;
   # Neither tool has user-level config discovery, so each wrapper injects the
   # house style only when upward discovery finds no project config and the
   # caller passes none — project law always wins.
   prettierConfig = "${config.xdg.configHome}/prettier/prettierrc.json";
+  # Prettier resolves config from each file's directory upward, so the probe
+  # rides --find-config-path on the last positional: option values precede
+  # trailing file lists, so the last positional is a real target, never a
+  # value like the `warn` in `--log-level warn`.
   prettier = pkgs.writeShellApplication {
     name = "prettier";
     text = ''
@@ -22,7 +27,7 @@
         case "$arg" in
           --config | --config=* | --no-config | --find-config-path) exec ${pkgs.prettier}/bin/prettier "$@" ;;
           -*) ;;
-          *) [[ -n "$target" ]] || target="$arg" ;;
+          *) target="$arg" ;;
         esac
       done
       if [[ -n "$target" ]] && ! ${pkgs.prettier}/bin/prettier --find-config-path "$target" >/dev/null 2>&1; then
@@ -35,6 +40,7 @@
   biome = pkgs.writeShellApplication {
     name = "biome";
     text = ''
+      ${style.walkUp}
       # BIOME_CONFIG_PATH is the env twin of the global --config-path option and
       # disables discovery outright; either spelling is explicit caller config,
       # so both pass through before discovery can shadow or be shadowed.
@@ -44,15 +50,8 @@
           --config-path | --config-path=*) exec ${pkgs.biome}/bin/biome "$@" ;;
         esac
       done
-      dir="$PWD"
-      while [[ -n "$dir" ]]; do
-        for name in biome.json biome.jsonc .biome.json .biome.jsonc; do
-          if [[ -f "$dir/$name" ]]; then
-            exec ${pkgs.biome}/bin/biome "$@"
-          fi
-        done
-        dir="''${dir%/*}"
-      done
+      _walk_up biome.json biome.jsonc .biome.json .biome.jsonc >/dev/null \
+        && exec ${pkgs.biome}/bin/biome "$@"
       BIOME_CONFIG_PATH="${biomeConfigDir}" exec ${pkgs.biome}/bin/biome "$@"
     '';
   };
@@ -70,8 +69,8 @@ in {
 
   xdg.configFile = {
     "prettier/prettierrc.json".text = builtins.toJSON {
-      tabWidth = 4;
-      printWidth = 150;
+      tabWidth = style.indent;
+      printWidth = style.width;
     };
     # Full Rasm-grade house law: formatter + JS style + organize-imports
     # assist, so config-less directories get the same quality as project law.
@@ -80,8 +79,8 @@ in {
       formatter = {
         enabled = true;
         indentStyle = "space";
-        indentWidth = 4;
-        lineWidth = 150;
+        indentWidth = style.indent;
+        lineWidth = style.width;
       };
       javascript.formatter = {
         quoteStyle = "single";

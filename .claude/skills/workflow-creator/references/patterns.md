@@ -80,7 +80,7 @@ The delegation contract — objective, territory, exclusions, output contract, s
 
 Canonical: prompt chaining. Primitive: `pipeline`. Guards: the accuracy loss of one overloaded call, by giving each subtask its own clean-context agent. Cost: stages × items agent calls; wall-clock is the slowest item's full chain. When: the work splits into a fixed sequence where each stage consumes the previous stage's output — outline → draft → tighten; extract → normalize → validate.
 
-```js
+```js conceptual
 export const meta = {
   name: 'spec-to-draft',
   description: 'Turn each spec section into an outline, then a draft, then a tightened pass',
@@ -108,7 +108,7 @@ A gate variant adds a JS check between stages — an outline that fails a cheap 
 
 Canonical: sectioning. Primitive: `parallel` barrier. Guards: sequential wall-clock, and the quality dilution of one call covering every angle. Cost: N + 1 calls; wall-clock is the slowest lane plus the synthesis. The synthesis genuinely needs every result, so the barrier is correct here.
 
-```js
+```js conceptual
 export const meta = {
   name: 'research-fanout',
   description: 'Research independent questions in parallel, synthesize one report',
@@ -142,7 +142,7 @@ Inline synthesis is small-output only: past ~50 rows of collected product, the `
 
 Canonical: chaining ⋈ sectioning — staged work where each item also fans out within a stage. Primitive: `pipeline` with a nested `parallel` inside one stage. Guards: the idle time a barrier inflicts; each item advances the moment IT is ready. Cost: the same calls as the barriered form, but wall-clock is the slowest single item's chain, never the sum of stage maxima. This is the default multi-stage shape; prefer it over barriered `parallel()` pairs.
 
-```js
+```js conceptual
 export const meta = {
   name: 'review-and-verify',
   description: 'Review each dimension, verify each finding as soon as its review lands',
@@ -172,7 +172,7 @@ Dimension `bugs` verifies its findings while `perf` is still under review.
 
 Canonical: sectioning. Primitive: `parallel` as a true barrier. Guards: double work and wasted spend — the next stage needs the ENTIRE previous result set in hand to dedup, merge, or early-exit on a count. Cost: wall-clock is each stage's slowest lane summed across stages — paid only because the dedup or early-exit genuinely needs the whole set. This is the legitimate use of `parallel` over a `pipeline`.
 
-```js
+```js conceptual
 const all = await parallel(
   DIMENSIONS.map(d => () => agent(d.prompt, { schema: FINDINGS_SCHEMA })))
 
@@ -190,7 +190,7 @@ return { confirmed: verified.filter(Boolean).filter(v => v.isReal) }
 
 Canonical: routing. Primitive: a plain-JS discriminant choosing one `agent()` from a table. Guards: the mediocrity of one generic prompt forced to cover every input class, and cross-class interference where tuning for one class hurts another. Cost: one call per item, plus one classifier call only when the class is not a simple key; a new class is one table row at zero orchestration cost. The classifier is itself an `agent()` when the class is not a simple key.
 
-```js
+```js conceptual
 export const meta = {
   name: 'route-fix',
   description: 'Classify each changed file by language, route it to the matching specialist',
@@ -222,7 +222,7 @@ The dispatch table is the pattern: adding a class is one row, never a new branch
 
 Canonical: orchestrator-workers. Primitive: a planner `agent()` whose structured output becomes the items a `parallel`/`pipeline` fans out over. Guards: hardcoding a fixed worklist when the subtasks cannot be known up front — the files a migration touches, the modules a feature spans, the questions a topic raises. Cost: planner + N workers + integrator; wall-clock is the plan, then the slowest worker, then the integration.
 
-```js
+```js conceptual
 export const meta = {
   name: 'migrate',
   description: 'Plan a migration into per-unit tasks, then run each unit, then integrate',
@@ -254,7 +254,7 @@ The planner returns DATA (a typed task list via `schema`), never prose — the J
 
 Canonical: evaluator-optimizer. Primitive: a plain-JS loop wrapping a generate `agent()` and a SEPARATE evaluate `agent()`. Guards: shipping a weak first pass, and the self-correction anti-pattern — a generator grading its own work rubber-stamps it. Cost: two calls per round under the cap; the verdict-driven exit usually lands well below it. The pass verdict drives the loop; a hard round cap stops an unsatisfiable bar from looping forever. When the bar is machine-checkable, use self-repair at [09] instead — a command verdict beats a model verdict wherever one exists.
 
-```js
+```js conceptual
 const MAX_ROUNDS = 4
 let draft = null
 let feedback = ''
@@ -280,7 +280,7 @@ return { draft, rounds: MAX_ROUNDS, note: 'hit round cap without passing' }
 
 Canonical: evaluator-optimizer with a deterministic evaluator. Primitive: a loop alternating a read-only check agent (running a command) and a fixer agent. Guards: the exit firing on the worker's claim of done instead of an externally measurable verdict — a fixer that believes it finished while the suite is red, or a loop that burns rounds re-verifying fixes that changed nothing. Cost: a cheap low-effort check plus a fixer per round; check-first means an already-green target exits after one floor-model call. The stop condition is a machine fact: a passing suite, zero diagnostics, an empty queue.
 
-```js
+```js conceptual
 const MAX_ROUNDS = 6
 const CHECK = { type: 'object', additionalProperties: false, required: ['passed', 'failures', 'sample'],
   properties: { passed: { type: 'boolean' }, failures: { type: 'integer' }, sample: { type: 'string' } } }
@@ -312,7 +312,7 @@ Canonical: chaining hardened with an admission check. Primitive: a grader betwee
 
 The grader ladder, strongest first: a deterministic grader (a command with a machine verdict — build, schema check, linter) wherever one exists; a model grader only for what no command measures, rubric-scoped to one dimension per call; a human only at the terminal artifact. Grade what the stage produced, never the path it took — a tool-call-sequence check breaks on every valid approach the design did not anticipate.
 
-```js
+```js conceptual
 const GATE = { type: 'object', additionalProperties: false, required: ['passed', 'reason'],
   properties: { passed: { type: 'boolean' }, reason: { type: 'string' } } }
 
@@ -336,7 +336,7 @@ Trial law for a stochastic gate: when a stage must pass CONSISTENTLY, run the tr
 
 Canonical: voting. Primitive: `parallel` over N identical-input thunks. Guards: a single confident hallucination surviving — a plausible-but-wrong finding one verifier waves through. Cost: N votes per claim — reserve it for findings that survive cheaper screens, never the raw candidate flood. Spawn N independent skeptics, each told to REFUTE; keep the finding only on a majority.
 
-```js
+```js conceptual
 async function survives(claim) {
   const votes = await parallel(Array.from({ length: 3 }, (_, i) => () =>
     agent(`Try hard to REFUTE this claim. Default to refuted=true if uncertain.\n\n${claim}`,
@@ -355,7 +355,7 @@ return { real }
 
 Canonical: voting feeding sectioning. Primitive: `parallel` to draft, `parallel` to score, one `agent()` to synthesize. Guards: the weakness of one-attempt-then-iterate when the solution space is wide — independent attempts from different angles, scored by parallel judges, then synthesized from the winner while grafting the runners-up's best ideas. Cost: 2N + 1 calls in three barriers. For a deeper field where absolute scores drift, use the tournament at [13].
 
-```js
+```js conceptual
 const ANGLES = ['MVP-first', 'risk-first', 'user-first', 'cost-first']
 
 // `args` is structured data — a free-text task arrives as a string. Default the no-args run.
@@ -384,7 +384,7 @@ return { final }
 
 Canonical: voting hardened for wide fields. Primitive: a plain-JS single-elimination bracket over blind pairwise judges. Guards: absolute-score drift — parallel judges scoring 1-10 calibrate differently, so ranks reshuffle run to run — and source bias, where a judge that knows which agent or angle produced a draft ratifies pedigree instead of quality. A comparative pick between two concrete artifacts is stable where an absolute scale is not.
 
-```js
+```js conceptual
 phase('Draft')
 const drafts = (await parallel(ANGLES.map((a, i) => () =>
   agent(draftPrompt(a), { label: `draft:${i}`, phase: 'Draft' })))).filter(Boolean)
@@ -426,7 +426,7 @@ Laws that ride the bracket: the judge sees only the artifacts and the criteria �
 
 Canonical: adversarial sectioning. Primitive: independent positions → one anonymized rebuttal round → a separate ruling agent. Guards: a lone perspective missing what a counter-position catches, and its inverse — consensus pressure, where positions converge because agreement is comfortable, not because the argument won. Cost: 2N + 1 calls; the single rebuttal round is the whole spend — further rounds buy convergence pressure, not signal. Use it for ambiguous, high-stakes judgment (an architecture choice, a contested diagnosis); an objectively checkable claim routes to the skeptic vote at [11] instead.
 
-```js
+```js conceptual
 const LENSES = ['operational risk', 'long-term maintainability', 'raw performance']
 
 phase('Position')
@@ -456,7 +456,7 @@ Laws: the diversity of the lenses does the work, not debate length — one rebut
 
 Canonical: routing by outcome. Primitive: a tier table and a residual loop — every item enters the cheapest tier, and only items that FAIL a tier's check re-dispatch to the next. Guards: paying the strongest model for volume a floor model finishes; the bulk resolves cheap, and the expensive tiers see only what defeated the tier below. Cost: expected spend per item is the tier ladder weighted by residual rates — the top tier prices only the hard residue.
 
-```js
+```js conceptual
 const TIERS = [
   { model: 'sonnet',  effort: 'low'  },
   { model: 'inherit', effort: 'high' },
@@ -490,7 +490,7 @@ Laws: the tier verdict comes from a check (the schema's `passed` backed by a com
 
 Canonical: orchestrator-workers with an unknown count — the loop IS the orchestrator. Primitive: a plain-JS `while` with a counter. Guards: stopping short on discovery work with a fixed goal, and running forever, via the explicit count cap. Cost: rounds scale inversely with per-round yield; the target count is the only ceiling.
 
-```js
+```js conceptual
 const bugs = []
 while (bugs.length < 10) {
   const r = await agent('Find bugs not already listed below.\n\n'
@@ -505,7 +505,7 @@ return { bugs: bugs.slice(0, 10) }
 
 Canonical: orchestrator-workers scaled to a token target. Primitive: a `while` guarded on `budget`. Guards: over- or under-spending — depth scales to the user's token target, so spend is pinned by construction. The `budget.total &&` guard is essential: without a target, `remaining()` is `Infinity` and the loop runs to the 1000-agent cap.
 
-```js
+```js conceptual
 const issues = []
 while (budget.total && budget.remaining() > 50_000) {
   const r = await agent('Find one more issue in this codebase.', { schema: ISSUE_SCHEMA })
@@ -519,7 +519,7 @@ return { issues }
 
 Canonical: orchestrator-workers, count unknown and unbounded. Primitive: a `while` with a dry-streak counter and a hard cap. Guards: both halves of the unknown-size trap — a fixed counter stops short of the long tail, and an open loop never terminates. Cost: yield-adaptive — spend tracks the corpus's true size plus K dry rounds of overhead. Keep spawning finders until K consecutive rounds turn up nothing new.
 
-```js
+```js conceptual
 const seen = new Set()
 const found = []
 let dryRounds = 0
@@ -541,7 +541,7 @@ Canonical: sectioning with a terminal orchestrator stage. Primitive: `parallel` 
 
 The deferral must be DATA whose resource slot is a LIST, so a deferral spanning files names them ALL — that is what permits clustering by shared resource.
 
-```js
+```js conceptual
 // per-worker schema: a residual carries a FILE LIST, not a free string; `residual` is
 // required-but-possibly-empty per the strict profile
 const FIX = { type: 'object', additionalProperties: false, required: ['file', 'residual'], properties: {
@@ -571,7 +571,7 @@ Why each choice: disjoint clusters write non-overlapping files, so the per-clust
 
 Iterating to drive-to-zero — the progress gate. The shape above fixes each cluster ONCE. When the reconcile instead ITERATES — re-queue the residuals a verify left `open`, re-cluster, fix again, round after round — every round MUST gate on file-changing PROGRESS, or it spends rounds verifying fixes that changed nothing:
 
-```js
+```js conceptual
 const seen = new Set(); let pending = uniq; let round = 0
 while (pending.length && round++ < MAX_ROUNDS) {
   let changed = false; const next = []
@@ -594,7 +594,7 @@ return { hard: pending }  // still-open: log LOUDLY + return, never drop
 
 Canonical: composition — a topology as a worker inside a larger one. Primitive: `workflow()`. Guards: re-inlining a self-contained sub-job by hand. Cost: the child spends from this run's shared caps and budget — nesting isolates state, never spend. `workflow()` runs a saved workflow inline and returns its result; nesting is one level deep.
 
-```js
+```js conceptual
 phase('Gather')
 const research = await workflow('research-fanout', ['question one', 'question two'])
 
@@ -617,7 +617,7 @@ What makes it robust:
 - Derive the owning unit by splitting on a STRUCTURAL SENTINEL, never a fixed depth: splitting `unit/.planning/a/b/c.md` on `'/.planning/'` homes it correctly; a fixed-depth `split('/')[2]` breaks the moment a sub-folder nests deeper.
 - A sub-domain whose governing root is an ANCESTOR needs an explicit homing branch named in the discovery prompt.
 
-```js
+```js conceptual
 // A target, an array of targets, or {targets:[...]}; empty = no-op
 const ROOT = 'libs/python'
 const normTarget = t => { const s = String(t).trim().replace(/\/+$/, ''); return (s === ROOT || s.indexOf(ROOT + '/') === 0) ? s : ROOT + '/' + s.replace(/^\/+/, '') }
@@ -664,7 +664,7 @@ The rules that make a writer → critic → red-team chain fast AND independent:
 
 - Pass navigation, withhold assessment. The inter-stage payload carries only verifiable location facts — touched files, symbol deltas as data (`{symbol, change}`), seam/ripple pointers — never the producer's summary, verdict, confidence, or rationale. Scope ("look here first") is legitimate; assessment ("this is complete") is the anchor. Build the projection in JS from schema fields so adjectives cannot leak:
 
-  ```js
+  ```js conceptual
   const navOf = (fix) => ({ files: fix.files, deltas: fix.deltas, seams: fix.seamsTouched })
   const crit = await agent(criticPrompt(pages, navOf(fix)), { schema: REVIEW })  // fix.summary never travels
   ```
@@ -700,7 +700,7 @@ The scratch convention — one layout, no exceptions:
 
 Dual schema: the PRODUCT schema types the on-disk file; the RECEIPT types the wire. Both strict — every object `additionalProperties: false` with every property required — so one shape serves AJV lanes and codex `--output-schema` alike.
 
-```js
+```js conceptual
 // One anchor = one fact at one coordinate; interpretation never lives in an anchor row. `note` is the shortest literal witness under 20 words,
 // or empty when path+line suffice; an `absence` anchor names where the expected thing was searched and not found.
 const ANCHOR = { type: 'object', additionalProperties: false, required: ['path', 'line', 'role', 'note'], properties: {
@@ -789,7 +789,7 @@ Canonical: composition with the harness — a workflow as the deterministic inne
 
 A schema is a plain JSON Schema object. Keep them small, strict, and `required`-tight so the subagent returns exactly what the next line needs. Default to the strict profile — `additionalProperties: false` on every object, every property listed in `required`, conditional fields required-but-empty — so the same shape is copyable into a codex `--output-schema` lane without edits (validator split: api reference).
 
-```js
+```js conceptual
 const FINDINGS_SCHEMA = {
   type: 'object',
   additionalProperties: false,

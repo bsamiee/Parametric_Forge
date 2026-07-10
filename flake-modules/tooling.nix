@@ -9,23 +9,25 @@ _: {
   perSystem = {
     config,
     forgePkgs,
+    lib,
     ...
   }: let
+    style = import ../modules/style.nix;
+    # Repo law files are the single source: the biome row carries biome.json's
+    # bytes, its treefmt excludes are the same file's negation rows, and the
+    # ruff row projects pyproject [tool.ruff] — a value changed in the law
+    # file busts the treefmt cache and lands in the row with zero edits here.
+    biomeLaw = builtins.fromJSON (builtins.readFile ../biome.json);
+    biomeExcludes = map (lib.removePrefix "!") (builtins.filter (lib.hasPrefix "!") biomeLaw.files.includes);
+    ruffLaw = (fromTOML (builtins.readFile ../pyproject.toml)).tool.ruff;
     # SQL dialect is a per-file fact; each row binds its files to a generated
-    # config carrying the house style. sqruff discovery is cwd-only, so the
-    # explicit --config keeps rows hermetic inside the sandboxed check.
+    # config projected from the style vocabulary. sqruff discovery is cwd-only,
+    # so the explicit --config keeps rows hermetic inside the sandboxed check.
     sqruffRow = dialect: includes: {
       command = "${forgePkgs.sqruff}/bin/sqruff";
       options = [
         "--config"
-        (toString (forgePkgs.writeText "sqruff-${dialect}" ''
-          [sqruff]
-          dialect = ${dialect}
-          max_line_length = 150
-
-          [sqruff:indentation]
-          tab_space_size = 4
-        ''))
+        (toString (forgePkgs.writeText "sqruff-${dialect}" (style.sql "sqruff" dialect)))
         "fix"
       ];
       inherit includes;
@@ -78,19 +80,14 @@ _: {
         biome = {
           enable = true;
           formatCommand = "format";
-          settings = builtins.fromJSON (builtins.readFile ../biome.json);
+          settings = biomeLaw;
         };
       };
       settings.formatter = {
-        # Workflow scripts carry top-level return/await forms the Workflow
-        # runtime accepts but JS module parsers reject; the harness rewrites
-        # settings JSON in its own layout on every permission mutation.
-        biome.excludes = [
-          ".claude/workflows/**"
-          ".claude/skills/workflow-creator/assets/**"
-          ".claude/settings.json"
-          ".claude/settings.local.json"
-        ];
+        # biome.json's negation rows verbatim, so treefmt never even offers
+        # biome the paths its own config ignores (an all-ignored batch is a
+        # biome error, not a no-op).
+        biome.excludes = biomeExcludes;
         # --isolated makes the row hermetic: identical bytes with or without
         # the machine-level XDG ruff config the sandboxed check cannot see.
         ruff-format = {
@@ -99,17 +96,17 @@ _: {
             "format"
             "--isolated"
             "--line-length"
-            "150"
+            (toString ruffLaw.line-length)
             "--target-version"
-            "py315"
+            ruffLaw.target-version
             "--config"
-            "preview = true"
+            "preview = ${lib.boolToString ruffLaw.preview}"
             "--config"
-            "format.skip-magic-trailing-comma = true"
+            "format.skip-magic-trailing-comma = ${lib.boolToString ruffLaw.format.skip-magic-trailing-comma}"
             "--config"
-            ''format.line-ending = "lf"''
+            ''format.line-ending = "${ruffLaw.format.line-ending}"''
             "--config"
-            "format.docstring-code-format = true"
+            "format.docstring-code-format = ${lib.boolToString ruffLaw.format.docstring-code-format}"
           ];
           includes = ["*.py" "*.pyi"];
         };
@@ -119,23 +116,28 @@ _: {
         # lockfile pair and rewrites both in its own layout.
         yamlfmt = {
           command = "${forgePkgs.yamlfmt}/bin/yamlfmt";
-          options = ["-conf" (toString (forgePkgs.writeText "yamlfmt-conf" (import ../modules/style.nix).yamlfmt))];
+          options = ["-conf" (toString (forgePkgs.writeText "yamlfmt-conf" style.yamlfmt))];
           includes = ["*.yaml" "*.yml"];
           excludes = ["pnpm-workspace.yaml" "pnpm-lock.yaml"];
         };
         shfmt = {
           command = "${forgePkgs.shfmt}/bin/shfmt";
-          options = ["-w" "-i" "4" "-ci"];
+          options = ["-w" "-i" (toString style.indent) "-ci"];
           includes = ["*.sh"];
         };
+        # Leading * crosses directories in treefmt globs; a bare `duckdb-*.sql`
+        # anchors at the tree root and matches nothing nested. No sqlite row:
+        # sqruff's sqlite dialect rewrites virtual-table module arguments
+        # (float[2] -> float [2]), which extensions parse verbatim — sqlite
+        # SQL stays formatter-unowned until that dialect matures, and fmt's
+        # sql classification skips the same basenames.
         sqruff-postgres = sqruffRow "postgres" ["*postgres*.sql"];
-        sqruff-duckdb = sqruffRow "duckdb" ["duckdb-*.sql"];
-        sqruff-sqlite = sqruffRow "sqlite" ["sqlite-*.sql"];
+        sqruff-duckdb = sqruffRow "duckdb" ["*duckdb-*.sql"];
         # stylua discovery is cwd/upward only; the row carries the house style
         # so the sandboxed check needs no repo-root config file.
         stylua = {
           command = "${forgePkgs.stylua}/bin/stylua";
-          options = ["--indent-type" "Spaces" "--indent-width" "4" "--column-width" "150"];
+          options = ["--indent-type" "Spaces" "--indent-width" (toString style.indent) "--column-width" (toString style.width)];
           includes = ["*.lua"];
         };
       };

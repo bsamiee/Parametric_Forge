@@ -1,6 +1,6 @@
 # [H1][ARRAY-ALGEBRA]
 
-Set algebra via associative arrays, structural transforms via bulk expansion, higher-order traversal via nameref + function dispatch, and null-safe pipeline bridging. Declaration, access, slicing, and basic iteration are in [bash-scripting-guide.md S6](./bash-scripting-guide.md).
+Set algebra via associative arrays, structural transforms via bulk expansion, higher-order traversal via nameref + function dispatch, and null-safe pipeline bridging. Declaration, access, slicing, and basic iteration are in `bash-scripting-guide.md` S6.
 
 | [INDEX] | [PATTERN]         |  [S]  | [USE_WHEN]                                                |
 | :-----: | :---------------- | :---: | :-------------------------------------------------------- |
@@ -15,7 +15,7 @@ Set algebra via associative arrays, structural transforms via bulk expansion, hi
 
 Build a set from one array and probe from the other instead of nested iteration. Case-insensitive sets: key via `${item,,}` in `_to_set` — propagates uniformly to all downstream operations.
 
-```bash
+```bash conceptual
 # Indexed-array set primitives: build set, probe from other
 _to_set() { local -n _src=$1 _dst=$2; local item; for item in "${_src[@]}"; do _dst["${item}"]=1; done; }
 _union() {
@@ -53,7 +53,7 @@ declare -a drift=(); _diff expected deployed drift
 
 Set algebra on associative arrays — keys as elements, values irrelevant for pure set ops.
 
-```bash
+```bash conceptual
 # Compact set primitives — O(n) per operation
 set_intersect() {
     local -n _r=$1 _a=$2 _b=$3
@@ -103,11 +103,11 @@ kv_inner_join joined users roles
 
 Nameref pitfalls: avoid `local -n _r=$1` where caller passes `_r` (circular ref); dynamic scoping resolves to nearest stack frame — prefix nameref locals with `_` or `__nr_` to prevent collisions.
 
-**Performance**: all operations O(n) per call. Above ~10k elements, delegate to `comm`/`sort`/`join` on sorted files — external tools handle large datasets orders of magnitude faster than bash loops.
+[PERFORMANCE]: all operations O(n) per call. Above ~10k elements, delegate to `comm`/`sort`/`join` on sorted files — external tools handle large datasets orders of magnitude faster than bash loops.
 
 ## [02]-[STRUCTURAL_TRANSFORMS]
 
-```bash
+```bash conceptual
 # Bulk prefix/suffix — O(n) in expansion engine, zero loops
 # Raw expansion demo (prefix/suffix) owned by bash-scripting-guide.md S3/S5
 # Composed: zip + flag building shows array-level composition
@@ -142,7 +142,7 @@ declare -a cli_flags=("${flags[@]/#/--}")  # cli_flags=("--host=localhost" ...)
 
 Callee accumulates into caller's associative array via `local -n` — replaces `eval`-based indirection.
 
-```bash
+```bash conceptual
 config_set() {
     local -n _target=$1; shift
     local pair; for pair in "$@"; do _target["${pair%%=*}"]="${pair#*=}"; done
@@ -162,7 +162,7 @@ config_merge merged overrides  # last-write wins
 
 ## [03]-[HIGHER_ORDER_TRAVERSE]
 
-```bash
+```bash conceptual
 _map() {
     local -r func="$1"; local -n _src=$2 _dst=$3
     local item result; for item in "${_src[@]}"; do
@@ -212,7 +212,7 @@ declare total=0; _reduce _add big total
 
 Only null-delimited (`\0`) is safe for arbitrary data — newline-delimited breaks on filenames with embedded newlines.
 
-```bash
+```bash conceptual
 # Null-safe collect/emit
 readarray -d '' -t targets < <(fd -e sh --print0 --type f)
 printf '%s\0' "${targets[@]}" | xargs -0 shellcheck
@@ -254,9 +254,9 @@ done
 
 ### [04.1]-[BASH_53_ARRAY_PRIMITIVES]
 
-Gate all behind `(( _BASH_V >= 503 ))` — version probe in [version-features.md S7](./version-features.md).
+Gate all behind `(( _BASH_V >= 503 ))` — version probe in `version-features.md` S7.
 
-```bash
+```bash conceptual
 (( _BASH_V >= 503 )) && {
     readarray -t arr <<< "${ generate_lines; }"           # zero-fork via current-shell ${ }
     GLOBSORT=mtime files=(*.log)                          # mtime-sorted glob without stat/ls
@@ -277,9 +277,9 @@ Gate all behind `(( _BASH_V >= 503 ))` — version probe in [version-features.md
 
 ### [04.2]-[BOUNDED_CONCURRENCY_POOL]
 
-`wait -n -p` (5.2+) enables per-job result collection without polling — alternative to `xargs -P` when per-job exit status matters.
+`wait -n -p` (`5.2+`) enables per-job result collection without polling — alternative to `xargs -P` when per-job exit status matters.
 
-```bash
+```bash conceptual
 _pool_map() {
     local -r max_jobs="$1" func="$2"; local -n _src=$3 _results=$4
     local -A _pids=()

@@ -21,6 +21,7 @@
   lib,
   ...
 }: let
+  style = import ../../../../style.nix;
   t = config.forge.theme;
   f = config.forge.fonts;
   hexOf = lib.mapAttrs (_: c: c.hex);
@@ -42,24 +43,24 @@
     "terminal.integrated.fontWeightBold" = "bold";
     "workbench.iconTheme" = "material-icon-theme";
 
-    # --- Editing law: house style (4-space, 150-col) ----------------------------
+    # --- Editing law: house style projected from modules/style.nix --------------
     # Globals stay shadowable by user-region keys (none exist top-level today);
     # [yaml] binds the yamlfmt extension (spawns PATH yamlfmt, cwd = workspace,
     # so project .yamlfmt wins before the XDG global) — an unbound YAML slot
     # falls to Prettier, which ignores every yamlfmt config. [nix] stays on
     # alejandra's 2-space so owners never fight.
-    "editor.tabSize" = 4;
+    "editor.tabSize" = style.indent;
     "editor.insertSpaces" = true;
-    "editor.rulers" = [150];
+    "editor.rulers" = [style.width];
     "files.insertFinalNewline" = true;
     "files.trimTrailingWhitespace" = true;
     # prettier.* rows are the esbenp extension's no-config fallback, mirroring
     # the XDG prettierrc so the extension lane matches the CLI wrapper.
-    "prettier.tabWidth" = 4;
-    "prettier.printWidth" = 150;
+    "prettier.tabWidth" = style.indent;
+    "prettier.printWidth" = style.width;
     "[yaml]" = {
       "editor.defaultFormatter" = "bluebrown.yamlfmt";
-      "editor.tabSize" = 4;
+      "editor.tabSize" = style.indent;
       "editor.insertSpaces" = true;
       "editor.detectIndentation" = false;
     };

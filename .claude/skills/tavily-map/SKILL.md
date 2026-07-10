@@ -16,7 +16,7 @@ Discover URLs on a website with no content extraction — the reconnaissance ste
 
 ## [01]-[USAGE]
 
-```bash
+```bash template
 # Discover all URLs
 uvx --from tavily-cli tvly map "https://docs.example.com" --json
 
@@ -49,7 +49,7 @@ uvx --from tavily-cli tvly map "https://example.com" --max-depth 3 --limit 200 -
 
 Map finds the right page, extract pulls it — cheaper than crawling an entire site when only a few pages matter:
 
-```bash
+```bash template
 # Step 1: locate the authentication docs
 uvx --from tavily-cli tvly map "https://docs.example.com" --instructions "authentication" --json
 

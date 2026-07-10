@@ -11,22 +11,22 @@ description: >-
 # [H1][CODING-PG]
 
 All SQL follows five governing principles:
-- **Polymorphic** — one function/query per concern, generic over specific via parameter dispatch and dynamic SQL
-- **Set-algebraic** — express operations as set transformations; zero row-at-a-time iteration
-- **Strongly typed** — domain types, composite types, range types; zero untyped `text` columns for structured data
-- **Programmatic** — variable-driven predicates, parameterized DDL, zero stringly-typed identifiers
-- **Declarative-first** — constraints, generated columns, and RLS policies enforce invariants at the schema level; application logic is last resort
-- **Source-current** — PostgreSQL 18/current docs are the truth baseline; examples must state current semantics, not stale point-version folklore
+- [POLYMORPHIC] — one function/query per concern, generic over specific via parameter dispatch and dynamic SQL
+- [SET_ALGEBRAIC] — express operations as set transformations; zero row-at-a-time iteration
+- [STRONGLY_TYPED] — domain types, composite types, range types; zero untyped `text` columns for structured data
+- [PROGRAMMATIC] — variable-driven predicates, parameterized DDL, zero stringly-typed identifiers
+- [DECLARATIVE_FIRST] — constraints, generated columns, and RLS policies enforce invariants at the schema level; application logic is last resort
+- [SOURCE_CURRENT] — PostgreSQL 18/current docs are the truth baseline; examples must state current semantics, not stale point-version folklore
 
 
 ## [01]-[PARADIGM]
 
-- **Immutability**: append-only event tables, temporal versioning via `tstzrange` + `WITHOUT OVERLAPS`, soft-delete via `archived_at` timestamp — zero in-place mutation of historical records
-- **Type anchoring**: one `CREATE TYPE` or `CREATE DOMAIN` per semantic concept — derive column declarations from domain types, never redeclare equivalent `CHECK` constraints across tables
-- **Expression control flow**: `CASE`-free query design via `COALESCE`, `NULLIF`, `GREATEST`/`LEAST`, lateral joins, and `FILTER (WHERE ...)` — reserve `CASE` for irreducible multi-branch projection only
-- **Set composition**: CTEs as named relational algebra steps; `UNION ALL` over procedural accumulation; `MERGE` over conditional INSERT/UPDATE sequences
-- **Constraint-driven integrity**: `CHECK`, `EXCLUDE`, `WITHOUT OVERLAPS`, `GENERATED ALWAYS AS` — push validation into DDL; application-layer checks are redundant defense, not primary enforcement
-- **Extension-first**: pgvector for embeddings, pg_trgm for fuzzy search, PostGIS for spatial, TimescaleDB for time-series — never hand-roll what an extension provides
+- [IMMUTABILITY]: append-only event tables, temporal versioning via `tstzrange` + `WITHOUT OVERLAPS`, soft-delete via `archived_at` timestamp — zero in-place mutation of historical records
+- [TYPE_ANCHORING]: one `CREATE TYPE` or `CREATE DOMAIN` per semantic concept — derive column declarations from domain types, never redeclare equivalent `CHECK` constraints across tables
+- [EXPRESSION_CONTROL_FLOW]: `CASE`-free query design via `COALESCE`, `NULLIF`, `GREATEST`/`LEAST`, lateral joins, and `FILTER (WHERE ...)` — reserve `CASE` for irreducible multi-branch projection only
+- [SET_COMPOSITION]: CTEs as named relational algebra steps; `UNION ALL` over procedural accumulation; `MERGE` over conditional INSERT/UPDATE sequences
+- [CONSTRAINT_DRIVEN_INTEGRITY]: `CHECK`, `EXCLUDE`, `WITHOUT OVERLAPS`, `GENERATED ALWAYS AS` — push validation into DDL; application-layer checks are redundant defense, not primary enforcement
+- [EXTENSION_FIRST]: pgvector for embeddings, pg_trgm for fuzzy search, PostGIS for spatial, TimescaleDB for time-series — never hand-roll what an extension provides
 
 
 ## [02]-[CONVENTIONS]
@@ -51,32 +51,32 @@ All SQL follows five governing principles:
 
 ## [03]-[CONTRACTS]
 
-**Type discipline**
+[TYPE_DISCIPLINE]:
 - One domain type per semantic concept; column declarations reference the domain, never inline `CHECK` constraints.
 - Composite types for structured return values from functions — never `OUT` parameter proliferation.
 - Range types (`tstzrange`, `int4range`, custom) for interval semantics — never dual `start`/`end` columns.
 - `NOT NULL` is default posture; nullable columns require documented justification.
 
-**Query algebra**
+[QUERY_ALGEBRA]:
 - CTEs for named intermediate results; recursive CTEs with `SEARCH BREADTH FIRST` or `CYCLE` for graph traversal.
 - `MERGE` with `RETURNING OLD.*, NEW.*, merge_action()` for write-audit fusion.
 - Window functions with `GROUPS`/`EXCLUDE` framing where row-count framing is insufficient.
 - `JSON_TABLE` / `jsonb_path_query` for structured JSON extraction — never application-side JSON parsing of database-resident JSON.
 - `LATERAL JOIN` for correlated subquery materialization — never scalar subqueries in SELECT list.
 
-**Index strategy**
+[INDEX_STRATEGY]:
 - Every `WHERE` clause pattern has a corresponding index; partial indexes for selective predicates.
 - `INCLUDE` columns for index-only scans on high-frequency read paths.
 - GIN for JSONB containment (`@>`), array overlap (`&&`), full-text (`@@`).
 - GiST for range overlap, spatial queries, nearest-neighbor when combined with `ORDER BY <-> LIMIT`.
 - BRIN for append-only monotonic columns (timestamps, serial IDs) — orders of magnitude smaller than B-tree.
 
-**Security**
+[SECURITY]:
 - RLS enabled on every tenant-scoped table; policies use fail-closed `nullif(current_setting('app.current_tenant', true), '')` tenant scoping.
 - Functions default to `SECURITY INVOKER` (always the default); `SECURITY DEFINER` only with `SET search_path = pg_catalog, public`.
 - Column-level `GRANT` for sensitive fields — never rely on view-based column hiding alone.
 
-**Performance**
+[PERFORMANCE]:
 - `EXPLAIN (ANALYZE, BUFFERS, VERBOSE, SETTINGS)` is the verification tool; assertions against plan shape, not just row counts.
 - AIO (`io_method = io_uring`) for sequential scan and vacuum workloads on Linux.
 - Parallel query enabled for aggregation, hash join, index scan — `max_parallel_workers_per_gather` tuned to workload.
@@ -113,10 +113,10 @@ All SQL follows five governing principles:
 
 ## [05]-[LOAD_SEQUENCE]
 
-**Foundation** (always load):
+[FOUNDATION]: (always load):
 - `references/validation.md` — compliance checklist, Effect-SQL alignment, migration safety
 
-**Task-routed references** (load when the task matches):
+[TASK_ROUTED_REFERENCES]: (load when the task matches):
 - `references/ddl.md` — schema design, domain/composite/range types, temporal constraints, generated columns, partitioning, lock levels
 - `references/queries.md` — CTE algebra, MERGE, window functions, JSON_TABLE, recursive patterns
 - `references/indexes.md` — index type selection, partial indexes, covering indexes, maintenance
@@ -152,5 +152,5 @@ All SQL follows five governing principles:
 
 After writing or modifying SQL, run in order:
 
-1. **Automated lint**: `bash scripts/pg_lint.sh [PATH...]` from this skill directory — anti-pattern detectors (rg-based + structural). Errors (E) block merge; warnings (W) require justification. Supports `--json`, `--sql-only`, `--ts-only`, and `--self-test`.
-2. **Manual checklist**: `references/validation.md` — compliance gates not automatable (Effect-SQL alignment, migration safety, lock-level awareness).
+1. [AUTOMATED_LINT]: `bash scripts/pg_lint.sh [PATH...]` from this skill directory — anti-pattern detectors (rg-based + structural). Errors (E) block merge; warnings (W) require justification. Supports `--json`, `--sql-only`, `--ts-only`, and `--self-test`.
+2. [MANUAL_CHECKLIST]: `references/validation.md` — compliance gates not automatable (Effect-SQL alignment, migration safety, lock-level awareness).

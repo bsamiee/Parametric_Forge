@@ -6,7 +6,7 @@ PG 12+ CTEs are inlined by default unless side-effecting or referenced multiple 
 
 Recursive CTE with SEARCH BREADTH FIRST + CYCLE in single query:
 
-```sql
+```sql conceptual
 WITH RECURSIVE org_tree AS (
     SELECT id, parent_id, name, 1 AS depth
     FROM departments
@@ -28,7 +28,7 @@ ORDER BY ordercol;
 
 Data-modifying CTE -- archive-and-delete in single statement:
 
-```sql
+```sql conceptual
 WITH deleted AS (
     DELETE FROM events
     WHERE created_at < NOW() - INTERVAL '90 days'
@@ -50,7 +50,7 @@ CTE contracts:
 
 ## [02]-[MERGE]
 
-```sql
+```sql conceptual
 MERGE INTO inventory AS tgt
 USING incoming_shipments AS src
 ON tgt.sku = src.sku
@@ -84,7 +84,7 @@ MERGE contracts:
 
 FILTER (WHERE) replaces CASE WHEN inside aggregates -- clearer intent, better optimization:
 
-```sql
+```sql conceptual
 SELECT department,
        count(*) FILTER (WHERE status = 'active') AS active_count,
        avg(salary) FILTER (WHERE status = 'active') AS active_avg_salary,
@@ -103,7 +103,7 @@ FILTER contracts:
 
 GROUPING SETS, CUBE, and ROLLUP replace N separate GROUP BY queries with a single scan -- set-algebraic multi-level aggregation:
 
-```sql
+```sql conceptual
 -- GROUPING SETS: explicit dimension combinations
 SELECT region, product_category, date_trunc('month', sale_date) AS month,
        SUM(revenue) AS total_revenue,
@@ -151,7 +151,7 @@ Multi-dimensional aggregation contracts:
 
 GROUPS framing + EXCLUDE + FILTER in single query:
 
-```sql
+```sql conceptual
 SELECT tenant_id, month, revenue,
        SUM(revenue) OVER (
            PARTITION BY tenant_id
@@ -166,7 +166,7 @@ FROM monthly_metrics;
 
 Ordered-set aggregates with WITHIN GROUP:
 
-```sql
+```sql conceptual
 SELECT region,
        percentile_cont(0.95) WITHIN GROUP (ORDER BY latency)
            FILTER (WHERE status = 'success') AS p95_latency,
@@ -179,7 +179,7 @@ GROUP BY region;
 
 RANGE with INTERVAL -- time-based windowing without physical row counting:
 
-```sql
+```sql conceptual
 SELECT tenant_id, event_date, revenue,
        AVG(revenue) OVER (
            PARTITION BY tenant_id
@@ -196,7 +196,7 @@ FROM daily_metrics;
 
 FIRST_VALUE / LAST_VALUE / NTH_VALUE -- positional extraction with frame trap:
 
-```sql
+```sql conceptual
 SELECT product_id, price_date, price,
        FIRST_VALUE(price) OVER w AS initial_price,
        LAST_VALUE(price) OVER w AS current_price,
@@ -211,7 +211,7 @@ WINDOW w AS (
 
 Distribution analytics -- PERCENT_RANK and CUME_DIST:
 
-```sql
+```sql conceptual
 SELECT employee_id, department, salary,
        PERCENT_RANK() OVER w AS pct_rank,
        CUME_DIST() OVER w AS cumulative_dist
@@ -221,7 +221,7 @@ WINDOW w AS (PARTITION BY department ORDER BY salary);
 
 Gap/island detection via LAG -- boolean expression, no CASE:
 
-```sql
+```sql conceptual
 SELECT user_id, action_time,
        action_time - LAG(action_time) OVER w AS gap,
        (EXTRACT(EPOCH FROM (
@@ -233,7 +233,7 @@ WINDOW w AS (PARTITION BY user_id ORDER BY action_time);
 
 Time-series gap fill -- generate_series + LEFT JOIN + window:
 
-```sql
+```sql conceptual
 SELECT gs.day,
        COALESCE(s.revenue, 0) AS revenue,
        AVG(COALESCE(s.revenue, 0)) OVER (
@@ -266,7 +266,7 @@ Window contracts:
 
 JSON_TABLE -- structured relational extraction from JSONB:
 
-```sql
+```sql conceptual
 SELECT o.id AS order_id, jt.*
 FROM orders o,
     JSON_TABLE(
@@ -284,7 +284,7 @@ WHERE jt.quantity > 0;
 
 jsonb_path_query with variables and predicate pushdown:
 
-```sql
+```sql conceptual
 SELECT id, metadata
 FROM events
 WHERE jsonb_path_exists(metadata, '$.tags[*] ? (@ == "priority")')
@@ -311,7 +311,7 @@ Scalar subqueries in SELECT list are FORBIDDEN -- always LATERAL JOIN for correl
 
 Top-N per group -- latest 3 orders per customer:
 
-```sql
+```sql conceptual
 SELECT c.id, c.name, recent.order_id, recent.total, recent.created_at
 FROM customers c
 CROSS JOIN LATERAL (
@@ -325,7 +325,7 @@ CROSS JOIN LATERAL (
 
 LATERAL with aggregation -- correlated aggregate without GROUP BY in outer:
 
-```sql
+```sql conceptual
 SELECT d.id, d.name, stats.order_count, stats.total_revenue
 FROM departments d
 LEFT JOIN LATERAL (
@@ -348,7 +348,7 @@ LATERAL contracts:
 
 Range containment -- find entity version valid at a specific moment:
 
-```sql
+```sql conceptual
 SELECT id, entity_id, payload, valid_period
 FROM entity_versions
 WHERE entity_id = $1
@@ -359,7 +359,7 @@ LIMIT 1;
 
 Temporal diff -- detect changes between two points in time:
 
-```sql
+```sql conceptual
 SELECT v_new.entity_id,
        v_old.payload AS before_state,
        v_new.payload AS after_state
@@ -372,7 +372,7 @@ WHERE v_new.valid_period @> $2::timestamptz   -- "now" snapshot
 
 Contiguous coverage verification -- detect gaps in temporal history:
 
-```sql
+```sql conceptual
 SELECT entity_id,
        unnest(range_agg(valid_period) - tstzrange(MIN(lower(valid_period)), MAX(upper(valid_period)))) AS gap
 FROM entity_versions
@@ -394,7 +394,7 @@ Temporal contracts:
 
 Compound cursor -- multi-column sort with tiebreaker:
 
-```sql
+```sql template
 SELECT id, rank, title, created_at
 FROM articles
 WHERE tenant_id = $1
@@ -416,7 +416,7 @@ Keyset contracts:
 
 Unnest array parameters for set-based batch INSERT/UPDATE — never row-at-a-time loops:
 
-```sql
+```sql template
 INSERT INTO tags (tenant_id, entity_id, label)
 SELECT $1, unnest($2::uuid[]), unnest($3::text[])
 ON CONFLICT (tenant_id, entity_id, label) DO NOTHING;
@@ -434,9 +434,9 @@ WHERE products.id = batch.id AND products.tenant_id = $3;
 
 ## [11]-[EFFECT_SQL_INTEGRATION]
 
-Typed query execution via `@effect/sql-pg` (v0.49+):
+Typed query execution via `@effect/sql-pg` (`v0.49+`):
 
-```typescript
+```typescript conceptual
 // SqlSchema.findAll — typed result decode via schema, parameterized query
 const findByTenant = SqlSchema.findAll({
     Request: TenantId,

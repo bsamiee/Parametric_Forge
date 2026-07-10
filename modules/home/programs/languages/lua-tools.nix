@@ -10,6 +10,7 @@
   pkgs,
   ...
 }: let
+  style = import ../../../style.nix;
   # stylua reads $XDG_CONFIG_HOME/stylua/stylua.toml only under
   # --search-parent-directories; the wrapper pins the flag so project configs
   # keep winning while the house style becomes the machine floor.
@@ -40,15 +41,15 @@ in {
 
   xdg.configFile."stylua/stylua.toml".text = ''
     indent_type = "Spaces"
-    indent_width = 4
-    column_width = 150
+    indent_width = ${toString style.indent}
+    column_width = ${toString style.width}
   '';
 
   # luacheck's documented fallback lane is --default-config, resolved on macOS
   # from Application Support, never XDG; a project .luacheckrc suppresses it.
   home.file = lib.mkIf pkgs.stdenv.hostPlatform.isDarwin {
     "Library/Application Support/Luacheck/.luacheckrc".text = ''
-      max_line_length = 150
+      max_line_length = ${toString style.width}
     '';
   };
 }

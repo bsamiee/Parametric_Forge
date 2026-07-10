@@ -8,7 +8,7 @@
 |  [02]   | Docker     | Container     | Slow      | Dockerfile | Isolated environment   |
 |  [03]   | JavaScript | `node24`      | Fastest   | Yes        | GitHub API integration |
 
-**Details:**
+[DETAILS]:
 1. Combine workflow steps; error propagation via `if: failure()`
 2. Custom runtime/toolchains; language-agnostic execution
 3. API interactions via `@actions/core` toolkit; pre/post lifecycle
@@ -24,15 +24,15 @@
 
 ## [02]-[DIRECTORY_STRUCTURE]
 
-**Local actions** (monorepo pattern): `.github/actions/<name>/action.yml`
+[LOCAL_ACTIONS]: (monorepo pattern): `.github/actions/<name>/action.yml`
 
-```yaml
+```yaml conceptual
 - uses: ./.github/actions/setup-node-cached
 ```
 
-**Standalone repos** (Marketplace): `action.yml` in repo root.
+[STANDALONE_REPOS]: (Marketplace): `action.yml` in repo root.
 
-```yaml
+```yaml template
 - uses: owner/repo@<SHA> # vN.N.N
 ```
 
@@ -40,7 +40,7 @@
 
 ## [03]-[METADATA]
 
-```yaml
+```yaml template
 name: 'Action Name'
 description: 'Brief description'
 author: 'Author'
@@ -61,13 +61,13 @@ runs:
   # main: 'dist/index.js'  # javascript (pre: 'pre.js', post: 'post.js')
 ```
 
-**Output limits:** 1 MiB per job (all outputs combined), 50 MiB per workflow run. Use artifacts for larger data.
+[OUTPUT_LIMITS]: 1 MiB per job (all outputs combined), 50 MiB per workflow run. Use artifacts for larger data.
 
 [IMPORTANT] Composite inputs are always strings (no `type:` key). JavaScript actions support `pre:` and `post:` lifecycle steps for setup/cleanup.
 
 ## [04]-[ERROR_PROPAGATION]
 
-```yaml
+```yaml conceptual
 runs:
   using: 'composite'
   steps:
@@ -87,12 +87,12 @@ runs:
 
 ## [05]-[VERSIONING]
 
-```bash
+```bash conceptual
 git tag -a v1.0.0 -m "Release v1.0.0" && git push origin v1.0.0
 git tag -fa v1 -m "Update v1 to v1.0.0" && git push origin v1 --force
 ```
 
-Consumers reference: `@v1.0.0` (exact), `@v1` (latest v1.x), `@SHA` (most secure). [REFERENCE] SHA pinning protocol: [->version-discovery.md§SHA_PINNING_FORMAT](./version-discovery.md).
+Consumers reference: `@v1.0.0` (exact), `@v1` (latest v1.x), `@SHA` (most secure). [REFERENCE] SHA pinning protocol: `version-discovery.md`§SHA_PINNING_FORMAT.
 
 ## [06]-[RUNTIME]
 
@@ -102,13 +102,13 @@ Consumers reference: `@v1.0.0` (exact), `@v1` (latest v1.x), `@SHA` (most secure
 |  [02]   | **`docker`**    | Stable — `using: 'docker'` with `image: 'Dockerfile'`.   |
 |  [03]   | **`composite`** | Stable — `using: 'composite'` with `steps:`.             |
 
-**Toolkit:** `@actions/core@3.x`, `@actions/github@9.x`. Bundle with `@vercel/ncc@0.38.x build index.js --minify`.
+[TOOLKIT]: `@actions/core@3.x`, `@actions/github@9.x`. Bundle with `@vercel/ncc@0.38.x build index.js --minify`.
 
 ## [07]-[JAVASCRIPT_ACTIONS]
 
-**Lifecycle:** `pre:` runs before job steps (setup). `main:` runs as the action step. `post:` runs after job completes (cleanup, even on failure).
+[LIFECYCLE]: `pre:` runs before job steps (setup). `main:` runs as the action step. `post:` runs after job completes (cleanup, even on failure).
 
-```yaml
+```yaml conceptual
 runs:
   using: 'node24'
   pre: 'dist/pre.js'
@@ -118,11 +118,11 @@ runs:
   post-if: always()               # default: always() — runs post even on failure
 ```
 
-**`pre-if` / `post-if`:** Status check functions evaluate against **job** status, not action status. `step` context is unavailable in `pre-if` (no steps have run yet). Both default to `always()`.
+`pre-if` / `post-if`: Status check functions evaluate against **job** status, not action status. `step` context is unavailable in `pre-if` (no steps have run yet). Both default to `always()`.
 
-**I/O patterns:**
+[IO_PATTERNS]:
 
-```javascript
+```javascript conceptual
 const core = require('@actions/core');
 core.setOutput('result', JSON.stringify({ status: 'ok', version: '1.0.0' }));
 core.setSecret(token);  // masks in all subsequent logs
@@ -130,7 +130,7 @@ core.setSecret(token);  // masks in all subsequent logs
 
 ## [08]-[DOCKER_ACTIONS]
 
-```dockerfile
+```dockerfile conceptual
 FROM golang:1.23 AS builder
 COPY . .
 RUN CGO_ENABLED=0 go build -o /action ./...
@@ -140,7 +140,7 @@ COPY --from=builder /action /action
 ENTRYPOINT ["/action"]
 ```
 
-```yaml
+```yaml conceptual
 runs:
   using: 'docker'
   image: 'Dockerfile'
@@ -150,13 +150,13 @@ runs:
   entrypoint: '/custom.sh'                # overrides Dockerfile ENTRYPOINT
 ```
 
-**Consumer override:** `entrypoint:` in action.yml overrides Dockerfile `ENTRYPOINT`. `args:` overrides Dockerfile `CMD`. Consumer workflows cannot override action's entrypoint — it is set by the action author.
+[CONSUMER_OVERRIDE]: `entrypoint:` in action.yml overrides Dockerfile `ENTRYPOINT`. `args:` overrides Dockerfile `CMD`. Consumer workflows cannot override action's entrypoint — it is set by the action author.
 
 [IMPORTANT] Docker actions only run on Linux runners. Container startup adds 5-30s overhead. Prefer distroless/scratch base images.
 
 ## [09]-[LOCAL_ACTION_CACHING]
 
-```yaml
+```yaml template
 # Composite action — split cache for deterministic control
 steps:
   - uses: actions/cache/restore@<SHA> # v5

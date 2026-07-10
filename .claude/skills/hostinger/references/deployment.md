@@ -10,7 +10,7 @@ The working set: `HOSTINGER_API_TOKEN`, the VM id, `SSH_USER@SSH_HOST`, the key 
 
 First-time box preparation, idempotent by construction:
 
-```bash
+```bash template
 ssh $SSH_USER@$SSH_HOST << 'SETUP'
 command -v docker >/dev/null || { curl -fsSL https://get.docker.com | sh; systemctl enable --now docker; }
 docker compose version >/dev/null 2>&1 || { apt-get update && apt-get install -y docker-compose-plugin; }
@@ -25,7 +25,7 @@ Baseline gates before the first deploy: Docker engine and compose plugin present
 
 Deploys keep one order — dependencies, migrations, app — and every command stays idempotent. `docker compose up -d` recreates only changed services; `docker compose down -v` destroys volumes and data and never runs in production without explicit approval.
 
-```bash
+```bash template
 # Sync code (never .env from git; scp the production env file separately)
 rsync -avz --exclude='.git' --exclude='node_modules' --exclude='.env.local' ./ $SSH_USER@$SSH_HOST:~/app/
 scp .env.production $SSH_USER@$SSH_HOST:~/app/.env

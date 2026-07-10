@@ -36,18 +36,22 @@ Density target: ~300 LOC per file, measured with `loc`, never bytes. Approaching
 
 Before adding any code: nixpkgs already solves it? the existing pattern extends? needed now, not "later"? Any "no" means the code does not land. Modification is surgical and in-place — read the entire file, understand its patterns, extend the existing surface; a parallel "improved" version is a defect.
 
-```nix
+```nix accepted
 # YES: dense, multi-capable — one owner absorbs every modality
 mkService = { name, exec, env ? {}, after ? [], ... }@args:
   let
     baseService = { inherit exec env; wantedBy = ["default.target"]; };
     withDeps = if after != [] then baseService // { inherit after; } else baseService;
   in withDeps // (removeAttrs args ["name" "exec" "env" "after"]);
+```
 
+```nix rejected
 # NO: function spam
 mkSimpleService = name: exec: { inherit exec; };
 mkServiceWithEnv = name: exec: env: { inherit exec env; };
+```
 
+```nix accepted
 # YES: extend the existing function in place
 someFn = args:
   let base = originalLogic args;
@@ -56,7 +60,7 @@ someFn = args:
 
 Every module opens with the header block and takes only the arguments it reads:
 
-```nix
+```nix template
 # Title         : [filename]
 # Author        : Bardia Samiee
 # Project       : Parametric Forge

@@ -7,7 +7,7 @@ Schema design patterns for PostgreSQL 18.
 
 One polymorphic example demonstrating: domains, generated columns, range types, NOT NULL defaults, uuidv7(), JSONB validation.
 
-```sql
+```sql conceptual
 CREATE DOMAIN email AS citext CHECK (VALUE ~ '^[^@\s]+@[^@\s]+\.[^@\s]+$');
 CREATE DOMAIN money_precise AS numeric(19,4) CHECK (VALUE >= 0);
 
@@ -57,7 +57,7 @@ CREATE INDEX organization_search_idx ON organization USING gin (search_vector);
 
 Domains brand primitive scalars with validation. Column declarations reference the domain — never inline equivalent CHECKs.
 
-```sql
+```sql conceptual
 -- CHECK-constrained domain: validation on every INSERT/UPDATE
 CREATE DOMAIN slug AS text
     CHECK (VALUE ~ '^[a-z0-9]([a-z0-9-]*[a-z0-9])?$' AND length(VALUE) BETWEEN 3 AND 63);
@@ -78,7 +78,7 @@ CREATE TYPE monetary AS (amount numeric(19,4), currency text);
 
 Composite types model structured return values and function parameters. Prefer over OUT parameter proliferation.
 
-```sql
+```sql conceptual
 CREATE TYPE audit_entry AS (
     actor_id uuid, action text, payload jsonb, occurred_at timestamptz
 );
@@ -102,9 +102,9 @@ Range types replace dual start/end columns with algebraic interval semantics. Bu
 
 Dual `start_date`/`end_date` columns are FORBIDDEN — always `tstzrange` with range constraint.
 
-**WITHOUT OVERLAPS is the primary PostgreSQL 18 temporal constraint mechanism.** Use `WITHOUT OVERLAPS` in PRIMARY KEY or UNIQUE constraints for temporal non-overlap. EXCLUDE constraints are the manual fallback ONLY when compatibility with older PostgreSQL is required or when the constraint involves operators beyond equality + range overlap (e.g., three-way exclusion with non-equality operators).
+WITHOUT OVERLAPS is the primary PostgreSQL 18 temporal constraint mechanism. Use `WITHOUT OVERLAPS` in PRIMARY KEY or UNIQUE constraints for temporal non-overlap. EXCLUDE constraints are the manual fallback ONLY when compatibility with older PostgreSQL is required or when the constraint involves operators beyond equality + range overlap (e.g., three-way exclusion with non-equality operators).
 
-```sql
+```sql conceptual
 CREATE TYPE price_range AS RANGE (SUBTYPE = numeric);
 
 -- Multirange for non-contiguous intervals
@@ -175,7 +175,7 @@ Range operators:
 
 Enums are rigid — reordering impossible, removal requires full type recreation. Prefer domain-constrained text or FK lookup.
 
-```sql
+```sql conceptual
 -- Domain-constrained text: transactional, no type recreation
 CREATE DOMAIN order_status AS text
     CHECK (VALUE IN ('draft', 'confirmed', 'shipped', 'delivered', 'cancelled'));
@@ -192,7 +192,7 @@ ALTER TABLE orders ADD CONSTRAINT fk_order_status
 
 ## [06]-[TYPE_COMPOSITION]
 
-```sql
+```sql conceptual
 -- Domain + range: branded temporal interval with floor constraint
 CREATE DOMAIN booking_period AS tstzrange
     CHECK (NOT isempty(VALUE) AND lower(VALUE) >= '2020-01-01'::timestamptz);
@@ -212,7 +212,7 @@ CREATE TABLE articles (
 
 Virtual columns compute at read time — zero storage, instant `ALTER TABLE ADD`. Expressions must be IMMUTABLE.
 
-```sql
+```sql conceptual
 ALTER TABLE customer ADD COLUMN
     full_name text GENERATED ALWAYS AS (
         profile->>'firstName' || ' ' || profile->>'lastName'
@@ -237,7 +237,7 @@ ALTER TABLE product ADD COLUMN
 
 TimescaleDB hypertables for time-series; pg_partman for non-time-series range/list. Never hand-roll partition creation.
 
-```sql
+```sql conceptual
 -- Range partition by time
 CREATE TABLE events (
     id          uuid        DEFAULT uuidv7(),
@@ -283,7 +283,7 @@ SELECT partman.create_parent(
 
 ## [09]-[CONSTRAINTS]
 
-```sql
+```sql conceptual
 -- Exclusion constraint: no overlapping periods per tenant (requires btree_gist)
 ALTER TABLE lease ADD CONSTRAINT no_overlapping_leases
     EXCLUDE USING gist (tenant_id WITH =, lease_period WITH &&);
@@ -341,7 +341,7 @@ DDL properties governing `Model.Class` field modifier selection:
 
 Model.Class mapping for the canonical table (branded entity IDs):
 
-```typescript
+```typescript conceptual
 const OrganizationId = S.UUID.pipe(S.brand("OrganizationId"))
 
 class Organization extends Model.Class<Organization>()("Organization", {
@@ -359,7 +359,7 @@ class Organization extends Model.Class<Organization>()("Organization", {
 }) {}
 ```
 
-- **Branded entity IDs**: `S.UUID.pipe(S.brand("EntityId"))` for every PK and FK — raw `S.UUID` is forbidden for identity fields. Branding prevents accidental cross-entity ID mixing at the type level
+- [BRANDED_ENTITY_IDS]: `S.UUID.pipe(S.brand("EntityId"))` for every PK and FK — raw `S.UUID` is forbidden for identity fields. Branding prevents accidental cross-entity ID mixing at the type level
 - `Model.Generated` for `id`, `tier`, `searchVector` — server-computed, excluded from insert/update
 - `Model.DateTimeInsertFromDate` / `DateTimeUpdateFromDate` — server-defaulted but readable
 - `S.Literal(...)` for constrained text — mirrors CHECK constraint in DDL
@@ -370,7 +370,7 @@ class Organization extends Model.Class<Organization>()("Organization", {
 
 Canonical document-chunk-embedding schema for retrieval-augmented generation:
 
-```sql
+```sql conceptual
 CREATE TABLE documents (
     id          uuid        DEFAULT uuidv7() PRIMARY KEY,
     tenant_id   uuid        NOT NULL,
@@ -413,5 +413,9 @@ CREATE INDEX ON chunks (tenant_id, created_at);
 - Tenant isolation via RLS — vector queries automatically scoped
 - `position` preserves document ordering for context window assembly
 - pg_trgm completes the retrieval triad: semantic (vector distance) + lexical (BM25 rank) + fuzzy (trigram similarity) — each captures different user intent failure modes
-- **Multi-tenant scale (>1M vectors)**: replace HNSW with DiskANN plus label-column filtering when `vectorscale` is available. Store discrete tenant/category labels in the indexed label column and query with label containment so filtering participates in index search instead of relying only on post-filtering. HNSW + RLS post-filter visits `ef_search` neighbors first then discards non-matching tenants, which at high selectivity can return fewer than `LIMIT k` results or require expensive iterative scan expansion
-- **Write amplification**: the three-index strategy (HNSW + GIN tsvector + GIN trgm) means each INSERT touches three indexes — acceptable for moderate ingestion but bottleneck for bulk pipelines. Mitigation: load into unindexed staging table, batch-merge via `MERGE INTO chunks ... USING staging`, then `CREATE INDEX CONCURRENTLY` post-load. For incremental ingestion, maintain indexes but set `gin_pending_list_limit = 64MB` to batch GIN updates and accept slightly stale trigram results during high-write bursts
+- [MULTI_TENANT_SCALE]: replace HNSW with DiskANN plus label-column filtering when `vectorscale` is available.
+  - Store discrete tenant/category labels in the indexed label column and query with label containment so filtering participates in index search instead of relying only on post-filtering.
+  - HNSW + RLS post-filter visits `ef_search` neighbors first then discards non-matching tenants, which at high selectivity can return fewer than `LIMIT k` results or require expensive iterative scan expansion
+- [WRITE_AMPLIFICATION]: the three-index strategy (HNSW + GIN tsvector + GIN trgm) means each INSERT touches three indexes — acceptable for moderate ingestion but bottleneck for bulk pipelines.
+  - Bulk mitigation: load into an unindexed staging table, batch-merge via `MERGE INTO chunks ... USING staging`, then `CREATE INDEX CONCURRENTLY` post-load.
+  - Incremental ingestion: maintain indexes but set `gin_pending_list_limit = 64MB` to batch GIN updates and accept slightly stale trigram results during high-write bursts

@@ -149,7 +149,7 @@ Architecture layout is fcose, tuned under `architecture:` — `nodeSeparation`, 
 
 `mmdc` renders a fence to a file, deriving format from the output extension:
 
-```bash
+```bash template
 mmdc -i input.mmd -o output.svg
 mmdc -i input.mmd -o output.png -b transparent -s 1.5 -w 1600 -H 900
 mmdc -i input.md -o rendered.md -a ./artefacts -j 4
@@ -163,7 +163,7 @@ mmdc -i - -o - -e svg
 
 A schema theme or `themeVariables` reaches the CLI only through `--configFile`, since `--theme` cannot select it:
 
-```json
+```json copy-safe
 {
   "theme": "base",
   "layout": "elk",
@@ -173,13 +173,13 @@ A schema theme or `themeVariables` reaches the CLI only through `--configFile`, 
 
 A sandboxed or CI render pins `executablePath` through `--puppeteerConfigFile` to the machine's `PUPPETEER_EXECUTABLE_PATH` (the Nix Chrome-for-Testing). Launch args carry `--use-mock-keychain` and `--password-store=basic` so a throwaway-profile render never reaches the macOS keychain; `--no-sandbox` and `--disable-dev-shm-usage` are the headless-CI defaults. The pin is a headless-safe Chromium build, never the branded `/Applications/Google Chrome.app`, which a sandboxed headless caller aborts at `_RegisterApplication`.
 
-```json
+```json copy-safe
 { "executablePath": "$PUPPETEER_EXECUTABLE_PATH", "args": ["--no-sandbox", "--disable-dev-shm-usage", "--use-mock-keychain", "--password-store=basic"] }
 ```
 
 A fully offline deterministic render pins every input: the toolchain pins the CLI, `executablePath` pins the browser, `iconPacksNamesAndUrls` pins icons, images ride `file://` or `data:`, and the config file locks the identity surface:
 
-```json
+```json copy-safe
 {
   "theme": "base",
   "deterministicIds": true,

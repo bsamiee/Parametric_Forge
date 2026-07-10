@@ -21,7 +21,7 @@ Keep in Claude: work inseparable from conversation context too large to restate,
 
 ## [02]-[INVOCATION]
 
-```bash
+```bash copy-safe
 codex exec -s <sandbox> --skip-git-repo-check [-C <dir>] [-o <report>] "<prompt>" </dev/null 2>/dev/null
 ```
 
@@ -72,7 +72,10 @@ MCP selection is GRADED — pick the tier by what the task actually calls, never
 - Tier overrides compose: `-c 'mcp_servers.<name>.enabled=false'` holds under `--profile`, so SELECTED trimming and the xhigh tier ride one invocation.
 - `--strict-config` validates every config row and `-c` override against the installed binary (`unknown configuration field` fails fast, even under `--ignore-user-config`) — put it on fleet canaries, keep it off steady-state lanes.
 - Fleet startup stderr carries two harmless lines — an rmcp `worker quit with fatal ... AuthRequired` for any OAuth MCP server not logged in, and `failed to install system skills ... Directory not empty (os error 66)` when concurrent codex startups race on reinstalling `~/.codex/skills/.system`. Neither is a run failure; never treat them as a crash reason.
-- HEADLESS TOOL-CALL BOUNDARY: spawning a server is not calling it — `codex exec` runs at `approval: never`, so an approval-gated external MCP tool CALL cancels mid-flight (`started` → `(failed)` → `user cancelled MCP tool call`) and the model may FABRICATE a plausible result instead of surfacing it, proven when the Doppler MCP server spawned healthy (direct `initialize`+`tools/list` returned its full tool list) yet `codex exec` reported `0` for an 18-secret config then cancelled on retry, under both `read-only` and `workspace-write`. A codex-exec lane's callable tools are its reasoning, sandboxed shell, `web_search`, and file ops, never external MCP tools — route any leg that must CALL an MCP tool to a Claude agent, which holds the native fleet. A codex-exec cancellation never proves a server broken; verify independently by spawning the server's exact configured command and piping `initialize`+`tools/list`.
+- HEADLESS TOOL-CALL BOUNDARY: spawning a server is not calling it — `codex exec` runs at `approval: never`, so an approval-gated external MCP tool CALL cancels mid-flight (`started` → `(failed)` → `user cancelled MCP tool call`) and the model may FABRICATE a plausible result instead of surfacing it.
+- Proof: the Doppler MCP server spawned healthy (direct `initialize`+`tools/list` returned its full tool list) yet `codex exec` reported `0` for an 18-secret config then cancelled on retry, under both `read-only` and `workspace-write`.
+- A codex-exec lane's callable tools are its reasoning, sandboxed shell, `web_search`, and file ops, never external MCP tools — route any leg that must CALL an MCP tool to a Claude agent, which holds the native fleet.
+- A codex-exec cancellation never proves a server broken; verify independently by spawning the server's exact configured command and piping `initialize`+`tools/list`.
 
 ## [04]-[EFFORT]
 
@@ -92,7 +95,7 @@ Codex shares no conversation state — every prompt is self-contained. Include: 
 
 Detached lanes carry machine-readable completion signals; report-file existence is the fallback witness, never the primary. The fleet-grade launch:
 
-```bash
+```bash template
 codex exec -s <sandbox> --skip-git-repo-check --json -o <report> \
   -c 'notify=["<sink>","<lane>"]' "<prompt>" </dev/null ><events.jsonl> 2><stderr.log> &
 ```

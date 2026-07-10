@@ -16,7 +16,7 @@ AI-powered deep research that gathers sources, analyzes them, and returns a cite
 
 ## [01]-[USAGE]
 
-```bash
+```bash template
 # Basic research (waits for completion)
 uvx --from tavily-cli tvly research "competitive landscape of AI code assistants"
 
@@ -62,7 +62,7 @@ A "what does X do" question rides `mini`; an "X vs Y vs Z" or "best way to" ques
 
 Long-running research starts detached and polls separately:
 
-```bash
+```bash template
 uvx --from tavily-cli tvly research "topic" --no-wait --json          # returns request_id
 uvx --from tavily-cli tvly research status <request_id> --json
 uvx --from tavily-cli tvly research poll <request_id> --json -o result.json

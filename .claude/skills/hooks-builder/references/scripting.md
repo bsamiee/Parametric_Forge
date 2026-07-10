@@ -2,7 +2,7 @@
 
 ## [01]-[SHEBANG]
 
-```python
+```python conceptual
 #!/usr/bin/env -S uv run --quiet --script
 # /// script
 # requires-python = ">=3.15"
@@ -12,7 +12,7 @@
 
 ## [02]-[TYPES]
 
-```python
+```python conceptual
 from collections.abc import Callable
 from typing import Any, Final, NamedTuple
 
@@ -28,7 +28,7 @@ class SkillEntry(NamedTuple):
 
 ## [03]-[CONSTANTS]
 
-```python
+```python conceptual
 from dataclasses import dataclass, field
 import re
 
@@ -47,7 +47,7 @@ _debug = lambda msg: DEBUG and print(f"[hook] {msg}", file=sys.stderr)
 
 ## [04]-[DISPATCH]
 
-```python
+```python conceptual
 handlers: dict[str, Handler] = {
     "workspace": (lambda _: ("npx", "nx", "show", "projects", "--json"), lambda o, _: {"projects": json.loads(o)}),
     "project": (lambda a: ("npx", "nx", "show", "project", a["name"], "--json"), lambda o, a: {"name": a["name"], "project": json.loads(o)}),
@@ -63,7 +63,7 @@ def tool(**cfg: Any) -> Callable[[Callable], Callable]:
 
 ## [05]-[PATTERN_MATCHING]
 
-```python
+```python conceptual
 def _fold_line(state: ParseState, line: str) -> ParseState:
     result, field, parts = state
     match_ = B.field_re.match(line)
@@ -94,7 +94,7 @@ def handle(action: Action) -> int:
 
 ## [06]-[EXPRESSIONS]
 
-```python
+```python conceptual
 # Walrus in comprehension
 lines = [line for n, g in B.groups if (line := f'<group name="{n}">{" ".join(g)}</group>')]
 
@@ -104,7 +104,7 @@ result = {"status": "success", **fmt(o, a)} if o else {"status": "error", "msg":
 
 ## [07]-[OUTPUT]
 
-```python
+```python conceptual
 def _format_xml(skills: list[SkillEntry], targets: frozenset[str]) -> str:
     return "\n".join([
         "<session_context>",
@@ -125,7 +125,7 @@ def _format_xml(skills: list[SkillEntry], targets: frozenset[str]) -> str:
 
 ## [09]-[TOOLING]
 
-```toml
+```toml copy-safe
 [tool.ty.environment]
 python-version = "3.15"
 

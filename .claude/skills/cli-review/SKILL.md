@@ -21,7 +21,7 @@ Run a Greptile review from the local checkout and summarize the findings. `grept
 
 `command -v greptile` decides. A missing CLI is never installed silently: ask the user, then run `npm i -g greptile`. Without npm, download the vendor installer to a file, inspect it, then execute it — never piped straight to a shell:
 
-```bash
+```bash copy-safe
 curl -fsSL "https://greptile.com/cli/install" -o /tmp/greptile-install.sh
 sh /tmp/greptile-install.sh
 ```
@@ -34,7 +34,7 @@ Re-run `command -v greptile` after installation.
 
 ## [04]-[RUN]
 
-```bash
+```bash output-only
 greptile review --json
 ```
 

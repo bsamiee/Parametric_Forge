@@ -90,14 +90,14 @@ BRIN contracts:
 - BRIN returns false positives (never false negatives) -- identifies candidate blocks, then heap scans verify
 - Unsuitable for randomly-ordered data (low correlation) -- B-tree wins
 - Autosummarize creates background worker to summarize new ranges -- without it, new ranges have no summary until VACUUM
-- **TimescaleDB hypertables still require BRIN on the time dimension.** Chunk exclusion eliminates irrelevant chunks (coarse-grained) but does NOT provide intra-chunk filtering. BRIN provides fine-grained range filtering within individual chunks — required for efficient range scans on large hypertables
+- TimescaleDB hypertables still require BRIN on the time dimension. Chunk exclusion eliminates irrelevant chunks (coarse-grained) but does NOT provide intra-chunk filtering. BRIN provides fine-grained range filtering within individual chunks — required for efficient range scans on large hypertables
 
 
 ## [06]-[BLOOM]
 
 Bloom filter index for equality queries across arbitrary column combinations. One bloom index replaces N single-column B-tree indexes at ~6x less space.
 
-```sql
+```sql conceptual
 -- Wide table with unpredictable WHERE clause combinations
 CREATE INDEX ON feature_flags USING bloom (tenant_id, user_id, flag_name, environment, region)
     WITH (length = 80, col1 = 2, col2 = 2, col3 = 4, col4 = 2, col5 = 2);
@@ -141,7 +141,7 @@ Bloom vs composite B-tree:
 ## [08]-[COMPOSITE_INDEX_DESIGN]
 
 Equality columns first, range columns last -- the "EqRng" rule:
-```sql
+```sql conceptual
 -- query: WHERE tenant_id = $1 AND status = $2 AND created_at > $3 ORDER BY created_at
 CREATE INDEX ON orders (tenant_id, status, created_at);
 -- tenant_id (eq), status (eq), created_at (range + sort) -- optimal column order
@@ -157,7 +157,7 @@ Anti-patterns:
 
 Partial indexes reduce size and improve write performance by indexing only the rows that matter.
 
-```sql
+```sql conceptual
 -- only 2% of orders are 'pending' -- full index wastes 98% of space
 CREATE INDEX ON orders (customer_id, created_at)
   WHERE status = 'pending';
@@ -213,7 +213,7 @@ Concurrent operations:
 4. HNSW indexes are updated on writes, but `m`/`ef_construction` retuning requires dual-index rotation
 
 Bloat monitoring:
-```sql
+```sql conceptual
 SELECT schemaname, indexrelname, pg_size_pretty(pg_relation_size(indexrelid)) AS size,
        idx_scan, idx_tup_read
 FROM pg_stat_user_indexes
@@ -224,7 +224,7 @@ ORDER BY pg_relation_size(indexrelid) DESC;
 - Deduplication status: `SELECT * FROM pgstatindex('index_name')` -- check `leaf_density` improvement after REINDEX on non-unique indexes with repetitive values
 
 Unused index detection:
-```sql
+```sql conceptual
 SELECT schemaname, indexrelname, idx_scan, idx_tup_read
 FROM pg_stat_user_indexes
 WHERE idx_scan = 0 AND idx_tup_read = 0;

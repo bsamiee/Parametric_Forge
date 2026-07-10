@@ -1,10 +1,10 @@
 # [H1][BASH-SCRIPTING-GUIDE]
 
-Bash 5.2+/5.3 language reference. Strict mode, parameter expansion, arrays, data structures, namerefs, arithmetic, builtin performance.
+Bash `5.2+`/5.3 language reference. Strict mode, parameter expansion, arrays, data structures, namerefs, arithmetic, builtin performance.
 
 ## [01]-[STRICT_MODE]
 
-```bash
+```bash conceptual
 #!/usr/bin/env bash
 set -Eeuo pipefail
 shopt -s inherit_errexit extglob nullglob
@@ -43,7 +43,7 @@ IFS=$'\n\t'
 
 Fork-free command substitution (`${ cmd; }` / `${| cmd; }`) is the single largest performance improvement in Bash 5.3 — eliminates the fork+exec that `$(cmd)` requires. Architecturally significant: every `$()` in a hot path becomes zero-cost.
 
-```bash
+```bash conceptual
 # Fork-free substitution (5.3) — version-gate for portability
 (( BASH_VERSINFO[0] > 5 || (BASH_VERSINFO[0] == 5 && BASH_VERSINFO[1] >= 3) )) && {
     name=${ printf '%s-%s' "${prefix}" "${suffix}"; }        # stdout capture, no fork
@@ -60,7 +60,7 @@ command | mapfile -t arr       # arr is in calling scope, not lost to subshell
 
 ## [03]-[PARAMETER_EXPANSION]
 
-```bash
+```bash conceptual
 # --- defaults and guards ---
 ${var:-default}              # Default if unset/empty
 ${var:=default}              # Assign default if unset/empty
@@ -115,7 +115,7 @@ printf '%s\n' "${files[@]/%.log/.bak}"             # Suffix swap: a.bak ...
 |  [04]   | `case/esac`                                   | Multi-branch pattern only |
 |  [05]   | `declare -Ar TABLE=(...); "${TABLE[$k]}"`     | O(1) dispatch table       |
 
-```bash
+```bash conceptual
 # case/esac: ONLY for pattern matching (globs, extglobs, regex)
 case "${file}" in
     *.tar.@(gz|bz2|xz)) _extract_archive "${file}" ;;
@@ -127,7 +127,7 @@ esac
 
 ## [05]-[VARIABLES_AND_ARRAYS]
 
-```bash
+```bash conceptual
 readonly MAX_RETRIES=3                              # Module-level: UPPER, readonly
 local -r base_dir="/opt"                            # Function-level: lowercase, local -r
 local -n ref=$1                                     # Nameref: alias to caller's variable
@@ -174,11 +174,11 @@ flock -n "${fd}" || _die "Already running"
 exec {fd}>&-                                        # Release FD
 ```
 
-**Controlled global mutation** — `declare -g` is the single escape hatch. Use exclusively for config loading; validate key names against `^[A-Za-z_][A-Za-z_0-9]*$` before `declare -g "${key}=${value}"`.
+[CONTROLLED_GLOBAL_MUTATION]:`declare -g` is the single escape hatch. Use exclusively for config loading; validate key names against `^[A-Za-z_][A-Za-z_0-9]*$` before `declare -g "${key}=${value}"`.
 
 ## [06]-[NAMEREFS]
 
-```bash
+```bash conceptual
 # Return scalar via nameref (zero-fork alternative to $(subshell))
 _compute() {
     local -n _result=$1
@@ -203,14 +203,14 @@ _reduce() {
 }
 ```
 
-**Nameref gotchas:**
-- **Name collision**: `local -n ref=ref` is undefined; same-name shadowing causes self-reference. Convention: `_` prefix on all nameref locals (`_result`, `_out`, `_items`).
-- **Array constraint**: `local -na` is invalid. Namerefs CAN reference arrays (`local -n _arr=my_array; ${_arr[@]}`), but cannot be declared as arrays.
-- **Scope**: Namerefs resolve at the call site's scope, not the declaration site — this is why they work for returning values up the call stack.
+[NAMEREF_GOTCHAS]:
+- [NAME_COLLISION]: `local -n ref=ref` is undefined; same-name shadowing causes self-reference. Convention: `_` prefix on all nameref locals (`_result`, `_out`, `_items`).
+- [ARRAY_CONSTRAINT]: `local -na` is invalid. Namerefs CAN reference arrays (`local -n _arr=my_array; ${_arr[@]}`), but cannot be declared as arrays.
+- [SCOPE]: Namerefs resolve at the call site's scope, not the declaration site — this is why they work for returning values up the call stack.
 
 ## [07]-[DATA_STRUCTURES]
 
-```bash
+```bash conceptual
 # Dispatch table: see [4][BRANCHING] for full pattern
 # Associative set (O(1) membership test)
 declare -Ar VALID_EXTS=([txt]=1 [log]=1 [csv]=1)
@@ -248,7 +248,7 @@ local -r front="${_queue[_q_head]}"; (( _q_head++ )) # Dequeue
 
 ## [08]-[ARITHMETIC]
 
-```bash
+```bash conceptual
 # Ternary assignment
 (( exit_code = failures > 0 ? EX_ERR : EX_OK ))
 # Boolean coercion (non-zero → 1, zero → 0)

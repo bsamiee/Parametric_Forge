@@ -15,28 +15,28 @@ Validation is sequential — each gate must pass before the next runs. `bash -n`
 
 ## [02]-[CRITICAL_SC_CODES]
 
-**SC2086 — Unquoted variable (info severity, security-critical impact)**
+[SC2086]:
 Unquoted `$var` undergoes word splitting AND pathname globbing. An input containing `* /etc/passwd` expands to every file in CWD plus `/etc/passwd`. Under `rm`, this is arbitrary file deletion. SC2086 is classified "info" because quoting is occasionally intentionally omitted (arithmetic contexts, `[[ ]]` RHS patterns) — the severity does NOT reflect the risk. Treat every SC2086 as a potential injection vector until proven safe.
 
-**SC2155 — Declare and assign in one statement (warning)**
+[SC2155]:
 `local v=$(cmd)` masks the exit code of `cmd`. Under `set -e`, a failing command inside the subshell is silently swallowed because `local` itself returns 0. The fix — `local v; v=$(cmd)` — exposes the real exit code to `errexit`. This interaction between `set -Eeuo pipefail` and declare-assign is the most common source of silent failures in strict-mode scripts.
 
-**SC2329 — Unused function never called (warning)**
+[SC2329]:
 Functions defined but never invoked in the file. Dispatch-table patterns legitimately define functions referenced via `"${_DISPATCH[$cmd]}"` — ShellCheck cannot trace this indirection. Suppress with `# shellcheck disable=SC2329` on dispatch-target functions, with a justification comment referencing the dispatch table.
 
-**SC2330 — Unsupported glob in BusyBox `[[ ]]` (warning)**
+[SC2330]:
 BusyBox `sh` implements `[[ ]]` but omits glob pattern matching on the RHS. `[[ $1 == https:* ]]` silently fails or behaves unpredictably. Use `case` for portable glob matching.
 
-**SC2331 — Legacy `-a` file test; prefer `-e` (warning)**
+[SC2331]:
 `[ -a file ]` is ambiguous: unary `-a` tests existence, but binary `-a` is logical AND (`[ expr1 -a expr2 ]`). `-e` is the unambiguous POSIX existence test. Replace all unary `-a` with `-e`.
 
-**SC2332 — `[ ! -o opt ]` always true due to OR precedence (error)**
+[SC2332]:
 `[ ! -o braceexpand ]` parses as `[ "!" ] -o [ "braceexpand" ]` — two non-empty strings OR'd, always true. Fix with `[[ ! -o opt ]]` (where `-o` is a unary option test) or `! [ -o opt ]` (external negation).
 
-**SC2164 — `cd` without error handling (warning)**
+[SC2164]:
 `cd dir` silently continues in the original directory when `dir` is missing. Under `set -e`, `cd` failure DOES trigger `errexit` — but compound commands (`cd dir && do_work`) mask this. Always use `cd dir || exit 1` for explicit intent, or `cd dir || die "..."` with the project's fatal-error function.
 
-**SC2046 — Unquoted command substitution (warning)**
+[SC2046]:
 `$(cmd)` without quotes undergoes word splitting and globbing — same injection class as SC2086 but with the added risk that `cmd`'s output is attacker-influenced. Filenames with spaces, glob characters, or IFS-matching bytes cause silent data corruption.
 
 ## [03]-[SC_CODE_REFERENCE]
@@ -55,7 +55,7 @@ BusyBox `sh` implements `[[ ]]` but omits glob pattern matching on the RHS. `[[ 
 
 ## [04]-[SHELLCHECKRC]
 
-```bash
+```bash template
 # .shellcheckrc — paradigm-aligned defaults
 shell=bash
 # Enable optional checks that align with immutability/safety paradigm
@@ -68,9 +68,9 @@ enable=avoid-nullary-conditions
 disable=SC2329
 ```
 
-**shellcheck.yml** (for CI matrix configuration):
+[SHELLCHECK_YML]: (for CI matrix configuration):
 
-```yaml
+```yaml template
 # .github/linters/.shellcheck.yml (alternative to .shellcheckrc for CI)
 shell: bash
 enable:
@@ -84,7 +84,7 @@ severity: style
 
 ## [05]-[DIRECTIVES]
 
-```bash
+```bash conceptual
 # Correct: justification explains WHY suppression is safe
 # shellcheck disable=SC2086  # $flags intentionally word-split for multi-flag expansion
 printf '%s\n' $flags
@@ -123,9 +123,9 @@ Directive reference:
 |  [05]   | `local v; v=$(cmd)`                     | SC2155 masked exit     | `local v=$(cmd)`           |
 |  [06]   | `[[ "$v" =~ pat ]] && BASH_REMATCH[1]`  | SC2046 from grep       | `$(echo "$v" \| rg -oP …)` |
 
-**Env contract validation** — declare-once, validate-all pattern from container entrypoints:
+[ENV_CONTRACT_VALIDATION]:declare-once, validate-all pattern from container entrypoints:
 
-```bash
+```bash conceptual
 declare -Ar _ENV_CONTRACT=([SERVICE_NAME]='^[a-zA-Z][a-zA-Z0-9_-]+$' [SERVICE_CMD]='.+')
 _validate_env() {
     local var pattern; for var in "${!_ENV_CONTRACT[@]}"; do
@@ -137,9 +137,9 @@ _validate_env() {
 ```
 Eliminates per-variable `[[ -z ]]` chains. Contract is data (the map), not code. `${!var}` indirect expansion reads the variable named by `$var`. Regex in `_ENV_CONTRACT` values validates shape at the boundary.
 
-**Embedded `--self-test` gate** — assert helpers for dispatch-table scripts:
+[EMBEDDED_SELF_TEST_GATE]:assert helpers for dispatch-table scripts:
 
-```bash
+```bash conceptual
 _assert_eq()    { [[ "$1" == "$2" ]] || _die "ASSERT ${FUNCNAME[1]}:${BASH_LINENO[0]}: '${1}' != '${2}'"; }
 _assert_match() { [[ "$1" =~ $2 ]]  || _die "ASSERT ${FUNCNAME[1]}:${BASH_LINENO[0]}: '${1}' !~ '${2}'"; }
 ```
@@ -160,7 +160,7 @@ Inline assertions with automatic caller location via `FUNCNAME[1]`/`BASH_LINENO[
 
 ## [08]-[CI_INTEGRATION]
 
-```yaml
+```yaml template
 # .github/workflows/shell-quality.yml
 name: Shell Quality Gate
 on: [pull_request]

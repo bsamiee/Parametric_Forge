@@ -6,10 +6,12 @@
 # ----------------------------------------------------------------------------
 # Python development environment - Canonical Python 3.15 installation.
 {
+  config,
   lib,
   pkgs,
   ...
 }: let
+  style = import ../../../style.nix;
   python = pkgs.python315;
   projectRootFunction = ''
     _find_project_root() {
@@ -164,8 +166,12 @@ in {
   # already are the house policy, and a row restating defaults is dead config.
   xdg.configFile = {
     "ruff/ruff.toml".text = ''
-      line-length = 150
-      indent-width = 4
+      # Ad-hoc contexts have no project root; without this row `ruff check`
+      # drops a .ruff_cache into the working directory.
+      cache-dir = "${config.xdg.cacheHome}/ruff"
+
+      line-length = ${toString style.width}
+      indent-width = ${toString style.indent}
 
       [format]
       line-ending = "lf"

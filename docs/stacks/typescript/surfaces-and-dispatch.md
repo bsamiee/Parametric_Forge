@@ -40,7 +40,7 @@ When a concern matches several rows, the most specific wins; the rail the arms r
 - Law: empty is not a batch — the unproven, possibly-empty collection is its own modality one signature below the tuple, same lookup contract at the honestly weaker return with no non-empty claim, so the caller who cannot prove plurality is served without widening the batch overload to admit empty, which would discard non-emptiness for every proven caller at once.
 - Boundary: how the swept rail combines — abort versus accumulate — is `rails-and-effects.md`'s disposition and the declared degree is `concurrency.md`'s; this surface owns only the arity discriminant and the shape-following return.
 
-```typescript
+```typescript conceptual
 import { Array, Data, Effect, HashMap, Predicate } from "effect"
 
 type Key = string
@@ -99,7 +99,7 @@ export type { Batch, Key, Ledger, Row, Sweep }
 - Reject: `Match.instanceOfUnsafe`, which subtracts `InstanceType<Ctor>` and deletes the fallback arm the runtime can still reach; a `name` string probe or an `as Error` cast admitting what the ladder proves.
 - Boundary: the conversion that consumes this triage — the `catch` slot of `Effect.try`/`Effect.tryPromise` — is `rails-and-effects.md`'s carrier embedding; this page owns the dispatch that types the caught value.
 
-```typescript
+```typescript conceptual
 import { Data, Either, Function, Match, type Option, pipe } from "effect"
 
 type Wire =
@@ -158,7 +158,7 @@ export type { Probe, Wire }
 - Law: record form versus pipeline: the record forms (`$match`, `Match.valueTags`, `Match.tagsExhaustive`, `Match.discriminatorsExhaustive`) serve a closed family whose arms are all local — coverage read at a glance; the `Match.type` pipeline builds the reusable dispatch value and serves arms that mix tag, structural, and predicate patterns or a terminal other than exhaustive; `Match.value` opens the same pipeline over one already-held value and earns its matcher only when arms exceed what `valueTags` states in place; `Match.typeTags` restates the `tagsExhaustive` pipeline as a second reusable spelling and is the rejected twin — one concept, one form.
 - Boundary: a `Match` whose arms each return a static row restates a keyed table — a keyed correspondence dispatches through the vocabulary lookup the table already is; `Match` owns structural and predicate dispatch on non-keyed shapes.
 
-```typescript
+```typescript conceptual
 import { Array, Data, Effect, Match, Number, Option, pipe, Unify } from "effect"
 
 type Signal<A> = Data.TaggedEnum<{
@@ -237,7 +237,7 @@ export type { Frame, Pulse, Signal }
 - Law: arity discriminates when every call shape has a distinct length — `Function.dual(2, body)` routes the two-argument call to data-first; a trailing optional or variadic parameter collides the lengths, so the discriminant becomes a predicate over the first argument — `(args) => Array.isArray(args[0])`, `(args) => Effect.isEffect(args[0])`, a `Predicate.isTagged` probe — answering only whether the first argument is the subject, never selecting behavior: behavior routed through the discriminant is the boolean knob smuggled into the calling convention.
 - Law: the predicate reads `IArguments` — the raw call — so it is total over both postures, including the zero-argument data-last call, where `args[0]` is `undefined` and must answer false.
 
-```typescript
+```typescript conceptual
 import { Array, Data, Effect, Function, Order } from "effect"
 
 type Row = { readonly key: string; readonly rank: number }
@@ -293,7 +293,7 @@ export type { Row }
 - Law: composition attaches at the row — each handler's admission, guard, and projection compose inside its own row value, and shared per-kind policy is a column on the vocabulary row the handler reads, so behavior variation is data the table already owns, never a wrapper stack applied after the record exists.
 - Law: a method record on an owner object is the same law — the object is contract-annotated or `satisfies`-checked at its declaration and never assembled field-by-field afterward; a record built by staged mutation forfeits the missing-key compile error that is the record's reason to exist.
 
-```typescript
+```typescript conceptual
 import { Data, Effect } from "effect"
 
 const _rows = {                                              // interior row anchor: the discriminant and guards anchor here, never on the assembled owner
@@ -359,7 +359,7 @@ export { Refused, ROUTE }
 - Law: pipeline order is wrap order — the first step is innermost, each later step encloses everything before it — so both resilience geometries are spellable and the declaration states which was chosen; which budget each geometry buys is `rails-and-effects.md`'s layering law, consumed here as settled.
 - Law: retry policy is a value — one `Schedule` composed once at the module and referenced by the seam — refined by `while`/`until` on the fault tag so only the transient family re-drives; a hand-rolled retry loop, or a schedule rebuilt inline per declaration, dissolves the policy the value form makes auditable.
 
-```typescript
+```typescript conceptual
 import { Data, Effect, Predicate, Schedule } from "effect"
 
 type Quote = { readonly key: string; readonly grade: number }

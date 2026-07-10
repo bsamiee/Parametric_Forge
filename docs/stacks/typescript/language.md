@@ -16,7 +16,7 @@ TypeScript on the dual compiler floor — TS7 `tsc` and TS6 `tsc6` in parity —
 - Absence law: `?:`, `| undefined`, and the unproven index are three distinct type-seam facts with three distinct spellings; the read spelling carries key provenance — dot proves a declared key, bracket marks index trust; domain absence is `Option`
 - Statement law: statements, `throw`, mutation, `as`, and `!` live only at `// BOUNDARY ADAPTER` sites, and load-order statements only at the boot edge; this page sanctions the in-process kernel. `Effect.gen` bindings are the rail's do-notation, never statement residue, and a platform-forced statement seam is legal only under its owning page's named exemption
 
-Treat source as modern erased-syntax TypeScript, never a compatibility layer. Replace an emit-bearing form, a declaration-site export, an inference-hidden signature, a pass-through re-export, a parallel import pair, or an assertion-repaired read the moment the active surface carries the concept in one form.
+Treat source as idiomatic erased-syntax TypeScript, never a compatibility layer. Replace an emit-bearing form, a declaration-site export, an inference-hidden signature, a pass-through re-export, a parallel import pair, or an assertion-repaired read the moment the active surface carries the concept in one form.
 
 ## [02]-[CANONICAL_CHOOSER]
 
@@ -93,7 +93,7 @@ Each contract fixes the placement rule the chooser row cannot state. Snippets co
 - Law: the value-plane import graph is a DAG — a cycle is split ownership and its repair moves the shared declaration to its owner, never defers the read behind a lazy accessor; a cycle whose every edge is `import type` erases to no cycle at all, so type-plane back-references are free exactly where value edges are illegal.
 - Boundary: which package a specifier may name is the exports-map edge; this site owns the statement forms inside one legal file.
 
-```typescript
+```typescript conceptual
 import { Array, type Duration, Option, Order, pipe } from "effect" // one statement per specifier: inline type specifiers ride the named list; Array shadows the global value plane deliberately
 import type { Frame } from "./frame.ts" // type-only module: the whole statement erases; Frame stays reachable in type positions
 import { type Gauge, admit } from "./gauge.ts"
@@ -133,7 +133,7 @@ export { Lens, spread } // one entry carries every meaning of Lens: the const va
 - Law: interior types are free — a `_`-declaration's checker-computed type costs nothing while no exported signature speaks it; the moment a public signature needs its keys, the declaration itself goes public under one name.
 - Boundary: package subpaths and per-runtime entry points are manifest surface; this site owns the shape of one module.
 
-```typescript
+```typescript conceptual
 import { Array, Option, Order, pipe } from "effect"
 
 const Band = { // public vocabulary: bare `as const` emits clean; the contract check homes below, not in a satisfies clause
@@ -166,7 +166,7 @@ export { Band, widest }                                    // the tail is the wh
 - Law: the class-interface merge is gated to the implanting seam — a same-name `interface` beside a `class` asserts instance members the class body never authors, which is legal exactly where a machine discharges the promise: generated-owner heritage whose constructor types what its prototype installs (`Data.Class`, `Effectable.Class`, `Streamable.Class` — implanting the `Pipeable` `.pipe` and `Inspectable` `toJSON`/`[NodeInspectSymbol]` surfaces off the shared prototype, the canonical members a body never writes) or a prototype implant the same module performs at its FFI seam; anywhere else the merge fabricates evidence — an `as`-grade assertion moved to the declaration plane, invisible at every call site.
 - Boundary: the derivation algebra the vocabulary table feeds is `derivation.md`'s, and the TypeId and variance-struct regime that legitimately rides same-name merging is `derivation.md`'s; the generated owner's identity semantics are `values.md`'s, and which owner form a domain product takes is `shapes.md`'s chooser; FFI prototype-implant mechanics are `boundaries.md`'s; this site owns which declaration form is legal.
 
-```typescript
+```typescript conceptual
 import { Data } from "effect"
 
 const Phase = { draft: 0, sealed: 1, retired: 2 } as const // the enum replacement: one object literal at runtime, ordinals as readable rows
@@ -190,7 +190,7 @@ export { Phase, Seal }                                     // Phase is one entry
 - Law: these forms live at the type-level seam — option bags, platform payloads, interop cells; a domain shape's absence is `Option` admitted at the Schema owner, and a type-seam bag never crosses into domain flow carrying `undefined`.
 - Boundary: the `Option` lift combinators are `values.md` material; Schema absence admission is `shapes.md`'s; this site owns the spelling and the read posture.
 
-```typescript
+```typescript conceptual
 import { Option } from "effect"
 
 const Grade = { low: 0, mid: 5, high: 9 } as const
@@ -225,7 +225,7 @@ export { Grade, overlay } // overlay is one entry: the operation and its merged 
 - Boundary: the conversion combinators that lift a kernel throw are `rails-and-effects.md`'s; worker and marshal statement seams are `boundaries.md`'s; this site owns the in-process compute kernel.
 - Boundary: the kernel's earn test — fold first, measure, then mark — and its algorithmic forms are `computation.md`'s; this site owns the mark's legality and its cast algebra.
 
-```typescript
+```typescript conceptual
 import { type Cause, Effect } from "effect"
 
 const _parse = (text: string): unknown => JSON.parse(text) as unknown // BOUNDARY ADAPTER: any-pin — the platform any never escapes; the parse throw exits only into the conversion below

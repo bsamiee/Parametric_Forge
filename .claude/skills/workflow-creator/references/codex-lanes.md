@@ -6,7 +6,7 @@ Routing a workflow lane to gpt-5.5 through a thin Claude wrapper. The `model` op
 
 The wrapper runs `model: 'sonnet', effort: 'low'` with a label prefixed `gpt-5.5:` — the workflow UI shows the wrapper's Claude model, so the label is the only indication of the real worker. It writes the task and the product schema to run scratch with the Write tool, launches codex detached fleet-grade (`--json` events plus the notify sink — the codex skill's signals section owns the exact line), and returns the thin RECEIPT — the product stays on disk for the terminal reader. It never performs, edits, judges, softens, summarizes, or relays the work itself.
 
-```js
+```js conceptual
 // TWO schemas: codex gets the PRODUCT schema (via the --output-schema file); the wrapper's
 // own schema is the thin RECEIPT — the product body never crosses the wire.
 // The wrapper is LAUNCH-ONLY: it returns a launch receipt in seconds; the orchestrator's

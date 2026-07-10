@@ -4,7 +4,7 @@ Use `heptabase file list` to resolve a PDF/media card ID into exportable file ID
 
 ## [01]-[COMMAND_SUMMARY]
 
-```bash
+```bash template
 heptabase file list --card-id <pdf-or-media-card-id>
 heptabase file export <fileId> --output-dir <existing-directory>
 ```
@@ -17,13 +17,13 @@ heptabase file export <fileId> --output-dir <existing-directory>
 
 If you have a PDF or media card ID, list its files first:
 
-```bash
+```bash template
 heptabase file list --card-id 22222222-2222-4222-8222-222222222222
 ```
 
 Example response:
 
-```json
+```json output-only
 {
   "cardId": "22222222-2222-4222-8222-222222222222",
   "cardType": "pdf",
@@ -46,7 +46,7 @@ Pick the file `id` whose `purpose` you need, then pass that `id` to `file export
 
 1. Create a scratch directory:
 
-```bash
+```bash copy-safe
 mktemp -d
 ```
 
@@ -54,7 +54,7 @@ Copy the returned directory path for the next command.
 
 2. Export the file:
 
-```bash
+```bash template
 heptabase file export 55555555-5555-4555-8555-555555555555 --output-dir <scratchDirFromMktemp>
 ```
 
@@ -62,7 +62,7 @@ heptabase file export 55555555-5555-4555-8555-555555555555 --output-dir <scratch
 
 Example response:
 
-```json
+```json output-only
 {
   "fileId": "55555555-5555-4555-8555-555555555555",
   "path": "/tmp/hepta-read/report-55555555-5555-4555-8555-555555555555.pdf",

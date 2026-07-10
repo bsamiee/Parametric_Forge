@@ -15,7 +15,7 @@ AppleScript, JXA, compiled OSA scripts, script bundles, Automator actions, Short
 
 `UTType.osaScript` carries the legacy `osas` OSType alongside `com.apple.applescript.script` and conforms to both `public.data` and `public.script`; `UTType.osaScriptBundle` conforms to `com.apple.bundle`, `com.apple.package`, and `public.script` together, because a `.scptd` is a package before it is a script. A saved applet or droplet carries no dedicated script UTI — `com.apple.application-bundle` is the ordinary application identity, and applet-ness is carried by the OSAKit storage type baked into the bundle at compile time plus the applet stub Mach-O at `Contents/MacOS`. JXA source text takes `com.netscape.javascript-source`, but JXA compiled bytecode reuses `com.apple.applescript.script` — the OSA component, not the type identifier, carries the `JavaScript` language dimension, so discrimination between a compiled AppleScript and a compiled JXA script is an `osalang` or component-identifier probe, never a UTI comparison.
 
-```swift
+```swift conceptual
 import UniformTypeIdentifiers
 
 enum ScriptArtifact: String, CaseIterable {
@@ -38,7 +38,7 @@ enum ScriptArtifact: String, CaseIterable {
 
 `UTExportedTypeDeclarations` binds only a tool that mints a new script-adjacent document type; a runner, editor, or workflow action that merely consumes the existing spine declares `CFBundleDocumentTypes` and `LSItemContentTypes` against the system-owned identifiers instead of exporting a parallel UTI. `.scptd` is the polymorphic artifact for embedded resources, script libraries, localized dictionaries, and bundle metadata — a flat `.scpt` earns deploy-target status only when the script owns no resource lookup, no embedded library, and no localized asset. `osacompile -o` selects package shape from the output extension: `.app` produces an applet or droplet, `.scptd` produces a bundled compiled script, and any other extension produces a flat compiled script. `osadecompile` is the review rail for a compiled artifact — a release pipeline stores `.applescript` as the source-control form and decompiles the shipped output during verification to prove the installed artifact still maps to reviewed text; execute-only output from `osacompile -x` removes readable source from the compiled artifact and is a distribution boundary the source-control rail never adopts as its own storage form.
 
-```bash
+```bash copy-safe
 osacompile -l AppleScript -o build/Task.scpt source/Task.applescript
 osacompile -l AppleScript -o build/Task.scptd source/Task.applescript
 osacompile -l JavaScript -o build/Task.app source/Task.jxa
@@ -63,7 +63,7 @@ The trust and lifecycle axis is three storage options composed as a bitmask:
 
 The `-t`/`-c` type and creator flags and the `-d`/`-r` resource-fork flags are storage-type selection expressed through the CLI rather than a separate axis.
 
-```objc
+```objc conceptual
 NSData *data = [script compiledDataForType:OSAStorageScriptBundleType
                          usingStorageOptions:(OSAPreventGetSource | OSAStayOpenApplet)
                                        error:&failure];
@@ -75,7 +75,7 @@ NSData *data = [script compiledDataForType:OSAStorageScriptBundleType
 
 Four ingress shapes reach automation code, and a reusable core normalizes all four before domain logic runs: AppleScript `run argv` receives a string list from `osascript`; Automator and Shortcuts `run` receive `{input, parameters}`; a droplet receives `open` with a list of Finder aliases; a JXA droplet receives `openDocuments` with a list of `Path` values.
 
-```applescript
+```applescript conceptual
 on normalize(payload)
 	if class of payload is list then return payload
 	return {payload}
@@ -94,7 +94,7 @@ end open
 
 `ignoring application responses` is a fire-and-forget Apple-event boundary; it never wraps a command whose result, error, or object specifier feeds later logic, and any such command nests back under `considering application responses`. `with timeout of n seconds` binds a command sent to an application object, not a command handled by the current script — a long application command carries an explicit timeout row, while local shell and Foundation work carries its own process or API timeout. A JXA script that needs Standard Additions sets `includeStandardAdditions` at the host boundary; application automation through object specifiers and Foundation bridge calls stay separate owner rows because JXA specifiers, Objective-C objects, and JavaScript values obey different coercion rules.
 
-```javascript
+```javascript conceptual
 ObjC.import("Foundation")
 
 const app = Application.currentApplication()
@@ -114,7 +114,7 @@ A script bundle places executable OSA code at `Contents/Resources/Scripts/main.s
 
 Automator's `Run AppleScript` action receives and returns `com.apple.applescript.object` list payloads through `on run {input, parameters}`; the action body is a workflow transform, so it returns the downstream payload explicitly rather than falling through. `Run JavaScript` uses `function run(input, parameters)`, and JXA action code returns ordinary JavaScript values only when the next action in the chain can coerce them through the OSA object bridge. `AMAppleScriptAction` hosts an `OSAScript` instance compiled from the action source, so a custom Automator action owns action UI, parameter storage, accepted and provided types, and script execution as one bundle contract.
 
-```applescript
+```applescript conceptual
 on run {input, parameters}
 	set rows to {}
 	repeat with itemRef in input
@@ -128,13 +128,13 @@ end run
 
 The global `Allow Running Scripts` switch under Shortcuts Advanced settings gates five privileged bridge actions — Run AppleScript, Run Shell Script, Run JavaScript for Mac Automation, Run JavaScript on Web Page, and Run Script Over SSH — which execute with full user privileges outside normal action guardrails. TCC for Automation, Files, and Accessibility still attaches to the responsible process, so the same shortcut earns different privacy prompts and different persistence across an app launch, a CLI invocation, and a background-automation launch context; a headless run that meets an unanswered consent prompt blocks rather than fails. External Shortcuts automation enters through the `shortcuts` CLI or the `Shortcuts Events` scripting dictionary. The CLI exposes four verbs — `run`, `list`, `view`, `sign` — and `shortcuts run` owns shell IPC with repeatable `--input-path` (accepting `-` for stdin and shell globs), `--output-path` (accepting `-`), and `--output-type` (a UTI, inferred from the output filename when omitted). `tell application "Shortcuts Events" to run shortcut ... with input ...` dispatches in the background without fronting the Shortcuts UI, while `tell application "Shortcuts"` launches the app. `shortcuts sign --mode anyone|people-who-know-me -i in.shortcut -o out.shortcut` is the distribution gate: `anyone` notarizes through iCloud for open sharing, `people-who-know-me` signs locally for contact-gated import, and an unsigned `.shortcut` file does not import on a hardened install.
 
-```applescript
+```applescript conceptual
 tell application "Shortcuts Events"
 	run shortcut "Normalize Intake" with input {"alpha", "beta"}
 end tell
 ```
 
-```bash
+```bash copy-safe
 shortcuts run "Normalize Intake" --input-path - --output-path - --output-type public.plain-text
 shortcuts sign --mode people-who-know-me -i Intake.shortcut -o Intake-signed.shortcut
 ```
@@ -147,7 +147,7 @@ App Intents is the sanctioned automation successor, reached only through an encl
 
 A Folder Action is a handler contract, not a callable API: every handler parameter is required, no handler returns a value, and the attached folder rides as the direct parameter.
 
-```applescript
+```applescript conceptual
 on adding folder items to thisFolder after receiving addedItems
 	repeat with addedItem in addedItems
 		my processAddedItem(thisFolder, addedItem)
@@ -157,7 +157,7 @@ end adding folder items to
 
 A hot folder drains itself or moves accepted work into a terminal subfolder; leaving processed files in the watched root repeats work and degrades Folder Actions throughput. `moving folder window for` is an opt-in contract only, unreliable across installed hosts — window-position automation belongs in a stay-open app or an explicit Finder script until host testing proves the event fires. A stay-open app owns periodic work through `idle`, which returns the next polling interval in seconds, and releases resources in `quit`.
 
-```applescript
+```applescript conceptual
 property pending : {}
 
 on idle
@@ -177,7 +177,7 @@ A droplet routes Finder drops through AppleScript `open` or JXA `openDocuments`,
 
 A Mail rule script implements `perform mail action with messages`, whose direct parameter is a message list; `in mailboxes` appears for a menu-invoked script and `for rule` appears for a rule-invoked script. The handler wraps in `using terms from application "Mail"` so compilation succeeds outside Mail while preserving Mail's own command terminology and parameter labels.
 
-```applescript
+```applescript conceptual
 using terms from application "Mail"
 	on perform mail action with messages theseMessages for rule theRule
 		tell application "Mail"
@@ -193,7 +193,7 @@ end using terms from
 
 Foundation scripting support exposes app scriptability through `NSScriptCommand`, `NSScriptObjectSpecifier`, `NSScriptClassDescription`, `NSScriptExecutionContext`, and a `.sdef` dictionary — a Cocoa app's scriptability is a model contract, never a string-command adapter. `NSAppleScript` and OSAKit's `OSAScript` are host-side execution boundaries: both compile and execute OSA code, return `NSAppleEventDescriptor`, and report structured error dictionaries, without turning AppleScript into a typed Swift API. Scripting Bridge belongs to a native client that wants Objective-C messaging over a scriptable application's dictionary; generated headers and `.sdef` remain the contract source rather than the bridge itself. `OSACopyScriptingDefinitionFromURL(CFURLRef, SInt32 modeFlags, CFDataRef *sdef)`, part of OpenScripting under `Carbon/Carbon.h`, is the runtime dictionary rail that a Command Line Tools-only host reaches without the full-Xcode requirement of the `sdef`/`sdp` executables. `modeFlags` is reserved as `kOSAModeNull`, the returned `CFData` is `.sdef` XML, and the call auto-synthesizes a dictionary from legacy `'aete'` resources and `scriptSuite`/`scriptTerminology` plist pairs. TCC attaches automation consent to the sending process, so running identical script text through Script Editor, `osascript`, Automator, Shortcuts, a signed applet, or an embedding host earns a distinct privacy prompt and a distinct persistence record for each sender.
 
-```swift
+```swift conceptual
 var sdef: Unmanaged<CFData>?
 let status = OSACopyScriptingDefinitionFromURL(appURL as CFURL, 0, &sdef)
 guard status == noErr, let xml = sdef?.takeRetainedValue() as Data? else {

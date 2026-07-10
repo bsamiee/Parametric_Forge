@@ -33,14 +33,15 @@ in {
     [${tool}:indentation]
     tab_space_size = ${i}
   '';
-  # Never-shadow discovery kernel: prints the first governing project config
-  # from $PWD up to and including the filesystem root, exit 1 when none owns
-  # the tree. Wrappers embed it so every upward walk shares one correctness.
-  walkUp = names: ''
+  # Never-shadow discovery kernel: _walk_up <name>... prints the first
+  # governing project config from $PWD up to and including the filesystem
+  # root, exit 1 when none owns the tree. Wrappers embed it so every upward
+  # walk shares one correctness.
+  walkUp = ''
     _walk_up() {
         local dir="$PWD" name
         while :; do
-            for name in ${builtins.concatStringsSep " " names}; do
+            for name in "$@"; do
                 [[ -f "$dir/$name" ]] && {
                     printf '%s\n' "$dir/$name"
                     return 0

@@ -8,7 +8,7 @@ The catalog reads in families — ownership; identity, inverse, and seam; topolo
 
 [CONFRONTATION_SET] — The grounding product is a flat entry list, one row per verified finding; a cross-owner finding carries the mirror anchor beside the primary:
 
-```markdown
+```markdown template
 - [<AXIS>]: <path>:<line> — <observed-fact-in-one-clause>
 - [<AXIS>]: <path>:<line> ⇄ <path>:<line> — <the-fact-and-how-the-two-ends-diverge>
 ```

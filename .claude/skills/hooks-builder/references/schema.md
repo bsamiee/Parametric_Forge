@@ -2,7 +2,7 @@
 
 Configuration nests three levels: a hook event, a matcher group filtering when it fires, and one or more hook handlers that run when matched. All matching handlers run in parallel; identical handlers deduplicate automatically — command hooks by command string plus `args`, HTTP hooks by URL.
 
-```json
+```json template
 {
   "hooks": {
     "PreToolUse": [{

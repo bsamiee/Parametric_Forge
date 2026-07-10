@@ -36,7 +36,7 @@ Apple Silicon (ARM64) required after Fall 2027. Flag Intel macOS labels with dep
 |  [01]   | **`ubuntu-24.04-arm`** | Free for public repos; private repos require Team/Enterprise. |
 |  [02]   | **`ubuntu-22.04-arm`** | Free for public repos; private repos require Team/Enterprise. |
 
-[IMPORTANT] ARM64 labels: canonical format is `-arm` suffix (NOT `-arm64`). `ubuntu-latest-arm64` and `ubuntu-24.04-arm64` are **invalid** — flag as incorrect label.
+[IMPORTANT] ARM64 labels: canonical format is `-arm` suffix (NOT `-arm64`). `ubuntu-latest-arm64` and `ubuntu-24.04-arm64` are invalid — flag as incorrect label.
 
 ### [03.1]-[DETECTION_RULES]
 
@@ -73,7 +73,7 @@ Larger runners (Team/Enterprise): up to 1,000 concurrent jobs; 100 GPU max.
 
 ## [07]-[MULTI_ARCHITECTURE]
 
-```yaml
+```yaml conceptual
 strategy:
   matrix:
     include:
@@ -90,7 +90,7 @@ runs-on: ${{ matrix.runner }}
 
 ### [08.1]-[ACTIONLINT_LABELS]
 
-```yaml
+```yaml conceptual
 # .github/actionlint.yaml
 self-hosted-runner:
   labels: [my-custom-runner, gpu-runner, arm-runner]

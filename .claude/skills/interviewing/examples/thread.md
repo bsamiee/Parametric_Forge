@@ -14,7 +14,7 @@ The ask names a mechanism, not a problem: a cache is a means already chosen, the
 
 Axes selected by the request — FRAMING, CONSERVATION, IDENTITY, APPROACH, TEMPORAL — probed over the pipeline subtree and the persistence seam. The confrontation set:
 
-```markdown
+```markdown generated
 - [FRAMING]: <unit>/pipeline/render.md:41 — render outputs are already content-keyed through the artifact index; the asked-for cache exists
 - [FRAMING]: <unit>/pipeline/fonts.md:12 — font subsetting re-runs whole on every build, keyed by nothing; stage timings put it at 41 of 56 cold seconds
 - [CONSERVATION]: <unit>/pipeline/render.md:63 ⇄ <unit>/deploy/publish.md:27 — render receipts mint at both ends; routed to its own tracked card
@@ -25,7 +25,7 @@ Axes selected by the request — FRAMING, CONSERVATION, IDENTITY, APPROACH, TEMP
 
 The FRAMING rows indict the request: the asked-for cache exists, and the pain — cold-rebuild wall time — anchors at the one un-keyed stage the cache never touches. The extracted goal replaces the ask as the interview's subject, and the ask enters the fan as one candidate resolution among its rivals.
 
-```markdown
+```markdown generated
 [CONSTRAINT] Unit of success: cold-rebuild wall time, not cache presence.
 [CONSTRAINT] One identity rail — the artifact index is the only content-key regime (house law, recorded, not asked).
 [CANDIDATE] The original ask survives as option: a front cache layer.
@@ -74,7 +74,7 @@ The descent terminates: the next question detects no new gap. Stratum 2's reject
 
 ## [06]-[RECORD]
 
-```markdown
+```markdown generated
 - [01]-[ACCEPTED]: Rebuild latency ownership
   - Context: <unit>/pipeline/fonts.md:12 — font subsetting re-runs whole on every build and carries
     41 of 56 cold seconds; render outputs are already content-keyed at <unit>/pipeline/render.md:41,

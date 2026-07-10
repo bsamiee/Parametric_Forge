@@ -24,7 +24,7 @@
 
 [CRITICAL] Direct interpolation of `${{ github.event.* }}` in `run:` blocks enables shell command injection from attacker-controlled PR titles, branch names, and commit messages.
 
-**Untrusted fields** (attacker-controlled in fork PRs):
+[UNTRUSTED_FIELDS]: (attacker-controlled in fork PRs):
 
 | [INDEX] | [FIELD]                                 | [ATTACK_VECTOR]                        |
 | :-----: | :-------------------------------------- | :------------------------------------- |
@@ -38,7 +38,7 @@
 |  [08]   | `github.event.discussion.title`         | Discussion title.                      |
 |  [09]   | `github.event.discussion.body`          | Discussion body.                       |
 
-```yaml
+```yaml conceptual
 # UNSAFE: direct interpolation in run: block
 - run: printf '%s\n' "${{ github.event.pull_request.title }}"
 
@@ -48,7 +48,7 @@
   run: printf '%s\n' "$PR_TITLE"
 ```
 
-[REFERENCE] Injection prevention: [expressions-and-contexts.md](./expressions-and-contexts.md).
+[REFERENCE] Injection prevention: `expressions-and-contexts.md`.
 
 ## [03]-[DEPRECATED_COMMANDS]
 
@@ -59,7 +59,7 @@
 |  [03]   | `::set-env name=KEY::VALUE`    | Removed.            | `echo "KEY=VALUE" >> "$GITHUB_ENV"`    |
 |  [04]   | `::add-path::VALUE`            | Removed.            | `echo "VALUE" >> "$GITHUB_PATH"`       |
 
-**Still valid workflow commands:**
+[STILL_VALID_WORKFLOW_COMMANDS]:
 - `::add-mask::VALUE` — dynamically mask a value in subsequent logs.
 - `::debug::MESSAGE` — debug-level log output.
 - `::notice file=F,line=L::MESSAGE` — annotation on workflow run page.
@@ -102,7 +102,7 @@
 |  [04]   | Missing `timeout-minutes:`                        | —                 | Default is 6 hours — add explicit timeout to every job. |
 |  [05]   | `-arm64` suffix on runner label                   | `runner-label`    | Use `-arm` suffix: `ubuntu-24.04-arm` not `-arm64`.     |
 
-- Valid runner labels: [runners.md](./runners.md)
+- Valid runner labels: `runners.md`
 
 ## [06]-[REUSABLE_WORKFLOW_ERRORS]
 
@@ -122,7 +122,7 @@
 |  [02]   | Too-frequent schedule     | —                 | Minimum interval is every 5 minutes for public repos (rate limited by GitHub).   |
 |  [03]   | Timezone expectation      | —                 | All `schedule` cron expressions evaluate in **UTC only** — no timezone override. |
 
-```yaml
+```yaml conceptual
 # Bad:  cron: '0 0 * * 8'    # Weekday 8 does not exist
 # Bad:  cron: '* * * * *'    # Every minute — will be rate-limited
 # Good: cron: '0 0 * * 0'    # Sunday at midnight UTC

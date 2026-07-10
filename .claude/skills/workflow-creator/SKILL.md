@@ -56,7 +56,7 @@ The rules that break runs, each carried in depth by its owning reference:
 
 Two parts, strict order. First the `meta` literal:
 
-```js
+```js conceptual
 export const meta = {
   name: 'review-changes',                                   // required — the workflow's name
   description: 'Review changed files, verify each finding', // required — shown in the permission dialog
@@ -79,7 +79,7 @@ Body files follow the canonical section order `[CONSTANTS]` `[INPUTS]` `[MODELS]
 
 Both bundled checks gate every workflow before it spends a token:
 
-```bash
+```bash template
 node ${CLAUDE_SKILL_DIR}/scripts/validate-workflow.mjs <file.js>
 node ${CLAUDE_SKILL_DIR}/scripts/dry-run.mjs <file.js> [--args '<json>'] [--fixtures '<json>']
 ```

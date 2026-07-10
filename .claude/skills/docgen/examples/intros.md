@@ -8,11 +8,11 @@ An index-doc lead opens with anything but the unit's own charter — the doc-set
 
 - Detection: An index lead whose first sentence names siblings, routing, or a reader tour before the unit's owned capability.
 - Rejected:
-  ```markdown
+  ```markdown rejected
   This README routes the design pages and registers the packages, and the architecture doc carries the domain map for the six sub-domains.
   ```
 - Accepted:
-  ```markdown
+  ```markdown accepted
   `<unit>` owns host-free geometry: evidence graduation, scan processing, and the tessellation rail that serves every cross-boundary consumer.
   ```
 - Reason: The charter sentence states what the unit owns and the one boundary it holds; routing and sibling roles belong to the router surface, not the lead.
@@ -24,11 +24,11 @@ A spec-page lead restates higher law or re-teaches a sibling instead of naming i
 
 - Detection: An implementation-page lead that recaps corpus law or a sibling's mechanics before its own byte-truth.
 - Rejected:
-  ```markdown
+  ```markdown rejected
   As the architecture doc explains, geometry is host-free; this page, in this section, describes how the tessellation daemon fits into that.
   ```
 - Accepted:
-  ```markdown
+  ```markdown accepted
   The tessellation serve owner frames per-element output as append-only positional rows keyed by the content hash.
   ```
 - Reason: The spec page owns byte-truth and flow; higher law is composed silently and a sibling is named only at a routing pointer.
@@ -40,11 +40,11 @@ A tool-doc lead narrates a command tour or mirrors help output instead of statin
 
 - Detection: A tool lead that walks flags or transcribes help text a fresh agent reads from `--help` directly.
 - Rejected:
-  ```markdown
+  ```markdown rejected
   Run the tool with `--input` and `--output`; you can also pass `--json` for machine output, and `--help` lists every flag in detail.
   ```
 - Accepted:
-  ```markdown
+  ```markdown accepted
   `<tool>` owns the changed-file static, test, and metadata gates; every verb routes through its own `--help`.
   ```
 - Reason: A tool doc is durable law: it states the contract and points at live help; mirrored flag prose drifts the instant the tool changes.
@@ -56,11 +56,11 @@ The lead's grammatical subject is the document or the doc-set, so it states no l
 
 - Detection: A lead whose subject is the artifact itself — its job, its relations, its place in the corpus.
 - Rejected:
-  ```markdown
+  ```markdown rejected
   This file describes the persistence layer and how it relates to the compute and geometry packages across the monorepo.
   ```
 - Accepted:
-  ```markdown
+  ```markdown accepted
   `<layer>` owns the content-addressed artifact index and the decode contract every cross-boundary reader binds.
   ```
 - Reason: A document whose subject is itself carries no invariant; N docs narrating the doc-set is N forks of one fact plus self-description.
@@ -72,12 +72,12 @@ The lead crams a member inventory, a sub-domain roster, or wire mechanism behind
 
 - Detection: A lead carrying a parenthetical roster or a mechanism clause that a lower tier owns.
 - Rejected:
-  ```markdown
+  ```markdown rejected
   This package carries the domain map (ingestion, registration, deviation, reconstruction, analysis, costing), and the daemon streams checksum-framed
   rows keyed by the content hash over the sync rail.
   ```
 - Accepted:
-  ```markdown
+  ```markdown accepted
   `<unit>` owns host-free geometry capability and the rail that serves every cross-boundary consumer.
   ```
 - Reason: A lead carrying a roster and a wire mechanism holds a lower tier's payload; the sub-domain list lives in the fenced tree and the framing lives at its owner.

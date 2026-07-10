@@ -8,7 +8,7 @@ Vector storage and similarity search. HNSW, IVFFlat, and DiskANN indexes for app
 
 ### [01.1]-[SCHEMA_INDEX_PATTERNS]
 
-```sql
+```sql conceptual
 CREATE EXTENSION vector;
 ALTER TABLE documents ADD COLUMN embedding vector(1536);
 
@@ -38,7 +38,7 @@ ORDER BY embedding <=> $1::vector LIMIT 20;
 
 ### [01.2]-[QUERY_PATTERNS]
 
-```sql
+```sql conceptual
 SELECT id, 1 - (embedding <=> $1::vector) AS similarity
 FROM documents ORDER BY embedding <=> $1::vector LIMIT 20;
 
@@ -64,7 +64,7 @@ ORDER BY embedding <=> $1::vector LIMIT 20;
 
 - Distance operators: `<->` (L2), `<=>` (cosine), `<#>` (negative inner product — ASC = most similar)
 - HNSW `ef_construction` affects build quality; `ef_search` (runtime) controls recall/speed tradeoff
-- Iterative scan (0.8+): `relaxed_order` (approximate, faster), `strict_order` (exact, re-sorts after expansion)
+- Iterative scan (`0.8+`): `relaxed_order` (approximate, faster), `strict_order` (exact, re-sorts after expansion)
 - `hnsw.max_scan_tuples` (default 20000): caps tuples visited — increase for large filtered sets, -1 for unlimited
 - IVFFlat requires `VACUUM` after bulk insert — stale statistics degrade recall
 - DiskANN for >1M vectors or memory-constrained; HNSW for <1M with RAM budget
@@ -76,7 +76,7 @@ ORDER BY embedding <=> $1::vector LIMIT 20;
 
 Full-text search with BM25 relevance scoring. Replaces `ts_rank_cd` for search-quality ranking.
 
-```sql
+```sql conceptual
 CREATE EXTENSION pg_search;
 CREATE INDEX ON documents USING bm25 (id, title, body)
     WITH (key_field = 'id', text_fields = '{"title": {"tokenizer": {"type": "default"}}, "body": {}}');
@@ -89,7 +89,7 @@ ORDER BY relevance DESC LIMIT 20;
 
 Advanced query syntax — phrase, regex, fuzzy, boost:
 
-```sql
+```sql conceptual
 -- Phrase match (exact sequence)
 SELECT id, paradedb.score(id) FROM documents
 WHERE id @@@ paradedb.phrase('body', 'distributed consensus protocol');
@@ -115,7 +115,7 @@ WHERE id @@@ paradedb.regex('title', 'post(gres|gre).*');
 
 Tokenizer configuration — per-field control in index definition:
 
-```sql
+```sql conceptual
 CREATE INDEX ON documents USING bm25 (id, title, body)
     WITH (key_field = 'id',
           text_fields = '{
@@ -136,7 +136,7 @@ CREATE INDEX ON documents USING bm25 (id, title, body)
 
 ## [03]-[HYBRID_SEARCH_BM25_PGVECTOR_RRF]
 
-```sql
+```sql conceptual
 WITH semantic AS (
     SELECT id, ROW_NUMBER() OVER (ORDER BY embedding <=> $1::vector) AS rank_s
     FROM documents ORDER BY embedding <=> $1::vector LIMIT 100
@@ -151,13 +151,13 @@ FROM semantic s FULL OUTER JOIN bm25 b ON s.id = b.id
 ORDER BY rrf_score DESC LIMIT 20;
 ```
 
-RRF formula: `rrf_score = Σ 1/(k + rank_i)` where k=60 dampens rank differences. RRF operates on **ranks only** — never combine raw BM25 scores with raw vector distances (different scales, incomparable). k=60 means a result must rank in top ~100 to contribute meaningful signal. Weighted variant: `w_s/(k + rank_s) + w_b/(k + rank_b)` for asymmetric retrieval (e.g., 70/30 semantic/keyword). Without pg_search: substitute tsvector + `ts_rank_cd` for BM25 CTE.
+RRF formula: `rrf_score = Σ 1/(k + rank_i)` where k=60 dampens rank differences. RRF operates on ranks only — never combine raw BM25 scores with raw vector distances (different scales, incomparable). k=60 means a result must rank in top ~100 to contribute meaningful signal. Weighted variant: `w_s/(k + rank_s) + w_b/(k + rank_b)` for asymmetric retrieval (e.g., 70/30 semantic/keyword). Without pg_search: substitute tsvector + `ts_rank_cd` for BM25 CTE.
 
 ## [04]-[PG_TRGM]
 
 Trigram-based fuzzy text search and similarity scoring.
 
-```sql
+```sql conceptual
 CREATE EXTENSION pg_trgm;
 CREATE INDEX ON users USING gin (name gin_trgm_ops);   -- faster for LIKE/ILIKE/regex
 CREATE INDEX ON users USING gist (name gist_trgm_ops);  -- supports ORDER BY similarity + KNN
@@ -182,7 +182,7 @@ FROM users WHERE $1 <% name ORDER BY wsim DESC LIMIT 10;
 
 Spatial data types, geodesic calculations, and geometric operations.
 
-```sql
+```sql conceptual
 CREATE EXTENSION postgis;
 CREATE INDEX ON locations USING gist (geom);
 
@@ -213,13 +213,13 @@ SELECT id, ST_CoverageClean(geom) OVER (PARTITION BY region) AS cleaned_geom FRO
 - `ST_DWithin` uses GiST index — `ST_Distance < threshold` does NOT
 - Always `ST_SetSRID(ST_MakePoint(lon, lat), 4326)` — longitude first, latitude second
 - Cast to geography for meters: `geom::geography`; back for spatial index: `::geometry`
-- `ST_CoverageClean` is a **window function** — requires `OVER ()` clause
+- `ST_CoverageClean` is a window function — requires `OVER ()` clause
 
 ## [06]-[TIMESCALEDB_2_22]
 
 Hypertables, continuous aggregates, columnar compression, and retention policies.
 
-```sql
+```sql conceptual
 SELECT create_hypertable('metrics', by_range('time', INTERVAL '1 day'));
 ALTER TABLE metrics SET (
     timescaledb.compress, timescaledb.compress_segmentby = 'device_id',
@@ -230,7 +230,7 @@ SELECT add_retention_policy('metrics', INTERVAL '90 days');
 
 ### [06.1]-[CONTINUOUS_AGGREGATES]
 
-```sql
+```sql conceptual
 CREATE MATERIALIZED VIEW metrics_hourly WITH (timescaledb.continuous) AS
 SELECT time_bucket('1 hour', time) AS bucket, device_id,
        avg(value) AS avg_value, max(value) AS max_value, count(*) AS sample_count
@@ -252,11 +252,11 @@ FROM metrics_hourly GROUP BY day_bucket, device_id WITH NO DATA;
 - Table must be empty before `create_hypertable` (or `migrate_data => true`)
 - Compression `segmentby`: columns in WHERE for selective decompression — wrong segmentby forces full decompression
 - Real-time aggregation enabled by default — queries union materialized + recent raw data
-- Hierarchical CAGGs (2.9+, finalized format from 2.7+): child `time_bucket` must be multiple of parent
-- UUIDv7 compression: 30% better ratio; `timescaledb.enable_uuid_compression` GUC (default on 2.23+)
-- Direct Compress (2.23+): incoming inserts write directly to compressed columnar storage — bypasses the uncompressed→compress cycle for append-only hypertables. Enable via `ALTER TABLE metrics SET (timescaledb.compress_direct_write = true)`. Reduces write amplification and compression policy lag
+- Hierarchical CAGGs (`2.9+`, finalized format from `2.7+`): child `time_bucket` must be multiple of parent
+- UUIDv7 compression: 30% better ratio; `timescaledb.enable_uuid_compression` GUC (default on `2.23+`)
+- Direct Compress (`2.23+`): incoming inserts write directly to compressed columnar storage — bypasses the uncompressed→compress cycle for append-only hypertables. Enable via `ALTER TABLE metrics SET (timescaledb.compress_direct_write = true)`. Reduces write amplification and compression policy lag
 - Concurrent CAGG refresh: non-overlapping time ranges refresh in parallel workers — `SELECT add_continuous_aggregate_policy(..., schedule_interval => INTERVAL '5 min')` with overlapping windows is safe as long as `start_offset > end_offset` (non-overlapping materialization ranges)
-- **Always pair hypertables with BRIN indexes on the time dimension** — chunk exclusion is coarse-grained (eliminates whole chunks), BRIN provides fine-grained intra-chunk filtering for efficient range scans within individual chunks
+- Always pair hypertables with BRIN indexes on the time dimension — chunk exclusion is coarse-grained (eliminates whole chunks), BRIN provides fine-grained intra-chunk filtering for efficient range scans within individual chunks
 
 ### [06.3]-[TIMESCALEDB_VS_PG_PARTMAN]
 
@@ -272,7 +272,7 @@ FROM metrics_hourly GROUP BY day_bucket, device_id WITH NO DATA;
 
 In-database job scheduling via cron expressions.
 
-```sql
+```sql conceptual
 SELECT cron.schedule('refresh-mat-view', '*/15 * * * *',
     $$REFRESH MATERIALIZED VIEW CONCURRENTLY mv_dashboard$$);
 SELECT cron.schedule_in_database('maintenance', '0 3 * * *',
@@ -290,7 +290,7 @@ SELECT cron.unschedule('refresh-mat-view');
 
 Automated partition lifecycle: creation, retention, and template management.
 
-```sql
+```sql conceptual
 CREATE EXTENSION pg_partman;
 CREATE TABLE events (
     id uuid PRIMARY KEY, created_at timestamptz NOT NULL, payload jsonb NOT NULL
@@ -318,7 +318,7 @@ SELECT cron.schedule('partman-maintenance', '0 * * * *',
 
 Required for EXCLUDE constraints mixing equality + range operators.
 
-```sql
+```sql conceptual
 CREATE EXTENSION btree_gist;
 -- Enables: EXCLUDE USING gist (employee_id WITH =, assignment_range WITH &&)
 ```
@@ -329,9 +329,9 @@ CREATE EXTENSION btree_gist;
 
 Analytical query acceleration via embedded DuckDB engine. OLAP complement to PostgreSQL OLTP.
 
-**Decision rule:** When the prompt mentions analytical workloads on time-series or transactional data at scale (>10M rows/day, dashboard aggregations, ad-hoc OLAP, heavy GROUP BY over large tables), recommend pg_duckdb with `SET LOCAL duckdb.force_execution = true`. This is NOT optional for heavy OLAP — pure PostgreSQL sequential scans on 100M+ row tables are insufficient for interactive analytical query latency.
+[DECISION_RULE]: When the prompt mentions analytical workloads on time-series or transactional data at scale (>10M rows/day, dashboard aggregations, ad-hoc OLAP, heavy GROUP BY over large tables), recommend pg_duckdb with `SET LOCAL duckdb.force_execution = true`. This is NOT optional for heavy OLAP — pure PostgreSQL sequential scans on 100M+ row tables are insufficient for interactive analytical query latency.
 
-```sql
+```sql conceptual
 CREATE EXTENSION pg_duckdb;
 
 -- Analytical aggregation — 1000x+ over native PG for wide GROUP BY
@@ -390,7 +390,7 @@ GROUP BY region;
 
 Declarative JSONB validation via JSON Schema.
 
-```sql
+```sql conceptual
 CREATE EXTENSION pg_jsonschema;
 -- jsonb_matches_schema(schema::json, data::jsonb) → boolean
 -- See ddl.md for CHECK constraint integration pattern
@@ -401,8 +401,8 @@ CREATE EXTENSION pg_jsonschema;
 
 ## [12]-[EXTENSION_INTERACTION_CONTRACTS]
 
-- **pgvector + pg_search**: BM25 + semantic RRF hybrid (see Hybrid Search section)
-- **pgvector + pg_trgm**: semantic + fuzzy text via weighted linear combination; vector CTE + trigram CTE joined on PK
-- **TimescaleDB + pg_partman**: mutually exclusive on same table — TimescaleDB manages own chunking; pg_partman for non-time-series only
-- **pgaudit**: see security.md for compliance-grade audit logging
-- **btree_gist + range types**: prerequisite pairing for EXCLUDE constraints with mixed operator types
+- [PGVECTOR_PG_SEARCH]: BM25 + semantic RRF hybrid (see Hybrid Search section)
+- [PGVECTOR_PG_TRGM]: semantic + fuzzy text via weighted linear combination; vector CTE + trigram CTE joined on PK
+- [TIMESCALEDB_PG_PARTMAN]: mutually exclusive on same table — TimescaleDB manages own chunking; pg_partman for non-time-series only
+- [PGAUDIT]: see security.md for compliance-grade audit logging
+- [BTREE_GIST_RANGE_TYPES]: prerequisite pairing for EXCLUDE constraints with mixed operator types

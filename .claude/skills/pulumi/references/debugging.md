@@ -12,7 +12,7 @@ When nothing identifies the operation, the target is the operator's most recent 
 
 Failed updates and failed previews both record engine events; the error lives in the diagnostic messages inside them.
 
-```bash
+```bash template
 # Failed update — by version number
 pulumi api /api/stacks/{orgName}/{projectName}/{stackName}/update/<version>/events \
   | jq -r '.events[].diagnosticEvent | select(. != null) | "[\(.severity)] \(.message)"' \

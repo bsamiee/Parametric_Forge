@@ -90,7 +90,7 @@ Each contract fixes the placement rule its chooser rows cannot state. Snippets c
 - Law: the tuple spread holds `Schema.Literal`'s non-empty overload and preserves the exact literal tuple; spreading derived keys lands in the widened `ReadonlyArray` overload and demotes the schema to `SchemaClass<Kind>` — non-emptiness and order are tuple facts stated once at the anchor, never assertion repairs at the seam.
 - Boundary: the stated-annotation export gate is `language.md`'s; the Schema owner that admits the wire value, and the class families vocabularies embed into, are `shapes.md`'s; dispatch composed over row lookups is `surfaces-and-dispatch.md`'s.
 
-```typescript
+```typescript conceptual
 import { Schema, type Types } from "effect"
 
 const _kinds = ["narrow", "level", "broad"] as const         // interior key anchor: order, iteration, and non-emptiness are tuple facts stated once
@@ -135,7 +135,7 @@ export { Tier }
 - Law: the registry is type-plane only — the paired runtime row arrives by registration at the composition graph, never a mutable module-level table; `services-and-layers.md` owns registration.
 - Boundary: `declare module` augmentation capturing a foreign package's codec quirk is `boundaries.md`'s; this seam owns own-registry row contribution only.
 
-```typescript
+```typescript conceptual
 interface Registry {                                         // the one sanctioned open interface: the row set is open, the row shape is not
   readonly narrow: { readonly weight: 5; readonly admit: (raw: string) => boolean }
 }
@@ -171,7 +171,7 @@ export type { Registry }
 - Law: generation is type-plane — a key the runtime must compute crosses at a value, because runtime case conversion widens to `string` and cannot index a generated record; a family the runtime addresses by key anchors as table rows instead.
 - Boundary: domain shape variants, partial views, and wire projections derive on the Schema owner in `shapes.md`; `Match.exhaustive` is the residue proof's combinator form and `surfaces-and-dispatch.md`'s; kernel legality is `language.md`'s.
 
-```typescript
+```typescript conceptual
 import type { Effect } from "effect"
 
 const Signal = {
@@ -219,7 +219,7 @@ export { quota, Signal, toll }
 - Law: pre-solving is not renaming — the instantiation expression changes the type surface by monomorphizing the generic to the domain shape, and the binding carries the domain role's semantic name; a binding that changes neither type nor name is the deleted hop.
 - Boundary: data-first/data-last pairing on a pre-solved operator is `surfaces-and-dispatch.md`'s.
 
-```typescript
+```typescript conceptual
 import { Array } from "effect"
 
 type Step = { readonly lane: "bulk" | "live"; readonly take: number } // the lane union lives in the field: consumers project Step["lane"], never a parallel alias
@@ -258,7 +258,7 @@ export type { Step }
 - Law: the relation holds at depth 2 — `T[K]` reaches each row through at most one property step before the function layer: one shallow value site drives, any number of function sites consume; burying the driving site breaks the reverse map, and the repair lifts one value position to depth 1, never annotates lambdas.
 - Boundary: `satisfies`-checked handler records and `Match` dispatch over these rows are `surfaces-and-dispatch.md`'s; this contract owns the inference mechanics.
 
-```typescript
+```typescript conceptual
 declare namespace lattice {                                  // the row contract rides the operation's own merged hub: one export serves both planes
   type Cell<A> = { readonly seed: A; readonly step: (state: A, tick: number) => A }
 }
@@ -294,7 +294,7 @@ export { lattice }
 - Law: decomposition is ASCII-bounded — a single-step `infer` split advances by UTF-16 code unit under TS6 `tsc6` and by code point under TS7 `tsc`, so a literal beyond ASCII has no parity-stable decomposition; alphabets past ASCII split at the value level, and the type derives from that computation's anchor.
 - Boundary: exhaustive dispatch over an extracted union is `surfaces-and-dispatch.md`'s; variance declaration and witness on public carriers is the nominal-carrier contract's.
 
-```typescript
+```typescript conceptual
 import type { Effect } from "effect"
 
 type Realm = "doc" | "layer"                                 // type anchor: no runtime row exists, so the union itself anchors the correspondence
@@ -339,7 +339,7 @@ export type { Facet, Flow, Parse, Realm, Trail, Verb }
 - Law: the fence is plural instantiation — the lambda earns existence when combinator call sites apply distinct instances; when every call site names one container, the combinator collapses into that container's module and the lambda dies.
 - Boundary: which container a domain value rides, and the instance merge algebra over `struct` and `tuple` composition, are `values.md`'s.
 
-```typescript
+```typescript conceptual
 import * as covariant from "@effect/typeclass/Covariant"
 import * as ArrayInstances from "@effect/typeclass/data/Array"
 import * as OptionInstances from "@effect/typeclass/data/Option"
@@ -382,7 +382,7 @@ export type { Ranked, RankedTypeLambda }
 - Law: module-instance identity is two-plane — `Symbol.for` holds the runtime key while the `unique symbol` declaration holds the type identity, and a runtime companion the carrier must hold once across duplicated module loads — an intern table, a registry cell — anchors as `GlobalValue.globalValue(FeedTypeId, () => value)` keyed by the same symbol; the admission is identity, never state: a `globalValue` holding what a Layer could own is a module-level live instance under a global key, and capability still enters through the requirement channel.
 - Boundary: brand-in-field refinements on admitted values are `shapes.md`'s; the `TypeLambda` an own carrier needs to ride typeclass combinators is this page's container contract.
 
-```typescript
+```typescript conceptual
 import { Function, type Types } from "effect"
 
 const FeedTypeId: unique symbol = Symbol.for("<scope>/Feed") // annotated unique symbol: Symbol.for holds one nominal key across module instances
@@ -424,7 +424,7 @@ export type { Feed }
 - Law: the subtraction law — each transition subtracts its key from the open set and intersects it into the filled record, so the protocol is order-free, refills are compile errors, and completion is exactly the spent key set.
 - Boundary: a builder whose product is a domain shape terminates at the Schema owner in `shapes.md`; runtime acquire/release ordering is `rails-and-effects.md`'s.
 
-```typescript
+```typescript conceptual
 import { Record } from "effect"
 
 type Slots = { readonly route: string; readonly limit: number; readonly lane: "bulk" | "live" }

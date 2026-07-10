@@ -13,49 +13,45 @@
   ...
 }: let
   manifest = import ../../../../overlays/manifest.nix;
+  style = import ../../../style.nix;
   # shfmt reads .editorconfig only when invoked without style flags; the
   # wrapper injects the house style solely when the caller passes no style
   # flag and no .editorconfig governs the working tree, so project law wins.
+  # Go's flag parser accepts -flag, --flag, and both =value forms alike.
   shfmt = pkgs.writeShellApplication {
     name = "shfmt";
     text = ''
+      ${style.walkUp}
       for arg in "$@"; do
-        case "$arg" in
-          -i | -i=* | -ci | -sr | -kp | -fn | -bn | -mn)
+        [[ "$arg" == -* ]] || continue
+        flag="''${arg#-}"
+        flag="''${flag#-}"
+        case "$flag" in
+          i | i=* | ci | ci=* | sr | sr=* | kp | kp=* | fn | fn=* | bn | bn=* | mn | mn=*)
             exec ${pkgs.shfmt}/bin/shfmt "$@"
             ;;
         esac
       done
-      dir="$PWD"
-      while [[ -n "$dir" ]]; do
-        if [[ -f "$dir/.editorconfig" ]]; then
-          exec ${pkgs.shfmt}/bin/shfmt "$@"
-        fi
-        dir="''${dir%/*}"
-      done
-      exec ${pkgs.shfmt}/bin/shfmt -i 4 -ci "$@"
+      _walk_up .editorconfig >/dev/null && exec ${pkgs.shfmt}/bin/shfmt "$@"
+      exec ${pkgs.shfmt}/bin/shfmt -i ${toString style.indent} -ci "$@"
     '';
   };
 
   # taplo has no user-level lookup and TAPLO_CONFIG overrides project configs;
   # the wrapper reaches the house config only when upward discovery finds no
-  # project taplo.toml and the caller passes neither flag nor env.
+  # project taplo.toml and the caller passes neither flag nor env. -c* covers
+  # clap's attached and equals value forms.
   taplo = pkgs.writeShellApplication {
     name = "taplo";
     text = ''
+      ${style.walkUp}
       [[ -n "''${TAPLO_CONFIG:-}" ]] && exec ${pkgs.taplo}/bin/taplo "$@"
       for arg in "$@"; do
         case "$arg" in
-          -c | --config | -c=* | --config=* | --no-auto-config) exec ${pkgs.taplo}/bin/taplo "$@" ;;
+          -c* | --config | --config=* | --no-auto-config) exec ${pkgs.taplo}/bin/taplo "$@" ;;
         esac
       done
-      dir="$PWD"
-      while [[ -n "$dir" ]]; do
-        if [[ -f "$dir/.taplo.toml" || -f "$dir/taplo.toml" ]]; then
-          exec ${pkgs.taplo}/bin/taplo "$@"
-        fi
-        dir="''${dir%/*}"
-      done
+      _walk_up .taplo.toml taplo.toml >/dev/null && exec ${pkgs.taplo}/bin/taplo "$@"
       TAPLO_CONFIG="${config.xdg.configHome}/taplo/taplo.toml" exec ${pkgs.taplo}/bin/taplo "$@"
     '';
   };
@@ -160,17 +156,17 @@ in {
       enable=deprecate-which
     '';
     # taplo has no user-level lookup and TAPLO_CONFIG overrides project
-    # configs; only the wrapper below may reference this file.
+    # configs; only the wrapper above may reference this file.
     "taplo/taplo.toml".text = ''
       [formatting]
-      indent_string = "    "
-      column_width = 150
+      indent_string = "${style.indentString}"
+      column_width = ${toString style.width}
       allowed_blank_lines = 2
       reorder_keys = false
     '';
     # Projected from the style vocabulary (modules/style.nix); the treefmt
     # row reads the same value, so every yamlfmt consumer shares one source.
-    "yamlfmt/.yamlfmt".text = (import ../../../style.nix).yamlfmt;
+    "yamlfmt/.yamlfmt".text = style.yamlfmt;
     "yamllint/config".text = ''
       extends: default
 
@@ -178,7 +174,7 @@ in {
       # indentation rule can describe it, so the linter cedes that dimension.
       rules:
         line-length:
-          max: 150
+          max: ${toString style.width}
           level: warning
         indentation: disable
         document-start: disable

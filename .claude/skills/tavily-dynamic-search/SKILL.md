@@ -41,7 +41,7 @@ Filtering code binds to these shapes.
 
 `tvly search --json`:
 
-```json
+```json template
 {
   "query": "string",
   "answer": "string | null",
@@ -60,7 +60,7 @@ Filtering code binds to these shapes.
 
 `tvly extract --json`:
 
-```json
+```json output-only
 {
   "results": [
     {
@@ -83,7 +83,7 @@ Two building blocks compose freely: `tvly search` returns titles, URLs, snippets
 - [HEREDOC]: Anything more complex rides a single-quoted heredoc — one Bash call, clean multi-line Python, no escaping, no temp files. The default for most tasks.
 - [SCRIPT]: A file on disk only when the same script runs across multiple turns; one-shot code is a heredoc, never a scratch file. Data saved for later turns belongs on disk; code does not.
 
-```bash
+```bash template
 python3 << 'PYEOF'
 import json, subprocess
 raw = subprocess.check_output(
@@ -103,7 +103,7 @@ Open-ended research explores before it extracts: save raw results to a scratch f
 
 Turn one — search, save, triage:
 
-```bash
+```bash template
 python3 << 'PYEOF'
 import json, subprocess
 
@@ -130,7 +130,7 @@ Context receives a few hundred tokens of titles and snippets; the full page cont
 
 Turn two — extract against the triage, with filtering logic written for this query:
 
-```bash
+```bash template
 python3 << 'PYEOF'
 import json
 
@@ -158,7 +158,7 @@ PYEOF
 
 Later turns chase leads the same way — re-search with sharper terms or `--include-domains`, extract a specific URL, keep appending data to disk while context stays lean:
 
-```bash
+```bash template
 python3 << 'PYEOF'
 import json, subprocess
 
@@ -210,6 +210,6 @@ A multi-angle pass runs several queries in one heredoc, deduplicates by URL, sor
 
 When `python3` is unavailable, `jq` covers simple lookups only — no multi-step search-then-extract, no complex filtering:
 
-```bash
+```bash template
 uvx --from tavily-cli tvly search "query" --json 2>/dev/null | jq '[.results[] | select(.score > 0.5) | {title, url, content}]'
 ```

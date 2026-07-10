@@ -101,7 +101,7 @@ The transplant carries only the result cache; per-agent transcripts stay in the 
 
 Recover a failed, cancelled, or quit run with a CONTINUATION SCRIPT, never journal surgery: copy the workflow, delete the completed stages, reconstruct their outputs from the journal's `result` records, bake them in as a data literal, and launch as a NEW run.
 
-```js
+```js conceptual
 // --- [INPUTS] --------------------------------------------------------------------------
 // Stage 1 completed in wf_a1b2c3; its outputs reconstructed from the journal's `result`
 // records and baked in as a literal. The body below is the original stage 2 onward, unchanged.

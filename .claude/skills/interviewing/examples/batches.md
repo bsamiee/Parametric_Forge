@@ -8,13 +8,13 @@ A question asks the user to imagine a design in the air when the corpus already 
 
 - Detection: A round opens with an abstraction — a shape, a policy, a tradeoff — and cites no anchor, so the user answers from imagination instead of reacting to what exists.
 - Rejected:
-  ```markdown
+  ```markdown rejected
   1. How should the graph carrier handle multiple backends?
      - a) One unified type
      - b) A separate type per backend
   ```
 - Accepted:
-  ```markdown
+  ```markdown accepted
   1. `<unit>/planning/graph.md:55` types the carrier as `AnyGraph = "RxGraph | NxGraph | igraph.Graph"` — a string union no type-checker resolves, and the third arm is GPL. Which backend is the canonical owner the other two fold into?
      - a) `RxGraph` canonical, the rest as boundary adapters — drops the GPL surface from the core rail; costs the `igraph`-only algorithms until re-homed.
      - b) A real tagged union over all three — keeps every algorithm; costs a GPL-confined build lane and a resolvable tag per backend.
@@ -28,12 +28,12 @@ A question invites the user to ratify the interviewer's framing instead of surfa
 
 - Detection: A question a satisfied user answers "yes" to without adding a fact — a tag question, a "does that sound right", a mirror of the interviewer's own preference.
 - Rejected:
-  ```markdown
+  ```markdown rejected
   1. The content-keyed scheduler looks like the right call, doesn't it?
   2. You're comfortable leaving impact search deferred, right?
   ```
 - Accepted:
-  ```markdown
+  ```markdown accepted
   1. Walk me through the last time a consumer needed the scheduler: what did it request, what did the current design force it to do instead, and what did that cost?
   2. When a caller last reached for impact search, what happened — did the deferred owner serve it, or did the caller route around the gap?
   ```
@@ -46,11 +46,11 @@ A question asks how the user hopes to handle an event that has not happened, har
 
 - Detection: A future-tense stem — "if X arrived", "how would you want" — that records aspiration, not evidence, and enters the record as a fact ruling.
 - Rejected:
-  ```markdown
+  ```markdown rejected
   1. If a new component family arrived that didn't fit the closed ten, how would you want to handle it?
   ```
 - Accepted:
-  ```markdown
+  ```markdown accepted
   1. `<unit>/architecture.md:79` closes `ComponentFamily` at ten. When did a family last press a slot the set refused — what was it, and what did the closed count force?
      - a) No family ever pressed the boundary — the closed count records as fact with its reopen condition.
      - b) A family was dropped or forced to fit — the count is a gap, not a design; name the missing slot.
@@ -64,12 +64,12 @@ A question carries one sane answer, spending a round to extract a foregone concl
 
 - Detection: A stem whose options do not lead to materially different work — strict typing over `Any`, a working seam over a broken one — where one branch is house law.
 - Rejected:
-  ```markdown
+  ```markdown rejected
   1. Should the design use strict typing instead of `Any`?
   2. Do we want to avoid shipping a broken seam?
   ```
 - Accepted:
-  ```markdown
+  ```markdown accepted
   [CONSTRAINT] Strict typing over `Any` is house law — recorded, not asked.
 
   1. The strict-typing law forces the carrier off the string union. Two typings survive it: a `Protocol` over the three backends, or a tagged union with a resolver. Which?
@@ -85,7 +85,7 @@ A batch grows past the point where every option is a real tradeoff, so the user 
 
 - Detection: A round with more than a handful of questions, each a menu of parameters the domain default already settles, forcing the user to rubber-stamp.
 - Rejected:
-  ```markdown
+  ```markdown rejected
   1. What log format? a) JSON b) logfmt c) plain
   2. What retention window? a) 7d b) 30d c) 90d
   3. What serializer? a) msgspec b) orjson c) stdlib
@@ -96,7 +96,7 @@ A batch grows past the point where every option is a real tradeoff, so the user 
   8. What doc format? a) markdown b) rst
   ```
 - Accepted:
-  ```markdown
+  ```markdown accepted
   1. The acquisition surface carries three entrypoints — `read`, `survey`, `acquire` — over one stated aspect. Collapse to one polymorphic entry discriminating on input shape, or keep three named arms?
      - a) One entry — object-store inventory and presign become input shapes; costs a wider input discriminant.
      - b) Three arms — each name self-documents; costs the entry proliferation the collapse law forbids.
@@ -110,14 +110,14 @@ Options list forms without their costs, so the user chooses by preference instea
 
 - Detection: A question whose options are bare labels — no cost, no consequence, no anchor — reducing the choice to taste.
 - Rejected:
-  ```markdown
+  ```markdown rejected
   1. How should the viewer load geometry?
      - a) wasm decoder
      - b) server-side tessellation
      - c) native codec
   ```
 - Accepted:
-  ```markdown
+  ```markdown accepted
   1. `<unit>/architecture.md:54` marks the viewer codec-absent until an upstream wasm decoder identity is admitted. Which decode owner does the viewer bind?
      - a) Upstream wasm decoder — keeps the viewer thin; costs a hard dependency on an unadmitted serving row that blocks render until it lands.
      - b) Server-side tessellation to a mesh wire — unblocks render now; costs a round-trip per view and a server the viewer did not need.
@@ -132,14 +132,14 @@ A batch stacks questions whose later members are meaningless until the first ans
 
 - Detection: Questions 2 through N presuppose a specific answer to question 1, so a different answer to 1 discards the rest of the batch.
 - Rejected:
-  ```markdown
+  ```markdown rejected
   1. Should the graph carrier be a single owner or split per backend?
   2. For the split, what are the three backend type names?
   3. For those types, which shares the traversal API?
   4. Given that API, where does the GPL backend get isolated?
   ```
 - Accepted:
-  ```markdown
+  ```markdown accepted
   1. The carrier owns three backends behind a string union. One decision gates the rest: is the carrier one polymorphic owner, or one owner per backend?
      - a) One owner — the backend becomes a policy value; the next round designs the discriminant and the GPL confinement.
      - b) Per backend — each is its own surface; the next round designs the shared traversal contract.
@@ -153,11 +153,11 @@ Two rulings collide and the interviewer picks one quietly, burying the conflict 
 
 - Detection: A round records a ruling that contradicts an earlier one — or an index claim its own pages deny — without ever surfacing the collision as a question.
 - Rejected:
-  ```markdown
+  ```markdown rejected
   1. Since the README already calls impact a standing domain owner, I'll record impact search as in-scope and move on.
   ```
 - Accepted:
-  ```markdown
+  ```markdown accepted
   1. Two rulings collide: `<unit>/README.md:3` presents impact as a standing domain owner, while `<unit>/planning/impact.md:15` gates impact search and wide sweeps behind an unnamed future consumer. Both cannot hold. Which is law?
      - a) Owner is law — pull search and sweeps into current scope; costs the build now, closes the claim-to-carriage gap.
      - b) Deferral is law — demote the README claim to "impact interchange owner"; costs the broad promise, keeps scope honest.
@@ -323,13 +323,13 @@ A question frames a scope cut as the default because no consumer exists yet, so 
 
 - Detection: A stem framing missing demand as license to build less — the options are cut-now against keep-just-in-case — and the concept's full arm census was never taken, so neither option names what the owner actually omits.
 - Rejected:
-  ```markdown
+  ```markdown rejected
   1. No consumer reads the assessment sweep yet — cut the owner to the two fields the report uses?
      - a) Cut to two fields — smaller surface, ship sooner.
      - b) Keep everything — just in case a consumer arrives.
   ```
 - Accepted:
-  ```markdown
+  ```markdown accepted
   1. `<unit>/planning/assessment.md:31` models the assessment owner with four of the twelve attributes the concept carries — `method`, `stage`, `factor-set`, and `system-boundary` among the absent. Which missing arms are refused by design, and which are gaps the owner absorbs now?
      - a) Refused — each refusal recorded as owned law naming the surface that holds it instead; costs the refusal audit, keeps a four-arm owner honest.
      - b) Gaps — the owner extends to the concept's space now; costs the wider model, prevents the tacked-on retrofit when the first consumer lands.

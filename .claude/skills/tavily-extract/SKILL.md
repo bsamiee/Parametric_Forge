@@ -16,7 +16,7 @@ Extract clean, LLM-optimized content from URLs already identified. Invocation ri
 
 ## [01]-[USAGE]
 
-```bash
+```bash template
 # Single URL
 uvx --from tavily-cli tvly extract "https://example.com/article" --json
 

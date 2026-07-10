@@ -4,7 +4,7 @@ Authoring skills FOR Codex: the on-disk format, discovery roots, trigger mechani
 
 ## [01]-[FORMAT_AND_LIMITS]
 
-```md
+```md template
 ---
 name: skill-name
 description: What the skill does and exactly when it does and does not trigger.
@@ -38,7 +38,7 @@ Invocation is explicit (`$skill-name` in the prompt, or `/skills` in the CLI/IDE
 
 `agents/openai.yaml` is the optional Codex-native metadata file: app-surface presentation, invocation policy, and tool dependencies.
 
-```yaml
+```yaml template
 interface:
   display_name: "User-facing name"
   short_description: "User-facing description"

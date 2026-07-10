@@ -3,12 +3,12 @@
 ## [01]-[SECURITY]
 
 [CRITICAL]:
-- [ALWAYS]: SHA-pin every `uses:` reference — format: `owner/repo@<SHA> # vN.N.N`. [REFERENCE] Pinning protocol and incident history: [->version-discovery.md](./version-discovery.md).
-- [ALWAYS]: `step-security/harden-runner` as **first step** in every job — monitors network egress, file integrity, process activity. Block mode enforces endpoint allowlists.
-- [ALWAYS]: Minimal permissions at **job level** — top-level `permissions: {}` (deny-all default), grant per-job. [REFERENCE] Per-action permissions: [->version-discovery.md§COMMON_ACTIONS_INDEX](./version-discovery.md).
+- [ALWAYS]: SHA-pin every `uses:` reference — format: `owner/repo@<SHA> # vN.N.N`. [REFERENCE] Pinning protocol and incident history: `version-discovery.md`.
+- [ALWAYS]: `step-security/harden-runner` as first step in every job — monitors network egress, file integrity, process activity. Block mode enforces endpoint allowlists.
+- [ALWAYS]: Minimal permissions at job level — top-level `permissions: {}` (deny-all default), grant per-job. [REFERENCE] Per-action permissions: `version-discovery.md`§COMMON_ACTIONS_INDEX.
 - [ALWAYS]: OIDC federation for cloud auth (`id-token: write`) — eliminates static credentials entirely.
 - [ALWAYS]: `actions/create-github-app-token` for cross-repo ops — scoped, 1-hour expiry, survives offboarding.
-- [NEVER]: Direct `${{ }}` interpolation of untrusted input in `run:` blocks. [REFERENCE] Safe patterns: [->expressions-and-contexts.md§INJECTION_PREVENTION](./expressions-and-contexts.md).
+- [NEVER]: Direct `${{ }}` interpolation of untrusted input in `run:` blocks. [REFERENCE] Safe patterns: `expressions-and-contexts.md`§INJECTION_PREVENTION.
 - [NEVER]: Mutable refs (`@main`, `@latest`, `@v1`) — SHA-pinned or immutable OCI only.
 
 | [INDEX] | [TRIGGER]             | [SECRETS] | [CODE_CONTEXT] | [RISK]              |
@@ -17,7 +17,7 @@
 |  [02]   | `pull_request_target` |    Yes    | Default        | Gate PR checkouts   |
 |  [03]   | `workflow_run`        |    Yes    | Default        | Validate conclusion |
 
-[IMPORTANT] **Secure-by-Default (Dec 8, 2025 — enforced):** `pull_request_target` workflows now anchor execution to default-branch definitions. `GITHUB_REF` resolves to `refs/heads/main`; `GITHUB_SHA` points to default branch HEAD at run start. Environment policy evaluation aligns with the execution ref. This cuts off "pwn request" attacks by pinning workflow source to a trusted branch. [->advanced-triggers.md§PULL_REQUEST_TARGET](./advanced-triggers.md).
+[IMPORTANT] [SECURE_BY_DEFAULT]: `pull_request_target` workflows now anchor execution to default-branch definitions. `GITHUB_REF` resolves to `refs/heads/main`; `GITHUB_SHA` points to default branch HEAD at run start. Environment policy evaluation aligns with the execution ref. This cuts off "pwn request" attacks by pinning workflow source to a trusted branch. `advanced-triggers.md`§PULL_REQUEST_TARGET.
 
 ### [01.1]-[GITHUB_TOKEN_SCOPES]
 
@@ -54,7 +54,7 @@ Shorthand: `permissions: read-all` / `permissions: write-all` / `permissions: {}
 |  [08]   | Secret scanning   | Push protection blocks detected secrets pre-merge; up to 500 custom patterns. |
 |  [09]   | Auto-maintenance  | Ratchet and Dependabot keep pins current                                      |
 
-- Detail routes: [version-discovery.md](./version-discovery.md) — SHA pinning format, immutable actions, automated maintenance.
+- Detail routes: `version-discovery.md` — SHA pinning format, immutable actions, automated maintenance.
 
 ### [02.1]-[OIDC_FEDERATION]
 
@@ -85,7 +85,7 @@ Prerequisite: `permissions: { id-token: write }` at job level. Subject claims in
 - [ALWAYS]: `paths:` / `paths-ignore:` filters to skip irrelevant workflows.
 - [ALWAYS]: Sparse checkout for monorepos — 96.6% clone time reduction in benchmarks.
 
-```yaml
+```yaml template
 # Sparse checkout — monorepo: only needed packages
 - uses: actions/checkout@<SHA> # v6
   with:
@@ -119,7 +119,7 @@ Prerequisite: `permissions: { id-token: write }` at job level. Subject claims in
 |  [11]   | Workflow queue rate         | 500 runs / 10 seconds per repository.               |
 |  [12]   | API rate (GITHUB_TOKEN)     | 1,000 requests / hour per repository.               |
 
-**Concurrent jobs (GitHub-hosted standard runners):**
+[CONCURRENT_JOBS]:
 
 | [INDEX] | [PLAN]     | [CONCURRENT_JOBS] | [MACOS] |
 | :-----: | :--------- | :---------------: | :-----: |
@@ -144,7 +144,7 @@ Larger runners (Team/Enterprise): up to 1,000 concurrent jobs; 100 GPU max.
 
 ### [03.3]-[SELF_HOSTED_SCALING]
 
-**Actions Runner Controller (ARC)** — Kubernetes operator for ephemeral, autoscaling self-hosted runners.
+[ACTIONS_RUNNER_CONTROLLER]:Kubernetes operator for ephemeral, autoscaling self-hosted runners.
 
 - Runner Scale Sets: ephemeral container-based runners; clean scale-up/down.
 - ScaleSet Listener patches EphemeralRunnerSet replica count via K8s APIs.
@@ -163,14 +163,14 @@ Networking: service name as hostname inside container jobs (`postgres://postgres
 
 ## [05]-[ORGANIZATIONAL_CONTROLS]
 
-- **Required workflows via rulesets**: org/enterprise-level CI enforcement; replaces deprecated `required_workflows` feature.
-- **Ruleset features**: branch targeting, bypass rules for admins, evaluation/dry-run mode before enforcement.
-- **Merge queue integration**: required workflow rulesets require `merge_group` event trigger alongside `pull_request`.
-- **Environment protection**: required reviewers (1 of N), wait timers (1-43,200 min), deployment branch restrictions.
+- [REQUIRED_WORKFLOWS_VIA_RULESETS]: org/enterprise-level CI enforcement; replaces deprecated `required_workflows` feature.
+- [RULESET_FEATURES]: branch targeting, bypass rules for admins, evaluation/dry-run mode before enforcement.
+- [MERGE_QUEUE_INTEGRATION]: required workflow rulesets require `merge_group` event trigger alongside `pull_request`.
+- [ENVIRONMENT_PROTECTION]: required reviewers (1 of N), wait timers (1-43,200 min), deployment branch restrictions.
 
 ### [05.1]-[CUSTOM_DEPLOYMENT_PROTECTION_RULES]
 
-**Status:** Generally Available. Powered by GitHub Apps via webhooks and callbacks.
+[STATUS]: Generally Available. Powered by GitHub Apps via webhooks and callbacks.
 
 - GitHub sends `deployment_protection_rule` webhook payload when a job reaches a protected environment.
 - App responds via `POST /repos/{owner}/{repo}/actions/runs/{run_id}/deployment_protection_rule` with `state: "approved"` or `state: "rejected"`.

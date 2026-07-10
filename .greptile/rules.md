@@ -14,7 +14,7 @@ Machine-owner repo: nix-darwin + Home Manager flake for one macOS Apple Silicon 
 
 ## [02]-[UNIVERSAL_BAR]
 
-Anticipate 10x functionality growth: surfaces absorb new modalities as rows, cases, or dispatch arms — never as new files, flags, or knobs. Defects: knob/param/flag spam, hardcoded values, fragile string plumbing, naive happy-path logic, hand-rolled reimplementations of capability the ecosystem already provides. External packages are first-class implementation material at full power, newest stable versions. Everything ships agent-first: composable, receipt-bearing, self-describing. Collapse spam relentlessly.
+Anticipate 10x functionality growth: surfaces absorb new modalities as rows, cases, or dispatch arms — never as new files, flags, or knobs. Defects: knob/param/flag spam, hardcoded values, fragile string plumbing, naive happy-path logic, hand-rolled reimplementations of capability the ecosystem already provides. External packages are first-class implementation material at full power. Everything ships agent-first: composable, receipt-bearing, self-describing. Collapse spam relentlessly.
 
 ## [03]-[REVIEW_PRIORITIES]
 
@@ -38,7 +38,7 @@ Code that violates generic best practice on purpose — do not flag:
 Durable markdown — docs, standards, skills, prompts — is agent-facing law. Flag:
 
 - No-op intensifiers: quality adjectives (careful, high-quality, robust, thorough) in a sentence with no owner, action, trigger, or gate.
-- Filler lead-ins: "it is important to note", "note that", "make sure to", "be sure to", "remember to", "keep in mind".
+- Filler lead-ins: `it is important to note`, `note that`, `make sure to`, `be sure to`, `remember to`, `keep in mind`.
 - Restated harness obligations: telling an agent to follow CLAUDE.md/AGENTS.md, use available tools, or obey system instructions.
 - Quality ladders (good/better/best, minimum/ideal) where a contract gate belongs.
 - Command catalogs with no task trigger or acceptance signal per row.

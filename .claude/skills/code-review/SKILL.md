@@ -16,14 +16,14 @@ CodeRabbit review of changed code: bugs, security issues, and quality risks, gro
 
 ## [01]-[PREREQUISITES]
 
-```bash
+```bash copy-safe
 coderabbit --version 2>/dev/null || echo "NOT_INSTALLED"
 coderabbit auth status --agent 2>&1
 ```
 
 A missing CLI is never installed silently: point the user at the official source (https://www.coderabbit.ai/cli), preferring a package manager (npm, Homebrew); a directly downloaded binary is verified against the release signature or checksum before running. When browser auth is unavailable and `CODERABBIT_API_KEY` is present, authenticate headlessly:
 
-```bash
+```bash copy-safe
 coderabbit auth login --api-key "$CODERABBIT_API_KEY"
 coderabbit auth status --agent
 ```
@@ -32,7 +32,7 @@ When neither auth route works, stop with the exact auth failure — a manual rev
 
 ## [02]-[RUN]
 
-```bash
+```bash output-only
 coderabbit review --agent
 ```
 

@@ -2,7 +2,7 @@
 
 ## [01]-[SYNTAX]
 
-`${{ }}` for dynamic values. `if:` conditions are implicit (can omit `${{ }}`). Expressions resolve **before** runner execution — they are string interpolation, not runtime code.
+`${{ }}` for dynamic values. `if:` conditions are implicit (can omit `${{ }}`). Expressions resolve before runner execution — they are string interpolation, not runtime code.
 
 ## [02]-[CONTEXTS]
 
@@ -50,17 +50,17 @@
 |  [11]   | `always()`         | Run regardless of outcome.                                           |
 |  [12]   | `cancelled()`      | Workflow was cancelled.                                              |
 
-**Operators:** `()` > `!` > `<` `<=` `>` `>=` > `==` `!=` > `&&` > `||`
+[OPERATORS]: `()` > `!` > `<` `<=` `>` `>=` > `==` `!=` > `&&` > `||`
 
 **`hashFiles` behavior:** Returns empty string `''` on no match (no error, no warning). Uses `@actions/glob` patterns. Multiple args = logical AND across patterns. Broken symlinks produce empty hash silently. Glob matching is case-insensitive on Windows, case-sensitive on Linux/macOS. `?` wildcard not supported — returns empty.
 
-**`contains()` / `startsWith()` / `endsWith()`:** All three are **case-insensitive** for string comparisons. `contains('Hello', 'hello')` evaluates to `true`. When comparing against arrays, `contains()` checks for exact element match.
+[CONTAINS_STARTSWITH_ENDSWITH]: All three are **case-insensitive** for string comparisons. `contains('Hello', 'hello')` evaluates to `true`. When comparing against arrays, `contains()` checks for exact element match.
 
-**Comparison semantics:** Falsy values: `false`, `0`, `-0`, `""`, `null`. GitHub ignores case for string `==`/`!=`. `NaN` relational comparisons always return `false`. Objects/arrays equal only when same instance.
+[COMPARISON_SEMANTICS]: Falsy values: `false`, `0`, `-0`, `""`, `null`. GitHub ignores case for string `==`/`!=`. `NaN` relational comparisons always return `false`. Objects/arrays equal only when same instance.
 
 ## [04]-[PATTERNS]
 
-```yaml
+```yaml conceptual
 # Branch/tag conditionals
 if: github.ref == 'refs/heads/main'
 if: startsWith(github.ref, 'refs/tags/v')
@@ -93,7 +93,7 @@ if: always() && needs.deploy.result == 'failure' && needs.deploy.result != 'canc
 
 ## [05]-[CROSS_JOB_OUTPUTS]
 
-```yaml
+```yaml conceptual
 jobs:
   setup:
     runs-on: ubuntu-latest
@@ -122,7 +122,7 @@ jobs:
 - [NEVER]: Interpolate `${{ github.event.* }}` directly in `run:` — attacker-controlled PR titles, branch names, and commit messages can inject shell commands.
 - [ALWAYS]: Route untrusted values through `env:` block, then reference as shell variable.
 
-```yaml
+```yaml conceptual
 # SAFE — env var indirection
 - env:
     PR_TITLE: ${{ github.event.pull_request.title }}
@@ -133,7 +133,7 @@ jobs:
     printf 'Body: %s\n' "$PR_BODY"
 ```
 
-**Untrusted fields** (attacker-controlled in fork PRs):
+[UNTRUSTED_FIELDS]: (attacker-controlled in fork PRs):
 - `github.event.pull_request.title`, `.body`, `.head.ref`
 - `github.event.comment.body`
 - `github.event.head_commit.message`, `.author.name`, `.author.email`
@@ -141,7 +141,7 @@ jobs:
 
 ## [07]-[GITHUB_OUTPUT]
 
-```yaml
+```yaml conceptual
 # Simple key-value
 - run: echo "version=1.2.3" >> "$GITHUB_OUTPUT"
 
@@ -167,7 +167,7 @@ jobs:
 
 ## [08]-[JOB_SUMMARIES]
 
-```yaml
+```yaml conceptual
 - run: |
     echo "## Test Results" >> "$GITHUB_STEP_SUMMARY"
     echo "| Suite | Passed | Failed |" >> "$GITHUB_STEP_SUMMARY"
@@ -187,7 +187,7 @@ jobs:
 - Structured values (JSON) are masked as whole strings — individual fields may leak if extracted.
 - Short secrets (<4 chars) are NOT masked — use longer values.
 
-```yaml
+```yaml conceptual
 - run: echo "::add-mask::$DYNAMIC_TOKEN"
   env:
     DYNAMIC_TOKEN: ${{ steps.auth.outputs.token }}

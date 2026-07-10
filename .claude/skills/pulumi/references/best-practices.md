@@ -88,11 +88,11 @@ class MyComponent extends pulumi.ComponentResource {
 
 Values marked `--secret` are encrypted in state, masked in CLI output, and tracked through transformations; starting plaintext and converting later forces credential rotation and an audit of leaked values in logs and state history. Secrets are passwords, API keys, tokens, private keys, certificates, connection strings with credentials, OAuth client secrets, and encryption keys.
 
-```bash
+```bash copy-safe
 pulumi config set --secret databasePassword hunter2
 ```
 
-```typescript
+```typescript conceptual
 const config = new pulumi.Config();
 const dbPassword = config.requireSecret("databasePassword");
 // Outputs derived from secrets stay secret:
@@ -132,7 +132,7 @@ Lifecycle: add the alias, run `pulumi up` on every stack, then optionally drop t
 
 `pulumi preview` shows exactly what will be created, updated, or destroyed at zero cost; `pulumi up --yes` without a reviewed preview is deploying blind. Preview vocabulary: `+ create`, `~ update`, `- delete`, `+-replace` (destroy then recreate — potential downtime), `~+-replace`. Warning signs: unexpected replaces (immutable property changes), deletions of resources meant to stay, more changes than the code diff explains.
 
-```yaml
+```yaml template
 # CI shape: preview on every PR, deploy only on merge to main
 jobs:
   preview:

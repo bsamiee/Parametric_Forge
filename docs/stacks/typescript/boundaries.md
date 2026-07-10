@@ -45,7 +45,7 @@ This table selects the owner for a foreign signal; when a signal matches several
 - Law: parse-then-reserialize is rejected for signed material — a re-encode respells float forms, key order, and escapes — so forwarding emits the held octets verbatim, and `Schema.encode` of the envelope re-emits the same band bytes by construction.
 - Boundary: the receipt carries the coordinate and the digest, never the octets; the digest function is fixed at composition and arrives as a parameter or service, never chosen per site.
 
-```typescript
+```typescript conceptual
 import { Effect, Option, type ParseResult, Schema } from "effect"
 
 // --- [MODELS] ---------------------------------------------------------------------------
@@ -117,7 +117,7 @@ Axes pair freely — any protocol row under any serialization row, selected only
 - Law: endpoint faults are declared — `Schema.TaggedError` classes on `.addError` with their status — so the caller reconstructs the exact tagged family the handler failed with, and one error vocabulary spans the wire; the family's design is `rails-and-effects.md`'s.
 - Reject: a hand-written fetch client beside a contract; an API document authored by hand; a client-side error type parallel to the declared fault; a spec regenerated into source and committed as a second truth.
 
-```typescript
+```typescript conceptual
 import { HttpApi, HttpApiBuilder, HttpApiClient, HttpApiEndpoint, type HttpApiError, HttpApiGroup, type HttpClient, type HttpClientError, OpenApi } from "@effect/platform"
 import { Effect, Layer, type ParseResult, Schema } from "effect"
 
@@ -189,7 +189,7 @@ export { Contract, ContractLive, Missing, probed, Row, specification }
 - Law: behavioral quirks — a default option that engages a proprietary dialect, a shared global registry, a native accelerator probe — are internalized as the owner's configuration facts; the owner's construction encodes the correct posture, so no consumer can reach the quirk path.
 - Reject: an `as` bridge at call sites where the augmentation owns the truth; the augmentation in a global ambient dump far from the engine; a wrapper whose only job is smuggling a corrected type.
 
-```typescript
+```typescript conceptual
 import { type Effect, Either, ParseResult, Schema } from "effect"
 
 // --- [TYPES] ----------------------------------------------------------------------------
@@ -260,7 +260,7 @@ export type { Engine }
 - Law: `Config.withDescription` rides every row — a missing or malformed variable reports its meaning in the `ConfigError`, never a bare key name.
 - Reject: scattered per-site `Config.string` reads; a raw scalar carried where the brand exists; a default buried at a read site where `Config.withDefault` states it at the owner; a regex check after `Config.string` where `Schema.Config` owns the shape.
 
-```typescript
+```typescript conceptual
 import { Command, FileSystem, HttpClient, Path, PlatformConfigProvider } from "@effect/platform"
 import { NodeContext, NodeHttpClient, NodeRuntime } from "@effect/platform-node"
 import { Config, Effect, Layer, Schema } from "effect"
@@ -333,7 +333,7 @@ export {}
 - Law: the socket is a byte `Channel` — `Socket.toChannelWith<E>()` — and its construction is capability, not code: `Socket.makeWebSocket(url)` against the `Socket.WebSocketConstructor` Tag the runtime row satisfies, so one framed transport definition serves every runtime lane; the pipeline geometry above the frame is `streams.md`'s.
 - Reject: raw socket event listeners; a hand-written length-prefix parser; `JSON.stringify` written to a socket where a frame row owns the framing; a per-format duplex owner where the frame table and the one schema seam compose.
 
-```typescript
+```typescript conceptual
 import { ChannelSchema, Ndjson, Socket, Transferable, Worker, type WorkerError, WorkerRunner } from "@effect/platform"
 import { type Channel, type Chunk, Context, Effect, type Layer, type ParseResult, Schema, Stream } from "effect"
 
@@ -420,7 +420,7 @@ export { Bench, BenchLive, framed, Grade, MarshalFault, RunnerLive, Sweep }
 - Law: a read that must follow writes rides the `Reactivity` bus (`@effect/experimental`, provisioned by `Reactivity.layer`) — `mutation(keys, write)` stamps the write's invalidation coordinates, `query(keys, read)` yields a `Mailbox` re-delivering on every overlapping mutation, `stream` is the same feed as a `Stream`, and `invalidate(keys)` is the foreign-write edge; keys are the currency — the array form names whole bands, the record form scopes `{ band: ids }`, and a record mutation wakes member readers and whole-band readers both — the same coordinates `[05]`'s view lane refreshes on, so a cadence poll of unchanged rows restates delivery the keys already own.
 - Reject: a stored string re-shaped by hand where the `SchemaStore` fuses admission; an in-process quota beside the store-backed window; a hand pub/sub of table-changed strings beside the bus.
 
-```typescript
+```typescript conceptual
 import { Reactivity } from "@effect/experimental"
 import { KeyValueStore } from "@effect/platform"
 import { Migrator, SqlClient, SqlResolver, SqlSchema } from "@effect/sql"

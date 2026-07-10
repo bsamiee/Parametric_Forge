@@ -94,10 +94,11 @@ The review vocabulary. Findings cite the defect name and the line.
 - Accepted: The engine lays out every graph family; a family that cannot take it routes to its own engine truth, and each engine trap carries its authoring rule beside it.
 - Reason: A maturity label, default, or risk posture is a fact about the upstream, never law here. The reframe flips the authority: the ruling stated as owned law, every alternative demoted to a boundary fact where the standard structurally cannot apply, each trap carrying its in-standard answer.
 
-[VERSION_ANCHOR] — Durable prose anchored to a release point in time: a version number or pin, a version-conditional behavior band, a date, release narration, or deictic freshness vocabulary — newest, latest, modern, currently, recently. The corpus assumes the newest stable release of everything it touches.
+[VERSION_ANCHOR] — Durable prose anchored to a release point in time: a version number or pin, a version-conditional behavior band, a date, release narration, or deictic freshness vocabulary — `newest`, `latest`, `modern`, `currently`, `recently`. The corpus assumes the newest stable release of everything it touches.
 - Rejected: The neo look lands at 2.14.0+; the curve default moved at 2.13.0 — restore the spline with the prior key.
 - Accepted: The look key accepts `neo`; the curve default is `rounded`, and `basis` restores the spline.
 - Reason: Behavior is stated as the behavior — the newest stable's truth with no band. A genuine wire or persistence version boundary is a positive property stated once at its codec owner; every other pin lives in the owning manifest alone.
+- Survivors: A capability floor a doctrine page legislates — interpreter floor, tool major — is admission law stated once at the owning page; registry data inside a compatibility matrix is the document's own system of record; an ordering selector (`latest` session, `newest` commit) states a cursor, never freshness. Trigger vocabulary a law page enumerates rides code spans.
 
 [SET_IN_STONE] — Wording that freezes the current shape against ground-up rebuild: SEALED, FROZEN, FINAL, legislated counts, "never re-opened", per-member byte-identical chants.
 - Rejected: The FROZEN twenty-column receipt: field names, types, and order are byte-identical wire law.
@@ -228,6 +229,6 @@ Examples prove shape or prevent misuse. Place them beside the rule they clarify.
 ## [12]-[ACCESSIBILITY]
 
 - Carry meaning through text, not through color, position, shape, pointer movement, screenshots, or sound alone.
-- Provide text equivalents for visual, audio, or screenshot-only information — diagrams carry `accTitle`/`accDescr`, glyph-heavy structures carry adjacent prose stating the relation they encode.
+- Provide text equivalents for visual, audio, or screenshot-only information — diagrams carry `accTitle`/`accDescr`, glyph-heavy structures carry adjacent prose stating the relation they encode. A syntax-teaching fence inside a diagram skill's own reference corpus is exempt where the directives would corrupt or pollute the taught grammar and adjacent prose already states the relation.
 - Use input-neutral UI verbs when keyboard, pointer, touch, voice, or automation can perform the action; preserve exact UI labels when the label is the action target.
 - Prefer conventional grammar and punctuation for machine translation.

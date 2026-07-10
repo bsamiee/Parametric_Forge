@@ -12,7 +12,7 @@ description: >-
 
 Generate and validate production-ready GitHub Actions workflows and custom actions.
 
-**Tasks:**
+[TASKS]:
 1. Gather requirements — triggers, runners, dependencies, environments, security posture.
 2. Read [best-practices.md](./references/best-practices.md) — security hardening, supply chain, performance, anti-patterns.
 3. Read [version-discovery.md](./references/version-discovery.md) — SHA resolution protocol, action index, permissions.
@@ -24,14 +24,14 @@ Generate and validate production-ready GitHub Actions workflows and custom actio
 9. Validate — Read validation references, run actionlint, apply 11 best practice checks.
 10. Fix and re-validate until passing (max 3 iterations).
 
-**Scope:**
+[SCOPE]:
 - Workflow files (`.github/workflows/*.yml`).
 - Custom actions — composite, Docker, JavaScript (`.github/actions/*/action.yml`).
 - Reusable workflows (`workflow_call`).
 - Supply chain — SLSA attestation, SBOM, Cosign signing.
 - Monorepo CI — Nx affected detection, sparse checkout, pnpm workspace caching.
 
-**References:**
+[REFERENCES]:
 
 | [INDEX] | [DOMAIN]          | [FILE]                                                                     |
 | :-----: | :---------------- | :------------------------------------------------------------------------- |
@@ -100,7 +100,7 @@ All templates use a unified `[UPPER_SNAKE_CASE]` placeholder convention:
 
 ### [02.2]-[HARDEN_RUNNER_SCOPE]
 
-`harden-runner` is included as the first step in every **workflow** job template (basic, reusable). **Action** templates (composite, Docker, JavaScript) do NOT include `harden-runner` — the **calling workflow** is responsible for adding it as the first step in the job that invokes the action. Actions are steps, not jobs.
+`harden-runner` is included as the first step in every workflow job template (basic, reusable). Action templates (composite, Docker, JavaScript) do NOT include `harden-runner` — the calling workflow is responsible for adding it as the first step in the job that invokes the action. Actions are steps, not jobs.
 
 ### [02.3]-[TEMPLATE_INDEX]
 
@@ -136,12 +136,12 @@ Each example demonstrates distinct patterns with minimal overlap. Load relevant 
 
 Static SHA catalogs decay — actions release frequently and stale pins miss security patches. Resolve versions at generation time. Never embed hardcoded SHAs in reference docs or templates.
 
-**Resolution protocol:**
+[RESOLUTION_PROTOCOL]:
 1. `git ls-remote --tags https://github.com/{owner}/{repo}` — verify tag exists.
 2. `gh api repos/{owner}/{repo}/git/ref/tags/{tag} --jq '.object.sha'` — resolve tag to full SHA.
 3. Format: `owner/repo@<40-char-SHA> # vX.Y.Z`.
 
-**Fallback methods:**
+[FALLBACK_METHODS]:
 - Context7 MCP: `resolve-library-id` then `get-library-docs` for action documentation.
 - WebSearch: `"[owner/repo] [version] github action"` for release notes.
 
@@ -154,7 +154,7 @@ Static SHA catalogs decay — actions release frequently and stale pins miss sec
 
 ## [05]-[VALIDATION]
 
-**Validation pipeline:**
+[VALIDATION_PIPELINE]:
 
 | [INDEX] | [STAGE]             | [TOOL]            | [VALIDATES]                                                          |
 | :-----: | :------------------ | :---------------- | :------------------------------------------------------------------- |
@@ -162,7 +162,7 @@ Static SHA catalogs decay — actions release frequently and stale pins miss sec
 |  [02]   | **Best Practices**  | 11 custom checks  | SHA pinning, permissions, injection, timeouts, harden-runner.        |
 |  [03]   | **Local Execution** | act v0.2.84       | Dry-run validation against Docker images (requires Docker).          |
 
-**Best practice checks (11):**
+[BEST_PRACTICE_CHECKS]:
 
 | [INDEX] | [CHECK]                  | [TAG]              | [DETECTS]                                                    |
 | :-----: | :----------------------- | :----------------- | :----------------------------------------------------------- |
@@ -178,9 +178,9 @@ Static SHA catalogs decay — actions release frequently and stale pins miss sec
 |  [10]   | **Expression injection** | `[INJECTION]`      | Direct `${{ github.event.* }}` in `run:` blocks.             |
 |  [11]   | **Immutable actions**    | `[IMMUTABLE]`      | Action publishing without immutable OCI (informational).     |
 
-**Error routing:** Match error patterns to reference files — [common_errors.md](references/common_errors.md) (syntax, expressions, deprecated), [runners.md](references/runners.md) (labels, deprecations), [supply_chain.md](references/supply_chain.md) (SHA, OIDC, SBOM, harden-runner), [modern_features.md](references/modern_features.md) (reusable workflows, concurrency, matrix, node runtime), [act_usage.md](references/act_usage.md) (actionlint rules, act limitations).
+[ERROR_ROUTING]: Match error patterns to reference files — [common_errors.md](references/common_errors.md) (syntax, expressions, deprecated), [runners.md](references/runners.md) (labels, deprecations), [supply_chain.md](references/supply_chain.md) (SHA, OIDC, SBOM, harden-runner), [modern_features.md](references/modern_features.md) (reusable workflows, concurrency, matrix, node runtime), [act_usage.md](references/act_usage.md) (actionlint rules, act limitations).
 
-**Troubleshooting:**
+[TROUBLESHOOTING]:
 
 | [INDEX] | [ISSUE]                     | [SOLUTION]                                     |
 | :-----: | :-------------------------- | :--------------------------------------------- |

@@ -11,7 +11,7 @@
 {pkgs, ...}: let
   fmt = pkgs.writeShellApplication {
     name = "fmt";
-    runtimeInputs = [pkgs.coreutils pkgs.fd pkgs.jq];
+    runtimeInputs = [pkgs.coreutils pkgs.fd pkgs.gnused pkgs.jq];
     text = ''
       shopt -s inherit_errexit
 
@@ -19,20 +19,23 @@
       declare -Ar _LANE_TOOL=(
         [nix]=alejandra [shell]=shfmt [python]=ruff [web]=biome
         [prose]=prettier [yaml]=yamlfmt [toml]=taplo [lua]=stylua
-        [sql]=sqruff [swift]=swiftformat [csharp]=csharpier [osa]=forge-osa [jq]=jq
+        [sql]=sqruff [sql-duckdb]=sqruff
+        [swift]=swiftformat [csharp]=csharpier [osa]=forge-osa [jq]=jq
       )
       declare -Ar _LANE_WRITE=(
         [nix]='alejandra -q --' [shell]='shfmt -w' [python]='ruff format --'
         [web]='biome format --write' [prose]='prettier --log-level warn --write'
         [yaml]='yamlfmt' [toml]='taplo fmt' [lua]='stylua --'
-        [sql]='sqruff fix' [swift]='swiftformat --quiet' [csharp]='csharpier format'
+        [sql]='sqruff fix' [sql-duckdb]='sqruff fix'
+        [swift]='swiftformat --quiet' [csharp]='csharpier format'
         [osa]='forge-osa fmt' [jq]='_gate_jq'
       )
       declare -Ar _LANE_CHECK=(
         [nix]='alejandra -c --' [shell]='shfmt -d' [python]='ruff format --check --'
         [web]='biome format' [prose]='prettier --log-level warn --check'
         [yaml]='yamlfmt -lint' [toml]='taplo fmt --check' [lua]='stylua --check --'
-        [sql]='sqruff lint' [swift]='swiftformat --quiet --lint' [csharp]='csharpier check'
+        [sql]='sqruff lint' [sql-duckdb]='sqruff lint'
+        [swift]='swiftformat --quiet --lint' [csharp]='csharpier check'
         [osa]='forge-osa check' [jq]='_gate_jq'
       )
       declare -Ar _EXT_LANE=(
@@ -95,6 +98,10 @@
       # Pure classification: deny rows first, then the extension row; unowned
       # readable files fall through to a bounded shebang probe. A dotfile's
       # whole name is not an extension; a bare trailing dot owns nothing.
+      # SQL dialect is a filename fact (estate law): duckdb-* rides its own
+      # lane so batches stay dialect-homogeneous for the sqruff wrapper;
+      # sqlite-* is unowned — sqruff's sqlite dialect rewrites virtual-table
+      # module arguments (float[2] -> float [2]), which extensions parse verbatim.
       _lane_for() {
         local -r path="$1"
         local -n _out="$2"
@@ -104,6 +111,12 @@
         local ext="''${base##*.}"
         [[ "$ext" == "$base" || ".$ext" == "$base" ]] && ext=""
         [[ -n "$ext" ]] && _out="''${_EXT_LANE[''${ext,,}]:-}"
+        if [[ "$_out" == sql ]]; then
+          case "''${base,,}" in
+            sqlite-*) _out="" ;;
+            duckdb-*) _out=sql-duckdb ;;
+          esac
+        fi
         if [[ -z "$_out" && -f "$path" && -r "$path" ]]; then
           local first=""
           IFS= read -r -n 256 first <"$path" || true
@@ -125,6 +138,13 @@
             return 1
           }
         done
+        # The PATH probe reads the check table's head token for both modes.
+        for lane in "''${!_LANE_TOOL[@]}"; do
+          [[ "''${_LANE_WRITE[$lane]%% *}" == "''${_LANE_CHECK[$lane]%% *}" ]] || {
+            printf 'self-test: lane %s write/check head tokens diverge\n' "$lane" >&2
+            return 1
+          }
+        done
         local st
         st="$(mktemp -d)"
         printf '#!/usr/bin/env bash\n' >"$st/hook"
@@ -139,6 +159,8 @@
           [".yamlfmt"]="" ["note."]="" ["$st/hook"]=shell ["$st/tool"]=python
           ["$st/fish"]="" ["$st/blob"]="" ["pkg/pnpm-lock.yaml"]="" ["package-lock.json"]=""
           ["obj/packages.lock.json"]=""
+          ["sql/apply-postgres.sql"]=sql ["sql/duckdb-probe.sql"]=sql-duckdb
+          ["sql/SQLite-probe.sql"]="" ["sql/duck.sql"]=sql
         )
         local path got
         for path in "''${!probes[@]}"; do
@@ -181,7 +203,7 @@
         shift
       done
       ((''${#targets[@]})) || targets=(.)
-      readonly mode json_mode
+      readonly mode json_mode targets
       readonly deadline="''${FMT_DEADLINE_SECONDS:-300}"
       [[ "$deadline" =~ ^[0-9]+$ ]] || {
         printf 'fmt: FMT_DEADLINE_SECONDS must be a whole number of seconds\n' >&2

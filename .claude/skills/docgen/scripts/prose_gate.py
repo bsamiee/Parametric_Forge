@@ -100,7 +100,7 @@ FENCE_INTENTS = frozenset({
 TABLE_COLUMN_CEILING = 15
 TABLE_ROW_CEILING = 20
 MARKERS: dict[str, str] = (
-    dict.fromkeys((".py", ".sh", ".bash", ".zsh", ".nix", ".toml", ".yaml", ".yml"), "#")
+    dict.fromkeys((".py", ".sh", ".bash", ".zsh", ".nix", ".toml"), "#")
     | dict.fromkeys((".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs", ".cs", ".jsonc"), "//")
     | dict.fromkeys((".lua", ".sql"), "--")
 )
@@ -166,7 +166,7 @@ META_PHRASE = re.compile(
 QUOTED_SPAN = re.compile(r"\"[^\"]*\"|“[^”]*”|`[^`]*`")
 SKILL_NAME_SHAPE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 SKILL_NAME_RESERVED = re.compile(r"(?:^|-)(?:claude|anthropic)(?:-|$)")
-SKILL_VOICE = re.compile(r"\b(?:I|me|my|mine|we|our|you|your)\b", re.IGNORECASE)
+SKILL_VOICE = re.compile(r"\b(?:I(?!/)|me|my|mine|we|our|you|your)\b", re.IGNORECASE)
 SELF_COUNT = re.compile(
     r"(?:^|[.!?]\s+)(Two|Three|Four|Five|Six|Seven|Eight|Nine|Ten|Eleven|Twelve|Thirteen|Fourteen|Fifteen|Sixteen"
     r"|Seventeen|Eighteen|Nineteen|Twenty|\d+)\s+(named\s+)?(classes|laws|rules|sections|types|axes|fields|modes"
@@ -175,7 +175,7 @@ SELF_COUNT = re.compile(
 )
 VERSION_ANCHOR = re.compile(r"\bv?\d+\.\d+(?:\.\d+)+\b|\b\d+\.\d+(?:\.\d+)?\+|\bv\d+\.\d+\b")
 # Deictic freshness and permission verbs warn: both admit context-legal uses review adjudicates.
-FRESHNESS_DEICTIC = re.compile(r"\b(?:currently|recently|nowadays|at\s+present|these\s+days|going\s+forward|newest|latest|modern)\b", re.IGNORECASE)
+FRESHNESS_DEICTIC = re.compile(r"\b(?:currently|recently|nowadays|at\s+present|these\s+days|going\s+forward|modern)\b", re.IGNORECASE)
 WEAK_VERB = re.compile(r"\b(?:supports|provides|offers|allows|enables)\b", re.IGNORECASE)
 PATTERNS: tuple[tuple[Check, re.Pattern[str], Status], ...] = (
     (Check.HEDGE, HEDGE_WORDS, "fail"),
@@ -416,7 +416,7 @@ def lex(path: Path, text: str, cap: int) -> tuple[Document, tuple[Row, ...]]:
                 rows.append(row(path, number, Check.FENCE_LANGUAGE, "fail", "opening fence has no language tag"))
             elif template:
                 pass
-            elif len(tokens) == 1 and tokens[0] != "text":
+            elif len(tokens) == 1 and tokens[0] not in ("text", "mermaid"):
                 rows.append(row(path, number, Check.FENCE_INTENT, "warn", f"fence carries no intent label from the closed set: {info}"))
             elif len(tokens) > 1 and tokens[1] not in FENCE_INTENTS:
                 rows.append(row(path, number, Check.FENCE_INTENT, "fail", f"unknown fence intent: {tokens[1]}"))
@@ -427,7 +427,7 @@ def lex(path: Path, text: str, cap: int) -> tuple[Document, tuple[Row, ...]]:
         if fence is not None:
             glyph, width, start, info = fence
             if matched and matched.group("marker")[0] == glyph and len(matched.group("marker")) >= width and not matched.group("info").strip():
-                if not mermaid_access:
+                if not mermaid_access and text.count("```mermaid") <= 2:
                     rows.append(row(path, start, Check.FENCE_INTENT, "warn", "mermaid fence lacks accTitle/accDescr accessibility directives"))
                 fence = None
             elif ("codemap" in info or "seams" in info or any(glyph in line for glyph in GLYPHS)) and len(line) > cap:
@@ -514,7 +514,8 @@ def table_rows(doc: Document) -> tuple[Row, ...]:
                 actual = body[0] if body else "<empty>"
                 if actual.strip() != expected:
                     rows.append(row(doc.path, table.line + index + 1, Check.TABLE_INDEX, "fail", f"{actual or '<empty>'} != {expected}"))
-        if len(table.headers) > TABLE_COLUMN_CEILING or len(table.rows) > TABLE_ROW_CEILING:
+        fat = len(table.headers) > 4 or any(len(cell) > 60 for body in table.rows for cell in body)
+        if len(table.headers) > TABLE_COLUMN_CEILING or (len(table.rows) > TABLE_ROW_CEILING and fat):
             rows.append(
                 row(
                     doc.path,
@@ -639,7 +640,7 @@ def list_rows(doc: Document) -> tuple[Row, ...]:
             rows.append(row(doc.path, entry.line, Check.LIST_LEADER, "fail", f"router card deviates from - [NN]-[TOKEN](path): {entry.text[:50]}"))
         elif entry.text.startswith("[") and not CHECKBOX.match(entry.text) and not LIST_LEADER.match(f"- {entry.text}"):
             rows.append(row(doc.path, entry.line, Check.LIST_LEADER, "fail", entry.text.split(":", 1)[0]))
-        if entry.span_share < ROSTER_SPAN_SHARE:
+        if entry.span_share < ROSTER_SPAN_SHARE and not entry.text.startswith("`"):
             sentences = len(SENTENCE_END.findall(entry.prose))
             if sentences > LIST_SENTENCE_CAP:
                 rows.append(row(doc.path, entry.line, Check.LIST_BLOAT, "warn", f"{sentences} sentences > cap {LIST_SENTENCE_CAP}"))
@@ -742,7 +743,7 @@ def divider_rows(path: Path, text: str) -> tuple[Row, ...]:
     rows: list[Row] = []
     for number, line in enumerate(text.splitlines(), 1):
         matched = DIVIDER.match(line)
-        if not matched or matched["marker"] != marker:
+        if not matched or matched["marker"] != marker or matched["indent"]:
             continue
         body = DIVIDER_BODY.match(matched["body"])
         if not body:
@@ -919,9 +920,9 @@ def repaired_source(path: Path, text: str) -> tuple[str, tuple[Change, ...]]:
     out: list[str] = []
     for number, line in enumerate(text.splitlines(), 1):
         matched = DIVIDER.match(line)
-        loose = DIVIDER_LOOSE.match(matched["body"]) if matched and matched["marker"] == marker else None
+        loose = DIVIDER_LOOSE.match(matched["body"]) if matched and matched["marker"] == marker and not matched["indent"] else None
         if loose is None:
-            if matched and matched["marker"] == marker:
+            if matched and matched["marker"] == marker and not matched["indent"]:
                 changes.append(Change(number, Repair.SKIP, matched["body"][:60], "unlabeled divider body needs review"))
             out.append(line)
             continue

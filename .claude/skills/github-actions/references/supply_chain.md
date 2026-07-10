@@ -12,11 +12,11 @@
 |  [04]   | **SHA without version comment** | `[PIN-AUDIT]` |    LOW     | `@<SHA>` without `# vN.N.N` — valid but unauditable.          |
 |  [05]   | **Abbreviated SHA**             | `[UNPINNED]`  |    HIGH    | Less than 40 characters — not collision-resistant.            |
 
-**Required format:** `owner/repo@<40-char-SHA> # vN.N.N`
+[REQUIRED_FORMAT]: `owner/repo@<40-char-SHA> # vN.N.N`
 
 ### [01.2]-[TJ_ACTIONS_INCIDENT]
 
-**March 2025 — CVE-2025-30066:** tj-actions/changed-files compromise affected 23,000+ repositories.
+[MARCH_2025_CVE_2025_30066]: tj-actions/changed-files compromise affected 23,000+ repositories.
 
 - Attacker retargeted ALL existing version tags to a malicious commit.
 - Secrets extracted from Runner Worker process memory via injected CI step.
@@ -24,14 +24,14 @@
 - CISA advisory issued March 18, 2025.
 - `step-security/harden-runner` first detected the anomalous network egress.
 
-**Validator checks informed by incident:**
+[VALIDATOR_CHECKS_INFORMED_BY_INCIDENT]:
 - [ALWAYS]: Flag any `uses:` line without full 40-char SHA.
 - [ALWAYS]: Flag `tj-actions/*` without SHA pin — known targeted namespace.
 - [ALWAYS]: Flag workflows missing `step-security/harden-runner` as first step.
 
 ### [01.3]-[IMMUTABLE_ACTIONS]
 
-**Status:** OCI immutable publishing **paused** (not progressing to GA). GitHub pivoted to **org-level SHA pinning enforcement** as the primary supply chain control.
+[STATUS]: OCI immutable publishing paused (not progressing to GA). GitHub pivoted to org-level SHA pinning enforcement as the primary supply chain control.
 
 | [INDEX] | [CHECK]                          | [WHAT_TO_FLAG]                                                       |
 | :-----: | :------------------------------- | :------------------------------------------------------------------- |
@@ -39,11 +39,11 @@
 |  [02]   | **Org SHA enforcement disabled** | Flag if repo is GHEC/GHES 3.12+ and enforcement not enabled.         |
 |  [03]   | **`publish-immutable-action`**   | Flag — repo exists but is unusable for external consumers.           |
 
-**Current posture:** SHA pinning + Dependabot/Renovate automated updates. Org setting "Require actions to be pinned to a full-length commit SHA" enforces `@<40-char-SHA>` format, rejects `@v1`/`@main` refs. Available in GitHub Enterprise Cloud and Server 3.12+.
+[CURRENT_POSTURE]: SHA pinning + Dependabot/Renovate automated updates. Org setting "Require actions to be pinned to a full-length commit SHA" enforces `@<40-char-SHA>` format, rejects `@v1`/`@main` refs. Available in GitHub Enterprise Cloud and Server `3.12+`.
 
 ## [02]-[OIDC_FEDERATION]
 
-**Required permission:** `id-token: write` at job level. Short-lived tokens per session — zero rotation overhead.
+[REQUIRED_PERMISSION]: `id-token: write` at job level. Short-lived tokens per session — zero rotation overhead.
 
 ### [02.1]-[DETECTION_RULES]
 
@@ -82,7 +82,7 @@ Subject claims include repo, branch, and environment for fine-grained trust poli
 |  [02]   | **Build L2** | Signed provenance.        | `actions/attest-build-provenance` (v3) + OIDC.          |
 |  [03]   | **Build L3** | Hardened build platform.  | Reusable workflows (isolated `job_workflow_ref` claim). |
 
-**Required permissions:** `id-token: write`, `contents: read`, `attestations: write`.
+[REQUIRED_PERMISSIONS]: `id-token: write`, `contents: read`, `attestations: write`.
 
 ### [03.2]-[DETECTION_RULES]
 
@@ -95,9 +95,9 @@ Subject claims include repo, branch, and environment for fine-grained trust poli
 
 ### [03.3]-[VERIFICATION_SYNTAX]
 
-**`gh attestation verify`** — GA in GitHub CLI (requires >= v2.47.0). Verifies Sigstore-signed provenance and SBOM attestations.
+**`gh attestation verify`** — GA in GitHub CLI (requires >= `v2.47.0`). Verifies Sigstore-signed provenance and SBOM attestations.
 
-```bash
+```bash template
 # Verify binary against repo attestations
 gh attestation verify <file-path> --repo owner/repo
 
@@ -115,7 +115,7 @@ Key flags: `--repo` (single repo), `--owner` (org-wide), `--bundle` (offline), `
 
 ## [04]-[HARDEN_RUNNER]
 
-**Canonical version:** v2.14.2. EDR-class agent for GitHub Actions runners.
+[CANONICAL_VERSION]: EDR-class agent for GitHub Actions runners.
 
 ### [04.1]-[CAPABILITIES]
 

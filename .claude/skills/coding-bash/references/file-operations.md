@@ -1,6 +1,6 @@
 # [H1][FILE-PIPELINES]
 
-Production patterns for file I/O beyond basic reads. Basic file reads (`$(<file)`, `mapfile`) and conditionals (`-f`, `-d`, `-r`) are in [bash-scripting-guide.md S6/S9](./bash-scripting-guide.md).
+Production patterns for file I/O beyond basic reads. Basic file reads (`$(<file)`, `mapfile`) and conditionals (`-f`, `-d`, `-r`) are in `bash-scripting-guide.md` S6/S9.
 
 | [INDEX] | [PATTERN]             |  [S]  | [USE_WHEN]                                    |
 | :-----: | :-------------------- | :---: | :-------------------------------------------- |
@@ -11,9 +11,9 @@ Production patterns for file I/O beyond basic reads. Basic file reads (`$(<file)
 
 ## [01]-[ATOMIC_WRITE_LIFECYCLE]
 
-`rename(2)` atomicity holds only within a single filesystem — cross-device `mv` falls back to copy+delete. `umask 077` must precede `mktemp` — the race between creation and `chmod` is unclosable. `sync --data-only` (coreutils 8.24+) before `mv` ensures data durability — without it, power loss after `mv` can yield a zero-length file.
+`rename(2)` atomicity holds only within a single filesystem — cross-device `mv` falls back to copy+delete. `umask 077` must precede `mktemp` — the race between creation and `chmod` is unclosable. `sync --data-only` (coreutils `8.24+`) before `mv` ensures data durability — without it, power loss after `mv` can yield a zero-length file.
 
-```bash
+```bash conceptual
 # Full atomic write pipeline: umask → mktemp → write → fsync → rename → cleanup
 _atomic_write() {
     local -r target="$1"; shift
@@ -69,13 +69,13 @@ _with_tempdir() {
 }
 ```
 
-`_register_cleanup` pushes onto the LIFO `_CLEANUP_STACK` (see [script-patterns.md](./script-patterns.md)). `_atomic_snapshot` uses `${file##*/}` instead of `$(basename)` to avoid a fork per file. For true multi-file atomicity, swap a symlink: `ln -sfn "${staging}" "${dest_dir}.new" && mv -Tf "${dest_dir}.new" "${dest_dir}"`.
+`_register_cleanup` pushes onto the LIFO `_CLEANUP_STACK` (see `script-patterns.md`). `_atomic_snapshot` uses `${file##*/}` instead of `$(basename)` to avoid a fork per file. For true multi-file atomicity, swap a symlink: `ln -sfn "${staging}" "${dest_dir}.new" && mv -Tf "${dest_dir}.new" "${dest_dir}"`.
 
 ## [02]-[DESCRIPTOR_MULTIPLEX]
 
 `exec {fd}>file` delegates to the kernel's `open()` return, stored in `$fd`. Composable, collision-free, mandatory for library-quality functions — hardcoded FDs collide when functions compose.
 
-```bash
+```bash conceptual
 # Structured logging: separate channels with cleanup registration
 _init_logging() {
     local -r log_dir="$1"
@@ -106,13 +106,13 @@ _fan_out() {
 }
 ```
 
-`exec {fd}>&-` closes the descriptor — omitting leaks FDs (default ulimit ~1024). `_fan_out` calls `wait` because `>(tee ...)` subshells can outlive the parent. For bounded-concurrency job pools, use `wait -n -p finished_pid` (Bash 5.1+) — see `_run_pool` in data-pipeline.sh.
+`exec {fd}>&-` closes the descriptor — omitting leaks FDs (default ulimit ~1024). `_fan_out` calls `wait` because `>(tee ...)` subshells can outlive the parent. For bounded-concurrency job pools, use `wait -n -p finished_pid` (Bash `5.1+`) — see `_run_pool` in data-pipeline.sh.
 
 ## [03]-[DIRECTORY_TRAVERSAL]
 
-**GLOBSORT (Bash 5.3+)** controls glob result ordering without forking to `ls` or `stat`. Scoped via `local` in functions — does not leak. Replaces `ls -t | while read` pipelines entirely.
+[GLOBSORT]: controls glob result ordering without forking to `ls` or `stat`. Scoped via `local` in functions — does not leak. Replaces `ls -t | while read` pipelines entirely.
 
-```bash
+```bash conceptual
 # GLOBSORT: sorted glob expansion without ls piping (Bash 5.3+)
 # Values: name, size, blocks, mtime, atime, ctime, numeric, none; prefix - for descending
 _recent_logs() {
@@ -126,7 +126,7 @@ _recent_logs() {
 
 `fd` respects `.gitignore`, handles special-character filenames via `--print0`, and provides regex/glob filtering with depth control. `--format` (fd 10+) produces structured output without `--exec` fork overhead. `--strip-cwd-prefix=always|never|auto` for clean pipeline output. `--hyperlink` emits OSC 8 clickable links (pairs with `rg --hyperlink-format`).
 
-```bash
+```bash conceptual
 # fd-first file discovery with glob fallback
 _discover() {
     local -r base="$1" pattern="$2"; local -n _out=$3
@@ -190,7 +190,7 @@ _collect_filtered() {
 
 Config files, markdown, and structured logs have internal structure. Pure bash extraction via `mapfile` + array slicing operates on the loaded array — no repeated file I/O.
 
-```bash
+```bash conceptual
 # Line-addressed access: array indexing after mapfile
 _line() {
     local -n _lines=$1
@@ -251,7 +251,7 @@ printf '%s\n' "${sql_block[@]}"
 - `exec {fd}>file` for all FD allocation — hardcoded numbers collide in composed functions.
 - `exec {fd}>&-` to close FDs on both success and error paths — leaked descriptors exhaust ulimit.
 - `flock -n` (non-blocking) or `flock -w N` (timeout) — never bare `flock` unless blocking is intentional.
-- `GLOBSORT` (Bash 5.3+) for sorted glob expansion — replaces `ls -t` piping. Scope via `local` to prevent leak.
+- `GLOBSORT` (Bash `5.3+`) for sorted glob expansion — replaces `ls -t` piping. Scope via `local` to prevent leak.
 - `fd --format` (fd 10+) for structured output — avoids `--exec` fork overhead per match.
 - `fd --strip-cwd-prefix=always` for clean relative paths in pipelines.
 - `fd` for file search, glob for in-process traversal, `find` as POSIX fallback only.

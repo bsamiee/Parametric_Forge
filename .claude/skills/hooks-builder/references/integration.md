@@ -30,7 +30,7 @@ Exit-0 stdout lands as context Claude sees only on `UserPromptSubmit`, `UserProm
 
 Hooks run without a controlling terminal — `/dev/tty` is unavailable — so desktop notifications, window titles, and bells return through the `terminalSequence` JSON field, which Claude Code emits on the hook's behalf. The allowlist is OSC `0`/`1`/`2` (titles), `9` (iTerm2/ConEmu/Windows Terminal/WezTerm, including `9;4` taskbar progress), `99` (Kitty), `777` (urxvt/Ghostty/Warp), and bare BEL; anything outside it — cursor moves, colors, OSC 8 hyperlinks, OSC 52 clipboard — rejects the whole field. Build control bytes with `printf` octal escapes and the JSON with `jq -n --arg`:
 
-```bash
+```bash conceptual
 #!/bin/bash
 input=$(cat)
 body=$(jq -r '.message // "Needs your attention"' <<<"$input")
@@ -46,7 +46,7 @@ jq -nc --arg seq "$seq" '{terminalSequence: $seq}'
 
 Skills and subagents declare hooks in frontmatter with the same configuration shape, scoped to the component's lifetime and cleaned up when it finishes. All events are supported; a subagent's `Stop` hooks convert automatically to `SubagentStop`. The `once: true` field — honored only in skill frontmatter — runs a hook a single time per session:
 
-```yaml
+```yaml template
 ---
 name: secure-operations
 description: Perform operations with security checks

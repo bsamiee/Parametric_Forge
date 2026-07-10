@@ -6,7 +6,7 @@ can reach that local server.
 
 ## [01]-[COMMON_SYMPTOM]
 
-```json
+```json output-only
 {
   "error": "Heptabase started, but the CLI server is not ready yet. Ensure CLI is enabled..."
 }
@@ -21,7 +21,7 @@ If it still fails, ask the user to make sure the desktop app has CLI enabled at
 If you want a persistent `workspace-write` setup, ask the user to add this to
 `~/.codex/config.toml`:
 
-```toml
+```toml copy-safe
 [sandbox_workspace_write]
 network_access = true
 ```

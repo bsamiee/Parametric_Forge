@@ -10,7 +10,7 @@ Prefer Markdown for ordinary writing and appending. Use ProseMirror JSON only wh
 
 A ProseMirror document is a JSON object:
 
-```json
+```json template
 {
   "type": "doc",
   "content": [
@@ -58,7 +58,7 @@ For everyday note content, you can use Markdown instead of JSON. The table below
 
 Below is an example with inline mentions, an image block, a standalone video line (note the blank lines), and a todo item:
 
-```markdown
+```markdown template
 # Sprint notes
 
 Discussed in {{card 11111111-1111-4111-8111-111111111111}} on {{date 2026-06-04}}.
@@ -188,7 +188,7 @@ When you save as Markdown, you can get bold, italic, and stuff from the syntax i
 
 ### [03.4]-[DEPRECATED_ATTRIBUTES]
 
-Some attrs remain in the schema as legacy. When **creating** new JSON, omit them unless you are round-tripping an existing document from `read`:
+Some attrs remain in the schema as legacy. When creating new JSON, omit them unless you are round-tripping an existing document from `read`:
 
 <!-- prettier-ignore -->
 
@@ -202,7 +202,7 @@ Some attrs remain in the schema as legacy. When **creating** new JSON, omit them
 
 ### [04.1]-[MINIMAL_NOTE]
 
-```json
+```json template
 {
   "type": "doc",
   "content": [{ "type": "heading", "attrs": { "level": 1, "id": null } }]
@@ -211,7 +211,7 @@ Some attrs remain in the schema as legacy. When **creating** new JSON, omit them
 
 ### [04.2]-[PARAGRAPH_WITH_MARKS_AND_LINK]
 
-```json
+```json template
 {
   "type": "doc",
   "content": [
@@ -243,7 +243,7 @@ Some attrs remain in the schema as legacy. When **creating** new JSON, omit them
 
 ### [04.3]-[TODO_ITEM]
 
-```json
+```json template
 {
   "type": "doc",
   "content": [
@@ -268,7 +268,7 @@ Some attrs remain in the schema as legacy. When **creating** new JSON, omit them
 
 ### [04.4]-[CODE_BLOCK]
 
-```json
+```json template
 {
   "type": "doc",
   "content": [
@@ -290,7 +290,7 @@ Use `!` to enable line wrapping, for example `!typescript`. For Mermaid code blo
 
 ### [04.5]-[INLINE_CARD_MENTION]
 
-```json
+```json template
 {
   "type": "doc",
   "content": [
@@ -311,7 +311,7 @@ Use `!` to enable line wrapping, for example `!typescript`. For Mermaid code blo
 
 ### [04.6]-[MIRROR_EMBED]
 
-```json
+```json template
 {
   "type": "doc",
   "content": [
@@ -333,7 +333,7 @@ Use `!` to enable line wrapping, for example `!typescript`. For Mermaid code blo
 
 `math_display` is a block; `math_inline` is an inline sibling next to `text` inside a paragraph. Neither uses `attrs` or a top-level `text` property for the formula. Put the TeX string in `content` as a single child `text` node. Multiple child `text` nodes are schema-valid, but prefer one child `text` node when creating new math content.
 
-```json
+```json template
 {
   "type": "doc",
   "content": [
@@ -360,7 +360,7 @@ Use `!` to enable line wrapping, for example `!typescript`. For Mermaid code blo
 
 ### [04.8]-[TABLE]
 
-```json
+```json template
 {
   "type": "doc",
   "content": [

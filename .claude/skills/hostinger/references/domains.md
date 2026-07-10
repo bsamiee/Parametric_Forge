@@ -6,7 +6,7 @@ Domain portfolio law: availability through purchase, delegation, DNS zone record
 
 Availability precedes every purchase; the endpoint is rate-limited to 10 requests per minute, TLDs arrive without a leading dot, and alternative suggestions require exactly one TLD.
 
-```bash
+```bash template
 curl -X POST "https://developers.hostinger.com/api/domains/v1/availability" \
   -H "Authorization: Bearer $HOSTINGER_API_TOKEN" -H "Content-Type: application/json" \
   -d '{ "domain": "myproject", "tlds": ["com", "net", "io"], "with_alternatives": true }'
@@ -14,7 +14,7 @@ curl -X POST "https://developers.hostinger.com/api/domains/v1/availability" \
 
 Purchase requires an `item_id` from the billing catalog (`billing_getCatalogItemListV1`), a payment method (default used when omitted), and WHOIS contacts (TLD defaults used when omitted). A WHOIS profile for the target TLD exists before registration; some TLDs demand `additional_details`.
 
-```bash
+```bash template
 curl -X POST "https://developers.hostinger.com/api/domains/v1/portfolio" \
   -H "Authorization: Bearer $HOSTINGER_API_TOKEN" -H "Content-Type: application/json" \
   -d '{
@@ -29,7 +29,7 @@ Post-purchase hardening: enable domain lock and privacy protection immediately (
 
 ## [02]-[NAMESERVERS_AND_DNS]
 
-```bash
+```bash template
 # Delegate — at least two nameservers, verified responsive before switching
 curl -X PUT "https://developers.hostinger.com/api/domains/v1/portfolio/example.com/nameservers" \
   -H "Authorization: Bearer $HOSTINGER_API_TOKEN" -H "Content-Type: application/json" \
@@ -44,7 +44,7 @@ Zone records under Hostinger nameservers ride the `DNS_*` MCP family — get, up
 
 `301` preserves SEO for permanent moves; `302` serves temporary campaigns. Forwarding comes off before the domain points at hosting.
 
-```bash
+```bash copy-safe
 curl -X POST "https://developers.hostinger.com/api/domains/v1/forwarding" \
   -H "Authorization: Bearer $HOSTINGER_API_TOKEN" -H "Content-Type: application/json" \
   -d '{ "domain": "old-domain.com", "redirect_type": "301", "redirect_url": "https://new-domain.com" }'
@@ -55,7 +55,7 @@ curl -X POST "https://developers.hostinger.com/api/domains/v1/forwarding" \
 
 Profiles are per-TLD contact bundles reused across domains; `entity_type` is `individual` or `organization`, and requirements differ by TLD. Usage is checked before deletion — a profile in use by active domains refuses to delete.
 
-```bash
+```bash copy-safe
 curl -X GET "https://developers.hostinger.com/api/domains/v1/whois?tld=com" -H "Authorization: Bearer $HOSTINGER_API_TOKEN"
 
 curl -X POST "https://developers.hostinger.com/api/domains/v1/whois" \
@@ -73,7 +73,7 @@ curl -X GET "https://developers.hostinger.com/api/domains/v1/whois/741288/usage"
 
 Domain lock blocks unauthorized transfers and stays on for every production domain; privacy protection hides owner data from public WHOIS. Lock comes off only immediately before an intended transfer. Registrar-imposed lock periods can follow registration — `.com` typically holds 60 days.
 
-```bash
+```bash copy-safe
 # PUT enables, DELETE disables — same paths
 curl -X PUT "https://developers.hostinger.com/api/domains/v1/portfolio/example.com/domain-lock" -H "Authorization: Bearer $HOSTINGER_API_TOKEN"
 curl -X PUT "https://developers.hostinger.com/api/domains/v1/portfolio/example.com/privacy-protection" -H "Authorization: Bearer $HOSTINGER_API_TOKEN"
@@ -81,7 +81,7 @@ curl -X PUT "https://developers.hostinger.com/api/domains/v1/portfolio/example.c
 
 Domain access verification lives on a different base path and returns pending and completed verifications for a set of domains:
 
-```bash
+```bash copy-safe
 curl -X GET "https://developers.hostinger.com/api/v2/direct/verifications/active" \
   -H "Authorization: Bearer $HOSTINGER_API_TOKEN" -H "Content-Type: application/json" \
   -d '{ "domains": ["example.com", "example.net"] }'

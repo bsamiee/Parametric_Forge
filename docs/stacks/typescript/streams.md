@@ -49,7 +49,7 @@ Three discriminants select the carrier — boundedness, effectfulness, increment
 - Law: a long-lived feed survives its faults by re-registration — `Stream.retry(policy)` re-runs the entire stream through its acquires on each fault and resets the schedule once an element flows again, so backoff never compounds across outages — and `Stream.timeoutFail(fault, gap)` converts a stalled pull into the typed fault the policy consumes; the restart re-emits from wherever the source starts, so the resume coordinate lives in the source's own state — the cursor, the poll's high-water mark — never in a downstream dedup set.
 - Reject: an offset `while` pump; `Stream.fromIterable` around a fully fetched result; a recursive effect pushing into a `Queue` as a hand-rolled feed — the constructor family already owns registration, cadence, and termination.
 
-```typescript
+```typescript conceptual
 import { Chunk, type Duration, type Effect, Number, type Option, Schedule, Stream } from "effect"
 
 type Reading = { readonly key: string; readonly value: number }
@@ -110,7 +110,7 @@ State that threads element-to-element lives inside the pipeline as a fold accumu
 - Boundary: cross-fiber shared state is `concurrency.md`'s `Ref`/`STM`; the accumulator here is pipeline-local and single-fiber by construction, so reaching for a cell inside a pipeline marks state that belongs to the fold.
 - Boundary: the Mealy step's `(state, element) => [state, output]` shape is `computation.md`'s law — this page owns its lift into the stream and everything the carrier adds.
 
-```typescript
+```typescript conceptual
 import { HashMap, Number, Option, Stream } from "effect"
 
 type Sample = { readonly key: string; readonly value: number }
@@ -158,7 +158,7 @@ A window is a pair of policy values — a `Sink` deciding what closes a batch, a
 - Use: `Sink.fold`/`Sink.foldUntil`/`Sink.collectAllN` for predicate and count closure; `Sink.zip` and `Sink.race` keep composed consumers one `Sink` value so the terminal `Stream.run(sink)` receives one consumer.
 - Reject: count-only batching of variable-size payloads; a byte counter threaded through `mapAccum` to fake a weighted window; a flush raced against a hand timer.
 
-```typescript
+```typescript conceptual
 import { Chunk, type Duration, Function, Schedule, Sink, Stream } from "effect"
 
 type Entry = { readonly key: string; readonly payload: string }
@@ -211,7 +211,7 @@ Fan-out multiplies consumers of one pull; fan-in funds one consumer from many so
 - Law: two feeds sorted by distinct keys align with `Stream.zipAllSortedByKeyWith({ other, onSelf, onOther, onBoth, order })` — a constant-space keyed join total over all three presence cases; the caller owes distinct sorted keys, the operator's named precondition, and `Stream.zipLatest` pairs by arrival time, not key — choosing it for keyed data is the named confusion.
 - Boundary: `Match.valueTags` mechanics are `surfaces-and-dispatch.md`'s; `Order` instances are `values.md`'s — both compose here as values.
 
-```typescript
+```typescript conceptual
 import { type Duration, Effect, GroupBy, Match, Order, type Scope, Stream } from "effect"
 
 type Sample = { readonly key: string; readonly value: number }
@@ -302,7 +302,7 @@ The seam between a push world and pull geometry is a bridge with an explicit buf
 - Law: rate shaping is `Stream.throttle({ cost, units, duration, burst, strategy })` — a declared token bucket where `"shape"` delays and `"enforce"` drops, `cost` prices a whole chunk (`Chunk.size` for per-element pricing), and `burst` prices the allowance above steady state; `Stream.debounce(duration)` owns quiescence — emit only after input pauses — and `Stream.schedule(policy)` paces per element on a `Schedule` value, cadence where `throttle` prices volume.
 - Reject: a hand token bucket around `mapEffect`; sleep-loop pacing; shedding via a mutable counter inside `filter`.
 
-```typescript
+```typescript conceptual
 import { Chunk, Data, type Duration, Effect, Stream } from "effect"
 
 class FeedFault extends Data.TaggedError("FeedFault")<{ readonly reason: string }> {}
@@ -362,7 +362,7 @@ N identical lookups inside one flow are one declared request family and one reso
 - Law: in stream geometry the window is declared upstream — `Stream.groupedWithin(width, patience)` pages the key feed by count or latency, one batched `Effect.forEach` runs per page under `Stream.mapEffect` with `{ concurrency }` lanes, and `Stream.flattenIterables` restores element flow; width, patience, and lanes ride one `as const satisfies` policy row.
 - Boundary: the resolver's provider call is `boundaries.md`'s seam — material is decoded before the resolver distributes it; this page owns only the collapse geometry.
 
-```typescript
+```typescript conceptual
 import { dataLoader } from "@effect/experimental/RequestResolver"
 import {
   Array, Clock, Data, type Duration, Effect, HashMap, Option, Request, RequestResolver, type Scope, Stream,

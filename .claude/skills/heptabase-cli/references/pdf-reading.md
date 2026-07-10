@@ -4,20 +4,20 @@
 
 1. Find PDF card IDs:
 
-```bash
+```bash template
 heptabase card list --card-types pdf --limit 20
 heptabase card list -q "<keyword>" --card-types pdf --limit 20
 ```
 
 2. Read metadata before content:
 
-```bash
+```bash template
 heptabase pdf metadata <pdfCardId>
 ```
 
 3. Read small page ranges:
 
-```bash
+```bash template
 heptabase pdf read <pdfCardId> --start-page 1 --end-page 5
 ```
 
@@ -38,4 +38,4 @@ heptabase pdf read <pdfCardId> --start-page 1 --end-page 5
 
 - `parsedStatus: "processing"`: wait and retry later.
 - `parsedStatus: "failed"` or `"notSupported"`: parsed Markdown is not available for this PDF.
-- `parsedStatus: null`: this PDF card is not parsed yet. Ask the user to open the PDF in Heptabase and click the **Parse** button.
+- `parsedStatus: null`: this PDF card is not parsed yet. Ask the user to open the PDF in Heptabase and click the Parse button.

@@ -25,12 +25,14 @@
           ../overlays
         ]);
     };
-    # .jq-only projection: `jq -f <file> </dev/null` compiles without running
-    # the body; named args bind at compile time, so the gate predefines them.
+    # .jq-only projection checked through the fmt front door: its jq lane owns
+    # the compile gate (empty stdin, pre-bound $vars), so one implementation
+    # serves the CLI and this check, and CI proves the CLI on every run.
     jqSources = fileset.toSource {
       root = ../.;
       fileset = fileset.fileFilter (file: file.hasExt "jq") ../overlays;
     };
+    fmtCli = builtins.head (import ../modules/home/scripts/fmt.nix {pkgs = forgePkgs;}).home.packages;
   in {
     checks =
       {
@@ -42,21 +44,9 @@
           touch "$out"
         '';
 
-        jq-syntax = forgePkgs.runCommand "forge-jq-syntax" {nativeBuildInputs = [forgePkgs.jq];} ''
-          fail=0
-          for f in $(find ${jqSources} -type f -name '*.jq' | sort); do
-            args=()
-            for v in $(grep -oE '\$[A-Za-z_][A-Za-z0-9_]*' "$f" | sort -u); do
-              name=''${v:1}
-              case "$name" in ENV | __loc__ | __prog__) continue ;; esac
-              args+=(--arg "$name" "")
-            done
-            jq "''${args[@]}" -f "$f" </dev/null >/dev/null || {
-              echo "[SYNTAX] ''${f#${jqSources}/}" >&2
-              fail=1
-            }
-          done
-          test "$fail" -eq 0
+        jq-syntax = forgePkgs.runCommand "forge-jq-syntax" {} ''
+          ${fmtCli}/bin/fmt --self-test
+          ${fmtCli}/bin/fmt --check ${jqSources}
           touch "$out"
         '';
       }

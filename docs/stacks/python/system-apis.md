@@ -45,7 +45,7 @@ This table is a lookup by repeated local smell; the owning card states the place
 - Reject: a stringly `os.walk` flow; a `shutil.copy`/`move` wrapper; one `stat()` per `exists`/`is_dir` check; drive/root string slicing for `os.path.splitroot`; a symlink-prefix resolution loop for `realpath(strict=ALLOW_MISSING)`; a `urllib` strip-and-unquote where `Path.from_uri` admits a `file:` URI; a right-anchored `match` where `full_match` spans the whole path; a `copy: bool` knob where a policy row carries `follow_symlinks`/`preserve_metadata`.
 
 [FILE_IO]:
-- Owner: `NamedTemporaryFile(delete_on_close=...)`, `shutil.rmtree(onexc=...)`, `importlib.resources.files`/`as_file`, `tomllib` (TOML 1.1.0), and `mimetypes.guess_file_type`.
+- Owner: `NamedTemporaryFile(delete_on_close=...)`, `shutil.rmtree(onexc=...)`, `importlib.resources.files`/`as_file`, `tomllib` (TOML `1.1.0`), and `mimetypes.guess_file_type`.
 - Gate: persisted text I/O states `encoding="utf-8"` (or `encoding="locale"` only at a genuine locale boundary), never an implicit default at a durable seam.
 - Rule: `importlib.resources.as_file(files(anchor) / name)` materializes a packaged resource to a real path inside a `with` scope and reclaims it on exit — the `__file__`-relative computation it retires; a config payload parses through `tomllib.load`/`loads`, never a `tomli` backport the active interpreter subsumes; `mimetypes.guess_file_type` takes the path directly where `guess_type` re-parses a URL.
 - Reject: `mkstemp` unlink ladders; an `onerror` tuple handler for `rmtree(onexc=...)`; a `__file__` extraction loop; a `tomli` shim; path use of `mimetypes.guess_type`.

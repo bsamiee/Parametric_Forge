@@ -14,7 +14,7 @@
 |  [08]   | **Trusted ops on fork PRs**      | `pull_request_target`               |    Yes    |      Yes      |
 |  [09]   | **Manual parameterized trigger** | `workflow_dispatch`                 |    Yes    |      No       |
 
-```yaml
+```yaml conceptual
 on:
   push:
     paths: ['src/**', '!src/**/*.md', '!**/__tests__/**']
@@ -24,7 +24,7 @@ on:
 
 ## [02]-[WORKFLOW_RUN]
 
-```yaml
+```yaml conceptual
 on:
   workflow_run:
     workflows: ["CI Pipeline"]
@@ -40,13 +40,13 @@ jobs:
         with: { run-id: '${{ github.event.workflow_run.id }}', github-token: '${{ secrets.GITHUB_TOKEN }}' }
 ```
 
-**Properties:** `.name`, `.conclusion`, `.head_sha`, `.head_branch`, `.id`, `.event`
+[PROPERTIES]: `.name`, `.conclusion`, `.head_sha`, `.head_branch`, `.id`, `.event`
 
 [IMPORTANT] Max 3 levels of chaining. Artifacts accessible via `run-id` from triggering workflow.
 
 ## [03]-[REPOSITORY_DISPATCH]
 
-```yaml
+```yaml conceptual
 on:
   repository_dispatch:
     types: [deploy-prod, deploy-staging, run-migration]
@@ -59,7 +59,7 @@ jobs:
       - run: printf 'Version: %s\n' "${{ github.event.client_payload.version }}"
 ```
 
-```bash
+```bash template
 curl -X POST -H "Authorization: Bearer $TOKEN" -H "Accept: application/vnd.github.v3+json" \
   "https://api.github.com/repos/OWNER/REPO/dispatches" \
   -d '{"event_type":"deploy-prod","client_payload":{"version":"v1.2.3"}}'
@@ -69,7 +69,7 @@ curl -X POST -H "Authorization: Bearer $TOKEN" -H "Accept: application/vnd.githu
 
 ## [04]-[CHATOPS]
 
-```yaml
+```yaml conceptual
 on:
   issue_comment: { types: [created] }
 jobs:
@@ -90,11 +90,11 @@ jobs:
             });
 ```
 
-[IMPORTANT] Verify `author_association`. Pass comment content through `env:` indirection. [REFERENCE] [->expressions-and-contexts.md§INJECTION_PREVENTION](./expressions-and-contexts.md).
+[IMPORTANT] Verify `author_association`. Pass comment content through `env:` indirection. [REFERENCE] `expressions-and-contexts.md`§INJECTION_PREVENTION.
 
 ## [05]-[WORKFLOW_DISPATCH]
 
-```yaml
+```yaml conceptual
 on:
   workflow_dispatch:
     inputs:
@@ -116,11 +116,11 @@ on:
 
 ## [06]-[SCHEDULE]
 
-[IMPORTANT] All `schedule` cron expressions evaluate in **UTC only** (no timezone override). Timezone support is on GitHub roadmap (Q1 2026 preview). Convert local times manually. Schedules only run on the default branch.
+[IMPORTANT] All `schedule` cron expressions evaluate in UTC only (no timezone override). Timezone support is on GitHub roadmap (Q1 2026 preview). Convert local times manually. Schedules only run on the default branch.
 
 ## [07]-[MERGE_GROUP]
 
-```yaml
+```yaml conceptual
 on:
   pull_request:
   merge_group: { types: [checks_requested] }
@@ -134,17 +134,17 @@ jobs:
 
 [CRITICAL] Add `merge_group` alongside `pull_request` when using merge queue — without it, required checks never report.
 
-**Context properties:** `base_ref`, `base_sha`, `head_ref`, `head_sha`, `head_commit.*`
+[CONTEXT_PROPERTIES]: `base_ref`, `base_sha`, `head_ref`, `head_sha`, `head_commit.*`
 
 ## [08]-[PULL_REQUEST_TARGET]
 
-**Dec 8, 2025 enforcement (active):** Workflow source always comes from default branch — no matter which branch the PR targets. `GITHUB_REF` resolves to `refs/heads/main`; `GITHUB_SHA` points to default branch HEAD at run start. Environment protection rules evaluate against the execution ref. This eliminates "pwn request" attacks where malicious PRs modified workflow definitions.
+[DEC_8_2025_ENFORCEMENT]: Workflow source always comes from default branch — no matter which branch the PR targets. `GITHUB_REF` resolves to `refs/heads/main`; `GITHUB_SHA` points to default branch HEAD at run start. Environment protection rules evaluate against the execution ref. This eliminates "pwn request" attacks where malicious PRs modified workflow definitions.
 
 [CRITICAL]:
 - [NEVER]: Checkout PR head without environment protection gate (required reviewers).
 - [ALWAYS]: Use for labeling, commenting, triage only.
 
-```yaml
+```yaml conceptual
 on:
   pull_request_target: { types: [opened, labeled] }
 jobs:
@@ -162,7 +162,7 @@ jobs:
 
 ## [09]-[DYNAMIC_MATRIX]
 
-```yaml
+```yaml conceptual
 jobs:
   setup:
     runs-on: ubuntu-latest
@@ -194,7 +194,7 @@ jobs:
 
 - `continue-on-error`: downstream `needs:` jobs then see the failed job as success.
 
-**Interaction semantics:** `continue-on-error: true` on a matrix job masks its failure from `fail-fast` — remaining matrix jobs continue. However, downstream `needs:` jobs see the failed job's result as `success`, which can hide real failures. **Recommended pattern:** Use `fail-fast: false` (let all matrix jobs run) without `continue-on-error`, then aggregate results in a downstream job via `needs.*.result`.
+[INTERACTION_SEMANTICS]: `continue-on-error: true` on a matrix job masks its failure from `fail-fast` — remaining matrix jobs continue. However, downstream `needs:` jobs see the failed job's result as `success`, which can hide real failures. Recommended pattern: Use `fail-fast: false` (let all matrix jobs run) without `continue-on-error`, then aggregate results in a downstream job via `needs.*.result`.
 
 [IMPORTANT] `uses:` values are static strings — not dynamically generated. Max 256 jobs per matrix.
 
@@ -206,4 +206,4 @@ jobs:
 |  [02]   | **Reusable workflows**    | Max 2 nesting levels, 50 unique/run. `secrets: inherit` at each level. `job_workflow_ref` for SLSA L3.     |
 |  [03]   | **Concurrency groups**    | Max 1 running + 1 pending/group. `cancel-in-progress: true` for CI; `false` for deploys (state risk).      |
 
-[REFERENCE] [->best-practices.md§ORGANIZATIONAL_CONTROLS](./best-practices.md).
+[REFERENCE] `best-practices.md`§ORGANIZATIONAL_CONTROLS.

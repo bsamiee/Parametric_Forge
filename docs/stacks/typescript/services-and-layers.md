@@ -46,7 +46,7 @@ When a concern matches several rows, the most specific wins; owner form is decid
 - Boundary: a port whose implementations vary by deployment is chooser row `[02]` even when a default exists — a `Reference` default is policy data, never a live engine; an engine default smuggles the root's selection into the definition.
 - Reject: `Effect.serviceOptional` where the absence case has a policy — it converts absence into `NoSuchElementException` and forfeits the `Option` fold.
 
-```typescript
+```typescript conceptual
 import { Context, Effect, HashMap, Option, Ref } from "effect"
 
 class Budget extends Context.Reference<Budget>()("<scope>/Budget", {
@@ -117,7 +117,7 @@ export { Budget, Probe, Registry }
 - Law: `Layer.unwrapEffect` admits a value-decided graph — an `Effect<Layer<…>>` whose result shape the root cannot know statically — and `Layer.unwrapScoped` is the same seam when the deciding effect holds resources; both keep selection inside the layer algebra, so a runtime decision never leaks upward into two hand-assembled runtimes.
 - Boundary: which services exist is this page's concern; what a built service does on the rail — spans, schedules, brackets — is `rails-and-effects.md`.
 
-```typescript
+```typescript conceptual
 import { Context, Effect, Layer, Schedule } from "effect"
 
 class Conn extends Context.Tag("<scope>/Conn")<Conn, {
@@ -194,7 +194,7 @@ export { Conn, Meter, Sender, Store, probed, root }
 - Law: selection composes as `Layer.unwrapEffect` over the config read — the decision is itself an effect in the layer algebra, its `ConfigError` rides the layer's error channel, and the root that provides the selected engine still proves `never, never` or declares the config fault, one line either way.
 - Use: `Layer.succeed(Port, Port.of({ … }))` as the zero-construction engine — the same table row shape serves a live engine, a stub, and a recorded fake.
 
-```typescript
+```typescript conceptual
 import { Config, type ConfigError, Context, Data, Effect, Layer, Ref, Struct } from "effect"
 
 class TransportFault extends Data.TaggedError("TransportFault")<{ readonly frame: string }> {}
@@ -261,7 +261,7 @@ export { Transport, TransportFault, TransportLive, relayed }
 - Use: `Reloadable.manual(Tag, { layer })` with `Reloadable.reload(Tag)` when refresh is event-driven — the signal calls reload, readers are untouched — and `Reloadable.reloadFork(Tag)` when the signaler must not wait on reconstruction.
 - Boundary: reload cadence is a `Schedule` value; its composition algebra is `rails-and-effects.md`.
 
-```typescript
+```typescript conceptual
 import { Clock, Context, Duration, Effect, Layer, LayerMap, ManagedRuntime, Reloadable, Schedule } from "effect"
 
 class Roster extends Context.Tag("<scope>/Roster")<Roster, {
@@ -330,7 +330,7 @@ export { Roster, RosterAuto, Tenants, Vault, halted, host, served }
 - Law: `it.effect` runs under deterministic `TestServices` — time is virtual until `TestClock.adjust` moves it, randomness is seeded — so a duration-dependent path is proven by forking the effect, adjusting the clock, and joining the fiber: zero wall-clock waits, zero flake.
 - Boundary: a spec module's public surface is empty — the collector call is its one side effect, so the exports block carries nothing and inline exports remain banned.
 
-```typescript
+```typescript test-only
 import { expect, layer } from "@effect/vitest"
 import { Config, ConfigProvider, Context, Duration, Effect, Fiber, Layer, TestClock } from "effect"
 

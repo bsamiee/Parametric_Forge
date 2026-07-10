@@ -4,7 +4,7 @@
 
 ## [01]-[COMMAND_SHAPE]
 
-```bash
+```bash copy-safe
 npx pulumi do aws:s3:Bucket create --yes --bucket my-data
 npx pulumi do aws:s3:Bucket read my-data
 ```
@@ -20,7 +20,7 @@ There is no Pulumi logical name to choose: the CLI derives an internal name from
 
 Properties come from per-property flags, a body file, or both; flags overlay the body. Flags set top-level scalar properties only — nested or structured values (`tags`, nested blocks) come from the body file. The body defaults to PCL as flat `name = value` attributes; `--input yaml` selects YAML via the converter plugin.
 
-```bash
+```bash copy-safe
 cat > bucket.pcl <<'EOF'
 bucket = "my-data"
 tags = {
@@ -36,7 +36,7 @@ Before authoring properties for a resource new to the session, `npx pulumi packa
 
 `create`, `read`, and `patch` each write one JSON object to stdout with the resource's properties top-level beside an `id` field holding the cloud identifier — no nested `outputs` object, no `urn`, no echoed type token. `list` writes a JSON array of `{id, name}` entries; a function writes its declared result shape. The exit code is checked on every invocation.
 
-```json
+```json output-only
 {
   "id":     "my-data",
   "bucket": "my-data",
@@ -48,7 +48,7 @@ Before authoring properties for a resource new to the session, `npx pulumi packa
 
 No state means no resource graph and no `${...}` reference syntax. A value flows between commands by reading a field from one command's JSON output and passing it as a literal flag to the next — across providers as readily as within one.
 
-```bash
+```bash copy-safe
 # create prints JSON containing "id": "vpc-0abc123"
 npx pulumi do aws:ec2:Vpc create --yes --cidr-block 10.0.0.0/16
 npx pulumi do aws:ec2:Subnet create --yes --vpc-id vpc-0abc123 --cidr-block 10.0.1.0/24
@@ -64,7 +64,7 @@ A value the chain does not produce — an existing resource id, an API zone id �
 
 Resources `pulumi do` created are ordinary cloud resources with no Pulumi state behind them; a project adopts them with `pulumi import`, which records each resource in stack state and generates its program code by default.
 
-```bash
+```bash copy-safe
 # import takes the full pkg:mod/type:Type token, not pulumi do's short aws:s3:Bucket
 npx pulumi import aws:s3/bucket:Bucket assets my-data
 ```

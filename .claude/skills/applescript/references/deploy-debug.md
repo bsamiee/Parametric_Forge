@@ -6,7 +6,7 @@ A deployable AppleScript artifact is a typed, signed Open Scripting Architecture
 
 `UTType.appleScript` binds plain `.applescript` source text, `UTType.osaScript` binds a flat compiled `.scpt`, and `UTType.osaScriptBundle` binds the `.scptd` package form through `com.apple.applescript.script-bundle`. A file-accepting surface discriminates on these conformances before any extension check; extension sniffing is a fallback for a type identity that resolution fails to produce.
 
-```swift
+```swift conceptual
 import UniformTypeIdentifiers
 
 enum ScriptArtifact {
@@ -31,14 +31,14 @@ enum ScriptArtifact {
 
 `osacompile -o <name>.app` produces a bundled applet or droplet from source or compiled input, `-o <name>.scptd` produces a bundled compiled script, and every other output extension produces a flat compiled script; the output extension is the sole package-format switch.
 
-```bash
+```bash copy-safe
 /usr/bin/osacompile -l AppleScript -o build/Worker.app src/Worker.applescript
 /usr/bin/osacompile -o build/Library.scptd src/Library.applescript
 ```
 
 Bundle metadata mutates before signing, never after: `CFBundleIdentifier`, `CFBundleName`, version fields, `NSAppleEventsUsageDescription`, and background-presentation keys are trust inputs the code signature seals inside `Info.plist`. An optional key such as the usage description takes an add-then-set fallback since a fresh bundle template never carries it:
 
-```bash
+```bash template
 /usr/libexec/PlistBuddy -c 'Set :CFBundleIdentifier com.example.worker' "$plist"
 /usr/libexec/PlistBuddy -c 'Add :NSAppleEventsUsageDescription string "Worker controls approved target apps."' "$plist" 2>/dev/null \
   || /usr/libexec/PlistBuddy -c 'Set :NSAppleEventsUsageDescription "Worker controls approved target apps."' "$plist"
@@ -48,7 +48,7 @@ Bundle metadata mutates before signing, never after: `CFBundleIdentifier`, `CFBu
 
 A Developer ID applet ships hardened runtime, the minimal `com.apple.security.automation.apple-events` entitlement set `true` in the signed entitlements plist, a timestamped signature, a notarized archive, a stapled bundle, and an independent Gatekeeper assessment as one pipeline.
 
-```bash
+```bash template
 set -euo pipefail
 identity='Developer ID Application: Example Corp (TEAMID1234)'
 profile='notarytool-profile'
@@ -71,7 +71,7 @@ A JXA applet runs its hardened runtime with no JIT entitlement present, and Java
 
 Nested signing runs inner-to-outer: every embedded helper, framework, plug-in, and command-line tool inside the bundle signs first, and the outer app bundle signs last, sealing every inner signature inside its own.
 
-```bash
+```bash template
 while IFS= read -r -d '' path; do
   /usr/bin/codesign --force --options runtime --timestamp --sign "$identity" "$path"
 done < <(/usr/bin/find "$app/Contents" \( -perm -111 -o -name '*.dylib' -o -name '*.framework' \) -print0 | /usr/bin/sort -z -r)
@@ -83,7 +83,7 @@ done < <(/usr/bin/find "$app/Contents" \( -perm -111 -o -name '*.dylib' -o -name
 
 `AEDeterminePermissionToAutomateTarget` classifies Automation consent before any real Apple Event ships: `noErr` means already-permitted, `errAEEventNotPermitted` (`-1743`) means denied, and `errAEEventWouldRequireUserConsent` (`-1744`) means the status is undetermined and a prompt resolves it — returned only when the trailing `askUserIfNeeded` argument is `false`. Passing `typeWildCard` for both event class and event ID asks whether any event reaches the target at all. A preflight call with `askUserIfNeeded` `false` branches silently on the verdict; a follow-up call with `askUserIfNeeded` `true` triggers the consent dialog on demand, so a host never discovers denial by shipping a doomed command first.
 
-```swift
+```swift conceptual
 import Carbon.AppleScript
 
 func automationVerdict(bundleID: String) -> OSStatus {
@@ -102,7 +102,7 @@ func automationVerdict(bundleID: String) -> OSStatus {
 
 `do shell script` starts a fresh, non-login `/bin/sh` per call, receives a noninteractive environment, returns stdout, turns a nonzero exit into an AppleScript error, and interprets command and output text as UTF-8 — shell state never survives past the call that created it. Shell arguments stay data until one join point converts them with `quoted form of`; every command builder carries an absolute executable path and never accepts a pre-joined fragment from a caller.
 
-```applescript
+```applescript conceptual
 script Shell
     on argv(wordList)
         set quotedWords to {}
@@ -121,14 +121,14 @@ do shell script "/usr/bin/stat " & Shell's argv({"-f", "%N:%z", POSIX path of (c
 
 Elevated shell execution runs outside application `tell` blocks or inside `tell me`, since the target application never becomes the parent process for a privileged scripting addition; multi-command elevation sends one quoted script to `/bin/sh -c`, preserving one authentication prompt, one root shell, and one injection boundary. Long data enters a temporary file, never the command string, so `kern.argmax`, AppleScript quoting, shell parsing, and logging surfaces all stop carrying payload bytes, and a background command detaches with explicit redirection and a captured PID so AppleScript receives a process handle, never a live pipe.
 
-```applescript
+```applescript conceptual
 tell application "Finder" to set selectedPaths to (POSIX path of (selection as alias list))
 tell me
     do shell script "/usr/sbin/chown -R root:wheel " & Shell's argv(selectedPaths) with administrator privileges
 end tell
 ```
 
-```applescript
+```applescript conceptual
 set payload to "set -e" & linefeed & ¬
     "install -d -m 0755 /Library/Application\\ Support/Example" & linefeed & ¬
     "cp " & quoted form of POSIX path of sourceFile & " /Library/Application\\ Support/Example/config.json"
@@ -136,7 +136,7 @@ set payload to "set -e" & linefeed & ¬
 do shell script "/bin/sh -c " & quoted form of payload with administrator privileges
 ```
 
-```applescript
+```applescript conceptual
 set tempPath to do shell script "/usr/bin/mktemp /tmp/example.XXXXXX"
 try
     set fd to open for access POSIX file tempPath with write permission
@@ -151,7 +151,7 @@ on error e number n
 end try
 ```
 
-```applescript
+```applescript conceptual
 set logPath to POSIX path of (path to temporary items) & "worker.log"
 set commandText to "/usr/local/bin/worker > " & quoted form of logPath & " 2>&1 & echo $!"
 set workerPID to do shell script commandText
@@ -161,7 +161,7 @@ set workerPID to do shell script commandText
 
 Round-trips across the Apple Event boundary, object-specifier resolution, and the target application's own implementation quality dominate automation cost. A script batches specifiers across the process boundary once, then loops over native AppleScript lists locally.
 
-```applescript
+```applescript conceptual
 tell application "Calendar"
     tell calendar "Work"
         set {eventIds, eventStarts, eventSummaries} to {uid, start date, summary} of every event
@@ -176,7 +176,7 @@ end repeat
 
 `whose` filtering pushes selection into the target application when that application implements object filtering correctly, with looping over every remote object staying the fallback path, never the first design — UI scripting rides the same discipline one layer lower, resolving the smallest stable accessibility container first and collecting attributes in plural form rather than walking rows one at a time. Bulk property assignment through a plural object specifier beats a per-object command loop, since one Apple Event mutates the whole selection set.
 
-```applescript
+```applescript conceptual
 tell application "Finder"
     set staleAliases to every alias file of folder sourceFolder whose modification date < cutoffDate
     set label index of staleAliases to 2
@@ -186,7 +186,7 @@ end tell
 
 `with timeout` budgets a hostile application's latency at the Apple Event boundary, and the enclosing handler records target, selector, and timeout value as fault coordinates on the way out; `with transaction` benefits only an application that implements transaction semantics, so the transaction block sits behind an application capability row and an unsupported target keeps the ordinary batched Apple Event path.
 
-```applescript
+```applescript conceptual
 on fetchWindowNames()
     try
         with timeout of 5 seconds
@@ -198,7 +198,7 @@ on fetchWindowNames()
 end fetchWindowNames
 ```
 
-```applescript
+```applescript conceptual
 on applyRemoteMutation(targetBundleID, mutationScript, supportsTransactions)
     if supportsTransactions then
         tell application id targetBundleID
@@ -218,7 +218,7 @@ end applyRemoteMutation
 
 Production handlers rethrow the full AppleScript error structure after attaching domain context; dropping `partial result`, `from`, or `to` destroys the only structured diagnostics some applications return. The rethrown fields — AppleScript error number, shell exit status, target application name, offending object, expected type — normalize into one fault record, keeping OSA, shell, and Apple Event failures comparable across a single layer.
 
-```applescript
+```applescript conceptual
 on annotateError(domainName, handlerName, thunk)
     try
         return (run thunk)
@@ -231,7 +231,7 @@ end annotateError
 
 Recovery branches on exact negative Apple Event numbers, never message substrings: `-1743` routes an Automation-consent denial, `-1712` routes a timeout, and `-1728` routes an object-not-found fault.
 
-```applescript
+```applescript conceptual
 try
     tell application "Calendar" to count calendars
 on error e number n
@@ -246,7 +246,7 @@ end try
 
 `AEDebugSends=1` and `AEDebugReceives=1` on a launched process's environment trace Apple Event wire traffic for that process alone — a Finder-launched applet needs a wrapper launch or a launchd environment variable, while a terminal `osascript` call inherits both directly — and system-wide tracing routes through the Unified Log subsystem `com.apple.appleevents`, surfacing the same send and receive descriptors for a process the harness never spawned itself.
 
-```bash
+```bash copy-safe
 AEDebugSends=1 AEDebugReceives=1 /usr/bin/osascript -sse scripts/probe.applescript 2>build/apple-events.log
 /usr/bin/log stream --debug --predicate 'subsystem == "com.apple.appleevents"'
 ```
@@ -257,7 +257,7 @@ Endpoint Security carries no `apple_event` event type, so Apple Event traffic it
 
 Nix packages AppleScript as a Darwin-only derivation whose build phase invokes host OSA tools and whose install result already carries the target distribution channel's signature; a pure Linux builder never owns OSA compilation.
 
-```nix
+```nix template
 { stdenvNoCC, lib }:
 
 stdenvNoCC.mkDerivation {
@@ -281,7 +281,7 @@ stdenvNoCC.mkDerivation {
 
 Homebrew distributes a signed applet as a cask when the artifact is an application bundle, a disk image, or a zip; the formula lane owns a command-line launcher that calls `osascript`, never GUI app installation semantics.
 
-```ruby
+```ruby template
 cask "worker-applet" do
   version "1.0.0"
   sha256 "<sha256>"
@@ -294,7 +294,7 @@ end
 
 `NSAppleScript` binds to the main thread and rejects reentrancy: `compileAndReturnError:`, `executeAndReturnError:`, and `executeAppleEvent:error:` all misbehave off-thread or under recursive invocation. OSAKit's `OSAScript` rides the identical OSA component substrate and grants no concurrency escape. Off-main execution runs through `NSUserAppleScriptTask`, whose completion handler fires on its own queue outside the sandbox, or through a spawned `/usr/bin/osascript` `Process`, never through a background-queue `NSAppleScript` call.
 
-```swift
+```swift conceptual
 func runAppleScript(source: String) throws -> NSAppleEventDescriptor? {
     var compileError: NSDictionary?
     let script = NSAppleScript(source: source)
@@ -310,7 +310,7 @@ func runAppleScript(source: String) throws -> NSAppleEventDescriptor? {
 
 OSAKit owns a richer OSA lifecycle than `NSAppleScript`: `OSALanguage.availableLanguages`, `OSAScript.compileAndReturnError:`, `OSAScript.executeHandler(withName:arguments:error:)` returns an `NSAppleEventDescriptor`, never display text, `OSAScript.executeAndReturnDisplayValue(_:)` gives the human-readable form, and `compiledData(forType:usingStorageOptions:)`/`write(to:ofType:usingStorageOptions:)` serialize the compiled artifact — together the migration surface for an editor, a runner, or an artifact builder. Its storage option flags are the programmatic form of every `osacompile` output flag — `OSAPreventGetSource` seals an execute-only build, `OSAStayOpenApplet` and `OSACompileIntoContext` mirror the remaining compiler switches — so an in-process build rail skips shelling out to `osacompile` entirely.
 
-```swift
+```swift conceptual
 func runHandler(source: String) -> (NSAppleEventDescriptor?, NSDictionary?) {
     guard let language = OSALanguage(forName: "AppleScript") else { return (nil, nil) }
     let script = OSAScript(source: source, language: language)

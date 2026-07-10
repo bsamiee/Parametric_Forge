@@ -48,7 +48,7 @@ For node-kind precision and field constraints, author a tree-sitter S-expression
 
 ## [05]-[EXAMPLES]
 
-```bash
+```bash copy-safe
 # structural: every `<recv>.bar(...)` call in C#
 uv run python -m tools.assay code search --pattern '$RECV.bar($$$ARGS)' --csharp src/
 

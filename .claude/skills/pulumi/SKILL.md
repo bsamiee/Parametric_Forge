@@ -54,7 +54,7 @@ When a `Pulumi.yaml` project already manages a resource, changes go through the 
 
 A Pulumi project is code in Python, TypeScript, Go, C#, or Java describing related resources and their dependencies. Match the codebase language when one is present; default to TypeScript otherwise.
 
-```bash
+```bash copy-safe
 npx pulumi new aws-typescript      # template list: npx pulumi template list
 npx pulumi preview                 # show what would change — always before up
 npx pulumi up                      # apply
@@ -65,7 +65,7 @@ npx pulumi refresh                 # reconcile state with cloud reality
 
 Stacks isolate instances of a project — one per environment (`dev`, `staging`, `prod`) is the standard pattern:
 
-```bash
+```bash copy-safe
 npx pulumi stack init dev
 npx pulumi config set aws:region us-west-2
 npx pulumi config set --secret dbPassword "..."
@@ -80,7 +80,7 @@ npx pulumi config set --secret dbPassword "..."
 
 Pulumi Cloud layers governance onto a project: ESC composes secrets and configuration from cloud secret managers, OIDC-vended credentials, and other environments into one resolved bundle; policy packs run against the resource graph before any cloud API call; deployments run operations server-side; schedules automate drift detection and rotation.
 
-```bash
+```bash template
 npx pulumi env init my_org/aws/prod
 npx pulumi env run my_org/aws/prod -- aws s3 ls     # injects credentials; never capture `env open` output
 npx pulumi policy new aws-typescript

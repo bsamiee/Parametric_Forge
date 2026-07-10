@@ -53,7 +53,7 @@ The rich owner is one `Schema.Class<Self>(identifier)(fields)` declaration: the 
 - Law: `new Owner(...)` and `Owner.make(...)` run the filter set, so trusted interior construction proves the same invariants decode proves; raw material enters through decode at the admission seam — placement is `boundaries.md`'s — and `{ disableValidation: true }` survives only inside a kernel that already proved the invariant it skips.
 - Reject: an `interface`-plus-implementation pair; a DTO type beside the class; constructor parameter properties; a `with<Field>` copy-method family restating what a successor constructor or derived projection owns.
 
-```typescript
+```typescript conceptual
 import { Array, Option, Order, Schema } from "effect"
 
 const _Key = Schema.NonEmptyString.pipe(                      // interior refinement: the brand reaches consumers only as Shape["key"], never a standalone export
@@ -104,7 +104,7 @@ export { Anchor, Sealed, Shape }
 - Law: a family whose cases contain the family is the same form threaded through the member — the recursive arm of the `Schema.Union` is the suspended owner, and folds over the tree are getters on the case classes, total by construction.
 - Reject: an eager self-reference (`ReferenceError` at module load); `Schema.Any` standing where the suspended reference belongs; a depth-limited copy family — `Shape1`, `Shape2` — unrolling what one suspended owner closes.
 
-```typescript
+```typescript conceptual
 import { Array, Schema } from "effect"
 
 class Leaf extends Schema.TaggedClass<Leaf>()("Leaf", {
@@ -153,7 +153,7 @@ A closed family is one owner under one name; the `_tag` is simultaneously the ru
 - Boundary: fault-family architecture — the family-per-surface partition, reason discriminants, policy folds, catch routing — is `rails-and-effects.md`'s; this page owns the declaration form.
 - Reject: `class Fault extends Error`; evidence baked into message strings; a fault union assembled from untagged shapes.
 
-```typescript
+```typescript conceptual
 import { Schema } from "effect"
 
 const _Stage = ["<stage-a>", "<stage-b>", "<stage-c>"] as const // interior vocabulary: consumers read ShapeFault["stage"], so the row set has one edit site
@@ -207,7 +207,7 @@ The interior never meets `?:`, `undefined`, or `null`: `Schema.optionalWith(S, {
 - Law: absence with a cause is a tagged family — `Option.none()` carries zero evidence, so the moment two causes of absence exist the field is a case family whose cases carry their cause, and `Option` survives only as the cause-free projection the owner carries as a member — attached to the family constructor, never exported beside it, and one-directional: the family sheds cause down to `Option`, never rebuilds from it, because a shed cause cannot be recovered.
 - Reject: bare `Schema.optional` (leaks `| undefined` into the decoded type); `Schema.NullOr` on a domain field; sentinel values standing for absence; a boolean `has`-twin beside a nullable field.
 
-```typescript
+```typescript conceptual
 import { Data, Option, Schema } from "effect"
 
 type Presence = Data.TaggedEnum<{
@@ -269,7 +269,7 @@ The wire twin derives: `typeof Owner.Encoded` is the wire type, `Schema.encodedS
 - Law: the `FromSelf` twins — `Schema.ExitFromSelf`, `Schema.CauseFromSelf` — compose inside owners whose encoded side stays in-process; the plain forms own the JSON-bound envelope.
 - Reject: a fault serialized as its `message` string; a bespoke result union restating what `Exit` already algebrizes.
 
-```typescript
+```typescript conceptual
 import { ParseResult, Schema } from "effect"
 
 class GradeFault extends Schema.TaggedError<GradeFault>()("GradeFault", {
@@ -329,7 +329,7 @@ When one concept systematically projects into N storage or wire views, the varia
 - Boundary: the systematic axis belongs here; a one-off view derives through the projection forms of the derived-surfaces section, and a `pick`/`omit` chain rebuilding what a variant matrix states is the inverted choice.
 - Reject: variant divergence handled by optional fields on one wide shape; a secret scrubbed at egress call sites instead of subtracted at the field; a write-side default re-implemented as a nullable column.
 
-```typescript
+```typescript conceptual
 import { VariantSchema } from "@effect/experimental"
 import { DateTime, Effect, Option, Redacted, Schema } from "effect"
 
@@ -385,7 +385,7 @@ A foreign class is admitted by identity, never re-modeled: `Schema.instanceOf` a
 - Law: a foreign instance crosses a wire only through a composed twin — `Schema.transform` from an encodable schema onto the `FromSelf` owner, declared once beside it; absent that twin the foreign value is process-bound by construction.
 - Reject: `Schema.Unknown` smuggling a foreign instance past the seam; a standalone `is`-guard function beside a schema that owns it; an `as` cast where the declaration proves identity.
 
-```typescript
+```typescript conceptual
 import { Arbitrary, FastCheck, Pretty, Schema } from "effect"
 
 declare class Handle {
@@ -429,7 +429,7 @@ Every free surface derives from the owner's AST, and every ad-hoc view derives f
 - Law: a projection with a second consumer rides the owner as a `static` with its type on the owner's merged namespace — `Owner.Patch`, `Owner.Badge` — so one import carries the owner and every view; a prefixed sibling export is the scatter, and a single-use projection derives at its use site and is stored nowhere.
 - Reject: a hand-declared patch or request interface; `Schema.partial` where the exact form is meant; a stored projection type restating what a one-line derivation states at the use site.
 
-```typescript
+```typescript conceptual
 import { Arbitrary, Either, type Equivalence, FastCheck, JSONSchema, Pretty, Schema } from "effect"
 
 class Member extends Schema.Class<Member>("Member")({

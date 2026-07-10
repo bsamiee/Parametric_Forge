@@ -1,6 +1,6 @@
 # [H1][BASH-LOGGING]
 
-Production logging for Bash 5.2+/5.3. JSON-ND structured emission, numeric level dispatch, caller-context injection, terminal capability detection, CI platform integration, coprocess log shipping, OpenTelemetry context propagation, fork-free hot paths.
+Production logging for Bash `5.2+`/5.3. JSON-ND structured emission, numeric level dispatch, caller-context injection, terminal capability detection, CI platform integration, coprocess log shipping, OpenTelemetry context propagation, fork-free hot paths.
 
 | [INDEX] | [PATTERN]            |  [S]  | [USE_WHEN]                                          |
 | :-----: | :------------------- | :---: | :-------------------------------------------------- |
@@ -14,9 +14,9 @@ Production logging for Bash 5.2+/5.3. JSON-ND structured emission, numeric level
 
 ## [01]-[JSON_ND_STRUCTURED_LOGGING]
 
-`jq -nc` with `--arg`/`--argjson` — injection-safe. `printf`-based JSON only for fixed-schema, program-controlled values. `_LOG_FD` defaults to stderr because container runtimes capture stderr independently — preserves stdout as a clean data channel for pipeline composition. `_ts` centralizes timestamp generation with a fork-free path on Bash 5.3+ (see S7).
+`jq -nc` with `--arg`/`--argjson` — injection-safe. `printf`-based JSON only for fixed-schema, program-controlled values. `_LOG_FD` defaults to stderr because container runtimes capture stderr independently — preserves stdout as a clean data channel for pipeline composition. `_ts` centralizes timestamp generation with a fork-free path on Bash `5.3+` (see S7).
 
-```bash
+```bash conceptual
 # Caller context via FUNCNAME[2]/BASH_LINENO[1] (through _log -> _json_log -> caller)
 _LOG_FD="${_LOG_FD:-2}"
 
@@ -67,11 +67,11 @@ _json_log_rich() {
 }
 ```
 
-All emitters write a single atomic line via `jq -nc` — prevents interleaved partial writes. EPOCHREALTIME precision owned by version-features.md S4. jq 1.8+: `if` without `else` defaults to identity; `trim`/`ltrim`/`rtrim` replace regex-based cleanup.
+All emitters write a single atomic line via `jq -nc` — prevents interleaved partial writes. EPOCHREALTIME precision owned by version-features.md S4. jq `1.8+`: `if` without `else` defaults to identity; `trim`/`ltrim`/`rtrim` replace regex-based cleanup.
 
 ## [02]-[LEVEL_GATED_DISPATCH]
 
-```bash
+```bash conceptual
 declare -Ar _LOG_LEVELS=([TRACE]=0 [DEBUG]=1 [INFO]=2 [WARN]=3 [ERROR]=4 [FATAL]=5)
 declare -i LOG_LEVEL="${_LOG_LEVELS[${LOG_LEVEL_NAME:-INFO}]:-2}"
 
@@ -114,7 +114,7 @@ _with_level() {
 
 Three-tier detection: (1) `NO_COLOR` env (no-color.org), (2) FD test (`-t 2`), (3) `tput colors`. CI platforms support ANSI without TTY.
 
-```bash
+```bash conceptual
 # NO_COLOR spec: if set (any value including empty), disable all color
 _init_color() {
     local -r _nc="${NO_COLOR+set}"
@@ -165,7 +165,7 @@ _log_text() {
 
 Platform resolved once at startup. `case/esac` retained for genuine glob-pattern matching, not if/elif routing.
 
-```bash
+```bash conceptual
 readonly _CI_PLATFORM="$(
     [[ -n "${GITHUB_ACTIONS:-}" ]] && printf 'github' \
     || { [[ -n "${GITLAB_CI:-}" ]] && printf 'gitlab'; } \
@@ -233,7 +233,7 @@ _summary_table() {
 
 ## [05]-[ASYNC_LOG_SHIPPING]
 
-```bash
+```bash conceptual
 # NOTE: while-read is intentional here — streaming consumer, not collection
 _start_log_sink() {
     local -r dest="${1:?destination required}"
@@ -284,7 +284,7 @@ Batch buffering (100 lines or 1s timeout) amortizes syscalls. Shipping alternati
 
 `_init_trace` is the canonical owner of TRACEPARENT generation — version-features.md S4 references this file. `TRACEPARENT` propagates through `exec` and subshell boundaries via `export`.
 
-```bash
+```bash conceptual
 _corr_hi="" _corr_lo=""
 printf -v _corr_hi '%08x' "${SRANDOM}"
 printf -v _corr_lo '%08x' "${SRANDOM}"
@@ -355,13 +355,13 @@ _with_span() {
 # Nesting: _with_span "deploy" _with_span "deploy.build" make
 ```
 
-`SRANDOM` provides unpredictable span IDs (version-features.md S4). `_with_span` composes with `_with_section` (S4). `BASH_MONOSECONDS` in `_span_end` is immune to NTP drift — `EPOCHREALTIME` arithmetic breaks on clock adjustment. OTLP export: `otel-cli exec -- cmd` (equinix-labs) or `opentelemetry-bash` (Thoth v3.43+, auto-instrumentation).
+`SRANDOM` provides unpredictable span IDs (version-features.md S4). `_with_span` composes with `_with_section` (S4). `BASH_MONOSECONDS` in `_span_end` is immune to NTP drift — `EPOCHREALTIME` arithmetic breaks on clock adjustment. OTLP export: `otel-cli exec -- cmd` (equinix-labs) or `opentelemetry-bash` (Thoth `v3.43+`, auto-instrumentation).
 
 ## [07]-[FORK_FREE_EMISSION]
 
 At 10K log lines, forking `date` per line (~3ms/fork on Linux) costs ~30s wall time. Three techniques eliminate this: `${ cmd; }` (5.3, no subshell), `BASH_MONOSECONDS` (monotonic elapsed timing), loadable `strftime` (fork-free formatting).
 
-```bash
+```bash conceptual
 # Version-gated _ts: fork-free on 5.3+, subshell fallback on 5.2
 # shellcheck disable=SC2083
 (( BASH_VERSINFO[0] * 100 + BASH_VERSINFO[1] >= 503 )) && \
@@ -404,6 +404,6 @@ _init_strftime() {
 - `TRACEPARENT`/`CORRELATION_ID` propagation via `export` — child processes inherit through `exec`. `CORRELATION_ID` via `printf -v`, NEVER `$(printf ...)`.
 - SIGUSR1 for log rotation — reopen FD after external tool moves the file, no process restart.
 - Dual-channel (`_log_dual`): JSON to coprocess for aggregation, colored text to stderr for operator visibility.
-- Fork-free timestamp via `_ts` helper — version-gated: loadable `strftime` > `${ ; }` (5.3+) > `printf -v` fallback. `${ cmd; }` requires space after `{` and `;` before `}`.
+- Fork-free timestamp via `_ts` helper — version-gated: loadable `strftime` > `${ ; }` (`5.3+`) > `printf -v` fallback. `${ cmd; }` requires space after `{` and `;` before `}`.
 - `BASH_MONOSECONDS` for elapsed timing — NEVER `EPOCHREALTIME` arithmetic for duration measurement (NTP drift breaks deltas).
 - Sibling file contracts: version-features.md references this file for TRACEPARENT generation and S7 for fork-free patterns; variable-features.md references S3 for terminal capability.

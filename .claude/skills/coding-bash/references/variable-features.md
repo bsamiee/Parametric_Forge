@@ -1,6 +1,6 @@
 # [H1][SHELL-INTROSPECTION]
 
-Call stack introspection, nameref composition patterns, hierarchical trap composition, process lifecycle with PID maps, and dispatch-table capability detection including Bash 5.3 variables. Basic variable types, arithmetic, and brace expansion are in [bash-scripting-guide.md S4/S6](./bash-scripting-guide.md).
+Call stack introspection, nameref composition patterns, hierarchical trap composition, process lifecycle with PID maps, and dispatch-table capability detection including Bash 5.3 variables. Basic variable types, arithmetic, and brace expansion are in `bash-scripting-guide.md` S4/S6.
 
 | [INDEX] | [PATTERN]          |  [S]  | [USE_WHEN]                               |
 | :-----: | :----------------- | :---: | :--------------------------------------- |
@@ -14,7 +14,7 @@ Call stack introspection, nameref composition patterns, hierarchical trap compos
 
 `BASH_LINENO[i-1]` pairs with `FUNCNAME[i]` — line number records the call site, FUNCNAME records the called function. `set -E` (errtrace) is mandatory: without it, ERR fires only at top-level scope.
 
-```bash
+```bash conceptual
 # ERR trap: structured stack trace with failing command
 _on_err() {
     local -r rc=$? cmd="${BASH_COMMAND}" depth="${#FUNCNAME[@]}"
@@ -59,7 +59,7 @@ _caller_chain() {
 
 Namerefs (`local -n`) bind a local name to a caller-scope variable, replacing `$(subshell)` capture with direct writes. Scales to multiple return channels where subshell can only return one string.
 
-```bash
+```bash conceptual
 # Return channel: caller allocates, callee populates via nameref — zero forks
 parse_uri() {
     local -n __scheme="$1" __host="$2" __path="$3"
@@ -81,7 +81,7 @@ local quot rem
 divide quot rem 17 5  # quot=3, rem=2
 ```
 
-**Pitfalls** — nameref resolution uses dynamic scope, producing three failure modes:
+[PITFALLS]:nameref resolution uses dynamic scope, producing three failure modes:
 
 | [INDEX] | [PITFALL]       | [TRIGGER]                          | [SYMPTOM]                              | [MITIGATION]                  |
 | :-----: | :-------------- | :--------------------------------- | :------------------------------------- | :---------------------------- |
@@ -95,7 +95,7 @@ The `__` prefix convention prevents callee nameref names from colliding with cal
 
 Execution order: ERR (stack intact for diagnostics) then EXIT (cleanup). Signal traps (INT/TERM) trigger EXIT via `exit`. `_CLEANUP_STACK` LIFO separates registration from release — reverse iteration ensures dependent resources release before their dependencies.
 
-```bash
+```bash conceptual
 # --- Trap hierarchy: ERR (S1 _on_err) → _CLEANUP_STACK (LIFO release) → EXIT (orchestrator)
 # ERR trap defined in S1 — _on_err captures stack diagnostics
 
@@ -129,9 +129,9 @@ Signal traps call `exit` with conventional codes (130=INT, 143=TERM) to trigger 
 
 ## [04]-[PROCESS_LIFECYCLE]
 
-`wait -f PID` (5.2+) waits without job control. `wait -n -p VARNAME` (5.1+) returns the specific completed PID for per-job error handling. `SRANDOM` draws from `/dev/urandom` (kernel CSPRNG) — use for jitter and temp names where `RANDOM` (LCG) is insufficient.
+`wait -f PID` (`5.2+`) waits without job control. `wait -n -p VARNAME` (`5.1+`) returns the specific completed PID for per-job error handling. `SRANDOM` draws from `/dev/urandom` (kernel CSPRNG) — use for jitter and temp names where `RANDOM` (LCG) is insufficient.
 
-```bash
+```bash conceptual
 # PID map: name → PID for targeted signal delivery and per-job error tracking
 declare -A _JOBS=()
 
@@ -193,7 +193,7 @@ _exec_service() {
 
 ## [05]-[RUNTIME_CAPABILITY]
 
-```bash
+```bash conceptual
 declare -Ar _TOOL_FALLBACKS=(
     [search]="rg:_search_rg fd:_search_fd grep:_search_grep"
     [json]="jq:_parse_jq python3:_parse_python"
@@ -286,8 +286,8 @@ shopt -s array_expand_once
 - `_CLEANING` guard prevents re-entrant cleanup on cascading signals (INT during EXIT).
 - Signal traps call `exit CODE` to trigger EXIT trap — `exit 130` for INT, `exit 143` for TERM.
 - `exec` replacement bypasses EXIT trap — call `_run_cleanups` explicitly before exec.
-- `wait -f PID` (5.2+) for non-job-control waits — without `-f`, `wait` may return immediately for unknown PIDs.
-- `wait -n -p var` (5.1+) returns the specific completed PID — enables per-job error handling in pools.
+- `wait -f PID` (`5.2+`) for non-job-control waits — without `-f`, `wait` may return immediately for unknown PIDs.
+- `wait -n -p var` (`5.1+`) returns the specific completed PID — enables per-job error handling in pools.
 - `SRANDOM` uses `/dev/urandom` (kernel CSPRNG) — use for jitter, temp names, tokens where `RANDOM` (LCG) is insufficient.
 - `command -v` over `which` — POSIX portable, no external process, no path caching issues.
 - `${!prefix@}` for variable name enumeration — configuration discovery without hardcoded lists.
