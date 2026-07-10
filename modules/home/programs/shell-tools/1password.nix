@@ -12,13 +12,11 @@
   inputs,
   ...
 }: let
-  # Doppler owns every lane (CLI, TUI, GUI) through the session cache. The op
-  # cache stays written on every switch as the 1Password custody/bootstrap
-  # anchor — a fresh machine emits from it before Doppler tokens exist.
+  # Doppler owns every lane (CLI, TUI, GUI) through the session cache. The op cache stays written on every switch as the 1Password
+  # custody/bootstrap anchor — a fresh machine emits from it before Doppler tokens exist.
   sessionCache = "${config.xdg.cacheHome}/forge-secrets/session-env.sh";
   opCache = "${config.xdg.configHome}/hm-op-session.sh";
-  # Replay constants as rows: one declaration owns name AND value; the export
-  # block and the replay-manifest name set both derive from it.
+  # Replay constants as rows: one declaration owns name AND value; the export block and the replay-manifest name set both derive from it.
   replayRows = {
     CLOUDSDK_CONFIG = "${config.xdg.configHome}/gcloud";
     WORKSPACE_MCP_CREDENTIALS_DIR = "${config.xdg.cacheHome}/workspace-mcp";
@@ -28,10 +26,8 @@
     MAGHZ_REMOTE_USER = "maghz-agent";
     MAGHZ_REMOTE_WORKROOT = "/home/maghz-agent/maghz";
   };
-  # GUI-session secret replay: re-export each session key into the launchd
-  # GUI domain via "launchctl setenv" so GUI-launched apps inherit the same
-  # tokens as interactive shells. Key NAMES enumerate from both caches; a
-  # name no backend serves is cleared, narrowing the replay.
+  # GUI-session secret replay: re-export each session key into the launchd GUI domain via "launchctl setenv" so GUI-launched apps inherit the
+  # same tokens as interactive shells. Key NAMES enumerate from both caches; a name no backend serves is cleared, narrowing the replay.
   guiOpSecrets = pkgs.writeShellApplication {
     name = "gui-op-secrets";
     runtimeInputs = [pkgs.coreutils pkgs.gnugrep pkgs.gawk];
@@ -39,9 +35,8 @@
       # shellcheck source=/dev/null
       [ ! -f "${config.xdg.configHome}/forge-session-secrets.sh" ] || . "${config.xdg.configHome}/forge-session-secrets.sh"
       ${lib.concatStringsSep "\n      " (lib.mapAttrsToList (k: v: ''export ${k}="${v}"'') replayRows)}
-      # Replay manifest (key NAMES only, mode 600): the set names forge-accept
-      # asserts against the live gui domain for lane parity. The temp lives
-      # beside its rename target so the publish stays same-filesystem atomic.
+      # Replay manifest (key NAMES only, mode 600): the set names forge-accept asserts against the live gui domain for lane parity. The temp
+      # lives beside its rename target so the publish stays same-filesystem atomic.
       mkdir -p "${config.xdg.cacheHome}/forge-secrets"
       names_tmp="$(mktemp "${config.xdg.cacheHome}/forge-secrets/gui-replay.names.XXXXXX")"
       trap 'rm -f "$names_tmp"' EXIT
@@ -51,9 +46,8 @@
           /bin/launchctl setenv "$k" "$val"
           printf '%s\n' "$k" >>"$names_tmp"
         else
-          # Narrowing is real in the launchd domain: a name no backend serves
-          # is cleared, so the cutover flip retires stale GUI values at replay
-          # instead of leaving them pinned until logout.
+          # Narrowing is real in the launchd domain: a name no backend serves is cleared, so the cutover flip retires
+          # stale GUI values at replay instead of leaving them pinned until logout.
           /bin/launchctl unsetenv "$k" || true
         fi
       done < <({ for f in "${sessionCache}" "${opCache}"; do
@@ -66,8 +60,7 @@
       trap - EXIT
     '';
   };
-  # Per-lane cutover proof: key NAMES only, never values. CLI runs the
-  # canonical hook against a temp CLAUDE_ENV_FILE and shows its receipt; TUI
+  # Per-lane cutover proof: key NAMES only, never values. CLI runs the canonical hook against a temp CLAUDE_ENV_FILE and shows its receipt; TUI
   # probes an interactive login zsh; GUI reads the launchd domain.
   secretsProof = pkgs.writeShellApplication {
     name = "forge-secrets-proof";
@@ -127,8 +120,7 @@ in {
       '';
 
       # --- [ACTIVATION_HOOK_GENERATE_TOKEN_CACHE_DURING_REBUILD]
-      # Runs AFTER linkGeneration: xdg.configFile entries (the template) land
-      # after writeBoundary, so an earlier run would read a stale template.
+      # Runs AFTER linkGeneration: xdg.configFile entries (the template) land after writeBoundary, so an earlier run would read a stale template.
       injectSecretsFromVault = lib.hm.dag.entryAfter ["linkGeneration" "ensureForgeJupyterToken"] ''
         cache_file="$HOME/.config/hm-op-session.sh"
         template_file="$HOME/.config/op/env.template"
@@ -140,8 +132,7 @@ in {
           exit 1
         fi
 
-        # Resolve tokens from 1Password into a mode-600 cache; temp lives in
-        # the target directory so the publish rename stays same-filesystem.
+        # Resolve tokens from 1Password into a mode-600 cache; temp lives in the target directory so the publish rename stays same-filesystem.
         echo "Injecting secrets from 1Password vault..." >&2
         mkdir -p "$(dirname "$cache_file")"
         tmp_file="$(mktemp "$cache_file.XXXXXX")"
@@ -162,8 +153,7 @@ in {
           fi
         fi
 
-        # GUI replay: restart the RunAtLoad agent so GUI apps pick up
-        # the just-written cache on this switch instead of at next login.
+        # GUI replay: restart the RunAtLoad agent so GUI apps pick up the just-written cache on this switch instead of at next login.
         /bin/launchctl kickstart -k "gui/$UID/com.parametric-forge.gui-op-secrets" >/dev/null 2>&1 || true
       '';
     };
@@ -171,9 +161,8 @@ in {
 
   xdg.configFile = {
     # --- [OP_SSH_AGENT_SEAM_ONE_UNIFIED_KEY_DETERMINISTIC_OFFER_ORDER]
-    # The agent serves exactly the unified estate key; op-ssh-sign (git-tools
-    # signing rail) resolves the same item by public key. Approval posture is
-    # app-level: approve-for-all-applications during active windows.
+    # The agent serves exactly the unified estate key; op-ssh-sign (git-tools signing rail) resolves the same item by public key. Approval
+    # posture is app-level: approve-for-all-applications during active windows.
     "1Password/ssh/agent.toml".text = ''
       [[ssh-keys]]
       item = "Forge SSH Key"
@@ -181,8 +170,7 @@ in {
     '';
 
     # --- Session-secrets dispatcher: one sourceable file for TUI and GUI lanes -
-    # The SessionStart hook maintains the doppler-first session cache; the op
-    # cache serves only a fresh machine where no session cache exists yet.
+    # The SessionStart hook maintains the doppler-first session cache; the op cache serves only a fresh machine where no session cache exists yet.
     "forge-session-secrets.sh".text = ''
       if [ -f "${sessionCache}" ]; then
         . "${sessionCache}"
@@ -193,8 +181,7 @@ in {
 
     # --- [SECRET_TEMPLATE_API_KEYS_FOR_OP_INJECT]
     "op/env.template".text = ''
-      # API keys resolved during rebuild via "op inject"; the export keyword
-      # makes child processes inherit each variable.
+      # API keys resolved during rebuild via "op inject"; the export keyword makes child processes inherit each variable.
       # ANTHROPIC_API_KEY stays excluded: Claude Code OAuth owns that auth.
       export GREPTILE_API_KEY="op://Tokens/GREPTILE_API_KEY/token"
       export CODERABBIT_API_KEY="op://Tokens/CODERABBIT_API_KEY/token"
@@ -227,15 +214,12 @@ in {
   };
 
   # --- [GUI_SESSION_SECRETS]
-  # launchd-launched GUI apps never source .zshrc; this RunAtLoad agent replays
-  # the mode-600 session material, and no secret value enters the Nix store.
-  # The bundle-apps row makes Login Items & Extensions show the display name
-  # the agent's AssociatedBundleIdentifiers resolves to.
+  # launchd-launched GUI apps never source .zshrc; this RunAtLoad agent replays the mode-600 session material, and no secret value enters the
+  # Nix store. The bundle-apps row makes Login Items & Extensions show the display name the agent's AssociatedBundleIdentifiers resolves to.
   forge.bundleApps.gui-op-secrets = "GUI Op Secrets";
 
-  # RunAtLoad + writer-side kickstart is the event source; WatchPaths on the
-  # cache file was adjudicated out — launchd.plist(5) marks it race-prone, and
-  # the cache writer already owns the deterministic replay trigger.
+  # RunAtLoad + writer-side kickstart is the event source; WatchPaths on the cache file is race-prone (launchd.plist(5)), and the cache writer
+  # already owns the deterministic replay trigger.
   launchd.agents.gui-op-secrets = {
     enable = true;
     config = {

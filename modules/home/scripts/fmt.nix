@@ -30,7 +30,6 @@
         ["sql"]='sqruff|sqruff fix|sqruff lint'
         ["sql-duckdb"]='sqruff|sqruff fix|sqruff lint'
         ["swift"]='swiftformat|swiftformat --quiet|swiftformat --quiet --lint'
-        ["csharp"]='csharpier|csharpier format|csharpier check'
         ["osa"]='forge-osa|forge-osa fmt|forge-osa check'
         ["jq"]='jq|_gate_jq|_gate_jq'
       )
@@ -50,14 +49,16 @@
         ["lua"]=lua
         ["sql"]=sql
         ["swift"]=swift
-        ["cs"]=csharp
         ["applescript"]=osa
         ["jq"]=jq
       )
-      # Package-manager lockfiles are machine-owned; formatting one is corruption.
+      # Package-manager-owned files: lockfiles plus pnpm-workspace.yaml (pnpm rewrites its workspace/lock pair in its own layout); formatting
+      # one is corruption or churn. C# has no lane: csharpier hard-codes Allman braces against the estate K&R editorconfig law — dotnet format
+      # owns .cs through the project rails.
       declare -Ar _DENY_BASE=(
         ["pnpm-lock.yaml"]=1 ["package-lock.json"]=1 ["packages.lock.json"]=1
         ["yarn.lock"]=1 ["bun.lock"]=1 ["composer.lock"]=1 ["Gemfile.lock"]=1
+        ["pnpm-workspace.yaml"]=1
       )
       readonly _SHEBANG_SHELL='^#!.*[/[:space:]](env[[:space:]]+)?(ba|da|mk)?sh([[:space:]]|$)'
       readonly _SHEBANG_PYTHON='^#!.*[/[:space:]](env[[:space:]]+(-S[[:space:]]+)?)?python[0-9.]*([[:space:]]|$)'

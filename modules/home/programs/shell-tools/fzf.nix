@@ -25,17 +25,14 @@ in {
       "--color=preview-fg:${palette.foreground.hex},preview-scrollbar:${palette.pink.hex},label:${palette.magenta.hex},query:${palette.foreground.hex}"
       # Border and styling
       "--border=sharp"
-      # Border labels are widget-scoped below; forgit rows carry theirs in
-      # environments/shell.nix.
+      # Border labels are widget-scoped below; forgit rows carry theirs in environments/shell.nix.
       "--border-label-pos=0"
       # UI elements: BMP-only glyphs — PUA codepoints fail fzf width validation
       "--prompt='❯ '"
       "--marker='✓'"
       "--pointer='❯'"
       "--separator='─'"
-      # Unquoted: literal quotes survive naive re-splitting of FZF_DEFAULT_OPTS
-      # and trip fzf's one-or-two-character scrollbar validation.
-      "--scrollbar=│"
+      "--scrollbar=│" # unquoted: quote chars would survive FZF_DEFAULT_OPTS re-split and trip fzf's 1-2 char scrollbar validation
       "--info=right"
       "--highlight-line"
       # Behavior; previews are widget-scoped, never a global default
@@ -65,7 +62,6 @@ in {
     };
 
     # --- [CTRL_R_COMMAND_HISTORY]
-    # Note: Ctrl-R (history) disabled - handled by Atuin
-    historyWidget.options = [];
+    historyWidget.options = []; # Ctrl-R history disabled — Atuin owns it
   };
 }

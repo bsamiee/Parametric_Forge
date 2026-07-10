@@ -839,9 +839,14 @@ def comment_rows(path: Path, text: str) -> tuple[Row, ...]:
 def divider_rows(path: Path, text: str) -> tuple[Row, ...]:
     marker = MARKERS[path.suffix]
     rows: list[Row] = []
+    seen: dict[str, int] = {}
+    open_section: tuple[int, str] | None = None
+    payload = 0
     for number, line in enumerate(text.splitlines(), 1):
         matched = DIVIDER.match(line)
         if not matched or matched["marker"] != marker or matched["indent"]:
+            stripped = line.strip()
+            payload += bool(stripped) and not stripped.startswith(marker)
             continue
         body = DIVIDER_BODY.match(matched["body"])
         if not body:
@@ -850,6 +855,39 @@ def divider_rows(path: Path, text: str) -> tuple[Row, ...]:
             rows.append(row(path, number, Check.SECTION_DIVIDER, "fail", "divider carries content beyond the label and dash fill"))
         elif body["tail"] and len(line) != DIVIDER_WIDTH:
             rows.append(row(path, number, Check.SECTION_WIDTH, "fail", f"full divider width {len(line)} != {DIVIDER_WIDTH}"))
+        # Full dividers charter sections: duplicate labels, empty sections, and orphan sub-dividers are phantom
+        # structure; every repair reads the enclosing section first, so the tier stays warn with no fixer arm.
+        if body and body["tail"]:
+            if body["label"] in seen:
+                rows.append(
+                    row(
+                        path, number, Check.SECTION_DIVIDER, "warn", f"[{body['label']}] duplicates the section divider at line {seen[body['label']]}"
+                    )
+                )
+            seen[body["label"]] = number
+            if open_section and payload == 0:
+                rows.append(
+                    row(
+                        path,
+                        open_section[0],
+                        Check.SECTION_DIVIDER,
+                        "warn",
+                        f"[{open_section[1]}] charters an empty section; phantom label or misplaced divider",
+                    )
+                )
+            open_section, payload = (number, body["label"]), 0
+        elif body and open_section is None:
+            rows.append(row(path, number, Check.SECTION_DIVIDER, "warn", "sub-section divider precedes any chartering section"))
+    if open_section and payload == 0:
+        rows.append(
+            row(
+                path,
+                open_section[0],
+                Check.SECTION_DIVIDER,
+                "warn",
+                f"[{open_section[1]}] charters an empty section; phantom label or misplaced divider",
+            )
+        )
     return tuple(rows)
 
 

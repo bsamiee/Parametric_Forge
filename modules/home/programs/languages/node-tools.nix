@@ -87,6 +87,7 @@ in {
         semicolons = "always";
         trailingCommas = "all";
       };
+      json.parser.allowComments = true;
       assist = {
         enabled = true;
         actions.source.organizeImports = "on";

@@ -4,10 +4,8 @@
 -- License       : MIT
 -- Path          : modules/home/programs/apps/nvim/lua/plugins/colorscheme.lua
 -- ----------------------------------------------------------------------------
--- Dracula colorscheme remapped to the Forge palette, then the generated
--- syntax projection (forge/syntax.lua: owner scope table -> treesitter
--- captures, role rows -> diagnostics/floats/Pmenu/statuscolumn) applies on
--- top. No hex lives here; every value arrives from the theme owner.
+-- Dracula colorscheme remapped to the Forge palette, then the generated syntax projection (forge/syntax.lua: owner scope table -> treesitter
+-- captures, role rows -> diagnostics/floats/Pmenu/statuscolumn) applies on top. No hex lives here; every value arrives from the theme owner.
 
 local palette = require("forge.palette")
 local syntax = require("forge.syntax")
@@ -16,8 +14,7 @@ local int = function(hex)
     return tonumber(hex:sub(2), 16)
 end
 
--- Stock dracula/vim values -> Forge variant; applied over every
--- highlight group so linked and direct definitions both follow.
+-- Stock dracula/vim values -> Forge variant; applied over every highlight group so linked and direct definitions both follow.
 local remap = {
     [0x282A36] = int(palette.background),
     [0x21222C] = int(palette.background),
@@ -54,9 +51,8 @@ local apply = function()
         end
     end
 
-    -- Treesitter captures project from the owner scope table; a hue rebind in
-    -- the theme owner lands here with zero edits. Hierarchical fallback covers
-    -- capture subgroups (@keyword.return -> @keyword).
+    -- Treesitter captures project from the owner scope table; a hue rebind in the theme owner lands here with zero edits. Hierarchical fallback
+    -- covers capture subgroups (@keyword.return -> @keyword).
     for _, row in ipairs(syntax.scopes) do
         local flags = style_flags(row.style)
         for _, capture in ipairs(row.captures) do
@@ -64,8 +60,7 @@ local apply = function()
         end
     end
 
-    -- Role rows: diagnostics, floats, completion menu, statuscolumn, diff
-    -- fills (background tint, neutral code foreground), and search fills
+    -- Role rows: diagnostics, floats, completion menu, statuscolumn, diff fills (background tint, neutral code foreground), and search fills
     -- (warm, distinct from the cool selection slate).
     local roles = syntax.roles
     for name, def in pairs({
@@ -94,8 +89,7 @@ local apply = function()
         CurSearch = { bg = roles.ui.match, fg = roles.text.primary },
         Whitespace = { fg = roles.ui.whitespace },
         SnacksIndent = { fg = roles.ui.indent },
-        -- Hunk signs ride the owner git-state vocabulary — the same hues the
-        -- VS Code and WezTerm gutters read; dracula links them to Diff* tints.
+        -- Hunk signs ride the owner git-state vocabulary — the same hues the VS Code and WezTerm gutters read; dracula links them to Diff* tints.
         GitSignsAdd = { fg = roles.git.added },
         GitSignsChange = { fg = roles.git.modified },
         GitSignsDelete = { fg = roles.git.deleted },

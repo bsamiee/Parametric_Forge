@@ -4,9 +4,8 @@
 # License       : MIT
 # Path          : modules/home/programs/apps/zellij/themes/dracula.nix
 # ----------------------------------------------------------------------------
-# Nix-generated Zellij component theme from the estate palette owner. One row
-# per component: [ base background emphasis_0 emphasis_1 emphasis_2 emphasis_3 ]
-# as palette role names; the renderer is one fold over the rows.
+# Nix-generated Zellij component theme from the estate palette owner. One row per
+# component: [ base background emphasis_0 emphasis_1 emphasis_2 emphasis_3 ] as palette role names; the renderer is one fold over the rows.
 {
   config,
   lib,
@@ -38,8 +37,7 @@
     name = builtins.elemAt pair 0;
     roleRows = builtins.elemAt pair 1;
   in
-    # zipListsWith truncates to the shorter list: a mis-arity row would drop
-    # or invent emphasis slots silently, so arity gates at eval.
+    # zipListsWith truncates to the shorter list: a mis-arity row would drop or invent emphasis slots silently, so arity gates at eval.
     assert lib.assertMsg (builtins.length roleRows == builtins.length slots) "zellij theme ${name}: one role per slot (${toString (builtins.length slots)})"; ''
       ${name} {
       ${lib.concatStrings (lib.zipListsWith (slot: role: "      ${slot} ${rgb role}\n") slots roleRows)}    }'';

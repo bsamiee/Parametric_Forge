@@ -4,10 +4,8 @@
 # License       : MIT
 # Path          : modules/home/programs/shell-tools/webhook.nix
 # ----------------------------------------------------------------------------
-# Signed-event inbox on adnanh/webhook: typed source rows generate hooks.json
-# (HMAC verification via env-named secrets, never literals) and one projector
-# appends typed receipt rows. Loopback-only; an absent secret fails closed
-# (empty HMAC key never matches a signed delivery).
+# Signed-event inbox on adnanh/webhook: typed source rows generate hooks.json (HMAC verification via env-named secrets, never literals) and one
+# projector appends typed receipt rows. Loopback-only; an absent secret fails closed (empty HMAC key never matches a signed delivery).
 {
   config,
   lib,
@@ -15,12 +13,9 @@
   ...
 }: let
   jsonFormat = pkgs.formats.json {};
-  # 9010: the maghz tunnel owns loopback 9000 (VPS hook forward); the local
-  # inbox binds beside it, never under it.
-  port = "9010";
+  port = "9010"; # beside the maghz tunnel's loopback 9000 (VPS hook forward), never under it
 
-  # Source rows: signature grammar + event-id extraction per emitter. `ping`
-  # carries no signature and no projector — it is the readiness contract only.
+  # Source rows: signature grammar + event-id extraction per emitter. `ping` carries no signature and no projector — it is the readiness contract only.
   sources = {
     github = {
       signature = {
@@ -38,8 +33,8 @@
     };
   };
 
-  # Projector: payload hash, per-source event-id dedupe, one JSONL receipt row.
-  # mkdir spinlock because macOS ships no flock(1); the section is milliseconds.
+  # Projector: payload hash, per-source event-id dedupe, one JSONL receipt row. mkdir spinlock because macOS
+  # ships no flock(1); the section runs in milliseconds.
   inbox = pkgs.writeShellApplication {
     name = "forge-webhook-inbox";
     runtimeInputs = [pkgs.coreutils pkgs.jq];
@@ -62,9 +57,8 @@
         fi
         if [ "$tries" -ge 100 ]; then
           tries=0
-          # Stale-holder break: the section is milliseconds, so a 10s-old lock
-          # is a dead holder. One rmdir per window, then the loop re-races; a
-          # live peer that recreates the lock restarts the wait cleanly.
+          # Stale-holder break: the section is milliseconds, so a 10s-old lock is a dead holder. One rmdir per window, then the loop re-races;
+          # a live peer that recreates the lock restarts the wait cleanly.
           lock_age=$((EPOCHSECONDS - $(stat -c %Y "$lock" 2>/dev/null || echo "$EPOCHSECONDS")))
           [ "$lock_age" -lt 10 ] || rmdir "$lock" 2>/dev/null || true
         fi
@@ -78,8 +72,7 @@
       else
         printf '%s:%s\n' "$source_id" "$event_id" >>"$state_dir/seen.ids"
       fi
-      # Dedupe-index retention: a bounded recent window stays authoritative;
-      # rotation runs under the lock, so no reader observes a partial index.
+      # Dedupe-index retention: a bounded recent window stays authoritative; rotation runs under the lock, so no reader observes a partial index.
       if [ -f "$state_dir/seen.ids" ] && [ "$(wc -l <"$state_dir/seen.ids")" -gt 10000 ]; then
         tail -n 5000 "$state_dir/seen.ids" >"$state_dir/seen.ids.new"
         mv -f "$state_dir/seen.ids.new" "$state_dir/seen.ids"
@@ -123,8 +116,7 @@
     trigger-rule = {
       match = {
         type = "payload-hmac-sha256";
-        # Backtick raw string: Go template parsing runs on the raw JSON bytes,
-        # so escaped double quotes would break the action.
+        # Backtick raw string: Go template parsing runs on the raw JSON bytes, so escaped double quotes would break the action.
         secret = "{{ getenv `${row.signature.secretEnv}` | js }}";
         parameter = {
           source = "header";

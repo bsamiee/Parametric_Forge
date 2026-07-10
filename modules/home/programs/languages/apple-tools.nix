@@ -4,8 +4,7 @@
 # License       : MIT
 # Path          : modules/home/programs/languages/apple-tools.nix
 # ----------------------------------------------------------------------------
-# Apple-platform code quality: Swift format/lint and the OSA (AppleScript/JXA)
-# compile gate plus canonical formatter.
+# Apple-platform code quality: Swift format/lint and the OSA (AppleScript/JXA) compile gate plus canonical formatter.
 {
   config,
   lib,
@@ -15,11 +14,9 @@
   style = import ../../../style.nix;
   swiftformatConfig = "${config.xdg.configHome}/swiftformat/config";
   swiftlintConfig = "${config.xdg.configHome}/swiftlint/config.yml";
-  # --base-config seeds house style while every discovered project .swiftformat
-  # still applies on top; an explicit caller config suppresses the injection.
-  # The Swift version is derived from the live toolchain per call and rides the
-  # seeded config, keeping it the weakest layer: project .swiftformat and
-  # .swift-version files still win, and no toolchain means no injection.
+  # --base-config seeds house style while every discovered project .swiftformat still applies on top; an explicit caller config suppresses the
+  # injection. The Swift version is derived from the live toolchain per call and rides the seeded config, keeping it the weakest layer: project
+  # .swiftformat and .swift-version files still win, and no toolchain means no injection.
   swiftformat = pkgs.writeShellApplication {
     name = "swiftformat";
     runtimeInputs = [pkgs.coreutils];
@@ -34,8 +31,7 @@
       tmp="$(mktemp -d)"
       trap 'rm -rf "$tmp"' EXIT
       cat "${swiftformatConfig}" >"$tmp/config"
-      # BASH_REMATCH, never sed|head: head's early exit would SIGPIPE sed under
-      # pipefail and drop the version injection on a race.
+      # BASH_REMATCH, never sed|head: head's early exit would SIGPIPE sed under pipefail and drop the version injection on a race.
       ver_re='Swift version ([0-9]+\.[0-9]+)'
       if [[ "$(/usr/bin/swift --version 2>/dev/null || true)" =~ $ver_re ]]; then
         printf -- '--swift-version %s\n' "''${BASH_REMATCH[1]}" >>"$tmp/config"
@@ -43,12 +39,9 @@
       ${pkgs.swiftformat}/bin/swiftformat --base-config "$tmp/config" "$@"
     '';
   };
-  # swiftlint reads .swiftlint.yml from the working directory only. The wrapper
-  # keeps stock semantics when the cwd carries a config, promotes the nearest
-  # ancestor config on subdirectory invocations, and falls back to the house
-  # config only when no project law exists and the caller passes none.
-  # SourceKitten loads sourcekitdInProc from the active developer toolchain,
-  # which the nixpkgs binary cannot see without DYLD_FRAMEWORK_PATH.
+  # swiftlint reads .swiftlint.yml from the working directory only. The wrapper keeps stock semantics when the cwd carries a config, promotes the
+  # nearest ancestor config on subdirectory invocations, and falls back to the house config only when no project law exists and the caller passes
+  # none. SourceKitten loads sourcekitdInProc from the active developer toolchain, which the nixpkgs binary cannot see without DYLD_FRAMEWORK_PATH.
   swiftlint = pkgs.writeShellApplication {
     name = "swiftlint";
     text = ''
@@ -76,8 +69,7 @@
         exec ${pkgs.swiftlint}/bin/swiftlint "$@" --config "${swiftlintConfig}"
       }
 
-      # Option-first and path-first invocations are implicit lint; named
-      # subcommands other than lint/analyze keep raw passthrough.
+      # Option-first and path-first invocations are implicit lint; named subcommands other than lint/analyze keep raw passthrough.
       case "''${1:-lint}" in
         lint | analyze | -*) _lint "$@" ;;
         *) if [[ -e "$1" ]]; then _lint "$@"; fi ;;
@@ -85,9 +77,8 @@
       exec ${pkgs.swiftlint}/bin/swiftlint "$@"
     '';
   };
-  # osacompile is the only OSA syntax gate Apple ships; compile -> osadecompile
-  # round-trip is the canonical, comment-preserving AppleScript formatter.
-  # JXA compiles through the same gate; its formatting is prettier/biome-owned.
+  # osacompile is the only OSA syntax gate Apple ships; compile -> osadecompile round-trip is the canonical, comment-preserving AppleScript
+  # formatter. JXA compiles through the same gate; its formatting is prettier/biome-owned.
   forge-osa = pkgs.writeShellApplication {
     name = "forge-osa";
     runtimeInputs = [pkgs.coreutils];
@@ -125,8 +116,7 @@
             status=1
             continue
           fi
-          # $(<file) strips trailing newlines; printf restores exactly one, so
-          # repeated fmt is byte-stable. Sibling temp + mv keeps the write atomic.
+          # $(<file) strips trailing newlines; printf restores exactly one, so repeated fmt is byte-stable. Sibling temp + mv keeps the write atomic.
           printf '%s\n' "$(<"$tmp/fmt")" >"$src.fmt.$$"
           mv "$src.fmt.$$" "$src"
           printf '[FMT] %s\n' "$src"

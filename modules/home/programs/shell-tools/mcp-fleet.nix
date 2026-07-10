@@ -4,11 +4,9 @@
 # License       : MIT
 # Path          : modules/home/programs/shell-tools/mcp-fleet.nix
 # ----------------------------------------------------------------------------
-# Declarative MCP fleet manifest: one row is the whole definition of a fleet
-# member. mcp-launchers.nix builds wrappers from `launcher` rows; `forge-mcp
-# doctor` probes rows by `probe` class under `codex.startupTimeoutSec`;
-# `forge-mcp drift` validates both client registrations against rows and only
-# reports — ~/.claude.json and ~/.codex/config.toml stay user/tool-owned.
+# Declarative MCP fleet manifest: one row is the whole definition of a fleet member. mcp-launchers.nix builds wrappers from `launcher` rows;
+# `forge-mcp doctor` probes rows by `probe` class under `codex.startupTimeoutSec`; `forge-mcp drift` validates both client registrations against
+# rows and only reports — ~/.claude.json and ~/.codex/config.toml stay user/tool-owned.
 # Row schema (env/header material is key NAMES only, never values):
 #   name             registration key in both clients
 #   transport        "stdio" | "http"
@@ -96,8 +94,7 @@
     };
   }
   {
-    # Registration is the doppler-run indirection: agent-runtime/dev injects
-    # DOPPLER_MCP_AGENT_TOKEN, so no ambient env key is consumed.
+    # Registration is the doppler-run indirection: agent-runtime/dev injects DOPPLER_MCP_AGENT_TOKEN, so no ambient env key is consumed.
     name = "doppler";
     transport = "stdio";
     command = "${profileBin}/doppler";
@@ -150,8 +147,8 @@
     };
   }
   {
-    # Registrations and the Maghz fleet spell the bare name; forge-notebooklm-mcp
-    # is the canonical fleet wrapper. Browser-session backend: probed only on demand.
+    # Registrations and the Maghz fleet spell the bare name; forge-notebooklm-mcp is the canonical fleet wrapper.
+    # Browser-session backend: probed only on demand.
     name = "notebooklm";
     transport = "stdio";
     command = "${profileBin}/notebooklm-mcp";
@@ -252,8 +249,7 @@
     };
   }
   {
-    # Lifecycle-gated wrapper: the vendor router spawns only while Rhino 9
-    # WIP runs; otherwise a stdio shim serves one rhino_status tool that
+    # Lifecycle-gated wrapper: the vendor router spawns only while Rhino 9 WIP runs; otherwise a stdio shim serves one rhino_status tool that
     # instructs start-then-reconnect. mcp-launchers.nix owns the gate.
     name = "rhino-mcp-platform";
     transport = "stdio";

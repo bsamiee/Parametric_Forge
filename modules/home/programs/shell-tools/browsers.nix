@@ -157,10 +157,8 @@
   fzfArgsBash = "fzf_base=(\n${lib.concatMapStringsSep "\n" (a: "        ${lib.escapeShellArg a}") fzfBaseArgs}\n      )";
 
   # --- [RECEIPT_VERB_ROWS]
-  # Canned [desc sql] projections over the normalized event spine — fixed
-  # columns kind, ts, source, surface, event, verb, result, state, status,
-  # session_id, urgency, raw — so every verb binds on any corpus thinness;
-  # kind-specific raw fields extract from JSON text. A new analytic is one row.
+  # Canned [desc sql] projections over the normalized event spine — fixed columns kind, ts, source, surface, event, verb, result, state, status,
+  # session_id, urgency, raw — so every verb binds on any corpus thinness; kind-specific raw fields extract from JSON text. A new analytic is one row.
   receiptVerbs =
     lib.mapAttrs (_: t: {
       desc = lib.elemAt t 0;
@@ -181,10 +179,8 @@
     name = "forge-receipts";
     runtimeInputs = [pkgs.coreutils pkgs.jq pkgs.fzf pkgs.gawk pkgs.findutils pkgs.duckdb];
     text = ''
-      # Unified receipts plane over registry-declared sources (kv TSV +
-      # JSONL): browse/table rows, an ad-hoc SQL door plus canned verbs over
-      # the normalized spine (DuckDB), a registry-vs-disk audit, and a live
-      # failure push bus; the attention feed folds in as kind=attention rows.
+      # Unified receipts plane over registry-declared sources (kv TSV + JSONL): browse/table rows, an ad-hoc SQL door plus canned verbs over the
+      # normalized spine (DuckDB), a registry-vs-disk audit, and a live failure push bus; the attention feed folds in as kind=attention rows.
       registry="${registers.receipts}"
       verbs="${verbsJson}"
       self="''${BASH_SOURCE[0]}"
@@ -192,8 +188,7 @@
       attention_feed="''${FORGE_ATTENTION_FEED:-''${XDG_STATE_HOME:-$HOME/.local/state}/forge/agent-attention.jsonl}"
       reg_rows="$(jq -r '.[] | [.kind, .path, (.grain // "kv")] | @tsv' "$registry")"
       ${fzfArgsBash}
-      # Shared F01 vocabulary (attention.nix) composed into every jq program;
-      # the $-bearing jq text is single-quoted data, never a shell expansion.
+      # Shared F01 vocabulary (attention.nix) composed into every jq program; the $-bearing jq text is single-quoted data, never a shell expansion.
       # shellcheck disable=SC2016
       jq_defs=${lib.escapeShellArg (attention.urgencyJq + attention.kvJq + attention.spineJq)}
       mode="" render="table" since="" failures=0 limit=40 pick="" sql_query="" verb_name=""
@@ -216,8 +211,7 @@
         shift
       done
       : "''${mode:=rows}"
-      # --limit feeds --argjson, --since Nh/Nd feeds arithmetic: both reject
-      # non-numeric input at the option seam instead of a bash math abort.
+      # --limit feeds --argjson, --since Nh/Nd feeds arithmetic: both reject non-numeric input at the option seam instead of a bash math abort.
       case "$limit" in "" | *[!0-9]*) usage >&2; exit 64 ;; esac
       case "$since" in
         *h | *d) case "''${since%?}" in "" | *[!0-9]*) usage >&2; exit 64 ;; esac ;;
@@ -247,8 +241,7 @@
 
       # --- [SQL_PLANE]
       run_sql() { # $1 = SQL over the `receipts` spine table
-        # Script-scope temp: the EXIT trap fires after this function returns,
-        # so a `local` here would be unbound at cleanup under set -u.
+        # Script-scope temp: the EXIT trap fires after this function returns, so a `local` here would be unbound at cleanup under set -u.
         tmpd="$(mktemp -d)"
         trap 'rm -rf "$tmpd"' EXIT
         corpus="$tmpd/corpus.jsonl"
@@ -262,16 +255,14 @@
         [ -s "$corpus" ] || { printf 'forge-receipts: empty corpus\n' >&2; exit 1; }
         duckdb_args=()
         [ "$render" != json ] || duckdb_args+=(-json)
-        # Declared spine schema (attention.nix spineColumnsSql), never
-        # inference: an all-null column on a thin or --kind-filtered corpus
-        # infers JSON and poisons every COALESCE over it.
+        # Declared spine schema (attention.nix spineColumnsSql), never inference: an all-null column on a thin or --kind-filtered corpus infers
+        # JSON and poisons every COALESCE over it.
         duckdb ''${duckdb_args[0]+"''${duckdb_args[@]}"} -c \
           "CREATE TEMP TABLE receipts AS FROM read_json('$corpus', format = 'newline_delimited', columns = {${attention.spineColumnsSql}}); $1"
       }
 
       # --- [AUDIT]
-      # Registry-vs-disk truth: declared rows probed for presence, JSONL
-      # sibling, and last ts; any on-disk receipt log the registry does not
+      # Registry-vs-disk truth: declared rows probed for presence, JSONL sibling, and last ts; any on-disk receipt log the registry does not
       # claim is a FAIL — the dual-receipt law made enforceable.
       cmd_audit() {
         local rows="" kind path grain f last found registered rc=0
@@ -306,9 +297,8 @@
       }
 
       # --- [PUSH_BUS]
-      # Live failure fold: every new registry row parses, derives urgency, and
-      # a high row broadcasts into every live zjstatus bar via zjstatus::notify::.
-      # Torn or foreign lines fold to info and drop; a dead zellij is benign.
+      # Live failure fold: every new registry row parses, derives urgency, and a high row broadcasts into every live zjstatus bar via
+      # zjstatus::notify::. Torn or foreign lines fold to info and drop; a dead zellij is benign.
       cmd_bus() {
         local pathmap
         mapfile -t logs < <(jq -r --arg home "$HOME" '.[] | $home + "/" + .path' "$registry")
@@ -390,8 +380,7 @@
     name = "forge-browse";
     runtimeInputs = [pkgs.coreutils pkgs.jq pkgs.fzf pkgs.gawk pkgs.gnused];
     text = ''
-      # Polymorphic register browser: one entrypoint dispatches on the catalog;
-      # previews are read-only evidence; one typed receipt per browse run.
+      # Polymorphic register browser: one entrypoint dispatches on the catalog; previews are read-only evidence; one typed receipt per browse run.
       catalog="${catalogJson}"
       self="''${BASH_SOURCE[0]}"
       receipt_log="''${FORGE_BROWSE_RECEIPT_LOG:-$HOME/Library/Logs/forge-browse.receipts.log}"
@@ -499,8 +488,7 @@
       query="''${out_lines[0]:-}"
       sel="''${out_lines[1]:-}"
       id="''${sel%%$'\t'*}"
-      # fzf exit classes: 0 select, 1 no-match, 130 user abort are benign;
-      # any other rc is a browser fault — result=error survives --failures
+      # fzf exit classes: 0 select, 1 no-match, 130 user abort are benign; any other rc is a browser fault — result=error survives --failures
       # triage and the rc propagates to the caller.
       if [ "$rc" -eq 0 ] && [ -n "$id" ]; then
         emit_receipt "$domain" "$query" "$id" "$sel" "print" "ok" "0" "$duration_ms"
@@ -515,9 +503,8 @@
   };
 
   # --- [COMPLETIONS]
-  # Projections of the same catalog/registry rows, one ;-delimited spec string
-  # per command; profile site-functions enter fpath through the completion
-  # owner's fingerprint.
+  # Projections of the same catalog/registry rows, one ;-delimited spec string per command; profile site-functions enter
+  # fpath through the completion owner's fingerprint.
   domainsWord = lib.concatStringsSep " " (lib.attrNames catalogRows);
   mkCompletion = name: specs:
     pkgs.writeTextDir "share/zsh/site-functions/_${name}" ''
@@ -529,9 +516,8 @@
   receiptsCompletion = mkCompletion "forge-receipts" "*--kind[filter by kind]:kind:(${lib.concatMapStringsSep " " (r: r.kind) receiptSources});--since[time window ISO or Nh/Nd]:window:;--failures[failed rows only];--limit[row cap]:count:;--json[JSON rows];--tsv[TSV rows];--fzf[interactive picker];--follow[live tail];--pick[one row]:row:;--sql[SQL over the receipts spine table]:query:;--verb[canned SQL projection]:verb:(${lib.concatStringsSep " " (lib.attrNames receiptVerbs)});--verbs[list verb rows];--audit[registry-vs-disk truth];--bus[live failure push into zjstatus bars]";
 
   # --- [TELEVISION_CHANNELS]
-  # Durable semantic channels over the same registers; source/preview commands
-  # are store-path exact so channels never depend on ambient PATH. Rows with
-  # json browse a register; the delegate row rides forge-receipts lanes.
+  # Durable semantic channels over the same registers; source/preview commands are store-path exact so channels never depend on ambient PATH.
+  # Rows with json browse a register; the delegate row rides forge-receipts lanes.
   mkChannel = domain: row: {
     metadata = {
       name = "${channelPrefix}-${domain}";
@@ -580,8 +566,7 @@ in {
     # Identity bundle row (bundle-apps.nix) for the bus agent.
     forge.bundleApps.forge-receipts-bus = "Forge Receipts Bus";
 
-    # Live push bus: KeepAlive tail over every registry log; a high-urgency
-    # row lands in every zjstatus bar the instant its receipt is written.
+    # Live push bus: KeepAlive tail over every registry log; a high-urgency row lands in every zjstatus bar the instant its receipt is written.
     launchd.agents.forge-receipts-bus = {
       enable = true;
       config = {
@@ -597,8 +582,7 @@ in {
       };
     };
 
-    # Television 0.15.9: durable channel host. Shell integration stays off —
-    # Ctrl-R is Atuin, Ctrl-T is fzf; channels launch via `tv <channel>`.
+    # Television 0.15.9: durable channel host. Shell integration stays off — Ctrl-R is Atuin, Ctrl-T is fzf; channels launch via `tv <channel>`.
     # Theme roles bind palette roles: one role row serves every bound key.
     programs.television = {
       enable = true;
