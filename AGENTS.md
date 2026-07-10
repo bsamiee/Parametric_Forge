@@ -5,13 +5,17 @@
 - `CLAUDE.md` is the project execution standard — model dispatch, estate law, Nix code law, language routing, provisioning contract, commit standards. This file carries only agent-runtime deltas.
 - This repository is the machine/user toolchain owner for every estate host: shell, PATH, tool, wrapper, launcher, and credential behavior is fixed here, never patched in a sibling project.
 - Apple Container is a coexistence runtime, never a Docker/Compose replacement or `DOCKER_HOST` owner. Install ownership: `modules/darwin/homebrew/brews.nix`; runtime/env ownership: `modules/home/environments/containers.nix`; diagnostics: `forge-provision doctor`.
-- Runtime routing law: Docker Engine API, `DOCKER_HOST`, Compose, Pulumi Docker providers, Docker SDKs, Testcontainers, `docker cp`/`docker exec`, and Buildx-into-daemon run on Colima. Registry/image movement without a runtime uses `skopeo`/`crane`/`oras`/`regctl`. Single isolated OCI run/build, `container machine`, and per-container-VM benchmarking run on Apple Container. Kubernetes stays on the kubectl/kind/helm chain; Apple Container is not a Kubernetes owner.
+- Runtime routing — Colima runs Docker Engine API, `DOCKER_HOST`, Compose, Pulumi Docker providers, Docker SDKs, Testcontainers, `docker cp`/`docker exec`, and Buildx-into-daemon.
+- Runtime routing — registry/image movement without a runtime uses `skopeo`/`crane`/`oras`/`regctl`.
+- Runtime routing — Apple Container runs single isolated OCI run/build, `container machine`, and per-container-VM benchmarking.
+- Runtime routing — Kubernetes stays on the kubectl/kind/helm chain; Apple Container is not a Kubernetes owner.
 - `~/.codex` is the sole Codex configuration home; no file in this repository is Codex configuration source of truth. Repo `.claude/` state serves the Claude harness, and this file carries policy, never configuration.
 
 ## [02]-[SKILL_MASTERS]
 
 - `.claude/skills/` here are the estate masters for harness skills; `~/.codex/skills/` and sibling-repo copies are mirrors. A skill edit lands in the master and propagates by copy — never edit a mirror, never build sync tooling.
 - `.claude/hooks/setup-env.sh` is the canonical SessionStart hook, byte-identical in every estate repo and mastered here; hook fixes land here first.
+- The byte-copied mirror set spans `.claude/{skills,hooks,scripts,agents}`, `commands/docs.md`, `docs/stacks/{python,typescript}/`, and the three prose standards (`information-structure`, `formatting`, `style-guide`); sibling copies are read-only mirrors.
 
 ## [03]-[NIX_SHELL_EXECUTION]
 
@@ -35,4 +39,5 @@
 ## [06]-[DEPLOY_SEAM]
 
 - Any change to a module, overlay, or launcher lands through `forge-redeploy --switch` and proves through `forge-accept`; an edited `.nix` file without a switch is invisible to the running estate.
+- A change to any module the shared home graph imports proves both hosts before it lands: the darwin system build plus `nix eval '.#nixosConfigurations.maghz.config.system.build.toplevel.drvPath'` — `nix flake check` covers neither toplevel.
 - The `maghz` NixOS host deploys over SSH from this repo (`forge-redeploy --os nixos --host maghz --target-host <ssh>`); its services stay loopback-bound and are reached through the `vpsTunnels` rows, never by opening ports.

@@ -8,7 +8,7 @@ Four siblings own the surfaces this algebra composes as settled material. The ru
 
 Choose the narrowest carrier that preserves the real outcome. A wider carrier is earned only by a capability the narrower one cannot carry: a typed failure cause, or accumulated independent faults. The carrier choice is itself the sequencing algebra; the collection owner and the do-notation builder are that same algebra at traversal scale, not a sixth and seventh carrier.
 
-| [INDEX] | [SURFACE]                | [OWNS]                         | [REJECT]                          |
+| [INDEX] | [SURFACE]                | [OWNS]                         | [REJECTED_FORM]                   |
 | :-----: | :----------------------- | :----------------------------- | :-------------------------------- |
 |  [01]   | `Option[T]`              | non-failing absence            | `None`-as-hidden-failure          |
 |  [02]   | `Result[T, E]`           | typed fallibility, fail-fast   | raised control flow in domain     |

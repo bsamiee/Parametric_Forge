@@ -58,29 +58,62 @@ Colima is the Docker API / Compose / Buildx / Pulumi default and never yields `D
 |  [05]   | Plugin wasm WASI-deserialize panic on the pinned Zellij          | Every plugin admission needs a load proof on the pinned Zellij   |
 |  [06]   | Shift `/`, `[`, `]` arrive as `?`, `{`, `}`                      | The Hyper layer binds shifted punctuation with and without Shift |
 |  [07]   | Dead sessions left orphaned `loc` processes that blocked forever | `loc` detaches stdin and deadlines its scan                      |
+|  [08]   | Session names overflowed the 103-byte IPC `sun_path` cap         | Session names stay short; the byte budget is named at the minter |
 
 - [06]: owner: `apps/chords.nix`.
 - [07]: `loc` wraps its scan with `LOC_SCAN_DEADLINE_SECONDS` and emits typed degrade output; the caller's death is what stranded it.
 
 ## [07]-[DEPLOY]
 
-| [INDEX] | [TRAP]                                                         | [RULE_NOW]                                                        |
-| :-----: | :------------------------------------------------------------- | :---------------------------------------------------------------- |
-|  [01]   | A Brew failure killed HM activation while `nh` printed success | `forge-redeploy` receipts propagate activation-phase exit status  |
-|  [02]   | Homebrew removed `--no-quarantine`/`--no-binaries`             | Dead arg removed; posture in `HOMEBREW_CASK_OPTS` + session vars  |
-|  [03]   | `AllSpacesAndDisplays` was a phantom wallpaper schema          | Wallpaper rail uses System Events `osascript` + idempotence probe |
-|  [04]   | `_reap` exited `129` on every signal, stranding workers        | Per-signal traps pass the signal number                           |
+| [INDEX] | [TRAP]                                                          | [RULE_NOW]                                                        |
+| :-----: | :-------------------------------------------------------------- | :---------------------------------------------------------------- |
+|  [01]   | A Brew failure killed HM activation while `nh` printed success  | `forge-redeploy` receipts propagate activation-phase exit status  |
+|  [02]   | Homebrew removed `--no-quarantine`/`--no-binaries`              | Dead arg removed; posture in `HOMEBREW_CASK_OPTS` + session vars  |
+|  [03]   | `AllSpacesAndDisplays` was a phantom wallpaper schema           | Wallpaper rail uses System Events `osascript` + idempotence probe |
+|  [04]   | `_reap` exited `129` on every signal, stranding workers         | Per-signal traps pass the signal number                           |
+|  [05]   | `nix flake check` passed while the maghz toplevel eval was dead | Both-OS static gate: darwin build AND the maghz toplevel drv eval |
+|  [06]   | A darwin-only package interpolation broke the shared home graph | Darwin-only `pkgs.*` rides `optionalString isDarwin`              |
 
 - [01]: the killed activation meant font projection never ran.
 - [02]: the Brewfile `cask_args` then killed new cask installs; owner `darwin/homebrew/`.
 - [03]: PlistBuddy `Add` failed under `set -e`; owner `assets/wallpaper/`.
 - [04]: HUP/INT/TERM reap resolver workers before EXIT cleanup; the stranded workers were SessionStart resolver workers (`.claude/hooks/setup-env.sh`).
+- [05]: the dead reference (`forge.chords` from darwin-gated `apps/`) shipped through repeated darwin-only switches; `nix eval '.#nixosConfigurations.maghz.config.system.build.toplevel.drvPath'` is the missing half of the gate.
+- [06]: `terminal-notifier` in `shell-tools/` (imported by both hosts) throws at linux eval; an empty interpolation plus a runtime `[ -n "$tn" ]` guard is the shape.
 
-## [08]-[RASM]
+## [08]-[SHELL_KERNELS]
+
+| [INDEX] | [TRAP]                                                              | [RULE_NOW]                                                        |
+| :-----: | :------------------------------------------------------------------ | :---------------------------------------------------------------- |
+|  [01]   | Torn JSONL tail line killed pipefail readers                        | Readers rail with `fromjson?` or explicit `\|\| true`             |
+|  [02]   | `exec` skipped the EXIT trap, leaking a mktemp per run              | Cleanup never rides an EXIT trap across `exec`                    |
+|  [03]   | `du \| cut \|\| echo 0` emitted two-line values on failure          | Fallbacks come from one guarded fold, never `\|\| echo`           |
+|  [04]   | Silent-skip wrapper guards shipped thinner `bin/` on upstream drift | A missing wrapper target fails the build with a named drift error |
+|  [05]   | Raw 0x1F bytes in jq literals read as `join("")` everywhere         | Control characters spell as escapes (`\u001f`), never raw bytes   |
+
+- [01]: owners: the `forge-agents` quota lanes and attention fold (`shell-tools/mcp-launchers.nix`).
+- [02]: owner: `overlays/sqlite-forge/`; proven live — `trap ... EXIT; exec true` prints nothing.
+- [04]: owners: `overlays/energyplus/`, `overlays/openstudio/`; wrapper text generates Nix-side (`placeholder "out"` + `lib.escapeShellArg`), never as runtime heredocs.
+
+## [09]-[FORMATTERS]
+
+Placeholder-bearing templates are formatter poison: the treefmt sqruff lane rewrote `||` to `| |` and lowercased `__FORGE_SERVICE_SQL__` inside live provisioning SQL, breaking `apply`/`check`/`up` for every service. Templates carrying substitution placeholders use a formatter-unowned extension (`.sql.tpl`), and the consuming self-test asserts the placeholders and the absence of mangle signatures (`overlays/forge-provision/`).
+
+## [10]-[ATTENTION]
+
+| [INDEX] | [TRAP]                                                   | [RULE_NOW]                                               |
+| :-----: | :------------------------------------------------------- | :------------------------------------------------------- |
+|  [01]   | `osascript` notification clicks opened Script Editor     | Notifications post via `terminal-notifier`; clicks route |
+|  [02]   | Attention count trusted stale hook rows: 4 tabs, 4 waits | `needs_input` joins live idle lanes, one per pane        |
+
+- [01]: the click executes `forge-agents focus` — zellij pane focus, pty-to-host-app ancestry resolution, receipt per lane (`shell-tools/mcp-launchers.nix`).
+- [02]: the join normalizes `ps` short/long tty forms and dedupes `unique_by(.tty)`; a session whose latest event is `Notification` but whose lane is busy already got its answer.
+
+## [11]-[RASM]
 
 Rasm owns the method and language-law bedrock Forge composes: campaign method and the `docs/stacks/{typescript,python}` doctrine that Forge references rather than duplicates. `docs/standards/design-doctrine.md` is byte-identical across Rasm, Forge, and Maghz; Forge adds `nix-doctrine`, Maghz adds `ops-doctrine`. The docgen master is Rasm `.claude/skills/docgen/` and mirrors propagate by copy, never tooling. Forge-owned global Git config controls LFS behavior that reaches Rasm — Rasm's tip carries zero LFS attribute rows, making the filter inert. Rasm points its machine-level scientific and provisioning executables back to Forge ownership: a shell/PATH/scientific/DB failure in Rasm is fixed in the Forge owner, never patched in Rasm.
 
-## [09]-[MAGHZ]
+## [12]-[MAGHZ]
 
 Forge owns the `nixosConfigurations.maghz` host and `forge-redeploy --os nixos --host maghz`; the Maghz service plane deploys only after the host base is proven. `ssh.nix` owns the Maghz host identity and the tunnel substrate, and the Codex Postgres MCP converged from an inline `uvx` row to the Forge launcher `forge-maghz-postgres-mcp` (env key `MAGHZ_MCP__DATABASE_URI`, `required=true`) — so Codex startup depends on tunnel ordering, and `profile local|prd` is the only mode-changing entry, declared up only after service-health probes pass through the tunnel. Maghz is service-bearing (Postgres 18, Ollama, n8n, Atuin sync on loopback, Docker volumes, Doppler interpolation) and owns its own standards and `ops-doctrine`.
 

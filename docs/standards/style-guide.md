@@ -229,6 +229,6 @@ Examples prove shape or prevent misuse. Place them beside the rule they clarify.
 ## [12]-[ACCESSIBILITY]
 
 - Carry meaning through text, not through color, position, shape, pointer movement, screenshots, or sound alone.
-- Provide text equivalents for visual, audio, or screenshot-only information — diagrams carry `accTitle`/`accDescr`, glyph-heavy structures carry adjacent prose stating the relation they encode. A syntax-teaching fence inside a diagram skill's own reference corpus is exempt where the directives would corrupt or pollute the taught grammar and adjacent prose already states the relation.
+- Provide text equivalents for visual, audio, or screenshot-only information — diagrams carry `accTitle`/`accDescr`, glyph-heavy structures carry adjacent prose stating the relation they encode. A syntax-teaching fence inside a diagram skill's own reference corpus is exempt where the directives corrupt or pollute the taught grammar and adjacent prose already states the relation.
 - Use input-neutral UI verbs when keyboard, pointer, touch, voice, or automation can perform the action; preserve exact UI labels when the label is the action target.
 - Prefer conventional grammar and punctuation for machine translation.

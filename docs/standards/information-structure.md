@@ -96,7 +96,7 @@ Records carry independently scanned items; lists carry peer facts or true sequen
 [RECORD_FORMS]:
 - `GroupedRecord`: a standalone `[RECORD_KEY]:` label followed by `- Field: value` bullets; the normative field carrier for same-section clusters. A record key naming a verbatim identifier keeps the identifier's exact casing in a code span; a conceptual key is an UPPER_SNAKE rubric.
 - `AnchoredRecord`: an H3 record heading, used only when another artifact links to the record or a stable slug is required.
-- `ContrastRecord`: `[CONTRAST_KEY]:` followed by `- Accepted:`, `- Rejected:` or `- Near miss:`, and `- Reason:` bullets.
+- `ContrastRecord`: `[CONTRAST_KEY]:` followed by `- Rejected:` or `- Near miss:`, `- Accepted:`, and `- Reason:` bullets.
 - `OrderedStep`: a numbered task step carrying fields such as `Action`, `Command`, `Expected signal`, `Recovery`, or `Result`.
 - `row-owned record`: a record after a table that carries one row's independent status, detail, omission, update, or retention.
 

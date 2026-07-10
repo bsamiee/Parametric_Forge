@@ -5,24 +5,54 @@ Parametric Forge is the machine estate: one flake owns the macOS workstation and
 ## [01]-[LAYOUT]
 
 ```text
-flake.nix / flake.lock    Inputs (Determinate pin, nixpkgs-unstable, flake-parts, nix-darwin,
-                          home-manager master, disko, treefmt-nix), systems, host exports
-flake-modules/            nixpkgs config, package/app outputs, checks + formatter, dev shell
-hosts/                    context.nix host-context factory; darwin/ (macbook) and nixos/
-                          (maghz: nixos-anywhere + disko bootstrap, forge-redeploy day-2)
-modules/common/           Determinate Nix custom settings + shared toolchain env (both OSes)
-modules/darwin/           macOS defaults/input/interface/security, fonts, Homebrew bridge
-modules/nixos/            NixOS system surface: boot/disko, static network, SSH, users,
-                          container runtime, loopback services (maghz)
-modules/home/             Home Manager: xdg, theme, aliases, assets, environments/,
-                          programs/ (apps, git/language/container/mac/media/nix/shell tools,
-                          zsh), scripts/ (integration + analysis)
-overlays/                 Forge packages and pins: duckdb, energyplus, openstudio, sqlean,
-                          sqlite-forge, forge-provision, nodejs-bin, pnpm
-services/                 IaC owner: Doppler topology + GitHub settings rows (topology.ts),
-                          Pulumi Automation API driver (driver.ts), estate.ts
-docs/                     stacks/ (python, typescript atlases) + standards/ (design/nix
-                          doctrine, style, formatting, information structure)
+flake.nix                      inputs (Determinate pin, nixpkgs-unstable, flake-parts, nix-darwin, home-manager master, disko, treefmt-nix), systems, host exports
+flake.lock
+flake-modules/                 nixpkgs config, package/app outputs, checks + formatter, dev shell
+hosts/
+├── context.nix                host-context factory: one row per machine
+├── darwin/                    macbook
+└── nixos/                     maghz: nixos-anywhere + disko bootstrap, forge-redeploy day-2
+modules/
+├── common/                    Determinate Nix settings + shared toolchain env (both OSes)
+├── darwin/
+│   ├── settings/              macOS defaults, input, interface, security
+│   └── homebrew/              Homebrew bridge
+├── nixos/                     boot/disko, static network, SSH, users, containers, loopback services
+└── home/
+    ├── aliases/               shell alias register
+    ├── assets/
+    │   ├── ascii/             fetch banner art
+    │   └── wallpaper/
+    ├── environments/          cross-tool environment surfaces
+    ├── programs/
+    │   ├── apps/
+    │   │   ├── karabiner/     leader-chord keyboard layer
+    │   │   ├── nvim/          editor estate (lua/)
+    │   │   ├── vscode/
+    │   │   ├── wezterm/       terminal host
+    │   │   ├── yazi/          file manager
+    │   │   └── zellij/        multiplexer (layouts/, themes/)
+    │   ├── container-tools/
+    │   ├── git-tools/
+    │   ├── languages/         per-language toolchains
+    │   ├── mac-tools/
+    │   ├── media-tools/
+    │   ├── nix-tools/
+    │   ├── shell-tools/       CLI estate: forge-* kernels, MCP launchers, ssh, secrets
+    │   └── zsh/
+    └── scripts/               integration + analysis kernels
+overlays/                      duckdb, sqlean, nodejs-bin, pnpm ride default.nix rows
+├── energyplus/
+├── openstudio/
+├── sqlite-forge/              extension-loaded sqlite shell profiles
+└── forge-provision/           local provisioning CLI (bash/, data/, jq/, sql/)
+services/                      IaC owner: Doppler + GitHub topology rows, Automation API driver
+docs/
+├── atlas/                     estate atlas: platform facts, rails, interconnection, scars
+├── stacks/                    python/, typescript/ language law
+└── standards/                 design/nix doctrine, style, formatting, information structure
+.claude/                       harness estate: skills/ masters, hooks/, workflows/, lsp-marketplace/
+.greptile/ · .coderabbit.yaml  per-repo reviewer configuration
 ```
 
 ## [02]-[HOSTS]
@@ -57,7 +87,8 @@ This machine runs Determinate Nix, not vanilla: Determinate owns the daemon and 
 - `modules/nixos/` carries system-scope NixOS state for server hosts: boot and disko, static addressing projected from the host-context network row, key-only SSH, declarative users, container runtime, and loopback-bound services reached solely through tunnel rows. Nothing Darwin-owned — Homebrew, launchd, macOS defaults — generalizes here.
 - `modules/home/` carries user-scope state under Home Manager: XDG hygiene, session environments, program owners, scripts. System and home scopes never mix in one module.
 - `overlays/` is the admission gate for upstream packages nixpkgs lacks or pins wrongly: each overlay owns its version, source hash (`nix-prefetch-github`), and build; the flake-level overlay composes them. Admission requires a real consumer now — never anticipatory packaging.
-- `services/` owns live service state as code, held to `docs/stacks/typescript/` in full. The repo root is the single pnpm workspace (`package.json` + `pnpm-workspace.yaml` catalog — one manifest, no per-folder package files): `node services/driver.ts preview|up|refresh [--adopt] [--target=<p>/<c>/<token>]` converges the estate; `outputs [--reveal]` projects receipts; `scopes apply|doctor|strict` governs directory-scope resolution; `reviewers` proves the reviewer matrix. The driver brokers its own tokens from `op` per invocation. An existing service domain extends its rows; a new service domain gets a new organized owner, mirroring the module folder philosophy.
+- `services/` owns live service state as code, held to `docs/stacks/typescript/` in full. The repo root is the single pnpm workspace (`package.json` + `pnpm-workspace.yaml` catalog — one manifest, no per-folder package files). An existing service domain extends its rows; a new service domain gets a new organized owner, mirroring the module folder philosophy.
+- `services/` workspace commands: `node services/driver.ts preview|up|refresh [--adopt] [--target=<p>/<c>/<token>]` converges the estate; `outputs [--reveal]` projects receipts; `scopes apply|doctor|strict` governs directory-scope resolution; `reviewers` proves the reviewer matrix. The driver brokers its own tokens from `op` per invocation.
 
 ## [06]-[SECRETS]
 
@@ -98,7 +129,7 @@ Recurring machine work is launchd-owned under the `com.parametric-forge.<name>` 
 |  [03]   | Shell packaging | `writeShellApplication` for any body with a runtime closure; `writeShellScriptBin` for closure-free one-liners. |
 |  [04]   | TypeScript      | `docs/stacks/typescript/` — `services/` code is held to it in full.                                             |
 |  [05]   | Python          | `docs/stacks/python/`; 3.15, `uv`-managed, `ruff` + `ty`.                                                       |
-|  [06]   | Markdown        | `docs/standards/` owners: style-guide, formatting, information-structure; agent-facing declarative register.    |
+|  [06]   | Markdown        | `docs/standards/` prose owners; `prose_gate.py` (docgen skill) is the check + fix rail.                         |
 |  [07]   | launchd         | Declared agent rows with receipts and health gates; never ad-hoc `launchctl` state.                             |
 
 ## [13]-[GITHUB_AND_SERVICES]

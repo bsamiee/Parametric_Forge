@@ -48,6 +48,11 @@ Apply when writing or reviewing Nix modules, overlays, flake composition, `write
 - Rejected: Evaluation-time shell guessing, shell fragments spread across config, build or activation output that only prints success text.
 - Example: `pkgs.writeShellApplication { name = "shape"; runtimeInputs = [ pkgs.jq ]; text = script; }`
 
+[BOTH_OS_EVAL]:
+- Law: A module the shared home graph imports evaluates on every host; a platform-only package interpolation gates at eval (`lib.optionalString pkgs.stdenv.hostPlatform.isDarwin`) with a runtime emptiness guard, and an option defined under a platform-gated import is consumed cross-platform only through an `or` default. The static gate is the pair: the darwin system build AND the NixOS toplevel drv eval — `nix flake check` alone proves neither host's toplevel.
+- Rejected: Darwin-only `pkgs.*` interpolated unconditionally in a both-OS module, cross-gate option reads without a default, a switch proven on one host standing in for the other's eval.
+- Example: `tn = lib.optionalString pkgs.stdenv.hostPlatform.isDarwin "${pkgs.terminal-notifier}/bin/terminal-notifier";`
+
 ## [03]-[SHELL_KERNELS]
 
 [KERNEL_BODIES]:
@@ -92,8 +97,13 @@ Apply when writing or reviewing Nix modules, overlays, flake composition, `write
 
 [FORK_DISCIPLINE]:
 - Law: One projection per payload — a single `jq` program per JSON snapshot, a single `awk` pass per text stream; predicates project to JSON booleans through `--argjson`; descriptors allocate dynamically with `{fd}`; temps are trap-registered at creation and created beside their rename target for same-filesystem atomicity.
-- Rejected: `sed | tr | head` chains per field, `grep -q` on the read end of a pipe under `pipefail`, string-built JSON booleans, hardcoded descriptor numbers, temp files in `$TMPDIR` renamed across filesystems, cleanup only on success paths.
+- Rejected: `sed | tr | head` chains per field, `grep -q` on the read end of a pipe under `pipefail`, string-built JSON booleans, hardcoded descriptor numbers, temp files in `$TMPDIR` renamed across filesystems, cleanup only on success paths, cleanup riding an EXIT trap across `exec` (the trap never fires — feed via process substitution or clean before the exec).
 - Example: `read -r files bytes < <(awk '/^A:/ { a = $2 } /^B:/ { b = $2 } END { print a, b }' "$stats")`
+
+[EXPECTED_NONZERO]:
+- Law: A probe whose non-zero exit is data — a no-match `grep`, `lsof` on a vanished holder, `tail` of a live-appended file mid-write — rails with an explicit `|| true` and the reader treats empty as the verdict; `jq` over live-appended JSONL admits rows through `fromjson?` so a torn tail line is skipped, never fatal.
+- Rejected: An `|| true` on a mutation or one that conflates a real failure class with the expected-empty case, an unrailed probe killing the kernel under `set -e` + `pipefail`, retry loops papering over a torn read the rail admits cleanly.
+- Example: `last="$(tail -1 "$feed" 2>/dev/null || true)"`
 
 [DUAL_RECEIPTS]:
 - Law: Mutating rails append a human TSV row and a JSONL sibling with identical envelope keys — `ts` and `surface` always, `result` on terminal receipts, `state` on transition receipts — and numerics enter the envelope as JSON numbers; doctor commands emit one typed row stream that renders both the human table and `--json`.

@@ -10,7 +10,7 @@ Choose the lifecycle role before adding an owner, construct, rail, or projection
 
 [ROLE_INDEX]:
 
-| [INDEX] | [ROLE]          | [POSITION]             | [ACCEPTS]             | [EMITS]            | [OWNER]          | [REJECT]             |
+| [INDEX] | [ROLE]          | [POSITION]             | [ACCEPTS]             | [EMITS]            | [OWNER]          | [REJECTED_FORM]      |
 | :-----: | :-------------- | :--------------------- | :-------------------- | :----------------- | :--------------- | :------------------- |
 |  [01]   | Raw ingress     | before admission       | external material     | payload or ingress | boundary adapter | domain raw           |
 |  [02]   | Typed payload   | before materialization | static dictionary law | ingress or owner   | payload contract | interior payload     |
@@ -93,7 +93,7 @@ Choose the invariant owner before choosing a package-backed model, wrapper, prot
 
 [OWNER_INDEX]:
 
-| [INDEX] | [DECISION]             | [DISCRIMINANT]           | [OWNER]              | [CHOOSE]                   | [REJECT]              |
+| [INDEX] | [DECISION]             | [DISCRIMINANT]           | [OWNER]              | [CHOOSE]                   | [REJECTED_FORM]       |
 | :-----: | :--------------------- | :----------------------- | :------------------- | :------------------------- | :-------------------- |
 |  [01]   | static keys            | untrusted, def-time      | `[BOUNDARY_SHAPES]`  | closed `TypedDict`         | `dict[str, object]`   |
 |  [02]   | untrusted admission    | untrusted, runtime       | `[BOUNDARY_SHAPES]`  | Pydantic                   | interior revalidation |
@@ -422,7 +422,7 @@ A durable owner is frozen after materialization, and state change is a transitio
 - Law: durable collections are `tuple`, `frozenset`, `frozendict`, `Map`, `Block`, or another admitted immutable owner; a transition returns `Self`, `Result[Self, E]`, or a closed successor union.
 - Law: a trusted swap uses `copy.replace`, `msgspec.structs.replace`, `frozendict` union, or a persistent `Map`/`Block` combinator; an untrusted delta validates a closed patch first, then becomes a replacement expression.
 - Law: a patch is a closed `TypedDict` with `NotRequired` update fields and `Required[ReadOnly[...]]` identity or version fields, admitted exactly once through the `[03]-[PAYLOAD_AND_MATERIALIZATION]` `TypeAdapter` gate; the replacement lane receives the admitted patch and never re-validates it, so this section owns the transition algebra and not the admission it composes.
-- Law: deep transition rebuilds nested identity when a shallow swap would replay cached, mutable, or session-owned state — a composite owner's transition replaces the inner owner through its own kernel and the outer owner through `copy.replace`, so a stale nested map, cursor, or session is never carried forward by a top-level field swap.
+- Law: deep transition rebuilds nested identity when a shallow swap replays cached, mutable, or session-owned state — a composite owner's transition replaces the inner owner through its own kernel and the outer owner through `copy.replace`, so a stale nested map, cursor, or session is never carried forward by a top-level field swap.
 - Law: a `frozendict` field transitions through union (`row | {key: value}`), a `Map`/`Block` field through its persistent combinator, and the whole successor is one expression; aliases normalize before replacement and never key an owner replacement.
 - Reject: a mutable field on a frozen owner, a direct `__replace__` where `copy.replace` states the transition, mutate-then-freeze, a shallow nested-dict update, cached-session replay by shallow replace, a second `TypeAdapter` pass over the already-admitted patch, and `MappingProxyType` as durable immutability.
 

@@ -24,7 +24,7 @@ Use the active Python surface directly. This chooser owns language syntax, type-
 
 [TYPE_DECLARATION_FORMS]: which declaration, generated-owner, callable, or generic form carries the type evidence.
 
-| [INDEX] | [CONCERN]                | [USE]                                                     | [REPLACE]                           |
+| [INDEX] | [CONCERN]                | [USE]                                                     | [REJECTED_FORM]                     |
 | :-----: | :----------------------- | :-------------------------------------------------------- | :---------------------------------- |
 |  [01]   | generic shape            | inline type parameters and `type` aliases                 | `TypeVar`, `ParamSpec`, `TypeAlias` |
 |  [02]   | generic defaults         | type parameter defaults and `NoDefault`                   | overload families for defaults      |
@@ -42,7 +42,7 @@ Use the active Python surface directly. This chooser owns language syntax, type-
 
 [TYPE_PREDICATE_AND_EXPRESSION_FORMS]: how membership is proved and a type-expression value is carried.
 
-| [INDEX] | [CONCERN]             | [USE]       | [REPLACE]                           |
+| [INDEX] | [CONCERN]             | [USE]       | [REJECTED_FORM]                     |
 | :-----: | :-------------------- | :---------- | :---------------------------------- |
 |  [01]   | type predicates       | `TypeIs`    | one-way `TypeGuard` predicates      |
 |  [02]   | non-subtype narrowing | `TypeGuard` | `bool` helper plus `cast`           |
@@ -50,7 +50,7 @@ Use the active Python surface directly. This chooser owns language syntax, type-
 
 [TYPED_DICT_PAYLOAD_FORMS]: how a keyword or dictionary payload states its static key law.
 
-| [INDEX] | [CONCERN]          | [USE]                            | [REPLACE]                          |
+| [INDEX] | [CONCERN]          | [USE]                            | [REJECTED_FORM]                    |
 | :-----: | :----------------- | :------------------------------- | :--------------------------------- |
 |  [01]   | kwargs payload     | `Unpack[TypedDict]`              | homogeneous `**kwargs`             |
 |  [02]   | typed dict closure | `closed=` and `extra_items=`     | open payload prose                 |
@@ -59,7 +59,7 @@ Use the active Python surface directly. This chooser owns language syntax, type-
 
 [CLOSED_DISPATCH_AND_VALUE_FORMS]: how a closed domain dispatches, proves exhaustiveness, and carries an immutable value.
 
-| [INDEX] | [CONCERN]            | [USE]                               | [REPLACE]                        |
+| [INDEX] | [CONCERN]            | [USE]                               | [REJECTED_FORM]                  |
 | :-----: | :------------------- | :---------------------------------- | :------------------------------- |
 |  [01]   | conditional binding  | assignment expressions (`:=`)       | precondition temporary variables |
 |  [02]   | closed dispatch      | `match` with pattern narrowing      | tag `if` chains                  |
@@ -74,7 +74,7 @@ Use the active Python surface directly. This chooser owns language syntax, type-
 
 [TEXT_AND_TEMPLATE_FORMS]: how structured text and templates stay typed and parseable.
 
-| [INDEX] | [CONCERN]             | [USE]                     | [REPLACE]                  |
+| [INDEX] | [CONCERN]             | [USE]                     | [REJECTED_FORM]            |
 | :-----: | :-------------------- | :------------------------ | :------------------------- |
 |  [01]   | literal text boundary | `LiteralString`           | untyped sensitive `str`    |
 |  [02]   | safe templates        | t-strings and processors  | f-string pre-parsing       |
@@ -83,7 +83,7 @@ Use the active Python surface directly. This chooser owns language syntax, type-
 
 [REFLECTION_AND_AST_FORMS]: how annotations, members, unions, frames, and AST are read structurally.
 
-| [INDEX] | [CONCERN]              | [USE]                                                      | [REPLACE]                           |
+| [INDEX] | [CONCERN]              | [USE]                                                      | [REJECTED_FORM]                     |
 | :-----: | :--------------------- | :--------------------------------------------------------- | :---------------------------------- |
 |  [01]   | runtime annotations    | `annotationlib.get_annotations()`                          | direct `__annotations__` reads      |
 |  [02]   | signature annotations  | `inspect.signature(annotation_format=...)`                 | annotation string post-processing   |
@@ -100,7 +100,7 @@ Use the active Python surface directly. This chooser owns language syntax, type-
 
 [MODULE_AND_IO_FORMS]: how imports, startup hooks, and text encoding state their boundary.
 
-| [INDEX] | [CONCERN]       | [USE]                                                                   | [REPLACE]                             |
+| [INDEX] | [CONCERN]       | [USE]                                                                   | [REJECTED_FORM]                       |
 | :-----: | :-------------- | :---------------------------------------------------------------------- | :------------------------------------ |
 |  [01]   | deferred import | module-scope `lazy import` / `lazy from`; `__getattr__` package surface | function-local imports, `lazy_loader` |
 |  [02]   | startup hook    | `.start` entries                                                        | executable `.pth` import lines        |
@@ -111,7 +111,7 @@ Use the active Python surface directly. This chooser owns language syntax, type-
 Use these contracts when the chooser names the primitive but code still needs a placement rule.
 
 [TYPE_DECLARATION_SITE]:
-- Use when: the defining declaration, the decorator that builds a family of owners, or the callable signature can carry type evidence that callers would otherwise repair downstream.
+- Use when: the defining declaration, the decorator that builds a family of owners, or the callable signature can carry type evidence that callers otherwise repair downstream.
 - Accept: inline type parameters, `type` aliases, `TypeForm[T]` for type-expression values, type parameter defaults, `NoDefault`, `slice[T]`, `io.Reader`/`io.Writer`, `@typing.override`, `typing.Self`, `@typing.disjoint_base`, `@typing.final` and `Final`, `@dataclass_transform()` with `field_specifiers` for a generated-owner decorator, inline `**P` with `Concatenate` for parameter-preserving callable signatures, and `TypeVarTuple` `bound`, `covariant`, `contravariant`, and `infer_variance` arguments.
 - Reject: erased `Callable[..., T]`, imported `ParamSpec` or `TypeVar`/`Generic` where inline `**P` and `class C[T]` express the shape, `from typing_extensions import` for any member the active `typing` namespace exports, `slots_default`/non-existent decorator keywords, remote alias repair, broad `type[T]` or `object` placeholders for type-form values, unmarked overrides, prose-only disjointness or finality, bound-self boilerplate, checker-invisible model decorators, and protocol shells created only to type an existing object.
 - Boundary: `TypeForm`, disjointness, finality, generated-owner, and signature evidence are static typing contracts that carry no runtime value; runtime validation, object-family policy, aspect architecture, protocol ports, and payload materialization belong to the owning concept page.
@@ -262,7 +262,7 @@ SHAPE = admitted(key="<key-a>", span={"lo": 0, "hi": 4}, tag="<ext-a>")
 - Reject: a `lazy` statement inside a function, class, or `try`, a `lazy from M import *`, and a `lazy from __future__` are each a `SyntaxError`, the soft keyword being module-scope, non-star, and non-future only; `lazy from . import a` and `lazy from .core import Y` compile but the `ban-relative-imports` gate rejects them, routing the package surface through the absolute `lazy from package.submodule import ...` form; a function-local `import`, an `importlib.import_module` scattered beyond the single resolver, a `sys.modules` mutation, and a per-call re-import each stand in for a module-scope binding; `lazy_loader.attach`/`attach_stub`/`load` (not an admitted dependency, superseded by the native keyword and the `__getattr__` surface) and `importlib.util.LazyLoader` (no `from`-import support, eager spec resolution) are dead forms; a `__lazy_modules__ = ["*"]` wildcard and a process-wide `sys.set_lazy_imports` blanket mode override the explicit per-import boundary.
 - Law: the deferred surface grows by one declaration — a new cold dependency is one more `lazy` line, a new mandatory re-export one more module-scope `lazy from` name, a new optional surface one more `EXTRAS` row — no consumer is edited, and a removed name breaks loudly at its first reference. The `__getattr__` body stays a pure idempotent resolver, its memoization riding import idempotency under the import lock; a genuinely computed value that must cache takes a `threading.Lock` double-check, never an unguarded `globals()[name] = ...` check-then-set that races under a free-threaded build.
 - Boundary: `if TYPE_CHECKING: from X import Y` is the narrower form for a name that must never load at runtime, while a `lazy from X import Y` used only in annotations already costs nothing under PEP 649/749 deferred evaluation, so the guard is reserved for the reference that must stay unimportable. A module whose import registers or runs a side effect — codec, dtype, driver, or plugin registration — is never `lazy`-deferred, since deferral moves the effect to an arbitrary first-use site and a worker thread under free-threading; force it eager through the runtime's `sys.set_lazy_imports_filter`, or populate the registry by explicit entry-point discovery owned by `boundaries.md`. The proxy reifies on a first `LOAD_GLOBAL`/`LOAD_NAME`, attribute access, `getattr`, or `types.LazyImportType.resolve()` — `globals()`, `dir()`, `__dict__`, and `frame.f_globals` reads do not, so the `__dir__` union stays cost-free — while the reification mechanism, `sys.lazy_modules` membership, the `sys.set_lazy_imports` `"normal"`/`"all"`/`"none"` modes, and the `require-lazy`/`ban-lazy` policy belong to the runtime owner and the enforcement gate.
-- Exemption: the module `__getattr__` resolver is the platform-forced statement seam — the attribute protocol calls it and reads a raised `AttributeError` as the miss signal, so it cannot ride the `Result` rail; its `find_spec` presence guard, the `raise AttributeError` miss, and the `raise ImportError` install-hint on a known-but-absent optional dependency (where `hasattr` would raise and `find_spec` probes without importing) are its only statements.
+- Exemption: the module `__getattr__` resolver is the platform-forced statement seam — the attribute protocol calls it and reads a raised `AttributeError` as the miss signal, so it cannot ride the `Result` rail; its `find_spec` presence guard, the `raise AttributeError` miss, and the `raise ImportError` install-hint on a known-but-absent optional dependency (where `hasattr` raises and `find_spec` probes without importing) are its only statements.
 
 ```python conceptual
 import threading
@@ -444,7 +444,7 @@ HEAVIEST: Tier = RANK[max(RANK)]
 Use these tests before keeping a local abstraction beside a language primitive.
 
 [TYPE_EVIDENCE_REPAIR]:
-- Smell: a cast, alias, erased callable, fake protocol, runtime-checkable shell, or bool predicate exists only to recover type evidence that the declaration could have preserved.
+- Smell: a cast, alias, erased callable, fake protocol, runtime-checkable shell, or bool predicate exists only to recover type evidence the declaration itself carries.
 - Collapse: move evidence into the owner declaration, `TypeIs` predicate, `TypedDict` payload, `TypeForm`, parameter-preserving callable, or real structural owner.
 - Done when: callers narrow, call, unpack, or inspect the value without `cast`, wildcard protocols, post-check repair code, or duplicated declaration aliases.
 

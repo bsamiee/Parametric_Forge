@@ -4,15 +4,21 @@ The estate is a web of single-owner surfaces whose projections fan into many con
 
 ## [01]-[CONFIG_FORGE_NAMESPACE]
 
-Two read-only option surfaces are the estate's projection hinges: a downstream module reads the resolved value and renders its own artifact, never a private copy of the source data. Each owner declares the matching `options.forge.<name>`; the full record shape sits in a note below.
+The `options.forge.*` read-only surfaces are the estate's projection hinges: a downstream module reads the resolved value and renders its own artifact, never a private copy of the source data. Each owner declares the matching `options.forge.<name>`; record shapes for the deep ones sit in a note below.
 
-| [INDEX] | [OPTION]              | [OWNER]                                 | [SHAPE]          | [HINGE_LAW]                                    |
-| :-----: | :-------------------- | :-------------------------------------- | :--------------- | :--------------------------------------------- |
-|  [01]   | `config.forge.theme`  | `modules/home/theme.nix`                | `{ palette, … }` | Rename/reshape fails eval for themed readers.  |
-|  [02]   | `config.forge.chords` | `modules/home/programs/apps/chords.nix` | `{ layers, … }`  | Key/mod change couples leader and popup bytes. |
+| [INDEX] | [OPTION]                    | [OWNER]                                 | [HINGE_LAW]                                                      |
+| :-----: | :-------------------------- | :-------------------------------------- | :--------------------------------------------------------------- |
+|  [01]   | `config.forge.theme`        | `modules/home/theme.nix`                | Rename/reshape fails eval for every themed reader.               |
+|  [02]   | `config.forge.chords`       | `modules/home/programs/apps/chords.nix` | Key/mod change couples leader and popup bytes.                   |
+|  [03]   | `config.forge.ssh.hosts`    | `shell-tools/ssh.nix`                   | A tunnel row fans to supervisors, receipts, acceptance, pickers. |
+|  [04]   | `config.forge.ignoreEstate` | `shell-tools/fd.nix`                    | One ignore taxonomy renders for every search/watch consumer.     |
+|  [05]   | `config.forge.registers.*`  | `aliases/`, `shell-tools/browsers.nix`  | Register rows project to `forge/registers/*.json` for pickers.   |
+|  [06]   | `config.forge.fonts`        | `modules/home/fonts.nix`                | Font identity drives terminal, editor, and glyph render seams.   |
+|  [07]   | `config.forge.lsp`          | `modules/home/programs/apps/nvim/`      | Server rows shared across editor surfaces.                       |
 
 - `config.forge.theme` shape: `{ palette, roles, ansi16, syntaxScopes, projections; }`
 - `config.forge.chords` shape: `{ layers, modes, karabiner.rules, zellij.{ ... }; }`
+- `config.forge.chords` is defined under the darwin-gated `apps/` import: a both-OS consumer reads it only through an `or` default (`browsers.nix` chords register).
 
 ## [02]-[THEME_PROJECTION_WEB]
 
@@ -55,13 +61,23 @@ New capability lands as a row on the owning table, never a new file. Each axis h
 
 The MCP manifest is the deepest fan-out: `mcp-launchers.nix` filters launcher rows, serializes fleet JSON, builds pnpm wrappers, and validates Claude/Codex registration drift against `~/.claude.json` and `~/.codex/config.toml` — a manifest row change ripples to wrapper presence, `forge-mcp drift`, and required Codex servers. Secret and token custody for these rows is [secrets-and-services.md](secrets-and-services.md).
 
-## [07]-[ESTATE_REACH]
+## [07]-[RUNTIME_SEAMS]
+
+Beyond eval-time option hinges, five contracts bind processes at runtime across module boundaries; each side is edited only with the other in view.
+
+- [01]-[ATTENTION]: `.claude/hooks/agent-attention.sh` appends JSONL rows (`ts, event, session_id, cwd, term, wezterm_pane, zellij_session, zellij_pane, tty`) that `forge-agents collect` folds and `forge-agents focus` routes; the zjstatus bar renders the collector's `pipe_agents`/`pipe_quota` cells by exact pipe name (`apps/zellij/config.nix`). A field rename, tty-form change, or pipe-name edit on either side severs the chain silently. Budgets ride `FORGE_ATTENTION_{FEED,MAX_ROWS,KEEP_ROWS}`.
+- [02]-[RECEIPTS]: every `forge-*` kernel persists TSV receipts to `~/Library/Logs/forge-<name>.receipts.log`, override key `FORGE_<NAME>_RECEIPT_LOG` (grammar minted by the `forge-tools.nix` builder); `forge-receipts` discovers sources from `config.forge.registers.receiptSources` plus `config.forge.ssh.hosts` rows. A new kernel that hand-rolls its receipt path is invisible to the browser.
+- [03]-[TERMINAL_MESH]: `apps/chords.nix` bind rows invoke `forge-yazi.sh toggle` (`scripts/terminal.nix`); the yazi opener invokes `forge-edit.sh %s`; the editor registry publishes `editor-tab-*.tsv` rows the dispatcher globs; `forge-terminal-accept.sh` asserts the whole mesh. A rename on any edge is a four-file edit proven by the acceptance run.
+- [04]-[XDG_PROJECTIONS]: agent-facing artifacts live at fixed projection paths — `~/.config/forge/registers/*.json` (browsers), `~/.config/forge/theme/palette.json` + `forge-dracula.tmTheme` (theme), `~/.local/state/forge/` (collector state, attention feed), `~/.cache/forge*/` (launcher prefixes). Consumers hardcode these paths by contract; moving one is an estate-wide grep, not a local edit.
+- [05]-[QA_HOOKS]: `flake-modules/qa.nix` invokes `fmt --self-test`/`--check` from `scripts/fmt.nix`; treefmt lanes and `fmt` share formatter ownership per extension — a file class both claim gets formatted twice, and a placeholder-bearing template neither may own (`.sql.tpl` scar, [scars.md](scars.md)).
+
+## [08]-[ESTATE_REACH]
 
 The estate does not end at the flake. Four seams cross into other systems, each owned here and detailed in a sibling atlas doc.
 
 - [01]-[MACHINE_MACOS](platform-facts.md): Forge owns launchd grammar, activation classes, deploy locks, container runtime
-- [02]-[SECRETS_SERVICES](secrets-and-services.md): Forge owns the Doppler pull rail, `services/` Pulumi topology, GitHub-as-code, tunnels
-- [03]-[RAILS_PROVISIONING](rails-and-contracts.md): Forge owns `forge-redeploy`, `forge-provision`, `forge-accept`, drift, the schema-v3 envelope
+- [02]-[SECRETS_AND_SERVICES](secrets-and-services.md): Forge owns the Doppler pull rail, `services/` Pulumi topology, GitHub-as-code, tunnels
+- [03]-[RAILS_AND_CONTRACTS](rails-and-contracts.md): Forge owns `forge-redeploy`, `forge-provision`, `forge-accept`, drift, the schema-v3 envelope
 - [04]-[RASM_MAGHZ](scars.md): Forge owns `nixosConfigurations.maghz`, the `ssh.nix` tunnel substrate, mirrored standards, the machine-tooling boundary
 
 The cross-repo law: Forge is the machine owner. When a shell wrapper, PATH entry, container socket, DB CLI, or scientific build fails in Rasm or Maghz, the fix is the Forge owner, never a patch in the sibling. Rasm owns the method and language-law bedrock Forge composes; Maghz owns its own service plane and `ops-doctrine`. Standards mirror by copy, never by tooling.

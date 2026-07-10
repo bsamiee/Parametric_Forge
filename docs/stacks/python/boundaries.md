@@ -6,7 +6,7 @@ Foreign material crosses once: a boundary owner projects native handles, sentine
 
 This table selects the owner for a foreign signal; when a signal matches several rows, the most specific wins, and lifetime rows are read before transport rows.
 
-| [INDEX] | [FOREIGN_SIGNAL]        | [SEAM_OWNER]        | [INTERIOR_FORM]                         | [REJECT]                   |
+| [INDEX] | [FOREIGN_SIGNAL]        | [SEAM_OWNER]        | [INTERIOR_FORM]                         | [REJECTED_FORM]            |
 | :-----: | :---------------------- | :------------------ | :-------------------------------------- | :------------------------- |
 |  [01]   | native handle or FFI    | capsule owner       | `Result[T, Fault]` value projection     | raw `ctypes` handle field  |
 |  [02]   | borrowed live memory    | scoped view         | detached `bytes`/value copy             | escaping `memoryview`      |

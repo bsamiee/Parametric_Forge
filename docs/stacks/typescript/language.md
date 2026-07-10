@@ -24,7 +24,7 @@ Each table routes a concern to the legal form that owns it, and every `[USE]` na
 
 [MODULE_AND_IMPORT_FORMS]: how a file consumes another surface.
 
-| [INDEX] | [CONCERN]                        | [USE]                                                | [REPLACE]                                     |
+| [INDEX] | [CONCERN]                        | [USE]                                                | [REJECTED_FORM]                               |
 | :-----: | :------------------------------- | :--------------------------------------------------- | :-------------------------------------------- |
 |  [01]   | type-only specifier              | `import type { Shape } from "<specifier>"`           | a value import kept live for type positions   |
 |  [02]   | mixed specifier                  | one statement, inline `type` specifiers              | a value line and a type line on one specifier |
@@ -38,7 +38,7 @@ Each table routes a concern to the legal form that owns it, and every `[USE]` na
 
 [EXPORT_SURFACE_FORMS]: how a module declares its public surface.
 
-| [INDEX] | [CONCERN]                  | [USE]                                             | [REPLACE]                                         |
+| [INDEX] | [CONCERN]                  | [USE]                                             | [REJECTED_FORM]                                   |
 | :-----: | :------------------------- | :------------------------------------------------ | :------------------------------------------------ |
 |  [01]   | public surface site        | one terminal `// --- [EXPORTS]` block             | `export` riding body declarations, default export |
 |  [02]   | value-bearing name         | `export { Shape }` — one entry, every meaning     | a value entry plus a parallel type entry per name |
@@ -53,7 +53,7 @@ Each table routes a concern to the legal form that owns it, and every `[USE]` na
 
 [ERASURE_REPLACEMENT_FORMS]: the legal form for each banned emit-bearing construct.
 
-| [INDEX] | [CONCERN]                | [USE]                                              | [REPLACE]                                  |
+| [INDEX] | [CONCERN]                | [USE]                                              | [REJECTED_FORM]                            |
 | :-----: | :----------------------- | :------------------------------------------------- | :----------------------------------------- |
 |  [01]   | closed vocabulary        | `as const` table with a one-name derived type      | `enum`, `const enum`                       |
 |  [02]   | value-and-type grouping  | the module itself; type-only `declare namespace`   | runtime `namespace`, instantiated module   |
@@ -62,7 +62,7 @@ Each table routes a concern to the legal form that owns it, and every `[USE]` na
 
 [STRICTNESS_CONSEQUENCE_FORMS]: the spelling each strictness fact forces open.
 
-| [INDEX] | [CONCERN]                    | [USE]                                            | [REPLACE]                                        |
+| [INDEX] | [CONCERN]                    | [USE]                                            | [REJECTED_FORM]                                  |
 | :-----: | :--------------------------- | :----------------------------------------------- | :----------------------------------------------- |
 |  [01]   | key whose presence varies    | `?:` under exact-optional semantics              | `?: T \| undefined` blur                         |
 |  [02]   | always-present key, no value | `T \| undefined` spelled in the type             | `?:` on a key that always exists                 |

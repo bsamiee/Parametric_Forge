@@ -132,7 +132,7 @@ Fibers coordinate through typed primitives whose topology is fixed at constructi
 [HANDSHAKE_SIGNAL]:
 - Law: a one-shot typed handoff is a `Deferred<A, E>` — `Deferred.await` suspends every taker, `Deferred.succeed`/`Deferred.fail` settle exactly once and report a late settle as a `false` return, never an error; readiness that carries evidence rides the success value, the failing arm is typed, and `Deferred.poll` reads without suspending.
 - Law: `Deferred.complete` memoizes one evaluation of its effect across all takers; `Deferred.completeWith` hands each taker the unevaluated effect — per-taker evaluation is a semantic choice made at the settle site, not an optimization accident discovered later.
-- Law: a value-less reusable gate is `Effect.makeLatch` — `whenOpen` gates a section, `open` releases every waiter and stays open, `close` re-arms, and `release` pulses the current waiters through without opening, the one-cycle admission `open` would make permanent; a set-once gate that would carry a value is a `Deferred`, never a `Latch` beside a `Ref`.
+- Law: a value-less reusable gate is `Effect.makeLatch` — `whenOpen` gates a section, `open` releases every waiter and stays open, `close` re-arms, and `release` pulses the current waiters through without opening, the one-cycle admission `open` otherwise makes permanent; a set-once gate that carries a value is a `Deferred`, never a `Latch` beside a `Ref`.
 - Reject: a `Ref` flag polled under `Effect.repeat`; a `Queue` of one sentinel standing for a handshake.
 
 [CHANNEL_SELECT]:
