@@ -166,7 +166,7 @@ jobs:
 |  [02]   | `max-parallel`      | Unlimited (runner pool) | Limits concurrent matrix jobs. Omit for maximum parallelism.                         |
 |  [03]   | `continue-on-error` | `false`                 | Per-job: `true` masks failure from `fail-fast` and downstream `needs:` sees success. |
 
-[INTERACTION_SEMANTICS]: `continue-on-error: true` on a matrix job masks its failure from `fail-fast` — remaining matrix jobs continue. Downstream `needs:` jobs see the failed job's result as `success`, hiding real failures. Recommended: Use `fail-fast: false` without `continue-on-error`, then aggregate results via `needs.*.result` in a downstream job.
+[INTERACTION_SEMANTICS]: `continue-on-error: true` on a matrix job masks its failure from `fail-fast` — remaining matrix jobs continue. Downstream `needs:` jobs see the failed job's result as `success`, hiding real failures. The matrix policy: `fail-fast: false` without `continue-on-error`, then aggregate results via `needs.*.result` in a downstream job.
 
 | [INDEX] | [CHECK]                         | [TAG]      | [WHAT_TO_FLAG]                                                       |
 | :-----: | :------------------------------ | :--------- | :------------------------------------------------------------------- |

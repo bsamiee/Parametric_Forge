@@ -16,7 +16,7 @@ heptabase card set-property <cardIdOrDate> --property-id <propertyId> (--value <
 
 Pass exactly one of `--value` or `--json-value`.
 
-- Use `--value` when the CLI should send the argument as a literal string, such as text content or a select option name.
+- Use `--value` when the CLI sends the argument as a literal string, such as text content or a select option name.
 - Use `--json-value` when the value's JSON type matters, such as numbers, booleans, arrays, objects, relation values, and `null`.
 - Use `--json-value null` to clear a property.
 
@@ -66,9 +66,9 @@ Relation property reads return an array of populated relation objects, not a pla
 
 ## [02]-[RELATION_PROPERTIES]
 
-Relation writes are not self-contained. You must first discover the relation property's target tag database, then list cards in that database.
+Relation writes are not self-contained: first discover the relation property's target tag database, then list cards in that database.
 
-1. If you only have a card ID/date, run `heptabase card properties <cardIdOrDate>` to find the source tag containing the relation property.
+1. Given only a card ID/date, run `heptabase card properties <cardIdOrDate>` to find the source tag containing the relation property.
 2. Run `heptabase tag properties <sourceTagId>`.
 3. Find the relation property. Its definition includes `relationTargetTagId`.
 4. Run `heptabase tag cards <relationTargetTagId>` to list related-card candidates. Do not use source-type cards as relation values; relation writes reject them even when they belong to the target tag database.

@@ -95,6 +95,7 @@ FENCE_INTENTS = frozenset({
     "output-only",
     "rejected",
     "seams",
+    "signature",
     "test-only",
 })
 TABLE_COLUMN_CEILING = 15
@@ -119,7 +120,7 @@ DIVIDER_LOOSE = re.compile(r"^\[(?P<raw>[^\]]+)\](?P<tail>.*)$")
 CHECKBOX = re.compile(r"^\[[ xX]\]\s")
 CARD_ROW = re.compile(r"^\s*-\s+`[^`]+`\s+-\s+")
 EXAMPLE_LINE = re.compile(
-    r"^\s*(?:>\s*)?(?:[-+*]|\d+[.)])?\s*(?:Detection|Rejected|Accepted|Near miss|Banned|Survivors|Reason|Reframe)"
+    r"^\s*(?:>\s*)?(?:[-+*]|\d+[.)])?\s*(?:Detection|Reject(?:ed)?|Accept(?:ed)?|Near miss|Banned|Survivors|Reason|Reframe)"
     r"(?:\s*\([^)]*\))?:"
 )
 FENCE = re.compile(r"^(?P<indent> {0,3})(?P<marker>`{3,}|~{3,})(?P<info>.*)$")
@@ -427,7 +428,7 @@ def lex(path: Path, text: str, cap: int) -> tuple[Document, tuple[Row, ...]]:
         if fence is not None:
             glyph, width, start, info = fence
             if matched and matched.group("marker")[0] == glyph and len(matched.group("marker")) >= width and not matched.group("info").strip():
-                if not mermaid_access and text.count("```mermaid") <= 2:
+                if not mermaid_access and text.count("```mermaid") <= 2 and not ({"templates", "examples"} & set(path.parts)):
                     rows.append(row(path, start, Check.FENCE_INTENT, "warn", "mermaid fence lacks accTitle/accDescr accessibility directives"))
                 fence = None
             elif ("codemap" in info or "seams" in info or any(glyph in line for glyph in GLYPHS)) and len(line) > cap:
@@ -476,7 +477,6 @@ def lex(path: Path, text: str, cap: int) -> tuple[Document, tuple[Row, ...]]:
         n += 1
     if fence is not None:
         rows.append(row(path, fence[2], Check.FENCE_UNCLOSED, "fail", "opening fence has no closing fence"))
-    mermaid_access = True
     doc = Document(str(path), "templates" in path.parts, tuple(prose), tuple(tables), tuple(headings), tuple(links), tuple(lists))
     return doc, tuple(rows)
 
@@ -514,8 +514,9 @@ def table_rows(doc: Document) -> tuple[Row, ...]:
                 actual = body[0] if body else "<empty>"
                 if actual.strip() != expected:
                     rows.append(row(doc.path, table.line + index + 1, Check.TABLE_INDEX, "fail", f"{actual or '<empty>'} != {expected}"))
-        fat = len(table.headers) > 4 or any(len(cell) > 60 for body in table.rows for cell in body)
-        if len(table.headers) > TABLE_COLUMN_CEILING or (len(table.rows) > TABLE_ROW_CEILING and fat):
+        fat = len(table.headers) > 4 or any(len(cell) > 100 for body in table.rows for cell in body)
+        registry = len(table.headers) <= 3
+        if len(table.headers) > TABLE_COLUMN_CEILING or (len(table.rows) > TABLE_ROW_CEILING and fat and not registry):
             rows.append(
                 row(
                     doc.path,
@@ -622,10 +623,11 @@ def prose_rows(doc: Document) -> tuple[Row, ...]:
             rows.extend(row(doc.path, span.line, Check.TEMPLATE_SLOT, "fail", hit.group(0)) for hit in PLACEHOLDER.finditer(span.text))
         rows.extend(row(doc.path, span.line, Check.BOLD_EMPHASIS, "fail", hit.group(0)) for hit in BOLD.finditer(span.text))
         rows.extend(row(doc.path, span.line, Check.GLYPH_BAN, "fail", f"banned glyph {hit.group(0)!r}") for hit in EMOJI.finditer(span.text))
+        voiced = QUOTED_SPAN.sub(" ", span.text)
         rows.extend(
             row(doc.path, span.line, check, status, hit.group(0).lstrip(".!? "))
             for check, pattern, status in PATTERNS
-            for hit in pattern.finditer(span.text)
+            for hit in pattern.finditer(voiced)
         )
     return tuple(rows)
 
@@ -782,10 +784,7 @@ def code(rows: Iterable[Row]) -> int:
 
 
 # --- [REPAIR] ---------------------------------------------------------------------------
-# The fix verb applies every deterministic repair the gate can prove: rubric headers, the
-# [INDEX] column and its [NN] entries, alignment colons, H2/H3 numbering, loose list leaders,
-# trailing whitespace, table spacing, and the canonical render. Judgment-tier repairs emit
-# SKIP changes instead of mutating.
+# Judgment-tier repairs emit SKIP instead of mutating; every gate-provable repair is applied.
 
 
 def carded(matched: re.Match[str]) -> str:
@@ -921,7 +920,7 @@ def repaired_source(path: Path, text: str) -> tuple[str, tuple[Change, ...]]:
     for number, line in enumerate(text.splitlines(), 1):
         matched = DIVIDER.match(line)
         loose = DIVIDER_LOOSE.match(matched["body"]) if matched and matched["marker"] == marker and not matched["indent"] else None
-        if loose is None:
+        if loose is None or matched is None:
             if matched and matched["marker"] == marker and not matched["indent"]:
                 changes.append(Change(number, Repair.SKIP, matched["body"][:60], "unlabeled divider body needs review"))
             out.append(line)

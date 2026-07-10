@@ -3,7 +3,7 @@ name: ifc-bim
 description: Inspect, query, validate, edit, and convert IFC/BIM building models. Use when working with .ifc files, IfcOpenShell, IFC schema entities, spatial or element structure, selector queries, relations, Psets/Qtos, GlobalIds, clash detection, quantity takeoff, cost or work schedules, IDS/ifctester validation, geometry tessellation, 2D plots or 3D renders, or exporting IFC to GLB/OBJ/glTF/DAE/STEP. Covers a live in-memory model (load once, then query and edit across calls) and deterministic batch file-to-file conversion, validation, and extraction. Not the system of record for the Rasm BimModel semantic graph, which C#/Rasm.Bim owns.
 ---
 
-# IFC and BIM tooling
+# [IFC_BIM]
 
 Two surfaces own IFC work, chosen by task. The `ifc` MCP (the official IfcOpenShell server, launched by `forge-ifcmcp`) holds one model in memory across calls for live query and edit. The `ifcopenshell` batch CLI runs deterministic file-to-file conversion, validation, and extraction with no session. Reach for the MCP to investigate a model; reach for the CLI to produce an artifact.
 

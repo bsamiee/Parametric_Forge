@@ -46,7 +46,7 @@ uvx --from tavily-cli tvly extract "https://example.com/article" -o article.md
 |  [07]   | `-o, --output`        | Save output to file                                                           |
 |  [08]   | `--json`              | Structured JSON output                                                        |
 
-## [03]-[SELECTION]
+## [03]-[LANE_SELECTION]
 
 - `basic` depth runs first; `advanced` binds only when content comes back missing — it is slower and costs more.
 - `--query` plus `--chunks-per-source` returns only relevant chunks; full pages are the exception, not the default, when the result feeds an agent.

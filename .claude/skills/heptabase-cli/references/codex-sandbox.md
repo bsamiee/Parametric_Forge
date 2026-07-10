@@ -18,7 +18,7 @@ First, retry the command outside the sandbox. In Codex, request escalation for
 If it still fails, ask the user to make sure the desktop app has CLI enabled at
 `Settings > AI Features`.
 
-If you want a persistent `workspace-write` setup, ask the user to add this to
+For a persistent `workspace-write` setup, ask the user to add this to
 `~/.codex/config.toml`:
 
 ```toml copy-safe

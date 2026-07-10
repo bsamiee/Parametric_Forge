@@ -12,6 +12,7 @@
 1. Combine workflow steps; error propagation via `if: failure()`
 2. Custom runtime/toolchains; language-agnostic execution
 3. API interactions via `@actions/core` toolkit; pre/post lifecycle
+
 ### [01.1]-[DECISION_TREE]
 
 | [INDEX] | [QUESTION]                      | [ANSWER] | [RECOMMENDATION]                              |
@@ -118,7 +119,7 @@ runs:
   post-if: always()               # default: always() — runs post even on failure
 ```
 
-`pre-if` / `post-if`: Status check functions evaluate against **job** status, not action status. `step` context is unavailable in `pre-if` (no steps have run yet). Both default to `always()`.
+`pre-if` / `post-if`: Status check functions evaluate against job status, not action status. `step` context is unavailable in `pre-if` (no steps have run yet). Both default to `always()`.
 
 [IO_PATTERNS]:
 

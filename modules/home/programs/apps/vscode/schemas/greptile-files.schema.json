@@ -1,0 +1,33 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "forge://schemas/greptile-files.schema.json",
+    "title": "Greptile .greptile/files.json",
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["files"],
+    "properties": {
+        "files": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["path"],
+                "properties": {
+                    "path": {
+                        "type": "string",
+                        "description": "Path relative to the directory containing the .greptile/ folder"
+                    },
+                    "description": {
+                        "type": "string",
+                        "description": "What the file contains and why it is relevant to reviews"
+                    },
+                    "scope": {
+                        "type": "array",
+                        "items": { "type": "string" },
+                        "description": "Globs relative to the .greptile/ directory; include this file only when reviewing matching files"
+                    }
+                }
+            }
+        }
+    }
+}

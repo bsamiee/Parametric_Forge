@@ -27,8 +27,8 @@ const VERIFY = { type: 'object', additionalProperties: false, required: ['claims
 
 // --- [OPERATIONS] ----------------------------------------------------------------------
 
-// Steady worker pool — holds a true steady state of <=cap long chains; preferred over
-// parallel(thunks) once the file list grows to hundreds of long multi-stage edits (pattern #14).
+// Steady worker pool — holds <=cap long chains; preferred over parallel(thunks) for
+// hundreds of long multi-stage edits.
 const sleep = (ms) => new Promise((res) => setTimeout(res, ms))
 const pool = async (items, cap, worker) => {
     const out = new Array(items.length)
@@ -53,9 +53,8 @@ const done = (await pool(FILES, 10, (f) => agent(
 
 // --- [RECONCILE]
 // BARRIER (dedup + cluster by shared file via union-find), then PIPELINE fix -> verify.
-// Single-pass: each cluster fixes + verifies ONCE. To ITERATE this to drive-to-zero, progress-gate every
-// round — skip the verify on a no-change fix, re-queue only NEW residuals via a seen-set, break the round
-// nothing changed a file (the round cap is a backstop, not the exit). Worked law: the patterns reference reconcile shape.
+// Single-pass here: each cluster fixes + verifies once. To drive-to-zero, progress-gate each round —
+// skip verify on a no-change fix, re-queue only NEW residuals via a seen-set, break when nothing changed a file.
 const all = done.flatMap((d) => d.residual || [])
 const uniq = [...new Map(all.map((r) => [r.files.join(',') + '|' + r.claim, r])).values()]
 const clusters = (() => {
@@ -73,7 +72,7 @@ let hard = []
 if (clusters.length) {
     phase('Reconcile')
     // Disjoint clusters write non-overlapping files, so per-cluster fixers run concurrently with no collision (no worktree).
-    // Per-cluster paste is small-output-only; a heavy cluster (~50+ rows) moves to a scratch report file + receipt — the patterns reference report-file shape.
+    // Per-cluster paste is small-output-only; a heavy cluster (~50+ rows) moves to a scratch report file + receipt.
     const out = (await pipeline(
         clusters,
         (cl) => agent('Fix these cross-file deferrals in place. Read EVERY listed file; make the shared fix once, consistently, regress nothing.\n' + JSON.stringify(cl, null, 1), { label: 'fix', phase: 'Reconcile', schema: FIXED }),

@@ -18,11 +18,23 @@ description: >-
 
 Every committed diagram answers one written question, instantiates one catalog archetype or admitted type, opens with frontmatter carrying its type's Dracula subset, and ships only after the validator and the soundness audit pass. The reasoning discipline and the engine surface load on demand through the reference routes below.
 
-## [01]-[QUESTION]
+## [01]-[ROUTING]
+
+- [01]-[METHODOLOGY](references/methodology.md): when to diagram, investigation, node and edge law, type selection, soundness audit, multi-diagram composition
+- [02]-[CONSTRUCTION](references/construction.md): per-type construction — the question each type answers, what its marks assert, failure modes, truth tests
+- [03]-[THEMING](references/theming.md): Dracula palette, role map, the base theme block, canonical classDef rails, dual-host contrast, Alucard
+- [04]-[STYLING](references/styling.md): the full styling grammar — every link and arrow form for every family, link lengths, the complete shape registry, containers and subgraphs, style precedence with its interaction traps, the per-type styling matrix
+- [05]-[CONFIG](references/config.md): frontmatter schema, secure keys, layout engines and ELK tuning, look system, accessibility, mmdc and CI, trap list
+- [06]-[SYNTAX_CORE](references/syntax-core.md): advanced flowchart, sequence, state, class, and ER — node metadata, edge IDs, markdown strings, KaTeX, per-type traps
+- [07]-[SYNTAX_EXTENDED](references/syntax-extended.md): the type registry beyond the core five — admitted rows with working fences and traps, registered rows named
+- [08]-[CONCEPT_MAP](references/concept-mapping.md): recognizing the diagram shape inside raw material — code, prose, plans, arguments — shape signals, archetype routes, misfit shapes, composite subjects
+- [09]-[EMBEDDING](references/embedding.md): the embedding contract — fence law in markdown hosts, inline-SVG law in single-file HTML artifacts, export surfaces, source-beside-render
+
+## [02]-[QUESTION]
 
 A diagram earns its fence only when the reader traces a relation across more marks than a clause holds: three or more nodes with at least one branch, cycle, or crossing relation. Below that threshold prose owns the fact, and one diagram owns one question — a diagram needing two legends is two diagrams. The full discipline — investigation traces per archetype, staged growth with the node-annotation-omission ladder, node and edge law, type selection, soundness, multi-diagram composition — is [references/methodology.md](references/methodology.md); what each type's marks must mean, its signal, and its master patterns is [references/construction.md](references/construction.md). A subject that arrives as raw material — code, prose, a plan, an argument — with no written question resolves its shape first through [references/concept-mapping.md](references/concept-mapping.md).
 
-## [02]-[CATALOG]
+## [03]-[CATALOG]
 
 Select the archetype by intent, copy its template, and refill — a catalog template is self-sufficient, carrying its archetype's construction law in its own prose. An intent outside the catalog selects its type through the methodology decision table and the extended registry, under the same frontmatter, theming, and validation law. The split move partitions a subject the moment a second question appears, and a required legend is itself a split signal.
 
@@ -44,23 +56,23 @@ Select the archetype by intent, copy its template, and refill — a catalog temp
 |  [14]   | profile       | two-subject capability compare | `radar-beta`        | one comparison per fence         |
 |  [15]   | decomposition | weighted whole-to-part         | `treemap-beta`      | aggregate the tail               |
 
-- [01]-[SPINE](templates/spine.mmd.md)
-- [02]-[SEAM-GRAPH](templates/seam-graph.mmd.md)
-- [03]-[LOGIC-FLOW](templates/logic-flow.mmd.md)
-- [04]-[LIFECYCLE](templates/lifecycle.mmd.md)
-- [05]-[WIRE-SEQUENCE](templates/wire-sequence.mmd.md)
-- [06]-[SCHEMA](templates/schema.mmd.md)
-- [07]-[STRATA](templates/strata.mmd.md)
-- [08]-[SCHEDULE](templates/schedule.mmd.md)
-- [09]-[BOARD](templates/board.mmd.md)
-- [10]-[HISTORY](templates/history.mmd.md)
-- [11]-[TOPOLOGY](templates/topology.mmd.md)
-- [12]-[LANDSCAPE](templates/landscape.mmd.md)
-- [13]-[EVENT-FLOW](templates/event-flow.mmd.md)
-- [14]-[PROFILE](templates/profile.mmd.md)
-- [15]-[DECOMPOSITION](templates/decomposition.mmd.md)
+- [01]-[SPINE](templates/spine.mmd.md): main path through owners
+- [02]-[SEAM_GRAPH](templates/seam-graph.mmd.md): shapes across a boundary
+- [03]-[LOGIC_FLOW](templates/logic-flow.mmd.md): one operation dispatch
+- [04]-[LIFECYCLE](templates/lifecycle.mmd.md): guarded state transitions
+- [05]-[WIRE_SEQUENCE](templates/wire-sequence.mmd.md): ordered boundary exchange
+- [06]-[SCHEMA](templates/schema.mmd.md): persistent entity relations
+- [07]-[STRATA](templates/strata.mmd.md): layer dependency direction
+- [08]-[SCHEDULE](templates/schedule.mmd.md): dated committed work
+- [09]-[BOARD](templates/board.mmd.md): stage-held work now
+- [10]-[HISTORY](templates/history.mmd.md): branch and merge truth
+- [11]-[TOPOLOGY](templates/topology.mmd.md): deployables and reach
+- [12]-[LANDSCAPE](templates/landscape.mmd.md): one-zoom system landscape
+- [13]-[EVENT_FLOW](templates/event-flow.mmd.md): command-event causality
+- [14]-[PROFILE](templates/profile.mmd.md): two-subject capability compare
+- [15]-[DECOMPOSITION](templates/decomposition.mmd.md): weighted whole-to-part
 
-## [03]-[VALIDATE]
+## [04]-[VALIDATE]
 
 A diagram is not done until its fence passes both stages: graph-logic checks over the source, then a render whose proof is an actual SVG artifact, never a zero exit alone.
 
@@ -74,7 +86,7 @@ The canon checker runs beside the validator as `uv run scripts/check_canon.py <f
 
 `mmdc` on PATH renders every fence; the machine toolchain installs it (Nix `mermaid-cli`) and `--renderer CMD` overrides it. The render binds the pinned Chromium through `PUPPETEER_EXECUTABLE_PATH`, so the real Google Chrome app never launches. A fence the machine renderer rejects re-proves through the pinned current release — `pnpm dlx @mermaid-js/mermaid-cli@11.16.0`, scoped to the pnpm dlx cache, verified by the emitted SVG — so a lagging toolchain never masquerades as broken syntax; the passing row lands as `rendered-release:`, and a fence the current release also rejects stays a real syntax failure. `--export DIR` writes every passing fence as an embed-ready SVG — unique root id, aria title and description preserved, Dracula canvas baked — the mechanical arm of the embedding contract.
 
-## [04]-[CONTRACT]
+## [05]-[CONTRACT]
 
 - Frontmatter opens every fence body before the diagram header, carrying `theme: base` and `look: classic` with the Dracula variable subset the diagram type consumes; the token system, role map, dual-host law, and the types and hosts that carry a local style law instead — packet, C4 element surfaces, host-themed docs — are [references/theming.md](references/theming.md).
 - Every themed fence renders flat by construction: `look: classic`, `useGradient: false`, `dropShadow: "none"`, and the family `themeCSS` filter belt kill gradient borders and node halos on every host, including one that initializes a newer look — the border canon in the theming reference owns the lock, the weight ladder, and the Lavender container boundary.
@@ -83,7 +95,7 @@ The canon checker runs beside the validator as `uv run scripts/check_canon.py <f
 - Semantic node classes and edge rails come from the canonical Dracula `classDef` set with its ruled translucent accent fills; an ad-hoc hex is a defect.
 - The ruled mono stack `fontFamily: "SF Mono, Menlo, Cascadia Mono, Segoe UI Mono, Consolas, monospace"` and the recessed `#21222C` label backing reach every themed fence; per-element sizes ride the theming micro-scale `themeCSS` stamps, and no canvas text renders below 12px.
 
-## [05]-[LEGIBILITY]
+## [06]-[LEGIBILITY]
 
 Legibility bounds a diagram, not syntax capacity. A rendered diagram ships only after it passes every legibility check:
 
@@ -95,18 +107,6 @@ Legibility bounds a diagram, not syntax capacity. A rendered diagram ships only 
 - The diagram type matches the subject.
 
 A faulted fence converges on its own source across at most five render-inspect-edit rounds; each correction is a minimal text edit to the fence itself, never a sibling file.
-
-## [06]-[REFERENCES]
-
-- [01]-[METHODOLOGY](references/methodology.md): when to diagram, investigation, node and edge law, type selection, soundness audit, multi-diagram composition
-- [02]-[CONSTRUCTION](references/construction.md): per-type construction — the question each type answers, what its marks assert, failure modes, truth tests
-- [03]-[THEMING](references/theming.md): Dracula palette, role map, the base theme block, canonical classDef rails, dual-host contrast, Alucard
-- [04]-[STYLING](references/styling.md): the full styling grammar — every link and arrow form for every family, link lengths, the complete shape registry, containers and subgraphs, style precedence with its interaction traps, the per-type styling matrix
-- [05]-[CONFIG](references/config.md): frontmatter schema, secure keys, layout engines and ELK tuning, look system, accessibility, mmdc and CI, trap list
-- [06]-[SYNTAX_CORE](references/syntax-core.md): advanced flowchart, sequence, state, class, and ER — node metadata, edge IDs, markdown strings, KaTeX, per-type traps
-- [07]-[SYNTAX_EXTENDED](references/syntax-extended.md): the type registry beyond the core five — admitted rows with working fences and traps, registered rows named
-- [08]-[CONCEPT_MAP](references/concept-mapping.md): recognizing the diagram shape inside raw material — code, prose, plans, arguments — shape signals, archetype routes, misfit shapes, composite subjects
-- [09]-[EMBEDDING](references/embedding.md): the embedding contract — fence law in markdown hosts, inline-SVG law in single-file HTML artifacts, export surfaces, source-beside-render
 
 ## [07]-[GOTCHAS]
 

@@ -4,7 +4,7 @@ This reference covers note and journal content writes through the Heptabase CLI.
 
 Read this before generating ProseMirror JSON: the card content schema is strict, and guessed structures can fail validation or damage card content.
 
-Prefer Markdown for ordinary writing and appending. Use ProseMirror JSON only when you need to preserve existing structure or create schema nodes/marks that Markdown cannot express.
+Prefer Markdown for ordinary writing and appending. Use ProseMirror JSON only to preserve existing structure or to create schema nodes/marks that Markdown cannot express.
 
 ## [01]-[TOP_LEVEL_JSON_SHAPE]
 
@@ -31,7 +31,7 @@ When editing existing content, preserve existing `id` values from `read`. For ne
 
 ## [02]-[MARKDOWN_CONTENT]
 
-For everyday note content, you can use Markdown instead of JSON. The table below maps Markdown syntax to the ProseMirror nodes and marks the CLI creates:
+Everyday note content uses Markdown instead of JSON. The table below maps Markdown syntax to the ProseMirror nodes and marks the CLI creates:
 
 <!-- prettier-ignore -->
 
@@ -56,7 +56,7 @@ For everyday note content, you can use Markdown instead of JSON. The table below
 |  [17]   | `$x$`, `$$x$$`                                                          | `math_inline`, `math_display`                         |
 |  [18]   | `**bold**`, `*italic*`, `~~strike~~`, `` `code` ``, `[link](url)`       | marks                                                 |
 
-Below is an example with inline mentions, an image block, a standalone video line (note the blank lines), and a todo item:
+Below is an example with inline mentions, an image block, a standalone video line (note the blank lines), and a `todo` item:
 
 ```markdown template
 # Sprint notes
@@ -167,7 +167,7 @@ Editor colors for `table_cell` / `table_header` `backgroundColor` and `textColor
 
 Marks only attach to `text` nodes. Each mark is an entry in that node's `marks` array: `{ "type": "<mark>", "attrs": ... }` (many marks have no `attrs`).
 
-When you save as Markdown, you can get bold, italic, and stuff from the syntax in [Markdown Content](#markdown-content). But you cannot get underline or text/background color that way because there is no Markdown syntax for them — save as JSON (ProseMirror) if you need those marks.
+Saving as Markdown yields bold, italic, and the other marks from the syntax in [Markdown Content](#markdown-content). Underline and text/background color have no Markdown syntax — save as JSON (ProseMirror) for those marks.
 
 <!-- prettier-ignore -->
 
@@ -188,7 +188,7 @@ When you save as Markdown, you can get bold, italic, and stuff from the syntax i
 
 ### [03.4]-[DEPRECATED_ATTRIBUTES]
 
-Some attrs remain in the schema as legacy. When creating new JSON, omit them unless you are round-tripping an existing document from `read`:
+Some attrs remain in the schema as legacy. When creating new JSON, omit them unless round-tripping an existing document from `read`:
 
 <!-- prettier-ignore -->
 

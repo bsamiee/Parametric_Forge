@@ -9,7 +9,7 @@ description: >-
   General web research beyond indexed library docs belongs to tavily-dynamic-search.
 ---
 
-# [CONTEXT7]
+# [CONTEXT7_MCP]
 
 Library questions resolve against live indexed documentation, never training data: `resolve-library-id` maps a library name to a Context7 ID, `query-docs` answers one scoped question against that ID. A known ID in the `/org/project` or `/org/project/version` form passes straight to `query-docs` with no resolution step.
 

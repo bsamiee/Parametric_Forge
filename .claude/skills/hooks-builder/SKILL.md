@@ -16,14 +16,16 @@ description: >-
 
 A hook binds a handler — shell command, HTTP endpoint, MCP tool call, single-turn prompt, or multi-turn agent — to a lifecycle event, filtered by a matcher and an optional `if` rule. Build order: pick the event by what the automation must intercept or observe, pick the handler type by whether the decision is deterministic or judged, then write the config and prove it with a direct stdin test.
 
-- [01]-[LIFECYCLE]: [references/lifecycle.md](references/lifecycle.md) — the full event census, per-event matcher values, exit-2 blockability, and decision-control fields; open when selecting an event or writing its input handling.
-- [02]-[SCHEMA]: [references/schema.md](references/schema.md) — configuration structure, matcher evaluation law, the five handler types with all fields, exec versus shell form, and JSON output; open when authoring the settings entry.
-- [03]-[INTEGRATION]: [references/integration.md](references/integration.md) — path placeholders, context injection routing, terminal notifications, env persistence, async execution, and hooks in skill or agent frontmatter; open when the hook feeds context or runs in the background.
-- [04]-[SCRIPTING]: [references/scripting.md](references/scripting.md) — Python hook-script standards; open when writing a command-hook script.
-- [05]-[RECIPES]: [references/recipes.md](references/recipes.md) — proven implementations from security gate to stop evaluator; open for a working seed to adapt.
-- [06]-[TROUBLESHOOTING]: [references/troubleshooting.md](references/troubleshooting.md) — platform behavior and misconfiguration symptoms; open when a hook misfires.
+## [01]-[ROUTING]
 
-## [01]-[EVENT_SELECTION]
+- [01]-[LIFECYCLE](references/lifecycle.md): the full event census, per-event matcher values, exit-2 blockability, and decision-control fields; open when selecting an event or writing its input handling.
+- [02]-[SCHEMA](references/schema.md): configuration structure, matcher evaluation law, the five handler types with all fields, exec versus shell form, and JSON output; open when authoring the settings entry.
+- [03]-[INTEGRATION](references/integration.md): path placeholders, context injection routing, terminal notifications, env persistence, async execution, and hooks in skill or agent frontmatter; open when the hook feeds context or runs in the background.
+- [04]-[SCRIPTING](references/scripting.md): Python hook-script standards; open when writing a command-hook script.
+- [05]-[RECIPES](references/recipes.md): proven implementations from security gate to stop evaluator; open for a working seed to adapt.
+- [06]-[TROUBLESHOOTING](references/troubleshooting.md): platform behavior and misconfiguration symptoms; open when a hook misfires.
+
+## [02]-[EVENT_SELECTION]
 
 - Intercept before execution -> `PreToolUse` (block, rewrite input, or defer); permission dialogs -> `PermissionRequest`; after an auto-mode denial -> `PermissionDenied` (retry signal).
 - React after completion -> `PostToolUse` (format, lint, rewrite output), `PostToolUseFailure` (error handling), `PostToolBatch` (after a parallel batch, before the next model call).
@@ -35,7 +37,7 @@ A hook binds a handler — shell command, HTTP endpoint, MCP tool call, single-t
 - Worktrees -> `WorktreeCreate` (replace git default, return the path), `WorktreeRemove`; compaction -> `PreCompact` (block or archive), `PostCompact`; MCP user input -> `Elicitation`/`ElicitationResult`.
 - Observation only -> `Notification`, `SubagentStart`, `MessageDisplay`.
 
-## [02]-[HANDLER_SELECTION]
+## [03]-[HANDLER_SELECTION]
 
 | [INDEX] | [TYPE]     | [OWNS]                                             | [DEFAULT_TIMEOUT] |
 | :-----: | :--------- | :------------------------------------------------- | :---------------: |
@@ -47,6 +49,6 @@ A hook binds a handler — shell command, HTTP endpoint, MCP tool call, single-t
 
 Prompt and agent handlers bind only to the judgment-eligible events; `SessionStart` and `Setup` take `command` and `mcp_tool` only — the eligibility roster is in [references/schema.md](references/schema.md).
 
-## [03]-[GATE]
+## [04]-[GATE]
 
 A built hook proves before it ships: `python3 -c "import json; json.load(open('.claude/settings.json'))"` passes, and a direct stdin test exercises the handler — `printf '%s' '{"tool_name":"Bash","tool_input":{"command":"npm test"}}' | ./hook.sh; echo $?` returns the intended exit code. `/hooks` browses the live configuration read-only; `claude --debug` traces match and execution.

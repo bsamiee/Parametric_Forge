@@ -1,10 +1,8 @@
 /**
- * planning-card-triage — realize the open planning cards that matter most.
+ * planning-card-triage — realize the open planning cards at or above a priority.
  *
- * Each Rasm package owns a pool of IDEAS/TASK cards under its `.planning/`. This
- * pulls the open cards for a scope, keeps only those at or above a priority
- * threshold (default 'high'), then realizes and verifies each one. The threshold
- * filter is one line of ordinary JavaScript between the two agent stages.
+ * Demonstrates plain-JS control between agent stages: pull the open cards, keep only
+ * those over a priority threshold with one filter line, then realize and verify each.
  *
  * Workflow({ name: 'planning-card-triage',
  *            args: { scope: 'libs/csharp/Rasm.Bim', minPriority: 'high' } })
@@ -27,7 +25,7 @@ const RANK = { low: 0, medium: 1, high: 2, critical: 3 }
 
 // --- [INPUTS] --------------------------------------------------------------------------
 
-// `args` arrives as structured data — read fields directly, default the omitted case.
+// Structured args — read fields directly; default the omitted case.
 const scope = args?.scope ?? 'libs'
 const minPriority = args?.minPriority ?? 'high'
 
@@ -71,14 +69,14 @@ const VERDICT = {
 const floor = RANK[minPriority] ?? RANK.high
 
 phase('Pull cards')
-// Mechanical discovery — run the rail, read the cards back. Tier the reasoning down.
+// Mechanical discovery — tier the reasoning down (effort: 'low').
 const { cards } = await agent(
     `Use the assay code rail (\`uv run python -m tools.assay code ...\`) to find every OPEN ` +
     `IDEAS/TASK card under ${scope}/**/.planning/. For each, return its id, title, priority, and file.`,
     { label: 'pull-cards', phase: 'Pull cards', schema: CARDS, effort: 'low' },
 )
 
-// Plain JavaScript — keep only the cards at or above the priority floor.
+// Plain-JS filter — the threshold step between the two agent stages.
 const top = cards.filter(c => (RANK[c.priority] ?? 0) >= floor)
 log(`${top.length} of ${cards.length} card(s) are ${minPriority}+`)
 
@@ -88,13 +86,13 @@ if (top.length === 0) {
 
 const results = await pipeline(
     top,
-    // Stage 1 — realize the card in the codebase, following the package's standards.
+    // Stage 1 — realize the card in the codebase.
     card => agent(
         `Realize this planning card in ${scope}, extending the canonical owner per CLAUDE.md.\n` +
         `Card ${card.id} [${card.priority}]: ${card.title}\nSource: ${card.file || '(unknown)'}`,
         { label: `realize:${card.id}`, phase: 'Realize' },
     ),
-    // Stage 2 — verify the realization, then mark the card done. Adversarial completeness judgment, so tier the reasoning up.
+    // Stage 2 — verify, then mark the card done. Adversarial judgment, so tier up (effort: 'high').
     (_done, card) => agent(
         `Verify the realization of card ${card.id} ("${card.title}") is complete and matches the ` +
         `card's charter. Run the package's owner-scoped proof gate. If complete, remove the done card.`,

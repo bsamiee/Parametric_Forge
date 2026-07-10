@@ -19,7 +19,7 @@ readonly _MIN_BASH_V=502 _HAS_INSITU=$((_BASH_V >= 503))
 }
 readonly DATA_DIR="${RESMGR_DIR:-${HOME}/.resmgr}"
 _BOLD="" _DIM="" _RESET=""
-# NO_COLOR compliance (https://no-color.org) — existence disables color
+# NO_COLOR compliance — presence disables color regardless of value
 [[ -z "${NO_COLOR+set}" ]] && [[ -t 2 ]] &&
     (($(tput colors 2>/dev/null || printf '0') >= 8)) && {
     _BOLD=$'\033[1m'

@@ -323,8 +323,8 @@ $$;
 ```
 
 Batch/queue contracts:
-- `FOR UPDATE SKIP LOCKED` — rows locked by other workers are skipped entirely, not queued. Ensure all rows eventually processed (e.g., periodic sweep for stuck rows)
-- Combine with `unnest` batch pattern: when processing batch arrays, the function should use FOR UPDATE SKIP LOCKED as the queue-safe variant for concurrent batch consumers
+- `FOR UPDATE SKIP LOCKED` — rows locked by other workers are skipped entirely, not queued. A periodic sweep reclaims stuck rows so every row is processed
+- Combine with `unnest` batch pattern: when processing batch arrays, use FOR UPDATE SKIP LOCKED as the queue-safe variant for concurrent batch consumers
 - Intermediate COMMIT in procedures releases row locks and frees WAL — critical for large batch operations (see Procedures section)
 - Index on `(status, created_at)` required — partial index `WHERE status = 'pending'` for selective access
 

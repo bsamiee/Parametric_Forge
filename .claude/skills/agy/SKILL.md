@@ -14,7 +14,12 @@ description: >-
 
 Antigravity is an external Gemini call admitted only where it adds capability beyond the local toolchain. The wrapper is print-only: one bounded prompt in, one JSON receipt out, the default profile pinned to the strongest Gemini reasoning tier. Antigravity output is advisory until local source, official docs, MCP output, or user intent confirms it.
 
-## [01]-[CAPABILITY]
+## [01]-[ROUTING]
+
+[SCRIPTS]:
+- [01]-[RUNNER](scripts/agy.py): the print-only Antigravity wrapper — one bounded prompt in, one JSON receipt out, pinned to the strongest Gemini reasoning tier.
+
+## [02]-[CAPABILITY]
 
 | [INDEX] | [TRIGGER]                                                        | [WHY_GEMINI]                                     |
 | :-----: | :--------------------------------------------------------------- | :----------------------------------------------- |
@@ -26,14 +31,14 @@ Antigravity is an external Gemini call admitted only where it adds capability be
 |  [06]   | Redacted log or dataset distillation in a scratch directory      | Pattern finding without polluting main context   |
 |  [07]   | Explicit requests for Gemini, Antigravity, or Google Ultra       | User-directed routing                            |
 
-## [02]-[REFUSAL]
+## [03]-[REFUSAL]
 
 - [SECRETS]: OAuth codes, tokens, credential files, and unredacted sensitive logs never enter a prompt.
 - [AUTHORITY]: Facts owned by local source, official docs, configured MCPs, or repository commands come from those owners, never from Antigravity recall.
 - [ROUTINE]: Edits, formatting, git operations, package upgrades, and checks the local toolchain owns stay local.
 - [SCOPE]: The wrapper exposes `prompt` and `models` alone; background task management and shell-login subcommands stay outside it.
 
-## [03]-[INVOCATION]
+## [04]-[INVOCATION]
 
 Run from this skill directory:
 
@@ -47,13 +52,13 @@ The wrapper pins `Gemini 3.1 Pro (High)` — the strongest reasoning tier in the
 
 `AGY_BIN` overrides the binary path (default `agy`), `AGY_MODEL` overrides the pinned model, and `AGY_PRINT_TIMEOUT` overrides the default `5m` timeout.
 
-## [04]-[PROMPT_CONTRACT]
+## [05]-[PROMPT_CONTRACT]
 
 - State the task, the relevant context, and the exact output shape in one self-contained prompt; Antigravity sees nothing of the current conversation beyond what the prompt carries.
 - Carry the constraints that bind the answer: audience, files already inspected, limits, and facts not to assume.
 - Ask for ranked options, deltas, or a direct answer; open-ended commentary is never the request.
 
-## [05]-[RECEIPT]
+## [06]-[RECEIPT]
 
 ```json generated
 {"op":"prompt","output":"..."}
@@ -62,6 +67,6 @@ The wrapper pins `Gemini 3.1 Pro (High)` — the strongest reasoning tier in the
 
 Faults are `binary_not_found`, `auth_required`, `quota_exceeded`, or `process_error`. `auth_required` resolves through interactive `agy` in a real TTY with Google OAuth as `b.samiee93@gmail.com`.
 
-## [06]-[RAW_CLI]
+## [07]-[RAW_CLI]
 
 Interactive `agy` in a real TTY owns ongoing conversations, workspace tool permissions, resume, plugin management, and sandboxed project work. The direct surface carries `-p/--print`, `-i/--prompt-interactive`, `-c/--continue`, `--conversation`, `--mode` (`accept-edits`, `plan`), `--sandbox`, `--project`/`--new-project`, and the `models`, `plugin`, `install`, `update`, and `changelog` subcommands. `--dangerously-skip-permissions` binds only on an explicit user request for that exact mode.

@@ -117,7 +117,7 @@ _parse_duration() {
 }
 ```
 
-Regex pattern must be unquoted on RHS of `=~` — quoting forces literal string match. BASH_REMATCH indexing follows group nesting depth: outer groups get lower indices. `_extract_pairs` uses `local` (not `local -r`) inside the loop — `local -r` would fail on second iteration with a redeclaration error. See service-wrapper.sh `_parse_traceparent` for a production example: `[[ "${tp}" =~ ^([0-9a-f]{2})-([0-9a-f]{32})-([0-9a-f]{16})-([0-9a-f]{2})$ ]]` validates W3C trace context and extracts trace/span/flags in a single match.
+Regex pattern must be unquoted on RHS of `=~` — quoting forces literal string match. BASH_REMATCH indexing follows group nesting depth: outer groups get lower indices. `_extract_pairs` uses `local` (not `local -r`) inside the loop — `local -r` fails on the second iteration with a redeclaration error. See service-wrapper.sh `_parse_traceparent` for a production example: `[[ "${tp}" =~ ^([0-9a-f]{2})-([0-9a-f]{32})-([0-9a-f]{16})-([0-9a-f]{2})$ ]]` validates W3C trace context and extracts trace/span/flags in a single match.
 
 ## [03]-[PRINTF_FORMATTING]
 

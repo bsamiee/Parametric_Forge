@@ -1,4 +1,4 @@
-# [LEAD_CRAFT]
+# [INTRO_CRAFT]
 
 The lead is one charter sentence opening with the document's own law, plus at most one boundary-consequence sentence — never the doc-set, the siblings, the audience, or the process. Each entry contrasts a leaked lead against its reframe under the fixed Detection / Rejected / Accepted / Reason / Reframe card.
 

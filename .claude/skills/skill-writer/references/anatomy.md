@@ -24,7 +24,17 @@ Admission test per kind; a fact failing its kind's test moves down a tier or out
 - [TEMPLATES]: File-kind instances copied verbatim with slot fills, each distilled from a proven example; a finished instance carries zero residual slot tokens.
 - [ASSETS]: Binary and data material scripts consume — fonts, schemas, corpora — never read into context.
 
-## [03]-[FRONTMATTER]
+## [03]-[ROOT_SCHEMA]
+
+Every root conforms to one structural schema, so an agent predicts any SKILL.md's shape before opening it and a census proves the fleet byte-structural.
+
+- [H1]: `# [SKILL_TOKEN]` — the directory name in UPPER_SNAKE, nothing else; never a prose title, never a tier prefix.
+- [LEAD]: the charter paragraph(s) under the H1 carry law only — no routing links; a cross-skill pointer names the sibling skill in prose, never a link.
+- [ROUTING]: a bundle with routable files opens its numbered sections with `## [01]-[ROUTING]` — a router-card list `- [NN]-[TOKEN](path): phrase`, grouped under `[REFERENCES]:` / `[TEMPLATES]:` / `[EXAMPLES]:` / `[SCRIPTS]:` labels when more than one file kind routes, each group numbered from `[01]`. A flat bundle (no routable files) carries no routing section and its content sections start at `[01]`.
+- [SECTIONS]: H2s run `[NN]-[UPPER_SNAKE]` sequentially with `-[EXTRA]` qualifier chains legal; H3s run `[NN.M]-[TOKEN]`. Group labels inside sections are `[TOKEN]:` lines, never bold. Shared concerns keep the shared name — `[GATE]` for the deterministic gate, `[GOTCHAS]` for trap rosters, `[REPO_INTEGRATION]` for repo-canon composition.
+- [FAMILY]: sibling skills forming one family keep byte-consistent shapes — identical slot names, identical opening lines modulo the discriminating verb — with one designated law owner carrying the richer structure.
+
+## [04]-[FRONTMATTER]
 
 The portable core is `name` and `description`; every other field is loader policy, absent unless it changes behavior.
 
@@ -37,7 +47,7 @@ The portable core is `name` and `description`; every other field is loader polic
 
 Invocation policy resolves to one of three modes: model-invoked (listed description, autonomous selection), operator-invoked (`disable-model-invocation: true`, zero listing cost), or ambient (`user-invocable: false`, listed but never a command). The mode is chosen by who reliably remembers the skill exists and whether firing has side effects.
 
-## [04]-[SHADOWING]
+## [05]-[SHADOWING]
 
 Same-name skills shadow by scope — enterprise over personal, personal over project — so a personal skill silently masks every project master sharing its name. An estate that masters skills inside repos keeps the personal root empty; the repo copy is the single authority and shadowing has nothing to bite. A project skill likewise replaces a bundled skill sharing its name, and a skill beats a same-named command file. Plugin skills are namespaced and exempt from the contest.
 
@@ -47,7 +57,7 @@ Three residency mechanics complete the placement picture:
 - [SYMLINK]: A skill entry at any level resolves through a symlink to a directory elsewhere on disk, and one target reachable from several locations loads once — a master bundle can live outside the scan roots with links standing in.
 - [LIVE_RELOAD]: Watched skill directories hot-reload `SKILL.md` adds, edits, and removals within the running session; only a top-level skills directory created mid-session needs a restart. The authoring loop — tune a description, re-test the trigger — runs without session churn.
 
-## [05]-[FREEDOM]
+## [06]-[FREEDOM]
 
 Instruction rigidity is priced per instruction by the cost of deviation, never set once per skill.
 
@@ -59,10 +69,10 @@ Instruction rigidity is priced per instruction by the cost of deviation, never s
 
 Both inversions are the `DEGREES_OF_FREEDOM` defect: a fragile sequence left as loose guidance breaks runs, and a mandated litany over contextual work produces ritual theater. Within any band, required inclusions are stated and reshaping freedom is granted — a body that pins every sentence of the output forecloses the judgment the model was selected for.
 
-## [06]-[SCRIPT_THRESHOLD]
+## [07]-[SCRIPT_THRESHOLD]
 
 Prose mechanics cross into a bundled script at the first of: the procedure is deterministic end to end; the same steps recur across activations; the prose and an existing tool drift independently; or the narration outweighs its own invocation line. A bundled script is self-contained — pinned interpreter contract, declared dependencies, no network fetch, no global install, no credential read. A skill that legitimately owns an install surface names the exact source, its scope, and its verification step in one row; everything else ships in the bundle and runs as shipped.
 
-## [07]-[DIAGRAMS]
+## [08]-[DIAGRAMS]
 
 A root or reference admits a diagram fence only where shape is the content — a dispatch topology, a state machine, a multi-actor flow whose edge structure prose spends a paragraph per arm to carry. A fence whose nodes map one-to-one onto an adjacent table or roster with no edges beyond reading order is decoration and is deleted; the table already carries the information at lower cost. Type selection, construction, and render validation ride the mermaid-diagramming skill — this test owns admission alone, and the worked pair sits in the repairs file.

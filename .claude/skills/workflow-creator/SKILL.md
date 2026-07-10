@@ -18,13 +18,29 @@ description: >-
 
 A workflow is a runnable JavaScript orchestrator for Claude Code's `Workflow` tool: the loops, conditionals, and fan-out are plain deterministic code, and only the leaf `agent()` calls spend tokens — each in its own fresh context window. The deliverable is the file, in `.claude/workflows/<name>.js` (project) or `~/.claude/workflows/` (personal), named by its `meta.name`, never its filename.
 
-Depth rides one hop down: the runtime manual — every global, option, cap, and the validation rail — is [references/api.md](references/api.md); the orchestration catalog is [references/patterns.md](references/patterns.md); concurrency economics and cross-run law are [references/throughput.md](references/throughput.md); resume, transplant, and reconstruction are [references/recovery.md](references/recovery.md); gpt-5.5 lane composition is [references/codex-lanes.md](references/codex-lanes.md). Starter skeletons sit in `assets/templates/` (including `run-ledger.template.md`); complete runnable examples in `assets/examples/`, each self-described by its header comment; the deterministic gates in `scripts/`.
+## [01]-[ROUTING]
 
-## [01]-[FIT]
+[REFERENCES]:
+- [01]-[API](references/api.md): every global, option, cap, and the validation rail — the runtime manual.
+- [02]-[PATTERNS](references/patterns.md): the orchestration catalog.
+- [03]-[THROUGHPUT](references/throughput.md): concurrency economics and cross-run law.
+- [04]-[RECOVERY](references/recovery.md): resume, transplant, and reconstruction.
+- [05]-[CODEX_LANES](references/codex-lanes.md): gpt-5.5 lane composition.
+
+[TEMPLATES]:
+- [01]-[SKELETONS](assets/templates/): starter skeletons — fan-out, loop, pipeline, and `run-ledger.template.md`.
+
+[EXAMPLES]:
+- [01]-[RUNNABLE](assets/examples/): complete runnable examples, each self-described by its header comment.
+
+[SCRIPTS]:
+- [01]-[GATES](scripts/): the deterministic validate and dry-run gates.
+
+## [02]-[FIT]
 
 Placement across execution surfaces — main turn, fork, subagent, team, workflow — is the agent-dispatch skill's law. The line that matters here: a workflow earns its cost when the work is parallel or multi-stage, the orchestration must be deterministic and resumable, and fresh-context isolation per step is an advantage. One subagent doing one task is the plain `Agent` tool; a procedure where Claude picks the steps each run is a skill; a fixed shape (fan-out, pipeline, loop) worth rerunning and resuming is a workflow. When the fit is doubtful, say so and offer the lighter option.
 
-## [02]-[SHAPE]
+## [03]-[SHAPE]
 
 Answer these before writing a line; the answers pick the topology. Write them down for the user — they are the design.
 
@@ -36,23 +52,23 @@ Answer these before writing a line; the answers pick the topology. Write them do
 
 Terminal stages are opt-in, never a default. A reconcile or align stage exists only when workers DEFER cross-item work they cannot do alone — then the deferral travels as data whose resource slot is a LIST (`{files: string[], claim}`), so clustering by shared resource works (patterns reference, the reconcile shape). A pure fan-out legitimately ends at its last per-item stage. A workflow parameterized by a target (file, sub-folder, unit root, several at once) resolves scope with a discovery agent — the orchestrator has no filesystem (patterns reference, the scope shape).
 
-## [03]-[LAWS]
+## [04]-[LAWS]
 
 The rules that break runs, each carried in depth by its owning reference:
 
-- [01]: `meta` is a pure literal, the first statement, no backticks anywhere inside it.
-- [02]: `Date.now()`, `Math.random()`, and argless `new Date()` throw — pass timestamps via `args`; vary randomness by loop index.
-- [03]: No filesystem or Node APIs in the orchestrator — file and shell work lives inside `agent()`; the body is plain JavaScript, never TypeScript.
-- [04]: `parallel()` takes thunks (`[() => agent(…)]`), never bare promises — bare calls start immediately and defeat the limiter.
-- [05]: Always `.filter(Boolean)` on `parallel()`/`pipeline()` results — skipped, failed, and budget-dropped items are `null` holes.
-- [06]: A heavy lane product (anything past ~50 rows) goes to disk; only the thin receipt `{ok, report, entries, headline, failure}` crosses the wire, and the terminal reader reads every ok report file IN FULL — relaying a product through an intermediate agent truncates it silently (patterns reference, the report-file shape).
-- [07]: No agent idles — waiting is orchestration: the agent returns a receipt, the orchestrator holds time with `setTimeout`, a fresh agent runs the next round (throughput reference).
-- [08]: Every open-ended loop carries a hard stop — a counter, a budget guard (`budget.total && budget.remaining() > N`), or a progress gate; a fix-verify loop gates on file-changing progress, never the round cap alone.
-- [09]: `args` is structured data — read it directly, never `JSON.parse` it, and default the no-args run to a safe no-op, never a full-corpus sweep.
-- [10]: Wrap long prompt strings with adjacent `+` at a space kept on the left segment — never a multi-line template literal, which injects `\n` and changes both the value and the resume key.
-- [11]: A stage prompt that embeds earlier receipts interpolates them live at author time — `+ JSON.stringify(receipts) +` or a single-line `${JSON.stringify(receipts)}` — never a `__TOKEN__` placeholder patched later and never a `${'$'}{…}` escape: both ship literal text the agent reads as its data, and the defect stays silent until that stage fires hours in. The linter flags both shapes; a patched persisted script re-runs it before the launch is trusted.
+- [01]-[META_LITERAL]: `meta` is a pure literal, the first statement, no backticks anywhere inside it.
+- [02]-[NO_WALLCLOCK]: `Date.now()`, `Math.random()`, and argless `new Date()` throw — pass timestamps via `args`; vary randomness by loop index.
+- [03]-[NO_NODE_APIS]: No filesystem or Node APIs in the orchestrator — file and shell work lives inside `agent()`; the body is plain JavaScript, never TypeScript.
+- [04]-[THUNKS_NOT_PROMISES]: `parallel()` takes thunks (`[() => agent(…)]`), never bare promises — bare calls start immediately and defeat the limiter.
+- [05]-[FILTER_HOLES]: Always `.filter(Boolean)` on `parallel()`/`pipeline()` results — skipped, failed, and budget-dropped items are `null` holes.
+- [06]-[DISK_RECEIPTS]: A heavy lane product (anything past ~50 rows) goes to disk; only the thin receipt `{ok, report, entries, headline, failure}` crosses the wire, and the terminal reader reads every ok report file IN FULL — relaying a product through an intermediate agent truncates it silently (patterns reference, the report-file shape).
+- [07]-[NO_IDLE_WAIT]: No agent idles — waiting is orchestration: the agent returns a receipt, the orchestrator holds time with `setTimeout`, a fresh agent runs the next round (throughput reference).
+- [08]-[HARD_STOP]: Every open-ended loop carries a hard stop — a counter, a budget guard (`budget.total && budget.remaining() > N`), or a progress gate; a fix-verify loop gates on file-changing progress, never the round cap alone.
+- [09]-[ARGS_STRUCTURED]: `args` is structured data — read it directly, never `JSON.parse` it, and default the no-args run to a safe no-op, never a full-corpus sweep.
+- [10]-[PROMPT_CONCAT]: Wrap long prompt strings with adjacent `+` at a space kept on the left segment — never a multi-line template literal, which injects `\n` and changes both the value and the resume key.
+- [11]-[LIVE_INTERPOLATION]: A stage prompt that embeds earlier receipts interpolates them live at author time — `+ JSON.stringify(receipts) +` or a single-line `${JSON.stringify(receipts)}` — never a `__TOKEN__` placeholder patched later and never a `${'$'}{…}` escape: both ship literal text the agent reads as its data, and the defect stays silent until that stage fires hours in. The linter flags both shapes; a patched persisted script re-runs it before the launch is trusted.
 
-## [04]-[FILE]
+## [05]-[FILE]
 
 Two parts, strict order. First the `meta` literal:
 
@@ -75,7 +91,7 @@ The three `agent()` options tuned most, independent axes:
 
 Body files follow the canonical section order `[CONSTANTS]` `[INPUTS]` `[MODELS]` `[DOCTRINE]` `[OPERATIONS]` `[COMPOSITION]` with `// --- [LABEL]` dividers — placement rules are the api reference's file-organization section.
 
-## [05]-[GATE]
+## [06]-[GATE]
 
 Both bundled checks gate every workflow before it spends a token:
 
@@ -86,7 +102,7 @@ node ${CLAUDE_SKILL_DIR}/scripts/dry-run.mjs <file.js> [--args '<json>'] [--fixt
 
 The linter enforces the parser's hard rules — errors exit 1 and every one gets fixed; warnings are real runtime bugs, cleared too. The dry-run re-hosts the unmodified file under mocked globals for zero tokens: `parseOk=true ran=true deterministic=true` is the bar, and per-phase agent counts expose fan-out bugs and guard-dropped phases. A green simulation validates the machine, never the meaning — close that gap with a narrow real run on one tiny scope before the full spend. Signals, fixtures, and narrow-run mechanics: api reference, validation section. Trigger and adherence proof for this bundle rides the skill-writer eval loop, with the linter and dry-run as its deterministic graders.
 
-## [06]-[RUN]
+## [07]-[RUN]
 
 Launch with `Workflow({ name })` or `Workflow({ scriptPath })`; the run goes to the background, returns a run ID immediately, and notifies on completion; `/workflows` watches it live. The moment the call returns, write the run ledger (run ID, scriptPath, args, exact resume command) from `assets/templates/run-ledger.template.md` into the session scratchpad — without the captured run ID a later turn only starts over. Pause, stop, resume, cross-session transplant, and continuation-script reconstruction: recovery reference.
 

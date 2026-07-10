@@ -280,30 +280,37 @@ flowchart LR
 
 Each diagram type accepts a bounded set of styling statements; `yes` is verified acceptance, `no` is no verified route, and the local mechanism is the type's own styling surface.
 
-| [INDEX] | [TYPE]       | [CLASSDEF] | [TRIPLE_COLON] | [STYLE] | [LINKSTYLE] | [LOCAL]                                        |
-| :-----: | :----------- | :--------: | :------------: | :-----: | :---------: | :--------------------------------------------- |
-|  [01]   | Flowchart    |    yes     |      yes       |   yes   |     yes     | edge-id + shape metadata                       |
-|  [02]   | Sequence     |     no     |       no       |   no    |     no      | `box`/`rect` backgrounds                       |
-|  [03]   | State        |    yes     |      yes       |   yes   |     no      | composite-state classes                        |
-|  [04]   | Class        |    yes     |      yes       |   yes   |     no      | relation arrows + lollipops                    |
-|  [05]   | ER           |    yes     |      yes       |   yes   |     no      | identifying `--` vs non-`..`                   |
-|  [06]   | Gantt        |     no     |       no       |   no    |     no      | config section + `todayMarker`                 |
-|  [07]   | Pie          |     no     |       no       |   no    |     no      | ordinal `pie1`–`pie12` vars                    |
-|  [08]   | Quadrant     |    yes     |      yes       |   no    |     no      | point-local `color`/`radius`                   |
-|  [09]   | Timeline     |     no     |       no       |   no    |     no      | `cScale0`–`cScale11` vars                      |
-|  [10]   | Mindmap      |     no     |      yes       |   no    |     no      | host classes + `::icon(...)`                   |
-|  [11]   | Kanban       |     no     |       no       |   no    |     no      | task metadata + config keys                    |
-|  [12]   | GitGraph     |     no     |       no       |   no    |     no      | `git0`–`git7` + label vars                     |
-|  [13]   | Requirement  |    yes     |      yes       |   yes   |     no      | direct requirement/element style               |
-|  [14]   | Architecture |     no     |       no       |   no    |     no      | `arch*` vars + `align`/`seed`                  |
-|  [15]   | Block        |    yes     |       no       |   yes   |     no      | id `class`/`style` + nesting                   |
-|  [16]   | Sankey       |     no     |       no       |   no    |     no      | config link-color strategy                     |
-|  [17]   | XY chart     |     no     |       no       |   no    |     no      | config plot palette                            |
-|  [18]   | Radar        |     no     |       no       |   no    |     no      | nested `radar` + `cScale` vars                 |
-|  [19]   | Treemap      |    trap    |      trap      |   no    |     no      | ordinal `cScale`/`cScalePeer` + section stamps |
-|  [20]   | Packet       |     no     |       no       |   no    |     no      | `.packet*` `themeCSS` class stamp              |
-|  [21]   | Journey      |     no     |       no       |   no    |     no      | `fillType0`–`fillType7` vars                   |
-|  [22]   | C4           |     no     |       no       |   no    |     no      | `Update*Style` calls                           |
+[GRAMMAR_STYLED]: types accepting at least one diagram-grammar styling statement.
+
+| [INDEX] | [TYPE]      | [CLASSDEF] | [TRIPLE_COLON] | [STYLE] | [LINKSTYLE] | [LOCAL]                                        |
+| :-----: | :---------- | :--------: | :------------: | :-----: | :---------: | :--------------------------------------------- |
+|  [01]   | Flowchart   |    yes     |      yes       |   yes   |     yes     | edge-id + shape metadata                       |
+|  [02]   | State       |    yes     |      yes       |   yes   |     no      | composite-state classes                        |
+|  [03]   | Class       |    yes     |      yes       |   yes   |     no      | relation arrows + lollipops                    |
+|  [04]   | ER          |    yes     |      yes       |   yes   |     no      | identifying `--` vs non-`..`                   |
+|  [05]   | Quadrant    |    yes     |      yes       |   no    |     no      | point-local `color`/`radius`                   |
+|  [06]   | Mindmap     |     no     |      yes       |   no    |     no      | host classes + `::icon(...)`                   |
+|  [07]   | Requirement |    yes     |      yes       |   yes   |     no      | direct requirement/element style               |
+|  [08]   | Block       |    yes     |       no       |   yes   |     no      | id `class`/`style` + nesting                   |
+|  [09]   | Treemap     |    trap    |      trap      |   no    |     no      | ordinal `cScale`/`cScalePeer` + section stamps |
+
+[CONFIG_STYLED]: no verified route for `classDef`, `:::`, `style`, or `linkStyle`; styling rides the type's own config or theme-variable surface.
+
+| [INDEX] | [TYPE]       | [LOCAL]                           |
+| :-----: | :----------- | :-------------------------------- |
+|  [01]   | Sequence     | `box`/`rect` backgrounds          |
+|  [02]   | Gantt        | config section + `todayMarker`    |
+|  [03]   | Pie          | ordinal `pie1`–`pie12` vars       |
+|  [04]   | Timeline     | `cScale0`–`cScale11` vars         |
+|  [05]   | Kanban       | task metadata + config keys       |
+|  [06]   | GitGraph     | `git0`–`git7` + label vars        |
+|  [07]   | Architecture | `arch*` vars + `align`/`seed`     |
+|  [08]   | Sankey       | config link-color strategy        |
+|  [09]   | XY chart     | config plot palette               |
+|  [10]   | Radar        | nested `radar` + `cScale` vars    |
+|  [11]   | Packet       | `.packet*` `themeCSS` class stamp |
+|  [12]   | Journey      | `fillType0`–`fillType7` vars      |
+|  [13]   | C4           | `Update*Style` calls              |
 
 The silent traps live where syntax parses but styling does not apply or applies destructively: mindmap `:::` classes must be supplied by the host, so in-diagram `classDef` never defines them; block `:::` has no verified route; state styling reaches plain states while a composite class parses and lands in the DOM with its fill and stroke non-portable and `[*]` markers unstyleable; treemap `classDef` emits inline `!important` fills that lock out every stylesheet correction, so a themed treemap carries no classes and rides its ordinal range plus section stamps; and the nested packet theme-variable block half-applies, so packet styling rides its `themeCSS` classes.
 
@@ -311,37 +318,44 @@ The silent traps live where syntax parses but styling does not apply or applies 
 
 Every family ships at or above its render floor. Each row inherits `theme: base`, `look: classic`, `fontFamily`, flat locks, palette closure, label backing, and the micro-scale stamp unless `[BOUND]` names a limited surface.
 
-| [INDEX] | [FAMILY]      | [TOKENS]          | [ROUTE]           | [STAMP]           | [BOUND]             |
-| :-----: | :------------ | :---------------- | :---------------- | :---------------- | :------------------ |
-|  [01]   | flowchart     | base vars         | canonical classes | edge rails        | none                |
-|  [02]   | sequence      | actor signal vars | region surfaces   | marker fill       | none                |
-|  [03]   | state         | general vars      | state classes     | composite stamp   | none                |
-|  [04]   | class         | class vars        | type classes      | note chip         | none                |
-|  [05]   | ER            | band vars         | entity classes    | relation stamp    | none                |
-|  [06]   | gantt         | task vars         | axis cadence      | section stamp     | none                |
-|  [07]   | mindmap       | depth colors      | host classes      | node opacity      | no in-fence classes |
-|  [08]   | timeline      | ordinal colors    | section borders   | wayfinding stamp  | none                |
-|  [09]   | kanban        | ordinal colors    | card variables    | priority remap    | none                |
-|  [10]   | gitGraph      | branch colors     | commit variables  | rail dot stamps   | none                |
-|  [11]   | requirement   | requirement vars  | element classes   | marker scale      | none                |
-|  [12]   | C4            | `c4:` config      | relation updates  | boundary hooks    | none                |
-|  [13]   | architecture  | arch vars         | align grid        | icon refill       | group icons         |
-|  [14]   | pie           | pie ordinals      | slice stamps      | foreground labels | none                |
-|  [15]   | quadrant      | quadrant vars     | point classes     | opacity stamp     | none                |
-|  [16]   | sankey        | `nodeColors`      | label strategy    | link blend        | legacy labels       |
-|  [17]   | xychart       | `xyChart` block   | plot palette      | label caps        | none                |
-|  [18]   | radar         | `radar` block     | curve ordinals    | margin clearance  | none                |
-|  [19]   | treemap       | scale ranges      | section stamps    | label caps        | no `classDef`       |
-|  [20]   | packet        | themeCSS classes  | wash fills        | packet labels     | no variables        |
-|  [21]   | journey       | fill actors       | face vars         | axis stamps       | title config        |
-|  [22]   | venn          | set styles        | union labels      | label sizes       | none                |
-|  [23]   | eventmodeling | `em*` pairs       | swimlane vars     | mono spans        | no acc directives   |
-|  [24]   | wardley       | wardley block     | evolution color   | engine metrics    | component anchor    |
-|  [25]   | cynefin       | cynefin block     | domain washes     | item chips        | seed                |
-|  [26]   | treeView      | tree config       | highlight class   | description stamp | none                |
-|  [27]   | ishikawa      | global vars       | main surface      | line weights      | no stylesheet       |
-|  [28]   | swimlane      | flowchart floor   | lane styles       | title stamp       | none                |
-|  [29]   | railroad      | railroad block    | terminal chips    | rule labels       | none                |
+[UNBOUND]: families whose floor binds no limited surface.
+
+| [INDEX] | [FAMILY]    | [TOKENS]          | [ROUTE]           | [STAMP]           |
+| :-----: | :---------- | :---------------- | :---------------- | :---------------- |
+|  [01]   | flowchart   | base vars         | canonical classes | edge rails        |
+|  [02]   | sequence    | actor signal vars | region surfaces   | marker fill       |
+|  [03]   | state       | general vars      | state classes     | composite stamp   |
+|  [04]   | class       | class vars        | type classes      | note chip         |
+|  [05]   | ER          | band vars         | entity classes    | relation stamp    |
+|  [06]   | gantt       | task vars         | axis cadence      | section stamp     |
+|  [07]   | timeline    | ordinal colors    | section borders   | wayfinding stamp  |
+|  [08]   | kanban      | ordinal colors    | card variables    | priority remap    |
+|  [09]   | gitGraph    | branch colors     | commit variables  | rail dot stamps   |
+|  [10]   | requirement | requirement vars  | element classes   | marker scale      |
+|  [11]   | C4          | `c4:` config      | relation updates  | boundary hooks    |
+|  [12]   | pie         | pie ordinals      | slice stamps      | foreground labels |
+|  [13]   | quadrant    | quadrant vars     | point classes     | opacity stamp     |
+|  [14]   | xychart     | `xyChart` block   | plot palette      | label caps        |
+|  [15]   | radar       | `radar` block     | curve ordinals    | margin clearance  |
+|  [16]   | venn        | set styles        | union labels      | label sizes       |
+|  [17]   | treeView    | tree config       | highlight class   | description stamp |
+|  [18]   | swimlane    | flowchart floor   | lane styles       | title stamp       |
+|  [19]   | railroad    | railroad block    | terminal chips    | rule labels       |
+
+[BOUND]: families whose floor names a limited surface in `[BOUND]`.
+
+| [INDEX] | [FAMILY]      | [TOKENS]         | [ROUTE]         | [STAMP]        | [BOUND]             |
+| :-----: | :------------ | :--------------- | :-------------- | :------------- | :------------------ |
+|  [01]   | mindmap       | depth colors     | host classes    | node opacity   | no in-fence classes |
+|  [02]   | architecture  | arch vars        | align grid      | icon refill    | group icons         |
+|  [03]   | sankey        | `nodeColors`     | label strategy  | link blend     | legacy labels       |
+|  [04]   | treemap       | scale ranges     | section stamps  | label caps     | no `classDef`       |
+|  [05]   | packet        | themeCSS classes | wash fills      | packet labels  | no variables        |
+|  [06]   | journey       | fill actors      | face vars       | axis stamps    | title config        |
+|  [07]   | eventmodeling | `em*` pairs      | swimlane vars   | mono spans     | no acc directives   |
+|  [08]   | wardley       | wardley block    | evolution color | engine metrics | component anchor    |
+|  [09]   | cynefin       | cynefin block    | domain washes   | item chips     | seed                |
+|  [10]   | ishikawa      | global vars      | main surface    | line weights   | no stylesheet       |
 
 ## [07]-[CONSISTENCY_LAWS]
 

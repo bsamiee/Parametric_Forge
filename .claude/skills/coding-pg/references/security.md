@@ -184,7 +184,7 @@ SELECT pg_reload_conf();
 
 ### [05.2]-[SESSION_VS_OBJECT_AUDIT]
 
-[SESSION_AUDIT]: (`pgaudit.log`): captures all statements matching configured classes regardless of target. Classes: `read`, `write`, `function`, `role`, `ddl`, `misc`, `misc_set`, `all` --- comma-separated. Recommended baseline: `ddl, write` for schema changes and data mutations; add `role` when tracking privilege changes.
+[SESSION_AUDIT]: (`pgaudit.log`): captures all statements matching configured classes regardless of target. Classes: `read`, `write`, `function`, `role`, `ddl`, `misc`, `misc_set`, `all` --- comma-separated. Baseline: `ddl, write` for schema changes and data mutations; add `role` when tracking privilege changes.
 
 [OBJECT_AUDIT]: (`pgaudit.role`): captures only statements touching objects where the named audit role has grants. More selective --- use for targeted compliance on sensitive tables:
 
@@ -238,4 +238,4 @@ FROM write_result;
 - OLD is NULL for INSERT actions, NEW is NULL for DELETE actions
 - MERGE RETURNING + writable CTE: audit insert happens in same transaction --- atomicity guaranteed
 - `current_setting('app.user_id')` must be SET per transaction --- not session state
-- Audit table should be append-only with RLS preventing modification --- `FOR SELECT` policy only for app roles
+- Audit table is append-only with RLS preventing modification --- `FOR SELECT` policy only for app roles

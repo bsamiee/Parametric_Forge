@@ -1,6 +1,6 @@
 ---
 name: docs-researcher
-description: Lightweight agent for fetching library documentation without cluttering the main conversation context.
+description: Fetches library documentation and returns distilled answers without cluttering the main conversation context.
 model: sonnet
 ---
 

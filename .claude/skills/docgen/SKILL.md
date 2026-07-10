@@ -16,9 +16,33 @@ description: >-
 
 # [DOCGEN]
 
-Durable prose is law for an agent that loads it with no memory of why it was written, and every line either changes that agent's next action or poisons it. One register, one owner per fact, one schema per file kind, one decision per line — everything else is deleted, never softened. Structure, tables, markers, and schemas are [references/structure.md](references/structure.md); the defect catalog is [references/defects.md](references/defects.md); rebuilding existing documents is [references/rewriting.md](references/rewriting.md). Skill bundle design — trigger descriptions, disclosure architecture, bundled scripts, evals — is the skill-writer skill's deliverable; this register binds the prose inside every bundle it produces.
+Durable prose is law for an agent that loads it with no memory of why it was written, and every line either changes that agent's next action or poisons it. One register, one owner per fact, one schema per file kind, one decision per line — everything else is deleted, never softened. Skill bundle design — trigger descriptions, disclosure architecture, bundled scripts, evals — is the skill-writer skill's deliverable; this register binds the prose inside every bundle it produces.
 
-## [01]-[GATE]
+## [01]-[ROUTING]
+
+[REFERENCES]:
+- [01]-[STRUCTURE](references/structure.md): altitude tiers, routing law, representation choice, table design, file-kind schemas, marker systems
+- [02]-[DEFECTS](references/defects.md): the defect catalog — definitions, detection tests, pairs, reframe rules
+- [03]-[REWRITING](references/rewriting.md): rebuilding an existing document without inheriting its frame
+
+[TEMPLATES]: authoring a new instance of a known file kind starts from its template; a finished instance carries zero residual slot tokens and its heading census matches the template.
+- [01]-[IDEAS](templates/ideas.template.md): copy verbatim; fill only the H1 token and lead slot
+- [02]-[TASKLOG](templates/tasklog.template.md): copy verbatim; fill only the H1 token and lead slot
+- [03]-[README](templates/readme.template.md): exact structure, replace only the slots; multi-folder units group domain cards under one `[FOLDER_TOKEN]:` label per folder
+- [04]-[ARCHITECTURE](templates/architecture.template.md): exact structure, replace only the slots
+- [05]-[SPEC](templates/spec.template.md): exact section spine; slots carry their budgets, cluster count follows the domain
+- [06]-[API_CATALOG](templates/api-catalog.template.md): exact structure, replace only the slots
+
+[EXAMPLES]: symptom-indexed worked pairs; consult the matching set before building or repairing the container.
+- [01]-[TABLES](examples/tables.md): table crimes and their structural repairs
+- [02]-[LISTS](examples/lists.md): mega bullets, shredded splits, the classified repair
+- [03]-[MARKERS](examples/markers.md): entry leaders, status vocabularies, glyphs
+- [04]-[INTROS](examples/intros.md): leads that legislate and the rejected frames
+
+[SCRIPTS]:
+- [01]-[PROSE_GATE](scripts/prose_gate.py): the deterministic gate and fixer; invocation in the gate section
+
+## [02]-[GATE]
 
 ```bash template
 uv run scripts/prose_gate.py [--json] <paths...>
@@ -30,7 +54,7 @@ uv run scripts/prose_gate.py fix [--write] <paths...>
 
 Run the gate on every touched durable doc before returning. `fix` applies every deterministic repair — header rubrics, the `[INDEX]` column and its `[NN]` entries, alignment colons, H2/H3 numbering, loose numbered list leaders, trailing whitespace, table spacing, and the canonical column-aligned render — printing a per-change plan as a dry run by default and mutating only under `--write`; judgment-tier repairs surface as `SKIP` rows for review. The gate and the fixer share one table model, so a grid whose canonical render exceeds the 150-column width cap fails `table-width` regardless of its current padding. It is the mechanical floor — fence, heading, table, link, list, and source section-divider structure; template residue, bold emphasis, and trailing whitespace; the banned-lexeme roster of hedges, meta-phrases, self-counts, version anchors, freshness deictics, and permission verbs — and a skill bundle additionally gates frontmatter shape, name shape and directory identity, description voice and budgets, the root line ceiling, orphan bundle files, and nested reference hops, the mechanical floor beneath the skill-writer skill's authoring law; the full check census is the script's `Check` vocabulary. The gate scans prose spans only: fence bodies, code spans, link destinations, template placeholders, and example-leader rows are structural carriers, not prose findings. Every semantic class and every altitude judgment remains review work against the catalog.
 
-## [02]-[REGISTER]
+## [03]-[REGISTER]
 
 The register's laws produce the voice; every catalog defect is a way of breaking one of them.
 
@@ -84,9 +108,9 @@ Enable the merge-edges option and the network-simplex placement strategy in the 
 The layout block carries `mergeEdges: true` and `nodePlacementStrategy: NETWORK_SIMPLEX`.
 ```
 
-Rebuilding an existing document under this register is its own discipline — the source's frame is the primary contaminant; run the [references/rewriting.md](references/rewriting.md) procedure.
+Rebuilding an existing document under this register is its own discipline — the source's frame is the primary contaminant; run the `rewriting.md` procedure.
 
-## [03]-[FACT_LAW]
+## [04]-[FACT_LAW]
 
 [FACT_CLASSES] — Every fact in a durable doc is exactly one of:
 - [LAW]: Intent, invariant, boundary, prohibition. Survives any rename. Carried in prose.
@@ -99,46 +123,28 @@ Rebuilding an existing document under this register is its own discipline — th
 
 [ANCHOR] — Loaded prose is the working model the next agent generates inside, so every shape the prose names becomes a wall: a member roster anchors the rebuild to today's census, a forbidden-alternative litany anchors it to the anti-shape, a frozen count or seal anchors it to the ceiling. The cure is always the extension rule — how one new row, case, or member lands — stated where the anchor stood, with the roster living on the surface tooling keeps true.
 
-Altitude tiers, routing law, representation choice, table design, file-kind schemas, and marker systems are [references/structure.md](references/structure.md).
+Altitude tiers, routing law, representation choice, table design, file-kind schemas, and marker systems are `structure.md`'s.
 
-## [04]-[DEFECTS]
+## [05]-[DEFECTS]
 
-The defect classes are the review vocabulary; findings cite class and line. Definitions, detection tests, pairs, and reframe rules are [references/defects.md](references/defects.md).
+The defect classes are the review vocabulary; findings cite class and line. Definitions, detection tests, pairs, and reframe rules are `defects.md`'s.
 
 [STRUCTURAL]: `ENUMERATION_ANCHOR` `STALE_MIRROR` `MECHANISM_LEAK` `META_FRAME` `TWIN_TRUTH` `REPORT_FRAME` `COUPLING`
 [SEMANTIC]: `HEDGE` `CAPABILITY_GATE` `LEGACY_COMPAT` `IMPORTED_POSTURE` `VERSION_ANCHOR` `SET_IN_STONE` `WEAK_VERBS` `PROCESS_LEDGER` `ASSERTED_IMPOSSIBILITY` `DELETED_FORM_LITANY`
 
 Skill-bundle authoring classes — triggers, disclosure, instruction bodies — are the skill-writer skill's catalog; a bundle review cites both catalogs, each from its owner.
 
-## [05]-[TEMPLATES]
-
-Authoring a new instance of a known file kind starts from its template; the binding is per row.
-
-- [01]-[IDEAS]: Copy [templates/ideas.template.md](templates/ideas.template.md) verbatim; fill only the H1 token and lead slot.
-- [02]-[TASKLOG]: Copy [templates/tasklog.template.md](templates/tasklog.template.md) verbatim; fill only the H1 token and lead slot.
-- [03]-[README]: Use the exact structure of [templates/readme.template.md](templates/readme.template.md); replace only the slots. A unit spanning multiple sub-folders groups its domain cards under one `[FOLDER_TOKEN]:` label per folder; a small unit keeps the flat list and drops the labels.
-- [04]-[ARCHITECTURE]: Use the exact structure of [templates/architecture.template.md](templates/architecture.template.md); replace only the slots.
-- [05]-[SPEC]: Use the section spine of [templates/spec.template.md](templates/spec.template.md) exactly; slots carry their budgets, and the cluster count follows the domain.
-- [06]-[API_CATALOG]: Use the exact structure of [templates/api-catalog.template.md](templates/api-catalog.template.md); replace only the slots.
-
-A finished instance carries zero residual slot tokens — `rg '<[a-z][a-z0-9-]+>' <file>` returns nothing — and its heading census matches the template.
-
-## [06]-[EXAMPLES]
-
-Consult the matching set before building or repairing the container; entries are symptom-indexed with the fix demonstrated.
-
-- [01]-[TABLES]: [examples/tables.md](examples/tables.md) — table crimes and their structural repairs.
-- [02]-[LISTS]: [examples/lists.md](examples/lists.md) — mega bullets, shredded splits, and the classified repair.
-- [03]-[MARKERS]: [examples/markers.md](examples/markers.md) — entry leaders, status vocabularies, glyphs.
-- [04]-[INTROS]: [examples/intros.md](examples/intros.md) — leads that legislate and the rejected frames.
-
-## [07]-[TABLES]
+## [06]-[TABLES]
 
 A table is built right at authoring: a one-sentence lead stating the shared invariant, bracketed rubric headers, a centered `[INDEX]`, explicit alignment colons, atomic cells inside the 150-column rendered width cap — then `scripts/prose_gate.py fix --write` pads. Repair preserves the grid: hoist repeats into headers, relieve clause tails into the lead or a one-line note after the table, split an overloaded row into two, fan joined values one row each. Conversion to another container is earned only two ways — the information is structurally non-tabular (an ordered sequence rides `OrderedStep` records, a no-shared-question row family rides records), or a declared type standard owns that information's shape; a wide cell alone never converts a table.
 
-## [08]-[COMMENTS]
+## [07]-[COMMENTS]
 
 Comments — in source and in transcription-complete fences alike — serve the agent editing the file in isolation. One in-situ constraint the code cannot show, 1-2 lines, uncoupled from paths, sessions, and siblings, never a duplicate of card or index content. Every pass that touches a file prunes its stale or drifted comments in the same pass.
+
+## [08]-[CAMPAIGNS]
+
+A backlog too large for one pass runs as an adjudicated campaign: the gate census partitions findings by check class, find-only lanes adjudicate each class against the law files with a closed per-class verdict vocabulary and a CHECK_DEFECTS section, judgment lands the verdicts — a check defect fixes the gate or the law at the owner, never the instance — and fix waves apply the survivors with the live gate as ground truth. A false-positive pattern proven by a dossier is a gate defect by definition; the finding class is repaired before its findings are.
 
 ## [09]-[GOTCHAS]
 

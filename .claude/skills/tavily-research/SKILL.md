@@ -48,7 +48,7 @@ echo "query" | uvx --from tavily-cli tvly research - --json
 |  [08]   | `-o, --output`      | Save output to file                         |
 |  [09]   | `--json`            | Structured JSON output                      |
 
-## [03]-[MODEL_SELECTION]
+## [03]-[LANE_SELECTION]
 
 | [INDEX] | [MODEL] | [OWNS]                             | [LATENCY] |
 | :-----: | :------ | :--------------------------------- | :-------- |

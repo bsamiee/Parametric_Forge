@@ -62,7 +62,7 @@ class Family(StrEnum):
 APP = App(name="validate-mermaid")
 ENCODER = msgspec.json.Encoder()
 ENV_MARKERS = ("chrome", "chromium", "puppeteer", "browser", "libnss", "sandbox", "econnrefused", "enoent")
-# Current-release proof rail: exact npm source, pnpm dlx cache scope, the rendered SVG is the verification.
+# Version-pinned fallback renderer: proves whether a syntax failure survives a known-good release.
 RELEASE_RENDERER = ("pnpm", "dlx", "@mermaid-js/mermaid-cli@11.16.0")
 RENDER_TIMEOUT = 120
 SUFFIXES = frozenset({".md", ".mmd"})

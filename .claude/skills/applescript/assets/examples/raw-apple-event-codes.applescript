@@ -4,9 +4,9 @@
 use framework "Foundation"
 use scripting additions
 
--- «class XXXX» / «event XXXXYYYY» / «constant ****XXXX» compile with no dictionary resolution,
--- so a load-bearing verb survives an .sdef the release retired. osadecompile emits these for
--- any term the current dictionary no longer defines — a version-drift receipt, not corruption.
+-- Chevron literals («class XXXX», «event XXXXYYYY», «constant ****XXXX») compile with no dictionary
+-- resolution, so a load-bearing verb survives an .sdef the release retired. osadecompile emits them for
+-- any term the dictionary dropped — a version-drift receipt, not corruption.
 on chevronRead()
 	tell application id "com.apple.finder"
 		return «class pnam» of «class docu» 1

@@ -46,7 +46,14 @@ Durable markdown — docs, standards, skills, prompts — is agent-facing law. F
 - Closing checklists with no machine-checkable gate.
 - Process ledgers: ship-status markers, decision tags, freshness stamps, session narration in durable prose.
 - Meta-commentary: sentences whose subject is the document itself (this skill, this file, this section) outside routing rows.
-- Defensive caveats: hedges (may, might, generally, usually, when possible) softening settled rules; contract qualifiers (optional, if present, where supported, unless) survive.
+- Defensive caveats: hedges (`may`, `might`, `generally`, `usually`, `when possible`) softening settled rules; contract qualifiers (`optional`, `if present`, `where supported`, `unless`) survive.
 - Bare abstractions: three or more abstract guidance bullets with no paired rejected/accepted example, template, or gate.
 - Fixed output skeletons: one mandated report shape (summary, findings, recommendations, next steps) regardless of consumer.
+- Mirror sentences: prose a fresh agent regenerates from disk plus the document's stated invariants — restated topology, member rosters, tool inventories — is a stale copy, deleted or demoted to a regenerable fence.
+- Table teardowns: a table converted to cards, lists, or prose when in-place relief (header hoists, lead-sentence relief, row splits) was available; conversion is earned only by rows sharing no comparison question or a type-standard-owned shape.
+- File-kind drift: sibling files of one kind (a bundle's references, atlas pages, templates) diverging in section vocabulary, card field sets, or marker tokens — consistency across the kind outranks local optimization.
 - Skill bundles (.claude/skills/**): first/second-person frontmatter descriptions — quoted user-utterance trigger phrases are not voice; over-broad or keyword-stuffed trigger descriptions; SKILL.md over 500 lines or carrying reference banks inline; references that only route to other references; deterministic multi-step procedures narrated in prose where a bundled script belongs; instructed network fetches or global installs inside skill bodies, except an owned install surface naming exact source, scope, and verification.
+
+## [06]-[COMMENT_DISCIPLINE]
+
+A comment exists only for the in-situ constraint the code cannot show — the why, the invariant, the trap. One line is the target; a short comment inlines onto its statement; two lines is the usual ceiling, and three-plus survives only when truly irreplaceable. Flag: what-comments restating the adjacent code, narration and process residue, comments coupling to paths, sessions, or sibling docs, and multi-line blocks whose payload compresses to one line. Every pass that touches a file prunes its stale or drifted comments in the same pass — comment hygiene is a standing obligation, not a separate cleanup.

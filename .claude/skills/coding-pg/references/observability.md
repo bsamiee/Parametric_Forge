@@ -106,8 +106,8 @@ Taxonomy:
 Diagnostic patterns with actionable thresholds:
 - `IO:DataFileRead` sustained >5s across >10% of backends --- insufficient shared_buffers or working set exceeds RAM; verify with `pg_stat_io` read counts
 - `Lock:transactionid` sustained >30s --- long-running transactions holding row locks; identify holder via `pg_blocking_pids()` lock chain query above
-- `LWLock:WALInsert` sustained >2s --- WAL write bottleneck --- increase `wal_buffers`, consider `synchronous_commit = off` for non-critical writes
-- `Client:ClientRead` sustained >10s --- application not consuming results fast enough; connection pool exhaustion likely
+- `LWLock:WALInsert` sustained >2s --- WAL write bottleneck --- increase `wal_buffers`, set `synchronous_commit = off` for non-critical writes
+- `Client:ClientRead` sustained >10s --- application not consuming results fast enough; connection pool exhaustion
 - `LWLock:BufferMapping` --- hash partition contention on buffer table; PG 18 doubled partitions, but sustained occurrence indicates shared_buffers thrashing
 
 

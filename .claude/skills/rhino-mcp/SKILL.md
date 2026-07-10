@@ -9,7 +9,7 @@ description: >-
   rhino-bridge) and not for authoring the Rasm.AppHost MCP server.
 ---
 
-# [H1][RHINO-MCP]
+# [RHINO_MCP]
 
 Drives McNeel `Rhino-MCP-Platform` through the `mcp__rhino-mcp-platform__*` tool surface (the bridge README `[INSTALL]` owns the pinned platform version). The router (`rhino-mcp-router`, USER-scope stdio server in `~/.claude.json`) proxies each call to a per-document loopback HTTP listener inside the targeted Rhino "slot". Every document-touching tool is bound to that slot's `RhinoDoc`, never `RhinoDoc.ActiveDoc`. All outputs are JSON strings (viewport adds a JPEG block).
 

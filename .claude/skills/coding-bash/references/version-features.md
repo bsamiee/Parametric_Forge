@@ -93,7 +93,7 @@ disk_pct=${| REPLY="$(df --output=pcent / | tail -1 | tr -d '[:space:]%')"; }
 (( disk_pct > 90 )) && _warn "Disk usage critical: ${disk_pct}%"
 ```
 
-`${| }` vs `${ }`: `${ }` expands to captured stdout inline; `${| }` expands to `REPLY` set by the command body. Use `${ }` for stdout capture, `${| }` when a current-shell body should compute a value through `REPLY` while stdout remains independent.
+`${| }` vs `${ }`: `${ }` expands to captured stdout inline; `${| }` expands to `REPLY` set by the command body. Use `${ }` for stdout capture, `${| }` when a current-shell body computes a value through `REPLY` while stdout remains independent.
 
 ## [03]-[GLOBSORT_PIPELINES]
 
@@ -209,7 +209,7 @@ _rate_check() {
 }
 ```
 
-`10#${usec}` forces base-10 interpretation — microsecond strings like `09` would otherwise parse as invalid octal.
+`10#${usec}` forces base-10 interpretation — microsecond strings like `09` otherwise parse as invalid octal.
 
 ## [05]-[MONOTONIC_CLOCK]
 
@@ -433,7 +433,7 @@ _source_lib() {
 }
 ```
 
-`array_expand_once` should be enabled globally in scripts using associative arrays with computed subscripts — it is strictly safer than the default. `read -E` is interactive-only (no effect in non-interactive scripts). `source -p` is the 5.3 equivalent of controlling `LD_LIBRARY_PATH` for shell libraries.
+Enable `array_expand_once` globally in scripts using associative arrays with computed subscripts — it is strictly safer than the default. `read -E` is interactive-only (no effect in non-interactive scripts). `source -p` is the 5.3 equivalent of controlling `LD_LIBRARY_PATH` for shell libraries.
 
 ## [09]-[WAIT_PRIMITIVES]
 
@@ -486,7 +486,7 @@ readonly wrapped="${raw//error_code:[0-9]*/[&]}"
 shopt -u patsub_replacement   # restore default — scope carefully
 ```
 
-`wait -n` without `-p` is sufficient when you only need backpressure (throttle to N concurrent). Add `-p` when you need to correlate completion with the specific job that finished. `wait -f` is needed in non-job-control contexts where `wait PID` would fail silently.
+`wait -n` without `-p` is sufficient for backpressure alone (throttle to N concurrent). Add `-p` to correlate completion with the specific job that finished. `wait -f` is needed in non-job-control contexts where `wait PID` fails silently.
 
 ## [10]-[VERSION_GATING]
 

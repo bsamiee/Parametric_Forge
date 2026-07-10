@@ -1,14 +1,10 @@
 /**
  * review-branch — pre-PR review with adversarial verification.
  *
- * Fans out one reviewer per dimension (bugs / security / tests). The moment a
- * dimension's review returns, each finding it raised is verified in parallel by
- * a cheap Sonnet agent that tries to refute it. pipeline() means a finding
- * verifies as soon as ITS review is done — no waiting for the slowest reviewer.
- *
- * Two axes, set independently: the verify stage drops to model: 'sonnet' (cheap
- * per-finding fan-out) but keeps effort: 'high' so the adversarial refute still
- * reasons hard — effort tiers the reasoning, not the model.
+ * Demonstrates pipeline (no barrier): each finding verifies the moment ITS review
+ * returns, never waiting for the slowest reviewer. Model and effort are independent
+ * axes — verify drops to model: 'sonnet' yet keeps effort: 'high', so the refute
+ * still reasons hard; effort tiers the reasoning, not the model.
  *
  * Run before opening a PR:  Workflow({ name: 'review-branch' })
  */
@@ -33,8 +29,7 @@ const DIMENSIONS = [
 
 // --- [MODELS] --------------------------------------------------------------------------
 
-// Structured output: each reviewer must return findings in this exact shape.
-// STRICT everywhere: additionalProperties:false + every property required at every level; a conditional field is required-but-empty (''), never omitted.
+// STRICT: additionalProperties:false + every property required; a conditional field is required-but-empty (''), never omitted.
 const FINDINGS = {
     type: 'object',
     additionalProperties: false,

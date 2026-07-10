@@ -8,7 +8,7 @@ description: >-
   C#/Python/TypeScript, or authoring a structural query before a repo-wide scan.
 ---
 
-# [H1][AST-GREP]
+# [AST_GREP]
 
 Structural search is authored for the `assay code` rail, which vendors ast-grep and tree-sitter in-process — never the raw `ast-grep`/`sg` CLI. Every pattern runs through `uv run python -m tools.assay code search|query` and returns the same one-`Envelope`, artifact-backed contract as every other rail. The vendored ast-grep version is pinned in the pnpm catalog (`pnpm-workspace.yaml` `@ast-grep/cli`) and resolved through the lockfile; there is no globally installed CLI to match.
 

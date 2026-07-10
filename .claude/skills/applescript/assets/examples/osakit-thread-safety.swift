@@ -12,12 +12,10 @@ struct ScriptFailure: Error {
     }
 }
 
-// The actor confines every compile and execute to one serial context, so the run-loop
-// reentrancy a blocked send opens cannot corrupt a second in-flight script. isThreadSafe
-// governs shared-versus-dedicated instance selection, never whether execution fans across
-// threads: the stock AppleScript and JavaScript components report true and take the shared
-// instance, a third-party component that declines the bit takes a dedicated one, and either
-// lane stays serial.
+// The actor confines every compile and execute to one serial context, so the run-loop reentrancy
+// a blocked send opens cannot corrupt a second in-flight script. isThreadSafe selects shared-versus-
+// dedicated instance, never whether execution fans across threads: stock AppleScript and JavaScript
+// components report true and share, a component that declines takes a dedicated one, either lane serial.
 actor ScriptExecutor {
     private let language: OSALanguage
     private lazy var instance: OSALanguageInstance =
@@ -37,10 +35,9 @@ actor ScriptExecutor {
     }
 }
 
-/// Off-main execution never runs a background-queue NSAppleScript call. It moves execution out
-/// of the in-process OSA component entirely — NSUserAppleScriptTask (async completion handler,
-/// own queue, outside the sandbox) or a spawned /usr/bin/osascript Process — so the host's own
-/// actor keeps ownership of the descriptor result. The handler is invoked by kASSubroutineEvent.
+/// Off-main execution never runs a background-queue NSAppleScript call; it moves execution out of the
+/// in-process OSA component entirely — NSUserAppleScriptTask (async, own queue, outside the sandbox) or a
+/// spawned /usr/bin/osascript Process — so the host actor keeps the descriptor result. Handler invoked by kASSubroutineEvent.
 func runUserHandler(scriptName: String, handler: String, argument: String) async throws -> NSAppleEventDescriptor? {
     let directory = try FileManager.default.url(
         for: .applicationScriptsDirectory, in: .userDomainMask, appropriateFor: nil, create: false,

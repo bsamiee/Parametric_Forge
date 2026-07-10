@@ -182,5 +182,5 @@ PG error codes to Effect tagged errors:
 - Implicit invocation: "Review this migration.sql for PostgreSQL 18 RLS, MERGE, index, and temporal-table issues."
 - Noisy context: "Given this app bug, ignore framework chatter and audit only the embedded SQL for doctrine violations."
 - Negative control: "Write TypeScript domain models only." Expected: do not invoke PostgreSQL references unless SQL or schema design appears.
-- Compliance checks: output should load only task-relevant references, avoid command thrash, avoid creating helper files, preserve `uuidv7()`/`WITHOUT OVERLAPS`/RLS doctrine, and run `../scripts/pg_lint.sh` from this references directory when SQL text or fixtures are available.
+- Compliance checks: output loads only task-relevant references, avoids command thrash, avoids creating helper files, preserves `uuidv7()`/`WITHOUT OVERLAPS`/RLS doctrine, and runs `../scripts/pg_lint.sh` from this references directory when SQL text or fixtures are available.
 | `S.UUID` without `S.brand` for PK/FK              | RAW_UUID_ID --- brand entity IDs                           |

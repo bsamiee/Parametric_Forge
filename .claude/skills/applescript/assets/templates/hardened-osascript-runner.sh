@@ -21,10 +21,9 @@ die() {
     exit 1
 }
 
-# Silent consent verdict from the exact binary that will later automate. The embedded
-# JXA binds AEDeterminePermissionToAutomateTarget through the ObjC bridge and passes the
-# target descriptor pointer, so askUserIfNeeded stays false and no prompt is raised. The
-# perl alarm bounds the call; JXA prints the raw JSON return (no -s s, which would quote it).
+# Silent consent verdict from the exact binary that will later automate. The embedded JXA binds
+# AEDeterminePermissionToAutomateTarget through the ObjC bridge, passing the target descriptor pointer,
+# so askUserIfNeeded stays false and no prompt raises; the perl alarm bounds the call, and JXA prints the raw JSON return (no -s s, which would quote it).
 preflight() {
     local bundle_id=$1
     perl -e 'alarm shift; exec @ARGV' "$PREFLIGHT_TIMEOUT" \

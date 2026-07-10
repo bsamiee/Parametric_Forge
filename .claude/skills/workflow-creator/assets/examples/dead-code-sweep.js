@@ -1,18 +1,11 @@
 /**
- * dead-code-sweep — find and remove unreferenced code across the tri-language
- * platform, round by round, until a clean sweep turns up nothing.
+ * dead-code-sweep — remove unreferenced C#/Python/TS symbols round by round until a
+ * clean sweep turns up nothing.
  *
- * A loop-until-dry sweep over libs/csharp, libs/python and libs/typescript.
- * Each round, one finder agent uses the assay code rail to locate unreferenced
- * symbols — C# types/members, Python functions/imports, TS bindings. A `seen`
- * set keyed by file::symbol dedups within and across rounds, so a symbol an
- * earlier round already handled is never re-found. Every fresh dead symbol is
- * removed in parallel — each removal runs in its own git worktree because two
- * symbols can collapse into the same canonical owner and collide — and each
- * removal agent runs the changed owner's proof gate, reverting its own edit if
- * anything breaks. The loop stops once two
- * rounds in a row come back clean, because removing code can expose more dead
- * code underneath it — and a hard round cap guarantees termination either way.
+ * Demonstrates loop-until-dry: a file::symbol seen-set dedups across rounds, each
+ * removal runs in its own worktree (two symbols can collapse into one owner and
+ * collide) under a self-reverting proof gate, and a dry-streak plus round cap
+ * terminate the loop even as removals expose more dead code underneath.
  *
  * Workflow({ name: 'dead-code-sweep', args: { scope: 'libs/csharp/Rasm' } })
  */
@@ -34,7 +27,7 @@ const MAX_ROUNDS = 8 // hard cap so the loop always terminates
 
 // --- [INPUTS] --------------------------------------------------------------------------
 
-// `args` arrives as structured data — read the scope directly, default to all libs.
+// Structured args — read `scope` directly; default to all libs.
 const scope = args?.scope ?? 'libs'
 
 // --- [MODELS] --------------------------------------------------------------------------
@@ -94,7 +87,7 @@ while (emptyRounds < DRY_STREAK && round < MAX_ROUNDS) {
         { label: `find:round-${round}`, phase: 'Find', schema: DEAD, effort: 'low' },
     )
 
-    // Dedup through the seen set — a symbol any earlier round already handled is dropped, so a finder that re-reports it cannot trigger a second removal.
+    // Dedup via the seen set: a symbol handled in any earlier round never triggers a second removal.
     const fresh = (items ?? []).filter(it => {
         const key = `${it.file}::${it.symbol}`
         return seen.has(key) ? false : (seen.add(key), true)
@@ -109,8 +102,8 @@ while (emptyRounds < DRY_STREAK && round < MAX_ROUNDS) {
     emptyRounds = 0
     log(`Round ${round}: ${fresh.length} new dead symbol(s) found`)
 
-    // Remove each one in parallel. Two removals can collapse into the SAME canonical owner, so each runs in its own worktree (isolation) to avoid colliding edits;
-    // every agent then runs the changed owner's proof gate and reverts its own edit if anything fails, so a bad removal cannot land.
+    // Worktree per removal: two can collapse into the same canonical owner and collide; each runs the
+    // owner's proof gate and self-reverts on failure, so a bad removal cannot land.
     phase('Remove')
     const outcomes = await parallel(fresh.map(it => () =>
         agent(

@@ -62,9 +62,8 @@ _MATERIAL=0
 # --- [OPERATIONS] -----------------------------------------------------------------------
 
 _mtime() {
-    # Fractional seconds: a live refresh inside the same wall-clock second must
-    # still classify as live. Output is shape-validated per stat flavor — GNU
-    # stat parses BSD's '-f %Fm' as a file operand and emits multiline junk.
+    # Fractional seconds: a refresh inside the same wall-clock second must still classify live.
+    # Shape-validated per stat flavor — GNU stat reads BSD's '-f %Fm' as a file operand, emitting multiline junk.
     local m
     m="$(stat -f %Fm "$1" 2>/dev/null)" || m=""
     [[ "${m}" =~ ^[0-9]+(\.[0-9]+)?$ ]] || { m="$(stat -c %.9Y "$1" 2>/dev/null)" || m=""; }
@@ -83,12 +82,9 @@ _join() {
 
 _fetch() {
     local -r project="$1" config="$2" snap="$3" token="$4" out="$5"
-    # Request budget sits inside the SessionStart hook timeout: a stalled API
-    # degrades to the snapshot instead of killing the whole emission. no-cache
-    # forces a full fetch so every live success rewrites the snapshot — the
-    # mtime advance IS the live verdict; cache-served reads would fake snapshot.
-    # json format: the dump is parsed, never sourced — secret bytes cannot
-    # reach the shell parser, and the snapshot stores json bytes for offline.
+    # Request budget sits inside the hook timeout: a stalled API degrades to the snapshot, never kills emission.
+    # --no-cache forces a full fetch so every live success rewrites the snapshot — the mtime advance IS the live verdict, where a cache-served read would fake it.
+    # --format json is parsed, never sourced, so secret bytes never reach the shell parser; the snapshot holds json for offline.
     local -a flags=(--fallback "${snap}" --no-cache --timeout 3s)
     [[ "${DOPPLER_OFFLINE}" != "1" ]] || flags+=(--fallback-only)
     if [[ -n "${token}" ]]; then
@@ -114,9 +110,8 @@ _classify() {
 }
 
 _resolve_source() {
-    # Background worker: writes ${out} (env dump), ${out}.err, ${out}.meta
-    # (outcome|keys|age_days|auth|reason) and refreshes the per-source key-name
-    # manifest — the derived expected map a dead row is reported against.
+    # Background worker: writes ${out} (env dump), ${out}.err, and ${out}.meta
+    # (outcome|keys|age_days|auth|reason), and refreshes the per-source key-name manifest a dead row is reported against.
     local -r spec="$1" out="$2"
     local project config snapshot tokenvar
     IFS=: read -r project config snapshot tokenvar <<<"${spec}"
@@ -132,13 +127,9 @@ _resolve_source() {
     post="$(_mtime "${snap}")"
     outcome="$(_classify "${rc}" "${pre}" "${post}")"
     if [[ "${auth}" == "token" && "${outcome}" != "live" ]]; then
-        # Resilient rail: a degraded token attempt retries ambient CLI auth once,
-        # into a side file so a failed retry can never clobber served material.
-        # Runs offline too — fallback decryption is passphrase-bound to the
-        # fetching auth, so only the ambient retry can read a CLI-written
-        # snapshot. Blame lands on the token only when ambient disproves it: a
-        # live retry, or ambient material where the token lane died (Doppler
-        # never serves fallback on 401/403/404, so a dead token lane IS auth).
+        # Resilient rail: a degraded token attempt retries ambient CLI auth once into a side file, so a failed retry never clobbers served material.
+        # Offline too — fallback decryption is passphrase-bound to the fetching auth, so only the ambient retry reads a CLI-written snapshot.
+        # Blame lands on the token only when ambient disproves it: a live retry, or ambient material where the token lane died (Doppler never serves fallback on 401/403/404, so a dead token lane IS auth).
         # Snapshot-for-snapshot keeps auth=token — the snapshot alert covers it.
         local rc2=0 retry
         pre="${post}"
@@ -226,9 +217,8 @@ _load_secrets() {
             fi
             if [[ "${outcome}" != "dead" && -s "${out}" ]]; then
                 _MATERIAL=1
-                # NUL-delimited literal assignment, never source/eval: Doppler's
-                # env escaping is server-side and unproven shell-safe, so secret
-                # bytes must not reach the parser. jq decodes json exactly.
+                # NUL-delimited literal assignment, never source/eval: Doppler's env escaping is server-side and unproven shell-safe,
+                # so secret bytes never reach the parser; jq decodes json exactly.
                 local k v
                 while IFS= read -r -d '' k && IFS= read -r -d '' v; do
                     [[ "${k}" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]] || continue
@@ -318,10 +308,8 @@ _emit_tool_paths() {
 
 # --- [PUBLISH] --------------------------------------------------------------------------
 
-# Resolve Doppler, then publish: keys into CLAUDE_ENV_FILE (env mode only),
-# the TUI/GUI session cache on resolver material, and the key-name receipt.
-# A total outage preserves the last good cache; a fresh machine with no cache
-# yet still bootstraps from whatever emitted.
+# Resolve Doppler, then publish: keys into CLAUDE_ENV_FILE (env mode only), the session cache on resolver material, and the key-name receipt.
+# A total outage preserves the last good cache; a cache-less fresh machine still bootstraps from whatever emitted.
 _resolve_and_publish() {
     local publish_env="$1" key
     _load_secrets

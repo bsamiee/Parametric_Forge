@@ -54,7 +54,7 @@
 
 **`hashFiles` behavior:** Returns empty string `''` on no match (no error, no warning). Uses `@actions/glob` patterns. Multiple args = logical AND across patterns. Broken symlinks produce empty hash silently. Glob matching is case-insensitive on Windows, case-sensitive on Linux/macOS. `?` wildcard not supported — returns empty.
 
-[CONTAINS_STARTSWITH_ENDSWITH]: All three are **case-insensitive** for string comparisons. `contains('Hello', 'hello')` evaluates to `true`. When comparing against arrays, `contains()` checks for exact element match.
+[CONTAINS_STARTSWITH_ENDSWITH]: All three are case-insensitive for string comparisons. `contains('Hello', 'hello')` evaluates to `true`. When comparing against arrays, `contains()` checks for exact element match.
 
 [COMPARISON_SEMANTICS]: Falsy values: `false`, `0`, `-0`, `""`, `null`. GitHub ignores case for string `==`/`!=`. `NaN` relational comparisons always return `false`. Objects/arrays equal only when same instance.
 

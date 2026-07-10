@@ -2,12 +2,13 @@
 name: coding-bash
 description: >-
   Use for Bash 5.2+/5.3 scripts, shell CLIs, entrypoints, CI jobs, cron,
-  text-processing pipelines, ShellCheck remediation, and shell reviews.
+  text-processing pipelines, ShellCheck remediation, and shell reviews —
+  "write a shell script", "fix this bash", "make a CLI wrapper".
   Enforces strict mode, dispatch-table routing, fork-minimal primitives,
   atomic I/O, signal-safe cleanup, and pragmatic functional shell patterns.
 ---
 
-# [H1][CODING-BASH]
+# [CODING_BASH]
 
 All code follows five governing principles:
 - [FUNCTIONAL] — immutable locals, pure functions, dispatch tables, and tightly bounded mutable shell state
@@ -17,8 +18,31 @@ All code follows five governing principles:
 - [ECOSYSTEM_FIRST] — `rg`/`fd`/`jq`/`sd`/`choose`/`mlr` over sed/grep/find/cut when available
 - [EXECUTABLE_DOCTRINE] — examples and templates must pass syntax, ShellCheck, and their own self-tests
 
+## [01]-[ROUTING]
 
-## [01]-[PARADIGM]
+[FOUNDATION]: every task loads [bash-scripting-guide.md](references/bash-scripting-guide.md) — primitives, strict mode, expansion, arrays.
+
+[TASK_ROUTED]: load only when the task matches.
+- [01]-[VERSION_FEATURES](references/version-features.md): 5.2/5.3 features, fork-free substitution, version gating
+- [02]-[VARIABLE_FEATURES](references/variable-features.md): call stacks, namerefs, traps, process lifecycle, 5.3 vars
+- [03]-[ARRAY_OPERATIONS](references/array-operations.md): set algebra, structural transforms, higher-order traversal
+- [04]-[STRING_OPERATIONS](references/string-operations.md): transform pipelines, regex extraction, codecs, templates
+- [05]-[FILE_OPERATIONS](references/file-operations.md): atomic writes, FD multiplexing, directory traversal
+- [06]-[SCRIPT_PATTERNS](references/script-patterns.md): arg parsing, help, ERR traps, parallel, retry
+- [07]-[BASH_LOGGING](references/bash-logging.md): structured logging, CI integration, tracing
+- [08]-[BASH_TESTING](references/bash-testing.md): bats-core `1.13+` suites, coverage, hypothesis PBT
+- [09]-[BASH_PORTABILITY](references/bash-portability.md): cross-shell compat, containers, POSIX
+- [10]-[TEXT_PROCESSING_GUIDE](references/text-processing-guide.md): rg/awk/sd/jq/yq/mlr tool selection
+- [11]-[VALIDATION](references/validation.md): ShellCheck codes, static analysis, CI
+
+[EXAMPLES]: read the one matching the target archetype before writing.
+- [01]-[CLI_TOOL](examples/cli-tool.sh): two-dimensional verb:resource dispatch CLI
+- [02]-[DATA_PIPELINE](examples/data-pipeline.sh): file processing with jq pipelines, accumulation
+- [03]-[SERVICE_WRAPPER](examples/service-wrapper.sh): container entrypoint, signal dispatch, coproc
+
+[TEMPLATE]: scaffold a new script from [standard.template.md](templates/standard.template.md) — strict-mode header, logging, cleanup stack, traps, flag parsing, self-test.
+
+## [02]-[PARADIGM]
 
 - [IMMUTABILITY]: `local -r` for all non-mutating function locals, `readonly` for module-level constants. Mutable state only for argument parsing — frozen via `readonly` in `_main` before core logic
 - [DISPATCH_TABLES]: `declare -Ar` for O(1) command routing, two-dimensional `verb:resource` keyed dispatch, option metadata, validation rules, log-level gating, env contract validation (regex patterns per env var). `case/esac` reserved exclusively for glob/regex pattern matching — never conditional routing
@@ -29,10 +53,9 @@ All code follows five governing principles:
 - [FORK_ELIMINATION]: `printf -v var '%(%F %T)T' -1` over `$(date)`, `$(<file)` over `$(cat file)`, `EPOCHSECONDS`/`EPOCHREALTIME` over `$(date +%s)`, `mapfile` over `while read` loops, `BASH_REMATCH` over `grep -oP`
 - [ATOMIC_IO]: All file writes via `mktemp` + write + `mv` (rename is atomic on same filesystem). `umask 077` before `mktemp` for sensitive data. Dynamic FDs via `exec {fd}>file`
 
+## [03]-[CONVENTIONS]
 
-## [02]-[CONVENTIONS]
-
-[ECOSYSTEM_TOOL_SELECTION]:prefer the ecosystem's richer alternative when available:
+[ECOSYSTEM_TOOL_SELECTION]: prefer the ecosystem's richer alternative when available:
 
 | [INDEX] | [TASK]           | [PREFERRED] | [FALLBACK]         | [NEVER]               |
 | :-----: | :--------------- | :---------- | :----------------- | :-------------------- |
@@ -52,8 +75,7 @@ All code follows five governing principles:
 - `mlr` handles format conversion (CSV to JSON, TSV to JSON) natively
 - Pipeline preference: single `awk` program over chained `grep | sed | cut`
 
-
-## [03]-[CONTRACTS]
+## [04]-[CONTRACTS]
 
 [VARIABLE_DISCIPLINE]:
 - `local -r` for all non-mutating function locals. `readonly` for all module-level constants.
@@ -103,32 +125,6 @@ All code follows five governing principles:
 - Health endpoint: `socat TCP-LISTEN:${port},reuseaddr,fork SYSTEM:"printf 'HTTP/1.1 200 OK\r\n...'"` backgrounded with cleanup registration.
 - W3C tracing: parse `TRACEPARENT` via `BASH_REMATCH`, generate via `printf -v TRACE_ID '%08x%08x%08x%08x' "${SRANDOM}"...`, export for child propagation.
 
-
-## [04]-[LOAD_SEQUENCE]
-
-[FOUNDATION]: every task loads [bash-scripting-guide.md](references/bash-scripting-guide.md) — primitives, strict mode, expansion, arrays.
-
-[TASK_ROUTED]: load only when the task matches.
-- [01]-[VERSION_FEATURES](references/version-features.md): 5.2/5.3 features, fork-free substitution, version gating
-- [02]-[VARIABLE_FEATURES](references/variable-features.md): call stacks, namerefs, traps, process lifecycle, 5.3 vars
-- [03]-[ARRAY_OPERATIONS](references/array-operations.md): set algebra, structural transforms, higher-order traversal
-- [04]-[STRING_OPERATIONS](references/string-operations.md): transform pipelines, regex extraction, codecs, templates
-- [05]-[FILE_OPERATIONS](references/file-operations.md): atomic writes, FD multiplexing, directory traversal
-- [06]-[SCRIPT_PATTERNS](references/script-patterns.md): arg parsing, help, ERR traps, parallel, retry
-- [07]-[BASH_LOGGING](references/bash-logging.md): structured logging, CI integration, tracing
-- [08]-[BASH_TESTING](references/bash-testing.md): bats-core `1.13+` suites, coverage, hypothesis PBT
-- [09]-[BASH_PORTABILITY](references/bash-portability.md): cross-shell compat, containers, POSIX
-- [10]-[TEXT_PROCESSING_GUIDE](references/text-processing-guide.md): rg/awk/sd/jq/yq/mlr tool selection
-- [11]-[VALIDATION](references/validation.md): ShellCheck codes, static analysis, CI
-
-[EXAMPLES]: read the one matching the target archetype before writing.
-- [01]-[CLI_TOOL](examples/cli-tool.sh): two-dimensional verb:resource dispatch CLI
-- [02]-[DATA_PIPELINE](examples/data-pipeline.sh): file processing with jq pipelines, accumulation
-- [03]-[SERVICE_WRAPPER](examples/service-wrapper.sh): container entrypoint, signal dispatch, coproc
-
-[TEMPLATE]: scaffold a new script from [standard.template.md](templates/standard.template.md) — strict-mode header, logging, cleanup stack, traps, flag parsing, self-test.
-
-
 ## [05]-[ANTI_PATTERNS]
 
 [STATE_VIOLATIONS]:
@@ -151,7 +147,6 @@ All code follows five governing principles:
 - UTILITY EXTRACTION: `lib/utils.sh`, `common.sh` helper files. Colocate all logic in the script.
 - RANDOM OVER SRANDOM: `$RANDOM` for security-relevant randomness (temp names, jitter, tokens). Use `$SRANDOM` (cryptographic entropy).
 
-
 ## [06]-[VALIDATION_GATE]
 
 - Required: `bash -n script.sh` (syntax check), ShellCheck `0.11.0+` clean (static analysis).
@@ -164,8 +159,7 @@ All code follows five governing principles:
 - Implicit invocation: "Review this deployment script for ShellCheck, strict mode, cleanup, and streaming-loop issues."
 - Noisy context: "Ignore CI chatter and only audit the Bash entrypoint."
 - Negative control: "Only write PostgreSQL DDL." Expected: do not load Bash references unless shell code appears.
-- Compliance checks: output should load only relevant references, avoid command thrash, avoid helper files, preserve marked shell-reality exceptions, and run `bash -n`, ShellCheck, and `--self-test` when applicable.
-
+- Compliance checks: output loads only relevant references, avoids command thrash, avoids helper files, preserves marked shell-reality exceptions, and runs `bash -n`, ShellCheck, and `--self-test` when applicable.
 
 ## [08]-[FIRST_CLASS_TOOLS]
 

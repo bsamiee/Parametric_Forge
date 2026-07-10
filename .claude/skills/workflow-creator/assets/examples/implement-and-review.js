@@ -1,9 +1,8 @@
 /**
  * implement-and-review — implement a feature, then loop review-and-fix.
  *
- * Implement once, then review. If the review fails, fix the listed issues and
- * review again — up to 3 rounds. The loop lives in JavaScript, so unlike a
- * hand-orchestrated chat it physically cannot forget to re-review.
+ * The review loop lives in JavaScript, so unlike a hand-orchestrated chat it cannot
+ * forget to re-review: a failing review feeds its issues back to a fix, up to 3 rounds.
  *
  * Workflow({ name: 'implement-and-review', args: 'collapse the duplicate mesh codecs in libs/csharp/Rasm into one [Union]' })
  */
@@ -25,13 +24,12 @@ const MAX_ROUNDS = 3 // hard cap — every loop in a workflow needs one.
 
 // --- [INPUTS] --------------------------------------------------------------------------
 
-// `args` arrives as structured data. This workflow expects a plain-text task string; anything else falls back to the default.
+// Structured args: a plain-text task string, else the default.
 const task = typeof args === 'string' && args.trim() ? args : 'collapse the duplicate mesh codecs in libs/csharp/Rasm into one [Union]'
 
 // --- [MODELS] --------------------------------------------------------------------------
 
-// The reviewer must answer two things: did it pass, and if not, what is wrong.
-// STRICT: additionalProperties:false + every property required (issues = required-but-empty on a pass).
+// STRICT: additionalProperties:false + every property required; issues is required-but-empty on a pass.
 const REVIEW = {
     type: 'object',
     additionalProperties: false,
@@ -53,7 +51,7 @@ let round = 0
 do {
     round++
 
-    // The reviewer is a fresh-context agent — it never saw the implementer's reasoning, so it grades the diff on its merits instead of rubber-stamping.
+    // Fresh-context reviewer — it never saw the implementer's reasoning, so it grades the diff on merits, not rubber-stamps.
     phase('Review')
     review = await agent(
         `Review the current uncommitted changes for: ${task}. List concrete, specific issues.`,

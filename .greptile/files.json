@@ -37,6 +37,18 @@
             "scope": ["**/*.py"]
         },
         {
+            "path": "docs/atlas/scars.md",
+            "description": "Estate regression scars: named failure classes past incidents proved, with the load-bearing repair shape"
+        },
+        {
+            "path": "docs/atlas/interconnection.md",
+            "description": "Seam map: config.forge.* option hinges, runtime contracts (attention feed, receipts, terminal mesh, XDG projections), owner tables — the blast radius a cross-module change must honor"
+        },
+        {
+            "path": "docs/atlas/rails-and-contracts.md",
+            "description": "Estate rails and contract surfaces: receipts, envelopes, registers, notification and attention plumbing"
+        },
+        {
             "path": "docs/standards/style-guide.md",
             "description": "Prose law: sentence altitude, register, banned patterns",
             "scope": ["**/*.md"]

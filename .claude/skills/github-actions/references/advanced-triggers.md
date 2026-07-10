@@ -194,7 +194,7 @@ jobs:
 
 - `continue-on-error`: downstream `needs:` jobs then see the failed job as success.
 
-[INTERACTION_SEMANTICS]: `continue-on-error: true` on a matrix job masks its failure from `fail-fast` — remaining matrix jobs continue. However, downstream `needs:` jobs see the failed job's result as `success`, which can hide real failures. Recommended pattern: Use `fail-fast: false` (let all matrix jobs run) without `continue-on-error`, then aggregate results in a downstream job via `needs.*.result`.
+[INTERACTION_SEMANTICS]: `continue-on-error: true` on a matrix job masks its failure from `fail-fast` — remaining matrix jobs continue. However, downstream `needs:` jobs see the failed job's result as `success`, which can hide real failures. The matrix policy: `fail-fast: false` (let all matrix jobs run) without `continue-on-error`, then aggregate results in a downstream job via `needs.*.result`.
 
 [IMPORTANT] `uses:` values are static strings — not dynamically generated. Max 256 jobs per matrix.
 

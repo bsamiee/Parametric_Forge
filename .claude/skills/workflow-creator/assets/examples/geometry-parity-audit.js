@@ -1,13 +1,10 @@
 /**
- * geometry-parity-audit — find where the C# geometry kernel and the Python
- * companion disagree, then cluster the divergences into themes.
+ * geometry-parity-audit — compare each shared geometry op across the C# kernel and
+ * the Python companion, then cluster the divergences into themes.
  *
- * Rasm runs two host-free geometry stacks that must agree at the wire: the C#
- * `Rasm` kernel and the Python `geometry` companion. This fans out one agent per
- * shared operation (curve offset, mesh boolean, surface intersect, …) to compare
- * the two implementations, then clusters every divergence it found. The
- * parallel() call is a genuine barrier: clustering needs every comparison at once
- * — you cannot name a theme from one operation alone — so a barrier is correct.
+ * Demonstrates a correct barrier: clustering works across the whole divergence set —
+ * a theme cannot be named from one op alone — so parallel() must gather every
+ * comparison before the cluster stage runs.
  *
  * Workflow({ name: 'geometry-parity-audit',
  *            args: { ops: ['curve offset', 'mesh boolean', 'surface intersect'] } })
@@ -26,7 +23,7 @@ export const meta = {
 
 // --- [INPUTS] --------------------------------------------------------------------------
 
-// `args` arrives as structured data. An object with an `ops` list overrides the discovery step; nothing passed lets the kernel enumerate the shared ops itself.
+// Structured args: an `ops` list overrides discovery; omit it to enumerate the shared ops.
 const seedOps = Array.isArray(args?.ops) ? args.ops : null
 
 // --- [MODELS] --------------------------------------------------------------------------
@@ -64,7 +61,7 @@ const ops = seedOps ?? (await agent(
 )).ops
 log(`${ops.length} shared operation(s) to compare`)
 
-// Compare each op independently. Barrier on purpose — the clustering step works across the WHOLE set of divergences, so it needs every comparison together.
+// Barrier: clustering works across the whole divergence set, so it needs every comparison together.
 const comparisons = await parallel(ops.map(op => () =>
     agent(
         `Compare how "${op}" is implemented in libs/csharp/Rasm versus libs/python/geometry. ` +
@@ -83,8 +80,7 @@ if (divergent.length === 0) {
 
 // --- [CLUSTER_DIVERGENCES]
 
-// Paste fan-in is small-output-only (divergences bounded by the op roster); past ~50 rows
-// the product moves to a scratch report file + receipt — the patterns reference report-file shape.
+// Paste fan-in is small-output-only; past ~50 rows move the product to a scratch report file + receipt.
 phase('Cluster divergences')
 const report = await agent(
     `Here are ${divergent.length} cross-runtime geometry divergences. Cluster them into ` +

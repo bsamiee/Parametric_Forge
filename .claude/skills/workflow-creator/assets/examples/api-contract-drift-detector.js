@@ -1,14 +1,9 @@
 /**
- * api-contract-drift-detector — find where a shared wire type has drifted between
- * the C# producer and its host-free consumers, then open one consolidated PR.
+ * api-contract-drift-detector — check each shared wire type across the C# producer
+ * and its Python/TypeScript consumers, then open one consolidated drift PR.
  *
- * The three branches couple only at the wire: C# is the producer, libs/python/data
- * and libs/typescript/interchange are the host-free consumers. A wire type is in
- * sync only when all three agree on its field set, names, optionality, and codes.
- * This fans out one checker per shared wire type — each agent reads the C# producer
- * shape and both consumer mirrors and reports any divergence. The parallel() call
- * is a genuine barrier: the consolidated drift PR has to touch every divergence at
- * once, so it needs the full set of results before it can run — a barrier is correct.
+ * Demonstrates a correct barrier: parallel() fans out one checker per wire type, and
+ * the single PR stage must touch every divergence at once, so it needs the full set.
  *
  * Workflow({ name: 'api-contract-drift-detector',
  *            args: { types: ['MeshPayload', 'IfcEntityRef', 'UnitSystem'] } })
@@ -27,7 +22,7 @@ export const meta = {
 
 // --- [INPUTS] --------------------------------------------------------------------------
 
-// `args` arrives as structured data. An object with a `types` list overrides the discovery step; nothing passed lets the kernel enumerate the shared wire types.
+// Structured args: a `types` list overrides discovery; omit it to enumerate the shared wire types.
 const seedTypes = Array.isArray(args?.types) ? args.types : null
 
 // --- [MODELS] --------------------------------------------------------------------------
@@ -69,7 +64,7 @@ const { types } = seedTypes
     )
 log(`${types.length} shared wire type(s) to check`)
 
-// Fan out — one checker per wire type, all at once. Barrier on purpose: the PR stage edits every divergence together, so it needs the full set of results.
+// Barrier: the PR stage edits every divergence together, so it needs the full result set.
 const checks = await parallel(types.map(wt => () =>
     agent(
         `Check the wire type "${wt}" for drift across the three branches. Read the C# producer ` +
@@ -90,8 +85,7 @@ if (drifted.length === 0) {
 
 // --- [OPEN_PR]
 
-// Paste fan-in is small-output-only (drift set bounded by the wire-type roster); past
-// ~50 rows the product moves to a scratch report file + receipt — the patterns reference report-file shape.
+// Paste fan-in is small-output-only; past ~50 rows move the product to a scratch report file + receipt.
 phase('Open PR')
 await agent(
     `Open ONE draft pull request that realigns every drifted wire type to its C# producer ` +

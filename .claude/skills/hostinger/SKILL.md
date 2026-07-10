@@ -25,9 +25,9 @@ The MCP tool names mirror the REST resources one-to-one (`VPS_createSnapshotV1` 
 
 ## [01]-[ROUTING]
 
-- [DOMAINS]: [references/domains.md](references/domains.md) — portfolio, availability and purchase, nameservers and DNS zone records, forwarding, WHOIS profiles, lock and privacy, verification, outbound transfer, bulk audit. Open for any domain or DNS task.
-- [VPS]: [references/vps.md](references/vps.md) — VM lifecycle and actions, Docker Manager projects, firewall law and patterns, SSH keys, templates, post-install scripts, backups and snapshots, recovery mode, Monarx, PTR, metrics, troubleshooting. Open for any server task.
-- [DEPLOYMENT]: [references/deployment.md](references/deployment.md) — the SSH-first deployment workflow for Dockerized apps: baseline, deploy and update order, verification levels, rollback, and the SSH-versus-API split. Open when deploying or updating an application on a VPS.
+- [01]-[DOMAINS](references/domains.md): portfolio, availability and purchase, nameservers and DNS zone records, forwarding, WHOIS profiles, lock and privacy, verification, outbound transfer, bulk audit. Open for any domain or DNS task.
+- [02]-[VPS](references/vps.md): VM lifecycle and actions, Docker Manager projects, firewall law and patterns, SSH keys, templates, post-install scripts, backups and snapshots, recovery mode, Monarx, PTR, metrics, troubleshooting. Open for any server task.
+- [03]-[DEPLOYMENT](references/deployment.md): the SSH-first deployment workflow for Dockerized apps: baseline, deploy and update order, verification levels, rollback, and the SSH-versus-API split. Open when deploying or updating an application on a VPS.
 
 ## [02]-[STANDING_LAW]
 

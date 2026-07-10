@@ -9,22 +9,32 @@ allowed-tools:
 
 Every artifact is one self-contained file: a deliverable type fixes its composition — layout class, structural spine, element set, capture contract — and the references rule the code, style, figures, and interaction it composes from.
 
-## [01]-[BUILD]
+## [01]-[ROUTING]
 
-1. Load the five references.
-2. Select the deliverable type from the deliverables reference by the reader's first question; the type fixes the measure, the section spine, the envelope kind, and whether a drawer ships. A page serving two types splits or subordinates.
-3. Model the content before rendering it: the payload block carries every fact, stable ids on every capturable item, and markup states nothing the model lacks.
-4. Compose answer-first down the type's spine, starting from [templates/artifact.template.html](templates/artifact.template.html) — the gate-clean shell with the registry, layers, body order, drawer, and script kernels; [examples/decision-record.html](examples/decision-record.html) is the worked decision-doc instance at composed scale. Real controls, real data rows, real rendered rivals — never prose describing an unbuilt surface — with every element inheriting the token registry.
-5. Validate the finalized artifact with `uv run ${CLAUDE_SKILL_DIR}/scripts/studio.py` and fix until clean: `gate <file.html>` checks self-containment, accessibility, style-doctrine conformance, and W3C markup; `render <file.html>` returns a headless screenshot and the console through the machine's pinned Chromium. `--help` lists every verb.
-6. An artifact whose value is the user's judgment runs served, not just opened: `serve <file.html>` hosts it with the return channel, the user acts, and `receipts <file.html>` reads the submissions; the interaction reference owns the envelope.
-
-## [02]-[REFERENCES]
+[REFERENCES]:
 
 - [01]-[DELIVERABLES](references/deliverables.md): the type registry — per-type spine, layout class, element set, capture contract, and the variant table that resolves every named deliverable onto a core type.
 - [02]-[HTML](references/html.md): advanced HTML — semantic structure, density, and the coding patterns every artifact composes from.
 - [03]-[SVG](references/svg.md): advanced inline SVG for HTML — the element vocabulary, construction patterns, and figure and diagram craft.
 - [04]-[STYLE](references/style.md): the design language and styling doctrine — the token system, layout, theming, and legibility law every artifact inherits.
 - [05]-[INTERACTION](references/interaction.md): interaction and the return channel — the data-to-presentation mapping, the drawer, and how a page returns the user's adjustments as data.
+
+[TEMPLATES]:
+
+- [01]-[ARTIFACT](templates/artifact.template.html): the gate-clean shell with the registry, layers, body order, drawer, and script kernels.
+
+[EXAMPLES]:
+
+- [01]-[DECISION_RECORD](examples/decision-record.html): the worked decision-doc instance at composed scale.
+
+## [02]-[BUILD]
+
+1. Load the five references.
+2. Select the deliverable type from the deliverables reference by the reader's first question; the type fixes the measure, the section spine, the envelope kind, and whether a drawer ships. A page serving two types splits or subordinates.
+3. Model the content before rendering it: the payload block carries every fact, stable ids on every capturable item, and markup states nothing the model lacks.
+4. Compose answer-first down the type's spine, starting from `templates/artifact.template.html` — the gate-clean shell with the registry, layers, body order, drawer, and script kernels; `examples/decision-record.html` is the worked decision-doc instance at composed scale. Real controls, real data rows, real rendered rivals — never prose describing an unbuilt surface — with every element inheriting the token registry.
+5. Validate the finalized artifact with `uv run ${CLAUDE_SKILL_DIR}/scripts/studio.py` and fix until clean: `gate <file.html>` checks self-containment, accessibility, style-doctrine conformance, and W3C markup; `render <file.html>` returns a headless screenshot and the console through the machine's pinned Chromium. `--help` lists every verb.
+6. An artifact whose value is the user's judgment runs served, not just opened: `serve <file.html>` hosts it with the return channel, the user acts, and `receipts <file.html>` reads the submissions; the interaction reference owns the envelope.
 
 ## [03]-[CONTRACT]
 

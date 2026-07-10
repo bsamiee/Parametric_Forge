@@ -46,9 +46,8 @@ function writeUTF8(text, posixPath) {
     return target.js;
 }
 
-// Domain operation. A property read is a method call; a specifier stays uncalled until a
-// container operation consumes it. A whose predicate reduces target-side; JS filtering is
-// the fallback when the compound descriptor crosses a brittle object model.
+// Domain operation. A property read is a method call; a specifier stays uncalled until a container
+// operation consumes it. A whose predicate reduces target-side, with JS filtering the fallback when the compound descriptor crosses a brittle object model.
 function perform(bundleID, payload) {
     const app = Application(bundleID);
     const currentApp = Application.currentApplication();

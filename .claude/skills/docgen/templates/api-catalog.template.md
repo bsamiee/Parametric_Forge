@@ -4,8 +4,8 @@
 
 ## [01]-[PACKAGE_SURFACE]
 
-- package: <package-id>
-- license: <license>
+- Package: <package-id>
+- License: <license>
 - namespace: <namespace-or-import>
 - asset: <asset-or-dll>
 - rail: <one-file-rail>

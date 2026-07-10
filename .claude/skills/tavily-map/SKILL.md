@@ -45,7 +45,7 @@ uvx --from tavily-cli tvly map "https://example.com" --max-depth 3 --limit 200 -
 |  [09]   | `-o, --output`                           | Save output to file                          |
 |  [10]   | `--json`                                 | Structured JSON output                       |
 
-## [03]-[MAP_THEN_EXTRACT]
+## [03]-[LANE_SELECTION]
 
 Map finds the right page, extract pulls it — cheaper than crawling an entire site when only a few pages matter:
 

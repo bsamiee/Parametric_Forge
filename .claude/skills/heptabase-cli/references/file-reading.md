@@ -15,7 +15,7 @@ heptabase file export <fileId> --output-dir <existing-directory>
 
 ## [02]-[LIST_FILES]
 
-If you have a PDF or media card ID, list its files first:
+Given a PDF or media card ID, list its files first:
 
 ```bash template
 heptabase file list --card-id 22222222-2222-4222-8222-222222222222
@@ -40,7 +40,7 @@ Example response:
 }
 ```
 
-Pick the file `id` whose `purpose` you need, then pass that `id` to `file export` as `<fileId>`.
+Pick the file `id` for the required `purpose`, then pass that `id` to `file export` as `<fileId>`.
 
 ## [03]-[EXPORT_AND_READ]
 
@@ -84,7 +84,7 @@ Now read `/tmp/hepta-read/report-55555555-5555-4555-8555-555555555555.pdf` with 
 
 ## [05]-[CLEAN_UP_SCRATCH_FILES]
 
-- Exported files are temporary scratch copies. After you finish reading them, delete the scratch directory created by `mktemp -d`.
+- Exported files are temporary scratch copies. After reading them, delete the scratch directory created by `mktemp -d`.
 - Do not delete the scratch directory until all tools that need the returned `path` are done.
 
 ## [06]-[TROUBLESHOOTING]

@@ -100,7 +100,7 @@ effective_cache_size = '24GB'             # hint: total OS + PG cache (50-75% of
 ```
 
 Cost model contracts:
-- `random_page_cost / seq_page_cost` ratio governs index vs seq scan preference -- SSD ratio should approach 1.0; default 4.0 heavily penalizes index scans
+- `random_page_cost / seq_page_cost` ratio governs index vs seq scan preference -- SSD ratio approaches 1.0; default 4.0 heavily penalizes index scans
 - `effective_cache_size` is a planner hint (no memory allocated) -- undersized value causes seq scan preference on indexed queries; set to 50-75% of total RAM
 - Diagnosis: EXPLAIN shows seq scan on selective indexed query → `random_page_cost` too high
 - Mixed storage: `ALTER TABLESPACE ssd_space SET (random_page_cost = 1.1)` for per-tablespace override
@@ -240,7 +240,7 @@ SELECT pg_try_advisory_lock(hashtext('leader_election'));
 - Two key spaces: 64-bit single-key and 32-bit dual-key — use dual-key for `(entity_type_hash, entity_id_hash)` patterns
 
 Optimization contracts:
-- `SKIP LOCKED` skips locked rows entirely -- they are NOT retried; ensure all rows eventually processed
+- `SKIP LOCKED` skips locked rows entirely -- they are NOT retried; a periodic sweep reclaims stuck rows so every row is processed
 - Prepared statements: `PREPARE stmt AS ...` + `EXECUTE stmt(...)` -- avoids repeated parse/plan after 5th execution (custom plan to generic plan transition)
 - `plan_cache_mode = force_custom_plan` for parameterized queries where generic plan is suboptimal (skewed data distribution)
 - Statistics target: `ALTER TABLE orders ALTER COLUMN status SET STATISTICS 1000` -- increase for high-cardinality skewed columns
@@ -260,7 +260,7 @@ wal_compression = zstd                    # PG 15+: compress full-page writes (r
 WAL contracts:
 - `wal_compression = zstd` reduces WAL volume significantly -- lower replication bandwidth and faster WAL replay
 - `full_page_writes = on` (never disable in production) -- protects against partial page writes on crash
-- Monitor checkpoint frequency: `SELECT * FROM pg_stat_checkpointer` -- `checkpoints_req` (forced) should be rare relative to `checkpoints_timed`
+- Monitor checkpoint frequency: `SELECT * FROM pg_stat_checkpointer` -- `checkpoints_req` (forced) stays rare relative to `checkpoints_timed`
 
 
 ## [11]-[PARTITIONING_PERFORMANCE]

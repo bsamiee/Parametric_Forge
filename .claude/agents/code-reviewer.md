@@ -1,6 +1,7 @@
 ---
 name: code-reviewer
 description: Runs CodeRabbit AI review on local changes and returns triaged, actionable findings
+model: sonnet
 ---
 
 # CodeRabbit Review Agent

@@ -57,7 +57,7 @@
         },
         {
             "id": "shell-app-bar",
-            "rule": "Shell bodies — packaged via writeShellApplication or standalone .sh including .claude hooks — declare runtimeInputs where packaged, use set -euo pipefail, pass shellcheck without directives, carry zero '|| true' masks, and embed no repo paths, usernames, or magic values.",
+            "rule": "Shell bodies — packaged via writeShellApplication or standalone .sh including .claude hooks — declare runtimeInputs where packaged, use set -euo pipefail, pass shellcheck without directives, and embed no repo paths, usernames, or magic values. An '|| true' survives only as a pipefail rail where non-zero exit is an expected data condition (probe no-match, vanished process, torn tail line of a live-appended file); an '|| true' that hides a real failure class is a defect.",
             "severity": "medium",
             "scope": ["modules/**", "overlays/**", "flake-modules/**", ".claude/**"],
             "enabled": true
@@ -81,6 +81,12 @@
             "rule": "Lua and TOML app config consumes Nix-owned vocabulary projections; a private hex color, ad hoc keybind, or duplicated theme value in consumer config is a defect — the value belongs on the generating owner.",
             "severity": "medium",
             "scope": ["modules/home/programs/**"],
+            "enabled": true
+        },
+        {
+            "id": "seam-drift",
+            "rule": "Cross-module seams are single-owner projections mapped in docs/atlas/interconnection.md. A change touching an owner surface (theme roles, chord rows, ssh host rows, ignoreEstate, MCP fleet manifest, register grammar, receipt env-key grammar, attention-feed fields, XDG projection paths, zjstatus pipe names) must land with its consumers verified; a consumer-side literal that re-derives an owner value, a renamed field only one side knows about, or a new kernel hand-rolling an owned grammar (receipt paths, launchd labels, envelope keys) is drift.",
+            "severity": "high",
             "enabled": true
         },
         {

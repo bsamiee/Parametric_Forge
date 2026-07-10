@@ -25,10 +25,9 @@ function probe(bundleID) {
     }
 }
 
-// A whose predicate compiles to an Apple event test descriptor evaluated target-side. A
-// compound descriptor fails coercion on an incompletely-implemented object model, so the
-// filter delegates to an equivalent AppleScript whose through runScript — a tactical OSA
-// language switch, never a shell escape.
+// A whose predicate compiles to an Apple event test descriptor evaluated target-side; a compound
+// descriptor fails coercion on an incomplete object model. The filter delegates to an equivalent
+// AppleScript whose via runScript — a tactical OSA language switch, never a shell escape.
 function whoseDelegate() {
     const source = `
 tell application "Finder"

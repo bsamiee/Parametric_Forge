@@ -33,7 +33,7 @@ Patterns:
 - Trigram search (pg_trgm): `CREATE INDEX ON users USING gin (name gin_trgm_ops)` -- supports `%`, `ILIKE`, `~`
 
 GIN contracts:
-- `jsonb_path_ops` supports only `@>` -- use default `jsonb_ops` if you need `?`, `?|`, `?&` (key existence)
+- `jsonb_path_ops` covers only `@>` -- the default `jsonb_ops` serves `?`, `?|`, `?&` (key existence)
 - GIN is write-amplified -- each indexed value produces multiple index entries; unsuitable for high-write columns
 - Pending list: GIN uses a "pending list" for fast inserts, merged on vacuum or when `gin_pending_list_limit` reached
 - Parallel GIN build (PG 18): set `max_parallel_maintenance_workers = 4` for large indexes; build time scales linearly with workers
