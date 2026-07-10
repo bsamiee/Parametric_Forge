@@ -4,7 +4,7 @@ Proven hook implementations built on dispatch tables, frozen state, and `B: Fina
 
 ## [01]-[SECURITY_GATE]
 
-[EVENTS]: PreToolUse (Bash|Write|Read matcher)
+[EVENTS]: PreToolUse "Bash|Write|Read matcher"
 
 ```python conceptual
 #!/usr/bin/env python3
@@ -47,7 +47,7 @@ if __name__ == "__main__":
 
 ## [02]-[INPUT_TRANSFORMER]
 
-[EVENTS]: PreToolUse (Bash|Write matcher)
+[EVENTS]: PreToolUse "Bash|Write matcher"
 
 ```python conceptual
 #!/usr/bin/env python3
@@ -78,7 +78,7 @@ if __name__ == "__main__":
 
 ## [03]-[QUALITY_PIPELINE]
 
-[EVENTS]: PostToolUse (Write|Edit matcher)
+[EVENTS]: PostToolUse "Write|Edit matcher"
 
 ```python conceptual
 #!/usr/bin/env python3
@@ -106,7 +106,7 @@ if __name__ == "__main__":
 
 ## [04]-[CONTEXT_BOOTSTRAP]
 
-[EVENTS]: SessionStart (startup|resume|compact matcher)
+[EVENTS]: SessionStart "startup|resume|compact matcher"
 
 ```python conceptual
 #!/usr/bin/env python3
@@ -131,7 +131,7 @@ if __name__ == "__main__":
 
 ## [05]-[OBSERVABILITY]
 
-[EVENTS]: All (catch-all matcher)
+[EVENTS]: All "catch-all matcher"
 
 ```python conceptual
 #!/usr/bin/env python3
@@ -173,14 +173,18 @@ if __name__ == "__main__":
 
 ```json template
 {
-  "hooks": {
-    "Stop": [{
-      "hooks": [{
-        "type": "prompt",
-        "prompt": "Evaluate whether the task is complete: tests pass, types check, all requirements met. Return {\"ok\": true} if complete. Return {\"ok\": false, \"reason\": \"what is missing\"} if incomplete.",
-        "timeout": 30
-      }]
-    }]
-  }
+    "hooks": {
+        "Stop": [
+            {
+                "hooks": [
+                    {
+                        "type": "prompt",
+                        "prompt": "Evaluate whether the task is complete: tests pass, types check, all requirements met. Return {\"ok\": true} if complete. Return {\"ok\": false, \"reason\": \"what is missing\"} if incomplete.",
+                        "timeout": 30
+                    }
+                ]
+            }
+        ]
+    }
 }
 ```

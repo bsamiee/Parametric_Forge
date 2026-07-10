@@ -139,27 +139,28 @@
                   name = $1
                   kind = ($0 ~ /EXITED/) ? "session-exited" : "session"
                   detail = $0; sub(/^[^ ]+ /, "", detail)
-                  gsub(/\\/, "\\\\", name); gsub(/"/, "\\\"", name)
-                  gsub(/\\/, "\\\\", detail); gsub(/"/, "\\\"", detail)
+                  gsub(/\\/, "\\\\", name); gsub(/"/, "\\\"", name); gsub(/[[:cntrl:]]/, " ", name)
+                  gsub(/\\/, "\\\\", detail); gsub(/"/, "\\\"", detail); gsub(/[[:cntrl:]]/, " ", detail)
                   printf "{\"row_id\":\"%s:%s\",\"kind\":\"%s\",\"label\":\"%s\",\"detail\":\"%s\",\"target\":\"%s\"}\n", kind, name, kind, name, detail, name
                 }'
               if [[ -n "$session" ]]; then
                 zj_json list-tabs | jq -c '.[] | {row_id: ("tab:" + (.tab_id | tostring)), kind: "tab",
                   label: .name, detail: ("swap=" + (.active_swap_layout_name // "-") + (if .active then " active" else "" end)),
                   target: (.tab_id | tostring)}'
-                zj_json list-panes --all | jq -c '.[]? | select((.is_plugin | not) and (.exited | not))
+                # ONE pane snapshot feeds pane rows and star liveness: two
+                # probes could disagree mid-mutation and star a vanished pane.
+                panes="$(zj_json list-panes --all)"
+                jq -c '.[]? | select((.is_plugin | not) and (.exited | not))
                   | {row_id: ("pane:" + (.id | tostring)), kind: "pane",
                      label: ((.title // "") | if . == "" then "pane" else . end),
                      detail: ("tab=" + (.tab_id | tostring) + " cmd=" + ((.terminal_command // .command // "-") | .[0:40])),
-                     target: (.id | tostring)}'
+                     target: (.id | tostring)}' <<<"$panes"
                 if [[ -r "$stars_file" ]]; then
-                  live="$(zj_json list-panes --all | jq -c '[.[] | select(.is_plugin | not) | (.id | tostring)]')"
+                  live="$(jq -c '[.[] | select(.is_plugin | not) | (.id | tostring)]' <<<"$panes")"
                   gawk -F'\t' -v s="$session" '$1 == s {printf "%s\t%s\n", $2, $3}' "$stars_file" \
-                    | while IFS=$'\t' read -r pid title; do
-                        jq -cn --arg pid "$pid" --arg title "$title" --argjson live "$live" \
-                          'select($live | index($pid) != null)
-                           | {row_id: ("star:" + $pid), kind: "starred-pane", label: ("★ " + $title), detail: ("pane=" + $pid), target: $pid}'
-                      done
+                    | jq -Rc --argjson live "$live" '(split("\t")) as [$pid, $title]
+                        | select($live | index($pid) != null)
+                        | {row_id: ("star:" + $pid), kind: "starred-pane", label: ("★ " + $title), detail: ("pane=" + $pid), target: $pid}'
                 fi
               fi
               root_parents=(${lib.escapeShellArgs projectRootParents})
@@ -170,29 +171,27 @@
                     '{row_id: ("project:" + ($root | split("/") | last)), kind: "project",
                       label: ($root | split("/") | last), detail: $root, target: $root}'
                   if [[ -e "$root/.git" ]]; then
-                    git -C "$root" worktree list --porcelain 2>/dev/null | gawk '/^worktree /{print $2}' \
-                      | tail -n +2 | while IFS= read -r wt; do
-                        jq -cn --arg wt "$wt" --arg root "$root" \
-                          '{row_id: ("worktree:" + ($wt | split("/") | last)), kind: "worktree",
-                            label: (($root | split("/") | last) + "@" + ($wt | split("/") | last)),
-                            detail: $wt, target: $wt}'
-                      done
+                    # sub() keeps the whole path ($2 truncates at a space); the
+                    # rail treats a worktree-less or odd repo as empty, not fatal.
+                    (git -C "$root" worktree list --porcelain 2>/dev/null || true) | gawk '/^worktree /{sub(/^worktree /, ""); print}' \
+                      | tail -n +2 \
+                      | jq -Rc --arg root "$root" '(split("/") | last) as $n
+                          | {row_id: ("worktree:" + $n), kind: "worktree",
+                             label: (($root | split("/") | last) + "@" + $n), detail: ., target: .}'
                   fi
                 done
               done
               for dir in "$layouts_dir" "$recorded_dir"; do
                 [[ -d "$dir" ]] || continue
-                find "$dir" \( -type f -o -type l \) -name '*.kdl' ! -name '*.swap.kdl' | sort | while IFS= read -r f; do
-                  jq -cn --arg f "$f" --arg src "$([[ "$dir" == "$recorded_dir" ]] && echo recorded || echo generated)" \
-                    '{row_id: ("layout:" + ($f | split("/") | last | rtrimstr(".kdl"))), kind: "layout",
-                      label: ($f | split("/") | last | rtrimstr(".kdl")), detail: $src, target: $f}'
-                done
+                src="$([[ "$dir" == "$recorded_dir" ]] && echo recorded || echo generated)"
+                find "$dir" \( -type f -o -type l \) -name '*.kdl' ! -name '*.swap.kdl' | sort \
+                  | jq -Rc --arg src "$src" '(split("/") | last | rtrimstr(".kdl")) as $n
+                      | {row_id: ("layout:" + $n), kind: "layout", label: $n, detail: $src, target: .}'
               done
               if [[ -r "$macros_file" ]]; then
-                gawk -F'\t' 'NF >= 2 {printf "%s\t%s\n", $1, $2}' "$macros_file" | while IFS=$'\t' read -r name cmd; do
-                  jq -cn --arg name "$name" --arg cmd "$cmd" \
-                    '{row_id: ("macro:" + $name), kind: "macro", label: $name, detail: $cmd, target: $cmd}'
-                done
+                gawk -F'\t' 'NF >= 2 {printf "%s\t%s\n", $1, $2}' "$macros_file" \
+                  | jq -Rc '(split("\t")) as [$name, $cmd]
+                      | {row_id: ("macro:" + $name), kind: "macro", label: $name, detail: $cmd, target: $cmd}'
               fi
               if [[ -r "$lanes_cache" ]]; then
                 jq -c 'if type == "array" then .[] else empty end
@@ -202,7 +201,9 @@
               fi
             }
 
-            row_of() { inventory | jq -c --arg id "$1" 'select(.row_id == $id)' | head -1; }
+            # first() stops inside jq: a head(1) sibling would EPIPE the writer
+            # under pipefail once the inventory outgrows the pipe buffer.
+            row_of() { inventory | jq -cn --arg id "$1" 'first(inputs | select(.row_id == $id))'; }
 
             preview_row() { # $1 = row_id — read-only evidence only
               local row kind target
@@ -319,26 +320,30 @@
                   record)
                     name="''${3:?layout record needs NAME}"
                     [[ -n "$session" ]] || { echo "layout record requires a Zellij session" >&2; exit 1; }
+                    # Dump to a trap-reaped temp beside the target: a failed
+                    # re-record must never eat the prior asset under the name.
                     out="$recorded_dir/''${name}.kdl"
-                    zellij action dump-layout >"$out"
+                    tmp_out="$recorded_dir/.gate-$$.kdl"
+                    trap 'rm -f "$tmp_out"' EXIT
+                    zellij action dump-layout >"$tmp_out"
                     # Parse gate: a disposable background session must accept the
-                    # recorded asset before it becomes a graph row.
+                    # recorded asset before it replaces the graph row.
                     gate="forge-layout-gate-$$"
                     gate_ok="false"
                     if zellij attach --create-background "$gate" >/dev/null 2>&1; then
-                      if zellij --session "$gate" action new-tab --layout "$out" >/dev/null 2>&1; then
+                      if zellij --session "$gate" action new-tab --layout "$tmp_out" >/dev/null 2>&1; then
                         sleep 0.5
-                        tabs="$(zellij --session "$gate" action query-tab-names 2>/dev/null | wc -l | tr -d ' ')"
+                        tabs="$( (zellij --session "$gate" action query-tab-names 2>/dev/null || true) | wc -l | tr -d ' ')"
                         [[ "$tabs" -ge 2 ]] && gate_ok="true"
                       fi
                       zellij kill-session "$gate" >/dev/null 2>&1 || true
                       zellij delete-session "$gate" >/dev/null 2>&1 || true
                     fi
                     if [[ "$gate_ok" == "true" ]]; then
+                      mv "$tmp_out" "$out"
                       emit_receipt layout-record layout "layout:$name" record ok 0 0
                       printf '%s\n' "$out"
                     else
-                      rm -f "$out"
                       emit_receipt layout-record layout "layout:$name" record error 1 0
                       echo "layout record: parse gate failed; asset discarded" >&2
                       exit 1
@@ -414,15 +419,19 @@
               exit 0
             fi
 
+            # One inventory snapshot feeds the picker AND target resolution: a
+            # re-scan after selection could miss a vanished row and dispatch an
+            # empty target. fzf reads a fully rendered list — a pick made while
+            # jq still streamed would EPIPE jq and fail a valid selection.
             start="''${EPOCHREALTIME//[.,]/}"
             rc=0
-            sel="$(inventory \
-              | jq -r '[.kind, .row_id, .label, .detail] | @tsv' \
-              | fzf --delimiter=$'\t' --border-label='[WORKSPACE GRAPH]' --height=100% \
-                --with-nth=1,3,4 --print-query \
-                --preview="$self row {2}" --preview-window=right:50%:border-bold \
-                --bind "ctrl-s:execute-silent($self star --pane {2})" \
-                "''${fzf_base[@]}")" || rc=$?
+            inv="$(inventory)"
+            rows_tsv="$(jq -r '[.kind, .row_id, .label, .detail] | @tsv' <<<"$inv")"
+            sel="$(fzf --delimiter=$'\t' --border-label='[WORKSPACE GRAPH]' --height=100% \
+              --with-nth=1,3,4 --print-query \
+              --preview="$self row {2}" --preview-window=right:50%:border-bold \
+              --bind "ctrl-s:execute-silent($self star --pane {2})" \
+              "''${fzf_base[@]}" <<<"$rows_tsv")" || rc=$?
             end="''${EPOCHREALTIME//[.,]/}"
             duration_ms=$(((end - start) / 1000))
             # fzf --print-query contract: line 1 query, line 2 selection.
@@ -434,9 +443,8 @@
                 *) emit_receipt graph - - browse error "$rc" "$duration_ms"; exit "$rc" ;;
               esac
             fi
-            kind="$(cut -f1 <<<"$line")"
-            row_id="$(cut -f2 <<<"$line")"
-            target="$(row_of "$row_id" | jq -r '.target')"
+            IFS=$'\t' read -r kind row_id _ <<<"$line"
+            target="$(jq -rn --arg id "$row_id" 'first(inputs | select(.row_id == $id) | .target)' <<<"$inv")"
 
             # Selection dispatch: total over the kind family; unreachable actions
             # (attach from inside) degrade to printed evidence, never a nested client.

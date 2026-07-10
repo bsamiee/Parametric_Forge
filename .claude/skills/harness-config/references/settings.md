@@ -10,13 +10,13 @@ Rules are `Tool` or `Tool(specifier)` strings evaluated deny, then ask, then all
 - [TERRITORY]: `permissions.additionalDirectories` extends the writable surface beyond the working directory; sandbox rows under `sandbox.*` bind filesystem, network, and credential reach beneath whatever permissions allow.
 - [PROMPT_ECONOMY]: recurring prompts are a config smell — each session's repeated approvals convert into scoped allow rows, and destructive classes into deny rows, so unattended lanes (workflows, background workers, `-p` calls) run without a human at the prompt. Rows stay specifier-scoped; a blanket grant trades every future prompt for the whole tool surface:
 
-  ```json rejected
-  { "permissions": { "allow": ["Bash"] } }
-  ```
+    ```json rejected
+    { "permissions": { "allow": ["Bash"] } }
+    ```
 
-  ```json accepted
-  { "permissions": { "allow": ["Bash(pnpm test:*)", "Bash(gh pr view:*)"], "deny": ["Bash(git push --force*:*)"] } }
-  ```
+    ```json accepted
+    { "permissions": { "allow": ["Bash(pnpm test:*)", "Bash(gh pr view:*)"], "deny": ["Bash(git push --force*:*)"] } }
+    ```
 
 ## [02]-[MODEL_ROUTING]
 

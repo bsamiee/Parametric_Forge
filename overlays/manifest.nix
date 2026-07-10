@@ -14,6 +14,7 @@
 # the overlay fold.
 let
   v = rec {
+    biome = "2.5.3";
     duckdb = "1.5.4";
     nodejs = "26.5.0";
     pnpm = "11.10.0";
@@ -23,8 +24,29 @@ let
     gcloud = "575.0.1";
     osBuild = "241b8abb4d";
     epBuild = "6f2e40d102";
+    biomeBase = "https://github.com/biomejs/biome/releases/download/%40biomejs%2Fbiome%40${biome}"; # release tags carry the npm scope; GitHub asset URLs need it percent-encoded
     duckdbBase = "https://github.com/duckdb/duckdb/releases/download/v${duckdb}";
     sqleanBase = "https://github.com/nalgeon/sqlean/releases/download/${sqlean}";
+  };
+
+  # VS Code extension admission builder: every security field is explicit in
+  # the effective row; defaults name the benign common case and a row that
+  # deviates overrides the exact field, so per-row vetting stays readable.
+  vsxRow = {
+    publisher,
+    name,
+    license,
+    capability,
+    native_code ? "none", # none | bundled-binary | downloads-runtime | wasm
+    postinstall_behavior ? "none",
+    secret_touching ? "none",
+    host_permissions ? "workspace-fs",
+    runtime_write_policy ? "workspace-edits-only",
+    mutable_paths ? ["~/.vscode/extensions" "~/Library/Application Support/Code/User/globalStorage"],
+  }: {
+    id = "${publisher}.${name}";
+    registry = "vscode-marketplace";
+    inherit publisher name license capability native_code postinstall_behavior secret_touching host_permissions runtime_write_policy mutable_paths;
   };
 in rec {
   vocabulary = {
@@ -48,6 +70,40 @@ in rec {
   # `overlayReason` — overlay mutation transitively overrides consumer
   # dependencies and re-keys fixed-output hashes; "new" attrs are inert.
   packages = {
+    biome = {
+      upstream = "github:biomejs/biome";
+      version = v.biome;
+      versionPolicy = "fast";
+      sourceKind = "github-release";
+      # Linux rows pin the musl static builds: they run on NixOS with no
+      # interpreter or patchelf dependency; glibc assets would need auto-patchelf.
+      assets = {
+        aarch64-darwin = {
+          url = "${v.biomeBase}/biome-darwin-arm64";
+          hash = "sha256-YQ0+HncNNzNo1MzuWhnF4XNbAjUCT8vtauB+sIDTuwk=";
+        };
+        aarch64-linux = {
+          url = "${v.biomeBase}/biome-linux-arm64-musl";
+          hash = "sha256-GmnqTrVbquwL7dfWraOx5ibitDDs/JqPG5A3PKeK63A=";
+        };
+        x86_64-linux = {
+          url = "${v.biomeBase}/biome-linux-x64-musl";
+          hash = "sha256-A88SVyCx15EJPJxovjSHXQhjjDFLPh5j2xpF8rQYsco=";
+        };
+      };
+      license = "mit";
+      patchFamily = "none";
+      cacheClass = "binary-only-local";
+      updateEngine = "nvfetcher";
+      retention = "git-history";
+      projection.overlay = "override";
+      overlayReason = "nixpkgs source-builds biome behind the upstream release line; the attr override routes every consumer (node-tools wrapper, fmt router, vscode LSP lane) through the official release binary";
+      consumers = ["node-tools" "fmt"];
+      description = "Biome formatter, linter, and LSP for the web toolchain";
+      homepage = "https://biomejs.dev/";
+      mainProgram = "biome";
+    };
+
     duckdb = {
       upstream = "github:duckdb/duckdb";
       version = v.duckdb;
@@ -107,7 +163,7 @@ in rec {
         };
       };
       license = "mit";
-      patchFamily = "npm-tool-strip"; # pnpm-only rail: npm/npx/corepack never reach the installed output
+      patchFamily = "npm-tool-strip"; # pnpm-only rail: npm/npx never reach the installed output (corepack left the Node 26 distribution)
       cacheClass = "binary-only-local";
       updateEngine = "nvfetcher";
       retention = "git-history";
@@ -222,7 +278,28 @@ in rec {
       updateEngine = "manual";
       retention = "git-history";
       projection.overlay = "new";
-      kernel = true; # hand-authored derivation kernel; the row owns version/asset facts
+      # Opt-runtime spec: the shared overlay recipe folds these layout, env,
+      # and wrapper facts into the derivation; a next platform runtime is one
+      # row, never a new kernel file.
+      runtime = {
+        root = "opt/openstudio";
+        shebangDirs = ["bin"];
+        env = {
+          roots = ["OPENSTUDIO_ROOT" "OPENSTUDIO_DIR"];
+          paths = {
+            OPENSTUDIO_EXE = "bin/openstudio";
+            OPENSTUDIO_RUBY_ROOT = "Ruby";
+            OPENSTUDIO_PYTHON_ROOT = "Python";
+            OPENSTUDIO_RADIANCE_ROOT = "Radiance";
+            OPENSTUDIO_ENERGYPLUSDIR = "EnergyPlus";
+          };
+          version = ["OPENSTUDIO_VERSION"];
+        };
+        wrappers = {
+          openstudio = "bin/openstudio";
+          openstudio-install-utility = "bin/install_utility";
+        };
+      };
       consumers = ["scientific-tools"];
       description = "OpenStudio SDK and CLI for whole-building energy modeling";
       homepage = "https://openstudio.net";
@@ -245,7 +322,26 @@ in rec {
       updateEngine = "manual";
       retention = "git-history";
       projection.overlay = "new";
-      kernel = true;
+      runtime = {
+        root = "opt/energyplus";
+        shebangDirs = ["."];
+        env = {
+          roots = ["ENERGYPLUSDIR" "ENERGYPLUS_DIR"];
+          paths = {ENERGYPLUS_EXE = "energyplus";};
+          version = ["ENERGYPLUS_VERSION"];
+        };
+        wrappers = {
+          energyplus = "energyplus";
+          "energyplus-${v.energyplus}" = "energyplus";
+          runenergyplus = "runenergyplus";
+          runepmacro = "runepmacro";
+          runreadvars = "runreadvars";
+          EPMacro = "EPMacro";
+          ExpandObjects = "ExpandObjects";
+          ConvertInputFormat = "ConvertInputFormat";
+          "ConvertInputFormat-${v.energyplus}" = "ConvertInputFormat";
+        };
+      };
       consumers = ["scientific-tools"];
       description = "Whole building energy simulation runtime";
       homepage = "https://energyplus.net";
@@ -273,7 +369,7 @@ in rec {
     };
 
     sqlite-forge = {
-      upstream = "repo:overlays/sqlite-forge";
+      upstream = "repo:overlays";
       versionPolicy = "repo-owned";
       sourceKind = "repo";
       license = "mit";
@@ -286,7 +382,16 @@ in rec {
         package = true;
         app = true;
       };
-      kernel = true;
+      # Shell-kernel data: base modules load on every profile, a profile row
+      # adds extras, and `all` derives in the fold as the union of every row.
+      shell = {
+        baseModules = ["regexp" "uuid" "stats" "text" "time" "crypto" "math"];
+        profiles = {
+          safe = [];
+          extended = ["define" "vsv" "fuzzy" "ipaddr"];
+          fileio = ["fileio"];
+        };
+      };
       consumers = ["db-tools"];
     };
   };
@@ -415,11 +520,196 @@ in rec {
   # one, so an under-specified admission fails the build, never lands silent.
   extensions = {
     vscode = {
-      source = "nix-vscode-extensions"; # Marketplace/OpenVSX generated registry; admission is per-row vetting, never registry trust
+      source = "marketplace-cli"; # Homebrew-cask VS Code + mutable user extensions dir: rows reconcile through `code --install-extension`, never a Nix-linked dir
       forbiddenLanes = ["homebrew-brewfile-vscode"]; # extension presence never splits across Homebrew and the declared source
-      liveState = "user-managed extensions dir; a drift row until rows are vetted (per-row security fields required)";
+      liveState = "roster-reconciled: forge-vscode doctor proves installed-vs-roster; extras are drift rows, never auto-uninstalled";
       requiredFields = vocabulary.extensionSecurityFields;
-      rows = {};
+      rows = {
+        nix-ide = vsxRow {
+          publisher = "jnoortheen";
+          name = "nix-ide";
+          license = "MIT";
+          capability = "Nix language client binding the profile nixd + alejandra";
+          postinstall_behavior = "starts-language-server"; # spawns the configured nixd, never a bundled one
+        };
+        shfmt = vsxRow {
+          publisher = "mkhl";
+          name = "shfmt";
+          license = "MIT";
+          capability = "shell formatter binding the profile shfmt binary";
+        };
+        shellcheck = vsxRow {
+          publisher = "timonwong";
+          name = "shellcheck";
+          license = "MIT";
+          capability = "shell diagnostics";
+          native_code = "bundled-binary"; # darwin-arm64 shellcheck payload inside the vsix
+          postinstall_behavior = "starts-language-server";
+        };
+        ruff = vsxRow {
+          publisher = "charliermarsh";
+          name = "ruff";
+          license = "MIT";
+          capability = "Python format/lint on the native ruff server";
+          native_code = "bundled-binary";
+          postinstall_behavior = "starts-language-server";
+        };
+        ty = vsxRow {
+          publisher = "astral-sh";
+          name = "ty";
+          license = "MIT";
+          capability = "Python type checking (estate primary gate)";
+          native_code = "bundled-binary";
+          postinstall_behavior = "starts-language-server";
+        };
+        python = vsxRow {
+          publisher = "ms-python";
+          name = "python";
+          license = "MIT";
+          capability = "Python core: interpreter selection, testing, run lanes";
+          native_code = "bundled-binary";
+          postinstall_behavior = "starts-language-server";
+        };
+        debugpy = vsxRow {
+          publisher = "ms-python";
+          name = "debugpy";
+          license = "MIT";
+          capability = "Python debug adapter";
+          native_code = "bundled-binary";
+        };
+        mypy = vsxRow {
+          publisher = "ms-python";
+          name = "mypy-type-checker";
+          license = "MIT";
+          capability = "mypy strict secondary gate over the project venv";
+          postinstall_behavior = "starts-language-server";
+        };
+        biome = vsxRow {
+          publisher = "biomejs";
+          name = "biome";
+          license = "MIT";
+          capability = "TS/JS/JSON/CSS formatter+linter over workspace or profile biome";
+          native_code = "bundled-binary";
+          postinstall_behavior = "starts-language-server";
+        };
+        yamlfmt = vsxRow {
+          publisher = "bluebrown";
+          name = "yamlfmt";
+          license = "MIT";
+          capability = "YAML formatter spawning PATH yamlfmt (project config wins)";
+        };
+        yaml = vsxRow {
+          publisher = "redhat";
+          name = "vscode-yaml";
+          license = "MIT";
+          capability = "YAML language server + yaml.schemas validation";
+          postinstall_behavior = "starts-language-server";
+          host_permissions = "workspace-fs+network"; # schema downloads from schemastore; telemetry pinned off in settings
+        };
+        even-better-toml = vsxRow {
+          publisher = "tamasfe";
+          name = "even-better-toml";
+          license = "MIT";
+          capability = "TOML language support on the taplo server";
+          native_code = "wasm";
+          postinstall_behavior = "starts-language-server";
+        };
+        csharp = vsxRow {
+          publisher = "ms-dotnettools";
+          name = "csharp";
+          license = "MIT";
+          capability = "Roslyn C# language server (Rasm workspace lane)";
+          native_code = "downloads-runtime";
+          postinstall_behavior = "acquires .NET runtime through vscode-dotnet-runtime";
+          mutable_paths = ["~/.vscode/extensions" "~/Library/Application Support/Code/User/globalStorage" "~/.dotnet"];
+        };
+        dotnet-runtime = vsxRow {
+          publisher = "ms-dotnettools";
+          name = "vscode-dotnet-runtime";
+          license = "MIT";
+          capability = "shared .NET runtime acquisition dependency of csharp";
+          native_code = "downloads-runtime";
+          postinstall_behavior = "downloads .NET runtimes on demand";
+          host_permissions = "workspace-fs+network";
+          mutable_paths = ["~/.vscode/extensions" "~/Library/Application Support/Code/User/globalStorage" "~/.dotnet"];
+        };
+        material-icon-theme = vsxRow {
+          publisher = "PKief";
+          name = "material-icon-theme";
+          license = "MIT";
+          capability = "file icon vocabulary; asserted workbench.iconTheme";
+        };
+        errorlens = vsxRow {
+          publisher = "usernamehw";
+          name = "errorlens";
+          license = "MIT";
+          capability = "inline diagnostic decorations at the offending line";
+        };
+        todo-tree = vsxRow {
+          publisher = "Gruntfuggly";
+          name = "todo-tree";
+          license = "MIT";
+          capability = "TODO/FIXME tree + palette-bound tag decorations";
+        };
+        rainbow-csv = vsxRow {
+          publisher = "mechatroner";
+          name = "rainbow-csv";
+          license = "MIT";
+          capability = "CSV/TSV column coloring beside the qsv/mlr lanes";
+        };
+        kdl = vsxRow {
+          publisher = "kdl-org";
+          name = "kdl";
+          license = "Apache-2.0";
+          capability = "KDL grammar for zellij config surfaces";
+        };
+        coderabbit = vsxRow {
+          publisher = "CodeRabbit";
+          name = "coderabbit-vscode";
+          license = "proprietary";
+          capability = "estate reviewer lane inside the editor";
+          secret_touching = "api-token"; # authenticates to the CodeRabbit account
+          host_permissions = "workspace-fs+network";
+        };
+        prettier = vsxRow {
+          publisher = "esbenp";
+          name = "prettier-vscode";
+          license = "MIT";
+          capability = "no-config fallback formatter mirroring the XDG prettierrc";
+        };
+        markdown-all-in-one = vsxRow {
+          publisher = "yzhang";
+          name = "markdown-all-in-one";
+          license = "MIT";
+          capability = "markdown editing: TOC, tables, list continuation";
+        };
+        markdown-mermaid = vsxRow {
+          publisher = "bierner";
+          name = "markdown-mermaid";
+          license = "MIT";
+          capability = "mermaid fences rendered in the builtin markdown preview";
+        };
+        tailwindcss = vsxRow {
+          publisher = "bradlc";
+          name = "vscode-tailwindcss";
+          license = "MIT";
+          capability = "Tailwind class intellisense (Rasm web lane)";
+          postinstall_behavior = "starts-language-server";
+        };
+        playwright = vsxRow {
+          publisher = "ms-playwright";
+          name = "playwright";
+          license = "MIT";
+          capability = "Playwright test explorer + trace lanes";
+        };
+        containers = vsxRow {
+          publisher = "ms-azuretools";
+          name = "vscode-containers";
+          license = "MIT";
+          capability = "container/images explorer over the Colima Docker socket";
+          host_permissions = "workspace-fs+docker-socket";
+        };
+      };
     };
     zellij-wasm = {
       source = "fetchFromGitHub"; # pinned derivations + declarative permission-grant rows (CA-5 consumes)

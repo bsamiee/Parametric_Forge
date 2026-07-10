@@ -16,17 +16,17 @@
 }: let
   gib = n: n * 1024 * 1024 * 1024;
 
-  # Determinate owns eval-cores, lazy-trees, netrc-file, ssl-cert-file, and
-  # experimental-features in /etc/nix/nix.conf; those keys are rejected here.
+  # Local admin group per OS: Darwin admin, NixOS wheel.
+  adminGroups = {
+    darwin = ["@admin"];
+    nixos = ["@wheel"];
+  };
+
+  # Determinate owns /etc/nix/nix.conf (eval-cores, lazy-trees, caches,
+  # experimental-features); the darwin module asserts against netrc-file and
+  # ssl-cert-file here — auth rides determinateNixd.authentication rows.
   customSettings = {
-    # Local admin group per OS: Darwin admin, NixOS wheel.
-    trusted-users =
-      ["root"]
-      ++ (
-        if host.os == "darwin"
-        then ["@admin"]
-        else ["@wheel"]
-      );
+    trusted-users = ["root"] ++ adminGroups.${host.os};
 
     # --- Performance ------------------------------------------------------
     max-substitution-jobs = 32;
@@ -63,17 +63,13 @@
     ];
     narinfo-cache-positive-ttl = 86400;
   };
-in
-  {
-    # --- Nixpkgs Configuration ------------------------------------------------
-    nixpkgs.config = {
-      allowUnfree = true;
-      allowBroken = false;
-    };
-  }
-  // (
-    if host.os == "darwin"
-    then {
+
+  # OS projection rows: Darwin rides determinateNix customSettings; NixOS
+  # rides nix.settings — determinate.enable defaults true and the module
+  # reroutes generated nix.conf to nix.custom.conf and swaps the daemon
+  # for determinate-nixd.
+  osProjections = {
+    darwin = {
       determinateNix = {
         enable = true;
 
@@ -83,10 +79,17 @@ in
 
         inherit customSettings;
       };
-    }
-    else {
-      # determinate.enable defaults true; the module reroutes generated
-      # nix.conf to nix.custom.conf and swaps the daemon for determinate-nixd.
+    };
+    nixos = {
       nix.settings = customSettings;
-    }
-  )
+    };
+  };
+in
+  {
+    # --- Nixpkgs Configuration ------------------------------------------------
+    nixpkgs.config = {
+      allowUnfree = true;
+      allowBroken = false;
+    };
+  }
+  // osProjections.${host.os}

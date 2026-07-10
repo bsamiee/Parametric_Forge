@@ -21,6 +21,7 @@
   naming = config.forge.registers.naming;
   sshHosts = config.forge.ssh.hosts;
   manifest = import ../../../../../overlays/manifest.nix;
+  receiptsFold = import ../../shell-tools/receipts.nix;
   profileBin = "/etc/profiles/per-user/${config.home.username}/bin";
   homeDir = config.home.homeDirectory;
   toolchainEnv = forgeToolchainEnvFor {
@@ -70,42 +71,43 @@
   # without it keep the native clipboard default.
   hostAliasAlternation =
     lib.concatStringsSep "|"
-    (lib.concatMap (h: h.aliases ++ [h.tunnelHost]) (lib.attrValues sshHosts));
+    (map lib.escapeRegex (lib.unique (lib.concatMap (h: h.aliases ++ [h.tunnelHost]) (lib.attrValues sshHosts))));
   hostDomains = lib.listToAttrs (lib.concatMap (
     h: map (a: lib.nameValuePair a "SSH:${h.name}") (lib.unique (h.aliases ++ [h.tunnelHost]))
   ) (lib.attrValues sshHosts));
-  quickSelectRows = [
-    {
-      id = "nix-store-path";
-      regex = "/nix/store/[a-z0-9]{32}-[a-zA-Z0-9+._?=-]+";
-      priority = 10;
-    }
-    {
-      id = "flake-ref";
-      regex = "(github|gitlab|sourcehut):[A-Za-z0-9._-]+/[A-Za-z0-9._-]+(/[A-Za-z0-9._/-]+)?";
-      priority = 20;
-    }
-    {
-      id = "file-span";
-      regex = "[A-Za-z0-9~._/-]+[.][a-z]+:[0-9]+(:[0-9]+)?";
-      priority = 30;
-      select = "edit";
-    }
-    {
-      id = "issue-id";
-      regex = "[A-Z]{2,10}-[0-9]{1,6}|#[0-9]{2,6}";
-      priority = 40;
-    }
-    {
+  quickSelectRows =
+    [
+      {
+        id = "nix-store-path";
+        regex = "/nix/store/[a-z0-9]{32}-[a-zA-Z0-9+._?=-]+";
+        priority = 10;
+      }
+      {
+        id = "flake-ref";
+        regex = "(github|gitlab|sourcehut):[A-Za-z0-9._-]+/[A-Za-z0-9._-]+(/[A-Za-z0-9._/-]+)?";
+        priority = 20;
+      }
+      {
+        id = "file-span";
+        regex = "[A-Za-z0-9~._/-]+[.][a-z]+:[0-9]+(:[0-9]+)?";
+        priority = 30;
+        select = "edit";
+      }
+      {
+        id = "issue-id";
+        regex = "[A-Z]{2,10}-[0-9]{1,6}|#[0-9]{2,6}";
+        priority = 40;
+      }
+    ]
+    ++ lib.optional (hostAliasAlternation != "") {
       id = "host-alias";
       regex = "\\b(${hostAliasAlternation})\\b";
       priority = 50;
       select = "domain";
-    }
-  ];
+    };
   hyperlinkRows = [
-    # Semantic estate links: forge://<register-domain>[/<row>] opens the
-    # register browser float via the open-uri handler.
+    # Semantic estate links: forge://<register-domain>[/...] opens the register
+    # browser float scoped to the domain (forge-browse takes one DOMAIN arg).
     {
       id = "forge-scheme";
       regex = "forge://[A-Za-z0-9/@._:-]+";
@@ -133,8 +135,8 @@
 
   # --- Command deck rows ----------------------------------------------------------
   # One registry feeds the command palette, the launcher menu, and key rows.
-  # kind: float (spawn command in shaped window) | domain (spawn in mux domain)
-  # | builtin (deck.lua dispatch arm). `destructive` rows confirm on nightly.
+  # kind: float (spawn command in shaped window) | domain (spawn in mux
+  # domain); `destructive` rows pass the deck confirm gate before acting.
   commandRows =
     [
       {
@@ -248,6 +250,11 @@
     adjust_window_size_when_changing_font_size = false;
     window_close_confirmation = "NeverPrompt";
     skip_close_confirmation_for_processes_named = ["bash" "sh" "zsh" "fish" "tmux" "nu"];
+    use_cap_height_to_scale_fallback_fonts = true;
+    warn_about_missing_glyphs = true;
+    # Bell rings are structured attention: the events.lua bell arm owns the
+    # surface (receipt row always, toast when background), never a beep.
+    audible_bell = "Disabled";
 
     # Input seam
     disable_default_key_bindings = true;
@@ -294,8 +301,6 @@
     "font_size"
     "line_height"
     "harfbuzz_features"
-    "use_cap_height_to_scale_fallback_fonts"
-    "warn_about_missing_glyphs"
     "keys"
     "key_tables" # sync-panes writes its broadcast table here
     "mouse_bindings"
@@ -313,6 +318,9 @@
   patternDupes = dupesOf (map (r: r.id) quickSelectRows) ++ dupesOf (map (r: toString r.priority) quickSelectRows);
   selectIds = lib.unique (builtins.filter (s: s != null) (map (r: r.select or null) quickSelectRows));
   badSelects = builtins.filter (s: !(lib.elem s ["edit" "domain"])) selectIds;
+  badKinds = lib.unique (map (r: r.kind) (builtins.filter (r: !(lib.elem r.kind ["float" "domain"])) commandRows));
+  badFloatRefs = map (r: r.id) (builtins.filter (r: r.kind == "float" && !(floatRows ? ${r.float})) commandRows);
+  chordDupes = dupesOf (map (r: "${r.mods}+${r.key}") chordRows);
 
   # --- Generated Lua data + entry point -------------------------------------------
   rows = {
@@ -326,6 +334,9 @@
     host_domains = hostDomains;
     plugins.sync_panes = "${syncPanesSrc}";
     font = fontRow;
+    # Registry float rows are singletons: a live float focuses instead of
+    # duplicating. Synthesized floats (quick-edit, open-uri) never set reuse.
+    commands = map (r: r // {reuse = r.kind == "float";}) commandRows;
     keys =
       map (r: {
         inherit (r) id key mods action class;
@@ -333,7 +344,6 @@
         requires_nightly = r.requiresNightly or false;
       })
       chordRows;
-    commands = commandRows;
     floats = floatRows;
     workspaces = workspaceRows;
     quick_select = quickSelectRows;
@@ -382,7 +392,9 @@
   actionIds = map (r: r.action) chordRows;
 
   # Build-time validator: Lua syntax, plugin payload shape, dispatch totality
-  # (chord actions AND quick-select select arms both resolve in deck.lua).
+  # (chord actions AND quick-select select arms both resolve in deck.lua). The
+  # grep proves the arm shape itself — a ["id"] table key or an == "id"
+  # equality dispatch — so a receipt/log string literal never false-passes.
   configDir =
     pkgs.runCommand "wezterm-config" {
       nativeBuildInputs = [pkgs.lua5_4];
@@ -401,7 +413,7 @@
       test -f ${syncPanesSrc}/plugin/init.lua
       test -d ${weztermTypesSrc}/lua
       for a in $actions; do
-        grep -q "\"$a\"" "$out/deck.lua" || {
+        grep -Eq "\[\"$a\"\]|== \"$a\"" "$out/deck.lua" || {
           echo "wezterm validator: chord action '$a' has no deck.lua dispatch arm" >&2
           exit 1
         }
@@ -422,16 +434,19 @@
       zellij_bin="${pkgs.zellij}/bin/zellij"
       layout="''${ZELLIJ_DEFAULT_LAYOUT:-default}"
       receipt_log="''${FORGE_WORKSPACE_RECEIPT_LOG:-$HOME/Library/Logs/forge-workspace.receipts.log}"
+      receipt_surface="forge-workspace"
       provider="''${FORGE_SPACE_PROVIDER:-none}"
+      ${receiptsFold}
 
       usage() { printf 'Usage: forge-workspace [SLUG] | --list | --json\n'; }
 
-      emit() { # $1=slug $2=action $3=result $4=detail
-        local ts
+      emit() { # $1=slug $2=action $3=result $4=detail $5=space
+        local ts row
         TZ=UTC0 printf -v ts '%(%Y-%m-%dT%H:%M:%SZ)T' "$EPOCHSECONDS"
-        mkdir -p "$(dirname "$receipt_log")"
-        printf 'ts=%s\towner=forge-workspace\tslug=%s\taction=%s\tprovider=%s\tspace=%s\tresult=%s\tdetail=%s\n' \
-          "$ts" "$1" "$2" "$provider" "$5" "$3" "''${4:--}" >>"$receipt_log"
+        printf -v row 'ts=%s\tslug=%s\taction=%s\tprovider=%s\tspace=%s\tresult=%s\tdetail=%s' \
+          "$ts" "$1" "$2" "$provider" "$5" "$3" "''${4:--}"
+        append_receipt "$row" \
+          || printf 'forge-workspace: WARNING receipt not persisted to %s\n' "$receipt_log" >&2
       }
 
       # --no-auto-start on every cli call: a stale socket must fail the probe,
@@ -449,20 +464,20 @@
           exit 0
           ;;
         --json)
-          jq --argjson live "$(live_workspaces | jq -R . | jq -s .)" \
+          jq --argjson live "$(live_workspaces | jq -nR '[inputs]')" \
             'map(. + {live: (.name as $n | $live | index($n) != null)})' "$rows"
           exit 0
           ;;
         --list | "")
-          live_set="$(live_workspaces)"
+          # One awk pass owns the join: the live set enters as a variable, the
+          # registry rows stream as TSV (every field provably non-empty).
           {
             printf 'SLUG\tLABEL\tCWD\tLIVE\n'
-            while IFS=$'\t' read -r slug label cwd; do
-              live=no
-              grep -qx "$slug" <<<"$live_set" && live=yes
-              printf '%s\t%s\t%s\t%s\n' "$slug" "$label" "$cwd" "$live"
-            done < <(jq -r '.[] | [.name, .label, .cwd] | @tsv' "$rows")
-          } | awk -F'\t' '{printf "%-16s %-24s %-56s %s\n", $1, $2, $3, $4}'
+            jq -r '.[] | [.name, .label, .cwd] | @tsv' "$rows"
+          } | awk -F'\t' -v live="$(live_workspaces)" '
+            BEGIN { n = split(live, ls, "\n"); for (i = 1; i <= n; i++) if (ls[i] != "") set[ls[i]] = 1 }
+            NR == 1 { printf "%-16s %-24s %-56s %s\n", $1, $2, $3, $4; next }
+            { printf "%-16s %-24s %-56s %s\n", $1, $2, $3, ($1 in set ? "yes" : "no") }'
           exit 0
           ;;
       esac
@@ -492,11 +507,15 @@
       fi
 
       # Explicit prog mirrors the deck seam: the workspace's slug-named zellij
-      # session, never the shared default_prog session.
+      # session, never the shared default_prog session. Stderr lands in a
+      # trap-registered temp so warning noise never corrupts the pane id.
+      err="$(mktemp)"
+      trap 'rm -f "$err"' EXIT
       pane_id="$("$wezterm_bin" cli --no-auto-start spawn --new-window --workspace "$slug" --cwd "$cwd" -- \
-        "$zellij_bin" --layout "$layout" attach --create "$slug" 2>&1)" || {
-        emit "$slug" spawn error "$pane_id" "$space_state"
-        printf 'forge-workspace: spawn failed: %s\n' "$pane_id" >&2
+        "$zellij_bin" --layout "$layout" attach --create "$slug" 2>"$err")" || {
+        detail="$(tr '\t\n' '  ' <"$err")"
+        emit "$slug" spawn error "''${detail:-spawn failed}" "$space_state"
+        printf 'forge-workspace: spawn failed: %s\n' "''${detail:-unknown}" >&2
         exit 1
       }
       emit "$slug" spawn ok "pane_id=$pane_id" "$space_state"
@@ -528,6 +547,18 @@ in {
       {
         assertion = badSelects == [];
         message = "wezterm: quick-select rows carry unknown select arms: ${lib.concatStringsSep ", " badSelects}";
+      }
+      {
+        assertion = badKinds == [];
+        message = "wezterm: command rows carry unknown kinds: ${lib.concatStringsSep ", " badKinds}";
+      }
+      {
+        assertion = badFloatRefs == [];
+        message = "wezterm: command rows reference undeclared float shapes: ${lib.concatStringsSep ", " badFloatRefs}";
+      }
+      {
+        assertion = chordDupes == [];
+        message = "wezterm: duplicate chord key+mods rows (guard wrap and dispatch both collide): ${lib.concatStringsSep ", " chordDupes}";
       }
     ];
 

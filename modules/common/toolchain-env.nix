@@ -8,6 +8,7 @@
 # forgeToolchainEnvFor module argument; session, launchd, and zsh owners
 # call it with their own home/username/cache context.
 {
+  host,
   lib,
   pkgs,
   ...
@@ -17,7 +18,8 @@
     username,
     xdgCacheHome,
   }: let
-    isDarwin = pkgs.stdenv.hostPlatform.isDarwin;
+    # OS branch keys on the static host context, never on pkgs (fixpoint safety).
+    isDarwin = host.os == "darwin";
     # Only provisioned directories: useUserPackages replaces ~/.nix-profile with
     # /etc/profiles; cargo/go user bins return here only once something provisions them.
     userPathEntries =
@@ -68,18 +70,16 @@
     };
     # EnergyPlus/OpenStudio are macOS-only (operator ruling); Linux hosts get
     # an empty energy row, so downstream folds and exports stay polymorphic.
-    energyEnv = lib.optionalAttrs isDarwin {
-      ENERGYPLUSDIR = "${pkgs.energyplus}/opt/energyplus";
-      ENERGYPLUS_DIR = "${pkgs.energyplus}/opt/energyplus";
-      ENERGYPLUS_EXE = "${pkgs.energyplus}/bin/energyplus";
-      ENERGYPLUS_VERSION = pkgs.energyplus.version;
-      OPENSTUDIO_ROOT = "${pkgs.openstudio}/opt/openstudio";
-      OPENSTUDIO_DIR = "${pkgs.openstudio}/opt/openstudio";
-      OPENSTUDIO_EXE = "${pkgs.openstudio}/bin/openstudio";
-      OPENSTUDIO_VERSION = pkgs.openstudio.version;
-      OPENSTUDIO_RADIANCE_ROOT = "${pkgs.openstudio}/opt/openstudio/Radiance";
-      OPENSTUDIO_ENERGYPLUSDIR = "${pkgs.openstudio}/opt/openstudio/EnergyPlus";
-    };
+    # Layout facts fold from each package's manifest-derived runtimeEnv; the
+    # session EXE keys re-point at the env-exporting wrappers.
+    energyEnv = lib.optionalAttrs isDarwin (
+      pkgs.energyplus.runtimeEnv
+      // pkgs.openstudio.runtimeEnv
+      // {
+        ENERGYPLUS_EXE = lib.getExe pkgs.energyplus;
+        OPENSTUDIO_EXE = lib.getExe pkgs.openstudio;
+      }
+    );
     shellExports = env:
       lib.concatStringsSep "\n" (
         lib.mapAttrsToList (name: value: "export ${name}=${lib.escapeShellArg (toString value)}") env

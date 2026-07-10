@@ -1,14 +1,14 @@
 ---
 name: hostinger
 description: >-
-  Hostinger estate operations across the domain portfolio and the VPS fleet: domain registration,
-  availability checks, nameservers, DNS zone records, forwarding, WHOIS profiles, domain lock and
-  privacy protection, plus VPS lifecycle, Docker Compose projects, firewalls, SSH keys, backups,
-  snapshots, recovery mode, malware scanning, PTR records, and metrics. Use when registering or
-  transferring domains, editing DNS, deploying or troubleshooting a VPS or its Docker projects,
-  configuring firewalls, or managing server infrastructure on Hostinger. Shared web hosting,
-  WordPress, and ecommerce surfaces are outside this skill; declarative IaC provisioning
-  through the Pulumi Hostinger provider belongs to pulumi.
+    Hostinger estate operations across the domain portfolio and the VPS fleet: domain registration,
+    availability checks, nameservers, DNS zone records, forwarding, WHOIS profiles, domain lock and
+    privacy protection, plus VPS lifecycle, Docker Compose projects, firewalls, SSH keys, backups,
+    snapshots, recovery mode, malware scanning, PTR records, and metrics. Use when registering or
+    transferring domains, editing DNS, deploying or troubleshooting a VPS or its Docker projects,
+    configuring firewalls, or managing server infrastructure on Hostinger. Shared web hosting,
+    WordPress, and ecommerce surfaces are outside this skill; declarative IaC provisioning
+    through the Pulumi Hostinger provider belongs to pulumi.
 ---
 
 # [HOSTINGER]

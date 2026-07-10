@@ -1,17 +1,17 @@
 ---
 name: pulumi
 description: >-
-  Use this skill for any task that creates, modifies, inspects, or destroys cloud infrastructure
-  or SaaS configuration, from one-off CLI operations to full multi-resource projects, across
-  providers in the Pulumi ecosystem — AWS, Azure, GCP, Kubernetes, Cloudflare, Hostinger, Auth0,
-  Datadog, Vercel, and others — driven through one CLI, one state model, and one credential layer.
-  Trigger even when the task does not name Pulumi; phrasings like "deploy this app," "provision a
-  database," "stand up a VPC," "configure Auth0," or "tear down staging" qualify, as do tasks that
-  migrate Terraform, CloudFormation, CDK, Bicep, or ARM code to Pulumi, Automation API embedding,
-  ComponentResource authoring, Output/apply questions, and failed pulumi up or preview debugging.
-  Do not trigger for application runtime code that reads or writes data via cloud SDKs; that is
-  application code, not infrastructure. Interactive Hostinger domain, DNS, and VPS operations
-  belong to the hostinger skill.
+    Use this skill for any task that creates, modifies, inspects, or destroys cloud infrastructure
+    or SaaS configuration, from one-off CLI operations to full multi-resource projects, across
+    providers in the Pulumi ecosystem — AWS, Azure, GCP, Kubernetes, Cloudflare, Hostinger, Auth0,
+    Datadog, Vercel, and others — driven through one CLI, one state model, and one credential layer.
+    Trigger even when the task does not name Pulumi; phrasings like "deploy this app," "provision a
+    database," "stand up a VPC," "configure Auth0," or "tear down staging" qualify, as do tasks that
+    migrate Terraform, CloudFormation, CDK, Bicep, or ARM code to Pulumi, Automation API embedding,
+    ComponentResource authoring, Output/apply questions, and failed pulumi up or preview debugging.
+    Do not trigger for application runtime code that reads or writes data via cloud SDKs; that is
+    application code, not infrastructure. Interactive Hostinger domain, DNS, and VPS operations
+    belong to the hostinger skill.
 ---
 
 # [PULUMI]

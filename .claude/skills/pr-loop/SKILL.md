@@ -1,12 +1,12 @@
 ---
 name: pr-loop
 description: >-
-  Autonomous multi-reviewer PR round-trip over `gh` and the GitHub GraphQL API. Detect the current branch's
-  open GitHub PR, wait for every reviewer (CodeRabbit, Greptile, Macroscope, Gemini, OpenAI Codex, Claude,
-  human), aggregate and triage all feedback, fix valid findings, re-push, re-trigger, resolve threads, and
-  converge to merge-ready with the user out of the loop. Use after opening or updating a PR, or on "address
-  the PR review feedback", "drive the PR to green", "round-trip reviewer comments", or "babysit the PR".
-  Local pre-PR review belongs to code-review and cli-review.
+    Autonomous multi-reviewer PR round-trip over `gh` and the GitHub GraphQL API. Detect the current branch's
+    open GitHub PR, wait for every reviewer (CodeRabbit, Greptile, Macroscope, Gemini, OpenAI Codex, Claude,
+    human), aggregate and triage all feedback, fix valid findings, re-push, re-trigger, resolve threads, and
+    converge to merge-ready with the user out of the loop. Use after opening or updating a PR, or on "address
+    the PR review feedback", "drive the PR to green", "round-trip reviewer comments", or "babysit the PR".
+    Local pre-PR review belongs to code-review and cli-review.
 ---
 
 # [PR_LOOP]

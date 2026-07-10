@@ -44,7 +44,7 @@
 
 # SAFE: env var indirection
 - env:
-    PR_TITLE: ${{ github.event.pull_request.title }}
+      PR_TITLE: ${{ github.event.pull_request.title }}
   run: printf '%s\n' "$PR_TITLE"
 ```
 
@@ -60,6 +60,7 @@
 |  [04]   | `::add-path::VALUE`            | Removed.            | `echo "VALUE" >> "$GITHUB_PATH"`       |
 
 [STILL_VALID_WORKFLOW_COMMANDS]:
+
 - `::add-mask::VALUE` — dynamically mask a value in subsequent logs.
 - `::debug::MESSAGE` — debug-level log output.
 - `::notice file=F,line=L::MESSAGE` — annotation on workflow run page.

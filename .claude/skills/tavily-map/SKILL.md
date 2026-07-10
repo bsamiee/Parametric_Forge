@@ -1,12 +1,12 @@
 ---
 name: tavily-map
 description: >-
-  Discover and list all URLs on a website without extracting content, via the Tavily CLI —
-  faster than crawling, returns URLs only. Use to find a specific page on a large site, list
-  site structure, or locate where something lives on a domain — "map the site", "find the URL
-  for", "what pages are on", "list all pages", "site structure". Essential when the site is
-  known but the exact page is not; pair with tavily-extract for the content. Bulk content
-  across many pages belongs to tavily-crawl.
+    Discover and list all URLs on a website without extracting content, via the Tavily CLI —
+    faster than crawling, returns URLs only. Use to find a specific page on a large site, list
+    site structure, or locate where something lives on a domain — "map the site", "find the URL
+    for", "what pages are on", "list all pages", "site structure". Essential when the site is
+    known but the exact page is not; pair with tavily-extract for the content. Bulk content
+    across many pages belongs to tavily-crawl.
 allowed-tools: Bash(uvx *)
 ---
 

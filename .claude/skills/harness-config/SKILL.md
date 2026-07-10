@@ -1,18 +1,18 @@
 ---
 name: harness-config
 description: >-
-  Owns the persistent behavior surfaces of the Claude Code harness and the placement law
-  that picks one: the CLAUDE.md memory hierarchy with imports and path-scoped rules, auto
-  memory, settings scopes and precedence, permission rule evaluation, model and effort
-  routing (aliases, opusplan, subagent overrides), power rows for skill listing budgets,
-  statusline, output styles, plugins and env, plus the headless lanes — print mode, bare
-  mode, structured output, session continuation, background sessions, dynamic agents, and
-  the SDK. Use when deciding where an instruction lives (memory file, rule, skill, hook,
-  setting, or subagent), tuning model, effort, or permission defaults, diagnosing what
-  loaded into context, scripting Claude Code noninteractively, or wiring CI calls.
-  Mechanical settings.json edits belong to update-config; hook construction belongs to
-  hooks-builder; skill bundle authoring belongs to skill-writer; work placement across
-  subagents, teams, and workflows belongs to agent-dispatch.
+    Owns the persistent behavior surfaces of the Claude Code harness and the placement law
+    that picks one: the CLAUDE.md memory hierarchy with imports and path-scoped rules, auto
+    memory, settings scopes and precedence, permission rule evaluation, model and effort
+    routing (aliases, opusplan, subagent overrides), power rows for skill listing budgets,
+    statusline, output styles, plugins and env, plus the headless lanes — print mode, bare
+    mode, structured output, session continuation, background sessions, dynamic agents, and
+    the SDK. Use when deciding where an instruction lives (memory file, rule, skill, hook,
+    setting, or subagent), tuning model, effort, or permission defaults, diagnosing what
+    loaded into context, scripting Claude Code noninteractively, or wiring CI calls.
+    Mechanical settings.json edits belong to update-config; hook construction belongs to
+    hooks-builder; skill bundle authoring belongs to skill-writer; work placement across
+    subagents, teams, and workflows belongs to agent-dispatch.
 ---
 
 # [HARNESS_CONFIG]

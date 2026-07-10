@@ -23,8 +23,8 @@
   boot.tmp.cleanOnBoot = true;
   zramSwap.enable = true;
 
-  # --- Locale / time ------------------------------------------------------------
-  time.timeZone = "America/Chicago";
+  # --- Locale -------------------------------------------------------------------
+  # Time zone projects from the host-context row through the host factory.
   i18n.defaultLocale = "en_US.UTF-8";
 
   # --- Network ------------------------------------------------------------------

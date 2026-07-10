@@ -132,7 +132,7 @@
   };
 
   overridePath = "${config.xdg.configHome}/forge/fonts/override.json";
-  receiptLog = "$HOME/Library/Logs/forge-font.receipts.log";
+  receiptsFold = import ./programs/shell-tools/receipts.nix;
 
   # --- Build-time manifest: name-table identity + feature + shaping receipts ---
   # fonttools is the metadata oracle, hb-shape the shaping oracle; feature
@@ -199,34 +199,48 @@
   # watch list. commit folds the override into this file and switches.
   forgeFont = pkgs.writeShellApplication {
     name = "forge-font";
-    runtimeInputs = [pkgs.jq pkgs.fzf pkgs.sd pkgs.coreutils];
+    runtimeInputs = [pkgs.jq pkgs.fzf pkgs.sd pkgs.gnugrep pkgs.coreutils];
     text = ''
       manifest="''${XDG_CONFIG_HOME:-$HOME/.config}/forge/fonts/manifest.json"
       override="''${XDG_CONFIG_HOME:-$HOME/.config}/forge/fonts/override.json"
       owner="''${FORGE_ROOT:-$HOME/Documents/99.Github/Parametric_Forge}/modules/home/fonts.nix"
-      emit() { # $1=verb $2=result $3=detail
-        local ts
+      receipt_log="''${FORGE_FONT_RECEIPT_LOG:-$HOME/Library/Logs/forge-font.receipts.log}"
+      receipt_surface="forge-font"
+      ${receiptsFold}
+      emit() { # $1=verb $2=outcome key (result|state) $3=outcome $4=detail
+        local ts row
         TZ=UTC0 printf -v ts '%(%Y-%m-%dT%H:%M:%SZ)T' "$EPOCHSECONDS"
-        mkdir -p "$HOME/Library/Logs"
-        printf 'ts=%s\towner=forge-font\tverb=%s\tresult=%s\tdetail=%s\n' "$ts" "$1" "$2" "$3" >>"${receiptLog}"
+        printf -v row 'ts=%s\tverb=%s\tdetail=%s\t%s=%s' "$ts" "$1" "$4" "$2" "$3"
+        # An unwritable log must never mask a landed verb.
+        append_receipt "$row" \
+          || printf 'forge-font: WARNING receipt not persisted to %s\n' "$receipt_log" >&2
+      }
+      require_manifest() { # admission gate: shape-asserted once, typed fault on a torn file
+        jq -e '(.families | type == "object") and (.roles | type == "object")' "$manifest" >/dev/null 2>&1 || {
+          printf 'forge-font: manifest missing or malformed: %s\n' "$manifest" >&2
+          exit 66
+        }
       }
       monos() { jq -r '.families | to_entries[] | select(.value.roles | index("mono")) | .key' "$manifest"; }
       apply() { # $1=role $2=family
+        require_manifest
         jq -e --arg f "$2" '.families | has($f)' "$manifest" >/dev/null || {
           printf 'forge-font: %s is not a manifest family\n' "$2" >&2
           exit 64
         }
         mkdir -p "''${override%/*}"
         jq -n --arg r "$1" --arg f "$2" '{($r): $f}' >"$override"
-        emit set ok "$1=$2"
+        emit set result ok "$1=$2"
         printf 'override: %s = %s (WezTerm reloads live; forge-font commit makes it durable)\n' "$1" "$2"
       }
       case "''${1:-pick}" in
         pick)
+          require_manifest
           fam="$(monos | fzf --border-label='[FORGE-FONT: MONO]' --height=40%)" || exit 130
           apply mono "$fam"
           ;;
         list)
+          require_manifest
           jq -r '.families | to_entries[] | [.key, .value.class, (.value.roles | join("+")), .value.version, .value.package] | @tsv' "$manifest" \
             | awk -F'\t' 'BEGIN{printf "%-24s %-9s %-14s %-24s %s\n","FAMILY","CLASS","ROLES","VERSION","PACKAGE"}{printf "%-24s %-9s %-14s %-24s %s\n",$1,$2,$3,$4,$5}'
           ;;
@@ -241,13 +255,28 @@
             printf 'forge-font: override carries no mono role\n' >&2
             exit 64
           }
+          command -v forge-redeploy >/dev/null || {
+            printf 'forge-font: forge-redeploy not on PATH — commit needs the deploy rail\n' >&2
+            emit commit result fail "forge-redeploy-missing"
+            exit 69
+          }
           sd '^    mono = ".*"; # forge-font:mono' "    mono = \"$fam\"; # forge-font:mono" "$owner"
-          emit commit ok "mono=$fam"
-          forge-redeploy --switch && rm -f "$override" && emit reset ok "post-commit"
+          # sd exits 0 on zero matches; the landed row is the only edit proof.
+          grep -qF "mono = \"$fam\"; # forge-font:mono" "$owner" || {
+            printf 'forge-font: marker drift — no "# forge-font:mono" row landed in %s\n' "$owner" >&2
+            emit commit result fail marker-drift
+            exit 65
+          }
+          # Transition receipt at the edit, terminal receipt only after the
+          # switch lands — a failed redeploy leaves state=edited on record.
+          emit commit state edited "mono=$fam"
+          forge-redeploy --switch
+          rm -f "$override"
+          emit commit result ok "mono=$fam"
           ;;
         reset)
           rm -f "$override"
-          emit reset ok "-"
+          emit reset result ok "-"
           printf 'override cleared; nix roles govern\n'
           ;;
         *)
@@ -268,25 +297,43 @@
     text = ''
       manifest="''${XDG_CONFIG_HOME:-$HOME/.config}/forge/fonts/manifest.json"
       payload="$HOME/Library/Fonts/.forge-fonts-manifest"
-      sp="$(/usr/sbin/system_profiler SPFontsDataType -json 2>/dev/null)"
-      rows=()
-      row() { rows+=("$(jq -nc --arg s "$1" --arg r "$2" --arg d "$3" '{surface:$s,result:$r,detail:$d}')"); }
+      # Admission gate: the manifest crosses once, shape-asserted — a missing
+      # or torn projection fails typed, never as a raw jq slurpfile error.
+      jq -e '(.families | type == "object") and (.roles | type == "object")' "$manifest" >/dev/null 2>&1 || {
+        printf 'forge-font-doctor: manifest missing or malformed: %s\n' "$manifest" >&2
+        exit 66
+      }
       if [[ -f $payload ]]; then
-        row payload ok "$(wc -l <"$payload" | tr -d ' ') managed files projected"
+        payload_result=ok
+        payload_detail="$(wc -l <"$payload") managed files projected"
       else
-        row payload fail "darwin projection manifest missing"
+        payload_result=fail
+        payload_detail="darwin projection manifest missing"
       fi
-      while IFS= read -r fam; do
-        if jq -e --arg f "$fam" '.SPFontsDataType[].typefaces[]? | select(.family == $f)' <<<"$sp" >/dev/null 2>&1; then
-          row "coretext:$fam" ok "registered"
-        else
-          row "coretext:$fam" fail "not enumerated by system_profiler"
-        fi
-      done < <(jq -r '.roles | [.mono, .sans, .serif, .symbols] + .scripts | .[]' "$manifest")
-      row electron "note" "Chromium reads CoreText post-restart; the rendered receipt is the VS Code capture lane"
-      row fontconfig "note" "fc-* serves Pango-class consumers only; CoreText rows above are Darwin truth"
-      printf '%s\n' "''${rows[@]}" | jq -s '{schema:"forge-font-doctor/v1", rows:.}'
-      if printf '%s\n' "''${rows[@]}" | jq -e 'select(.result == "fail")' >/dev/null; then exit 1; fi
+      # One projection: CoreText enumeration joins the manifest role chain in a
+      # single jq pass over the system_profiler snapshot. A dead profiler
+      # degrades typed — an empty snapshot fails every CoreText row, never the
+      # kernel. One row stream renders both the human table and --json.
+      snapshot="$(/usr/sbin/system_profiler SPFontsDataType -json 2>/dev/null || true)"
+      [[ -n $snapshot ]] || snapshot='{}'
+      report="$(jq -c --slurpfile m "$manifest" --arg pr "$payload_result" --arg pd "$payload_detail" '
+          ([.SPFontsDataType[]?.typefaces[]?.family] | unique) as $registered
+          | ($m[0].roles | [to_entries[].value] | flatten | unique) as $families
+          | {schema: "forge-font-doctor/v1",
+             rows: ([{surface: "payload", result: $pr, detail: $pd}]
+               + [$families[] | {
+                   surface: "coretext:\(.)",
+                   result: (if IN($registered[]) then "ok" else "fail" end),
+                   detail: (if IN($registered[]) then "registered" else "not enumerated by system_profiler" end)}]
+               + [{surface: "electron", result: "note", detail: "Chromium reads CoreText post-restart; the rendered receipt is the VS Code capture lane"},
+                  {surface: "fontconfig", result: "note", detail: "fc-* serves Pango-class consumers only; CoreText rows above are Darwin truth"}])}' <<<"$snapshot")"
+      if [[ "''${1:-}" == "--json" ]]; then
+        jq . <<<"$report"
+      else
+        jq -r '.rows[] | [.surface, .result, .detail] | @tsv' <<<"$report" \
+          | awk -F'\t' 'BEGIN{printf "%-34s %-6s %s\n","SURFACE","RESULT","DETAIL"}{printf "%-34s %-6s %s\n",$1,$2,$3}'
+      fi
+      jq -e '.rows | any(.result == "fail") | not' <<<"$report" >/dev/null
     '';
   };
 in {

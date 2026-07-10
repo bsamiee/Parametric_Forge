@@ -22,37 +22,97 @@ The stylesheet is an architecture: layers order the cascade once, and every rule
 Semantic names only — a consumer reads intent, never hex. The dark registry is the shipped base:
 
 ```css copy-safe
-@property --tone { syntax: "<percentage>"; inherits: true; initial-value: 0% }
-@property --raise { syntax: "<number>"; inherits: true; initial-value: 0 }
-@layer tokens {
-:root {
-  color-scheme: dark;
-  --bg:oklch(0.16 0.022 290); --surface:oklch(0.205 0.024 290); --raised:oklch(0.245 0.026 290);
-  --raised-2:oklch(0.295 0.028 290); --overlay:oklch(0.345 0.03 290);
-  --line:oklch(1 0 0/.09); --line-strong:oklch(1 0 0/.16); --boundary:oklch(0.84 0.089 304);
-  --text:oklch(0.965 0.008 290); --text-muted:oklch(0.78 0.03 290); --text-faint:oklch(0.66 0.032 290);
-  --accent:oklch(0.72 0.185 292); --accent-hover:oklch(0.78 0.18 292); --accent-active:oklch(0.655 0.175 292);
-  --accent-weak:oklch(0.72 0.185 292/.16); --on-accent:oklch(0.16 0.02 292); --focus:var(--accent);
-  --editorial:oklch(0.71 0.13 55); --editorial-weak:oklch(0.71 0.13 55/.14);
-  --ok:oklch(0.76 0.15 150); --warn:oklch(0.8 0.14 78); --fail:oklch(0.7 0.2 25); --info:oklch(0.79 0.12 225);
-  --series-1:oklch(0.72 0.185 292); --series-2:oklch(0.72 0.17 350); --series-3:oklch(0.74 0.12 225);
-  --series-4:oklch(0.74 0.15 150); --series-5:oklch(0.78 0.13 65); --series-6:oklch(0.8 0.11 110);
-  --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:24px; --s6:32px; --s7:48px; --s8:64px;
-  --fs-2xs:.694rem; --fs-xs:.833rem; --fs-sm:.9rem; --fs-md:1rem; --fs-lg:1.2rem;
-  --fs-xl:1.44rem; --fs-2xl:1.728rem; --fs-3xl:2.074rem;
-  --fs-4xl:clamp(2.074rem, 1.6rem + 2.2cqi, 2.986rem);
-  --lh-tight:1.15; --lh-heading:1.25; --lh-body:1.6; --lh-data:1.4;
-  --font-display:ui-serif,Georgia,'Iowan Old Style',serif;
-  --font-sans:ui-sans-serif,system-ui,'Segoe UI',Roboto,sans-serif;
-  --font-mono:ui-monospace,'SF Mono',Menlo,'Cascadia Mono',Consolas,monospace;
-  --dur-1:120ms; --dur-2:200ms; --dur-3:320ms; --dur-out-2:140ms; --dur-out-3:230ms;
-  --ease-out:cubic-bezier(.16,1,.3,1); --ease-standard:cubic-bezier(.2,0,0,1);
-  --ease-spring:cubic-bezier(.34,1.56,.64,1);
-  --r-1:6px; --r-2:10px; --r-3:16px; --r-full:999px; --measure:1100px;
-  --shadow-1:0 1px 2px oklch(0 0 0/.45),0 1px 1px oklch(0 0 0/.3);
-  --shadow-2:0 6px 24px oklch(0 0 0/.55),0 2px 6px oklch(0 0 0/.4);
+@property --tone {
+    syntax: "<percentage>";
+    inherits: true;
+    initial-value: 0%;
 }
-@media (prefers-reduced-motion:reduce){:root{--dur-1:0ms;--dur-2:0ms;--dur-3:0ms;--dur-out-2:0ms;--dur-out-3:0ms}}
+@property --raise {
+    syntax: "<number>";
+    inherits: true;
+    initial-value: 0;
+}
+@layer tokens {
+    :root {
+        color-scheme: dark;
+        --bg: oklch(0.16 0.022 290);
+        --surface: oklch(0.205 0.024 290);
+        --raised: oklch(0.245 0.026 290);
+        --raised-2: oklch(0.295 0.028 290);
+        --overlay: oklch(0.345 0.03 290);
+        --line: oklch(1 0 0/0.09);
+        --line-strong: oklch(1 0 0/0.16);
+        --boundary: oklch(0.84 0.089 304);
+        --text: oklch(0.965 0.008 290);
+        --text-muted: oklch(0.78 0.03 290);
+        --text-faint: oklch(0.66 0.032 290);
+        --accent: oklch(0.72 0.185 292);
+        --accent-hover: oklch(0.78 0.18 292);
+        --accent-active: oklch(0.655 0.175 292);
+        --accent-weak: oklch(0.72 0.185 292/0.16);
+        --on-accent: oklch(0.16 0.02 292);
+        --focus: var(--accent);
+        --editorial: oklch(0.71 0.13 55);
+        --editorial-weak: oklch(0.71 0.13 55/0.14);
+        --ok: oklch(0.76 0.15 150);
+        --warn: oklch(0.8 0.14 78);
+        --fail: oklch(0.7 0.2 25);
+        --info: oklch(0.79 0.12 225);
+        --series-1: oklch(0.72 0.185 292);
+        --series-2: oklch(0.72 0.17 350);
+        --series-3: oklch(0.74 0.12 225);
+        --series-4: oklch(0.74 0.15 150);
+        --series-5: oklch(0.78 0.13 65);
+        --series-6: oklch(0.8 0.11 110);
+        --s1: 4px;
+        --s2: 8px;
+        --s3: 12px;
+        --s4: 16px;
+        --s5: 24px;
+        --s6: 32px;
+        --s7: 48px;
+        --s8: 64px;
+        --fs-2xs: 0.694rem;
+        --fs-xs: 0.833rem;
+        --fs-sm: 0.9rem;
+        --fs-md: 1rem;
+        --fs-lg: 1.2rem;
+        --fs-xl: 1.44rem;
+        --fs-2xl: 1.728rem;
+        --fs-3xl: 2.074rem;
+        --fs-4xl: clamp(2.074rem, 1.6rem + 2.2cqi, 2.986rem);
+        --lh-tight: 1.15;
+        --lh-heading: 1.25;
+        --lh-body: 1.6;
+        --lh-data: 1.4;
+        --font-display: ui-serif, Georgia, "Iowan Old Style", serif;
+        --font-sans: ui-sans-serif, system-ui, "Segoe UI", Roboto, sans-serif;
+        --font-mono: ui-monospace, "SF Mono", Menlo, "Cascadia Mono", Consolas, monospace;
+        --dur-1: 120ms;
+        --dur-2: 200ms;
+        --dur-3: 320ms;
+        --dur-out-2: 140ms;
+        --dur-out-3: 230ms;
+        --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+        --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+        --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+        --r-1: 6px;
+        --r-2: 10px;
+        --r-3: 16px;
+        --r-full: 999px;
+        --measure: 1100px;
+        --shadow-1: 0 1px 2px oklch(0 0 0/0.45), 0 1px 1px oklch(0 0 0/0.3);
+        --shadow-2: 0 6px 24px oklch(0 0 0/0.55), 0 2px 6px oklch(0 0 0/0.4);
+    }
+    @media (prefers-reduced-motion: reduce) {
+        :root {
+            --dur-1: 0ms;
+            --dur-2: 0ms;
+            --dur-3: 0ms;
+            --dur-out-2: 0ms;
+            --dur-out-3: 0ms;
+        }
+    }
 }
 ```
 
@@ -60,21 +120,39 @@ The light palette is one declaration block carried twice — inside `@media (pre
 
 ```css copy-safe
 @layer tokens {
-:root[data-theme="light"] {
-color-scheme: light;
---bg:oklch(0.975 0.008 85); --surface:oklch(0.945 0.012 85); --raised:oklch(1 0 0);
---raised-2:oklch(1 0 0); --overlay:oklch(1 0 0);
---line:oklch(0 0 0/.1); --line-strong:oklch(0 0 0/.16); --boundary:oklch(0.55 0.16 301);
---text:oklch(0.21 0.012 290); --text-muted:oklch(0.43 0.02 290); --text-faint:oklch(0.54 0.02 290);
---accent:oklch(0.52 0.19 292); --accent-hover:oklch(0.47 0.19 292); --accent-active:oklch(0.44 0.18 292);
---accent-weak:oklch(0.52 0.19 292/.12); --on-accent:oklch(0.99 0 0);
---editorial:oklch(0.55 0.12 55); --editorial-weak:oklch(0.55 0.12 55/.1);
---ok:oklch(0.52 0.15 150); --warn:oklch(0.56 0.13 70); --fail:oklch(0.53 0.2 25); --info:oklch(0.52 0.12 235);
---series-1:oklch(0.52 0.19 292); --series-2:oklch(0.54 0.17 350); --series-3:oklch(0.54 0.12 225);
---series-4:oklch(0.55 0.13 150); --series-5:oklch(0.58 0.12 65); --series-6:oklch(0.6 0.11 110);
---shadow-1:0 1px 2px oklch(0 0 0/.08),0 1px 1px oklch(0 0 0/.05);
---shadow-2:0 6px 24px oklch(0 0 0/.12),0 2px 6px oklch(0 0 0/.08);
-}
+    :root[data-theme="light"] {
+        color-scheme: light;
+        --bg: oklch(0.975 0.008 85);
+        --surface: oklch(0.945 0.012 85);
+        --raised: oklch(1 0 0);
+        --raised-2: oklch(1 0 0);
+        --overlay: oklch(1 0 0);
+        --line: oklch(0 0 0/0.1);
+        --line-strong: oklch(0 0 0/0.16);
+        --boundary: oklch(0.55 0.16 301);
+        --text: oklch(0.21 0.012 290);
+        --text-muted: oklch(0.43 0.02 290);
+        --text-faint: oklch(0.54 0.02 290);
+        --accent: oklch(0.52 0.19 292);
+        --accent-hover: oklch(0.47 0.19 292);
+        --accent-active: oklch(0.44 0.18 292);
+        --accent-weak: oklch(0.52 0.19 292/0.12);
+        --on-accent: oklch(0.99 0 0);
+        --editorial: oklch(0.55 0.12 55);
+        --editorial-weak: oklch(0.55 0.12 55/0.1);
+        --ok: oklch(0.52 0.15 150);
+        --warn: oklch(0.56 0.13 70);
+        --fail: oklch(0.53 0.2 25);
+        --info: oklch(0.52 0.12 235);
+        --series-1: oklch(0.52 0.19 292);
+        --series-2: oklch(0.54 0.17 350);
+        --series-3: oklch(0.54 0.12 225);
+        --series-4: oklch(0.55 0.13 150);
+        --series-5: oklch(0.58 0.12 65);
+        --series-6: oklch(0.6 0.11 110);
+        --shadow-1: 0 1px 2px oklch(0 0 0/0.08), 0 1px 1px oklch(0 0 0/0.05);
+        --shadow-2: 0 6px 24px oklch(0 0 0/0.12), 0 2px 6px oklch(0 0 0/0.08);
+    }
 }
 ```
 
@@ -178,17 +256,29 @@ Containers, `:has()`, and registered custom properties form one state machine: d
 
 ```css copy-safe
 @layer components {
-  .panel {
-    container: panel / inline-size;
-    background: color-mix(in oklch, var(--raised), var(--accent) var(--tone));
-    box-shadow: 0 calc(var(--raise) * var(--s1)) calc(var(--raise) * var(--s4)) oklch(0 0 0 / .28);
-    transition: --tone var(--dur-2) var(--ease-standard), --raise var(--dur-2) var(--ease-standard);
-  }
-  .panel:has(:is(input, textarea, select):focus-visible) { --tone: 10%; --raise: 1 }
-  .panel:has([aria-invalid="true"]) { --tone: 14%; border-color: var(--fail) }
-  @container panel (inline-size >= 42rem) {
-    .panel__body { display: grid; grid-template-columns: minmax(12rem, .8fr) minmax(0, 1.2fr); gap: var(--s4) }
-  }
+    .panel {
+        container: panel / inline-size;
+        background: color-mix(in oklch, var(--raised), var(--accent) var(--tone));
+        box-shadow: 0 calc(var(--raise) * var(--s1)) calc(var(--raise) * var(--s4)) oklch(0 0 0 / 0.28);
+        transition:
+            --tone var(--dur-2) var(--ease-standard),
+            --raise var(--dur-2) var(--ease-standard);
+    }
+    .panel:has(:is(input, textarea, select):focus-visible) {
+        --tone: 10%;
+        --raise: 1;
+    }
+    .panel:has([aria-invalid="true"]) {
+        --tone: 14%;
+        border-color: var(--fail);
+    }
+    @container panel (inline-size >= 42rem) {
+        .panel__body {
+            display: grid;
+            grid-template-columns: minmax(12rem, 0.8fr) minmax(0, 1.2fr);
+            gap: var(--s4);
+        }
+    }
 }
 ```
 

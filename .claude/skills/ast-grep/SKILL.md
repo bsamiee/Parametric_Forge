@@ -1,11 +1,11 @@
 ---
 name: ast-grep
 description: >-
-  Author structural code patterns for the assay `code` rail — ast-grep
-  metavariable patterns (`$VAR`, `$$$ARGS`) via `code search` and tree-sitter
-  S-expression queries via `code query`. Use when matching code by AST shape
-  rather than text, finding call/usage/definition patterns across
-  C#/Python/TypeScript, or authoring a structural query before a repo-wide scan.
+    Author structural code patterns for the assay `code` rail — ast-grep
+    metavariable patterns (`$VAR`, `$$$ARGS`) via `code search` and tree-sitter
+    S-expression queries via `code query`. Use when matching code by AST shape
+    rather than text, finding call/usage/definition patterns across
+    C#/Python/TypeScript, or authoring a structural query before a repo-wide scan.
 ---
 
 # [AST_GREP]
@@ -38,7 +38,7 @@ For node-kind precision and field constraints, author a tree-sitter S-expression
 
 - Fields anchor structure: `(call_expression function: (identifier) @fn arguments: (arguments) @args)`.
 - Predicates filter captures: `(#eq? @fn "run_check")`, `(#match? @name "^_")`.
-- Content prefilter: a single-pattern query whose predicates are *only* `#eq?` and/or `#any-of?` auto-prefilters routed files by literal byte presence (zero false negatives) before any parse, so a literal-anchored sweep skips files that cannot match. Adding a `#match?`/`#not-eq?` predicate, or authoring multiple patterns, disables the prefilter and parses every routed file — prefer literal `#eq?`/`#any-of?` over regex `#match?` for repo-wide scans where a literal anchor exists.
+- Content prefilter: a single-pattern query whose predicates are _only_ `#eq?` and/or `#any-of?` auto-prefilters routed files by literal byte presence (zero false negatives) before any parse, so a literal-anchored sweep skips files that cannot match. Adding a `#match?`/`#not-eq?` predicate, or authoring multiple patterns, disables the prefilter and parses every routed file — prefer literal `#eq?`/`#any-of?` over regex `#match?` for repo-wide scans where a literal anchor exists.
 
 ## [04]-[DISCIPLINE]
 

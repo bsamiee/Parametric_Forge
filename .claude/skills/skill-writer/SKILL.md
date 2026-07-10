@@ -1,18 +1,18 @@
 ---
 name: skill-writer
 description: >-
-  Designs, authors, reviews, and repairs skill bundles end to end: SKILL.md root routing,
-  trigger descriptions and listing budgets, references and progressive disclosure, bundled
-  scripts and templates, frontmatter invocation policy, degrees-of-freedom calibration, and
-  the eval loop that proves a skill fires when it must and changes output when it loads. Use
-  when creating a skill, rewriting or auditing an existing bundle, writing or tuning a trigger
-  description, splitting an oversized root, deciding whether material earns a skill or a
-  cheaper owner, pricing how rigid an instruction is allowed to be, measuring trigger and
-  adherence quality, or auditing a skill estate for trigger collisions, listing overflow,
-  and forks. Prose register and the deterministic prose gate belong to the
-  docgen skill; codex-native format and discovery mechanics belong to the codex skill;
-  runnable orchestration scripts belong to workflow-creator; placement across memory files,
-  rules, settings, and hooks belongs to harness-config.
+    Designs, authors, reviews, and repairs skill bundles end to end: SKILL.md root routing,
+    trigger descriptions and listing budgets, references and progressive disclosure, bundled
+    scripts and templates, frontmatter invocation policy, degrees-of-freedom calibration, and
+    the eval loop that proves a skill fires when it must and changes output when it loads. Use
+    when creating a skill, rewriting or auditing an existing bundle, writing or tuning a trigger
+    description, splitting an oversized root, deciding whether material earns a skill or a
+    cheaper owner, pricing how rigid an instruction is allowed to be, measuring trigger and
+    adherence quality, or auditing a skill estate for trigger collisions, listing overflow,
+    and forks. Prose register and the deterministic prose gate belong to the
+    docgen skill; codex-native format and discovery mechanics belong to the codex skill;
+    runnable orchestration scripts belong to workflow-creator; placement across memory files,
+    rules, settings, and hooks belongs to harness-config.
 ---
 
 # [SKILL_WRITER]
@@ -22,6 +22,7 @@ A skill is deployed law plus packaged capability: the description competes for s
 ## [01]-[ROUTING]
 
 [REFERENCES]:
+
 - [01]-[ANATOMY](references/anatomy.md): bundle anatomy, budgets, frontmatter policy, the root schema, freedom calibration
 - [02]-[TRIGGERS](references/triggers.md): trigger science and listing economics
 - [03]-[DEFECTS](references/defects.md): the authoring defect catalog
@@ -29,9 +30,11 @@ A skill is deployed law plus packaged capability: the description competes for s
 - [05]-[ESTATE](references/estate.md): fleet-scale governance, audit cadence, mirror discipline
 
 [EXAMPLES]:
+
 - [01]-[REPAIRS](examples/repairs.md): pressure cases with worked fixes
 
 [SCRIPTS]:
+
 - [01]-[ESTATE_AUDIT](scripts/estate_audit.py): one-pass fleet sweep; invocation in the estate section
 
 ## [02]-[PLACEMENT]

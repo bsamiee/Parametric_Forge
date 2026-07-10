@@ -11,8 +11,12 @@ The wrapper runs `model: 'sonnet', effort: 'low'` with a label prefixed `gpt-5.5
 // own schema is the thin RECEIPT — the product body never crosses the wire.
 // The wrapper is LAUNCH-ONLY: it returns a launch receipt in seconds; the orchestrator's
 // setTimeout harvest loop owns the waiting and the promotion.
-const receipt = await agent(codexPrompt('audit-auth', task, PRODUCT_SCHEMA, /*writes*/ false),
-  { model: 'sonnet', effort: 'low', label: 'gpt-5.5:audit-auth', schema: RECEIPT })
+const receipt = await agent(codexPrompt("audit-auth", task, PRODUCT_SCHEMA, /*writes*/ false), {
+    model: "sonnet",
+    effort: "low",
+    label: "gpt-5.5:audit-auth",
+    schema: RECEIPT,
+});
 ```
 
 The task file is the quoting-proof prompt channel (`codex exec … "Do the task in <task>.md"` — long prompts through shell argv are the fragility); the `--output-schema` file is what makes codex's report typed JSON. Codex schemas run the OpenAI strict profile — the stricter row of the validator split in the api reference; design conditional fields as required-but-empty (`""`/`[]`). The wrapper writes the task and schema files with the Write tool at ABSOLUTE paths under the repo root (never a shell heredoc — cwd drift and quoting land files where codex cannot find them), and the launch call verifies both with `test -s` before starting codex.

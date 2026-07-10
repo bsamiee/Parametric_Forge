@@ -35,8 +35,13 @@ opt.showmode = false
 opt.cmdheight = 2
 opt.laststatus = 3
 opt.colorcolumn = "150"
+-- One border owner for every float that names none (hover, signature,
+-- diagnostics); surfaces passing an explicit border keep their own.
+opt.winborder = "rounded"
 
 -- EDITING --------------------------------------------------------------------
+-- Persistent undo: history survives sessions under the state dir.
+opt.undofile = true
 opt.clipboard = vim.env.SSH_TTY and "" or "unnamedplus"
 opt.mouse = "a"
 opt.virtualedit = "block"
@@ -60,3 +65,12 @@ opt.foldexpr = "v:lua.vim.treesitter.foldexpr()"
 opt.foldtext = ""
 opt.foldlevel = 99
 opt.foldlevelstart = 99
+
+-- FEEDBACK -------------------------------------------------------------------
+-- Yank flash through the host highlighter (no default autocmd ships).
+vim.api.nvim_create_autocmd("TextYankPost", {
+    group = vim.api.nvim_create_augroup("forge_yank", { clear = true }),
+    callback = function()
+        vim.hl.on_yank()
+    end,
+})

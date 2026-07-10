@@ -71,10 +71,10 @@
       # (modules/home/programs/nix-tools/nixd.nix); zero eval cost until read.
       debug = true;
 
-      flake = {
-        overlays.default = import ./overlays;
-        darwinConfigurations = import ./hosts/darwin {inherit inputs nix-darwin home-manager;};
-        nixosConfigurations = import ./hosts/nixos {inherit inputs home-manager;};
-      };
+      flake =
+        {
+          overlays.default = import ./overlays;
+        }
+        // import ./hosts {inherit inputs nix-darwin home-manager;};
     };
 }

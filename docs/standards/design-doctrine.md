@@ -14,7 +14,7 @@ A computation chooses one outcome carrier at admission and threads it unchanged 
 - Accepted: One rail per operation, boundary conversion once, a closed typed fault vocabulary, an absence carrier only for non-failing absence, applicative accumulation for independent validation, collapse only at host, wire, process, UI, or persistence edges.
 
 ```typescript conceptual
-pipe(Schema.decodeUnknown(Shape)(raw), Effect.flatMap(Shape.run), Effect.map(Receipt.from))
+pipe(Schema.decodeUnknown(Shape)(raw), Effect.flatMap(Shape.run), Effect.map(Receipt.from));
 ```
 
 ## [03]-[DISPATCH]
@@ -47,7 +47,7 @@ Variation is data: literals, flags, routes, retries, schedules, codecs, threshol
 - Accepted: One declarative row per variation, derived logic over enumerated arms, typed evidence on inputs and outputs, symbols and discriminants derived from the owner rather than re-spelled.
 
 ```typescript conceptual
-const Route = { PRIMARY: { schedule, run } } as const satisfies Record<string, RouteRow>
+const Route = { PRIMARY: { schedule, run } } as const satisfies Record<string, RouteRow>;
 ```
 
 ## [06]-[BOUNDARY]

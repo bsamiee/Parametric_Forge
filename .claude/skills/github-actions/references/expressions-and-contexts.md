@@ -95,23 +95,23 @@ if: always() && needs.deploy.result == 'failure' && needs.deploy.result != 'canc
 
 ```yaml conceptual
 jobs:
-  setup:
-    runs-on: ubuntu-latest
-    outputs:
-      version: ${{ steps.ver.outputs.version }}
-      should-deploy: ${{ steps.check.outputs.deploy }}
-    steps:
-      - id: ver
-        run: echo "version=$(jq -r .version package.json)" >> "$GITHUB_OUTPUT"
-      - id: check
-        run: echo "deploy=${{ github.ref == 'refs/heads/main' }}" >> "$GITHUB_OUTPUT"
+    setup:
+        runs-on: ubuntu-latest
+        outputs:
+            version: ${{ steps.ver.outputs.version }}
+            should-deploy: ${{ steps.check.outputs.deploy }}
+        steps:
+            - id: ver
+              run: echo "version=$(jq -r .version package.json)" >> "$GITHUB_OUTPUT"
+            - id: check
+              run: echo "deploy=${{ github.ref == 'refs/heads/main' }}" >> "$GITHUB_OUTPUT"
 
-  deploy:
-    needs: setup
-    if: needs.setup.outputs.should-deploy == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - run: echo "Deploying ${{ needs.setup.outputs.version }}"
+    deploy:
+        needs: setup
+        if: needs.setup.outputs.should-deploy == 'true'
+        runs-on: ubuntu-latest
+        steps:
+            - run: echo "Deploying ${{ needs.setup.outputs.version }}"
 ```
 
 [IMPORTANT] All job outputs are strings. Boolean comparisons require string equality: `== 'true'`, not `== true`. Multi-line outputs require delimiter syntax.
@@ -119,21 +119,23 @@ jobs:
 ## [06]-[INJECTION_PREVENTION]
 
 [CRITICAL]:
+
 - [NEVER]: Interpolate `${{ github.event.* }}` directly in `run:` — attacker-controlled PR titles, branch names, and commit messages can inject shell commands.
 - [ALWAYS]: Route untrusted values through `env:` block, then reference as shell variable.
 
 ```yaml conceptual
 # SAFE — env var indirection
 - env:
-    PR_TITLE: ${{ github.event.pull_request.title }}
-    PR_BODY: ${{ github.event.pull_request.body }}
-    COMMENT: ${{ github.event.comment.body }}
+      PR_TITLE: ${{ github.event.pull_request.title }}
+      PR_BODY: ${{ github.event.pull_request.body }}
+      COMMENT: ${{ github.event.comment.body }}
   run: |
-    printf 'Title: %s\n' "$PR_TITLE"
-    printf 'Body: %s\n' "$PR_BODY"
+      printf 'Title: %s\n' "$PR_TITLE"
+      printf 'Body: %s\n' "$PR_BODY"
 ```
 
 [UNTRUSTED_FIELDS]: (attacker-controlled in fork PRs):
+
 - `github.event.pull_request.title`, `.body`, `.head.ref`
 - `github.event.comment.body`
 - `github.event.head_commit.message`, `.author.name`, `.author.email`
@@ -147,11 +149,11 @@ jobs:
 
 # Multi-line output (delimiter syntax)
 - run: |
-    {
-      echo "changelog<<EOF"
-      git log --oneline v1.1.0..HEAD
-      echo "EOF"
-    } >> "$GITHUB_OUTPUT"
+      {
+        echo "changelog<<EOF"
+        git log --oneline v1.1.0..HEAD
+        echo "EOF"
+      } >> "$GITHUB_OUTPUT"
 
 # JSON output (for fromJSON consumption)
 - run: echo "matrix=$(jq -c . matrix.json)" >> "$GITHUB_OUTPUT"
@@ -169,10 +171,10 @@ jobs:
 
 ```yaml conceptual
 - run: |
-    echo "## Test Results" >> "$GITHUB_STEP_SUMMARY"
-    echo "| Suite | Passed | Failed |" >> "$GITHUB_STEP_SUMMARY"
-    echo "|---|---|---|" >> "$GITHUB_STEP_SUMMARY"
-    echo "| Unit | 142 | 0 |" >> "$GITHUB_STEP_SUMMARY"
+      echo "## Test Results" >> "$GITHUB_STEP_SUMMARY"
+      echo "| Suite | Passed | Failed |" >> "$GITHUB_STEP_SUMMARY"
+      echo "|---|---|---|" >> "$GITHUB_STEP_SUMMARY"
+      echo "| Unit | 142 | 0 |" >> "$GITHUB_STEP_SUMMARY"
 ```
 
 - GitHub-flavored Markdown: tables, badges, expandable `<details>` sections.
@@ -190,5 +192,5 @@ jobs:
 ```yaml conceptual
 - run: echo "::add-mask::$DYNAMIC_TOKEN"
   env:
-    DYNAMIC_TOKEN: ${{ steps.auth.outputs.token }}
+      DYNAMIC_TOKEN: ${{ steps.auth.outputs.token }}
 ```

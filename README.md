@@ -141,26 +141,26 @@ GitHub repository settings for the estate (merge hygiene, rulesets, feature bool
 Everything lands declaratively with the first switch; only these steps are manual, each with its proof:
 
 1. Install Determinate Nix.
-   - Command: `curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix | sh -s -- install`
-   - Verify: `nix --version` reports Determinate
+    - Command: `curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix | sh -s -- install`
+    - Verify: `nix --version` reports Determinate
 2. Sign into the 1Password app; enable Settings → Developer → SSH agent + CLI integration. GUI-only by vendor design; key custody syncs from the cloud — zero key handling.
-   - Verify: `SSH_AUTH_SOCK=~/Library/Group\ Containers/2BUA8C4S2C.com.1password/t/agent.sock ssh-add -L` lists the key
+    - Verify: `SSH_AUTH_SOCK=~/Library/Group\ Containers/2BUA8C4S2C.com.1password/t/agent.sock ssh-add -L` lists the key
 3. Clone to the path the deploy rail resolves; the agent socket is explicit until the first switch projects `~/.ssh/config`.
-   - Command: `SSH_AUTH_SOCK=~/Library/Group\ Containers/2BUA8C4S2C.com.1password/t/agent.sock git clone git@github.com:bsamiee/Parametric_Forge.git ~/Documents/99.Github/Parametric_Forge`
-   - Verify: repo present at `FORGE_ROOT`
+    - Command: `SSH_AUTH_SOCK=~/Library/Group\ Containers/2BUA8C4S2C.com.1password/t/agent.sock git clone git@github.com:bsamiee/Parametric_Forge.git ~/Documents/99.Github/Parametric_Forge`
+    - Verify: repo present at `FORGE_ROOT`
 4. Authenticate GitHub.
-   - Command: `gh auth login` (keyring, SSH protocol)
-   - Verify: `gh auth status`
+    - Command: `gh auth login` (keyring, SSH protocol)
+    - Verify: `gh auth status`
 5. Authenticate Doppler.
-   - Command: `doppler login`
-   - Verify: `doppler me`
+    - Command: `doppler login`
+    - Verify: `doppler me`
 6. First switch — installs the sudoers allowlist every later `forge-redeploy --switch` rides.
-   - Command: `sudo nix run nix-darwin/master#darwin-rebuild -- switch --flake .#macbook`
-   - Verify: `forge-redeploy --check-only`
+    - Command: `sudo nix run nix-darwin/master#darwin-rebuild -- switch --flake .#macbook`
+    - Verify: `forge-redeploy --check-only`
 7. Approve the TCC/automation prompts macOS raises on first agent launches.
-   - Verify: affected agents run without prompting
+    - Verify: affected agents run without prompting
 
-Day-2 rebuilds: `forge-redeploy --switch`. A fresh NixOS host bootstraps with nixos-anywhere + disko from its `hosts/nixos` row; day-2 is the same rail with `--os nixos --target-host`.
+Day-2 rebuilds: `forge-redeploy --switch`. A fresh NixOS host bootstraps with nixos-anywhere + disko from its `hosts/context.nix` row; day-2 is the same rail with `--os nixos --target-host`.
 
 ## [15]-[MAINTENANCE]
 

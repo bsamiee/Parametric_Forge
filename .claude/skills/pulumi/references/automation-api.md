@@ -8,7 +8,9 @@ import * as automation from "@pulumi/pulumi/automation";
 const stack = await automation.LocalWorkspace.createOrSelectStack({
     stackName: "dev",
     projectName: "my-project",
-    program: async () => { /* Pulumi program */ },
+    program: async () => {
+        /* Pulumi program */
+    },
 });
 const upResult = await stack.up({ onOutput: console.log });
 ```
@@ -54,10 +56,12 @@ for (const info of [
 // destroy(): same list reversed, selectStack + stack.destroy()
 
 // Parallel for independent stacks
-await Promise.all(independentStacks.map(async (info) => {
-    const stack = await automation.LocalWorkspace.createOrSelectStack({ stackName: "prod", workDir: info.dir });
-    return stack.up({ onOutput: (msg) => console.log(`[${info.name}] ${msg}`) });
-}));
+await Promise.all(
+    independentStacks.map(async (info) => {
+        const stack = await automation.LocalWorkspace.createOrSelectStack({ stackName: "prod", workDir: info.dir });
+        return stack.up({ onOutput: (msg) => console.log(`[${info.name}] ${msg}`) });
+    }),
+);
 ```
 
 ## [03]-[CONFIG_OUTPUTS_ERRORS]

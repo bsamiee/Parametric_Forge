@@ -17,17 +17,6 @@ local function executable(name)
     return vim.fn.executable(name) == 1
 end
 
-local function check_commands(title, names)
-    health.start(title)
-    for _, name in ipairs(names) do
-        if executable(name) then
-            health.ok(name)
-        else
-            health.error(("%s not resolvable on PATH"):format(name))
-        end
-    end
-end
-
 local function read_json(path)
     local fd = io.open(path, "r")
     if not fd then
@@ -77,29 +66,45 @@ function M.check()
         end
     end
 
+    -- Formatter rows resolve through conform's own definitions (command +
+    -- availability), so name/binary divergence (ruff_format -> ruff) never
+    -- needs restating here.
+    health.start("formatter binaries")
     local formatters = {}
     for _, names in pairs(tools.format) do
         for _, name in ipairs(names) do
-            formatters[name:gsub("^ruff_.*", "ruff")] = true
+            formatters[name] = true
         end
     end
-    check_commands("formatter binaries", vim.tbl_keys(formatters))
+    for name in vim.spairs(formatters) do
+        local info = require("conform").get_formatter_info(name)
+        if info.available then
+            health.ok(("%s (%s)"):format(name, info.command))
+        else
+            health.error(("%s unavailable: %s"):format(name, info.available_msg or "no definition"))
+        end
+    end
 
+    -- tbl_extend("error") faults if an ft row ever collides with a lane name.
     local linters = {}
-    for _, names in pairs(tools.lint) do
+    local lint_lanes = { global = tools.lint.global, workflow = tools.lint.workflow }
+    for _, names in pairs(vim.tbl_extend("error", lint_lanes, tools.lint.ft)) do
         for _, name in ipairs(names) do
             linters[name] = true
         end
     end
     health.start("linter lane")
-    for name in pairs(linters) do
-        local defined = pcall(require, "lint.linters." .. name)
+    for name in vim.spairs(linters) do
+        local defined, def = pcall(require, "lint.linters." .. name)
         if not defined then
             health.error(("nvim-lint has no definition for %s"):format(name))
-        elseif executable(name) then
-            health.ok(name)
         else
-            health.error(("%s not resolvable on PATH"):format(name))
+            local cmd = type(def.cmd) == "function" and def.cmd() or def.cmd
+            if executable(cmd) then
+                health.ok(("%s (%s)"):format(name, cmd))
+            else
+                health.error(("%s command not resolvable: %s"):format(name, cmd))
+            end
         end
     end
 
@@ -110,7 +115,7 @@ function M.check()
             estate_bins[bin] = true
         end
     end
-    for bin in pairs(estate_bins) do
+    for bin in vim.spairs(estate_bins) do
         if executable(bin) then
             health.ok(bin)
         else

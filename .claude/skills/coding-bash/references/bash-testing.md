@@ -2,17 +2,17 @@
 
 Production testing for Bash `5.2+`/5.3. bats-core `1.13+`, test isolation via subshell sandboxing, mocks via PATH manipulation, coverage via kcov 43+, CI with multi-shell container matrix, property-based fuzzing.
 
-| [INDEX] | [PATTERN]           |  [S]  | [USE_WHEN]                                    |
-| :-----: | :------------------ | :---: | :-------------------------------------------- |
-|  [01]   | bats-core framework |  S1   | Every test suite — lifecycle, helpers, tags   |
-|  [02]   | Test isolation      |  S2   | Side-effect-free — temp dirs, FD sandbox, env |
-|  [03]   | Mock/stub patterns  |  S3   | External command interception, function stubs |
-|  [04]   | Coverage/mutation   |  S4   | Quality gates — kcov, lcov, mutation sweep    |
-|  [05]   | CI integration      |  S5   | GH Actions — lint, test matrix, coverage gate |
-|  [06]   | Property-based      |  S6   | Input domain exploration, random generation   |
-|  [07]   | Snapshot testing    |  S7   | Output baseline comparison, approval workflow |
-|  [08]   | Contract testing    |  S8   | CLI exit codes, stdout schema, stderr rules   |
-|  [09]   | ShellCheck 0.11.0   |  S9   | SC2327-SC2332 — new codes for test/prod code  |
+| [INDEX] | [PATTERN]           | [S] | [USE_WHEN]                                    |
+| :-----: | :------------------ | :-: | :-------------------------------------------- |
+|  [01]   | bats-core framework | S1  | Every test suite — lifecycle, helpers, tags   |
+|  [02]   | Test isolation      | S2  | Side-effect-free — temp dirs, FD sandbox, env |
+|  [03]   | Mock/stub patterns  | S3  | External command interception, function stubs |
+|  [04]   | Coverage/mutation   | S4  | Quality gates — kcov, lcov, mutation sweep    |
+|  [05]   | CI integration      | S5  | GH Actions — lint, test matrix, coverage gate |
+|  [06]   | Property-based      | S6  | Input domain exploration, random generation   |
+|  [07]   | Snapshot testing    | S7  | Output baseline comparison, approval workflow |
+|  [08]   | Contract testing    | S8  | CLI exit codes, stdout schema, stderr rules   |
+|  [09]   | ShellCheck 0.11.0   | S9  | SC2327-SC2332 — new codes for test/prod code  |
 
 ## [01]-[BATS_CORE_FRAMEWORK]
 
@@ -295,48 +295,48 @@ CI pipeline owned by bash-testing.md. validation.md cross-references for ShellCh
 name: Shell Tests
 on: [push, pull_request]
 jobs:
-  lint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: koalaman/shellcheck-action@v2
-        with: { scandir: ./lib, severity: warning }
-  test:
-    needs: lint
-    strategy:
-      matrix:
-        include:
-          - { os: ubuntu-latest, bash: '5.2', container: '' }
-          - { os: ubuntu-latest, bash: '5.2', container: 'alpine:3.21' }
-          - { os: ubuntu-latest, bash: '5.2', container: 'cgr.dev/chainguard/wolfi-base:latest' }
-          - { os: macos-latest, bash: '5.3', container: '' }
-      fail-fast: false
-    runs-on: ${{ matrix.os }}
-    container: ${{ matrix.container || null }}
-    steps:
-      - uses: actions/checkout@v4
-      - if: matrix.container == 'alpine:3.21'
-        run: apk add --no-cache bash>=5.2 curl git
-      - uses: bats-core/bats-action@4.0.0
-        with: { support-install: true, assert-install: true, file-install: true, detik-install: false }
-      - run: bats --recursive --jobs 2 --timing --print-output-on-failure --formatter pretty --report-formatter junit --output tests/reports/ tests/
-      - if: always()
-        uses: actions/upload-artifact@v4
-        with: { name: 'test-results-${{ matrix.os }}-${{ matrix.bash }}-${{ matrix.container || "native" }}', path: tests/reports/ }
-  coverage:
-    needs: test
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: bats-core/bats-action@4.0.0
-        with: { support-install: true, assert-install: true, file-install: true }
-      - run: sudo apt-get install -y kcov
-      - run: kcov --include-path=./lib --bash-dont-parse-binary-dir coverage/ bats tests/
-      - run: |
-          pct=$(jq -r '.percent_covered' coverage/bats/kcov-result.json)
-          (( ${pct%.*} >= 80 )) || { echo "Coverage ${pct}% below 80%" >&2; exit 1; }
-      - uses: actions/upload-artifact@v4
-        with: { name: coverage-report, path: coverage/ }
+    lint:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+            - uses: koalaman/shellcheck-action@v2
+              with: { scandir: ./lib, severity: warning }
+    test:
+        needs: lint
+        strategy:
+            matrix:
+                include:
+                    - { os: ubuntu-latest, bash: "5.2", container: "" }
+                    - { os: ubuntu-latest, bash: "5.2", container: "alpine:3.21" }
+                    - { os: ubuntu-latest, bash: "5.2", container: "cgr.dev/chainguard/wolfi-base:latest" }
+                    - { os: macos-latest, bash: "5.3", container: "" }
+            fail-fast: false
+        runs-on: ${{ matrix.os }}
+        container: ${{ matrix.container || null }}
+        steps:
+            - uses: actions/checkout@v4
+            - if: matrix.container == 'alpine:3.21'
+              run: apk add --no-cache bash>=5.2 curl git
+            - uses: bats-core/bats-action@4.0.0
+              with: { support-install: true, assert-install: true, file-install: true, detik-install: false }
+            - run: bats --recursive --jobs 2 --timing --print-output-on-failure --formatter pretty --report-formatter junit --output tests/reports/ tests/
+            - if: always()
+              uses: actions/upload-artifact@v4
+              with: { name: 'test-results-${{ matrix.os }}-${{ matrix.bash }}-${{ matrix.container || "native" }}', path: tests/reports/ }
+    coverage:
+        needs: test
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+            - uses: bats-core/bats-action@4.0.0
+              with: { support-install: true, assert-install: true, file-install: true }
+            - run: sudo apt-get install -y kcov
+            - run: kcov --include-path=./lib --bash-dont-parse-binary-dir coverage/ bats tests/
+            - run: |
+                  pct=$(jq -r '.percent_covered' coverage/bats/kcov-result.json)
+                  (( ${pct%.*} >= 80 )) || { echo "Coverage ${pct}% below 80%" >&2; exit 1; }
+            - uses: actions/upload-artifact@v4
+              with: { name: coverage-report, path: coverage/ }
 ```
 
 ### [05.1]-[CONTAINERIZED_TESTING]
@@ -356,10 +356,10 @@ docker run --rm -v "${PWD}/lib:/code/lib:ro" -v "${PWD}/tests:/code/tests:ro" \
 ```yaml conceptual
 # docker-compose.test.yml — CI-local parity
 services:
-  tests:
-    image: bats/bats:latest
-    volumes: ['./lib:/code/lib:ro', './tests:/code/tests:ro']
-    command: ['--formatter', 'junit', '--output', '/code/tests/reports/', '/code/tests']
+    tests:
+        image: bats/bats:latest
+        volumes: ["./lib:/code/lib:ro", "./tests:/code/tests:ro"]
+        command: ["--formatter", "junit", "--output", "/code/tests/reports/", "/code/tests"]
 ```
 
 ## [06]-[PROPERTY_BASED_PATTERNS]
@@ -525,7 +525,7 @@ Full ShellCheck reference in validation.md S3. Test-relevant codes from `0.11.0`
 |  [05]   | **SC2331** | warn  | `-a` file test ambiguous         | `[ -a ~/.bashrc ]` (`-a` also AND)  | `[ -e ~/.bashrc ]` — unambiguous |
 
 - SC2327 fix: or split into separate ops. SC2328 fix: or redirect only. SC2329 fix: disable via dispatch-table.
-|  [06]   | **SC2332** | error | `[ ! -o opt ]` always true       | OR precedence: `[ "!" ] -o [ "opt" ]`  | `[[ ! -o opt ]]` or `! [ -o opt ]`        |
+  | [06] | **SC2332** | error | `[ ! -o opt ]` always true | OR precedence: `[ "!" ] -o [ "opt" ]` | `[[ ! -o opt ]]` or `! [ -o opt ]` |
 
 SC2329 false-positives: dispatch-table functions called via `"${_DISPATCH[$cmd]}"` — ShellCheck cannot trace associative-array indirection. Suppress with `# shellcheck disable=SC2329` and justification comment.
 

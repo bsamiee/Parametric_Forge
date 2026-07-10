@@ -8,7 +8,7 @@ can reach that local server.
 
 ```json output-only
 {
-  "error": "Heptabase started, but the CLI server is not ready yet. Ensure CLI is enabled..."
+    "error": "Heptabase started, but the CLI server is not ready yet. Ensure CLI is enabled..."
 }
 ```
 

@@ -1,11 +1,11 @@
 ---
 name: cli-review
 description: >-
-  Runs a Greptile CLI review of the current local branch against its base — no PR needed —
-  installing or authenticating the CLI when missing, then summarizes JSON findings by
-  severity. Use for Greptile feedback before opening a PR, outside a hosted review flow, or
-  directly from a local checkout. CodeRabbit review of working-tree changes belongs to
-  code-review; hosted PR reviewer round-trips belong to pr-loop.
+    Runs a Greptile CLI review of the current local branch against its base — no PR needed —
+    installing or authenticating the CLI when missing, then summarizes JSON findings by
+    severity. Use for Greptile feedback before opening a PR, outside a hosted review flow, or
+    directly from a local checkout. CodeRabbit review of working-tree changes belongs to
+    code-review; hosted PR reviewer round-trips belong to pr-loop.
 allowed-tools: Bash(git:*) Bash(greptile:*) Bash(command:*) Bash(curl:*) Bash(npm:*)
 ---
 

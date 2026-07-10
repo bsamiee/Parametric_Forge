@@ -57,7 +57,7 @@ validate_owned_container_identity() {
     net="$(network_name)"
     volume="$(service_volume_name "$service")"
     mount="${service_volume_mount[$service]}"
-    jq -e --arg net "$net" --arg volume "$volume" --arg mount "$mount" -f "$(catalog_path jq/container-identity.jq)" <<<"$raw" >/dev/null ||
+    jq -e --arg mode identity --arg net "$net" --arg volume "$volume" --arg mount "$mount" -f "$(catalog_path jq/container-projection.jq)" <<<"$raw" >/dev/null ||
         die "refusing container with wrong network or volume mount id=$id service=$service"
 }
 
@@ -135,9 +135,9 @@ service_identity_json() {
 # One inspect snapshot projects service, name, image, state, health, and identity as one US-joined row.
 container_report_row() {
     local raw="$1"
-    jq -r --arg service_label "$service_label" --arg net "$(network_name)" \
+    jq -r --arg mode report-row --arg service_label "$service_label" --arg net "$(network_name)" \
         --argjson identities "$(service_identity_json)" \
-        -f "$(catalog_path jq/container-report.jq)" <<<"${raw:-[]}"
+        -f "$(catalog_path jq/container-projection.jq)" <<<"${raw:-[]}"
 }
 
 container_id_for_service() {
@@ -358,9 +358,9 @@ readiness_report() {
     ports="$(published_ports "$id")"
     stderr_line "$(printf 'readiness\tservice=%s\tstatus=timeout\tport=%s\tcontainer_id=%s\tname=%s\timage=%s\tdocker_status=%s\thealth=%s\tpublished=%s' \
         "$service" "$(service_port "$service")" "$id" "$name" "$image" "$state" "$health" "$ports")"
-    while IFS= read -r line; do
-        stderr_line "$(printf 'readiness-log\tservice=%s\t%s' "$service" "$line")"
-    done < <(docker logs --tail 20 "$id" 2>&1 || true)
+    local log_block
+    log_block="$(docker logs --tail 20 "$id" 2>&1 | awk -v service="$service" '{ printf "readiness-log\tservice=%s\t%s\n", service, $0 }' || true)"
+    [[ -z "$log_block" ]] || stderr_line "$log_block"
 }
 
 wait_service() {
@@ -435,19 +435,21 @@ service_extension_sql() {
 }
 
 # One extension-row producer; mode selects the read-only probe or the mutating apply SQL.
+# A failed per-service SQL run fails the whole producer: silently dropped rows would
+# evade apply_required_rows_ok, which only inspects rows that exist.
 extension_rows() {
     local mode="$1"
-    local service
+    local service rc=0
     for service in "${service_order[@]}"; do
         if ! service_enabled "$service"; then
-            disabled_service_apply_rows "$service"
+            disabled_service_apply_rows "$service" || rc=1
         elif [[ "$mode" == "apply" ]]; then
-            service_extension_sql "$service" apply-postgres.sql.tpl
+            service_extension_sql "$service" apply-postgres.sql.tpl || rc=1
         else
-            service_extension_sql "$service" check-postgres.sql.tpl
+            service_extension_sql "$service" check-postgres.sql.tpl || rc=1
         fi
     done
-    return 0
+    return "$rc"
 }
 
 apply_required_rows_ok() {
@@ -530,7 +532,7 @@ generated_files_json() {
                 file_record_json generated_artifact path "$path"
             done
         fi
-    } | jq -s 'sort_by(.kind, (.path // ""))'
+    } | jq -s 'sort_by(.kind)'
 }
 
 owned_containers_json() {
@@ -541,13 +543,14 @@ owned_containers_json() {
         return 0
     }
     docker inspect "${ids[@]}" | jq -c \
+        --arg mode owned \
         --arg owner_label "$owner_label" \
         --arg service_label "$service_label" \
         --arg root_label "$root_label" \
         --arg project_label "$project_label" \
         --arg net "$(network_name)" \
         --argjson identities "$(service_identity_json)" \
-        -f "$(catalog_path jq/owned-containers.jq)"
+        -f "$(catalog_path jq/container-projection.jq)"
 }
 
 # One owned-resource projector for the named kinds; the kind selects its jq projection.

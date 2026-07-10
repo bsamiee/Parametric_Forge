@@ -51,11 +51,11 @@ Skills and subagents declare hooks in frontmatter with the same configuration sh
 name: secure-operations
 description: Perform operations with security checks
 hooks:
-  PreToolUse:
-    - matcher: "Bash"
-      hooks:
-        - type: command
-          command: "./scripts/security-check.sh"
+    PreToolUse:
+        - matcher: "Bash"
+          hooks:
+              - type: command
+                command: "./scripts/security-check.sh"
 ---
 ```
 

@@ -3,6 +3,7 @@
 ## [01]-[SECURITY]
 
 [CRITICAL]:
+
 - [ALWAYS]: SHA-pin every `uses:` reference — format: `owner/repo@<SHA> # vN.N.N`. [REFERENCE] Pinning protocol and incident history: `version-discovery.md`.
 - [ALWAYS]: `step-security/harden-runner` as first step in every job — monitors network egress, file integrity, process activity. Block mode enforces endpoint allowlists.
 - [ALWAYS]: Minimal permissions at job level — top-level `permissions: {}` (deny-all default), grant per-job. [REFERENCE] Per-action permissions: `version-discovery.md`§COMMON_ACTIONS_INDEX.
@@ -79,6 +80,7 @@ Prerequisite: `permissions: { id-token: write }` at job level. Subject claims in
 ## [03]-[PERFORMANCE]
 
 [IMPORTANT]:
+
 - [ALWAYS]: `actions/cache` or setup action built-in cache (`cache: 'pnpm'`) — v5 backend is ~80% faster uploads.
 - [ALWAYS]: `concurrency` groups with `cancel-in-progress: true` for CI; `false` for deploys.
 - [ALWAYS]: `timeout-minutes:` on every job — prevents runaway billing. Step-level `timeout-minutes:` also supported natively (not in composite actions).
@@ -89,11 +91,11 @@ Prerequisite: `permissions: { id-token: write }` at job level. Subject claims in
 # Sparse checkout — monorepo: only needed packages
 - uses: actions/checkout@<SHA> # v6
   with:
-    sparse-checkout: |
-      packages/api
-      packages/shared
-    sparse-checkout-cone-mode: true
-    fetch-depth: 1
+      sparse-checkout: |
+          packages/api
+          packages/shared
+      sparse-checkout-cone-mode: true
+      fetch-depth: 1
 ```
 
 | [INDEX] | [LAYER]         | [PATH]               | [CACHE_KEY]                                                |

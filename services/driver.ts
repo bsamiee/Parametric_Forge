@@ -35,6 +35,8 @@ const STACK = 'estate';
 type Flags = {
     readonly adopt: boolean;
     readonly reveal: boolean;
+    readonly refresh: boolean;
+    readonly expectNoChanges: boolean;
     readonly targets: ReadonlyArray<string>;
 };
 
@@ -355,7 +357,9 @@ const _digest = (bodies: ReadonlyArray<Uint8Array | string>): string =>
 
 // App identities hash their repo-owned artifacts per repo root; ruleset-native
 // identities hash the desired rule policy once — drift shows up as a hash
-// change on either side, never as prose.
+// change on either side, never as prose. Repo roots derive from repository
+// rows as `<scopeRoot>/<name>`, so the matrix follows the GitHub surface and
+// never couples to Doppler scope rows.
 const _artifactHash = (root: string, artifacts: readonly string[]) =>
     Effect.map(
         Effect.flatMap(FileSystem.FileSystem, (fs) =>
@@ -387,19 +391,19 @@ const _reviewerMatrix = Effect.gen(function* () {
         (row) =>
             Effect.map(
                 Effect.forEach(
-                    Topology.scopes,
-                    (scope) =>
+                    Topology.repositories,
+                    (repository) =>
                         row.mechanism === 'ruleset'
                             ? Effect.succeed({
-                                  repo: path.basename(scope.dir),
+                                  repo: repository.name,
                                   present: row.posture === 'active',
                                   configHash: row.posture === 'active' ? policyHash : '',
                               } satisfies ReviewerRepo)
                             : Effect.map(
-                                  _artifactHash(scope.dir, row.artifacts),
+                                  _artifactHash(path.join(Topology.scopeRoot, repository.name), row.artifacts),
                                   (proof) =>
                                       ({
-                                          repo: path.basename(scope.dir),
+                                          repo: repository.name,
                                           present: proof.present,
                                           configHash: proof.hash,
                                       }) satisfies ReviewerRepo,
@@ -421,19 +425,22 @@ const _reviewerMatrix = Effect.gen(function* () {
 
 const USAGE =
     'forge-services driver\n' +
-    '  preview|up|refresh [--adopt] [--target=<project>/<config>/<token>]\n' +
+    '  preview|up|refresh [--adopt] [--refresh] [--expect-no-changes] [--target=<project>/<config>/<token>]\n' +
     '  outputs [name] [--reveal]\n' +
     '  scopes apply|doctor|strict\n' +
     '  reviewers';
 
-// One flag anchor: exact flags match whole, the target flag matches by prefix.
-const _FLAGS = { adopt: '--adopt', reveal: '--reveal', target: '--target=' } as const;
+// One flag anchor: `=`-suffixed flags match by prefix, the rest match whole.
+const _FLAGS = { adopt: '--adopt', reveal: '--reveal', refresh: '--refresh', expectNoChanges: '--expect-no-changes', target: '--target=' } as const;
 
-const _known = (arg: string): boolean => arg === _FLAGS.adopt || arg === _FLAGS.reveal || arg.startsWith(_FLAGS.target);
+const _known = (arg: string): boolean =>
+    Arr.some(Struct.keys(_FLAGS), (key) => (_FLAGS[key].endsWith('=') ? arg.startsWith(_FLAGS[key]) : arg === _FLAGS[key]));
 
 const _flags = (argv: ReadonlyArray<string>): Flags => ({
     adopt: Arr.contains(argv, _FLAGS.adopt),
     reveal: Arr.contains(argv, _FLAGS.reveal),
+    refresh: Arr.contains(argv, _FLAGS.refresh),
+    expectNoChanges: Arr.contains(argv, _FLAGS.expectNoChanges),
     targets: Arr.filterMap(argv, (arg) => (arg.startsWith(_FLAGS.target) ? Option.some(arg.slice(_FLAGS.target.length)) : Option.none())),
 });
 
@@ -444,21 +451,30 @@ const _tokenUrn = (coordinate: string): string =>
 
 const _targeted = (flags: Flags): { readonly target?: string[] } => (flags.targets.length === 0 ? {} : { target: flags.targets.map(_tokenUrn) });
 
+// Plan modes fold as engine options: --refresh diffs against refreshed live
+// state (the drift probe), --expect-no-changes turns steady state into a gate.
+const _modes = (flags: Flags): { readonly refresh?: true; readonly expectNoChanges?: true } => ({
+    ...(flags.refresh ? { refresh: true as const } : {}),
+    ...(flags.expectNoChanges ? { expectNoChanges: true as const } : {}),
+});
+
 const _scopeVerb = Schema.decodeUnknownOption(Schema.Literal(...Struct.keys(_scopeVerbs)));
 
 const _verbs = {
     preview: (flags: Flags, _positional: ReadonlyArray<string>) =>
         Effect.flatMap(
-            _stackAct('preview', flags, (stack) => stack.preview({ diff: true, onOutput: _echo, ..._targeted(flags) })),
+            _stackAct('preview', flags, (stack) => stack.preview({ diff: true, onOutput: _echo, ..._targeted(flags), ..._modes(flags) })),
             (result) => Console.log(JSON.stringify(result.changeSummary ?? {})),
         ),
     up: (flags: Flags, _positional: ReadonlyArray<string>) =>
         Effect.flatMap(
-            _stackAct('up', flags, (stack) => stack.up({ onOutput: _echo, ..._targeted(flags) })),
+            _stackAct('up', flags, (stack) => stack.up({ onOutput: _echo, ..._targeted(flags), ..._modes(flags) })),
             (result) => Console.log(JSON.stringify(result.summary.resourceChanges ?? {})),
         ),
     refresh: (flags: Flags, _positional: ReadonlyArray<string>) =>
-        Effect.asVoid(_stackAct('refresh', flags, (stack) => stack.refresh({ onOutput: _echo, ..._targeted(flags) }))),
+        Effect.asVoid(
+            _stackAct('refresh', flags, (stack) => stack.refresh({ onOutput: _echo, ..._targeted(flags), ..._modes({ ...flags, refresh: false }) })),
+        ),
     outputs: (flags: Flags, positional: ReadonlyArray<string>) =>
         Effect.flatMap(
             _stackAct('outputs', flags, (stack) => stack.outputs()),

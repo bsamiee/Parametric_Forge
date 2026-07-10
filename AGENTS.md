@@ -35,9 +35,12 @@
 - Diagnose agent-tool runtime behavior separately from shell behavior. Claude workflow globals such as `args` are owned by Claude's workflow runtime; Nix, zsh, aliases, and PATH only explain subprocess, hook, or shell-command behavior.
 - Persist API tokens through `CLAUDE_ENV_FILE` only when subagents or tools need inherited credentials; Claude may expand that file into shell launch command lines while commands run.
 - Use `CLAUDE_ENV_EXPORT_KEYS` (comma/space list) for additional sub-agent credential variables required beyond the default `setup-env.sh` key set.
+- The harness edit path can materialize control-character escapes (``) as raw bytes on disk; after writing content that carries them, byte-verify with `cat -v` — raw control bytes are invisible to every text reader — and can strip 3-byte BMP private-use glyphs while planes 15/16 survive, so glyph-bearing files ride scripted writes with byte-level diff gates.
+- Estate rebuild passes hold the structural-win bar: a pass that only polishes is a failed pass unless an exhausted attack proves clean; a byte-fidelity deferral discharges by baseline eval-diff of the rendered artifact, never by standing; every pass returns evidence-anchored harvest rows that fold into scars, doctrine, and review rules the same session.
 
 ## [06]-[DEPLOY_SEAM]
 
 - Any change to a module, overlay, or launcher lands through `forge-redeploy --switch` and proves through `forge-accept`; an edited `.nix` file without a switch is invisible to the running estate.
+- A file created in the working tree is `git add --intent-to-add`ed before its first build — untracked files are invisible to the git-filtered flake source, and a dirty-tree build silently packages without them.
 - A change to any module the shared home graph imports proves both hosts before it lands: the darwin system build plus `nix eval '.#nixosConfigurations.maghz.config.system.build.toplevel.drvPath'` — `nix flake check` covers neither toplevel.
 - The `maghz` NixOS host deploys over SSH from this repo (`forge-redeploy --os nixos --host maghz --target-host <ssh>`); its services stay loopback-bound and are reached through the `vpsTunnels` rows, never by opening ports.

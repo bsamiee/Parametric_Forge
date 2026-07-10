@@ -232,8 +232,12 @@
     };
 
     # --- Docker Configuration -----------------------------------------------
+    # Colima owns the Darwin socket; the NixOS host serves the system default.
     docker = {
-      path = "unix://${config.xdg.dataHome}/colima/default/docker.sock";
+      path =
+        if pkgs.stdenv.hostPlatform.isDarwin
+        then "unix://${config.xdg.dataHome}/colima/default/docker.sock"
+        else "unix:///var/run/docker.sock";
     };
 
     # --- Pager Configuration ------------------------------------------------

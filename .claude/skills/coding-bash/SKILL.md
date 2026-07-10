@@ -1,16 +1,17 @@
 ---
 name: coding-bash
 description: >-
-  Use for Bash 5.2+/5.3 scripts, shell CLIs, entrypoints, CI jobs, cron,
-  text-processing pipelines, ShellCheck remediation, and shell reviews —
-  "write a shell script", "fix this bash", "make a CLI wrapper".
-  Enforces strict mode, dispatch-table routing, fork-minimal primitives,
-  atomic I/O, signal-safe cleanup, and pragmatic functional shell patterns.
+    Use for Bash 5.2+/5.3 scripts, shell CLIs, entrypoints, CI jobs, cron,
+    text-processing pipelines, ShellCheck remediation, and shell reviews —
+    "write a shell script", "fix this bash", "make a CLI wrapper".
+    Enforces strict mode, dispatch-table routing, fork-minimal primitives,
+    atomic I/O, signal-safe cleanup, and pragmatic functional shell patterns.
 ---
 
 # [CODING_BASH]
 
 All code follows five governing principles:
+
 - [FUNCTIONAL] — immutable locals, pure functions, dispatch tables, and tightly bounded mutable shell state
 - [POLYMORPHIC] — one parser, one dispatcher, one logger; extend via table entries not code branches
 - [PRODUCTION_HARDENED] — ERR traps, atomic I/O, signal forwarding, cleanup registries, version gating
@@ -23,6 +24,7 @@ All code follows five governing principles:
 [FOUNDATION]: every task loads [bash-scripting-guide.md](references/bash-scripting-guide.md) — primitives, strict mode, expansion, arrays.
 
 [TASK_ROUTED]: load only when the task matches.
+
 - [01]-[VERSION_FEATURES](references/version-features.md): 5.2/5.3 features, fork-free substitution, version gating
 - [02]-[VARIABLE_FEATURES](references/variable-features.md): call stacks, namerefs, traps, process lifecycle, 5.3 vars
 - [03]-[ARRAY_OPERATIONS](references/array-operations.md): set algebra, structural transforms, higher-order traversal
@@ -36,6 +38,7 @@ All code follows five governing principles:
 - [11]-[VALIDATION](references/validation.md): ShellCheck codes, static analysis, CI
 
 [EXAMPLES]: read the one matching the target archetype before writing.
+
 - [01]-[CLI_TOOL](examples/cli-tool.sh): two-dimensional verb:resource dispatch CLI
 - [02]-[DATA_PIPELINE](examples/data-pipeline.sh): file processing with jq pipelines, accumulation
 - [03]-[SERVICE_WRAPPER](examples/service-wrapper.sh): container entrypoint, signal dispatch, coproc
@@ -69,6 +72,7 @@ All code follows five governing principles:
 |  [08]   | Interactive JSON | `jnv`       | `jq`               | --                    |
 
 [SELECTION_RULES]:
+
 - Probe availability via `command -v` before use; fall back gracefully
 - `rg`/`fd` integrate with `.gitignore` by default — prefer for repo-aware searches
 - `jq` is mandatory for JSON — never parse JSON with sed/awk/grep
@@ -78,6 +82,7 @@ All code follows five governing principles:
 ## [04]-[CONTRACTS]
 
 [VARIABLE_DISCIPLINE]:
+
 - `local -r` for all non-mutating function locals. `readonly` for all module-level constants.
 - Mutable state (parsed args, log level) declared at module level, frozen via `readonly` in `_main` before core logic.
 - `declare -Ar` for all dispatch tables, option metadata, and lookup maps.
@@ -86,6 +91,7 @@ All code follows five governing principles:
 - Naming: `UPPER_SNAKE` for constants/env, `lower_snake` for locals/functions, `_` prefix for internal functions.
 
 [CONTROL_FLOW]:
+
 - `case/esac` for pattern matching (globs, regexes) only — never for if/elif-style routing.
 - `declare -Ar` dispatch tables for command routing: `"${_DISPATCH[${cmd}]}" "${args[@]}"`. Nest for subdomains: `_CONFIG_SUBCMDS`, `_INIT_SUBCMDS`.
 - `[[ ]]` over `[ ]`. `(( ))` for arithmetic. `&&`/`||` for short-circuit.
@@ -95,6 +101,7 @@ All code follows five governing principles:
 - Shell reality exceptions must be explicit: option parsing uses `case`; cleanup stacks may use a static `eval` template over shell-quoted commands; bounded counters and polling loops may mutate when the mutation is the resource protocol.
 
 [ERROR_HANDLING]:
+
 - `set -Eeuo pipefail` + `shopt -s inherit_errexit` in every script. No exceptions.
 - ERR trap with `BASH_COMMAND`, `BASH_LINENO`, `FUNCNAME` context. Stack trace for multi-level call chains.
 - `_CLEANUP_STACK` LIFO registry invoked by EXIT trap. `_CLEANING` guard prevents re-entrant execution on cascading signals.
@@ -103,12 +110,14 @@ All code follows five governing principles:
 - Timing rule: `BASH_MONOSECONDS` (`5.3+`) for elapsed-time durations — monotonic, immune to NTP drift, zero forks. `EPOCHREALTIME` only for absolute timestamps and microsecond-precision benchmarks (`_bench()` shape: `(end_s - start_s) * 1000000 + 10#end_us - 10#start_us`). See `references/version-features.md` for version-safe `BASH_MONOSECONDS` / `EPOCHREALTIME` fallback dispatch.
 
 [LOGGING_ARCHITECTURE]:
+
 - `declare -Ar _LOG_EMIT=([json]=_log_json [text]=_log_text_emit)` — format resolved once at startup via `readonly _LOG_EMITTER="${_LOG_EMIT[${LOG_FORMAT:-text}]}"`.
 - `_log()` gates on `_LOG_LEVELS` numeric threshold, then dispatches via `"${_LOG_EMITTER}"` — zero branching per call.
 - JSON emitter: `jq -nc --arg` for injection-safe serialization with `EPOCHREALTIME` microsecond timestamps and optional W3C trace context fields.
 - `FUNCNAME` offset accounts for `_info` -> `_log` -> `_LOG_EMITTER` call chain depth (typically `FUNCNAME[3]`, `BASH_LINENO[2]`).
 
 [SURFACE]:
+
 - `_` prefix for all internal functions. Public surface = `_main` entry point only.
 - One dispatch table per concern — extend by adding entries, not code branches.
 - No utility/helper files — colocate all logic in the script. `source` only for test frameworks.
@@ -116,6 +125,7 @@ All code follows five governing principles:
 - ~350 LOC scrutiny threshold — investigate compression via dispatch tables and awk programs, not file splitting.
 
 [RESOURCES]:
+
 - Temporary files: `mktemp` + `_register_cleanup "rm -f -- $(printf '%q' "${tmp}")"` or equivalent static quoted cleanup template. Work directories: `mktemp -d` with `SRANDOM` in path for uniqueness.
 - Signal forwarding for PID 1: trap TERM/INT, `kill -"${sig}" "${_CHILD_PID}"`, exit with signal code (143/130). Guard on `(( _CHILD_PID > 0 ))`.
 - On 5.3, `BASH_TRAPSIG` enables a unified signal handler with dispatch-table routing by signal number.
@@ -128,22 +138,26 @@ All code follows five governing principles:
 ## [05]-[ANTI_PATTERNS]
 
 [STATE_VIOLATIONS]:
+
 - MUTABLE STATE: `let`/global mutation outside `declare -g` config loading. Use `local -r`/`readonly`; freeze parsed args in `_main`.
 - FORK IN HOT PATH: `$(date)`, `$(cat file)`, `$(wc -l < file)` in loops. Use `printf -v`, `$(<file)`, `EPOCHSECONDS`, `mapfile`.
 
 [CONTROL_FLOW_VIOLATIONS]:
+
 - IMPERATIVE DISPATCH: `if/elif/else` chain for command routing. Use `declare -Ar` dispatch table + O(1) lookup.
 - WHILE-READ COLLECTION: `while IFS= read -r line` loop to build arrays. Use `mapfile -t arr < <(cmd)`.
 - UNMARKED STREAM LOOP: `while read` without a streaming-boundary comment. Streaming consumers are valid; collection loops are not.
 - NAKED WRITE: Direct `>` or `>>` for output files. Use `mktemp` + `mv` atomic pattern.
 
 [SAFETY_VIOLATIONS]:
+
 - HARDCODED FD: `exec 3>file` with literal FD numbers. Use `exec {fd}>file` for safe dynamic allocation.
 - UNQUOTED EXPANSION: `$var` without quotes. Always `"${var}"` — exceptions only in `(( ))` arithmetic.
 - EVAL INJECTION: `eval "$user_string"` with untrusted input. Only static cleanup/capture templates over shell-quoted values are allowed; otherwise use `declare -Ar` dispatch or `case/esac` pattern match.
 - ECHO OVER PRINTF: `echo -e`/`echo -n` for formatted output. Use `printf` — portable, no ambiguity, format strings.
 
 [ORGANIZATION_VIOLATIONS]:
+
 - UTILITY EXTRACTION: `lib/utils.sh`, `common.sh` helper files. Colocate all logic in the script.
 - RANDOM OVER SRANDOM: `$RANDOM` for security-relevant randomness (temp names, jitter, tokens). Use `$SRANDOM` (cryptographic entropy).
 

@@ -6,7 +6,8 @@
 -- ----------------------------------------------------------------------------
 -- Chord binder: motion primitives stay native rows here; every domain chord
 -- is a generated forge/chords.lua row (owner: apps/chords.nix). `fn` rows
--- resolve through the dispatch table; unknown ids fault at startup.
+-- resolve through the dispatch table: explicit verbs, then the picker
+-- grammar; ids outside both fault at startup.
 
 local map = vim.keymap.set
 
@@ -23,6 +24,15 @@ map("n", "<C-d>", "<C-d>zz", { desc = "Scroll down and center" })
 map("n", "<C-u>", "<C-u>zz", { desc = "Scroll up and center" })
 map("n", "n", "nzzzv", { desc = "Next search result and center" })
 map("n", "N", "Nzzzv", { desc = "Previous search result and center" })
+map("n", "]h", function()
+    require("gitsigns").nav_hunk("next")
+end, { desc = "Next git hunk" })
+map("n", "[h", function()
+    require("gitsigns").nav_hunk("prev")
+end, { desc = "Previous git hunk" })
+map({ "o", "x" }, "ih", function()
+    require("gitsigns").select_hunk()
+end, { desc = "Inner git hunk" })
 
 -- QUIT/SAVE/CLEAR ------------------------------------------------------------
 map("n", "<leader>q", "<cmd>qa<cr>", { desc = "Quit all" })
@@ -31,51 +41,26 @@ map("n", "<Esc>", "<cmd>nohlsearch<cr>", { desc = "Clear search highlight" })
 
 -- DOMAIN CHORD DISPATCH ------------------------------------------------------
 -- Action identity lives in the chord row; this table owns the callbacks.
-local actions = {
-    pick_files = function()
-        Snacks.picker.files()
-    end,
-    pick_recent = function()
-        Snacks.picker.recent()
-    end,
-    pick_buffers = function()
-        Snacks.picker.buffers()
-    end,
-    pick_grep = function()
-        Snacks.picker.grep()
-    end,
-    pick_grep_word = function()
-        Snacks.picker.grep_word()
-    end,
-    pick_resume = function()
-        Snacks.picker.resume()
-    end,
-    pick_help = function()
-        Snacks.picker.help()
-    end,
-    pick_keymaps = function()
-        Snacks.picker.keymaps()
-    end,
+-- Picker actions derive from the fn grammar (pick_<source>, lsp_<source>)
+-- over one factory, so a new picker chord is one chords.nix row with zero
+-- edits here; explicit rows own the non-picker verbs and grammar overrides.
+-- Closures defer Snacks resolution to press time (the global lands at
+-- setup); Snacks.picker returns nil for an unregistered source, so a bad
+-- source name faults typed at press while ungrammatical ids fault at bind.
+local pick = function(source)
+    return function()
+        local open = Snacks.picker[source]
+        if not open then
+            vim.notify(("forge.chords: unknown picker source %q"):format(source), vim.log.levels.ERROR)
+            return
+        end
+        open()
+    end
+end
+
+local actions = setmetatable({
     pick_estate = function()
         require("plugins.snacks").pick_estate()
-    end,
-    lsp_definitions = function()
-        Snacks.picker.lsp_definitions()
-    end,
-    lsp_references = function()
-        Snacks.picker.lsp_references()
-    end,
-    lsp_implementations = function()
-        Snacks.picker.lsp_implementations()
-    end,
-    lsp_type_definitions = function()
-        Snacks.picker.lsp_type_definitions()
-    end,
-    lsp_symbols = function()
-        Snacks.picker.lsp_symbols()
-    end,
-    lsp_workspace_symbols = function()
-        Snacks.picker.lsp_workspace_symbols()
     end,
     lsp_rename = function()
         vim.lsp.buf.rename()
@@ -110,7 +95,15 @@ local actions = {
     zen = function()
         Snacks.zen()
     end,
-}
+}, {
+    __index = function(_, fn)
+        if type(fn) ~= "string" then
+            return nil
+        end
+        local source = fn:match("^pick_(.+)$") or (fn:find("^lsp_") and fn or nil)
+        return source and pick(source) or nil
+    end,
+})
 
 for _, row in ipairs(require("forge.chords")) do
     local rhs = row.action or actions[row.fn]

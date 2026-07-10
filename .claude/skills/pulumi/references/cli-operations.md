@@ -38,9 +38,9 @@ Before authoring properties for a resource new to the session, `npx pulumi packa
 
 ```json output-only
 {
-  "id":     "my-data",
-  "bucket": "my-data",
-  "arn":    "arn:aws:s3:::my-data"
+    "id": "my-data",
+    "bucket": "my-data",
+    "arn": "arn:aws:s3:::my-data"
 }
 ```
 

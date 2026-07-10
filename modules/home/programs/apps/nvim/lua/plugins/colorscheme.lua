@@ -68,15 +68,14 @@ local apply = function()
     -- fills (background tint, neutral code foreground), and search fills
     -- (warm, distinct from the cool selection slate).
     local roles = syntax.roles
-    local info = roles.state.info or roles.accent.primary
     for name, def in pairs({
         DiagnosticError = { fg = roles.state.danger },
         DiagnosticWarn = { fg = roles.state.warning },
-        DiagnosticInfo = { fg = info },
+        DiagnosticInfo = { fg = roles.state.info },
         DiagnosticHint = { fg = roles.text.muted },
         DiagnosticUnderlineError = { undercurl = true, sp = roles.state.danger },
         DiagnosticUnderlineWarn = { undercurl = true, sp = roles.state.warning },
-        DiagnosticUnderlineInfo = { undercurl = true, sp = info },
+        DiagnosticUnderlineInfo = { undercurl = true, sp = roles.state.info },
         DiagnosticUnderlineHint = { undercurl = true, sp = roles.text.muted },
         FloatBorder = { fg = roles.ui.border },
         FloatTitle = { fg = roles.accent.primary, bold = true },
@@ -94,7 +93,13 @@ local apply = function()
         IncSearch = { bg = roles.ui.match, fg = roles.text.primary },
         CurSearch = { bg = roles.ui.match, fg = roles.text.primary },
         Whitespace = { fg = roles.ui.whitespace },
-        IndentLine = { fg = roles.ui.indent },
+        SnacksIndent = { fg = roles.ui.indent },
+        -- Hunk signs ride the owner git-state vocabulary — the same hues the
+        -- VS Code and WezTerm gutters read; dracula links them to Diff* tints.
+        GitSignsAdd = { fg = roles.git.added },
+        GitSignsChange = { fg = roles.git.modified },
+        GitSignsDelete = { fg = roles.git.deleted },
+        GitSignsUntracked = { fg = roles.git.untracked },
     }) do
         vim.api.nvim_set_hl(0, name, def)
     end

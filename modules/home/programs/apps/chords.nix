@@ -15,88 +15,150 @@
 }: let
   # --- Physical layers --------------------------------------------------------
   # Karabiner rewrites right-hand modifiers into leader stacks; zellij consumes
-  # each stack as the concrete modifier set named in `zellij`. Power carries no
-  # zellij binds by design: it passes through to terminal apps (yazi owns it).
+  # each stack as the derived `zellij` modifier set. Power carries no zellij
+  # binds by design: it passes through to terminal apps (yazi owns it).
   # WezTerm claims NO layer: its outer-terminal keys live in the typed
   # weztermRows vocabulary below, so every leader chord passes to zellij
-  # untouched. `rank` orders the emitted karabiner rule document.
-  layers = {
-    hyper = {
-      name = "Hyper";
-      glyphs = "⌘⌥⌃⇧";
-      physical = "Right Command";
-      chip = "R⌘";
-      rank = 30;
-      from = "right_command";
-      to = {
-        key_code = "left_shift";
-        modifiers = ["left_command" "left_control" "left_option"];
-      };
-      zellij = "Super Alt Ctrl Shift";
-    };
-    super = {
-      name = "Super";
-      glyphs = "⌘⌥⌃";
-      physical = "Right Option";
-      chip = "R⌥";
-      rank = 20;
-      from = "right_option";
-      to = {
-        key_code = "left_control";
-        modifiers = ["left_command" "left_option"];
-      };
-      zellij = "Super Alt Ctrl";
-    };
-    power = {
-      name = "Power";
-      glyphs = "⌥⌃⇧";
-      physical = "Right Shift";
-      chip = "R⇧";
-      rank = 10;
-      from = "right_shift";
-      to = {
-        key_code = "left_option";
-        modifiers = ["left_control" "left_shift"];
-      };
-      zellij = "Alt Ctrl Shift";
-    };
-  };
-
-  # Caps Lock dual-role sits beside the leader layers in the karabiner document.
-  capsRule = {
-    description = "Caps Lock → ⌘⌥ super-modifier (hold) / Caps Lock (tap)";
-    manipulators = [
-      {
-        type = "basic";
-        from = {
-          key_code = "caps_lock";
-          modifiers.optional = ["any"];
+  # untouched. `rank` orders the emitted karabiner rule document; `display`
+  # overrides the cheatsheet chord prefix (defaults to the zellij prefix).
+  # Glyphs, the zellij prefix, the kitty CSI-u bitmask, and the WezTerm glyph
+  # map all derive from the karabiner `to` row through the modifier
+  # vocabulary — one source per layer, one glyph owner per modifier (`wez` is
+  # the WezTerm mods-string spelling of the same physical modifier).
+  modVocab = [
+    {
+      kc = "left_command";
+      word = "Super";
+      wez = "CMD";
+      glyph = "⌘";
+      bit = 8;
+    }
+    {
+      kc = "left_option";
+      word = "Alt";
+      wez = "ALT";
+      glyph = "⌥";
+      bit = 2;
+    }
+    {
+      kc = "left_control";
+      word = "Ctrl";
+      wez = "CTRL";
+      glyph = "⌃";
+      bit = 4;
+    }
+    {
+      kc = "left_shift";
+      word = "Shift";
+      wez = "SHIFT";
+      glyph = "⇧";
+      bit = 1;
+    }
+  ];
+  layers =
+    lib.mapAttrs (
+      _: l: let
+        mods = lib.filter (m: lib.elem m.kc ([l.to.key_code] ++ l.to.modifiers)) modVocab;
+        zellij = lib.concatMapStringsSep " " (m: m.word) mods;
+      in
+        l
+        // {
+          inherit mods zellij;
+          glyphs = lib.concatMapStrings (m: m.glyph) mods;
+          csi = lib.foldl' (a: m: a + m.bit) 1 mods;
+          display = l.display or zellij;
+        }
+    ) {
+      hyper = {
+        name = "Hyper";
+        physical = "Right Command";
+        chip = "R⌘";
+        rank = 30;
+        display = "Hyper";
+        from = "right_command";
+        to = {
+          key_code = "left_shift";
+          modifiers = ["left_command" "left_control" "left_option"];
         };
-        to = [
-          {
-            key_code = "left_command";
-            modifiers = ["left_option"];
-          }
-        ];
-        to_if_alone = [
-          {
-            hold_down_milliseconds = 100;
-            key_code = "caps_lock";
-          }
-        ];
-      }
+      };
+      super = {
+        name = "Super";
+        physical = "Right Option";
+        chip = "R⌥";
+        rank = 20;
+        from = "right_option";
+        to = {
+          key_code = "left_control";
+          modifiers = ["left_command" "left_option"];
+        };
+      };
+      power = {
+        name = "Power";
+        physical = "Right Shift";
+        chip = "R⇧";
+        rank = 10;
+        from = "right_shift";
+        to = {
+          key_code = "left_option";
+          modifiers = ["left_control" "left_shift"];
+        };
+      };
+    };
+  layersByRank = dir: lib.sort (a: b: dir a.rank b.rank) (lib.attrValues layers);
+
+  # One manipulator grammar owns every karabiner rule: leader rewrites and the
+  # Caps Lock dual-role are rows; `alone` adds the tap arm.
+  mkKarabinerRule = r: {
+    inherit (r) description;
+    manipulators = [
+      ({
+          type = "basic";
+          from = {
+            key_code = r.from;
+            modifiers.optional = ["any"];
+          };
+          to = [r.to];
+        }
+        // lib.optionalAttrs (r ? alone) {to_if_alone = [r.alone];})
     ];
   };
+  capsRule = mkKarabinerRule {
+    description = "Caps Lock → ⌘⌥ super-modifier (hold) / Caps Lock (tap)";
+    from = "caps_lock";
+    to = {
+      key_code = "left_command";
+      modifiers = ["left_option"];
+    };
+    alone = {
+      hold_down_milliseconds = 100;
+      key_code = "caps_lock";
+    };
+  };
 
-  # Leader-role documentation block: vocabulary interpolates from the layer
-  # table; only the inter-field padding stays curated per row (glyph display
-  # widths defeat programmatic alignment). Every fragment line carries its full
-  # emitted indentation; consumers interpolate at their template's indent anchor.
-  headerComment = lib.concatStringsSep "\n" [
-    "    // Primary Modifier:    ${layers.hyper.physical}   → ${layers.hyper.name} (${layers.hyper.glyphs})  leader | ${layers.hyper.zellij}"
-    "    // Secondary Modifier:  ${layers.super.physical}    → ${layers.super.name} (${layers.super.glyphs})   leader | ${layers.super.zellij}"
-    "    // Tertiary Modifier:   ${layers.power.physical}     → ${layers.power.name} (${layers.power.glyphs})   leader | ${layers.power.zellij}"
-  ];
+  # Leader-role documentation block derived from the ranked layer rows: ASCII
+  # fields pad by byte width, glyph fields pad by modifier count (display
+  # width), so a new layer lands aligned with zero curated padding. Every
+  # fragment line carries its full emitted indentation; consumers interpolate
+  # at their template's indent anchor.
+  headerRoles = ["Primary" "Secondary" "Tertiary" "Quaternary"];
+  headerComment = let
+    rows = layersByRank (a: b: a > b);
+    roles = headerRoles;
+    pad = n: lib.strings.replicate (lib.max 0 n) " ";
+    padTo = w: s: s + pad (w - lib.stringLength s);
+    roleW = 2 + lib.foldl' lib.max 0 (map (r: lib.stringLength "${r} Modifier:") (lib.take (builtins.length rows) roles));
+    physW = 3 + lib.foldl' lib.max 0 (map (l: lib.stringLength l.physical) rows);
+    maxG = lib.foldl' lib.max 0 (map (l: builtins.length l.mods) rows);
+    maxN = lib.foldl' lib.max 0 (map (l: lib.stringLength l.name) rows);
+    line = role: l:
+      "    // "
+      + padTo roleW "${role} Modifier:"
+      + padTo physW l.physical
+      + "→ ${l.name} (${l.glyphs})"
+      + pad ((maxG - builtins.length l.mods) + (maxN - lib.stringLength l.name) + 2)
+      + "leader | ${l.zellij}";
+  in
+    lib.concatStringsSep "\n" (lib.zipListsWith line roles rows);
 
   # --- Mode table ---------------------------------------------------------------
   # One row per zellij mode reachable from a Hyper leader key. `rank` orders the
@@ -173,6 +235,10 @@
       keys = [modes.locked.key];
       kdl = ''SwitchToMode "Locked";'';
       label = "locked mode";
+      forgot = {
+        label = "lock";
+        rank = 10;
+      };
     }
     {
       keys = ["q"];
@@ -194,6 +260,16 @@
     {
       keys = ["]"];
       kdl = "NextSwapLayout;";
+    }
+    {
+      # Which-key sheet: the body interpolates forgotKdl, which reads only the
+      # forgot metadata of these rows — laziness keeps the knot well-founded.
+      keys = [cheatsheetKey];
+      body = cheatsheetBody;
+      forgot = {
+        label = "cheatsheet";
+        rank = 120;
+      };
     }
   ];
 
@@ -367,6 +443,14 @@
     }
   ];
 
+  # Layer-keyed bind vocabulary: every per-layer projection — KDL binds,
+  # cheatsheet rows, ids, register rows, ribbon hint chips — folds over this
+  # attrset, so a new leader layer is one `layers` row plus one entry here.
+  bindRows = {
+    hyper = hyperRows;
+    super = superRows;
+  };
+
   # Which-key rows with no chord of their own: command vocabulary surfaced in
   # the cheatsheet beside the chords.
   forgotExtras = [
@@ -419,12 +503,7 @@
   # the semantic id its dispatch table resolves. `destructive` rows confirm
   # before acting; `forgot` rows surface in the cheatsheet; every leader chord
   # still passes to zellij untouched.
-  weztermModGlyph = {
-    CMD = "⌘";
-    SHIFT = "⇧";
-    CTRL = "⌃";
-    ALT = "⌥";
-  };
+  weztermModGlyph = lib.listToAttrs (map (m: lib.nameValuePair m.wez m.glyph) modVocab);
   weztermDisplay = row: let
     glyphs = lib.concatMapStrings (m: weztermModGlyph.${m}) (lib.reverseList (lib.splitString "|" row.mods));
     keyLabel =
@@ -885,7 +964,6 @@
   # Every table string emitted inside a KDL quoted string passes through this.
   kdlEsc = lib.replaceStrings ["\\" "\""] ["\\\\" "\\\""];
   cheatsheetKey = "/";
-  cap = s: lib.toUpper (builtins.substring 0 1 s) + builtins.substring 1 (builtins.stringLength s) s;
 
   forgotOf = prefix: rows:
     lib.concatMap (
@@ -900,35 +978,22 @@
   modeForgot =
     [
       {
-        rank = 10;
-        label = "lock";
-        display = "${layers.hyper.name} ${modes.locked.key}";
-      }
-      {
         rank = 20;
         label = "unlock (locked)";
-        display = "${layers.hyper.name} ${modes.locked.exitKey}";
+        display = "${layers.hyper.display} ${modes.locked.exitKey}";
       }
     ]
     ++ map (m: {
       inherit (modes.${m}) rank;
       label = "${m} mode";
-      display = "${layers.hyper.name} ${modes.${m}.key}";
+      display = "${layers.hyper.display} ${modes.${m}.key}";
     }) (lib.filter (m: modes.${m} ? rank) (lib.attrNames modes));
-
-  cheatsheetForgot = {
-    rank = 120;
-    label = "cheatsheet";
-    display = "${layers.hyper.name} ${cheatsheetKey}";
-  };
 
   forgotRows =
     lib.sort (a: b: a.rank < b.rank)
     (modeForgot
-      ++ [cheatsheetForgot]
-      ++ forgotOf layers.hyper.name hyperRows
+      ++ lib.concatLists (lib.mapAttrsToList (n: forgotOf layers.${n}.display) bindRows)
       ++ map (r: r.forgot // {display = "Super ${r.key}";}) normalRows
-      ++ forgotOf layers.super.zellij superRows
       ++ forgotExtras
       ++ weztermForgot);
 
@@ -940,16 +1005,35 @@
   # KEY IDENTITY: a Shift-carrying layer receives shifted punctuation as the
   # SHIFTED character, so its binds emit that glyph both with and without the
   # Shift modifier listed; letter keys and Shift-free layers pass through.
+  # The map is total over the ANSI shifted row: any future punctuation bind
+  # on a Shift layer renders correctly instead of silently never firing.
   shiftedGlyph = {
-    "/" = "?";
+    "`" = "~";
+    "1" = "!";
+    "2" = "@";
+    "3" = "#";
+    "4" = "$";
+    "5" = "%";
+    "6" = "^";
+    "7" = "&";
+    "8" = "*";
+    "9" = "(";
+    "0" = ")";
+    "-" = "_";
+    "=" = "+";
     "[" = "{";
     "]" = "}";
     "\\" = "|";
+    ";" = ":";
+    "'" = "\"";
+    "," = "<";
+    "." = ">";
+    "/" = "?";
   };
   stripShift = prefix: lib.concatStringsSep " " (lib.filter (w: w != "Shift") (lib.splitString " " prefix));
   bindKeys = prefix: k:
     if lib.hasInfix "Shift" prefix && shiftedGlyph ? ${k}
-    then ["${prefix} ${shiftedGlyph.${k}}" "${stripShift prefix} ${shiftedGlyph.${k}}"]
+    then ["${prefix} ${kdlEsc shiftedGlyph.${k}}" "${stripShift prefix} ${kdlEsc shiftedGlyph.${k}}"]
     else ["${prefix} ${kdlEsc k}"];
 
   renderBind = prefix: row: let
@@ -965,8 +1049,7 @@
       )
     ];
 
-  cheatsheetBind = lib.concatStringsSep "\n" [
-    "        bind ${lib.concatMapStringsSep " " (s: "\"${s}\"") (bindKeys layers.hyper.zellij cheatsheetKey)} {"
+  cheatsheetBody = lib.concatStringsSep "\n" [
     "          LaunchOrFocusPlugin \"zellij-forgot\" {"
     "            \"LOAD_ZELLIJ_BINDINGS\" \"false\""
     forgotKdl
@@ -974,15 +1057,9 @@
     "            move_to_focused_tab true"
     "          };"
     "          SwitchToMode \"Normal\""
-    "        }"
   ];
 
-  hyperBindsKdl =
-    lib.concatMapStringsSep "\n" (renderBind layers.hyper.zellij) hyperRows
-    + "\n"
-    + cheatsheetBind;
-
-  superBindsKdl = lib.concatMapStringsSep "\n" (renderBind layers.super.zellij) superRows;
+  bindsKdl = lib.mapAttrs (n: lib.concatMapStringsSep "\n" (renderBind layers.${n}.zellij)) bindRows;
 
   renderNormal = r:
     lib.concatStringsSep "\n" [
@@ -996,7 +1073,7 @@
   entryBindsKdl = lib.concatMapStringsSep "\n" (m:
     lib.concatStringsSep "\n" [
       "      shared_except \"${m}\" \"locked\" {"
-      "        bind \"${layers.hyper.zellij} ${modes.${m}.key}\" { SwitchToMode \"${cap m}\"; }"
+      "        bind \"${layers.hyper.zellij} ${modes.${m}.key}\" { SwitchToMode \"${lib.strings.toSentenceCase m}\"; }"
       "      }"
     ])
   entryOrder;
@@ -1021,26 +1098,15 @@
     }) (lib.sort (a: b: a.ribbon.rank < b.ribbon.rank)
       (builtins.filter (r: r ? ribbon) superRows));
 
+  # Ribbon hint chips for the layers that carry bind rows, rank-descending.
   hintsRight =
-    "${layers.hyper.chip} ${lib.toLower layers.hyper.name}"
-    + " · ${layers.super.chip} ${lib.toLower layers.super.name} ";
+    lib.concatMapStringsSep " · " (l: "${l.chip} ${lib.toLower l.name}")
+    (lib.sort (a: b: a.rank > b.rank) (map (n: layers.${n}) (lib.attrNames bindRows)))
+    + " ";
 
-  # Kitty CSI-u modifier field for a zellij prefix (bitmask + 1); id-tagged
-  # rows export {key, mods} so runtime consumers inject the REAL chord bytes
-  # without hand-duplicating the vocabulary.
-  csiMods = prefix:
-    lib.foldl' (a: w:
-      a
-      + {
-        Super = 8;
-        Alt = 2;
-        Ctrl = 4;
-        Shift = 1;
-      }
-      .${
-        w
-      })
-    1 (lib.splitString " " prefix);
+  # Id-tagged rows export {key, mods} (kitty CSI-u bitmask from the layer row)
+  # so runtime consumers inject the REAL chord bytes without hand-duplicating
+  # the vocabulary.
   bindIds = layer: rows:
     lib.concatMap (
       r:
@@ -1048,12 +1114,12 @@
           name = r.id;
           value = {
             key = builtins.head r.keys;
-            mods = csiMods layer.zellij;
+            mods = layer.csi;
           };
         }
     )
     rows;
-  ids = lib.listToAttrs (bindIds layers.hyper hyperRows ++ bindIds layers.super superRows);
+  ids = lib.listToAttrs (lib.concatLists (lib.mapAttrsToList (n: bindIds layers.${n}) bindRows));
 
   # --- Register projection ----------------------------------------------------
   # Typed chord rows for the register rail: every consumer's chords in one
@@ -1083,11 +1149,11 @@
       mods = layers.hyper.zellij;
       key = modes.${m}.key;
       label = "${m} mode";
-      action = "SwitchToMode \"${cap m}\";";
+      action = "SwitchToMode \"${lib.strings.toSentenceCase m}\";";
       scope = "shared_except ${m} locked";
       toggle = true;
       projection_path = ".config/zellij/config.kdl";
-      rendered = "bind \"${layers.hyper.zellij} ${modes.${m}.key}\" { SwitchToMode \"${cap m}\"; }";
+      rendered = "bind \"${layers.hyper.zellij} ${modes.${m}.key}\" { SwitchToMode \"${lib.strings.toSentenceCase m}\"; }";
     })
     entryOrder;
   # The unlock chord lives only in the locked block (config.nix consumes
@@ -1105,8 +1171,7 @@
     rendered = "bind \"${layers.hyper.zellij} ${modes.locked.exitKey}\" { SwitchToMode \"Normal\"; }";
   };
   register =
-    map (zjRegRow layers.hyper) hyperRows
-    ++ map (zjRegRow layers.super) superRows
+    lib.concatLists (lib.mapAttrsToList (n: map (zjRegRow layers.${n})) bindRows)
     ++ map (r: {
       chord_id = "zellij:normal:${r.key}";
       consumer = "zellij";
@@ -1122,18 +1187,6 @@
     ++ modeRegRows
     ++ [
       lockedExitRow
-      {
-        chord_id = "zellij:hyper:${cheatsheetKey}";
-        consumer = "zellij";
-        physical_layer = layers.hyper.name;
-        mods = layers.hyper.zellij;
-        key = cheatsheetKey;
-        label = "cheatsheet";
-        action = "LaunchOrFocusPlugin \"zellij-forgot\"";
-        scope = "shared_except locked";
-        projection_path = ".config/zellij/config.kdl";
-        rendered = cheatsheetBind;
-      }
       {
         chord_id = "karabiner:caps_lock";
         consumer = "karabiner";
@@ -1191,37 +1244,28 @@
   register;
   conflictClaims = dupesOf claims;
   conflictIds = dupesOf (map (r: r.chord_id) register);
+  # listToAttrs keeps the first occurrence: a duplicate injection id would
+  # shadow silently without this guard.
+  conflictInjectionIds = dupesOf (lib.concatMap (rows: lib.concatMap (r: lib.optional (r ? id) r.id) rows) (lib.attrValues bindRows));
 in {
   options.forge.chords = lib.mkOption {
     type = lib.types.raw;
     readOnly = true;
     default = {
       inherit layers modes register;
-      nvim = {
-        domains = nvimDomains;
-        rows = nvimRows;
-      };
-      wezterm = {
-        rows = weztermRows;
-        display = weztermDisplay;
-      };
+      nvim.rows = nvimRows;
+      wezterm.rows = weztermRows;
       karabiner.rules =
         [capsRule]
-        ++ map (l: {
-          description = "${l.physical} → ${l.name} (${l.glyphs}) leader";
-          manipulators = [
-            {
-              type = "basic";
-              from = {
-                key_code = l.from;
-                modifiers.optional = ["any"];
-              };
-              to = [l.to];
-            }
-          ];
-        }) (lib.sort (a: b: a.rank < b.rank) (lib.attrValues layers));
+        ++ map (l:
+          mkKarabinerRule {
+            description = "${l.physical} → ${l.name} (${l.glyphs}) leader";
+            inherit (l) from to;
+          }) (layersByRank (a: b: a < b));
       zellij = {
-        inherit headerComment hyperBindsKdl superBindsKdl normalBindsKdl entryBindsKdl hintsRight ids;
+        inherit headerComment normalBindsKdl entryBindsKdl hintsRight ids;
+        hyperBindsKdl = bindsKdl.hyper;
+        superBindsKdl = bindsKdl.super;
         prefix = lib.mapAttrs (_: l: l.zellij) layers;
         ribbon = {
           hyperGroup = ribbonHyperGroup;
@@ -1240,6 +1284,16 @@ in {
     {
       assertion = conflictIds == [];
       message = "forge.chords: duplicate chord_id rows: ${lib.concatStringsSep ", " conflictIds}";
+    }
+    {
+      assertion = conflictInjectionIds == [];
+      message = "forge.chords: duplicate injection ids: ${lib.concatStringsSep ", " conflictInjectionIds}";
+    }
+    {
+      # zipListsWith truncates: a layer past the role vocabulary would vanish
+      # from the headerComment silently instead of landing misdocumented.
+      assertion = builtins.length (lib.attrValues layers) <= builtins.length headerRoles;
+      message = "forge.chords: ${toString (builtins.length (lib.attrValues layers))} layers exceed the ${toString (builtins.length headerRoles)}-row headerRoles vocabulary; extend headerRoles.";
     }
   ];
 }

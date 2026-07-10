@@ -1,13 +1,13 @@
 ---
 name: tavily-dynamic-search
 description: >-
-  Programmatic web search with context isolation: search the web, filter results in a local
-  Python process, and let only curated print() output enter the context window. The default
-  skill for web research. Triggered by "search for", "look up", "find", "research", "what's
-  the latest on", or any query needing current web information, and by "search and filter",
-  "find the important parts", or "extract the key details". Deep cited reports belong to
-  tavily-research; pulling known URLs belongs to tavily-extract; indexed library and
-  framework documentation belongs to context7-mcp.
+    Programmatic web search with context isolation: search the web, filter results in a local
+    Python process, and let only curated print() output enter the context window. The default
+    skill for web research. Triggered by "search for", "look up", "find", "research", "what's
+    the latest on", or any query needing current web information, and by "search and filter",
+    "find the important parts", or "extract the key details". Deep cited reports belong to
+    tavily-research; pulling known URLs belongs to tavily-extract; indexed library and
+    framework documentation belongs to context7-mcp.
 allowed-tools: Bash(uvx *), Bash(python3 *), Bash(uv run *), Bash(jq *)
 ---
 
@@ -43,18 +43,18 @@ Filtering code binds to these shapes.
 
 ```json template
 {
-  "query": "string",
-  "answer": "string | null",
-  "results": [
-    {
-      "url": "string",
-      "title": "string",
-      "content": "string (snippet, ~500-1500 chars)",
-      "score": 0.0,
-      "raw_content": "string | null (full page, only with --include-raw-content)"
-    }
-  ],
-  "response_time": 0.0
+    "query": "string",
+    "answer": "string | null",
+    "results": [
+        {
+            "url": "string",
+            "title": "string",
+            "content": "string (snippet, ~500-1500 chars)",
+            "score": 0.0,
+            "raw_content": "string | null (full page, only with --include-raw-content)"
+        }
+    ],
+    "response_time": 0.0
 }
 ```
 
@@ -62,16 +62,16 @@ Filtering code binds to these shapes.
 
 ```json output-only
 {
-  "results": [
-    {
-      "url": "string",
-      "title": "string",
-      "raw_content": "string (full page markdown)",
-      "images": []
-    }
-  ],
-  "failed_results": [],
-  "response_time": 0.0
+    "results": [
+        {
+            "url": "string",
+            "title": "string",
+            "raw_content": "string (full page markdown)",
+            "images": []
+        }
+    ],
+    "failed_results": [],
+    "response_time": 0.0
 }
 ```
 

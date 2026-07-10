@@ -1,12 +1,12 @@
 ---
 name: tavily-extract
 description: >-
-  Extract clean markdown or text from specific URLs via the Tavily CLI, up to 20 URLs per
-  call, including JavaScript-rendered pages, with query-focused chunking for targeted
-  retrieval. Use when one or more URLs are already in hand and their content is the need —
-  "extract", "grab the content from", "pull the text from", "get the page at", "read this
-  webpage". Finding pages without a URL belongs to tavily-dynamic-search; bulk extraction
-  across a whole site belongs to tavily-crawl.
+    Extract clean markdown or text from specific URLs via the Tavily CLI, up to 20 URLs per
+    call, including JavaScript-rendered pages, with query-focused chunking for targeted
+    retrieval. Use when one or more URLs are already in hand and their content is the need —
+    "extract", "grab the content from", "pull the text from", "get the page at", "read this
+    webpage". Finding pages without a URL belongs to tavily-dynamic-search; bulk extraction
+    across a whole site belongs to tavily-crawl.
 allowed-tools: Bash(uvx *)
 ---
 

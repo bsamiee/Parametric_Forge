@@ -51,14 +51,15 @@ The very first statement must be `export const meta = {…}`, and the object mus
 
 ```js conceptual
 export const meta = {
-  name: 'find-flaky-tests',                          // required — non-empty string
-  description: 'Find flaky tests and propose fixes', // required — shown in the permission dialog
-  whenToUse: 'CI is intermittently red',             // optional — shown in the workflow list
-  phases: [                                          // optional — one entry per phase() call
-    { title: 'Scan', detail: 'grep test logs for retries' },
-    { title: 'Fix',  detail: 'one agent per flaky test', model: 'sonnet' },
-  ],
-}
+    name: "find-flaky-tests", // required — non-empty string
+    description: "Find flaky tests and propose fixes", // required — shown in the permission dialog
+    whenToUse: "CI is intermittently red", // optional — shown in the workflow list
+    phases: [
+        // optional — one entry per phase() call
+        { title: "Scan", detail: "grep test logs for retries" },
+        { title: "Fix", detail: "one agent per flaky test", model: "sonnet" },
+    ],
+};
 ```
 
 `phases[].title` is matched exactly against `phase()` calls. `phases[].model` is a label, not a setting: the binary shows it in the permission dialog, but no code reads it to pick a model. The model is set only by the `model` option on each `agent()` call — a re-tiered phase sets both, or the dialog lies.
@@ -73,9 +74,11 @@ Prompts are the bulk of a workflow. Keep source lines near 150 columns by splitt
 
 ```js conceptual
 const PROMPT =
-  'TASK: realize the open cards of `' + folder + '` into design fences ' +
-  'at the doctrine bar. Read each card body, the pages it seams to, and ' +
-  'verify every novel member before writing.'
+    "TASK: realize the open cards of `" +
+    folder +
+    "` into design fences " +
+    "at the doctrine bar. Read each card body, the pages it seams to, and " +
+    "verify every novel member before writing.";
 ```
 
 - Break at a space and keep that space on the left segment; dropping it fuses two words — a silent prompt change.
@@ -138,9 +141,9 @@ Inside a long `[COMPOSITION]`, mark each phase with a bare subsection divider wh
 `args` arrives as structured data, exactly as the caller supplied it — no serialization to undo. `Workflow({ args: { minUsers: 5 } })` yields the object; an array stays an array; a string stays a string; nothing passed yields `undefined`. The only handling a script needs is a default for the omitted case plus a shape check when one workflow accepts both a config object and a free-text task:
 
 ```js conceptual
-const threshold = args?.minUsers ?? 20            // object input
-const scope = Array.isArray(args) ? args : []     // array input
-const task = typeof args === 'string' ? args : 'the change described in TASK.md'
+const threshold = args?.minUsers ?? 20; // object input
+const scope = Array.isArray(args) ? args : []; // array input
+const task = typeof args === "string" ? args : "the change described in TASK.md";
 ```
 
 Never `JSON.parse(args)` — it is already a live value, and parsing an object throws. Default the no-args run to a safe no-op, never a silent full-corpus sweep. ONE narrow carve-out exists for saved-command invocations that hand a JSON-looking string — a single guarded normalizer at `[INPUTS]` only: `(typeof args === 'string' && /^\s*[\[{]/.test(args)) ? JSON.parse(args) : args`. A bare `JSON.parse(args)` anywhere else stays forbidden. A saved workflow receives `args` via `Workflow({ scriptPath, args })`; if a harness build ever drops it for a `scriptPath` launch, relaunch with an inline `script` or encode the scope in the file.
@@ -148,8 +151,8 @@ Never `JSON.parse(args)` — it is already a live value, and parsing an object t
 ## [05]-[AGENT]
 
 ```js conceptual
-const text = await agent('Summarize the README.')                   // → string
-const data = await agent('List the deps.', { schema: DEPS_SCHEMA }) // → validated object
+const text = await agent("Summarize the README."); // → string
+const data = await agent("List the deps.", { schema: DEPS_SCHEMA }); // → validated object
 ```
 
 Without `schema`, `agent()` returns the subagent's final text verbatim. With `schema`, it returns a validated object. If the user skips the agent from `/workflows`, `agent()` returns `null` — the reason results get `.filter(Boolean)`.

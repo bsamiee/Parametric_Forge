@@ -14,10 +14,18 @@
 }: let
   logs = "${config.home.homeDirectory}/Library/Logs";
   bundleId = "com.parametric-forge.forge-nix-automation";
+  receiptsFold = import ./receipts.nix;
+  # Platform ps dispatch: /bin/ps is a Darwin fact; NixOS gets procps by
+  # store path so a manual run on the Linux host degrades typed, never 127.
+  psBin =
+    if pkgs.stdenv.hostPlatform.isDarwin
+    then "/bin/ps"
+    else "${pkgs.procps}/bin/ps";
 
   # One builder owns the shared tool rail: UTC stamp, per-tool receipt-log
-  # override (FORGE_<NAME>_RECEIPT_LOG), one persist function every receipt
-  # emitter calls. storePath prepends the Determinate profile so every
+  # override (FORGE_<NAME>_RECEIPT_LOG), and the dual-receipt fold — every
+  # persist_receipt row lands as one TSV line plus a JSONL sibling with
+  # identical keys. storePath prepends the Determinate profile so every
   # nix/nix-env call (incl. nh's) resolves the daemon-matched client.
   mkTool = {
     name,
@@ -30,7 +38,7 @@
   in
     pkgs.writeShellApplication {
       inherit name;
-      runtimeInputs = inputs;
+      runtimeInputs = lib.unique (inputs ++ [pkgs.jq]);
       text =
         lib.optionalString storePath ''
           export PATH="/nix/var/nix/profiles/default/bin:$PATH"
@@ -38,9 +46,11 @@
         + ''
           TZ=UTC0 printf -v ts '%(%Y-%m-%dT%H:%M:%SZ)T' "$EPOCHSECONDS"
           receipt_log="''${${envKey}:-$HOME/Library/Logs/${receiptName}.receipts.log}"
+          receipt_surface="${receiptName}"
+          ${receiptsFold}
           # An unwritable log must never fail a trap or mask a landed run.
           persist_receipt() {
-            { mkdir -p "''${receipt_log%/*}" && printf '%s\n' "$1" >>"$receipt_log"; } \
+            append_receipt "$1" \
               || printf '${name}: WARNING receipt not persisted to %s\n' "$receipt_log" >&2
             printf '${name}: receipt\t%s\n' "$1"
           }
@@ -425,11 +435,17 @@
       # Scheduled runs stay AC-gated and yield to a live deploy; manual runs wait.
       # No grep -q: consuming all input avoids the pipefail/SIGPIPE false skip.
       if [ "$mode" = "scheduled" ]; then
-        /usr/bin/pmset -g batt | grep "AC Power" >/dev/null || {
-          power="battery" result="skipped"
-          exit 0
-        }
-        power="ac"
+        # pmset is a Darwin fact; a host without it is mains-powered and
+        # skips the battery gate instead of dying under pipefail.
+        if [ -x /usr/bin/pmset ]; then
+          /usr/bin/pmset -g batt | grep "AC Power" >/dev/null || {
+            power="battery" result="skipped"
+            exit 0
+          }
+          power="ac"
+        else
+          power="mains"
+        fi
         flock_args=(-n)
       else
         flock_args=(-w 600)
@@ -631,7 +647,7 @@
       claude-desktop-config = ["Library/Application Support/Claude/claude_desktop_config.json" "registry-candidate" "joins the five-way MCP registration drift when the generator lands"];
       vscode-extensions-root = [".vscode" "keep" "live VS Code extension estate; manifest extension lane owns admission"];
       cloudstorage-variant-roots = ["Library/CloudStorage" "operator-disposal" "stale GoogleDrive account-variant roots; FileProvider-managed, never bulk-trashed"];
-      sqlean-unmanaged-dylibs = [".local/share/sqlean" "operator-disposal" "unmanaged copies; live owner overlays/sqlean + sqlite-forge"];
+      sqlean-unmanaged-dylibs = [".local/share/sqlean" "operator-disposal" "unmanaged copies; live owner the sqlean/sqlite-forge rows in overlays/manifest.nix"];
       jupyter-root-dot = [".jupyter" "relocation-pending" "forge-jupyter probe family owns live state"];
       secret-custody-gcloud = [".config/gcloud" "custody-row" "credential DBs under config; key-name-only receipts"];
       secret-custody-gws = [".config/gws" "custody-row" "token cache + client secret under config"];
@@ -671,15 +687,29 @@
   forgeCleanup = mkTool {
     name = "forge-cleanup";
     receiptName = "forge-orphan-sweep";
-    inputs = [pkgs.coreutils pkgs.findutils pkgs.gawk pkgs.jq];
+    inputs = [pkgs.coreutils pkgs.findutils pkgs.gawk pkgs.jq pkgs.flock];
     text = ''
       rows_json='${cleanupRows}'
       state_dir="''${XDG_STATE_HOME:-$HOME/.local/state}/forge-cleanup"
       run_ts="''${ts//[-:]/}"
       work="$(mktemp -d)"
-      trap 'rm -rf "$work"' EXIT
+      trap 'rm -rf "$work" "''${prune_tmp:-}"' EXIT
       usage() { echo "usage: forge-cleanup plan | apply [plan-file] | sweep [--report-only]" >&2; exit 64; }
       verb="''${1:-}"; shift || true
+
+      # Mutating verbs serialize on one lock: an apply racing the scheduled
+      # sweep must never double-trash a candidate or double-reap a pid.
+      lock_file="''${FORGE_CLEANUP_LOCK:-$HOME/.cache/forge-cleanup.lock}"
+      case "$verb" in
+        apply | sweep)
+          mkdir -p "''${lock_file%/*}"
+          exec {cleanup_fd}>"$lock_file"
+          flock -w 60 "$cleanup_fd" || {
+            printf 'forge-cleanup: another mutating run holds %s\n' "$lock_file" >&2
+            exit 75
+          }
+          ;;
+      esac
 
       # Hard deny for the kill lane: session servers, GUI apps, credential
       # daemons, and system trees are never reaped even on a class match.
@@ -693,8 +723,10 @@
       # sanctioned agent (KeepAlive services included) is never a candidate.
       proc_snapshot() {
         if [ ! -e "$work/procs" ]; then
-          /bin/launchctl list 2>/dev/null | awk 'NR > 1 && $1 ~ /^[0-9]+$/ {print $1}' >"$work/managed"
-          /bin/ps -axo pid=,ppid=,uid=,tty=,etime=,rss=,command= 2>/dev/null | awk -v uid="$(id -u)" -v self="$$" '
+          # launchd exclusion is a Darwin fact; on a systemd host the managed
+          # set is empty (user services carry a non-1 ppid and drop anyway).
+          { /bin/launchctl list 2>/dev/null || true; } | awk 'NR > 1 && $1 ~ /^[0-9]+$/ {print $1}' >"$work/managed"
+          ${psBin} -axo pid=,ppid=,uid=,tty=,etime=,rss=,command= 2>/dev/null | awk -v uid="$(id -u)" -v self="$$" '
             function esecs(e,  a, n, d, hms) {
               d = 0
               if (index(e, "-") > 0) { split(e, a, "-"); d = a[1]; e = a[2] }
@@ -704,7 +736,7 @@
               return hms[1] + 0
             }
             NR == FNR { managed[$1] = 1; next }
-            $2 == 1 && $3 == uid && $4 == "??" && !($1 in managed) && $1 != self {
+            $2 == 1 && $3 == uid && $4 ~ /^\?\??$/ && !($1 in managed) && $1 != self {
               cmd = ""
               for (i = 7; i <= NF; i++) cmd = cmd (i > 7 ? " " : "") $i
               printf "%s\t%s\t%s\t%s\n", $1, esecs($5), $6, cmd
@@ -897,7 +929,8 @@
           printf '# name\tkind\tstate\tcount\tkb\taction\tsafe\tdetail\n'
           while IFS= read -r row; do detect_row "$row"; done < <(jq -c '.[]' "$rows_json")
         } | tee "$plan_file"
-        printf 'forge-cleanup: plan receipt %s\n' "$plan_file"
+        persist_receipt "$(printf 'ts=%s\tverb=plan\tfindings=%s\treceipt=%s\tresult=ok' \
+          "$ts" "$(grep -cv '^#' "$plan_file" || true)" "$plan_file")"
       }
 
       cmd_apply() {
@@ -952,7 +985,9 @@
                 stale_list="$work/codex-stale"
                 codex_stale_projects "$cfg" >"$stale_list"
                 if [ -s "$stale_list" ]; then
-                  # Backup rides the trash rail like every other mutation.
+                  # Backup rides the trash rail like every other mutation; the
+                  # rename temp lives beside its target and dies with the trap.
+                  prune_tmp="$cfg.forge-prune"
                   cp -p "$cfg" "$work/config.toml.pre-prune" && trash "$work/config.toml.pre-prune"
                   gawk '
                     NR == FNR { stale[$0] = 1; next }
@@ -961,7 +996,7 @@
                       else if ($0 ~ /^\[/) drop = 0
                       if (!drop) print
                     }
-                  ' "$stale_list" "$cfg" >"$cfg.forge-prune" && mv "$cfg.forge-prune" "$cfg"
+                  ' "$stale_list" "$cfg" >"$prune_tmp" && mv "$prune_tmp" "$cfg"
                   printf '%s\taction=prune-trust\toutcome=applied\tcount=%s\n' "$name" "$(wc -l <"$stale_list" | tr -d ' ')"
                 else
                   printf '%s\taction=prune-trust\toutcome=drifted-clean\n' "$name"
@@ -977,7 +1012,8 @@
             esac
           done <"$plan_file"
         } | tee "$apply_file"
-        printf 'forge-cleanup: apply receipt %s\n' "$apply_file"
+        persist_receipt "$(printf 'ts=%s\tverb=apply\tapplied=%s\tplan=%s\treceipt=%s\tresult=ok' \
+          "$ts" "$(grep -c 'outcome=applied' "$apply_file" || true)" "$plan_file" "$apply_file")"
       }
 
       # Orphan-only lane for the scheduled agent: fresh detection each run,
@@ -1000,7 +1036,7 @@
         } >"$sweep_file"
         cat "$sweep_file"
         read -r killed reported gone < <(awk -F '\t' 'NR > 1 {c[$2]++} END {printf "%d %d %d\n", c["killed"] + 0, c["report"] + 0, c["gone"] + 0}' "$sweep_file")
-        persist_receipt "$(printf 'ts=%s\tkilled=%s\treported=%s\tgone=%s\treport_only=%s\treceipt=%s\tresult=ok' \
+        persist_receipt "$(printf 'ts=%s\tverb=sweep\tkilled=%s\treported=%s\tgone=%s\treport_only=%s\treceipt=%s\tresult=ok' \
           "$run_ts" "$killed" "$reported" "$gone" "$report_only" "$sweep_file")"
       }
 
@@ -1051,21 +1087,27 @@
       trap emit_receipt EXIT
 
       # terminal-notifier over osascript: OSA notifications attribute to Script
-      # Editor and a click opens its document dialog. Darwin-only package —
-      # empty interpolation on NixOS makes notify a no-op there.
+      # Editor and a click opens its document dialog. The shared notifier rail
+      # (bundle-apps.nix) is empty on hosts without one — notify no-ops there.
       notify() {
-        tn='${lib.optionalString pkgs.stdenv.hostPlatform.isDarwin "${pkgs.terminal-notifier}/bin/terminal-notifier"}'
+        tn='${config.forge.notifier}'
         [ -z "$tn" ] || "$tn" -title "Forge Nix drift" \
           -message "$1" -group forge-nix-drift >/dev/null 2>&1 || true
       }
 
       # Scheduled runs stay AC-gated: a moved input triggers a full host build.
       if [ "$mode" = "scheduled" ]; then
-        /usr/bin/pmset -g batt | grep "AC Power" >/dev/null || {
-          power="battery" result="skipped"
-          exit 0
-        }
-        power="ac"
+        # pmset is a Darwin fact; a host without it is mains-powered and
+        # skips the battery gate instead of dying under pipefail.
+        if [ -x /usr/bin/pmset ]; then
+          /usr/bin/pmset -g batt | grep "AC Power" >/dev/null || {
+            power="battery" result="skipped"
+            exit 0
+          }
+          power="ac"
+        else
+          power="mains"
+        fi
         flock_args=(-n)
       else
         flock_args=(-w 600)
@@ -1106,28 +1148,40 @@
       if [ "$dirty_total" = 0 ]; then worktree="clean"; else worktree="dirty-$dirty_total"; fi
 
       # Bump only when the flake pair is untouched: uncommitted operator or
-      # thread edits to flake.nix/flake.lock must never be entangled.
+      # thread edits to flake.nix/flake.lock must never be entangled. The
+      # mutation window rides the DEPLOY lock so a redeploy evaluating
+      # mid-update never reads a half-written flake.lock; the window closes
+      # before the build, which re-takes that lock itself.
+      deploy_lock="''${FORGE_REDEPLOY_LOCK:-$HOME/.cache/forge-redeploy.lock}"
+      mkdir -p "''${deploy_lock%/*}"
       if [ -n "$(git status --porcelain -- flake.nix flake.lock)" ]; then
         bump="skipped-dirty"
       else
-        snap >"$tmpdir/pre"
-        # A failed update (network/registry) is withdrawn and notified; a
-        # partially written lock must never wedge later runs into skipped-dirty.
-        if ! nix flake update; then
-          git checkout -- flake.lock
-          bump="fail"
-          notify "Flake update failed; lock kept at HEAD."
-          exit 1
-        fi
-        if [ -z "$(git status --porcelain -- flake.lock)" ]; then
-          bump="current"
+        exec {deploy_fd}>"$deploy_lock"
+        if ! flock -w 600 "$deploy_fd"; then
+          bump="skipped-deploy-in-flight"
         else
-          bump="moved"
-          snap >"$tmpdir/post"
-          inputs="$(join -t "$(printf '\t')" "$tmpdir/pre" "$tmpdir/post" \
-            | awk -F '\t' '$2 != $3 {print $1}' | paste -sd, -)"
-          [ -n "$inputs" ] || inputs="transitive"
+          snap >"$tmpdir/pre"
+          # A failed update (network/registry) is withdrawn and notified; a
+          # partially written lock must never wedge later runs into skipped-dirty.
+          if ! nix flake update; then
+            git checkout -- flake.lock
+            bump="fail"
+            notify "Flake update failed; lock kept at HEAD."
+            exit 1
+          fi
+          if [ -z "$(git status --porcelain -- flake.lock)" ]; then
+            bump="current"
+          else
+            bump="moved"
+            snap >"$tmpdir/post"
+            # Full outer join: an added or removed root input is drift too.
+            inputs="$(join -t "$(printf '\t')" -a1 -a2 -e - -o 0,1.2,2.2 "$tmpdir/pre" "$tmpdir/post" \
+              | awk -F '\t' '$2 != $3 {print $1}' | paste -sd, -)"
+            [ -n "$inputs" ] || inputs="transitive"
+          fi
         fi
+        exec {deploy_fd}>&-
       fi
 
       # Receipt-proved build through the deploy owner; --build also owns the
@@ -1140,15 +1194,15 @@
       fi
       cat "$tmpdir/redeploy"
 
-      # A bump that did not prove buildable is withdrawn, keeping HEAD's lock
-      # the last known-good; the failure receipt carries the moved-input list.
-      if [ "$bump" = "moved" ] && [ "$build" != "ok" ]; then
-        git checkout -- flake.lock
-        bump="reverted"
-      fi
-
+      # Post-build adjudication under the deploy lock: an unproven bump is
+      # withdrawn (HEAD's lock stays last known-good), a proven bump commits.
       if [ "$bump" = "moved" ]; then
-        if git -c commit.gpgsign=false commit -m "nix: bump flake inputs ($inputs)" -- flake.lock >/dev/null; then
+        exec {deploy_fd}>"$deploy_lock"
+        flock -w 600 "$deploy_fd" || true
+        if [ "$build" != "ok" ]; then
+          git checkout -- flake.lock
+          bump="reverted"
+        elif git -c commit.gpgsign=false commit -m "nix: bump flake inputs ($inputs)" -- flake.lock >/dev/null; then
           commit="ok"
         else
           commit="failed"
@@ -1157,12 +1211,14 @@
           notify "Lock bump built but commit failed; flake.lock left uncommitted."
           printf 'forge-nix-drift: WARNING lock bump built but commit failed; flake.lock left uncommitted\n' >&2
         fi
+        exec {deploy_fd}>&-
       fi
 
       if [ "$build" = "ok" ]; then
         # The typed receipt row is the contract; human stdout wording is not.
         redeploy_receipts="''${FORGE_REDEPLOY_RECEIPT_LOG:-$HOME/Library/Logs/forge-redeploy.receipts.log}"
-        system_path="$(tail -1 "$redeploy_receipts" 2>/dev/null | awk -F '\t' '
+        # tail of an absent receipt log is expected non-zero, railed.
+        system_path="$({ tail -1 "$redeploy_receipts" 2>/dev/null || true; } | awk -F '\t' '
           {for (i = 1; i <= NF; i++) if ($i ~ /^system=/) {sub(/^system=/, "", $i); print $i; exit}}')"
         [ "$system_path" != "-" ] || system_path=""
         if [ -n "$system_path" ] && [ -e /run/current-system ]; then
@@ -1307,7 +1363,7 @@
         *) usage ;;
       esac
       if [ -n "$from$only" ]; then
-        printf '%s\n' "''${STEPS[@]}" | grep -qx "''${from:-$only}" || usage
+        [[ " ''${STEPS[*]} " == *" ''${from:-$only} "* ]] || usage
       fi
 
       uid="$(id -u)"
@@ -1325,7 +1381,7 @@
       trap 'rm -rf "$work"' EXIT
 
       row() {
-        printf 'ts=%s\tstep=%s\tstatus=%s\tdetail=%s\n' "$ts" "$2" "$1" "$3" >>"$receipt_log"
+        append_receipt "$(printf 'ts=%s\tstep=%s\tstatus=%s\tdetail=%s' "$ts" "$2" "$1" "$3")" || true
         printf '%-8s | %-22s | %s\n' "$1" "$2" "$3" >&2
         case "$1" in
           PASS) pass=$((pass + 1)) ;;
@@ -1442,9 +1498,10 @@
         fi
         # Background-limited agents (LimitLoadToSessionType) address as
         # user/$uid; plain gui agents as gui/$uid — probe both domains.
+        # Consume-all grep: -q's early exit SIGPIPEs launchctl under pipefail.
         if { /bin/launchctl print "user/$uid/org.nix-community.home.atuin-daemon" \
           || /bin/launchctl print "gui/$uid/org.nix-community.home.atuin-daemon"; } 2>/dev/null \
-          | grep -q 'state = running'; then
+          | grep 'state = running' >/dev/null; then
           row PASS outputs-atuin "atuin daemon agent running"
         else
           row FAIL outputs-atuin "atuin daemon agent not running"
@@ -1815,8 +1872,9 @@
       work="$(mktemp -d)"
       trap 'rm -rf "$work"' EXIT
 
-      # Tab-split keeps labels with spaces intact (launchctl is TSV).
-      /bin/launchctl list 2>/dev/null | awk -F '\t' 'NR > 1 {print $3 "\t" $1 "\t" $2}' >"$work/observed"
+      # Tab-split keeps labels with spaces intact (launchctl is TSV); a host
+      # without launchd yields an empty census instead of a pipefail kill.
+      { /bin/launchctl list 2>/dev/null || true; } | awk -F '\t' 'NR > 1 {print $3 "\t" $1 "\t" $2}' >"$work/observed"
 
       # Triage rows load once; classify is a pure prefix scan in row order.
       mapfile -t triage_rows < <(jq -r '.[] | [.prefix, .class, .note] | @tsv' '${launchdTriage}')
@@ -1831,7 +1889,8 @@
         printf 'unclassified\tno triage row\n'
       }
 
-      obs() { grep -m1 "^$1	" "$work/observed" || true; }
+      # Exact label match: a label is data, never a regex.
+      obs() { awk -F '\t' -v l="$1" '$1 == l {print; exit}' "$work/observed" || true; }
 
       # Declared lane: every plist in the user LaunchAgents dir.
       for plist in "$HOME/Library/LaunchAgents"/*.plist; do
@@ -1987,43 +2046,23 @@
       // schedule;
   };
 in {
-  home = {
-    packages = [
-      forgeRedeploy
-      forgeNixMaintenance
-      forgeCleanup
-      forgeNixDrift
-      forgeActivationSweep
-      forgeAccept
-      forgePathDoctor
-      forgeLaunchdDoctor
-      forgeParity
-      forgeUpdateBoard
-    ];
+  home.packages = [
+    forgeRedeploy
+    forgeNixMaintenance
+    forgeCleanup
+    forgeNixDrift
+    forgeActivationSweep
+    forgeAccept
+    forgePathDoctor
+    forgeLaunchdDoctor
+    forgeParity
+    forgeUpdateBoard
+  ];
 
-    # Shared identity bundle for the scheduled agents: Login Items &
-    # Extensions shows one "Forge Nix Automation" row (one toggle governs
-    # drift, maintenance, and the orphan sweep) instead of generic "/bin/sh"
-    # entries.
-    file."Applications/Forge Nix Automation.app/Contents/Info.plist".text = lib.generators.toPlist {escape = true;} {
-      CFBundleIdentifier = bundleId;
-      CFBundleName = "Forge Nix Automation";
-      CFBundleDisplayName = "Forge Nix Automation";
-      CFBundleVersion = "1";
-      CFBundleShortVersionString = "1.0";
-      CFBundlePackageType = "APPL";
-      LSUIElement = true;
-      LSBackgroundOnly = true;
-    };
-
-    activation.registerForgeNixAutomationApp = lib.hm.dag.entryAfter ["linkGeneration"] ''
-      app="$HOME/Applications/Forge Nix Automation.app"
-      lsregister="/System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/LaunchServices.framework/Versions/A/Support/lsregister"
-      if [ -d "$app" ] && [ -x "$lsregister" ]; then
-        "$lsregister" -f "$app" || true
-      fi
-    '';
-  };
+  # Shared identity bundle for the scheduled agents (bundle-apps.nix): Login
+  # Items & Extensions shows one "Forge Nix Automation" row — one toggle
+  # governs drift, maintenance, and the orphan sweep.
+  forge.bundleApps.forge-nix-automation = "Forge Nix Automation";
 
   launchd.agents = {
     # Weekly off-peak cadence; the shared flock serializes against deploys.

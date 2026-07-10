@@ -23,11 +23,15 @@ class StaticSite extends pulumi.ComponentResource {
         super("myorg:index:StaticSite", name, {}, opts);
 
         const bucket = new aws.s3.Bucket(`${name}-bucket`, {}, { parent: this });
-        const website = new aws.s3.BucketWebsiteConfigurationV2(`${name}-website`, {
-            bucket: bucket.id,
-            indexDocument: { suffix: args.indexDocument ?? "index.html" },
-            errorDocument: { key: args.errorDocument ?? "error.html" },
-        }, { parent: this });
+        const website = new aws.s3.BucketWebsiteConfigurationV2(
+            `${name}-website`,
+            {
+                bucket: bucket.id,
+                indexDocument: { suffix: args.indexDocument ?? "index.html" },
+                errorDocument: { key: args.errorDocument ?? "error.html" },
+            },
+            { parent: this },
+        );
 
         this.bucketName = bucket.id;
         this.websiteUrl = website.websiteEndpoint;
@@ -118,16 +122,16 @@ pulumi package publish https://github.com/myorg/my-component --publisher myorg
 on: { push: { tags: ["v*"] } }
 permissions: { id-token: write, contents: read }
 jobs:
-  publish:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with: { fetch-depth: 0 }
-      - uses: pulumi/auth-actions@v1
-        with:
-          organization: myorg
-          requested-token-type: urn:pulumi:token-type:access_token:organization
-      - run: pulumi package publish https://github.com/${{ github.repository }} --publisher myorg
+    publish:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+              with: { fetch-depth: 0 }
+            - uses: pulumi/auth-actions@v1
+              with:
+                  organization: myorg
+                  requested-token-type: urn:pulumi:token-type:access_token:organization
+            - run: pulumi package publish https://github.com/${{ github.repository }} --publisher myorg
 ```
 
 ## [07]-[ANTI_PATTERNS]

@@ -92,19 +92,22 @@ Meaning rides two orthogonal class axes — geometry names what a node is, role 
 A figure earns its geometry by the reader question: magnitude and proportion stay linear — meter, waffle, bars — and a radial form is legal only where the bounded scalar, the genuine cycle, or the shared-center comparison is itself the subject. The polar kernel below is what every circular figure composes, and degeneracy is law: a zero-width domain returns the neutral point, a span under 0.5° culls the segment, and a full 360° ring splits into two 180° arcs.
 
 ```js copy-safe
-const P = (cx, cy, r, deg) => { const t = (deg - 90) * Math.PI / 180; return `${cx + r * Math.cos(t)} ${cy + r * Math.sin(t)}`; };
+const P = (cx, cy, r, deg) => {
+    const t = ((deg - 90) * Math.PI) / 180;
+    return `${cx + r * Math.cos(t)} ${cy + r * Math.sin(t)}`;
+};
 const norm = (v, lo, hi) => (hi - lo < 1e-9 ? 0 : Math.min(1, Math.max(0, (v - lo) / (hi - lo))));
 const arcPath = (cx, cy, r, a0, a1) => {
-  const span = ((a1 - a0) % 360 + 360) % 360 || (a1 !== a0 ? 360 : 0);
-  if (span < 0.5) return "";
-  if (span >= 360) return `${arcPath(cx, cy, r, a0, a0 + 180)} ${arcPath(cx, cy, r, a0 + 180, a0 + 360 - 1e-4).replace("M", "L")}`;
-  return `M ${P(cx, cy, r, a0)} A ${r} ${r} 0 ${span > 180 ? 1 : 0} 1 ${P(cx, cy, r, a0 + span)}`;
+    const span = (((a1 - a0) % 360) + 360) % 360 || (a1 !== a0 ? 360 : 0);
+    if (span < 0.5) return "";
+    if (span >= 360) return `${arcPath(cx, cy, r, a0, a0 + 180)} ${arcPath(cx, cy, r, a0 + 180, a0 + 360 - 1e-4).replace("M", "L")}`;
+    return `M ${P(cx, cy, r, a0)} A ${r} ${r} 0 ${span > 180 ? 1 : 0} 1 ${P(cx, cy, r, a0 + span)}`;
 };
 const ringSeg = (cx, cy, ri, ro, a0, a1) => {
-  const span = ((a1 - a0) % 360 + 360) % 360;
-  if (span < 0.5 || ro <= ri || ri < 0) return "";
-  const L = span > 180 ? 1 : 0;
-  return `M ${P(cx, cy, ro, a0)} A ${ro} ${ro} 0 ${L} 1 ${P(cx, cy, ro, a1)} L ${P(cx, cy, ri, a1)} A ${ri} ${ri} 0 ${L} 0 ${P(cx, cy, ri, a0)} Z`;
+    const span = (((a1 - a0) % 360) + 360) % 360;
+    if (span < 0.5 || ro <= ri || ri < 0) return "";
+    const L = span > 180 ? 1 : 0;
+    return `M ${P(cx, cy, ro, a0)} A ${ro} ${ro} 0 ${L} 1 ${P(cx, cy, ro, a1)} L ${P(cx, cy, ri, a1)} A ${ri} ${ri} 0 ${L} 0 ${P(cx, cy, ri, a0)} Z`;
 };
 ```
 
@@ -127,9 +130,11 @@ const ringSeg = (cx, cy, ri, ro, a0, a1) => {
 - [SANKEY_RIBBON] — 3–12 flows: node bars 24px wide with 8px padding, slots assigned cumulatively (`slotY = node.y0 + Σ priorWidths + w/2`), outgoing links sorted by target y and incoming by source y, up to 6 relaxation sweeps of barycenter reordering when crossings fight value-tracking. Ribbon totals conserve: a node's in-width equals its out-width or the gap renders as an explicit loss stub. The ribbon is two horizontal-tangent cubics closed into one path:
 
 ```js copy-safe
-const ribbon = (x0, y0, w0, x1, y1, w1) => { const dx = (x1 - x0) * 0.5;
-  return `M ${x0} ${y0 - w0 / 2} C ${x0 + dx} ${y0 - w0 / 2} ${x1 - dx} ${y1 - w1 / 2} ${x1} ${y1 - w1 / 2}
-          L ${x1} ${y1 + w1 / 2} C ${x1 - dx} ${y1 + w1 / 2} ${x0 + dx} ${y0 + w0 / 2} ${x0} ${y0 + w0 / 2} Z`; };
+const ribbon = (x0, y0, w0, x1, y1, w1) => {
+    const dx = (x1 - x0) * 0.5;
+    return `M ${x0} ${y0 - w0 / 2} C ${x0 + dx} ${y0 - w0 / 2} ${x1 - dx} ${y1 - w1 / 2} ${x1} ${y1 - w1 / 2}
+          L ${x1} ${y1 + w1 / 2} C ${x1 - dx} ${y1 + w1 / 2} ${x0 + dx} ${y0 + w0 / 2} ${x0} ${y0 + w0 / 2} Z`;
+};
 ```
 
 - [DEPENDENCY_ARCS] — ordering constraints over one baseline of nodes at `xᵢ = x0 + i × step`: edge `i→j` is `M xᵢ base A rx ry 0 0 1 xⱼ base` with `rx = |xⱼ - xᵢ| / 2`, `ry = clamp(|xⱼ - xᵢ| × 0.32, 20, 96)`; long arcs draw first at lower opacity, short arcs above. A backward constraint renders in `--fail` — the defect that convicts the sequence.
@@ -165,18 +170,18 @@ Every axis and micro mark declares its domain law: ticks land on the 1–2–5�
 A quantitative figure is hand-authored from the same kernels as every diagram — scales, ticks, and axes are generated geometry, never a runtime charting library. Chart-form selection and palette law ride the `dataviz` skill; this section owns the SVG realization once the form is chosen, and the domain law above binds every scale it builds.
 
 ```js copy-safe
-const linear = (d0, d1, r0, r1) => v => r0 + (d1 - d0 < 1e-9 ? 0.5 : (v - d0) / (d1 - d0)) * (r1 - r0);
+const linear = (d0, d1, r0, r1) => (v) => r0 + (d1 - d0 < 1e-9 ? 0.5 : (v - d0) / (d1 - d0)) * (r1 - r0);
 const band = (n, r0, r1, padIn = 0.15, padOut = 0.1) => {
-  const step = (r1 - r0) / Math.max(1e-9, n - padIn + 2 * padOut);
-  return { x: i => r0 + step * (padOut + i), w: step * (1 - padIn), step };
+    const step = (r1 - r0) / Math.max(1e-9, n - padIn + 2 * padOut);
+    return { x: (i) => r0 + step * (padOut + i), w: step * (1 - padIn), step };
 };
 const ticks = (lo, hi, target = 5) => {
-  if (hi - lo < 1e-9) return [lo];
-  const raw = (hi - lo) / Math.max(1, target - 1);
-  const mag = 10 ** Math.floor(Math.log10(raw));
-  const step = [1, 2, 5, 10].map(s => s * mag).find(s => s >= raw);
-  const t0 = Math.ceil(lo / step) * step;
-  return Array.from({ length: Math.floor((hi - t0) / step) + 1 }, (_, i) => +(t0 + i * step).toFixed(10));
+    if (hi - lo < 1e-9) return [lo];
+    const raw = (hi - lo) / Math.max(1, target - 1);
+    const mag = 10 ** Math.floor(Math.log10(raw));
+    const step = [1, 2, 5, 10].map((s) => s * mag).find((s) => s >= raw);
+    const t0 = Math.ceil(lo / step) * step;
+    return Array.from({ length: Math.floor((hi - t0) / step) + 1 }, (_, i) => +(t0 + i * step).toFixed(10));
 };
 ```
 
@@ -200,20 +205,28 @@ Detail lives outboard, never crammed into boxes; animation exists to show flow, 
 - Connected highlighting is data plus CSS — nodes carry `data-k`, dependent marks carry a space-separated `data-rel` roster, `:has()` on the figure root lights the neighborhood with zero script — and the same states bind to a `data-selected` stamp so touch and keyboard reach what hover shows:
 
 ```css copy-safe
-.diagram:has([data-k="api"]:hover) [data-rel~="api"],.diagram[data-selected="api"] [data-rel~="api"]{opacity:1;stroke-width:2.25}
-.diagram:has([data-k="api"]:hover) [data-rel]:not([data-rel~="api"]),.diagram[data-selected="api"] [data-rel]:not([data-rel~="api"]){opacity:.22;transition:opacity var(--dur-2) var(--ease-standard)}
+.diagram:has([data-k="api"]:hover) [data-rel~="api"],
+.diagram[data-selected="api"] [data-rel~="api"] {
+    opacity: 1;
+    stroke-width: 2.25;
+}
+.diagram:has([data-k="api"]:hover) [data-rel]:not([data-rel~="api"]),
+.diagram[data-selected="api"] [data-rel]:not([data-rel~="api"]) {
+    opacity: 0.22;
+    transition: opacity var(--dur-2) var(--ease-standard);
+}
 ```
 
 - A multi-behavior system draws one stable topology and overlays named flows — never one diagram per behavior. A `FLOWS` map owns each flow's edge ids, node ids, and ordered captions; selecting a flow chip dims everything, lights the members, animates the lit edges by dash offset, and walks the captions in a floating card:
 
 ```js copy-safe
 const FLOWS = { publish: { edges: ["e1", "e3"], nodes: ["api", "queue"], steps: ["Client submits", "Queue fans out"] } };
-const setFlow = key => {
-  const flow = FLOWS[key];
-  document.querySelectorAll(".diagram .lit").forEach(el => el.classList.remove("lit"));
-  document.querySelectorAll(".diagram [id]").forEach(el => el.classList.toggle("dim", Boolean(flow)));
-  (flow?.edges ?? []).concat(flow?.nodes ?? []).forEach(id => document.getElementById(id)?.classList.remove("dim"));
-  (flow?.edges ?? []).forEach(id => document.getElementById(id)?.classList.add("lit"));
+const setFlow = (key) => {
+    const flow = FLOWS[key];
+    document.querySelectorAll(".diagram .lit").forEach((el) => el.classList.remove("lit"));
+    document.querySelectorAll(".diagram [id]").forEach((el) => el.classList.toggle("dim", Boolean(flow)));
+    (flow?.edges ?? []).concat(flow?.nodes ?? []).forEach((id) => document.getElementById(id)?.classList.remove("dim"));
+    (flow?.edges ?? []).forEach((id) => document.getElementById(id)?.classList.add("lit"));
 };
 ```
 
@@ -227,20 +240,24 @@ A figure sheet delivers standalone illustrations — doc headers, README figures
 
 ```js copy-safe
 const exportSvg = (svg, filename) => {
-  const clone = svg.cloneNode(true);
-  clone.setAttribute("xmlns", "http://www.w3.org/2000/svg");
-  const box = svg.viewBox.baseVal;
-  clone.setAttribute("width", box.width); clone.setAttribute("height", box.height);
-  clone.querySelectorAll("[data-selected],.dim,.lit").forEach(n => { n.classList.remove("dim", "lit"); delete n.dataset.selected; });
-  const styles = getComputedStyle(svg);
-  clone.querySelectorAll("[fill^='var('],[stroke^='var(']").forEach(n => {
-    for (const attr of ["fill", "stroke"]) {
-      const raw = n.getAttribute(attr);
-      if (raw?.startsWith("var(")) n.setAttribute(attr, styles.getPropertyValue(raw.slice(4, -1).split(",")[0].trim()).trim() || raw);
-    }
-  });
-  const url = URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(clone)], { type: "image/svg+xml;charset=utf-8" }));
-  Object.assign(document.createElement("a"), { href: url, download: filename }).click();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
+    const clone = svg.cloneNode(true);
+    clone.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+    const box = svg.viewBox.baseVal;
+    clone.setAttribute("width", box.width);
+    clone.setAttribute("height", box.height);
+    clone.querySelectorAll("[data-selected],.dim,.lit").forEach((n) => {
+        n.classList.remove("dim", "lit");
+        delete n.dataset.selected;
+    });
+    const styles = getComputedStyle(svg);
+    clone.querySelectorAll("[fill^='var('],[stroke^='var(']").forEach((n) => {
+        for (const attr of ["fill", "stroke"]) {
+            const raw = n.getAttribute(attr);
+            if (raw?.startsWith("var(")) n.setAttribute(attr, styles.getPropertyValue(raw.slice(4, -1).split(",")[0].trim()).trim() || raw);
+        }
+    });
+    const url = URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(clone)], { type: "image/svg+xml;charset=utf-8" }));
+    Object.assign(document.createElement("a"), { href: url, download: filename }).click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
 };
 ```

@@ -3,6 +3,7 @@
 ## [01]-[DISCOVERY_PROTOCOL]
 
 [IMPORTANT]:
+
 - [ALWAYS]: Resolve versions at generation time — never embed static SHAs in reference docs.
 - [ALWAYS]: Verify tags exist before pinning.
 - [ALWAYS]: Dereference annotated tags with `^{}` — lightweight tags resolve directly.
@@ -27,6 +28,7 @@ done
 Format: `owner/repo@<40-char-SHA> # vX.Y.Z`
 
 [INCIDENT_TJ_ACTIONS_CHANGED_FILES]:
+
 - Attacker retargeted ALL existing version tags to malicious commit.
 - 23,000+ repos affected — secrets extracted from Runner Worker process memory.
 - Cascading supply chain: enabled by prior compromise of `reviewdog/action-setup@v1` (CVE-2025-30154).
@@ -34,6 +36,7 @@ Format: `owner/repo@<40-char-SHA> # vX.Y.Z`
 - `step-security/harden-runner` first detected the anomalous egress.
 
 [CRITICAL]:
+
 - [ALWAYS]: Pin to full 40-character SHA with version comment suffix.
 - [NEVER]: Use mutable refs (`@main`, `@latest`, `@v1`) in production workflows.
 
@@ -43,11 +46,11 @@ Format: `owner/repo@<40-char-SHA> # vX.Y.Z`
 # .github/dependabot.yml — automated SHA updates
 version: 2
 updates:
-  - package-ecosystem: "github-actions"
-    directory: "/"
-    schedule: { interval: "weekly" }
-    groups:
-      actions: { patterns: ["*"] }
+    - package-ecosystem: "github-actions"
+      directory: "/"
+      schedule: { interval: "weekly" }
+      groups:
+          actions: { patterns: ["*"] }
 ```
 
 Dependabot natively parses `# v4.2.2` comments after SHA pins — updates both SHA and comment on new release.
@@ -55,8 +58,8 @@ Dependabot natively parses `# v4.2.2` comments after SHA pins — updates both S
 ```json conceptual
 // renovate.json — alternative with pinDigests
 {
-  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["config:recommended", "helpers:pinGitHubActionDigests"]
+    "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+    "extends": ["config:recommended", "helpers:pinGitHubActionDigests"]
 }
 ```
 
@@ -147,10 +150,10 @@ Renovate resolves version tag from comment, fetches new SHA, updates both. `help
 ```yaml template
 - uses: actions/upload-artifact@<SHA> # v6
   with:
-    name: build-output
-    path: dist/
-    retention-days: 7
-    if-no-files-found: error
+      name: build-output
+      path: dist/
+      retention-days: 7
+      if-no-files-found: error
 ```
 
 ## [07]-[SIGNING_VERIFICATION]

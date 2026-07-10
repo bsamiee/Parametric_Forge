@@ -34,7 +34,7 @@ The Nix estate is machine configuration, not application code: every Nix line co
 
 Density target: ~300 LOC per file, measured with `loc`, never bytes. Approaching the limit means collapsing polymorphically inside the file — merged functions, dispatch tables, parameterized rows — splitting only when concerns are truly distinct; justified single-concern files (long lists, one owner) may exceed it.
 
-Before adding any code: nixpkgs already solves it? the existing pattern extends? needed now, not "later"? Any "no" means the code does not land. Modification is surgical and in-place — read the entire file, understand its patterns, extend the existing surface; a parallel "improved" version is a defect.
+Before adding any code: nixpkgs already solves it? the existing pattern extends? needed now, not "later"? Any "no" means the code does not land. Vocabulary row tables use positional constructors or delimited tuples — the formatter explodes multi-key attrset rows ~2.4x, and density that dies at the fmt lane never lands. Modification is surgical and in-place — read the entire file, understand its patterns, extend the existing surface; a parallel "improved" version is a defect.
 
 ```nix accepted
 # YES: dense, multi-capable — one owner absorbs every modality
@@ -81,9 +81,11 @@ Every module opens with the header block and takes only the arguments it reads:
 Code-generation law lives in the stack atlases: `docs/stacks/python/README.md` and `docs/stacks/typescript/README.md` route every language, shape, rail, and boundary decision to its owning page. Design law lives in the `docs/standards/` doctrine pair — `design-doctrine.md` binds every executable surface (rails, dispatch, vocabularies), and `nix-doctrine.md` extends it onto Nix modules, overlays, packaged shell kernels, and generated config. Durable Markdown follows the remaining `docs/standards/` owners — `style-guide.md` for language law, `formatting.md` for surface mechanics, `information-structure.md` for container design. The docgen skill's `prose_gate.py` compiles those owners into the mechanical floor: bare invocation checks, `fix --write` repairs; every touched durable doc passes it before the turn ends.
 
 [SHELL]:
+
 - `.sh` extension on every bash script; `set -euo pipefail` mandatory; ShellCheck passes. Package shell CLIs with `writeShellApplication` when they carry a runtime closure, ShellCheck integration, or a stable Home Manager-installed binary; `writeShellScriptBin` only for closure-free one-liners.
 
 [PYTHON]:
+
 - 3.15 only, never older; `uv` for package management; `ruff` for all linting/formatting.
 - Type checking: `ty` with `mypy` as the strict secondary gate — both resolve the project environment first, `ty` falling back to the Nix build, `mypy` to the newest release through uv's tool cache.
 

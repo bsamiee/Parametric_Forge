@@ -61,10 +61,10 @@ Custom deployment protection rules use GitHub Apps subscribing to the `deploymen
 ```yaml conceptual
 # Correct: quote the env file variable
 - run: |
-    echo "## Build Results" >> "$GITHUB_STEP_SUMMARY"
-    echo "| Metric | Value |" >> "$GITHUB_STEP_SUMMARY"
-    echo "|---|---|" >> "$GITHUB_STEP_SUMMARY"
-    echo "| Status | ${{ job.status }} |" >> "$GITHUB_STEP_SUMMARY"
+      echo "## Build Results" >> "$GITHUB_STEP_SUMMARY"
+      echo "| Metric | Value |" >> "$GITHUB_STEP_SUMMARY"
+      echo "|---|---|" >> "$GITHUB_STEP_SUMMARY"
+      echo "| Status | ${{ job.status }} |" >> "$GITHUB_STEP_SUMMARY"
 ```
 
 [IMPORTANT] Always quote `$GITHUB_STEP_SUMMARY` in `run:` blocks to prevent word splitting.
@@ -91,16 +91,16 @@ Custom deployment protection rules use GitHub Apps subscribing to the `deploymen
 ```yaml conceptual
 # Correct: container job with service health check
 jobs:
-  test:
-    runs-on: ubuntu-latest
-    container:
-      image: node:24
-    services:
-      postgres:
-        image: postgres:17
-        env:
-          POSTGRES_PASSWORD: postgres
-        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+    test:
+        runs-on: ubuntu-latest
+        container:
+            image: node:24
+        services:
+            postgres:
+                image: postgres:17
+                env:
+                    POSTGRES_PASSWORD: postgres
+                options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
 ```
 
 [IMPORTANT] When job runs in a container, service containers share a Docker network — use service name as hostname, no port mapping.
@@ -109,8 +109,8 @@ jobs:
 
 ```yaml conceptual
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+    group: ${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 ```
 
 | [INDEX] | [CHECK]                          | [TAG]           | [WHAT_TO_FLAG]                                                      |
@@ -145,17 +145,17 @@ concurrency:
 ```yaml template
 # Correct: anchor and alias for shared step sequences
 x-setup: &setup
-  - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-  - uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
-    with: { node-version: '24', cache: 'pnpm' }
-  - run: corepack enable && pnpm install --frozen-lockfile
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+    - uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
+      with: { node-version: "24", cache: "pnpm" }
+    - run: corepack enable && pnpm install --frozen-lockfile
 
 jobs:
-  lint:
-    runs-on: ubuntu-latest
-    steps:
-      - *setup
-      - run: pnpm lint
+    lint:
+        runs-on: ubuntu-latest
+        steps:
+            - *setup
+            - run: pnpm lint
 ```
 
 ## [07]-[MATRIX_STRATEGY]

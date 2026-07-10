@@ -30,7 +30,7 @@ The driver brokers three credentials from 1Password per invocation (ambient env 
 
 ## [04]-[REVIEWER_MATRIX]
 
-CodeRabbit (line review), Greptile (semantic review), and Copilot (native ruleset rule) are the three active reviewer identities; Macroscope stays gated until check-run names, fix authority, and branch-mutation policy are typed rows. Config custody is repo-owned — each repo tunes its own `.coderabbit.yaml` and `.greptile/` artifacts — and `node services/driver.ts reviewers` is the matrix receipt: presence plus config hash per identity per repo, with gated identities proving absence.
+CodeRabbit (line review), Greptile (semantic review), and Copilot (native ruleset rule) are the three active reviewer identities; Macroscope stays gated until check-run names, fix authority, and branch-mutation policy are typed rows. Config custody is repo-owned — each repo tunes its own `.coderabbit.yaml` and `.greptile/` artifacts — and `node services/driver.ts reviewers` is the matrix receipt: presence plus config hash per identity per repository row (local roots derive as `<scopeRoot>/<name>`), with gated identities proving absence.
 
 ## [05]-[VERBS]
 
@@ -39,5 +39,7 @@ CodeRabbit (line review), Greptile (semantic review), and Copilot (native rulese
 |  [01]   | `node services/driver.ts preview`       | Desired-vs-live estate diff; steady state is `{"same":N}`                |
 |  [02]   | `node services/driver.ts up`            | Applies rows; `--target=<p>/<c>/<token>` drives token revoke-and-remint  |
 |  [03]   | `node services/driver.ts scopes doctor` | Machine directory scopes match rows; zero stray scopes or `doppler.yaml` |
-|  [04]   | `node services/driver.ts reviewers`     | Reviewer identity presence + config hashes across all repo roots         |
+|  [04]   | `node services/driver.ts reviewers`     | Reviewer identity presence + config hashes across all repository roots   |
 |  [05]   | `node services/driver.ts outputs`       | Token outputs; `--reveal` is the one-time handoff path                   |
+
+`--refresh` on `preview`/`up` diffs against refreshed live state — the drift probe; `--expect-no-changes` on any stack verb fails the run when a change plans, so `preview --refresh --expect-no-changes` is the machine-checkable steady-state gate.

@@ -121,35 +121,12 @@
       inherit (tunnel) forwards;
     });
 
-  # Per-row identity bundle: Login Items & Extensions resolves the agent's
-  # AssociatedBundleIdentifiers to "<Name> VPS Tunnel" instead of the "/bin/sh"
-  # basename home-manager's mutateConfig writes into ProgramArguments[0].
+  # Per-row identity bundle rows on the shared owner (bundle-apps.nix): Login
+  # Items & Extensions resolves the agent's AssociatedBundleIdentifiers to
+  # "<Name> VPS Tunnel" instead of the "/bin/sh" basename.
   tunnelTitle = name: "${lib.toSentenceCase name} VPS Tunnel";
   tunnelBundleId = name: "com.parametric-forge.${name}-vps-tunnel";
-  tunnelInfoPlist = name: ''
-    <?xml version="1.0" encoding="UTF-8"?>
-    <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-    <plist version="1.0">
-    <dict>
-      <key>CFBundleIdentifier</key>
-      <string>${tunnelBundleId name}</string>
-      <key>CFBundleName</key>
-      <string>${tunnelTitle name}</string>
-      <key>CFBundleDisplayName</key>
-      <string>${tunnelTitle name}</string>
-      <key>CFBundleVersion</key>
-      <string>1</string>
-      <key>CFBundleShortVersionString</key>
-      <string>1.0</string>
-      <key>CFBundlePackageType</key>
-      <string>APPL</string>
-      <key>LSUIElement</key>
-      <true/>
-      <key>LSBackgroundOnly</key>
-      <true/>
-    </dict>
-    </plist>
-  '';
+  receiptsFold = import ./receipts.nix;
 
   # Health-gated supervisor: spawns ssh -N, proves every local bind, then
   # emits service-health receipts on state transitions. Restart-worthy states
@@ -175,20 +152,18 @@
 
       mapfile -t ports < <(jq -r '.forwards[].port' "$row_file")
 
-      # Dual receipt: TSV stays the human/log contract, the JSONL sibling is
-      # the agent contract (same envelope keys).
+      # Dual receipt through the shared fold: TSV stays the human/log
+      # contract, the JSONL sibling carries the identical keys — including
+      # the services vector the handcrafted emit used to collapse.
+      receipt_log="$receipts"
+      receipt_surface="vps-tunnel"
+      ${receiptsFold}
       emit() {
-        mkdir -p "$(dirname "$receipts")"
-        local ts detail
+        local ts row
         TZ=UTC0 printf -v ts '%(%Y-%m-%dT%H:%M:%SZ)T' "$EPOCHSECONDS"
-        printf 'ts=%s\ttunnel=%s\tstate=%s\t%s\n' "$ts" "$name" "$1" "''${2:-}" | tee -a "$receipts"
-        # TSV rows carry a detail= column prefix; the JSONL key already names
-        # the field, so the prefix is stripped rather than doubled.
-        detail="''${2:-}"
-        detail="''${detail#detail=}"
-        jq -cn --arg ts "$ts" --arg tunnel "$name" --arg state "$1" --arg detail "$detail" \
-          '{ts: $ts, surface: "vps-tunnel", tunnel: $tunnel, state: $state, detail: $detail}' \
-          >>"''${receipts%.log}.jsonl"
+        printf -v row 'ts=%s\ttunnel=%s\tstate=%s\t%s' "$ts" "$name" "$1" "''${2:-}"
+        append_receipt "$row" || true
+        printf '%s\n' "$row"
       }
 
       port_open() { (exec {tcp_fd}<>"/dev/tcp/127.0.0.1/$1" && exec {tcp_fd}>&-) 2>/dev/null; }
@@ -353,25 +328,7 @@ in {
           // tunnelHosts;
       };
 
-      home.file = lib.optionalAttrs pkgs.stdenv.hostPlatform.isDarwin (
-        lib.mapAttrs' (
-          name: _:
-            lib.nameValuePair
-            "Applications/${tunnelTitle name}.app/Contents/Info.plist"
-            {text = tunnelInfoPlist name;}
-        )
-        vpsTunnels
-      );
-
-      home.activation.registerVpsTunnelApps = lib.hm.dag.entryAfter ["linkGeneration"] ''
-        lsregister="/System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/LaunchServices.framework/Versions/A/Support/lsregister"
-        ${lib.concatMapStrings (name: ''
-          app="$HOME/Applications/${tunnelTitle name}.app"
-          if [ -d "$app" ] && [ -x "$lsregister" ]; then
-            "$lsregister" -f "$app" || true
-          fi
-        '') (builtins.attrNames vpsTunnels)}
-      '';
+      forge.bundleApps = lib.mapAttrs' (name: _: lib.nameValuePair "${name}-vps-tunnel" (tunnelTitle name)) vpsTunnels;
 
       # Durable per-row tunnel agents; local parity mode boots them out before
       # compose binds the same loopback ports. KeepAlive=true implies

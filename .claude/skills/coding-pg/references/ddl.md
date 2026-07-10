@@ -2,7 +2,6 @@
 
 Schema design patterns for PostgreSQL 18.
 
-
 ## [01]-[CANONICAL_TABLE_PATTERN]
 
 One polymorphic example demonstrating: domains, generated columns, range types, NOT NULL defaults, uuidv7(), JSONB validation.
@@ -52,7 +51,6 @@ CREATE INDEX organization_search_idx ON organization USING gin (search_vector);
 - Stored generated columns: for indexed computed values (GIN on tsvector, B-tree on sort keys)
 - `jsonb_matches_schema()` CHECK: declarative JSONB validation at DDL level (requires `CREATE EXTENSION pg_jsonschema`)
 
-
 ## [02]-[DOMAIN_TYPES]
 
 Domains brand primitive scalars with validation. Column declarations reference the domain — never inline equivalent CHECKs.
@@ -72,7 +70,6 @@ CREATE TYPE monetary AS (amount numeric(19,4), currency text);
 - Domains over `citext` require the extension loaded before creation
 - Domain constraints fire on every INSERT/UPDATE — avoid expensive expressions (subqueries, function calls)
 - Domains cannot appear in composite types used in `BEFORE` trigger `NEW`/`OLD` in some PL/pgSQL contexts — cast explicitly
-
 
 ## [03]-[COMPOSITE_TYPES]
 
@@ -94,7 +91,6 @@ CREATE FUNCTION recent_audits(p_entity_id uuid, p_limit int DEFAULT 10)
 
 - Composite types cannot have constraints or defaults — validation at function/trigger level
 - `ALTER TYPE ... ADD ATTRIBUTE` rewrites all tables using it as column — use JSONB for frequently evolving structures
-
 
 ## [04]-[RANGE_TYPES_AND_TEMPORAL_CONSTRAINTS_PG_18]
 
@@ -170,7 +166,6 @@ Range operators:
 - `btree_gist` extension required for equality columns in exclusion constraints
 - Multirange aggregation: `range_agg()` collapses, `unnest()` expands
 
-
 ## [05]-[ENUM_ALTERNATIVES]
 
 Enums are rigid — reordering impossible, removal requires full type recreation. Prefer domain-constrained text or FK lookup.
@@ -189,7 +184,6 @@ ALTER TABLE orders ADD CONSTRAINT fk_order_status
     FOREIGN KEY (status) REFERENCES order_status_ref(code);
 ```
 
-
 ## [06]-[TYPE_COMPOSITION]
 
 ```sql conceptual
@@ -206,7 +200,6 @@ CREATE TABLE articles (
     tags tag_slug[] NOT NULL DEFAULT '{}'
 );
 ```
-
 
 ## [07]-[VIRTUAL_GENERATED_COLUMNS_PG_18]
 
@@ -231,7 +224,6 @@ ALTER TABLE product ADD COLUMN
 |  [03]   | Cannot be part of PRIMARY KEY / UNIQUE          | Virtual only     |
 |  [04]   | CAN appear in WHERE (planner pushes expression) | Virtual only     |
 |  [05]   | Use STORED when column needs indexing           | —                |
-
 
 ## [08]-[PARTITIONING]
 
@@ -280,7 +272,6 @@ SELECT partman.create_parent(
 - Updating a partition key can route the row to another partition by deleting from the old partition and inserting into the new one; it is materially more expensive than same-partition UPDATE and can surface concurrency conflicts. Treat partition key columns as effectively immutable after insert
 - Default partition catches unmatched rows — monitor size as health signal
 
-
 ## [09]-[CONSTRAINTS]
 
 ```sql conceptual
@@ -324,7 +315,6 @@ ALTER TABLE documents ADD CONSTRAINT valid_metadata
 - DEFERRABLE UNIQUE enables batch INSERT without intermediate violations; raised at COMMIT
 - Lock-level awareness: see `validation.md` Migration Safety.
 
-
 ## [10]-[EFFECT_SQL_ALIGNMENT]
 
 DDL properties governing `Model.Class` field modifier selection:
@@ -342,20 +332,20 @@ DDL properties governing `Model.Class` field modifier selection:
 Model.Class mapping for the canonical table (branded entity IDs):
 
 ```typescript conceptual
-const OrganizationId = S.UUID.pipe(S.brand("OrganizationId"))
+const OrganizationId = S.UUID.pipe(S.brand("OrganizationId"));
 
 class Organization extends Model.Class<Organization>()("Organization", {
-    id:           Model.Generated(OrganizationId),
-    slug:         S.NonEmptyTrimmedString,
-    displayName:  S.NonEmptyTrimmedString,
+    id: Model.Generated(OrganizationId),
+    slug: S.NonEmptyTrimmedString,
+    displayName: S.NonEmptyTrimmedString,
     contactEmail: S.NonEmptyTrimmedString,
-    plan:         S.Literal("starter", "business", "enterprise"),
-    metadata:     Model.JsonFromString(OrganizationMetadata),
-    revenue:      S.BigDecimal,
-    tier:         Model.Generated(S.Literal("starter", "business", "enterprise")),
+    plan: S.Literal("starter", "business", "enterprise"),
+    metadata: Model.JsonFromString(OrganizationMetadata),
+    revenue: S.BigDecimal,
+    tier: Model.Generated(S.Literal("starter", "business", "enterprise")),
     searchVector: Model.Generated(S.String),
-    createdAt:    Model.DateTimeInsertFromDate,
-    updatedAt:    Model.DateTimeUpdateFromDate,
+    createdAt: Model.DateTimeInsertFromDate,
+    updatedAt: Model.DateTimeUpdateFromDate,
 }) {}
 ```
 
@@ -364,7 +354,6 @@ class Organization extends Model.Class<Organization>()("Organization", {
 - `Model.DateTimeInsertFromDate` / `DateTimeUpdateFromDate` — server-defaulted but readable
 - `S.Literal(...)` for constrained text — mirrors CHECK constraint in DDL
 - `Model.JsonFromString(schema)` for JSONB with typed codec — mirrors `jsonb_matches_schema` CHECK
-
 
 ## [11]-[RAG_PIPELINE_SCHEMA]
 
@@ -414,8 +403,8 @@ CREATE INDEX ON chunks (tenant_id, created_at);
 - `position` preserves document ordering for context window assembly
 - pg_trgm completes the retrieval triad: semantic (vector distance) + lexical (BM25 rank) + fuzzy (trigram similarity) — each captures different user intent failure modes
 - [MULTI_TENANT_SCALE]: replace HNSW with DiskANN plus label-column filtering when `vectorscale` is available.
-  - Store discrete tenant/category labels in the indexed label column and query with label containment so filtering participates in index search instead of relying only on post-filtering.
-  - HNSW + RLS post-filter visits `ef_search` neighbors first then discards non-matching tenants, which at high selectivity can return fewer than `LIMIT k` results or require expensive iterative scan expansion
+    - Store discrete tenant/category labels in the indexed label column and query with label containment so filtering participates in index search instead of relying only on post-filtering.
+    - HNSW + RLS post-filter visits `ef_search` neighbors first then discards non-matching tenants, which at high selectivity can return fewer than `LIMIT k` results or require expensive iterative scan expansion
 - [WRITE_AMPLIFICATION]: the three-index strategy (HNSW + GIN tsvector + GIN trgm) means each INSERT touches three indexes — acceptable for moderate ingestion but bottleneck for bulk pipelines.
-  - Bulk mitigation: load into an unindexed staging table, batch-merge via `MERGE INTO chunks ... USING staging`, then `CREATE INDEX CONCURRENTLY` post-load.
-  - Incremental ingestion: maintain indexes but set `gin_pending_list_limit = 64MB` to batch GIN updates and accept slightly stale trigram results during high-write bursts
+    - Bulk mitigation: load into an unindexed staging table, batch-merge via `MERGE INTO chunks ... USING staging`, then `CREATE INDEX CONCURRENTLY` post-load.
+    - Incremental ingestion: maintain indexes but set `gin_pending_list_limit = 64MB` to batch GIN updates and accept slightly stale trigram results during high-write bursts

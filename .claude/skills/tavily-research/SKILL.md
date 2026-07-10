@@ -1,12 +1,12 @@
 ---
 name: tavily-research
 description: >-
-  Comprehensive AI-powered research with citations via the Tavily CLI: a structured report
-  grounded in web sources, taking 30-120 seconds. Use for deep research, detailed reports,
-  comparisons, market analysis, or literature review — "research", "investigate", "analyze
-  in depth", "compare X vs Y", "what does the market look like for" — whenever multi-source
-  synthesis with explicit citations is the deliverable. Quick fact-finding and filtered
-  lookups belong to tavily-dynamic-search.
+    Comprehensive AI-powered research with citations via the Tavily CLI: a structured report
+    grounded in web sources, taking 30-120 seconds. Use for deep research, detailed reports,
+    comparisons, market analysis, or literature review — "research", "investigate", "analyze
+    in depth", "compare X vs Y", "what does the market look like for" — whenever multi-source
+    synthesis with explicit citations is the deliverable. Quick fact-finding and filtered
+    lookups belong to tavily-dynamic-search.
 allowed-tools: Bash(uvx *)
 ---
 

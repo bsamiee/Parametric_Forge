@@ -1,15 +1,15 @@
 ---
 name: hooks-builder
 description: >-
-  Creates Claude Code hooks — shell command, HTTP, MCP tool, prompt, and agent handlers
-  firing across the full lifecycle event surface, from session and prompt events through
-  tool, permission, task, teammate, worktree, compaction, and MCP elicitation events. Use
-  when building PreToolUse validation, PostToolUse formatting, PermissionRequest
-  auto-approval, Stop/SubagentStop evaluation, TeammateIdle or TaskCompleted gating,
-  FileChanged or CwdChanged watchers, SessionStart context injection, Setup provisioning,
-  config-change auditing, async background hooks, or any deterministic agent control via
-  blocking and non-blocking hooks. Where an instruction lives — memory, rule, setting, or
-  hook — belongs to harness-config.
+    Creates Claude Code hooks — shell command, HTTP, MCP tool, prompt, and agent handlers
+    firing across the full lifecycle event surface, from session and prompt events through
+    tool, permission, task, teammate, worktree, compaction, and MCP elicitation events. Use
+    when building PreToolUse validation, PostToolUse formatting, PermissionRequest
+    auto-approval, Stop/SubagentStop evaluation, TeammateIdle or TaskCompleted gating,
+    FileChanged or CwdChanged watchers, SessionStart context injection, Setup provisioning,
+    config-change auditing, async background hooks, or any deterministic agent control via
+    blocking and non-blocking hooks. Where an instruction lives — memory, rule, setting, or
+    hook — belongs to harness-config.
 ---
 
 # [HOOKS_BUILDER]

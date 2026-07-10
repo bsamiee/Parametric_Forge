@@ -2,16 +2,16 @@
 name: workflow-creator
 allowed-tools: Bash(node ${CLAUDE_SKILL_DIR}/scripts/*)
 description: >-
-  Author runnable workflow scripts for Claude Code's Workflow tool — deterministic
-  multi-agent orchestration files under `.claude/workflows/` that fan out fresh-context
-  subagents through plain JavaScript control flow: the `meta` block, `agent()`,
-  `pipeline()`, `parallel()`, schemas, budgets, resume. Use whenever the user wants to
-  create, write, scaffold, design, fix, or debug a workflow — "make a workflow", "turn
-  this into a workflow", "orchestrate this with subagents deterministically" — when the
-  script format or an erroring run needs explaining, and when a described repeatable
-  multi-step or parallel job wants packaging as a workflow even though the word never
-  appears. Not for merely running an existing workflow or a one-off single-subagent
-  task; whether a workflow is the right execution surface belongs to agent-dispatch.
+    Author runnable workflow scripts for Claude Code's Workflow tool — deterministic
+    multi-agent orchestration files under `.claude/workflows/` that fan out fresh-context
+    subagents through plain JavaScript control flow: the `meta` block, `agent()`,
+    `pipeline()`, `parallel()`, schemas, budgets, resume. Use whenever the user wants to
+    create, write, scaffold, design, fix, or debug a workflow — "make a workflow", "turn
+    this into a workflow", "orchestrate this with subagents deterministically" — when the
+    script format or an erroring run needs explaining, and when a described repeatable
+    multi-step or parallel job wants packaging as a workflow even though the word never
+    appears. Not for merely running an existing workflow or a one-off single-subagent
+    task; whether a workflow is the right execution surface belongs to agent-dispatch.
 ---
 
 # [WORKFLOW_CREATOR]
@@ -21,6 +21,7 @@ A workflow is a runnable JavaScript orchestrator for Claude Code's `Workflow` to
 ## [01]-[ROUTING]
 
 [REFERENCES]:
+
 - [01]-[API](references/api.md): every global, option, cap, and the validation rail — the runtime manual.
 - [02]-[PATTERNS](references/patterns.md): the orchestration catalog.
 - [03]-[THROUGHPUT](references/throughput.md): concurrency economics and cross-run law.
@@ -28,12 +29,15 @@ A workflow is a runnable JavaScript orchestrator for Claude Code's `Workflow` to
 - [05]-[CODEX_LANES](references/codex-lanes.md): gpt-5.5 lane composition.
 
 [TEMPLATES]:
+
 - [01]-[SKELETONS](assets/templates/): starter skeletons — fan-out, loop, pipeline, and `run-ledger.template.md`.
 
 [EXAMPLES]:
+
 - [01]-[RUNNABLE](assets/examples/): complete runnable examples, each self-described by its header comment.
 
 [SCRIPTS]:
+
 - [01]-[GATES](scripts/): the deterministic validate and dry-run gates.
 
 ## [02]-[FIT]
@@ -74,11 +78,11 @@ Two parts, strict order. First the `meta` literal:
 
 ```js conceptual
 export const meta = {
-  name: 'review-changes',                                   // required — the workflow's name
-  description: 'Review changed files, verify each finding', // required — shown in the permission dialog
-  whenToUse: 'Before shipping a branch',                    // optional — shown in the workflow list
-  phases: [{ title: 'Review' }, { title: 'Verify', model: 'sonnet' }],
-}
+    name: "review-changes", // required — the workflow's name
+    description: "Review changed files, verify each finding", // required — shown in the permission dialog
+    whenToUse: "Before shipping a branch", // optional — shown in the workflow list
+    phases: [{ title: "Review" }, { title: "Verify", model: "sonnet" }],
+};
 ```
 
 `meta.phases[].model` is a dialog label only — the model is set per `agent()` call; a re-tiered phase sets both or the dialog lies. Then the body: async JavaScript with injected globals — `agent(prompt, opts?)`, `pipeline(items, …stages)`, `parallel(thunks)`, `phase(title)`, `log(msg)`, `console`, `setTimeout`, `budget`, `args`, `workflow(name, args?)` — and the body's `return` becomes the tool result. Full signatures, the `args` shape map, and every cap: api reference.

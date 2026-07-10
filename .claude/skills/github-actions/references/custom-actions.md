@@ -9,6 +9,7 @@
 |  [03]   | JavaScript | `node24`      | Fastest   | Yes        | GitHub API integration |
 
 [DETAILS]:
+
 1. Combine workflow steps; error propagation via `if: failure()`
 2. Custom runtime/toolchains; language-agnostic execution
 3. API interactions via `@actions/core` toolkit; pre/post lifecycle
@@ -42,24 +43,24 @@
 ## [03]-[METADATA]
 
 ```yaml template
-name: 'Action Name'
-description: 'Brief description'
-author: 'Author'
-branding: { icon: 'package', color: 'blue' }  # Feather icon set
+name: "Action Name"
+description: "Brief description"
+author: "Author"
+branding: { icon: "package", color: "blue" } # Feather icon set
 
 inputs:
-  input-name: { description: 'Description', required: true, default: 'value' }
+    input-name: { description: "Description", required: true, default: "value" }
 
 outputs:
-  output-name:
-    description: 'Description'
-    value: ${{ steps.step-id.outputs.value }}  # composite only
+    output-name:
+        description: "Description"
+        value: ${{ steps.step-id.outputs.value }} # composite only
 
 runs:
-  using: 'composite'     # or 'docker' or 'node24'
-  steps: [...]           # composite
-  # image: 'Dockerfile'  # docker
-  # main: 'dist/index.js'  # javascript (pre: 'pre.js', post: 'post.js')
+    using: "composite" # or 'docker' or 'node24'
+    steps: [...] # composite
+    # image: 'Dockerfile'  # docker
+    # main: 'dist/index.js'  # javascript (pre: 'pre.js', post: 'post.js')
 ```
 
 [OUTPUT_LIMITS]: 1 MiB per job (all outputs combined), 50 MiB per workflow run. Use artifacts for larger data.
@@ -70,18 +71,18 @@ runs:
 
 ```yaml conceptual
 runs:
-  using: 'composite'
-  steps:
-    - id: main
-      shell: bash
-      continue-on-error: true
-      run: [MAIN_CMD]
-    - if: always()
-      shell: bash
-      run: printf '%s\n' "Cleanup"  # runs even if main failed
-    - if: steps.main.outcome == 'failure'
-      shell: bash
-      run: exit 1  # propagate failure after cleanup
+    using: "composite"
+    steps:
+        - id: main
+          shell: bash
+          continue-on-error: true
+          run: [MAIN_CMD]
+        - if: always()
+          shell: bash
+          run: printf '%s\n' "Cleanup" # runs even if main failed
+        - if: steps.main.outcome == 'failure'
+          shell: bash
+          run: exit 1 # propagate failure after cleanup
 ```
 
 [CRITICAL] Composite actions require `shell:` on every `run:` step. `continue-on-error` behavior with input variables is unpredictable — test thoroughly.
@@ -111,12 +112,12 @@ Consumers reference: `@v1.0.0` (exact), `@v1` (latest v1.x), `@SHA` (most secure
 
 ```yaml conceptual
 runs:
-  using: 'node24'
-  pre: 'dist/pre.js'
-  pre-if: runner.os == 'linux'    # default: always() — runs pre unconditionally
-  main: 'dist/index.js'
-  post: 'dist/post.js'
-  post-if: always()               # default: always() — runs post even on failure
+    using: "node24"
+    pre: "dist/pre.js"
+    pre-if: runner.os == 'linux' # default: always() — runs pre unconditionally
+    main: "dist/index.js"
+    post: "dist/post.js"
+    post-if: always() # default: always() — runs post even on failure
 ```
 
 `pre-if` / `post-if`: Status check functions evaluate against job status, not action status. `step` context is unavailable in `pre-if` (no steps have run yet). Both default to `always()`.
@@ -124,9 +125,9 @@ runs:
 [IO_PATTERNS]:
 
 ```javascript conceptual
-const core = require('@actions/core');
-core.setOutput('result', JSON.stringify({ status: 'ok', version: '1.0.0' }));
-core.setSecret(token);  // masks in all subsequent logs
+const core = require("@actions/core");
+core.setOutput("result", JSON.stringify({ status: "ok", version: "1.0.0" }));
+core.setSecret(token); // masks in all subsequent logs
 ```
 
 ## [08]-[DOCKER_ACTIONS]
@@ -143,12 +144,12 @@ ENTRYPOINT ["/action"]
 
 ```yaml conceptual
 runs:
-  using: 'docker'
-  image: 'Dockerfile'
-  env:
-    INPUT_NAME: ${{ inputs.input-name }}  # inputs available as INPUT_* env vars
-  args: ['--flag', '${{ inputs.param }}']  # passed to ENTRYPOINT, overrides CMD
-  entrypoint: '/custom.sh'                # overrides Dockerfile ENTRYPOINT
+    using: "docker"
+    image: "Dockerfile"
+    env:
+        INPUT_NAME: ${{ inputs.input-name }} # inputs available as INPUT_* env vars
+    args: ["--flag", "${{ inputs.param }}"] # passed to ENTRYPOINT, overrides CMD
+    entrypoint: "/custom.sh" # overrides Dockerfile ENTRYPOINT
 ```
 
 [CONSUMER_OVERRIDE]: `entrypoint:` in action.yml overrides Dockerfile `ENTRYPOINT`. `args:` overrides Dockerfile `CMD`. Consumer workflows cannot override action's entrypoint — it is set by the action author.
@@ -160,20 +161,20 @@ runs:
 ```yaml template
 # Composite action — split cache for deterministic control
 steps:
-  - uses: actions/cache/restore@<SHA> # v5
-    id: cache
-    with:
-      path: ~/.local/share/tool
-      key: ${{ runner.os }}-tool-${{ hashFiles('**/lockfile') }}
-      restore-keys: ${{ runner.os }}-tool-
-  - if: steps.cache.outputs.cache-hit != 'true'
-    shell: bash
-    run: install-tool.sh
-  - uses: actions/cache/save@<SHA> # v5
-    if: steps.cache.outputs.cache-hit != 'true'
-    with:
-      path: ~/.local/share/tool
-      key: ${{ steps.cache.outputs.cache-primary-key }}
+    - uses: actions/cache/restore@<SHA> # v5
+      id: cache
+      with:
+          path: ~/.local/share/tool
+          key: ${{ runner.os }}-tool-${{ hashFiles('**/lockfile') }}
+          restore-keys: ${{ runner.os }}-tool-
+    - if: steps.cache.outputs.cache-hit != 'true'
+      shell: bash
+      run: install-tool.sh
+    - uses: actions/cache/save@<SHA> # v5
+      if: steps.cache.outputs.cache-hit != 'true'
+      with:
+          path: ~/.local/share/tool
+          key: ${{ steps.cache.outputs.cache-primary-key }}
 ```
 
 [IMPORTANT] Prefix cache keys with action name to avoid collision across actions: `my-action-${{ runner.os }}-...`. Split pattern prevents save on cache hit (avoids redundant uploads).

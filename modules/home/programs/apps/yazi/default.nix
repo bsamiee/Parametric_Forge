@@ -5,16 +5,26 @@
 # Path          : modules/home/programs/apps/yazi/default.nix
 # ----------------------------------------------------------------------------
 # Yazi file workbench owner: store-owned plugin rows, typed previewer/opener/
-# fetcher/preloader rows generating yazi.toml, and the diagnostic previewer
-# kernel. File-action routing is rows here, never inline TOML literals.
+# fetcher/preloader rows generating yazi.toml, SFTP VFS mounts projected from
+# the estate SSH rows, and the diagnostic previewer kernel. File-action
+# routing is rows here, never inline TOML literals; upstream-default rows are
+# deleted, so every settings row below diverges from the 26.5.6 preset.
 {
+  config,
   lib,
   pkgs,
   ...
 }: let
+  tomlFormat = pkgs.formats.toml {};
+
   yaziPkg = pkgs.yazi.override {
     _7zz = pkgs._7zz-rar; # RAR-capable 7zip: one archive runtime for the whole owner
   };
+
+  # 1Password agent socket, HOME-relative; matches the IdentityAgent row in
+  # shell-tools/ssh.nix — the ambient SSH_AUTH_SOCK is the identity-less
+  # Apple agent, so VFS rows pin the socket explicitly.
+  opAgentSock = "Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock";
 
   # Diagnostic previewer kernel: ONE dispatch surface over the config-language
   # lanes; every arm is read-only evidence (checks + syntax render), never a
@@ -26,6 +36,7 @@
       # Usage: yazi-diag-preview.sh <lane> <file>; lanes: nix toml json yaml kdl
       lane="''${1:?lane required}"
       file="''${2:?file required}"
+      size="$(wc -c <"$file")" # full-parse diagnostics stay off huge files
       diag() { # bounded diagnostic block, one lane arm each
         case "$lane" in
           nix)
@@ -62,7 +73,11 @@
           *) printf 'yazi-diag-preview.sh: unknown lane %s\n' "$lane" >&2; exit 64 ;;
         esac
       }
-      diag
+      if [ "$size" -le 2097152 ]; then
+        diag
+      else
+        printf '[SKIP] diagnostics: %s bytes exceeds 2MiB parse cap\n' "$size"
+      fi
       printf '%s\n' '────────────────────────────────────────'
       bat --color=always --style=plain --paging=never "$file" 2>/dev/null | head -200 || true
     '';
@@ -70,8 +85,13 @@
 
   # --- Previewer rows ---------------------------------------------------------
   # Directory tree, config-language diagnostics (one lane per row), archives,
-  # markdown, then the DuckDB data lane; all globs are disjoint. JSON stays on
-  # the jq diagnostic lane; DuckDB owns tabular/columnar formats.
+  # markdown, the DuckDB data lane, then a hexyl lane for the true-binary
+  # residue (mime-ext classifies unknown extensions via file(1); what remains
+  # octet-stream is genuinely opaque). All globs are disjoint; JSON stays on
+  # the jq diagnostic lane and DuckDB owns tabular/columnar formats. Every
+  # external-command row is local:// scoped (regular + search results): a bare
+  # url glob also matches sftp:// and archive:// URLs, shadowing the native
+  # vfs/archive previewers with commands that cannot read those URLs.
   diagLanes = {
     nix = "*.nix";
     kdl = "*.kdl";
@@ -83,43 +103,52 @@
   previewerRows =
     [
       {
-        url = "*/";
+        url = "local://*/";
         run = ''piper -- eza -TL=3 --color=always --icons=always --group-directories-first --no-quotes "$1"'';
       }
     ]
-    ++ lib.mapAttrsToList (lane: url: {
-      inherit url;
+    ++ lib.mapAttrsToList (lane: glob: {
+      url = "local://${glob}";
       run = ''piper -- yazi-diag-preview.sh ${lane} "$1"'';
     })
     diagLanes
     ++ [
       {
-        url = "*.tar*";
+        url = "local://*.tar*";
         run = ''piper --format=url -- tar tf "$1"'';
       }
       {
-        url = "*.md";
+        url = "local://*.md";
         run = ''piper -- rich --line-numbers --force-terminal "$1"'';
       }
     ]
-    ++ map (url: {
-      inherit url;
+    ++ map (glob: {
+      url = "local://${glob}";
       run = "duckdb";
     })
-    duckdbGlobs;
+    duckdbGlobs
+    ++ [
+      {
+        url = "local://*";
+        mime = "application/octet-stream";
+        run = ''piper -- hexyl --border=none --length=4KiB "$1"'';
+      }
+    ];
 
-  # Preload opt-outs: remote mounts, caches, and generated trees never burn
-  # preview bandwidth eagerly; hover still previews on demand.
+  # Preload opt-outs: remote mounts (device and SFTP VFS), caches, and
+  # generated trees never burn preview bandwidth eagerly; hover still
+  # previews on demand.
   preloaderRows = map (url: {
     inherit url;
     run = "noop";
-  }) ["/Volumes/**" "**/Library/Caches/**" "**/node_modules/**" "**/.git/**"];
+  }) ["/Volumes/**" "sftp://**" "**/Library/Caches/**" "**/node_modules/**" "**/.git/**"];
 
   # Fetcher rows: mime-ext extension-database MIME (speed over file(1) on huge
   # or remote trees) + first-party git status; the version assert pins the
-  # `run`/`group` row grammar these rows spell.
-  fetcherRows = assert lib.assertMsg (lib.versionAtLeast yaziPkg.version "26.2")
-  "yazi ${yaziPkg.version}: mime-ext fetcher rows assume the >26.1.22 grammar";
+  # 26.5.6 surface these rows and files spell — fetcher `group` grammar,
+  # per-lane task worker pools, and the [services] vfs.toml schema.
+  fetcherRows = assert lib.assertMsg (lib.versionAtLeast yaziPkg.version "26.5.6")
+  "yazi ${yaziPkg.version}: config assumes the 26.5.6 fetcher/tasks/vfs grammar";
     map (side: {
       url = "${side}://*";
       run = "mime-ext.${side}";
@@ -130,12 +159,14 @@
       inherit url;
       run = "git";
       group = "git";
-    }) ["*" "*/"];
+    }) ["local://*" "local://*/"];
 
   # --- Opener policy rows -------------------------------------------------------
   # Typed opener table + routing rules; the archive owner is the augment-command
   # event family (augmented-extract) over the shared _7zz-rar runtime — native
-  # `extract` and ad-hoc archive commands never route beside it.
+  # `extract` and ad-hoc archive commands never route beside it. Preset openers
+  # not named here (play, download) survive the per-key merge and stay callable
+  # from rules.
   openers = {
     edit = [
       {
@@ -174,6 +205,10 @@
       }
     ];
   };
+  # MIME spellings match the mime-ext emission (unprefixed IANA: application/tar,
+  # rar, 7z-compressed, xz, bzip2, gzip) — legacy x-* spellings never match and
+  # silently drop the rule. The vfs row keeps download routing for absent/stale
+  # remote files ahead of the catch-all.
   openRules = [
     {
       url = "*/";
@@ -192,7 +227,7 @@
       use = ["open" "inspect" "reveal"];
     }
     {
-      mime = "application/{zip,gzip,x-tar,x-bzip2,x-7z-compressed,x-rar,x-xz,zstd}";
+      mime = "application/{zip,rar,7z*,tar,gzip,xz,zstd,bzip*,lzma,compress,archive,cpio,arj,xar,ms-cab*}";
       use = ["extract" "reveal"];
     }
     {
@@ -200,8 +235,12 @@
       use = ["open" "reveal"];
     }
     {
-      mime = "application/{json,toml,yaml,x-ndjson}";
+      mime = "application/{json,ndjson}";
       use = ["edit" "reveal"];
+    }
+    {
+      mime = "vfs/{absent,stale}";
+      use = ["download"];
     }
     {
       mime = "*";
@@ -244,58 +283,30 @@ in {
       };
 
       mgr = {
-        ratio = [1 4 3];
         sort_by = "natural"; # 1.md < 2.md < 10.md
-        sort_sensitive = false;
-        sort_reverse = false;
-        sort_dir_first = true;
         sort_translit = true;
         linemode = "mtime";
-        show_hidden = false;
-        show_symlink = true; # popup usage benefits from direct path truth
-        mouse_events = ["click" "scroll" "drag"];
-        title_format = "Yazi: {cwd}";
       };
 
-      preview = {
-        max_width = 1200;
-        max_height = 900;
-      };
+      preview.max_width = 1200;
 
       opener = openers;
       open.prepend_rules = openRules;
 
-      # 26.5.6 split the single micro/macro worker pair into per-lane pools;
-      # this owner's preview-heavy surface (previewer + fetcher rows above)
-      # lifts the fetch/preload lanes, the rest hold the upstream preset five.
+      # Preview-heavy surface (previewer + fetcher rows above) lifts the
+      # fetch/preload lanes past the preset pools; image_bound caps decode
+      # size for popup-pane hover latency.
       tasks = {
-        file_workers = 3;
-        plugin_workers = 5;
         fetch_workers = 8;
         preload_workers = 5;
-        process_workers = 5;
-        bizarre_retry = 3;
-        image_alloc = 536870912; # 512MB; WezTerm handles large images
         image_bound = [4096 4096];
-        suppress_preload = false;
       };
 
-      pick = {
-        open_title = " [OPEN WITH] ";
-        open_origin = "hovered";
-        open_offset = [0 1 50 7];
-      };
-
-      which = {
-        sort_by = "none";
-        sort_sensitive = false;
-        sort_reverse = false;
-        sort_translit = false;
-      };
+      pick.open_title = " [OPEN WITH] ";
 
       # Popup geometry as rows: every input popup shares bottom-center at
       # [0 (-3) 50 3] unless its row overrides; confirms share center at
-      # [0 0 50 10] and optionally carry a content line.
+      # [0 0 50 10] and optionally carry a body line.
       input =
         {cursor_blink = true;}
         // lib.concatMapAttrs (name: row: {
@@ -318,23 +329,34 @@ in {
       confirm = lib.concatMapAttrs (name: row:
         {
           "${name}_title" = row.title;
-          "${name}_origin" = "center";
           "${name}_offset" = [0 0 50 10];
         }
-        // lib.optionalAttrs (row ? content) {"${name}_content" = row.content;}) {
+        // lib.optionalAttrs (row ? body) {"${name}_body" = row.body;}) {
         trash.title = " [TRASH {n} FILE{s}] ";
         delete.title = " [DELETE {n} FILE{s}] ";
-        overwrite = {
-          title = " [OVERWRITE FILE] ";
-          content = "Will overwrite the following file:";
-        };
+        overwrite.title = " [OVERWRITE FILE] ";
         quit = {
           title = " [QUIT] ";
-          content = "The following tasks are still running, are you sure you want to quit?";
+          body = "The following tasks are still running, are you sure you want to quit?";
         };
       };
     };
   };
 
   xdg.configFile."yazi/keymap.toml".source = ./keymap.toml;
+
+  # SFTP VFS mounts projected from the estate SSH rows: one service per host,
+  # authenticated through the 1Password agent socket; enter with
+  # `cd sftp://<host>/`. Preloading over the tunnel is opted out above.
+  xdg.configFile."yazi/vfs.toml".source = tomlFormat.generate "yazi-vfs" {
+    services =
+      lib.mapAttrs (_: row: {
+        type = "sftp";
+        host = row.hostName;
+        inherit (row) user;
+        port = 22;
+        identity_agent = "${config.home.homeDirectory}/${opAgentSock}";
+      })
+      config.forge.ssh.hosts;
+  };
 }

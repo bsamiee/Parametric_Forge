@@ -75,12 +75,12 @@ Larger runners (Team/Enterprise): up to 1,000 concurrent jobs; 100 GPU max.
 
 ```yaml conceptual
 strategy:
-  matrix:
-    include:
-      - runner: ubuntu-latest
-        arch: x64
-      - runner: ubuntu-24.04-arm
-        arch: arm64
+    matrix:
+        include:
+            - runner: ubuntu-latest
+              arch: x64
+            - runner: ubuntu-24.04-arm
+              arch: arm64
 runs-on: ${{ matrix.runner }}
 ```
 
@@ -93,7 +93,7 @@ runs-on: ${{ matrix.runner }}
 ```yaml conceptual
 # .github/actionlint.yaml
 self-hosted-runner:
-  labels: [my-custom-runner, gpu-runner, arm-runner]
+    labels: [my-custom-runner, gpu-runner, arm-runner]
 ```
 
 Custom labels must be declared for actionlint validation — unlisted labels produce false-positive errors.

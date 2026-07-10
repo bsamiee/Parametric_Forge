@@ -23,14 +23,14 @@ actionlint -format sarif                     # SARIF (code scanning integration)
 ```yaml copy-safe
 # .github/actionlint.yaml
 shellcheck:
-  enable: true
-  shell: bash
+    enable: true
+    shell: bash
 pyflakes:
-  enable: true
+    enable: true
 ignore:
-  - 'SC2086'                          # Ignore specific shellcheck rule
+    - "SC2086" # Ignore specific shellcheck rule
 self-hosted-runner:
-  labels: [my-custom-runner, gpu-runner]  # Declare custom labels
+    labels: [my-custom-runner, gpu-runner] # Declare custom labels
 ```
 
 ### [01.2]-[CI_INTEGRATION]
@@ -38,20 +38,20 @@ self-hosted-runner:
 ```yaml conceptual
 name: Lint Workflows
 on:
-  pull_request:
-    paths: ['.github/workflows/**']
+    pull_request:
+        paths: [".github/workflows/**"]
 jobs:
-  actionlint:
-    runs-on: ubuntu-latest
-    permissions: {}
-    steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - run: bash <(curl https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash)
-      - run: ./actionlint -format sarif > actionlint.sarif
-      - uses: github/codeql-action/upload-sarif@45cbd0c69e560cd9e7cd7f8c32362050c9b7ded2 # v4.32.2
-        if: always()
-        with:
-          sarif_file: actionlint.sarif
+    actionlint:
+        runs-on: ubuntu-latest
+        permissions: {}
+        steps:
+            - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+            - run: bash <(curl https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash)
+            - run: ./actionlint -format sarif > actionlint.sarif
+            - uses: github/codeql-action/upload-sarif@45cbd0c69e560cd9e7cd7f8c32362050c9b7ded2 # v4.32.2
+              if: always()
+              with:
+                  sarif_file: actionlint.sarif
 ```
 
 ### [01.3]-[KEY_CHECKS]

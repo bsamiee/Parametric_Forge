@@ -56,18 +56,23 @@
   ];
   treesitter = pkgs.vimPlugins.nvim-treesitter.withPlugins (p: map (n: p.${n}) grammars);
 
-  # Plugin admissions ride overlays/manifest.nix extensions.nvim-plugins rows.
-  plugins = {
-    dracula-vim = pkgs.vimPlugins.dracula-vim;
-    snacks-nvim = pkgs.vimPlugins.snacks-nvim;
-    nvim-treesitter = treesitter;
-    conform-nvim = pkgs.vimPlugins.conform-nvim;
-    nvim-lint = pkgs.vimPlugins.nvim-lint;
-    grug-far-nvim = pkgs.vimPlugins.grug-far-nvim;
-    render-markdown-nvim = pkgs.vimPlugins.render-markdown-nvim;
-    overseer-nvim = pkgs.vimPlugins.overseer-nvim;
-    trouble-nvim = pkgs.vimPlugins.trouble-nvim;
-  };
+  # Plugin admissions ride overlays/manifest.nix extensions.nvim-plugins rows;
+  # a new plugin is one name here plus its setup owner in lua/plugins/.
+  plugins =
+    lib.genAttrs [
+      "dracula-vim"
+      "snacks-nvim"
+      "nvim-treesitter-textobjects"
+      "conform-nvim"
+      "nvim-lint"
+      "gitsigns-nvim"
+      "lualine-nvim"
+      "grug-far-nvim"
+      "render-markdown-nvim"
+      "overseer-nvim"
+      "trouble-nvim"
+    ] (name: pkgs.vimPlugins.${name})
+    // {nvim-treesitter = treesitter;};
 
   # One Lua fact inventory serves lua_ls settings (any workspace root, the
   # repo sources included) and the generated .luarc.json in the config dir.
@@ -77,10 +82,11 @@
 
   # --- LSP inventory: one row family, two consumers ---------------------------
   # `cmd`/`filetypes`/`root_markers`/`settings` feed vim.lsp.config rows;
-  # `claude` is the marketplace identity (plugin dir, command, args, extension
-  # map) the health surface proves against .claude/lsp-marketplace. Commands
-  # are bare names resolving through the Forge per-user profile — never
-  # per-project shells (tool-resolution policy).
+  # `claude` is the marketplace identity (plugin dir, extension map, optional
+  # settings override) the health surface proves against
+  # .claude/lsp-marketplace — command/args derive from `cmd` at projection.
+  # Commands are bare names resolving through the Forge per-user profile —
+  # never per-project shells (tool-resolution policy).
   servers = {
     nixd = rec {
       cmd = ["nixd"];
@@ -89,7 +95,6 @@
       settings.nixd = config.forge.lsp.nixd;
       claude = {
         plugin = "nixd-lsp";
-        command = "nixd";
         extensions.".nix" = "nix";
         inherit settings;
       };
@@ -113,7 +118,6 @@
       };
       claude = {
         plugin = "lua-lsp";
-        command = "lua-language-server";
         extensions.".lua" = "lua";
       };
     };
@@ -129,8 +133,6 @@
       };
       claude = {
         plugin = "bash-lsp";
-        command = "bash-language-server";
-        args = ["start"];
         extensions = {
           ".sh" = "shellscript";
           ".bash" = "shellscript";
@@ -148,8 +150,6 @@
       settings = {};
       claude = {
         plugin = "ty-lsp";
-        command = "ty";
-        args = ["server"];
         extensions = {
           ".py" = "python";
           ".pyi" = "python";
@@ -165,8 +165,6 @@
       settings = {};
       claude = {
         plugin = "tsgo-lsp";
-        command = "tsgo";
-        args = ["--lsp" "-stdio"];
         extensions = {
           ".ts" = "typescript";
           ".tsx" = "typescriptreact";
@@ -186,8 +184,6 @@
       settings = {};
       claude = {
         plugin = "postgres-lsp";
-        command = "postgrestools";
-        args = ["lsp-proxy"];
         extensions.".sql" = "sql";
       };
     };
@@ -201,8 +197,6 @@
       };
       claude = {
         plugin = "yaml-lsp";
-        command = "yaml-language-server";
-        args = ["--stdio"];
         extensions = {
           ".yaml" = "yaml";
           ".yml" = "yaml";
@@ -217,8 +211,6 @@
       settings = {};
       claude = {
         plugin = "roslyn-lsp";
-        command = "roslyn-language-server";
-        args = ["--stdio"];
         extensions = {
           ".cs" = "csharp";
           ".csx" = "csharp";
@@ -338,33 +330,32 @@
       plugins;
     inherit grammars;
     provider.python3 = "${home}/.local/bin/pynvim-python";
-    format = {
-      nix = ["alejandra"];
-      sh = ["shfmt"];
-      bash = ["shfmt"];
-      lua = ["stylua"];
-      python = ["ruff_format"];
-      toml = ["taplo"];
-      yaml = ["yamlfmt"];
-      json = ["prettier"];
-      jsonc = ["prettier"];
-      markdown = ["prettier"];
-      css = ["prettier"];
-      html = ["prettier"];
-      javascript = ["prettier"];
-      javascriptreact = ["prettier"];
-      typescript = ["prettier"];
-      typescriptreact = ["prettier"];
-      sql = ["sqruff"];
-    };
+    format =
+      {
+        nix = ["alejandra"];
+        sh = ["shfmt"];
+        bash = ["shfmt"];
+        lua = ["stylua"];
+        python = ["ruff_format"];
+        toml = ["taplo"];
+        yaml = ["yamlfmt"];
+        sql = ["sqruff"];
+        cs = ["csharpier"];
+      }
+      // lib.genAttrs
+      ["css" "html" "javascript" "javascriptreact" "json" "jsonc" "markdown" "typescript" "typescriptreact"]
+      (_: ["prettier"]);
+    # Lane shape is the contract: `ft` rows index by filetype, `workflow`
+    # attaches path-gated, `global` rides every buffer (plugins/lint.lua).
     lint = {
-      nix = ["deadnix" "statix"];
-      sh = ["shellcheck"];
-      bash = ["shellcheck"];
-      python = ["ruff"];
-      yaml = ["yamllint"];
-      dockerfile = ["hadolint"];
-      # GitHub Actions lanes attach path-gated in plugins/lint.lua.
+      ft = {
+        nix = ["deadnix" "statix"];
+        sh = ["shellcheck"];
+        bash = ["shellcheck"];
+        python = ["ruff"];
+        yaml = ["yamllint"];
+        dockerfile = ["hadolint"];
+      };
       workflow = ["actionlint" "zizmor"];
       global = ["typos"];
     };
@@ -384,7 +375,10 @@
       config.forge.theme.syntaxScopes;
     roles =
       lib.mapAttrs (_: lib.mapAttrs (_: c: c.hex))
-      {inherit (config.forge.theme.roles) surface text accent state diff ui;};
+      {inherit (config.forge.theme.roles) surface text accent state diff ui;}
+      # Git-state vocabulary: the same hues the VS Code and WezTerm gutters
+      # read; the glyph half of the row stays with its terminal consumers.
+      // {git = lib.mapAttrs (_: g: g.color.hex) config.forge.theme.roles.git;};
   };
 
   luarc =
@@ -404,7 +398,9 @@ in {
   # Python provider through the uv tool lane: pynvim's own interpreter shim,
   # isolated from ambient virtualenvs — never ambient discovery.
   home.activation.pynvimProvider = lib.hm.dag.entryAfter ["writeBoundary"] ''
-    [ -x "$HOME/.local/bin/pynvim-python" ] || run ${pkgs.uv}/bin/uv tool install pynvim >/dev/null 2>&1 || true
+    [ -x "$HOME/.local/bin/pynvim-python" ] \
+      || run ${pkgs.uv}/bin/uv tool install pynvim >/dev/null 2>&1 \
+      || echo "pynvim provider install deferred; :checkhealth forge proves the lane" >&2
   '';
 
   # Recursive tree link merges tracked sources with the generated fact modules
@@ -428,13 +424,14 @@ in {
     "nvim/lua/forge/chords.lua".text = genLuaModule config.forge.chords.nvim.rows;
     # Claude marketplace parity projection: identity rows the health surface
     # compares against <flake_root>/.claude/lsp-marketplace/<plugin>/.lsp.json.
+    # command/args are one fact — the server `cmd` row — projected here.
     "forge/lsp/claude-marketplace.json".text = builtins.toJSON (
       lib.mapAttrs' (_: row:
         lib.nameValuePair row.claude.plugin ({
-            command = row.claude.command;
+            command = builtins.head row.cmd;
             extensionToLanguage = row.claude.extensions;
           }
-          // lib.optionalAttrs (row.claude ? args) {inherit (row.claude) args;}
+          // lib.optionalAttrs (builtins.tail row.cmd != []) {args = builtins.tail row.cmd;}
           // lib.optionalAttrs (row.claude ? settings) {inherit (row.claude) settings;}))
       servers
     );

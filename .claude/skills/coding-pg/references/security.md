@@ -2,7 +2,6 @@
 
 Row-level security, privilege architecture, authentication, audit, and pgaudit for PostgreSQL 18. Security is enforced at the database level --- application-layer authorization is redundant defense, not primary enforcement.
 
-
 ## [01]-[ROW_LEVEL_SECURITY_RLS]
 
 RLS policies enforce tenant isolation and access control at the query planner level --- invisible to application queries.
@@ -23,6 +22,7 @@ CREATE POLICY tenant_isolation ON orders
 Admin bypass: `CREATE POLICY admin_access ON orders FOR ALL TO app_admin USING (true) WITH CHECK (true);`
 
 Per-operation policies enforce least-privilege per DML verb:
+
 - `FOR SELECT USING (...)` --- read visibility filter
 - `FOR INSERT WITH CHECK (...)` --- write admission gate
 - `FOR UPDATE USING (...) WITH CHECK (...)` --- both old and new row must satisfy
@@ -58,7 +58,6 @@ CREATE POLICY valid_period_access ON versioned_entities
 - Performance: RLS predicates are appended to every query --- ensure indexed columns used in policies. Planner pushes simple RLS predicates (`col = const`) into index scans; complex predicates (subqueries, function calls) force scan-time filtering --- keep policy expressions index-friendly
 - Superusers and roles with BYPASSRLS bypass RLS --- never use superuser for application connections
 - Schema isolation vs RLS tradeoff: schema-per-tenant eliminates RLS overhead but complicates shared infrastructure (migrations, connection routing, monitoring). RLS preferred for shared-schema multi-tenancy; schema isolation for strict compliance boundaries.
-
 
 ## [02]-[PRIVILEGE_ARCHITECTURE]
 
@@ -105,7 +104,6 @@ CREATE ROLE app_service NOINHERIT;  -- must SET ROLE explicitly, no ambient priv
 - `GRANT USAGE ON SCHEMA` required before any object access within schema
 - `NOINHERIT` prevents ambient privilege from granted roles --- force explicit `SET ROLE` for escalation audit trail
 
-
 ## [03]-[FUNCTION_SECURITY]
 
 SECURITY INVOKER vs SECURITY DEFINER for function execution context.
@@ -148,7 +146,6 @@ $$;
 - SECURITY DEFINER functions bypass RLS --- use sparingly and audit carefully
 - Leakproof functions: `LEAKPROOF` attribute declares function cannot leak information through error messages or side channels --- required for some RLS optimizations
 
-
 ## [04]-[AUTHENTICATION_PG_18]
 
 ### [04.1]-[CONTRACTS]
@@ -158,7 +155,6 @@ $$;
 - Data checksums enabled by default in PG 18 (`initdb`) --- protects against silent data corruption
 - TLS 1.3 cipher control: `ssl_tls13_ciphers = 'TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256'`
 - Connection-level encryption: `sslmode=verify-full` on client side enforces server certificate validation
-
 
 ## [05]-[PGAUDIT]
 
@@ -202,7 +198,6 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON users, payments, audit_log TO auditor;
 - Log output goes to PostgreSQL server log --- route to SIEM via syslog or log shipper (Alloy, Promtail, Fluent Bit)
 - `pgaudit.log = 'all'` generates significant volume --- scope to `ddl, write` minimum; add `role` for privilege audit
 - `misc_set`: logs SET/RESET commands; `misc`: logs DISCARD, FETCH, CHECKPOINT and other utility statements
-
 
 ## [06]-[AUDIT_PATTERNS]
 

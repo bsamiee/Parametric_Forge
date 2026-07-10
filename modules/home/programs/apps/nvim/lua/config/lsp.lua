@@ -18,6 +18,12 @@ for name, row in pairs(require("forge.lsp").servers) do
     vim.lsp.enable(name)
 end
 
+-- Builtin gr*/gO LSP maps retire: chord rows (apps/chords.nix) are the one
+-- LSP dispatch surface, and dropping the prefix family unblocks instant gr.
+for lhs, mode in pairs({ grn = "n", gra = { "n", "x" }, grr = "n", gri = "n", grt = "n", gO = "n" }) do
+    vim.keymap.del(mode, lhs)
+end
+
 vim.api.nvim_create_autocmd("LspAttach", {
     group = vim.api.nvim_create_augroup("forge_lsp_attach", { clear = true }),
     callback = function(ev)
@@ -31,7 +37,8 @@ vim.api.nvim_create_autocmd("LspAttach", {
 vim.diagnostic.config({
     severity_sort = true,
     virtual_text = { source = "if_many" },
-    float = { border = "rounded", source = "if_many" },
+    -- Border rides the global winborder owner (config/options.lua).
+    float = { source = "if_many" },
     signs = {
         text = {
             [vim.diagnostic.severity.ERROR] = "●",

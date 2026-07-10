@@ -1,17 +1,17 @@
 ---
 name: docgen
 description: >-
-  Doc-gen foundation for durable agent-facing documents: the owning-voice register, altitude
-  control, file-kind consistency and marker systems, the anti-anchoring law against enumerating
-  or freezing facts prose cannot keep true, the named defect catalog (capability-gating,
-  legacy-compat, imported upstream posture, process-ledger, deleted-form litanies, coupling),
-  and a deterministic prose gate. Use when authoring, editing, reviewing, or rewriting any durable markdown — README,
-  ARCHITECTURE, specs, standards, prompts, tool docs, the prose inside skill files — when
-  designing a document schema or marker vocabulary, or when hunting noise, fragility,
-  staleness, poison framing, or context anchoring. Skill bundle design — triggers, disclosure,
-  bundled scripts, evals — belongs to the skill-writer skill; Mermaid fences to
-  mermaid-diagramming; interactive HTML artifacts to html-studio. Do not trigger for transient
-  chat replies, code-only edits, or research whose deliverable is not durable markdown.
+    Doc-gen foundation for durable agent-facing documents: the owning-voice register, altitude
+    control, file-kind consistency and marker systems, the anti-anchoring law against enumerating
+    or freezing facts prose cannot keep true, the named defect catalog (capability-gating,
+    legacy-compat, imported upstream posture, process-ledger, deleted-form litanies, coupling),
+    and a deterministic prose gate. Use when authoring, editing, reviewing, or rewriting any durable markdown — README,
+    ARCHITECTURE, specs, standards, prompts, tool docs, the prose inside skill files — when
+    designing a document schema or marker vocabulary, or when hunting noise, fragility,
+    staleness, poison framing, or context anchoring. Skill bundle design — triggers, disclosure,
+    bundled scripts, evals — belongs to the skill-writer skill; Mermaid fences to
+    mermaid-diagramming; interactive HTML artifacts to html-studio. Do not trigger for transient
+    chat replies, code-only edits, or research whose deliverable is not durable markdown.
 ---
 
 # [DOCGEN]
@@ -21,11 +21,13 @@ Durable prose is law for an agent that loads it with no memory of why it was wri
 ## [01]-[ROUTING]
 
 [REFERENCES]:
+
 - [01]-[STRUCTURE](references/structure.md): altitude tiers, routing law, representation choice, table design, file-kind schemas, marker systems
 - [02]-[DEFECTS](references/defects.md): the defect catalog — definitions, detection tests, pairs, reframe rules
 - [03]-[REWRITING](references/rewriting.md): rebuilding an existing document without inheriting its frame
 
 [TEMPLATES]: authoring a new instance of a known file kind starts from its template; a finished instance carries zero residual slot tokens and its heading census matches the template.
+
 - [01]-[IDEAS](templates/ideas.template.md): copy verbatim; fill only the H1 token and lead slot
 - [02]-[TASKLOG](templates/tasklog.template.md): copy verbatim; fill only the H1 token and lead slot
 - [03]-[README](templates/readme.template.md): exact structure, replace only the slots; multi-folder units group domain cards under one `[FOLDER_TOKEN]:` label per folder
@@ -34,12 +36,14 @@ Durable prose is law for an agent that loads it with no memory of why it was wri
 - [06]-[API_CATALOG](templates/api-catalog.template.md): exact structure, replace only the slots
 
 [EXAMPLES]: symptom-indexed worked pairs; consult the matching set before building or repairing the container.
+
 - [01]-[TABLES](examples/tables.md): table crimes and their structural repairs
 - [02]-[LISTS](examples/lists.md): mega bullets, shredded splits, the classified repair
 - [03]-[MARKERS](examples/markers.md): entry leaders, status vocabularies, glyphs
 - [04]-[INTROS](examples/intros.md): leads that legislate and the rejected frames
 
 [SCRIPTS]:
+
 - [01]-[PROSE_GATE](scripts/prose_gate.py): the deterministic gate and fixer; invocation in the gate section
 
 ## [02]-[GATE]
@@ -113,6 +117,7 @@ Rebuilding an existing document under this register is its own discipline — th
 ## [04]-[FACT_LAW]
 
 [FACT_CLASSES] — Every fact in a durable doc is exactly one of:
+
 - [LAW]: Intent, invariant, boundary, prohibition. Survives any rename. Carried in prose.
 - [REPRESENTATION]: A structure snapshot — tree, codemap, diagram. Regenerable from disk, verified by tooling, carried only in a fence or diagram, never restated in prose.
 - [REGISTRY]: A fact whose system of record is the doc itself. The only class allowed to enumerate.

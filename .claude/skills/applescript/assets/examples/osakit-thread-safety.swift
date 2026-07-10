@@ -12,10 +12,10 @@ struct ScriptFailure: Error {
     }
 }
 
-// The actor confines every compile and execute to one serial context, so the run-loop reentrancy
-// a blocked send opens cannot corrupt a second in-flight script. isThreadSafe selects shared-versus-
-// dedicated instance, never whether execution fans across threads: stock AppleScript and JavaScript
-// components report true and share, a component that declines takes a dedicated one, either lane serial.
+/// The actor confines every compile and execute to one serial context, so the run-loop reentrancy
+/// a blocked send opens cannot corrupt a second in-flight script. isThreadSafe selects shared-versus-
+/// dedicated instance, never whether execution fans across threads: stock AppleScript and JavaScript
+/// components report true and share, a component that declines takes a dedicated one, either lane serial.
 actor ScriptExecutor {
     private let language: OSALanguage
     private lazy var instance: OSALanguageInstance =

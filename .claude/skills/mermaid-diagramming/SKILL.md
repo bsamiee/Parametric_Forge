@@ -1,17 +1,17 @@
 ---
 name: mermaid-diagramming
 description: >-
-  Generates and validates Mermaid diagrams with YAML frontmatter, ELK layout, Dracula theme
-  tokens, and a bundled render-plus-graph-logic validator. Owns diagram methodology — when to
-  diagram, node and edge selection, per-type construction, logical soundness — the archetype
-  template catalog from architecture spine to weighted decomposition, the concept-to-diagram
-  map that turns state machines, dispatch topologies, dependency graphs, protocol seams, and
-  chronologies into the right fence, and the embedding contract for diagrams inside markdown
-  docs and single-file HTML artifacts. Use when authoring, editing, or fixing any mermaid
-  fence, choosing a diagram type, embedding a rendered diagram in a page, or whenever a task
-  asks to draw, diagram, map, or visualize a system, flow, state machine, sequence exchange,
-  schema, dependency structure, schedule, hierarchy, or workflow board — even when mermaid is
-  never named — distinct from quantitative dataviz marks and interactive HTML pages.
+    Generates and validates Mermaid diagrams with YAML frontmatter, ELK layout, Dracula theme
+    tokens, and a bundled render-plus-graph-logic validator. Owns diagram methodology — when to
+    diagram, node and edge selection, per-type construction, logical soundness — the archetype
+    template catalog from architecture spine to weighted decomposition, the concept-to-diagram
+    map that turns state machines, dispatch topologies, dependency graphs, protocol seams, and
+    chronologies into the right fence, and the embedding contract for diagrams inside markdown
+    docs and single-file HTML artifacts. Use when authoring, editing, or fixing any mermaid
+    fence, choosing a diagram type, embedding a rendered diagram in a page, or whenever a task
+    asks to draw, diagram, map, or visualize a system, flow, state machine, sequence exchange,
+    schema, dependency structure, schedule, hierarchy, or workflow board — even when mermaid is
+    never named — distinct from quantitative dataviz marks and interactive HTML pages.
 ---
 
 # [MERMAID_DIAGRAMMING]

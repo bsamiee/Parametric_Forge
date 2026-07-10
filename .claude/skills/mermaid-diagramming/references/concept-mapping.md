@@ -8,7 +8,7 @@ Read the material for the shape, not the topic. Every row names the signals that
 
 | [INDEX] | [SHAPE]             | [SIGNALS_IN_THE_MATERIAL]                    | [ROUTE]                                                         |
 | :-----: | :------------------ | :------------------------------------------- | :-------------------------------------------------------------- |
-|  [01]   | mode machine        | *in* a state; "once X, never back"           | lifecycle                                                       |
+|  [01]   | mode machine        | _in_ a state; "once X, never back"           | lifecycle                                                       |
 |  [02]   | dispatch topology   | one entry point, a discriminant, many arms   | logic-flow                                                      |
 |  [03]   | ownership walk      | "first, then, finally" across owners         | spine                                                           |
 |  [04]   | dependency lattice  | "X needs Y"; imports; "never depend upward"  | strata                                                          |

@@ -43,61 +43,35 @@ const _projects = [
 
 type _ProjectSlug = (typeof _projects)[number]['slug'];
 
-// API-minted projects carry zero environments, so agent-runtime's ride as
-// mint rows; each environment creates its same-slug root config.
-const _environments = [
-    {
-        project: 'agent-runtime',
-        slug: 'dev',
-        name: 'Development',
-        origin: 'mint',
-    },
-    { project: 'agent-runtime', slug: 'stg', name: 'Staging', origin: 'mint' },
-    { project: 'agent-runtime', slug: 'prd', name: 'Production', origin: 'mint' },
-    {
-        project: 'parametric-forge',
-        slug: 'dev',
-        name: 'Development',
-        origin: 'adopt',
-    },
-    {
-        project: 'parametric-forge',
-        slug: 'stg',
-        name: 'Staging',
-        origin: 'adopt',
-    },
-    {
-        project: 'parametric-forge',
-        slug: 'prd',
-        name: 'Production',
-        origin: 'adopt',
-    },
-    { project: 'maghz', slug: 'dev', name: 'Development', origin: 'adopt' },
-    { project: 'maghz', slug: 'stg', name: 'Staging', origin: 'adopt' },
-    { project: 'maghz', slug: 'prd', name: 'Production', origin: 'adopt' },
-    { project: 'rasm', slug: 'dev', name: 'Development', origin: 'adopt' },
-    { project: 'rasm', slug: 'stg', name: 'Staging', origin: 'adopt' },
-    { project: 'rasm', slug: 'prd', name: 'Production', origin: 'adopt' },
-] as const satisfies ReadonlyArray<{
-    readonly project: _ProjectSlug;
-    readonly slug: string;
-    readonly name: string;
-    readonly origin: _Origin;
-}>;
+// Every project carries the standard environment triple, and an environment's
+// origin rides its project: API-minted projects mint their environments (each
+// environment creates its same-slug root config), adopted projects adopt them.
+const _ENV_AXIS = [
+    { slug: 'dev', name: 'Development' },
+    { slug: 'stg', name: 'Staging' },
+    { slug: 'prd', name: 'Production' },
+] as const;
 
-type _EnvironmentSlug<P extends _ProjectSlug = _ProjectSlug> = Extract<(typeof _environments)[number], { readonly project: P }>['slug'];
+type _EnvironmentSlug = (typeof _ENV_AXIS)[number]['slug'];
+
+const _environments: ReadonlyArray<{
+    readonly project: _ProjectSlug;
+    readonly slug: _EnvironmentSlug;
+    readonly name: (typeof _ENV_AXIS)[number]['name'];
+    readonly origin: _Origin;
+}> = _projects.flatMap((project) => _ENV_AXIS.map((env) => ({ project: project.slug, slug: env.slug, name: env.name, origin: project.origin })));
 
 // Branch configs pair with a declared environment of their own project, and
 // Doppler's naming law rides the type: a branch name is `<env>_<suffix>`.
 type _BranchRow = {
     [P in _ProjectSlug]: {
-        [E in _EnvironmentSlug<P>]: {
+        [E in _EnvironmentSlug]: {
             readonly project: P;
             readonly environment: E;
             readonly name: `${E}_${string}`;
             readonly origin: _Origin;
         };
-    }[_EnvironmentSlug<P>];
+    }[_EnvironmentSlug];
 }[_ProjectSlug];
 
 // Branch configs only; root configs ride their environment. agent-runtime's
@@ -115,13 +89,14 @@ const _configs = [
 
 // A config coordinate resolves to a root config (same-slug as its
 // environment) or a declared branch config of the same project.
-type _ConfigName<P extends _ProjectSlug = _ProjectSlug> = _EnvironmentSlug<P> | Extract<(typeof _configs)[number], { readonly project: P }>['name'];
+type _ConfigName<P extends _ProjectSlug = _ProjectSlug> = _EnvironmentSlug | Extract<(typeof _configs)[number], { readonly project: P }>['name'];
 
 type _Coordinate = { [P in _ProjectSlug]: { readonly project: P; readonly config: _ConfigName<P> } }[_ProjectSlug];
 
 // Static Developer-plan tokens; replacement is manual revoke-and-remint: drop
 // the row and `up --target=<project>/<config>/<name>` (revokes), restore the
 // row and target again (mints), then hand the fresh key off through 1Password.
+// A read grant carries the `-readonly` name suffix as the naming law.
 const _tokens = [
     {
         project: 'agent-runtime',
@@ -136,10 +111,7 @@ const _tokens = [
         access: 'read',
     },
 ] as const satisfies ReadonlyArray<
-    _Coordinate & {
-        readonly name: string;
-        readonly access: 'read' | 'read/write';
-    }
+    _Coordinate & ({ readonly name: `${string}-readonly`; readonly access: 'read' } | { readonly name: string; readonly access: 'read/write' })
 >;
 
 // Machine directory-scope rows: the replacement for every per-repo
@@ -163,16 +135,17 @@ const _scopes = [
 // Doppler mandates HTTPS delivery (the url type carries it) and signs each
 // delivery with the brokered secret (secretSource names the custody coordinate
 // the driver resolves at apply time); no secret names ride the wire, delivery
-// is at-least-once, and the consumer owns idempotency.
+// is at-least-once, and the consumer owns idempotency. The payload event
+// derives in estate.ts as `<project>.<firstEnabledConfig>.secrets.update`, and
+// the provider ships no webhook import, so every row is mint by construction.
 type _WebhookRow = {
     [P in _ProjectSlug]: {
         readonly project: P;
         readonly slug: string;
         readonly url: `https://${string}`;
         readonly enabledConfigs: readonly [_ConfigName<P>, ...ReadonlyArray<_ConfigName<P>>];
-        readonly payload: string;
         readonly secretSource: _Coordinate & { readonly name: string };
-        readonly origin: _Origin;
+        readonly origin: 'mint';
     };
 }[_ProjectSlug];
 
@@ -182,7 +155,6 @@ const _webhooks = [
         slug: 'maghz-prd-redeploy',
         url: 'https://31-97-131-41.sslip.io/hooks/doppler',
         enabledConfigs: ['prd_host'],
-        payload: JSON.stringify({ event: 'maghz.prd_host.secrets.update' }),
         secretSource: {
             project: 'maghz',
             config: 'prd_host',

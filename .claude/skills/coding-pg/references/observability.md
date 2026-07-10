@@ -2,7 +2,6 @@
 
 Statistics views, automatic plan capture, wait event analysis, and I/O diagnostics for PostgreSQL 18. Plan analysis (EXPLAIN) lives in performance.md --- this file covers runtime monitoring and diagnostics.
 
-
 ## [01]-[PG_STAT_STATEMENTS]
 
 Query fingerprinting and execution statistics. Primary tool for identifying regression and optimization targets.
@@ -10,6 +9,7 @@ Query fingerprinting and execution statistics. Primary tool for identifying regr
 Enable: `shared_preload_libraries = 'pg_stat_statements'` + `CREATE EXTENSION pg_stat_statements`.
 
 Top queries by total time with cache efficiency:
+
 ```sql conceptual
 SELECT queryid, query, calls, total_exec_time / 1000 AS total_sec,
        mean_exec_time AS avg_ms, stddev_exec_time AS stddev_ms,
@@ -24,12 +24,12 @@ LIMIT 20;
 - Query normalization: literals replaced with `$N` parameters --- identical query shapes share a fingerprint
 
 Contracts:
+
 - `pg_stat_statements_reset()` clears all statistics --- snapshot before clearing
 - `pg_stat_statements.max` (default 5000): number of distinct queries tracked --- increase for large applications
 - `pg_stat_statements.track = 'all'` tracks nested function calls --- default `top` only tracks top-level
 - Statistics persist across connections. PG 14+: `pg_stat_statements.save = on` (default) persists across restarts; pre-PG 14 requires explicit save
 - Cascading analysis: join `pg_stat_statements` with `pg_stat_user_indexes` via `queryid` correlation to identify queries whose plans shifted from index scan to seq scan between snapshots
-
 
 ## [02]-[AUTO_EXPLAIN]
 
@@ -48,10 +48,10 @@ auto_explain.log_settings = on             -- PG 15+: include GUC settings affec
 ```
 
 Contracts:
+
 - `log_analyze = on` re-executes timing for each node --- use with appropriate `log_min_duration`
 - JSON format enables automated parsing --- pipe to observability stack
 - Per-session override: `SET auto_explain.log_min_duration = '50ms'` for targeted debugging
-
 
 ## [03]-[PG_STAT_ACTIVITY]
 
@@ -89,10 +89,10 @@ GROUP BY wait_event_type, wait_event
 ORDER BY sessions DESC;
 ```
 
-
 ## [04]-[WAIT_EVENTS]
 
 Taxonomy:
+
 - `LWLock` --- lightweight locks on shared memory structures (buffer mapping, WAL insertion)
 - `Lock` --- heavyweight locks (table locks, row locks, advisory locks)
 - `BufferPin` --- waiting for buffer pin
@@ -104,12 +104,12 @@ Taxonomy:
 - `Timeout` --- waiting for timeout expiry (PgSleep, RecoveryApplyDelay, VacuumDelay)
 
 Diagnostic patterns with actionable thresholds:
+
 - `IO:DataFileRead` sustained >5s across >10% of backends --- insufficient shared_buffers or working set exceeds RAM; verify with `pg_stat_io` read counts
 - `Lock:transactionid` sustained >30s --- long-running transactions holding row locks; identify holder via `pg_blocking_pids()` lock chain query above
 - `LWLock:WALInsert` sustained >2s --- WAL write bottleneck --- increase `wal_buffers`, set `synchronous_commit = off` for non-critical writes
 - `Client:ClientRead` sustained >10s --- application not consuming results fast enough; connection pool exhaustion
 - `LWLock:BufferMapping` --- hash partition contention on buffer table; PG 18 doubled partitions, but sustained occurrence indicates shared_buffers thrashing
-
 
 ## [05]-[PG_STAT_IO_PG_16]
 
@@ -126,6 +126,7 @@ ORDER BY read_time + write_time DESC;
 ```
 
 Column semantics:
+
 - `backend_type`: client backend, autovacuum worker, checkpointer, background writer
 - `object`: relation (heap/index), temp relation
 - `context`: normal (shared buffers), vacuum, bulkread (seq scan ring buffer), bulkwrite (COPY/CREATE TABLE AS)
@@ -133,10 +134,10 @@ Column semantics:
 - `fsyncs`/`fsync_time`: per-backend fsync calls --- high values on checkpointer indicate I/O saturation
 
 Diagnostic patterns:
+
 - High `read_time` on `context = bulkread` --- sequential scans dominating; investigate missing indexes
 - High `write_time` on `backend_type = checkpointer` --- checkpoint spread insufficient; tune `checkpoint_completion_target`
 - High `extends` on `context = normal` --- frequent relation extension from table growth
-
 
 ## [06]-[PG_STAT_WAL]
 
@@ -152,7 +153,6 @@ FROM pg_stat_wal;
 - `wal_bytes` growth rate predicts replication lag under given network bandwidth
 - `wal_fpi` (full page images): high ratio to `wal_records` indicates excessive full-page writes after checkpoint --- tune `checkpoint_timeout`
 - `wal_buffers_full`: non-zero indicates `wal_buffers` undersized --- backends forced to write WAL directly
-
 
 ## [07]-[PG_STAT_PROGRESS_VIEWS]
 
@@ -170,10 +170,10 @@ Progress monitoring for long-running maintenance operations.
 - `phase` column indicates current operation phase (e.g., vacuum: scanning heap, vacuuming indexes, truncating heap)
 - Progress percentage: `(blocks_done::numeric / NULLIF(blocks_total, 0) * 100)` --- approximate for concurrent modifications
 
-
 ## [08]-[TABLE_STATISTICS]
 
 Bloat detection --- tables with highest dead tuple ratio (filter noise with `n_dead_tup > 1000`):
+
 ```sql conceptual
 SELECT schemaname, relname, n_live_tup, n_dead_tup,
        ROUND(n_dead_tup::numeric / NULLIF(n_live_tup + n_dead_tup, 0) * 100, 2) AS dead_pct,

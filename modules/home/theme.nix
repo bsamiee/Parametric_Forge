@@ -7,21 +7,15 @@
 # Estate palette owner: enriched Dracula-variant rows, semantic roles, ANSI-16
 # projection, the master syntax scope table (tmTheme, treesitter, textMate,
 # and semantic tokens project from one pivot), derived diff/search/git roles,
-# the shared icon vocabulary, the target registry with coverage and closeout
-# projections, and the rendered proof lane. Every color consumer interpolates
+# the shared icon vocabulary, the target registry with its coverage
+# projection, and the rendered proof lane. Every color consumer interpolates
 # these tokens; no consumer carries a private hex.
 {
   lib,
   pkgs,
   ...
 }: let
-  hexDigit =
-    lib.listToAttrs (lib.imap0 (i: c: lib.nameValuePair c i)
-      (lib.stringToCharacters "0123456789ABCDEF"));
-  byte = s: i:
-    16
-    * hexDigit.${lib.toUpper (builtins.substring i 1 s)}
-    + hexDigit.${lib.toUpper (builtins.substring (i + 1) 1 s)};
+  byte = s: i: lib.fromHexString (builtins.substring i 2 s);
 
   # Color record: uppercase hex plus every numeric rendering consumers need.
   mkColor = raw: let
@@ -405,10 +399,17 @@
   # --- Target registry: the Stylix-class capability matrix ---------------------
   # One row per rendering consumer; verdicts: bound (interpolates owner
   # tokens), gap (adoption pending), defer (no config surface to own).
-  # Coverage and the AESTHETIC-CLOSEOUT phase-1 register project from these
-  # rows so projection gaps surface before drift.
+  # coverage.json projects from these rows so gaps surface before drift.
   targets = let
-    row = id: owner: carrier: binds: verdict: {inherit id owner carrier binds verdict;};
+    # `binds` admits as a space-joined token string and lands typed: the row
+    # carries a real list so JSON consumers never re-split.
+    row = id: owner: carrier: binds: verdict: {
+      inherit id owner carrier verdict;
+      binds =
+        if binds == "-"
+        then []
+        else lib.splitString " " binds;
+    };
     apps = "modules/home/programs/apps";
     st = "modules/home/programs/shell-tools";
   in [
@@ -429,7 +430,7 @@
     (row "atuin" "${st}/atuin.nix" "toml" "palette" "bound")
     (row "carbon" "${st}/carbon.nix" "json" "scopes fonts" "bound")
     (row "bottom" "${st}/bottom.nix" "toml" "palette" "bound")
-    (row "procs" "${st}/procs.nix" "toml" "ansi16" "bound")
+    (row "procs" "${st}/procs.nix" "toml" "ansi16-slots" "bound")
     (row "jnv" "${st}/jnv.nix" "flags" "palette" "bound")
     (row "pik" "${st}/pik.nix" "toml" "palette" "bound")
     (row "trippy" "${st}/trippy.nix" "toml" "palette" "bound")
@@ -439,7 +440,7 @@
     (row "posting" "${st}/posting.nix" "yaml" "palette" "bound")
     (row "process-compose" "${st}/process-compose.nix" "yaml" "palette" "bound")
     (row "mcp-cells" "${st}/mcp-launchers.nix" "zjstatus-pipe" "roles" "bound")
-    (row "glow" "${st}/glow.nix" "json" "-" "gap")
+    (row "glow" "modules/home/programs/media-tools/glow.nix" "json" "-" "gap")
     (row "zsh-syntax-highlighting" "modules/home/programs/zsh" "env" "-" "gap")
     (row "zsh-autosuggestions" "modules/home/programs/zsh" "env" "-" "gap")
     (row "you-should-use" "modules/home/programs/zsh" "env" "-" "gap")
@@ -448,6 +449,15 @@
     (row "wallpaper" "modules/home/assets/wallpaper" "bitmap" "-" "defer")
     (row "dock-controlcenter" "system-owned" "-" "-" "defer")
   ];
+
+  # Registry rows are proven at eval: every owner path must exist on disk, so a
+  # moved consumer breaks the registry loudly. "system-owned" rows carry no file.
+  targetsProved = let
+    missing = builtins.filter (t: t.owner != "system-owned" && !builtins.pathExists (../.. + "/${t.owner}")) targets;
+  in
+    if missing == []
+    then targets
+    else throw "forge.theme.targets: owner paths missing on disk: ${lib.concatMapStringsSep ", " (t: "${t.id}=${t.owner}") missing}";
 
   scopeRule = row: let
     style = row.style or null;
@@ -493,29 +503,29 @@
   '';
   tmThemeFile = pkgs.writeText "forge-dracula.tmTheme" tmTheme;
 
-  hexOnly = lib.mapAttrs (_: c: c.hex);
+  # Deep hex projection: a color record (any attrset carrying `hex`) collapses
+  # to its hex, every other leaf (glyphs, labels) passes through — so a new
+  # role family lands in palette.json with zero edits here.
+  project = v:
+    if lib.isAttrs v && v ? hex
+    then v.hex
+    else if lib.isAttrs v
+    then lib.mapAttrs (_: project) v
+    else v;
   paletteJson = builtins.toJSON {
-    palette = hexOnly palette;
-    derived = hexOnly derived;
-    roles =
-      lib.mapAttrs (_: lib.mapAttrs (_: c: c.hex))
-      {inherit (roles) surface text accent state diff ui;}
-      // {
-        git =
-          lib.mapAttrs (_: g: {
-            color = g.color.hex;
-            inherit (g) glyph;
-          })
-          roles.git;
-      };
-    ansi16 = hexOnly ansi16;
-    syntax =
-      map (row: {
+    palette = project palette;
+    derived = project derived;
+    roles = project roles;
+    ansi16 = project ansi16;
+    icons = project icons;
+    syntax = map (row:
+      {
         inherit (row) name scope captures;
         color = row.color.hex;
         style = row.style or "";
-      })
-      syntaxScopes;
+      }
+      // lib.optionalAttrs (row ? background) {background = row.background.hex;})
+    syntaxScopes;
   };
 
   # Base16/Base24 export adapter (Tinted scheme exchange); the canonical
@@ -546,14 +556,13 @@
     base16 = palette.brightBlue;
     base17 = palette.pink;
   };
-  base24Yaml = ''
-    system: "base24"
-    name: "Forge Dracula"
-    author: "Parametric Forge"
-    variant: "dark"
-    palette:
-    ${lib.concatStringsSep "\n" (lib.mapAttrsToList (slot: c: "  ${slot}: \"${lib.toLower (lib.removePrefix "#" c.hex)}\"") base24Slots)}
-  '';
+  base24File = (pkgs.formats.yaml {}).generate "forge-base24.yaml" {
+    system = "base24";
+    name = "Forge Dracula";
+    author = "Parametric Forge";
+    variant = "dark";
+    palette = lib.mapAttrs (_: c: lib.toLower (lib.removePrefix "#" c.hex)) base24Slots;
+  };
 
   # --- Rendered proof board -----------------------------------------------------
   # palette.html: swatches, elevation ladder, fg tiers, ANSI-16, syntax scopes
@@ -612,62 +621,103 @@
     </script></body></html>
   '';
 
+  receiptsFold = import ./programs/shell-tools/receipts.nix;
+
   # forge-theme-proof: the terminal-native proof lane. Renders every claim in
-  # the live renderer and stamps a receipt (source hash, geometry, font,
-  # TERM); NO_COLOR=1 rerun is the strip test.
+  # the live renderer and stamps a dual receipt (source hash, geometry, font,
+  # TERM) through the shared receipts fold; NO_COLOR=1 rerun is the strip test.
   forgeThemeProof = pkgs.writeShellApplication {
     name = "forge-theme-proof";
     runtimeInputs = [pkgs.jq pkgs.coreutils];
     text = ''
       p="''${XDG_CONFIG_HOME:-$HOME/.config}/forge/theme/palette.json"
       f="''${XDG_CONFIG_HOME:-$HOME/.config}/forge/fonts/manifest.json"
+      receipt_log="''${FORGE_THEME_PROOF_RECEIPT_LOG:-$HOME/Library/Logs/forge-theme-proof.receipts.log}"
+      receipt_surface="forge-theme-proof"
+      ${receiptsFold}
+      # Admission gate: the palette snapshot crosses once, shape-asserted — a
+      # missing or torn projection fails typed, never as an unbound-var crash.
+      jq -e '(.palette | type == "object") and (.derived | type == "object")
+        and (.roles.git | type == "object") and (.syntax | type == "array")' "$p" >/dev/null 2>&1 || {
+        printf 'forge-theme-proof: palette projection missing or malformed: %s\n' "$p" >&2
+        exit 66
+      }
       hash="$(sha256sum "$p" | cut -c1-12)"
-      font="$(jq -r '.roles.mono + " " + (.metrics.size|tostring)' "$f" 2>/dev/null || echo unknown)"
+      font="$(jq -r '.roles.mono + " " + (.metrics.size|tostring)' "$f" 2>/dev/null || true)"
+      font="''${font:-unknown}"
+
+      # One projection over the palette snapshot: color, syntax, and git rows
+      # cross on a unit-separator rail; hex decodes in shell arithmetic.
+      declare -A RGB HEX
+      syntax_rows=()
+      git_rows=()
+      while IFS=$'\x1f' read -r kind key hex glyph; do # streaming boundary: typed row feed
+        h="''${hex#\#}"
+        rgb="$((16#''${h:0:2}));$((16#''${h:2:2}));$((16#''${h:4:2}))"
+        case "$kind" in
+          color)
+            RGB[$key]="$rgb"
+            HEX[$key]="$hex"
+            ;;
+          syntax) syntax_rows+=("$key"$'\x1f'"$rgb") ;;
+          git) git_rows+=("$key"$'\x1f'"$rgb"$'\x1f'"$glyph") ;;
+        esac
+      done < <(jq -r '
+        ((.palette | to_entries[] | ["color", "palette.\(.key)", .value, ""]),
+         (.derived | to_entries[] | ["color", "derived.\(.key)", .value, ""]),
+         (.syntax[] | ["syntax", .name, .color, ""]),
+         (.roles.git | to_entries[] | ["git", .key, .value.color, .value.glyph]))
+        | join("\u001f")' "$p")
+
       esc() { printf '\033[%sm' "$1"; }
-      fg() { jq -r ".$1" "$p" | sed 's/#//' | { read -r h; printf '38;2;%d;%d;%d' "0x''${h:0:2}" "0x''${h:2:2}" "0x''${h:4:2}"; }; }
-      bg() { jq -r ".$1" "$p" | sed 's/#//' | { read -r h; printf '48;2;%d;%d;%d' "0x''${h:0:2}" "0x''${h:2:2}" "0x''${h:4:2}"; }; }
-      r() { esc 0; }
       if [[ -n "''${NO_COLOR:-}" ]]; then
         esc() { :; }
       fi
+      fg() { printf '38;2;%s' "''${RGB[$1]}"; }
+      bg() { printf '48;2;%s' "''${RGB[$1]}"; }
+      r() { esc 0; }
       printf '\n%s[FORGE-THEME-PROOF]%s src=%s geometry=%sx%s font="%s" term=%s\n\n' \
         "$(esc "$(fg palette.pink);1")" "$(r)" "$hash" "''${COLUMNS:-?}" "''${LINES:-?}" "$font" "''${TERM_PROGRAM:-$TERM}"
       printf '%s[SURFACE_LADDER]%s\n' "$(esc "$(fg palette.cyan);1")" "$(r)"
       for row in crust background surface current_line selection; do
-        printf '  %s %-14s %s %s\n' "$(esc "$(bg "palette.$row")")        " "$(r) $row" "$(jq -r ".palette.$row" "$p")" ""
+        printf '  %s %-14s %s\n' "$(esc "$(bg "palette.$row")")        $(r)" "$row" "''${HEX[palette.$row]}"
       done
-      printf '  %s %-14s %s\n\n' "$(esc "$(bg derived.overlay)")        " "$(r) overlay" "$(jq -r '.derived.overlay' "$p")"
+      printf '  %s %-14s %s\n\n' "$(esc "$(bg derived.overlay)")        $(r)" "overlay" "''${HEX[derived.overlay]}"
       printf '%s[FG_TIERS]%s ' "$(esc "$(fg palette.cyan);1")" "$(r)"
       printf '%sprimary%s %ssubtle%s %smuted%s\n\n' \
         "$(esc "$(fg palette.foreground)")" "$(r)" "$(esc "$(fg palette.subtle)")" "$(r)" "$(esc "$(fg palette.comment)")" "$(r)"
       printf '%s[ANSI16]%s\n  ' "$(esc "$(fg palette.cyan);1")" "$(r)"
-      for i in 0 1 2 3 4 5 6 7; do printf '\033[4%sm  \033[0m' "$i"; done
+      for i in 0 1 2 3 4 5 6 7; do printf '%s  %s' "$(esc "4$i")" "$(r)"; done
       printf '\n  '
-      for i in 0 1 2 3 4 5 6 7; do printf '\033[10%sm  \033[0m' "$i"; done
+      for i in 0 1 2 3 4 5 6 7; do printf '%s  %s' "$(esc "10$i")" "$(r)"; done
       printf '\n\n%s[SEMANTIC]%s ' "$(esc "$(fg palette.cyan);1")" "$(r)"
       printf '%sok%s %swarn%s %sattention%s %sdanger%s %sinfo%s\n\n' \
         "$(esc "$(fg palette.green)")" "$(r)" "$(esc "$(fg palette.amber)")" "$(r)" \
         "$(esc "$(fg palette.orange)")" "$(r)" "$(esc "$(fg palette.red)")" "$(r)" "$(esc "$(fg palette.blue)")" "$(r)"
       printf '%s[SYNTAX]%s\n' "$(esc "$(fg palette.cyan);1")" "$(r)"
-      jq -r '.syntax[] | [.name, .color] | @tsv' "$p" | while IFS=$'\t' read -r name hex; do
-        h="''${hex#\#}"
-        printf '  \033[38;2;%d;%d;%dm%-12s\033[0m' "0x''${h:0:2}" "0x''${h:2:2}" "0x''${h:4:2}" "$name"
-      done | fold -w "''${COLUMNS:-100}" -s
-      printf '\n\n%s[DIFF_FILLS]%s\n' "$(esc "$(fg palette.cyan);1")" "$(r)"
+      {
+        for row in "''${syntax_rows[@]}"; do
+          IFS=$'\x1f' read -r name rgb <<<"$row"
+          printf '  %s%-12s%s' "$(esc "38;2;$rgb")" "$name" "$(r)"
+        done
+        printf '\n'
+      } | fold -w "''${COLUMNS:-100}" -s
+      printf '\n%s[DIFF_FILLS]%s\n' "$(esc "$(fg palette.cyan);1")" "$(r)"
       for pair in "diffAdd:+ inserted" "diffDel:− deleted" "diffChange:~ changed" "search:search match" "searchCurrent:current match"; do
         printf '  %s %s %s\n' "$(esc "$(bg "derived.''${pair%%:*}");$(fg palette.foreground)")" "''${pair#*:}" "$(r)"
       done
       printf '\n%s[GIT]%s ' "$(esc "$(fg palette.cyan);1")" "$(r)"
-      jq -r '.roles.git | to_entries[] | [.key, .value.color, .value.glyph] | @tsv' "$p" | while IFS=$'\t' read -r k hex glyph; do
-        h="''${hex#\#}"
-        printf '\033[38;2;%d;%d;%dm%s %s\033[0m  ' "0x''${h:0:2}" "0x''${h:2:2}" "0x''${h:4:2}" "$glyph" "$k"
+      for row in "''${git_rows[@]}"; do
+        IFS=$'\x1f' read -r k rgb glyph <<<"$row"
+        printf '%s%s %s%s  ' "$(esc "38;2;$rgb")" "$glyph" "$k" "$(r)"
       done
       printf '\n\n'
-      ts=$(date -u +%Y-%m-%dT%H:%M:%SZ)
-      mkdir -p "$HOME/Library/Logs"
-      printf 'ts=%s\towner=forge-theme-proof\tartifact=terminal\trenderer=%s\tfont=%s\tgeometry=%sx%s\thash=%s\n' \
-        "$ts" "''${TERM_PROGRAM:-$TERM}" "$font" "''${COLUMNS:-?}" "''${LINES:-?}" "$hash" \
-        >>"$HOME/Library/Logs/forge-theme-proof.receipts.log"
+      TZ=UTC0 printf -v ts '%(%Y-%m-%dT%H:%M:%SZ)T' "$EPOCHSECONDS"
+      receipt="$(printf 'ts=%s\tartifact=terminal\trenderer=%s\tfont=%s\tgeometry=%sx%s\thash=%s\tresult=ok' \
+        "$ts" "''${TERM_PROGRAM:-$TERM}" "$font" "''${COLUMNS:-?}" "''${LINES:-?}" "$hash")"
+      # An unwritable log must never mask a rendered proof.
+      append_receipt "$receipt" \
+        || printf 'forge-theme-proof: WARNING receipt not persisted to %s\n' "$receipt_log" >&2
     '';
   };
 
@@ -766,7 +816,10 @@ in {
   options.forge.theme = lib.mkOption {
     type = lib.types.raw;
     readOnly = true;
-    default = {inherit palette derived roles ansi16 syntaxScopes icons targets projections;};
+    default = {
+      inherit palette derived roles ansi16 syntaxScopes icons projections;
+      targets = targetsProved;
+    };
     description = "Estate palette owner: enriched Dracula tokens, roles, ANSI-16, registry, projections.";
   };
 
@@ -774,31 +827,15 @@ in {
     home.packages = [forgeThemeProof];
 
     # Machine-readable projections for consumers outside Home Manager modules,
-    # the ecosystem exchange adapter, the proof board, and the closeout seed.
+    # the ecosystem exchange adapter, the proof board, and the coverage ledger.
     xdg.configFile = {
       "forge/theme/palette.json".text = paletteJson;
       "forge/theme/forge-dracula.tmTheme".source = tmThemeFile;
-      "forge/theme/base24.yaml".text = base24Yaml;
+      "forge/theme/base24.yaml".source = base24File;
       "forge/theme/palette.html".source = paletteHtml;
       "forge/theme/coverage.json".text = builtins.toJSON {
         schema = "forge-theme-coverage/v1";
-        inherit targets;
-      };
-      # AESTHETIC-CLOSEOUT phase-1 register seed: one touchpoint per target;
-      # the mapping wave fills option_space, capture_ref, and placement.
-      "forge/theme/closeout-register.json".text = builtins.toJSON {
-        schema = "aesthetic-closeout-register/v1";
-        label_convention = "[BRACKETED_UPPER]";
-        touchpoints =
-          map (t: {
-            inherit (t) id carrier verdict;
-            config_path = t.owner;
-            palette_tokens = t.binds;
-            option_space = null;
-            capture_ref = null;
-            placement = null;
-          })
-          targets;
+        targets = targetsProved;
       };
     };
   };

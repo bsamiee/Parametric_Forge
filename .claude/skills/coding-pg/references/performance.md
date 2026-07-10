@@ -2,7 +2,6 @@
 
 AIO, JIT, parallel query, vacuum optimization, cost model tuning, connection pooling, plan-driven diagnostics for PostgreSQL 18.
 
-
 ## [01]-[ASYNCHRONOUS_I_O_PG_18]
 
 Asynchronous I/O can materially improve sequential scans, bitmap heap scans, and vacuum on Linux with io_uring; verify gains with workload-specific `EXPLAIN (ANALYZE, BUFFERS, SETTINGS)`.
@@ -16,10 +15,10 @@ maintenance_io_concurrency = 100          # vacuum, CREATE INDEX prefetch
 ```
 
 AIO contracts:
+
 - Primary benefit: sequential scans, bitmap heap scans, VACUUM. Index point lookups usually see only modest improvement under high-concurrency prefetch conditions because they are already single-page I/O
 - `io_uring` requires Linux `5.6+` with `IORING_FEAT_NODROP`; non-Linux platforms degrade to synchronous I/O (no thread-based fallback). `worker` mode is a compile-time option, not automatic
 - Breakeven: AIO overhead (submission queue management) exceeds benefit for queries returning <100 rows via index scan — disable per-session with `SET LOCAL io_max_concurrency = 1` for OLTP-heavy connections
-
 
 ## [02]-[JIT_COMPILATION]
 
@@ -33,12 +32,12 @@ jit_optimize_above_cost = 500000          # apply LLVM optimizations above this 
 ```
 
 JIT contracts:
+
 - JIT benefits: complex WHERE expressions, aggregation with many columns, complex JOIN conditions
 - JIT overhead: ~50-200ms compilation time -- amortized only for queries processing many rows
 - Disable per-query: `SET LOCAL jit = off` for queries where JIT overhead exceeds benefit (small result sets, OLTP)
 - JIT compiled plans are NOT cached across executions — each `EXECUTE` of a prepared statement re-compiles if JIT threshold met. High-concurrency OLTP with many unique query shapes: set `jit = off` globally, enable per-session for analytics
 - `EXPLAIN ANALYZE` shows JIT time: `JIT: Functions: N, Generation Time: X.Xms, Optimization Time: X.Xms, Emission Time: X.Xms`
-
 
 ## [03]-[PARALLEL_QUERY]
 
@@ -55,11 +54,11 @@ parallel_tuple_cost = 0.1                 # per-tuple transfer cost to leader
 ```
 
 Parallel contracts:
+
 - Partial aggregation: workers compute partials, leader combines -- requires associative/commutative aggregate
 - `Workers Launched` < `Workers Planned` in EXPLAIN → `max_parallel_workers` saturated globally
 - Mark custom functions `PARALLEL SAFE` when side-effect-free and no backend-private state access
 - Breakeven: parallel overhead (process launch + tuple transfer) exceeds benefit below ~100K qualifying rows. Force serial for small tables: `SET LOCAL max_parallel_workers_per_gather = 0`
-
 
 ## [04]-[VACUUM_OPTIMIZATION]
 
@@ -75,16 +74,17 @@ autovacuum_naptime = 15s                  # check interval (default 60s)
 ```
 
 Advanced vacuum patterns:
+
 - Per-table tuning: `ALTER TABLE hot_table SET (autovacuum_vacuum_scale_factor = 0.01, autovacuum_vacuum_cost_delay = 0)`
 - Vacuum monitoring (PG 18): `SELECT relname, total_vacuum_time, total_analyze_time FROM pg_stat_all_tables`
 - Freeze: tune `autovacuum_freeze_max_age` (default 200M) to prevent transaction ID wraparound -- remaining settings rarely need adjustment
 
 Vacuum contracts:
+
 - `VACUUM (SKIP_LOCKED)` for tables with concurrent long transactions -- vacuums only unlocked pages
 - AIO (PG 18) can accelerate vacuum I/O on SSD with io_uring; measure against production-shaped tables before claiming a multiplier
 - Dead tuple storage: PG 17+ uses TidStore (radix tree) instead of flat array -- handles billions of dead tuples without memory exhaustion
 - `VACUUM FULL` rewrites entire table -- takes AccessExclusiveLock; use `pg_repack` extension for online table compaction
-
 
 ## [05]-[COST_MODEL_TUNING]
 
@@ -100,12 +100,12 @@ effective_cache_size = '24GB'             # hint: total OS + PG cache (50-75% of
 ```
 
 Cost model contracts:
+
 - `random_page_cost / seq_page_cost` ratio governs index vs seq scan preference -- SSD ratio approaches 1.0; default 4.0 heavily penalizes index scans
 - `effective_cache_size` is a planner hint (no memory allocated) -- undersized value causes seq scan preference on indexed queries; set to 50-75% of total RAM
 - Diagnosis: EXPLAIN shows seq scan on selective indexed query → `random_page_cost` too high
 - Mixed storage: `ALTER TABLESPACE ssd_space SET (random_page_cost = 1.1)` for per-tablespace override
 - Verification: `EXPLAIN (ANALYZE, BUFFERS)` on representative queries after cost tuning. If `Seq Scan` persists on queries with <5% selectivity and a matching index, the cost model is miscalibrated — not the index strategy
-
 
 ## [06]-[CONNECTION_AND_MEMORY_TUNING]
 
@@ -117,10 +117,10 @@ huge_pages = try                          # reduce TLB misses for large shared_b
 ```
 
 Memory contracts:
+
 - `work_mem` is per operation -- a query with 5 hash joins uses 5x work_mem; set conservatively
 - `shared_buffers` > 25% of RAM: diminishing returns, OS page cache handles the rest
 - `huge_pages = try`: uses 2MB huge pages if available -- significant for shared_buffers > 4GB
-
 
 ## [07]-[CONNECTION_POOLING_AND_PREPARED_STATEMENTS]
 
@@ -133,9 +133,9 @@ PgBouncer transaction-mode prepared statement strategies:
 |  [03]   | App-level `PREPARE`/`EXECUTE`        | Server may lack PS after pool reassignment            | Anti-pattern |
 
 `SET LOCAL` scoping:
+
 - `SET LOCAL work_mem = '256MB'` applies within current transaction only -- safe with transaction-mode pooling
 - Use for per-query `work_mem`, `jit`, `statement_timeout` overrides without affecting other clients
-
 
 ## [08]-[EXPLAIN_ANALYSIS]
 
@@ -184,12 +184,12 @@ Plan pathologies:
 |  [07]   | `actual rows` = 0, `estimated` > 0  | Empty result                | Plan valid; timing meaningless |
 
 EXPLAIN contracts:
+
 - `ANALYZE` actually executes the query -- use `BEGIN; EXPLAIN ANALYZE ...; ROLLBACK;` for write queries
 - Row estimate accuracy: `actual rows` vs `estimated rows` -- ratio > 10x suggests stale statistics or unanalyzed table. Run `ANALYZE tablename` and re-check
 - `SETTINGS` flag surfaces non-default GUCs (e.g., `random_page_cost`, `work_mem`) that affected plan choice -- critical for diagnosing why production differs from local
 
 I/O statistics: see `observability.md` pg_stat_io section.
-
 
 ## [09]-[QUERY_OPTIMIZATION_PATTERNS]
 
@@ -240,11 +240,11 @@ SELECT pg_try_advisory_lock(hashtext('leader_election'));
 - Two key spaces: 64-bit single-key and 32-bit dual-key — use dual-key for `(entity_type_hash, entity_id_hash)` patterns
 
 Optimization contracts:
+
 - `SKIP LOCKED` skips locked rows entirely -- they are NOT retried; a periodic sweep reclaims stuck rows so every row is processed
 - Prepared statements: `PREPARE stmt AS ...` + `EXECUTE stmt(...)` -- avoids repeated parse/plan after 5th execution (custom plan to generic plan transition)
 - `plan_cache_mode = force_custom_plan` for parameterized queries where generic plan is suboptimal (skewed data distribution)
 - Statistics target: `ALTER TABLE orders ALTER COLUMN status SET STATISTICS 1000` -- increase for high-cardinality skewed columns
-
 
 ## [10]-[WAL_AND_CHECKPOINT_TUNING]
 
@@ -258,10 +258,10 @@ wal_compression = zstd                    # PG 15+: compress full-page writes (r
 ```
 
 WAL contracts:
+
 - `wal_compression = zstd` reduces WAL volume significantly -- lower replication bandwidth and faster WAL replay
 - `full_page_writes = on` (never disable in production) -- protects against partial page writes on crash
 - Monitor checkpoint frequency: `SELECT * FROM pg_stat_checkpointer` -- `checkpoints_req` (forced) stays rare relative to `checkpoints_timed`
-
 
 ## [11]-[PARTITIONING_PERFORMANCE]
 
@@ -272,6 +272,7 @@ enable_partition_pruning = on             # default on; planner eliminates non-m
 ```
 
 Partitioning contracts:
+
 - Declarative partitioning (RANGE, LIST, HASH) preferred over inheritance-based
 - Partition key must appear in WHERE clause for pruning to activate -- queries without partition key scan all partitions
 - Join-wise partition matching: PG can perform partition-wise joins when both sides share identical partition scheme

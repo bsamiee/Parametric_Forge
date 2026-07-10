@@ -348,10 +348,12 @@
 
   # Runtime acceptance harness: drives the popup/edit rail in a disposable
   # detached session against the live generated config and asserts invariants
-  # from list-panes/list-tabs JSON. Dismiss and focus semantics need an
-  # attached client (zellij 0.44.3 routes them per-client), so those legs run
-  # only when the target session has one and DEFER otherwise — the two
-  # adjudicated runtime residuals surface as receipt rows either way.
+  # from list-panes/list-tabs JSON. Focus is server state — is_focused rides
+  # the panes snapshot and focus-pane-id mutates it detached — so the focus
+  # leg runs everywhere. Only the dismiss chord needs an attached client:
+  # send-keys/write on 0.44.3 are pane-pty writes (dump-screen proof), never
+  # keybind-engine input, so that one leg DEFERs without a client and the
+  # residual surfaces as a receipt row either way.
   forgeTerminalAccept = pkgs.writeShellApplication {
     name = "forge-terminal-accept.sh";
     runtimeInputs = [yaziPkg pkgs.zellij pkgs.jq pkgs.neovim pkgs.coreutils pkgs.findutils pkgs.gawk forgeNvim forgeEdit forgeYazi];
@@ -405,6 +407,8 @@
 
       # shellcheck disable=SC2329  # invoked by the EXIT trap
       cleanup() {
+        # Probe fixtures die on every exit path, not just the happy tail.
+        if [[ -n "''${probe_dir:-}" ]]; then rm -rf "$probe_dir"; fi
         if [[ "$owned" == "true" && "$keep" != "true" ]]; then
           zellij kill-session "$session" >/dev/null 2>&1 || true
           sleep 0.5
@@ -594,10 +598,12 @@
         row R08-editor-multifile FAIL "editors=$(panes | jq -r "$editor_pred | length") buflisted=$buflisted"
       fi
 
-      # R09/R10: the two adjudicated runtime residuals. The dismiss gesture is
-      # a marker-gated HIDE on the real keybind path: the popup persists with
-      # its yazi state and the floating dispatcher reaps itself. R09 needs the
-      # chord injected through an attached wezterm pty
+      # R09: the one adjudicated runtime residual. The dismiss gesture is a
+      # marker-gated HIDE on the real keybind path: the popup persists with
+      # its yazi state and the floating dispatcher reaps itself. The chord
+      # must enter as client input — zellij 0.44.3 has no zero-client route
+      # (send-keys/write land in the pane pty) — so R09 needs the chord
+      # injected through an attached wezterm pty
       # (FORGE_ACCEPT_WEZTERM_SOCK + FORGE_ACCEPT_WEZTERM_PANE).
       # Default chord bytes are the kitty CSI-u projection of the chord
       # owner's yaziToggle row; the env override still accepts %b escapes.
@@ -627,36 +633,23 @@
           row R09-dismiss-hide FAIL "popups=$(panes | jq -r "$popup_pred | length") layer_visible=$layer_vis dispatchers=$dispatchers"
         fi
       else
-        row R09-dismiss-hide DEFER "dismiss gesture needs a pty-injected chord; set FORGE_ACCEPT_WEZTERM_SOCK/_PANE on an attached probe"
+        row R09-dismiss-hide DEFER "chord needs client input (send-keys is a pane-pty write); set FORGE_ACCEPT_WEZTERM_SOCK/_PANE on an attached probe"
       fi
 
-      if [[ "$attached" == "true" ]]; then
-        # Create-branch focus retention: fresh popup must hold focus after
-        # the floating dispatcher reaps itself.
-        popup_id="$(panes | jq -r "$popup_pred | .[0].id // empty")"
-        if [[ -n "$popup_id" ]]; then
-          zj close-pane --pane-id "terminal_''${popup_id}" >/dev/null 2>&1 || true
-          sleep 1
-        fi
-        zj new-pane --floating -c -- forge-yazi.sh toggle >/dev/null 2>&1 || true
-        if poll "$popup_pred | length == 1"; then
-          new_popup="$(panes | jq -r "$popup_pred | .[0].id")"
-          focused=""
-          for _ in {1..10}; do
-            focused="$(zj list-clients 2>/dev/null | awk 'NR==2 {print $2}')"
-            if [[ "$focused" == "terminal_''${new_popup}" ]]; then break; fi
-            sleep 0.5
-          done
-          if [[ "$focused" == "terminal_''${new_popup}" ]]; then
-            row R10-create-focus PASS "focus retained on created popup terminal_$new_popup"
-          else
-            row R10-create-focus FAIL "focus=$focused popup=terminal_$new_popup"
-          fi
-        else
-          row R10-create-focus FAIL "popup did not recreate for the focus probe"
-        fi
+      # R10: create-branch focus retention — the fresh popup must hold focus
+      # after the floating dispatcher reaps itself. is_focused is server
+      # state in the panes snapshot, so this leg runs attached or detached.
+      popup_id="$(panes | jq -r "$popup_pred | .[0].id // empty")"
+      if [[ -n "$popup_id" ]]; then
+        zj close-pane --pane-id "terminal_''${popup_id}" >/dev/null 2>&1 || true
+        sleep 1
+      fi
+      zj new-pane --floating -c -- forge-yazi.sh toggle >/dev/null 2>&1 || true
+      if poll "$popup_pred | (length == 1) and (.[0].is_focused == true)"; then
+        new_popup="$(panes | jq -r "$popup_pred | .[0].id")"
+        row R10-create-focus PASS "focus retained on created popup terminal_$new_popup"
       else
-        row R10-create-focus DEFER "needs an attached client; runs in the attached choreography"
+        row R10-create-focus FAIL "popup/focus rows: $(panes | jq -c "$popup_pred | map({id, is_focused})")"
       fi
 
       # R11: pane-scoped close returns the tab to zero popups.
@@ -670,12 +663,28 @@
         row R11-popup-close FAIL "popup still present after close-pane"
       fi
 
-      rm -rf "$probe_dir"
-      jq -n --argjson rows "$rows" --arg session "$session" \
+      receipt="$(jq -n --argjson rows "$rows" --arg session "$session" \
         --argjson attached "$attached" \
         '{schema: "forge-terminal-accept/v1", session: $session, attached: $attached, rows: $rows,
           summary: (reduce $rows[] as $r ({pass: 0, fail: 0, defer: 0};
-            .[$r.status | ascii_downcase] += 1))}'
+            .[$r.status | ascii_downcase] += 1))}')"
+      printf '%s\n' "$receipt"
+
+      # Dual receipts: every forge-* kernel persists its run — one TSV row and
+      # one JSONL sibling with identical envelope keys, numerics as numbers.
+      receipt_log="''${FORGE_TERMINAL_ACCEPT_RECEIPT_LOG:-$HOME/Library/Logs/forge-terminal-accept.receipts.log}"
+      mkdir -p "''${receipt_log%/*}"
+      TZ=UTC0 printf -v ts '%(%Y-%m-%dT%H:%M:%SZ)T' "$EPOCHSECONDS"
+      result=ok
+      ((fail)) && result=fail
+      IFS=$'\x1f' read -r pass_n fail_n defer_n < <(jq -r \
+        '[.summary.pass, .summary.fail, .summary.defer] | join("\u001f")' <<<"$receipt")
+      printf 'ts=%s\tsurface=forge-terminal-accept\tsession=%s\tattached=%s\tpass=%s\tfail=%s\tdefer=%s\tresult=%s\n' \
+        "$ts" "$session" "$attached" "$pass_n" "$fail_n" "$defer_n" "$result" >>"$receipt_log"
+      jq -cn --arg ts "$ts" --arg session "$session" --argjson attached "$attached" \
+        --argjson pass "$pass_n" --argjson fail "$fail_n" --argjson defer "$defer_n" --arg result "$result" \
+        '{ts: $ts, surface: "forge-terminal-accept", session: $session, attached: $attached,
+          pass: $pass, fail: $fail, defer: $defer, result: $result}' >>"''${receipt_log%.log}.jsonl"
       exit "$fail"
     '';
   };

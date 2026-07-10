@@ -4,191 +4,264 @@
 # License       : MIT
 # Path          : modules/home/programs/apps/vscode/default.nix
 # ----------------------------------------------------------------------------
-# VS Code as a first-class theme+font consumer: the palette owner projects
-# workbench colors, terminal ANSI, textMate scopes, AND semantic-token rules;
-# the font owner projects editor+terminal typography (family chain, ligature
-# features, line metrics). Everything lands through a sentinel-managed block
-# in the JSONC user settings; managed keys are stripped from the user region
-# so later-wins JSONC resolution cannot shadow the owners. Every other key
-# and comment stays app- and user-owned.
-# Extension-source policy (overlays/manifest.nix `extensions.vscode`): the
-# declared source is the nix-vscode-extensions registry with per-row vetting
-# on the manifest security fields — never registry trust, never a Homebrew
-# Brewfile lane. File icons adopt the live material-icon-theme decision;
-# product icons stay default until an extension row is vetted (CA-2 lane).
+# VS Code owner: appearance.nix projects the theme+font owners into asserted
+# design scalars and structured appearance rows; this file owns the behavior
+# law — editing rules, the universal rows promoted from the estate workspace
+# files (language blocks merge per-key across scopes, so workspace intent
+# composes on top), tool bindings on the Home Manager profile — plus the
+# sentinel-managed publish rail and the manifest-rostered extension surface.
+# The publish rail targets the Default profile settings file; a custom full
+# profile reads profiles/<id>/settings.json and never sees this block.
 {
   config,
   lib,
+  pkgs,
   ...
 }: let
   style = import ../../../../style.nix;
-  t = config.forge.theme;
-  f = config.forge.fonts;
-  hexOf = lib.mapAttrs (_: c: c.hex);
-  ansi = hexOf t.ansi16;
-  s = lib.mapAttrs (_: lib.mapAttrs (_: c: c.hex)) {inherit (t.roles) surface text accent state diff ui;};
+  manifest = import ../../../../../overlays/manifest.nix;
+  appearance = import ./appearance.nix {
+    inherit lib;
+    t = config.forge.theme;
+    f = config.forge.fonts;
+  };
+  ext = import ./extensions.nix {
+    inherit lib pkgs;
+    inherit (manifest.extensions.vscode) rows;
+  };
+  profileBin = "${config.home.profileDirectory}/bin";
+  venv = "\${workspaceFolder}/.venv/bin";
 
-  forgeSettings = {
-    # --- Typography: generated from the font owner -----------------------------
-    "editor.fontFamily" = f.projections.vscodeFamily;
-    "editor.fontSize" = builtins.floor f.metrics.size;
-    "editor.fontLigatures" = f.features.vscode;
-    "editor.fontVariations" = false; # static primary; fractional axes are a variable-font lever
-    "editor.lineHeight" = f.metrics.editorLineHeight;
-    "terminal.integrated.fontFamily" = f.projections.vscodeFamily;
-    "terminal.integrated.fontSize" = builtins.floor f.metrics.size;
-    "terminal.integrated.fontLigatures.enabled" = false;
-    "terminal.integrated.lineHeight" = 1.0;
-    "terminal.integrated.fontWeight" = "normal";
-    "terminal.integrated.fontWeightBold" = "bold";
-    "workbench.iconTheme" = "material-icon-theme";
+  # Asserted rows own their key estate-wide: user-region copies are stripped so
+  # they cannot shadow the owners. Values must stay scalar — the strip regex
+  # removes single lines only, and an attrs/list row would orphan its body.
+  asserted =
+    lib.mapAttrs (
+      k: v:
+        lib.throwIf (builtins.isAttrs v || builtins.isList v)
+        "vscode asserted row ${k} must be scalar; land structured rows in the shadowable set"
+        v
+    )
+    appearance.asserted;
 
-    # --- Editing law: house style projected from modules/style.nix --------------
-    # Globals stay shadowable by user-region keys (none exist top-level today);
-    # [yaml] binds the yamlfmt extension (spawns PATH yamlfmt, cwd = workspace,
-    # so project .yamlfmt wins before the XDG global) — an unbound YAML slot
-    # falls to Prettier, which ignores every yamlfmt config. [nix] stays on
-    # alejandra's 2-space so owners never fight.
-    "editor.tabSize" = style.indent;
-    "editor.insertSpaces" = true;
-    "editor.rulers" = [style.width];
-    "files.insertFinalNewline" = true;
-    "files.trimTrailingWhitespace" = true;
-    # prettier.* rows are the esbenp extension's no-config fallback, mirroring
-    # the XDG prettierrc so the extension lane matches the CLI wrapper.
-    "prettier.tabWidth" = style.indent;
-    "prettier.printWidth" = style.width;
-    "[yaml]" = {
-      "editor.defaultFormatter" = "bluebrown.yamlfmt";
+  forgeSettings =
+    asserted
+    // appearance.settings
+    // {
+      # --- [EDITING_LAW]: house style projected from modules/style.nix
       "editor.tabSize" = style.indent;
       "editor.insertSpaces" = true;
+      "editor.rulers" = [style.width];
       "editor.detectIndentation" = false;
-    };
-    "[nix]" = {
-      "editor.tabSize" = 2;
-      "editor.detectIndentation" = false;
+      "files.insertFinalNewline" = true;
+      "files.trimTrailingWhitespace" = true;
+      "editor.linkedEditing" = true;
+      "editor.inlayHints.enabled" = "offUnlessPressed";
+      "editor.inlayHints.padding" = true;
+      "editor.semanticHighlighting.enabled" = true;
+      "editor.suggest.insertMode" = "replace";
+      "editor.suggestSelection" = "recentlyUsedByPrefix";
+      "editor.acceptSuggestionOnEnter" = "smart";
+      # Deterministic suggest posture: the app default mutates when an inline
+      # suggestion provider is present.
+      "editor.quickSuggestions" = {
+        other = "on";
+        comments = "off";
+        strings = "on";
+      };
+
+      # --- [FILES_AND_EXPLORER]
+      "files.hotExit" = "onExitAndWindowClose";
+      "explorer.incrementalNaming" = "smart";
+      "files.associations" = {
+        "**/.claude/**/*.md" = "markdown";
+        "**/docs/**/*.md" = "markdown";
+      };
+      "explorer.fileNesting.enabled" = true;
+      "explorer.fileNesting.expand" = false;
+      "explorer.fileNesting.patterns" = {
+        "flake.nix" = "flake.lock";
+        "pyproject.toml" = "uv.lock";
+        "package.json" = "pnpm-lock.yaml, pnpm-workspace.yaml";
+        "README.md" = "LICENSE";
+        "CLAUDE.md" = "AGENTS.md, .coderabbit.yaml";
+        ".gitignore" = ".gitattributes, .mailmap, .dockerignore";
+        "*.ts" = "$(capture).test.ts, $(capture).spec.ts, $(capture).d.ts";
+      };
+      "files.exclude" = {
+        "**/.cache" = true;
+        "**/.direnv" = true;
+        "**/.venv" = true;
+        "**/__pycache__" = true;
+        "**/node_modules" = true;
+        "result" = true;
+        "result-*" = true;
+      };
+      "files.watcherExclude" = {
+        "**/.archive/**" = true;
+        "**/.cache/**" = true;
+        "**/.direnv/**" = true;
+        "**/.venv/**" = true;
+        "**/__pycache__/**" = true;
+        "result/**" = true;
+      };
+      "files.readonlyInclude" = {
+        "**/flake.lock" = true;
+        "**/pnpm-lock.yaml" = true;
+        "**/uv.lock" = true;
+        "**/node_modules/**" = true;
+      };
+      "search.exclude" = {
+        "**/.archive/**" = true;
+        "**/.cache/**" = true;
+        "**/.venv/**" = true;
+        "**/flake.lock" = true;
+        "**/pnpm-lock.yaml" = true;
+        "**/uv.lock" = true;
+      };
+      "search.smartCase" = true;
+      "search.followSymlinks" = false;
+      "search.useGlobalIgnoreFiles" = true;
+
+      # --- [GIT_DIFF_TESTING]
+      "git.autofetch" = true;
+      "git.pruneOnFetch" = true;
+      "git.branchProtection" = ["main"];
+      "git.mergeEditor" = true;
+      "diffEditor.ignoreTrimWhitespace" = false;
+      "diffEditor.hideUnchangedRegions.enabled" = true;
+      "testing.automaticallyOpenPeekView" = "failureAnywhere";
+      "testing.automaticallyOpenTestResults" = "openOnTestFailure";
+      "workbench.editor.highlightModifiedTabs" = true;
+      "workbench.editor.pinnedTabSizing" = "compact";
+
+      # --- [SCHEMA_BINDING]: projected forge schemas validate estate file shapes
+      "json.schemas" = map (name: {
+        fileMatch = ["**/.greptile/${name}.json"];
+        url = "file://${config.xdg.configHome}/forge/schemas/greptile-${name}.schema.json";
+      }) ["config" "files"];
+      "yaml.schemas" = {
+        "https://storage.googleapis.com/coderabbit_public_assets/schema.v2.json" = ".coderabbit.yaml";
+      };
+
+      # --- [LANGUAGE_BLOCKS]: per-key merge law — a workspace block overrides
+      # only the keys it names, so these compose under every repo's intent.
+      # [yaml] binds the yamlfmt extension (spawns PATH yamlfmt, cwd = workspace,
+      # so project .yamlfmt wins before the XDG global); [nix] stays on
+      # alejandra's 2-space so owners never fight.
+      "[yaml]" = {
+        "editor.defaultFormatter" = "bluebrown.yamlfmt";
+        "editor.tabSize" = style.indent;
+        "editor.insertSpaces" = true;
+        "editor.detectIndentation" = false;
+      };
+      "[nix]" = {
+        "editor.defaultFormatter" = "jnoortheen.nix-ide";
+        "editor.tabSize" = 2;
+        "editor.detectIndentation" = false;
+      };
+      "[python]"."editor.defaultFormatter" = "charliermarsh.ruff";
+      "[shellscript]"."editor.defaultFormatter" = "mkhl.shfmt";
+      "[csharp]"."editor.defaultFormatter" = "ms-dotnettools.csharp";
+      "[markdown]" = {
+        "editor.defaultFormatter" = "yzhang.markdown-all-in-one";
+        "editor.wordWrap" = "on";
+        "editor.rulers" = [];
+      };
+      "[typescript][typescriptreact][javascript][javascriptreact][json][jsonc][css]"."editor.defaultFormatter" = "biomejs.biome";
+
+      # --- [TOOL_BINDINGS]: Home Manager profile binaries, never bare names
+      "nix.enableLanguageServer" = true;
+      "nix.serverPath" = "${profileBin}/nixd";
+      "nix.formatterPath" = "${profileBin}/alejandra";
+      "nix.serverSettings".nixd.formatting.command = ["${profileBin}/alejandra"];
+      "shfmt.executablePath" = "${profileBin}/shfmt";
+      "todo-tree.ripgrep.ripgrep" = "${profileBin}/rg"; # the extension ships no arm64 vscode-ripgrep; bind the estate binary
+      "biome.requireConfiguration" = true;
+      "biome.suggestInstallingGlobally" = false;
+      # prettier.* rows are the esbenp extension's no-config fallback, mirroring
+      # the XDG prettierrc so the extension lane matches the CLI wrapper.
+      "prettier.tabWidth" = style.indent;
+      "prettier.printWidth" = style.width;
+      "redhat.telemetry.enabled" = false;
+
+      # --- [TYPESCRIPT]
+      "js/ts.tsdk.path" = "./node_modules/typescript/lib";
+      "js/ts.tsdk.promptToUseWorkspaceVersion" = true;
+      "js/ts.preferences.quoteStyle" = "single";
+      "js/ts.preferences.importModuleSpecifierEnding" = "minimal";
+      "js/ts.preferences.preferTypeOnlyAutoImports" = true;
+      "js/ts.suggest.completeFunctionCalls" = true;
+      "js/ts.updateImportsOnFileMove.enabled" = "always";
+      "js/ts.inlayHints.parameterNames.enabled" = "literals";
+      "js/ts.inlayHints.parameterTypes.enabled" = true;
+      "js/ts.inlayHints.functionLikeReturnTypes.enabled" = true;
+      "js/ts.inlayHints.variableTypes.enabled" = true;
+      "js/ts.inlayHints.enumMemberValues.enabled" = true;
+
+      # --- [PYTHON]: project venv first; the language server lane is ty+ruff
+      "python.defaultInterpreterPath" = "${venv}/python";
+      "python.languageServer" = "None";
+      "python.createEnvironment.trigger" = "off";
+      "python.testing.pytestEnabled" = true;
+      "python.testing.pytestArgs" = ["tests"];
+      "python.testing.promptToConfigure" = false;
+      "python.testing.unittestEnabled" = false;
+      "ruff.nativeServer" = "on";
+      "ruff.configurationPreference" = "filesystemFirst";
+      "ruff.importStrategy" = "fromEnvironment";
+      "ruff.showSyntaxErrors" = false;
+      "ruff.interpreter" = ["${venv}/python"];
+      "ty.diagnosticMode" = "workspace";
+      "ty.showSyntaxErrors" = true;
+      "ty.path" = ["${venv}/ty"];
+      "ty.completions.autoImport" = true;
+      "mypy-type-checker.cwd" = "\${workspaceFolder}";
+      "mypy-type-checker.importStrategy" = "fromEnvironment";
+      "mypy-type-checker.interpreter" = ["${venv}/python"];
+      "mypy-type-checker.reportingScope" = "file";
+      "mypy-type-checker.preferDaemon" = false;
+
+      # --- [DOTNET]
+      "dotnet.preferCSharpExtension" = false;
+      "dotnet.server.useOmnisharp" = false;
+      "dotnet.enableXamlTools" = false;
+      "dotnet.backgroundAnalysis.analyzerDiagnosticsScope" = "fullSolution";
+      "dotnet.backgroundAnalysis.compilerDiagnosticsScope" = "fullSolution";
+      "dotnet.projects.enableAutomaticRestore" = true;
+      "dotnet.formatting.organizeImportsOnFormat" = true;
+      "dotnet.inlayHints.enableInlayHintsForParameters" = true;
+      "dotnet.inlayHints.enableInlayHintsForLiteralParameters" = true;
+      "dotnet.inlayHints.enableInlayHintsForIndexerParameters" = true;
+      "dotnet.inlayHints.enableInlayHintsForObjectCreationParameters" = true;
+      "dotnet.inlayHints.enableInlayHintsForOtherParameters" = true;
+      "dotnet.inlayHints.suppressInlayHintsForParametersThatMatchArgumentName" = true;
+      "dotnet.inlayHints.suppressInlayHintsForParametersThatMatchMethodIntent" = true;
+      "dotnet.inlayHints.suppressInlayHintsForParametersThatDifferOnlyBySuffix" = true;
+      "csharp.inlayHints.enableInlayHintsForTypes" = true;
+      "csharp.inlayHints.enableInlayHintsForImplicitVariableTypes" = true;
+      "csharp.inlayHints.enableInlayHintsForLambdaParameterTypes" = true;
+      "csharp.inlayHints.enableInlayHintsForImplicitObjectCreation" = true;
+      "csharp.suppressHiddenDiagnostics" = false;
     };
 
-    # --- Workbench: elevation ladder + role projection --------------------------
-    "workbench.colorCustomizations" = {
-      "editor.background" = s.surface.base;
-      "editor.foreground" = s.text.primary;
-      "editorLineNumber.foreground" = s.text.subtle;
-      "editorLineNumber.activeForeground" = s.accent.primary;
-      "editorCursor.foreground" = s.ui.cursor;
-      "editor.lineHighlightBackground" = s.surface.raised;
-      "editor.selectionBackground" = s.surface.selected;
-      "editor.findMatchBackground" = s.ui.match;
-      "editor.findMatchHighlightBackground" = s.ui.search;
-      "editorIndentGuide.background1" = s.surface.selected;
-      "editorIndentGuide.activeBackground1" = s.text.subtle;
-      "editorWhitespace.foreground" = s.ui.whitespace;
-      "editorWidget.background" = s.surface.overlay;
-      "editorWidget.border" = s.ui.border;
-      "editorHoverWidget.background" = s.surface.overlay;
-      "editorSuggestWidget.background" = s.surface.overlay;
-      "editorSuggestWidget.selectedBackground" = s.surface.selected;
-      "quickInput.background" = s.surface.overlay;
-      "activityBar.background" = s.surface.crust;
-      "activityBar.foreground" = s.accent.primary;
-      "activityBar.inactiveForeground" = s.text.subtle;
-      "activityBarBadge.background" = s.accent.secondary;
-      "activityBarBadge.foreground" = s.text.inverse;
-      "sideBar.background" = s.surface.crust;
-      # Undecorated explorer rows inherit sideBar.foreground (no list.foreground
-      # token exists); primary keeps unchanged files bright, git states recolor.
-      "sideBar.foreground" = s.text.primary;
-      "sideBarTitle.foreground" = s.text.primary;
-      "sideBarSectionHeader.background" = s.surface.crust;
-      "statusBar.background" = s.surface.surface;
-      "statusBar.foreground" = s.text.subtle;
-      "statusBar.noFolderBackground" = s.surface.surface;
-      "statusBar.debuggingBackground" = s.state.attention;
-      "statusBar.debuggingForeground" = s.text.inverse;
-      "titleBar.activeBackground" = s.surface.crust;
-      "titleBar.activeForeground" = s.text.subtle;
-      "editorGroupHeader.tabsBackground" = s.surface.surface;
-      "tab.activeBackground" = s.surface.base;
-      "tab.activeForeground" = s.text.primary;
-      "tab.inactiveBackground" = s.surface.surface;
-      "tab.inactiveForeground" = s.text.subtle;
-      "tab.activeBorderTop" = s.accent.primary;
-      "panel.background" = s.surface.base;
-      "panelTitle.activeForeground" = s.accent.primary;
-      "panelTitle.inactiveForeground" = s.text.subtle;
-      "badge.background" = s.accent.secondary;
-      "badge.foreground" = s.text.inverse;
-      "list.activeSelectionBackground" = s.surface.selected;
-      "list.inactiveSelectionBackground" = s.surface.raised;
-      "list.hoverBackground" = s.surface.raised;
-      "input.background" = s.surface.crust;
-      "input.border" = s.surface.selected;
-      "dropdown.background" = s.surface.overlay;
-      "focusBorder" = s.accent.primary;
-      "diffEditor.insertedLineBackground" = s.diff.add;
-      "diffEditor.insertedTextBackground" = s.diff.addEmph;
-      "diffEditor.removedLineBackground" = s.diff.del;
-      "diffEditor.removedTextBackground" = s.diff.delEmph;
-      "gitDecoration.addedResourceForeground" = s.state.success;
-      "gitDecoration.modifiedResourceForeground" = s.accent.primary;
-      "gitDecoration.deletedResourceForeground" = s.state.danger;
-      # Staged variants track their unstaged hue (VS Code SCM convention) so a
-      # staged file never falls back to a non-palette default.
-      "gitDecoration.stageModifiedResourceForeground" = s.accent.primary;
-      "gitDecoration.stageDeletedResourceForeground" = s.state.danger;
-      "gitDecoration.untrackedResourceForeground" = s.state.success;
-      "gitDecoration.ignoredResourceForeground" = s.text.muted;
-      "gitDecoration.renamedResourceForeground" = s.accent.tertiary;
-      "gitDecoration.conflictingResourceForeground" = s.accent.secondary;
-      "terminal.background" = t.palette.background.hex;
-      "terminal.foreground" = t.palette.foreground.hex;
-      "terminal.selectionBackground" = t.palette.selection.hex;
-      "terminalCursor.foreground" = t.palette.foreground.hex;
-      "terminal.ansiBlack" = ansi.black;
-      "terminal.ansiRed" = ansi.red;
-      "terminal.ansiGreen" = ansi.green;
-      "terminal.ansiYellow" = ansi.yellow;
-      "terminal.ansiBlue" = ansi.blue;
-      "terminal.ansiMagenta" = ansi.magenta;
-      "terminal.ansiCyan" = ansi.cyan;
-      "terminal.ansiWhite" = ansi.white;
-      "terminal.ansiBrightBlack" = ansi.brightBlack;
-      "terminal.ansiBrightRed" = ansi.brightRed;
-      "terminal.ansiBrightGreen" = ansi.brightGreen;
-      "terminal.ansiBrightYellow" = ansi.brightYellow;
-      "terminal.ansiBrightBlue" = ansi.brightBlue;
-      "terminal.ansiBrightMagenta" = ansi.brightMagenta;
-      "terminal.ansiBrightCyan" = ansi.brightCyan;
-      "terminal.ansiBrightWhite" = ansi.brightWhite;
-    };
-
-    # --- Tokens: textMate scopes + semantic rules from the one pivot ------------
-    "editor.tokenColorCustomizations".textMateRules = t.projections.vscodeTokenRules;
-    "editor.semanticTokenColorCustomizations" = {
-      enabled = true;
-      rules = t.projections.vscodeSemanticRules;
-    };
-  };
-
-  # Managed keys are stripped from the user region (single-line scalars only);
-  # the sentinel block at the top then owns them without later-wins shadowing.
-  managedScalarKeys = [
-    "editor.fontFamily"
-    "editor.fontSize"
-    "editor.fontLigatures"
-    "editor.fontVariations"
-    "editor.lineHeight"
-    "editor.letterSpacing"
-    "terminal.integrated.fontFamily"
-    "terminal.integrated.fontSize"
-    "terminal.integrated.fontLigatures.enabled"
-    "terminal.integrated.lineHeight"
-    "terminal.integrated.letterSpacing"
-    "terminal.integrated.fontWeight"
-    "terminal.integrated.fontWeightBold"
-    "workbench.iconTheme"
-  ];
-  managedKeyRegex = "^[[:space:]]*\"(${lib.concatMapStringsSep "|" (k: lib.replaceStrings ["."] ["\\."] k) managedScalarKeys})\"[[:space:]]*:";
+  # Strip set derives from the asserted rows; tombstones strip retired keys
+  # whose value now falls back to the app default (the experimental renderer
+  # and retired EditContext spelling are owned-surface cleanup).
+  managedKeys =
+    builtins.attrNames asserted
+    ++ [
+      "editor.letterSpacing"
+      "terminal.integrated.letterSpacing"
+      "editor.experimentalEditContextEnabled"
+      "editor.experimentalGpuAcceleration"
+    ];
+  # Key alternation crosses into awk as a dynamic regex through ENVIRON — never
+  # a /literal/ — so key spellings can never collide with the awk delimiter.
+  managedKeyAlt =
+    lib.throwIf (managedKeys == []) "vscode managed strip set is empty"
+    (lib.concatMapStringsSep "|" lib.escapeRegex managedKeys);
+  managedKeyRegex = "^[[:space:]]*\"(${managedKeyAlt})\"[[:space:]]*:";
 
   # JSONC block asserted after the root brace; sentinels make replacement
   # idempotent and user keys outside the managed set stay untouched.
@@ -204,30 +277,41 @@ in {
   xdg.configFile = {
     "forge/theme/vscode.json".text = builtins.toJSON forgeSettings;
     "forge/theme/vscode-settings-block.jsonc".text = forgeBlock;
+    "forge/vscode/roster.json".text = ext.rosterJson;
     "forge/schemas/greptile-config.schema.json".source = ./schemas/greptile-config.schema.json;
     "forge/schemas/greptile-files.schema.json".source = ./schemas/greptile-files.schema.json;
   };
 
+  home.packages = [ext.package];
+
   home.activation.vscodeThemeSeed = lib.hm.dag.entryAfter ["writeBoundary"] ''
     settings=${lib.escapeShellArg settingsPath}
     FORGE_BLOCK=$(<${config.xdg.configFile."forge/theme/vscode-settings-block.jsonc".source})
-    export FORGE_BLOCK
+    FORGE_MANAGED_RE=${lib.escapeShellArg managedKeyRegex}
+    FORGE_MANAGED_RE_ANY=${lib.escapeShellArg "\"(${managedKeyAlt})\"[[:space:]]*:"}
+    export FORGE_BLOCK FORGE_MANAGED_RE FORGE_MANAGED_RE_ANY
     if [ -s "$settings" ]; then
+      # Fail-closed guards: a begin sentinel without its end (torn prior write)
+      # would strip every remaining user key, and a managed key sharing the
+      # root-brace line (hand-minified file) would shadow the owners under
+      # JSONC last-wins; both refuse instead of merging.
       merged=$(/usr/bin/awk '
         /\/\/ forge-theme:begin/ { skip = 1; next }
         /\/\/ forge-theme:end/   { skip = 0; next }
         skip { next }
         !inserted && match($0, /^[[:space:]]*\{/) {
+          rest = substr($0, RLENGTH + 1)
+          if (rest ~ ENVIRON["FORGE_MANAGED_RE_ANY"]) exit 66
           print substr($0, 1, RLENGTH)
           print ENVIRON["FORGE_BLOCK"]
-          rest = substr($0, RLENGTH + 1)
           if (rest != "") print rest
           inserted = 1
           next
         }
-        inserted && $0 ~ /${managedKeyRegex}/ { next }
+        inserted && $0 ~ ENVIRON["FORGE_MANAGED_RE"] { next }
         { print }
-      ' "$settings")
+        END { if (skip) exit 65 }
+      ' "$settings") || merged=""
     else
       run /bin/mkdir -p "''${settings%/*}"
       merged=$(printf '{\n%s\n}' "$FORGE_BLOCK")
@@ -246,7 +330,7 @@ in {
         fi
         ;;
       *)
-        echo "vscode theme seed: no root brace in $settings; block not asserted" >&2
+        echo "vscode theme seed: $settings lacks a root brace, carries an unterminated forge-theme block, or holds a managed key on the root-brace line; block not asserted" >&2
         ;;
     esac
   '';

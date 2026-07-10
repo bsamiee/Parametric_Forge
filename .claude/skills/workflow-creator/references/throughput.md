@@ -18,17 +18,26 @@ The runtime runs up to 16 agents at once (fewer on machines with few CPU cores) 
 For a large list of long multi-stage chains, `parallel()` enqueues all N at once and leans on the limiter; a bounded pool holds a true steady state of at most `cap` chains — what heavy multi-minute chains want:
 
 ```js conceptual
-const sleep = ms => new Promise(r => setTimeout(r, ms))
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const pool = async (items, cap, worker) => {
-  const out = new Array(items.length)
-  let next = 0
-  let gate = Promise.resolve()  // serialized launch gate
-  const launch = () => { gate = gate.then(() => sleep(1500)); return gate }
-  const run = async () => { while (next < items.length) { const i = next++; await launch(); out[i] = await worker(items[i], i) } }
-  await Promise.all(Array.from({ length: Math.min(cap, items.length) }, () => run()))
-  return out
-}
-const done = (await pool(pages, 10, p => processPage(p))).filter(Boolean)
+    const out = new Array(items.length);
+    let next = 0;
+    let gate = Promise.resolve(); // serialized launch gate
+    const launch = () => {
+        gate = gate.then(() => sleep(1500));
+        return gate;
+    };
+    const run = async () => {
+        while (next < items.length) {
+            const i = next++;
+            await launch();
+            out[i] = await worker(items[i], i);
+        }
+    };
+    await Promise.all(Array.from({ length: Math.min(cap, items.length) }, () => run()));
+    return out;
+};
+const done = (await pool(pages, 10, (p) => processPage(p))).filter(Boolean);
 ```
 
 The `launch()` gate spaces the roll-out: each worker awaits the shared gate before starting a job, so launches sit one stagger interval apart and the pool ramps to `cap` gradually — identically on a fresh run and on a cache-replaying resume. Tune `cap` and the stagger to the work's weight; ~10 concurrent and ~1500 ms suit heavy multi-stage agents.
@@ -37,22 +46,33 @@ Slot the agents, never the chains, when chains have uneven stage widths. The poo
 
 ```js conceptual
 const makeSlots = (cap) => {
-  let active = 0
-  let gate = Promise.resolve()
-  const waiters = []
-  const stagger = () => { gate = gate.then(() => sleep(1500)); return gate }
-  return async (fn) => {
-    if (active >= cap) await new Promise((res) => waiters.push(res))
-    active++
-    await stagger()
-    try { return await fn() } finally { active--; const next = waiters.shift(); if (next) next() }
-  }
-}
-const slot = makeSlots(14)
-await Promise.all(batches.map(async (b) => {
-  const [a, c] = await Promise.all([slot(() => agent(lensA(b))), slot(() => agent(lensB(b)))])
-  const impl = await slot(() => agent(implPrompt(b, a, c)))  // chain continues per batch
-}))
+    let active = 0;
+    let gate = Promise.resolve();
+    const waiters = [];
+    const stagger = () => {
+        gate = gate.then(() => sleep(1500));
+        return gate;
+    };
+    return async (fn) => {
+        if (active >= cap) await new Promise((res) => waiters.push(res));
+        active++;
+        await stagger();
+        try {
+            return await fn();
+        } finally {
+            active--;
+            const next = waiters.shift();
+            if (next) next();
+        }
+    };
+};
+const slot = makeSlots(14);
+await Promise.all(
+    batches.map(async (b) => {
+        const [a, c] = await Promise.all([slot(() => agent(lensA(b))), slot(() => agent(lensB(b)))]);
+        const impl = await slot(() => agent(implPrompt(b, a, c))); // chain continues per batch
+    }),
+);
 ```
 
 `parallel()` stays correct for a small fixed fan-out that needs a barrier; reach for the pool only at the large-corpus scale `parallel()` serves less well.
@@ -66,34 +86,46 @@ When per-item outputs are themselves a corpus too large to combine in one prompt
 Bounded buckets — balance by WORK, never count, and cap atomicity at the fair share. When heterogeneous clusters must consolidate into at most N agents, two packer defects each recreate the same 2x-plus long pole. First, a count-balanced packer overloads bucket 0: descending count-sort drops the largest connected component into the first empty bucket, then count-parity tops that bucket up while it already holds the largest distinct-file union — an agent's load is the files it must read and reconcile, never how many claims it carries. Second — worse and easier to miss — UNBOUNDED cluster atomicity: on an interlinked corpus, union-find by shared file fuses most claims into ONE connected component (a measured 125-of-134), and a clusters-never-split packer hands one agent nearly everything while its siblings finish in minutes. Atomicity is a BUDGET, never an absolute: component-atomic while a cluster fits the fair share (`totalWork / n`); above that, sub-shard the component FILE-atomically — rows sharing a lead file never split (the hard edit-collision floor) — and accept the cross-shard seams deliberately, because the verify or terminal stage owns them. Two concurrent shards of one component may share a secondary page, so shard-carrying prompts add: edit pages a sibling may share with surgical anchored Edits only, re-reading and re-applying on an edit conflict — never a whole-file rewrite. Log per-bucket weights so the long pole is visible, never silent:
 
 ```js conceptual
-const clusterWork = (c) => { const files = new Set(); for (const r of c) for (const f of r.files ?? []) files.add(f); return files.size * 2 + c.length }
+const clusterWork = (c) => {
+    const files = new Set();
+    for (const r of c) for (const f of r.files ?? []) files.add(f);
+    return files.size * 2 + c.length;
+};
 // The atomicity budget: a component over the fair share sub-shards by lead file — same-lead-file
 // rows stay together; heaviest groups first-fit into shards under the cap; an oversized
 // same-file group stands alone (the floor).
-const shardOversized = (clusters, cap) => clusters.flatMap((c) => {
-  if (clusterWork(c) <= cap) return [c]
-  const byFile = new Map()
-  for (const r of c) { const k = (r.files ?? [])[0] ?? '~'; if (!byFile.has(k)) byFile.set(k, []); byFile.get(k).push(r) }
-  const shards = []
-  for (const g of [...byFile.values()].sort((a, b) => clusterWork(b) - clusterWork(a))) {
-    const t = shards.find((s) => clusterWork(s.concat(g)) <= cap)
-    if (t) t.push(...g); else shards.push([...g])
-  }
-  return shards
-})
+const shardOversized = (clusters, cap) =>
+    clusters.flatMap((c) => {
+        if (clusterWork(c) <= cap) return [c];
+        const byFile = new Map();
+        for (const r of c) {
+            const k = (r.files ?? [])[0] ?? "~";
+            if (!byFile.has(k)) byFile.set(k, []);
+            byFile.get(k).push(r);
+        }
+        const shards = [];
+        for (const g of [...byFile.values()].sort((a, b) => clusterWork(b) - clusterWork(a))) {
+            const t = shards.find((s) => clusterWork(s.concat(g)) <= cap);
+            if (t) t.push(...g);
+            else shards.push([...g]);
+        }
+        return shards;
+    });
 const packClusters = (clusters, n) => {
-  const cap = Math.max(1, Math.ceil(clusters.reduce((w, c) => w + clusterWork(c), 0) / n))
-  const shards = shardOversized(clusters, cap)
-  if (shards.length <= n) return shards  // one agent per shard — balanced by construction
-  const buckets = Array.from({ length: n }, () => ({ work: 0, rows: [] }))
-  for (const c of shards.slice().sort((a, b) => clusterWork(b) - clusterWork(a))) {
-    let mi = 0; for (let i = 1; i < n; i++) if (buckets[i].work < buckets[mi].work) mi = i
-    buckets[mi].rows.push(...c); buckets[mi].work += clusterWork(c)
-  }
-  return buckets.filter((b) => b.rows.length).map((b) => b.rows)
-}
-const buckets = packClusters(clusters, RECON_CAP)
-log('bucket work [' + buckets.map(clusterWork).join(', ') + ']')  // no silent long pole
+    const cap = Math.max(1, Math.ceil(clusters.reduce((w, c) => w + clusterWork(c), 0) / n));
+    const shards = shardOversized(clusters, cap);
+    if (shards.length <= n) return shards; // one agent per shard — balanced by construction
+    const buckets = Array.from({ length: n }, () => ({ work: 0, rows: [] }));
+    for (const c of shards.slice().sort((a, b) => clusterWork(b) - clusterWork(a))) {
+        let mi = 0;
+        for (let i = 1; i < n; i++) if (buckets[i].work < buckets[mi].work) mi = i;
+        buckets[mi].rows.push(...c);
+        buckets[mi].work += clusterWork(c);
+    }
+    return buckets.filter((b) => b.rows.length).map((b) => b.rows);
+};
+const buckets = packClusters(clusters, RECON_CAP);
+log("bucket work [" + buckets.map(clusterWork).join(", ") + "]"); // no silent long pole
 ```
 
 The same budget applies to POOL-per-cluster shapes (one agent per atomic cluster under a concurrency cap): shard with `cap = ceil(totalWork / POOL_CAP)` before the pool, or the giant component still lands on one agent. The heaviest atomic cluster still bounds the wall-clock — irreducible — but weight-greedy stops topping it up. The same law orders an UNPACKED pool: heterogeneous clusters under a cap smaller than the cluster count launch heaviest-first, so the long pole starts in the first wave instead of extending the tail. Fixed-size `chunk(pages, N)` batches of homogeneous items need none of this — uniform items balance by construction.

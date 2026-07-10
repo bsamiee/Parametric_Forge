@@ -166,17 +166,6 @@ in {
         # the just-written cache on this switch instead of at next login.
         /bin/launchctl kickstart -k "gui/$UID/com.parametric-forge.gui-op-secrets" >/dev/null 2>&1 || true
       '';
-
-      # Register the GUI Op Secrets app bundle with Launch Services so macOS Login Items & Extensions
-      # resolves the agent's AssociatedBundleIdentifiers to "GUI Op Secrets" instead of the "/bin/sh"
-      # program name, on every switch rather than only at next login. lsregister -f is idempotent.
-      registerGuiOpSecretsApp = lib.hm.dag.entryAfter ["linkGeneration"] ''
-        app="$HOME/Applications/GUI Op Secrets.app"
-        lsregister="/System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/LaunchServices.framework/Versions/A/Support/lsregister"
-        if [[ -d "$app" && -x "$lsregister" ]]; then
-          "$lsregister" -f "$app" || true
-        fi
-      '';
     };
   };
 
@@ -240,19 +229,9 @@ in {
   # --- GUI session secrets -----------------------------------------------------
   # launchd-launched GUI apps never source .zshrc; this RunAtLoad agent replays
   # the mode-600 session material, and no secret value enters the Nix store.
-  # AssociatedBundleIdentifiers makes Login Items & Extensions show the bundle
-  # display name instead of the "/bin/sh" basename home-manager's mutateConfig
-  # writes into ProgramArguments[0]; the launchd freeformType passes it through.
-  home.file."Applications/GUI Op Secrets.app/Contents/Info.plist".text = lib.generators.toPlist {escape = true;} {
-    CFBundleIdentifier = "com.parametric-forge.gui-op-secrets";
-    CFBundleName = "GUI Op Secrets";
-    CFBundleDisplayName = "GUI Op Secrets";
-    CFBundleVersion = "1";
-    CFBundleShortVersionString = "1.0";
-    CFBundlePackageType = "APPL";
-    LSUIElement = true;
-    LSBackgroundOnly = true;
-  };
+  # The bundle-apps row makes Login Items & Extensions show the display name
+  # the agent's AssociatedBundleIdentifiers resolves to.
+  forge.bundleApps.gui-op-secrets = "GUI Op Secrets";
 
   # RunAtLoad + writer-side kickstart is the event source; WatchPaths on the
   # cache file was adjudicated out — launchd.plist(5) marks it race-prone, and

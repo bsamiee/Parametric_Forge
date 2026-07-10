@@ -11,26 +11,26 @@ Each diagram type answers one question with a bounded mark vocabulary; per type,
 - Edge: the single declared relation, its direction load-bearing.
 - Signal: the branch structure and its rejoin points — a strong flowchart lets the reader reconstruct every path without prose, so the discriminators and folds carry the value, never the boxes between them.
 - Method:
-  1. Fix the relation semantic first.
-  2. Place the dominant rail from start to outcome.
-  3. Attach branches off discriminators only.
-  4. Class nodes by semantic role.
-  5. Label every non-obvious edge with the relation verb.
+    1. Fix the relation semantic first.
+    2. Place the dominant rail from start to outcome.
+    3. Attach branches off discriminators only.
+    4. Class nodes by semantic role.
+    5. Label every non-obvious edge with the relation verb.
 - Master patterns:
-  - Declare the dominant rail contiguously first, branches after, so the rail reads as one unbroken line.
-  - Converge every fault onto one rail instead of per-stage dead ends; the convergence point states the recovery law once.
-  - Fan a discriminator with exhaustive labeled out-edges that re-merge at a single fold — an arm that never rejoins is a leaked exit.
-  - Keep annotation traffic on dashed Comment traces so the solid control rail stays the loudest ink on the canvas.
-  - Broadcast with `A --> B & C` only for genuinely symmetric fan-out; asymmetric hops get their own labeled edges.
+    - Declare the dominant rail contiguously first, branches after, so the rail reads as one unbroken line.
+    - Converge every fault onto one rail instead of per-stage dead ends; the convergence point states the recovery law once.
+    - Fan a discriminator with exhaustive labeled out-edges that re-merge at a single fold — an arm that never rejoins is a leaked exit.
+    - Keep annotation traffic on dashed Comment traces so the solid control rail stays the loudest ink on the canvas.
+    - Broadcast with `A --> B & C` only for genuinely symmetric fan-out; asymmetric hops get their own labeled edges.
 - Failure modes:
-  - the god-flowchart absorbing lifecycle, sequence, or schema payloads.
-  - control flow drawn beside data flow, both unlabeled.
-  - decorative arrowheads on a symmetric relation.
-  - branch arms that never rejoin, leaking the merge.
+    - the god-flowchart absorbing lifecycle, sequence, or schema payloads.
+    - control flow drawn beside data flow, both unlabeled.
+    - decorative arrowheads on a symmetric relation.
+    - branch arms that never rejoin, leaking the merge.
 - Logic checks:
-  - every path from entry reaches a terminal.
-  - each discriminator's out-labels are exhaustive and disjoint.
-  - no edge contradicts the subject's declared direction law, a dependency edge pointing one way throughout.
+    - every path from entry reaches a terminal.
+    - each discriminator's out-labels are exhaustive and disjoint.
+    - no edge contradicts the subject's declared direction law, a dependency edge pointing one way throughout.
 
 [SEQUENCE]:
 
@@ -39,27 +39,27 @@ Each diagram type answers one question with a bounded mark vocabulary; per type,
 - Message: one protocol step its sender can actually initiate.
 - Signal: causality and ownership — every request visibly paired with its return, and the activation bars showing exactly who holds the work at every instant.
 - Method:
-  1. Pick one scenario, happy path plus at most one fault split.
-  2. Order participants left-to-right by first touch.
-  3. Write messages as verb phrases carrying the payload name.
-  4. Add activation only where lifetime matters.
-  5. Close on the terminal response or fault.
+    1. Pick one scenario, happy path plus at most one fault split.
+    2. Order participants left-to-right by first touch.
+    3. Write messages as verb phrases carrying the payload name.
+    4. Add activation only where lifetime matters.
+    5. Close on the terminal response or fault.
 - Master patterns:
-  - Name the frame shape ON the wire in a `Note over` both sides — the contract becomes a visible shared fact, not two private assumptions.
-  - Tint the region one participant owns with `rect` — sequence's one styling lever — so ownership reads as surface, never inference.
-  - Split aborts from outcomes: `break` for the path that ends the exchange, `alt` for the paths that complete it differently.
-  - Run `autonumber` on any exchange another document cites, so a step reference survives edits.
-  - Show lifetime with `create`/`destroy` instead of a static roster when the scenario births or kills a participant.
-  - Group participants into `box` blocks by process boundary, so the wire crossings stand apart from in-process calls.
+    - Name the frame shape ON the wire in a `Note over` both sides — the contract becomes a visible shared fact, not two private assumptions.
+    - Tint the region one participant owns with `rect` — sequence's one styling lever — so ownership reads as surface, never inference.
+    - Split aborts from outcomes: `break` for the path that ends the exchange, `alt` for the paths that complete it differently.
+    - Run `autonumber` on any exchange another document cites, so a step reference survives edits.
+    - Show lifetime with `create`/`destroy` instead of a static roster when the scenario births or kills a participant.
+    - Group participants into `box` blocks by process boundary, so the wire crossings stand apart from in-process calls.
 - Failure modes:
-  - the god-participant sending and receiving everything, hiding decomposition.
-  - response arrows omitted, leaving causality unverifiable.
-  - `alt` or `par` blocks nesting past two levels, the signal to split the scenario.
-  - data objects promoted to participants.
+    - the god-participant sending and receiving everything, hiding decomposition.
+    - response arrows omitted, leaving causality unverifiable.
+    - `alt` or `par` blocks nesting past two levels, the signal to split the scenario.
+    - data objects promoted to participants.
 - Logic checks:
-  - every request expecting a reply carries its dotted return.
-  - no message departs a participant destroyed or never created.
-  - the message order is achievable, no reply preceding its request.
+    - every request expecting a reply carries its dotted return.
+    - no message departs a participant destroyed or never created.
+    - the message order is achievable, no reply preceding its request.
 
 [STATE]:
 
@@ -68,28 +68,28 @@ Each diagram type answers one question with a bounded mark vocabulary; per type,
 - Transition: an event plus optional guard; guards leaving one state stay disjoint.
 - Signal: the guard vocabulary — which event moves which mode and what makes every exit deterministic; the states are the given, the guards are the knowledge.
 - Method:
-  1. Enumerate resting modes first, rejecting any activity.
-  2. Fix entry `[*]` and every terminal.
-  3. Add one transition per event with its guard.
-  4. Nest a composite only where substates share every external transition.
-  5. Name transitions by event, never by target state.
+    1. Enumerate resting modes first, rejecting any activity.
+    2. Fix entry `[*]` and every terminal.
+    3. Add one transition per event with its guard.
+    4. Nest a composite only where substates share every external transition.
+    5. Name transitions by event, never by target state.
 - Master patterns:
-  - Bound every recovery loop — a fault state exits on `recover [attempts < max]` and `abort [attempts == max]`, so the machine provably terminates.
-  - Fan a multi-way guard through a `<<choice>>` pseudostate instead of stacking guards on one source, keeping each edge's condition atomic.
-  - Split genuinely independent sub-modes into `--` concurrency regions rather than multiplying the state count combinatorially.
-  - Class resting states by criticality — dormant `recessed`, fault `error`, terminal `boundary` — while nominal running states ride the primary default, so lifecycle risk reads at a glance.
-  - Give a composite its own `direction` when its interior flow runs against the outer axis.
+    - Bound every recovery loop — a fault state exits on `recover [attempts < max]` and `abort [attempts == max]`, so the machine provably terminates.
+    - Fan a multi-way guard through a `<<choice>>` pseudostate instead of stacking guards on one source, keeping each edge's condition atomic.
+    - Split genuinely independent sub-modes into `--` concurrency regions rather than multiplying the state count combinatorially.
+    - Class resting states by criticality — dormant `recessed`, fault `error`, terminal `boundary` — while nominal running states ride the primary default, so lifecycle risk reads at a glance.
+    - Give a composite its own `direction` when its interior flow runs against the outer axis.
 - Failure modes:
-  - an activity drawn as a state, a step mistaken for a mode.
-  - overlapping guards making a transition nondeterministic.
-  - composite nesting used for visual grouping over shared-transition semantics.
-  - a missing terminal, so the lifecycle never ends.
+    - an activity drawn as a state, a step mistaken for a mode.
+    - overlapping guards making a transition nondeterministic.
+    - composite nesting used for visual grouping over shared-transition semantics.
+    - a missing terminal, so the lifecycle never ends.
 - Logic checks:
-  - every non-terminal state holds an exit.
-  - an absorbing state is declared terminal or gains an exit.
-  - the machine carries its initial `[*]` entry.
-  - guards leaving one state are mutually exclusive and cover the event's domain.
-  - each composite's substates genuinely share its external transitions.
+    - every non-terminal state holds an exit.
+    - an absorbing state is declared terminal or gains an exit.
+    - the machine carries its initial `[*]` entry.
+    - guards leaving one state are mutually exclusive and cover the event's domain.
+    - each composite's substates genuinely share its external transitions.
 
 [CLASS]:
 
@@ -98,25 +98,25 @@ Each diagram type answers one question with a bounded mark vocabulary; per type,
 - Relation: a compile-time relationship the source proves.
 - Signal: the relation kinds chosen — inheritance versus composition versus dependency is the design decision; members exist only to justify an arrow.
 - Method:
-  1. Select the type cluster answering the question, never the whole codebase.
-  2. Choose which relation kinds appear, two at most.
-  3. Carry only members that discriminate the design.
-  4. Group by namespace when the ownership boundary is the point.
+    1. Select the type cluster answering the question, never the whole codebase.
+    2. Choose which relation kinds appear, two at most.
+    3. Carry only members that discriminate the design.
+    4. Group by namespace when the ownership boundary is the point.
 - Master patterns:
-  - Hold the two-relation ceiling; a third relation kind is a second diagram over the same class names.
-  - Spend `namespace` as the ownership boundary claim, mirroring the real module or package seam.
-  - Attach a lollipop `()--` only to the port a consumer actually binds; decorating every class with interfaces flattens the one seam that matters.
-  - Keep generics on the declaration and drop them at every reference — the engine collides two classes differing only by generic suffix.
-  - Note the one non-obvious invariant with `note for`; every other comment belongs to the owning page.
+    - Hold the two-relation ceiling; a third relation kind is a second diagram over the same class names.
+    - Spend `namespace` as the ownership boundary claim, mirroring the real module or package seam.
+    - Attach a lollipop `()--` only to the port a consumer actually binds; decorating every class with interfaces flattens the one seam that matters.
+    - Keep generics on the declaration and drop them at every reference — the engine collides two classes differing only by generic suffix.
+    - Note the one non-obvious invariant with `note for`; every other comment belongs to the owning page.
 - Failure modes:
-  - member dumps of every field and method drowning the relations.
-  - inheritance and dependency arrows mixed without visual distinction.
-  - interface lollipops attached to everything.
-  - speculative types with no source anchor.
+    - member dumps of every field and method drowning the relations.
+    - inheritance and dependency arrows mixed without visual distinction.
+    - interface lollipops attached to everything.
+    - speculative types with no source anchor.
 - Logic checks:
-  - every drawn relation verifies in source.
-  - no cycle among the inheritance arrows.
-  - cardinality appears only where the association is the point.
+    - every drawn relation verifies in source.
+    - no cycle among the inheritance arrows.
+    - cardinality appears only where the association is the point.
 
 [ER]:
 
@@ -125,26 +125,26 @@ Each diagram type answers one question with a bounded mark vocabulary; per type,
 - Relationship: a join path whose cardinality storage enforces.
 - Signal: keys and cardinality as enforced constraints — the diagram's worth is exactly the set of joins a reader can trust without opening the DDL.
 - Method:
-  1. Start from the aggregate root.
-  2. Add entities one join away until the question closes.
-  3. Mark PK and FK on every drawn entity.
-  4. Set cardinality from the constraint storage enforces, never intended usage.
-  5. Name relations with the owning verb.
+    1. Start from the aggregate root.
+    2. Add entities one join away until the question closes.
+    3. Mark PK and FK on every drawn entity.
+    4. Set cardinality from the constraint storage enforces, never intended usage.
+    5. Name relations with the owning verb.
 - Master patterns:
-  - Resolve every many-to-many through a visible junction entity whose composite PK is both FKs — the crow's foot cannot state it directly.
-  - Hold FK-edge reciprocity as one atomic edit: an FK attribute lands with its relationship edge, and either alone is a lie.
-  - Spend the identifying `--` versus non-identifying `..` stroke as a real dependency claim, not typography.
-  - Class the hierarchy — aggregate root `primary`, junction `recessed`, externally-owned registry `external` — so ownership renders, not just relates.
-  - Trim attributes to identifying and discriminating columns; the full column roster is the DDL's property.
+    - Resolve every many-to-many through a visible junction entity whose composite PK is both FKs — the crow's foot cannot state it directly.
+    - Hold FK-edge reciprocity as one atomic edit: an FK attribute lands with its relationship edge, and either alone is a lie.
+    - Spend the identifying `--` versus non-identifying `..` stroke as a real dependency claim, not typography.
+    - Class the hierarchy — aggregate root `primary`, junction `recessed`, externally-owned registry `external` — so ownership renders, not just relates.
+    - Trim attributes to identifying and discriminating columns; the full column roster is the DDL's property.
 - Failure modes:
-  - value objects promoted to entities.
-  - cardinality drawn from hope — the code admits many, the diagram says one.
-  - an FK attribute shown without its relationship edge, or the edge without the FK.
-  - attribute dumps past the identifying and discriminating columns.
+    - value objects promoted to entities.
+    - cardinality drawn from hope — the code admits many, the diagram says one.
+    - an FK attribute shown without its relationship edge, or the edge without the FK.
+    - attribute dumps past the identifying and discriminating columns.
 - Logic checks:
-  - every FK attribute has a matching relationship edge and the reverse.
-  - every entity carries a PK.
-  - cardinality matches the schema constraint.
+    - every FK attribute has a matching relationship edge and the reverse.
+    - every entity carries a PK.
+    - cardinality matches the schema constraint.
 
 ## [02]-[EXTENDED_TYPES]
 
@@ -277,8 +277,8 @@ Each diagram type answers one question with a bounded mark vocabulary; per type,
 - Signal: the merge topology — where lines cut, join, and tag, read like a subway map.
 - Method: order branches main-first so ranks stack stably, commit ids name real work, tag on main at release points; history stays truthful to the repository it claims.
 - Failure modes:
-  - fabricated history matching no real repo state.
-  - a branch merged or checked out before it exists.
+    - fabricated history matching no real repo state.
+    - a branch merged or checked out before it exists.
 - Logic checks: every commit id stays unique and every branch predates its checkout.
 
 [QUADRANT]:
@@ -289,9 +289,9 @@ Each diagram type answers one question with a bounded mark vocabulary; per type,
 - Signal: cluster and outlier — which items group and which sit alone in a quadrant.
 - Method: six to ten points, coordinates from assessment not narrative, class points by category so hue carries the second reading.
 - Failure modes:
-  - axes that are not independent, collapsing the plane to a line.
-  - points placed by narrative rather than measured coordinates.
-- Logic checks:  every coordinate falls within its declared axis range.
+    - axes that are not independent, collapsing the plane to a line.
+    - points placed by narrative rather than measured coordinates.
+- Logic checks: every coordinate falls within its declared axis range.
 
 [PACKET]:
 

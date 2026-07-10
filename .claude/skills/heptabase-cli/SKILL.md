@@ -3,7 +3,7 @@ name: heptabase-cli
 description: Interact with Heptabase using the CLI to manage knowledge base content, search cards, edit properties, read parsed PDF and media transcript content, export local files, manage whiteboard cards, and browse AI Tutor goals, courses, and lessons.
 allowed-tools: Bash(heptabase *) Bash(jq *) Bash(mktemp *)
 metadata:
-  heptabase-cli-version-range: "0.4.x"
+    heptabase-cli-version-range: "0.4.x"
 ---
 
 # [HEPTABASE_CLI]

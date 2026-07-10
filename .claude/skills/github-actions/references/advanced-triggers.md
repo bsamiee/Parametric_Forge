@@ -16,28 +16,28 @@
 
 ```yaml conceptual
 on:
-  push:
-    paths: ['src/**', '!src/**/*.md', '!**/__tests__/**']
-  pull_request:
-    paths: ['packages/frontend/**', 'packages/shared/**']
+    push:
+        paths: ["src/**", "!src/**/*.md", "!**/__tests__/**"]
+    pull_request:
+        paths: ["packages/frontend/**", "packages/shared/**"]
 ```
 
 ## [02]-[WORKFLOW_RUN]
 
 ```yaml conceptual
 on:
-  workflow_run:
-    workflows: ["CI Pipeline"]
-    types: [completed]
-    branches: [main]
+    workflow_run:
+        workflows: ["CI Pipeline"]
+        types: [completed]
+        branches: [main]
 jobs:
-  deploy:
-    if: github.event.workflow_run.conclusion == 'success'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@<SHA> # v6
-      - uses: actions/download-artifact@<SHA> # v7
-        with: { run-id: '${{ github.event.workflow_run.id }}', github-token: '${{ secrets.GITHUB_TOKEN }}' }
+    deploy:
+        if: github.event.workflow_run.conclusion == 'success'
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@<SHA> # v6
+            - uses: actions/download-artifact@<SHA> # v7
+              with: { run-id: "${{ github.event.workflow_run.id }}", github-token: "${{ secrets.GITHUB_TOKEN }}" }
 ```
 
 [PROPERTIES]: `.name`, `.conclusion`, `.head_sha`, `.head_branch`, `.id`, `.event`
@@ -71,23 +71,23 @@ curl -X POST -H "Authorization: Bearer $TOKEN" -H "Accept: application/vnd.githu
 
 ```yaml conceptual
 on:
-  issue_comment: { types: [created] }
+    issue_comment: { types: [created] }
 jobs:
-  deploy:
-    if: |
-      github.event.issue.pull_request &&
-      startsWith(github.event.comment.body, '/deploy') &&
-      contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.comment.author_association)
-    runs-on: ubuntu-latest
-    permissions: { pull-requests: write, deployments: write }
-    steps:
-      - uses: actions/github-script@<SHA> # v8
-        with:
-          script: |
-            await github.rest.reactions.createForIssueComment({
-              owner: context.repo.owner, repo: context.repo.repo,
-              comment_id: context.payload.comment.id, content: 'rocket'
-            });
+    deploy:
+        if: |
+            github.event.issue.pull_request &&
+            startsWith(github.event.comment.body, '/deploy') &&
+            contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.comment.author_association)
+        runs-on: ubuntu-latest
+        permissions: { pull-requests: write, deployments: write }
+        steps:
+            - uses: actions/github-script@<SHA> # v8
+              with:
+                  script: |
+                      await github.rest.reactions.createForIssueComment({
+                        owner: context.repo.owner, repo: context.repo.repo,
+                        comment_id: context.payload.comment.id, content: 'rocket'
+                      });
 ```
 
 [IMPORTANT] Verify `author_association`. Pass comment content through `env:` indirection. [REFERENCE] `expressions-and-contexts.md`§INJECTION_PREVENTION.
@@ -96,12 +96,12 @@ jobs:
 
 ```yaml conceptual
 on:
-  workflow_dispatch:
-    inputs:
-      environment: { description: 'Deployment target', required: true, type: environment }
-      log-level: { description: 'Verbosity', type: choice, default: 'info', options: [debug, info, warn, error] }
-      dry-run: { description: 'Simulate', type: boolean, default: false }
-      version: { description: 'Release version', required: true, type: string }
+    workflow_dispatch:
+        inputs:
+            environment: { description: "Deployment target", required: true, type: environment }
+            log-level: { description: "Verbosity", type: choice, default: "info", options: [debug, info, warn, error] }
+            dry-run: { description: "Simulate", type: boolean, default: false }
+            version: { description: "Release version", required: true, type: string }
 ```
 
 | [INDEX] | [TYPE]            | [UI_RENDERING]       | [NOTES]                     |
@@ -122,14 +122,14 @@ on:
 
 ```yaml conceptual
 on:
-  pull_request:
-  merge_group: { types: [checks_requested] }
+    pull_request:
+    merge_group: { types: [checks_requested] }
 jobs:
-  validate:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@<SHA> # v6
-      - run: npm test
+    validate:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@<SHA> # v6
+            - run: npm test
 ```
 
 [CRITICAL] Add `merge_group` alongside `pull_request` when using merge queue — without it, required checks never report.
@@ -141,49 +141,50 @@ jobs:
 [DEC_8_2025_ENFORCEMENT]: Workflow source always comes from default branch — no matter which branch the PR targets. `GITHUB_REF` resolves to `refs/heads/main`; `GITHUB_SHA` points to default branch HEAD at run start. Environment protection rules evaluate against the execution ref. This eliminates "pwn request" attacks where malicious PRs modified workflow definitions.
 
 [CRITICAL]:
+
 - [NEVER]: Checkout PR head without environment protection gate (required reviewers).
 - [ALWAYS]: Use for labeling, commenting, triage only.
 
 ```yaml conceptual
 on:
-  pull_request_target: { types: [opened, labeled] }
+    pull_request_target: { types: [opened, labeled] }
 jobs:
-  triage:
-    runs-on: ubuntu-latest
-    permissions: { pull-requests: write }
-    steps:
-      - uses: actions/github-script@<SHA> # v8
-        with:
-          script: |
-            await github.rest.issues.addLabels({
-              ...context.repo, issue_number: context.issue.number, labels: ['needs-review']
-            });
+    triage:
+        runs-on: ubuntu-latest
+        permissions: { pull-requests: write }
+        steps:
+            - uses: actions/github-script@<SHA> # v8
+              with:
+                  script: |
+                      await github.rest.issues.addLabels({
+                        ...context.repo, issue_number: context.issue.number, labels: ['needs-review']
+                      });
 ```
 
 ## [09]-[DYNAMIC_MATRIX]
 
 ```yaml conceptual
 jobs:
-  setup:
-    runs-on: ubuntu-latest
-    outputs:
-      matrix: ${{ steps.set-matrix.outputs.matrix }}
-    steps:
-      - id: set-matrix
-        run: |
-          echo "matrix=$(jq -c . <<'EOF'
-          {"include":[{"project":"api","node":"20"},{"project":"web","node":"22"}]}
-          EOF
-          )" >> "$GITHUB_OUTPUT"
-  build:
-    needs: setup
-    strategy:
-      fail-fast: true
-      max-parallel: 4
-      matrix: ${{ fromJSON(needs.setup.outputs.matrix) }}
-    runs-on: ubuntu-latest
-    steps:
-      - run: echo "Building ${{ matrix.project }} on Node ${{ matrix.node }}"
+    setup:
+        runs-on: ubuntu-latest
+        outputs:
+            matrix: ${{ steps.set-matrix.outputs.matrix }}
+        steps:
+            - id: set-matrix
+              run: |
+                  echo "matrix=$(jq -c . <<'EOF'
+                  {"include":[{"project":"api","node":"20"},{"project":"web","node":"22"}]}
+                  EOF
+                  )" >> "$GITHUB_OUTPUT"
+    build:
+        needs: setup
+        strategy:
+            fail-fast: true
+            max-parallel: 4
+            matrix: ${{ fromJSON(needs.setup.outputs.matrix) }}
+        runs-on: ubuntu-latest
+        steps:
+            - run: echo "Building ${{ matrix.project }} on Node ${{ matrix.node }}"
 ```
 
 | [INDEX] | [KEY]                   | [DEFAULT]                   | [BEHAVIOR]                                                          |

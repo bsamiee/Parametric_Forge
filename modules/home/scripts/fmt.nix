@@ -15,29 +15,28 @@
     text = ''
       shopt -s inherit_errexit
 
-      # --- Dispatch tables: lane -> tool / argv prefix per mode --------------
-      declare -Ar _LANE_TOOL=(
-        [nix]=alejandra [shell]=shfmt [python]=ruff [web]=biome
-        [prose]=prettier [yaml]=yamlfmt [toml]=taplo [lua]=stylua
-        [sql]=sqruff [sql-duckdb]=sqruff
-        [swift]=swiftformat [csharp]=csharpier [osa]=forge-osa [jq]=jq
+      # --- Lane vocabulary: one row per lane — 'tool|write argv|check argv' --
+      declare -Ar _LANE=(
+        [nix]='alejandra|alejandra -q --|alejandra -c --'
+        [shell]='shfmt|shfmt -w|shfmt -d'
+        [python]='ruff|ruff format --|ruff format --check --'
+        [web]='biome|biome format --write|biome format'
+        [prose]='prettier|prettier --log-level warn --write|prettier --log-level warn --check'
+        [yaml]='yamlfmt|yamlfmt|yamlfmt -lint'
+        [toml]='taplo|taplo fmt|taplo fmt --check'
+        [lua]='stylua|stylua --|stylua --check --'
+        [sql]='sqruff|sqruff fix|sqruff lint'
+        [sql-duckdb]='sqruff|sqruff fix|sqruff lint'
+        [swift]='swiftformat|swiftformat --quiet|swiftformat --quiet --lint'
+        [csharp]='csharpier|csharpier format|csharpier check'
+        [osa]='forge-osa|forge-osa fmt|forge-osa check'
+        [jq]='jq|_gate_jq|_gate_jq'
       )
-      declare -Ar _LANE_WRITE=(
-        [nix]='alejandra -q --' [shell]='shfmt -w' [python]='ruff format --'
-        [web]='biome format --write' [prose]='prettier --log-level warn --write'
-        [yaml]='yamlfmt' [toml]='taplo fmt' [lua]='stylua --'
-        [sql]='sqruff fix' [sql-duckdb]='sqruff fix'
-        [swift]='swiftformat --quiet' [csharp]='csharpier format'
-        [osa]='forge-osa fmt' [jq]='_gate_jq'
-      )
-      declare -Ar _LANE_CHECK=(
-        [nix]='alejandra -c --' [shell]='shfmt -d' [python]='ruff format --check --'
-        [web]='biome format' [prose]='prettier --log-level warn --check'
-        [yaml]='yamlfmt -lint' [toml]='taplo fmt --check' [lua]='stylua --check --'
-        [sql]='sqruff lint' [sql-duckdb]='sqruff lint'
-        [swift]='swiftformat --quiet --lint' [csharp]='csharpier check'
-        [osa]='forge-osa check' [jq]='_gate_jq'
-      )
+      declare -Ar _MODE_FIELD=([write]=1 [check]=2)
+      _lane_row() { # $1 = lane, $2 = out array name -> (tool, write argv, check argv)
+        local -n _row="$2"
+        IFS='|' read -r -a _row <<<"''${_LANE[$1]}"
+      }
       declare -Ar _EXT_LANE=(
         [nix]=nix
         [sh]=shell [bash]=shell
@@ -131,16 +130,23 @@
 
       _self_test() {
         local ext lane
+        local -a lrow
         for ext in "''${!_EXT_LANE[@]}"; do
           lane="''${_EXT_LANE[$ext]}"
-          [[ -n "''${_LANE_TOOL[$lane]:-}" && -n "''${_LANE_WRITE[$lane]:-}" && -n "''${_LANE_CHECK[$lane]:-}" ]] || {
-            printf 'self-test: ext %s -> lane %s incomplete\n' "$ext" "$lane" >&2
+          [[ -n "''${_LANE[$lane]:-}" ]] || {
+            printf 'self-test: ext %s -> unowned lane %s\n' "$ext" "$lane" >&2
             return 1
           }
         done
-        # The PATH probe reads the check table's head token for both modes.
-        for lane in "''${!_LANE_TOOL[@]}"; do
-          [[ "''${_LANE_WRITE[$lane]%% *}" == "''${_LANE_CHECK[$lane]%% *}" ]] || {
+        # Every row carries three non-empty fields; the PATH probe reads the
+        # check field's head token for both modes, so the heads must agree.
+        for lane in "''${!_LANE[@]}"; do
+          _lane_row "$lane" lrow
+          [[ ''${#lrow[@]} -eq 3 && -n "''${lrow[0]}" && -n "''${lrow[1]}" && -n "''${lrow[2]}" ]] || {
+            printf 'self-test: lane %s row incomplete\n' "$lane" >&2
+            return 1
+          }
+          [[ "''${lrow[1]%% *}" == "''${lrow[2]%% *}" ]] || {
             printf 'self-test: lane %s write/check head tokens diverge\n' "$lane" >&2
             return 1
           }
@@ -183,7 +189,7 @@
         }
         rm -rf "$st"
         printf 'self-test: %d extensions, %d lanes, %d classification probes ok\n' \
-          "''${#_EXT_LANE[@]}" "''${#_LANE_TOOL[@]}" "''${#probes[@]}"
+          "''${#_EXT_LANE[@]}" "''${#_LANE[@]}" "''${#probes[@]}"
       }
 
       # --- Arguments ----------------------------------------------------------
@@ -271,30 +277,61 @@
         fi
       done
 
-      # --- Lanes run concurrently; each lane is one batched, deadlined call --
+      # --- Lanes run concurrently; each lane chunks batched, deadlined calls -
       _run_lane() {
         local -r lane="$1"
-        local -a files cmd
+        local -a files lrow cmd run batch
         mapfile -d $'\0' -t files <"$tmp/list.$lane"
-        local -n mtab="_LANE_''${mode^^}"
-        read -r -a cmd <<<"''${mtab[$lane]}"
-        # TERM first, KILL after a 10s grace; a write-mode kill can leave an
-        # in-place rewrite half-applied — write atomicity stays tool-owned.
-        if ((deadline > 0)) && ! declare -F "''${cmd[0]}" >/dev/null; then
-          cmd=(timeout -k 10 "$deadline" "''${cmd[@]}")
-        fi
-        local -ri t0="$BASH_MONOSECONDS"
-        local -i rc=0
-        # The recorded pid is the abort rail's direct handle on timeout/tool.
-        "''${cmd[@]}" "''${files[@]}" >"$tmp/out.$lane" 2>&1 &
-        printf '%d' "$!" >"$tmp/pid.$lane"
-        wait "$!" || rc=$?
+        _lane_row "$lane" lrow
+        read -r -a cmd <<<"''${lrow[''${_MODE_FIELD[$mode]}]}"
+        local -i wrap=0
+        ((deadline > 0)) && ! declare -F "''${cmd[0]}" >/dev/null && wrap=1
+        # Argv per spawn rides a 128KiB byte budget: a huge tree chunks into
+        # repeat spawns instead of dying E2BIG, and the one lane deadline
+        # spans every chunk.
+        local -ri t0="$BASH_MONOSECONDS" n="''${#files[@]}" budget=131072
+        local -i rc=0 crc i=0 bytes remaining
+        while ((i < n)); do
+          batch=("''${files[i]}")
+          bytes=$((''${#files[i]} + 1))
+          i+=1
+          while ((i < n)); do
+            ((bytes + ''${#files[i]} + 1 <= budget)) || break
+            batch+=("''${files[i]}")
+            bytes+=$((''${#files[i]} + 1))
+            i+=1
+          done
+          run=("''${cmd[@]}")
+          if ((wrap)); then
+            remaining=$((deadline - (BASH_MONOSECONDS - t0)))
+            ((remaining > 0)) || {
+              rc=124
+              break
+            }
+            # TERM first, KILL after a 10s grace; a write-mode kill can leave
+            # an in-place rewrite half-applied — atomicity stays tool-owned.
+            run=(timeout -k 10 "$remaining" "''${run[@]}")
+          fi
+          # The recorded pid is the abort rail's direct handle on timeout/tool.
+          "''${run[@]}" "''${batch[@]}" >>"$tmp/out.$lane" 2>&1 &
+          printf '%d' "$!" >"$tmp/pid.$lane"
+          crc=0
+          wait "$!" || crc=$?
+          if ((crc)); then
+            rc="$crc"
+            # A deadline kill ends the lane; other failures keep going so the
+            # capture accumulates every chunk's diagnostics.
+            ((wrap && (crc == 124 || crc == 137))) && break
+          fi
+        done
         printf '%d' "$((BASH_MONOSECONDS - t0))" >"$tmp/secs.$lane"
         return "$rc"
       }
 
+      declare -a lrow
       for lane in "''${!lane_count[@]}"; do
-        runner="''${_LANE_CHECK[$lane]%% *}"
+        _lane_row "$lane" lrow
+        runner="''${lrow[2]%% *}"
         if ! command -v "$runner" >/dev/null 2>&1 && ! declare -F "$runner" >/dev/null; then
           lane_state[$lane]=missing
           continue
@@ -330,6 +367,7 @@
       fi
       if ((json_mode)); then
         for lane in "''${!lane_count[@]}"; do
+          _lane_row "$lane" lrow
           # tr drops NULs before capture (bash warns on them); jq itself maps
           # invalid UTF-8 — including a head-split multibyte char — to U+FFFD.
           snippet=""
@@ -338,7 +376,7 @@
           esac
           secs=null
           [[ -f "$tmp/secs.$lane" ]] && secs="$(<"$tmp/secs.$lane")"
-          jq -nc --arg lane "$lane" --arg tool "''${_LANE_TOOL[$lane]}" \
+          jq -nc --arg lane "$lane" --arg tool "''${lrow[0]}" \
             --argjson files "''${lane_count[$lane]}" --arg state "''${lane_state[$lane]:-missing}" \
             --argjson rc "''${lane_rc[$lane]:-null}" --argjson secs "$secs" --arg output "$snippet" \
             '{lane: $lane, tool: $tool, files: $files, state: $state, rc: $rc, secs: $secs, output: $output}'
@@ -352,13 +390,14 @@
       [[ "$mode" == write ]] && ok_tag=FMT
       mapfile -t lanes_sorted < <(printf '%s\n' "''${!lane_count[@]}" | sort)
       for lane in "''${lanes_sorted[@]}"; do
+        _lane_row "$lane" lrow
         case "''${lane_state[$lane]:-missing}" in
-          ok) printf '[%s] %-8s %3d file(s) via %s\n' "$ok_tag" "$lane" "''${lane_count[$lane]}" "''${_LANE_TOOL[$lane]}" ;;
-          missing) printf '[MISSING] %-8s %3d file(s) — %s not on PATH\n' "$lane" "''${lane_count[$lane]}" "''${_LANE_TOOL[$lane]}" ;;
+          ok) printf '[%s] %-8s %3d file(s) via %s\n' "$ok_tag" "$lane" "''${lane_count[$lane]}" "''${lrow[0]}" ;;
+          missing) printf '[MISSING] %-8s %3d file(s) — %s not on PATH\n' "$lane" "''${lane_count[$lane]}" "''${lrow[0]}" ;;
           fail | timeout)
             detail="rc=''${lane_rc[$lane]}"
             [[ "''${lane_state[$lane]}" == timeout ]] && detail="timed out after ''${deadline}s"
-            printf '[FAIL] %-8s %3d file(s) via %s (%s)\n' "$lane" "''${lane_count[$lane]}" "''${_LANE_TOOL[$lane]}" "$detail"
+            printf '[FAIL] %-8s %3d file(s) via %s (%s)\n' "$lane" "''${lane_count[$lane]}" "''${lrow[0]}" "$detail"
             gawk 'NR <= 40 { print "    " $0 } END { if (NR > 40) printf "    [+%d more lines]\n", NR - 40 }' "$tmp/out.$lane"
             ;;
         esac

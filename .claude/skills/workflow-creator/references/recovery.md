@@ -106,9 +106,9 @@ Recover a failed, cancelled, or quit run with a CONTINUATION SCRIPT, never journ
 // Stage 1 completed in wf_a1b2c3; its outputs reconstructed from the journal's `result`
 // records and baked in as a literal. The body below is the original stage 2 onward, unchanged.
 const stage1 = [
-  { lane: 's0', report: '.claude/scratch/rebuild/gov-s0-report.json', entries: 14 },
-  { lane: 's1', report: '.claude/scratch/rebuild/api-s1-report.json', entries: 9 },
-]
+    { lane: "s0", report: ".claude/scratch/rebuild/gov-s0-report.json", entries: 14 },
+    { lane: "s1", report: ".claude/scratch/rebuild/api-s1-report.json", entries: 9 },
+];
 ```
 
 Author every workflow for this recovery from day one: each stage writes its product to a disk file and returns a `{path, summary}` receipt, so any stage is re-enterable at zero cache dependence — the receipt roster IS the data literal a continuation script bakes in, and the product files are already on disk. A workflow whose stages hand heavy products through memory alone is unrecoverable past its own run.

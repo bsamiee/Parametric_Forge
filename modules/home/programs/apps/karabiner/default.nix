@@ -38,17 +38,34 @@
 
   jq = "${pkgs.jq}/bin/jq";
 
-  # Karabiner persists runtime state (profiles[].devices, root global) into
-  # karabiner.json; merge those app-owned subtrees from the live file so the
-  # declarative document owns rules without destroying GUI-side device state.
+  # App-owned CLI beside the running Karabiner: lints the exact rule bytes
+  # before they reach the live config. Absent only before first cask install.
+  karabinerCli = "/Library/Application Support/org.pqrs/Karabiner-Elements/bin/karabiner_cli";
+
+  # Karabiner persists GUI/runtime state into karabiner.json: root keys beyond
+  # profiles (global), per-profile devices, parameters, simple_modifications,
+  # fn_function_keys, complex_modifications.parameters, virtual_hid_keyboard
+  # subkeys, selected, and GUI-created profiles. The declarative document owns
+  # complex_modifications.rules and the declared profile identity; everything
+  # else merges from the live file so activation never destroys app-owned
+  # state. Declared keys win except `selected` (profile choice is GUI-owned).
+  # The stage gate admits the live file only when it is structurally a
+  # Karabiner document (object; profiles an array of objects): valid JSON of
+  # any other shape falls to wholesale declared replacement instead of
+  # killing activation mid-merge.
   mergeProgram = ''
     ($live[0]) as $l
-    | . + (if ($l | has("global")) then {global: $l.global} else {} end)
-    | .profiles |= map(
+    | (.profiles | map(.name)) as $names
+    | ($l | del(.profiles)) + .
+    | .profiles = (.profiles | map(
         . as $p
         | (first($l.profiles[]? | select(.name == $p.name)) // {}) as $m
-        | $p + (if ($m | has("devices")) then {devices: $m.devices} else {} end)
-      )
+        | $m + $p
+        | .complex_modifications = (($m.complex_modifications // {}) + $p.complex_modifications)
+        | .virtual_hid_keyboard = (($m.virtual_hid_keyboard // {}) + $p.virtual_hid_keyboard)
+        | (if $m | has("selected") then .selected = $m.selected else . end)
+      ))
+      + [$l.profiles[]? | select(.name as $n | $names | index($n) | not)]
   '';
 
   # Atomic write-if-changed: mktemp in the target directory, compare, rename.
@@ -83,8 +100,15 @@ in {
     refuse_symlink "${cfgDir}/karabiner.json"
     refuse_symlink "${assetDir}/parametric-forge-chords.json"
 
+    if [ -x ${lib.escapeShellArg karabinerCli} ]; then
+      if ! lint="$(${lib.escapeShellArg karabinerCli} --lint-complex-modifications ${stagedAssetJson} 2>&1)"; then
+        echo "karabiner: chord rules failed lint: $lint" >&2
+        exit 1
+      fi
+    fi
+
     ${stageFile "${cfgDir}/karabiner.json" ''
-      if [ -f "${cfgDir}/karabiner.json" ] && ${jq} -e . "${cfgDir}/karabiner.json" >/dev/null 2>&1; then
+      if [ -f "${cfgDir}/karabiner.json" ] && ${jq} -e 'type == "object" and ((.profiles // []) | type == "array") and all(.profiles[]?; type == "object")' "${cfgDir}/karabiner.json" >/dev/null 2>&1; then
         ${jq} --slurpfile live "${cfgDir}/karabiner.json" '${mergeProgram}' ${karabinerJson} >"$tmp"
       else
         cat ${karabinerJson} >"$tmp"

@@ -1,16 +1,17 @@
 ---
 name: coding-pg
 description: >-
-  Use for PostgreSQL 18 SQL, migrations, DDL, functions, RLS policies,
-  indexes, query plans, extensions, and SQL embedded in TypeScript via
-  @effect/sql-pg. Enforces set-algebraic queries, schema-level invariants,
-  current PostgreSQL features, extension-first design, tenant security,
-  observability, and migration safety.
+    Use for PostgreSQL 18 SQL, migrations, DDL, functions, RLS policies,
+    indexes, query plans, extensions, and SQL embedded in TypeScript via
+    @effect/sql-pg. Enforces set-algebraic queries, schema-level invariants,
+    current PostgreSQL features, extension-first design, tenant security,
+    observability, and migration safety.
 ---
 
 # [CODING_PG]
 
 All SQL follows five governing principles:
+
 - [POLYMORPHIC] — one function/query per concern, generic over specific via parameter dispatch and dynamic SQL
 - [SET_ALGEBRAIC] — express operations as set transformations; zero row-at-a-time iteration
 - [STRONGLY_TYPED] — domain types, composite types, range types; zero untyped `text` columns for structured data
@@ -21,9 +22,11 @@ All SQL follows five governing principles:
 ## [01]-[ROUTING]
 
 [FOUNDATION]: always load.
+
 - [01]-[VALIDATION](references/validation.md): compliance checklist, Effect-SQL alignment, migration safety
 
 [TASK_ROUTED_REFERENCES]: load when the task matches.
+
 - [01]-[DDL](references/ddl.md): schema design, domain/composite/range types, temporal constraints, generated columns, partitioning, lock levels
 - [02]-[QUERIES](references/queries.md): CTE algebra, MERGE, window functions, JSON_TABLE, recursive patterns
 - [03]-[INDEXES](references/indexes.md): index type selection, partial indexes, covering indexes, maintenance
@@ -65,12 +68,14 @@ All SQL follows five governing principles:
 ## [04]-[CONTRACTS]
 
 [TYPE_DISCIPLINE]:
+
 - One domain type per semantic concept; column declarations reference the domain, never inline `CHECK` constraints.
 - Composite types for structured return values from functions — never `OUT` parameter proliferation.
 - Range types (`tstzrange`, `int4range`, custom) for interval semantics — never dual `start`/`end` columns.
 - `NOT NULL` is default posture; nullable columns require documented justification.
 
 [QUERY_ALGEBRA]:
+
 - CTEs for named intermediate results; recursive CTEs with `SEARCH BREADTH FIRST` or `CYCLE` for graph traversal.
 - `MERGE` with `RETURNING OLD.*, NEW.*, merge_action()` for write-audit fusion.
 - Window functions with `GROUPS`/`EXCLUDE` framing where row-count framing is insufficient.
@@ -78,6 +83,7 @@ All SQL follows five governing principles:
 - `LATERAL JOIN` for correlated subquery materialization — never scalar subqueries in SELECT list.
 
 [INDEX_STRATEGY]:
+
 - Every `WHERE` clause pattern has a corresponding index; partial indexes for selective predicates.
 - `INCLUDE` columns for index-only scans on high-frequency read paths.
 - GIN for JSONB containment (`@>`), array overlap (`&&`), full-text (`@@`).
@@ -85,11 +91,13 @@ All SQL follows five governing principles:
 - BRIN for append-only monotonic columns (timestamps, serial IDs) — orders of magnitude smaller than B-tree.
 
 [SECURITY]:
+
 - RLS enabled on every tenant-scoped table; policies use fail-closed `nullif(current_setting('app.current_tenant', true), '')` tenant scoping.
 - Functions default to `SECURITY INVOKER` (always the default); `SECURITY DEFINER` only with `SET search_path = pg_catalog, public`.
 - Column-level `GRANT` for sensitive fields — never rely on view-based column hiding alone.
 
 [PERFORMANCE]:
+
 - `EXPLAIN (ANALYZE, BUFFERS, VERBOSE, SETTINGS)` is the verification tool; assertions against plan shape, not just row counts.
 - AIO (`io_method = io_uring`) for sequential scan and vacuum workloads on Linux.
 - Parallel query enabled for aggregation, hash join, index scan — `max_parallel_workers_per_gather` tuned to workload.
@@ -124,22 +132,22 @@ All SQL follows five governing principles:
 
 ## [06]-[FIRST_CLASS_EXTENSIONS]
 
-| [INDEX] | [EXTENSION]          | [OWNS]                                                | [LOAD_WHEN]                             |
-| :-----: | :------------------- | :---------------------------------------------------- | :-------------------------------------- |
-|  [01]   | `pgvector`           | Vector storage, HNSW/IVFFlat/DiskANN indexes          | Embedding search, similarity queries    |
-|  [02]   | `pgvectorscale`      | DiskANN index, Statistical Binary Quantization        | >1M vectors, memory-constrained         |
-|  [03]   | `pg_search`          | BM25 full-text via Tantivy, `@@@` operator            | Search-quality ranking, hybrid search   |
-|  [04]   | `pg_trgm`            | Trigram similarity, GIN trigram indexes, `%` operator | Fuzzy text search, typo tolerance       |
-|  [05]   | `PostGIS`            | Geometry/geography types, spatial indexes, ST_* funcs | Geospatial queries, proximity search    |
-|  [06]   | `TimescaleDB`        | Hypertables, continuous aggregates, compression       | Time-series ingestion, rollup queries   |
-|  [07]   | `pg_cron`            | In-database scheduled jobs                            | Materialized view refresh, maintenance  |
-|  [08]   | `pg_partman`         | Partition lifecycle management                        | Non-time-series partitioning            |
-|  [09]   | `pg_duckdb`          | Embedded DuckDB, analytical acceleration, lake access | OLAP queries, Parquet/Iceberg reads     |
-|  [10]   | `pg_jsonschema`      | JSONB validation via JSON Schema CHECK constraints    | Structured JSONB columns                |
-|  [11]   | `btree_gist`         | GiST equality operators for EXCLUDE constraints       | Range + equality exclusion constraints  |
-|  [12]   | `bloom`              | Bloom filter index for wide-table equality            | >5 columns, arbitrary WHERE combos      |
-|  [13]   | `pg_stat_statements` | Query fingerprinting, execution statistics            | Performance analysis, regression detect |
-|  [14]   | `pgaudit`            | Compliance-grade audit logging (session + object)     | SOC 2, HIPAA, PCI-DSS compliance        |
+| [INDEX] | [EXTENSION]          | [OWNS]                                                  | [LOAD_WHEN]                             |
+| :-----: | :------------------- | :------------------------------------------------------ | :-------------------------------------- |
+|  [01]   | `pgvector`           | Vector storage, HNSW/IVFFlat/DiskANN indexes            | Embedding search, similarity queries    |
+|  [02]   | `pgvectorscale`      | DiskANN index, Statistical Binary Quantization          | >1M vectors, memory-constrained         |
+|  [03]   | `pg_search`          | BM25 full-text via Tantivy, `@@@` operator              | Search-quality ranking, hybrid search   |
+|  [04]   | `pg_trgm`            | Trigram similarity, GIN trigram indexes, `%` operator   | Fuzzy text search, typo tolerance       |
+|  [05]   | `PostGIS`            | Geometry/geography types, spatial indexes, ST\_\* funcs | Geospatial queries, proximity search    |
+|  [06]   | `TimescaleDB`        | Hypertables, continuous aggregates, compression         | Time-series ingestion, rollup queries   |
+|  [07]   | `pg_cron`            | In-database scheduled jobs                              | Materialized view refresh, maintenance  |
+|  [08]   | `pg_partman`         | Partition lifecycle management                          | Non-time-series partitioning            |
+|  [09]   | `pg_duckdb`          | Embedded DuckDB, analytical acceleration, lake access   | OLAP queries, Parquet/Iceberg reads     |
+|  [10]   | `pg_jsonschema`      | JSONB validation via JSON Schema CHECK constraints      | Structured JSONB columns                |
+|  [11]   | `btree_gist`         | GiST equality operators for EXCLUDE constraints         | Range + equality exclusion constraints  |
+|  [12]   | `bloom`              | Bloom filter index for wide-table equality              | >5 columns, arbitrary WHERE combos      |
+|  [13]   | `pg_stat_statements` | Query fingerprinting, execution statistics              | Performance analysis, regression detect |
+|  [14]   | `pgaudit`            | Compliance-grade audit logging (session + object)       | SOC 2, HIPAA, PCI-DSS compliance        |
 
 ## [07]-[VALIDATION_GATE]
 

@@ -74,17 +74,27 @@ The table is the artifact's densest surface; its markup does the aligning so the
 - Row groups are structural: one `<tbody>` per group with a group-header row spanning the columns, so collapse, zebra, and aggregate logic address the group as one node.
 
 ```html template
-<div class="twrap"><table>
-  <caption class="sr-only">Stage readiness by package</caption>
-  <thead><tr>
-    <th scope="col" aria-sort="descending"><button type="button" data-sort="pkg">Package</button></th>
-    <th scope="col" class="num">Coverage</th>
-    <th scope="col">Status</th>
-  </tr></thead>
-  <tbody>
-    <tr data-id="pkg-a"><th scope="row">Loader</th><td class="num">62</td><td><span class="chip warn">[AT-RISK]</span></td></tr>
-  </tbody>
-</table></div>
+<div class="twrap">
+    <table>
+        <caption class="sr-only">
+            Stage readiness by package
+        </caption>
+        <thead>
+            <tr>
+                <th scope="col" aria-sort="descending"><button type="button" data-sort="pkg">Package</button></th>
+                <th scope="col" class="num">Coverage</th>
+                <th scope="col">Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr data-id="pkg-a">
+                <th scope="row">Loader</th>
+                <td class="num">62</td>
+                <td><span class="chip warn">[AT-RISK]</span></td>
+            </tr>
+        </tbody>
+    </table>
+</div>
 ```
 
 ## [05]-[DISCLOSURE_AND_OVERLAY]
@@ -103,15 +113,18 @@ Native disclosure and top-layer elements own open state, dismissal, focus, and s
 ```html template
 <button class="drawer-tab" popovertarget="drawer">Export</button>
 <aside id="drawer" class="export-bar" popover aria-label="Export">
-  <header><h2>Export</h2><span class="micro" data-dirty></span></header>
-  <div data-send hidden><button class="btn primary" data-export="send">Send to agent</button></div>
-  <div>
-    <button class="btn" data-export="markdown">Copy markdown</button>
-    <button class="btn" data-export="json">Download JSON</button>
-    <button class="btn ghost" data-export="changed">Copy changed only</button>
-  </div>
-  <div data-drawer-fields></div>
-  <textarea readonly aria-label="Outgoing payload"></textarea>
+    <header>
+        <h2>Export</h2>
+        <span class="micro" data-dirty></span>
+    </header>
+    <div data-send hidden><button class="btn primary" data-export="send">Send to agent</button></div>
+    <div>
+        <button class="btn" data-export="markdown">Copy markdown</button>
+        <button class="btn" data-export="json">Download JSON</button>
+        <button class="btn ghost" data-export="changed">Copy changed only</button>
+    </div>
+    <div data-drawer-fields></div>
+    <textarea readonly aria-label="Outgoing payload"></textarea>
 </aside>
 ```
 
@@ -121,8 +134,8 @@ A composite widget is the one place `role` builds what HTML lacks; the markup ca
 
 ```html template
 <div role="tablist" aria-label="Views" data-tabs>
-  <button type="button" role="tab" id="tab-a" aria-selected="true" aria-controls="panel-a" data-tab="panel-a">Plan</button>
-  <button type="button" role="tab" id="tab-b" aria-selected="false" tabindex="-1" aria-controls="panel-b" data-tab="panel-b">Risks</button>
+    <button type="button" role="tab" id="tab-a" aria-selected="true" aria-controls="panel-a" data-tab="panel-a">Plan</button>
+    <button type="button" role="tab" id="tab-b" aria-selected="false" tabindex="-1" aria-controls="panel-b" data-tab="panel-b">Risks</button>
 </div>
 <section role="tabpanel" id="panel-a" aria-labelledby="tab-a"></section>
 <section role="tabpanel" id="panel-b" aria-labelledby="tab-b" hidden></section>
@@ -169,22 +182,24 @@ The composed card shows the grammar at real scale — identity on the article, t
 
 ```html template
 <article class="card" data-id="st-2">
-  <header class="rowline">
-    <h3>Ingest loader collapse</h3>
-    <span class="chip warn">[AT-RISK]</span>
-    <time class="micro right" datetime="2026-07-20">Jul 20</time>
-  </header>
-  <dl class="kv">
-    <dt>Owner</dt><dd>runtime</dd>
-    <dt>Gate</dt><dd><code>bridge-verify</code></dd>
-  </dl>
-  <details>
-    <summary>Evidence <span class="chip">3 rows</span></summary>
-    <figure>
-      <pre><code>loader.fold(rows)</code></pre>
-      <figcaption>One entry point discriminates on input shape.</figcaption>
-    </figure>
-  </details>
+    <header class="rowline">
+        <h3>Ingest loader collapse</h3>
+        <span class="chip warn">[AT-RISK]</span>
+        <time class="micro right" datetime="2026-07-20">Jul 20</time>
+    </header>
+    <dl class="kv">
+        <dt>Owner</dt>
+        <dd>runtime</dd>
+        <dt>Gate</dt>
+        <dd><code>bridge-verify</code></dd>
+    </dl>
+    <details>
+        <summary>Evidence <span class="chip">3 rows</span></summary>
+        <figure>
+            <pre><code>loader.fold(rows)</code></pre>
+            <figcaption>One entry point discriminates on input shape.</figcaption>
+        </figure>
+    </details>
 </article>
 ```
 

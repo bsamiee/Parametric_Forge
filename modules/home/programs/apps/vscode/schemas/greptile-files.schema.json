@@ -6,6 +6,7 @@
     "additionalProperties": false,
     "required": ["files"],
     "properties": {
+        "$schema": { "type": "string" },
         "files": {
             "type": "array",
             "items": {

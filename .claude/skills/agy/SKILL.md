@@ -1,13 +1,13 @@
 ---
 name: agy
 description: >-
-  Bounded one-shot Gemini sub-calls through the Antigravity CLI (`agy`): multimodal judgment
-  over screenshots, generated images, UI states, and diagrams, image-prompt drafting, broad
-  synthesis across competing designs, ambiguity reduction into crisp constraints, alternate
-  approaches and counterexample hunts, and redacted log or dataset distillation. Use when a
-  task gains from an external second model or names Gemini, Antigravity, Google Ultra, or
-  Nano Banana image judgment. gpt-5.5 offload belongs to the codex skill; delegation across
-  Claude's own surfaces belongs to agent-dispatch.
+    Bounded one-shot Gemini sub-calls through the Antigravity CLI (`agy`): multimodal judgment
+    over screenshots, generated images, UI states, and diagrams, image-prompt drafting, broad
+    synthesis across competing designs, ambiguity reduction into crisp constraints, alternate
+    approaches and counterexample hunts, and redacted log or dataset distillation. Use when a
+    task gains from an external second model or names Gemini, Antigravity, Google Ultra, or
+    Nano Banana image judgment. gpt-5.5 offload belongs to the codex skill; delegation across
+    Claude's own surfaces belongs to agent-dispatch.
 ---
 
 # [AGY]
@@ -17,6 +17,7 @@ Antigravity is an external Gemini call admitted only where it adds capability be
 ## [01]-[ROUTING]
 
 [SCRIPTS]:
+
 - [01]-[RUNNER](scripts/agy.py): the print-only Antigravity wrapper — one bounded prompt in, one JSON receipt out, pinned to the strongest Gemini reasoning tier.
 
 ## [02]-[CAPABILITY]

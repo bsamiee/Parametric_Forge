@@ -29,6 +29,7 @@ in {
     ./aria2.nix
     ./atuin.nix
     ./bat.nix
+    ./bundle-apps.nix
     ./bottom.nix
     ./browsers.nix
     ./carapace.nix

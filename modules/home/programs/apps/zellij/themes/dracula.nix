@@ -37,9 +37,12 @@
   renderComponent = pair: let
     name = builtins.elemAt pair 0;
     roleRows = builtins.elemAt pair 1;
-  in ''
-    ${name} {
-    ${lib.concatStrings (lib.zipListsWith (slot: role: "      ${slot} ${rgb role}\n") slots roleRows)}    }'';
+  in
+    # zipListsWith truncates to the shorter list: a mis-arity row would drop
+    # or invent emphasis slots silently, so arity gates at eval.
+    assert lib.assertMsg (builtins.length roleRows == builtins.length slots) "zellij theme ${name}: one role per slot (${toString (builtins.length slots)})"; ''
+      ${name} {
+      ${lib.concatStrings (lib.zipListsWith (slot: role: "      ${slot} ${rgb role}\n") slots roleRows)}    }'';
 in {
   xdg.configFile."zellij/themes/dracula.kdl".text = ''
     // Title         : dracula.kdl

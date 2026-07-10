@@ -18,35 +18,37 @@ readonly ALLOW_SYSTEM_LINKS="${CLAUDE_BOOTSTRAP_SYSTEM_LINKS:-${ALLOW_SUDO}}"
 readonly ALLOW_NETWORK="${CLAUDE_BOOTSTRAP_ALLOW_NETWORK:-0}"
 readonly ALLOW_REMOTE_INSTALLERS="${CLAUDE_BOOTSTRAP_ALLOW_REMOTE_INSTALLERS:-0}"
 readonly BINSTALL_URL='https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh'
+# Quoted subscripts: formatters parse bare hyphenated keys as arithmetic and
+# space them into broken lookups ("trash - put"); quoting pins the literal.
 declare -Ar TOOLS=(
-    [rg]='ripgrep:binstall' [fd]='fd-find:binstall'
-    [sd]='sd:binstall' [bat]='bat:binstall'
-    [eza]='eza:binstall' [choose]='choose:binstall'
-    [xh]='xh:binstall' [dust]='du-dust:binstall'
-    [procs]='procs:binstall' [ouch]='ouch:binstall'
-    [jnv]='jnv:binstall' [scc]='boyter/scc:github-go'
-    [hyperfine]='hyperfine:binstall' [gping]='gping:binstall'
-    [trip]='trippy:binstall'
-    [doggo]='mr-karan/doggo:github-go'
-    [trash - put]='trash-cli:pipx'
-    [uv]='uv:pipx'
-    [gws]='googleworkspace/cli:v0.22.5:github-release-sha'
-    [agy]='google-antigravity/official-installer:latest:antigravity-installer'
+    ["rg"]='ripgrep:binstall' ["fd"]='fd-find:binstall'
+    ["sd"]='sd:binstall' ["bat"]='bat:binstall'
+    ["eza"]='eza:binstall' ["choose"]='choose:binstall'
+    ["xh"]='xh:binstall' ["dust"]='du-dust:binstall'
+    ["procs"]='procs:binstall' ["ouch"]='ouch:binstall'
+    ["jnv"]='jnv:binstall' ["scc"]='boyter/scc:github-go'
+    ["hyperfine"]='hyperfine:binstall' ["gping"]='gping:binstall'
+    ["trip"]='trippy:binstall'
+    ["doggo"]='mr-karan/doggo:github-go'
+    ["trash-put"]='trash-cli:pipx'
+    ["uv"]='uv:pipx'
+    ["gws"]='googleworkspace/cli:v0.22.5:github-release-sha'
+    ["agy"]='google-antigravity/official-installer:latest:antigravity-installer'
 )
 declare -Ar STRATEGY_DISPATCH=(
-    [antigravity - installer]=_install_antigravity_installer
-    [binstall]=_install_binstall
-    [github - go]=_install_github_go
-    [github - release - sha]=_install_github_release_sha
-    [pipx]=_install_pipx
+    ["antigravity-installer"]=_install_antigravity_installer
+    ["binstall"]=_install_binstall
+    ["github-go"]=_install_github_go
+    ["github-release-sha"]=_install_github_release_sha
+    ["pipx"]=_install_pipx
 )
 declare -Ar COMMAND_DISPATCH=(
-    [check]=_check
-    [apply]=_apply
-    [help]=_usage
+    ["check"]=_check
+    ["apply"]=_apply
+    ["help"]=_usage
 )
-declare -Ar ARCH_MAP=([x86_64]='(amd64|x86_64)' [aarch64]='arm64' [arm64]='arm64')
-declare -Ar POST_NOTES=([trip]='requires: sudo setcap cap_net_raw+ep')
+declare -Ar ARCH_MAP=(["x86_64"]='(amd64|x86_64)' ["aarch64"]='arm64' ["arm64"]='arm64')
+declare -Ar POST_NOTES=(["trip"]='requires: sudo setcap cap_net_raw+ep')
 declare -ar PKG_MGRS=(apt-get dnf)
 declare -ar PREREQS=(curl tar gzip jq)
 declare -a installed=() skipped=() failed=()
@@ -200,7 +202,12 @@ _install_antigravity_installer() {
     local tmp
     tmp="$(mktemp -d)"
     _TMP_PATHS+=("${tmp}")
-    curl -fsSL https://antigravity.google/cli/install.sh -o "${tmp}/install.sh"
+    # A fetch failure is one failed tool, never a killed apply run.
+    curl -fsSL https://antigravity.google/cli/install.sh -o "${tmp}/install.sh" || {
+        rm -rf "${tmp}"
+        failed+=("${binary}")
+        return 1
+    }
     bash "${tmp}/install.sh" --dir "${BIN_DIR}" || {
         rm -rf "${tmp}"
         failed+=("${binary}")
@@ -248,8 +255,14 @@ _install_github_release_sha() {
     _TMP_PATHS+=("${tmp}")
     archive="${tmp}/${asset}"
     checksum_file="${archive}.sha256"
-    curl -sSfL "${base_url}/${asset}" -o "${archive}"
-    curl -sSfL "${base_url}/${asset}.sha256" -o "${checksum_file}"
+    # A fetch failure is one failed tool, never a killed apply run.
+    { curl -sSfL "${base_url}/${asset}" -o "${archive}" &&
+        curl -sSfL "${base_url}/${asset}.sha256" -o "${checksum_file}"; } || {
+        rm -rf "${tmp}"
+        printf '[FAIL] Release fetch failed for %s\n' "${asset}" >&2
+        failed+=("${binary}")
+        return 1
+    }
     expected="$(awk '{print $1}' "${checksum_file}")"
     actual="$(_sha256_file "${archive}")"
     [[ "${expected}" == "${actual}" ]] || {
@@ -258,8 +271,13 @@ _install_github_release_sha() {
         failed+=("${binary}")
         return 1
     }
-    tar -xzf "${archive}" -C "${tmp}"
-    install -m 0755 "${tmp}/${binary}" "${BIN_DIR}/${binary}"
+    { tar -xzf "${archive}" -C "${tmp}" &&
+        install -m 0755 "${tmp}/${binary}" "${BIN_DIR}/${binary}"; } || {
+        rm -rf "${tmp}"
+        printf '[FAIL] Archive layout unexpected for %s\n' "${asset}" >&2
+        failed+=("${binary}")
+        return 1
+    }
     rm -rf "${tmp}"
     installed+=("${binary}")
 }
@@ -288,9 +306,10 @@ _install_github_go() {
     raw_os="$(uname -s)"
     readonly raw_os
     local -r os="${raw_os@L}"
-    url="$(curl -sSf "https://api.github.com/repos/${repo}/releases/latest" |
+    # A fetch failure is one failed tool, never a killed apply run.
+    url="$(curl -sSf "https://api.github.com/repos/${repo}/releases/latest" 2>/dev/null |
         jq -r --arg os "${os}" --arg arch "${arch}" \
-            '[.assets[].browser_download_url | select(test($os; "i") and test($arch; "i") and test("\\.tar\\.gz$"))] | first // empty')"
+            '[.assets[].browser_download_url | select(test($os; "i") and test($arch; "i") and test("\\.tar\\.gz$"))] | first // empty' || true)"
     readonly url
     [[ -n "${url}" ]] || {
         printf '[FAIL] No release asset for %s/%s\n' "${os}" "${arch}"
@@ -300,8 +319,13 @@ _install_github_go() {
     tmp="$(mktemp -d)"
     readonly tmp
     _TMP_PATHS+=("${tmp}")
-    curl -sSfL "${url}" | tar -xz -C "${tmp}"
-    install -m 0755 "${tmp}/${binary}" "${BIN_DIR}/${binary}"
+    { curl -sSfL "${url}" | tar -xz -C "${tmp}" &&
+        install -m 0755 "${tmp}/${binary}" "${BIN_DIR}/${binary}"; } || {
+        rm -rf "${tmp}"
+        printf '[FAIL] Release download failed for %s\n' "${binary}" >&2
+        failed+=("${binary}")
+        return 1
+    }
     rm -rf "${tmp}"
     installed+=("${binary}")
 }

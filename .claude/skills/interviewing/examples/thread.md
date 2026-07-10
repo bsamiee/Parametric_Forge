@@ -76,25 +76,25 @@ The descent terminates: the next question detects no new gap. Stratum 2's reject
 
 ```markdown generated
 - [01]-[ACCEPTED]: Rebuild latency ownership
-  - Context: <unit>/pipeline/fonts.md:12 — font subsetting re-runs whole on every build and carries
-    41 of 56 cold seconds; render outputs are already content-keyed at <unit>/pipeline/render.md:41,
-    so the requested cache exists and the cost anchors at the one un-keyed stage.
-  - Drivers: One identity rail; cold-rebuild wall time as the unit of success; no environment reads
-    inside a keyed stage.
-  - Options: front cache layer | key the subsetter into the index | whole-tree memo
-  - Ruling: Font subsetting joins the artifact index as a content-keyed stage, keyed on font bytes
-    plus the explicit glyph set.
-  - Consequence: The index stays the one identity rail; a no-change rebuild reuses every stage, and
-    the subsetter's inputs become declared contract instead of ambient state.
-  - Confirmation: A no-change rebuild completes without re-running the subsetter and cold wall time
-    drops below the render-only floor.
-  - Rejected: front cache layer — a second keying regime beside the index, and a miss still re-runs
-    the subsetter; reopens when profiling shows the index lookup itself dominating a fully keyed
-    build. whole-tree memo — tree-grain keys re-render everything on one changed page; reopens when
-    the unit's page count drops to where whole-tree grain is indistinguishable from stage grain.
-  - Premises: [FACT] <unit>/pipeline/fonts.md:12 — the stage re-runs whole, keyed by nothing.
-    [ASSUMPTION] subsetter inputs are deterministic once the glyph set is explicit — invalidated if
-    the subsetter reads environment fonts, which re-opens the custody question.
+    - Context: <unit>/pipeline/fonts.md:12 — font subsetting re-runs whole on every build and carries
+      41 of 56 cold seconds; render outputs are already content-keyed at <unit>/pipeline/render.md:41,
+      so the requested cache exists and the cost anchors at the one un-keyed stage.
+    - Drivers: One identity rail; cold-rebuild wall time as the unit of success; no environment reads
+      inside a keyed stage.
+    - Options: front cache layer | key the subsetter into the index | whole-tree memo
+    - Ruling: Font subsetting joins the artifact index as a content-keyed stage, keyed on font bytes
+      plus the explicit glyph set.
+    - Consequence: The index stays the one identity rail; a no-change rebuild reuses every stage, and
+      the subsetter's inputs become declared contract instead of ambient state.
+    - Confirmation: A no-change rebuild completes without re-running the subsetter and cold wall time
+      drops below the render-only floor.
+    - Rejected: front cache layer — a second keying regime beside the index, and a miss still re-runs
+      the subsetter; reopens when profiling shows the index lookup itself dominating a fully keyed
+      build. whole-tree memo — tree-grain keys re-render everything on one changed page; reopens when
+      the unit's page count drops to where whole-tree grain is indistinguishable from stage grain.
+    - Premises: [FACT] <unit>/pipeline/fonts.md:12 — the stage re-runs whole, keyed by nothing.
+      [ASSUMPTION] subsetter inputs are deterministic once the glyph set is explicit — invalidated if
+      the subsetter reads environment fonts, which re-opens the custody question.
 ```
 
 ## [07]-[LANDING]

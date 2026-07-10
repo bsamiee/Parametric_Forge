@@ -25,18 +25,18 @@ Example response:
 
 ```json output-only
 {
-  "cardId": "22222222-2222-4222-8222-222222222222",
-  "cardType": "pdf",
-  "files": [
-    {
-      "id": "55555555-5555-4555-8555-555555555555",
-      "purpose": "content",
-      "name": "report.pdf",
-      "mimeType": "application/pdf",
-      "size": 123456,
-      "lastEditedTime": "2026-05-02T00:00:00.000Z"
-    }
-  ]
+    "cardId": "22222222-2222-4222-8222-222222222222",
+    "cardType": "pdf",
+    "files": [
+        {
+            "id": "55555555-5555-4555-8555-555555555555",
+            "purpose": "content",
+            "name": "report.pdf",
+            "mimeType": "application/pdf",
+            "size": 123456,
+            "lastEditedTime": "2026-05-02T00:00:00.000Z"
+        }
+    ]
 }
 ```
 
@@ -64,13 +64,13 @@ Example response:
 
 ```json output-only
 {
-  "fileId": "55555555-5555-4555-8555-555555555555",
-  "path": "/tmp/hepta-read/report-55555555-5555-4555-8555-555555555555.pdf",
-  "filename": "report-55555555-5555-4555-8555-555555555555.pdf",
-  "originalName": "report.pdf",
-  "mimeType": "application/pdf",
-  "size": 123456,
-  "lastEditedTime": "2026-05-02T00:00:00.000Z"
+    "fileId": "55555555-5555-4555-8555-555555555555",
+    "path": "/tmp/hepta-read/report-55555555-5555-4555-8555-555555555555.pdf",
+    "filename": "report-55555555-5555-4555-8555-555555555555.pdf",
+    "originalName": "report.pdf",
+    "mimeType": "application/pdf",
+    "size": 123456,
+    "lastEditedTime": "2026-05-02T00:00:00.000Z"
 }
 ```
 

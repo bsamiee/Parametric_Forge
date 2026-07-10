@@ -1,16 +1,16 @@
 ---
 name: applescript
 description: >-
-  Builds and hardens AppleScript, JXA, and Open Scripting Architecture automation — osascript/osacompile
-  runners, Apple Events and object-specifier dispatch, TCC consent preflight and hardened-runtime
-  entitlements, OSAKit/NSAppleScript embedding, ScriptingBridge and Cocoa Scripting, sdef and scriptable-app
-  dictionaries, notarized script-app distribution. Use when writing or reviewing AppleScript/JXA code,
-  sending Apple Events, wiring ScriptingBridge or OSAKit, authoring or reading an sdef, or packaging a signed
-  macOS automation artifact. Routes language core, OSA runtime, Foundation embedding, Apple Events security,
-  automation surfaces, and deploy/debug to their reference; carries hardened-runner, ObjC-bridge-tool,
-  compiled-library, and notarized-applet templates over real consent-preflight, raw-event-code, thread-safety,
-  observation, and dictionary-routing examples. Not plain shell scripting, browser page automation, or
-  Shortcuts-only flows.
+    Builds and hardens AppleScript, JXA, and Open Scripting Architecture automation — osascript/osacompile
+    runners, Apple Events and object-specifier dispatch, TCC consent preflight and hardened-runtime
+    entitlements, OSAKit/NSAppleScript embedding, ScriptingBridge and Cocoa Scripting, sdef and scriptable-app
+    dictionaries, notarized script-app distribution. Use when writing or reviewing AppleScript/JXA code,
+    sending Apple Events, wiring ScriptingBridge or OSAKit, authoring or reading an sdef, or packaging a signed
+    macOS automation artifact. Routes language core, OSA runtime, Foundation embedding, Apple Events security,
+    automation surfaces, and deploy/debug to their reference; carries hardened-runner, ObjC-bridge-tool,
+    compiled-library, and notarized-applet templates over real consent-preflight, raw-event-code, thread-safety,
+    observation, and dictionary-routing examples. Not plain shell scripting, browser page automation, or
+    Shortcuts-only flows.
 ---
 
 # [APPLESCRIPT]
@@ -21,6 +21,7 @@ AppleScript is an object-specifier compiler over the Apple Event ABI, not an Eng
 
 [REFERENCES]:
 Load the lane that owns the failing decision.
+
 - [01]-[LANGUAGE_CORE](references/language-core.md): the script-object algebra, closures, coercion rails, the comparison-attribute stack, delimiter critical sections, filter references, handler-dispatch tables, chevron raw codes, script persistence, and `NSAppleEventDescriptor` surgery.
 - [02]-[OSA_RUNTIME](references/osa-runtime.md): the `osascript` source algebra and output serialization, JXA specifier proxies and `whose` descriptors, the `$` ObjC bridge and `NSTask` kernels, script libraries, applet and droplet handler contracts, compiled storage, and run-only distribution.
 - [03]-[FOUNDATION_OSAKIT](references/foundation-osakit.md): `NSAppleScript` against `OSAScript`, OSAKit storage and options, component thread-safety and main-thread confinement, Cocoa Scripting commands and specifiers, `NSUserScriptTask`, ScriptingBridge, and the `OSACopyScriptingDefinitionFromURL` runtime escape.
@@ -30,6 +31,7 @@ Load the lane that owns the failing decision.
 
 [TEMPLATES]:
 Copy a skeleton and fill its policy rows; each is production-grade and parameterized.
+
 - [01]-[HARDENED_RUNNER](assets/templates/hardened-osascript-runner.sh): an agent or CLI drives automation through `osascript` behind a silent consent preflight, argv-only data, a JSON envelope, a timeout budget, and hash-only audit.
 - [02]-[OBJC_BRIDGE_TOOL](assets/templates/jxa-objc-tool.js): JXA reaches Foundation and CoreServices through an `NSTask` process kernel, a deep-unwrap boundary, and a JSON envelope over `run(argv)`.
 - [03]-[COMPILED_LIBRARY](assets/templates/applescript-library.applescript): reusable AppleScript ships as a `.scpt`/`.scptd` script object with policy rows, receipt-shaped errors, and AppleScriptObjC JSON and atomic-write rails.
@@ -37,6 +39,7 @@ Copy a skeleton and fill its policy rows; each is production-grade and parameter
 
 [EXAMPLES]:
 Each example is one focused frontier pattern as a real code artifact.
+
 - [01]-[CONSENT_PREFLIGHT](assets/examples/aedetermine-preflight.js): `AEDeterminePermissionToAutomateTarget` classified silently through the JXA ObjC bridge, reading the granted, denied, and never-asked verdicts.
 - [02]-[RAW_EVENT_CODES](assets/examples/raw-apple-event-codes.applescript): chevron `«event»`/`«class»`/`«constant»` literals and `NSAppleEventDescriptor` list and record surgery over the four-character ABI.
 - [03]-[THREAD_SAFETY](assets/examples/osakit-thread-safety.swift): one serial `OSALanguageInstance` per lane behind a Swift actor, with the main-thread and run-loop-reentrancy confinement.

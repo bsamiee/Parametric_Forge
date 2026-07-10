@@ -25,6 +25,7 @@
 - `step-security/harden-runner` first detected the anomalous network egress.
 
 [VALIDATOR_CHECKS_INFORMED_BY_INCIDENT]:
+
 - [ALWAYS]: Flag any `uses:` line without full 40-char SHA.
 - [ALWAYS]: Flag `tj-actions/*` without SHA pin — known targeted namespace.
 - [ALWAYS]: Flag workflows missing `step-security/harden-runner` as first step.
@@ -184,6 +185,7 @@ Key flags: `--repo` (single repo), `--owner` (org-wide), `--bundle` (offline), `
 |  [04]   | **node24** | Current default.                          | Active.           |
 
 [IMPORTANT]:
+
 - [ALWAYS]: Flag actions still bundled with node20 runtime — will break after March 4, 2026.
 - [ALWAYS]: Flag `actions/cache@v3` or `@v4` — requires v5 for node24 compatibility.
 - [ALWAYS]: Flag `actions/checkout@v4` or earlier — v6 is current stable with node22+ runtime.

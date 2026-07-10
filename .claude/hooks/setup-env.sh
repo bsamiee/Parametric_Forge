@@ -21,6 +21,9 @@ if ((BASH_VERSINFO[0] < 5)) && [[ -x "/etc/profiles/per-user/${USER}/bin/bash" ]
 fi
 shopt -s inherit_errexit
 IFS=$'\n\t'
+# Every artifact this hook writes is secret-adjacent: resolver dumps, retry
+# side files, stderr captures, key manifests. One umask owns their mode.
+umask 077
 
 # --- [CONSTANTS] ------------------------------------------------------------------------
 
@@ -313,7 +316,6 @@ _emit_tool_paths() {
 _resolve_and_publish() {
     local publish_env="$1" key
     _load_secrets
-    umask 077
     local keys_tmp
     keys_tmp="$(mktemp "${TMPDIR:-/tmp}/claude-keys.XXXXXX")"
     _TMP_FILES+=("${keys_tmp}")
@@ -400,26 +402,47 @@ readonly ENV_DIR
 [[ -d "${ENV_DIR}" && -w "${ENV_DIR}" && ! -d "${CLAUDE_ENV_FILE}" ]] || exit 0
 
 # Warm lane: replay the cache into the env file instantly — no network inside
-# the hook budget — and dispatch the detached refresh.
-if [[ -s "${SESSION_CACHE}" ]]; then
-    umask 077
-    _ENV_TMP="$(mktemp "${CLAUDE_ENV_FILE}.tmp.XXXXXX")"
-    readonly _ENV_TMP
-    _TMP_FILES+=("${_ENV_TMP}")
+# the hook budget — and dispatch the detached refresh (PATH-resolved nohup:
+# /usr/bin is a Darwin fact and this hook runs on every host).
+_replay_cache() {
+    local env_tmp
+    env_tmp="$(mktemp "${CLAUDE_ENV_FILE}.tmp.XXXXXX")"
+    _TMP_FILES+=("${env_tmp}")
     {
         cat "${SESSION_CACHE}"
         _emit_extra_env_keys
         _emit_tool_paths
-    } >"${_ENV_TMP}"
-    chmod 600 "${_ENV_TMP}"
-    mv "${_ENV_TMP}" "${CLAUDE_ENV_FILE}"
+    } >"${env_tmp}"
+    chmod 600 "${env_tmp}"
+    mv "${env_tmp}" "${CLAUDE_ENV_FILE}"
     # Last refresh verdicts stay loud: degraded rows reach the session context.
     grep -E 'DEAD|STALE' "${SESSION_CACHE_DIR}/receipt" 2>/dev/null || true
+}
+if [[ -s "${SESSION_CACHE}" ]]; then
+    _replay_cache
     printf 'setup-env: replay served from session cache; refresh dispatched\n' >&2
-    (/usr/bin/nohup "$0" --refresh >/dev/null 2>>"${SESSION_CACHE_DIR}/refresh.err" &)
+    (nohup "$0" --refresh >/dev/null 2>>"${SESSION_CACHE_DIR}/refresh.err" &)
     exit 0
 fi
 
 # Cold lane (first boot, no cache): resolve inline so the first session still
-# receives keys; every later session rides the warm lane.
+# receives keys. Concurrent cold sessions single-flight through the refresh
+# lock: the loser polls for the winner's cache and replays it, resolving
+# inline unlocked only when no cache lands inside the wait budget.
+mkdir -p "${SESSION_CACHE_DIR}"
+chmod 700 "${SESSION_CACHE_DIR}"
+if mkdir "${REFRESH_LOCK}" 2>/dev/null; then
+    _LOCKED=1
+    trap 'rm -rf "${REFRESH_LOCK}"; [[ ${#_TMP_FILES[@]} -eq 0 ]] || rm -f "${_TMP_FILES[@]}"' EXIT
+else
+    for _ in {1..20}; do
+        [[ -s "${SESSION_CACHE}" ]] && break
+        sleep 0.5
+    done
+    if [[ -s "${SESSION_CACHE}" ]]; then
+        _replay_cache
+        printf 'setup-env: replay served from a concurrent resolver cache\n' >&2
+        exit 0
+    fi
+fi
 _resolve_and_publish env

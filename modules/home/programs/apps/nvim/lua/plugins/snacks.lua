@@ -13,6 +13,7 @@
 require("snacks").setup({
     bigfile = { enabled = true },
     dashboard = {
+        enabled = true,
         preset = {
             keys = {
                 { icon = " ", key = "n", desc = "New File", action = ":ene | startinsert" },
@@ -119,9 +120,12 @@ end
 local function run(row)
     -- ENOENT rail: vim.system throws on a missing executable; fault as a
     -- typed notification instead of a stack trace in the picker confirm.
-    if vim.fn.executable(row.argv[1]) == 0 then
-        vim.notify(("estate row %q: %s not resolvable on PATH"):format(row.id, row.argv[1]), vim.log.levels.ERROR)
-        return
+    -- `probes` names the real tools behind sh-wrapped rows (health vocabulary).
+    for _, bin in ipairs(row.probes or { row.argv[1] }) do
+        if vim.fn.executable(bin) == 0 then
+            vim.notify(("estate row %q: %s not resolvable on PATH"):format(row.id, bin), vim.log.levels.ERROR)
+            return
+        end
     end
     if row.mode == "pane" then
         if not vim.env.ZELLIJ then

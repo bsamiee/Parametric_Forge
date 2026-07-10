@@ -5,8 +5,8 @@
 # Path          : hosts/context.nix
 # ----------------------------------------------------------------------------
 # Host-context factory: one vocabulary for every host on every OS. A new
-# machine is a new row here; host files project rows into darwinSystem or
-# nixosSystem, and the home graph gates imports on `host.os`/`host.features`.
+# machine is a new row here; the host factory projects rows into darwinSystem
+# or nixosSystem, and the home graph gates imports on `host.os`.
 let
   # Universal 1Password-held key ("Forge SSH Key"): auth + signing everywhere.
   authorizedKeys = [
@@ -15,8 +15,10 @@ let
 in {
   macbook = {
     name = "macbook";
+    label = "Bardia's MacBook Pro";
     os = "darwin";
     system = "aarch64-darwin";
+    timeZone = "America/Chicago";
     stateVersion = {
       system = 7;
       home = "26.05";
@@ -24,10 +26,6 @@ in {
     user = {
       name = "bardiasamiee";
       home = "/Users/bardiasamiee";
-    };
-    features = {
-      desktop = true;
-      server = false;
     };
     ssh = {inherit authorizedKeys;};
   };
@@ -39,6 +37,7 @@ in {
     name = "maghz";
     os = "nixos";
     system = "x86_64-linux";
+    timeZone = "America/Chicago";
     stateVersion = {
       system = "26.11";
       home = "26.11";
@@ -53,10 +52,6 @@ in {
         groups = ["docker"];
       }
     ];
-    features = {
-      desktop = false;
-      server = true;
-    };
     ssh = {inherit authorizedKeys;};
     disk.device = "/dev/sda";
     # Hostinger serves no DHCP: addressing is static, live-verified from the

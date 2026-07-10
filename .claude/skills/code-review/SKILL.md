@@ -1,13 +1,13 @@
 ---
 name: code-review
 description: >-
-  CodeRabbit code review of local changes via `coderabbit review --agent` — staged,
-  uncommitted, committed, or against a base branch or commit — with findings grouped by
-  severity, `.coderabbit.yaml` repo configuration, and an autonomous implement-review-fix
-  cycle. The default review skill: trigger on any explicit review request and autonomously
-  when a review is warranted (code, PR, quality, security), and on "run coderabbit".
-  Greptile branch-vs-base review belongs to cli-review; hosted PR reviewer round-trips
-  belong to pr-loop.
+    CodeRabbit code review of local changes via `coderabbit review --agent` — staged,
+    uncommitted, committed, or against a base branch or commit — with findings grouped by
+    severity, `.coderabbit.yaml` repo configuration, and an autonomous implement-review-fix
+    cycle. The default review skill: trigger on any explicit review request and autonomously
+    when a review is warranted (code, PR, quality, security), and on "run coderabbit".
+    Greptile branch-vs-base review belongs to cli-review; hosted PR reviewer round-trips
+    belong to pr-loop.
 ---
 
 # [CODE_REVIEW]

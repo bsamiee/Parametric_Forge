@@ -3,6 +3,7 @@
 ## [01]-[SQL_FUNCTIONS]
 
 SQL functions are candidates for planner inlining when all conditions are met:
+
 - SQL language (not PL/pgSQL)
 - IMMUTABLE or STABLE volatility
 - No SET clauses
@@ -50,10 +51,10 @@ Function attribute contracts:
 SECURITY INVOKER has always been the default for functions in all PG versions. PG 15 changed the default for views (not functions) via `CREATE VIEW ... WITH (security_invoker = on)`.
 
 Volatility misclassification consequences:
+
 - IMMUTABLE on a STABLE function: planner caches result across rows -- stale reads within query
 - STABLE on a VOLATILE function: planner may eliminate repeated calls -- missed side effects
 - Overly conservative (VOLATILE on IMMUTABLE): prevents index usage and constant folding
-
 
 ## [02]-[PL_PGSQL_FUNCTIONS]
 
@@ -90,6 +91,7 @@ $$;
 ```
 
 PL/pgSQL contracts:
+
 - `format('%I', ident)` for identifier interpolation -- `%I` double-quotes, preventing SQL injection
 - `format('%L', literal)` for literal interpolation -- `%L` single-quotes and escapes
 - Parameterized `EXECUTE ... USING` for value interpolation -- never concatenate values into query strings
@@ -143,6 +145,7 @@ $$;
 ```
 
 Dispatch contracts:
+
 - VALUES-based lookup replaces IF/THEN chains -- one code path, no branch coverage gaps
 - `format('%I', ident)` in each template handles identifier safety
 - `EXECUTE ... USING` binds values positionally -- zero SQL injection surface
@@ -150,6 +153,7 @@ Dispatch contracts:
 - Unrecognized operation: v_sql is NULL, RETURN QUERY EXECUTE NULL raises error -- fail-fast
 
 PL/pgSQL performance:
+
 - Plan caching: PL/pgSQL caches plans after 5 executions -- parameter-dependent plan shapes cause regression
 - `EXECUTE` forces re-planning every call -- use for dynamic SQL only, not to bypass plan caching
 - Composite-type parameter passing copies entire row -- pass individual columns when row is wide
@@ -168,7 +172,6 @@ Prepared statement vs dynamic SQL tradeoff (Effect-SQL):
 - For >10K calls/sec on fixed-shape queries: `sql` tagged template (auto-prepared) — zero re-plan overhead
 - For polymorphic functions with table-name dispatch: `EXECUTE ... USING` is unavoidable — the table name changes per call, so plan reuse is impossible
 - `plan_cache_mode = force_custom_plan` when generic plan is suboptimal (skewed data distribution on parameterized columns)
-
 
 ## [03]-[CUSTOM_AGGREGATES]
 
@@ -246,7 +249,6 @@ Ordered-set aggregates: `CREATE AGGREGATE ... (ORDER BY ...)` with `WITHIN GROUP
 
 Hypothetical-set aggregates: `CREATE AGGREGATE ... (ORDER BY ...)` with `HYPOTHETICAL` flag -- answers "what rank would this value have?" without inserting.
 
-
 ## [04]-[PROCEDURES]
 
 Procedures (PG 11+) for transaction-controlled operations. Unlike functions, procedures can COMMIT/ROLLBACK within their body.
@@ -279,13 +281,13 @@ $$;
 ```
 
 Procedure contracts:
+
 - `CALL procedure_name(...)` -- cannot be used in SELECT or as expression
 - COMMIT/ROLLBACK requires LANGUAGE plpgsql -- not available in SQL procedures
 - Procedures cannot return values -- use OUT parameters or write results to a staging table
 - Transaction control restriction: procedures using COMMIT/ROLLBACK cannot be called inside a client-initiated transaction block
 - `FOR UPDATE SKIP LOCKED` prevents contention when multiple instances run concurrently
 - Intermediate COMMIT releases row locks and frees WAL -- critical for large batch operations
-
 
 ## [05]-[BATCH_QUEUE_PATTERNS]
 
@@ -323,11 +325,11 @@ $$;
 ```
 
 Batch/queue contracts:
+
 - `FOR UPDATE SKIP LOCKED` — rows locked by other workers are skipped entirely, not queued. A periodic sweep reclaims stuck rows so every row is processed
 - Combine with `unnest` batch pattern: when processing batch arrays, use FOR UPDATE SKIP LOCKED as the queue-safe variant for concurrent batch consumers
 - Intermediate COMMIT in procedures releases row locks and frees WAL — critical for large batch operations (see Procedures section)
 - Index on `(status, created_at)` required — partial index `WHERE status = 'pending'` for selective access
-
 
 ## [06]-[POLYMORPHIC_FUNCTIONS]
 
@@ -355,6 +357,7 @@ Polymorphic type resolution:
 |  [09]   | anycompatiblemultirange (PG 14+) | Multirange over anycompatible element type                         |
 
 Resolution contracts:
+
 - At least one input parameter must be polymorphic for the return type to be polymorphic
 - `anyelement` resolution is strict per-call -- no implicit casting between parameters
 - `anycompatible` is weaker -- PG will implicitly cast to find common type (int + numeric -> numeric)

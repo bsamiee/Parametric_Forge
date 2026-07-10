@@ -2,7 +2,6 @@
 
 Compliance checklist for PostgreSQL 18 SQL code. Run after writing or modifying SQL. Each item is a pass/fail gate --- violations require correction before merge.
 
-
 ## [01]-[TYPE_INTEGRITY]
 
 - [ ] Every semantic concept has ONE domain type --- no duplicate CHECK constraints across tables
@@ -11,7 +10,6 @@ Compliance checklist for PostgreSQL 18 SQL code. Run after writing or modifying 
 - [ ] `uuidv7()` for new PK generation --- no `uuid-ossp` or `pgcrypto` dependency for IDs
 - [ ] Virtual generated columns for read-computed projections --- stored only when indexing required
 - [ ] Enum types used only for truly fixed sets --- domain-constrained text for evolving vocabularies
-
 
 ## [02]-[QUERY_INTEGRITY]
 
@@ -28,7 +26,6 @@ Compliance checklist for PostgreSQL 18 SQL code. Run after writing or modifying 
 - [ ] VALUES-based dispatch in PL/pgSQL --- no IF/THEN/ELSIF chains for operation routing
 - [ ] Composable aggregates in hierarchical CAGGs (avg/count/sum/stddev) --- no PERCENTILE_CONT across tiers
 
-
 ## [03]-[INDEX_INTEGRITY]
 
 - [ ] Every WHERE clause pattern on tables > 10K rows has a corresponding index
@@ -42,7 +39,6 @@ Compliance checklist for PostgreSQL 18 SQL code. Run after writing or modifying 
 - [ ] All indexes created with `CONCURRENTLY` in production migrations
 - [ ] `pg_stat_user_indexes.idx_scan = 0` indexes investigated and justified or removed
 
-
 ## [04]-[DDL_INTEGRITY]
 
 - [ ] Temporal constraints use `WITHOUT OVERLAPS` (PG 18) --- no trigger-based overlap prevention
@@ -53,7 +49,6 @@ Compliance checklist for PostgreSQL 18 SQL code. Run after writing or modifying 
 - [ ] Foreign keys explicitly named --- no auto-generated constraint names
 - [ ] `DETACH PARTITION ... CONCURRENTLY` for online partition removal
 
-
 ## [05]-[SECURITY_INTEGRITY]
 
 - [ ] RLS enabled and FORCED on every tenant-scoped table
@@ -63,7 +58,6 @@ Compliance checklist for PostgreSQL 18 SQL code. Run after writing or modifying 
 - [ ] Application connections use non-superuser role without BYPASSRLS
 - [ ] `scram-sha-256` authentication --- no md5 (deprecated PG 18)
 
-
 ## [06]-[PERFORMANCE_INTEGRITY]
 
 - [ ] `EXPLAIN (ANALYZE, BUFFERS, VERBOSE)` verified for new query patterns
@@ -72,7 +66,6 @@ Compliance checklist for PostgreSQL 18 SQL code. Run after writing or modifying 
 - [ ] `FOR UPDATE SKIP LOCKED` for concurrent batch processing --- no bare `FOR UPDATE` on queue tables
 - [ ] Functions marked `IMMUTABLE`/`STABLE`/`VOLATILE` accurately
 - [ ] Functions marked `PARALLEL SAFE` when eligible
-
 
 ## [07]-[INTEGRATION_INTEGRITY_EFFECT_SQL]
 
@@ -113,7 +106,6 @@ PG error codes to Effect tagged errors:
 - [ ] Batch operations use `unnest(array[])` — not row-at-a-time PL/pgSQL loops or application-side iteration
 - [ ] RAG schemas: chunks table has HNSW on embedding + GIN on tsvector; document_id FK with ON DELETE CASCADE; tenant_id with RLS
 
-
 ## [08]-[MIGRATION_SAFETY]
 
 ### [08.1]-[LOCK_LEVEL_AWARENESS]
@@ -149,7 +141,6 @@ PG error codes to Effect tagged errors:
 - [ ] Consistent table ordering across migrations prevents deadlock between concurrent runs
 - [ ] `CREATE INDEX CONCURRENTLY` cannot run inside a transaction block --- migrations must use non-transactional mode for concurrent index ops
 
-
 ## [09]-[DETECTION_HEURISTICS]
 
 | [INDEX] | [GREP_PATTERN]                                      | [VIOLATION]                                                     |
@@ -175,7 +166,6 @@ PG error codes to Effect tagged errors:
 - `uuid_generate_v4()`/`gen_random_uuid()` on a new ordered PK: justify random UUIDs by workload.
 - EXCLUDE_OVER_WITHOUT_OVERLAPS: use WITHOUT OVERLAPS when equality + range overlap is enough.
 
-
 ## [10]-[SKILL_EVAL_PROMPTS]
 
 - Explicit invocation: "Using coding-pg, design a temporal pricing table with PostgreSQL 18 constraints and validation commands."
@@ -183,4 +173,4 @@ PG error codes to Effect tagged errors:
 - Noisy context: "Given this app bug, ignore framework chatter and audit only the embedded SQL for doctrine violations."
 - Negative control: "Write TypeScript domain models only." Expected: do not invoke PostgreSQL references unless SQL or schema design appears.
 - Compliance checks: output loads only task-relevant references, avoids command thrash, avoids creating helper files, preserves `uuidv7()`/`WITHOUT OVERLAPS`/RLS doctrine, and runs `../scripts/pg_lint.sh` from this references directory when SQL text or fixtures are available.
-| `S.UUID` without `S.brand` for PK/FK              | RAW_UUID_ID --- brand entity IDs                           |
+  | `S.UUID` without `S.brand` for PK/FK | RAW_UUID_ID --- brand entity IDs |

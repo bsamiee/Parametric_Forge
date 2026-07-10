@@ -18,6 +18,7 @@ External tool reference: rg, awk, sd, fd, choose, jq, yq, mlr, jnv. Pipeline com
 |  [10]   | Tabular align  | `column` |   -   | `-t` pretty-prints; display only                             |
 
 [CAPABILITY_PROBING]:always gate on availability:
+
 ```bash copy-safe
 _require_tool() {
     command -v "${1}" >/dev/null 2>&1 || {
@@ -86,6 +87,7 @@ _require_tool fd find && _find() { fd "$@"; } || _find() { find "$@"; }
 |  [20]   | `--hyperlink-format` | OSC 8 terminal links   | `rg --hyperlink-format vscode 'WORKITEM'` |
 
 [RG_JQ_COMPOSITION]:structured search results:
+
 ```bash copy-safe
 # Extract matched lines as clean JSON array
 rg --json 'ERROR' app.log \
@@ -134,6 +136,7 @@ command | sd 'old' 'new'                  # Pipe mode (stdin → stdout)
 ## [06]-[PIPELINE_PATTERNS]
 
 [TOOL_COMPOSITION_PATTERNS]:
+
 ```bash copy-safe
 # rg → awk: filter then extract fields from unstructured log
 rg 'ERROR' app.log | awk '{print $1, $2, $NF}'

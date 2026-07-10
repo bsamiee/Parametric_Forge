@@ -24,10 +24,10 @@ Read commands return property values as:
 
 ```json output-only
 {
-  "id": "property-id",
-  "name": "Status",
-  "type": "select",
-  "value": "Published"
+    "id": "property-id",
+    "name": "Status",
+    "type": "select",
+    "value": "Published"
 }
 ```
 
@@ -35,10 +35,10 @@ Relation property reads return an array of populated relation objects, not a pla
 
 ```json output-only
 {
-  "id": "property-id",
-  "name": "Related",
-  "type": "relation",
-  "value": [{ "id": "related-card-id", "type": "note" }]
+    "id": "property-id",
+    "name": "Related",
+    "type": "relation",
+    "value": [{ "id": "related-card-id", "type": "note" }]
 }
 ```
 
@@ -47,7 +47,6 @@ Relation property reads return an array of populated relation objects, not a pla
 `select` and `multiSelect` option names are case-sensitive, matching the database UI; duplicate resolved options or relation cards are rejected.
 
 <!-- prettier-ignore -->
-
 | [INDEX] | [PROPERTY_TYPE] | [FORMAT]                                                                                       |
 | :-----: | :-------------- | :--------------------------------------------------------------------------------------------- |
 |  [01]   | `text`          | Plain string via `--value "Draft notes"`. Stores a plain-text paragraph.                       |

@@ -9,6 +9,7 @@ Apply when writing or reviewing prose, headings, captions, notes, examples, comm
 ## [02]-[WORDING_PRECEDENCE]
 
 Use the first owner that decides a naming or wording question:
+
 1. Current repository material, manifests, generated contracts, API fields, and actual product or package names.
 2. The active document-type standard for the document being written.
 3. Maintained product names, UI labels, APIs, commands, and support status.
@@ -24,6 +25,7 @@ Durable prose is law for agents that read it with no memory of why it was writte
 [REGENERATION_TEST] — The core test, applied sentence by sentence: delete the sentence. If a fresh agent regenerates the fact from disk plus the document's stated invariants, the sentence was a mirror — delete it, or demote it to a fenced representation when structure must be shown. If the fact cannot be regenerated, it is law kept at the altitude that owns it, still answerable to every defect class — surviving regeneration rules out the mirror alone, never a freeze, hedge, or ledger the catalog deletes. Fences and diagrams are exempt: a representation is declared regenerable, verified by tooling, and never paraphrased back into prose.
 
 [FACT_CLASSES] — Every fact in a durable doc is exactly one of:
+
 - [LAW]: Intent, invariant, boundary, prohibition. Survives any rename. Carried in prose.
 - [REPRESENTATION]: A structure snapshot (tree, codemap, diagram). Regenerable from disk, verified by tooling, carried only in a fence or diagram, never restated in prose.
 - [REGISTRY]: A fact whose system of record is the doc itself (package admissions, seam contracts). The only class allowed to enumerate.
@@ -31,6 +33,7 @@ Durable prose is law for agents that read it with no memory of why it was writte
 [ALTITUDE] — A fact lands at the lowest tier that owns it; a higher tier states only the invariant the fact instantiates. A sentence that can move one tier down without losing governing force over more than one child is at the wrong altitude. Fixing a violation demotes the fact to its owner, then collapses the higher copy — payload dropped during demotion is a defect.
 
 Tier ledger — what each tier carries; everything below its line is a lower tier's property:
+
 - [ROOT_README]: Repo purpose, layer law, and entry routes by concern — never folder inventories, tool rosters, or package facts.
 - [BRANCH_INDEX]: Branch invariants, package-grain topology and seams, and admission law — never a package's member inventory or file names.
 - [FOLDER_INDEX]: Folder charter, sub-domain structure, package-grain seams, and package registries — never file-tier wire truth, signatures, literals, or sibling-doc description.
@@ -43,31 +46,37 @@ Tier ledger — what each tier carries; everything below its line is a lower tie
 The review vocabulary. Findings cite the defect name and the line.
 
 [ENUMERATION_ANCHOR] — Prose that lists or counts enumerable content: files, folders, types, functions, packages — or the document's own members. The list is a second copy of a truth that lives elsewhere; every add, rename, or removal stales it silently, and future agents treat the stale copy as binding law. The self-directed form counts or characterizes the document's own content — a member count, a completeness claim ("the complete catalog"), an ordinal self-reference ("the third law below"), a size self-description — and the next entry falsifies it. A quantity is legal only as a rule threshold, a domain value, or a count whose members are enumerated in the same clause.
+
 - Rejected: `runtime` mints `ContentIdentity`/`ContentKey`, `BoundaryFault`/`RuntimeRail`, `Retry`, `RuntimeContext`/`SettingsAdmission`, and `Receipt`/`ReceiptContributor`, and references no sibling.
 - Accepted: One package is the foundation: it mints the shared value, fault, transport, and receipt owners, and references no sibling.
 - Reason: The accepted form states the invariant class; the member list is the owning folder's topology, regenerable from disk. Scalar counts of surfaces ("five sub-domains", "22 types") are the same defect. Domain values are data, not enumeration.
 
 [STALE_MIRROR] — A hand-maintained copy of truth whose system of record is elsewhere: disk, a manifest, a lockfile, another doc.
+
 - Rejected: A README routing table carrying one row per spec page under `.planning/`.
 - Accepted: One card per sub-domain pointing at `.planning/<sub>/`; the tree is the page index.
 - Reason: The doc adds only the intent the tree cannot carry; navigation below the pointer is disk truth.
 
 [MECHANISM_LEAK] — Index-tier prose carrying spec-tier mechanism: wire framing, hash algorithms, buffer sizes, exact signatures.
+
 - Rejected (index doc): streaming the GLB as 64 KiB Crc32-framed rows keyed by the seed-zero XxHash128 artifact hash.
 - Accepted (index doc): the serve owner frames and never tessellates.
 - Reason: Frame size, checksum, and seed live on the spec that owns the serve mechanism; the index states the boundary invariant. Demote the mechanism, never delete it.
 
 [META_FRAME] — Prose describing the artifact, its audience, its siblings, or its process instead of stating law.
+
 - Rejected: This file routes the spec pages and registers the packages; `ARCHITECTURE.md` carries the domain map and `TASKLOG.md` the open work.
 - Accepted: (nothing — the planning standard states the doc-set once; each doc just begins.)
 - Reason: N docs restating the doc-set is N copies of one fact plus self-description. Routing surfaces (README indexes, route maps, instruction files) may name owner relationships because routing is their job.
 
 [TWIN_TRUTH] — One fact stated in two docs or two tiers, in different words. The wordings drift independently; a future agent cannot tell which is law.
+
 - Rejected: A seam contract worded in the folder README lead, the ARCHITECTURE seam registry, and the branch ledger — three wordings.
 - Accepted: The seam registry edge (package grain, mirrored verbatim at the counterpart) plus the owning spec's mechanism; nothing else.
 - Reason: One owner per fact; every other site composes or points.
 
 [HEDGE] — Non-committal qualifiers, deferred-decision markers, and defensive residue around settled decisions: apology, reassurance tails answering unasked doubts, risk-hedge warnings, litigation against a claim nobody made. A durable doc records decisions; an open decision is a tracked item, never a soft sentence. Future tense is legal only on a card growth line and a tracked research item.
+
 - Banned: Word-boundary, page-wide — `should`, `could`, `would`, `might`, `maybe`, `perhaps`, `likely`, `probably`, `propose`, `consider`, `recommended`, `ideally`, `TBD`, `TODO`, `FIXME`, `we`, `our`, `you` — and the synonym forms `is expected to`, `can be`, `aims to`, `is designed to`, `in the future`, `eventually`, `as needed`, `if necessary`.
 - Survivors: Contract qualifiers that scope behavior rather than defer decisions — `optional`, `if present`, `where supported`, `when configured`, `only when`, `unless`.
 - Rejected: Delivery is exactly-once effective — transport plus consumer dedupe by content key (never magic).
@@ -75,57 +84,68 @@ The review vocabulary. Findings cite the defect name and the line.
 - Reason: The guarantee is stated as the mechanism that produces it; the reassurance tail, the mood verb, and the anticipated objection all die.
 
 [REPORT_FRAME] — Session, provenance, freshness, review, or checklist narration in a durable doc: research origins, source tails, "as of" dates, reviewer labels, process history, verification evidence, proof posture, closure checklists.
+
 - Rejected: All members decompile-verified against `provider 12.2.0`; four proofs, each independently fatal.
 - Accepted: (the member set and the rule, stated as law.)
 - Reason: Verification happens before authoring; durable artifacts state resulting law and omit origin — history is version control's job.
 
 [CAPABILITY_GATE] — Capability adjudicated against consumer presence, in either polarity: deferral gates it behind future demand; defense argues a consumerless addition past an imagined objection. Consumer count is never a design axis.
+
 - Rejected: The growth register re-opens this row only when a consumer names it; assume 5x the consumer demand on every surface.
 - Accepted: The graphite row binds the recorder surface at composition.
 - Reason: The arm, contract, and policy row are designed now in full; only the binding fact varies at composition. A capability that cannot yet be modeled gets silence; open work is a card.
 
 [LEGACY_COMPAT] — A shape preserved because an old caller, persisted reader, or predecessor depends on it; retired engines, dead aliases, and migration grace narrated in owner law.
+
 - Rejected: The legacy ingress survives as the fallback row for controllers that predate the gateway class.
 - Accepted: Clusters without the gateway class select the ingress row.
 - Reason: Coexisting arms are peer rows selected by a present environment fact. A genuine persisted-wire pin is a positive wire property stated once at its codec owner; everything else has no predecessor to spare.
 
 [IMPORTED_POSTURE] — A foreign authority's posture adopted over the corpus ruling: an upstream maturity label on a ruled standard, the ecosystem default presented as the default here, a fallback named beside the ruling, probationary ceremony on the ruled path, environment caveats the operating environment already resolves.
+
 - Rejected: The engine stays experimental — a diagram ships only after its render is inspected, and the shared renderer is the fallback when a defect bites.
 - Accepted: The engine lays out every graph family; a family that cannot take it routes to its own engine truth, and each engine trap carries its authoring rule beside it.
 - Reason: A maturity label, default, or risk posture is a fact about the upstream, never law here. The reframe flips the authority: the ruling stated as owned law, every alternative demoted to a boundary fact where the standard structurally cannot apply, each trap carrying its in-standard answer.
 
 [VERSION_ANCHOR] — Durable prose anchored to a release point in time: a version number or pin, a version-conditional behavior band, a date, release narration, or deictic freshness vocabulary — `newest`, `latest`, `modern`, `currently`, `recently`. The corpus assumes the newest stable release of everything it touches.
+
 - Rejected: The neo look lands at 2.14.0+; the curve default moved at 2.13.0 — restore the spline with the prior key.
 - Accepted: The look key accepts `neo`; the curve default is `rounded`, and `basis` restores the spline.
 - Reason: Behavior is stated as the behavior — the newest stable's truth with no band. A genuine wire or persistence version boundary is a positive property stated once at its codec owner; every other pin lives in the owning manifest alone.
 - Survivors: A capability floor a doctrine page legislates — interpreter floor, tool major — is admission law stated once at the owning page; registry data inside a compatibility matrix is the document's own system of record; an ordering selector (`latest` session, `newest` commit) states a cursor, never freshness. Trigger vocabulary a law page enumerates rides code spans.
 
 [SET_IN_STONE] — Wording that freezes the current shape against ground-up rebuild: SEALED, FROZEN, FINAL, legislated counts, "never re-opened", per-member byte-identical chants.
+
 - Rejected: The FROZEN twenty-column receipt: field names, types, and order are byte-identical wire law.
 - Accepted: The receipt's `[Key]` sequence is the persisted decode contract; growth is trailing-append.
 - Reason: A real wire contract is stated once at its owning declaration; a design-shape freeze is deleted outright. The partition principle is the law; a count is reported, never legislated.
 
 [WEAK_VERBS] — Permission verbs — supports, allows, enables, provides, offers — where an owning verb states law, including a permission verb smuggled into the object of an owning main verb (owns the option to enable).
+
 - Rejected: The package offers an optional self-hosted graph lane.
 - Accepted: The graph lane binds only under the self-hosted profile row.
 - Reason: The package is material the owner consumes, never a benefactor that supplies; the deployment condition is a policy row, not a hedge in the verb.
 
 [PROCESS_LEDGER] — Campaign or session bookkeeping fossilized into durable law: ship-status markers, decision tags and ruling IDs, research/wave/gate stamps, self-revision narration.
+
 - Rejected: DECISION [V10]: the trust gate binds every identifier crossing into engine SQL — LANDED, verify and extend.
 - Accepted: The trust gate binds every identifier crossing into engine SQL.
 - Reason: The rule is the authority. Open work moves to the card owner; anything resolved reads as if it had always been so — the reader cannot tell which parts were built when.
 
 [ASSERTED_IMPOSSIBILITY] — An impossibility claim ("unspellable", "structurally impossible") whose clause does not name the enforcing structure — a victory lap standing in for the mechanism.
+
 - Rejected: Cross-tenant batching is unspellable.
 - Accepted: Batch keys carry the tenant brand, so a batch is tenant-scoped by construction.
 - Reason: The enforcing structure is the subject and the impossibility its stated consequence, in one clause; with no nameable enforcer the claim is deleted.
 
 [DELETED_FORM_LITANY] — Law stated as an inventory of forbidden alternatives, the positive rule buried after the corpses or absent. Every enumerated strawman anchors a future agent to the anti-shape.
+
 - Rejected: Zero new surface — a per-extension package, a second engine, an open-per-query connection, inline credentials, or a raw-string identifier is the deleted form.
 - Accepted: The broker fold owns permission, cost, and consent for every operation.
 - Reason: The total positive claim forecloses every listed corpse by construction. One genuinely non-obvious trap survives as one tight positive invariant; a single prohibition with its enforcing mechanism in-clause is the house register, not this defect.
 
 [COUPLING] — Links, citations, numbered references, or meta-references to files, sources, or the project outside the artifact's own concern, anywhere but a declared routing surface.
+
 - Rejected: Per the fabrication decision and `sibling/page.md`, the codec follows the vendor's recommended framing (see reference 4).
 - Accepted: The codec frames append-only positional rows.
 - Reason: The fact is verified before authoring and stated as owned law; routes live in routing surfaces, and the origin dies with the decision that consumed it.
@@ -144,12 +164,14 @@ Comments — in source files and in transcription-complete fences alike — exis
 Use a front-and-close paragraph shape. The first sentence states the rule, claim, scope, outcome, or transition. The final sentence closes on the consequence, boundary, confirmation, or route the reader retains.
 
 [KEEP_OR_CONVERT]:
+
 - Keep a standalone sentence when it leads, transitions, captions, closes, states a consequence, names a route boundary, or marks a gap.
 - Convert a sentence to `Label: value` only when the value is scanned, quoted, or updated independently.
 - Convert local detail to a note, alert, or row-owned record only when its scope is local to one row, claim, risk, or artifact.
 - Delete or fold a sentence that only repeats emphasis.
 
 [MECHANICS]:
+
 - Coordinating conjunctions join equal-rank ideas: `for`, `and`, `nor`, `but`, `or`, `yet`, and `so`.
 - Use a comma before a coordinating conjunction joining two independent clauses.
 - Omit the comma for imperative clauses sharing an implied subject unless contrast, length, or ambiguity requires it.
@@ -175,11 +197,13 @@ Use one term for one concept inside a bounded context. Names are load-bearing: p
 ## [08]-[PUNCTUATION]
 
 [LOCAL_MECHANICS]:
+
 - Use U.S. English spelling unless a product or proper name differs.
 - Form singular possessives with `'s`; use the serial comma; use one space after terminal punctuation.
 - Use ASCII hyphen-minus in commands, flags, paths, slugs, identifiers, code, config, tracker literals, and copyable text.
 
 [COLONS_DASHES]:
+
 - Use a colon after a complete sentence that introduces a list, table, example, consequence, or explanation.
 - Capitalize the first word after a colon only when the following material is a complete sentence.
 - Use parentheses for nonessential clarification; promote required conditions into the main sentence.
@@ -189,6 +213,7 @@ Use one term for one concept inside a bounded context. Names are load-bearing: p
 - Prefer sentence splits or vertical lists over semicolon-ended bullets.
 
 [QUOTES_NUMBERS]:
+
 - Use numerals for versions, measurements, commands, flags, identifiers, dates, editions, counts, thresholds, and compared values.
 - Spell out isolated nontechnical counts from zero through nine only when the value is not a comparison, threshold, field value, or literal.
 - Use backticks for UI labels, commands, code, exact strings, and copied literals.
@@ -205,6 +230,7 @@ Use one term for one concept inside a bounded context. Names are load-bearing: p
 - When inline code contains a backtick, use a longer matching backtick delimiter rather than a backslash escape.
 
 [PLACEHOLDER_EXAMPLES]:
+
 - Accepted: `Shape`, `RefinedShape`, and `OtherShape`. Near miss: `Customer`, `PremiumCustomer`, and `WebhookPayload`. Reason: the accepted names show type structure without importing a business domain.
 - Accepted: `Variant`, `PRIMARY`, `SECONDARY`, `"<variant-a>"`. Near miss: `Mode`, `PROD`, `STAGING`, `"premium"`. Reason: the accepted names teach enum shape without deployment or pricing semantics.
 - Accepted: `SELECTED`, `SELECTED_RESULT`, `"<value-a>"`. Near miss: `active_customer`, `invoice_total`, `"alice"`. Reason: the accepted names mark selection and data position without anchoring the sample to an identity or product.

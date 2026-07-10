@@ -39,6 +39,7 @@ SELECT * FROM deleted;
 ```
 
 CTE contracts:
+
 - `AS MATERIALIZED` forces single evaluation; `AS NOT MATERIALIZED` forces inlining even with multiple references
 - Side-effecting CTEs (INSERT/UPDATE/DELETE) are always materialized -- execute exactly once
 - SEARCH BREADTH FIRST produces an `ordercol` (or custom name) for deterministic BFS ordering
@@ -46,7 +47,6 @@ CTE contracts:
 - SEARCH and CYCLE compose on the same recursive CTE -- SEARCH controls traversal order, CYCLE prevents infinite loops
 - There is no `max_recursion_depth` GUC in PostgreSQL -- use LIMIT in outer query for explicit row caps
 - Queue drain pattern: `DELETE ... WHERE id IN (SELECT ... FOR UPDATE SKIP LOCKED) RETURNING *` atomically claims and removes rows
-
 
 ## [02]-[MERGE]
 
@@ -69,6 +69,7 @@ RETURNING merge_action() AS action,
 ```
 
 MERGE contracts:
+
 - `merge_action()` returns `'INSERT'`, `'UPDATE'`, or `'DELETE'` -- typed signal for downstream event emission
 - `OLD.*` / `NEW.*` in RETURNING access pre/post values in PostgreSQL 18 -- replaces audit trigger patterns
 - `OLD` is NULL for INSERT actions; `NEW` is NULL for DELETE actions
@@ -78,7 +79,6 @@ MERGE contracts:
 - MERGE is atomic -- all matched rows processed in single statement execution
 - MERGE fires statement-level triggers for the actions specified in the command and row-level triggers for rows that execute the corresponding action
 - MERGE RETURNING composes inside CTEs for downstream INSERT/audit pipelines
-
 
 ## [03]-[CONDITIONAL_AGGREGATION]
 
@@ -94,10 +94,10 @@ GROUP BY department;
 ```
 
 FILTER contracts:
+
 - FILTER (WHERE) is evaluated before the aggregate function -- pre-filter, not post-filter
 - Applies to regular aggregates, window aggregates, and ordered-set aggregates
 - CASE WHEN inside aggregates is an anti-pattern -- use FILTER (WHERE) exclusively
-
 
 ## [04]-[MULTI_DIMENSIONAL_AGGREGATION]
 
@@ -139,13 +139,13 @@ GROUP BY ROLLUP (
 ```
 
 Multi-dimensional aggregation contracts:
+
 - `GROUPING(col1, col2, ...)` returns a bitmask: bit=1 when column is aggregated (NULL because of grouping, not data) -- use to distinguish NULL-from-data vs NULL-from-rollup
 - CUBE(a, b, c) produces 2^3 = 8 grouping sets -- exponential growth; limit to 3-4 columns
 - ROLLUP(a, b, c) produces 4 grouping sets: (a,b,c), (a,b), (a), () -- hierarchical, not combinatorial
 - Mixed syntax: `GROUP BY a, ROLLUP(b, c), CUBE(d)` composes via cross-product of grouping set lists
 - Planner uses HashAggregate or GroupAggregate with Sort -- partial indexes on grouping columns accelerate sorted strategies
 - `FILTER (WHERE ...)` composes with GROUPING SETS -- conditional aggregation within each dimension slice
-
 
 ## [05]-[WINDOW_FUNCTIONS]
 
@@ -247,6 +247,7 @@ LEFT JOIN daily_sales s ON gs.day = s.sale_date;
 ```
 
 Window contracts:
+
 - GROUPS framing counts distinct peer groups, not individual rows -- different from ROWS
 - RANGE framing operates on value distance from current row's ORDER BY value -- composable with INTERVAL for time-based windows
 - RANGE with INTERVAL requires a single ORDER BY column of date/timestamp/interval type -- multi-column ORDER BY invalid with RANGE INTERVAL
@@ -260,7 +261,6 @@ Window contracts:
 - PERCENT_RANK: (rank - 1) / (total_rows - 1), range [0, 1] -- use for relative standing within partition
 - CUME_DIST: count(values <= current) / total_rows, range (0, 1] -- use for cumulative distribution
 - Gap detection: `(expression)::int` coercion preferred over CASE for boolean-to-integer projection
-
 
 ## [06]-[JSON_TABLE_AND_SQL_JSON]
 
@@ -292,6 +292,7 @@ WHERE jsonb_path_exists(metadata, '$.tags[*] ? (@ == "priority")')
 ```
 
 SQL/JSON contracts:
+
 - JSON_TABLE produces a relational result set -- composable with JOINs, WHERE, GROUP BY
 - JSON_TABLE is an implicit LATERAL join -- outer row columns are accessible in path expressions
 - JSON_TABLE COLUMNS support scalar SQL types only (text, int, numeric, uuid, boolean, timestamptz) -- composite and array types invalid
@@ -303,7 +304,6 @@ SQL/JSON contracts:
 - jsonb_path_query returns `setof jsonb` -- use `jsonb_path_query_first` for scalar extraction
 - SQL/JSON path language uses `@` for current item, `$` for root -- not JSONPath dot notation
 - jsonb_path_query variables: second argument is jsonb object -- keys become `$varname` in path expression
-
 
 ## [07]-[LATERAL_JOIN]
 
@@ -338,11 +338,11 @@ LEFT JOIN LATERAL (
 ```
 
 LATERAL contracts:
+
 - LATERAL subquery can reference columns from preceding FROM items -- standard correlated subquery semantics
 - `CROSS JOIN LATERAL` excludes rows where lateral returns empty; `LEFT JOIN LATERAL ... ON TRUE` preserves them with NULLs
 - Planner may convert LATERAL to nested loop -- verify with EXPLAIN for large outer sets
 - LATERAL + LIMIT is the canonical top-N-per-group pattern -- index on `(foreign_key, sort_column DESC)` required
-
 
 ## [08]-[TEMPORAL_QUERIES_TSTZRANGE]
 
@@ -382,13 +382,13 @@ HAVING range_agg(valid_period) != tstzrange(MIN(lower(valid_period)), MAX(upper(
 ```
 
 Temporal contracts:
+
 - `@>` (range contains point): index via GiST on `valid_period` -- primary temporal lookup operator
 - `&&` (ranges overlap): detects temporal conflicts; `WITHOUT OVERLAPS` in PK/UNIQUE prevents at schema level
 - `-|-` (ranges adjacent): detects gapless sequences; `range_agg()` (PG 14+) collapses overlapping/adjacent ranges -- subtract from bounding range to expose gaps
 - `upper(range)` / `lower(range)`: extract bounds for display or cursor-based temporal pagination
 - Temporal tables with `WITHOUT OVERLAPS` guarantee at-most-one-match for point-in-time `@>` lookups -- no `LIMIT 1` needed on containment queries when constraint is present
 - `PERIOD` in temporal FK enforces containment: child range must fall entirely within parent range
-
 
 ## [09]-[KEYSET_PAGINATION]
 
@@ -404,13 +404,13 @@ LIMIT $page_size + 1;
 ```
 
 Keyset contracts:
+
 - Fetch N+1 rows; `has_next = rows.length > page_size`; cursor = last visible row's sort key tuple
 - First page: omit cursor WHERE clause, keep ORDER BY + LIMIT
 - Bidirectional: reverse ORDER BY and comparison operator for "previous page"
 - Tuple comparison `(a, b) < ($a, $b)` uses composite B-tree ordering -- single index scan
 - Sort columns must be indexed -- composite index matching ORDER BY direction
 - Ties in non-unique sort columns: always include PK as tiebreaker
-
 
 ## [10]-[BATCH_OPERATIONS_VIA_UNNEST]
 
@@ -431,7 +431,6 @@ WHERE products.id = batch.id AND products.tenant_id = $3;
 - `ON CONFLICT DO NOTHING` for idempotent batch insert — no duplicate error on retry
 - Array parameters bind via `EXECUTE ... USING` in PL/pgSQL or `sql(arrayParam)` in Effect-SQL
 
-
 ## [11]-[EFFECT_SQL_INTEGRATION]
 
 Typed query execution via `@effect/sql-pg` (`v0.49+`):
@@ -441,16 +440,15 @@ Typed query execution via `@effect/sql-pg` (`v0.49+`):
 const findByTenant = SqlSchema.findAll({
     Request: TenantId,
     Result: Order,
-    execute: (tenantId) =>
-        sql`SELECT id, name, status FROM orders WHERE tenant_id = ${tenantId}`,
-})
+    execute: (tenantId) => sql`SELECT id, name, status FROM orders WHERE tenant_id = ${tenantId}`,
+});
 
 // SqlSchema.findOne — Option-wrapped single result
 const findById = SqlSchema.findOne({
     Request: OrderId,
     Result: Order,
     execute: (id) => sql`SELECT * FROM orders WHERE id = ${id}`,
-})
+});
 
 // SqlResolver — batched N+1 resolution with automatic deduplication
 const OrderById = SqlResolver.findById("OrderById", {
@@ -458,7 +456,7 @@ const OrderById = SqlResolver.findById("OrderById", {
     Result: Order,
     ResultId: (row) => row.id,
     execute: (ids) => sql`SELECT * FROM orders WHERE id IN ${sql.in(ids)}`,
-})
+});
 
 // Keyset pagination with typed cursor
 const listOrders = (tenantId: TenantId, cursor: Option<PageCursor>, limit: number) =>
@@ -468,13 +466,15 @@ const listOrders = (tenantId: TenantId, cursor: Option<PageCursor>, limit: numbe
         execute: () =>
             sql`SELECT id, rank, title, created_at FROM orders
                 WHERE tenant_id = ${tenantId}
-                ${cursor.pipe(Option.match({
-                    onNone: () => sql``,
-                    onSome: (c) => sql`AND (rank, id) < (${c.rank}, ${c.id})`,
-                }))}
+                ${cursor.pipe(
+                    Option.match({
+                        onNone: () => sql``,
+                        onSome: (c) => sql`AND (rank, id) < (${c.rank}, ${c.id})`,
+                    }),
+                )}
                 ORDER BY rank DESC, id DESC
                 LIMIT ${limit + 1}`,
-    })(undefined)
+    })(undefined);
 ```
 
 - `sql` tagged template: parameterized, type-safe, injection-proof — never string concatenation

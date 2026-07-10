@@ -41,7 +41,6 @@ readonly port_policy_requested="${FORGE_PROVISION_PORT_POLICY:-auto}"
 readonly port_range_requested="${FORGE_PROVISION_PORT_RANGE:-$default_port_range}"
 readonly port_exclude_requested="${FORGE_PROVISION_PORT_EXCLUDE:-}"
 readonly auth_mode_requested="${FORGE_PROVISION_AUTH:-auto-root}"
-readonly pg_cron_requested="${FORGE_PROVISION_PG_CRON:-0}"
 readonly compose_up_wait_timeout=180
 # shellcheck disable=SC2034  # consumed by the sourced docker projection
 readonly service_ready_attempts=15
@@ -79,7 +78,11 @@ declare -A command_lock_mode=() command_diagnostic_json=()
 declare -a command_order=()
 
 load_command_routes() {
-    local verb handler json_mode argspec mutates lock_mode diagnostic desc extra
+    local verb handler json_mode argspec mutates lock_mode diagnostic desc extra rows
+    rows="$(jq -r -f "$(catalog_path jq/command-routes.jq)" "$(catalog_path data/commands.json)")" || {
+        printf 'forge-provision: unreadable command catalog: data/commands.json\n' >&2
+        exit 70
+    }
     while IFS=$'\t' read -r verb handler json_mode argspec mutates lock_mode diagnostic desc extra; do
         [[ -n "$verb" ]] || continue
         if [[ -n "${extra:-}" || -z "$handler" || -z "$argspec" || -z "$lock_mode" || -z "$desc" ]] || ! [[ "$json_mode$mutates$diagnostic" =~ ^[01]{3}$ ]]; then
@@ -94,8 +97,11 @@ load_command_routes() {
         [[ "$json_mode" == 1 ]] && command_json[$verb]=1
         [[ "$mutates" == 1 ]] && command_mutates[$verb]=1
         [[ "$diagnostic" == 1 ]] && command_diagnostic_json[$verb]=1
-    done < <(jq -r -f "$(catalog_path jq/command-routes.jq)" "$(catalog_path data/commands.json)")
-    return 0
+    done <<<"$rows"
+    ((${#command_order[@]} > 0)) || {
+        printf 'forge-provision: empty command catalog: data/commands.json\n' >&2
+        exit 70
+    }
 }
 
 load_command_routes
@@ -107,7 +113,11 @@ declare -A service_dsn_env=() service_volume_mount=() service_preload_base=()
 declare -A service_host=() service_container_port=() service_db_name=() service_db_user=()
 
 load_service_rows() {
-    local service role profile enabled_env enabled_default image_env image_default port_env port_default dsn_env volume_mount preload host container_port db_name db_user extra
+    local service role profile enabled_env enabled_default image_env image_default port_env port_default dsn_env volume_mount preload host container_port db_name db_user extra rows
+    rows="$(jq -r -f "$(catalog_path jq/service-rows.jq)" "$(catalog_path data/services.json)")" || {
+        printf 'forge-provision: unreadable service catalog: data/services.json\n' >&2
+        exit 70
+    }
     while IFS=$'\t' read -r service role profile enabled_env enabled_default image_env image_default port_env port_default dsn_env volume_mount preload host container_port db_name db_user extra; do
         [[ -n "$service" ]] || continue
         if [[ -n "${extra:-}" || -z "$role" || -z "$profile" || -z "$enabled_default" || -z "$image_env" || -z "$image_default" || -z "$port_env" || -z "$port_default" || -z "$dsn_env" || -z "$volume_mount" || -z "$preload" || -z "$host" || -z "$container_port" || -z "$db_name" || -z "$db_user" ]]; then
@@ -131,11 +141,45 @@ load_service_rows() {
         service_container_port[$service]="$container_port"
         service_db_name[$service]="$db_name"
         service_db_user[$service]="$db_user"
-    done < <(jq -r -f "$(catalog_path jq/service-rows.jq)" "$(catalog_path data/services.json)")
-    return 0
+    done <<<"$rows"
+    ((${#service_order[@]} > 0)) || {
+        printf 'forge-provision: empty service catalog: data/services.json\n' >&2
+        exit 70
+    }
 }
 
 load_service_rows
+
+# Extension gate vocabulary: the catalog row owns admitted values; bash admits set values only.
+declare -A extension_gate_values=()
+
+load_extension_gate_rows() {
+    local env_name values extra rows
+    rows="$(jq -r '[.[] | select((.gateEnv // "") != "") | {env: .gateEnv, values: ((.gateEnabledValues // ["1"]) | join(","))}] | unique_by(.env) | .[] | [.env, .values] | @tsv' "$(catalog_path data/postgres-extensions.json)")" || {
+        printf 'forge-provision: unreadable extension catalog: data/postgres-extensions.json\n' >&2
+        exit 70
+    }
+    while IFS=$'\t' read -r env_name values extra; do
+        [[ -n "$env_name" ]] || continue
+        if [[ -n "${extra:-}" || -z "$values" ]]; then
+            printf 'forge-provision: invalid extension gate row env=%s\n' "$env_name" >&2
+            exit 70
+        fi
+        extension_gate_values[$env_name]="$values"
+    done <<<"$rows"
+}
+
+load_extension_gate_rows
+
+validate_extension_gates() {
+    local gate_env gate_value
+    for gate_env in "${!extension_gate_values[@]}"; do
+        gate_value="${!gate_env:-}"
+        [[ -n "$gate_value" ]] || continue
+        [[ ",${extension_gate_values[$gate_env],,},0,false,no,off," == *",${gate_value,,},"* ]] ||
+            die "$gate_env must be one of ${extension_gate_values[$gate_env]} or 0/false/no/off: $gate_value"
+    done
+}
 
 forge_root=""
 project_key=""
@@ -330,6 +374,7 @@ normalize_command_args() {
             return 0
             ;;
         owned-prune)
+            local seen_json=false
             for arg in "$@"; do
                 case "$arg" in
                     --owned)
@@ -339,12 +384,16 @@ normalize_command_args() {
                     --volumes)
                         parsed_args+=("$arg")
                         ;;
-                    --json) [[ "$output_json" == false ]] || die_usage "prune received --json both globally and locally" ;;
+                    --json)
+                        [[ "$output_json" == false ]] || die_usage "prune received --json both globally and locally"
+                        [[ "$seen_json" == false ]] || die_usage "prune received duplicate --json"
+                        seen_json=true
+                        ;;
                     *) die_usage "prune requires --owned and accepts optional --volumes and --json" ;;
                 esac
             done
             [[ "$seen_owned" == true ]] || die_usage "prune requires --owned"
-            [[ " $* " == *" --json "* ]] && output_json=true
+            [[ "$seen_json" == false ]] || output_json=true
             return 0
             ;;
         tool-surface-selector)
@@ -634,16 +683,6 @@ host_port_busy() {
     esac
 }
 
-manifest_port_for_service() {
-    local service="$1"
-    local manifest="$current_link/manifest.json"
-    [[ -f "$manifest" ]] || return 1
-    jq -er --arg service "$service" '.services[$service].port // empty' "$manifest" 2>/dev/null || {
-        warn "published manifest is unreadable or missing port for service=$service; ignoring manifest port pins"
-        return 1
-    }
-}
-
 set_resolved_block() {
     local base="$1"
     local source="$2"
@@ -661,14 +700,24 @@ set_resolved_block() {
     done
 }
 
+# One manifest read pins every service port; any missing or unreadable row voids the pin set.
 set_resolved_manifest_ports() {
-    local service port excluded
-    local -A manifest_ports=() seen_active_ports=()
+    local service port excluded joined index=0
+    local -a manifest_ports=()
+    local -A seen_active_ports=()
+    local manifest="$current_link/manifest.json"
+    [[ -f "$manifest" ]] || return 1
     excluded="$(combined_excluded_ports 2>/dev/null)" || excluded="$port_exclude_requested"
+    joined="$(jq -er '[$ARGS.positional[] as $service | (.services[$service].port // empty | tostring)]
+        | if length == ($ARGS.positional | length) then join("\u001f") else error("missing manifest port") end' \
+        --args -- "${service_order[@]}" <"$manifest" 2>/dev/null)" || {
+        warn "published manifest is unreadable or missing service ports; ignoring manifest port pins"
+        return 1
+    }
+    IFS=$'\x1f' read -r -a manifest_ports <<<"$joined"
     for service in "${service_order[@]}"; do
-        port="$(manifest_port_for_service "$service")" || return 1
+        port="${manifest_ports[$((index++))]}"
         validate_port "manifest port for $service" "$port"
-        manifest_ports[$service]="$port"
         if service_enabled "$service"; then
             port_in_csv_ranges "$port" "$port_range_requested" || return 1
             [[ "$excluded" == "probe-unavailable" ]] || ! port_in_csv_ranges "$port" "$excluded" || return 1
@@ -676,8 +725,9 @@ set_resolved_manifest_ports() {
             seen_active_ports[$port]="$service"
         fi
     done
+    index=0
     for service in "${service_order[@]}"; do
-        resolved_service_port[$service]="${manifest_ports[$service]}"
+        resolved_service_port[$service]="${manifest_ports[$((index++))]}"
         resolved_service_port_source[$service]="current-manifest"
     done
 }
@@ -1022,8 +1072,7 @@ compose_project_name() {
 validate_static_env() {
     validate_lock_wait_seconds
     validate_project_slug "$project_name"
-    [[ "$pg_cron_requested" == "0" || "$pg_cron_requested" == "1" ]] ||
-        die "FORGE_PROVISION_PG_CRON must be 0 or 1: $pg_cron_requested"
+    validate_extension_gates
     resolve_auth
     resolve_ports false
 
@@ -1984,11 +2033,12 @@ create_generation() {
     generation="$provisioning_dir/.$generation_id"
     unpublished_generation="$generation"
     mkdir "$staging"
+    # && chain: `if !` suspends errexit inside the block, so unchained renders could mask a failure.
     if ! {
-        atomic_render "$staging/.env" render_env
-        atomic_render "$staging/compose.yaml" render_compose
-        atomic_render "$staging/manifest.json" render_generation_manifest "$generation_id"
-        docker_compose_file "$staging/compose.yaml" config >/dev/null
+        atomic_render "$staging/.env" render_env &&
+            atomic_render "$staging/compose.yaml" render_compose &&
+            atomic_render "$staging/manifest.json" render_generation_manifest "$generation_id" &&
+            docker_compose_file "$staging/compose.yaml" config >/dev/null
     }; then
         rc=$?
         rm -rf -- "$staging"
@@ -2130,7 +2180,7 @@ apple_container_json() {
     # Sanitized host-gate telemetry: presence, version line, eligibility facts, service state only.
     local present=false version="" macos_major=0 arch xcode_kind="none" gate=false dev_dir="" system="absent" raw_status="" status=""
     arch="$(uname -m)"
-    if command -v container >/dev/null 2>&1; then
+    if [[ "$host_os" == "Darwin" ]] && command -v container >/dev/null 2>&1; then
         present=true
         version="$(container --version 2>/dev/null || true)"
         version="${version%%$'\n'*}"
@@ -2190,9 +2240,7 @@ cmd_up() {
             rm -f -- "$compose_up_log"
             break
         fi
-        while IFS= read -r line; do
-            stderr_line "$line"
-        done <"$compose_up_log"
+        [[ ! -s "$compose_up_log" ]] || stderr_line "$(<"$compose_up_log")"
         if [[ "$port_policy_mode" == "auto" ]] &&
             awk '{ line = tolower($0) } line ~ /port[[:space:]]is[[:space:]]already[[:space:]]allocated/ || line ~ /ports[[:space:]]are[[:space:]]not[[:space:]]available/ || line ~ /bind:[[:space:]]address[[:space:]]already[[:space:]]in[[:space:]]use/ || line ~ /bind[[:space:]]for[[:space:]].*failed/ || line ~ /listen[[:space:]]tcp.*:[[:space:]]bind/ { found = 1 } END { exit(found ? 0 : 1) }' "$compose_up_log" &&
             ((auto_retry_count < 8)); then
@@ -2350,8 +2398,8 @@ cmd_psql_service() {
     assert_no_active_mutation_for_psql
     require_docker
     local rc=0 cleanup_rc=0
-    acquire_psql_session_lock "$service"
     install_release_traps release_psql_session_locks
+    acquire_psql_session_lock "$service"
     psql_in_container "$service" true "$@" || rc=$?
     release_psql_session_locks || cleanup_rc=$?
     trap - EXIT INT TERM HUP QUIT
@@ -2610,8 +2658,9 @@ cmd_doctor() {
         "$docker_endpoint" "$endpoint_path_exists" "$incoming_host" "$incoming_context" "${DOCKER_HOST:-}" "${DOCKER_CONTEXT:-}" "${DOCKER_CONFIG:-$HOME/.docker}"
     printf 'doctor\thost_docker_config=%s\ndoctor\thost_docker_config_credsStore=%s\ndoctor\thost_docker_config_credHelpers=%s\ndoctor\tanonymous_pull_config=%s\texists=%s\ndoctor\tdocker_compose=%s\ndoctor\tdocker_server=%s\n' \
         "$host_docker_config" "$host_creds_store" "$host_cred_helpers" "$docker_config_dir/config.json" "$anonymous_config_exists" "$compose_version" "$docker_server"
-    printf 'doctor\tports_inspectable=%s\ndoctor\tports_usable=%s\n' \
-        "$ports_available" "$(jq -r 'all(.[]; .state == "disabled" or .owner == "none" or .owner == "provision:this-project")' <<<"$ports_json")"
+    local ports_usable=false
+    [[ "$ports_available" != true ]] || ports_usable="$(jq -r 'all(.[]; .state == "disabled" or .owner == "none" or .owner == "provision:this-project")' <<<"$ports_json")"
+    printf 'doctor\tports_inspectable=%s\ndoctor\tports_usable=%s\n' "$ports_available" "$ports_usable"
     if [[ "$ports_available" == true ]]; then
         emit_ports_text "$ports_json"
     else
@@ -2663,6 +2712,8 @@ cmd_self_test() {
         [[ -n "${command_argspec[$command]:-}" ]] || die "command missing argspec: $command"
         [[ -n "${command_lock_mode[$command]:-}" ]] || die "command missing lock mode: $command"
         case "${command_lock_mode[$command]}" in mutation | psql-session | none) ;; *) die "unknown lock mode for command: $command mode=${command_lock_mode[$command]}" ;; esac
+        case "${command_argspec[$command]}" in json-only | owned-prune | tool-surface-selector | psql-pass-through) ;; *) die "unknown argspec for command: $command argspec=${command_argspec[$command]}" ;; esac
+        [[ -z "${command_diagnostic_json[$command]:-}" || -z "${command_mutates[$command]:-}" ]] || die "diagnostic JSON is admitted only for non-mutating commands: $command"
         if [[ -n "${command_mutates[$command]:-}" ]]; then
             [[ "${command_lock_mode[$command]}" == "mutation" ]] || die "mutating command must use mutation lock mode: $command"
         else
@@ -2708,6 +2759,12 @@ cmd_self_test() {
         done < <(extension_catalog_rows "$service")
         ((${#seen_extensions[@]} > 0)) || die "service missing extension catalog rows: $service"
     done
+    local gate_env gate_conflicts
+    for gate_env in "${!extension_gate_values[@]}"; do
+        [[ "$gate_env" =~ ^FORGE_PROVISION_[A-Z0-9_]+$ ]] || die "extension gate env outside the FORGE_PROVISION_ namespace: $gate_env"
+    done
+    gate_conflicts="$(jq -r '[.[] | select((.gateEnv // "") != "") | {env: .gateEnv, values: (.gateEnabledValues // ["1"])}] | group_by(.env) | map(select((map(.values) | unique | length) > 1) | .[0].env) | join(",")' "$(catalog_path data/postgres-extensions.json)")"
+    [[ -z "$gate_conflicts" ]] || die "conflicting gate vocabularies for: $gate_conflicts"
     local sql_template template_path template_text placeholder
     local -a required_placeholders=()
     local -A sql_template_placeholders=()
@@ -2789,7 +2846,6 @@ main() {
         usage >&2
         die_usage "unknown command: $command"
     }
-    current_command="$command"
     if [[ "$diagnostic_json" == true ]] && ! command_supports_diagnostic_json "$command"; then
         local verb diagnostic_verbs=""
         for verb in "${command_order[@]}"; do

@@ -74,11 +74,11 @@ disable=SC2329
 # .github/linters/.shellcheck.yml (alternative to .shellcheckrc for CI)
 shell: bash
 enable:
-  - require-variable-braces
-  - add-default-case
-  - check-unassigned-uppercase
+    - require-variable-braces
+    - add-default-case
+    - check-unassigned-uppercase
 disable:
-  - SC2329
+    - SC2329
 severity: style
 ```
 
@@ -135,6 +135,7 @@ _validate_env() {
     done
 }
 ```
+
 Eliminates per-variable `[[ -z ]]` chains. Contract is data (the map), not code. `${!var}` indirect expansion reads the variable named by `$var`. Regex in `_ENV_CONTRACT` values validates shape at the boundary.
 
 [EMBEDDED_SELF_TEST_GATE]:assert helpers for dispatch-table scripts:
@@ -166,33 +167,33 @@ name: Shell Quality Gate
 on: [pull_request]
 
 jobs:
-  validate:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Syntax check
-        run: |
-          find . -name '*.sh' -print0 | xargs -0 -n1 bash -n
-      - uses: ludeeus/action-shellcheck@2.0.0
-        with:
-          severity: style
-          shellcheck_version: v0.11.0
-          scandir: '.'
-          additional_files: '*.bash'
-      - name: Install bats + kcov
-        run: |
-          sudo apt-get install -y kcov
-          npm install -g bats bats-support bats-assert
-      - name: Unit tests with coverage
-        run: |
-          kcov --include-path=. coverage/ bats tests/
-      - name: Coverage gate
-        run: |
-          pct="$(jq -r '.percent_covered' coverage/bats/coverage.json)"
-          awk -v p="${pct}" 'BEGIN { exit (p < 80) ? 1 : 0 }' || {
-            printf 'Coverage %s%% below 80%% threshold\n' "${pct}" >&2
-            exit 1
-          }
+    validate:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+            - name: Syntax check
+              run: |
+                  find . -name '*.sh' -print0 | xargs -0 -n1 bash -n
+            - uses: ludeeus/action-shellcheck@2.0.0
+              with:
+                  severity: style
+                  shellcheck_version: v0.11.0
+                  scandir: "."
+                  additional_files: "*.bash"
+            - name: Install bats + kcov
+              run: |
+                  sudo apt-get install -y kcov
+                  npm install -g bats bats-support bats-assert
+            - name: Unit tests with coverage
+              run: |
+                  kcov --include-path=. coverage/ bats tests/
+            - name: Coverage gate
+              run: |
+                  pct="$(jq -r '.percent_covered' coverage/bats/coverage.json)"
+                  awk -v p="${pct}" 'BEGIN { exit (p < 80) ? 1 : 0 }' || {
+                    printf 'Coverage %s%% below 80%% threshold\n' "${pct}" >&2
+                    exit 1
+                  }
 ```
 
 ShellCheck exit codes:

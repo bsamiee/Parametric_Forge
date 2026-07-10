@@ -9,7 +9,7 @@ use scripting additions
 -- any term the dictionary dropped — a version-drift receipt, not corruption.
 on chevronRead()
 	tell application id "com.apple.finder"
-		return «class pnam» of «class docu» 1
+		return name of document 1
 	end tell
 end chevronRead
 

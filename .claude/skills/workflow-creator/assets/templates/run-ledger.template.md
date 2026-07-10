@@ -8,9 +8,9 @@ This ledger is NOT the journal. The journal (`journal.jsonl`, in the transcript 
 
 - Workflow: <workflow-name>
 - Scope / args: <scope-or-args, or "none">
-- Run ID: <wf_...>
+- Run ID: <wf\_...>
 - Launched scriptPath: <abs-path-to-the-.js-that-was-launched>
-- Transcript dir: <~/.claude/projects/.../subagents/workflows/wf_<id>/ — holds journal.jsonl>
+- Transcript dir: <~/.claude/projects/.../subagents/workflows/wf\_<id>/ — holds journal.jsonl>
 - Run scratch: <.claude/scratch/<workflow-name>/ — lane report files; a continuation script rebuilds completed stages from these plus the journal's `result` records>
 
 ## Resume / restart (same session only)
@@ -31,4 +31,4 @@ This ledger is NOT the journal. The journal (`journal.jsonl`, in the transcript 
 ## Status log
 
 - <marker>: launched
-- <marker>: resumed from <wf_...> after <reason>
+- <marker>: resumed from <wf\_...> after <reason>

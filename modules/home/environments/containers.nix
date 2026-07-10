@@ -14,6 +14,7 @@
   ...
 }: let
   isDarwin = pkgs.stdenv.hostPlatform.isDarwin;
+  toml = pkgs.formats.toml {};
   # Guard keeps the agent inert when the Homebrew binary is absent.
   containerSystemStart = pkgs.writeShellApplication {
     name = "container-system-start";
@@ -25,19 +26,18 @@
   # Apple Container startup config. `container system start` snapshots this
   # into its app root and re-saves it, so the file must be a real writable
   # file — a store symlink fails the save and aborts the start.
-  containerConfigToml = pkgs.writeText "container-config.toml" ''
-    [build]
-    rosetta = true
-    cpus = 4
-    memory = "8192mb"
-
-    [container]
-    cpus = 4
-    memory = "4g"
-
-    [registry]
-    domain = "docker.io"
-  '';
+  containerConfigToml = toml.generate "container-config.toml" {
+    build = {
+      rosetta = true;
+      cpus = 4;
+      memory = "8192mb";
+    };
+    container = {
+      cpus = 4;
+      memory = "4g";
+    };
+    registry.domain = "docker.io";
+  };
 in {
   # Declarative Colima: store-owned profile, launchd lifecycle (RunAtLoad +
   # restart-on-clean-exit), session env. colimaHomeDir stays on dataHome — the
@@ -144,20 +144,19 @@ in {
   '');
 
   xdg.configFile = {
-    "containers/registries.conf".text = ''
-      unqualified-search-registries = ["docker.io"]
-
-      [[registry]]
-      prefix = "docker.io"
-      location = "docker.io"
-    '';
-    "containers/storage.conf".text = ''
-      [storage]
-    '';
-    "containers/containers.conf".text = ''
-      [containers]
-
-      [engine]
-    '';
+    "containers/registries.conf".source = toml.generate "registries.conf" {
+      unqualified-search-registries = ["docker.io"];
+      registry = [
+        {
+          prefix = "docker.io";
+          location = "docker.io";
+        }
+      ];
+    };
+    "containers/storage.conf".source = toml.generate "storage.conf" {storage = {};};
+    "containers/containers.conf".source = toml.generate "containers.conf" {
+      containers = {};
+      engine = {};
+    };
   };
 }

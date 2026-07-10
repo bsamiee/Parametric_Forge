@@ -8,7 +8,7 @@ Resources created inside `apply()` never appear in `pulumi preview` and break de
 
 ```typescript rejected
 const bucket = new aws.s3.Bucket("bucket");
-bucket.id.apply(bucketId => {
+bucket.id.apply((bucketId) => {
     new aws.s3.BucketObject("object", { bucket: bucketId, content: "hello" });
 });
 ```
@@ -16,7 +16,7 @@ bucket.id.apply(bucketId => {
 ```typescript accepted
 const bucket = new aws.s3.Bucket("bucket");
 const object = new aws.s3.BucketObject("object", {
-    bucket: bucket.id,   // Output<string> passes directly; Pulumi owns the dependency
+    bucket: bucket.id, // Output<string> passes directly; Pulumi owns the dependency
     content: "hello",
 });
 ```
@@ -30,7 +30,9 @@ Pulumi builds its DAG from input/output relationships; manually unwrapped values
 ```typescript rejected
 const vpc = new aws.ec2.Vpc("vpc", { cidrBlock: "10.0.0.0/16" });
 let vpcId: string;
-vpc.id.apply(id => { vpcId = id; });
+vpc.id.apply((id) => {
+    vpcId = id;
+});
 const subnet = new aws.ec2.Subnet("subnet", { vpcId: vpcId, cidrBlock: "10.0.1.0/24" });
 ```
 
@@ -40,7 +42,7 @@ const subnet = new aws.ec2.Subnet("subnet", { vpcId: vpc.id, cidrBlock: "10.0.1.
 
 // String building over outputs:
 const name = pulumi.interpolate`prefix-${bucket.id}-suffix`;
-const alt  = pulumi.concat("prefix-", bucket.id, "-suffix");
+const alt = pulumi.concat("prefix-", bucket.id, "-suffix");
 ```
 
 ## [03]-[COMPONENTS_FOR_RELATED_RESOURCES]
@@ -70,7 +72,7 @@ Every child inside a component carries `{ parent: this }`; without it children l
 class MyComponent extends pulumi.ComponentResource {
     constructor(name: string, opts?: pulumi.ComponentResourceOptions) {
         super("myorg:components:MyComponent", name, {}, opts);
-        const bucket = new aws.s3.Bucket(`${name}-bucket`);   // lands at root level
+        const bucket = new aws.s3.Bucket(`${name}-bucket`); // lands at root level
     }
 }
 ```
@@ -97,7 +99,7 @@ const config = new pulumi.Config();
 const dbPassword = config.requireSecret("databasePassword");
 // Outputs derived from secrets stay secret:
 const connectionString = pulumi.interpolate`postgres://user:${dbPassword}@host/db`;
-const computed = pulumi.secret(someValue);   // explicit marking
+const computed = pulumi.secret(someValue); // explicit marking
 ```
 
 ESC centralizes secrets across stacks: a `Pulumi.yaml` `environment:` list pulls a resolved environment, and `esc env set <env> <key> --secret <value>` writes into it.
@@ -108,19 +110,27 @@ Renaming a resource, moving it into a component, or changing its parent reads as
 
 ```typescript rejected
 // was: new aws.s3.Bucket("my-bucket")
-const bucket = new aws.s3.Bucket("application-bucket");   // destroys the bucket
+const bucket = new aws.s3.Bucket("application-bucket"); // destroys the bucket
 ```
 
 ```typescript accepted
-const bucket = new aws.s3.Bucket("application-bucket", {}, {
-    aliases: [{ name: "my-bucket" }],
-});
+const bucket = new aws.s3.Bucket(
+    "application-bucket",
+    {},
+    {
+        aliases: [{ name: "my-bucket" }],
+    },
+);
 
 // Moving a root resource into a component records the old parent:
-const moved = new aws.s3.Bucket("bucket", {}, {
-    parent: this,
-    aliases: [{ name: "my-bucket", parent: pulumi.rootStackResource }],
-});
+const moved = new aws.s3.Bucket(
+    "bucket",
+    {},
+    {
+        parent: this,
+        aliases: [{ name: "my-bucket", parent: pulumi.rootStackResource }],
+    },
+);
 
 // Full-URN form when the previous URN is known:
 // aliases: ["urn:pulumi:stack::project::aws:s3/bucket:Bucket::old-name"]
@@ -135,20 +145,20 @@ Lifecycle: add the alias, run `pulumi up` on every stack, then optionally drop t
 ```yaml template
 # CI shape: preview on every PR, deploy only on merge to main
 jobs:
-  preview:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pulumi/actions@v5
-        with: { command: preview, stack-name: production }
-        env: { PULUMI_ACCESS_TOKEN: "${{ secrets.PULUMI_ACCESS_TOKEN }}" }
-  deploy:
-    needs: preview
-    if: github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: pulumi/actions@v5
-        with: { command: up, stack-name: production }
+    preview:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+            - uses: pulumi/actions@v5
+              with: { command: preview, stack-name: production }
+              env: { PULUMI_ACCESS_TOKEN: "${{ secrets.PULUMI_ACCESS_TOKEN }}" }
+    deploy:
+        needs: preview
+        if: github.ref == 'refs/heads/main'
+        runs-on: ubuntu-latest
+        steps:
+            - uses: pulumi/actions@v5
+              with: { command: up, stack-name: production }
 ```
 
 ## [08]-[QUICK_REFERENCE]

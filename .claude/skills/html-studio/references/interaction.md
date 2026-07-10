@@ -12,9 +12,18 @@ One plain state object holds every captured fact; `render()` projects it into th
 const state = { rows: [], filter: "", selection: [], captures: {} };
 const baseline = structuredClone(state);
 const undo = [];
-const commit = mutate => { undo.push(structuredClone(state)); mutate(state); render(); };
-const undoLast = () => { if (undo.length) { Object.assign(state, undo.pop()); render(); } };
-const changedKeys = () => Object.keys(state).filter(k => JSON.stringify(state[k]) !== JSON.stringify(baseline[k]));
+const commit = (mutate) => {
+    undo.push(structuredClone(state));
+    mutate(state);
+    render();
+};
+const undoLast = () => {
+    if (undo.length) {
+        Object.assign(state, undo.pop());
+        render();
+    }
+};
+const changedKeys = () => Object.keys(state).filter((k) => JSON.stringify(state[k]) !== JSON.stringify(baseline[k]));
 ```
 
 Every region is a projection — filter, group, join — of the one model, and an item that accepts reader judgment carries its decision slot in the model, so capture is model mutation and export serializes the model.
@@ -24,22 +33,24 @@ Every region is a projection — filter, group, join — of the one model, and a
 The dataset ships as one `<script type="application/json" id="payload">` block parsed once at boot; the parser output is the sole data source, and markup never duplicates a field. The embed is sanitized so the payload text has no way to terminate its own script element, and repeated rows hydrate by cloning a `<template>`:
 
 ```js copy-safe
-const embed = data => JSON.stringify(data)
-  .replace(/</g, "\\u003c")
-  .replace(/\u2028/g, "\\u2028").replace(/\u2029/g, "\\u2029");
+const embed = (data) =>
+    JSON.stringify(data)
+        .replace(/</g, "\\u003c")
+        .replace(/\u2028/g, "\\u2028")
+        .replace(/\u2029/g, "\\u2029");
 ```
 
 ```js copy-safe
 const data = JSON.parse(document.getElementById("payload").textContent);
 const tpl = document.getElementById("row-tpl");
-const mountRows = rows => {
-  const frag = document.createDocumentFragment();
-  rows.forEach(r => {
-    const node = tpl.content.cloneNode(true);
-    node.querySelector("[data-cell=name]").textContent = r.name;
-    frag.append(node);
-  });
-  document.querySelector("tbody").replaceChildren(frag);
+const mountRows = (rows) => {
+    const frag = document.createDocumentFragment();
+    rows.forEach((r) => {
+        const node = tpl.content.cloneNode(true);
+        node.querySelector("[data-cell=name]").textContent = r.name;
+        frag.append(node);
+    });
+    document.querySelector("tbody").replaceChildren(frag);
 };
 ```
 
@@ -58,7 +69,7 @@ A filter acts in two modalities and never deletes from the model: a scope filter
 Rendering is data-to-presentation mapping through safe sinks; an injected string never renders as trusted markup.
 
 ```js copy-safe
-const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 ```
 
 - A renderer writes with `replaceChildren`, `textContent`, attributes, dataset stamps, and custom properties; a scoped `paint*` patch survives only for local SVG, meter, or readout updates whose model remains authoritative.
@@ -74,19 +85,49 @@ const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;"
 One document-level listener owns each event concern, routing by `closest()` on `data-*` hooks — controls added by re-render arrive pre-wired, and no node carries its own handler.
 
 ```js copy-safe
-const debounce = (fn, ms) => { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; };
+const debounce = (fn, ms) => {
+    let t;
+    return (...a) => {
+        clearTimeout(t);
+        t = setTimeout(() => fn(...a), ms);
+    };
+};
 ```
 
 ```js conceptual
 const ROUTES = {
-  click:  [["[data-verdict-for]", hit => commit(s => setVerdict(s, hit))]],
-  input:  [["[data-note-for]",    debounce(hit => commit(s => setNote(s, hit)), 250)],
-           ["[data-filter-box]",  debounce(hit => commit(s => { s.filter = hit.value.trim(); }), 120)]],
-  change: [["[data-seg] input",   hit => commit(s => { s.view = hit.value; })]],
+    click: [["[data-verdict-for]", (hit) => commit((s) => setVerdict(s, hit))]],
+    input: [
+        ["[data-note-for]", debounce((hit) => commit((s) => setNote(s, hit)), 250)],
+        [
+            "[data-filter-box]",
+            debounce(
+                (hit) =>
+                    commit((s) => {
+                        s.filter = hit.value.trim();
+                    }),
+                120,
+            ),
+        ],
+    ],
+    change: [
+        [
+            "[data-seg] input",
+            (hit) =>
+                commit((s) => {
+                    s.view = hit.value;
+                }),
+        ],
+    ],
 };
-Object.entries(ROUTES).forEach(([type, routes]) => document.addEventListener(type, e => {
-  routes.forEach(([sel, fn]) => { const hit = e.target.closest(sel); if (hit) fn(hit, e); });
-}));
+Object.entries(ROUTES).forEach(([type, routes]) =>
+    document.addEventListener(type, (e) => {
+        routes.forEach(([sel, fn]) => {
+            const hit = e.target.closest(sel);
+            if (hit) fn(hit, e);
+        });
+    }),
+);
 ```
 
 - Every control answers keyboard and touch identically to mouse: tabs roll focus with arrow keys under a roving `tabindex`, grids move focus cell-to-cell as one composite, and Enter and Space share the click path on any focusable region.
@@ -102,7 +143,11 @@ Object.entries(ROUTES).forEach(([type, routes]) => document.addEventListener(typ
 - A destructive action gates through the native dialog as a promise, and the default resolution is the non-destructive value:
 
 ```js copy-safe
-const ask = dlg => new Promise(res => { dlg.showModal(); dlg.addEventListener("close", () => res(dlg.returnValue === "ok"), { once: true }); });
+const ask = (dlg) =>
+    new Promise((res) => {
+        dlg.showModal();
+        dlg.addEventListener("close", () => res(dlg.returnValue === "ok"), { once: true });
+    });
 ```
 
 ## [05]-[CAPTURE]
@@ -121,14 +166,14 @@ One canonical envelope rides every egress path — clipboard, download, and the 
 
 ```json conceptual
 {
-  "kind": "plan",
-  "version": 1,
-  "artifact": { "id": "plan.shape-collapse", "title": "Collapsing the Shape Surface", "baseline": "b-2031" },
-  "decision": { "status": "approve_with_notes", "at": "2026-07-06T18:40:00Z" },
-  "decisions": [ { "id": "st-3", "verdict": "defer", "note": "after the call-site audit" } ],
-  "changes": [ { "itemId": "st-2", "path": "/stages/st-2/status", "from": "planned", "to": "active" } ],
-  "annotations": [ { "id": "a-1", "itemId": "st-3", "intent": "question", "status": "active", "text": "who owns the audit" } ],
-  "state": {}
+    "kind": "plan",
+    "version": 1,
+    "artifact": { "id": "plan.shape-collapse", "title": "Collapsing the Shape Surface", "baseline": "b-2031" },
+    "decision": { "status": "approve_with_notes", "at": "2026-07-06T18:40:00Z" },
+    "decisions": [{ "id": "st-3", "verdict": "defer", "note": "after the call-site audit" }],
+    "changes": [{ "itemId": "st-2", "path": "/stages/st-2/status", "from": "planned", "to": "active" }],
+    "annotations": [{ "id": "a-1", "itemId": "st-3", "intent": "question", "status": "active", "text": "who owns the audit" }],
+    "state": {}
 }
 ```
 
@@ -159,24 +204,30 @@ The wire form wraps the canonical envelope without redefining it: the POST body 
 ```js conceptual
 const returnMeta = document.querySelector('meta[name="artifact-return"]');
 const tokenMeta = document.querySelector('meta[name="artifact-token"]');
-const sendToAgent = async envelope => {
-  const res = await fetch(returnMeta.content, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "X-Artifact-Token": tokenMeta?.content ?? "" },
-    body: JSON.stringify({ kind: envelope.kind, artifact: envelope.artifact.id, version: envelope.version, data: envelope }),
-  });
-  if (!res.ok) throw new Error(`submit ${res.status}`);
-  return res.json();
+const sendToAgent = async (envelope) => {
+    const res = await fetch(returnMeta.content, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-Artifact-Token": tokenMeta?.content ?? "" },
+        body: JSON.stringify({ kind: envelope.kind, artifact: envelope.artifact.id, version: envelope.version, data: envelope }),
+    });
+    if (!res.ok) throw new Error(`submit ${res.status}`);
+    return res.json();
 };
 if (returnMeta) {
-  const btn = document.querySelector("[data-export='send']");
-  btn.closest("[data-send]").hidden = false;
-  btn.addEventListener("click", async () => {
-    btn.disabled = true;
-    try { await sendToAgent(snapshotEnvelope()); btn.textContent = "Sent"; }
-    catch { btn.textContent = "Send failed — copied instead"; copyEnvelope(); }
-    finally { btn.disabled = false; }
-  });
+    const btn = document.querySelector("[data-export='send']");
+    btn.closest("[data-send]").hidden = false;
+    btn.addEventListener("click", async () => {
+        btn.disabled = true;
+        try {
+            await sendToAgent(snapshotEnvelope());
+            btn.textContent = "Sent";
+        } catch {
+            btn.textContent = "Send failed — copied instead";
+            copyEnvelope();
+        } finally {
+            btn.disabled = false;
+        }
+    });
 }
 ```
 
@@ -187,14 +238,17 @@ A submission re-enters the agent conversation as data whose decision fields sele
 One egress chain owns every copy: the payload lands in the readonly mirror first, `navigator.clipboard.writeText` runs second, and a denied clipboard leaves the mirror selected with the toast naming the fallback — the page never dead-ends, and `document.execCommand` never appears. Downloads ride one Blob recipe; two egress paths in one artifact is a defect.
 
 ```js copy-safe
-const copyRich = (html, text) => navigator.clipboard.write([new ClipboardItem({
-  "text/html": new Blob([html], { type: "text/html" }),
-  "text/plain": new Blob([text], { type: "text/plain" }),
-})]);
+const copyRich = (html, text) =>
+    navigator.clipboard.write([
+        new ClipboardItem({
+            "text/html": new Blob([html], { type: "text/html" }),
+            "text/plain": new Blob([text], { type: "text/plain" }),
+        }),
+    ]);
 const download = (name, text) => {
-  const url = URL.createObjectURL(new Blob([text], { type: "application/json" }));
-  Object.assign(document.createElement("a"), { href: url, download: name }).click();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
+    const url = URL.createObjectURL(new Blob([text], { type: "application/json" }));
+    Object.assign(document.createElement("a"), { href: url, download: name }).click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
 };
 ```
 
@@ -208,9 +262,20 @@ const download = (name, text) => {
 
 ```js conceptual
 const draftKey = "draft:" + document.title;
-try { const saved = localStorage.getItem(draftKey); if (saved) Object.assign(state, JSON.parse(saved)); } catch {}
-document.addEventListener("input", debounce(() => { try { localStorage.setItem(draftKey, JSON.stringify(state)); } catch {} }, 250));
+try {
+    const saved = localStorage.getItem(draftKey);
+    if (saved) Object.assign(state, JSON.parse(saved));
+} catch {}
+document.addEventListener(
+    "input",
+    debounce(() => {
+        try {
+            localStorage.setItem(draftKey, JSON.stringify(state));
+        } catch {}
+    }, 250),
+);
 ```
+
 - An artifact opened from `file://` embeds whatever it needs: inline script, data URLs, Blob URLs, picked files, and fragment state all run; a sibling `fetch`, module import, or worker is dead there, and a design reaching for a neighbor file stops being self-contained.
 
 ## [10]-[REDACTION]

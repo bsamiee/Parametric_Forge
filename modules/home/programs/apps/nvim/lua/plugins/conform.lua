@@ -12,9 +12,12 @@ require("conform").setup({
     formatters_by_ft = require("forge.tools").format,
     -- Bare-name law: the builtin prettier definition prefers the repo's
     -- node_modules/.bin, executing a repo-owned binary on save; pin the
-    -- per-user profile binary instead.
+    -- per-user profile binary instead. Same law for csharpier: the builtin
+    -- probes `dotnet csharpier` (cwd-dependent, session-cached) — pin the
+    -- profile binary the estate fmt router's cs lane owns.
     formatters = {
         prettier = { command = "prettier" },
+        csharpier = { command = "csharpier", args = { "format" } },
     },
     format_on_save = {
         timeout_ms = 1500,

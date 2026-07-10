@@ -95,14 +95,14 @@ end open
 `ignoring application responses` is a fire-and-forget Apple-event boundary; it never wraps a command whose result, error, or object specifier feeds later logic, and any such command nests back under `considering application responses`. `with timeout of n seconds` binds a command sent to an application object, not a command handled by the current script — a long application command carries an explicit timeout row, while local shell and Foundation work carries its own process or API timeout. A JXA script that needs Standard Additions sets `includeStandardAdditions` at the host boundary; application automation through object specifiers and Foundation bridge calls stay separate owner rows because JXA specifiers, Objective-C objects, and JavaScript values obey different coercion rules.
 
 ```javascript conceptual
-ObjC.import("Foundation")
+ObjC.import("Foundation");
 
-const app = Application.currentApplication()
-app.includeStandardAdditions = true
+const app = Application.currentApplication();
+app.includeStandardAdditions = true;
 
 function run(input, parameters) {
-  const values = Array.isArray(input) ? input : [input]
-  return values.map(String).join("\n")
+    const values = Array.isArray(input) ? input : [input];
+    return values.map(String).join("\n");
 }
 ```
 

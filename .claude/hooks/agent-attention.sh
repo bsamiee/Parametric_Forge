@@ -3,7 +3,7 @@
 # event, carrying the emitting session's terminal identity so `forge-agents
 # focus` routes a notification click back to the exact pane. Append-only;
 # any failure exits 0 so the hook can never block the harness.
-set -euo pipefail
+set -Eeuo pipefail
 trap 'exit 0' ERR
 
 feed="${FORGE_ATTENTION_FEED:-${XDG_STATE_HOME:-$HOME/.local/state}/forge/agent-attention.jsonl}"
@@ -12,11 +12,12 @@ keep_rows="${FORGE_ATTENTION_KEEP_ROWS:-1000}"
 mkdir -p "${feed%/*}"
 
 # Terminal identity: the hook's own controlling tty, else the spawning
-# agent's; "??" (no controlling terminal) admits as empty.
-tty="$(/bin/ps -o tty= -p $$ 2>/dev/null | tr -d ' ' || true)"
-[ -n "$tty" ] && [ "$tty" != "??" ] ||
-    tty="$(/bin/ps -o tty= -p "$PPID" 2>/dev/null | tr -d ' ' || true)"
-[ "$tty" != "??" ] || tty=""
+# agent's; no-controlling-terminal ("??" BSD, "?" procps) admits as empty.
+# PATH-resolved ps: /bin/ps is a Darwin fact and the hook runs on every host.
+tty="$(ps -o tty= -p $$ 2>/dev/null | tr -d ' ' || true)"
+{ [ -n "$tty" ] && [ "$tty" != "??" ] && [ "$tty" != "?" ]; } ||
+    tty="$(ps -o tty= -p "$PPID" 2>/dev/null | tr -d ' ' || true)"
+case "$tty" in "?" | "??") tty="" ;; esac
 
 TZ=UTC0 printf -v ts '%(%Y-%m-%dT%H:%M:%SZ)T' "$EPOCHSECONDS"
 jq -c --arg ts "$ts" \

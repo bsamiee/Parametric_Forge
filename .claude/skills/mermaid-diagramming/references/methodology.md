@@ -143,12 +143,12 @@ Every committed diagram passes a mechanical audit; each finding blocks the fence
 
 - [MACHINE] — the bundled `validate_mermaid.py` owns the machine roster, blocking on structural defects and warning on legibility pressure; its output is the authority.
 - [JUDGMENT] — the reviewer clears these before commit:
-  - a cycle in a domain declared acyclic
-  - one concept rendered under two names
-  - an edge skipping the declared abstraction level
-  - mixed edge semantics hidden behind precise labels
-  - a legend explaining two taxonomies or two edge semantics
-  - a diagram needing narration to supply its own title, scope, node types, or edge meaning
+    - a cycle in a domain declared acyclic
+    - one concept rendered under two names
+    - an edge skipping the declared abstraction level
+    - mixed edge semantics hidden behind precise labels
+    - a legend explaining two taxonomies or two edge semantics
+    - a diagram needing narration to supply its own title, scope, node types, or edge meaning
 
 ## [09]-[COMPOSITION]
 

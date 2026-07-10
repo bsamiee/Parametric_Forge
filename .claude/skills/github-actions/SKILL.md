@@ -1,11 +1,11 @@
 ---
 name: github-actions
 description: >-
-  Generates and validates GitHub Actions workflows and custom actions (composite/Docker/JavaScript)
-  with SHA-pinned supply chain security, SLSA attestation, OIDC federation, and
-  harden-runner enforcement. Use when creating, editing, reviewing, or validating
-  CI/CD pipelines, reusable workflows, monorepo CI patterns, container build/deploy
-  orchestration, or advanced triggers (workflow_run, dispatch, ChatOps).
+    Generates and validates GitHub Actions workflows and custom actions (composite/Docker/JavaScript)
+    with SHA-pinned supply chain security, SLSA attestation, OIDC federation, and
+    harden-runner enforcement. Use when creating, editing, reviewing, or validating
+    CI/CD pipelines, reusable workflows, monorepo CI patterns, container build/deploy
+    orchestration, or advanced triggers (workflow_run, dispatch, ChatOps).
 ---
 
 # [GITHUB_ACTIONS]
@@ -13,6 +13,7 @@ description: >-
 Generate and validate production-ready GitHub Actions workflows and custom actions.
 
 [TASKS]:
+
 1. Gather requirements — triggers, runners, dependencies, environments, security posture.
 2. Read [best-practices.md](./references/best-practices.md) — security hardening, supply chain, performance, anti-patterns.
 3. Read [version-discovery.md](./references/version-discovery.md) — SHA resolution protocol, action index, permissions.
@@ -25,6 +26,7 @@ Generate and validate production-ready GitHub Actions workflows and custom actio
 10. Fix and re-validate until passing (max 3 iterations).
 
 [SCOPE]:
+
 - Workflow files (`.github/workflows/*.yml`).
 - Custom actions — composite, Docker, JavaScript (`.github/actions/*/action.yml`).
 - Reusable workflows (`workflow_call`).
@@ -34,6 +36,7 @@ Generate and validate production-ready GitHub Actions workflows and custom actio
 ## [01]-[ROUTING]
 
 [REFERENCES]:
+
 - [01]-[BEST_PRACTICES](references/best-practices.md): security hardening, supply chain, performance, anti-patterns
 - [02]-[VERSION_DISCOVERY](references/version-discovery.md): SHA resolution protocol, common actions index, permissions
 - [03]-[EXPRESSIONS](references/expressions-and-contexts.md): contexts, functions, injection prevention
@@ -46,6 +49,7 @@ Generate and validate production-ready GitHub Actions workflows and custom actio
 - [10]-[ACT_USAGE](references/act_usage.md): actionlint rules, act limitations
 
 [TEMPLATES]:
+
 - [01]-[BASIC_WORKFLOW](templates/basic-workflow.template.yml): lint, test, build, deploy CI pipeline with parameterized runtime
 - [02]-[REUSABLE_WORKFLOW](templates/reusable-workflow.template.yml): workflow_call with typed inputs, secrets, version extraction
 - [03]-[COMPOSITE_ACTION](templates/composite-action.template.yml): multi-step action with parameterized runtime and error handling
@@ -53,6 +57,7 @@ Generate and validate production-ready GitHub Actions workflows and custom actio
 - [05]-[JAVASCRIPT_ACTION](templates/javascript-action.template.yml): Node 24 action with pre/post lifecycle, typed error handling
 
 [EXAMPLES]:
+
 - [01]-[NODEJS_CI](examples/nodejs-ci.yml): matrix testing, caching, artifact upload, coverage, summaries
 - [02]-[DOCKER_BUILD_PUSH](examples/docker-build-push.yml): multi-platform builds, GHCR, BuildKit caching, SLSA provenance
 - [03]-[MONOREPO_CI](examples/monorepo-ci.yml): Nx affected detection, pnpm workspace, sparse checkout
@@ -70,12 +75,14 @@ Generate and validate production-ready GitHub Actions workflows and custom actio
 Every generated workflow enforces defense-in-depth: supply chain integrity prevents compromised actions from executing, minimal permissions limit blast radius if a job is compromised, and harden-runner detects anomalous behavior at runtime. These layers are independent — failure of one leaves others intact.
 
 [CRITICAL]:
+
 - [ALWAYS]: SHA-pin every `uses:` reference — mutable tags (`@v1`, `@main`) enable supply chain attacks. The tj-actions incident (CVE-2025-30066) compromised 23,000+ repos via tag retargeting.
 - [ALWAYS]: `step-security/harden-runner` as first step in every job — detected the tj-actions breach before any other tool.
 - [ALWAYS]: Top-level `permissions: {}` (deny-all default); grant minimal per-job permissions.
 - [ALWAYS]: `timeout-minutes:` on every job — prevents runaway billing on stuck workflows.
 
 [IMPORTANT]:
+
 - [ALWAYS]: OIDC federation (`id-token: write`) for cloud auth — eliminates static credentials entirely.
 - [ALWAYS]: `actions/create-github-app-token` for cross-repo ops — scoped, 1-hour expiry, survives offboarding.
 - [ALWAYS]: `>> $GITHUB_OUTPUT` for step outputs; `>> $GITHUB_STEP_SUMMARY` for job summaries.
@@ -116,15 +123,18 @@ Each example demonstrates distinct patterns with minimal overlap. Load relevant 
 Static SHA catalogs decay — actions release frequently and stale pins miss security patches. Resolve versions at generation time. Never embed hardcoded SHAs in reference docs or templates.
 
 [RESOLUTION_PROTOCOL]:
+
 1. `git ls-remote --tags https://github.com/{owner}/{repo}` — verify tag exists.
 2. `gh api repos/{owner}/{repo}/git/ref/tags/{tag} --jq '.object.sha'` — resolve tag to full SHA.
 3. Format: `owner/repo@<40-char-SHA> # vX.Y.Z`.
 
 [FALLBACK_METHODS]:
+
 - Context7 MCP: `resolve-library-id` then `get-library-docs` for action documentation.
 - WebSearch: `"[owner/repo] [version] github action"` for release notes.
 
 [IMPORTANT]:
+
 - [ALWAYS]: Verify the tag exists before pinning — deleted tags return empty results.
 - [ALWAYS]: Include version comment suffix (`# vX.Y.Z`) — Dependabot/Renovate parse these for automated updates.
 - [NEVER]: Embed static SHAs in reference files — they decay within weeks.
@@ -170,6 +180,7 @@ Static SHA catalogs decay — actions release frequently and stale pins miss sec
 |  [05]   | **Custom runner labels**    | Declare in `.github/actionlint.yaml`.          |
 
 [VERIFY] Completion:
+
 - [ ] Supply chain: Every `uses:` reference SHA-pinned with `# vX.Y.Z` comment suffix.
 - [ ] Security: Top-level `permissions: {}`, per-job minimal grants, `harden-runner` first step.
 - [ ] Injection: No direct `${{ github.event.* }}` in `run:` blocks — all through `env:` indirection.

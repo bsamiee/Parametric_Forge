@@ -2,17 +2,17 @@
 
 Multi-stage transform pipelines, regex extraction with BASH_REMATCH, codec patterns (URL/hex/base64), printf formatting, and template expansion. Single-operator PE reference in `bash-scripting-guide.md` S5.
 
-| [INDEX] | [PATTERN]          |  [S]  | [USE_WHEN]                                    |
-| :-----: | :----------------- | :---: | :-------------------------------------------- |
-|  [01]   | Transform pipeline |  S1   | Multi-stage string reshape via chained PE     |
-|  [02]   | Regex extraction   |  S2   | Structured parsing via BASH_REMATCH captures  |
-|  [03]   | Printf formatting  |  S3   | `%q`, `%(%T)T`, `printf -v` fork-free capture |
-|  [04]   | Codec patterns     |  S4   | URL encode, hex, base64, JSON escape          |
-|  [05]   | Template expansion |  S5   | Heredocs, format strings, envsubst            |
+| [INDEX] | [PATTERN]          | [S] | [USE_WHEN]                                    |
+| :-----: | :----------------- | :-: | :-------------------------------------------- |
+|  [01]   | Transform pipeline | S1  | Multi-stage string reshape via chained PE     |
+|  [02]   | Regex extraction   | S2  | Structured parsing via BASH_REMATCH captures  |
+|  [03]   | Printf formatting  | S3  | `%q`, `%(%T)T`, `printf -v` fork-free capture |
+|  [04]   | Codec patterns     | S4  | URL encode, hex, base64, JSON escape          |
+|  [05]   | Template expansion | S5  | Heredocs, format strings, envsubst            |
 
 ## [01]-[TRANSFORM_PIPELINES]
 
-Each `${}` produces a new string without mutating the variable — reassignment is explicit. In a loop processing N strings with M transforms, chained PE costs 0 forks vs `sed`/`awk` costing N*M process spawns. The `${var,,}` / `${var^^}` case transforms are locale-dependent — under `LC_CTYPE=tr_TR.UTF-8`, `${var^^}` maps `i` to `I` (dotless), not `İ`. Pin `LC_ALL=C` when ASCII-only case folding is required.
+Each `${}` produces a new string without mutating the variable — reassignment is explicit. In a loop processing N strings with M transforms, chained PE costs 0 forks vs `sed`/`awk` costing N\*M process spawns. The `${var,,}` / `${var^^}` case transforms are locale-dependent — under `LC_CTYPE=tr_TR.UTF-8`, `${var^^}` maps `i` to `I` (dotless), not `İ`. Pin `LC_ALL=C` when ASCII-only case folding is required.
 
 ```bash conceptual
 # Multi-stage path normalization: 5 transforms, 0 forks

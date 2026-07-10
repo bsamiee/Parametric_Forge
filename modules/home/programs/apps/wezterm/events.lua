@@ -4,12 +4,11 @@
 -- License       : MIT
 -- Path          : modules/home/programs/apps/wezterm/events.lua
 -- ----------------------------------------------------------------------------
--- Event plane: startup shaping, outer-fact status cells, tab/window titles,
--- palette augmentation, and the forge:// open-uri handoff. Status reads cheap
--- pane/window state only; every probe writes elsewhere.
+-- Event plane: one handler row per event, registered in a single fold. Status
+-- reads cheap pane/window state only; every probe writes elsewhere. Bodies
+-- read deck state at fire time, so registration never races the deck build.
 
 local wezterm = require("wezterm")
-local act = wezterm.action
 local rows = require("rows")
 local deck = require("deck")
 
@@ -24,11 +23,11 @@ local function cell(fg, text)
     }
 end
 
-function M.apply(config) -- luacheck: no unused args
+local handlers = {
     -- Session persistence is code-defined: GUI and auto-spawned mux servers
     -- land the default workspace's slug session at its name-policy cwd; an
     -- explicit `wezterm start -- prog` keeps its own args untouched.
-    wezterm.on("gui-startup", function(cmd)
+    ["gui-startup"] = function(cmd)
         local spawn = cmd or {}
         local ws = wezterm.mux.get_active_workspace()
         spawn.cwd = spawn.cwd or deck.workspace_cwd(ws)
@@ -38,22 +37,39 @@ function M.apply(config) -- luacheck: no unused args
         if gui then
             gui:maximize()
         end
-    end)
+    end,
 
-    wezterm.on("mux-startup", function()
+    ["mux-startup"] = function()
         local ws = wezterm.mux.get_active_workspace()
         wezterm.mux.spawn_window({ cwd = deck.workspace_cwd(ws), args = deck.session_args(ws) })
-    end)
+    end,
 
     -- Domain attach shaping: one launch receipt per attach.
-    wezterm.on("gui-attached", function(domain)
+    ["gui-attached"] = function(domain)
         deck.receipt({ action = "attach", domain = domain:name(), result = "ok" })
-    end)
+    end,
+
+    -- Bell rings are structured attention: a receipt row always; a toast only
+    -- when the ring lands outside the focused view (background pane or
+    -- unfocused window). audible_bell is Disabled; this arm is the surface.
+    ["bell"] = function(window, pane)
+        local background = not window:is_focused() or pane:pane_id() ~= window:active_pane():pane_id()
+        if background then
+            window:toast_notification("forge bell", "bell: " .. pane:get_title(), nil, 4000)
+        end
+        deck.receipt({
+            action = "bell",
+            pane_id = pane:pane_id(),
+            domain = pane:get_domain_name(),
+            background = background,
+            result = "ok",
+        })
+    end,
 
     -- Outer facts only: key table, sync state, non-local domain. Agent/quota
     -- cells and location live on the zellij zjstatus bar — the one top bar;
     -- this strip surfaces only when a second WezTerm tab raises the tab bar.
-    wezterm.on("update-status", function(window, pane)
+    ["update-status"] = function(window, pane)
         local items = {}
         local function push(fragments)
             for _, fragment in ipairs(fragments) do
@@ -76,62 +92,46 @@ function M.apply(config) -- luacheck: no unused args
 
         window:set_right_status(wezterm.format(items))
         window:set_left_status("")
-    end)
+    end,
 
-    wezterm.on("format-tab-title", function(tab)
+    ["format-tab-title"] = function(tab)
         local pane = tab.active_pane
         local proc = (pane.foreground_process_name or ""):gsub(".*/", "")
         local title = proc ~= "" and proc or pane.title
         return string.format(" %d:%s ", tab.tab_index + 1, title)
-    end)
+    end,
 
-    wezterm.on("format-window-title", function(tab, _, tabs)
+    ["format-window-title"] = function(tab, _, tabs)
         -- Per-window truth: a window parked in a background workspace titles as
         -- its own workspace, never the globally active one.
         local ok, mux_window = pcall(wezterm.mux.get_window, tab.window_id)
         local workspace = ok and mux_window and mux_window:get_workspace() or wezterm.mux.get_active_workspace()
         return string.format("%s — %d/%d", workspace, tab.tab_index + 1, #tabs)
-    end)
+    end,
 
-    -- Command deck rows land in the native palette without replacing it.
-    wezterm.on("augment-command-palette", function(window, pane)
-        local entries = {}
-        for _, cmd in ipairs(rows.commands) do
-            entries[#entries + 1] = {
-                brief = cmd.label,
-                icon = "md_dock_window",
-                action = wezterm.action_callback(function(win, p)
-                    deck.run_command(cmd, win, p)
-                end),
-            }
-        end
-        for _, pattern in ipairs(rows.quick_select) do
-            entries[#entries + 1] = {
-                brief = "quick select: " .. pattern.id,
-                icon = "md_select_search",
-                action = act.QuickSelectArgs({
-                    label = pattern.id,
-                    patterns = { pattern.regex },
-                    action = deck.select_action(pattern),
-                }),
-            }
-        end
-        return entries
-    end)
+    -- Command deck rows land in the native palette without replacing it; the
+    -- deck builds the entry table once per generation and this replays it.
+    ["augment-command-palette"] = function()
+        return deck.palette
+    end,
 
-    -- forge://<register-domain>[/...] opens the register browser float.
-    wezterm.on("open-uri", function(window, pane, uri)
+    -- forge://<register-domain>[/...] opens the register browser float scoped
+    -- to the domain (forge-browse takes one DOMAIN argument).
+    ["open-uri"] = function(_, _, uri)
         local domain = uri:match("^forge://([%w-]+)")
-        if domain then
-            for _, cmd in ipairs(rows.commands) do
-                if cmd.id == "browse-registers" then
-                    local scoped = { id = cmd.id, kind = cmd.kind, float = cmd.float, label = cmd.label, args = { cmd.args[1], domain } }
-                    deck.run_command(scoped, window, pane)
-                    return false
-                end
-            end
+        local browse = domain and deck.commands["browse-registers"]
+        if not browse then
+            return
         end
-    end)
+        deck.spawn_float({ id = browse.id, float = browse.float, args = { browse.args[1], domain } })
+        return false
+    end,
+}
+
+function M.apply(config) -- luacheck: no unused args
+    for name, handler in pairs(handlers) do
+        wezterm.on(name, handler)
+    end
 end
 
 return M

@@ -97,8 +97,9 @@ const estate =
 
         // The signing secret arrives driver-brokered sealed from its Doppler
         // custody row and unwraps only into the engine's secret input; an
-        // absent broker value plans the webhook unsigned-diff-free. Anchoring
-        // falls back to the environment when the first enabled config is a root.
+        // absent broker value plans the webhook unsigned-diff-free. The payload
+        // event generates from the row's own coordinates, and anchoring falls
+        // back to the environment when the first enabled config is a root.
         void _registered(Topology.webhooks, {
             key: (row) => row.slug,
             importId: (row) => row.slug,
@@ -112,7 +113,7 @@ const estate =
                         url: row.url,
                         enabled: true,
                         enabledConfigs: [...row.enabledConfigs],
-                        payload: row.payload,
+                        payload: JSON.stringify({ event: `${row.project}.${row.enabledConfigs[0]}.secrets.update` }),
                         ...(brokered === undefined ? {} : { secret: secret(Redacted.value(brokered)) }),
                     },
                     options,

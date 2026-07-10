@@ -25,16 +25,24 @@
       fi
 
       readonly target_input="''${1:-.}"
-      target_path="$(realpath -- "$target_input")"
+      target_path="$(realpath -- "$target_input" 2>/dev/null)" || {
+        printf 'loc: no such target: %s\n' "$target_input" >&2
+        exit 2
+      }
       readonly target_path
       readonly deadline="''${LOC_SCAN_DEADLINE_SECONDS:-120}"
+      [[ "$deadline" =~ ^[0-9]+$ ]] || {
+        printf 'loc: LOC_SCAN_DEADLINE_SECONDS must be a whole number of seconds\n' >&2
+        exit 2
+      }
       readonly tab=$'\t'
       readonly exclude_dirs=".git,.hg,.svn,bin,obj,node_modules,.cursor,.artifacts,dist,build,target,vendor"
 
       # Detached stdin + deadline: a dead invoking session must never strand
-      # this command substitution as an orphaned subshell.
+      # this command substitution as an orphaned subshell. TERM first, KILL
+      # after a 10s grace — a scan wedged on a dead mount ignores TERM.
       json="$(
-        timeout "$deadline" \
+        timeout -k 10 "$deadline" \
           scc "$target_path" \
           --by-file --format json \
           --no-cocomo --no-size \
@@ -42,6 +50,12 @@
           --sort code </dev/null
       )" || {
         rc=$?
+        # Failure keeps the envelope rail: machine consumers get one typed
+        # error shape, never empty stdout beside a human stderr line.
+        if [[ "$json_mode" == 1 ]]; then
+          jq -nc --argjson rc "$rc" --argjson deadline "$deadline" \
+            '{error: {surface: "loc", kind: "scan", rc: $rc, deadline: $deadline}}'
+        fi
         printf 'loc: scc scan failed (rc=%s, deadline=%ss)\n' "$rc" "$deadline" >&2
         exit "$rc"
       }

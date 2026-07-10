@@ -1,18 +1,18 @@
 ---
 name: interviewing
 description: >-
-  Adversarial elicitation that converts unknowns into durable decision artifacts: corpus-grounded
-  interviews whose questions confront the user with what exists, blindspot passes along a named
-  interrogation-axis catalog, direction brainstorms and wargames, pre-merge comprehension quizzes,
-  buy-in packets, mid-build deviation capture, and vocabulary teaching — each terminating in a
-  typed html-studio deliverable (decision record, direction set, roadmap brief, blindspot ledger,
-  capability entry). Owns question threading, the push-versus-accept ruling, the axis catalog,
-  kind contracts, and the durable-versus-ephemeral ruling.
-  Use when requirements are ambiguous or live in the user's head, before authoring a brief,
-  spec, roadmap, or direction document, when a conversation must land a durable decision or
-  roadmap artifact, when a mid-build discovery strikes the plan, or when the user says
-  "interview me", "find my blindspots", "what am I missing", "wargame this", "brainstorm this",
-  "quiz me", or "teach me the domain".
+    Adversarial elicitation that converts unknowns into durable decision artifacts: corpus-grounded
+    interviews whose questions confront the user with what exists, blindspot passes along a named
+    interrogation-axis catalog, direction brainstorms and wargames, pre-merge comprehension quizzes,
+    buy-in packets, mid-build deviation capture, and vocabulary teaching — each terminating in a
+    typed html-studio deliverable (decision record, direction set, roadmap brief, blindspot ledger,
+    capability entry). Owns question threading, the push-versus-accept ruling, the axis catalog,
+    kind contracts, and the durable-versus-ephemeral ruling.
+    Use when requirements are ambiguous or live in the user's head, before authoring a brief,
+    spec, roadmap, or direction document, when a conversation must land a durable decision or
+    roadmap artifact, when a mid-build discovery strikes the plan, or when the user says
+    "interview me", "find my blindspots", "what am I missing", "wargame this", "brainstorm this",
+    "quiz me", or "teach me the domain".
 ---
 
 # [INTERVIEWING]

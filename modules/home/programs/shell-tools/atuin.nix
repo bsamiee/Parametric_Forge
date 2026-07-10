@@ -5,48 +5,13 @@
 # Path          : modules/home/programs/shell-tools/atuin.nix
 # ----------------------------------------------------------------------------
 # Modern shell history with SQLite backend and full-text search UI
-{
-  config,
-  lib,
-  ...
-}: let
+{config, ...}: let
   inherit (config.forge.theme) palette;
 in {
-  # Hidden identity bundle: Login Items & Extensions resolves the HM-owned
-  # atuin-daemon agent to "Atuin Daemon" instead of the "/bin/sh" basename
-  # home-manager's mutateConfig writes into ProgramArguments[0].
-  home.file."Applications/Atuin Daemon.app/Contents/Info.plist".text = ''
-    <?xml version="1.0" encoding="UTF-8"?>
-    <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-    <plist version="1.0">
-    <dict>
-      <key>CFBundleIdentifier</key>
-      <string>com.parametric-forge.atuin-daemon</string>
-      <key>CFBundleName</key>
-      <string>Atuin Daemon</string>
-      <key>CFBundleDisplayName</key>
-      <string>Atuin Daemon</string>
-      <key>CFBundleVersion</key>
-      <string>1</string>
-      <key>CFBundleShortVersionString</key>
-      <string>1.0</string>
-      <key>CFBundlePackageType</key>
-      <string>APPL</string>
-      <key>LSUIElement</key>
-      <true/>
-      <key>LSBackgroundOnly</key>
-      <true/>
-    </dict>
-    </plist>
-  '';
-
-  home.activation.registerAtuinDaemonApp = lib.hm.dag.entryAfter ["linkGeneration"] ''
-    app="$HOME/Applications/Atuin Daemon.app"
-    lsregister="/System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/LaunchServices.framework/Versions/A/Support/lsregister"
-    if [ -d "$app" ] && [ -x "$lsregister" ]; then
-      "$lsregister" -f "$app" || true
-    fi
-  '';
+  # Hidden identity bundle row (bundle-apps.nix): Login Items & Extensions
+  # resolves the HM-owned atuin-daemon agent to "Atuin Daemon" instead of the
+  # "/bin/sh" basename home-manager's mutateConfig writes into ProgramArguments[0].
+  forge.bundleApps.atuin-daemon = "Atuin Daemon";
 
   # Identity + log rows merge into the HM module's agent config (freeform
   # schema). The label stays upstream (org.nix-community.home.atuin-daemon):
@@ -138,21 +103,22 @@ in {
         name = "dracula";
       };
     };
+
+    # Dracula theme through the HM theme owner (atuin ships only autumn and
+    # marine); rows cover every current theme meaning, Muted included.
+    themes.dracula = {
+      theme.name = "dracula";
+      colors = {
+        Base = palette.foreground.hex;
+        Muted = palette.comment.hex;
+        Title = palette.pink.hex;
+        Annotation = palette.comment.hex;
+        Guidance = palette.cyan.hex;
+        Important = palette.magenta.hex;
+        AlertInfo = palette.green.hex;
+        AlertWarn = palette.yellow.hex;
+        AlertError = palette.red.hex;
+      };
+    };
   };
-
-  # Dracula theme file (atuin only has "autumn" and "marine" built-in)
-  xdg.configFile."atuin/themes/dracula.toml".text = ''
-    [theme]
-    name = "dracula"
-
-    [colors]
-    Base = "${palette.foreground.hex}"
-    Title = "${palette.pink.hex}"
-    Annotation = "${palette.comment.hex}"
-    Guidance = "${palette.cyan.hex}"
-    Important = "${palette.magenta.hex}"
-    AlertInfo = "${palette.green.hex}"
-    AlertWarn = "${palette.yellow.hex}"
-    AlertError = "${palette.red.hex}"
-  '';
 }

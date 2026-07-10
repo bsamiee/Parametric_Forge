@@ -18,9 +18,15 @@
 }: let
   profileBin = "/etc/profiles/per-user/${config.home.username}/bin";
   stateHome = config.xdg.stateHome;
-  # Darwin-only package: interpolating it unconditionally breaks the NixOS
-  # eval, and shell-tools imports on both hosts. Empty string = no notifier.
-  tnBin = lib.optionalString pkgs.stdenv.hostPlatform.isDarwin "${pkgs.terminal-notifier}/bin/terminal-notifier";
+  # Shared owners: notifier rail + identity bundles (bundle-apps.nix), the
+  # dual-receipt emit fold (receipts.nix), and the platform ps dispatch —
+  # /bin/ps is a Darwin fact; NixOS gets procps by store path.
+  tnBin = config.forge.notifier;
+  receiptsFold = import ./receipts.nix;
+  psBin =
+    if pkgs.stdenv.hostPlatform.isDarwin
+    then "/bin/ps"
+    else "${pkgs.procps}/bin/ps";
   inherit (config.forge.theme) roles; # Estate palette owner (modules/home/theme.nix)
   fleet = import ./mcp-fleet.nix {
     inherit profileBin;
@@ -413,11 +419,13 @@
       verb="''${1:-}"; shift || true
 
       iso_now() { TZ=UTC0 printf '%(%Y-%m-%dT%H:%M:%SZ)T' "$EPOCHSECONDS"; }
+      receipt_surface="forge-mcp"
+      ${receiptsFold}
       receipt() { # $1=verb $2=result $3=detail
-        local ts
+        local ts row
         ts="$(iso_now)"
-        mkdir -p "$(dirname "$receipt_log")"
-        printf 'ts=%s\towner=forge-mcp\tverb=%s\tresult=%s\tdetail=%s\n' "$ts" "$1" "$2" "$3" >>"$receipt_log"
+        printf -v row 'ts=%s\towner=forge-mcp\tverb=%s\tresult=%s\tdetail=%s' "$ts" "$1" "$2" "$3"
+        append_receipt "$row" || true
       }
 
       cmd_outdated() {
@@ -560,7 +568,10 @@
           IFS=$'\x1f' read -r name label port token < <(jq -r \
             '[.name, (.doctor.launchdLabel // ""), (.doctor.port // "" | tostring), (.doctor.tokenFile // "")] | join("\u001f")' <<<"$row")
           if [ -n "$label" ]; then
-            if lctl="$(/bin/launchctl print "gui/$(id -u)/$label" 2>/dev/null)"; then
+            # launchd rows are Darwin facts; a systemd host skips them typed.
+            if [ ! -x /bin/launchctl ]; then
+              printf 'SKIP\t%s/launchd\tno launchd on this host\n' "$name" >>"$out"
+            elif lctl="$(/bin/launchctl print "gui/$(id -u)/$label" 2>/dev/null)"; then
               pid="$(awk '/^\s*pid = /{print $3; exit}' <<<"$lctl")"
               if [ -n "''${pid:-}" ]; then
                 printf 'OK\t%s/launchd\t%s running pid=%s\n' "$name" "$label" "$pid" >>"$out"
@@ -660,40 +671,53 @@
         # registry rows: name|class|present|clean|findings-file
         : >"$tmp/registries"
 
-        # An unreadable/unparseable client config is total drift, not a crash.
-        claude_json="$(jq '.mcpServers // {}' "$HOME/.claude.json" 2>/dev/null)" \
-          || { echo "drift: cannot read mcpServers from ~/.claude.json"; exit 1; }
-        codex_json="$(yq -p toml -o json '.mcp_servers // {}' "$HOME/.codex/config.toml" 2>/dev/null)" \
-          || { echo "drift: cannot read mcp_servers from ~/.codex/config.toml"; exit 1; }
-        jq -rn \
-          --slurpfile fleet "$fleet" \
-          --slurpfile claude <(printf '%s' "$claude_json") \
-          --slurpfile codex <(printf '%s' "$codex_json") \
-          -f '${driftJq}' >"$tmp/full" || true
-        grep $'^claude\t' "$tmp/full" | cut -f2- >"$tmp/claude.f" || true
-        grep $'^codex\t' "$tmp/full" | cut -f2- >"$tmp/codex.f" || true
-        printf 'claude|full|1|%s|%s\n' "$([ -s "$tmp/claude.f" ] && echo 0 || echo 1)" "$tmp/claude.f" >>"$tmp/registries"
-        printf 'codex|full|1|%s|%s\n' "$([ -s "$tmp/codex.f" ] && echo 0 || echo 1)" "$tmp/codex.f" >>"$tmp/registries"
-
-        subset_lane() { # $1=registry-name $2=json-map $3=jq-program
-          local name="$1" json="$2" prog="$3" f="$tmp/$1.f"
-          jq -rn --slurpfile fleet "$fleet" --slurpfile reg <(printf '%s' "$json") -f "$prog" >"$f" || true
-          local drift_lines
-          drift_lines="$(grep -cv '^INFO ' "$f" || true)"
-          printf '%s|subset|1|%s|%s\n' "$name" "$([ "$drift_lines" = 0 ] && echo 1 || echo 0)" "$f" >>"$tmp/registries"
-        }
-        # Projection registries are rows (name|file|format|extract|program):
-        # a new registry is one row, never a new if/else block.
+        # Registry admission: parse per format, then require an object shape —
+        # an absent, unparseable, or wrong-shaped registry is a total-drift
+        # finding, never a crash and never a false clean.
         extract_reg() { # $1=json|toml $2=filter $3=file
           case "$1" in
             json) jq "$2" "$3" 2>/dev/null ;;
             toml) yq -p toml -o json "$2" "$3" 2>/dev/null ;;
           esac
         }
+        admit_reg() { # $1=json|toml $2=filter $3=file -> object on stdout
+          local out
+          out="$(extract_reg "$1" "$2" "$3")" || return 1
+          jq -e 'type == "object"' <<<"$out" >/dev/null 2>&1 || return 1
+          printf '%s' "$out"
+        }
+        claude_ok=1 codex_ok=1
+        claude_json="$(admit_reg json '.mcpServers // {}' "$HOME/.claude.json")" || { claude_json='{}'; claude_ok=0; }
+        codex_json="$(admit_reg toml '.mcp_servers // {}' "$HOME/.codex/config.toml")" || { codex_json='{}'; codex_ok=0; }
+        # A drift-program failure on admitted registries is itself a finding;
+        # a swallowed rc here would render empty lanes as false-clean.
+        jq -rn \
+          --slurpfile fleet "$fleet" \
+          --slurpfile claude <(printf '%s' "$claude_json") \
+          --slurpfile codex <(printf '%s' "$codex_json") \
+          -f '${driftJq}' >"$tmp/full" \
+          || printf 'claude\tdrift program failed on admitted registries\ncodex\tdrift program failed on admitted registries\n' >>"$tmp/full"
+        grep $'^claude\t' "$tmp/full" | cut -f2- >"$tmp/claude.f" || true
+        grep $'^codex\t' "$tmp/full" | cut -f2- >"$tmp/codex.f" || true
+        [ "$claude_ok" = 1 ] || echo "registry unreadable or wrong-shaped: ~/.claude.json mcpServers" >>"$tmp/claude.f"
+        [ "$codex_ok" = 1 ] || echo "registry unreadable or wrong-shaped: ~/.codex/config.toml mcp_servers" >>"$tmp/codex.f"
+        printf 'claude|full|1|%s|%s\n' "$([ -s "$tmp/claude.f" ] && echo 0 || echo 1)" "$tmp/claude.f" >>"$tmp/registries"
+        printf 'codex|full|1|%s|%s\n' "$([ -s "$tmp/codex.f" ] && echo 0 || echo 1)" "$tmp/codex.f" >>"$tmp/registries"
+
+        subset_lane() { # $1=registry-name $2=json-map $3=jq-program
+          local name="$1" json="$2" prog="$3" f="$tmp/$1.f"
+          jq -rn --slurpfile fleet "$fleet" --slurpfile reg <(printf '%s' "$json") -f "$prog" >"$f" \
+            || echo "projection program failed on admitted registry" >>"$f"
+          local drift_lines
+          drift_lines="$(grep -cv '^INFO ' "$f" || true)"
+          printf '%s|subset|1|%s|%s\n' "$name" "$([ "$drift_lines" = 0 ] && echo 1 || echo 0)" "$f" >>"$tmp/registries"
+        }
+        # Projection registries are rows (name|file|format|extract|program):
+        # a new registry is one row, never a new if/else block.
         while IFS='|' read -r rname rfile rfmt rfilter rprog; do
           if [ ! -f "$rfile" ]; then
             printf '%s|subset|0|1|%s\n' "$rname" /dev/null >>"$tmp/registries"
-          elif r_json="$(extract_reg "$rfmt" "$rfilter" "$rfile")"; then
+          elif r_json="$(admit_reg "$rfmt" "$rfilter" "$rfile")"; then
             subset_lane "$rname" "$r_json" "$rprog"
           else
             printf '%s|subset|1|0|%s\n' "$rname" /dev/null >>"$tmp/registries"
@@ -757,9 +781,11 @@
         scan() { # $1=root $2=class $3=path
           local files kb
           [ -e "$3" ] || return 0
-          files="$(find "$3" -type f 2>/dev/null | wc -l | tr -d ' ')"
-          kb="$(du -sk "$3" 2>/dev/null | cut -f1)"
-          printf '%s\t%s\t%s\t%s\t%s\n' "$1" "$2" "''${3/#"$HOME"/\~}" "$files" "''${kb:-0}"
+          # Guarded folds: a root vanishing or turning unreadable mid-scan is
+          # expected non-zero, one scalar per probe, never a killed verb.
+          files="$({ find "$3" -type f 2>/dev/null || true; } | wc -l | tr -d ' ')"
+          kb="$({ du -sk "$3" 2>/dev/null || true; } | awk 'NR == 1 {s = $1} END {print s + 0}')"
+          printf '%s\t%s\t%s\t%s\t%s\n' "$1" "$2" "''${3/#"$HOME"/\~}" "$files" "$kb"
         }
         rows="$(
           scan claude transcripts "$HOME/.claude/projects"
@@ -844,7 +870,7 @@
   # exponentially; a notification click routes back via the `focus` verb.
   forgeAgents = pkgs.writeShellApplication {
     name = "forge-agents";
-    runtimeInputs = [pkgs.coreutils pkgs.jq pkgs.findutils pkgs.gawk pkgs.gnugrep];
+    runtimeInputs = [pkgs.coreutils pkgs.jq pkgs.findutils pkgs.gawk pkgs.gnugrep pkgs.flock];
     text = ''
             state_root="''${XDG_STATE_HOME:-$HOME/.local/state}/forge"
             cache="$state_root/agent-state.json"
@@ -856,6 +882,8 @@
             verb="''${1:-status}"; shift || true
 
             iso_now() { TZ=UTC0 printf '%(%Y-%m-%dT%H:%M:%SZ)T' "$EPOCHSECONDS"; }
+            receipt_surface="forge-agents"
+            ${receiptsFold}
 
             cmd_status() {
               if [ ! -f "$cache" ]; then
@@ -877,10 +905,16 @@
 
             cmd_collect() {
               mkdir -p "$state_root" "$(dirname "$lanes_out")"
+              # One collector at a time: an overlapping interval run must not
+              # race the cache, the backoff meta, or the notification dedupe.
+              exec {collect_fd}>"$state_root/.collect.lock"
+              flock -n "$collect_fd" || exit 0
               now="$EPOCHSECONDS"
               ts="$(iso_now)"
-              prev="$(cat "$cache" 2>/dev/null || echo '{}')"
-              m="$(cat "$meta" 2>/dev/null || echo '{}')"
+              # Tolerant admission: a torn or foreign cache/meta file folds to
+              # {} instead of killing the collector under set -e.
+              prev="$(jq -c 'if type == "object" then . else {} end' "$cache" 2>/dev/null || echo '{}')"
+              m="$(jq -c 'if type == "object" then . else {} end' "$meta" 2>/dev/null || echo '{}')"
 
               # Lane backoff: a failing provider lane is skipped for min(60*2^n, 3600)s.
               should_run() { # $1=lane
@@ -892,7 +926,7 @@
 
               # --- agent lanes: process facts -----------------------------------
               # The lane filter derives from the Nix-owned agentLanes roster.
-              lanes_rows="$(/bin/ps -axo pid=,pcpu=,tt=,etime=,args= | awk '
+              lanes_rows="$(${psBin} -axo pid=,pcpu=,tt=,etime=,args= | awk '
                 {
                   n = split($5, parts, "/"); base = parts[n]
                   if (base ~ /^(${lib.concatStringsSep "|" agentLanes})$/)
@@ -907,9 +941,12 @@
               # lane; one row per tty so stacked tabs never inflate the count, and
               # the newest row keeps its identity so `focus` can route the click --
               TZ=UTC0 printf -v att_cut '%(%Y-%m-%dT%H:%M:%SZ)T' "$((now - 3600))"
-              att="$(tail -n 500 "$feed" 2>/dev/null | jq -cs --arg cut "$att_cut" --argjson lanes "$lanes_rows" '
+              # fromjson? rail: the feed is live-appended and rotated lock-free,
+              # so a torn line skips instead of collapsing the whole fold to 0.
+              att="$(tail -n 500 "$feed" 2>/dev/null | jq -Rcn --arg cut "$att_cut" --argjson lanes "$lanes_rows" '
                 def pty: sub("^tty"; "");
                 ([$lanes[] | select(.agent == "claude" and .state == "waiting") | .tty | pty] | unique) as $idle
+                | [inputs | fromjson? | select(type == "object")]
                 | [group_by(.session_id)[] | max_by(.ts)
                    | select(.event == "Notification" and .ts >= $cut
                             and ((.tty // "") as $t | $t != "" and ($idle | index($t | pty))))]
@@ -1082,9 +1119,9 @@
               summary="needs=''${needs:-0} run=$run_n cx_stale=$cx_stale cl_stale=$cl_stale"
               prev_summary="$(jq -r '"needs=\(.attention.needs_input // 0) run=\(.lanes.running // 0) cx_stale=\(.quota.codex.stale != false) cl_stale=\(.quota.claude.stale != false)"' <<<"$prev" 2>/dev/null || echo "")"
               if [ "$summary" != "$prev_summary" ] || [ "$notified" = 1 ]; then
-                mkdir -p "$(dirname "$receipt_log")"
-                printf 'ts=%s\towner=forge-agents\tverb=collect\tresult=ok\t%s\tnotified=%s\n' \
-                  "$ts" "''${summary// /$'\t'}" "$notified" >>"$receipt_log"
+                printf -v receipt_row 'ts=%s\towner=forge-agents\tverb=collect\tresult=ok\t%s\tnotified=%s' \
+                  "$ts" "''${summary// /$'\t'}" "$notified"
+                append_receipt "$receipt_row" || true
               fi
             }
 
@@ -1094,9 +1131,10 @@
             # (unknown app: bare raise). Clicks run headless, so lane receipts
             # are the only witness when routing goes sideways.
             focus_receipt() {
-              mkdir -p "$(dirname "$receipt_log")"
-              printf 'ts=%s\towner=forge-agents\tverb=focus\tlane=%s\ttty=%s\n' \
-                "$(iso_now)" "$1" "''${tty:-.}" >>"$receipt_log" 2>/dev/null || true
+              local row
+              printf -v row 'ts=%s\towner=forge-agents\tverb=focus\tlane=%s\ttty=%s\tresult=ok' \
+                "$(iso_now)" "$1" "''${tty:-.}"
+              append_receipt "$row" 2>/dev/null || true
             }
             # Generic resolver: the lowest pid on the pty is its session leader;
             # walk ancestry to the first command inside an .app bundle. macOS
@@ -1104,16 +1142,16 @@
             # the host deterministically for any terminal, present or future.
             host_app_for_tty() { # $1=tty (ttysNNN) -> app basename on stdout
               local pid cmd
-              pid="$(/bin/ps -t "$1" -o pid= 2>/dev/null | sort -n | head -1 | tr -d ' ')"
+              pid="$(${psBin} -t "$1" -o pid= 2>/dev/null | sort -n | head -1 | tr -d ' ')"
               while [ -n "$pid" ] && [ "$pid" -gt 1 ]; do
-                cmd="$(/bin/ps -o comm= -p "$pid" 2>/dev/null)"
+                cmd="$(${psBin} -o comm= -p "$pid" 2>/dev/null)"
                 case "$cmd" in
                   *.app/*)
                     basename "''${cmd%%.app/*}"
                     return 0
                     ;;
                 esac
-                pid="$(/bin/ps -o ppid= -p "$pid" 2>/dev/null | tr -d ' ')"
+                pid="$(${psBin} -o ppid= -p "$pid" 2>/dev/null | tr -d ' ')"
               done
               return 1
             }
@@ -1167,8 +1205,9 @@
               local row zs zp wp tp app handler live_sessions ctty
               declare -A focus_row=([WezTerm]=focus_wezterm [Terminal]=focus_terminal)
               row="$(jq -c '.attention.latest // empty' "$cache" 2>/dev/null || true)"
-              [ -n "$row" ] || row="$(tail -n 500 "$feed" 2>/dev/null | jq -cs '
-                [group_by(.session_id)[] | max_by(.ts) | select(.event == "Notification")]
+              [ -n "$row" ] || row="$(tail -n 500 "$feed" 2>/dev/null | jq -Rcn '
+                [inputs | fromjson? | select(type == "object")]
+                | [group_by(.session_id)[] | max_by(.ts) | select(.event == "Notification")]
                 | max_by(.ts) // empty' 2>/dev/null || true)"
               # One projection per row snapshot; the 0x1f join survives empties.
               IFS=$'\x1f' read -r zs zp wp tp tty < <(jq -r \
@@ -1185,7 +1224,7 @@
               live_sessions="$(${profileBin}/zellij list-sessions -ns 2>/dev/null || true)"
               if [ -n "$zs" ] && grep -qxF "$zs" <<<"$live_sessions"; then
                 [ -z "$zp" ] || ${profileBin}/zellij --session "$zs" action focus-pane-id "$zp" 2>/dev/null || true
-                ctty="$(/bin/ps -axo tty=,args= | awk -v s="$zs" \
+                ctty="$(${psBin} -axo tty=,args= | awk -v s="$zs" \
                   '$1 != "??" && $0 ~ /zellij/ && $0 !~ /--server/ && index($0, s) {print $1; exit}' || true)"
                 [ -z "$ctty" ] || tty="$ctty"
               fi
@@ -1234,59 +1273,14 @@
       '1:verb:(collect status focus)' \
       '--json[raw collector cache]'
   '';
-
-  # Hidden-identity app bundle rows: Login Items & Extensions resolves each
-  # agent's AssociatedBundleIdentifiers to a real name instead of the "/bin/sh"
-  # basename home-manager's mutateConfig writes into ProgramArguments[0].
-  bundleRows = {
-    "forge-mcp-drift" = "Forge MCP Drift";
-    "forge-agents" = "Forge Agents";
-  };
-  mkBundlePlist = ident: display: ''
-    <?xml version="1.0" encoding="UTF-8"?>
-    <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-    <plist version="1.0">
-    <dict>
-      <key>CFBundleIdentifier</key>
-      <string>com.parametric-forge.${ident}</string>
-      <key>CFBundleName</key>
-      <string>${display}</string>
-      <key>CFBundleDisplayName</key>
-      <string>${display}</string>
-      <key>CFBundleVersion</key>
-      <string>1</string>
-      <key>CFBundleShortVersionString</key>
-      <string>1.0</string>
-      <key>CFBundlePackageType</key>
-      <string>APPL</string>
-      <key>LSUIElement</key>
-      <true/>
-      <key>LSBackgroundOnly</key>
-      <true/>
-    </dict>
-    </plist>
-  '';
 in {
-  home = {
-    packages = launchers ++ [maghzPostgres rhinoRouter forgeMcp forgeAgents mcpCompletion agentsCompletion];
+  home.packages = launchers ++ [maghzPostgres rhinoRouter forgeMcp forgeAgents mcpCompletion agentsCompletion];
 
-    file =
-      lib.mapAttrs' (
-        ident: display:
-          lib.nameValuePair "Applications/${display}.app/Contents/Info.plist" {
-            text = mkBundlePlist ident display;
-          }
-      )
-      bundleRows;
-
-    activation.registerForgeAgentApps = lib.hm.dag.entryAfter ["linkGeneration"] ''
-      lsregister="/System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/LaunchServices.framework/Versions/A/Support/lsregister"
-      for app in ${lib.concatStringsSep " " (map (d: "\"$HOME/Applications/${d}.app\"") (lib.attrValues bundleRows))}; do
-        if [ -d "$app" ] && [ -x "$lsregister" ]; then
-          "$lsregister" -f "$app" || true
-        fi
-      done
-    '';
+  # Identity bundle rows on the shared owner (bundle-apps.nix): Login Items &
+  # Extensions resolves each agent's AssociatedBundleIdentifiers to a real name.
+  forge.bundleApps = {
+    forge-mcp-drift = "Forge MCP Drift";
+    forge-agents = "Forge Agents";
   };
 
   launchd.agents = {

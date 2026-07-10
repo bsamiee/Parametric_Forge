@@ -31,66 +31,79 @@ Yellow sits at OKLCH `0.89 0.139 90` — true gold, clear of the green-adjacent 
 Every token carries its role on two surfaces at once: the `themeVariables` that spend it diagram-wide and the `classDef` or `linkStyle` rail that spends it per node and per edge. A token holding a role with no rail is unspendable, so every token names both surfaces. Same meaning, same token, across every diagram in a corpus; a role outside this set composes from the nearest listed role, never a new hex.
 
 [BACKGROUND]:
+
 - Role: canvas + bright-fill text
 - Theme carriers: `background`, bright-ordinal `*Label*`, `sequenceNumberColor`
 - Class or rail: `color:#282A36` on every bright translucent class
 
 [DARKER]:
+
 - Role: recessed container + dormant / done + label backing
 - Theme carriers: `clusterBkg`, `compositeBackground`, `tertiaryColor`, `doneTaskBkgColor`, `sectionBkgColor`, `edgeLabelBackground`, `labelBackgroundColor`, `labelBoxBkgColor`, `relationLabelBackground`
 - Class or rail: `recessed` class; recessed label backing
 
 [SELECTION]:
+
 - Role: neutral fill + activation + neutral note
 - Theme carriers: `mainBkg`, `primaryColor`, `actorBkg`, `taskBkgColor`, `noteBkgColor`, `activationBkgColor`, `altBackground`, `compositeTitleBackground`
 - Class or rail: `primary` fill
 
 [COMMENT]:
+
 - Role: secondary rail + muted stroke + neutral-note border
 - Theme carriers: `secondaryColor`, `gridColor`, `noteBorderColor`, `actorLineColor`, `git7`
 - Class or rail: `annotation` stroke; dashed trace rail
 
 [FOREGROUND]:
+
 - Role: label text
 - Theme carriers: every `*TextColor`, `textColor`
 - Class or rail: `color:#F8F8F2` on dark and deep-translucent classes
 
 [CYAN]:
+
 - Role: external system / typed interface
 - Theme carriers: `git2`, `pie2`, `cScale1`, `plotColorPalette`
 - Class or rail: `external` class; external rail
 
 [GREEN]:
+
 - Role: success / executed
 - Theme carriers: `git3`, `pie3`, `cScale2`
 - Class or rail: `success` class; success rail
 
 [LAVENDER]:
+
 - Role: container boundary + container title ink
 - Theme carriers: `clusterBorder`, `compositeBorder`, `titleColor`, `labelBoxBorderColor`, `archGroupBorderColor`
 - Class or rail: the 1px dashed container border and its title, every container family, both skills
 
 [ORANGE]:
+
 - Role: data store / durable fact
 - Theme carriers: `git4`, `pie4`, `cScale3`
 - Class or rail: `data` class; data rail
 
 [PINK]:
+
 - Role: primary control flow + terminus marks
 - Theme carriers: `lineColor`, `arrowheadColor`, `signalColor`, `transitionColor`, `todayLineColor`
 - Class or rail: `primary` stroke; default rail; arrowheads, pseudostate discs, terminal rings, lollipop rings
 
 [PURPLE]:
+
 - Role: node ownership border / focus
 - Theme carriers: `nodeBorder`, `primaryBorderColor`, `actorBorder`, `taskBorderColor`, `activationBorderColor`, `git0`
 - Class or rail: `boundary` stroke; solid on nodes, never on containers
 
 [RED]:
+
 - Role: error / rejection / forbidden
 - Theme carriers: `critBkgColor`, `critBorderColor`, `git5`, `pie6`, `cScale5`
 - Class or rail: `error` class; error rail on every fault edge
 
 [YELLOW]:
+
 - Role: payload / literal / tag / attention note
 - Theme carriers: `tagLabelBackground`, `git6`, `pie7`, `cScale6`, class-diagram `noteBkgColor`
 - Class or rail: `payload` class; payload rail; class-note chip; gitgraph tag; treeview highlight; railroad terminal — every carrier translucent gold under Foreground ink
@@ -102,192 +115,192 @@ The block carries the high-traffic themed families; a family absent here takes i
 ```yaml copy-safe
 ---
 config:
-  theme: base
-  look: classic
-  themeVariables:
-    darkMode: true
-    fontFamily: "SF Mono, Menlo, Cascadia Mono, Segoe UI Mono, Consolas, monospace"
-    useGradient: false
-    dropShadow: "none"
-    background: "#282A36"
-    primaryColor: "#44475A"
-    primaryTextColor: "#F8F8F2"
-    primaryBorderColor: "#BD93F9"
-    secondaryColor: "#6272A4"
-    secondaryTextColor: "#F8F8F2"
-    secondaryBorderColor: "#6272A4"
-    tertiaryColor: "#21222C"
-    tertiaryTextColor: "#F8F8F2"
-    tertiaryBorderColor: "#44475A"
-    mainBkg: "#44475A"
-    nodeBorder: "#BD93F9"
-    nodeTextColor: "#F8F8F2"
-    lineColor: "#FF79C6"
-    arrowheadColor: "#FF79C6"
-    textColor: "#F8F8F2"
-    titleColor: "#D6BCFA"
-    clusterBkg: "#21222C"
-    clusterBorder: "#D6BCFA"
-    compositeBackground: "#21222C"
-    compositeTitleBackground: "#282A36"
-    compositeBorder: "#D6BCFA"
-    altBackground: "#282A36"
-    edgeLabelBackground: "#21222C"
-    labelBackgroundColor: "#21222C"
-    noteBkgColor: "#44475A"
-    noteTextColor: "#F8F8F2"
-    noteBorderColor: "#6272A4"
-    actorBkg: "#44475A"
-    actorBorder: "#BD93F9"
-    actorTextColor: "#F8F8F2"
-    actorLineColor: "#6272A4"
-    signalColor: "#FF79C6"
-    signalTextColor: "#F8F8F2"
-    sequenceNumberColor: "#282A36"
-    activationBkgColor: "#44475A"
-    activationBorderColor: "#BD93F9"
-    labelBoxBkgColor: "#21222C"
-    labelBoxBorderColor: "#D6BCFA"
-    labelTextColor: "#F8F8F2"
-    loopTextColor: "#F8F8F2"
-    classText: "#F8F8F2"
-    requirementBackground: "#44475A"
-    requirementBorderColor: "#BD93F9"
-    requirementTextColor: "#F8F8F2"
-    relationColor: "#FF79C6"
-    relationLabelBackground: "#21222C"
-    relationLabelColor: "#F8F8F2"
-    attributeBackgroundColorOdd: "#282A36"
-    attributeBackgroundColorEven: "#21222C"
-    sectionBkgColor: "#21222C"
-    altSectionBkgColor: "#282A36"
-    sectionBkgColor2: "#21222C"
-    excludeBkgColor: "#21222C"
-    gridColor: "#6272A4"
-    taskBkgColor: "#44475A"
-    taskBorderColor: "#BD93F9"
-    taskTextColor: "#F8F8F2"
-    taskTextOutsideColor: "#F8F8F2"
-    taskTextDarkColor: "#F8F8F2"
-    activeTaskBkgColor: "#6272A4"
-    activeTaskBorderColor: "#BD93F9"
-    doneTaskBkgColor: "#21222C"
-    doneTaskBorderColor: "#6272A4"
-    critBkgColor: "#FF555580"
-    critBorderColor: "#FF5555"
-    todayLineColor: "#FF79C6"
-    vertLineColor: "#8BE9FD"
-    fillType0: "#FF79C680"
-    fillType1: "#8BE9FD66"
-    fillType2: "#50FA7B66"
-    fillType3: "#FFB86C66"
-    fillType4: "#BD93F980"
-    fillType5: "#FF555580"
-    fillType6: "#FFD86654"
-    fillType7: "#6272A4"
-    actor0: "#BD93F9"
-    actor1: "#8BE9FD"
-    actor2: "#50FA7B"
-    actor3: "#FFB86C"
-    actor4: "#FF79C6"
-    actor5: "#6272A4"
-    faceColor: "#FFD86654"
-    personBorder: "#BD93F9"
-    personBkg: "#44475A"
-    archEdgeColor: "#FF79C6"
-    archEdgeArrowColor: "#FF79C6"
-    archEdgeWidth: "2"
-    archGroupBorderColor: "#D6BCFA"
-    archGroupBorderWidth: "1"
-    git0: "#BD93F9"
-    git1: "#FF79C6"
-    git2: "#8BE9FD"
-    git3: "#50FA7B"
-    git4: "#FFB86C"
-    git5: "#FF5555"
-    git6: "#FFD866"
-    git7: "#6272A4"
-    gitBranchLabel0: "#282A36"
-    gitBranchLabel1: "#282A36"
-    gitBranchLabel2: "#282A36"
-    gitBranchLabel3: "#282A36"
-    gitBranchLabel4: "#282A36"
-    gitBranchLabel5: "#282A36"
-    gitBranchLabel6: "#282A36"
-    gitBranchLabel7: "#282A36"
-    commitLabelColor: "#F8F8F2"
-    commitLabelBackground: "#21222C"
-    commitLabelFontSize: "11px"
-    tagLabelColor: "#F8F8F2"
-    tagLabelBackground: "#FFD86654"
-    tagLabelBorder: "#FFD866"
-    tagLabelFontSize: "11px"
-    pie1: "#FF79C6"
-    pie2: "#8BE9FD"
-    pie3: "#50FA7B"
-    pie4: "#FFB86C"
-    pie5: "#BD93F9"
-    pie6: "#FF5555"
-    pie7: "#FFD866"
-    pie8: "#8BE9FD"
-    pie9: "#50FA7B"
-    pie10: "#FFB86C"
-    pie11: "#BD93F9"
-    pie12: "#FF5555"
-    pieOpacity: 1
-    pieStrokeWidth: "1.5px"
-    pieOuterStrokeWidth: "0px"
-    pieSectionTextSize: "13px"
-    pieSectionTextColor: "#F8F8F2"
-    pieLegendTextSize: "12px"
-    pieLegendTextColor: "#F8F8F2"
-    pieTitleTextSize: "15px"
-    pieTitleTextColor: "#F8F8F2"
-    cScale0: "#FF79C6"
-    cScale1: "#8BE9FD"
-    cScale2: "#50FA7B"
-    cScale3: "#FFB86C"
-    cScale4: "#BD93F9"
-    cScale5: "#FF5555"
-    cScale6: "#FFD866"
-    cScale7: "#8BE9FD"
-    cScale8: "#50FA7B"
-    cScale9: "#FFB86C"
-    cScale10: "#BD93F9"
-    cScale11: "#FF5555"
-    cScaleLabel0: "#282A36"
-    cScaleLabel1: "#282A36"
-    cScaleLabel2: "#282A36"
-    cScaleLabel3: "#282A36"
-    cScaleLabel4: "#282A36"
-    cScaleLabel5: "#282A36"
-    cScaleLabel6: "#282A36"
-    cScaleLabel7: "#282A36"
-    cScaleLabel8: "#282A36"
-    cScaleLabel9: "#282A36"
-    cScaleLabel10: "#282A36"
-    cScaleLabel11: "#282A36"
-    xyChart:
-      backgroundColor: "#282A36"
-      titleColor: "#F8F8F2"
-      dataLabelColor: "#F8F8F2"
-      legendTextColor: "#F8F8F2"
-      xAxisLabelColor: "#F8F8F2"
-      xAxisTitleColor: "#F8F8F2"
-      xAxisTickColor: "#6272A4"
-      xAxisLineColor: "#6272A4"
-      yAxisLabelColor: "#F8F8F2"
-      yAxisTitleColor: "#F8F8F2"
-      yAxisTickColor: "#6272A4"
-      yAxisLineColor: "#6272A4"
-      plotColorPalette: "#FF79C6,#8BE9FD,#50FA7B,#FFB86C,#BD93F9,#FF5555,#FFD866"
-    radar:
-      axisColor: "#6272A4"
-      axisStrokeWidth: 1.5
-      graticuleColor: "#44475A"
-      graticuleOpacity: 0.4
-      curveOpacity: 0.35
-      curveStrokeWidth: 2
+    theme: base
+    look: classic
+    themeVariables:
+        darkMode: true
+        fontFamily: "SF Mono, Menlo, Cascadia Mono, Segoe UI Mono, Consolas, monospace"
+        useGradient: false
+        dropShadow: "none"
+        background: "#282A36"
+        primaryColor: "#44475A"
+        primaryTextColor: "#F8F8F2"
+        primaryBorderColor: "#BD93F9"
+        secondaryColor: "#6272A4"
+        secondaryTextColor: "#F8F8F2"
+        secondaryBorderColor: "#6272A4"
+        tertiaryColor: "#21222C"
+        tertiaryTextColor: "#F8F8F2"
+        tertiaryBorderColor: "#44475A"
+        mainBkg: "#44475A"
+        nodeBorder: "#BD93F9"
+        nodeTextColor: "#F8F8F2"
+        lineColor: "#FF79C6"
+        arrowheadColor: "#FF79C6"
+        textColor: "#F8F8F2"
+        titleColor: "#D6BCFA"
+        clusterBkg: "#21222C"
+        clusterBorder: "#D6BCFA"
+        compositeBackground: "#21222C"
+        compositeTitleBackground: "#282A36"
+        compositeBorder: "#D6BCFA"
+        altBackground: "#282A36"
+        edgeLabelBackground: "#21222C"
+        labelBackgroundColor: "#21222C"
+        noteBkgColor: "#44475A"
+        noteTextColor: "#F8F8F2"
+        noteBorderColor: "#6272A4"
+        actorBkg: "#44475A"
+        actorBorder: "#BD93F9"
+        actorTextColor: "#F8F8F2"
+        actorLineColor: "#6272A4"
+        signalColor: "#FF79C6"
+        signalTextColor: "#F8F8F2"
+        sequenceNumberColor: "#282A36"
+        activationBkgColor: "#44475A"
+        activationBorderColor: "#BD93F9"
+        labelBoxBkgColor: "#21222C"
+        labelBoxBorderColor: "#D6BCFA"
+        labelTextColor: "#F8F8F2"
+        loopTextColor: "#F8F8F2"
+        classText: "#F8F8F2"
+        requirementBackground: "#44475A"
+        requirementBorderColor: "#BD93F9"
+        requirementTextColor: "#F8F8F2"
+        relationColor: "#FF79C6"
+        relationLabelBackground: "#21222C"
+        relationLabelColor: "#F8F8F2"
+        attributeBackgroundColorOdd: "#282A36"
+        attributeBackgroundColorEven: "#21222C"
+        sectionBkgColor: "#21222C"
+        altSectionBkgColor: "#282A36"
+        sectionBkgColor2: "#21222C"
+        excludeBkgColor: "#21222C"
+        gridColor: "#6272A4"
+        taskBkgColor: "#44475A"
+        taskBorderColor: "#BD93F9"
+        taskTextColor: "#F8F8F2"
+        taskTextOutsideColor: "#F8F8F2"
+        taskTextDarkColor: "#F8F8F2"
+        activeTaskBkgColor: "#6272A4"
+        activeTaskBorderColor: "#BD93F9"
+        doneTaskBkgColor: "#21222C"
+        doneTaskBorderColor: "#6272A4"
+        critBkgColor: "#FF555580"
+        critBorderColor: "#FF5555"
+        todayLineColor: "#FF79C6"
+        vertLineColor: "#8BE9FD"
+        fillType0: "#FF79C680"
+        fillType1: "#8BE9FD66"
+        fillType2: "#50FA7B66"
+        fillType3: "#FFB86C66"
+        fillType4: "#BD93F980"
+        fillType5: "#FF555580"
+        fillType6: "#FFD86654"
+        fillType7: "#6272A4"
+        actor0: "#BD93F9"
+        actor1: "#8BE9FD"
+        actor2: "#50FA7B"
+        actor3: "#FFB86C"
+        actor4: "#FF79C6"
+        actor5: "#6272A4"
+        faceColor: "#FFD86654"
+        personBorder: "#BD93F9"
+        personBkg: "#44475A"
+        archEdgeColor: "#FF79C6"
+        archEdgeArrowColor: "#FF79C6"
+        archEdgeWidth: "2"
+        archGroupBorderColor: "#D6BCFA"
+        archGroupBorderWidth: "1"
+        git0: "#BD93F9"
+        git1: "#FF79C6"
+        git2: "#8BE9FD"
+        git3: "#50FA7B"
+        git4: "#FFB86C"
+        git5: "#FF5555"
+        git6: "#FFD866"
+        git7: "#6272A4"
+        gitBranchLabel0: "#282A36"
+        gitBranchLabel1: "#282A36"
+        gitBranchLabel2: "#282A36"
+        gitBranchLabel3: "#282A36"
+        gitBranchLabel4: "#282A36"
+        gitBranchLabel5: "#282A36"
+        gitBranchLabel6: "#282A36"
+        gitBranchLabel7: "#282A36"
+        commitLabelColor: "#F8F8F2"
+        commitLabelBackground: "#21222C"
+        commitLabelFontSize: "11px"
+        tagLabelColor: "#F8F8F2"
+        tagLabelBackground: "#FFD86654"
+        tagLabelBorder: "#FFD866"
+        tagLabelFontSize: "11px"
+        pie1: "#FF79C6"
+        pie2: "#8BE9FD"
+        pie3: "#50FA7B"
+        pie4: "#FFB86C"
+        pie5: "#BD93F9"
+        pie6: "#FF5555"
+        pie7: "#FFD866"
+        pie8: "#8BE9FD"
+        pie9: "#50FA7B"
+        pie10: "#FFB86C"
+        pie11: "#BD93F9"
+        pie12: "#FF5555"
+        pieOpacity: 1
+        pieStrokeWidth: "1.5px"
+        pieOuterStrokeWidth: "0px"
+        pieSectionTextSize: "13px"
+        pieSectionTextColor: "#F8F8F2"
+        pieLegendTextSize: "12px"
+        pieLegendTextColor: "#F8F8F2"
+        pieTitleTextSize: "15px"
+        pieTitleTextColor: "#F8F8F2"
+        cScale0: "#FF79C6"
+        cScale1: "#8BE9FD"
+        cScale2: "#50FA7B"
+        cScale3: "#FFB86C"
+        cScale4: "#BD93F9"
+        cScale5: "#FF5555"
+        cScale6: "#FFD866"
+        cScale7: "#8BE9FD"
+        cScale8: "#50FA7B"
+        cScale9: "#FFB86C"
+        cScale10: "#BD93F9"
+        cScale11: "#FF5555"
+        cScaleLabel0: "#282A36"
+        cScaleLabel1: "#282A36"
+        cScaleLabel2: "#282A36"
+        cScaleLabel3: "#282A36"
+        cScaleLabel4: "#282A36"
+        cScaleLabel5: "#282A36"
+        cScaleLabel6: "#282A36"
+        cScaleLabel7: "#282A36"
+        cScaleLabel8: "#282A36"
+        cScaleLabel9: "#282A36"
+        cScaleLabel10: "#282A36"
+        cScaleLabel11: "#282A36"
+        xyChart:
+            backgroundColor: "#282A36"
+            titleColor: "#F8F8F2"
+            dataLabelColor: "#F8F8F2"
+            legendTextColor: "#F8F8F2"
+            xAxisLabelColor: "#F8F8F2"
+            xAxisTitleColor: "#F8F8F2"
+            xAxisTickColor: "#6272A4"
+            xAxisLineColor: "#6272A4"
+            yAxisLabelColor: "#F8F8F2"
+            yAxisTitleColor: "#F8F8F2"
+            yAxisTickColor: "#6272A4"
+            yAxisLineColor: "#6272A4"
+            plotColorPalette: "#FF79C6,#8BE9FD,#50FA7B,#FFB86C,#BD93F9,#FF5555,#FFD866"
+        radar:
+            axisColor: "#6272A4"
+            axisStrokeWidth: 1.5
+            graticuleColor: "#44475A"
+            graticuleOpacity: 0.4
+            curveOpacity: 0.35
+            curveStrokeWidth: 2
 ---
 ```
 
@@ -388,19 +401,19 @@ classDef edgeTrace stroke:#6272A4,color:#F8F8F2,stroke-width:1.5px,stroke-dashar
 
 Per-element sizing rides `themeCSS`, never `themeVariables.fontSize`. Every value is an exact stamp over the SVG-px scale on a three-step type ramp — 13.5 bold container title, 13 primary, 12 tertiary — and nothing on a mermaid canvas renders below the 12px floor, since SVG text carries no hinting and sits below a hinted HTML equivalent at equal size. The container title sits above the node label deliberately: containment names the largest scope on the canvas, so its title carries the heaviest type, and the 13.5px/700 stamp stays under the engine's 16px measurement box, so no titled container clips.
 
-| [INDEX] | [CLASS]                     | [SELECTOR]                               | [PX]  | [WEIGHT]               |
-| :-----: | :-------------------------- | :--------------------------------------- | :---: | :--------------------- |
-|  [01]   | node label                  | `.nodeLabel`                             |  13   | 500                    |
-|  [02]   | actor label (sequence)      | `text.actor tspan`                       |  13   | 600                    |
-|  [03]   | ER entity name              | `.name .nodeLabel`                       |  13   | 600                    |
-|  [04]   | class title                 | `.classTitle`                            |  13   | 600                    |
-|  [05]   | container / namespace title | `.cluster-label .nodeLabel`              | 13.5  | 700, uppercase in text |
-|  [06]   | edge label                  | `.edgeLabel`                             |  12   | 500                    |
-|  [07]   | message text (sequence)     | `.messageText`                           |  12   | 500                    |
-|  [08]   | note text                   | `.noteText`, `.noteLabel .nodeLabel`     |  12   | 400                    |
-|  [09]   | ER attribute cell           | `.nodeLabel` under ER                    |  12   | 400                    |
-|  [10]   | loop / group label          | `.loopText`, `.labelText`                |  12   | 500                    |
-|  [11]   | section / lane title        | `.sectionTitle`, kanban `.cluster-label` | 13.5  | 700, Lavender ink      |
+| [INDEX] | [CLASS]                     | [SELECTOR]                               | [PX] | [WEIGHT]               |
+| :-----: | :-------------------------- | :--------------------------------------- | :--: | :--------------------- |
+|  [01]   | node label                  | `.nodeLabel`                             |  13  | 500                    |
+|  [02]   | actor label (sequence)      | `text.actor tspan`                       |  13  | 600                    |
+|  [03]   | ER entity name              | `.name .nodeLabel`                       |  13  | 600                    |
+|  [04]   | class title                 | `.classTitle`                            |  13  | 600                    |
+|  [05]   | container / namespace title | `.cluster-label .nodeLabel`              | 13.5 | 700, uppercase in text |
+|  [06]   | edge label                  | `.edgeLabel`                             |  12  | 500                    |
+|  [07]   | message text (sequence)     | `.messageText`                           |  12  | 500                    |
+|  [08]   | note text                   | `.noteText`, `.noteLabel .nodeLabel`     |  12  | 400                    |
+|  [09]   | ER attribute cell           | `.nodeLabel` under ER                    |  12  | 400                    |
+|  [10]   | loop / group label          | `.loopText`, `.labelText`                |  12  | 500                    |
+|  [11]   | section / lane title        | `.sectionTitle`, kanban `.cluster-label` | 13.5 | 700, Lavender ink      |
 
 The line-weight ladder — one scale, every stroke on the canvas, stated here once and spent verbatim by every stamp, rail, and class:
 

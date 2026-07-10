@@ -12,14 +12,14 @@ A ProseMirror document is a JSON object:
 
 ```json template
 {
-  "type": "doc",
-  "content": [
-    {
-      "type": "paragraph",
-      "attrs": { "id": null },
-      "content": [{ "type": "text", "text": "Hello" }]
-    }
-  ]
+    "type": "doc",
+    "content": [
+        {
+            "type": "paragraph",
+            "attrs": { "id": null },
+            "content": [{ "type": "text", "text": "Hello" }]
+        }
+    ]
 }
 ```
 
@@ -34,7 +34,6 @@ When editing existing content, preserve existing `id` values from `read`. For ne
 Everyday note content uses Markdown instead of JSON. The table below maps Markdown syntax to the ProseMirror nodes and marks the CLI creates:
 
 <!-- prettier-ignore -->
-
 | [INDEX] | [MARKDOWN]                                                              | [PROSEMIRROR]                                         |
 | :-----: | :---------------------------------------------------------------------- | :---------------------------------------------------- |
 |  [01]   | `# H1` through `###### H6`                                              | `heading`                                             |
@@ -87,7 +86,6 @@ Video markdown rules:
 Optional attrs carry a trailing `?`. Every `id` and `fileId` is a UUID string or null; string attrs (`src`, `url`, `width`, `title`, and peers) are string or null; `originalWidth`/`originalHeight` are number or null; timestamp attrs are ISO 8601 strings (see [Timestamp Attrs](#timestamp-attrs)). Media `reference` attrs are preserved from `read`, never created manually (see [Media References](#media-references)). For `table_cell`/`table_header`, `colspan?`/`rowspan?` are positive integers, `colwidth?` is a positive integer[] or null, and `backgroundColor?`/`textColor?` are an editor color or null (see [Editor Colors](#editor-colors)). For `embed` and `mention`, `objectType` is `note`, `journal`, `highlightElement`, `image`, `video`, or `audio`, and `objectId` is a UUID string, or `YYYY-MM-DD` when `objectType` is `journal`. Deprecated `image`/`video` attrs live in [Deprecated attributes](#deprecated-attributes).
 
 <!-- prettier-ignore -->
-
 | [INDEX] | [NODE]                       | [CONTENT]                     | [ATTRS]                                                               |
 | :-----: | :--------------------------- | :---------------------------- | :-------------------------------------------------------------------- |
 |  [01]   | `doc`                        | `block+`                      | none                                                                  |
@@ -139,7 +137,6 @@ Editor colors for `table_cell` / `table_header` `backgroundColor` and `textColor
 ### [03.2]-[INLINE_NODES]
 
 <!-- prettier-ignore -->
-
 | [INDEX] | [NODE]                                   | [ATTRS]                                                         |
 | :-----: | :--------------------------------------- | :-------------------------------------------------------------- |
 |  [01]   | `text`                                   | none                                                            |
@@ -170,7 +167,6 @@ Marks only attach to `text` nodes. Each mark is an entry in that node's `marks` 
 Saving as Markdown yields bold, italic, and the other marks from the syntax in [Markdown Content](#markdown-content). Underline and text/background color have no Markdown syntax — save as JSON (ProseMirror) for those marks.
 
 <!-- prettier-ignore -->
-
 | [INDEX] | [MARK]      | [ATTRS]                                         | [NOTES]                                                      |
 | :-----: | :---------- | :---------------------------------------------- | :----------------------------------------------------------- |
 |  [01]   | `em`        | none                                            | italic                                                       |
@@ -191,7 +187,6 @@ Saving as Markdown yields bold, italic, and the other marks from the syntax in [
 Some attrs remain in the schema as legacy. When creating new JSON, omit them unless round-tripping an existing document from `read`:
 
 <!-- prettier-ignore -->
-
 | [INDEX] | [NODE_MARK] | [DEPRECATED]                            | [NOTES]                                                                        |
 | :-----: | :---------- | :-------------------------------------- | :----------------------------------------------------------------------------- |
 |  [01]   | `image`     | `alt`, `title`                          | Markdown import ignores them; use `fileId` / `src` and `alignment` instead     |
@@ -204,8 +199,8 @@ Some attrs remain in the schema as legacy. When creating new JSON, omit them unl
 
 ```json template
 {
-  "type": "doc",
-  "content": [{ "type": "heading", "attrs": { "level": 1, "id": null } }]
+    "type": "doc",
+    "content": [{ "type": "heading", "attrs": { "level": 1, "id": null } }]
 }
 ```
 
@@ -213,31 +208,31 @@ Some attrs remain in the schema as legacy. When creating new JSON, omit them unl
 
 ```json template
 {
-  "type": "doc",
-  "content": [
-    {
-      "type": "paragraph",
-      "attrs": { "id": null },
-      "content": [
-        { "type": "text", "text": "This is " },
-        { "type": "text", "marks": [{ "type": "strong" }], "text": "bold" },
-        { "type": "text", "text": " and " },
-        { "type": "text", "marks": [{ "type": "em" }], "text": "italic" },
-        { "type": "text", "text": ", with " },
+    "type": "doc",
+    "content": [
         {
-          "type": "text",
-          "marks": [
-            {
-              "type": "link",
-              "attrs": { "href": "https://heptabase.com" }
-            }
-          ],
-          "text": "a link"
-        },
-        { "type": "text", "text": "." }
-      ]
-    }
-  ]
+            "type": "paragraph",
+            "attrs": { "id": null },
+            "content": [
+                { "type": "text", "text": "This is " },
+                { "type": "text", "marks": [{ "type": "strong" }], "text": "bold" },
+                { "type": "text", "text": " and " },
+                { "type": "text", "marks": [{ "type": "em" }], "text": "italic" },
+                { "type": "text", "text": ", with " },
+                {
+                    "type": "text",
+                    "marks": [
+                        {
+                            "type": "link",
+                            "attrs": { "href": "https://heptabase.com" }
+                        }
+                    ],
+                    "text": "a link"
+                },
+                { "type": "text", "text": "." }
+            ]
+        }
+    ]
 }
 ```
 
@@ -245,24 +240,24 @@ Some attrs remain in the schema as legacy. When creating new JSON, omit them unl
 
 ```json template
 {
-  "type": "doc",
-  "content": [
-    {
-      "type": "todo_list_item",
-      "attrs": {
-        "id": null,
-        "checked": false,
-        "lastUpdatedTime": "2026-05-26T00:00:00.000Z"
-      },
-      "content": [
+    "type": "doc",
+    "content": [
         {
-          "type": "paragraph",
-          "attrs": { "id": null },
-          "content": [{ "type": "text", "text": "Review schema rules" }]
+            "type": "todo_list_item",
+            "attrs": {
+                "id": null,
+                "checked": false,
+                "lastUpdatedTime": "2026-05-26T00:00:00.000Z"
+            },
+            "content": [
+                {
+                    "type": "paragraph",
+                    "attrs": { "id": null },
+                    "content": [{ "type": "text", "text": "Review schema rules" }]
+                }
+            ]
         }
-      ]
-    }
-  ]
+    ]
 }
 ```
 
@@ -270,19 +265,19 @@ Some attrs remain in the schema as legacy. When creating new JSON, omit them unl
 
 ```json template
 {
-  "type": "doc",
-  "content": [
-    {
-      "type": "code_block",
-      "attrs": { "id": null, "params": "typescript" },
-      "content": [{ "type": "text", "text": "const answer = 42;" }]
-    },
-    {
-      "type": "code_block",
-      "attrs": { "id": null, "params": "!mermaid:preview" },
-      "content": [{ "type": "text", "text": "flowchart TD\n  A[Draft] --> B[Review]" }]
-    }
-  ]
+    "type": "doc",
+    "content": [
+        {
+            "type": "code_block",
+            "attrs": { "id": null, "params": "typescript" },
+            "content": [{ "type": "text", "text": "const answer = 42;" }]
+        },
+        {
+            "type": "code_block",
+            "attrs": { "id": null, "params": "!mermaid:preview" },
+            "content": [{ "type": "text", "text": "flowchart TD\n  A[Draft] --> B[Review]" }]
+        }
+    ]
 }
 ```
 
@@ -292,20 +287,20 @@ Use `!` to enable line wrapping, for example `!typescript`. For Mermaid code blo
 
 ```json template
 {
-  "type": "doc",
-  "content": [
-    {
-      "type": "paragraph",
-      "attrs": { "id": null },
-      "content": [
-        { "type": "text", "text": "See also: " },
+    "type": "doc",
+    "content": [
         {
-          "type": "card",
-          "attrs": { "cardId": "11111111-1111-4111-8111-111111111111" }
+            "type": "paragraph",
+            "attrs": { "id": null },
+            "content": [
+                { "type": "text", "text": "See also: " },
+                {
+                    "type": "card",
+                    "attrs": { "cardId": "11111111-1111-4111-8111-111111111111" }
+                }
+            ]
         }
-      ]
-    }
-  ]
+    ]
 }
 ```
 
@@ -313,19 +308,19 @@ Use `!` to enable line wrapping, for example `!typescript`. For Mermaid code blo
 
 ```json template
 {
-  "type": "doc",
-  "content": [
-    {
-      "type": "embed",
-      "attrs": {
-        "id": null,
-        "objectType": "note",
-        "objectId": "11111111-1111-4111-8111-111111111111",
-        "width": "100%",
-        "alignment": "center"
-      }
-    }
-  ]
+    "type": "doc",
+    "content": [
+        {
+            "type": "embed",
+            "attrs": {
+                "id": null,
+                "objectType": "note",
+                "objectId": "11111111-1111-4111-8111-111111111111",
+                "width": "100%",
+                "alignment": "center"
+            }
+        }
+    ]
 }
 ```
 
@@ -335,26 +330,26 @@ Use `!` to enable line wrapping, for example `!typescript`. For Mermaid code blo
 
 ```json template
 {
-  "type": "doc",
-  "content": [
-    {
-      "type": "math_display",
-      "attrs": { "id": null },
-      "content": [{ "type": "text", "text": "\\int_0^1 x^2 \\,dx = \\frac{1}{3}" }]
-    },
-    {
-      "type": "paragraph",
-      "attrs": { "id": null },
-      "content": [
-        { "type": "text", "text": "Inline: " },
+    "type": "doc",
+    "content": [
         {
-          "type": "math_inline",
-          "content": [{ "type": "text", "text": "a^2 + b^2 = c^2" }]
+            "type": "math_display",
+            "attrs": { "id": null },
+            "content": [{ "type": "text", "text": "\\int_0^1 x^2 \\,dx = \\frac{1}{3}" }]
         },
-        { "type": "text", "text": " in a sentence." }
-      ]
-    }
-  ]
+        {
+            "type": "paragraph",
+            "attrs": { "id": null },
+            "content": [
+                { "type": "text", "text": "Inline: " },
+                {
+                    "type": "math_inline",
+                    "content": [{ "type": "text", "text": "a^2 + b^2 = c^2" }]
+                },
+                { "type": "text", "text": " in a sentence." }
+            ]
+        }
+    ]
 }
 ```
 
@@ -362,71 +357,71 @@ Use `!` to enable line wrapping, for example `!typescript`. For Mermaid code blo
 
 ```json template
 {
-  "type": "doc",
-  "content": [
-    {
-      "type": "table",
-      "attrs": { "id": null, "hasRowHeader": false, "hasColumnHeader": true },
-      "content": [
+    "type": "doc",
+    "content": [
         {
-          "type": "table_row",
-          "attrs": { "id": null },
-          "content": [
-            {
-              "type": "table_header",
-              "attrs": { "colspan": 1, "rowspan": 1 },
-              "content": [
+            "type": "table",
+            "attrs": { "id": null, "hasRowHeader": false, "hasColumnHeader": true },
+            "content": [
                 {
-                  "type": "paragraph",
-                  "attrs": { "id": null },
-                  "content": [{ "type": "text", "text": "Name" }]
-                }
-              ]
-            },
-            {
-              "type": "table_header",
-              "attrs": { "colspan": 1, "rowspan": 1 },
-              "content": [
+                    "type": "table_row",
+                    "attrs": { "id": null },
+                    "content": [
+                        {
+                            "type": "table_header",
+                            "attrs": { "colspan": 1, "rowspan": 1 },
+                            "content": [
+                                {
+                                    "type": "paragraph",
+                                    "attrs": { "id": null },
+                                    "content": [{ "type": "text", "text": "Name" }]
+                                }
+                            ]
+                        },
+                        {
+                            "type": "table_header",
+                            "attrs": { "colspan": 1, "rowspan": 1 },
+                            "content": [
+                                {
+                                    "type": "paragraph",
+                                    "attrs": { "id": null },
+                                    "content": [{ "type": "text", "text": "Status" }]
+                                }
+                            ]
+                        }
+                    ]
+                },
                 {
-                  "type": "paragraph",
-                  "attrs": { "id": null },
-                  "content": [{ "type": "text", "text": "Status" }]
+                    "type": "table_row",
+                    "attrs": { "id": null },
+                    "content": [
+                        {
+                            "type": "table_cell",
+                            "attrs": { "colspan": 1, "rowspan": 1 },
+                            "content": [
+                                {
+                                    "type": "paragraph",
+                                    "attrs": { "id": null },
+                                    "content": [{ "type": "text", "text": "Schema docs" }]
+                                }
+                            ]
+                        },
+                        {
+                            "type": "table_cell",
+                            "attrs": { "colspan": 1, "rowspan": 1 },
+                            "content": [
+                                {
+                                    "type": "paragraph",
+                                    "attrs": { "id": null },
+                                    "content": [{ "type": "text", "text": "Draft" }]
+                                }
+                            ]
+                        }
+                    ]
                 }
-              ]
-            }
-          ]
-        },
-        {
-          "type": "table_row",
-          "attrs": { "id": null },
-          "content": [
-            {
-              "type": "table_cell",
-              "attrs": { "colspan": 1, "rowspan": 1 },
-              "content": [
-                {
-                  "type": "paragraph",
-                  "attrs": { "id": null },
-                  "content": [{ "type": "text", "text": "Schema docs" }]
-                }
-              ]
-            },
-            {
-              "type": "table_cell",
-              "attrs": { "colspan": 1, "rowspan": 1 },
-              "content": [
-                {
-                  "type": "paragraph",
-                  "attrs": { "id": null },
-                  "content": [{ "type": "text", "text": "Draft" }]
-                }
-              ]
-            }
-          ]
+            ]
         }
-      ]
-    }
-  ]
+    ]
 }
 ```
 

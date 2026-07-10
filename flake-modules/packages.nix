@@ -19,8 +19,13 @@ in {
     inherit (forgePkgs) lib;
     rowsWhere = field:
       lib.filterAttrs (_: row: row.projection.${field} or false) manifest.packages;
-    defaultName =
-      lib.head (builtins.attrNames (rowsWhere "default"));
+    # Exactly one row may carry projection.default; zero or many is a named eval fault.
+    defaultName = let
+      names = builtins.attrNames (rowsWhere "default");
+    in
+      if builtins.length names == 1
+      then lib.head names
+      else throw "overlays/manifest.nix: exactly one projection.default row required, found ${toString (builtins.length names)}";
     mkApp = package: {
       type = "app";
       program = lib.getExe package;
@@ -36,7 +41,9 @@ in {
     apps =
       lib.mapAttrs (name: _: mkApp forgePkgs.${name}) (rowsWhere "app")
       // {
-        default = config.apps.${defaultName};
+        default =
+          config.apps.${defaultName}
+          or (throw "overlays/manifest.nix: the projection.default row '${defaultName}' must also set projection.app");
       };
   };
 }

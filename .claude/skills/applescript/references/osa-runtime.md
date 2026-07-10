@@ -43,9 +43,9 @@ osascript -l JavaScript -s s ./automation.scpt "$bundle_id" "$payload_json"
 
 ```javascript copy-safe
 function run(argv) {
-  const [bundleID, payloadJSON] = argv
-  console.log(`decoding payload for ${bundleID}`)
-  return JSON.stringify({ ok: true, bundleID })
+    const [bundleID, payloadJSON] = argv;
+    console.log(`decoding payload for ${bundleID}`);
+    return JSON.stringify({ ok: true, bundleID });
 }
 ```
 
@@ -73,15 +73,15 @@ osalang -L
 A JXA property that addresses an application object model returns an object specifier until evaluation forces it: parentheses call `get` for a scalar or array value, and assignment sends a `set` Apple event. Specifier chains stay lazy across element traversal, so a pipeline sends one event at the terminal property call. `whose` builds one of these specifiers into an Apple event test descriptor rather than a JavaScript predicate, closed over a comparison-and-logic key vocabulary (`_beginsWith`, `_and`, and their peers) that the target application evaluates server-side. A single-field predicate coerces cleanly against every target because it maps to one comparison descriptor; a compound predicate composes a logical descriptor around it, and a target whose object-model implementation omits logical-descriptor support rejects the whole compound test outright rather than degrading to a partial match — so a production filter reduces on the target for the cheap single field and falls back to JavaScript filtering for the rest.
 
 ```javascript copy-safe
-const Finder = Application("Finder")
-const frontWindow = Finder.windows[0]
-const nameValue = frontWindow.name()
-frontWindow.bounds = { x: 80, y: 80, width: 1200, height: 900 }
+const Finder = Application("Finder");
+const frontWindow = Finder.windows[0];
+const nameValue = frontWindow.name();
+frontWindow.bounds = { x: 80, y: 80, width: 1200, height: 900 };
 
-const se = Application("System Events")
-const names = se.processes.whose({ _and: [{ name: { _beginsWith: "S" } }, { visible: true }] }).name()
-const raw = se.processes.whose({ visible: true }).properties()
-const kept = raw.filter(p => /^S/.test(p.name) && p.bundleIdentifier)
+const se = Application("System Events");
+const names = se.processes.whose({ _and: [{ name: { _beginsWith: "S" } }, { visible: true }] }).name();
+const raw = se.processes.whose({ visible: true }).properties();
+const kept = raw.filter((p) => /^S/.test(p.name) && p.bundleIdentifier);
 ```
 
 ## [06]-[STANDARD_ADDITIONS]
@@ -89,9 +89,9 @@ const kept = raw.filter(p => /^S/.test(p.name) && p.bundleIdentifier)
 Standard Additions do not bind to an arbitrary target application; JXA admits them only on the executing host through `Application.currentApplication()` with `includeStandardAdditions` set, and AppleScript mirrors the same boundary with `use scripting additions` under explicit `current application` ownership.
 
 ```javascript conceptual
-const app = Application.currentApplication()
-app.includeStandardAdditions = true
-const choice = app.chooseFile({ withPrompt: "Select input" })
+const app = Application.currentApplication();
+app.includeStandardAdditions = true;
+const choice = app.chooseFile({ withPrompt: "Select input" });
 ```
 
 ```applescript copy-safe
@@ -104,15 +104,17 @@ set hostPath to POSIX path of (path to me)
 JXA app dictionaries carry `Path` as the file-reference token that crosses Apple events; a droplet handler receives `Path` values, never plain strings, and a bridge conversion to a Foundation type is explicit. `Progress` is a host contract, not a transport: an interactive OSA host surfaces it, while a headless `osascript` caller only ever consumes stdout and stderr.
 
 ```javascript copy-safe
-ObjC.import("Foundation")
-const input = Path("/Users/example/Desktop/input.pdf")
-const url = $.NSURL.fileURLWithPath(input.toString())
-const name = url.lastPathComponent.js
+ObjC.import("Foundation");
+const input = Path("/Users/example/Desktop/input.pdf");
+const url = $.NSURL.fileURLWithPath(input.toString());
+const name = url.lastPathComponent.js;
 
 function run(argv) {
-  Progress.totalUnitCount = argv.length
-  argv.forEach((_, index) => { Progress.completedUnitCount = index + 1 })
-  return argv.length
+    Progress.totalUnitCount = argv.length;
+    argv.forEach((_, index) => {
+        Progress.completedUnitCount = index + 1;
+    });
+    return argv.length;
 }
 ```
 
@@ -121,16 +123,16 @@ function run(argv) {
 `ObjC.import()` admits a framework into the `$` namespace; every value it returns stays an Objective-C object until `.js`, `ObjC.unwrap()`, or `ObjC.deepUnwrap()` converts it at the boundary, and deep unwrapping belongs at the edge where a Foundation collection becomes a JSON-safe JavaScript value, never mid-pipeline. `ObjC.bindFunction()` admits a C function by declared result and argument types; a pointer-heavy signature routes through `ObjC.Ref` and `ObjC.castRefToObject()` behind an owner-scoped wrapper so a pointer lifetime never leaks into application code.
 
 ```javascript copy-safe
-ObjC.import("Foundation")
-const fm = $.NSFileManager.defaultManager
-const urls = fm.URLsForDirectoryInDomains($.NSDocumentDirectory, $.NSUserDomainMask)
-const first = urls.objectAtIndex(0).path.js
-const dict = $.NSDictionary.dictionaryWithObjectsForKeys(["value", 42], ["key", "count"])
-const value = ObjC.deepUnwrap(dict)
+ObjC.import("Foundation");
+const fm = $.NSFileManager.defaultManager;
+const urls = fm.URLsForDirectoryInDomains($.NSDocumentDirectory, $.NSUserDomainMask);
+const first = urls.objectAtIndex(0).path.js;
+const dict = $.NSDictionary.dictionaryWithObjectsForKeys(["value", 42], ["key", "count"]);
+const value = ObjC.deepUnwrap(dict);
 
-ObjC.bindFunction("getpid", ["int", []])
+ObjC.bindFunction("getpid", ["int", []]);
 function run() {
-  return $.getpid()
+    return $.getpid();
 }
 ```
 
@@ -139,21 +141,21 @@ function run() {
 JXA shells out through `NSTask`/`NSPipe` when a caller needs exact argv, separated stdout and stderr streams, and a termination contract; `do shell script` remains an AppleScript Standard Addition with shell-string semantics rather than an argv contract. `terminationStatus` alone conflates two distinct outcomes — a normal exit carrying a nonzero code, or death by an uncaught signal — so a caller reads `terminationReason` (`.exit` vs `.uncaughtSignal`) beside the status to know which meaning the numeric value carries.
 
 ```javascript copy-safe
-ObjC.import("Foundation")
+ObjC.import("Foundation");
 function runTask(launchPath, args) {
-  const task = $.NSTask.alloc.init
-  const out = $.NSPipe.pipe
-  task.launchPath = launchPath
-  task.arguments = args
-  task.standardOutput = out
-  task.launch
-  task.waitUntilExit
-  const data = out.fileHandleForReading.readDataToEndOfFile
-  return {
-    status: task.terminationStatus,
-    reason: task.terminationReason,
-    stdout: $.NSString.alloc.initWithDataEncoding(data, $.NSUTF8StringEncoding).js
-  }
+    const task = $.NSTask.alloc.init;
+    const out = $.NSPipe.pipe;
+    task.launchPath = launchPath;
+    task.arguments = args;
+    task.standardOutput = out;
+    task.launch;
+    task.waitUntilExit;
+    const data = out.fileHandleForReading.readDataToEndOfFile;
+    return {
+        status: task.terminationStatus,
+        reason: task.terminationReason,
+        stdout: $.NSString.alloc.initWithDataEncoding(data, $.NSUTF8StringEncoding).js,
+    };
 }
 ```
 
@@ -162,8 +164,8 @@ function runTask(launchPath, args) {
 `Library("name")` loads a compiled script library from the script-library search locations and exposes its handlers as callable functions; a value that is not a handler stays private implementation state. AppleScript composes libraries at compile time through `use script`, and `use scripting additions` stays explicit whenever library resolution changes the inheritance chain.
 
 ```javascript copy-safe
-const toolbox = Library("toolbox")
-toolbox.normalizeName("  A   B  ")
+const toolbox = Library("toolbox");
+toolbox.normalizeName("  A   B  ");
 ```
 
 ```applescript copy-safe
@@ -186,10 +188,18 @@ osacompile -l JavaScript -o build/Worker.app src/worker.jxa
 ```
 
 ```javascript copy-safe
-function run(argv) { return "double-click" }
-function openDocuments(docs) { return docs.map(d => d.toString()).join("\n") }
-function idle() { return 300 }
-function quit() { return true }
+function run(argv) {
+    return "double-click";
+}
+function openDocuments(docs) {
+    return docs.map((d) => d.toString()).join("\n");
+}
+function idle() {
+    return 300;
+}
+function quit() {
+    return true;
+}
 ```
 
 ## [12]-[RUN_ONLY_AND_DRIFT_RECEIPTS]
@@ -311,8 +321,8 @@ set hostName to run script js in "JavaScript"
 ```
 
 ```javascript copy-safe
-const host = Application.currentApplication()
-host.includeStandardAdditions = true
-const source = 'tell application "Finder" to return POSIX path of (files of desktop whose name extension is "scpt") as list'
-const paths = host.runScript(source)
+const host = Application.currentApplication();
+host.includeStandardAdditions = true;
+const source = 'tell application "Finder" to return POSIX path of (files of desktop whose name extension is "scpt") as list';
+const paths = host.runScript(source);
 ```
