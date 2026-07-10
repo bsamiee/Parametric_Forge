@@ -17,23 +17,5 @@ split("\n")
     dsnEnv: .[7],
     composeService: .[0]
   })
-| map({
-    (.key): {
-      key,
-      role,
-      enabled,
-      connectable,
-      profile,
-      image,
-      imageEnv,
-      host,
-      port,
-      portEnv,
-      portSource,
-      containerPort,
-      dsnRedacted,
-      dsnEnv,
-      composeService
-    }
-  })
-| add // {}
+| map({key: .key, value: .})
+| from_entries

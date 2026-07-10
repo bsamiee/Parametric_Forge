@@ -13,7 +13,14 @@ resolve_share_dir() {
     printf '%s/share/forge-provision\n' "${bin_dir%/bin}"
 }
 
-readonly forge_provision_share="${FORGE_PROVISION_SHARE:-$(resolve_share_dir)}"
+forge_provision_share="${FORGE_PROVISION_SHARE:-}"
+if [[ -z "$forge_provision_share" ]]; then
+    forge_provision_share="$(resolve_share_dir)" || {
+        printf 'forge-provision: cannot resolve packaged share directory\n' >&2
+        exit 70
+    }
+fi
+readonly forge_provision_share
 readonly schema_version=3
 readonly owner_label="dev.bsamiee.forge-provision"
 readonly service_label="dev.bsamiee.forge-provision.service"
@@ -150,6 +157,7 @@ docker_endpoint_issue=""
 current_command=""
 output_json=false
 diagnostic_json=false
+tool_surface_selector="all"
 auth_mode=""
 auth_risk=""
 auth_secret_dir=""
@@ -269,13 +277,7 @@ redact_message() {
         [[ -n "$needle" ]] || continue
         text="${text//"$needle"/[redacted]}"
     done
-    if command -v jq >/dev/null 2>&1; then
-        text="$(printf '%s\n' "$text" | jq -Rr -f "$(catalog_path jq/redact-message.jq)" 2>/dev/null || printf '%s\n' "$text")"
-    else
-        text="${text//POSTGRES_PASSWORD=*/POSTGRES_PASSWORD=[redacted]}"
-        text="${text//PGPASSFILE=*/PGPASSFILE=[redacted]}"
-        text="${text//DOCKER_CONFIG=*/DOCKER_CONFIG=[redacted]}"
-    fi
+    text="$(printf '%s\n' "$text" | jq -Rr -f "$(catalog_path jq/redact-message.jq)" 2>/dev/null || printf '%s\n' "$text")"
     printf '%s\n' "$text"
 }
 
@@ -531,10 +533,10 @@ os_ephemeral_ranges() {
             ;;
         Darwin)
             local first last hifirst hilast ranges=()
-            first="$(sysctl -n net.inet.ip.portrange.first 2>/dev/null || true)"
-            last="$(sysctl -n net.inet.ip.portrange.last 2>/dev/null || true)"
-            hifirst="$(sysctl -n net.inet.ip.portrange.hifirst 2>/dev/null || true)"
-            hilast="$(sysctl -n net.inet.ip.portrange.hilast 2>/dev/null || true)"
+            first="$(/usr/sbin/sysctl -n net.inet.ip.portrange.first 2>/dev/null || true)"
+            last="$(/usr/sbin/sysctl -n net.inet.ip.portrange.last 2>/dev/null || true)"
+            hifirst="$(/usr/sbin/sysctl -n net.inet.ip.portrange.hifirst 2>/dev/null || true)"
+            hilast="$(/usr/sbin/sysctl -n net.inet.ip.portrange.hilast 2>/dev/null || true)"
             [[ "$first" =~ ^[0-9]+$ && "$last" =~ ^[0-9]+$ ]] && ranges+=("$first-$last")
             [[ "$hifirst" =~ ^[0-9]+$ && "$hilast" =~ ^[0-9]+$ ]] && ranges+=("$hifirst-$hilast")
             if ((${#ranges[@]} > 0)); then
@@ -597,13 +599,12 @@ auto_block_busy() {
     return 1
 }
 
+# Linux prefers /proc/net: unprivileged lsof only sees the caller's own listeners there.
 listener_probe_method() {
-    if command -v lsof >/dev/null 2>&1; then
-        printf 'lsof'
-    elif command -v ss >/dev/null 2>&1; then
-        printf 'ss'
-    elif [[ -r /proc/net/tcp || -r /proc/net/tcp6 ]]; then
+    if [[ "$host_os" == "Linux" && (-r /proc/net/tcp || -r /proc/net/tcp6) ]]; then
         printf 'proc-net'
+    elif command -v lsof >/dev/null 2>&1; then
+        printf 'lsof'
     else
         printf 'unavailable'
     fi
@@ -628,12 +629,6 @@ host_port_busy() {
     local port="$1"
     case "$(listener_probe_method)" in
         lsof) lsof -nP -iTCP:"$port" -sTCP:LISTEN -t >/dev/null 2>&1 ;;
-        ss)
-            ss -H -ltnp 2>/dev/null | awk -v suffix=":$port" '
-        $4 == suffix || $4 ~ suffix "$" { found = 1 }
-        END { exit(found ? 0 : 1) }
-      '
-            ;;
         proc-net) proc_net_port_busy "$port" ;;
         *) return 2 ;;
     esac
@@ -643,7 +638,10 @@ manifest_port_for_service() {
     local service="$1"
     local manifest="$current_link/manifest.json"
     [[ -f "$manifest" ]] || return 1
-    jq -er --arg service "$service" '.services[$service].port // empty' "$manifest" 2>/dev/null
+    jq -er --arg service "$service" '.services[$service].port // empty' "$manifest" 2>/dev/null || {
+        warn "published manifest is unreadable or missing port for service=$service; ignoring manifest port pins"
+        return 1
+    }
 }
 
 set_resolved_block() {
@@ -934,9 +932,11 @@ tool_surface_json() {
             catalog_surface="sqlite-forge"
             raw="$(SQLITE_FORGE_PROFILE=safe sqlite-forge -bail -json :memory: <"$(catalog_path sql/sqlite-extension-probe.sql)" 2>/dev/null)" || return 1
             ;;
+        *) die "unknown tool surface: $surface" ;;
     esac
-    jq -nc --argjson catalog "$(jq --arg surface "$catalog_surface" 'map(select(.surface == $surface))' "$(catalog_path "data/${surface}-extensions.json")")" \
-        --argjson rows "$raw" -f "$(catalog_path "jq/tool-${surface}.jq")"
+    jq -nc --arg surface "$surface" \
+        --argjson catalog "$(jq --arg surface "$catalog_surface" 'map(select(.surface == $surface))' "$(catalog_path "data/${surface}-extensions.json")")" \
+        --argjson rows "$raw" -f "$(catalog_path jq/tool-surface.jq)"
 }
 
 tool_surfaces_json() {
@@ -963,7 +963,9 @@ enabled_services() {
 }
 
 enabled_service_count() {
-    enabled_services | awk 'END { print NR }'
+    local -a services=()
+    mapfile -t services < <(enabled_services)
+    printf '%s\n' "${#services[@]}"
 }
 
 validate_port() {
@@ -1760,12 +1762,15 @@ docker_compose_file() {
     return "$rc"
 }
 
+# Diagnostic-only probe: never routes through die, which would corrupt a capturing envelope.
 docker_compose_version() {
-    select_compose_command || {
+    if docker compose version >/dev/null 2>&1; then
+        docker compose version --short 2>/dev/null || printf 'unavailable'
+    elif command -v docker-compose >/dev/null 2>&1; then
+        docker-compose version --short 2>/dev/null || printf 'unavailable'
+    else
         printf 'unavailable'
-        return 0
-    }
-    "${compose_command[@]}" version --short 2>/dev/null || printf 'unavailable'
+    fi
 }
 
 atomic_render() {
@@ -2111,7 +2116,7 @@ lock_json() {
 colima_json() {
     local status
     if command -v colima >/dev/null 2>&1; then
-        if status="$(colima status --json 2>/dev/null)"; then
+        if status="$(colima status --json 2>/dev/null)" && jq -e . <<<"$status" >/dev/null 2>&1; then
             jq -nc --argjson status "$status" --argjson diagnostic "$diagnostic_json" -f "$(catalog_path jq/colima-status.jq)"
         else
             jq -nc '{available: true, status: null, raw: null, statusRedacted: true}'
@@ -2123,17 +2128,21 @@ colima_json() {
 
 apple_container_json() {
     # Sanitized host-gate telemetry: presence, version line, eligibility facts, service state only.
-    local present=false version="" macos_major=0 arch xcode_kind="none" gate=false dev_dir="" system="absent" status=""
+    local present=false version="" macos_major=0 arch xcode_kind="none" gate=false dev_dir="" system="absent" raw_status="" status=""
     arch="$(uname -m)"
     if command -v container >/dev/null 2>&1; then
         present=true
         version="$(container --version 2>/dev/null || true)"
         version="${version%%$'\n'*}"
-        status="$(container system status --format json 2>/dev/null | jq -r '.status // empty' 2>/dev/null || true)"
-        if [[ "$status" == "running" ]]; then
-            system="running"
+        if raw_status="$(container system status --format json 2>/dev/null)"; then
+            status="$(jq -r '.status // empty' <<<"$raw_status" 2>/dev/null || true)"
+            if [[ "$status" == "running" ]]; then
+                system="running"
+            else
+                system="not-running"
+            fi
         else
-            system="not-running"
+            system="probe-failed"
         fi
     fi
     if [[ -x /usr/bin/sw_vers ]]; then
@@ -2242,41 +2251,58 @@ cmd_up() {
     fi
 }
 
-cmd_down() {
-    local docker_rc=0 before_containers="[]" before_networks="[]" before_generated
+# One teardown owner: the dispatched verb selects volume scope, asset policy, and envelope mode.
+cmd_teardown() {
+    local mode="$current_command" include_volumes=false rc=0 docker_ok=false
+    [[ "$mode" != "prune" || " $* " != *" --volumes "* ]] || include_volumes=true
+    local before_containers="[]" before_volumes="[]" before_networks="[]" before_generated
     before_generated="$(generated_files_json)"
     if docker_ready; then
+        docker_ok=true
         acquire_endpoint_lock
         assert_owned_project cleanup
         before_containers="$(owned_containers_json)"
-        before_networks="$(owned_networks_json)"
-        cleanup_runtime_docker_resources || docker_rc=$?
-        cleanup_runtime_assets_preserve_state
+        before_networks="$(owned_resources_json network)"
+        [[ "$mode" != "prune" ]] || before_volumes="$(owned_resources_json volume)"
+        remove_owned_containers || rc=$?
+        if [[ "$include_volumes" == true ]]; then
+            remove_owned_resources volume || rc=$?
+        fi
+        remove_owned_resources network || rc=$?
+        if [[ "$include_volumes" == true ]]; then
+            cleanup_assets
+        else
+            cleanup_runtime_assets_preserve_state
+        fi
         cleanup_empty_parents_after_lock=true
     else
-        docker_rc=1
+        rc=1
         cleanup_transient_assets
         cleanup_empty_parents_after_lock=true
         warn "Docker unavailable or rejected; transient generated files were cleaned and durable state retained for reconciliation"
     fi
     if [[ "$output_json" == true ]]; then
-        emit_stack_json down "$(bool_json test "$docker_rc" -eq 0)" "$(envelope_filter envelope-down.jq)" \
-            --argjson dockerAvailable "$(bool_json test "$docker_rc" -eq 0)" \
+        emit_stack_json "$mode" "$(bool_json test "$rc" -eq 0)" "$(envelope_filter envelope-teardown.jq)" \
+            --arg mode "$mode" \
+            --argjson dockerAvailable "$docker_ok" \
             --argjson containers "$before_containers" \
+            --argjson volumes "$before_volumes" \
             --argjson networks "$before_networks" \
-            --argjson generated "$before_generated"
+            --argjson generated "$before_generated" \
+            --argjson includeVolumes "$include_volumes"
+    elif [[ "$mode" == "prune" ]]; then
+        printf 'prune\towned\tok=%s\tproject=%s\troot=%s\n' "$(bool_json test "$rc" -eq 0)" "$project_name" "$root_key"
     fi
-    return "$docker_rc"
+    return "$rc"
 }
 
 emit_extension_run_json() {
     local command="$1"
     local rows="$2"
-    local ok_json="${3:-}"
+    local ok_json="$3"
     local ports_json="${4:-[]}"
     local extensions_json
     extensions_json="$(printf '%s\n' "$rows" | apply_rows_json)"
-    [[ -n "$ok_json" ]] || ok_json="$(jq -r 'all(.[]; (.required | not) or .state == "ok")' <<<"$extensions_json")"
     emit_stack_json "$command" "$ok_json" "$(envelope_filter envelope-extension-run.jq)" \
         --argjson extensions "$extensions_json" \
         --argjson ports "$ports_json"
@@ -2300,22 +2326,20 @@ cmd_extension_run() {
     else
         wait_services
     fi
-    local rows ok_json
+    local rows required_ok=true
     if [[ "$mode" == "apply" ]]; then
         rows="$(extension_rows apply)"
     else
         rows="$(extension_rows check)"
     fi
-    apply_required_rows_ok "$rows" || ok_json=false
+    apply_required_rows_ok "$rows" || required_ok=false
     if [[ "$json" == true ]]; then
-        emit_extension_run_json "$mode" "$rows" "${ok_json:-}"
-        if [[ "${ok_json:-true}" == false ]]; then
-            exit 1
-        fi
+        emit_extension_run_json "$mode" "$rows" "$required_ok"
+        [[ "$required_ok" == true ]] || exit 1
         return 0
     fi
     printf '%s\n' "$rows"
-    apply_required_rows_ok "$rows" || die "required extension $mode failed"
+    [[ "$required_ok" == true ]] || die "required extension $mode failed"
 }
 
 cmd_psql_service() {
@@ -2358,17 +2382,17 @@ docker_state_snapshot() {
         for kind in "$@"; do
             case "$kind" in
                 containers) snapshot_containers="$(owned_containers_json)" ;;
-                volumes) snapshot_volumes="$(owned_volumes_json)" ;;
-                networks) snapshot_networks="$(owned_networks_json)" ;;
+                volumes) snapshot_volumes="$(owned_resources_json volume)" ;;
+                networks) snapshot_networks="$(owned_resources_json network)" ;;
                 images) snapshot_images="$(relevant_images_json)" ;;
                 disk) snapshot_disk="$(docker_disk_json)" ;;
-                ports | ports-offline) snapshot_ports="$(port_records_json)" ;;
+                ports | ports-offline) snapshot_ports="$(port_records_json true)" ;;
             esac
         done
         return 0
     fi
     for kind in "$@"; do
-        [[ "$kind" == "ports-offline" ]] && snapshot_ports="$(port_records_offline_json)"
+        [[ "$kind" == "ports-offline" ]] && snapshot_ports="$(port_records_json false)"
     done
     return 0
 }
@@ -2388,7 +2412,7 @@ cmd_status() {
         return 0
     fi
     local ids=()
-    local id service name image state health ports identity_json identity_ok identity_issue
+    local id raw service name image state health ports identity_ok identity_issue
     if [[ "$docker_ok" != true ]]; then
         printf 'status\tstate=docker-unavailable\tproject=%s\troot=%s\treason=%s\n' "$project_name" "$root_key" "$docker_issue"
         return 0
@@ -2399,24 +2423,10 @@ cmd_status() {
         return 0
     fi
     for id in "${ids[@]}"; do
-        service="$(inspect_label "$id" "$service_label")"
-        name="$(inspect_name "$id" || printf '-')"
-        image="$(docker inspect --format '{{ .Config.Image }}' "$id" || printf '-')"
-        state="$(docker inspect --format '{{ .State.Status }}' "$id" || printf '-')"
-        health="$(docker inspect --format '{{ if .State.Health }}{{ .State.Health.Status }}{{ else }}none{{ end }}' "$id" || printf '-')"
+        raw="$(docker inspect "$id" 2>/dev/null)" || raw='[]'
+        IFS=$'\x1f' read -r service name image state health identity_ok identity_issue < <(container_report_row "$raw") ||
+            { service="" name='-' image='-' state='-' health='-' identity_ok=false identity_issue=unknown-service; }
         ports="$(published_ports "$id")"
-        if known_service "$service"; then
-            identity_json="$(docker inspect "$id" | jq -r \
-                --arg image "$(service_image "$service")" \
-                --arg net "$(network_name)" \
-                --arg volume "$(service_volume_name "$service")" \
-                --arg mount "${service_volume_mount[$service]}" \
-                -f "$(catalog_path jq/status-text-identity.jq)")"
-            IFS=$'\t' read -r identity_ok identity_issue <<<"$identity_json"
-        else
-            identity_ok=false
-            identity_issue=unknown-service
-        fi
         printf 'status\tservice=%s\tcontainer_id=%s\tname=%s\timage=%s\tdocker_status=%s\thealth=%s\tports=%s\tidentity_ok=%s\tidentity_issue=%s\tproject=%s\troot=%s\n' \
             "$service" "$id" "$name" "$image" "$state" "$health" "$ports" "$identity_ok" "$identity_issue" "$project_name" "$root_key"
     done
@@ -2554,8 +2564,15 @@ cmd_doctor() {
             endpoint_path_exists="false"
         fi
     fi
-    [[ -f "$host_docker_config" ]] && host_creds_store="$(jq -r '.credsStore // .credStore // "none"' "$host_docker_config" 2>/dev/null || printf 'unreadable')"
-    [[ -f "$host_docker_config" ]] && host_cred_helpers="$(jq -r '(.credHelpers // {}) | length' "$host_docker_config" 2>/dev/null || printf 'unreadable')"
+    if [[ -f "$host_docker_config" ]]; then
+        IFS=$'\x1f' read -r host_creds_store host_cred_helpers < <(
+            jq -r -f "$(catalog_path jq/host-creds.jq)" "$host_docker_config" 2>/dev/null
+        ) || true
+        [[ -n "$host_creds_store" && -n "$host_cred_helpers" ]] || {
+            host_creds_store="unreadable"
+            host_cred_helpers="unreadable"
+        }
+    fi
     [[ -f "$docker_config_dir/config.json" ]] && anonymous_config_exists=true
     docker_path="$(command -v docker || printf '-')"
     if [[ "$policy_status" == "ok" ]] && docker info >/dev/null 2>&1; then
@@ -2631,50 +2648,6 @@ cmd_inventory() {
         "$(jq -r length <<<"$snapshot_images")" "$(jq -r length <<<"$snapshot_disk")"
 }
 
-cmd_prune() {
-    local json=false include_volumes=false
-    [[ "$output_json" == true ]] && json=true
-    [[ " $* " != *" --volumes "* ]] || include_volumes=true
-    local prune_docker_ok=false before_containers="[]" before_volumes="[]" before_networks="[]" before_generated rc=0
-    before_generated="$(generated_files_json)"
-    if docker_ready; then
-        prune_docker_ok=true
-        acquire_endpoint_lock
-        assert_owned_project cleanup
-        before_containers="$(owned_containers_json)"
-        before_volumes="$(owned_volumes_json)"
-        before_networks="$(owned_networks_json)"
-        remove_owned_containers || rc=$?
-        if [[ "$include_volumes" == true ]]; then
-            remove_owned_resources volume || rc=$?
-        fi
-        remove_owned_resources network || rc=$?
-        if [[ "$include_volumes" == true ]]; then
-            cleanup_assets
-        else
-            cleanup_runtime_assets_preserve_state
-        fi
-        cleanup_empty_parents_after_lock=true
-    else
-        rc=1
-        cleanup_transient_assets
-        cleanup_empty_parents_after_lock=true
-        warn "Docker unavailable or rejected; transient generated files were cleaned and durable state retained for reconciliation"
-    fi
-    if [[ "$json" == true ]]; then
-        emit_stack_json prune "$(bool_json test "$rc" -eq 0)" "$(envelope_filter envelope-prune.jq)" \
-            --argjson dockerAvailable "$prune_docker_ok" \
-            --argjson containers "$before_containers" \
-            --argjson volumes "$before_volumes" \
-            --argjson networks "$before_networks" \
-            --argjson generated "$before_generated" \
-            --argjson includeVolumes "$include_volumes"
-    else
-        printf 'prune\towned\tok=%s\tproject=%s\troot=%s\n' "$(bool_json test "$rc" -eq 0)" "$project_name" "$root_key"
-    fi
-    return "$rc"
-}
-
 cmd_self_test() {
     validate_static_env
     local command service port ext category required create_on_apply extra tmp_dir tmp_src tmp_dst
@@ -2735,6 +2708,20 @@ cmd_self_test() {
         done < <(extension_catalog_rows "$service")
         ((${#seen_extensions[@]} > 0)) || die "service missing extension catalog rows: $service"
     done
+    local sql_template template_path template_text placeholder
+    local -a required_placeholders=()
+    local -A sql_template_placeholders=()
+    sql_template_placeholders["apply-postgres.sql.tpl"]="__FORGE_EXTENSION_VALUES__ __FORGE_SERVICE_SQL__ __FORGE_CONTEXT_SQL__"
+    sql_template_placeholders["check-postgres.sql.tpl"]="__FORGE_EXTENSION_VALUES__ __FORGE_SERVICE_SQL__"
+    for sql_template in "${!sql_template_placeholders[@]}"; do
+        template_path="$(catalog_path "sql/$sql_template")"
+        template_text="$(<"$template_path")"
+        read -ra required_placeholders <<<"${sql_template_placeholders[$sql_template]}"
+        for placeholder in "${required_placeholders[@]}"; do
+            [[ "$template_text" == *"$placeholder"* ]] || die "SQL template missing required placeholder: $sql_template $placeholder"
+        done
+        [[ "$template_text" != *'| |'* ]] || die "SQL template carries formatter-mangled operators: $sql_template"
+    done
     tmp_dir="$(mktemp -d "${TMPDIR:-/tmp}/forge-provision-self-test.XXXXXX")" || die "mktemp failed for self-test"
     tmp_src="$tmp_dir/source"
     tmp_dst="$tmp_dir/dest"
@@ -2769,6 +2756,12 @@ main() {
             --)
                 shift
                 break
+                ;;
+            --help | -h)
+                break
+                ;;
+            -*)
+                die_usage "unknown flag: $1"
                 ;;
             *)
                 break

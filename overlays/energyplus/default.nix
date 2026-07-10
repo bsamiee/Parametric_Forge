@@ -16,7 +16,41 @@
   system = stdenvNoCC.hostPlatform.system;
   asset =
     row.assets.${system}
-    or (throw "energyplus: no asset row for ${system}");
+    or (throw "energyplus: no asset row for ${system} (declared: ${lib.concatStringsSep " " (builtins.attrNames row.assets)})");
+  runtime = "${placeholder "out"}/opt/energyplus";
+  env = {
+    ENERGYPLUSDIR = runtime;
+    ENERGYPLUS_DIR = runtime;
+    ENERGYPLUS_EXE = "${runtime}/energyplus";
+    ENERGYPLUS_VERSION = row.version;
+  };
+  wrappers = lib.genAttrs [
+    "energyplus"
+    "energyplus-${row.version}"
+    "runenergyplus"
+    "runepmacro"
+    "runreadvars"
+    "EPMacro"
+    "ExpandObjects"
+    "ConvertInputFormat"
+    "ConvertInputFormat-${row.version}"
+  ] (tool: tool);
+  wrapperText = target:
+    lib.concatLines (
+      ["#!${lib.getExe bash}" "set -euo pipefail"]
+      ++ lib.mapAttrsToList (name: value: "export ${name}=${lib.escapeShellArg value}") env
+      ++ [''exec "${runtime}/${target}" "$@"'']
+    );
+  # A missing tool is upstream layout drift (patch_drift); fail the build
+  # loudly, never ship a silently thinner bin/.
+  installWrapper = name: target: ''
+    [ -x ${lib.escapeShellArg "${runtime}/${target}"} ] || {
+      echo "energyplus: expected tool '${target}' missing from the release layout" >&2
+      exit 1
+    }
+    printf '%s' ${lib.escapeShellArg (wrapperText target)} >"$out/bin/${name}"
+    chmod 0755 "$out/bin/${name}"
+  '';
 in
   stdenvNoCC.mkDerivation {
     pname = "energyplus";
@@ -30,44 +64,14 @@ in
     dontBuild = true;
 
     installPhase = ''
-            runHook preInstall
+      runHook preInstall
 
-            mkdir -p "$out/bin" "$out/opt"
-            cp -R . "$out/opt/energyplus"
-            patchShebangs "$out/opt/energyplus"
-            runtime="$out/opt/energyplus"
+      mkdir -p "$out/bin" "$out/opt"
+      cp -R . "$out/opt/energyplus"
+      patchShebangs "$out/opt/energyplus"
 
-            install_tool() {
-              tool="$1"
-              cat >"$out/bin/$tool" <<EOF
-      #!${bash}/bin/bash
-      set -euo pipefail
-      export ENERGYPLUSDIR="$runtime"
-      export ENERGYPLUS_DIR="$runtime"
-      export ENERGYPLUS_EXE="$runtime/energyplus"
-      export ENERGYPLUS_VERSION="${row.version}"
-      exec "$runtime/$tool" "\$@"
-      EOF
-              chmod 0755 "$out/bin/$tool"
-            }
-
-            for tool in \
-              energyplus \
-              energyplus-${row.version} \
-              runenergyplus \
-              runepmacro \
-              runreadvars \
-              EPMacro \
-              ExpandObjects \
-              ConvertInputFormat \
-              ConvertInputFormat-${row.version}
-            do
-              if [ -x "$runtime/$tool" ]; then
-                install_tool "$tool"
-              fi
-            done
-
-            runHook postInstall
+      ${lib.concatStrings (lib.mapAttrsToList installWrapper wrappers)}
+      runHook postInstall
     '';
 
     meta = {

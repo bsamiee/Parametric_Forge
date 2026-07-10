@@ -1,4 +1,4 @@
-# Title         : sqlite-forge/default.nix
+# Title         : default.nix
 # Author        : Bardia Samiee
 # Project       : Parametric Forge
 # License       : MIT
@@ -6,7 +6,6 @@
 # ----------------------------------------------------------------------------
 # SQLite shell with Forge-owned native extension profiles.
 {
-  coreutils,
   libspatialite,
   sqlite-interactive,
   sqlite-vec,
@@ -21,36 +20,26 @@
 in
   writeShellApplication {
     name = "sqlite-forge";
-    runtimeInputs = [
-      coreutils
-      sqlite-interactive
-    ];
+    runtimeInputs = [sqlite-interactive];
     text = ''
-      rc="$(mktemp "''${TMPDIR:-/tmp}/sqlite-forge.XXXXXX")"
-      cleanup() { rm -f -- "$rc"; }
-      trap cleanup EXIT INT TERM
-
       profile="''${SQLITE_FORGE_PROFILE:-safe}"
+      modules=(regexp uuid stats text time crypto math)
       case "$profile" in
-        safe) modules=(regexp uuid stats text time crypto math) ;;
-        extended) modules=(regexp uuid stats text time crypto math define vsv fuzzy ipaddr) ;;
-        fileio) modules=(regexp uuid stats text time crypto math fileio) ;;
-        all) modules=(regexp uuid stats text time crypto math define vsv fuzzy ipaddr fileio) ;;
+        safe) ;;
+        extended) modules+=(define vsv fuzzy ipaddr) ;;
+        fileio) modules+=(fileio) ;;
+        all) modules+=(define vsv fuzzy ipaddr fileio) ;;
         *)
           printf 'sqlite-forge: unknown SQLITE_FORGE_PROFILE=%s; expected safe, extended, fileio, or all\n' "$profile" >&2
           exit 2
           ;;
       esac
 
-      {
-        printf '%s\n' '-- SQLite Forge extension profile'
-        for module in "''${modules[@]}"; do
-          printf '.load ${sqleanLibDir}/%s${sharedLibExt}\n' "$module"
-        done
-        printf '.load ${sqliteVecLib}\n'
-        printf '.load ${spatialiteLib}\n'
-      } >"$rc"
-
-      exec sqlite3 -init "$rc" "$@"
+      # exec skips EXIT traps, so the init script rides a process-substitution
+      # fd instead of a temp file a trap would have to reap.
+      exec sqlite3 -init <(
+        printf '.load ${sqleanLibDir}/%s${sharedLibExt}\n' "''${modules[@]}"
+        printf '.load %s\n' '${sqliteVecLib}' '${spatialiteLib}'
+      ) "$@"
     '';
   }

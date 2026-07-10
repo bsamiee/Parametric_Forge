@@ -16,7 +16,37 @@
   system = stdenvNoCC.hostPlatform.system;
   asset =
     row.assets.${system}
-    or (throw "openstudio: no asset row for ${system}");
+    or (throw "openstudio: no asset row for ${system} (declared: ${lib.concatStringsSep " " (builtins.attrNames row.assets)})");
+  runtime = "${placeholder "out"}/opt/openstudio";
+  env = {
+    OPENSTUDIO_ROOT = runtime;
+    OPENSTUDIO_DIR = runtime;
+    OPENSTUDIO_EXE = "${runtime}/bin/openstudio";
+    OPENSTUDIO_VERSION = row.version;
+    OPENSTUDIO_RUBY_ROOT = "${runtime}/Ruby";
+    OPENSTUDIO_PYTHON_ROOT = "${runtime}/Python";
+    OPENSTUDIO_RADIANCE_ROOT = "${runtime}/Radiance";
+  };
+  wrappers = {
+    openstudio = "bin/openstudio";
+    openstudio-install-utility = "bin/install_utility";
+  };
+  wrapperText = target:
+    lib.concatLines (
+      ["#!${lib.getExe bash}" "set -euo pipefail"]
+      ++ lib.mapAttrsToList (name: value: "export ${name}=${lib.escapeShellArg value}") env
+      ++ [''exec "${runtime}/${target}" "$@"'']
+    );
+  # A missing tool is upstream layout drift (patch_drift); fail the build
+  # loudly, never ship a silently thinner bin/.
+  installWrapper = name: target: ''
+    [ -x ${lib.escapeShellArg "${runtime}/${target}"} ] || {
+      echo "openstudio: expected tool '${target}' missing from the release layout" >&2
+      exit 1
+    }
+    printf '%s' ${lib.escapeShellArg (wrapperText target)} >"$out/bin/${name}"
+    chmod 0755 "$out/bin/${name}"
+  '';
 in
   stdenvNoCC.mkDerivation {
     pname = "openstudio";
@@ -30,44 +60,14 @@ in
     dontBuild = true;
 
     installPhase = ''
-            runHook preInstall
+      runHook preInstall
 
-            mkdir -p "$out/bin" "$out/opt"
-            cp -R . "$out/opt/openstudio"
-            patchShebangs "$out/opt/openstudio/bin"
-            runtime="$out/opt/openstudio"
+      mkdir -p "$out/bin" "$out/opt"
+      cp -R . "$out/opt/openstudio"
+      patchShebangs "$out/opt/openstudio/bin"
 
-            cat >"$out/bin/openstudio" <<EOF
-      #!${bash}/bin/bash
-      set -euo pipefail
-      export OPENSTUDIO_ROOT="$runtime"
-      export OPENSTUDIO_DIR="$runtime"
-      export OPENSTUDIO_EXE="$runtime/bin/openstudio"
-      export OPENSTUDIO_VERSION="${row.version}"
-      export OPENSTUDIO_RUBY_ROOT="$runtime/Ruby"
-      export OPENSTUDIO_PYTHON_ROOT="$runtime/Python"
-      export OPENSTUDIO_RADIANCE_ROOT="$runtime/Radiance"
-      exec "$runtime/bin/openstudio" "\$@"
-      EOF
-            chmod 0755 "$out/bin/openstudio"
-
-            if [ -x "$runtime/bin/install_utility" ]; then
-              cat >"$out/bin/openstudio-install-utility" <<EOF
-      #!${bash}/bin/bash
-      set -euo pipefail
-      export OPENSTUDIO_ROOT="$runtime"
-      export OPENSTUDIO_DIR="$runtime"
-      export OPENSTUDIO_EXE="$runtime/bin/openstudio"
-      export OPENSTUDIO_VERSION="${row.version}"
-      export OPENSTUDIO_RUBY_ROOT="$runtime/Ruby"
-      export OPENSTUDIO_PYTHON_ROOT="$runtime/Python"
-      export OPENSTUDIO_RADIANCE_ROOT="$runtime/Radiance"
-      exec "$runtime/bin/install_utility" "\$@"
-      EOF
-              chmod 0755 "$out/bin/openstudio-install-utility"
-            fi
-
-            runHook postInstall
+      ${lib.concatStrings (lib.mapAttrsToList installWrapper wrappers)}
+      runHook postInstall
     '';
 
     meta = {

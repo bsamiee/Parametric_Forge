@@ -11,7 +11,7 @@
     },
     {
         "verb": "down",
-        "handler": "cmd_down",
+        "handler": "cmd_teardown",
         "json": true,
         "argspec": "json-only",
         "mutates": true,
@@ -71,7 +71,7 @@
     },
     {
         "verb": "prune",
-        "handler": "cmd_prune",
+        "handler": "cmd_teardown",
         "json": true,
         "argspec": "owned-prune",
         "mutates": true,

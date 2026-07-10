@@ -24,7 +24,7 @@ inspect_labels() {
     local id="$1" raw
     shift
     raw="$(docker inspect --format '{{ json .Config.Labels }}' "$id" 2>/dev/null)" || raw='{}'
-    jq -r '. // {} | [$ARGS.positional[] as $k | (.[$k] // "")] | join("\u001f")' --args -- "$@" <<<"${raw:-null}"
+    jq -r -f "$(catalog_path jq/label-fields.jq)" --args -- "$@" <<<"${raw:-null}"
 }
 
 validate_owned_container_identity() {
@@ -121,14 +121,23 @@ enforce_max_active_projects() {
 
 service_identity_json() {
     local service
+    local -a identity_args=()
     for service in "${service_order[@]}"; do
-        jq -nc \
-            --arg service "$service" \
-            --arg image "$(service_image "$service")" \
-            --arg volume "$(service_volume_name "$service")" \
-            --arg mount "${service_volume_mount[$service]}" \
-            '{key: $service, image: $image, volume: $volume, mount: $mount}'
-    done | jq -s 'map({(.key): {image, volume, mount}}) | add'
+        identity_args+=("$service" "$(service_image "$service")" "$(service_volume_name "$service")" "${service_volume_mount[$service]}")
+    done
+    jq -nc \
+        '[range(0; ($ARGS.positional | length); 4) as $i
+          | {key: $ARGS.positional[$i], value: {image: $ARGS.positional[$i + 1], volume: $ARGS.positional[$i + 2], mount: $ARGS.positional[$i + 3]}}]
+         | from_entries' \
+        --args -- "${identity_args[@]}"
+}
+
+# One inspect snapshot projects service, name, image, state, health, and identity as one US-joined row.
+container_report_row() {
+    local raw="$1"
+    jq -r --arg service_label "$service_label" --arg net "$(network_name)" \
+        --argjson identities "$(service_identity_json)" \
+        -f "$(catalog_path jq/container-report.jq)" <<<"${raw:-[]}"
 }
 
 container_id_for_service() {
@@ -186,32 +195,6 @@ port_owned_by_service() {
         container_publishes_service_host_port "$id" "$port" "${service_host[$service]}" && return 0
     done
     return 1
-}
-
-# Sanitized host-listener probe: only the PID drives owner classification; command lines never surface.
-host_listener_pid() {
-    local port="$1"
-    local -n __pid="$2"
-    local line
-    __pid=""
-    if command -v lsof >/dev/null 2>&1; then
-        while IFS= read -r line; do
-            if [[ "$line" == p* && -z "$__pid" ]]; then
-                __pid="${line#p}"
-            fi
-        done < <(lsof -nP -iTCP:"$port" -sTCP:LISTEN -Fp 2>/dev/null || true)
-        return 0
-    fi
-    if command -v ss >/dev/null 2>&1; then
-        line="$(ss -H -ltnp 2>/dev/null | awk -v suffix=":$port" '$4 == suffix || $4 ~ suffix "$" {print; exit}')"
-        if [[ "$line" =~ pid=([0-9]+) ]]; then
-            __pid="${BASH_REMATCH[1]}"
-        fi
-        return 0
-    fi
-    if proc_net_port_busy "$port"; then
-        __pid="-"
-    fi
 }
 
 port_busy() {
@@ -322,7 +305,7 @@ assert_owned_named_resource() {
     local raw owner root project service_value
     raw="$(docker "$kind" inspect --format '{{ json .Labels }}' "$name" 2>/dev/null)" || return 0
     IFS=$'\x1f' read -r owner root project service_value < <(
-        jq -r '. // {} | [$ARGS.positional[] as $k | (.[$k] // "")] | join("\u001f")' \
+        jq -r -f "$(catalog_path jq/label-fields.jq)" \
             --args -- "$owner_label" "$root_label" "$project_label" "$service_label" <<<"${raw:-null}"
     )
     [[ "$owner" == "1" && "$root" == "$root_key" && "$project" == "$project_name" && "$service_value" == "$expected_service" ]] ||
@@ -364,16 +347,14 @@ require_service_endpoint() {
 
 readiness_report() {
     local service="$1"
-    local id name image state health ports
+    local id raw name='-' image='-' state='-' health='-' ports
     id="$(container_id_for_service "$service")"
     if [[ -z "$id" ]]; then
         stderr_line "$(printf 'readiness\tservice=%s\tstatus=missing-container\tport=%s\tproject=%s\troot=%s' "$service" "$(service_port "$service")" "$project_name" "$root_key")"
         return 0
     fi
-    name="$(inspect_name "$id" || printf '-')"
-    image="$(docker inspect --format '{{ .Config.Image }}' "$id" || printf '-')"
-    state="$(docker inspect --format '{{ .State.Status }}' "$id" || printf '-')"
-    health="$(docker inspect --format '{{ if .State.Health }}{{ .State.Health.Status }}{{ else }}none{{ end }}' "$id" || printf '-')"
+    raw="$(docker inspect "$id" 2>/dev/null)" || raw='[]'
+    IFS=$'\x1f' read -r _ name image state health _ _ < <(container_report_row "$raw") || true
     ports="$(published_ports "$id")"
     stderr_line "$(printf 'readiness\tservice=%s\tstatus=timeout\tport=%s\tcontainer_id=%s\tname=%s\timage=%s\tdocker_status=%s\thealth=%s\tpublished=%s' \
         "$service" "$(service_port "$service")" "$id" "$name" "$image" "$state" "$health" "$ports")"
@@ -461,9 +442,9 @@ extension_rows() {
         if ! service_enabled "$service"; then
             disabled_service_apply_rows "$service"
         elif [[ "$mode" == "apply" ]]; then
-            service_extension_sql "$service" apply-postgres.sql
+            service_extension_sql "$service" apply-postgres.sql.tpl
         else
-            service_extension_sql "$service" check-postgres.sql
+            service_extension_sql "$service" check-postgres.sql.tpl
         fi
     done
     return 0
@@ -508,9 +489,10 @@ remove_owned_resources() {
     esac
     ((${#names[@]} > 0)) || return 0
     for name in "${names[@]}"; do
-        service="$(docker "$kind" inspect --format "{{ index .Labels \"$service_label\" }}" "$name")" || return
-        root="$(docker "$kind" inspect --format "{{ index .Labels \"$root_label\" }}" "$name")" || return
-        project="$(docker "$kind" inspect --format "{{ index .Labels \"$project_label\" }}" "$name")" || return
+        IFS=$'\x1f' read -r service root project < <(
+            docker "$kind" inspect --format '{{ json .Labels }}' "$name" 2>/dev/null |
+                jq -r -f "$(catalog_path jq/label-fields.jq)" --args -- "$service_label" "$root_label" "$project_label"
+        ) || return
         case "$kind" in
             volume) known_service "$service" || die "refusing to remove unexpected owned volume service=$service name=$name" ;;
             network) [[ "$service" == "network" ]] || die "refusing to remove unexpected owned network service=$service name=$name" ;;
@@ -518,11 +500,6 @@ remove_owned_resources() {
         [[ "$root" == "$root_key" && "$project" == "$project_name" ]] || die "refusing to remove $kind outside current root/project name=$name root=$root project=$project"
         docker "$kind" rm "$name" >/dev/null || return
     done
-}
-
-cleanup_runtime_docker_resources() {
-    remove_owned_containers
-    remove_owned_resources network
 }
 
 file_record_json() {
@@ -573,26 +550,17 @@ owned_containers_json() {
         -f "$(catalog_path jq/owned-containers.jq)"
 }
 
-owned_volumes_json() {
-    local volumes=()
-    collect_owned_names volume volumes
-    ((${#volumes[@]} > 0)) || {
+# One owned-resource projector for the named kinds; the kind selects its jq projection.
+owned_resources_json() {
+    local kind="$1"
+    local names=()
+    collect_owned_names "$kind" names
+    ((${#names[@]} > 0)) || {
         printf '[]\n'
         return 0
     }
-    docker volume inspect "${volumes[@]}" | jq -c --arg owner_label "$owner_label" --arg service_label "$service_label" --arg root_label "$root_label" --arg project_label "$project_label" --argjson diagnostic "$diagnostic_json" \
-        -f "$(catalog_path jq/owned-volumes.jq)"
-}
-
-owned_networks_json() {
-    local networks=()
-    collect_owned_names network networks
-    ((${#networks[@]} > 0)) || {
-        printf '[]\n'
-        return 0
-    }
-    docker network inspect "${networks[@]}" | jq -c --arg owner_label "$owner_label" --arg service_label "$service_label" --arg root_label "$root_label" --arg project_label "$project_label" --argjson diagnostic "$diagnostic_json" \
-        -f "$(catalog_path jq/owned-networks.jq)"
+    docker "$kind" inspect "${names[@]}" | jq -c --arg owner_label "$owner_label" --arg service_label "$service_label" --arg root_label "$root_label" --arg project_label "$project_label" --argjson diagnostic "$diagnostic_json" \
+        -f "$(catalog_path "jq/owned-${kind}s.jq")"
 }
 
 service_records_tsv() {
@@ -629,21 +597,22 @@ configured_images_json() {
 port_record_json() {
     local service="$1"
     local online="${2:-true}"
-    local port ids=() id="-" name="-" image="-" compose_project="-" compose_service="-" provision_owner="-" provision_root="-" provision_project="-" owner="none" pid state="free" occupied=false
+    local port ids=() id="-" name="-" image="-" compose_project="-" compose_service="-" provision_owner="-" provision_root="-" provision_project="-" owner="none" host_listener=false state="free" occupied=false
     port="$(service_port "$service")"
     service_enabled "$service" || state="disabled"
     if [[ "$online" == true ]]; then
         collect_published_container_ids ids "$port" || die "docker port inspection failed for port=$port"
     fi
-    host_listener_pid "$port" pid
-    [[ -n "$pid" ]] || pid="-"
+    if host_port_busy "$port"; then
+        host_listener=true
+    fi
     if ((${#ids[@]} > 0)); then
         id="${ids[0]}"
         read_container_provenance "$id"
         owner="$(classify_owner "$id" "$compose_project" "$provision_owner" "$provision_root" "$provision_project")"
         occupied=true
         [[ "$state" == "disabled" ]] || state="busy"
-    elif [[ "$pid" != "-" ]]; then
+    elif [[ "$host_listener" == true ]]; then
         owner="external:host-listener"
         occupied=true
         [[ "$state" == "disabled" ]] || state="busy"
@@ -673,16 +642,10 @@ port_record_json() {
 }
 
 port_records_json() {
+    local online="${1:-true}"
     local service
     for service in "${service_order[@]}"; do
-        port_record_json "$service" true
-    done | jq -s 'sort_by(.service)'
-}
-
-port_records_offline_json() {
-    local service
-    for service in "${service_order[@]}"; do
-        port_record_json "$service" false
+        port_record_json "$service" "$online"
     done | jq -s 'sort_by(.service)'
 }
 
