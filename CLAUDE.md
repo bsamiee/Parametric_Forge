@@ -27,6 +27,7 @@ The Nix estate is machine configuration, not application code: every Nix line co
 - Latest nixpkgs-unstable always; a pin exists only with a named incompatibility and dies when compatibility lands.
 - `forge-redeploy` is the only activation path, and switches happen freely — deploy early to catch runtime-only bugs, never batch changes behind ceremony. The static gate is a pair — the darwin system build AND the maghz toplevel drv eval (`nix flake check` proves neither toplevel); `forge-accept` proves the switch end to end.
 - Recurring work is a declared launchd agent under the `com.parametric-forge.<name>` grammar, beside the surface it serves; ad-hoc background processes and manual `launchctl` state are defects.
+- Standing remote connections (mounts, tunnels, sessions) follow the doctrine's `[REMOTE_TRANSPORT]` card: openssh keepalive custody, probed liveness with caused receipts, detach-before-reap drains.
 - [NEVER]: kill live terminal sessions — no `zellij kill-session`/`kill-all-sessions`, no WezTerm restarts. Fix in repo, redeploy; the operator restarts on their own schedule.
 - `.claude/skills/` here are the estate masters for harness skills and `.claude/hooks/setup-env.sh` is the canonical SessionStart hook; edits land in the master and propagate to mirrors (`~/.codex/skills/`, sibling repos) by copy — never edit a mirror, never build sync tooling.
 

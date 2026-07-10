@@ -244,6 +244,12 @@ Apply when writing or reviewing Nix modules, overlays, flake composition, `write
 - Rejected: `RunAtLoad` beside `KeepAlive = true`, rows without `ProcessType`, `StartInterval` for wall-clock schedules, `WatchPaths` as an event source, in-band stop commands against keep-alive supervisors, default `ExitTimeOut` on agents owning slow-drain teardowns.
 - Example: `KeepAlive = true; ThrottleInterval = 30; ProcessType = "Background";`
 
+[REMOTE_TRANSPORT]:
+
+- Law: A supervised lane holding a standing remote connection — mount, tunnel, session — rides the openssh binary with `ServerAliveInterval`/`ServerAliveCountMax` rows: keepalive custody belongs to the transport, because idle TCP dies silently to NAT reaping and the next operation rides a doomed handshake. The supervisor proves liveness with a periodic through-the-surface probe under failure hysteresis, emits a caused `down` receipt and exits so `KeepAlive` relaunches, and its drain detaches the consumer-visible surface while the server still answers, then reaps the server.
+- Rejected: Embedded ssh libraries without keepalives behind standing connections, a supervisor blocked in `wait` on a server that outlives its backend, teardown that kills the server under a live consumer surface, `down` receipts without a cause discriminator.
+- Example: `remote=":sftp,ssh='ssh -o ServerAliveInterval=15 -o ServerAliveCountMax=3 -l $user $addr':$rpath"`
+
 [DUAL_OS_ROWS]:
 
 - Law: One row registry projects both supervisors — launchd agents on Darwin, lingering systemd user services on Linux — running the identical packaged body; launchd attributes stay platform-gated, and both OS toplevels evaluate green as the gate for every row change.

@@ -45,3 +45,4 @@
 - A file created in the working tree is `git add --intent-to-add`ed before its first build — untracked files are invisible to the git-filtered flake source, and a dirty-tree build silently packages without them.
 - A change to any module the shared home graph imports proves both hosts before it lands: the darwin system build plus `nix eval '.#nixosConfigurations.maghz.config.system.build.toplevel.drvPath'` — `nix flake check` covers neither toplevel.
 - The `maghz` NixOS host deploys over SSH from this repo (`forge-redeploy --os nixos --host maghz --target-host <ssh>`); its services stay loopback-bound and are reached through the `vpsTunnels` rows, never by opening ports.
+- An interrupted-server dialog or dead remote mount is a transport event: decode it from the lane's receipts before touching code — the transition contract lives in `docs/atlas/interconnection.md`, the transport law in the nix doctrine's `[REMOTE_TRANSPORT]` card.
