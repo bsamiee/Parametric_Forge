@@ -13,6 +13,10 @@
   ...
 }: let
   yaziPkg = config.programs.yazi.package;
+  # HM-installed cross-module kernels (forge-zellij, forge-workspace) enter
+  # the harness through the per-user profile — the estate spelling for
+  # kernels owned by sibling modules.
+  profileBin = "/etc/profiles/per-user/${config.home.username}/bin";
   # Shared dual-receipt emit fold (shell-tools/receipts.nix): one grammar for
   # every receipt-bearing kernel, TSV plus JSONL with identical keys.
   receiptsFold = import ../programs/shell-tools/receipts.nix;
@@ -527,6 +531,29 @@
         row R14-opener-seam PASS "yazi.toml edit opener + keymap zoxide picker spell the Forge scripts"
       else
         row R14-opener-seam FAIL "opener/picker rows missing under $yazi_conf"
+      fi
+
+      # R15: session-fabric state envelope — forge-zellij state emits schema
+      # v2 with classified session rows (the resurrection-receipts join), and
+      # the probe session classifies live.
+      state_json="$(${profileBin}/forge-zellij state 2>/dev/null || true)"
+      if jq -e --arg s "$session" '
+          (.schema == "forge-zellij-state/v2")
+          and (.sessions | type == "array")
+          and ([.sessions[] | select(.name == $s and .state == "live")] | length == 1)' <<<"$state_json" >/dev/null 2>&1; then
+        row R15-fabric-state PASS "state/v2 classifies probe session live"
+      else
+        row R15-fabric-state FAIL "state envelope: $(jq -c '{schema, sessions: (.sessions | length)}' <<<"$state_json" 2>/dev/null || printf 'unparseable')"
+      fi
+
+      # R16: workspace rows carry the session lifecycle enum; a headless
+      # --json degrades the gui join, never the lifecycle classification.
+      ws_json="$(${profileBin}/forge-workspace --json 2>/dev/null || true)"
+      if jq -e 'type == "array" and length > 0
+          and all(.[]; .lifecycle | IN("live", "resurrectable", "cold"))' <<<"$ws_json" >/dev/null 2>&1; then
+        row R16-workspace-lifecycle PASS "every workspace row carries a lifecycle verdict"
+      else
+        row R16-workspace-lifecycle FAIL "rows: $(jq -c 'map({name, lifecycle}) | .[:6]' <<<"$ws_json" 2>/dev/null || printf 'unparseable')"
       fi
 
       # R04-R08: edit rail — spawn, registry, socket, reuse, multi-file.

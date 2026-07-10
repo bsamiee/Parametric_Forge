@@ -18,11 +18,26 @@
 }: let
   profileBin = "/etc/profiles/per-user/${config.home.username}/bin";
   stateHome = config.xdg.stateHome;
-  # Shared owners: notifier rail + identity bundles (bundle-apps.nix), the
-  # dual-receipt emit fold (receipts.nix), and the platform ps dispatch —
+  # Shared owners: notifier + alerter rails and identity bundles
+  # (bundle-apps.nix), the dual-receipt emit fold (receipts.nix), the F01
+  # attention vocabulary (attention.nix), and the platform ps dispatch —
   # /bin/ps is a Darwin fact; NixOS gets procps by store path.
   tnBin = config.forge.notifier;
+  alerterBin = config.forge.alerter;
   receiptsFold = import ./receipts.nix;
+  attention = import ./attention.nix {sshHosts = config.forge.ssh.hosts;};
+  # Standing-alert rows joined to their receipt-registry paths at eval: an
+  # alert row naming an unregistered kind is a wiring defect, not a runtime skip.
+  alertRows =
+    map (
+      row: let
+        reg = lib.findFirst (r: r.kind == row.kind) null config.forge.registers.receiptSources;
+      in
+        assert lib.assertMsg (reg != null) "forge-agents: alert row kind '${row.kind}' has no receipt-registry row";
+          row // {inherit (reg) path grain;}
+    )
+    attention.alertRows;
+  alertsJson = pkgs.writeText "forge-agents-alerts.json" (builtins.toJSON alertRows);
   psBin =
     if pkgs.stdenv.hostPlatform.isDarwin
     then "/bin/ps"
@@ -43,10 +58,36 @@
     retentionDays = 7;
     logDir = "${stateHome}/forge-mcp-snoop";
   };
-  # Desktop-notification policy row for the collector projections.
+  # Notification policy rows for the collector projections: per-source arms
+  # select the renderer by interaction contract — a needs-input rise posts a
+  # replaceable banner whose click opens the alerter answer channel (falling
+  # back to bare focus off-Darwin), a standing-alert rise posts a banner plus
+  # the in-bar toast, and bell rows render as a bar count only (the WezTerm
+  # bell arm already owns the bell toast).
   notifyPolicy = {
     needsInput = true;
+    alerts = true;
     minIntervalSec = 300;
+    bellWindowSec = 900;
+    answerTimeoutSec = 120;
+    clickVerb =
+      if alerterBin != ""
+      then "answer"
+      else "focus";
+    # Cross-device tier (ntfy): per-class publish rows the same rise gates
+    # drive; the target rides the NTFY_URL/NTFY_TOPIC/NTFY_TOKEN Doppler rows
+    # (ntfy.sh topic-as-capability today, the maghz self-hosted server once
+    # its public ingress lands) and absent custody degrades to local-only.
+    remote = {
+      needsInput = {
+        priority = "high";
+        tags = "forge,question";
+      };
+      alerts = {
+        priority = "high";
+        tags = "forge,warning";
+      };
+    };
   };
   # Agent-lane roster: process basenames the collector counts as agent lanes.
   agentLanes = ["claude" "codex"];
@@ -864,26 +905,35 @@
   };
 
   # --- [FORGE_AGENTS]
-  # One data owner turns agent lanes, attention, and AI quota into one cached
-  # fact set; the zjstatus top bar is the ONE surface rendering the cells.
-  # Failed provider lanes keep the previous value with stale=true and back off
-  # exponentially; a notification click routes back via the `focus` verb.
+  # One data owner turns agent lanes, attention (hook + bell feed rows),
+  # standing estate alerts, and AI quota into one cached fact set; the
+  # zjstatus top bar renders the cells and the {notifications} toast, the
+  # desktop banner rides terminal-notifier, and the alerter answer channel
+  # closes the loop — one fold, four renderers, per-source policy rows.
+  # Failed provider lanes keep the previous value with stale=true and back
+  # off exponentially; a banner click routes back via `answer`/`focus`.
   forgeAgents = pkgs.writeShellApplication {
     name = "forge-agents";
-    runtimeInputs = [pkgs.coreutils pkgs.jq pkgs.findutils pkgs.gawk pkgs.gnugrep pkgs.flock];
+    runtimeInputs = [pkgs.coreutils pkgs.curl pkgs.jq pkgs.findutils pkgs.gawk pkgs.gnugrep pkgs.flock];
     text = ''
             state_root="''${XDG_STATE_HOME:-$HOME/.local/state}/forge"
             cache="$state_root/agent-state.json"
             meta="$state_root/agent-collect.meta.json"
-            feed="$state_root/agent-attention.jsonl"
+            feed="''${FORGE_ATTENTION_FEED:-$state_root/agent-attention.jsonl}"
             lanes_out="''${XDG_CACHE_HOME:-$HOME/.cache}/forge/agent-lanes.json"
             receipt_log="''${FORGE_AGENTS_RECEIPT_LOG:-$HOME/Library/Logs/forge-agents.receipts.log}"
-            usage() { echo "usage: forge-agents collect | status [--json] | focus" >&2; exit 64; }
+            usage() { echo "usage: forge-agents collect | status [--json] | focus | answer" >&2; exit 64; }
             verb="''${1:-status}"; shift || true
 
             iso_now() { TZ=UTC0 printf '%(%Y-%m-%dT%H:%M:%SZ)T' "$EPOCHSECONDS"; }
             receipt_surface="forge-agents"
             ${receiptsFold}
+            # Shared F01 vocabulary (attention.nix): urgency ladder, kv
+            # parser, latest-needs fold — $-bearing jq text as single-quoted
+            # data by design.
+            # shellcheck disable=SC2016
+            jq_defs=${lib.escapeShellArg (attention.urgencyJq + attention.kvJq + attention.latestNeedsJq)}
+            alerts_catalog='${alertsJson}'
 
             cmd_status() {
               if [ ! -f "$cache" ]; then
@@ -895,7 +945,8 @@
               else
                 jq -r '
                   "as-of      \(.ts)",
-                  "lanes      running=\(.lanes.running) waiting=\(.lanes.waiting) needs_input=\(.attention.needs_input)",
+                  "lanes      running=\(.lanes.running) waiting=\(.lanes.waiting) needs_input=\(.attention.needs_input) alerts=\(.alerts.count // 0) bells=\(.bells.count // 0)",
+                  (.alerts.rows[]? | "  alert: \(.label) since \(.ts // "-")"),
                   (.lanes.rows[]? | "  pid=\(.pid) \(.agent) cpu=\(.cpu) tty=\(.tty) up=\(.etime)"),
                   "codex      5h=\(.quota.codex.primary_used_percent // "?")% 7d=\(.quota.codex.secondary_used_percent // "?")% stale=\(.quota.codex.stale) source=\(.quota.codex.source // "-")",
                   "claude     5h_tokens=\(.quota.claude.window_tokens // 0) 7d_tokens=\(.quota.claude.week_tokens // 0) stale=\(.quota.claude.stale) source=\(.quota.claude.source // "-")"
@@ -935,26 +986,60 @@
                   | {pid: (.[0] | tonumber), cpu: (.[1] | tonumber), tty: .[2], etime: .[3], agent: .[4],
                      state: (if (.[1] | tonumber) >= 5 then "running" else "waiting" end)})')"
 
-              # --- [ATTENTION]
-              # Hook-feed fold joined against live process facts. A session needs
-              # input only when its latest event is Notification within the window
-              # AND its recorded tty still hosts an idle claude lane; one row per
-              # tty so stacked tabs never inflate the count, and the newest row
-              # keeps its identity so `focus` can route the click.
+              # --- [ATTENTION_AND_BELLS]
+              # ONE feed snapshot, ONE jq: hook rows join live process facts —
+              # a session needs input only when its latest event is
+              # Notification within the window AND its recorded tty still
+              # hosts an idle claude lane; one row per tty so stacked tabs
+              # never inflate the count, and the newest row keeps its identity
+              # so `focus`/`answer` route the click. source=bell rows (WezTerm
+              # bell arm) count inside their own policy window — the deck
+              # toast owns the bell's desktop surface. fromjson? rails the
+              # live-appended, lock-free-rotated feed.
               TZ=UTC0 printf -v att_cut '%(%Y-%m-%dT%H:%M:%SZ)T' "$((now - 3600))"
-              # fromjson? rail: the feed is live-appended and rotated lock-free,
-              # so a torn line skips instead of collapsing the whole fold to 0.
-              att="$(tail -n 500 "$feed" 2>/dev/null | jq -Rcn --arg cut "$att_cut" --argjson lanes "$lanes_rows" '
+              TZ=UTC0 printf -v bell_cut '%(%Y-%m-%dT%H:%M:%SZ)T' "$((now - ${toString notifyPolicy.bellWindowSec}))"
+              feed_facts="$(tail -n 500 "$feed" 2>/dev/null | jq -Rcn \
+                --arg cut "$att_cut" --arg bcut "$bell_cut" --argjson lanes "$lanes_rows" '
                 def pty: sub("^tty"; "");
                 ([$lanes[] | select(.agent == "claude" and .state == "waiting") | .tty | pty] | unique) as $idle
-                | [inputs | fromjson? | select(type == "object")]
-                | [group_by(.session_id)[] | max_by(.ts)
-                   | select(.event == "Notification" and .ts >= $cut
-                            and ((.tty // "") as $t | $t != "" and ($idle | index($t | pty))))]
-                | unique_by(.tty)
-                | {needs_input: length, latest: (max_by(.ts) // null)}' 2>/dev/null)" \
-                || att='{"needs_input": 0, "latest": null}'
-              needs="$(jq -r '.needs_input' <<<"$att")"
+                | [inputs | fromjson? | select(type == "object")] as $rows
+                | {
+                    att: ([$rows | map(select((.source // "hook") == "hook"))
+                           | group_by(.session_id)[] | max_by(.ts)
+                           | select(.event == "Notification" and .ts >= $cut
+                                    and ((.tty // "") as $t | $t != "" and ($idle | index($t | pty))))]
+                          | unique_by(.tty)
+                          | {needs_input: length, latest: (max_by(.ts) // null)}),
+                    bells: ([$rows[] | select((.source // "") == "bell" and .ts >= $bcut)]
+                            | {count: length, latest: (max_by(.ts) // null)})
+                  }' 2>/dev/null)" \
+                || feed_facts='{"att": {"needs_input": 0, "latest": null}, "bells": {"count": 0, "latest": null}}'
+              att="$(jq -c '.att' <<<"$feed_facts")"
+              bells="$(jq -c '.bells' <<<"$feed_facts")"
+              needs="$(jq -r '.att.needs_input' <<<"$feed_facts")"
+              bells_n="$(jq -r '.bells.count' <<<"$feed_facts")"
+
+              # --- [ALERTS_STANDING_ESTATE_CONDITIONS]
+              # Catalog rows (attention.nix joined to the receipt registry):
+              # each predicate judges the LAST receipt row of its kind, so an
+              # alert stands until a newer row clears it — estate state, not a
+              # windowed event. One jq per row; rows are Nix-owned data.
+              alerts="$(while IFS=$'\x1f' read -r a_source a_kind a_pred a_label a_path a_grain; do
+                f="$HOME/$a_path"
+                [ -f "$f" ] || continue
+                last="$(tail -n 1 "$f" 2>/dev/null || true)"
+                [ -n "$last" ] || continue
+                case "$a_grain" in
+                  json) a_parse='(fromjson? // {})' ;;
+                  *) a_parse='kv_row' ;;
+                esac
+                jq -Rc --arg source "$a_source" --arg kind "$a_kind" --arg label "$a_label" \
+                  "$jq_defs $a_parse | select($a_pred) | {source: \$source, kind: \$kind, label: \$label, ts: (.ts // null), state: (.state // .deployed // .result // null)}" \
+                  <<<"$last" 2>/dev/null || true
+              done < <(jq -r '.[] | [.source, .kind, .pred, .label, .path, .grain] | join("\u001f")' "$alerts_catalog") \
+                | jq -sc '.')"
+              [ -n "$alerts" ] || alerts='[]'
+              alerts_n="$(jq -r 'length' <<<"$alerts")"
 
               # --- [QUOTA_CODEX_PROVIDER_SNAPSHOTS]
               cx_prev="$(jq -c '.quota.codex // {}' <<<"$prev")"
@@ -1022,6 +1107,7 @@
               # --- [CACHE_ASSEMBLY]
               tmp_cache="$cache.tmp.$$"
               jq -cn --arg ts "$ts" --argjson lanes "$lanes_rows" --argjson att "$att" \
+                --argjson bells "$bells" --argjson alerts "$alerts" \
                 --argjson cx "$cx" --argjson cl "$cl" '{
                 schema: "forge-agents/v1", ts: $ts,
                 lanes: {
@@ -1030,6 +1116,8 @@
                   waiting: ([$lanes[] | select(.state == "waiting")] | length)
                 },
                 attention: $att,
+                bells: $bells,
+                alerts: {count: ($alerts | length), rows: $alerts},
                 quota: {codex: $cx, claude: $cl}
               }' >"$tmp_cache"
               mv "$tmp_cache" "$cache"
@@ -1048,6 +1136,8 @@
                  (.quota.claude.stale != false | tostring)] | join("\u001f")' "$cache")
               agents_text="AI ''${run_n}▸ ''${wait_n}⋯"
               [ "''${needs:-0}" = 0 ] || agents_text="$agents_text ''${needs}✋"
+              [ "''${bells_n:-0}" = 0 ] || agents_text="$agents_text ''${bells_n}🔔"
+              [ "''${alerts_n:-0}" = 0 ] || agents_text="$agents_text ''${alerts_n}⚠"
               quota_text=""
               if [ -n "$cx_p" ]; then quota_text="CX ''${cx_p%.*}%·''${cx_s%.*}%"; fi
               if [ -n "$cl_w" ]; then
@@ -1056,11 +1146,13 @@
               fi
               [ -n "$quota_text" ] || quota_text="quota -"
 
-              # Cell state colors: agents muted when idle, success while lanes run,
-              # attention on needs_input; quota escalates on the codex 5h window.
+              # Cell state colors: agents muted when idle, success while lanes
+              # run, attention on needs_input, danger while a standing estate
+              # alert is active; quota escalates on the codex 5h window.
               agents_fg="${roles.text.muted.hex}"
               [ "$run_n" = 0 ] || agents_fg="${roles.state.success.hex}"
               [ "''${needs:-0}" = 0 ] || agents_fg="${roles.state.attention.hex}"
+              [ "''${alerts_n:-0}" = 0 ] || agents_fg="${roles.state.danger.hex}"
               quota_fg="${roles.text.muted.hex}"
               if [ -n "$cx_p" ]; then
                 p="''${cx_p%.*}"
@@ -1085,28 +1177,107 @@
                 ${profileBin}/zellij --session "$s" pipe "zjstatus::pipe::pipe_quota::$quota_cell" 2>/dev/null || true
               done < <(${profileBin}/zellij list-sessions -ns 2>/dev/null || true)
 
-              # Policy-gated desktop notification on a needs_input rise; the click
-              # runs `forge-agents focus` (osascript notifications route clicks to
-              # Script Editor, so posting goes through terminal-notifier instead).
+              # One rise contract for every notification class: rise_gate is
+              # the predicate (count above previous, per-class throttle),
+              # notify_post the renderer fan — terminal-notifier banner with
+              # an optional click verb, the in-bar toast broadcast, and the
+              # ntfy cross-device publish (policy rows carry priority/tags;
+              # absent custody degrades to local-only). The {notifications}
+              # widget renders payloads literally (no #[..] path), so urgency
+              # rides the text prefix — "?" needs-input, "!!" failure;
+              # per-urgency color stays on the pipe_agents cell. A new
+              # notification class is one gate + one post, never a new
+              # hand-spelled block; a dead zellij, absent notifier, or
+              # unreachable ntfy target is benign.
+              notify_bars() { # $1 = one-line message
+                local msg
+                msg="$(tr -d '\n' <<<"$1")"
+                msg="''${msg:0:120}"
+                while IFS= read -r s; do
+                  [ -n "$s" ] || continue
+                  ${profileBin}/zellij --session "$s" pipe "zjstatus::notify::$msg" 2>/dev/null || true
+                done < <(${profileBin}/zellij list-sessions -ns 2>/dev/null || true)
+              }
+              # Cross-device custody: session env first, launchd GUI replay
+              # second (the collector runs under launchd with no session env).
+              ntfy_url="''${NTFY_URL:-}" ntfy_topic="''${NTFY_TOPIC:-}" ntfy_token="''${NTFY_TOKEN:-}"
+              if [ -z "$ntfy_url" ] && [ -x /bin/launchctl ]; then
+                ntfy_url="$(/bin/launchctl getenv NTFY_URL || true)"
+                ntfy_topic="$(/bin/launchctl getenv NTFY_TOPIC || true)"
+                ntfy_token="$(/bin/launchctl getenv NTFY_TOKEN || true)"
+              fi
+              notify_remote() { # $1=priority $2=tags $3=title $4=message
+                [ -n "$ntfy_url" ] && [ -n "$ntfy_topic" ] || return 0
+                local -a auth=()
+                [ -z "$ntfy_token" ] || auth=(-H "Authorization: Bearer $ntfy_token")
+                curl -fsS --max-time 5 -X POST "$ntfy_url/$ntfy_topic" \
+                  -H "X-Title: $3" -H "X-Priority: $1" -H "X-Tags: $2" \
+                  ''${auth[0]+"''${auth[@]}"} --data "$4" >/dev/null 2>&1 || true
+              }
+              rise_gate() { # $1=count $2=prev $3=last_epoch
+                [ "''${1:-0}" -gt "''${2:-0}" ] \
+                  && [ $((now - ''${3:-0})) -ge ${toString notifyPolicy.minIntervalSec} ]
+              }
+              notify_post() { # $1=group $2=title $3=banner_msg $4=bar_msg $5=click_cmd("" = none) $6=priority $7=tags
+                if [ -n "$tn" ]; then
+                  local -a tn_args=(-title "$2" -message "$3" -group "$1")
+                  [ -z "$5" ] || tn_args+=(-execute "$5")
+                  "$tn" "''${tn_args[@]}" >/dev/null 2>&1 || true
+                fi
+                notify_bars "$4"
+                notify_remote "$6" "$7" "$2" "$3"
+              }
+
+              # needs-input rise: the banner carries the waiting pane's last
+              # line via peek, and its click runs the policy verb — `answer`
+              # (alerter reply routed into the waiting pane) where the alerter
+              # rail exists, bare `focus` elsewhere (osascript clicks opened
+              # Script Editor — the scar that keeps posting on terminal-notifier).
               prev_needs="$(jq -r '.attention.needs_input // 0' <<<"$prev")"
               last_notify="$(jq -r '.last_notify // 0' <<<"$m")"
               notified=0
               tn='${tnBin}'
-              if ${lib.boolToString notifyPolicy.needsInput} && [ -n "$tn" ] \
-                && [ "''${needs:-0}" -gt "''${prev_needs:-0}" ] \
-                && [ $((now - last_notify)) -ge ${toString notifyPolicy.minIntervalSec} ]; then
-                "$tn" -title "Forge Agents" \
-                  -message "''${needs} agent session(s) waiting for input" \
-                  -group forge-agents -execute "${profileBin}/forge-agents focus" >/dev/null 2>&1 || true
+              if ${lib.boolToString notifyPolicy.needsInput} \
+                && rise_gate "''${needs:-0}" "$prev_needs" "$last_notify"; then
+                peek_line=""
+                IFS=$'\x1f' read -r n_zs n_zp < <(jq -r \
+                  '.latest // {} | [.zellij_session // "", .zellij_pane // ""] | join("\u001f")' <<<"$att") || true
+                if [ -n "''${n_zs:-}" ] && [ -n "''${n_zp:-}" ]; then
+                  peek_line="$(${profileBin}/forge-zellij peek --session "$n_zs" --pane "$n_zp" --lines 5 --text 2>/dev/null | tail -1 || true)"
+                  peek_line="''${peek_line:0:80}"
+                fi
+                notify_post forge-agents "Forge Agents" \
+                  "''${needs} agent session(s) waiting for input''${peek_line:+ — $peek_line}" \
+                  "? ''${needs} agent(s) waiting''${peek_line:+ — $peek_line}" \
+                  "${profileBin}/forge-agents ${notifyPolicy.clickVerb}" \
+                  "${notifyPolicy.remote.needsInput.priority}" "${notifyPolicy.remote.needsInput.tags}"
                 notified=1
+              fi
+
+              # standing-alert rise: banner in its own group, no click verb —
+              # the receipts plane (forge-receipts --verb failures) is the
+              # follow-up surface.
+              prev_alerts="$(jq -r '.alerts.count // 0' <<<"$prev")"
+              last_alert_notify="$(jq -r '.last_alert_notify // 0' <<<"$m")"
+              alert_notified=0
+              if ${lib.boolToString notifyPolicy.alerts} \
+                && rise_gate "''${alerts_n:-0}" "$prev_alerts" "$last_alert_notify"; then
+                alert_labels="$(jq -r 'map(.label) | join(", ")' <<<"$alerts")"
+                notify_post forge-estate "Forge Estate" \
+                  "''${alerts_n} standing alert(s): ''${alert_labels}" \
+                  "!! ''${alert_labels}" "" \
+                  "${notifyPolicy.remote.alerts.priority}" "${notifyPolicy.remote.alerts.tags}"
+                alert_notified=1
               fi
 
               # --- [META_TRANSITION_RECEIPT]
               jq -cn --argjson now "$now" --argjson m "$m" \
-                --argjson cx_ok "$cx_ok" --argjson cl_ok "$cl_ok" --argjson notified "$notified" '
+                --argjson cx_ok "$cx_ok" --argjson cl_ok "$cl_ok" \
+                --argjson notified "$notified" --argjson alert_notified "$alert_notified" '
                 ($m.lanes // {}) as $l
                 | {
                     last_notify: (if $notified == 1 then $now else ($m.last_notify // 0) end),
+                    last_alert_notify: (if $alert_notified == 1 then $now else ($m.last_alert_notify // 0) end),
                     lanes: {
                       codex: (if $cx_ok == 1 then {failures: 0, last_attempt: $now}
                               else {failures: ((($l.codex.failures // 0) + 1) | if . > 6 then 6 else . end), last_attempt: $now} end),
@@ -1117,9 +1288,9 @@
               mv "$meta.tmp.$$" "$meta"
 
               # jq's // coerces false to the alternative; != false keeps a real false.
-              summary="needs=''${needs:-0} run=$run_n cx_stale=$cx_stale cl_stale=$cl_stale"
-              prev_summary="$(jq -r '"needs=\(.attention.needs_input // 0) run=\(.lanes.running // 0) cx_stale=\(.quota.codex.stale != false) cl_stale=\(.quota.claude.stale != false)"' <<<"$prev" 2>/dev/null)" || prev_summary=""
-              if [ "$summary" != "$prev_summary" ] || [ "$notified" = 1 ]; then
+              summary="needs=''${needs:-0} run=$run_n alerts=''${alerts_n:-0} bells=''${bells_n:-0} cx_stale=$cx_stale cl_stale=$cl_stale"
+              prev_summary="$(jq -r '"needs=\(.attention.needs_input // 0) run=\(.lanes.running // 0) alerts=\(.alerts.count // 0) bells=\(.bells.count // 0) cx_stale=\(.quota.codex.stale != false) cl_stale=\(.quota.claude.stale != false)"' <<<"$prev" 2>/dev/null)" || prev_summary=""
+              if [ "$summary" != "$prev_summary" ] || [ "$notified" = 1 ] || [ "$alert_notified" = 1 ]; then
                 printf -v receipt_row 'ts=%s\tverb=collect\tresult=ok\t%s\tnotified=%s' \
                   "$ts" "''${summary// /$'\t'}" "$notified"
                 append_receipt "$receipt_row" || true
@@ -1206,10 +1377,8 @@
               local row zs zp wp tp app handler live_sessions ctty
               declare -A focus_row=([WezTerm]=focus_wezterm [Terminal]=focus_terminal)
               row="$(jq -c '.attention.latest // empty' "$cache" 2>/dev/null || true)"
-              [ -n "$row" ] || row="$(tail -n 500 "$feed" 2>/dev/null | jq -Rcn '
-                [inputs | fromjson? | select(type == "object")]
-                | [group_by(.session_id)[] | max_by(.ts) | select(.event == "Notification")]
-                | max_by(.ts) // empty' 2>/dev/null || true)"
+              [ -n "$row" ] || row="$(tail -n 500 "$feed" 2>/dev/null \
+                | jq -Rcn "$jq_defs latest_needs" 2>/dev/null || true)"
               # One projection per row snapshot; the 0x1f join survives empties.
               IFS=$'\x1f' read -r zs zp wp tp tty < <(jq -r \
                 '[.zellij_session // "", .zellij_pane // "", .wezterm_pane // "", .term // "", .tty // ""] | join("\u001f")' \
@@ -1250,10 +1419,62 @@
               focus_receipt "$(printf '%s-app' "$app" | tr '[:upper:]' '[:lower:]')"
             }
 
+            # Answer channel: the needs-input banner click lands here. Resolve
+            # the latest attention row, carry the waiting pane's tail into a
+            # blocking alerter question, and write the typed reply back into
+            # the exact pane by pane-id — the notification answers the agent
+            # without a window switch. Every degraded leg falls back to focus.
+            answer_receipt() { # $1=result $2=reply_len
+              local row
+              printf -v row 'ts=%s\tverb=answer\treply_len=%s\tresult=%s' \
+                "$(iso_now)" "$2" "$1"
+              append_receipt "$row" 2>/dev/null || true
+            }
+            cmd_answer() {
+              local alr row zs zp tail_text ans atype reply
+              alr='${alerterBin}'
+              row="$(jq -c '.attention.latest // empty' "$cache" 2>/dev/null || true)"
+              IFS=$'\x1f' read -r zs zp < <(jq -r \
+                '[.zellij_session // "", .zellij_pane // ""] | join("\u001f")' \
+                <<<"''${row:-null}" 2>/dev/null) || true
+              if [ -z "$alr" ] || [ -z "''${zs:-}" ] || [ -z "''${zp:-}" ]; then
+                cmd_focus
+                return 0
+              fi
+              tail_text="$(${profileBin}/forge-zellij peek --session "$zs" --pane "$zp" --lines 10 --text 2>/dev/null | tail -6 || true)"
+              [ -n "$tail_text" ] || tail_text="(pane content unavailable)"
+              ans="$("$alr" --message "$tail_text" --title "Forge Agents" \
+                --subtitle "reply lands in $zs pane $zp" --reply "Answer" \
+                --timeout ${toString notifyPolicy.answerTimeoutSec} \
+                --group forge-agents-answer --json 2>/dev/null || true)"
+              atype="$(jq -r '.activationType // "none"' <<<"$ans" 2>/dev/null || true)"
+              case "''${atype:-none}" in
+                replied)
+                  reply="$(jq -r '.activationValue // ""' <<<"$ans")"
+                  if [ -n "$reply" ]; then
+                    # Pane-id-addressed write needs no focus; byte 13 submits.
+                    ${profileBin}/zellij --session "$zs" action write-chars --pane-id "$zp" -- "$reply" 2>/dev/null || true
+                    ${profileBin}/zellij --session "$zs" action write --pane-id "$zp" 13 2>/dev/null || true
+                    answer_receipt replied "''${#reply}"
+                    cmd_focus
+                    return 0
+                  fi
+                  answer_receipt empty-reply 0
+                  ;;
+                contentsClicked)
+                  answer_receipt clicked 0
+                  cmd_focus
+                  return 0
+                  ;;
+                *) answer_receipt "''${atype:-none}" 0 ;;
+              esac
+            }
+
             case "$verb" in
               collect) cmd_collect ;;
               status) cmd_status "$@" ;;
               focus) cmd_focus ;;
+              answer) cmd_answer ;;
               *) usage ;;
             esac
     '';
@@ -1271,7 +1492,7 @@
   agentsCompletion = pkgs.writeTextDir "share/zsh/site-functions/_forge-agents" ''
     #compdef forge-agents
     _arguments \
-      '1:verb:(collect status focus)' \
+      '1:verb:(collect status focus answer)' \
       '--json[raw collector cache]'
   '';
 in {

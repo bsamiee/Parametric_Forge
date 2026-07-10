@@ -19,6 +19,7 @@ A fact lands at the lowest tier that owns it; a higher tier states only the inva
 
 Routing is the one job that licenses linking and naming siblings; every other page composes settled law silently.
 
+- The routing license is a file class, never a section grafted onto an ordinary page: `README.md`, a skill root `SKILL.md`, an instruction root (`CLAUDE.md`, `AGENTS.md`), and a memory index `MEMORY.md` are the only durable files that carry file links; a relative link in any other page is coupling, and the gate fails it as `coupled-link`.
 - One router per corpus level, keyed by reader decision: each recurring choice maps to exactly one owning page. A missing route row is a missing capability; a duplicate route is a fork.
 - A route row is path, label, and one charter phrase — never signatures, member inventories, fault bands, or package decisions. A row needing a sentence is a card with earned fields, not a wider row.
 - A router scales by grouping: when the unit spans multiple sub-folders, cards group under one `[FOLDER_TOKEN]:` label per folder — each folder reads as its own card block, and the group labels mirror the disk folders exactly. A small unit keeps one flat card list; group labels are earned by the second folder, never decorative.

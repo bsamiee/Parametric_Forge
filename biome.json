@@ -6,8 +6,6 @@
             "**",
             "!.claude/workflows/**",
             "!.claude/skills/workflow-creator/assets/**",
-            "!.claude/settings.json",
-            "!.claude/settings.local.json",
             "!flake.lock",
             "!pnpm-lock.yaml",
             "!node_modules/**"

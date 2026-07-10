@@ -15,8 +15,10 @@
   ...
 }: let
   inherit (config.forge.theme) palette;
-  # Shared dual-receipt emit fold (receipts.nix).
+  # Shared dual-receipt emit fold (receipts.nix) + the F01 attention
+  # vocabulary (attention.nix): urgency ladder, kv parser, spine, alert rows.
   receiptsFold = import ./receipts.nix;
+  attention = import ./attention.nix {sshHosts = config.forge.ssh.hosts;};
   profileBin = "/etc/profiles/per-user/${config.home.username}/bin";
   fleet = import ./mcp-fleet.nix {
     inherit profileBin;
@@ -24,151 +26,85 @@
   };
 
   # --- [NAME_POLICY_ROWS]
-  # One repo/workroot identity resolves to stable slugs across consumers; the
-  # channel prefix and receipt-log grammar are the live consumers today.
-  # `collision` is the slug-clash policy (reject = eval assertion below);
-  # `previous` carries retired slugs so renames keep receipt-partition history.
-  naming = [
-    {
-      source = "Parametric_Forge";
-      slug = "forge";
-      display = "[FORGE]";
+  # One repo/workroot identity per row — [source slug consumers previous?];
+  # display derives from slug; slug claims (current + retired `previous`,
+  # which keep receipt-partition history across renames) collide at eval.
+  naming =
+    map (t: {
+      source = lib.elemAt t 0;
+      slug = lib.elemAt t 1;
+      display = "[${lib.toUpper (lib.elemAt t 1)}]";
       domain = "estate-repo";
       collision = "reject";
-      previous = [];
-      consumers = ["television-channel-prefix" "receipt-log-prefix" "launchd-agent-name-prefix" "wezterm-workspace-name" "zellij-session-name"];
-    }
-    {
-      source = "Rasm";
-      slug = "rasm";
-      display = "[RASM]";
-      domain = "estate-repo";
-      collision = "reject";
-      previous = [];
-      consumers = ["zellij-session-name"];
-    }
-    {
-      source = "Maghz";
-      slug = "maghz";
-      display = "[MAGHZ]";
-      domain = "estate-repo";
-      collision = "reject";
-      previous = [];
-      consumers = ["tunnel-receipt-partition" "zellij-session-name"];
-    }
-  ];
+      previous = lib.flatten (lib.drop 3 t);
+      consumers = lib.elemAt t 2;
+    }) [
+      ["Parametric_Forge" "forge" ["television-channel-prefix" "receipt-log-prefix" "launchd-agent-name-prefix" "wezterm-workspace-name" "wezterm-workspace-warm" "zellij-session-name"]]
+      ["Rasm" "rasm" ["zellij-session-name"]]
+      ["Maghz" "maghz" ["tunnel-receipt-partition" "zellij-session-name"]]
+    ];
   channelPrefix = (lib.findFirst (r: lib.elem "television-channel-prefix" r.consumers) {slug = "forge";} naming).slug;
   slugClaims = lib.concatMap (r: [r.slug] ++ r.previous) naming;
   slugConflicts = lib.attrNames (lib.filterAttrs (_: c: c > 1) (lib.foldl' (acc: s: acc // {${s} = (acc.${s} or 0) + 1;}) {} slugClaims));
 
   # --- [RECEIPT_SOURCE_REGISTER]
-  # Declared kv-receipt emitters; paths are $HOME-relative and may not exist yet.
+  # Declared receipt emitters at $HOME-relative paths that may not exist yet;
+  # tuple grammar "kind[|stem[|emitter]]" defaults stem=kind and
+  # emitter=forge-<stem>; grain is kv (TSV k=v) unless a literal row says
+  # json (JSONL). Query plane, audit verb, and push bus dispatch on the rows
+  # — an unregistered emitter is invisible to all three; --audit flags it.
+  osPath = darwin: linux:
+    if host.os == "darwin"
+    then darwin
+    else linux;
+  kvSource = s: let
+    p = lib.splitString "|" s ++ ["" ""];
+    at = i: d: lib.findFirst (v: v != "") d [(lib.elemAt p i)];
+    stem = at 1 (lib.head p);
+  in {
+    kind = lib.head p;
+    path = "Library/Logs/forge-${stem}.receipts.log";
+    emitter = at 2 "forge-${stem}";
+  };
   receiptSources =
-    [
-      {
-        kind = "redeploy";
-        path = "Library/Logs/forge-redeploy.receipts.log";
-        emitter = "forge-redeploy";
-      }
-      {
-        kind = "maintenance";
-        path = "Library/Logs/forge-nix-maintenance.receipts.log";
-        emitter = "forge-nix-maintenance";
-      }
-      {
-        kind = "drift";
-        path = "Library/Logs/forge-nix-drift.receipts.log";
-        emitter = "forge-nix-drift";
-      }
-      {
-        kind = "orphan-sweep";
-        path = "Library/Logs/forge-orphan-sweep.receipts.log";
-        emitter = "forge-orphan-sweep";
-      }
-      {
-        kind = "activation-sweep";
-        path = "Library/Logs/forge-activation-sweep.receipts.log";
-        emitter = "forge-activation-sweep";
-      }
-      {
-        kind = "accept";
-        path = "Library/Logs/forge-accept.receipts.log";
-        emitter = "forge-accept";
-      }
-      {
-        kind = "browse";
-        path = "Library/Logs/forge-browse.receipts.log";
-        emitter = "forge-browse";
-      }
-      {
-        kind = "workspace";
-        path = "Library/Logs/forge-workspace.receipts.log";
-        emitter = "forge-workspace";
-      }
-      {
-        kind = "wezterm";
-        path = "Library/Logs/forge-wezterm.receipts.log";
-        emitter = "wezterm command deck";
-      }
-      {
-        kind = "zellij";
-        path = "Library/Logs/forge-zellij.receipts.log";
-        emitter = "forge-zellij";
-      }
-      {
-        kind = "mcp";
-        path = "Library/Logs/forge-mcp.receipts.log";
-        emitter = "forge-mcp";
-      }
-      {
-        kind = "agents";
-        path = "Library/Logs/forge-agents.receipts.log";
-        emitter = "forge-agents collector";
-      }
-      {
-        kind = "terminal-accept";
-        path = "Library/Logs/forge-terminal-accept.receipts.log";
-        emitter = "forge-terminal-accept.sh";
-      }
-      {
-        kind = "path-doctor";
-        path = "Library/Logs/forge-path-doctor.receipts.log";
-        emitter = "forge-path-doctor";
-      }
-      {
-        kind = "launchd-doctor";
-        path = "Library/Logs/forge-launchd-doctor.receipts.log";
-        emitter = "forge-launchd-doctor";
-      }
-      {
-        kind = "parity";
-        path = "Library/Logs/forge-parity.receipts.log";
-        emitter = "forge-parity";
-      }
-      {
-        kind = "update-board";
-        path = "Library/Logs/forge-update-board.receipts.log";
-        emitter = "forge-update-board";
-      }
-    ]
-    # Tunnel receipt rows derive from the ssh tunnel registry: a new VPS row
-    # appears in the receipts browser without touching this file. The path
-    # follows the supervisor's per-OS write target (launchd logs on Darwin,
-    # the systemd state dir on Linux — ssh.nix FORGE_TUNNEL_RECEIPTS row).
-    ++ lib.mapAttrsToList (name: _: {
-      kind = "tunnel-${name}";
-      path =
-        if host.os == "darwin"
-        then "Library/Logs/forge-${name}-vps-tunnel.receipts.log"
-        else ".local/state/forge-tunnels/${name}-vps-tunnel.receipts.log";
-      emitter = "${name}-vps-tunnel supervisor";
-    })
-    config.forge.ssh.hosts;
+    map (r: {grain = "kv";} // r)
+    (map kvSource ["redeploy" "maintenance|nix-maintenance" "drift|nix-drift" "orphan-sweep" "activation-sweep" "accept" "browse" "workspace" "wezterm||wezterm command deck" "zellij" "mcp" "agents||forge-agents collector" "terminal-accept||forge-terminal-accept.sh" "path-doctor" "launchd-doctor" "parity" "update-board" "vscode" "fonts||forge-project-fonts" "theme-proof"]
+      ++ [
+        # rsync-mv emits JSONL only, at a per-OS path (rsync.nix).
+        {
+          kind = "rsync-mv";
+          path = osPath "Library/Logs/forge-rsync-mv.receipts.jsonl" ".local/state/parametric-forge/rsync-mv.receipts.jsonl";
+          emitter = "rsync-mv.sh";
+          grain = "json";
+        }
+      ]
+      # Tunnel and mount rows derive from the ssh host registry: a new VPS or
+      # mount row appears here untouched; paths follow each supervisor's
+      # per-OS write target (launchd logs on Darwin, systemd state on Linux).
+      ++ lib.mapAttrsToList (name: _: {
+        kind = "tunnel-${name}";
+        path = osPath "Library/Logs/forge-${name}-vps-tunnel.receipts.log" ".local/state/forge-tunnels/${name}-vps-tunnel.receipts.log";
+        emitter = "${name}-vps-tunnel supervisor";
+      })
+      config.forge.ssh.hosts
+      ++ lib.concatLists (lib.mapAttrsToList (
+          name: h:
+            map (m: {
+              kind = "mount-${name}-${m.name}";
+              path = osPath "Library/Logs/forge-${name}-mount-${m.name}.receipts.log" ".local/state/forge-mounts/${name}-mount-${m.name}.receipts.log";
+              emitter = "forge-vps-mount supervisor";
+            }) (h.mounts or [])
+        )
+        config.forge.ssh.hosts));
 
   # --- [REGISTER_JSON_PROJECTIONS]
-  # MCP rows are sanitized at the seam: endpoint basename, key NAMES, pin,
-  # doctor family (label/port/exec names) — never argv (host paths), token
-  # custody paths, or values.
+  # MCP rows sanitize at the seam — endpoint basename, key NAMES, pin, doctor
+  # family — never argv, token custody paths, or values; `sub` projects an
+  # optional sub-attrset onto its closed key family, null when absent.
+  sub = keys: v:
+    if v == null
+    then null
+    else keys // builtins.intersectAttrs keys v;
   mcpRegister =
     map (r: {
       inherit (r) name transport probe;
@@ -176,65 +112,44 @@
       envKeys = r.envKeys or [];
       clients = r.clients or ["claude" "codex"];
       assertLevel = r.assertLevel or "full";
-      launcher =
-        if r ? launcher
-        then {inherit (r.launcher) pkg version;}
-        else null;
+      launcher = sub (lib.genAttrs ["pkg" "version"] (_: null)) (r.launcher or null);
       codex = r.codex or null;
-      doctor =
-        if r ? doctor
-        then {
-          launchdLabel = r.doctor.launchdLabel or null;
-          port = r.doctor.port or null;
-          execs = r.doctor.execs or [];
-        }
-        else null;
+      doctor = sub (lib.genAttrs ["launchdLabel" "port"] (_: null) // {execs = [];}) (r.doctor or null);
     })
     fleet;
   registerJson = domain: rows: pkgs.writeText "forge-register-${domain}.json" (builtins.toJSON rows);
-  registers = {
-    aliases = registerJson "aliases" config.forge.registers.aliases;
-    chords = registerJson "chords" (config.forge.chords.register or []);
-    mcp = registerJson "mcp" mcpRegister;
-    naming = registerJson "naming" naming;
-    receipts = registerJson "receipts" receiptSources;
+  registers = lib.mapAttrs registerJson {
+    inherit naming;
+    aliases = config.forge.registers.aliases;
+    chords = config.forge.chords.register or [];
+    mcp = mcpRegister;
+    receipts = receiptSources;
   };
 
   # --- [BROWSE_CATALOG]
-  # Catalog-driven dispatch: one row per domain — source JSON, TSV projection,
-  # label, per-domain binds. The receipts domain delegates to forge-receipts.
-  catalogRows = {
-    aliases = {
-      json = registers.aliases;
-      label = "[ALIASES]";
-      tsv = ''.[] | [.alias, .category, .risk, .expansion] | @tsv'';
-      desc = "shell alias register";
+  # One tuple per domain — [tsvProjection desc binds?]; label and json derive
+  # from the name; the receipts domain delegates to forge-receipts.
+  catalogRows =
+    lib.mapAttrs (d: t:
+      {
+        json = registers.${d};
+        label = "[${lib.toUpper d}]";
+        tsv = lib.elemAt t 0;
+        desc = lib.elemAt t 1;
+      }
+      // lib.optionalAttrs (lib.length t > 2) {binds = lib.elemAt t 2;}) {
+      aliases = [''.[] | [.alias, .category, .risk, .expansion] | @tsv'' "shell alias register"];
+      chords = [''.[] | [.chord_id, .mods, .key, .label] | @tsv'' "chord register across consumers"];
+      mcp = [''.[] | [.name, .transport, (.launcher.version // "-"), .probe] | @tsv'' "MCP fleet rows" ["ctrl-d:execute(${profileBin}/forge-mcp doctor | ${pkgs.less}/bin/less -R)"]];
+      naming = [''.[] | [.slug, .source, .display, .domain] | @tsv'' "name policy rows"];
+    }
+    // {
+      receipts = {
+        delegate = "receipts";
+        label = "[RECEIPTS]";
+        desc = "typed receipt rows across estate logs";
+      };
     };
-    chords = {
-      json = registers.chords;
-      label = "[CHORDS]";
-      tsv = ''.[] | [.chord_id, .mods, .key, .label] | @tsv'';
-      desc = "chord register across consumers";
-    };
-    mcp = {
-      json = registers.mcp;
-      label = "[MCP]";
-      tsv = ''.[] | [.name, .transport, (.launcher.version // "-"), .probe] | @tsv'';
-      desc = "MCP fleet rows";
-      binds = ["ctrl-d:execute(${profileBin}/forge-mcp doctor | ${pkgs.less}/bin/less -R)"];
-    };
-    naming = {
-      json = registers.naming;
-      label = "[NAMING]";
-      tsv = ''.[] | [.slug, .source, .display, .domain] | @tsv'';
-      desc = "name policy rows";
-    };
-    receipts = {
-      delegate = "receipts";
-      label = "[RECEIPTS]";
-      desc = "typed receipt rows across estate logs";
-    };
-  };
   catalogJson = pkgs.writeText "forge-browse-catalog.json" (builtins.toJSON catalogRows);
 
   # Per-browser fzf projection: theme rides each generated command, never a
@@ -251,37 +166,66 @@
   # "''${fzf_base[@]}" so every browser carries the theme per command.
   fzfArgsBash = "fzf_base=(\n${lib.concatMapStringsSep "\n" (a: "        ${lib.escapeShellArg a}") fzfBaseArgs}\n      )";
 
+  # --- [RECEIPT_VERB_ROWS]
+  # Canned [desc sql] projections over the normalized event spine — fixed
+  # columns kind, ts, source, surface, event, verb, result, state, status,
+  # session_id, urgency, raw — so every verb binds on any corpus thinness;
+  # kind-specific raw fields extract from JSON text. A new analytic is one row.
+  receiptVerbs =
+    lib.mapAttrs (_: t: {
+      desc = lib.elemAt t 0;
+      sql = lib.elemAt t 1;
+    }) {
+      kinds = ["corpus census: rows, span, failure count per kind" "SELECT kind, count(*) AS n, min(ts) AS first_ts, max(ts) AS last_ts, count(*) FILTER (urgency = 'high') AS failures FROM receipts GROUP BY kind ORDER BY n DESC"];
+      failures = ["failure-urgency rows, newest first" "SELECT ts, kind, COALESCE(result, state, status, '-') AS outcome, COALESCE(surface, '-') AS surface FROM receipts WHERE urgency = 'high' ORDER BY ts DESC LIMIT 100"];
+      redeploy-trend = ["per-day redeploy runs, build seconds, failures" "SELECT substr(ts, 1, 10) AS day, count(*) AS runs, round(avg(TRY_CAST(json_extract_string(raw, '$.build_s') AS DOUBLE)), 1) AS avg_build_s, round(max(TRY_CAST(json_extract_string(raw, '$.build_s') AS DOUBLE)), 1) AS max_build_s, count(*) FILTER (COALESCE(result, 'ok') != 'ok') AS failures FROM receipts WHERE kind = 'redeploy' GROUP BY day ORDER BY day DESC LIMIT 30"];
+      tunnel-flaps = ["per-day tunnel state transitions" "SELECT substr(ts, 1, 10) AS day, kind, count(*) FILTER (prev IS NOT NULL AND state IS DISTINCT FROM prev) AS flaps, count(*) FILTER (state != 'up') AS down_rows FROM (SELECT ts, kind, state, LAG(state) OVER (PARTITION BY kind ORDER BY ts) AS prev FROM receipts WHERE kind LIKE 'tunnel-%') GROUP BY day, kind ORDER BY day DESC, kind LIMIT 30"];
+      accept-trend = ["acceptance pass/warn/fail per run" "SELECT ts, TRY_CAST(regexp_extract(json_extract_string(raw, '$.summary'), 'pass:(\\d+)', 1) AS INTEGER) AS pass, TRY_CAST(regexp_extract(json_extract_string(raw, '$.summary'), 'warn:(\\d+)', 1) AS INTEGER) AS warn, TRY_CAST(regexp_extract(json_extract_string(raw, '$.summary'), 'fail:(\\d+)', 1) AS INTEGER) AS fail, result FROM receipts WHERE kind = 'accept' ORDER BY ts DESC LIMIT 30"];
+      timeline = ["unified estate chronology: receipts + attention rows" "SELECT ts, kind, COALESCE(source, kind) AS source, urgency, COALESCE(event, verb, json_extract_string(raw, '$.mode'), json_extract_string(raw, '$.action'), '-') AS what, COALESCE(result, state, status, '-') AS outcome, COALESCE(surface, '-') AS surface FROM receipts ORDER BY ts DESC LIMIT 200"];
+      session-replay = ["forensic chronology of the latest attention session: events + receipts on one join key" "SELECT ts, kind, COALESCE(event, verb, '-') AS what, COALESCE(result, state, status, '-') AS outcome, urgency, COALESCE(surface, '-') AS surface FROM receipts WHERE session_id = (SELECT session_id FROM receipts WHERE kind = 'attention' AND COALESCE(session_id, '-') != '-' ORDER BY ts DESC LIMIT 1) ORDER BY ts DESC LIMIT 200"];
+    };
+  verbsJson = pkgs.writeText "forge-receipts-verbs.json" (builtins.toJSON receiptVerbs);
+
   # --- [FORGE_RECEIPTS]
   forgeReceipts = pkgs.writeShellApplication {
     name = "forge-receipts";
-    runtimeInputs = [pkgs.coreutils pkgs.jq pkgs.fzf pkgs.gawk];
+    runtimeInputs = [pkgs.coreutils pkgs.jq pkgs.fzf pkgs.gawk pkgs.findutils pkgs.duckdb];
     text = ''
-      # Unified browser over kv receipt logs; registry rows declare the corpus.
+      # Unified receipts plane over registry-declared sources (kv TSV +
+      # JSONL): browse/table rows, an ad-hoc SQL door plus canned verbs over
+      # the normalized spine (DuckDB), a registry-vs-disk audit, and a live
+      # failure push bus; the attention feed folds in as kind=attention rows.
       registry="${registers.receipts}"
+      verbs="${verbsJson}"
       self="''${BASH_SOURCE[0]}"
+      zellij_bin="${profileBin}/zellij"
+      attention_feed="''${FORGE_ATTENTION_FEED:-''${XDG_STATE_HOME:-$HOME/.local/state}/forge/agent-attention.jsonl}"
+      reg_rows="$(jq -r '.[] | [.kind, .path, (.grain // "kv")] | @tsv' "$registry")"
       ${fzfArgsBash}
-      mode="table" since="" failures=0 limit=40 pick=""
+      # Shared F01 vocabulary (attention.nix) composed into every jq program;
+      # the $-bearing jq text is single-quoted data, never a shell expansion.
+      # shellcheck disable=SC2016
+      jq_defs=${lib.escapeShellArg (attention.urgencyJq + attention.kvJq + attention.spineJq)}
+      mode="" render="table" since="" failures=0 limit=40 pick="" sql_query="" verb_name=""
       kinds=()
-      usage() {
-        printf 'Usage: forge-receipts [--kind K]... [--since ISO|Nh|Nd] [--failures]\n'
-        printf '                      [--limit N] [--json|--tsv|--fzf|--follow] [--pick kind@ts]\n'
-      }
+      usage() { printf '%s\n' 'Usage: forge-receipts [--kind K]... [--since ISO|Nh|Nd] [--failures] [--limit N]' '                      [--json|--tsv|--fzf|--follow] [--pick kind@ts]' '                      [--sql QUERY] [--verb NAME] [--verbs] [--audit] [--bus]'; }
       while [ "$#" -gt 0 ]; do
         case "$1" in
           --kind) kinds+=("''${2:?--kind needs a value}"); shift ;;
           --since) since="''${2:?--since needs a value}"; shift ;;
           --failures) failures=1 ;;
           --limit) limit="''${2:?--limit needs a value}"; shift ;;
-          --json) mode="json" ;;
-          --tsv) mode="tsv" ;;
-          --fzf) mode="fzf" ;;
-          --follow) mode="follow" ;;
+          --json | --tsv) render="''${1#--}" ;;
+          --fzf | --follow | --verbs | --audit | --bus) mode="''${1#--}" ;;
           --pick) mode="pick"; pick="''${2:?--pick needs kind@ts}"; shift ;;
+          --sql) mode="sql"; sql_query="''${2:?--sql needs a query}"; shift ;;
+          --verb) mode="verb"; verb_name="''${2:?--verb needs a name}"; shift ;;
           --help | -h) usage; exit 0 ;;
           *) usage >&2; exit 64 ;;
         esac
         shift
       done
+      : "''${mode:=rows}"
       # --limit feeds --argjson, --since Nh/Nd feeds arithmetic: both reject
       # non-numeric input at the option seam instead of a bash math abort.
       case "$limit" in "" | *[!0-9]*) usage >&2; exit 64 ;; esac
@@ -289,41 +233,134 @@
         *h | *d) case "''${since%?}" in "" | *[!0-9]*) usage >&2; exit 64 ;; esac ;;
       esac
 
-      threshold=""
-      if [ -n "$since" ]; then
-        case "$since" in
-          *h) TZ=UTC0 printf -v threshold '%(%Y%m%dT%H%M%SZ)T' "$((EPOCHSECONDS - ''${since%h} * 3600))" ;;
-          *d) TZ=UTC0 printf -v threshold '%(%Y%m%dT%H%M%SZ)T' "$((EPOCHSECONDS - ''${since%d} * 86400))" ;;
-          *) threshold="''${since//[:-]/}" ;;
-        esac
-      fi
+      threshold="''${since//[:-]/}" # empty since stays empty; ISO normalizes
+      case "$since" in
+        *h) TZ=UTC0 printf -v threshold '%(%Y%m%dT%H%M%SZ)T' "$((EPOCHSECONDS - ''${since%h} * 3600))" ;;
+        *d) TZ=UTC0 printf -v threshold '%(%Y%m%dT%H%M%SZ)T' "$((EPOCHSECONDS - ''${since%d} * 86400))" ;;
+      esac
 
-      wanted() {
-        [ "''${#kinds[@]}" -eq 0 ] && return 0
-        local k
-        for k in "''${kinds[@]}"; do [ "$k" = "$1" ] && return 0; done
-        return 1
+      wanted() { # kind membership; an empty --kind filter admits every row
+        [ "''${#kinds[@]}" -eq 0 ] || case " ''${kinds[*]} " in *" $1 "*) return 0 ;; *) return 1 ;; esac
       }
 
-      collect() {
-        local kind path f
-        while IFS=$'\t' read -r kind path; do
+      collect() { # $1 = per-source row cap; grain selects the parse expression
+        local cap="''${1:-500}" kind path grain parse f
+        while IFS=$'\t' read -r kind path grain; do
           f="$HOME/$path"
-          [ -f "$f" ] || continue
-          wanted "$kind" || continue
-          tail -n 500 "$f" | jq -R -c --arg kind "$kind" '
-            split("\t")
-            | map(select(test("^[^=]+=")) | capture("^(?<key>[^=]+)=(?<value>.*)$"))
-            | from_entries + {kind: $kind}' 2>/dev/null || true
-        done < <(jq -r '.[] | [.kind, .path] | @tsv' "$registry")
+          { [ -f "$f" ] && wanted "$kind"; } || continue
+          parse='kv_row'
+          [ "$grain" != json ] || parse='(fromjson? | select(type == "object"))'
+          tail -n "$cap" "$f" \
+            | jq -Rc --arg kind "$kind" "$jq_defs $parse"' + {kind: $kind}' 2>/dev/null || true
+        done <<<"$reg_rows"
       }
+
+      # --- [SQL_PLANE]
+      run_sql() { # $1 = SQL over the `receipts` spine table
+        # Script-scope temp: the EXIT trap fires after this function returns,
+        # so a `local` here would be unbound at cleanup under set -u.
+        tmpd="$(mktemp -d)"
+        trap 'rm -rf "$tmpd"' EXIT
+        corpus="$tmpd/corpus.jsonl"
+        {
+          collect 100000
+          if wanted attention; then
+            tail -n 100000 "$attention_feed" 2>/dev/null \
+              | jq -Rc 'fromjson? | select(type == "object") + {kind: "attention"}' || true
+          fi
+        } | jq -c "$jq_defs spine" >"$corpus"
+        [ -s "$corpus" ] || { printf 'forge-receipts: empty corpus\n' >&2; exit 1; }
+        duckdb_args=()
+        [ "$render" != json ] || duckdb_args+=(-json)
+        # Declared spine schema (attention.nix spineColumnsSql), never
+        # inference: an all-null column on a thin or --kind-filtered corpus
+        # infers JSON and poisons every COALESCE over it.
+        duckdb ''${duckdb_args[0]+"''${duckdb_args[@]}"} -c \
+          "CREATE TEMP TABLE receipts AS FROM read_json('$corpus', format = 'newline_delimited', columns = {${attention.spineColumnsSql}}); $1"
+      }
+
+      # --- [AUDIT]
+      # Registry-vs-disk truth: declared rows probed for presence, JSONL
+      # sibling, and last ts; any on-disk receipt log the registry does not
+      # claim is a FAIL — the dual-receipt law made enforceable.
+      cmd_audit() {
+        local rows="" kind path grain f last found registered rc=0
+        note() { rows+="$(printf '%s\t%s\t%s' "$1" "$2" "$3")"$'\n'; }
+        while IFS=$'\t' read -r kind path grain; do
+          f="$HOME/$path"
+          [ -f "$f" ] || { note ABSENT "$kind" "declared log has no rows yet: ~/$path"; continue; }
+          last="$({ tail -n 1 "$f" 2>/dev/null || true; } \
+            | jq -Rr "$jq_defs"' (if startswith("{") then (fromjson? // {}) else kv_row end) | .ts // "-"' 2>/dev/null || true)"
+          if [ "$grain" = "kv" ] && [ "''${path##*.}" = "log" ] && [ ! -f "''${f%.log}.jsonl" ]; then
+            note WARN "$kind" "kv log without JSONL sibling (pre-fold history or non-fold emitter), last=''${last:--}"
+          else
+            note OK "$kind" "last=''${last:--}"
+          fi
+        done <<<"$reg_rows"
+        registered="$(jq -r --arg home "$HOME" '.[] | ($home + "/" + .path), ($home + "/" + .path | sub("\\.log$"; ".jsonl"))' "$registry")"
+        while IFS= read -r found; do
+          [ -n "$found" ] || continue
+          grep -qxF "$found" <<<"$registered" \
+            || { note FAIL "$(basename "$found")" "unregistered receipt emitter: ''${found/#"$HOME"/\~}"; rc=1; }
+        done < <({
+          find "$HOME/Library/Logs" -maxdepth 1 \( -name '*.receipts.log' -o -name '*.receipts.jsonl' \) 2>/dev/null || true
+          find "''${XDG_STATE_HOME:-$HOME/.local/state}" -maxdepth 2 \( -name '*.receipts.log' -o -name '*.receipts.jsonl' \) 2>/dev/null || true
+        } | sort)
+        if [ "$render" = json ]; then
+          TZ=UTC0 printf -v now_ts '%(%Y-%m-%dT%H:%M:%SZ)T' "$EPOCHSECONDS"
+          jq -Rcs --arg ts "$now_ts" --arg rc "$rc" '{schema: "forge-receipts/v1", ts: $ts, verb: "audit", result: (if $rc == "0" then "ok" else "fail" end), rows: (split("\n") | map(select(length > 0) | split("\t") | {status: .[0], kind: .[1], detail: .[2]}))}' <<<"$rows"
+        else
+          printf '%s' "$rows" | gawk -F'\t' '{printf "[%-6s] %-18s %s\n", $1, $2, $3}'
+        fi
+        exit "$rc"
+      }
+
+      # --- [PUSH_BUS]
+      # Live failure fold: every new registry row parses, derives urgency, and
+      # a high row broadcasts into every live zjstatus bar via zjstatus::notify::.
+      # Torn or foreign lines fold to info and drop; a dead zellij is benign.
+      cmd_bus() {
+        local pathmap
+        mapfile -t logs < <(jq -r --arg home "$HOME" '.[] | $home + "/" + .path' "$registry")
+        [ "''${#logs[@]}" -gt 0 ] || { printf 'forge-receipts: empty registry\n' >&2; exit 1; }
+        pathmap="$(jq -c --arg home "$HOME" \
+          'map({key: ($home + "/" + .path), value: {kind, grain: (.grain // "kv")}}) | from_entries' "$registry")"
+        tail -n 0 -F "''${logs[@]}" 2>/dev/null \
+          | gawk 'match($0, /^==> (.+) <==$/, m) {f = m[1]; next} f != "" {print f "\t" $0; fflush()}' \
+          | jq -Rc --unbuffered --argjson map "$pathmap" "$jq_defs"'
+              (split("\t")[0]) as $path
+              | ($map[$path] // empty) as $row
+              | (sub("^[^\t]*\t"; "")) as $line
+              | (if $row.grain == "json" then ($line | fromjson? // {}) else ($line | kv_row) end)
+              | . + {kind: $row.kind}
+              | select(urgency == "high")
+              | "!! \(.kind) \(.result // .state // .status // "fail")\(if .ts then " " + .ts else "" end)"' \
+          | while IFS= read -r msg; do # streaming boundary: live failure push
+              while IFS= read -r s; do
+                [ -n "$s" ] || continue
+                "$zellij_bin" --session "$s" pipe "zjstatus::notify::''${msg:0:120}" 2>/dev/null || true
+              done < <("$zellij_bin" list-sessions -ns 2>/dev/null || true)
+            done
+      }
+
+      case "$mode" in
+        verbs) jq -r 'to_entries[] | [.key, .value.desc] | @tsv' "$verbs" | gawk -F'\t' '{printf "%-16s %s\n", $1, $2}'; exit 0 ;;
+        sql) run_sql "$sql_query"; exit 0 ;;
+        verb)
+          v_sql="$(jq -r --arg v "$verb_name" '.[$v].sql // empty' "$verbs")"
+          [ -n "$v_sql" ] || { printf 'forge-receipts: unknown verb %s (see --verbs)\n' "$verb_name" >&2; exit 64; }
+          run_sql "$v_sql"; exit 0
+          ;;
+        audit) cmd_audit ;;
+        bus) cmd_bus; exit 0 ;;
+      esac
 
       if [ "$mode" = "follow" ]; then
         logs=()
-        while IFS=$'\t' read -r kind path; do
+        while IFS=$'\t' read -r kind path _; do
           wanted "$kind" || continue
           [ -f "$HOME/$path" ] && logs+=("$HOME/$path")
-        done < <(jq -r '.[] | [.kind, .path] | @tsv' "$registry")
+        done <<<"$reg_rows"
         [ "''${#logs[@]}" -gt 0 ] || { printf 'forge-receipts: no logs to follow\n' >&2; exit 1; }
         exec tail -n 0 -F "''${logs[@]}"
       fi
@@ -334,32 +371,26 @@
         exit 0
       fi
 
-      rows="$(collect | jq -s -c --arg th "$threshold" --argjson failures "$failures" --argjson limit "$limit" '
-        map(select(.ts != null))
-        | (if $th != "" then map(select((.ts | gsub("[-:]"; "")) >= $th)) else . end)
-        | (if $failures == 1 then map(select(((.result // "ok") != "ok") or ((.status // "") | test("(?i)fail")))) else . end)
-        | sort_by(.ts | gsub("[-:]"; "")) | reverse | .[:$limit]')"
+      rows="$(collect | jq -s -c --arg th "$threshold" --argjson failures "$failures" --argjson limit "$limit" "$jq_defs"' map(select(.ts != null)) | (if $th != "" then map(select((.ts | gsub("[-:]"; "")) >= $th)) else . end) | (if $failures == 1 then map(select(urgency == "high")) else . end) | sort_by(.ts | gsub("[-:]"; "")) | reverse | .[:$limit]')"
 
       to_tsv() {
-        jq -r '.[] | [.kind, .ts, (.result // .status // "-"),
-          (to_entries | map(select(.key | IN("kind", "ts", "result") | not))
-            | map("\(.key)=\(.value)") | join(" "))] | @tsv' <<<"$rows"
+        jq -r '.[] | [.kind, .ts, (.result // .status // "-"), (to_entries | map(select(.key | IN("kind", "ts", "result") | not)) | map("\(.key)=\(.value)") | join(" "))] | @tsv' <<<"$rows"
       }
 
-      case "$mode" in
+      case "$render" in
         json) jq -c '.[]' <<<"$rows" ;;
         tsv) to_tsv ;;
         table)
-          to_tsv | awk -F'\t' '{printf "%-17s %-21s %-8s %s\n", $1, $2, $3, $4}'
+          if [ "$mode" = "fzf" ]; then
+            sel="$(to_tsv | fzf --delimiter=$'\t' --border-label='[RECEIPTS]' \
+              --preview="$self --pick {1}@{2} | jq ." --preview-window=right:55%:border-bold \
+              "''${fzf_base[@]}")" || exit 0
+            IFS=$'\t' read -r sel_kind sel_ts _ <<<"$sel"
+            [ -n "$sel_kind" ] && "$self" --pick "$sel_kind@$sel_ts"
+          else
+            to_tsv | gawk -F'\t' '{printf "%-17s %-21s %-8s %s\n", $1, $2, $3, $4}'
+          fi
           ;;
-        fzf)
-          sel="$(to_tsv | fzf --delimiter=$'\t' --border-label='[RECEIPTS]' \
-            --preview="$self --pick {1}@{2} | jq ." --preview-window=right:55%:border-bold \
-            "''${fzf_base[@]}")" || exit 0
-          IFS=$'\t' read -r sel_kind sel_ts _ <<<"$sel"
-          [ -n "$sel_kind" ] && "$self" --pick "$sel_kind@$sel_ts"
-          ;;
-        *) usage >&2; exit 64 ;;
       esac
     '';
   };
@@ -427,10 +458,7 @@
       case "''${1:-}" in
         --help | -h) usage; exit 0 ;;
         --list-domains) jq -r 'keys[]' "$catalog"; exit 0 ;;
-        --preview)
-          preview "''${2:?--preview needs DOMAIN ID}" "''${3:?--preview needs DOMAIN ID}"
-          exit 0
-          ;;
+        --preview) preview "''${2:?--preview needs DOMAIN ID}" "''${3:?--preview needs DOMAIN ID}"; exit 0 ;;
         --json)
           if [ -n "''${2:-}" ]; then
             json="$(jq -r --arg d "$2" '.[$d].json // empty' "$catalog")"
@@ -481,100 +509,72 @@
       query="''${out_lines[0]:-}"
       sel="''${out_lines[1]:-}"
       id="''${sel%%$'\t'*}"
-      # fzf exit classes: 0 select, 1 no-match, 130 user abort — benign runs;
-      # any other rc is a browser fault: result=error survives --failures
+      # fzf exit classes: 0 select, 1 no-match, 130 user abort are benign;
+      # any other rc is a browser fault — result=error survives --failures
       # triage and the rc propagates to the caller.
-      case "$rc" in
-        0)
-          if [ -n "$id" ]; then
-            emit_receipt "$domain" "$query" "$id" "$sel" "print" "ok" "0" "$duration_ms"
-            row_by_id "$json" "$id"
-          else
-            emit_receipt "$domain" "$query" "-" "-" "cancel" "ok" "0" "$duration_ms"
-          fi
-          ;;
-        1 | 130)
-          emit_receipt "$domain" "$query" "-" "-" "cancel" "ok" "$rc" "$duration_ms"
-          ;;
-        *)
-          emit_receipt "$domain" "$query" "-" "-" "browse" "error" "$rc" "$duration_ms"
-          exit "$rc"
-          ;;
-      esac
+      if [ "$rc" -eq 0 ] && [ -n "$id" ]; then
+        emit_receipt "$domain" "$query" "$id" "$sel" "print" "ok" "0" "$duration_ms"
+        row_by_id "$json" "$id"
+      elif [ "$rc" -eq 0 ] || [ "$rc" -eq 1 ] || [ "$rc" -eq 130 ]; then
+        emit_receipt "$domain" "$query" "-" "-" "cancel" "ok" "$rc" "$duration_ms"
+      else
+        emit_receipt "$domain" "$query" "-" "-" "browse" "error" "$rc" "$duration_ms"
+        exit "$rc"
+      fi
     '';
   };
 
   # --- [COMPLETIONS]
-  # Projections of the same catalog/registry rows; profile site-functions
-  # enter fpath through the completion owner's fingerprint.
-  domains = lib.attrNames catalogRows;
-  kinds = map (r: r.kind) receiptSources;
-  browseCompletion = pkgs.writeTextDir "share/zsh/site-functions/_forge-browse" ''
-    #compdef forge-browse
-    _arguments \
-      '1:domain:(${lib.concatStringsSep " " domains})' \
-      '--json[emit register JSON]:domain:(${lib.concatStringsSep " " domains})' \
-      '--list-domains[list register domains]' \
-      '--preview[render row preview]:domain:(${lib.concatStringsSep " " domains})'
-  '';
-  receiptsCompletion = pkgs.writeTextDir "share/zsh/site-functions/_forge-receipts" ''
-    #compdef forge-receipts
-    _arguments \
-      '*--kind[filter by kind]:kind:(${lib.concatStringsSep " " kinds})' \
-      '--since[time window ISO or Nh/Nd]:window:' \
-      '--failures[failed rows only]' \
-      '--limit[row cap]:count:' \
-      '--json[JSON rows]' \
-      '--tsv[TSV rows]' \
-      '--fzf[interactive picker]' \
-      '--follow[live tail]' \
-      '--pick[one row]:row:'
-  '';
+  # Projections of the same catalog/registry rows, one ;-delimited spec string
+  # per command; profile site-functions enter fpath through the completion
+  # owner's fingerprint.
+  domainsWord = lib.concatStringsSep " " (lib.attrNames catalogRows);
+  mkCompletion = name: specs:
+    pkgs.writeTextDir "share/zsh/site-functions/_${name}" ''
+      #compdef ${name}
+      _arguments \
+        ${lib.concatStringsSep " \\\n  " (map (r: "'${r}'") (lib.splitString ";" specs))}
+    '';
+  browseCompletion = mkCompletion "forge-browse" "1:domain:(${domainsWord});--json[emit register JSON]:domain:(${domainsWord});--list-domains[list register domains];--preview[render row preview]:domain:(${domainsWord})";
+  receiptsCompletion = mkCompletion "forge-receipts" "*--kind[filter by kind]:kind:(${lib.concatMapStringsSep " " (r: r.kind) receiptSources});--since[time window ISO or Nh/Nd]:window:;--failures[failed rows only];--limit[row cap]:count:;--json[JSON rows];--tsv[TSV rows];--fzf[interactive picker];--follow[live tail];--pick[one row]:row:;--sql[SQL over the receipts spine table]:query:;--verb[canned SQL projection]:verb:(${lib.concatStringsSep " " (lib.attrNames receiptVerbs)});--verbs[list verb rows];--audit[registry-vs-disk truth];--bus[live failure push into zjstatus bars]";
 
   # --- [TELEVISION_CHANNELS]
   # Durable semantic channels over the same registers; source/preview commands
-  # are store-path exact so channels never depend on ambient PATH.
+  # are store-path exact so channels never depend on ambient PATH. Rows with
+  # json browse a register; the delegate row rides forge-receipts lanes.
   mkChannel = domain: row: {
     metadata = {
       name = "${channelPrefix}-${domain}";
       description = row.desc;
     };
-    source = {
-      command = "${pkgs.jq}/bin/jq -r '${row.tsv}' ${row.json}";
-      output = "{split:\t:0}";
-    };
-    preview.command = "${forgeBrowse}/bin/forge-browse --preview ${domain} '{split:\t:0}'";
+    source =
+      if row ? json
+      then {
+        command = "${pkgs.jq}/bin/jq -r '${row.tsv}' ${row.json}";
+        output = "{split:\t:0}";
+      }
+      else {
+        command = "${forgeReceipts}/bin/forge-receipts --tsv --limit 300";
+        output = "{split:\t:0}@{split:\t:1}";
+      };
+    preview.command =
+      if row ? json
+      then "${forgeBrowse}/bin/forge-browse --preview ${domain} '{split:\t:0}'"
+      else "${forgeReceipts}/bin/forge-receipts --pick '{split:\t:0}@{split:\t:1}' | ${pkgs.jq}/bin/jq -C .";
     ui.preview_panel.size = 55;
   };
-  tvChannels =
-    lib.mapAttrs' (domain: row: lib.nameValuePair "${channelPrefix}-${domain}" (mkChannel domain row))
-    (lib.filterAttrs (_: row: row ? json) catalogRows)
-    // {
-      "${channelPrefix}-receipts" = {
-        metadata = {
-          name = "${channelPrefix}-receipts";
-          description = "typed receipt rows across estate logs";
-        };
-        source = {
-          command = "${forgeReceipts}/bin/forge-receipts --tsv --limit 300";
-          output = "{split:\t:0}@{split:\t:1}";
-        };
-        preview.command = "${forgeReceipts}/bin/forge-receipts --pick '{split:\t:0}@{split:\t:1}' | ${pkgs.jq}/bin/jq -C .";
-        ui.preview_panel.size = 55;
-      };
-    };
+  tvChannels = lib.mapAttrs' (domain: row: lib.nameValuePair "${channelPrefix}-${domain}" (mkChannel domain row)) catalogRows;
 in {
-  options.forge.registers.naming = lib.mkOption {
-    type = lib.types.raw;
-    readOnly = true;
-    default = naming;
-    description = "Name policy rows: source, slug, display, domain, consumers.";
-  };
-  options.forge.registers.receiptSources = lib.mkOption {
-    type = lib.types.raw;
-    readOnly = true;
-    default = receiptSources;
-    description = "Declared kv-receipt emitters: kind, path, emitter.";
+  options.forge.registers = let
+    ro = default: description:
+      lib.mkOption {
+        inherit default description;
+        type = lib.types.raw;
+        readOnly = true;
+      };
+  in {
+    naming = ro naming "Name policy rows: source, slug, display, domain, consumers.";
+    receiptSources = ro receiptSources "Declared receipt emitters: kind, path, grain (kv|json), emitter.";
   };
 
   config = {
@@ -587,8 +587,29 @@ in {
 
     home.packages = [forgeBrowse forgeReceipts browseCompletion receiptsCompletion];
 
+    # Identity bundle row (bundle-apps.nix) for the bus agent.
+    forge.bundleApps.forge-receipts-bus = "Forge Receipts Bus";
+
+    # Live push bus: KeepAlive tail over every registry log; a high-urgency
+    # row lands in every zjstatus bar the instant its receipt is written.
+    launchd.agents.forge-receipts-bus = {
+      enable = true;
+      config = {
+        Label = "com.parametric-forge.forge-receipts-bus";
+        ProgramArguments = ["${forgeReceipts}/bin/forge-receipts" "--bus"];
+        KeepAlive = true;
+        ThrottleInterval = 30;
+        ProcessType = "Background";
+        Nice = 10;
+        StandardOutPath = "${config.home.homeDirectory}/Library/Logs/forge-receipts-bus.log";
+        StandardErrorPath = "${config.home.homeDirectory}/Library/Logs/forge-receipts-bus.log";
+        AssociatedBundleIdentifiers = ["com.parametric-forge.forge-receipts-bus"];
+      };
+    };
+
     # Television 0.15.9: durable channel host. Shell integration stays off —
     # Ctrl-R is Atuin, Ctrl-T is fzf; channels launch via `tv <channel>`.
+    # Theme roles bind palette roles: one role row serves every bound key.
     programs.television = {
       enable = true;
       enableBashIntegration = false;
@@ -598,37 +619,19 @@ in {
         use_nerd_font_icons = true;
       };
       channels = tvChannels;
-      themes.forge-dracula = {
-        background = palette.background.hex;
-        border_fg = palette.comment.hex;
-        text_fg = palette.foreground.hex;
-        dimmed_text_fg = palette.comment.hex;
-        input_text_fg = palette.foreground.hex;
-        result_count_fg = palette.magenta.hex;
-        result_name_fg = palette.cyan.hex;
-        result_line_number_fg = palette.yellow.hex;
-        result_value_fg = palette.foreground.hex;
-        selection_fg = palette.foreground.hex;
-        selection_bg = palette.selection.hex;
-        match_fg = palette.green.hex;
-        preview_title_fg = palette.magenta.hex;
-        channel_mode_fg = palette.background.hex;
-        channel_mode_bg = palette.cyan.hex;
-        remote_control_mode_fg = palette.background.hex;
-        remote_control_mode_bg = palette.green.hex;
-        action_picker_mode_fg = palette.background.hex;
-        action_picker_mode_bg = palette.magenta.hex;
-        send_to_channel_mode_fg = palette.cyan.hex;
+      themes.forge-dracula = lib.concatMapAttrs (role: keys: lib.genAttrs keys (_: palette.${role}.hex)) {
+        background = ["background" "channel_mode_fg" "remote_control_mode_fg" "action_picker_mode_fg"];
+        comment = ["border_fg" "dimmed_text_fg"];
+        cyan = ["result_name_fg" "channel_mode_bg" "send_to_channel_mode_fg"];
+        foreground = ["text_fg" "input_text_fg" "result_value_fg" "selection_fg"];
+        green = ["match_fg" "remote_control_mode_bg"];
+        magenta = ["result_count_fg" "preview_title_fg" "action_picker_mode_bg"];
+        selection = ["selection_bg"];
+        yellow = ["result_line_number_fg"];
       };
     };
 
     # Agent-facing register projections beside the theme's palette.json.
-    xdg.configFile = {
-      "forge/registers/aliases.json".source = registers.aliases;
-      "forge/registers/chords.json".source = registers.chords;
-      "forge/registers/mcp.json".source = registers.mcp;
-      "forge/registers/naming.json".source = registers.naming;
-      "forge/registers/receipts.json".source = registers.receipts;
-    };
+    xdg.configFile = lib.mapAttrs' (d: json: lib.nameValuePair "forge/registers/${d}.json" {source = json;}) registers;
   };
 }

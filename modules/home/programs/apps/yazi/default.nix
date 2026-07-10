@@ -21,10 +21,8 @@
     _7zz = pkgs._7zz-rar; # RAR-capable 7zip: one archive runtime for the whole owner
   };
 
-  # 1Password agent socket, HOME-relative; matches the IdentityAgent row in
-  # shell-tools/ssh.nix — the ambient SSH_AUTH_SOCK is the identity-less
-  # Apple agent, so VFS rows pin the socket explicitly.
-  opAgentSock = "Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock";
+  # The ambient SSH_AUTH_SOCK is the identity-less Apple agent, so VFS rows pin
+  # the estate identity socket (config.forge.ssh.identityAgent) explicitly.
 
   # Diagnostic previewer kernel: ONE dispatch surface over the config-language
   # lanes; every arm is read-only evidence (checks + syntax render), never a
@@ -135,13 +133,13 @@
       }
     ];
 
-  # Preload opt-outs: remote mounts (device and SFTP VFS), caches, and
-  # generated trees never burn preview bandwidth eagerly; hover still
-  # previews on demand.
+  # Preload opt-outs: remote mounts (device, SFTP VFS, and the rclone VPS
+  # mount root), caches, and generated trees never burn preview bandwidth
+  # eagerly; hover still previews on demand.
   preloaderRows = map (url: {
     inherit url;
     run = "noop";
-  }) ["/Volumes/**" "sftp://**" "**/Library/Caches/**" "**/node_modules/**" "**/.git/**"];
+  }) ["/Volumes/**" "${config.forge.ssh.mountRoot}/**" "sftp://**" "**/Library/Caches/**" "**/node_modules/**" "**/.git/**"];
 
   # Fetcher rows: mime-ext extension-database MIME (speed over file(1) on huge
   # or remote trees) + first-party git status; the version assert pins the
@@ -355,7 +353,7 @@ in {
         host = row.hostName;
         inherit (row) user;
         port = 22;
-        identity_agent = "${config.home.homeDirectory}/${opAgentSock}";
+        identity_agent = config.forge.ssh.identityAgent;
       })
       config.forge.ssh.hosts;
   };

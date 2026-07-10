@@ -49,13 +49,21 @@ local handlers = {
         deck.receipt({ action = "attach", domain = domain:name(), result = "ok" })
     end,
 
-    -- Bell rings are structured attention: a receipt row always; a toast only
-    -- when the ring lands outside the focused view (background pane or
-    -- unfocused window). audible_bell is Disabled; this arm is the surface.
+    -- Bell rings are structured attention: a receipt row always; a toast plus
+    -- an attention-feed row only when the ring lands outside the focused view
+    -- (background pane or unfocused window) — a watched pane's bell is already
+    -- seen. audible_bell is Disabled; this arm is the surface. The feed row
+    -- makes any process ending with \a a first-class attention emitter: the
+    -- collector folds it, the bar counts it, `forge-agents focus` routes it.
     ["bell"] = function(window, pane)
         local background = not window:is_focused() or pane:pane_id() ~= window:active_pane():pane_id()
         if background then
             window:toast_notification("forge bell", "bell: " .. pane:get_title(), nil, 4000)
+            local cwd = pane:get_current_working_dir()
+            deck.attention({
+                wezterm_pane = tostring(pane:pane_id()),
+                cwd = cwd and cwd.file_path or "-",
+            })
         end
         deck.receipt({
             action = "bell",

@@ -427,7 +427,7 @@ in {
     ${colorRows}
             format_left               "#[bg=$surface] {tabs}"
             format_center             "{swap_layout}"
-            format_right              "{pipe_agents}{pipe_quota}#[bg=$pink,fg=$background,bold] {session} "
+            format_right              "{notifications}{pipe_agents}{pipe_quota}#[bg=$pink,fg=$background,bold] {session} "
             format_space              "#[bg=$surface]"
 
             // Narrow panes: hide whole parts by precedence instead of letting
@@ -439,6 +439,15 @@ in {
             pipe_agents_rendermode    "dynamic"
             pipe_quota_format         "{output}"
             pipe_quota_rendermode     "dynamic"
+
+            // Transient toast rail: zjstatus::notify:: broadcasts (collector
+            // rises, receipts push bus) render here and auto-hide. Payloads
+            // are literal — urgency rides the text prefix (? input, !! fail),
+            // never #[..] directives; per-urgency color stays on pipe_agents.
+            // Broadcast reaches both bar instances; only this bar renders it.
+            notification_format_unread           "#[bg=$amber,fg=$background,bold]  {message} "
+            notification_format_no_notifications ""
+            notification_show_interval           "8"
 
             swap_layout_format        "#[bg=$surface,fg=$purple,bold] {name} "
             swap_layout_hide_if_empty "true"

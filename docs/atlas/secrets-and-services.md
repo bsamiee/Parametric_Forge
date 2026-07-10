@@ -20,7 +20,7 @@ Secret custody is partitioned into classes, each with one origin, one movement p
 - [05]: MCP Doppler token: outer `doppler run` injects it inside the wrapper, inner `forge-doppler-mcp --read-only --project agent-runtime --config dev` narrows the surface; no `envKeys` on the row, the token never leaves the wrapper, and read-only is default posture, not the auth boundary.
 - [06]: 1Password personal custody: 1Password SSH agent socket and `op-ssh-sign`; private key never enters repo files, only the public key and allowed signer are projected.
 
-The read-only flag on the MCP Doppler lane is cosmetic relative to token scope — the scoped service token is the real auth boundary, detailed in [scars.md](scars.md).
+The read-only flag on the MCP Doppler lane is cosmetic relative to token scope — the scoped service token is the real auth boundary.
 
 ## [02]-[DOPPLER_PULL_RAIL]
 
@@ -36,11 +36,11 @@ Directory scopes replace `doppler.yaml`: `scopes apply` runs `doppler configure 
 
 ## [04]-[SSH_GIT_SIGNING]
 
-`secretBackend = "doppler"` in `1password.nix` flips the CLI/TUI/GUI lanes to the Doppler-first session cache; `transition` re-arms the 1Password fallback. `hm-op-session.sh` is generated during activation by `op inject` from `~/.config/op/env.template` and published mode 600. SSH auth serves only `Forge SSH Key` from the `Personal` vault through the 1Password agent, and `ssh.nix` sets the Darwin `IdentityAgent` to the stable 1Password socket. Git signing uses SSH format with `key::<publicKey>`, `op-ssh-sign`, and an `allowed_signers` generated from the same public key — signing and verification are the 1Password agent item, not an on-disk key. The signing false-positive trap is [scars.md](scars.md).
+`secretBackend = "doppler"` in `1password.nix` flips the CLI/TUI/GUI lanes to the Doppler-first session cache; `transition` re-arms the 1Password fallback. `hm-op-session.sh` is generated during activation by `op inject` from `~/.config/op/env.template` and published mode 600. SSH auth serves only `Forge SSH Key` from the `Personal` vault through the 1Password agent, and `ssh.nix` sets the Darwin `IdentityAgent` to the stable 1Password socket. Git signing uses SSH format with `key::<publicKey>`, `op-ssh-sign`, and an `allowed_signers` generated from the same public key — signing and verification are the 1Password agent item, not an on-disk key.
 
 ## [05]-[TUNNELS]
 
-One `vpsTunnels.maghz` row in `ssh.nix` projects the interactive SSH host, the transport-only tunnel host, the launchd/systemd tunnel agent, and the loopback forwards. The forwards carry named services — `webhook`, `aria2-rpc`, `codex-oauth`, `postgres`, `ollama`, `n8n`, `atuin` — each with a probe class (`pg` via `pg_isready`, `http` via a GET path, or bind-only `none` that is never service-probed); the row owns the service-to-port map. The `postgres` forward (probe `pg`) is load-bearing beyond loopback convenience: the Codex Postgres MCP is `required=true`, so its startup depends on the tunnel reaching `state=up`. A down forward breaks the MCP gate, not just the port. Tunnel-startup ordering and the Maghz service plane are [scars.md](scars.md).
+One `vpsTunnels.maghz` row in `ssh.nix` projects the interactive SSH host, the transport-only tunnel host, the launchd/systemd tunnel agent, and the loopback forwards. The forwards carry named services — `webhook`, `aria2-rpc`, `codex-oauth`, `postgres`, `ollama`, `n8n`, `atuin` — each with a probe class (`pg` via `pg_isready`, `http` via a GET path, or bind-only `none` that is never service-probed); the row owns the service-to-port map. The `postgres` forward (probe `pg`) is load-bearing beyond loopback convenience: the Codex Postgres MCP is `required=true`, so its startup depends on the tunnel reaching `state=up`. A down forward breaks the MCP gate, not just the port.
 
 ## [06]-[GITHUB_AS_CODE]
 

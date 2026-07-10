@@ -14,6 +14,7 @@
 # the overlay fold.
 let
   v = rec {
+    alerter = "26.5";
     biome = "2.5.3";
     duckdb = "1.5.4";
     nodejs = "26.5.0";
@@ -70,6 +71,32 @@ in rec {
   # `overlayReason` — overlay mutation transitively overrides consumer
   # dependencies and re-keys fixed-output hashes; "new" attrs are inert.
   packages = {
+    alerter = {
+      upstream = "github:vjeantet/alerter";
+      version = v.alerter;
+      versionPolicy = "fast";
+      sourceKind = "github-release";
+      # Notarized Developer ID binary posting under fr.vjeantet.alerter: the
+      # macOS notification (TCC) identity rides the embedded signature, so
+      # admission fetches the release artifact unmodified — a source rebuild
+      # or binary patch forfeits the identity and every --reply/--actions path.
+      assets.aarch64-darwin = {
+        url = "https://github.com/vjeantet/alerter/releases/download/v${v.alerter}/alerter-${v.alerter}.zip";
+        fetch = "zip";
+        hash = "sha256-JSqn8a1t3cWY/ZDynbqq7T+3Hm8XNOMGM9uhBv7RG2E=";
+      };
+      license = "mit";
+      patchFamily = "none";
+      cacheClass = "binary-only-local";
+      updateEngine = "manual";
+      retention = "git-history";
+      projection.overlay = "new";
+      consumers = ["bundle-apps" "mcp-launchers"];
+      description = "Blocking macOS alerts with typed JSON reply and action results";
+      homepage = "https://github.com/vjeantet/alerter";
+      mainProgram = "alerter";
+    };
+
     biome = {
       upstream = "github:biomejs/biome";
       version = v.biome;
@@ -606,6 +633,8 @@ in rec {
           postinstall_behavior = "starts-language-server";
           host_permissions = "workspace-fs+network"; # schema downloads from schemastore; telemetry pinned off in settings
         };
+        # Slow upstream accepted: taplo is feature-complete for TOML 1.0 and
+        # no fresher equivalent exists in this capability class.
         even-better-toml = vsxRow {
           publisher = "tamasfe";
           name = "even-better-toml";
@@ -638,6 +667,20 @@ in rec {
           name = "material-icon-theme";
           license = "MIT";
           capability = "file icon vocabulary; asserted workbench.iconTheme";
+        };
+        # Product-icon finalist by completeness: 651 iconDefinitions over the
+        # 603-glyph codicon registry — the only candidate restyling the full
+        # set — with publisher symmetry beside the file-icon row above. Pure
+        # declarative payload: main null, zero deps, no lifecycle scripts.
+        # Freshness ruling: the 2024-07 upstream date is accepted — a font
+        # exceeding the registry is a closed deliverable, staleness surfaces
+        # only as a visibly missing glyph, and the fresh alternative
+        # (icons-carbon, 2026-01) covers 36% with unproven codicon fallback.
+        material-product-icons = vsxRow {
+          publisher = "PKief";
+          name = "material-product-icons";
+          license = "MIT";
+          capability = "product icon vocabulary; asserted workbench.productIconTheme";
         };
         errorlens = vsxRow {
           publisher = "usernamehw";
@@ -682,12 +725,6 @@ in rec {
           name = "markdown-all-in-one";
           license = "MIT";
           capability = "markdown editing: TOC, tables, list continuation";
-        };
-        markdown-mermaid = vsxRow {
-          publisher = "bierner";
-          name = "markdown-mermaid";
-          license = "MIT";
-          capability = "mermaid fences rendered in the builtin markdown preview";
         };
         tailwindcss = vsxRow {
           publisher = "bradlc";

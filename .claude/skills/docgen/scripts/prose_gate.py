@@ -27,6 +27,9 @@ type Align = Literal["center", "left", "right", "none"]
 class Check(StrEnum):
     BOLD_EMPHASIS = "bold-emphasis"
     COLLECT = "collect"
+    COMMENT_SHRED = "comment-shred"
+    COMMENT_STACK = "comment-stack"
+    COUPLED_LINK = "coupled-link"
     DEAD_RELATIVE_LINK = "dead-relative-link"
     FENCE_GEOMETRY = "fence-geometry"
     FENCE_INTENT = "fence-intent"
@@ -53,7 +56,6 @@ class Check(StrEnum):
     SKILL_DESCRIPTION = "skill-description"
     SKILL_FRONTMATTER = "skill-frontmatter"
     SKILL_NAME = "skill-name"
-    SKILL_REFERENCE_HOP = "skill-reference-hop"
     SKILL_ROOT_BUDGET = "skill-root-budget"
     TABLE_ALIGN = "table-align"
     TABLE_BOUNDS = "table-bounds"
@@ -75,6 +77,8 @@ class Check(StrEnum):
 CAP = 150
 CELL_BUDGET = 160
 COLUMN_FLOOR = 5
+COMMENT_SHRED_FLOOR = 100
+COMMENT_STACK_CAP = 4
 LIST_CHAR_CAP = 500
 LIST_SENTENCE_CAP = 3
 ROSTER_SPAN_SHARE = 0.6
@@ -106,6 +110,8 @@ MARKERS: dict[str, str] = (
     | dict.fromkeys((".lua", ".sql"), "--")
 )
 PRUNED = frozenset({".git", "node_modules", ".venv", ".cache", ".direnv", "result", "dist", "coverage", ".archive", ".history"})
+# Routing is a file class: only these filenames carry file links; a relative link anywhere else is coupling.
+ROUTING_FILES = frozenset({"README.md", "SKILL.md", "CLAUDE.md", "AGENTS.md", "MEMORY.md"})
 APP = App(help="Gate and format durable markdown prose.")
 ENCODER = msgspec.json.Encoder()
 
@@ -119,11 +125,14 @@ DIVIDER_BODY = re.compile(r"^\[(?P<label>[A-Z][A-Z0-9_]*)\](?P<tail>.*)$")
 DIVIDER_LOOSE = re.compile(r"^\[(?P<raw>[^\]]+)\](?P<tail>.*)$")
 CHECKBOX = re.compile(r"^\[[ xX]\]\s")
 CARD_ROW = re.compile(r"^\s*-\s+`[^`]+`\s+-\s+")
+# Structural comment forms: shebangs, dash fills, doc-comment glyphs, and tool pragmas never count as prose comment lines.
+COMMENT_DIRECTIVE = re.compile(r"[!/-]|(?:shellcheck|noqa|ruff:|type:|mypy:|pyright:|fmt:|eslint|@ts-|biome-ignore|prettier|luacheck)\b")
 EXAMPLE_LINE = re.compile(
     r"^\s*(?:>\s*)?(?:[-+*]|\d+[.)])?\s*(?:Detection|Reject(?:ed)?|Accept(?:ed)?|Near miss|Banned|Survivors|Reason|Reframe)"
     r"(?:\s*\([^)]*\))?:"
 )
-FENCE = re.compile(r"^(?P<indent> {0,3})(?P<marker>`{3,}|~{3,})(?P<info>.*)$")
+# Any-indent fences: list-nested fences open at the item's content column; close indent is bounded at the check site.
+FENCE = re.compile(r"^(?P<indent> *)(?P<marker>`{3,}|~{3,})(?P<info>.*)$")
 EMOJI = re.compile(r"[\U0001F000-\U0001FAFF\u2705\u274C\u2713\u2714\u2717\u2718\u2B50\u2728]")
 PROMPT_LINE = re.compile(r"^\s*(?:\$|\u276F|PS>)\s+\S")
 GROUP_LABEL = re.compile(r"^\[[A-Z][A-Z0-9_]*\]:\s*$")
@@ -264,8 +273,7 @@ class Document(msgspec.Struct, frozen=True):
 
 
 # --- [TABLE_GEOMETRY] -------------------------------------------------------------------
-# One projection owns table shape: the gate measures the canonical render and fmt writes it,
-# so the width verdict and the written bytes cannot drift.
+# One projection owns table shape: the gate measures the canonical render and fmt writes it, so the verdict and the written bytes cannot drift.
 
 
 def split_cells(line: str) -> tuple[str, ...]:
@@ -307,7 +315,8 @@ def separator(width: int, align: Align) -> str:
 def rendered(table: Table) -> tuple[str, ...]:
     ncol = max(len(table.headers), *(len(row) for row in table.rows), 1) if table.rows else len(table.headers)
     headers = table.headers + ("",) * (ncol - len(table.headers))
-    aligns: tuple[Align, ...] = table.aligns + ("left",) * (ncol - len(table.aligns))
+    filler: Align = "left"
+    aligns: tuple[Align, ...] = table.aligns + (filler,) * (ncol - len(table.aligns))
     widths = tuple(max([len(headers[col])] + [len(row[col]) for row in table.rows if col < len(row)] + [COLUMN_FLOOR]) for col in range(ncol))
 
     def emit(cells: tuple[str, ...], fill: Callable[[str, int, Align], str], /) -> str:
@@ -398,7 +407,7 @@ def lex(path: Path, text: str, cap: int) -> tuple[Document, tuple[Row, ...]]:
     links: list[LinkRef] = []
     lists: list[ListEntry] = []
     rows: list[Row] = []
-    fence: tuple[str, int, int, str] | None = None
+    fence: tuple[str, int, int, str, int] | None = None
     mermaid_access = True
     n = 0
     while n < len(raw):
@@ -421,13 +430,19 @@ def lex(path: Path, text: str, cap: int) -> tuple[Document, tuple[Row, ...]]:
                 rows.append(row(path, number, Check.FENCE_INTENT, "warn", f"fence carries no intent label from the closed set: {info}"))
             elif len(tokens) > 1 and tokens[1] not in FENCE_INTENTS:
                 rows.append(row(path, number, Check.FENCE_INTENT, "fail", f"unknown fence intent: {tokens[1]}"))
-            fence = (marker[0], len(marker), number, info.lower())
+            fence = (marker[0], len(marker), number, info.lower(), len(matched.group("indent")))
             mermaid_access = "mermaid" not in tokens[:1] if tokens else True
             n += 1
             continue
         if fence is not None:
-            glyph, width, start, info = fence
-            if matched and matched.group("marker")[0] == glyph and len(matched.group("marker")) >= width and not matched.group("info").strip():
+            glyph, width, start, info, margin = fence
+            if (
+                matched
+                and matched.group("marker")[0] == glyph
+                and len(matched.group("marker")) >= width
+                and not matched.group("info").strip()
+                and len(matched.group("indent")) <= margin + 3
+            ):
                 if not mermaid_access and text.count("```mermaid") <= 2 and not ({"templates", "examples"} & set(path.parts)):
                     rows.append(row(path, start, Check.FENCE_INTENT, "warn", "mermaid fence lacks accTitle/accDescr accessibility directives"))
                 fence = None
@@ -465,7 +480,8 @@ def lex(path: Path, text: str, cap: int) -> tuple[Document, tuple[Row, ...]]:
                 rows.append(row(path, number, Check.LIST_MARKER, "fail", f"bullet marker {item.group('mark')} where - is the only legal marker"))
             cursor = n + 1
             chunks = [item.group("body")]
-            while cursor < len(raw) and raw[cursor].startswith((" ", "\t")) and not LIST_ITEM.match(raw[cursor]):
+            # A nested fence ends the measured entry text; its body is fence material, never entry prose.
+            while cursor < len(raw) and raw[cursor].startswith((" ", "\t")) and not LIST_ITEM.match(raw[cursor]) and not FENCE.match(raw[cursor]):
                 chunks.append(raw[cursor].strip())
                 cursor += 1
             text_joined = " ".join(chunks)
@@ -603,13 +619,24 @@ def heading_rows(doc: Document) -> tuple[Row, ...]:
 def link_rows(doc: Document) -> tuple[Row, ...]:
     if doc.template:
         return ()
-    base = Path(doc.path).parent
+    path = Path(doc.path)
+    routing = path.name in ROUTING_FILES
     rows: list[Row] = []
     for link in doc.links:
         target = link.target.split("#", 1)[0]
         if not target or target == "path" or re.match(r"^[a-z][a-z0-9+.-]*:", target, re.IGNORECASE):
             continue
-        if not (base / target).resolve(strict=False).exists():
+        if not routing:
+            rows.append(
+                row(
+                    doc.path,
+                    link.line,
+                    Check.COUPLED_LINK,
+                    "fail",
+                    f"{link.target} couples a non-routing page; links live only in {', '.join(sorted(ROUTING_FILES))}",
+                )
+            )
+        if not (path.parent / target).resolve(strict=False).exists():
             rows.append(row(doc.path, link.line, Check.DEAD_RELATIVE_LINK, "fail", link.target))
     return tuple(rows)
 
@@ -698,45 +725,49 @@ def skill_rows(path: Path, text: str) -> tuple[Row, ...]:
     return tuple(rows)
 
 
-def bundle_root(path: Path) -> Path | None:
-    for ancestor in tuple(path.parents)[:4]:
-        if (ancestor / "SKILL.md").is_file():
-            return ancestor
-    return None
-
-
 def bundle_rows(path: Path, text: str) -> tuple[Row, ...]:
+    if path.name != "SKILL.md":
+        return ()
+    rows: list[Row] = [
+        row(path, 0, Check.SKILL_BUNDLE_ROUTER, "fail", f"{readme.relative_to(path.parent).as_posix()} rides a bundle; SKILL.md is the only router")
+        for readme in sorted(path.parent.rglob("README.md"))
+    ]
+    for sibling in sorted(path.parent.rglob("*.md")):
+        relative = sibling.relative_to(path.parent).as_posix()
+        if sibling == path or relative in text or sibling.name in text:
+            continue
+        rows.append(row(path, 0, Check.SKILL_BUNDLE_ORPHAN, "warn", f"{relative} unreachable from root"))
+    return tuple(rows)
+
+
+def comment_rows(path: Path, text: str) -> tuple[Row, ...]:
+    marker = MARKERS[path.suffix]
     rows: list[Row] = []
-    if path.name == "SKILL.md":
-        rows.extend(
-            row(
-                path,
-                0,
-                Check.SKILL_BUNDLE_ROUTER,
-                "fail",
-                f"{readme.relative_to(path.parent).as_posix()} rides a bundle; SKILL.md is the only router",
-            )
-            for readme in sorted(path.parent.rglob("README.md"))
-        )
-        for sibling in sorted(path.parent.rglob("*.md")):
-            relative = sibling.relative_to(path.parent).as_posix()
-            if sibling == path or relative in text or sibling.name in text:
-                continue
-            rows.append(row(path, 0, Check.SKILL_BUNDLE_ORPHAN, "warn", f"{relative} unreachable from root"))
-    elif (root := bundle_root(path)) is not None:
-        for number, line in enumerate(text.splitlines(), 1):
-            for link in LINK.finditer(line):
-                target = link.group(2).split("#", 1)[0]
-                if not target or re.match(r"^[a-z][a-z0-9+.-]*:", target, re.IGNORECASE):
-                    continue
-                resolved = (path.parent / target).resolve(strict=False)
-                if (
-                    resolved.suffix == ".md"
-                    and resolved.exists()
-                    and resolved.is_relative_to(root.resolve())
-                    and resolved != (root / "SKILL.md").resolve()
-                ):
-                    rows.append(row(path, number, Check.SKILL_REFERENCE_HOP, "warn", f"nested hop to {target}; depth rides one hop from the root"))
+    run: list[tuple[int, int]] = []
+    leading = True
+
+    def close() -> None:
+        if len(run) > COMMENT_STACK_CAP:
+            detail = f"{len(run)} stacked comment lines > cap {COMMENT_STACK_CAP}; merge toward the {CAP}-column width"
+            rows.append(row(path, run[0][0], Check.COMMENT_STACK, "fail", detail))
+        elif len(run) >= 2 and all(width < COMMENT_SHRED_FLOOR for _, width in run):
+            detail = f"{len(run)} stacked comment lines all under {COMMENT_SHRED_FLOOR} columns; merge toward the {CAP}-column width"
+            rows.append(row(path, run[0][0], Check.COMMENT_SHRED, "warn", detail))
+        run.clear()
+
+    for number, line in enumerate(text.splitlines(), 1):
+        body = line.strip()
+        if not body.startswith(marker):
+            leading = False
+            close()
+            continue
+        if leading:
+            continue
+        if DIVIDER.match(line) or COMMENT_DIRECTIVE.match(body.removeprefix(marker).lstrip()):
+            close()
+            continue
+        run.append((number, len(line.rstrip())))
+    close()
     return tuple(rows)
 
 
@@ -762,7 +793,7 @@ def scan(path: Path, cap: int) -> tuple[Row, ...]:
     if isinstance(text, Row):
         return (text,)
     if path.suffix != ".md":
-        return divider_rows(path, text)
+        return divider_rows(path, text) + comment_rows(path, text)
     doc, lexer_rows = lex(path, text, cap)
     checks = lexer_rows + table_rows(doc) + heading_rows(doc) + link_rows(doc) + prose_rows(doc) + list_rows(doc)
     return checks + skill_rows(path, text) + bundle_rows(path, text)
@@ -850,7 +881,7 @@ def repaired_table(table: Table) -> tuple[Table, tuple[Change, ...]]:
 def repaired_lines(lines: list[str], skip_until: int) -> tuple[list[str], tuple[Change, ...]]:
     changes: list[Change] = []
     out: list[str] = []
-    fence: tuple[str, int] | None = None
+    fence: tuple[str, int, int] | None = None
     section = 0
     subsection = 0
     for number, raw in enumerate(lines, 1):
@@ -863,11 +894,17 @@ def repaired_lines(lines: list[str], skip_until: int) -> tuple[list[str], tuple[
             continue
         matched = FENCE.match(line)
         if fence is None and matched:
-            fence = (matched.group("marker")[0], len(matched.group("marker")))
+            fence = (matched.group("marker")[0], len(matched.group("marker")), len(matched.group("indent")))
             out.append(line)
             continue
         if fence is not None:
-            if matched and matched.group("marker")[0] == fence[0] and len(matched.group("marker")) >= fence[1] and not matched.group("info").strip():
+            if (
+                matched
+                and matched.group("marker")[0] == fence[0]
+                and len(matched.group("marker")) >= fence[1]
+                and not matched.group("info").strip()
+                and len(matched.group("indent")) <= fence[2] + 3
+            ):
                 fence = None
             out.append(line)
             continue

@@ -5,56 +5,57 @@
 # Path          : modules/home/programs/apps/chords.nix
 # ----------------------------------------------------------------------------
 # Single chord-vocabulary owner: physical leader layers, zellij leader binds,
-# mode table, which-key rows, and hint-ribbon rows are ONE parameterized table
-# projected into karabiner JSON, zellij keybind KDL, and zellij-forgot content.
-# A new bind is one row here; consumers never hand-duplicate chords.
+# mode table, which-key rows, ribbon hints, and per-consumer register rows are
+# ONE parameterized table projected into karabiner JSON, zellij KDL,
+# zellij-forgot content, WezTerm rows.lua, nvim chords.lua, and the VS Code
+# keybindings sentinel tail. A new bind is one row here; consumers never
+# hand-duplicate chords.
 {
   config,
   lib,
   ...
 }: let
+  # --- [ROW_GRAMMAR]
+  # Positional tuples zip against a field schema: a short tuple drops trailing
+  # fields, null skips a slot, and an oversized tuple faults — zipListsWith
+  # would truncate silently otherwise.
+  row = fields: t:
+    lib.throwIf (builtins.length t > builtins.length fields)
+    "chords row ${builtins.toJSON t} exceeds schema [${lib.concatStringsSep " " fields}]"
+    (lib.filterAttrs (_: v: v != null) (lib.listToAttrs (lib.zipListsWith lib.nameValuePair fields t)));
+  sub = long: short: t:
+    row (
+      if builtins.length t == 3
+      then long
+      else short
+    )
+    t;
+  mkForgot = sub ["label" "display" "rank"] ["label" "rank"];
+  mkRibbon = sub ["label" "key" "rank"] ["label" "rank"];
+
   # --- [PHYSICAL_LAYERS]
   # Karabiner rewrites right-hand modifiers into leader stacks; zellij consumes
-  # each stack as the derived `zellij` modifier set. Power carries no zellij
-  # binds by design: it passes through to terminal apps (yazi owns it).
-  # WezTerm claims NO layer: its outer-terminal keys live in the typed
-  # weztermRows vocabulary below, so every leader chord passes to zellij
-  # untouched. `rank` orders the emitted karabiner rule document; `display`
-  # overrides the cheatsheet chord prefix (defaults to the zellij prefix).
+  # each stack as the derived modifier set. Power carries no zellij binds (yazi
+  # owns it) and WezTerm claims no layer — its outer keys live in weztermRows.
   # Glyphs, the zellij prefix, the kitty CSI-u bitmask, and the WezTerm glyph
-  # map all derive from the karabiner `to` row through the modifier
-  # vocabulary — one source per layer, one glyph owner per modifier (`wez` is
-  # the WezTerm mods-string spelling of the same physical modifier).
-  modVocab = [
-    {
-      kc = "left_command";
-      word = "Super";
-      wez = "CMD";
-      glyph = "⌘";
-      bit = 8;
-    }
-    {
-      kc = "left_option";
-      word = "Alt";
-      wez = "ALT";
-      glyph = "⌥";
-      bit = 2;
-    }
-    {
-      kc = "left_control";
-      word = "Ctrl";
-      wez = "CTRL";
-      glyph = "⌃";
-      bit = 4;
-    }
-    {
-      kc = "left_shift";
-      word = "Shift";
-      wez = "SHIFT";
-      glyph = "⇧";
-      bit = 1;
-    }
+  # map all derive from the karabiner `to` row through this vocabulary; `rank`
+  # orders the emitted rule document, `display` overrides the cheatsheet prefix.
+  modVocab = map (row ["kc" "word" "wez" "glyph" "bit"]) [
+    ["left_command" "Super" "CMD" "⌘" 8]
+    ["left_option" "Alt" "ALT" "⌥" 2]
+    ["left_control" "Ctrl" "CTRL" "⌃" 4]
+    ["left_shift" "Shift" "SHIFT" "⇧" 1]
   ];
+  mkLayer = t: let
+    r = row ["name" "physical" "chip" "rank" "from" "toKey" "toMods" "display"] t;
+  in
+    (removeAttrs r ["toKey" "toMods"])
+    // {
+      to = {
+        key_code = r.toKey;
+        modifiers = r.toMods;
+      };
+    };
   layers =
     lib.mapAttrs (
       _: l: let
@@ -68,42 +69,11 @@
           csi = lib.foldl' (a: m: a + m.bit) 1 mods;
           display = l.display or zellij;
         }
-    ) {
-      hyper = {
-        name = "Hyper";
-        physical = "Right Command";
-        chip = "R⌘";
-        rank = 30;
-        display = "Hyper";
-        from = "right_command";
-        to = {
-          key_code = "left_shift";
-          modifiers = ["left_command" "left_control" "left_option"];
-        };
-      };
-      super = {
-        name = "Super";
-        physical = "Right Option";
-        chip = "R⌥";
-        rank = 20;
-        from = "right_option";
-        to = {
-          key_code = "left_control";
-          modifiers = ["left_command" "left_option"];
-        };
-      };
-      power = {
-        name = "Power";
-        physical = "Right Shift";
-        chip = "R⇧";
-        rank = 10;
-        from = "right_shift";
-        to = {
-          key_code = "left_option";
-          modifiers = ["left_control" "left_shift"];
-        };
-      };
-    };
+    ) (lib.mapAttrs (_: mkLayer) {
+      hyper = ["Hyper" "Right Command" "R⌘" 30 "right_command" "left_shift" ["left_command" "left_control" "left_option"] "Hyper"];
+      super = ["Super" "Right Option" "R⌥" 20 "right_option" "left_control" ["left_command" "left_option"]];
+      power = ["Power" "Right Shift" "R⇧" 10 "right_shift" "left_option" ["left_control" "left_shift"]];
+    });
   layersByRank = dir: lib.sort (a: b: dir a.rank b.rank) (lib.attrValues layers);
 
   # One manipulator grammar owns every karabiner rule: leader rewrites and the
@@ -136,10 +106,9 @@
   };
 
   # Leader-role documentation block derived from the ranked layer rows: ASCII
-  # fields pad by byte width, glyph fields pad by modifier count (display
-  # width), so a new layer lands aligned with zero curated padding. Every
-  # fragment line carries its full emitted indentation; consumers interpolate
-  # at their template's indent anchor.
+  # fields pad by byte width, glyph fields by modifier count, so a new layer
+  # lands aligned with zero curated padding; every fragment line carries its
+  # full emitted indentation.
   headerRoles = ["Primary" "Secondary" "Tertiary" "Quaternary"];
   headerComment = let
     rows = layersByRank (a: b: a > b);
@@ -161,63 +130,41 @@
     lib.concatStringsSep "\n" (lib.zipListsWith line roles rows);
 
   # --- [MODE_TABLE]
-  # One row per zellij mode reachable from a Hyper leader key. `rank` orders the
-  # which-key sheet; `ribbon` labels the normal-mode hint ribbon; `entryOrder`
-  # and `ribbonOrder` are curated presentation sequences over the same rows.
-  modes = {
-    pane = {
-      key = "p";
-      ribbon = "pane";
-      rank = 30;
-    };
-    tab = {
-      key = "t";
-      ribbon = "tab";
-      rank = 40;
-    };
-    resize = {
-      key = "r";
-      ribbon = "resize";
-      rank = 50;
-    };
-    scroll = {
-      key = "s";
-      ribbon = "scroll";
-      rank = 60;
-    };
-    session = {
-      key = "o";
-      ribbon = "session";
-      rank = 70;
-    };
-    move = {
-      key = "m";
-      ribbon = "move";
-      rank = 80;
-    };
-    tmux = {
-      key = "b";
-      rank = 90;
-    };
-    locked = {
-      key = "g";
-      exitKey = "l";
-      ribbon = "lock";
-    };
+  # One row per zellij mode reachable from a Hyper leader key; entryOrder and
+  # ribbonOrder are curated presentation sequences over the same rows.
+  modes = lib.mapAttrs (_: row ["key" "ribbon" "rank" "exitKey"]) {
+    pane = ["p" "pane" 30];
+    tab = ["t" "tab" 40];
+    resize = ["r" "resize" 50];
+    scroll = ["s" "scroll" 60];
+    session = ["o" "session" 70];
+    move = ["m" "move" 80];
+    tmux = ["b" null 90];
+    locked = ["g" "lock" null "l"];
   };
   entryOrder = ["pane" "resize" "scroll" "session" "tab" "move" "tmux"];
   ribbonOrder = ["pane" "tab" "resize" "move" "scroll" "session" "locked"];
 
   # --- [BIND_ROWS]
-  # Row schema: keys (aliases share one row), kdl (single-line body) XOR body
-  # (verbatim multi-line KDL at emitted indentation), pre (verbatim comment
-  # lines), gap (blank line before), label (register label when no forgot/
-  # ribbon row carries one), forgot {label, display?, rank}, ribbon
-  # {label, key?, rank}, id (exports the row as zellij.ids.<id> {key, mods}
-  # for runtime chord injection). Display strings derive from layer prefixes
-  # unless a curated grouping overrides them.
-  # Floating-popup Run bodies render geometry from the zellij popup-geometry
-  # owner (programs.zellij.popupGeometry), never inline percent literals.
+  # Bind tuple: [keys kdl label forgot ribbon] — keys is one key or an alias
+  # list, forgot/ribbon are [label rank] or [label display|key rank]. An
+  # attrset escape carries the tuple as `t` plus verbatim extras: body
+  # (multi-line KDL at emitted indentation) XOR kdl, pre (emitted comment
+  # lines), gap (blank line before), id (exports zellij.ids.<id> {key, mods}
+  # for runtime chord injection). Floating Run bodies render geometry from the
+  # zellij popup-geometry owner, never inline percent literals.
+  mkBind = spec: let
+    base =
+      if lib.isList spec
+      then {t = spec;}
+      else spec;
+    r = row ["keys" "kdl" "label" "forgot" "ribbon"] base.t;
+  in
+    (removeAttrs base ["t"])
+    // (removeAttrs r ["keys" "forgot" "ribbon"])
+    // {keys = lib.toList r.keys;}
+    // lib.optionalAttrs (r ? forgot) {forgot = mkForgot r.forgot;}
+    // lib.optionalAttrs (r ? ribbon) {ribbon = mkRibbon r.ribbon;};
   popupGeometry = config.programs.zellij.popupGeometry;
   runFloat = cmdWords: g:
     lib.concatStringsSep "\n" [
@@ -230,221 +177,75 @@
       "            height \"${g.height}\""
       "          }"
     ];
-  hyperRows = [
-    {
-      keys = [modes.locked.key];
-      kdl = ''SwitchToMode "Locked";'';
-      label = "locked mode";
-      forgot = {
-        label = "lock";
-        rank = 10;
-      };
-    }
-    {
-      keys = ["q"];
-      kdl = "Quit;";
-      forgot = {
-        label = "quit zellij";
-        rank = 110;
-      };
-    }
-    {
-      keys = ["["];
-      kdl = "PreviousSwapLayout;";
-      forgot = {
-        label = "swap layout prev/next";
-        display = "Hyper [ / Hyper ]";
-        rank = 100;
-      };
-    }
-    {
-      keys = ["]"];
-      kdl = "NextSwapLayout;";
-    }
+  hyperRows = map mkBind [
+    [modes.locked.key ''SwitchToMode "Locked";'' "locked mode" ["lock" 10]]
+    ["q" "Quit;" null ["quit zellij" 110]]
+    ["[" "PreviousSwapLayout;" null ["swap layout prev/next" "Hyper [ / Hyper ]" 100]]
+    ["]" "NextSwapLayout;"]
     {
       # Which-key sheet: the body interpolates forgotKdl, which reads only the
       # forgot metadata of these rows — laziness keeps the knot well-founded.
-      keys = [cheatsheetKey];
+      t = [cheatsheetKey null null ["cheatsheet" 120]];
       body = cheatsheetBody;
-      forgot = {
-        label = "cheatsheet";
-        rank = 120;
-      };
     }
   ];
 
   # Normal-mode simple layer: bare macOS Command chords zellij receives because
   # WezTerm full-passes them (no default keybinds; weztermRows claims neither).
-  normalRows = [
-    {
-      key = "t";
-      action = "NewTab;";
-      comment = "Create new tab without entering tab mode";
-      forgot = {
-        label = "new tab";
-        rank = 130;
-      };
-    }
-    {
-      key = "w";
-      action = "CloseFocus;";
-      comment = "Close pane without entering pane mode";
-      forgot = {
-        label = "close pane";
-        rank = 140;
-      };
-    }
+  normalRows = map (t: let
+    r = row ["key" "action" "comment" "forgot"] t;
+  in
+    r // {forgot = mkForgot r.forgot;}) [
+    ["t" "NewTab;" "Create new tab without entering tab mode" ["new tab" 130]]
+    ["w" "CloseFocus;" "Close pane without entering pane mode" ["close pane" 140]]
   ];
 
-  superRows = [
+  superRows = map mkBind [
+    ["[" "GoToPreviousTab;" null ["previous/next tab" "Super Alt Ctrl [ / ]" 170] ["tab ±" "[ ]" 50]]
+    ["]" "GoToNextTab;"]
     {
-      keys = ["["];
-      kdl = "GoToPreviousTab;";
-      forgot = {
-        label = "previous/next tab";
-        display = "Super Alt Ctrl [ / ]";
-        rank = 170;
-      };
-      ribbon = {
-        key = "[ ]";
-        label = "tab ±";
-        rank = 50;
-      };
-    }
-    {
-      keys = ["]"];
-      kdl = "GoToNextTab;";
-    }
-    {
+      t = ["f" "ToggleFloatingPanes;" null ["toggle floating panes" 190] ["float" 30]];
       gap = true;
-      keys = ["f"];
-      kdl = "ToggleFloatingPanes;";
-      forgot = {
-        label = "toggle floating panes";
-        rank = 190;
-      };
-      ribbon = {
-        label = "float";
-        rank = 30;
-      };
     }
+    ["n" "NewPane;" null ["new pane" 180] ["pane" 20]]
     {
-      keys = ["n"];
-      kdl = "NewPane;";
-      forgot = {
-        label = "new pane";
-        rank = 180;
-      };
-      ribbon = {
-        label = "pane";
-        rank = 20;
-      };
-    }
-    {
+      t = ["y" null null ["yazi popup" 150] ["files" 10]];
+      id = "yaziToggle";
+      body = runFloat ["forge-yazi.sh" "toggle"] popupGeometry.dispatcher;
       pre = lib.concatStringsSep "\n" [
         "        // Floating dispatcher: toggles the per-tab Yazi popup (create /"
         "        // show+focus / hide). Never in_place: an attached client on 0.44.3"
         "        // strands exited in-place panes and their suppressed hosts."
       ];
-      id = "yaziToggle";
-      keys = ["y"];
-      body = runFloat ["forge-yazi.sh" "toggle"] popupGeometry.dispatcher;
-      forgot = {
-        label = "yazi popup";
-        rank = 150;
-      };
-      ribbon = {
-        label = "files";
-        rank = 10;
-      };
     }
     {
+      t = [["h" "Left"] ''MoveFocusOrTab "Left";'' null ["move focus" "Super Alt Ctrl h/j/k/l" 200]];
       gap = true;
-      keys = ["h" "Left"];
-      kdl = ''MoveFocusOrTab "Left";'';
-      forgot = {
-        label = "move focus";
-        display = "Super Alt Ctrl h/j/k/l";
-        rank = 200;
-      };
     }
+    [["l" "Right"] ''MoveFocusOrTab "Right";'']
+    [["j" "Down"] ''MoveFocus "Down";'']
+    [["k" "Up"] ''MoveFocus "Up";'']
+    [["=" "+"] ''Resize "Increase";'' null ["resize" "Super Alt Ctrl = / -" 210]]
+    ["-" ''Resize "Decrease";'']
+    ["p" "TogglePaneInGroup;" null ["pane group toggle/mark" "Super Alt Ctrl p / g" 220]]
+    ["g" "ToggleGroupMarking;"]
     {
-      keys = ["l" "Right"];
-      kdl = ''MoveFocusOrTab "Right";'';
-    }
-    {
-      keys = ["j" "Down"];
-      kdl = ''MoveFocus "Down";'';
-    }
-    {
-      keys = ["k" "Up"];
-      kdl = ''MoveFocus "Up";'';
-    }
-    {
-      keys = ["=" "+"];
-      kdl = ''Resize "Increase";'';
-      forgot = {
-        label = "resize";
-        display = "Super Alt Ctrl = / -";
-        rank = 210;
-      };
-    }
-    {
-      keys = ["-"];
-      kdl = ''Resize "Decrease";'';
-    }
-    {
-      keys = ["p"];
-      kdl = "TogglePaneInGroup;";
-      forgot = {
-        label = "pane group toggle/mark";
-        display = "Super Alt Ctrl p / g";
-        rank = 220;
-      };
-    }
-    {
-      keys = ["g"];
-      kdl = "ToggleGroupMarking;";
-    }
-    {
+      t = ["b" null null ["register browser" 160] ["browse" 40]];
       gap = true;
-      keys = ["b"];
       body = runFloat ["forge-browse"] popupGeometry.browse;
-      forgot = {
-        label = "register browser";
-        rank = 160;
-      };
-      ribbon = {
-        label = "browse";
-        rank = 40;
-      };
     }
     {
-      keys = ["s"];
+      t = ["s" null null ["workspace graph" 162] ["graph" 45]];
       body = runFloat ["forge-zellij" "graph"] popupGeometry.graph;
-      forgot = {
-        label = "workspace graph";
-        rank = 162;
-      };
-      ribbon = {
-        label = "graph";
-        rank = 45;
-      };
     }
     {
-      keys = ["w"];
+      # Cheatsheet-only discoverability: the ribbon stays inside ~160 columns.
+      t = ["w" null null ["watch panels" 164]];
       body = runFloat ["forge-zellij" "watch"] popupGeometry.watchPicker;
-      # Cheatsheet-only discoverability: the ribbon stays inside ~160 columns,
-      # so watch carries no ribbon chip.
-      forgot = {
-        label = "watch panels";
-        rank = 164;
-      };
     }
   ];
 
-  # Layer-keyed bind vocabulary: every per-layer projection — KDL binds,
-  # cheatsheet rows, ids, register rows, ribbon hint chips — folds over this
+  # Layer-keyed bind vocabulary: every per-layer projection folds over this
   # attrset, so a new leader layer is one `layers` row plus one entry here.
   bindRows = {
     hyper = hyperRows;
@@ -453,56 +254,24 @@
 
   # Which-key rows with no chord of their own: command vocabulary surfaced in
   # the cheatsheet beside the chords.
-  forgotExtras = [
-    {
-      rank = 230;
-      label = "editor";
-      display = "nv / vim -> nvim";
-    }
-    {
-      rank = 240;
-      label = "file manager";
-      display = "y -> yazi popup (Super Alt Ctrl y)";
-    }
-    {
-      rank = 250;
-      label = "git ui";
-      display = "lazygit float (pane mode w)";
-    }
-    {
-      rank = 260;
-      label = "json explore";
-      display = "jqi -> jnv";
-    }
-    {
-      rank = 270;
-      label = "loc report";
-      display = "loc <path>";
-    }
-    {
-      rank = 280;
-      label = "folder map";
-      display = "tree <path>";
-    }
-    {
-      rank = 290;
-      label = "deploy";
-      display = "forge-redeploy --check-only / --build / --switch";
-    }
-    {
-      rank = 300;
-      label = "http";
-      display = "GET/POST/PUT -> xh";
-    }
+  forgotExtras = map (row ["rank" "label" "display"]) [
+    [230 "editor" "nv / vim -> nvim"]
+    [240 "file manager" "y -> yazi popup (Super Alt Ctrl y)"]
+    [250 "git ui" "lazygit float (pane mode w)"]
+    [260 "json explore" "jqi -> jnv"]
+    [270 "loc report" "loc <path>"]
+    [280 "folder map" "tree <path>"]
+    [290 "deploy" "forge-redeploy --check-only / --build / --switch"]
+    [300 "http" "GET/POST/PUT -> xh"]
   ];
 
   # --- [WEZTERM_OUTER_LAYER]
-  # Typed outer-terminal rows: WezTerm claims native left-Command chords plus
-  # the CMD|SHIFT overlay/deck layer and pass-through-aware CTRL pane nav; the
-  # wezterm owner projects them into generated key rows (rows.lua), `action` is
-  # the semantic id its dispatch table resolves. `destructive` rows confirm
-  # before acting; `forgot` rows surface in the cheatsheet; every leader chord
-  # still passes to zellij untouched.
+  # Typed outer-terminal rows: native left-Command chords, the CMD|SHIFT
+  # overlay/deck layer, and pass-through-aware CTRL pane nav; the wezterm
+  # owner projects them into rows.lua and `id` doubles as the dispatch action.
+  # Tuple tail is [frank flabel fdisplay destructive]: forgot label/display
+  # default from the row, `destructive` rows confirm before acting, and every
+  # leader chord still passes to zellij untouched.
   weztermModGlyph = lib.listToAttrs (map (m: lib.nameValuePair m.wez m.glyph) modVocab);
   weztermDisplay = row: let
     glyphs = lib.concatMapStrings (m: weztermModGlyph.${m}) (lib.reverseList (lib.splitString "|" row.mods));
@@ -511,202 +280,47 @@
       then lib.toUpper row.key
       else row.key;
   in "${glyphs}${keyLabel}";
-  weztermRows = [
+  mkWez = t: let
+    r = row ["id" "key" "mods" "label" "class" "frank" "flabel" "fdisplay" "destructive"] t;
+  in
+    (removeAttrs r ["frank" "flabel" "fdisplay"])
+    // {action = r.id;}
+    // lib.optionalAttrs (r ? frank) {
+      forgot = lib.filterAttrs (_: v: v != null) {
+        rank = r.frank;
+        label = r.flabel or null;
+        display = r.fdisplay or null;
+      };
+    };
+  weztermRows = map mkWez [
     # Native macOS vocabulary (left Command).
-    {
-      id = "copy";
-      key = "c";
-      mods = "CMD";
-      action = "copy";
-      label = "copy";
-      class = "native";
-    }
-    {
-      id = "paste";
-      key = "v";
-      mods = "CMD";
-      action = "paste";
-      label = "paste";
-      class = "native";
-    }
-    {
-      id = "spawn-window";
-      key = "n";
-      mods = "CMD";
-      action = "spawn-window";
-      label = "new window";
-      class = "native";
-    }
-    {
-      id = "quit";
-      key = "q";
-      mods = "CMD";
-      action = "quit";
-      label = "quit wezterm";
-      class = "native";
-    }
-    {
-      id = "hide-app";
-      key = "h";
-      mods = "CMD";
-      action = "hide-app";
-      label = "hide app";
-      class = "native";
-    }
-    {
-      id = "minimize";
-      key = "m";
-      mods = "CMD";
-      action = "minimize";
-      label = "minimize";
-      class = "native";
-    }
-    {
-      id = "font-inc";
-      key = "=";
-      mods = "CMD";
-      action = "font-inc";
-      label = "font size +";
-      class = "native";
-    }
-    {
-      id = "font-dec";
-      key = "-";
-      mods = "CMD";
-      action = "font-dec";
-      label = "font size -";
-      class = "native";
-    }
-    {
-      id = "font-reset";
-      key = "0";
-      mods = "CMD";
-      action = "font-reset";
-      label = "font size reset";
-      class = "native";
-    }
-    {
-      id = "reload";
-      key = "r";
-      mods = "CMD";
-      action = "reload";
-      label = "reload config";
-      class = "native";
-    }
+    ["copy" "c" "CMD" "copy" "native"]
+    ["paste" "v" "CMD" "paste" "native"]
+    ["spawn-window" "n" "CMD" "new window" "native"]
+    ["quit" "q" "CMD" "quit wezterm" "native"]
+    ["hide-app" "h" "CMD" "hide app" "native"]
+    ["minimize" "m" "CMD" "minimize" "native"]
+    ["font-inc" "=" "CMD" "font size +" "native"]
+    ["font-dec" "-" "CMD" "font size -" "native"]
+    ["font-reset" "0" "CMD" "font size reset" "native"]
+    ["reload" "r" "CMD" "reload config" "native"]
     # Overlay layer: native pickers and diagnostics.
-    {
-      id = "palette";
-      key = "p";
-      mods = "CMD|SHIFT";
-      action = "palette";
-      label = "wezterm palette";
-      class = "overlay";
-      forgot.rank = 310;
-    }
-    {
-      id = "quick-select";
-      key = "Space";
-      mods = "CMD|SHIFT";
-      action = "quick-select";
-      label = "wezterm quick select";
-      class = "overlay";
-      forgot.rank = 320;
-    }
-    {
-      id = "launcher";
-      key = "l";
-      mods = "CMD|SHIFT";
-      action = "launcher";
-      label = "wezterm launcher";
-      class = "overlay";
-      forgot.rank = 330;
-    }
-    {
-      id = "char-select";
-      key = "u";
-      mods = "CMD|SHIFT";
-      action = "char-select";
-      label = "wezterm unicode picker";
-      class = "overlay";
-      forgot.rank = 340;
-    }
-    {
-      id = "debug-overlay";
-      key = "d";
-      mods = "CMD|SHIFT";
-      action = "debug-overlay";
-      label = "wezterm debug overlay";
-      class = "overlay";
-      forgot.rank = 350;
-    }
-    # Command deck: workspace router and guarded broadcast.
-    {
-      id = "workspace-switch";
-      key = "o";
-      mods = "CMD|SHIFT";
-      action = "workspace-switch";
-      label = "wezterm workspace switch";
-      class = "deck";
-      forgot.rank = 360;
-    }
-    {
-      id = "workspace-new";
-      key = "n";
-      mods = "CMD|SHIFT";
-      action = "workspace-new";
-      label = "wezterm workspace new";
-      class = "deck";
-      forgot.rank = 365;
-    }
-    {
-      id = "sync-toggle";
-      key = "e";
-      mods = "CMD|SHIFT";
-      action = "sync-toggle";
-      label = "wezterm sync panes";
-      class = "deck";
-      destructive = true;
-      forgot.rank = 370;
-    }
+    ["palette" "p" "CMD|SHIFT" "wezterm palette" "overlay" 310]
+    ["quick-select" "Space" "CMD|SHIFT" "wezterm quick select" "overlay" 320]
+    ["launcher" "l" "CMD|SHIFT" "wezterm launcher" "overlay" 330]
+    ["char-select" "u" "CMD|SHIFT" "wezterm unicode picker" "overlay" 340]
+    ["debug-overlay" "d" "CMD|SHIFT" "wezterm debug overlay" "overlay" 350]
+    # Command deck: workspace router, attention router, guarded broadcast.
+    ["workspace-switch" "o" "CMD|SHIFT" "wezterm workspace switch" "deck" 360]
+    ["workspace-new" "n" "CMD|SHIFT" "wezterm workspace new" "deck" 365]
+    ["attention-focus" "a" "CMD|SHIFT" "jump to waiting agent" "deck" 368]
+    ["sync-toggle" "e" "CMD|SHIFT" "wezterm sync panes" "deck" 370 null null true]
     # Pass-through-aware pane nav: Neovim window motion inside nvim panes,
     # raw bytes into zellij panes, WezTerm pane motion in plain splits.
-    {
-      id = "nav-left";
-      key = "h";
-      mods = "CTRL";
-      action = "nav-left";
-      label = "pane nav left";
-      class = "nav";
-      forgot = {
-        rank = 380;
-        label = "wezterm pane nav";
-        display = "⌃H/J/K/L (plain splits)";
-      };
-    }
-    {
-      id = "nav-down";
-      key = "j";
-      mods = "CTRL";
-      action = "nav-down";
-      label = "pane nav down";
-      class = "nav";
-    }
-    {
-      id = "nav-up";
-      key = "k";
-      mods = "CTRL";
-      action = "nav-up";
-      label = "pane nav up";
-      class = "nav";
-    }
-    {
-      id = "nav-right";
-      key = "l";
-      mods = "CTRL";
-      action = "nav-right";
-      label = "pane nav right";
-      class = "nav";
-    }
+    ["nav-left" "h" "CTRL" "pane nav left" "nav" 380 "wezterm pane nav" "⌃H/J/K/L (plain splits)"]
+    ["nav-down" "j" "CTRL" "pane nav down" "nav"]
+    ["nav-up" "k" "CTRL" "pane nav up" "nav"]
+    ["nav-right" "l" "CTRL" "pane nav right" "nav"]
   ];
   weztermForgot =
     lib.concatMap (
@@ -721,217 +335,73 @@
 
   # --- [NEOVIM_EDITOR_DOMAIN_TABLE]
   # One editor chord vocabulary keyed by domain; the nvim module projects it
-  # into lua/forge/chords.lua. `action` carries a native command string; `fn`
-  # names a row in the editor dispatch table (nvim config/keymaps.lua binds
-  # both). Plugin README maps never leak in: every editor chord is a row here.
-  nvimDomains = {
+  # into lua/forge/chords.lua. `<cmd>…` targets land as native command
+  # strings, bare names as dispatch-table fns (keymaps.lua binds both); mode
+  # defaults to ["n"]. Plugin README maps never leak in.
+  mkNvim = t: let
+    r = row ["keys" "target" "desc" "mode"] t;
+  in
+    (removeAttrs r ["target"])
+    // (
+      if lib.hasPrefix "<cmd>" r.target
+      then {action = r.target;}
+      else {fn = r.target;}
+    );
+  nvimDomains = lib.mapAttrs (_: map mkNvim) {
     files = [
-      {
-        keys = "<leader>ff";
-        fn = "pick_files";
-        desc = "Find files";
-      }
-      {
-        keys = "<leader>fr";
-        fn = "pick_recent";
-        desc = "Recent files";
-      }
-      {
-        keys = "<leader>fb";
-        fn = "pick_buffers";
-        desc = "Pick buffer";
-      }
+      ["<leader>ff" "pick_files" "Find files"]
+      ["<leader>fr" "pick_recent" "Recent files"]
+      ["<leader>fb" "pick_buffers" "Pick buffer"]
     ];
     search = [
-      {
-        keys = "<leader>sg";
-        fn = "pick_grep";
-        desc = "Live grep";
-      }
-      {
-        keys = "<leader>sw";
-        fn = "pick_grep_word";
-        mode = ["n" "x"];
-        desc = "Grep word/selection";
-      }
-      {
-        keys = "<leader>sr";
-        fn = "pick_resume";
-        desc = "Resume last picker";
-      }
-      {
-        keys = "<leader>sh";
-        fn = "pick_help";
-        desc = "Help pages";
-      }
-      {
-        keys = "<leader>sk";
-        fn = "pick_keymaps";
-        desc = "Keymaps";
-      }
+      ["<leader>sg" "pick_grep" "Live grep"]
+      ["<leader>sw" "pick_grep_word" "Grep word/selection" ["n" "x"]]
+      ["<leader>sr" "pick_resume" "Resume last picker"]
+      ["<leader>sh" "pick_help" "Help pages"]
+      ["<leader>sk" "pick_keymaps" "Keymaps"]
     ];
     buffers = [
-      {
-        keys = "<leader>bn";
-        action = "<cmd>bnext<cr>";
-        desc = "Next buffer";
-      }
-      {
-        keys = "<leader>bp";
-        action = "<cmd>bprevious<cr>";
-        desc = "Previous buffer";
-      }
-      {
-        keys = "<leader>bb";
-        action = "<cmd>e #<cr>";
-        desc = "Switch to other buffer";
-      }
-      {
-        keys = "<leader>bd";
-        fn = "bufdelete";
-        desc = "Delete buffer";
-      }
-      {
-        keys = "<A-w>";
-        fn = "bufdelete";
-        desc = "Delete buffer";
-      }
-      {
-        keys = "<leader>ba";
-        fn = "bufdelete_all";
-        desc = "Delete all buffers";
-      }
-      {
-        keys = "<leader>bo";
-        fn = "bufdelete_other";
-        desc = "Delete other buffers";
-      }
-      {
-        keys = "<leader>bz";
-        fn = "zen";
-        desc = "Toggle zen mode";
-      }
+      ["<leader>bn" "<cmd>bnext<cr>" "Next buffer"]
+      ["<leader>bp" "<cmd>bprevious<cr>" "Previous buffer"]
+      ["<leader>bb" "<cmd>e #<cr>" "Switch to other buffer"]
+      ["<leader>bd" "bufdelete" "Delete buffer"]
+      ["<A-w>" "bufdelete" "Delete buffer"]
+      ["<leader>ba" "bufdelete_all" "Delete all buffers"]
+      ["<leader>bo" "bufdelete_other" "Delete other buffers"]
+      ["<leader>bz" "zen" "Toggle zen mode"]
     ];
     diagnostics = [
-      {
-        keys = "<leader>xx";
-        action = "<cmd>Trouble diagnostics toggle<cr>";
-        desc = "Diagnostics (Trouble)";
-      }
-      {
-        keys = "<leader>xb";
-        action = "<cmd>Trouble diagnostics toggle filter.buf=0<cr>";
-        desc = "Buffer diagnostics (Trouble)";
-      }
-      {
-        keys = "<leader>xs";
-        action = "<cmd>Trouble symbols toggle focus=false<cr>";
-        desc = "Symbols (Trouble)";
-      }
-      {
-        keys = "<leader>xq";
-        action = "<cmd>Trouble qflist toggle<cr>";
-        desc = "Quickfix (Trouble)";
-      }
-      {
-        keys = "<leader>xl";
-        action = "<cmd>Trouble loclist toggle<cr>";
-        desc = "Location list (Trouble)";
-      }
+      ["<leader>xx" "<cmd>Trouble diagnostics toggle<cr>" "Diagnostics (Trouble)"]
+      ["<leader>xb" "<cmd>Trouble diagnostics toggle filter.buf=0<cr>" "Buffer diagnostics (Trouble)"]
+      ["<leader>xs" "<cmd>Trouble symbols toggle focus=false<cr>" "Symbols (Trouble)"]
+      ["<leader>xq" "<cmd>Trouble qflist toggle<cr>" "Quickfix (Trouble)"]
+      ["<leader>xl" "<cmd>Trouble loclist toggle<cr>" "Location list (Trouble)"]
     ];
     lsp = [
-      {
-        keys = "gd";
-        fn = "lsp_definitions";
-        desc = "Goto definition";
-      }
-      {
-        keys = "gr";
-        fn = "lsp_references";
-        desc = "References";
-      }
-      {
-        keys = "gI";
-        fn = "lsp_implementations";
-        desc = "Goto implementation";
-      }
-      {
-        keys = "gy";
-        fn = "lsp_type_definitions";
-        desc = "Goto type definition";
-      }
-      {
-        keys = "<leader>cs";
-        fn = "lsp_symbols";
-        desc = "Document symbols";
-      }
-      {
-        keys = "<leader>cS";
-        fn = "lsp_workspace_symbols";
-        desc = "Workspace symbols";
-      }
-      {
-        keys = "<leader>cr";
-        fn = "lsp_rename";
-        desc = "Rename symbol";
-      }
-      {
-        keys = "<leader>ca";
-        fn = "code_action";
-        mode = ["n" "x"];
-        desc = "Code action";
-      }
-      {
-        keys = "<leader>cf";
-        fn = "format";
-        mode = ["n" "x"];
-        desc = "Format buffer/range";
-      }
+      ["gd" "lsp_definitions" "Goto definition"]
+      ["gr" "lsp_references" "References"]
+      ["gI" "lsp_implementations" "Goto implementation"]
+      ["gy" "lsp_type_definitions" "Goto type definition"]
+      ["<leader>cs" "lsp_symbols" "Document symbols"]
+      ["<leader>cS" "lsp_workspace_symbols" "Workspace symbols"]
+      ["<leader>cr" "lsp_rename" "Rename symbol"]
+      ["<leader>ca" "code_action" "Code action" ["n" "x"]]
+      ["<leader>cf" "format" "Format buffer/range" ["n" "x"]]
     ];
     estate = [
-      {
-        keys = "<leader>ee";
-        fn = "pick_estate";
-        desc = "Nix estate actions";
-      }
+      ["<leader>ee" "pick_estate" "Nix estate actions"]
     ];
     refactor = [
-      {
-        keys = "<leader>rr";
-        fn = "grug_open";
-        mode = ["n" "x"];
-        desc = "Search and replace (grug-far)";
-      }
-      {
-        keys = "<leader>rw";
-        fn = "grug_word";
-        desc = "Replace word under cursor";
-      }
+      ["<leader>rr" "grug_open" "Search and replace (grug-far)" ["n" "x"]]
+      ["<leader>rw" "grug_word" "Replace word under cursor"]
     ];
     tasks = [
-      {
-        keys = "<leader>tt";
-        action = "<cmd>OverseerToggle<cr>";
-        desc = "Task list (overseer)";
-      }
-      {
-        keys = "<leader>tr";
-        action = "<cmd>OverseerRun<cr>";
-        desc = "Run task (overseer)";
-      }
+      ["<leader>tt" "<cmd>OverseerToggle<cr>" "Task list (overseer)"]
+      ["<leader>tr" "<cmd>OverseerRun<cr>" "Run task (overseer)"]
     ];
     git = [
-      {
-        keys = "<leader>gb";
-        fn = "git_blame_line";
-        desc = "Blame line";
-      }
-      {
-        keys = "<leader>gB";
-        fn = "git_browse";
-        mode = ["n" "x"];
-        desc = "Open repo in browser";
-      }
+      ["<leader>gb" "git_blame_line" "Blame line"]
+      ["<leader>gB" "git_browse" "Open repo in browser" ["n" "x"]]
     ];
   };
   nvimRows =
@@ -959,6 +429,65 @@
       rendered = builtins.toJSON r;
     })
     nvimRows;
+
+  # --- [VSCODE_EDITOR_ROWS]
+  # One nav vocabulary drives terminal AND editor: the weztermRows nav class
+  # is the source and each editor twin derives per row — a new direction is
+  # one wezterm row whose VS Code binding appears with it, or breaks loudly
+  # on a missing dispatch arm. `!terminalFocus` keeps the integrated terminal
+  # raw so zellij under it navigates exactly as under wezterm; `shadows`
+  # names the displaced mac editor default (bundle-verified, all palette-
+  # reachable). Removal rules and estate-verb bindings are deliberately
+  # absent: no Karabiner layer chord collides with a VS Code default (the
+  # layers land on 4-modifier combos VS Code ships none for), and a verb row
+  # lands only when earned. HM's programs.vscode keybindings option was
+  # rejected — it writes a read-only wholesale store symlink; the sentinel
+  # tail keeps hand rows alive above the managed block. A non-nav bind lands
+  # as one tuple on the extra lane; `args` carries a command payload
+  # (runCommands sequences, typed inputs), null-skipping unclaimed slots.
+  vscodeNavCommand = {
+    nav-left = "workbench.action.navigateLeft";
+    nav-down = "workbench.action.navigateDown";
+    nav-up = "workbench.action.navigateUp";
+    nav-right = "workbench.action.navigateRight";
+  };
+  vscodeNavShadows = {
+    nav-down = "editor.action.joinLines";
+    nav-up = "deleteAllRight";
+    nav-right = "notebook.centerActiveCell";
+  };
+  vscodeRows =
+    map (r:
+      {
+        key = "ctrl+${r.key}";
+        command = vscodeNavCommand.${r.action};
+        when = "!terminalFocus";
+        label = "focus ${lib.removePrefix "nav-" r.action} (workbench plane)";
+        mirror = "wezterm:${r.id}";
+      }
+      // lib.optionalAttrs (vscodeNavShadows ? ${r.action}) {shadows = vscodeNavShadows.${r.action};})
+    (builtins.filter (r: r.class == "nav") weztermRows)
+    ++ map (row ["key" "command" "when" "label" "mirror" "shadows" "args"]) [];
+  # Projection-ready keybinding objects: exactly the fields VS Code reads.
+  vscodeBindOf = r:
+    {inherit (r) key command;}
+    // lib.optionalAttrs (r ? when) {inherit (r) when;}
+    // lib.optionalAttrs (r ? args) {inherit (r) args;};
+  vscodeRegRows = map (r:
+    {
+      chord_id = "vscode:${r.key}";
+      consumer = "vscode";
+      physical_layer = "none";
+      mods = "";
+      inherit (r) key label;
+      action = r.command;
+      scope = "editor:${r.when or "global"}";
+      projection_path = "Library/Application Support/Code/User/keybindings.json";
+      rendered = builtins.toJSON (vscodeBindOf r);
+    }
+    // lib.optionalAttrs (r ? mirror) {inherit (r) mirror;}
+    // lib.optionalAttrs (r ? shadows) {inherit (r) shadows;})
+  vscodeRows;
 
   # --- [PROJECTIONS]
   # Every table string emitted inside a KDL quoted string passes through this.
@@ -1004,32 +533,15 @@
 
   # KEY IDENTITY: a Shift-carrying layer receives shifted punctuation as the
   # SHIFTED character, so its binds emit that glyph both with and without the
-  # Shift modifier listed; letter keys and Shift-free layers pass through.
-  # The map is total over the ANSI shifted row: any future punctuation bind
-  # on a Shift layer renders correctly instead of silently never firing.
-  shiftedGlyph = {
-    "`" = "~";
-    "1" = "!";
-    "2" = "@";
-    "3" = "#";
-    "4" = "$";
-    "5" = "%";
-    "6" = "^";
-    "7" = "&";
-    "8" = "*";
-    "9" = "(";
-    "0" = ")";
-    "-" = "_";
-    "=" = "+";
-    "[" = "{";
-    "]" = "}";
-    "\\" = "|";
-    ";" = ":";
-    "'" = "\"";
-    "," = "<";
-    "." = ">";
-    "/" = "?";
-  };
+  # Shift modifier listed; letter keys and Shift-free layers pass through. The
+  # map is total over the ANSI shifted row, capacity-asserted at the zip.
+  shiftedGlyph = let
+    plain = ["`" "1" "2" "3" "4" "5" "6" "7" "8" "9" "0" "-" "=" "[" "]" "\\" ";" "'" "," "." "/"];
+    shifted = ["~" "!" "@" "#" "$" "%" "^" "&" "*" "(" ")" "_" "+" "{" "}" "|" ":" "\"" "<" ">" "?"];
+  in
+    lib.throwIf (builtins.length plain != builtins.length shifted)
+    "chords shiftedGlyph rows diverge: ${toString (builtins.length plain)} plain vs ${toString (builtins.length shifted)} shifted"
+    (lib.listToAttrs (lib.zipListsWith lib.nameValuePair plain shifted));
   stripShift = prefix: lib.concatStringsSep " " (lib.filter (w: w != "Shift") (lib.splitString " " prefix));
   bindKeys = prefix: k:
     if lib.hasInfix "Shift" prefix && shiftedGlyph ? ${k}
@@ -1125,8 +637,8 @@
   # Typed chord rows for the register rail: every consumer's chords in one
   # vocabulary — chord_id, consumer, physical_layer, mods, key, label, action,
   # scope (the KDL mode block or OS/app plane the claim is active in), toggle
-  # (re-press of the same chord exits the mode), projection_path, rendered
-  # evidence, and CSI-u injection where exported.
+  # (re-press exits the mode), projection_path, rendered evidence, and CSI-u
+  # injection where exported.
   zjRegRow = layer: row:
     {
       chord_id = "zellij:${lib.toLower layer.name}:${builtins.head row.keys}";
@@ -1225,12 +737,13 @@
       rendered = weztermDisplay r;
     })
     weztermRows
-    ++ nvimRegRows;
+    ++ nvimRegRows
+    ++ vscodeRegRows;
 
   # Intra-consumer conflict ledger: every emitted (consumer, chord) claim must
-  # be unique; shift-glyph expansion rides the same bindKeys the KDL uses.
-  # WezTerm claims carry their modifier set — the outer layer stacks CMD and
-  # CMD|SHIFT chords on the same letters by design.
+  # be unique; shift-glyph expansion rides the same bindKeys the KDL uses, the
+  # WezTerm outer layer stacks CMD and CMD|SHIFT on the same letters by
+  # design, and a vscode claim is key+when (disjoint when-contexts are legal).
   dupesOf = xs: lib.attrNames (lib.filterAttrs (_: c: c > 1) (lib.foldl' (acc: x: acc // {${x} = (acc.${x} or 0) + 1;}) {} xs));
   claims = lib.concatMap (r:
     map (c: "${r.consumer}|${c}")
@@ -1239,6 +752,8 @@
       then lib.concatMap (bindKeys r.mods) (lib.splitString "," r.key)
       else if r.consumer == "wezterm"
       then ["${r.mods} ${r.key}"]
+      else if r.consumer == "vscode"
+      then ["${r.key}|${r.scope}"]
       else [r.key]
     ))
   register;
@@ -1255,6 +770,7 @@ in {
       inherit layers modes register;
       nvim.rows = nvimRows;
       wezterm.rows = weztermRows;
+      vscode.binds = map vscodeBindOf vscodeRows;
       karabiner.rules =
         [capsRule]
         ++ map (l:

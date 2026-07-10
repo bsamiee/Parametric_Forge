@@ -30,6 +30,15 @@ in {
       default = lib.optionalString pkgs.stdenv.hostPlatform.isDarwin "${pkgs.terminal-notifier}/bin/terminal-notifier";
       description = "Desktop notification binary; empty on hosts without one — callers guard on emptiness at runtime.";
     };
+    # Interaction-contract split: notifier posts replaceable async banners;
+    # alerter blocks until the user answers and returns typed JSON (--reply /
+    # --actions), so a notification becomes a synchronous answer channel.
+    alerter = lib.mkOption {
+      type = lib.types.str;
+      readOnly = true;
+      default = lib.optionalString pkgs.stdenv.hostPlatform.isDarwin "${pkgs.alerter}/bin/alerter";
+      description = "Blocking question-notification binary; empty on hosts without one — callers guard on emptiness at runtime.";
+    };
   };
 
   config = lib.mkIf pkgs.stdenv.hostPlatform.isDarwin {

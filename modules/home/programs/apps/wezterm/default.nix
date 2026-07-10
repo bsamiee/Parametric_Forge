@@ -44,17 +44,40 @@
   # all arrive from config.forge.fonts; deck.lua interprets them.
   fontRow = config.forge.fonts.projections.luaFont;
 
-  # --- [WORKSPACE_ROWS_NAME_POLICY_PROJECTION]
+  # --- [WORKSPACE_ROWS_ONE_SESSION_FABRIC_VOCABULARY]
+  # One row = picker entry + zellij session identity + cwd + float policy +
+  # warm posture. Local rows project from the name-policy register; remote
+  # rows derive from ssh-host mount rows (cwd = the rclone mountpoint), so a
+  # second VPS lights the picker with zero edits here. `warm` rows resurrect
+  # in the background at login (forge-workspace --warm); `float` names the
+  # shape workspace-scoped floats take while the workspace is active.
   workspaceRoot = "${homeDir}/Documents/99.Github";
   workspaceRows =
     map (r: {
       name = r.slug;
       label = r.display;
       cwd = "${workspaceRoot}/${r.source}";
+      kind = "local";
+      float = "utility";
+      warm = lib.elem "wezterm-workspace-warm" r.consumers;
     })
-    (builtins.filter (r: r.domain == "estate-repo") naming);
+    (builtins.filter (r: r.domain == "estate-repo") naming)
+    ++ lib.concatMap (
+      h:
+        map (m: {
+          name = "${h.name}-${m.name}";
+          label = "[${lib.toUpper h.name} ${lib.toUpper m.name}]";
+          cwd = m.mountpoint;
+          kind = "remote";
+          host = h.name;
+          float = "remote";
+          warm = false;
+        })
+        h.mounts
+    ) (lib.attrValues sshHosts);
   defaultWorkspace =
     (lib.findFirst (r: lib.elem "wezterm-workspace-name" r.consumers) {slug = "forge";} naming).slug;
+  warmSlugs = map (r: r.name) (builtins.filter (r: r.warm) workspaceRows);
 
   # --- [SSH_DOMAIN_ROWS_SSH_REGISTRY_ROWS_TRANSPORT_ONLY_NEVER_PERSISTENCE]
   sshDomainRows =
@@ -117,6 +140,8 @@
   ];
 
   # --- [FLOATING_UTILITY_DECK_ROWS]
+  # `remote` is the workspace-scoped shape remote workspaces select: near-
+  # opaque so a remote-context float never reads as a local one.
   floatRows = {
     utility = {
       width = 120;
@@ -132,12 +157,21 @@
       opacity = 0.88;
       decorations = "RESIZE";
     };
+    remote = {
+      width = 120;
+      height = 32;
+      level = "AlwaysOnTop";
+      opacity = 0.98;
+      decorations = "RESIZE";
+    };
   };
 
   # --- [COMMAND_DECK_ROWS]
   # One registry feeds the command palette, the launcher menu, and key rows.
   # kind: float (spawn command in shaped window) | domain (spawn in mux
-  # domain); `destructive` rows pass the deck confirm gate before acting.
+  # domain); `destructive` rows pass the deck confirm gate before acting;
+  # `scope = "workspace"` keys the float singleton per workspace and takes
+  # the active workspace row's float shape.
   commandRows =
     [
       {
@@ -202,7 +236,17 @@
         label = "deck: scratch shell";
         kind = "float";
         float = "utility";
+        scope = "workspace";
         args = ["${profileBin}/zsh" "-l"];
+      }
+      {
+        # Pane-capture float: the waiting agent pane's tail (forge-zellij
+        # peek --attention) pinned in a pager — F10 capture on the float rail.
+        id = "peek-attention";
+        label = "forge: peek waiting agent pane";
+        kind = "float";
+        float = "utility";
+        args = ["${pkgs.bash}/bin/bash" "-c" "${profileBin}/forge-zellij peek --attention --text | ${pkgs.less}/bin/less -R +G"];
       }
     ]
     ++ map (d: {
@@ -211,7 +255,17 @@
       kind = "domain";
       domain = d.name;
     })
-    sshDomainRows;
+    sshDomainRows
+    # Remote state through the VFS: one float per host browses sftp://<host>/
+    # in Yazi — remote registers and logs inspected through the same themed
+    # file UI as local state, identity via the pinned agent socket.
+    ++ map (h: {
+      id = "sftp-${h.name}";
+      label = "remote: browse ${h.name} files (sftp)";
+      kind = "float";
+      float = "utility";
+      args = ["${profileBin}/forge-yazi.sh" "sftp://${h.name}/"];
+    }) (lib.attrValues sshHosts);
 
   # --- [PURE_DATA_SETTINGS_RENDERED_VIA_LIB_GENERATORS_TOLUA]
   # Constructor/env-dependent values live in deck.lua; the two sets stay
@@ -320,17 +374,30 @@
   selectIds = lib.unique (builtins.filter (s: s != null) (map (r: r.select or null) quickSelectRows));
   badSelects = builtins.filter (s: !(lib.elem s ["edit" "domain"])) selectIds;
   badKinds = lib.unique (map (r: r.kind) (builtins.filter (r: !(lib.elem r.kind ["float" "domain"])) commandRows));
-  badFloatRefs = map (r: r.id) (builtins.filter (r: r.kind == "float" && !(floatRows ? ${r.float})) commandRows);
+  badFloatRefs =
+    map (r: r.id) (builtins.filter (r: r.kind == "float" && !(floatRows ? ${r.float})) commandRows)
+    ++ map (r: r.name) (builtins.filter (r: !(floatRows ? ${r.float})) workspaceRows);
   chordDupes = dupesOf (map (r: "${r.mods}+${r.key}") chordRows);
+  workspaceDupes = dupesOf (map (r: r.name) workspaceRows);
 
   # --- [GENERATED_LUA_DATA_ENTRY_POINT]
   rows = {
     nightly_floor = "20260707";
     receipts_log = "${homeDir}/Library/Logs/forge-wezterm.receipts.log";
+    # Attention-feed seam (interconnection [01]-[ATTENTION]): the bell arm
+    # appends source=bell rows on the hook-feed schema for the collector fold.
+    attention_feed = "${config.xdg.stateHome}/forge/agent-attention.jsonl";
     paths = {
       path = lib.concatStringsSep ":" toolchainEnv.launchdPathEntries;
       zellij = "${pkgs.zellij}/bin/zellij";
       nvim = "${profileBin}/nvim";
+      forge_agents = "${profileBin}/forge-agents";
+      # Frozen-layout assets (forge-zellij layout record): session_args and
+      # forge-workspace both resolve <slug>.kdl here before the default.
+      recorded_layouts = "${homeDir}/.local/state/forge/zellij-layouts";
+      # Nightly-only mux pin: without it the mux inherits the identity-less
+      # Apple launchd SSH_AUTH_SOCK (deck.lua applies it under has_nightly).
+      auth_sock = config.forge.ssh.identityAgent;
     };
     host_domains = hostDomains;
     plugins.sync_panes = "${syncPanesSrc}";
@@ -422,19 +489,27 @@
     name = "forge-workspace";
     runtimeInputs = [pkgs.coreutils pkgs.jq pkgs.gawk pkgs.gnugrep];
     text = ''
-      # Resolves a name-policy slug to WezTerm workspace + mux window and
-      # the desktop-Space bridge. Provider dispatch: none (default) degrades
-      # with an explicit receipt row — never silent fallthrough.
+      # Resolves a workspace-row slug (or wildcard project root) to a WezTerm
+      # workspace + slug-named zellij session; --json/--list carry the session
+      # lifecycle (live | resurrectable | cold) joined from zellij truth;
+      # --warm resurrects warm rows in the background (login rail). Provider
+      # dispatch: none (default) degrades with an explicit receipt row.
       rows="${namingJson}"
       wezterm_bin="''${FORGE_WEZTERM_BIN:-/Applications/WezTerm.app/Contents/MacOS/wezterm}"
       zellij_bin="${pkgs.zellij}/bin/zellij"
       layout="''${ZELLIJ_DEFAULT_LAYOUT:-default}"
+      workspace_root="${workspaceRoot}"
+      recorded_dir="''${XDG_STATE_HOME:-$HOME/.local/state}/forge/zellij-layouts"
       receipt_log="''${FORGE_WORKSPACE_RECEIPT_LOG:-$HOME/Library/Logs/forge-workspace.receipts.log}"
       receipt_surface="forge-workspace"
       provider="''${FORGE_SPACE_PROVIDER:-none}"
       ${receiptsFold}
 
-      usage() { printf 'Usage: forge-workspace [SLUG] | --list | --json\n'; }
+      usage() { printf 'Usage: forge-workspace [SLUG] | --list | --json | --warm\n'; }
+
+      layout_for() { # frozen slug asset (forge-zellij layout record) wins over the default
+        if [ -f "$recorded_dir/$1.kdl" ]; then printf '%s' "$recorded_dir/$1.kdl"; else printf '%s' "$layout"; fi
+      }
 
       emit() { # $1=slug $2=action $3=result $4=detail $5=space
         local ts row
@@ -454,38 +529,79 @@
         fi
       }
 
+      # Lifecycle join: zellij session truth per row — live (session up),
+      # resurrectable (EXITED, serialized), cold (no session); `gui` carries
+      # the wezterm workspace presence separately (a session can outlive its
+      # window). One list-sessions text parse feeds both classifications.
+      lifecycle_rows() {
+        local sess
+        sess="$("$zellij_bin" list-sessions --no-formatting 2>/dev/null || true)"
+        jq --argjson gui "$(live_workspaces | jq -nR '[inputs]')" \
+          --argjson zlive "$(gawk '!/EXITED/ && NF {print $1}' <<<"$sess" | jq -nR '[inputs]')" \
+          --argjson zexit "$(gawk '/EXITED/ {print $1}' <<<"$sess" | jq -nR '[inputs]')" \
+          'map(. + {
+             gui: (.name as $n | ($gui | index($n)) != null),
+             lifecycle: (.name as $n
+               | if ($zlive | index($n)) != null then "live"
+                 elif ($zexit | index($n)) != null then "resurrectable"
+                 else "cold" end)})' "$rows"
+      }
+
       case "''${1:-}" in
         --help | -h)
           usage
           exit 0
           ;;
         --json)
-          jq --argjson live "$(live_workspaces | jq -nR '[inputs]')" \
-            'map(. + {live: (.name as $n | $live | index($n) != null)})' "$rows"
+          lifecycle_rows
+          exit 0
+          ;;
+        --warm)
+          # Login rail: warm rows that are not live attach in the background —
+          # resurrectable sessions replay their serialized layout, cold rows
+          # land their frozen (or default) layout at the row cwd.
+          lifecycle_rows | jq -r '.[] | select(.warm and .lifecycle != "live") | [.name, .cwd, .lifecycle] | @tsv' \
+            | while IFS=$'\t' read -r slug cwd was; do # streaming boundary: warm rows as they arrive
+                if (cd "$cwd" 2>/dev/null && "$zellij_bin" --layout "$(layout_for "$slug")" attach --create-background "$slug" >/dev/null 2>&1); then
+                  emit "$slug" warm ok "from=$was" "-"
+                else
+                  emit "$slug" warm error "attach --create-background failed (from=$was)" "-"
+                fi
+              done
           exit 0
           ;;
         --list | "")
-          # One awk pass owns the join: the live set enters as a variable, the
-          # registry rows stream as TSV (every field provably non-empty).
           {
-            printf 'SLUG\tLABEL\tCWD\tLIVE\n'
-            jq -r '.[] | [.name, .label, .cwd] | @tsv' "$rows"
-          } | awk -F'\t' -v live="$(live_workspaces)" '
-            BEGIN { n = split(live, ls, "\n"); for (i = 1; i <= n; i++) if (ls[i] != "") set[ls[i]] = 1 }
-            NR == 1 { printf "%-16s %-24s %-56s %s\n", $1, $2, $3, $4; next }
-            { printf "%-16s %-24s %-56s %s\n", $1, $2, $3, ($1 in set ? "yes" : "no") }'
+            printf 'SLUG\tLABEL\tKIND\tLIFECYCLE\tGUI\tCWD\n'
+            lifecycle_rows | jq -r '.[] | [.name, .label, .kind, .lifecycle, (.gui | tostring), .cwd] | @tsv'
+          } | gawk -F'\t' '{printf "%-14s %-14s %-8s %-13s %-6s %s\n", $1, $2, $3, $4, $5, $6}'
           exit 0
           ;;
       esac
 
       slug="$1"
       row="$(jq -c --arg s "$slug" '.[] | select(.name == $s)' "$rows")"
+      if [ -z "$row" ] && [ -d "$workspace_root/$slug" ]; then
+        # Wildcard admission: any project root is a latent workspace with the
+        # default layout; explicit registry rows always win over the pattern.
+        row="$(jq -cn --arg s "$slug" --arg cwd "$workspace_root/$slug" \
+          '{name: $s, label: ("[" + ($s | ascii_upcase) + "]"), cwd: $cwd, kind: "wildcard"}')"
+      fi
       if [ -z "$row" ]; then
         emit "$slug" resolve error "unknown slug" "-"
         printf 'forge-workspace: unknown slug %s\n' "$slug" >&2
         exit 64
       fi
-      cwd="$(jq -r '.cwd' <<<"$row")"
+      IFS=$'\x1f' read -r cwd kind < <(jq -r '[.cwd, .kind] | join("\u001f")' <<<"$row")
+
+      # Remote rows ride a mountpoint: device-diff against the parent proves
+      # the mount answers before a session lands on a dead directory.
+      if [ "$kind" = "remote" ] \
+        && [ "$(stat -c %d "$cwd" 2>/dev/null || echo x)" = "$(stat -c %d "''${cwd%/*}" 2>/dev/null || echo y)" ]; then
+        emit "$slug" spawn error "mount absent at $cwd (forge-vps-mount agent down?)" "-"
+        printf 'forge-workspace: %s is not mounted; check the mount agent receipts\n' "$cwd" >&2
+        exit 69
+      fi
 
       # Space bridge: provider table decides; `none` is a declared degrade.
       space_state="degrade:provider-none"
@@ -508,7 +624,7 @@
       err="$(mktemp)"
       trap 'rm -f "$err"' EXIT
       pane_id="$("$wezterm_bin" cli --no-auto-start spawn --new-window --workspace "$slug" --cwd "$cwd" -- \
-        "$zellij_bin" --layout "$layout" attach --create "$slug" 2>"$err")" || {
+        "$zellij_bin" --layout "$(layout_for "$slug")" attach --create "$slug" 2>"$err")" || {
         detail="$(tr '\t\n' '  ' <"$err")"
         emit "$slug" spawn error "''${detail:-spawn failed}" "$space_state"
         printf 'forge-workspace: spawn failed: %s\n' "''${detail:-unknown}" >&2
@@ -522,8 +638,9 @@
     #compdef forge-workspace
     _arguments \
       '1:workspace:(${lib.concatMapStringsSep " " (r: r.name) workspaceRows})' \
-      '--list[table of rows with live state]' \
-      '--json[rows with live state as JSON]'
+      '--list[table of rows with session lifecycle]' \
+      '--json[rows with session lifecycle as JSON]' \
+      '--warm[background-attach warm rows (login rail)]'
   '';
 in {
   config = {
@@ -556,9 +673,31 @@ in {
         assertion = chordDupes == [];
         message = "wezterm: duplicate chord key+mods rows (guard wrap and dispatch both collide): ${lib.concatStringsSep ", " chordDupes}";
       }
+      {
+        assertion = workspaceDupes == [];
+        message = "wezterm: duplicate workspace row names (local/remote collision): ${lib.concatStringsSep ", " workspaceDupes}";
+      }
     ];
 
     home.packages = [forgeWorkspace workspaceCompletion];
+
+    # Warm rail: at login the warm workspace rows resurrect or create their
+    # sessions in the background, so the first interactive attach is instant;
+    # every warm emits a forge-workspace receipt. Row-gated: the agent exists
+    # only while a warm row does.
+    forge.bundleApps = lib.mkIf (warmSlugs != []) {forge-workspace-warm = "Forge Workspace Warm";};
+    launchd.agents.forge-workspace-warm = lib.mkIf (warmSlugs != []) {
+      enable = true;
+      config = {
+        Label = "com.parametric-forge.forge-workspace-warm";
+        ProgramArguments = ["${forgeWorkspace}/bin/forge-workspace" "--warm"];
+        RunAtLoad = true;
+        ProcessType = "Background";
+        StandardOutPath = "${homeDir}/Library/Logs/forge-workspace-warm.log";
+        StandardErrorPath = "${homeDir}/Library/Logs/forge-workspace-warm.log";
+        AssociatedBundleIdentifiers = ["com.parametric-forge.forge-workspace-warm"];
+      };
+    };
 
     xdg.configFile."wezterm" = {
       source = configDir;

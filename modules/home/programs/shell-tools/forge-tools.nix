@@ -1037,7 +1037,7 @@
         cat "$sweep_file"
         read -r killed reported gone < <(awk -F '\t' 'NR > 1 {c[$2]++} END {printf "%d %d %d\n", c["killed"] + 0, c["report"] + 0, c["gone"] + 0}' "$sweep_file")
         persist_receipt "$(printf 'ts=%s\tverb=sweep\tkilled=%s\treported=%s\tgone=%s\treport_only=%s\treceipt=%s\tresult=ok' \
-          "$run_ts" "$killed" "$reported" "$gone" "$report_only" "$sweep_file")"
+          "$ts" "$killed" "$reported" "$gone" "$report_only" "$sweep_file")"
       }
 
       case "$verb" in

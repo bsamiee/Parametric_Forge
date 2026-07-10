@@ -155,7 +155,9 @@ The review vocabulary. Findings cite the defect name and the line.
 Comments — in source files and in transcription-complete fences alike — exist for the agent editing the file in isolation, with none of the index docs loaded.
 
 - A comment carries the one in-situ constraint the code cannot show: the why, the invariant, the trap. Never the what, never a duplicate of card or index content, never process or session narration.
-- 1-2 lines; 3-4 only when the constraint truly needs them. Prefer shortening a kept comment over keeping a long one.
+- A comment line fills toward the 150-column width before wrapping; a block is 1-2 wrapped lines, 3-4 only when the constraint truly needs them, never more than 4 stacked. Prefer shortening a kept comment over keeping a long one.
+- Stacked short fragments are one shredded thought: 2 or more consecutive comment lines each under 100 columns merge into one dense line or one properly wrapped block. A wrapped block is legal by construction — its early lines ride near the cap.
+- The file's leading header block — title rows, the dash divider, and the docstring below it — is structural, outside every stack count; so are shebangs, doc-comment glyphs, and tool pragmas.
 - Comments are uncoupled: no paths that break on rename, no references to sessions, passes, reviews, or sibling docs.
 - Comment hygiene is a standing obligation: every pass that touches a file — ad hoc or workflow — prunes its stale, drifted, or unnecessary comments and tightens the survivors in the same pass.
 
@@ -239,7 +241,7 @@ Use one term for one concept inside a bounded context. Names are load-bearing: p
 
 A durable artifact holds only its own concern. Links, citations, numbered references, and meta-references to other files, sources, or the project couple the artifact to surfaces it does not own — every coupling is a drift channel and an anchor a future rebuild inherits.
 
-- Links, file paths, and cross-references live only in declared routing surfaces: a router section, a route map, an instruction file's routing rows. Prose everywhere else states law without naming where the law came from or where a sibling's law lives.
+- Routing is a file class, never a section grafted onto an ordinary page: `README.md`, a skill root `SKILL.md`, an instruction root (`CLAUDE.md`, `AGENTS.md`), and a memory index `MEMORY.md` are the only durable files that carry links, file paths, or cross-references. Prose in every other file states law without naming where the law came from or where a sibling's law lives; the prose gate fails a relative link anywhere else as `coupled-link`.
 - No numbered references, footnotes, citation apparatus, or source names in prose — an external fact is verified before authoring and stated as law; the origin dies.
 - No meta-references to sibling artifacts, paraphrased or direct: a fact owned elsewhere is composed silently, or the owning symbol alone is named. Cross-reference and boundaries sections institutionalize coupling and are banned.
 - Link text in a routing surface describes the destination; bare URLs appear only as example values.

@@ -182,6 +182,37 @@
   forgeJupyterRootPrelude = ''
     export FORGE_PROVISION_ROOT=${lib.escapeShellArg forgeJupyterRootDir}
   '';
+  # Supervised stdio lane, mirroring the rhino-mcp-router lane: uvx pythons
+  # that ignore stdin EOF (jupyter-mcp-server) strand under a hard-killed MCP
+  # client; the watchdog ties the server subtree to client liveness.
+  superviseStdio = server: ''
+    client=$PPID
+    set -m
+    ${server} "$@" <&0 &
+    srv=$!
+    set +m
+    reap() {
+      kill -TERM -- "-$srv" 2>/dev/null || kill -TERM "$srv" 2>/dev/null || true
+    }
+    trap reap TERM INT HUP
+    (
+      while kill -0 "$srv" 2>/dev/null; do
+        if ! kill -0 "$client" 2>/dev/null; then
+          kill -TERM -- "-$srv" 2>/dev/null || true
+          sleep 2
+          kill -KILL -- "-$srv" 2>/dev/null || true
+          exit 0
+        fi
+        sleep 15
+      done
+    ) &
+    wdog=$!
+    rc=0
+    wait "$srv" || rc=$?
+    reap
+    kill "$wdog" 2>/dev/null || true
+    exit "$rc"
+  '';
   forgePythonEnvPrelude = python: profile: ''
     forge_python_root() {
       if [ -n "''${FORGE_PROVISION_ROOT:-}" ]; then
@@ -336,9 +367,10 @@
     c = get_config()
     c.IdentityProvider.token = os.environ["JUPYTER_TOKEN"]
   '';
-  forgeIfcMcp = pkgs.writeShellScriptBin "forge-ifcmcp" ''
-    exec ${forgeCompanionEnv}/bin/forge-companion-env uvx --python "${pkgs.python312}/bin/python3" --from "ifcopenshell-mcp[mcp]==0.8.5" ifcmcp "$@"
-  '';
+  forgeIfcMcp = pkgs.writeShellApplication {
+    name = "forge-ifcmcp";
+    text = superviseStdio ''${forgeCompanionEnv}/bin/forge-companion-env uvx --python "${pkgs.python312}/bin/python3" --from "ifcopenshell-mcp[mcp]==0.8.5" ifcmcp'';
+  };
   # writeShellApplication: the token prelude runs sed under launchd/systemd
   # minimal PATH, so the tool arrives via runtimeInputs, never ambient lookup.
   forgeJupyter = pkgs.writeShellApplication {
@@ -363,7 +395,7 @@
       # Connector defaults owned here so both MCP fleets carry no per-client env.
       export JUPYTER_URL="''${JUPYTER_URL:-http://127.0.0.1:${toString forgeJupyterPort}}"
       export ALLOW_IMG_OUTPUT="''${ALLOW_IMG_OUTPUT:-true}"
-      exec ${forgeCompanionEnv}/bin/forge-companion-env uvx --python "${pkgs.python312}/bin/python3" --from "jupyter-mcp-server==1.0.2" jupyter-mcp-server "$@"
+      ${superviseStdio ''${forgeCompanionEnv}/bin/forge-companion-env uvx --python "${pkgs.python312}/bin/python3" --from "jupyter-mcp-server==1.0.2" jupyter-mcp-server''}
     '';
   };
 in

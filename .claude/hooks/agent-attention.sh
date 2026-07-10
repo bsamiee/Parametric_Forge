@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 # Attention feed for the forge-agents collector: one JSONL row per lifecycle
 # event, carrying the emitting session's terminal identity so `forge-agents
-# focus` routes a notification click back to the exact pane. Append-only;
-# any failure exits 0 so the hook can never block the harness.
+# focus` routes a notification click back to the exact pane. Rows carry a
+# `source` discriminator (hook here; the WezTerm bell arm appends source=bell
+# rows on the same schema) so the collector folds per-source policy. Append-
+# only; any failure exits 0 so the hook can never block the harness.
 set -Eeuo pipefail
 trap 'exit 0' ERR
 
@@ -24,7 +26,7 @@ jq -c --arg ts "$ts" \
     --arg term "${TERM_PROGRAM:-}" --arg wp "${WEZTERM_PANE:-}" \
     --arg zs "${ZELLIJ_SESSION_NAME:-}" --arg zp "${ZELLIJ_PANE_ID:-}" \
     --arg tty "$tty" \
-    '{ts: $ts, event: (.hook_event_name // "unknown"), session_id: (.session_id // "-"), cwd: (.cwd // "-"),
+    '{ts: $ts, source: "hook", event: (.hook_event_name // "unknown"), session_id: (.session_id // "-"), cwd: (.cwd // "-"),
     term: $term, wezterm_pane: $wp, zellij_session: $zs, zellij_pane: $zp, tty: $tty}' \
     >>"$feed" 2>/dev/null
 

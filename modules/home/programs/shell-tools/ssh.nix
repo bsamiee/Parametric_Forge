@@ -6,8 +6,10 @@
 # ----------------------------------------------------------------------------
 # SSH client configuration with GitHub integration and VPS loopback tunnels.
 # One tunnel row projects everything: interactive host block, transport-only
-# tunnel block, launchd agent, and service-health receipts. A future VPS is a
-# new row here, never a new agent module.
+# tunnel block, launchd tunnel agent, rclone mount agents, service-health
+# receipts, and the remote-surface rows every consumer folds (WezTerm SSH
+# domains, Yazi VFS, workspace picker). A future VPS is a new row here, never
+# a new agent module.
 {
   config,
   host,
@@ -15,12 +17,31 @@
   pkgs,
   ...
 }: let
+  homeDir = config.home.homeDirectory;
+
+  # One identity agent for every remote surface: ssh client, WezTerm mux,
+  # Yazi VFS, and the rclone mount lane all pin this socket — the ambient
+  # SSH_AUTH_SOCK is the identity-less Apple launchd agent.
+  identityAgent = "${homeDir}/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock";
+  mountRoot = "${homeDir}/Volumes";
+
   # Probe classes drive the health receipts: pg (pg_isready), http (GET path),
-  # none (forward only, bind-checked but never service-probed).
+  # none (forward only, bind-checked but never service-probed). Mount rows are
+  # the F12 mount-policy vocabulary: path (remote, "" = user home), readOnly,
+  # and cache posture (off|minimal|writes|full) — cache sinks ONLY into the
+  # rclone lane; Yazi's ServiceSftp has no cache knob by design.
   vpsTunnels = {
     maghz = {
       user = "maghz-agent";
       hostName = "31.97.131.41";
+      mounts = [
+        {
+          name = "home";
+          path = "";
+          readOnly = true;
+          cache = "off";
+        }
+      ];
       forwards = [
         {
           port = 9000;
@@ -60,6 +81,12 @@
           service = "atuin";
           probe = "http";
           path = "/";
+        }
+        {
+          port = 2586;
+          service = "ntfy";
+          probe = "http";
+          path = "/v1/health";
         }
       ];
     };
@@ -119,6 +146,28 @@
       inherit name;
       sshHost = "${name}-tunnel";
       inherit (tunnel) forwards;
+    });
+
+  # (host, mount) pairs on client hosts: each pair projects one supervisor
+  # agent, one receipt log, one receipt-registry row, and one mountpoint.
+  mountPairs = lib.concatLists (lib.mapAttrsToList (
+      name: tunnel:
+        map (m: {
+          inherit name m;
+          inherit (tunnel) user hostName;
+          agent = "${name}-mount-${m.name}";
+          mountpoint = "${mountRoot}/${name}-${m.name}";
+        }) (tunnel.mounts or [])
+    )
+    clientTunnels);
+  mountRowJson = p:
+    pkgs.writeText "vps-mount-${p.agent}.json" (builtins.toJSON {
+      host = p.name;
+      inherit (p) mountpoint;
+      address = p.hostName;
+      inherit (p) user;
+      mount = p.m;
+      authSock = identityAgent;
     });
 
   # Per-row identity bundle rows on the shared owner (bundle-apps.nix): Login
@@ -265,22 +314,213 @@
       done
     '';
   };
+
+  # Mount supervisor: one rclone process per (host, mount) row — nfsmount on
+  # Darwin (userspace NFS + native mount -t nfs: no kext, no sudo), FUSE mount
+  # on Linux. The remote is a config-file-free connection string; identity is
+  # the 1Password agent socket; host keys validate against ~/.ssh/known_hosts.
+  # Lifecycle law: rclone survives a backend drop (lazy reconnect) while the
+  # OS ejects the volume, so readiness is proven continuously, never once — a
+  # health loop probes process, device, and statfs-through-the-mount, and any
+  # failed verdict drains + receipts + exits so KeepAlive/Restart relaunch
+  # into a fresh mount. Drain order is the clean-eject guarantee: detach the
+  # volume while the NFS server still answers, THEN reap rclone — the reverse
+  # order is the macOS "server connections interrupted" dialog.
+  mountSupervisor = pkgs.writeShellApplication {
+    name = "forge-vps-mount";
+    runtimeInputs = [pkgs.coreutils pkgs.jq pkgs.rclone] ++ lib.optionals pkgs.stdenv.hostPlatform.isLinux [pkgs.util-linux pkgs.procps];
+    text = ''
+      row_file="$1"
+      IFS=$'\x1f' read -r hostname mname rpath ro cache addr user mountpoint auth_sock < <(jq -r \
+        '[.host, .mount.name, .mount.path, (.mount.readOnly | tostring), .mount.cache,
+          .address, .user, .mountpoint, .authSock] | join("\u001f")' "$row_file")
+      grace="''${FORGE_MOUNT_GRACE:-30}"
+      probe_interval="''${FORGE_MOUNT_PROBE_INTERVAL:-30}"
+      probe_fail_max="''${FORGE_MOUNT_PROBE_FAILS:-3}"
+      case "$grace" in "" | *[!0-9]* | 0) grace=30 ;; esac
+      case "$probe_interval" in "" | *[!0-9]* | 0) probe_interval=30 ;; esac
+      case "$probe_fail_max" in "" | *[!0-9]* | 0) probe_fail_max=3 ;; esac
+      receipt_log="''${FORGE_MOUNT_RECEIPTS:-$HOME/Library/Logs/forge-$hostname-mount-$mname.receipts.log}"
+      receipt_surface="vps-mount"
+      volname="forge-$hostname-$mname"
+      ${receiptsFold}
+      emit() {
+        local ts row
+        TZ=UTC0 printf -v ts '%(%Y-%m-%dT%H:%M:%SZ)T' "$EPOCHSECONDS"
+        printf -v row 'ts=%s\tmount=%s-%s\tstate=%s\t%s' "$ts" "$hostname" "$mname" "$1" "''${2:-}"
+        append_receipt "$row" || true
+        printf '%s\n' "$row"
+      }
+
+      # Mountpoint truth is the device number: a mounted dir sits on a
+      # different device than its parent — no mount-table parsing, both OS.
+      mounted() {
+        [ "$(stat -c %d "$mountpoint" 2>/dev/null || echo x)" != "$(stat -c %d "''${mountpoint%/*}" 2>/dev/null || echo y)" ]
+      }
+
+      # Volume detach while the NFS server still answers: plain umount asks
+      # the OS for a clean eject, the fallback forces a busy volume. The
+      # verdict (absent|clean|forced|lazy|failed) is receipt data.
+      detach() {
+        mounted || { printf 'absent'; return 0; }
+        case "$(uname -s)" in
+          Darwin)
+            if /sbin/umount "$mountpoint" 2>/dev/null; then printf 'clean'; return 0; fi
+            if /usr/sbin/diskutil unmount force "$mountpoint" >/dev/null 2>&1; then printf 'forced'; return 0; fi
+            ;;
+          *)
+            if umount "$mountpoint" 2>/dev/null; then printf 'clean'; return 0; fi
+            if umount -l "$mountpoint" 2>/dev/null; then printf 'lazy'; return 0; fi
+            ;;
+        esac
+        printf 'failed'
+      }
+
+      reap() { # bounded TERM -> KILL over pids; rclone exits fast once detached
+        local pid live
+        [ "$#" -gt 0 ] || return 0
+        kill "$@" 2>/dev/null || true
+        for _ in 1 2 3 4 5 6 7 8 9 10; do
+          live=0
+          for pid in "$@"; do kill -0 "$pid" 2>/dev/null && live=1; done
+          [ "$live" = 1 ] || return 0
+          sleep 0.5
+        done
+        kill -9 "$@" 2>/dev/null || true
+      }
+
+      # Stale-owner recovery: a prior rclone outlives both its supervisor and
+      # the volume (an external eject never stops the NFS server). Reap by
+      # volname before this instance serves the same mountpoint twice.
+      case "$(uname -s)" in Darwin) pgrep_bin=/usr/bin/pgrep ;; *) pgrep_bin=pgrep ;; esac
+      mapfile -t stale < <("$pgrep_bin" -U "$(id -u)" -f -- "rclone (nfsmount|mount) .*--volname $volname( |$)" 2>/dev/null || true)
+      if [ "''${#stale[@]}" -gt 0 ]; then
+        reap "''${stale[@]}"
+        emit reaped "detail=stale rclone pids=''${stale[*]}"
+      fi
+
+      mkdir -p "$mountpoint"
+      export SSH_AUTH_SOCK="$auth_sock"
+
+      # Stale-mount reclaim: anything still on the mountpoint after the reap
+      # belongs to another owner — receipt the conflict, never mount over it.
+      stale_detach="$(detach)"
+      if mounted; then
+        emit mount-conflict "detail=$mountpoint held by another owner (detach=$stale_detach)"
+        exit 1
+      fi
+
+      # idle_timeout=0 pins one warm SSH session for the mount's lifetime:
+      # the default 1m pool expiry made every quiet-period statfs ride a
+      # fresh handshake, and one transient RST then landed a statfs error
+      # macOS answers with the interrupted-server dialog. The tunnel posture
+      # (one standing connection) is the mount posture.
+      remote=":sftp,host=$addr,user=$user,key_use_agent=true,idle_timeout=0,known_hosts_file=$HOME/.ssh/known_hosts:$rpath"
+      sub=nfsmount
+      [ "$(uname -s)" = "Darwin" ] || sub=mount
+      flags=(--config "" --volname "$volname" --vfs-cache-mode "$cache")
+      [ "$ro" != "true" ] || flags+=(--read-only)
+
+      # Traps precede the spawn; drain emits `down` only after a landed mount
+      # (pre-mount failures carry their own states). ExitTimeOut (45s) on the
+      # agent row outlives the worst-case detach + reap.
+      rclone_pid=""
+      mounted_once=""
+      drained=""
+      drain() { # $1 = cause — detach first, reap second, receipt the truth
+        [ -z "$drained" ] || return 0
+        drained="$1"
+        local how
+        how="$(detach)"
+        [ -z "$rclone_pid" ] || reap "$rclone_pid"
+        rclone_pid=""
+        [ -z "$mounted_once" ] || emit down "detail=cause=$1 detach=$how"
+      }
+      trap 'drain exit' EXIT
+      trap 'drain term; trap - EXIT; exit 143' TERM INT
+      rclone "$sub" "$remote" "$mountpoint" "''${flags[@]}" &
+      rclone_pid=$!
+
+      deadline=$((SECONDS + grace))
+      until mounted; do
+        if ! kill -0 "$rclone_pid" 2>/dev/null; then
+          emit vps-unreachable "detail=rclone exited before the mount landed"
+          exit 1
+        fi
+        if [ "$SECONDS" -ge "$deadline" ]; then
+          emit mount-failed "detail=no mount within ''${grace}s"
+          exit 1
+        fi
+        sleep 1
+      done
+      mounted_once=1
+      emit mounted "detail=$mountpoint ro=$ro cache=$cache"
+
+      # Health loop: process, device, then statfs through the mount — statfs
+      # reaches the SFTP backend via the NFS server (the exact call the live
+      # incident saw fail), and timeout bounds an NFS stall. Consecutive
+      # backend failures get tunnel-style hysteresis; eject and exit drain
+      # immediately. Every exit relaunches under KeepAlive/Restart=always.
+      probe_fails=0
+      while :; do
+        # Backgrounded sleep keeps the interval interruptible by TERM/INT.
+        sleep "$probe_interval" &
+        wait "$!" || true
+        if ! kill -0 "$rclone_pid" 2>/dev/null; then
+          rc=0
+          wait "$rclone_pid" || rc=$?
+          rclone_pid=""
+          drain "rclone-exited rc=$rc"
+          exit 1
+        fi
+        if ! mounted; then
+          drain ejected
+          exit 1
+        fi
+        if timeout 10 stat -f -c %b "$mountpoint" >/dev/null 2>&1; then
+          probe_fails=0
+        else
+          probe_fails=$((probe_fails + 1))
+          if [ "$probe_fails" -ge "$probe_fail_max" ]; then
+            drain "backend-lost after $probe_fails probes"
+            exit 1
+          fi
+        fi
+      done
+    '';
+  };
 in {
-  # Host rows projected for downstream consumers (WezTerm ssh_domains,
-  # pickers): transport facts only, forwards reduced to service/port pairs.
-  options.forge.ssh.hosts = lib.mkOption {
-    type = lib.types.raw;
-    readOnly = true;
-    default =
-      lib.mapAttrs (name: tunnel: {
-        inherit name;
-        inherit (tunnel) user hostName;
-        aliases = ["${name}-vps" name];
-        tunnelHost = "${name}-tunnel";
-        forwards = map (f: {inherit (f) port service;}) tunnel.forwards;
-      })
-      vpsTunnels;
-    description = "SSH estate host rows: interactive aliases, transport identity, declared forwards.";
+  # Host rows projected for downstream consumers (WezTerm ssh_domains, Yazi
+  # VFS, workspace picker, receipt registry): transport facts, forwards
+  # reduced to service/port pairs, and mount rows carrying their mountpoints.
+  options.forge.ssh = {
+    hosts = lib.mkOption {
+      type = lib.types.raw;
+      readOnly = true;
+      default =
+        lib.mapAttrs (name: tunnel: {
+          inherit name;
+          inherit (tunnel) user hostName;
+          aliases = ["${name}-vps" name];
+          tunnelHost = "${name}-tunnel";
+          forwards = map (f: {inherit (f) port service;}) tunnel.forwards;
+          mounts = map (m: m // {mountpoint = "${mountRoot}/${name}-${m.name}";}) (tunnel.mounts or []);
+        })
+        vpsTunnels;
+      description = "SSH estate host rows: interactive aliases, transport identity, declared forwards, mount rows.";
+    };
+    identityAgent = lib.mkOption {
+      type = lib.types.str;
+      readOnly = true;
+      default = identityAgent;
+      description = "1Password agent socket every remote surface pins (ssh, WezTerm mux, Yazi VFS, rclone).";
+    };
+    mountRoot = lib.mkOption {
+      type = lib.types.str;
+      readOnly = true;
+      default = mountRoot;
+      description = "Root directory holding the rclone VPS mountpoints.";
+    };
   };
 
   config =
@@ -304,7 +544,7 @@ in {
               lib.optionalAttrs pkgs.stdenv.hostPlatform.isDarwin {
                 # 1Password's stable agent socket is the identity source on Darwin;
                 # Linux hosts authenticate inbound through authorized keys.
-                IdentityAgent = "\"~/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock\"";
+                IdentityAgent = "\"${identityAgent}\"";
               }
               // {
                 # Connection multiplexing for performance
@@ -328,40 +568,75 @@ in {
           // tunnelHosts;
       };
 
-      forge.bundleApps = lib.mapAttrs' (name: _: lib.nameValuePair "${name}-vps-tunnel" (tunnelTitle name)) vpsTunnels;
+      forge.bundleApps =
+        lib.mapAttrs' (name: _: lib.nameValuePair "${name}-vps-tunnel" (tunnelTitle name)) vpsTunnels
+        // lib.listToAttrs (map (p: lib.nameValuePair p.agent "${lib.toSentenceCase p.name} Mount ${lib.toSentenceCase p.m.name}") mountPairs);
 
-      # Durable per-row tunnel agents; local parity mode boots them out before
-      # compose binds the same loopback ports. KeepAlive=true implies
-      # RunAtLoad, so the pair never coexists.
-      launchd.agents = lib.mapAttrs' (name: tunnel:
-        lib.nameValuePair "${name}-vps-tunnel" {
-          enable = true;
-          config = {
-            Label = "com.parametric-forge.${name}-vps-tunnel";
-            ProgramArguments = ["${tunnelSupervisor}/bin/forge-vps-tunnel" "${tunnelRowJson name tunnel}"];
-            KeepAlive = true;
-            ThrottleInterval = 30;
-            ProcessType = "Background";
-            StandardOutPath = "${config.home.homeDirectory}/Library/Logs/forge-${name}-vps-tunnel.log";
-            StandardErrorPath = "${config.home.homeDirectory}/Library/Logs/forge-${name}-vps-tunnel.log";
-            AssociatedBundleIdentifiers = [(tunnelBundleId name)];
-          };
-        })
-      clientTunnels;
+      # Durable per-row tunnel + mount agents; local parity mode boots the
+      # tunnels out before compose binds the same loopback ports.
+      # KeepAlive=true implies RunAtLoad, so the pair never coexists.
+      # ExitTimeOut on mounts outlives the rclone unmount drain — the launchd
+      # 20s default SIGKILLs the teardown and strands a dead NFS mountpoint.
+      launchd.agents =
+        lib.mapAttrs' (name: tunnel:
+          lib.nameValuePair "${name}-vps-tunnel" {
+            enable = true;
+            config = {
+              Label = "com.parametric-forge.${name}-vps-tunnel";
+              ProgramArguments = ["${tunnelSupervisor}/bin/forge-vps-tunnel" "${tunnelRowJson name tunnel}"];
+              KeepAlive = true;
+              ThrottleInterval = 30;
+              ProcessType = "Background";
+              StandardOutPath = "${homeDir}/Library/Logs/forge-${name}-vps-tunnel.log";
+              StandardErrorPath = "${homeDir}/Library/Logs/forge-${name}-vps-tunnel.log";
+              AssociatedBundleIdentifiers = [(tunnelBundleId name)];
+            };
+          })
+        clientTunnels
+        // lib.listToAttrs (map (p:
+          lib.nameValuePair p.agent {
+            enable = true;
+            config = {
+              Label = "com.parametric-forge.${p.agent}";
+              ProgramArguments = ["${mountSupervisor}/bin/forge-vps-mount" "${mountRowJson p}"];
+              KeepAlive = true;
+              ThrottleInterval = 30;
+              ExitTimeOut = 45;
+              ProcessType = "Background";
+              StandardOutPath = "${homeDir}/Library/Logs/forge-${p.agent}.log";
+              StandardErrorPath = "${homeDir}/Library/Logs/forge-${p.agent}.log";
+              AssociatedBundleIdentifiers = ["com.parametric-forge.${p.agent}"];
+            };
+          })
+        mountPairs);
     }
     # Static host gate: config attr names must never depend on pkgs (fixpoint).
     // lib.optionalAttrs (host.os == "nixos") {
-      systemd.user.services = lib.mapAttrs' (name: tunnel:
-        lib.nameValuePair "${name}-vps-tunnel" {
-          Unit.Description = "Forge VPS tunnel ${name}";
-          Service = {
-            ExecStart = "${tunnelSupervisor}/bin/forge-vps-tunnel ${tunnelRowJson name tunnel}";
-            Environment = ["FORGE_TUNNEL_RECEIPTS=%h/.local/state/forge-tunnels/${name}-vps-tunnel.receipts.log"];
-            Restart = "always";
-            RestartSec = 30;
-          };
-          Install.WantedBy = ["default.target"];
-        })
-      clientTunnels;
+      systemd.user.services =
+        lib.mapAttrs' (name: tunnel:
+          lib.nameValuePair "${name}-vps-tunnel" {
+            Unit.Description = "Forge VPS tunnel ${name}";
+            Service = {
+              ExecStart = "${tunnelSupervisor}/bin/forge-vps-tunnel ${tunnelRowJson name tunnel}";
+              Environment = ["FORGE_TUNNEL_RECEIPTS=%h/.local/state/forge-tunnels/${name}-vps-tunnel.receipts.log"];
+              Restart = "always";
+              RestartSec = 30;
+            };
+            Install.WantedBy = ["default.target"];
+          })
+        clientTunnels
+        // lib.listToAttrs (map (p:
+          lib.nameValuePair p.agent {
+            Unit.Description = "Forge VPS mount ${p.agent}";
+            Service = {
+              ExecStart = "${mountSupervisor}/bin/forge-vps-mount ${mountRowJson p}";
+              Environment = ["FORGE_MOUNT_RECEIPTS=%h/.local/state/forge-mounts/${p.agent}.receipts.log"];
+              Restart = "always";
+              RestartSec = 30;
+              TimeoutStopSec = 45;
+            };
+            Install.WantedBy = ["default.target"];
+          })
+        mountPairs);
     };
 }

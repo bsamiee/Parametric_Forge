@@ -36,16 +36,18 @@ Colima is the Docker API / Compose / Buildx / Pulumi default and never yields `D
 
 ## [05]-[MCP]
 
-| [INDEX] | [TRAP]                                                            | [RULE_NOW]                                                      |
-| :-----: | :---------------------------------------------------------------- | :-------------------------------------------------------------- |
-|  [01]   | Project `mcpServers` blocks shadowed the fleet with stale servers | An empty `{}` project block is inert; the global fleet governs  |
-|  [02]   | `mcpServers.jupyter.env` carried a literal `JUPYTER_TOKEN`        | Carry no literal token env; the wrapper resolves the live token |
-|  [03]   | Required MCP registration proves only startup/registration        | `required = true` fails startup/resume if the MCP cannot init   |
-|  [04]   | Relocated LSP telemetry/plugin rows pointed at absent paths/SHAs  | Telemetry is `@forge-lsp`; dead marketplace keys are deleted    |
+| [INDEX] | [TRAP]                                                            | [RULE_NOW]                                                        |
+| :-----: | :---------------------------------------------------------------- | :---------------------------------------------------------------- |
+|  [01]   | Project `mcpServers` blocks shadowed the fleet with stale servers | An empty `{}` project block is inert; the global fleet governs    |
+|  [02]   | `mcpServers.jupyter.env` carried a literal `JUPYTER_TOKEN`        | Carry no literal token env; the wrapper resolves the live token   |
+|  [03]   | Required MCP registration proves only startup/registration        | `required = true` fails startup/resume if the MCP cannot init     |
+|  [04]   | Relocated LSP telemetry/plugin rows pointed at absent paths/SHAs  | Telemetry is `@forge-lsp`; dead marketplace keys are deleted      |
+|  [05]   | Stdio servers ignoring stdin EOF stranded under hard-killed hosts | Long-lived stdio pythons ride the supervised parent-liveness lane |
 
 - [02]: the literal token overrode wrapper token-file resolution.
 - [03]: tunnel health, env, and wrapper are separate axes.
 - [04]: the plugin cache is materialized with `claude plugin update`.
+- [05]: `superviseStdio` (`languages/scientific-tools.nix`) and the rhino router lane own the pattern — process group + `kill -0` client watchdog; node fleet servers exit on EOF and ride bare.
 
 ## [06]-[ZELLIJ_TERMINAL]
 
@@ -90,20 +92,20 @@ Colima is the Docker API / Compose / Buildx / Pulumi default and never yields `D
 
 ## [08]-[SHELL_KERNELS]
 
-| [INDEX] | [TRAP]                                                              | [RULE_NOW]                                                            |
-| :-----: | :------------------------------------------------------------------ | :-------------------------------------------------------------------- |
-|  [01]   | Torn JSONL tail line killed pipefail readers                        | Readers rail with `fromjson?` or explicit `\|\| true`                 |
-|  [02]   | `exec` skipped the EXIT trap, leaking a mktemp per run              | Cleanup never rides an EXIT trap across `exec`                        |
-|  [03]   | `du \| cut \|\| echo 0` emitted two-line values on failure          | Fallbacks come from one guarded fold, never `\|\| echo`               |
-|  [04]   | Silent-skip wrapper guards shipped thinner `bin/` on upstream drift | A missing wrapper target fails the build with a named drift error     |
-|  [05]   | Raw 0x1F bytes in jq literals read as `join("")` everywhere         | Control characters spell as escapes (`\u001f`), never raw bytes       |
-|  [06]   | `if ! { a; b; c; }` suspended errexit inside the block              | Guarded multi-step blocks `&&`-chain                                  |
-|  [07]   | `sd` exited 0 on zero matches; drift shipped as `state=edited`      | Self-rewriting rails assert the landed row post-edit, never pre-guard |
-|  [08]   | A sentinel strip deleted the file tail on a torn region             | Region strips fail closed on an unterminated region                   |
-|  [09]   | A `jq -e .` gate admitted wrong shapes, killing a merge             | Merge-with-live gates assert document shape and fall to replace       |
-|  [10]   | `lib.zipListsWith` silently dropped rows past the shorter list      | Curated-list zips pair with a capacity assertion at the owner         |
-|  [11]   | A grep totality proof passed on an unrelated string literal         | Totality greps match the dispatch-arm shape, never any occurrence     |
-|  [12]   | Nested `''` interpolation dropped inner-line indentation            | KDL/config fragments carry full emitted indentation, single-quoted    |
+| [INDEX] | [TRAP]                                                         | [RULE_NOW]                                                            |
+| :-----: | :------------------------------------------------------------- | :-------------------------------------------------------------------- |
+|  [01]   | Torn JSONL tail line killed pipefail readers                   | Readers rail with `fromjson?` or explicit `\|\| true`                 |
+|  [02]   | `exec` skipped the EXIT trap, leaking a mktemp per run         | Cleanup never rides an EXIT trap across `exec`                        |
+|  [03]   | `du \| cut \|\| echo 0` emitted two-line values on failure     | Fallbacks come from one guarded fold, never `\|\| echo`               |
+|  [04]   | Silent-skip wrapper guards shipped thinner `bin/` on drift     | A missing wrapper target fails the build with a named drift error     |
+|  [05]   | Raw 0x1F bytes in jq literals read as `join("")` everywhere    | Control characters spell as escapes (`\u001f`), never raw bytes       |
+|  [06]   | `if ! { a; b; c; }` suspended errexit inside the block         | Guarded multi-step blocks `&&`-chain                                  |
+|  [07]   | `sd` exited 0 on zero matches; drift shipped as `state=edited` | Self-rewriting rails assert the landed row post-edit, never pre-guard |
+|  [08]   | A sentinel strip deleted the file tail on a torn region        | Region strips fail closed on an unterminated region                   |
+|  [09]   | A `jq -e .` gate admitted wrong shapes, killing a merge        | Merge-with-live gates assert document shape and fall to replace       |
+|  [10]   | `lib.zipListsWith` silently dropped rows past the shorter list | Curated-list zips pair with a capacity assertion at the owner         |
+|  [11]   | A grep totality proof passed on an unrelated string literal    | Totality greps match the dispatch-arm shape, never any occurrence     |
+|  [12]   | Nested `''` interpolation dropped inner-line indentation       | KDL/config fragments carry full emitted indentation, single-quoted    |
 
 - [01]: owners: the `forge-agents` quota lanes and attention fold (`shell-tools/mcp-launchers.nix`).
 - [02]: owner: the `sqlite-forge` kernel in `overlays/default.nix`; proven live — `trap ... EXIT; exec true` prints nothing.
@@ -123,11 +125,23 @@ shfmt parses bare hyphenated associative-array subscripts as arithmetic and rewr
 - [01]: the click executes `forge-agents focus` — zellij pane focus, pty-to-host-app ancestry resolution, receipt per lane (`shell-tools/mcp-launchers.nix`).
 - [02]: the join normalizes `ps` short/long tty forms and dedupes `unique_by(.tty)`; a session whose latest event is `Notification` but whose lane is busy already got its answer.
 
-## [11]-[RASM]
+## [11]-[REMOTE_MOUNT]
+
+| [INDEX] | [TRAP]                                                            | [RULE_NOW]                                                        |
+| :-----: | :---------------------------------------------------------------- | :---------------------------------------------------------------- |
+|  [01]   | Backend drop left rclone a zombie NFS server, ejected receiptless | Health loop probes process/device/statfs; a failed verdict drains |
+|  [02]   | Reaping rclone under a held volume raised the interrupted dialog  | Drain detaches the volume first, reaps the NFS server second      |
+|  [03]   | A stale rclone survives its supervisor across agent bounces       | Startup reaps stale rclone by `--volname` before serving twice    |
+|  [04]   | Idle SFTP pool expiry re-handshook per statfs; one RST = dialog   | `idle_timeout=0` pins one warm session for the mount's lifetime   |
+
+- Owner: `shell-tools/ssh.nix` `mountSupervisor`; an external clean unmount also exits rclone (rc=0), so `cause=rclone-exited` and `cause=ejected` are two receipts of one recovery arm.
+- WezTerm nightly fronts `default_ssh_auth_sock` with a per-process proxy (`~/.local/share/wezterm/agent.<pid>`); panes see the proxy, and `ssh-add -l` through it must list the 1Password identity — the proxy, not the raw socket path, is the propagation proof.
+
+## [12]-[RASM]
 
 Rasm owns the method and language-law bedrock Forge composes: campaign method and the `docs/stacks/{typescript,python}` doctrine that Forge references rather than duplicates. `docs/standards/design-doctrine.md` is byte-identical across Rasm, Forge, and Maghz; Forge adds `nix-doctrine`, Maghz adds `ops-doctrine`. The docgen master is Rasm `.claude/skills/docgen/` and mirrors propagate by copy, never tooling. Forge-owned global Git config controls LFS behavior that reaches Rasm — Rasm's tip carries zero LFS attribute rows, making the filter inert. Rasm points its machine-level scientific and provisioning executables back to Forge ownership: a shell/PATH/scientific/DB failure in Rasm is fixed in the Forge owner, never patched in Rasm.
 
-## [12]-[MAGHZ]
+## [13]-[MAGHZ]
 
 Forge owns the `nixosConfigurations.maghz` host and `forge-redeploy --os nixos --host maghz`; the Maghz service plane deploys only after the host base is proven. `ssh.nix` owns the Maghz host identity and the tunnel substrate, and the Codex Postgres MCP converged from an inline `uvx` row to the Forge launcher `forge-maghz-postgres-mcp` (env key `MAGHZ_MCP__DATABASE_URI`, `required=true`) — so Codex startup depends on tunnel ordering, and `profile local|prd` is the only mode-changing entry, declared up only after service-health probes pass through the tunnel. Maghz is service-bearing (Postgres 18, Ollama, n8n, Atuin sync on loopback, Docker volumes, Doppler interpolation) and owns its own standards and `ops-doctrine`.
 

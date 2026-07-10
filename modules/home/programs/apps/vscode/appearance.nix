@@ -93,8 +93,13 @@ in {
     # --- [THEME_OWNERSHIP]
     # Builtin substrate: every visible family is overridden below, so the
     # base theme contributes fallback values only, never a rendered color.
+    # Product icons ride the one finalist that restyles the full codicon
+    # registry (651 defs over 603 ids) — same publisher family as the file
+    # icons, one visual vocabulary across both icon planes; product glyphs
+    # are single-color fonts, so the palette above still owns every hue.
     "workbench.colorTheme" = "Default Dark Modern";
     "workbench.iconTheme" = "material-icon-theme";
+    "workbench.productIconTheme" = "material-product-icons";
     "material-icon-theme.folders.color" = s.accent.structural;
     # --- [RENDER]
     # The ANSI projection is contrast-verified at the palette owner; the
@@ -111,6 +116,11 @@ in {
     # size or heading-scale keys). Manual zoom stays per-window (zoomPerWindow).
     "window.zoomLevel" = 0.25;
     "workbench.tree.indent" = 12;
+    # Gutter and tab-row density: 3 line-number chars cover every file under
+    # 10k lines without the 5-char default's dead margin; compact is the one
+    # registered step below default tab height.
+    "editor.lineNumbersMinChars" = 3;
+    "window.density.editorTabHeight" = "compact";
   };
 
   # --- [SETTINGS] ---------------------------------------------------------------------------
@@ -148,15 +158,31 @@ in {
     # --- [TOKENS]: textMate + semantic rules from the one scope pivot.
     # Markdown scheme rides precise scopes, never the text.html.markdown base:
     # prose falls to editor.foreground (text.primary); [BRACKET] markers parse
-    # as shortcut link references and pin back to prose so string-yellow never
-    # leaks; headings own every token inside themselves via deeper selectors.
+    # as shortcut link references — labels read magenta-bold as status chips
+    # while the bracket sigils recede to the structural tier beside list and
+    # quote markers, so a `]-[` connector run stays typographic, never a
+    # magenta smear; headings own every token inside themselves via deeper
+    # selectors. fontStyle REPLACES on the deepest match (never merges), so
+    # nested emphasis restates the outer weight. Raw spans are ONE literal
+    # tier: sigils and content both ride string-yellow (the sigil row exists
+    # because the generic punctuation rule would out-match the span rule on
+    # the deeper punctuation.definition.raw scope); fence chrome recedes with
+    # the info-string language id riding the attribute vocabulary.
     "editor.tokenColorCustomizations".textMateRules =
       t.projections.vscodeTokenRules
       ++ [
         {
-          name = "Markdown bracket markers";
-          scope = "meta.link.reference string.other.link.title, meta.link.reference punctuation.definition.link.title, meta.link.reference constant.other.reference.link, meta.link.reference punctuation.definition.constant, meta.link.reference.def constant.other.reference.link, meta.link.reference.def punctuation.definition.constant";
-          settings.foreground = s.accent.secondary;
+          name = "Markdown bracket marker label";
+          scope = "meta.link.reference string.other.link.title, meta.link.reference constant.other.reference.link, meta.link.reference.def constant.other.reference.link";
+          settings = {
+            foreground = s.accent.secondary;
+            fontStyle = "bold";
+          };
+        }
+        {
+          name = "Markdown bracket marker sigils";
+          scope = "meta.link.reference punctuation.definition.link.title, meta.link.reference punctuation.definition.constant, meta.link.reference.def punctuation.definition.constant";
+          settings.foreground = s.accent.structural;
         }
         {
           name = "Markdown heading";
@@ -167,16 +193,32 @@ in {
           };
         }
         {
-          name = "Markdown inline raw";
-          scope = "markup.inline.raw";
-          settings.foreground = s.accent.secondary;
+          # Whole raw span — content and both sigils — is one string-yellow
+          # literal; known-language fences still override through their own
+          # embedded grammars (deeper scopes always win).
+          name = "Markdown raw span";
+          scope = "markup.inline.raw, markup.raw.block";
+          settings.foreground = p.yellow;
         }
         {
-          # Sigil/content split: the backtick punctuation rides string-yellow
-          # while the span content keeps the magenta accent above.
           name = "Markdown raw sigils";
-          scope = "markup.inline.raw punctuation.definition.raw, markup.fenced_code punctuation.definition.markdown, markup.raw punctuation.definition.markdown";
+          scope = "markup.inline.raw punctuation.definition.raw";
           settings.foreground = p.yellow;
+        }
+        {
+          # Fence chrome recedes to the punctuation tier; embedded code keeps
+          # its own grammar and the body of unknown fences stays prose.
+          name = "Markdown fence delimiter";
+          scope = "markup.fenced_code.block.markdown punctuation.definition.markdown";
+          settings.foreground = s.text.subtle;
+        }
+        {
+          name = "Markdown fence language";
+          scope = "fenced_code.block.language";
+          settings = {
+            foreground = p.blue;
+            fontStyle = "italic";
+          };
         }
         {
           name = "Markdown link";
@@ -190,6 +232,39 @@ in {
             foreground = s.accent.tertiary;
             fontStyle = "italic";
           };
+        }
+        {
+          # Replacement semantics would render ***x*** italic-only without
+          # this row; foreground still resolves from the italic rule above.
+          name = "Markdown emphasis stack";
+          scope = "markup.bold markup.italic, markup.italic markup.bold";
+          settings.fontStyle = "bold italic";
+        }
+        {
+          name = "Markdown strikethrough";
+          scope = "markup.strikethrough";
+          settings = {
+            foreground = s.text.muted;
+            fontStyle = "strikethrough";
+          };
+        }
+        {
+          name = "Markdown structure markers";
+          scope = "punctuation.definition.list.begin.markdown, punctuation.definition.quote.begin.markdown";
+          settings.foreground = s.accent.structural;
+        }
+        {
+          name = "Markdown quote";
+          scope = "markup.quote";
+          settings = {
+            foreground = s.text.subtle;
+            fontStyle = "italic";
+          };
+        }
+        {
+          name = "Markdown separator";
+          scope = "meta.separator.markdown";
+          settings.foreground = s.text.subtle;
         }
       ];
     "editor.semanticTokenColorCustomizations" = {
@@ -219,7 +294,7 @@ in {
         "toolbar.activeBackground" = s.surface.selected;
         "textLink.foreground" = s.state.info;
         "textLink.activeForeground" = p.brightBlue;
-        "textPreformat.foreground" = s.state.warning;
+        "textPreformat.foreground" = p.yellow; # preview/settings inline code joins the editor's raw-literal tier
         "textPreformat.background" = s.surface.crust;
         "textBlockQuote.background" = s.surface.surface;
         "textBlockQuote.border" = s.text.muted;
@@ -257,6 +332,11 @@ in {
         "editorStickyScroll.background" = s.surface.base;
         "editorStickyScroll.shadow" = s.surface.crust;
         "editorStickyScrollHover.background" = s.surface.raised;
+        "editorRuler.foreground" = s.surface.selected;
+        "editor.foldBackground" = a p.selection "4D";
+        "editor.linkedEditingBackground" = a p.magenta "1A";
+        "editor.rangeHighlightBackground" = a p.selection "33";
+        "editorGhostText.foreground" = s.text.muted;
         # --- [EDITOR_WIDGETS]
         "editorWidget.background" = s.surface.overlay;
         "editorWidget.border" = s.ui.border;
@@ -271,6 +351,8 @@ in {
         "quickInput.background" = s.surface.overlay;
         "quickInputTitle.background" = s.surface.crust;
         "quickInputList.focusBackground" = s.surface.selected;
+        "quickInputList.focusForeground" = s.text.primary;
+        "quickInputList.focusIconForeground" = s.accent.primary;
         # --- [DIAGNOSTICS]
         "editorError.foreground" = s.state.danger;
         "editorWarning.foreground" = s.state.warning;
@@ -291,6 +373,7 @@ in {
         "editorGutter.modifiedBackground" = g.modified;
         "editorGutter.deletedBackground" = g.deleted;
         "editorGutter.foldingControlForeground" = s.text.subtle;
+        "editorGutter.commentRangeForeground" = s.text.subtle;
         "editorOverviewRuler.border" = "#00000000";
         "editorOverviewRuler.findMatchForeground" = a p.yellow "80";
         "editorOverviewRuler.selectionHighlightForeground" = a p.selection "CC";
@@ -327,6 +410,8 @@ in {
         "peekViewTitle.background" = s.surface.surface;
         "peekViewTitleLabel.foreground" = s.text.primary;
         "peekViewTitleDescription.foreground" = s.text.subtle;
+        "peekViewEditorGutter.background" = s.surface.surface;
+        "searchEditor.findMatchBackground" = s.ui.search;
         "diffEditor.insertedLineBackground" = s.diff.add;
         "diffEditor.insertedTextBackground" = s.diff.addEmph;
         "diffEditor.removedLineBackground" = s.diff.del;
@@ -361,6 +446,7 @@ in {
         "statusBar.debuggingBackground" = s.state.attention;
         "statusBar.debuggingForeground" = s.text.inverse;
         "statusBarItem.hoverBackground" = s.surface.raised;
+        "statusBarItem.prominentBackground" = s.surface.raised;
         "statusBarItem.remoteBackground" = s.accent.structural;
         "statusBarItem.remoteForeground" = s.text.primary;
         "statusBarItem.errorBackground" = s.state.danger;
@@ -406,6 +492,9 @@ in {
         "list.warningForeground" = s.state.warning;
         "list.deemphasizedForeground" = s.text.muted;
         "list.dropBackground" = a p.selection "40";
+        "list.filterMatchBackground" = s.ui.search;
+        "list.focusHighlightForeground" = s.accent.primary;
+        "tree.tableColumnsBorder" = s.surface.selected;
         "listFilterWidget.background" = s.surface.overlay;
         "listFilterWidget.outline" = s.accent.primary;
         "listFilterWidget.noMatchesOutline" = s.state.danger;
@@ -455,6 +544,7 @@ in {
         "menu.selectionBackground" = s.surface.selected;
         "menu.selectionForeground" = s.text.primary;
         "menu.separatorBackground" = s.surface.selected;
+        "menu.border" = s.surface.selected;
         "notifications.background" = s.surface.overlay;
         "notifications.foreground" = s.text.primary;
         "notificationCenterHeader.background" = s.surface.crust;
@@ -479,6 +569,7 @@ in {
         "gitDecoration.ignoredResourceForeground" = s.text.muted;
         "gitDecoration.renamedResourceForeground" = g.renamed;
         "gitDecoration.conflictingResourceForeground" = g.conflict;
+        "gitDecoration.submoduleResourceForeground" = s.state.info;
         # --- [TERMINAL]: ANSI-16 rides the ansiRows fold
         "terminal.background" = p.background;
         "terminal.foreground" = p.foreground;
@@ -491,10 +582,27 @@ in {
         "terminalOverviewRuler.cursorForeground" = s.accent.primary;
         "terminalStickyScroll.background" = p.background;
         "terminalStickyScrollHover.background" = s.surface.raised;
+        "terminal.dropBackground" = a p.selection "40";
         # --- [DEBUG_TESTING_CHAT]
         "debugToolBar.background" = s.surface.overlay;
         "debugIcon.breakpointForeground" = s.state.danger;
         "debugIcon.startForeground" = s.state.success;
+        "debugTokenExpression.name" = p.blue;
+        "debugTokenExpression.value" = s.text.primary;
+        "debugTokenExpression.string" = p.yellow;
+        "debugTokenExpression.boolean" = p.purple;
+        "debugTokenExpression.number" = p.purple;
+        "debugTokenExpression.error" = s.state.danger;
+        "debugTokenExpression.type" = p.cyan;
+        "debugConsole.infoForeground" = s.state.info;
+        "debugConsole.warningForeground" = s.state.warning;
+        "debugConsole.errorForeground" = s.state.danger;
+        "debugConsole.sourceForeground" = s.text.subtle;
+        "notebook.editorBackground" = s.surface.base;
+        "notebook.cellEditorBackground" = s.surface.surface;
+        "notebook.cellBorderColor" = s.surface.selected;
+        "notebook.focusedCellBorder" = s.accent.primary;
+        "notebook.selectedCellBackground" = s.surface.raised;
         "testing.iconPassed" = s.state.success;
         "testing.iconFailed" = s.state.danger;
         "testing.iconErrored" = s.state.danger;

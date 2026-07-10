@@ -30,141 +30,75 @@
     rgba = alpha: "rgba(${toString r}, ${toString g}, ${toString b}, ${alpha})";
   };
 
+  # --- [ROW_GRAMMAR]
+  # Positional tuples zip against a field schema: a short tuple drops trailing
+  # fields, null skips a slot, and an oversized tuple faults — zipListsWith
+  # would truncate silently otherwise. byName keys a row list on its `name`.
+  row = fields: t:
+    lib.throwIf (builtins.length t > builtins.length fields)
+    "theme row '${toString (builtins.head t)}' exceeds schema [${lib.concatStringsSep " " fields}]"
+    (lib.filterAttrs (_: v: v != null) (lib.listToAttrs (lib.zipListsWith lib.nameValuePair fields t)));
+  byName = rows: lib.listToAttrs (map (r: lib.nameValuePair r.name (removeAttrs r ["name"])) rows);
+
   # Enriched palette: the canonical rows plus the design-language growth —
   # crust/surface complete the elevation ladder, subtle is the third fg tier
   # and the structural-UI hue, amber splits warning from string-yellow, blue
   # ends the faked ANSI blue, brightBlue ends blue==cyan. current_line is
   # retuned (chroma pulled to kill the muddy active line) and magenta is
-  # AA-lifted; every row is contrast-verified against the base.
-  palette = lib.mapAttrs (_: mkColor) {
-    crust = "#0E0D16";
-    background = "#15131F";
-    surface = "#201E30";
-    current_line = "#2A2A3A";
-    selection = "#44475A";
-    foreground = "#F8F8F2";
-    subtle = "#8E91A5";
-    comment = "#6272A4";
-    purple = "#A072C6";
-    cyan = "#94F2E8";
-    green = "#50FA7B";
-    yellow = "#F1FA8C";
-    amber = "#F3AE51";
-    orange = "#F97359";
-    red = "#FF5555";
-    magenta = "#EE55A8";
-    pink = "#E98FBE";
-    blue = "#7AA2F7";
-    brightBlue = "#A9C7FF";
-  };
+  # AA-lifted; every row is contrast-verified against the base. Rows spell as
+  # name=#HEX tokens folded through mkColor — one vector, one constructor.
+  hexRows = s: lib.listToAttrs (map (t: let p = lib.splitString "=" t; in lib.nameValuePair (builtins.head p) (mkColor (builtins.elemAt p 1))) (lib.splitString " " s));
+  palette = hexRows "crust=#0E0D16 background=#15131F surface=#201E30 current_line=#2A2A3A selection=#44475A foreground=#F8F8F2 subtle=#8E91A5 comment=#6272A4 purple=#A072C6 cyan=#94F2E8 green=#50FA7B yellow=#F1FA8C amber=#F3AE51 orange=#F97359 red=#FF5555 magenta=#EE55A8 pink=#E98FBE blue=#7AA2F7 brightBlue=#A9C7FF";
 
   # Derived roles: computed fills, never palette rows. Diff and search tint
   # the background and hold the code foreground neutral (fg clears 7.7+ on
   # every fill); emphasis is the same hue at +0.06 OKLCH L.
-  derived = lib.mapAttrs (_: mkColor) {
-    overlay = "#37364D";
-    diffAdd = "#122A18";
-    diffAddEmph = "#213926";
-    diffDel = "#3B1818";
-    diffDelEmph = "#4C2726";
-    diffChange = "#152539";
-    diffChangeEmph = "#233449";
-    search = "#3A3418";
-    searchCurrent = "#5A4E1E";
-  };
+  derived = hexRows "overlay=#37364D diffAdd=#122A18 diffAddEmph=#213926 diffDel=#3B1818 diffDelEmph=#4C2726 diffChange=#152539 diffChangeEmph=#233449 search=#3A3418 searchCurrent=#5A4E1E";
 
-  roles = {
-    surface = {
-      inherit (palette) crust surface;
-      base = palette.background;
-      raised = palette.current_line;
-      inherit (derived) overlay;
-      selected = palette.selection;
+  # Role families as [name color] pair rows folded per family; git rows carry
+  # a redundant glyph so meaning never rides hue alone ([name color glyph]).
+  pairs = ps: lib.listToAttrs (map (p: lib.nameValuePair (builtins.elemAt p 0) (builtins.elemAt p 1)) ps);
+  roles =
+    lib.mapAttrs (_: pairs) {
+      surface = [["crust" palette.crust] ["base" palette.background] ["surface" palette.surface] ["raised" palette.current_line] ["overlay" derived.overlay] ["selected" palette.selection]];
+      text = [["primary" palette.foreground] ["subtle" palette.subtle] ["muted" palette.comment] ["inverse" palette.background]];
+      accent = [["primary" palette.cyan] ["secondary" palette.magenta] ["tertiary" palette.pink] ["structural" palette.purple]];
+      state = [["success" palette.green] ["warning" palette.amber] ["attention" palette.orange] ["danger" palette.red] ["info" palette.blue]];
+      diff = [["add" derived.diffAdd] ["addEmph" derived.diffAddEmph] ["del" derived.diffDel] ["delEmph" derived.diffDelEmph] ["change" derived.diffChange] ["changeEmph" derived.diffChangeEmph]];
+      ui = [["border" palette.subtle] ["cursor" palette.foreground] ["indent" palette.subtle] ["whitespace" palette.selection] ["search" derived.search] ["match" derived.searchCurrent]];
+    }
+    // {
+      git = byName (map (row ["name" "color" "glyph"]) [
+        ["added" palette.green "[+]"]
+        ["staged" palette.green "[●]"]
+        ["modified" palette.blue "[~]"]
+        ["deleted" palette.red "[−]"]
+        ["untracked" palette.green "[?]"]
+        ["renamed" palette.purple "[»]"]
+        ["conflict" palette.magenta "[!]"]
+      ]);
     };
-    text = {
-      primary = palette.foreground;
-      inherit (palette) subtle;
-      muted = palette.comment;
-      inverse = palette.background;
-    };
-    accent = {
-      primary = palette.cyan;
-      secondary = palette.magenta;
-      tertiary = palette.pink;
-      structural = palette.purple;
-    };
-    state = {
-      success = palette.green;
-      warning = palette.amber;
-      attention = palette.orange;
-      danger = palette.red;
-      info = palette.blue;
-    };
-    diff = {
-      add = derived.diffAdd;
-      addEmph = derived.diffAddEmph;
-      del = derived.diffDel;
-      delEmph = derived.diffDelEmph;
-      change = derived.diffChange;
-      changeEmph = derived.diffChangeEmph;
-    };
-    # Git states carry a redundant glyph so meaning never rides hue alone.
-    git = {
-      added = {
-        color = palette.green;
-        glyph = "+";
-      };
-      staged = {
-        color = palette.green;
-        glyph = "●";
-      };
-      modified = {
-        color = palette.blue;
-        glyph = "~";
-      };
-      deleted = {
-        color = palette.red;
-        glyph = "−";
-      };
-      untracked = {
-        color = palette.subtle;
-        glyph = "?";
-      };
-      renamed = {
-        color = palette.purple;
-        glyph = "»";
-      };
-      conflict = {
-        color = palette.magenta;
-        glyph = "!";
-      };
-    };
-    ui = {
-      border = palette.subtle;
-      cursor = palette.foreground;
-      indent = palette.subtle;
-      whitespace = palette.selection;
-      inherit (derived) search;
-      match = derived.searchCurrent;
-    };
-  };
 
   # Canonical hex->ANSI-16 assignment; terminal palettes and ANSI-slot
   # consumers agree with truecolor consumers. Slot 4 carries a real blue,
   # slot 12 its bright companion, and both magenta slots ride the AA lift.
-  ansi16 = {
-    inherit (palette) red green yellow magenta cyan blue;
-    black = palette.background;
-    white = palette.foreground;
-    brightBlack = palette.selection;
-    brightRed = palette.red;
-    brightGreen = palette.green;
-    brightYellow = palette.yellow;
-    inherit (palette) brightBlue;
-    brightMagenta = palette.magenta;
-    brightCyan = palette.cyan;
-    brightWhite = palette.foreground;
-  };
+  # Brights derive from the normal octet with the two real divergences
+  # (brightBlack -> selection, brightBlue -> the dedicated bright row) as
+  # override rows.
+  ansi16 = let
+    base = {
+      inherit (palette) red green yellow blue magenta cyan;
+      black = palette.background;
+      white = palette.foreground;
+    };
+  in
+    base
+    // lib.mapAttrs' (n: v: lib.nameValuePair "bright${lib.toUpper (builtins.substring 0 1 n)}${builtins.substring 1 99 n}" v)
+    (base
+      // {
+        black = palette.selection;
+        blue = palette.brightBlue;
+      });
 
   # Master scope table: the one scope-to-role-to-hue pivot. tmTheme (bat,
   # delta, yazi syntect), VS Code textMate + semantic tokens, and the nvim
@@ -173,221 +107,105 @@
   # Rebinds vs stock Dracula: keyword->pink (AA), operator/punctuation->subtle,
   # escape->orange, variable/parameter->blue (ends type==variable), tag keeps
   # magenta, warning splits to amber so a diagnostic is never a string.
-  syntaxScopes = [
-    {
-      name = "Comment";
-      scope = "comment, punctuation.definition.comment";
-      color = palette.comment;
-      style = "italic";
-      captures = ["comment"];
-    }
-    {
-      name = "String";
-      scope = "string";
-      color = palette.yellow;
-      captures = ["string" "character"];
-    }
-    {
-      name = "Escape";
-      scope = "constant.character.escape";
-      color = palette.orange;
-      captures = ["string.escape" "character.special"];
-    }
-    {
-      name = "Number";
-      scope = "constant.numeric";
-      color = palette.purple;
-      captures = ["number" "number.float"];
-    }
-    {
-      name = "Constant";
-      scope = "constant.language, constant.character, constant.other";
-      color = palette.purple;
-      captures = ["constant" "constant.builtin" "boolean"];
-    }
-    {
-      name = "Keyword";
-      scope = "keyword, storage, storage.type, storage.modifier";
-      color = palette.pink;
-      captures = ["keyword"];
-    }
-    {
-      name = "Operator";
-      scope = "keyword.operator, punctuation.accessor";
-      color = palette.subtle;
-      captures = ["operator" "keyword.operator"];
-    }
-    {
-      name = "Punctuation";
-      scope = "punctuation";
-      color = palette.subtle;
-      captures = ["punctuation.bracket" "punctuation.delimiter" "punctuation.special"];
-    }
-    {
-      name = "Function";
-      scope = "entity.name.function, support.function";
-      color = palette.green;
-      captures = ["function" "function.method" "function.macro" "function.builtin"];
-    }
-    {
-      name = "Type";
-      scope = "entity.name.class, entity.name.type, entity.other.inherited-class, support.type, support.class";
-      color = palette.cyan;
-      captures = ["type" "type.builtin" "constructor"];
-    }
-    {
-      name = "Variable";
-      scope = "variable, support.variable";
-      color = palette.blue;
-      captures = ["variable" "variable.member" "property"];
-    }
-    {
-      name = "Parameter";
-      scope = "variable.parameter";
-      color = palette.blue;
-      style = "italic";
-      captures = ["variable.parameter"];
-    }
-    {
-      name = "Attribute";
-      scope = "entity.other.attribute-name";
-      color = palette.magenta;
-      style = "italic";
-      captures = ["attribute"];
-    }
-    {
-      name = "Tag";
-      scope = "entity.name.tag";
-      color = palette.magenta;
-      captures = ["tag"];
-    }
-    {
-      name = "Heading";
-      scope = "markup.heading";
-      color = palette.purple;
-      style = "bold";
-      captures = ["markup.heading"];
-    }
-    {
-      name = "Bold";
-      scope = "markup.bold";
-      color = palette.orange;
-      style = "bold";
-      captures = ["markup.strong"];
-    }
-    {
-      name = "Italic";
-      scope = "markup.italic";
-      color = palette.yellow;
-      style = "italic";
-      captures = ["markup.italic"];
-    }
-    {
-      name = "Link";
-      scope = "markup.underline.link";
-      color = palette.blue;
-      captures = ["markup.link" "markup.link.url" "string.special.url"];
-    }
-    {
-      name = "Inserted";
-      scope = "markup.inserted";
-      color = palette.green;
-      captures = ["diff.plus"];
-    }
-    {
-      name = "Deleted";
-      scope = "markup.deleted";
-      color = palette.red;
-      captures = ["diff.minus"];
-    }
-    {
-      name = "Invalid";
-      scope = "invalid";
-      color = palette.foreground;
-      background = palette.red;
-      captures = [];
-    }
+  # Row tuple: [name scope color style captures background].
+  syntaxScopes = map (row ["name" "scope" "color" "style" "captures" "background"]) [
+    ["Comment" "comment, punctuation.definition.comment" palette.comment "italic" ["comment"]]
+    ["String" "string" palette.yellow null ["string" "character"]]
+    ["Escape" "constant.character.escape" palette.orange null ["string.escape" "character.special"]]
+    ["Number" "constant.numeric" palette.purple null ["number" "number.float"]]
+    ["Constant" "constant.language, constant.character, constant.other" palette.purple null ["constant" "constant.builtin" "boolean"]]
+    ["Keyword" "keyword, storage, storage.type, storage.modifier" palette.pink null ["keyword"]]
+    ["Operator" "keyword.operator, punctuation.accessor" palette.subtle null ["operator" "keyword.operator"]]
+    ["Punctuation" "punctuation" palette.subtle null ["punctuation.bracket" "punctuation.delimiter" "punctuation.special"]]
+    ["Function" "entity.name.function, support.function" palette.green null ["function" "function.method" "function.macro" "function.builtin"]]
+    ["Type" "entity.name.class, entity.name.type, entity.other.inherited-class, support.type, support.class" palette.cyan null ["type" "type.builtin" "constructor"]]
+    ["Variable" "variable, support.variable" palette.blue null ["variable" "variable.member" "property"]]
+    ["Parameter" "variable.parameter" palette.blue "italic" ["variable.parameter"]]
+    ["Attribute" "entity.other.attribute-name" palette.magenta "italic" ["attribute"]]
+    ["Tag" "entity.name.tag" palette.magenta null ["tag"]]
+    ["Heading" "markup.heading" palette.purple "bold" ["markup.heading"]]
+    ["Bold" "markup.bold" palette.orange "bold" ["markup.strong"]]
+    ["Italic" "markup.italic" palette.yellow "italic" ["markup.italic"]]
+    ["Link" "markup.underline.link" palette.blue null ["markup.link" "markup.link.url" "string.special.url"]]
+    ["Inserted" "markup.inserted" palette.green null ["diff.plus"]]
+    ["Deleted" "markup.deleted" palette.red null ["diff.minus"]]
+    ["Invalid" "invalid" palette.foreground null [] palette.red]
   ];
 
   # Semantic-token projection: language-server styling VS Code textMate rules
-  # miss. Same pivot hues; modifiers express sub-distinction, never new hues.
-  semanticRules = {
-    namespace = palette.cyan.hex;
-    class = palette.cyan.hex;
-    enum = palette.cyan.hex;
-    interface = palette.cyan.hex;
-    struct = palette.cyan.hex;
-    type = palette.cyan.hex;
-    typeParameter = palette.cyan.hex;
-    function = palette.green.hex;
-    method = palette.green.hex;
-    macro = palette.green.hex;
-    parameter = {
-      foreground = palette.blue.hex;
-      fontStyle = "italic";
-    };
-    variable = palette.blue.hex;
-    property = palette.blue.hex;
-    enumMember = palette.purple.hex;
-    "variable.readonly" = palette.purple.hex;
-    keyword = palette.pink.hex;
-    string = palette.yellow.hex;
-    number = palette.purple.hex;
-    comment = {
-      foreground = palette.comment.hex;
-      fontStyle = "italic";
-    };
-    decorator = palette.magenta.hex;
-    operator = palette.subtle.hex;
+  # miss. Same pivot hues folded per family; modifiers express sub-distinction,
+  # never new hues. Server-specific rows below the generic fold are keyed to
+  # what each live server actually emits (verified against nixd, ty, Roslyn,
+  # and the builtin TS provider); a rule nothing emits is dead weight, and
+  # nixd's overloaded standard legend actively mis-colors Nix under unscoped
+  # generic rules.
+  it = c: {
+    foreground = c.hex;
+    fontStyle = "italic";
   };
+  semanticRules =
+    lib.genAttrs ["namespace" "class" "enum" "interface" "struct" "type" "typeParameter" "recordClass:csharp" "recordStruct:csharp"] (_: palette.cyan.hex)
+    // lib.genAttrs ["function" "method" "macro" "extensionMethod:csharp" "keyword.static:nix"] (_: palette.green.hex)
+    // lib.genAttrs ["variable" "property" "method:nix" "type:nix" "field:csharp"] (_: palette.blue.hex)
+    // lib.genAttrs ["enumMember" "variable.readonly" "number" "macro:nix" "builtinConstant:python" "constant:csharp"] (_: palette.purple.hex)
+    // lib.genAttrs ["keyword" "controlKeyword:csharp" "macro:csharp"] (_: palette.pink.hex)
+    // {
+      parameter = it palette.blue;
+      string = palette.yellow.hex;
+      comment = it palette.comment;
+      decorator = palette.magenta.hex;
+      operator = palette.subtle.hex;
+      # nixd overloads a standard legend: booleans ride `macro`, attr names
+      # `method`, with-scoped vars `interface`, lambda formals and null
+      # `regexp`, select paths `type`, builtins `keyword.static`, unresolved
+      # names `variable.abstract` — every correction is language-scoped so the
+      # generic rows above keep their real meaning elsewhere.
+      "interface:nix" = it palette.blue;
+      "regexp:nix" = it palette.blue;
+      "variable.abstract:nix" = palette.red.hex;
+      # ty (Python): pyright-lineage custom token types.
+      "selfParameter:python" = it palette.pink;
+      "clsParameter:python" = it palette.pink;
+      # Roslyn (C#): custom token family; ReassignedVariable is its
+      # mutable-variable signal (boolean form adds the flag without
+      # replacing weight or slant from other rules).
+      "stringVerbatim:csharp" = palette.yellow.hex;
+      "stringEscapeCharacter:csharp" = palette.orange.hex;
+      "*.ReassignedVariable".underline = true;
+      "*.deprecated".strikethrough = true;
+    };
 
   # Shared icon vocabulary: one directory/process glyph table projected into
   # consumers (Yazi dirs today; tab titles, prompts, and dashboards adopt
   # through their register rows) — never app-local maps.
-  icons = {
-    dirs = {
-      ".git" = {
-        glyph = "󰊢";
-        color = palette.pink;
-      };
-      node_modules = {
-        glyph = "󰏗";
-        color = palette.green;
-      };
-      target = {
-        glyph = "󰀘";
-        color = palette.magenta;
-      };
-      ".venv" = {
-        glyph = "󰅩";
-        color = palette.yellow;
-      };
-      __pycache__ = {
-        glyph = "󰌠";
-        color = palette.yellow;
-      };
-      ".config" = {
-        glyph = "";
-        color = palette.purple;
-      };
-      ".ssh" = {
-        glyph = "";
-        color = palette.pink;
-      };
-      src = {
-        glyph = "󰈙";
-        color = palette.cyan;
-      };
-      bin = {
-        glyph = "󰞰";
-        color = palette.green;
-      };
-    };
+  # Dir row tuple: [name glyph color]. glyphsProved fails eval on any empty
+  # glyph: the harness edit path can silently strip BMP private-use glyphs,
+  # and an empty glyph is a dead icon row every consumer renders as nothing.
+  glyphsProved = v: let
+    dead =
+      lib.attrNames (lib.filterAttrs (_: r: r.glyph == "") v.dirs)
+      ++ lib.attrNames (lib.filterAttrs (_: g: g == "") v.process);
+  in
+    if dead == []
+    then v
+    else throw "forge.theme.icons: empty glyph rows (harness strip?): ${lib.concatStringsSep ", " dead}";
+  icons = glyphsProved {
+    dirs = byName (map (row ["name" "glyph" "color"]) [
+      [".git" "󰊢" palette.pink]
+      ["node_modules" "󰏗" palette.green]
+      ["target" "󰀘" palette.magenta]
+      [".venv" "󰅩" palette.yellow]
+      ["__pycache__" "󰌠" palette.yellow]
+      [".config" "󰒓" palette.purple]
+      [".ssh" "󰣀" palette.pink]
+      ["src" "󰈙" palette.cyan]
+      ["bin" "󰞰" palette.green]
+    ]);
     process = {
-      nvim = "";
-      zsh = "";
+      nvim = "";
+      zsh = "󰆍";
       python = "󰌠";
-      node = "";
+      node = "󰎙";
       docker = "󰡨";
       ssh = "󰣀";
       git = "󰊢";
@@ -400,64 +218,66 @@
   # One row per rendering consumer; verdicts: bound (interpolates owner
   # tokens), gap (adoption pending), defer (no config surface to own).
   # coverage.json projects from these rows so gaps surface before drift.
+  # Row tuple: [id owner carrier binds verdict]; binds admits as a space-
+  # joined token string and lands typed so JSON consumers never re-split.
   targets = let
-    # `binds` admits as a space-joined token string and lands typed: the row
-    # carries a real list so JSON consumers never re-split.
-    row = id: owner: carrier: binds: verdict: {
-      inherit id owner carrier verdict;
-      binds =
-        if binds == "-"
-        then []
-        else lib.splitString " " binds;
-    };
     apps = "modules/home/programs/apps";
     st = "modules/home/programs/shell-tools";
-  in [
-    (row "wezterm" "${apps}/wezterm/default.nix" "lua+toml" "roles ansi16 fonts" "bound")
-    (row "zellij" "${apps}/zellij/config.nix" "kdl" "palette roles" "bound")
-    (row "zellij-theme" "${apps}/zellij/themes/dracula.nix" "kdl" "palette" "bound")
-    (row "yazi" "${apps}/yazi/theme.nix" "toml+tmTheme" "palette icons" "bound")
-    (row "nvim" "${apps}/nvim/default.nix" "lua" "palette scopes roles" "bound")
-    (row "vscode" "${apps}/vscode/default.nix" "jsonc-sentinel" "ansi16 scopes semantic fonts" "bound")
-    (row "bat" "${st}/bat.nix" "tmTheme" "scopes" "bound")
-    (row "delta" "modules/home/programs/git-tools/git.nix" "gitconfig" "ansi16 diff blameRamp" "bound")
-    (row "lazygit" "modules/home/programs/git-tools/lazygit.nix" "yaml" "palette" "bound")
-    (row "starship" "${st}/starship.nix" "toml" "palette" "bound")
-    (row "fzf" "${st}/fzf.nix" "env" "palette" "bound")
-    (row "eza" "${st}/eza.nix" "yaml" "palette" "bound")
-    (row "fastfetch" "${st}/fastfetch.nix" "json" "palette fonts" "bound")
-    (row "k9s" "modules/home/programs/container-tools/k9s.nix" "yaml" "roles" "bound")
-    (row "atuin" "${st}/atuin.nix" "toml" "palette" "bound")
-    (row "carbon" "${st}/carbon.nix" "json" "scopes fonts" "bound")
-    (row "bottom" "${st}/bottom.nix" "toml" "palette" "bound")
-    (row "procs" "${st}/procs.nix" "toml" "ansi16-slots" "bound")
-    (row "jnv" "${st}/jnv.nix" "flags" "palette" "bound")
-    (row "pik" "${st}/pik.nix" "toml" "palette" "bound")
-    (row "trippy" "${st}/trippy.nix" "toml" "palette" "bound")
-    (row "tlrc" "${st}/tlrc.nix" "toml" "palette" "bound")
-    (row "ripgrep" "${st}/ripgrep.nix" "flags" "palette" "bound")
-    (row "browsers" "${st}/browsers.nix" "toml" "palette" "bound")
-    (row "posting" "${st}/posting.nix" "yaml" "palette" "bound")
-    (row "process-compose" "${st}/process-compose.nix" "yaml" "palette" "bound")
-    (row "mcp-cells" "${st}/mcp-launchers.nix" "zjstatus-pipe" "roles" "bound")
-    (row "glow" "modules/home/programs/media-tools/glow.nix" "json" "-" "gap")
-    (row "zsh-syntax-highlighting" "modules/home/programs/zsh" "env" "-" "gap")
-    (row "zsh-autosuggestions" "modules/home/programs/zsh" "env" "-" "gap")
-    (row "you-should-use" "modules/home/programs/zsh" "env" "-" "gap")
-    (row "macos-accent" "modules/darwin/settings" "defaults" "-" "gap")
-    (row "mermaid-html-studio" ".claude/skills" "css" "-" "gap")
-    (row "wallpaper" "modules/home/assets/wallpaper" "bitmap" "-" "defer")
-    (row "dock-controlcenter" "system-owned" "-" "-" "defer")
-  ];
+    mkTarget = t: let
+      r = row ["id" "owner" "carrier" "binds" "verdict"] t;
+    in
+      r // {binds = lib.optionals (r.binds != "-") (lib.splitString " " r.binds);};
+  in
+    map mkTarget [
+      ["wezterm" "${apps}/wezterm/default.nix" "lua+toml" "roles ansi16 fonts" "bound"]
+      ["zellij" "${apps}/zellij/config.nix" "kdl" "palette roles" "bound"]
+      ["zellij-theme" "${apps}/zellij/themes/dracula.nix" "kdl" "palette" "bound"]
+      ["yazi" "${apps}/yazi/theme.nix" "toml+tmTheme" "palette icons" "bound"]
+      ["nvim" "${apps}/nvim/default.nix" "lua" "palette scopes roles" "bound"]
+      ["vscode" "${apps}/vscode/default.nix" "jsonc-sentinel" "ansi16 scopes semantic fonts" "bound"]
+      ["bat" "${st}/bat.nix" "tmTheme" "scopes" "bound"]
+      ["delta" "modules/home/programs/git-tools/git.nix" "gitconfig" "ansi16 diff blameRamp" "bound"]
+      ["lazygit" "modules/home/programs/git-tools/lazygit.nix" "yaml" "palette" "bound"]
+      ["starship" "${st}/starship.nix" "toml" "palette" "bound"]
+      ["fzf" "${st}/fzf.nix" "env" "palette" "bound"]
+      ["eza" "${st}/eza.nix" "yaml" "palette" "bound"]
+      ["fastfetch" "${st}/fastfetch.nix" "json" "palette fonts" "bound"]
+      ["k9s" "modules/home/programs/container-tools/k9s.nix" "yaml" "roles" "bound"]
+      ["atuin" "${st}/atuin.nix" "toml" "palette" "bound"]
+      ["carbon" "${st}/carbon.nix" "json" "scopes fonts" "bound"]
+      ["bottom" "${st}/bottom.nix" "toml" "palette" "bound"]
+      ["procs" "${st}/procs.nix" "toml" "ansi16-slots" "bound"]
+      ["jnv" "${st}/jnv.nix" "flags" "palette" "bound"]
+      ["pik" "${st}/pik.nix" "toml" "palette" "bound"]
+      ["trippy" "${st}/trippy.nix" "toml" "palette" "bound"]
+      ["tlrc" "${st}/tlrc.nix" "toml" "palette" "bound"]
+      ["ripgrep" "${st}/ripgrep.nix" "flags" "palette" "bound"]
+      ["browsers" "${st}/browsers.nix" "toml" "palette" "bound"]
+      ["posting" "${st}/posting.nix" "yaml" "palette" "bound"]
+      ["process-compose" "${st}/process-compose.nix" "yaml" "palette" "bound"]
+      ["mcp-cells" "${st}/mcp-launchers.nix" "zjstatus-pipe" "roles" "bound"]
+      ["glow" "modules/home/programs/media-tools/glow.nix" "json" "-" "gap"]
+      ["zsh-syntax-highlighting" "modules/home/programs/zsh" "env" "-" "gap"]
+      ["zsh-autosuggestions" "modules/home/programs/zsh" "env" "-" "gap"]
+      ["you-should-use" "modules/home/programs/zsh" "env" "-" "gap"]
+      ["macos-accent" "modules/darwin/settings" "defaults" "-" "gap"]
+      ["mermaid-html-studio" ".claude/skills" "css" "-" "gap"]
+      ["wallpaper" "modules/home/assets/wallpaper" "bitmap" "-" "defer"]
+      ["dock-controlcenter" "system-owned" "-" "-" "defer"]
+    ];
 
-  # Registry rows are proven at eval: every owner path must exist on disk, so a
-  # moved consumer breaks the registry loudly. "system-owned" rows carry no file.
+  # Registry rows are proven at eval: every owner path must exist on disk and
+  # ids stay unique, so a moved consumer or a copy-pasted row breaks loudly.
+  # "system-owned" rows carry no file.
   targetsProved = let
     missing = builtins.filter (t: t.owner != "system-owned" && !builtins.pathExists (../.. + "/${t.owner}")) targets;
+    dupes = lib.attrNames (lib.filterAttrs (_: c: c > 1) (lib.foldl' (acc: t: acc // {${t.id} = (acc.${t.id} or 0) + 1;}) {} targets));
   in
-    if missing == []
-    then targets
-    else throw "forge.theme.targets: owner paths missing on disk: ${lib.concatMapStringsSep ", " (t: "${t.id}=${t.owner}") missing}";
+    if missing != []
+    then throw "forge.theme.targets: owner paths missing on disk: ${lib.concatMapStringsSep ", " (t: "${t.id}=${t.owner}") missing}"
+    else if dupes != []
+    then throw "forge.theme.targets: duplicate target ids: ${lib.concatStringsSep ", " dupes}"
+    else targets;
 
   scopeRule = row: let
     style = row.style or null;
@@ -472,6 +292,9 @@
     ${lib.optionalString (background != null) "        <key>background</key><string>${background.hex}</string>\n"}${lib.optionalString (style != null) "        <key>fontStyle</key><string>${style}</string>\n"}      </dict>
         </dict>'';
 
+  # Global editor settings rows: [key role] pairs folded into the leading
+  # settings dict; scope rules follow from the master pivot.
+  tmSetting = p: "        <key>${builtins.elemAt p 0}</key><string>${(builtins.elemAt p 1).hex}</string>";
   tmTheme = ''
     <?xml version="1.0" encoding="UTF-8"?>
     <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -484,16 +307,7 @@
         <dict>
           <key>settings</key>
           <dict>
-            <key>background</key><string>${roles.surface.base.hex}</string>
-            <key>foreground</key><string>${roles.text.primary.hex}</string>
-            <key>caret</key><string>${roles.text.primary.hex}</string>
-            <key>selection</key><string>${roles.surface.selected.hex}</string>
-            <key>lineHighlight</key><string>${roles.surface.raised.hex}</string>
-            <key>invisibles</key><string>${roles.surface.selected.hex}</string>
-            <key>gutterForeground</key><string>${roles.text.subtle.hex}</string>
-            <key>findHighlight</key><string>${roles.ui.match.hex}</string>
-            <key>findHighlightForeground</key><string>${roles.text.primary.hex}</string>
-            <key>misspelling</key><string>${roles.state.danger.hex}</string>
+    ${lib.concatMapStringsSep "\n" tmSetting [["background" roles.surface.base] ["foreground" roles.text.primary] ["caret" roles.text.primary] ["selection" roles.surface.selected] ["lineHighlight" roles.surface.raised] ["invisibles" roles.surface.selected] ["gutterForeground" roles.text.subtle] ["findHighlight" roles.ui.match] ["findHighlightForeground" roles.text.primary] ["misspelling" roles.state.danger]]}
           </dict>
         </dict>
     ${lib.concatMapStringsSep "\n" scopeRule syntaxScopes}
@@ -528,34 +342,13 @@
     syntaxScopes;
   };
 
-  # Base16/Base24 export adapter (Tinted scheme exchange); the canonical
+  # Base16/Base24 export adapter (Tinted scheme exchange); slot names derive
+  # from the ordered palette-row vector (base00..base17). The canonical
   # palette stays runtime truth, this is the ecosystem egress.
-  base24Slots = {
-    base00 = palette.background;
-    base01 = palette.surface;
-    base02 = palette.selection;
-    base03 = palette.comment;
-    base04 = palette.subtle;
-    base05 = palette.foreground;
-    base06 = palette.foreground;
-    base07 = palette.foreground;
-    base08 = palette.red;
-    base09 = palette.orange;
-    base0A = palette.yellow;
-    base0B = palette.green;
-    base0C = palette.cyan;
-    base0D = palette.blue;
-    base0E = palette.purple;
-    base0F = palette.magenta;
-    base10 = palette.crust;
-    base11 = palette.crust;
-    base12 = palette.red;
-    base13 = palette.yellow;
-    base14 = palette.green;
-    base15 = palette.cyan;
-    base16 = palette.brightBlue;
-    base17 = palette.pink;
-  };
+  base24Slots = lib.listToAttrs (lib.imap0 (
+      i: p: lib.nameValuePair "base${lib.fixedWidthString 2 "0" (lib.toHexString i)}" palette.${p}
+    ) (lib.splitString " "
+      "background surface selection comment subtle foreground foreground foreground red orange yellow green cyan blue purple magenta crust crust red yellow green cyan brightBlue pink"));
   base24File = (pkgs.formats.yaml {}).generate "forge-base24.yaml" {
     system = "base24";
     name = "Forge Dracula";
@@ -743,67 +536,38 @@
     '';
     # WezTerm color-scheme rows in the colors-TOML shape; the tab bar sits on
     # the surface step and inactive chrome reads through the subtle tier.
-    weztermColorScheme = {
-      foreground = palette.foreground.hex;
-      background = palette.background.hex;
-      cursor_bg = palette.foreground.hex;
-      cursor_fg = palette.background.hex;
-      cursor_border = palette.foreground.hex;
-      selection_fg = palette.foreground.hex;
-      selection_bg = palette.selection.hex;
-      split = palette.subtle.hex;
-      quick_select_label_bg = {Color = roles.state.attention.hex;};
-      quick_select_label_fg = {Color = roles.text.inverse.hex;};
-      quick_select_match_bg = {Color = roles.surface.selected.hex;};
-      quick_select_match_fg = {Color = roles.text.primary.hex;};
-      input_selector_label_bg = {Color = roles.surface.raised.hex;};
-      input_selector_label_fg = {Color = roles.accent.primary.hex;};
-      launcher_label_bg = {Color = roles.surface.raised.hex;};
-      launcher_label_fg = {Color = roles.accent.primary.hex;};
-      ansi = map (c: c.hex) [
-        ansi16.black
-        ansi16.red
-        ansi16.green
-        ansi16.yellow
-        ansi16.blue
-        ansi16.magenta
-        ansi16.cyan
-        ansi16.white
-      ];
-      brights = map (c: c.hex) [
-        ansi16.brightBlack
-        ansi16.brightRed
-        ansi16.brightGreen
-        ansi16.brightYellow
-        ansi16.brightBlue
-        ansi16.brightMagenta
-        ansi16.brightCyan
-        ansi16.brightWhite
-      ];
-      tab_bar = {
-        background = roles.surface.surface.hex;
-        active_tab = {
-          bg_color = roles.accent.primary.hex;
-          fg_color = roles.text.inverse.hex;
-        };
-        inactive_tab = {
-          bg_color = roles.surface.surface.hex;
-          fg_color = roles.text.subtle.hex;
-        };
-        inactive_tab_hover = {
-          bg_color = roles.surface.raised.hex;
-          fg_color = roles.text.primary.hex;
-        };
-        new_tab = {
-          bg_color = roles.surface.surface.hex;
-          fg_color = roles.text.subtle.hex;
-        };
-        new_tab_hover = {
-          bg_color = roles.surface.raised.hex;
-          fg_color = roles.text.primary.hex;
-        };
+    # Label quads and tab rows fold from [bg fg] pairs; ANSI vectors derive
+    # from the slot-name order.
+    weztermColorScheme = let
+      labeled = lib.concatMapAttrs (n: p: {
+        "${n}_bg" = {Color = (builtins.elemAt p 0).hex;};
+        "${n}_fg" = {Color = (builtins.elemAt p 1).hex;};
+      });
+      tab = bg: fg: {
+        bg_color = bg.hex;
+        fg_color = fg.hex;
       };
-    };
+      slots = map (k: ansi16.${k}.hex);
+    in
+      lib.mapAttrs (_: c: c.hex) (pairs [["foreground" palette.foreground] ["background" palette.background] ["cursor_bg" palette.foreground] ["cursor_fg" palette.background] ["cursor_border" palette.foreground] ["selection_fg" palette.foreground] ["selection_bg" palette.selection] ["split" palette.subtle]])
+      // {
+        ansi = slots ["black" "red" "green" "yellow" "blue" "magenta" "cyan" "white"];
+        brights = slots ["brightBlack" "brightRed" "brightGreen" "brightYellow" "brightBlue" "brightMagenta" "brightCyan" "brightWhite"];
+        tab_bar = {
+          background = roles.surface.surface.hex;
+          active_tab = tab roles.accent.primary roles.text.inverse;
+          inactive_tab = tab roles.surface.surface roles.text.subtle;
+          inactive_tab_hover = tab roles.surface.raised roles.text.primary;
+          new_tab = tab roles.surface.surface roles.text.subtle;
+          new_tab_hover = tab roles.surface.raised roles.text.primary;
+        };
+      }
+      // labeled {
+        quick_select_label = [roles.state.attention roles.text.inverse];
+        quick_select_match = [roles.surface.selected roles.text.primary];
+        input_selector_label = [roles.surface.raised roles.accent.primary];
+        launcher_label = [roles.surface.raised roles.accent.primary];
+      };
     # Four-step surface ramp for delta blame backgrounds.
     blameRamp = lib.concatMapStringsSep " " (c: c.hex) [
       roles.surface.base

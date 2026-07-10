@@ -75,6 +75,21 @@
       openRegistration = true;
     };
 
+    # ntfy push server: the estate-private notification tier, loopback-only
+    # behind the maghz tunnel row (SSH is the auth boundary while no public
+    # ingress exists). The Mac publish arm selects its target through the
+    # NTFY_URL Doppler row; pointing that row here requires the Maghz compose
+    # Caddy site plus deny-all token auth landing together.
+    ntfy-sh = {
+      enable = true;
+      # base-url is loopback-truthful on BOTH tunnel ends (the forward maps
+      # port-to-port); it flips to the public URL with the ingress landing.
+      settings = {
+        base-url = "http://127.0.0.1:2586";
+        listen-http = "127.0.0.1:2586";
+      };
+    };
+
     journald.extraConfig = "SystemMaxUse=500M";
   };
 

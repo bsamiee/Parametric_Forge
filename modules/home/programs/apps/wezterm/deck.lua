@@ -26,21 +26,33 @@ for _, cmd in ipairs(rows.commands) do
     M.commands[cmd.id] = cmd
 end
 
-local layout = os.getenv("ZELLIJ_DEFAULT_LAYOUT") or "default"
-
 -- Workspace identity crosses the outer-inner seam intact: the zellij session
 -- carries the workspace name (estate slug policy), so windows in different
--- workspaces never mirror one shared session.
+-- workspaces never mirror one shared session. A frozen layout asset recorded
+-- under the slug (forge-zellij layout record) outranks the default layout —
+-- the freeze/load round-trip closing at the spawn seam.
 function M.session_args(name)
+    local layout = os.getenv("ZELLIJ_DEFAULT_LAYOUT") or "default"
+    local frozen = rows.paths.recorded_layouts .. "/" .. name .. ".kdl"
+    local f = io.open(frozen)
+    if f then
+        f:close()
+        layout = frozen
+    end
     return { rows.paths.zellij, "--layout", layout, "attach", "--create", name }
 end
 
-function M.workspace_cwd(name)
+function M.workspace_row(name)
     for _, w in ipairs(rows.workspaces) do
         if w.name == name then
-            return w.cwd
+            return w
         end
     end
+end
+
+function M.workspace_cwd(name)
+    local w = M.workspace_row(name)
+    return w and w.cwd
 end
 
 -- Destructive-action gate, total across version predicates: nightly prompts
@@ -85,13 +97,50 @@ function M.receipt(fields)
     end
 end
 
+-- Attention emitter: one JSONL row on the hook-feed superset schema (ts +
+-- source + event + terminal identity), so non-Claude processes ride the same
+-- collector fold, focus routing, and history queries as harness sessions.
+-- Append-only and failure-silent — a bell must never fault the event plane.
+function M.attention(fields)
+    local row = {
+        ts = os.date("!%Y-%m-%dT%H:%M:%SZ"),
+        source = "bell",
+        event = "Bell",
+        session_id = "-",
+        cwd = "-",
+        term = "WezTerm",
+        wezterm_pane = "",
+        zellij_session = "",
+        zellij_pane = "",
+        tty = "",
+    }
+    for k, v in pairs(fields) do
+        row[k] = v
+    end
+    local ok, json = pcall(wezterm.json_encode, row)
+    local f = ok and io.open(rows.attention_feed, "a") or nil
+    if f then
+        f:write(json .. "\n")
+        f:close()
+    end
+end
+
 -- Registry float rows are singletons: a live float for the row focuses
 -- instead of duplicating (a second redeploy press must never fork a second
 -- run); synthesized floats (varying args) never set reuse and spawn fresh.
+-- Workspace-scoped rows key the singleton per workspace, so each workspace
+-- owns its own instance (one scratch float per workspace, not one global).
 -- The registry rides wezterm.GLOBAL, surviving config reloads; a dead or
 -- workspace-hidden window fails resolution and falls through to a spawn.
+local function float_key(cmd)
+    if cmd.scope == "workspace" then
+        return cmd.id .. "@" .. wezterm.mux.get_active_workspace()
+    end
+    return cmd.id
+end
+
 local function focus_float(cmd)
-    local window_id = cmd.reuse and (wezterm.GLOBAL.deck_floats or {})[cmd.id] or nil
+    local window_id = cmd.reuse and (wezterm.GLOBAL.deck_floats or {})[float_key(cmd)] or nil
     if not window_id then
         return false
     end
@@ -108,16 +157,27 @@ end
 -- Floating utility deck: float rows shape the spawn natively — width/height
 -- ride wezterm.mux.spawn_window as cell counts; window level is a macOS
 -- platform row — other hosts degrade with an explicit receipt, never
--- silently. The spawn rides a pcall rail: a failure lands an error receipt,
--- never an unhandled callback fault (the second result is the error value).
+-- silently. Workspace-scoped rows take the active workspace row's float
+-- policy, so a remote workspace's floats read visibly distinct. The spawn
+-- rides a pcall rail: a failure lands an error receipt, never an unhandled
+-- callback fault (the second result is the error value).
 function M.spawn_float(cmd)
     if focus_float(cmd) then
         return
     end
-    local float = rows.floats[cmd.float]
+    local shape = cmd.float
+    local cwd = cmd.cwd
+    if cmd.scope == "workspace" then
+        -- Workspace-scoped floats take the active workspace row's shape AND
+        -- land at its cwd: the per-workspace scratch opens in the workspace.
+        local wrow = M.workspace_row(wezterm.mux.get_active_workspace())
+        shape = (wrow and wrow.float) or shape
+        cwd = cwd or (wrow and wrow.cwd)
+    end
+    local float = rows.floats[shape]
     local ok, spawned, pane, window = pcall(wezterm.mux.spawn_window, {
         args = cmd.args,
-        cwd = cmd.cwd,
+        cwd = cwd,
         width = float.width,
         height = float.height,
     })
@@ -141,7 +201,7 @@ function M.spawn_float(cmd)
     end
     if cmd.reuse then
         local registry = wezterm.GLOBAL.deck_floats or {}
-        registry[cmd.id] = window:window_id()
+        registry[float_key(cmd)] = window:window_id()
         wezterm.GLOBAL.deck_floats = registry
     end
     M.receipt({
@@ -338,6 +398,11 @@ local function key_actions(launcher, quick_select)
         ["debug-overlay"] = act.ShowDebugOverlay,
         ["quick-select"] = quick_select,
         ["launcher"] = act.ShowLauncherArgs(launcher),
+        -- Attention router: one keypress resolves the collector's latest
+        -- needs-input row and focuses that pane (forge-agents owns the hops).
+        ["attention-focus"] = wezterm.action_callback(function()
+            wezterm.background_child_process({ rows.paths.forge_agents, "focus" })
+        end),
         ["workspace-switch"] = wezterm.action_callback(function(window, pane)
             window:perform_action(
                 act.InputSelector({
@@ -388,10 +453,13 @@ function M.apply(config)
     config.line_height = rows.font.line_heights[primary] or rows.font.default_line_height
     config.harfbuzz_features = rows.font.harfbuzz_features
 
-    -- Nightly-gated scalar rows.
+    -- Nightly-gated scalar rows. The auth-sock pin routes every mux-spawned
+    -- pane and SSH domain through the 1Password agent instead of the
+    -- identity-less ambient launchd socket.
     if M.has_nightly then
         config.command_palette_font = config.font
         config.quick_select_remove_styling = true
+        config.default_ssh_auth_sock = rows.paths.auth_sock
     end
 
     -- Outer-inner seam: zellij attach + toolchain PATH projection. Deck-owned
