@@ -7,7 +7,7 @@ description: Inspect, query, validate, edit, and convert IFC/BIM building models
 
 Two surfaces own IFC work, chosen by task. The `ifc` MCP (the official IfcOpenShell server, launched by `forge-ifcmcp`) holds one model in memory across calls for live query and edit. The `ifcopenshell` batch CLI runs deterministic file-to-file conversion, validation, and extraction with no session. Reach for the MCP to investigate a model; reach for the CLI to produce an artifact.
 
-## Surface selection
+## [01]-[SURFACE_SELECTION]
 
 Pick the lowest tier that does the job:
 
@@ -15,7 +15,7 @@ Pick the lowest tier that does the job:
 2. `ifcopenshell` CLI — batch convert, validate, or extract to a file.
 3. `ifcopenshell` Python API — an operation with no MCP tool and no CLI: a `forge-companion-env uv run` script against `import ifcopenshell`.
 
-## The ifc MCP
+## [02]-[THE_IFC_MCP]
 
 One model is held in memory across calls. Load first, then operate.
 
@@ -25,7 +25,7 @@ One model is held in memory across calls. Load first, then operate.
 - Author: `ifc_edit` (`function_path`, `params`) dispatches the `ifcopenshell.api` mutation surface; read `ifc_docs` (`function_path`) for the signature before the edit.
 - Geometry: `ifc_shape_list`/`ifc_shape_docs`/`ifc_shape` for geometry-evaluation methods, `ifc_plot` (2D floorplan, elevation, or section as PNG/SVG), `ifc_render` (3D PNG).
 
-## The ifcopenshell batch CLI
+## [03]-[THE_IFCOPENSHELL_BATCH_CLI]
 
 `ifcopenshell` ships no cp315 wheel — every CLI tool runs through the cp312 companion lane: `forge-companion-env uvx --from ifcopenshell <tool> <args>`.
 

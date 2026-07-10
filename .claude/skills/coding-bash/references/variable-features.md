@@ -2,13 +2,13 @@
 
 Call stack introspection, nameref composition patterns, hierarchical trap composition, process lifecycle with PID maps, and dispatch-table capability detection including Bash 5.3 variables. Basic variable types, arithmetic, and brace expansion are in [bash-scripting-guide.md S4/S6](./bash-scripting-guide.md).
 
-| [IDX] | [PATTERN]          |  [S]  | [USE_WHEN]                               |
-| :---: | :----------------- | :---: | :--------------------------------------- |
-| [01]  | Call stack diag    |  S1   | ERR traps, reporting, auto-span          |
-| [02]  | Nameref patterns   |  S2   | Return channels, multi-return, pitfalls  |
-| [03]  | Trap hierarchy     |  S3   | ERR→EXIT ordering, resource scopes       |
-| [04]  | Process lifecycle  |  S4   | PID maps, signal fwd, wait -n, exec      |
-| [05]  | Runtime capability |  S5   | Fallback chains, env contracts, 5.3 vars |
+| [INDEX] | [PATTERN]          |  [S]  | [USE_WHEN]                               |
+| :-----: | :----------------- | :---: | :--------------------------------------- |
+|  [01]   | Call stack diag    |  S1   | ERR traps, reporting, auto-span          |
+|  [02]   | Nameref patterns   |  S2   | Return channels, multi-return, pitfalls  |
+|  [03]   | Trap hierarchy     |  S3   | ERR→EXIT ordering, resource scopes       |
+|  [04]   | Process lifecycle  |  S4   | PID maps, signal fwd, wait -n, exec      |
+|  [05]   | Runtime capability |  S5   | Fallback chains, env contracts, 5.3 vars |
 
 ## [01]-[CALL_STACK_DIAGNOSTICS]
 
@@ -83,11 +83,11 @@ divide quot rem 17 5  # quot=3, rem=2
 
 **Pitfalls** — nameref resolution uses dynamic scope, producing three failure modes:
 
-| [PITFALL]       | [TRIGGER]                          | [SYMPTOM]                              | [MITIGATION]                  |
-| :-------------- | :--------------------------------- | :------------------------------------- | :---------------------------- |
-| Circular ref    | `local -n ref="ref"`               | `circular name reference` error        | Never nameref to own name     |
-| Scope collision | `local` shadows nameref target     | Binds callee's local, not caller's var | `__` prefix for nameref names |
-| Nested alias    | Nested callee re-namerefs same ref | Silent overwrites across call depth    | Unique prefixes per depth     |
+| [INDEX] | [PITFALL]       | [TRIGGER]                          | [SYMPTOM]                              | [MITIGATION]                  |
+| :-----: | :-------------- | :--------------------------------- | :------------------------------------- | :---------------------------- |
+|  [01]   | Circular ref    | `local -n ref="ref"`               | `circular name reference` error        | Never nameref to own name     |
+|  [02]   | Scope collision | `local` shadows nameref target     | Binds callee's local, not caller's var | `__` prefix for nameref names |
+|  [03]   | Nested alias    | Nested callee re-namerefs same ref | Silent overwrites across call depth    | Unique prefixes per depth     |
 
 The `__` prefix convention prevents callee nameref names from colliding with caller variables — the Bash equivalent of name mangling.
 
@@ -277,7 +277,7 @@ shopt -s array_expand_once
 
 `_TOOL_FALLBACKS` encodes preference-ordered fallback chains — `_resolve_tool` walks via `command -v` and returns the first available implementation. `_ENV_CONTRACT` unifies required/type/enum validation into regex patterns. `_bench` uses EPOCHREALTIME PE arithmetic; `10#${us}` forces decimal on zero-padded microseconds. `BASH_SOURCE[-1]` is the entry script, `BASH_SOURCE[0]` is the current file. `BASH_MONOSECONDS` replaces `EPOCHSECONDS` where NTP drift matters. `BASH_TRAPSIG` enables dispatch-table signal routing from a single handler. `array_expand_once` (replacing `assoc_expand_once`) prevents subscript double-evaluation.
 
-## [RULES]
+## [06]-[RULES]
 
 - `FUNCNAME[i]` + `BASH_LINENO[i-1]` — arrays are offset by one; line number records call site, FUNCNAME records called function.
 - `set -E` (errtrace) mandatory for ERR traps inside functions — without it, only top-level failures trigger.

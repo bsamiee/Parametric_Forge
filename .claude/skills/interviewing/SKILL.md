@@ -102,13 +102,16 @@ The durability test: a future session consults the artifact as law — a standin
 
 Each durable kind is a content contract: the fields in its row are what a future session consults as law, and the kind's page composes through the html-studio type in its row. The contract binds the content; html-studio binds the page — a kind never restates spine, layout, or capture law here.
 
-| [INDEX] | [KIND]             | [CONTRACT]                                                                                                     | [HTML_STUDIO_TYPE] |
-| :-----: | :----------------- | :------------------------------------------------------------------------------------------------------------- | :----------------- |
-|  [01]   | `decision-record`  | context, drivers, options with costs, one indicative ruling, consequence, confirmation signal, marked premises | decision-doc       |
-|  [02]   | `direction-set`    | constraint frame, directions with thesis and tier, disconfirmation results, leading direction, flip triggers   | decision-doc       |
-|  [03]   | `roadmap-brief`    | confidence horizons, outcomes with owners and gates, promotion conditions, dependencies                        | roadmap            |
-|  [04]   | `blindspot-ledger` | axis-led findings with anchor, blast radius, consequence, and fold-back; clean axes listed                     | report             |
-|  [05]   | `capability-entry` | owner, edges, maturity, refused arms distinguished from gaps                                                   | atlas              |
+| [INDEX] | [KIND]             | [CONTRACT]                                                                  | [HTML_STUDIO_TYPE] |
+| :-----: | :----------------- | :-------------------------------------------------------------------------- | :----------------- |
+|  [01]   | `decision-record`  | context, drivers, costed options, one ruling, consequence, marked premises  | decision-doc       |
+|  [02]   | `direction-set`    | constraint frame, directions with thesis/tier, leading direction            | decision-doc       |
+|  [03]   | `roadmap-brief`    | confidence horizons, outcomes with owners/gates, promotion conditions, deps | roadmap            |
+|  [04]   | `blindspot-ledger` | axis-led findings: anchor, blast radius, consequence, fold-back; clean axes | report             |
+|  [05]   | `capability-entry` | owner, edges, maturity, refused arms distinguished from gaps                | atlas              |
+
+- `decision-record`: one indicative ruling; confirmation signal.
+- `direction-set`: disconfirmation results; flip triggers.
 
 Content law binds every instance regardless of kind:
 

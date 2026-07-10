@@ -38,11 +38,11 @@ Choose the container by what the reader retrieves; convert before styling.
 - Diagram fences — question admission, type selection, construction, render validation — ride the mermaid-diagramming skill; a doc admits one only as a declared regenerable representation.
 
 [FENCE_CONTENT]:
-- A fence carries a language tag plus one intent label from the closed set — `copy-safe` runs as written, `template` carries neutral placeholders, `conceptual` illustrates, `generated` and `output-only` carry produced output, `rejected` carries a counterexample — and the body honors its label: a copy-safe body runs, a renderable body renders under the corpus validator.
+- A fence carries a language tag plus one intent label from the closed set — `copy-safe` runs as written, `template` carries neutral placeholders, `conceptual` illustrates, `generated` and `output-only` carry produced output, `accepted` and `rejected` carry a worked contrast pair, `codemap` and `seams` carry width-capped topology — and the body honors its label: a copy-safe body runs, a renderable body renders under the corpus validator.
 - Reusable examples use legal neutral identifiers; placeholder strings such as `"<value-a>"` appear only inside literals, and no project, host, or domain concept anchors an example meant to travel.
 - Each example owns one demonstration region no sibling example repeats, and shows the form at real composed scale — admission, dispatch, and policy in one body with the growth axis visible — never an isolated minimum.
 
-[TABLE_ELIGIBILITY] — Build a table only when all three hold: rows share one comparison question, every column answers it with an atomic value, and more than one row exists. A single prose column disqualifies the table outright; a one-row table is a definition record; rows with no shared question are separate records. Eligibility is structural, never an enumeration license: rows mirroring an owner recorded elsewhere are a stale mirror however atomic the cells; the doc tables only its own registry or a verified representation.
+[TABLE_ELIGIBILITY] — Build a table only when all three hold: rows share one comparison question, every column answers it with an atomic value, and more than one row exists. One trailing prose column survives inside the cell budget; a second prose column disqualifies the table; a one-row table is a definition record; rows with no shared question are separate records. Eligibility is structural, never an enumeration license: rows mirroring an owner recorded elsewhere are a stale mirror however atomic the cells; the doc tables only its own registry or a verified representation.
 
 [CELL_BUDGET] — Each cell is one atomic unit: a value, marker, token, code span, proper noun, path, or a phrase of at most six words carrying no internal comma or clause-joining conjunction. A cell that wants a comma wants to be a card; a cell that wraps to a second rendered line is over budget. The stub column is a short unique key, never a sentence.
 
@@ -50,11 +50,11 @@ Choose the container by what the reader retrieves; convert before styling.
 
 [TABLE_MECHANICS] — Enumerable tables open with a centered `[INDEX]` column numbered `[01]` through `[NN]`; every header is a bracketed uppercase rubric; links live in a routing list after the table, never in cells beside prose columns.
 
-[TABLE_REFACTOR] — Repairing an existing table: test eligibility first (a failed test converts the whole table, never trims it), hoist repeated words to headers, split sentence-bearing rows to cards, extract links to field lines.
+[TABLE_REFACTOR] — Repairing an existing table preserves the grid: hoist repeated words into headers, lift shared invariants and clause tails into the lead or a one-line note after the table, split an overloaded row into two, split slash-joined values one row per value, extract links to field lines, and re-pad with `scripts/prose_gate.py fix --write`. Conversion is earned only two ways: the information is structurally non-tabular — an ordered sequence rides `OrderedStep` records, a no-shared-question row family rides records — or a declared type standard owns that information's shape; cell width alone never converts a table.
 
 ```markdown rejected
-| Mode | When to use it | Output |
-| --- | --- | --- |
+| Mode      | When to use it                                                                                            | Output                                                |
+| --------- | --------------------------------------------------------------------------------------------------------- | ----------------------------------------------------- |
 | interview | Use when requirements are ambiguous, contradictory, or live in the user's head — see [modes.md](modes.md) | a decisions table plus an implementation-ready prompt |
 ```
 

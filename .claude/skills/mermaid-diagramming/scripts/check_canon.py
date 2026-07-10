@@ -7,7 +7,7 @@
 
 # ruff: noqa: T201, D101, D103
 
-# --- [RUNTIME_PRELUDE] ---------------------------------------------------------------------
+# --- [RUNTIME_PRELUDE] ------------------------------------------------------------------
 
 from collections.abc import Mapping
 from enum import StrEnum
@@ -22,7 +22,7 @@ from ruamel.yaml import YAML
 from ruamel.yaml.error import YAMLError
 
 
-# --- [TYPES] -------------------------------------------------------------------------------
+# --- [TYPES] ----------------------------------------------------------------------------
 
 type Level = Literal["fail", "warn"]
 
@@ -101,7 +101,7 @@ class Cond(StrEnum):
     TITLE = "title"
 
 
-# --- [CONSTANTS] ---------------------------------------------------------------------------
+# --- [CONSTANTS] ------------------------------------------------------------------------
 
 FAIL: Level = "fail"
 WARN: Level = "warn"
@@ -292,7 +292,7 @@ CANON_INIT = "%%{init:...}%% directives are deprecated - frontmatter is the curr
 CANON_ORDER = "The config block holds one key order: theme, look, layout, root render keys, per-type blocks, themeVariables (opening darkMode, fontFamily, useGradient, dropShadow), themeCSS last."
 
 
-# --- [MODELS] ------------------------------------------------------------------------------
+# --- [MODELS] ---------------------------------------------------------------------------
 
 
 class Row(msgspec.Struct, frozen=True):
@@ -333,7 +333,7 @@ class Doc(msgspec.Struct, frozen=True):
     body: str
 
 
-# --- [TABLES] ------------------------------------------------------------------------------
+# --- [TABLES] ---------------------------------------------------------------------------
 
 TV = ("themeVariables",)
 
@@ -2647,7 +2647,7 @@ KANBAN_PRIORITY_STAMPS = (
 TV_OPENING = ("darkMode", "fontFamily", "useGradient", "dropShadow")
 
 
-# --- [OPERATIONS] --------------------------------------------------------------------------
+# --- [OPERATIONS] -----------------------------------------------------------------------
 
 
 def emit(row: Row, json_mode: bool) -> None:
@@ -3110,7 +3110,7 @@ def explained(rule_id: str) -> int:
     return 0
 
 
-# --- [COMPOSITION] -------------------------------------------------------------------------
+# --- [COMPOSITION] ----------------------------------------------------------------------
 
 APP = App(name="check-canon")
 ENCODER = msgspec.json.Encoder()

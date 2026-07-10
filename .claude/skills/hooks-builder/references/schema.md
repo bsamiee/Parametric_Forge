@@ -42,13 +42,13 @@ The `if` field narrows further with exactly one permission rule — `"Bash(git *
 
 ## [03]-[COMMON_FIELDS]
 
-| [INDEX] | [FIELD]         | [EFFECT]                                                                                                                                                                  |
-| :-----: | :-------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-|  [01]   | `type`          | `"command"`, `"http"`, `"mcp_tool"`, `"prompt"`, or `"agent"`                                                                                                             |
-|  [02]   | `if`            | Permission-rule filter on tool events; on other events a hook with `if` never runs                                                                                        |
-|  [03]   | `timeout`       | Seconds before cancel — 600 for command/http/mcp_tool, 30 for prompt, 60 for agent      |
-|  [04]   | `statusMessage` | Custom spinner text while the hook runs                                                                                                                                   |
-|  [05]   | `once`          | Runs once per session then is removed; honored only in skill frontmatter                                                                                                  |
+| [INDEX] | [FIELD]         | [EFFECT]                                                                           |
+| :-----: | :-------------- | :--------------------------------------------------------------------------------- |
+|  [01]   | `type`          | `"command"`, `"http"`, `"mcp_tool"`, `"prompt"`, or `"agent"`                      |
+|  [02]   | `if`            | Permission-rule filter on tool events; on other events a hook with `if` never runs |
+|  [03]   | `timeout`       | Seconds before cancel — 600 for command/http/mcp_tool, 30 for prompt, 60 for agent |
+|  [04]   | `statusMessage` | Custom spinner text while the hook runs                                            |
+|  [05]   | `once`          | Runs once per session then is removed; honored only in skill frontmatter           |
 
 `UserPromptSubmit` lowers the command-family default timeout to 30 seconds and `MessageDisplay` lowers it to 10.
 

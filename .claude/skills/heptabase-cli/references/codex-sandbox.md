@@ -4,7 +4,7 @@ The Heptabase CLI talks to the running desktop app through a local server. Codex
 may need permission to run `heptabase` outside its workspace sandbox so the CLI
 can reach that local server.
 
-## Common Symptom
+## [01]-[COMMON_SYMPTOM]
 
 ```json
 {

@@ -18,7 +18,7 @@ loopback return channel that injects `artifact-return` and `artifact-token` head
 appends receipts as one tagged JSONL stream.
 """
 
-# --- [RUNTIME_PRELUDE] -------------------------------------------------------------------
+# --- [RUNTIME_PRELUDE] ------------------------------------------------------------------
 
 from collections.abc import Iterator, Mapping, Sequence
 from datetime import datetime, UTC
@@ -68,7 +68,7 @@ if TYPE_CHECKING:
     from tree_sitter import Node
 
 
-# --- [TYPES] -----------------------------------------------------------------------------
+# --- [TYPES] ----------------------------------------------------------------------------
 
 type Status = Literal["ok", "warn", "fail"]
 type Session = Annotated[str, Parameter(env_var="CLAUDE_CODE_SESSION_ID")]
@@ -161,7 +161,7 @@ class OutputMode(StrEnum):
     JSON = "json"
 
 
-# --- [CONSTANTS] -------------------------------------------------------------------------
+# --- [CONSTANTS] ------------------------------------------------------------------------
 
 SKILL_DIR = Path(__file__).resolve().parent
 
@@ -231,7 +231,7 @@ sys.exit(1 if any(message.startswith(("error\\t", "pageerror\\t")) for message i
 """
 
 
-# --- [MODELS] ----------------------------------------------------------------------------
+# --- [MODELS] ---------------------------------------------------------------------------
 
 
 class Row(msgspec.Struct, frozen=True):
@@ -361,7 +361,7 @@ class VnuReport(msgspec.Struct, frozen=True):
     messages: tuple[VnuMessage, ...] = ()
 
 
-# --- [SERVICES] ------------------------------------------------------------------------------
+# --- [SERVICES] -------------------------------------------------------------------------
 
 ENC = msgspec.json.Encoder()
 DEC_ENVELOPE = msgspec.json.Decoder(Envelope)
@@ -436,9 +436,10 @@ class Runtime(msgspec.Struct, frozen=True):
     sink: Sink
 
 
-# --- [OPERATIONS] --------------------------------------------------------------------------
+# --- [OPERATIONS] -----------------------------------------------------------------------
 
 # --- [GATE_DOM]
+
 
 def _node_set(found: object) -> TypeIs[list[html.HtmlElement]]:
     return isinstance(found, list) and all(isinstance(node, html.HtmlElement) for node in found)
@@ -579,11 +580,12 @@ def dom_rows(artifact: Artifact) -> tuple[Row, ...]:
     )
     rows.extend(
         Row(artifact.path, line(node), Check.FIELDSET_LEGEND, "fail", "segmented control uses div role; use fieldset and legend")
-        for node in q(document, "//*[contains(concat(' ',normalize-space(@class),' '),' seg ') and (self::div or @role='group' or @role='radiogroup')]")
+        for node in q(
+            document, "//*[contains(concat(' ',normalize-space(@class),' '),' seg ') and (self::div or @role='group' or @role='radiogroup')]"
+        )
     )
     rows.extend(
-        Row(artifact.path, line(node), Check.FIELDSET_LEGEND, "fail", "fieldset lacks legend")
-        for node in q(document, "//fieldset[not(legend)]")
+        Row(artifact.path, line(node), Check.FIELDSET_LEGEND, "fail", "fieldset lacks legend") for node in q(document, "//fieldset[not(legend)]")
     )
     rows.extend(
         Row(artifact.path, line(node), Check.FORM_NAME, "warn", f"<{tag(node)}> capture control lacks name")
@@ -670,7 +672,13 @@ def css_structure_rows(artifact: Artifact) -> tuple[Row, ...]:
 def css_parse_rows(artifact: Artifact) -> tuple[Row, ...]:
     rules = tinycss2.parse_stylesheet(artifact.css, skip_comments=True, skip_whitespace=True)
     return tuple(
-        Row(artifact.path, artifact.css_base + int(getattr(rule, "source_line", 1)) - 1, Check.CSS_LAYER, "fail", getattr(rule, "message", "css parse error"))
+        Row(
+            artifact.path,
+            artifact.css_base + int(getattr(rule, "source_line", 1)) - 1,
+            Check.CSS_LAYER,
+            "fail",
+            getattr(rule, "message", "css parse error"),
+        )
         for rule in rules
         if getattr(rule, "type", "") == "error"
     )
@@ -804,7 +812,13 @@ def js_tree_rows(artifact: Artifact, script: Script) -> tuple[Row, ...]:
         rows.extend(_js_node_rows(artifact, script, node, sink=active))
         stack.extend((child, active) for child in node.children)
     rows.extend(
-        Row(artifact.path, script.line + script.body[: match.start()].count("\n"), Check.JS_LEGACY, "fail", "document.execCommand is dead; the kernel copy chain owns egress")
+        Row(
+            artifact.path,
+            script.line + script.body[: match.start()].count("\n"),
+            Check.JS_LEGACY,
+            "fail",
+            "document.execCommand is dead; the kernel copy chain owns egress",
+        )
         for match in EXEC_COMMAND.finditer(script.body)
     )
     return tuple(rows)
@@ -855,8 +869,7 @@ def audit(path: Path) -> tuple[Row, ...]:
             (Check.RESIDUE, RESIDUE, "unfilled {{...}} template placeholder remains"),
             (Check.SECRET, SECRET, "credential-shaped literal"),
         )
-        if pattern.search(value)
-        and not (check is Check.SECRET and ";base64," in value)
+        if pattern.search(value) and not (check is Check.SECRET and ";base64," in value)
     )
     return tuple(sorted(rows, key=lambda row: (row.line, row.check, row.detail)))
 
@@ -871,16 +884,14 @@ def conformance_rows(path: Path) -> tuple[Row, ...]:
         return (Row(str(path), 0, Check.CONFORMANCE, "warn", "vnu not on PATH: conformance skipped"),)
     try:
         proc = subprocess.run(
-            ["vnu", "--format", "json", "--stdout", str(path)],
-            capture_output=True,
-            text=True,
-            check=False,
-            timeout=SUBPROCESS_TIMEOUT["vnu"],
+            ["vnu", "--format", "json", "--stdout", str(path)], capture_output=True, text=True, check=False, timeout=SUBPROCESS_TIMEOUT["vnu"]
         )
     except subprocess.TimeoutExpired:
         return (Row(str(path), 0, Check.CONFORMANCE, "warn", f"vnu stalled past {SUBPROCESS_TIMEOUT['vnu']:.0f}s: conformance skipped"),)
     if not (stdout := proc.stdout.strip()):
-        return () if proc.returncode == 0 else (Row(str(path), 0, Check.CONFORMANCE, "warn", f"vnu emitted no output (returncode {proc.returncode})"),)
+        return (
+            () if proc.returncode == 0 else (Row(str(path), 0, Check.CONFORMANCE, "warn", f"vnu emitted no output (returncode {proc.returncode})"),)
+        )
     try:
         report = DEC_VNU.decode(stdout.encode("utf-8"))
     except msgspec.DecodeError:
@@ -947,7 +958,7 @@ def live_process(state: ServerState) -> psutil.Process | None:
         process = psutil.Process(state.pid)
         with process.oneshot():
             return process if process.is_running() and abs(process.create_time() - state.create_time) < 1.0 else None
-    except (psutil.NoSuchProcess, psutil.ZombieProcess, psutil.AccessDenied):
+    except psutil.NoSuchProcess, psutil.ZombieProcess, psutil.AccessDenied:
         return None
 
 
@@ -1094,7 +1105,7 @@ async def supervise(server: ThreadingHTTPServer, runtime: Runtime, ttl: float | 
     runtime.sink.event(EventKind.STOPPED, "supervisor exit")
 
 
-# --- [COMPOSITION] -------------------------------------------------------------------------
+# --- [COMPOSITION] ----------------------------------------------------------------------
 
 
 def gate(paths: Annotated[Sequence[Path], Parameter(name="paths")], *, json: bool = False) -> int:
@@ -1299,8 +1310,8 @@ def self_test() -> int:
         scratch = APath(tempfile.mkdtemp(prefix="html-studio-selftest-")) / "probe.html"
         await scratch.write_text(
             '<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n'
-            '<title>Self-test probe</title>\n<style>:root{color-scheme:dark light}</style>\n</head>\n'
-            '<body><main><h1>probe</h1></main><script>const probe=1;</script></body>\n</html>\n'
+            "<title>Self-test probe</title>\n<style>:root{color-scheme:dark light}</style>\n</head>\n"
+            "<body><main><h1>probe</h1></main><script>const probe=1;</script></body>\n</html>\n"
         )
         env = dict(os.environ) | {"CLAUDE_CODE_SESSION_ID": f"selftest-{os.getpid()}"}
         process = await anyio.open_process([sys.executable, str(APath(__file__)), "serve", str(scratch), "--output", "json"], env=env)
@@ -1352,7 +1363,7 @@ def self_test() -> int:
     return int(Exit.OK)
 
 
-# --- [ENTRY] ---------------------------------------------------------------------------------
+# --- [ENTRY] ----------------------------------------------------------------------------
 
 app = App(name="studio", result_action="return_int_as_exit_code_else_zero")
 app.command(gate)

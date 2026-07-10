@@ -2,16 +2,16 @@
 
 The OSA runtime owns script execution, compilation, language selection, descriptor boundaries, script-library composition, applet packaging, and signed distribution across `osascript`, `osacompile`, `osadecompile`, `osalang`, `OSAKit`, `NSAppleScript`, `ScriptingBridge`, and `Automator`. AppleScript and JXA sit as language rows on this one rail; production automation keeps process invocation, output serialization, and packaging policy outside script bodies and treats the descriptor boundary as the real API surface.
 
-| [INDEX] | [SURFACE] | [CONTRACT] |
-| :-: | :-- | :-- |
-| [01] | `osascript` | Runs `-e` text, one file, or stdin; `-l` selects language, `-s` selects serialization. |
-| [02] | `osacompile` | Compiles to `.scpt`/`.scptd`/`.app` by output extension; `-x` strips source, `-s`/`-u` set applet behavior. |
-| [03] | `osadecompile` | Recovers source from compiled data; run-only input returns `-1756`. |
-| [04] | `osalang` | Lists installed OSA components with `-L` capability flags. |
-| [05] | `OSAKit` | Embeds language-aware `OSAScript` with storage options and structured errors. |
-| [06] | `NSAppleScript` | Embeds AppleScript-only execution bound to the main thread. |
-| [07] | `ScriptingBridge` | Proxies Apple events as typed objects through `SBApplication`. |
-| [08] | `Automator` | Hosts `AMAppleScriptAction.script` as a stored `OSAScript`. |
+| [INDEX] | [SURFACE]         | [CONTRACT]                                                                                                  |
+| :-----: | :---------------- | :---------------------------------------------------------------------------------------------------------- |
+|  [01]   | `osascript`       | Runs `-e` text, one file, or stdin; `-l` selects language, `-s` selects serialization.                      |
+|  [02]   | `osacompile`      | Compiles to `.scpt`/`.scptd`/`.app` by output extension; `-x` strips source, `-s`/`-u` set applet behavior. |
+|  [03]   | `osadecompile`    | Recovers source from compiled data; run-only input returns `-1756`.                                         |
+|  [04]   | `osalang`         | Lists installed OSA components with `-L` capability flags.                                                  |
+|  [05]   | `OSAKit`          | Embeds language-aware `OSAScript` with storage options and structured errors.                               |
+|  [06]   | `NSAppleScript`   | Embeds AppleScript-only execution bound to the main thread.                                                 |
+|  [07]   | `ScriptingBridge` | Proxies Apple events as typed objects through `SBApplication`.                                              |
+|  [08]   | `Automator`       | Hosts `AMAppleScriptAction.script` as a stored `OSAScript`.                                                 |
 
 ## [01]-[INVOCATION_AND_ARGV]
 

@@ -66,32 +66,35 @@ An implement-plus-review request runs the cycle without per-step prompts: implem
 
 `.coderabbit.yaml` at the repository root owns review behavior for hosted and CLI reviews; organization and workspace global overrides outrank it, and it outranks every UI setting.
 
-### Inheritance
+### [05.1]-[INHERITANCE]
 
 - Top-level `inheritance: true` opts the repository into a central `.coderabbit.yaml` kept in a repository named `coderabbit`; the chain stops at the first parent without `inheritance: true`.
 - Merge semantics: objects deep-merge with child fields winning; arrays place child items first and append unique parent items, deduplicated by the first stable key among `path`, `label`, `name`, `id`, `key`; scalars take the child value.
 - Self-hosted resolution order: repository YAML, central YAML, `YAML_CONFIG` environment variable, schema defaults.
 
-### Path instructions
+### [05.2]-[PATH_INSTRUCTIONS]
 
 `reviews.path_instructions` is an array of `{path, instructions}` rows: `path` is a minimatch glob (`**/*.ts`, `src/controllers/**`), `instructions` carries up to 20000 characters of review guidance for matching files. On a PR, `@coderabbitai emit path instructions` opens a PR merging suggested rows learned over the prior seven days without overwriting existing entries.
 
-### Knowledge base
+### [05.3]-[KNOWLEDGE_BASE]
 
 `knowledge_base` controls persistent review context:
 
-| [INDEX] | [KEY]                                 | [SHAPE_AND_EFFECT]                                                                                                                                        |
-| :-----: | :------------------------------------ | :-------------------------------------------------------------------------------------------------------------------------------------------------------- |
-|  [01]   | `opt_out`                             | `true` disables retention-backed features and removes stored data                                                                                         |
-|  [02]   | `web_search.enabled`                  | Web context during reviews                                                                                                                                |
-|  [03]   | `code_guidelines`                     | `enabled` plus `filePatterns`; default patterns pick up `CLAUDE.md`, `AGENTS.md`, `.cursorrules`, `copilot-instructions.md`, and sibling agent rule files |
-|  [04]   | `learnings.scope`                     | `local` / `global` / `auto`; `approval_delay` 0-30 days gates auto-apply                                                                                  |
-|  [05]   | `issues.scope`, `pull_requests.scope` | `local` / `global` / `auto`                                                                                                                               |
-|  [06]   | `jira.usage`, `linear.usage`          | `auto` / `enabled` / `disabled`, scoped by `project_keys` / `team_keys`                                                                                   |
-|  [07]   | `mcp.usage`                           | `auto` / `enabled` / `disabled`; `disabled_servers` excludes server labels                                                                                |
-|  [08]   | `linked_repositories`                 | `{repository, instructions}` rows for cross-repo context; `automatic_repository_linking` auto-detects related repos                                       |
+| [INDEX] | [KEY]                                 | [SHAPE_AND_EFFECT]                                                         |
+| :-----: | :------------------------------------ | :------------------------------------------------------------------------- |
+|  [01]   | `opt_out`                             | `true` disables retention-backed features and removes stored data          |
+|  [02]   | `web_search.enabled`                  | Web context during reviews                                                 |
+|  [03]   | `code_guidelines`                     | `enabled` plus `filePatterns`                                              |
+|  [04]   | `learnings.scope`                     | `local` / `global` / `auto`; `approval_delay` 0-30 days gates auto-apply   |
+|  [05]   | `issues.scope`, `pull_requests.scope` | `local` / `global` / `auto`                                                |
+|  [06]   | `jira.usage`, `linear.usage`          | `auto` / `enabled` / `disabled`, scoped by `project_keys` / `team_keys`    |
+|  [07]   | `mcp.usage`                           | `auto` / `enabled` / `disabled`; `disabled_servers` excludes server labels |
+|  [08]   | `linked_repositories`                 | `{repository, instructions}` rows for cross-repo context                   |
 
-### Pre-merge checks
+- `code_guidelines` defaults: `filePatterns` picks up `CLAUDE.md`, `AGENTS.md`, `.cursorrules`, `copilot-instructions.md`, and sibling agent rule files.
+- `linked_repositories`: `automatic_repository_linking` auto-detects related repos.
+
+### [05.4]-[PRE_MERGE_CHECKS]
 
 `reviews.pre_merge_checks` gates merges. Each check runs in mode `off`, `warning`, or `error`; `error` blocks the PR when `reviews.request_changes_workflow: true`.
 
@@ -101,7 +104,7 @@ An implement-plus-review request runs the cycle without per-step prompts: implem
 - [CUSTOM]: `custom_checks` rows of `{mode, name, instructions}`; `instructions` states deterministic pass/fail criteria, up to 10000 characters.
 - [OVERRIDE]: `override_requested_reviewers_only: true` restricts overriding failing checks to requested reviewers.
 
-### Other high-leverage fields
+### [05.5]-[OTHER_HIGH_LEVERAGE_FIELDS]
 
 - [PROFILE]: `reviews.profile` — `quiet` / `chill` / `assertive`; `tone_instructions` sets reviewer register, up to 250 characters.
 - [FILTERS]: `reviews.path_filters` — include/exclude globs (`!` excludes) scoping both review and sparse checkout.

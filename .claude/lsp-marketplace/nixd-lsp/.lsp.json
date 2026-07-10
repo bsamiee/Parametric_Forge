@@ -1,29 +1,29 @@
 {
-  "nixd": {
-    "command": "nixd",
-    "extensionToLanguage": {
-      ".nix": "nix"
-    },
-    "settings": {
-      "nixd": {
-        "nixpkgs": {
-          "expr": "import (builtins.getFlake \"/Users/bardiasamiee/Documents/99.Github/Parametric_Forge\").inputs.nixpkgs { }"
+    "nixd": {
+        "command": "nixd",
+        "extensionToLanguage": {
+            ".nix": "nix"
         },
-        "formatting": {
-          "command": ["alejandra"]
-        },
-        "options": {
-          "nix-darwin": {
-            "expr": "(builtins.getFlake \"/Users/bardiasamiee/Documents/99.Github/Parametric_Forge\").darwinConfigurations.macbook.options"
-          },
-          "home-manager": {
-            "expr": "(builtins.getFlake \"/Users/bardiasamiee/Documents/99.Github/Parametric_Forge\").darwinConfigurations.macbook.options.home-manager.users.type.getSubOptions [ ]"
-          },
-          "flake-parts": {
-            "expr": "(builtins.getFlake \"/Users/bardiasamiee/Documents/99.Github/Parametric_Forge\").debug.options"
-          }
+        "settings": {
+            "nixd": {
+                "nixpkgs": {
+                    "expr": "import (builtins.getFlake \"/Users/bardiasamiee/Documents/99.Github/Parametric_Forge\").inputs.nixpkgs { }"
+                },
+                "formatting": {
+                    "command": ["alejandra"]
+                },
+                "options": {
+                    "nix-darwin": {
+                        "expr": "(builtins.getFlake \"/Users/bardiasamiee/Documents/99.Github/Parametric_Forge\").darwinConfigurations.macbook.options"
+                    },
+                    "home-manager": {
+                        "expr": "(builtins.getFlake \"/Users/bardiasamiee/Documents/99.Github/Parametric_Forge\").darwinConfigurations.macbook.options.home-manager.users.type.getSubOptions [ ]"
+                    },
+                    "flake-parts": {
+                        "expr": "(builtins.getFlake \"/Users/bardiasamiee/Documents/99.Github/Parametric_Forge\").debug.options"
+                    }
+                }
+            }
         }
-      }
     }
-  }
 }

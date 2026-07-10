@@ -1,136 +1,134 @@
 # Node.js CI -- Matrix testing, service containers, coverage, dependency review, JUnit summaries
 name: Node.js CI
 on:
-  push:
-    branches: [main, develop]
-    paths-ignore: ['docs/**', '**/*.md', 'LICENSE']
-  pull_request:
-    branches: [main]
-    paths-ignore: ['docs/**', '**/*.md', 'LICENSE']
-  merge_group: { types: [checks_requested] }
-  workflow_dispatch:
+    push:
+        branches: [main, develop]
+        paths-ignore: ["docs/**", "**/*.md", "LICENSE"]
+    pull_request:
+        branches: [main]
+        paths-ignore: ["docs/**", "**/*.md", "LICENSE"]
+    merge_group: {types: [checks_requested]}
+    workflow_dispatch:
 
 permissions: {}
 concurrency:
-  group: ci-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ !contains(github.ref, 'refs/heads/main') }}
-env: { NODE_VERSION: '24' }
+    group: ci-${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: ${{ !contains(github.ref, 'refs/heads/main') }}
+env: {NODE_VERSION: "24"}
 
 jobs:
-  lint:
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    permissions: { contents: read }
-    steps:
-      - uses: step-security/harden-runner@5ef0c079ce82195b2a36a210272d6b661572d83e # v2.14.2
-        with: { egress-policy: audit }
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
-        with: { node-version: '${{ env.NODE_VERSION }}', cache: pnpm }
-      - run: corepack enable && pnpm install --frozen-lockfile
-      - run: pnpm lint
+    lint:
+        runs-on: ubuntu-latest
+        timeout-minutes: 10
+        permissions: {contents: read}
+        steps:
+            - uses: step-security/harden-runner@5ef0c079ce82195b2a36a210272d6b661572d83e # v2.14.2
+              with: {egress-policy: audit}
+            - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+            - uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
+              with: {node-version: "${{ env.NODE_VERSION }}", cache: pnpm}
+            - run: corepack enable && pnpm install --frozen-lockfile
+            - run: pnpm lint
 
-  dependency-review:
-    if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    permissions: { contents: read }
-    steps:
-      - uses: step-security/harden-runner@5ef0c079ce82195b2a36a210272d6b661572d83e # v2.14.2
-        with: { egress-policy: audit }
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - uses: actions/dependency-review-action@3c4e3dcb1aa7874d2c16be7d79418e9b7efd6261 # v4.8.2
-        with: { fail-on-severity: high, deny-licenses: 'GPL-3.0, AGPL-3.0' }
+    dependency-review:
+        if: github.event_name == 'pull_request'
+        runs-on: ubuntu-latest
+        timeout-minutes: 5
+        permissions: {contents: read}
+        steps:
+            - uses: step-security/harden-runner@5ef0c079ce82195b2a36a210272d6b661572d83e # v2.14.2
+              with: {egress-policy: audit}
+            - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+            - uses: actions/dependency-review-action@3c4e3dcb1aa7874d2c16be7d79418e9b7efd6261 # v4.8.2
+              with: {fail-on-severity: high, deny-licenses: "GPL-3.0, AGPL-3.0"}
 
-  test:
-    name: Test ${{ matrix.runner }} / Node ${{ matrix.node-version }}
-    runs-on: ${{ matrix.runner }}
-    timeout-minutes: 30
-    permissions: { contents: read, checks: write }
-    concurrency:
-      group: ci-test-${{ matrix.runner }}-${{ matrix.node-version }}-${{ github.ref }}
-      cancel-in-progress: true
-    services:
-      postgres:
-        image: postgres:17
-        env: { POSTGRES_PASSWORD: testpass, POSTGRES_DB: testdb }
-        ports: ['5432:5432']
-        options: >-
-          --health-cmd "pg_isready -U postgres"
-          --health-interval 10s --health-timeout 5s
-          --health-retries 5 --health-start-period 10s
-      redis:
-        image: redis:7-alpine
-        ports: ['6379:6379']
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s --health-timeout 5s
-          --health-retries 5 --health-start-period 5s
-    env:
-      DATABASE_URL: postgresql://postgres:testpass@localhost:5432/testdb
-      REDIS_URL: redis://localhost:6379
-    strategy:
-      matrix:
-        runner: [ubuntu-latest, windows-latest, macos-latest]
-        node-version: ['20', '22', '24']
-        exclude:
-          - { runner: macos-latest, node-version: '20' }
-          - { runner: windows-latest, node-version: '20' }
-        include:
-          - { runner: ubuntu-24.04-arm, node-version: '24' }
-          - { runner: ubuntu-24.04-arm, node-version: '22' }
-      fail-fast: false
-    steps:
-      - uses: step-security/harden-runner@5ef0c079ce82195b2a36a210272d6b661572d83e # v2.14.2
-        with: { egress-policy: audit }
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
-        with: { node-version: '${{ matrix.node-version }}', cache: pnpm }
-      - run: corepack enable && pnpm install --frozen-lockfile
-      - run: pnpm exec nx run-many -t typecheck,test
-      - if: always()
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
-        with:
-          name: test-results-${{ matrix.runner }}-${{ matrix.node-version }}
-          path: test-results/
-          retention-days: 7
-      - if: matrix.runner == 'ubuntu-latest' && matrix.node-version == '24'
-        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
-        with: { token: '${{ secrets.CODECOV_TOKEN }}', fail_ci_if_error: true }
-      - if: always()
-        shell: bash
-        run: |
-          echo "## Test: ${{ matrix.runner }} / Node ${{ matrix.node-version }}" >> "$GITHUB_STEP_SUMMARY"
-          XML="test-results/junit.xml"
-          if [ -f "$XML" ]; then
-            TESTS=$(grep -oP 'tests="\K[0-9]+' "$XML" | head -1)
-            FAILS=$(grep -oP 'failures="\K[0-9]+' "$XML" | head -1)
-            ERRS=$(grep -oP 'errors="\K[0-9]+' "$XML" | head -1)
-            TIME=$(grep -oP 'time="\K[0-9.]+' "$XML" | head -1)
-            echo "| Metric   | Value                                                       |" >> "$GITHUB_STEP_SUMMARY"
-            echo "|----------|-------------------------------------------------------------|" >> "$GITHUB_STEP_SUMMARY"
-            echo "| Passed   | $(( ${TESTS:-0} - ${FAILS:-0} - ${ERRS:-0} )) / ${TESTS:-0} |" >> "$GITHUB_STEP_SUMMARY"
-            echo "| Failed   | ${FAILS:-0}                                                 |" >> "$GITHUB_STEP_SUMMARY"
-            echo "| Duration | ${TIME:-?}s                                                 |" >> "$GITHUB_STEP_SUMMARY"
-          else
-            echo "> [!WARNING] No JUnit XML found at \`$XML\`" >> "$GITHUB_STEP_SUMMARY"
-          fi
+    test:
+        name: Test ${{ matrix.runner }} / Node ${{ matrix.node-version }}
+        runs-on: ${{ matrix.runner }}
+        timeout-minutes: 30
+        permissions: {contents: read, checks: write}
+        concurrency:
+            group: ci-test-${{ matrix.runner }}-${{ matrix.node-version }}-${{ github.ref }}
+            cancel-in-progress: true
+        services:
+            postgres:
+                image: postgres:17
+                env: {POSTGRES_PASSWORD: testpass, POSTGRES_DB: testdb}
+                ports: ["5432:5432"]
+                options: >-
+                    --health-cmd "pg_isready -U postgres" --health-interval 10s --health-timeout 5s --health-retries 5 --health-start-period 10s
+            redis:
+                image: redis:7-alpine
+                ports: ["6379:6379"]
+                options: >-
+                    --health-cmd "redis-cli ping" --health-interval 10s --health-timeout 5s --health-retries 5 --health-start-period 5s
+        env:
+            DATABASE_URL: postgresql://postgres:testpass@localhost:5432/testdb
+            REDIS_URL: redis://localhost:6379
+        strategy:
+            matrix:
+                runner: [ubuntu-latest, windows-latest, macos-latest]
+                node-version: ["20", "22", "24"]
+                exclude:
+                    - {runner: macos-latest, node-version: "20"}
+                    - {runner: windows-latest, node-version: "20"}
+                include:
+                    - {runner: ubuntu-24.04-arm, node-version: "24"}
+                    - {runner: ubuntu-24.04-arm, node-version: "22"}
+            fail-fast: false
+        steps:
+            - uses: step-security/harden-runner@5ef0c079ce82195b2a36a210272d6b661572d83e # v2.14.2
+              with: {egress-policy: audit}
+            - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+            - uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
+              with: {node-version: "${{ matrix.node-version }}", cache: pnpm}
+            - run: corepack enable && pnpm install --frozen-lockfile
+            - run: pnpm exec nx run-many -t typecheck,test
+            - if: always()
+              uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+              with:
+                name: test-results-${{ matrix.runner }}-${{ matrix.node-version }}
+                path: test-results/
+                retention-days: 7
+            - if: matrix.runner == 'ubuntu-latest' && matrix.node-version == '24'
+              uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
+              with: {token: "${{ secrets.CODECOV_TOKEN }}", fail_ci_if_error: true}
+            - if: always()
+              shell: bash
+              run: |
+                echo "## Test: ${{ matrix.runner }} / Node ${{ matrix.node-version }}" >> "$GITHUB_STEP_SUMMARY"
+                XML="test-results/junit.xml"
+                if [ -f "$XML" ]; then
+                  TESTS=$(grep -oP 'tests="\K[0-9]+' "$XML" | head -1)
+                  FAILS=$(grep -oP 'failures="\K[0-9]+' "$XML" | head -1)
+                  ERRS=$(grep -oP 'errors="\K[0-9]+' "$XML" | head -1)
+                  TIME=$(grep -oP 'time="\K[0-9.]+' "$XML" | head -1)
+                  {
+                    echo "| Metric   | Value                                                       |"
+                    echo "|----------|-------------------------------------------------------------|"
+                    echo "| Passed   | $(( ${TESTS:-0} - ${FAILS:-0} - ${ERRS:-0} )) / ${TESTS:-0} |"
+                    echo "| Failed   | ${FAILS:-0}                                                 |"
+                    echo "| Duration | ${TIME:-?}s                                                 |"
+                  } >> "$GITHUB_STEP_SUMMARY"
+                else
+                  echo "> [!WARNING] No JUnit XML found at \`$XML\`" >> "$GITHUB_STEP_SUMMARY"
+                fi
 
-  build:
-    needs: [lint, test]
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    permissions: { contents: read, id-token: write, attestations: write }
-    steps:
-      - uses: step-security/harden-runner@5ef0c079ce82195b2a36a210272d6b661572d83e # v2.14.2
-        with: { egress-policy: audit }
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
-        with: { node-version: '${{ env.NODE_VERSION }}', cache: pnpm }
-      - run: corepack enable && pnpm install --frozen-lockfile
-      - run: pnpm build
-      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
-        with: { name: 'build-${{ github.sha }}', path: dist/, retention-days: 7, if-no-files-found: error }
-      - if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: actions/attest-build-provenance@96278af6caaf10aea03fd8d33a09a777ca52d62f # v3.2.0
-        with: { subject-path: dist/ }
+    build:
+        needs: [lint, test]
+        runs-on: ubuntu-latest
+        timeout-minutes: 15
+        permissions: {contents: read, id-token: write, attestations: write}
+        steps:
+            - uses: step-security/harden-runner@5ef0c079ce82195b2a36a210272d6b661572d83e # v2.14.2
+              with: {egress-policy: audit}
+            - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+            - uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
+              with: {node-version: "${{ env.NODE_VERSION }}", cache: pnpm}
+            - run: corepack enable && pnpm install --frozen-lockfile
+            - run: pnpm build
+            - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+              with: {name: "build-${{ github.sha }}", path: dist/, retention-days: 7, if-no-files-found: error}
+            - if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+              uses: actions/attest-build-provenance@96278af6caaf10aea03fd8d33a09a777ca52d62f # v3.2.0
+              with: {subject-path: dist/}

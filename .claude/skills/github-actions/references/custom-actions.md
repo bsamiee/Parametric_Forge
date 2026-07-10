@@ -2,20 +2,20 @@
 
 ## [01]-[ACTION_TYPES]
 
-| [INDEX] | [TYPE]     | [RUNTIME]     | [STARTUP] | [PRE/POST] | [USE_CASE]             |
-| :-----: | ---------- | ------------- | :-------: | :--------: | ---------------------- |
-|  [01]   | Composite  | Shell/Actions |   Fast    |     No     | Step orchestration     |
-|  [02]   | Docker     | Container     |   Slow    | Dockerfile | Isolated environment   |
-|  [03]   | JavaScript | `node24`      |  Fastest  |    Yes     | GitHub API integration |
+| [INDEX] | [TYPE]     | [RUNTIME]     | [STARTUP] | [PRE_POST] | [USE_CASE]             |
+| :-----: | :--------- | :------------ | :-------- | :--------- | :--------------------- |
+|  [01]   | Composite  | Shell/Actions | Fast      | No         | Step orchestration     |
+|  [02]   | Docker     | Container     | Slow      | Dockerfile | Isolated environment   |
+|  [03]   | JavaScript | `node24`      | Fastest   | Yes        | GitHub API integration |
 
 **Details:**
 1. Combine workflow steps; error propagation via `if: failure()`
 2. Custom runtime/toolchains; language-agnostic execution
 3. API interactions via `@actions/core` toolkit; pre/post lifecycle
-### [1.1]-[DECISION_TREE]
+### [01.1]-[DECISION_TREE]
 
 | [INDEX] | [QUESTION]                      | [ANSWER] | [RECOMMENDATION]                              |
-| :-----: | ------------------------------- | :------: | --------------------------------------------- |
+| :-----: | :------------------------------ | :------: | :-------------------------------------------- |
 |  [01]   | **Shared steps only?**          |   Yes    | Composite action.                             |
 |  [02]   | **Custom runtime/tools?**       |   Yes    | Docker action.                                |
 |  [03]   | **GitHub API / complex logic?** |   Yes    | JavaScript action.                            |
@@ -97,7 +97,7 @@ Consumers reference: `@v1.0.0` (exact), `@v1` (latest v1.x), `@SHA` (most secure
 ## [06]-[RUNTIME]
 
 | [INDEX] | [RUNTIME]       | [STATUS]                                                 |
-| :-----: | --------------- | -------------------------------------------------------- |
+| :-----: | :-------------- | :------------------------------------------------------- |
 |  [01]   | **`node24`**    | Required — use `using: 'node24'` for JavaScript actions. |
 |  [02]   | **`docker`**    | Stable — `using: 'docker'` with `image: 'Dockerfile'`.   |
 |  [03]   | **`composite`** | Stable — `using: 'composite'` with `steps:`.             |
@@ -180,7 +180,7 @@ steps:
 ## [10]-[TESTING]
 
 | [INDEX] | [STRATEGY]               | [TOOL]                     | [SCOPE]                                    |
-| :-----: | ------------------------ | -------------------------- | ------------------------------------------ |
+| :-----: | :----------------------- | :------------------------- | :----------------------------------------- |
 |  [01]   | **Unit test composites** | Workflow with known inputs | Test each step outcome in isolation.       |
 |  [02]   | **Integration test**     | `nektos/act`               | Run full action locally against Docker.    |
 |  [03]   | **CI validation**        | Dedicated test workflow    | `.github/workflows/test-action.yml` on PR. |

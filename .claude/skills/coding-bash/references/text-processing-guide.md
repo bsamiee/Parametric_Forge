@@ -41,18 +41,17 @@ _require_tool fd find && _find() { fd "$@"; } || _find() { find "$@"; }
 
 ## [02]-[REGEX_DIALECTS]
 
-`rg` and `sd` use PCRE2 natively. BRE/ERE awareness needed only when reading existing `grep`/`sed` in legacy scripts.
+`rg`/`sd` use PCRE2 natively; `grep`/`sed` use BRE; `grep -E`/`awk` use ERE — awareness needed only when reading existing scripts in the older dialects.
 
-| [INDEX] | [FEATURE]     | [PCRE2] (`rg`/`sd`) | [BRE] (`grep`/`sed`) | [ERE] (`grep -E`/`awk`) |
-| :-----: | ------------- | :------------------ | :------------------- | :---------------------- |
-|  [01]   | One or more   | `+`                 | `\+`                 | `+`                     |
-|  [02]   | Zero or one   | `?`                 | `\?`                 | `?`                     |
-|  [03]   | Alternation   | `\|`                | `\|`                 | `\|`                    |
-|  [04]   | Grouping      | `(...)`             | `\(...\)`            | `(...)`                 |
-|  [05]   | Lookahead     | `(?=…)` / `(?!…)`   | -                    | -                       |
-|  [06]   | Lookbehind    | `(?<=…)` / `(?<!…)` | -                    | -                       |
-|  [07]   | Named capture | `(?P<name>…)`       | -                    | -                       |
-|  [08]   | Non-greedy    | `*?`, `+?`, `??`    | -                    | -                       |
+| [INDEX] | [FEATURE]     | [PCRE2]             | [BRE]     | [ERE]   |
+| :-----: | :------------ | :------------------ | :-------- | :------ |
+|  [01]   | One or more   | `+`                 | `\+`      | `+`     |
+|  [02]   | Zero or one   | `?`                 | `\?`      | `?`     |
+|  [03]   | Alternation   | `\|`                | `\|`      | `\|`    |
+|  [04]   | Grouping      | `(...)`             | `\(...\)` | `(...)` |
+|  [05]   | Lookahead     | `(?=…)` / `(?!…)`   | -         | -       |
+|  [06]   | Lookbehind    | `(?<=…)` / `(?<!…)` | -         | -       |
+|  [07]   | Named capture | `(?P<name>…)`       | -         | -       |
 
 **POSIX classes** (locale-safe, inside `[[:class:]]`):
 
@@ -188,7 +187,7 @@ mlr -c -j filter '$revenue > 1000' then sort-by -nr revenue data.csv \
 
 ## [08]-[STRUCTURED_DATA]
 
-### jq 1.8+ — JSON processing
+### [08.1]-[JQ_1_8_JSON_PROCESSING]
 
 ```bash
 # Field extraction with fallback (// = alternative operator)
@@ -219,7 +218,7 @@ jq '.flags | to_entries | map(.value |= toboolean)' settings.json
 jq -r '$ENV.HOME + "/.config/" + .name' packages.json
 ```
 
-### yq 4.46+ — universal config codec (YAML/JSON/TOML/INI/XML/HCL/CSV)
+### [08.2]-[YQ_4_46_UNIVERSAL_CONFIG_CODEC_YAML_JSON_TOML_INI_XML_HCL_CSV]
 
 ```bash
 # YAML → JSON conversion for jq pipeline
@@ -236,7 +235,7 @@ yq eval -i -p=toml -o=toml '.database.pool_size = 20' config.toml
 yq eval -p=hcl -o=yaml '.resource.aws_instance' main.tf
 ```
 
-### mlr 6+ — CSV/TSV/JSON format conversion
+### [08.3]-[MLR_6_CSV_TSV_JSON_FORMAT_CONVERSION]
 
 ```bash
 # CSV → JSON with filter and sort (-c = --csv, -j = --json shorthands)
@@ -253,7 +252,7 @@ mlr --ijson --ocsv cat api_response.json
 # mlr repl  (then type verbs interactively against piped data)
 ```
 
-### jnv — interactive JSON exploration
+### [08.4]-[JNV_INTERACTIVE_JSON_EXPLORATION]
 
 ```bash
 # Develop jq queries interactively, then embed in scripts

@@ -136,7 +136,7 @@ A surface a parser, generator, gate, or ledger reads keeps its exact shape. Ever
 
 [FENCE_RULES]:
 - A code fence carries a language tag plus one intent label; renderer-local fences use the exact renderer tag, and Mermaid fences are `mermaid`.
-- Intent labels: `copy-safe` runs as written, `template` for neutral placeholders, `conceptual` for illustration, `generated` for generated output, `test-only` for test source, `output-only` for observed output, and `rejected` for a counterexample no compact ContrastRecord carries.
+- Intent labels: `copy-safe` runs as written, `template` for neutral placeholders, `conceptual` for illustration, `generated` for generated output, `test-only` for test source, `output-only` for observed output, `accepted` and `rejected` for a worked contrast pair, and `codemap`/`seams` for width-capped topology fences.
 
 [COMMAND_OUTPUT]:
 - A copy-safe command is an instruction to run; an expected signal is the short output or state change to compare.
@@ -167,7 +167,8 @@ project/
 
 [ENFORCEMENT]:
 - `prose_gate.py` compiles the hedge ban, the meta-frame ban, the self-count and list-entry budgets, and the fence-geometry cap into a fail-on-hit gate.
-- Table cell-count equality and pipe escaping are mechanically checkable; cell budget, header compression, and carrier choice stay review-tier until a checker owns them.
+- `prose_gate.py fix` mechanically repairs header rubrics, `[INDEX]` columns and `[NN]` entries, alignment colons, heading numbering, loose list leaders, and padding — dry-run by default, `--write` applies; padding and marker mechanics are never review-tier.
+- Table cell-count equality, pipe escaping, and the 150-column rendered width cap are mechanically checked; header compression and carrier choice stay review-tier until a checker owns them.
 
 [COMMAND_ROUTING]:
 - A tool document states its contract and routes verbs and flags to live `--help`; it never mirrors help output, which stales on the next release.

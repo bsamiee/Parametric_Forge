@@ -16,16 +16,19 @@ readonly SEND_TIMEOUT="${AUTOMATION_SEND_TIMEOUT:-45}"
 readonly EVENT_CLASS="${AUTOMATION_EVENT_CLASS:-0x2A2A2A2A}"
 readonly EVENT_ID="${AUTOMATION_EVENT_ID:-0x2A2A2A2A}"
 
-die() { printf '{"ok":false,"stage":"%s","reason":%s}\n' "$1" "$2"; exit 1; }
+die() {
+    printf '{"ok":false,"stage":"%s","reason":%s}\n' "$1" "$2"
+    exit 1
+}
 
 # Silent consent verdict from the exact binary that will later automate. The embedded
 # JXA binds AEDeterminePermissionToAutomateTarget through the ObjC bridge and passes the
 # target descriptor pointer, so askUserIfNeeded stays false and no prompt is raised. The
 # perl alarm bounds the call; JXA prints the raw JSON return (no -s s, which would quote it).
 preflight() {
-  local bundle_id=$1
-  perl -e 'alarm shift; exec @ARGV' "$PREFLIGHT_TIMEOUT" \
-    "$OSASCRIPT" -l JavaScript - "$bundle_id" "$EVENT_CLASS" "$EVENT_ID" <<'JXA'
+    local bundle_id=$1
+    perl -e 'alarm shift; exec @ARGV' "$PREFLIGHT_TIMEOUT" \
+        "$OSASCRIPT" -l JavaScript - "$bundle_id" "$EVENT_CLASS" "$EVENT_ID" <<'JXA'
 ObjC.import('Foundation')
 ObjC.import('CoreServices')
 ObjC.bindFunction('AEDeterminePermissionToAutomateTarget', ['int', ['pointer', 'unsigned int', 'unsigned int', 'bool']])
@@ -44,44 +47,47 @@ JXA
 # One SHA-256 of the source, a bounded preview, the success bit, and the result length.
 # The secret-bearing body never reaches the log.
 audit() {
-  local script_path=$1 ok=$2 result_len=$3 digest preview
-  digest=$("$SHASUM" -a 256 "$script_path" | { read -r sum _; printf '%s' "$sum"; })
-  preview=$(head -c 96 "$script_path" | tr -d '\000-\037')
-  printf '%s\tok=%s\tlen=%s\tsha256=%s\tpreview=%q\n' \
-    "$(date -u +%FT%TZ)" "$ok" "$result_len" "$digest" "$preview" >>"$AUDIT_LOG"
+    local script_path=$1 ok=$2 result_len=$3 digest preview
+    digest=$("$SHASUM" -a 256 "$script_path" | {
+        read -r sum _
+        printf '%s' "$sum"
+    })
+    preview=$(head -c 96 "$script_path" | tr -d '\000-\037')
+    printf '%s\tok=%s\tlen=%s\tsha256=%s\tpreview=%q\n' \
+        "$(date -u +%FT%TZ)" "$ok" "$result_len" "$digest" "$preview" >>"$AUDIT_LOG"
 }
 
 main() {
-  [[ $# -ge 2 ]] || die "usage" '"runner <bundle-id> <script-path> [data-arg ...]"'
-  local bundle_id=$1 script_path=$2
-  shift 2
-  [[ -f $script_path ]] || die "input" '"script path is not a file"'
+    [[ $# -ge 2 ]] || die "usage" '"runner <bundle-id> <script-path> [data-arg ...]"'
+    local bundle_id=$1 script_path=$2
+    shift 2
+    [[ -f $script_path ]] || die "input" '"script path is not a file"'
 
-  local verdict_json verdict
-  verdict_json=$(preflight "$bundle_id" 2>/dev/null) \
-    || die "preflight" '"consent preflight timed out or failed"'
-  verdict=$(printf '%s' "$verdict_json" | /usr/bin/plutil -extract verdict raw -o - - 2>/dev/null || printf 'failed')
+    local verdict_json verdict
+    verdict_json=$(preflight "$bundle_id" 2>/dev/null) ||
+        die "preflight" '"consent preflight timed out or failed"'
+    verdict=$(printf '%s' "$verdict_json" | /usr/bin/plutil -extract verdict raw -o - - 2>/dev/null || printf 'failed')
 
-  case $verdict in
-    granted) ;;
-    denied) die "consent" '"automation denied for target — route the user to System Settings > Privacy > Automation"' ;;
-    undecided) die "consent" '"automation undecided — trigger the explicit user-initiated permission lane"' ;;
-    target-not-running) die "consent" '"target application is not running — launch it before preflight"' ;;
-    *) die "consent" '"consent verdict unreadable"' ;;
-  esac
+    case $verdict in
+        granted) ;;
+        denied) die "consent" '"automation denied for target — route the user to System Settings > Privacy > Automation"' ;;
+        undecided) die "consent" '"automation undecided — trigger the explicit user-initiated permission lane"' ;;
+        target-not-running) die "consent" '"target application is not running — launch it before preflight"' ;;
+        *) die "consent" '"consent verdict unreadable"' ;;
+    esac
 
-  local result rc=0
-  result=$(perl -e 'alarm shift; exec @ARGV' "$SEND_TIMEOUT" \
-    "$OSASCRIPT" -s s "$script_path" "$bundle_id" "$@" 2>&1) || rc=$?
+    local result rc=0
+    result=$(perl -e 'alarm shift; exec @ARGV' "$SEND_TIMEOUT" \
+        "$OSASCRIPT" -s s "$script_path" "$bundle_id" "$@" 2>&1) || rc=$?
 
-  if [[ $rc -eq 0 ]]; then
-    audit "$script_path" true "${#result}"
-    printf '{"ok":true,"verdict":"granted","result":%s}\n' "$(printf '%s' "$result" | python3 -c 'import json,sys;print(json.dumps(sys.stdin.read()))')"
-  else
-    audit "$script_path" false 0
-    printf '{"ok":false,"stage":"send","rc":%d,"error":%s}\n' "$rc" "$(printf '%s' "$result" | python3 -c 'import json,sys;print(json.dumps(sys.stdin.read()))')"
-    exit "$rc"
-  fi
+    if [[ $rc -eq 0 ]]; then
+        audit "$script_path" true "${#result}"
+        printf '{"ok":true,"verdict":"granted","result":%s}\n' "$(printf '%s' "$result" | python3 -c 'import json,sys;print(json.dumps(sys.stdin.read()))')"
+    else
+        audit "$script_path" false 0
+        printf '{"ok":false,"stage":"send","rc":%d,"error":%s}\n' "$rc" "$(printf '%s' "$result" | python3 -c 'import json,sys;print(json.dumps(sys.stdin.read()))')"
+        exit "$rc"
+    fi
 }
 
 main "$@"

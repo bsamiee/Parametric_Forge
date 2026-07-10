@@ -3,7 +3,7 @@
 ## [01]-[TRIGGER_SELECTION]
 
 | [INDEX] | [SCENARIO]                       | [TRIGGER]                           | [SECRETS] | [PATH_FILTER] |
-| :-----: | -------------------------------- | ----------------------------------- | :-------: | :-----------: |
+| :-----: | :------------------------------- | :---------------------------------- | :-------: | :-----------: |
 |  [01]   | **Standard PR validation**       | `pull_request`                      |    No     |      Yes      |
 |  [02]   | **External PR with secrets**     | `workflow_run` after `pull_request` |    Yes    |      No       |
 |  [03]   | **Deploy after CI**              | `workflow_run`                      |    Yes    |      No       |
@@ -105,7 +105,7 @@ on:
 ```
 
 | [INDEX] | [TYPE]            | [UI_RENDERING]       | [NOTES]                     |
-| :-----: | ----------------- | -------------------- | --------------------------- |
+| :-----: | :---------------- | :------------------- | :-------------------------- |
 |  [01]   | **`string`**      | Free text            | Default if unspecified.     |
 |  [02]   | **`boolean`**     | Checkbox             | `true` / `false`.           |
 |  [03]   | **`choice`**      | Dropdown             | From `options:` list.       |
@@ -141,8 +141,8 @@ jobs:
 **Dec 8, 2025 enforcement (active):** Workflow source always comes from default branch — no matter which branch the PR targets. `GITHUB_REF` resolves to `refs/heads/main`; `GITHUB_SHA` points to default branch HEAD at run start. Environment protection rules evaluate against the execution ref. This eliminates "pwn request" attacks where malicious PRs modified workflow definitions.
 
 [CRITICAL]:
-- [NEVER] Checkout PR head without environment protection gate (required reviewers).
-- [ALWAYS] Use for labeling, commenting, triage only.
+- [NEVER]: Checkout PR head without environment protection gate (required reviewers).
+- [ALWAYS]: Use for labeling, commenting, triage only.
 
 ```yaml
 on:
@@ -186,11 +186,13 @@ jobs:
       - run: echo "Building ${{ matrix.project }} on Node ${{ matrix.node }}"
 ```
 
-| [INDEX] | [KEY]                   | [DEFAULT]                   | [BEHAVIOR]                                                                                                                      |
-| :-----: | ----------------------- | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-|  [01]   | **`fail-fast`**         | `true`                      | Cancels all in-progress/queued matrix jobs when any job fails.                                                                  |
-|  [02]   | **`max-parallel`**      | Unlimited (runner pool cap) | Limits concurrent matrix jobs. Omit for maximum parallelism.                                                                    |
-|  [03]   | **`continue-on-error`** | `false`                     | Per-job override: `true` prevents that job's failure from triggering fail-fast, and downstream `needs:` jobs see it as success. |
+| [INDEX] | [KEY]                   | [DEFAULT]                   | [BEHAVIOR]                                                          |
+| :-----: | :---------------------- | :-------------------------- | :------------------------------------------------------------------ |
+|  [01]   | **`fail-fast`**         | `true`                      | Cancels all in-progress/queued matrix jobs when any job fails.      |
+|  [02]   | **`max-parallel`**      | Unlimited (runner pool cap) | Limits concurrent matrix jobs. Omit for maximum parallelism.        |
+|  [03]   | **`continue-on-error`** | `false`                     | Per-job override: `true` shields that job's failure from fail-fast. |
+
+- `continue-on-error`: downstream `needs:` jobs then see the failed job as success.
 
 **Interaction semantics:** `continue-on-error: true` on a matrix job masks its failure from `fail-fast` — remaining matrix jobs continue. However, downstream `needs:` jobs see the failed job's result as `success`, which can hide real failures. **Recommended pattern:** Use `fail-fast: false` (let all matrix jobs run) without `continue-on-error`, then aggregate results in a downstream job via `needs.*.result`.
 
@@ -199,7 +201,7 @@ jobs:
 ## [10]-[ORCHESTRATION_PATTERNS]
 
 | [INDEX] | [PATTERN]                 | [KEY_RULES]                                                                                                |
-| :-----: | ------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| :-----: | :------------------------ | :--------------------------------------------------------------------------------------------------------- |
 |  [01]   | **Environment promotion** | Chain via `needs:` — each with independent protection rules (reviewers, wait timers, branch restrictions). |
 |  [02]   | **Reusable workflows**    | Max 2 nesting levels, 50 unique/run. `secrets: inherit` at each level. `job_workflow_ref` for SLSA L3.     |
 |  [03]   | **Concurrency groups**    | Max 1 running + 1 pending/group. `cancel-in-progress: true` for CI; `false` for deploys (state risk).      |

@@ -1,27 +1,31 @@
 {
-  "name": "parametric-forge",
-  "private": true,
-  "type": "module",
-  "description": "Estate workspace root: services/ is the services-IaC owner (Doppler + GitHub as typed Pulumi rows)",
-  "engines": {
-    "node": ">=26"
-  },
-  "scripts": {
-    "preview": "node services/driver.ts preview",
-    "up": "node services/driver.ts up",
-    "scopes": "node services/driver.ts scopes doctor",
-    "reviewers": "node services/driver.ts reviewers",
-    "typecheck": "tsc -p tsconfig.json"
-  },
-  "devDependencies": {
-    "@effect/language-service": "catalog:",
-    "@effect/platform": "catalog:",
-    "@effect/platform-node": "catalog:",
-    "@pulumi/github": "catalog:",
-    "@pulumi/pulumi": "catalog:",
-    "@pulumiverse/doppler": "catalog:",
-    "@types/node": "catalog:",
-    "effect": "catalog:",
-    "typescript": "catalog:"
-  }
+    "name": "parametric-forge",
+    "private": true,
+    "type": "module",
+    "description": "Estate workspace root: services/ is the services-IaC owner (Doppler + GitHub as typed Pulumi rows)",
+    "engines": {
+        "node": ">=26"
+    },
+    "scripts": {
+        "preview": "node services/driver.ts preview",
+        "up": "node services/driver.ts up",
+        "scopes": "node services/driver.ts scopes doctor",
+        "reviewers": "node services/driver.ts reviewers",
+        "typecheck": "pnpm run typecheck:tsgo && pnpm run typecheck:tsc",
+        "typecheck:tsgo": "tsgo -p tsconfig.json",
+        "typecheck:tsc": "tsc -p tsconfig.json"
+    },
+    "devDependencies": {
+        "@effect/language-service": "catalog:",
+        "@effect/tsgo": "catalog:",
+        "@effect/platform": "catalog:",
+        "@effect/platform-node": "catalog:",
+        "@pulumi/github": "catalog:",
+        "@pulumi/pulumi": "catalog:",
+        "@pulumiverse/doppler": "catalog:",
+        "@types/node": "catalog:",
+        "@typescript/native-preview": "catalog:",
+        "effect": "catalog:",
+        "typescript": "catalog:"
+    }
 }

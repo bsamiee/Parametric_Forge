@@ -4,14 +4,14 @@ AppleScript, JXA, compiled OSA scripts, script bundles, Automator actions, Short
 
 ## [01]-[UTTYPE_SPINE]
 
-| [INDEX] | [ROLE]           | [UTI]                                | [EXTENSION]    | [CONFORMANCE]        |
-| :-----: | :--------------- | :------------------------------------ | :------------- | :-------------------- |
-|  [01]   | Source text       | `com.apple.applescript.text`          | `.applescript` | `public.script`        |
-|  [02]   | Compiled script    | `com.apple.applescript.script`        | `.scpt`        | `public.data`          |
-|  [03]   | Script bundle      | `com.apple.applescript.script-bundle` | `.scptd`       | `com.apple.bundle`     |
-|  [04]   | Coarse import      | `public.script`                       | none            | self                  |
-|  [05]   | JXA source         | `com.netscape.javascript-source`      | `.js`          | `public.source-code`   |
-|  [06]   | Saved applet       | `com.apple.application-bundle`        | `.app`         | `com.apple.bundle`     |
+| [INDEX] | [ROLE]          | [UTI]                                 | [EXTENSION]    | [CONFORMANCE]        |
+| :-----: | :-------------- | :------------------------------------ | :------------- | :------------------- |
+|  [01]   | Source text     | `com.apple.applescript.text`          | `.applescript` | `public.script`      |
+|  [02]   | Compiled script | `com.apple.applescript.script`        | `.scpt`        | `public.data`        |
+|  [03]   | Script bundle   | `com.apple.applescript.script-bundle` | `.scptd`       | `com.apple.bundle`   |
+|  [04]   | Coarse import   | `public.script`                       | none           | self                 |
+|  [05]   | JXA source      | `com.netscape.javascript-source`      | `.js`          | `public.source-code` |
+|  [06]   | Saved applet    | `com.apple.application-bundle`        | `.app`         | `com.apple.bundle`   |
 
 `UTType.osaScript` carries the legacy `osas` OSType alongside `com.apple.applescript.script` and conforms to both `public.data` and `public.script`; `UTType.osaScriptBundle` conforms to `com.apple.bundle`, `com.apple.package`, and `public.script` together, because a `.scptd` is a package before it is a script. A saved applet or droplet carries no dedicated script UTI — `com.apple.application-bundle` is the ordinary application identity, and applet-ness is carried by the OSAKit storage type baked into the bundle at compile time plus the applet stub Mach-O at `Contents/MacOS`. JXA source text takes `com.netscape.javascript-source`, but JXA compiled bytecode reuses `com.apple.applescript.script` — the OSA component, not the type identifier, carries the `JavaScript` language dimension, so discrimination between a compiled AppleScript and a compiled JXA script is an `osalang` or component-identifier probe, never a UTI comparison.
 
@@ -203,18 +203,18 @@ guard status == noErr, let xml = sdef?.takeRetainedValue() as Data? else {
 
 ## [13]-[HOST_DISPATCH_MATRIX]
 
-| [INDEX] | [HOST]              | [ENTRY]                        | [PAYLOAD]          | [EXIT]           |
-| :-----: | :------------------ | :------------------------------ | :------------------ | :---------------- |
-|  [01]   | `osascript`          | `run argv`                      | string list          | stdout status     |
-|  [02]   | Automator             | `run {input, parameters}`       | OSA object list       | OSA object list    |
-|  [03]   | Shortcuts action      | `run(input, parameters)`        | shortcut input        | action output      |
-|  [04]   | Shortcuts external    | `shortcuts run`                 | typed output          | CLI result         |
-|  [05]   | Droplet               | `open` handler                  | Finder aliases        | none               |
-|  [06]   | Folder Action         | folder handlers                 | folder parameters     | none               |
-|  [07]   | Mail rule             | `perform mail action`           | message list          | none               |
-|  [08]   | Stay-open agent       | `idle` `quit`                   | script properties      | next interval      |
-|  [09]   | Script Menu           | file launch                     | script app shell       | host-defined       |
-|  [10]   | Native host           | `NSAppleScript` `OSAScript`      | source data event      | descriptor error   |
+| [INDEX] | [HOST]             | [ENTRY]                     | [PAYLOAD]         | [EXIT]           |
+| :-----: | :----------------- | :-------------------------- | :---------------- | :--------------- |
+|  [01]   | `osascript`        | `run argv`                  | string list       | stdout status    |
+|  [02]   | Automator          | `run {input, parameters}`   | OSA object list   | OSA object list  |
+|  [03]   | Shortcuts action   | `run(input, parameters)`    | shortcut input    | action output    |
+|  [04]   | Shortcuts external | `shortcuts run`             | typed output      | CLI result       |
+|  [05]   | Droplet            | `open` handler              | Finder aliases    | none             |
+|  [06]   | Folder Action      | folder handlers             | folder parameters | none             |
+|  [07]   | Mail rule          | `perform mail action`       | message list      | none             |
+|  [08]   | Stay-open agent    | `idle` `quit`               | script properties | next interval    |
+|  [09]   | Script Menu        | file launch                 | script app shell  | host-defined     |
+|  [10]   | Native host        | `NSAppleScript` `OSAScript` | source data event | descriptor error |
 
 ## [14]-[MACOS_26_POSTURE]
 

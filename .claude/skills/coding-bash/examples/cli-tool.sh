@@ -7,7 +7,7 @@ set -Eeuo pipefail
 shopt -s inherit_errexit nullglob extglob
 IFS=$'\n\t'
 
-# --- [CONSTANTS] --------------------------------------------------------------
+# --- [CONSTANTS] ------------------------------------------------------------------------
 readonly VERSION="1.0.0" EX_OK=0 EX_ERR=1 EX_USAGE=2
 readonly SCRIPT_NAME="${BASH_SOURCE[0]##*/}"
 readonly _BASH_V=$((BASH_VERSINFO[0] * 100 + BASH_VERSINFO[1]))
@@ -31,7 +31,7 @@ readonly _BOLD _DIM _RESET
 declare -i LOG_LEVEL=2 _CLEANING=0 _JSON_LOG=0
 declare -a _CLEANUP_STACK=()
 
-# --- [DISPATCH] ---------------------------------------------------------------
+# --- [DISPATCH] -------------------------------------------------------------------------
 # Two-dimensional verb:resource keyed dispatch with parallel metadata arrays
 declare -Ar _DISPATCH=(
     ["get:project"]=_handle_get_project ["get:env"]=_handle_get_env
@@ -50,7 +50,7 @@ declare -Ar _OPT_META=(
     [j]="-j|--json|JSON log output||")
 readonly _OPT_DISPLAY_ORDER="h V v q j"
 
-# --- [LOGGING] ----------------------------------------------------------------
+# --- [LOGGING] --------------------------------------------------------------------------
 # _LOG_EMIT: polymorphic emitter — JSON-ND when piped/flagged, text when terminal
 _LOG_EMIT() {
     local -r level="$1" ts="$2" func="$3" line="$4" msg="$5"
@@ -84,7 +84,7 @@ _die_usage() {
     exit "${EX_USAGE}"
 }
 
-# --- [CLEANUP] ----------------------------------------------------------------
+# --- [CLEANUP] --------------------------------------------------------------------------
 _on_err() {
     local -r rc=$? cmd="${BASH_COMMAND}" depth="${#FUNCNAME[@]}"
     printf '\n[ERROR] exit %d: %s\n[STACK]\n' "${rc}" "${cmd}" >&2
@@ -105,7 +105,7 @@ _run_cleanups() {
     done
 }
 
-# --- [FUNCTIONS] --------------------------------------------------------------
+# --- [FUNCTIONS] ------------------------------------------------------------------------
 # shellcheck disable=SC2086  # eval template — word splitting is intentional
 # Version-gated capture: fork-free ${ } on 5.3, subshell $() fallback on 5.2
 # shellcheck disable=SC2015
@@ -258,40 +258,40 @@ _usage() {
     done
 }
 
-# --- [PARSER] -----------------------------------------------------------------
+# --- [PARSER] ---------------------------------------------------------------------------
 _parse_flags() {
     while (($# > 0)); do
         case "$1" in
-        -h | --help)
-            _usage
-            exit 0
-            ;;
-        -V | --version)
-            printf '%s v%s (bash %s)\n' \
-                "${SCRIPT_NAME}" "${VERSION}" "${BASH_VERSION}"
-            exit 0
-            ;;
-        -v | --verbose)
-            LOG_LEVEL=1
-            shift
-            ;;
-        -q | --quiet)
-            LOG_LEVEL=3
-            shift
-            ;;
-        -j | --json)
-            _JSON_LOG=1
-            shift
-            ;;
-        --self-test)
-            _self_test
-            exit 0
-            ;;
-        --)
-            shift
-            break
-            ;;
-        -*) _die_usage "Unknown: $1" ;; *) break ;;
+            -h | --help)
+                _usage
+                exit 0
+                ;;
+            -V | --version)
+                printf '%s v%s (bash %s)\n' \
+                    "${SCRIPT_NAME}" "${VERSION}" "${BASH_VERSION}"
+                exit 0
+                ;;
+            -v | --verbose)
+                LOG_LEVEL=1
+                shift
+                ;;
+            -q | --quiet)
+                LOG_LEVEL=3
+                shift
+                ;;
+            -j | --json)
+                _JSON_LOG=1
+                shift
+                ;;
+            --self-test)
+                _self_test
+                exit 0
+                ;;
+            --)
+                shift
+                break
+                ;;
+            -*) _die_usage "Unknown: $1" ;; *) break ;;
         esac
     done
     (($# >= 2)) || {
@@ -302,7 +302,7 @@ _parse_flags() {
     _dispatch "$@"
 }
 
-# --- [TESTING] ----------------------------------------------------------------
+# --- [TESTING] --------------------------------------------------------------------------
 _self_test() {
     _info "Running self-tests..."
     [[ "${SCRIPT_NAME}" == "cli-tool.sh" ]] || _die "ASSERT: script name"
@@ -317,7 +317,7 @@ _self_test() {
     _info "All tests passed (bash ${BASH_VERSION}, insitu=${_HAS_INSITU})"
 }
 
-# --- [EXPORT] -----------------------------------------------------------------
+# --- [EXPORT] ---------------------------------------------------------------------------
 trap '_on_err' ERR
 trap '_run_cleanups' EXIT
 _main() { _parse_flags "$@"; }

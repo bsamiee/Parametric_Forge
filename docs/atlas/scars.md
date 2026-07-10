@@ -4,11 +4,15 @@ Each row is a trap the estate already paid for: the failure shape and the rule t
 
 ## [01]-[GIT]
 
-| [INDEX] | [TRAP] | [RULE_NOW] |
-| :-----: | :--- | :--- |
-| [01] | `git reset --soft HEAD~1` after an uncertain commit ate a pushed commit | Inspect the commit graph before any reset near uncertain commit state; recovery from an eaten push is fast-forward, not reset |
-| [02] | `GH_TOKEN`/`GITHUB_TOKEN` shadow the keyring credential carrying `admin:ssh_signing_key` | Strip both env vars when validating signed GitHub SSH auth |
-| [03] | `git add --renormalize` stages immediately and captures unrelated index state | Renormalize only inside the owning commit; there are no LFS attribute rows, so the filter is inert — verify with `git lfs ls-files` before push |
+| [INDEX] | [TRAP]                                                           | [RULE_NOW]                                                 |
+| :-----: | :--------------------------------------------------------------- | :--------------------------------------------------------- |
+|  [01]   | `git reset --soft HEAD~1` ate a pushed commit                    | Inspect the commit graph before any uncertain-state reset  |
+|  [02]   | `GH_TOKEN`/`GITHUB_TOKEN` shadow the keyring credential          | Strip both env vars when validating signed GitHub SSH auth |
+|  [03]   | `git add --renormalize` immediately stages unrelated index state | Renormalize only inside the owning commit                  |
+
+- [01]: recovery: an eaten push recovers by fast-forward, not reset.
+- [02]: the shadowed credential carries `admin:ssh_signing_key`.
+- [03]: no LFS attribute rows exist, so the filter is inert; verify with `git lfs ls-files` before push.
 
 ## [02]-[SIGNING]
 
@@ -16,11 +20,15 @@ Each row is a trap the estate already paid for: the failure shape and the rule t
 
 ## [03]-[DOPPLER]
 
-| [INDEX] | [TRAP] | [RULE_NOW] |
-| :-----: | :--- | :--- |
-| [01] | MCP `--read-only` is cosmetic relative to token scope | The scoped service token is the auth boundary; read-only is default posture, not enforcement (`mcp-fleet.nix`) |
-| [02] | A snapshot pruner that reaped every non-dotfile destroyed unrelated files in a repointed cache dir | Prune only owned snapshot families (`.claude/hooks/setup-env.sh`) |
-| [03] | `forge-mcp drift` crashed on absent, empty, or malformed `~/.claude.json`/`~/.codex/config.toml` | A parse failure is a drift finding, not a raw crash (`mcp-launchers.nix`) |
+| [INDEX] | [TRAP]                                                             | [RULE_NOW]                                          |
+| :-----: | :----------------------------------------------------------------- | :-------------------------------------------------- |
+|  [01]   | MCP `--read-only` is cosmetic relative to token scope              | The scoped service token is the auth boundary       |
+|  [02]   | A pruner reaping every non-dotfile wiped a repointed cache dir     | Prune only owned snapshot families                  |
+|  [03]   | `forge-mcp drift` crashed on absent/empty/malformed client configs | A parse failure is a drift finding, not a raw crash |
+
+- [01]: read-only is default posture, not enforcement (`mcp-fleet.nix`).
+- [02]: owner: `.claude/hooks/setup-env.sh`.
+- [03]: crash inputs: `~/.claude.json`/`~/.codex/config.toml`; owner `mcp-launchers.nix`.
 
 ## [04]-[CONTAINER]
 
@@ -28,33 +36,45 @@ Colima is the Docker API / Compose / Buildx / Pulumi default and never yields `D
 
 ## [05]-[MCP]
 
-| [INDEX] | [TRAP] | [RULE_NOW] |
-| :-----: | :--- | :--- |
-| [01] | Project-scoped `mcpServers` blocks shadowed the global fleet with stale servers | An empty `{}` project block is inert; the global fleet governs |
-| [02] | `mcpServers.jupyter.env` carried a literal `JUPYTER_TOKEN`, overriding wrapper token-file resolution | Carry no literal token env; the wrapper resolves the live token |
-| [03] | Required MCP registration proves only startup/registration | `required = true` fails startup/resume when the MCP cannot initialize; tunnel health, env, and wrapper are separate axes |
-| [04] | Relocated LSP telemetry/plugin rows pointed at absent paths/SHAs | Telemetry is `@forge-lsp`; the plugin cache is materialized with `claude plugin update`; dead marketplace keys are deleted |
+| [INDEX] | [TRAP]                                                            | [RULE_NOW]                                                      |
+| :-----: | :---------------------------------------------------------------- | :-------------------------------------------------------------- |
+|  [01]   | Project `mcpServers` blocks shadowed the fleet with stale servers | An empty `{}` project block is inert; the global fleet governs  |
+|  [02]   | `mcpServers.jupyter.env` carried a literal `JUPYTER_TOKEN`        | Carry no literal token env; the wrapper resolves the live token |
+|  [03]   | Required MCP registration proves only startup/registration        | `required = true` fails startup/resume if the MCP cannot init   |
+|  [04]   | Relocated LSP telemetry/plugin rows pointed at absent paths/SHAs  | Telemetry is `@forge-lsp`; dead marketplace keys are deleted    |
+
+- [02]: the literal token overrode wrapper token-file resolution.
+- [03]: tunnel health, env, and wrapper are separate axes.
+- [04]: the plugin cache is materialized with `claude plugin update`.
 
 ## [06]-[ZELLIJ_TERMINAL]
 
-| [INDEX] | [TRAP] | [RULE_NOW] |
-| :-----: | :--- | :--- |
-| [01] | Unserialized popup dispatch let concurrent dispatchers create duplicate popups | Popup dispatch is serialized (`scripts/integration/`) |
-| [02] | `startswith("forge-yazi.sh")` predicates matched wrong panes | Pane identity uses exact matching |
-| [03] | An ungranted plugin in a borderless pane rendered blank forever | Plugin grants are seeded per wasm path in the Zellij `permissions.kdl` |
-| [04] | The Zellij server inherited stale env after `sessionVariables` edits | Respawn the server after session-variable changes |
-| [05] | A plugin wasm panicked on the pinned Zellij with a WASI deserialize failure | Every plugin admission needs a load proof against the pinned Zellij |
-| [06] | Shift `/`, `[`, `]` arrive as `?`, `{`, `}` | The Hyper layer binds shifted punctuation with and without Shift (`apps/chords.nix`) |
-| [07] | Dead sessions left orphaned `loc` processes and `loc` blocked forever when the caller died | `loc` detaches stdin and wraps its scan with `LOC_SCAN_DEADLINE_SECONDS` and typed degrade output |
+| [INDEX] | [TRAP]                                                           | [RULE_NOW]                                                       |
+| :-----: | :--------------------------------------------------------------- | :--------------------------------------------------------------- |
+|  [01]   | Unserialized dispatch let concurrent dispatchers dup popups      | Popup dispatch is serialized (`scripts/terminal.nix`)            |
+|  [02]   | `startswith("forge-yazi.sh")` predicates matched wrong panes     | Pane identity uses exact matching                                |
+|  [03]   | An ungranted plugin in a borderless pane rendered blank forever  | Plugin grants seeded per wasm path in Zellij `permissions.kdl`   |
+|  [04]   | Zellij server inherited stale env after `sessionVariables` edits | Respawn the server after session-variable changes                |
+|  [05]   | Plugin wasm WASI-deserialize panic on the pinned Zellij          | Every plugin admission needs a load proof on the pinned Zellij   |
+|  [06]   | Shift `/`, `[`, `]` arrive as `?`, `{`, `}`                      | The Hyper layer binds shifted punctuation with and without Shift |
+|  [07]   | Dead sessions left orphaned `loc` processes that blocked forever | `loc` detaches stdin and deadlines its scan                      |
+
+- [06]: owner: `apps/chords.nix`.
+- [07]: `loc` wraps its scan with `LOC_SCAN_DEADLINE_SECONDS` and emits typed degrade output; the caller's death is what stranded it.
 
 ## [07]-[DEPLOY]
 
-| [INDEX] | [TRAP] | [RULE_NOW] |
-| :-----: | :--- | :--- |
-| [01] | A Brew failure killed Home Manager activation while `nh` printed success, so font projection never ran | `forge-redeploy` receipts capture and propagate the activation-phase exit status |
-| [02] | Homebrew removed `--no-quarantine`/`--no-binaries`; the Brewfile `cask_args` killed new cask installs | The dead arg is removed; posture is carried by `HOMEBREW_CASK_OPTS` and session variables (`darwin/homebrew/`) |
-| [03] | `AllSpacesAndDisplays` was a phantom wallpaper schema and PlistBuddy `Add` failed under `set -e` | The wallpaper rail uses System Events `osascript` plus an idempotence probe (`assets/wallpaper/`) |
-| [04] | A `_reap` that exited `129` for every signal stranded SessionStart workers | Per-signal traps pass the signal number; HUP/INT/TERM reap resolver workers before EXIT cleanup (`.claude/hooks/setup-env.sh`) |
+| [INDEX] | [TRAP]                                                         | [RULE_NOW]                                                        |
+| :-----: | :------------------------------------------------------------- | :---------------------------------------------------------------- |
+|  [01]   | A Brew failure killed HM activation while `nh` printed success | `forge-redeploy` receipts propagate activation-phase exit status  |
+|  [02]   | Homebrew removed `--no-quarantine`/`--no-binaries`             | Dead arg removed; posture in `HOMEBREW_CASK_OPTS` + session vars  |
+|  [03]   | `AllSpacesAndDisplays` was a phantom wallpaper schema          | Wallpaper rail uses System Events `osascript` + idempotence probe |
+|  [04]   | `_reap` exited `129` on every signal, stranding workers        | Per-signal traps pass the signal number                           |
+
+- [01]: the killed activation meant font projection never ran.
+- [02]: the Brewfile `cask_args` then killed new cask installs; owner `darwin/homebrew/`.
+- [03]: PlistBuddy `Add` failed under `set -e`; owner `assets/wallpaper/`.
+- [04]: HUP/INT/TERM reap resolver workers before EXIT cleanup; the stranded workers were SessionStart resolver workers (`.claude/hooks/setup-env.sh`).
 
 ## [08]-[RASM]
 

@@ -5,7 +5,7 @@ set -Eeuo pipefail
 shopt -s inherit_errexit nullglob extglob
 IFS=$'\n\t'
 
-# --- [CONSTANTS] --------------------------------------------------------------
+# --- [CONSTANTS] ------------------------------------------------------------------------
 
 readonly _OK=0 _FAIL=1 _USAGE=2 _S=$'\x1f'
 readonly _R=$'\033[31m' _Y=$'\033[33m' _G=$'\033[32m' _B=$'\033[1m' _Z=$'\033[0m'
@@ -16,7 +16,7 @@ unset -v _t
 declare -Ar _CLR=([E]="${_R}" [W]="${_Y}")
 declare -Ar _CTR=([E]=_errs [W]=_warns)
 
-# --- [TRAPS] ------------------------------------------------------------------
+# --- [TRAPS] ----------------------------------------------------------------------------
 
 declare -a _CLEANUP=()
 declare -i _CLEANING=0
@@ -35,7 +35,7 @@ _on_err() {
 trap _on_exit EXIT
 trap _on_err ERR
 
-# --- [EMITTERS] ---------------------------------------------------------------
+# --- [EMITTERS] -------------------------------------------------------------------------
 
 _emit_json() {
     jq -cn --arg l "$1" --arg v "$2" --arg m "$3" --arg c "$4" \
@@ -48,12 +48,12 @@ _emit_text() {
 }
 _emit() {
     case "${_FMT}" in
-    json) _emit_json "$@" ;;
-    text) _emit_text "$@" ;;
+        json) _emit_json "$@" ;;
+        text) _emit_text "$@" ;;
     esac
 }
 
-# --- [RULES] ------------------------------------------------------------------
+# --- [RULES] ----------------------------------------------------------------------------
 
 # LABEL<FS>LEVEL<FS>EXT<FS>FLAGS<FS>MESSAGE<FS>PATTERN
 readonly -a _RG_RULES=(
@@ -86,7 +86,7 @@ readonly -a _PAIR_RULES=(
     "STRINGLY_POLICY${_S}E${_S}CREATE\\s+POLICY${_S}current_setting${_S}RLS policy without current_setting() — hardcoded tenant literals"
 )
 
-# --- [ENGINE] -----------------------------------------------------------------
+# --- [ENGINE] ---------------------------------------------------------------------------
 
 declare -i _errs=0 _warns=0 _checks=0
 
@@ -162,7 +162,7 @@ _check_sprawl() {
     done
 }
 
-# --- [INTERFACE] --------------------------------------------------------------
+# --- [INTERFACE] ------------------------------------------------------------------------
 _usage() {
     cat <<'EOF'
 pg_lint — PostgreSQL 18 anti-pattern linter
@@ -177,40 +177,40 @@ declare -a _PATHS=()
 _parse() {
     while (($#)); do
         case "$1" in
-        -h | --help)
-            _usage
-            exit 0
-            ;;
-        -q | --quiet)
-            _QUIET=true
-            shift
-            ;;
-        --sql-only)
-            _TS=false
-            shift
-            ;;
-        --ts-only)
-            _SQL=false
-            shift
-            ;;
-        --json)
-            _FMT=json
-            shift
-            ;;
-        --self-test)
-            _self_test
-            exit $?
-            ;;
-        --)
-            shift
-            break
-            ;;
-        -*)
-            printf 'Unknown: %s\n' "$1" >&2
-            _usage >&2
-            exit "${_USAGE}"
-            ;;
-        *) break ;;
+            -h | --help)
+                _usage
+                exit 0
+                ;;
+            -q | --quiet)
+                _QUIET=true
+                shift
+                ;;
+            --sql-only)
+                _TS=false
+                shift
+                ;;
+            --ts-only)
+                _SQL=false
+                shift
+                ;;
+            --json)
+                _FMT=json
+                shift
+                ;;
+            --self-test)
+                _self_test
+                exit $?
+                ;;
+            --)
+                shift
+                break
+                ;;
+            -*)
+                printf 'Unknown: %s\n' "$1" >&2
+                _usage >&2
+                exit "${_USAGE}"
+                ;;
+            *) break ;;
         esac
     done
     _PATHS=("${@:-.}")
@@ -229,7 +229,7 @@ _summary() {
     ((_TTY)) && printf '\n%s%s%s%s\n' "${_B}" "${clr}" "${line}" "${_Z}" || printf '\n%s\n' "${line}"
 }
 
-# --- [SELF-TEST] --------------------------------------------------------------
+# --- [SELF_TEST] ------------------------------------------------------------------------
 
 _self_test() {
     local -i pass=0 fail=0
@@ -273,7 +273,7 @@ SQL
     return $((fail > 0))
 }
 
-# --- [ENTRY] ------------------------------------------------------------------
+# --- [ENTRY] ----------------------------------------------------------------------------
 
 _main() {
     _parse "$@"

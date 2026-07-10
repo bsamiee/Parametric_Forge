@@ -223,10 +223,10 @@ run script loader with parameters {"a", "b"}
 The OSA file-kind rail distinguishes source, compiled script, and script bundle before any tool invokes `osacompile`, `osascript`, `NSAppleScript`, or `OSAScript` against a path.
 
 | [INDEX] | [UTTYPE]                 | [IDENTIFIER]                          | [ROLE]                                                  |
-| :-----: | :----------------------- | :------------------------------------- | :------------------------------------------------------- |
-|  [01]   | `UTType.appleScript`     | `com.apple.applescript.text`           | Text source, typically `.applescript`.                   |
-|  [02]   | `UTType.osaScript`       | `com.apple.applescript.script`         | Compiled OSA script data, typically `.scpt`.              |
-|  [03]   | `UTType.osaScriptBundle` | `com.apple.applescript.script-bundle`  | Compiled bundle carrying resources, typically `.scptd`.   |
+| :-----: | :----------------------- | :------------------------------------ | :------------------------------------------------------ |
+|  [01]   | `UTType.appleScript`     | `com.apple.applescript.text`          | Text source, typically `.applescript`.                  |
+|  [02]   | `UTType.osaScript`       | `com.apple.applescript.script`        | Compiled OSA script data, typically `.scpt`.            |
+|  [03]   | `UTType.osaScriptBundle` | `com.apple.applescript.script-bundle` | Compiled bundle carrying resources, typically `.scptd`. |
 
 `NSAppleScript` owns text-or-URL script loading, compilation, execution, and structured error dictionaries at the Foundation boundary; OSAKit's `OSAScript` owns richer editor and compiled-script workflows over the same runtime, and Automator's `AMAppleScriptAction` compiles to an `OSAScript` instance underneath.
 

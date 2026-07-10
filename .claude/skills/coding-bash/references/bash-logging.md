@@ -2,15 +2,15 @@
 
 Production logging for Bash 5.2+/5.3. JSON-ND structured emission, numeric level dispatch, caller-context injection, terminal capability detection, CI platform integration, coprocess log shipping, OpenTelemetry context propagation, fork-free hot paths.
 
-| [IDX] | [PATTERN]            |  [S]  | [USE_WHEN]                                          |
-| :---: | :------------------- | :---: | :-------------------------------------------------- |
-| [01]  | JSON-ND structured   |  S1   | Container workloads, log aggregation                |
-| [02]  | Level-gated dispatch |  S2   | Every script — numeric gate, caller injection       |
-| [03]  | Terminal capability  |  S3   | Interactive output — NO_COLOR, tput, CI detect      |
-| [04]  | CI platform          |  S4   | GH Actions / GitLab — annotations, collapsible      |
-| [05]  | Async log shipping   |  S5   | High-throughput — coprocess sink, FD rotation       |
-| [06]  | Context propagation  |  S6   | Distributed tracing — correlation, OTEL traceparent |
-| [07]  | Fork-free emission   |  S7   | Bash 5.3+ — zero-fork timestamps, elapsed timing    |
+| [INDEX] | [PATTERN]            |  [S]  | [USE_WHEN]                                          |
+| :-----: | :------------------- | :---: | :-------------------------------------------------- |
+|  [01]   | JSON-ND structured   |  S1   | Container workloads, log aggregation                |
+|  [02]   | Level-gated dispatch |  S2   | Every script — numeric gate, caller injection       |
+|  [03]   | Terminal capability  |  S3   | Interactive output — NO_COLOR, tput, CI detect      |
+|  [04]   | CI platform          |  S4   | GH Actions / GitLab — annotations, collapsible      |
+|  [05]   | Async log shipping   |  S5   | High-throughput — coprocess sink, FD rotation       |
+|  [06]   | Context propagation  |  S6   | Distributed tracing — correlation, OTEL traceparent |
+|  [07]   | Fork-free emission   |  S7   | Bash 5.3+ — zero-fork timestamps, elapsed timing    |
 
 ## [01]-[JSON_ND_STRUCTURED_LOGGING]
 
@@ -274,11 +274,11 @@ _log_dual() {
 
 Batch buffering (100 lines or 1s timeout) amortizes syscalls. Shipping alternatives:
 
-| [METHOD]              | [COMMAND]                                                              | [TRADEOFF]                    |
-| --------------------- | ---------------------------------------------------------------------- | ----------------------------- |
-| Direct OTLP           | `curl -s -X POST "${OTEL_EXPORTER_OTLP_ENDPOINT}/v1/logs" -d @payload` | Simple; one fork per batch    |
-| Fluent Bit stdin pipe | `script.sh \| fluent-bit -i stdin -o <output>`                         | Zero-change to emitters       |
-| syslog (Linux)        | `logger -t "${SCRIPT_NAME}" --sd-id meta@0 "key=val"`                  | Zero-fork on Linux via socket |
+| [INDEX] | [METHOD]              | [COMMAND]                                                              | [TRADEOFF]                    |
+| :-----: | :-------------------- | :--------------------------------------------------------------------- | :---------------------------- |
+|  [01]   | Direct OTLP           | `curl -s -X POST "${OTEL_EXPORTER_OTLP_ENDPOINT}/v1/logs" -d @payload` | Simple; one fork per batch    |
+|  [02]   | Fluent Bit stdin pipe | `script.sh \| fluent-bit -i stdin -o <output>`                         | Zero-change to emitters       |
+|  [03]   | syslog (Linux)        | `logger -t "${SCRIPT_NAME}" --sd-id meta@0 "key=val"`                  | Zero-fork on Linux via socket |
 
 ## [06]-[CONTEXT_PROPAGATION]
 
@@ -391,7 +391,7 @@ _init_strftime() {
 
 `${ cmd; }` requires space after `{` and `;` before `}` — omitting either is a parse error. ShellCheck 0.10.x does not parse this syntax. `_init_strftime` redefines `_ts` if the loadable is available — call at startup before first log emission.
 
-## [RULES]
+## [08]-[RULES]
 
 - JSON serialization: `jq -nc` with `--arg`/`--argjson` for all structured output — `printf`-based JSON only for fixed-schema, program-controlled values.
 - `_LOG_FD` indirection for all emitters — enables coprocess, file, and dual-channel output without modifying callers. Stderr default because container runtimes capture stdout/stderr independently.

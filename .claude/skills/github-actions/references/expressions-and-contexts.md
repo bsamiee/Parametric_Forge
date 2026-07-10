@@ -7,7 +7,7 @@
 ## [02]-[CONTEXTS]
 
 | [INDEX] | [CONTEXT]      | [KEY_PROPERTIES]                                                                            |
-| :-----: | -------------- | ------------------------------------------------------------------------------------------- |
+| :-----: | :------------- | :------------------------------------------------------------------------------------------ |
 |  [01]   | `github`       | `.event_name`, `.ref`, `.ref_name`, `.sha`, `.actor`, `.repository`, `.run_id`, `.workflow` |
 |  [02]   | `github.event` | `.action`, `.pull_request.number/.head.ref/.base.ref/.head.sha`, `.head_commit.message`     |
 |  [03]   | `env`          | `env.VAR_NAME` — workflow, job, step level; step-level overrides job-level.                 |
@@ -24,7 +24,7 @@
 **`runner` context expansions:**
 
 | [INDEX] | [PROPERTY]           | [VALUE]                            |
-| :-----: | -------------------- | ---------------------------------- |
+| :-----: | :------------------- | :--------------------------------- |
 |  [01]   | `runner.os`          | `Linux`, `Windows`, `macOS`        |
 |  [02]   | `runner.arch`        | `X64`, `ARM64`, `ARM`              |
 |  [03]   | `runner.environment` | `github-hosted`, `self-hosted`     |
@@ -36,7 +36,7 @@
 ## [03]-[FUNCTIONS]
 
 | [INDEX] | [FUNCTION]         | [EXAMPLE]                                                            |
-| :-----: | ------------------ | -------------------------------------------------------------------- |
+| :-----: | :----------------- | :------------------------------------------------------------------- |
 |  [01]   | `contains(a, b)`   | `contains(github.ref, 'refs/tags/')` — **case-insensitive**.         |
 |  [02]   | `startsWith(a, b)` | `startsWith(github.ref, 'refs/tags/v')` — **case-insensitive**.      |
 |  [03]   | `endsWith(a, b)`   | `endsWith(github.ref, '/main')` — **case-insensitive**.              |
@@ -119,8 +119,8 @@ jobs:
 ## [06]-[INJECTION_PREVENTION]
 
 [CRITICAL]:
-- [NEVER] Interpolate `${{ github.event.* }}` directly in `run:` — attacker-controlled PR titles, branch names, and commit messages can inject shell commands.
-- [ALWAYS] Route untrusted values through `env:` block, then reference as shell variable.
+- [NEVER]: Interpolate `${{ github.event.* }}` directly in `run:` — attacker-controlled PR titles, branch names, and commit messages can inject shell commands.
+- [ALWAYS]: Route untrusted values through `env:` block, then reference as shell variable.
 
 ```yaml
 # SAFE — env var indirection
@@ -158,7 +158,7 @@ jobs:
 ```
 
 | [INDEX] | [FILE]                     | [PURPOSE]                                              | [SIZE_LIMIT]                    |
-| :-----: | -------------------------- | ------------------------------------------------------ | ------------------------------- |
+| :-----: | :------------------------- | :----------------------------------------------------- | :------------------------------ |
 |  [01]   | **`$GITHUB_OUTPUT`**       | Step outputs — `steps.ID.outputs.KEY`.                 | 1 MiB/job, 50 MiB/workflow run. |
 |  [02]   | **`$GITHUB_STATE`**        | Step state — persisted between pre/main/post.          | —                               |
 |  [03]   | **`$GITHUB_ENV`**          | Environment variables — available to subsequent steps. | 48 KiB/variable.                |

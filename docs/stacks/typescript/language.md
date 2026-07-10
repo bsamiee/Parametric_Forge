@@ -24,32 +24,32 @@ Each table routes a concern to the legal form that owns it, and every `[USE]` na
 
 [MODULE_AND_IMPORT_FORMS]: how a file consumes another surface.
 
-| [INDEX] | [CONCERN]                        | [USE]                                                   | [REPLACE]                                          |
-| :-----: | :------------------------------- | :------------------------------------------------------ | :------------------------------------------------- |
-|  [01]   | type-only specifier              | `import type { Shape } from "<specifier>"`              | a value import kept live for type positions        |
-|  [02]   | mixed specifier                  | one statement, inline `type` specifiers                 | a value line and a type line on one specifier      |
-|  [03]   | package namespace                | one named root binding under its canonical name         | per-member cherry-picking, alias drift             |
-|  [04]   | shadowed global                  | `globalThis.<Name>` at the FFI seam                     | renaming the module binding to spare a global      |
-|  [05]   | load-time effect                 | side-effect import leading a boot-edge module           | registration import inside a domain module         |
-|  [06]   | qualified type via erased import | `Shape.Field` type access through the erased binding    | importing the value side for one type name         |
-|  [07]   | data-file import                 | `with { type: "json" }` ingress feeding the decode seam | a JSON binding trusted as domain shape             |
-|  [08]   | deferred module load             | boundary loader; the promise converts at its seam       | bare `import()` or `require` in domain flow        |
-|  [09]   | deferred module evaluation       | `import defer * as Name` leading a boot-edge module     | a hand-rolled lazy-init singleton over a cold path |
+| [INDEX] | [CONCERN]                        | [USE]                                                | [REPLACE]                                     |
+| :-----: | :------------------------------- | :--------------------------------------------------- | :-------------------------------------------- |
+|  [01]   | type-only specifier              | `import type { Shape } from "<specifier>"`           | a value import kept live for type positions   |
+|  [02]   | mixed specifier                  | one statement, inline `type` specifiers              | a value line and a type line on one specifier |
+|  [03]   | package namespace                | one named root binding under its canonical name      | per-member cherry-picking, alias drift        |
+|  [04]   | shadowed global                  | `globalThis.<Name>` at the FFI seam                  | renaming the module binding to spare a global |
+|  [05]   | load-time effect                 | side-effect import leading a boot-edge module        | registration import inside a domain module    |
+|  [06]   | qualified type via erased import | `Shape.Field` type access through the erased binding | importing the value side for one type name    |
+|  [07]   | data-file import                 | `with { type: "json" }` ingress feeding decode seam  | a JSON binding trusted as domain shape        |
+|  [08]   | deferred module load             | boundary loader; the promise converts at its seam    | bare `import()` or `require` in domain flow   |
+|  [09]   | deferred module evaluation       | `import defer * as Name` leading a boot-edge module  | hand-rolled lazy-init singleton, cold path    |
 
 [EXPORT_SURFACE_FORMS]: how a module declares its public surface.
 
-| [INDEX] | [CONCERN]                  | [USE]                                                         | [REPLACE]                                         |
-| :-----: | :------------------------- | :------------------------------------------------------------ | :------------------------------------------------ |
-|  [01]   | public surface site        | one terminal `// --- [EXPORTS]` block                         | `export` riding body declarations, default export |
-|  [02]   | value-bearing name         | `export { Shape }` — one entry, every meaning                 | a value entry plus a parallel type entry per name |
-|  [03]   | pure-type name             | `export type { Shape }` in the block                          | a type smuggled through the value statement       |
-|  [04]   | companion type family      | type-only `declare namespace` merged on the owner             | prefixed sibling type exports                     |
-|  [05]   | value-keyed type           | same-name `const` plus `type` pair                            | a `<Name>Kind` alias beside its const             |
-|  [06]   | single-signature operation | annotated arrow `const`, listed in the block                  | hoisted `function` statement, inferred signature  |
-|  [07]   | interior symbol            | `_`-prefixed, absent from the block                           | exported helper, promotion alias                  |
-|  [08]   | package entry point        | exports-map subpath; consumers import the owner               | `export ... from` pass-through, `export *`        |
-|  [09]   | public type surface        | `type` alias or the owner's merged companion                  | exported `interface` open to remote merge         |
-|  [10]   | machine-implanted members  | same-name `interface` beside its class at the implanting seam | a merge promising members nothing implants        |
+| [INDEX] | [CONCERN]                  | [USE]                                             | [REPLACE]                                         |
+| :-----: | :------------------------- | :------------------------------------------------ | :------------------------------------------------ |
+|  [01]   | public surface site        | one terminal `// --- [EXPORTS]` block             | `export` riding body declarations, default export |
+|  [02]   | value-bearing name         | `export { Shape }` — one entry, every meaning     | a value entry plus a parallel type entry per name |
+|  [03]   | pure-type name             | `export type { Shape }` in the block              | a type smuggled through the value statement       |
+|  [04]   | companion type family      | type-only `declare namespace` merged on the owner | prefixed sibling type exports                     |
+|  [05]   | value-keyed type           | same-name `const` plus `type` pair                | a `<Name>Kind` alias beside its const             |
+|  [06]   | single-signature operation | annotated arrow `const`, listed in the block      | hoisted `function` statement, inferred signature  |
+|  [07]   | interior symbol            | `_`-prefixed, absent from the block               | exported helper, promotion alias                  |
+|  [08]   | package entry point        | exports-map subpath; consumers import the owner   | `export ... from` pass-through, `export *`        |
+|  [09]   | public type surface        | `type` alias or the owner's merged companion      | exported `interface` open to remote merge         |
+|  [10]   | machine-implanted members  | same-name `interface` by its class, implant seam  | a merge promising members nothing implants        |
 
 [ERASURE_REPLACEMENT_FORMS]: the legal form for each banned emit-bearing construct.
 
@@ -62,16 +62,16 @@ Each table routes a concern to the legal form that owns it, and every `[USE]` na
 
 [STRICTNESS_CONSEQUENCE_FORMS]: the spelling each strictness fact forces open.
 
-| [INDEX] | [CONCERN]                   | [USE]                                                    | [REPLACE]                                            |
-| :-----: | :-------------------------- | :------------------------------------------------------- | :--------------------------------------------------- |
-|  [01]   | key whose presence varies   | `?:` under exact-optional semantics                      | `?: T \| undefined` blur                             |
-|  [02]   | present cell, maybe empty   | `T \| undefined` spelled in the type                     | `?:` on a key that always exists                     |
-|  [03]   | exact-optional construction | conditional spread `...(guard && { key })`               | a `key: undefined` write, post-build delete          |
-|  [04]   | proven-key read             | key typed `keyof typeof Table`; total access             | membership re-check, `!` repair                      |
-|  [05]   | open-index read             | bracket read lifted to `Option` at the seam              | `!` assertion on the unproven cell                   |
-|  [06]   | key-provenance spelling     | dot on the declared key, bracket on the signature member | uniform dot; a signature widened to spare brackets   |
-|  [07]   | side-effect specifier       | a resolving specifier; assets declare their module shape | an unresolvable registration import trusted silently |
-|  [08]   | builtin iterator input      | collection combinator over the iterable                  | hand `.next()` stepping that trusts `.value`         |
+| [INDEX] | [CONCERN]                    | [USE]                                            | [REPLACE]                                        |
+| :-----: | :--------------------------- | :----------------------------------------------- | :----------------------------------------------- |
+|  [01]   | key whose presence varies    | `?:` under exact-optional semantics              | `?: T \| undefined` blur                         |
+|  [02]   | always-present key, no value | `T \| undefined` spelled in the type             | `?:` on a key that always exists                 |
+|  [03]   | exact-optional construction  | conditional spread `...(guard && { key })`       | a `key: undefined` write, post-build delete      |
+|  [04]   | proven-key read              | key typed `keyof typeof Table`; total access     | membership re-check, `!` repair                  |
+|  [05]   | open-index read              | bracket read lifted to `Option` at the seam      | `!` assertion on the unproven cell               |
+|  [06]   | key-provenance spelling      | dot on declared key, bracket on signature member | uniform dot; signature widened to spare brackets |
+|  [07]   | side-effect specifier        | resolving specifier; assets declare module shape | unresolvable registration import, silent trust   |
+|  [08]   | builtin iterator input       | collection combinator over the iterable          | hand `.next()` stepping that trusts `.value`     |
 
 ## [03]-[LANGUAGE_FORM_CONTRACTS]
 

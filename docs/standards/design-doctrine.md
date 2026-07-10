@@ -83,7 +83,17 @@ A bounded vocabulary is an executable owner: one declaration carries identity, b
 ROUTE: frozendict[Route, Policy] = frozendict({Route.PRIMARY: Policy(step=run, attempts=5)})
 ```
 
-## [09]-[EXECUTION]
+## [09]-[FILE_ORGANIZATION]
+
+Source files carry one section grammar: the language comment marker, one space, `---`, one space, and a bracketed UPPER_SNAKE label with no internal spaces — dash-filled to a 90-column line for a full section, bare for a subsection. Nothing beyond the label and its dash fill rides a divider line. Canonical section order, unused sections omitted: `RUNTIME_PRELUDE` (imports, shebangs, strict modes, load gates) precedes `TYPES` -> `CONSTANTS` -> `MODELS` -> `ERRORS` -> `SERVICES` -> `OPERATIONS` -> `COMPOSITION` -> `EXPORTS`. The divider grammar and width ride the docs gate; the section order stays review-tier.
+
+```python conceptual
+# --- [CONSTANTS] ------------------------------------------------------------------------
+
+# --- [SUBSECTION]
+```
+
+## [10]-[EXECUTION]
 
 Every agent and workflow producing or reviewing an executable surface lands its change at the root cause and leaves no residual: the fix targets the cause, not the symptom, and a defect noticed anywhere in the working tree — inside the stated territory or beyond it — is resolved in the same pass, never deferred to a later one and never annotated as another owner's problem. A defect genuinely out of reach lands as an explicit unreachable naming the owner that closes it — the escalation seam — never a silent residual a successor rediscovers. A pattern, smell, or defect-class a run reveals becomes durable law in its owning surface and propagates byte-identical to every project the same session; a lesson kept as session memory is a regression.
 

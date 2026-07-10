@@ -3,24 +3,24 @@
 // Replace the TODOs, rename the file to <your-name>.js, drop it in .claude/workflows/.
 
 export const meta = {
-  name: 'TODO-loop',
-  whenToUse: 'TODO: when a reader should pick this',  // optional
-  description: 'TODO: one line — what this produces',
-  phases: [{ title: 'Collect' }],
+    name: 'TODO-loop',
+    whenToUse: 'TODO: when a reader should pick this',  // optional
+    description: 'TODO: one line — what this produces',
+    phases: [{ title: 'Collect' }],
 }
 
-// --- [MODELS] ----------------------------------------------------------------------------
+// --- [MODELS] --------------------------------------------------------------------------
 
 const RESULT_SCHEMA = {
-  type: 'object',
-  additionalProperties: false, // STRICT: required must list every property — codex --output-schema rejects anything less
-  required: ['items'],
-  properties: {
-    items: { type: 'array', items: { type: 'string' } },
-  },
+    type: 'object',
+    additionalProperties: false, // STRICT: required must list every property — codex --output-schema rejects anything less
+    required: ['items'],
+    properties: {
+        items: { type: 'array', items: { type: 'string' } },
+    },
 }
 
-// --- [COMPOSITION] -----------------------------------------------------------------------
+// --- [COMPOSITION] ---------------------------------------------------------------------
 
 phase('Collect')
 const collected = []
@@ -53,13 +53,13 @@ const collected = []
 // moves to a run-scratch report file + receipt (the patterns reference report-file shape).
 
 while (budget.total && budget.remaining() > 50_000 && collected.length < 200) {
-  const r = await agent(
-    'TODO: instruction. Do not repeat anything already found below.\n\n'
-    + JSON.stringify(collected),
-    { schema: RESULT_SCHEMA, effort: 'low' })
+    const r = await agent(
+        'TODO: instruction. Do not repeat anything already found below.\n\n'
+        + JSON.stringify(collected),
+        { schema: RESULT_SCHEMA, effort: 'low' })
 
-  collected.push(...(r?.items ?? []))
-  log(`${collected.length} collected · ${Math.round(budget.remaining() / 1000)}k tokens left`)
+    collected.push(...(r?.items ?? []))
+    log(`${collected.length} collected · ${Math.round(budget.remaining() / 1000)}k tokens left`)
 }
 
 return { collected }

@@ -12,111 +12,110 @@
 # │  pre-if/post-if: default to always() — only JavaScript actions support      │
 # │    pre/post lifecycle. Conditions use runner/github context, NOT steps.     │
 # └─────────────────────────────────────────────────────────────────────────────┘
-name: '[ACTION_NAME]'
-description: '[DESCRIPTION]'
-author: '[AUTHOR_NAME]'
+name: "[ACTION_NAME]"
+description: "[DESCRIPTION]"
+author: "[AUTHOR_NAME]"
 
 inputs:
-  github-token:
-    description: 'GitHub token for API access'
-    required: false
-    default: ${{ github.token }}
-  source-path:
-    description: '[INPUT_DESCRIPTION]'
-    required: true
-  verbose:
-    description: 'Enable verbose output (true|false)'
-    required: false
-    default: 'false'
+    github-token:
+        description: "GitHub token for API access"
+        required: false
+        default: ${{ github.token }}
+    source-path:
+        description: "[INPUT_DESCRIPTION]"
+        required: true
+    verbose:
+        description: "Enable verbose output (true|false)"
+        required: false
+        default: "false"
 
 outputs:
-  result:
-    description: '[OUTPUT_DESCRIPTION]'
-  changed:
-    description: 'Whether changes were detected (true|false)'
+    result:
+        description: "[OUTPUT_DESCRIPTION]"
+    changed:
+        description: "Whether changes were detected (true|false)"
 
 branding:
-  icon: '[ICON_NAME]'
-  color: '[COLOR]'
+    icon: "[ICON_NAME]"
+    color: "[COLOR]"
 
 runs:
-  using: 'node24'
-  main: 'dist/index.js'
-  pre: 'dist/setup.js'
-  pre-if: runner.os == 'Linux'   # default: always() — skip setup on non-Linux
-  post: 'dist/cleanup.js'
-  post-if: always()              # default: always() — cleanup runs even on failure
-
-# --- Build ------------------------------------------------------------------
-# npx @vercel/ncc build src/index.ts -o dist --minify --license licenses.txt
-#
-# --- src/index.ts (ESM — @actions/core@3.x is ESM-only) --------------------
-# import * as core from '@actions/core';
-# import * as github from '@actions/github';
-#
-# class InputError extends Error {
-#   constructor(field: string, reason: string) {
-#     super(`Input '${field}' ${reason}`);
-#     this.name = 'InputError';
-#   }
-# }
-#
-# async function run(): Promise<void> {
-#   try {
-#     // --- Input validation (fail fast) ---
-#     const token = core.getInput('github-token');
-#     const sourcePath = core.getInput('source-path', { required: true });
-#     const verbose = core.getBooleanInput('verbose');
-#
-#     if (!sourcePath.trim()) {
-#       throw new InputError('source-path', 'must be a non-empty string');
-#     }
-#
-#     const octokit = github.getOctokit(token);
-#
-#     // --- Main logic ---
-#     core.startGroup('[ACTION_NAME]');
-#     // [MAIN_LOGIC]
-#     const result = 'processed';
-#     const changed = true;
-#     if (verbose) core.info(`Result: ${result}, changed: ${changed}`);
-#     core.endGroup();
-#
-#     // --- Outputs ---
-#     core.setOutput('result', result);
-#     core.setOutput('changed', String(changed));
-#
-#     // --- Job summary ---
-#     await core.summary
-#       .addHeading('[ACTION_NAME] Results')
-#       .addTable([
-#         [{ data: 'Metric', header: true }, { data: 'Value', header: true }],
-#         ['Source', sourcePath],
-#         ['Changed', String(changed)],
-#       ])
-#       .write();
-#   } catch (error) {
-#     // --- Typed error handling ---
-#     if (error instanceof InputError) {
-#       core.setFailed(`Validation: ${error.message}`);
-#     } else if (error instanceof Error) {
-#       core.setFailed(error.message);
-#     } else {
-#       core.setFailed('An unexpected error occurred');
-#     }
-#   }
-# }
-#
-# run();
-#
-# --- src/setup.ts (pre: lifecycle) ------------------------------------------
-# import * as core from '@actions/core';
-# core.startGroup('Pre: validating environment');
-# // Validate runner prerequisites, restore caches
-# core.endGroup();
-#
-# --- src/cleanup.ts (post: lifecycle) ---------------------------------------
-# import * as core from '@actions/core';
-# core.startGroup('Post: cleanup');
-# // Upload metrics, save caches, revoke tokens
-# core.endGroup();
+    using: "node24"
+    main: "dist/index.js"
+    pre: "dist/setup.js"
+    pre-if: runner.os == 'Linux' # default: always() — skip setup on non-Linux
+    post: "dist/cleanup.js"
+    post-if: always() # default: always() — cleanup runs even on failure
+    # --- Build ------------------------------------------------------------------
+    # npx @vercel/ncc build src/index.ts -o dist --minify --license licenses.txt
+    #
+    # --- src/index.ts (ESM — @actions/core@3.x is ESM-only) --------------------
+    # import * as core from '@actions/core';
+    # import * as github from '@actions/github';
+    #
+    # class InputError extends Error {
+    #   constructor(field: string, reason: string) {
+    #     super(`Input '${field}' ${reason}`);
+    #     this.name = 'InputError';
+    #   }
+    # }
+    #
+    # async function run(): Promise<void> {
+    #   try {
+    #     // --- Input validation (fail fast) ---
+    #     const token = core.getInput('github-token');
+    #     const sourcePath = core.getInput('source-path', { required: true });
+    #     const verbose = core.getBooleanInput('verbose');
+    #
+    #     if (!sourcePath.trim()) {
+    #       throw new InputError('source-path', 'must be a non-empty string');
+    #     }
+    #
+    #     const octokit = github.getOctokit(token);
+    #
+    #     // --- Main logic ---
+    #     core.startGroup('[ACTION_NAME]');
+    #     // [MAIN_LOGIC]
+    #     const result = 'processed';
+    #     const changed = true;
+    #     if (verbose) core.info(`Result: ${result}, changed: ${changed}`);
+    #     core.endGroup();
+    #
+    #     // --- Outputs ---
+    #     core.setOutput('result', result);
+    #     core.setOutput('changed', String(changed));
+    #
+    #     // --- Job summary ---
+    #     await core.summary
+    #       .addHeading('[ACTION_NAME] Results')
+    #       .addTable([
+    #         [{ data: 'Metric', header: true }, { data: 'Value', header: true }],
+    #         ['Source', sourcePath],
+    #         ['Changed', String(changed)],
+    #       ])
+    #       .write();
+    #   } catch (error) {
+    #     // --- Typed error handling ---
+    #     if (error instanceof InputError) {
+    #       core.setFailed(`Validation: ${error.message}`);
+    #     } else if (error instanceof Error) {
+    #       core.setFailed(error.message);
+    #     } else {
+    #       core.setFailed('An unexpected error occurred');
+    #     }
+    #   }
+    # }
+    #
+    # run();
+    #
+    # --- src/setup.ts (pre: lifecycle) ------------------------------------------
+    # import * as core from '@actions/core';
+    # core.startGroup('Pre: validating environment');
+    # // Validate runner prerequisites, restore caches
+    # core.endGroup();
+    #
+    # --- src/cleanup.ts (post: lifecycle) ---------------------------------------
+    # import * as core from '@actions/core';
+    # core.startGroup('Post: cleanup');
+    # // Upload metrics, save caches, revoke tokens
+    # core.endGroup();

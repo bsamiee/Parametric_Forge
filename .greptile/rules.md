@@ -2,7 +2,7 @@
 
 Machine-owner repo: nix-darwin + Home Manager flake for one macOS Apple Silicon host running Determinate Nix on nixpkgs-unstable. Every line configures the system, deploys files/packages, or enables services — anything else does not belong.
 
-## Design paradigms
+## [01]-[DESIGN_PARADIGMS]
 
 - Fewer, deeper polymorphic surfaces beat many loose files. Optimization means collapsing types/options/functions into denser dispatch surfaces in the same file — never extraction, never capability loss. LOC is measured in lines, never bytes.
 - Parameterize ingress and egress. Hardcoded strings, repo paths, usernames, ports, or geometry numbers are defects; values are rows, parameters, or model-derived.
@@ -12,17 +12,17 @@ Machine-owner repo: nix-darwin + Home Manager flake for one macOS Apple Silicon 
 - Receipts over narration: lifecycle commands emit typed receipt lines; scripts that print prose status instead of structured receipts are below the bar.
 - Fix-to-root completeness: a change that patches a symptom while its root cause stands, leaves a known defect unfixed because it sits outside the diff's scope, or defers a residual for a later pass is a defect — the root fix belongs in the same change, and a genuinely blocked item is an explicit unreachable naming its owner, never a silent residual.
 
-## Universal bar
+## [02]-[UNIVERSAL_BAR]
 
 Anticipate 10x functionality growth: surfaces absorb new modalities as rows, cases, or dispatch arms — never as new files, flags, or knobs. Defects: knob/param/flag spam, hardcoded values, fragile string plumbing, naive happy-path logic, hand-rolled reimplementations of capability the ecosystem already provides. External packages are first-class implementation material at full power, newest stable versions. Everything ships agent-first: composable, receipt-bearing, self-describing. Collapse spam relentlessly.
 
-## Review priorities
+## [03]-[REVIEW_PRIORITIES]
 
 1. Regression against a landed law (vocabulary ownership, schema-v3 envelopes, pnpm-only node, no-LFS) outranks style.
 2. New public surface (option, command, flag, file) demands justification against extending an existing owner.
 3. Secret-adjacent code: values must never reach agent-facing JSON, logs, or Pulumi outputs unredacted; parsing never touches secret bytes with eval/source.
 
-## Load-bearing exceptions
+## [04]-[LOAD_BEARING_EXCEPTIONS]
 
 Code that violates generic best practice on purpose — do not flag:
 
@@ -33,7 +33,7 @@ Code that violates generic best practice on purpose — do not flag:
 - Nix string-interpolated shell bodies with declared runtimeInputs are the packaging idiom, not embedded-script smell.
 - A large file that owns one full concern is sanctioned; never recommend splitting by size.
 
-## Durable prose and skill detection
+## [05]-[DURABLE_PROSE_AND_SKILL_DETECTION]
 
 Durable markdown — docs, standards, skills, prompts — is agent-facing law. Flag:
 

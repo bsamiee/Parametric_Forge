@@ -3,11 +3,11 @@
 Row-level security, privilege architecture, authentication, audit, and pgaudit for PostgreSQL 18. Security is enforced at the database level --- application-layer authorization is redundant defense, not primary enforcement.
 
 
-## Row-Level Security (RLS)
+## [01]-[ROW_LEVEL_SECURITY_RLS]
 
 RLS policies enforce tenant isolation and access control at the query planner level --- invisible to application queries.
 
-### Patterns
+### [01.1]-[PATTERNS]
 
 Tenant isolation policy (enable + force in same statement block):
 
@@ -47,7 +47,7 @@ CREATE POLICY valid_period_access ON versioned_entities
     USING (valid_period @> current_timestamp::timestamptz);
 ```
 
-### Contracts
+### [01.2]-[CONTRACTS]
 
 - `USING` filters visible rows (SELECT, UPDATE, DELETE); `WITH CHECK` validates new/modified rows (INSERT, UPDATE)
 - `FORCE ROW LEVEL SECURITY` applies policies even to table owners --- without it, table owners bypass RLS
@@ -58,9 +58,9 @@ CREATE POLICY valid_period_access ON versioned_entities
 - Schema isolation vs RLS tradeoff: schema-per-tenant eliminates RLS overhead but complicates shared infrastructure (migrations, connection routing, monitoring). RLS preferred for shared-schema multi-tenancy; schema isolation for strict compliance boundaries.
 
 
-## Privilege Architecture
+## [02]-[PRIVILEGE_ARCHITECTURE]
 
-### Patterns
+### [02.1]-[PATTERNS]
 
 Column-level grants for sensitive data:
 
@@ -94,7 +94,7 @@ GRANT EXECUTE ON FUNCTION app.search_entities(text, int) TO app_readonly;
 CREATE ROLE app_service NOINHERIT;  -- must SET ROLE explicitly, no ambient privilege
 ```
 
-### Contracts
+### [02.2]-[CONTRACTS]
 
 - Role hierarchy: `app_readonly` < `app_readwrite` < `app_admin` via `GRANT role TO role`
 - `ALTER DEFAULT PRIVILEGES` applies to FUTURE objects only --- existing objects need explicit GRANT
@@ -104,11 +104,11 @@ CREATE ROLE app_service NOINHERIT;  -- must SET ROLE explicitly, no ambient priv
 - `NOINHERIT` prevents ambient privilege from granted roles --- force explicit `SET ROLE` for escalation audit trail
 
 
-## Function Security
+## [03]-[FUNCTION_SECURITY]
 
 SECURITY INVOKER vs SECURITY DEFINER for function execution context.
 
-### Patterns
+### [03.1]-[PATTERNS]
 
 SECURITY INVOKER (always the default for SQL/plpgsql functions in all PG versions):
 
@@ -138,7 +138,7 @@ END;
 $$;
 ```
 
-### Contracts
+### [03.2]-[CONTRACTS]
 
 - SECURITY INVOKER has always been the default for SQL/plpgsql functions in all PG versions --- this was never changed
 - **Views are different from functions**: PG 15 introduced `security_invoker` option for VIEWS via `CREATE VIEW ... WITH (security_invoker = true)`. Prior to PG 15, views always executed as the view owner (definer semantics). For RLS enforcement through views, set `security_invoker = true` on every view --- otherwise RLS policies evaluate against the view owner's privileges, not the querying role
@@ -147,9 +147,9 @@ $$;
 - Leakproof functions: `LEAKPROOF` attribute declares function cannot leak information through error messages or side channels --- required for some RLS optimizations
 
 
-## Authentication (PG 18)
+## [04]-[AUTHENTICATION_PG_18]
 
-### Contracts
+### [04.1]-[CONTRACTS]
 
 - md5 is deprecated in PG 18 --- use `scram-sha-256` exclusively
 - OAuth 2.0: `host all all 0.0.0.0/0 oauth` in pg_hba.conf; requires `oauth_validator_library` (singular) in postgresql.conf --- token validation loaded via shared library
@@ -158,7 +158,7 @@ $$;
 - Connection-level encryption: `sslmode=verify-full` on client side enforces server certificate validation
 
 
-## pgaudit
+## [05]-[PGAUDIT]
 
 Compliance-grade audit logging for SOC 2, HIPAA, and PCI-DSS requirements.
 
@@ -166,7 +166,7 @@ Compliance-grade audit logging for SOC 2, HIPAA, and PCI-DSS requirements.
 CREATE EXTENSION pgaudit;
 ```
 
-### Configuration
+### [05.1]-[CONFIGURATION]
 
 Session audit via `ALTER SYSTEM` (persists across restarts):
 
@@ -180,7 +180,7 @@ ALTER SYSTEM SET pgaudit.role = 'auditor';          -- object audit role
 SELECT pg_reload_conf();
 ```
 
-### Session vs Object Audit
+### [05.2]-[SESSION_VS_OBJECT_AUDIT]
 
 **Session audit** (`pgaudit.log`): captures all statements matching configured classes regardless of target. Classes: `read`, `write`, `function`, `role`, `ddl`, `misc`, `misc_set`, `all` --- comma-separated. Recommended baseline: `ddl, write` for schema changes and data mutations; add `role` when tracking privilege changes.
 
@@ -194,7 +194,7 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON users, payments, audit_log TO auditor;
 
 **Dual mode**: run both simultaneously --- session audit for broad DDL/role coverage, object audit for sensitive data tables. Both fire independently for the same statement when conditions match.
 
-### Contracts
+### [05.3]-[CONTRACTS]
 
 - `pgaudit.log_relation = on` logs each relation accessed per statement --- critical for JOINs touching sensitive tables
 - Log output goes to PostgreSQL server log --- route to SIEM via syslog or log shipper (Alloy, Promtail, Fluent Bit)
@@ -202,7 +202,7 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON users, payments, audit_log TO auditor;
 - `misc_set`: logs SET/RESET commands; `misc`: logs DISCARD, FETCH, CHECKPOINT and other utility statements
 
 
-## Audit Patterns
+## [06]-[AUDIT_PATTERNS]
 
 Application-level audit via MERGE RETURNING --- not triggers.
 
@@ -231,7 +231,7 @@ SELECT 'entity',
 FROM write_result;
 ```
 
-### Contracts
+### [06.1]-[CONTRACTS]
 
 - OLD is NULL for INSERT actions, NEW is NULL for DELETE actions
 - MERGE RETURNING + writable CTE: audit insert happens in same transaction --- atomicity guaranteed

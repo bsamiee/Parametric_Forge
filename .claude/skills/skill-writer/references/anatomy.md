@@ -14,7 +14,7 @@ A bundle is a directory whose every file sits at the lowest tier that owns it: t
 
 ## [02]-[FILE_KINDS]
 
-Admission test per kind; a fact failing its kind's test moves down a tier or out of the bundle.
+Admission test per kind; a fact failing its kind's test moves down a tier or out of the bundle. The kinds are closed and `SKILL.md` is the only routing surface — a `README.md` or secondary router at any depth is a defect, and material it carried folds into the root's route rows or the owning reference.
 
 - [DESCRIPTION]: The owned deliverable, the concrete objects and verbs that select the skill, and the negative boundary — third person, nothing else. Admission: the sentence changes selection.
 - [ROOT]: The common-path workflow, hard law every activation needs, budget contracts, and one labeled route per branch. Admission: every activation reads it, or it is a route row.

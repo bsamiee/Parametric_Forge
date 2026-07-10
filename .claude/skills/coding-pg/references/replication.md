@@ -3,7 +3,7 @@
 Logical replication topology, publication/subscription patterns, and conflict management for PostgreSQL 18.
 
 
-## Publications
+## [01]-[PUBLICATIONS]
 
 Publications define which tables and operations are replicated.
 
@@ -35,7 +35,7 @@ Publication contracts:
 - `ALTER PUBLICATION ... ADD TABLE ...` / `DROP TABLE ...` for dynamic membership — no publication recreation needed
 
 
-## Subscriptions
+## [02]-[SUBSCRIPTIONS]
 
 Subscriptions connect to publisher and apply changes.
 
@@ -74,7 +74,7 @@ Subscription contracts:
 - `two_phase = true`: prepared transactions (`PREPARE TRANSACTION`) replicated atomically — requires publisher support
 
 
-## RLS Bypass in Logical Replication
+## [03]-[RLS_BYPASS_IN_LOGICAL_REPLICATION]
 
 **SECURITY CRITICAL**: The apply worker executes as the subscription owner (typically superuser), which **bypasses all RLS policies**. Row-level security is not evaluated during logical replication apply.
 
@@ -88,7 +88,7 @@ Mitigations:
 - **Column filtering**: exclude sensitive columns from cross-environment replication publications
 
 
-## Conflict Tracking (PG 15+)
+## [04]-[CONFLICT_TRACKING_PG_15]
 
 `pg_stat_subscription_stats` (introduced PG 15) tracks logical replication conflicts per subscription.
 
@@ -122,7 +122,7 @@ Conflict contracts:
 - Monitor `pg_replication_slots.confirmed_flush_lsn` vs `pg_current_wal_lsn()` for replication lag
 
 
-## Bidirectional Replication
+## [05]-[BIDIRECTIONAL_REPLICATION]
 
 Two publications + two subscriptions with `origin = none` on both sides. Origin tracking prevents infinite loops: changes arriving via replication carry the publisher's origin, and `origin = none` filters them out on re-publish.
 
@@ -156,7 +156,7 @@ Pitfalls:
 - **Partitioned tables**: `publish_via_partition_root = true` required on both sides — otherwise partition-level changes carry partition OID, not root OID, breaking origin filtering
 
 
-## Replication Slots
+## [06]-[REPLICATION_SLOTS]
 
 ```sql
 -- Create logical slot
@@ -179,7 +179,7 @@ Slot contracts:
 - Failover slots (PG 17+): `failover = true` in subscription — slot position replicated to physical standby via WAL. On promotion, the new primary has the slot at the last-confirmed LSN. Does NOT auto-transfer active connections — subscriber must reconnect to new primary. Requires `hot_standby_feedback = on` on standby
 
 
-## Change Data Capture Patterns
+## [07]-[CHANGE_DATA_CAPTURE_PATTERNS]
 
 Using logical replication as CDC for event-driven architectures.
 
@@ -211,21 +211,21 @@ CDC contracts:
 - Large transactions: `streaming = on` streams changes before COMMIT, subscriber spills to disk until commit/abort arrives. `streaming = parallel` (PG 16+) applies streamed changes via parallel workers — prevents single large transaction from blocking all other apply. Memory: `logical_decoding_work_mem` (default 64MB) controls spill threshold on publisher
 
 
-## Configuration Requirements
+## [08]-[CONFIGURATION_REQUIREMENTS]
 
-| Parameter                           | Side       | Default        | Purpose                                         |
-| ----------------------------------- | ---------- | -------------- | ----------------------------------------------- |
-| `wal_level`                         | publisher  | `replica`      | Must be `logical`; requires restart             |
-| `max_replication_slots`             | publisher  | 10             | Per subscriber + CDC consumers                  |
-| `max_wal_senders`                   | publisher  | 10             | Connections for streaming + logical replication |
-| `max_slot_wal_keep_size`            | publisher  | -1 (unlimited) | Safety limit for inactive slots                 |
-| `max_logical_replication_workers`   | subscriber | 4              | Parallel apply workers across all subscriptions |
-| `max_sync_workers_per_subscription` | subscriber | 2              | Initial sync parallelism                        |
+| [INDEX] | [PARAMETER]                         | [SIDE]     | [DEFAULT]      | [PURPOSE]                                       |
+| :-----: | :---------------------------------- | :--------- | :------------- | :---------------------------------------------- |
+|  [01]   | `wal_level`                         | publisher  | `replica`      | Must be `logical`; requires restart             |
+|  [02]   | `max_replication_slots`             | publisher  | 10             | Per subscriber + CDC consumers                  |
+|  [03]   | `max_wal_senders`                   | publisher  | 10             | Connections for streaming + logical replication |
+|  [04]   | `max_slot_wal_keep_size`            | publisher  | -1 (unlimited) | Safety limit for inactive slots                 |
+|  [05]   | `max_logical_replication_workers`   | subscriber | 4              | Parallel apply workers across all subscriptions |
+|  [06]   | `max_sync_workers_per_subscription` | subscriber | 2              | Initial sync parallelism                        |
 
 Publisher requires `pg_hba.conf` entries allowing replication connections from subscriber hosts.
 
 
-## Monitoring
+## [09]-[MONITORING]
 
 ```sql
 -- Subscription worker status and lag (pg_stat_subscription: PG 15+)

@@ -24,7 +24,11 @@ Durable prose is law for an agent that loads it with no memory of why it was wri
 uv run scripts/prose_gate.py [--json] <paths...>
 ```
 
-Run the gate on every touched durable doc before returning. It is the mechanical floor — fence, heading, table, link, and list structure; template residue, bold emphasis, and trailing whitespace; the banned-lexeme roster of hedges, meta-phrases, self-counts, version anchors, freshness deictics, and permission verbs — and a skill bundle additionally gates frontmatter shape, name shape and directory identity, description voice and budgets, the root line ceiling, orphan bundle files, and nested reference hops, the mechanical floor beneath the skill-writer skill's authoring law; the full check census is the script's `Check` vocabulary. The gate scans prose spans only: fence bodies, code spans, link destinations, template placeholders, and example-leader rows are structural carriers, not prose findings. Every semantic class and every altitude judgment remains review work against the catalog.
+```bash
+uv run scripts/prose_gate.py fix [--write] <paths...>
+```
+
+Run the gate on every touched durable doc before returning. `fix` applies every deterministic repair — header rubrics, the `[INDEX]` column and its `[NN]` entries, alignment colons, H2/H3 numbering, loose numbered list leaders, trailing whitespace, table spacing, and the canonical column-aligned render — printing a per-change plan as a dry run by default and mutating only under `--write`; judgment-tier repairs surface as `SKIP` rows for review. The gate and the fixer share one table model, so a grid whose canonical render exceeds the 150-column width cap fails `table-width` regardless of its current padding. It is the mechanical floor — fence, heading, table, link, list, and source section-divider structure; template residue, bold emphasis, and trailing whitespace; the banned-lexeme roster of hedges, meta-phrases, self-counts, version anchors, freshness deictics, and permission verbs — and a skill bundle additionally gates frontmatter shape, name shape and directory identity, description voice and budgets, the root line ceiling, orphan bundle files, and nested reference hops, the mechanical floor beneath the skill-writer skill's authoring law; the full check census is the script's `Check` vocabulary. The gate scans prose spans only: fence bodies, code spans, link destinations, template placeholders, and example-leader rows are structural carriers, not prose findings. Every semantic class and every altitude judgment remains review work against the catalog.
 
 ## [02]-[REGISTER]
 
@@ -128,11 +132,15 @@ Consult the matching set before building or repairing the container; entries are
 - [03]-[MARKERS]: [examples/markers.md](examples/markers.md) — entry leaders, status vocabularies, glyphs.
 - [04]-[INTROS]: [examples/intros.md](examples/intros.md) — leads that legislate and the rejected frames.
 
-## [07]-[COMMENTS]
+## [07]-[TABLES]
+
+A table is built right at authoring: a one-sentence lead stating the shared invariant, bracketed rubric headers, a centered `[INDEX]`, explicit alignment colons, atomic cells inside the 150-column rendered width cap — then `scripts/prose_gate.py fix --write` pads. Repair preserves the grid: hoist repeats into headers, relieve clause tails into the lead or a one-line note after the table, split an overloaded row into two, fan joined values one row each. Conversion to another container is earned only two ways — the information is structurally non-tabular (an ordered sequence rides `OrderedStep` records, a no-shared-question row family rides records), or a declared type standard owns that information's shape; a wide cell alone never converts a table.
+
+## [08]-[COMMENTS]
 
 Comments — in source and in transcription-complete fences alike — serve the agent editing the file in isolation. One in-situ constraint the code cannot show, 1-2 lines, uncoupled from paths, sessions, and siblings, never a duplicate of card or index content. Every pass that touches a file prunes its stale or drifted comments in the same pass.
 
-## [08]-[GOTCHAS]
+## [09]-[GOTCHAS]
 
 - The most dangerous defect looks like rigor — a complete roster, an exact count, a frozen chant, a litany of forbidden alternatives. It reads as discipline and rots as law.
 - Deleting a defective sentence never deletes capability: demote mechanism to its owner first, then collapse the copy; dropped payload is a defect.
@@ -141,6 +149,6 @@ Comments — in source and in transcription-complete fences alike — serve the 
 - Tooling docs are durable law too: a tool doc states its contract and routes verbs to live `--help`, never mirroring help output or narrating commands for a human tour.
 - Author satisfaction is never the exit: a durable doc seals on a context-free cold read that raises nothing — the producer's grade admits, the cold read decides.
 
-## [09]-[REPO_INTEGRATION]
+## [10]-[REPO_INTEGRATION]
 
 When the host repo declares a prose canon in its instruction chain, that canon wins on any conflict and this skill is its portable twin; the repo docs gate consumes `scripts/prose_gate.py --json`.

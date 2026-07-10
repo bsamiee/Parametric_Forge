@@ -2,13 +2,13 @@
 
 Multi-stage transform pipelines, regex extraction with BASH_REMATCH, codec patterns (URL/hex/base64), printf formatting, and template expansion. Single-operator PE reference in [bash-scripting-guide.md S5](./bash-scripting-guide.md).
 
-| [IDX] | [PATTERN]          |  [S]  | [USE_WHEN]                                    |
-| :---: | :----------------- | :---: | :-------------------------------------------- |
-| [01]  | Transform pipeline |  S1   | Multi-stage string reshape via chained PE     |
-| [02]  | Regex extraction   |  S2   | Structured parsing via BASH_REMATCH captures  |
-| [03]  | Printf formatting  |  S3   | `%q`, `%(%T)T`, `printf -v` fork-free capture |
-| [04]  | Codec patterns     |  S4   | URL encode, hex, base64, JSON escape          |
-| [05]  | Template expansion |  S5   | Heredocs, format strings, envsubst            |
+| [INDEX] | [PATTERN]          |  [S]  | [USE_WHEN]                                    |
+| :-----: | :----------------- | :---: | :-------------------------------------------- |
+|  [01]   | Transform pipeline |  S1   | Multi-stage string reshape via chained PE     |
+|  [02]   | Regex extraction   |  S2   | Structured parsing via BASH_REMATCH captures  |
+|  [03]   | Printf formatting  |  S3   | `%q`, `%(%T)T`, `printf -v` fork-free capture |
+|  [04]   | Codec patterns     |  S4   | URL encode, hex, base64, JSON escape          |
+|  [05]   | Template expansion |  S5   | Heredocs, format strings, envsubst            |
 
 ## [01]-[TRANSFORM_PIPELINES]
 
@@ -261,7 +261,7 @@ _render_row() {
 
 `envsubst` explicit variable list prevents unintended expansion of `$PATH`, `$HOME`, etc. `_render_from_file` exports then unexports to avoid polluting the environment. `printf` format strings over `eval`-based templates — format specifiers cannot execute code.
 
-## [RULES]
+## [06]-[RULES]
 
 - Chain PEs left-to-right with explicit reassignment — each `${}` is pure, 0 forks per transform.
 - `printf -v var` over `var=$(printf ...)` — eliminates subshell fork for variable capture.

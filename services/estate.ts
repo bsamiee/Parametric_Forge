@@ -4,172 +4,179 @@
 // License       : MIT
 // Path          : services/estate.ts
 // ----------------------------------------------------------------------------
-// Inline Pulumi program: folds topology rows into Doppler and GitHub
-// resources. Adoption of live CLI/gh-born state rides the `import` resource
-// option behind the adopt flag; a row deleted from topology.ts is destroyed
-// by Pulumi on the next up. This module is the Pulumi engine boundary:
-// resource constructors are the engine's own registration calls inside the
-// Automation API program context.
+// Inline Pulumi program: one parameterized registration fold materializes
+// every topology row family into Doppler and GitHub resources. Adoption of
+// live CLI/gh-born state rides the `import` resource option behind the adopt
+// flag; a row deleted from topology.ts is destroyed by Pulumi on the next up.
+// This module is the Pulumi engine boundary: resource constructors are the
+// engine's own registration calls inside the Automation API program context.
 
-import * as doppler from "@pulumiverse/doppler";
-import * as github from "@pulumi/github";
-import { secret } from "@pulumi/pulumi";
-import type { CustomResourceOptions, Resource } from "@pulumi/pulumi";
-import {
-  configs,
-  environments,
-  projects,
-  repositories,
-  rulesetPolicy,
-  rulesets,
-  tokens,
-  webhooks,
-  type Origin,
-} from "./topology.ts";
+import * as doppler from '@pulumiverse/doppler';
+import * as github from '@pulumi/github';
+import { secret } from '@pulumi/pulumi';
+import type { CustomResourceOptions, Resource } from '@pulumi/pulumi';
+import { Topology } from './topology.ts';
 
-type EstateFlags = {
-  readonly adopt: boolean;
-};
+declare namespace estate {
+    type Flags = { readonly adopt: boolean };
+    type Registration<Row> = {
+        readonly key: (row: Row) => string;
+        readonly importId: (row: Row) => string;
+        readonly anchor?: (row: Row) => Resource | undefined;
+        readonly make: (row: Row, options: CustomResourceOptions) => Resource;
+    };
+}
 
-const GITHUB_OWNER = "bsamiee";
+const GITHUB_OWNER = 'bsamiee';
 
 // Uniform repo policy: merge hygiene plus the live feature-surface booleans —
 // unspecified booleans would plan as removals against adopted state.
 const _mergeHygiene = {
-  allowMergeCommit: false,
-  allowSquashMerge: true,
-  allowRebaseMerge: true,
-  deleteBranchOnMerge: true,
-  hasWiki: false,
-  hasIssues: true,
-  hasProjects: true,
-  hasDownloads: true,
+    allowMergeCommit: false,
+    allowSquashMerge: true,
+    allowRebaseMerge: true,
+    deleteBranchOnMerge: true,
+    hasWiki: false,
+    hasIssues: true,
+    hasProjects: true,
+    hasDownloads: true,
 } as const;
 
-const _options = (
-  origin: Origin,
-  importId: string,
-  f: EstateFlags,
-  dependsOn?: Resource,
-): CustomResourceOptions => ({
-  ...(f.adopt && origin === "adopt" ? { import: importId } : {}),
-  ...(dependsOn ? { dependsOn } : {}),
-});
+const estate =
+    (f: estate.Flags, webhookSecrets: ReadonlyMap<string, string> = new Map()) =>
+    async (): Promise<Record<string, unknown>> => {
+        // One fold owns every row family: key, import identity, dependency
+        // anchor, and constructor arrive as registration columns.
+        const _registered = <Row extends { readonly origin: Topology.Origin }>(
+            rows: ReadonlyArray<Row>,
+            registration: estate.Registration<Row>,
+        ): ReadonlyMap<string, Resource> =>
+            new Map(
+                rows.map((row) => {
+                    const anchor = registration.anchor?.(row);
+                    return [
+                        registration.key(row),
+                        registration.make(row, {
+                            ...(f.adopt && row.origin === 'adopt' ? { import: registration.importId(row) } : {}),
+                            ...(anchor ? { dependsOn: anchor } : {}),
+                        }),
+                    ] as const;
+                }),
+            );
 
-const estate = (
-  f: EstateFlags,
-  webhookSecrets: ReadonlyMap<string, string> = new Map(),
-) => async (): Promise<Record<string, unknown>> => {
-  const project = new Map<string, Resource>(
-    projects.map((row) => [
-      row.slug,
-      new doppler.Project(
-        row.slug,
-        { name: row.slug, description: row.description },
-        _options(row.origin, row.slug, f),
-      ),
-    ] as const),
-  );
+        const project = _registered(Topology.projects, {
+            key: (row) => row.slug,
+            importId: (row) => row.slug,
+            make: (row, options) => new doppler.Project(row.slug, { name: row.slug, description: row.description }, options),
+        });
 
-  const environment = new Map<string, Resource>(
-    environments.map((row) => [
-      `${row.project}.${row.slug}`,
-      new doppler.Environment(
-        `${row.project}-${row.slug}`,
-        { project: row.project, slug: row.slug, name: row.name },
-        _options(row.origin, `${row.project}.${row.slug}`, f, project.get(row.project)),
-      ),
-    ] as const),
-  );
+        const environment = _registered(Topology.environments, {
+            key: (row) => `${row.project}.${row.slug}`,
+            importId: (row) => `${row.project}.${row.slug}`,
+            anchor: (row) => project.get(row.project),
+            make: (row, options) =>
+                new doppler.Environment(`${row.project}-${row.slug}`, { project: row.project, slug: row.slug, name: row.name }, options),
+        });
 
-  const config = new Map<string, Resource>(
-    configs.map((row) => [
-      `${row.project}.${row.name}`,
-      new doppler.BranchConfig(
-        `${row.project}-${row.name}`,
-        { project: row.project, environment: row.environment, name: row.name },
-        _options(row.origin, `${row.project}.${row.environment}.${row.name}`, f, environment.get(`${row.project}.${row.environment}`)),
-      ),
-    ] as const),
-  );
+        const config = _registered(Topology.configs, {
+            key: (row) => `${row.project}.${row.name}`,
+            importId: (row) => `${row.project}.${row.environment}.${row.name}`,
+            anchor: (row) => environment.get(`${row.project}.${row.environment}`),
+            make: (row, options) =>
+                new doppler.BranchConfig(
+                    `${row.project}-${row.name}`,
+                    {
+                        project: row.project,
+                        environment: row.environment,
+                        name: row.name,
+                    },
+                    options,
+                ),
+        });
 
-  // Change-notification webhooks: the signing secret arrives driver-brokered
-  // from its Doppler custody row and lands engine-side as a secret input; an
-  // absent broker value plans the webhook unsigned-diff-free by omission.
-  for (const row of webhooks) {
-    const brokered = webhookSecrets.get(row.slug);
-    void new doppler.Webhook(
-      row.slug,
-      {
-        project: row.project,
-        url: row.url,
-        enabled: true,
-        enabledConfigs: [...row.enabledConfigs],
-        payload: row.payload,
-        ...(brokered === undefined ? {} : { secret: secret(brokered) }),
-      },
-      _options(row.origin, row.slug, f, config.get(`${row.project}.${row.enabledConfigs[0]}`)),
-    );
-  }
+        // The signing secret arrives driver-brokered from its Doppler custody
+        // row; an absent broker value plans the webhook unsigned-diff-free.
+        void _registered(Topology.webhooks, {
+            key: (row) => row.slug,
+            importId: (row) => row.slug,
+            anchor: (row) => config.get(`${row.project}.${row.enabledConfigs[0]}`),
+            make: (row, options) => {
+                const brokered = webhookSecrets.get(row.slug);
+                return new doppler.Webhook(
+                    row.slug,
+                    {
+                        project: row.project,
+                        url: row.url,
+                        enabled: true,
+                        enabledConfigs: [...row.enabledConfigs],
+                        payload: row.payload,
+                        ...(brokered === undefined ? {} : { secret: secret(brokered) }),
+                    },
+                    options,
+                );
+            },
+        });
 
-  // GitHub settings surface: token rides the engine env (GITHUB_TOKEN, driver-
-  // brokered); repositories carry protect so a row edit can never cascade into
-  // repo destruction; rulesets adopt by `<repository>:<id>`.
-  const gh = new github.Provider("github", { owner: GITHUB_OWNER });
-  const repository = new Map<string, Resource>(
-    repositories.map((row) => [
-      row.name,
-      new github.Repository(
-        row.name,
-        { name: row.name, description: row.description, ..._mergeHygiene },
-        {
-          provider: gh,
-          protect: true,
-          ...(f.adopt && row.origin === "adopt" ? { import: row.name } : {}),
-        },
-      ),
-    ] as const),
-  );
-  for (const row of rulesets) {
-    const anchor = repository.get(row.repository);
-    void new github.RepositoryRuleset(
-      `${row.repository}-${row.name}`,
-      {
-        name: row.name,
-        repository: row.repository,
-        target: "branch",
-        enforcement: "active",
-        conditions: { refName: { includes: ["~DEFAULT_BRANCH"], excludes: [] } },
-        rules: rulesetPolicy,
-      },
-      {
-        provider: gh,
-        ...(anchor === undefined ? {} : { dependsOn: anchor }),
-        ...(f.adopt && row.origin === "adopt" ? { import: `${row.repository}:${row.importId}` } : {}),
-      },
-    );
-  }
+        // GitHub settings surface: the token rides the engine env (driver-
+        // brokered GITHUB_TOKEN); repositories carry protect so a row edit can
+        // never cascade into repo destruction; rulesets adopt by `<repository>:<id>`.
+        const gh = new github.Provider('github', { owner: GITHUB_OWNER });
+        const repository = _registered(Topology.repositories, {
+            key: (row) => row.name,
+            importId: (row) => row.name,
+            make: (row, options) =>
+                new github.Repository(
+                    row.name,
+                    { name: row.name, description: row.description, ..._mergeHygiene },
+                    { provider: gh, protect: true, ...options },
+                ),
+        });
 
-  return Object.fromEntries(
-    tokens
-      .filter((row) => config.has(`${row.project}.${row.config}`) || project.has(row.project))
-      .map((row) => {
-        // Root-config tokens anchor on their environment (same-slug root config
-        // exists once the environment does); branch-config tokens on their config row.
-        const anchor = config.get(`${row.project}.${row.config}`) ??
-          environment.get(`${row.project}.${row.config}`) ??
-          project.get(row.project);
-        const token = new doppler.ServiceToken(
-          `${row.project}-${row.config}-${row.name}`,
-          { project: row.project, config: row.config, name: row.name, access: row.access },
-          { ...(anchor ? { dependsOn: anchor } : {}) },
+        void _registered(Topology.rulesets, {
+            key: (row) => `${row.repository}-${row.name}`,
+            importId: (row) => `${row.repository}:${row.importId}`,
+            anchor: (row) => repository.get(row.repository),
+            make: (row, options) =>
+                new github.RepositoryRuleset(
+                    `${row.repository}-${row.name}`,
+                    {
+                        name: row.name,
+                        repository: row.repository,
+                        target: 'branch',
+                        enforcement: 'active',
+                        conditions: {
+                            refName: { includes: ['~DEFAULT_BRANCH'], excludes: [] },
+                        },
+                        rules: Topology.rulesetPolicy,
+                    },
+                    { provider: gh, ...options },
+                ),
+        });
+
+        return Object.fromEntries(
+            Topology.tokens
+                .filter((row) => config.has(`${row.project}.${row.config}`) || project.has(row.project))
+                .map((row) => {
+                    // Root-config tokens anchor on their environment (same-slug root
+                    // config exists once the environment does); branch-config tokens
+                    // on their config row.
+                    const anchor =
+                        config.get(`${row.project}.${row.config}`) ?? environment.get(`${row.project}.${row.config}`) ?? project.get(row.project);
+                    const token = new doppler.ServiceToken(
+                        `${row.project}-${row.config}-${row.name}`,
+                        {
+                            project: row.project,
+                            config: row.config,
+                            name: row.name,
+                            access: row.access,
+                        },
+                        { ...(anchor ? { dependsOn: anchor } : {}) },
+                    );
+                    return [`token:${row.project}/${row.config}/${row.name}`, token.key] as const;
+                }),
         );
-        return [`token:${row.project}/${row.config}/${row.name}`, token.key] as const;
-      }),
-  );
-};
+    };
 
-// --- [EXPORTS] ------------------------------------------------------------------
+// --- [EXPORTS] -------------------------------------------------------------------------
 
 export { estate };
-export type { EstateFlags };

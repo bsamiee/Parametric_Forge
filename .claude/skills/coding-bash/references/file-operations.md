@@ -2,12 +2,12 @@
 
 Production patterns for file I/O beyond basic reads. Basic file reads (`$(<file)`, `mapfile`) and conditionals (`-f`, `-d`, `-r`) are in [bash-scripting-guide.md S6/S9](./bash-scripting-guide.md).
 
-| [IDX] | [PATTERN]             |  [S]  | [USE_WHEN]                                    |
-| :---: | :-------------------- | :---: | :-------------------------------------------- |
-| [01]  | Atomic write          |  S1   | Config/log output that must not be partial    |
-| [02]  | Descriptor multiplex  |  S2   | Parallel logging, lock files, output channels |
-| [03]  | Directory traversal   |  S3   | Sorted globs, fd search, recursive processing |
-| [04]  | Structured extraction |  S4   | Config parsing, marker sections, line access  |
+| [INDEX] | [PATTERN]             |  [S]  | [USE_WHEN]                                    |
+| :-----: | :-------------------- | :---: | :-------------------------------------------- |
+|  [01]   | Atomic write          |  S1   | Config/log output that must not be partial    |
+|  [02]   | Descriptor multiplex  |  S2   | Parallel logging, lock files, output channels |
+|  [03]   | Directory traversal   |  S3   | Sorted globs, fd search, recursive processing |
+|  [04]   | Structured extraction |  S4   | Config parsing, marker sections, line access  |
 
 ## [01]-[ATOMIC_WRITE_LIFECYCLE]
 
@@ -243,7 +243,7 @@ printf '%s\n' "${sql_block[@]}"
 
 `_parse_kv` handles `key = "quoted value"` and `key=bare_value` uniformly — regex alternation strips quotes only when matched symmetrically. `mapfile -t` loads the entire file once; subsequent iteration is pure array traversal. Array slicing `${arr[@]:offset:count}` is O(count) copy, not O(n) scan.
 
-## [RULES]
+## [05]-[RULES]
 
 - Atomic writes: `umask 077` → `mktemp` → write → `sync --data-only` (fsync) → `mv` — full pipeline.
 - `rename(2)` is atomic only on same filesystem — cross-device `mv` copies, reintroducing partial-write risk.

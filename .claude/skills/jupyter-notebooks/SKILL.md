@@ -7,12 +7,12 @@ description: Execute, parameterize, convert, validate, and edit Jupyter notebook
 
 Two execution paths, chosen by need. Batch is the default: deterministic, re-runnable, server-free, pure-Python on the scientific interpreter. Interactive is for live exploration in a persistent kernel through the `jupyter` MCP.
 
-## Path selection
+## [01]-[PATH_SELECTION]
 
 - Batch — execute, parameterize, convert, or validate a notebook deterministically with no server. The default for pipelines, re-runnable runs, and verification. Pure `uv run` on the scientific interpreter.
 - Interactive — explore in a live kernel with state held across cells. The `jupyter` MCP over a running JupyterLab server. Use only when live kernel state matters; otherwise batch.
 
-## Batch — no server
+## [02]-[BATCH_NO_SERVER]
 
 Every tool is pure-Python and runs through `uv run` on the scientific interpreter; the spawned kernel inherits that interpreter, so numpy and scipy are present.
 
@@ -24,7 +24,7 @@ Every tool is pure-Python and runs through `uv run` on the scientific interprete
 
 For a run needing more than one tool, or one that repeats, write a PEP 723 inline-metadata script and invoke it with `uv run script.py`.
 
-## Interactive — live kernel
+## [03]-[INTERACTIVE_LIVE_KERNEL]
 
 Start the server with `forge-jupyter` (JupyterLab on `127.0.0.1:8888`; without a running server the MCP has nothing to drive), then operate through the `jupyter` MCP:
 

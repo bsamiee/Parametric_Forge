@@ -53,12 +53,12 @@ flowchart LR
 
 A run is a background task. The tool call returns a run ID immediately; progress streams to `/workflows`; a `<task-notification>` lands in the conversation on completion.
 
-| [INDEX] | [ACTION]  | [MECHANISM]                                                                                      |
-| :-----: | :-------- | :------------------------------------------------------------------------------------------------ |
-|  [01]   | Pause     | `p` in `/workflows` — the gentle hold, nothing discarded                                         |
-|  [02]   | Stop      | `x` with focus on the run, or `TaskStop` programmatically; completed agents stay cached          |
+| [INDEX] | [ACTION]          | [MECHANISM]                                                                             |
+| :-----: | :---------------- | :-------------------------------------------------------------------------------------- |
+|  [01]   | Pause             | `p` in `/workflows` — the gentle hold, nothing discarded                                |
+|  [02]   | Stop              | `x` with focus on the run, or `TaskStop` programmatically; completed agents stay cached |
 |  [03]   | Restart one agent | `r` on the selected running agent — without stopping the run                            |
-|  [04]   | Resume    | `p` in `/workflows`, or `Workflow({ scriptPath, resumeFromRunId })`                              |
+|  [04]   | Resume            | `p` in `/workflows`, or `Workflow({ scriptPath, resumeFromRunId })`                     |
 
 Stop a still-running prior run before relaunching its script. Never kill a live session or server to force a workflow's hand — fix and redeploy, then let the owner restart on its own schedule.
 

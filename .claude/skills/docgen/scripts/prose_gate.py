@@ -1,13 +1,13 @@
 #!/usr/bin/env -S uv run
 # /// script
-# requires-python = ">=3.13"
+# requires-python = ">=3.14"
 # dependencies = ["cyclopts", "msgspec"]
 # ///
 # ruff: noqa: T201, D100, D101, D103
 
-# --- [RUNTIME_PRELUDE] -------------------------------------------------------------------
+# --- [RUNTIME_PRELUDE] ------------------------------------------------------------------
 
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from enum import StrEnum
 from pathlib import Path
 import re
@@ -18,7 +18,7 @@ from cyclopts import App
 import msgspec
 
 
-# --- [TYPES] -----------------------------------------------------------------------------
+# --- [TYPES] ----------------------------------------------------------------------------
 
 type Status = Literal["ok", "warn", "fail"]
 type Align = Literal["center", "left", "right", "none"]
@@ -29,39 +29,52 @@ class Check(StrEnum):
     COLLECT = "collect"
     DEAD_RELATIVE_LINK = "dead-relative-link"
     FENCE_GEOMETRY = "fence-geometry"
+    FENCE_INTENT = "fence-intent"
     FENCE_LANGUAGE = "fence-language"
     FENCE_UNCLOSED = "fence-unclosed"
+    GLYPH_BAN = "glyph-ban"
+    HEADING_ANCHOR = "heading-anchor"
     HEADING_H1 = "heading-h1"
     HEADING_ORDER = "heading-order"
+    HEADING_SPACING = "heading-spacing"
     HEDGE = "hedge"
     LIST_BLOAT = "list-bloat"
     LIST_LEADER = "list-leader"
+    LIST_MARKER = "list-marker"
     META_PHRASE = "meta-phrase"
     READ = "read"
+    SECTION_DIVIDER = "section-divider"
+    SECTION_WIDTH = "section-width"
     SELF_COUNT = "self-count"
+    PROSE_WRAP = "prose-wrap"
     SETEXT_HEADING = "setext-heading"
     SKILL_BUNDLE_ORPHAN = "skill-bundle-orphan"
+    SKILL_BUNDLE_ROUTER = "skill-bundle-router"
     SKILL_DESCRIPTION = "skill-description"
     SKILL_FRONTMATTER = "skill-frontmatter"
     SKILL_NAME = "skill-name"
     SKILL_REFERENCE_HOP = "skill-reference-hop"
     SKILL_ROOT_BUDGET = "skill-root-budget"
     TABLE_ALIGN = "table-align"
+    TABLE_BOUNDS = "table-bounds"
     TABLE_CELL = "table-cell"
     TABLE_HEADER = "table-header"
     TABLE_INDEX = "table-index"
+    TABLE_LINKS = "table-links"
     TABLE_PROSE = "table-prose"
     TABLE_SHAPE = "table-shape"
+    TABLE_WIDTH = "table-width"
     TEMPLATE_SLOT = "template-slot"
     TRAILING_WHITESPACE = "trailing-whitespace"
     VERSION_ANCHOR = "version-anchor"
     WEAK_VERB = "weak-verb"
 
 
-# --- [CONSTANTS] -------------------------------------------------------------------------
+# --- [CONSTANTS] ------------------------------------------------------------------------
 
 CAP = 150
 CELL_BUDGET = 160
+COLUMN_FLOOR = 5
 LIST_CHAR_CAP = 500
 LIST_SENTENCE_CAP = 3
 ROSTER_SPAN_SHARE = 0.6
@@ -70,28 +83,70 @@ SKILL_DESCRIPTION_CEILING = 1536
 SKILL_DESCRIPTION_FLOOR = 60
 SKILL_NAME_CAP = 64
 SKILL_ROOT_CAP = 500
-APP = App(help="Gate durable markdown prose.")
+TABLE_WIDTH_CAP = 150
+DIVIDER_WIDTH = 90
+FENCE_INTENTS = frozenset({
+    "accepted",
+    "codemap",
+    "copy-safe",
+    "template",
+    "conceptual",
+    "generated",
+    "output-only",
+    "rejected",
+    "seams",
+    "test-only",
+})
+TABLE_COLUMN_CEILING = 15
+TABLE_ROW_CEILING = 20
+MARKERS: dict[str, str] = (
+    dict.fromkeys((".py", ".sh", ".bash", ".zsh", ".nix", ".toml", ".yaml", ".yml"), "#")
+    | dict.fromkeys((".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs", ".cs", ".jsonc"), "//")
+    | dict.fromkeys((".lua", ".sql"), "--")
+)
+PRUNED = frozenset({".git", "node_modules", ".venv", ".cache", ".direnv", "result", "dist", "coverage", ".archive", ".history"})
+APP = App(help="Gate and format durable markdown prose.")
 ENCODER = msgspec.json.Encoder()
 
 BOLD = re.compile(r"(?<!\*)\*\*(?=\S)(.+?)(?<=\S)\*\*(?!\*)|(?<!_)__(?=\S)(.+?)(?<=\S)__(?!_)")
+ROUTER_CARD = re.compile(
+    r"^(?P<indent>\s*)- \[?\s*(?P<n>\d{1,3})\s*\]?\s*[-\u2013\u2014]?\s*\[(?P<text>[^\]]+)\]\((?P<path>[^)\s]+)\)\s*:\s*(?P<rest>.*)$"
+)
+DASH_TAIL = re.compile(r"^ -+$")
+DIVIDER = re.compile(r"^(?P<indent>\s*)(?P<marker>#|//|--) --- (?P<body>\S.*)$")
+DIVIDER_BODY = re.compile(r"^\[(?P<label>[A-Z][A-Z0-9_]*)\](?P<tail>.*)$")
+DIVIDER_LOOSE = re.compile(r"^\[(?P<raw>[^\]]+)\](?P<tail>.*)$")
+CHECKBOX = re.compile(r"^\[[ xX]\]\s")
 CARD_ROW = re.compile(r"^\s*-\s+`[^`]+`\s+-\s+")
 EXAMPLE_LINE = re.compile(
     r"^\s*(?:>\s*)?(?:[-+*]|\d+[.)])?\s*(?:Detection|Rejected|Accepted|Near miss|Banned|Survivors|Reason|Reframe)"
     r"(?:\s*\([^)]*\))?:"
 )
 FENCE = re.compile(r"^(?P<indent> {0,3})(?P<marker>`{3,}|~{3,})(?P<info>.*)$")
+EMOJI = re.compile(r"[\U0001F000-\U0001FAFF\u2705\u274C\u2713\u2714\u2717\u2718\u2B50\u2728]")
+PROMPT_LINE = re.compile(r"^\s*(?:\$|\u276F|PS>)\s+\S")
+GROUP_LABEL = re.compile(r"^\[[A-Z][A-Z0-9_]*\]:\s*$")
 GLYPHS = ("│", "├", "└", "⇄")
 HEADER_CELL = re.compile(r"^\[[A-Z][A-Z0-9_]*\]$")
 HEADING = re.compile(r"^(?P<level>#{1,6})\s+(?P<title>.+?)\s*$")
-LIST_ITEM = re.compile(r"^(?P<indent>\s*)(?:[-+*]|\d+[.)])\s+(?P<body>\S.*)$")
+LIST_ITEM = re.compile(r"^(?P<indent>\s*)(?P<mark>[-+*]|\d+[.)])\s+(?P<body>\S.*)$")
 LIST_LEADER = re.compile(r"^\s*(?:[-+*]|\d+[.)])\s+\[(?:\d{2}(?:-[A-Z0-9_]+)?|[A-Z0-9_]+|[OX!~ ])\](?:\s+[—-]|[-:]\s*|:)")
 LINK = re.compile(r"(?<!!)\[([^\]\n]+)\]\(([^)\s]+)(?:\s+\"[^\"]*\")?\)")
-NUMBERED_SECTION = re.compile(r"^\[(?P<n>\d{2})\]-\[(?P<token>[A-Z][A-Z0-9_]*)\]$")
+NUMBERED_SECTION = re.compile(r"^\[(?P<n>\d{2})\]-\[(?P<token>[A-Z][A-Z0-9_]*)\](?:-\[[A-Z][A-Z0-9_]*\])*$")
 PLACEHOLDER = re.compile(r"<[a-z][a-z0-9]*(?:[-_][a-z0-9]+)+>")
 SENTENCE_END = re.compile(r"[.!?](?:\s|$)")
 SETEXT = re.compile(r"^\s*(?:=+|-{3,})\s*$")
 TABLE_SEP = re.compile(r"^\s*\|(?:\s*:?-+:?\s*\|)+\s*$")
 YAML_KEY = re.compile(r"^[A-Za-z_][A-Za-z0-9_-]*\s*:")
+
+INDEX_ALIASES = frozenset({"INDEX", "IDX", "NN", "NO", "NUM", "ROW"})
+NUMBER_ENTRY = re.compile(r"^\[?\s*0*(\d{1,3})\s*\]?$")
+H2_NUMBERED = re.compile(r"^\[(\d{2})\]-(\[[A-Z][A-Z0-9_]*\](?:-\[[A-Z][A-Z0-9_]*\])*)$")
+H3_NUMBERED = re.compile(r"^\[(\d{2})\.(\d+)\]-(\[[A-Z][A-Z0-9_]*\](?:-\[[A-Z][A-Z0-9_]*\])*)$")
+LEADER_BARE = re.compile(r"^(?P<indent>\s*)- \[(?P<token>\d{2,3}|[A-Z][A-Z0-9_]*)\]\s+(?![-\u2013\u2014:(])(?P<rest>\S.*)$")
+LEADER_LOOSE = re.compile(
+    r"^(?P<indent>\s*)-\s+\[?\s*(?P<n>\d{1,3})\s*\]?\s*[-\u2013\u2014]\s*\[?\s*(?P<label>[A-Za-z][A-Za-z0-9_ ]*?)\s*\]?\s*:(?P<rest>.*)$"
+)
 
 HEDGE_PHRASE = re.compile(
     r"\b(?:is\s+expected\s+to|can\s+be|aims\s+to|is\s+designed\s+to|in\s+the\s+future|eventually|as\s+needed|if\s+necessary)\b", re.IGNORECASE
@@ -120,7 +175,7 @@ SELF_COUNT = re.compile(
 )
 VERSION_ANCHOR = re.compile(r"\bv?\d+\.\d+(?:\.\d+)+\b|\b\d+\.\d+(?:\.\d+)?\+|\bv\d+\.\d+\b")
 # Deictic freshness and permission verbs warn: both admit context-legal uses review adjudicates.
-FRESHNESS_DEICTIC = re.compile(r"\b(?:currently|recently|nowadays|at\s+present|these\s+days|going\s+forward)\b", re.IGNORECASE)
+FRESHNESS_DEICTIC = re.compile(r"\b(?:currently|recently|nowadays|at\s+present|these\s+days|going\s+forward|newest|latest|modern)\b", re.IGNORECASE)
 WEAK_VERB = re.compile(r"\b(?:supports|provides|offers|allows|enables)\b", re.IGNORECASE)
 PATTERNS: tuple[tuple[Check, re.Pattern[str], Status], ...] = (
     (Check.HEDGE, HEDGE_WORDS, "fail"),
@@ -134,7 +189,20 @@ PATTERNS: tuple[tuple[Check, re.Pattern[str], Status], ...] = (
 )
 
 
-# --- [MODELS] ----------------------------------------------------------------------------
+# --- [MODELS] ---------------------------------------------------------------------------
+
+
+class Repair(StrEnum):
+    HEADER = "header-rubric"
+    INDEX = "index-column"
+    ENTRY = "index-entry"
+    ALIGN = "alignment"
+    HEADING = "heading-number"
+    LEADER = "list-leader"
+    DIVIDER = "section-divider"
+    SPACING = "table-spacing"
+    WHITESPACE = "trailing-whitespace"
+    SKIP = "unfixable"
 
 
 class Row(msgspec.Struct, frozen=True):
@@ -145,6 +213,13 @@ class Row(msgspec.Struct, frozen=True):
     detail: str
 
 
+class Change(msgspec.Struct, frozen=True):
+    line: int
+    kind: Repair
+    before: str
+    after: str
+
+
 class Span(msgspec.Struct, frozen=True):
     line: int
     text: str
@@ -152,6 +227,8 @@ class Span(msgspec.Struct, frozen=True):
 
 class Table(msgspec.Struct, frozen=True):
     line: int
+    end: int
+    indent: str
     headers: tuple[str, ...]
     aligns: tuple[Align, ...]
     rows: tuple[tuple[str, ...], ...]
@@ -185,36 +262,9 @@ class Document(msgspec.Struct, frozen=True):
     lists: tuple[ListEntry, ...]
 
 
-# --- [OPERATIONS] ------------------------------------------------------------------------
-
-
-def row(path: Path | str, line: int, check: Check, status: Status, detail: str) -> Row:
-    return Row(file=str(path), line=line, check=check, status=status, detail=detail)
-
-
-def collect(paths: tuple[Path, ...]) -> tuple[tuple[Path, ...], tuple[Row, ...]]:
-    files: list[Path] = []
-    faults: list[Row] = []
-    for target in paths:
-        if target.is_dir():
-            found = tuple(sorted(path.resolve() for path in target.rglob("*.md")))
-            files.extend(found)
-            if not found:
-                faults.append(row(target, 0, Check.COLLECT, "fail", "directory holds no markdown"))
-        elif target.suffix == ".md" and target.is_file():
-            files.append(target.resolve())
-        else:
-            faults.append(row(target, 0, Check.COLLECT, "fail", "not a readable markdown file"))
-    return tuple(dict.fromkeys(files)), tuple(faults)
-
-
-def frontmatter_end(lines: tuple[str, ...]) -> int:
-    if not lines or lines[0].rstrip() != "---":
-        return 0
-    for number, line in enumerate(lines[1:], 2):
-        if line.rstrip() == "---":
-            return number if any(YAML_KEY.match(body) for body in lines[1 : number - 1]) else 0
-    return 0
+# --- [TABLE_GEOMETRY] -------------------------------------------------------------------
+# One projection owns table shape: the gate measures the canonical render and fmt writes it,
+# so the width verdict and the written bytes cannot drift.
 
 
 def split_cells(line: str) -> tuple[str, ...]:
@@ -226,6 +276,7 @@ def split_cells(line: str) -> tuple[str, ...]:
             current.append(char)
             escaped = False
         elif char == "\\":
+            current.append(char)
             escaped = True
         elif char == "|":
             cells.append("".join(current).strip())
@@ -239,6 +290,75 @@ def split_cells(line: str) -> tuple[str, ...]:
 def aligned(cell: str) -> Align:
     left, right = cell.startswith(":"), cell.endswith(":")
     return "center" if left and right else "left" if left else "right" if right else "none"
+
+
+def padded(text: str, width: int, align: Align) -> str:
+    gap = width - len(text)
+    head = gap // 2 if align == "center" else gap if align == "right" else 0
+    return " " * head + text + " " * (gap - head)
+
+
+def separator(width: int, align: Align) -> str:
+    body = "-" * (width - 2)
+    return {"center": f":{body}:", "right": f"{body}-:", "left": f":{body}-", "none": f":{body}-"}[align]
+
+
+def rendered(table: Table) -> tuple[str, ...]:
+    ncol = max(len(table.headers), *(len(row) for row in table.rows), 1) if table.rows else len(table.headers)
+    headers = table.headers + ("",) * (ncol - len(table.headers))
+    aligns: tuple[Align, ...] = table.aligns + ("left",) * (ncol - len(table.aligns))
+    widths = tuple(max([len(headers[col])] + [len(row[col]) for row in table.rows if col < len(row)] + [COLUMN_FLOOR]) for col in range(ncol))
+
+    def emit(cells: tuple[str, ...], fill: Callable[[str, int, Align], str], /) -> str:
+        full = cells + ("",) * (ncol - len(cells))
+        return table.indent + "| " + " | ".join(fill(full[col], widths[col], aligns[col]) for col in range(ncol)) + " |"
+
+    return (
+        emit(headers, padded),
+        emit(tuple(map(separator, widths, aligns, strict=True)), lambda cell, _w, _a: cell),
+        *(emit(row, padded) for row in table.rows),
+    )
+
+
+# --- [LEXER] ----------------------------------------------------------------------------
+
+
+def row(path: Path | str, line: int, check: Check, status: Status, detail: str) -> Row:
+    return Row(file=str(path), line=line, check=check, status=status, detail=detail)
+
+
+def walked(target: Path, owned: frozenset[str]) -> tuple[Path, ...]:
+    found: list[Path] = []
+    for root, dirs, names in target.walk():
+        dirs[:] = [entry for entry in dirs if entry not in PRUNED]
+        found.extend((root / name).resolve() for name in names if (root / name).suffix in owned)
+    return tuple(sorted(found))
+
+
+def collect(paths: tuple[Path, ...]) -> tuple[tuple[Path, ...], tuple[Row, ...]]:
+    files: list[Path] = []
+    faults: list[Row] = []
+    owned = frozenset(MARKERS) | {".md"}
+    for target in paths:
+        if target.is_dir():
+            found = walked(target, owned)
+            files.extend(found)
+            if not found:
+                faults.append(row(target, 0, Check.COLLECT, "fail", "directory holds no owned files"))
+        elif target.suffix in owned and target.is_file():
+            files.append(target.resolve())
+        else:
+            faults.append(row(target, 0, Check.COLLECT, "fail", "not an owned file kind"))
+    return tuple(dict.fromkeys(files)), tuple(faults)
+
+
+def frontmatter_end(lines: tuple[str, ...]) -> int:
+    if not lines or lines[0].rstrip() != "---":
+        return 0
+    for number, line in enumerate(lines[1:], 2):
+        if line.rstrip() == "---":
+            return number if any(YAML_KEY.match(body) for body in lines[1 : number - 1]) else 0
+    return 0
 
 
 def prose_spans(line: str, number: int) -> tuple[Span, ...]:
@@ -268,7 +388,7 @@ def read(path: Path) -> str | Row:
         return row(path, 0, Check.READ, "fail", type(exc).__name__)
 
 
-def lex(path: Path, text: str, cap: int) -> tuple[Document | None, tuple[Row, ...]]:
+def lex(path: Path, text: str, cap: int) -> tuple[Document, tuple[Row, ...]]:
     raw = tuple(text.splitlines())
     skip_until = frontmatter_end(raw)
     prose: list[Span] = []
@@ -278,6 +398,7 @@ def lex(path: Path, text: str, cap: int) -> tuple[Document | None, tuple[Row, ..
     lists: list[ListEntry] = []
     rows: list[Row] = []
     fence: tuple[str, int, int, str] | None = None
+    mermaid_access = True
     n = 0
     while n < len(raw):
         number, line = n + 1, raw[n]
@@ -289,26 +410,44 @@ def lex(path: Path, text: str, cap: int) -> tuple[Document | None, tuple[Row, ..
         matched = FENCE.match(line)
         if fence is None and matched:
             marker, info = matched.group("marker"), matched.group("info").strip()
+            tokens = info.lower().split()
+            template = "templates" in path.parts
             if not info:
                 rows.append(row(path, number, Check.FENCE_LANGUAGE, "fail", "opening fence has no language tag"))
+            elif template:
+                pass
+            elif len(tokens) == 1 and tokens[0] != "text":
+                rows.append(row(path, number, Check.FENCE_INTENT, "warn", f"fence carries no intent label from the closed set: {info}"))
+            elif len(tokens) > 1 and tokens[1] not in FENCE_INTENTS:
+                rows.append(row(path, number, Check.FENCE_INTENT, "fail", f"unknown fence intent: {tokens[1]}"))
             fence = (marker[0], len(marker), number, info.lower())
+            mermaid_access = "mermaid" not in tokens[:1] if tokens else True
             n += 1
             continue
         if fence is not None:
-            glyph, width, _start, info = fence
+            glyph, width, start, info = fence
             if matched and matched.group("marker")[0] == glyph and len(matched.group("marker")) >= width and not matched.group("info").strip():
+                if not mermaid_access:
+                    rows.append(row(path, start, Check.FENCE_INTENT, "warn", "mermaid fence lacks accTitle/accDescr accessibility directives"))
                 fence = None
             elif ("codemap" in info or "seams" in info or any(glyph in line for glyph in GLYPHS)) and len(line) > cap:
                 rows.append(row(path, number, Check.FENCE_GEOMETRY, "fail", f"line {len(line)} > cap {cap}"))
+            elif info.startswith("mermaid") and ("accTitle" in line or "accDescr" in line):
+                mermaid_access = True
+            elif "copy-safe" in info and PROMPT_LINE.match(line):
+                rows.append(row(path, number, Check.FENCE_INTENT, "fail", "copy-safe fence line carries a shell prompt"))
             n += 1
             continue
         if path.name == "README.md" and CARD_ROW.match(line) and len(line) > cap:
             rows.append(row(path, number, Check.FENCE_GEOMETRY, "fail", f"card row {len(line)} > cap {cap}"))
         if heading := HEADING.match(line):
             headings.append(Heading(number, len(heading.group("level")), heading.group("title")))
+            if n + 1 < len(raw) and raw[n + 1].strip():
+                rows.append(row(path, number, Check.HEADING_SPACING, "fail", "heading is not followed by a blank line"))
         if SETEXT.match(line) and n > 0 and raw[n - 1].strip() and not TABLE_SEP.match(line):
             rows.append(row(path, number, Check.SETEXT_HEADING, "fail", "setext heading marker"))
         if line.lstrip().startswith("|") and n + 1 < len(raw) and TABLE_SEP.match(raw[n + 1]):
+            indent = line[: len(line) - len(line.lstrip())]
             headers = split_cells(line)
             aligns = tuple(aligned(cell) for cell in split_cells(raw[n + 1]))
             body: list[tuple[str, ...]] = []
@@ -316,27 +455,33 @@ def lex(path: Path, text: str, cap: int) -> tuple[Document | None, tuple[Row, ..
             while cursor < len(raw) and raw[cursor].lstrip().startswith("|"):
                 body.append(split_cells(raw[cursor]))
                 cursor += 1
-            tables.append(Table(number, headers, aligns, tuple(body)))
+            tables.append(Table(number, cursor, indent, headers, aligns, tuple(body)))
             n = cursor
             continue
-        links.extend(LinkRef(number, link.group(2)) for link in LINK.finditer(line))
+        links.extend(LinkRef(number, link.group(2)) for link in LINK.finditer(re.sub(r"`[^`]*`", "", line)))
         if item := LIST_ITEM.match(line):
+            if item.group("mark") in "*+":
+                rows.append(row(path, number, Check.LIST_MARKER, "fail", f"bullet marker {item.group('mark')} where - is the only legal marker"))
             cursor = n + 1
             chunks = [item.group("body")]
             while cursor < len(raw) and raw[cursor].startswith((" ", "\t")) and not LIST_ITEM.match(raw[cursor]):
                 chunks.append(raw[cursor].strip())
                 cursor += 1
-            text = " ".join(chunks)
-            stripped = " ".join(span.text.strip() for span in prose_spans(text, number))
-            share = 1 - (len(stripped) / max(1, len(text.strip())))
-            lists.append(ListEntry(number, text, stripped, share))
+            text_joined = " ".join(chunks)
+            stripped = " ".join(span.text.strip() for span in prose_spans(text_joined, number))
+            share = 1 - (len(stripped) / max(1, len(text_joined.strip())))
+            lists.append(ListEntry(number, text_joined, stripped, share))
         if not line.lstrip().startswith("|"):
             prose.extend(prose_spans(line, number))
         n += 1
     if fence is not None:
         rows.append(row(path, fence[2], Check.FENCE_UNCLOSED, "fail", "opening fence has no closing fence"))
+    mermaid_access = True
     doc = Document(str(path), "templates" in path.parts, tuple(prose), tuple(tables), tuple(headings), tuple(links), tuple(lists))
     return doc, tuple(rows)
+
+
+# --- [CHECKS] ---------------------------------------------------------------------------
 
 
 def table_rows(doc: Document) -> tuple[Row, ...]:
@@ -369,6 +514,26 @@ def table_rows(doc: Document) -> tuple[Row, ...]:
                 actual = body[0] if body else "<empty>"
                 if actual.strip() != expected:
                     rows.append(row(doc.path, table.line + index + 1, Check.TABLE_INDEX, "fail", f"{actual or '<empty>'} != {expected}"))
+        if len(table.headers) > TABLE_COLUMN_CEILING or len(table.rows) > TABLE_ROW_CEILING:
+            rows.append(
+                row(
+                    doc.path,
+                    table.line,
+                    Check.TABLE_BOUNDS,
+                    "warn",
+                    f"{len(table.headers)} columns x {len(table.rows)} rows exceeds the 15x20 ceiling",
+                )
+            )
+        linked = any(LINK.search(QUOTED_SPAN.sub("", cell)) for body in table.rows for cell in body)
+        prose_bearing = any(
+            len(QUOTED_SPAN.sub("", cell).split()) >= 4 for body in table.rows for cell in body if not LINK.search(QUOTED_SPAN.sub("", cell))
+        )
+        if linked and prose_bearing:
+            rows.append(row(doc.path, table.line, Check.TABLE_LINKS, "fail", "links ride cells beside prose columns; links move below the table"))
+        if (width := max(len(line) for line in rendered(table))) > TABLE_WIDTH_CAP:
+            rows.append(
+                row(doc.path, table.line, Check.TABLE_WIDTH, "fail", f"rendered width {width} > cap {TABLE_WIDTH_CAP}; relieve cells, keep the table")
+            )
         rows.extend(
             row(
                 doc.path,
@@ -398,7 +563,23 @@ def heading_rows(doc: Document) -> tuple[Row, ...]:
     h1 = tuple(heading for heading in doc.headings if heading.level == 1)
     rows.extend(row(doc.path, heading.line, Check.HEADING_H1, "fail", "duplicate H1") for heading in h1[1:])
     expected = 1
-    for heading in (heading for heading in doc.headings if heading.level == 2):
+    subsection = 0
+    for heading in (heading for heading in doc.headings if heading.level in (2, 3)):
+        if heading.level == 3:
+            subsection += 1
+            deep = H3_NUMBERED.match(heading.title)
+            if not deep or (int(deep.group(1)), int(deep.group(2))) != (expected - 1, subsection):
+                rows.append(
+                    row(
+                        doc.path,
+                        heading.line,
+                        Check.HEADING_ORDER,
+                        "fail",
+                        f"H3 breaks [{expected - 1:02}.{subsection}] numbering: {heading.title[:50]}",
+                    )
+                )
+            continue
+        subsection = 0
         matched = NUMBERED_SECTION.match(heading.title)
         if not matched:
             rows.append(row(doc.path, heading.line, Check.HEADING_ORDER, "fail", heading.title))
@@ -407,6 +588,13 @@ def heading_rows(doc: Document) -> tuple[Row, ...]:
         if actual != expected:
             rows.append(row(doc.path, heading.line, Check.HEADING_ORDER, "fail", f"{actual:02} != {expected:02}"))
         expected = actual + 1
+    slugs: dict[str, int] = {}
+    for heading in doc.headings:
+        slug = re.sub(r"[^a-z0-9 -]", "", heading.title.lower())
+        if slug in slugs:
+            rows.append(row(doc.path, heading.line, Check.HEADING_ANCHOR, "fail", f"anchor slug collides with line {slugs[slug]}"))
+        else:
+            slugs[slug] = heading.line
     return tuple(rows)
 
 
@@ -432,6 +620,7 @@ def prose_rows(doc: Document) -> tuple[Row, ...]:
         if not doc.template:
             rows.extend(row(doc.path, span.line, Check.TEMPLATE_SLOT, "fail", hit.group(0)) for hit in PLACEHOLDER.finditer(span.text))
         rows.extend(row(doc.path, span.line, Check.BOLD_EMPHASIS, "fail", hit.group(0)) for hit in BOLD.finditer(span.text))
+        rows.extend(row(doc.path, span.line, Check.GLYPH_BAN, "fail", f"banned glyph {hit.group(0)!r}") for hit in EMOJI.finditer(span.text))
         rows.extend(
             row(doc.path, span.line, check, status, hit.group(0).lstrip(".!? "))
             for check, pattern, status in PATTERNS
@@ -445,7 +634,10 @@ def list_rows(doc: Document) -> tuple[Row, ...]:
         return ()
     rows: list[Row] = []
     for entry in doc.lists:
-        if entry.text.startswith("[") and not LIST_LEADER.match(f"- {entry.text}"):
+        card = ROUTER_CARD.match(f"- {entry.text}")
+        if card is not None and f"- {entry.text}" != carded(card):
+            rows.append(row(doc.path, entry.line, Check.LIST_LEADER, "fail", f"router card deviates from - [NN]-[TOKEN](path): {entry.text[:50]}"))
+        elif entry.text.startswith("[") and not CHECKBOX.match(entry.text) and not LIST_LEADER.match(f"- {entry.text}"):
             rows.append(row(doc.path, entry.line, Check.LIST_LEADER, "fail", entry.text.split(":", 1)[0]))
         if entry.span_share < ROSTER_SPAN_SHARE:
             sentences = len(SENTENCE_END.findall(entry.prose))
@@ -513,6 +705,16 @@ def bundle_root(path: Path) -> Path | None:
 def bundle_rows(path: Path, text: str) -> tuple[Row, ...]:
     rows: list[Row] = []
     if path.name == "SKILL.md":
+        rows.extend(
+            row(
+                path,
+                0,
+                Check.SKILL_BUNDLE_ROUTER,
+                "fail",
+                f"{readme.relative_to(path.parent).as_posix()} rides a bundle; SKILL.md is the only router",
+            )
+            for readme in sorted(path.parent.rglob("README.md"))
+        )
         for sibling in sorted(path.parent.rglob("*.md")):
             relative = sibling.relative_to(path.parent).as_posix()
             if sibling == path or relative in text or sibling.name in text:
@@ -525,8 +727,30 @@ def bundle_rows(path: Path, text: str) -> tuple[Row, ...]:
                 if not target or re.match(r"^[a-z][a-z0-9+.-]*:", target, re.IGNORECASE):
                     continue
                 resolved = (path.parent / target).resolve(strict=False)
-                if resolved.suffix == ".md" and resolved.exists() and resolved.is_relative_to(root.resolve()) and resolved != (root / "SKILL.md").resolve():
+                if (
+                    resolved.suffix == ".md"
+                    and resolved.exists()
+                    and resolved.is_relative_to(root.resolve())
+                    and resolved != (root / "SKILL.md").resolve()
+                ):
                     rows.append(row(path, number, Check.SKILL_REFERENCE_HOP, "warn", f"nested hop to {target}; depth rides one hop from the root"))
+    return tuple(rows)
+
+
+def divider_rows(path: Path, text: str) -> tuple[Row, ...]:
+    marker = MARKERS[path.suffix]
+    rows: list[Row] = []
+    for number, line in enumerate(text.splitlines(), 1):
+        matched = DIVIDER.match(line)
+        if not matched or matched["marker"] != marker:
+            continue
+        body = DIVIDER_BODY.match(matched["body"])
+        if not body:
+            rows.append(row(path, number, Check.SECTION_DIVIDER, "warn", f"divider label is not bracketed UPPER_SNAKE: {matched['body'][:60]}"))
+        elif body["tail"] and not DASH_TAIL.match(body["tail"]):
+            rows.append(row(path, number, Check.SECTION_DIVIDER, "fail", "divider carries content beyond the label and dash fill"))
+        elif body["tail"] and len(line) != DIVIDER_WIDTH:
+            rows.append(row(path, number, Check.SECTION_WIDTH, "fail", f"full divider width {len(line)} != {DIVIDER_WIDTH}"))
     return tuple(rows)
 
 
@@ -534,9 +758,14 @@ def scan(path: Path, cap: int) -> tuple[Row, ...]:
     text = read(path)
     if isinstance(text, Row):
         return (text,)
+    if path.suffix != ".md":
+        return divider_rows(path, text)
     doc, lexer_rows = lex(path, text, cap)
-    checks = lexer_rows + table_rows(doc) + heading_rows(doc) + link_rows(doc) + prose_rows(doc) + list_rows(doc) if doc else lexer_rows
+    checks = lexer_rows + table_rows(doc) + heading_rows(doc) + link_rows(doc) + prose_rows(doc) + list_rows(doc)
     return checks + skill_rows(path, text) + bundle_rows(path, text)
+
+
+# --- [EMIT] -----------------------------------------------------------------------------
 
 
 def emit(rows: Iterable[Row], json_mode: bool) -> None:
@@ -551,15 +780,226 @@ def code(rows: Iterable[Row]) -> int:
     return 1 if any(finding.status == "fail" for finding in rows) else 0
 
 
-# --- [ENTRY] -----------------------------------------------------------------------------
+# --- [REPAIR] ---------------------------------------------------------------------------
+# The fix verb applies every deterministic repair the gate can prove: rubric headers, the
+# [INDEX] column and its [NN] entries, alignment colons, H2/H3 numbering, loose list leaders,
+# trailing whitespace, table spacing, and the canonical render. Judgment-tier repairs emit
+# SKIP changes instead of mutating.
+
+
+def carded(matched: re.Match[str]) -> str:
+    stem = re.sub(r"\.[A-Za-z0-9.]+$", "", matched["text"])
+    return f"{matched['indent']}- [{int(matched['n']):02}]-{rubric(stem)}({matched['path']}): {matched['rest']}"
+
+
+def rubric(text: str) -> str:
+    token = re.sub(r"[^A-Za-z0-9]+", "_", text).strip("_").upper().lstrip("0123456789_")
+    return f"[{token}]" if token else text
+
+
+def repaired_table(table: Table) -> tuple[Table, tuple[Change, ...]]:
+    changes: list[Change] = []
+    headers = list(table.headers)
+    aligns: list[Align] = list(table.aligns)
+    rows = [list(body) for body in table.rows]
+    for position, header in enumerate(headers):
+        fixed = rubric(header)
+        if header and not HEADER_CELL.match(header) and fixed != header and HEADER_CELL.match(fixed):
+            changes.append(Change(table.line, Repair.HEADER, header, fixed))
+            headers[position] = fixed
+    numbers = [NUMBER_ENTRY.match(body[0]) if body else None for body in rows]
+    sequential = bool(rows) and all(numbers) and [int(matched.group(1)) for matched in numbers if matched] == list(range(1, len(rows) + 1))
+    if headers and headers[0].strip("[]") in INDEX_ALIASES:
+        if headers[0] != "[INDEX]":
+            changes.append(Change(table.line, Repair.INDEX, headers[0], "[INDEX]"))
+            headers[0] = "[INDEX]"
+        for offset, body in enumerate(rows, 1):
+            expected = f"[{offset:02}]"
+            if body and body[0] != expected:
+                if numbers[offset - 1] or not body[0]:
+                    changes.append(Change(table.line + offset + 1, Repair.ENTRY, body[0], expected))
+                    body[0] = expected
+                else:
+                    changes.append(Change(table.line + offset + 1, Repair.SKIP, body[0], "non-numeric cell under [INDEX]; review"))
+    elif len(rows) >= 2 and sequential:
+        changes.append(
+            Change(table.line, Repair.SKIP, headers[0] if headers else "<empty>", "sequential first column under a non-index header; review")
+        )
+    elif len(rows) >= 2:
+        changes.append(Change(table.line, Repair.INDEX, "<absent>", "[INDEX] column inserted"))
+        headers.insert(0, "[INDEX]")
+        aligns.insert(0, "center")
+        for offset, body in enumerate(rows, 1):
+            body.insert(0, f"[{offset:02}]")
+    ncol = len(headers)
+    normalized: list[Align] = []
+    for position in range(ncol):
+        current: Align = aligns[position] if position < len(aligns) else "none"
+        wanted: Align = "center" if position == 0 and headers and headers[0] == "[INDEX]" else ("left" if current == "none" else current)
+        if wanted != current:
+            changes.append(Change(table.line + 1, Repair.ALIGN, f"column {position + 1} {current}", wanted))
+        normalized.append(wanted)
+    for offset, body in enumerate(rows, 1):
+        if len(body) > ncol:
+            changes.append(Change(table.line + offset + 1, Repair.SKIP, f"{len(body)} cells", f"{ncol} header cells; ragged row needs review"))
+        body.extend([""] * (ncol - len(body)))
+    repaired = Table(table.line, table.end, table.indent, tuple(headers), tuple(normalized), tuple(tuple(body) for body in rows))
+    return repaired, tuple(changes)
+
+
+def repaired_lines(lines: list[str], skip_until: int) -> tuple[list[str], tuple[Change, ...]]:
+    changes: list[Change] = []
+    out: list[str] = []
+    fence: tuple[str, int] | None = None
+    section = 0
+    subsection = 0
+    for number, raw in enumerate(lines, 1):
+        line = raw
+        if raw.endswith((" ", "\t")):
+            changes.append(Change(number, Repair.WHITESPACE, "<trailing whitespace>", "<stripped>"))
+            line = raw.rstrip()
+        if number <= skip_until:
+            out.append(line)
+            continue
+        matched = FENCE.match(line)
+        if fence is None and matched:
+            fence = (matched.group("marker")[0], len(matched.group("marker")))
+            out.append(line)
+            continue
+        if fence is not None:
+            if matched and matched.group("marker")[0] == fence[0] and len(matched.group("marker")) >= fence[1] and not matched.group("info").strip():
+                fence = None
+            out.append(line)
+            continue
+        if (item := LIST_ITEM.match(line)) and item.group("mark") in "*+":
+            wanted = f"{item.group('indent')}- {item.group('body')}"
+            changes.append(Change(number, Repair.LEADER, line.strip()[:60], wanted.strip()[:60]))
+            line = wanted
+        heading = HEADING.match(line)
+        if heading and len(heading.group("level")) == 2:
+            section, subsection = section + 1, 0
+            numbered = H2_NUMBERED.match(heading.group("title"))
+            label = numbered.group(2) if numbered else rubric(heading.group("title"))
+            wanted = f"## [{section:02}]-{label}"
+            if line != wanted and label.startswith("["):
+                changes.append(Change(number, Repair.HEADING, line, wanted))
+                line = wanted
+        elif heading and len(heading.group("level")) == 3 and section:
+            subsection += 1
+            numbered = H3_NUMBERED.match(heading.group("title"))
+            label = numbered.group(3) if numbered else rubric(heading.group("title"))
+            wanted = f"### [{section:02}.{subsection}]-{label}"
+            if line != wanted and label.startswith("["):
+                changes.append(Change(number, Repair.HEADING, line, wanted))
+                line = wanted
+        elif (card := ROUTER_CARD.match(line)) is not None:
+            wanted = carded(card)
+            if line != wanted:
+                changes.append(Change(number, Repair.LEADER, line.strip()[:60], wanted.strip()[:60]))
+                line = wanted
+        elif (bare := LEADER_BARE.match(line)) is not None:
+            wanted = f"{bare['indent']}- [{bare['token']}]: {bare['rest']}"
+            changes.append(Change(number, Repair.LEADER, line.strip(), wanted.strip()))
+            line = wanted
+        elif (loose := LEADER_LOOSE.match(line)) is not None:
+            wanted = f"{loose['indent']}- [{int(loose['n']):02}]-{rubric(loose['label'])}:{loose['rest']}"
+            if line != wanted:
+                changes.append(Change(number, Repair.LEADER, line.strip(), wanted.strip()))
+                line = wanted
+        out.append(line)
+        if HEADING.match(line) and number <= len(lines) and number < len(lines) and lines[number].strip():
+            out.append("")
+            changes.append(Change(number, Repair.SPACING, "<none>", "blank line after heading"))
+    return out, tuple(changes)
+
+
+def repaired_source(path: Path, text: str) -> tuple[str, tuple[Change, ...]]:
+    marker = MARKERS[path.suffix]
+    changes: list[Change] = []
+    out: list[str] = []
+    for number, line in enumerate(text.splitlines(), 1):
+        matched = DIVIDER.match(line)
+        loose = DIVIDER_LOOSE.match(matched["body"]) if matched and matched["marker"] == marker else None
+        if loose is None:
+            if matched and matched["marker"] == marker:
+                changes.append(Change(number, Repair.SKIP, matched["body"][:60], "unlabeled divider body needs review"))
+            out.append(line)
+            continue
+        label = rubric(loose["raw"])
+        tail = loose["tail"]
+        head = f"{matched['indent']}{marker} --- {label}"
+        if not HEADER_CELL.match(label) or (tail and not DASH_TAIL.match(tail)) or (tail and len(head) > DIVIDER_WIDTH - 2):
+            changes.append(Change(number, Repair.SKIP, line.strip()[:60], "divider resists mechanical repair; review"))
+            out.append(line)
+            continue
+        wanted = head if not tail else f"{head} " + "-" * (DIVIDER_WIDTH - len(head) - 1)
+        if wanted != line:
+            changes.append(Change(number, Repair.DIVIDER, line.strip()[:60], wanted.strip()[:60]))
+        out.append(wanted)
+    return "\n".join(out) + ("\n" if text.endswith("\n") else ""), tuple(changes)
+
+
+def repaired_text(path: Path, text: str, cap: int) -> tuple[str, tuple[Change, ...]]:
+    if path.suffix != ".md":
+        return repaired_source(path, text)
+    template = "templates" in path.parts
+    lines = list(text.splitlines())
+    changes: list[Change] = []
+    if not template:
+        lines, line_changes = repaired_lines(lines, frontmatter_end(tuple(lines)))
+        changes.extend(line_changes)
+    doc, _ = lex(path, "\n".join(lines), cap)
+    for table in reversed(doc.tables):
+        target = table
+        if not template:
+            target, table_changes = repaired_table(table)
+            changes.extend(table_changes)
+        block = list(rendered(target))
+        if table.end < len(lines) and lines[table.end].strip():
+            block.append("")
+            changes.append(Change(table.end + 1, Repair.SPACING, "<none>", "blank line after table"))
+        if table.line > 1 and lines[table.line - 2].strip():
+            block.insert(0, "")
+            changes.append(Change(table.line, Repair.SPACING, "<none>", "blank line before table"))
+        lines[table.line - 1 : table.end] = block
+    return "\n".join(lines) + ("\n" if text.endswith("\n") else ""), tuple(sorted(changes, key=lambda change: change.line))
+
+
+# --- [ENTRY] ----------------------------------------------------------------------------
 
 
 @APP.default
-def run(*paths: Path, json: bool = False, cap: int = CAP) -> int:
+def gate(*paths: Path, json: bool = False, cap: int = CAP) -> int:
     files, faults = collect(paths)
     rows = faults + tuple(finding for path in files for finding in scan(path, cap))
     emit(rows, json)
     return code(rows)
+
+
+@APP.command
+def fix(*paths: Path, write: bool = False, cap: int = CAP) -> int:
+    """Apply every deterministic repair; dry-run by default, --write mutates files.
+
+    Returns:
+        1 when faults or pending dry-run changes exist, 0 otherwise.
+    """
+    files, faults = collect(paths)
+    emit(faults, json_mode=False)
+    pending = 0
+    for path in files:
+        text = read(path)
+        if isinstance(text, Row):
+            emit((text,), json_mode=False)
+            continue
+        repaired, changes = repaired_text(path, text, cap)
+        verb = "FIX" if write else "PLAN"
+        for change in changes:
+            print(f"{path}:{change.line}: {verb if change.kind is not Repair.SKIP else 'SKIP'} {change.kind} {change.before} -> {change.after}")
+        if repaired != text:
+            pending += 1
+            if write:
+                path.write_text(repaired, encoding="utf-8")
+    return 1 if (faults or (not write and pending)) else 0
 
 
 if __name__ == "__main__":

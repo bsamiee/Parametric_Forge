@@ -6,23 +6,26 @@ The edge is the only place the system meets material it did not mint: wire paylo
 
 This table selects the owner for a foreign signal; when a signal matches several rows, the most specific wins, and identity rows are read before transport rows.
 
-| [INDEX] | [FOREIGN_SIGNAL]                    | [SEAM_OWNER]                                 | [INTERIOR_FORM]                         | [REJECTED_FORM]                  |
-| :-----: | :---------------------------------- | :------------------------------------------- | :-------------------------------------- | :------------------------------- |
-|  [01]   | raw payload — body, file, message   | Schema owner at first sight                  | decoded value on the rail               | interior re-validation           |
-|  [02]   | signed or hashed octets             | opaque byte band held at admission           | digest receipt + content projection     | parse-then-reserialize           |
-|  [03]   | trace identity in headers           | `HttpTraceContext` codec family              | `Option`-carried parent span            | hand-parsed `traceparent`        |
-|  [04]   | HTTP, RPC, or CLI surface           | contribution family — endpoint/group as data | derived server, client, and spec        | hand-rolled route table          |
-|  [05]   | foreign binary or text format       | codec engine behind `Schema.transformOrFail` | `ParseError` on the one decode rail     | second codec fault family        |
-|  [06]   | platform capability — fs, net, exec | abstract `Context.Tag`                       | requirement in the `R` channel          | direct `node:*`/`fetch` import   |
-|  [07]   | foreign callback API                | `Effectify.effectify` at the seam owner      | typed effect signature                  | per-site `Effect.async` wrap     |
-|  [08]   | environment or config read          | `Config` through the provider chain          | validated value at construction         | scattered `process.env` reads    |
-|  [09]   | process start                       | `runMain` in one boot module                 | drained fibers and finalizers           | top-level `Effect.runPromise`    |
-|  [10]   | host cancellation signal            | `{ signal }` run option; `tryPromise` signal | fiber interruption on `Cause`           | `AbortController` in domain flow |
-|  [11]   | off-thread or socket handoff        | Schema-typed marshal frame                   | tagged request/response family          | untyped `postMessage` payload    |
-|  [12]   | relational store — statements, rows | `SqlClient` Tag; statements as `sql` values  | `SqlSchema`-fused decoded rows          | string-built SQL, driver import  |
-|  [13]   | store read that must follow writes  | `Reactivity` keyed invalidation bus          | re-run `Mailbox`/`Stream` delivery      | cadence poll of unchanged rows   |
-|  [14]   | reactive view binding               | `Atom.runtime` over the built Layer graph    | `useAtomValue`/`useAtomSet` projections | in-view `run*`, per-render Layer |
-|  [15]   | wasm module                         | scoped instantiation behind a capability Tag | calls through the marked kernel         | escaping linear-memory view      |
+| [INDEX] | [FOREIGN_SIGNAL]               | [SEAM_OWNER]                    | [INTERIOR_FORM]                 | [REJECTED_FORM]                |
+| :-----: | :----------------------------- | :------------------------------ | :------------------------------ | :----------------------------- |
+|  [01]   | raw payload: body/file/message | Schema owner at first sight     | decoded value on the rail       | interior re-validation         |
+|  [02]   | signed or hashed octets        | opaque byte band at admission   | digest receipt + projection     | parse-then-reserialize         |
+|  [03]   | trace identity in headers      | `HttpTraceContext` codec family | `Option`-carried parent span    | hand-parsed `traceparent`      |
+|  [04]   | HTTP, RPC, or CLI surface      | contribution family             | derived server, client, spec    | hand-rolled route table        |
+|  [05]   | foreign binary or text format  | `Schema.transformOrFail` codec  | `ParseError` on the decode rail | second codec fault family      |
+|  [06]   | platform capability            | abstract `Context.Tag`          | requirement in the `R` channel  | direct `node:*`/`fetch` import |
+|  [07]   | foreign callback API           | `Effectify.effectify`           | typed effect signature          | per-site `Effect.async` wrap   |
+|  [08]   | environment or config read     | `Config` provider chain         | validated value at construction | scattered `process.env` reads  |
+|  [09]   | process start                  | `runMain` in one boot module    | drained fibers and finalizers   | top-level `Effect.runPromise`  |
+|  [10]   | host cancellation signal       | `{ signal }`, `tryPromise`      | fiber interruption on `Cause`   | `AbortController` in domain    |
+|  [11]   | off-thread or socket handoff   | Schema-typed marshal frame      | tagged request/response family  | untyped `postMessage` payload  |
+|  [12]   | relational store               | `SqlClient`; `sql` statements   | `SqlSchema`-fused decoded rows  | hand-built SQL, driver import  |
+|  [13]   | store read after writes        | `Reactivity` keyed invalidation | re-run `Mailbox`/`Stream`       | cadence poll of unchanged rows |
+|  [14]   | reactive view binding          | `Atom.runtime` over Layer graph | `useAtomValue`/`useAtomSet`     | `run*`, per-render Layer       |
+|  [15]   | wasm module                    | scoped capability-Tag instance  | calls through the marked kernel | escaping linear-memory view    |
+
+- [04]: contribution family: endpoint/group expressed as data.
+- [06]: platform capability: fs, net, exec.
 
 ## [02]-[ADMISSION]
 
@@ -99,15 +102,15 @@ export { admitted, Envelope, Passport }
 - Law: group-scoped concerns ride the declaration — `.middleware(Tag)` on the group, `.addError` for group-wide faults, `.prefix` for mount points — so a cross-cutting obligation is recoverable from the contract value, never from handler bodies.
 - Reject: a hand-rolled router table where the declarative family fits; a route registered beside the contract; transport or codec baked into a handler; a second contract authored for a client variant.
 
-Axes pair freely — any protocol row under any serialization row, selected only at the root; the client mirror rows are `RpcClient.layerProtocolHttp`/`layerProtocolSocket`/`layerProtocolWorker`.
+Axes pair freely — any protocol row under any serialization row, selected only at the root; protocol rows live on `RpcServer`, serialization rows on `RpcSerialization`, and the client mirror rows are `RpcClient.layerProtocolHttp`/`layerProtocolSocket`/`layerProtocolWorker`.
 
-| [INDEX] | [PROTOCOL_ROW] — `RpcServer`       | [SERIALIZATION_ROW] — `RpcSerialization` |
-| :-----: | :--------------------------------- | :--------------------------------------- |
-|  [01]   | `layerProtocolHttp({ path })`      | `layerJson`                              |
-|  [02]   | `layerProtocolWebsocket({ path })` | `layerNdjson`                            |
-|  [03]   | `layerProtocolWorkerRunner`        | `layerMsgPack`                           |
-|  [04]   | `layerProtocolStdio`               | `layerJsonRpc()`                         |
-|  [05]   | `layerProtocolSocketServer`        | `layerNdJsonRpc()`                       |
+| [INDEX] | [PROTOCOL_ROW]                     | [SERIALIZATION_ROW] |
+| :-----: | :--------------------------------- | :------------------ |
+|  [01]   | `layerProtocolHttp({ path })`      | `layerJson`         |
+|  [02]   | `layerProtocolWebsocket({ path })` | `layerNdjson`       |
+|  [03]   | `layerProtocolWorkerRunner`        | `layerMsgPack`      |
+|  [04]   | `layerProtocolStdio`               | `layerJsonRpc()`    |
+|  [05]   | `layerProtocolSocketServer`        | `layerNdJsonRpc()`  |
 
 [DERIVED_SURFACES]:
 - Law: one declaration derives every consumer surface — `HttpApiBuilder.api` plus `HttpApiBuilder.serve` derive the server, `HttpApiClient.make` derives the fully typed client, `OpenApi.fromApi` derives the spec, `HttpApiBuilder.toWebHandler` derives the fetch-shaped handler for hostless runtimes; server, client, and spec cannot drift because they are projections of one value. `RpcClient.make` against the same group is the identical law on the RPC axis, `RpcServer.toWebHandler` its hostless projection, and `RpcTest.makeClient` short-circuits transport in specs — the production and test callers share the contract.

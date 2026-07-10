@@ -388,31 +388,31 @@ classDef edgeTrace stroke:#6272A4,color:#F8F8F2,stroke-width:1.5px,stroke-dashar
 
 Per-element sizing rides `themeCSS`, never `themeVariables.fontSize`. Every value is an exact stamp over the SVG-px scale on a three-step type ramp — 13.5 bold container title, 13 primary, 12 tertiary — and nothing on a mermaid canvas renders below the 12px floor, since SVG text carries no hinting and sits below a hinted HTML equivalent at equal size. The container title sits above the node label deliberately: containment names the largest scope on the canvas, so its title carries the heaviest type, and the 13.5px/700 stamp stays under the engine's 16px measurement box, so no titled container clips.
 
-| [INDEX] | [CLASS]                   | [SELECTOR]                  | [PX] | [WEIGHT]               |
-| :-----: | :------------------------ | :-------------------------- | :--: | :--------------------- |
-|  [01]   | node label                | `.nodeLabel`                |  13  | 500                    |
-|  [02]   | actor label (sequence)    | `text.actor tspan`          |  13  | 600                    |
-|  [03]   | ER entity name            | `.name .nodeLabel`          |  13  | 600                    |
-|  [04]   | class title               | `.classTitle`               |  13  | 600                    |
-|  [05]   | container / namespace title | `.cluster-label .nodeLabel` | 13.5 | 700, uppercase in text |
-|  [06]   | edge label                | `.edgeLabel`                |  12  | 500                    |
-|  [07]   | message text (sequence)   | `.messageText`              |  12  | 500                    |
-|  [08]   | note text                 | `.noteText`, `.noteLabel .nodeLabel` | 12 | 400            |
-|  [09]   | ER attribute cell         | `.nodeLabel` under ER       |  12  | 400                    |
-|  [10]   | loop / group label        | `.loopText`, `.labelText`   |  12  | 500                    |
-|  [11]   | section / lane title      | `.sectionTitle`, kanban `.cluster-label` | 13.5 | 700, Lavender ink |
+| [INDEX] | [CLASS]                     | [SELECTOR]                               | [PX]  | [WEIGHT]               |
+| :-----: | :-------------------------- | :--------------------------------------- | :---: | :--------------------- |
+|  [01]   | node label                  | `.nodeLabel`                             |  13   | 500                    |
+|  [02]   | actor label (sequence)      | `text.actor tspan`                       |  13   | 600                    |
+|  [03]   | ER entity name              | `.name .nodeLabel`                       |  13   | 600                    |
+|  [04]   | class title                 | `.classTitle`                            |  13   | 600                    |
+|  [05]   | container / namespace title | `.cluster-label .nodeLabel`              | 13.5  | 700, uppercase in text |
+|  [06]   | edge label                  | `.edgeLabel`                             |  12   | 500                    |
+|  [07]   | message text (sequence)     | `.messageText`                           |  12   | 500                    |
+|  [08]   | note text                   | `.noteText`, `.noteLabel .nodeLabel`     |  12   | 400                    |
+|  [09]   | ER attribute cell           | `.nodeLabel` under ER                    |  12   | 400                    |
+|  [10]   | loop / group label          | `.loopText`, `.labelText`                |  12   | 500                    |
+|  [11]   | section / lane title        | `.sectionTitle`, kanban `.cluster-label` | 13.5  | 700, Lavender ink      |
 
 The line-weight ladder — one scale, every stroke on the canvas, stated here once and spent verbatim by every stamp, rail, and class:
 
-| [INDEX] | [STROKE]                     | [WEIGHT] | [RATIO] | [FORM]                     |
-| :-----: | :--------------------------- | :------: | :-----: | :------------------------- |
-|  [01]   | standing edge                |  `2px`   |  100%   | solid                      |
-|  [02]   | fault / critical / emphasis edge | `3px` |  150%   | solid                      |
-|  [03]   | dashed / dotted edge         | `1.5px`  |   75%   | `4 6` trace, `6 6` planned |
-|  [04]   | node border                  | `1.5px`  |   75%   | solid, 100% opacity        |
-|  [05]   | callout / emphasis node border | `2px`  |  100%   | solid                      |
-|  [06]   | container border             |  `1px`   |   50%   | dashed `5 4`, Lavender     |
-|  [07]   | grid / divider stroke        |  `1px`   |   50%   | family-owned dash          |
+| [INDEX] | [STROKE]                         | [WEIGHT] | [RATIO] | [FORM]                     |
+| :-----: | :------------------------------- | :------: | :-----: | :------------------------- |
+|  [01]   | standing edge                    |  `2px`   |  100%   | solid                      |
+|  [02]   | fault / critical / emphasis edge |  `3px`   |  150%   | solid                      |
+|  [03]   | dashed / dotted edge             | `1.5px`  |   75%   | `4 6` trace, `6 6` planned |
+|  [04]   | node border                      | `1.5px`  |   75%   | solid, 100% opacity        |
+|  [05]   | callout / emphasis node border   |  `2px`   |  100%   | solid                      |
+|  [06]   | container border                 |  `1px`   |   50%   | dashed `5 4`, Lavender     |
+|  [07]   | grid / divider stroke            |  `1px`   |   50%   | family-owned dash          |
 
 Marker and circle scale tie to one factor: every arrowhead across every family scales `.8` linear, and every terminal circle scales `.48` — the `.8` squared area factor cut a further 25%, radius `3.4px` on the state start disc — because a filled disc reads by area while a head reads by length, and a circle at the old `.64` still shouldered its label. The circle factor binds every terminal and endpoint disc: state start and terminal ring, flowchart `--o` endpoints, gitgraph commit dots (`.75` transform on the engine radii, preserving merge-ring ratios), journey actor dots (`r:5.25px`), quadrant points (`radius: 4`), railroad start and end (`markerRadius: 4`). ER cardinality rings stay at the `.8` marker scale — they pair with crow's-foot paths as one glyph, never as terminal dots.
 

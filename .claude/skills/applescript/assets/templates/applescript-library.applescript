@@ -83,7 +83,7 @@ on boundedName(appName)
 			tell application appName to return {ok:true, value:name}
 		end timeout
 	on error message number n
-		return {ok:false, app:appName, budget:(timeoutSeconds of my policies), number:n, message:message}
+		return {ok:false, application:appName, budget:(timeoutSeconds of my policies), number:n, message:message}
 	end try
 end boundedName
 

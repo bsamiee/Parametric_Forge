@@ -23,31 +23,36 @@ Each table routes a correspondence to the form that owns it, and every `[USE]` n
 
 [ANCHOR_FORMS]: which declaration anchors a correspondence.
 
-| [INDEX] | [CONCERN]                          | [USE]                                                                               | [REPLACE]                                      |
-| :-----: | :--------------------------------- | :---------------------------------------------------------------------------------- | :--------------------------------------------- |
-|  [01]   | keyed rows any export reaches      | plain `as const` anchor + merged guard hub; assembled owner where companions attach | hand union, annotation restating every row     |
-|  [02]   | keyed rows no export reaches       | `as const satisfies Record<string, Row>` at the anchor                              | guard ceremony where `satisfies` still rides   |
-|  [03]   | key set for wire, order, iteration | `as const` key tuple; table guarded against its elements                            | keys restated at the literal, `as`-cast spread |
-|  [04]   | row set contributed across modules | merged registry interface; rows via `declare module`                                | central table every contributor edits          |
-|  [05]   | governed value, literals inert     | stated `Record<GeneratedUnion, V>` annotation                                       | hand-synced parallel table that drifts         |
-|  [06]   | pure type-plane correspondence     | `type` literal-union or template-pattern anchor                                     | a dead runtime table no value reads            |
-|  [07]   | caller-supplied literal shape      | `const` type parameter at the owner                                                 | caller `as const` discipline                   |
-|  [08]   | own-carrier nominal identity       | annotated `unique symbol` TypeId + variance struct                                  | structural carrier forged by look-alikes       |
-|  [09]   | protocol call order                | accumulating state parameter, structurally witnessed                                | runtime flag re-checked per call               |
-|  [10]   | boundary shape                     | Schema owner                                                                        | interface plus parallel decoder pair           |
+| [INDEX] | [CONCERN]                       | [USE]                                                | [REPLACE]                                  |
+| :-----: | :------------------------------ | :--------------------------------------------------- | :----------------------------------------- |
+|  [01]   | keyed rows any export reaches   | plain `as const` anchor + merged guard hub           | hand union, annotation restating every row |
+|  [02]   | keyed rows no export reaches    | `as const satisfies Record<string, Row>`             | guard ceremony despite `satisfies`         |
+|  [03]   | key set: wire, order, iteration | `as const` key tuple; guarded by its elements        | keys restated at literal, `as`-cast spread |
+|  [04]   | rows contributed across modules | merged registry interface; rows via `declare module` | central table every contributor edits      |
+|  [05]   | governed value, literals inert  | stated `Record<GeneratedUnion, V>` annotation        | hand-synced parallel table that drifts     |
+|  [06]   | pure type-plane correspondence  | `type` literal-union or template-pattern anchor      | a dead runtime table no value reads        |
+|  [07]   | caller-supplied literal shape   | `const` type parameter at the owner                  | caller `as const` discipline               |
+|  [08]   | own-carrier nominal identity    | annotated `unique symbol` TypeId + variance struct   | structural carrier forged by look-alikes   |
+|  [09]   | protocol call order             | accumulating state parameter, structurally witnessed | runtime flag re-checked per call           |
+|  [10]   | boundary shape                  | Schema owner                                         | interface plus parallel decoder pair       |
+
+- [01]: assembled owner where companions attach.
 
 [PROJECTION_FORMS]: how a surface derives from its anchor.
 
-| [INDEX] | [CONCERN]                    | [USE]                                                                                       | [REPLACE]                                      |
-| :-----: | :--------------------------- | :------------------------------------------------------------------------------------------ | :--------------------------------------------- |
-|  [01]   | discriminant union           | `keyof typeof rows`; `keyof Registry` on the merge seam                                     | hand-written union                             |
-|  [02]   | row and axis types           | indexed access `(typeof rows)[Kind]["axis"]`                                                | per-row aliases                                |
-|  [03]   | tag union of a tagged family | `Family["_tag"]` — indexed access distributes over the union                                | hand-listed tag union                          |
-|  [04]   | literal-keyed return         | indexed-access return on the generic key                                                    | conditional return needing a cast to implement |
-|  [05]   | package-carrier channel      | `Effect.Effect.Success`, `Schema.Schema.Type`, `Context.Tag.Service`, `Layer.Layer.Success` | hand `infer` over package types                |
-|  [06]   | local-carrier channels       | one bracketed multi-clause `infer` conditional                                              | chained single-`infer` conditionals            |
-|  [07]   | union subset by pattern      | `Extract`/`Exclude` with a template pattern                                                 | re-listed members                              |
-|  [08]   | derived-surface flatten      | `Types.Simplify` at the public alias                                                        | hand-rolled `{ [K in keyof T]: T[K] }` alias   |
+| [INDEX] | [CONCERN]                    | [USE]                                          | [REPLACE]                                      |
+| :-----: | :--------------------------- | :--------------------------------------------- | :--------------------------------------------- |
+|  [01]   | discriminant union           | `keyof typeof rows`; `keyof Registry`          | hand-written union                             |
+|  [02]   | row and axis types           | indexed access `(typeof rows)[Kind]["axis"]`   | per-row aliases                                |
+|  [03]   | tag union of a tagged family | `Family["_tag"]` distributes over the union    | hand-listed tag union                          |
+|  [04]   | literal-keyed return         | indexed-access return on the generic key       | conditional return needing a cast to implement |
+|  [05]   | package-carrier channel      | `Effect.Effect.Success` and peers              | hand `infer` over package types                |
+|  [06]   | local-carrier channels       | one bracketed multi-clause `infer` conditional | chained single-`infer` conditionals            |
+|  [07]   | union subset by pattern      | `Extract`/`Exclude` with a template pattern    | re-listed members                              |
+|  [08]   | derived-surface flatten      | `Types.Simplify` at the public alias           | hand-rolled `{ [K in keyof T]: T[K] }` alias   |
+
+- [01]: `keyof Registry` reads the merge seam.
+- [05]: package carriers: `Effect.Effect.Success`, `Schema.Schema.Type`, `Context.Tag.Service`, `Layer.Layer.Success`.
 
 [GENERATION_FORMS]: how a member family generates from anchors.
 
@@ -62,16 +67,16 @@ Each table routes a correspondence to the form that owns it, and every `[USE]` n
 
 [INFERENCE_FORMS]: how the owner pre-solves what consumers would otherwise repair.
 
-| [INDEX] | [CONCERN]                    | [USE]                                                         | [REPLACE]                                    |
-| :-----: | :--------------------------- | :------------------------------------------------------------ | :------------------------------------------- |
-|  [01]   | literal retention            | `const` type parameter                                        | `as const` at every call site                |
-|  [02]   | check-only position          | `NoInfer<T>`                                                  | mirror generic, argument-order repair        |
-|  [03]   | pre-solved generic           | instantiation expression under a semantic name                | wrapper arrow restating the signature        |
-|  [04]   | per-row lambda typing        | reverse-mapped owner parameter                                | annotated handlers, call-site type arguments |
-|  [05]   | tuple shape through an owner | variadic signature `readonly [...Init, Next]`                 | positional overload ladder, widened arrays   |
-|  [06]   | distribution posture         | naked parameter to map; `[T] extends [U]` for one answer      | accidental union distribution                |
-|  [07]   | variance intent              | `in`/`out` paired with the variance struct                    | inference drift, phantom bivariance          |
-|  [08]   | container polymorphism       | `HKT.TypeLambda` plus `HKT.Kind` under a typeclass constraint | per-container operator copies                |
+| [INDEX] | [CONCERN]                    | [USE]                                                    | [REPLACE]                                    |
+| :-----: | :--------------------------- | :------------------------------------------------------- | :------------------------------------------- |
+|  [01]   | literal retention            | `const` type parameter                                   | `as const` at every call site                |
+|  [02]   | check-only position          | `NoInfer<T>`                                             | mirror generic, argument-order repair        |
+|  [03]   | pre-solved generic           | instantiation expression under a semantic name           | wrapper arrow restating the signature        |
+|  [04]   | per-row lambda typing        | reverse-mapped owner parameter                           | annotated handlers, call-site type arguments |
+|  [05]   | tuple shape through an owner | variadic signature `readonly [...Init, Next]`            | positional overload ladder, widened arrays   |
+|  [06]   | distribution posture         | naked parameter to map; `[T] extends [U]` for one answer | accidental union distribution                |
+|  [07]   | variance intent              | `in`/`out` paired with the variance struct               | inference drift, phantom bivariance          |
+|  [08]   | container polymorphism       | `HKT.TypeLambda` + `HKT.Kind` under typeclass constraint | per-container operator copies                |
 
 ## [03]-[DERIVATION_CONTRACTS]
 

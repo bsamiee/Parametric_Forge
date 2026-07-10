@@ -2,18 +2,18 @@
 
 Bash 5.2/5.3 feature exploitation. Fork-free substitution, REPLY-bound substitution, GLOBSORT pipelines, epoch instrumentation, monotonic clock, trap signal dispatch, loadable builtins (fltexpr, strptime, kv), shell options (array_expand_once, read -E, source -p), version gating. Minimum baseline is 5.2 — features below that threshold are unconditionally available.
 
-| [IDX] | [PATTERN]              |  [S]  | [VER] | [USE_WHEN]                                           |
-| :---: | :--------------------- | :---: | :---: | :--------------------------------------------------- |
-| [01]  | Fork-free substitution |  S1   |  5.3  | Tight loops, accumulator patterns, hot-path captures |
-| [02]  | REPLY-bound expansion  |  S2   |  5.3  | Result binding, structured side-effect separation    |
-| [03]  | GLOBSORT pipelines     |  S3   |  5.3  | File processing by size/mtime without sort(1)        |
-| [04]  | Epoch instrumentation  |  S4   | 5.2+  | Benchmarking, TTL caches, SRANDOM nonces             |
-| [05]  | Monotonic clock        |  S5   |  5.3  | Elapsed time immune to NTP drift, SLA enforcement    |
-| [06]  | Trap signal dispatch   |  S6   |  5.3  | Multi-signal handlers, graceful shutdown dispatch    |
-| [07]  | Loadable builtins      |  S7   |  5.3  | Float math, date/KV ops without awk/date forks       |
-| [08]  | Shell options (5.3)    |  S8   |  5.3  | array_expand_once, read -E, source -p PATH           |
-| [09]  | Wait primitives        |  S9   | 5.2+  | Bounded concurrency, PID tracking, job completion    |
-| [10]  | Version gating         |  S10  | 5.2+  | Feature dispatch across 5.2/5.3 fleet boundary       |
+| [INDEX] | [PATTERN]              |  [S]  | [VER] | [USE_WHEN]                                           |
+| :-----: | :--------------------- | :---: | :---: | :--------------------------------------------------- |
+|  [01]   | Fork-free substitution |  S1   |  5.3  | Tight loops, accumulator patterns, hot-path captures |
+|  [02]   | REPLY-bound expansion  |  S2   |  5.3  | Result binding, structured side-effect separation    |
+|  [03]   | GLOBSORT pipelines     |  S3   |  5.3  | File processing by size/mtime without sort(1)        |
+|  [04]   | Epoch instrumentation  |  S4   | 5.2+  | Benchmarking, TTL caches, SRANDOM nonces             |
+|  [05]   | Monotonic clock        |  S5   |  5.3  | Elapsed time immune to NTP drift, SLA enforcement    |
+|  [06]   | Trap signal dispatch   |  S6   |  5.3  | Multi-signal handlers, graceful shutdown dispatch    |
+|  [07]   | Loadable builtins      |  S7   |  5.3  | Float math, date/KV ops without awk/date forks       |
+|  [08]   | Shell options (5.3)    |  S8   |  5.3  | array_expand_once, read -E, source -p PATH           |
+|  [09]   | Wait primitives        |  S9   | 5.2+  | Bounded concurrency, PID tracking, job completion    |
+|  [10]   | Version gating         |  S10  | 5.2+  | Feature dispatch across 5.2/5.3 fleet boundary       |
 
 ## [01]-[FORK_FREE_SUBSTITUTION]
 
@@ -99,16 +99,16 @@ disk_pct=${| REPLY="$(df --output=pcent / | tail -1 | tr -d '[:space:]%')"; }
 
 GLOBSORT (5.3) controls pathname expansion order globally. `+` prefix = ascending (default), `-` = descending.
 
-| [IDX] | [SPECIFIER] | [SORTS_BY]                  |
-| :---: | :---------- | :-------------------------- |
-| [01]  | `name`      | Alphabetical (default)      |
-| [02]  | `size`      | File size (st_size)         |
-| [03]  | `mtime`     | Modification time           |
-| [04]  | `atime`     | Access time                 |
-| [05]  | `ctime`     | Inode change time           |
-| [06]  | `blocks`    | Allocated block count       |
-| [07]  | `numeric`   | Leading digits in filename  |
-| [08]  | `nosort`    | Raw readdir order (fastest) |
+| [INDEX] | [SPECIFIER] | [SORTS_BY]                  |
+| :-----: | :---------- | :-------------------------- |
+|  [01]   | `name`      | Alphabetical (default)      |
+|  [02]   | `size`      | File size (st_size)         |
+|  [03]   | `mtime`     | Modification time           |
+|  [04]   | `atime`     | Access time                 |
+|  [05]   | `ctime`     | Inode change time           |
+|  [06]   | `blocks`    | Allocated block count       |
+|  [07]   | `numeric`   | Leading digits in filename  |
+|  [08]   | `nosort`    | Raw readdir order (fastest) |
 
 ```bash
 # Process newest logs first — no ls/stat/sort pipeline
@@ -141,11 +141,11 @@ readonly file_count="${#files[@]}"
 
 Three builtin variables replace `date(1)` forks entirely. All are unconditionally available at the 5.2+ baseline:
 
-| [IDX] | [VARIABLE]      | [PROVIDES]                     | [REPLACES]      |
-| :---: | :-------------- | :----------------------------- | :-------------- |
-| [01]  | `EPOCHSECONDS`  | Integer seconds since epoch    | `$(date +%s)`   |
-| [02]  | `EPOCHREALTIME` | Microsecond float (sec.usec)   | `$(date +%s%N)` |
-| [03]  | `SRANDOM`       | 32-bit getrandom(2)/getentropy | `$RANDOM`       |
+| [INDEX] | [VARIABLE]      | [PROVIDES]                     | [REPLACES]      |
+| :-----: | :-------------- | :----------------------------- | :-------------- |
+|  [01]   | `EPOCHSECONDS`  | Integer seconds since epoch    | `$(date +%s)`   |
+|  [02]   | `EPOCHREALTIME` | Microsecond float (sec.usec)   | `$(date +%s%N)` |
+|  [03]   | `SRANDOM`       | 32-bit getrandom(2)/getentropy | `$RANDOM`       |
 
 `SRANDOM` uses the kernel's getrandom(2) syscall — `RANDOM` is a predictable LCG (linear congruential generator). `SRANDOM` is suitable for nonces, session IDs, and jitter values but NOT for cryptographic key material (32-bit space). For keys: `head -c 32 /dev/urandom | base64`.
 
@@ -542,7 +542,7 @@ _features() {
 
 Version gating via packed integer eliminates nested `[[ ]]` chains. `_capture` uses eval (the only acceptable use — template-generated, not user-input derived) to select syntax at call site. Feature flags as `readonly` arithmetic — `(( _HAS_X ))` is zero-cost branching. `array_expand_once` is unconditionally enabled on 5.3 — it is strictly safer than the default and has no backwards-compatibility cost within a controlled script.
 
-## [RULES]
+## [11]-[RULES]
 
 - `${ cmd; }` for all captures in tight loops — fork overhead dominates at >100 iterations (~5-8x speedup).
 - `${| cmd; }` when stdout needs conditional processing or value crosses function boundary via REPLY.

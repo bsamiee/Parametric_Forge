@@ -16,6 +16,7 @@
 ## [03]-[NIX_SHELL_EXECUTION]
 
 - Prefer Nix/Home Manager owned executables and wrappers over aliases or interactive shell functions.
+- `fmt [--check|--json] [target...]` is the universal formatter front door (owner: `modules/home/scripts/fmt.nix`); each file type routes to its owning formatter through the never-shadow PATH wrappers, and repo law (`pyproject.toml`, `biome.json`, treefmt rows) always outranks the machine XDG fallbacks.
 - Python work uses the project or tool-owner interpreter (`uv run`, `.venv/bin/python`, or the repo-declared command), never ambient `python3`, unless the task is explicitly the machine Python.
 - Resolve current nixpkgs and Home Manager option behavior through `Context7` or module source, never recall.
 

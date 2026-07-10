@@ -3,9 +3,9 @@
 ## [01]-[DISCOVERY_PROTOCOL]
 
 [IMPORTANT]:
-- [ALWAYS] Resolve versions at generation time — never embed static SHAs in reference docs.
-- [ALWAYS] Verify tags exist before pinning.
-- [ALWAYS] Dereference annotated tags with `^{}` — lightweight tags resolve directly.
+- [ALWAYS]: Resolve versions at generation time — never embed static SHAs in reference docs.
+- [ALWAYS]: Verify tags exist before pinning.
+- [ALWAYS]: Dereference annotated tags with `^{}` — lightweight tags resolve directly.
 
 ```bash
 # Fetch latest release tag
@@ -34,8 +34,8 @@ Format: `owner/repo@<40-char-SHA> # vX.Y.Z`
 - `step-security/harden-runner` first detected the anomalous egress.
 
 [CRITICAL]:
-- [ALWAYS] Pin to full 40-character SHA with version comment suffix.
-- [NEVER] Use mutable refs (`@main`, `@latest`, `@v1`) in production workflows.
+- [ALWAYS]: Pin to full 40-character SHA with version comment suffix.
+- [NEVER]: Use mutable refs (`@main`, `@latest`, `@v1`) in production workflows.
 
 ## [03]-[AUTOMATED_MAINTENANCE]
 
@@ -73,50 +73,53 @@ Renovate resolves version tag from comment, fetches new SHA, updates both. `help
 
 ## [05]-[COMMON_ACTIONS_INDEX]
 
-| [ACTION]                                | [MAJOR] | [KEY_INPUTS]                                                     | [REQUIRED_PERMISSIONS]                    |
-| --------------------------------------- | :-----: | ---------------------------------------------------------------- | ----------------------------------------- |
-| `actions/checkout`                      |   v6    | `fetch-depth`, `ref`, `token`, `sparse-checkout`                 | `contents: read`                          |
-| `actions/setup-node`                    |   v6    | `node-version`, `cache` (npm/yarn/pnpm), `registry-url`          | _(none)_                                  |
-| `actions/setup-python`                  |   v5    | `python-version`, `cache` (pip/pipenv/poetry)                    | _(none)_                                  |
-| `actions/setup-java`                    |   v4    | `distribution`, `java-version`, `cache` (maven/gradle)           | _(none)_                                  |
-| `actions/setup-go`                      |   v5    | `go-version`, `cache`                                            | _(none)_                                  |
-| `actions/cache`                         |   v5    | `path`, `key`, `restore-keys`                                    | _(none)_                                  |
-| `actions/upload-artifact`               |   v6    | `name`, `path`, `retention-days`, `if-no-files-found`            | `actions: write`                          |
-| `actions/download-artifact`             |   v7    | `name`, `path`, `run-id`                                         | `actions: read`                           |
-| `actions/github-script`                 |   v8    | `script`, `github-token`                                         | _varies by script_                        |
-| `nrwl/nx-set-shas`                      |   v4    | `main-branch-name`, `workflow-id`                                | `contents: read`, `actions: read`         |
-| `docker/setup-buildx-action`            |   v3    | _(none required)_                                                | _(none)_                                  |
-| `docker/login-action`                   |   v3    | `registry`, `username`, `password`                               | `packages: write` _(GHCR)_                |
-| `docker/build-push-action`              |   v6    | `context`, `push`, `tags`, `platforms`, `cache-from`, `cache-to` | `packages: write` _(GHCR)_                |
-| `docker/metadata-action`                |   v5    | `images`, `tags`                                                 | _(none)_                                  |
-| `aws-actions/configure-aws-credentials` |   v6    | `role-to-assume`, `aws-region`                                   | `id-token: write` _(OIDC)_                |
-| `azure/login`                           |   v2    | `client-id`, `tenant-id`, `subscription-id`                      | `id-token: write` _(OIDC)_                |
-| `google-github-actions/auth`            |   v3    | `workload_identity_provider`, `service_account`                  | `id-token: write` _(OIDC)_                |
-| `codecov/codecov-action`                |   v5    | `token`, `files`, `fail_ci_if_error`                             | _(none)_                                  |
-| `softprops/action-gh-release`           |   v2    | `tag_name`, `name`, `body`, `files`                              | `contents: write`                         |
-| `super-linter/super-linter`             |   v7    | `validate_all_codebase`, `default_branch`                        | `contents: read`, `statuses: write`       |
-| `slackapi/slack-github-action`          |   v2    | `method`, `token`, `payload`                                     | _(none — uses Slack token)_               |
-| `sigstore/cosign-installer`             |   v4    | `cosign-release`                                                 | _(none)_                                  |
-| `actions/dependency-review-action`      |   v4    | `fail-on-severity`, `allow-licenses`, `deny-licenses`            | `contents: read`                          |
-| `actions/attest-build-provenance`       |   v3    | `subject-name`, `subject-digest`, `push-to-registry`             | `id-token: write`, `attestations: write`  |
-| `actions/attest-sbom`                   |   v3    | `subject-name`, `subject-digest`, `sbom-path`                    | `id-token: write`, `attestations: write`  |
-| `anchore/sbom-action`                   |   v0    | `image`, `format`, `output-file`                                 | `contents: read`                          |
-| `aquasecurity/trivy-action`             |   v0    | `image-ref`, `format`, `severity`                                | `security-events: write` _(SARIF upload)_ |
-| `github/codeql-action`                  |   v4    | `languages`, `sarif_file`                                        | `security-events: write`, `actions: read` |
-| `actions/create-github-app-token`       |   v2    | `app-id`, `private-key`, `owner`, `repositories`                 | _(none — uses app credentials)_           |
-| `step-security/harden-runner`           |   v2    | `egress-policy`, `allowed-endpoints`                             | _(none)_                                  |
-| `peter-evans/create-pull-request`       |   v7    | `branch`, `title`, `body`, `commit-message`                      | `contents: write`, `pull-requests: write` |
-| `peter-evans/slash-command-dispatch`    |   v4    | `commands`, `permission`                                         | `contents: read`, `issues: write`         |
-| `dorny/paths-filter`                    |   v3    | `filters`, `base`                                                | `contents: read`, `pull-requests: read`   |
-| `google-github-actions/setup-gcloud`    |   v2    | `version`, `project_id`                                          | _(none)_                                  |
-| `gitleaks/gitleaks-action`              |   v2    | `scan_mode`                                                      | `contents: read`                          |
+| [INDEX] | [ACTION]                                | [MAJOR] | [KEY_INPUTS]                            | [REQUIRED_PERMISSIONS]                    |
+| :-----: | :-------------------------------------- | :-----: | :-------------------------------------- | :---------------------------------------- |
+|  [01]   | `actions/checkout`                      |   v6    | `fetch-depth`, `ref`, `token`           | `contents: read`                          |
+|  [02]   | `actions/setup-node`                    |   v6    | `node-version`, `cache`, `registry-url` | _(none)_                                  |
+|  [03]   | `actions/setup-python`                  |   v5    | `python-version`, `cache`               | _(none)_                                  |
+|  [04]   | `actions/setup-java`                    |   v4    | `distribution`, `java-version`, `cache` | _(none)_                                  |
+|  [05]   | `actions/setup-go`                      |   v5    | `go-version`, `cache`                   | _(none)_                                  |
+|  [06]   | `actions/cache`                         |   v5    | `path`, `key`, `restore-keys`           | _(none)_                                  |
+|  [07]   | `actions/upload-artifact`               |   v6    | `name`, `path`, `retention-days`        | `actions: write`                          |
+|  [08]   | `actions/download-artifact`             |   v7    | `name`, `path`, `run-id`                | `actions: read`                           |
+|  [09]   | `actions/github-script`                 |   v8    | `script`, `github-token`                | _varies by script_                        |
+|  [10]   | `nrwl/nx-set-shas`                      |   v4    | `main-branch-name`, `workflow-id`       | `contents: read`, `actions: read`         |
+|  [11]   | `docker/setup-buildx-action`            |   v3    | _(none required)_                       | _(none)_                                  |
+|  [12]   | `docker/login-action`                   |   v3    | `registry`, `username`, `password`      | `packages: write` _(GHCR)_                |
+|  [13]   | `docker/build-push-action`              |   v6    | `context`, `push`, `tags`, `platforms`  | `packages: write` _(GHCR)_                |
+|  [14]   | `docker/metadata-action`                |   v5    | `images`, `tags`                        | _(none)_                                  |
+|  [15]   | `aws-actions/configure-aws-credentials` |   v6    | `role-to-assume`, `aws-region`          | `id-token: write` _(OIDC)_                |
+|  [16]   | `azure/login`                           |   v2    | `client-id`, `tenant-id`                | `id-token: write` _(OIDC)_                |
+|  [17]   | `google-github-actions/auth`            |   v3    | `workload_identity_provider`            | `id-token: write` _(OIDC)_                |
+|  [18]   | `codecov/codecov-action`                |   v5    | `token`, `files`, `fail_ci_if_error`    | _(none)_                                  |
+|  [19]   | `softprops/action-gh-release`           |   v2    | `tag_name`, `name`, `body`, `files`     | `contents: write`                         |
+|  [20]   | `super-linter/super-linter`             |   v7    | `validate_all_codebase`                 | `contents: read`, `statuses: write`       |
+|  [21]   | `slackapi/slack-github-action`          |   v2    | `method`, `token`, `payload`            | _(none — uses Slack token)_               |
+|  [22]   | `sigstore/cosign-installer`             |   v4    | `cosign-release`                        | _(none)_                                  |
+|  [23]   | `actions/dependency-review-action`      |   v4    | `fail-on-severity`, `allow-licenses`    | `contents: read`                          |
+|  [24]   | `actions/attest-build-provenance`       |   v3    | `subject-name`, `subject-digest`        | `id-token: write`, `attestations: write`  |
+|  [25]   | `actions/attest-sbom`                   |   v3    | `subject-name`, `subject-digest`        | `id-token: write`, `attestations: write`  |
+|  [26]   | `anchore/sbom-action`                   |   v0    | `image`, `format`, `output-file`        | `contents: read`                          |
+|  [27]   | `aquasecurity/trivy-action`             |   v0    | `image-ref`, `format`, `severity`       | `security-events: write` _(SARIF)_        |
+|  [28]   | `github/codeql-action`                  |   v4    | `languages`, `sarif_file`               | `security-events: write`, `actions: read` |
+|  [29]   | `actions/create-github-app-token`       |   v2    | `app-id`, `private-key`, `owner`        | _(none — uses app credentials)_           |
+|  [30]   | `step-security/harden-runner`           |   v2    | `egress-policy`, `allowed-endpoints`    | _(none)_                                  |
+|  [31]   | `peter-evans/create-pull-request`       |   v7    | `branch`, `title`, `commit-message`     | `contents: write`, `pull-requests: write` |
+|  [32]   | `peter-evans/slash-command-dispatch`    |   v4    | `commands`, `permission`                | `contents: read`, `issues: write`         |
+|  [33]   | `dorny/paths-filter`                    |   v3    | `filters`, `base`                       | `contents: read`, `pull-requests: read`   |
+|  [34]   | `google-github-actions/setup-gcloud`    |   v2    | `version`, `project_id`                 | _(none)_                                  |
+|  [35]   | `gitleaks/gitleaks-action`              |   v2    | `scan_mode`                             | `contents: read`                          |
+
+- Further `[KEY_INPUTS]`: checkout `sparse-checkout`; setup-node `cache` (npm/yarn/pnpm); setup-python `cache` (pip/pipenv/poetry); setup-java `cache` (maven/gradle); upload-artifact `if-no-files-found`; build-push `cache-from`, `cache-to`; auth `service_account`; azure `subscription-id`; dependency-review `deny-licenses`; attest-build-provenance and attest-sbom `push-to-registry`/`sbom-path`; create-app-token `repositories`; create-pull-request `body`; super-linter `default_branch`.
+- `[REQUIRED_PERMISSIONS]`: trivy `_(SARIF upload)_`.
 
 [IMPORTANT] Column `[MAJOR]` shows the current major version series. Always resolve exact SHA via discovery protocol at generation time — never use bare `@vN` tags.
 
 ## [06]-[ARTIFACTS]
 
 | [INDEX] | [PROPERTY]         | [VALUE]                                                     |
-| :-----: | ------------------ | ----------------------------------------------------------- |
+| :-----: | :----------------- | :---------------------------------------------------------- |
 |  [01]   | **Immutability**   | Cannot be altered after upload — new upload = new ID.       |
 |  [02]   | **Availability**   | Immediately downloadable — no wait for workflow completion. |
 |  [03]   | **Retention**      | 1-90 days (default 90); configurable per upload.            |

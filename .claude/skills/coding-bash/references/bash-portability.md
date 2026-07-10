@@ -36,9 +36,9 @@ Cross-platform shell compatibility for Bash 5.2+/5.3, zsh, dash, and container-m
 
 ## [02]-[SHELL_COMPATIBILITY_MATRIX]
 
-Cross-shell semantic divergences — not feature presence but behavioral differences that cause silent bugs:
+Cross-shell semantic divergences against Bash 5.2+, zsh 5.9+, and dash/ash — not feature presence but behavioral differences that cause silent bugs:
 
-| [INDEX] | [FEATURE]            | [BASH_5.2+]        | [ZSH_5.9+]            | [DASH/ASH]         |
+| [INDEX] | [FEATURE]            | [BASH]             | [ZSH]                 | [DASH_ASH]         |
 | :-----: | :------------------- | :----------------- | :-------------------- | :----------------- |
 |  [01]   | Array indexing       | 0-indexed          | **1-indexed** default | No arrays          |
 |  [02]   | `local -n` (nameref) | Yes                | No                    | No                 |
@@ -56,7 +56,7 @@ Cross-shell semantic divergences — not feature presence but behavioral differe
 
 Decision rule: dash/ash restricts to POSIX `[ ]`, no arrays, no namerefs, no here-strings. Bash 5.2+ means full feature set. zsh requires testing — array indexing, `$0`, option names diverge silently. `${ cmd; }` and `GLOBSORT` are 5.3-only — gate with `(( _BASH_V >= 503 ))`. `coproc` is 4.0+ only, not POSIX — use `mkfifo` for portable bidirectional IPC.
 
-### [2.1]-[POSIX_2024_ISSUE_8]
+### [02.1]-[POSIX_2024_ISSUE_8]
 
 IEEE 1003.1-2024 standardized `pipefail`, `sed -E`, `realpath`, `readlink`, `printf` numbered args (`%2$s%1$s`), `rm -d`. Explicitly **deferred**: `local` (reserved identifier, not standardized). `find -print0` / `xargs -0` remain non-standard.
 
@@ -68,7 +68,9 @@ _has_pipefail() { (set -o pipefail 2>/dev/null); }
 
 ## [03]-[COREUTIL_DIVERGENCE]
 
-| [INDEX] | [CMD]      | [GNU]                      | [BSD_(macOS)]                   | [PORTABLE]                             |
+GNU coreutils and BSD coreutils, the macOS default, diverge on flag behavior for common commands; the portable form avoids both.
+
+| [INDEX] | [CMD]      | [GNU]                      | [BSD_MACOS]                     | [PORTABLE]                             |
 | :-----: | :--------- | :------------------------- | :------------------------------ | :------------------------------------- |
 |  [01]   | `date`     | `date -d "2024-01-01" +%s` | `date -jf "%Y-%m-%d" "..." +%s` | `EPOCHSECONDS` / `printf '%(%s)T'`     |
 |  [02]   | `sed -i`   | `sed -i 's/a/b/' f`        | `sed -i '' 's/a/b/' f`          | `sd` or temp+mv                        |
@@ -158,7 +160,7 @@ _clipboard() { _platform clipboard; }
 
 `eval` in probes is safe — static string literals, not user input. `(( _CAN_X ))` for arithmetic dispatch is zero-cost.
 
-### [4.1]-[EXTENDED_PLATFORM_DISPATCH]
+### [04.1]-[EXTENDED_PLATFORM_DISPATCH]
 
 Multi-axis dispatch — keys compose `action_platform_toolchain` for GNU/BSD/busybox:
 
@@ -178,7 +180,7 @@ _grep_pcre() {
 
 ## [05]-[CONTAINER_ENVIRONMENTS]
 
-### [5.1]-[IMAGE_SELECTION_MATRIX]
+### [05.1]-[IMAGE_SELECTION_MATRIX]
 
 | [INDEX] | [IMAGE]               | [SHELL]      | [BASH]                  | [USE_WHEN]                         |
 | :-----: | :-------------------- | :----------- | :---------------------- | :--------------------------------- |
@@ -191,7 +193,7 @@ _grep_pcre() {
 
 Wolfi-base ships bash by default — more predictable than Alpine for build stages. Distroless images contain no shell — portability shifts to "what shell does the build image have?" Loadable builtins (`enable -f`) are distribution-dependent (Arch: included; Debian: `bash-builtins` pkg; macOS/Alpine: build from source) — never depend on them in portable scripts.
 
-### [5.2]-[PID_1_PATTERNS]
+### [05.2]-[PID_1_PATTERNS]
 
 Kernel does NOT deliver default SIGTERM to PID 1 — without explicit handling, SIGTERM is ignored and k8s escalates to SIGKILL after `terminationGracePeriodSeconds` (30s default).
 
@@ -217,7 +219,9 @@ _exec_service() { exec "$@"; }
 
 ## [06]-[SIGNAL_AND_TRAP_PORTABILITY]
 
-| [INDEX] | [BEHAVIOR]           | [BASH_5.2+]             | [DASH/ASH]       | [ZSH_5.9+]  |
+Signal and trap semantics diverge across Bash 5.2+, dash/ash, and zsh 5.9+:
+
+| [INDEX] | [BEHAVIOR]           | [BASH]                  | [DASH_ASH]       | [ZSH]       |
 | :-----: | :------------------- | :---------------------- | :--------------- | :---------- |
 |  [01]   | EXIT on signal death | Fires                   | **No**           | **No**      |
 |  [02]   | Subshell traps       | Inherited               | **Reset**        | Inherited   |
@@ -250,7 +254,7 @@ _critical_section() {
 
 Cleanup implementation (`_cleanup`, `_CLEANUP_STACK`, `_CLEANING` guard) is owned by `script-patterns.md` S5. ERR trap stack trace (`_on_err` with `BASH_COMMAND`/`BASH_LINENO`/`FUNCNAME`) is owned by `script-patterns.md` S5 and `variable-features.md` S2.
 
-## [RULES]
+## [07]-[RULES]
 
 - `#!/usr/bin/env bash` default — NEVER `#!/bin/bash` unless security policy mandates. NEVER `env -S` (macOS/busybox lack it).
 - macOS Homebrew re-exec pattern for `_BASH_V < 502` — probes `/opt/homebrew/bin/bash` then `/usr/local/bin/bash`.

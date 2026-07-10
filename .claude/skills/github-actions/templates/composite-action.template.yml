@@ -12,78 +12,78 @@
 # │  Node 20 EOL: April 2026. Forced node24 migration: March 4, 2026.           │
 # │  Composite actions lack pre/post lifecycle — use if: always() for cleanup.  │
 # └─────────────────────────────────────────────────────────────────────────────┘
-name: '[ACTION_NAME]'
-description: '[DESCRIPTION]'
-author: '[AUTHOR_NAME]'
+name: "[ACTION_NAME]"
+description: "[DESCRIPTION]"
+author: "[AUTHOR_NAME]"
 
 inputs:
-  runtime-version:
-    description: 'Runtime version to install'
-    required: false
-    default: '24'
-  working-directory:
-    description: 'Directory containing project manifest'
-    required: false
-    default: '.'
+    runtime-version:
+        description: "Runtime version to install"
+        required: false
+        default: "24"
+    working-directory:
+        description: "Directory containing project manifest"
+        required: false
+        default: "."
 
 outputs:
-  result:
-    description: '[OUTPUT_DESCRIPTION]'
-    value: ${{ steps.main.outputs.result }}
+    result:
+        description: "[OUTPUT_DESCRIPTION]"
+        value: ${{ steps.main.outputs.result }}
 
 branding:
-  icon: '[ICON_NAME]'
-  color: '[COLOR]'  # white | yellow | blue | green | orange | red | purple | gray-dark
+    icon: "[ICON_NAME]"
+    color: "[COLOR]" # white | yellow | blue | green | orange | red | purple | gray-dark
 
 runs:
-  using: 'composite'
-  steps:
-    # --- Validate inputs before any work ---
-    - name: Validate inputs
-      shell: bash
-      run: |
-        if [[ -z "$VERSION" ]]; then
-          echo "::error title=Missing Input::runtime-version is required"
-          exit 1
-        fi
-        if [[ ! -f "$WORKDIR/package.json" ]]; then
-          echo "::error title=No Manifest::package.json not found in $WORKDIR"
-          exit 1
-        fi
-      env:
-        VERSION: ${{ inputs.runtime-version }}
-        WORKDIR: ${{ inputs.working-directory }}
+    using: "composite"
+    steps:
+        # --- Validate inputs before any work ---
+        - name: Validate inputs
+          shell: bash
+          run: |
+            if [[ -z "$VERSION" ]]; then
+              echo "::error title=Missing Input::runtime-version is required"
+              exit 1
+            fi
+            if [[ ! -f "$WORKDIR/package.json" ]]; then
+              echo "::error title=No Manifest::package.json not found in $WORKDIR"
+              exit 1
+            fi
+          env:
+            VERSION: ${{ inputs.runtime-version }}
+            WORKDIR: ${{ inputs.working-directory }}
 
-    # --- Detect container context (skip setup-node inside containers) ---
-    - name: Setup runtime
-      if: runner.environment != 'github-hosted' || env.CONTAINER == ''
-      uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
-      with:
-        node-version: ${{ inputs.runtime-version }}
-        cache: '[PACKAGE_MANAGER]'
-      env:
-        CONTAINER: ${{ job.container.id }}
+        # --- Detect container context (skip setup-node inside containers) ---
+        - name: Setup runtime
+          if: runner.environment != 'github-hosted' || env.CONTAINER == ''
+          uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
+          with:
+            node-version: ${{ inputs.runtime-version }}
+            cache: "[PACKAGE_MANAGER]"
+          env:
+            CONTAINER: ${{ job.container.id }}
 
-    - name: Install dependencies
-      shell: bash
-      working-directory: ${{ inputs.working-directory }}
-      run: '[INSTALL_CMD]'
+        - name: Install dependencies
+          shell: bash
+          working-directory: ${{ inputs.working-directory }}
+          run: "[INSTALL_CMD]"
 
-    # --- Main logic — set outputs via GITHUB_OUTPUT ---
-    - name: Execute main logic
-      id: main
-      shell: bash
-      working-directory: ${{ inputs.working-directory }}
-      run: |
-        echo "::group::[ACTION_NAME]"
-        # [MAIN_COMMAND]
-        echo "result=[OUTPUT_VALUE]" >> "$GITHUB_OUTPUT"
-        echo "::endgroup::"
-      env:
-        RUNTIME_VERSION: ${{ inputs.runtime-version }}
+        # --- Main logic — set outputs via GITHUB_OUTPUT ---
+        - name: Execute main logic
+          id: main
+          shell: bash
+          working-directory: ${{ inputs.working-directory }}
+          run: |
+            echo "::group::[ACTION_NAME]"
+            # [MAIN_COMMAND]
+            echo "result=[OUTPUT_VALUE]" >> "$GITHUB_OUTPUT"
+            echo "::endgroup::"
+          env:
+            RUNTIME_VERSION: ${{ inputs.runtime-version }}
 
-    # --- Cleanup runs unconditionally (composite has no post: lifecycle) ---
-    - name: Cleanup
-      if: always()
-      shell: bash
-      run: rm -rf "${{ runner.temp }}/[CLEANUP_PATTERN]" 2>/dev/null || true
+        # --- Cleanup runs unconditionally (composite has no post: lifecycle) ---
+        - name: Cleanup
+          if: always()
+          shell: bash
+          run: rm -rf "${{ runner.temp }}/[CLEANUP_PATTERN]" 2>/dev/null || true

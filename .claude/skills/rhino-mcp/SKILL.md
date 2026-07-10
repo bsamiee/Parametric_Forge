@@ -19,13 +19,13 @@ Drives McNeel `Rhino-MCP-Platform` through the `mcp__rhino-mcp-platform__*` tool
 
 ## [01]-[WHEN_TO_USE_MCP_VS_BRIDGE]
 
-| [INTENT]                                         | [SURFACE]                                             |
-| ------------------------------------------------ | ----------------------------------------------------- |
-| Explore host state, script ad-hoc geometry/IO    | MCP (`run_csharp`/`run_python`)                       |
-| Author/inspect a Grasshopper graph interactively | MCP (`g2_*`)                                          |
-| Visually inspect a scene, drive camera           | MCP (`get_viewport_image`, camera)                    |
-| Reproducible, typed, gated host verification     | rhino-bridge `[RhinoScenario]`                        |
-| Build the Rasm capability-registry MCP server    | `libs/csharp/Rasm.AppHost` (unrelated SDK projection) |
+| [INDEX] | [INTENT]                                         | [SURFACE]                                             |
+| :-----: | :----------------------------------------------- | :---------------------------------------------------- |
+|  [01]   | Explore host state, script ad-hoc geometry/IO    | MCP (`run_csharp`/`run_python`)                       |
+|  [02]   | Author/inspect a Grasshopper graph interactively | MCP (`g2_*`)                                          |
+|  [03]   | Visually inspect a scene, drive camera           | MCP (`get_viewport_image`, camera)                    |
+|  [04]   | Reproducible, typed, gated host verification     | rhino-bridge `[RhinoScenario]`                        |
+|  [05]   | Build the Rasm capability-registry MCP server    | `libs/csharp/Rasm.AppHost` (unrelated SDK projection) |
 
 [IMPORTANT] Keep MCP idle during ANY bridge cycle that holds the session — `build`/`status`/`verify`/`quit`/deploy/publish — not only `verify`. MCP `run_csharp`/`run_python`/`run_command` drive `RhinoApp` command history and inject foreign lines into the same `command.history.tail` / `command.capture.tail` evidence the bridge spools, contaminating per-scenario evidence. Run interactive MCP exploration strictly before or after the bridge holds the session, never concurrently. This rule extends conditionally to `Rasm.AppHost`: its MCP server is host-neutral capability projection and stays outside the contamination hazard, but any AppHost tool that drives a live Rhino host through its `ComputeIntent` acquires the same liability and the same idle-during-bridge-lease discipline.
 
@@ -35,24 +35,26 @@ Drives McNeel `Rhino-MCP-Platform` through the `mcp__rhino-mcp-platform__*` tool
 
 Every non-router tool accepts an implicit `slot` arg (animal-name ID). Omitting it uses the last-used/open Rhino, auto-spawning one only if none is running. Slot state is lazy and stateful — `list_slots` is what prunes crashed Rhinos and adopts user-started ones since the last call.
 
-| [TOOL]       | [DOES]                                                        | [KEY_IO]                                                                    |
-| ------------ | ------------------------------------------------------------- | --------------------------------------------------------------------------- |
-| `spawn_slot` | Launch a new Rhino, return its slot ID                        | → `{ slotId }`; pass `slot` on later calls                                  |
-| `list_slots` | List running slots; prunes crashed, adopts user-started       | → `payload[]` (`slotId, port, autoSpawned, crashReportPath`)                |
-| `close_slot` | Close a spawned slot (stops listener, closes doc, saves none) | → `payload.closed`; `error.code` ∈ `slot_not_found`, `cannot_close_adopted` |
+| [INDEX] | [TOOL]       | [DOES]                                                  | [KEY_IO]                                                     |
+| :-----: | :----------- | :------------------------------------------------------ | :----------------------------------------------------------- |
+|  [01]   | `spawn_slot` | Launch a new Rhino, return its slot ID                  | → `{ slotId }`; pass `slot` on later calls                   |
+|  [02]   | `list_slots` | List running slots; prunes crashed, adopts user-started | → `payload[]` (`slotId, port, autoSpawned, crashReportPath`) |
+|  [03]   | `close_slot` | Close a spawned slot                                    | → `payload.closed`; `error.code` set                         |
+
+- `close_slot`: stops listener, closes doc, saves none; `error.code` ∈ `slot_not_found`, `cannot_close_adopted`.
 
 [IMPORTANT] Poll `list_slots` before assuming a held `slot` is live. Adopted (user-started) slots return `cannot_close_adopted` and are non-disposable — treat them as borrowed, never force-close them.
 
-## [03]-[SCRIPTING]—[RUN_CSHARP/PYTHON/COMMAND]
+## [03]-[SCRIPTING]-[RUN_CSHARP_PYTHON_COMMAND]
 
 The universal escape hatch: full RhinoCommon scoped to the slot's doc, stdout/error captured.
 
-| [TOOL]         | [INPUT]   | [OUTPUT]                                           |
-| -------------- | --------- | -------------------------------------------------- |
-| `run_python`   | `script`  | `{stdout, error}`; error null on success           |
-| `run_csharp`   | `script`  | `{stdout, error}`                                  |
-| `run_command`  | `command` | command-window text (e.g. `"_Box 0,0,0 10,10,10"`) |
-| `get_commands` | `filter?` | newline list of English command names (cap 200)    |
+| [INDEX] | [TOOL]         | [INPUT]   | [OUTPUT]                                           |
+| :-----: | :------------- | :-------- | :------------------------------------------------- |
+|  [01]   | `run_python`   | `script`  | `{stdout, error}`; error null on success           |
+|  [02]   | `run_csharp`   | `script`  | `{stdout, error}`                                  |
+|  [03]   | `run_command`  | `command` | command-window text (e.g. `"_Box 0,0,0 10,10,10"`) |
+|  [04]   | `get_commands` | `filter?` | newline list of English command names (cap 200)    |
 
 [IMPORTANT] `run_csharp` evaluates a STATEMENT BODY, not an expression — a top-level `return <expr>;` is rejected. Emit results through `Console.WriteLine(...)`; never write an expression-returning lambda.
 
@@ -64,11 +66,11 @@ The universal escape hatch: full RhinoCommon scoped to the slot's doc, stdout/er
 
 Headless, no dialogs. All bound to the slot's doc.
 
-| [TOOL]      | [INPUTS]                         | [OUTPUT]                                                              |
-| ----------- | -------------------------------- | --------------------------------------------------------------------- |
-| `open_doc`  | `path` (abs), `clearFirst=false` | import/merge; zoom-extents all views; → `{path, imported, cleared}`   |
-| `save_doc`  | `path` (.3dm abs)                | overwrite with WriteUserData, dialogs suppressed; → `{path, objects}` |
-| `close_doc` | `path?`                          | save-then-close if path given, else discard; → status string          |
+| [INDEX] | [TOOL]      | [INPUTS]                         | [OUTPUT]                                                              |
+| :-----: | :---------- | :------------------------------- | :-------------------------------------------------------------------- |
+|  [01]   | `open_doc`  | `path` (abs), `clearFirst=false` | import/merge; zoom-extents all views; → `{path, imported, cleared}`   |
+|  [02]   | `save_doc`  | `path` (.3dm abs)                | overwrite with WriteUserData, dialogs suppressed; → `{path, objects}` |
+|  [03]   | `close_doc` | `path?`                          | save-then-close if path given, else discard; → status string          |
 
 ## [05]-[SCENE_QUERY_SELECTION_MATERIALS]
 
@@ -103,7 +105,7 @@ Headless, no dialogs. All bound to the slot's doc.
 
 [IMPORTANT] On an empty/off-screen capture, read `scene.boundingBox` and object counts before re-framing with `boxMin`/`boxMax` or `view`. The JPEG block costs context tokens: capture at the minimum resolution sufficient to diagnose, keep the `480x270` default first, and escalate toward the `1280x720` ceiling only after a metadata-only pass.
 
-## [07]-[GRASSHOPPER_GRAPH_AUTHORING]-[g2_*]
+## [07]-[GRASSHOPPER]-[GRAPH_AUTHORING_G2]
 
 `g2_*` is the Grasshopper graph-authoring surface for Rasm MCP work. It authors `Grasshopper2` canvas and document objects through McNeel's interactive MCP platform; bridge scenarios remain the typed verification boundary.
 

@@ -3,23 +3,28 @@
 # requires-python = ">=3.15"
 # dependencies = ["anyio", "cyclopts", "expression", "msgspec"]
 # ///
-# ruff: noqa: T201, D100, D101, D103, D105
+# ruff: noqa: T201, D100, D101, D103
 
-# --- [RUNTIME_PRELUDE] -------------------------------------------------------------------
+# --- [RUNTIME_PRELUDE] ------------------------------------------------------------------
 
-import re
-import tempfile
 from enum import StrEnum
 from pathlib import Path
-from typing import Literal, assert_never
+import re
+import tempfile
+from typing import assert_never, Literal, TYPE_CHECKING
 
 import anyio
-import msgspec
 from cyclopts import App
-from expression import Error, Nothing, Ok, Option, Result, Some
+from expression import Error, Nothing, Ok, Some
 from expression.collections import Block
+import msgspec
 
-# --- [VOCABULARY] ------------------------------------------------------------------------
+
+if TYPE_CHECKING:
+    from expression import Option, Result
+
+
+# --- [VOCABULARY] -----------------------------------------------------------------------
 
 
 class Lang(StrEnum):
@@ -35,13 +40,7 @@ class Check(StrEnum):
 
 
 type CheckFault = Literal[
-    "<compile-failed>",
-    "<decompile-failed>",
-    "<recompile-failed>",
-    "<tid-unrestored>",
-    "<shell-unquoted>",
-    "<toolchain-missing>",
-    "<deadline>",
+    "<compile-failed>", "<decompile-failed>", "<recompile-failed>", "<tid-unrestored>", "<shell-unquoted>", "<toolchain-missing>", "<deadline>"
 ]
 type Verdict = Literal["pass", "fail", "skip"]
 
@@ -59,7 +58,7 @@ SHELL_UNQUOTED = re.compile(r"&\s*(?!quoted form of\b|space\b|linefeed\b|return\
 ENCODER = msgspec.json.Encoder()
 APP = App(name="validate-applescript", help="Compile-check, round-trip, and lint the bundle's OSA artifacts.")
 
-# --- [OWNERS] ----------------------------------------------------------------------------
+# --- [OWNERS] ---------------------------------------------------------------------------
 
 
 class Artifact(msgspec.Struct, frozen=True, gc=False):
@@ -94,7 +93,7 @@ class Report(msgspec.Struct, frozen=True, kw_only=True):
     findings: tuple[Finding, ...]
 
 
-# --- [BOUNDARY_ADMISSION] ----------------------------------------------------------------
+# --- [BOUNDARY_ADMISSION] ---------------------------------------------------------------
 
 
 def _lang_of(suffix: str, /) -> Option[Lang]:
@@ -112,9 +111,7 @@ def _fence_lang(tag: str, /) -> Lang:
 
 
 def _template(path: Path, /) -> Option[Admitted]:
-    return _lang_of(path.suffix).map(
-        lambda lang: Artifact(lang=lang, origin=path.name, source=path.read_text(encoding="utf-8"), strict=True)
-    )
+    return _lang_of(path.suffix).map(lambda lang: Artifact(lang=lang, origin=path.name, source=path.read_text(encoding="utf-8"), strict=True))
 
 
 def _fences(path: Path, /) -> Block[Admitted]:
@@ -135,7 +132,7 @@ def discovered(bundle: Path, /) -> Block[Admitted]:
     return documents.fold(lambda acc, doc: acc.append(_fences(doc)), templates.append(examples))
 
 
-# --- [PURE_LINTS] ------------------------------------------------------------------------
+# --- [PURE_LINTS] -----------------------------------------------------------------------
 
 
 def _tid(source: str, /) -> Result[None, CheckFault]:
@@ -160,7 +157,7 @@ def _lints(artifact: Artifact, /) -> Block[Finding]:
     return Block.of_seq(_finding(artifact, check, outcome) for check, outcome in checks)
 
 
-# --- [COMPILE_RAIL] ----------------------------------------------------------------------
+# --- [COMPILE_RAIL] ---------------------------------------------------------------------
 
 
 async def _osacompile(source: str, lang: Lang, workdir: Path, stem: str, /) -> Result[Path, CheckFault]:
@@ -194,7 +191,7 @@ async def checked(artifact: Artifact, /) -> Block[Finding]:
     return lints.append(Block.of_seq(staged))
 
 
-# --- [DISPOSITION] -----------------------------------------------------------------------
+# --- [DISPOSITION] ----------------------------------------------------------------------
 
 
 def _tally(findings: Block[Finding], /) -> tuple[int, int, int, int]:
@@ -235,15 +232,15 @@ async def validated(bundle: Path, seconds: float, /) -> Report:
     return Report(artifacts=artifact_count, passed=passed, failed=failed, skipped=skipped, strict_failed=strict_failed, findings=tuple(findings))
 
 
-# --- [EGRESS] ----------------------------------------------------------------------------
+# --- [EGRESS] ---------------------------------------------------------------------------
 
 
 def _rendered(report: Report, /) -> str:
     header = f"artifacts={report.artifacts} pass={report.passed} fail={report.failed} skip={report.skipped} strict-fail={report.strict_failed}"
     rows = Block.of_seq(report.findings).choose(
-        lambda finding: Some(f"[{finding.verdict:<4}] {finding.origin} :: {finding.check} {finding.detail}".rstrip())
-        if finding.verdict != "pass"
-        else Nothing
+        lambda finding: (
+            Some(f"[{finding.verdict:<4}] {finding.origin} :: {finding.check} {finding.detail}".rstrip()) if finding.verdict != "pass" else Nothing
+        )
     )
     body = rows.fold(lambda acc, line: f"{acc}\n{line}", header)
     return body if not rows.is_empty() else f"{header}\nall artifacts compile, round-trip, and lint clean"

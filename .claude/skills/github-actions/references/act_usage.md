@@ -20,7 +20,7 @@ actionlint -format sarif                     # SARIF (code scanning integration)
 
 **Exit codes:** `0` = success, `1` = errors found, `2` = fatal error.
 
-### [1.1]-[CONFIGURATION]
+### [01.1]-[CONFIGURATION]
 
 ```yaml
 # .github/actionlint.yaml
@@ -35,7 +35,7 @@ self-hosted-runner:
   labels: [my-custom-runner, gpu-runner]  # Declare custom labels
 ```
 
-### [1.2]-[CI_INTEGRATION]
+### [01.2]-[CI_INTEGRATION]
 
 ```yaml
 name: Lint Workflows
@@ -56,10 +56,10 @@ jobs:
           sarif_file: actionlint.sarif
 ```
 
-### [1.3]-[KEY_CHECKS]
+### [01.3]-[KEY_CHECKS]
 
 | [INDEX] | [CHECK_CATEGORY]        | [WHAT_IT_VALIDATES]                                                 |
-| :-----: | ----------------------- | ------------------------------------------------------------------- |
+| :-----: | :---------------------- | :------------------------------------------------------------------ |
 |  [01]   | **Syntax**              | YAML structure, required fields, duplicate keys.                    |
 |  [02]   | **Expressions**         | Type correctness, context availability, injection detection.        |
 |  [03]   | **Actions**             | Input/output validation, deprecated inputs, runtime version.        |
@@ -93,10 +93,10 @@ act workflow_dispatch --input version=1.2.3    # Trigger with inputs
 
 **Exit codes:** `0` = success, `1` = job failed, `2` = parse/execution error.
 
-### [2.1]-[OPTIONS]
+### [02.1]-[OPTIONS]
 
 | [INDEX] | [FLAG]                                     | [PURPOSE]                                    |
-| :-----: | ------------------------------------------ | -------------------------------------------- |
+| :-----: | :----------------------------------------- | :------------------------------------------- |
 |  [01]   | **`--container-architecture linux/amd64`** | Consistent platform (important on ARM Macs). |
 |  [02]   | **`-P ubuntu-latest=node:24-bookworm`**    | Custom Docker image for runner.              |
 |  [03]   | **`-s GITHUB_TOKEN=ghp_xxx`**              | Pass secret.                                 |
@@ -106,7 +106,7 @@ act workflow_dispatch --input version=1.2.3    # Trigger with inputs
 |  [07]   | **`--action-offline-mode`**                | Skip downloading actions (use cached).       |
 |  [08]   | **`--matrix os:ubuntu-latest`**            | Filter matrix to specific combination.       |
 
-### [2.2]-[CONFIGURATION_FILE]
+### [02.2]-[CONFIGURATION_FILE]
 
 ```bash
 # .actrc (project root or $HOME)
@@ -118,7 +118,7 @@ act workflow_dispatch --input version=1.2.3    # Trigger with inputs
 ## [03]-[LIMITATIONS]
 
 | [INDEX] | [TOOL]         | [LIMITATION]                        | [IMPACT]                                                   |
-| :-----: | -------------- | ----------------------------------- | ---------------------------------------------------------- |
+| :-----: | :------------- | :---------------------------------- | :--------------------------------------------------------- |
 |  [01]   | **actionlint** | No cross-file analysis              | Cannot validate reusable workflow caller/callee contracts. |
 |  [02]   | **actionlint** | Popular actions data may lag        | New action versions may not be in bundled metadata.        |
 |  [03]   | **act**        | Not 100% GitHub-compatible          | Some features behave differently than real runners.        |
@@ -131,7 +131,7 @@ act workflow_dispatch --input version=1.2.3    # Trigger with inputs
 ## [04]-[TROUBLESHOOTING]
 
 | [INDEX] | [ISSUE]                             | [SOLUTION]                                                    |
-| :-----: | ----------------------------------- | ------------------------------------------------------------- |
+| :-----: | :---------------------------------- | :------------------------------------------------------------ |
 |  [01]   | **Cannot connect to Docker daemon** | Start Docker Desktop or daemon.                               |
 |  [02]   | **Workflow file not found**         | Run from repo root or use `-W` flag.                          |
 |  [03]   | **Action not found locally**        | Use `-P` for alternative images or `--action-offline-mode`.   |

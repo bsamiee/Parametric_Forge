@@ -2,14 +2,14 @@
 
 Set algebra via associative arrays, structural transforms via bulk expansion, higher-order traversal via nameref + function dispatch, and null-safe pipeline bridging. Declaration, access, slicing, and basic iteration are in [bash-scripting-guide.md S6](./bash-scripting-guide.md).
 
-| [IDX] | [PATTERN]         |  [S]  | [USE_WHEN]                                                |
-| :---: | :---------------- | :---: | :-------------------------------------------------------- |
-| [01]  | Set algebra       |  S1   | Union, intersect, diff, dedup on indexed arrays           |
-| [02]  | Relational ops    |  S1B  | Set algebra + joins on associative arrays                 |
-| [03]  | Structural xforms |  S2   | Reshape, zip, transpose w/o element-wise loops            |
-| [04]  | Nameref builders  |  S2B  | Accumulate/merge into caller's assoc array via `local -n` |
-| [05]  | Higher-order trav |  S3   | Map/filter/reduce/scan/predicates via nameref             |
-| [06]  | Pipeline bridge   |  S4   | Null-safe array-to-pipeline, parallel map, collect        |
+| [INDEX] | [PATTERN]         |  [S]  | [USE_WHEN]                                                |
+| :-----: | :---------------- | :---: | :-------------------------------------------------------- |
+|  [01]   | Set algebra       |  S1   | Union, intersect, diff, dedup on indexed arrays           |
+|  [02]   | Relational ops    |  S1B  | Set algebra + joins on associative arrays                 |
+|  [03]   | Structural xforms |  S2   | Reshape, zip, transpose w/o element-wise loops            |
+|  [04]   | Nameref builders  |  S2B  | Accumulate/merge into caller's assoc array via `local -n` |
+|  [05]   | Higher-order trav |  S3   | Map/filter/reduce/scan/predicates via nameref             |
+|  [06]   | Pipeline bridge   |  S4   | Null-safe array-to-pipeline, parallel map, collect        |
 
 ## [01]-[SET_ALGEBRA]
 
@@ -49,7 +49,7 @@ declare -a drift=(); _diff expected deployed drift
 (( ${#drift[@]} )) && printf 'Missing in deploy: %s\n' "${drift[*]}"
 ```
 
-### [1.1]-[RELATIONAL_SET_OPERATIONS]
+### [01.1]-[RELATIONAL_SET_OPERATIONS]
 
 Set algebra on associative arrays — keys as elements, values irrelevant for pure set ops.
 
@@ -138,7 +138,7 @@ declare -a cli_flags=("${flags[@]/#/--}")  # cli_flags=("--host=localhost" ...)
 
 `_zip_kv` binds directly into destination index via `printf -v` — zero forks. `_unpack` is the inverse of `_join` + `_zip_kv`.
 
-### [2.1]-[NAMEREF_BUILDER]
+### [02.1]-[NAMEREF_BUILDER]
 
 Callee accumulates into caller's associative array via `local -n` — replaces `eval`-based indirection.
 
@@ -252,7 +252,7 @@ done
 
 `_group_by`/`_count_by` use nameref classifier convention: classifier writes to `$2` via `printf -v`.
 
-### [4.1]-[BASH_53_ARRAY_PRIMITIVES]
+### [04.1]-[BASH_53_ARRAY_PRIMITIVES]
 
 Gate all behind `(( _BASH_V >= 503 ))` — version probe in [version-features.md S7](./version-features.md).
 
@@ -275,7 +275,7 @@ Gate all behind `(( _BASH_V >= 503 ))` — version probe in [version-features.md
 # fltexpr loadable builtin: enable -f fltexpr fltexpr; fltexpr 'end - start'
 ```
 
-### [4.2]-[BOUNDED_CONCURRENCY_POOL]
+### [04.2]-[BOUNDED_CONCURRENCY_POOL]
 
 `wait -n -p` (5.2+) enables per-job result collection without polling — alternative to `xargs -P` when per-job exit status matters.
 
@@ -299,7 +299,7 @@ _pool_map() {
 }
 ```
 
-### [4.3]-[PERFORMANCE_THRESHOLDS]
+### [04.3]-[PERFORMANCE_THRESHOLDS]
 
 | [INDEX] | [ELEMENT_COUNT] | [STRATEGY]                                                    |
 | :-----: | :-------------- | :------------------------------------------------------------ |
@@ -309,7 +309,7 @@ _pool_map() {
 
 `_map_exec` unusable above 10K (fork per element). Associative arrays degrade O(n^2) beyond ~50K entries on stock bash (no rehashing compiled in) — delegate to `awk` associative arrays or `jq`.
 
-## [RULES]
+## [05]-[RULES]
 
 - `declare -A` for set ops — O(n+m) beats O(n*m). `set_*` for assoc-array set algebra; `_union`/`_intersect`/`_diff` for indexed arrays.
 - `printf -v` for fork-free binding in `_map`/`_reduce`/`_scan` — `$()` forks per element.

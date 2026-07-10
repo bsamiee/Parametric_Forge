@@ -1,0 +1,37 @@
+{
+    "$schema": "https://biomejs.dev/schemas/2.4.16/schema.json",
+    "files": {
+        "ignoreUnknown": true,
+        "includes": [
+            "**",
+            "!.claude/workflows/**",
+            "!.claude/skills/workflow-creator/assets/**",
+            "!.claude/settings.json",
+            "!.claude/settings.local.json",
+            "!flake.lock",
+            "!pnpm-lock.yaml",
+            "!node_modules/**"
+        ]
+    },
+    "formatter": {
+        "enabled": true,
+        "indentStyle": "space",
+        "indentWidth": 4,
+        "lineWidth": 150
+    },
+    "javascript": {
+        "formatter": {
+            "quoteStyle": "single",
+            "semicolons": "always",
+            "trailingCommas": "all"
+        }
+    },
+    "assist": {
+        "enabled": true,
+        "actions": {
+            "source": {
+                "organizeImports": "on"
+            }
+        }
+    }
+}

@@ -6,12 +6,12 @@ metadata:
   heptabase-cli-version-range: "0.4.x"
 ---
 
-## Prerequisites
+## [01]-[PREREQUISITES]
 
 - CLI installed from the desktop app. The command is `heptabase` on macOS/Linux; Windows installs `heptabase.cmd` for cmd/PowerShell and a `heptabase` shim for POSIX shells.
 - Check version compatibility before use with `heptabase --version`. If the installed CLI version is outside this skill's compatibility range (`0.4.x`), you MUST stop and ask the user to update either the Heptabase desktop app or this skill package before continuing.
 
-## Command discovery
+## [02]-[COMMAND_DISCOVERY]
 
 Run `heptabase help` to see all available top-level commands. This is always up to date. Each command supports `--help` for detailed usage:
 
@@ -21,7 +21,7 @@ heptabase note --help
 heptabase note create --help
 ```
 
-## Common recipes
+## [03]-[COMMON_RECIPES]
 
 Use these as quick recipes for frequent requests. For less common flags or if a command fails, run `heptabase help` or `<command> --help` to discover the correct syntax.
 
@@ -42,31 +42,31 @@ Use these as quick recipes for frequent requests. For less common flags or if a 
 - **List cards on a whiteboard:** `heptabase whiteboard cards <whiteboardId>`
 - **Add a card to a whiteboard:** `heptabase whiteboard add-card --whiteboard-id <whiteboardId> --card-id <cardIdOrDate>`
 
-## Note and journal card content editing
+## [04]-[NOTE_AND_JOURNAL_CARD_CONTENT_EDITING]
 
 Use `create` / `append` with Markdown for ordinary writing. Before calling `heptabase note save` / `heptabase journal save` with ProseMirror JSON, you MUST read `references/card-content-schema.md`. Also read it before generating Markdown that uses Heptabase-specific extensions such as card mentions, whiteboard mentions, dates, videos, math, or toggle/todo lists.
 
-## Property editing
+## [05]-[PROPERTY_EDITING]
 
 Before setting a property value, you MUST read `references/property-values.md` and inspect the target property with `heptabase card properties <cardIdOrDate>` and/or `heptabase tag properties <tagId>`. Property formats vary by type, and relation writes replace the full relation value. For relation properties, use `heptabase tag properties <sourceTagId>` to get the property definition's `relationTargetTagId`, then list valid related cards before writing.
 
-## File reading
+## [06]-[FILE_READING]
 
 Before reading/listing files or exporting a file, you MUST read `references/file-reading.md`.
 
-## PDF reading
+## [07]-[PDF_READING]
 
 Before reading parsed PDF content, you MUST read `references/pdf-reading.md`.
 
-## Transcript reading
+## [08]-[TRANSCRIPT_READING]
 
 Before reading parsed media transcripts, you MUST read `references/transcript-reading.md`.
 
-## All output is JSON
+## [09]-[ALL_OUTPUT_IS_JSON]
 
 Every command prints JSON to stdout. You can parse it with `jq` or pipe it to other tools.
 
-## Troubleshooting
+## [10]-[TROUBLESHOOTING]
 
 - **Desktop app must be running.** The CLI communicates with a local server inside the app. If the app is closed, all commands fail. Run `heptabase start` to launch and wait for readiness.
 - **Codex sandbox may block the local CLI server.** If Heptabase starts but Codex says the CLI server is not ready, read `references/codex-sandbox.md`; retry `heptabase` commands outside the sandbox when Codex supports escalation.
@@ -74,7 +74,7 @@ Every command prints JSON to stdout. You can parse it with `jq` or pipe it to ot
 - **Request body size limit.** The server rejects request bodies larger than 1 MB.
 - **Request timeout.** The server times out requests that take longer than 10 seconds to send their body.
 
-## Known limitations
+## [11]-[KNOWN_LIMITATIONS]
 
 - **Auto-enabling local server/CLI install not supported.** If the local CLI server is disabled or CLI wiring is missing, the skill cannot repair it by itself; ask the user to enable Local CLI Server and CLI install from desktop settings first.
 - **File export is local-file-only.** `heptabase file export` works only when the file metadata and raw file are already available locally in the desktop app. It does not download missing files from cloud storage.
@@ -82,6 +82,6 @@ Every command prints JSON to stdout. You can parse it with `jq` or pipe it to ot
 - **Whiteboard creation/edit/delete not supported yet.** You can list whiteboards and add, list, or remove cards on them, but you can't create, rename, move, or delete whiteboards.
 - **Property filtering not supported yet.** You can read tag property schemas, read property values, and set one property value on a card, but you can't query cards by property value.
 
-## Warnings
+## [12]-[WARNINGS]
 
 - **Use the CLI as the only data access path.** Never directly read, write, or modify Heptabase app data through local database files, app storage, cache files, internal endpoints, or any other non-CLI mechanism. If the CLI does not support the requested operation, stop and report that it is not supported.

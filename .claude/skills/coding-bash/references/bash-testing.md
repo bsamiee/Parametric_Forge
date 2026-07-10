@@ -2,17 +2,17 @@
 
 Production testing for Bash 5.2+/5.3. bats-core 1.13+, test isolation via subshell sandboxing, mocks via PATH manipulation, coverage via kcov 43+, CI with multi-shell container matrix, property-based fuzzing.
 
-| [IDX] | [PATTERN]           |  [S]  | [USE_WHEN]                                    |
-| :---: | :------------------ | :---: | :-------------------------------------------- |
-| [01]  | bats-core framework |  S1   | Every test suite — lifecycle, helpers, tags   |
-| [02]  | Test isolation      |  S2   | Side-effect-free — temp dirs, FD sandbox, env |
-| [03]  | Mock/stub patterns  |  S3   | External command interception, function stubs |
-| [04]  | Coverage/mutation   |  S4   | Quality gates — kcov, lcov, mutation sweep    |
-| [05]  | CI integration      |  S5   | GH Actions — lint, test matrix, coverage gate |
-| [06]  | Property-based      |  S6   | Input domain exploration, random generation   |
-| [07]  | Snapshot testing    |  S7   | Output baseline comparison, approval workflow |
-| [08]  | Contract testing    |  S8   | CLI exit codes, stdout schema, stderr rules   |
-| [09]  | ShellCheck 0.11.0   |  S9   | SC2327-SC2332 — new codes for test/prod code  |
+| [INDEX] | [PATTERN]           |  [S]  | [USE_WHEN]                                    |
+| :-----: | :------------------ | :---: | :-------------------------------------------- |
+|  [01]   | bats-core framework |  S1   | Every test suite — lifecycle, helpers, tags   |
+|  [02]   | Test isolation      |  S2   | Side-effect-free — temp dirs, FD sandbox, env |
+|  [03]   | Mock/stub patterns  |  S3   | External command interception, function stubs |
+|  [04]   | Coverage/mutation   |  S4   | Quality gates — kcov, lcov, mutation sweep    |
+|  [05]   | CI integration      |  S5   | GH Actions — lint, test matrix, coverage gate |
+|  [06]   | Property-based      |  S6   | Input domain exploration, random generation   |
+|  [07]   | Snapshot testing    |  S7   | Output baseline comparison, approval workflow |
+|  [08]   | Contract testing    |  S8   | CLI exit codes, stdout schema, stderr rules   |
+|  [09]   | ShellCheck 0.11.0   |  S9   | SC2327-SC2332 — new codes for test/prod code  |
 
 ## [01]-[BATS_CORE_FRAMEWORK]
 
@@ -65,14 +65,16 @@ _run_validation_case() {
 @test "validate_replicas: positive accepted" { _run_validation_case valid; }
 ```
 
-### [1.1]-[HELPERS_TAGS_CONFIG]
+### [01.1]-[HELPERS_TAGS_CONFIG]
 
-| [LIBRARY]      | [KEY_ASSERTIONS]                                                                                                                                                                    |
-| :------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `bats-support` | `fail`, `bats_require_minimum_version`                                                                                                                                              |
-| `bats-assert`  | `assert_success`, `assert_failure`, `assert_output`, `assert_line/regex`, `assert_stderr`/`refute_stderr`, `assert_stderr_line`/`refute_stderr_line`, `assert_regex`/`refute_regex` |
-| `bats-file`    | `assert_file_exist`, `assert_dir_exist`, `assert_file_contains`                                                                                                                     |
-| `bats-detik`   | k8s resource assertions (kubectl wait)                                                                                                                                              |
+`bats-assert` also exposes `assert_stderr`/`refute_stderr`, `assert_stderr_line`/`refute_stderr_line`, and `assert_regex`/`refute_regex`.
+
+| [INDEX] | [LIBRARY]      | [KEY_ASSERTIONS]                                                         |
+| :-----: | :------------- | :----------------------------------------------------------------------- |
+|  [01]   | `bats-support` | `fail`, `bats_require_minimum_version`                                   |
+|  [02]   | `bats-assert`  | `assert_success`, `assert_failure`, `assert_output`, `assert_line/regex` |
+|  [03]   | `bats-file`    | `assert_file_exist`, `assert_dir_exist`, `assert_file_contains`          |
+|  [04]   | `bats-detik`   | k8s resource assertions (kubectl wait)                                   |
 
 BREAKING (bats-assert): `assert_output`/`refute_output` without args no longer reads stdin — requires `-` or `--stdin`.
 
@@ -131,7 +133,7 @@ _make_project_fixture() {
 }
 ```
 
-### [2.1]-[ADVANCED_ISOLATION]
+### [02.1]-[ADVANCED_ISOLATION]
 
 ```bash
 # faketime: deterministic time-dependent tests (requires libfaketime)
@@ -209,7 +211,7 @@ _assert_call_count() {
 
 `export -f` propagates function overrides into child processes. Mock scripts must reject unrecognized arguments with `exit 1` — silent acceptance masks bugs. `printf '%q'` safely quotes responses containing single quotes, newlines, or special characters for use in `eval`-constructed function bodies.
 
-### [3.1]-[PLAN_BASED_MOCKS]
+### [03.1]-[PLAN_BASED_MOCKS]
 
 `buildkite-plugins/bats-mock` provides `stub`/`unstub` with plan-based call expectations — verifies both behavior and call sequence on `unstub`.
 
@@ -251,7 +253,7 @@ _check_coverage() {
 # kcov --dump-summary coverage/ | jq -r '.percent_covered' | { read -r pct; (( ${pct%.*} >= 80 )); }
 ```
 
-### [4.1]-[MUTATION_TESTING]
+### [04.1]-[MUTATION_TESTING]
 
 ```bash
 # Automated mutation: flip operator, run suite, check if tests catch it
@@ -337,7 +339,7 @@ jobs:
         with: { name: coverage-report, path: coverage/ }
 ```
 
-### [5.1]-[CONTAINERIZED_TESTING]
+### [05.1]-[CONTAINERIZED_TESTING]
 
 `bats/bats` Docker image (Alpine-based, 5M+ pulls) bundles `bats-support` and `bats-assert` — `bats_load_library` resolves them without installation. Mount scripts read-only to prevent test pollution.
 
@@ -422,7 +424,7 @@ _prop_test() {
 
 Shrinking on violation: binary-search input size `[lo=1, hi=failing_size]` to find minimal reproducing case.
 
-### [6.1]-[HYPOTHESIS_PBT]
+### [06.1]-[HYPOTHESIS_PBT]
 
 Python Hypothesis provides structured shrinking, replay databases, and rich strategies unavailable in pure bash. Pattern: Hypothesis generates inputs, `subprocess.run` invokes the script under test, assertions verify algebraic properties. Pass data via stdin — never interpolate into shell strings (injection). Set `timeout=` on every subprocess call.
 
@@ -514,18 +516,20 @@ _assert_cli_contract() {
 
 Full ShellCheck reference in validation.md S3. Test-relevant codes from 0.11.0 below — each surfaces in test infrastructure or scripts under test.
 
-| [CODE]     | [SEV] | [ISSUE]                          | [VIOLATION]                            | [FIX]                                     |
-| ---------- | :---: | :------------------------------- | :------------------------------------- | :---------------------------------------- |
-| **SC2327** | warn  | Capture + redirect clash         | `v=$(cmd > out.txt)` — `$v` is empty   | `v=$(cmd \| tee out.txt)` or separate ops |
-| **SC2328** | warn  | Redirect steals from `$()`       | `v=$(tr -d ':' < in > out)` — empty    | `v=$(tr -d ':' < in)` or redirect only    |
-| **SC2329** | warn  | Function never invoked           | Defined `f()` but never called in file | Call, remove, or disable (dispatch-table) |
-| **SC2330** | warn  | BusyBox `[[ ]]` glob unsupported | `[[ $1 == https:* ]]` in busybox sh    | `case "$1" in https:*) ... esac`          |
-| **SC2331** | warn  | `-a` file test ambiguous         | `[ -a ~/.bashrc ]` — `-a` is also AND  | `[ -e ~/.bashrc ]` — unambiguous          |
-| **SC2332** | error | `[ ! -o opt ]` always true       | OR precedence: `[ "!" ] -o [ "opt" ]`  | `[[ ! -o opt ]]` or `! [ -o opt ]`        |
+| [INDEX] | [CODE]     | [SEV] | [ISSUE]                          | [VIOLATION]                         | [FIX]                            |
+| :-----: | :--------- | :---: | :------------------------------- | :---------------------------------- | :------------------------------- |
+|  [01]   | **SC2327** | warn  | Capture + redirect clash         | `v=$(cmd > out.txt)` empties `$v`   | `v=$(cmd \| tee out.txt)`        |
+|  [02]   | **SC2328** | warn  | Redirect steals from `$()`       | `v=$(tr -d ':' < in > out)` — empty | `v=$(tr -d ':' < in)`            |
+|  [03]   | **SC2329** | warn  | Function never invoked           | Defined `f()`, never called         | Call, remove, or disable         |
+|  [04]   | **SC2330** | warn  | BusyBox `[[ ]]` glob unsupported | `[[ $1 == https:* ]]` in busybox sh | `case "$1" in https:*) ... esac` |
+|  [05]   | **SC2331** | warn  | `-a` file test ambiguous         | `[ -a ~/.bashrc ]` (`-a` also AND)  | `[ -e ~/.bashrc ]` — unambiguous |
+
+- SC2327 fix: or split into separate ops. SC2328 fix: or redirect only. SC2329 fix: disable via dispatch-table.
+|  [06]   | **SC2332** | error | `[ ! -o opt ]` always true       | OR precedence: `[ "!" ] -o [ "opt" ]`  | `[[ ! -o opt ]]` or `! [ -o opt ]`        |
 
 SC2329 false-positives: dispatch-table functions called via `"${_DISPATCH[$cmd]}"` — ShellCheck cannot trace associative-array indirection. Suppress with `# shellcheck disable=SC2329` and justification comment.
 
-## [RULES]
+## [10]-[RULES]
 
 - bats-core 1.13+ exclusively — NEVER shunit2 or shellspec.
 - `bats_require_minimum_version 1.13.0` at top of every `.bats` file.

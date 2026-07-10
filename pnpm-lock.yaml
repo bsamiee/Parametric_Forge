@@ -15,6 +15,9 @@ catalogs:
     '@effect/platform-node':
       specifier: 0.107.0
       version: 0.107.0
+    '@effect/tsgo':
+      specifier: 0.15.0
+      version: 0.15.0
     '@pulumi/github':
       specifier: 6.14.0
       version: 6.14.0
@@ -27,6 +30,9 @@ catalogs:
     '@types/node':
       specifier: 26.1.1
       version: 26.1.1
+    '@typescript/native-preview':
+      specifier: 7.0.0-dev.20260702.3
+      version: 7.0.0-dev.20260702.3
     effect:
       specifier: 3.21.4
       version: 3.21.4
@@ -47,6 +53,9 @@ importers:
       '@effect/platform-node':
         specifier: 'catalog:'
         version: 0.107.0(@effect/cluster@0.59.0(@effect/platform@0.96.2(effect@3.21.4))(@effect/rpc@0.75.1(@effect/platform@0.96.2(effect@3.21.4))(effect@3.21.4))(@effect/sql@0.51.1(@effect/experimental@0.60.0(@effect/platform@0.96.2(effect@3.21.4))(effect@3.21.4))(@effect/platform@0.96.2(effect@3.21.4))(effect@3.21.4))(@effect/workflow@0.18.2(@effect/experimental@0.60.0(@effect/platform@0.96.2(effect@3.21.4))(effect@3.21.4))(@effect/platform@0.96.2(effect@3.21.4))(@effect/rpc@0.75.1(@effect/platform@0.96.2(effect@3.21.4))(effect@3.21.4))(effect@3.21.4))(effect@3.21.4))(@effect/platform@0.96.2(effect@3.21.4))(@effect/rpc@0.75.1(@effect/platform@0.96.2(effect@3.21.4))(effect@3.21.4))(@effect/sql@0.51.1(@effect/experimental@0.60.0(@effect/platform@0.96.2(effect@3.21.4))(effect@3.21.4))(@effect/platform@0.96.2(effect@3.21.4))(effect@3.21.4))(effect@3.21.4)
+      '@effect/tsgo':
+        specifier: 'catalog:'
+        version: 0.15.0
       '@pulumi/github':
         specifier: 'catalog:'
         version: 6.14.0(typescript@6.0.3)
@@ -59,6 +68,9 @@ importers:
       '@types/node':
         specifier: 'catalog:'
         version: 26.1.1
+      '@typescript/native-preview':
+        specifier: 'catalog:'
+        version: 7.0.0-dev.20260702.3
       effect:
         specifier: 'catalog:'
         version: 3.21.4
@@ -129,6 +141,45 @@ packages:
       '@effect/experimental': ^0.60.0
       '@effect/platform': ^0.96.1
       effect: ^3.21.2
+
+  '@effect/tsgo-darwin-arm64@0.15.0':
+    resolution: {integrity: sha512-sZkpl4Tf3qOZZ0mxnRV8OngSMAseFBkQ2GA9Dc/4XlZ6cleVdORvWHajXkcJz9BpALCRRkQX7XmKIUOkJMmsVA==}
+    cpu: [arm64]
+    os: [darwin]
+
+  '@effect/tsgo-darwin-x64@0.15.0':
+    resolution: {integrity: sha512-KnhO581RTyow7qKg/ESY+v5B0So1K+YXVlQ88CXEVk9SLREx/E9PoJenO9/KBbTL5LXibMGOWwJwese1RwBlLQ==}
+    cpu: [x64]
+    os: [darwin]
+
+  '@effect/tsgo-linux-arm64@0.15.0':
+    resolution: {integrity: sha512-Yc4OI6aUYW1cp/uoddUBSslE3FT7qLXlXh1zKW5jzjzkfXX24o9ESUaMnIffBCrhfUHZ5qh0HI6/GW3PTzzklg==}
+    cpu: [arm64]
+    os: [linux]
+
+  '@effect/tsgo-linux-arm@0.15.0':
+    resolution: {integrity: sha512-2iutC28/VH3HDTqizF+so4mH/+pF9hjZjjZJfzHpevqxAzmNCsBIbT9H0F3Figa9O4lkfBYju/NBLUvGTIW4sw==}
+    cpu: [arm]
+    os: [linux]
+
+  '@effect/tsgo-linux-x64@0.15.0':
+    resolution: {integrity: sha512-lC60WvoCN2KnbarnS9xstI08/u0YT3hGXSwtaWK8swIPmOQC6PwMx33BSqkgC9lgqDyFruzMECpX6JSQMh9oHQ==}
+    cpu: [x64]
+    os: [linux]
+
+  '@effect/tsgo-win32-arm64@0.15.0':
+    resolution: {integrity: sha512-ew0R4MXNSk7mCAama+M4tOKmchalq6z9tP9BOKrrogWqwjCY/pFqJRFMWrMxq8tQXNeso8llYdhNw9ju2f3E7Q==}
+    cpu: [arm64]
+    os: [win32]
+
+  '@effect/tsgo-win32-x64@0.15.0':
+    resolution: {integrity: sha512-LNTdM0GDjjoft4tZ3EjBFbzjg5DCPv7sOEWBSY+OdhsBXVuHOZFUjA7mhUQYnHveRoK3X5zsG8v0slnMRNTZHQ==}
+    cpu: [x64]
+    os: [win32]
+
+  '@effect/tsgo@0.15.0':
+    resolution: {integrity: sha512-0SRXLxbYiNqQr2joKiPkAOB1ahxBSBtyuneCEhyBratiulwQg2FENtJnGw2ojmpq3QEkTmHsMOsm8ZL0D1iSgA==}
+    hasBin: true
 
   '@effect/workflow@0.18.2':
     resolution: {integrity: sha512-2av0TexhxHnapQa3eLn6TkniokUFRZKf8dlWlLqbODMpXAJ3mm+DOHWM0ozMGkg9K/+zGCtiL3dMqJyJ8r7G8g==}
@@ -540,6 +591,53 @@ packages:
 
   '@types/shimmer@1.2.0':
     resolution: {integrity: sha512-UE7oxhQLLd9gub6JKIAhDq06T0F6FnztwMNRvYgjeQSBeMc1ZG/tA47EwfduvkuQS8apbkM/lpLpWsaCeYsXVg==}
+
+  '@typescript/native-preview-darwin-arm64@7.0.0-dev.20260702.3':
+    resolution: {integrity: sha512-sswJ7XRSH17/jDv6eqlRyNzjQev4w+TH+16RgeoZkKbQfZnVuLchF4ORCecEuia15X2yE8pbiQGY596LVbGKdA==}
+    engines: {node: '>=16.20.0'}
+    cpu: [arm64]
+    os: [darwin]
+
+  '@typescript/native-preview-darwin-x64@7.0.0-dev.20260702.3':
+    resolution: {integrity: sha512-j8ZYT/chWtx3QT1Bghp0/+2g6aKLaxRVpXEHt6Fjdj4OXQTpH4pljOE0+LeAqaET88PUo/XM9pi0TJ5TJwHLMg==}
+    engines: {node: '>=16.20.0'}
+    cpu: [x64]
+    os: [darwin]
+
+  '@typescript/native-preview-linux-arm64@7.0.0-dev.20260702.3':
+    resolution: {integrity: sha512-FEBt9UER27yvn3o4quXZ9fQ/Hd39hxFPljJe8dxstCvyYLh0A9TwDuuwghWCisp5U9TDWWtl8m1GLjvqIKc6IA==}
+    engines: {node: '>=16.20.0'}
+    cpu: [arm64]
+    os: [linux]
+
+  '@typescript/native-preview-linux-arm@7.0.0-dev.20260702.3':
+    resolution: {integrity: sha512-SM73Mp3oYUWkyHmym0MVfPnMeLGM6oo1vcPZTxVoL7BOKWkJKK+iM7D1tcqDSZNPwURSkWMxP17Dh+4JPqzikg==}
+    engines: {node: '>=16.20.0'}
+    cpu: [arm]
+    os: [linux]
+
+  '@typescript/native-preview-linux-x64@7.0.0-dev.20260702.3':
+    resolution: {integrity: sha512-CY/r7gHjDnf3xWptpQVRQnagMdUDbh+zL01SF+cTJsg1WVY3TtVNrCo48dwAnJL+U97qx1SKaGVsi/8cSPwrZA==}
+    engines: {node: '>=16.20.0'}
+    cpu: [x64]
+    os: [linux]
+
+  '@typescript/native-preview-win32-arm64@7.0.0-dev.20260702.3':
+    resolution: {integrity: sha512-9U/ahdJAWZdYxPdNry3VAhB9avaQCiqsEk2PfheeKrKSKCtfs5FoPXy/QXAaIGIBK/Lw4a7OqyVyEbd0i77TkQ==}
+    engines: {node: '>=16.20.0'}
+    cpu: [arm64]
+    os: [win32]
+
+  '@typescript/native-preview-win32-x64@7.0.0-dev.20260702.3':
+    resolution: {integrity: sha512-kPqfivHuzzEK2NFEl2QeCCiWJ4qkGMJYFX9TmJ4ylh784XICgQLX3PJe7OCqZcUicfeMIIDu6m3flcCi+4tW4Q==}
+    engines: {node: '>=16.20.0'}
+    cpu: [x64]
+    os: [win32]
+
+  '@typescript/native-preview@7.0.0-dev.20260702.3':
+    resolution: {integrity: sha512-j21laxUja23ex6qYGjwiSiQ6YpS/p5E7lCMDYKDBAdBv93Z1NzV96BZV3gdRwl+buH09EPuBAiqxKQqRO1grhw==}
+    engines: {node: '>=16.20.0'}
+    hasBin: true
 
   abbrev@4.0.0:
     resolution: {integrity: sha512-a1wflyaL0tHtJSmLSOVybYhy22vRih4eduhhrkcjgrWGnRfrZtovJ2FRjxuTtkkj47O/baf0R86QU5OuYpz8fA==}
@@ -1278,6 +1376,37 @@ snapshots:
       effect: 3.21.4
       uuid: 11.1.1
 
+  '@effect/tsgo-darwin-arm64@0.15.0':
+    optional: true
+
+  '@effect/tsgo-darwin-x64@0.15.0':
+    optional: true
+
+  '@effect/tsgo-linux-arm64@0.15.0':
+    optional: true
+
+  '@effect/tsgo-linux-arm@0.15.0':
+    optional: true
+
+  '@effect/tsgo-linux-x64@0.15.0':
+    optional: true
+
+  '@effect/tsgo-win32-arm64@0.15.0':
+    optional: true
+
+  '@effect/tsgo-win32-x64@0.15.0':
+    optional: true
+
+  '@effect/tsgo@0.15.0':
+    optionalDependencies:
+      '@effect/tsgo-darwin-arm64': 0.15.0
+      '@effect/tsgo-darwin-x64': 0.15.0
+      '@effect/tsgo-linux-arm': 0.15.0
+      '@effect/tsgo-linux-arm64': 0.15.0
+      '@effect/tsgo-linux-x64': 0.15.0
+      '@effect/tsgo-win32-arm64': 0.15.0
+      '@effect/tsgo-win32-x64': 0.15.0
+
   '@effect/workflow@0.18.2(@effect/experimental@0.60.0(@effect/platform@0.96.2(effect@3.21.4))(effect@3.21.4))(@effect/platform@0.96.2(effect@3.21.4))(@effect/rpc@0.75.1(@effect/platform@0.96.2(effect@3.21.4))(effect@3.21.4))(effect@3.21.4)':
     dependencies:
       '@effect/experimental': 0.60.0(@effect/platform@0.96.2(effect@3.21.4))(effect@3.21.4)
@@ -1748,6 +1877,37 @@ snapshots:
   '@types/semver@7.7.1': {}
 
   '@types/shimmer@1.2.0': {}
+
+  '@typescript/native-preview-darwin-arm64@7.0.0-dev.20260702.3':
+    optional: true
+
+  '@typescript/native-preview-darwin-x64@7.0.0-dev.20260702.3':
+    optional: true
+
+  '@typescript/native-preview-linux-arm64@7.0.0-dev.20260702.3':
+    optional: true
+
+  '@typescript/native-preview-linux-arm@7.0.0-dev.20260702.3':
+    optional: true
+
+  '@typescript/native-preview-linux-x64@7.0.0-dev.20260702.3':
+    optional: true
+
+  '@typescript/native-preview-win32-arm64@7.0.0-dev.20260702.3':
+    optional: true
+
+  '@typescript/native-preview-win32-x64@7.0.0-dev.20260702.3':
+    optional: true
+
+  '@typescript/native-preview@7.0.0-dev.20260702.3':
+    optionalDependencies:
+      '@typescript/native-preview-darwin-arm64': 7.0.0-dev.20260702.3
+      '@typescript/native-preview-darwin-x64': 7.0.0-dev.20260702.3
+      '@typescript/native-preview-linux-arm': 7.0.0-dev.20260702.3
+      '@typescript/native-preview-linux-arm64': 7.0.0-dev.20260702.3
+      '@typescript/native-preview-linux-x64': 7.0.0-dev.20260702.3
+      '@typescript/native-preview-win32-arm64': 7.0.0-dev.20260702.3
+      '@typescript/native-preview-win32-x64': 7.0.0-dev.20260702.3
 
   abbrev@4.0.0: {}
 

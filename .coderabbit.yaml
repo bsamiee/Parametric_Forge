@@ -4,365 +4,293 @@ early_access: false
 enable_free_tier: true
 inheritance: false
 reviews:
-  profile: assertive
-  request_changes_workflow: false
-  high_level_summary: true
-  high_level_summary_instructions: >-
-    Lead with contract-surface and behavior deltas, one dense paragraph. No restated
-    diff statistics, no methodology narration.
-  high_level_summary_placeholder: "@coderabbitai summary"
-  high_level_summary_in_walkthrough: false
-  auto_title_placeholder: "@coderabbitai"
-  auto_title_instructions: ""
-  review_status: true
-  review_details: true
-  commit_status: true
-  fail_commit_status: false
-  collapse_walkthrough: true
-  changed_files_summary: true
-  sequence_diagrams: true
-  estimate_code_review_effort: true
-  assess_linked_issues: true
-  related_issues: true
-  related_prs: true
-  suggested_labels: true
-  labeling_instructions: []
-  mutually_exclusive_groups: {}
-  auto_apply_labels: true
-  suggested_reviewers: true
-  auto_assign_reviewers: true
-  suggested_reviewers_instructions: []
-  in_progress_fortune: false
-  poem: false
-  enable_prompt_for_ai_agents: true
-  abort_on_close: true
-  disable_cache: false
-  slop_detection:
-    enabled: true
-  path_filters:
-    - "!flake.lock"
-    - "!pnpm-lock.yaml"
-    - "!**/*.wasm"
-    - "!modules/home/assets/**"
-    - "!.claude/scratch/**"
-  path_instructions:
-    - path: "**"
-      instructions: >-
-        Universal bar: anticipate 10x functionality growth — surfaces absorb new modalities
-        as rows, cases, or dispatch arms, never as new files, flags, or knobs. Defects:
-        knob/param/flag spam, hardcoded values, fragile string plumbing, naive happy-path
-        logic, hand-rolled reimplementations of capability the ecosystem already provides.
-        External packages are first-class implementation material used at full power, newest
-        stable versions. Everything is agent-first: composable, receipt-bearing,
-        self-describing, no interactive-only paths. Collapse spam relentlessly.
-        Fix-to-root is a review demand: a PR that patches a symptom while its root cause
-        stands, leaves a known defect unfixed because it sits outside the change's scope, or
-        defers a residual for a later pass is defective — the root fix belongs in the same
-        change, and a genuinely blocked item is an explicit unreachable naming its owner,
-        never a silent residual.
-    - path: "**/*.nix"
-      instructions: >-
-        Machine-owner repo on nix-darwin + Home Manager, Determinate Nix, nixpkgs-unstable.
-        Review against docs/standards/nix-doctrine.md and docs/standards/design-doctrine.md.
-        Defects: new wrapper modules, compat shims, aliases for retired names, anticipatory
-        options, `with pkgs;` at file level, mixed system/home scope, singleton per-tool
-        files where an owner table exists, vocabulary values (color, keybind, tool
-        admission, MCP server) placed outside their single declared owner, host facts
-        duplicated instead of projected from the host context owner, generated config built
-        by string templates where a native generator exists, version pins without a recorded
-        reason. Embedded shell bodies are reviewed as Bash: set -euo pipefail, declared
-        runtimeInputs, shellcheck-clean, no `|| true` masks, no hardcoded repo paths or
-        usernames. One owner per axis; a new capability is a row on the owning surface,
-        never a new file. Files trend toward 300 LOC via polymorphic collapse, never by
-        deleting capability.
-    - path: "overlays/**"
-      instructions: >-
-        Overlay packages are contract-bearing. forge-provision emits schema-v3 JSON
-        envelopes only — flag any envelope field lacking a README contract row, any raw
-        socket path, host absolute path, or token material in agent-facing JSON. jq programs
-        live in jq/ files, never inlined in Bash; jq owns JSON shape, Bash owns admission
-        and exit codes. SQL probes stay read-only. Dispatch is catalog-driven: service,
-        image, command, and verb facts live in data catalogs, never hardcoded in shell.
-    - path: "services/**"
-      instructions: >-
-        TypeScript under docs/stacks/typescript law: Effect rails with tagged faults,
-        Config.redacted for secret-bearing config, Schema decodes at boundaries, no any,
-        no class-based services, pnpm-only. Pulumi rows are typed and declarative;
-        imperative provider calls outside the driver are defects. Secret values must never
-        reach state outputs unredacted. Dependency movement is forward-only — a downgrade
-        or stale pin without a recorded reason is a defect.
-    - path: "modules/home/programs/**"
-      instructions: >-
-        App config consumers (Lua, TOML) project from Nix-owned vocabularies: private hex
-        colors, ad hoc keybinds, or duplicated theme values in consumer config are defects —
-        values arrive from generated owners. Lua is reviewed against the host application's
-        API, not generic Lua convention.
-    - path: "**/*.sh"
-      instructions: >-
-        Standalone shell including .claude hooks: set -euo pipefail, shellcheck-clean
-        without directives, no `|| true` failure masks, no command substitution that can
-        block on session death, no embedded repo paths, usernames, or magic values —
-        parameters or model-derived values only. Hooks never pass secret values through
-        shell parsing, logs, or receipts.
-    - path: ".claude/workflows/**"
-      instructions: >-
-        Workflow scripts are deterministic orchestration: plain control flow, schema-typed
-        agent outputs, bounded loops and harvest rounds, every stage writing its product to
-        disk and returning a path receipt. Defects: bare promises without await ownership,
-        unbounded polling, branching on wall clock, subagents asked to wait — codex wrappers
-        are launch-only and the orchestrator owns time.
-    - path: ".claude/**"
-      instructions: >-
-        Agent-facing declarative artifacts: implicit agentic prose, active voice, 1-2 line
-        comments. Defects: meta-commentary, provenance or freshness tails, checklist noise,
-        restating obligations the instruction chain already carries, project-coupled content
-        in reusable surfaces.
-    - path: "**/*.md"
-      instructions: >-
-        Review prose and structure against docs/standards/style-guide.md,
-        docs/standards/formatting.md, and docs/standards/information-structure.md — the
-        docgen discipline. Defects: no-op sentences that change no reader decision, leading
-        filler words, meta-commentary, provenance/freshness tails, checklist tails, heading
-        proliferation for short content, tables carrying explanations instead of enumerable
-        facts, duplicated content an owning doc already carries, drift from the [UPPER_CASE]
-        label convention, quality ladders (good/better/best tiers) where a contract gate
-        belongs, restated obligations the instruction chain already carries (follow
-        CLAUDE.md, use available tools), and defensive caveats softening settled rules.
-    - path: ".claude/skills/**"
-      instructions: >-
-        Skill bundles under the docgen skill-craft law. Defects: first- or second-person
-        voice in frontmatter descriptions — quoted user-utterance trigger phrases are not
-        voice; over-broad triggers spanning unrelated domains or keyword-stuffed synonym
-        lists; SKILL.md over 500 lines or carrying reference
-        banks, troubleshooting ledgers, or example floods that belong one hop down;
-        references that only route to other references; no-op intensifiers with no owner,
-        action, or gate; filler lead-ins (note that, make sure to, remember to);
-        good/better/best quality ladders instead of contract gates; command catalogs
-        without task triggers; generic think/plan/implement lifecycle steps; closing
-        checklists with no machine-checkable gate; deterministic multi-step procedures
-        narrated in prose where a bundled script belongs; three or more abstract guidance
-        bullets with no paired rejected/accepted example or gate; one mandated output
-        skeleton regardless of consumer; instructed network fetches or global installs
-        inside skill bodies, except an owned install surface naming exact source, scope,
-        and verification.
-  auto_review:
-    enabled: true
-    description_keyword: ""
-    auto_incremental_review: true
-    auto_pause_after_reviewed_commits: 0
-    ignore_title_keywords: []
-    labels: []
-    drafts: true
-    base_branches: []
-    ignore_usernames: []
-  finishing_touches:
-    docstrings:
-      enabled: true
-    unit_tests:
-      enabled: false
-    simplify:
-      enabled: false
-    autofix:
-      enabled: true
-    custom: []
-  pre_merge_checks:
-    override_requested_reviewers_only: false
-    docstrings:
-      mode: "off"
-      threshold: 80
-    title:
-      mode: "off"
-      requirements: ""
-    description:
-      mode: "off"
-    issue_assessment:
-      mode: "off"
-    custom_checks: []
-  tools:
-    ast-grep:
-      essential_rules: true
-      rule_dirs: []
-      util_dirs: []
-      packages: []
-    shellcheck:
-      enabled: true
-    ruff:
-      enabled: true
-    markdownlint:
-      enabled: false
-    github-checks:
-      enabled: true
-      timeout_ms: 90000
-    languagetool:
-      enabled: false
-      enabled_rules: []
-      disabled_rules: []
-      enabled_categories: []
-      disabled_categories: []
-      enabled_only: false
-      level: default
-    biome:
-      enabled: true
-    hadolint:
-      enabled: true
-    swiftlint:
-      enabled: true
-    phpstan:
-      enabled: true
-      level: default
-    phpmd:
-      enabled: true
-    phpcs:
-      enabled: true
-    golangci-lint:
-      enabled: true
-    yamllint:
-      enabled: true
-    gitleaks:
-      enabled: true
-    trufflehog:
-      enabled: true
-    checkov:
-      enabled: true
-    tflint:
-      enabled: true
-    detekt:
-      enabled: true
-    eslint:
-      enabled: true
-    flake8:
-      enabled: true
-    fbinfer:
-      enabled: true
-      enable_java: false
-    fortitudeLint:
-      enabled: true
-    rubocop:
-      enabled: true
-    buf:
-      enabled: true
-    regal:
-      enabled: true
-    actionlint:
-      enabled: true
-    zizmor:
-      enabled: true
-    pmd:
-      enabled: true
-    clang:
-      enabled: true
-    cppcheck:
-      enabled: true
-    opengrep:
-      enabled: true
-    semgrep:
-      enabled: true
-    circleci:
-      enabled: true
-    clippy:
-      enabled: true
-    sqlfluff:
-      enabled: true
-    squawk:
-      enabled: true
-    trivy:
-      enabled: true
-    prismaLint:
-      enabled: true
-    pylint:
-      enabled: true
-    oxc:
-      enabled: true
-    shopifyThemeCheck:
-      enabled: true
-    luacheck:
-      enabled: true
-    brakeman:
-      enabled: true
-    dotenvLint:
-      enabled: true
-    htmlhint:
-      enabled: true
-    stylelint:
-      enabled: true
-    checkmake:
-      enabled: true
-    osvScanner:
-      enabled: true
-    oasdiff:
-      enabled: true
-    reactDoctor:
-      enabled: true
-    presidio:
-      enabled: true
-    blinter:
-      enabled: true
-    smartyLint:
-      enabled: true
-    emberTemplateLint:
-      enabled: true
-    skillspector:
-      enabled: true
-    psscriptanalyzer:
-      enabled: true
-chat:
-  art: false
-  allow_non_org_members: true
-  auto_reply: true
-  integrations:
-    jira:
-      usage: disabled
-    linear:
-      usage: disabled
-knowledge_base:
-  opt_out: false
-  web_search:
-    enabled: true
-  code_guidelines:
-    enabled: true
-    filePatterns:
-      - "docs/standards/*.md"
-      - "docs/stacks/*/README.md"
-  learnings:
-    scope: local
-    approval_delay: 0
-  issues:
-    scope: local
-  jira:
-    usage: disabled
-    project_keys: []
-  linear:
-    usage: disabled
-    team_keys: []
-  pull_requests:
-    scope: local
-  mcp:
-    usage: auto
-    disabled_servers: []
-  automatic_repository_linking: false
-  linked_repositories:
-    - repository: bsamiee/Rasm
-      instructions: >-
-        Doctrine master for the shared stack and docgen law; skill bundles mirror
-        byte-identical across the estate — flag divergence in mirrored surfaces.
-    - repository: bsamiee/Maghz
-      instructions: >-
-        VPS second-brain consumer of Forge machine rails; provisioning contract and
-        launcher changes ripple here.
-code_generation:
-  docstrings:
-    language: en-US
-    path_instructions: []
-  unit_tests:
-    path_instructions: []
-issue_enrichment:
-  auto_enrich:
-    enabled: true
-  planning:
-    enabled: false
-    auto_planning:
-      enabled: false
-      labels: []
-  labeling:
+    profile: assertive
+    request_changes_workflow: false
+    high_level_summary: true
+    high_level_summary_instructions: >-
+        Lead with contract-surface and behavior deltas, one dense paragraph. No restated diff statistics, no methodology narration.
+    high_level_summary_placeholder: "@coderabbitai summary"
+    high_level_summary_in_walkthrough: false
+    auto_title_placeholder: "@coderabbitai"
+    auto_title_instructions: ""
+    review_status: true
+    review_details: true
+    commit_status: true
+    fail_commit_status: false
+    collapse_walkthrough: true
+    changed_files_summary: true
+    sequence_diagrams: true
+    estimate_code_review_effort: true
+    assess_linked_issues: true
+    related_issues: true
+    related_prs: true
+    suggested_labels: true
     labeling_instructions: []
+    mutually_exclusive_groups: {}
     auto_apply_labels: true
+    suggested_reviewers: true
+    auto_assign_reviewers: true
+    suggested_reviewers_instructions: []
+    in_progress_fortune: false
+    poem: false
+    enable_prompt_for_ai_agents: true
+    abort_on_close: true
+    disable_cache: false
+    slop_detection:
+        enabled: true
+    path_filters:
+        - "!flake.lock"
+        - "!pnpm-lock.yaml"
+        - "!**/*.wasm"
+        - "!modules/home/assets/**"
+        - "!.claude/scratch/**"
+    path_instructions:
+        - path: "**"
+          instructions: >-
+            Universal bar: anticipate 10x functionality growth — surfaces absorb new modalities as rows, cases, or dispatch arms, never as new files, flags, or knobs. Defects: knob/param/flag spam, hardcoded values, fragile string plumbing, naive happy-path logic, hand-rolled reimplementations of capability the ecosystem already provides. External packages are first-class implementation material used at full power, newest stable versions. Everything is agent-first: composable, receipt-bearing, self-describing, no interactive-only paths. Collapse spam relentlessly. Fix-to-root is a review demand: a PR that patches a symptom while its root cause stands, leaves a known defect unfixed because it sits outside the change's scope, or defers a residual for a later pass is defective — the root fix belongs in the same change, and a genuinely blocked item is an explicit unreachable naming its owner, never a silent residual.
+        - path: "**/*.nix"
+          instructions: >-
+            Machine-owner repo on nix-darwin + Home Manager, Determinate Nix, nixpkgs-unstable. Review against docs/standards/nix-doctrine.md and docs/standards/design-doctrine.md. Defects: new wrapper modules, compat shims, aliases for retired names, anticipatory options, `with pkgs;` at file level, mixed system/home scope, singleton per-tool files where an owner table exists, vocabulary values (color, keybind, tool admission, MCP server) placed outside their single declared owner, host facts duplicated instead of projected from the host context owner, generated config built by string templates where a native generator exists, version pins without a recorded reason. Embedded shell bodies are reviewed as Bash: set -euo pipefail, declared runtimeInputs, shellcheck-clean, no `|| true` masks, no hardcoded repo paths or usernames. One owner per axis; a new capability is a row on the owning surface, never a new file. Files trend toward 300 LOC via polymorphic collapse, never by deleting capability.
+        - path: "overlays/**"
+          instructions: >-
+            Overlay packages are contract-bearing. forge-provision emits schema-v3 JSON envelopes only — flag any envelope field lacking a README contract row, any raw socket path, host absolute path, or token material in agent-facing JSON. jq programs live in jq/ files, never inlined in Bash; jq owns JSON shape, Bash owns admission and exit codes. SQL probes stay read-only. Dispatch is catalog-driven: service, image, command, and verb facts live in data catalogs, never hardcoded in shell.
+        - path: "services/**"
+          instructions: >-
+            TypeScript under docs/stacks/typescript law: Effect rails with tagged faults, Config.redacted for secret-bearing config, Schema decodes at boundaries, no any, no class-based services, pnpm-only. Pulumi rows are typed and declarative; imperative provider calls outside the driver are defects. Secret values must never reach state outputs unredacted. Dependency movement is forward-only — a downgrade or stale pin without a recorded reason is a defect.
+        - path: "modules/home/programs/**"
+          instructions: >-
+            App config consumers (Lua, TOML) project from Nix-owned vocabularies: private hex colors, ad hoc keybinds, or duplicated theme values in consumer config are defects — values arrive from generated owners. Lua is reviewed against the host application's API, not generic Lua convention.
+        - path: "**/*.sh"
+          instructions: >-
+            Standalone shell including .claude hooks: set -euo pipefail, shellcheck-clean without directives, no `|| true` failure masks, no command substitution that can block on session death, no embedded repo paths, usernames, or magic values — parameters or model-derived values only. Hooks never pass secret values through shell parsing, logs, or receipts.
+        - path: ".claude/workflows/**"
+          instructions: >-
+            Workflow scripts are deterministic orchestration: plain control flow, schema-typed agent outputs, bounded loops and harvest rounds, every stage writing its product to disk and returning a path receipt. Defects: bare promises without await ownership, unbounded polling, branching on wall clock, subagents asked to wait — codex wrappers are launch-only and the orchestrator owns time.
+        - path: ".claude/**"
+          instructions: >-
+            Agent-facing declarative artifacts: implicit agentic prose, active voice, 1-2 line comments. Defects: meta-commentary, provenance or freshness tails, checklist noise, restating obligations the instruction chain already carries, project-coupled content in reusable surfaces.
+        - path: "**/*.md"
+          instructions: >-
+            Review prose and structure against docs/standards/style-guide.md, docs/standards/formatting.md, and docs/standards/information-structure.md — the docgen discipline. Defects: no-op sentences that change no reader decision, leading filler words, meta-commentary, provenance/freshness tails, checklist tails, heading proliferation for short content, tables carrying explanations instead of enumerable facts, duplicated content an owning doc already carries, drift from the [UPPER_CASE] label convention, quality ladders (good/better/best tiers) where a contract gate belongs, restated obligations the instruction chain already carries (follow CLAUDE.md, use available tools), and defensive caveats softening settled rules.
+        - path: ".claude/skills/**"
+          instructions: >-
+            Skill bundles under the docgen skill-craft law. Defects: first- or second-person voice in frontmatter descriptions — quoted user-utterance trigger phrases are not voice; over-broad triggers spanning unrelated domains or keyword-stuffed synonym lists; SKILL.md over 500 lines or carrying reference banks, troubleshooting ledgers, or example floods that belong one hop down; references that only route to other references; no-op intensifiers with no owner, action, or gate; filler lead-ins (note that, make sure to, remember to); good/better/best quality ladders instead of contract gates; command catalogs without task triggers; generic think/plan/implement lifecycle steps; closing checklists with no machine-checkable gate; deterministic multi-step procedures narrated in prose where a bundled script belongs; three or more abstract guidance bullets with no paired rejected/accepted example or gate; one mandated output skeleton regardless of consumer; instructed network fetches or global installs inside skill bodies, except an owned install surface naming exact source, scope, and verification.
+    auto_review:
+        enabled: true
+        description_keyword: ""
+        auto_incremental_review: true
+        auto_pause_after_reviewed_commits: 0
+        ignore_title_keywords: []
+        labels: []
+        drafts: true
+        base_branches: []
+        ignore_usernames: []
+    finishing_touches:
+        docstrings:
+            enabled: true
+        unit_tests:
+            enabled: false
+        simplify:
+            enabled: false
+        autofix:
+            enabled: true
+        custom: []
+    pre_merge_checks:
+        override_requested_reviewers_only: false
+        docstrings:
+            mode: "off"
+            threshold: 80
+        title:
+            mode: "off"
+            requirements: ""
+        description:
+            mode: "off"
+        issue_assessment:
+            mode: "off"
+        custom_checks: []
+    tools:
+        ast-grep:
+            essential_rules: true
+            rule_dirs: []
+            util_dirs: []
+            packages: []
+        shellcheck:
+            enabled: true
+        ruff:
+            enabled: true
+        markdownlint:
+            enabled: false
+        github-checks:
+            enabled: true
+            timeout_ms: 90000
+        languagetool:
+            enabled: false
+            enabled_rules: []
+            disabled_rules: []
+            enabled_categories: []
+            disabled_categories: []
+            enabled_only: false
+            level: default
+        biome:
+            enabled: true
+        hadolint:
+            enabled: true
+        swiftlint:
+            enabled: true
+        phpstan:
+            enabled: true
+            level: default
+        phpmd:
+            enabled: true
+        phpcs:
+            enabled: true
+        golangci-lint:
+            enabled: true
+        yamllint:
+            enabled: true
+        gitleaks:
+            enabled: true
+        trufflehog:
+            enabled: true
+        checkov:
+            enabled: true
+        tflint:
+            enabled: true
+        detekt:
+            enabled: true
+        eslint:
+            enabled: true
+        flake8:
+            enabled: true
+        fbinfer:
+            enabled: true
+            enable_java: false
+        fortitudeLint:
+            enabled: true
+        rubocop:
+            enabled: true
+        buf:
+            enabled: true
+        regal:
+            enabled: true
+        actionlint:
+            enabled: true
+        zizmor:
+            enabled: true
+        pmd:
+            enabled: true
+        clang:
+            enabled: true
+        cppcheck:
+            enabled: true
+        opengrep:
+            enabled: true
+        semgrep:
+            enabled: true
+        circleci:
+            enabled: true
+        clippy:
+            enabled: true
+        sqlfluff:
+            enabled: true
+        squawk:
+            enabled: true
+        trivy:
+            enabled: true
+        prismaLint:
+            enabled: true
+        pylint:
+            enabled: true
+        oxc:
+            enabled: true
+        shopifyThemeCheck:
+            enabled: true
+        luacheck:
+            enabled: true
+        brakeman:
+            enabled: true
+        dotenvLint:
+            enabled: true
+        htmlhint:
+            enabled: true
+        stylelint:
+            enabled: true
+        checkmake:
+            enabled: true
+        osvScanner:
+            enabled: true
+        oasdiff:
+            enabled: true
+        reactDoctor:
+            enabled: true
+        presidio:
+            enabled: true
+        blinter:
+            enabled: true
+        smartyLint:
+            enabled: true
+        emberTemplateLint:
+            enabled: true
+        skillspector:
+            enabled: true
+        psscriptanalyzer:
+            enabled: true
+chat:
+    art: false
+    allow_non_org_members: true
+    auto_reply: true
+    integrations:
+        jira:
+            usage: disabled
+        linear:
+            usage: disabled
+knowledge_base:
+    opt_out: false
+    web_search:
+        enabled: true
+    code_guidelines:
+        enabled: true
+        filePatterns:
+            - "docs/standards/*.md"
+            - "docs/stacks/*/README.md"
+    learnings:
+        scope: local
+        approval_delay: 0
+    issues:
+        scope: local
+    jira:
+        usage: disabled
+        project_keys: []
+    linear:
+        usage: disabled
+        team_keys: []
+    pull_requests:
+        scope: local
+    mcp:
+        usage: auto
+        disabled_servers: []
+    automatic_repository_linking: false
+    linked_repositories:
+        - repository: bsamiee/Rasm
+          instructions: >-
+            Doctrine master for the shared stack and docgen law; skill bundles mirror byte-identical across the estate — flag divergence in mirrored surfaces.
+        - repository: bsamiee/Maghz
+          instructions: >-
+            VPS second-brain consumer of Forge machine rails; provisioning contract and launcher changes ripple here.
+code_generation:
+    docstrings:
+        language: en-US
+        path_instructions: []
+    unit_tests:
+        path_instructions: []
+issue_enrichment:
+    auto_enrich:
+        enabled: true
+    planning:
+        enabled: false
+        auto_planning:
+            enabled: false
+            labels: []
+    labeling:
+        labeling_instructions: []
+        auto_apply_labels: true

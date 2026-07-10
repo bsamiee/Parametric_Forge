@@ -7,7 +7,9 @@ import OSAKit
 
 struct ScriptFailure: Error {
     let info: NSDictionary?
-    init(_ info: NSDictionary?) { self.info = info }
+    init(_ info: NSDictionary?) {
+        self.info = info
+    }
 }
 
 // The actor confines every compile and execute to one serial context, so the run-loop
@@ -22,7 +24,7 @@ actor ScriptExecutor {
         language.isThreadSafe ? language.sharedLanguageInstance() : OSALanguageInstance(language: language)
 
     init(languageName: String = "AppleScript") {
-        self.language = OSALanguage(forName: languageName)!
+        language = OSALanguage(forName: languageName)!
     }
 
     func run(_ source: String, handler: String, arguments: [NSAppleEventDescriptor]) throws -> NSAppleEventDescriptor {
@@ -35,18 +37,20 @@ actor ScriptExecutor {
     }
 }
 
-// Off-main execution never runs a background-queue NSAppleScript call. It moves execution out
-// of the in-process OSA component entirely — NSUserAppleScriptTask (async completion handler,
-// own queue, outside the sandbox) or a spawned /usr/bin/osascript Process — so the host's own
-// actor keeps ownership of the descriptor result. The handler is invoked by kASSubroutineEvent.
+/// Off-main execution never runs a background-queue NSAppleScript call. It moves execution out
+/// of the in-process OSA component entirely — NSUserAppleScriptTask (async completion handler,
+/// own queue, outside the sandbox) or a spawned /usr/bin/osascript Process — so the host's own
+/// actor keeps ownership of the descriptor result. The handler is invoked by kASSubroutineEvent.
 func runUserHandler(scriptName: String, handler: String, argument: String) async throws -> NSAppleEventDescriptor? {
     let directory = try FileManager.default.url(
-        for: .applicationScriptsDirectory, in: .userDomainMask, appropriateFor: nil, create: false)
+        for: .applicationScriptsDirectory, in: .userDomainMask, appropriateFor: nil, create: false,
+    )
     let task = try NSUserAppleScriptTask(url: directory.appendingPathComponent(scriptName))
 
     let event = NSAppleEventDescriptor(
         eventClass: AEEventClass(kASAppleScriptSuite), eventID: AEEventID(kASSubroutineEvent),
-        targetDescriptor: nil, returnID: AEReturnID(kAutoGenerateReturnID), transactionID: AETransactionID(kAnyTransactionID))
+        targetDescriptor: nil, returnID: AEReturnID(kAutoGenerateReturnID), transactionID: AETransactionID(kAnyTransactionID),
+    )
     event.setParam(.init(string: handler), forKeyword: keyASSubroutineName)
     let list = NSAppleEventDescriptor.list()
     list.insert(.init(string: argument), at: 0)

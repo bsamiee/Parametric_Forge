@@ -6,7 +6,7 @@ Read this before generating ProseMirror JSON: the card content schema is strict,
 
 Prefer Markdown for ordinary writing and appending. Use ProseMirror JSON only when you need to preserve existing structure or create schema nodes/marks that Markdown cannot express.
 
-## Top-Level JSON Shape
+## [01]-[TOP_LEVEL_JSON_SHAPE]
 
 A ProseMirror document is a JSON object:
 
@@ -29,31 +29,32 @@ The document must contain at least one block. `{"type":"doc","content":[]}` is i
 
 When editing existing content, preserve existing `id` values from `read`. For new blocks, omit `id` or set it to `null`; the CLI save handler backfills valid IDs. Do not create custom string IDs yourself.
 
-## Markdown Content
+## [02]-[MARKDOWN_CONTENT]
 
 For everyday note content, you can use Markdown instead of JSON. The table below maps Markdown syntax to the ProseMirror nodes and marks the CLI creates:
 
 <!-- prettier-ignore -->
-| Markdown | ProseMirror result |
-| --- | --- |
-| `# H1` through `###### H6` | `heading` |
-| Plain text paragraphs | `paragraph` |
-| `>` quote | `blockquote` |
-| `- item` | `bullet_list_item` |
-| `1. item` | `numbered_list_item` |
-| `- [ ] item`, `- [x] item` | `todo_list_item` |
-| `+ item` | `toggle_list_item` |
-| Triple backtick fences | `code_block` |
-| `---` | `horizontal_rule` |
-| Markdown tables | `table` |
-| `![](src)`, `![](src "title")` | `image` block (`alt` is ignored so no need to set it) |
-| `{{video URL}}`, `{{youtube URL}}`, `{{vimeo URL}}`, `{{bilibili URL}}` | `video` block |
-| `{{card UUID}}` | inline `card` mention |
-| `{{pdf_card UUID}}` | inline `pdf_card` mention |
-| `{{whiteboard UUID}}` | inline `whiteboard` mention |
-| `{{date YYYY-MM-DD}}` | inline `date` mention |
-| `$x$`, `$$x$$` | `math_inline`, `math_display` |
-| `**bold**`, `*italic*`, `~~strike~~`, `` `code` ``, `[link](url)` | marks |
+
+| [INDEX] | [MARKDOWN]                                                              | [PROSEMIRROR]                                         |
+| :-----: | :---------------------------------------------------------------------- | :---------------------------------------------------- |
+|  [01]   | `# H1` through `###### H6`                                              | `heading`                                             |
+|  [02]   | Plain text paragraphs                                                   | `paragraph`                                           |
+|  [03]   | `>` quote                                                               | `blockquote`                                          |
+|  [04]   | `- item`                                                                | `bullet_list_item`                                    |
+|  [05]   | `1. item`                                                               | `numbered_list_item`                                  |
+|  [06]   | `- [ ] item`, `- [x] item`                                              | `todo_list_item`                                      |
+|  [07]   | `+ item`                                                                | `toggle_list_item`                                    |
+|  [08]   | Triple backtick fences                                                  | `code_block`                                          |
+|  [09]   | `---`                                                                   | `horizontal_rule`                                     |
+|  [10]   | Markdown tables                                                         | `table`                                               |
+|  [11]   | `![](src)`, `![](src "title")`                                          | `image` block (`alt` is ignored so no need to set it) |
+|  [12]   | `{{video URL}}`, `{{youtube URL}}`, `{{vimeo URL}}`, `{{bilibili URL}}` | `video` block                                         |
+|  [13]   | `{{card UUID}}`                                                         | inline `card` mention                                 |
+|  [14]   | `{{pdf_card UUID}}`                                                     | inline `pdf_card` mention                             |
+|  [15]   | `{{whiteboard UUID}}`                                                   | inline `whiteboard` mention                           |
+|  [16]   | `{{date YYYY-MM-DD}}`                                                   | inline `date` mention                                 |
+|  [17]   | `$x$`, `$$x$$`                                                          | `math_inline`, `math_display`                         |
+|  [18]   | `**bold**`, `*italic*`, `~~strike~~`, `` `code` ``, `[link](url)`       | marks                                                 |
 
 Below is an example with inline mentions, an image block, a standalone video line (note the blank lines), and a todo item:
 
@@ -79,34 +80,43 @@ Video markdown rules:
 - Put a blank line before and after the video line when other blocks are nearby.
 - Invalid: `Watch this: {{youtube https://...}}` (trailing text prevents a `video` block).
 
-## ProseMirror Nodes
+## [03]-[PROSEMIRROR_NODES]
 
-### Blocks
+### [03.1]-[BLOCKS]
+
+Optional attrs carry a trailing `?`. Every `id` and `fileId` is a UUID string or null; string attrs (`src`, `url`, `width`, `title`, and peers) are string or null; `originalWidth`/`originalHeight` are number or null; timestamp attrs are ISO 8601 strings (see [Timestamp Attrs](#timestamp-attrs)). Media `reference` attrs are preserved from `read`, never created manually (see [Media References](#media-references)). For `table_cell`/`table_header`, `colspan?`/`rowspan?` are positive integers, `colwidth?` is a positive integer[] or null, and `backgroundColor?`/`textColor?` are an editor color or null (see [Editor Colors](#editor-colors)). For `embed` and `mention`, `objectType` is `note`, `journal`, `highlightElement`, `image`, `video`, or `audio`, and `objectId` is a UUID string, or `YYYY-MM-DD` when `objectType` is `journal`. Deprecated `image`/`video` attrs live in [Deprecated attributes](#deprecated-attributes).
 
 <!-- prettier-ignore -->
-| Node | Content | Attrs |
-| --- | --- | --- |
-| `doc` | `block+` | none |
-| `paragraph` | `inline*` | `id?: UUID string or null` |
-| `heading` | `inline*` | `id?: UUID string or null`, `level?: 1-6` (default `1`) |
-| `blockquote` | `block+` | `id?: UUID string or null` |
-| `horizontal_rule` | none | `id?: UUID string or null` |
-| `code_block` | `text*` | `id?: UUID string or null`, `params?: string or null` (see [Code Block Params](#code-block-params); default `""`) |
-| `math_display` | `text*` | `id?: UUID string or null` |
-| `bullet_list_item` | `paragraph block*` | `id?: UUID string or null`, `folded?: boolean`, `format?: 0, 1, 2, "0", "1", "2", or null` |
-| `numbered_list_item` | `paragraph block*` | `id?: UUID string or null`, `order?: positive integer or null`, `format?: 0, 1, 2, "0", "1", "2", or null` |
-| `todo_list_item` | `paragraph block*` | `id?: UUID string or null`, `checked?: boolean`, `dueDate?: YYYY-MM-DD string or null`, `lastCheckedTime?: ISO 8601 string or null`, `lastUpdatedTime?: ISO 8601 string` (see [Timestamp Attrs](#timestamp-attrs)) |
-| `toggle_list_item` | `heading` or `paragraph`, then `block*` | `id?: UUID string or null`, `folded?: boolean` |
-| `table` | `table_row+` | `id?: UUID string or null`, `hasRowHeader?: boolean`, `hasColumnHeader?: boolean` |
-| `table_row` | zero or more `table_cell` or `table_header` nodes | `id?: UUID string or null` |
-| `table_cell`, `table_header` | `block+` | `id?: UUID string or null`, `colspan?: positive integer`, `rowspan?: positive integer`, `colwidth?: positive integer[] or null`, `backgroundColor?: editor color or null`, `textColor?: editor color or null` (see [Editor Colors](#editor-colors)) |
-| `image` | none | `id?: UUID string or null`, `src?: string or null`, `fileId?: UUID string or null`, `width?: string or null`, `originalHeight?: number or null`, `originalWidth?: number or null`, `alignment?: left, center, or right`, `reference?: media reference or null` (preserve from `read`; do not create manually); **legacy markdown:** `alt`, `title` |
-| `video` | none | `id?: UUID string or null`, `fileId?: UUID string or null`, `url?: string or null`, `width?: string or null`, `alignment?: left, center, or right`, `originalWidth?: number or null`, `originalHeight?: number or null`, `reference?: media reference or null` (preserve from `read`; do not create manually); **deprecated:** `source` (legacy iframe embeds; omit on new content) |
-| `audio` | none | `id?: UUID string or null`, `url?: string or null`, `fileId?: UUID string or null`, `reference?: media reference or null` (preserve from `read`; do not create manually) |
-| `file` | none | `id?: UUID string or null`, `fileId?: UUID string or null`, `url?: string or null`, `reference?: media reference or null` (preserve from `read`; do not create manually) |
-| `bookmark` | none | `url: full URL string`, `id?: UUID string or null`, `title?: string or null`, `description?: string or null`, `thumbnailUrl?: string or null`, `faviconUrl?: string or null`, `siteName?: string or null`, `lastUpdatedTime?: ISO 8601 string or null` (see [Timestamp Attrs](#timestamp-attrs)) |
-| `embed` | none | supported `objectType`: `note`, `journal`, `highlightElement`, `image`, `video`, or `audio`; `objectId: UUID string` (or `YYYY-MM-DD` when `objectType` is `journal`), `id?: UUID string or null`; `originalWidth`, `originalHeight`, `width`, and `alignment` |
-| `mention` | none | supported `objectType`: `note`, `journal`, `highlightElement`, `image`, `video`, or `audio`; `objectId: UUID string` (or `YYYY-MM-DD` when `objectType` is `journal`), `id?: UUID string or null` |
+
+| [INDEX] | [NODE]                       | [CONTENT]                     | [ATTRS]                                                               |
+| :-----: | :--------------------------- | :---------------------------- | :-------------------------------------------------------------------- |
+|  [01]   | `doc`                        | `block+`                      | none                                                                  |
+|  [02]   | `paragraph`                  | `inline*`                     | `id?`                                                                 |
+|  [03]   | `heading`                    | `inline*`                     | `id?`, `level?` 1-6 (default `1`)                                     |
+|  [04]   | `blockquote`                 | `block+`                      | `id?`                                                                 |
+|  [05]   | `horizontal_rule`            | none                          | `id?`                                                                 |
+|  [06]   | `code_block`                 | `text*`                       | `id?`, `params?`                                                      |
+|  [07]   | `math_display`               | `text*`                       | `id?`                                                                 |
+|  [08]   | `bullet_list_item`           | `paragraph block*`            | `id?`, `folded?`, `format?`                                           |
+|  [09]   | `numbered_list_item`         | `paragraph block*`            | `id?`, `order?`, `format?`                                            |
+|  [10]   | `todo_list_item`             | `paragraph block*`            | `id?`, `checked?`, `dueDate?`, `lastCheckedTime?`, `lastUpdatedTime?` |
+|  [11]   | `toggle_list_item`           | `(heading\|paragraph) block*` | `id?`, `folded?`                                                      |
+|  [12]   | `table`                      | `table_row+`                  | `id?`, `hasRowHeader?`, `hasColumnHeader?`                            |
+|  [13]   | `table_row`                  | `(table_cell\|table_header)*` | `id?`                                                                 |
+|  [14]   | `table_cell`, `table_header` | `block+`                      | `id?`, `colspan?`, `rowspan?`, `colwidth?`                            |
+|  [15]   | `image`                      | none                          | `id?`, `src?`, `fileId?`, `width?`, `alignment?`, `reference?`        |
+|  [16]   | `video`                      | none                          | `id?`, `fileId?`, `url?`, `width?`, `alignment?`, `reference?`        |
+|  [17]   | `audio`                      | none                          | `id?`, `url?`, `fileId?`, `reference?`                                |
+|  [18]   | `file`                       | none                          | `id?`, `fileId?`, `url?`, `reference?`                                |
+|  [19]   | `bookmark`                   | none                          | `url` (required), `id?`, `title?`, `description?`, and peers          |
+|  [20]   | `embed`                      | none                          | `objectType`, `objectId`, `id?`, `width`, `alignment`                 |
+|  [21]   | `mention`                    | none                          | `objectType`, `objectId`, `id?`                                       |
+
+- `format?` ∈ 0, 1, 2, "0", "1", "2", or null; `order?` positive integer or null; `dueDate?` YYYY-MM-DD or null.
+- `alignment?` ∈ left/center/right; image and video also `originalWidth?`, `originalHeight?`.
+- `bookmark` also `thumbnailUrl?`, `faviconUrl?`, `siteName?`, `lastUpdatedTime?`; `url` is a full URL string.
+- `embed` also `originalWidth`, `originalHeight`; `code_block` `params?` see [Code Block Params](#code-block-params), default `""`.
+- `table_cell`/`table_header` also `backgroundColor?`, `textColor?`.
 
 Block media nodes cannot appear inside a paragraph. Use inline mention nodes for inline references.
 
@@ -126,63 +136,71 @@ Media `reference` attrs are internal metadata. Preserve them when editing existi
 
 Editor colors for `table_cell` / `table_header` `backgroundColor` and `textColor` are `gray`, `brown`, `orange`, `yellow`, `green`, `blue`, `purple`, `pink`, and `red`.
 
-### Inline Nodes
+### [03.2]-[INLINE_NODES]
 
 <!-- prettier-ignore -->
-| Node | Attrs |
-| --- | --- |
-| `text` | none |
-| `math_inline` | none |
-| `hard_break` | none |
-| `web` | `url: full URL string`, `title?: string or null` |
-| `date` | `date: string` (`YYYY-MM-DD`) |
-| `whiteboard` | `whiteboardId: UUID string` |
-| `card` | `cardId: UUID string` |
-| `pdf_card` | `pdfCardId: UUID string` |
-| `section` | `sectionId: UUID string` |
-| `tag` | `tagId: UUID string` |
-| `highlight_element` | `highlightElementId: UUID string` |
-| `image_card`, `video_card`, `audio_card` | `cardId: UUID string` |
-| `web_card` | `webCardId: UUID string` |
-| `chat` | `chatId: UUID string`, `chatMessageId?: UUID string or null`, `quotedChatMessageId?: UUID string or null` |
+
+| [INDEX] | [NODE]                                   | [ATTRS]                                                         |
+| :-----: | :--------------------------------------- | :-------------------------------------------------------------- |
+|  [01]   | `text`                                   | none                                                            |
+|  [02]   | `math_inline`                            | none                                                            |
+|  [03]   | `hard_break`                             | none                                                            |
+|  [04]   | `web`                                    | `url: full URL string`, `title?: string or null`                |
+|  [05]   | `date`                                   | `date: string` (`YYYY-MM-DD`)                                   |
+|  [06]   | `whiteboard`                             | `whiteboardId: UUID string`                                     |
+|  [07]   | `card`                                   | `cardId: UUID string`                                           |
+|  [08]   | `pdf_card`                               | `pdfCardId: UUID string`                                        |
+|  [09]   | `section`                                | `sectionId: UUID string`                                        |
+|  [10]   | `tag`                                    | `tagId: UUID string`                                            |
+|  [11]   | `highlight_element`                      | `highlightElementId: UUID string`                               |
+|  [12]   | `image_card`, `video_card`, `audio_card` | `cardId: UUID string`                                           |
+|  [13]   | `web_card`                               | `webCardId: UUID string`                                        |
+|  [14]   | `chat`                                   | `chatId: UUID string`, `chatMessageId?`, `quotedChatMessageId?` |
+
+- `chat`: `chatMessageId?` and `quotedChatMessageId?` are UUID string or null.
 
 - **`text`** — Put characters in `text` (required) and optional formatting in `marks`. See [Top-Level JSON Shape](#top-level-json-shape) and [Marks](#marks).
 - **`math_inline`** — Put the TeX inside `content` as a child `text` node. See [Math](#math).
 - **`people`** — Do not use `people`. It exists in a special editor schema, but the CLI save schema rejects it.
 
-### Marks
+### [03.3]-[MARKS]
 
 Marks only attach to `text` nodes. Each mark is an entry in that node's `marks` array: `{ "type": "<mark>", "attrs": ... }` (many marks have no `attrs`).
 
 When you save as Markdown, you can get bold, italic, and stuff from the syntax in [Markdown Content](#markdown-content). But you cannot get underline or text/background color that way because there is no Markdown syntax for them — save as JSON (ProseMirror) if you need those marks.
 
 <!-- prettier-ignore -->
-| Mark | Attrs | Notes |
-| --- | --- | --- |
-| `em` | none | italic |
-| `strong` | none | bold |
-| `strike` | none | strikethrough |
-| `underline` | none | underline |
-| `code` | none | inline code |
-| `link` | `href: non-empty string` | `href` is required; **deprecated (legacy markdown):** `title`, `data-internal-href`, `edited` — preserve from `read` if present, do not set on new links |
-| `color` | `type: text or background`, `color: gray, brown, orange, yellow, green, blue, purple, pink, or red` | both attrs are required when the mark is present |
-| `highlight` | `ids: UUID string[]` | read-only highlight/comment metadata; do not create manually |
-| `anchor` | `ids: UUID string[]` | read-only anchor metadata; do not create manually |
 
-### Deprecated attributes
+| [INDEX] | [MARK]      | [ATTRS]                                         | [NOTES]                                                      |
+| :-----: | :---------- | :---------------------------------------------- | :----------------------------------------------------------- |
+|  [01]   | `em`        | none                                            | italic                                                       |
+|  [02]   | `strong`    | none                                            | bold                                                         |
+|  [03]   | `strike`    | none                                            | strikethrough                                                |
+|  [04]   | `underline` | none                                            | underline                                                    |
+|  [05]   | `code`      | none                                            | inline code                                                  |
+|  [06]   | `link`      | `href: non-empty string`                        | `href` required; deprecated attrs preserved from `read`      |
+|  [07]   | `color`     | `type: text\|background`, `color: editor color` | both attrs required when the mark is present                 |
+|  [08]   | `highlight` | `ids: UUID string[]`                            | read-only highlight/comment metadata; do not create manually |
+|  [09]   | `anchor`    | `ids: UUID string[]`                            | read-only anchor metadata; do not create manually            |
+
+- `link` deprecated (legacy markdown) attrs: `title`, `data-internal-href`, `edited` — preserve from `read` if present, never set on new links.
+- `color` `color` ∈ gray, brown, orange, yellow, green, blue, purple, pink, or red.
+
+### [03.4]-[DEPRECATED_ATTRIBUTES]
 
 Some attrs remain in the schema as legacy. When **creating** new JSON, omit them unless you are round-tripping an existing document from `read`:
 
 <!-- prettier-ignore -->
-| Node or mark | Deprecated attrs | Notes |
-| --- | --- | --- |
-| `image` | `alt`, `title` | Markdown import ignores them; use `fileId` / `src` and `alignment` instead |
-| `video` | `source` | Legacy iframe `data-source`; use `fileId` or `url` |
-| `link` | `title`, `data-internal-href`, `edited` | Use `href` only for new external links; internal links are resolved by the app |
 
-## Examples
+| [INDEX] | [NODE_MARK] | [DEPRECATED]                            | [NOTES]                                                                        |
+| :-----: | :---------- | :-------------------------------------- | :----------------------------------------------------------------------------- |
+|  [01]   | `image`     | `alt`, `title`                          | Markdown import ignores them; use `fileId` / `src` and `alignment` instead     |
+|  [02]   | `video`     | `source`                                | Legacy iframe `data-source`; use `fileId` or `url`                             |
+|  [03]   | `link`      | `title`, `data-internal-href`, `edited` | Use `href` only for new external links; internal links are resolved by the app |
 
-### Minimal Note
+## [04]-[EXAMPLES]
+
+### [04.1]-[MINIMAL_NOTE]
 
 ```json
 {
@@ -191,7 +209,7 @@ Some attrs remain in the schema as legacy. When **creating** new JSON, omit them
 }
 ```
 
-### Paragraph With Marks And Link
+### [04.2]-[PARAGRAPH_WITH_MARKS_AND_LINK]
 
 ```json
 {
@@ -223,7 +241,7 @@ Some attrs remain in the schema as legacy. When **creating** new JSON, omit them
 }
 ```
 
-### Todo Item
+### [04.3]-[TODO_ITEM]
 
 ```json
 {
@@ -248,7 +266,7 @@ Some attrs remain in the schema as legacy. When **creating** new JSON, omit them
 }
 ```
 
-### Code Block
+### [04.4]-[CODE_BLOCK]
 
 ```json
 {
@@ -270,7 +288,7 @@ Some attrs remain in the schema as legacy. When **creating** new JSON, omit them
 
 Use `!` to enable line wrapping, for example `!typescript`. For Mermaid code blocks, append `:code`, `:preview`, or `:split` to choose the display mode.
 
-### Inline Card Mention
+### [04.5]-[INLINE_CARD_MENTION]
 
 ```json
 {
@@ -291,7 +309,7 @@ Use `!` to enable line wrapping, for example `!typescript`. For Mermaid code blo
 }
 ```
 
-### Mirror Embed
+### [04.6]-[MIRROR_EMBED]
 
 ```json
 {
@@ -311,7 +329,7 @@ Use `!` to enable line wrapping, for example `!typescript`. For Mermaid code blo
 }
 ```
 
-### Math
+### [04.7]-[MATH]
 
 `math_display` is a block; `math_inline` is an inline sibling next to `text` inside a paragraph. Neither uses `attrs` or a top-level `text` property for the formula. Put the TeX string in `content` as a single child `text` node. Multiple child `text` nodes are schema-valid, but prefer one child `text` node when creating new math content.
 
@@ -340,7 +358,7 @@ Use `!` to enable line wrapping, for example `!typescript`. For Mermaid code blo
 }
 ```
 
-### Table
+### [04.8]-[TABLE]
 
 ```json
 {
@@ -412,7 +430,7 @@ Use `!` to enable line wrapping, for example `!typescript`. For Mermaid code blo
 }
 ```
 
-## Dos
+## [05]-[DOS]
 
 - Do read first and edit the returned `content` when replacing a card or journal.
 - Do pass the latest `contentMd5` to `save`.
@@ -420,7 +438,7 @@ Use `!` to enable line wrapping, for example `!typescript`. For Mermaid code blo
 - Do use `id: null` or omit `id` on new blocks; the save handler backfills valid IDs.
 - Do resolve real target IDs with CLI reads/lists before creating inline mentions or embeds.
 
-## Don'ts
+## [06]-[DON_TS]
 
 - Don't write an empty document.
 - Don't put text in `attrs.text`.

@@ -8,23 +8,32 @@ Six siblings own material this algebra composes as settled: a fold whose accumul
 
 This table maps a computational shape to the form that owns it; the most specific shape wins.
 
-| [INDEX] | [COMPUTATION]                                 | [OWNING_FORM]                                                              | [REJECTED_FORM]                          |
-| :-----: | :-------------------------------------------- | :------------------------------------------------------------------------- | :--------------------------------------- |
-|  [01]   | several quantities over one sequence          | `Array.reduce` into one readonly seed; statistics project at read          | a `sum`/`min`/`max`/`length` pass apiece |
-|  [02]   | running or cumulative trace                   | `Array.scan`, the same `(step, SEED)` pair                                 | an index loop appending each step        |
-|  [03]   | multi-stage transform over a large source     | lazy `Iterable` pipeline, one tail materialization                         | a fully built array per stage            |
-|  [04]   | sliding or fixed windows                      | `Array.window` / `Array.chunksOf`                                          | `slice(i, i + n)` index stepping         |
-|  [05]   | parallel or Cartesian co-iteration            | `Array.zipWith` / `Array.cartesianWith`                                    | nested `for` loops, a hand index pair    |
-|  [06]   | keyed, prefix, or breach grouping             | `Array.groupBy` / `Array.span` / `Array.splitWhere`                        | a mutable bucket accumulator             |
-|  [07]   | per-element verdict split or `Option` harvest | `Array.partitionMap` / `Array.getSomes`                                    | a filter-then-map double pass            |
-|  [08]   | element-wise transform with threaded state    | `Array.mapAccum` Mealy step                                                | a `let` rebound across a `map`           |
-|  [09]   | closed transition system                      | vocabulary rows carrying `(next, emit)`; one fold drives                   | a `switch` advancing a mutable phase     |
-|  [10]   | stateful actor behind a request surface       | `Machine.makeSerializable` procedure rows, booted scoped                   | a class of mutable fields and methods    |
-|  [11]   | bounded recursion over a closed family        | one `(leaf, join)` algebra threaded by one traversal                       | a recursive function per reduction       |
-|  [12]   | input-scaled recursion depth                  | frontier kernel over an immutable `List` stack; rail `Effect.iterate`      | native recursion past the stack ceiling  |
-|  [13]   | graph-shaped traversal or path cost           | `Graph.dfs`/`Graph.topo`/`Graph.dijkstra` walker reads                     | a hand frontier over adjacency state     |
-|  [14]   | overlapping subproblems                       | tabulation fold threading the solved table; `Effect.cachedFunction` family | a hand memo `Map` beside the function    |
-|  [15]   | measured hot path                             | marked kernel — `MutableHashMap`/`TypedArray` draft, detached immutable    | ambient mutation in domain flow          |
+| [INDEX] | [COMPUTATION]                           | [OWNING_FORM]                               | [REJECTED_FORM]                       |
+| :-----: | :-------------------------------------- | :------------------------------------------ | :------------------------------------ |
+|  [01]   | several quantities over one sequence    | `Array.reduce` into one readonly seed       | `sum`/`min`/`max`/`length` pass       |
+|  [02]   | running or cumulative trace             | `Array.scan`, `(step, SEED)` pair           | an index loop appending each step     |
+|  [03]   | multi-stage transform, large source     | lazy `Iterable` pipeline; tail materialized | a fully built array per stage         |
+|  [04]   | sliding or fixed windows                | `Array.window` / `Array.chunksOf`           | `slice(i, i + n)` index stepping      |
+|  [05]   | parallel or Cartesian co-iteration      | `Array.zipWith` / `Array.cartesianWith`     | nested `for` loops, a hand index pair |
+|  [06]   | keyed, prefix, or breach grouping       | `Array.groupBy` and peers                   | a mutable bucket accumulator          |
+|  [07]   | verdict split or `Option` harvest       | `Array.partitionMap` / `Array.getSomes`     | a filter-then-map double pass         |
+|  [08]   | element-wise transform, threaded state  | `Array.mapAccum` Mealy step                 | a `let` rebound across a `map`        |
+|  [09]   | closed transition system                | vocabulary rows carry `(next, emit)`        | a `switch` advancing a mutable phase  |
+|  [10]   | stateful actor behind a request surface | `Machine.makeSerializable` procedure rows   | class of mutable fields, methods      |
+|  [11]   | bounded recursion over a closed family  | `(leaf, join)` algebra, one traversal       | a recursive function per reduction    |
+|  [12]   | input-scaled recursion depth            | frontier kernel; `Effect.iterate` rail      | native recursion past stack ceiling   |
+|  [13]   | graph-shaped traversal or path cost     | `Graph.dfs` and peers                       | a hand frontier over adjacency state  |
+|  [14]   | overlapping subproblems                 | tabulation fold; `Effect.cachedFunction`    | a hand memo `Map` beside the function |
+|  [15]   | measured hot path                       | `MutableHashMap`/`TypedArray` draft         | ambient mutation in domain flow       |
+
+- [01]: statistics project at read.
+- [06]: grouping: `Array.groupBy` keyed, `Array.span` prefix, `Array.splitWhere` breach.
+- [09]: one fold drives the rows.
+- [10]: procedure rows booted scoped.
+- [12]: frontier kernel walks an immutable `List` stack.
+- [13]: graph walkers: `Graph.dfs`, `Graph.topo`, `Graph.dijkstra`.
+- [14]: tabulation fold threads the solved table; the `Effect.cachedFunction` family memoizes.
+- [15]: marked kernel drafts mutable, detaches an immutable result.
 
 ## [02]-[SEED_FOLD]
 

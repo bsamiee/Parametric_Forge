@@ -8,29 +8,29 @@ Six siblings own material this page composes as settled: the `Effect` carrier al
 
 This table maps a dataflow shape to the form that owns it; the most specific shape wins.
 
-| [INDEX] | [DATAFLOW]                                | [OWNING_FORM]                                         | [REJECTED_FORM]                         |
-| :-----: | :---------------------------------------- | :---------------------------------------------------- | :-------------------------------------- |
-|  [01]   | bounded pure reduction over admitted data | `Chunk.reduce` fold, no carrier                       | a `Stream` over in-memory data          |
-|  [02]   | bounded collection, effect per element    | `Effect.forEach` with explicit `{ concurrency }`      | hand fiber loop; stream ceremony        |
-|  [03]   | unbounded, incremental, or scoped source  | `Stream` pipeline into one `run*` terminal            | whole-feed materialization              |
-|  [04]   | cursor-paged provider read                | `Stream.paginateChunkEffect`                          | an offset pump materializing all pages  |
-|  [05]   | point read repeated on a cadence          | `Stream.repeatEffectWithSchedule`                     | a sleep loop pushing into a queue       |
-|  [06]   | element-to-element state                  | `Stream.mapAccum` Mealy step                          | `Ref` mutated inside `map`              |
-|  [07]   | running trace of an accumulator           | `Stream.scan`, seed emitted first                     | a fold that swallows intermediates      |
-|  [08]   | neighbor access or fixed lookback         | `Stream.zipWithPrevious` / `Stream.sliding`           | a hand Mealy carrying the prior element |
-|  [09]   | consecutive-repeat suppression            | `Stream.changes` / `Stream.changesWith`               | a `last` cell compared inside `filter`  |
-|  [10]   | count-or-latency window                   | `Stream.groupedWithin(width, patience)`               | timer fiber plus mutable buffer         |
-|  [11]   | budget-closed, cadence-flushed batch      | `Stream.aggregateWithin` + `Sink.foldWeighted`        | count windows over uneven payloads      |
-|  [12]   | static N consumers of one source          | `Stream.broadcast(n, lag)` scoped tuple               | re-running the source per consumer      |
-|  [13]   | late or dynamic consumers of one source   | `Stream.share` replay window                          | re-plumbed `broadcast` per subscriber   |
-|  [14]   | per-key partitioned processing            | `Stream.groupByKey` + `GroupBy.evaluate`              | keyed map of arrays, then re-stream     |
-|  [15]   | heterogeneous source union                | `Stream.mergeWithTag` derived tagged merge            | hand-tagged `map` before `merge`        |
-|  [16]   | keyed alignment of two sorted feeds       | `Stream.zipAllSortedByKeyWith`                        | materialize both sides and join         |
-|  [17]   | callback or queue ingress                 | `Stream.asyncScoped` / `Stream.fromQueue`             | listener pushing into an outer array    |
-|  [18]   | stalled pull or failing long-lived source | `Stream.timeoutFail` + `Stream.retry`                 | a hand reconnect loop around the source |
-|  [19]   | pipeline feeding channel consumers        | `Stream.toQueue` / `Stream.toPubSub` `Take` handoff   | `runForEach` offers, end hand-signaled  |
-|  [20]   | N identical lookups in one flow           | `Request.TaggedClass` + `RequestResolver.makeBatched` | per-element query — the N+1             |
-|  [21]   | batch collapse across unrelated fibers    | `RequestResolver.dataLoader` wall-clock window        | same-traversal proximity as the window  |
+| [INDEX] | [DATAFLOW]                            | [OWNING_FORM]                                         | [REJECTED_FORM]                         |
+| :-----: | :------------------------------------ | :---------------------------------------------------- | :-------------------------------------- |
+|  [01]   | bounded pure reduction, admitted data | `Chunk.reduce` fold, no carrier                       | a `Stream` over in-memory data          |
+|  [02]   | bounded collection, effect/element    | `Effect.forEach` with explicit `{ concurrency }`      | hand fiber loop; stream ceremony        |
+|  [03]   | unbounded, incremental, or scoped     | `Stream` pipeline into one `run*` terminal            | whole-feed materialization              |
+|  [04]   | cursor-paged provider read            | `Stream.paginateChunkEffect`                          | an offset pump materializing all pages  |
+|  [05]   | point read repeated on a cadence      | `Stream.repeatEffectWithSchedule`                     | a sleep loop pushing into a queue       |
+|  [06]   | element-to-element state              | `Stream.mapAccum` Mealy step                          | `Ref` mutated inside `map`              |
+|  [07]   | running trace of an accumulator       | `Stream.scan`, seed emitted first                     | a fold that swallows intermediates      |
+|  [08]   | neighbor access or fixed lookback     | `Stream.zipWithPrevious` / `Stream.sliding`           | a hand Mealy carrying the prior element |
+|  [09]   | consecutive-repeat suppression        | `Stream.changes` / `Stream.changesWith`               | a `last` cell compared inside `filter`  |
+|  [10]   | count-or-latency window               | `Stream.groupedWithin(width, patience)`               | timer fiber plus mutable buffer         |
+|  [11]   | budget-closed, cadence-flushed batch  | `Stream.aggregateWithin` + `Sink.foldWeighted`        | count windows over uneven payloads      |
+|  [12]   | static N consumers of one source      | `Stream.broadcast(n, lag)` scoped tuple               | re-running the source per consumer      |
+|  [13]   | late or dynamic consumers, one source | `Stream.share` replay window                          | re-plumbed `broadcast` per subscriber   |
+|  [14]   | per-key partitioned processing        | `Stream.groupByKey` + `GroupBy.evaluate`              | keyed map of arrays, then re-stream     |
+|  [15]   | heterogeneous source union            | `Stream.mergeWithTag` derived tagged merge            | hand-tagged `map` before `merge`        |
+|  [16]   | keyed alignment of two sorted feeds   | `Stream.zipAllSortedByKeyWith`                        | materialize both sides and join         |
+|  [17]   | callback or queue ingress             | `Stream.asyncScoped` / `Stream.fromQueue`             | listener pushing into an outer array    |
+|  [18]   | stalled or failing long-lived source  | `Stream.timeoutFail` + `Stream.retry`                 | a hand reconnect loop around the source |
+|  [19]   | pipeline feeding channel consumers    | `Stream.toQueue` / `Stream.toPubSub` `Take` handoff   | `runForEach` offers, end hand-signaled  |
+|  [20]   | N identical lookups in one flow       | `Request.TaggedClass` + `RequestResolver.makeBatched` | per-element query — the N+1             |
+|  [21]   | batch collapse, unrelated fibers      | `RequestResolver.dataLoader` wall-clock window        | same-traversal proximity as the window  |
 
 ## [02]-[PIPELINE_SELECTION]
 

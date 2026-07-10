@@ -4,14 +4,14 @@ Topology is the shape of result flow, fixed before the first spawn: it decides w
 
 ## [01]-[SHAPES]
 
-| [INDEX] | [SHAPE]         | [FLOW]                                                      | [SELECT_WHEN]                                                          |
-| :-----: | :-------------- | :---------------------------------------------------------- | :--------------------------------------------------------------------- |
-|  [01]   | Star            | Fan out disjoint lenses, one consolidator merges            | Independent territories, breadth-heavy audit or research               |
-|  [02]   | Pipeline        | Stages transform an artifact under explicit contracts       | Stable ordering; each stage verifies the previous stage's output       |
-|  [03]   | Panel           | Independent verdicts on one question, then adjudication     | Ambiguous or high-stakes judgment where disagreement finds blind spots |
-|  [04]   | Tournament      | N candidates, blind pairwise comparison, unblinded analysis | Taste-heavy artifacts; comparison grades better than absolute scores   |
-|  [05]   | Generate-filter | Cheap generators flood, a strict gate admits                | Search problems where candidate cost is low and the gate is sharp      |
-|  [06]   | Loop            | Work, verify, repeat until an external check passes         | Convergent work with a deterministic done-signal                       |
+| [INDEX] | [SHAPE]         | [FLOW]                                                | [SELECT_WHEN]                                             |
+| :-----: | :-------------- | :---------------------------------------------------- | :-------------------------------------------------------- |
+|  [01]   | Star            | Fan out disjoint lenses, one consolidator merges      | Independent territories, breadth-heavy audit or research  |
+|  [02]   | Pipeline        | Stages transform an artifact under contracts          | Stable ordering; each stage verifies the prior output     |
+|  [03]   | Panel           | Independent verdicts on one question, then adjudicate | High-stakes judgment where disagreement finds blind spots |
+|  [04]   | Tournament      | Blind pairwise comparison, unblinded analysis         | Taste-heavy artifacts; comparison beats absolute scores   |
+|  [05]   | Generate-filter | Cheap generators flood, a strict gate admits          | Search problems, low candidate cost, sharp gate           |
+|  [06]   | Loop            | Work, verify, repeat until an external check passes   | Convergent work with a deterministic done-signal          |
 
 ## [02]-[CONSOLIDATION]
 

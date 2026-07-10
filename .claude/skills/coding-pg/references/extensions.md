@@ -2,11 +2,11 @@
 
 First-class extension integration for PostgreSQL 18. Install with `CREATE EXTENSION ... CASCADE` for automatic dependency resolution.
 
-## pgvector (0.8+)
+## [01]-[PGVECTOR_0_8]
 
 Vector storage and similarity search. HNSW, IVFFlat, and DiskANN indexes for approximate nearest-neighbor.
 
-### Schema & Index Patterns
+### [01.1]-[SCHEMA_INDEX_PATTERNS]
 
 ```sql
 CREATE EXTENSION vector;
@@ -36,7 +36,7 @@ WHERE labels @> ARRAY[$2::smallint, $3::smallint]
 ORDER BY embedding <=> $1::vector LIMIT 20;
 ```
 
-### Query Patterns
+### [01.2]-[QUERY_PATTERNS]
 
 ```sql
 SELECT id, 1 - (embedding <=> $1::vector) AS similarity
@@ -52,15 +52,15 @@ WHERE tenant_id = $2 AND archived_at IS NULL
 ORDER BY embedding <=> $1::vector LIMIT 20;
 ```
 
-### Type Variants
+### [01.3]-[TYPE_VARIANTS]
 
-| Type           | Bytes/Dim | Max Dims       | Index Support          | Use When                                      |
-| -------------- | --------- | -------------- | ---------------------- | --------------------------------------------- |
-| `vector(n)`    | 4         | 2000           | HNSW, IVFFlat, DiskANN | Default — full precision                      |
-| `halfvec(n)`   | 2         | 4000           | HNSW, IVFFlat          | Memory-constrained, acceptable precision loss |
-| `sparsevec(n)` | variable  | 16000 non-zero | HNSW                   | High-dimensional sparse embeddings            |
+| [INDEX] | [TYPE]         | [BYTES_DIM] | [MAX_DIMS]     | [INDEX_SUPPORT]        | [USE_WHEN]                                    |
+| :-----: | :------------- | :---------- | :------------- | :--------------------- | :-------------------------------------------- |
+|  [01]   | `vector(n)`    | 4           | 2000           | HNSW, IVFFlat, DiskANN | Default — full precision                      |
+|  [02]   | `halfvec(n)`   | 2           | 4000           | HNSW, IVFFlat          | Memory-constrained, acceptable precision loss |
+|  [03]   | `sparsevec(n)` | variable    | 16000 non-zero | HNSW                   | High-dimensional sparse embeddings            |
 
-### Contracts
+### [01.4]-[CONTRACTS]
 
 - Distance operators: `<->` (L2), `<=>` (cosine), `<#>` (negative inner product — ASC = most similar)
 - HNSW `ef_construction` affects build quality; `ef_search` (runtime) controls recall/speed tradeoff
@@ -72,7 +72,7 @@ ORDER BY embedding <=> $1::vector LIMIT 20;
 - Pre-filter: partial indexes (`WHERE tenant_id = X`) for high-selectivity; iterative scan for low-selectivity
 - DiskANN label filtering: store discrete filters as labels and query with label containment so filtering participates in the index scan — avoids post-filter recall degradation on high-selectivity filters
 
-## pg_search (BM25 via Tantivy)
+## [02]-[PG_SEARCH_BM25_VIA_TANTIVY]
 
 Full-text search with BM25 relevance scoring. Replaces `ts_rank_cd` for search-quality ranking.
 
@@ -124,7 +124,7 @@ CREATE INDEX ON documents USING bm25 (id, title, body)
           }');
 ```
 
-### Contracts
+### [02.1]-[CONTRACTS]
 
 - BM25 replaces `ts_rank_cd` for relevance scoring; retain tsvector for simple boolean matching
 - `@@@` operator with `paradedb.parse()` for query syntax; `paradedb.score(key_field)` for relevance
@@ -134,7 +134,7 @@ CREATE INDEX ON documents USING bm25 (id, title, body)
 - `paradedb.fuzzy_term`: `distance` is Levenshtein edit distance (default 1, max 2); `transpose_cost_one = true` treats transpositions as single edit
 - `paradedb.boost(factor, query)`: field-level relevance weighting — title matches weighted higher than body
 
-## Hybrid Search: BM25 + pgvector RRF
+## [03]-[HYBRID_SEARCH_BM25_PGVECTOR_RRF]
 
 ```sql
 WITH semantic AS (
@@ -153,7 +153,7 @@ ORDER BY rrf_score DESC LIMIT 20;
 
 RRF formula: `rrf_score = Σ 1/(k + rank_i)` where k=60 dampens rank differences. RRF operates on **ranks only** — never combine raw BM25 scores with raw vector distances (different scales, incomparable). k=60 means a result must rank in top ~100 to contribute meaningful signal. Weighted variant: `w_s/(k + rank_s) + w_b/(k + rank_b)` for asymmetric retrieval (e.g., 70/30 semantic/keyword). Without pg_search: substitute tsvector + `ts_rank_cd` for BM25 CTE.
 
-## pg_trgm
+## [04]-[PG_TRGM]
 
 Trigram-based fuzzy text search and similarity scoring.
 
@@ -171,14 +171,14 @@ SELECT name, word_similarity($1, name) AS wsim
 FROM users WHERE $1 <% name ORDER BY wsim DESC LIMIT 10;
 ```
 
-### Contracts
+### [04.1]-[CONTRACTS]
 
 - `%` uses `pg_trgm.similarity_threshold` — tunable per-transaction via `SET LOCAL`
 - `<%` (word similarity) and `<<%` (strict word similarity) — subsequence and word-boundary matching
 - Trigrams require minimum 3 characters — shorter strings produce empty trigram sets
 - GIN/GiST tradeoffs: see indexes.md; GiST uniquely supports `ORDER BY similarity()` KNN
 
-## PostGIS (3.6+)
+## [05]-[POSTGIS_3_6]
 
 Spatial data types, geodesic calculations, and geometric operations.
 
@@ -202,20 +202,20 @@ SELECT id, ST_AsGeoJSON(geom)::jsonb AS geojson FROM locations WHERE id = $1;
 SELECT id, ST_CoverageClean(geom) OVER (PARTITION BY region) AS cleaned_geom FROM coverage_layers;
 ```
 
-| Aspect   | `geometry`                          | `geography`                 |
-| -------- | ----------------------------------- | --------------------------- |
-| Units    | Coordinate (degrees if 4326)        | Meters                      |
-| Speed    | Fast                                | ~5x slower                  |
-| Use when | Small areas, computational geometry | Earth-surface distance/area |
+| [INDEX] | [ASPECT] | [GEOMETRY]                          | [GEOGRAPHY]                 |
+| :-----: | :------- | :---------------------------------- | :-------------------------- |
+|  [01]   | Units    | Coordinate (degrees if 4326)        | Meters                      |
+|  [02]   | Speed    | Fast                                | ~5x slower                  |
+|  [03]   | Use when | Small areas, computational geometry | Earth-surface distance/area |
 
-### Contracts
+### [05.1]-[CONTRACTS]
 
 - `ST_DWithin` uses GiST index — `ST_Distance < threshold` does NOT
 - Always `ST_SetSRID(ST_MakePoint(lon, lat), 4326)` — longitude first, latitude second
 - Cast to geography for meters: `geom::geography`; back for spatial index: `::geometry`
 - `ST_CoverageClean` is a **window function** — requires `OVER ()` clause
 
-## TimescaleDB (2.22+)
+## [06]-[TIMESCALEDB_2_22]
 
 Hypertables, continuous aggregates, columnar compression, and retention policies.
 
@@ -228,7 +228,7 @@ SELECT add_compression_policy('metrics', INTERVAL '7 days');
 SELECT add_retention_policy('metrics', INTERVAL '90 days');
 ```
 
-### Continuous Aggregates
+### [06.1]-[CONTINUOUS_AGGREGATES]
 
 ```sql
 CREATE MATERIALIZED VIEW metrics_hourly WITH (timescaledb.continuous) AS
@@ -247,7 +247,7 @@ SELECT time_bucket('1 day', bucket) AS day_bucket, device_id,
 FROM metrics_hourly GROUP BY day_bucket, device_id WITH NO DATA;
 ```
 
-### Contracts
+### [06.2]-[CONTRACTS]
 
 - Table must be empty before `create_hypertable` (or `migrate_data => true`)
 - Compression `segmentby`: columns in WHERE for selective decompression — wrong segmentby forces full decompression
@@ -258,17 +258,17 @@ FROM metrics_hourly GROUP BY day_bucket, device_id WITH NO DATA;
 - Concurrent CAGG refresh: non-overlapping time ranges refresh in parallel workers — `SELECT add_continuous_aggregate_policy(..., schedule_interval => INTERVAL '5 min')` with overlapping windows is safe as long as `start_offset > end_offset` (non-overlapping materialization ranges)
 - **Always pair hypertables with BRIN indexes on the time dimension** — chunk exclusion is coarse-grained (eliminates whole chunks), BRIN provides fine-grained intra-chunk filtering for efficient range scans within individual chunks
 
-### TimescaleDB vs pg_partman
+### [06.3]-[TIMESCALEDB_VS_PG_PARTMAN]
 
-| Criterion                | TimescaleDB           | pg_partman                |
-| ------------------------ | --------------------- | ------------------------- |
-| Time-series ingestion    | Hypertable            | Over-engineered           |
-| Continuous aggregates    | Native CAGG           | Manual materialized views |
-| Non-time range partition | Not applicable        | Native declarative        |
-| Compression              | Columnar (90%+ ratio) | None (use pg_duckdb)      |
-| Retention policy         | Built-in              | Built-in                  |
+| [INDEX] | [CRITERION]              | [TIMESCALEDB]         | [PG_PARTMAN]              |
+| :-----: | :----------------------- | :-------------------- | :------------------------ |
+|  [01]   | Time-series ingestion    | Hypertable            | Over-engineered           |
+|  [02]   | Continuous aggregates    | Native CAGG           | Manual materialized views |
+|  [03]   | Non-time range partition | Not applicable        | Native declarative        |
+|  [04]   | Compression              | Columnar (90%+ ratio) | None (use pg_duckdb)      |
+|  [05]   | Retention policy         | Built-in              | Built-in                  |
 
-## pg_cron (1.6+)
+## [07]-[PG_CRON_1_6]
 
 In-database job scheduling via cron expressions.
 
@@ -280,13 +280,13 @@ SELECT cron.schedule_in_database('maintenance', '0 3 * * *',
 SELECT cron.unschedule('refresh-mat-view');
 ```
 
-### Contracts
+### [07.1]-[CONTRACTS]
 
 - Jobs run as the creating user; each invocation in a new transaction — no session state
 - Maximum 1 concurrent run per job — next invocation waits if previous still running
 - Failure logged in `cron.job_run_details` with `status = 'failed'` — no automatic retry
 
-## pg_partman (5.2+)
+## [08]-[PG_PARTMAN_5_2]
 
 Automated partition lifecycle: creation, retention, and template management.
 
@@ -307,14 +307,14 @@ SELECT cron.schedule('partman-maintenance', '0 * * * *',
     $$SELECT partman.run_maintenance()$$);
 ```
 
-### Contracts
+### [08.1]-[CONTRACTS]
 
 - `run_maintenance()` must be called regularly — creates future partitions and executes retention
 - `native` type uses PG declarative partitioning — legacy `'monthly'`/`'daily'` removed in 5.x
 - Template table: indexes/constraints on `_template` propagate to new partitions
 - Default partition created automatically — monitor its size as a health signal
 
-## btree_gist
+## [09]-[BTREE_GIST]
 
 Required for EXCLUDE constraints mixing equality + range operators.
 
@@ -325,7 +325,7 @@ CREATE EXTENSION btree_gist;
 
 - PREREQUISITE for any EXCLUDE constraint combining `=` with range operators — always install alongside range-based exclusion schemas
 
-## pg_duckdb
+## [10]-[PG_DUCKDB]
 
 Analytical query acceleration via embedded DuckDB engine. OLAP complement to PostgreSQL OLTP.
 
@@ -375,7 +375,7 @@ WHERE sale_date >= '2025-01-01'
 GROUP BY region;
 ```
 
-### Contracts
+### [10.1]-[CONTRACTS]
 
 - `SET LOCAL duckdb.force_execution = true` — transaction-scoped, PgBouncer-safe
 - pg_duckdb for analytical queries (GROUP BY, window functions, aggregates over large datasets) — never for OLTP (INSERT/UPDATE/DELETE)
@@ -386,7 +386,7 @@ GROUP BY region;
 - DuckDB execution inherits PG transaction context — `SET LOCAL` settings, RLS (via query rewrite), advisory locks all apply
 - Parallel table scanning: DuckDB parallelizes across Parquet row groups and PG table pages — scales with `max_parallel_workers`
 
-## pg_jsonschema
+## [11]-[PG_JSONSCHEMA]
 
 Declarative JSONB validation via JSON Schema.
 
@@ -399,7 +399,7 @@ CREATE EXTENSION pg_jsonschema;
 - Use for all JSONB columns with enforceable structure — primary enforcement at database layer
 - Application-side JSON validation is redundant defense, not primary enforcement
 
-## Extension Interaction Contracts
+## [12]-[EXTENSION_INTERACTION_CONTRACTS]
 
 - **pgvector + pg_search**: BM25 + semantic RRF hybrid (see Hybrid Search section)
 - **pgvector + pg_trgm**: semantic + fuzzy text via weighted linear combination; vector CTE + trigram CTE joined on PK

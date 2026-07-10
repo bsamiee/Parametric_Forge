@@ -1,0 +1,397 @@
+# Title         : pyproject.toml
+# Author        : Bardia Samiee
+# Project       : Parametric Forge
+# License       : MIT
+# Path          : pyproject.toml
+# ----------------------------------------------------------------------------
+# Python law for Forge-owned scripts: the Rasm bedrock's tool sections over a
+# curated dependency core — the stack-law substrate plus what the skill
+# scripts import, never the scientific graph. `package = false` keeps the repo
+# a virtual uv project: locked, synced, and nothing here ever builds.
+
+[project]
+name = "parametric-forge"
+version = "0.1.0"
+requires-python = ">=3.15"
+dependencies = [
+    # --- [LAW_CORE]
+    "anyio",              # structured concurrency substrate
+    "beartype",           # runtime boundary contracts
+    "expression",         # Result/Option rails and composition
+    "msgspec",            # wire codecs
+    "numpy",              # array numerics
+    "pydantic",           # admission models
+    "pydantic-settings",  # validated environment boundary
+    "stamina",            # retry policy
+    "structlog",          # structured logging
+    # --- [SCRIPT_SURFACES]
+    "coloraide",          # oklch palette math (theme tooling)
+    "cyclopts",           # CLI dispatch for skill scripts
+    "httpx",              # typed HTTP boundary
+    "lxml",               # XML/HTML processing
+    "networkx",           # graph checks (mermaid validation)
+    "pillow",             # image IO
+    "playwright",         # headless render probes (browsers ride PLAYWRIGHT_BROWSERS_PATH)
+    "psutil",             # process inspection (html-studio serve)
+    "ruamel-yaml",        # round-trip YAML editing
+    "tinycss2",           # CSS token parsing
+    "tree-sitter",        # structural source analysis
+    "tree-sitter-typescript",
+    "watchfiles",         # filesystem watch loops
+    "xxhash",             # content identity hashes
+]
+
+[dependency-groups]
+dev = [
+    "mypy",
+    "ruff>=0.15.20,<0.16",  # preview rule set moves per minor; the band holds the vetted gate stable
+    "sqlfluff",
+    "ty",
+]
+
+# --- [UV] -------------------------------------------------------------------------------
+
+[tool.uv]
+package =        false
+default-groups = ["dev"]
+
+[tool.uv.sources]
+# 0.22.9 imports typing.no_type_check_decorator (removed in 3.15); the pinned rev carries the fix, unreleased as of 0.22.9.
+beartype = { git = "https://github.com/beartype/beartype.git", rev = "f370a0b1733413681e7a72bf36fbe839e60b3c85" }
+
+# --- [TY] -------------------------------------------------------------------------------
+
+[tool.ty.environment]
+python-platform = "all"
+python-version = "3.15"
+
+[tool.ty.analysis]
+respect-type-ignore-comments = false
+
+[tool.ty.src]
+exclude = [
+    ".artifacts",
+    ".cache",
+    ".claude/scratch",
+    ".claude/skills/**/.cache",
+    ".claude/worktrees",
+    ".history",
+    ".nx",
+    ".venv",
+    "coverage",
+    "dist",
+    "node_modules",
+    "test-results",
+    "tmp",
+]
+
+[tool.ty.rules]
+all = "error"
+
+[tool.ty.terminal]
+error-on-warning = true
+
+# --- [MYPY] -----------------------------------------------------------------------------
+
+# `ty` is the binding type gate; mypy is the advisory strict secondary,
+# invoked per target — no pinned files row, Forge has no package tree.
+[tool.mypy]
+python_version =          "3.15"
+cache_dir =               ".cache/mypy"
+strict =                  true
+pretty =                  true
+warn_unreachable =        true
+explicit_package_bases =  true
+warn_unused_configs =     true
+disallow_any_explicit =   true
+disallow_any_unimported = true
+enable_error_code = [
+    "exhaustive-match",
+    "explicit-override",
+    "ignore-without-code",
+    "redundant-self",
+    "truthy-bool",
+    "truthy-iterable",
+    "unused-awaitable",
+]
+exclude = [
+    "^\\.artifacts/",
+    "^\\.cache/",
+    "^\\.claude/skills/.*/\\.cache/",
+    "^\\.claude/worktrees/",
+    "^\\.git/",
+    "^\\.history/",
+    "^\\.nx/",
+    "^\\.venv/",
+    "^build/",
+    "^dist/",
+    "^coverage/",
+    "^test-results/",
+    "^node_modules/",
+    "^tmp/",
+]
+
+# --- [SQLFLUFF] -------------------------------------------------------------------------
+
+# Postgres is the estate default dialect; the repo's duckdb/sqlite probe files
+# ride the per-dialect sqruff rows in flake-modules/tooling.nix.
+[tool.sqlfluff.core]
+dialect =         "postgres"
+max_line_length = 150
+
+[tool.sqlfluff.indentation]
+tab_space_size = 4
+
+# --- [RUFF] -----------------------------------------------------------------------------
+
+[tool.ruff]
+cache-dir =        ".cache/ruff"
+preview =          true
+line-length =      150
+required-version = ">=0.15.20,<0.16"
+target-version =   "py315"
+extend-exclude = [
+    "**/.artifacts/**",
+    "**/.cache/**",
+    "**/.claude/scratch/**",
+    "**/.claude/skills/**/.cache/**",
+    "**/.claude/worktrees/**",
+    "**/test-results/**",
+    "**/coverage/**",
+    "**/.history/**",
+]
+
+[tool.ruff.format]
+exclude =                   ["*.md"] # Markdown fences: the linter skips *.md natively; fence layout is design-doc law, so the formatter skips them too.
+line-ending =               "lf"
+docstring-code-format =     true
+skip-magic-trailing-comma = true
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = [
+    # --- [FORMATTER]
+    "COM812",  # ruff format owns trailing commas
+    "ISC001",  # ruff format owns implicit string concatenation
+    # --- [MATCH_DISPATCH]
+    "RET504",  # named intermediates keep flow pipelines readable
+    "RET505",  # explicit match dispatch keeps exhaustive arms visible
+    "RET506",  # explicit error branches keep ROP rails visible
+    "SIM108",  # match/case owns dispatch, not ternaries
+    "SIM114",  # match/case owns dispatch, not merged if arms
+    # --- [DENSITY]
+    "PLR0912", # one dispatch surface owns every branch; a branch cap pressures arm extraction
+    "PLR0914", # dense dispatch surfaces own their locals; a variable cap pressures fragmentation
+    "PLR0915", # one surface owns every arm; a statement cap never justifies splitting a closed union
+    "PLR0916", # dense dispatch predicates stay on the owning surface; a boolean-expression cap pressures fragmentation
+    # --- [ERROR_RAILS]
+    "EM101",   # frozen errors carry inline messages
+    "EM102",   # error constructors carry formatted context
+    "TRY003",  # domain errors carry descriptive messages
+    "TRY301",  # `@safe` ROP boundaries may raise inside the guarded call
+    "TRY400",  # structlog `.error()` is valid outside exception handlers
+    # --- [DOCSTRINGS]
+    "DOC502",  # Raises sections may document propagated helper exceptions; DOC501 still requires direct raises
+    # --- [SEMANTIC_ORDER]
+    "RUF022",  # semantic public-surface order beats alphabetical `__all__`
+    "RUF023",  # semantic slot order beats alphabetical `__slots__`
+    # --- [WORKFLOW]
+    "TD003",   # TODO links are not required for local maintenance notes
+    "FIX002",  # TODO comments are accepted source markers
+    "INP001",  # monorepo packages may be implicit namespaces
+    "CPY001",  # top-level LICENSE owns copyright notice
+    # --- [SECTION_DIVIDERS]
+    "ERA001",  # compact `# --- [LABEL]` subsection dividers are source structure
+]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py"      = ["F401"]
+"**/.claude/skills/**/scripts/**" = [
+    "TC003",
+    "ANN001",
+    "ANN401",
+    "B905",
+    "C901",
+    "E501",
+    "ERA001",
+    "EXE001",
+    "FBT001",
+    "PLC0415",
+    "PLC2701",
+    "PLC3002",
+    "PLR0911",
+    "PLR6201",
+    "PLW1510",
+    "PTH109",
+    "S105",
+    "S310",
+    "S404",
+    "S603",
+    "S607",
+    "TID251",
+    "TRY300",
+]
+"tests/**"         = ["S101", "PT018", "PLR2004", "PLR0913", "ARG001", "ARG002", "ANN201", "ANN401", "D101", "D102", "D103", "SLF001", "PLC2701"]  # PLC2701: specs import the private-by-design _testkit package
+"**/adapters/**"   = ["ANN401"]
+"**/conftest.py"   = ["E402", "F401", "ARG001"]
+"tests/python/_testkit/runtime.py" = ["E402"]  # Hypothesis environment gates must precede imports
+
+[tool.ruff.lint.flake8-annotations]
+allow-star-arg-any =      false
+mypy-init-return =        true
+suppress-dummy-args =     true
+suppress-none-returning = true
+
+[tool.ruff.lint.flake8-bandit]
+check-typed-exception = true
+
+[tool.ruff.lint.flake8-bugbear]
+extend-immutable-calls = [
+    "beartype.BeartypeConf",
+    "msgspec.Meta",
+    "msgspec.field",
+    "pydantic.ConfigDict",
+    "pydantic.Field",
+    "pydantic.PrivateAttr",
+    "stamina.retry",
+]
+
+[tool.ruff.lint.flake8-builtins]
+ignorelist = ["id", "type", "input", "format", "hash"]
+
+[tool.ruff.lint.flake8-import-conventions.extend-aliases]
+"dask.array" =     "da"
+"dask.dataframe" = "dd"
+"scipy" =          "sp"
+"sympy" =          "sym"
+"xarray" =         "xr"
+
+[tool.ruff.lint.flake8-pytest-style]
+parametrize-names-type =          "csv"
+raises-extend-require-match-for = ["AttributeError", "KeyError", "RuntimeError", "TypeError", "msgspec.ValidationError", "pydantic.ValidationError",]
+
+[tool.ruff.lint.flake8-self]
+extend-ignore-names = ["_validate", "_disc", "_check", "_value_"]
+
+[tool.ruff.lint.flake8-tidy-imports]
+ban-relative-imports =        "all"
+banned-module-level-imports = [
+  "adbc_driver_flightsql", "daft", "dataframely", "datafusion", "fastexcel",
+  "geoarrow.rust.compute", "h3ronpy", "igraph", "laszip", "lazrs",
+  "odc.stac", "planetary_computer", "pointblank", "polars_st",
+  "pystac", "pystac_client", "stac_geoparquet", "tensorstore", "xarray", "xrspatial",
+]
+
+[tool.ruff.lint.flake8-tidy-imports.banned-api]
+"concurrent.futures.ProcessPoolExecutor".msg = "Use anyio.to_process.run_sync() — structured concurrency with cancellation support."
+"concurrent.futures.ThreadPoolExecutor".msg =  "Use anyio.to_thread.run_sync() with CapacityLimiter — structured concurrency."
+"abc.ABC".msg =                        "Use typing.Protocol — structural subtyping, no inheritance hierarchies."
+"abc.abstractmethod".msg =             "Use typing.Protocol — structural subtyping replaces nominal."
+"asyncio".msg =                        "Use anyio — run/sleep/gather/Lock/Event/Semaphore/Queue all have anyio equivalents."
+"collections.namedtuple".msg =         "Use pydantic BaseModel(frozen=True) or msgspec.Struct(frozen=True) — namedtuple lacks runtime validation."
+"contextlib.suppress".msg =            "Use Result rails or a marked boundary adapter — suppress hides fallibility."
+"http.client".msg =                    "Use httpx behind a validated adapter — direct stdlib HTTP bypasses timeout, retry, and observability policy."
+"json.dump".msg =                      "Use Path.write_bytes(msgspec.json.encode(obj)) — C-accelerated, struct-aware serialization."
+"json.dumps".msg =                     "Use msgspec.json.encode() — C-accelerated, gc=False struct support, 5x+ stdlib perf."
+"json.JSONDecoder".msg =               "Use msgspec.json.Decoder(type=T) — schema-validated, zero-copy deserialization."
+"json.JSONEncoder".msg =               "Use msgspec.json.Encoder(enc_hook=fn) — custom serialization via hook, not class inheritance."
+"json.load".msg =                      "Use msgspec.json.decode(Path.read_bytes(), type=T) — schema-validated, zero-copy."
+"json.loads".msg =                     "Use msgspec.json.decode(buf, type=T) — schema-validated, zero-copy deserialization."
+"logging.basicConfig".msg =            "Logging pipeline configured via structlog + OpenTelemetry — never configure stdlib directly."
+"logging.critical".msg =               "Use structlog.get_logger().critical() — stdlib root logger bypasses structured pipeline."
+"logging.debug".msg =                  "Use structlog.get_logger().debug() — stdlib root logger bypasses structured pipeline."
+"logging.error".msg =                  "Use structlog.get_logger().error() — stdlib root logger bypasses structured pipeline."
+"logging.exception".msg =              "Use structlog.get_logger().exception() — stdlib root logger bypasses structured pipeline."
+"logging.getLogger".msg =              "Use structlog.get_logger() — stdlib logging bypasses structured pipeline."
+"logging.info".msg =                   "Use structlog.get_logger().info() — stdlib root logger bypasses structured pipeline."
+"logging.warning".msg =                "Use structlog.get_logger().warning() — stdlib root logger bypasses structured pipeline."
+"os.environ".msg =                     "Use pydantic-settings BaseSettings — validated, typed config; never read env vars directly."
+"os.getenv".msg =                      "Use pydantic-settings BaseSettings — validated, typed config at startup; not scattered env reads."
+"pydantic.validator".msg =             "Use @field_validator or @model_validator — pydantic.validator is deprecated v1 API."
+"requests".msg =                       "Use httpx behind a typed adapter — direct requests imports are not an approved transport surface."
+"returns".msg =                        "Use expression.Result / expression.Option — returns is not an approved rail surface."
+"returns.maybe".msg =                  "Use expression.Result / expression.Option — returns is not an approved rail surface."
+"returns.result".msg =                 "Use expression.Result / expression.Option — returns is not an approved rail surface."
+"socket.create_connection".msg =       "Use anyio networking or httpx adapters with explicit deadlines — direct sockets bypass boundary policy."
+"socket.create_server".msg =           "Use anyio networking with explicit lifecycle ownership — direct sockets bypass boundary policy."
+"socket.socket".msg =                  "Use anyio networking or a marked boundary adapter — raw sockets bypass deadline and observability policy."
+"subprocess.call".msg =                "Use anyio.run_process() — async, cancellation-aware, structured concurrency."
+"subprocess.check_call".msg =          "Use anyio.run_process() — async, cancellation-aware, structured concurrency."
+"subprocess.check_output".msg =        "Use anyio.run_process() — async, cancellation-aware, structured concurrency."
+"subprocess.Popen".msg =               "Use anyio.open_process() — async process handle with structured teardown."
+"subprocess.run".msg =                 "Use anyio.run_process() — async, cancellation-aware, structured concurrency."
+"time.sleep".msg =                     "Use anyio.sleep() — time.sleep blocks the event loop thread."
+"traceback.print_exc".msg =            "Use structlog.get_logger().exception() — traceback.print_exc leaks to stderr."
+"typing.Any".msg =                     "Use precise type parameters or object at validated boundaries; Any requires explicit boundary justification."
+"typing.ParamSpec".msg =               "Use PEP 695 decorator parameters (**P) — legacy ParamSpec imports drift from current type syntax."
+"typing.TypeAlias".msg =               "Use PEP 695 type aliases (`type Name = ...`) — TypeAlias is legacy syntax."
+"typing.TypeGuard".msg =               "Use TypeIs — complement-safe narrowing in both branches is required."
+"typing.TypeVar".msg =                 "Use PEP 695 type parameters — TypeVar is legacy generic syntax."
+"typing.TypeVarTuple".msg =            "Use PEP 695 variadic type parameters — TypeVarTuple is legacy syntax."
+"typing.cast".msg =                    "Use TypeGuard/TypeIs, validated adapters, or pattern narrowing; cast erases checker evidence."
+"typing.NamedTuple".msg =              "Use pydantic BaseModel(frozen=True) or msgspec.Struct(frozen=True) — NamedTuple lacks runtime validation."
+"typing.no_type_check".msg =           "Rasm type gates are mandatory — use a typed boundary adapter or refine the signature instead."
+"typing.Optional".msg =                "Use Result/Option for fallibility; use T | None only for non-fallible absence."
+"typing_extensions.Any".msg =          "Use precise type parameters or object at validated boundaries; Any requires explicit boundary justification."
+"typing_extensions.cast".msg =         "Use TypeGuard/TypeIs, validated adapters, or pattern narrowing; cast erases checker evidence."
+"typing_extensions.deprecated".msg =   "Deprecation markers are forbidden — refactor APIs immediately."
+"typing_extensions.Optional".msg =     "Use Result/Option for fallibility; use T | None only for non-fallible absence."
+"typing_extensions.ParamSpec".msg =    "Use PEP 695 decorator parameters (**P) — legacy ParamSpec imports drift from current type syntax."
+"typing_extensions.TypeAlias".msg =    "Use PEP 695 type aliases (`type Name = ...`) — TypeAlias is legacy syntax."
+"typing_extensions.TypeGuard".msg =    "Use TypeIs — complement-safe narrowing in both branches is required."
+"typing_extensions.TypeVar".msg =      "Use PEP 695 type parameters — TypeVar is legacy generic syntax."
+"typing_extensions.TypeVarTuple".msg = "Use PEP 695 variadic type parameters — TypeVarTuple is legacy syntax."
+"urllib.request".msg =                 "Use httpx behind a typed adapter — direct urllib imports bypass transport policy."
+"urllib3".msg =                        "Use httpx behind a typed adapter — urllib3 remains a transitive implementation detail."
+"warnings.catch_warnings".msg =        "Deprecation/workaround warning flows are forbidden — refactor immediately."
+"warnings.deprecated".msg =            "Deprecation decorators are forbidden — refactor APIs immediately."
+"warnings.filterwarnings".msg =        "Do not filter/suppress warnings — remove deprecated paths and refactor immediately."
+"warnings.simplefilter".msg =          "Do not filter/suppress warnings — remove deprecated paths and refactor immediately."
+"warnings.warn".msg =                  "Deprecation/workaround warnings are forbidden — refactor immediately."
+"warnings.warn_explicit".msg =         "Deprecation/workaround warnings are forbidden — refactor immediately."
+
+[tool.ruff.lint.flake8-type-checking]
+strict =                         true
+exempt-modules =                 ["typing", "typing_extensions"]
+runtime-evaluated-base-classes = ["msgspec.Struct", "pydantic.BaseModel", "pydantic.RootModel", "pydantic_settings.BaseSettings"]
+runtime-evaluated-decorators =   ["beartype.beartype", "pydantic.computed_field", "pydantic.field_validator", "pydantic.model_validator", "pydantic.validate_call"]
+
+[tool.ruff.lint.flake8-unused-arguments]
+ignore-variadic-names = true
+
+[tool.ruff.lint.isort]
+combine-as-imports =         true
+force-sort-within-sections = true
+lines-after-imports =        2
+order-by-type =              false
+split-on-trailing-comma =    false
+
+[tool.ruff.lint.mccabe]
+max-complexity = 20
+
+[tool.ruff.lint.pep8-naming]
+classmethod-decorators = ["pydantic.field_validator", "pydantic.model_validator"]
+
+[tool.ruff.lint.pycodestyle]
+ignore-overlong-task-comments = true
+
+[tool.ruff.lint.pydocstyle]
+ignore-var-parameters = true
+convention =            "google"
+ignore-decorators =     ["typing.overload", "typing.override"]
+property-decorators =   ["pydantic.computed_field"]
+
+[tool.ruff.lint.pydoclint]
+ignore-one-line-docstrings = false
+
+[tool.ruff.lint.pylint]
+allow-dunder-method-names = ["__get_pydantic_core_schema__", "__get_pydantic_json_schema__"]
+allow-magic-value-types =   ["str", "bytes", "int"]
+max-args = 8
+max-bool-expr = 3
+max-branches = 6
+max-locals = 10
+max-nested-blocks = 4
+max-public-methods = 10
+max-statements = 30
+

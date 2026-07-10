@@ -95,19 +95,19 @@ func quitApplication(bundleID: String) throws -> NSAppleEventDescriptor {
 
 `AESendMode` is a bitfield over independent axes, not an opaque flag. The reply axis is mutually exclusive, the interaction axis is mutually exclusive, and the remaining flags compose freely across both.
 
-| [INDEX] | [AXIS]       | [FLAG]              | [HEX]    | [EFFECT]                              |
-| :-----: | :----------- | :------------------ | :------- | :------------------------------------- |
-|  [01]   | Reply        | `kAENoReply`         | `0x01`   | no reply returned                      |
-|  [02]   | Reply        | `kAEQueueReply`      | `0x02`   | reply queued to sender asynchronously  |
-|  [03]   | Reply        | `kAEWaitReply`       | `0x03`   | blocks the run loop for the reply      |
-|  [04]   | Interaction  | `kAENeverInteract`   | `0x10`   | receiver never fronts UI               |
-|  [05]   | Interaction  | `kAECanInteract`     | `0x20`   | receiver may front UI                  |
-|  [06]   | Interaction  | `kAEAlwaysInteract`  | `0x30`   | receiver always fronts UI              |
-|  [07]   | Modifier     | `kAECanSwitchLayer`  | `0x40`   | permits a layer switch to the receiver |
-|  [08]   | Modifier     | `kAEDontReconnect`   | `0x80`   | suppresses automatic session reconnect |
-|  [09]   | Modifier     | `kAEWantReceipt`     | `0x200`  | requests a transport return receipt    |
-|  [10]   | Modifier     | `kAEDontRecord`      | `0x1000` | excludes the event from recording      |
-|  [11]   | Modifier     | `kAEDontExecute`     | `0x2000` | builds the event without executing it  |
+| [INDEX] | [AXIS]      | [FLAG]              | [HEX]    | [EFFECT]                               |
+| :-----: | :---------- | :------------------ | :------- | :------------------------------------- |
+|  [01]   | Reply       | `kAENoReply`        | `0x01`   | no reply returned                      |
+|  [02]   | Reply       | `kAEQueueReply`     | `0x02`   | reply queued to sender asynchronously  |
+|  [03]   | Reply       | `kAEWaitReply`      | `0x03`   | blocks the run loop for the reply      |
+|  [04]   | Interaction | `kAENeverInteract`  | `0x10`   | receiver never fronts UI               |
+|  [05]   | Interaction | `kAECanInteract`    | `0x20`   | receiver may front UI                  |
+|  [06]   | Interaction | `kAEAlwaysInteract` | `0x30`   | receiver always fronts UI              |
+|  [07]   | Modifier    | `kAECanSwitchLayer` | `0x40`   | permits a layer switch to the receiver |
+|  [08]   | Modifier    | `kAEDontReconnect`  | `0x80`   | suppresses automatic session reconnect |
+|  [09]   | Modifier    | `kAEWantReceipt`    | `0x200`  | requests a transport return receipt    |
+|  [10]   | Modifier    | `kAEDontRecord`     | `0x1000` | excludes the event from recording      |
+|  [11]   | Modifier    | `kAEDontExecute`    | `0x2000` | builds the event without executing it  |
 
 The Cocoa mirror `NSAppleEventSendOptions` renames each surviving flag (`NSAppleEventSendNoReply`/`NSAppleEventSendQueueReply`/`NSAppleEventSendWaitForReply` on the reply axis, `NSAppleEventSendNeverInteract`/`NSAppleEventSendCanInteract`/`NSAppleEventSendAlwaysInteract` on the interaction axis, plus `NSAppleEventSendCanSwitchLayer`, `NSAppleEventSendDontRecord`, `NSAppleEventSendDontExecute`) and drops `kAEDontReconnect` and `kAEWantReceipt` outright. It adds one net-new flag, `NSAppleEventSendDontAnnotate` (`kAEDoNotAutomaticallyAddAnnotationsToEvent`), which suppresses the sandbox annotations the system otherwise stamps onto the event. `NSAppleEventSendDefaultOptions` composes `NSAppleEventSendWaitForReply | NSAppleEventSendCanInteract`, so a sender that names neither axis still blocks its run loop and still permits receiver UI.
 
@@ -127,20 +127,20 @@ TCC Automation rows bind sender identity, receiver identity, and code requiremen
 
 The `access` row keys on `(service, client, client_type, indirect_object_identifier)`. `client` carries the sender identity, `client_type` is `0` for a bundle ID and `1` for an absolute path, and `csreq` carries the sender's code-requirement blob. Automation is unique among TCC services because the row is a relation, not a single-party grant: the target application rides `indirect_object_identifier`, and the target's own code requirement rides `indirect_object_code_identity` — neither endpoint alone makes the row meaningful.
 
-| [INDEX] | [AUTH_VALUE] | [MEANING]      |
-| :-----: | :----------: | :------------- |
-|  [01]   | `0`          | denied          |
-|  [02]   | `1`          | unknown         |
-|  [03]   | `2`          | allowed         |
-|  [04]   | `3`          | limited         |
+| [INDEX] | [AUTH_VALUE] | [MEANING] |
+| :-----: | :----------: | :-------- |
+|  [01]   |     `0`      | denied    |
+|  [02]   |     `1`      | unknown   |
+|  [03]   |     `2`      | allowed   |
+|  [04]   |     `3`      | limited   |
 
-| [INDEX] | [AUTH_REASON] | [MEANING]        |
-| :-----: | :-----------: | :--------------- |
-|  [01]   | `2`           | user consent      |
-|  [02]   | `3`           | user set          |
-|  [03]   | `5`           | service policy    |
-|  [04]   | `6`           | MDM policy        |
-|  [05]   | `11`          | entitled          |
+| [INDEX] | [AUTH_REASON] | [MEANING]      |
+| :-----: | :-----------: | :------------- |
+|  [01]   |      `2`      | user consent   |
+|  [02]   |      `3`      | user set       |
+|  [03]   |      `5`      | service policy |
+|  [04]   |      `6`      | MDM policy     |
+|  [05]   |     `11`      | entitled       |
 
 Sequoia-era columns `pid_version`, `boot_uuid`, `last_modified`, and `last_reminded` bind the grant to one process generation and reminder cadence. `tccutil reset AppleEvents [bundle-id]` is the sanctioned reset path — it clears the client-to-target relationship rows and forces re-consent. Resetting a sender, resigning a sender, moving a path-identified binary, or changing receiver identity invalidates an existing approval. Enterprise pre-grants flow through PPPC (`[09]`), never through direct `TCC.db` edits.
 
@@ -203,11 +203,11 @@ func checkAutomationConsent(
 }
 ```
 
-| [INDEX] | [CODE]   | [SYMBOL]                          | [MEANING]                                              |
-| :-----: | :------: | :--------------------------------- | :------------------------------------------------------ |
-|  [01]   | `-1742`  | `errAETargetAddressNotPermitted`   | sender-to-target reachability policy blocks the address |
-|  [02]   | `-1743`  | `errAEEventNotPermitted`           | a standing user denial exists for this Automation pair   |
-|  [03]   | `-1744`  | `errAEEventWouldRequireUserConsent`| the target is undecided and reached through a suppressed prompt |
+| [INDEX] | [CODE]  | [SYMBOL]                            | [MEANING]                                                       |
+| :-----: | :-----: | :---------------------------------- | :-------------------------------------------------------------- |
+|  [01]   | `-1742` | `errAETargetAddressNotPermitted`    | sender-to-target reachability policy blocks the address         |
+|  [02]   | `-1743` | `errAEEventNotPermitted`            | a standing user denial exists for this Automation pair          |
+|  [03]   | `-1744` | `errAEEventWouldRequireUserConsent` | the target is undecided and reached through a suppressed prompt |
 
 The distinction is load-bearing: preflight with `askUserIfNeeded: false`, and a send carrying `kAEDoNotPromptForUserConsent`, returns `-1744` for an undecided target and cannot silently read a prior denial — a prior denial surfaces only as `-1743`. Only `askUserIfNeeded: true` yields the authoritative `noErr`/`-1743` verdict, at the cost of a possible visible prompt. A background checker treats `-1744` as unknown, routed to the explicit permission lane, never as denied.
 
@@ -298,13 +298,17 @@ Audit receipts hash the payload and never store it: a script body carries secret
 
 ## [13]-[FAILURE_SHAPES]
 
-| [INDEX] | [SIGNAL]                                                        | [MEANING]                                                                                     | [NEXT_ACTION]                                          |
-| :-----: | :---------------------------------------------------------------- | :---------------------------------------------------------------------------------------------- | :-------------------------------------------------------- |
-|  [01]   | `errAEEventNotPermitted` with no prompt shown                      | sender lacks the entitlement, lacks the usage string, runs from an unkeyed helper, or carries a denied TCC row | fix entitlement, usage string, or signed helper identity   |
-|  [02]   | `errAEEventWouldRequireUserConsent`                                | the caller selected a silent preflight or send path                                             | route to the explicit permission lane, never retry silently |
-|  [03]   | `procNotFound` from `AEDeterminePermissionToAutomateTarget`        | the target descriptor names no running receiver                                                 | launch or require the receiver, then preflight again       |
-|  [04]   | an installed PPPC profile fails at runtime                         | sender or receiver `CodeRequirement` mismatch, wrong `IdentifierType`, or a conflicting restrictive payload | regenerate the profile from the observed sender-target pair |
-|  [05]   | Automation failure only under a CI runner                         | headless runners cannot satisfy a user consent prompt and cannot carry stable per-user TCC state | ship a signed fixture sender with a pre-installed PPPC profile |
-|  [06]   | a nil Scripting Bridge application instance                        | receiver discovery or dictionary absence, not a TCC denial                                       | verify bundle ID and running state before blaming TCC       |
-|  [07]   | a sender scripting Finder for plain filesystem work                 | the sender is overprivileged by design for the task                                              | route file operations through Foundation or security-scoped bookmarks |
-|  [08]   | a receiver dictionary exposing broad classes with no access groups  | every serious caller is forced into broad TCC grants                                             | annotate command families in `sdef` and publish stable group identifiers |
+| [INDEX] | [SIGNAL]                                   | [MEANING]                                 | [NEXT_ACTION]                               |
+| :-----: | :----------------------------------------- | :---------------------------------------- | :------------------------------------------ |
+|  [01]   | `errAEEventNotPermitted`, no prompt        | sender not permitted to send              | fix entitlement, usage, or helper identity  |
+|  [02]   | `errAEEventWouldRequireUserConsent`        | caller chose a silent preflight/send path | explicit permission lane, no silent retry   |
+|  [03]   | `procNotFound` at preflight                | no running receiver for the descriptor    | launch the receiver, preflight again        |
+|  [04]   | an installed PPPC profile fails at runtime | profile identity/requirement mismatch     | regenerate profile from sender-target pair  |
+|  [05]   | Automation failure only under a CI runner  | headless runner: no prompt, no TCC state  | ship signed fixture + pre-installed PPPC    |
+|  [06]   | nil Scripting Bridge app instance          | receiver/dictionary absent, not TCC       | verify bundle ID + running state first      |
+|  [07]   | scripting Finder for plain file work       | sender overprivileged for the task        | use Foundation/security-scoped bookmarks    |
+|  [08]   | broad classes, no access groups            | forces broad TCC grants on callers        | annotate `sdef` families, publish group IDs |
+
+- Row 01 causes: missing entitlement, missing usage string, unkeyed helper, or denied TCC row.
+- Row 03 signal comes from `AEDeterminePermissionToAutomateTarget`.
+- Row 04 mismatch: sender or receiver `CodeRequirement`, wrong `IdentifierType`, or a conflicting restrictive payload.

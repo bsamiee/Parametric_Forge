@@ -51,13 +51,13 @@ static void InstallHexCoercion(void) { AEInstallCoercionHandler('hex ', typeSInt
 
 `NSAppleScript.executeAppleEvent(_:error:)` invokes a compiled script's named handler with event class `kASAppleScriptSuite`, event ID `kASSubroutineEvent`, the handler name under `keyASSubroutineName`, and arguments under `keyDirectObject` as a descriptor list. A failure surfaces as an `NSDictionary`, never `NSError`, carrying the same keys across compile and execute faults.
 
-| [INDEX] | [KEY]                            | [CARRIES]                            |
-| :-----: | :-------------------------------- | :------------------------------------ |
-|  [01]   | `NSAppleScriptErrorMessage`        | full diagnostic text                    |
-|  [02]   | `NSAppleScriptErrorBriefMessage`   | condensed diagnostic text                |
-|  [03]   | `NSAppleScriptErrorNumber`         | negative Apple Event Manager status       |
-|  [04]   | `NSAppleScriptErrorAppName`        | offending application name                  |
-|  [05]   | `NSAppleScriptErrorRange`          | source range of the fault                    |
+| [INDEX] | [KEY]                            | [CARRIES]                           |
+| :-----: | :------------------------------- | :---------------------------------- |
+|  [01]   | `NSAppleScriptErrorMessage`      | full diagnostic text                |
+|  [02]   | `NSAppleScriptErrorBriefMessage` | condensed diagnostic text           |
+|  [03]   | `NSAppleScriptErrorNumber`       | negative Apple Event Manager status |
+|  [04]   | `NSAppleScriptErrorAppName`      | offending application name          |
+|  [05]   | `NSAppleScriptErrorRange`        | source range of the fault           |
 
 ```swift
 func callHandler(_ script: NSAppleScript, name: String, arguments: [NSAppleEventDescriptor]) throws -> NSAppleEventDescriptor {
@@ -75,13 +75,13 @@ func callHandler(_ script: NSAppleScript, name: String, arguments: [NSAppleEvent
 
 `OSAScript` owns the language instance, storage options, source, handler execution, and compiled persistence that `NSAppleScript` keeps private; `OSADontSetScriptLocation` suppresses the script's file-origin binding, which breaks `path to me` inside the compiled script. `writeToURL:ofType:usingStorageOptions:` persists into one of five containers, and `OSAPreventGetSource` strips recoverable source text from the written artifact. `AMAppleScriptAction.script` is an `OSAScript` slot, so an Automator AppleScript action shares this same compile, execution, and storage model instead of `NSAppleScript`'s dictionary-only failure surface, and `OSAScriptController` binds an `OSAScriptView`, result text, the selected `OSALanguage`, and `compileScript:`/`runScript:` controller actions for a host shipping an OSA editor, recorder, or runner pane.
 
-| [INDEX] | [CONSTANT]                        | [CONTAINER]                     |
-| :-----: | :---------------------------------- | :-------------------------------- |
-|  [01]   | `OSAStorageScriptType`                | flat compiled `.scpt`               |
-|  [02]   | `OSAStorageScriptBundleType`           | `.scptd` bundle with resources        |
-|  [03]   | `OSAStorageApplicationType`            | flat script applet                     |
-|  [04]   | `OSAStorageApplicationBundleType`      | applet bundle with resources             |
-|  [05]   | `OSAStorageTextType`                   | plain source text                          |
+| [INDEX] | [CONSTANT]                        | [CONTAINER]                    |
+| :-----: | :-------------------------------- | :----------------------------- |
+|  [01]   | `OSAStorageScriptType`            | flat compiled `.scpt`          |
+|  [02]   | `OSAStorageScriptBundleType`      | `.scptd` bundle with resources |
+|  [03]   | `OSAStorageApplicationType`       | flat script applet             |
+|  [04]   | `OSAStorageApplicationBundleType` | applet bundle with resources   |
+|  [05]   | `OSAStorageTextType`              | plain source text              |
 
 ```objc
 static OSAScript *Compile(NSString *source, NSURL *origin, OSALanguageInstance *instance, NSDictionary **info) {
@@ -179,16 +179,16 @@ final class ShapeExportCommand: NSScriptCommand {
 
 A scriptable object publishes its own address through `objectSpecifier`, choosing whichever concrete `NSScriptObjectSpecifier` subclass keeps it addressable after the container reorders — a stable unique ID over a volatile index. `NSPositionalSpecifier` is the deliberate outlier: it subclasses `NSObject` rather than `NSScriptObjectSpecifier` because it names an insertion position paired with a container specifier for a `make ... at` command, and it never substitutes where a selection specifier is required. A container overrides `indicesOfObjects(byEvaluating:)` to serve indexed, named, unique-ID, and whose-style lookups from an existing index rather than Cocoa's linear evaluator; an empty array means no match, and `nil` delegates to the default evaluator.
 
-| [INDEX] | [SPECIFIER]              | [SELECTS_BY]                 |
-| :-----: | :-------------------------- | :------------------------------ |
-|  [01]   | `NSIndexSpecifier`            | absolute or relative index         |
-|  [02]   | `NSNameSpecifier`              | name                                 |
-|  [03]   | `NSUniqueIDSpecifier`          | stable identifier                    |
-|  [04]   | `NSRangeSpecifier`             | `items X thru Y`                       |
-|  [05]   | `NSWhoseSpecifier`             | qualified `whose` test                   |
-|  [06]   | `NSMiddleSpecifier`            | middle element                            |
-|  [07]   | `NSRandomSpecifier`            | random element                              |
-|  [08]   | `NSPropertySpecifier`          | to-one property                              |
+| [INDEX] | [SPECIFIER]           | [SELECTS_BY]               |
+| :-----: | :-------------------- | :------------------------- |
+|  [01]   | `NSIndexSpecifier`    | absolute or relative index |
+|  [02]   | `NSNameSpecifier`     | name                       |
+|  [03]   | `NSUniqueIDSpecifier` | stable identifier          |
+|  [04]   | `NSRangeSpecifier`    | `items X thru Y`           |
+|  [05]   | `NSWhoseSpecifier`    | qualified `whose` test     |
+|  [06]   | `NSMiddleSpecifier`   | middle element             |
+|  [07]   | `NSRandomSpecifier`   | random element             |
+|  [08]   | `NSPropertySpecifier` | to-one property            |
 
 ```swift
 override var objectSpecifier: NSScriptObjectSpecifier? {
@@ -251,11 +251,11 @@ static NSData *CopySDEF(NSURL *url, OSAError *status) {
 }
 ```
 
-| [INDEX] | [CODE]                          | [MEANING]                              |
-| :-----: | :--------------------------------- | :---------------------------------------- |
-|  [01]   | `errAETargetAddressNotPermitted`     | sender cannot address the target             |
-|  [02]   | `errAEEventNotPermitted`             | target rejects the event for this sender       |
-|  [03]   | `errAETimeout`                       | target did not reply within the send budget      |
+| [INDEX] | [CODE]                           | [MEANING]                                   |
+| :-----: | :------------------------------- | :------------------------------------------ |
+|  [01]   | `errAETargetAddressNotPermitted` | sender cannot address the target            |
+|  [02]   | `errAEEventNotPermitted`         | target rejects the event for this sender    |
+|  [03]   | `errAETimeout`                   | target did not reply within the send budget |
 
 ```swift
 func scriptKind(for url: URL) -> UTType? {

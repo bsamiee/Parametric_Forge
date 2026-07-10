@@ -57,11 +57,11 @@ codex exec -s <sandbox> --skip-git-repo-check [-C <dir>] [-o <report>] "<prompt>
 
 MCP selection is GRADED — pick the tier by what the task actually calls, never default to the full fleet:
 
-| [INDEX] | [TIER]     | [INVOCATION]                                              | [BEHAVIOR]                                                                                                |
-| :-----: | :--------- | :-------------------------------------------------------- | :-------------------------------------------------------------------------------------------------------- |
-|  [01]   | FULL FLEET | bare invocation                                           | Every `[mcp_servers]` row plus every plugin server spawns as a child; slowest startup; fail-closed hazard |
-|  [02]   | SELECTED   | `-c 'mcp_servers.<name>.enabled=false'` per unused server | Disabled servers spawn no child and expose no tools; the rest of config.toml stays live                   |
-|  [03]   | NONE       | `--ignore-user-config -c model_reasoning_effort="<tier>"` | config.toml skipped wholesale; zero MCP children; effort resets — always restate the tier                 |
+| [INDEX] | [TIER]     | [INVOCATION]                                              | [BEHAVIOR]                                                    |
+| :-----: | :--------- | :-------------------------------------------------------- | :------------------------------------------------------------ |
+|  [01]   | FULL FLEET | bare invocation                                           | All `[mcp_servers]` + plugin servers spawn; slow; fail-closed |
+|  [02]   | SELECTED   | `-c 'mcp_servers.<name>.enabled=false'` per unused server | Disabled servers spawn no child, no tools; config stays live  |
+|  [03]   | NONE       | `--ignore-user-config -c model_reasoning_effort="<tier>"` | config.toml skipped; zero MCP children; restate effort tier   |
 
 - `--ignore-user-config` drops MCP, plugins, notify, and the trust table; auth, the gpt-5.5 default, and ALL skills survive the skip.
 - FAIL-CLOSED HAZARD: a `required = true` server that misses its `startup_timeout_sec` handshake kills the whole run at session creation — `thread/start failed`, exit 1, no model turn, no report, ZERO JSONL events. One unreachable required server (a down VPS behind a stdio bridge) fails every full-fleet lane on the machine; the rescue is `-c 'mcp_servers.<name>.enabled=false'` on lanes that do not call it. Disable required servers first when trimming.
@@ -117,11 +117,13 @@ Every run prints `session id: <uuid>` in its banner (under `--json`, `thread.sta
 
 `codex review` runs an independent non-interactive code review; the positional prompt sets focus, omitted for a general pass.
 
-| [INDEX] | [SCOPE]                       | [COMMAND]                                                                                                                                                   |
-| :-----: | :---------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-|  [01]   | Staged + unstaged + untracked | `codex review --uncommitted "<focus>"`                                                                                                                      |
-|  [02]   | Branch against a base         | `codex review --base <branch>` — the CLI rejects a prompt alongside `--base`; a FOCUSED range review routes through `codex exec` with an explicit diff task |
-|  [03]   | One commit                    | `codex review --commit <sha> "<focus>"`                                                                                                                     |
+| [INDEX] | [SCOPE]                       | [COMMAND]                               |
+| :-----: | :---------------------------- | :-------------------------------------- |
+|  [01]   | Staged + unstaged + untracked | `codex review --uncommitted "<focus>"`  |
+|  [02]   | Branch against a base         | `codex review --base <branch>`          |
+|  [03]   | One commit                    | `codex review --commit <sha> "<focus>"` |
+
+- Branch against a base: the CLI rejects a prompt alongside `--base`; a FOCUSED range review routes through `codex exec` with an explicit diff task.
 
 A fleet-grade review lane runs `codex exec review` instead — the same scope flags plus `--json` events, `-o`, and `--output-schema` typed findings, so a detached review composes with the signals ladder ([06]) like any other lane.
 

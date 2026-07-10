@@ -4,7 +4,7 @@ set -Eeuo pipefail
 shopt -s inherit_errexit
 IFS=$'\n\t'
 
-# --- [CONSTANTS] --------------------------------------------------------------
+# --- [CONSTANTS] ------------------------------------------------------------------------
 
 readonly COMMAND="${1:-check}"
 readonly CARGO_HOME_DIR="${CARGO_HOME:-${HOME}/.cargo}"
@@ -28,16 +28,16 @@ declare -Ar TOOLS=(
     [hyperfine]='hyperfine:binstall' [gping]='gping:binstall'
     [trip]='trippy:binstall'
     [doggo]='mr-karan/doggo:github-go'
-    [trash-put]='trash-cli:pipx'
+    [trash - put]='trash-cli:pipx'
     [uv]='uv:pipx'
     [gws]='googleworkspace/cli:v0.22.5:github-release-sha'
     [agy]='google-antigravity/official-installer:latest:antigravity-installer'
 )
 declare -Ar STRATEGY_DISPATCH=(
-    [antigravity-installer]=_install_antigravity_installer
+    [antigravity - installer]=_install_antigravity_installer
     [binstall]=_install_binstall
-    [github-go]=_install_github_go
-    [github-release-sha]=_install_github_release_sha
+    [github - go]=_install_github_go
+    [github - release - sha]=_install_github_release_sha
     [pipx]=_install_pipx
 )
 declare -Ar COMMAND_DISPATCH=(
@@ -53,7 +53,7 @@ declare -a installed=() skipped=() failed=()
 declare -a _TMP_PATHS=()
 trap '[[ ${#_TMP_PATHS[@]} -eq 0 ]] || rm -rf "${_TMP_PATHS[@]}"' EXIT
 
-# --- [ERRORS] -----------------------------------------------------------------
+# --- [ERRORS] ---------------------------------------------------------------------------
 
 _die() {
     printf '[FATAL] %s\n' "$1" >&2
@@ -65,7 +65,7 @@ _require_enabled() {
     [[ "${value}" == "1" ]] || _die "${message}"
 }
 
-# --- [FUNCTIONS] --------------------------------------------------------------
+# --- [FUNCTIONS] ------------------------------------------------------------------------
 
 _usage() {
     cat <<'USAGE'
@@ -397,7 +397,7 @@ _apply() {
     _report
 }
 
-# --- [EXPORT] -----------------------------------------------------------------
+# --- [EXPORT] ---------------------------------------------------------------------------
 
 [[ -v COMMAND_DISPATCH["${COMMAND}"] ]] || {
     _usage >&2

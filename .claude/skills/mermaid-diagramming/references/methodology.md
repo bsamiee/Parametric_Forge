@@ -93,38 +93,38 @@ Every visual channel is spent deliberately; a channel spent twice on one meaning
 
 The question shape selects the declaration; the full grammar, floor, and trap roster per row is the syntax reference's property.
 
-| [INDEX] | [QUESTION]                                   | [TYPE]                        |
-| :-----: | :------------------------------------------- | :---------------------------- |
-|  [01]   | what exists and relates                      | `flowchart`                   |
-|  [02]   | who exchanges what in order                  | `sequenceDiagram`             |
-|  [03]   | which modes and transitions                  | `stateDiagram-v2`             |
-|  [04]   | what data, keys, and cardinality             | `erDiagram`                   |
-|  [05]   | which types relate at compile time           | `classDiagram`                |
-|  [06]   | which owner performs which step              | `swimlane-beta`               |
-|  [07]   | which commands yield which events            | `eventmodeling`               |
-|  [08]   | system landscape at one zoom                 | `C4`                          |
-|  [09]   | which deployable runs where                  | `architecture-beta`           |
-|  [10]   | dated committed work                         | `gantt`                       |
-|  [11]   | which stage holds which work now             | `kanban`                      |
-|  [12]   | how branches diverge and merge               | `gitGraph`                    |
-|  [13]   | what occurred across periods                 | `timeline`                    |
-|  [14]   | how satisfaction moves across phases         | `journey`                     |
-|  [15]   | radial concept decomposition                 | `mindmap`                     |
-|  [16]   | weighted whole-to-part decomposition         | `treemap-beta`                |
-|  [17]   | filesystem or containment truth              | `treeView-beta`               |
-|  [18]   | fixed-grid placement as the meaning          | `block-beta`                  |
-|  [19]   | requirement-to-artifact traceability         | `requirementDiagram`          |
-|  [20]   | part-to-whole share inside a fence           | `pie`                         |
-|  [21]   | two independent judgments as position        | `quadrantChart`               |
-|  [22]   | weighted flow through stages                 | `sankey`                      |
-|  [23]   | categories against a measure                 | `xychart`                     |
-|  [24]   | multivariate profile comparison              | `radar-beta`                  |
-|  [25]   | measured set overlap                         | `venn-beta`                   |
-|  [26]   | capability position on evolution             | `wardley-beta`                |
-|  [27]   | decision-domain sort with movement           | `cynefin-beta`                |
-|  [28]   | admitted strings rule by rule                | `railroad-*-beta`             |
-|  [29]   | plausible causes of one effect               | `ishikawa-beta`               |
-|  [30]   | wire-format bit contract                     | `packet`                      |
+| [INDEX] | [QUESTION]                            | [TYPE]               |
+| :-----: | :------------------------------------ | :------------------- |
+|  [01]   | what exists and relates               | `flowchart`          |
+|  [02]   | who exchanges what in order           | `sequenceDiagram`    |
+|  [03]   | which modes and transitions           | `stateDiagram-v2`    |
+|  [04]   | what data, keys, and cardinality      | `erDiagram`          |
+|  [05]   | which types relate at compile time    | `classDiagram`       |
+|  [06]   | which owner performs which step       | `swimlane-beta`      |
+|  [07]   | which commands yield which events     | `eventmodeling`      |
+|  [08]   | system landscape at one zoom          | `C4`                 |
+|  [09]   | which deployable runs where           | `architecture-beta`  |
+|  [10]   | dated committed work                  | `gantt`              |
+|  [11]   | which stage holds which work now      | `kanban`             |
+|  [12]   | how branches diverge and merge        | `gitGraph`           |
+|  [13]   | what occurred across periods          | `timeline`           |
+|  [14]   | how satisfaction moves across phases  | `journey`            |
+|  [15]   | radial concept decomposition          | `mindmap`            |
+|  [16]   | weighted whole-to-part decomposition  | `treemap-beta`       |
+|  [17]   | filesystem or containment truth       | `treeView-beta`      |
+|  [18]   | fixed-grid placement as the meaning   | `block-beta`         |
+|  [19]   | requirement-to-artifact traceability  | `requirementDiagram` |
+|  [20]   | part-to-whole share inside a fence    | `pie`                |
+|  [21]   | two independent judgments as position | `quadrantChart`      |
+|  [22]   | weighted flow through stages          | `sankey`             |
+|  [23]   | categories against a measure          | `xychart`            |
+|  [24]   | multivariate profile comparison       | `radar-beta`         |
+|  [25]   | measured set overlap                  | `venn-beta`          |
+|  [26]   | capability position on evolution      | `wardley-beta`       |
+|  [27]   | decision-domain sort with movement    | `cynefin-beta`       |
+|  [28]   | admitted strings rule by rule         | `railroad-*-beta`    |
+|  [29]   | plausible causes of one effect        | `ishikawa-beta`      |
+|  [30]   | wire-format bit contract              | `packet`             |
 
 The quantitative rows — pie, xychart, sankey, radar — hold only while the artifact must stay a mermaid fence; a standing data visualization routes to the dataviz lane.
 

@@ -4,16 +4,18 @@ The Forge rails are `writeShellApplication` commands with fixed contracts: share
 
 ## [01]-[RAIL_SET]
 
-| [INDEX] | [RAIL]                   | [OWNS]                                                                                       | [OWNER]                         |
-| :-----: | :----------------------- | :------------------------------------------------------------------------------------------- | :------------------------------ |
-|  [01]   | `forge-redeploy`         | The only sanctioned activation path: build, diff, switch, rollback, generations, Cachix push | `shell-tools/forge-tools.nix`   |
-|  [02]   | `forge-accept`           | Ordered post-switch proof across secrets, terminal, MCP fleet, tunnels                       | `shell-tools/forge-tools.nix`   |
-|  [03]   | `forge-nix-drift`        | Unattended flake-input drift detection with build proof, never a switch                      | `shell-tools/forge-tools.nix`   |
-|  [04]   | `forge-nix-maintenance`  | Generation trim, GC, store optimise                                                          | `shell-tools/forge-tools.nix`   |
-|  [05]   | `forge-activation-sweep` | Root-owned in-the-way HM target detection and clear                                          | `shell-tools/forge-tools.nix`   |
-|  [06]   | `forge-cleanup`          | Litter plan/apply and orphan sweep over a typed row registry                                 | `shell-tools/forge-tools.nix`   |
-|  [07]   | `forge-provision`        | Docker/Compose DB estate: envelope, locks, generations, extension apply                      | `overlays/forge-provision/`     |
-|  [08]   | `forge-mcp`              | MCP wrapper doctor/drift/outdated against live client configs                                | `shell-tools/mcp-launchers.nix` |
+| [INDEX] | [RAIL]                   | [OWNS]                                                                  | [OWNER]                         |
+| :-----: | :----------------------- | :---------------------------------------------------------------------- | :------------------------------ |
+|  [01]   | `forge-redeploy`         | The only sanctioned activation path                                     | `shell-tools/forge-tools.nix`   |
+|  [02]   | `forge-accept`           | Ordered post-switch proof across secrets, terminal, MCP fleet, tunnels  | `shell-tools/forge-tools.nix`   |
+|  [03]   | `forge-nix-drift`        | Unattended flake-input drift detection with build proof, never a switch | `shell-tools/forge-tools.nix`   |
+|  [04]   | `forge-nix-maintenance`  | Generation trim, GC, store optimise                                     | `shell-tools/forge-tools.nix`   |
+|  [05]   | `forge-activation-sweep` | Root-owned in-the-way HM target detection and clear                     | `shell-tools/forge-tools.nix`   |
+|  [06]   | `forge-cleanup`          | Litter plan/apply and orphan sweep over a typed row registry            | `shell-tools/forge-tools.nix`   |
+|  [07]   | `forge-provision`        | Docker/Compose DB estate: envelope, locks, generations, extension apply | `overlays/forge-provision/`     |
+|  [08]   | `forge-mcp`              | MCP wrapper doctor/drift/outdated against live client configs           | `shell-tools/mcp-launchers.nix` |
+
+- [01]: `forge-redeploy` phases: build, diff, switch, rollback, generations, Cachix push
 
 ## [02]-[FORGE_REDEPLOY]
 

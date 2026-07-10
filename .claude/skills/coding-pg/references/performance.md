@@ -3,7 +3,7 @@
 AIO, JIT, parallel query, vacuum optimization, cost model tuning, connection pooling, plan-driven diagnostics for PostgreSQL 18.
 
 
-## Asynchronous I/O (PG 18)
+## [01]-[ASYNCHRONOUS_I_O_PG_18]
 
 Asynchronous I/O can materially improve sequential scans, bitmap heap scans, and vacuum on Linux with io_uring; verify gains with workload-specific `EXPLAIN (ANALYZE, BUFFERS, SETTINGS)`.
 
@@ -21,7 +21,7 @@ AIO contracts:
 - Breakeven: AIO overhead (submission queue management) exceeds benefit for queries returning <100 rows via index scan — disable per-session with `SET LOCAL io_max_concurrency = 1` for OLTP-heavy connections
 
 
-## JIT Compilation
+## [02]-[JIT_COMPILATION]
 
 JIT compiles query expressions to native code. Beneficial for complex expressions on large datasets; overhead for simple queries.
 
@@ -40,7 +40,7 @@ JIT contracts:
 - `EXPLAIN ANALYZE` shows JIT time: `JIT: Functions: N, Generation Time: X.Xms, Optimization Time: X.Xms, Emission Time: X.Xms`
 
 
-## Parallel Query
+## [03]-[PARALLEL_QUERY]
 
 ```ini
 max_parallel_workers_per_gather = 4       # workers per Gather node
@@ -61,7 +61,7 @@ Parallel contracts:
 - Breakeven: parallel overhead (process launch + tuple transfer) exceeds benefit below ~100K qualifying rows. Force serial for small tables: `SET LOCAL max_parallel_workers_per_gather = 0`
 
 
-## Vacuum Optimization
+## [04]-[VACUUM_OPTIMIZATION]
 
 Vacuum reclaims dead tuples, updates visibility map, and freezes old transactions.
 
@@ -86,7 +86,7 @@ Vacuum contracts:
 - `VACUUM FULL` rewrites entire table -- takes AccessExclusiveLock; use `pg_repack` extension for online table compaction
 
 
-## Cost Model Tuning
+## [05]-[COST_MODEL_TUNING]
 
 The planner's cost model determines whether it chooses index scans or sequential scans. Incorrect cost parameters directly undermine index strategy.
 
@@ -107,7 +107,7 @@ Cost model contracts:
 - Verification: `EXPLAIN (ANALYZE, BUFFERS)` on representative queries after cost tuning. If `Seq Scan` persists on queries with <5% selectivity and a matching index, the cost model is miscalibrated — not the index strategy
 
 
-## Connection and Memory Tuning
+## [06]-[CONNECTION_AND_MEMORY_TUNING]
 
 ```ini
 shared_buffers = '8GB'                    # 25% of RAM for dedicated DB server
@@ -122,22 +122,22 @@ Memory contracts:
 - `huge_pages = try`: uses 2MB huge pages if available -- significant for shared_buffers > 4GB
 
 
-## Connection Pooling and Prepared Statements
+## [07]-[CONNECTION_POOLING_AND_PREPARED_STATEMENTS]
 
 PgBouncer transaction-mode prepared statement strategies:
 
-| Strategy                             | Mechanism                                             | Status       |
-| ------------------------------------ | ----------------------------------------------------- | ------------ |
-| PgBouncer 1.21+ `prepared_statement` | Transparent PS management across pooled connections   | Preferred    |
-| `protocol = 'simple'`                | Disables extended query protocol; parse-on-every-exec | Fallback     |
-| App-level `PREPARE`/`EXECUTE`        | Server may lack PS after pool reassignment            | Anti-pattern |
+| [INDEX] | [STRATEGY]                           | [MECHANISM]                                           | [STATUS]     |
+| :-----: | :----------------------------------- | :---------------------------------------------------- | :----------- |
+|  [01]   | PgBouncer 1.21+ `prepared_statement` | Transparent PS management across pooled connections   | Preferred    |
+|  [02]   | `protocol = 'simple'`                | Disables extended query protocol; parse-on-every-exec | Fallback     |
+|  [03]   | App-level `PREPARE`/`EXECUTE`        | Server may lack PS after pool reassignment            | Anti-pattern |
 
 `SET LOCAL` scoping:
 - `SET LOCAL work_mem = '256MB'` applies within current transaction only -- safe with transaction-mode pooling
 - Use for per-query `work_mem`, `jit`, `statement_timeout` overrides without affecting other clients
 
 
-## EXPLAIN Analysis
+## [08]-[EXPLAIN_ANALYSIS]
 
 Primary diagnostic tool. Always use `EXPLAIN (ANALYZE, BUFFERS, VERBOSE, SETTINGS)` -- never wall-clock time alone. Add `FORMAT JSON` for programmatic parsing. Add `WAL` to measure WAL generation per statement (write queries).
 
@@ -151,37 +151,37 @@ PG 18 enhancements: automatic buffer reporting, index lookup counts, VERBOSE inc
 
 Key metrics per node:
 
-| Metric        | Reading                             | Signal                                            |
-| ------------- | ----------------------------------- | ------------------------------------------------- |
-| `actual time` | First/last-row ms (inclusive)       | Subtract child time for node cost                 |
-| `rows`        | Actual vs estimated cardinality     | >10x → stale stats / correlated cols              |
-| `Buffers`     | `shared hit` vs `read` ratio        | High `read` → cold cache / small `shared_buffers` |
-| `I/O Timings` | I/O wait vs CPU (`track_io_timing`) | Compute-bound vs I/O-bound                        |
-| `WAL`         | `records` / `fpi` / `bytes`         | High `fpi` → checkpoint too frequent              |
+| [INDEX] | [METRIC]      | [READING]                           | [SIGNAL]                                          |
+| :-----: | :------------ | :---------------------------------- | :------------------------------------------------ |
+|  [01]   | `actual time` | First/last-row ms (inclusive)       | Subtract child time for node cost                 |
+|  [02]   | `rows`        | Actual vs estimated cardinality     | >10x → stale stats / correlated cols              |
+|  [03]   | `Buffers`     | `shared hit` vs `read` ratio        | High `read` → cold cache / small `shared_buffers` |
+|  [04]   | `I/O Timings` | I/O wait vs CPU (`track_io_timing`) | Compute-bound vs I/O-bound                        |
+|  [05]   | `WAL`         | `records` / `fpi` / `bytes`         | High `fpi` → checkpoint too frequent              |
 
 Plan node diagnostics:
 
-| Node                     | Indicates                  | Diagnostic                              |
-| ------------------------ | -------------------------- | --------------------------------------- |
-| `Index Only Scan`        | Covering index working     | `Heap Fetches` ≈ 0 after VACUUM         |
-| `Bitmap Heap Scan`       | Multi-index merge          | `lossy` → increase `work_mem`           |
-| `Hash Join`              | Large equijoin             | `Batches` > 1 → spill to disk           |
-| `Nested Loop`            | Small outer, indexed inner | High outer x seq inner → missing index  |
-| `Parallel Seq Scan`      | Workers engaged            | `Launched` < `Planned` → saturated      |
-| `Memoize` (14+)          | NL inner cache             | `Evictions` > 0 → raise `work_mem`      |
-| `Incremental Sort` (13+) | Partial presort via index  | Composite index on full key avoids sort |
+| [INDEX] | [NODE]                   | [INDICATES]                | [DIAGNOSTIC]                            |
+| :-----: | :----------------------- | :------------------------- | :-------------------------------------- |
+|  [01]   | `Index Only Scan`        | Covering index working     | `Heap Fetches` ≈ 0 after VACUUM         |
+|  [02]   | `Bitmap Heap Scan`       | Multi-index merge          | `lossy` → increase `work_mem`           |
+|  [03]   | `Hash Join`              | Large equijoin             | `Batches` > 1 → spill to disk           |
+|  [04]   | `Nested Loop`            | Small outer, indexed inner | High outer x seq inner → missing index  |
+|  [05]   | `Parallel Seq Scan`      | Workers engaged            | `Launched` < `Planned` → saturated      |
+|  [06]   | `Memoize` (14+)          | NL inner cache             | `Evictions` > 0 → raise `work_mem`      |
+|  [07]   | `Incremental Sort` (13+) | Partial presort via index  | Composite index on full key avoids sort |
 
 Plan pathologies:
 
-| Symptom                             | Cause                       | Fix                            |
-| ----------------------------------- | --------------------------- | ------------------------------ |
-| NL: high outer x seq inner          | Missing join index          | Add index on join column       |
-| Hash: `Batches` > 1                 | `work_mem` spill            | Increase `work_mem`            |
-| Sort: `external merge`              | `work_mem` insufficient     | Increase `work_mem`            |
-| Bitmap: `lossy` blocks              | Bitmap exceeds `work_mem`   | Increase `work_mem`            |
-| Filter removes >> rows returned     | Missing partial index       | Add partial index              |
-| Seq scan on selective indexed query | `random_page_cost` too high | Set 1.1-1.5 for SSD            |
-| `actual rows` = 0, `estimated` > 0  | Empty result                | Plan valid; timing meaningless |
+| [INDEX] | [SYMPTOM]                           | [CAUSE]                     | [FIX]                          |
+| :-----: | :---------------------------------- | :-------------------------- | :----------------------------- |
+|  [01]   | NL: high outer x seq inner          | Missing join index          | Add index on join column       |
+|  [02]   | Hash: `Batches` > 1                 | `work_mem` spill            | Increase `work_mem`            |
+|  [03]   | Sort: `external merge`              | `work_mem` insufficient     | Increase `work_mem`            |
+|  [04]   | Bitmap: `lossy` blocks              | Bitmap exceeds `work_mem`   | Increase `work_mem`            |
+|  [05]   | Filter removes >> rows returned     | Missing partial index       | Add partial index              |
+|  [06]   | Seq scan on selective indexed query | `random_page_cost` too high | Set 1.1-1.5 for SSD            |
+|  [07]   | `actual rows` = 0, `estimated` > 0  | Empty result                | Plan valid; timing meaningless |
 
 EXPLAIN contracts:
 - `ANALYZE` actually executes the query -- use `BEGIN; EXPLAIN ANALYZE ...; ROLLBACK;` for write queries
@@ -191,7 +191,7 @@ EXPLAIN contracts:
 I/O statistics: see `observability.md` pg_stat_io section.
 
 
-## Query Optimization Patterns
+## [09]-[QUERY_OPTIMIZATION_PATTERNS]
 
 Batch processing: `FOR UPDATE SKIP LOCKED` for concurrent worker queue.
 
@@ -246,7 +246,7 @@ Optimization contracts:
 - Statistics target: `ALTER TABLE orders ALTER COLUMN status SET STATISTICS 1000` -- increase for high-cardinality skewed columns
 
 
-## WAL and Checkpoint Tuning
+## [10]-[WAL_AND_CHECKPOINT_TUNING]
 
 ```ini
 wal_level = replica                       # minimum for replication; 'logical' for CDC
@@ -263,7 +263,7 @@ WAL contracts:
 - Monitor checkpoint frequency: `SELECT * FROM pg_stat_checkpointer` -- `checkpoints_req` (forced) should be rare relative to `checkpoints_timed`
 
 
-## Partitioning Performance
+## [11]-[PARTITIONING_PERFORMANCE]
 
 Partition pruning eliminates irrelevant partitions at plan time and execution time.
 

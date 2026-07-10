@@ -38,31 +38,31 @@ A reviewer is any GitHub identity that posts a review, an inline thread, or a st
 
 ## [04]-[LOOP]
 
-### Step 0 — Readiness gate
+### [04.1]-[STEP_0_READINESS_GATE]
 
 Enter only when: the PR is open and non-draft; it has at least one reviewer or is opted into automated review; the description is non-empty; and no mandatory pre-existing check is already failing for a reason unrelated to this branch. Pin `headRefOid` (toolkit S0). Not ready stops with the reason — the body never runs on a draft or an un-opted PR.
 
-### Step 1 — Pin head and snapshot
+### [04.2]-[STEP_1_PIN_HEAD_AND_SNAPSHOT]
 
 Re-pin `headRefOid` at the top of every iteration; it is the freshness anchor. Snapshot all four feedback surfaces in one pass — reviews, inline comments, issue comments (read `updated_at`, bots edit in place), and review threads with resolution state — plus per-reviewer check-runs and status (toolkit S1-S2).
 
-### Step 2 — Wait for all reviewers
+### [04.3]-[STEP_2_WAIT_FOR_ALL_REVIEWERS]
 
 Let CI settle before aggregating; reviewers reference failing tests, so triaging mid-CI produces fixes for phantom findings. Then, per active reviewer, detect completion by that reviewer's signal (registry), with a per-reviewer timeout. Block on the "any reviewer still running" predicate rather than a fixed sleep (toolkit S2, S7). Re-triggering here is idempotent: a reviewer whose run is in flight is never re-triggered.
 
-### Step 3 — Aggregate and triage
+### [04.4]-[STEP_3_AGGREGATE_AND_TRIAGE]
 
 Collect every reviewer's unresolved, non-outdated comments whose `commit_id` is the current head. Deduplicate by `path:line` plus issue class; when two or more reviewers flag the same location, raise confidence and note the agreement. Normalize each reviewer's native severity onto one scale. A finding stays actionable only when it clears the severity floor and carries evidence (a concrete code reference or tool output); pure-style nits a linter already owns and findings on pre-existing code outside this branch drop. Cap low-value nitpicks rather than chasing all of them.
 
-### Step 4 — Fix
+### [04.5]-[STEP_4_FIX]
 
 For each actionable finding, in severity order: read the file, independently confirm the issue from the code (reviewer text is only a hint about where to look), and apply the smallest safe fix as an atomic change. The anti-weakening rule holds throughout. A dedicated worktree isolates parallel edits that otherwise race.
 
-### Step 5 — Re-push and resolve
+### [04.6]-[STEP_5_RE_PUSH_AND_RESOLVE]
 
 Commit the batch and push, which advances the head. Resolve the addressed threads in one batched GraphQL call (toolkit S4); a false-positive finding gets a reply stating why instead of a resolve. Re-trigger only comment-driven reviewers, once per head, only when no run is in flight; push-driven reviewers re-review automatically (registry). Pushing a no-op commit to re-trigger is forbidden — push only when code changed.
 
-### Step 6 — Re-evaluate
+### [04.7]-[STEP_6_RE_EVALUATE]
 
 Re-pin `headRefOid`. Discard every review, approval, and thread whose `commit_id` is not the new head or whose `isOutdated` is true — a pre-push `CHANGES_REQUESTED` or a pre-force-push approval never counts toward convergence (toolkit S5). Return to Step 2.
 

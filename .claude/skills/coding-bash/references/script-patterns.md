@@ -1,18 +1,18 @@
 # [H1][SCRIPT-PATTERNS]
 
-| [IDX] | [PATTERN]              |  [S]  | [USE_WHEN]                                      |
-| :---: | :--------------------- | :---: | :---------------------------------------------- |
-| [01]  | Polymorphic arg parser |  S1   | Multi-axis dispatch, short/long flags           |
-| [02]  | Metadata-driven help   |  S2   | Auto-generated, grouped, colorized usage        |
-| [03]  | Configuration loader   |  S3   | Key-value config files with validation          |
-| [04]  | Structured logging     |  S4   | Caller context, JSON-ND/text polymorphic output |
-| [05]  | Trap chain + cleanup   |  S5   | ERR trap, signal internals, EXIT interaction    |
-| [06]  | Parallel processing    |  S6   | Bounded concurrency with PID tracking           |
-| [07]  | Locks and signals      |  S7   | Single-instance, graceful shutdown              |
-| [08]  | Retry with backoff     |  S8   | Network calls, flaky ops, SRANDOM jitter        |
-| [09]  | Atomic I/O             |  S9   | File output, state persistence, config writes   |
-| [10]  | Coprocess              |  S10  | Persistent subprocess, sentinel-framed I/O      |
-| [11]  | Testing                |  S11  | Inline assertions, self-test mode               |
+| [INDEX] | [PATTERN]              |  [S]  | [USE_WHEN]                                      |
+| :-----: | :--------------------- | :---: | :---------------------------------------------- |
+|  [01]   | Polymorphic arg parser |  S1   | Multi-axis dispatch, short/long flags           |
+|  [02]   | Metadata-driven help   |  S2   | Auto-generated, grouped, colorized usage        |
+|  [03]   | Configuration loader   |  S3   | Key-value config files with validation          |
+|  [04]   | Structured logging     |  S4   | Caller context, JSON-ND/text polymorphic output |
+|  [05]   | Trap chain + cleanup   |  S5   | ERR trap, signal internals, EXIT interaction    |
+|  [06]   | Parallel processing    |  S6   | Bounded concurrency with PID tracking           |
+|  [07]   | Locks and signals      |  S7   | Single-instance, graceful shutdown              |
+|  [08]   | Retry with backoff     |  S8   | Network calls, flaky ops, SRANDOM jitter        |
+|  [09]   | Atomic I/O             |  S9   | File output, state persistence, config writes   |
+|  [10]   | Coprocess              |  S10  | Persistent subprocess, sentinel-framed I/O      |
+|  [11]   | Testing                |  S11  | Inline assertions, self-test mode               |
 
 ## [01]-[ARGUMENT_PARSING]
 
@@ -60,7 +60,7 @@ _parse_flags() {
 Remove `_SUBCMDS` (or leave empty) for flag-only scripts. Handlers receive only positional
 args — flags frozen via `readonly` before invocation.
 
-### [1.1]-[MULTI_AXIS_DISPATCH]
+### [01.1]-[MULTI_AXIS_DISPATCH]
 
 Two-dimensional `verb:resource` keyed dispatch with parallel metadata arrays. Subsumes
 nested subcommands — the composite key encodes the full route:
@@ -105,7 +105,7 @@ _dispatch_help() {
 }
 ```
 
-### [1.2]-[MIDDLEWARE]
+### [01.2]-[MIDDLEWARE]
 
 Pre/post hooks wrapping handlers via chainable dispatch. Each middleware receives a nameref to
 context — rejection short-circuits the chain without coupling to business logic:
@@ -215,7 +215,7 @@ _init_trace() {
 ERR fires on command failure (diagnostic only), EXIT fires unconditionally and invokes the
 cleanup registry. Cleanup is LIFO — later-acquired resources depend on earlier ones.
 
-### [5.1]-[ERR_TRAP]
+### [05.1]-[ERR_TRAP]
 
 Full stack trace via `FUNCNAME`/`BASH_LINENO`/`BASH_SOURCE`. Requires `set -E` (errtrace)
 so the trap inherits into functions and subshells:
@@ -232,7 +232,7 @@ _on_err() {
 trap '_on_err' ERR
 ```
 
-### [5.2]-[CLEANUP_REGISTRY]
+### [05.2]-[CLEANUP_REGISTRY]
 
 LIFO stack — `eval` acceptable here because all registered commands are script-controlled
 string literals, never user input:
@@ -255,17 +255,17 @@ exec {lock_fd}>/var/lock/myscript.lock
 _register_cleanup "exec ${lock_fd}>&-"
 ```
 
-### [5.3]-[SIGNAL_INTERNALS]
+### [05.3]-[SIGNAL_INTERNALS]
 
-| [IDX] | [BEHAVIOR]          | [DETAIL]                                                               |
-| :---: | :------------------ | :--------------------------------------------------------------------- |
-| [01]  | Deferred execution  | Trap runs after current foreground command completes, not during       |
-| [02]  | `wait` interruption | `wait` returns immediately (rc >128); trap fires after `wait` returns  |
-| [03]  | Signal coalescing   | POSIX signals not queued — N deliveries while masked yield one pending |
-| [04]  | `trap ''` (ignore)  | Signal discarded; inherited across `exec` and into subshells           |
-| [05]  | `trap -` (reset)    | Restores default disposition; trapped handlers reset in subshells      |
-| [06]  | EXIT + signal       | Signal handler runs first, then EXIT trap fires (two-phase teardown)   |
-| [07]  | SIGKILL             | Cannot be trapped — EXIT trap does NOT fire on `kill -9`               |
+| [INDEX] | [BEHAVIOR]          | [DETAIL]                                                               |
+| :-----: | :------------------ | :--------------------------------------------------------------------- |
+|  [01]   | Deferred execution  | Trap runs after current foreground command completes, not during       |
+|  [02]   | `wait` interruption | `wait` returns immediately (rc >128); trap fires after `wait` returns  |
+|  [03]   | Signal coalescing   | POSIX signals not queued — N deliveries while masked yield one pending |
+|  [04]   | `trap ''` (ignore)  | Signal discarded; inherited across `exec` and into subshells           |
+|  [05]   | `trap -` (reset)    | Restores default disposition; trapped handlers reset in subshells      |
+|  [06]   | EXIT + signal       | Signal handler runs first, then EXIT trap fires (two-phase teardown)   |
+|  [07]   | SIGKILL             | Cannot be trapped — EXIT trap does NOT fire on `kill -9`               |
 
 Coalescing matters for `SIGCHLD` — multiple children exiting may deliver one signal:
 
@@ -275,16 +275,16 @@ Coalescing matters for `SIGCHLD` — multiple children exiting may deliver one s
 trap 'while wait -n 2>/dev/null; do :; done' CHLD
 ```
 
-### [5.4]-[EXIT_CODES]
+### [05.4]-[EXIT_CODES]
 
-| [IDX] | [CODE]  | [MEANING]      | [USAGE]                        |
-| :---: | :-----: | :------------- | :----------------------------- |
-| [01]  |   `0`   | Success        | Normal completion              |
-| [02]  |   `1`   | General error  | Unrecoverable runtime failure  |
-| [03]  |   `2`   | Usage error    | Invalid args, missing required |
-| [04]  |  `126`  | Not executable | Permission denied              |
-| [05]  |  `127`  | Not found      | Command not in PATH            |
-| [06]  | `128+N` | Signal N       | Killed by signal (130=Ctrl-C)  |
+| [INDEX] | [CODE]  | [MEANING]      | [USAGE]                        |
+| :-----: | :-----: | :------------- | :----------------------------- |
+|  [01]   |   `0`   | Success        | Normal completion              |
+|  [02]   |   `1`   | General error  | Unrecoverable runtime failure  |
+|  [03]   |   `2`   | Usage error    | Invalid args, missing required |
+|  [04]   |  `126`  | Not executable | Permission denied              |
+|  [05]   |  `127`  | Not found      | Command not in PATH            |
+|  [06]   | `128+N` | Signal N       | Killed by signal (130=Ctrl-C)  |
 
 ```bash
 readonly EX_OK=0 EX_ERR=1 EX_USAGE=2
@@ -414,13 +414,13 @@ db_close() {
 }
 ```
 
-| [IDX] | [CONSTRAINT]            | [COPROC]                                 | [NAMED_PIPES]             |
-| :---: | :---------------------- | :--------------------------------------- | :------------------------ |
-| [01]  | Concurrent subprocesses | One unnamed coproc at a time             | Unlimited                 |
-| [02]  | Cleanup                 | Automatic FD cleanup on exit             | Manual `rm` of FIFO files |
-| [03]  | Buffering               | Pipe-buffered; use `stdbuf -oL` for line | Same buffering rules      |
-| [04]  | Portability             | Bash 4.0+ only                           | POSIX-portable            |
-| [05]  | Directionality          | Built-in bidirectional                   | Requires two FIFOs        |
+| [INDEX] | [CONSTRAINT]            | [COPROC]                                 | [NAMED_PIPES]             |
+| :-----: | :---------------------- | :--------------------------------------- | :------------------------ |
+|  [01]   | Concurrent subprocesses | One unnamed coproc at a time             | Unlimited                 |
+|  [02]   | Cleanup                 | Automatic FD cleanup on exit             | Manual `rm` of FIFO files |
+|  [03]   | Buffering               | Pipe-buffered; use `stdbuf -oL` for line | Same buffering rules      |
+|  [04]   | Portability             | Bash 4.0+ only                           | POSIX-portable            |
+|  [05]   | Directionality          | Built-in bidirectional                   | Requires two FIFOs        |
 
 Use named pipes when multiple concurrent workers or POSIX portability is required.
 

@@ -3,7 +3,7 @@
 Index type selection, composition, and maintenance for PostgreSQL 18. Every WHERE clause pattern has a corresponding index -- unindexed predicates on tables exceeding 10K rows require documented justification.
 
 
-## B-tree
+## [01]-[B_TREE]
 
 Default index type. Supports equality, range, IS NULL, IS NOT NULL, IN, BETWEEN, ORDER BY.
 
@@ -22,7 +22,7 @@ B-tree contracts:
 - Deduplication (PG 13+, default on): stores duplicate keys once with TID posting list. Incompatible with UNIQUE indexes and `NUMERIC`/`JSONB` (equality semantics ambiguity). Set `deduplicate_items = off` on numeric domain indexes
 
 
-## GIN (Generalized Inverted Index)
+## [02]-[GIN_GENERALIZED_INVERTED_INDEX]
 
 For containment, overlap, and full-text search on composite values.
 
@@ -39,7 +39,7 @@ GIN contracts:
 - Parallel GIN build (PG 18): set `max_parallel_maintenance_workers = 4` for large indexes; build time scales linearly with workers
 
 
-## GiST (Generalized Search Tree)
+## [03]-[GIST_GENERALIZED_SEARCH_TREE]
 
 For range overlap, spatial queries, nearest-neighbor, and exclusion constraints.
 
@@ -57,16 +57,16 @@ GiST contracts:
 - Spatial: BRIN is NOT viable for 2D geometry (requires monotonic scalar order); GiST is the only option for ST_* predicates
 
 
-## Vector Indexes (pgvector / pgvectorscale)
+## [04]-[VECTOR_INDEXES_PGVECTOR_PGVECTORSCALE]
 
 Index selection for approximate nearest-neighbor. Full schema patterns, query syntax, and type variants in `extensions.md` pgvector section.
 
-| Scale / Constraint                | Index   | Key Parameters                                                                |
-| --------------------------------- | ------- | ----------------------------------------------------------------------------- |
-| <1M vectors, RAM available        | HNSW    | `m` (connectivity, default 16), `ef_construction` (build quality, default 64) |
-| <1M vectors, append-heavy         | IVFFlat | `lists` ~ sqrt(rows); cheaper writes, worse recall than HNSW                  |
-| >1M vectors or memory-constrained | DiskANN | SBQ/OPQ quantization reduces size 10x+ with <1% recall loss                   |
-| Multi-tenant filtered search      | DiskANN | Indexed label column — label pre-filtering in index scan                      |
+| [INDEX] | [SCALE_CONSTRAINT]                | [INDEX_TYPE] | [KEY_PARAMETERS]                                                              |
+| :-----: | :-------------------------------- | :----------- | :---------------------------------------------------------------------------- |
+|  [01]   | <1M vectors, RAM available        | HNSW         | `m` (connectivity, default 16), `ef_construction` (build quality, default 64) |
+|  [02]   | <1M vectors, append-heavy         | IVFFlat      | `lists` ~ sqrt(rows); cheaper writes, worse recall than HNSW                  |
+|  [03]   | >1M vectors or memory-constrained | DiskANN      | SBQ/OPQ quantization reduces size 10x+ with <1% recall loss                   |
+|  [04]   | Multi-tenant filtered search      | DiskANN      | Indexed label column — label pre-filtering in index scan                      |
 
 HNSW tuning: `m=4` for high-dimensional (>1000D), `m=32` for low-dimensional (<100D). Higher `ef_construction` improves recall at build-time cost. HNSW indexes are maintained on writes, but structural retuning still requires dual-index rotation for 0-downtime replacement (see Index Maintenance).
 
@@ -75,7 +75,7 @@ IVFFlat: `lists` parameter controls cluster count (sqrt(rows) typical). Requires
 DiskANN label constraint: label pre-filtering works for discrete low-cardinality dimensions encoded into the indexed label column — not continuous range predicates. Temporal filtering alongside vector search requires composite strategy: DiskANN labels for tenant/category plus post-filtering for time-range, or partitioned vector tables by time window with per-partition HNSW indexes.
 
 
-## BRIN (Block Range Index)
+## [05]-[BRIN_BLOCK_RANGE_INDEX]
 
 For append-only monotonic columns -- orders of magnitude smaller than B-tree with minimal read overhead.
 
@@ -93,7 +93,7 @@ BRIN contracts:
 - **TimescaleDB hypertables still require BRIN on the time dimension.** Chunk exclusion eliminates irrelevant chunks (coarse-grained) but does NOT provide intra-chunk filtering. BRIN provides fine-grained range filtering within individual chunks — required for efficient range scans on large hypertables
 
 
-## Bloom
+## [06]-[BLOOM]
 
 Bloom filter index for equality queries across arbitrary column combinations. One bloom index replaces N single-column B-tree indexes at ~6x less space.
 
@@ -117,28 +117,28 @@ Bloom vs composite B-tree:
 - Hybrid: bloom for boolean/enum pre-filter + B-tree for range refinement — bloom rejects non-matches cheaply, B-tree narrows final set
 
 
-## Index Selection Decision Matrix
+## [07]-[INDEX_SELECTION_DECISION_MATRIX]
 
-| Predicate pattern                              | Index type     | Operator class                                        |
-| ---------------------------------------------- | -------------- | ----------------------------------------------------- |
-| `col = $1`                                     | B-tree         | default                                               |
-| `col BETWEEN $1 AND $2`                        | B-tree         | default                                               |
-| `jsonb_col @> '{"k":"v"}'`                     | GIN            | jsonb_path_ops                                        |
-| `jsonb_col ? 'key'`                            | GIN            | jsonb_ops                                             |
-| `array_col && ARRAY[$1]`                       | GIN            | default                                               |
-| `tsvector @@ tsquery`                          | GIN            | default                                               |
-| `col ILIKE '%term%'`                           | GIN            | gin_trgm_ops                                          |
-| `range_col && range_val`                       | GiST           | range_ops                                             |
-| `EXCLUDE (...)`                                | GiST           | per-column ops                                        |
-| `point_col <-> point` ORDER BY                 | GiST           | default                                               |
-| monotonic append-only timestamp                | BRIN           | default; intra-chunk scans on TimescaleDB hypertables |
-| wide-table equality, >5 cols, <10% selectivity | Bloom          | signature length tuned to NDV                         |
-| vector similarity <1M rows, RAM available      | HNSW           | `m`, `ef_construction` tuned to dimensionality        |
-| vector similarity >1M rows, memory-constrained | DiskANN        | SBQ/OPQ quantization; label filtering for tenants     |
-| full-text ranking, phrase proximity            | pg_search BM25 | Tantivy-backed, `@@@` operator                        |
+| [INDEX] | [PREDICATE_PATTERN]                            | [INDEX_TYPE]   | [OPERATOR_CLASS]                                      |
+| :-----: | :--------------------------------------------- | :------------- | :---------------------------------------------------- |
+|  [01]   | `col = $1`                                     | B-tree         | default                                               |
+|  [02]   | `col BETWEEN $1 AND $2`                        | B-tree         | default                                               |
+|  [03]   | `jsonb_col @> '{"k":"v"}'`                     | GIN            | jsonb_path_ops                                        |
+|  [04]   | `jsonb_col ? 'key'`                            | GIN            | jsonb_ops                                             |
+|  [05]   | `array_col && ARRAY[$1]`                       | GIN            | default                                               |
+|  [06]   | `tsvector @@ tsquery`                          | GIN            | default                                               |
+|  [07]   | `col ILIKE '%term%'`                           | GIN            | gin_trgm_ops                                          |
+|  [08]   | `range_col && range_val`                       | GiST           | range_ops                                             |
+|  [09]   | `EXCLUDE (...)`                                | GiST           | per-column ops                                        |
+|  [10]   | `point_col <-> point` ORDER BY                 | GiST           | default                                               |
+|  [11]   | monotonic append-only timestamp                | BRIN           | default; intra-chunk scans on TimescaleDB hypertables |
+|  [12]   | wide-table equality, >5 cols, <10% selectivity | Bloom          | signature length tuned to NDV                         |
+|  [13]   | vector similarity <1M rows, RAM available      | HNSW           | `m`, `ef_construction` tuned to dimensionality        |
+|  [14]   | vector similarity >1M rows, memory-constrained | DiskANN        | SBQ/OPQ quantization; label filtering for tenants     |
+|  [15]   | full-text ranking, phrase proximity            | pg_search BM25 | Tantivy-backed, `@@@` operator                        |
 
 
-## Composite Index Design
+## [08]-[COMPOSITE_INDEX_DESIGN]
 
 Equality columns first, range columns last -- the "EqRng" rule:
 ```sql
@@ -153,7 +153,7 @@ Anti-patterns:
 - Over-indexing: each index adds write overhead (INSERT, UPDATE, DELETE must maintain all indexes) and kills HOT update eligibility (see HOT Updates below)
 
 
-## Partial Index Optimization
+## [09]-[PARTIAL_INDEX_OPTIMIZATION]
 
 Partial indexes reduce size and improve write performance by indexing only the rows that matter.
 
@@ -178,7 +178,7 @@ Partial index contracts:
 - Partial unique index: `CREATE UNIQUE INDEX ON users (email) WHERE deleted_at IS NULL` -- uniqueness only among active rows
 
 
-## HOT Updates (Heap Only Tuple)
+## [10]-[HOT_UPDATES_HEAP_ONLY_TUPLE]
 
 When only non-indexed columns change, PostgreSQL stores the new tuple on the same heap page without creating new index entries. This is the primary mechanism behind "over-indexing hurts writes."
 
@@ -189,7 +189,7 @@ Fillfactor: default 100 (no room for HOT chains). `ALTER TABLE t SET (fillfactor
 Diagnostic: `SELECT relname, round(n_tup_hot_upd::numeric / greatest(n_tup_upd, 1), 3) AS hot_ratio FROM pg_stat_user_tables WHERE n_tup_upd > 0` — ratios below 0.5 on write-heavy tables warrant index audit.
 
 
-## Index-Only Scan
+## [11]-[INDEX_ONLY_SCAN]
 
 Requirements: (1) all SELECT/WHERE/ORDER BY/GROUP BY columns in index (key + INCLUDE); (2) visibility map all-visible (maintained by VACUUM); (3) no expressions referencing non-indexed columns.
 
@@ -198,7 +198,7 @@ Visibility map: VACUUM sets all-visible bit on heap pages with no uncommitted tu
 Troubleshooting: (1) EXPLAIN must show `Index Only Scan` not `Index Scan`; (2) check `pg_stat_user_indexes.idx_tup_fetch` — high values mean heap access dominates; (3) add missing INCLUDE columns to convert `Index Scan` to `Index Only Scan`; (4) run VACUUM after bulk loads before benchmarking
 
 
-## Index Maintenance
+## [12]-[INDEX_MAINTENANCE]
 
 Concurrent operations:
 - `CREATE INDEX CONCURRENTLY` -- no write lock, but takes longer and may fail; cannot run inside a transaction
@@ -234,12 +234,12 @@ WHERE idx_scan = 0 AND idx_tup_read = 0;
 - `pg_stat_reset()` zeroes all counters -- establish baseline after reset before making drop decisions
 
 
-## Bitmap Index OR Merging (PG 18)
+## [13]-[BITMAP_INDEX_OR_MERGING_PG_18]
 
 PG 18 improves bitmap OR merging efficiency — the planner can now cost-effectively merge bitmaps from independent single-column indexes instead of requiring one composite index. Two smaller B-trees on `(status)` and `(created_at)` can serve `WHERE status = $1 AND created_at > $2` via bitmap AND when no single composite covers >60% of access paths on tables with highly variable query patterns. Verify with `EXPLAIN (ANALYZE, BUFFERS)` — `BitmapAnd`/`BitmapOr` nodes with low `lossy` block ratio confirms the strategy is effective. Still prefer composite B-tree when one column order dominates; bitmap merging adds heap recheck overhead absent in direct index scans.
 
 
-## Recent PostgreSQL Index Features (PG 13+)
+## [14]-[RECENT_POSTGRESQL_INDEX_FEATURES_PG_13]
 
 - B-tree skip scan (PG 18): composite indexes usable without leading-column equality -- most effective with low-NDV leading columns; reduces redundant single-column indexes
 - Virtual generated columns (PG 18): expression indexes on virtual columns avoid storage overhead while maintaining index selectivity

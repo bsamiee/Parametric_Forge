@@ -4,14 +4,21 @@ Secret custody is partitioned into classes, each with one origin, one movement p
 
 ## [01]-[CUSTODY_CLASSES]
 
-| [INDEX] | [CLASS] | [ORIGIN] | [MOVEMENT] | [BOUNDARY] |
-| :-----: | :--- | :--- | :--- | :--- |
-| [01] | User CLI Doppler token | `doppler login` ambient auth | Stripped with `env -u DOPPLER_TOKEN` during the multi-source hook fetch | One CLI identity; never serialized into receipts or client configs |
-| [02] | Config service token | Pulumi `doppler.ServiceToken` row, output as secret `token:<project>/<config>/<name>` | Revealed once via `driver.ts outputs <name> --reveal`; consumed by the hook `TOKEN_ENV_VAR` lane | Read-only grant; a failed token retries ambient once and reports failure by name, never value |
-| [03] | IaC admin token | `op://Tokens/DOPPLER_IAC_TOKEN/token` | `op read` unless ambient `DOPPLER_TOKEN` exists; injected as Pulumi Automation env | Only the driver child process receives the unwrapped token |
-| [04] | GitHub IaC PAT | `op://Tokens/Github Token/token` | `op read` unless ambient `GITHUB_TOKEN` exists; injected into `@pulumi/github` | Provider env only; repository resources stay protected |
-| [05] | MCP Doppler token | `agent-runtime/dev` secret `DOPPLER_MCP_AGENT_TOKEN` | Outer `doppler run` injects it inside the wrapper; inner `forge-doppler-mcp --read-only --project agent-runtime --config dev` narrows the surface | No `envKeys` on the row; the token never leaves the wrapper, and read-only is default posture, not the auth boundary |
-| [06] | 1Password personal custody | `Forge SSH Key` in the `Personal` vault | 1Password SSH agent socket and `op-ssh-sign` | Private key never enters repo files; only the public key and allowed signer are projected |
+| [INDEX] | [CLASS]                    | [ORIGIN]                                             | [MOVEMENT]              | [BOUNDARY]        |
+| :-----: | :------------------------- | :--------------------------------------------------- | :---------------------- | :---------------- |
+|  [01]   | User CLI Doppler token     | `doppler login` ambient auth                         | `env -u` strip          | one CLI identity  |
+|  [02]   | Config service token       | Pulumi `doppler.ServiceToken` row                    | `driver.ts --reveal`    | read-only grant   |
+|  [03]   | IaC admin token            | `op://Tokens/DOPPLER_IAC_TOKEN/token`                | `op read`, else ambient | driver child only |
+|  [04]   | GitHub IaC PAT             | `op://Tokens/Github Token/token`                     | `op read`, else ambient | provider env only |
+|  [05]   | MCP Doppler token          | `agent-runtime/dev` secret `DOPPLER_MCP_AGENT_TOKEN` | `doppler run` wrap      | wrapper-scoped    |
+|  [06]   | 1Password personal custody | `Forge SSH Key` in the `Personal` vault              | 1Password agent         | public key only   |
+
+- [01]: User CLI Doppler token: stripped with `env -u DOPPLER_TOKEN` during the multi-source hook fetch; one CLI identity, never serialized into receipts or client configs.
+- [02]: Config service token: output secret `token:<project>/<config>/<name>`, revealed once via `driver.ts outputs <name> --reveal` and consumed by the hook `TOKEN_ENV_VAR` lane; read-only grant, a failed token retries ambient once and reports failure by name, never value.
+- [03]: IaC admin token: `op read` unless ambient `DOPPLER_TOKEN` exists, injected as Pulumi Automation env; only the driver child process receives the unwrapped token.
+- [04]: GitHub IaC PAT: `op read` unless ambient `GITHUB_TOKEN` exists, injected into `@pulumi/github`; provider env only, repository resources stay protected.
+- [05]: MCP Doppler token: outer `doppler run` injects it inside the wrapper, inner `forge-doppler-mcp --read-only --project agent-runtime --config dev` narrows the surface; no `envKeys` on the row, the token never leaves the wrapper, and read-only is default posture, not the auth boundary.
+- [06]: 1Password personal custody: 1Password SSH agent socket and `op-ssh-sign`; private key never enters repo files, only the public key and allowed signer are projected.
 
 The read-only flag on the MCP Doppler lane is cosmetic relative to token scope — the scoped service token is the real auth boundary, detailed in [scars.md](scars.md).
 

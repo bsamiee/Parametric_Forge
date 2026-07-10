@@ -1,74 +1,55 @@
 {
-  "files": [
-    {
-      "path": "CLAUDE.md",
-      "description": "Execution standards: model dispatch, nix requirements, code density bar, shell and provisioning law, commit grammar"
-    },
-    {
-      "path": "AGENTS.md",
-      "description": "Repo role and ownership boundaries for agents"
-    },
-    {
-      "path": "README.md",
-      "description": "Repo structure register: module split, overlays, services, hosts"
-    },
-    {
-      "path": "docs/standards/design-doctrine.md",
-      "description": "Universal design law binding every executable surface: rails, dispatch, admitted substrate, parameterization, boundaries, density, vocabularies"
-    },
-    {
-      "path": "docs/standards/nix-doctrine.md",
-      "description": "Nix extension of the design law: owner modules, row dispatch, overlays, shell kernels, JSON envelope rails, generated config, vocabulary owners",
-      "scope": [
-        "**/*.nix",
-        "modules/**",
-        "overlays/**",
-        "flake-modules/**",
-        "hosts/**"
-      ]
-    },
-    {
-      "path": "overlays/forge-provision/README.md",
-      "description": "Schema-v3 JSON envelope contract for provisioning commands",
-      "scope": [
-        "overlays/**"
-      ]
-    },
-    {
-      "path": "docs/stacks/typescript/README.md",
-      "description": "TypeScript doctrine: Effect rails, services, boundaries",
-      "scope": [
-        "services/**",
-        "**/*.ts"
-      ]
-    },
-    {
-      "path": "docs/stacks/python/README.md",
-      "description": "Python doctrine: typed rails, uv custody",
-      "scope": [
-        "**/*.py"
-      ]
-    },
-    {
-      "path": "docs/standards/style-guide.md",
-      "description": "Prose law: sentence altitude, register, banned patterns",
-      "scope": [
-        "**/*.md"
-      ]
-    },
-    {
-      "path": "docs/standards/formatting.md",
-      "description": "Formatting law for durable artifacts",
-      "scope": [
-        "**/*.md"
-      ]
-    },
-    {
-      "path": "docs/standards/information-structure.md",
-      "description": "Information architecture law: structure, density, tables vs prose",
-      "scope": [
-        "**/*.md"
-      ]
-    }
-  ]
+    "files": [
+        {
+            "path": "CLAUDE.md",
+            "description": "Execution standards: model dispatch, nix requirements, code density bar, shell and provisioning law, commit grammar"
+        },
+        {
+            "path": "AGENTS.md",
+            "description": "Repo role and ownership boundaries for agents"
+        },
+        {
+            "path": "README.md",
+            "description": "Repo structure register: module split, overlays, services, hosts"
+        },
+        {
+            "path": "docs/standards/design-doctrine.md",
+            "description": "Universal design law binding every executable surface: rails, dispatch, admitted substrate, parameterization, boundaries, density, vocabularies"
+        },
+        {
+            "path": "docs/standards/nix-doctrine.md",
+            "description": "Nix extension of the design law: owner modules, row dispatch, overlays, shell kernels, JSON envelope rails, generated config, vocabulary owners",
+            "scope": ["**/*.nix", "modules/**", "overlays/**", "flake-modules/**", "hosts/**"]
+        },
+        {
+            "path": "overlays/forge-provision/README.md",
+            "description": "Schema-v3 JSON envelope contract for provisioning commands",
+            "scope": ["overlays/**"]
+        },
+        {
+            "path": "docs/stacks/typescript/README.md",
+            "description": "TypeScript doctrine: Effect rails, services, boundaries",
+            "scope": ["services/**", "**/*.ts"]
+        },
+        {
+            "path": "docs/stacks/python/README.md",
+            "description": "Python doctrine: typed rails, uv custody",
+            "scope": ["**/*.py"]
+        },
+        {
+            "path": "docs/standards/style-guide.md",
+            "description": "Prose law: sentence altitude, register, banned patterns",
+            "scope": ["**/*.md"]
+        },
+        {
+            "path": "docs/standards/formatting.md",
+            "description": "Formatting law for durable artifacts",
+            "scope": ["**/*.md"]
+        },
+        {
+            "path": "docs/standards/information-structure.md",
+            "description": "Information architecture law: structure, density, tables vs prose",
+            "scope": ["**/*.md"]
+        }
+    ]
 }

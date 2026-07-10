@@ -77,20 +77,33 @@ The decision doc confronts the reader with rendered rivals and returns a ruling;
 
 Each variant resolves onto a core type and earns only its named deltas; everything unstated inherits from the base row.
 
-| [INDEX] | [VARIANT]     | [BASE]       | [ENVELOPE_KIND] | [DELTAS]                                                                                                                                                                                                                                              |
-| :-----: | :------------ | :----------- | :-------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-|  [01]   | diff-review   | report       | `diff`          | rendered diff with margin annotations and severity chips; file-level risk labels; per-hunk verdicts anchored to stable hunk ids                                  |
-|  [02]   | quiz          | decision-doc | `quiz`          | items with three effective homogeneous choices; a justification field per answer; one receipt carries every selection; criterion readout, never a percentage                                                                                          |
-|  [03]   | wargame       | decision-doc | `decision`      | the scoring matrix promoted to the shell at board width; weights locked before scores render; one row per direction, kill conditions as row chips                                                                                                     |
-|  [04]   | buy-in        | report       | `buyin`         | the inspectable evidence leads — demo, trace, before-and-after; one objection lane per audience with refutation and proving signal; a sign-off matrix as capture                                                                                      |
-|  [05]   | explainer     | report       | none            | reading class; contrasting cases side by side; scrub controls driving a live figure; hover-linked term glossary; disclosure deepens, never gates                                                                                                      |
-|  [06]   | contact-sheet | dashboard    | none            | stage class; variant matrix under shared controls — density, border, state toggles — with a best-for label per cell; both themes rendered, not imagined                                                                                               |
-|  [07]   | board         | dashboard    | `board`         | drag cards across named columns; dependency warnings on invalid placement; changed-only export of moved ids; DOM position never authoritative                                                                                                         |
-|  [08]   | atlas         | roadmap      | `report`        | entity cards with edge lists and maturity chips; one SVG relation figure over three or more edges; refused arms distinguished from gaps by bracket text                                                                                               |
-|  [09]   | deck          | any          | inherits base   | full-viewport slide shell over the same payload and drawer; arrow-key state machine; slide counter always rendered; per-slide reading width                                                                                                           |
-|  [10]   | editor        | plan         | `plan`          | disposable field editor over one payload; controls bound one-to-one to payload fields; invalid-combination warnings from declared rules; changed-only export         |
-|  [11]   | walkthrough   | report       | none            | reading class; a request path or callstack as a numbered step rail synced to one flow figure; source excerpts keyed to steps; key-files table; gotchas close                                                                           |
-|  [12]   | prototype     | dashboard    | none            | stage class; linked screens under `data-step` navigation, or one micro-interaction under live timing controls with replay; fake data declared as fake                                     |
+| [INDEX] | [VARIANT]     | [BASE]       | [ENVELOPE_KIND] | [DELTAS]                                                                              |
+| :-----: | :------------ | :----------- | :-------------- | :------------------------------------------------------------------------------------ |
+|  [01]   | diff-review   | report       | `diff`          | rendered diff with margin annotations and severity chips; file-level risk labels      |
+|  [02]   | quiz          | decision-doc | `quiz`          | three homogeneous choices; per-answer justification; criterion readout, no percentage |
+|  [03]   | wargame       | decision-doc | `decision`      | scoring matrix at board width; weights locked before scores; one row per direction    |
+|  [04]   | buy-in        | report       | `buyin`         | inspectable evidence — demo, trace, before/after; one objection lane per audience     |
+|  [05]   | explainer     | report       | none            | reading class; contrasting cases side by side; scrub controls drive a live figure     |
+|  [06]   | contact-sheet | dashboard    | none            | stage class; variant matrix under shared controls; best-for label per cell            |
+|  [07]   | board         | dashboard    | `board`         | drag cards across named columns; dependency warnings on invalid placement             |
+|  [08]   | atlas         | roadmap      | `report`        | entity cards, edge lists, maturity chips; one SVG relation figure over 3+ edges       |
+|  [09]   | deck          | any          | inherits base   | full-viewport slide shell over the same payload and drawer; arrow-key state machine   |
+|  [10]   | editor        | plan         | `plan`          | disposable field editor over one payload; controls bound one-to-one to fields         |
+|  [11]   | walkthrough   | report       | none            | reading class; request path/callstack as a numbered step rail on one flow figure      |
+|  [12]   | prototype     | dashboard    | none            | stage class; linked screens under `data-step` nav, or a timed micro-interaction       |
+
+- diff-review: per-hunk verdicts anchored to stable hunk ids.
+- quiz: one receipt carries every selection.
+- wargame: kill conditions as row chips.
+- buy-in: refutation and proving signal; a sign-off matrix as capture.
+- explainer: hover-linked term glossary; disclosure deepens, never gates.
+- contact-sheet: controls are density, border, state toggles; both themes rendered, not imagined.
+- board: changed-only export of moved ids; DOM position never authoritative.
+- atlas: refused arms distinguished from gaps by bracket text.
+- deck: slide counter always rendered; per-slide reading width.
+- editor: invalid-combination warnings from declared rules; changed-only export.
+- walkthrough: source excerpts keyed to steps; key-files table; gotchas close.
+- prototype: live timing controls with replay; fake data declared as fake.
 
 - A variant page keeps its base type's spine inside the variant shell: a deck of plan stages still orders decisions before mechanics; a wargame still states its constraint frame before any direction renders. The diff-review's author-side writeup form leads motivation and before-and-after evidence with a file tour ordered by review focus; a prototype spends fidelity only where the judgment needs it.
 - Two-way flow is the default posture for every capturing variant: the page is a disposable editor for exactly the judgment it collects, and the copy-as-prompt control is the floor when no return channel serves it.

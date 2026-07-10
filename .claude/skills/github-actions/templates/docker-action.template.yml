@@ -16,41 +16,41 @@
 # │  entrypoint: in action.yml overrides Dockerfile ENTRYPOINT.                 │
 # │  args: in action.yml overrides Dockerfile CMD.                              │
 # └─────────────────────────────────────────────────────────────────────────────┘
-name: '[ACTION_NAME]'
-description: '[DESCRIPTION]'
-author: '[AUTHOR_NAME]'
+name: "[ACTION_NAME]"
+description: "[DESCRIPTION]"
+author: "[AUTHOR_NAME]"
 
 inputs:
-  source-path:
-    description: 'Path to source files to process'
-    required: true
-  output-format:
-    description: 'Output format (json|yaml|text)'
-    required: false
-    default: 'json'
-  debug:
-    description: 'Enable debug logging (true|false)'
-    required: false
-    default: 'false'
+    source-path:
+        description: "Path to source files to process"
+        required: true
+    output-format:
+        description: "Output format (json|yaml|text)"
+        required: false
+        default: "json"
+    debug:
+        description: "Enable debug logging (true|false)"
+        required: false
+        default: "false"
 
 outputs:
-  result:
-    description: 'Processing result'
-  duration:
-    description: 'Execution time in seconds'
+    result:
+        description: "Processing result"
+    duration:
+        description: "Execution time in seconds"
 
 branding:
-  icon: '[ICON_NAME]'
-  color: '[COLOR]'
+    icon: "[ICON_NAME]"
+    color: "[COLOR]"
 
 runs:
-  using: 'docker'
-  image: 'Dockerfile'
-  args:
-    - ${{ inputs.source-path }}
-    - ${{ inputs.output-format }}
-  env:
-    DEBUG: ${{ inputs.debug }}
+    using: "docker"
+    image: "Dockerfile"
+    args:
+        - ${{ inputs.source-path }}
+        - ${{ inputs.output-format }}
+    env:
+        DEBUG: ${{ inputs.debug }}
 
 # --- Dockerfile (multi-stage distroless) ------------------------------------
 #

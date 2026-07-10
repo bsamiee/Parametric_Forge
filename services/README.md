@@ -13,14 +13,14 @@ Pins follow the package schema, never registry-page text. `pulumi-command` is ad
 
 ## [02]-[GITHUB_ROW_FAMILIES]
 
-| [INDEX] | [FAMILY]                 | [STATE]                                                                                                                                               |
-| :-----: | :----------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------- |
-|  [01]   | Repository core          | LANDED — uniform merge hygiene + feature booleans, `protect: true`, adopt-imported                                                                    |
-|  [02]   | Rulesets / branch policy | LANDED — `main-guard` (non-fast-forward, deletion, `copilotCodeReview`) on `~DEFAULT_BRANCH`; no `pullRequest` rule: direct pushes to main stay legal |
-|  [03]   | Environments             | EMPTY BY RULING — no real deploy targets exist; symmetry environments are policy theater                                                              |
-|  [04]   | Secret/variable rows     | EMPTY BY RULING — zero workflow consumers; Actions secret sync rejected until a workflow names its exact set                                          |
-|  [05]   | Access bindings          | EMPTY BY RULING — sole-owner repos, account-level SSH identity; no collaborators, teams, or deploy keys                                               |
-|  [06]   | Surface rows             | EMPTY BY RULING — no owned repo webhooks, Pages, releases, or GitHub-native config files                                                              |
+| [INDEX] | [FAMILY]                 | [STATE]                                                                                                      |
+| :-----: | :----------------------- | :----------------------------------------------------------------------------------------------------------- |
+|  [01]   | Repository core          | LANDED — uniform merge hygiene + feature booleans, `protect: true`, adopt-imported                           |
+|  [02]   | Rulesets / branch policy | LANDED — `main-guard` on `~DEFAULT_BRANCH`; direct pushes to main stay legal                                 |
+|  [03]   | Environments             | EMPTY BY RULING — no real deploy targets exist; symmetry environments are policy theater                     |
+|  [04]   | Secret/variable rows     | EMPTY BY RULING — zero workflow consumers; Actions secret sync rejected until a workflow names its exact set |
+|  [05]   | Access bindings          | EMPTY BY RULING — sole-owner repos, account-level SSH identity; no collaborators, teams, or deploy keys      |
+|  [06]   | Surface rows             | EMPTY BY RULING — no owned repo webhooks, Pages, releases, or GitHub-native config files                     |
 
 A family leaves EMPTY the moment a real consumer exists; the row lands in `topology.ts`, never through `gh api`. `gh` is operator/discovery/breakglass only — durable GitHub state mutation through `gh api` is retired.
 
@@ -34,8 +34,8 @@ CodeRabbit (line review), Greptile (semantic review), and Copilot (native rulese
 
 ## [05]-[VERBS]
 
-| [INDEX] | [VERB]                         | [PROVES]                                                                 |
-| :-----: | :----------------------------- | :----------------------------------------------------------------------- |
+| [INDEX] | [VERB]                                  | [PROVES]                                                                 |
+| :-----: | :-------------------------------------- | :----------------------------------------------------------------------- |
 |  [01]   | `node services/driver.ts preview`       | Desired-vs-live estate diff; steady state is `{"same":N}`                |
 |  [02]   | `node services/driver.ts up`            | Applies rows; `--target=<p>/<c>/<token>` drives token revoke-and-remint  |
 |  [03]   | `node services/driver.ts scopes doctor` | Machine directory scopes match rows; zero stray scopes or `doppler.yaml` |

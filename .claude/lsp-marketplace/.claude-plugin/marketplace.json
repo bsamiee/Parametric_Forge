@@ -1,50 +1,50 @@
 {
-  "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
-  "name": "forge-lsp",
-  "owner": {
-    "name": "Parametric Forge"
-  },
-  "description": "In-house LSP servers for the polyglot stack",
-  "plugins": [
-    {
-      "name": "ty-lsp",
-      "source": "./ty-lsp",
-      "description": "Astral ty language server for Python (.py/.pyi)"
+    "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
+    "name": "forge-lsp",
+    "owner": {
+        "name": "Parametric Forge"
     },
-    {
-      "name": "roslyn-lsp",
-      "source": "./roslyn-lsp",
-      "description": "Roslyn language server for C# (.cs/.csx)"
-    },
-    {
-      "name": "tsgo-lsp",
-      "source": "./tsgo-lsp",
-      "description": "TypeScript 7 language server (typescript@7 upstream; nixpkgs typescript-go ships the tsgo binary) (.ts/.tsx/.js)"
-    },
-    {
-      "name": "bash-lsp",
-      "source": "./bash-lsp",
-      "description": "Bash language server with shellcheck/shfmt integration (.sh/.bash)"
-    },
-    {
-      "name": "nixd-lsp",
-      "source": "./nixd-lsp",
-      "description": "nixd language server for Nix (.nix)"
-    },
-    {
-      "name": "lua-lsp",
-      "source": "./lua-lsp",
-      "description": "lua-language-server for Lua (.lua)"
-    },
-    {
-      "name": "postgres-lsp",
-      "source": "./postgres-lsp",
-      "description": "postgrestools language server for SQL (.sql)"
-    },
-    {
-      "name": "yaml-lsp",
-      "source": "./yaml-lsp",
-      "description": "yaml-language-server with SchemaStore (.yaml/.yml)"
-    }
-  ]
+    "description": "In-house LSP servers for the polyglot stack",
+    "plugins": [
+        {
+            "name": "ty-lsp",
+            "source": "./ty-lsp",
+            "description": "Astral ty language server for Python (.py/.pyi)"
+        },
+        {
+            "name": "roslyn-lsp",
+            "source": "./roslyn-lsp",
+            "description": "Roslyn language server for C# (.cs/.csx)"
+        },
+        {
+            "name": "tsgo-lsp",
+            "source": "./tsgo-lsp",
+            "description": "TypeScript 7 language server (typescript@7 upstream; nixpkgs typescript-go ships the tsgo binary) (.ts/.tsx/.js)"
+        },
+        {
+            "name": "bash-lsp",
+            "source": "./bash-lsp",
+            "description": "Bash language server with shellcheck/shfmt integration (.sh/.bash)"
+        },
+        {
+            "name": "nixd-lsp",
+            "source": "./nixd-lsp",
+            "description": "nixd language server for Nix (.nix)"
+        },
+        {
+            "name": "lua-lsp",
+            "source": "./lua-lsp",
+            "description": "lua-language-server for Lua (.lua)"
+        },
+        {
+            "name": "postgres-lsp",
+            "source": "./postgres-lsp",
+            "description": "postgrestools language server for SQL (.sql)"
+        },
+        {
+            "name": "yaml-lsp",
+            "source": "./yaml-lsp",
+            "description": "yaml-language-server with SchemaStore (.yaml/.yml)"
+        }
+    ]
 }

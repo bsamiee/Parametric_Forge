@@ -41,26 +41,17 @@ BusyBox `sh` implements `[[ ]]` but omits glob pattern matching on the RHS. `[[ 
 
 ## [03]-[SC_CODE_REFERENCE]
 
-| [INDEX] | [CODE]     | [SEV] | [ISSUE]                          | [FIX]                                      |
-| :-----: | ---------- | :---- | :------------------------------- | :----------------------------------------- |
-|  [01]   | **SC2086** | info  | Unquoted variable                | `"${var}"`                                 |
-|  [02]   | **SC2046** | warn  | Unquoted `$()`                   | `"$(cmd)"` or `mapfile -t arr < <(cmd)`    |
-|  [03]   | **SC2155** | warn  | `local v=$(cmd)` masks `$?`      | `local v; v=$(cmd)`                        |
-|  [04]   | **SC2164** | warn  | `cd` without guard               | `cd dir \|\| exit 1`                       |
-|  [05]   | **SC2068** | error | Unquoted `$@`                    | `"$@"`                                     |
-|  [06]   | **SC2329** | warn  | Unused function                  | Remove, call, or disable (dispatch-table)  |
-|  [07]   | **SC2006** | style | Backticks                        | `$(cmd)`                                   |
-|  [08]   | **SC2116** | style | Useless echo `$(echo $v)`        | `$v` directly                              |
-|  [09]   | **SC2162** | info  | `read` without `-r`              | `IFS= read -r line`                        |
-|  [10]   | **SC2181** | style | `cmd; if [ $? ]`                 | `cmd && action \|\| handle_error`          |
-|  [11]   | **SC2327** | warn  | Capture + redirect clash         | Separate redirect from capture             |
-|  [12]   | **SC2328** | warn  | Redirect steals from `$()`       | Restructure command                        |
-|  [13]   | **SC2330** | warn  | BusyBox `[[ ]]` glob unsupported | `case "$v" in pat) ... esac`               |
-|  [14]   | **SC2331** | warn  | Ambiguous `-a` file test         | `-e` (unambiguous existence)               |
-|  [15]   | **SC2332** | error | `[ ! -o opt ]` always true       | `[[ ! -o opt ]]` or `! [ -o opt ]`         |
-|  [16]   | **SC3010** | warn  | `[[ ]]` in sh script             | `[ ]` or fix shebang to `bash`             |
-|  [17]   | **SC3030** | warn  | Arrays in sh script              | Fix shebang to `bash`                      |
-|  [18]   | **SC3037** | warn  | `echo` flags in sh               | `printf` — paradigm requires it regardless |
+| [INDEX] | [CODE]     | [SEV] | [ISSUE]                     | [FIX]                                     |
+| :-----: | :--------- | :---- | :-------------------------- | :---------------------------------------- |
+|  [01]   | **SC2086** | info  | Unquoted variable           | `"${var}"`                                |
+|  [02]   | **SC2046** | warn  | Unquoted `$()`              | `"$(cmd)"` or `mapfile -t arr < <(cmd)`   |
+|  [03]   | **SC2155** | warn  | `local v=$(cmd)` masks `$?` | `local v; v=$(cmd)`                       |
+|  [04]   | **SC2164** | warn  | `cd` without guard          | `cd dir \| exit 1`                        |
+|  [05]   | **SC2068** | error | Unquoted `$@`               | `"$@"`                                    |
+|  [06]   | **SC2329** | warn  | Unused function             | Remove, call, or disable (dispatch-table) |
+|  [07]   | **SC2006** | style | Backticks                   | `$(cmd)`                                  |
+|  [08]   | **SC2116** | style | Useless echo `$(echo $v)`   | `$v` directly                             |
+|  [09]   | **SC2162** | info  | `read` without `-r`         | `IFS= read -r line`                       |
 
 ## [04]-[SHELLCHECKRC]
 
@@ -112,14 +103,14 @@ source "${_PLUGIN_DIR}/${plugin}.sh"
 
 Directive reference:
 
-| [DIRECTIVE]                                   | [PURPOSE]                    |
-| :-------------------------------------------- | :--------------------------- |
-| `# shellcheck disable=SC2086`                 | Suppress next command        |
-| `# shellcheck disable=SC2086,SC2046`          | Multi-code, single directive |
-| `# shellcheck shell=bash`                     | Override shebang detection   |
-| `# shellcheck source=./lib.sh`                | Resolve dynamic source       |
-| `# shellcheck source=/dev/null`               | Skip unresolvable source     |
-| `# shellcheck enable=require-variable-braces` | Enable optional check inline |
+| [INDEX] | [DIRECTIVE]                                   | [PURPOSE]                    |
+| :-----: | :-------------------------------------------- | :--------------------------- |
+|  [01]   | `# shellcheck disable=SC2086`                 | Suppress next command        |
+|  [02]   | `# shellcheck disable=SC2086,SC2046`          | Multi-code, single directive |
+|  [03]   | `# shellcheck shell=bash`                     | Override shebang detection   |
+|  [04]   | `# shellcheck source=./lib.sh`                | Resolve dynamic source       |
+|  [05]   | `# shellcheck source=/dev/null`               | Skip unresolvable source     |
+|  [06]   | `# shellcheck enable=require-variable-braces` | Enable optional check inline |
 
 ## [06]-[IDIOMATIC_PATTERNS]
 
@@ -159,13 +150,13 @@ Inline assertions with automatic caller location via `FUNCNAME[1]`/`BASH_LINENO[
 
 `set -Eeuo pipefail` + `shopt -s inherit_errexit` creates constraints that ShellCheck assumes may not be active:
 
-| [INTERACTION]            | [STRICT_MODE_BEHAVIOR]                          | [SC_IMPLICATION]                         |
-| :----------------------- | :---------------------------------------------- | :--------------------------------------- |
-| `local v=$(failing_cmd)` | `local` returns 0, masks failure — no `errexit` | SC2155 = silent-failure bug, not style   |
-| `cd dir` no guard        | `errexit` fires in simple cmd; compound masks   | SC2164 still warranted                   |
-| `cmd1 \| cmd2`           | `pipefail` exposes `cmd1` failure               | SC2312 (subshell exit) becomes relevant  |
-| `$(cmd)` in `[[ ]]`      | `inherit_errexit` propagates into cmd sub       | Failures inside `[[ $(cmd) ]]` now fatal |
-| `$@` unquoted + `set -u` | `set -u` catches unset but NOT empty `$@`       | SC2068 still required — `"$@"` always    |
+| [INDEX] | [INTERACTION]            | [STRICT_MODE_BEHAVIOR]                          | [SC_IMPLICATION]                         |
+| :-----: | :----------------------- | :---------------------------------------------- | :--------------------------------------- |
+|  [01]   | `local v=$(failing_cmd)` | `local` returns 0, masks failure — no `errexit` | SC2155 = silent-failure bug, not style   |
+|  [02]   | `cd dir` no guard        | `errexit` fires in simple cmd; compound masks   | SC2164 still warranted                   |
+|  [03]   | `cmd1 \| cmd2`           | `pipefail` exposes `cmd1` failure               | SC2312 (subshell exit) becomes relevant  |
+|  [04]   | `$(cmd)` in `[[ ]]`      | `inherit_errexit` propagates into cmd sub       | Failures inside `[[ $(cmd) ]]` now fatal |
+|  [05]   | `$@` unquoted + `set -u` | `set -u` catches unset but NOT empty `$@`       | SC2068 still required — `"$@"` always    |
 
 ## [08]-[CI_INTEGRATION]
 
@@ -206,9 +197,9 @@ jobs:
 
 ShellCheck exit codes:
 
-| [CODE] | [MEANING]                    |
-| :----: | :--------------------------- |
-| **0**  | Clean                        |
-| **1**  | Issues at/above severity     |
-| **2**  | Parse errors                 |
-| **3**  | Bad options or missing files |
+| [INDEX] | [CODE] | [MEANING]                    |
+| :-----: | :----: | :--------------------------- |
+|  [01]   | **0**  | Clean                        |
+|  [02]   | **1**  | Issues at/above severity     |
+|  [03]   | **2**  | Parse errors                 |
+|  [04]   | **3**  | Bad options or missing files |

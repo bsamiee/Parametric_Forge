@@ -52,33 +52,36 @@ A `.greptile/` directory in any directory of the repository configures reviews f
 - [RULES]: `rules.md` — plain markdown review context for the directory tree; severities and rule IDs live only in `config.json` rules.
 - [FILES]: `files.json` — `{"files": [{path, description, scope}]}` pointing the reviewer at load-bearing files; references accumulate down the cascade.
 
-### config.json fields
+### [06.1]-[CONFIG_JSON_FIELDS]
 
-| [INDEX] | [FIELD]                               | [SHAPE_AND_EFFECT]                                                                                                                      |
-| :-----: | :------------------------------------ | :-------------------------------------------------------------------------------------------------------------------------------------- |
-|  [01]   | `strictness`                          | `1` verbose, `2` default, `3` critical-only                                                                                             |
-|  [02]   | `commentTypes`                        | Subset of `syntax`, `logic`, `style`, `info`                                                                                            |
-|  [03]   | `ignorePatterns`                      | Newline-separated gitignore-syntax file patterns                                                                                        |
-|  [04]   | `labels` / `disabledLabels`           | Glob filters on PR labels gating whether reviews run                                                                                    |
-|  [05]   | `includeAuthors` / `excludeAuthors`   | Glob filters on PR authors                                                                                                              |
-|  [06]   | `includeBranches` / `excludeBranches` | Glob filters on target branches                                                                                                         |
-|  [07]   | `includeKeywords` / `ignoreKeywords`  | Newline-separated title/description keywords                                                                                            |
-|  [08]   | `triggerOnUpdates`                    | Re-review when the PR updates                                                                                                           |
-|  [09]   | `statusCheck`                         | Post a commit status check                                                                                                              |
-|  [10]   | `fixWithAI`                           | Append AI-fix prompts to findings                                                                                                       |
-|  [11]   | `instructions`                        | Free-form reviewer instructions; concatenates down the cascade                                                                          |
-|  [12]   | `rules`                               | Rows of `{rule, id, severity, scope, enabled}`; severity `low`/`medium`/`high`; `scope` globs relative to the `.greptile/` directory    |
-|  [13]   | `disabledRules`                       | Inherited rule IDs disabled for this tree                                                                                               |
-|  [14]   | `context.repos`                       | `owner/repo` list on the same SCM host, readable with the same credentials                                                              |
-|  [15]   | Section toggles                       | `summarySection`, `issuesTableSection`, `confidenceScoreSection`, `sequenceDiagramSection`, each `{included, collapsible, defaultOpen}` |
+| [INDEX] | [FIELD]                               | [SHAPE_AND_EFFECT]                                                         |
+| :-----: | :------------------------------------ | :------------------------------------------------------------------------- |
+|  [01]   | `strictness`                          | `1` verbose, `2` default, `3` critical-only                                |
+|  [02]   | `commentTypes`                        | Subset of `syntax`, `logic`, `style`, `info`                               |
+|  [03]   | `ignorePatterns`                      | Newline-separated gitignore-syntax file patterns                           |
+|  [04]   | `labels` / `disabledLabels`           | Glob filters on PR labels gating whether reviews run                       |
+|  [05]   | `includeAuthors` / `excludeAuthors`   | Glob filters on PR authors                                                 |
+|  [06]   | `includeBranches` / `excludeBranches` | Glob filters on target branches                                            |
+|  [07]   | `includeKeywords` / `ignoreKeywords`  | Newline-separated title/description keywords                               |
+|  [08]   | `triggerOnUpdates`                    | Re-review when the PR updates                                              |
+|  [09]   | `statusCheck`                         | Post a commit status check                                                 |
+|  [10]   | `fixWithAI`                           | Append AI-fix prompts to findings                                          |
+|  [11]   | `instructions`                        | Free-form reviewer instructions; concatenates down the cascade             |
+|  [12]   | `rules`                               | Rows of `{rule, id, severity, scope, enabled}`                             |
+|  [13]   | `disabledRules`                       | Inherited rule IDs disabled for this tree                                  |
+|  [14]   | `context.repos`                       | `owner/repo` list on the same SCM host, readable with the same credentials |
+|  [15]   | Section toggles                       | Section objects, each `{included, collapsible, defaultOpen}`               |
 
-### Cascading
+- `rules` fields: severity `low`/`medium`/`high`; `scope` globs relative to the `.greptile/` directory.
+- Section toggles: `summarySection`, `issuesTableSection`, `confidenceScoreSection`, `sequenceDiagramSection`.
+
+### [06.2]-[CASCADING]
 
 - Greptile walks from the repository root to each reviewed file and collects every `.greptile/` directory on the path: scalar settings take the most specific value, arrays replace parent arrays, section objects merge field-wise, and rules, file references, and instructions accumulate.
 - A child disables an inherited rule by listing its `id` in `disabledRules`; a rule without an `id` cannot be selectively disabled.
 - Precedence low to high: dashboard settings, org default rules, root `.greptile/`, intermediate `.greptile/`, most specific `.greptile/`, org enforced rules — enforced rules always apply and cannot be overridden from the repository.
 
-### Security review
+### [06.3]-[SECURITY_REVIEW]
 
 No dedicated security mode or flag exists. Security standards land as high-severity `rules` rows, `rules.md` sections, or org enforced dashboard rules — a security-focused pass is a rules change, not a CLI switch.
 

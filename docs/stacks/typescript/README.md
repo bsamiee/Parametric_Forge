@@ -6,21 +6,19 @@ This folder is the TypeScript stack decision atlas. It routes language, derivati
 
 ## [01]-[ATLAS]
 
-This table is the lookup by reader decision.
+The router is a lookup by reader decision.
 
-| [INDEX] | [DECISION]                            | [READ]                                            |
-| :-----: | :------------------------------------ | :------------------------------------------------ |
-|  [01]   | language, module, and export legality | [language](language.md)                           |
-|  [02]   | type derivation and inference         | [derivation](derivation.md)                       |
-|  [03]   | value primitive and algebra instance  | [values](values.md)                               |
-|  [04]   | algorithmic body and computation      | [computation](computation.md)                     |
-|  [05]   | domain shape ownership                | [shapes](shapes.md)                               |
-|  [06]   | surface and dispatch                  | [surfaces and dispatch](surfaces-and-dispatch.md) |
-|  [07]   | rail and effect flow                  | [rails and effects](rails-and-effects.md)         |
-|  [08]   | capability wiring and substitution    | [services and layers](services-and-layers.md)     |
-|  [09]   | structured concurrency                | [concurrency](concurrency.md)                     |
-|  [10]   | incremental dataflow                  | [streams](streams.md)                             |
-|  [11]   | host and wire boundary                | [boundaries](boundaries.md)                       |
+- [01]-[LANGUAGE](language.md): language, module, and export legality
+- [02]-[DERIVATION](derivation.md): type derivation and inference
+- [03]-[VALUES](values.md): value primitive and algebra instance
+- [04]-[COMPUTATION](computation.md): algorithmic body and computation
+- [05]-[SHAPES](shapes.md): domain shape ownership
+- [06]-[SURFACES_AND_DISPATCH](surfaces-and-dispatch.md): surface and dispatch
+- [07]-[RAILS_AND_EFFECTS](rails-and-effects.md): rail and effect flow
+- [08]-[SERVICES_AND_LAYERS](services-and-layers.md): capability wiring and substitution
+- [09]-[CONCURRENCY](concurrency.md): structured concurrency
+- [10]-[STREAMS](streams.md): incremental dataflow
+- [11]-[BOUNDARIES](boundaries.md): host and wire boundary
 
 ## [02]-[DOCTRINE]
 
@@ -67,7 +65,7 @@ Run this scan on every edit. Any signal triggers the move; three or more instanc
 |  [07]   | several schemas model one concept                         | one rich owner plus `pick`/`omit`/`extend`/`transform`      |
 |  [08]   | standalone branded-primitive export                       | brand as a field refinement inside the owning Schema        |
 |  [09]   | call sites re-assert literals or re-instantiate a generic | `const` type parameter, `NoInfer`, instantiation expression |
-|  [10]   | `as` assertion claims what evidence could prove           | decode at the seam; `satisfies` at the declaration          |
+|  [10]   | `as` assertion replaces provable evidence                 | decode at the seam; `satisfies` at the declaration          |
 |  [11]   | boolean parameter selects between two bodies              | one derived body or one vocabulary row                      |
 |  [12]   | functions differ only by a literal                        | parameterize; the literal becomes a vocabulary row          |
 |  [13]   | function calls exactly one other function                 | delete the hop                                              |
@@ -81,7 +79,7 @@ Run this scan on every edit. Any signal triggers the move; three or more instanc
 |  [21]   | module-level live instance or ambient capability import   | Tag requirement satisfied by the Layer graph                |
 |  [22]   | wrapper renames or forwards a package API                 | use the package surface directly                            |
 |  [23]   | barrel file or re-export alias                            | export at the owner; delete the file                        |
-|  [24]   | loose consts assemble what the owner could declare        | attach the composition at the owner declaration             |
+|  [24]   | loose consts assemble what belongs on the owner           | attach the composition at the owner declaration             |
 |  [25]   | the same 2-4 combinators recur together                   | one parameterized rail transformer                          |
 |  [26]   | a combinator body opens another `flatMap`/`andThen`       | flatten: one `pipe` chain or `Effect.gen`                   |
 |  [27]   | `catchAll` or reflex `ignore` blankets a typed channel    | `catchTag`/`catchTags`; discard only as a ruled outcome     |

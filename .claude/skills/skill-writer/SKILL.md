@@ -33,7 +33,7 @@ A recurring prompt pattern graduates into a skill after it has recurred, never b
 
 ## [02]-[BUDGETS]
 
-- [ROOT]: `SKILL.md` holds at most 500 lines; the root routes, references carry depth one hop down, and a route's target never routes onward.
+- [ROOT]: `SKILL.md` holds at most 500 lines and is the bundle's only router — a `README.md` or secondary index at any depth is a defect; references carry depth one hop down, and a route's target never routes onward.
 - [DESCRIPTION]: At most 1024 characters, third person, deliverable and primary triggers in the first clause — listings truncate, and the tail dies first.
 - [BODY]: Loaded body persists across turns and rides compaction inside a token budget; it lands late in context where attention is dense, which is why loaded law binds and why every dead line taxes every task the skill touches for the rest of the session.
 - [SCRIPTS]: Execute without entering context; their cost is invocation and receipt, never implementation.

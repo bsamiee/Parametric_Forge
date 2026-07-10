@@ -42,7 +42,7 @@ Tables enumerate, cards legislate. A table is a lookup grid, not a prose contain
 
 [ELIGIBILITY]:
 - Build a table only when all three hold: rows share one comparison question, every column answers it with an atomic value, and more than one row exists. Fail any one and the carrier is a record, card, or prose.
-- A single prose column disqualifies the table outright. A one-row table is a definition record. Rows with no shared comparison question are separate records.
+- One trailing prose column survives inside the cell budget; a second prose column disqualifies the table. A one-row table is a definition record. Rows with no shared comparison question are separate records.
 - Use comparison, lookup, decision, matrix, support, or dependency forms only; never tables for sequences, heterogeneous records, narrative, or field lists.
 - Eligibility is structural, never an enumeration license: a table whose rows mirror an owner whose system of record is elsewhere is a stale mirror however atomic its cells; the doc tables only its own registry or a tool-verified representation.
 
@@ -58,8 +58,9 @@ Tables enumerate, cards legislate. A table is a lookup grid, not a prose contain
 - No cell restates its header, repeats another cell, or carries a value shared by the whole column; a shared value moves to the lead sentence or a `[VALUE]:` card.
 
 [PROSE_RELIEF]:
+- Repair preserves the grid: hoist, relieve, split, and re-pad in place; conversion to records or lists is the last resort, earned only when every in-place relief fails, and cell width alone never converts a table.
 - Cross-row invariants, reading rules, and shared consequences live in the lead sentence before the table or a note after it, never duplicated per cell; the prose around a table is a design surface, not decoration.
-- When a row needs a sentence to explain itself, promote the whole table to a GroupedRecord or AnchoredRecord set; a pre-table GroupedRecord may carry table-level invariants when the key names the table concept.
+- When a row needs a sentence to explain itself, move the sentence to the lead or a row-owned record and keep the row; promote the whole table to a GroupedRecord or AnchoredRecord set only when relief fails across the row family.
 - A row family that resists every table fix — split, hoist, extract, relieve — leaves the table as an indexed list or record set; a teardown that flattens the table into mega-prose lines or a bare unlabeled list destroys the structure it was meant to save.
 
 [LINKS]:
@@ -76,7 +77,7 @@ Tables enumerate, cards legislate. A table is a lookup grid, not a prose contain
 
 | [INDEX] | [SYMPTOM]                               | [RIGHT_CONTAINER]                    |
 | :-----: | :-------------------------------------- | :----------------------------------- |
-|  [01]   | cell holds a sentence or internal comma | GroupedRecord card                   |
+|  [01]   | cell holds a sentence or internal comma | lead relief, else GroupedRecord card |
 |  [02]   | cell packs values behind slashes        | one row per value                    |
 |  [03]   | column restates its header              | delete column, hoist word to header  |
 |  [04]   | column holds one universal value        | `[VALUE]:` card, delete column       |

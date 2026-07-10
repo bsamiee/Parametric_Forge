@@ -6,32 +6,32 @@ Parallel work has a structural owner or it does not exist: every fiber parents t
 
 This table selects the owning primitive for a concurrent effect; when an effect matches several rows the most specific wins, and the ownership rows are read before the coordination rows.
 
-| [INDEX] | [EFFECT_SIGNATURE]                         | [PRIMITIVE]                                    | [REJECTED_FORM]                              |
-| :-----: | :----------------------------------------- | :--------------------------------------------- | :------------------------------------------- |
-|  [01]   | child rejoins the owner, failure re-raises | `Effect.fork` + `Fiber.join`                   | `Effect.runFork` inside domain flow          |
-|  [02]   | child lifetime rides a region              | `Effect.forkScoped`                            | `forkDaemon` plus a hand-tracked kill list   |
-|  [03]   | one live fiber per key, restart supersedes | `FiberMap.run`                                 | a `Map<string, Fiber>` registry              |
-|  [04]   | at most one background instance            | `FiberHandle.run`                              | an "already running" boolean flag            |
-|  [05]   | homogeneous fan forked from a callback     | `FiberSet.run` / `FiberSet.makeRuntime`        | `Effect.runFork` per event                   |
-|  [06]   | commit survives interrupt, wait does not   | `Effect.uninterruptibleMask` + `restore`       | `Effect.uninterruptible` over the whole flow |
-|  [07]   | compensation only on interrupt             | `Effect.onInterrupt`                           | `Effect.ensuring` firing on every exit       |
-|  [08]   | expiry aborts into the fault family        | `Effect.timeoutFail`                           | a `Date.now()` deadline comparison           |
-|  [09]   | expiry settles as a value                  | `Effect.timeoutOption`                         | `Cause.TimeoutException` caught downstream   |
-|  [10]   | one-shot typed handoff                     | `Deferred`                                     | a polled `Ref` flag                          |
-|  [11]   | reusable value-less gate                   | `Effect.makeLatch`                             | a `Deferred` re-made per cycle               |
-|  [12]   | each value reaches exactly one taker       | `Queue.bounded`/`sliding`/`dropping`           | a `PubSub` with one subscriber               |
-|  [13]   | every subscriber sees every value          | `PubSub` + scoped `subscribe`                  | offers looped over N queues                  |
-|  [14]   | late subscriber must see the last N        | `PubSub` `{ replay }`                          | a `Ref` snapshot beside the channel          |
-|  [15]   | producer must signal done or failure       | `Mailbox`                                      | a poison-pill sentinel on a `Queue`          |
-|  [16]   | in-flight bound spanning call sites        | `Effect.makeSemaphore` + `withPermits`         | a counter `Ref` incremented by hand          |
-|  [17]   | one permit budget, fair across keys        | `PartitionedSemaphore.make`                    | a semaphore per key — the budget fragments   |
-|  [18]   | one cell, pure update, atomic report       | `Ref.modify`                                   | `Ref.get` then `Ref.set`                     |
-|  [19]   | the update is itself an effect             | `SynchronizedRef.updateEffect`                 | a one-permit semaphore around a `Ref`        |
-|  [20]   | invariant spans cells or waits on one      | `STM.gen` + `STM.check` + `STM.commit`         | lock ordering over two `Ref`s                |
-|  [21]   | shared commits, one exclusive sweep        | `TReentrantLock.withReadLock`/`withWriteLock`  | a one-permit gate serializing every reader   |
-|  [22]   | contention on any of the six axes          | the `[06]`-`[CONTENTION_OWNERS]` matrix        | one `HashMap` doing six jobs                 |
-|  [23]   | fan-out over a collection                  | explicit `{ concurrency }` on `Effect.forEach` | the option omitted — silent serialization    |
-|  [24]   | first success across redundant lanes       | `Effect.raceAll`                               | both arms settling one `Deferred`            |
+| [INDEX] | [EFFECT_SIGNATURE]                         | [PRIMITIVE]                                   | [REJECTED_FORM]                            |
+| :-----: | :----------------------------------------- | :-------------------------------------------- | :----------------------------------------- |
+|  [01]   | child rejoins the owner, failure re-raises | `Effect.fork` + `Fiber.join`                  | `Effect.runFork` inside domain flow        |
+|  [02]   | child lifetime rides a region              | `Effect.forkScoped`                           | `forkDaemon` plus a hand-tracked kill list |
+|  [03]   | one live fiber per key, restart supersedes | `FiberMap.run`                                | a `Map<string, Fiber>` registry            |
+|  [04]   | at most one background instance            | `FiberHandle.run`                             | an "already running" boolean flag          |
+|  [05]   | homogeneous fan forked from a callback     | `FiberSet.run` / `FiberSet.makeRuntime`       | `Effect.runFork` per event                 |
+|  [06]   | commit survives interrupt, wait does not   | `Effect.uninterruptibleMask` + `restore`      | `Effect.uninterruptible` over whole flow   |
+|  [07]   | compensation only on interrupt             | `Effect.onInterrupt`                          | `Effect.ensuring` firing on every exit     |
+|  [08]   | expiry aborts into the fault family        | `Effect.timeoutFail`                          | a `Date.now()` deadline comparison         |
+|  [09]   | expiry settles as a value                  | `Effect.timeoutOption`                        | `Cause.TimeoutException` caught downstream |
+|  [10]   | one-shot typed handoff                     | `Deferred`                                    | a polled `Ref` flag                        |
+|  [11]   | reusable value-less gate                   | `Effect.makeLatch`                            | a `Deferred` re-made per cycle             |
+|  [12]   | each value reaches exactly one taker       | `Queue.bounded`/`sliding`/`dropping`          | a `PubSub` with one subscriber             |
+|  [13]   | every subscriber sees every value          | `PubSub` + scoped `subscribe`                 | offers looped over N queues                |
+|  [14]   | late subscriber must see the last N        | `PubSub` `{ replay }`                         | a `Ref` snapshot beside the channel        |
+|  [15]   | producer must signal done or failure       | `Mailbox`                                     | a poison-pill sentinel on a `Queue`        |
+|  [16]   | in-flight bound spanning call sites        | `Effect.makeSemaphore` + `withPermits`        | a counter `Ref` incremented by hand        |
+|  [17]   | one permit budget, fair across keys        | `PartitionedSemaphore.make`                   | a semaphore per key — the budget fragments |
+|  [18]   | one cell, pure update, atomic report       | `Ref.modify`                                  | `Ref.get` then `Ref.set`                   |
+|  [19]   | the update is itself an effect             | `SynchronizedRef.updateEffect`                | a one-permit semaphore around a `Ref`      |
+|  [20]   | invariant spans cells or waits on one      | `STM.gen` + `STM.check` + `STM.commit`        | lock ordering over two `Ref`s              |
+|  [21]   | shared commits, one exclusive sweep        | `TReentrantLock.withReadLock`/`withWriteLock` | a one-permit gate serializing every reader |
+|  [22]   | contention on any of the six axes          | the `[06]`-`[CONTENTION_OWNERS]` matrix       | one `HashMap` doing six jobs               |
+|  [23]   | fan-out over a collection                  | `{ concurrency }` on `Effect.forEach`         | the option omitted — silent serialization  |
+|  [24]   | first success across redundant lanes       | `Effect.raceAll`                              | both arms settling one `Deferred`          |
 
 ## [02]-[FIBER_OWNERSHIP]
 
@@ -270,20 +270,20 @@ export type { Claim, Ledger }
 
 Contention is a closed owner matrix: keyed, keyless, fungible, windowed, durable, and placed axes each have exactly one owning surface, and the policy that tunes each owner is a value declared beside it, never arithmetic spread through call sites. `Cache` starts where a key discriminates callers — the keyless memo of one computation is `computation.md`'s `Effect.cached` family, never a one-key cache.
 
-| [INDEX] | [CONTENTION_SIGNATURE]                | [OWNER]                                    | [LIFETIME_POLICY]                                               |
-| :-----: | :------------------------------------ | :----------------------------------------- | :-------------------------------------------------------------- |
-|  [01]   | keyed value memoized, misses collapse | `Cache.make`                               | `capacity` + `timeToLive`; `makeWith` folds TTL from the `Exit` |
-|  [02]   | keyed value surviving restart         | `PersistedCache.make`                      | `timeToLive` folds request and `Exit`; `storeId` names the band |
-|  [03]   | keyed resource, refcounted holders    | `RcMap.make`                               | `idleTimeToLive` after last release; `capacity` faults typed    |
-|  [04]   | keyed resource cache, lookup acquires | `ScopedCache.make`                         | `capacity` + `timeToLive`; eviction runs the entry's release    |
-|  [05]   | fungible members, checkout and return | `Pool.make`/`makeWithTTL`                  | `min`/`max`, `targetUtilization`, TTL anchored by strategy      |
-|  [06]   | per-key pool family                   | `KeyedPool.makeWithTTLBy`                  | per-key size and TTL rows                                       |
-|  [07]   | keyless resource, shared by demand    | `RcRef.make`                               | refcount + `idleTimeToLive`                                     |
-|  [08]   | keyless dependency, swapped live      | `ScopedRef.fromAcquire`                    | `set` acquires the successor, then releases the displaced       |
-|  [09]   | keyless snapshot on a cadence         | `Resource.auto`/`manual`                   | `Schedule`-paced or `refresh`-verb renewal                      |
-|  [10]   | throughput window, one process        | `RateLimiter.make`                         | `limit`/`interval`/`algorithm` policy row                       |
-|  [11]   | quota shared across processes         | experimental `RateLimiter` Tag + `consume` | store-backed window; `onExceeded` `"delay"`/`"fail"`            |
-|  [12]   | key-to-member placement               | `HashRing.make` + `add`                    | weighted ring; membership change re-homes minimally             |
+| [INDEX] | [CONTENTION_SIGNATURE]                | [OWNER]                       | [LIFETIME_POLICY]                                               |
+| :-----: | :------------------------------------ | :---------------------------- | :-------------------------------------------------------------- |
+|  [01]   | keyed value memoized, misses collapse | `Cache.make`                  | `capacity` + `timeToLive`; `makeWith` folds TTL from the `Exit` |
+|  [02]   | keyed value surviving restart         | `PersistedCache.make`         | `timeToLive` folds request and `Exit`; `storeId` names the band |
+|  [03]   | keyed resource, refcounted holders    | `RcMap.make`                  | `idleTimeToLive` after last release; `capacity` faults typed    |
+|  [04]   | keyed resource cache, lookup acquires | `ScopedCache.make`            | `capacity` + `timeToLive`; eviction runs the entry's release    |
+|  [05]   | fungible members, checkout and return | `Pool.make`/`makeWithTTL`     | `min`/`max`, `targetUtilization`, TTL anchored by strategy      |
+|  [06]   | per-key pool family                   | `KeyedPool.makeWithTTLBy`     | per-key size and TTL rows                                       |
+|  [07]   | keyless resource, shared by demand    | `RcRef.make`                  | refcount + `idleTimeToLive`                                     |
+|  [08]   | keyless dependency, swapped live      | `ScopedRef.fromAcquire`       | `set` acquires the successor, then releases the displaced       |
+|  [09]   | keyless snapshot on a cadence         | `Resource.auto`/`manual`      | `Schedule`-paced or `refresh`-verb renewal                      |
+|  [10]   | throughput window, one process        | `RateLimiter.make`            | `limit`/`interval`/`algorithm` policy row                       |
+|  [11]   | quota shared across processes         | `RateLimiter` Tag + `consume` | store-backed window; `onExceeded` `"delay"`/`"fail"`            |
+|  [12]   | key-to-member placement               | `HashRing.make` + `add`       | weighted ring; membership change re-homes minimally             |
 
 [KEYED_LIFETIME]:
 - Law: the keyed axis selects on what the key resolves to — a memoized value, a keyed resource, or a fungible member — and each resolution has exactly one owner: `Cache.make({ capacity, timeToLive, lookup })` memoizes values and collapses concurrent misses on one key into one in-flight lookup — the stampede is structurally impossible, not guarded — and `Cache.makeWith` folds the TTL from the lookup's `Exit`, so a failed lookup lingers seconds while a hit lingers minutes inside one owner.

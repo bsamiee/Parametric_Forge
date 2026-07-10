@@ -3,7 +3,7 @@
 Statistics views, automatic plan capture, wait event analysis, and I/O diagnostics for PostgreSQL 18. Plan analysis (EXPLAIN) lives in performance.md --- this file covers runtime monitoring and diagnostics.
 
 
-## pg_stat_statements
+## [01]-[PG_STAT_STATEMENTS]
 
 Query fingerprinting and execution statistics. Primary tool for identifying regression and optimization targets.
 
@@ -31,11 +31,11 @@ Contracts:
 - Cascading analysis: join `pg_stat_statements` with `pg_stat_user_indexes` via `queryid` correlation to identify queries whose plans shifted from index scan to seq scan between snapshots
 
 
-## auto_explain
+## [02]-[AUTO_EXPLAIN]
 
 Automatic slow-query plan capture --- logs execution plans for queries exceeding threshold.
 
-```
+```ini conceptual
 shared_preload_libraries = 'auto_explain'
 auto_explain.log_min_duration = '100ms'
 auto_explain.log_analyze = on              -- actual row counts (adds overhead)
@@ -53,7 +53,7 @@ Contracts:
 - Per-session override: `SET auto_explain.log_min_duration = '50ms'` for targeted debugging
 
 
-## pg_stat_activity
+## [03]-[PG_STAT_ACTIVITY]
 
 Real-time session and query monitoring.
 
@@ -90,7 +90,7 @@ ORDER BY sessions DESC;
 ```
 
 
-## Wait Events
+## [04]-[WAIT_EVENTS]
 
 Taxonomy:
 - `LWLock` --- lightweight locks on shared memory structures (buffer mapping, WAL insertion)
@@ -111,7 +111,7 @@ Diagnostic patterns with actionable thresholds:
 - `LWLock:BufferMapping` --- hash partition contention on buffer table; PG 18 doubled partitions, but sustained occurrence indicates shared_buffers thrashing
 
 
-## pg_stat_io (PG 16+)
+## [05]-[PG_STAT_IO_PG_16]
 
 I/O statistics disaggregated by backend type, object, and context --- identifies the source of I/O bottlenecks.
 
@@ -138,7 +138,7 @@ Diagnostic patterns:
 - High `extends` on `context = normal` --- frequent relation extension from table growth
 
 
-## pg_stat_wal
+## [06]-[PG_STAT_WAL]
 
 WAL generation rate monitoring for replication lag prediction and write-volume analysis.
 
@@ -154,24 +154,24 @@ FROM pg_stat_wal;
 - `wal_buffers_full`: non-zero indicates `wal_buffers` undersized --- backends forced to write WAL directly
 
 
-## pg_stat_progress_* Views
+## [07]-[PG_STAT_PROGRESS_VIEWS]
 
 Progress monitoring for long-running maintenance operations.
 
-| View                            | Operation             | Key columns                                            |
-| ------------------------------- | --------------------- | ------------------------------------------------------ |
-| `pg_stat_progress_vacuum`       | VACUUM                | `heap_blks_total`, `heap_blks_scanned`, `phase`        |
-| `pg_stat_progress_create_index` | CREATE INDEX          | `blocks_total`, `blocks_done`, `tuples_total`, `phase` |
-| `pg_stat_progress_analyze`      | ANALYZE               | `sample_blks_total`, `sample_blks_scanned`             |
-| `pg_stat_progress_cluster`      | CLUSTER / VACUUM FULL | `heap_blks_total`, `heap_blks_scanned`                 |
-| `pg_stat_progress_copy`         | COPY                  | `bytes_processed`, `tuples_processed`                  |
-| `pg_stat_progress_basebackup`   | BASE BACKUP           | `backup_total`, `backup_streamed`                      |
+| [INDEX] | [VIEW]                          | [OPERATION]           | [KEY_COLUMNS]                                          |
+| :-----: | :------------------------------ | :-------------------- | :----------------------------------------------------- |
+|  [01]   | `pg_stat_progress_vacuum`       | VACUUM                | `heap_blks_total`, `heap_blks_scanned`, `phase`        |
+|  [02]   | `pg_stat_progress_create_index` | CREATE INDEX          | `blocks_total`, `blocks_done`, `tuples_total`, `phase` |
+|  [03]   | `pg_stat_progress_analyze`      | ANALYZE               | `sample_blks_total`, `sample_blks_scanned`             |
+|  [04]   | `pg_stat_progress_cluster`      | CLUSTER / VACUUM FULL | `heap_blks_total`, `heap_blks_scanned`                 |
+|  [05]   | `pg_stat_progress_copy`         | COPY                  | `bytes_processed`, `tuples_processed`                  |
+|  [06]   | `pg_stat_progress_basebackup`   | BASE BACKUP           | `backup_total`, `backup_streamed`                      |
 
 - `phase` column indicates current operation phase (e.g., vacuum: scanning heap, vacuuming indexes, truncating heap)
 - Progress percentage: `(blocks_done::numeric / NULLIF(blocks_total, 0) * 100)` --- approximate for concurrent modifications
 
 
-## Table Statistics
+## [08]-[TABLE_STATISTICS]
 
 Bloat detection --- tables with highest dead tuple ratio (filter noise with `n_dead_tup > 1000`):
 ```sql

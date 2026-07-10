@@ -6,21 +6,23 @@ A concern with many call shapes keeps one dense surface, never a family of shall
 
 When a concern matches several rows, the most specific wins; the rail the arms return is orthogonal to the form and is read after the form is fixed.
 
-| [INDEX] | [CONCERN_SIGNATURE]                      | [FORM]                                         | [REJECTED_FORM]                                  |
-| :-----: | :--------------------------------------- | :--------------------------------------------- | :----------------------------------------------- |
-|  [01]   | one concern, several call shapes         | overloaded declaration over one input union    | `resolve`/`resolveMany`/`resolveWhere` siblings  |
-|  [02]   | plural call shape must prove plurality   | `NonEmptyReadonlyArray` modality               | `batch: boolean` beside a widened array          |
-|  [03]   | possibly-empty plural, proof unavailable | wide `ReadonlyArray` overload below the tuple  | batch overload widened to admit empty            |
-|  [04]   | closed family, arms local, coverage owed | `$match` / `Match.exhaustive` terminal         | `orElse` fallback absorbing future tags          |
-|  [05]   | partial dispatch, residue is absence     | `Match.option` terminal                        | `null` return or sentinel                        |
-|  [06]   | staged dispatch, residue flows onward    | `Match.tag`/`Match.tags` arms + `Match.either` | pre-filtered parallel matchers per stage         |
-|  [07]   | foreign-field discriminant on the wire   | `Match.discriminatorsExhaustive("<field>")`    | re-tagging the provider shape before dispatch    |
-|  [08]   | foreign thrown value, classed but open   | `Match.instanceOf` ladder + `orElse` residue   | `name` string probe; `as Error` cast             |
-|  [09]   | keyed static correspondence              | vocabulary row lookup                          | `Match`/`switch` arms restating the table        |
-|  [10]   | operator with a pipe subject             | one `Function.dual` definition                 | data-first plus curried twin pair                |
-|  [11]   | per-kind behavior owned familywide       | mapped handler record, one generic dispatch    | `switch` per consumer; call-site record assembly |
-|  [12]   | cross-cutting policy on one function     | `Effect.fn` definition-seam pipeline           | policy hand-woven inside the body                |
-|  [13]   | open structural input, no tag            | `Match.when` pattern and refinement arms       | `typeof` ladder with casts                       |
+| [INDEX] | [CONCERN_SIGNATURE]                      | [FORM]                                         | [REJECTED_FORM]                           |
+| :-----: | :--------------------------------------- | :--------------------------------------------- | :---------------------------------------- |
+|  [01]   | one concern, several call shapes         | overloaded declaration over one input union    | `resolve` sibling proliferation           |
+|  [02]   | plural call shape must prove plurality   | `NonEmptyReadonlyArray` modality               | `batch: boolean` beside a widened array   |
+|  [03]   | possibly-empty plural, proof unavailable | wide `ReadonlyArray` overload below the tuple  | batch overload widened to admit empty     |
+|  [04]   | closed family, arms local, coverage owed | `$match` / `Match.exhaustive` terminal         | `orElse` fallback absorbing future tags   |
+|  [05]   | partial dispatch, residue is absence     | `Match.option` terminal                        | `null` return or sentinel                 |
+|  [06]   | staged dispatch, residue flows onward    | `Match.tag`/`Match.tags` arms + `Match.either` | pre-filtered parallel matchers per stage  |
+|  [07]   | foreign-field discriminant on the wire   | `Match.discriminatorsExhaustive("<field>")`    | re-tag provider shape before dispatch     |
+|  [08]   | foreign thrown value, classed but open   | `Match.instanceOf` ladder + `orElse` residue   | `name` string probe; `as Error` cast      |
+|  [09]   | keyed static correspondence              | vocabulary row lookup                          | `Match`/`switch` arms restating the table |
+|  [10]   | operator with a pipe subject             | one `Function.dual` definition                 | data-first plus curried twin pair         |
+|  [11]   | per-kind behavior owned familywide       | mapped handler record, one generic dispatch    | `switch` per consumer; call-site assembly |
+|  [12]   | cross-cutting policy on one function     | `Effect.fn` definition-seam pipeline           | policy hand-woven inside the body         |
+|  [13]   | open structural input, no tag            | `Match.when` pattern and refinement arms       | `typeof` ladder with casts                |
+
+- [01]: `resolve`/`resolveMany`/`resolveWhere` siblings.
 
 ## [02]-[ENTRYPOINT_COLLAPSE]
 

@@ -6,20 +6,18 @@ This folder is the Python stack decision atlas. It routes language, shape, surfa
 
 ## [01]-[ATLAS]
 
-This table is a lookup by reader decision.
+The router is a lookup by reader decision.
 
-| [INDEX] | [DECISION]                          | [READ]                                            |
-| :-----: | :---------------------------------- | :------------------------------------------------ |
-|  [01]   | language syntax and standards       | [language](language.md)                           |
-|  [02]   | data shape                          | [shapes](shapes.md)                               |
-|  [03]   | surface and dispatch                | [surfaces and dispatch](surfaces-and-dispatch.md) |
-|  [04]   | algorithmic body and computation    | [iteration](iteration.md)                         |
-|  [05]   | rail and effect flow                | [rails and effects](rails-and-effects.md)         |
-|  [06]   | structured concurrency              | [concurrency](concurrency.md)                     |
-|  [07]   | host and wire boundary              | [boundaries](boundaries.md)                       |
-|  [08]   | numeric approach                    | [algorithms](algorithms.md)                       |
-|  [09]   | system API replacement              | [system APIs](system-apis.md)                     |
-|  [10]   | interpreter execution and isolation | [runtime](runtime.md)                             |
+- [01]-[LANGUAGE](language.md): language syntax and standards
+- [02]-[SHAPES](shapes.md): data shape
+- [03]-[SURFACES_AND_DISPATCH](surfaces-and-dispatch.md): surface and dispatch
+- [04]-[ITERATION](iteration.md): algorithmic body and computation
+- [05]-[RAILS_AND_EFFECTS](rails-and-effects.md): rail and effect flow
+- [06]-[CONCURRENCY](concurrency.md): structured concurrency
+- [07]-[BOUNDARIES](boundaries.md): host and wire boundary
+- [08]-[ALGORITHMS](algorithms.md): numeric approach
+- [09]-[SYSTEM_APIS](system-apis.md): system API replacement
+- [10]-[RUNTIME](runtime.md): interpreter execution and isolation
 
 ## [02]-[DOCTRINE]
 

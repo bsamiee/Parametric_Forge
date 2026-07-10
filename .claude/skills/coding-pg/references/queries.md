@@ -1,6 +1,6 @@
 # Queries
 
-## CTE algebra
+## [01]-[CTE_ALGEBRA]
 
 PG 12+ CTEs are inlined by default unless side-effecting or referenced multiple times.
 
@@ -48,7 +48,7 @@ CTE contracts:
 - Queue drain pattern: `DELETE ... WHERE id IN (SELECT ... FOR UPDATE SKIP LOCKED) RETURNING *` atomically claims and removes rows
 
 
-## MERGE
+## [02]-[MERGE]
 
 ```sql
 MERGE INTO inventory AS tgt
@@ -80,7 +80,7 @@ MERGE contracts:
 - MERGE RETURNING composes inside CTEs for downstream INSERT/audit pipelines
 
 
-## Conditional aggregation
+## [03]-[CONDITIONAL_AGGREGATION]
 
 FILTER (WHERE) replaces CASE WHEN inside aggregates -- clearer intent, better optimization:
 
@@ -99,7 +99,7 @@ FILTER contracts:
 - CASE WHEN inside aggregates is an anti-pattern -- use FILTER (WHERE) exclusively
 
 
-## Multi-dimensional aggregation
+## [04]-[MULTI_DIMENSIONAL_AGGREGATION]
 
 GROUPING SETS, CUBE, and ROLLUP replace N separate GROUP BY queries with a single scan -- set-algebraic multi-level aggregation:
 
@@ -147,7 +147,7 @@ Multi-dimensional aggregation contracts:
 - `FILTER (WHERE ...)` composes with GROUPING SETS -- conditional aggregation within each dimension slice
 
 
-## Window functions
+## [05]-[WINDOW_FUNCTIONS]
 
 GROUPS framing + EXCLUDE + FILTER in single query:
 
@@ -262,7 +262,7 @@ Window contracts:
 - Gap detection: `(expression)::int` coercion preferred over CASE for boolean-to-integer projection
 
 
-## JSON_TABLE and SQL/JSON
+## [06]-[JSON_TABLE_AND_SQL_JSON]
 
 JSON_TABLE -- structured relational extraction from JSONB:
 
@@ -305,7 +305,7 @@ SQL/JSON contracts:
 - jsonb_path_query variables: second argument is jsonb object -- keys become `$varname` in path expression
 
 
-## LATERAL JOIN
+## [07]-[LATERAL_JOIN]
 
 Scalar subqueries in SELECT list are FORBIDDEN -- always LATERAL JOIN for correlated subqueries.
 
@@ -344,7 +344,7 @@ LATERAL contracts:
 - LATERAL + LIMIT is the canonical top-N-per-group pattern -- index on `(foreign_key, sort_column DESC)` required
 
 
-## Temporal queries (tstzrange)
+## [08]-[TEMPORAL_QUERIES_TSTZRANGE]
 
 Range containment -- find entity version valid at a specific moment:
 
@@ -390,7 +390,7 @@ Temporal contracts:
 - `PERIOD` in temporal FK enforces containment: child range must fall entirely within parent range
 
 
-## Keyset pagination
+## [09]-[KEYSET_PAGINATION]
 
 Compound cursor -- multi-column sort with tiebreaker:
 
@@ -412,7 +412,7 @@ Keyset contracts:
 - Ties in non-unique sort columns: always include PK as tiebreaker
 
 
-## Batch operations via unnest
+## [10]-[BATCH_OPERATIONS_VIA_UNNEST]
 
 Unnest array parameters for set-based batch INSERT/UPDATE — never row-at-a-time loops:
 
@@ -432,7 +432,7 @@ WHERE products.id = batch.id AND products.tenant_id = $3;
 - Array parameters bind via `EXECUTE ... USING` in PL/pgSQL or `sql(arrayParam)` in Effect-SQL
 
 
-## Effect-SQL integration
+## [11]-[EFFECT_SQL_INTEGRATION]
 
 Typed query execution via `@effect/sql-pg` (v0.49+):
 

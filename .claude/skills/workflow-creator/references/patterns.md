@@ -6,18 +6,21 @@ Copy-paste orchestration shapes. Each names when it wins, the primitive it rests
 
 The whole space is built from five primitives: `pipeline` (streaming stages, no barrier), `parallel` (a barrier — waits for every thunk), a plain-JS loop, a bounded worker pool (throughput reference), and the `agent()` leaf itself. Every shape below is a canonical topology or a hardened specialization:
 
-| [INDEX] | [TOPOLOGY]           | [PRIMITIVES]                                  | [FITS]                                                                 | [GUARDS]                                                   |
-| :-----: | :------------------- | :-------------------------------------------- | :--------------------------------------------------------------------- | :--------------------------------------------------------- |
-|  [01]   | Prompt chaining      | `pipeline` or a sequential `agent()` chain    | Fixed ordered subtasks, each consuming the last's output               | One overloaded call losing accuracy                        |
-|  [02]   | Sectioning           | `parallel` barrier, or `pipeline` fan-out     | Independent subtasks run at once, then combine                         | Sequential wall-clock; divided focus diluting every aspect |
-|  [03]   | Voting               | `parallel` over N identical-input thunks      | One high-stakes judgement wanting agreement                            | A single confident-but-wrong answer surviving              |
-|  [04]   | Tournament           | plain-JS bracket over blind pairwise judges   | Wide solution space; relative quality is measurable, absolute is not   | Absolute-score drift; source bias ratifying a favorite     |
-|  [05]   | Debate               | position → rebuttal → separate judge          | Ambiguous, high-stakes judgment where disagreement exposes blind spots | A lone perspective missing what a counter-position catches |
-|  [06]   | Routing              | plain-JS discriminant → one `agent()` of many | Input classes each handled best by a different specialist              | One generic prompt mediocre at every class                 |
-|  [07]   | Escalation           | tiered re-dispatch of residuals               | Bulk work a cheap tier resolves, with a hard residue                   | Paying the strongest model for work a floor model finishes |
-|  [08]   | Orchestrator-workers | planner `agent()` → fan-out over its output   | The subtask list is not known up front                                 | Hardcoding a worklist the problem does not have            |
-|  [09]   | Evaluator-optimizer  | loop: generate `agent()` → evaluate `agent()` | Clear pass criteria; one draft rarely enough                           | Shipping a first pass; an agent grading its own work       |
-|  [10]   | Self-repair          | loop: check command → fix agent               | A machine-checkable target (types, tests, lint) reachable in rounds    | Exit driven by the worker's claim instead of the check     |
+| [INDEX] | [TOPOLOGY]           | [PRIMITIVES]                        | [FITS]                             | [GUARDS]                            |
+| :-----: | :------------------- | :---------------------------------- | :--------------------------------- | :---------------------------------- |
+|  [01]   | Prompt chaining      | `pipeline` or `agent()` chain       | Fixed ordered subtasks; chained    | One overloaded call losing accuracy |
+|  [02]   | Sectioning           | `parallel` barrier or fan-out       | Independent subtasks, then combine | Sequential cost; diluted focus      |
+|  [03]   | Voting               | `parallel`, N identical inputs      | One judgement wanting agreement    | A confident-wrong answer surviving  |
+|  [04]   | Tournament           | JS bracket, blind pairwise judges   | Wide space, relative quality only  | Absolute-score drift; source bias   |
+|  [05]   | Debate               | position → rebuttal → judge         | High-stakes ambiguous judgment     | Lone view missing the counter-catch |
+|  [06]   | Routing              | JS discriminant → one `agent()`     | Classes want distinct specialists  | Generic prompt mediocre everywhere  |
+|  [07]   | Escalation           | tiered residual re-dispatch         | Bulk on a cheap tier; hard residue | Top model doing floor-model work    |
+|  [08]   | Orchestrator-workers | planner `agent()` → fan-out         | Subtask list unknown up front      | Hardcoding an absent worklist       |
+|  [09]   | Evaluator-optimizer  | loop: generate → evaluate `agent()` | Clear pass bar; one draft too few  | Shipping first pass; self-grading   |
+|  [10]   | Self-repair          | loop: check → fix agent             | Machine-checkable target in rounds | Exit on the claim, not the check    |
+
+- Debate: disagreement exposes blind spots a lone view misses.
+- Self-repair: machine-checkable means types, tests, or lint.
 
 Selection rules that sit on top of the map: sectioning defaults to `pipeline`, never `parallel` — reach for the barrier only when a stage needs the ENTIRE previous result set at once. The evaluator is always a separate `agent()` from the generator — self-grading finds nothing. A verdict that a command measures belongs to self-repair or an eval gate, never to a model judge. The discrimination order runs as one dispatch — every edge is a shape answer, every leaf the owning section:
 
@@ -678,11 +681,14 @@ Canonical: sectioning hardened for heavy products. Primitive: a fan of producing
 
 Vocabulary, one meaning each: a LANE is one concurrent worker in a fan — its own scope, product, and receipt; a STAGE is one position in a pipeline; a PRODUCT is a lane's complete output; a RECEIPT is the thin `{ok, report, entries, headline, failure}` envelope that stands in for it on the wire. Sourcing rides product size, never mixed ad hoc:
 
-| [INDEX] | [TIER]                   | [WHEN]                                                                                        | [MECHANISM]                                                                                           |
-| :-----: | :----------------------- | :-------------------------------------------------------------------------------------------- | :---------------------------------------------------------------------------------------------------- |
-|  [01]   | Inline structured output | Small structural outputs — plans, slices, verdicts, counts, paths; the default below ~50 rows | Schema-tight `agent()` structured output                                                              |
-|  [02]   | Scratch product file     | Any heavy product — maps, findings, dossiers, reports                                         | Lane WRITES the complete product to run scratch, returns the receipt; consumers READ THE FILE IN FULL |
-|  [03]   | `journal.jsonl`          | Recovery only                                                                                 | Never a designed data path                                                                            |
+| [INDEX] | [TIER]                   | [WHEN]                                           | [MECHANISM]                                     |
+| :-----: | :----------------------- | :----------------------------------------------- | :---------------------------------------------- |
+|  [01]   | Inline structured output | Small structural outputs; default below ~50 rows | Schema-tight `agent()` structured output        |
+|  [02]   | Scratch product file     | Any heavy product                                | Lane writes product to scratch, returns receipt |
+|  [03]   | `journal.jsonl`          | Recovery only                                    | Never a designed data path                      |
+
+- Inline structured output: the default is plans, slices, verdicts, counts, paths.
+- Scratch product file: heavy product means maps, findings, dossiers, reports; consumers READ THE FILE IN FULL.
 
 The scratch convention — one layout, no exceptions:
 

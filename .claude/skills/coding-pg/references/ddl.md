@@ -3,7 +3,7 @@
 Schema design patterns for PostgreSQL 18.
 
 
-## Canonical table pattern
+## [01]-[CANONICAL_TABLE_PATTERN]
 
 One polymorphic example demonstrating: domains, generated columns, range types, NOT NULL defaults, uuidv7(), JSONB validation.
 
@@ -53,7 +53,7 @@ CREATE INDEX organization_search_idx ON organization USING gin (search_vector);
 - `jsonb_matches_schema()` CHECK: declarative JSONB validation at DDL level (requires `CREATE EXTENSION pg_jsonschema`)
 
 
-## Domain types
+## [02]-[DOMAIN_TYPES]
 
 Domains brand primitive scalars with validation. Column declarations reference the domain — never inline equivalent CHECKs.
 
@@ -74,7 +74,7 @@ CREATE TYPE monetary AS (amount numeric(19,4), currency text);
 - Domains cannot appear in composite types used in `BEFORE` trigger `NEW`/`OLD` in some PL/pgSQL contexts — cast explicitly
 
 
-## Composite types
+## [03]-[COMPOSITE_TYPES]
 
 Composite types model structured return values and function parameters. Prefer over OUT parameter proliferation.
 
@@ -96,7 +96,7 @@ CREATE FUNCTION recent_audits(p_entity_id uuid, p_limit int DEFAULT 10)
 - `ALTER TYPE ... ADD ATTRIBUTE` rewrites all tables using it as column — use JSONB for frequently evolving structures
 
 
-## Range types and temporal constraints (PG 18)
+## [04]-[RANGE_TYPES_AND_TEMPORAL_CONSTRAINTS_PG_18]
 
 Range types replace dual start/end columns with algebraic interval semantics. Built-in: `int4range`, `int8range`, `numrange`, `tsrange`, `tstzrange`, `daterange`.
 
@@ -152,15 +152,15 @@ ALTER TABLE employment
 
 Range operators:
 
-| Operator | Semantics    | Example                                     |
-| -------- | ------------ | ------------------------------------------- |
-| `&&`     | Overlap      | `'[2024-01-01,2024-06-01)'::tstzrange && r` |
-| `@>`     | Contains     | `r @> '2024-03-15'::timestamptz`            |
-| `<@`     | Contained by | `r <@ '[2024-01-01,2025-01-01)'::tstzrange` |
-| `-\|-`   | Adjacent     | `r1 -\|- r2`                                |
-| `*`      | Intersection | `r1 * r2`                                   |
-| `+`      | Union        | `r1 + r2` (must overlap or be adjacent)     |
-| `-`      | Difference   | `r1 - r2`                                   |
+| [INDEX] | [OPERATOR] | [SEMANTICS]  | [EXAMPLE]                                   |
+| :-----: | :--------: | :----------- | :------------------------------------------ |
+|  [01]   |    `&&`    | Overlap      | `'[2024-01-01,2024-06-01)'::tstzrange && r` |
+|  [02]   |    `@>`    | Contains     | `r @> '2024-03-15'::timestamptz`            |
+|  [03]   |    `<@`    | Contained by | `r <@ '[2024-01-01,2025-01-01)'::tstzrange` |
+|  [04]   |   `-\|-`   | Adjacent     | `r1 -\|- r2`                                |
+|  [05]   |    `*`     | Intersection | `r1 * r2`                                   |
+|  [06]   |    `+`     | Union        | `r1 + r2` (must overlap or be adjacent)     |
+|  [07]   |    `-`     | Difference   | `r1 - r2`                                   |
 
 - Always `tstzrange` over `tsrange` — timezone-naive ranges corrupt across DST transitions
 - Canonical bound: `[)` (inclusive-exclusive) — gap-free partitioning, no off-by-one
@@ -171,7 +171,7 @@ Range operators:
 - Multirange aggregation: `range_agg()` collapses, `unnest()` expands
 
 
-## Enum alternatives
+## [05]-[ENUM_ALTERNATIVES]
 
 Enums are rigid — reordering impossible, removal requires full type recreation. Prefer domain-constrained text or FK lookup.
 
@@ -190,7 +190,7 @@ ALTER TABLE orders ADD CONSTRAINT fk_order_status
 ```
 
 
-## Type composition
+## [06]-[TYPE_COMPOSITION]
 
 ```sql
 -- Domain + range: branded temporal interval with floor constraint
@@ -208,7 +208,7 @@ CREATE TABLE articles (
 ```
 
 
-## Virtual generated columns (PG 18)
+## [07]-[VIRTUAL_GENERATED_COLUMNS_PG_18]
 
 Virtual columns compute at read time — zero storage, instant `ALTER TABLE ADD`. Expressions must be IMMUTABLE.
 
@@ -224,16 +224,16 @@ ALTER TABLE product ADD COLUMN
     ) VIRTUAL;
 ```
 
-| Restriction                                     | Applies to       |
-| ----------------------------------------------- | ---------------- |
-| Cannot reference other generated columns        | Virtual + Stored |
-| Cannot use subqueries, aggregates, window fns   | Virtual + Stored |
-| Cannot be part of PRIMARY KEY / UNIQUE          | Virtual only     |
-| CAN appear in WHERE (planner pushes expression) | Virtual only     |
-| Use STORED when column needs indexing           | —                |
+| [INDEX] | [RESTRICTION]                                   | [APPLIES_TO]     |
+| :-----: | :---------------------------------------------- | :--------------- |
+|  [01]   | Cannot reference other generated columns        | Virtual + Stored |
+|  [02]   | Cannot use subqueries, aggregates, window fns   | Virtual + Stored |
+|  [03]   | Cannot be part of PRIMARY KEY / UNIQUE          | Virtual only     |
+|  [04]   | CAN appear in WHERE (planner pushes expression) | Virtual only     |
+|  [05]   | Use STORED when column needs indexing           | —                |
 
 
-## Partitioning
+## [08]-[PARTITIONING]
 
 TimescaleDB hypertables for time-series; pg_partman for non-time-series range/list. Never hand-roll partition creation.
 
@@ -281,7 +281,7 @@ SELECT partman.create_parent(
 - Default partition catches unmatched rows — monitor size as health signal
 
 
-## Constraints
+## [09]-[CONSTRAINTS]
 
 ```sql
 -- Exclusion constraint: no overlapping periods per tenant (requires btree_gist)
@@ -325,19 +325,19 @@ ALTER TABLE documents ADD CONSTRAINT valid_metadata
 - Lock-level awareness: see `validation.md` Migration Safety.
 
 
-## Effect-SQL alignment
+## [10]-[EFFECT_SQL_ALIGNMENT]
 
 DDL properties governing `Model.Class` field modifier selection:
 
-| DDL Property                      | Effect-SQL Implication                                                       |
-| --------------------------------- | ---------------------------------------------------------------------------- |
-| `DEFAULT uuidv7()`                | Maps to `Model.Generated` — excluded from insert projections                 |
-| `GENERATED ALWAYS AS ... VIRTUAL` | Maps to `Model.Generated` — excluded from insert/update                      |
-| `GENERATED ALWAYS AS ... STORED`  | Maps to `Model.Generated` — excluded from insert/update                      |
-| `DEFAULT clock_timestamp()`       | Maps to `Model.DateTimeInsertFromDate` or `DateTimeUpdateFromDate`           |
-| `NOT NULL`                        | Must NOT use `Model.FieldOption`                                             |
-| Nullable column                   | Must use `Model.FieldOption`                                                 |
-| RLS-enforced tenant column        | Maps to `Model.FieldExcept("update", "jsonUpdate")` — immutable after insert |
+| [INDEX] | [DDL_PROPERTY]                    | [EFFECT_SQL]                                                                 |
+| :-----: | :-------------------------------- | :--------------------------------------------------------------------------- |
+|  [01]   | `DEFAULT uuidv7()`                | Maps to `Model.Generated` — excluded from insert projections                 |
+|  [02]   | `GENERATED ALWAYS AS ... VIRTUAL` | Maps to `Model.Generated` — excluded from insert/update                      |
+|  [03]   | `GENERATED ALWAYS AS ... STORED`  | Maps to `Model.Generated` — excluded from insert/update                      |
+|  [04]   | `DEFAULT clock_timestamp()`       | Maps to `Model.DateTimeInsertFromDate` or `DateTimeUpdateFromDate`           |
+|  [05]   | `NOT NULL`                        | Must NOT use `Model.FieldOption`                                             |
+|  [06]   | Nullable column                   | Must use `Model.FieldOption`                                                 |
+|  [07]   | RLS-enforced tenant column        | Maps to `Model.FieldExcept("update", "jsonUpdate")` — immutable after insert |
 
 Model.Class mapping for the canonical table (branded entity IDs):
 
@@ -366,7 +366,7 @@ class Organization extends Model.Class<Organization>()("Organization", {
 - `Model.JsonFromString(schema)` for JSONB with typed codec — mirrors `jsonb_matches_schema` CHECK
 
 
-## RAG pipeline schema
+## [11]-[RAG_PIPELINE_SCHEMA]
 
 Canonical document-chunk-embedding schema for retrieval-augmented generation:
 

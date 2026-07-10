@@ -21,16 +21,16 @@ Dispatch is three decisions taken in order: placement — which execution surfac
 
 ## [01]-[PLACEMENT]
 
-| [INDEX] | [SURFACE]        | [CONTEXT]                                         | [SELECT_WHEN]                                                              |
-| :-----: | :--------------- | :------------------------------------------------ | :------------------------------------------------------------------------- |
-|  [01]   | Main turn        | Full history, full tools                          | Iterative back-and-forth, phases sharing context, quick targeted change    |
-|  [02]   | `/btw`           | Full history, no tools, answer discarded          | A side question about material already in the conversation                 |
-|  [03]   | Fork             | Inherits history, system prompt, and prompt cache | A side task that needs the accumulated context; parallel takes on one base |
-|  [04]   | Subagent         | Fresh: own prompt, memory hierarchy, git snapshot | Noisy or verbose work whose transcript must stay out of the parent         |
-|  [05]   | Nested subagent  | Fresh, spawned by a worker                        | A delegated task that itself splits; grandchild noise never surfaces       |
-|  [06]   | Agent team       | Independent peer sessions, shared tasks, mailbox  | Workers must trade findings, challenge each other, self-claim tasks        |
-|  [07]   | Dynamic workflow | Script variables hold every intermediate result   | Dozens to hundreds of agents, codified reruns, bounded loops               |
-|  [08]   | Codex offload    | Separate model and context, one report returns    | Transcript-heavy mechanical or research legs — the codex skill owns these  |
+| [INDEX] | [SURFACE]        | [CONTEXT]                                  | [SELECT_WHEN]                                                         |
+| :-----: | :--------------- | :----------------------------------------- | :-------------------------------------------------------------------- |
+|  [01]   | Main turn        | Full history, full tools                   | Iterative back-and-forth, phases share context, targeted change       |
+|  [02]   | `/btw`           | Full history, no tools, answer discarded   | A side question about material already in the conversation            |
+|  [03]   | Fork             | Inherits history + system prompt + cache   | Side task needing accumulated context; parallel takes on a base       |
+|  [04]   | Subagent         | Fresh: own prompt, memory, git snapshot    | Noisy or verbose work whose transcript stays out of the parent        |
+|  [05]   | Nested subagent  | Fresh, spawned by a worker                 | A delegated task that itself splits; grandchild noise stays hidden    |
+|  [06]   | Agent team       | Independent peer sessions, tasks, mailbox  | Workers must trade findings, challenge, self-claim tasks              |
+|  [07]   | Dynamic workflow | Script vars hold every intermediate result | Dozens to hundreds of agents, codified reruns, bounded loops          |
+|  [08]   | Codex offload    | Separate model + context, one report       | Transcript-heavy mechanical or research legs — codex skill owns these |
 
 Placement law rides four axes: cost rises down the table, so the cheapest surface that isolates the noise wins; a fork beats a fresh subagent when the worker needs the conversation so far, because the fork reuses the parent prompt cache; a team beats parallel subagents only when workers must communicate, since each teammate is a full session priced accordingly; a workflow beats a team when the plan is codifiable and the intermediates belong in script variables instead of any context window.
 

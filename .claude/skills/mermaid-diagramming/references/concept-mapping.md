@@ -6,29 +6,39 @@ A concept arrives as code, prose, a plan, or an argument — never as a diagram 
 
 Read the material for the shape, not the topic. Every row names the signals that select it and the archetype that owns it; the archetype's template carries the construction law.
 
-| [INDEX] | [SHAPE]             | [SIGNALS_IN_THE_MATERIAL]                                                                                                                         | [ROUTE]                                                         |
-| :-----: | :------------------ | :------------------------------------------------------------------------------------------------------------------------------------------------ | :-------------------------------------------------------------- |
-|  [01]   | mode machine        | an entity described as being *in* something; status or phase vocabulary; "once X, never back"; an enum field written from many sites under guards | lifecycle                                                       |
-|  [02]   | dispatch topology   | one entry point, a discriminant, many arms; match or switch expressions; policy tables; routing rules; "depending on"                             | logic-flow                                                      |
-|  [03]   | ownership walk      | "first, then, finally" across distinct owners; boot narratives; request paths; a composition root                                                 | spine                                                           |
-|  [04]   | dependency lattice  | "X needs Y"; import lists; layer talk; "must never depend upward"; cycle complaints                                                               | strata                                                          |
-|  [05]   | boundary seam       | two packages naming each other's types; a declared contract ledger; "crosses the boundary"                                                        | seam-graph                                                      |
-|  [06]   | conversation        | two or more parties taking turns; request and response pairs; timeout, retry, and ack vocabulary                                                  | wire-sequence                                                   |
-|  [07]   | identity web        | nouns with identifiers; "each X has many Y"; uniqueness and ownership claims over stored facts                                                    | schema                                                          |
-|  [08]   | command causality   | "when X happens, Y fires"; handlers emitting events; projections consuming them                                                                   | event-flow                                                      |
-|  [09]   | chronology          | dated occurrences across periods with no causal claim                                                                                             | history for repositories, `timeline` otherwise                  |
-|  [10]   | committed future    | owned work with dates and "after" dependencies; milestone talk                                                                                    | schedule                                                        |
-|  [11]   | queue snapshot      | work sitting in named stages right now; ticket and owner vocabulary                                                                               | board                                                           |
-|  [12]   | zoned deployment    | units running in zones, reaching each other over ports and protocols                                                                              | topology                                                        |
-|  [13]   | system neighborhood | one system and everything that talks to it, at one audience's altitude                                                                            | landscape                                                       |
-|  [14]   | capability profile  | one axis vocabulary scored across two subjects                                                                                                    | profile                                                         |
-|  [15]   | weighted whole      | one measure in one unit distributed across parts of a whole                                                                                       | decomposition                                                   |
-|  [16]   | strict taxonomy     | is-a or part-of decomposition under one root, no cross-links                                                                                      | `mindmap`; a needed cross-link makes it a `flowchart`           |
-|  [17]   | diagnosis fan       | many suspected conditions converging on one named effect                                                                                          | `ishikawa-beta`                                                 |
-|  [18]   | position judgment   | items placed by two independent assessments                                                                                                       | `quadrantChart`; evolution and visibility select `wardley-beta` |
-|  [19]   | domain sort         | practices classified by how knowable their cause-effect is, with claimed movement                                                                 | `cynefin-beta`                                                  |
-|  [20]   | admitted language   | which strings, fields, or bit ranges a contract accepts                                                                                           | `railroad-*-beta` for grammars, `packet` for wire formats       |
-|  [21]   | laned procedure     | steps whose owning actor is the point, handoffs the cost                                                                                          | `swimlane-beta`                                                 |
+| [INDEX] | [SHAPE]             | [SIGNALS_IN_THE_MATERIAL]                    | [ROUTE]                                                         |
+| :-----: | :------------------ | :------------------------------------------- | :-------------------------------------------------------------- |
+|  [01]   | mode machine        | *in* a state; "once X, never back"           | lifecycle                                                       |
+|  [02]   | dispatch topology   | one entry point, a discriminant, many arms   | logic-flow                                                      |
+|  [03]   | ownership walk      | "first, then, finally" across owners         | spine                                                           |
+|  [04]   | dependency lattice  | "X needs Y"; imports; "never depend upward"  | strata                                                          |
+|  [05]   | boundary seam       | two packages naming each other's types       | seam-graph                                                      |
+|  [06]   | conversation        | parties taking turns; request/response pairs | wire-sequence                                                   |
+|  [07]   | identity web        | "each X has many Y"; uniqueness claims       | schema                                                          |
+|  [08]   | command causality   | "when X happens, Y fires"; handlers emit     | event-flow                                                      |
+|  [09]   | chronology          | dated occurrences, no causal claim           | history for repositories, `timeline` otherwise                  |
+|  [10]   | committed future    | dated work with "after" deps; milestones     | schedule                                                        |
+|  [11]   | queue snapshot      | named stages now; ticket/owner vocabulary    | board                                                           |
+|  [12]   | zoned deployment    | units in zones over ports and protocols      | topology                                                        |
+|  [13]   | system neighborhood | one system and all that talks to it          | landscape                                                       |
+|  [14]   | capability profile  | one axis scored across two subjects          | profile                                                         |
+|  [15]   | weighted whole      | one measure/unit across parts of a whole     | decomposition                                                   |
+|  [16]   | strict taxonomy     | is-a/part-of under one root, no cross-links  | `mindmap`; a needed cross-link makes it a `flowchart`           |
+|  [17]   | diagnosis fan       | many conditions converging on one effect     | `ishikawa-beta`                                                 |
+|  [18]   | position judgment   | items placed by two independent gradings     | `quadrantChart`; evolution and visibility select `wardley-beta` |
+|  [19]   | domain sort         | practices sorted by cause-effect knowability | `cynefin-beta`                                                  |
+|  [20]   | admitted language   | strings/fields/bit-ranges a contract admits  | `railroad-*-beta` for grammars, `packet` for wire formats       |
+|  [21]   | laned procedure     | owning actor is the point, handoffs the cost | `swimlane-beta`                                                 |
+
+- mode machine: status or phase vocabulary; an enum field written from many sites under guards
+- dispatch topology: match or switch expressions; policy tables; routing rules; "depending on"
+- ownership walk: boot narratives; request paths; a composition root
+- dependency lattice: layer talk; cycle complaints
+- boundary seam: a declared contract ledger; "crosses the boundary"
+- conversation: timeout, retry, and ack vocabulary
+- identity web: nouns with identifiers; ownership claims over stored facts
+- command causality: projections consuming the emitted events
+- domain sort: claimed movement between domains
 
 Named archetype routes resolve through the catalog table in the root; bare declarations route through the methodology type table. Two shapes present at once is two diagrams sharing one name vocabulary, never one canvas carrying both.
 

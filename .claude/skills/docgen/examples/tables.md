@@ -1,6 +1,6 @@
 # [TABLE_CRAFT]
 
-Table repair is symptom-indexed: each entry names one defect an agent already sees in a grid, carries the fixed Detection / Rejected / Accepted / Reason / Reframe card, and shows both table shapes as tiny fences. A failed eligibility test converts the whole table; a passed test hoists, splits, extracts, or relieves in place.
+Table repair is symptom-indexed: each entry names one defect an agent already sees in a grid, carries the fixed Detection / Rejected / Accepted / Reason / Reframe card, and shows both table shapes as tiny fences. Repair preserves the grid — hoist, split, extract, relieve, and re-pad in place; the conversion entries fire only after every in-place relief fails.
 
 ## [01]-[HIGH_COMPLEXITY_DONE_RIGHT]
 
@@ -235,7 +235,31 @@ A link rides inside a comparison cell, so it drifts with the attribute grid inst
 - Reason: A mixed table is not a routing table; the link belongs on a `- Key: path` line after the grid, not inside a comparison cell.
 - Reframe: Strip links from attribute cells to a routing list below; keep an in-cell link only in a path-only routing table.
 
-## [11]-[MISSING_INDEX]
+## [11]-[SEQUENCE_ROWS]
+
+The rows are ordered steps a reader executes in order — a sequence wearing a grid — so the standardized carrier is the `OrderedStep` record set, one of the two earned conversions.
+
+- Detection: Rows are steps with an execution order; the action column carries imperative commands; row order is the payload.
+- Rejected:
+  ```markdown
+  | [INDEX] | [ACTION]                                     | [VERIFY]          |
+  | :-----: | :------------------------------------------- | :---------------- |
+  |  [01]   | Install the runtime: `<command-a>`           | `<check-a>` lists |
+  |  [02]   | Authenticate: `<command-b>` (keyring, SSH)   | `<check-b>`       |
+  ```
+- Accepted:
+  ```markdown
+  1. Install the runtime.
+     - Command: `<command-a>`
+     - Verify: `<check-a>` lists the runtime
+  2. Authenticate.
+     - Command: `<command-b>` (keyring, SSH)
+     - Verify: `<check-b>`
+  ```
+- Reason: A table asserts comparable rows; a sequence's payload is order plus per-step fields, which is the `OrderedStep` shape, and commands crammed into cells blow the budget.
+- Reframe: Convert ordered steps to numbered `OrderedStep` records carrying `Command`/`Verify` field lines; this and the type-standard-owned shape are the only earned conversions.
+
+## [12]-[MISSING_INDEX]
 
 An enumerable table drops the leading `[INDEX]` column or carries bare-word headers, breaking stable reference and census.
 

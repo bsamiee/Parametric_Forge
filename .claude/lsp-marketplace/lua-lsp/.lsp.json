@@ -1,8 +1,8 @@
 {
-  "lua": {
-    "command": "lua-language-server",
-    "extensionToLanguage": {
-      ".lua": "lua"
+    "lua": {
+        "command": "lua-language-server",
+        "extensionToLanguage": {
+            ".lua": "lua"
+        }
     }
-  }
 }

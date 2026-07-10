@@ -14,71 +14,71 @@
  */
 
 export const meta = {
-  name: 'geometry-parity-audit',
-  description: 'Compare each shared geometry op across the C# kernel and Python companion, cluster the divergences',
-  whenToUse: 'Auditing cross-runtime parity before locking a wire contract',
-  phases: [
-    { title: 'Enumerate ops' },
-    { title: 'Compare', detail: 'one agent per operation', model: 'sonnet' },
-    { title: 'Cluster divergences' },
-  ],
+    name: 'geometry-parity-audit',
+    description: 'Compare each shared geometry op across the C# kernel and Python companion, cluster the divergences',
+    whenToUse: 'Auditing cross-runtime parity before locking a wire contract',
+    phases: [
+        { title: 'Enumerate ops' },
+        { title: 'Compare', detail: 'one agent per operation', model: 'sonnet' },
+        { title: 'Cluster divergences' },
+    ],
 }
 
-// --- [INPUTS] ----------------------------------------------------------------------------
+// --- [INPUTS] --------------------------------------------------------------------------
 
 // `args` arrives as structured data. An object with an `ops` list overrides the discovery step; nothing passed lets the kernel enumerate the shared ops itself.
 const seedOps = Array.isArray(args?.ops) ? args.ops : null
 
-// --- [MODELS] ----------------------------------------------------------------------------
+// --- [MODELS] --------------------------------------------------------------------------
 
 // STRICT everywhere: additionalProperties:false + every property required at every level; a conditional field is required-but-empty (''), never omitted.
 const OPS = {
-  type: 'object',
-  additionalProperties: false,
-  required: ['ops'],
-  properties: {
-    ops: { type: 'array', items: { type: 'string' } },
-  },
+    type: 'object',
+    additionalProperties: false,
+    required: ['ops'],
+    properties: {
+        ops: { type: 'array', items: { type: 'string' } },
+    },
 }
 
 const COMPARISON = {
-  type: 'object',
-  additionalProperties: false,
-  required: ['op', 'diverges', 'detail', 'csharpRef', 'pythonRef'],
-  properties: {
-    op: { type: 'string' },
-    diverges: { type: 'boolean' },
-    detail: { type: 'string' },    // empty when the implementations agree
-    csharpRef: { type: 'string' },
-    pythonRef: { type: 'string' },
-  },
+    type: 'object',
+    additionalProperties: false,
+    required: ['op', 'diverges', 'detail', 'csharpRef', 'pythonRef'],
+    properties: {
+        op: { type: 'string' },
+        diverges: { type: 'boolean' },
+        detail: { type: 'string' },    // empty when the implementations agree
+        csharpRef: { type: 'string' },
+        pythonRef: { type: 'string' },
+    },
 }
 
-// --- [COMPOSITION] -----------------------------------------------------------------------
+// --- [COMPOSITION] ---------------------------------------------------------------------
 
 phase('Enumerate ops')
 const ops = seedOps ?? (await agent(
-  'List the geometry operations implemented in BOTH libs/csharp/Rasm and ' +
-  'libs/python/geometry — the ops that must agree at the wire. Return each op name.',
-  { label: 'enumerate-ops', phase: 'Enumerate ops', schema: OPS },
+    'List the geometry operations implemented in BOTH libs/csharp/Rasm and ' +
+    'libs/python/geometry — the ops that must agree at the wire. Return each op name.',
+    { label: 'enumerate-ops', phase: 'Enumerate ops', schema: OPS },
 )).ops
 log(`${ops.length} shared operation(s) to compare`)
 
 // Compare each op independently. Barrier on purpose — the clustering step works across the WHOLE set of divergences, so it needs every comparison together.
 const comparisons = await parallel(ops.map(op => () =>
-  agent(
-    `Compare how "${op}" is implemented in libs/csharp/Rasm versus libs/python/geometry. ` +
-    `Read both implementations. Report whether their numeric results, tolerance handling, ` +
-    `or degenerate-case behavior diverge, and cite the file:symbol on each side.`,
-    { label: `compare:${op}`, phase: 'Compare', model: 'sonnet', schema: COMPARISON },
-  ),
+    agent(
+        `Compare how "${op}" is implemented in libs/csharp/Rasm versus libs/python/geometry. ` +
+        `Read both implementations. Report whether their numeric results, tolerance handling, ` +
+        `or degenerate-case behavior diverge, and cite the file:symbol on each side.`,
+        { label: `compare:${op}`, phase: 'Compare', model: 'sonnet', schema: COMPARISON },
+    ),
 ))
 
 const divergent = comparisons.filter(Boolean).filter(c => c.diverges)
 log(`${divergent.length} of ${ops.length} operation(s) diverge`)
 
 if (divergent.length === 0) {
-  return { compared: ops.length, divergent: 0, message: 'Kernels agree across every shared op' }
+    return { compared: ops.length, divergent: 0, message: 'Kernels agree across every shared op' }
 }
 
 // --- [CLUSTER_DIVERGENCES]
@@ -87,11 +87,11 @@ if (divergent.length === 0) {
 // the product moves to a scratch report file + receipt — the patterns reference report-file shape.
 phase('Cluster divergences')
 const report = await agent(
-  `Here are ${divergent.length} cross-runtime geometry divergences. Cluster them into ` +
-  `themes (tolerance policy, degenerate handling, numeric drift, missing case), name each ` +
-  `theme, and for each say which side is the likely reference. Return a ranked briefing.\n\n` +
-  divergent.map(d => `- ${d.op}: ${d.detail}\n  C#: ${d.csharpRef}\n  Py: ${d.pythonRef}`).join('\n'),
-  { label: 'cluster-divergences', phase: 'Cluster divergences' },
+    `Here are ${divergent.length} cross-runtime geometry divergences. Cluster them into ` +
+    `themes (tolerance policy, degenerate handling, numeric drift, missing case), name each ` +
+    `theme, and for each say which side is the likely reference. Return a ranked briefing.\n\n` +
+    divergent.map(d => `- ${d.op}: ${d.detail}\n  C#: ${d.csharpRef}\n  Py: ${d.pythonRef}`).join('\n'),
+    { label: 'cluster-divergences', phase: 'Cluster divergences' },
 )
 
 return { compared: ops.length, divergent: divergent.length, report }

@@ -18,7 +18,7 @@ All code follows five governing principles:
 - **Executable doctrine** — examples and templates must pass syntax, ShellCheck, and their own self-tests
 
 
-## Paradigm
+## [01]-[PARADIGM]
 
 - **Immutability**: `local -r` for all non-mutating function locals, `readonly` for module-level constants. Mutable state only for argument parsing — frozen via `readonly` in `_main` before core logic
 - **Dispatch tables**: `declare -Ar` for O(1) command routing, two-dimensional `verb:resource` keyed dispatch, option metadata, validation rules, log-level gating, env contract validation (regex patterns per env var). `case/esac` reserved exclusively for glob/regex pattern matching — never conditional routing
@@ -30,20 +30,20 @@ All code follows five governing principles:
 - **Atomic I/O**: All file writes via `mktemp` + write + `mv` (rename is atomic on same filesystem). `umask 077` before `mktemp` for sensitive data. Dynamic FDs via `exec {fd}>file`
 
 
-## Conventions
+## [02]-[CONVENTIONS]
 
 **Ecosystem tool selection** — prefer modern alternatives when available:
 
-| [TASK]           | [PREFERRED] | [FALLBACK]         | [NEVER]               |
-| ---------------- | ----------- | ------------------ | --------------------- |
-| File search      | `fd`        | `find`             | `ls -R`               |
-| Content search   | `rg`        | `grep -rn`         | `find -exec grep`     |
-| JSON             | `jq`        | `python3 -c`       | `sed`/`awk` on JSON   |
-| YAML             | `yq eval`   | `python3 -c`       | `sed` on YAML         |
-| CSV/TSV          | `mlr`       | `awk -F`           | `cut` for multi-field |
-| Stream edit      | `sd`        | `sed`              | `awk` for simple sub  |
-| Column select    | `choose`    | `awk '{print $N}'` | `cut -d`              |
-| Interactive JSON | `jnv`       | `jq`               | --                    |
+| [INDEX] | [TASK]           | [PREFERRED] | [FALLBACK]         | [NEVER]               |
+| :-----: | :--------------- | :---------- | :----------------- | :-------------------- |
+|  [01]   | File search      | `fd`        | `find`             | `ls -R`               |
+|  [02]   | Content search   | `rg`        | `grep -rn`         | `find -exec grep`     |
+|  [03]   | JSON             | `jq`        | `python3 -c`       | `sed`/`awk` on JSON   |
+|  [04]   | YAML             | `yq eval`   | `python3 -c`       | `sed` on YAML         |
+|  [05]   | CSV/TSV          | `mlr`       | `awk -F`           | `cut` for multi-field |
+|  [06]   | Stream edit      | `sd`        | `sed`              | `awk` for simple sub  |
+|  [07]   | Column select    | `choose`    | `awk '{print $N}'` | `cut -d`              |
+|  [08]   | Interactive JSON | `jnv`       | `jq`               | --                    |
 
 **Selection rules**:
 - Probe availability via `command -v` before use; fall back gracefully
@@ -53,7 +53,7 @@ All code follows five governing principles:
 - Pipeline preference: single `awk` program over chained `grep | sed | cut`
 
 
-## Contracts
+## [03]-[CONTRACTS]
 
 **Variable discipline**
 - `local -r` for all non-mutating function locals. `readonly` for all module-level constants.
@@ -102,40 +102,30 @@ All code follows five governing principles:
 - W3C tracing: parse `TRACEPARENT` via `BASH_REMATCH`, generate via `printf -v TRACE_ID '%08x%08x%08x%08x' "${SRANDOM}"...`, export for child propagation.
 
 
-## Load sequence
+## [04]-[LOAD_SEQUENCE]
 
-**Foundation** (always):
+[FOUNDATION]: every task loads [bash-scripting-guide.md](references/bash-scripting-guide.md) — primitives, strict mode, expansion, arrays.
 
-| [REFERENCE]                                                   | [FOCUS]                                    |
-| ------------------------------------------------------------- | ------------------------------------------ |
-| [bash-scripting-guide.md](references/bash-scripting-guide.md) | Primitives, strict mode, expansion, arrays |
+[TASK_ROUTED]: load only when the task matches.
+- [01]-[VERSION_FEATURES](references/version-features.md): 5.2/5.3 features, fork-free substitution, version gating
+- [02]-[VARIABLE_FEATURES](references/variable-features.md): call stacks, namerefs, traps, process lifecycle, 5.3 vars
+- [03]-[ARRAY_OPERATIONS](references/array-operations.md): set algebra, structural transforms, higher-order traversal
+- [04]-[STRING_OPERATIONS](references/string-operations.md): transform pipelines, regex extraction, codecs, templates
+- [05]-[FILE_OPERATIONS](references/file-operations.md): atomic writes, FD multiplexing, directory traversal
+- [06]-[SCRIPT_PATTERNS](references/script-patterns.md): arg parsing, help, ERR traps, parallel, retry
+- [07]-[BASH_LOGGING](references/bash-logging.md): structured logging, CI integration, tracing
+- [08]-[BASH_TESTING](references/bash-testing.md): bats-core 1.13+ suites, coverage, hypothesis PBT
+- [09]-[BASH_PORTABILITY](references/bash-portability.md): cross-shell compat, containers, POSIX
+- [10]-[TEXT_PROCESSING_GUIDE](references/text-processing-guide.md): rg/awk/sd/jq/yq/mlr tool selection
+- [11]-[VALIDATION](references/validation.md): ShellCheck codes, static analysis, CI
 
-**Task-routed references** (load only when the task matches):
-
-| [REFERENCE]                                                     | [FOCUS]                                                    |
-| --------------------------------------------------------------- | ---------------------------------------------------------- |
-| [version-features.md](references/version-features.md)           | 5.2/5.3 features, fork-free substitution, version gating   |
-| [variable-features.md](references/variable-features.md)         | Call stacks, namerefs, traps, process lifecycle, 5.3 vars  |
-| [array-operations.md](references/array-operations.md)           | Set algebra, structural transforms, higher-order traversal |
-| [string-operations.md](references/string-operations.md)         | Transform pipelines, regex extraction, codecs, templates   |
-| [file-operations.md](references/file-operations.md)             | Atomic writes, FD multiplexing, directory traversal        |
-| [script-patterns.md](references/script-patterns.md)             | Arg parsing, help, ERR traps, parallel, retry              |
-| [bash-logging.md](references/bash-logging.md)                   | Structured logging, CI integration, tracing                |
-| [bash-testing.md](references/bash-testing.md)                   | bats-core 1.13+ suites, coverage, hypothesis PBT           |
-| [bash-portability.md](references/bash-portability.md)           | Cross-shell compat, containers, POSIX                      |
-| [text-processing-guide.md](references/text-processing-guide.md) | rg/awk/sd/jq/yq/mlr tool selection                         |
-| [validation.md](references/validation.md)                       | ShellCheck codes, static analysis, CI                      |
-
-**Examples** (read one matching your target archetype before writing):
-
-| [EXAMPLE]                                         | [ARCHETYPE]                                     |
-| ------------------------------------------------- | ----------------------------------------------- |
-| [cli-tool.sh](examples/cli-tool.sh)               | Two-dimensional verb:resource dispatch CLI      |
-| [data-pipeline.sh](examples/data-pipeline.sh)     | File processing with jq pipelines, accumulation |
-| [service-wrapper.sh](examples/service-wrapper.sh) | Container entrypoint, signal dispatch, coproc   |
+[EXAMPLES]: read the one matching the target archetype before writing.
+- [01]-[CLI_TOOL](examples/cli-tool.sh): two-dimensional verb:resource dispatch CLI
+- [02]-[DATA_PIPELINE](examples/data-pipeline.sh): file processing with jq pipelines, accumulation
+- [03]-[SERVICE_WRAPPER](examples/service-wrapper.sh): container entrypoint, signal dispatch, coproc
 
 
-## Anti-Patterns
+## [05]-[ANTI_PATTERNS]
 
 **State violations**
 - MUTABLE STATE: `let`/global mutation outside `declare -g` config loading. Use `local -r`/`readonly`; freeze parsed args in `_main`.
@@ -158,13 +148,13 @@ All code follows five governing principles:
 - RANDOM OVER SRANDOM: `$RANDOM` for security-relevant randomness (temp names, jitter, tokens). Use `$SRANDOM` (cryptographic entropy).
 
 
-## Validation gate
+## [06]-[VALIDATION_GATE]
 
 - Required: `bash -n script.sh` (syntax check), ShellCheck 0.11.0+ clean (static analysis).
 - Required for executable examples: run `--self-test` when present.
 - Reject completion when strict mode, readonly discipline, ShellCheck compliance, or example self-tests are not satisfied.
 
-## Skill eval prompts
+## [07]-[SKILL_EVAL_PROMPTS]
 
 - Explicit invocation: "Using coding-bash, refactor this .sh CLI into dispatch-table Bash 5.3 style with self-tests."
 - Implicit invocation: "Review this deployment script for ShellCheck, strict mode, cleanup, and streaming-loop issues."
@@ -173,19 +163,19 @@ All code follows five governing principles:
 - Compliance checks: output should load only relevant references, avoid command thrash, avoid helper files, preserve marked shell-reality exceptions, and run `bash -n`, ShellCheck, and `--self-test` when applicable.
 
 
-## First-class tools
+## [08]-[FIRST_CLASS_TOOLS]
 
-| [TOOL]       | [VER]    | [PROVIDES]                                 |
-| ------------ | -------- | ------------------------------------------ |
-| `bash`       | 5.2+/5.3 | Shell runtime, builtins, `${ }` (5.3)      |
-| `shellcheck` | 0.11.0+  | Static analysis, SC codes                  |
-| `bats-core`  | 1.13+    | Test framework, TAP output                 |
-| `kcov`       | 43+      | Coverage instrumentation                   |
-| `rg`         | 15+      | Content search, `.gitignore`-aware         |
-| `fd`         | 10+      | File search, `.gitignore`-aware            |
-| `jq`         | 1.8+     | JSON processing, streaming, `trim`, `skip` |
-| `yq`         | 4.46+    | YAML processing                            |
-| `mlr`        | 6+       | CSV/TSV/JSON format transforms             |
-| `sd`         | 1+       | Stream editing (sed replacement)           |
-| `choose`     | 1.3+     | Column selection (cut replacement)         |
-| `gawk`       | 5.3+     | Text processing, inline programs           |
+| [INDEX] | [TOOL]       | [VER]    | [PROVIDES]                                 |
+| :-----: | :----------- | :------- | :----------------------------------------- |
+|  [01]   | `bash`       | 5.2+/5.3 | Shell runtime, builtins, `${ }` (5.3)      |
+|  [02]   | `shellcheck` | 0.11.0+  | Static analysis, SC codes                  |
+|  [03]   | `bats-core`  | 1.13+    | Test framework, TAP output                 |
+|  [04]   | `kcov`       | 43+      | Coverage instrumentation                   |
+|  [05]   | `rg`         | 15+      | Content search, `.gitignore`-aware         |
+|  [06]   | `fd`         | 10+      | File search, `.gitignore`-aware            |
+|  [07]   | `jq`         | 1.8+     | JSON processing, streaming, `trim`, `skip` |
+|  [08]   | `yq`         | 4.46+    | YAML processing                            |
+|  [09]   | `mlr`        | 6+       | CSV/TSV/JSON format transforms             |
+|  [10]   | `sd`         | 1+       | Stream editing (sed replacement)           |
+|  [11]   | `choose`     | 1.3+     | Column selection (cut replacement)         |
+|  [12]   | `gawk`       | 5.3+     | Text processing, inline programs           |
