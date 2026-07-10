@@ -328,7 +328,7 @@
   # order is the macOS "server connections interrupted" dialog.
   mountSupervisor = pkgs.writeShellApplication {
     name = "forge-vps-mount";
-    runtimeInputs = [pkgs.coreutils pkgs.jq pkgs.rclone] ++ lib.optionals pkgs.stdenv.hostPlatform.isLinux [pkgs.util-linux pkgs.procps];
+    runtimeInputs = [pkgs.coreutils pkgs.jq pkgs.rclone pkgs.openssh] ++ lib.optionals pkgs.stdenv.hostPlatform.isLinux [pkgs.util-linux pkgs.procps];
     text = ''
       row_file="$1"
       IFS=$'\x1f' read -r hostname mname rpath ro cache addr user mountpoint auth_sock < <(jq -r \
@@ -410,12 +410,12 @@
         exit 1
       fi
 
-      # idle_timeout=0 pins one warm SSH session for the mount's lifetime:
-      # the default 1m pool expiry made every quiet-period statfs ride a
-      # fresh handshake, and one transient RST then landed a statfs error
-      # macOS answers with the interrupted-server dialog. The tunnel posture
-      # (one standing connection) is the mount posture.
-      remote=":sftp,host=$addr,user=$user,key_use_agent=true,idle_timeout=0,known_hosts_file=$HOME/.ssh/known_hosts:$rpath"
+      # External openssh transport: rclone's internal ssh library sends no
+      # keepalives, so NAT/idle drops silently killed the warm session and the
+      # next statfs rode a doomed handshake — macOS answers with the
+      # interrupted-server dialog. ServerAlive keepalives (the tunnel posture)
+      # hold the standing connection; auth/known-hosts ride openssh + agent.
+      remote=":sftp,ssh='ssh -o BatchMode=yes -o ServerAliveInterval=15 -o ServerAliveCountMax=3 -l $user $addr',idle_timeout=0:$rpath"
       sub=nfsmount
       [ "$(uname -s)" = "Darwin" ] || sub=mount
       flags=(--config "" --volname "$volname" --vfs-cache-mode "$cache")
