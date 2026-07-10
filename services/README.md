@@ -1,4 +1,4 @@
-# Services Control Plane
+# [SERVICES]
 
 External SaaS desired state as typed Pulumi rows: `topology.ts` declares rows, `estate.ts` folds them into resources, `driver.ts` owns stack lifecycle, credential brokering, the machine scope rail, and the reviewer matrix. Boundary law: this directory owns external service/control-plane desired state only — terminal configs, themes, launchd wrappers, and aliases never enter Pulumi. The repo root is the workspace: one `package.json` plus the `pnpm-workspace.yaml` catalog own every pin, and all verbs run from the root.
 
@@ -13,14 +13,14 @@ Pins follow the package schema, never registry-page text. `pulumi-command` is ad
 
 ## [02]-[GITHUB_ROW_FAMILIES]
 
-| [INDEX] | [FAMILY]                 | [STATE]                                                                                                      |
-| :-----: | :----------------------- | :----------------------------------------------------------------------------------------------------------- |
-|  [01]   | Repository core          | LANDED — uniform merge hygiene + feature booleans, `protect: true`, adopt-imported                           |
-|  [02]   | Rulesets / branch policy | LANDED — `main-guard` on `~DEFAULT_BRANCH`; direct pushes to main stay legal                                 |
-|  [03]   | Environments             | EMPTY BY RULING — no real deploy targets exist; symmetry environments are policy theater                     |
-|  [04]   | Secret/variable rows     | EMPTY BY RULING — zero workflow consumers; Actions secret sync rejected until a workflow names its exact set |
-|  [05]   | Access bindings          | EMPTY BY RULING — sole-owner repos, account-level SSH identity; no collaborators, teams, or deploy keys      |
-|  [06]   | Surface rows             | EMPTY BY RULING — no owned repo webhooks, Pages, releases, or GitHub-native config files                     |
+| [INDEX] | [FAMILY]                 | [STATE]                                                                                                     |
+| :-----: | :----------------------- | :---------------------------------------------------------------------------------------------------------- |
+|  [01]   | Repository core          | Uniform merge hygiene + feature booleans, `protect: true`, adopt-imported                                   |
+|  [02]   | Rulesets / branch policy | `main-guard` on `~DEFAULT_BRANCH`; direct pushes to main stay legal                                         |
+|  [03]   | Environments             | Empty by ruling: no real deploy targets exist; symmetry environments are policy theater                     |
+|  [04]   | Secret/variable rows     | Empty by ruling: zero workflow consumers; Actions secret sync rejected until a workflow names its exact set |
+|  [05]   | Access bindings          | Empty by ruling: sole-owner repos, account-level SSH identity; no collaborators, teams, or deploy keys      |
+|  [06]   | Surface rows             | Empty by ruling: no owned repo webhooks, Pages, releases, or GitHub-native config files                     |
 
 A family leaves EMPTY the moment a real consumer exists; the row lands in `topology.ts`, never through `gh api`. `gh` is operator/discovery/breakglass only — durable GitHub state mutation through `gh api` is retired.
 

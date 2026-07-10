@@ -10,7 +10,9 @@
 // main-guard rulesets, reviewer matrix). estate.ts materializes rows into
 // resources; driver.ts applies scope rows machine-side. Every row is declared
 // end-state, managed forever: 'adopt' rows import live CLI/gh-born resources,
-// 'mint' rows are created fresh and never carry an import ID.
+// 'mint' rows are created fresh and never carry an import ID. Cross-family
+// coordinates derive from their anchors, so a row naming an undeclared
+// project, environment, config, or repository is a compile error.
 
 type _Origin = 'adopt' | 'mint';
 
@@ -38,6 +40,8 @@ const _projects = [
     readonly description: string;
     readonly origin: _Origin;
 }>;
+
+type _ProjectSlug = (typeof _projects)[number]['slug'];
 
 // API-minted projects carry zero environments, so agent-runtime's ride as
 // mint rows; each environment creates its same-slug root config.
@@ -75,11 +79,26 @@ const _environments = [
     { project: 'rasm', slug: 'stg', name: 'Staging', origin: 'adopt' },
     { project: 'rasm', slug: 'prd', name: 'Production', origin: 'adopt' },
 ] as const satisfies ReadonlyArray<{
-    readonly project: string;
+    readonly project: _ProjectSlug;
     readonly slug: string;
     readonly name: string;
     readonly origin: _Origin;
 }>;
+
+type _EnvironmentSlug<P extends _ProjectSlug = _ProjectSlug> = Extract<(typeof _environments)[number], { readonly project: P }>['slug'];
+
+// Branch configs pair with a declared environment of their own project, and
+// Doppler's naming law rides the type: a branch name is `<env>_<suffix>`.
+type _BranchRow = {
+    [P in _ProjectSlug]: {
+        [E in _EnvironmentSlug<P>]: {
+            readonly project: P;
+            readonly environment: E;
+            readonly name: `${E}_${string}`;
+            readonly origin: _Origin;
+        };
+    }[_EnvironmentSlug<P>];
+}[_ProjectSlug];
 
 // Branch configs only; root configs ride their environment. agent-runtime's
 // secret set lives in its `dev` root config, so no branch row exists for it.
@@ -92,12 +111,13 @@ const _configs = [
     },
     { project: 'maghz', environment: 'prd', name: 'prd_host', origin: 'adopt' },
     { project: 'rasm', environment: 'dev', name: 'dev_repo', origin: 'adopt' },
-] as const satisfies ReadonlyArray<{
-    readonly project: string;
-    readonly environment: string;
-    readonly name: string;
-    readonly origin: _Origin;
-}>;
+] as const satisfies ReadonlyArray<_BranchRow>;
+
+// A config coordinate resolves to a root config (same-slug as its
+// environment) or a declared branch config of the same project.
+type _ConfigName<P extends _ProjectSlug = _ProjectSlug> = _EnvironmentSlug<P> | Extract<(typeof _configs)[number], { readonly project: P }>['name'];
+
+type _Coordinate = { [P in _ProjectSlug]: { readonly project: P; readonly config: _ConfigName<P> } }[_ProjectSlug];
 
 // Static Developer-plan tokens; replacement is manual revoke-and-remint: drop
 // the row and `up --target=<project>/<config>/<name>` (revokes), restore the
@@ -115,12 +135,12 @@ const _tokens = [
         name: 'maghz-host-readonly',
         access: 'read',
     },
-] as const satisfies ReadonlyArray<{
-    readonly project: string;
-    readonly config: string;
-    readonly name: string;
-    readonly access: 'read' | 'read/write';
-}>;
+] as const satisfies ReadonlyArray<
+    _Coordinate & {
+        readonly name: string;
+        readonly access: 'read' | 'read/write';
+    }
+>;
 
 // Machine directory-scope rows: the replacement for every per-repo
 // doppler.yaml, applied idempotently via `doppler configure set`.
@@ -134,16 +154,28 @@ const _scopes = [
     },
     { dir: `${_scopeRoot}/Maghz`, project: 'maghz', config: 'dev' },
     { dir: `${_scopeRoot}/Rasm`, project: 'rasm', config: 'dev_repo' },
-] as const satisfies ReadonlyArray<{
-    readonly dir: string;
-    readonly project: string;
-    readonly config: string;
-}>;
+] as const satisfies ReadonlyArray<
+    _Coordinate & {
+        readonly dir: `${typeof _scopeRoot}/${string}`;
+    }
+>;
 
-// Change-notification webhooks: Doppler mandates HTTPS delivery and signs each
+// Doppler mandates HTTPS delivery (the url type carries it) and signs each
 // delivery with the brokered secret (secretSource names the custody coordinate
 // the driver resolves at apply time); no secret names ride the wire, delivery
 // is at-least-once, and the consumer owns idempotency.
+type _WebhookRow = {
+    [P in _ProjectSlug]: {
+        readonly project: P;
+        readonly slug: string;
+        readonly url: `https://${string}`;
+        readonly enabledConfigs: readonly [_ConfigName<P>, ...ReadonlyArray<_ConfigName<P>>];
+        readonly payload: string;
+        readonly secretSource: _Coordinate & { readonly name: string };
+        readonly origin: _Origin;
+    };
+}[_ProjectSlug];
+
 const _webhooks = [
     {
         project: 'maghz',
@@ -158,22 +190,12 @@ const _webhooks = [
         },
         origin: 'mint',
     },
-] as const satisfies ReadonlyArray<{
-    readonly project: string;
-    readonly slug: string;
-    readonly url: string;
-    readonly enabledConfigs: readonly string[];
-    readonly payload: string;
-    readonly secretSource: {
-        readonly project: string;
-        readonly config: string;
-        readonly name: string;
-    };
-    readonly origin: _Origin;
-}>;
+] as const satisfies ReadonlyArray<_WebhookRow>;
 
 // GitHub settings-as-code: every owned repo carries the shared merge-hygiene
 // policy (estate.ts owns the values) and one active main-guard ruleset.
+const _owner = 'bsamiee';
+
 const _repositories = [
     {
         name: 'Parametric_Forge',
@@ -196,6 +218,8 @@ const _repositories = [
     readonly origin: _Origin;
 }>;
 
+type _RepositoryName = (typeof _repositories)[number]['name'];
+
 // importId is the live ruleset ID; the adopt import ID is `<repository>:<importId>`.
 const _rulesets = [
     {
@@ -217,7 +241,7 @@ const _rulesets = [
         origin: 'adopt',
     },
 ] as const satisfies ReadonlyArray<{
-    readonly repository: string;
+    readonly repository: _RepositoryName;
     readonly name: string;
     readonly importId: number;
     readonly origin: _Origin;
@@ -276,7 +300,7 @@ const _reviewers = [
     readonly identity: 'coderabbit' | 'greptile' | 'copilot' | 'macroscope';
     readonly mechanism: 'app' | 'ruleset';
     readonly posture: 'active' | 'gated';
-    readonly trigger: string;
+    readonly trigger: 'pr-open' | 'pr-open+push';
     readonly statusCheck: boolean;
     readonly overlapClass: 'line-review' | 'semantic-review' | 'native-review' | 'remediation';
     readonly artifacts: readonly string[];
@@ -290,6 +314,7 @@ const Topology = {
     scopeRoot: _scopeRoot,
     scopes: _scopes,
     webhooks: _webhooks,
+    owner: _owner,
     repositories: _repositories,
     rulesets: _rulesets,
     rulesetPolicy: _rulesetPolicy,

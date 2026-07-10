@@ -11,10 +11,11 @@
 // This module is the Pulumi engine boundary: resource constructors are the
 // engine's own registration calls inside the Automation API program context.
 
-import * as doppler from '@pulumiverse/doppler';
 import * as github from '@pulumi/github';
-import { secret } from '@pulumi/pulumi';
 import type { CustomResourceOptions, Resource } from '@pulumi/pulumi';
+import { secret } from '@pulumi/pulumi';
+import * as doppler from '@pulumiverse/doppler';
+import { Redacted } from 'effect';
 import { Topology } from './topology.ts';
 
 declare namespace estate {
@@ -26,8 +27,6 @@ declare namespace estate {
         readonly make: (row: Row, options: CustomResourceOptions) => Resource;
     };
 }
-
-const GITHUB_OWNER = 'bsamiee';
 
 // Uniform repo policy: merge hygiene plus the live feature-surface booleans —
 // unspecified booleans would plan as removals against adopted state.
@@ -43,7 +42,9 @@ const _mergeHygiene = {
 } as const;
 
 const estate =
-    (f: estate.Flags, webhookSecrets: ReadonlyMap<string, string> = new Map()) =>
+    (f: estate.Flags, webhookSecrets: Readonly<Record<string, Redacted.Redacted<string>>> = {}) =>
+    // BOUNDARY ADAPTER: promise-native Pulumi registration program — statements
+    // and the JS Map registries live only inside this kernel.
     async (): Promise<Record<string, unknown>> => {
         // One fold owns every row family: key, import identity, dependency
         // anchor, and constructor arrive as registration columns.
@@ -94,14 +95,16 @@ const estate =
                 ),
         });
 
-        // The signing secret arrives driver-brokered from its Doppler custody
-        // row; an absent broker value plans the webhook unsigned-diff-free.
+        // The signing secret arrives driver-brokered sealed from its Doppler
+        // custody row and unwraps only into the engine's secret input; an
+        // absent broker value plans the webhook unsigned-diff-free. Anchoring
+        // falls back to the environment when the first enabled config is a root.
         void _registered(Topology.webhooks, {
             key: (row) => row.slug,
             importId: (row) => row.slug,
-            anchor: (row) => config.get(`${row.project}.${row.enabledConfigs[0]}`),
+            anchor: (row) => config.get(`${row.project}.${row.enabledConfigs[0]}`) ?? environment.get(`${row.project}.${row.enabledConfigs[0]}`),
             make: (row, options) => {
-                const brokered = webhookSecrets.get(row.slug);
+                const brokered = webhookSecrets[row.slug];
                 return new doppler.Webhook(
                     row.slug,
                     {
@@ -110,7 +113,7 @@ const estate =
                         enabled: true,
                         enabledConfigs: [...row.enabledConfigs],
                         payload: row.payload,
-                        ...(brokered === undefined ? {} : { secret: secret(brokered) }),
+                        ...(brokered === undefined ? {} : { secret: secret(Redacted.value(brokered)) }),
                     },
                     options,
                 );
@@ -120,7 +123,7 @@ const estate =
         // GitHub settings surface: the token rides the engine env (driver-
         // brokered GITHUB_TOKEN); repositories carry protect so a row edit can
         // never cascade into repo destruction; rulesets adopt by `<repository>:<id>`.
-        const gh = new github.Provider('github', { owner: GITHUB_OWNER });
+        const gh = new github.Provider('github', { owner: Topology.owner });
         const repository = _registered(Topology.repositories, {
             key: (row) => row.name,
             importId: (row) => row.name,
@@ -154,26 +157,23 @@ const estate =
         });
 
         return Object.fromEntries(
-            Topology.tokens
-                .filter((row) => config.has(`${row.project}.${row.config}`) || project.has(row.project))
-                .map((row) => {
-                    // Root-config tokens anchor on their environment (same-slug root
-                    // config exists once the environment does); branch-config tokens
-                    // on their config row.
-                    const anchor =
-                        config.get(`${row.project}.${row.config}`) ?? environment.get(`${row.project}.${row.config}`) ?? project.get(row.project);
-                    const token = new doppler.ServiceToken(
-                        `${row.project}-${row.config}-${row.name}`,
-                        {
-                            project: row.project,
-                            config: row.config,
-                            name: row.name,
-                            access: row.access,
-                        },
-                        { ...(anchor ? { dependsOn: anchor } : {}) },
-                    );
-                    return [`token:${row.project}/${row.config}/${row.name}`, token.key] as const;
-                }),
+            Topology.tokens.map((row) => {
+                // A token coordinate is compile-proven against declared rows:
+                // branch-config tokens anchor on their config row, root-config
+                // tokens on their environment (same-slug root config).
+                const anchor = config.get(`${row.project}.${row.config}`) ?? environment.get(`${row.project}.${row.config}`);
+                const token = new doppler.ServiceToken(
+                    `${row.project}-${row.config}-${row.name}`,
+                    {
+                        project: row.project,
+                        config: row.config,
+                        name: row.name,
+                        access: row.access,
+                    },
+                    { ...(anchor ? { dependsOn: anchor } : {}) },
+                );
+                return [`token:${row.project}/${row.config}/${row.name}`, token.key] as const;
+            }),
         );
     };
 
