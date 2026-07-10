@@ -1,4 +1,4 @@
-# File Reading
+# [FILE_READING]
 
 Use `heptabase file list` to resolve a PDF/media card ID into exportable file IDs. Use `heptabase file export` to copy a local raw file into a scratch directory so native file-reading tools can inspect it.
 
@@ -76,13 +76,13 @@ Example response:
 
 Now read `/tmp/hepta-read/report-55555555-5555-4555-8555-555555555555.pdf` with your native file-reading tool.
 
-## [04]-[AVOID_READING_HUGE_FILES_BLINDLY]
+## [04]-[SIZE_GUARDS]
 
 - Check `size`, `mimeType`, and `name` before reading.
-- For textual PDF reads, prefer `references/pdf-reading.md` and `heptabase pdf read` over exporting the raw PDF.
+- For textual PDF reads, prefer `heptabase pdf read` over exporting the raw PDF.
 - If the file is large, ask the user before reading the whole file or use targeted extraction, search, or page reads to avoid wasting tokens.
 
-## [05]-[CLEAN_UP_SCRATCH_FILES]
+## [05]-[SCRATCH_CLEANUP]
 
 - Exported files are temporary scratch copies. After reading them, delete the scratch directory created by `mktemp -d`.
 - Do not delete the scratch directory until all tools that need the returned `path` are done.

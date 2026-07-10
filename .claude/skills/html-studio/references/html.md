@@ -69,7 +69,7 @@ The table is the artifact's densest surface; its markup does the aligning so the
 - Every record row carries `data-id` matching its model row, so capture, selection, and diff address the row by the same key the payload uses.
 - `<colgroup>` with spanned `<col>` elements tints a compared column as one rule instead of a per-cell class.
 - A cell holds one atomic value; a cell that wants interior layout is a card row that outgrew its table.
-- `<tfoot>` carries aggregates, and a filtered view recomputes them from the visible rows — a total that ignores the active filter lies.
+- `<tfoot>` carries aggregates recomputed from the visible rows, never the full set.
 - A long table sticks its `<thead>` inside the table's own scroll container, never against the page; a sparkline or trend mark embeds as an inline `<svg>` inside its `<td>`.
 - Row groups are structural: one `<tbody>` per group with a group-header row spanning the columns, so collapse, zebra, and aggregate logic address the group as one node.
 
@@ -160,7 +160,7 @@ Native form semantics own every capture control, so keyboard order, grouping, an
 - Constraint attributes — `required`, `min`, `max`, `maxlength`, `pattern` — carry validation; `:user-valid` and `:user-invalid` style only after the reader interacts, so a fresh form never opens red.
 - Judgment fields carry `autocomplete="off"` — browser autofill has no business completing a verdict or an annotation — and `inputmode` with `enterkeyhint` tunes the virtual keyboard where a field expects numerals or a terminal action.
 - A `<button>` inside any form declares `type="button"` unless it genuinely submits; the default type submits and reloads the page.
-- A control either mutates a named field of the export model or renders as view-only chrome without capture styling — a control styled as capture that feeds nothing implies judgment returns when it does not.
+- A control either mutates a named field of the export model or renders as view-only chrome without capture styling.
 
 ## [08]-[DENSITY]
 

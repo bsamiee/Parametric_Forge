@@ -1,6 +1,6 @@
 # Platform Facts
 
-macOS reality the estate is built against: the launchd naming grammar, the TCC and sudo posture, the bash/GNU-BSD portability traps, and the deploy/lock/activation classes. Each entry is a fact an agent needs before touching the surface and cannot derive from a module read alone. Command surfaces route to their `--help`; this doc carries the invariants and the quirks.
+macOS reality the estate is built against: the invariants and quirks an agent needs before touching a surface, none derivable from a module read alone. Command surfaces route to their `--help`.
 
 ## [01]-[SCOPE_BOUNDARIES]
 

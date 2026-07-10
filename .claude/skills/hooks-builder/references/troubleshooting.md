@@ -11,10 +11,10 @@ Symptom-indexed misconfiguration and platform behavior; diagnosis runs `claude -
 |  [03]   | Hook fires on the wrong tools     | Unanchored `Edit.*` hits `NotebookEdit`   | Anchor as `^Edit$`                                  |
 |  [04]   | Hook with `if` never runs         | `if` set on a non-tool event              | `if` binds only on tool events; else remove         |
 |  [05]   | `permission denied`               | Script not executable                     | `chmod +x` the script                               |
-|  [06]   | JSON output ignored               | Exit code 2 alongside JSON                | One approach per hook: JSON, or exit codes          |
+|  [06]   | JSON output ignored               | Exit code 2 alongside JSON                | JSON or exit codes, never both                      |
 |  [07]   | JSON parse failure                | Shell profile text on stdout              | Stdout carries only the JSON object                 |
 |  [08]   | Block has no effect               | Exit 1 used as the failure signal         | Exit 1 is non-blocking; policy enforcement exits 2  |
-|  [09]   | Async hook returns nothing        | Decision fields on an async hook          | Never decides; only `additionalContext`, next turn  |
+|  [09]   | Async hook returns nothing        | Decision fields on an async hook          | Emits only `additionalContext`, next turn           |
 |  [10]   | Injected context surfaces to user | Context phrased as system commands        | Phrase as factual, not imperative framing           |
 |  [11]   | No desktop notification           | Writing escape sequences to `/dev/tty`    | Return `terminalSequence` in JSON output            |
 |  [12]   | Windows exec-form spawn fails     | `.cmd`/`.bat` shim named as `command`     | Spawn `node`, script path in `args`, or shell form  |

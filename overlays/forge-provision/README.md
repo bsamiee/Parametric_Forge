@@ -9,7 +9,7 @@
 - The mutating set is exactly `up`, `down`, `prune`, `apply`; each runs under the mutation lock and every other verb makes no durable write to the repo, the Docker runtime, or lock state beyond stale-lock recovery.
 - `prune` binds to `--owned` and touches only resources labeled by this root, project, and instance; `--volumes` extends removal to owned data volumes, otherwise volumes survive every lifecycle verb including `down`.
 - `psql` opens a session-capable client inside an owned service container: database writes are the operator's, provisioning state stays untouched, and the session lock blocks lifecycle mutation for its duration.
-- `verify` and the `psql-<service>` forms are retired spellings; dispatch rejects them with a usage error, never an alias.
+- Dispatch admits only the cataloged verbs; an unrecognized verb fails with a usage error, never an alias or fallback.
 - Every verb is noninteractive and agent-first: no host `sudo`, no keychain prompt, no database password prompt, and no Docker credential helper — public images pull through an anonymous `DOCKER_CONFIG` the command provisions itself.
 
 ## [02]-[JSON_CONTRACT]
@@ -59,9 +59,10 @@ Every variable carries the `FORGE_PROVISION_` prefix; rows name the suffix alone
 |  [02]   | `PROJECT` / `INSTANCE`                                      | Project key override and instance separation                   |
 |  [03]   | `AUTH`                                                      | `auto-root` (generated secret file) or `trust-loopback`        |
 |  [04]   | `PORT_POLICY` / `PORT_RANGE` / `PORT_EXCLUDE` / `PORT_BASE` | Port allocation policy surface                                 |
-|  [05]   | `PGDUCKDB` / `PG_CRON` / `VECTORSCALE`                      | Analytics service gate; pg_cron and vectorscale creation gates |
-|  [06]   | `TIMESCALE_*` / `SEARCH_*` / `PGDUCKDB_*`                   | Per-service image and port overrides from `services.json` rows |
-|  [07]   | `LOCK_WAIT_SECONDS` / `LOCK_TTL_SECONDS`                    | Lock acquisition deadline and stale-lock expiry                |
-|  [08]   | `COMPOSE_PARALLEL_LIMIT` / `MAX_ACTIVE_PROJECTS`            | Compose parallelism and machine-wide project cap               |
-|  [09]   | `ALLOW_EPHEMERAL_PORTS` / `ALLOW_NON_COLIMA_DOCKER`         | Safety-gate overrides, default off                             |
-|  [10]   | `SHARE`                                                     | Packaged catalog share-directory override; packaging-internal  |
+|  [05]   | `PGDUCKDB`                                                  | Analytics service gate, default off                            |
+|  [06]   | `PG_CRON` / `VECTORSCALE`                                   | pg_cron and vectorscale creation gates, default off            |
+|  [07]   | `TIMESCALE_*` / `SEARCH_*` / `PGDUCKDB_*`                   | Per-service image and port overrides from `services.json` rows |
+|  [08]   | `LOCK_WAIT_SECONDS` / `LOCK_TTL_SECONDS`                    | Lock acquisition deadline and stale-lock expiry                |
+|  [09]   | `COMPOSE_PARALLEL_LIMIT` / `MAX_ACTIVE_PROJECTS`            | Compose parallelism and machine-wide project cap               |
+|  [10]   | `ALLOW_EPHEMERAL_PORTS` / `ALLOW_NON_COLIMA_DOCKER`         | Safety-gate overrides, default off                             |
+|  [11]   | `SHARE`                                                     | Packaged catalog share-directory override; packaging-internal  |

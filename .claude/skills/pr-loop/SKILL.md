@@ -37,7 +37,7 @@ Declared once at entry; holds for the whole run without per-fix prompts.
 
 ## [04]-[REVIEWERS]
 
-A reviewer is any GitHub identity that posts a review, an inline thread, or a status. The loop is reviewer-agnostic: it reads a registry keyed by bot login and falls back to an author scan for any bot it does not recognize. The completion signal differs per reviewer — a check-run for Macroscope, a comment-text transition for CodeRabbit, a summary-footer SHA match plus `N/5` for Greptile, a posted review object for Gemini, Codex, Claude, and humans — so branch on the reviewer, never assume a check-run exists. `references/reviewers.md` carries the keyed table (login, gather endpoint, re-trigger, completion, confidence) and the author-scan fallback.
+A reviewer is any GitHub identity that posts a review, an inline thread, or a status. The loop is reviewer-agnostic: it reads a registry keyed by bot login and falls back to an author scan for any bot it does not recognize. The completion signal differs per reviewer, so branch on the reviewer's registry signal and never assume a check-run exists. `references/reviewers.md` carries the keyed table (login, gather endpoint, re-trigger, completion, confidence) and the author-scan fallback.
 
 ## [05]-[LOOP]
 

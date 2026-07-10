@@ -49,14 +49,16 @@ doppler run --project <token-project> --config <token-config> --fallback <snapsh
 
 The Developer plan is the operating envelope: 10 projects, 4 environments per project, 10 configs per environment, 5 config syncs, 5 webhooks, 50 service tokens, 3-day activity logs. Plan-gated features stay out of estate design:
 
-| [INDEX] | [FEATURE]                              | [PLAN]                              |
-| :-----: | :------------------------------------- | :---------------------------------- |
-|  [01]   | `doppler run --watch` process restarts | Team                                |
-|  [02]   | Automatic secret rotation              | Team                                |
-|  [03]   | Service accounts and OIDC identities   | Team                                |
-|  [04]   | Config inheritance                     | Team                                |
-|  [05]   | Trusted IPs                            | Team                                |
-|  [06]   | Change Requests                        | Team; policies Enterprise           |
-|  [07]   | RBAC and custom roles                  | Team; custom permissions Enterprise |
-|  [08]   | Integration access scoping             | Team                                |
-|  [09]   | Dynamic secrets                        | Enterprise                          |
+| [INDEX] | [FEATURE]                              | [PLAN]     |
+| :-----: | :------------------------------------- | :--------- |
+|  [01]   | `doppler run --watch` process restarts | Team       |
+|  [02]   | Automatic secret rotation              | Team       |
+|  [03]   | Service accounts and OIDC identities   | Team       |
+|  [04]   | Config inheritance                     | Team       |
+|  [05]   | Trusted IPs                            | Team       |
+|  [06]   | Change Requests                        | Team       |
+|  [07]   | Change Request policies                | Enterprise |
+|  [08]   | RBAC and custom roles                  | Team       |
+|  [09]   | Custom permissions                     | Enterprise |
+|  [10]   | Integration access scoping             | Team       |
+|  [11]   | Dynamic secrets                        | Enterprise |

@@ -4,8 +4,8 @@
 -- License       : MIT
 -- Path          : modules/home/programs/apps/nvim/lua/config/lsp.lua
 -- ----------------------------------------------------------------------------
--- Native LSP control plane over generated forge/lsp.lua rows (owner: apps/nvim/default.nix). Native completion with autotrigger is the decided lane
--- (blink.cmp stays annex-gated); diagnostics render through one config.
+-- Native LSP control plane over generated forge/lsp.lua rows (owner: apps/nvim/default.nix); native completion
+-- with autotrigger is the lane, blink.cmp stays annex-gated, and diagnostics render through one config.
 
 for name, row in pairs(require("forge.lsp").servers) do
     vim.lsp.config(name, {
@@ -35,8 +35,7 @@ vim.api.nvim_create_autocmd("LspAttach", {
 vim.diagnostic.config({
     severity_sort = true,
     virtual_text = { source = "if_many" },
-    -- Border rides the global winborder owner (config/options.lua).
-    float = { source = "if_many" },
+    float = { source = "if_many" }, -- border rides the global winborder owner (config/options.lua)
     signs = {
         text = {
             [vim.diagnostic.severity.ERROR] = "●",

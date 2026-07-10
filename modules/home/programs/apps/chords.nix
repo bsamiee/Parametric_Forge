@@ -7,6 +7,7 @@
 # Single chord-vocabulary owner: physical leader layers, zellij leader binds, mode table, which-key rows, ribbon hints, and per-consumer register
 # rows are ONE parameterized table projected into karabiner JSON, zellij KDL, zellij-forgot content, WezTerm rows.lua, nvim chords.lua, and the
 # VS Code keybindings sentinel tail. A new bind is one row here; consumers never hand-duplicate chords.
+
 {
   config,
   lib,
@@ -30,10 +31,10 @@
   mkRibbon = sub ["label" "key" "rank"] ["label" "rank"];
 
   # --- [PHYSICAL_LAYERS]
-  # Karabiner rewrites right-hand modifiers into leader stacks; zellij consumes each stack as the derived modifier set. Power carries no zellij
-  # binds (yazi owns it) and WezTerm claims no layer — its outer keys live in weztermRows. Glyphs, the zellij prefix, the kitty CSI-u bitmask,
-  # and the WezTerm glyph map all derive from the karabiner `to` row through this vocabulary; `rank` orders the emitted rule document, `display`
-  # overrides the cheatsheet prefix.
+  # Karabiner rewrites right-hand modifiers into leader stacks; zellij consumes each stack as the derived modifier set.
+  # Power carries no zellij binds (yazi owns it) and WezTerm claims no layer — its outer keys live in weztermRows.
+  # Glyphs, the zellij prefix, the kitty CSI-u bitmask, and the WezTerm glyph map all derive from the karabiner `to`
+  # row through this vocabulary; `rank` orders the emitted rule document, `display` overrides the cheatsheet prefix.
   modVocab = map (row ["kc" "word" "wez" "glyph" "bit"]) [
     ["left_command" "Super" "CMD" "⌘" 8]
     ["left_option" "Alt" "ALT" "⌥" 2]
@@ -408,10 +409,10 @@
     nvimRows;
 
   # --- [VSCODE_EDITOR_ROWS]
-  # One nav vocabulary drives terminal AND editor: the weztermRows nav class is the source and each editor twin derives per row — a new direction is one
-  # wezterm row whose VS Code twin lands with it or breaks loudly on a missing dispatch arm. `!terminalFocus` keeps the terminal raw so zellij under it
-  # navigates as under wezterm; `shadows` names the displaced mac editor default. Layer chords sit on 4-modifier combos VS Code ships none for; the
-  # sentinel tail keeps hand rows alive (HM's keybindings option writes a read-only symlink); a non-nav bind is one extra-lane tuple, `args` its command payload.
+  # One nav vocabulary drives terminal AND editor: weztermRows nav rows are the source and each editor twin derives per row — a new direction is one
+  # wezterm row whose VS Code twin lands with it or breaks loudly on a missing dispatch arm. `!terminalFocus` keeps the terminal raw so zellij under
+  # it navigates as under wezterm; `shadows` names the displaced mac editor default. Layer chords sit on 4-modifier combos VS Code ships none for; the
+  # sentinel tail keeps hand rows alive (HM's keybindings writes a read-only symlink); a non-nav bind is one extra-lane tuple, `args` its payload.
   vscodeNavCommand = {
     nav-left = "workbench.action.navigateLeft";
     nav-down = "workbench.action.navigateDown";
@@ -498,9 +499,8 @@
     (r: "            \"${kdlEsc r.label}\" \"${kdlEsc r.display}\"")
     forgotRows;
 
-  # KEY IDENTITY: a Shift-carrying layer receives shifted punctuation as the SHIFTED character, so its binds emit that glyph both with and
-  # without the Shift modifier listed; letter keys and Shift-free layers pass through. The map is total over the ANSI shifted row,
-  # capacity-asserted at the zip.
+  # KEY IDENTITY: a Shift-carrying layer receives shifted punctuation as the SHIFTED character, so its binds emit that glyph both with and without the
+  # Shift modifier listed; letter keys and Shift-free layers pass through. The map is total over the ANSI shifted row, capacity-asserted at the zip.
   shiftedGlyph = let
     plain = ["`" "1" "2" "3" "4" "5" "6" "7" "8" "9" "0" "-" "=" "[" "]" "\\" ";" "'" "," "." "/"];
     shifted = ["~" "!" "@" "#" "$" "%" "^" "&" "*" "(" ")" "_" "+" "{" "}" "|" ":" "\"" "<" ">" "?"];
@@ -582,8 +582,8 @@
     (lib.sort (a: b: a.rank > b.rank) (map (n: layers.${n}) (lib.attrNames bindRows)))
     + " ";
 
-  # Id-tagged rows export {key, mods} (kitty CSI-u bitmask from the layer row) so runtime consumers inject the REAL chord bytes
-  # without hand-duplicating the vocabulary.
+  # Id-tagged rows export {key, mods} (kitty CSI-u bitmask from the layer row) so runtime consumers inject
+  # the REAL chord bytes without hand-duplicating the vocabulary.
   bindIds = layer: rows:
     lib.concatMap (
       r:
@@ -599,9 +599,9 @@
   ids = lib.listToAttrs (lib.concatLists (lib.mapAttrsToList (n: bindIds layers.${n}) bindRows));
 
   # --- [REGISTER_PROJECTION]
-  # Typed chord rows for the register rail: every consumer's chords in one vocabulary — chord_id, consumer, physical_layer, mods, key, label,
-  # action, scope (the KDL mode block or OS/app plane the claim is active in), toggle (re-press exits the mode), projection_path, rendered
-  # evidence, and CSI-u injection where exported.
+  # Typed chord rows for the register rail: every consumer's chords in one vocabulary — chord_id, consumer,
+  # physical_layer, mods, key, label, action, scope (the KDL mode block or OS/app plane the claim is active in),
+  # toggle (re-press exits the mode), projection_path, rendered evidence, and CSI-u injection where exported.
   zjRegRow = layer: row:
     {
       chord_id = "zellij:${lib.toLower layer.name}:${builtins.head row.keys}";
@@ -702,9 +702,8 @@
     ++ nvimRegRows
     ++ vscodeRegRows;
 
-  # Intra-consumer conflict ledger: every emitted (consumer, chord) claim must be unique; shift-glyph expansion rides the same bindKeys the KDL
-  # uses, the WezTerm outer layer stacks CMD and CMD|SHIFT on the same letters by design, and a vscode claim is key+when (disjoint when-contexts
-  # are legal).
+  # Intra-consumer conflict ledger: every emitted (consumer, chord) claim must be unique; shift-glyph expansion rides the same bindKeys the KDL uses,
+  # the WezTerm outer layer stacks CMD and CMD|SHIFT on the same letters by design, and a vscode claim is key+when (disjoint when-contexts are legal).
   dupesOf = xs: lib.attrNames (lib.filterAttrs (_: c: c > 1) (lib.foldl' (acc: x: acc // {${x} = (acc.${x} or 0) + 1;}) {} xs));
   claims = lib.concatMap (r:
     map (c: "${r.consumer}|${c}")

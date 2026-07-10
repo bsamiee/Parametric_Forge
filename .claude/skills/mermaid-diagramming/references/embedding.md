@@ -1,6 +1,6 @@
 # [EMBEDDING]
 
-A validated fence reaches its reader through a host, and every host binds one of two lanes: source lane — the host renders the fence itself — or render lane — the page carries the pre-rendered SVG. The fence stays the single source of truth in both; the SVG is a projection regenerated at will. Skills that produce artifacts route here by name for the contract; the mermaid-diagramming validator owns the mechanics.
+A validated fence reaches its reader through a host, and every host binds one of two lanes: source lane — the host renders the fence itself — or render lane — the page carries the pre-rendered SVG. The fence stays the single source of truth in both; the SVG is a projection regenerated at will. The mermaid-diagramming validator owns the render mechanics.
 
 ## [01]-[MARKDOWN_HOSTS]
 
@@ -23,7 +23,7 @@ The export row is the contract: each passing fence lands as an SVG whose root id
 - The SVG sits inside a container with `overflow-x: auto`; a wide diagram scrolls in its own box and never forces page-level horizontal scroll.
 - On a dark host the baked `#282A36` canvas reads as a raised panel; the container steps its own surface down a level or frames the SVG with a visible border — the elevation rule the theming reference states for inline placement.
 - The source fence rides beside the render — a collapsed `<details>` block carrying the fence keeps the diagram legible to machine readers, who see explicit labeled edges where a human sees layout. Spatial implication is invisible to an agent; the fence is the diagram's machine form.
-- A page that must re-render user-edited diagram source is an editor, not an artifact: only there does an inlined mermaid runtime earn its megabytes, initialized once with the host's security posture, and the artifact contract above stops applying.
+- A page that must re-render user-edited diagram source is an editor, not an artifact: only there does an inlined mermaid runtime earn its megabytes, initialized once with the host's security posture, and the artifact contract stops applying.
 
 ## [03]-[EXPORT_SURFACES]
 

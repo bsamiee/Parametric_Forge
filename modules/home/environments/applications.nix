@@ -5,6 +5,7 @@
 # Path          : modules/home/environments/applications.nix
 # ----------------------------------------------------------------------------
 # User application environment variables
+
 {config, ...}: {
   home.sessionVariables = {
     # --- [WEZTERM]
@@ -23,8 +24,7 @@
     YAZI_CONFIG_HOME = "${config.xdg.configHome}/yazi";
 
     # --- [NEOVIM]
-    # Editor RPC rail uses native `nvim --listen`/`--server`; sockets live under the private runtime root (XDG runtime dir, else per-user TMPDIR)
-    # at forge-edit/<session>/ per the integration script registry.
+    # Editor RPC rail: `nvim --listen`/`--server`; sockets under private runtime root (XDG runtime dir, else per-user TMPDIR) at forge-edit/<session>/.
 
     # --- [SERPL]
     SERPL_CONFIG = "${config.xdg.configHome}/serpl";

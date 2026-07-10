@@ -1,6 +1,6 @@
-# [H1][FILE-PIPELINES]
+# [FILE_PIPELINES]
 
-Production patterns for file I/O beyond basic reads. Basic file reads (`$(<file)`, `mapfile`) and conditionals (`-f`, `-d`, `-r`) are in `bash-scripting-guide.md` S6/S9.
+Production patterns for file I/O beyond basic reads and conditionals.
 
 | [INDEX] | [PATTERN]             | [S] | [USE_WHEN]                                    |
 | :-----: | :-------------------- | :-: | :-------------------------------------------- |
@@ -69,7 +69,7 @@ _with_tempdir() {
 }
 ```
 
-`_register_cleanup` pushes onto the LIFO `_CLEANUP_STACK` (see `script-patterns.md`). `_atomic_snapshot` uses `${file##*/}` instead of `$(basename)` to avoid a fork per file. For true multi-file atomicity, swap a symlink: `ln -sfn "${staging}" "${dest_dir}.new" && mv -Tf "${dest_dir}.new" "${dest_dir}"`.
+`_register_cleanup` pushes onto the LIFO `_CLEANUP_STACK`. `_atomic_snapshot` uses `${file##*/}` instead of `$(basename)` to avoid a fork per file. For true multi-file atomicity, swap a symlink: `ln -sfn "${staging}" "${dest_dir}.new" && mv -Tf "${dest_dir}.new" "${dest_dir}"`.
 
 ## [02]-[DESCRIPTOR_MULTIPLEX]
 
@@ -106,7 +106,7 @@ _fan_out() {
 }
 ```
 
-`exec {fd}>&-` closes the descriptor — omitting leaks FDs (default ulimit ~1024). `_fan_out` calls `wait` because `>(tee ...)` subshells can outlive the parent. For bounded-concurrency job pools, use `wait -n -p finished_pid` (Bash `5.1+`) — see `_run_pool` in data-pipeline.sh.
+`exec {fd}>&-` closes the descriptor — omitting leaks FDs (default ulimit ~1024). `_fan_out` calls `wait` because `>(tee ...)` subshells can outlive the parent. For bounded-concurrency job pools, use `wait -n -p finished_pid` (Bash `5.1+`).
 
 ## [03]-[DIRECTORY_TRAVERSAL]
 
@@ -124,7 +124,7 @@ _recent_logs() {
 # GLOBSORT='-size' for largest-first; GLOBSORT='numeric' for natural sort of versioned files
 ```
 
-`fd` respects `.gitignore`, handles special-character filenames via `--print0`, and provides regex/glob filtering with depth control. `--format` (fd 10+) produces structured output without `--exec` fork overhead. `--strip-cwd-prefix=always|never|auto` for clean pipeline output. `--hyperlink` emits OSC 8 clickable links (pairs with `rg --hyperlink-format`).
+`fd` respects `.gitignore`, handles special-character filenames via `--print0`, and filters by regex or glob with depth control. `--format` (fd 10+) produces structured output without `--exec` fork overhead. `--strip-cwd-prefix=always|never|auto` for clean pipeline output. `--hyperlink` emits OSC 8 clickable links (pairs with `rg --hyperlink-format`).
 
 ```bash conceptual
 # fd-first file discovery with glob fallback

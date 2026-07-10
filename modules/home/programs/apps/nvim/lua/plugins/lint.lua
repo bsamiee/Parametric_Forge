@@ -4,9 +4,8 @@
 -- License       : MIT
 -- Path          : modules/home/programs/apps/nvim/lua/plugins/lint.lua
 -- ----------------------------------------------------------------------------
--- Non-LSP diagnostic lane over generated linter rows (forge/tools.lua): spawn-parse-publish through vim.diagnostic with namespace separation from
--- LSP. Filetype lanes index the rows directly — a new Nix lint row lands with zero edits here. GitHub Actions lanes gate on the workflow path, never
--- plain yaml.
+-- Non-LSP diagnostic lane over generated linter rows (forge/tools.lua): spawn-parse-publish through vim.diagnostic with namespace separation from LSP.
+-- Filetype lanes index rows directly — a new Nix lint row lands with zero edits here. GitHub Actions lanes gate on workflow path, never plain yaml.
 
 local lint = require("lint")
 local rows = require("forge.tools").lint

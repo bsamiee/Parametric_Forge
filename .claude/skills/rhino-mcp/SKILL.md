@@ -113,7 +113,6 @@ Headless, no dialogs. All bound to the slot's doc.
 
 [GH_KERNEL_RULES]:
 
-- Kernel: `g2_*` uses `Grasshopper2` canvas and document objects.
 - Solve: mutating GH2 tools accept `solve=true`; set `solve=false` while batching and solve once after the batch.
 - Explicit solve: use `g2_solve_canvas` for solve/status readback.
 - Slider policy: GH2 sliders use `decimals` `0..12`; `0` gives integer behavior.

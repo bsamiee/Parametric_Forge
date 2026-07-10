@@ -4,9 +4,9 @@ Every runtime invariant selects exactly one owning primitive, and the selection 
 
 Everything around the value plane is shed by kind: vocabulary tables and the type-derivation algebra are `derivation.md`'s, Schema owners and decoded collection admission are `shapes.md`'s, the carrier with its in-flow `Option`/`Either` folds is `rails-and-effects.md`'s, dispatch over values is `surfaces-and-dispatch.md`'s, algorithmic bodies and the fold algebra over admitted collections are `computation.md`'s, keyed accumulators threaded through incremental dataflow are `streams.md`'s, the decode seam that admits these values is `boundaries.md`'s, and the kernel mark with the statement seam is `language.md`'s.
 
-## [01]-[INDEX]
+## [01]-[INVARIANT_CHOOSER]
 
-This table maps a value invariant to the form that owns it; the most specific invariant wins.
+A value invariant selects the form that owns it; the most specific invariant wins.
 
 | [INDEX] | [INVARIANT]                       | [OWNING_FORM]                                       | [REJECTED_FORM]                       |
 | :-----: | :-------------------------------- | :-------------------------------------------------- | :------------------------------------ |

@@ -5,6 +5,7 @@
 # Path          : modules/home/programs/shell-tools/fzf.nix
 # ----------------------------------------------------------------------------
 # FZF configuration themed from the estate palette owner
+
 {config, ...}: let
   inherit (config.forge.theme) palette;
 in {
@@ -17,13 +18,11 @@ in {
     defaultCommand = "fd --type f --hidden --follow --exclude .git";
 
     defaultOptions = [
-      # Colors from the shared palette tokens
       "--color=fg:${palette.foreground.hex},fg+:${palette.background.hex},bg:${palette.background.hex},bg+:${palette.cyan.hex},selected-fg:${palette.background.hex},selected-bg:${palette.cyan.hex}"
       "--color=hl:${palette.green.hex},hl+:${palette.magenta.hex},info:${palette.comment.hex},marker:${palette.green.hex}"
       "--color=prompt:${palette.magenta.hex},spinner:${palette.green.hex},pointer:${palette.magenta.hex},header:${palette.comment.hex}"
       "--color=gutter:${palette.background.hex},border:${palette.cyan.hex},separator:${palette.pink.hex},scrollbar:${palette.pink.hex}"
       "--color=preview-fg:${palette.foreground.hex},preview-scrollbar:${palette.pink.hex},label:${palette.magenta.hex},query:${palette.foreground.hex}"
-      # Border and styling
       "--border=sharp"
       # Border labels are widget-scoped below; forgit rows carry theirs in environments/shell.nix.
       "--border-label-pos=0"
@@ -35,7 +34,7 @@ in {
       "--scrollbar=│" # unquoted: quote chars would survive FZF_DEFAULT_OPTS re-split and trip fzf's 1-2 char scrollbar validation
       "--info=right"
       "--highlight-line"
-      # Behavior; previews are widget-scoped, never a global default
+      # Previews are widget-scoped, never a global default
       "--height=80%"
       "--layout=reverse"
       "--preview-window=right:50%:border-bold"

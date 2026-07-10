@@ -5,6 +5,7 @@
 # Path          : modules/home/programs/shell-tools/fastfetch.nix
 # ----------------------------------------------------------------------------
 # System information display themed from the estate palette owner
+
 {config, ...}: let
   inherit (config.forge.theme) palette;
 in {

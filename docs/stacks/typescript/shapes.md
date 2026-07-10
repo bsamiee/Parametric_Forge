@@ -480,7 +480,7 @@ declare namespace Member {
     type Badge = Schema.Schema.Type<typeof Member.Badge>;
 }
 
-const _cohort: FastCheck.Arbitrary<Member> = Arbitrary.make(Member); // eight surfaces off one declaration — Patch, Badge, and this six-instance cluster — every one moves when a field moves
+const _cohort: FastCheck.Arbitrary<Member> = Arbitrary.make(Member); // every derived surface off this one declaration moves when a field moves
 const _same: Equivalence.Equivalence<Member> = Schema.equivalence(Member);
 const _shown: (member: Member) => string = Pretty.make(Member);
 const _contract: JSONSchema.JsonSchema7Root = JSONSchema.make(Member);

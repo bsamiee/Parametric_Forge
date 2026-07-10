@@ -10,8 +10,8 @@ inspect_label() {
     printf '%s\n' "$value"
 }
 
-# One docker inspect serves every requested container label as one row; absent labels and failed inspects project as empty fields. Unit-separator
-# delimited: tab is IFS whitespace and read would collapse empty fields.
+# One docker inspect serves every requested container label as one row; absent labels and failed inspects project as empty fields.
+# Unit-separator delimited: tab is IFS whitespace and read collapses empty fields.
 inspect_labels() {
     local id="$1" raw
     shift
@@ -124,7 +124,7 @@ service_identity_json() {
         --args -- "${identity_args[@]}"
 }
 
-# One inspect snapshot projects service, name, image, state, health, and identity as one US-joined row.
+# One inspect snapshot projects the container's report fields as one US-joined row.
 container_report_row() {
     local raw="$1"
     jq -r --arg mode report-row --arg service_label "$service_label" --arg net "$(network_name)" \

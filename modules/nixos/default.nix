@@ -6,6 +6,7 @@
 # ----------------------------------------------------------------------------
 # NixOS system surface: boot, network, SSH, users, container runtime, and the Atuin sync server. Owns nothing Darwin owns —
 # Homebrew, launchd, and macOS defaults never generalize here.
+
 {
   host,
   pkgs,
@@ -26,8 +27,8 @@
   i18n.defaultLocale = "en_US.UTF-8";
 
   # --- [NETWORK]
-  # Static addressing projected from the host-context network row — the provider serves no DHCP. SSH only on day one; every service stays
-  # loopback behind the ssh.nix vpsTunnels registry (webhook, postgres, ollama, n8n, atuin).
+  # Static addressing projected from the host-context network row — the provider serves no DHCP. SSH only on day one; every
+  # service stays loopback behind the ssh.nix vpsTunnels registry.
   networking = {
     usePredictableInterfaceNames = false;
     useDHCP = false;

@@ -1,15 +1,15 @@
-# [H1][BEST-PRACTICES]
+# [BEST_PRACTICES]
 
 ## [01]-[SECURITY]
 
 [CRITICAL]:
 
-- [ALWAYS]: SHA-pin every `uses:` reference — format: `owner/repo@<SHA> # vN.N.N`. [REFERENCE] Pinning protocol and incident history: `version-discovery.md`.
+- [ALWAYS]: SHA-pin every `uses:` reference — format: `owner/repo@<SHA> # vN.N.N`.
 - [ALWAYS]: `step-security/harden-runner` as first step in every job — monitors network egress, file integrity, process activity. Block mode enforces endpoint allowlists.
-- [ALWAYS]: Minimal permissions at job level — top-level `permissions: {}` (deny-all default), grant per-job. [REFERENCE] Per-action permissions: `version-discovery.md`§COMMON_ACTIONS_INDEX.
+- [ALWAYS]: Minimal permissions at job level — top-level `permissions: {}` (deny-all default), grant per-job.
 - [ALWAYS]: OIDC federation for cloud auth (`id-token: write`) — eliminates static credentials entirely.
 - [ALWAYS]: `actions/create-github-app-token` for cross-repo ops — scoped, 1-hour expiry, survives offboarding.
-- [NEVER]: Direct `${{ }}` interpolation of untrusted input in `run:` blocks. [REFERENCE] Safe patterns: `expressions-and-contexts.md`§INJECTION_PREVENTION.
+- [NEVER]: Direct `${{ }}` interpolation of untrusted input in `run:` blocks.
 - [NEVER]: Mutable refs (`@main`, `@latest`, `@v1`) — SHA-pinned or immutable OCI only.
 
 | [INDEX] | [TRIGGER]             | [SECRETS] | [CODE_CONTEXT] | [RISK]              |
@@ -18,7 +18,7 @@
 |  [02]   | `pull_request_target` |    Yes    | Default        | Gate PR checkouts   |
 |  [03]   | `workflow_run`        |    Yes    | Default        | Validate conclusion |
 
-[IMPORTANT] [SECURE_BY_DEFAULT]: `pull_request_target` workflows now anchor execution to default-branch definitions. `GITHUB_REF` resolves to `refs/heads/main`; `GITHUB_SHA` points to default branch HEAD at run start. Environment policy evaluation aligns with the execution ref. This cuts off "pwn request" attacks by pinning workflow source to a trusted branch. `advanced-triggers.md`§PULL_REQUEST_TARGET.
+[IMPORTANT] [SECURE_BY_DEFAULT]: `pull_request_target` anchors execution to default-branch workflow definitions, cutting off pwn-request attacks.
 
 ### [01.1]-[GITHUB_TOKEN_SCOPES]
 
@@ -55,8 +55,6 @@ Shorthand: `permissions: read-all` / `permissions: write-all` / `permissions: {}
 |  [08]   | Secret scanning   | Push protection blocks detected secrets pre-merge; up to 500 custom patterns. |
 |  [09]   | Auto-maintenance  | Ratchet and Dependabot keep pins current                                      |
 
-- Detail routes: `version-discovery.md` — SHA pinning format, immutable actions, automated maintenance.
-
 ### [02.1]-[OIDC_FEDERATION]
 
 | [INDEX] | [PROVIDER] | [ACTION]                                | [KEY_INPUTS]                                    |
@@ -81,11 +79,11 @@ Prerequisite: `permissions: { id-token: write }` at job level. Subject claims in
 
 [IMPORTANT]:
 
-- [ALWAYS]: `actions/cache` or setup action built-in cache (`cache: 'pnpm'`) — v5 backend is ~80% faster uploads.
+- [ALWAYS]: `actions/cache` or a setup action's built-in cache (`cache: 'pnpm'`).
 - [ALWAYS]: `concurrency` groups with `cancel-in-progress: true` for CI; `false` for deploys.
 - [ALWAYS]: `timeout-minutes:` on every job — prevents runaway billing. Step-level `timeout-minutes:` also supported natively (not in composite actions).
 - [ALWAYS]: `paths:` / `paths-ignore:` filters to skip irrelevant workflows.
-- [ALWAYS]: Sparse checkout for monorepos — 96.6% clone time reduction in benchmarks.
+- [ALWAYS]: Sparse checkout for monorepos.
 
 ```yaml template
 # Sparse checkout — monorepo: only needed packages
@@ -134,19 +132,19 @@ Larger runners (Team/Enterprise): up to 1,000 concurrent jobs; 100 GPU max.
 
 ### [03.2]-[RUNNERS]
 
-| [INDEX] | [TYPE]    | [SPEC]          | [NOTES]                                                    |
-| :-----: | :-------- | :-------------- | :--------------------------------------------------------- |
-|  [01]   | Standard  | 2 vCPU / 7 GB   | Default `ubuntu-latest`.                                   |
-|  [02]   | 4-core    | 4 vCPU / 16 GB  | Team/Enterprise plans; SSD-backed.                         |
-|  [03]   | 8-64-core | 8-64 vCPU       | Up to 256 GB RAM; SSD-backed.                              |
-|  [04]   | GPU (T4)  | 4 vCPU / 28 GB  | Tesla T4 / 16 GB VRAM; $0.07/min.                          |
-|  [05]   | ARM64     | 4 vCPU (Cobalt) | `ubuntu-24.04-arm` — free for public repos; ~37% cost cut. |
+| [INDEX] | [TYPE]    | [SPEC]          | [NOTES]                                     |
+| :-----: | :-------- | :-------------- | :------------------------------------------ |
+|  [01]   | Standard  | 2 vCPU / 7 GB   | Default `ubuntu-latest`.                    |
+|  [02]   | 4-core    | 4 vCPU / 16 GB  | Team/Enterprise plans; SSD-backed.          |
+|  [03]   | 8-64-core | 8-64 vCPU       | Up to 256 GB RAM; SSD-backed.               |
+|  [04]   | GPU (T4)  | 4 vCPU / 28 GB  | Tesla T4 / 16 GB VRAM; $0.07/min.           |
+|  [05]   | ARM64     | 4 vCPU (Cobalt) | `ubuntu-24.04-arm` — free for public repos. |
 
 [IMPORTANT] ARM64 labels: `ubuntu-24.04-arm`, `ubuntu-22.04-arm`. No `-arm64` suffix — the canonical format is `-arm`. Free for public repos; Team/Enterprise for private repos.
 
 ### [03.3]-[SELF_HOSTED_SCALING]
 
-[ACTIONS_RUNNER_CONTROLLER]:Kubernetes operator for ephemeral, autoscaling self-hosted runners.
+[ACTIONS_RUNNER_CONTROLLER]: Kubernetes operator for ephemeral, autoscaling self-hosted runners.
 
 - Runner Scale Sets: ephemeral container-based runners; clean scale-up/down.
 - ScaleSet Listener patches EphemeralRunnerSet replica count via K8s APIs.
@@ -158,21 +156,21 @@ Larger runners (Team/Enterprise): up to 1,000 concurrent jobs; 100 GPU max.
 | [INDEX] | [SERVICE] | [IMAGE]       | [HEALTH_CMD]      | [ENV]                                   |
 | :-----: | :-------- | :------------ | :---------------- | :-------------------------------------- |
 |  [01]   | Postgres  | `postgres:17` | `pg_isready`      | `POSTGRES_PASSWORD`, `POSTGRES_DB`      |
-|  [02]   | Redis     | `redis:7`     | `redis-cli ping`  | _(none)_                                |
+|  [02]   | Redis     | `redis:7`     | `redis-cli ping`  | —                                       |
 |  [03]   | MySQL     | `mysql:8`     | `mysqladmin ping` | `MYSQL_ROOT_PASSWORD`, `MYSQL_DATABASE` |
 
 Networking: service name as hostname inside container jobs (`postgres://postgres:5432`). VM runners use `localhost` with port mapping.
 
 ## [05]-[ORGANIZATIONAL_CONTROLS]
 
-- [REQUIRED_WORKFLOWS_VIA_RULESETS]: org/enterprise-level CI enforcement; replaces deprecated `required_workflows` feature.
+- [REQUIRED_WORKFLOWS_VIA_RULESETS]: org/enterprise-level CI enforcement.
 - [RULESET_FEATURES]: branch targeting, bypass rules for admins, evaluation/dry-run mode before enforcement.
 - [MERGE_QUEUE_INTEGRATION]: required workflow rulesets require `merge_group` event trigger alongside `pull_request`.
 - [ENVIRONMENT_PROTECTION]: required reviewers (1 of N), wait timers (1-43,200 min), deployment branch restrictions.
 
 ### [05.1]-[CUSTOM_DEPLOYMENT_PROTECTION_RULES]
 
-[STATUS]: Generally Available. Powered by GitHub Apps via webhooks and callbacks.
+Powered by GitHub Apps via webhooks and callbacks.
 
 - GitHub sends `deployment_protection_rule` webhook payload when a job reaches a protected environment.
 - App responds via `POST /repos/{owner}/{repo}/actions/runs/{run_id}/deployment_protection_rule` with `state: "approved"` or `state: "rejected"`.
@@ -186,7 +184,7 @@ Networking: service name as hostname inside container jobs (`postgres://postgres
 |  [01]   | `permissions: write-all`                  | Explicit minimal permissions per job.                                    |
 |  [02]   | `@main` / `@latest` / `@v1`               | SHA-pin with version comment; Dependabot auto-updates.                   |
 |  [03]   | No timeout on jobs                        | `timeout-minutes:` on every job.                                         |
-|  [04]   | `actions/cache@v3`/`v4`                   | v5 required — Node 24 runtime, faster backend (~80% upload speedup).     |
+|  [04]   | `actions/cache@v3`/`v4`                   | v5 required — Node 24 runtime, faster backend.                           |
 |  [05]   | `set-output` / `save-state`               | `>> $GITHUB_OUTPUT` / `>> $GITHUB_STATE`.                                |
 |  [06]   | Long-lived cloud credentials              | OIDC federation (`id-token: write`).                                     |
 |  [07]   | PATs for cross-repo ops                   | `actions/create-github-app-token` — scoped, auditable, 1-hour TTL.       |

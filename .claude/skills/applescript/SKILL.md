@@ -19,8 +19,9 @@ AppleScript is an object-specifier compiler over the Apple Event ABI, not an Eng
 
 ## [01]-[ROUTING]
 
+Load the reference, template, or example that owns the failing decision.
+
 [REFERENCES]:
-Load the lane that owns the failing decision.
 
 - [01]-[LANGUAGE_CORE](references/language-core.md): the script-object algebra, closures, coercion rails, the comparison-attribute stack, delimiter critical sections, filter references, handler-dispatch tables, chevron raw codes, script persistence, and `NSAppleEventDescriptor` surgery.
 - [02]-[OSA_RUNTIME](references/osa-runtime.md): the `osascript` source algebra and output serialization, JXA specifier proxies and `whose` descriptors, the `$` ObjC bridge and `NSTask` kernels, script libraries, applet and droplet handler contracts, compiled storage, and run-only distribution.
@@ -30,7 +31,6 @@ Load the lane that owns the failing decision.
 - [06]-[DEPLOY_DEBUG](references/deploy-debug.md): artifact topology, signing and notarization, the shell boundary, Apple Event performance, error architecture, the observation rails, Nix and Homebrew packaging, and the Swift migration boundary.
 
 [TEMPLATES]:
-Copy a skeleton and fill its policy rows; each is production-grade and parameterized.
 
 - [01]-[HARDENED_RUNNER](assets/templates/hardened-osascript-runner.sh): an agent or CLI drives automation through `osascript` behind a silent consent preflight, argv-only data, a JSON envelope, a timeout budget, and hash-only audit.
 - [02]-[OBJC_BRIDGE_TOOL](assets/templates/jxa-objc-tool.js): JXA reaches Foundation and CoreServices through an `NSTask` process kernel, a deep-unwrap boundary, and a JSON envelope over `run(argv)`.
@@ -38,7 +38,6 @@ Copy a skeleton and fill its policy rows; each is production-grade and parameter
 - [04]-[NOTARIZED_APPLET](assets/templates/notarized-applet.sh): a script-app carries a hardened runtime, the minimal Apple Events entitlement, nested signing, notarization, and a stapled ticket.
 
 [EXAMPLES]:
-Each example is one focused frontier pattern as a real code artifact.
 
 - [01]-[CONSENT_PREFLIGHT](assets/examples/aedetermine-preflight.js): `AEDeterminePermissionToAutomateTarget` classified silently through the JXA ObjC bridge, reading the granted, denied, and never-asked verdicts.
 - [02]-[RAW_EVENT_CODES](assets/examples/raw-apple-event-codes.applescript): chevron `«event»`/`«class»`/`«constant»` literals and `NSAppleEventDescriptor` list and record surgery over the four-character ABI.

@@ -96,9 +96,8 @@
       cmd = ["lua-language-server"];
       filetypes = ["lua"];
       root_markers = [".luarc.json" "stylua.toml" ".git"];
-      # The generated .luarc.json only reaches the deployed config dir; the settings row carries the same facts to every root — the repo sources
-      # resolve at apps/nvim (stylua.toml) and keep vim/plugin awareness. Claude side stays settings-free: store paths in a
-      # tracked .lsp.json would drift on every plugin bump.
+      # The generated .luarc.json only reaches the deployed config dir; the settings row carries the same facts to every root, so repo sources resolve
+      # at apps/nvim (stylua.toml) and keep vim/plugin awareness; Claude stays settings-free — a tracked .lsp.json of stored paths drifts on plugin bumps.
       settings.Lua = {
         runtime.version = "LuaJIT";
         workspace = {

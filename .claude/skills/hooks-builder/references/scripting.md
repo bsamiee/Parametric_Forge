@@ -1,5 +1,7 @@
 # [SCRIPTING]
 
+Python hooks ship as uv single-file scripts built from frozen constants, typed dispatch tables, and exhaustive pattern matching, with every subprocess boundary shell-free.
+
 ## [01]-[SHEBANG]
 
 ```python conceptual

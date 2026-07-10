@@ -1,10 +1,10 @@
 # Workflow Throughput
 
-Parallelization economics inside one workflow — wall-clock math, concurrency shaping, load balancing, waiting discipline — and the laws governing several workflows in flight at once. Topology selection lives in the patterns reference; runtime signatures in the api reference.
+Parallelization economics inside one workflow — wall-clock math, concurrency shaping, load balancing, waiting discipline — and the laws governing several workflows in flight at once.
 
 ## [01]-[ECONOMICS]
 
-The barrier decision is the one authors get wrong, so make it explicitly:
+The barrier decision is the one authors get wrong, so make it explicit:
 
 - `pipeline(items, stage1, stage2, …)` is the default for multi-stage work. There is no barrier between stages — item A runs stage 3 while item B is still in stage 1. Wall-clock equals the slowest single item's whole chain, never the sum of the slowest stage at each step.
 - `parallel(thunks)` is a barrier: it waits for every task before returning. Reach for it ONLY when a stage genuinely needs the ENTIRE previous result set in hand — dedup across all findings, a merge, a count-based early-exit. "Cleaner code" and "the stages feel separate" are not reasons — a pipeline models separate stages fine, and a barrier wastes every fast item's idle time waiting on the slowest.
@@ -99,7 +99,7 @@ const shardOversized = (clusters, cap) =>
         if (clusterWork(c) <= cap) return [c];
         const byFile = new Map();
         for (const r of c) {
-            const k = (r.files ?? [])[0] ?? "~";
+            const k = (r.files ?? [])[0] ?? '~';
             if (!byFile.has(k)) byFile.set(k, []);
             byFile.get(k).push(r);
         }
@@ -125,24 +125,24 @@ const packClusters = (clusters, n) => {
     return buckets.filter((b) => b.rows.length).map((b) => b.rows);
 };
 const buckets = packClusters(clusters, RECON_CAP);
-log("bucket work [" + buckets.map(clusterWork).join(", ") + "]"); // no silent long pole
+log('bucket work [' + buckets.map(clusterWork).join(', ') + ']'); // no silent long pole
 ```
 
 The same budget applies to POOL-per-cluster shapes (one agent per atomic cluster under a concurrency cap): shard with `cap = ceil(totalWork / POOL_CAP)` before the pool, or the giant component still lands on one agent. The heaviest atomic cluster still bounds the wall-clock — irreducible — but weight-greedy stops topping it up. The same law orders an UNPACKED pool: heterogeneous clusters under a cap smaller than the cluster count launch heaviest-first, so the long pole starts in the first wave instead of extending the tail. Fixed-size `chunk(pages, N)` batches of homogeneous items need none of this — uniform items balance by construction.
 
 ## [04]-[DISCIPLINE]
 
-- Label and phase every concurrent call. Set the `phase` option inside `pipeline`/`parallel` stages — concurrent calls otherwise race on the global `phase()` and land in the wrong group. Labels follow a stable grammar (`verify:${file}`, `t${tier}:${id}`): they name agents in `/workflows`, key dry-run `--fixtures`, and identify lanes in a harvest roster; relabelling never invalidates the resume cache.
+- Label and phase every concurrent call. Set the `phase` option inside `pipeline`/`parallel` stages — concurrent calls otherwise race on the global `phase()` and land in the wrong group. Labels follow a stable grammar (`verify:${file}`, `t${tier}:${id}`): they name agents in `/workflows`, key dry-run `--fixtures`, and identify lanes in a harvest roster; relabeling never invalidates the resume cache.
 - No agent idles — waiting is orchestration. An agent that waits on anything external (a detached process, another lane, a file appearing) is a design error: subagent Bash blocks foreground `sleep`, background tasks never notify a workflow subagent, and idle no-op calls trip no-progress enforcement into a forced FALSE return — `stallMs` does not license idling.
 - Every wait restructures as: the agent launches and returns a receipt → the orchestrator holds time (`await new Promise(r => setTimeout(r, ms))` — the one legal clock) → a fresh short-lived agent runs the next check round.
-- Repeated mechanics are staged artifacts, never prose. Any step executed more than once across rounds or lanes (checks, promotions, validations) is written ONCE as an executable script and executed verbatim thereafter. Each fresh agent re-deriving mechanics from prose is an independent chance to botch them; across N rounds a botch is guaranteed (empirical: one round's mis-expanded pgrep pattern declared four live lanes dead).
+- Repeated mechanics are staged artifacts, never prose. Any step executed more than once across rounds or lanes (checks, promotions, validations) is written ONCE as an executable script and executed verbatim thereafter. Each fresh agent re-deriving mechanics from prose is an independent chance to botch them; across N rounds a botch is guaranteed — a mis-expanded pgrep pattern silently declares live lanes dead.
 - `stallMs` is a stall override, never a wait license: raise it for a legitimately slow single agent (a long build inside one call), never to let an agent poll.
 - `isolation: 'worktree'` costs ~200-500 ms plus disk per agent. Use it only when parallel agents mutate files and otherwise collide; disjoint write scopes make it unnecessary.
 
 ## [05]-[CROSS_RUN]
 
 - Concurrent runs of DIFFERENT scripts coexist freely — each owns its run directory, journal, and scratch namespace.
-- Launch same-script runs one call at a time. Empirical: three parallel `Workflow` invocations of one scriptPath in a single batch delivered `args` to two runs and empty `args` to the third, which failed its own validation and skipped. Launch same-scriptPath runs sequentially, and give every workflow an early guard — `if (!required) return { skipped: true, reason }` — so the failure mode is a 6 ms no-op instead of a silent mis-run.
+- Launch same-script runs one call at a time. Three parallel `Workflow` invocations of one scriptPath in a single batch misdeliver `args`: two runs receive them, the third receives empty `args` and skips on its own validation. Launch same-scriptPath runs sequentially, and give every workflow an early guard — `if (!required) return { skipped: true, reason }` — so the failure mode is a 6 ms no-op instead of a silent mis-run.
 - A launch into territory adjacent to a LIVE writer carries the seam law. When a new agent's territory shares a file with an agent still running — or with that agent's uncommitted output — the new agent's prompt names the foreign content FROZEN (never edit, move, or reformat it), sequences the shared file LAST with a mandatory full re-read immediately before the first edit, and restricts that file to surgical Edit operations — one full-file Write clobbers the sibling.
 - A sibling's territory breach observed mid-flight is adjudicated at its receipt, never by intervening in a live run.
 - Grant permissions before a long parallel run. Subagents run in `acceptEdits` mode and inherit the session tool allowlist; a non-allowlisted shell, web, or MCP call surfaces a mid-run permission prompt and stalls the run until answered.

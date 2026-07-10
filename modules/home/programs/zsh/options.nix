@@ -4,7 +4,8 @@
 # License       : MIT
 # Path          : modules/home/programs/zsh/options.nix
 # ----------------------------------------------------------------------------
-# Zsh options and settings; completion surface is owned by completions.nix
+# Zsh shell options and history configuration.
+
 _: {
   programs.zsh = {
     # --- [DIRECTORY_NAVIGATION]
@@ -12,13 +13,13 @@ _: {
     setOptions = ["AUTO_PUSHD" "PUSHD_IGNORE_DUPS" "CDABLE_VARS" "COMPLETE_IN_WORD"];
 
     # --- [SUGGESTION_HIGHLIGHTING]
-    # strategy = [] suppresses the HM scalar; init.nix owns the final array post-atuin.
+    # strategy = [] suppresses the HM scalar; the interactive init owns the final array post-atuin.
     autosuggestion = {
       enable = true;
       strategy = [];
     };
-    # zsh-syntax-highlighting over fast-syntax-highlighting: both upstreams idle, so a swap buys no currency; HM owns z-sy-h natively at order
-    # 1200. Terminal ANSI palette carries the theme tokens.
+    # zsh-syntax-highlighting over fast-syntax-highlighting: both upstreams idle, so a swap buys no currency. HM owns z-sy-h natively at order 1200,
+    # and the terminal ANSI palette carries the theme tokens.
     syntaxHighlighting.enable = true;
 
     # --- [HISTORY]

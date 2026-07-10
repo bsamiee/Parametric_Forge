@@ -7,6 +7,7 @@
 # SSH client configuration with GitHub integration and VPS loopback tunnels. One tunnel row projects everything: interactive host block,
 # transport-only tunnel block, launchd tunnel agent, rclone mount agents, service-health receipts, and the remote-surface rows every consumer
 # folds (WezTerm SSH domains, Yazi VFS, workspace picker). A future VPS is a new row here, never a new agent module.
+
 {
   config,
   host,
@@ -185,8 +186,7 @@
 
       mapfile -t ports < <(jq -r '.forwards[].port' "$row_file")
 
-      # Dual receipt through the shared fold: TSV stays the human/log contract, the JSONL sibling carries the identical keys — including the
-      # services vector the handcrafted emit used to collapse.
+      # Dual receipt through the shared fold: TSV stays the human/log contract, the JSONL sibling carries identical keys including the services vector.
       receipt_log="$receipts"
       receipt_surface="vps-tunnel"
       ${receiptsFold}
@@ -377,8 +377,8 @@
         exit 1
       fi
 
-      # External openssh transport: rclone's internal ssh library sends no keepalives, so NAT/idle drops silently killed the warm session and the
-      # next statfs rode a doomed handshake — macOS answers with the interrupted-server dialog. ServerAlive keepalives (the tunnel posture) hold
+      # External openssh transport: rclone's internal ssh library sends no keepalives, so NAT/idle drops silently kill the warm session and the
+      # next statfs rides a doomed handshake — macOS answers with the interrupted-server dialog. ServerAlive keepalives (the tunnel posture) hold
       # the standing connection; auth/known-hosts ride openssh + agent.
       remote=":sftp,ssh='ssh -o BatchMode=yes -o ServerAliveInterval=15 -o ServerAliveCountMax=3 -l $user $addr',idle_timeout=0:$rpath"
       sub=nfsmount
@@ -420,9 +420,8 @@
       mounted_once=1
       emit mounted "detail=$mountpoint ro=$ro cache=$cache"
 
-      # Health loop: process, device, then statfs through the mount — statfs reaches the SFTP backend via the NFS server, and timeout bounds an
-      # NFS stall. Consecutive backend failures get tunnel-style hysteresis; eject and exit drain immediately.
-      # Every exit relaunches under KeepAlive/Restart=always.
+      # Health loop: process, device, then statfs through the mount reaching the SFTP backend via the NFS server, and timeout bounds an NFS stall.
+      # Consecutive failures get tunnel-style hysteresis; eject and exit drain immediately, and every exit relaunches under KeepAlive/Restart=always.
       probe_fails=0
       while :; do
         # Backgrounded sleep keeps the interval interruptible by TERM/INT.

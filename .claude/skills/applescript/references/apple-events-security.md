@@ -142,7 +142,7 @@ The `access` row keys on `(service, client, client_type, indirect_object_identif
 |  [04]   |      `6`      | MDM policy     |
 |  [05]   |     `11`      | entitled       |
 
-Sequoia-era columns `pid_version`, `boot_uuid`, `last_modified`, and `last_reminded` bind the grant to one process generation and reminder cadence. `tccutil reset AppleEvents [bundle-id]` is the sanctioned reset path — it clears the client-to-target relationship rows and forces re-consent. Resetting a sender, resigning a sender, moving a path-identified binary, or changing receiver identity invalidates an existing approval. Enterprise pre-grants flow through PPPC (`[09]`), never through direct `TCC.db` edits.
+The columns `pid_version`, `boot_uuid`, `last_modified`, and `last_reminded` bind the grant to one process generation and reminder cadence. `tccutil reset AppleEvents [bundle-id]` is the sanctioned reset path — it clears the client-to-target relationship rows and forces re-consent. Resetting a sender, resigning a sender, moving a path-identified binary, or changing receiver identity invalidates an existing approval. Enterprise pre-grants flow through PPPC, never through direct `TCC.db` edits.
 
 ## [07]-[AUDIT_TOKEN_ATTRIBUTION]
 
@@ -270,7 +270,7 @@ No EndpointSecurity event intercepts an individual `AESend`; the full `es_event_
 
 Compiled scripts change identity only when packaged as executables. `osacompile` emits `.scpt`, `.scptd`, or `.app`; a flat compiled script still runs under the invoking host, while an applet runs as a signed bundle carrying its own `Info.plist` and entitlements. `UTType.appleScript` (`com.apple.applescript.text`), `UTType.osaScript` (`com.apple.applescript.script`), and `UTType.osaScriptBundle` (`com.apple.applescript.script-bundle`) classify source and storage form, and only a launched, signed bundle shifts TCC attribution away from the invoking host. JXA and AppleScript share this identical Apple Event security envelope — language choice changes source syntax and bridge ergonomics, never TCC service identity, receiver consent, entitlement need, or event-code semantics.
 
-macOS 26 carries the Apple Event security model forward unchanged: the entitlement graph, the consent model, and the TCC Automation relation apply exactly as documented here. The erosion sits at the legacy edges — `tell application "iTunes"` no longer resolves against a music player on this release — while a genuine security-relevant drift shows up in ASObjC scripts that touch protected frameworks such as CoreLocation: the automatic consent prompt no longer fires for those calls, so the grant requires a manual toggle in System Settings. An OS update resets some standing automation approvals outright, so a production consent lane rechecks authorization on every launch rather than trusting a stored grant across an update.
+The entitlement graph, the consent model, and the TCC Automation relation are the stable core of the Apple Event security model, and the erosion sits at the legacy edges — `tell application "iTunes"` no longer resolves against a music player — while a genuine security-relevant drift shows up in ASObjC scripts that touch protected frameworks such as CoreLocation: the automatic consent prompt no longer fires for those calls, so the grant requires a manual toggle in System Settings. An OS update resets some standing automation approvals outright, so a production consent lane rechecks authorization on every launch rather than trusting a stored grant across an update.
 
 ## [12]-[SECURITY_PATTERNS]
 

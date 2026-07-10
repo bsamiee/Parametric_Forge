@@ -1,8 +1,6 @@
-# Card Content Schema
+# [CARD_CONTENT_SCHEMA]
 
-This reference covers note and journal content writes through the Heptabase CLI.
-
-Read this before generating ProseMirror JSON: the card content schema is strict, and guessed structures can fail validation or damage card content.
+Read before generating ProseMirror JSON: the card content schema is strict, and guessed structures fail validation or damage card content.
 
 Prefer Markdown for ordinary writing and appending. Use ProseMirror JSON only to preserve existing structure or to create schema nodes/marks that Markdown cannot express.
 
@@ -29,9 +27,11 @@ The document must contain at least one block. `{"type":"doc","content":[]}` is i
 
 When editing existing content, preserve existing `id` values from `read`. For new blocks, omit `id` or set it to `null`; the CLI save handler backfills valid IDs. Do not create custom string IDs yourself.
 
+Editing a card or journal reads first, edits the returned `content`, and saves with the latest `contentMd5` from that read; a stale `contentMd5` rejects the write.
+
 ## [02]-[MARKDOWN_CONTENT]
 
-Everyday note content uses Markdown instead of JSON. The table below maps Markdown syntax to the ProseMirror nodes and marks the CLI creates:
+Markdown syntax maps to the ProseMirror nodes and marks the CLI creates:
 
 <!-- prettier-ignore -->
 | [INDEX] | [MARKDOWN]                                                              | [PROSEMIRROR]                                         |
@@ -79,6 +79,8 @@ Video markdown rules:
 - Put a blank line before and after the video line when other blocks are nearby.
 - Invalid: `Watch this: {{youtube https://...}}` (trailing text prevents a `video` block).
 
+Every card, PDF, and whiteboard mention UUID resolves from a CLI read or list first; a guessed UUID targets nothing.
+
 ## [03]-[PROSEMIRROR_NODES]
 
 ### [03.1]-[BLOCKS]
@@ -118,19 +120,19 @@ Optional attrs carry a trailing `?`. Every `id` and `fileId` is a UUID string or
 
 Block media nodes cannot appear inside a paragraph. Use inline mention nodes for inline references.
 
-#### Code Block Params
+#### [CODE_BLOCK_PARAMS]
 
-Code block `params` are serialized as `[!]<language>[:displayMode]`, where `!` enables line wrapping and `displayMode` applies to Mermaid blocks (`code`, `preview`, or `split`). See [Code Block](#code-block).
+Code block `params` are serialized as `[!]<language>[:displayMode]`, where a leading `!` wraps lines and `displayMode` applies to Mermaid blocks (`code`, `preview`, or `split`). See [Code Block](#code-block).
 
-#### Timestamp Attrs
+#### [TIMESTAMP_ATTRS]
 
 Use ISO 8601 strings for timestamp attrs, for example `2026-05-26T00:00:00.000Z`.
 
-#### Media References
+#### [MEDIA_REFERENCES]
 
 Media `reference` attrs are internal metadata. Preserve them when editing existing JSON from `read`, but do not create them manually. If present, the value must be either `null` or an object with `objectType` and `objectId`. Supported `objectType` values are `card`, `textElement`, `journal`, `highlightElement`, `mediaElement`, `mediaCard`, `pdfCard`, `insight`, `chatMessage`, `chat2AccountRelation`, and `webCard`. `objectId` must be a UUID string, except `journal` references use a `YYYY-MM-DD` date string.
 
-#### Editor Colors
+#### [EDITOR_COLORS]
 
 Editor colors for `table_cell` / `table_header` `backgroundColor` and `textColor` are `gray`, `brown`, `orange`, `yellow`, `green`, `blue`, `purple`, `pink`, and `red`.
 
@@ -424,23 +426,3 @@ Use `!` to enable line wrapping, for example `!typescript`. For Mermaid code blo
     ]
 }
 ```
-
-## [05]-[DOS]
-
-- Do read first and edit the returned `content` when replacing a card or journal.
-- Do pass the latest `contentMd5` to `save`.
-- Do preserve existing `id` values from `read`.
-- Do use `id: null` or omit `id` on new blocks; the save handler backfills valid IDs.
-- Do resolve real target IDs with CLI reads/lists before creating inline mentions or embeds.
-
-## [06]-[DON_TS]
-
-- Don't write an empty document.
-- Don't put text in `attrs.text`.
-- Don't create custom string IDs for new blocks.
-- Don't invent UUIDs for `cardId`, `whiteboardId`, `pdfCardId`, `tagId`, or other references.
-- Don't use `people` inline mentions through the CLI schema.
-- Don't add `highlight` or `anchor` marks when creating new content.
-- Don't set deprecated attrs on new content; preserve them only when editing existing JSON from `read`.
-- Don't assume `embed` and block `mention` can target every card type; use only `note`, `journal`, `highlightElement`, `image`, `video`, or `audio`.
-- Don't edit Heptabase local database files directly to bypass the CLI.

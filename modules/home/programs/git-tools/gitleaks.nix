@@ -4,9 +4,9 @@
 # License       : MIT
 # Path          : modules/home/programs/git-tools/gitleaks.nix
 # ----------------------------------------------------------------------------
-# Machine-global gitleaks policy. Markdown, logs, text, and test trees are
-# fully scanned - they are the highest-probability paste channels. Only
-# generated artifacts that cannot carry authored secrets are allowlisted.
+# Machine-global gitleaks policy: Markdown, logs, text, and test trees scan fully as the highest-probability paste channels,
+# and only generated artifacts that cannot carry authored secrets are allowlisted.
+
 {pkgs, ...}: let
   tomlFormat = pkgs.formats.toml {};
 

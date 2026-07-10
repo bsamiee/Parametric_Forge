@@ -4,7 +4,7 @@
 -- License       : MIT
 -- Path          : modules/home/programs/apps/nvim/lua/config/options.lua
 -- ----------------------------------------------------------------------------
--- Core Neovim options - the foundation of editor behavior
+-- Core Neovim options.
 
 local opt = vim.opt
 

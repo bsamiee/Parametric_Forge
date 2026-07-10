@@ -1,6 +1,6 @@
 # [HOSTINGER_DOMAINS]
 
-Domain portfolio law: availability through purchase, delegation, DNS zone records, forwarding, WHOIS, lock and privacy, verification, outbound transfer, and bulk audit. REST rows below map one-to-one onto the `hostinger` MCP `domains_*` and `DNS_*` tools; curl is the canonical scripted form, and the Python/TypeScript/PHP SDKs wrap the same endpoints with the same field names.
+Domain portfolio law: availability through purchase, delegation, DNS zone records, forwarding, WHOIS, lock and privacy, verification, outbound transfer, and bulk audit. REST rows map one-to-one onto the `hostinger` MCP `domains_*` and `DNS_*` tools; curl is the canonical scripted form, and the Python/TypeScript/PHP SDKs wrap the same endpoints with the same field names.
 
 ## [01]-[AVAILABILITY_AND_PURCHASE]
 

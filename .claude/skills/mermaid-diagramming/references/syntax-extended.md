@@ -37,8 +37,6 @@ Pick a type by intent, then its section for the minimal fence and traps; a dash 
 
 `zenuml` is an external diagram the CLI registers.
 
-The quantitative rows — pie, xychart, sankey, radar — serve only when the artifact must stay a mermaid fence; a data visualization routes to the dataviz lane.
-
 ## [02]-[MINDMAP]
 
 ```mermaid

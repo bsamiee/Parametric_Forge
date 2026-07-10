@@ -4,10 +4,9 @@
 -- License       : MIT
 -- Path          : modules/home/programs/apps/yazi/init.lua
 -- ----------------------------------------------------------------------------
--- Plugin setup rows: every option below diverges from its plugin's default;
--- restated defaults are deleted, and unknown keys warn at startup.
+-- Plugin setup rows: every option below diverges from its plugin's default; restated defaults are deleted, and unknown keys warn at startup.
 
--- Core Plugins ---------------------------------------------------------------
+-- --- [CORE_PLUGINS] --------------------------------------------------------------------
 require("zoxide"):setup({
     update_db = true,
 })
@@ -21,11 +20,10 @@ require("full-border"):setup()
 
 require("git"):setup()
 
--- External Plugins -----------------------------------------------------------
+-- --- [EXTERNAL_PLUGINS] ----------------------------------------------------------------
 
--- Extension-database MIME: close the gz/zst/ndjson gaps, then classify the
--- unknown-extension residue through file(1) so text files off the database
--- still reach the code previewer.
+-- Extension-database MIME: close the gz/zst/ndjson gaps, then classify the unknown-extension residue through file(1) so text
+-- files off the database still reach the code previewer.
 require("mime-ext.local"):setup({
     with_exts = {
         gz = "application/gzip",
@@ -36,8 +34,7 @@ require("mime-ext.local"):setup({
     fallback_file1 = true,
 })
 
--- DuckDB data-preview lane: csv/tsv/parquet/xlsx/duckdb previewer rows
-require("duckdb"):setup()
+require("duckdb"):setup() -- csv/tsv/parquet/xlsx/duckdb previewer lane
 
 require("augment-command"):setup({
     prompt = true, -- Choose between hovered/selected items when both exist

@@ -4,9 +4,9 @@ Every working body between the decode seam and the rail is one expression over a
 
 Six siblings own material this algebra composes as settled: a fold whose accumulator is a carrier and the abort-versus-accumulate disposition are `rails-and-effects.md`'s; the carrier discriminant and the `Stream.mapAccum` lift of the step written here are `streams.md`'s; containers, algebra instances, and the merge tables are `values.md`'s; `Match` terminals and overload surfaces are `surfaces-and-dispatch.md`'s; cross-fiber cells are `concurrency.md`'s; the kernel mark's legality and its cast algebra are `language.md`'s — this page owns when a kernel is earned and which algorithmic forms it takes. What remains is the computation algebra, and its one collapse is uniform: a multi-pass scatter folds into one seeded pass, a materialized intermediate dissolves into a lazy combinator, a hand-indexed window becomes a window operator, a two-pass verdict split becomes one partitioned sieve, a cell beside a traversal becomes a `mapAccum` step, an unbounded native recursion becomes a frontier kernel, and a hand memo map becomes a tabulation fold.
 
-## [01]-[INDEX]
+## [01]-[COMPUTATION_CHOOSER]
 
-This table maps a computational shape to the form that owns it; the most specific shape wins.
+A computational shape selects the form that owns it; the most specific shape wins.
 
 | [INDEX] | [COMPUTATION]                           | [OWNING_FORM]                               | [REJECTED_FORM]                       |
 | :-----: | :-------------------------------------- | :------------------------------------------ | :------------------------------------ |

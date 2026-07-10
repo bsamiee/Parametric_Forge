@@ -5,6 +5,7 @@
 # Path          : modules/home/programs/mac-tools/duti.nix
 # ----------------------------------------------------------------------------
 # macOS default application associations via UTIs
+
 {
   config,
   lib,

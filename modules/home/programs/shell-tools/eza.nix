@@ -5,6 +5,7 @@
 # Path          : modules/home/programs/shell-tools/eza.nix
 # ----------------------------------------------------------------------------
 # Modern ls replacement themed from the estate palette owner
+
 {
   config,
   pkgs,

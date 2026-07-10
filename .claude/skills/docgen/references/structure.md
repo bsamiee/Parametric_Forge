@@ -41,7 +41,8 @@ Choose the container by what the reader retrieves; convert before styling.
 
 [FENCE_CONTENT]:
 
-- A fence carries a language tag plus one intent label from the closed set — `copy-safe` runs as written, `template` carries neutral placeholders, `conceptual` illustrates, `generated` and `output-only` carry produced output, `accepted` and `rejected` carry a worked contrast pair, `codemap` and `seams` carry width-capped topology — and the body honors its label: a copy-safe body runs, a renderable body renders under the corpus validator.
+- A fence carries a language tag plus one intent label from the closed set — `copy-safe` runs as written, `template` carries neutral placeholders, `conceptual` illustrates, `generated` and `output-only` carry produced output, `signature` carries a transcription-complete owner declaration an implementer copies verbatim, `test-only` carries test source, `accepted` and `rejected` carry a worked contrast pair, `codemap` and `seams` carry width-capped topology.
+- The body honors its label: a copy-safe body runs bare of placeholder slots and prompts, an output-only body carries no prompt-led run command, and a renderable body renders under the corpus validator — a mismatch retags the fence.
 - Reusable examples use legal neutral identifiers; placeholder strings such as `"<value-a>"` appear only inside literals, and no project, host, or domain concept anchors an example meant to travel.
 - Each example owns one demonstration region no sibling example repeats, and shows the form at real composed scale — admission, dispatch, and policy in one body with the growth axis visible — never an isolated minimum.
 
@@ -103,6 +104,7 @@ What an index-tier page carries is a selection decision, made for the agent edit
 A recurring file kind carries one declared schema — section set, marker vocabulary, entry shape — and every instance conforms byte-structurally. Uniformity is what makes a corpus machine-censusable and lets an agent work any instance without relearning its shape; a locally-optimized deviation is a defect even when it reads better in isolation.
 
 - The schema declares: the exact header set in order, the entry/card shape with its closed field vocabulary, the marker vocabulary, and the one sanctioned extension point if any.
+- Peer corpora of one file kind across languages carry one shared spine: the language changes the fence tag, never the section set, the numbering pad, or the card grammar — a branch-local skeleton is the same defect as a per-instance one.
 - A structural census is the conformance gate: identical header tokens across instances, identical field sets per entry, zero undeclared markers. A file kind whose instances cannot be censused has no schema — write one before writing another instance.
 - New capability lands as a row, entry, or declared extension inside the schema, never as a novel section invented per instance; pressure for a new section is a schema change made at the owner and rolled to every instance.
 

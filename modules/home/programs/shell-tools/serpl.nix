@@ -5,6 +5,7 @@
 # Path          : modules/home/programs/shell-tools/serpl.nix
 # ----------------------------------------------------------------------------
 # TUI search and replace powered by ripgrep
+
 {pkgs, ...}: let
   tomlFormat = pkgs.formats.toml {};
 in {

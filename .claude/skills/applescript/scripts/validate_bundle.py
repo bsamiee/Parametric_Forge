@@ -217,7 +217,7 @@ async def validated(bundle: Path, seconds: float, /) -> Report:
 
     collected: Block[Finding] = Block.empty()
     with anyio.move_on_after(seconds) as scope:
-        for artifact in artifacts:  # Exemption: async sequential fold — no async traverse exists (concurrency.md [03]).
+        for artifact in artifacts:  # Exemption: async sequential fold — no async traverse exists.
             collected = collected.append(await checked(artifact))
 
     skip_rows = skips.map(lambda row: Finding(origin=row.origin, check=Check.COMPILE, verdict="skip", strict=False, detail=row.reason))

@@ -1,6 +1,6 @@
-# [H1][BASH-PORTABILITY]
+# [BASH_PORTABILITY]
 
-Cross-platform shell compatibility for Bash `5.2+`/5.3, zsh, dash, and container-minimal shells. Platform detection, GNU/BSD coreutil divergence, capability probing, container environments, POSIX 2024 adoption reality.
+Cross-platform shell compatibility for Bash `5.2+`/5.3, zsh, dash, and container-minimal shells.
 
 | [INDEX] | [PATTERN]               | [S] | [USE_WHEN]                                                |
 | :-----: | :---------------------- | :-: | :-------------------------------------------------------- |
@@ -19,12 +19,12 @@ Cross-platform shell compatibility for Bash `5.2+`/5.3, zsh, dash, and container
 |  [02]   | `#!/bin/bash`         | Security policy mandates abs paths  |
 |  [03]   | `#!/bin/sh`           | POSIX-only, system init, containers |
 
-`env -S` (GNU coreutils `8.30+`) supports flag passthrough — macOS and busybox `env` lack it entirely. Avoid in cross-platform shebangs; handle flags in the script body.
+`env -S` (GNU coreutils `8.30+`) forwards shebang flags; macOS and busybox `env` lack it. Handle flags in the script body, never the shebang.
 
 ```bash conceptual
 # macOS: /bin/bash is 3.2.57 permanently (Apple GPLv3 refusal)
 # Homebrew: /opt/homebrew/bin/bash (ARM) | /usr/local/bin/bash (Intel)
-# Version gate pattern owned by version-features.md — use _BASH_V from there
+# Bash version gate: _BASH_V is the version-key probe
 (( _BASH_V >= 502 )) || {
     declare -ar _BREW=("/opt/homebrew/bin/bash" "/usr/local/bin/bash")
     local _p; for _p in "${_BREW[@]}"; do
@@ -38,21 +38,21 @@ Cross-platform shell compatibility for Bash `5.2+`/5.3, zsh, dash, and container
 
 Cross-shell semantic divergences against Bash `5.2+`, zsh `5.9+`, and dash/ash — not feature presence but behavioral differences that cause silent bugs:
 
-| [INDEX] | [FEATURE]            | [BASH]             | [ZSH]                 | [DASH_ASH]         |
-| :-----: | :------------------- | :----------------- | :-------------------- | :----------------- |
-|  [01]   | Array indexing       | 0-indexed          | **1-indexed** default | No arrays          |
-|  [02]   | `local -n` (nameref) | Yes                | No                    | No                 |
-|  [03]   | `${var,,}` case fold | Yes                | `${(L)var}` (differ)  | No                 |
-|  [04]   | `[[ ]]` conditionals | Yes                | Yes (subtly differs)  | No — `[ ]` only    |
-|  [05]   | Process substitution | `<(cmd)`           | `<(cmd)` (compat)     | No                 |
-|  [06]   | `set -o pipefail`    | Yes                | Yes                   | **Not yet** (dash) |
-|  [07]   | Here-strings `<<<`   | Yes                | Yes                   | No                 |
-|  [08]   | `$BASH_SOURCE`       | Yes                | `$0` (differs)        | `$0` (differs)     |
-|  [09]   | Brace expansion      | `{a,b}`, `{1..10}` | Yes                   | No                 |
-|  [10]   | `shopt` / `setopt`   | `shopt`            | `setopt` (differ)     | No                 |
-|  [11]   | `coproc`             | 4.0+ (not POSIX)   | `coproc` (differ)     | No — `mkfifo`      |
-|  [12]   | `${ cmd; }` (nofork) | **5.3+ only**      | No                    | No                 |
-|  [13]   | `GLOBSORT`           | **5.3+ only**      | No                    | No — alpha default |
+| [INDEX] | [FEATURE]            | [BASH]             | [ZSH]                | [DASH_ASH]         |
+| :-----: | :------------------- | :----------------- | :------------------- | :----------------- |
+|  [01]   | Array indexing       | 0-indexed          | 1-indexed default    | No arrays          |
+|  [02]   | `local -n` (nameref) | Yes                | No                   | No                 |
+|  [03]   | `${var,,}` case fold | Yes                | `${(L)var}` (differ) | No                 |
+|  [04]   | `[[ ]]` conditionals | Yes                | Yes (subtly differs) | No — `[ ]` only    |
+|  [05]   | Process substitution | `<(cmd)`           | `<(cmd)` (compat)    | No                 |
+|  [06]   | `set -o pipefail`    | Yes                | Yes                  | Not yet (dash)     |
+|  [07]   | Here-strings `<<<`   | Yes                | Yes                  | No                 |
+|  [08]   | `$BASH_SOURCE`       | Yes                | `$0` (differs)       | `$0` (differs)     |
+|  [09]   | Brace expansion      | `{a,b}`, `{1..10}` | Yes                  | No                 |
+|  [10]   | `shopt` / `setopt`   | `shopt`            | `setopt` (differ)    | No                 |
+|  [11]   | `coproc`             | 4.0+ (not POSIX)   | `coproc` (differ)    | No — `mkfifo`      |
+|  [12]   | `${ cmd; }` (nofork) | 5.3+ only          | No                   | No                 |
+|  [13]   | `GLOBSORT`           | 5.3+ only          | No                   | No — alpha default |
 
 Decision rule: dash/ash restricts to POSIX `[ ]`, no arrays, no namerefs, no here-strings. Bash `5.2+` means full feature set. zsh requires testing — array indexing, `$0`, option names diverge silently. `${ cmd; }` and `GLOBSORT` are 5.3-only — gate with `(( _BASH_V >= 503 ))`. `coproc` is `4.0+` only, not POSIX — use `mkfifo` for portable bidirectional IPC.
 
@@ -112,7 +112,7 @@ _parse_date() {
 
 ## [04]-[PLATFORM_DISPATCH]
 
-Resolve platform at init. Bind OS-specific functions once. All call sites dispatch through a uniform key — zero runtime branching after initialization. Tool probes (`_HAS_RG`, `_resolve_tool`) and bash version probes (`_HAS_INSITU`) are owned by `variable-features.md` and `version-features.md` respectively.
+Resolve platform at init. Bind OS-specific functions once. All call sites dispatch through a uniform key — zero runtime branching after initialization. Tool probes (`_HAS_RG`, `_resolve_tool`) and the bash-version probe (`_HAS_INSITU`) resolve once at init.
 
 ```bash conceptual
 readonly _PLATFORM="$(uname -s)"
@@ -182,14 +182,14 @@ _grep_pcre() {
 
 ### [05.1]-[IMAGE_SELECTION_MATRIX]
 
-| [INDEX] | [IMAGE]               | [SHELL]      | [BASH]                  | [USE_WHEN]                         |
-| :-----: | :-------------------- | :----------- | :---------------------- | :--------------------------------- |
-|  [01]   | Alpine 3.21           | busybox ash  | `apk add bash` -> 5.2.x | Minimal footprint, build stages    |
-|  [02]   | Debian bookworm-slim  | bash 5.2.15  | Pre-installed           | Default production base            |
-|  [03]   | Debian trixie-slim    | bash 5.2.37  | Pre-installed           | Next-gen production base           |
-|  [04]   | Wolfi (wolfi-base)    | bash + ash   | Pre-installed           | Supply-chain-hardened builds       |
-|  [05]   | Chainguard distroless | **No shell** | N/A                     | Production runtime — no shell exec |
-|  [06]   | Google distroless     | **No shell** | N/A                     | Production runtime — no shell exec |
+| [INDEX] | [IMAGE]               | [SHELL]     | [BASH]                  | [USE_WHEN]                         |
+| :-----: | :-------------------- | :---------- | :---------------------- | :--------------------------------- |
+|  [01]   | Alpine 3.21           | busybox ash | `apk add bash` -> 5.2.x | Minimal footprint, build stages    |
+|  [02]   | Debian bookworm-slim  | bash 5.2.15 | Pre-installed           | Default production base            |
+|  [03]   | Debian trixie-slim    | bash 5.2.37 | Pre-installed           | Next-gen production base           |
+|  [04]   | Wolfi (wolfi-base)    | bash + ash  | Pre-installed           | Supply-chain-hardened builds       |
+|  [05]   | Chainguard distroless | No shell    | N/A                     | Production runtime — no shell exec |
+|  [06]   | Google distroless     | No shell    | N/A                     | Production runtime — no shell exec |
 
 Wolfi-base ships bash by default — more predictable than Alpine for build stages. Distroless images contain no shell — portability shifts to "what shell does the build image have?" Loadable builtins (`enable -f`) are distribution-dependent (Arch: included; Debian: `bash-builtins` pkg; macOS/Alpine: build from source) — never depend on them in portable scripts.
 
@@ -212,7 +212,7 @@ ENTRYPOINT ["/bin/bash", "/entrypoint.sh"]
 _exec_service() { exec "$@"; }
 
 # Pattern 2: signal forwarding — multi-concern entrypoints only
-# Implementation owned by variable-features.md S3 (_forward_signal, _spawn)
+# Signal forwarding via _forward_signal/_spawn
 # K8s 1.33+: shareProcessNamespace: true makes pause container PID 1,
 # handling reaping + signal forwarding natively — prefer over in-script forwarding
 ```
@@ -223,13 +223,13 @@ Signal and trap semantics diverge across Bash `5.2+`, dash/ash, and zsh `5.9+`:
 
 | [INDEX] | [BEHAVIOR]           | [BASH]                  | [DASH_ASH]       | [ZSH]       |
 | :-----: | :------------------- | :---------------------- | :--------------- | :---------- |
-|  [01]   | EXIT on signal death | Fires                   | **No**           | **No**      |
-|  [02]   | Subshell traps       | Inherited               | **Reset**        | Inherited   |
+|  [01]   | EXIT on signal death | Fires                   | No               | No          |
+|  [02]   | Subshell traps       | Inherited               | Reset            | Inherited   |
 |  [03]   | ERR trap             | `set -E` for fn scope   | N/A              | `TRAPZERR`  |
 |  [04]   | DEBUG trap           | `set -T` for fn scope   | N/A              | `TRAPDEBUG` |
 |  [05]   | `$?` in EXIT trap    | Last cmd exit code      | Last cmd         | Last cmd    |
 |  [06]   | Signal in `wait`     | Interrupts, re-waitable | Interrupts, lost | Interrupts  |
-|  [07]   | Trapped → subshell   | **Reset to default**    | Reset            | Reset       |
+|  [07]   | Trapped → subshell   | Reset to default        | Reset            | Reset       |
 |  [08]   | Ignored → subshell   | Inherited (SIG_IGN)     | Inherited        | Inherited   |
 |  [09]   | Ignored → `exec`     | Inherited (POSIX req)   | Inherited        | Inherited   |
 
@@ -252,7 +252,7 @@ _critical_section() {
 }
 ```
 
-Cleanup implementation (`_cleanup`, `_CLEANUP_STACK`, `_CLEANING` guard) is owned by `script-patterns.md` S5. ERR trap stack trace (`_on_err` with `BASH_COMMAND`/`BASH_LINENO`/`FUNCNAME`) is owned by `script-patterns.md` S5 and `variable-features.md` S2.
+Cleanup (`_cleanup`, `_CLEANUP_STACK`, `_CLEANING` guard) and the ERR stack trace (`_on_err` over `BASH_COMMAND`/`BASH_LINENO`/`FUNCNAME`) are composed, not redefined here.
 
 ## [07]-[RULES]
 

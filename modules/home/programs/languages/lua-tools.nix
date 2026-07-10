@@ -5,15 +5,15 @@
 # Path          : modules/home/programs/languages/lua-tools.nix
 # ----------------------------------------------------------------------------
 # Lua development environment and tooling.
+
 {
   lib,
   pkgs,
   ...
 }: let
   style = import ../../../style.nix;
-  # stylua reads $XDG_CONFIG_HOME/stylua/stylua.toml only under
-  # --search-parent-directories; the wrapper pins the flag so project configs
-  # keep winning while the house style becomes the machine floor.
+  # stylua reads $XDG_CONFIG_HOME/stylua/stylua.toml only under --search-parent-directories; the wrapper pins the flag so
+  # project configs keep winning while the house style becomes the machine floor.
   stylua = pkgs.writeShellApplication {
     name = "stylua";
     text = ''
@@ -45,8 +45,7 @@ in {
     column_width = ${toString style.width}
   '';
 
-  # luacheck's documented fallback lane is --default-config, resolved on macOS
-  # from Application Support, never XDG; a project .luacheckrc suppresses it.
+  # luacheck's documented fallback lane is --default-config, resolved on macOS from Application Support, never XDG; a project .luacheckrc suppresses it.
   home.file = lib.mkIf pkgs.stdenv.hostPlatform.isDarwin {
     "Library/Application Support/Luacheck/.luacheckrc".text = ''
       max_line_length = ${toString style.width}

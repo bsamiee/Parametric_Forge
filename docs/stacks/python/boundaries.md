@@ -196,7 +196,7 @@ class Capsule:
                         for (
                             offset,
                             patch,
-                        ) in patches:  # Exemption: imperative measured kernel mutates one owned window in place; the per-edit buffer rebind is the rejected O(N*size) recopy
+                        ) in patches:  # Exemption: measured kernel mutates the owned window in place, the platform-forced statement seam
                             window[offset : offset + len(patch)] = patch
                             written += len(patch)
                         return Ok(written)

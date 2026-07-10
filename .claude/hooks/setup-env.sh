@@ -14,15 +14,13 @@
 # Per-project extras: CLAUDE_ENV_EXPORT_KEYS (comma/space list) and
 # CLAUDE_TOOL_PATHS (colon list). CLAUDE_DOPPLER_OFFLINE=1 forces fallback-only.
 set -Eeuo pipefail
-# GUI/TUI launch contexts can resolve `env bash` to Apple Bash 3.2, which
-# rejects inherit_errexit below; re-exec through the per-user profile Bash 5.
+# GUI/TUI launch contexts can resolve `env bash` to Apple Bash 3.2, which rejects inherit_errexit below; re-exec through the per-user profile Bash 5.
 if ((BASH_VERSINFO[0] < 5)) && [[ -x "/etc/profiles/per-user/${USER}/bin/bash" ]]; then
     exec "/etc/profiles/per-user/${USER}/bin/bash" "$0" "$@"
 fi
 shopt -s inherit_errexit
 IFS=$'\n\t'
-# Every artifact this hook writes is secret-adjacent: resolver dumps, retry
-# side files, stderr captures, key manifests. One umask owns their mode.
+# Every artifact this hook writes is secret-adjacent: resolver dumps, retry side files, stderr captures, key manifests. One umask owns their mode.
 umask 077
 
 # --- [CONSTANTS] ------------------------------------------------------------------------
@@ -95,8 +93,7 @@ _fetch() {
         DOPPLER_TOKEN="${token}" doppler secrets download --project "${project}" --config "${config}" \
             --no-file --format json --attempts 1 "${flags[@]}" >"${out}" 2>>"${out}.err"
     else
-        # env -u: an ambient DOPPLER_TOKEN outranks --project/--config and cannot
-        # represent three configs; strip it so each fetch resolves its named source.
+        # env -u: an ambient DOPPLER_TOKEN outranks --project/--config and cannot represent three configs; strip it so each fetch resolves its named source.
         env -u DOPPLER_TOKEN doppler secrets download --project "${project}" --config "${config}" \
             --no-file --format json --attempts 1 "${flags[@]}" >"${out}" 2>>"${out}.err"
     fi
@@ -133,8 +130,8 @@ _resolve_source() {
     if [[ "${auth}" == "token" && "${outcome}" != "live" ]]; then
         # Resilient rail: a degraded token attempt retries ambient CLI auth once into a side file, so a failed retry never clobbers served material.
         # Offline too — fallback decryption is passphrase-bound to the fetching auth, so only the ambient retry reads a CLI-written snapshot.
-        # Blame lands on the token only when ambient disproves it: a live retry, or ambient material where the token lane died (Doppler never serves fallback on 401/403/404, so a dead token lane IS auth).
-        # Snapshot-for-snapshot keeps auth=token — the snapshot alert covers it.
+        # Blame lands on the token only when ambient disproves it: a live retry, or ambient material where the token lane died (Doppler never
+        # serves fallback on 401/403/404, so a dead token lane IS auth). Snapshot-for-snapshot keeps auth=token — the snapshot alert covers it.
         local rc2=0 retry
         pre="${post}"
         _fetch "${project}" "${config}" "${snap}" "" "${out}.retry" || rc2=$?
@@ -172,8 +169,7 @@ _prune_snapshots() {
         IFS=: read -r _ _ row _ <<<"${spec}"
         expected+=("${row}" "${row%.json}.keys")
     done
-    # Prune only the file families this hook owns; doppler's own dot-prefixed
-    # fallback/metadata files and foreign material stay untouched.
+    # Prune only the file families this hook owns; doppler's own dot-prefixed fallback/metadata files and foreign material stay untouched.
     for f in "${DOPPLER_CACHE_DIR}"/*.json "${DOPPLER_CACHE_DIR}"/*.keys; do
         [[ -f "${f}" ]] || continue
         base="${f##*/}"
@@ -351,8 +347,7 @@ _resolve_and_publish() {
         mv "${cache_tmp}" "${SESSION_CACHE}"
     fi
 
-    # Receipt: key names only, never values. Full receipt to stderr + file;
-    # degraded rows also to stdout so the session context carries them loudly.
+    # Receipt: key names only, never values. Full receipt to stderr + file; degraded rows also to stdout so the session context carries them loudly.
     local receipt_tmp
     receipt_tmp="$(mktemp "${SESSION_CACHE_DIR}/.receipt.XXXXXX")"
     _TMP_FILES+=("${receipt_tmp}")
@@ -382,8 +377,7 @@ trap '_reap 1' HUP
 trap '_reap 2' INT
 trap '_reap 15' TERM
 
-# Refresh lane: detached network resolve rewriting the cache for the NEXT
-# session. Single-flight via lock dir; a stale lock (>3 min) is taken over.
+# Refresh lane: detached network resolve rewriting the cache for the NEXT session. Single-flight via lock dir; a stale lock (>3 min) is taken over.
 if [[ "${1:-}" == "--refresh" ]]; then
     mkdir -p "${SESSION_CACHE_DIR}"
     chmod 700 "${SESSION_CACHE_DIR}"
@@ -403,9 +397,8 @@ ENV_DIR="$(dirname -- "${CLAUDE_ENV_FILE}")"
 readonly ENV_DIR
 [[ -d "${ENV_DIR}" && -w "${ENV_DIR}" && ! -d "${CLAUDE_ENV_FILE}" ]] || exit 0
 
-# Warm lane: replay the cache into the env file instantly — no network inside
-# the hook budget — and dispatch the detached refresh (PATH-resolved nohup:
-# /usr/bin is a Darwin fact and this hook runs on every host).
+# Warm lane: replay the cache into the env file instantly — no network inside the hook budget — and dispatch the
+# detached refresh (PATH-resolved nohup: /usr/bin is a Darwin fact and this hook runs on every host).
 _replay_cache() {
     local env_tmp
     env_tmp="$(mktemp "${CLAUDE_ENV_FILE}.tmp.XXXXXX")"
@@ -427,10 +420,8 @@ if [[ -s "${SESSION_CACHE}" ]]; then
     exit 0
 fi
 
-# Cold lane (first boot, no cache): resolve inline so the first session still
-# receives keys. Concurrent cold sessions single-flight through the refresh
-# lock: the loser polls for the winner's cache and replays it, resolving
-# inline unlocked only when no cache lands inside the wait budget.
+# Cold lane (first boot, no cache): resolve inline so the first session still receives keys. Concurrent cold sessions single-flight through the
+# refresh lock: the loser polls for the winner's cache and replays it, resolving inline unlocked only when no cache lands inside the wait budget.
 mkdir -p "${SESSION_CACHE_DIR}"
 chmod 700 "${SESSION_CACHE_DIR}"
 if mkdir "${REFRESH_LOCK}" 2>/dev/null; then

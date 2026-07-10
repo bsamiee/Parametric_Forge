@@ -4,20 +4,14 @@
 // License       : MIT
 // Path          : services/topology.ts
 // ----------------------------------------------------------------------------
-// Services estate as typed rows under one assembled owner: the Doppler
-// topology (projects, environments, branch configs, service tokens, machine
-// directory scopes, webhooks) and the GitHub settings surface (repositories,
-// main-guard rulesets, reviewer matrix). estate.ts materializes rows into
-// resources; driver.ts applies scope rows machine-side. Every row is declared
-// end-state, managed forever: 'adopt' rows import live CLI/gh-born resources,
-// 'mint' rows are created fresh and never carry an import ID. Cross-family
-// coordinates derive from their anchors, so a row naming an undeclared
-// project, environment, config, or repository is a compile error.
+// Services estate as typed rows under one assembled owner: the Doppler topology and the GitHub settings surface, each row family a `const` projected
+// onto the `Topology` object. estate.ts materializes rows into resources; driver.ts applies scope rows machine-side. Every row is declared end-state,
+// managed forever: an 'adopt' row imports live CLI/gh-born resources, a 'mint' row is created fresh and never carries an import ID. Cross-family
+// coordinates derive from their anchors, so a row naming an undeclared project, environment, config, or repository is a compile error.
 
 type _Origin = 'adopt' | 'mint';
 
-// Import IDs: projects by slug, environments by `project.slug`, branch
-// configs by `project.environment.name`.
+// Import IDs: projects by slug, environments by `project.slug`, branch configs by `project.environment.name`.
 const _projects = [
     {
         slug: 'agent-runtime',
@@ -43,9 +37,8 @@ const _projects = [
 
 type _ProjectSlug = (typeof _projects)[number]['slug'];
 
-// Every project carries the standard environment triple, and an environment's
-// origin rides its project: API-minted projects mint their environments (each
-// environment creates its same-slug root config), adopted projects adopt them.
+// Every project carries the standard environment triple, and an environment's origin rides its project: API-minted projects mint their
+// environments (each environment creates its same-slug root config), adopted projects adopt them.
 const _ENV_AXIS = [
     { slug: 'dev', name: 'Development' },
     { slug: 'stg', name: 'Staging' },
@@ -61,8 +54,7 @@ const _environments: ReadonlyArray<{
     readonly origin: _Origin;
 }> = _projects.flatMap((project) => _ENV_AXIS.map((env) => ({ project: project.slug, slug: env.slug, name: env.name, origin: project.origin })));
 
-// Branch configs pair with a declared environment of their own project, and
-// Doppler's naming law rides the type: a branch name is `<env>_<suffix>`.
+// Branch configs pair with a declared environment of their own project; Doppler naming law makes a branch name `<env>_<suffix>`.
 type _BranchRow = {
     [P in _ProjectSlug]: {
         [E in _EnvironmentSlug]: {
@@ -74,8 +66,7 @@ type _BranchRow = {
     }[_EnvironmentSlug];
 }[_ProjectSlug];
 
-// Branch configs only; root configs ride their environment. agent-runtime's
-// secret set lives in its `dev` root config, so no branch row exists for it.
+// Branch configs only; root configs ride their environment. agent-runtime keeps its secrets in the `dev` root config, so no branch row exists.
 const _configs = [
     {
         project: 'parametric-forge',
@@ -87,15 +78,13 @@ const _configs = [
     { project: 'rasm', environment: 'dev', name: 'dev_repo', origin: 'adopt' },
 ] as const satisfies ReadonlyArray<_BranchRow>;
 
-// A config coordinate resolves to a root config (same-slug as its
-// environment) or a declared branch config of the same project.
+// A config coordinate resolves to a root config (same-slug as its environment) or a declared branch config of the same project.
 type _ConfigName<P extends _ProjectSlug = _ProjectSlug> = _EnvironmentSlug | Extract<(typeof _configs)[number], { readonly project: P }>['name'];
 
 type _Coordinate = { [P in _ProjectSlug]: { readonly project: P; readonly config: _ConfigName<P> } }[_ProjectSlug];
 
-// Static Developer-plan tokens; replacement is manual revoke-and-remint: drop
-// the row and `up --target=<project>/<config>/<name>` (revokes), restore the
-// row and target again (mints), then hand the fresh key off through 1Password.
+// Static Developer-plan tokens; replacement is manual revoke-and-remint: drop the row and `up --target=<project>/<config>/<name>` (revokes),
+// restore the row and target again (mints), then hand the fresh key off through 1Password.
 // A read grant carries the `-readonly` name suffix as the naming law.
 const _tokens = [
     {
@@ -114,8 +103,7 @@ const _tokens = [
     _Coordinate & ({ readonly name: `${string}-readonly`; readonly access: 'read' } | { readonly name: string; readonly access: 'read/write' })
 >;
 
-// Machine directory-scope rows: the replacement for every per-repo
-// doppler.yaml, applied idempotently via `doppler configure set`.
+// Machine directory-scope rows: the replacement for every per-repo doppler.yaml, applied idempotently via `doppler configure set`.
 const _scopeRoot = '/Users/bardiasamiee/Documents/99.Github';
 
 const _scopes = [
@@ -132,12 +120,10 @@ const _scopes = [
     }
 >;
 
-// Doppler mandates HTTPS delivery (the url type carries it) and signs each
-// delivery with the brokered secret (secretSource names the custody coordinate
-// the driver resolves at apply time); no secret names ride the wire, delivery
-// is at-least-once, and the consumer owns idempotency. The payload event
-// derives in estate.ts as `<project>.<firstEnabledConfig>.secrets.update`, and
-// the provider ships no webhook import, so every row is mint by construction.
+// Doppler mandates HTTPS delivery (the url type carries it) and signs each delivery with the brokered secret (secretSource
+// names the custody coordinate the driver resolves at apply time); no secret names ride the wire, delivery
+// is at-least-once, and the consumer owns idempotency. The payload event derives in estate.ts as
+// `<project>.<firstEnabledConfig>.secrets.update`, and the provider ships no webhook import, so every row is mint by construction.
 type _WebhookRow = {
     [P in _ProjectSlug]: {
         readonly project: P;
@@ -164,8 +150,7 @@ const _webhooks = [
     },
 ] as const satisfies ReadonlyArray<_WebhookRow>;
 
-// GitHub settings-as-code: every owned repo carries the shared merge-hygiene
-// policy (estate.ts owns the values) and one active main-guard ruleset.
+// GitHub settings-as-code: every owned repo carries the shared merge-hygiene policy from estate.ts and one active main-guard ruleset.
 const _owner = 'bsamiee';
 
 const _repositories = [
@@ -219,17 +204,15 @@ const _rulesets = [
     readonly origin: _Origin;
 }>;
 
-// One shared main-guard rule policy: history protection plus Copilot review as
-// the GitHub-native ruleset rule; reviewOnPush stays off because CodeRabbit and
-// Greptile already re-review each push. Direct pushes to main stay legal.
+// One shared main-guard rule policy: history protection plus Copilot review as the GitHub-native ruleset rule; reviewOnPush stays off because
+// CodeRabbit and Greptile already re-review each push. Direct pushes to main stay legal.
 const _rulesetPolicy = {
     nonFastForward: true,
     deletion: true,
     copilotCodeReview: { reviewOnPush: false, reviewDraftPullRequests: false },
 } as const;
 
-// Reviewer service matrix: config custody stays repo-owned, `driver.ts
-// reviewers` proves presence plus config hash; gated identities prove absence.
+// Reviewer service matrix: config custody stays repo-owned, `driver.ts reviewers` proves presence plus config hash; gated identities prove absence.
 // Macroscope holds at gated until its check-run and fix policy are typed rows.
 const _reviewers = [
     {

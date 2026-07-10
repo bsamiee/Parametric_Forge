@@ -46,7 +46,7 @@ const MAX_AGENTS = 1000; // runtime per-run lifetime cap
 const MAX_DEPTH = 1; // a top-level workflow may call workflow() ONCE; a child that itself calls workflow() is the runtime error
 const MAX_SYNTH_DEPTH = 64; // fixture-synthesis recursion bound; a self-referential JSON Schema would otherwise blow the stack (a runtime agent returns finite data, never an infinite shape)
 const BODY_TIMEOUT_MS = 5000; // wall-clock budget per body run; an unsettled promise/await is reported as a timeout instead of hanging the harness (a deterministic body settles in microseconds under mocked agents)
-// The DSL globals the runtime exposes, then the host names it withholds. Both are passed as  named Function params: the DSL set is bound to mocks,
+// The DSL globals the runtime exposes, then the host names it withholds. Both are passed as named Function params: the DSL set is bound to mocks,
 // the host set to throwers/undefined, so the body sees EXACTLY the runtime surface — host access fails here as it would there.
 const DSL_GLOBALS = [
     'args',
@@ -336,8 +336,8 @@ const simulate = async (absFile, args) => {
             error: `cannot read ${absFile}: ${e.code || e.message}`,
         };
     }
-    // an unsettled body (promise/await that never resolves) is raced against a wall-clock budget so the harness reports a timeout instead of exiting on an unsettled top-level await
-    // the timer is intentionally NOT unref'd: it must hold the event loop open so it can fire and reject, otherwise Node exits early on the stalled top-level await (code 13) before the timeout lands
+    // an unsettled body — a promise or await that never resolves — races a wall-clock budget so the harness reports a timeout instead of hanging on it.
+    // the timer is NOT unref'd: it holds the event loop open to fire and reject, or Node exits early (code 13) on the stalled await before the timeout lands.
     const withTimeout = (p) =>
         new Promise((res, rej) => {
             const t = setTimeout(

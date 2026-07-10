@@ -4,24 +4,19 @@
 # License       : MIT
 # Path          : modules/home/programs/apps/vscode/extensions.nix
 # ----------------------------------------------------------------------------
-# Extension roster consumer: overlays/manifest.nix `extensions.vscode` rows
-# are desired state, the mutable user extensions dir is runtime state, and
-# extensions.json stays VS Code-owned cache. `forge-vscode doctor` proves
-# installed-vs-roster, the settings sentinel, and the keybindings sentinel;
-# `sync` installs missing rows through the live Code CLI and never
-# uninstalls — an extra is operator freedom, and uninstalling one is an
-# operator gesture, never code.
+# Extension roster consumer: overlays/manifest.nix `extensions.vscode` rows are desired state, the mutable user extensions dir is
+# runtime state, and extensions.json stays VS Code-owned cache. `forge-vscode doctor` proves installed-vs-roster, the settings and
+# keybindings sentinels; `sync` installs missing rows through the live Code CLI and never uninstalls — an extra is operator freedom,
+# and uninstalling one is an operator gesture, never code.
+
 {
   lib,
   pkgs,
   rows,
 }: let
-  # Supersession map — the one durable drift ruling: an id here duplicates a
-  # surface the estate already owns, so its presence (now or after removal)
-  # is a named finding, never bare drift. Keys are lowercase to join the
-  # case-normalized classify fold. Age alone never mints a row: a merely
-  # outdated or undecided extra (dotenv syntax for files the secrets law
-  # bans, viewers with no owned twin) is the operator's uninstall, not code.
+  # Supersession map — the one durable drift ruling: an id here duplicates a surface the estate already owns, so its presence (now or after removal)
+  # is a named finding, never bare drift. Keys are lowercase to join the case-normalized classify fold. Age alone never mints a row: a merely
+  # outdated or undecided extra (dotenv syntax for files the secrets law bans, viewers with no owned twin) is the operator's uninstall, not code.
   superseded = {
     "aaron-bond.better-comments" = "Gruntfuggly.todo-tree + owner tag rows";
     "alefragnani.project-manager" = "forge-workspace session fabric";
@@ -45,14 +40,12 @@
     "vstirbu.vscode-mermaid-preview" = "builtin mermaid-markdown-features";
   };
 
-  # Contradiction guard: an id cannot be desired (roster) and condemned
-  # (superseded) at once — a re-admission must retire the ruling in the same
-  # change, or the doctor would prove "bound" while the map damns it.
+  # Contradiction guard: an id cannot be desired (roster) and condemned (superseded) at once — a re-admission
+  # must retire the ruling in the same change, or the doctor proves "bound" while the map damns it.
   contradictions = builtins.filter (id: lib.elem id (map (r: lib.toLower r.id) (lib.attrValues rows))) (builtins.attrNames superseded);
 
-  # Roster rows carry the full admission contract — every security field the
-  # manifest vocabulary names — and the supersession map rides beside them,
-  # so `forge-vscode roster` is the whole desired-state + ruling surface.
+  # Roster rows carry the full admission contract — every security field the manifest vocabulary names — and
+  # the supersession map rides beside them, so `forge-vscode roster` is the whole desired-state + ruling surface.
   rosterJson = lib.throwIf (contradictions != []) "forge-vscode roster/supersession contradiction: ${lib.concatStringsSep ", " contradictions}" (builtins.toJSON {
     schema = "forge-vscode-roster/v2";
     rows =
@@ -94,11 +87,9 @@
           printf 'absent'
         fi
       }
-      # Tail proof, not marker presence: the live region must equal the
-      # projected block byte-for-byte (a second marker pair or an edited row
-      # reads stale) AND nothing but blanks, comments, and the closing "]"
-      # may follow it — tail position is the authority position the rail
-      # claims, so a displaced block is a named finding.
+      # Tail proof, not marker presence: the live region must equal the projected block byte-for-byte (a second
+      # marker pair or an edited row reads stale) AND nothing but blanks, comments, and the closing "]" may follow
+      # it — tail position is the authority position the rail claims, so a displaced block is a named finding.
       keys_probe() { # -> bound|stale|displaced|absent
         [[ -s $keybindings && -r $keys_block ]] || { printf 'absent'; return; }
         if ! { grep -q "forge-keys:begin" "$keybindings" && grep -q "forge-keys:end" "$keybindings"; }; then
@@ -110,10 +101,8 @@
         [[ $trailing -eq 0 ]] || { printf 'displaced'; return; }
         printf 'bound'
       }
-      # One classification fold: roster ids vs live ids (stdin), case-normalized;
-      # an extra matching the supersession map carries its ruling inline. The
-      # live list is captured at the call site so a CLI failure rails as an
-      # envelope instead of dying raw inside a pipeline.
+      # One classification fold: roster ids vs live ids (stdin), case-normalized; an extra matching the supersession map carries its ruling inline.
+      # The live list is captured at the call site so a CLI failure rails as an envelope instead of dying raw inside a pipeline.
       classify() {
         jq -Rn --slurpfile roster <(jq '{ids: [.rows[].id | ascii_downcase], superseded: (.superseded // {})}' "$roster") '
           [inputs | select(length > 0) | ascii_downcase] as $live

@@ -5,17 +5,15 @@
 # Path          : modules/home/programs/git-tools/default.nix
 # ----------------------------------------------------------------------------
 # Git tools owner: config modules plus the config-free package table
+
 {pkgs, ...}: let
   manifest = import ../../../../overlays/manifest.nix;
-  # Git-lane admissions from the package manifest: git-cliff (changelog),
-  # mergiraf (structural merge driver; registration rides git.nix).
+  # Git-lane manifest admissions: git-cliff (changelog), mergiraf (structural merge driver; registration rides git.nix).
   gitRoster = map (row: pkgs.${row.attr}) (manifest.rosterRows "git");
   # 1Password agent socket, HOME-relative; matches the IdentityAgent row in shell-tools/ssh.nix.
   opAgentSock = "Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock";
-  # Receipt surface for the identity/signing/fsmonitor rail.
-  # doctor: resolved identity, signing rows, op-agent key service, fsmonitor daemon health.
-  # sign-proof: empty signed commit in a throwaway repo, verified locally.
-  # verify [ref]: GitHub-side verification status for a pushed commit.
+  # Receipt surface for the identity/signing/fsmonitor rail: doctor prints resolved identity, signing rows, op-agent key service, and
+  # fsmonitor health; sign-proof lands a verified empty signed commit in a throwaway repo; verify [ref] returns GitHub verification for a commit.
   forge-git-doctor = pkgs.writeShellApplication {
     name = "forge-git-doctor";
     runtimeInputs = [pkgs.git pkgs.gh pkgs.coreutils pkgs.openssh];
@@ -38,8 +36,7 @@
             printf '%-26s %s\n' "signer-binary" "MISSING at $signer (1Password.app absent or path stale)"
           fi
           # Signing goes live only when the op agent serves the configured key.
-          # Captured, never piped into grep -q: an early-exit grep would SIGPIPE
-          # ssh-add under pipefail and falsely report the key unserved.
+          # Captured, never piped into grep -q: an early-exit grep SIGPIPEs ssh-add under pipefail and falsely reports the key unserved.
           sock="$HOME/${opAgentSock}"
           pubkey="$(git config get user.signingkey || true)"
           pubkey="''${pubkey#key::}"

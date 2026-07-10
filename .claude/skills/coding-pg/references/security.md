@@ -1,10 +1,10 @@
-# Security
+# [SECURITY]
 
-Row-level security, privilege architecture, authentication, audit, and pgaudit for PostgreSQL 18. Security is enforced at the database level --- application-layer authorization is redundant defense, not primary enforcement.
+Security is enforced at the database level; application-layer authorization is redundant defense, never primary enforcement.
 
 ## [01]-[ROW_LEVEL_SECURITY_RLS]
 
-RLS policies enforce tenant isolation and access control at the query planner level --- invisible to application queries.
+RLS policies enforce tenant isolation and access control at the query planner level — invisible to application queries.
 
 ### [01.1]-[PATTERNS]
 
@@ -23,10 +23,10 @@ Admin bypass: `CREATE POLICY admin_access ON orders FOR ALL TO app_admin USING (
 
 Per-operation policies enforce least-privilege per DML verb:
 
-- `FOR SELECT USING (...)` --- read visibility filter
-- `FOR INSERT WITH CHECK (...)` --- write admission gate
-- `FOR UPDATE USING (...) WITH CHECK (...)` --- both old and new row must satisfy
-- `FOR DELETE USING (...)` --- deletion visibility filter
+- `FOR SELECT USING (...)` — read visibility filter
+- `FOR INSERT WITH CHECK (...)` — write admission gate
+- `FOR UPDATE USING (...) WITH CHECK (...)` — both old and new row must satisfy
+- `FOR DELETE USING (...)` — deletion visibility filter
 
 Combining permissive + restrictive for layered access:
 
@@ -40,7 +40,7 @@ CREATE POLICY active_only ON orders AS RESTRICTIVE FOR SELECT
     USING (status != 'archived');
 ```
 
-Temporal RLS --- policy with range containment:
+Temporal RLS — policy with range containment:
 
 ```sql conceptual
 CREATE POLICY valid_period_access ON versioned_entities
@@ -50,13 +50,13 @@ CREATE POLICY valid_period_access ON versioned_entities
 ### [01.2]-[CONTRACTS]
 
 - `USING` filters visible rows (SELECT, UPDATE, DELETE); `WITH CHECK` validates new/modified rows (INSERT, UPDATE)
-- `FORCE ROW LEVEL SECURITY` applies policies even to table owners --- without it, table owners bypass RLS
+- `FORCE ROW LEVEL SECURITY` applies policies even to table owners — without it, table owners bypass RLS
 - [POLICY_COMBINATION_SEMANTICS]: PERMISSIVE policies (the default) OR together; RESTRICTIVE policies (`AS RESTRICTIVE`) AND together.
 - Final access: at least one PERMISSIVE must pass AND every RESTRICTIVE must pass. When no PERMISSIVE policy exists for an operation, access is denied.
-- Policy type --- not role assignment --- determines combination logic.
-- `current_setting('app.current_tenant')` must be set via `SET LOCAL` or `set_config(..., true)` in each transaction --- not session-level. Failure mode: without `missing_ok`, a missing GUC raises an error; with `current_setting('app.current_tenant', true)`, a missing GUC returns NULL. Defense: use `nullif(current_setting('app.current_tenant', true), '')` and a RESTRICTIVE deny-all policy when NULL
-- Performance: RLS predicates are appended to every query --- ensure indexed columns used in policies. Planner pushes simple RLS predicates (`col = const`) into index scans; complex predicates (subqueries, function calls) force scan-time filtering --- keep policy expressions index-friendly
-- Superusers and roles with BYPASSRLS bypass RLS --- never use superuser for application connections
+- Policy type — not role assignment — determines combination logic.
+- `current_setting('app.current_tenant')` must be set via `SET LOCAL` or `set_config(..., true)` in each transaction — not session-level. Failure mode: without `missing_ok`, a missing GUC raises an error; with `current_setting('app.current_tenant', true)`, a missing GUC returns NULL. Defense: use `nullif(current_setting('app.current_tenant', true), '')` and a RESTRICTIVE deny-all policy when NULL
+- Performance: RLS predicates are appended to every query — ensure indexed columns used in policies. Planner pushes simple RLS predicates (`col = const`) into index scans; complex predicates (subqueries, function calls) force scan-time filtering — keep policy expressions index-friendly
+- Superusers and roles with BYPASSRLS bypass RLS — never use superuser for application connections
 - Schema isolation vs RLS tradeoff: schema-per-tenant eliminates RLS overhead but complicates shared infrastructure (migrations, connection routing, monitoring). RLS preferred for shared-schema multi-tenancy; schema isolation for strict compliance boundaries.
 
 ## [02]-[PRIVILEGE_ARCHITECTURE]
@@ -71,7 +71,7 @@ GRANT SELECT (id, name, email, created_at) ON users TO app_readonly;
 -- password_hash, mfa_secret, recovery_codes columns are NOT granted
 ```
 
-Default privileges for automated schema management --- applies to all FUTURE objects created by `deploy_role`:
+Default privileges for automated schema management — applies to all future objects created by `deploy_role`:
 
 ```sql conceptual
 ALTER DEFAULT PRIVILEGES FOR ROLE deploy_role IN SCHEMA app
@@ -98,11 +98,11 @@ CREATE ROLE app_service NOINHERIT;  -- must SET ROLE explicitly, no ambient priv
 ### [02.2]-[CONTRACTS]
 
 - Role hierarchy: `app_readonly` < `app_readwrite` < `app_admin` via `GRANT role TO role`
-- `ALTER DEFAULT PRIVILEGES` applies to FUTURE objects only --- existing objects need explicit GRANT
-- `PUBLIC` pseudo-role: all roles inherit from PUBLIC --- `REVOKE ... FROM PUBLIC` is the baseline posture
-- Column-level SELECT: queries referencing non-granted columns fail at parse time --- not runtime
+- `ALTER DEFAULT PRIVILEGES` applies to future objects only — existing objects need explicit GRANT
+- `PUBLIC` pseudo-role: all roles inherit from PUBLIC — `REVOKE ... FROM PUBLIC` is the baseline posture
+- Column-level SELECT: queries referencing non-granted columns fail at parse time — not runtime
 - `GRANT USAGE ON SCHEMA` required before any object access within schema
-- `NOINHERIT` prevents ambient privilege from granted roles --- force explicit `SET ROLE` for escalation audit trail
+- `NOINHERIT` prevents ambient privilege from granted roles — force explicit `SET ROLE` for escalation audit trail
 
 ## [03]-[FUNCTION_SECURITY]
 
@@ -110,7 +110,7 @@ SECURITY INVOKER vs SECURITY DEFINER for function execution context.
 
 ### [03.1]-[PATTERNS]
 
-SECURITY INVOKER (always the default for SQL/plpgsql functions in all PG versions):
+SECURITY INVOKER (the default):
 
 ```sql conceptual
 CREATE FUNCTION safe_lookup(p_id uuid)
@@ -140,19 +140,19 @@ $$;
 
 ### [03.2]-[CONTRACTS]
 
-- SECURITY INVOKER has always been the default for SQL/plpgsql functions in all PG versions --- this was never changed
-- [VIEWS_ARE_DIFFERENT_FROM_FUNCTIONS]: PG 15 introduced `security_invoker` option for VIEWS via `CREATE VIEW ... WITH (security_invoker = true)`. Prior to PG 15, views always executed as the view owner (definer semantics). For RLS enforcement through views, set `security_invoker = true` on every view --- otherwise RLS policies evaluate against the view owner's privileges, not the querying role
-- SECURITY DEFINER without `SET search_path`: attacker creates malicious function in user-writable schema that shadows a system function --- privilege escalation
-- SECURITY DEFINER functions bypass RLS --- use sparingly and audit carefully
-- Leakproof functions: `LEAKPROOF` attribute declares function cannot leak information through error messages or side channels --- required for some RLS optimizations
+- SECURITY INVOKER is the default for SQL and plpgsql functions.
+- [VIEWS_ARE_DIFFERENT_FROM_FUNCTIONS]: a view executes with definer semantics unless created `WITH (security_invoker = true)` — set it on every view whose RLS must evaluate against the querying role, not the view owner
+- SECURITY DEFINER without `SET search_path`: attacker creates malicious function in user-writable schema that shadows a system function — privilege escalation
+- SECURITY DEFINER functions bypass RLS — use sparingly and audit carefully
+- Leakproof functions: `LEAKPROOF` attribute declares function cannot leak information through error messages or side channels — required for some RLS optimizations
 
-## [04]-[AUTHENTICATION_PG_18]
+## [04]-[AUTHENTICATION]
 
 ### [04.1]-[CONTRACTS]
 
-- md5 is deprecated in PG 18 --- use `scram-sha-256` exclusively
-- OAuth 2.0: `host all all 0.0.0.0/0 oauth` in pg_hba.conf; requires `oauth_validator_library` (singular) in postgresql.conf --- token validation loaded via shared library
-- Data checksums enabled by default in PG 18 (`initdb`) --- protects against silent data corruption
+- md5 is deprecated — use `scram-sha-256` exclusively
+- OAuth 2.0: `host all all 0.0.0.0/0 oauth` in pg_hba.conf; requires `oauth_validator_library` (singular) in postgresql.conf — token validation loaded via shared library
+- Data checksums are enabled by default at `initdb` — protects against silent data corruption
 - TLS 1.3 cipher control: `ssl_tls13_ciphers = 'TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256'`
 - Connection-level encryption: `sslmode=verify-full` on client side enforces server certificate validation
 
@@ -180,9 +180,9 @@ SELECT pg_reload_conf();
 
 ### [05.2]-[SESSION_VS_OBJECT_AUDIT]
 
-[SESSION_AUDIT]: (`pgaudit.log`): captures all statements matching configured classes regardless of target. Classes: `read`, `write`, `function`, `role`, `ddl`, `misc`, `misc_set`, `all` --- comma-separated. Baseline: `ddl, write` for schema changes and data mutations; add `role` when tracking privilege changes.
+[SESSION_AUDIT]: (`pgaudit.log`): captures all statements matching configured classes regardless of target. Classes: `read`, `write`, `function`, `role`, `ddl`, `misc`, `misc_set`, `all` — comma-separated. Baseline: `ddl, write` for schema changes and data mutations; add `role` when tracking privilege changes.
 
-[OBJECT_AUDIT]: (`pgaudit.role`): captures only statements touching objects where the named audit role has grants. More selective --- use for targeted compliance on sensitive tables:
+[OBJECT_AUDIT]: (`pgaudit.role`): captures only statements touching objects where the named audit role has grants. More selective — use for targeted compliance on sensitive tables:
 
 ```sql conceptual
 CREATE ROLE auditor NOLOGIN;
@@ -190,20 +190,20 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON users, payments, audit_log TO auditor;
 -- Only queries touching these three tables generate object audit entries
 ```
 
-[DUAL_MODE]: run both simultaneously --- session audit for broad DDL/role coverage, object audit for sensitive data tables. Both fire independently for the same statement when conditions match.
+[DUAL_MODE]: run both simultaneously — session audit for broad DDL/role coverage, object audit for sensitive data tables. Both fire independently for the same statement when conditions match.
 
 ### [05.3]-[CONTRACTS]
 
-- `pgaudit.log_relation = on` logs each relation accessed per statement --- critical for JOINs touching sensitive tables
-- Log output goes to PostgreSQL server log --- route to SIEM via syslog or log shipper (Alloy, Promtail, Fluent Bit)
-- `pgaudit.log = 'all'` generates significant volume --- scope to `ddl, write` minimum; add `role` for privilege audit
+- `pgaudit.log_relation = on` logs each relation accessed per statement — critical for JOINs touching sensitive tables
+- Log output goes to PostgreSQL server log — route to SIEM via syslog or log shipper (Alloy, Promtail, Fluent Bit)
+- `pgaudit.log = 'all'` generates significant volume — scope to `ddl, write` minimum; add `role` for privilege audit
 - `misc_set`: logs SET/RESET commands; `misc`: logs DISCARD, FETCH, CHECKPOINT and other utility statements
 
 ## [06]-[AUDIT_PATTERNS]
 
-Application-level audit via MERGE RETURNING --- not triggers.
+Application-level audit via MERGE RETURNING — not triggers.
 
-Audit via MERGE RETURNING OLD/NEW (PG 18):
+Audit via MERGE RETURNING OLD/NEW:
 
 ```sql conceptual
 WITH write_result AS (
@@ -231,6 +231,6 @@ FROM write_result;
 ### [06.1]-[CONTRACTS]
 
 - OLD is NULL for INSERT actions, NEW is NULL for DELETE actions
-- MERGE RETURNING + writable CTE: audit insert happens in same transaction --- atomicity guaranteed
-- `current_setting('app.user_id')` must be SET per transaction --- not session state
-- Audit table is append-only with RLS preventing modification --- `FOR SELECT` policy only for app roles
+- MERGE RETURNING + writable CTE: audit insert happens in same transaction — atomicity guaranteed
+- `current_setting('app.user_id')` must be SET per transaction — not session state
+- Audit table is append-only with RLS preventing modification — `FOR SELECT` policy only for app roles

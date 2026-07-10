@@ -6,6 +6,7 @@
 # ----------------------------------------------------------------------------
 # Completion owner: generator rows written atomically at activation, one fingerprint-keyed compinit that never rescans per shell, data-driven
 # zstyle rows, and the fzf-tab completion UI. A new completion is a row here.
+
 {
   config,
   lib,
@@ -15,8 +16,8 @@
   inherit (config.forge.theme) palette;
   brewPrefix = "/opt/homebrew";
 
-  # Generator rows: `version` is the staleness key — a Nix store path for store-owned tools, a runtime probe for host apps.
-  # `gate` skips a row when the host binary is absent.
+  # Generator rows: `version` is the staleness key — a Nix store path for store-owned tools, a runtime
+  # probe for host apps. `gate` skips a row when the host binary is absent.
   generators = [
     {
       name = "zellij";
@@ -52,7 +53,7 @@
 
   # Dump key: the full pre-compinit fpath surface — generator rows, completion packages, sourced-plugin srcs, and the profile package set. The
   # per-user profile site-functions dir is pinned into the 400 row below: a dump baked by a degraded-env shell (NIX_PROFILES without
-  # /etc/profiles/per-user) would otherwise permanently miss home.packages completions under compinit -C. Any change retires every old dump at
+  # /etc/profiles/per-user) otherwise permanently misses home.packages completions under compinit -C. Any change retires every old dump at
   # activation; compinit -C rebuilds once per fingerprint, never per shell.
   fingerprint = builtins.substring 0 12 (builtins.hashString "sha256"
     (builtins.toJSON (map (g: g.version) generators
@@ -266,19 +267,19 @@ in {
 
     initContent = lib.mkMerge [
       (lib.mkOrder 400 ''
-        # --- [COMPLETION_FPATH_FINGERPRINT_KEYED_DUMP_BEFORE_COMPINIT]
+        # --- [FPATH_PREINIT]
         [[ -d "${cacheDir}" ]] || command mkdir -p -- "${cacheDir}"
         export ZSH_COMPDUMP="${cacheDir}/zcompdump-''${ZSH_VERSION}-${fingerprint}"
         fpath=("${compDir}" ${lib.concatMapStringsSep " " (p: "${p}/share/zsh/site-functions") completionPackages} "/etc/profiles/per-user/${config.home.username}/share/zsh/site-functions" $fpath)
       '')
 
       (lib.mkOrder 550 ''
-        # --- [COMPLETION_FZF_TAB_ZSTYLE_ROWS_RENDERED_FROM_THE_STYLE_TABLE]
+        # --- [ZSTYLE_ROWS]
         ${zstyleLines}
       '')
 
       (lib.mkOrder 580 ''
-        # --- [FZF_TAB_AFTER_COMPINIT_AT_570_BEFORE_WIDGET_WRAPPERS_AT_700]
+        # --- [FZF_TAB_SOURCE]
         # No use-fzf-default-opts: global FZF_DEFAULT_OPTS previews stay out of completion; the fzf-flags row above is the whole completion-UI surface.
         source ${pkgs.zsh-fzf-tab}/share/fzf-tab/fzf-tab.plugin.zsh
       '')

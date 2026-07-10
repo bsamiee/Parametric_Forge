@@ -1,6 +1,6 @@
-# [H1][VERSION-FEATURES]
+# [VERSION_FEATURES]
 
-Bash 5.2/5.3 feature exploitation. Fork-free substitution, REPLY-bound substitution, GLOBSORT pipelines, epoch instrumentation, monotonic clock, trap signal dispatch, loadable builtins (fltexpr, strptime, kv), shell options (array_expand_once, read -E, source -p), version gating. Minimum baseline is 5.2 — features below that threshold are unconditionally available.
+Bash 5.2/5.3 feature exploitation. Minimum baseline is 5.2 — features below that threshold are unconditionally available.
 
 | [INDEX] | [PATTERN]              | [S] | [VER] | [USE_WHEN]                                           |
 | :-----: | :--------------------- | :-: | :---: | :--------------------------------------------------- |
@@ -17,7 +17,7 @@ Bash 5.2/5.3 feature exploitation. Fork-free substitution, REPLY-bound substitut
 
 ## [01]-[FORK_FREE_SUBSTITUTION]
 
-`${ cmd; }` (whitespace after `{` mandatory) runs in the current shell, capturing stdout without fork/exec. Side effects propagate — variable assignments, traps, `cd` persist. This is NOT sandboxed capture.
+`${ cmd; }` (whitespace after `{` mandatory) runs in the current shell, capturing stdout without fork/exec. Side effects propagate — variable assignments, traps, `cd` persist. This is not sandboxed capture.
 
 The performance gap is structural: `$()` forks a subshell (clone + pipe + exec), `${ }` runs inline. In a 10k-iteration loop, `${ printf '%s' x; }` completes ~5-8x faster than `$(printf '%s' x)` — fork/exec overhead dominates at scale.
 
@@ -147,7 +147,7 @@ Three builtin variables replace `date(1)` forks entirely. All are unconditionall
 |  [02]   | `EPOCHREALTIME` | Microsecond float (sec.usec)   | `$(date +%s%N)` |
 |  [03]   | `SRANDOM`       | 32-bit getrandom(2)/getentropy | `$RANDOM`       |
 
-`SRANDOM` uses the kernel's getrandom(2) syscall — `RANDOM` is a predictable LCG (linear congruential generator). `SRANDOM` is suitable for nonces, session IDs, and jitter values but NOT for cryptographic key material (32-bit space). For keys: `head -c 32 /dev/urandom | base64`.
+`SRANDOM` uses the kernel's getrandom(2) syscall — `RANDOM` is a predictable LCG (linear congruential generator). `SRANDOM` is suitable for nonces, session IDs, and jitter values but not for cryptographic key material (32-bit space). For keys: `head -c 32 /dev/urandom | base64`.
 
 `printf -v ts '%(%F %T)T' -1` is the fork-free timestamp — replaces `$(date '+%F %T')` entirely. `-1` means "now"; strftime format via `%(...)T`.
 
@@ -213,7 +213,7 @@ _rate_check() {
 
 ## [05]-[MONOTONIC_CLOCK]
 
-`BASH_MONOSECONDS` (5.3) reads the system monotonic clock — immune to NTP adjustments, leap seconds, and manual `date -s` changes that corrupt `EPOCHREALTIME`-based elapsed measurements. Integer seconds resolution. Availability depends on OS `clock_gettime(CLOCK_MONOTONIC)` support (Linux, macOS, BSDs — universally present on `modern` systems).
+`BASH_MONOSECONDS` (5.3) reads the system monotonic clock — immune to NTP adjustments, leap seconds, and manual `date -s` changes that corrupt `EPOCHREALTIME`-based elapsed measurements. Integer seconds resolution. Availability depends on OS `clock_gettime(CLOCK_MONOTONIC)` support, present on Linux, macOS, and the BSDs.
 
 The critical distinction: `EPOCHREALTIME` measures wall-clock time (subject to NTP step corrections mid-measurement), `BASH_MONOSECONDS` measures elapsed time (monotonically increasing, never adjusted). Use `EPOCHREALTIME` for timestamps, `BASH_MONOSECONDS` for durations.
 
@@ -373,7 +373,7 @@ _kv_get() {
 }
 ```
 
-`BASH_LOADABLES_PATH` provides default search path. Verify interfaces with `help <builtin>` after loading — APIs may vary across installations. Always provide awk/date/associative-array fallback.
+`BASH_LOADABLES_PATH` sets the default search path. Verify interfaces with `help <builtin>` after loading — APIs may vary across installations. Always provide awk/date/associative-array fallback.
 
 ## [08]-[SHELL_OPTIONS_53]
 
@@ -394,7 +394,7 @@ counters[$(_next_key)]=1
 # call_count is now 1 (correct), not 2 (double-evaluation bug)
 ```
 
-[READ_E]: enables Readline with programmable completion during `read` — transforms `read -ep` from a bare prompt into a fully interactive input with tab completion, history, and key bindings. Production use: interactive CLIs that need domain-specific completions during user input.
+[READ_E]: activates Readline programmable completion during `read` — turns `read -ep` from a bare prompt into interactive input with tab completion, history, and key bindings. Production use: interactive CLIs needing domain-specific completions during input.
 
 ```bash conceptual
 # Interactive prompt with Readline completion (5.3)
@@ -437,7 +437,7 @@ Enable `array_expand_once` globally in scripts using associative arrays with com
 
 ## [09]-[WAIT_PRIMITIVES]
 
-`wait -n` (`5.1+`, unconditional at 5.2 baseline) blocks until ANY background job completes — the foundation for worker pools. `wait -n -p VARNAME` (`5.2+`) additionally stores the completed PID, enabling per-job result tracking. `wait -f PID` (`5.2+`) waits for a specific PID even outside job control — critical for scripts running under `set -m` restrictions.
+`wait -n` (`5.1+`, unconditional at 5.2 baseline) blocks until any background job completes — the foundation for worker pools. `wait -n -p VARNAME` (`5.2+`) additionally stores the completed PID, enabling per-job result tracking. `wait -f PID` (`5.2+`) waits for a specific PID even outside job control — critical for scripts running under `set -m` restrictions.
 
 `shopt -s patsub_replacement` (5.2) changes `${var//pat/rep}` behavior: `&` in the replacement expands to the matched text, mirroring sed's `\&`. Disabled by default for backwards compatibility — enable explicitly.
 
@@ -549,15 +549,15 @@ Version gating via packed integer eliminates nested `[[ ]]` chains. `_capture` u
 - GLOBSORT scoped via `_with_globsort` wrapper — never leak sort order into caller's glob behavior.
 - BASH_MONOSECONDS for elapsed-time measurement — immune to NTP drift. EPOCHREALTIME for timestamps only.
 - BASH_TRAPSIG for multi-signal handlers — dispatch on signal number via table, not per-signal trap registration.
-- SRANDOM for unpredictable identifiers and nonces — NEVER for cryptographic key material (32-bit).
+- SRANDOM for unpredictable identifiers and nonces — never for cryptographic key material (32-bit).
 - EPOCHSECONDS/EPOCHREALTIME are baseline (`5.2+`) — use unconditionally, never gate.
-- `printf -v var '%(%F %T)T' -1` is THE fork-free timestamp — never `$(date)`.
+- `printf -v var '%(%F %T)T' -1` is the fork-free timestamp — never `$(date)`.
 - EPOCHREALTIME microsecond diff via integer arithmetic with `10#` prefix — never float subtraction via bc.
 - `shopt -s array_expand_once` on 5.3 — unconditionally safer, prevents double-evaluation of subscripts.
 - `read -E` for interactive prompts requiring tab completion — no effect in non-interactive scripts.
 - `source -p PATH` to isolate library loading from ambient PATH — version-gate with `_source_lib` wrapper.
 - Loadable builtins (`fltexpr`, `strptime`, `kv`) guarded by `enable -f ... 2>/dev/null` — always provide fallback.
 - `wait -n -p` for bounded-concurrency pools with PID tracking; `wait -f` for non-job-control waits — both baseline.
-- `shopt -s patsub_replacement` enables `&` expansion in `${var//pat/rep}` — scope with shopt -u after use.
+- `shopt -s patsub_replacement` expands `&` to the matched text in `${var//pat/rep}` — scope with `shopt -u` after use.
 - Version gating via packed integer `(major * 100 + minor)` — gate only the 5.2/5.3 boundary.
 - Feature-polymorphic helpers (`_capture`, `_flt`, `_parse_ts`, `_secure_random`, `_elapsed_start`, `_kv_get`) centralize version dispatch — call sites remain version-agnostic.

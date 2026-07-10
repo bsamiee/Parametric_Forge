@@ -5,6 +5,7 @@
 # Path          : modules/home/aliases/git.nix
 # ----------------------------------------------------------------------------
 # Git register rows: daily ops, branch/remote, history, external tools.
+
 [
   # --- [GIT_DAILY]
   {

@@ -5,6 +5,7 @@
 # Path          : modules/home/programs/container-tools/default.nix
 # ----------------------------------------------------------------------------
 # Container and Kubernetes tool inventory; imports carry real configuration only.
+
 {
   lib,
   pkgs,
@@ -14,7 +15,7 @@
     ./k9s.nix
   ];
 
-  # Colima itself is installed by services.colima (containers.nix owns the runtime).
+  # services.colima installs Colima, and containers.nix owns the runtime.
   home.packages = [
     pkgs.docker-buildx # Docker BuildKit builder subcommand
     pkgs.docker-client # CLI only (connects to Colima daemon)

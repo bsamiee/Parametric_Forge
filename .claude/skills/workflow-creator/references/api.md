@@ -1,6 +1,6 @@
 # Workflow Runtime Reference
 
-The complete manual for Claude Code's `Workflow` tool: invocation, file anatomy, the script API, every option, every cap, the sandbox contract, and the zero-token validation rail. Orchestration shapes live in the patterns reference; concurrency economics in the throughput reference; resume and recovery in the recovery reference.
+Claude Code's `Workflow` tool runs one author-written JavaScript file that deterministically orchestrates fresh-context subagents in a sandbox. Orchestration shapes live in the patterns reference; concurrency economics in the throughput reference; resume and recovery in the recovery reference.
 
 ## [01]-[MODEL]
 
@@ -45,40 +45,40 @@ Runtime posture knobs, all advisory or off-switches — none change script seman
 
 Two parts, in this order; the parser is strict about both.
 
-### [03.1]-[META_MANDATORY_FIRST_STATEMENT_PURE_LITERAL]
+### [03.1]-[META_FIRST_LITERAL]
 
 The very first statement must be `export const meta = {…}`, and the object must be a pure literal: no variables, no function calls, no spreads, no template interpolation. The parser walks the syntax tree and rejects anything else, along with reserved keys (`__proto__`, `constructor`, `prototype`). A backtick anywhere in the literal is rejected — the parser reads any backtick as a template literal, even inside a single-quoted string — so `name`, `description`, and `phases` stay free of code-fenced spans.
 
 ```js conceptual
 export const meta = {
-    name: "find-flaky-tests", // required — non-empty string
-    description: "Find flaky tests and propose fixes", // required — shown in the permission dialog
-    whenToUse: "CI is intermittently red", // optional — shown in the workflow list
+    name: 'find-flaky-tests', // required — non-empty string
+    description: 'Find flaky tests and propose fixes', // required — shown in the permission dialog
+    whenToUse: 'CI is intermittently red', // optional — shown in the workflow list
     phases: [
         // optional — one entry per phase() call
-        { title: "Scan", detail: "grep test logs for retries" },
-        { title: "Fix", detail: "one agent per flaky test", model: "sonnet" },
+        { title: 'Scan', detail: 'grep test logs for retries' },
+        { title: 'Fix', detail: 'one agent per flaky test', model: 'sonnet' },
     ],
 };
 ```
 
 `phases[].title` is matched exactly against `phase()` calls. `phases[].model` is a label, not a setting: the binary shows it in the permission dialog, but no code reads it to pick a model. The model is set only by the `model` option on each `agent()` call — a re-tiered phase sets both, or the dialog lies.
 
-### [03.2]-[THE_BODY]
+### [03.2]-[BODY]
 
 Everything after `meta` is the body. It runs inside an `async` function, so `await` works at the top level. The orchestration globals are injected — nothing is imported. The body's `return` value becomes the tool result. Standard JS built-ins (`JSON`, `Math`, `Array`, `Map`, `Set`, …) are available; section [10] lists what is removed. The body is JavaScript only — TypeScript syntax (type annotations, `interface`, `as` casts) is a parse error.
 
-### [03.3]-[LONG_PROMPT_STRINGS]
+### [03.3]-[PROMPT_STRINGS]
 
 Prompts are the bulk of a workflow. Keep source lines near 150 columns by splitting one string across lines with adjacent `+` concatenation — JavaScript folds adjacent string operands into one value:
 
 ```js conceptual
 const PROMPT =
-    "TASK: realize the open cards of `" +
+    'TASK: realize the open cards of `' +
     folder +
-    "` into design fences " +
-    "at the doctrine bar. Read each card body, the pages it seams to, and " +
-    "verify every novel member before writing.";
+    '` into design fences ' +
+    'at the doctrine bar. Read each card body, the pages it seams to, and ' +
+    'verify every novel member before writing.';
 ```
 
 - Break at a space and keep that space on the left segment; dropping it fuses two words — a silent prompt change.
@@ -129,7 +129,7 @@ Inside a long `[COMPOSITION]`, mark each phase with a bare subsection divider wh
 |  [04]   | `phase`                       | `phase(title) → void`                            | Start a progress group; later agents join it   |
 |  [05]   | `log`                         | `log(message) → void`                            | Emit a narrator line above the progress tree   |
 |  [06]   | `console`                     | `console.log(…)`, `.error(…)`, …                 | Output routed into the workflow log            |
-|  [07]   | `setTimeout` / `clearTimeout` | the standard timer pair                          | Injected, abort-aware; no `sleep` exists       |
+|  [07]   | `setTimeout` / `clearTimeout` | the standard timer pair                          | Injected, abort-aware                          |
 |  [08]   | `budget`                      | `{ total, spent(), remaining() }`                | The turn's token target                        |
 |  [09]   | `args`                        | any                                              | `args` as structured data; `undefined` if none |
 |  [10]   | `workflow`                    | `workflow(nameOrRef, args?) → Promise<any>`      | Run another workflow inline; one nesting level |
@@ -143,7 +143,7 @@ Inside a long `[COMPOSITION]`, mark each phase with a bare subsection divider wh
 ```js conceptual
 const threshold = args?.minUsers ?? 20; // object input
 const scope = Array.isArray(args) ? args : []; // array input
-const task = typeof args === "string" ? args : "the change described in TASK.md";
+const task = typeof args === 'string' ? args : 'the change described in TASK.md';
 ```
 
 Never `JSON.parse(args)` — it is already a live value, and parsing an object throws. Default the no-args run to a safe no-op, never a silent full-corpus sweep. ONE narrow carve-out exists for saved-command invocations that hand a JSON-looking string — a single guarded normalizer at `[INPUTS]` only: `(typeof args === 'string' && /^\s*[\[{]/.test(args)) ? JSON.parse(args) : args`. A bare `JSON.parse(args)` anywhere else stays forbidden. A saved workflow receives `args` via `Workflow({ scriptPath, args })`; if a harness build ever drops it for a `scriptPath` launch, relaunch with an inline `script` or encode the scope in the file.
@@ -151,8 +151,8 @@ Never `JSON.parse(args)` — it is already a live value, and parsing an object t
 ## [05]-[AGENT]
 
 ```js conceptual
-const text = await agent("Summarize the README."); // → string
-const data = await agent("List the deps.", { schema: DEPS_SCHEMA }); // → validated object
+const text = await agent('Summarize the README.'); // → string
+const data = await agent('List the deps.', { schema: DEPS_SCHEMA }); // → validated object
 ```
 
 Without `schema`, `agent()` returns the subagent's final text verbatim. With `schema`, it returns a validated object. If the user skips the agent from `/workflows`, `agent()` returns `null` — the reason results get `.filter(Boolean)`.
@@ -170,7 +170,7 @@ Without `schema`, `agent()` returns the subagent's final text verbatim. With `sc
 
 `schema`, `model`, `isolation`, and `agentType` are the four options baked into the resume cache key, and the prompt text is hashed into it too — change any and that call re-runs. `label`, `phase`, `effort`, and `stallMs` never invalidate a cached result.
 
-### [05.1]-[SETTING_THE_MODEL]
+### [05.1]-[MODEL_SETTING]
 
 | [INDEX] | [PASSED]        | [RESOLVES_TO]                                    |
 | :-----: | :-------------- | :----------------------------------------------- |
@@ -181,11 +181,11 @@ Without `schema`, `agent()` returns the subagent's final text verbatim. With `sc
 |  [05]   | a full model ID | passed through unchanged                         |
 |  [06]   | omitted         | the session's main-loop model                    |
 
-There is no validation: a typo like `'sonet'` passes through verbatim and the agent fails later at the API call. Spell the alias exactly. Omit `model` for judgement-heavy work so it inherits the capable session model; drop cheap, high-volume, mechanical leaf work to `'sonnet'`, or route a self-contained lane to gpt-5.5 through the codex-lanes reference. `effort` is the orthogonal axis — a cheap model still reasons hard at `'high'`; match `'max'`/`'xhigh'` to synthesis and adversarial judgment, `'low'` to mechanical leaf work.
+There is no validation: a typo like `'sonet'` passes through verbatim and the agent fails later at the API call. Spell the alias exactly. Omit `model` for judgment-heavy work so it inherits the capable session model; drop cheap, high-volume, mechanical leaf work to `'sonnet'`, or route a self-contained lane to gpt-5.5 through the codex-lanes reference. `effort` is the orthogonal axis — a cheap model still reasons hard at `'high'`; match `'max'`/`'xhigh'` to synthesis and adversarial judgment, `'low'` to mechanical leaf work.
 
 Not how the model gets set: `meta.phases[].model` (display-only), and the `CLAUDE_CODE_SUBAGENT_MODEL` env var — when set it silently overrides every per-call `model` for the whole session (a user/CI knob the validation section exploits).
 
-### [05.2]-[STRUCTURED_OUTPUT_WITH_SCHEMA]
+### [05.2]-[SCHEMA_OUTPUT]
 
 The runtime compiles the schema with AJV, synthesizes a hidden `StructuredOutput` tool whose input is that schema, and tells the subagent it must call it exactly once. The call is AJV-validated; on a mismatch the agent is handed the error and retries; a subagent that finishes without calling it is nudged up to twice more before failing. The value `agent()` returns is the validated tool input.
 

@@ -4,11 +4,9 @@
 -- License       : MIT
 -- Path          : modules/home/programs/apps/wezterm/deck.lua
 -- ----------------------------------------------------------------------------
--- Row interpreter for constructor-bound config: fonts, seam env, key dispatch,
--- pane-nav handoff, guarded broadcast, hyperlinks, launcher menu, floats, and
--- palette entries. Every vocabulary it consumes is generated (rows.lua); no
--- private literals. Actions build once per config generation: action_callback
--- registers a permanent handler per call, so per-press construction leaks.
+-- Row interpreter for constructor-bound config: fonts, seam env, key dispatch, pane-nav handoff, guarded broadcast, hyperlinks,
+-- launcher menu, floats, and palette entries. Every vocabulary it consumes is generated (rows.lua); no private literals.
+-- Actions build once per config generation: action_callback registers a permanent handler per call, so per-press construction leaks.
 
 local wezterm = require("wezterm")
 local act = wezterm.action
@@ -26,11 +24,9 @@ for _, cmd in ipairs(rows.commands) do
     M.commands[cmd.id] = cmd
 end
 
--- Workspace identity crosses the outer-inner seam intact: the zellij session
--- carries the workspace name (estate slug policy), so windows in different
--- workspaces never mirror one shared session. A frozen layout asset recorded
--- under the slug (forge-zellij layout record) outranks the default layout —
--- the freeze/load round-trip closing at the spawn seam.
+-- Workspace identity crosses the outer-inner seam intact: the zellij session carries the workspace name (estate slug policy),
+-- so windows in different workspaces never mirror one shared session. A frozen layout asset recorded under the slug
+-- (forge-zellij layout record) outranks the default layout — the freeze/load round-trip closing at the spawn seam.
 function M.session_args(name)
     local layout = os.getenv("ZELLIJ_DEFAULT_LAYOUT") or "default"
     local frozen = rows.paths.recorded_layouts .. "/" .. name .. ".kdl"
@@ -55,10 +51,8 @@ function M.workspace_cwd(name)
     return w and w.cwd
 end
 
--- Destructive-action gate, total across version predicates: nightly prompts
--- via Confirmation, stable via a two-row InputSelector — the safety row
--- degrades in form, never in force. Build-time factory only: the stable arm
--- registers a callback per call.
+-- Destructive-action gate, total across version predicates: nightly prompts via Confirmation, stable via a two-row InputSelector — the safety row
+-- degrades in form, never in force. Build-time factory only: the stable arm registers a callback per call.
 function M.confirm(message, on_confirm)
     if M.has_nightly then
         return act.Confirmation({ message = message, action = on_confirm })
@@ -74,9 +68,8 @@ function M.confirm(message, on_confirm)
     })
 end
 
--- Receipt rail: the estate dual-receipt envelope — one kv-tab TSV row plus a
--- JSONL sibling with identical keys (ts + surface always; numerics stay JSON
--- numbers on the JSONL side). forge-receipts parses both.
+-- Receipt rail: the estate dual-receipt envelope — one kv-tab TSV row plus a JSONL sibling with identical keys
+-- (ts + surface always; numerics stay JSON numbers on the JSONL side). forge-receipts parses both.
 function M.receipt(fields)
     local row = { ts = os.date("!%Y-%m-%dT%H:%M:%SZ"), surface = "wezterm-deck" }
     local parts = { "ts=" .. row.ts, "surface=" .. row.surface }
@@ -97,10 +90,8 @@ function M.receipt(fields)
     end
 end
 
--- Attention emitter: one JSONL row on the hook-feed superset schema (ts +
--- source + event + terminal identity), so non-Claude processes ride the same
--- collector fold, focus routing, and history queries as harness sessions.
--- Append-only and failure-silent — a bell must never fault the event plane.
+-- Attention emitter: one JSONL row on the hook-feed superset schema (ts + source + event + terminal identity), so non-Claude processes ride the same
+-- collector fold, focus routing, and history queries as harness sessions. Append-only and failure-silent — a bell must never fault the event plane.
 function M.attention(fields)
     local row = {
         ts = os.date("!%Y-%m-%dT%H:%M:%SZ"),
@@ -125,13 +116,10 @@ function M.attention(fields)
     end
 end
 
--- Registry float rows are singletons: a live float for the row focuses
--- instead of duplicating (a second redeploy press must never fork a second
--- run); synthesized floats (varying args) never set reuse and spawn fresh.
--- Workspace-scoped rows key the singleton per workspace, so each workspace
--- owns its own instance (one scratch float per workspace, not one global).
--- The registry rides wezterm.GLOBAL, surviving config reloads; a dead or
--- workspace-hidden window fails resolution and falls through to a spawn.
+-- Registry float rows are singletons: a live float for the row focuses instead of duplicating (a second redeploy press must never
+-- fork a second run); synthesized floats (varying args) never set reuse and spawn fresh. Workspace-scoped rows key the singleton per
+-- workspace, so each workspace owns its own instance (one scratch float per workspace, not one global). The registry rides
+-- wezterm.GLOBAL, surviving config reloads; a dead or workspace-hidden window fails resolution and falls through to a spawn.
 local function float_key(cmd)
     if cmd.scope == "workspace" then
         return cmd.id .. "@" .. wezterm.mux.get_active_workspace()
@@ -154,13 +142,10 @@ local function focus_float(cmd)
     return true
 end
 
--- Floating utility deck: float rows shape the spawn natively — width/height
--- ride wezterm.mux.spawn_window as cell counts; window level is a macOS
--- platform row — other hosts degrade with an explicit receipt, never
--- silently. Workspace-scoped rows take the active workspace row's float
--- policy, so a remote workspace's floats read visibly distinct. The spawn
--- rides a pcall rail: a failure lands an error receipt, never an unhandled
--- callback fault (the second result is the error value).
+-- Floating utility deck: float rows shape the spawn natively — width/height ride wezterm.mux.spawn_window as cell counts;
+-- window level is a macOS platform row — other hosts degrade with an explicit receipt, never silently. Workspace-scoped
+-- rows take the active workspace row's float policy, so a remote workspace's floats read visibly distinct. The spawn rides
+-- a pcall rail: a failure lands an error receipt, never an unhandled callback fault (the second result is the error value).
 function M.spawn_float(cmd)
     if focus_float(cmd) then
         return
@@ -168,8 +153,7 @@ function M.spawn_float(cmd)
     local shape = cmd.float
     local cwd = cmd.cwd
     if cmd.scope == "workspace" then
-        -- Workspace-scoped floats take the active workspace row's shape AND
-        -- land at its cwd: the per-workspace scratch opens in the workspace.
+        -- Workspace-scoped floats take the active workspace row's shape AND land at its cwd: the per-workspace scratch opens in the workspace.
         local wrow = M.workspace_row(wezterm.mux.get_active_workspace())
         shape = (wrow and wrow.float) or shape
         cwd = cwd or (wrow and wrow.cwd)
@@ -215,9 +199,8 @@ function M.spawn_float(cmd)
     })
 end
 
--- Command rows project to actions once: one factory per kind; a destructive
--- row wraps its action in the confirm gate at build time; unknown kinds fault
--- loudly and drop from the palette.
+-- Command rows project to actions once: one factory per kind; a destructive row wraps its action in the confirm gate
+-- at build time; unknown kinds fault loudly and drop from the palette.
 local command_kinds = {
     float = function(cmd)
         return wezterm.action_callback(function()
@@ -245,8 +228,7 @@ local function command_action(cmd)
     return action
 end
 
--- Quick-select action bus: per-row `select` arms convert the selected span
--- into a Forge action; rows without an arm keep the native clipboard default.
+-- Quick-select action bus: per-row `select` arms convert the selected span to a Forge action; rows without an arm keep the native clipboard default.
 local select_kinds = {
     ["edit"] = function(_, pane, sel)
         local file, line = sel:match("^(.-):(%d+)")
@@ -303,23 +285,20 @@ local function workspace_choices()
 end
 
 local function switch_workspace(window, pane, name)
-    -- Fresh workspaces land their slug-named inner session at the policy cwd;
-    -- live workspaces ignore spawn, so reattach converges on the same session.
+    -- Fresh workspaces land their slug-named inner session at the policy cwd; live workspaces ignore spawn, so reattach converges on that session.
     local spawn = { args = M.session_args(name), cwd = M.workspace_cwd(name) }
     window:perform_action(act.SwitchToWorkspace({ name = name, spawn = spawn }), pane)
     M.receipt({ command = "workspace-switch", action = "switch", workspace = name, result = "ok" })
 end
 
--- Workspace picker action, registered once: choices rebuild per press inside
--- the key callback; every selection replays this one handler.
+-- Workspace picker action, registered once: choices rebuild per press inside the key callback; every selection replays this one handler.
 local pick_workspace = wezterm.action_callback(function(win, p, id)
     if id then
         switch_workspace(win, p, id)
     end
 end)
 
--- Pane-nav handoff: one generated row set crosses the WezTerm boundary —
--- nvim/zellij panes receive the raw chord, plain splits get pane motion.
+-- Pane-nav handoff: one generated row set crosses the WezTerm boundary — nvim/zellij panes receive the raw chord, plain splits get pane motion.
 local nav_direction = {
     ["nav-left"] = "Left",
     ["nav-down"] = "Down",
@@ -337,9 +316,8 @@ local function nav_action(row)
     end)
 end
 
--- Guarded broadcast: SSH-domain safety then destructive confirmation, only
--- then the plugin toggle. Disabling an active sync never prompts. The enable
--- and confirm actions build once; the per-press body only performs them.
+-- Guarded broadcast: SSH-domain safety then destructive confirmation, only then the plugin toggle. Disabling an active
+-- sync never prompts. The enable and confirm actions build once; the per-press body only performs them.
 local function guarded_sync_action(sync)
     local enable = wezterm.action_callback(function(win, p)
         win:perform_action(sync.toggle, p)
@@ -364,9 +342,8 @@ local function guarded_sync_action(sync)
     end)
 end
 
--- Chord-row action dispatch: semantic id -> action, built once. Total over the
--- generated vocabulary minus the plugin-owned sync row and class-routed nav
--- rows; the build validator proves every row id has an arm in this file.
+-- Chord-row action dispatch: semantic id -> action, built once. Total over the generated vocabulary minus the
+-- plugin-owned sync row and class-routed nav rows; the build validator proves every row id has an arm in this file.
 local function key_actions(launcher, quick_select)
     local prompt = {
         description = "New workspace name:",
@@ -398,8 +375,7 @@ local function key_actions(launcher, quick_select)
         ["debug-overlay"] = act.ShowDebugOverlay,
         ["quick-select"] = quick_select,
         ["launcher"] = act.ShowLauncherArgs(launcher),
-        -- Attention router: one keypress resolves the collector's latest
-        -- needs-input row and focuses that pane (forge-agents owns the hops).
+        -- Attention router: one keypress resolves the collector's latest needs-input row and focuses that pane (forge-agents owns the hops).
         ["attention-focus"] = wezterm.action_callback(function()
             wezterm.background_child_process({ rows.paths.forge_agents, "focus" })
         end),
@@ -419,11 +395,9 @@ local function key_actions(launcher, quick_select)
 end
 
 function M.apply(config)
-    -- Fonts: font-owner rows (modules/home/fonts.nix), constructor-bound. The
-    -- forge-font override file prepends a manifest-proven family and rides the
-    -- config reload watch list, so a swap applies live; leading travels per
-    -- mono family, never as one global value; an override naming a chain row
-    -- keeps that row's full spec (weight included).
+    -- Fonts: font-owner rows (modules/home/fonts.nix), constructor-bound. The forge-font override file prepends a
+    -- manifest-proven family and rides the config reload watch list, so a swap applies live; leading travels per mono
+    -- family, never as one global value; an override naming a chain row keeps that row's full spec (weight included).
     local function font_spec(f)
         return f.weight and { family = f.family, weight = f.weight } or f.family
     end
@@ -453,18 +427,16 @@ function M.apply(config)
     config.line_height = rows.font.line_heights[primary] or rows.font.default_line_height
     config.harfbuzz_features = rows.font.harfbuzz_features
 
-    -- Nightly-gated scalar rows. The auth-sock pin routes every mux-spawned
-    -- pane and SSH domain through the 1Password agent instead of the
-    -- identity-less ambient launchd socket.
+    -- Nightly-gated scalar rows. The auth-sock pin routes every mux-spawned pane and SSH domain through the
+    -- 1Password agent instead of the identity-less ambient launchd socket.
     if M.has_nightly then
         config.command_palette_font = config.font
         config.quick_select_remove_styling = true
         config.default_ssh_auth_sock = rows.paths.auth_sock
     end
 
-    -- Outer-inner seam: zellij attach + toolchain PATH projection. Deck-owned
-    -- spawns carry their workspace session explicitly; this is the fallback for
-    -- panes spawned outside deck control (`wezterm cli spawn` without a prog).
+    -- Outer-inner seam: zellij attach + toolchain PATH projection. Deck-owned spawns carry their workspace session
+    -- explicitly; this is the fallback for panes spawned outside deck control (`wezterm cli spawn` without a prog).
     config.default_prog = M.session_args(config.default_workspace)
     local ambient = os.getenv("PATH")
     config.set_environment_variables = {
@@ -485,9 +457,8 @@ function M.apply(config)
         end
     end
 
-    -- Palette rows build once: command entries plus per-pattern quick select;
-    -- the palette event replays this table (a per-open rebuild would register
-    -- a fresh callback set on every open).
+    -- Palette rows build once: command entries plus per-pattern quick select; the palette event replays this table
+    -- (a per-open rebuild registers a fresh callback set on every open).
     M.palette = {}
     for _, cmd in ipairs(rows.commands) do
         local action = command_action(cmd)
@@ -545,11 +516,9 @@ function M.apply(config)
         end
     end
 
-    -- Store-owned plugin rail: direct store-path load. plugin.require would
-    -- git-clone into the runtime cache (and a fetchFromGitHub tree is not a
-    -- repo); dofile consumes the pin with zero cache mutation, so the cache
-    -- stays empty and update_all() has nothing to touch. The env row swaps the
-    -- pin for a dev checkout without touching generated config.
+    -- Store-owned plugin rail: direct store-path load. plugin.require git-clones into the runtime cache (and a
+    -- fetchFromGitHub tree is not a repo); dofile consumes the pin with zero cache mutation, so the cache stays empty
+    -- and update_all() has nothing to touch. The env row swaps the pin for a dev checkout without touching generated config.
     local sync_src = os.getenv("FORGE_WEZTERM_PLUGIN_SYNC_PANES") or rows.plugins.sync_panes
     local sync = dofile(sync_src .. "/plugin/init.lua")
     M.sync = sync

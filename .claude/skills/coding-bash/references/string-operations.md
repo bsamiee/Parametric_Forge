@@ -1,6 +1,6 @@
-# [H1][STRING-TRANSFORMS]
+# [STRING_TRANSFORMS]
 
-Multi-stage transform pipelines, regex extraction with BASH_REMATCH, codec patterns (URL/hex/base64), printf formatting, and template expansion. Single-operator PE reference in `bash-scripting-guide.md` S5.
+Multi-stage transform pipelines, regex extraction with BASH_REMATCH, codec patterns (URL/hex/base64), printf formatting, and template expansion.
 
 | [INDEX] | [PATTERN]          | [S] | [USE_WHEN]                                    |
 | :-----: | :----------------- | :-: | :-------------------------------------------- |
@@ -66,7 +66,7 @@ _safe_filename_53() {
 }
 ```
 
-`+( )` and `+(-)` require `shopt -s extglob` (set in strict mode header). `set -- ${result}` without quotes splits on IFS, then `"$*"` rejoins with the first character of IFS. `${ cmd; }` (Bash `5.3+`) runs in current shell — side effects propagate; see `version-features.md` S1 for semantics and perf benchmarks.
+`+( )` and `+(-)` require `shopt -s extglob` (set in strict mode header). `set -- ${result}` without quotes splits on IFS, then `"$*"` rejoins with the first character of IFS. `${ cmd; }` (Bash `5.3+`) runs in current shell — side effects propagate.
 
 [EDGE_CASES]: `${var:-default}` substitutes when var is unset OR empty; `${var-default}` substitutes only when unset. `${var:+alt}` substitutes when var is set AND non-empty; `${var+alt}` substitutes when set (even if empty). Critical distinction for optional parameter pipelines.
 
@@ -117,7 +117,7 @@ _parse_duration() {
 }
 ```
 
-Regex pattern must be unquoted on RHS of `=~` — quoting forces literal string match. BASH_REMATCH indexing follows group nesting depth: outer groups get lower indices. `_extract_pairs` uses `local` (not `local -r`) inside the loop — `local -r` fails on the second iteration with a redeclaration error. See service-wrapper.sh `_parse_traceparent` for a production example: `[[ "${tp}" =~ ^([0-9a-f]{2})-([0-9a-f]{32})-([0-9a-f]{16})-([0-9a-f]{2})$ ]]` validates W3C trace context and extracts trace/span/flags in a single match.
+Regex pattern must be unquoted on RHS of `=~` — quoting forces literal string match. BASH_REMATCH indexing follows group nesting depth: outer groups get lower indices. `_extract_pairs` uses `local` (not `local -r`) inside the loop — `local -r` fails on the second iteration with a redeclaration error. A W3C trace-context validator extracts trace/span/flags in one match: `[[ "${tp}" =~ ^([0-9a-f]{2})-([0-9a-f]{32})-([0-9a-f]{16})-([0-9a-f]{2})$ ]]`.
 
 ## [03]-[PRINTF_FORMATTING]
 
@@ -162,7 +162,7 @@ _build_key() {
 }
 ```
 
-`printf -v` writes to the variable in the CURRENT scope — not a subshell. This means `local -n` namerefs compose with `printf -v` for zero-allocation output. `${var@Q}` is the PE equivalent of `printf '%q'` — use PE form in expansion contexts, `printf -v` form when building into a separate variable. Bash `5.3+` `${ cmd; }` is the third fork-free capture mechanism — use when the producer is a function (not a format string), since `printf -v` cannot capture another function's stdout; see `version-features.md` S1 for benchmarks. See service-wrapper.sh `_init_trace` for a production pattern: `printf -v TRACE_ID '%08x%08x%08x%08x' "${SRANDOM}" "${SRANDOM}" "${SRANDOM}" "${SRANDOM}"` generates 128-bit hex identifiers from CSPRNG without forking `uuidgen` or reading `/dev/urandom`.
+`printf -v` writes to the variable in the CURRENT scope — not a subshell. This means `local -n` namerefs compose with `printf -v` for zero-allocation output. `${var@Q}` is the PE equivalent of `printf '%q'` — use PE form in expansion contexts, `printf -v` form when building into a separate variable. Bash `5.3+` `${ cmd; }` is the third fork-free capture mechanism — use when the producer is a function (not a format string), since `printf -v` cannot capture another function's stdout. `printf -v TRACE_ID '%08x%08x%08x%08x' "${SRANDOM}" "${SRANDOM}" "${SRANDOM}" "${SRANDOM}"` generates 128-bit hex identifiers from CSPRNG without forking `uuidgen` or reading `/dev/urandom`.
 
 ## [04]-[CODEC_PATTERNS]
 
@@ -277,8 +277,8 @@ _render_row() {
 - `printf '%%%02X' "'${char}"` for byte-to-hex — `'` prefix is POSIX numeric extraction.
 - `printf '%b'` + `${//%/\\x}` for fork-free URL decode in single expansion.
 - JSON escape: backslash FIRST — prevents double-escaping from subsequent passes.
-- `<<'EOF'` suppresses expansion; `<<EOF` enables — mixing is the most common heredoc bug.
+- `<<'EOF'` suppresses expansion; `<<EOF` expands it — mixing is the most common heredoc bug.
 - `envsubst` with explicit variable list — without it, all env vars expand (security risk).
 - `printf -v var '%08x' "${SRANDOM}"` for fork-free hex ID generation from kernel CSPRNG — replaces `uuidgen`/`od -x` forks.
-- `${k%%+([[:space:]])}` / `${v##+([[:space:]])}` for extglob whitespace trim in config parsing (cli-tool.sh pattern).
+- `${k%%+([[:space:]])}` / `${v##+([[:space:]])}` for extglob whitespace trim in config parsing.
 - Bash `5.3+` `${ cmd; }` for fork-free function capture — use when producer is a function, not a format string (`printf -v` cannot capture another function's stdout).

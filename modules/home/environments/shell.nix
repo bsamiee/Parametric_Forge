@@ -5,6 +5,7 @@
 # Path          : modules/home/environments/shell.nix
 # ----------------------------------------------------------------------------
 # Shell configuration environment variables
+
 {
   config,
   forgeToolchainEnvFor,
@@ -19,19 +20,19 @@ in {
   # --- [USER_SESSION_PATH]
   # Order matters: nix-darwin paths must be included for non-login shells (VS Code)
   home.sessionPath = toolchainEnv.userPathEntries;
-  # Note: pnpm installed via nix for PATH stability; PNPM_HOME is data/config only.
+  # pnpm installed via nix for PATH stability; PNPM_HOME is data/config only.
 
   home.sessionVariables = {
     # --- [SHELL_INTERNALS]
     SQLITE_HISTORY = "${config.xdg.stateHome}/sqlite/history";
     LESSHISTFILE = "${config.xdg.stateHome}/less/history";
-    # ZSH_AUTOSUGGEST_STRATEGY is a zsh array owned by zsh/init.nix, not a session scalar.
+    # ZSH_AUTOSUGGEST_STRATEGY is a zsh array, not a session scalar.
     ZSH_AUTOSUGGEST_BUFFER_MAX_SIZE = "20";
-    ZSH_AUTOSUGGEST_USE_ASYNC = "1"; # Significant performance improvement
+    ZSH_AUTOSUGGEST_USE_ASYNC = "1";
     KEYTIMEOUT = "200";
     PAGER = "less"; # Let tools add their own flags
-    BAT_PAGER = "less -RFXK"; # Bat pager: -X fixes macOS Terminal.app clearing
-    # procs reads no pager env var; its pager command is owned by procs.nix config.
+    BAT_PAGER = "less -RFXK"; # -X fixes macOS Terminal.app clearing
+    # procs reads no pager env var; its pager is config-owned, not env.
     LESS = "-RFX"; # -X prevents screen clearing on macOS
     MANROFFOPT = "-c";
     RICH_THEME = "dracula"; # rich accepts named Pygments styles only; dracula matches the estate palette variant
@@ -61,12 +62,12 @@ in {
     # Rclone + Rsync
     RCLONE_CONFIG = "${config.xdg.configHome}/rclone/rclone.conf";
     RCLONE_TRANSFERS = "4"; # Balanced concurrent transfers
-    RCLONE_CHECKERS = "8"; # Parallel checkers for syncing
-    RSYNC_RSH = "ssh"; # Explicit SSH transport for rsync
+    RCLONE_CHECKERS = "8";
+    RSYNC_RSH = "ssh";
     RSYNC_PROTECT_ARGS = "1"; # Protect args with spaces/wildcards (pre-3.2.4)
 
     # --- [FZF_FORGIT_CONFIGURATION]
-    FORGIT_PAGER = "delta"; # Consistent with GIT_PAGER (zsh/config.nix envExtra)
+    FORGIT_PAGER = "delta"; # Consistent with GIT_PAGER
     FORGIT_ADD_FZF_OPTS = "--border-label='[GIT ADD]'";
     FORGIT_DIFF_FZF_OPTS = "--border-label='[GIT DIFF]'";
     FORGIT_LOG_FZF_OPTS = "--border-label='[GIT LOG]'";
@@ -82,12 +83,11 @@ in {
     '';
 
     # --- [ZSH_PLUGIN_CONFIGURATIONS]
-    # you-should-use
-    YSU_MESSAGE_POSITION = "before"; # Show message before command execution
+    YSU_MESSAGE_POSITION = "before";
 
-    # --- [NET_CONFIGURATION]
+    # --- [DOTNET]
     DOTNET_MULTILEVEL_LOOKUP = "0"; # Prefer deterministic Nix-provided SDK/runtime graph
-    DOTNET_NOLOGO = "1"; # Suppress startup banner
-    DOTNET_CLI_TELEMETRY_OPTOUT = "1"; # Disable telemetry
+    DOTNET_NOLOGO = "1";
+    DOTNET_CLI_TELEMETRY_OPTOUT = "1";
   };
 }

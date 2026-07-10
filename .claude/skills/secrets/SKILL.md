@@ -5,7 +5,7 @@ description: Estate secret custody and consumption over Doppler and 1Password �
 
 # [SECRETS]
 
-Doppler is the single secret backend; 1Password is transitional root custody and the IaC bootstrap broker. The sanctioned Doppler surfaces on this machine: `services/topology.ts` (the only topology owner — projects, environments, configs, service tokens, and directory scopes as IaC rows), the `doppler` CLI (secret-value reads and writes against declared configs), the SessionStart hook (the only consumption rail), and `~/.doppler` (CLI-owned config and fallback state). Anything else — a per-repo `doppler.yaml`, an ad-hoc env file, a second fetch path — is litter.
+Doppler is the single secret backend; 1Password is transitional root custody and the IaC bootstrap broker. The sanctioned Doppler surfaces on this machine: `services/topology.ts` (the only topology owner — projects, environments, configs, service tokens, and directory scopes as IaC rows), the `doppler` CLI (secret-value reads and writes against declared configs), the SessionStart hook (the only consumption rail), and `~/.doppler` (CLI-owned config and fallback state).
 
 ## [01]-[ROUTING]
 

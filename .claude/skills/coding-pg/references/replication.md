@@ -1,6 +1,6 @@
-# Replication
+# [REPLICATION]
 
-Logical replication topology, publication/subscription patterns, and conflict management for PostgreSQL 18.
+Logical replication moves committed changes publisher-to-subscriber through publications, slots, and subscriptions; RLS never re-evaluates on apply, and conflict resolution is the operator's, never automatic.
 
 ## [01]-[PUBLICATIONS]
 
@@ -68,8 +68,8 @@ ALTER SUBSCRIPTION order_replica ENABLE;
 Subscription contracts:
 
 - `copy_data = true` (default): initial table snapshot + ongoing replication; `false` for tables already synced
-- `streaming = parallel` (PG 16+): large transactions applied by parallel workers — prevents single-transaction blocking
-- `origin = none`: prevents circular replication by filtering changes that arrived via replication (origin-tagged). Does NOT prevent write-write conflicts — two nodes writing to the same row with `origin = none` on both sides still produces insert/update conflicts. Conflict-free bidirectional requires partitioned write domains (node A owns rows 1-N, node B owns N+1-M) or application-level last-write-wins
+- `streaming = parallel`: large transactions applied by parallel workers — prevents single-transaction blocking
+- `origin = none`: prevents circular replication by filtering changes that arrived via replication (origin-tagged). Does not prevent write-write conflicts — two nodes writing to the same row with `origin = none` on both sides still produces insert/update conflicts. Conflict-free bidirectional requires partitioned write domains (node A owns rows 1-N, node B owns N+1-M) or application-level last-write-wins
 - Subscription creates a replication slot on publisher — slot retains WAL until subscriber confirms; monitor `pg_replication_slots` for lag
 - `two_phase = true`: prepared transactions (`PREPARE TRANSACTION`) replicated atomically — requires publisher support
 
@@ -87,9 +87,9 @@ Mitigations:
 - [APPLICATION_LEVEL_VALIDATION_ON_SUBSCRIBER]: trigger or constraint on subscriber tables validates tenant_id matches expected value — defense-in-depth
 - [COLUMN_FILTERING]: exclude sensitive columns from cross-environment replication publications
 
-## [04]-[CONFLICT_TRACKING_PG_15]
+## [04]-[CONFLICT_TRACKING]
 
-`pg_stat_subscription_stats` (introduced PG 15) tracks logical replication conflicts per subscription.
+`pg_stat_subscription_stats` tracks logical replication conflicts per subscription.
 
 ```sql conceptual
 -- Conflict statistics per subscription
@@ -115,11 +115,11 @@ Conflict types:
 
 Conflict contracts:
 
-- Logical replication has NO automatic conflict resolution — conflicts halt the apply worker
+- Logical replication has no automatic conflict resolution — conflicts halt the apply worker
 - Default behavior is ERROR — apply worker stops; requires manual intervention or `ALTER SUBSCRIPTION ... SET (disable_on_error = true)`
-- `disable_on_error = true` disables subscription on error rather than retrying indefinitely — does NOT skip conflicting rows; manual resolution still required
+- `disable_on_error = true` disables subscription on error rather than retrying indefinitely — does not skip conflicting rows; manual resolution still required
 - Prevent conflicts: use unidirectional replication or ensure non-overlapping write partitions
-- `origin = none` prevents re-replication but does NOT resolve write-write conflicts on same row
+- `origin = none` prevents re-replication but does not resolve write-write conflicts on same row
 - Monitor `pg_replication_slots.confirmed_flush_lsn` vs `pg_current_wal_lsn()` for replication lag
 
 ## [05]-[BIDIRECTIONAL_REPLICATION]
@@ -153,7 +153,7 @@ Conflict resolution strategies:
 Pitfalls:
 
 - [SEQUENCE_COLLISIONS]: both nodes generating from same sequence causes PK collisions — use UUIDv7 PKs or odd/even sequence allocation (`INCREMENT BY 2, START WITH 1` on A, `START WITH 2` on B)
-- [SCHEMA_CHANGES]: DDL is NOT replicated — apply identical migrations on both nodes before DML changes arrive
+- [SCHEMA_CHANGES]: DDL is not replicated — apply identical migrations on both nodes before DML changes arrive
 - [INITIAL_SYNC]: use `copy_data = false` on both sides; manually ensure tables are synchronized before enabling subscriptions
 - [PARTITIONED_TABLES]: `publish_via_partition_root = true` required on both sides — otherwise partition-level changes carry partition OID, not root OID, breaking origin filtering
 
@@ -178,7 +178,7 @@ Slot contracts:
 - `max_replication_slots` limits total slots (default 10) — increase for many subscribers
 - Each slot tracks a position independently — multiple subscribers at different lag points are normal
 - Slot names are cluster-wide unique — not per-database
-- Failover slots (PG 17+): `failover = true` in subscription — slot position replicated to physical standby via WAL. On promotion, the new primary has the slot at the last-confirmed LSN. Does NOT auto-transfer active connections — subscriber must reconnect to new primary. Requires `hot_standby_feedback = on` on standby
+- Failover slots: `failover = true` in subscription — slot position replicated to physical standby via WAL. On promotion, the new primary has the slot at the last-confirmed LSN. Does not auto-transfer active connections — subscriber must reconnect to new primary. Requires `hot_standby_feedback = on` on standby
 
 ## [07]-[CHANGE_DATA_CAPTURE_PATTERNS]
 
@@ -211,7 +211,7 @@ CDC contracts:
 - Logical decoding requires `wal_level = logical` — set in postgresql.conf, requires restart
 - `pgoutput` is the standard output plugin — used by native logical replication; `wal2json` for JSON-formatted changes
 - Transactional consistency: all changes within a transaction delivered as a unit — consumer sees atomic commits
-- Large transactions: `streaming = on` streams changes before COMMIT, subscriber spills to disk until commit/abort arrives. `streaming = parallel` (PG 16+) applies streamed changes via parallel workers — prevents single large transaction from blocking all other apply. Memory: `logical_decoding_work_mem` (default 64MB) controls spill threshold on publisher
+- Large transactions: `streaming = on` streams changes before COMMIT, subscriber spills to disk until commit/abort arrives. `streaming = parallel` applies streamed changes via parallel workers — prevents single large transaction from blocking all other apply. Memory: `logical_decoding_work_mem` (default 64MB) controls spill threshold on publisher
 
 ## [08]-[CONFIGURATION_REQUIREMENTS]
 

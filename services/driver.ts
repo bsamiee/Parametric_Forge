@@ -4,16 +4,9 @@
 // License       : MIT
 // Path          : services/driver.ts
 // ----------------------------------------------------------------------------
-// Services-IaC boot module: Pulumi Automation API over a local file backend
-// under XDG state, passphrase and Doppler token brokered from 1Password per
-// invocation. Zero YAML on disk: the project manifest is synthesized into the
-// workspace temp dir. Also owns the machine directory-scope rail (the
-// replacement for per-repo doppler.yaml). Exports nothing; runMain terminates.
-//
-//   node services/driver.ts preview|up|refresh [--adopt] [--target=<p>/<c>/<token>]
-//   node services/driver.ts outputs [name] [--reveal]
-//   node services/driver.ts scopes apply|doctor|strict
-//   node services/driver.ts reviewers
+// Services-IaC boot module: Pulumi Automation API over a local file backend under XDG state, passphrase and Doppler token brokered
+// from 1Password per invocation. Zero YAML on disk: the project manifest synthesizes into the workspace temp dir. Also owns
+// the machine directory-scope rail, the replacement for per-repo doppler.yaml. Exports nothing; runMain terminates.
 
 import { createHash } from 'node:crypto';
 import { homedir } from 'node:os';
@@ -102,9 +95,8 @@ const _run = (cmd: Command.Command, label: string) =>
 
 const _shell = (command: string, ...args: ReadonlyArray<string>) => _run(Command.make(command, ...args), `${command} ${args.join(' ')}`);
 
-// Webhook signing secrets brokered from their Doppler custody rows via the IaC
-// token; each seals as Redacted at admission and unwraps only at the engine's
-// secret-input seam inside estate.ts.
+// Webhook signing secrets brokered from their Doppler custody rows via the IaC token; each seals as Redacted
+// at admission and unwraps only at the engine's secret-input seam inside estate.ts.
 const _webhookSecrets = (token: Redacted.Redacted<string>) =>
     Effect.map(
         Effect.forEach(
@@ -178,8 +170,7 @@ const _openStack = (flags: Flags) =>
         const backendUrl = `file://${cfg.stateDir}`;
         const webhookSecrets = yield* _webhookSecrets(token);
         return yield* Effect.tryPromise({
-            // BOUNDARY ADAPTER: Pulumi Automation API is promise-native; secrets unwrap
-            // only into the engine's child process environment.
+            // BOUNDARY ADAPTER: Pulumi Automation API is promise-native; secrets unwrap only into the engine's child process environment.
             try: () =>
                 LocalWorkspace.createOrSelectStack(
                     {
@@ -214,13 +205,12 @@ const _stackAct = <A>(operation: string, flags: Flags, act: (stack: Stack) => Pr
         }),
     );
 
-// BOUNDARY ADAPTER: Pulumi onOutput sink — the engine hands raw chunks to a
-// void callback outside the rail.
+// BOUNDARY ADAPTER: Pulumi onOutput sink — the engine hands raw chunks to a void callback outside the rail.
 const _echo = (chunk: string): void => {
     process.stdout.write(chunk);
 };
 
-// --- [SCOPE_RAIL]
+// --- [SCOPE_RAIL] ----------------------------------------------------------------------
 
 type ScopeReport = {
     readonly dir: string;
@@ -237,8 +227,7 @@ const _ScopeTable = Schema.parseJson(
     }),
 );
 
-// The doppler CLI emits enclave-prefixed keys; fromKey folds the rename into
-// the decode and an absent key decodes as unset.
+// The doppler CLI emits enclave-prefixed keys; fromKey folds the rename into the decode and an absent key decodes as unset.
 const _ScopePair = Schema.parseJson(
     Schema.Struct({
         project: Schema.optionalWith(Schema.String, { default: () => '' }).pipe(Schema.fromKey('enclave.project')),
@@ -304,9 +293,7 @@ const _doctor = Effect.gen(function* () {
     };
 });
 
-// Applies declared rows for existing directories, then unsets stray rows under
-// scopeRoot; never touches scope `/`, never sets a token, never parses the CLI
-// config file directly.
+// Applies declared rows for existing directories, then unsets stray scopeRoot rows; scope `/`, tokens, and the CLI config file stay untouched.
 const _applyScopes = Effect.gen(function* () {
     const fs = yield* FileSystem.FileSystem;
     const rows = yield* Effect.filter(Topology.scopes, (row) => fs.exists(row.dir), { concurrency: 4 });
@@ -339,7 +326,7 @@ const _scopeVerbs = {
     ),
 } as const;
 
-// --- [REVIEWER_MATRIX]
+// --- [REVIEWER_MATRIX] -----------------------------------------------------------------
 
 type ReviewerRepo = {
     readonly repo: string;
@@ -347,19 +334,16 @@ type ReviewerRepo = {
     readonly configHash: string;
 };
 
-// BOUNDARY ADAPTER: node:crypto digest kernel — the mutable hash draft dies at
-// the return; both matrix hash sites feed it.
+// BOUNDARY ADAPTER: node:crypto digest kernel — the mutable hash draft dies at the return; both matrix hash sites feed it.
 const _digest = (bodies: ReadonlyArray<Uint8Array | string>): string =>
     bodies
         .reduce((draft, body) => draft.update(body), createHash('sha256'))
         .digest('hex')
         .slice(0, 16);
 
-// App identities hash their repo-owned artifacts per repo root; ruleset-native
-// identities hash the desired rule policy once — drift shows up as a hash
-// change on either side, never as prose. Repo roots derive from repository
-// rows as `<scopeRoot>/<name>`, so the matrix follows the GitHub surface and
-// never couples to Doppler scope rows.
+// App identities hash their repo-owned artifacts per repo root; ruleset-native identities hash the desired rule policy
+// once — drift shows up as a hash change on either side, never as prose. Repo roots derive from repository rows as
+// `<scopeRoot>/<name>`, so the matrix follows the GitHub surface and never couples to Doppler scope rows.
 const _artifactHash = (root: string, artifacts: readonly string[]) =>
     Effect.map(
         Effect.flatMap(FileSystem.FileSystem, (fs) =>
@@ -444,15 +428,13 @@ const _flags = (argv: ReadonlyArray<string>): Flags => ({
     targets: Arr.filterMap(argv, (arg) => (arg.startsWith(_FLAGS.target) ? Option.some(arg.slice(_FLAGS.target.length)) : Option.none())),
 });
 
-// Remint rail: a token coordinate maps onto its ServiceToken URN so drop/restore
-// applies touch nothing else even when the estate carries unrelated drift.
+// Remint rail: a token coordinate maps onto its ServiceToken URN so drop/restore applies touch nothing else even under unrelated estate drift.
 const _tokenUrn = (coordinate: string): string =>
     `urn:pulumi:${STACK}::${PROJECT}::doppler:index/serviceToken:ServiceToken::${coordinate.split('/').join('-')}`;
 
 const _targeted = (flags: Flags): { readonly target?: string[] } => (flags.targets.length === 0 ? {} : { target: flags.targets.map(_tokenUrn) });
 
-// Plan modes fold as engine options: --refresh diffs against refreshed live
-// state (the drift probe), --expect-no-changes turns steady state into a gate.
+// Plan modes fold as engine options: --refresh diffs against refreshed live state (drift probe), --expect-no-changes turns steady state into a gate.
 const _modes = (flags: Flags): { readonly refresh?: true; readonly expectNoChanges?: true } => ({
     ...(flags.refresh ? { refresh: true as const } : {}),
     ...(flags.expectNoChanges ? { expectNoChanges: true as const } : {}),

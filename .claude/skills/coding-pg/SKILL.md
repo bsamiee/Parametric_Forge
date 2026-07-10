@@ -10,14 +10,14 @@ description: >-
 
 # [CODING_PG]
 
-All SQL follows five governing principles:
+All SQL follows these governing principles:
 
 - [POLYMORPHIC] — one function/query per concern, generic over specific via parameter dispatch and dynamic SQL
 - [SET_ALGEBRAIC] — express operations as set transformations; zero row-at-a-time iteration
 - [STRONGLY_TYPED] — domain types, composite types, range types; zero untyped `text` columns for structured data
 - [PROGRAMMATIC] — variable-driven predicates, parameterized DDL, zero stringly-typed identifiers
 - [DECLARATIVE_FIRST] — constraints, generated columns, and RLS policies enforce invariants at the schema level; application logic is last resort
-- [SOURCE_CURRENT] — PostgreSQL 18/current docs are the truth baseline; examples must state current semantics, not stale point-version folklore
+- [SOURCE_CURRENT] — every example states PostgreSQL 18 semantics
 
 ## [01]-[ROUTING]
 
@@ -44,7 +44,7 @@ All SQL follows five governing principles:
 - [EXPRESSION_CONTROL_FLOW]: `CASE`-free query design via `COALESCE`, `NULLIF`, `GREATEST`/`LEAST`, lateral joins, and `FILTER (WHERE ...)` — reserve `CASE` for irreducible multi-branch projection only
 - [SET_COMPOSITION]: CTEs as named relational algebra steps; `UNION ALL` over procedural accumulation; `MERGE` over conditional INSERT/UPDATE sequences
 - [CONSTRAINT_DRIVEN_INTEGRITY]: `CHECK`, `EXCLUDE`, `WITHOUT OVERLAPS`, `GENERATED ALWAYS AS` — push validation into DDL; application-layer checks are redundant defense, not primary enforcement
-- [EXTENSION_FIRST]: pgvector for embeddings, pg_trgm for fuzzy search, PostGIS for spatial, TimescaleDB for time-series — never hand-roll what an extension provides
+- [EXTENSION_FIRST]: pgvector for embeddings, pg_trgm for fuzzy search, PostGIS for spatial, TimescaleDB for time-series — never hand-roll what an extension owns
 
 ## [03]-[CONVENTIONS]
 
@@ -153,5 +153,5 @@ All SQL follows five governing principles:
 
 After writing or modifying SQL, run in order:
 
-1. [AUTOMATED_LINT]: `bash scripts/pg_lint.sh [PATH...]` from this skill directory — anti-pattern detectors (rg-based + structural). Errors (E) block merge; warnings (W) require justification. Supports `--json`, `--sql-only`, `--ts-only`, and `--self-test`.
+1. [AUTOMATED_LINT]: run `bash scripts/pg_lint.sh [PATH...]` from this skill directory; errors (E) block merge, warnings (W) require justification. Flags route to `--help`.
 2. [MANUAL_CHECKLIST]: `references/validation.md` — compliance gates not automatable (Effect-SQL alignment, migration safety, lock-level awareness).

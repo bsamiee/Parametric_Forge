@@ -1,6 +1,6 @@
 # Codex Lanes
 
-Routing a workflow lane to gpt-5.5 through a thin Claude wrapper. The `model` option accepts only Claude models, so a self-contained codex lane (repo sweep, audit, research, mechanical edit) rides a wrapper agent whose ONLY job is dispatch-and-receipt. Dispatch mechanics — flags, config, MCP grading, signals, sessions, effort tiers — are the codex skill's law; this reference carries only the workflow-level composition, and its content tracks that skill.
+Routing a workflow lane to gpt-5.5 through a thin Claude wrapper. The `model` option accepts only Claude models, so a self-contained codex lane (repo sweep, audit, research, mechanical edit) rides a wrapper agent whose ONLY job is dispatch-and-receipt. Dispatch mechanics — flags, config, MCP grading, signals, sessions, effort tiers — are the codex skill's law; this reference carries only the workflow-level composition.
 
 ## [01]-[WRAPPER]
 
@@ -11,10 +11,10 @@ The wrapper runs `model: 'sonnet', effort: 'low'` with a label prefixed `gpt-5.5
 // own schema is the thin RECEIPT — the product body never crosses the wire.
 // The wrapper is LAUNCH-ONLY: it returns a launch receipt in seconds; the orchestrator's
 // setTimeout harvest loop owns the waiting and the promotion.
-const receipt = await agent(codexPrompt("audit-auth", task, PRODUCT_SCHEMA, /*writes*/ false), {
-    model: "sonnet",
-    effort: "low",
-    label: "gpt-5.5:audit-auth",
+const receipt = await agent(codexPrompt('audit-auth', task, PRODUCT_SCHEMA, /*writes*/ false), {
+    model: 'sonnet',
+    effort: 'low',
+    label: 'gpt-5.5:audit-auth',
     schema: RECEIPT,
 });
 ```

@@ -4,12 +4,10 @@
 # License       : MIT
 # Path          : modules/home/programs/shell-tools/bundle-apps.nix
 # ----------------------------------------------------------------------------
-# macOS agent-identity owner: one bundleApps row per background agent projects
-# the Applications/<display>.app Info.plist (so Login Items & Extensions
-# resolves launchd AssociatedBundleIdentifiers to a real name instead of the
-# "/bin/sh" basename) and one LaunchServices registration batch. The notifier
-# rail rides the same surface: one platform-gated binary every caller guards
-# on emptiness.
+# macOS agent-identity owner: one bundleApps row per background agent projects the Applications/<display>.app Info.plist (so Login Items & Extensions
+# resolves launchd AssociatedBundleIdentifiers to a real name instead of the "/bin/sh" basename) and one LaunchServices registration batch. The notifier
+# rail rides the same surface: one platform-gated binary every caller guards on emptiness.
+
 {
   config,
   lib,
@@ -30,8 +28,7 @@ in {
       default = lib.optionalString pkgs.stdenv.hostPlatform.isDarwin "${pkgs.terminal-notifier}/bin/terminal-notifier";
       description = "Desktop notification binary; empty on hosts without one — callers guard on emptiness at runtime.";
     };
-    # Interaction-contract split: notifier posts replaceable async banners;
-    # alerter blocks until the user answers and returns typed JSON (--reply /
+    # Interaction-contract split: notifier posts replaceable async banners; alerter blocks until the user answers and returns typed JSON (--reply /
     # --actions), so a notification becomes a synchronous answer channel.
     alerter = lib.mkOption {
       type = lib.types.str;
@@ -60,8 +57,7 @@ in {
       )
       cfg;
 
-    # lsregister -f is idempotent; a missing app or binary is a silent no-op
-    # so activation never fails on this cosmetic identity surface.
+    # lsregister -f is idempotent; a missing app or binary is a silent no-op so activation never fails on this cosmetic identity surface.
     home.activation.registerForgeBundleApps = lib.hm.dag.entryAfter ["linkGeneration"] ''
       lsregister="/System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/LaunchServices.framework/Versions/A/Support/lsregister"
       for app in ${lib.concatMapStringsSep " " (d: ''"$HOME/Applications/${d}.app"'') (lib.attrValues cfg)}; do

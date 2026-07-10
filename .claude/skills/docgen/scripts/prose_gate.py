@@ -33,11 +33,13 @@ class Check(StrEnum):
     COMMENT_WIDTH = "comment-width"
     COUPLED_LINK = "coupled-link"
     DEAD_RELATIVE_LINK = "dead-relative-link"
+    EM_DASH = "em-dash"
     FENCE_GEOMETRY = "fence-geometry"
     FENCE_INTENT = "fence-intent"
     FENCE_LANGUAGE = "fence-language"
     FENCE_UNCLOSED = "fence-unclosed"
     GLYPH_BAN = "glyph-ban"
+    GROUP_LABEL = "group-label"
     HEADING_ANCHOR = "heading-anchor"
     HEADING_H1 = "heading-h1"
     HEADING_ORDER = "heading-order"
@@ -53,6 +55,7 @@ class Check(StrEnum):
     SECTION_WIDTH = "section-width"
     SELF_COUNT = "self-count"
     SETEXT_HEADING = "setext-heading"
+    SIBLING_POINTER = "sibling-pointer"
     SKILL_BUNDLE_ORPHAN = "skill-bundle-orphan"
     SKILL_BUNDLE_ROUTER = "skill-bundle-router"
     SKILL_DESCRIPTION = "skill-description"
@@ -66,6 +69,7 @@ class Check(StrEnum):
     TABLE_INDEX = "table-index"
     TABLE_LINKS = "table-links"
     TABLE_PROSE = "table-prose"
+    TABLE_SEVERED = "table-severed"
     TABLE_SHAPE = "table-shape"
     TABLE_WIDTH = "table-width"
     TEMPLATE_SLOT = "template-slot"
@@ -125,7 +129,7 @@ ENCODER = msgspec.json.Encoder()
 
 BOLD = re.compile(r"(?<!\*)\*\*(?=\S)(.+?)(?<=\S)\*\*(?!\*)|(?<!_)__(?=\S)(.+?)(?<=\S)__(?!_)")
 ROUTER_CARD = re.compile(
-    r"^(?P<indent>\s*)- \[?\s*(?P<n>\d{1,3})\s*\]?\s*[-\u2013\u2014]?\s*\[(?P<text>[^\]]+)\]\((?P<path>[^)\s]+)\)\s*:\s*(?P<rest>.*)$"
+    r"^(?P<indent>\s*)- \[?\s*(?P<n>\d{1,3})\s*(?:-[A-Z0-9_]+)?\]?\s*[-\u2013\u2014]?\s*\[(?P<text>[^\]]+)\]\((?P<path>[^)\s]+)\)\s*:\s*(?P<rest>.*)$"
 )
 DASH_TAIL = re.compile(r"^ -+$")
 DIVIDER = re.compile(r"^(?P<indent>\s*)(?P<marker>#|//|--) --- (?P<body>\S.*)$")
@@ -157,7 +161,7 @@ GLYPHS = ("│", "├", "└", "⇄")
 HEADER_CELL = re.compile(r"^\[[A-Z][A-Z0-9_]*\]$")
 HEADING = re.compile(r"^(?P<level>#{1,6})\s+(?P<title>.+?)\s*$")
 LIST_ITEM = re.compile(r"^(?P<indent>\s*)(?P<mark>[-+*]|\d+[.)])\s+(?P<body>\S.*)$")
-LIST_LEADER = re.compile(r"^\s*(?:[-+*]|\d+[.)])\s+\[(?:\d{2}(?:-[A-Z0-9_]+)?|[A-Z0-9_]+|[OX!~ ])\](?:\s+[—-]|[-:]\s*|:)")
+LIST_LEADER = re.compile(r"^\s*(?:[-+*]|\d+[.)])\s+\[(?:\d{2}(?:\.\d+)?(?:-[A-Z0-9_]+)?|[A-Z0-9_]+|[OX!~ ])\](?:\s+[—-]|[-:]\s*|:)")
 # A `- Field: value` record field answers to the earned-field law at card altitude; the entry budget binds peer bullets.
 FIELD_LINE = re.compile(r"^[A-Z][A-Za-z-]*(?: [A-Za-z-]+){0,2}: \S")
 # Hard-wrap detection: a flush-left prose line whose predecessor is also flush-left prose; structural leads are excluded.
@@ -207,6 +211,14 @@ SELF_COUNT = re.compile(
 )
 # The lookahead spares dotted-quad network literals; the lookbehind blocks interior re-matches inside them.
 VERSION_ANCHOR = re.compile(r"(?<![\d.])\b(?!(?:\d{1,3}\.){3}\d{1,3}\b)v?\d+\.\d+(?:\.\d+)+\b|\b\d+\.\d+(?:\.\d+)?\+|\bv\d+\.\d+\b")
+# A bare major band anchored to a capitalized product token: the `<Product> NN+` compatibility floor.
+VERSION_BAND = re.compile(r"\b[A-Z][A-Za-z]*\s+\d{1,3}\+(?!\+)")
+# A standards-clause citation is a domain value, not a release pin: Table 2.3.2 and its kin pass the anchor scan.
+CITATION_LEAD = re.compile(r"(?:Table|Clause|Section|Annex|Figure|Chapter|Note|Part|§)\s*$")
+# Spaced double or triple hyphens ride prose as an em dash; the spelled character is the only legal interrupter.
+EM_DASH_ASCII = re.compile(r"(?<=\s)-{2,3}(?=\s)")
+# Section-anchored pointers couple prose to a sibling's interior; a bare owner mention stays the legal one-line pointer form.
+POINTER = re.compile(r"[\w./-]*\w\.md#[\w.-]+|\b[\w./-]+/[\w.-]+#[A-Z][A-Z0-9_]+\b")
 # Deictic freshness and permission verbs warn: both admit context-legal uses review adjudicates.
 FRESHNESS_DEICTIC = re.compile(r"\b(?:currently|recently|nowadays|at\s+present|these\s+days|going\s+forward|modern)\b", re.IGNORECASE)
 WEAK_VERB = re.compile(r"\b(?:supports|provides|offers|allows|enables)\b", re.IGNORECASE)
@@ -217,8 +229,10 @@ PATTERNS: tuple[tuple[Check, re.Pattern[str], Status], ...] = (
     (Check.META_PHRASE, META_PHRASE, "fail"),
     (Check.SELF_COUNT, SELF_COUNT, "fail"),
     (Check.VERSION_ANCHOR, VERSION_ANCHOR, "fail"),
+    (Check.VERSION_ANCHOR, VERSION_BAND, "fail"),
     (Check.VERSION_ANCHOR, FRESHNESS_DEICTIC, "warn"),
     (Check.WEAK_VERB, WEAK_VERB, "warn"),
+    (Check.EM_DASH, EM_DASH_ASCII, "fail"),
 )
 
 
@@ -380,6 +394,8 @@ def collect(paths: tuple[Path, ...]) -> tuple[tuple[Path, ...], tuple[Row, ...]]
                 faults.append(row(target, 0, Check.COLLECT, "fail", "directory holds no owned files"))
         elif target.suffix in owned and target.is_file():
             files.append(target.resolve())
+        elif not target.exists():
+            faults.append(row(target, 0, Check.COLLECT, "fail", "path does not exist"))
         else:
             faults.append(row(target, 0, Check.COLLECT, "fail", "not an owned file kind"))
     return tuple(dict.fromkeys(files)), tuple(faults)
@@ -438,6 +454,8 @@ def lex(path: Path, text: str, cap: int) -> tuple[Document, tuple[Row, ...]]:
     fence: tuple[str, int, int, str, int] | None = None
     mermaid_access = True
     plain_run = False
+    last_rubric = ""
+    pointered = path.name not in ROUTING_FILES and "templates" not in path.parts and not teaching(path)
     n = 0
     while n < len(raw):
         number, line = n + 1, raw[n]
@@ -484,14 +502,24 @@ def lex(path: Path, text: str, cap: int) -> tuple[Document, tuple[Row, ...]]:
                 mermaid_access = True
             elif "copy-safe" in info and PROMPT_LINE.match(line):
                 rows.append(row(path, number, Check.FENCE_INTENT, "fail", "copy-safe fence line carries a shell prompt"))
+            elif "copy-safe" in info and PLACEHOLDER.search(line):
+                rows.append(row(path, number, Check.FENCE_INTENT, "fail", "copy-safe fence carries a placeholder slot; the body is a template"))
+            elif "output-only" in info and PROMPT_LINE.match(line):
+                rows.append(
+                    row(path, number, Check.FENCE_INTENT, "fail", "prompt-led command rides an output-only fence; the body is a run instruction")
+                )
             n += 1
             continue
         if path.name == "README.md" and CARD_ROW.match(line) and len(line) > cap:
             rows.append(row(path, number, Check.FENCE_GEOMETRY, "fail", f"card row {len(line)} > cap {cap}"))
         if heading := HEADING.match(line):
             headings.append(Heading(number, len(heading.group("level")), heading.group("title")))
+            rubrics = re.findall(r"\[([A-Z][A-Z0-9_]*)\]", heading.group("title"))
+            last_rubric = rubrics[-1] if rubrics else last_rubric
             if n + 1 < len(raw) and raw[n + 1].strip():
                 rows.append(row(path, number, Check.HEADING_SPACING, "fail", "heading is not followed by a blank line"))
+        elif GROUP_LABEL.match(line.strip()) and line.strip() == f"[{last_rubric}]:":
+            rows.append(row(path, number, Check.GROUP_LABEL, "warn", f"[{last_rubric}]: echoes its section heading; the label is phantom structure"))
         if SETEXT.match(line) and n > 0 and raw[n - 1].strip() and not TABLE_SEP.match(line):
             rows.append(row(path, number, Check.SETEXT_HEADING, "fail", "setext heading marker"))
         if line.lstrip().startswith("|") and n + 1 < len(raw) and TABLE_SEP.match(raw[n + 1]):
@@ -507,6 +535,8 @@ def lex(path: Path, text: str, cap: int) -> tuple[Document, tuple[Row, ...]]:
             plain_run = False
             n = cursor
             continue
+        if line.lstrip().startswith("|"):
+            rows.append(row(path, number, Check.TABLE_SEVERED, "fail", "table row stranded outside a grid"))
         links.extend(LinkRef(number, link.group(2)) for link in LINK.finditer(re.sub(r"`[^`]*`", "", line)))
         if item := LIST_ITEM.match(line):
             if item.group("mark") in "*+":
@@ -523,6 +553,14 @@ def lex(path: Path, text: str, cap: int) -> tuple[Document, tuple[Row, ...]]:
             lists.append(ListEntry(number, text_joined, stripped, share))
         if not line.lstrip().startswith("|"):
             prose.extend(prose_spans(line, number))
+            if pointered and line.strip() and not EXAMPLE_LINE.match(line):
+                delinked = LINK.sub(" ", line)
+                rows.extend(
+                    row(path, number, Check.SIBLING_POINTER, "warn", f"{hit.group(0)} anchors a sibling's interior; compose its law silently")
+                    for hit in POINTER.finditer(delinked)
+                )
+                if not HEADING.match(line) and re.search(rf"(?<![\w/.-]){re.escape(path.name)}\b", delinked):
+                    rows.append(row(path, number, Check.SIBLING_POINTER, "warn", f"{path.name} names itself; a page never self-references"))
         stripped = line.strip()
         plain = (
             bool(stripped) and not line.startswith((" ", "\t")) and not stripped.startswith(PLAIN_EXCLUDED) and NUMBERED_LEAD.match(stripped) is None
@@ -612,6 +650,12 @@ def table_rows(doc: Document) -> tuple[Row, ...]:
             for pattern in (HEDGE_WORDS, MARKER_WORDS, META_PHRASE)
             for hit in pattern.finditer(QUOTED_SPAN.sub(" ", cell))
         )
+        rows.extend(
+            row(doc.path, table.line + index + 1, Check.BOLD_EMPHASIS, "fail", hit.group(0)[:60])
+            for index, body in enumerate(table.rows, 1)
+            for cell in body
+            for hit in BOLD.finditer(QUOTED_SPAN.sub(" ", cell))
+        )
     return tuple(rows)
 
 
@@ -621,6 +665,11 @@ def heading_rows(doc: Document) -> tuple[Row, ...]:
     rows: list[Row] = []
     h1 = tuple(heading for heading in doc.headings if heading.level == 1)
     rows.extend(row(doc.path, heading.line, Check.HEADING_H1, "fail", "duplicate H1") for heading in h1[1:])
+    rows.extend(
+        row(doc.path, heading.line, Check.HEADING_H1, "fail", f"H1 is one bracketed rubric, never theater: {heading.title[:50]}")
+        for heading in h1
+        if heading.title.startswith("[") and not HEADER_CELL.match(heading.title)
+    )
     expected = 1
     subsection = 0
     for heading in (heading for heading in doc.headings if heading.level in (2, 3)):
@@ -696,6 +745,7 @@ def prose_rows(doc: Document) -> tuple[Row, ...]:
             row(doc.path, span.line, check, status, hit.group(0).lstrip(".!? "))
             for check, pattern, status in PATTERNS
             for hit in pattern.finditer(voiced)
+            if not (check is Check.VERSION_ANCHOR and CITATION_LEAD.search(voiced[: hit.start()]))
         )
     return tuple(rows)
 

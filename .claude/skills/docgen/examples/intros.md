@@ -82,3 +82,19 @@ The lead crams a member inventory, a sub-domain roster, or wire mechanism behind
     ```
 - Reason: A lead carrying a roster and a wire mechanism holds a lower tier's payload; the sub-domain list lives in the fenced tree and the framing lives at its owner.
 - Reframe: Collapse the lead to one charter sentence; demote the inventory to the tree and the mechanism to its owning page.
+
+## [06]-[REALIZATION_STATUS]
+
+A design-corpus lead narrates the page's distance from code — realized, planned, eventual — instead of stating the owned law.
+
+- Detection: A lead whose subject is the corpus's realization state: counts of pages on disk, planned-versus-implemented framing, instructions to treat design as real.
+- Rejected:
+    ```markdown rejected
+    Each codemap node is the eventual source file its design page becomes; treat every node as realized code — all fifty-nine pages are on disk.
+    ```
+- Accepted:
+    ```markdown accepted
+    `<unit>` folds every fabrication route through one policy-driven dispatch; the codemap carries the owner topology.
+    ```
+- Reason: The corpus charter states once what the work product is; a per-page realization narrative is process ledger, and the page count is an anchor the next page falsifies.
+- Reframe: Open with the unit's owned invariant; the realization contract lives at the corpus charter alone, and counts die with the frame.

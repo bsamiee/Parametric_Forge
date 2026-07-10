@@ -4,11 +4,9 @@
 -- License       : MIT
 -- Path          : modules/home/programs/apps/nvim/lua/plugins/treesitter.lua
 -- ----------------------------------------------------------------------------
--- nvim-treesitter main: parsers arrive store-owned (one Nix compat unit with
--- the neovim pin); runtime installation is unspellable. Highlight/indent
--- start per buffer when the parser exists; folds ride config/options.lua.
--- Structural textobjects (main branch) bind as row tables over one applier;
--- buffers without a matching query degrade to no-ops.
+-- nvim-treesitter main: parsers arrive store-owned as one Nix compat unit pinned to neovim, never runtime-installed.
+-- Highlight and indent start per buffer when the parser exists; folds ride config/options.lua.
+-- Structural textobjects (main branch) bind as row tables over one applier; buffers without a matching query degrade to no-ops.
 
 vim.treesitter.language.register("json", "jsonc")
 

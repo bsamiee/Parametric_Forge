@@ -6,6 +6,7 @@
 # ----------------------------------------------------------------------------
 # User wallpaper asset applied through System Events; WallpaperAgent owns its own store schema, so the apply never edits Index.plist directly.
 # Policy: one wallpaper on every desktop; restore path is System Settings > Wallpaper.
+
 {
   config,
   lib,

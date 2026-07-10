@@ -4,7 +4,7 @@ A failed `pulumi up` or `pulumi preview` already recorded its error; debugging r
 
 ## [01]-[IDENTIFY_THE_OPERATION]
 
-The operation arrives as org, project, stack, and an update version or preview id — usually in prose ("debug update 161 of vvm-dev"). Missing fields fill from context: the selected stack (`pulumi stack --show-name`, `pulumi stack ls`) or `Pulumi.yaml`; a missing version means the most recent update. Confirm the landed-on operation — version or preview id and stack — with the operator before reading further, lightly.
+The operation arrives as org, project, stack, and an update version or preview id — usually in prose ("debug update 161 of vvm-dev"). Missing fields fill from context: the selected stack (`pulumi stack --show-name`, `pulumi stack ls`) or `Pulumi.yaml`; a missing version means the most recent update. Confirm the landed-on operation — version or preview id and stack — with the operator before reading further.
 
 When nothing identifies the operation, the target is the operator's most recent one. The update list does not record who ran each update, so it resolves through the API: `pulumi whoami` gives the login; `pulumi api /api/stacks/{orgName}/{projectName}/{stackName}/updates/latest` gives the latest update and its `requestedBy.githubLogin`; on mismatch, walk back one version at a time via `/updates/<n>` until the login matches. State which operation was landed on — version, kind, result — and confirm before going further.
 

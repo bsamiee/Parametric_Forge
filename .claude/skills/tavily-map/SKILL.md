@@ -47,7 +47,7 @@ uvx --from tavily-cli tvly map "https://example.com" --max-depth 3 --limit 200 -
 
 ## [03]-[LANE_SELECTION]
 
-Map finds the right page, extract pulls it — cheaper than crawling an entire site when only a few pages matter:
+Map finds the right page; extract pulls it — cheaper than crawling an entire site when only a few pages matter:
 
 ```bash template
 # Step 1: locate the authentication docs

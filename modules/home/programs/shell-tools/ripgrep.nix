@@ -5,6 +5,7 @@
 # Path          : modules/home/programs/shell-tools/ripgrep.nix
 # ----------------------------------------------------------------------------
 # Fast recursive search configuration
+
 {
   config,
   lib,
@@ -19,11 +20,11 @@
     "--follow"
     "--max-columns=150"
     "--max-columns-preview"
-    "--sort=path" # Deterministic output (useful for scripts/tests)
-    "--line-number" # Show line numbers (essential for code navigation)
-    "--trim" # Remove trailing whitespace from output
+    "--sort=path" # Deterministic output
+    "--line-number"
+    "--trim" # Trim leading whitespace from printed lines
     "--no-messages" # Suppress file access error messages
-    "--search-zip" # Search compressed files (gzip, bzip2, xz, lz4, zstd, brotli)
+    "--search-zip" # Search inside compressed archives
     "--ignore-file-case-insensitive" # macOS case-insensitive filesystem support
     "--engine=auto" # Use PCRE2 only when needed (lookaround/backreferences)
     "--hyperlink-format=vscode" # Clickable paths in WezTerm → VSCode
@@ -69,7 +70,7 @@
     # Data formats
     "--type-add=data:*.{json,jsonc,json5,yaml,yml,toml}"
 
-    # Lock files (useful for dependency audits)
+    # Lock files
     "--type-add=lock:*lock.json"
     "--type-add=lock:*lock.yaml"
     "--type-add=lock:Cargo.lock"

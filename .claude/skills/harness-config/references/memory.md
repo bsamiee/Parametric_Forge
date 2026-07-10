@@ -6,10 +6,10 @@ Memory is the always-loaded instruction layer: operator-authored files plus mode
 
 | [INDEX] | [LEVEL] | [LOCATION]                         | [SCOPE]                            |
 | :-----: | :------ | :--------------------------------- | :--------------------------------- |
-|  [01]   | Managed | OS-level managed path              | Organization-wide, not excludable  |
+|  [01]   | Managed | OS-level managed path              | Organization-wide non-excludable   |
 |  [02]   | User    | `~/.claude/CLAUDE.md`              | Every project on the machine       |
 |  [03]   | Project | `CLAUDE.md` or `.claude/CLAUDE.md` | Everyone who clones the repository |
-|  [04]   | Local   | `CLAUDE.local.md`                  | This checkout only, gitignored     |
+|  [04]   | Local   | `CLAUDE.local.md`                  | Gitignored to this checkout        |
 
 The loader walks upward from the working directory, orders discovered files root to working directory, and appends `CLAUDE.local.md` after its sibling `CLAUDE.md` at each level. Subdirectory memory files lazy-load when work touches files beneath them, so folder conventions live beside the folders they govern instead of bloating the root. Target under 200 lines per file — adherence degrades as memory grows, and overflow moves to path-scoped rules. `claudeMdExcludes` skips matching memory files by glob at any settings scope.
 

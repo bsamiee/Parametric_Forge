@@ -119,7 +119,7 @@ Traversal is carrier policy: the collection owner and the sequencing operator to
 [SEQUENCING_OPERATOR]:
 
 - Law: fail-fast traversal is `expression.extra.result.traverse(step, block)` — the substrate's own applicative threader that maps each element through a `Result`-returning step, short-circuits the whole `Block` on the first `Error`, and collects every `Ok` into `Result[Block[T], E]` — and `sequence(block_of_results)` is `traverse(identity, ...)` for an already-railed `Block`; the hand-rolled seed-`bind` fold over `Ok(Block.empty())` is the rejected reimplementation of a primitive the package already ships.
-- Law: the named `threaded` reducer is reserved for a fold the substrate primitive cannot express — a non-append accumulation order, an interleaved running state beside the carrier, a heterogeneous seed — and is then explicit through `Block.fold(threaded, seed)`; a `threaded` re-spelling of plain `traverse` is the COLLAPSE_SCAN wrapper signal, dissolved into the `traverse` call.
+- Law: the named `threaded` reducer is reserved for a fold the substrate primitive cannot express — a non-append accumulation order, an interleaved running state beside the carrier, a heterogeneous seed — and is then explicit through `Block.fold(threaded, seed)`; a `threaded` re-spelling of plain `traverse` is the `COLLAPSE_SCAN` wrapper signal, dissolved into the `traverse` call.
 - Law: `traverse` aborts on the first `Error` and the accumulating disposition reports every casualty — the carrier alone switches between them — but accumulation needs the fault's own combination law and is therefore realized in `[04]`, where the `swap().to_option()` partition and the `combined` reduction close the casualty set; this card ships only the substrate's fail-fast threader and the bespoke `threaded` fold it cannot express.
 - Law: a dependent chain — each step's input the prior step's output, the ladder `traverse` cannot express — has two forms the carrier short-circuits identically: `expression.extra.result.pipeline(*arrows)` composes the `Callable[[A], Result[B, E]]` arrows kleisli (`>=>`) and threads the carrier point-free with no intermediate name, the dense form when only the terminal value survives; `@effect.result[T, E]()` is the generator do-notation where each `yield from` is a `bind` and the `return` is the final `Ok`, earned exactly when an earlier intermediate must be re-used by a later step — value reuse is the discriminant, never chain length, and a chain whose every intermediate feeds only its successor stays `pipeline`.
 - Boundary: the dispatch over a modality (`T | Iterable[T]`) and the head-normalization that drives it are the surfaces page's; this page composes `traverse` to state the failure semantics that dispatch carries, never to re-teach the arity normalization.
@@ -174,14 +174,14 @@ def assembled(head: str, tail: str, ceiling: int):
 
 The failure type is a closed vocabulary the program owns, and the carrier realizes its disposition: independent faults abort or accumulate by the chosen disposition, a dependent chain aborts on the first cause. Apply carrier-qualified failure transforms before collapse; a carrier transform never raises, and recovery keys on the fault's own code or case, never on a reconstructed message, so a fault re-spelled with `map_error` still routes to the right arm.
 
-| [INDEX] | [COMBINATOR]         | [CARRIER]          | [USE]                          |
-| :-----: | :------------------- | :----------------- | :----------------------------- |
-|  [01]   | `.map_error(f)`      | `Result`, `Try`    | re-spell the fault, keep cause |
-|  [02]   | `.or_else_with(f)`   | `Result`, `Option` | recover from the fault         |
-|  [03]   | `.swap()`            | `Result`           | route the fault half           |
-|  [04]   | `.merge()`           | `Result`           | collapse same-typed arms       |
-|  [05]   | `.filter_with(p, f)` | `Result`           | guard with a fault on fail     |
-|  [06]   | `.default_with(f)`   | `Result`, `Option` | terminal lazy fallback         |
+| [INDEX] | [COMBINATOR]         | [CARRIER]          | [USE]                            |
+| :-----: | :------------------- | :----------------- | :------------------------------- |
+|  [01]   | `.map_error(f)`      | `Result`, `Try`    | re-spell the fault keeping cause |
+|  [02]   | `.or_else_with(f)`   | `Result`, `Option` | recover from the fault           |
+|  [03]   | `.swap()`            | `Result`           | route the fault half             |
+|  [04]   | `.merge()`           | `Result`           | collapse same-typed arms         |
+|  [05]   | `.filter_with(p, f)` | `Result`           | guard with a fault on fail       |
+|  [06]   | `.default_with(f)`   | `Result`, `Option` | terminal lazy fallback           |
 
 [VOCABULARY_SHAPE]:
 

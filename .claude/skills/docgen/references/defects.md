@@ -66,7 +66,7 @@ The page reads as a report of its own production: research origin, verification 
 
 Links, citations, numbered references, or meta-references to files, sources, or the project outside the artifact's own concern, anywhere but a declared routing surface. Every coupling is a drift channel: the referenced surface moves, the reference rots, and differently-phrased references infest a corpus faster than any other litter.
 
-- Detection: A link, path, source name, footnote, or paraphrased sibling reference in prose whose section is not a router, route map, or instruction-file routing row.
+- Detection: A link, path, source name, footnote, or paraphrased sibling reference in prose whose section is not a router, route map, or instruction-file routing row. A sibling earns at most one boundary pointer line naming the owner and the one consumed symbol; a section-anchored reference (`page#SECTION`) couples to the sibling's interior, and a page never names itself.
 - Rejected: Per the platform decision and the vendor's guide, the codec follows the recommended framing (see reference 4).
 - Accepted: The codec frames append-only positional rows.
 - Reason: The external fact is verified before authoring and stated as owned law; cross-reference and boundaries sections institutionalize the defect and are banned.
@@ -80,7 +80,7 @@ Non-committal qualifiers, deferred-decision markers, and defensive residue aroun
 - Rejected: Delivery is exactly-once effective — at-least-once transport plus consumer dedupe by content key (never magic).
 - Accepted: Consumer dedupe by content key makes delivery exactly-once effective.
 - Reason: The guarantee is stated as the mechanism that produces it; the reassurance tail dies, and a hypothetical wrong implementation is never narrated — the correct signature makes it unrepresentable.
-- Reframe: Bare fact, at most one load-bearing reason, zero anticipated objections.
+- Reframe: Bare fact, at most one load-bearing reason, zero anticipated objections. A prohibition's consequence states in the present tense — `delegating it silently swaps moduli`, never `would swap`; the subjunctive is the hedge wearing a rationale.
 
 ## [09]-[CAPABILITY_GATE]
 
@@ -124,7 +124,7 @@ Permission verbs — `supports`, `allows`, `enables`, `provides`, `offers` — w
 
 ## [13]-[PROCESS_LEDGER]
 
-Campaign or session bookkeeping fossilized into durable law, in three surface forms: ship-status markers, decision tags and ruling IDs, research/wave/gate stamps and self-revision narration.
+Campaign or session bookkeeping fossilized into durable law, in three surface forms: ship-status markers, decision tags and ruling IDs, research/wave/gate stamps and self-revision narration. In a design-first corpus, realization status is the same class — `planned or implemented`, `treat as realized`, `the eventual source file`, verification narration — the corpus charter states once what the work product is, and no page narrates its distance from code.
 
 - Detection: A marker meaningless to a fresh agent reading the page as timeless law, or a reference to the page's own history or a process timeline.
 - Rejected: DECISION [V10]: the trust gate binds every identifier crossing into engine SQL — LANDED, verify and extend.
@@ -166,7 +166,7 @@ The corpus adopts a foreign authority's posture toward its own ruled standard: a
 
 Durable prose anchored to a release point in time: a version number or pin, a version-conditional behavior band (`at 2.3+`), a date, release narration, or deictic freshness vocabulary — `newest`, `latest`, `modern`, `currently`, `recently`. The corpus assumes the newest stable release of everything it touches, so every such anchor is stale the day after it is written and orders a rebuild agent to honor a dead boundary; the gate constants own the numeric and deictic floors.
 
-- Detection: A version literal, release band, date, or freshness deictic in prose; the manifest, lockfile, or codec owner is the only surface a version legally inhabits.
+- Detection: A version literal, release band, date, or freshness deictic in prose; the manifest, lockfile, or codec owner is the only surface a version legally inhabits. A standards-document clause or table citation (`Table 2.3.2`, `§ 6.3`) is a domain value, never a release pin.
 - Rejected: The neo look lands at 2.14.0+; the curve default moved at 2.13.0 — restore the spline with the prior key.
 - Accepted: The look key accepts `neo`; the curve default is `rounded`, and `basis` restores the spline.
 - Reason: Behavior is stated as the behavior — the newest stable's truth with no band; a genuine wire or persistence version boundary is a positive property stated once at its codec owner.

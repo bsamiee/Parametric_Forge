@@ -7,7 +7,7 @@ A bundle is a directory whose every file sits at the lowest tier that owns it: t
 | [INDEX] | [TIER]        | [LOADS]                     | [COST_PROFILE]                                             |
 | :-----: | :------------ | :-------------------------- | :--------------------------------------------------------- |
 |  [01]   | `description` | Every session, budgeted     | Competes with every installed sibling for listing space    |
-|  [02]   | `SKILL.md`    | On selection                | Persists across turns; rides compaction in a token budget  |
+|  [02]   | `SKILL.md`    | On selection                | Persists across turns and compaction inside a token budget |
 |  [03]   | `references/` | On route, per branch        | Paid only by the task that takes the branch                |
 |  [04]   | `scripts/`    | Never — executes            | Invocation line plus receipt; implementation stays on disk |
 |  [05]   | `assets/`     | Never — consumed by scripts | Zero context cost at any size                              |
@@ -75,4 +75,4 @@ Prose mechanics cross into a bundled script at the first of: the procedure is de
 
 ## [08]-[DIAGRAMS]
 
-A root or reference admits a diagram fence only where shape is the content — a dispatch topology, a state machine, a multi-actor flow whose edge structure prose spends a paragraph per arm to carry. A fence whose nodes map one-to-one onto an adjacent table or roster with no edges beyond reading order is decoration and is deleted; the table already carries the information at lower cost. Type selection, construction, and render validation ride the mermaid-diagramming skill — this test owns admission alone, and the worked pair sits in the repairs file.
+A root or reference admits a diagram fence only where shape is the content — a dispatch topology, a state machine, a multi-actor flow whose edge structure prose spends a paragraph per arm to carry. A fence whose nodes map one-to-one onto an adjacent table or roster with no edges beyond reading order is decoration and is deleted; the table already carries the information at lower cost. Type selection, construction, and render validation ride the mermaid-diagramming skill — this test owns admission alone.

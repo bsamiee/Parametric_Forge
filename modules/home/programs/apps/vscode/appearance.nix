@@ -7,6 +7,7 @@
 # VS Code visual projection: one function of the theme and font owners returning the asserted design scalars and the structured appearance rows.
 # The base theme is builtin Dark Modern — always present, never an extension dependency — and every visible family is overridden from the palette
 # owner, so the rendered workbench carries zero third-party color. Git hues bind the owner git vocabulary (roles.git), never per-app conventions.
+
 {
   lib,
   t,
@@ -93,8 +94,8 @@ in {
     "workbench.productIconTheme" = "material-product-icons";
     "material-icon-theme.folders.color" = s.accent.structural;
     # --- [RENDER]
-    # The ANSI projection is contrast-verified at the palette owner; the runtime contrast mutator would repaint owned hues. Motion stays app
-    # default — animated caret/scroll rows read out-of-sync on this machine.
+    # The ANSI projection is contrast-verified at the palette owner; the runtime contrast mutator repaints owned hues.
+    # Motion stays app default — animated caret/scroll rows read out-of-sync on this machine.
     "terminal.integrated.minimumContrastRatio" = 1;
     "terminal.integrated.customGlyphs" = true;
     "terminal.integrated.rescaleOverlappingGlyphs" = true;
@@ -104,8 +105,8 @@ in {
     # only; no size or heading-scale keys). Manual zoom stays per-window (zoomPerWindow).
     "window.zoomLevel" = 0.25;
     "workbench.tree.indent" = 12;
-    # Gutter and tab-row density: 3 line-number chars cover every file under 10k lines without the 5-char default's dead margin; compact is
-    # the one registered step below default tab height.
+    # Gutter and tab-row density: 3 line-number chars cover every file under 10k lines without the 5-char default's
+    # dead margin; compact is the one registered step below default tab height.
     "editor.lineNumbersMinChars" = 3;
     "window.density.editorTabHeight" = "compact";
   };
@@ -172,9 +173,9 @@ in {
           };
         }
         {
-          # Whole raw span — content and both sigils — is one string-yellow literal; known-language fences still override through their own
-          # embedded grammars (deeper scopes always win). The sigil row exists because the generic punctuation rule would out-match the span
-          # rule on the deeper punctuation.definition.raw scope.
+          # Whole raw span — content and both sigils — is one string-yellow literal; known-language fences still override
+          # through their own embedded grammars (deeper scopes always win). The sigil row exists because the generic
+          # punctuation rule out-matches the span rule on the deeper punctuation.definition.raw scope.
           name = "Markdown raw span";
           scope = "markup.inline.raw, markup.raw.block";
           settings.foreground = p.yellow;
@@ -212,7 +213,7 @@ in {
           };
         }
         {
-          # Replacement semantics would render ***x*** italic-only without this row; foreground still resolves from the italic rule above.
+          # Replacement semantics render ***x*** italic-only without this row; foreground still resolves from the italic rule above.
           name = "Markdown emphasis stack";
           scope = "markup.bold markup.italic, markup.italic markup.bold";
           settings.fontStyle = "bold italic";
@@ -534,7 +535,7 @@ in {
         "banner.foreground" = s.text.primary;
         "banner.iconForeground" = s.state.info;
         # --- [GIT_SCM]
-        # Bound to the owner git vocabulary; the modified pair rides the cyan accent role (operator law) — the blue git hue is too dark as explorer text on crust.
+        # Bound to owner git vocabulary; the modified pair rides cyan accent role (operator law) — blue git hue too dark as explorer text on crust.
         "gitDecoration.addedResourceForeground" = g.added;
         "gitDecoration.modifiedResourceForeground" = s.accent.primary;
         "gitDecoration.deletedResourceForeground" = g.deleted;

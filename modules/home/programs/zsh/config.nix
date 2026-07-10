@@ -4,7 +4,8 @@
 # License       : MIT
 # Path          : modules/home/programs/zsh/config.nix
 # ----------------------------------------------------------------------------
-# Zsh profile and login shell configurations
+# Zsh .zshenv env floor: PATH-neutral nix/Homebrew metadata and the never-clobber session-variable fallback.
+
 {
   config,
   forgeToolchainEnvFor,

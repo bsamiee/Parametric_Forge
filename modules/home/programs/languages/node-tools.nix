@@ -5,6 +5,7 @@
 # Path          : modules/home/programs/languages/node-tools.nix
 # ----------------------------------------------------------------------------
 # Node.js runtime and package tooling.
+
 {
   config,
   pkgs,
@@ -60,12 +61,12 @@ in {
     pkgs.tailwindcss # Utility-first CSS framework
     pkgs.typescript-go # TypeScript 7 (`typescript@7` upstream identity); nixpkgs still ships the dev snapshot as `tsgo` — a package-drift row until stable TS7 packaging lands
     pkgs.dts-lsp # TypeScript declaration navigation for API catalogue work
-    pkgs.mermaid-cli # Mermaid CLI (mmdc) on PATH; Chromium pinned via PUPPETEER_EXECUTABLE_PATH in languages.nix
+    pkgs.mermaid-cli # Mermaid CLI (mmdc) on PATH; Chromium pinned via PUPPETEER_EXECUTABLE_PATH
   ];
 
   xdg.configFile = {
     "prettier/prettierrc.json".text = builtins.toJSON style.prettierrc;
-    # Full Rasm-grade house law: formatter + JS style + organize-imports assist, so config-less directories get the same quality as project law.
+    # Full house law: formatter + JS style + organize-imports assist, so config-less directories get the same quality as project law.
     # Transient trees stay excluded even when passed explicitly (!! rows); workflow scripts are a top-level-await/return DSL no JS parser mode
     # accepts, so they stay grammar-excluded, never policy-excluded.
     "biome/biome.json".text = builtins.toJSON {

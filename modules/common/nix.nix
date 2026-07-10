@@ -7,6 +7,7 @@
 # Determinate Nix custom settings; /etc/nix/nix.conf stays Determinate-owned. One settings vocabulary, two projections: Darwin rides
 # determinateNix customSettings, NixOS rides the thin determinate module plus nix.settings — both land the values in /etc/nix/nix.custom.conf at
 # switch. The OS branch keys on the static host context, never on pkgs (module fixpoint safety).
+
 {
   host,
   lib,
@@ -14,7 +15,7 @@
 }: let
   gib = n: n * 1024 * 1024 * 1024;
 
-  # Local admin group per OS: Darwin admin, NixOS wheel.
+  # Local admin group per OS.
   adminGroups = {
     darwin = ["@admin"];
     nixos = ["@wheel"];
@@ -61,8 +62,7 @@
     narinfo-cache-positive-ttl = 86400;
   };
 
-  # OS projection rows: Darwin rides determinateNix customSettings; NixOS rides nix.settings — determinate.enable defaults true and the module
-  # reroutes generated nix.conf to nix.custom.conf and swaps the daemon for determinate-nixd.
+  # determinate.enable defaults true, so the module reroutes the generated nix.conf to nix.custom.conf and swaps the daemon for determinate-nixd.
   osProjections = {
     darwin = {
       determinateNix = {

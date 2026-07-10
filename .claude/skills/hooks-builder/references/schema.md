@@ -61,7 +61,7 @@ Command hooks add `command`, `args`, `async`, `asyncRewake`, and `shell`. The fo
 - [EXEC]: With `args`, `command` resolves as an executable and spawns directly with `args` as the argument vector — no shell, no tokenization, path placeholders substitute as plain strings. The form for any hook referencing a path placeholder.
 - [SHELL]: Without `args`, the string passes to a shell (`sh -c` on macOS/Linux; Git Bash on Windows, PowerShell fallback, or `shell: "powershell"` explicitly) with full tokenization, pipes, and globs; placeholders wrap in double quotes.
 
-On Windows, exec form requires a real executable — `.cmd`/`.bat` shims from `node_modules/.bin` spawn via `node` plus the script path instead. `async: true` runs the hook in the background without blocking (command hooks only); `asyncRewake: true` additionally wakes Claude on exit 2. Async hooks never block or return decisions — the action already proceeded; their `additionalContext` delivers on the next turn.
+On Windows, exec form requires a real executable — `.cmd`/`.bat` shims from `node_modules/.bin` spawn via `node` plus the script path instead. `async: true` runs the hook in the background without blocking (command hooks only); `asyncRewake: true` additionally wakes Claude on exit 2.
 
 ## [05]-[HTTP_AND_MCP_HOOKS]
 

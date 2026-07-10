@@ -23,12 +23,12 @@ Semantic names only — a consumer reads intent, never hex. The dark registry is
 
 ```css copy-safe
 @property --tone {
-    syntax: "<percentage>";
+    syntax: '<percentage>';
     inherits: true;
     initial-value: 0%;
 }
 @property --raise {
-    syntax: "<number>";
+    syntax: '<number>';
     inherits: true;
     initial-value: 0;
 }
@@ -85,9 +85,9 @@ Semantic names only — a consumer reads intent, never hex. The dark registry is
         --lh-heading: 1.25;
         --lh-body: 1.6;
         --lh-data: 1.4;
-        --font-display: ui-serif, Georgia, "Iowan Old Style", serif;
-        --font-sans: ui-sans-serif, system-ui, "Segoe UI", Roboto, sans-serif;
-        --font-mono: ui-monospace, "SF Mono", Menlo, "Cascadia Mono", Consolas, monospace;
+        --font-display: ui-serif, Georgia, 'Iowan Old Style', serif;
+        --font-sans: ui-sans-serif, system-ui, 'Segoe UI', Roboto, sans-serif;
+        --font-mono: ui-monospace, 'SF Mono', Menlo, 'Cascadia Mono', Consolas, monospace;
         --dur-1: 120ms;
         --dur-2: 200ms;
         --dur-3: 320ms;
@@ -120,7 +120,7 @@ The light palette is one declaration block carried twice — inside `@media (pre
 
 ```css copy-safe
 @layer tokens {
-    :root[data-theme="light"] {
+    :root[data-theme='light'] {
         color-scheme: light;
         --bg: oklch(0.975 0.008 85);
         --surface: oklch(0.945 0.012 85);
@@ -238,17 +238,15 @@ The artifact class fixes the content column, and one `--measure` rules the page 
 
 The structural devices are the page's shared visual vocabulary; every artifact composes from this set, so sibling artifacts read as one system.
 
-| [INDEX] | [DEVICE]         | [COMPOSITION]                                                                    |
-| :-----: | :--------------- | :------------------------------------------------------------------------------- |
-|  [01]   | header triad     | mono eyebrow kicker, serif display `h1`, muted deck line                         |
-|  [02]   | section numerals | CSS-counter `h2::before` in copper mono where order is meaningful                |
-|  [03]   | stat chip        | mono display numeral, mono caption, signed trend delta                           |
-|  [04]   | meter            | violet gradient fill driven by `--value`; segmented variant stacks status shares |
-|  [05]   | keyline rail     | 3px inline-start callout — copper for asides, status hue for verdicts            |
-|  [06]   | heat cell        | fill mixed toward `--accent` by score share, capped at 60%                       |
-|  [07]   | timeline spine   | rail of stamped dot rows; dot hue carries state, the rail carries order          |
-|  [08]   | split pane       | before-and-after panels sharing one header row and one scroll shell              |
-|  [09]   | sidenote         | margin annotation floated into the gutter, folding to block flow when narrow     |
+- [01]-[HEADER_TRIAD]: mono eyebrow kicker, serif display `h1`, muted deck line.
+- [02]-[SECTION_NUMERALS]: CSS-counter `h2::before` in copper mono where order is meaningful.
+- [03]-[STAT_CHIP]: mono display numeral, mono caption, signed trend delta.
+- [04]-[METER]: violet gradient fill driven by `--value`; segmented variant stacks status shares.
+- [05]-[KEYLINE_RAIL]: 3px inline-start callout — copper for asides, status hue for verdicts.
+- [06]-[HEAT_CELL]: fill mixed toward `--accent` by score share, capped at 60%.
+- [07]-[TIMELINE_SPINE]: rail of stamped dot rows; dot hue carries state, the rail carries order.
+- [08]-[SPLIT_PANE]: before-and-after panels sharing one header row and one scroll shell.
+- [09]-[SIDENOTE]: margin annotation floated into the gutter, folding to block flow when narrow.
 
 ## [07]-[STATE_SYSTEM]
 
@@ -268,7 +266,7 @@ Containers, `:has()`, and registered custom properties form one state machine: d
         --tone: 10%;
         --raise: 1;
     }
-    .panel:has([aria-invalid="true"]) {
+    .panel:has([aria-invalid='true']) {
         --tone: 14%;
         border-color: var(--fail);
     }

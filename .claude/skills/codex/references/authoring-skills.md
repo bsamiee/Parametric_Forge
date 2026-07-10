@@ -1,6 +1,6 @@
 # [CODEX_SKILL_AUTHORING]
 
-Authoring skills FOR Codex: the on-disk format, discovery roots, trigger mechanics, the `agents/openai.yaml` metadata surface, and the exact deltas from Claude-side skills. A skill is a directory holding a `SKILL.md` whose frontmatter carries `name` and `description`; `scripts/`, `references/`, and `assets/` ride alongside optionally. The format follows the agent-skills open standard, so a Claude-side bundle ports with only frontmatter and routing deltas.
+A Codex skill is a directory holding a `SKILL.md` whose frontmatter carries `name` and `description`, with `scripts/`, `references/`, and `assets/` alongside optionally. The format follows the agent-skills open standard, so a Claude-side bundle ports with only frontmatter and routing deltas.
 
 ## [01]-[FORMAT_AND_LIMITS]
 
@@ -40,23 +40,23 @@ Invocation is explicit (`$skill-name` in the prompt, or `/skills` in the CLI/IDE
 
 ```yaml template
 interface:
-    display_name: "User-facing name"
-    short_description: "User-facing description"
-    icon_small: "./assets/small-logo.svg"
-    icon_large: "./assets/large-logo.png"
-    brand_color: "#3B82F6"
-    default_prompt: "Surrounding prompt to use the skill with"
+    display_name: 'User-facing name'
+    short_description: 'User-facing description'
+    icon_small: './assets/small-logo.svg'
+    icon_large: './assets/large-logo.png'
+    brand_color: '#3B82F6'
+    default_prompt: 'Surrounding prompt to use the skill with'
 
 policy:
     allow_implicit_invocation: false # default true; false leaves only explicit $skill
 
 dependencies:
     tools:
-        - type: "mcp"
-          value: "serverName"
-          description: "What the server provides"
-          transport: "streamable_http"
-          url: "https://example.com/mcp"
+        - type: 'mcp'
+          value: 'serverName'
+          description: 'What the server provides'
+          transport: 'streamable_http'
+          url: 'https://example.com/mcp'
 ```
 
 `[[skills.config]]` rows in `~/.codex/config.toml` disable a skill without deleting it (`path = ".../SKILL.md"`, `enabled = false`); restart applies.

@@ -30,11 +30,11 @@ Re-run `command -v greptile` after installation.
 
 ## [03]-[AUTH]
 
-`greptile whoami` reports the signed-in account. Missing authentication runs `greptile login` and waits for the user to complete the browser flow; headless environments use `greptile login --api-key` or `GREPTILE_API_KEY`.
+`greptile whoami` reports the signed-in account. Missing authentication runs `greptile login` and waits for the user to complete the browser flow; headless environments use `greptile login --api-key` or `GREPTILE_API_KEY`. `greptile logout` clears the session, and `greptile settings set apiBaseUrl` points the CLI at a self-hosted deployment.
 
 ## [04]-[RUN]
 
-```bash output-only
+```bash copy-safe
 greptile review --json
 ```
 
@@ -87,7 +87,5 @@ No dedicated security mode or flag exists. Security standards land as high-sever
 
 ## [07]-[CLI_SURFACE]
 
-- [REVIEW]: `greptile review` compares the current branch to the repository default branch; `-b <base>` overrides the base.
-- [OUTPUT]: `--json` for machine parsing, `--text` (alias `--agent`) for plain text, `--diff` for inline diffs, `--context <lines>` for surrounding context, `--width`, `--no-color`.
+- [OUTPUT]: `--json` selects machine parsing, `--text`/`--agent` plain text; the remaining render flags route to `greptile review --help`.
 - [SESSIONS]: `--resume` continues an interrupted review; `greptile review show [ID]` reopens a finished one; `greptile review status` exits `0` completed, `3` in progress, `4` failed, `5` cancelled.
-- [AUTH]: `greptile login` (browser), `greptile login --api-key` or `GREPTILE_API_KEY` (headless), `greptile whoami`, `greptile logout`, `greptile settings set apiBaseUrl` for self-hosted deployments.

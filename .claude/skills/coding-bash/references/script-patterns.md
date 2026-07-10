@@ -1,4 +1,4 @@
-# [H1][SCRIPT-PATTERNS]
+# [SCRIPT_PATTERNS]
 
 | [INDEX] | [PATTERN]              | [S] | [USE_WHEN]                                      |
 | :-----: | :--------------------- | :-: | :---------------------------------------------- |
@@ -16,8 +16,7 @@
 
 ## [01]-[ARGUMENT_PARSING]
 
-Three-phase pipeline: subcommand dispatch (O(1) via `declare -Ar`), flag parsing (`case/esac`),
-positional collection (remainder after `--`). Flags consumed exhaustively before positionals.
+Three-phase pipeline: subcommand dispatch (O(1) via `declare -Ar`), flag parsing (`case/esac`), positional collection (remainder after `--`). Flags consumed exhaustively before positionals.
 
 ```bash conceptual
 declare -Ar _SUBCMDS=([start]=_cmd_start [stop]=_cmd_stop [status]=_cmd_status)
@@ -57,13 +56,11 @@ _parse_flags() {
 }
 ```
 
-Remove `_SUBCMDS` (or leave empty) for flag-only scripts. Handlers receive only positional
-args — flags frozen via `readonly` before invocation.
+Remove `_SUBCMDS` (or leave empty) for flag-only scripts. Handlers receive only positional args — flags frozen via `readonly` before invocation.
 
 ### [01.1]-[MULTI_AXIS_DISPATCH]
 
-Two-dimensional `verb:resource` keyed dispatch with parallel metadata arrays. Subsumes
-nested subcommands — the composite key encodes the full route:
+Two-dimensional `verb:resource` keyed dispatch with parallel metadata arrays. Subsumes nested subcommands — the composite key encodes the full route:
 
 ```bash conceptual
 declare -Ar _DISPATCH=(
@@ -107,8 +104,7 @@ _dispatch_help() {
 
 ### [01.2]-[MIDDLEWARE]
 
-Pre/post hooks wrapping handlers via chainable dispatch. Each middleware receives a nameref to
-context — rejection short-circuits the chain without coupling to business logic:
+Pre/post hooks wrapping handlers via chainable dispatch. Each middleware receives a nameref to context — rejection short-circuits the chain without coupling to business logic:
 
 ```bash conceptual
 declare -a _MIDDLEWARE=()
@@ -135,8 +131,7 @@ _use _mw_version
 
 ## [02]-[METADATA_DRIVEN_HELP]
 
-`_OPT_META` encodes all option data — adding an option = one table entry + one `case` branch.
-Explicit key list controls iteration order (associative arrays have no insertion order).
+`_OPT_META` encodes all option data — adding an option is one table entry plus one `case` branch. Explicit key list controls iteration order (associative arrays have no insertion order).
 
 ```bash conceptual
 # Terminal colors — NO_COLOR compliant (https://no-color.org), CI-aware
@@ -194,7 +189,7 @@ load_config() {
 
 ## [04]-[STRUCTURED_LOGGING]
 
-Canonical reference: `bash-logging.md`. API signatures:
+API signatures:
 
 ```bash conceptual
 _debug() _info() _warn() _err()     # Level-gated, caller-context injection via FUNCNAME[2]
@@ -212,13 +207,11 @@ _init_trace() {
 
 ## [05]-[TRAP_CHAIN_AND_CLEANUP]
 
-ERR fires on command failure (diagnostic only), EXIT fires unconditionally and invokes the
-cleanup registry. Cleanup is LIFO — later-acquired resources depend on earlier ones.
+ERR fires on command failure (diagnostic only), EXIT fires unconditionally and invokes the cleanup registry. Cleanup is LIFO — later-acquired resources depend on earlier ones.
 
 ### [05.1]-[ERR_TRAP]
 
-Full stack trace via `FUNCNAME`/`BASH_LINENO`/`BASH_SOURCE`. Requires `set -E` (errtrace)
-so the trap inherits into functions and subshells:
+Full stack trace via `FUNCNAME`/`BASH_LINENO`/`BASH_SOURCE`. Requires `set -E` (errtrace) so the trap inherits into functions and subshells:
 
 ```bash conceptual
 _on_err() {
@@ -234,8 +227,7 @@ trap '_on_err' ERR
 
 ### [05.2]-[CLEANUP_REGISTRY]
 
-LIFO stack — `eval` acceptable here because all registered commands are script-controlled
-string literals, never user input:
+LIFO stack — `eval` acceptable here because all registered commands are script-controlled string literals, never user input:
 
 ```bash conceptual
 declare -a _CLEANUP_STACK=()
@@ -293,8 +285,7 @@ _die_usage() { _err "$@"; _err "See --help"; exit "${EX_USAGE}"; }
 
 ## [06]-[PARALLEL_PROCESSING]
 
-`wait -n -p VARNAME` (Bash `5.1+`) captures the finished PID — required for mapping results
-back to inputs. Without `-p`, a failed job is unidentifiable in the batch.
+`wait -n -p VARNAME` (Bash `5.1+`) captures the finished PID — required for mapping results back to inputs. Without `-p`, a failed job is unidentifiable in the batch.
 
 ```bash conceptual
 declare -A _job_pids=()
@@ -346,9 +337,7 @@ trap - INT TERM           # Reset: default disposition restored
 
 ## [08]-[RETRY]
 
-`SRANDOM` provides kernel entropy — `RANDOM` is LCG, unsuitable for jitter (correlated storms
-across near-simultaneously seeded processes). Parameters: `max` ($1, default 3), `delay` ($2,
-default 1s), `max_delay` ($3, default 60s), command ($4+).
+`SRANDOM` draws kernel entropy; `RANDOM` is an LCG unsuitable for jitter — correlated storms across near-simultaneously seeded processes. Parameters: `max` (`$1`, default 3), `delay` (`$2`, default 1s), `max_delay` (`$3`, default 60s), command (`$4+`).
 
 ```bash conceptual
 retry() {
@@ -390,9 +379,7 @@ _register_cleanup "rm -rf '${WORK_DIR}'"
 
 ## [10]-[COPROCESS]
 
-`coproc` (Bash `4.0+`) creates a bidirectional pipe — `${COPROC[0]}` reads stdout,
-`${COPROC[1]}` writes stdin. Sentinel-based framing solves the result boundary problem
-(knowing when a multi-line response ends):
+`coproc` (Bash `4.0+`) creates a bidirectional pipe — `${COPROC[0]}` reads stdout, `${COPROC[1]}` writes stdin. Sentinel-based framing solves the result boundary problem (knowing when a multi-line response ends):
 
 ```bash conceptual
 # Persistent database session — sentinel marks end of each result set

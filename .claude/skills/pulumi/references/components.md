@@ -1,14 +1,14 @@
 # [PULUMI_COMPONENTS]
 
-`ComponentResource` authoring in full: anatomy, args interface design, output exposure, design patterns, multi-language packaging, and distribution. A component groups related resources into one reusable node with children nested underneath in preview, up, and the Pulumi Cloud console.
+`ComponentResource` authoring: a component groups related resources into one reusable node with children nested underneath in preview, up, and the Pulumi Cloud console.
 
 ## [01]-[ANATOMY]
 
 Every component carries four elements: extend `ComponentResource` and call `super()` with a type URN; accept name, args, and `ComponentResourceOptions`; set `parent: this` on every child; call `registerOutputs()` as the constructor's last act.
 
 ```typescript conceptual
-import * as pulumi from "@pulumi/pulumi";
-import * as aws from "@pulumi/aws";
+import * as pulumi from '@pulumi/pulumi';
+import * as aws from '@pulumi/aws';
 
 interface StaticSiteArgs {
     indexDocument?: pulumi.Input<string>;
@@ -20,15 +20,15 @@ class StaticSite extends pulumi.ComponentResource {
     public readonly websiteUrl: pulumi.Output<string>;
 
     constructor(name: string, args: StaticSiteArgs, opts?: pulumi.ComponentResourceOptions) {
-        super("myorg:index:StaticSite", name, {}, opts);
+        super('myorg:index:StaticSite', name, {}, opts);
 
         const bucket = new aws.s3.Bucket(`${name}-bucket`, {}, { parent: this });
         const website = new aws.s3.BucketWebsiteConfigurationV2(
             `${name}-website`,
             {
                 bucket: bucket.id,
-                indexDocument: { suffix: args.indexDocument ?? "index.html" },
-                errorDocument: { key: args.errorDocument ?? "error.html" },
+                indexDocument: { suffix: args.indexDocument ?? 'index.html' },
+                errorDocument: { key: args.errorDocument ?? 'error.html' },
             },
             { parent: this },
         );
@@ -111,7 +111,7 @@ Consumers install with `pulumi package add <git-repo-url>[@vX.Y.Z]`, which downl
 |  [04]   | Language ecosystem | Package manager  | npm, PyPI, NuGet, Maven                       |
 |  [05]   | Public community   | Pulumi Registry  | Submit via the pulumi/registry GitHub repo    |
 
-The private registry gives automatic API documentation, version management, and org-wide discoverability. Versions are `v`-prefixed git tags; a README is required and becomes the registry documentation page; type annotations (JSDoc, docstrings, Go `Annotate()`) enrich generated SDK docs.
+The private registry generates API documentation automatically, manages versions, and makes components org-wide discoverable. Versions are `v`-prefixed git tags; a README is required and becomes the registry documentation page; type annotations (JSDoc, docstrings, Go `Annotate()`) enrich generated SDK docs.
 
 ```bash template
 pulumi package publish https://github.com/myorg/my-component --publisher myorg
@@ -119,7 +119,7 @@ pulumi package publish https://github.com/myorg/my-component --publisher myorg
 
 ```yaml template
 # CI publish on tag push, OIDC-authenticated
-on: { push: { tags: ["v*"] } }
+on: { push: { tags: ['v*'] } }
 permissions: { id-token: write, contents: read }
 jobs:
     publish:

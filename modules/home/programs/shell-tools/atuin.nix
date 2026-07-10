@@ -5,6 +5,7 @@
 # Path          : modules/home/programs/shell-tools/atuin.nix
 # ----------------------------------------------------------------------------
 # Modern shell history with SQLite backend and full-text search UI
+
 {config, ...}: let
   inherit (config.forge.theme) palette;
 in {
@@ -57,7 +58,7 @@ in {
       show_tabs = true;
       exit_mode = "return-original";
       keymap_mode = "auto";
-      word_jump_mode = "emacs"; # Valid: "emacs" or "subl"
+      word_jump_mode = "emacs";
       word_chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-";
       scroll_context_lines = 2;
       enter_accept = true;
@@ -96,7 +97,7 @@ in {
       };
     };
 
-    # Dracula theme through the HM theme owner (atuin ships only autumn and marine); rows cover every current theme meaning, Muted included.
+    # Dracula theme through the HM theme owner; atuin ships only autumn and marine natively.
     themes.dracula = {
       theme.name = "dracula";
       colors = {

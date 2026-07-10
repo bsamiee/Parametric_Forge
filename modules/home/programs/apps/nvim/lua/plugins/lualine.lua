@@ -4,11 +4,8 @@
 -- License       : MIT
 -- Path          : modules/home/programs/apps/nvim/lua/plugins/lualine.lua
 -- ----------------------------------------------------------------------------
--- Statusline over the generated Forge palette (showmode=false decided a
--- statusline mode indicator; the default statusline shows none). Theme rows
--- derive from one mode->hue table; git facts arrive from gitsigns buffer
--- state — no second git engine. globalstatus derives from laststatus=3
--- (owner: config/options.lua).
+-- Statusline over the generated Forge palette (showmode=false decided a statusline mode indicator; default shows none). Theme rows derive from one
+-- mode->hue table; git facts from gitsigns buffer state — no second git engine. globalstatus derives from laststatus=3 (owner: config/options.lua).
 
 local p = require("forge.palette")
 
@@ -31,8 +28,7 @@ require("lualine").setup({
             terminal = mode(p.orange),
             inactive = mode(p.selection),
         },
-        -- Icon providers stay default-off (render-markdown.lua names the law).
-        icons_enabled = false,
+        icons_enabled = false, -- render-markdown.lua names the icon-provider law.
         component_separators = "│",
         section_separators = "",
     },

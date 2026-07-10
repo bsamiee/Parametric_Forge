@@ -1,6 +1,6 @@
-# [H1][ARRAY-ALGEBRA]
+# [ARRAY_OPERATIONS]
 
-Set algebra via associative arrays, structural transforms via bulk expansion, higher-order traversal via nameref + function dispatch, and null-safe pipeline bridging. Declaration, access, slicing, and basic iteration are in `bash-scripting-guide.md` S6.
+Set algebra via associative arrays, structural transforms via bulk expansion, higher-order traversal via nameref + function dispatch, and null-safe pipeline bridging.
 
 | [INDEX] | [PATTERN]         | [S] | [USE_WHEN]                                                |
 | :-----: | :---------------- | :-: | :-------------------------------------------------------- |
@@ -254,7 +254,7 @@ done
 
 ### [04.1]-[BASH_53_ARRAY_PRIMITIVES]
 
-Gate all behind `(( _BASH_V >= 503 ))` — version probe in `version-features.md` S7.
+Gate all behind `(( _BASH_V >= 503 ))`.
 
 ```bash conceptual
 (( _BASH_V >= 503 )) && {
@@ -277,7 +277,7 @@ Gate all behind `(( _BASH_V >= 503 ))` — version probe in `version-features.md
 
 ### [04.2]-[BOUNDED_CONCURRENCY_POOL]
 
-`wait -n -p` (`5.2+`) enables per-job result collection without polling — alternative to `xargs -P` when per-job exit status matters.
+`wait -n -p` (`5.2+`) collects per-job results without polling — the alternative to `xargs -P` when per-job exit status matters.
 
 ```bash conceptual
 _pool_map() {

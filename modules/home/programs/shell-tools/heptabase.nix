@@ -4,8 +4,8 @@
 # License       : MIT
 # Path          : modules/home/programs/shell-tools/heptabase.nix
 # ----------------------------------------------------------------------------
-# Durable Heptabase CLI wrapper backed by the Homebrew-managed app bundle;
-# Darwin-only — the desktop runtime it execs exists nowhere else.
+# Durable Heptabase CLI wrapper backed by the Homebrew-managed app bundle; Darwin-only — the desktop runtime it execs exists nowhere else.
+
 {
   lib,
   pkgs,

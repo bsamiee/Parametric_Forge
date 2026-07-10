@@ -4,13 +4,11 @@
 # License       : MIT
 # Path          : overlays/default.nix
 # ----------------------------------------------------------------------------
-# Row-folded package projection over overlays/manifest.nix: one binary-release
-# template consumes asset rows; opt-runtime rows (energyplus, openstudio)
-# share one recipe folding row-owned layout, env, and wrapper facts; the
-# sqlite-forge shell kernel generates from its row's profile data; patch rows
-# override upstream packages with row-owned facts; forge-provision is the one
-# hand-authored kernel directory. Vocabulary validation runs here and is
-# forced by the forge-package-manifest build.
+# Row-folded package projection over overlays/manifest.nix: one binary-release template consumes asset rows; opt-runtime rows (energyplus,
+# openstudio) share one recipe folding row-owned layout, env, and wrapper facts; the sqlite-forge shell kernel generates from its row's profile data;
+# patch rows override upstream packages with row-owned facts; forge-provision is the one hand-authored kernel directory. Vocabulary validation runs
+# here and is forced by the forge-package-manifest build.
+
 final: prev: let
   manifest = import ./manifest.nix;
   inherit (prev) lib;
@@ -36,12 +34,10 @@ final: prev: let
     assert lib.assertMsg (lib.elem row.completion voc.completionKinds) "${name}: completion '${row.completion}' outside vocabulary";
     assert lib.assertMsg (lib.elem row.themeCarrier voc.themeCarriers) "${name}: themeCarrier '${row.themeCarrier}' outside vocabulary";
     assert lib.assertMsg (!(row ? completionArgs) || row.completion == "native") "${name}: completionArgs requires completion = \"native\"";
-    # Attr absence is nixpkgs drift (rename/removal) or a typo, never a
-    # platform fact — nixpkgs attrs exist on every platform; fail loud.
+    # Attr absence is nixpkgs drift (rename/removal) or a typo, never a platform fact — nixpkgs attrs exist on every platform; fail loud.
     assert lib.assertMsg (prev ? ${row.attr}) "${name}: attr '${row.attr}' absent from the package set (nixpkgs drift or typo)"; row;
 
-  # Lane admission contract: a row missing a required field fails the ledger
-  # build; `extensionSecurityFields`-class vocabularies are executable here.
+  # Lane admission contract: a row missing a required field fails the ledger build; `extensionSecurityFields`-class vocabularies are executable here.
   checkExtensionLane = lane: def:
     def
     // {
@@ -54,8 +50,7 @@ final: prev: let
         def.rows;
     };
 
-  # Launcher extension rows project live from the fleet manifest owner into
-  # the ledger; placeholder args — only family fields cross, never spawn lines.
+  # Launcher extension rows project live from the fleet manifest owner into the ledger; placeholder args: only family fields cross, never spawn lines.
   fleetLauncherRows = lib.listToAttrs (map (
       r:
         assert lib.assertMsg (lib.elem r.launcher.updateEngine voc.updateEngines) "${r.name}: launcher updateEngine '${r.launcher.updateEngine}' outside vocabulary";
@@ -69,8 +64,7 @@ final: prev: let
   assetOf = name: row:
     row.assets.${system}
     or (throw "${name}: no asset row for ${system} (declared: ${lib.concatStringsSep " " (builtins.attrNames row.assets)})");
-  # Hash origin rides the asset row: fetch="zip" hashes the unpacked NAR
-  # (fetchzip), default hashes the flat file (fetchurl).
+  # Hash origin rides the asset row: fetch="zip" hashes the unpacked NAR (fetchzip), default hashes the flat file (fetchurl).
   srcOf = a:
     if (a.fetch or "url") == "zip"
     then
@@ -80,16 +74,14 @@ final: prev: let
       }
     else prev.fetchurl {inherit (a) url hash;};
 
-  # Env vocabulary of an opt-runtime row projected at a root: names bind to
-  # the runtime root, root-relative subpaths, or the row version.
+  # Env vocabulary of an opt-runtime row projected at a root: names bind to the runtime root, root-relative subpaths, or the row version.
   runtimeEnvAt = row: root:
     lib.genAttrs row.runtime.env.roots (_: root)
     // lib.mapAttrs (_: sub: "${root}/${sub}") row.runtime.env.paths
     // lib.genAttrs row.runtime.env.version (_: row.version);
 
-  # One derivation template for every binary-release row; recipes carry only
-  # the install kernel and unpack facts, with finalAttrs threaded through for
-  # passthru projections.
+  # One derivation template for every binary-release row; recipes carry only the install kernel and unpack facts,
+  # with finalAttrs threaded through for passthru projections.
   mkBinaryRelease = name: recipe: let
     row = rowOf name;
     a = assetOf name row;
@@ -111,11 +103,9 @@ final: prev: let
       }
       // recipe {inherit row a finalAttrs;});
 
-  # Shared opt-runtime recipe: the release tree lands under $out/<root>, each
-  # wrapper exports the row env before exec, and passthru.runtimeEnv serves
-  # session-env consumers the same vocabulary at the installed root. A missing
-  # tool is upstream layout drift (patch_drift); fail the build loudly, never
-  # ship a silently thinner bin/.
+  # Shared opt-runtime recipe: the release tree lands under $out/<root>, each wrapper exports the row env before exec, and passthru.runtimeEnv serves
+  # session-env consumers the same vocabulary at the installed root. A missing tool is upstream layout drift (patch_drift);
+  # fail the build loudly, never ship a silently thinner bin/.
   optRuntime = {
     row,
     finalAttrs,
@@ -152,8 +142,7 @@ final: prev: let
   };
 
   recipes = {
-    # Notarized single-binary release: the zip carries the signed Mach-O and
-    # the TCC notification identity rides its embedded signature — install
+    # Notarized single-binary release: the zip carries the signed Mach-O and the TCC notification identity rides its embedded signature — install
     # copies bytes only; any strip, patch, or re-link forfeits the identity.
     alerter = _: {
       installPhase = ''
@@ -180,8 +169,7 @@ final: prev: let
         runHook postInstall
       '';
     };
-    # Library-only release: upstream ships extension modules, no CLI binary;
-    # an unmatched glob fails the install loudly on layout drift.
+    # Library-only release: upstream ships extension modules, no CLI binary; an unmatched glob fails the install loudly on layout drift.
     sqlean = _: {
       installPhase = ''
         runHook preInstall
@@ -192,10 +180,8 @@ final: prev: let
     nodejs-bin_26 = {a, ...}: {
       pname = "nodejs-bin";
       sourceRoot = a.dir;
-      # pnpm-only rail: npm/npx never reach the installed output (Node 26
-      # dropped corepack from the distribution). A missing strip target is
-      # upstream layout drift (patch_drift); fail the build loudly, never
-      # ship a silently fatter output.
+      # pnpm-only rail: npm/npx never reach the installed output (Node 26 dropped corepack from the distribution). A missing strip target is upstream
+      # layout drift (patch_drift); fail the build loudly, never ship a silently fatter output.
       installPhase = let
         stripRows = ["bin/npm" "bin/npx" "lib/node_modules/npm"];
       in ''
@@ -220,23 +206,20 @@ final: prev: let
   gcloudRow = rowOf "google-cloud-sdk";
   pnpmRow = rowOf "pnpm_11";
 in
-  # Every binary-release attr derives from the recipes table: a next platform
-  # runtime or wrapped release is one manifest row plus one recipe row, never
-  # a new output attr or kernel file.
+  # Every binary-release attr derives from the recipes table: a next platform runtime or wrapped release is one manifest
+  # row plus one recipe row, never a new output attr or kernel file.
   lib.mapAttrs mkBinaryRelease recipes
   // {
     carbon-now-cli = prev.carbon-now-cli.overrideAttrs (old: {
-      # patchFamily source-substitute: Node 26 rejects `assert { type: 'json' }`.
-      # No existence guard — an upstream layout or syntax change must fail the
-      # build loudly (patch_drift), never ship an unpatched binary.
+      # patchFamily source-substitute: Node 26 rejects `assert { type: 'json' }`. No existence guard — an upstream layout or syntax change must fail
+      # the build loudly (patch_drift), never ship an unpatched binary.
       postInstall =
         (old.postInstall or "")
         + ''
           substituteInPlace "$out/lib/node_modules/carbon-now-cli/dist/cli.js" \
             --replace-fail "assert { type: 'json' }" "with { type: 'json' }"
         '';
-      # Update-notifier policy row: self-mutating configstore state is
-      # disabled at admission, never left as unowned config litter.
+      # Update-notifier policy row: self-mutating configstore state is disabled at admission, never left as unowned config litter.
       nativeBuildInputs = (old.nativeBuildInputs or []) ++ [prev.makeBinaryWrapper];
       postFixup =
         (old.postFixup or "")
@@ -244,8 +227,7 @@ in
           wrapProgram "$out/bin/carbon-now" --set NO_UPDATE_NOTIFIER 1
         '';
     });
-    # The binary duckdb CLI overlay has no source tree or pythonHash; python
-    # duckdb (harlequin's engine) keeps the nixpkgs source-built duckdb lineage.
+    # Binary duckdb CLI overlay has no source tree or pythonHash; python duckdb (harlequin's engine) keeps the nixpkgs source-built duckdb lineage.
     pythonPackagesExtensions =
       (prev.pythonPackagesExtensions or [])
       ++ [
@@ -262,8 +244,7 @@ in
           // {
             mcp-launchers = manifest.extensions.mcp-launchers // {rows = fleetLauncherRows;};
           });
-        # Nixpkgs-followed package rows carry no frozen version copy; the ledger
-        # resolves the live pin from the package set, mirroring admissions.
+        # Nixpkgs-followed package rows carry no frozen version copy; the ledger resolves the live pin from the package set, mirroring admissions.
         packages =
           lib.mapAttrs (
             name: row:
@@ -276,8 +257,7 @@ in
               }
           )
           manifest.packages;
-        # Admission pins resolve live from the package set — never frozen copies.
-        # Platform support is a meta.platforms fact (availableOn), not attr
+        # Admission pins resolve live from the package set — never frozen copies. Platform support is a meta.platforms fact (availableOn), not attr
         # presence; checkAdmission already made a missing attr a loud failure.
         admissions =
           lib.mapAttrs (
@@ -323,8 +303,7 @@ in
     pnpm_11 = prev.pnpm_11.overrideAttrs (old: {
       inherit (pnpmRow) version;
       src = srcOf pnpmRow.assets.any;
-      # patchFamily shebang-retarget: nixpkgs nodejs-slim aborts on a libuv
-      # kqueue EINTR assertion at Darwin teardown; Node 26 exits clean.
+      # patchFamily shebang-retarget: nixpkgs nodejs-slim aborts on a libuv kqueue EINTR assertion at Darwin teardown; Node 26 exits clean.
       postFixup =
         (old.postFixup or "")
         + ''
@@ -333,8 +312,7 @@ in
           done
         '';
     });
-    # SQLite shell kernel generated from the manifest row: base modules load on
-    # every profile, profile rows add extras, `all` derives as their union.
+    # SQLite shell kernel generated from the manifest row: base modules load on every profile, profile rows add extras, `all` derives as their union.
     sqlite-forge = let
       row = rowOf "sqlite-forge";
       ext = prev.stdenv.hostPlatform.extensions.sharedLibrary;
@@ -356,8 +334,7 @@ in
               ;;
           esac
 
-          # exec skips EXIT traps, so the init script rides a process-substitution
-          # fd instead of a temp file a trap would have to reap.
+          # exec skips EXIT traps, so the init script rides a process-substitution fd instead of a temp file a trap must reap.
           exec sqlite3 -init <(
             printf '.load ${final.sqlean}/lib/%s${ext}\n' "''${modules[@]}"
             printf '.load %s\n' '${final.sqlite-vec}/lib/vec0${ext}' '${final.libspatialite}/lib/mod_spatialite${ext}'

@@ -1,4 +1,4 @@
-# [H1][COMMON-ERRORS]
+# [COMMON_ERRORS]
 
 ## [01]-[SYNTAX_ERRORS]
 
@@ -22,9 +22,9 @@
 
 ### [02.1]-[EXPRESSION_INJECTION_DETECTION]
 
-[CRITICAL] Direct interpolation of `${{ github.event.* }}` in `run:` blocks enables shell command injection from attacker-controlled PR titles, branch names, and commit messages.
+[CRITICAL] Direct interpolation of `${{ github.event.* }}` in `run:` blocks admits shell command injection from attacker-controlled PR titles, branch names, and commit messages.
 
-[UNTRUSTED_FIELDS]: (attacker-controlled in fork PRs):
+[UNTRUSTED_FIELDS] — attacker-controlled in fork PRs:
 
 | [INDEX] | [FIELD]                                 | [ATTACK_VECTOR]                        |
 | :-----: | :-------------------------------------- | :------------------------------------- |
@@ -47,8 +47,6 @@
       PR_TITLE: ${{ github.event.pull_request.title }}
   run: printf '%s\n' "$PR_TITLE"
 ```
-
-[REFERENCE] Injection prevention: `expressions-and-contexts.md`.
 
 ## [03]-[DEPRECATED_COMMANDS]
 
@@ -91,7 +89,7 @@
 |  [05]   | actions/download-artifact | v3, v4     | v7.0.0    | `37930b1c2abaa49bbe596cd826c3c89aef350131` |
 |  [06]   | github/codeql-action      | v2, v3     | v4.32.2   | `45cbd0c69e560cd9e7cd7f8c32362050c9b7ded2` |
 
-[REFERENCE] Full SHA map: SHA resolution: use `git ls-remote` discovery protocol at generation time.
+Resolve each SHA with `git ls-remote` at generation time.
 
 ## [05]-[JOB_CONFIGURATION]
 
@@ -102,8 +100,6 @@
 |  [03]   | `Circular dependency detected`                    | `job-needs`       | Break circular `needs:` chain.                          |
 |  [04]   | Missing `timeout-minutes:`                        | —                 | Default is 6 hours — add explicit timeout to every job. |
 |  [05]   | `-arm64` suffix on runner label                   | `runner-label`    | Use `-arm` suffix: `ubuntu-24.04-arm` not `-arm64`.     |
-
-- Valid runner labels: `runners.md`
 
 ## [06]-[REUSABLE_WORKFLOW_ERRORS]
 
@@ -117,11 +113,11 @@
 
 ## [07]-[SCHEDULE_ERRORS]
 
-| [INDEX] | [ERROR]                   | [ACTIONLINT_RULE] | [FIX]                                                                            |
-| :-----: | :------------------------ | :---------------- | :------------------------------------------------------------------------------- |
-|  [01]   | `Invalid CRON expression` | `events`          | Format: `minute(0-59) hour(0-23) day(1-31) month(1-12) weekday(0-6, 0=Sunday)`.  |
-|  [02]   | Too-frequent schedule     | —                 | Minimum interval is every 5 minutes for public repos (rate limited by GitHub).   |
-|  [03]   | Timezone expectation      | —                 | All `schedule` cron expressions evaluate in **UTC only** — no timezone override. |
+| [INDEX] | [ERROR]                   | [ACTIONLINT_RULE] | [FIX]                                                                           |
+| :-----: | :------------------------ | :---------------- | :------------------------------------------------------------------------------ |
+|  [01]   | `Invalid CRON expression` | `events`          | Format: `minute(0-59) hour(0-23) day(1-31) month(1-12) weekday(0-6, 0=Sunday)`. |
+|  [02]   | Too-frequent schedule     | —                 | Minimum interval is every 5 minutes for public repos (rate limited by GitHub).  |
+|  [03]   | Timezone expectation      | —                 | All `schedule` cron expressions evaluate in UTC only — no timezone override.    |
 
 ```yaml conceptual
 # Bad:  cron: '0 0 * * 8'    # Weekday 8 does not exist

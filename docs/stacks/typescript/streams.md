@@ -4,9 +4,9 @@ Dataflow earns a `Stream` at exactly three signals: the source is unbounded or a
 
 Six siblings own material this page composes as settled: the `Effect` carrier algebra and `Schedule` policy values are `rails-and-effects.md`'s, `Queue`/`PubSub` mechanics and fiber ownership are `concurrency.md`'s, `Chunk` and the collection algebra are `values.md`'s, edge decode is `boundaries.md`'s, the Mealy step's shape is `computation.md`'s, and overload seams with `Match` terminals are `surfaces-and-dispatch.md`'s. What remains is this page's algebra — the carrier discriminant and its source lift, the accumulator ladder, window policy, fan geometry, the scoped ingress bridge, and the request resolver that collapses N+1 — and its one collapse is uniform: hand-rolled cursor pumps, timers, counters, buffers, tag maps, reconnect loops, and dedup caches dissolve into the declared operator that already owns the geometry.
 
-## [01]-[INDEX]
+## [01]-[DATAFLOW_CHOOSER]
 
-This table maps a dataflow shape to the form that owns it; the most specific shape wins.
+A dataflow shape selects the form that owns it; the most specific shape wins.
 
 | [INDEX] | [DATAFLOW]                            | [OWNING_FORM]                                         | [REJECTED_FORM]                         |
 | :-----: | :------------------------------------ | :---------------------------------------------------- | :-------------------------------------- |

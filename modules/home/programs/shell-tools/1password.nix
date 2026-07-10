@@ -4,7 +4,8 @@
 # License       : MIT
 # Path          : modules/home/programs/shell-tools/1password.nix
 # ----------------------------------------------------------------------------
-# 1Password: Shell Plugins (gh), biometric CLI auth, token injection on rebuild
+# 1Password custody: biometric CLI unlock, SSH agent seam, op-inject token cache on rebuild, and GUI/session secret replay
+
 {
   config,
   lib,
@@ -96,7 +97,7 @@
 in {
   imports = [inputs.shell-plugins.hmModules.default];
 
-  # --- [SHELL_PLUGINS_BIOMETRIC_AUTH_FOR_SUPPORTED_CLIS]
+  # --- [SHELL_PLUGINS]
   # gh stays excluded: GH_TOKEN keeps it working in non-interactive contexts.
   programs._1password-shell-plugins = {
     enable = true;
@@ -106,20 +107,20 @@ in {
   home = {
     packages = [secretsProof];
 
-    # --- [ENVIRONMENT_BIOMETRIC_UNLOCK_FOR_CLI]
+    # --- [BIOMETRIC_UNLOCK]
     sessionVariables = {
       OP_BIOMETRIC_UNLOCK_ENABLED = "true";
     };
 
     activation = {
-      # --- [SETUP_OP_CONFIG_DIRECTORY]
-      # Run BEFORE writeBoundary (validation phase) - safe for idempotent directory creation
+      # --- [OP_CONFIG_DIR]
+      # entryBefore writeBoundary lands this in the validation phase, before config-file link generation.
       ensure1PasswordDirs = lib.hm.dag.entryBefore ["writeBoundary"] ''
         mkdir -p "${config.xdg.configHome}/op"
         chmod 700 "${config.xdg.configHome}/op"
       '';
 
-      # --- [ACTIVATION_HOOK_GENERATE_TOKEN_CACHE_DURING_REBUILD]
+      # --- [TOKEN_CACHE]
       # Runs AFTER linkGeneration: xdg.configFile entries (the template) land after writeBoundary, so an earlier run would read a stale template.
       injectSecretsFromVault = lib.hm.dag.entryAfter ["linkGeneration" "ensureForgeJupyterToken"] ''
         cache_file="$HOME/.config/hm-op-session.sh"
@@ -160,7 +161,7 @@ in {
   };
 
   xdg.configFile = {
-    # --- [OP_SSH_AGENT_SEAM_ONE_UNIFIED_KEY_DETERMINISTIC_OFFER_ORDER]
+    # --- [SSH_AGENT_SEAM]
     # The agent serves exactly the unified estate key; op-ssh-sign (git-tools signing rail) resolves the same item by public key. Approval
     # posture is app-level: approve-for-all-applications during active windows.
     "1Password/ssh/agent.toml".text = ''
@@ -169,7 +170,7 @@ in {
       vault = "Personal"
     '';
 
-    # --- Session-secrets dispatcher: one sourceable file for TUI and GUI lanes -
+    # --- [SESSION_SECRETS]
     # The SessionStart hook maintains the doppler-first session cache; the op cache serves only a fresh machine where no session cache exists yet.
     "forge-session-secrets.sh".text = ''
       if [ -f "${sessionCache}" ]; then
@@ -179,10 +180,9 @@ in {
       fi
     '';
 
-    # --- [SECRET_TEMPLATE_API_KEYS_FOR_OP_INJECT]
+    # --- [SECRET_TEMPLATE]
     "op/env.template".text = ''
-      # API keys resolved during rebuild via "op inject"; the export keyword makes child processes inherit each variable.
-      # ANTHROPIC_API_KEY stays excluded: Claude Code OAuth owns that auth.
+      # API keys resolved during rebuild via "op inject"; ANTHROPIC_API_KEY stays excluded — Claude Code OAuth owns that auth.
       export GREPTILE_API_KEY="op://Tokens/GREPTILE_API_KEY/token"
       export CODERABBIT_API_KEY="op://Tokens/CODERABBIT_API_KEY/token"
       export OP_SERVICE_ACCOUNT_TOKEN="op://Tokens/OP_SERVICE_ACCOUNT_TOKEN/token"

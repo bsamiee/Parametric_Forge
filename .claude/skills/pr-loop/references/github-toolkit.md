@@ -1,6 +1,6 @@
 # [GITHUB_TOOLKIT]
 
-Copyable `gh`/GraphQL/REST patterns, labeled by the loop step each serves. `{owner}`/`{repo}` are auto-filled by `gh` from the repo cwd; `$PR`, `$PRID`, `$HEAD`, `$BRANCH` are shell vars. All field and enum names are introspection-verified. The `mcp__github__*` tools cover the same surface when shelling out is undesirable (`pull_request_read` for S1/S2, `pull_request_review_write` for per-thread resolve, `add_reply_to_pull_request_comment` for replies).
+Copyable `gh`/GraphQL/REST patterns, labeled by the loop step each serves. `{owner}`/`{repo}` are auto-filled by `gh` from the repo cwd; `$PR`, `$PRID`, `$HEAD`, `$BRANCH` are shell vars. The `mcp__github__*` tools cover the same surface when shelling out is undesirable (`pull_request_read` for S1/S2, `pull_request_review_write` for per-thread resolve, `add_reply_to_pull_request_comment` for replies).
 
 ## [01]-[S0_PIN_HEAD]
 
@@ -120,7 +120,7 @@ gh pr view "$PR" --json reviewDecision,mergeable,mergeStateStatus,statusCheckRol
          or ((.conclusion//.state)=="PENDING"))]|length}'
 ```
 
-`reviewDecision in APPROVED|CHANGES_REQUESTED|REVIEW_REQUIRED|null` (null = no required reviewers). `mergeable in MERGEABLE|CONFLICTING|UNKNOWN` (UNKNOWN = still computing, re-poll). `mergeStateStatus in CLEAN|HAS_HOOKS|UNSTABLE|BLOCKED|BEHIND|DIRTY|UNKNOWN`. Merge-ready: `mergeable==MERGEABLE && failing==0 && pending==0 && decision in {APPROVED,null} && state in {CLEAN,HAS_HOOKS}`. `BEHIND` -> `gh pr update-branch "$PR"`. `DIRTY` (conflicts) -> human. The merge itself (`gh pr merge`) is outside this skill's autonomy contract — report merge-ready and stop.
+`reviewDecision in APPROVED|CHANGES_REQUESTED|REVIEW_REQUIRED|null` (null = no required reviewers). `mergeable in MERGEABLE|CONFLICTING|UNKNOWN` (UNKNOWN = still computing, re-poll). `mergeStateStatus in CLEAN|HAS_HOOKS|UNSTABLE|BLOCKED|BEHIND|DIRTY|UNKNOWN`. Merge-ready: `mergeable==MERGEABLE && failing==0 && pending==0 && decision in {APPROVED,null} && state in {CLEAN,HAS_HOOKS}`. `BEHIND` -> `gh pr update-branch "$PR"`. `DIRTY` (conflicts) -> human. The merge itself (`gh pr merge`) stays with the operator — report merge-ready and stop.
 
 ## [08]-[S7_POLLING]
 

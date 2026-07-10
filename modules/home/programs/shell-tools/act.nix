@@ -5,6 +5,7 @@
 # Path          : modules/home/programs/shell-tools/act.nix
 # ----------------------------------------------------------------------------
 # Local GitHub Actions runner configuration
+
 {
   lib,
   pkgs,

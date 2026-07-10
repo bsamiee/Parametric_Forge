@@ -5,6 +5,7 @@
 # Path          : modules/home/assets/default.nix
 # ----------------------------------------------------------------------------
 # Asset files aggregator - fastfetch ASCII art and desktop wallpaper
+
 {
   host,
   lib,

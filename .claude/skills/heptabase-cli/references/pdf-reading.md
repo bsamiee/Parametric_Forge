@@ -1,4 +1,4 @@
-# PDF Reading
+# [PDF_READING]
 
 ## [01]-[COMMON_USAGE_PATTERN]
 
@@ -26,10 +26,10 @@ heptabase pdf read <pdfCardId> --start-page 1 --end-page 5
 - Always call `pdf metadata` first.
 - Page numbers are 1-indexed and inclusive.
 - Empty or image-only pages are returned with `markdown: ""` so the range is continuous.
-- Read 5-10 pages by default to avoid burning through tokens.
-- Ask the user before requesting significantly more than 100 pages.
+- Read 5-10 pages by default to bound token cost.
+- Ask the user before requesting more than 100 pages.
 
-## [03]-[WHEN_TO_USE_PDF_READ_VS_FILE_EXPORT]
+## [03]-[READ_VS_EXPORT]
 
 - Use `pdf read` for textual analysis. It returns Heptabase's parsed Markdown, ready for the LLM.
 - Use `file export` for visual or structural inspection. It returns the raw `.pdf` binary path for native PDF tools. This is rarely needed.

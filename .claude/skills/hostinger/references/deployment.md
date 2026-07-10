@@ -4,7 +4,7 @@ SSH-first deployment for Dockerized applications on a Hostinger VPS: SSH plus Do
 
 ## [01]-[INPUTS_AND_ACCESS]
 
-The working set: `HOSTINGER_API_TOKEN`, the VM id, `SSH_USER@SSH_HOST`, the key path, and the remote app directory. On this estate SSH rides the universal key in `~/.ssh/config`, so a configured host alias replaces explicit `-i` flags. Key provisioning for a new box is API work: register the public key, attach it to the VM, verify with `ssh <host> "echo SSH_OK && hostname"` — endpoints in `references/vps.md`, routed from the root.
+The working set: `HOSTINGER_API_TOKEN`, the VM id, `SSH_USER@SSH_HOST`, the key path, and the remote app directory. On this estate SSH rides the universal key in `~/.ssh/config`, so a configured host alias replaces explicit `-i` flags. Key provisioning for a new box is API work: register the public key, attach it to the VM, then verify with `ssh <host> "echo SSH_OK && hostname"`.
 
 ## [02]-[BASELINE]
 
@@ -19,7 +19,13 @@ docker --version && docker compose version
 SETUP
 ```
 
-Baseline gates before the first deploy: Docker engine and compose plugin present; the app directory exists; `.env` exists with non-empty values for every required key; the firewall accepts SSH and the app ports only; database ports stay internal to the Docker network unless explicitly required.
+Baseline gates before the first deploy:
+
+- Docker engine and compose plugin present.
+- The app directory exists.
+- `.env` exists with non-empty values for every required key.
+- The firewall accepts SSH and the app ports only.
+- Database ports stay internal to the Docker network unless explicitly required.
 
 ## [03]-[DEPLOY_AND_UPDATE]
 
@@ -66,4 +72,9 @@ Failed-deploy recovery, smallest hammer first: restore the previous compose or i
 |  [05]   | VM status, restart                | Either; API for automation |
 |  [06]   | Monarx malware scanner            | API                        |
 
-Standing safety rows: secrets enter commands as environment variables and never print; `.env` files never land in git; critical env keys validate non-empty before deploy; database schema changes are the riskiest step and always follow the snapshot.
+Standing safety rows:
+
+- Secrets enter commands as environment variables and never print.
+- `.env` files never land in git.
+- Critical env keys validate non-empty before deploy.
+- Database schema changes are the riskiest step and always follow the snapshot.

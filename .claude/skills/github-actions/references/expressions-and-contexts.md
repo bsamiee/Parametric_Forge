@@ -1,4 +1,4 @@
-# [H1][EXPRESSIONS-AND-CONTEXTS]
+# [EXPRESSIONS_AND_CONTEXTS]
 
 ## [01]-[SYNTAX]
 
@@ -21,7 +21,7 @@
 |  [11]   | `job`          | `job.status`, `job.container.id`, `job.container.network`.                                  |
 |  [12]   | `strategy`     | `strategy.fail-fast`, `strategy.job-index`, `strategy.job-total`, `strategy.max-parallel`.  |
 
-**`runner` context expansions:**
+[RUNNER_EXPANSIONS]:
 
 | [INDEX] | [PROPERTY]           | [VALUE]                            |
 | :-----: | :------------------- | :--------------------------------- |
@@ -37,9 +37,9 @@
 
 | [INDEX] | [FUNCTION]         | [EXAMPLE]                                                            |
 | :-----: | :----------------- | :------------------------------------------------------------------- |
-|  [01]   | `contains(a, b)`   | `contains(github.ref, 'refs/tags/')` — **case-insensitive**.         |
-|  [02]   | `startsWith(a, b)` | `startsWith(github.ref, 'refs/tags/v')` — **case-insensitive**.      |
-|  [03]   | `endsWith(a, b)`   | `endsWith(github.ref, '/main')` — **case-insensitive**.              |
+|  [01]   | `contains(a, b)`   | `contains(github.ref, 'refs/tags/')` — case-insensitive.             |
+|  [02]   | `startsWith(a, b)` | `startsWith(github.ref, 'refs/tags/v')` — case-insensitive.          |
+|  [03]   | `endsWith(a, b)`   | `endsWith(github.ref, '/main')` — case-insensitive.                  |
 |  [04]   | `format(fmt, ...)` | `format('https://img.shields.io/badge/{0}-{1}', 'build', 'passing')` |
 |  [05]   | `toJSON(val)`      | `toJSON(github.event)` — debug context objects.                      |
 |  [06]   | `fromJSON(str)`    | `fromJSON(needs.setup.outputs.matrix)` — dynamic matrix.             |
@@ -52,7 +52,7 @@
 
 [OPERATORS]: `()` > `!` > `<` `<=` `>` `>=` > `==` `!=` > `&&` > `||`
 
-**`hashFiles` behavior:** Returns empty string `''` on no match (no error, no warning). Uses `@actions/glob` patterns. Multiple args = logical AND across patterns. Broken symlinks produce empty hash silently. Glob matching is case-insensitive on Windows, case-sensitive on Linux/macOS. `?` wildcard not supported — returns empty.
+[HASHFILES_BEHAVIOR]: Returns empty string `''` on no match (no error, no warning). Uses `@actions/glob` patterns. Multiple args = logical AND across patterns. Broken symlinks produce empty hash silently. Glob matching is case-insensitive on Windows, case-sensitive on Linux/macOS. `?` wildcard not supported — returns empty.
 
 [CONTAINS_STARTSWITH_ENDSWITH]: All three are case-insensitive for string comparisons. `contains('Hello', 'hello')` evaluates to `true`. When comparing against arrays, `contains()` checks for exact element match.
 
@@ -77,7 +77,7 @@ environment: ${{ github.ref == 'refs/heads/main' && 'production' || 'staging' }}
 # Default value
 environment: ${{ inputs.environment || 'dev' }}
 
-# Dynamic matrix from job output [->advanced-triggers.md§DYNAMIC_MATRIX]
+# Dynamic matrix from job output
 strategy:
   matrix: ${{ fromJSON(needs.setup.outputs.matrix) }}
 
@@ -134,7 +134,7 @@ jobs:
       printf 'Body: %s\n' "$PR_BODY"
 ```
 
-[UNTRUSTED_FIELDS]: (attacker-controlled in fork PRs):
+[UNTRUSTED_FIELDS] — attacker-controlled in fork PRs:
 
 - `github.event.pull_request.title`, `.body`, `.head.ref`
 - `github.event.comment.body`
@@ -159,13 +159,13 @@ jobs:
 - run: echo "matrix=$(jq -c . matrix.json)" >> "$GITHUB_OUTPUT"
 ```
 
-| [INDEX] | [FILE]                     | [PURPOSE]                                              | [SIZE_LIMIT]                    |
-| :-----: | :------------------------- | :----------------------------------------------------- | :------------------------------ |
-|  [01]   | **`$GITHUB_OUTPUT`**       | Step outputs — `steps.ID.outputs.KEY`.                 | 1 MiB/job, 50 MiB/workflow run. |
-|  [02]   | **`$GITHUB_STATE`**        | Step state — persisted between pre/main/post.          | —                               |
-|  [03]   | **`$GITHUB_ENV`**          | Environment variables — available to subsequent steps. | 48 KiB/variable.                |
-|  [04]   | **`$GITHUB_PATH`**         | PATH additions — available to subsequent steps.        | —                               |
-|  [05]   | **`$GITHUB_STEP_SUMMARY`** | Job summary — Markdown rendered on workflow run page.  | 1 MiB/step, 20 summaries/job.   |
+| [INDEX] | [FILE]                 | [PURPOSE]                                              | [SIZE_LIMIT]                    |
+| :-----: | :--------------------- | :----------------------------------------------------- | :------------------------------ |
+|  [01]   | `$GITHUB_OUTPUT`       | Step outputs — `steps.ID.outputs.KEY`.                 | 1 MiB/job, 50 MiB/workflow run. |
+|  [02]   | `$GITHUB_STATE`        | Step state — persisted between pre/main/post.          | —                               |
+|  [03]   | `$GITHUB_ENV`          | Environment variables — available to subsequent steps. | 48 KiB/variable.                |
+|  [04]   | `$GITHUB_PATH`         | PATH additions — available to subsequent steps.        | —                               |
+|  [05]   | `$GITHUB_STEP_SUMMARY` | Job summary — Markdown rendered on workflow run page.  | 1 MiB/step, 20 summaries/job.   |
 
 ## [08]-[JOB_SUMMARIES]
 
@@ -180,7 +180,7 @@ jobs:
 - GitHub-flavored Markdown: tables, badges, expandable `<details>` sections.
 - Max 1 MiB per step; exceeding truncates with error annotation. Max 20 step summaries displayed per job.
 - Secrets auto-masked in summaries — same masking rules as log output.
-- Supports badges via `![](url)`, collapsible regions via `<details><summary>`, and HTML tables.
+- Summaries render badges via `![](url)`, collapsible `<details><summary>` regions, and HTML tables.
 
 ## [09]-[SECRET_MASKING]
 

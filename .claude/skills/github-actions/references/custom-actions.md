@@ -1,4 +1,4 @@
-# [H1][CUSTOM-ACTIONS]
+# [CUSTOM_ACTIONS]
 
 ## [01]-[ACTION_TYPES]
 
@@ -8,31 +8,27 @@
 |  [02]   | Docker     | Container     | Slow      | Dockerfile | Isolated environment   |
 |  [03]   | JavaScript | `node24`      | Fastest   | Yes        | GitHub API integration |
 
-[DETAILS]:
-
-1. Combine workflow steps; error propagation via `if: failure()`
-2. Custom runtime/toolchains; language-agnostic execution
-3. API interactions via `@actions/core` toolkit; pre/post lifecycle
-
 ### [01.1]-[DECISION_TREE]
 
-| [INDEX] | [QUESTION]                      | [ANSWER] | [RECOMMENDATION]                              |
-| :-----: | :------------------------------ | :------: | :-------------------------------------------- |
-|  [01]   | **Shared steps only?**          |   Yes    | Composite action.                             |
-|  [02]   | **Custom runtime/tools?**       |   Yes    | Docker action.                                |
-|  [03]   | **GitHub API / complex logic?** |   Yes    | JavaScript action.                            |
-|  [04]   | **Full pipeline reuse?**        |   Yes    | Reusable workflow (`workflow_call`).          |
-|  [05]   | **SLSA L3 provenance?**         |   Yes    | Reusable workflow (`job_workflow_ref` claim). |
+An affirmative answer selects the type:
+
+| [INDEX] | [QUESTION]                  | [RECOMMENDATION]                              |
+| :-----: | :-------------------------- | :-------------------------------------------- |
+|  [01]   | Shared steps only?          | Composite action.                             |
+|  [02]   | Custom runtime/tools?       | Docker action.                                |
+|  [03]   | GitHub API / complex logic? | JavaScript action.                            |
+|  [04]   | Full pipeline reuse?        | Reusable workflow (`workflow_call`).          |
+|  [05]   | SLSA L3 provenance?         | Reusable workflow (`job_workflow_ref` claim). |
 
 ## [02]-[DIRECTORY_STRUCTURE]
 
-[LOCAL_ACTIONS]: (monorepo pattern): `.github/actions/<name>/action.yml`
+[LOCAL_ACTIONS] — monorepo: `.github/actions/<name>/action.yml`
 
 ```yaml conceptual
 - uses: ./.github/actions/setup-node-cached
 ```
 
-[STANDALONE_REPOS]: (Marketplace): `action.yml` in repo root.
+[STANDALONE_REPOS] — Marketplace: `action.yml` in repo root.
 
 ```yaml template
 - uses: owner/repo@<SHA> # vN.N.N
@@ -43,21 +39,21 @@
 ## [03]-[METADATA]
 
 ```yaml template
-name: "Action Name"
-description: "Brief description"
-author: "Author"
-branding: { icon: "package", color: "blue" } # Feather icon set
+name: 'Action Name'
+description: 'Brief description'
+author: 'Author'
+branding: { icon: 'package', color: 'blue' } # Feather icon set
 
 inputs:
-    input-name: { description: "Description", required: true, default: "value" }
+    input-name: { description: 'Description', required: true, default: 'value' }
 
 outputs:
     output-name:
-        description: "Description"
+        description: 'Description'
         value: ${{ steps.step-id.outputs.value }} # composite only
 
 runs:
-    using: "composite" # or 'docker' or 'node24'
+    using: 'composite' # or 'docker' or 'node24'
     steps: [...] # composite
     # image: 'Dockerfile'  # docker
     # main: 'dist/index.js'  # javascript (pre: 'pre.js', post: 'post.js')
@@ -71,7 +67,7 @@ runs:
 
 ```yaml conceptual
 runs:
-    using: "composite"
+    using: 'composite'
     steps:
         - id: main
           shell: bash
@@ -94,15 +90,15 @@ git tag -a v1.0.0 -m "Release v1.0.0" && git push origin v1.0.0
 git tag -fa v1 -m "Update v1 to v1.0.0" && git push origin v1 --force
 ```
 
-Consumers reference: `@v1.0.0` (exact), `@v1` (latest v1.x), `@SHA` (most secure). [REFERENCE] SHA pinning protocol: `version-discovery.md`§SHA_PINNING_FORMAT.
+Consumers reference: `@v1.0.0` (exact), `@v1` (latest v1.x), `@SHA` (most secure).
 
 ## [06]-[RUNTIME]
 
-| [INDEX] | [RUNTIME]       | [STATUS]                                                 |
-| :-----: | :-------------- | :------------------------------------------------------- |
-|  [01]   | **`node24`**    | Required — use `using: 'node24'` for JavaScript actions. |
-|  [02]   | **`docker`**    | Stable — `using: 'docker'` with `image: 'Dockerfile'`.   |
-|  [03]   | **`composite`** | Stable — `using: 'composite'` with `steps:`.             |
+| [INDEX] | [RUNTIME]   | [STATUS]                                                 |
+| :-----: | :---------- | :------------------------------------------------------- |
+|  [01]   | `node24`    | Required — use `using: 'node24'` for JavaScript actions. |
+|  [02]   | `docker`    | Stable — `using: 'docker'` with `image: 'Dockerfile'`.   |
+|  [03]   | `composite` | Stable — `using: 'composite'` with `steps:`.             |
 
 [TOOLKIT]: `@actions/core@3.x`, `@actions/github@9.x`. Bundle with `@vercel/ncc@0.38.x build index.js --minify`.
 
@@ -112,11 +108,11 @@ Consumers reference: `@v1.0.0` (exact), `@v1` (latest v1.x), `@SHA` (most secure
 
 ```yaml conceptual
 runs:
-    using: "node24"
-    pre: "dist/pre.js"
+    using: 'node24'
+    pre: 'dist/pre.js'
     pre-if: runner.os == 'linux' # default: always() — runs pre unconditionally
-    main: "dist/index.js"
-    post: "dist/post.js"
+    main: 'dist/index.js'
+    post: 'dist/post.js'
     post-if: always() # default: always() — runs post even on failure
 ```
 
@@ -125,8 +121,8 @@ runs:
 [IO_PATTERNS]:
 
 ```javascript conceptual
-const core = require("@actions/core");
-core.setOutput("result", JSON.stringify({ status: "ok", version: "1.0.0" }));
+const core = require('@actions/core');
+core.setOutput('result', JSON.stringify({ status: 'ok', version: '1.0.0' }));
 core.setSecret(token); // masks in all subsequent logs
 ```
 
@@ -144,12 +140,12 @@ ENTRYPOINT ["/action"]
 
 ```yaml conceptual
 runs:
-    using: "docker"
-    image: "Dockerfile"
+    using: 'docker'
+    image: 'Dockerfile'
     env:
         INPUT_NAME: ${{ inputs.input-name }} # inputs available as INPUT_* env vars
-    args: ["--flag", "${{ inputs.param }}"] # passed to ENTRYPOINT, overrides CMD
-    entrypoint: "/custom.sh" # overrides Dockerfile ENTRYPOINT
+    args: ['--flag', '${{ inputs.param }}'] # passed to ENTRYPOINT, overrides CMD
+    entrypoint: '/custom.sh' # overrides Dockerfile ENTRYPOINT
 ```
 
 [CONSUMER_OVERRIDE]: `entrypoint:` in action.yml overrides Dockerfile `ENTRYPOINT`. `args:` overrides Dockerfile `CMD`. Consumer workflows cannot override action's entrypoint — it is set by the action author.
@@ -181,12 +177,12 @@ steps:
 
 ## [10]-[TESTING]
 
-| [INDEX] | [STRATEGY]               | [TOOL]                     | [SCOPE]                                    |
-| :-----: | :----------------------- | :------------------------- | :----------------------------------------- |
-|  [01]   | **Unit test composites** | Workflow with known inputs | Test each step outcome in isolation.       |
-|  [02]   | **Integration test**     | `nektos/act`               | Run full action locally against Docker.    |
-|  [03]   | **CI validation**        | Dedicated test workflow    | `.github/workflows/test-action.yml` on PR. |
-|  [04]   | **Output validation**    | `actions/github-script`    | Assert outputs match expected values.      |
+| [INDEX] | [STRATEGY]           | [TOOL]                     | [SCOPE]                                    |
+| :-----: | :------------------- | :------------------------- | :----------------------------------------- |
+|  [01]   | Unit test composites | Workflow with known inputs | Test each step outcome in isolation.       |
+|  [02]   | Integration test     | `nektos/act`               | Run full action locally against Docker.    |
+|  [03]   | CI validation        | Dedicated test workflow    | `.github/workflows/test-action.yml` on PR. |
+|  [04]   | Output validation    | `actions/github-script`    | Assert outputs match expected values.      |
 
 ## [11]-[MARKETPLACE]
 

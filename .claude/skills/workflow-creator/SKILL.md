@@ -51,7 +51,7 @@ Answer these before writing a line; the answers pick the topology. Write them do
 1. The unit of work — the thing one subagent does once. Name it concretely.
 2. The count — a known list maps; an unknown count loops.
 3. The topology — independent units, one pass each: fan-out. Ordered stages: pipeline. Until a target, a budget, or dry: loop.
-4. The barrier question — a later step needing ALL earlier results at once (dedup, merge, count, early-exit) takes `parallel`; everything else prefers `pipeline`. This is the decision authors get wrong: `pipeline` streams items through stages with no barrier, so wall-clock is the slowest single chain, never the sum of stage maxima. When in doubt, `pipeline`.
+4. The barrier question — a later step needing ALL earlier results at once (dedup, merge, count, early-exit) takes `parallel`; everything else prefers `pipeline`, which streams items through stages with no barrier, so wall-clock is the slowest single chain, never the sum of stage maxima. When in doubt, `pipeline`.
 5. The data question — any result a later line reads a field off of takes a `schema`.
 
 Terminal stages are opt-in, never a default. A reconcile or align stage exists only when workers DEFER cross-item work they cannot do alone — then the deferral travels as data whose resource slot is a LIST (`{files: string[], claim}`), so clustering by shared resource works (patterns reference, the reconcile shape). A pure fan-out legitimately ends at its last per-item stage. A workflow parameterized by a target (file, sub-folder, unit root, several at once) resolves scope with a discovery agent — the orchestrator has no filesystem (patterns reference, the scope shape).
@@ -78,10 +78,10 @@ Two parts, strict order. First the `meta` literal:
 
 ```js conceptual
 export const meta = {
-    name: "review-changes", // required — the workflow's name
-    description: "Review changed files, verify each finding", // required — shown in the permission dialog
-    whenToUse: "Before shipping a branch", // optional — shown in the workflow list
-    phases: [{ title: "Review" }, { title: "Verify", model: "sonnet" }],
+    name: 'review-changes', // required — the workflow's name
+    description: 'Review changed files, verify each finding', // required — shown in the permission dialog
+    whenToUse: 'Before shipping a branch', // optional — shown in the workflow list
+    phases: [{ title: 'Review' }, { title: 'Verify', model: 'sonnet' }],
 };
 ```
 
@@ -89,7 +89,7 @@ export const meta = {
 
 The three `agent()` options tuned most, independent axes:
 
-- `model` — `'sonnet'`/`'opus'`/`'fable'`/`'inherit'` or a full ID; `'sonnet'` is the floor. Cheap mechanical leaf work drops to `'sonnet'`; a self-contained lane routes to gpt-5.5 through the codex-lanes reference; judgement-heavy work inherits the session model.
+- `model` — `'sonnet'`/`'opus'`/`'fable'`/`'inherit'` or a full ID; `'sonnet'` is the floor. Cheap mechanical leaf work drops to `'sonnet'`; a self-contained lane routes to gpt-5.5 through the codex-lanes reference; judgment-heavy work inherits the session model.
 - `effort` — `'low'`…`'max'`, independent of `model`: a cheap model still reasons hard. Synthesis and adversarial judgment run high; mechanical leaf work runs `'low'`.
 - `schema` — a strict JSON Schema (`additionalProperties: false`, everything required, conditional fields required-but-empty) returning a validated object; one strict shape serves native lanes and codex `--output-schema` alike.
 

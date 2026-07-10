@@ -32,7 +32,7 @@ When neither auth route works, stop with the exact auth failure — a manual rev
 
 ## [02]-[RUN]
 
-```bash output-only
+```bash copy-safe
 coderabbit review --agent
 ```
 

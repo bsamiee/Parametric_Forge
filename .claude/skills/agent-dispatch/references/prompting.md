@@ -10,13 +10,11 @@ A non-fork worker's opening context is exactly: its own system prompt (the defin
 
 Every delegation prompt carries five fields; a missing field is filled by the worker's imagination.
 
-| [INDEX] | [FIELD]    | [CONTENT]                                                                             |
-| :-----: | :--------- | :------------------------------------------------------------------------------------ |
-|  [01]   | Objective  | The single outcome, stated as a verifiable end state, never an activity               |
-|  [02]   | Territory  | Exact files, directories, symbols, or sources in scope                                |
-|  [03]   | Exclusions | Adjacent surfaces the worker must not touch, and the boundary with sibling workers    |
-|  [04]   | Contract   | The return shape: schema, receipt fields, report sections, evidence requirements      |
-|  [05]   | Acceptance | The externally checkable signal that the work is done — passing gate, count, artifact |
+- [01]-[OBJECTIVE]: The single outcome, stated as a verifiable end state, never an activity.
+- [02]-[TERRITORY]: Exact files, directories, symbols, or sources in scope.
+- [03]-[EXCLUSIONS]: Adjacent surfaces the worker must not touch, and the boundary with sibling workers.
+- [04]-[CONTRACT]: The return shape — schema, receipt fields, report sections, evidence requirements.
+- [05]-[ACCEPTANCE]: The externally checkable signal that the work is done — passing gate, count, artifact.
 
 Workers cannot ask questions mid-run, so ambiguity is resolved before dispatch or delegated as an explicit investigation step inside the objective. Constraints that exist in the parent's head — register, conventions, prior decisions — travel in the prompt or die at the boundary.
 

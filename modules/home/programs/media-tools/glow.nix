@@ -4,14 +4,15 @@
 # License       : MIT
 # Path          : modules/home/programs/media-tools/glow.nix
 # ----------------------------------------------------------------------------
-# Terminal markdown rendering for beautiful Yazi markdown preview
+# Terminal markdown renderer for Yazi preview
+
 {pkgs, ...}: let
   yamlFormat = pkgs.formats.yaml {};
 
   glowConfig = {
     style = "dark";
     mouse = true;
-    showLineNumbers = true; # Enables TUI line numbers
+    showLineNumbers = true;
   };
 in {
   xdg.configFile."glow/glow.yml".source = yamlFormat.generate "glow-config" glowConfig;

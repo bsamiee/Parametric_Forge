@@ -26,6 +26,7 @@
 #                    launchdLabel (live agent state), port (loopback bind),
 #                    tokenFile (custody presence, key NAME only), execs
 #                    (companion binaries that must resolve on PATH)
+
 {
   profileBin,
   homeDir,

@@ -5,8 +5,9 @@
 # Path          : modules/home/environments/core.nix
 # ----------------------------------------------------------------------------
 # Core system environment variables
+
 {pkgs, ...}: {
-  # MAGIC below points at this package's magic.mgc; the binary must ride with it — /usr/bin/file 5.41 rejects v20 magic and floods every `file` call.
+  # MAGIC points at this package's magic.mgc; the binary must ride with it — /usr/bin/file 5.41 rejects v20 magic and floods every `file` call.
   home.packages = [pkgs.file];
 
   home.sessionVariables = {
@@ -15,7 +16,7 @@
     LANG = "en_US.UTF-8";
     LC_ALL = "";
 
-    # EDITOR/VISUAL are owned by programs.neovim.defaultEditor (apps/nvim).
+    # EDITOR/VISUAL are owned by programs.neovim.defaultEditor.
 
     # --- [FILE_TYPE_DETECTION]
     MAGIC = "${pkgs.file}/share/misc/magic.mgc";

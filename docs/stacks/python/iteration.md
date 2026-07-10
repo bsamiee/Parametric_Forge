@@ -4,13 +4,13 @@ Every function body that does real work is one expression over an already-admitt
 
 Three siblings own the folds this page sets aside, and each is composed here as settled material, never re-derived: a `Result`/`Option` accumulator, `traverse`, and the accumulating fault fold are `rails-and-effects.md`'s carrier algebra; reductions over a `numpy` array are `algorithms.md`'s numeric route; the `T | Iterable[T]` arity head and the `tailrec` dispatch loop are `surfaces-and-dispatch.md`'s. What remains once the carrier, the array, and the dispatch driver are removed is the algebra here — and its one collapse is uniform: a multi-pass scatter folds to one seeded pass, a materialized intermediate dissolves into a lazy combinator, a hand-indexed window becomes a window combinator, nested loops become one `product`, and an unbounded native recursion becomes a streaming-monoid or a marker frontier.
 
-## [01]-[INDEX]
+## [01]-[SHAPE_CHOOSER]
 
-This table maps a computational shape to the form that owns it; the most specific shape wins.
+A computational shape routes to the form that owns it; the most specific shape wins.
 
 | [INDEX] | [COMPUTATION]                             | [OWNING_FORM]                                | [REJECTED_FORM]                          |
 | :-----: | :---------------------------------------- | :------------------------------------------- | :--------------------------------------- |
-|  [01]   | several quantities over one sequence      | `reduce` to a typed struct seed, one pass    | a `sum`/`min`/`max`/`len` pass apiece    |
+|  [01]   | several quantities over one sequence      | one-pass `reduce` to a typed struct seed     | a `sum`/`min`/`max`/`len` pass apiece    |
 |  [02]   | running or cumulative state               | `accumulate` / `Seq.scan`, the same seed     | an index loop appending each step        |
 |  [03]   | masked, trimmed, or bounded stream        | a lazy `compress`/`takewhile`/`islice` chain | nested comprehensions materializing each |
 |  [04]   | adjacent-run grouping over an ordered key | `itertools.groupby` on the run key           | `groupby` over unordered input           |
@@ -18,7 +18,7 @@ This table maps a computational shape to the form that owns it; the most specifi
 |  [06]   | parallel or Cartesian co-iteration        | `zip(strict=True)` / `itertools.product`     | nested `for` loops; unequal-length `zip` |
 |  [07]   | one projection guarded by its own value   | a comprehension with a walrus binding        | recompute the projection or a temp var   |
 |  [08]   | a multi-stage per-element transform       | a generator function with `yield from`       | a crammed multi-clause comprehension     |
-|  [09]   | reduce a bounded recursive structure      | structural recursion, `match`-destructured   | a manual stack-and-index walk            |
+|  [09]   | reduce a bounded recursive structure      | `match`-destructured structural recursion    | a manual stack-and-index walk            |
 |  [10]   | a leaf-monoid reduction at depth          | a streaming `(unit, fuse)` frontier          | native recursion past the frame limit    |
 |  [11]   | a shape-sensitive reduction at depth      | an `expand`/`combine` marker frontier        | `sys.setrecursionlimit` raising the cap  |
 |  [12]   | overlapping subproblems on a pure core    | `@cache` / `@lru_cache` over the function    | a hand-rolled memo `dict`                |

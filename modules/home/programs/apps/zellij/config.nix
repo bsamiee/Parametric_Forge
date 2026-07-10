@@ -4,10 +4,9 @@
 # License       : MIT
 # Path          : modules/home/programs/apps/zellij/config.nix
 # ----------------------------------------------------------------------------
-# Nix-generated Zellij configuration. Leader, entry, and normal-mode chord
-# rows project from the chord owner (chords.nix); mode-interior binds and
-# their hint ribbons render from ONE per-mode row table, so a bind and its
-# ribbon hint cannot drift apart.
+# Nix-generated Zellij configuration: leader, entry, and normal-mode chord rows project from the chord owner (chords.nix); mode-interior binds and
+# their hint ribbons render from ONE per-mode row table, so a bind and its ribbon hint cannot drift apart.
+
 {
   config,
   lib,
@@ -40,10 +39,8 @@
     "blue"
   ]);
 
-  # Hint-ribbon grammar: native macOS modifier glyphs; a layer chip (R⌘ Hyper,
-  # R⌥ Super) prefixes its key group once. Both bars sit on the surface
-  # elevation step; chips carry inverse text on accent fills. Keys cyan,
-  # labels muted, mode chip carries the state color shared with the top bar.
+  # Hint-ribbon grammar: native macOS modifier glyphs; a layer chip (R⌘ Hyper, R⌥ Super) prefixes its key group once. Both bars sit on the
+  # surface elevation step; chips carry inverse text on accent fills. Keys cyan, labels muted, mode chip carries the state color shared with the top bar.
   seg = c: t: "#[bg=$surface,fg=$" + c + "]" + t;
   segB = c: t: "#[bg=$surface,fg=$" + c + ",bold]" + t;
   chipOn = bgc: fgc: t: "#[bg=$" + bgc + ",fg=$" + fgc + ",bold] " + t + " " + seg "comment" " ";
@@ -54,15 +51,10 @@
   done = pl "⏎" "done";
 
   # --- [MODE_INTERIOR_ROW_TABLE]
-  # One row per bind renders BOTH the mode's KDL block and its zjstatus ribbon,
-  # so a bind and its hint cannot drift. Constructors keep rows single-line:
-  # bind keys kdl | bindH keys kdl [l rank]|[k l rank] (k defaults to the first
-  # key) | hintRow k l rank (grouped label over adjacent binds, no bind of its
-  # own) | gap row (blank line before) | mkExit key (tagged Normal exit) |
-  # launchRow key plugin l rank (floating plugin body). Mode meta: header
-  # (section comment), chip [c label]|[c fg label], note (input-mode text),
-  # tail ("done" default | "none"). Rows render in list order into the KDL
-  # block; hint rank orders the ribbon independently.
+  # One row per bind renders BOTH the mode's KDL block and its zjstatus ribbon, so a bind and its hint cannot drift; constructors keep rows single-line.
+  # The hint tuple is [l rank] or [k l rank] with k defaulting to the first key; hintRow is a grouped label over adjacent binds with no bind of its own,
+  # gap prefixes a blank line, mkExit tags a Normal exit, and launchRow floats a plugin body. Mode meta: header is a section comment, chip is [c label]
+  # or [c fg label], note is input-mode text, tail is "done" (default) or "none"; rows render in list order, hint rank orders the ribbon independently.
   bind = keys: kdl: {inherit keys kdl;};
   hintOf = h:
     if builtins.length h == 3
@@ -299,8 +291,7 @@
   };
 
   # --- [RENDERERS]
-  # KDL fold: rows render at their full emitted indentation; tagged exit rows
-  # align the layer comment at byte 83; headers dash-fill to width 83.
+  # KDL fold: rows render at their full emitted indentation; tagged exit rows align the layer comment at byte 83; headers dash-fill to width 83.
   hyperTag = "// ${layers.hyper.name} (${layers.hyper.glyphs}) | ${layers.hyper.physical}";
   alignTag = line: line + lib.strings.replicate (lib.max 1 (82 - lib.stringLength line)) " " + hyperTag;
   headerLine = label: "      // --- ${label} " + lib.strings.replicate (69 - lib.stringLength label) "-";
@@ -325,18 +316,15 @@
       ++ [(lib.concatMapStringsSep "\n" renderRow (lib.filter (x: x ? keys) m.rows))]
       ++ ["      }"]
     );
-  # Emission orders are curated vocabularies over modeTable: blocks skip the
-  # ribbon-only prompt row (tmux renders at the keybind tail); the coverage
-  # asserts break eval when a new mode misses either list instead of dropping
-  # it silently from the KDL or the ribbon bar.
+  # Emission orders are curated vocabularies over modeTable: blocks skip the ribbon-only prompt row (tmux renders at the keybind tail); the coverage
+  # asserts break eval when a new mode misses either list instead of dropping it silently from the KDL or the ribbon bar.
   blockOrder = ["locked" "tab" "pane" "move" "resize" "scroll" "search" "session" "entersearch" "renametab" "renamepane"];
   hintOrder = ["normal" "locked" "pane" "tab" "resize" "move" "scroll" "search" "entersearch" "session" "renametab" "renamepane" "prompt" "tmux"];
   sorted = lib.sort (a: b: a < b);
   modeBlocksKdl = assert lib.assertMsg (sorted (blockOrder ++ ["prompt" "tmux"]) == builtins.attrNames modeTable) "zellij blockOrder drifted from modeTable";
     lib.concatMapStringsSep "\n\n" modeBlock blockOrder;
 
-  # Ribbon fold over the same rows: chip, optional input note, rank-ordered
-  # hints, then the done tail. Normal mode composes from the chord owner.
+  # Ribbon fold over the same rows: chip, optional input note, rank-ordered hints, then the done tail. Normal mode composes from the chord owner.
   chipOf = c:
     if builtins.length c == 3
     then chipOn (builtins.elemAt c 0) (builtins.elemAt c 1) (builtins.elemAt c 2)
@@ -395,8 +383,7 @@ in {
         copy_command                "pbcopy"
         scroll_buffer_size          100000
 
-        // Host web stance: server off, sharing disabled until reverse-proxy +
-        // token-lifecycle rows exist (annex-gated exposure).
+        // Host web stance: server off, sharing disabled until reverse-proxy + token-lifecycle rows exist (annex-gated exposure).
         web_server                  false
         web_sharing                 "disabled"
 
@@ -418,11 +405,9 @@ in {
           }
           zellij-forgot location="file:~/.config/zellij/plugins/zellij_forgot.wasm"
 
-          // --- zjstatus: THE one top bar — tabs, layout, agent/quota cells, session --
-          // Cells are pipe-fed by the forge-agents collector, which owns the
-          // role->palette styling and ships formatted payloads; the bar renders
-          // them verbatim and never polls a provider itself. WezTerm's tab bar
-          // hides at one tab, so no second bar ever stacks above this one.
+          // --- [ZJSTATUS_TOP_BAR]
+          // Cells are pipe-fed by the forge-agents collector, which owns the role->palette styling and ships formatted payloads; the bar renders them
+          // verbatim and never polls a provider itself. WezTerm's tab bar hides at one tab, so no second bar ever stacks above this one.
           zjstatus location="file:~/.config/zellij/plugins/zjstatus.wasm" {
     ${colorRows}
             format_left               "#[bg=$surface] {tabs}"
@@ -430,8 +415,7 @@ in {
             format_right              "{notifications}{pipe_agents}{pipe_quota}#[bg=$pink,fg=$background,bold] {session} "
             format_space              "#[bg=$surface]"
 
-            // Narrow panes: hide whole parts by precedence instead of letting
-            // them overlap — agent/quota cells outrank tabs and the swap label.
+            // Narrow panes: hide whole parts by precedence instead of letting them overlap — agent/quota cells outrank tabs and the swap label.
             format_hide_on_overlength "true"
             format_precedence         "rlc"
 
@@ -440,11 +424,9 @@ in {
             pipe_quota_format         "{output}"
             pipe_quota_rendermode     "dynamic"
 
-            // Transient toast rail: zjstatus::notify:: broadcasts (collector
-            // rises, receipts push bus) render here and auto-hide. Payloads
-            // are literal — urgency rides the text prefix (? input, !! fail),
-            // never #[..] directives; per-urgency color stays on pipe_agents.
-            // Broadcast reaches both bar instances; only this bar renders it.
+            // Transient toast rail: zjstatus::notify:: broadcasts (collector rises, receipts push bus) render here and auto-hide.
+            // Payloads are literal — urgency rides the text prefix (? input, !! fail), never #[..] directives;
+            // per-urgency color stays on pipe_agents. Broadcast reaches both bar instances; only this bar renders it.
             notification_format_unread           "#[bg=$amber,fg=$background,bold]  {message} "
             notification_format_no_notifications ""
             notification_show_interval           "8"
@@ -486,7 +468,7 @@ in {
 
         keybinds clear-defaults=true {
           normal {
-            //  --- Simple Layer ------------------------------------------------------
+            // --- [SIMPLE_LAYER]
     ${chords.zellij.normalBindsKdl}
           }
 

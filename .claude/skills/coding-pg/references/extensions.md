@@ -1,8 +1,8 @@
-# Extensions
+# [EXTENSIONS]
 
 First-class extension integration for PostgreSQL 18. Install with `CREATE EXTENSION ... CASCADE` for automatic dependency resolution.
 
-## [01]-[PGVECTOR_0_8]
+## [01]-[PGVECTOR]
 
 Vector storage and similarity search. HNSW, IVFFlat, and DiskANN indexes for approximate nearest-neighbor.
 
@@ -64,7 +64,7 @@ ORDER BY embedding <=> $1::vector LIMIT 20;
 
 - Distance operators: `<->` (L2), `<=>` (cosine), `<#>` (negative inner product — ASC = most similar)
 - HNSW `ef_construction` affects build quality; `ef_search` (runtime) controls recall/speed tradeoff
-- Iterative scan (`0.8+`): `relaxed_order` (approximate, faster), `strict_order` (exact, re-sorts after expansion)
+- Iterative scan: `relaxed_order` (approximate, faster), `strict_order` (exact, re-sorts after expansion)
 - `hnsw.max_scan_tuples` (default 20000): caps tuples visited — increase for large filtered sets, -1 for unlimited
 - IVFFlat requires `VACUUM` after bulk insert — stale statistics degrade recall
 - DiskANN for >1M vectors or memory-constrained; HNSW for <1M with RAM budget
@@ -129,7 +129,7 @@ CREATE INDEX ON documents USING bm25 (id, title, body)
 - BM25 replaces `ts_rank_cd` for relevance scoring; retain tsvector for simple boolean matching
 - `@@@` operator with `paradedb.parse()` for query syntax; `paradedb.score(key_field)` for relevance
 - `key_field` must be a unique column (typically PK) — used for score association
-- `record: "position"` enables phrase queries and proximity scoring — without it, phrase matching degrades to term co-occurrence
+- `record: "position"` drives phrase queries and proximity scoring; without it, phrase matching degrades to term co-occurrence
 - Tokenizer types: `default` (Unicode segmentation), `en_stem` (English stemmer), `raw` (no tokenization), `ngram`, `chinese_compatible`
 - `paradedb.fuzzy_term`: `distance` is Levenshtein edit distance (default 1, max 2); `transpose_cost_one = true` treats transpositions as single edit
 - `paradedb.boost(factor, query)`: field-level relevance weighting — title matches weighted higher than body
@@ -176,9 +176,9 @@ FROM users WHERE $1 <% name ORDER BY wsim DESC LIMIT 10;
 - `%` uses `pg_trgm.similarity_threshold` — tunable per-transaction via `SET LOCAL`
 - `<%` (word similarity) and `<<%` (strict word similarity) — subsequence and word-boundary matching
 - Trigrams require minimum 3 characters — shorter strings produce empty trigram sets
-- GIN/GiST tradeoffs: see indexes.md; GiST uniquely supports `ORDER BY similarity()` KNN
+- GiST alone drives `ORDER BY similarity()` KNN
 
-## [05]-[POSTGIS_3_6]
+## [05]-[POSTGIS]
 
 Spatial data types, geodesic calculations, and geometric operations.
 
@@ -210,12 +210,12 @@ SELECT id, ST_CoverageClean(geom) OVER (PARTITION BY region) AS cleaned_geom FRO
 
 ### [05.1]-[CONTRACTS]
 
-- `ST_DWithin` uses GiST index — `ST_Distance < threshold` does NOT
+- `ST_DWithin` uses GiST index — `ST_Distance < threshold` does not
 - Always `ST_SetSRID(ST_MakePoint(lon, lat), 4326)` — longitude first, latitude second
 - Cast to geography for meters: `geom::geography`; back for spatial index: `::geometry`
 - `ST_CoverageClean` is a window function — requires `OVER ()` clause
 
-## [06]-[TIMESCALEDB_2_22]
+## [06]-[TIMESCALEDB]
 
 Hypertables, continuous aggregates, columnar compression, and retention policies.
 
@@ -252,11 +252,11 @@ FROM metrics_hourly GROUP BY day_bucket, device_id WITH NO DATA;
 - Table must be empty before `create_hypertable` (or `migrate_data => true`)
 - Compression `segmentby`: columns in WHERE for selective decompression — wrong segmentby forces full decompression
 - Real-time aggregation enabled by default — queries union materialized + recent raw data
-- Hierarchical CAGGs (`2.9+`, finalized format from `2.7+`): child `time_bucket` must be multiple of parent
-- UUIDv7 compression: 30% better ratio; `timescaledb.enable_uuid_compression` GUC (default on `2.23+`)
-- Direct Compress (`2.23+`): incoming inserts write directly to compressed columnar storage — bypasses the uncompressed→compress cycle for append-only hypertables. Enable via `ALTER TABLE metrics SET (timescaledb.compress_direct_write = true)`. Reduces write amplification and compression policy lag
+- Hierarchical CAGGs: child `time_bucket` must be a multiple of the parent's
+- UUIDv7 compression: 30% better ratio via the `timescaledb.enable_uuid_compression` GUC
+- Direct Compress: incoming inserts write directly to compressed columnar storage — bypasses the uncompressed→compress cycle for append-only hypertables. Enable via `ALTER TABLE metrics SET (timescaledb.compress_direct_write = true)`. Reduces write amplification and compression policy lag
 - Concurrent CAGG refresh: non-overlapping time ranges refresh in parallel workers — `SELECT add_continuous_aggregate_policy(..., schedule_interval => INTERVAL '5 min')` with overlapping windows is safe as long as `start_offset > end_offset` (non-overlapping materialization ranges)
-- Always pair hypertables with BRIN indexes on the time dimension — chunk exclusion is coarse-grained (eliminates whole chunks), BRIN provides fine-grained intra-chunk filtering for efficient range scans within individual chunks
+- Always pair hypertables with a BRIN index on the time dimension — chunk exclusion is coarse-grained (eliminates whole chunks) while BRIN filters ranges within a chunk for efficient intra-chunk scans
 
 ### [06.3]-[TIMESCALEDB_VS_PG_PARTMAN]
 
@@ -268,7 +268,7 @@ FROM metrics_hourly GROUP BY day_bucket, device_id WITH NO DATA;
 |  [04]   | Compression              | Columnar (90%+ ratio) | None (use pg_duckdb)      |
 |  [05]   | Retention policy         | Built-in              | Built-in                  |
 
-## [07]-[PG_CRON_1_6]
+## [07]-[PG_CRON]
 
 In-database job scheduling via cron expressions.
 
@@ -286,7 +286,7 @@ SELECT cron.unschedule('refresh-mat-view');
 - Maximum 1 concurrent run per job — next invocation waits if previous still running
 - Failure logged in `cron.job_run_details` with `status = 'failed'` — no automatic retry
 
-## [08]-[PG_PARTMAN_5_2]
+## [08]-[PG_PARTMAN]
 
 Automated partition lifecycle: creation, retention, and template management.
 
@@ -310,7 +310,7 @@ SELECT cron.schedule('partman-maintenance', '0 * * * *',
 ### [08.1]-[CONTRACTS]
 
 - `run_maintenance()` must be called regularly — creates future partitions and executes retention
-- `native` type uses PG declarative partitioning — legacy `'monthly'`/`'daily'` removed in 5.x
+- `native` type uses PG declarative partitioning; `p_type := 'native'` is the partition type
 - Template table: indexes/constraints on `_template` propagate to new partitions
 - Default partition created automatically — monitor its size as a health signal
 
@@ -323,13 +323,13 @@ CREATE EXTENSION btree_gist;
 -- Enables: EXCLUDE USING gist (employee_id WITH =, assignment_range WITH &&)
 ```
 
-- PREREQUISITE for any EXCLUDE constraint combining `=` with range operators — always install alongside range-based exclusion schemas
+- Prerequisite for any EXCLUDE constraint combining `=` with range operators — always install alongside range-based exclusion schemas
 
 ## [10]-[PG_DUCKDB]
 
 Analytical query acceleration via embedded DuckDB engine. OLAP complement to PostgreSQL OLTP.
 
-[DECISION_RULE]: When the prompt mentions analytical workloads on time-series or transactional data at scale (>10M rows/day, dashboard aggregations, ad-hoc OLAP, heavy GROUP BY over large tables), recommend pg_duckdb with `SET LOCAL duckdb.force_execution = true`. This is NOT optional for heavy OLAP — pure PostgreSQL sequential scans on 100M+ row tables are insufficient for interactive analytical query latency.
+[DECISION_RULE]: When the prompt names analytical workloads on time-series or transactional data at scale (>10M rows/day, dashboard aggregations, ad-hoc OLAP, heavy GROUP BY over large tables), reach for pg_duckdb with `SET LOCAL duckdb.force_execution = true`. This is not optional for heavy OLAP — pure PostgreSQL sequential scans on 100M+ row tables cannot meet interactive analytical query latency.
 
 ```sql conceptual
 CREATE EXTENSION pg_duckdb;
@@ -382,7 +382,7 @@ GROUP BY region;
 - `read_parquet` / `read_csv` / `read_json` for direct lake access without ETL pipeline
 - `iceberg_scan(path, version => timestamp)` for Apache Iceberg with time travel — query historical snapshots by timestamp or snapshot ID
 - `delta_scan(path)` for Delta Lake tables — reads transaction log for consistent snapshot
-- Hybrid joins: DuckDB scans lake tables, PG provides transactional foreign key tables — optimizer handles cross-engine join
+- Hybrid joins: DuckDB scans lake tables while PG owns the transactional foreign-key tables — the optimizer handles the cross-engine join
 - DuckDB execution inherits PG transaction context — `SET LOCAL` settings, RLS (via query rewrite), advisory locks all apply
 - Parallel table scanning: DuckDB parallelizes across Parquet row groups and PG table pages — scales with `max_parallel_workers`
 
@@ -401,8 +401,8 @@ CREATE EXTENSION pg_jsonschema;
 
 ## [12]-[EXTENSION_INTERACTION_CONTRACTS]
 
-- [PGVECTOR_PG_SEARCH]: BM25 + semantic RRF hybrid (see Hybrid Search section)
+- [PGVECTOR_PG_SEARCH]: BM25 + semantic RRF hybrid
 - [PGVECTOR_PG_TRGM]: semantic + fuzzy text via weighted linear combination; vector CTE + trigram CTE joined on PK
 - [TIMESCALEDB_PG_PARTMAN]: mutually exclusive on same table — TimescaleDB manages own chunking; pg_partman for non-time-series only
-- [PGAUDIT]: see security.md for compliance-grade audit logging
+- [PGAUDIT]: compliance-grade audit logging via the pgaudit extension
 - [BTREE_GIST_RANGE_TYPES]: prerequisite pairing for EXCLUDE constraints with mixed operator types

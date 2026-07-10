@@ -4,10 +4,9 @@
 # License       : MIT
 # Path          : modules/home/programs/apps/yazi/theme.nix
 # ----------------------------------------------------------------------------
-# Typed Yazi theme from the estate palette owner, rendered through the native
-# TOML generator; syntect preview highlighting consumes the owner's shared
-# tmTheme artifact and icons project from the shared icon vocabulary plus the
-# extension icon-family vocabulary below.
+# Typed Yazi theme from the estate palette owner, rendered through the native TOML generator; syntect preview highlighting consumes the owner's shared
+# tmTheme artifact and icons project from the shared icon vocabulary plus the extension icon-family vocabulary below.
+
 {
   config,
   lib,
@@ -15,8 +14,7 @@
 }: let
   p = config.forge.theme.palette;
 
-  # Style combinators over palette rows; badge is the dominant shape
-  # (background-colored text on a colored block).
+  # Style combinators over palette rows; badge is the dominant shape (background-colored text on a colored block).
   fg = c: {fg = c.hex;};
   bg = c: {bg = c.hex;};
   on = f: b: {
@@ -27,8 +25,7 @@
   bold = s: s // {bold = true;};
   sep = open: close: {inherit open close;};
 
-  # Extension icon families: space-joined names share one glyph+color row;
-  # a new extension is a name on an existing row or one new row.
+  # Extension icon families: space-joined names share one glyph+color row; a new extension is a name on an existing row or one new row.
   extFamilies = {
     "nix" = ["󱄅" p.cyan];
     "py" = ["󰌠" p.green];
@@ -64,8 +61,7 @@
     "lrcat lrtemplate xmp" = ["󰄄" p.yellow];
   };
 
-  # Filetype color rows: [kind pattern color ?is], kind mime|url, first match
-  # wins; ordering is the routing decision.
+  # Filetype color rows: [kind pattern color ?is], kind mime|url, first match wins; ordering is the routing decision.
   fileRules = [
     ["mime" "image/*" p.pink]
     ["mime" "video/*" p.purple]

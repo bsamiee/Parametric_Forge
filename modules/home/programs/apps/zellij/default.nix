@@ -5,15 +5,14 @@
 # Path          : modules/home/programs/apps/zellij/default.nix
 # ----------------------------------------------------------------------------
 # Zellij terminal multiplexer configuration
+
 {
   config,
   lib,
   pkgs,
   ...
 }: let
-  # Full upstream grant vocabulary, zellij 0.44.3 PermissionType — grants are
-  # typed rows here, projected into the permission cache declaratively (a 1-row
-  # bar pane cannot render the interactive prompt).
+  # zellij PermissionType vocabulary: typed grant rows seed the permission cache; a 1-row bar pane cannot render the interactive prompt.
   grantVocabulary = [
     "ReadApplicationState"
     "ChangeApplicationState"
@@ -42,10 +41,8 @@ in {
   ];
 
   options.programs.zellij = {
-    # One geometry owner per floating popup; the layout KDL and the integration
-    # scripts both render from these rows, never from inline literals. Percent
-    # strings only: both KDL and the zellij CLI accept them verbatim, and a
-    # malformed value fails at eval instead of misrendering a popup.
+    # One geometry owner per floating popup; the layout KDL and the integration scripts both render from these rows, never from inline literals.
+    # Percent strings only: both KDL and the zellij CLI accept them verbatim, and a malformed value fails at eval instead of misrendering a popup.
     popupGeometry = lib.mkOption {
       type = lib.types.attrsOf (lib.types.submodule {
         options =
@@ -90,8 +87,7 @@ in {
           width = "60%";
           height = "70%";
         };
-        # Toggle-dispatcher stub: a deliberately tiny short-lived pane that
-        # runs the popup dispatch logic and reaps itself.
+        # Toggle-dispatcher stub: a deliberately tiny short-lived pane that runs the popup dispatch logic and reaps itself.
         dispatcher = {
           x = "45%";
           y = "45%";
@@ -101,9 +97,8 @@ in {
       };
     };
 
-    # Permission manifest owner: one row per wasm, exact upstream grant names.
-    # Clearing the plugin cache revokes grants — activation reseeds rows, so a
-    # plugin upgrade (cache rebuild) and session resurrection stay distinct.
+    # Permission manifest owner: one row per wasm, exact upstream grant names. Clearing the plugin cache revokes grants —
+    # activation reseeds rows, so a plugin upgrade (cache rebuild) and session resurrection stay distinct.
     pluginGrants = lib.mkOption {
       type = lib.types.attrsOf (lib.types.listOf (lib.types.enum grantVocabulary));
       default = {
@@ -116,9 +111,8 @@ in {
   config = {
     home.packages = [pkgs.zellij];
 
-    # Grant reconcile, not append: plugDir-scoped rows PROJECT from the declared
-    # set every activation — stale plugin rows are pruned, grant edits propagate,
-    # rows outside plugDir (interactive grants for foreign paths) stay untouched.
+    # Grant reconcile, not append: plugDir-scoped rows PROJECT from the declared set every activation — stale plugin rows are pruned,
+    # grant edits propagate, rows outside plugDir (interactive grants for foreign paths) stay untouched.
     home.activation.zellijPluginGrants = lib.hm.dag.entryAfter ["writeBoundary"] (let
       plugDir = "${config.xdg.configHome}/zellij/plugins";
       permsFile = "${config.home.homeDirectory}/Library/Caches/org.Zellij-Contributors.Zellij/permissions.kdl";
@@ -149,8 +143,7 @@ in {
     '');
 
     # --- [PLUGIN_INSTALLATION]
-    # Every third-party wasm is file-owned and hash-pinned; aliases resolve
-    # through file: locations, so plugin load never depends on the network.
+    # Every third-party wasm is file-owned and hash-pinned; aliases resolve through file: locations, so plugin load never depends on the network.
     xdg.configFile = {
       "zellij/plugins/zjstatus.wasm".source = pkgs.fetchurl {
         url = "https://github.com/dj95/zjstatus/releases/download/v0.23.0/zjstatus.wasm";

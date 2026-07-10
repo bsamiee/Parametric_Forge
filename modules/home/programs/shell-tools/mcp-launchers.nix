@@ -4,9 +4,10 @@
 # License       : MIT
 # Path          : modules/home/programs/shell-tools/mcp-launchers.nix
 # ----------------------------------------------------------------------------
-# Data-plane owner: builds pinned pnpm launchers from mcp-fleet.nix rows and ships the fleet/agent observability surface — `forge-mcp` (outdated |
-# doctor | drift | generate | roots | snoop) emitting schema=forge-mcp/v1 receipts, plus `forge-agents`, the collector turning agent lanes, attention,
-# and AI quota into cached facts the zjstatus bar renders. Bar code never touches providers or credentials; the collector owns that seam.
+# Data-plane owner: builds pinned pnpm launchers from mcp-fleet.nix rows and ships the fleet/agent observability surface — `forge-mcp` emitting
+# schema=forge-mcp/v1 receipts, plus `forge-agents`, the collector turning agent lanes, attention, and AI quota into cached facts the zjstatus bar
+# renders. Bar code never touches providers or credentials; the collector owns that seam.
+
 {
   config,
   lib,
@@ -64,8 +65,8 @@
       if alerterBin != ""
       then "answer"
       else "focus";
-    # Cross-device tier (ntfy): per-class publish rows the same rise gates drive; the target rides the NTFY_URL/NTFY_TOPIC/NTFY_TOKEN Doppler rows
-    # (ntfy.sh topic-as-capability today, the maghz self-hosted server once its public ingress lands), and absent custody degrades to local-only.
+    # Cross-device tier (ntfy): per-class publish rows the same rise gates drive; the target rides the NTFY_URL/NTFY_TOPIC/NTFY_TOKEN
+    # Doppler rows, and absent custody degrades to local-only.
     remote = {
       needsInput = {
         priority = "high";
@@ -94,8 +95,7 @@
           stage="$(mktemp -d "$parent/.stage.XXXXXX")"
           # Failure litter guard: an errexit death mid-install must not strand the stage, so every success path removes or promotes it first.
           trap 'rm -rf "$stage"' EXIT
-          # --config rows pin XDG containment for launchd spawns without session
-          # env; prefer-offline lets exact pins cold-start from a warm store.
+          # --config rows pin XDG containment for launchd spawns without session env; prefer-offline lets exact pins cold-start from a warm store.
           pnpm add --dir "$stage" \
             --config.loglevel=error \
             --config.prefer-offline=true \
@@ -760,8 +760,7 @@
         exit "$rc"
       }
 
-      # Desired-registration generator: emits the manifest-derived fragment for one client shape; values are env NAMES or empty strings, never
-      # secrets.
+      # Desired-registration generator: emits the manifest fragment for one client shape; values are env NAMES or empty strings, never secrets.
       cmd_generate() {
         case "''${1:-}" in
           claude) jq -f '${generateClaudeJq}' "$fleet" ;;
@@ -1227,7 +1226,7 @@
               append_receipt "$row" 2>/dev/null || true
             }
             # Generic resolver: the lowest pid on the pty is its session leader; walk ancestry to the first command inside an .app bundle. macOS `ps
-            # -o comm=` prints full executable paths, so the bundle names the host deterministically for any terminal, present or future.
+            # -o comm=` prints full executable paths, so the bundle names the host deterministically for any terminal.
             host_app_for_tty() { # $1=tty (ttysNNN) -> app basename on stdout
               local pid cmd
               pid="$(${psBin} -t "$1" -o pid= 2>/dev/null | sort -n | head -1 | tr -d ' ')"

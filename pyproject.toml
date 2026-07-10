@@ -4,10 +4,8 @@
 # License       : MIT
 # Path          : pyproject.toml
 # ----------------------------------------------------------------------------
-# Python law for Forge-owned scripts: the Rasm bedrock's tool sections over a
-# curated dependency core — the stack-law substrate plus what the skill
-# scripts import, never the scientific graph. `package = false` keeps the repo
-# a virtual uv project: locked, synced, and nothing here ever builds.
+# Python law for Forge-owned scripts: the Rasm bedrock's tool sections over a curated dependency core — the stack-law substrate plus what the skill
+# scripts import, never the scientific graph. `package = false` keeps the repo a virtual uv project: locked, synced, and nothing here ever builds.
 
 [project]
 name = "parametric-forge"
@@ -57,7 +55,7 @@ dev = [
 package = false
 default-groups = ["dev"]
 
-[tool.uv.sources] # 0.22.9 imports typing.no_type_check_decorator (removed in 3.15); the pinned rev carries the fix, unreleased as of 0.22.9.
+[tool.uv.sources] # beartype 0.22.9 imports typing.no_type_check_decorator (removed in 3.15); the pinned rev carries the still-unreleased fix.
 beartype = { git = "https://github.com/beartype/beartype.git", rev = "f370a0b1733413681e7a72bf36fbe839e60b3c85" }
 
 # --- [TY] -------------------------------------------------------------------------------
@@ -98,8 +96,7 @@ error-on-warning = true
 
 # --- [MYPY] -----------------------------------------------------------------------------
 
-# `ty` is the binding type gate; mypy is the advisory strict secondary,
-# invoked per target — no pinned files row, Forge has no package tree.
+# `ty` is the binding type gate; mypy is the advisory strict secondary, invoked per target — no pinned files row, Forge has no package tree.
 [tool.mypy]
 python_version = "3.15"
 cache_dir = ".cache/mypy"
@@ -136,8 +133,7 @@ exclude = [
 
 # --- [SQLFLUFF] -------------------------------------------------------------------------
 
-# Postgres is the estate default dialect; the repo's duckdb/sqlite probe files
-# ride the per-dialect sqruff rows in flake-modules/tooling.nix.
+# Postgres is the estate default dialect; the repo's duckdb/sqlite probe files ride the per-dialect sqruff rows in flake-modules/tooling.nix.
 [tool.sqlfluff.core]
 dialect = "postgres"
 max_line_length = 150

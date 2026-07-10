@@ -147,7 +147,8 @@ A surface a parser, generator, gate, or ledger reads keeps its exact shape. Ever
 [FENCE_RULES]:
 
 - A code fence carries a language tag plus one intent label; renderer-local fences use the exact renderer tag, and Mermaid fences are `mermaid`.
-- Intent labels: `copy-safe` runs as written, `template` for neutral placeholders, `conceptual` for illustration, `generated` for generated output, `test-only` for test source, `output-only` for observed output, `accepted` and `rejected` for a worked contrast pair, and `codemap`/`seams` for width-capped topology fences.
+- Intent labels: `copy-safe` runs as written, `template` for neutral placeholders, `conceptual` for illustration, `generated` for generated output, `test-only` for test source, `output-only` for observed output, `signature` for a transcription-complete owner declaration an implementer copies verbatim, `accepted` and `rejected` for a worked contrast pair, and `codemap`/`seams` for width-capped topology fences.
+- The body honors its label: a `copy-safe` body carries no placeholder slots or shell prompts, and an `output-only` body carries no prompt-led run command — either mismatch retags the fence.
 
 [COMMAND_OUTPUT]:
 
@@ -190,6 +191,7 @@ project/
 [COMMAND_ROUTING]:
 
 - A tool document states its contract and routes verbs and flags to live `--help`; it never mirrors help output, which stales on the next release.
+- A flag or option table is legal only where the document is the system of record — the surface ships no live `--help` or equivalent introspection. Where live help exists, the table is a stale mirror however atomic its cells; the doc routes.
 
 [ANCHOR_COMMENTS]:
 

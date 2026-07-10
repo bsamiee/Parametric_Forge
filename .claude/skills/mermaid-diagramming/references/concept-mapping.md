@@ -1,6 +1,6 @@
 # [CONCEPT_MAPPING]
 
-A concept arrives as code, prose, a plan, or an argument — never as a diagram type. This reference owns the recognition step between raw material and the written question: the structural shape inside the material selects the archetype, and each shape betrays itself through signals readable before any node exists. Question wording, staged growth, and per-type mark law bind downstream in the methodology and construction references; recognition binds here.
+A concept arrives as code, prose, a plan, or an argument — never as a diagram type. The structural shape inside the material selects the archetype, and each shape betrays itself through signals readable before any node exists. Recognition classifies that shape; question wording, staged growth, and per-type mark law bind downstream.
 
 ## [01]-[SHAPE_CATALOG]
 

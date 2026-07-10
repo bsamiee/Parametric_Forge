@@ -5,6 +5,7 @@
 # Path          : modules/home/environments/development.nix
 # ----------------------------------------------------------------------------
 # Development tools and version control
+
 {
   config,
   lib,

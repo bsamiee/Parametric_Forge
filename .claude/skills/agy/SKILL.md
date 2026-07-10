@@ -18,7 +18,7 @@ Antigravity is an external Gemini call admitted only where it adds capability be
 
 [SCRIPTS]:
 
-- [01]-[RUNNER](scripts/agy.py): the print-only Antigravity wrapper — one bounded prompt in, one JSON receipt out, pinned to the strongest Gemini reasoning tier.
+- [01]-[RUNNER](scripts/agy.py): the wrapper this skill invokes; `prompt` and `models` subcommands.
 
 ## [02]-[CAPABILITY]
 
@@ -49,7 +49,7 @@ uv run scripts/agy.py prompt "Compare these two approaches and return the top 3 
 uv run scripts/agy.py prompt "Assess this screenshot and suggest concrete UI changes." --add-dir "$PWD" --timeout 10m
 ```
 
-The wrapper pins `Gemini 3.1 Pro (High)` — the strongest reasoning tier in the catalog, which spans Gemini 3.5 Flash and 3.1 Pro effort tiers beside hosted Claude and GPT-OSS entries. Agents never choose models in ordinary use; `models` exists for capability accounting and skill maintenance. `--add-dir` grants only bounded directories that answer the prompt, and the wrapper never asks `agy` to edit files.
+The wrapper pins `Gemini 3.1 Pro (High)`, the strongest reasoning tier; `models` lists the live catalog for capability accounting and skill maintenance. Agents never choose models in ordinary use. `--add-dir` grants only bounded directories that answer the prompt, and the wrapper never asks `agy` to edit files.
 
 `AGY_BIN` overrides the binary path (default `agy`), `AGY_MODEL` overrides the pinned model, and `AGY_PRINT_TIMEOUT` overrides the default `5m` timeout.
 
@@ -70,4 +70,4 @@ Faults are `binary_not_found`, `auth_required`, `quota_exceeded`, or `process_er
 
 ## [07]-[RAW_CLI]
 
-Interactive `agy` in a real TTY owns ongoing conversations, workspace tool permissions, resume, plugin management, and sandboxed project work. The direct surface carries `-p/--print`, `-i/--prompt-interactive`, `-c/--continue`, `--conversation`, `--mode` (`accept-edits`, `plan`), `--sandbox`, `--project`/`--new-project`, and the `models`, `plugin`, `install`, `update`, and `changelog` subcommands. `--dangerously-skip-permissions` binds only on an explicit user request for that exact mode.
+Interactive `agy` in a real TTY owns ongoing conversations, workspace tool permissions, resume, plugin management, and sandboxed project work; `agy --help` is the flag and subcommand contract. `--dangerously-skip-permissions` binds only on an explicit user request for that exact mode.

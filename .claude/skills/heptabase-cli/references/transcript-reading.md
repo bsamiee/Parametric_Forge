@@ -1,4 +1,4 @@
-# Transcript Reading
+# [TRANSCRIPT_READING]
 
 ## [01]-[COMMON_USAGE_PATTERN]
 
@@ -27,10 +27,10 @@ heptabase video read <videoCardId> --start-seconds 0 --end-seconds 300
 
 - Always call `audio metadata` or `video metadata` first.
 - `audio read` and `video read` return entries that overlap the requested inclusive range, not only entries that start inside it. For example, with `--start-seconds 60 --end-seconds 120`, an entry from 55s to 65s is returned.
-- Read 10-minute windows by default to avoid burning through tokens.
-- Ask the user before requesting significantly more than 1 hour at once.
+- Read 10-minute windows by default to bound token cost.
+- Ask the user before requesting more than 1 hour at once.
 
-## [03]-[WHEN_TO_USE_TRANSCRIPT_READ_VS_FILE_EXPORT]
+## [03]-[READ_VS_EXPORT]
 
 - Use `audio read` or `video read` for textual analysis. It returns Heptabase's parsed transcript entries, ready for the LLM.
 - Use `file export` for raw media inspection. It returns the local audio/video file path for native tools. This is rarely needed.

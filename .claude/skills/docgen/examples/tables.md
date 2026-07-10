@@ -134,8 +134,7 @@ A cell packs a multi-clause caveat, a signature, and behavior into a slot the co
 - Accepted:
 
     ```markdown accepted
-    `Shape` stacks layers; `from_profile` extrudes a profile and `peel`
-    strips the outer shell.
+    `Shape` stacks layers; `from_profile` extrudes a profile and `peel` strips the outer shell.
 
     | [INDEX] | [SYMBOL]             | [KIND] |
     | :-----: | :------------------- | :----- |
@@ -292,3 +291,31 @@ An enumerable table drops the leading `[INDEX]` column or carries bare-word head
     ```
 - Reason: The `[INDEX]` column gives every row a stable reference and the bracketed rubric makes headers censusable across sibling tables.
 - Reframe: Add the centered `[INDEX]` column numbered `[01]` onward and bracket every header as an uppercase rubric.
+
+## [13]-[SUB_LETTERED_INDEX]
+
+Rows carry invented sub-index tokens — `[1a]`, `[1b]` — to nest children under a parent row, breaking the `[NN]` sequence and the grid's flat-lookup contract.
+
+- Detection: Index cells outside the sequential `[NN]` vocabulary, lettered or dotted to express hierarchy inside the grid.
+- Rejected:
+    ```markdown rejected
+    | [INDEX] | [AXIS]        | [OWNER]       |
+    | :-----: | :------------ | :------------ |
+    |  [01]   | Panel algebra | `Panelize`    |
+    |  [1a]   | Family axis   | `PanelFamily` |
+    |  [1b]   | Panel wire    | `PanelField`  |
+    ```
+- Accepted:
+
+    ```markdown accepted
+    `Panelize` folds the algebra; its payload owners ride their own rows.
+
+    | [INDEX] | [AXIS]        | [OWNER]       |
+    | :-----: | :------------ | :------------ |
+    |  [01]   | Panel algebra | `Panelize`    |
+    |  [02]   | Family axis   | `PanelFamily` |
+    |  [03]   | Panel wire    | `PanelField`  |
+    ```
+
+- Reason: A GFM grid is flat — a lettered sub-row asserts a hierarchy the table cannot render, breaks index grep, and defeats the fixer's renumbering; the parent relation lives in the lead or an owner column, never in the index vocabulary.
+- Reframe: Fan sub-rows to sequential `[NN]` rows and carry the parent relation in the lead sentence or an owning column; a genuinely two-level family is two tables or a record set.

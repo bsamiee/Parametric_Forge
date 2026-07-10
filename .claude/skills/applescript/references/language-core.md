@@ -1,6 +1,6 @@
 # [LANGUAGE_CORE]
 
-AppleScript's language core compiles English-like syntax into an OSA object-specifier and Apple-event-descriptor program running over a mutable script-object runtime; every rule below is a fact about that compiled machine, never about the surface prose.
+AppleScript's language core compiles English-like syntax into an OSA object-specifier and Apple-event-descriptor program running over a mutable script-object runtime; each rule here governs that compiled machine, not the English-like surface.
 
 ## [01]-[SCRIPT_OBJECT_ALGEBRA]
 
@@ -130,7 +130,7 @@ if class of x is text then return POSIX path of (POSIX file x)
 error "unsupported path input" number -1700 from x to "alias | file | POSIX text"
 ```
 
-Coercion is asymmetric and lossy in one direction: `record as list` discards labels and yields values in declaration order, while `list as record` has no defined handler. `text` subsumes the retired `string` and `Unicode text` classes, so `class of "x"` returns `text` and a legacy dictionary naming `string` still coerces transparently. Numeric coercion honors the active `considering numeric strings` attribute for text-to-number conversion, and a malformed numeral faults `-1700` rather than silently yielding zero. A coercion chain is single-step: `x as list as text` performs two independent coercions through an intermediate value, and each step faults independently — a rail names the intermediate class whenever the source-to-target pair has no direct handler.
+Coercion is asymmetric and lossy in one direction: `record as list` discards labels and yields values in declaration order, while `list as record` has no defined handler. `text` subsumes `string` and `Unicode text`, so `class of "x"` returns `text` and a dictionary naming `string` coerces to `text`. Numeric coercion honors the active `considering numeric strings` attribute for text-to-number conversion, and a malformed numeral faults `-1700` rather than silently yielding zero. A coercion chain is single-step: `x as list as text` performs two independent coercions through an intermediate value, and each step faults independently — a rail names the intermediate class whenever the source-to-target pair has no direct handler.
 
 ## [07]-[FILTER_REFERENCES]
 
@@ -148,7 +148,7 @@ The implicit `it` inside a predicate names the candidate object under test; `it`
 
 ## [08]-[CONSIDERING_IGNORING]
 
-The comparison attribute stack is a lexically scoped policy of seven independent attributes — `case`, `diacriticals`, `hyphens`, `punctuation`, `white space`, `expansion`, and `numeric strings` — read by text equality, ordering, `contains`, and `text item delimiters` alike. The default active set ignores `case` and `numeric strings` while considering the rest, so `"a" = "A"` is true unwrapped but magnitude ordering is opt-in. `expansion` (ligature folding) is inert on current macOS. `considering numeric strings` orders embedded digit runs by magnitude, giving `"1.10" > "1.9"` and `"item2" < "item10"` without a custom parser, and `considering X but ignoring Y` composes the full stack in one clause.
+The comparison attribute stack is a lexically scoped policy of seven independent attributes — `case`, `diacriticals`, `hyphens`, `punctuation`, `white space`, `expansion`, and `numeric strings` — read by text equality, ordering, `contains`, and `text item delimiters` alike. The default active set ignores `case` and `numeric strings` while considering the rest, so `"a" = "A"` is true unwrapped but magnitude ordering is opt-in. `expansion` (ligature folding) is inert. `considering numeric strings` orders embedded digit runs by magnitude, giving `"1.10" > "1.9"` and `"item2" < "item10"` without a custom parser, and `considering X but ignoring Y` composes the full stack in one clause.
 
 ```applescript conceptual
 considering numeric strings but ignoring case and white space
@@ -220,13 +220,13 @@ set loader to "on run argv" & linefeed & "return item 1 of argv & \"/\" & item 2
 run script loader with parameters {"a", "b"}
 ```
 
-The OSA file-kind rail distinguishes source, compiled script, and script bundle before any tool invokes `osacompile`, `osascript`, `NSAppleScript`, or `OSAScript` against a path.
+The OSA file-kind rail distinguishes source, compiled script, and script bundle before any tool invokes `osacompile`, `osascript`, `NSAppleScript`, or `OSAScript` against a path; the extensions are conventional.
 
-| [INDEX] | [UTTYPE]                 | [IDENTIFIER]                          | [ROLE]                                                  |
-| :-----: | :----------------------- | :------------------------------------ | :------------------------------------------------------ |
-|  [01]   | `UTType.appleScript`     | `com.apple.applescript.text`          | Text source, typically `.applescript`.                  |
-|  [02]   | `UTType.osaScript`       | `com.apple.applescript.script`        | Compiled OSA script data, typically `.scpt`.            |
-|  [03]   | `UTType.osaScriptBundle` | `com.apple.applescript.script-bundle` | Compiled bundle carrying resources, typically `.scptd`. |
+| [INDEX] | [UTTYPE]                 | [IDENTIFIER]                          | [ROLE]                             | [EXTENSION]    |
+| :-----: | :----------------------- | :------------------------------------ | :--------------------------------- | :------------- |
+|  [01]   | `UTType.appleScript`     | `com.apple.applescript.text`          | Text source                        | `.applescript` |
+|  [02]   | `UTType.osaScript`       | `com.apple.applescript.script`        | Compiled OSA script data           | `.scpt`        |
+|  [03]   | `UTType.osaScriptBundle` | `com.apple.applescript.script-bundle` | Compiled bundle carrying resources | `.scptd`       |
 
 `NSAppleScript` owns text-or-URL script loading, compilation, execution, and structured error dictionaries at the Foundation boundary; OSAKit's `OSAScript` owns richer editor and compiled-script workflows over the same runtime, and Automator's `AMAppleScriptAction` compiles to an `OSAScript` instance underneath.
 
@@ -290,7 +290,7 @@ tell application id "com.apple.finder"
 end tell
 ```
 
-`osadecompile` emits chevron literals for any compiled script referencing terminology the current dictionary no longer defines; a compile/decompile round-trip against a target whose `.sdef` changed surfaces every unresolved term as a raw code, a version-drift receipt rather than corruption. A rail that must survive dictionary churn pins its load-bearing verbs as chevron literals rather than terms a future OS release may retire. Text is likewise a sequenced container with a fixed element vocabulary — `characters`, `words`, `paragraphs`, and `text items` — and every element form takes `every`, `item N`, `items X thru Y`, negative indices, `first`, `last`, `middle`, and `some`; word and paragraph segmentation is Unicode-aware and locale-influenced, while `text items` alone is delimiter-driven and therefore deterministic against the active `text item delimiters`. Character identity is the Unicode code point — `id of t` returns one integer for a single character and a list of code points for longer text, and `character id N` plus `string id {…}` invert it, the codepoint-exact rail that the deprecated Mac Roman `ASCII character`/`ASCII number` pair cannot express — as in `id of "café"` against `string id {72, 105}`.
+`osadecompile` emits chevron literals for any compiled script referencing terminology the current dictionary no longer defines; a compile/decompile round-trip against a target whose `.sdef` changed surfaces every unresolved term as a raw code, a version-drift receipt rather than corruption. A rail that must survive dictionary churn pins its load-bearing verbs as chevron literals rather than terms a future OS release may retire. Text is likewise a sequenced container with a fixed element vocabulary — `characters`, `words`, `paragraphs`, and `text items` — and every element form takes `every`, `item N`, `items X thru Y`, negative indices, `first`, `last`, `middle`, and `some`; word and paragraph segmentation is Unicode-aware and locale-influenced, while `text items` alone is delimiter-driven and therefore deterministic against the active `text item delimiters`. Character identity is the Unicode code point — `id of t` returns one integer for a single character and a list of code points for longer text, and `character id N` plus `string id {…}` invert it, the codepoint-exact rail that the Mac Roman `ASCII character`/`ASCII number` pair cannot express — as in `id of "café"` against `string id {72, 105}`.
 
 ## [13]-[HANDLER_DISPATCH]
 
@@ -331,7 +331,7 @@ set minutes of d to 0
 set seconds of d to 0
 ```
 
-`AppleScript's version` returns a version object ordered by component rather than by string, so a comparison against `"2.8"` is a true numeric comparison; `use AppleScript version "2.8"` declares a compile-time capability floor, and the current macOS 26 component is 2.8. A script declaring that floor fails to compile on an older component instead of misbehaving at runtime — the language's own capability gate.
+`AppleScript's version` returns a version object ordered by component rather than by string, so a comparison against `"2.8"` is a true numeric comparison; `use AppleScript version "2.8"` declares a compile-time capability floor, and the macOS 26 component is 2.8. A script declaring that floor fails to compile on an older component instead of misbehaving at runtime — the language's own capability gate.
 
 Vertical-bar identifiers admit reserved words and arbitrary characters as record labels, handler names, and variables, addressing a field whose spelling collides with terminology the compiler otherwise claims.
 

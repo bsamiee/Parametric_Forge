@@ -4,9 +4,7 @@
 -- License       : MIT
 -- Path          : modules/home/programs/apps/nvim/lua/forge/health.lua
 -- ----------------------------------------------------------------------------
--- :checkhealth forge — proves plugin store paths, server commands, parsers, formatter/linter binaries, estate action rows, Claude LSP marketplace
--- parity (tracked file AND the installed cache copy Claude actually loads), generated nixd expressions, and
--- provider resolution against the generated fact modules.
+-- :checkhealth forge — proves each generated Forge fact module resolves against the live editor surface it projects.
 
 local M = {}
 local health = vim.health

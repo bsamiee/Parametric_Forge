@@ -4,9 +4,9 @@
 # License       : MIT
 # Path          : modules/nixos/disko.nix
 # ----------------------------------------------------------------------------
-# Declarative disk layout consumed by nixos-anywhere at bootstrap and by the
-# installed system for fileSystems rows. GPT with a BIOS-boot partition (the
-# Hostinger KVM boots BIOS); swap stays zram-owned.
+# Declarative disk layout consumed by nixos-anywhere at bootstrap and by the installed system for fileSystems rows. GPT with a BIOS-boot partition
+# (the Hostinger KVM boots BIOS); swap stays zram-owned.
+
 {host, ...}: {
   disko.devices.disk.main = {
     device = host.disk.device;

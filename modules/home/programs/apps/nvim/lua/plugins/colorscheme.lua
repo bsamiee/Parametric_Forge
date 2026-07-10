@@ -60,8 +60,7 @@ local apply = function()
         end
     end
 
-    -- Role rows: diagnostics, floats, completion menu, statuscolumn, diff fills (background tint, neutral code foreground), and search fills
-    -- (warm, distinct from the cool selection slate).
+    -- Diff fills carry a background tint with neutral code foreground; search fills run warm, distinct from the cool selection slate.
     local roles = syntax.roles
     for name, def in pairs({
         DiagnosticError = { fg = roles.state.danger },
@@ -89,7 +88,7 @@ local apply = function()
         CurSearch = { bg = roles.ui.match, fg = roles.text.primary },
         Whitespace = { fg = roles.ui.whitespace },
         SnacksIndent = { fg = roles.ui.indent },
-        -- Hunk signs ride the owner git-state vocabulary — the same hues the VS Code and WezTerm gutters read; dracula links them to Diff* tints.
+        -- Hunk signs ride the owner git-state vocabulary, overriding dracula's default link to the Diff* tints.
         GitSignsAdd = { fg = roles.git.added },
         GitSignsChange = { fg = roles.git.modified },
         GitSignsDelete = { fg = roles.git.deleted },
@@ -98,11 +97,10 @@ local apply = function()
         vim.api.nvim_set_hl(0, name, def)
     end
 
-    -- Transparency
     vim.cmd("highlight Normal guibg=NONE ctermbg=NONE")
     vim.cmd("highlight NormalFloat guibg=NONE ctermbg=NONE")
     vim.cmd("highlight SignColumn guibg=NONE ctermbg=NONE")
-    -- Dashboard accents follow the variant cyan
+    -- Dashboard accents follow the variant cyan.
     vim.api.nvim_set_hl(0, "SnacksDashboardHeader", { fg = palette.cyan })
     vim.api.nvim_set_hl(0, "SnacksDashboardKey", { fg = palette.cyan })
     vim.api.nvim_set_hl(0, "SnacksDashboardIcon", { fg = palette.cyan })

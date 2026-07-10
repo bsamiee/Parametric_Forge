@@ -6,6 +6,7 @@
 # ----------------------------------------------------------------------------
 # Font inventory plus direct-file projection into the user font domain. macOS registers ~/Library/Fonts payloads deterministically; the nested
 # "/Library/Fonts/Nix Fonts" package tree depends on lazy fontd rescans.
+
 {
   config,
   lib,

@@ -4,7 +4,8 @@
 # License       : MIT
 # Path          : modules/home/programs/shell-tools/zoxide.nix
 # ----------------------------------------------------------------------------
-# Smart directory navigation with frecency-based learning
+# Directory navigation with frecency-based learning
+
 _: {
   programs.zoxide = {
     enable = true;

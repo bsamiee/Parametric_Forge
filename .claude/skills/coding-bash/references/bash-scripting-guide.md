@@ -1,6 +1,6 @@
-# [H1][BASH-SCRIPTING-GUIDE]
+# [BASH_SCRIPTING_GUIDE]
 
-Bash `5.2+`/5.3 language reference. Strict mode, parameter expansion, arrays, data structures, namerefs, arithmetic, builtin performance.
+Bash `5.2+`/5.3 language reference: strict-mode composition, parameter-expansion chains, array and nameref data structures, and fork-free native builtins.
 
 ## [01]-[STRICT_MODE]
 
@@ -41,7 +41,7 @@ IFS=$'\n\t'
 |  [12]   | lastpipe          | `shopt -s lastpipe`              | Pipeline-final cmd runs in current shell     |
 |  [13]   | Loadable builtins | `enable -f ... sleep`            | Fork-free `sleep`/`seq`/`strftime` in loops  |
 
-Fork-free command substitution (`${ cmd; }` / `${| cmd; }`) is the single largest performance improvement in Bash 5.3 — eliminates the fork+exec that `$(cmd)` requires. Architecturally significant: every `$()` in a hot path becomes zero-cost.
+Fork-free command substitution (`${ cmd; }` / `${| cmd; }`) drops the fork+exec that `$(cmd)` requires, making every hot-path `$()` zero-cost.
 
 ```bash conceptual
 # Fork-free substitution (5.3) — version-gate for portability
@@ -86,7 +86,7 @@ ${var@Q}                     # Shell-quoted (safe for re-eval)
 ${var@A}                     # Assignment form (declare -r var='value')
 ${var@a}                     # Attribute flags (r=readonly, a=array, A=assoc)
 
-# --- nested expansion chains (the real power) ---
+# --- nested expansion chains ---
 # file="/path/to/file.backup.tar.gz"
 ${file##*/}                  # file.backup.tar.gz (basename)
 ${file%.*}                   # /path/to/file.backup.tar (strip one ext)
@@ -122,7 +122,7 @@ case "${file}" in
     *.@(json|yaml))      _parse_config "${file}" ;;
     *)                   _die "Unsupported: ${file}" ;;
 esac
-# Dispatch table and arithmetic examples: see [7][DATA_STRUCTURES] and [8][ARITHMETIC]
+# Dispatch table and arithmetic: see [07]-[DATA_STRUCTURES], [08]-[ARITHMETIC]
 ```
 
 ## [05]-[VARIABLES_AND_ARRAYS]
@@ -174,7 +174,7 @@ flock -n "${fd}" || _die "Already running"
 exec {fd}>&-                                        # Release FD
 ```
 
-[CONTROLLED_GLOBAL_MUTATION]:`declare -g` is the single escape hatch. Use exclusively for config loading; validate key names against `^[A-Za-z_][A-Za-z_0-9]*$` before `declare -g "${key}=${value}"`.
+[CONTROLLED_GLOBAL_MUTATION]: `declare -g` is the single escape hatch. Use exclusively for config loading; validate key names against `^[A-Za-z_][A-Za-z_0-9]*$` before `declare -g "${key}=${value}"`.
 
 ## [06]-[NAMEREFS]
 
@@ -212,7 +212,7 @@ _reduce() {
 ## [07]-[DATA_STRUCTURES]
 
 ```bash conceptual
-# Dispatch table: see [4][BRANCHING] for full pattern
+# Dispatch table: see [04]-[BRANCHING]
 # Associative set (O(1) membership test)
 declare -Ar VALID_EXTS=([txt]=1 [log]=1 [csv]=1)
 [[ -v VALID_EXTS["${ext}"] ]] || _die "Unsupported: ${ext}"

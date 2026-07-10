@@ -10,6 +10,7 @@
 # keybindings) and the manifest-rostered extension surface. The keybindings rail renders the chord owner's vscode rows into a forge-keys tail
 # block: user rules evaluate bottom-to-top, so the managed tail is the authority position and hand experiments above it coexist. Both rails
 # target the Default profile; a custom full profile reads profiles/<id>/ and never sees these blocks.
+
 {
   config,
   lib,
@@ -144,9 +145,9 @@
       };
 
       # --- [LANGUAGE_BLOCKS]
-      # Per-key merge law: a workspace block overrides only the keys it names, so these compose under every repo's intent. [yaml] binds the
-      # yamlfmt extension (spawns PATH yamlfmt, cwd = workspace, so project .yamlfmt wins before the XDG global); [nix] stays
-      # on alejandra's 2-space so owners never fight.
+      # Per-key merge law: a workspace block overrides only the keys it names, so these compose under every
+      # repo's intent. [yaml] binds the yamlfmt extension (spawns PATH yamlfmt, cwd = workspace, so project
+      # .yamlfmt wins before the XDG global); [nix] stays on alejandra's 2-space so owners never fight.
       "[yaml]" = {
         "editor.defaultFormatter" = "bluebrown.yamlfmt";
         "editor.tabSize" = style.indent;
@@ -272,7 +273,7 @@
       "editor.experimentalEditContextEnabled"
       "editor.experimentalGpuAcceleration"
     ];
-  # Key alternation crosses into awk as a dynamic regex through ENVIRON — never a /literal/ — so key spellings can never collide with the awk delimiter.
+  # Key alternation reaches awk as a dynamic regex through ENVIRON — never a /literal/ — so key spellings never collide with the awk delimiter.
   managedKeyAlt =
     lib.throwIf (managedKeys == []) "vscode managed strip set is empty"
     (lib.concatMapStringsSep "|" lib.escapeRegex managedKeys);
@@ -334,9 +335,9 @@ in {
             next
           }
           inserted && $0 ~ ENVIRON["FORGE_MANAGED_RE"] {
-            # A managed line whose value continues past the line (open bracket or brace, or a bare colon with the scalar on the next line)
-            # would orphan its body under a single-line strip, and a second key sharing the managed line would vanish with it;
-            # all refuse instead of tearing the document.
+            # A managed line whose value continues past the line (open bracket or brace, or a bare colon with the
+            # scalar on the next line) would orphan its body under a single-line strip, and a second key sharing
+            # the managed line would vanish with it; all refuse instead of tearing the document.
             if (gsub(/\[/, "[") > gsub(/\]/, "]") || gsub(/\{/, "{") > gsub(/\}/, "}")) exit 67
             rest = $0
             sub(/^[[:space:]]*"[^"]+"[[:space:]]*:/, "", rest)
@@ -354,8 +355,7 @@ in {
         *"forge-theme:begin"*)
           if [ "$merged" != "$(/bin/cat "$settings" 2>/dev/null)" ]; then
             # Publish by in-place copy: VS Code's kqueue watcher is bound to the settings inode, so a rename publishes to an inode it never
-            # observes and the live window keeps stale config until reload. cp truncates and rewrites the
-            # existing inode, which the watcher applies live.
+            # observes and the live window keeps stale config until reload; cp truncates and rewrites the existing inode, so the watcher applies live.
             tmp=$(/usr/bin/mktemp "$settings.XXXXXX")
             printf '%s\n' "$merged" >"$tmp"
             run /bin/cp "$tmp" "$settings"
@@ -368,10 +368,10 @@ in {
       esac
     '';
 
-    # Keybindings rail: the forge-keys block re-lands at the array TAIL every switch — bottom-to-top precedence makes tail position the
-    # authority — and user rows above it pass through untouched. Fail-closed guards mirror the settings rail: an unterminated prior block
-    # refuses (a strip would eat the tail), and a document that is neither a multi-line array, the `[]` template, nor absent
-    # refuses with a named error instead of guessing.
+    # Keybindings rail: the forge-keys block re-lands at the array TAIL every switch — bottom-to-top precedence makes
+    # tail position the authority — and user rows above it pass through untouched. Fail-closed guards mirror the
+    # settings rail: an unterminated prior block refuses (a strip would eat the tail), and a document that is neither a
+    # multi-line array, the `[]` template, nor absent refuses with a named error instead of guessing.
     activation.vscodeKeysSeed = lib.hm.dag.entryAfter ["writeBoundary"] ''
         kb=${lib.escapeShellArg keybindingsPath}
       FORGE_KEYS_BLOCK=$(<${config.xdg.configFile."forge/vscode/keybindings-block.jsonc".source})
@@ -402,10 +402,10 @@ in {
             }
             for (i = tail + 1; i <= n; i++)
               if (buf[i] !~ /^[[:space:]]*$/ && buf[i] !~ /^[[:space:]]*\/\//) exit 66
-            # The preceding element needs a separator; JSONC tolerates the trailing comma the block always carries before the closer. A
-            # trailing line comment would swallow an appended comma, so the separator lands on the content ahead of the comment tail — but
-            # only when the "//" sits OUTSIDE a string (even quote count in the prefix), or a value like "x} //y" would take an
-            # interior comma and change meaning silently.
+            # The preceding element needs a separator; JSONC tolerates the trailing comma the block always carries before
+            # the closer. A trailing line comment would swallow an appended comma, so the separator lands on the content
+            # ahead of the comment tail — but only when the "//" sits OUTSIDE a string (even quote count in the prefix), or
+            # a value like "x} //y" would take an interior comma and change meaning silently.
             for (i = tail - 1; i >= 1; i--) {
               if (buf[i] ~ /^[[:space:]]*$/ || buf[i] ~ /^[[:space:]]*\/\//) continue
               line = buf[i]; cmt = ""

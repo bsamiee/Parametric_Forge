@@ -1,8 +1,10 @@
-# Queries
+# [QUERIES]
+
+Queries are set algebra, not row-at-a-time iteration: CTEs name relational steps, MERGE fuses conditional writes, and FILTER, window frames, LATERAL, and SQL/JSON express projection declaratively.
 
 ## [01]-[CTE_ALGEBRA]
 
-PG 12+ CTEs are inlined by default unless side-effecting or referenced multiple times.
+CTEs are inlined by default unless side-effecting or referenced multiple times.
 
 Recursive CTE with SEARCH BREADTH FIRST + CYCLE in single query:
 
@@ -26,7 +28,7 @@ WHERE NOT is_cycle
 ORDER BY ordercol;
 ```
 
-Data-modifying CTE -- archive-and-delete in single statement:
+Data-modifying CTE — archive-and-delete in single statement:
 
 ```sql conceptual
 WITH deleted AS (
@@ -41,11 +43,11 @@ SELECT * FROM deleted;
 CTE contracts:
 
 - `AS MATERIALIZED` forces single evaluation; `AS NOT MATERIALIZED` forces inlining even with multiple references
-- Side-effecting CTEs (INSERT/UPDATE/DELETE) are always materialized -- execute exactly once
+- Side-effecting CTEs (INSERT/UPDATE/DELETE) are always materialized — execute exactly once
 - SEARCH BREADTH FIRST produces an `ordercol` (or custom name) for deterministic BFS ordering
-- CYCLE columns are boolean `is_cycle` + array `path_array` -- filter `WHERE NOT is_cycle` in outer query
-- SEARCH and CYCLE compose on the same recursive CTE -- SEARCH controls traversal order, CYCLE prevents infinite loops
-- There is no `max_recursion_depth` GUC in PostgreSQL -- use LIMIT in outer query for explicit row caps
+- CYCLE columns are boolean `is_cycle` + array `path_array` — filter `WHERE NOT is_cycle` in outer query
+- SEARCH and CYCLE compose on the same recursive CTE — SEARCH controls traversal order, CYCLE prevents infinite loops
+- There is no `max_recursion_depth` GUC in PostgreSQL — use LIMIT in outer query for explicit row caps
 - Queue drain pattern: `DELETE ... WHERE id IN (SELECT ... FOR UPDATE SKIP LOCKED) RETURNING *` atomically claims and removes rows
 
 ## [02]-[MERGE]
@@ -70,19 +72,19 @@ RETURNING merge_action() AS action,
 
 MERGE contracts:
 
-- `merge_action()` returns `'INSERT'`, `'UPDATE'`, or `'DELETE'` -- typed signal for downstream event emission
-- `OLD.*` / `NEW.*` in RETURNING access pre/post values in PostgreSQL 18 -- replaces audit trigger patterns
+- `merge_action()` returns `'INSERT'`, `'UPDATE'`, or `'DELETE'` — typed signal for downstream event emission
+- `OLD.*` / `NEW.*` in RETURNING access pre/post values in PostgreSQL 18 — replaces audit trigger patterns
 - `OLD` is NULL for INSERT actions; `NEW` is NULL for DELETE actions
-- MERGE acquires ROW EXCLUSIVE lock -- same as UPDATE; does NOT escalate to table lock
-- Join condition must be deterministic -- each source row matches at most one target row
+- MERGE acquires ROW EXCLUSIVE lock — same as UPDATE; does not escalate to table lock
+- Join condition must be deterministic — each source row matches at most one target row
 - Multiple WHEN MATCHED clauses: first matching condition wins (order matters)
-- MERGE is atomic -- all matched rows processed in single statement execution
+- MERGE is atomic — all matched rows processed in single statement execution
 - MERGE fires statement-level triggers for the actions specified in the command and row-level triggers for rows that execute the corresponding action
 - MERGE RETURNING composes inside CTEs for downstream INSERT/audit pipelines
 
 ## [03]-[CONDITIONAL_AGGREGATION]
 
-FILTER (WHERE) replaces CASE WHEN inside aggregates -- clearer intent, better optimization:
+FILTER (WHERE) replaces CASE WHEN inside aggregates — clearer intent, better optimization:
 
 ```sql conceptual
 SELECT department,
@@ -95,13 +97,13 @@ GROUP BY department;
 
 FILTER contracts:
 
-- FILTER (WHERE) is evaluated before the aggregate function -- pre-filter, not post-filter
+- FILTER (WHERE) is evaluated before the aggregate function — pre-filter, not post-filter
 - Applies to regular aggregates, window aggregates, and ordered-set aggregates
-- CASE WHEN inside aggregates is an anti-pattern -- use FILTER (WHERE) exclusively
+- CASE WHEN inside aggregates is an anti-pattern — use FILTER (WHERE) exclusively
 
 ## [04]-[MULTI_DIMENSIONAL_AGGREGATION]
 
-GROUPING SETS, CUBE, and ROLLUP replace N separate GROUP BY queries with a single scan -- set-algebraic multi-level aggregation:
+GROUPING SETS, CUBE, and ROLLUP replace N separate GROUP BY queries with a single scan — set-algebraic multi-level aggregation:
 
 ```sql conceptual
 -- GROUPING SETS: explicit dimension combinations
@@ -140,12 +142,12 @@ GROUP BY ROLLUP (
 
 Multi-dimensional aggregation contracts:
 
-- `GROUPING(col1, col2, ...)` returns a bitmask: bit=1 when column is aggregated (NULL because of grouping, not data) -- use to distinguish NULL-from-data vs NULL-from-rollup
-- CUBE(a, b, c) produces 2^3 = 8 grouping sets -- exponential growth; limit to 3-4 columns
-- ROLLUP(a, b, c) produces 4 grouping sets: (a,b,c), (a,b), (a), () -- hierarchical, not combinatorial
+- `GROUPING(col1, col2, ...)` returns a bitmask: bit=1 when column is aggregated (NULL because of grouping, not data) — use to distinguish NULL-from-data vs NULL-from-rollup
+- CUBE(a, b, c) produces 2^3 = 8 grouping sets — exponential growth; limit to 3-4 columns
+- ROLLUP(a, b, c) produces 4 grouping sets: (a,b,c), (a,b), (a), () — hierarchical, not combinatorial
 - Mixed syntax: `GROUP BY a, ROLLUP(b, c), CUBE(d)` composes via cross-product of grouping set lists
-- Planner uses HashAggregate or GroupAggregate with Sort -- partial indexes on grouping columns accelerate sorted strategies
-- `FILTER (WHERE ...)` composes with GROUPING SETS -- conditional aggregation within each dimension slice
+- Planner uses HashAggregate or GroupAggregate with Sort — partial indexes on grouping columns accelerate sorted strategies
+- `FILTER (WHERE ...)` composes with GROUPING SETS — conditional aggregation within each dimension slice
 
 ## [05]-[WINDOW_FUNCTIONS]
 
@@ -177,7 +179,7 @@ FROM request_metrics
 GROUP BY region;
 ```
 
-RANGE with INTERVAL -- time-based windowing without physical row counting:
+RANGE with INTERVAL — time-based windowing without physical row counting:
 
 ```sql conceptual
 SELECT tenant_id, event_date, revenue,
@@ -194,7 +196,7 @@ SELECT tenant_id, event_date, revenue,
 FROM daily_metrics;
 ```
 
-FIRST_VALUE / LAST_VALUE / NTH_VALUE -- positional extraction with frame trap:
+FIRST_VALUE / LAST_VALUE / NTH_VALUE — positional extraction with frame trap:
 
 ```sql conceptual
 SELECT product_id, price_date, price,
@@ -209,7 +211,7 @@ WINDOW w AS (
 );
 ```
 
-Distribution analytics -- PERCENT_RANK and CUME_DIST:
+Distribution analytics — PERCENT_RANK and CUME_DIST:
 
 ```sql conceptual
 SELECT employee_id, department, salary,
@@ -219,7 +221,7 @@ FROM employees
 WINDOW w AS (PARTITION BY department ORDER BY salary);
 ```
 
-Gap/island detection via LAG -- boolean expression, no CASE:
+Gap/island detection via LAG — boolean expression, no CASE:
 
 ```sql conceptual
 SELECT user_id, action_time,
@@ -231,7 +233,7 @@ FROM user_actions
 WINDOW w AS (PARTITION BY user_id ORDER BY action_time);
 ```
 
-Time-series gap fill -- generate_series + LEFT JOIN + window:
+Time-series gap fill — generate_series + LEFT JOIN + window:
 
 ```sql conceptual
 SELECT gs.day,
@@ -248,23 +250,23 @@ LEFT JOIN daily_sales s ON gs.day = s.sale_date;
 
 Window contracts:
 
-- GROUPS framing counts distinct peer groups, not individual rows -- different from ROWS
-- RANGE framing operates on value distance from current row's ORDER BY value -- composable with INTERVAL for time-based windows
-- RANGE with INTERVAL requires a single ORDER BY column of date/timestamp/interval type -- multi-column ORDER BY invalid with RANGE INTERVAL
+- GROUPS framing counts distinct peer groups, not individual rows — different from ROWS
+- RANGE framing operates on value distance from current row's ORDER BY value — composable with INTERVAL for time-based windows
+- RANGE with INTERVAL requires a single ORDER BY column of date/timestamp/interval type — multi-column ORDER BY invalid with RANGE INTERVAL
 - Default frame: `RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW` (when ORDER BY specified)
-- LAST_VALUE / NTH_VALUE frame trap: default frame ends at CURRENT ROW -- always specify `ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING` for full-partition extraction
+- LAST_VALUE / NTH_VALUE frame trap: default frame ends at CURRENT ROW — always specify `ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING` for full-partition extraction
 - FIRST_VALUE is safe with default frame (starts at UNBOUNDED PRECEDING)
 - Frame exclusion modes: EXCLUDE CURRENT ROW, EXCLUDE GROUP, EXCLUDE TIES, EXCLUDE NO OTHERS
-- `COUNT(DISTINCT ...) OVER (...)` is not supported -- use subquery or LATERAL join
+- `COUNT(DISTINCT ...) OVER (...)` is not supported — use subquery or LATERAL join
 - Named windows: `WINDOW w AS (PARTITION BY tenant_id ORDER BY created_at)` then `OVER (w ROWS ...)` for DRY framing
 - `WITHIN GROUP (ORDER BY ...)` is required for ordered-set aggregates (percentile_cont, percentile_disc, mode)
-- PERCENT_RANK: (rank - 1) / (total_rows - 1), range [0, 1] -- use for relative standing within partition
-- CUME_DIST: count(values <= current) / total_rows, range (0, 1] -- use for cumulative distribution
+- PERCENT_RANK: (rank - 1) / (total_rows - 1), range [0, 1] — use for relative standing within partition
+- CUME_DIST: count(values <= current) / total_rows, range (0, 1] — use for cumulative distribution
 - Gap detection: `(expression)::int` coercion preferred over CASE for boolean-to-integer projection
 
 ## [06]-[JSON_TABLE_AND_SQL_JSON]
 
-JSON_TABLE -- structured relational extraction from JSONB:
+JSON_TABLE — structured relational extraction from JSONB:
 
 ```sql conceptual
 SELECT o.id AS order_id, jt.*
@@ -293,23 +295,23 @@ WHERE jsonb_path_exists(metadata, '$.tags[*] ? (@ == "priority")')
 
 SQL/JSON contracts:
 
-- JSON_TABLE produces a relational result set -- composable with JOINs, WHERE, GROUP BY
-- JSON_TABLE is an implicit LATERAL join -- outer row columns are accessible in path expressions
-- JSON_TABLE COLUMNS support scalar SQL types only (text, int, numeric, uuid, boolean, timestamptz) -- composite and array types invalid
+- JSON_TABLE produces a relational result set — composable with JOINs, WHERE, GROUP BY
+- JSON_TABLE is an implicit LATERAL join — outer row columns are accessible in path expressions
+- JSON_TABLE COLUMNS support scalar SQL types only (text, int, numeric, uuid, boolean, timestamptz) — composite and array types invalid
 - `FOR ORDINALITY` generates a 1-based row number column for positional tracking
-- `DEFAULT ... ON EMPTY` provides fallback when path yields no match (distinct from NULL)
+- `DEFAULT ... ON EMPTY` returns the fallback when path yields no match (distinct from NULL)
 - `DEFAULT ... ON ERROR` / `ERROR ON ERROR`: control behavior when path expression fails
-- `RETURNING type`: explicit cast of extracted value -- avoids text intermediary
+- `RETURNING type`: explicit cast of extracted value — avoids text intermediary
 - Multiple NESTED PATH siblings are combined as sibling row groups, not a cross-product; use separate JSON_TABLE calls when independent arrays need explicit pairing semantics
-- jsonb_path_query returns `setof jsonb` -- use `jsonb_path_query_first` for scalar extraction
-- SQL/JSON path language uses `@` for current item, `$` for root -- not JSONPath dot notation
-- jsonb_path_query variables: second argument is jsonb object -- keys become `$varname` in path expression
+- jsonb_path_query returns `setof jsonb` — use `jsonb_path_query_first` for scalar extraction
+- SQL/JSON path language uses `@` for current item, `$` for root — not JSONPath dot notation
+- jsonb_path_query variables: second argument is jsonb object — keys become `$varname` in path expression
 
 ## [07]-[LATERAL_JOIN]
 
-Scalar subqueries in SELECT list are FORBIDDEN -- always LATERAL JOIN for correlated subqueries.
+Scalar subqueries in SELECT list are forbidden — always LATERAL JOIN for correlated subqueries.
 
-Top-N per group -- latest 3 orders per customer:
+Top-N per group — latest 3 orders per customer:
 
 ```sql conceptual
 SELECT c.id, c.name, recent.order_id, recent.total, recent.created_at
@@ -323,7 +325,7 @@ CROSS JOIN LATERAL (
 ) recent;
 ```
 
-LATERAL with aggregation -- correlated aggregate without GROUP BY in outer:
+LATERAL with aggregation — correlated aggregate without GROUP BY in outer:
 
 ```sql conceptual
 SELECT d.id, d.name, stats.order_count, stats.total_revenue
@@ -339,14 +341,14 @@ LEFT JOIN LATERAL (
 
 LATERAL contracts:
 
-- LATERAL subquery can reference columns from preceding FROM items -- standard correlated subquery semantics
+- LATERAL subquery can reference columns from preceding FROM items — standard correlated subquery semantics
 - `CROSS JOIN LATERAL` excludes rows where lateral returns empty; `LEFT JOIN LATERAL ... ON TRUE` preserves them with NULLs
-- Planner may convert LATERAL to nested loop -- verify with EXPLAIN for large outer sets
-- LATERAL + LIMIT is the canonical top-N-per-group pattern -- index on `(foreign_key, sort_column DESC)` required
+- Planner may convert LATERAL to nested loop — verify with EXPLAIN for large outer sets
+- LATERAL + LIMIT is the canonical top-N-per-group pattern — index on `(foreign_key, sort_column DESC)` required
 
 ## [08]-[TEMPORAL_QUERIES_TSTZRANGE]
 
-Range containment -- find entity version valid at a specific moment:
+Range containment — find entity version valid at a specific moment:
 
 ```sql conceptual
 SELECT id, entity_id, payload, valid_period
@@ -357,7 +359,7 @@ ORDER BY lower(valid_period) DESC
 LIMIT 1;
 ```
 
-Temporal diff -- detect changes between two points in time:
+Temporal diff — detect changes between two points in time:
 
 ```sql conceptual
 SELECT v_new.entity_id,
@@ -370,7 +372,7 @@ WHERE v_new.valid_period @> $2::timestamptz   -- "now" snapshot
   AND v_new.id != v_old.id;                   -- different version rows
 ```
 
-Contiguous coverage verification -- detect gaps in temporal history:
+Contiguous coverage verification — detect gaps in temporal history:
 
 ```sql conceptual
 SELECT entity_id,
@@ -383,16 +385,16 @@ HAVING range_agg(valid_period) != tstzrange(MIN(lower(valid_period)), MAX(upper(
 
 Temporal contracts:
 
-- `@>` (range contains point): index via GiST on `valid_period` -- primary temporal lookup operator
+- `@>` (range contains point): index via GiST on `valid_period` — primary temporal lookup operator
 - `&&` (ranges overlap): detects temporal conflicts; `WITHOUT OVERLAPS` in PK/UNIQUE prevents at schema level
-- `-|-` (ranges adjacent): detects gapless sequences; `range_agg()` (PG 14+) collapses overlapping/adjacent ranges -- subtract from bounding range to expose gaps
+- `-|-` (ranges adjacent): detects gapless sequences; `range_agg()` collapses overlapping/adjacent ranges — subtract from bounding range to expose gaps
 - `upper(range)` / `lower(range)`: extract bounds for display or cursor-based temporal pagination
-- Temporal tables with `WITHOUT OVERLAPS` guarantee at-most-one-match for point-in-time `@>` lookups -- no `LIMIT 1` needed on containment queries when constraint is present
+- Temporal tables with `WITHOUT OVERLAPS` guarantee at-most-one-match for point-in-time `@>` lookups — no `LIMIT 1` needed on containment queries when constraint is present
 - `PERIOD` in temporal FK enforces containment: child range must fall entirely within parent range
 
 ## [09]-[KEYSET_PAGINATION]
 
-Compound cursor -- multi-column sort with tiebreaker:
+Compound cursor — multi-column sort with tiebreaker:
 
 ```sql template
 SELECT id, rank, title, created_at
@@ -408,8 +410,8 @@ Keyset contracts:
 - Fetch N+1 rows; `has_next = rows.length > page_size`; cursor = last visible row's sort key tuple
 - First page: omit cursor WHERE clause, keep ORDER BY + LIMIT
 - Bidirectional: reverse ORDER BY and comparison operator for "previous page"
-- Tuple comparison `(a, b) < ($a, $b)` uses composite B-tree ordering -- single index scan
-- Sort columns must be indexed -- composite index matching ORDER BY direction
+- Tuple comparison `(a, b) < ($a, $b)` uses composite B-tree ordering — single index scan
+- Sort columns must be indexed — composite index matching ORDER BY direction
 - Ties in non-unique sort columns: always include PK as tiebreaker
 
 ## [10]-[BATCH_OPERATIONS_VIA_UNNEST]
@@ -433,7 +435,7 @@ WHERE products.id = batch.id AND products.tenant_id = $3;
 
 ## [11]-[EFFECT_SQL_INTEGRATION]
 
-Typed query execution via `@effect/sql-pg` (`v0.49+`):
+Typed query execution via `@effect/sql-pg`:
 
 ```typescript conceptual
 // SqlSchema.findAll — typed result decode via schema, parameterized query
@@ -451,7 +453,7 @@ const findById = SqlSchema.findOne({
 });
 
 // SqlResolver — batched N+1 resolution with automatic deduplication
-const OrderById = SqlResolver.findById("OrderById", {
+const OrderById = SqlResolver.findById('OrderById', {
     Id: OrderId,
     Result: Order,
     ResultId: (row) => row.id,

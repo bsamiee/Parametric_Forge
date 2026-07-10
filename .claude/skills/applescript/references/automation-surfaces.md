@@ -95,14 +95,14 @@ end open
 `ignoring application responses` is a fire-and-forget Apple-event boundary; it never wraps a command whose result, error, or object specifier feeds later logic, and any such command nests back under `considering application responses`. `with timeout of n seconds` binds a command sent to an application object, not a command handled by the current script — a long application command carries an explicit timeout row, while local shell and Foundation work carries its own process or API timeout. A JXA script that needs Standard Additions sets `includeStandardAdditions` at the host boundary; application automation through object specifiers and Foundation bridge calls stay separate owner rows because JXA specifiers, Objective-C objects, and JavaScript values obey different coercion rules.
 
 ```javascript conceptual
-ObjC.import("Foundation");
+ObjC.import('Foundation');
 
 const app = Application.currentApplication();
 app.includeStandardAdditions = true;
 
 function run(input, parameters) {
     const values = Array.isArray(input) ? input : [input];
-    return values.map(String).join("\n");
+    return values.map(String).join('\n');
 }
 ```
 
@@ -141,7 +141,7 @@ shortcuts sign --mode people-who-know-me -i Intake.shortcut -o Intake-signed.sho
 
 ## [09]-[APP_INTENTS_SUCCESSOR]
 
-App Intents is the sanctioned automation successor, reached only through an enclosing Shortcut — no CLI verb invokes an App Intent directly, and no AppleScript-to-intent bridge exists. Any app shipping App Intents contributes Shortcuts actions that also run from Siri, Spotlight, and directly from Spotlight as first-class results; the Apple Intelligence `Use Model` action reasons over app-exposed entities inside the same Shortcut. A shortcut composes a `Run AppleScript` action alongside App-Intent-derived actions in one flow, so an AppleScript rail reaches App Intents by invoking that enclosing shortcut through `Shortcuts Events` or `shortcuts run`, never by calling an intent as a standalone target. macOS 26 personal automations add folder-change, external-drive, Wi-Fi, display, and app-launch triggers on the Mac, replacing Folder Actions and stay-open pollers wherever the trigger is a first-class Shortcuts event; the OSA hosts remain the owning surface for triggers Shortcuts does not model and for latency-sensitive in-process work.
+App Intents is the sanctioned automation successor, reached only through an enclosing Shortcut — no CLI verb invokes an App Intent directly, and no AppleScript-to-intent bridge exists. Any app shipping App Intents contributes Shortcuts actions that also run from Siri, Spotlight, and directly from Spotlight as first-class results; the Apple Intelligence `Use Model` action reasons over app-exposed entities inside the same Shortcut. A shortcut composes a `Run AppleScript` action alongside App-Intent-derived actions in one flow, so an AppleScript rail reaches App Intents by invoking that enclosing shortcut through `Shortcuts Events` or `shortcuts run`, never by calling an intent as a standalone target. Personal automations add folder-change, external-drive, Wi-Fi, display, and app-launch triggers on the Mac, replacing Folder Actions and stay-open pollers wherever the trigger is a first-class Shortcuts event; the OSA hosts remain the owning surface for triggers Shortcuts does not model and for latency-sensitive in-process work.
 
 ## [10]-[FOLDER_ACTIONS_STAYOPEN_DROPLETS]
 
@@ -216,6 +216,6 @@ guard status == noErr, let xml = sdef?.takeRetainedValue() as Data? else {
 |  [09]   | Script Menu        | file launch                 | script app shell  | host-defined     |
 |  [10]   | Native host        | `NSAppleScript` `OSAScript` | source data event | descriptor error |
 
-## [14]-[MACOS_26_POSTURE]
+## [14]-[PLATFORM_POSTURE]
 
-On macOS 26 the Open Scripting Architecture is stable but frozen: AppleScript, JXA, `osascript`, `osacompile`, and Automator all ship and function, none carry a deprecation notice, and none receive language investment. App Intents is the sanctioned successor surface, reaching users through Shortcuts, Siri, and Spotlight, with no CLI verb and no AppleScript command invoking an intent directly — the only scriptable rail into an intent is an enclosing Shortcut through `Shortcuts Events` or `shortcuts run`. Existing scriptable-app control stays on OSA because most apps expose richer dictionaries than their App Intents surface, while new first-party automation targets App Intents and composes OSA only through Shortcuts. The freeze erodes at legacy edges rather than at the core language or the type spine: `tell application "iTunes"` no longer resolves to a running target, Script Editor fails to open some resource-fork-stored scripts and raises `errOSADataFormatObsolete`, and error retrieval on a faulted event stalls a fault path for minutes before returning. Each of these is a packaging and toolchain fact a release rail absorbs by recompiling and re-testing on a current host, never a change to handler contracts, the UTType spine, or the host dispatch matrix.
+The Open Scripting Architecture is stable but frozen: AppleScript, JXA, `osascript`, `osacompile`, and Automator all ship and function, none carry a deprecation notice, and none receive language investment. App Intents is the sanctioned successor surface, reaching users through Shortcuts, Siri, and Spotlight, with no CLI verb and no AppleScript command invoking an intent directly — the only scriptable rail into an intent is an enclosing Shortcut through `Shortcuts Events` or `shortcuts run`. Existing scriptable-app control stays on OSA because most apps expose richer dictionaries than their App Intents surface, while new first-party automation targets App Intents and composes OSA only through Shortcuts. The freeze erodes at legacy edges rather than at the core language or the type spine: `tell application "iTunes"` no longer resolves to a running target, Script Editor fails to open some resource-fork-stored scripts and raises `errOSADataFormatObsolete`, and error retrieval on a faulted event stalls a fault path for minutes before returning. Each of these is a packaging and toolchain fact a release rail absorbs by recompiling and re-testing on a current host, never a change to handler contracts, the UTType spine, or the host dispatch matrix.

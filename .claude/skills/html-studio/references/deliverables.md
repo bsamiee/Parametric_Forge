@@ -1,6 +1,6 @@
 # [DELIVERABLES]
 
-Each deliverable type is a fixed composition: a layout class from the style reference, a structural spine whose section order is law, the element set the type earns, and the capture contract deciding what returns through the envelope. Type selection precedes any markup — the type fixes the measure, the spine, and the envelope `kind`, so two artifacts of one type read as siblings. A page serving two types splits, or one type owns the shell and the other renders as a section-scale insert; the variants in the closing section resolve onto the five core types the same way.
+Each deliverable type is a fixed composition: a layout class from the style reference, a structural spine whose section order is law, the element set the type earns, and the capture contract deciding what returns through the envelope. Type selection precedes any markup — the type fixes the measure, the spine, and the envelope `kind`, so two artifacts of one type read as siblings. A page serving two types splits, or one type owns the shell and the other renders as a section-scale insert; each variant resolves onto a core type the same way.
 
 ## [01]-[SELECTION]
 
@@ -77,34 +77,35 @@ The decision doc confronts the reader with rendered rivals and returns a ruling;
 
 Each variant resolves onto a core type and earns only its named deltas; everything unstated inherits from the base row.
 
-| [INDEX] | [VARIANT]     | [BASE]       | [ENVELOPE_KIND] | [DELTAS]                                                                              |
-| :-----: | :------------ | :----------- | :-------------- | :------------------------------------------------------------------------------------ |
-|  [01]   | diff-review   | report       | `diff`          | rendered diff with margin annotations and severity chips; file-level risk labels      |
-|  [02]   | quiz          | decision-doc | `quiz`          | three homogeneous choices; per-answer justification; criterion readout, no percentage |
-|  [03]   | wargame       | decision-doc | `decision`      | scoring matrix at board width; weights locked before scores; one row per direction    |
-|  [04]   | buy-in        | report       | `buyin`         | inspectable evidence — demo, trace, before/after; one objection lane per audience     |
-|  [05]   | explainer     | report       | none            | reading class; contrasting cases side by side; scrub controls drive a live figure     |
-|  [06]   | contact-sheet | dashboard    | none            | stage class; variant matrix under shared controls; best-for label per cell            |
-|  [07]   | board         | dashboard    | `board`         | drag cards across named columns; dependency warnings on invalid placement             |
-|  [08]   | atlas         | roadmap      | `report`        | entity cards, edge lists, maturity chips; one SVG relation figure over 3+ edges       |
-|  [09]   | deck          | any          | inherits base   | full-viewport slide shell over the same payload and drawer; arrow-key state machine   |
-|  [10]   | editor        | plan         | `plan`          | disposable field editor over one payload; controls bound one-to-one to fields         |
-|  [11]   | walkthrough   | report       | none            | reading class; request path/callstack as a numbered step rail on one flow figure      |
-|  [12]   | prototype     | dashboard    | none            | stage class; linked screens under `data-step` nav, or a timed micro-interaction       |
+| [INDEX] | [VARIANT]     | [BASE]       | [ENVELOPE_KIND] |
+| :-----: | :------------ | :----------- | :-------------- |
+|  [01]   | diff-review   | report       | `diff`          |
+|  [02]   | quiz          | decision-doc | `quiz`          |
+|  [03]   | wargame       | decision-doc | `decision`      |
+|  [04]   | buy-in        | report       | `buyin`         |
+|  [05]   | explainer     | report       | none            |
+|  [06]   | contact-sheet | dashboard    | none            |
+|  [07]   | board         | dashboard    | `board`         |
+|  [08]   | atlas         | roadmap      | `report`        |
+|  [09]   | deck          | any          | inherits base   |
+|  [10]   | editor        | plan         | `plan`          |
+|  [11]   | walkthrough   | report       | none            |
+|  [12]   | prototype     | dashboard    | none            |
 
-- diff-review: per-hunk verdicts anchored to stable hunk ids.
-- quiz: one receipt carries every selection.
-- wargame: kill conditions as row chips.
-- buy-in: refutation and proving signal; a sign-off matrix as capture.
-- explainer: hover-linked term glossary; disclosure deepens, never gates.
-- contact-sheet: controls are density, border, state toggles; both themes rendered, not imagined.
-- board: changed-only export of moved ids; DOM position never authoritative.
-- atlas: refused arms distinguished from gaps by bracket text.
-- deck: slide counter always rendered; per-slide reading width.
-- editor: invalid-combination warnings from declared rules; changed-only export.
-- walkthrough: source excerpts keyed to steps; key-files table; gotchas close.
-- prototype: live timing controls with replay; fake data declared as fake.
+- diff-review: rendered diff with margin annotations and severity chips, file-level risk labels; per-hunk verdicts anchored to stable hunk ids.
+- quiz: three homogeneous choices, per-answer justification, criterion readout with no percentage; one receipt carries every selection.
+- wargame: scoring matrix at board width, weights locked before scores, one row per direction; kill conditions as row chips.
+- buy-in: inspectable evidence — demo, trace, before-and-after — one objection lane per audience; refutation and proving signal, a sign-off matrix as capture.
+- explainer: reading class, contrasting cases side by side, scrub controls driving a live figure; hover-linked term glossary, disclosure deepens and never gates.
+- contact-sheet: stage class, variant matrix under shared controls, best-for label per cell; density, border, and state toggles, both themes rendered rather than imagined.
+- board: drag cards across named columns, dependency warnings on invalid placement; changed-only export of moved ids, DOM position never authoritative.
+- atlas: entity cards, edge lists, maturity chips, one SVG relation figure over 3+ edges; refused arms distinguished from gaps by bracket text.
+- deck: full-viewport slide shell over the same payload and drawer, arrow-key state machine; slide counter always rendered, per-slide reading width.
+- editor: disposable field editor over one payload, controls bound one-to-one to fields; invalid-combination warnings from declared rules, changed-only export.
+- walkthrough: reading class, request path or callstack as a numbered step rail on one flow figure; source excerpts keyed to steps, a key-files table, gotchas close.
+- prototype: stage class, linked screens under `data-step` nav or a timed micro-interaction; live timing controls with replay, fake data declared as fake.
 
-- A variant page keeps its base type's spine inside the variant shell: a deck of plan stages still orders decisions before mechanics; a wargame still states its constraint frame before any direction renders. The diff-review's author-side writeup form leads motivation and before-and-after evidence with a file tour ordered by review focus; a prototype spends fidelity only where the judgment needs it.
+- A variant page keeps its base type's spine inside the variant shell: a deck of plan stages still orders decisions before mechanics; a wargame still states its constraint frame before any direction renders.
+- The diff-review's author-side writeup form leads motivation and before-and-after evidence with a file tour ordered by review focus; a prototype spends fidelity only where the judgment needs it.
 - Two-way flow is the default posture for every capturing variant: the page is a disposable editor for exactly the judgment it collects, and the copy-as-prompt control is the floor when no return channel serves it.
 - Work larger than one page ships as a sibling chain — exploration, then prototype, then plan, then verification — each page one type linked by relative links, the chosen option collapsing forward into the next page; one page serving the whole chain is the two-type defect at chain scale.

@@ -6,8 +6,6 @@ TypeScript on the dual compiler floor — TS7 `tsc` and TS6 `tsc6` in parity —
 
 ## [01]-[ACTIVE_SURFACE]
 
-[ACTIVE_SURFACE]:
-
 - Compiler floor: TS7 `tsc` and TS6 `tsc6` under one flag set — a construct is legal when both accept it, and TS7 `tsc` diagnostic codes are the ones doctrine cites
 - Module law: every file is a module under `moduleDetection: "force"`; a specifier names a real file with its real `.ts` extension; resolution rides the package exports map; every side-effect specifier resolves (`TS2882` otherwise); the value-plane import graph is a DAG and a domain module's top level is declaration space
 - Syntax law: erased syntax only — `enum`, runtime `namespace`, constructor parameter properties, and `import =`/`export =` are `TS1294` at compile; decorators are legal JavaScript and still never appear — wrapping attaches through `pipe` at the owner declaration, never through a second composition channel

@@ -4,8 +4,8 @@
 # License       : MIT
 # Path          : modules/home/aliases/core.nix
 # ----------------------------------------------------------------------------
-# Core register rows: system, files, monitoring, data, network, dev. Raw row
-# list consumed by ../aliases/default.nix; desc/category/risk are row data.
+# Core register rows: system, files, monitoring, data, network, dev; desc/category/risk fields are row payload, not comment prose.
+
 [
   # --- [GENERAL]
   {

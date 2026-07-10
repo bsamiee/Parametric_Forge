@@ -5,6 +5,7 @@
 # Path          : modules/home/programs/shell-tools/carapace.nix
 # ----------------------------------------------------------------------------
 # Multi-shell argument completion binary
+
 _: {
   programs.carapace = {
     enable = true;

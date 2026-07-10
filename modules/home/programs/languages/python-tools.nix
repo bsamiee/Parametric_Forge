@@ -4,7 +4,8 @@
 # License       : MIT
 # Path          : modules/home/programs/languages/python-tools.nix
 # ----------------------------------------------------------------------------
-# Python development environment - Canonical Python 3.15 installation.
+# Canonical Python 3.15 development environment.
+
 {
   config,
   lib,

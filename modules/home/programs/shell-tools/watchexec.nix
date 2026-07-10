@@ -6,6 +6,7 @@
 # ----------------------------------------------------------------------------
 # watchexec owner: global ignore estate plus forge-watch, the packaged event rail. --events streams kernel filesystem events as JSON lines for
 # agent consumption; run mode owns busy-policy, debounce, and origin knobs.
+
 {
   config,
   pkgs,
@@ -55,6 +56,5 @@
   };
 in {
   home.packages = [pkgs.watchexec forgeWatch];
-  # The noise taxonomy and its rendering are owned by config.forge.ignoreEstate.
-  xdg.configFile."watchexec/ignore".text = config.forge.ignoreEstate.text;
+  xdg.configFile."watchexec/ignore".text = config.forge.ignoreEstate.text; # noise taxonomy plus its rendering
 }

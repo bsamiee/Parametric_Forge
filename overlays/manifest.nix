@@ -8,6 +8,7 @@
 # update engine, retention, and projection for every non-nixpkgs package and every host-runtime extension family. overlays/default.nix folds
 # `packages` rows into derivations; flake-modules/packages.nix folds `projection.package/app` into public outputs; HM rosters consume
 # `admissions` rows via `rosterRows`. Pure data plus builtins-only accessors — no pkgs, no lib; validation runs in the overlay fold.
+
 let
   v = rec {
     alerter = "26.5";
@@ -816,7 +817,7 @@ in rec {
           attr = "nvim-treesitter";
           license = "Apache-2.0"; # main branch; one compat unit with the neovim pin, tree-sitter-cli floor, parsers, queries
         };
-        # hmts-nvim admission reverted: 1.3.0 crashes on Neovim 0.12 + nvim-treesitter main (LanguageTree parent API drift) against real Forge
+        # hmts-nvim stays unadmitted: 1.3.0 crashes on Neovim 0.12 + nvim-treesitter main (LanguageTree parent API drift) against real Forge
         # files; re-admits only on an upstream compatibility release.
         conform-nvim = {
           attr = "conform-nvim";

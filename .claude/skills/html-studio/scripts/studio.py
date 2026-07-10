@@ -11,9 +11,8 @@
 # ruff: noqa: T201, D101, D102, D103, D107
 """html-studio automation owner.
 
-Verbs: gate | render | serve | status | stop | receipts | self-test. `gate` is the static
-artifact gate (structure, self-containment, tokens, contrast, script audit, conformance);
-`render` headless-captures a PNG through the pinned Chromium; the server verbs run the
+Verbs: gate | render | serve | status | stop | receipts | self-test. `gate` statically gates one
+artifact; `render` headless-captures a PNG through the pinned Chromium; the server verbs run the
 loopback return channel that injects `artifact-return` and `artifact-token` head metas and
 appends receipts as one tagged JSONL stream.
 """
@@ -875,7 +874,7 @@ def audit(path: Path) -> tuple[Row, ...]:
 
 
 def conformance_rows(path: Path) -> tuple[Row, ...]:
-    """W3C `vnu` HTML5 structural conformance; the stale bundled CSS backend is dropped since the studio owns CSS.
+    """W3C `vnu` HTML5 structural conformance over one page.
 
     Returns:
         The conformance rows, or a single skip/unparseable warn row. `info` maps warn, all else fail.
@@ -896,7 +895,7 @@ def conformance_rows(path: Path) -> tuple[Row, ...]:
         report = DEC_VNU.decode(stdout.encode("utf-8"))
     except msgspec.DecodeError:
         return (Row(str(path), 0, Check.CONFORMANCE, "warn", f"vnu output unparseable (returncode {proc.returncode})"),)
-    # Drop two irrelevant vnu lanes: the stale CSS backend (tinycss2 owns CSS here) and XML-1.0 mappability (these pages are HTML5 from file://, never XML/XHTML).
+    # Drop two vnu lanes: CSS messages (tinycss2 owns CSS here) and XML-1.0 mappability (these pages are HTML5 from file://, never XML/XHTML).
     return tuple(
         Row(str(path), message.last_line, Check.CONFORMANCE, "warn" if message.type == "info" else "fail", message.message[:120])
         for message in report.messages

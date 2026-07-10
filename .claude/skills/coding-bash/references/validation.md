@@ -1,17 +1,17 @@
-# [H1][VALIDATION]
+# [VALIDATION]
 
 ## [01]-[VALIDATION_PIPELINE]
 
 Validation is sequential — each gate must pass before the next runs. `bash -n` catches unclosed quotes, missing `done`/`fi`, and heredoc mismatches, but CANNOT detect unquoted expansions, unused variables, or unreachable code. ShellCheck fills the semantic gap. Tests prove runtime behavior. Coverage quantifies untested surface.
 
-| [INDEX] | [GATE]           | [COMMAND]                                     | [CATCHES]                          | [MISSES]                  |
-| :-----: | :--------------- | :-------------------------------------------- | :--------------------------------- | :------------------------ |
-|  [01]   | **Syntax**       | `bash -n script.sh`                           | Parse err, unclosed blocks         | Semantic+runtime defects  |
-|  [02]   | **Static: err**  | `shellcheck -S error -s bash script.sh`       | Unquoted `$@`, parse-adjacent      | Style/info-level patterns |
-|  [03]   | **Static: full** | `shellcheck -s bash script.sh`                | All 4 severity levels              | Runtime/integration bugs  |
-|  [04]   | **Unit tests**   | `bats tests/`                                 | Functional regressions, edge cases | Untested paths            |
-|  [05]   | **Coverage**     | `kcov --include-path=. coverage/ bats tests/` | Dead code, untested branches       | Semantic correctness      |
-|  [06]   | **Quality gate** | Exit 1 on coverage < threshold                | Enforcement                        | -                         |
+| [INDEX] | [GATE]       | [COMMAND]                                     | [CATCHES]                          | [MISSES]                  |
+| :-----: | :----------- | :-------------------------------------------- | :--------------------------------- | :------------------------ |
+|  [01]   | Syntax       | `bash -n script.sh`                           | Parse err, unclosed blocks         | Semantic+runtime defects  |
+|  [02]   | Static: err  | `shellcheck -S error -s bash script.sh`       | Unquoted `$@`, parse-adjacent      | Style/info-level patterns |
+|  [03]   | Static: full | `shellcheck -s bash script.sh`                | All 4 severity levels              | Runtime/integration bugs  |
+|  [04]   | Unit tests   | `bats tests/`                                 | Functional regressions, edge cases | Untested paths            |
+|  [05]   | Coverage     | `kcov --include-path=. coverage/ bats tests/` | Dead code, untested branches       | Semantic correctness      |
+|  [06]   | Quality gate | Exit 1 on coverage < threshold                | Enforcement                        | —                         |
 
 ## [02]-[CRITICAL_SC_CODES]
 
@@ -41,17 +41,17 @@ BusyBox `sh` implements `[[ ]]` but omits glob pattern matching on the RHS. `[[ 
 
 ## [03]-[SC_CODE_REFERENCE]
 
-| [INDEX] | [CODE]     | [SEV] | [ISSUE]                     | [FIX]                                     |
-| :-----: | :--------- | :---- | :-------------------------- | :---------------------------------------- |
-|  [01]   | **SC2086** | info  | Unquoted variable           | `"${var}"`                                |
-|  [02]   | **SC2046** | warn  | Unquoted `$()`              | `"$(cmd)"` or `mapfile -t arr < <(cmd)`   |
-|  [03]   | **SC2155** | warn  | `local v=$(cmd)` masks `$?` | `local v; v=$(cmd)`                       |
-|  [04]   | **SC2164** | warn  | `cd` without guard          | `cd dir \| exit 1`                        |
-|  [05]   | **SC2068** | error | Unquoted `$@`               | `"$@"`                                    |
-|  [06]   | **SC2329** | warn  | Unused function             | Remove, call, or disable (dispatch-table) |
-|  [07]   | **SC2006** | style | Backticks                   | `$(cmd)`                                  |
-|  [08]   | **SC2116** | style | Useless echo `$(echo $v)`   | `$v` directly                             |
-|  [09]   | **SC2162** | info  | `read` without `-r`         | `IFS= read -r line`                       |
+| [INDEX] | [CODE]   | [SEV] | [ISSUE]                     | [FIX]                                     |
+| :-----: | :------- | :---- | :-------------------------- | :---------------------------------------- |
+|  [01]   | `SC2086` | info  | Unquoted variable           | `"${var}"`                                |
+|  [02]   | `SC2046` | warn  | Unquoted `$()`              | `"$(cmd)"` or `mapfile -t arr < <(cmd)`   |
+|  [03]   | `SC2155` | warn  | `local v=$(cmd)` masks `$?` | `local v; v=$(cmd)`                       |
+|  [04]   | `SC2164` | warn  | `cd` without guard          | `cd dir \| exit 1`                        |
+|  [05]   | `SC2068` | error | Unquoted `$@`               | `"$@"`                                    |
+|  [06]   | `SC2329` | warn  | Unused function             | Remove, call, or disable (dispatch-table) |
+|  [07]   | `SC2006` | style | Backticks                   | `$(cmd)`                                  |
+|  [08]   | `SC2116` | style | Useless echo `$(echo $v)`   | `$v` directly                             |
+|  [09]   | `SC2162` | info  | `read` without `-r`         | `IFS= read -r line`                       |
 
 ## [04]-[SHELLCHECKRC]
 
@@ -123,7 +123,7 @@ Directive reference:
 |  [05]   | `local v; v=$(cmd)`                     | SC2155 masked exit     | `local v=$(cmd)`           |
 |  [06]   | `[[ "$v" =~ pat ]] && BASH_REMATCH[1]`  | SC2046 from grep       | `$(echo "$v" \| rg -oP …)` |
 
-[ENV_CONTRACT_VALIDATION]:declare-once, validate-all pattern from container entrypoints:
+[ENV_CONTRACT_VALIDATION]: Declare-once, validate-all pattern from container entrypoints:
 
 ```bash conceptual
 declare -Ar _ENV_CONTRACT=([SERVICE_NAME]='^[a-zA-Z][a-zA-Z0-9_-]+$' [SERVICE_CMD]='.+')
@@ -138,7 +138,7 @@ _validate_env() {
 
 Eliminates per-variable `[[ -z ]]` chains. Contract is data (the map), not code. `${!var}` indirect expansion reads the variable named by `$var`. Regex in `_ENV_CONTRACT` values validates shape at the boundary.
 
-[EMBEDDED_SELF_TEST_GATE]:assert helpers for dispatch-table scripts:
+[EMBEDDED_SELF_TEST_GATE]: Assert helpers for dispatch-table scripts:
 
 ```bash conceptual
 _assert_eq()    { [[ "$1" == "$2" ]] || _die "ASSERT ${FUNCNAME[1]}:${BASH_LINENO[0]}: '${1}' != '${2}'"; }
@@ -178,8 +178,8 @@ jobs:
               with:
                   severity: style
                   shellcheck_version: v0.11.0
-                  scandir: "."
-                  additional_files: "*.bash"
+                  scandir: '.'
+                  additional_files: '*.bash'
             - name: Install bats + kcov
               run: |
                   sudo apt-get install -y kcov
@@ -200,7 +200,7 @@ ShellCheck exit codes:
 
 | [INDEX] | [CODE] | [MEANING]                    |
 | :-----: | :----: | :--------------------------- |
-|  [01]   | **0**  | Clean                        |
-|  [02]   | **1**  | Issues at/above severity     |
-|  [03]   | **2**  | Parse errors                 |
-|  [04]   | **3**  | Bad options or missing files |
+|  [01]   |  `0`   | Clean                        |
+|  [02]   |  `1`   | Issues at/above severity     |
+|  [03]   |  `2`   | Parse errors                 |
+|  [04]   |  `3`   | Bad options or missing files |

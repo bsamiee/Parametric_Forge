@@ -4,7 +4,8 @@
 # License       : MIT
 # Path          : modules/home/environments/default.nix
 # ----------------------------------------------------------------------------
-# Environment aggregator + XDG base directories
+# Environment module aggregator
+
 {...}: {
   imports = [
     ./core.nix

@@ -1,6 +1,6 @@
-# [H1][SHELL-INTROSPECTION]
+# [SHELL_INTROSPECTION]
 
-Call stack introspection, nameref composition patterns, hierarchical trap composition, process lifecycle with PID maps, and dispatch-table capability detection including Bash 5.3 variables. Basic variable types, arithmetic, and brace expansion are in `bash-scripting-guide.md` S4/S6.
+Call stack introspection, nameref composition patterns, hierarchical trap composition, process lifecycle with PID maps, and dispatch-table capability detection including Bash 5.3 variables.
 
 | [INDEX] | [PATTERN]          | [S] | [USE_WHEN]                               |
 | :-----: | :----------------- | :-: | :--------------------------------------- |
@@ -81,13 +81,13 @@ local quot rem
 divide quot rem 17 5  # quot=3, rem=2
 ```
 
-[PITFALLS]:nameref resolution uses dynamic scope, producing three failure modes:
+Nameref resolution uses dynamic scope, producing three failure modes:
 
-| [INDEX] | [PITFALL]       | [TRIGGER]                          | [SYMPTOM]                              | [MITIGATION]                  |
-| :-----: | :-------------- | :--------------------------------- | :------------------------------------- | :---------------------------- |
-|  [01]   | Circular ref    | `local -n ref="ref"`               | `circular name reference` error        | Never nameref to own name     |
-|  [02]   | Scope collision | `local` shadows nameref target     | Binds callee's local, not caller's var | `__` prefix for nameref names |
-|  [03]   | Nested alias    | Nested callee re-namerefs same ref | Silent overwrites across call depth    | Unique prefixes per depth     |
+| [INDEX] | [PITFALL]       | [TRIGGER]                          | [SYMPTOM]                           | [MITIGATION]                  |
+| :-----: | :-------------- | :--------------------------------- | :---------------------------------- | :---------------------------- |
+|  [01]   | Circular ref    | `local -n ref="ref"`               | `circular name reference` error     | Never nameref to own name     |
+|  [02]   | Scope collision | `local` shadows nameref target     | Binds callee local not caller var   | `__` prefix for nameref names |
+|  [03]   | Nested alias    | Nested callee re-namerefs same ref | Silent overwrites across call depth | Unique prefixes per depth     |
 
 The `__` prefix convention prevents callee nameref names from colliding with caller variables — the Bash equivalent of name mangling.
 
@@ -275,7 +275,7 @@ local -a recent_logs=( /var/log/app/*.log )
 shopt -s array_expand_once
 ```
 
-`_TOOL_FALLBACKS` encodes preference-ordered fallback chains — `_resolve_tool` walks via `command -v` and returns the first available implementation. `_ENV_CONTRACT` unifies required/type/enum validation into regex patterns. `_bench` uses EPOCHREALTIME PE arithmetic; `10#${us}` forces decimal on zero-padded microseconds. `BASH_SOURCE[-1]` is the entry script, `BASH_SOURCE[0]` is the current file. `BASH_MONOSECONDS` replaces `EPOCHSECONDS` where NTP drift matters. `BASH_TRAPSIG` enables dispatch-table signal routing from a single handler. `array_expand_once` (replacing `assoc_expand_once`) prevents subscript double-evaluation.
+`_TOOL_FALLBACKS` encodes preference-ordered fallback chains — `_resolve_tool` walks via `command -v` and returns the first available implementation. `_ENV_CONTRACT` unifies required/type/enum validation into regex patterns. `_bench` uses EPOCHREALTIME PE arithmetic; `10#${us}` forces decimal on zero-padded microseconds. `BASH_SOURCE[-1]` is the entry script, `BASH_SOURCE[0]` is the current file. `BASH_MONOSECONDS` replaces `EPOCHSECONDS` where NTP drift matters. `BASH_TRAPSIG` carries the trapped signal number, so one handler dispatches every signal by table. `array_expand_once` (replacing `assoc_expand_once`) prevents subscript double-evaluation.
 
 ## [06]-[RULES]
 
@@ -287,7 +287,7 @@ shopt -s array_expand_once
 - Signal traps call `exit CODE` to trigger EXIT trap — `exit 130` for INT, `exit 143` for TERM.
 - `exec` replacement bypasses EXIT trap — call `_run_cleanups` explicitly before exec.
 - `wait -f PID` (`5.2+`) for non-job-control waits — without `-f`, `wait` may return immediately for unknown PIDs.
-- `wait -n -p var` (`5.1+`) returns the specific completed PID — enables per-job error handling in pools.
+- `wait -n -p var` (`5.1+`) returns the specific completed PID, so pools track per-job errors.
 - `SRANDOM` uses `/dev/urandom` (kernel CSPRNG) — use for jitter, temp names, tokens where `RANDOM` (LCG) is insufficient.
 - `command -v` over `which` — POSIX portable, no external process, no path caching issues.
 - `${!prefix@}` for variable name enumeration — configuration discovery without hardcoded lists.

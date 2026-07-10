@@ -5,6 +5,7 @@
 # Path          : modules/home/programs/git-tools/lazygit.nix
 # ----------------------------------------------------------------------------
 # Lazygit TUI configuration themed from the estate palette owner
+
 {config, ...}: let
   inherit (config.forge.theme) palette;
 in {
@@ -53,8 +54,7 @@ in {
 
       git = {
         # --- [PAGING_DELTA_RENDERS_INSIDE_LAZYGIT_PANES]
-        # Delta inherits its [delta] git-config options; --paging=never is the
-        # in-pane requirement and --navigate does not work inside lazygit.
+        # Delta inherits its [delta] git-config options; --paging=never is the in-pane requirement and --navigate does not work inside lazygit.
         pagers = [
           {
             colorArg = "always";
@@ -95,9 +95,8 @@ in {
         fetchInterval = 60;
       };
 
-      # Preset owns edit/editAtLine/openDirInEditor ({{filename}}/{{line}} are the
-      # only template vars); the darwin platform default owns open/openLink.
-      os.editPreset = "nvim"; # Matches EDITOR from programs.neovim.defaultEditor (apps/nvim)
+      # Preset owns edit/editAtLine/openDirInEditor ({{filename}}/{{line}} are the only template vars); the darwin platform default owns open/openLink.
+      os.editPreset = "nvim"; # Matches EDITOR from programs.neovim.defaultEditor
 
       # Store-managed binary: self-update writes are impossible.
       update.method = "never";

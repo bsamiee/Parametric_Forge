@@ -5,6 +5,7 @@
 # Path          : modules/home/programs/languages/dev-tools.nix
 # ----------------------------------------------------------------------------
 # Language-agnostic tooling: linters, formatters, and helpers shared across multiple ecosystems.
+
 {
   config,
   lib,
@@ -57,8 +58,8 @@
     pkgs.dotnet-sdk_9
     pkgs.dotnet-sdk_10
   ];
-  # roslyn-ls installs the binary as Microsoft.CodeAnalysis.LanguageServer and requires an explicit log directory; wrap it so consumers invoke
-  # `roslyn-language-server --stdio` directly.
+  # roslyn-ls installs the binary as Microsoft.CodeAnalysis.LanguageServer and requires an explicit log
+  # directory; wrap it so consumers invoke `roslyn-language-server --stdio` directly.
   roslyn-language-server = pkgs.writeShellScriptBin "roslyn-language-server" ''
     logdir="''${TMPDIR:-/tmp}/roslyn-ls"
     mkdir -p "$logdir"
@@ -135,8 +136,7 @@
   };
 in {
   # Machine-level fallback style for the YAML pair. yamlfmt walks the working tree upward for a project .yamlfmt before touching
-  # $XDG_CONFIG_HOME/yamlfmt/.yamlfmt; yamllint discovery rides YAMLLINT_CONFIG_FILE (environments/languages.nix) behind project-local .yamllint
-  # files, so project law always wins.
+  # $XDG_CONFIG_HOME/yamlfmt/.yamlfmt; yamllint discovery rides YAMLLINT_CONFIG_FILE behind project-local .yamllint files, so project law always wins.
   xdg.configFile = {
     # shellcheck resolves rc files from the script's directory upward, then ~/.shellcheckrc, then this file; a project rc fully shadows it. Keep
     # ~/.shellcheckrc absent — it would shadow this row.
@@ -152,7 +152,7 @@ in {
       allowed_blank_lines = 2
       reorder_keys = false
     '';
-    # Projected from the style vocabulary (modules/style.nix); the treefmt row reads the same value, so every yamlfmt consumer shares one source.
+    # Projected from the style vocabulary; the treefmt row reads the same value, so every yamlfmt consumer shares one source.
     "yamlfmt/.yamlfmt".text = style.yamlfmt;
     "yamllint/config".text = ''
       extends: default

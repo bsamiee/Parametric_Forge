@@ -7,6 +7,7 @@
 # WezTerm outer-command-deck owner: typed rows (keys, deck commands, quick-select patterns, hyperlink rules, floats, ssh domains, workspaces,
 # fonts, plugin pins) project into generated Lua data + a colors TOML; deck.lua and events.lua are the only static interpreters. A build-time
 # validator gates activation on Lua syntax, plugin payloads, and action-dispatch totality.
+
 {
   config,
   forgeToolchainEnvFor,
@@ -123,7 +124,7 @@
       select = "domain";
     };
   hyperlinkRows = [
-    # Semantic estate links: forge://<register-domain>[/...] opens the register browser float scoped to the domain (forge-browse takes one DOMAIN arg).
+    # Semantic estate links: forge://<register-domain>[/...] opens the register browser float scoped to the domain (forge-browse takes a DOMAIN arg).
     {
       id = "forge-scheme";
       regex = "forge://[A-Za-z0-9/@._:-]+";
@@ -158,9 +159,9 @@
   };
 
   # --- [COMMAND_DECK_ROWS]
-  # One registry feeds the command palette, the launcher menu, and key rows. kind: float (spawn command in shaped window) | domain (spawn in mux domain);
-  # `destructive` rows pass the deck confirm gate before acting; `scope = "workspace"` keys the float singleton per workspace
-  # and takes the active workspace row's float shape.
+  # One registry feeds the command palette, the launcher menu, and key rows. kind: float (spawn command in shaped window) | domain
+  # (spawn in mux domain); `destructive` rows pass the deck confirm gate before acting; `scope = "workspace"` keys the float singleton
+  # per workspace and takes the active workspace row's float shape.
   commandRows =
     [
       {

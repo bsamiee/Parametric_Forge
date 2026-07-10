@@ -4,11 +4,9 @@
 # License       : MIT
 # Path          : modules/home/programs/shell-tools/fd.nix
 # ----------------------------------------------------------------------------
-# Fast file finder plus the estate noise-pattern taxonomy: `dirs` are
-# directory names, `files` are file globs, `text` is the rendered
-# gitignore-grammar projection fd and watchexec consume verbatim.
-# Deliberately narrower per-surface policies (ripgrep search, eza tree
-# prune, rsync filter) stay consumer-owned.
+# Fast file finder plus the estate noise-pattern taxonomy: `dirs` are directory names, `files` are file globs, `text` is the rendered gitignore-grammar
+# projection fd and watchexec consume verbatim. Narrower per-surface policies (ripgrep search, eza tree prune, rsync filter) stay consumer-owned.
+
 {
   config,
   lib,

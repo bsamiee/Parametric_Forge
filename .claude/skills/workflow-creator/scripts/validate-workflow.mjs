@@ -41,10 +41,8 @@ if (bytes > MAX_BYTES) {
 }
 
 // --- [TRUE_PARSE]
-// the runtime wraps the body in an async function, so top-level
-// await/return are legal; an AsyncFunction-constructor parse is the exact same grammar.
-// This catches what regex checks cannot: unterminated strings, unescaped quotes,
-// dangling concatenations. Runs first because every later heuristic assumes valid JS.
+// the runtime wraps the body in an async function so top-level await/return are legal, and an AsyncFunction-constructor parse is that same grammar.
+// it catches what regex cannot — unterminated strings, unescaped quotes, dangling concatenations — and runs first, since every later heuristic assumes valid JS.
 
 try {
     const AsyncFunction = Object.getPrototypeOf(async () => {}).constructor;
@@ -80,9 +78,8 @@ function strip(code) {
             i += 2;
         } else if (c === '"' || c === "'" || c === '`') {
             // string / template
-            // Fill interiors with a non-whitespace, non-word, non-paren placeholder so a
-            // non-empty argument (e.g. `new Date('2026-01-01')`) does NOT collapse into
-            // empty parens and trip the argless-Date check, while still hiding any token.
+            // Fill interiors with a non-whitespace, non-word, non-paren placeholder so a non-empty argument (e.g. `new Date('2026-01-01')`) does NOT
+            // collapse into empty parens and trip the argless-Date check, while still hiding any token.
             const q = c;
             out += ' ';
             i++;
@@ -180,8 +177,7 @@ for (const [re, label] of [
 }
 
 // --- [EFFORT_MODEL_VALUES]
-// `effort:`/`model:` are matched in the stripped `code` (so prompt/comment mentions
-// never trip this), and the literal VALUE is read from raw `src` at the same offset.
+// `effort:`/`model:` are matched in stripped `code` (so prompt/comment mentions never trip this), and the literal VALUE is read from raw `src` at the same offset.
 
 const ALLOWED = {
     effort: new Set(['low', 'medium', 'high', 'xhigh', 'max']),
@@ -207,11 +203,9 @@ for (const key of ['effort', 'model']) {
 }
 
 // --- [LONG_PROMPT_STRINGS]
-// Targets the actual anti-pattern: a SINGLE string literal whose own content runs
-// past the column budget. A correctly `+`-wrapped segment is well under it, so it
-// never trips; only a genuinely unwrapped prose string does. Code-overflow lines
-// (long because of trailing `.join()`/opts, not the string) are not the string's
-// problem and are ignored. `meta` is exempt — its `description` is a forced one-liner.
+// Targets the actual anti-pattern: a SINGLE string literal whose own content runs past the column budget, where a correctly `+`-wrapped segment stays well under it.
+// Only a genuinely unwrapped prose string trips this, never a code-overflow line long from a trailing `.join()` or opts rather than from the string itself.
+// Those code lines are ignored, and `meta` is exempt because its `description` is a forced one-liner.
 
 const MAX_COL = 160;
 {
@@ -247,9 +241,8 @@ const MAX_COL = 160;
 }
 
 // --- [SECTION_DIVIDER_GRAMMAR]
-// A real divider is a pure-comment line (its stripped form is blank) matching the
-// pattern; in-prompt `[X]` text never qualifies. Flags free text after the bracket
-// and banned drift labels. Phase subsection labels (any UPPER_SNAKE) are allowed.
+// A real divider is a pure-comment line — its stripped form is blank — matching the pattern, and in-prompt `[X]` text never qualifies.
+// It flags free text after the bracket and banned drift labels, while phase subsection labels (any UPPER_SNAKE) are allowed.
 
 {
     const BANNED = new Set([
@@ -291,10 +284,8 @@ const MAX_COL = 160;
 }
 
 // --- [DEAD_INTERPOLATION]
-// Both patterns live INSIDE string/template content, so they are matched in raw
-// `src`. `${'$'}{…}` evaluates to the literal text `${…}`; a `__TOKEN__` placeholder
-// left for a later patch ships verbatim. Either way a stage prompt fires without
-// its data, silently, hours into the run.
+// Both patterns live INSIDE string/template content, matched against raw `src` — `${'$'}{…}` evaluates to the literal text `${…}`,
+// and a `__TOKEN__` left for a later patch ships verbatim, so either way a stage prompt fires without its data, silently, hours into the run.
 
 for (const [re, label] of [
     [/\$\{\s*['"]\$['"]\s*\}\s*\{/g, "`${'$'}{…}` escape — evaluates to the literal text `${…}`"],
@@ -325,9 +316,8 @@ for (const [re, label] of [
 }
 
 // --- [FORMAT]
-// prettier is the one JS formatter whose babel grammar accepts the workflow DSL
-// (biome rejects top-level await/return). Structural errors suppress the probe so
-// format noise never buries a real defect; a machine without prettier stays silent.
+// prettier is the one JS formatter whose babel grammar accepts the workflow DSL, since biome rejects top-level await/return.
+// structural errors suppress the probe so format noise never buries a real defect, and a machine without prettier stays silent.
 
 if (errors.length === 0) {
     const probe = spawnSync('prettier', ['--log-level', 'warn', '--check', path], { encoding: 'utf8' });

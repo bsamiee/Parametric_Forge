@@ -7,6 +7,7 @@
 # fmt: polymorphic formatter front door — one command routes every file type to its owning formatter. Formatters resolve from PATH so the Home
 # Manager fallback wrappers keep their never-shadow project-config semantics; those wrappers probe $PWD, so run
 # fmt from inside the project the targets live in.
+
 {pkgs, ...}: let
   style = import ../../style.nix;
   fdExcludes = builtins.concatStringsSep " " (map (d: "--exclude " + d) style.transientDirs);
@@ -53,8 +54,8 @@
         ["jq"]=jq
       )
       # Package-manager-owned files: lockfiles plus pnpm-workspace.yaml (pnpm rewrites its workspace/lock pair in its own layout); formatting
-      # one is corruption or churn. C# has no lane: csharpier hard-codes Allman braces against the estate K&R editorconfig law — dotnet format
-      # owns .cs through the project rails.
+      # one is corruption or churn. C# has no lane: csharpier hard-codes Allman braces against the estate K&R editorconfig law
+      # — dotnet format owns .cs through the project rails.
       declare -Ar _DENY_BASE=(
         ["pnpm-lock.yaml"]=1 ["package-lock.json"]=1 ["packages.lock.json"]=1
         ["yarn.lock"]=1 ["bun.lock"]=1 ["composer.lock"]=1 ["Gemfile.lock"]=1

@@ -4,8 +4,8 @@
 # License       : MIT
 # Path          : modules/home/programs/apps/karabiner/default.nix
 # ----------------------------------------------------------------------------
-# Karabiner-Elements writable configuration staging. Karabiner rewrites its own
-# store, so the target stays a real file: generate JSON, copy only on change.
+# Karabiner-Elements writable config staging: Karabiner rewrites its own store, so the target stays a real file — generate JSON, copy only on change.
+
 {
   config,
   lib,
@@ -15,8 +15,7 @@
   cfgDir = "${config.xdg.configHome}/karabiner";
   assetDir = "${cfgDir}/assets/complex_modifications";
 
-  # Physical leader scheme projected from the chord owner: Hyper (Right
-  # Command), Super (Right Option), Power (Right Shift), Caps Lock dual-role.
+  # Physical leader scheme projected from the chord owner: Hyper (Right Command), Super (Right Option), Power (Right Shift), Caps Lock dual-role.
   chordRules = config.forge.chords.karabiner.rules;
 
   karabinerJson = pkgs.writeText "karabiner.json" (builtins.toJSON {
@@ -38,21 +37,13 @@
 
   jq = "${pkgs.jq}/bin/jq";
 
-  # App-owned CLI beside the running Karabiner: lints the exact rule bytes
-  # before they reach the live config. Absent only before first cask install.
+  # App-owned CLI beside the running Karabiner: lints the exact rule bytes before they reach the live config. Absent only before first cask install.
   karabinerCli = "/Library/Application Support/org.pqrs/Karabiner-Elements/bin/karabiner_cli";
 
-  # Karabiner persists GUI/runtime state into karabiner.json: root keys beyond
-  # profiles (global), per-profile devices, parameters, simple_modifications,
-  # fn_function_keys, complex_modifications.parameters, virtual_hid_keyboard
-  # subkeys, selected, and GUI-created profiles. The declarative document owns
-  # complex_modifications.rules and the declared profile identity; everything
-  # else merges from the live file so activation never destroys app-owned
-  # state. Declared keys win except `selected` (profile choice is GUI-owned).
-  # The stage gate admits the live file only when it is structurally a
-  # Karabiner document (object; profiles an array of objects): valid JSON of
-  # any other shape falls to wholesale declared replacement instead of
-  # killing activation mid-merge.
+  # Karabiner writes its own GUI and runtime state back into karabiner.json, so the declarative document owns only complex_modifications.rules and the
+  # declared profile identity; every other key merges from the live file and activation never destroys app-owned state. Declared keys win except
+  # `selected`, which stays GUI-owned. The stage gate merges only when the live file is structurally a Karabiner document (object; profiles an array
+  # of objects); any other JSON shape falls to wholesale declared replacement instead of killing activation mid-merge.
   mergeProgram = ''
     ($live[0]) as $l
     | (.profiles | map(.name)) as $names
@@ -83,8 +74,7 @@
 in {
   imports = [../chords.nix];
 
-  # Symlinks anywhere on the config path break Karabiner change detection;
-  # refuse them and stage real writable files in place.
+  # Symlinks anywhere on the config path break Karabiner change detection; refuse them and stage real writable files in place.
   home.activation.ensureKarabinerConfig = lib.hm.dag.entryAfter ["linkGeneration"] ''
     refuse_symlink() {
       if [ -L "$1" ]; then

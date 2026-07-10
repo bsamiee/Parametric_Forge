@@ -5,6 +5,7 @@
 # Path          : flake-modules/qa.nix
 # ----------------------------------------------------------------------------
 # Flake checks: formatting, Nix static analysis, and public-output build smoke.
+
 {self, ...}: {
   perSystem = {
     config,
@@ -26,8 +27,7 @@
           ../overlays
         ]);
     };
-    # .jq-only projection checked through the fmt front door: its jq lane owns
-    # the compile gate (empty stdin, pre-bound $vars), so one implementation
+    # .jq-only projection checked through the fmt front door: its jq lane owns the compile gate (empty stdin, pre-bound $vars), so one implementation
     # serves the CLI and this check, and CI proves the CLI on every run.
     jqSources = fileset.toSource {
       root = ../.;
@@ -38,12 +38,9 @@
       findFirst (p: getName p == "fmt" || (p.meta.mainProgram or "") == "fmt")
       (throw "scripts/fmt.nix no longer exports the fmt CLI")
       (import ../modules/home/scripts/fmt.nix {pkgs = forgePkgs;}).home.packages;
-    # Both-OS static gate as check rows: every context host's toplevel must
-    # evaluate (scar: a dead maghz eval shipped through darwin-only switches).
-    # The gate derives from the context rows — any system a host runs proves
-    # every host's eval, so each operator seat carries the full pair and a new
-    # host or OS joins with zero edits here. drvPath context is discarded so
-    # the row proves eval, never builds a host.
+    # Both-OS static gate as check rows: every context host's toplevel must evaluate, deriving from the context rows so any system a host runs
+    # proves every host's eval and a new host or OS joins with zero edits. drvPath context is discarded so the row proves eval, never builds a host.
+    # Scar: a dead maghz eval once shipped through darwin-only switches.
     hostContext = import ../hosts/context.nix;
     hostEvals = optionalAttrs (builtins.elem system (map (host: host.system) (builtins.attrValues hostContext))) (mapAttrs' (
         name: host:

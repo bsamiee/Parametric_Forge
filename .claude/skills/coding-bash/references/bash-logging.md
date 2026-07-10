@@ -1,6 +1,6 @@
-# [H1][BASH-LOGGING]
+# [BASH_LOGGING]
 
-Production logging for Bash `5.2+`/5.3. JSON-ND structured emission, numeric level dispatch, caller-context injection, terminal capability detection, CI platform integration, coprocess log shipping, OpenTelemetry context propagation, fork-free hot paths.
+Production logging for Bash `5.2+`/5.3: every emitter writes one atomic line, a numeric threshold gates each level, and stderr stays the default channel so stdout carries clean pipeline data.
 
 | [INDEX] | [PATTERN]            | [S] | [USE_WHEN]                                          |
 | :-----: | :------------------- | :-: | :-------------------------------------------------- |
@@ -67,7 +67,7 @@ _json_log_rich() {
 }
 ```
 
-All emitters write a single atomic line via `jq -nc` — prevents interleaved partial writes. EPOCHREALTIME precision owned by version-features.md S4. jq `1.8+`: `if` without `else` defaults to identity; `trim`/`ltrim`/`rtrim` replace regex-based cleanup.
+All emitters write a single atomic line via `jq -nc` — prevents interleaved partial writes. jq: `if` without `else` defaults to identity; `trim`/`ltrim`/`rtrim` replace regex-based cleanup.
 
 ## [02]-[LEVEL_GATED_DISPATCH]
 
@@ -108,7 +108,7 @@ _with_level() {
 # Usage: _with_level DEBUG expensive_diagnostic_routine
 ```
 
-`_LOG_EMITTER` resolves once at startup — zero branching per call. `_with_level` enables diagnostic sections without global level mutation.
+`_LOG_EMITTER` resolves once at startup — zero branching per call. `_with_level` runs diagnostic sections at a lowered threshold without global level mutation.
 
 ## [03]-[TERMINAL_CAPABILITY]
 
@@ -159,7 +159,7 @@ _log_text() {
 }
 ```
 
-`NO_COLOR+set` tests existence not value — spec mandates any value (including empty) disables color. CI enables ANSI without TTY because log viewers render it natively.
+`NO_COLOR+set` tests existence not value — spec mandates any value (including empty) disables color. CI emits ANSI without a TTY because log viewers render it natively.
 
 ## [04]-[CI_PLATFORM_INTEGRATION]
 
@@ -282,7 +282,7 @@ Batch buffering (100 lines or 1s timeout) amortizes syscalls. Shipping alternati
 
 ## [06]-[CONTEXT_PROPAGATION]
 
-`_init_trace` is the canonical owner of TRACEPARENT generation — version-features.md S4 references this file. `TRACEPARENT` propagates through `exec` and subshell boundaries via `export`.
+`_init_trace` owns TRACEPARENT generation; `TRACEPARENT` propagates through `exec` and subshell boundaries via `export`.
 
 ```bash conceptual
 _corr_hi="" _corr_lo=""
@@ -355,7 +355,7 @@ _with_span() {
 # Nesting: _with_span "deploy" _with_span "deploy.build" make
 ```
 
-`SRANDOM` provides unpredictable span IDs (version-features.md S4). `_with_span` composes with `_with_section` (S4). `BASH_MONOSECONDS` in `_span_end` is immune to NTP drift — `EPOCHREALTIME` arithmetic breaks on clock adjustment. OTLP export: `otel-cli exec -- cmd` (equinix-labs) or `opentelemetry-bash` (Thoth `v3.43+`, auto-instrumentation).
+`SRANDOM` generates unpredictable span IDs. `_with_span` composes with `_with_section`. `BASH_MONOSECONDS` in `_span_end` is immune to NTP drift — `EPOCHREALTIME` arithmetic breaks on clock adjustment. OTLP export rides `otel-cli exec -- cmd` or `opentelemetry-bash` auto-instrumentation.
 
 ## [07]-[FORK_FREE_EMISSION]
 
@@ -389,15 +389,15 @@ _init_strftime() {
 # Precedence at startup: loadable strftime > ${ ; } (5.3) > $(printf) fallback
 ```
 
-`${ cmd; }` requires space after `{` and `;` before `}` — omitting either is a parse error. ShellCheck 0.10.x does not parse this syntax. `_init_strftime` redefines `_ts` if the loadable is available — call at startup before first log emission.
+`${ cmd; }` requires space after `{` and `;` before `}` — omitting either is a parse error. `_init_strftime` redefines `_ts` if the loadable is available — call at startup before first log emission.
 
 ## [08]-[RULES]
 
 - JSON serialization: `jq -nc` with `--arg`/`--argjson` for all structured output — `printf`-based JSON only for fixed-schema, program-controlled values.
-- `_LOG_FD` indirection for all emitters — enables coprocess, file, and dual-channel output without modifying callers. Stderr default because container runtimes capture stdout/stderr independently.
+- `_LOG_FD` indirection routes every emitter to coprocess, file, or dual-channel output without modifying callers. Stderr default because container runtimes capture stdout/stderr independently.
 - Numeric level comparison via `(( ))` — NEVER string comparison for level gating.
 - Output mode dispatch via function-reference table (`_LOG_EMIT`) — NEVER `case/esac` for format routing.
-- Caller context via `FUNCNAME`/`BASH_LINENO` with frame offset (variable-features.md S1). NO_COLOR: `${NO_COLOR+set}` tests existence. FORCE_COLOR re-enables; `FORCE_COLOR=0` treated as NO_COLOR.
+- Caller context via `FUNCNAME`/`BASH_LINENO` with frame offset. NO_COLOR: `${NO_COLOR+set}` tests existence. FORCE_COLOR forces color on; `FORCE_COLOR=0` treated as NO_COLOR.
 - CI platform detection once at startup via `_CI_PLATFORM` — NEVER per-call environment checks.
 - `_with_section` for exception-safe section open/close — NEVER unmatched open/close pairs.
 - Coprocess sinks for high-throughput logging — batch buffer with `read -t` timeout flush.
@@ -406,4 +406,3 @@ _init_strftime() {
 - Dual-channel (`_log_dual`): JSON to coprocess for aggregation, colored text to stderr for operator visibility.
 - Fork-free timestamp via `_ts` helper — version-gated: loadable `strftime` > `${ ; }` (`5.3+`) > `printf -v` fallback. `${ cmd; }` requires space after `{` and `;` before `}`.
 - `BASH_MONOSECONDS` for elapsed timing — NEVER `EPOCHREALTIME` arithmetic for duration measurement (NTP drift breaks deltas).
-- Sibling file contracts: version-features.md references this file for TRACEPARENT generation and S7 for fork-free patterns; variable-features.md references S3 for terminal capability.

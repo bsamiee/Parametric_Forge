@@ -6,6 +6,7 @@
 # ----------------------------------------------------------------------------
 # Container runtime and OCI environment. services.colima + programs.docker-cli own DOCKER_HOST/COLIMA_HOME/DOCKER_CONFIG on Darwin; Linux talks
 # to the system Docker socket unpointed with docker-cli owning config.json only.
+
 {
   config,
   lib,
@@ -71,7 +72,7 @@ in {
         binfmt = true;
         mountType = "virtiofs";
         mountInotify = true;
-        # Explicit: the launchd-spawned start skips colima's implicit default mounts, leaving the guest without the home tree bind mounts resolve in.
+        # The launchd-spawned start skips colima's implicit default mounts, leaving the guest without the home tree bind mounts resolve in.
         mounts = [
           {
             location = "~";
@@ -119,8 +120,8 @@ in {
     LAZYDOCKER_CONFIG_DIR = "${config.xdg.configHome}/lazydocker";
   };
 
-  # Forge owns the Apple Container config content; the file lands writable. A drifted app-root snapshot is cleared so the next start re-copies
-  # it. kernel/vminit/network/dns stay upstream-owned.
+  # Forge owns the Apple Container config content; the file lands writable. A drifted app-root snapshot is cleared so the next
+  # start re-copies it; kernel/vminit/network/dns stay upstream-owned.
   home.activation.appleContainerConfig = lib.mkIf isDarwin (lib.hm.dag.entryAfter ["writeBoundary"] ''
     run mkdir -p "${config.xdg.configHome}/container"
     run rm -f "${config.xdg.configHome}/container/config.toml"

@@ -5,6 +5,7 @@
 # Path          : modules/home/programs/shell-tools/rclone.nix
 # ----------------------------------------------------------------------------
 # Cloud storage synchronization and management
+
 _: {
   programs.rclone.enable = true;
 }

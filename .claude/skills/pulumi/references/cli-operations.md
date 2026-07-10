@@ -1,6 +1,6 @@
 # [PULUMI_CLI_OPERATIONS]
 
-`pulumi do` mechanics for stateless, one-shot resource operations: command anatomy, property input, resource discovery, output contracts, cross-resource wiring, and graduation into a project.
+`pulumi do` mechanics for stateless, one-shot resource operations.
 
 ## [01]-[COMMAND_SHAPE]
 
@@ -30,7 +30,7 @@ EOF
 npx pulumi do aws:s3:Bucket create --yes --input-file bucket.pcl
 ```
 
-Before authoring properties for a resource new to the session, `npx pulumi package info <pkg> --module <mod> --resource <Type>` lists its inputs and outputs with descriptions. `npx pulumi package get-schema <pkg>` returns the full machine-readable schema with nested type definitions — tens of MB for a large provider, never read whole. Property names are camelCase; flags take the kebab-case form. `npx pulumi package info <pkg>` with no module lists modules and resources; the catalog lives at https://www.pulumi.com/registry/.
+Before authoring properties for a resource new to the session, `npx pulumi package info <pkg> --module <mod> --resource <Type>` lists its inputs and outputs with descriptions. `npx pulumi package get-schema <pkg>` returns the full machine-readable schema with nested type definitions — tens of MB for a large provider, never read whole. Property names are camelCase; flags take the kebab-case form. `npx pulumi package info <pkg>` with no module lists the package's modules and resources.
 
 ## [03]-[OUTPUT_CONTRACT]
 

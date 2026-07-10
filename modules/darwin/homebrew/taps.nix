@@ -5,6 +5,7 @@
 # Path          : modules/darwin/homebrew/taps.nix
 # ----------------------------------------------------------------------------
 # Homebrew tap repositories
+
 _: {
   homebrew.taps = [
     {

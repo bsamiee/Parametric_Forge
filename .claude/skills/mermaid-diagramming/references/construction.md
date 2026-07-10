@@ -1,6 +1,6 @@
 # [CONSTRUCTION]
 
-Each diagram type answers one question with a bounded mark vocabulary; per type, this reference binds what its marks must assert, the signal a strong render concentrates, its master patterns, and the failure modes and logic checks that gate review. Type selection, investigation traces, and staged growth stay methodology's property; the validator owns only its named machine checks.
+Each diagram type answers one question with a bounded mark vocabulary. Per type: what its marks must assert, the signal a strong render concentrates, its master patterns, and the failure modes and logic checks that gate review. Type selection, investigation traces, and staged growth bind in methodology; the validator owns only its named machine checks.
 
 ## [01]-[CORE_TYPES]
 

@@ -4,8 +4,6 @@ This page is the derivation law: every type, vocabulary, and secondary surface c
 
 ## [01]-[ANCHOR_ALGEBRA]
 
-[ANCHOR_ALGEBRA]:
-
 - Anchor law: one declaration anchors each correspondence — a value anchor where runtime rows, iteration, or order exist (the `as const` table, the `as const` key tuple), a merged registry interface where the row set is contributed across modules, a type anchor where the correspondence is purely type-plane, a `const` type parameter where the caller supplies the shape, a state parameter where the fact is protocol position
 - Direction law: the algebra runs three directions and closes — types derive from values, secondary types compute from primary types, and generated types govern values back through contract checks — so an anchor edit propagates as compile pressure around the whole loop; a hand parallel in any direction is the break that lets the loop drift silently
 - Gate law: the stated-annotation export gate leaves an exported anchor plain `as const` — its contract homes as constrained-default guard aliases in the merged namespace, an assembled owner states a `typeof`-derived annotation over its interior anchors, and the expression-seam `satisfies` spelling survives only where no export reaches the anchor

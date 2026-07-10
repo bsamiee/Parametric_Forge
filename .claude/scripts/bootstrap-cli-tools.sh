@@ -18,8 +18,7 @@ readonly ALLOW_SYSTEM_LINKS="${CLAUDE_BOOTSTRAP_SYSTEM_LINKS:-${ALLOW_SUDO}}"
 readonly ALLOW_NETWORK="${CLAUDE_BOOTSTRAP_ALLOW_NETWORK:-0}"
 readonly ALLOW_REMOTE_INSTALLERS="${CLAUDE_BOOTSTRAP_ALLOW_REMOTE_INSTALLERS:-0}"
 readonly BINSTALL_URL='https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh'
-# Quoted subscripts: formatters parse bare hyphenated keys as arithmetic and
-# space them into broken lookups ("trash - put"); quoting pins the literal.
+# Quoted subscripts: formatters parse bare hyphenated keys as arithmetic and space them into broken lookups ("trash - put"); quoting pins the literal.
 declare -Ar TOOLS=(
     ["rg"]='ripgrep:binstall' ["fd"]='fd-find:binstall'
     ["sd"]='sd:binstall' ["bat"]='bat:binstall'
@@ -421,7 +420,7 @@ _apply() {
     _report
 }
 
-# --- [EXPORT] ---------------------------------------------------------------------------
+# --- [ENTRY] ----------------------------------------------------------------------------
 
 [[ -v COMMAND_DISPATCH["${COMMAND}"] ]] || {
     _usage >&2

@@ -6,6 +6,7 @@
 # ----------------------------------------------------------------------------
 # Signed-event inbox on adnanh/webhook: typed source rows generate hooks.json (HMAC verification via env-named secrets, never literals) and one
 # projector appends typed receipt rows. Loopback-only; an absent secret fails closed (empty HMAC key never matches a signed delivery).
+
 {
   config,
   lib,
@@ -33,8 +34,7 @@
     };
   };
 
-  # Projector: payload hash, per-source event-id dedupe, one JSONL receipt row. mkdir spinlock because macOS
-  # ships no flock(1); the section runs in milliseconds.
+  # Projector: payload hash, per-source event-id dedupe, one JSONL receipt row. mkdir spinlock (macOS lacks flock(1)); the section runs in milliseconds.
   inbox = pkgs.writeShellApplication {
     name = "forge-webhook-inbox";
     runtimeInputs = [pkgs.coreutils pkgs.jq];
@@ -57,8 +57,8 @@
         fi
         if [ "$tries" -ge 100 ]; then
           tries=0
-          # Stale-holder break: the section is milliseconds, so a 10s-old lock is a dead holder. One rmdir per window, then the loop re-races;
-          # a live peer that recreates the lock restarts the wait cleanly.
+          # Stale-holder break: the section is milliseconds, so a 10s-old lock is a dead holder. One rmdir
+          # per window, then the loop re-races; a live peer that recreates the lock restarts the wait cleanly.
           lock_age=$((EPOCHSECONDS - $(stat -c %Y "$lock" 2>/dev/null || echo "$EPOCHSECONDS")))
           [ "$lock_age" -lt 10 ] || rmdir "$lock" 2>/dev/null || true
         fi

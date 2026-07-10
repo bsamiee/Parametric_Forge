@@ -6,6 +6,7 @@
 # ----------------------------------------------------------------------------
 # Register rail owner: one row grammar projected to fzf browse commands, Television durable channels, XDG register JSON, and zsh completions.
 # Previews are read-only evidence; every browse run emits one typed receipt.
+
 {
   config,
   host,
@@ -157,8 +158,8 @@
   fzfArgsBash = "fzf_base=(\n${lib.concatMapStringsSep "\n" (a: "        ${lib.escapeShellArg a}") fzfBaseArgs}\n      )";
 
   # --- [RECEIPT_VERB_ROWS]
-  # Canned [desc sql] projections over the normalized event spine — fixed columns kind, ts, source, surface, event, verb, result, state, status,
-  # session_id, urgency, raw — so every verb binds on any corpus thinness; kind-specific raw fields extract from JSON text. A new analytic is one row.
+  # Canned [desc sql] projections over the normalized event spine (fixed columns per attention.spineColumnsSql) so every verb binds on any
+  # corpus thinness; kind-specific raw fields extract from JSON text. A new analytic is one row.
   receiptVerbs =
     lib.mapAttrs (_: t: {
       desc = lib.elemAt t 0;
@@ -255,8 +256,8 @@
         [ -s "$corpus" ] || { printf 'forge-receipts: empty corpus\n' >&2; exit 1; }
         duckdb_args=()
         [ "$render" != json ] || duckdb_args+=(-json)
-        # Declared spine schema (attention.nix spineColumnsSql), never inference: an all-null column on a thin or --kind-filtered corpus infers
-        # JSON and poisons every COALESCE over it.
+        # Declared spine schema (attention.nix spineColumnsSql), never inference: an all-null column on a thin or
+        # --kind-filtered corpus infers JSON and poisons every COALESCE over it.
         duckdb ''${duckdb_args[0]+"''${duckdb_args[@]}"} -c \
           "CREATE TEMP TABLE receipts AS FROM read_json('$corpus', format = 'newline_delimited', columns = {${attention.spineColumnsSql}}); $1"
       }
@@ -582,7 +583,7 @@ in {
       };
     };
 
-    # Television 0.15.9: durable channel host. Shell integration stays off — Ctrl-R is Atuin, Ctrl-T is fzf; channels launch via `tv <channel>`.
+    # Television: durable channel host. Shell integration stays off — Ctrl-R is Atuin, Ctrl-T is fzf; channels launch via `tv <channel>`.
     # Theme roles bind palette roles: one role row serves every bound key.
     programs.television = {
       enable = true;

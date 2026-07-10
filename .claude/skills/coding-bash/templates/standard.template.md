@@ -1,6 +1,6 @@
 # Standard Foundation Template
 
-Universal chassis for all Bash scripts. Provides strict mode, version gating, color initialization, structured logging with polymorphic emitters, LIFO cleanup registry, ERR/signal traps, metadata-driven usage generation, flag parsing, atomic writes, nameref return stubs, assertion helpers, and self-test mode. Archetype-specific concerns (dispatch tables, verb:resource routing, domain logic) belong in application code, not here.
+Universal chassis for all Bash scripts. Carries strict mode, version gating, color initialization, structured logging with polymorphic emitters, LIFO cleanup registry, ERR/signal traps, metadata-driven usage generation, flag parsing, atomic writes, nameref return stubs, assertion helpers, and self-test mode. Archetype-specific concerns (dispatch tables, verb:resource routing, domain logic) belong in application code, not here.
 
 ```bash
 #!/usr/bin/env bash

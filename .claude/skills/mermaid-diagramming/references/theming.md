@@ -119,185 +119,185 @@ config:
     look: classic
     themeVariables:
         darkMode: true
-        fontFamily: "SF Mono, Menlo, Cascadia Mono, Segoe UI Mono, Consolas, monospace"
+        fontFamily: 'SF Mono, Menlo, Cascadia Mono, Segoe UI Mono, Consolas, monospace'
         useGradient: false
-        dropShadow: "none"
-        background: "#282A36"
-        primaryColor: "#44475A"
-        primaryTextColor: "#F8F8F2"
-        primaryBorderColor: "#BD93F9"
-        secondaryColor: "#6272A4"
-        secondaryTextColor: "#F8F8F2"
-        secondaryBorderColor: "#6272A4"
-        tertiaryColor: "#21222C"
-        tertiaryTextColor: "#F8F8F2"
-        tertiaryBorderColor: "#44475A"
-        mainBkg: "#44475A"
-        nodeBorder: "#BD93F9"
-        nodeTextColor: "#F8F8F2"
-        lineColor: "#FF79C6"
-        arrowheadColor: "#FF79C6"
-        textColor: "#F8F8F2"
-        titleColor: "#D6BCFA"
-        clusterBkg: "#21222C"
-        clusterBorder: "#D6BCFA"
-        compositeBackground: "#21222C"
-        compositeTitleBackground: "#282A36"
-        compositeBorder: "#D6BCFA"
-        altBackground: "#282A36"
-        edgeLabelBackground: "#21222C"
-        labelBackgroundColor: "#21222C"
-        noteBkgColor: "#44475A"
-        noteTextColor: "#F8F8F2"
-        noteBorderColor: "#6272A4"
-        actorBkg: "#44475A"
-        actorBorder: "#BD93F9"
-        actorTextColor: "#F8F8F2"
-        actorLineColor: "#6272A4"
-        signalColor: "#FF79C6"
-        signalTextColor: "#F8F8F2"
-        sequenceNumberColor: "#282A36"
-        activationBkgColor: "#44475A"
-        activationBorderColor: "#BD93F9"
-        labelBoxBkgColor: "#21222C"
-        labelBoxBorderColor: "#D6BCFA"
-        labelTextColor: "#F8F8F2"
-        loopTextColor: "#F8F8F2"
-        classText: "#F8F8F2"
-        requirementBackground: "#44475A"
-        requirementBorderColor: "#BD93F9"
-        requirementTextColor: "#F8F8F2"
-        relationColor: "#FF79C6"
-        relationLabelBackground: "#21222C"
-        relationLabelColor: "#F8F8F2"
-        attributeBackgroundColorOdd: "#282A36"
-        attributeBackgroundColorEven: "#21222C"
-        sectionBkgColor: "#21222C"
-        altSectionBkgColor: "#282A36"
-        sectionBkgColor2: "#21222C"
-        excludeBkgColor: "#21222C"
-        gridColor: "#6272A4"
-        taskBkgColor: "#44475A"
-        taskBorderColor: "#BD93F9"
-        taskTextColor: "#F8F8F2"
-        taskTextOutsideColor: "#F8F8F2"
-        taskTextDarkColor: "#F8F8F2"
-        activeTaskBkgColor: "#6272A4"
-        activeTaskBorderColor: "#BD93F9"
-        doneTaskBkgColor: "#21222C"
-        doneTaskBorderColor: "#6272A4"
-        critBkgColor: "#FF555580"
-        critBorderColor: "#FF5555"
-        todayLineColor: "#FF79C6"
-        vertLineColor: "#8BE9FD"
-        fillType0: "#FF79C680"
-        fillType1: "#8BE9FD66"
-        fillType2: "#50FA7B66"
-        fillType3: "#FFB86C66"
-        fillType4: "#BD93F980"
-        fillType5: "#FF555580"
-        fillType6: "#FFD86654"
-        fillType7: "#6272A4"
-        actor0: "#BD93F9"
-        actor1: "#8BE9FD"
-        actor2: "#50FA7B"
-        actor3: "#FFB86C"
-        actor4: "#FF79C6"
-        actor5: "#6272A4"
-        faceColor: "#FFD86654"
-        personBorder: "#BD93F9"
-        personBkg: "#44475A"
-        archEdgeColor: "#FF79C6"
-        archEdgeArrowColor: "#FF79C6"
-        archEdgeWidth: "2"
-        archGroupBorderColor: "#D6BCFA"
-        archGroupBorderWidth: "1"
-        git0: "#BD93F9"
-        git1: "#FF79C6"
-        git2: "#8BE9FD"
-        git3: "#50FA7B"
-        git4: "#FFB86C"
-        git5: "#FF5555"
-        git6: "#FFD866"
-        git7: "#6272A4"
-        gitBranchLabel0: "#282A36"
-        gitBranchLabel1: "#282A36"
-        gitBranchLabel2: "#282A36"
-        gitBranchLabel3: "#282A36"
-        gitBranchLabel4: "#282A36"
-        gitBranchLabel5: "#282A36"
-        gitBranchLabel6: "#282A36"
-        gitBranchLabel7: "#282A36"
-        commitLabelColor: "#F8F8F2"
-        commitLabelBackground: "#21222C"
-        commitLabelFontSize: "11px"
-        tagLabelColor: "#F8F8F2"
-        tagLabelBackground: "#FFD86654"
-        tagLabelBorder: "#FFD866"
-        tagLabelFontSize: "11px"
-        pie1: "#FF79C6"
-        pie2: "#8BE9FD"
-        pie3: "#50FA7B"
-        pie4: "#FFB86C"
-        pie5: "#BD93F9"
-        pie6: "#FF5555"
-        pie7: "#FFD866"
-        pie8: "#8BE9FD"
-        pie9: "#50FA7B"
-        pie10: "#FFB86C"
-        pie11: "#BD93F9"
-        pie12: "#FF5555"
+        dropShadow: 'none'
+        background: '#282A36'
+        primaryColor: '#44475A'
+        primaryTextColor: '#F8F8F2'
+        primaryBorderColor: '#BD93F9'
+        secondaryColor: '#6272A4'
+        secondaryTextColor: '#F8F8F2'
+        secondaryBorderColor: '#6272A4'
+        tertiaryColor: '#21222C'
+        tertiaryTextColor: '#F8F8F2'
+        tertiaryBorderColor: '#44475A'
+        mainBkg: '#44475A'
+        nodeBorder: '#BD93F9'
+        nodeTextColor: '#F8F8F2'
+        lineColor: '#FF79C6'
+        arrowheadColor: '#FF79C6'
+        textColor: '#F8F8F2'
+        titleColor: '#D6BCFA'
+        clusterBkg: '#21222C'
+        clusterBorder: '#D6BCFA'
+        compositeBackground: '#21222C'
+        compositeTitleBackground: '#282A36'
+        compositeBorder: '#D6BCFA'
+        altBackground: '#282A36'
+        edgeLabelBackground: '#21222C'
+        labelBackgroundColor: '#21222C'
+        noteBkgColor: '#44475A'
+        noteTextColor: '#F8F8F2'
+        noteBorderColor: '#6272A4'
+        actorBkg: '#44475A'
+        actorBorder: '#BD93F9'
+        actorTextColor: '#F8F8F2'
+        actorLineColor: '#6272A4'
+        signalColor: '#FF79C6'
+        signalTextColor: '#F8F8F2'
+        sequenceNumberColor: '#282A36'
+        activationBkgColor: '#44475A'
+        activationBorderColor: '#BD93F9'
+        labelBoxBkgColor: '#21222C'
+        labelBoxBorderColor: '#D6BCFA'
+        labelTextColor: '#F8F8F2'
+        loopTextColor: '#F8F8F2'
+        classText: '#F8F8F2'
+        requirementBackground: '#44475A'
+        requirementBorderColor: '#BD93F9'
+        requirementTextColor: '#F8F8F2'
+        relationColor: '#FF79C6'
+        relationLabelBackground: '#21222C'
+        relationLabelColor: '#F8F8F2'
+        attributeBackgroundColorOdd: '#282A36'
+        attributeBackgroundColorEven: '#21222C'
+        sectionBkgColor: '#21222C'
+        altSectionBkgColor: '#282A36'
+        sectionBkgColor2: '#21222C'
+        excludeBkgColor: '#21222C'
+        gridColor: '#6272A4'
+        taskBkgColor: '#44475A'
+        taskBorderColor: '#BD93F9'
+        taskTextColor: '#F8F8F2'
+        taskTextOutsideColor: '#F8F8F2'
+        taskTextDarkColor: '#F8F8F2'
+        activeTaskBkgColor: '#6272A4'
+        activeTaskBorderColor: '#BD93F9'
+        doneTaskBkgColor: '#21222C'
+        doneTaskBorderColor: '#6272A4'
+        critBkgColor: '#FF555580'
+        critBorderColor: '#FF5555'
+        todayLineColor: '#FF79C6'
+        vertLineColor: '#8BE9FD'
+        fillType0: '#FF79C680'
+        fillType1: '#8BE9FD66'
+        fillType2: '#50FA7B66'
+        fillType3: '#FFB86C66'
+        fillType4: '#BD93F980'
+        fillType5: '#FF555580'
+        fillType6: '#FFD86654'
+        fillType7: '#6272A4'
+        actor0: '#BD93F9'
+        actor1: '#8BE9FD'
+        actor2: '#50FA7B'
+        actor3: '#FFB86C'
+        actor4: '#FF79C6'
+        actor5: '#6272A4'
+        faceColor: '#FFD86654'
+        personBorder: '#BD93F9'
+        personBkg: '#44475A'
+        archEdgeColor: '#FF79C6'
+        archEdgeArrowColor: '#FF79C6'
+        archEdgeWidth: '2'
+        archGroupBorderColor: '#D6BCFA'
+        archGroupBorderWidth: '1'
+        git0: '#BD93F9'
+        git1: '#FF79C6'
+        git2: '#8BE9FD'
+        git3: '#50FA7B'
+        git4: '#FFB86C'
+        git5: '#FF5555'
+        git6: '#FFD866'
+        git7: '#6272A4'
+        gitBranchLabel0: '#282A36'
+        gitBranchLabel1: '#282A36'
+        gitBranchLabel2: '#282A36'
+        gitBranchLabel3: '#282A36'
+        gitBranchLabel4: '#282A36'
+        gitBranchLabel5: '#282A36'
+        gitBranchLabel6: '#282A36'
+        gitBranchLabel7: '#282A36'
+        commitLabelColor: '#F8F8F2'
+        commitLabelBackground: '#21222C'
+        commitLabelFontSize: '11px'
+        tagLabelColor: '#F8F8F2'
+        tagLabelBackground: '#FFD86654'
+        tagLabelBorder: '#FFD866'
+        tagLabelFontSize: '11px'
+        pie1: '#FF79C6'
+        pie2: '#8BE9FD'
+        pie3: '#50FA7B'
+        pie4: '#FFB86C'
+        pie5: '#BD93F9'
+        pie6: '#FF5555'
+        pie7: '#FFD866'
+        pie8: '#8BE9FD'
+        pie9: '#50FA7B'
+        pie10: '#FFB86C'
+        pie11: '#BD93F9'
+        pie12: '#FF5555'
         pieOpacity: 1
-        pieStrokeWidth: "1.5px"
-        pieOuterStrokeWidth: "0px"
-        pieSectionTextSize: "13px"
-        pieSectionTextColor: "#F8F8F2"
-        pieLegendTextSize: "12px"
-        pieLegendTextColor: "#F8F8F2"
-        pieTitleTextSize: "15px"
-        pieTitleTextColor: "#F8F8F2"
-        cScale0: "#FF79C6"
-        cScale1: "#8BE9FD"
-        cScale2: "#50FA7B"
-        cScale3: "#FFB86C"
-        cScale4: "#BD93F9"
-        cScale5: "#FF5555"
-        cScale6: "#FFD866"
-        cScale7: "#8BE9FD"
-        cScale8: "#50FA7B"
-        cScale9: "#FFB86C"
-        cScale10: "#BD93F9"
-        cScale11: "#FF5555"
-        cScaleLabel0: "#282A36"
-        cScaleLabel1: "#282A36"
-        cScaleLabel2: "#282A36"
-        cScaleLabel3: "#282A36"
-        cScaleLabel4: "#282A36"
-        cScaleLabel5: "#282A36"
-        cScaleLabel6: "#282A36"
-        cScaleLabel7: "#282A36"
-        cScaleLabel8: "#282A36"
-        cScaleLabel9: "#282A36"
-        cScaleLabel10: "#282A36"
-        cScaleLabel11: "#282A36"
+        pieStrokeWidth: '1.5px'
+        pieOuterStrokeWidth: '0px'
+        pieSectionTextSize: '13px'
+        pieSectionTextColor: '#F8F8F2'
+        pieLegendTextSize: '12px'
+        pieLegendTextColor: '#F8F8F2'
+        pieTitleTextSize: '15px'
+        pieTitleTextColor: '#F8F8F2'
+        cScale0: '#FF79C6'
+        cScale1: '#8BE9FD'
+        cScale2: '#50FA7B'
+        cScale3: '#FFB86C'
+        cScale4: '#BD93F9'
+        cScale5: '#FF5555'
+        cScale6: '#FFD866'
+        cScale7: '#8BE9FD'
+        cScale8: '#50FA7B'
+        cScale9: '#FFB86C'
+        cScale10: '#BD93F9'
+        cScale11: '#FF5555'
+        cScaleLabel0: '#282A36'
+        cScaleLabel1: '#282A36'
+        cScaleLabel2: '#282A36'
+        cScaleLabel3: '#282A36'
+        cScaleLabel4: '#282A36'
+        cScaleLabel5: '#282A36'
+        cScaleLabel6: '#282A36'
+        cScaleLabel7: '#282A36'
+        cScaleLabel8: '#282A36'
+        cScaleLabel9: '#282A36'
+        cScaleLabel10: '#282A36'
+        cScaleLabel11: '#282A36'
         xyChart:
-            backgroundColor: "#282A36"
-            titleColor: "#F8F8F2"
-            dataLabelColor: "#F8F8F2"
-            legendTextColor: "#F8F8F2"
-            xAxisLabelColor: "#F8F8F2"
-            xAxisTitleColor: "#F8F8F2"
-            xAxisTickColor: "#6272A4"
-            xAxisLineColor: "#6272A4"
-            yAxisLabelColor: "#F8F8F2"
-            yAxisTitleColor: "#F8F8F2"
-            yAxisTickColor: "#6272A4"
-            yAxisLineColor: "#6272A4"
-            plotColorPalette: "#FF79C6,#8BE9FD,#50FA7B,#FFB86C,#BD93F9,#FF5555,#FFD866"
+            backgroundColor: '#282A36'
+            titleColor: '#F8F8F2'
+            dataLabelColor: '#F8F8F2'
+            legendTextColor: '#F8F8F2'
+            xAxisLabelColor: '#F8F8F2'
+            xAxisTitleColor: '#F8F8F2'
+            xAxisTickColor: '#6272A4'
+            xAxisLineColor: '#6272A4'
+            yAxisLabelColor: '#F8F8F2'
+            yAxisTitleColor: '#F8F8F2'
+            yAxisTickColor: '#6272A4'
+            yAxisLineColor: '#6272A4'
+            plotColorPalette: '#FF79C6,#8BE9FD,#50FA7B,#FFB86C,#BD93F9,#FF5555,#FFD866'
         radar:
-            axisColor: "#6272A4"
+            axisColor: '#6272A4'
             axisStrokeWidth: 1.5
-            graticuleColor: "#44475A"
+            graticuleColor: '#44475A'
             graticuleOpacity: 0.4
             curveOpacity: 0.35
             curveStrokeWidth: 2
@@ -348,7 +348,7 @@ Every accent-colored shape fills translucent: the fill carries its palette hex w
 |  [09]   | light-ink | Orange   | `#FFB86C66` |   40%   | `#F8F8F2` |        `5.2`         |
 |  [10]   | light-ink | Yellow   | `#FFD86654` |   33%   | `#F8F8F2` |        `5.5`         |
 
-A node-scale chip takes the dark-ink tier for maximum punch; a family whose engine fixes one ink for every colored surface — journey, pie, timeline, treemap, packet — takes the light-ink tier throughout so Foreground serves everything. Below both tiers sits the wash tier, 10–30% alphas (`1A`–`4D`) for large-area tints that carry no ink of their own: lane emphasis, cynefin domain fields, the treeview highlight band, packet field blocks. Neutral surfaces — Selection, Darker, Background — stay opaque; translucency marks accent semantics, never structure. The canonical Dracula node classes — nine, one per role the role map binds:
+A node-scale chip takes the dark-ink tier for maximum punch; a family whose engine fixes one ink for every colored surface — journey, pie, timeline, treemap, packet — takes the light-ink tier throughout so Foreground serves everything. Below both tiers sits the wash tier, 10–30% alphas (`1A`–`4D`) for large-area tints that carry no ink of their own: lane emphasis, cynefin domain fields, the treeview highlight band, packet field blocks. Neutral surfaces — Selection, Darker, Background — stay opaque; translucency marks accent semantics, never structure. The canonical Dracula node classes, one per role the role map binds:
 
 ```text
 classDef primary fill:#44475A,stroke:#FF79C6,color:#F8F8F2
@@ -376,7 +376,7 @@ A callout node reads against the standing role fills because its recessed surfac
 
 `recessed` fills a dormant, done, or terminal-adjacent node; `annotation` shares its surface with a Comment stroke and carries side commentary, never flow. On an ER entity a bright class fill floods the attribute rows and collides with the banding, so ER role classes stroke-encode instead — an external registry rides `fill:#21222C,stroke:#8BE9FD,color:#8BE9FD`, the role carried by stroke and title ink on a recessed surface. The class-diagram note alone takes the payload chip — `noteBkgColor: "#FFD86654"`, `noteBorderColor: "#FFD866"`, `noteTextColor: "#F8F8F2"` — because a class note tags an invariant, while sequence and state notes stay neutral Selection captions. The gitgraph tag, the treeview highlight, and the railroad terminal spend the same yellow-law chip: translucent gold, full gold border, Foreground ink.
 
-The six edge rails — every semantic edge takes its rail explicitly, and only a plain forward hop rides the default:
+The edge rails — every semantic edge takes its rail explicitly, and only a plain forward hop rides the default:
 
 ```text
 linkStyle default stroke:#FF79C6,color:#F8F8F2
@@ -387,7 +387,7 @@ linkStyle 4 stroke:#FFB86C,color:#F8F8F2
 linkStyle 5 stroke:#6272A4,color:#F8F8F2,stroke-width:1.5px,stroke-dasharray:4 6
 ```
 
-Rail semantics: Pink primary, Green success, Red error — mandatory on every fault edge — Cyan external, Orange data-carrying, Comment-dashed trace and secondary. Every rail declares `color:#F8F8F2` so its label never falls to a derived color; a rail without an explicit width rides the standing `2px` the micro-scale stamps, the fault rail carries the `3px` emphasis weight, and the trace rail carries the `1.5px` dashed weight — the one ladder in [05]. The engine colors each styled edge's arrowhead from its resolved stroke, so a Red rail terminates in a Red head with no extra key, and `arrowheadColor` governs only unstyled edges. A rail binds two ways with identical semantics: positionally through `linkStyle N` — indices are 0-based parse positions, so every edge insertion or deletion recounts every positional index before the diagram ships — or insertion-stably through an edge id, `A e1@--> B` then `class e1 edgeError`, where the id form survives the insertions that renumber every positional index; a fence under ongoing edits prefers the id form. The canonical edge classes mirror the five non-default rails:
+Rail semantics: Pink primary, Green success, Red error — mandatory on every fault edge — Cyan external, Orange data-carrying, Comment-dashed trace and secondary. Every rail declares `color:#F8F8F2` so its label never falls to a derived color; a rail without an explicit width rides the standing `2px` the micro-scale stamps, the fault rail carries the `3px` emphasis weight, and the trace rail carries the `1.5px` dashed weight — the one ladder in [05]. The engine colors each styled edge's arrowhead from its resolved stroke, so a Red rail terminates in a Red head with no extra key, and `arrowheadColor` governs only unstyled edges. A rail binds two ways with identical semantics: positionally through `linkStyle N` — indices are 0-based parse positions, so every edge insertion or deletion recounts every positional index before the diagram ships — or insertion-stably through an edge id, `A e1@--> B` then `class e1 edgeError`, where the id form survives the insertions that renumber every positional index; a fence under ongoing edits prefers the id form. The canonical edge classes mirror the non-default rails:
 
 ```text
 classDef edgeSuccess stroke:#50FA7B,color:#F8F8F2

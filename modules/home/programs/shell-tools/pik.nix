@@ -4,9 +4,9 @@
 # License       : MIT
 # Path          : modules/home/programs/shell-tools/pik.nix
 # ----------------------------------------------------------------------------
-# Process Interactive Kill - fuzzy process finder and killer. Config is
-# generator-owned and lands where pik resolves it per OS: ~/Library/
-# Application Support on macOS, $XDG_CONFIG_HOME/pik on Linux.
+# pik (Process Interactive Kill): fuzzy process finder and killer; config is generator-owned and lands where pik resolves it per OS —
+# ~/Library/Application Support on macOS, $XDG_CONFIG_HOME/pik on Linux.
+
 {
   config,
   lib,

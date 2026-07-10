@@ -1,10 +1,10 @@
 # [TYPESCRIPT_BOUNDARIES]
 
-The edge is the only place the system meets material it did not mint: wire payloads, foreign codecs, callback surfaces, platform capability, sibling threads and peers, durable stores. This page fixes where each crossing converts and who owns it — admission placement, contracts as data, codec engines, runtime selection, marshal, and the persistence seam — so that no module past a seam names a provider shape, re-validates an admitted value, or resolves a runtime. Every seam is a declaration site: what crosses, in which direction, with which fault, is recoverable from the owner alone.
+The edge is the only place the system meets material it did not mint: wire payloads, foreign codecs, callback surfaces, platform capability, sibling threads and peers, durable stores. This page fixes where each crossing converts and who owns it, so that no module past a seam names a provider shape, re-validates an admitted value, or resolves a runtime. Every seam is a declaration site: what crosses, in which direction, with which fault, is recoverable from the owner alone.
 
 ## [01]-[EDGE_CHOOSER]
 
-This table selects the owner for a foreign signal; when a signal matches several rows, the most specific wins, and identity rows are read before transport rows.
+When a foreign signal matches several rows, the most specific owner wins, and identity rows are read before transport rows.
 
 | [INDEX] | [FOREIGN_SIGNAL]               | [SEAM_OWNER]                    | [INTERIOR_FORM]                 | [REJECTED_FORM]                |
 | :-----: | :----------------------------- | :------------------------------ | :------------------------------ | :----------------------------- |
@@ -98,7 +98,7 @@ export { admitted, Envelope, Passport };
 [CONTRIBUTION_FAMILY]:
 
 - Use: every HTTP, RPC, and CLI entry surface.
-- Law: the contract is data — `HttpApiEndpoint` carries path, payload, success, and error Schemas as one declaration (`HttpApiEndpoint.get(name, path)` with `.setPath`/`.setPayload`/`.addSuccess`/`.addError`, or the `HttpApiSchema.param` template form); `HttpApiGroup.make(name).add(endpoint)` is the owning module's contribution; exactly one `HttpApi.make(id).add(group)` assembles at the composition root. The god contract has no lib-side existence — structurally impossible, not disciplined against.
+- Law: the contract is data — `HttpApiEndpoint` carries path, payload, success, and error Schemas as one declaration (`HttpApiEndpoint.get(name, path)` with `.setPath`/`.setPayload`/`.addSuccess`/`.addError`, or the `HttpApiSchema.param` template form); `HttpApiGroup.make(name).add(endpoint)` is the owning module's contribution; exactly one `HttpApi.make(id).add(group)` assembles at the composition root, so no lib-side module spells a god contract.
 - Law: the same assembly law spans transports — `RpcGroup.make(...Rpc.make(tag, { payload, success, error, stream }))` is the procedure family, and the CLI command tree contributes verbs under the identical shape; protocol and serialization cross as two orthogonal Layer axes the root selects from the matrix below. A definition names no transport, no port, no engine.
 - Law: handler exhaustiveness is compiler-checked — `HttpApiBuilder.group` demands `.handle` for every declared endpoint and `RpcGroup.toLayer` demands the full handler record; a missing or mistyped handler is a compile error, never a 404 discovered at runtime.
 - Law: group-scoped concerns ride the declaration — `.middleware(Tag)` on the group, `.addError` for group-wide faults, `.prefix` for mount points — so a cross-cutting obligation is recoverable from the contract value, never from handler bodies.

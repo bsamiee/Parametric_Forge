@@ -4,11 +4,9 @@
 # License       : MIT
 # Path          : modules/home/programs/shell-tools/process-compose.nix
 # ----------------------------------------------------------------------------
-# Non-container process orchestration for project-local service meshes; the
-# package row lives in the owner table. Placement rationale: container-tools
-# owns the container/Kubernetes axis, launchd owns durable machine services,
-# and process-compose is a general foreground workflow runner whose
-# process-compose.yaml files are always project-owned — so shell-tools owns it.
+# Non-container process orchestration for project-local service meshes; the package row lives in the owner table. Container-tools owns the
+# container/Kubernetes axis and launchd owns durable machine services; process-compose is a project-owned foreground runner, so shell-tools owns it.
+
 {
   config,
   lib,
@@ -18,10 +16,8 @@
   inherit (config.forge.theme) palette roles;
   yamlFormat = pkgs.formats.yaml {};
 
-  # forge-pc: detached project mesh over one deterministic per-project UDS.
-  # The server default socket embeds the PID, so a detached server is
-  # unaddressable later; pinning the socket to a project hash makes every
-  # client verb (state/logs/attach/down) reattachable and JSON-first.
+  # forge-pc: detached project mesh over one deterministic per-project UDS. The server default socket embeds the PID, so a detached server is
+  # unaddressable later; pinning the socket to a project hash makes every client verb (state/logs/attach/down) reattachable and JSON-first.
   forgePc = pkgs.writeShellApplication {
     name = "forge-pc";
     runtimeInputs = [pkgs.coreutils pkgs.jq pkgs.process-compose];
@@ -41,8 +37,7 @@
 
       case "$verb" in
         up)
-          # Detached + ordered shutdown; probes/restart policy stay
-          # project-owned in process-compose.yaml.
+          # Detached + ordered shutdown; probes/restart policy stay project-owned in process-compose.yaml.
           exec process-compose up -U -u "$sock" --detached --ordered-shutdown "$@"
           ;;
         down) exec "''${client[@]}" down ;;
@@ -58,8 +53,7 @@
             live=1
           fi
           if [ "''${1:-}" = "--json" ]; then
-            # Same receipt envelope as the estate JSONL rails: ts + surface +
-            # payload + result, one grammar for every doctor.
+            # Same receipt envelope as the estate JSONL rails: ts + surface + payload + result, one grammar for every doctor.
             TZ=UTC0 printf -v ts '%(%Y-%m-%dT%H:%M:%SZ)T' "$EPOCHSECONDS"
             jq -cn --arg ts "$ts" --arg project "''${PWD##*/}" --arg sock "$sock" \
               --argjson live "$([ "$live" = 1 ] && printf true || printf false)" \
@@ -78,10 +72,8 @@
     '';
   };
 
-  # Cockpit: the machine-scoped operator mesh — signed-event inbox, receipt
-  # tailer, MCP fleet drift probe — as one foreground process-compose project.
-  # Probes are processes with restart cadence, never launchd agents; the
-  # webhook port projects from the webhook.nix session variable.
+  # Cockpit: the machine-scoped operator mesh — signed-event inbox, receipt tailer, MCP fleet drift probe — as one foreground process-compose
+  # project. Probes are processes with restart cadence, never launchd agents; the webhook port projects from the webhook.nix session variable.
   webhookPort = lib.toInt config.home.sessionVariables.WEBHOOK_PORT;
   receiptsFile = "${config.xdg.stateHome}/forge-webhook/receipts.jsonl";
 
@@ -185,8 +177,7 @@ in {
 
   xdg.configFile."process-compose/theme.yaml".source = yamlFormat.generate "process-compose-theme" forgeStyle;
 
-  # settings.yaml is TUI-mutated state (theme/sort auto-save); seed the custom
-  # style selection once, never overwrite later user edits.
+  # settings.yaml is TUI-mutated state (theme/sort auto-save); seed the custom style selection once, never overwrite later user edits.
   home.activation.seedProcessComposeSettings = lib.hm.dag.entryAfter ["writeBoundary"] ''
     settings="${config.xdg.configHome}/process-compose/settings.yaml"
     if [ ! -f "$settings" ]; then

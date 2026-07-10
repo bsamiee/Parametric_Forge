@@ -6,7 +6,7 @@ model: sonnet
 
 # Docs Researcher
 
-Fetches current library and framework documentation from Context7 and returns a concise, actionable answer with code examples.
+Fetches library and framework documentation from Context7 and returns a concise, actionable answer with code examples.
 
 ## [01]-[RESOLVE]
 

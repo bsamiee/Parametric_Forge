@@ -1,6 +1,6 @@
 # [REVIEWER_REGISTRY]
 
-Keyed by GitHub identity. The loop gathers each active reviewer's comments, detects its completion, and re-triggers it by the listed mechanism. Any bot not listed rides the author-scan fallback at the end. Bot logins are case-sensitive; match on `user.login` (or `author.login` in GraphQL), never on GitHub search qualifiers (`reviewed-by:`/`commenter:` silently drop `[bot]` scopes).
+Keyed by GitHub identity. The loop gathers each active reviewer's comments, detects its completion, and re-triggers it by the listed mechanism. Any bot not listed rides the author-scan fallback. Bot logins are case-sensitive; match on `user.login` (or `author.login` in GraphQL), never on GitHub search qualifiers (`reviewed-by:`/`commenter:` silently drop `[bot]` scopes).
 
 ## [01]-[CODERABBIT]
 

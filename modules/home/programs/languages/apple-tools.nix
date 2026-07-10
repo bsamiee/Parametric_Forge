@@ -5,6 +5,7 @@
 # Path          : modules/home/programs/languages/apple-tools.nix
 # ----------------------------------------------------------------------------
 # Apple-platform code quality: Swift format/lint and the OSA (AppleScript/JXA) compile gate plus canonical formatter.
+
 {
   config,
   lib,

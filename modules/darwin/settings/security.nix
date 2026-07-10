@@ -5,6 +5,7 @@
 # Path          : modules/darwin/settings/security.nix
 # ----------------------------------------------------------------------------
 # Security, PAM, certificates, and firewall configuration for Darwin.
+
 {
   lib,
   config,
@@ -42,8 +43,8 @@ in {
   system.defaults = {
     # --- [SCREENSAVER_SECURITY]
     screensaver = {
-      askForPassword = mkDefault false; # Disable password prompt after screensaver
-      askForPasswordDelay = mkDefault 0; # No delay when disabled
+      askForPassword = mkDefault false;
+      askForPasswordDelay = mkDefault 0;
     };
     # --- [APPLICATION_SECURITY]
     CustomUserPreferences = {
@@ -63,7 +64,7 @@ in {
         voiceOverOnOffKey = mkDefault false;
         keyboardAccessFocusRingTimeout = mkDefault 15;
       };
-      # LSQuarantine stays disabled through the first-class owner: system.defaults.LaunchServices.LSQuarantine in settings/system.nix.
+      # LSQuarantine stays disabled through the first-class owner: system.defaults.LaunchServices.LSQuarantine.
       # --- [DEVELOPER_SECURITY_SETTINGS]
       "com.apple.dt.Xcode" = {
         DVTTextEditorTrimTrailingWhitespace = mkDefault false;

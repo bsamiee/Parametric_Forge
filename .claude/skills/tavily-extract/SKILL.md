@@ -35,16 +35,16 @@ uvx --from tavily-cli tvly extract "https://example.com/article" -o article.md
 
 ## [02]-[OPTIONS]
 
-| [INDEX] | [OPTION]              | [EFFECT]                                                                      |
-| :-----: | :-------------------- | :---------------------------------------------------------------------------- |
-|  [01]   | `--query`             | Rerank chunks by relevance to this query                                      |
-|  [02]   | `--chunks-per-source` | Chunks per URL, 1-5 (requires `--query`)                                      |
-|  [03]   | `--extract-depth`     | `basic` (default) or `advanced` for JS-rendered SPAs, dynamic content, tables |
-|  [04]   | `--format`            | `markdown` (default) or `text`                                                |
-|  [05]   | `--include-images`    | Include image URLs                                                            |
-|  [06]   | `--timeout`           | Max wait, 1-60 seconds                                                        |
-|  [07]   | `-o, --output`        | Save output to file                                                           |
-|  [08]   | `--json`              | Structured JSON output                                                        |
+| [INDEX] | [OPTION]              | [EFFECT]                                              |
+| :-----: | :-------------------- | :---------------------------------------------------- |
+|  [01]   | `--query`             | Rerank chunks by relevance to this query              |
+|  [02]   | `--chunks-per-source` | Chunks per URL, 1-5 (requires `--query`)              |
+|  [03]   | `--extract-depth`     | `basic` (default) or `advanced` for JS-rendered pages |
+|  [04]   | `--format`            | `markdown` (default) or `text`                        |
+|  [05]   | `--include-images`    | Include image URLs                                    |
+|  [06]   | `--timeout`           | Max wait, 1-60 seconds                                |
+|  [07]   | `-o, --output`        | Save output to file                                   |
+|  [08]   | `--json`              | Structured JSON output                                |
 
 ## [03]-[LANE_SELECTION]
 

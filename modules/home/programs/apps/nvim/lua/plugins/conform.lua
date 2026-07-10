@@ -4,8 +4,7 @@
 -- License       : MIT
 -- Path          : modules/home/programs/apps/nvim/lua/plugins/conform.lua
 -- ----------------------------------------------------------------------------
--- Formatter orchestration over Forge-owned global binaries; the per-filetype table is a generated fact (forge/tools.lua). Availability rows feed
--- :checkhealth forge.
+-- Formatter orchestration over Forge-owned binaries; per-filetype table is generated (forge/tools.lua); availability rows feed :checkhealth forge.
 
 require("conform").setup({
     formatters_by_ft = require("forge.tools").format,

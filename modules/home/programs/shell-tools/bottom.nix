@@ -5,6 +5,7 @@
 # Path          : modules/home/programs/shell-tools/bottom.nix
 # ----------------------------------------------------------------------------
 # Resource monitor themed from the estate palette owner
+
 {config, ...}: let
   inherit (config.forge.theme) palette;
 in {
@@ -14,69 +15,69 @@ in {
       # --- [GENERAL_FLAGS]
       flags = {
         # Display Performance
-        temperature_type = "c"; # Celsius for temperature
-        rate = 2000; # Update rate in milliseconds (2 seconds - balanced)
-        table_gap = "none"; # Cleaner look without table header gaps
-        disable_click = false; # Enable mouse support
-        show_table_scroll_position = true; # Show scroll position indicator
-        disable_gpu = true; # Disable GPU collection (enable if needed)
+        temperature_type = "c";
+        rate = 2000;
+        table_gap = "none";
+        disable_click = false;
+        show_table_scroll_position = true;
+        disable_gpu = true;
 
         # Data & Performance
-        retention = "5m"; # 5 minutes (balanced memory usage)
-        time_delta = 15000; # 15 second time delta in graphs
+        retention = "5m";
+        time_delta = 15000;
 
         # Initial View
-        default_widget_type = "process"; # Start with process view
-        default_widget_count = 1; # Single focused widget
-        expanded = false; # Compact view initially
-        basic = false; # Full mode for power users
-        use_old_network_legend = false; # Modern network legend
-        battery = true; # Show battery if available
+        default_widget_type = "process";
+        default_widget_count = 1;
+        expanded = false;
+        basic = false;
+        use_old_network_legend = false;
+        battery = true;
       };
 
       # --- [STYLE_CONFIGURATION]
       styles = {
         widgets = {
-          border_color = palette.cyan.hex; # Default borders
-          selected_border_color = palette.magenta.hex; # Focused widget
+          border_color = palette.cyan.hex;
+          selected_border_color = palette.magenta.hex;
           widget_title = {
-            color = palette.cyan.hex; # Consistent with borders
+            color = palette.cyan.hex;
           };
           table_header = {
             color = palette.cyan.hex;
-            bold = true; # Bold for emphasis
+            bold = true;
           };
           text = {
-            color = palette.foreground.hex; # Primary text
+            color = palette.foreground.hex;
           };
           selected_text = {
-            color = palette.background.hex; # Inverse text when selected
-            bg_color = palette.cyan.hex; # Selection background
+            color = palette.background.hex;
+            bg_color = palette.cyan.hex;
           };
           disabled_text = {
-            color = palette.comment.hex; # Muted - inactive items
+            color = palette.comment.hex;
           };
           thread_text = {
-            color = palette.purple.hex; # Thread indicators
-            bold = false; # Not bold for subtlety
+            color = palette.purple.hex;
+            bold = false;
           };
         };
         tables = {
           headers = {
-            color = palette.cyan.hex; # Matches borders
-            bold = true; # Bold for emphasis
+            color = palette.cyan.hex;
+            bold = true;
           };
         };
         graphs = {
-          graph_color = palette.selection.hex; # Subtle grid lines
+          graph_color = palette.selection.hex;
           legend_text = {
-            color = palette.cyan.hex; # Legend text (for inline tables)
-            bold = false; # Not bold for cleaner look
+            color = palette.cyan.hex;
+            bold = false;
           };
         };
         cpu = {
-          all_entry_color = palette.cyan.hex; # ALL CPU label
-          avg_entry_color = palette.pink.hex; # AVG CPU (important metric)
+          all_entry_color = palette.cyan.hex;
+          avg_entry_color = palette.pink.hex;
           cpu_core_colors = [
             palette.green.hex # Core 0
             palette.cyan.hex # Core 1
@@ -89,12 +90,11 @@ in {
           ];
         };
         memory = {
-          ram = palette.green.hex; # RAM (primary memory)
-          swap = palette.orange.hex; # Swap (warning state)
-          cache = palette.cyan.hex; # Cache (secondary)
-          arc = palette.purple.hex; # ARC cache
+          ram = palette.green.hex;
+          swap = palette.orange.hex;
+          cache = palette.cyan.hex;
+          arc = palette.purple.hex;
           gpu_colors = [
-            # GPU memory colors
             palette.pink.hex # GPU 0
             palette.cyan.hex # GPU 1
             palette.green.hex # GPU 2
@@ -102,10 +102,10 @@ in {
           ];
         };
         network = {
-          rx = palette.green.hex; # Download (incoming)
-          tx = palette.pink.hex; # Upload (outgoing)
-          rx_total = palette.cyan.hex; # Total received
-          tx_total = palette.orange.hex; # Total transmitted
+          rx = palette.green.hex;
+          tx = palette.pink.hex;
+          rx_total = palette.cyan.hex;
+          tx_total = palette.orange.hex;
         };
         battery = {
           high_battery = palette.green.hex; # Healthy (50%+)
@@ -115,15 +115,15 @@ in {
       };
       # --- [PROCESS_CONFIGURATION]
       processes = {
-        current_usage = true; # Show current usage in process widget
-        default_grouped = true; # Group processes with same name for clarity
-        default_tree = false; # Start with flat view (toggle with 't')
-        default_memory_value = true; # Show memory as values, not just %
-        case_sensitive = false; # Case-insensitive process search
-        whole_word = false; # Partial word matching in search
-        regex = false; # Simple search by default
-        process_command = false; # Show process name for clarity
-        disable_advanced_kill = false; # Enable advanced kill options
+        current_usage = true;
+        default_grouped = true;
+        default_tree = false;
+        default_memory_value = true;
+        case_sensitive = false;
+        whole_word = false;
+        regex = false;
+        process_command = false;
+        disable_advanced_kill = false;
         columns = [
           "PID"
           "Name"
@@ -152,11 +152,11 @@ in {
         };
       };
       # --- [TEMPERATURE_CONFIGURATION]
-      # Note: macOS temperature sensors may not be accessible to bottom
+      # macOS withholds temperature sensors from bottom.
       temperature = {
         sensor_filter = {
-          is_list_ignored = true; # Ignore items in list (show everything else)
-          list = []; # No sensors to ignore
+          is_list_ignored = true;
+          list = [];
           regex = false;
           case_sensitive = false;
           whole_word = false;
@@ -164,16 +164,16 @@ in {
       };
       # --- [MEMORY_GRAPH_CONFIGURATION]
       memory_graph = {
-        cache_memory = true; # Show cache for complete memory picture
+        cache_memory = true;
       };
-      # --- [NETWORK_FILTER]
+      # --- [NETWORK_GRAPH]
       network_graph = {
-        use_binary_prefix = true; # Use MiB/s (more accurate)
-        use_bytes = false; # Use bits for network
-        use_log = false; # Linear scale is more intuitive
+        use_binary_prefix = true;
+        use_bytes = false;
+        use_log = false;
         interface_filter = {
           is_list_ignored = true;
-          list = ["lo" "lo0"]; # Ignore loopback interfaces
+          list = ["lo" "lo0"];
           regex = false;
           case_sensitive = false;
           whole_word = true;
@@ -181,9 +181,9 @@ in {
       };
       # --- [CPU_CONFIGURATION]
       cpu = {
-        default = "all"; # Show all cores
-        hide_avg_cpu = false; # Show average CPU in addition to per-core
-        left_legend = false; # Legend on right side for better readability
+        default = "all";
+        hide_avg_cpu = false;
+        left_legend = false;
       };
     };
   };

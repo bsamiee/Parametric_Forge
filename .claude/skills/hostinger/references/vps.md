@@ -24,7 +24,7 @@ curl -X POST "https://developers.hostinger.com/api/vps/v1/virtual-machines/12345
 
 ## [02]-[DOCKER_MANAGER]
 
-Docker Manager deploys Compose projects through the API from inline content, a GitHub repo URL (auto-resolves `docker-compose.yaml` on the master branch), or any URL returning raw compose content. Deploying under an existing project name replaces that project — the zero-config redeploy path. Hostinger marks these endpoints subject to change; production deployments with existing compose files take the SSH lane in `references/deployment.md`, routed from the root.
+Docker Manager deploys Compose projects through the API from inline content, a GitHub repo URL (auto-resolves `docker-compose.yaml` on the master branch), or any URL returning raw compose content. Deploying under an existing project name replaces that project — the zero-config redeploy path. Hostinger marks these endpoints subject to change; a production deployment with an existing compose file takes the SSH lane instead.
 
 ```bash copy-safe
 curl -X POST "https://developers.hostinger.com/api/vps/v1/virtual-machines/12345/docker" \

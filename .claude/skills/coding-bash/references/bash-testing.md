@@ -1,6 +1,6 @@
-# [H1][BASH-TESTING]
+# [BASH_TESTING]
 
-Production testing for Bash `5.2+`/5.3. bats-core `1.13+`, test isolation via subshell sandboxing, mocks via PATH manipulation, coverage via kcov 43+, CI with multi-shell container matrix, property-based fuzzing.
+Production testing for Bash `5.2+`/5.3: bats-core suites, subshell isolation, PATH-mocked dependencies, coverage gates, and property fuzzing.
 
 | [INDEX] | [PATTERN]           | [S] | [USE_WHEN]                                    |
 | :-----: | :------------------ | :-: | :-------------------------------------------- |
@@ -213,7 +213,7 @@ _assert_call_count() {
 
 ### [03.1]-[PLAN_BASED_MOCKS]
 
-`buildkite-plugins/bats-mock` provides `stub`/`unstub` with plan-based call expectations — verifies both behavior and call sequence on `unstub`.
+`buildkite-plugins/bats-mock` ships `stub`/`unstub` with plan-based call expectations — `unstub` asserts both behavior and call sequence.
 
 ```bash conceptual
 # bats-mock: plan declares expected calls in order; unstub asserts plan fulfilled
@@ -227,7 +227,7 @@ _assert_call_count() {
 }
 ```
 
-Embedded `--self-test` assertion primitives (`_assert_eq`, `_assert_match`, `_assert_set`) owned by script-patterns.md S10.
+The `--self-test` assertion primitives `_assert_eq`/`_assert_match`/`_assert_set` are composed here, never redefined.
 
 ## [04]-[COVERAGE_AND_MUTATION]
 
@@ -288,7 +288,7 @@ _mutation_sweep() {
 
 ## [05]-[CI_INTEGRATION]
 
-CI pipeline owned by bash-testing.md. validation.md cross-references for ShellCheck-specific diagnostic codes. `koalaman/shellcheck-action@v2` (maintained by ShellCheck author). Container matrix references bash-portability.md S5.1 image selection.
+The pipeline runs lint, then a container test matrix, then the coverage gate; lint uses `koalaman/shellcheck-action@v2`.
 
 ```yaml conceptual
 # .github/workflows/shell-tests.yml — canonical pipeline: lint -> test (container matrix) -> coverage
@@ -306,10 +306,10 @@ jobs:
         strategy:
             matrix:
                 include:
-                    - { os: ubuntu-latest, bash: "5.2", container: "" }
-                    - { os: ubuntu-latest, bash: "5.2", container: "alpine:3.21" }
-                    - { os: ubuntu-latest, bash: "5.2", container: "cgr.dev/chainguard/wolfi-base:latest" }
-                    - { os: macos-latest, bash: "5.3", container: "" }
+                    - { os: ubuntu-latest, bash: '5.2', container: '' }
+                    - { os: ubuntu-latest, bash: '5.2', container: 'alpine:3.21' }
+                    - { os: ubuntu-latest, bash: '5.2', container: 'cgr.dev/chainguard/wolfi-base:latest' }
+                    - { os: macos-latest, bash: '5.3', container: '' }
             fail-fast: false
         runs-on: ${{ matrix.os }}
         container: ${{ matrix.container || null }}
@@ -358,8 +358,8 @@ docker run --rm -v "${PWD}/lib:/code/lib:ro" -v "${PWD}/tests:/code/tests:ro" \
 services:
     tests:
         image: bats/bats:latest
-        volumes: ["./lib:/code/lib:ro", "./tests:/code/tests:ro"]
-        command: ["--formatter", "junit", "--output", "/code/tests/reports/", "/code/tests"]
+        volumes: ['./lib:/code/lib:ro', './tests:/code/tests:ro']
+        command: ['--formatter', 'junit', '--output', '/code/tests/reports/', '/code/tests']
 ```
 
 ## [06]-[PROPERTY_BASED_PATTERNS]
@@ -426,7 +426,7 @@ Shrinking on violation: binary-search input size `[lo=1, hi=failing_size]` to fi
 
 ### [06.1]-[HYPOTHESIS_PBT]
 
-Python Hypothesis provides structured shrinking, replay databases, and rich strategies unavailable in pure bash. Pattern: Hypothesis generates inputs, `subprocess.run` invokes the script under test, assertions verify algebraic properties. Pass data via stdin — never interpolate into shell strings (injection). Set `timeout=` on every subprocess call.
+Python Hypothesis ships structured shrinking, replay databases, and rich strategies unavailable in pure bash. Pattern: Hypothesis generates inputs, `subprocess.run` invokes the script under test, assertions verify algebraic properties. Pass data via stdin — never interpolate into shell strings (injection). Set `timeout=` on every subprocess call.
 
 ```python conceptual
 # test_sort_pbt.py — sort idempotency via Hypothesis
@@ -514,18 +514,18 @@ _assert_cli_contract() {
 
 ## [09]-[SHELLCHECK_0_11_0]
 
-Full ShellCheck reference in validation.md S3. Test-relevant codes from `0.11.0` below — each surfaces in test infrastructure or scripts under test.
+The test-relevant `0.11.0` codes below surface in test infrastructure or scripts under test.
 
-| [INDEX] | [CODE]     | [SEV] | [ISSUE]                          | [VIOLATION]                         | [FIX]                            |
-| :-----: | :--------- | :---: | :------------------------------- | :---------------------------------- | :------------------------------- |
-|  [01]   | **SC2327** | warn  | Capture + redirect clash         | `v=$(cmd > out.txt)` empties `$v`   | `v=$(cmd \| tee out.txt)`        |
-|  [02]   | **SC2328** | warn  | Redirect steals from `$()`       | `v=$(tr -d ':' < in > out)` — empty | `v=$(tr -d ':' < in)`            |
-|  [03]   | **SC2329** | warn  | Function never invoked           | Defined `f()`, never called         | Call, remove, or disable         |
-|  [04]   | **SC2330** | warn  | BusyBox `[[ ]]` glob unsupported | `[[ $1 == https:* ]]` in busybox sh | `case "$1" in https:*) ... esac` |
-|  [05]   | **SC2331** | warn  | `-a` file test ambiguous         | `[ -a ~/.bashrc ]` (`-a` also AND)  | `[ -e ~/.bashrc ]` — unambiguous |
+| [INDEX] | [CODE]   | [SEV] | [ISSUE]                          | [VIOLATION]                           | [FIX]                              |
+| :-----: | :------- | :---: | :------------------------------- | :------------------------------------ | :--------------------------------- |
+|  [01]   | `SC2327` | warn  | Capture + redirect clash         | `v=$(cmd > out.txt)` empties `$v`     | `v=$(cmd \| tee out.txt)`          |
+|  [02]   | `SC2328` | warn  | Redirect steals from `$()`       | `v=$(tr -d ':' < in > out)` — empty   | `v=$(tr -d ':' < in)`              |
+|  [03]   | `SC2329` | warn  | Function never invoked           | Defined `f()`, never called           | Call, remove, or disable           |
+|  [04]   | `SC2330` | warn  | BusyBox `[[ ]]` glob unsupported | `[[ $1 == https:* ]]` in busybox sh   | `case "$1" in https:*) ... esac`   |
+|  [05]   | `SC2331` | warn  | `-a` file test ambiguous         | `[ -a ~/.bashrc ]` (`-a` also AND)    | `[ -e ~/.bashrc ]` — unambiguous   |
+|  [06]   | `SC2332` | error | `[ ! -o opt ]` always true       | OR precedence: `[ "!" ] -o [ "opt" ]` | `[[ ! -o opt ]]` or `! [ -o opt ]` |
 
-- SC2327 fix: or split into separate ops. SC2328 fix: or redirect only. SC2329 fix: disable via dispatch-table.
-  | [06] | **SC2332** | error | `[ ! -o opt ]` always true | OR precedence: `[ "!" ] -o [ "opt" ]` | `[[ ! -o opt ]]` or `! [ -o opt ]` |
+Alternative fixes: SC2327 splits into separate ops; SC2328 redirects only; SC2329 disables via dispatch-table.
 
 SC2329 false-positives: dispatch-table functions called via `"${_DISPATCH[$cmd]}"` — ShellCheck cannot trace associative-array indirection. Suppress with `# shellcheck disable=SC2329` and justification comment.
 
@@ -546,10 +546,9 @@ SC2329 false-positives: dispatch-table functions called via `"${_DISPATCH[$cmd]}
 - `bats/bats` Docker image for containerized testing — `bats_load_library` resolves bundled `bats-support`/`bats-assert`.
 - Property tests via `_prop_test` with SRANDOM generators — seed is triage marker only, not deterministic replay.
 - Hypothesis PBT (Python) for structured shrinking and algebraic property verification — pass data via stdin, timeout on subprocess.
-- Embedded `--self-test`: assertion primitives owned by script-patterns.md S10 — cross-reference, do not duplicate.
-- ShellCheck `0.11.0`: SC2327-SC2332 codes — validation.md S3 for full reference, S9 above for test-relevant subset.
-- CI pipeline owned by bash-testing.md S5 — validation.md cross-references for ShellCheck diagnostic codes.
-- Container test matrix references bash-portability.md S5.1 image selection (Alpine ash, Wolfi bash, native).
-- Multi-shell validation: probe `_has_pipefail` (bash-portability.md S2.1) when testing POSIX compatibility.
+- Embedded `--self-test` composes the shared `_assert_eq`/`_assert_match`/`_assert_set` primitives, never redefines them.
+- ShellCheck `0.11.0`: SC2327-SC2332 codes surface in test infrastructure and scripts under test.
+- Container test matrix covers Alpine ash, Wolfi bash, and native.
+- Multi-shell validation: probe `_has_pipefail` when testing POSIX compatibility.
 - Mutation sweep via `_mutation_sweep` — every surviving mutant is an assertion gap requiring investigation.
 - Snapshot baselines stored in `tests/snapshots/` — `BATS_UPDATE_SNAPSHOTS=1` for refresh workflow.

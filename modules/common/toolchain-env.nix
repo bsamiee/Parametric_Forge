@@ -6,6 +6,7 @@
 # ----------------------------------------------------------------------------
 # Shared PATH vectors and toolchain env factory installed as the forgeToolchainEnvFor module argument; session, launchd,
 # and zsh owners call it with their own home/username/cache context.
+
 {
   host,
   lib,
@@ -17,9 +18,8 @@
     username,
     xdgCacheHome,
   }: let
-    # OS branch keys on the static host context, never on pkgs (fixpoint safety).
-    isDarwin = host.os == "darwin";
-    # Only provisioned directories: useUserPackages replaces ~/.nix-profile with /etc/profiles; cargo/go user bins return here only once something provisions them.
+    isDarwin = host.os == "darwin"; # OS branch keys on the static host context, never on pkgs (fixpoint safety).
+    # Only provisioned directories: useUserPackages replaces ~/.nix-profile with /etc/profiles; cargo/go user bins return once provisioned.
     userPathEntries =
       [
         "${home}/.local/bin"

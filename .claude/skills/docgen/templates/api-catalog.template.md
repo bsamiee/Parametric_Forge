@@ -6,9 +6,9 @@
 
 - Package: <package-id>
 - License: <license>
-- namespace: <namespace-or-import>
-- asset: <asset-or-dll>
-- rail: <one-file-rail>
+- Namespace: <namespace-or-import>
+- Asset: <asset-or-dll>
+- Rail: <one-file-rail>
 
 ## [02]-[PUBLIC_TYPES]
 

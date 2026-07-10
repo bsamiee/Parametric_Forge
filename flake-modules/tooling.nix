@@ -5,6 +5,7 @@
 # Path          : flake-modules/tooling.nix
 # ----------------------------------------------------------------------------
 # Developer shell and formatting surfaces.
+
 _: {
   perSystem = {
     config,
@@ -64,7 +65,7 @@ _: {
     treefmt = {
       flakeCheck = false;
       projectRootFile = "flake.nix";
-      # Rows carry the house style (4-space indent, 150 width) explicitly: the formatting flake check runs sandboxed, where machine-level XDG tool configs are invisible.
+      # Rows carry the house style (4-space indent, 150 width) explicitly: the sandboxed formatting check cannot see machine-level XDG tool configs.
       programs = {
         alejandra.enable = true;
         # The repo-root biome.json is the single law for treefmt, the PATH wrapper, and the VSCode extension. The row must carry its bytes:

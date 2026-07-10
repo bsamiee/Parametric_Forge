@@ -4,7 +4,8 @@
 # License       : MIT
 # Path          : modules/home/programs/shell-tools/trippy.nix
 # ----------------------------------------------------------------------------
-# Modern network diagnostic tool combining traceroute and ping
+# Network diagnostic tool combining traceroute and ping
+
 {
   config,
   pkgs,

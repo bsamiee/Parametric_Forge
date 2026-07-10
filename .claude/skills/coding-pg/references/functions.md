@@ -1,4 +1,6 @@
-# Functions
+# [FUNCTIONS]
+
+SQL function bodies inline into the caller's plan when eligible; PL/pgSQL is reserved for logic that set-based SQL cannot express, and dispatch rides a VALUES lookup, never an IF/THEN chain.
 
 ## [01]-[SQL_FUNCTIONS]
 
@@ -13,7 +15,7 @@ SQL functions are candidates for planner inlining when all conditions are met:
 - No subqueries referencing outer query levels
 - Not a set-returning function called in FROM (materialized as subplan)
 
-When inlined, the function body is substituted directly into the outer query plan -- zero call overhead.
+When inlined, the function body is substituted directly into the outer query plan — zero call overhead.
 
 ```sql conceptual
 CREATE FUNCTION full_name(profile jsonb)
@@ -22,7 +24,7 @@ LANGUAGE SQL IMMUTABLE PARALLEL SAFE
 RETURN profile->>'first_name' || ' ' || profile->>'last_name';
 ```
 
-Set-returning SQL function (not inlined -- materialized as subplan):
+Set-returning SQL function (not inlined — materialized as subplan):
 
 ```sql conceptual
 CREATE FUNCTION active_tenants()
@@ -31,7 +33,7 @@ LANGUAGE SQL STABLE
 AS $$ SELECT * FROM tenant WHERE archived_at IS NULL $$;
 ```
 
-PG 14+ simplified syntax: `RETURN expr` for single-expression functions. Set-returning functions use `AS $$ SELECT ... $$` body syntax.
+Single-expression functions use `RETURN expr`; set-returning functions use `AS $$ SELECT ... $$` body syntax.
 
 Function attribute contracts:
 
@@ -44,21 +46,21 @@ Function attribute contracts:
 |  [05]   | PARALLEL RESTRICTED        | Accesses backend-private state (temp tables, cursors) | Runs in parallel leader only                |
 |  [06]   | PARALLEL UNSAFE            | Side effects or non-thread-safe code                  | Disables parallelism entirely               |
 |  [07]   | SECURITY INVOKER (default) | Executes with caller's privileges                     | Permits inlining                            |
-|  [08]   | SECURITY DEFINER           | Owner privileges; MUST set `search_path`              | Prevents inlining                           |
+|  [08]   | SECURITY DEFINER           | Owner privileges; must set `search_path`              | Prevents inlining                           |
 
-- SECURITY DEFINER: MUST set `search_path = pg_catalog, public`.
+- SECURITY DEFINER: must set `search_path = pg_catalog, public`.
 
-SECURITY INVOKER has always been the default for functions in all PG versions. PG 15 changed the default for views (not functions) via `CREATE VIEW ... WITH (security_invoker = on)`.
+Functions default to SECURITY INVOKER; the view default differs and needs `CREATE VIEW ... WITH (security_invoker = on)` to match.
 
 Volatility misclassification consequences:
 
-- IMMUTABLE on a STABLE function: planner caches result across rows -- stale reads within query
-- STABLE on a VOLATILE function: planner may eliminate repeated calls -- missed side effects
+- IMMUTABLE on a STABLE function: planner caches result across rows — stale reads within query
+- STABLE on a VOLATILE function: planner may eliminate repeated calls — missed side effects
 - Overly conservative (VOLATILE on IMMUTABLE): prevents index usage and constant folding
 
 ## [02]-[PL_PGSQL_FUNCTIONS]
 
-For multi-statement logic that SQL functions cannot express. Minimize PL/pgSQL -- every PL/pgSQL function is a candidate for replacement by SQL + CTE + MERGE.
+For multi-statement logic that SQL functions cannot express. Minimize PL/pgSQL — every PL/pgSQL function is a candidate for replacement by SQL + CTE + MERGE.
 
 ```sql conceptual
 CREATE FUNCTION upsert_entity(
@@ -92,15 +94,15 @@ $$;
 
 PL/pgSQL contracts:
 
-- `format('%I', ident)` for identifier interpolation -- `%I` double-quotes, preventing SQL injection
-- `format('%L', literal)` for literal interpolation -- `%L` single-quotes and escapes
-- Parameterized `EXECUTE ... USING` for value interpolation -- never concatenate values into query strings
-- `RETURN QUERY SELECT ...` for static set-returning; `RETURN QUERY EXECUTE` for dynamic set-returning -- both stream rows without materializing
-- `RETURN SELECT *` is invalid syntax -- always `RETURN QUERY SELECT *` in PL/pgSQL
+- `format('%I', ident)` for identifier interpolation — `%I` double-quotes, preventing SQL injection
+- `format('%L', literal)` for literal interpolation — `%L` single-quotes and escapes
+- Parameterized `EXECUTE ... USING` for value interpolation — never concatenate values into query strings
+- `RETURN QUERY SELECT ...` for static set-returning; `RETURN QUERY EXECUTE` for dynamic set-returning — both stream rows without materializing
+- `RETURN SELECT *` is invalid syntax — always `RETURN QUERY SELECT *` in PL/pgSQL
 - `RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = '...', DETAIL = '...'` for error signaling
 - `GET DIAGNOSTICS v_count = ROW_COUNT` after DML to inspect affected rows
 
-PL/pgSQL dispatch via EXECUTE -- eliminate IF/THEN chains:
+PL/pgSQL dispatch via EXECUTE — eliminate IF/THEN chains:
 
 ```sql conceptual
 -- Dynamic dispatch: operation name → SQL template, no branching
@@ -146,18 +148,18 @@ $$;
 
 Dispatch contracts:
 
-- VALUES-based lookup replaces IF/THEN chains -- one code path, no branch coverage gaps
+- VALUES-based lookup replaces IF/THEN chains — one code path, no branch coverage gaps
 - `format('%I', ident)` in each template handles identifier safety
-- `EXECUTE ... USING` binds values positionally -- zero SQL injection surface
-- Adding operations: insert a new VALUES row -- no structural change to function body
-- Unrecognized operation: v_sql is NULL, RETURN QUERY EXECUTE NULL raises error -- fail-fast
+- `EXECUTE ... USING` binds values positionally — zero SQL injection surface
+- Adding operations: insert a new VALUES row — no structural change to function body
+- Unrecognized operation: v_sql is NULL, RETURN QUERY EXECUTE NULL raises error — fail-fast
 
 PL/pgSQL performance:
 
-- Plan caching: PL/pgSQL caches plans after 5 executions -- parameter-dependent plan shapes cause regression
-- `EXECUTE` forces re-planning every call -- use for dynamic SQL only, not to bypass plan caching
-- Composite-type parameter passing copies entire row -- pass individual columns when row is wide
-- EXCEPTION blocks create a subtransaction on entry (even if no error occurs) -- measurable overhead per call. Use specific conditions (`WHEN unique_violation`, `WHEN foreign_key_violation`) -- `WHEN OTHERS` masks bugs
+- Plan caching: PL/pgSQL caches plans after 5 executions — parameter-dependent plan shapes cause regression
+- `EXECUTE` forces re-planning every call — use for dynamic SQL only, not to bypass plan caching
+- Composite-type parameter passing copies entire row — pass individual columns when row is wide
+- EXCEPTION blocks create a subtransaction on entry (even if no error occurs) — measurable overhead per call. Use specific conditions (`WHEN unique_violation`, `WHEN foreign_key_violation`) — `WHEN OTHERS` masks bugs
 
 Prepared statement vs dynamic SQL tradeoff (Effect-SQL):
 
@@ -205,7 +207,7 @@ CREATE AGGREGATE weighted_avg(value numeric, weight numeric) (
 SELECT category, weighted_avg(score, confidence) FROM reviews GROUP BY category;
 ```
 
-Moving-aggregate with MSFUNC/MINVFUNC -- O(1) per frame slide for window aggregates:
+Moving-aggregate with MSFUNC/MINVFUNC — O(1) per frame slide for window aggregates:
 
 ```sql conceptual
 CREATE FUNCTION running_sum_state(state numeric, value numeric)
@@ -245,13 +247,13 @@ Aggregate contracts:
 |  [04]   | MSFUNC/MSTYPE/MINVFUNC       | Moving-aggregate optimization              | Window aggregates recompute from scratch on each frame slide |
 |  [05]   | SORTOP                       | Aggregate can exploit sorted input         | No sort-based optimization                                   |
 
-Ordered-set aggregates: `CREATE AGGREGATE ... (ORDER BY ...)` with `WITHIN GROUP (ORDER BY ...)` at call site -- for percentile_cont, mode, and similar rank-dependent computations.
+Ordered-set aggregates: `CREATE AGGREGATE ... (ORDER BY ...)` with `WITHIN GROUP (ORDER BY ...)` at call site — for percentile_cont, mode, and similar rank-dependent computations.
 
-Hypothetical-set aggregates: `CREATE AGGREGATE ... (ORDER BY ...)` with `HYPOTHETICAL` flag -- answers "what rank would this value have?" without inserting.
+Hypothetical-set aggregates: `CREATE AGGREGATE ... (ORDER BY ...)` with `HYPOTHETICAL` flag — answers "what rank would this value have?" without inserting.
 
 ## [04]-[PROCEDURES]
 
-Procedures (PG 11+) for transaction-controlled operations. Unlike functions, procedures can COMMIT/ROLLBACK within their body.
+Procedures own transaction-controlled operations; unlike functions, they COMMIT/ROLLBACK within the body.
 
 ```sql conceptual
 CREATE PROCEDURE batch_archive(p_batch_size int DEFAULT 1000)
@@ -282,12 +284,12 @@ $$;
 
 Procedure contracts:
 
-- `CALL procedure_name(...)` -- cannot be used in SELECT or as expression
-- COMMIT/ROLLBACK requires LANGUAGE plpgsql -- not available in SQL procedures
-- Procedures cannot return values -- use OUT parameters or write results to a staging table
+- `CALL procedure_name(...)` — cannot be used in SELECT or as expression
+- COMMIT/ROLLBACK requires LANGUAGE plpgsql — not available in SQL procedures
+- Procedures cannot return values — use OUT parameters or write results to a staging table
 - Transaction control restriction: procedures using COMMIT/ROLLBACK cannot be called inside a client-initiated transaction block
 - `FOR UPDATE SKIP LOCKED` prevents contention when multiple instances run concurrently
-- Intermediate COMMIT releases row locks and frees WAL -- critical for large batch operations
+- Intermediate COMMIT releases row locks and frees WAL — critical for large batch operations
 
 ## [05]-[BATCH_QUEUE_PATTERNS]
 
@@ -344,23 +346,23 @@ AS $$ SELECT array_agg(elem) FROM unnest(arr) AS elem WHERE elem IS NOT NULL $$;
 
 Polymorphic type resolution:
 
-| [INDEX] | [PSEUDO_TYPE]                    | [RESOLUTION_RULE]                                                  |
-| :-----: | :------------------------------- | :----------------------------------------------------------------- |
-|  [01]   | anyelement                       | All params and return resolve to the same concrete type            |
-|  [02]   | anyarray                         | Array of anyelement; element type must match all anyelement params |
-|  [03]   | anynonarray                      | Same as anyelement but rejects array types                         |
-|  [04]   | anyenum                          | Same as anyelement but rejects non-enum types                      |
-|  [05]   | anycompatible (PG 13+)           | Params may differ; planner casts to common supertype               |
-|  [06]   | anycompatiblearray               | Array of anycompatible — already an array type; no `[]` suffix     |
-|  [07]   | anycompatiblenonarray            | anycompatible but rejects arrays                                   |
-|  [08]   | anycompatiblerange               | Range over anycompatible element type                              |
-|  [09]   | anycompatiblemultirange (PG 14+) | Multirange over anycompatible element type                         |
+| [INDEX] | [PSEUDO_TYPE]           | [RESOLUTION_RULE]                                                  |
+| :-----: | :---------------------- | :----------------------------------------------------------------- |
+|  [01]   | anyelement              | All params and return resolve to the same concrete type            |
+|  [02]   | anyarray                | Array of anyelement; element type must match all anyelement params |
+|  [03]   | anynonarray             | Same as anyelement but rejects array types                         |
+|  [04]   | anyenum                 | Same as anyelement but rejects non-enum types                      |
+|  [05]   | anycompatible           | Params may differ; planner casts to common supertype               |
+|  [06]   | anycompatiblearray      | Array of anycompatible — already an array type; no `[]` suffix     |
+|  [07]   | anycompatiblenonarray   | anycompatible but rejects arrays                                   |
+|  [08]   | anycompatiblerange      | Range over anycompatible element type                              |
+|  [09]   | anycompatiblemultirange | Multirange over anycompatible element type                         |
 
 Resolution contracts:
 
 - At least one input parameter must be polymorphic for the return type to be polymorphic
-- `anyelement` resolution is strict per-call -- no implicit casting between parameters
-- `anycompatible` is weaker -- PG will implicitly cast to find common type (int + numeric -> numeric)
+- `anyelement` resolution is strict per-call — no implicit casting between parameters
+- `anycompatible` is weaker — PG will implicitly cast to find common type (int + numeric -> numeric)
 - Mixing `any*` and `anycompatible*` families in the same function signature is forbidden
-- `anycompatiblearray` is already an array pseudo-type -- using `anycompatiblearray[]` is redundant and incorrect
-- Overloaded functions: PG resolves by argument types -- avoid overloading across polymorphic and concrete signatures (resolution becomes ambiguous)
+- `anycompatiblearray` is already an array pseudo-type — using `anycompatiblearray[]` is redundant and incorrect
+- Overloaded functions: PG resolves by argument types — avoid overloading across polymorphic and concrete signatures (resolution becomes ambiguous)

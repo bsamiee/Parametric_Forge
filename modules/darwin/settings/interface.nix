@@ -5,6 +5,7 @@
 # Path          : modules/darwin/settings/interface.nix
 # ----------------------------------------------------------------------------
 # Visual interface and desktop environment settings for Darwin.
+
 {
   lib,
   config,
@@ -35,7 +36,7 @@ in {
         wvous-tr-corner = mkDefault 1;
         wvous-bl-corner = mkDefault 1;
         wvous-br-corner = mkDefault 1;
-        # Pin sources: Drafts is masApp-declared; Claude and ChatGPT are intentional manual installs pinned by operator ruling.
+        # Pin sources: Drafts is masApp-declared; Claude and ChatGPT are intentional manual installs.
         persistent-apps = mkDefault [
           {
             spacer = {
@@ -110,8 +111,8 @@ in {
       NSGlobalDomain = {
         AppleInterfaceStyle = mkDefault "Dark";
         AppleInterfaceStyleSwitchesAutomatically = mkDefault false;
-        AppleIconAppearanceTheme = mkDefault "RegularDark"; # Tahoe icon/widget dark style
-        _HIHideMenuBar = mkDefault false; # Pin menu bar visible under Tahoe
+        AppleIconAppearanceTheme = mkDefault "RegularDark"; # icon/widget dark style
+        _HIHideMenuBar = mkDefault false; # menu bar stays visible
         AppleShowScrollBars = mkDefault "WhenScrolling";
         AppleScrollerPagingBehavior = mkDefault false;
         AppleICUForce24HourTime = mkDefault true;

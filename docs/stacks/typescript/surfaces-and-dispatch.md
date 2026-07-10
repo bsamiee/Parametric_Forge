@@ -22,8 +22,6 @@ When a concern matches several rows, the most specific wins; the rail the arms r
 |  [12]   | cross-cutting policy on one function     | `Effect.fn` definition-seam pipeline           | policy hand-woven inside the body         |
 |  [13]   | open structural input, no tag            | `Match.when` pattern and refinement arms       | `typeof` ladder with casts                |
 
-- [01]: `resolve`/`resolveMany`/`resolveWhere` siblings.
-
 ## [02]-[ENTRYPOINT_COLLAPSE]
 
 [OVERLOAD_COLLAPSE]:

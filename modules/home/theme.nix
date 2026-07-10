@@ -7,6 +7,7 @@
 # Estate palette owner: enriched Dracula-variant rows, semantic roles, ANSI-16 projection, the master syntax scope table (tmTheme, treesitter,
 # textMate, and semantic tokens project from one pivot), derived diff/search/git roles, the shared icon vocabulary, the target registry with its
 # coverage projection, and the rendered proof lane. Every color consumer interpolates these tokens; no consumer carries a private hex.
+
 {
   lib,
   pkgs,
@@ -116,10 +117,9 @@
     ["Invalid" "invalid" palette.foreground null [] palette.red]
   ];
 
-  # Semantic-token projection: language-server styling VS Code textMate rules miss. Same pivot hues folded per family; modifiers express
-  # sub-distinction, never new hues. Server-specific rows below the generic fold are keyed to what each live server actually emits (verified
-  # against nixd, ty, Roslyn, and the builtin TS provider); a rule nothing emits is dead weight, and nixd's overloaded standard
-  # legend actively mis-colors Nix under unscoped generic rules.
+  # Semantic-token projection: language-server styling VS Code textMate rules miss. Same pivot hues folded per family; modifiers express sub-distinction,
+  # never new hues. Server-specific rows below the generic fold are keyed to what nixd, ty, Roslyn, and the builtin TS provider emit; a rule nothing emits
+  # is dead weight, and nixd's overloaded standard legend actively mis-colors Nix under unscoped generic rules.
   it = c: {
     foreground = c.hex;
     fontStyle = "italic";
@@ -153,7 +153,7 @@
       "*.deprecated".strikethrough = true;
     };
 
-  # Shared icon vocabulary: one directory/process glyph table projected into consumers (Yazi dirs today; tab titles, prompts, and dashboards
+  # Shared icon vocabulary: one directory/process glyph table projected into consumers (Yazi dirs; tab titles, prompts, and dashboards
   # adopt through their register rows) — never app-local maps. Dir row tuple: [name glyph color]. glyphsProved fails eval on any empty glyph:
   # the harness edit path can silently strip BMP private-use glyphs, and an empty glyph is a dead icon row every consumer renders as nothing.
   glyphsProved = v: let
@@ -189,7 +189,7 @@
     };
   };
 
-  # --- [TARGET_REGISTRY_THE_STYLIX_CLASS_CAPABILITY_MATRIX]
+  # --- [TARGET_REGISTRY]
   # One row per rendering consumer; verdicts: bound (interpolates owner tokens), gap (adoption pending), defer (no config surface to own).
   # coverage.json projects from these rows so gaps surface before drift. Row tuple: [id owner carrier binds verdict]; binds admits as a
   # space-joined token string and lands typed so JSON consumers never re-split.
@@ -313,7 +313,7 @@
   };
 
   # Base16/Base24 export adapter (Tinted scheme exchange); slot names derive from the ordered palette-row vector (base00..base17). The canonical
-  # palette stays runtime truth, this is the ecosystem egress.
+  # palette stays runtime truth; this is the ecosystem egress.
   base24Slots = lib.listToAttrs (lib.imap0 (
       i: p: lib.nameValuePair "base${lib.fixedWidthString 2 "0" (lib.toHexString i)}" palette.${p}
     ) (lib.splitString " "

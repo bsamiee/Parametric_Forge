@@ -5,6 +5,7 @@
 # Path          : modules/home/programs/default.nix
 # ----------------------------------------------------------------------------
 # Home Manager programs aggregator; GUI/mac surfaces gate on the host context.
+
 {
   host,
   lib,

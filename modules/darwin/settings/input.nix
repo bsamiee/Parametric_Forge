@@ -5,6 +5,7 @@
 # Path          : modules/darwin/settings/input.nix
 # ----------------------------------------------------------------------------
 # Input device configuration for keyboard, mouse, and trackpad.
+
 {lib, ...}: let
   inherit (lib) mkDefault;
 in {
@@ -51,7 +52,7 @@ in {
         InitialKeyRepeat = mkDefault 15;
         KeyRepeat = mkDefault 2;
         ApplePressAndHoldEnabled = mkDefault false;
-        AppleKeyboardUIMode = mkDefault 2; # 2 = full keyboard access on Sonoma+
+        AppleKeyboardUIMode = mkDefault 2; # 2 = full keyboard access
         "com.apple.keyboard.fnState" = mkDefault false;
         NSAutomaticCapitalizationEnabled = mkDefault true;
         NSAutomaticSpellingCorrectionEnabled = mkDefault true;
@@ -70,7 +71,7 @@ in {
       };
       # --- [ADVANCED_INPUT_CUSTOMIZATIONS]
       CustomUserPreferences = {
-        # Trackpad keys without first-class nix-darwin owners at the pinned rev; the rest live on system.defaults.trackpad.* above.
+        # Trackpad keys without first-class nix-darwin owners; the rest live on system.defaults.trackpad.*.
         "com.apple.AppleMultitouchTrackpad" = {
           TrackpadTwoFingerDoubleTapGesture = mkDefault 1; # first-class owner is bool-only; keep int here
           TrackpadFiveFingerPinchGesture = mkDefault 2;

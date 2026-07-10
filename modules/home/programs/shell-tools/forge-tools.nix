@@ -5,6 +5,7 @@
 # Path          : modules/home/programs/shell-tools/forge-tools.nix
 # ----------------------------------------------------------------------------
 # Agent-safe Forge maintenance entrypoints: deploy rail, hygiene board, doctors, parity, acceptance choreography.
+
 {
   config,
   lib,
@@ -204,8 +205,8 @@
         fi
       }
 
-      # Single owner of the post-activation contract: generation capture, live-system equality, then the daemon kickstart. $1 = expected store path,
-      # $2 = its label.
+      # Single owner of the post-activation contract: generation capture, live-system equality, then the daemon
+      # kickstart. $1 = expected store path, $2 = its label.
       assert_live() {
         gen_live="$(readlink "$profile" 2>/dev/null)" || gen_live="-"
         gen_live="''${gen_live##*system-}"
@@ -533,8 +534,8 @@
       cycles-ownerless-cache = ".cache/cycles";
       pause-note-tombstone = ".claude/dossiers/forge-rebuild/PAUSE-NOTE.md";
     };
-    # wezterm-plugin-clone-cache enforces provenance law: every runtime plugin clone must resolve to a pinned store-path origin; the live cache is
-    # empty — regrowth is litter.
+    # wezterm-plugin-clone-cache enforces provenance law: every runtime plugin clone must resolve to a
+    # pinned store-path origin; the live cache is empty — regrowth is litter.
     glob = {
       zdotdir-compdump = [".config/zsh" ".zcompdump*" 0];
       mcp-stage-litter = [".cache/forge-mcp" ".stage.*" 0];
@@ -621,8 +622,8 @@
       rasm-bridge-state = [".rasm" "relocation-pending" "rhino-bridge lease/quit journals in a home root dotdir; relocation rides the bridge owner in Rasm"];
     };
     # kill rows are the evidence-gated reap set; report rows keep daemon-by-design classes (git fsmonitor, op) visible without lifecycle theft. codex
-    # lanes detach by design; only lanes far past every effort-tier deadline are litter. node-modules census is the visibility net for new daemon
-    # classes before they earn a kill row.
+    # lanes detach by design; only lanes far past every effort-tier deadline are litter. node-modules
+    # census is the visibility net for new daemon classes before they earn a kill row.
     orphan = {
       biome-lsp-proxy-orphans = ["biome lsp-proxy" "" 300 "kill"];
       biome-daemon-orphans = ["biome __run_server" "" 300 "kill"];
@@ -732,8 +733,8 @@
         done < <(orphan_matches "$2" "$3" "$4" "$5")
       }
 
-      # One jq projection per row: every field lands in one read. Unit-separator delimited: tab is IFS whitespace and read would collapse empty
-      # fields.
+      # One jq projection per row: every field lands in one read. Unit-separator delimited: tab is IFS
+      # whitespace and read would collapse empty fields.
       row_fields() {
         jq -r '[.name, .kind, (.target // ""), (.expect // ""), (.root // ""), (.pattern // ""), (.match // ""), (.exclude // ""), (.minAgeSec // 0 | tostring), (.action // ""), (.depth // 0 | tostring), (.maxAgeDays // 0 | tostring), (.budgetGb // 0 | tostring), (.owner // ""), (.prune // ""), (.decision // ""), (.note // "")] | join("\u001f")' <<<"$1"
       }
@@ -958,8 +959,8 @@
           "$ts" "$(grep -c 'outcome=applied' "$apply_file" || true)" "$plan_file" "$apply_file")"
       }
 
-      # Orphan-only lane for the scheduled agent: fresh detection each run, kill rows reaped, report rows logged; per-pid receipt plus one summary
-      # line on the receipts log.
+      # Orphan-only lane for the scheduled agent: fresh detection each run, kill rows reaped, report
+      # rows logged; per-pid receipt plus one summary line on the receipts log.
       cmd_sweep() {
         report_only=0
         [ "''${1:-}" != "--report-only" ] || report_only=1
@@ -1048,8 +1049,8 @@
       else
         flock_args=(-w 600)
       fi
-      # Own lock serializes drift runs; the deploy flock stays redeploy-owned, so an in-flight deploy surfaces as build=deploy-in-flight, not
-      # deadlock.
+      # Own lock serializes drift runs; the deploy flock stays redeploy-owned, so an in-flight deploy
+      # surfaces as build=deploy-in-flight, not deadlock.
       mkdir -p "$(dirname "$lock_file")"
       exec {lock_fd}>"$lock_file"
       flock "''${flock_args[@]}" "$lock_fd" || {
@@ -1083,8 +1084,8 @@
       if [ "$dirty_total" = 0 ]; then worktree="clean"; else worktree="dirty-$dirty_total"; fi
 
       # Bump only when the flake pair is untouched: uncommitted operator or thread edits to flake.nix/flake.lock must never be entangled. The mutation
-      # window rides the DEPLOY lock so a redeploy evaluating mid-update never reads a half-written flake.lock; the window closes before the build,
-      # which re-takes that lock itself.
+      # window rides the DEPLOY lock so a redeploy evaluating mid-update never reads a half-written
+      # flake.lock; the window closes before the build, which re-takes that lock itself.
       deploy_lock="''${FORGE_REDEPLOY_LOCK:-$HOME/.cache/forge-redeploy.lock}"
       mkdir -p "''${deploy_lock%/*}"
       if [ -n "$(git status --porcelain -- flake.nix flake.lock)" ]; then
@@ -1836,8 +1837,8 @@
     '';
   };
 
-  # Repeatable parity rail: generation home-files vs live $HOME (store-linked, staged-equal, missing, drifted), broken store links across managed
-  # roots, HM gc-root singleton.
+  # Repeatable parity rail: generation home-files vs live $HOME (store-linked, staged-equal, missing,
+  # drifted), broken store links across managed roots, HM gc-root singleton.
   forgeParity = mkTool {
     name = "forge-parity";
     inputs = [pkgs.coreutils pkgs.diffutils pkgs.findutils pkgs.gnugrep pkgs.gawk];

@@ -7,6 +7,7 @@
 # Terminal API workspace with versionable request collections; the package row lives in the owner table. Theme is projected from the estate
 # palette owner; user collections stay mutable state, while the forge-services collection is a generated probe surface over service-row
 # credential NAMES — `forge-console` brokers values into a mode-600 launch-time env file, never a durable file.
+
 {
   config,
   lib,

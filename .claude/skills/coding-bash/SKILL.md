@@ -10,7 +10,7 @@ description: >-
 
 # [CODING_BASH]
 
-All code follows five governing principles:
+All code follows these governing principles:
 
 - [FUNCTIONAL] — immutable locals, pure functions, dispatch tables, and tightly bounded mutable shell state
 - [POLYMORPHIC] — one parser, one dispatcher, one logger; extend via table entries not code branches
@@ -32,7 +32,7 @@ All code follows five governing principles:
 - [05]-[FILE_OPERATIONS](references/file-operations.md): atomic writes, FD multiplexing, directory traversal
 - [06]-[SCRIPT_PATTERNS](references/script-patterns.md): arg parsing, help, ERR traps, parallel, retry
 - [07]-[BASH_LOGGING](references/bash-logging.md): structured logging, CI integration, tracing
-- [08]-[BASH_TESTING](references/bash-testing.md): bats-core `1.13+` suites, coverage, hypothesis PBT
+- [08]-[BASH_TESTING](references/bash-testing.md): bats-core suites, coverage, hypothesis PBT
 - [09]-[BASH_PORTABILITY](references/bash-portability.md): cross-shell compat, containers, POSIX
 - [10]-[TEXT_PROCESSING_GUIDE](references/text-processing-guide.md): rg/awk/sd/jq/yq/mlr tool selection
 - [11]-[VALIDATION](references/validation.md): ShellCheck codes, static analysis, CI
@@ -128,7 +128,7 @@ All code follows five governing principles:
 
 - Temporary files: `mktemp` + `_register_cleanup "rm -f -- $(printf '%q' "${tmp}")"` or equivalent static quoted cleanup template. Work directories: `mktemp -d` with `SRANDOM` in path for uniqueness.
 - Signal forwarding for PID 1: trap TERM/INT, `kill -"${sig}" "${_CHILD_PID}"`, exit with signal code (143/130). Guard on `(( _CHILD_PID > 0 ))`.
-- On 5.3, `BASH_TRAPSIG` enables a unified signal handler with dispatch-table routing by signal number.
+- On 5.3, `BASH_TRAPSIG` carries the signal number, so one unified handler routes every signal through a dispatch table.
 - `GLOBSORT` controls glob ordering (e.g., `-mtime` for newest-first file discovery).
 - Retry: `_retry_exec max delay max_delay cmd...` — exponential backoff `delay=$(( delay * 2 > max_delay ? max_delay : delay * 2 ))` with `SRANDOM` jitter.
 - Env contracts: `declare -Ar _ENV_CONTRACT=([VAR]='^regex$')` validated at startup — dispatch table over env vars, regex per key.
@@ -163,7 +163,7 @@ All code follows five governing principles:
 
 ## [06]-[VALIDATION_GATE]
 
-- Required: `bash -n script.sh` (syntax check), ShellCheck `0.11.0+` clean (static analysis).
+- Required: `bash -n script.sh` (syntax check), ShellCheck clean (static analysis).
 - Required for executable examples: run `--self-test` when present.
 - Reject completion when strict mode, readonly discipline, ShellCheck compliance, or example self-tests are not satisfied.
 

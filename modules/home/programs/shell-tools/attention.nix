@@ -4,23 +4,16 @@
 # License       : MIT
 # Path          : modules/home/programs/shell-tools/attention.nix
 # ----------------------------------------------------------------------------
-# F01 attention-vocabulary owner beside forge-agents: ONE urgency ladder, the
-# kv-grain receipt parser, the normalized event-spine projection, and the
-# standing-alert predicate rows. The forge-agents collector folds these into
-# bar cells and notifications; the forge-receipts query plane folds the same
-# defs into its SQL corpus and live push bus — one vocabulary, many renderers.
-# jq fragments compose into consumer programs; alert predicates judge the
-# LAST parsed receipt row of their kind.
+# F01 attention-vocabulary owner beside forge-agents: ONE urgency ladder, the kv-grain receipt parser, the normalized
+# event-spine projection, and the standing-alert predicate rows. The forge-agents collector folds these into bar cells
+# and notifications; the forge-receipts query plane folds the same defs into its SQL corpus and live push bus — one
+# vocabulary, many renderers. jq fragments compose into consumer programs; alert predicates judge the LAST parsed receipt row of their kind.
+
 {sshHosts ? {}}: let
-  # Spine vocabulary: ONE ordered column vector derives the jq projection
-  # (spineJq) and the DuckDB schema clause (spineColumnsSql); every column
-  # lands VARCHAR — scalars stringified so a thin or single-kind corpus can
-  # never split a column's inferred type (an all-null column infers JSON and
-  # kills COALESCE). The default arm is the stringify fold `(.col | s)`;
-  # non-default columns override in the expression vocabulary — session_id is
-  # the forensic join key (zellij session name where the row carries one,
-  # else the emitter's own session id). A new spine column is one vector
-  # entry, plus an override row only when it computes.
+  # Spine vocabulary: ONE ordered column vector derives the jq projection (spineJq) and the DuckDB schema clause (spineColumnsSql); every column lands
+  # VARCHAR — scalars stringified so a thin or single-kind corpus can never split a column's inferred type (an all-null column infers JSON and kills
+  # COALESCE). The default arm is the stringify fold `(.col | s)`; non-default columns override in the expression vocabulary; session_id is the join
+  # key: zellij session name, else the emitter's own session id. A new column is one vector entry, plus an override row only when it computes.
   spineColumns = ["kind" "ts" "source" "surface" "event" "verb" "result" "state" "status" "session_id" "urgency" "raw"];
   spineExpr = {
     kind = ''((.kind // "-") | tostring)'';
@@ -31,8 +24,7 @@
   };
   columnOf = c: "${c}: ${spineExpr.${c} or "(.${c} | s)"}";
 in {
-  # Urgency is derived at the fold, never stored by emitters: failure-shaped
-  # fields -> high, a needs-input hook event -> input, everything else -> info.
+  # Urgency is derived at the fold, never stored by emitters: failure-shaped fields -> high, a needs-input event -> input, everything else -> info.
   urgencyJq = ''
     def urgency:
       if ((.result // "ok") != "ok")
@@ -44,8 +36,7 @@ in {
       else "info" end;
   '';
 
-  # kv-grain TSV row -> object, numerics restored as JSON numbers (the same
-  # numeric law the receipts.nix emit fold applies on the JSONL side).
+  # kv-grain TSV row -> object, numerics restored as JSON numbers (the same numeric law the receipts.nix emit fold applies on the JSONL side).
   kvJq = ''
     def kv_row:
       split("\t")
@@ -54,9 +45,8 @@ in {
       | from_entries;
   '';
 
-  # Normalized event spine: the FIXED column set every SQL verb binds against,
-  # derived from the spine vocabulary; the full source row rides `raw` JSON
-  # text for kind-specific extraction (json_extract_string on raw).
+  # Normalized event spine: the FIXED column set every SQL verb binds against, derived from the spine vocabulary; the full source row rides `raw`
+  # JSON text for kind-specific extraction, one json_extract_string(raw, ...) per kind-specific field the fixed columns do not carry.
   spineJq = ''
     def spine:
       def s: if . == null then null else tostring end;
@@ -67,14 +57,12 @@ in {
       | {${builtins.concatStringsSep ",\n         " (map columnOf spineColumns)}};
   '';
 
-  # DuckDB read_json `columns` clause from the same vector: a declared schema,
-  # never inference — an all-null column on a filtered corpus otherwise
-  # infers JSON and poisons every COALESCE over it.
+  # DuckDB read_json `columns` clause from the same vector: a declared schema, never inference — an all-null column on a filtered or thin
+  # corpus otherwise infers JSON and poisons every COALESCE over the column downstream.
   spineColumnsSql = builtins.concatStringsSep ", " (map (c: "${c}: 'VARCHAR'") spineColumns);
 
-  # Latest needs-input row over a raw feed stream (jq -Rn + inputs): the one
-  # spelling of "which session waits newest" — focus, peek, and answer
-  # fallbacks all fold this instead of re-deriving it.
+  # Latest needs-input row over a raw feed stream (jq -Rn + inputs): the one spelling of "which session waits newest" —
+  # focus, peek, and answer fallbacks all fold this instead of re-deriving it.
   latestNeedsJq = ''
     def latest_needs:
       [inputs | fromjson? | select(type == "object")]
@@ -82,12 +70,9 @@ in {
       | max_by(.ts) // empty;
   '';
 
-  # Standing-alert rows: a condition read from the latest receipt of a kind,
-  # active until a newer row clears it — estate state, not a windowed event.
-  # A new alert class is one row; the collector resolves kind -> path through
-  # the receipt registry and renders every active row in the same bar cell.
-  # Tunnel and mount rows derive from the same ssh host registry the receipt
-  # registry folds, so both sides stay row-consistent by construction.
+  # Standing-alert rows: a condition read from the latest receipt of a kind, active until a newer row clears it — estate state, not a windowed event.
+  # A new alert class is one row; the collector resolves kind -> path through the receipt registry and renders every active row in the same bar cell.
+  # Tunnel and mount rows derive from the same ssh host registry the receipt registry folds, so both sides stay row-consistent by construction.
   alertRows =
     [
       {

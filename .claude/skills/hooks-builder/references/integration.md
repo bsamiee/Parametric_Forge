@@ -44,7 +44,7 @@ jq -nc --arg seq "$seq" '{terminalSequence: $seq}'
 
 ## [05]-[COMPONENT_HOOKS]
 
-Skills and subagents declare hooks in frontmatter with the same configuration shape, scoped to the component's lifetime and cleaned up when it finishes. All events are supported; a subagent's `Stop` hooks convert automatically to `SubagentStop`. The `once: true` field — honored only in skill frontmatter — runs a hook a single time per session:
+Skills and subagents declare hooks in frontmatter with the same configuration shape, scoped to the component's lifetime and cleaned up when it finishes. Every event admits a component hook; a subagent's `Stop` hooks convert automatically to `SubagentStop`. The `once: true` field — honored only in skill frontmatter — runs a hook a single time per session:
 
 ```yaml template
 ---
@@ -52,10 +52,10 @@ name: secure-operations
 description: Perform operations with security checks
 hooks:
     PreToolUse:
-        - matcher: "Bash"
+        - matcher: 'Bash'
           hooks:
               - type: command
-                command: "./scripts/security-check.sh"
+                command: './scripts/security-check.sh'
 ---
 ```
 

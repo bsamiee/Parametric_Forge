@@ -4,7 +4,8 @@
 # License       : MIT
 # Path          : modules/home/programs/shell-tools/procs.nix
 # ----------------------------------------------------------------------------
-# Modern ps replacement with Dracula theme
+# ps replacement; renders process state, resource usage, and ports with estate-themed columns.
+
 {
   config,
   pkgs,
@@ -208,7 +209,7 @@
       show_parent_in_tree = true;
       show_children_in_tree = true;
       show_header = true;
-      show_footer = true; # Show process counts (useful context)
+      show_footer = true; # process counts
       cut_to_terminal = true;
       cut_to_pager = false;
       cut_to_pipe = false;
@@ -248,7 +249,7 @@
 
     # --- [WATCH_MODE_CONFIGURATION]
     watch = {
-      interval = 2; # 2 seconds (matches bottom.nix update rate)
+      interval = 2; # seconds
     };
   };
 in {

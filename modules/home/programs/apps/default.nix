@@ -5,6 +5,7 @@
 # Path          : modules/home/programs/apps/default.nix
 # ----------------------------------------------------------------------------
 # GUI and terminal applications aggregator
+
 {...}: {
   imports = [
     ./karabiner

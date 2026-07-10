@@ -1335,7 +1335,7 @@ pid_looks_like_forge_provision() {
     [[ "$command_line" == *forge-provision* ]]
 }
 
-# One dead-lock recovery for all modes: ownerless dirs expire by TTL; owned dirs need a dead pid (per-mode liveness test), same host, and a matching token.
+# One dead-lock recovery across modes: ownerless dirs expire by TTL; owned dirs need a dead pid (per-mode liveness), same host, and a matching token.
 lock_recover_dead() {
     local lock="$1"
     local live_test="$2"
@@ -2605,7 +2605,7 @@ cmd_doctor() {
     else
         apply_docker_endpoint
     fi
-    # Sanitized existence boolean for unix endpoints only; the socket path itself never enters agent-facing JSON (--diagnostic-json owns fingerprints).
+    # Sanitized existence boolean for unix endpoints only; the socket path never enters agent-facing JSON (--diagnostic-json owns fingerprints).
     local endpoint_path_exists="null"
     if [[ "$docker_endpoint" == unix://* ]]; then
         if [[ -S "${docker_endpoint#unix://}" ]]; then

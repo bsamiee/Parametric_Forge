@@ -1,4 +1,4 @@
-# DDL
+# [DDL]
 
 Schema design patterns for PostgreSQL 18.
 
@@ -92,13 +92,13 @@ CREATE FUNCTION recent_audits(p_entity_id uuid, p_limit int DEFAULT 10)
 - Composite types cannot have constraints or defaults — validation at function/trigger level
 - `ALTER TYPE ... ADD ATTRIBUTE` rewrites all tables using it as column — use JSONB for frequently evolving structures
 
-## [04]-[RANGE_TYPES_AND_TEMPORAL_CONSTRAINTS_PG_18]
+## [04]-[RANGE_AND_TEMPORAL_TYPES]
 
 Range types replace dual start/end columns with algebraic interval semantics. Built-in: `int4range`, `int8range`, `numrange`, `tsrange`, `tstzrange`, `daterange`.
 
-Dual `start_date`/`end_date` columns are FORBIDDEN — always `tstzrange` with range constraint.
+Dual `start_date`/`end_date` columns are forbidden; always use `tstzrange` with a range constraint.
 
-WITHOUT OVERLAPS is the primary PostgreSQL 18 temporal constraint mechanism. Use `WITHOUT OVERLAPS` in PRIMARY KEY or UNIQUE constraints for temporal non-overlap. EXCLUDE constraints are the manual fallback ONLY when compatibility with older PostgreSQL is required or when the constraint involves operators beyond equality + range overlap (e.g., three-way exclusion with non-equality operators).
+`WITHOUT OVERLAPS` is the temporal constraint mechanism: use it in PRIMARY KEY or UNIQUE constraints for temporal non-overlap. An EXCLUDE constraint is the fallback only when the constraint needs operators beyond equality plus range overlap, such as three-way exclusion with non-equality operators.
 
 ```sql conceptual
 CREATE TYPE price_range AS RANGE (SUBTYPE = numeric);
@@ -201,7 +201,7 @@ CREATE TABLE articles (
 );
 ```
 
-## [07]-[VIRTUAL_GENERATED_COLUMNS_PG_18]
+## [07]-[VIRTUAL_GENERATED_COLUMNS]
 
 Virtual columns compute at read time — zero storage, instant `ALTER TABLE ADD`. Expressions must be IMMUTABLE.
 
@@ -222,7 +222,7 @@ ALTER TABLE product ADD COLUMN
 |  [01]   | Cannot reference other generated columns        | Virtual + Stored |
 |  [02]   | Cannot use subqueries, aggregates, window fns   | Virtual + Stored |
 |  [03]   | Cannot be part of PRIMARY KEY / UNIQUE          | Virtual only     |
-|  [04]   | CAN appear in WHERE (planner pushes expression) | Virtual only     |
+|  [04]   | Can appear in WHERE (planner pushes expression) | Virtual only     |
 |  [05]   | Use STORED when column needs indexing           | —                |
 
 ## [08]-[PARTITIONING]
@@ -268,8 +268,8 @@ SELECT partman.create_parent(
 - Partition key must be part of PRIMARY KEY and all UNIQUE constraints
 - `enable_partition_pruning = on` (default) — planner eliminates non-matching partitions
 - pg_partman: `partman.create_parent()` + `partman.run_maintenance()` via pg_cron
-- `ALTER TABLE ... DETACH PARTITION ... CONCURRENTLY` for online removal (PG 14+)
-- Updating a partition key can route the row to another partition by deleting from the old partition and inserting into the new one; it is materially more expensive than same-partition UPDATE and can surface concurrency conflicts. Treat partition key columns as effectively immutable after insert
+- `ALTER TABLE ... DETACH PARTITION ... CONCURRENTLY` for online removal
+- Treat partition key columns as immutable after insert: updating one deletes the row from its partition and reinserts into the target, costing far more than a same-partition UPDATE and risking concurrency conflicts.
 - Default partition catches unmatched rows — monitor size as health signal
 
 ## [09]-[CONSTRAINTS]
@@ -312,8 +312,7 @@ ALTER TABLE documents ADD CONSTRAINT valid_metadata
 - `VALIDATE CONSTRAINT` acquires `ShareUpdateExclusiveLock` — concurrent DML proceeds
 - Partial unique indexes enforce conditional uniqueness
 - `btree_gist` required for equality + range operators in exclusion constraints
-- DEFERRABLE UNIQUE enables batch INSERT without intermediate violations; raised at COMMIT
-- Lock-level awareness: see `validation.md` Migration Safety.
+- DEFERRABLE UNIQUE defers its check to COMMIT, so batch INSERT proceeds without intermediate violations
 
 ## [10]-[EFFECT_SQL_ALIGNMENT]
 
@@ -325,24 +324,24 @@ DDL properties governing `Model.Class` field modifier selection:
 |  [02]   | `GENERATED ALWAYS AS ... VIRTUAL` | Maps to `Model.Generated` — excluded from insert/update                      |
 |  [03]   | `GENERATED ALWAYS AS ... STORED`  | Maps to `Model.Generated` — excluded from insert/update                      |
 |  [04]   | `DEFAULT clock_timestamp()`       | Maps to `Model.DateTimeInsertFromDate` or `DateTimeUpdateFromDate`           |
-|  [05]   | `NOT NULL`                        | Must NOT use `Model.FieldOption`                                             |
+|  [05]   | `NOT NULL`                        | Must not use `Model.FieldOption`                                             |
 |  [06]   | Nullable column                   | Must use `Model.FieldOption`                                                 |
 |  [07]   | RLS-enforced tenant column        | Maps to `Model.FieldExcept("update", "jsonUpdate")` — immutable after insert |
 
 Model.Class mapping for the canonical table (branded entity IDs):
 
 ```typescript conceptual
-const OrganizationId = S.UUID.pipe(S.brand("OrganizationId"));
+const OrganizationId = S.UUID.pipe(S.brand('OrganizationId'));
 
-class Organization extends Model.Class<Organization>()("Organization", {
+class Organization extends Model.Class<Organization>()('Organization', {
     id: Model.Generated(OrganizationId),
     slug: S.NonEmptyTrimmedString,
     displayName: S.NonEmptyTrimmedString,
     contactEmail: S.NonEmptyTrimmedString,
-    plan: S.Literal("starter", "business", "enterprise"),
+    plan: S.Literal('starter', 'business', 'enterprise'),
     metadata: Model.JsonFromString(OrganizationMetadata),
     revenue: S.BigDecimal,
-    tier: Model.Generated(S.Literal("starter", "business", "enterprise")),
+    tier: Model.Generated(S.Literal('starter', 'business', 'enterprise')),
     searchVector: Model.Generated(S.String),
     createdAt: Model.DateTimeInsertFromDate,
     updatedAt: Model.DateTimeUpdateFromDate,
@@ -398,7 +397,7 @@ CREATE INDEX ON chunks (tenant_id, created_at);
 ```
 
 - `chunks.embedding` + HNSW for semantic search; `chunks.search_text` + GIN for keyword BM25; `content gin_trgm_ops` for fuzzy/typo-tolerant matching
-- Hybrid retrieval: semantic CTE + BM25 CTE + trigram CTE + RRF join (see `extensions.md` Hybrid Search)
+- Hybrid retrieval: semantic CTE + BM25 CTE + trigram CTE + RRF join
 - Tenant isolation via RLS — vector queries automatically scoped
 - `position` preserves document ordering for context window assembly
 - pg_trgm completes the retrieval triad: semantic (vector distance) + lexical (BM25 rank) + fuzzy (trigram similarity) — each captures different user intent failure modes

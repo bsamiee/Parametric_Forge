@@ -353,8 +353,8 @@ flowchart LR
     class CACHE,DEPLOY annotation
 ```
 
-`````
 - Accepted:
+`````markdown accepted
 ````markdown accepted
 - [01]-[BUILT]: Content-keyed artifact lookup
   - Owner: The artifact index owner.

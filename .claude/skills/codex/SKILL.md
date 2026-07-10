@@ -23,7 +23,7 @@ Keep in Claude: work inseparable from conversation context too large to restate,
 
 ## [03]-[INVOCATION]
 
-```bash copy-safe
+```bash template
 codex exec -s <sandbox> --skip-git-repo-check [-C <dir>] [-o <report>] "<prompt>" </dev/null 2>/dev/null
 ```
 

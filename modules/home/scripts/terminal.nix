@@ -5,6 +5,7 @@
 # Path          : modules/home/scripts/terminal.nix
 # ----------------------------------------------------------------------------
 # Yazi -> Zellij -> Neovim rail: popup dispatcher, RPC handoff, server owner. Pane targeting is ID-based via list-panes JSON; never ordinal focus.
+
 {
   config,
   lib,
@@ -22,13 +23,12 @@
   yaziPopup = config.programs.zellij.popupGeometry.yazi;
   yaziPopupArgs = lib.escapeShellArgs ["-x" yaziPopup.x "-y" yaziPopup.y "--width" yaziPopup.width "--height" yaziPopup.height];
 
-  # One popup-identity vocabulary: production dispatch, caller dismissal, and the acceptance harness all match this exact jq row predicate, so the
-  # harness can never assert an identity production stopped matching. terminal_command is the spawn command (invoked_with), so exec inside the pane
-  # never breaks rediscovery.
+  # One popup-identity vocabulary — production dispatch, caller dismissal, and the acceptance harness share this exact jq row predicate, so the harness
+  # can never miss a production identity. terminal_command is the spawn command (invoked_with), so exec inside the pane never breaks rediscovery.
   yaziPopupIdentity = ''(.is_plugin | not) and (.exited | not) and ((.is_floating // false) or (.is_suppressed // false)) and ((.title // "") == " [YAZI] ") and ((.terminal_command // .command // "") == "forge-yazi.sh")'';
 
-  # One truthy-snapshot kernel: list-panes flaps transiently against a busy session; every reader retries to a non-empty array so a flap never
-  # misreads the session as pane-free.
+  # One truthy-snapshot kernel: list-panes flaps transiently against a busy session; every reader retries to a non-empty array,
+  # so a flap never misreads the session as pane-free.
   panesSnapshotSh = listCmd: ''
     panes="[]"
     for _ in {1..5}; do
@@ -111,8 +111,8 @@
       caller="''${ZELLIJ_PANE_ID:-}"
       ${runtimeBaseSh}
       runtime_root="$runtime_base/''${session}"
-      # RPC handoff resolves paths against the server's cwd, and a fresh editor pane opens at $PWD; pin caller-relative arguments to absolute so both
-      # branches open the caller's files.
+      # RPC handoff resolves paths against the server's cwd, and a fresh editor pane opens
+      # at $PWD; pin caller-relative arguments to absolute so both branches open the caller's files.
       mapfile -d "" -t args < <(realpath -zm -- "$@")
       set -- "''${args[@]}"
       # A dead snapshot degrades to the fresh-editor branch.
@@ -239,8 +239,8 @@
       fi
 
       self="''${ZELLIJ_PANE_ID:-}"
-      # Serialize concurrent dispatchers (double-chord): one session-scoped lock spans snapshot-to-act, so racing toggles never both read a popup-free
-      # tab and create duplicate popups.
+      # Serialize concurrent dispatchers (double-chord): one session-scoped lock spans snapshot-to-act, so racing
+      # toggles never both read a popup-free tab and create duplicate popups.
       exec {lock_fd}>"$runtime_root/toggle.lock"
       flock -w 5 "$lock_fd" || {
         printf 'forge-yazi.sh: another toggle holds the dispatch lock\n' >&2
@@ -488,8 +488,8 @@
         row R14-opener-seam FAIL "opener/picker rows missing under $yazi_conf"
       fi
 
-      # R15: session-fabric state envelope — forge-zellij state emits schema v2 with classified session rows (the resurrection-receipts join), and the
-      # probe session classifies live.
+      # R15: session-fabric state envelope — forge-zellij state emits schema v2 with classified session rows
+      # (the resurrection-receipts join), and the probe session classifies live.
       state_json="$(${profileBin}/forge-zellij state 2>/dev/null || true)"
       if jq -e --arg s "$session" '
           (.schema == "forge-zellij-state/v2")
@@ -500,8 +500,7 @@
         row R15-fabric-state FAIL "state envelope: $(jq -c '{schema, sessions: (.sessions | length)}' <<<"$state_json" 2>/dev/null || printf 'unparseable')"
       fi
 
-      # R16: workspace rows carry the session lifecycle enum; a headless
-      # --json degrades the gui join, never the lifecycle classification.
+      # R16: workspace rows carry the session lifecycle enum; a headless --json degrades the gui join, never the lifecycle classification.
       ws_json="$(${profileBin}/forge-workspace --json 2>/dev/null || true)"
       if jq -e 'type == "array" and length > 0
           and all(.[]; .lifecycle | IN("live", "resurrectable", "cold"))' <<<"$ws_json" >/dev/null 2>&1; then
@@ -510,8 +509,8 @@
         row R16-workspace-lifecycle FAIL "rows: $(jq -c 'map({name, lifecycle}) | .[:6]' <<<"$ws_json" 2>/dev/null || printf 'unparseable')"
       fi
 
-      # R04-R08: edit rail — spawn, registry, socket, reuse, multi-file. Canonicalized so bufname comparisons match forge-edit's realpath pin (macOS
-      # /var and /tmp are /private symlinks).
+      # R04-R08: edit rail — spawn, registry, socket, reuse, multi-file. Canonicalized so bufname comparisons match
+      # forge-edit's realpath pin (macOS /var and /tmp are /private symlinks).
       probe_dir="$(realpath -- "$(mktemp -d "''${TMPDIR:-/tmp}/forge-accept.XXXXXX")")"
       printf 'alpha\n' >"$probe_dir/a.txt"
       printf 'beta\n' >"$probe_dir/b.txt"

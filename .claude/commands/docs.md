@@ -5,11 +5,11 @@ argument-hint: <library> [query]
 
 # /docs
 
-Fetches current documentation and code examples for a library via Context7.
+Fetches documentation and code examples for a library via Context7.
 
 ## [01]-[USAGE]
 
-```text
+```text template
 /docs <library> [query]
 ```
 
@@ -18,7 +18,7 @@ Fetches current documentation and code examples for a library via Context7.
 
 ## [02]-[EXAMPLES]
 
-```text
+```text copy-safe
 /docs react hooks
 /docs next.js authentication
 /docs prisma relations
@@ -37,7 +37,7 @@ Fetches current documentation and code examples for a library via Context7.
 
 A version segment in the library ID pins the documentation to that release:
 
-```text
+```text copy-safe
 /docs /vercel/next.js/v15.1.8 middleware
 /docs /facebook/react/v19.0.0 use hook
 ```

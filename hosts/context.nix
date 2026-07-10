@@ -6,6 +6,7 @@
 # ----------------------------------------------------------------------------
 # Host-context factory: one vocabulary for every host on every OS. A new machine is a new row here; the host factory projects rows into
 # darwinSystem or nixosSystem, and the home graph gates imports on `host.os`.
+
 let
   # Universal 1Password-held key ("Forge SSH Key"): auth + signing everywhere.
   authorizedKeys = [
@@ -29,8 +30,8 @@ in {
     ssh = {inherit authorizedKeys;};
   };
 
-  # Hostinger VPS (live-verified: x86_64, BIOS boot, single /dev/sda). Primary user mirrors the Darwin identity; serviceUsers carry workload
-  # identities (Maghz compose plane) so existing tunnel/deploy rows survive the cutover.
+  # Hostinger VPS: x86_64, BIOS boot, single /dev/sda. Primary user mirrors the Darwin identity; serviceUsers
+  # carry the Maghz compose-plane workload identities that own the tunnel and deploy rows.
   maghz = {
     name = "maghz";
     os = "nixos";
@@ -52,7 +53,7 @@ in {
     ];
     ssh = {inherit authorizedKeys;};
     disk.device = "/dev/sda";
-    # Hostinger serves no DHCP: addressing is static, live-verified from the provider recovery image (proto static route, /24 + /48 scopes).
+    # Hostinger serves no DHCP: static addressing (proto static route, /24 + /48 scopes).
     network = {
       interface = "eth0";
       ipv4 = {

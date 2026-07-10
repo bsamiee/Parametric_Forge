@@ -12,7 +12,7 @@ allowed-tools: Bash(uvx *)
 
 # [TAVILY_CRAWL]
 
-Crawl a website and extract content from every discovered page, optionally saving each page as a local markdown file. Invocation rides `uvx --from tavily-cli tvly crawl …` with ambient `TAVILY_API_KEY`; the tavily-dynamic-search skill owns the family invocation law.
+Crawl a website and extract content from every discovered page, optionally saving each page as a local markdown file. Invocation rides `uvx --from tavily-cli tvly crawl …`; the tavily-dynamic-search skill owns the family invocation law.
 
 ## [01]-[USAGE]
 

@@ -5,6 +5,7 @@
 # Path          : modules/darwin/homebrew/default.nix
 # ----------------------------------------------------------------------------
 # Homebrew configuration and aggregator
+
 {
   config,
   lib,
@@ -23,7 +24,7 @@
     "/sbin"
   ];
 
-  # --- [SCHEDULED_UPDATE_POLICY_DOMT4_AUTOUPDATE]
+  # --- [AUTOUPDATE_SCHEDULE]
   # Daily update+upgrade+cleanup, keychain-backed sudo askpass (pinentry-mac), notifier off (TCC denies the notification permission). The reconciler
   # regenerates the tap-owned agent whenever live state drifts from this row, so the schedule is repo-declared, never hidden operator state.
   autoupdateIntervalSeconds = 86400;
@@ -40,7 +41,7 @@
         interval="$(/usr/libexec/PlistBuddy -c 'Print :StartInterval' "$plist" 2>/dev/null || true)"
         if [ "$interval" != "${toString autoupdateIntervalSeconds}" ]; then return 1; fi
         /usr/libexec/PlistBuddy -c 'Print :RunAtLoad' "$plist" >/dev/null 2>&1 || return 1
-        # One pass proves every updater marker: six required, notifier absent.
+        # One pass proves every updater marker present and the notifier absent.
         awk '
           /--no-ask --formula/ {formula = 1}
           /--no-ask --cask/ {cask = 1}
@@ -109,9 +110,9 @@ in {
     };
   };
 
-  # Reconcile at login and daily at 10:00; converged runs are read-only and exit 0, logged so a failed regeneration never hides until the next
-  # day. The reconciled agent keeps its upstream tap label (com.github.domt4.homebrew-autoupdate) — external job, not ours to rename.
-  # nix-darwin's strict launchd schema has no AssociatedBundleIdentifiers key, so this row shows a generic Login Items entry.
+  # Converged runs are read-only and exit 0, logged so a failed regeneration never hides until the next day. The reconciled agent keeps
+  # its upstream tap label (com.github.domt4.homebrew-autoupdate) — an upstream-owned identifier renamed only upstream, never here. nix-darwin's
+  # strict launchd schema has no AssociatedBundleIdentifiers key, so this row shows a generic Login Items entry.
   launchd.user.agents.forge-brew-autoupdate = {
     serviceConfig = {
       Label = "com.parametric-forge.forge-brew-autoupdate";

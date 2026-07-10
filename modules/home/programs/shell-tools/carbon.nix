@@ -5,6 +5,7 @@
 # Path          : modules/home/programs/shell-tools/carbon.nix
 # ----------------------------------------------------------------------------
 # Beautiful code screenshot generation themed from the estate palette owner
+
 {
   config,
   pkgs,
@@ -38,7 +39,7 @@
       exportSize = "2x";
       type = "png";
 
-      # Custom theme: CodeMirror vocabulary on the master scope map — keyword pink, operator/punctuation subtle, variable blue, tag magenta.
+      # Custom theme: CodeMirror token vocabulary mapped onto the master scope palette.
       custom = {
         background = palette.background.rgba "1";
         text = palette.foreground.rgba "1";

@@ -4,11 +4,10 @@
 # License       : MIT
 # Path          : modules/home/programs/apps/yazi/default.nix
 # ----------------------------------------------------------------------------
-# Yazi file workbench owner: store-owned plugin rows, typed previewer/opener/
-# fetcher/preloader rows generating yazi.toml, SFTP VFS mounts projected from
-# the estate SSH rows, and the diagnostic previewer kernel. File-action
-# routing is rows here, never inline TOML literals; upstream-default rows are
-# deleted, so every settings row below diverges from the 26.5.6 preset.
+# Yazi file workbench owner: store-owned plugin rows, typed previewer/opener/fetcher/preloader rows generating yazi.toml, SFTP VFS mounts projected
+# from the estate SSH rows, and the diagnostic previewer kernel. File-action routing is rows here, never inline TOML literals; upstream-default rows
+# are deleted, so every settings row below diverges from the 26.5.6 preset.
+
 {
   config,
   lib,
@@ -21,12 +20,10 @@
     _7zz = pkgs._7zz-rar; # RAR-capable 7zip: one archive runtime for the whole owner
   };
 
-  # The ambient SSH_AUTH_SOCK is the identity-less Apple agent, so VFS rows pin
-  # the estate identity socket (config.forge.ssh.identityAgent) explicitly.
+  # The ambient SSH_AUTH_SOCK is the identity-less Apple agent; VFS rows pin the estate identity socket (config.forge.ssh.identityAgent) explicitly.
 
-  # Diagnostic previewer kernel: ONE dispatch surface over the config-language
-  # lanes; every arm is read-only evidence (checks + syntax render), never a
-  # build, never network. Hover latency stays bounded by head caps.
+  # Diagnostic previewer kernel: ONE dispatch surface over the config-language lanes; every arm is read-only evidence (checks + syntax render), never
+  # a build, never network. Hover latency stays bounded by head caps.
   diagPreview = pkgs.writeShellApplication {
     name = "yazi-diag-preview.sh";
     runtimeInputs = [pkgs.alejandra pkgs.deadnix pkgs.statix pkgs.taplo pkgs.jq pkgs.yq-go pkgs.bat pkgs.coreutils];
@@ -82,14 +79,10 @@
   };
 
   # --- [PREVIEWER_ROWS]
-  # Directory tree, config-language diagnostics (one lane per row), archives,
-  # markdown, the DuckDB data lane, then a hexyl lane for the true-binary
-  # residue (mime-ext classifies unknown extensions via file(1); what remains
-  # octet-stream is genuinely opaque). All globs are disjoint; JSON stays on
-  # the jq diagnostic lane and DuckDB owns tabular/columnar formats. Every
-  # external-command row is local:// scoped (regular + search results): a bare
-  # url glob also matches sftp:// and archive:// URLs, shadowing the native
-  # vfs/archive previewers with commands that cannot read those URLs.
+  # Directory tree, config-language diagnostics (one lane per row), archives, markdown, the DuckDB data lane, then a hexyl lane for the true-binary
+  # residue (mime-ext classifies unknown extensions via file(1); what remains octet-stream is genuinely opaque). All globs are disjoint; JSON stays on
+  # the jq diagnostic lane and DuckDB owns tabular/columnar formats. Every external-command row is local:// scoped (regular + search results): a bare
+  # url glob also matches sftp:// and archive:// URLs, shadowing the native vfs/archive previewers with commands that cannot read those URLs.
   diagLanes = {
     nix = "*.nix";
     kdl = "*.kdl";
@@ -133,18 +126,15 @@
       }
     ];
 
-  # Preload opt-outs: remote mounts (device, SFTP VFS, and the rclone VPS
-  # mount root), caches, and generated trees never burn preview bandwidth
-  # eagerly; hover still previews on demand.
+  # Preload opt-outs: remote mounts (device, SFTP VFS, and the rclone VPS mount root), caches, and generated trees never burn preview
+  # bandwidth eagerly; hover still previews on demand.
   preloaderRows = map (url: {
     inherit url;
     run = "noop";
   }) ["/Volumes/**" "${config.forge.ssh.mountRoot}/**" "sftp://**" "**/Library/Caches/**" "**/node_modules/**" "**/.git/**"];
 
-  # Fetcher rows: mime-ext extension-database MIME (speed over file(1) on huge
-  # or remote trees) + first-party git status; the version assert pins the
-  # 26.5.6 surface these rows and files spell — fetcher `group` grammar,
-  # per-lane task worker pools, and the [services] vfs.toml schema.
+  # Fetcher rows: mime-ext extension-database MIME (speed over file(1) on huge or remote trees) + first-party git status; the version assert pins the
+  # 26.5.6 surface these rows and files spell — fetcher `group` grammar, per-lane task worker pools, and the [services] vfs.toml schema.
   fetcherRows = assert lib.assertMsg (lib.versionAtLeast yaziPkg.version "26.5.6")
   "yazi ${yaziPkg.version}: config assumes the 26.5.6 fetcher/tasks/vfs grammar";
     map (side: {
@@ -160,11 +150,9 @@
     }) ["local://*" "local://*/"];
 
   # --- [OPENER_POLICY_ROWS]
-  # Typed opener table + routing rules; the archive owner is the augment-command
-  # event family (augmented-extract) over the shared _7zz-rar runtime — native
-  # `extract` and ad-hoc archive commands never route beside it. Preset openers
-  # not named here (play, download) survive the per-key merge and stay callable
-  # from rules.
+  # Typed opener table + routing rules; the archive owner is the augment-command event family (augmented-extract) over the shared _7zz-rar runtime
+  # — native `extract` and ad-hoc archive commands never route beside it. Preset openers not named here (play, download)
+  # survive the per-key merge and stay callable from rules.
   openers = {
     edit = [
       {
@@ -203,10 +191,8 @@
       }
     ];
   };
-  # MIME spellings match the mime-ext emission (unprefixed IANA: application/tar,
-  # rar, 7z-compressed, xz, bzip2, gzip) — legacy x-* spellings never match and
-  # silently drop the rule. The vfs row keeps download routing for absent/stale
-  # remote files ahead of the catch-all.
+  # MIME spellings match the mime-ext emission (unprefixed IANA: application/tar, rar, 7z-compressed, xz, bzip2, gzip) — legacy x-* spellings
+  # never match and silently drop the rule. The vfs row keeps download routing for absent/stale remote files ahead of the catch-all.
   openRules = [
     {
       url = "*/";
@@ -256,9 +242,8 @@ in {
     package = yaziPkg;
     initLua = ./init.lua;
 
-    # Store-owned plugin rows (substrate: no runtime fetching). nixpkgs
-    # yaziPlugins rows are current against upstream; augment-command pins the
-    # upstream HEAD directly (not packaged in nixpkgs).
+    # Store-owned plugin rows, no runtime fetching: nixpkgs `yaziPlugins` is the packaged substrate, and augment-command
+    # pins upstream HEAD directly since nixpkgs omits it.
     plugins = {
       inherit (pkgs.yaziPlugins) full-border toggle-pane jump-to-char mount piper git smart-filter mime-ext duckdb zoom;
 
@@ -271,8 +256,7 @@ in {
       };
     };
 
-    # Popup-first configuration with deterministic editor handoff; every table
-    # below is a typed row set, rendered to yazi.toml at build.
+    # Popup-first configuration with deterministic editor handoff; every table below is a typed row set, rendered to yazi.toml at build.
     settings = {
       plugin = {
         prepend_previewers = previewerRows;
@@ -291,9 +275,8 @@ in {
       opener = openers;
       open.prepend_rules = openRules;
 
-      # Preview-heavy surface (previewer + fetcher rows above) lifts the
-      # fetch/preload lanes past the preset pools; image_bound caps decode
-      # size for popup-pane hover latency.
+      # Preview-heavy surface (previewer + fetcher rows above) lifts the fetch/preload lanes past the preset pools;
+      # image_bound caps decode size for popup-pane hover latency.
       tasks = {
         fetch_workers = 8;
         preload_workers = 5;
@@ -302,9 +285,8 @@ in {
 
       pick.open_title = " [OPEN WITH] ";
 
-      # Popup geometry as rows: every input popup shares bottom-center at
-      # [0 (-3) 50 3] unless its row overrides; confirms share center at
-      # [0 0 50 10] and optionally carry a body line.
+      # Popup geometry as rows: every input popup shares bottom-center at [0 (-3) 50 3] unless its row overrides;
+      # confirms share center at [0 0 50 10] and optionally carry a body line.
       input =
         {cursor_blink = true;}
         // lib.concatMapAttrs (name: row: {
@@ -343,8 +325,7 @@ in {
 
   xdg.configFile."yazi/keymap.toml".source = ./keymap.toml;
 
-  # SFTP VFS mounts projected from the estate SSH rows: one service per host,
-  # authenticated through the 1Password agent socket; enter with
+  # SFTP VFS mounts projected from the estate SSH rows: one service per host, authenticated through the 1Password agent socket; enter with
   # `cd sftp://<host>/`. Preloading over the tunnel is opted out above.
   xdg.configFile."yazi/vfs.toml".source = tomlFormat.generate "yazi-vfs" {
     services =

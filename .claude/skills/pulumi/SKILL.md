@@ -18,11 +18,11 @@ description: >-
 
 Pulumi creates and manages cloud infrastructure — virtual machines, storage, Kubernetes clusters, databases, DNS, SaaS configuration — from code or CLI commands: it previews the pending change, then applies it. Work enters at the smallest of three levels that fits the task; depth for each concern rides one hop down in a reference.
 
-| [INDEX] | [LEVEL] | [SURFACE]                                  | [WHEN]                                         |
-| :-----: | :------ | :----------------------------------------- | :--------------------------------------------- |
-|  [01]   | L1      | `pulumi do` CLI                            | Single resource or multi-vendor bootstrapping  |
-|  [02]   | L2      | Pulumi project (Python, TS, Go, C#, Java)  | Multiple resources, abstractions, environments |
-|  [03]   | L3      | ESC, policy, deployments, drift, schedules | Governance, secrets, scheduled and hosted runs |
+| [INDEX] | [LEVEL] | [SURFACE]                         | [WHEN]                                        |
+| :-----: | :------ | :-------------------------------- | :-------------------------------------------- |
+|  [01]   | L1      | `pulumi do` CLI                   | Single resource or multi-vendor bootstrapping |
+|  [02]   | L2      | Pulumi project in a host language | Multiple related resources                    |
+|  [03]   | L3      | Pulumi Cloud governance layer     | Governance and hosted runs                    |
 
 A single-bucket request in a directory with no Pulumi project is an L1 task — no project scaffolding. A VPC with subnets and a cluster is L2 from the start. Nightly drift detection on an existing stack is L3. Converting Terraform, CloudFormation, CDK, ARM, or Bicep code is `pulumi convert` plus the docs at https://www.pulumi.com/docs/iac/adopting-pulumi/, independent of the level model.
 

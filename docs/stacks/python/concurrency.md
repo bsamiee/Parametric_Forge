@@ -170,7 +170,7 @@ async def staged[T](
 
     with anyio.move_on_after(whole_seconds):
         acc: Result[Block[T], DeadlineFault] = Ok(Block.empty())
-        for step in steps:  # Exemption: async sequential fold — no async traverse exists, so the carrier rebinds per awaited step.
+        for step in steps:  # Exemption: async sequential fold, the statement-bearing kernel
             acc = await threaded(acc, step)
         return acc
     return Error("<whole-deadline>")

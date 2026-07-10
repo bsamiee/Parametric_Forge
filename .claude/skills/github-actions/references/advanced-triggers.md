@@ -1,25 +1,25 @@
-# [H1][ADVANCED-TRIGGERS]
+# [ADVANCED_TRIGGERS]
 
 ## [01]-[TRIGGER_SELECTION]
 
-| [INDEX] | [SCENARIO]                       | [TRIGGER]                           | [SECRETS] | [PATH_FILTER] |
-| :-----: | :------------------------------- | :---------------------------------- | :-------: | :-----------: |
-|  [01]   | **Standard PR validation**       | `pull_request`                      |    No     |      Yes      |
-|  [02]   | **External PR with secrets**     | `workflow_run` after `pull_request` |    Yes    |      No       |
-|  [03]   | **Deploy after CI**              | `workflow_run`                      |    Yes    |      No       |
-|  [04]   | **External webhook/API**         | `repository_dispatch`               |    Yes    |      No       |
-|  [05]   | **ChatOps slash commands**       | `issue_comment`                     |    Yes    |      No       |
-|  [06]   | **Scheduled tasks**              | `schedule`                          |    Yes    |      No       |
-|  [07]   | **Merge queue validation**       | `merge_group`                       |    Yes    |      No       |
-|  [08]   | **Trusted ops on fork PRs**      | `pull_request_target`               |    Yes    |      Yes      |
-|  [09]   | **Manual parameterized trigger** | `workflow_dispatch`                 |    Yes    |      No       |
+| [INDEX] | [SCENARIO]                   | [TRIGGER]                           | [SECRETS] | [PATH_FILTER] |
+| :-----: | :--------------------------- | :---------------------------------- | :-------: | :-----------: |
+|  [01]   | Standard PR validation       | `pull_request`                      |    No     |      Yes      |
+|  [02]   | External PR with secrets     | `workflow_run` after `pull_request` |    Yes    |      No       |
+|  [03]   | Deploy after CI              | `workflow_run`                      |    Yes    |      No       |
+|  [04]   | External webhook/API         | `repository_dispatch`               |    Yes    |      No       |
+|  [05]   | ChatOps slash commands       | `issue_comment`                     |    Yes    |      No       |
+|  [06]   | Scheduled tasks              | `schedule`                          |    Yes    |      No       |
+|  [07]   | Merge queue validation       | `merge_group`                       |    Yes    |      No       |
+|  [08]   | Trusted ops on fork PRs      | `pull_request_target`               |    Yes    |      Yes      |
+|  [09]   | Manual parameterized trigger | `workflow_dispatch`                 |    Yes    |      No       |
 
 ```yaml conceptual
 on:
     push:
-        paths: ["src/**", "!src/**/*.md", "!**/__tests__/**"]
+        paths: ['src/**', '!src/**/*.md', '!**/__tests__/**']
     pull_request:
-        paths: ["packages/frontend/**", "packages/shared/**"]
+        paths: ['packages/frontend/**', 'packages/shared/**']
 ```
 
 ## [02]-[WORKFLOW_RUN]
@@ -27,7 +27,7 @@ on:
 ```yaml conceptual
 on:
     workflow_run:
-        workflows: ["CI Pipeline"]
+        workflows: ['CI Pipeline']
         types: [completed]
         branches: [main]
 jobs:
@@ -37,7 +37,7 @@ jobs:
         steps:
             - uses: actions/checkout@<SHA> # v6
             - uses: actions/download-artifact@<SHA> # v7
-              with: { run-id: "${{ github.event.workflow_run.id }}", github-token: "${{ secrets.GITHUB_TOKEN }}" }
+              with: { run-id: '${{ github.event.workflow_run.id }}', github-token: '${{ secrets.GITHUB_TOKEN }}' }
 ```
 
 [PROPERTIES]: `.name`, `.conclusion`, `.head_sha`, `.head_branch`, `.id`, `.event`
@@ -90,7 +90,7 @@ jobs:
                       });
 ```
 
-[IMPORTANT] Verify `author_association`. Pass comment content through `env:` indirection. [REFERENCE] `expressions-and-contexts.md`§INJECTION_PREVENTION.
+[IMPORTANT] Verify `author_association`. Pass comment content through `env:` indirection.
 
 ## [05]-[WORKFLOW_DISPATCH]
 
@@ -98,25 +98,25 @@ jobs:
 on:
     workflow_dispatch:
         inputs:
-            environment: { description: "Deployment target", required: true, type: environment }
-            log-level: { description: "Verbosity", type: choice, default: "info", options: [debug, info, warn, error] }
-            dry-run: { description: "Simulate", type: boolean, default: false }
-            version: { description: "Release version", required: true, type: string }
+            environment: { description: 'Deployment target', required: true, type: environment }
+            log-level: { description: 'Verbosity', type: choice, default: 'info', options: [debug, info, warn, error] }
+            dry-run: { description: 'Simulate', type: boolean, default: false }
+            version: { description: 'Release version', required: true, type: string }
 ```
 
-| [INDEX] | [TYPE]            | [UI_RENDERING]       | [NOTES]                     |
-| :-----: | :---------------- | :------------------- | :-------------------------- |
-|  [01]   | **`string`**      | Free text            | Default if unspecified.     |
-|  [02]   | **`boolean`**     | Checkbox             | `true` / `false`.           |
-|  [03]   | **`choice`**      | Dropdown             | From `options:` list.       |
-|  [04]   | **`number`**      | Numeric input        | Validated as integer/float. |
-|  [05]   | **`environment`** | Environment selector | Respects protection rules.  |
+| [INDEX] | [TYPE]        | [UI_RENDERING]       | [NOTES]                     |
+| :-----: | :------------ | :------------------- | :-------------------------- |
+|  [01]   | `string`      | Free text            | Default if unspecified.     |
+|  [02]   | `boolean`     | Checkbox             | `true` / `false`.           |
+|  [03]   | `choice`      | Dropdown             | From `options:` list.       |
+|  [04]   | `number`      | Numeric input        | Validated as integer/float. |
+|  [05]   | `environment` | Environment selector | Respects protection rules.  |
 
-**`ref` parameter:** API triggers specify branch/tag/SHA via `ref` field in request body. UI triggers use branch picker dropdown. Max 25 inputs, 65,535 chars payload.
+`ref` parameter: API triggers specify branch/tag/SHA via the `ref` field in the request body; UI triggers use the branch picker. Max 25 inputs, 65,535 chars payload.
 
 ## [06]-[SCHEDULE]
 
-[IMPORTANT] All `schedule` cron expressions evaluate in UTC only (no timezone override). Timezone support is on GitHub roadmap (Q1 2026 preview). Convert local times manually. Schedules only run on the default branch.
+[IMPORTANT] All `schedule` cron expressions evaluate in UTC only (no timezone override). Convert local times manually. Schedules only run on the default branch.
 
 ## [07]-[MERGE_GROUP]
 
@@ -138,7 +138,7 @@ jobs:
 
 ## [08]-[PULL_REQUEST_TARGET]
 
-[DEC_8_2025_ENFORCEMENT]: Workflow source always comes from default branch — no matter which branch the PR targets. `GITHUB_REF` resolves to `refs/heads/main`; `GITHUB_SHA` points to default branch HEAD at run start. Environment protection rules evaluate against the execution ref. This eliminates "pwn request" attacks where malicious PRs modified workflow definitions.
+[SECURE_BY_DEFAULT]: Workflow source always comes from default branch — no matter which branch the PR targets. `GITHUB_REF` resolves to `refs/heads/main`; `GITHUB_SHA` points to default branch HEAD at run start. Environment protection rules evaluate against the execution ref. This eliminates "pwn request" attacks where malicious PRs modified workflow definitions.
 
 [CRITICAL]:
 
@@ -187,13 +187,11 @@ jobs:
             - run: echo "Building ${{ matrix.project }} on Node ${{ matrix.node }}"
 ```
 
-| [INDEX] | [KEY]                   | [DEFAULT]                   | [BEHAVIOR]                                                          |
-| :-----: | :---------------------- | :-------------------------- | :------------------------------------------------------------------ |
-|  [01]   | **`fail-fast`**         | `true`                      | Cancels all in-progress/queued matrix jobs when any job fails.      |
-|  [02]   | **`max-parallel`**      | Unlimited (runner pool cap) | Limits concurrent matrix jobs. Omit for maximum parallelism.        |
-|  [03]   | **`continue-on-error`** | `false`                     | Per-job override: `true` shields that job's failure from fail-fast. |
-
-- `continue-on-error`: downstream `needs:` jobs then see the failed job as success.
+| [INDEX] | [KEY]               | [DEFAULT]                   | [BEHAVIOR]                                                          |
+| :-----: | :------------------ | :-------------------------- | :------------------------------------------------------------------ |
+|  [01]   | `fail-fast`         | `true`                      | Cancels all in-progress/queued matrix jobs when any job fails.      |
+|  [02]   | `max-parallel`      | Unlimited (runner pool cap) | Limits concurrent matrix jobs. Omit for maximum parallelism.        |
+|  [03]   | `continue-on-error` | `false`                     | Per-job override: `true` shields that job's failure from fail-fast. |
 
 [INTERACTION_SEMANTICS]: `continue-on-error: true` on a matrix job masks its failure from `fail-fast` — remaining matrix jobs continue. However, downstream `needs:` jobs see the failed job's result as `success`, which can hide real failures. The matrix policy: `fail-fast: false` (let all matrix jobs run) without `continue-on-error`, then aggregate results in a downstream job via `needs.*.result`.
 
@@ -201,10 +199,6 @@ jobs:
 
 ## [10]-[ORCHESTRATION_PATTERNS]
 
-| [INDEX] | [PATTERN]                 | [KEY_RULES]                                                                                                |
-| :-----: | :------------------------ | :--------------------------------------------------------------------------------------------------------- |
-|  [01]   | **Environment promotion** | Chain via `needs:` — each with independent protection rules (reviewers, wait timers, branch restrictions). |
-|  [02]   | **Reusable workflows**    | Max 2 nesting levels, 50 unique/run. `secrets: inherit` at each level. `job_workflow_ref` for SLSA L3.     |
-|  [03]   | **Concurrency groups**    | Max 1 running + 1 pending/group. `cancel-in-progress: true` for CI; `false` for deploys (state risk).      |
-
-[REFERENCE] `best-practices.md`§ORGANIZATIONAL_CONTROLS.
+- [01]-[ENVIRONMENT_PROMOTION]: Chain stages via `needs:`, each carrying independent protection rules — reviewers, wait timers, branch restrictions.
+- [02]-[REUSABLE_WORKFLOWS]: Nest at most 2 levels and 50 unique per run; `secrets: inherit` at each level; `job_workflow_ref` earns SLSA L3.
+- [03]-[CONCURRENCY_GROUPS]: One running plus one pending per group; `cancel-in-progress: true` for CI, `false` for deploys to avoid state corruption.

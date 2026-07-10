@@ -4,8 +4,9 @@
 # License       : MIT
 # Path          : modules/home/programs/apps/zellij/themes/dracula.nix
 # ----------------------------------------------------------------------------
-# Nix-generated Zellij component theme from the estate palette owner. One row per
-# component: [ base background emphasis_0 emphasis_1 emphasis_2 emphasis_3 ] as palette role names; the renderer is one fold over the rows.
+# Nix-generated Zellij component theme from the estate palette owner. One row per component:
+# [ base background emphasis_0 emphasis_1 emphasis_2 emphasis_3 ] as palette role names; the renderer is one fold over the rows.
+
 {
   config,
   lib,
@@ -17,10 +18,8 @@
   components = [
     ["text_unselected" ["cyan" "current_line" "orange" "yellow" "cyan" "orange"]]
     ["text_selected" ["orange" "current_line" "cyan" "foreground" "foreground" "foreground"]]
-    # Inactive status ribbons: bright keys on raised surface.
     ["ribbon_unselected" ["foreground" "current_line" "cyan" "foreground" "foreground" "foreground"]]
-    # Active ribbon highlight when a mode is entered.
-    ["ribbon_selected" ["current_line" "orange" "cyan" "yellow" "magenta" "comment"]]
+    ["ribbon_selected" ["current_line" "orange" "cyan" "yellow" "magenta" "comment"]] # Highlighted when a mode is entered.
     ["table_title" ["foreground" "current_line" "cyan" "yellow" "magenta" "comment"]]
     ["table_cell_unselected" ["foreground" "background" "comment" "cyan" "yellow" "magenta"]]
     ["table_cell_selected" ["foreground" "selection" "cyan" "yellow" "pink" "comment"]]
@@ -37,7 +36,7 @@
     name = builtins.elemAt pair 0;
     roleRows = builtins.elemAt pair 1;
   in
-    # zipListsWith truncates to the shorter list: a mis-arity row would drop or invent emphasis slots silently, so arity gates at eval.
+    # zipListsWith truncates to the shorter list: a mis-arity row drops or invents emphasis slots silently, so arity gates at eval.
     assert lib.assertMsg (builtins.length roleRows == builtins.length slots) "zellij theme ${name}: one role per slot (${toString (builtins.length slots)})"; ''
       ${name} {
       ${lib.concatStrings (lib.zipListsWith (slot: role: "      ${slot} ${rgb role}\n") slots roleRows)}    }'';

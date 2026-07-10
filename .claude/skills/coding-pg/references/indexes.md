@@ -1,26 +1,26 @@
-# Indexes
+# [INDEXES]
 
-Index type selection, composition, and maintenance for PostgreSQL 18. Every WHERE clause pattern has a corresponding index -- unindexed predicates on tables exceeding 10K rows require documented justification.
+Index type selection, composition, and maintenance for PostgreSQL 18. Every WHERE clause pattern has a corresponding index — unindexed predicates on tables exceeding 10K rows require documented justification.
 
 ## [01]-[B_TREE]
 
-Default index type. Supports equality, range, IS NULL, IS NOT NULL, IN, BETWEEN, ORDER BY.
+Default index type; serves equality, range, IS NULL, IS NOT NULL, IN, BETWEEN, and ORDER BY predicates.
 
 Advanced patterns:
 
-- Composite ordering: `CREATE INDEX ON orders (tenant_id, created_at DESC, id DESC)` -- matches keyset pagination ORDER BY
-- INCLUDE for index-only scans: `CREATE INDEX ON orders (tenant_id, status) INCLUDE (total, currency)` -- covers SELECT without heap access
-- Partial index: `CREATE INDEX ON orders (customer_id) WHERE status = 'pending'` -- indexes only relevant rows
-- Expression index: `CREATE INDEX ON users (lower(email))` -- supports `WHERE lower(email) = $1`
-- NULLS FIRST/LAST: `CREATE INDEX ON tasks (priority DESC NULLS LAST, created_at ASC)` -- NULL ordering must match query ORDER BY
-- Skip scan (PG 18): planner uses composite index without leading-column equality by skipping distinct values of the leading column. Cost-effective only with low-NDV leading columns (e.g., `status` in `(status, created_at)`); high-NDV leading columns still require dedicated index
+- Composite ordering: `CREATE INDEX ON orders (tenant_id, created_at DESC, id DESC)` — matches keyset pagination ORDER BY
+- INCLUDE for index-only scans: `CREATE INDEX ON orders (tenant_id, status) INCLUDE (total, currency)` — covers SELECT without heap access
+- Partial index: `CREATE INDEX ON orders (customer_id) WHERE status = 'pending'` — indexes only relevant rows
+- Expression index: `CREATE INDEX ON users (lower(email))` — serves `WHERE lower(email) = $1`
+- NULLS FIRST/LAST: `CREATE INDEX ON tasks (priority DESC NULLS LAST, created_at ASC)` — NULL ordering must match query ORDER BY
+- Skip scan: planner uses a composite index without leading-column equality by skipping distinct values of the leading column; cost-effective only with low-NDV leading columns (e.g., `status` in `(status, created_at)`), high-NDV leading columns still need a dedicated index
 
 B-tree contracts:
 
-- Composite (a, b, c) serves `WHERE a =`, `WHERE a = AND b =`, and via PG 18 skip scan with low-NDV `a`: `WHERE b = AND c =`
-- INCLUDE columns stored in leaf pages only — cannot filter or sort, but enable index-only scans
-- Covering index = all SELECT + WHERE + ORDER BY columns in index (key + INCLUDE) — enables index-only scan
-- Deduplication (PG 13+, default on): stores duplicate keys once with TID posting list. Incompatible with UNIQUE indexes and `NUMERIC`/`JSONB` (equality semantics ambiguity). Set `deduplicate_items = off` on numeric domain indexes
+- Composite (a, b, c) serves `WHERE a =`, `WHERE a = AND b =`, and via skip scan with low-NDV `a`: `WHERE b = AND c =`
+- INCLUDE columns stored in leaf pages only — cannot filter or sort, but back index-only scans
+- Covering index = all SELECT + WHERE + ORDER BY columns in index (key + INCLUDE) — yields an index-only scan
+- Deduplication (default on): stores duplicate keys once with a TID posting list; incompatible with UNIQUE indexes and `NUMERIC`/`JSONB` (ambiguous equality semantics) — set `deduplicate_items = off` on numeric domain indexes
 
 ## [02]-[GIN_GENERALIZED_INVERTED_INDEX]
 
@@ -28,17 +28,17 @@ For containment, overlap, and full-text search on composite values.
 
 Patterns:
 
-- JSONB containment: `CREATE INDEX ON events USING gin (metadata jsonb_path_ops)` -- supports `@>` operator, smaller than default ops
-- Array overlap: `CREATE INDEX ON products USING gin (tags)` -- supports `&&`, `@>`, `<@` operators
+- JSONB containment: `CREATE INDEX ON events USING gin (metadata jsonb_path_ops)` — serves `@>`, smaller than default ops
+- Array overlap: `CREATE INDEX ON products USING gin (tags)` — serves `&&`, `@>`, `<@`
 - Full-text search: `CREATE INDEX ON documents USING gin (search_vector)` where `search_vector` is stored generated `tsvector`
-- Trigram search (pg_trgm): `CREATE INDEX ON users USING gin (name gin_trgm_ops)` -- supports `%`, `ILIKE`, `~`
+- Trigram search (pg_trgm): `CREATE INDEX ON users USING gin (name gin_trgm_ops)` — serves `%`, `ILIKE`, `~`
 
 GIN contracts:
 
-- `jsonb_path_ops` covers only `@>` -- the default `jsonb_ops` serves `?`, `?|`, `?&` (key existence)
-- GIN is write-amplified -- each indexed value produces multiple index entries; unsuitable for high-write columns
+- `jsonb_path_ops` covers only `@>` — the default `jsonb_ops` serves `?`, `?|`, `?&` (key existence)
+- GIN is write-amplified — each indexed value produces multiple index entries; unsuitable for high-write columns
 - Pending list: GIN uses a "pending list" for fast inserts, merged on vacuum or when `gin_pending_list_limit` reached
-- Parallel GIN build (PG 18): set `max_parallel_maintenance_workers = 4` for large indexes; build time scales linearly with workers
+- Parallel GIN build: set `max_parallel_maintenance_workers = 4` for large indexes; build time scales linearly with workers
 
 ## [03]-[GIST_GENERALIZED_SEARCH_TREE]
 
@@ -46,22 +46,22 @@ For range overlap, spatial queries, nearest-neighbor, and exclusion constraints.
 
 Patterns:
 
-- Range overlap: `CREATE INDEX ON bookings USING gist (room_id, during)` -- supports `&&`, `@>`, `<@` on ranges
-- Exclusion constraint index: `EXCLUDE USING gist (tenant_id WITH =, valid_period WITH &&)` -- auto-creates GiST index
-- PostGIS spatial: `CREATE INDEX ON locations USING gist (geom)` -- supports ST_Within, ST_DWithin, ST_Intersects; `buffering = on` for batch loads
-- KNN ordering: `ORDER BY point_col <-> point '(x,y)' LIMIT 10` -- GiST provides efficient ordered scan
+- Range overlap: `CREATE INDEX ON bookings USING gist (room_id, during)` — serves `&&`, `@>`, `<@` on ranges
+- Exclusion constraint index: `EXCLUDE USING gist (tenant_id WITH =, valid_period WITH &&)` — auto-creates GiST index
+- PostGIS spatial: `CREATE INDEX ON locations USING gist (geom)` — serves ST_Within, ST_DWithin, ST_Intersects; `buffering = on` for batch loads
+- KNN ordering: `ORDER BY point_col <-> point '(x,y)' LIMIT 10` — GiST drives an efficient ordered scan
 - SP-GiST: non-balanced partitioning (IP ranges via `inet_ops`, text prefixes). Use GiST unless data has natural space-partitioned structure
 
 GiST contracts:
 
-- Distance operators (`<->`, `<=>`) enable KNN without full scan — GiST and HNSW both support this
+- Distance operators (`<->`, `<=>`) drive KNN without a full scan — GiST and HNSW both index it
 - GiST indexes are larger than B-tree for scalars — use B-tree when only equality/range needed
-- Exclusion constraints REQUIRE GiST (or SP-GiST) — B-tree cannot support exclusion
-- Spatial: BRIN is NOT viable for 2D geometry (requires monotonic scalar order); GiST is the only option for ST\_\* predicates
+- Exclusion constraints require GiST or SP-GiST — B-tree cannot enforce exclusion
+- Spatial: BRIN is not viable for 2D geometry (requires monotonic scalar order); GiST is the only option for ST\_\* predicates
 
 ## [04]-[VECTOR_INDEXES_PGVECTOR_PGVECTORSCALE]
 
-Index selection for approximate nearest-neighbor. Full schema patterns, query syntax, and type variants in `extensions.md` pgvector section.
+Index selection for approximate nearest-neighbor.
 
 | [INDEX] | [SCALE_CONSTRAINT]                | [INDEX_TYPE] | [KEY_PARAMETERS]                                                              |
 | :-----: | :-------------------------------- | :----------- | :---------------------------------------------------------------------------- |
@@ -78,22 +78,22 @@ DiskANN label constraint: label pre-filtering works for discrete low-cardinality
 
 ## [05]-[BRIN_BLOCK_RANGE_INDEX]
 
-For append-only monotonic columns -- orders of magnitude smaller than B-tree with minimal read overhead.
+For append-only monotonic columns — orders of magnitude smaller than B-tree with minimal read overhead.
 
 Patterns:
 
 - Timestamp on append-only: `CREATE INDEX ON events USING brin (created_at) WITH (pages_per_range = 32)`
-- Multi-column BRIN: `CREATE INDEX ON logs USING brin (created_at, severity)` -- both columns must be naturally correlated with physical order
-- Autosummarize: `CREATE INDEX ON events USING brin (created_at) WITH (autosummarize = on)` -- auto-summarize new page ranges
+- Multi-column BRIN: `CREATE INDEX ON logs USING brin (created_at, severity)` — both columns must be naturally correlated with physical order
+- Autosummarize: `CREATE INDEX ON events USING brin (created_at) WITH (autosummarize = on)` — auto-summarize new page ranges
 
 BRIN contracts:
 
-- BRIN effectiveness depends on physical correlation between column value and row position -- `pg_stats.correlation` near +/-1.0
+- BRIN effectiveness depends on physical correlation between column value and row position — `pg_stats.correlation` near +/-1.0
 - `pages_per_range`: smaller = more precise but larger index; larger = smaller index but more false positives
-- BRIN returns false positives (never false negatives) -- identifies candidate blocks, then heap scans verify
-- Unsuitable for randomly-ordered data (low correlation) -- B-tree wins
-- Autosummarize creates background worker to summarize new ranges -- without it, new ranges have no summary until VACUUM
-- TimescaleDB hypertables still require BRIN on the time dimension. Chunk exclusion eliminates irrelevant chunks (coarse-grained) but does NOT provide intra-chunk filtering. BRIN provides fine-grained range filtering within individual chunks — required for efficient range scans on large hypertables
+- BRIN returns false positives (never false negatives) — identifies candidate blocks, then heap scans verify
+- Unsuitable for randomly-ordered data (low correlation) — B-tree wins
+- Autosummarize creates background worker to summarize new ranges — without it, new ranges have no summary until VACUUM
+- TimescaleDB hypertables still require BRIN on the time dimension: chunk exclusion eliminates irrelevant chunks (coarse-grained) but a BRIN index filters ranges within a chunk — required for efficient range scans on large hypertables
 
 ## [06]-[BLOOM]
 
@@ -107,15 +107,15 @@ CREATE INDEX ON feature_flags USING bloom (tenant_id, user_id, flag_name, enviro
 
 Contracts:
 
-- Only supports `=` operator -- no range queries, no NULL matching, no ordering
+- Serves the `=` operator alone — equality queries only, no ordering
 - `length`: signature size in bits (default 80); larger = fewer false positives, more space
 - `col{N}`: bits per column (default 2); increase for high-cardinality columns
 - Use when: >5 columns queried in arbitrary combinations, equality-only, traditional composite indexes impractical
-- Bloom + GIN trigram on same table: bloom covers boolean/enum columns, GIN covers text -- no single B-tree composite achieves both
+- Bloom + GIN trigram on same table: bloom covers boolean/enum columns, GIN covers text — no single B-tree composite achieves both
 
 Bloom vs composite B-tree:
 
-- <3 columns, >20% selectivity: composite B-tree (simpler, supports range queries)
+- <3 columns, >20% selectivity: composite B-tree (simpler, serves range queries)
 - 3-5 columns, variable selectivity: composite B-tree (bloom overhead not justified)
 - > 5 columns, arbitrary equality combos, <10% selectivity: bloom (~6x less space, 3-5% false positives acceptable)
 - Hybrid: bloom for boolean/enum pre-filter + B-tree for range refinement — bloom rejects non-matches cheaply, B-tree narrows final set
@@ -142,7 +142,7 @@ Bloom vs composite B-tree:
 
 ## [08]-[COMPOSITE_INDEX_DESIGN]
 
-Equality columns first, range columns last -- the "EqRng" rule:
+Equality columns first, range columns last — the "EqRng" rule:
 
 ```sql conceptual
 -- query: WHERE tenant_id = $1 AND status = $2 AND created_at > $3 ORDER BY created_at
@@ -152,8 +152,8 @@ CREATE INDEX ON orders (tenant_id, status, created_at);
 
 Anti-patterns:
 
-- Range column before equality column wastes index efficiency -- B-tree cannot skip past range predicate to reach subsequent equality columns (pre-PG 18)
-- Redundant indexes: (a, b) makes standalone (a) index redundant -- drop (a)
+- Range column before equality column wastes index efficiency — B-tree cannot skip past a range predicate to reach later equality columns
+- Redundant indexes: (a, b) makes standalone (a) index redundant — drop (a)
 - Over-indexing: each index adds write overhead (INSERT, UPDATE, DELETE must maintain all indexes) and kills HOT update eligibility (see HOT Updates below)
 
 ## [09]-[PARTIAL_INDEX_OPTIMIZATION]
@@ -176,10 +176,10 @@ CREATE INDEX ON notifications (user_id, created_at)
 
 Partial index contracts:
 
-- Query WHERE clause must imply the index predicate -- planner matches syntactically, not semantically
-- `WHERE status IN ('pending', 'processing')` does NOT match `WHERE status = 'pending'` partial index
-- Immutable expressions only in predicate -- no functions with side effects, no volatile functions
-- Partial unique index: `CREATE UNIQUE INDEX ON users (email) WHERE deleted_at IS NULL` -- uniqueness only among active rows
+- Query WHERE clause must imply the index predicate — planner matches syntactically, not semantically
+- `WHERE status IN ('pending', 'processing')` does not match `WHERE status = 'pending'` partial index
+- Immutable expressions only in predicate — no functions with side effects, no volatile functions
+- Partial unique index: `CREATE UNIQUE INDEX ON users (email) WHERE deleted_at IS NULL` — uniqueness only among active rows
 
 ## [10]-[HOT_UPDATES_HEAP_ONLY_TUPLE]
 
@@ -203,9 +203,9 @@ Troubleshooting: (1) EXPLAIN must show `Index Only Scan` not `Index Scan`; (2) c
 
 Concurrent operations:
 
-- `CREATE INDEX CONCURRENTLY` -- no write lock, but takes longer and may fail; cannot run inside a transaction
-- `REINDEX CONCURRENTLY` -- rebuilds without blocking writes
-- Failed CONCURRENTLY builds leave invalid index -- check `pg_index.indisvalid`; recovery: `DROP INDEX CONCURRENTLY idx_name; CREATE INDEX CONCURRENTLY ...` (never leave invalid — they consume write overhead without serving reads)
+- `CREATE INDEX CONCURRENTLY` — no write lock, but takes longer and may fail; cannot run inside a transaction
+- `REINDEX CONCURRENTLY` — rebuilds without blocking writes
+- Failed CONCURRENTLY builds leave invalid index — check `pg_index.indisvalid`; recovery: `DROP INDEX CONCURRENTLY idx_name; CREATE INDEX CONCURRENTLY ...` (never leave invalid — they consume write overhead without serving reads)
 - GIN/GiST pending list: large pending lists cause concurrent builds to fail — run `VACUUM` before `CREATE INDEX CONCURRENTLY` on GIN tables
 
 0-downtime index rotation (critical for HNSW vectors and schema-evolving indexes):
@@ -224,8 +224,8 @@ FROM pg_stat_user_indexes
 ORDER BY pg_relation_size(indexrelid) DESC;
 ```
 
-- `pgstatindex('index_name')` -- `avg_leaf_density` below 50% suggests bloat requiring REINDEX
-- Deduplication status: `SELECT * FROM pgstatindex('index_name')` -- check `leaf_density` improvement after REINDEX on non-unique indexes with repetitive values
+- `pgstatindex('index_name')` — `avg_leaf_density` below 50% suggests bloat requiring REINDEX
+- Deduplication status: `SELECT * FROM pgstatindex('index_name')` — check `leaf_density` improvement after REINDEX on non-unique indexes with repetitive values
 
 Unused index detection:
 
@@ -235,17 +235,16 @@ FROM pg_stat_user_indexes
 WHERE idx_scan = 0 AND idx_tup_read = 0;
 ```
 
-- `idx_scan` resets on statistics reset -- verify against sufficient uptime before dropping
-- `pg_stat_reset()` zeroes all counters -- establish baseline after reset before making drop decisions
+- `idx_scan` resets on statistics reset — verify against sufficient uptime before dropping
+- `pg_stat_reset()` zeroes all counters — establish baseline after reset before making drop decisions
 
-## [13]-[BITMAP_INDEX_OR_MERGING_PG_18]
+## [13]-[BITMAP_OR_MERGING]
 
-PG 18 improves bitmap OR merging efficiency — the planner can now cost-effectively merge bitmaps from independent single-column indexes instead of requiring one composite index. Two smaller B-trees on `(status)` and `(created_at)` can serve `WHERE status = $1 AND created_at > $2` via bitmap AND when no single composite covers >60% of access paths on tables with highly variable query patterns. Verify with `EXPLAIN (ANALYZE, BUFFERS)` — `BitmapAnd`/`BitmapOr` nodes with low `lossy` block ratio confirms the strategy is effective. Still prefer composite B-tree when one column order dominates; bitmap merging adds heap recheck overhead absent in direct index scans.
+The planner merges bitmaps from independent single-column indexes instead of requiring one composite index: two smaller B-trees on `(status)` and `(created_at)` serve `WHERE status = $1 AND created_at > $2` via bitmap AND when no single composite covers >60% of access paths on highly variable query patterns. Verify with `EXPLAIN (ANALYZE, BUFFERS)` — `BitmapAnd`/`BitmapOr` nodes with low `lossy` block ratio confirm it; still prefer composite B-tree when one column order dominates, since bitmap merging adds heap-recheck overhead.
 
-## [14]-[RECENT_POSTGRESQL_INDEX_FEATURES_PG_13]
+## [14]-[ADDITIONAL_INDEX_FEATURES]
 
-- B-tree skip scan (PG 18): composite indexes usable without leading-column equality -- most effective with low-NDV leading columns; reduces redundant single-column indexes
-- Virtual generated columns (PG 18): expression indexes on virtual columns avoid storage overhead while maintaining index selectivity
-- `NULLS NOT DISTINCT` (PG 15+): `CREATE UNIQUE INDEX ON users (email) NULLS NOT DISTINCT` -- treats multiple NULLs as duplicates; without this, UNIQUE indexes allow unlimited NULLs in the indexed column (each NULL considered distinct). Use on any nullable unique column where business logic requires at-most-one NULL
-- MAINTAIN privilege (PG 17+): dedicated privilege for REINDEX, CLUSTER, VACUUM -- separates maintenance from ownership
-- Incremental sort (PG 13+): planner can leverage a partially-ordered index to incrementally sort remaining columns — composite index `(a)` can serve `ORDER BY a, b` if `b` sort is cheap
+- Virtual generated columns: expression indexes on virtual columns avoid storage overhead while maintaining index selectivity
+- `NULLS NOT DISTINCT`: `CREATE UNIQUE INDEX ON users (email) NULLS NOT DISTINCT` — treats multiple NULLs as duplicates; without it, a UNIQUE index counts every NULL as distinct and admits unlimited NULLs in the column. Use on any nullable unique column that requires at-most-one NULL
+- MAINTAIN privilege: dedicated privilege for REINDEX, CLUSTER, VACUUM — separates maintenance from ownership
+- Incremental sort: planner leverages a partially-ordered index to sort remaining columns incrementally — composite index `(a)` serves `ORDER BY a, b` when the `b` sort is cheap

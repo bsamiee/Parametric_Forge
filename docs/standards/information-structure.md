@@ -105,7 +105,7 @@ Records carry independently scanned items; lists carry peer facts or true sequen
 
 - `GroupedRecord`: a standalone `[RECORD_KEY]:` label followed by `- Field: value` bullets; the normative field carrier for same-section clusters. A record key naming a verbatim identifier keeps the identifier's exact casing in a code span; a conceptual key is an UPPER_SNAKE rubric.
 - `AnchoredRecord`: an H3 record heading, used only when another artifact links to the record or a stable slug is required.
-- `ContrastRecord`: `[CONTRAST_KEY]:` followed by `- Rejected:` or `- Near miss:`, `- Accepted:`, and `- Reason:` bullets.
+- `ContrastRecord`: `[CONTRAST_KEY]:` followed by `- Rejected:` or `- Near miss:`, `- Accepted:`, and `- Reason:` bullets; a law-led variant opens with a `- Law:` or definition bullet before the contrast pair.
 - `OrderedStep`: a numbered task step carrying fields such as `Action`, `Command`, `Expected signal`, `Recovery`, or `Result`.
 - `row-owned record`: a record after a table that carries one row's independent status, detail, omission, update, or retention.
 
@@ -158,6 +158,7 @@ A type standard narrows this vocabulary only when it declares exact casing, acti
 [GROUP_LABELS]:
 
 - A standalone bracketed set label `[X_Y_Z]:` introduces a category, set, or key list; keep one blank line before it and place its list or table on the next line with no blank gap.
+- A group label never echoes the heading above it: a section whose only label restates its own rubric carries phantom structure — delete the label and let the heading charter the container.
 - Never stack two set labels; if a second appears before the first label's list, remove the outer label or promote it to prose or a heading.
 - A `[RECORD_KEY]:` or `[CONTRAST_KEY]:` label is followed by a bullet list, never bare indented `Field: value` lines.
 

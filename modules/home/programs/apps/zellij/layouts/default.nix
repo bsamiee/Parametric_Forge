@@ -5,6 +5,7 @@
 # Path          : modules/home/programs/apps/zellij/layouts/default.nix
 # ----------------------------------------------------------------------------
 # Shell-first Zellij layout; editor and Yazi arrive on demand via the rail
+
 {config, ...}: let
   lazygitPopup = config.programs.zellij.popupGeometry.lazygit;
 in {

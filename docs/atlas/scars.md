@@ -1,6 +1,6 @@
 # Scars
 
-Each row is a trap the estate already paid for: the failure shape and the rule that now prevents it, anchored to the surface that enforces the rule. This ledger is the system of record for these traps — an agent that skips it re-pays the cost, and a pass touching an owner re-proves the scar rows anchored to it (a row can outlive the rail it claims). Rules already stated as forward law in a sibling atlas doc are not repeated here.
+Each row is a trap the estate already paid for: the failure shape and the rule that now prevents it, anchored to the surface that enforces the rule. This ledger is the system of record for these traps; a pass touching an owner re-proves the scar rows anchored to it, and a row can outlive the rail it claims.
 
 ## [01]-[GIT]
 

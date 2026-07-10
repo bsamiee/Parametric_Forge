@@ -5,6 +5,7 @@
 # Path          : modules/home/programs/languages/scientific-tools.nix
 # ----------------------------------------------------------------------------
 # Native scientific build/runtime toolchain for source-built Python packages, geospatial/data libraries, numerical kernels, and local provisioning probes.
+
 {
   config,
   forgeToolchainEnvFor,
@@ -97,7 +98,7 @@
     pdal
   ];
 
-  # EnergyPlus/OpenStudio stay macOS-only (operator ruling); gmsh generalizes.
+  # EnergyPlus/OpenStudio bind macOS only; gmsh generalizes to every host.
   aecNativeTools =
     [pkgs.gmsh]
     ++ lib.optionals isDarwin [
@@ -167,8 +168,7 @@
   forgeJupyterTokenPrelude = ''
     token_file=${lib.escapeShellArg forgeJupyterTokenFile}
     if [ -z "''${JUPYTER_TOKEN:-}" ] && [ -f "$token_file" ]; then
-      # Typed extraction, never source: a mutable file must not reach the parser. First-match-quit sed, never sed|head:
-      # head's early exit would SIGPIPE sed under pipefail.
+      # Typed extraction, never source: a mutable file must not reach the parser. First-match-quit sed; head's early exit SIGPIPEs sed under pipefail.
       JUPYTER_TOKEN="$(sed -n '/^export JUPYTER_TOKEN=/{s///p;q;}' "$token_file")"
     fi
     if [ -z "''${JUPYTER_TOKEN:-}" ]; then
@@ -180,8 +180,8 @@
   forgeJupyterRootPrelude = ''
     export FORGE_PROVISION_ROOT=${lib.escapeShellArg forgeJupyterRootDir}
   '';
-  # Supervised stdio lane, mirroring the rhino-mcp-router lane: uvx pythons that ignore stdin EOF (jupyter-mcp-server) strand under a hard-killed
-  # MCP client; the watchdog ties the server subtree to client liveness.
+  # Supervised stdio lane: uvx pythons that ignore stdin EOF (jupyter-mcp-server) strand under a hard-killed MCP client;
+  # the watchdog ties the server subtree to client liveness.
   superviseStdio = server: ''
     client=$PPID
     set -m
@@ -469,7 +469,7 @@ in
         };
     };
 
-    # Persistent Jupyter rides both supervisors (operator ruling: local AND VPS): launchd on Darwin, a lingering systemd user service on Linux.
+    # Persistent Jupyter rides a supervisor on both hosts: launchd on Darwin, a lingering systemd user service on Linux.
     # KeepAlive implies launch-at-load; Interactive classification exempts user-facing kernel compute from Background throttling per launchd.plist(5).
     launchd.agents.forge-jupyter = {
       enable = true;

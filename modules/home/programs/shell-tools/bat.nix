@@ -5,6 +5,7 @@
 # Path          : modules/home/programs/shell-tools/bat.nix
 # ----------------------------------------------------------------------------
 # Cat clone with syntax highlighting and Git integration
+
 {
   config,
   pkgs,
@@ -20,7 +21,6 @@
       tabs = "4";
       paging = "auto";
 
-      # Syntax mappings for unrecognized extensions
       map-syntax = [
         "*.nix:Nix"
         ".envrc:Bash"

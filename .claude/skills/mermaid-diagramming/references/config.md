@@ -4,7 +4,7 @@ Frontmatter is the only live channel a fence configures itself through: the bloc
 
 ## [01]-[FRONTMATTER]
 
-An opening `---` on line 1 of the fence body carries `title:` and `config:`, closing with `---` before the diagram header. `%%{init:...}%%` directives are deprecated — frontmatter is the current channel.
+An opening `---` on line 1 of the fence body carries `title:` and `config:`, closing with `---` before the diagram header; frontmatter is the configuration channel, never a `%%{init:...}%%` directive.
 
 ```mermaid
 ---
@@ -139,7 +139,7 @@ Architecture layout is fcose, tuned under `architecture:` — `nodeSeparation`, 
 
 ## [03]-[LOOK]
 
-`look` selects `classic`, `handDrawn`, or `neo`, and `handDrawnSeed` pins hand-drawn jitter. Every themed fence declares `look: classic` explicitly: the neo look stamps `data-look="neo"` on nodes and clusters and styles them with a gradient-URL stroke and a full-opacity light-gray drop shadow through the theme's `useGradient` and `dropShadow` variables — the gradient border and white halo a newer-look host paints onto an undeclared fence. Frontmatter `look` outranks any host `initialize` look, `useGradient: false` and `dropShadow: "none"` disarm the two variables under any look, and the `filter:none!important` belt in the family `themeCSS` strings closes the cascade; the border canon in the theming reference owns this four-layer lock. Schema themes are `default`, `base`, `dark`, `forest`, `neutral`, `neo`, `neo-dark`, `redux`, `redux-dark`, `redux-color`, and `redux-dark-color`. Theme selection and `themeVariables` palette work ride the same frontmatter `config:` block, owned by the theming reference — only `base` accepts `themeVariables`.
+`look` selects `classic`, `handDrawn`, or `neo`, and `handDrawnSeed` pins hand-drawn jitter. Every themed fence declares `look: classic` explicitly: the neo look stamps `data-look="neo"` on nodes and clusters and styles them with a gradient-URL stroke and a full-opacity light-gray drop shadow through the theme's `useGradient` and `dropShadow` variables — the gradient border and white halo a neo-default host paints onto an undeclared fence. Frontmatter `look` outranks any host `initialize` look, `useGradient: false` and `dropShadow: "none"` disarm the two variables under any look, and the `filter:none!important` belt in the family `themeCSS` strings closes the cascade; the border canon in the theming reference owns this four-layer lock. Schema themes are `default`, `base`, `dark`, `forest`, `neutral`, `neo`, `neo-dark`, `redux`, `redux-dark`, `redux-color`, and `redux-dark-color`. Theme selection and `themeVariables` palette work ride the same frontmatter `config:` block, owned by the theming reference — only `base` accepts `themeVariables`.
 
 ## [04]-[ACCESSIBILITY]
 

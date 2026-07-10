@@ -4,15 +4,11 @@
 # License       : MIT
 # Path          : modules/home/programs/apps/yazi/keymap.toml
 # ----------------------------------------------------------------------------
-# Custom keybindings for Yazi file manager
 # Primary Modifier:		Right Command   → Hyper (⌘⌥⌃⇧)  leader "<D-A-C-S>"	| Zellij-owned
 # Secondary Modifier:	Right Option    → Super (⌘⌥⌃)   leader "<D-A-C>" 	| Zellij-owned
 # Tertiary Modifier: 	Right Shift     → Power (⌥⌃⇧)   leader "<A-C-S>" 	| Free for Yazi binds
 
-# <D> = Super 	(Command/⌘)
-# <A> = Alt 	(Option/⌥)
-# <C> = Ctrl 	(Control/⌃)
-# <S> = Shift 	(⇧)
+# `<D>` Super (Command/⌘), `<A>` Alt (Option/⌥), `<C>` Ctrl (Control/⌃), `<S>` Shift (⇧)
 
 [mgr]
 keymap = [

@@ -9,6 +9,7 @@
 # disposable-session parse gate), watch-with-memory monitor rows, and two read-only inspectors — state (forge-zellij-state/v2: sessions classified
 # live|resurrectable with serialization freshness and the newest fabric receipt joined per session) and peek (typed single-frame pane capture over
 # `subscribe`, attention-joined). Every mutating verb emits one typed kv receipt; fzf fronts the graph, state lives external (no plugin store).
+
 {
   config,
   lib,
@@ -136,8 +137,8 @@
             }
 
             # Resurrection-with-cause fold: the newest fabric receipt per session (forge-zellij session_id + forge-workspace slug JSONL tails)
-            # becomes a name -> "last: verb result ts" map, so an EXITED row says WHY it matters, not merely that it died. Torn tail lines skip
-            # via fromjson? (live-appended JSONL law).
+            # becomes a name -> "last: verb result ts" map, so an EXITED row says WHY it matters, not merely that it died.
+            # Torn tail lines skip via fromjson? (live-appended JSONL law).
             exited_cause_map() {
               local ws_log="''${FORGE_WORKSPACE_RECEIPT_LOG:-$HOME/Library/Logs/forge-workspace.receipts.log}"
               { tail -qn 400 "''${receipt_log%.log}.jsonl" "''${ws_log%.log}.jsonl" 2>/dev/null || true; } \
@@ -149,7 +150,7 @@
                   | map({key: .s, value: ("last: " + .what + " " + .result + " " + .ts)}) | from_entries'
             }
 
-            # --- [DISCRIMINATED_INVENTORY_ONE_ROW_GRAMMAR_NINE_KINDS]
+            # --- [DISCRIMINATED_INVENTORY_ONE_ROW_GRAMMAR]
             inventory() {
               # sessions: live and resurrectable (list-sessions exits 1 when none); jq owns escaping, the cause map enriches EXITED rows.
               (zellij list-sessions --no-formatting 2>/dev/null || true) | jq -Rc --argjson causes "$(exited_cause_map)" '
@@ -217,7 +218,7 @@
               fi
             }
 
-            # first() stops inside jq: a head(1) sibling would EPIPE the writer under pipefail once the inventory outgrows the pipe buffer.
+            # first() stops inside jq: a head(1) sibling EPIPEs the writer under pipefail once the inventory outgrows the pipe buffer.
             row_of() { inventory | jq -cn --arg id "$1" 'first(inputs | select(.row_id == $id))'; }
 
             preview_row() { # $1 = row_id — read-only evidence only
@@ -312,8 +313,7 @@
                   shift
                 done
                 case "$lines" in "" | *[!0-9]*) echo "peek: --lines must be numeric" >&2; exit 64 ;; esac
-                # Session routing lands BEFORE pane resolution: a detached `peek --session S` must resolve S's focused pane, not fail
-                # against the caller's absent session.
+                # Session routing lands BEFORE pane resolution: a detached `peek --session S` resolves S's focused pane, not the caller's absent one.
                 [[ -z "$peek_session" || "$peek_session" == "$session" ]] || session_args=(--session "$peek_session")
                 if [[ -z "$peek_pane" ]]; then
                   [[ -n "$peek_session" ]] || { echo "peek needs --pane, --attention, or a Zellij session" >&2; exit 64; }
@@ -508,7 +508,7 @@
             fi
 
             # One inventory snapshot feeds the picker AND target resolution: a re-scan after selection could miss a vanished row and dispatch an
-            # empty target. fzf reads a fully rendered list — a pick made while jq still streamed would EPIPE jq and fail a valid selection.
+            # empty target. fzf reads a fully rendered list — a pick made while jq still streams EPIPEs jq and fails a valid selection.
             start="''${EPOCHREALTIME//[.,]/}"
             rc=0
             inv="$(inventory)"

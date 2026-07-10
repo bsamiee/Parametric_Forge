@@ -1,4 +1,4 @@
-# [H1][TEXT-PROCESSING-GUIDE]
+# [TEXT_PROCESSING]
 
 External tool reference: rg, awk, sd, fd, choose, jq, yq, mlr, jnv. Pipeline composition, capability probing, macOS caveats.
 
@@ -14,10 +14,10 @@ External tool reference: rg, awk, sd, fd, choose, jq, yq, mlr, jnv. Pipeline com
 |  [06]   | JSON           | `jq`     | 1.8+  | Structural parsing; `skip/2`+`limit/2`, `trim/0`, `add/1`    |
 |  [07]   | YAML/JSON/TOML | `yq`     | 4.46+ | Universal codec: YAML/JSON/TOML/INI/XML/HCL/CSV              |
 |  [08]   | CSV/TSV/JSON   | `mlr`    |  6+   | `-c`/`-j` shorthands, `--gzin` auto-decompress, regex fields |
-|  [09]   | JSON (TUI)     | `jnv`    |   -   | Interactive jq query dev — paste into scripts                |
-|  [10]   | Tabular align  | `column` |   -   | `-t` pretty-prints; display only                             |
+|  [09]   | JSON (TUI)     | `jnv`    |   —   | Interactive jq query dev — paste into scripts                |
+|  [10]   | Tabular align  | `column` |   —   | `-t` pretty-prints; display only                             |
 
-[CAPABILITY_PROBING]:always gate on availability:
+[CAPABILITY_PROBING]: Always gate on availability:
 
 ```bash copy-safe
 _require_tool() {
@@ -31,7 +31,7 @@ _require_tool rg grep && _search() { rg "$@"; } || _search() { grep -rn "$@"; }
 _require_tool fd find && _find() { fd "$@"; } || _find() { find "$@"; }
 ```
 
-[MACOS_DARWIN_CAVEATS]:use when the active environment targets Darwin:
+[MACOS_DARWIN_CAVEATS]: Use when the active environment targets Darwin:
 
 | [INDEX] | [ISSUE]         | [CONSEQUENCE]                  | [FIX]                     |
 | :-----: | :-------------- | :----------------------------- | :------------------------ |
@@ -86,7 +86,7 @@ _require_tool fd find && _find() { fd "$@"; } || _find() { find "$@"; }
 |  [19]   | `-.`                 | Search hidden files    | `rg -. 'SECRET' .env*` (short `--hidden`) |
 |  [20]   | `--hyperlink-format` | OSC 8 terminal links   | `rg --hyperlink-format vscode 'WORKITEM'` |
 
-[RG_JQ_COMPOSITION]:structured search results:
+[RG_JQ_COMPOSITION]: Structured search results:
 
 ```bash copy-safe
 # Extract matched lines as clean JSON array
@@ -119,7 +119,7 @@ gawk 'BEGIN {print mkbool(1), mkbool(0)}' # true false (typed, not 1/0)
 
 Builtins: `NF` (fields), `NR` (line#), `FNR` (file-line#), `FS`/`OFS` (separators), `FILENAME`. gawk 5.4: MinRX engine (POSIX-compliant default), `\uHHHH` Unicode escapes, `@nsinclude` for namespace-preserving includes.
 
-[ZERO_FORK_ALTERNATIVE]: when extracting/transforming bash variables, prefer `local -n` nameref + `printf -v` over spawning awk/sed subshells. Reserve awk for multi-line aggregation and state machines where bash builtins cannot compete.
+[ZERO_FORK_ALTERNATIVE]: When extracting/transforming bash variables, prefer `local -n` nameref + `printf -v` over spawning awk/sed subshells. Reserve awk for multi-line aggregation and state machines where bash builtins cannot compete.
 
 ## [05]-[SD]
 
@@ -162,7 +162,7 @@ mlr -c -j filter '$revenue > 1000' then sort-by -nr revenue data.csv \
     | jq '[.[].email]'
 ```
 
-[DECISION_DISPATCH]:tool selection by data shape:
+[DECISION_DISPATCH]: Tool selection by data shape:
 
 | [INDEX] | [DATA_SHAPE]      | [PRIMARY]    | [COMPOSITION]                   |
 | :-----: | :---------------- | :----------- | :------------------------------ |
@@ -190,7 +190,7 @@ mlr -c -j filter '$revenue > 1000' then sort-by -nr revenue data.csv \
 
 ## [08]-[STRUCTURED_DATA]
 
-### [08.1]-[JQ_1_8_JSON_PROCESSING]
+### [08.1]-[JQ_PROCESSING]
 
 ```bash copy-safe
 # Field extraction with fallback (// = alternative operator)
@@ -221,7 +221,7 @@ jq '.flags | to_entries | map(.value |= toboolean)' settings.json
 jq -r '$ENV.HOME + "/.config/" + .name' packages.json
 ```
 
-### [08.2]-[YQ_4_46_UNIVERSAL_CONFIG_CODEC_YAML_JSON_TOML_INI_XML_HCL_CSV]
+### [08.2]-[YQ_CODEC]
 
 ```bash copy-safe
 # YAML → JSON conversion for jq pipeline
@@ -238,7 +238,7 @@ yq eval -i -p=toml -o=toml '.database.pool_size = 20' config.toml
 yq eval -p=hcl -o=yaml '.resource.aws_instance' main.tf
 ```
 
-### [08.3]-[MLR_6_CSV_TSV_JSON_FORMAT_CONVERSION]
+### [08.3]-[MLR_CONVERSION]
 
 ```bash copy-safe
 # CSV → JSON with filter and sort (-c = --csv, -j = --json shorthands)
@@ -255,7 +255,7 @@ mlr --ijson --ocsv cat api_response.json
 # mlr repl  (then type verbs interactively against piped data)
 ```
 
-### [08.4]-[JNV_INTERACTIVE_JSON_EXPLORATION]
+### [08.4]-[JNV_EXPLORATION]
 
 ```bash copy-safe
 # Develop jq queries interactively, then embed in scripts
