@@ -7,20 +7,20 @@
         "settings": {
             "nixd": {
                 "nixpkgs": {
-                    "expr": "import (builtins.getFlake \"/Users/bardiasamiee/Documents/99.Github/Parametric_Forge\").inputs.nixpkgs { }"
+                    "expr": "import (builtins.getFlake \"git+file:///Users/bardiasamiee/Documents/99.Github/Parametric_Forge\").inputs.nixpkgs { }"
                 },
                 "formatting": {
                     "command": ["alejandra"]
                 },
                 "options": {
                     "nix-darwin": {
-                        "expr": "(builtins.getFlake \"/Users/bardiasamiee/Documents/99.Github/Parametric_Forge\").darwinConfigurations.macbook.options"
+                        "expr": "(builtins.getFlake \"git+file:///Users/bardiasamiee/Documents/99.Github/Parametric_Forge\").darwinConfigurations.macbook.options"
                     },
                     "home-manager": {
-                        "expr": "(builtins.getFlake \"/Users/bardiasamiee/Documents/99.Github/Parametric_Forge\").darwinConfigurations.macbook.options.home-manager.users.type.getSubOptions [ ]"
+                        "expr": "(builtins.getFlake \"git+file:///Users/bardiasamiee/Documents/99.Github/Parametric_Forge\").darwinConfigurations.macbook.options.home-manager.users.type.getSubOptions [ ]"
                     },
                     "flake-parts": {
-                        "expr": "(builtins.getFlake \"/Users/bardiasamiee/Documents/99.Github/Parametric_Forge\").debug.options"
+                        "expr": "(builtins.getFlake \"git+file:///Users/bardiasamiee/Documents/99.Github/Parametric_Forge\").debug.options"
                     }
                 }
             }

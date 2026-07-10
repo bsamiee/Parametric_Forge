@@ -14,7 +14,10 @@
   ...
 }: let
   flakeRoot = "${host.user.home}/Documents/99.Github/Parametric_Forge";
-  flake = ''(builtins.getFlake "${flakeRoot}")'';
+  # git+file:// forces the git-tree fetcher (never walks .git), so nixd's
+  # upstream nix-2.34 fetchers skip the core.fsmonitor unix socket at
+  # .git/fsmonitor--daemon.ipc a plain-path copy would choke on.
+  flake = ''(builtins.getFlake "git+file://${flakeRoot}")'';
   configClass =
     {
       darwin = "darwinConfigurations";
