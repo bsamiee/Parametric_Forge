@@ -42,6 +42,32 @@
     "terminal.integrated.fontWeightBold" = "bold";
     "workbench.iconTheme" = "material-icon-theme";
 
+    # --- Editing law: house style (4-space, 150-col) ----------------------------
+    # Globals stay shadowable by user-region keys (none exist top-level today);
+    # [yaml] binds the yamlfmt extension (spawns PATH yamlfmt, cwd = workspace,
+    # so project .yamlfmt wins before the XDG global) — an unbound YAML slot
+    # falls to Prettier, which ignores every yamlfmt config. [nix] stays on
+    # alejandra's 2-space so owners never fight.
+    "editor.tabSize" = 4;
+    "editor.insertSpaces" = true;
+    "editor.rulers" = [150];
+    "files.insertFinalNewline" = true;
+    "files.trimTrailingWhitespace" = true;
+    # prettier.* rows are the esbenp extension's no-config fallback, mirroring
+    # the XDG prettierrc so the extension lane matches the CLI wrapper.
+    "prettier.tabWidth" = 4;
+    "prettier.printWidth" = 150;
+    "[yaml]" = {
+      "editor.defaultFormatter" = "bluebrown.yamlfmt";
+      "editor.tabSize" = 4;
+      "editor.insertSpaces" = true;
+      "editor.detectIndentation" = false;
+    };
+    "[nix]" = {
+      "editor.tabSize" = 2;
+      "editor.detectIndentation" = false;
+    };
+
     # --- Workbench: elevation ladder + role projection --------------------------
     "workbench.colorCustomizations" = {
       "editor.background" = s.surface.base;

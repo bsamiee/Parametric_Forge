@@ -13,6 +13,52 @@
   ...
 }: let
   manifest = import ../../../../overlays/manifest.nix;
+  # shfmt reads .editorconfig only when invoked without style flags; the
+  # wrapper injects the house style solely when the caller passes no style
+  # flag and no .editorconfig governs the working tree, so project law wins.
+  shfmt = pkgs.writeShellApplication {
+    name = "shfmt";
+    text = ''
+      for arg in "$@"; do
+        case "$arg" in
+          -i | -i=* | -ci | -sr | -kp | -fn | -bn | -mn)
+            exec ${pkgs.shfmt}/bin/shfmt "$@"
+            ;;
+        esac
+      done
+      dir="$PWD"
+      while [[ -n "$dir" ]]; do
+        if [[ -f "$dir/.editorconfig" ]]; then
+          exec ${pkgs.shfmt}/bin/shfmt "$@"
+        fi
+        dir="''${dir%/*}"
+      done
+      exec ${pkgs.shfmt}/bin/shfmt -i 4 -ci "$@"
+    '';
+  };
+
+  # taplo has no user-level lookup and TAPLO_CONFIG overrides project configs;
+  # the wrapper reaches the house config only when upward discovery finds no
+  # project taplo.toml and the caller passes neither flag nor env.
+  taplo = pkgs.writeShellApplication {
+    name = "taplo";
+    text = ''
+      [[ -n "''${TAPLO_CONFIG:-}" ]] && exec ${pkgs.taplo}/bin/taplo "$@"
+      for arg in "$@"; do
+        case "$arg" in
+          -c | --config | -c=* | --config=* | --no-auto-config) exec ${pkgs.taplo}/bin/taplo "$@" ;;
+        esac
+      done
+      dir="$PWD"
+      while [[ -n "$dir" ]]; do
+        if [[ -f "$dir/.taplo.toml" || -f "$dir/taplo.toml" ]]; then
+          exec ${pkgs.taplo}/bin/taplo "$@"
+        fi
+        dir="''${dir%/*}"
+      done
+      TAPLO_CONFIG="${config.xdg.configHome}/taplo/taplo.toml" exec ${pkgs.taplo}/bin/taplo "$@"
+    '';
+  };
   # Data-lane admissions from the package manifest (CSV -> xan; relational/Parquet -> DuckDB).
   dataRoster = map (row: pkgs.${row.attr}) (manifest.rosterRows "data");
   dotnet-combined = pkgs.dotnetCorePackages.combinePackages [
@@ -100,6 +146,47 @@
     '';
   };
 in {
+  # Machine-level fallback style for the YAML pair. yamlfmt walks the working
+  # tree upward for a project .yamlfmt before touching
+  # $XDG_CONFIG_HOME/yamlfmt/.yamlfmt; yamllint discovery rides
+  # YAMLLINT_CONFIG_FILE (environments/languages.nix) behind project-local
+  # .yamllint files, so project law always wins.
+  xdg.configFile = {
+    # shellcheck resolves rc files from the script's directory upward, then
+    # ~/.shellcheckrc, then this file; a project rc fully shadows it. Keep
+    # ~/.shellcheckrc absent — it would shadow this row.
+    "shellcheckrc".text = ''
+      external-sources=true
+      enable=deprecate-which
+    '';
+    # taplo has no user-level lookup and TAPLO_CONFIG overrides project
+    # configs; only the wrapper below may reference this file.
+    "taplo/taplo.toml".text = ''
+      [formatting]
+      indent_string = "    "
+      column_width = 150
+      allowed_blank_lines = 2
+      reorder_keys = false
+    '';
+    # Projected from the style vocabulary (modules/style.nix); the treefmt
+    # row reads the same value, so every yamlfmt consumer shares one source.
+    "yamlfmt/.yamlfmt".text = (import ../../../style.nix).yamlfmt;
+    "yamllint/config".text = ''
+      extends: default
+
+      # yamlfmt owns shape: its sequence-item nesting is engine-fixed and no
+      # indentation rule can describe it, so the linter cedes that dimension.
+      rules:
+        line-length:
+          max: 150
+          level: warning
+        indentation: disable
+        document-start: disable
+        truthy:
+          check-keys: false
+    '';
+  };
+
   home = {
     activation.ensureWorkspaceMcpTool = lib.hm.dag.entryAfter ["linkGeneration"] workspace-mcp-ensure;
 
@@ -112,14 +199,14 @@ in {
         # --- Shell Tooling ------------------------------------------------------
         bash # Bash 5.3+ runtime for generated scripts and explicit bash sessions
         shellcheck # POSIX shell static analysis
-        shfmt # Shell script formatter
+        shfmt # Shell formatter (let-bound house-style fallback wrapper)
         bash-language-server # Bash LSP (navigation + diagnostics via shellcheck/shfmt)
 
         # --- YAML ---------------------------------------------------------------
         yamlfmt # YAML formatter (Google)
         yamllint # YAML linter
         yaml-language-server # YAML LSP (SchemaStore-backed validation + completion)
-        taplo # TOML formatter, validator, and LSP
+        taplo # TOML formatter/validator/LSP (let-bound house-config fallback wrapper)
 
         # --- JSON ---------------------------------------------------------------
         jq # Lightweight command-line JSON processor
@@ -139,6 +226,7 @@ in {
 
         # --- .NET ---------------------------------------------------------------
         dotnet-combined
+        csharpier # C# formatter; reads project .csharpierrc/.editorconfig
         ilspycmd # .NET assembly decompiler for NuGet API catalogues
         nuget-to-json # NuGet package metadata extraction
         roslyn-language-server # C# LSP (roslyn-ls wrapped for clean --stdio)

@@ -1,8 +1,8 @@
-# Title         : default.nix
+# Title         : terminal.nix
 # Author        : Bardia Samiee
 # Project       : Parametric Forge
 # License       : MIT
-# Path          : modules/home/scripts/integration/default.nix
+# Path          : modules/home/scripts/terminal.nix
 # ----------------------------------------------------------------------------
 # Yazi -> Zellij -> Neovim rail: popup dispatcher, RPC handoff, server owner.
 # Pane targeting is ID-based via list-panes JSON; never ordinal focus. The
@@ -692,7 +692,7 @@
     '';
   };
 in {
-  imports = [../../programs/apps/chords.nix];
+  imports = [../programs/apps/chords.nix];
 
   home.packages = [forgeNvim forgeEdit forgeYazi yaziZoxideCdi forgeTerminalAccept];
 }

@@ -844,230 +844,328 @@
   # Claude from local transcript/stats estimation (source-labeled). Failed
   # lanes preserve the previous value with stale=true and back off
   # exponentially. Projections: role-styled zjstatus pipe cells, workspace-
-  # graph lane rows, policy-gated desktop notification.
+  # graph lane rows, policy-gated desktop notification whose click routes
+  # back to the raising pane via the `focus` verb.
   forgeAgents = pkgs.writeShellApplication {
     name = "forge-agents";
     runtimeInputs = [pkgs.coreutils pkgs.jq pkgs.findutils pkgs.gawk pkgs.gnugrep];
     text = ''
-      state_root="''${XDG_STATE_HOME:-$HOME/.local/state}/forge"
-      cache="$state_root/agent-state.json"
-      meta="$state_root/agent-collect.meta.json"
-      feed="$state_root/agent-attention.jsonl"
-      lanes_out="''${XDG_CACHE_HOME:-$HOME/.cache}/forge/agent-lanes.json"
-      receipt_log="''${FORGE_AGENTS_RECEIPT_LOG:-$HOME/Library/Logs/forge-agents.receipts.log}"
-      usage() { echo "usage: forge-agents collect | status [--json]" >&2; exit 64; }
-      verb="''${1:-status}"; shift || true
+            state_root="''${XDG_STATE_HOME:-$HOME/.local/state}/forge"
+            cache="$state_root/agent-state.json"
+            meta="$state_root/agent-collect.meta.json"
+            feed="$state_root/agent-attention.jsonl"
+            lanes_out="''${XDG_CACHE_HOME:-$HOME/.cache}/forge/agent-lanes.json"
+            receipt_log="''${FORGE_AGENTS_RECEIPT_LOG:-$HOME/Library/Logs/forge-agents.receipts.log}"
+            usage() { echo "usage: forge-agents collect | status [--json] | focus" >&2; exit 64; }
+            verb="''${1:-status}"; shift || true
 
-      iso_now() { TZ=UTC0 printf '%(%Y-%m-%dT%H:%M:%SZ)T' "$EPOCHSECONDS"; }
+            iso_now() { TZ=UTC0 printf '%(%Y-%m-%dT%H:%M:%SZ)T' "$EPOCHSECONDS"; }
 
-      cmd_status() {
-        if [ ! -f "$cache" ]; then
-          echo "forge-agents: no cache yet; run forge-agents collect" >&2
-          exit 1
-        fi
-        if [ "''${1:-}" = "--json" ]; then
-          jq . "$cache"
-        else
-          jq -r '
-            "as-of      \(.ts)",
-            "lanes      running=\(.lanes.running) waiting=\(.lanes.waiting) needs_input=\(.attention.needs_input)",
-            (.lanes.rows[]? | "  pid=\(.pid) \(.agent) cpu=\(.cpu) tty=\(.tty) up=\(.etime)"),
-            "codex      5h=\(.quota.codex.primary_used_percent // "?")% 7d=\(.quota.codex.secondary_used_percent // "?")% stale=\(.quota.codex.stale) source=\(.quota.codex.source // "-")",
-            "claude     5h_tokens=\(.quota.claude.window_tokens // 0) 7d_tokens=\(.quota.claude.week_tokens // 0) stale=\(.quota.claude.stale) source=\(.quota.claude.source // "-")"
-          ' "$cache"
-        fi
-      }
+            cmd_status() {
+              if [ ! -f "$cache" ]; then
+                echo "forge-agents: no cache yet; run forge-agents collect" >&2
+                exit 1
+              fi
+              if [ "''${1:-}" = "--json" ]; then
+                jq . "$cache"
+              else
+                jq -r '
+                  "as-of      \(.ts)",
+                  "lanes      running=\(.lanes.running) waiting=\(.lanes.waiting) needs_input=\(.attention.needs_input)",
+                  (.lanes.rows[]? | "  pid=\(.pid) \(.agent) cpu=\(.cpu) tty=\(.tty) up=\(.etime)"),
+                  "codex      5h=\(.quota.codex.primary_used_percent // "?")% 7d=\(.quota.codex.secondary_used_percent // "?")% stale=\(.quota.codex.stale) source=\(.quota.codex.source // "-")",
+                  "claude     5h_tokens=\(.quota.claude.window_tokens // 0) 7d_tokens=\(.quota.claude.week_tokens // 0) stale=\(.quota.claude.stale) source=\(.quota.claude.source // "-")"
+                ' "$cache"
+              fi
+            }
 
-      cmd_collect() {
-        mkdir -p "$state_root" "$(dirname "$lanes_out")"
-        now="$EPOCHSECONDS"
-        ts="$(iso_now)"
-        prev="$(cat "$cache" 2>/dev/null || echo '{}')"
-        m="$(cat "$meta" 2>/dev/null || echo '{}')"
+            cmd_collect() {
+              mkdir -p "$state_root" "$(dirname "$lanes_out")"
+              now="$EPOCHSECONDS"
+              ts="$(iso_now)"
+              prev="$(cat "$cache" 2>/dev/null || echo '{}')"
+              m="$(cat "$meta" 2>/dev/null || echo '{}')"
 
-        # Lane backoff: a failing provider lane is skipped for min(60*2^n, 3600)s.
-        should_run() { # $1=lane
-          jq -e --arg l "$1" --argjson now "$now" '
-            (.lanes[$l] // {failures: 0, last_attempt: 0}) as $s
-            | ($s.failures == 0) or ($now - $s.last_attempt) >= ([60 * pow(2; $s.failures), 3600] | min)
-          ' <<<"$m" >/dev/null
-        }
-
-        # --- agent lanes: process facts -----------------------------------
-        lanes_rows="$(/bin/ps -axo pid=,pcpu=,tt=,etime=,args= | awk '
-          {
-            n = split($5, parts, "/"); base = parts[n]
-            if (base == "claude" || base == "codex")
-              printf "%s\t%s\t%s\t%s\t%s\n", $1, $2, $3, $4, base
-          }' | jq -Rcs 'split("\n") | map(select(length > 0) | split("\t")
-            | {pid: (.[0] | tonumber), cpu: (.[1] | tonumber), tty: .[2], etime: .[3], agent: .[4],
-               state: (if (.[1] | tonumber) >= 5 then "running" else "waiting" end)})')"
-
-        # --- attention: hook-feed fold (Notification newer than 60m and not
-        # superseded by Stop/SessionEnd counts as needs_input) ---------------
-        att_cut="$(date -u -d '-60 minutes' +%Y-%m-%dT%H:%M:%SZ)"
-        needs="$(tail -n 500 "$feed" 2>/dev/null | jq -cs --arg cut "$att_cut" '
-          [group_by(.session_id)[] | max_by(.ts)
-           | select(.event == "Notification" and .ts >= $cut)] | length' 2>/dev/null || echo 0)"
-
-        # --- quota: codex provider snapshots --------------------------------
-        cx_prev="$(jq -c '.quota.codex // {}' <<<"$prev")"
-        cx="$cx_prev"; cx_ok=1
-        if should_run codex; then
-          cx_ok=0
-          while IFS= read -r f; do
-            rl="$(jq -c 'select(.payload.rate_limits.primary) | .payload.rate_limits' "$f" 2>/dev/null | tail -1)"
-            if [ -n "$rl" ]; then
-              cx="$(jq -c --arg ts "$ts" '{
-                provider: "codex", source: "provider", as_of: $ts, stale: false, error: null,
-                primary_used_percent: .primary.used_percent, primary_window_min: .primary.window_minutes,
-                primary_resets_at: .primary.resets_at,
-                secondary_used_percent: .secondary.used_percent, secondary_window_min: .secondary.window_minutes,
-                secondary_resets_at: .secondary.resets_at
-              }' <<<"$rl")"
-              cx_ok=1
-              break
-            fi
-          done < <(find "$HOME/.codex/sessions" -type f -name '*.jsonl' -newermt '-7 days' -printf '%T@ %p\n' 2>/dev/null \
-            | sort -rn | head -20 | cut -d' ' -f2-)
-          if [ "$cx_ok" = 0 ]; then
-            cx="$(jq -c '. + {stale: true, error: "no rate_limit snapshot within 7d"}' <<<"$cx_prev")"
-          fi
-        fi
-
-        # --- quota: claude local estimation ---------------------------------
-        cl_prev="$(jq -c '.quota.claude // {}' <<<"$prev")"
-        cl="$cl_prev"; cl_ok=1
-        if should_run claude; then
-          cl_ok=0
-          cutoff="$(date -u -d '-5 hours' +%Y-%m-%dT%H:%M:%SZ)"
-          win_tok="$(
-            find "$HOME/.claude/projects" -type f -name '*.jsonl' -newermt '-5 hours' -print0 2>/dev/null \
-              | while IFS= read -r -d "" f; do tail -n 2000 "$f" 2>/dev/null | grep '"usage"' || true; done \
-              | jq -n --arg c "$cutoff" \
-                '[inputs | select(type == "object" and .message.usage and ((.timestamp // "") >= $c))
-                  | .message.usage | ((.input_tokens // 0) + (.output_tokens // 0))] | add // 0' 2>/dev/null
-          )" || win_tok=""
-          week_tok="$(jq --arg d "$(date -u -d '-7 days' +%Y-%m-%d)" \
-            '[.dailyModelTokens[]? | select(.date >= $d) | .tokensByModel | add] | add // 0' \
-            "$HOME/.claude/stats-cache.json" 2>/dev/null)" || week_tok=""
-          week_asof="$(jq -r '.lastComputedDate // "-"' "$HOME/.claude/stats-cache.json" 2>/dev/null || echo -)"
-          if [ -n "$win_tok" ]; then
-            cl="$(jq -cn --arg ts "$ts" --argjson w "$win_tok" --argjson wk "''${week_tok:-0}" --arg wa "$week_asof" '{
-              provider: "claude", source: "local-estimate", as_of: $ts, stale: false, error: null,
-              window_min: 300, window_tokens: $w, burn_tokens_per_hour: (($w / 5) | floor),
-              week_tokens: $wk, week_as_of: $wa
-            }')"
-            cl_ok=1
-          else
-            cl="$(jq -c '. + {stale: true, error: "transcript scan failed"}' <<<"$cl_prev")"
-          fi
-        fi
-
-        # --- cache assembly --------------------------------------------------
-        tmp_cache="$cache.tmp.$$"
-        jq -cn --arg ts "$ts" --argjson lanes "$lanes_rows" --argjson needs "''${needs:-0}" \
-          --argjson cx "$cx" --argjson cl "$cl" '{
-          schema: "forge-agents/v1", ts: $ts,
-          lanes: {
-            rows: $lanes,
-            running: ([$lanes[] | select(.state == "running")] | length),
-            waiting: ([$lanes[] | select(.state == "waiting")] | length)
-          },
-          attention: {needs_input: $needs},
-          quota: {codex: $cx, claude: $cl}
-        }' >"$tmp_cache"
-        mv "$tmp_cache" "$cache"
-
-        # --- projections ------------------------------------------------------
-        # The zjstatus top bar is the ONE render surface; the collector owns
-        # role->palette styling (build-time hexes from the theme owner) and
-        # ships fully formatted payloads the bar renders verbatim (dynamic).
-        run_n="$(jq -r '.lanes.running' "$cache")"
-        wait_n="$(jq -r '.lanes.waiting' "$cache")"
-        agents_text="AI ''${run_n}▸ ''${wait_n}⋯"
-        [ "''${needs:-0}" = 0 ] || agents_text="$agents_text ''${needs}✋"
-        cx_p="$(jq -r '.quota.codex.primary_used_percent // empty' "$cache")"
-        cx_s="$(jq -r '.quota.codex.secondary_used_percent // empty' "$cache")"
-        cl_w="$(jq -r '.quota.claude.window_tokens // empty' "$cache")"
-        quota_text=""
-        if [ -n "$cx_p" ]; then quota_text="CX ''${cx_p%.*}%·''${cx_s%.*}%"; fi
-        if [ -n "$cl_w" ]; then
-          cl_h="$(jq -rn --argjson t "$cl_w" 'if $t >= 1000000 then "\(($t / 100000 | floor) / 10)M" elif $t >= 1000 then "\(($t / 1000 | floor))K" else "\($t)" end')"
-          quota_text="''${quota_text:+$quota_text }CL $cl_h"
-        fi
-        [ -n "$quota_text" ] || quota_text="quota -"
-
-        # Cell state colors: agents muted when idle, success while lanes run,
-        # attention on needs_input; quota escalates on the codex 5h window.
-        agents_fg="${roles.text.muted.hex}"
-        [ "$run_n" = 0 ] || agents_fg="${roles.state.success.hex}"
-        [ "''${needs:-0}" = 0 ] || agents_fg="${roles.state.attention.hex}"
-        quota_fg="${roles.text.muted.hex}"
-        if [ -n "$cx_p" ]; then
-          p="''${cx_p%.*}"
-          if [ "$p" -ge 90 ]; then quota_fg="${roles.state.danger.hex}"
-          elif [ "$p" -ge 70 ]; then quota_fg="${roles.state.warning.hex}"; fi
-        fi
-        mk_cell() { # $1=fg $2=attrs("" or ",bold") $3=text -> raised chip + surface gap (the bar plane)
-          printf '#[bg=${roles.surface.raised.hex},fg=%s%s] %s #[bg=${roles.surface.surface.hex}] ' "$1" "$2" "$3"
-        }
-        agents_cell="$(mk_cell "$agents_fg" ",bold" "$agents_text")"
-        quota_cell="$(mk_cell "$quota_fg" "" "$quota_text")"
-
-        # Workspace-graph lane rows: the forge-zellij agent-lane arm reads this.
-        jq -c '[.lanes.rows[] | {lane: "\(.agent)-\(.pid)", status: .state, pane_id: ""}]' \
-          "$cache" >"$lanes_out.tmp.$$"
-        mv "$lanes_out.tmp.$$" "$lanes_out"
-
-        # zjstatus pipe cells into every live session; a dead server is benign.
-        while IFS= read -r s; do
-          [ -n "$s" ] || continue
-          ${profileBin}/zellij --session "$s" pipe "zjstatus::pipe::pipe_agents::$agents_cell" 2>/dev/null || true
-          ${profileBin}/zellij --session "$s" pipe "zjstatus::pipe::pipe_quota::$quota_cell" 2>/dev/null || true
-        done < <(${profileBin}/zellij list-sessions -ns 2>/dev/null || true)
-
-        # Policy-gated desktop notification on a needs_input rise.
-        prev_needs="$(jq -r '.attention.needs_input // 0' <<<"$prev")"
-        last_notify="$(jq -r '.last_notify // 0' <<<"$m")"
-        notified=0
-        if ${lib.boolToString notifyPolicy.needsInput} \
-          && [ "''${needs:-0}" -gt "''${prev_needs:-0}" ] \
-          && [ $((now - last_notify)) -ge ${toString notifyPolicy.minIntervalSec} ]; then
-          /usr/bin/osascript -e "display notification \"''${needs} agent session(s) waiting for input\" with title \"Forge Agents\"" 2>/dev/null || true
-          notified=1
-        fi
-
-        # --- meta + transition receipt ---------------------------------------
-        jq -cn --argjson now "$now" --argjson m "$m" \
-          --argjson cx_ok "$cx_ok" --argjson cl_ok "$cl_ok" --argjson notified "$notified" '
-          ($m.lanes // {}) as $l
-          | {
-              last_notify: (if $notified == 1 then $now else ($m.last_notify // 0) end),
-              lanes: {
-                codex: (if $cx_ok == 1 then {failures: 0, last_attempt: $now}
-                        else {failures: ((($l.codex.failures // 0) + 1) | if . > 6 then 6 else . end), last_attempt: $now} end),
-                claude: (if $cl_ok == 1 then {failures: 0, last_attempt: $now}
-                         else {failures: ((($l.claude.failures // 0) + 1) | if . > 6 then 6 else . end), last_attempt: $now} end)
+              # Lane backoff: a failing provider lane is skipped for min(60*2^n, 3600)s.
+              should_run() { # $1=lane
+                jq -e --arg l "$1" --argjson now "$now" '
+                  (.lanes[$l] // {failures: 0, last_attempt: 0}) as $s
+                  | ($s.failures == 0) or ($now - $s.last_attempt) >= ([60 * pow(2; $s.failures), 3600] | min)
+                ' <<<"$m" >/dev/null
               }
-            }' >"$meta.tmp.$$"
-        mv "$meta.tmp.$$" "$meta"
 
-        # jq's // coerces false to the alternative; != false keeps a real false.
-        summary="needs=''${needs:-0} run=$run_n cx_stale=$(jq -r '.quota.codex.stale != false' "$cache") cl_stale=$(jq -r '.quota.claude.stale != false' "$cache")"
-        prev_summary="$(jq -r '"needs=\(.attention.needs_input // 0) run=\(.lanes.running // 0) cx_stale=\(.quota.codex.stale != false) cl_stale=\(.quota.claude.stale != false)"' <<<"$prev" 2>/dev/null || echo "")"
-        if [ "$summary" != "$prev_summary" ] || [ "$notified" = 1 ]; then
-          mkdir -p "$(dirname "$receipt_log")"
-          printf 'ts=%s\towner=forge-agents\tverb=collect\tresult=ok\t%s\tnotified=%s\n' \
-            "$ts" "''${summary// /$'\t'}" "$notified" >>"$receipt_log"
-        fi
-      }
+              # --- agent lanes: process facts -----------------------------------
+              lanes_rows="$(/bin/ps -axo pid=,pcpu=,tt=,etime=,args= | awk '
+                {
+                  n = split($5, parts, "/"); base = parts[n]
+                  if (base == "claude" || base == "codex")
+                    printf "%s\t%s\t%s\t%s\t%s\n", $1, $2, $3, $4, base
+                }' | jq -Rcs 'split("\n") | map(select(length > 0) | split("\t")
+                  | {pid: (.[0] | tonumber), cpu: (.[1] | tonumber), tty: .[2], etime: .[3], agent: .[4],
+                     state: (if (.[1] | tonumber) >= 5 then "running" else "waiting" end)})')"
 
-      case "$verb" in
-        collect) cmd_collect ;;
-        status) cmd_status "$@" ;;
-        *) usage ;;
-      esac
+              # --- attention: hook-feed fold joined against live process facts.
+              # A session needs input only when its latest event is Notification
+              # within the window AND its recorded tty still hosts an idle claude
+              # lane; one row per tty so stacked tabs never inflate the count, and
+              # the newest row keeps its identity so `focus` can route the click --
+              att_cut="$(date -u -d '-60 minutes' +%Y-%m-%dT%H:%M:%SZ)"
+              att="$(tail -n 500 "$feed" 2>/dev/null | jq -cs --arg cut "$att_cut" --argjson lanes "$lanes_rows" '
+                ([$lanes[] | select(.agent == "claude" and .state == "waiting") | .tty] | unique) as $idle
+                | [group_by(.session_id)[] | max_by(.ts)
+                   | select(.event == "Notification" and .ts >= $cut
+                            and ((.tty // "") as $t | $t != "" and ($idle | index($t))))]
+                | unique_by(.tty)
+                | {needs_input: length, latest: (max_by(.ts) // null)}' 2>/dev/null \
+                || echo '{"needs_input": 0, "latest": null}')"
+              needs="$(jq -r '.needs_input' <<<"$att")"
+
+              # --- quota: codex provider snapshots --------------------------------
+              cx_prev="$(jq -c '.quota.codex // {}' <<<"$prev")"
+              cx="$cx_prev"; cx_ok=1
+              if should_run codex; then
+                cx_ok=0
+                while IFS= read -r f; do
+                  rl="$(jq -c 'select(.payload.rate_limits.primary) | .payload.rate_limits' "$f" 2>/dev/null | tail -1)"
+                  if [ -n "$rl" ]; then
+                    cx="$(jq -c --arg ts "$ts" '{
+                      provider: "codex", source: "provider", as_of: $ts, stale: false, error: null,
+                      primary_used_percent: .primary.used_percent, primary_window_min: .primary.window_minutes,
+                      primary_resets_at: .primary.resets_at,
+                      secondary_used_percent: .secondary.used_percent, secondary_window_min: .secondary.window_minutes,
+                      secondary_resets_at: .secondary.resets_at
+                    }' <<<"$rl")"
+                    cx_ok=1
+                    break
+                  fi
+                done < <(find "$HOME/.codex/sessions" -type f -name '*.jsonl' -newermt '-7 days' -printf '%T@ %p\n' 2>/dev/null \
+                  | sort -rn | head -20 | cut -d' ' -f2-)
+                if [ "$cx_ok" = 0 ]; then
+                  cx="$(jq -c '. + {stale: true, error: "no rate_limit snapshot within 7d"}' <<<"$cx_prev")"
+                fi
+              fi
+
+              # --- quota: claude local estimation ---------------------------------
+              cl_prev="$(jq -c '.quota.claude // {}' <<<"$prev")"
+              cl="$cl_prev"; cl_ok=1
+              if should_run claude; then
+                cl_ok=0
+                cutoff="$(date -u -d '-5 hours' +%Y-%m-%dT%H:%M:%SZ)"
+                win_tok="$(
+                  find "$HOME/.claude/projects" -type f -name '*.jsonl' -newermt '-5 hours' -print0 2>/dev/null \
+                    | while IFS= read -r -d "" f; do tail -n 2000 "$f" 2>/dev/null | grep '"usage"' || true; done \
+                    | jq -n --arg c "$cutoff" \
+                      '[inputs | select(type == "object" and .message.usage and ((.timestamp // "") >= $c))
+                        | .message.usage | ((.input_tokens // 0) + (.output_tokens // 0))] | add // 0' 2>/dev/null
+                )" || win_tok=""
+                week_tok="$(jq --arg d "$(date -u -d '-7 days' +%Y-%m-%d)" \
+                  '[.dailyModelTokens[]? | select(.date >= $d) | .tokensByModel | add] | add // 0' \
+                  "$HOME/.claude/stats-cache.json" 2>/dev/null)" || week_tok=""
+                week_asof="$(jq -r '.lastComputedDate // "-"' "$HOME/.claude/stats-cache.json" 2>/dev/null || echo -)"
+                if [ -n "$win_tok" ]; then
+                  cl="$(jq -cn --arg ts "$ts" --argjson w "$win_tok" --argjson wk "''${week_tok:-0}" --arg wa "$week_asof" '{
+                    provider: "claude", source: "local-estimate", as_of: $ts, stale: false, error: null,
+                    window_min: 300, window_tokens: $w, burn_tokens_per_hour: (($w / 5) | floor),
+                    week_tokens: $wk, week_as_of: $wa
+                  }')"
+                  cl_ok=1
+                else
+                  cl="$(jq -c '. + {stale: true, error: "transcript scan failed"}' <<<"$cl_prev")"
+                fi
+              fi
+
+              # --- cache assembly --------------------------------------------------
+              tmp_cache="$cache.tmp.$$"
+              jq -cn --arg ts "$ts" --argjson lanes "$lanes_rows" --argjson att "$att" \
+                --argjson cx "$cx" --argjson cl "$cl" '{
+                schema: "forge-agents/v1", ts: $ts,
+                lanes: {
+                  rows: $lanes,
+                  running: ([$lanes[] | select(.state == "running")] | length),
+                  waiting: ([$lanes[] | select(.state == "waiting")] | length)
+                },
+                attention: $att,
+                quota: {codex: $cx, claude: $cl}
+              }' >"$tmp_cache"
+              mv "$tmp_cache" "$cache"
+
+              # --- projections ------------------------------------------------------
+              # The zjstatus top bar is the ONE render surface; the collector owns
+              # role->palette styling (build-time hexes from the theme owner) and
+              # ships fully formatted payloads the bar renders verbatim (dynamic).
+              run_n="$(jq -r '.lanes.running' "$cache")"
+              wait_n="$(jq -r '.lanes.waiting' "$cache")"
+              agents_text="AI ''${run_n}▸ ''${wait_n}⋯"
+              [ "''${needs:-0}" = 0 ] || agents_text="$agents_text ''${needs}✋"
+              cx_p="$(jq -r '.quota.codex.primary_used_percent // empty' "$cache")"
+              cx_s="$(jq -r '.quota.codex.secondary_used_percent // empty' "$cache")"
+              cl_w="$(jq -r '.quota.claude.window_tokens // empty' "$cache")"
+              quota_text=""
+              if [ -n "$cx_p" ]; then quota_text="CX ''${cx_p%.*}%·''${cx_s%.*}%"; fi
+              if [ -n "$cl_w" ]; then
+                cl_h="$(jq -rn --argjson t "$cl_w" 'if $t >= 1000000 then "\(($t / 100000 | floor) / 10)M" elif $t >= 1000 then "\(($t / 1000 | floor))K" else "\($t)" end')"
+                quota_text="''${quota_text:+$quota_text }CL $cl_h"
+              fi
+              [ -n "$quota_text" ] || quota_text="quota -"
+
+              # Cell state colors: agents muted when idle, success while lanes run,
+              # attention on needs_input; quota escalates on the codex 5h window.
+              agents_fg="${roles.text.muted.hex}"
+              [ "$run_n" = 0 ] || agents_fg="${roles.state.success.hex}"
+              [ "''${needs:-0}" = 0 ] || agents_fg="${roles.state.attention.hex}"
+              quota_fg="${roles.text.muted.hex}"
+              if [ -n "$cx_p" ]; then
+                p="''${cx_p%.*}"
+                if [ "$p" -ge 90 ]; then quota_fg="${roles.state.danger.hex}"
+                elif [ "$p" -ge 70 ]; then quota_fg="${roles.state.warning.hex}"; fi
+              fi
+              mk_cell() { # $1=fg $2=attrs("" or ",bold") $3=text -> raised chip + surface gap (the bar plane)
+                printf '#[bg=${roles.surface.raised.hex},fg=%s%s] %s #[bg=${roles.surface.surface.hex}] ' "$1" "$2" "$3"
+              }
+              agents_cell="$(mk_cell "$agents_fg" ",bold" "$agents_text")"
+              quota_cell="$(mk_cell "$quota_fg" "" "$quota_text")"
+
+              # Workspace-graph lane rows: the forge-zellij agent-lane arm reads this.
+              jq -c '[.lanes.rows[] | {lane: "\(.agent)-\(.pid)", status: .state, pane_id: ""}]' \
+                "$cache" >"$lanes_out.tmp.$$"
+              mv "$lanes_out.tmp.$$" "$lanes_out"
+
+              # zjstatus pipe cells into every live session; a dead server is benign.
+              while IFS= read -r s; do
+                [ -n "$s" ] || continue
+                ${profileBin}/zellij --session "$s" pipe "zjstatus::pipe::pipe_agents::$agents_cell" 2>/dev/null || true
+                ${profileBin}/zellij --session "$s" pipe "zjstatus::pipe::pipe_quota::$quota_cell" 2>/dev/null || true
+              done < <(${profileBin}/zellij list-sessions -ns 2>/dev/null || true)
+
+              # Policy-gated desktop notification on a needs_input rise; the click
+              # runs `forge-agents focus` (osascript notifications route clicks to
+              # Script Editor, so posting goes through terminal-notifier instead).
+              prev_needs="$(jq -r '.attention.needs_input // 0' <<<"$prev")"
+              last_notify="$(jq -r '.last_notify // 0' <<<"$m")"
+              notified=0
+              if ${lib.boolToString notifyPolicy.needsInput} \
+                && [ "''${needs:-0}" -gt "''${prev_needs:-0}" ] \
+                && [ $((now - last_notify)) -ge ${toString notifyPolicy.minIntervalSec} ]; then
+                ${pkgs.terminal-notifier}/bin/terminal-notifier -title "Forge Agents" \
+                  -message "''${needs} agent session(s) waiting for input" \
+                  -group forge-agents -execute "${profileBin}/forge-agents focus" >/dev/null 2>&1 || true
+                notified=1
+              fi
+
+              # --- meta + transition receipt ---------------------------------------
+              jq -cn --argjson now "$now" --argjson m "$m" \
+                --argjson cx_ok "$cx_ok" --argjson cl_ok "$cl_ok" --argjson notified "$notified" '
+                ($m.lanes // {}) as $l
+                | {
+                    last_notify: (if $notified == 1 then $now else ($m.last_notify // 0) end),
+                    lanes: {
+                      codex: (if $cx_ok == 1 then {failures: 0, last_attempt: $now}
+                              else {failures: ((($l.codex.failures // 0) + 1) | if . > 6 then 6 else . end), last_attempt: $now} end),
+                      claude: (if $cl_ok == 1 then {failures: 0, last_attempt: $now}
+                               else {failures: ((($l.claude.failures // 0) + 1) | if . > 6 then 6 else . end), last_attempt: $now} end)
+                    }
+                  }' >"$meta.tmp.$$"
+              mv "$meta.tmp.$$" "$meta"
+
+              # jq's // coerces false to the alternative; != false keeps a real false.
+              summary="needs=''${needs:-0} run=$run_n cx_stale=$(jq -r '.quota.codex.stale != false' "$cache") cl_stale=$(jq -r '.quota.claude.stale != false' "$cache")"
+              prev_summary="$(jq -r '"needs=\(.attention.needs_input // 0) run=\(.lanes.running // 0) cx_stale=\(.quota.codex.stale != false) cl_stale=\(.quota.claude.stale != false)"' <<<"$prev" 2>/dev/null || echo "")"
+              if [ "$summary" != "$prev_summary" ] || [ "$notified" = 1 ]; then
+                mkdir -p "$(dirname "$receipt_log")"
+                printf 'ts=%s\towner=forge-agents\tverb=collect\tresult=ok\t%s\tnotified=%s\n' \
+                  "$ts" "''${summary// /$'\t'}" "$notified" >>"$receipt_log"
+              fi
+            }
+
+            # Click-routing: land the operator on the pane that raised attention.
+            # Inner hop focuses the zellij pane; outer hop resolves the attached
+            # client's pty to its hosting wezterm pane or Terminal tab and raises it.
+            # Every run leaves a lane receipt: notification clicks execute headless,
+            # so the receipt log is the only witness when routing goes sideways.
+            focus_receipt() {
+              mkdir -p "$(dirname "$receipt_log")"
+              printf 'ts=%s\towner=forge-agents\tverb=focus\tlane=%s\ttty=%s\n' \
+                "$(iso_now)" "$1" "''${tty:-.}" >>"$receipt_log" 2>/dev/null || true
+            }
+            cmd_focus() {
+              row="$(jq -c '.attention.latest // empty' "$cache" 2>/dev/null || true)"
+              [ -n "$row" ] || row="$(tail -n 500 "$feed" 2>/dev/null | jq -cs '
+                [group_by(.session_id)[] | max_by(.ts) | select(.event == "Notification")]
+                | max_by(.ts) // empty' 2>/dev/null || true)"
+              zs="$(jq -r '.zellij_session // ""' <<<"$row" 2>/dev/null || true)"
+              zp="$(jq -r '.zellij_pane // ""' <<<"$row" 2>/dev/null || true)"
+              wp="$(jq -r '.wezterm_pane // ""' <<<"$row" 2>/dev/null || true)"
+              tp="$(jq -r '.term // ""' <<<"$row" 2>/dev/null || true)"
+              tty="$(jq -r '.tty // ""' <<<"$row" 2>/dev/null || true)"
+              wezbin="/Applications/WezTerm.app/Contents/MacOS/wezterm"
+              [ -x "$wezbin" ] || wezbin="$(command -v wezterm || true)"
+
+              # Inner hop: focus the exact zellij pane, then chase the attached
+              # client's pty (reattachment moves it, so the row's tty is advisory).
+              live_sessions="$(${profileBin}/zellij list-sessions -ns 2>/dev/null || true)"
+              if [ -n "$zs" ] && grep -qxF "$zs" <<<"$live_sessions"; then
+                [ -z "$zp" ] || ${profileBin}/zellij --session "$zs" action focus-pane-id "$zp" 2>/dev/null || true
+                ctty="$(/bin/ps -axo tty=,args= | awk -v s="$zs" \
+                  '$1 != "??" && $0 ~ /zellij/ && $0 !~ /--server/ && index($0, s) {print $1; exit}' || true)"
+                [ -z "$ctty" ] || tty="$ctty"
+              fi
+
+              # Outer hop: wezterm pane by pty, recorded wezterm pane, Terminal tab
+              # by pty, then a bare app raise as the last resort.
+              if [ -n "$wezbin" ] && [ -n "$tty" ]; then
+                pane="$("$wezbin" cli list --format json 2>/dev/null \
+                  | jq -r --arg t "/dev/$tty" '.[] | select(.tty_name == $t) | .pane_id' | head -n1 || true)"
+                if [ -n "$pane" ]; then
+                  "$wezbin" cli activate-pane --pane-id "$pane" 2>/dev/null || true
+                  /usr/bin/open -a WezTerm 2>/dev/null || true
+                  focus_receipt "wezterm-pty"
+                  return 0
+                fi
+              fi
+              if [ -n "$wp" ] && [ -n "$wezbin" ] && "$wezbin" cli activate-pane --pane-id "$wp" 2>/dev/null; then
+                /usr/bin/open -a WezTerm 2>/dev/null || true
+                focus_receipt "wezterm-pane"
+                return 0
+              fi
+              if [ "$tp" = "Apple_Terminal" ] && [ -n "$tty" ]; then
+                hit="$(/usr/bin/osascript 2>/dev/null <<OSA
+      tell application "Terminal"
+        repeat with w in windows
+          repeat with t in tabs of w
+            if (tty of t) is "/dev/$tty" then
+              set selected of t to true
+              set index of w to 1
+              activate
+              return "hit"
+            end if
+          end repeat
+        end repeat
+      end tell
+      return ""
+      OSA
+                )" || hit=""
+                if [ "$hit" = "hit" ]; then
+                  focus_receipt "terminal-tab"
+                  return 0
+                fi
+              fi
+              # App-level fallback honors the recorded host app; a TCC-blocked
+              # tab match still lands the operator on the right application.
+              if [ "$tp" = "Apple_Terminal" ]; then
+                /usr/bin/open -a Terminal 2>/dev/null || true
+                focus_receipt "terminal-app"
+              else
+                /usr/bin/open -a WezTerm 2>/dev/null || true
+                focus_receipt "wezterm-app"
+              fi
+            }
+
+            case "$verb" in
+              collect) cmd_collect ;;
+              status) cmd_status "$@" ;;
+              focus) cmd_focus ;;
+              *) usage ;;
+            esac
     '';
   };
 
@@ -1083,7 +1181,7 @@
   agentsCompletion = pkgs.writeTextDir "share/zsh/site-functions/_forge-agents" ''
     #compdef forge-agents
     _arguments \
-      '1:verb:(collect status)' \
+      '1:verb:(collect status focus)' \
       '--json[raw collector cache]'
   '';
 

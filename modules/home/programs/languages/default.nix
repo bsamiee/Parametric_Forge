@@ -14,6 +14,7 @@
     ./scientific-tools.nix
 
     # Languages
+    ./apple-tools.nix
     ./lua-tools.nix
     ./node-tools.nix
     ./python-tools.nix

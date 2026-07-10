@@ -355,7 +355,7 @@
       javascriptreact = ["prettier"];
       typescript = ["prettier"];
       typescriptreact = ["prettier"];
-      sql = ["pg_format"];
+      sql = ["sqruff"];
     };
     lint = {
       nix = ["deadnix" "statix"];

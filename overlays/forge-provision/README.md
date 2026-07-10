@@ -51,15 +51,17 @@ PostgreSQL server extensions are Docker-owned by this command: `check` probes, `
 
 ## [07]-[ENVIRONMENT]
 
-| [INDEX] | [VARIABLE]                                                                     | [OWNS]                                                         |
-| :-----: | :----------------------------------------------------------------------------- | :------------------------------------------------------------- |
-|  [01]   | `FORGE_PROVISION_ROOT`                                                         | Provision root override; otherwise the Git worktree resolves   |
-|  [02]   | `FORGE_PROVISION_PROJECT` / `FORGE_PROVISION_INSTANCE`                         | Project key override and instance separation                   |
-|  [03]   | `FORGE_PROVISION_AUTH`                                                         | `auto-root` (generated secret file) or `trust-loopback`        |
-|  [04]   | `FORGE_PROVISION_PORT_POLICY` / `_PORT_RANGE` / `_PORT_EXCLUDE` / `_PORT_BASE` | Port allocation policy surface                                 |
-|  [05]   | `FORGE_PROVISION_PGDUCKDB` / `_PG_CRON` / `_VECTORSCALE`                       | Analytics service gate; pg_cron and vectorscale creation gates |
-|  [06]   | `FORGE_PROVISION_TIMESCALE_*` / `_SEARCH_*` / `_PGDUCKDB_*`                    | Per-service image and port overrides from `services.json` rows |
-|  [07]   | `FORGE_PROVISION_LOCK_WAIT_SECONDS` / `_LOCK_TTL_SECONDS`                      | Lock acquisition deadline and stale-lock expiry                |
-|  [08]   | `FORGE_PROVISION_COMPOSE_PARALLEL_LIMIT` / `_MAX_ACTIVE_PROJECTS`              | Compose parallelism and machine-wide project cap               |
-|  [09]   | `FORGE_PROVISION_ALLOW_EPHEMERAL_PORTS` / `_ALLOW_NON_COLIMA_DOCKER`           | Safety-gate overrides, default off                             |
-|  [10]   | `FORGE_PROVISION_SHARE`                                                        | Packaged catalog share-directory override; packaging-internal  |
+Every variable carries the `FORGE_PROVISION_` prefix; rows name the suffix alone.
+
+| [INDEX] | [VARIABLE]                                                  | [OWNS]                                                         |
+| :-----: | :---------------------------------------------------------- | :------------------------------------------------------------- |
+|  [01]   | `ROOT`                                                      | Provision root override; otherwise the Git worktree resolves   |
+|  [02]   | `PROJECT` / `INSTANCE`                                      | Project key override and instance separation                   |
+|  [03]   | `AUTH`                                                      | `auto-root` (generated secret file) or `trust-loopback`        |
+|  [04]   | `PORT_POLICY` / `PORT_RANGE` / `PORT_EXCLUDE` / `PORT_BASE` | Port allocation policy surface                                 |
+|  [05]   | `PGDUCKDB` / `PG_CRON` / `VECTORSCALE`                      | Analytics service gate; pg_cron and vectorscale creation gates |
+|  [06]   | `TIMESCALE_*` / `SEARCH_*` / `PGDUCKDB_*`                   | Per-service image and port overrides from `services.json` rows |
+|  [07]   | `LOCK_WAIT_SECONDS` / `LOCK_TTL_SECONDS`                    | Lock acquisition deadline and stale-lock expiry                |
+|  [08]   | `COMPOSE_PARALLEL_LIMIT` / `MAX_ACTIVE_PROJECTS`            | Compose parallelism and machine-wide project cap               |
+|  [09]   | `ALLOW_EPHEMERAL_PORTS` / `ALLOW_NON_COLIMA_DOCKER`         | Safety-gate overrides, default off                             |
+|  [10]   | `SHARE`                                                     | Packaged catalog share-directory override; packaging-internal  |

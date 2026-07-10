@@ -1,8 +1,8 @@
-# Title         : default.nix
+# Title         : loc.nix
 # Author        : Bardia Samiee
 # Project       : Parametric Forge
 # License       : MIT
-# Path          : modules/home/scripts/analysis/scc/default.nix
+# Path          : modules/home/scripts/loc.nix
 # ----------------------------------------------------------------------------
 # scc code counter + loc wrapper for grouped per-file / per-folder LOC
 {pkgs, ...}: let

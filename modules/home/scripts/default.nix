@@ -4,7 +4,7 @@
 # License       : MIT
 # Path          : modules/home/scripts/default.nix
 # ----------------------------------------------------------------------------
-# Scripts module aggregator; integration glue rides the desktop app graph.
+# Scripts module aggregator; the terminal rail rides the desktop app graph.
 {
   host,
   lib,
@@ -12,8 +12,8 @@
   ...
 }: {
   imports =
-    [./analysis]
-    ++ lib.optionals (host.os == "darwin") [./integration];
+    [./fmt.nix ./loc.nix]
+    ++ lib.optionals (host.os == "darwin") [./terminal.nix];
 
   home.packages = [
     pkgs.forge-provision

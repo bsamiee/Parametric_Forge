@@ -59,8 +59,12 @@
               exec "$project_root/.venv/bin/python" "$@"
             fi
 
-            export FORGE_PYTHON_SHIM_ACTIVE=1
-            exec uv --project "$project_root" run python "$@"
+            # The uv lane needs a locked project; a config-only pyproject
+            # (no lock) must not trigger dependency resolution or venv creation.
+            if [[ -f "$project_root/uv.lock" ]]; then
+              export FORGE_PYTHON_SHIM_ACTIVE=1
+              exec uv --project "$project_root" run python "$@"
+            fi
           fi
 
           export UV_PYTHON_PREFERENCE="only-system"
@@ -124,7 +128,12 @@
             if tool_path="$(_resolve_project_tool "$project_root")"; then
               exec "$tool_path" "$@"
             fi
-            exec uv --project "$project_root" run "${name}" "$@"
+            # The uv lane needs a locked project; a config-only pyproject
+            # (no lock) falls through to the store binary, which still reads
+            # the project's [tool.*] law from the working tree.
+            if [[ -f "$project_root/uv.lock" ]]; then
+              exec uv --project "$project_root" run "${name}" "$@"
+            fi
           fi
 
           export UV_PYTHON_PREFERENCE="only-system"
@@ -147,6 +156,36 @@
     '';
   };
 in {
+  # Machine-level fallback style: ruff and mypy resolve their XDG user config
+  # only when upward discovery finds no project config, so project law always
+  # wins and ad-hoc scripts inherit the house style. ty needs no user row —
+  # strictness is project law and its user-level config merges rather than yields.
+  # uv needs no user row — its defaults (managed pythons, automatic downloads)
+  # already are the house policy, and a row restating defaults is dead config.
+  xdg.configFile = {
+    "ruff/ruff.toml".text = ''
+      line-length = 150
+      indent-width = 4
+
+      [format]
+      line-ending = "lf"
+      docstring-code-format = true
+      skip-magic-trailing-comma = true
+
+      [lint]
+      select = ["E4", "E7", "E9", "F", "B", "I", "SIM", "UP", "RUF"]
+
+      # The formatter owns trailing commas; default-true here fights
+      # skip-magic-trailing-comma and warns on every format run.
+      [lint.isort]
+      split-on-trailing-comma = false
+    '';
+    "mypy/config".text = ''
+      [mypy]
+      pretty = true
+    '';
+  };
+
   home.packages = with pkgs; [
     # --- Python Runtime (Canonical Source) ----------------------------------
     (projectPython "python")
