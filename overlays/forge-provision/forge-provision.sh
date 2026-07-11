@@ -2232,7 +2232,7 @@ cmd_up() {
     preflight_ports
     local previous_compose=""
     [[ -f "$compose_file" ]] && previous_compose="$compose_file"
-    local generation apply_output compose_up_log service
+    local generation apply_output compose_up_log service compose_cause
     local auto_retry_count=0
     while true; do
         generation="$(create_generation)"
@@ -2269,9 +2269,11 @@ cmd_up() {
         while IFS= read -r service; do
             readiness_report "$service"
         done < <(enabled_services)
+        # The last daemon error line rides the envelope (bounded, redacted) so JSON consumers see the cause stderr suppression would hide.
+        compose_cause="$(awk '/[Ee]rror/ { cause = $0 } END { print substr(cause, 1, 300) }' "$compose_up_log" 2>/dev/null || true)"
         rm -f -- "$compose_up_log"
         restore_previous_generation "$previous_compose" "$generation/compose.yaml" || true
-        die "Docker Compose up failed; generation was not published"
+        die "Docker Compose up failed; generation was not published${compose_cause:+ cause=$compose_cause}"
     done
     require_enabled_services
     wait_services
@@ -2614,6 +2616,9 @@ cmd_doctor() {
             endpoint_path_exists="false"
         fi
     fi
+    # Nested facet verdicts stay typed, and a rejected endpoint or absent socket also surfaces as a top-level warning row.
+    [[ "$policy_status" == "ok" ]] || warn "Docker endpoint policy rejected: $policy_reason"
+    [[ "$endpoint_path_exists" != "false" ]] || warn "Docker unix endpoint socket is absent"
     if [[ -f "$host_docker_config" ]]; then
         IFS=$'\x1f' read -r host_creds_store host_cred_helpers < <(
             jq -r -f "$(catalog_path jq/host-creds.jq)" "$host_docker_config" 2>/dev/null
@@ -2835,19 +2840,21 @@ main() {
             die_usage "verify is retired; use check for read-only verification or apply for mutating extension creation"
             ;;
     esac
-    if [[ "$output_json" == true && -n "$command" ]]; then
-        command_supports_json "$command" || die_usage "$command does not support JSON output"
-    fi
     case "$command" in
         help | --help | -h | "")
+            [[ "$output_json" != true ]] || die_usage "${command:-help} does not support JSON output"
             usage
             return 0
             ;;
     esac
+    # Existence gates before JSON capability so an unknown verb dies as unknown, never as a JSON-support refusal.
     [[ -v command_handler["$command"] ]] || {
         usage >&2
         die_usage "unknown command: $command"
     }
+    if [[ "$output_json" == true ]]; then
+        command_supports_json "$command" || die_usage "$command does not support JSON output"
+    fi
     if [[ "$diagnostic_json" == true ]] && ! command_supports_diagnostic_json "$command"; then
         local verb diagnostic_verbs=""
         for verb in "${command_order[@]}"; do
