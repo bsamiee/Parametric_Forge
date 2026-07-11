@@ -7,7 +7,6 @@
 # Estate font owner: family catalog, typography roles, fallback chains, per-family metrics, and renderer projections. Every
 # type consumer interpolates these rows; no consumer carries a private family string. The darwin module installs files; this owner names families
 # and drives renderers — it never reads config.fonts.packages.
-
 {
   config,
   host,

@@ -5,7 +5,6 @@
 # Path          : modules/home/programs/shell-tools/forge-tools.nix
 # ----------------------------------------------------------------------------
 # Agent-safe Forge maintenance entrypoints: deploy rail, hygiene board, doctors, parity, acceptance choreography.
-
 {
   config,
   lib,

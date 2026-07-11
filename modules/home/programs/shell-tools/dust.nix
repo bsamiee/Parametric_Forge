@@ -5,13 +5,11 @@
 # Path          : modules/home/programs/shell-tools/dust.nix
 # ----------------------------------------------------------------------------
 # Modern disk usage analyzer (du replacement)
-
 {pkgs, ...}: let
   tomlFormat = pkgs.formats.toml {};
 
   dustConfig = {
     reverse = true; # Largest entries print first
-    ignore-hidden = true;
     output-format = "si";
     skip-total = true; # Suppress the root total row
   };

@@ -10,7 +10,6 @@
 # keybindings) and the manifest-rostered extension surface. The keybindings rail renders the chord owner's vscode rows into a forge-keys tail
 # block: user rules evaluate bottom-to-top, so the managed tail is the authority position and hand experiments above it coexist. Both rails
 # target the Default profile; a custom full profile reads profiles/<id>/ and never sees these blocks.
-
 {
   config,
   lib,

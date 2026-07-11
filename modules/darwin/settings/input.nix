@@ -5,7 +5,6 @@
 # Path          : modules/darwin/settings/input.nix
 # ----------------------------------------------------------------------------
 # Input device configuration for keyboard, mouse, and trackpad.
-
 {lib, ...}: let
   inherit (lib) mkDefault;
 in {
@@ -34,6 +33,9 @@ in {
         TrackpadPinch = mkDefault true;
         TrackpadRotate = mkDefault true;
         TrackpadThreeFingerVertSwipeGesture = mkDefault 2;
+        TrackpadThreeFingerHorizSwipeGesture = mkDefault 2;
+        TrackpadCornerSecondaryClick = mkDefault 0;
+        TrackpadTwoFingerDoubleTapGesture = mkDefault true; # smart zoom; bool owner projects both trackpad domains
         TrackpadFourFingerVertSwipeGesture = mkDefault 2;
         TrackpadFourFingerHorizSwipeGesture = mkDefault 2;
         TrackpadFourFingerPinchGesture = mkDefault 2;
@@ -47,6 +49,9 @@ in {
       magicmouse = {
         MouseButtonMode = mkDefault "TwoButton";
       };
+      # --- [FN_KEY]
+      # Fn cycles the three input sources (U.S., Persian-ISIRI 2901, Arabic); holding Fn exposes the hardware F1-F12 row per fnState below.
+      hitoolbox.AppleFnUsageType = mkDefault "Change Input Source";
       # --- [GLOBAL_INPUT_BEHAVIOR]
       NSGlobalDomain = {
         InitialKeyRepeat = mkDefault 15;
@@ -73,7 +78,6 @@ in {
       CustomUserPreferences = {
         # Trackpad keys without first-class nix-darwin owners; the rest live on system.defaults.trackpad.*.
         "com.apple.AppleMultitouchTrackpad" = {
-          TrackpadTwoFingerDoubleTapGesture = mkDefault 1; # first-class owner is bool-only; keep int here
           TrackpadFiveFingerPinchGesture = mkDefault 2;
           TrackpadHandResting = mkDefault true;
         };

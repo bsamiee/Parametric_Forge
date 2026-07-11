@@ -5,7 +5,6 @@
 # Path          : modules/home/environments/applications.nix
 # ----------------------------------------------------------------------------
 # User application environment variables
-
 {config, ...}: {
   home.sessionVariables = {
     # --- [WEZTERM]

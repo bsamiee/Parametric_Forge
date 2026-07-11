@@ -6,7 +6,6 @@
 # ----------------------------------------------------------------------------
 # Dual-receipt emit fold for every receipt-bearing kernel: one row spec in (a k=v TSV row or a JSON object), one human TSV line plus a JSONL sibling
 # out with identical envelope keys and JSON-number numerics. The host script sets receipt_log and receipt_surface and carries jq in runtimeInputs.
-
 ''
   append_receipt() { # $1: "k=v<TAB>k=v" row or one-line JSON object
     local tsv json

@@ -6,7 +6,6 @@
 # ----------------------------------------------------------------------------
 # Register rail owner: one row grammar projected to fzf browse commands, Television durable channels, XDG register JSON, and zsh completions.
 # Previews are read-only evidence; every browse run emits one typed receipt.
-
 {
   config,
   host,
@@ -22,6 +21,7 @@
   fleet = import ./mcp-fleet.nix {
     inherit profileBin;
     homeDir = config.home.homeDirectory;
+    sshBin = "${pkgs.openssh}/bin/ssh";
   };
 
   # --- [NAME_POLICY_ROWS]
@@ -145,14 +145,8 @@
     };
   catalogJson = pkgs.writeText "forge-browse-catalog.json" (builtins.toJSON catalogRows);
 
-  # Per-browser fzf projection: theme rides each generated command, never a global default (global fzf options stay theme-only in fzf.nix).
-  fzfColorRows = [
-    "--color=fg:${palette.foreground.hex},fg+:${palette.background.hex},bg:${palette.background.hex},bg+:${palette.cyan.hex},selected-fg:${palette.background.hex},selected-bg:${palette.cyan.hex}"
-    "--color=hl:${palette.green.hex},hl+:${palette.magenta.hex},info:${palette.comment.hex},marker:${palette.green.hex}"
-    "--color=prompt:${palette.magenta.hex},spinner:${palette.green.hex},pointer:${palette.magenta.hex},header:${palette.comment.hex}"
-    "--color=gutter:${palette.background.hex},border:${palette.cyan.hex},separator:${palette.pink.hex},scrollbar:${palette.pink.hex}"
-    "--color=preview-fg:${palette.foreground.hex},preview-scrollbar:${palette.pink.hex},label:${palette.magenta.hex},query:${palette.foreground.hex}"
-  ];
+  # Per-browser fzf theme: the theme owner's shared fzf vocabulary rides every generated command (global fzf options stay theme-only in fzf.nix).
+  fzfColorRows = config.forge.theme.projections.fzfColorRows;
   fzfBaseArgs = fzfColorRows ++ ["--border=sharp" "--layout=reverse" "--info=right" "--highlight-line" "--prompt=❯ " "--pointer=❯"];
   # Bash array literal injected into each generated script; consumers expand "''${fzf_base[@]}" so every browser carries the theme per command.
   fzfArgsBash = "fzf_base=(\n${lib.concatMapStringsSep "\n" (a: "        ${lib.escapeShellArg a}") fzfBaseArgs}\n      )";
@@ -308,14 +302,15 @@
           'map({key: ($home + "/" + .path), value: {kind, grain: (.grain // "kv")}}) | from_entries' "$registry")"
         tail -n 0 -F "''${logs[@]}" 2>/dev/null \
           | gawk 'match($0, /^==> (.+) <==$/, m) {f = m[1]; next} f != "" {print f "\t" $0; fflush()}' \
-          | jq -Rc --unbuffered --argjson map "$pathmap" "$jq_defs"'
+          | jq -Rrc --unbuffered --argjson map "$pathmap" "$jq_defs"'
               (split("\t")[0]) as $path
               | ($map[$path] // empty) as $row
               | (sub("^[^\t]*\t"; "")) as $line
               | (if $row.grain == "json" then ($line | fromjson? // {}) else ($line | kv_row) end)
               | . + {kind: $row.kind}
               | select(urgency == "high")
-              | "!! \(.kind) \(.result // .state // .status // "fail")\(if .ts then " " + .ts else "" end)"' \
+              | ((.ts // "" | fromdateiso8601? | localtime | strftime("%H:%M")) // "") as $hm
+              | "!! \(.kind | ascii_upcase) \(.result // .state // .status // "fail")\(if $hm != "" then " · " + $hm else "" end)"' \
           | while IFS= read -r msg; do # streaming boundary: live failure push
               while IFS= read -r s; do
                 [ -n "$s" ] || continue

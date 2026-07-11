@@ -181,7 +181,7 @@ Without `schema`, `agent()` returns the subagent's final text verbatim. With `sc
 |  [05]   | a full model ID | passed through unchanged                         |
 |  [06]   | omitted         | the session's main-loop model                    |
 
-There is no validation: a typo like `'sonet'` passes through verbatim and the agent fails later at the API call. Spell the alias exactly. Omit `model` for judgment-heavy work so it inherits the capable session model; drop cheap, high-volume, mechanical leaf work to `'sonnet'`, or route a self-contained lane to gpt-5.5 through the codex-lanes reference. `effort` is the orthogonal axis — a cheap model still reasons hard at `'high'`; match `'max'`/`'xhigh'` to synthesis and adversarial judgment, `'low'` to mechanical leaf work.
+There is no validation: a typo like `'sonet'` passes through verbatim and the agent fails later at the API call. Spell the alias exactly. Omit `model` for judgment-heavy work so it inherits the capable session model; drop cheap, high-volume, mechanical leaf work to `'sonnet'`, or route a self-contained lane to codex (terra default, sol for the hardest legs) through the codex-lanes reference. `effort` is the orthogonal axis — a cheap model still reasons hard at `'high'`; match `'max'`/`'xhigh'` to synthesis and adversarial judgment, `'low'` to mechanical leaf work.
 
 Not how the model gets set: `meta.phases[].model` (display-only), and the `CLAUDE_CODE_SUBAGENT_MODEL` env var — when set it silently overrides every per-call `model` for the whole session (a user/CI knob the validation section exploits).
 
@@ -189,14 +189,7 @@ Not how the model gets set: `meta.phases[].model` (display-only), and the `CLAUD
 
 The runtime compiles the schema with AJV, synthesizes a hidden `StructuredOutput` tool whose input is that schema, and tells the subagent it must call it exactly once. The call is AJV-validated; on a mismatch the agent is handed the error and retries; a subagent that finishes without calling it is nudged up to twice more before failing. The value `agent()` returns is the validated tool input.
 
-Two validators sit behind the two schema surfaces a workflow touches — author every schema to the STRICTER profile so one shape serves both without edits:
-
-| [INDEX] | [PRODUCER]                   | [VALIDATOR]           | [REQUIREMENT]                                                                 |
-| :-----: | :--------------------------- | :-------------------- | :---------------------------------------------------------------------------- |
-|  [01]   | `agent(…, { schema })`       | AJV in the runtime    | Tolerates optional props and open objects; strict is convention, not enforced |
-|  [02]   | `codex exec --output-schema` | OpenAI strict profile | `additionalProperties: false` everywhere; every key in `required`             |
-
-- `codex exec --output-schema`: conditional fields are required-but-empty
+`agent(…, { schema })` is the workflow's one validation boundary — a codex lane's product arrives as tool-result text under a prose JSON contract and the WRAPPER's receipt schema validates what crosses the wire (codex-lanes reference). Keep schemas strict by convention: `additionalProperties: false`, every key in `required`, conditional fields required-but-empty — the same shape then serves a rare `codex exec --output-schema` leg (a machine parsing a report blind, OpenAI strict profile enforced) without edits.
 
 Rules for computing data properly: use `schema` for anything a later line reads a field off of — free text only when the result passes whole into another prompt; keep schemas small, strict, and `required`-tight, defined as `const`s in the body (never inside `meta`); hand data between stages by stringifying into the next prompt (the orchestrator shares no memory with the subagent); a skipped or failed agent returns `null` even with a `schema`.
 

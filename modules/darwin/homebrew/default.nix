@@ -5,7 +5,6 @@
 # Path          : modules/darwin/homebrew/default.nix
 # ----------------------------------------------------------------------------
 # Homebrew configuration and aggregator
-
 {
   config,
   lib,

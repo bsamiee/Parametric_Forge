@@ -5,7 +5,6 @@
 # Path          : modules/home/aliases/containers.nix
 # ----------------------------------------------------------------------------
 # Container and Kubernetes register rows.
-
 [
   # --- [DOCKER]
   {

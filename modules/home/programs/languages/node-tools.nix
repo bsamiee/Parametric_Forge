@@ -5,7 +5,6 @@
 # Path          : modules/home/programs/languages/node-tools.nix
 # ----------------------------------------------------------------------------
 # Node.js runtime and package tooling.
-
 {
   config,
   pkgs,

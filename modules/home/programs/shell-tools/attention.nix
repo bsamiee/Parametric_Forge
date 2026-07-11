@@ -8,7 +8,6 @@
 # event-spine projection, and the standing-alert predicate rows. The forge-agents collector folds these into bar cells
 # and notifications; the forge-receipts query plane folds the same defs into its SQL corpus and live push bus — one
 # vocabulary, many renderers. jq fragments compose into consumer programs; alert predicates judge the LAST parsed receipt row of their kind.
-
 {sshHosts ? {}}: let
   # Spine vocabulary: ONE ordered column vector derives the jq projection (spineJq) and the DuckDB schema clause (spineColumnsSql); every column lands
   # VARCHAR — scalars stringified so a thin or single-kind corpus can never split a column's inferred type (an all-null column infers JSON and kills

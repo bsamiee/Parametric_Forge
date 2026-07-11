@@ -7,7 +7,6 @@
 # Yazi file workbench owner: store-owned plugin rows, typed previewer/opener/fetcher/preloader rows generating yazi.toml, SFTP VFS mounts projected
 # from the estate SSH rows, and the diagnostic previewer kernel. File-action routing is rows here, never inline TOML literals; upstream-default rows
 # are deleted, so every settings row below diverges from the 26.5.6 preset.
-
 {
   config,
   lib,

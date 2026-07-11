@@ -5,7 +5,6 @@
 # Path          : modules/darwin/settings/default.nix
 # ----------------------------------------------------------------------------
 # Darwin settings aggregator
-
 {...}: {
   imports = [
     ./input.nix

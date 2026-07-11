@@ -6,7 +6,6 @@
 # ----------------------------------------------------------------------------
 # NixOS system surface: boot, network, SSH, users, container runtime, and the Atuin sync server. Owns nothing Darwin owns —
 # Homebrew, launchd, and macOS defaults never generalize here.
-
 {
   host,
   pkgs,

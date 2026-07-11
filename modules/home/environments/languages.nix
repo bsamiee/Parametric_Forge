@@ -5,7 +5,6 @@
 # Path          : modules/home/environments/languages.nix
 # ----------------------------------------------------------------------------
 # Programming language toolchains and environments
-
 {
   config,
   forgeToolchainEnvFor,

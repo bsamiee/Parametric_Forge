@@ -6,7 +6,7 @@ description: >-
     synthesis across competing designs, ambiguity reduction into crisp constraints, alternate
     approaches and counterexample hunts, and redacted log or dataset distillation. Use when a
     task gains from an external second model or names Gemini, Antigravity, Google Ultra, or
-    Nano Banana image judgment. gpt-5.5 offload belongs to the codex skill; delegation across
+    Nano Banana image judgment. gpt-5.6 offload belongs to the codex skill; delegation across
     Claude's own surfaces belongs to agent-dispatch.
 ---
 

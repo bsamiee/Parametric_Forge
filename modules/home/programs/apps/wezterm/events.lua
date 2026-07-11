@@ -35,6 +35,11 @@ local handlers = {
         if gui then
             gui:maximize()
         end
+        -- Bar-cell warmup: the fresh session's pipe cells (identity chip included) land as soon as the zellij server answers,
+        -- instead of waiting out the collector's minute cadence. The collect lock makes an overlapping run a no-op.
+        wezterm.time.call_after(2, function()
+            wezterm.background_child_process({ rows.paths.forge_agents, "collect" })
+        end)
     end,
 
     ["mux-startup"] = function()

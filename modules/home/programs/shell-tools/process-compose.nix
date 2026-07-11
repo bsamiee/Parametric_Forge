@@ -6,7 +6,6 @@
 # ----------------------------------------------------------------------------
 # Non-container process orchestration for project-local service meshes; the package row lives in the owner table. Container-tools owns the
 # container/Kubernetes axis and launchd owns durable machine services; process-compose is a project-owned foreground runner, so shell-tools owns it.
-
 {
   config,
   lib,

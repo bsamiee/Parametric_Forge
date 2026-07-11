@@ -5,7 +5,6 @@
 # Path          : modules/darwin/homebrew/brews.nix
 # ----------------------------------------------------------------------------
 # Homebrew CLI tools and formulae
-
 _: {
   homebrew.brews = [
     # --- [SYSTEM_UTILITIES]

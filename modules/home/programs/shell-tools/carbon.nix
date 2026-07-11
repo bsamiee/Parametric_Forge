@@ -5,7 +5,6 @@
 # Path          : modules/home/programs/shell-tools/carbon.nix
 # ----------------------------------------------------------------------------
 # Beautiful code screenshot generation themed from the estate palette owner
-
 {
   config,
   pkgs,

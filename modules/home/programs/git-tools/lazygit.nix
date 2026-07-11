@@ -5,7 +5,6 @@
 # Path          : modules/home/programs/git-tools/lazygit.nix
 # ----------------------------------------------------------------------------
 # Lazygit TUI configuration themed from the estate palette owner
-
 {config, ...}: let
   inherit (config.forge.theme) palette;
 in {

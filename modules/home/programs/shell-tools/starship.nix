@@ -5,7 +5,6 @@
 # Path          : modules/home/programs/shell-tools/starship.nix
 # ----------------------------------------------------------------------------
 # Prompt themed from the estate palette owner
-
 {
   config,
   lib,

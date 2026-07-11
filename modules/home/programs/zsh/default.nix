@@ -5,7 +5,6 @@
 # Path          : modules/home/programs/zsh/default.nix
 # ----------------------------------------------------------------------------
 # Zsh configuration orchestrator
-
 {config, ...}: {
   imports = [
     ./init.nix

@@ -5,7 +5,6 @@
 # Path          : modules/home/environments/shell.nix
 # ----------------------------------------------------------------------------
 # Shell configuration environment variables
-
 {
   config,
   forgeToolchainEnvFor,

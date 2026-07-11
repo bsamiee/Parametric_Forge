@@ -6,7 +6,6 @@
 # ----------------------------------------------------------------------------
 # nixd estate-portal owner (nix-community/nixd, the LSP — distinct from the determinate-nixd daemon). Option-completion expressions generate
 # once from the host context; every LSP client (Neovim rows, Claude marketplace) consumes these generated rows.
-
 {
   host,
   lib,

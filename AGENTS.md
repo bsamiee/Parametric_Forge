@@ -13,7 +13,7 @@
 
 ## [02]-[SKILL_MASTERS]
 
-- `.claude/skills/` here are the estate masters for harness skills; `~/.codex/skills/` and sibling-repo copies are mirrors. A skill edit lands in the master and propagates by copy — never edit a mirror, never build sync tooling.
+- `.claude/skills/` here are the estate masters for harness skills; sibling-repo copies and Codex-admitted `~/.codex/skills/` are mirrors. Claude-caller skills such as `codex` remain Claude-only to prevent recursive triggering. A skill edit lands in the master and propagates by copy — never edit a mirror, never build sync tooling.
 - `.claude/hooks/setup-env.sh` is the canonical SessionStart hook, byte-identical in every estate repo and mastered here; hook fixes land here first.
 - The byte-copied mirror set spans `.claude/{skills,hooks,scripts,agents}`, `commands/docs.md`, `docs/stacks/{python,typescript}/`, and the three prose standards (`information-structure`, `formatting`, `style-guide`); sibling copies are read-only mirrors.
 
@@ -22,7 +22,7 @@
 - Prefer Nix/Home Manager owned executables and wrappers over aliases or interactive shell functions.
 - `fmt [--check|--json] [target...]` is the universal formatter front door (owner: `modules/home/scripts/fmt.nix`); each file type routes to its owning formatter through the never-shadow PATH wrappers, and repo law (`pyproject.toml`, `biome.json`, treefmt rows) always outranks the machine XDG fallbacks.
 - Python work uses the project or tool-owner interpreter (`uv run`, `.venv/bin/python`, or the repo-declared command), never ambient `python3`, unless the task is explicitly the machine Python.
-- Resolve current nixpkgs and Home Manager option behavior through `Context7` or module source, never recall.
+- Nix option and package truth routes through the `nixos` MCP first, never recall; `CLAUDE.md` [03] carries the tool contract and its division of labor with `context7` and module source.
 
 ## [04]-[PROVISIONING_AND_LAUNCHERS]
 

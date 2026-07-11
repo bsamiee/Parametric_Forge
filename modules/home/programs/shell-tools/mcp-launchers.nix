@@ -7,7 +7,6 @@
 # Data-plane owner: builds pinned pnpm launchers from mcp-fleet.nix rows and ships the fleet/agent observability surface — `forge-mcp` emitting
 # schema=forge-mcp/v1 receipts, plus `forge-agents`, the collector turning agent lanes, attention, and AI quota into cached facts the zjstatus bar
 # renders. Bar code never touches providers or credentials; the collector owns that seam.
-
 {
   config,
   lib,
@@ -37,10 +36,11 @@
     if pkgs.stdenv.hostPlatform.isDarwin
     then "/bin/ps"
     else "${pkgs.procps}/bin/ps";
-  inherit (config.forge.theme) roles; # Estate palette owner (modules/home/theme.nix)
+  inherit (config.forge.theme) roles icons; # Estate palette owner (modules/home/theme.nix): roles + the closed status-glyph alphabet
   fleet = import ./mcp-fleet.nix {
     inherit profileBin;
     homeDir = config.home.homeDirectory;
+    sshBin = "${pkgs.openssh}/bin/ssh";
   };
   launcherRows = builtins.filter (r: r ? launcher) fleet;
   fleetJson = pkgs.writeText "mcp-fleet.json" (builtins.toJSON fleet);
@@ -245,8 +245,16 @@
   pins =
     builtins.concatStringsSep "\n" (map (r: "${r.launcher.pkg}|${r.launcher.version}")
       (builtins.filter (r: r.launcher.updateEngine == "npm-registry") launcherRows));
-  # Full-parity drift program: fleet rows vs the two user-owned client registrations, key NAMES only.
+  # Full-parity drift program: fleet rows vs both user-owned registrations; Claude secret fields must be environment references, never literals.
   driftJq = pkgs.writeText "mcp-drift.jq" ''
+    def env_ref: "$" + "{\(.)}";
+    def claude_env:
+      ((.claudeEnvNames // .envKeys // []) | map({key: ., value: (. | env_ref)}) | from_entries);
+    def claude_headers:
+      ((.codex.headerEnv // {}) | with_entries(.value |= env_ref))
+      + (if (.codex.bearerEnvVar // null) == null then {}
+         else {Authorization: ("Bearer " + (.codex.bearerEnvVar | env_ref))}
+         end);
     ($fleet[0]) as $rows
     | ($claude[0] // {}) as $cl
     | ($codex[0] // {}) as $cx
@@ -263,15 +271,11 @@
                   (if ($c.type // "stdio") != "stdio" then ["claude\t\($row.name): claude type != stdio"] else [] end)
                   + (if ($c.command // "") != $row.command then ["claude\t\($row.name): claude command \($c.command // "absent") != \($row.command)"] else [] end)
                   + (if ($c.args // []) != ($row.args // []) then ["claude\t\($row.name): claude args \($c.args // [])"] else [] end)
-                  + ((($c.env // {}) | keys | sort) as $have
-                     | (($row.claudeEnvNames // $row.envKeys // []) | sort) as $want
-                     | if $have != $want then ["claude\t\($row.name): claude env names \($have) != \($want)"] else [] end)
+                  + (if ($c.env // {}) != ($row | claude_env) then ["claude\t\($row.name): claude env inheritance contract drift"] else [] end)
                 else
                   (if ($c.type // "") != "http" then ["claude\t\($row.name): claude type != http"] else [] end)
                   + (if ($c.url // "") != $row.url then ["claude\t\($row.name): claude url \($c.url // "absent")"] else [] end)
-                  + ((($c.headers // {}) | keys | sort) as $have
-                     | (($row.headerNames // []) | sort) as $want
-                     | if $have != $want then ["claude\t\($row.name): claude header names \($have) != \($want)"] else [] end)
+                  + (if ($c.headers // {}) != ($row | claude_headers) then ["claude\t\($row.name): claude header inheritance contract drift"] else [] end)
                 end)
              end)
             + (if ($who | index("codex")) | not then []
@@ -279,6 +283,10 @@
                elif $lvl == "presence" then []
                else ($cx[$row.name]) as $c
                 | (if ($c.required // false) != ($row.codex.required // false) then ["codex\t\($row.name): codex required \($c.required // false) != \($row.codex.required // false)"] else [] end)
+                  + (if ($c.default_tools_approval_mode // null) != ($row.codex.toolsApprovalMode // null) then ["codex\t\($row.name): codex default_tools_approval_mode \($c.default_tools_approval_mode // "absent") != \($row.codex.toolsApprovalMode // "absent")"] else [] end)
+                  + (if ($row.codex.auth // null) == null then []
+                     elif ($c.auth // null) != $row.codex.auth then ["codex\t\($row.name): codex auth \($c.auth // "absent") != \($row.codex.auth)"]
+                     else [] end)
                   + (if ($c.startup_timeout_sec // null) != $row.codex.startupTimeoutSec then ["codex\t\($row.name): codex startup_timeout_sec \($c.startup_timeout_sec // "absent")"] else [] end)
                   + (if ($c.tool_timeout_sec // null) != $row.codex.toolTimeoutSec then ["codex\t\($row.name): codex tool_timeout_sec \($c.tool_timeout_sec // "absent")"] else [] end)
                   + (if $row.transport == "stdio" then
@@ -296,12 +304,15 @@
           )
       ]
     | flatten
+    + (if $codex_oauth_store == "keyring" then []
+       else ["codex\tmcp_oauth_credentials_store \($codex_oauth_store // "absent") != keyring"]
+       end)
     + (($cl | keys) - [$rows[] | select((.clients // ["claude", "codex"]) | index("claude")) | .name] | map("claude\t\(.): EXTRA in claude (not in manifest)"))
     + (($cx | keys) - [$rows[] | select((.clients // ["claude", "codex"]) | index("codex")) | .name] | map("codex\t\(.): EXTRA in codex (not in manifest)"))
     | .[]
   '';
-  # Subset drift for projection registries (claude-shaped JSON: vscode servers map, maghz .mcp.json). Registered rows naming a fleet row must honor
-  # its contract; commands may spell the launcher basename, and unknown rows are INFO.
+  # Subset drift for Claude-shaped projection registries such as the VS Code servers map. Registered rows naming a fleet row must honor its contract;
+  # commands may spell the launcher basename, and unknown rows are INFO.
   subsetClaudeJq = pkgs.writeText "mcp-drift-subset-claude.jq" ''
     ($fleet[0]) as $rows
     | (INDEX($rows[]; .name)) as $byName
@@ -328,33 +339,16 @@
       ]
     | flatten | .[]
   '';
-  # Subset drift for codex-shaped projections (maghz .codex/config.toml): timeouts are host-local rows there, so only identity fields compare.
-  subsetCodexJq = pkgs.writeText "mcp-drift-subset-codex.jq" ''
-    ($fleet[0]) as $rows
-    | (INDEX($rows[]; .name)) as $byName
-    | ($reg[0] // {}) as $r
-    | [
-        $r | to_entries[]
-        | .key as $n
-        | .value as $c
-        | ($byName[$n]) as $row
-        | if $row == null then ["INFO \($n): local-only (not a manifest row)"]
-          elif $row.transport == "stdio" then
-            (if (($c.command // "") != $row.command) and (($c.command // "") != ($row.command | split("/") | last)) then ["\($n): command \($c.command // "absent") != \($row.command | split("/") | last)"] else [] end)
-            + (if ($c.args // []) != ($row.args // []) then ["\($n): args \($c.args // [])"] else [] end)
-            + ((($c.env_vars // []) | sort) as $have
-               | (($row.envKeys // []) | sort) as $want
-               | if $have != $want then ["\($n): env_vars \($have) != \($want)"] else [] end)
-          else
-            (if ($c.url // "") != $row.url then ["\($n): url \($c.url // "absent")"] else [] end)
-            + (if ($c.bearer_token_env_var // null) != ($row.codex.bearerEnvVar // null) then ["\($n): bearer_token_env_var \($c.bearer_token_env_var // "absent") != \($row.codex.bearerEnvVar // "absent")"] else [] end)
-            + (if ($c.env_http_headers // null) != ($row.codex.headerEnv // null) then ["\($n): env_http_headers drift"] else [] end)
-          end
-      ]
-    | flatten | .[]
-  '';
-  # Desired-registration generator: one program per client shape, all reading the same fleet rows — the "one generator" behind the five-way drift.
-  generateClaudeJq = pkgs.writeText "mcp-generate-claude.jq" ''
+  # Desired-registration generator: one program per client shape, all reading the same fleet rows behind full and project-subset drift.
+  claudeProjectionJq = pkgs.writeText "mcp-generate-claude.jq" ''
+    def env_ref: "$" + "{\(.)}";
+    def claude_env:
+      ((.claudeEnvNames // .envKeys // []) | map({key: ., value: (. | env_ref)}) | from_entries);
+    def claude_headers:
+      ((.codex.headerEnv // {}) | with_entries(.value |= env_ref))
+      + (if (.codex.bearerEnvVar // null) == null then {}
+         else {Authorization: ("Bearer " + (.codex.bearerEnvVar | env_ref))}
+         end);
     {
       mcpServers: ([
         .[]
@@ -364,33 +358,47 @@
             key: .name,
             value: (
               if .transport == "stdio" then
-                {type: "stdio", command, args: (.args // []),
-                 env: ((.claudeEnvNames // .envKeys // []) | map({key: ., value: ""}) | from_entries)}
+                {type: "stdio", command, args: (.args // []), env: claude_env}
               else
-                {type: "http", url,
-                 headers: ((.headerNames // []) | map({key: ., value: ""}) | from_entries)}
+                {type: "http", url, headers: claude_headers}
               end)
           }
-      ] | from_entries)
+      ] | from_entries),
+      managed_names: [.[] | select((.clients // ["claude", "codex"]) | index("claude")) | .name]
     }
   '';
-  generateCodexJq = pkgs.writeText "mcp-generate-codex.jq" ''
-    .[]
-    | select((.clients // ["claude", "codex"]) | index("codex"))
-    | "[mcp_servers.\(.name)]"
-      + (if .transport == "stdio" then
-           "\ncommand = \(.command | tojson)"
-           + (if (.args // []) != [] then "\nargs = \(.args | tojson)" else "" end)
-           + (if (.envKeys // []) != [] then "\nenv_vars = \(.envKeys | tojson)" else "" end)
-         else
-           "\nurl = \(.url | tojson)"
-           + (if .codex.bearerEnvVar != null then "\nbearer_token_env_var = \(.codex.bearerEnvVar | tojson)" else "" end)
-           + (if .codex.headerEnv != null then "\nenv_http_headers = { \(.codex.headerEnv | to_entries | map("\(.key | tojson) = \(.value | tojson)") | join(", ")) }" else "" end)
-         end)
-      + (if (.codex.required // false) then "\nrequired = true" else "" end)
-      + "\nstartup_timeout_sec = \(.codex.startupTimeoutSec)"
-      + "\ntool_timeout_sec = \(.codex.toolTimeoutSec)"
-      + "\n"
+  codexProjectionJq = pkgs.writeText "mcp-generate-codex.jq" ''
+    def codex_value:
+      (if .transport == "stdio" then
+         {command, args: (.args // [])}
+         + (if (.envKeys // []) != [] then {env_vars: .envKeys} else {} end)
+       else
+         {url}
+         + (if (.codex.bearerEnvVar // null) != null then {bearer_token_env_var: .codex.bearerEnvVar} else {} end)
+         + (if (.codex.headerEnv // null) != null then {env_http_headers: .codex.headerEnv} else {} end)
+       end)
+      + (if (.codex.auth // null) != null then {auth: .codex.auth} else {} end)
+      + (if (.codex.toolsApprovalMode // null) != null then {default_tools_approval_mode: .codex.toolsApprovalMode} else {} end)
+      + {
+          required: (.codex.required // false),
+          startup_timeout_sec: .codex.startupTimeoutSec,
+          tool_timeout_sec: .codex.toolTimeoutSec
+        };
+    {
+      mcp_servers: ([
+        .[]
+        | select((.clients // ["claude", "codex"]) | index("codex"))
+        | select((.assertLevel // "full") == "full")
+        | {key: .name, value: codex_value}
+      ] | from_entries),
+      managed_names: [.[] | select((.clients // ["claude", "codex"]) | index("codex")) | .name],
+      presence_names: [
+        .[]
+        | select((.clients // ["claude", "codex"]) | index("codex"))
+        | select((.assertLevel // "full") == "presence")
+        | .name
+      ]
+    }
   '';
   generateVscodeJq = pkgs.writeText "mcp-generate-vscode.jq" ''
     {
@@ -416,14 +424,13 @@
   '';
   forgeMcp = pkgs.writeShellApplication {
     name = "forge-mcp";
-    runtimeInputs = [pkgs.coreutils pkgs.curl pkgs.jq pkgs.yq-go pkgs.findutils pkgs.gawk pkgs.gnugrep];
+    runtimeInputs = [pkgs.coreutils pkgs.curl pkgs.jq pkgs.yq-go pkgs.findutils pkgs.gawk pkgs.gnugrep pkgs.flock];
     text = ''
       fleet='${fleetJson}'
       receipt_log="''${FORGE_MCP_RECEIPT_LOG:-$HOME/Library/Logs/forge-mcp.receipts.log}"
-      maghz_root="''${FORGE_MAGHZ_ROOT:-$HOME/Documents/99.Github/Maghz}"
       vscode_mcp="$HOME/Library/Application Support/Code/User/mcp.json"
       usage() {
-        echo "usage: forge-mcp outdated [--notify] [--json] | doctor [--network] [--json] | drift [--json]" >&2
+        echo "usage: forge-mcp outdated [--notify] [--json] | doctor [--network] [--json] | drift [--json] | reconcile <claude|codex>" >&2
         echo "       forge-mcp generate <claude|codex|vscode> | roots [--json] | snoop SERVER [-- ARGS...]" >&2
         exit 64
       }
@@ -486,16 +493,75 @@
         exit "$rc"
       }
 
-      # Side-effect-free health probe: newline-delimited JSON-RPC initialize on stdio (stdin EOF is the shutdown), POST initialize for http rows. Env
-      # material is asserted by key NAME only, so values never print. Each probe emits one typed row (STATUS<TAB>name<TAB>detail); presentation is the
-      # doctor's, so human and --json render from the same rows.
+      # Side-effect-free health probe: newline-delimited JSON-RPC initialize on stdio (stdin EOF is the shutdown), POST initialize for bearer/http
+      # rows, and Codex app-server inventory for OAuth rows so its credential store performs the authenticated initialize plus tools/list. Values never
+      # print. Each probe emits one typed row (STATUS<TAB>name<TAB>detail); presentation is the doctor's, so human and --json share the same rows.
       req='{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"forge-mcp-doctor","version":"1.0.0"}}}'
+      codex_oauth_inventory() { # $1=workdir $2=result-file
+        local work="$1" result="$2" oauth_home="$1/codex-oauth-home" fifo="$1/codex-oauth.in" raw="$1/codex-oauth.raw"
+        local pid input_fd success=0
+        printf '{"ok":false,"reason":"app-server-unavailable","rows":[]}\n' >"$result"
+        command -v codex >/dev/null 2>&1 || return 1
+        mkdir -p "$oauth_home"
+        jq -f '${codexProjectionJq}' "$fleet" \
+          | jq '{mcp_oauth_credentials_store: "keyring",
+                 mcp_servers: (.mcp_servers | with_entries(select(.value.auth == "oauth")))}' \
+          | yq -p json -o toml '.' >"$oauth_home/config.toml"
+        if [ "$(yq -p toml -o json '.mcp_servers | length' "$oauth_home/config.toml")" = 0 ]; then
+          printf '{"ok":true,"reason":"no-oauth-rows","rows":[]}\n' >"$result"
+          return 0
+        fi
+
+        mkfifo "$fifo"
+        : >"$raw"
+        CODEX_HOME="$oauth_home" codex app-server --strict-config --stdio <"$fifo" >"$raw" 2>"$work/codex-oauth.err" &
+        pid=$!
+        if ! exec {input_fd}>"$fifo"; then
+          kill "$pid" 2>/dev/null || true
+          wait "$pid" 2>/dev/null || true
+          return 1
+        fi
+        response_ready() { # $1=id $2=50ms-attempts
+          local id="$1" limit="$2" attempt
+          for ((attempt = 0; attempt < limit; attempt++)); do
+            jq -e --argjson id "$id" 'select(.id == $id)' "$raw" >/dev/null 2>&1 && return 0
+            kill -0 "$pid" 2>/dev/null || return 1
+            sleep 0.05
+          done
+          return 1
+        }
+        if printf '%s\n' \
+          '{"id":1,"method":"initialize","params":{"clientInfo":{"name":"forge-mcp-doctor","version":"1.0.0"}}}' >&"$input_fd" \
+          && response_ready 1 100 \
+          && printf '%s\n' '{"method":"initialized"}' \
+            '{"id":2,"method":"mcpServerStatus/list","params":{"detail":"toolsAndAuthOnly"}}' >&"$input_fd" \
+          && response_ready 2 600; then
+          success=1
+        fi
+        exec {input_fd}>&-
+        kill "$pid" 2>/dev/null || true
+        wait "$pid" 2>/dev/null || true
+        if [ "$success" = 1 ] && jq -ce '
+          select(.id == 2 and (.result.data | type == "array"))
+          | {ok: true, reason: "verified", rows: [.result.data[] | {
+              name, authStatus,
+              toolsListed: (.tools | type == "object"),
+              toolCount: (.tools | if type == "object" then length else 0 end),
+              serverInfoName: (.serverInfo.name // "")
+            }]}
+        ' "$raw" >"$result"; then
+          return 0
+        fi
+        printf '{"ok":false,"reason":"authenticated-probe-failed","rows":[]}\n' >"$result"
+        return 1
+      }
+
       probe_row() {
-        row="$1" network="$2" out="$3"
+        row="$1" network="$2" out="$3" codex_auth="$4" codex_oauth="$5"
         # One jq projection owns the row header; the unit-separator join survives empty fields where tab-IFS reads would collapse them.
-        IFS=$'\x1f' read -r name probe transport t cmdpath url bearer < <(jq -r \
+        IFS=$'\x1f' read -r name probe transport t cmdpath url bearer auth < <(jq -r \
           '[.name, .probe, .transport, (.codex.startupTimeoutSec // 20 | tostring),
-            (.command // ""), (.url // ""), (.codex.bearerEnvVar // "")] | join("\u001f")' <<<"$row")
+            (.command // ""), (.url // ""), (.codex.bearerEnvVar // ""), (.codex.auth // "")] | join("\u001f")' <<<"$row")
         missing="$(jq -r '(.envKeys // [])[]' <<<"$row" | while IFS= read -r k; do
           [ -n "''${!k:-}" ] || printf '%s ' "$k"
         done)"
@@ -506,6 +572,23 @@
         fi
         if [ "$probe" = "network" ] && [ "$network" != 1 ]; then
           emit SKIP "network class (probe with --network)$envnote"; return 0
+        fi
+        if [ "$auth" = "oauth" ]; then
+          auth_status="$(jq -r --arg name "$name" '[.[] | select(.name == $name) | .auth_status][0] // "unavailable"' "$codex_auth" 2>/dev/null || echo unavailable)"
+          if [ "$auth_status" != "o_auth" ]; then
+            emit FAIL "Codex OAuth is not usable (status=$auth_status)"; return 0
+          fi
+          if [ "$(jq -r '.ok // false' "$codex_oauth" 2>/dev/null || echo false)" != true ]; then
+            emit FAIL "Codex authenticated MCP probe unavailable"; return 0
+          fi
+          IFS=$'\x1f' read -r verified_auth tools_listed tool_count server_info < <(jq -r --arg name "$name" '
+            [.rows[] | select(.name == $name)
+             | [.authStatus, (.toolsListed | tostring), (.toolCount | tostring), .serverInfoName] | join("\u001f")][0] // ""
+          ' "$codex_oauth")
+          if [ "$verified_auth" != "oAuth" ] || [ "$tools_listed" != true ] || [ -z "$server_info" ]; then
+            emit FAIL "Codex authenticated initialize/tools inventory failed"; return 0
+          fi
+          emit OK "$server_info authenticated, tools=$tool_count"; return 0
         fi
         if [ "$transport" = "stdio" ]; then
           if [ ! -x "$cmdpath" ]; then
@@ -552,8 +635,7 @@
             info="$(jq -er '.result.serverInfo | "\(.name) \(.version // "?")"' <<<"$payload" 2>/dev/null || echo "initialize accepted")"
             emit OK "$info$envnote"
           elif [ "$code" = 401 ] && [ ''${#hdr[@]} -eq 0 ]; then
-            # No credential mechanism on the row (client-managed OAuth): a 401 proves the endpoint is alive; an unauthenticated pass never can.
-            emit OK "reachable, HTTP 401 (client-managed auth)$envnote"
+            emit FAIL "HTTP 401 with no declared credential mechanism$envnote"
           else
             emit FAIL "HTTP $code from initialize$envnote"
           fi
@@ -619,6 +701,18 @@
           esac
         done
         tmp="$(mktemp -d)"; trap 'rm -rf "$tmp"' EXIT
+        codex_auth="$tmp/codex-auth.json"
+        if command -v codex >/dev/null 2>&1 && codex mcp list --json >"$codex_auth" 2>/dev/null; then
+          :
+        else
+          printf '[]\n' >"$codex_auth"
+        fi
+        codex_oauth="$tmp/codex-oauth.json"
+        if [ "$network" = 1 ] && jq -e 'any(.[]; .codex.auth == "oauth")' "$fleet" >/dev/null; then
+          codex_oauth_inventory "$tmp" "$codex_oauth" || true
+        else
+          printf '{"ok":false,"reason":"network-probe-disabled","rows":[]}\n' >"$codex_oauth"
+        fi
         # Wrapper roll-call: every declared fleet wrapper must exist on PATH.
         while IFS= read -r w; do
           if ! command -v "$w" >/dev/null 2>&1; then
@@ -628,7 +722,7 @@
         family_rows "$tmp/families"
         i=0
         while IFS= read -r row; do
-          probe_row "$row" "$network" "$tmp/row.$i" &
+          probe_row "$row" "$network" "$tmp/row.$i" "$codex_auth" "$codex_oauth" &
           i=$((i + 1))
         done < <(jq -c '.[]' "$fleet")
         wait
@@ -657,8 +751,8 @@
         exit "$rc"
       }
 
-      # Five-way registration drift: the manifest is the owner; every registry is validated as a full mirror (claude, codex) or a declared projection
-      # subset (vscode, maghz-claude, maghz-codex). Report-only, never mutates.
+      # Three-way registration drift: the manifest is the owner; global Claude/Codex are full mirrors and VS Code is the declared projection. Estate
+      # repositories carry no client registration layer, so a switch has one configuration authority per client.
       cmd_drift() {
         as_json=0
         for a in "$@"; do
@@ -685,14 +779,20 @@
           jq -e 'type == "object"' <<<"$out" >/dev/null 2>&1 || return 1
           printf '%s' "$out"
         }
-        claude_ok=1 codex_ok=1
+        claude_ok=1 codex_ok=1 codex_store=""
         claude_json="$(admit_reg json '.mcpServers // {}' "$HOME/.claude.json")" || { claude_json='{}'; claude_ok=0; }
-        codex_json="$(admit_reg toml '.mcp_servers // {}' "$HOME/.codex/config.toml")" || { codex_json='{}'; codex_ok=0; }
+        if codex_root="$(admit_reg toml '.' "$HOME/.codex/config.toml")"; then
+          codex_json="$(jq -c '.mcp_servers // {}' <<<"$codex_root")"
+          codex_store="$(jq -r '.mcp_oauth_credentials_store // ""' <<<"$codex_root")"
+        else
+          codex_json='{}'; codex_ok=0
+        fi
         # A drift-program failure on admitted registries is itself a finding; a swallowed rc here would render empty lanes as false-clean.
         jq -rn \
           --slurpfile fleet "$fleet" \
           --slurpfile claude <(printf '%s' "$claude_json") \
           --slurpfile codex <(printf '%s' "$codex_json") \
+          --arg codex_oauth_store "$codex_store" \
           -f '${driftJq}' >"$tmp/full" \
           || printf 'claude\tdrift program failed on admitted registries\ncodex\tdrift program failed on admitted registries\n' >>"$tmp/full"
         grep $'^claude\t' "$tmp/full" | cut -f2- >"$tmp/claude.f" || true
@@ -720,9 +820,7 @@
             printf '%s|subset|1|0|%s\n' "$rname" /dev/null >>"$tmp/registries"
           fi
         done < <(printf '%s\n' \
-          "vscode|$vscode_mcp|json|.servers // {}|${subsetClaudeJq}" \
-          "maghz-claude|$maghz_root/.mcp.json|json|.mcpServers // {}|${subsetClaudeJq}" \
-          "maghz-codex|$maghz_root/.codex/config.toml|toml|.mcp_servers // {}|${subsetCodexJq}")
+          "vscode|$vscode_mcp|json|.servers // {}|${subsetClaudeJq}")
 
         rc=0
         while IFS='|' read -r _ _ present clean _; do
@@ -760,11 +858,134 @@
         exit "$rc"
       }
 
-      # Desired-registration generator: emits the manifest fragment for one client shape; values are env NAMES or empty strings, never secrets.
+      # Declarative client projection: the manifest replaces its MCP map, client-private presence rows survive, and unadmitted rows fail closed. One
+      # lock serializes Forge writers; a bounded optimistic compare/stability/publish/readback loop re-merges client writes instead of erasing them.
+      cmd_reconcile() {
+        client="''${1:-}"
+        [ "$client" = claude ] || [ "$client" = codex ] || usage
+        lock_root="''${XDG_RUNTIME_DIR:-''${TMPDIR:-/tmp}}"
+        mkdir -p "$lock_root"
+        exec {reconcile_lock_fd}>"$lock_root/forge-mcp-reconcile-$UID.lock"
+        if ! flock -w 15 "$reconcile_lock_fd"; then
+          receipt reconcile fail "lock-timeout"
+          echo "forge-mcp reconcile: another reconciler held the lock for 15s" >&2
+          exit 75
+        fi
+
+        source_matches() { # $1=config $2=snapshot $3=had-config
+          if [ "$3" = 1 ]; then cmp -s "$1" "$2"; else [ ! -e "$1" ]; fi
+        }
+        publish_attempt() { # $1=config $2=snapshot $3=rendered $4=expected $5=had-config
+          source_matches "$1" "$2" "$5" || return 1
+          sleep 0.05
+          source_matches "$1" "$2" "$5" || return 1
+          cp "$3" "$4"
+          mv "$3" "$1"
+          sleep 0.05
+          cmp -s "$1" "$4"
+        }
+
+        if [ "$client" = claude ]; then
+          cfg="$HOME/.claude.json"
+          mkdir -p "''${cfg%/*}"
+          tmp="$(mktemp -d "''${cfg%/*}/.forge-mcp-reconcile.XXXXXX")"; trap 'rm -rf "$tmp"' EXIT
+          projection="$(jq -f '${claudeProjectionJq}' "$fleet")"
+          for attempt in 1 2 3 4 5; do
+            source="$tmp/source.$attempt"; rendered="$tmp/rendered.$attempt"; expected="$tmp/expected.$attempt"; had_cfg=0
+            if [ -e "$cfg" ]; then
+              had_cfg=1
+              cp "$cfg" "$source"
+              current="$(jq '.' "$source")" || {
+                receipt reconcile fail "claude-config-unparseable"
+                echo "forge-mcp reconcile: $cfg is not valid JSON" >&2
+                exit 65
+              }
+            else
+              : >"$source"; current='{}'
+            fi
+            extras="$(jq -rn --argjson current "$current" --argjson projection "$projection" \
+              '(($current.mcpServers // {} | keys) - $projection.managed_names) | join(" ")')"
+            if [ -n "$extras" ]; then
+              receipt reconcile fail "unadmitted-claude-rows"
+              echo "forge-mcp reconcile: unadmitted Claude MCP rows: $extras" >&2
+              exit 65
+            fi
+            merged="$(jq -cn --argjson current "$current" --argjson projection "$projection" \
+              '$current | .mcpServers = $projection.mcpServers')"
+            if [ "$(jq -Sc . <<<"$current")" = "$(jq -Sc . <<<"$merged")" ]; then
+              receipt reconcile ok "claude-config-unchanged"
+              echo "forge-mcp reconcile: Claude projection already current"
+              return 0
+            fi
+            jq '.' <<<"$merged" >"$rendered"
+            chmod 0600 "$rendered"
+            if publish_attempt "$cfg" "$source" "$rendered" "$expected" "$had_cfg"; then
+              receipt reconcile ok "claude-config-updated-attempt=$attempt"
+              echo "forge-mcp reconcile: Claude projection updated"
+              return 0
+            fi
+          done
+          receipt reconcile fail "claude-config-write-contention"
+          echo "forge-mcp reconcile: $cfg kept changing across five merge attempts" >&2
+          exit 75
+        fi
+        codex_home="''${CODEX_HOME:-$HOME/.codex}"
+        cfg="$codex_home/config.toml"
+        mkdir -p "$codex_home"
+        tmp="$(mktemp -d "$codex_home/.forge-mcp-reconcile.XXXXXX")"; trap 'rm -rf "$tmp"' EXIT
+        projection="$(jq -f '${codexProjectionJq}' "$fleet")"
+        for attempt in 1 2 3 4 5; do
+          source="$tmp/source.$attempt"; rendered="$tmp/rendered.$attempt"; expected="$tmp/expected.$attempt"; had_cfg=0
+          if [ -e "$cfg" ]; then
+            had_cfg=1
+            cp "$cfg" "$source"
+            current="$(yq -p toml -o json '.' "$source")" || {
+              receipt reconcile fail "codex-config-unparseable"
+              echo "forge-mcp reconcile: $cfg is not valid TOML" >&2
+              exit 65
+            }
+          else
+            : >"$source"; current='{}'
+          fi
+          extras="$(jq -rn --argjson current "$current" --argjson projection "$projection" \
+            '(($current.mcp_servers // {} | keys) - $projection.managed_names) | join(" ")')"
+          if [ -n "$extras" ]; then
+            receipt reconcile fail "unadmitted-codex-rows"
+            echo "forge-mcp reconcile: unadmitted Codex MCP rows: $extras" >&2
+            exit 65
+          fi
+          merged="$(jq -cn --argjson current "$current" --argjson projection "$projection" '
+            ($projection.presence_names | reduce .[] as $name ({};
+              if $current.mcp_servers[$name] == null then . else .[$name] = $current.mcp_servers[$name] end)) as $presence
+            | $current
+            | .mcp_oauth_credentials_store = "keyring"
+            | .mcp_servers = ($projection.mcp_servers + $presence)
+            | del(.features.js_repl)
+          ')"
+          if [ "$(jq -Sc . <<<"$current")" = "$(jq -Sc . <<<"$merged")" ]; then
+            receipt reconcile ok "codex-config-unchanged"
+            echo "forge-mcp reconcile: Codex projection already current"
+            return 0
+          fi
+          printf '%s\n' "$merged" | yq -p json -o toml '.' >"$rendered"
+          yq -p toml -o json '.' "$rendered" >/dev/null
+          chmod 0600 "$rendered"
+          if publish_attempt "$cfg" "$source" "$rendered" "$expected" "$had_cfg"; then
+            receipt reconcile ok "codex-config-updated-attempt=$attempt"
+            echo "forge-mcp reconcile: Codex projection updated"
+            return 0
+          fi
+        done
+        receipt reconcile fail "codex-config-write-contention"
+        echo "forge-mcp reconcile: $cfg kept changing across five merge attempts" >&2
+        exit 75
+      }
+
+      # Desired-registration generator: Claude values are environment references and Codex values are env NAMES; neither shape materializes secrets.
       cmd_generate() {
         case "''${1:-}" in
-          claude) jq -f '${generateClaudeJq}' "$fleet" ;;
-          codex) jq -rf '${generateCodexJq}' "$fleet" ;;
+          claude) jq -f '${claudeProjectionJq}' "$fleet" | jq '{mcpServers}' ;;
+          codex) jq -f '${codexProjectionJq}' "$fleet" | jq '{mcp_servers}' | yq -p json -o toml '.' ;;
           vscode) jq -f '${generateVscodeJq}' "$fleet" ;;
           *) usage ;;
         esac
@@ -847,6 +1068,7 @@
         outdated) cmd_outdated "$@" ;;
         doctor) cmd_doctor "$@" ;;
         drift) cmd_drift "$@" ;;
+        reconcile) cmd_reconcile "$@" ;;
         generate) cmd_generate "$@" ;;
         roots) cmd_roots "$@" ;;
         snoop) cmd_snoop "$@" ;;
@@ -935,9 +1157,9 @@
               # the window AND its recorded tty still hosts an idle claude lane; one row per tty so stacked tabs never inflate the count, and the
               # newest row keeps its identity so `focus`/`answer` route the click. source=bell rows (WezTerm bell arm) count inside their own policy
               # window — the deck toast owns the bell's desktop surface, and fromjson? rails the live-appended, lock-free-rotated feed.
-              TZ=UTC0 printf -v att_cut '%(%Y-%m-%dT%H:%M:%SZ)T' "$((now - 3600))"
+              TZ=UTC0 printf -v att_cut '%(%Y-%m-%dT%H:%M:%SZ)T' "$((now - 900))"
               TZ=UTC0 printf -v bell_cut '%(%Y-%m-%dT%H:%M:%SZ)T' "$((now - ${toString notifyPolicy.bellWindowSec}))"
-              feed_facts="$(tail -n 500 "$feed" 2>/dev/null | jq -Rcn \
+              feed_facts="$(tail -n 2000 "$feed" 2>/dev/null | jq -Rcn \
                 --arg cut "$att_cut" --arg bcut "$bell_cut" --argjson lanes "$lanes_rows" '
                 def pty: sub("^tty"; "");
                 ([$lanes[] | select(.agent == "claude" and .state == "waiting") | .tty | pty] | unique) as $idle
@@ -1059,18 +1281,34 @@
 
               # --- [PROJECTIONS]
               # The zjstatus top bar is the ONE render surface; the collector owns role->palette styling (build-time hexes from the theme owner) and
-              # ships fully formatted payloads the bar renders verbatim (dynamic). One projection per cache snapshot; 0x1f join survives empties.
-              IFS=$'\x1f' read -r run_n wait_n cx_p cx_s cl_w cx_stale cl_stale < <(jq -r '
-                [(.lanes.running | tostring), (.lanes.waiting | tostring),
+              # ships fully formatted payloads the bar renders verbatim (dynamic). Cell grammar mirrors the toast urgency prefixes: `AI <lanes>`
+              # (muted at 0, green above), attention-glyph<n> needs-input (orange), bell-glyph<n> bells (amber) — segments appear only when nonzero, and the run/wait
+              # CPU split stays out of the bar (sampling noise, not signal). Standing alerts ride their OWN red cell naming the first kind
+              # (+N overflow), so estate state never recolors the agent cell. One projection per cache snapshot; 0x1f join survives empties.
+              IFS=$'\x1f' read -r lanes_n cx_p cx_s cl_w cx_stale cl_stale < <(jq -r '
+                [(.lanes.rows | length | tostring),
                  (.quota.codex.primary_used_percent // "" | tostring),
                  (.quota.codex.secondary_used_percent // "" | tostring),
                  (.quota.claude.window_tokens // "" | tostring),
                  (.quota.codex.stale != false | tostring),
                  (.quota.claude.stale != false | tostring)] | join("\u001f")' "$cache")
-              agents_text="AI ''${run_n}▸ ''${wait_n}⋯"
-              [ "''${needs:-0}" = 0 ] || agents_text="$agents_text ''${needs}✋"
-              [ "''${bells_n:-0}" = 0 ] || agents_text="$agents_text ''${bells_n}🔔"
-              [ "''${alerts_n:-0}" = 0 ] || agents_text="$agents_text ''${alerts_n}⚠"
+              seg() { # $1=fg $2=attrs("" or ",bold") $3=text -> one colored fragment on the bar plane
+                printf '#[bg=${roles.surface.surface.hex},fg=%s%s]%s' "$1" "$2" "$3"
+              }
+              ai_fg="${roles.text.muted.hex}"
+              [ "$lanes_n" = 0 ] || ai_fg="${roles.state.success.hex}"
+              agents_cell="$(seg "$ai_fg" ",bold" " AI $lanes_n")"
+              [ "''${needs:-0}" = 0 ] || agents_cell="$agents_cell$(seg "${roles.state.attention.hex}" ",bold" " ${icons.alphabet.attention.glyph}''${needs}")"
+              [ "''${bells_n:-0}" = 0 ] || agents_cell="$agents_cell$(seg "${roles.state.warning.hex}" "" " ${icons.alphabet.bell.glyph}''${bells_n}")"
+              agents_cell="$agents_cell "
+              # A piped single space clears the cell when the last alert lifts (an empty pipe payload would drop the message entirely).
+              alerts_cell=" "
+              if [ "''${alerts_n:-0}" -gt 0 ]; then
+                a_kind="$(jq -r '.[0].kind // "alert" | ascii_upcase' <<<"$alerts")"
+                a_more=""
+                [ "''${alerts_n}" -le 1 ] || a_more=" +$((alerts_n - 1))"
+                alerts_cell="$(seg "${roles.state.danger.hex}" ",bold" " ${icons.alphabet.failure.glyph} ''${a_kind}''${a_more} ")"
+              fi
               quota_text=""
               if [ -n "$cx_p" ]; then quota_text="CX ''${cx_p%.*}%·''${cx_s%.*}%"; fi
               if [ -n "$cl_w" ]; then
@@ -1078,35 +1316,29 @@
                 quota_text="''${quota_text:+$quota_text }CL $cl_h"
               fi
               [ -n "$quota_text" ] || quota_text="quota -"
-
-              # Cell state colors: agents muted when idle, success while lanes run, attention on needs_input, danger while a standing estate alert is
-              # active; quota escalates on the codex 5h window.
-              agents_fg="${roles.text.muted.hex}"
-              [ "$run_n" = 0 ] || agents_fg="${roles.state.success.hex}"
-              [ "''${needs:-0}" = 0 ] || agents_fg="${roles.state.attention.hex}"
-              [ "''${alerts_n:-0}" = 0 ] || agents_fg="${roles.state.danger.hex}"
+              # Quota escalates on the codex 5h window: muted, warning at 70%, danger at 90%.
               quota_fg="${roles.text.muted.hex}"
               if [ -n "$cx_p" ]; then
                 p="''${cx_p%.*}"
                 if [ "$p" -ge 90 ]; then quota_fg="${roles.state.danger.hex}"
                 elif [ "$p" -ge 70 ]; then quota_fg="${roles.state.warning.hex}"; fi
               fi
-              mk_cell() { # $1=fg $2=attrs("" or ",bold") $3=text -> raised chip + surface gap (the bar plane)
-                printf '#[bg=${roles.surface.raised.hex},fg=%s%s] %s #[bg=${roles.surface.surface.hex}] ' "$1" "$2" "$3"
-              }
-              agents_cell="$(mk_cell "$agents_fg" ",bold" "$agents_text")"
-              quota_cell="$(mk_cell "$quota_fg" "" "$quota_text")"
+              quota_cell="$(seg "$quota_fg" "" " $quota_text ")"
 
               # Workspace-graph lane rows: the forge-zellij agent-lane arm reads this.
               jq -c '[.lanes.rows[] | {lane: "\(.agent)-\(.pid)", status: .state, pane_id: ""}]' \
                 "$cache" >"$lanes_out.tmp.$$"
               mv "$lanes_out.tmp.$$" "$lanes_out"
 
-              # zjstatus pipe cells into every live session; a dead server is benign.
+              # zjstatus pipe cells into every live session; a dead server is benign. The session identity chip is the collector's uppercase
+              # display projection of each session's own name — pink accent fill flush to the bar's right edge (no trailing gap).
               while IFS= read -r s; do
                 [ -n "$s" ] || continue
+                session_cell="$(printf '#[bg=${roles.accent.tertiary.hex},fg=${roles.text.inverse.hex},bold] %s ' "''${s^^}")"
+                ${profileBin}/zellij --session "$s" pipe "zjstatus::pipe::pipe_alerts::$alerts_cell" 2>/dev/null || true
                 ${profileBin}/zellij --session "$s" pipe "zjstatus::pipe::pipe_agents::$agents_cell" 2>/dev/null || true
                 ${profileBin}/zellij --session "$s" pipe "zjstatus::pipe::pipe_quota::$quota_cell" 2>/dev/null || true
+                ${profileBin}/zellij --session "$s" pipe "zjstatus::pipe::pipe_session::$session_cell" 2>/dev/null || true
               done < <(${profileBin}/zellij list-sessions -ns 2>/dev/null || true)
 
               # Rise contract per notification class: rise_gate is the predicate (count rise + per-class throttle); notify_post fans terminal-notifier
@@ -1161,15 +1393,22 @@
               if ${lib.boolToString notifyPolicy.needsInput} \
                 && rise_gate "''${needs:-0}" "$prev_needs" "$last_notify"; then
                 peek_line=""
-                IFS=$'\x1f' read -r n_zs n_zp < <(jq -r \
-                  '.latest // {} | [.zellij_session // "", .zellij_pane // ""] | join("\u001f")' <<<"$att") || true
-                if [ -n "''${n_zs:-}" ] && [ -n "''${n_zp:-}" ]; then
+                IFS=$'\x1f' read -r n_zs n_zp n_msg < <(jq -r \
+                  '.latest // {} | [.zellij_session // "", .zellij_pane // "", .message // ""] | join("\u001f")' <<<"$att") || true
+                if [ -z "''${n_msg:-}" ] && [ -n "''${n_zs:-}" ] && [ -n "''${n_zp:-}" ]; then
                   peek_line="$(${profileBin}/forge-zellij peek --session "$n_zs" --pane "$n_zp" --lines 5 --text 2>/dev/null | tail -1 || true)"
                   peek_line="''${peek_line:0:80}"
                 fi
-                notify_post forge-agents "Forge Agents" \
-                  "''${needs} agent session(s) waiting for input''${peek_line:+ — $peek_line}" \
-                  "? ''${needs} agent(s) waiting''${peek_line:+ — $peek_line}" \
+                # Sourcing rides every surface: banner and toast name the emitting session (uppercased); the hook's Notification message is the
+                # detail when present, the waiting pane's last line the fallback.
+                n_src="''${n_zs:-agent}"
+                n_src="''${n_src^^}"
+                n_detail="''${n_msg:-$peek_line}"
+                n_count=""
+                [ "''${needs:-0}" -le 1 ] || n_count="''${needs}x · "
+                notify_post forge-agents "Forge Agents [''${n_src}]" \
+                  "''${n_count}waiting for input''${n_detail:+ — $n_detail}" \
+                  "? ''${n_count}''${n_src}''${n_detail:+ — $n_detail}" \
                   "${profileBin}/forge-agents ${notifyPolicy.clickVerb}" \
                   "${notifyPolicy.remote.needsInput.priority}" "${notifyPolicy.remote.needsInput.tags}"
                 notified=1
@@ -1207,7 +1446,7 @@
               mv "$meta.tmp.$$" "$meta"
 
               # jq's // coerces false to the alternative; != false keeps a real false.
-              summary="needs=''${needs:-0} run=$run_n alerts=''${alerts_n:-0} bells=''${bells_n:-0} cx_stale=$cx_stale cl_stale=$cl_stale"
+              summary="needs=''${needs:-0} lanes=$lanes_n alerts=''${alerts_n:-0} bells=''${bells_n:-0} cx_stale=$cx_stale cl_stale=$cl_stale"
               prev_summary="$(jq -r '"needs=\(.attention.needs_input // 0) run=\(.lanes.running // 0) alerts=\(.alerts.count // 0) bells=\(.bells.count // 0) cx_stale=\(.quota.codex.stale != false) cl_stale=\(.quota.claude.stale != false)"' <<<"$prev" 2>/dev/null)" || prev_summary=""
               if [ "$summary" != "$prev_summary" ] || [ "$notified" = 1 ] || [ "$alert_notified" = 1 ]; then
                 printf -v receipt_row 'ts=%s\tverb=collect\tresult=ok\t%s\tnotified=%s' \
@@ -1343,8 +1582,8 @@
               local alr row zs zp tail_text ans atype reply
               alr='${alerterBin}'
               row="$(jq -c '.attention.latest // empty' "$cache" 2>/dev/null || true)"
-              IFS=$'\x1f' read -r zs zp < <(jq -r \
-                '[.zellij_session // "", .zellij_pane // ""] | join("\u001f")' \
+              IFS=$'\x1f' read -r zs zp _msg < <(jq -r \
+                '[.zellij_session // "", .zellij_pane // "", .message // ""] | join("\u001f")' \
                 <<<"''${row:-null}" 2>/dev/null) || true
               if [ -z "$alr" ] || [ -z "''${zs:-}" ] || [ -z "''${zp:-}" ]; then
                 cmd_focus
@@ -1393,7 +1632,7 @@
   mcpCompletion = pkgs.writeTextDir "share/zsh/site-functions/_forge-mcp" ''
     #compdef forge-mcp
     _arguments \
-      '1:verb:(outdated doctor drift generate roots snoop)' \
+      '1:verb:(outdated doctor drift reconcile generate roots snoop)' \
       '--notify[Notification Center on outdated pins]' \
       '--network[probe network-class rows]' \
       '--json[schema=forge-mcp/v1 receipt]'
@@ -1405,7 +1644,13 @@
       '--json[raw collector cache]'
   '';
 in {
-  home.packages = launchers ++ [maghzPostgres rhinoRouter forgeMcp forgeAgents mcpCompletion agentsCompletion];
+  home.packages = launchers ++ [maghzPostgres rhinoRouter forgeMcp forgeAgents mcpCompletion agentsCompletion pkgs.mcp-nixos];
+
+  # Each Darwin switch reasserts the fleet maps while preserving non-MCP client state; Codex app-private rows remain presence-owned by ChatGPT.
+  home.activation.forgeMcpReconcile = lib.mkIf pkgs.stdenv.hostPlatform.isDarwin (lib.hm.dag.entryAfter ["writeBoundary"] ''
+    run ${forgeMcp}/bin/forge-mcp reconcile claude
+    run ${forgeMcp}/bin/forge-mcp reconcile codex
+  '');
 
   # Identity bundle rows on the shared owner (bundle-apps.nix): Login Items & Extensions resolves each agent's AssociatedBundleIdentifiers to a name.
   forge.bundleApps = {

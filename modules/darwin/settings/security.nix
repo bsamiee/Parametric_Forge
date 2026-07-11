@@ -5,7 +5,6 @@
 # Path          : modules/darwin/settings/security.nix
 # ----------------------------------------------------------------------------
 # Security, PAM, certificates, and firewall configuration for Darwin.
-
 {
   lib,
   config,
@@ -40,32 +39,11 @@ in {
     };
   };
   # --- [SYSTEM_SECURITY_CONFIGURATION]
+  # Screen-lock delay is sysadminctl/profile-owned since Big Sur (com.apple.screensaver askForPassword keys are decorative), and Siri/Apple
+  # Intelligence disablement is Settings-owned on Tahoe — neither surface carries a truthful defaults row.
   system.defaults = {
-    # --- [SCREENSAVER_SECURITY]
-    screensaver = {
-      askForPassword = mkDefault false;
-      askForPasswordDelay = mkDefault 0;
-    };
     # --- [APPLICATION_SECURITY]
     CustomUserPreferences = {
-      # --- [PRIVACY_TELEMETRY_SETTINGS]
-      "com.apple.assistant.support" = {
-        "Assistant Enabled" = mkDefault false;
-      };
-      "com.apple.Siri" = {
-        StatusMenuVisible = mkDefault false;
-      };
-      # --- [ACCESSIBILITY_SECURITY_SETTINGS]
-      "com.apple.universalaccess" = {
-        slowKey = mkDefault false;
-        stickyKey = mkDefault false;
-        grayscale = mkDefault false;
-        closeViewHotkeysEnabled = mkDefault false;
-        voiceOverOnOffKey = mkDefault false;
-        keyboardAccessFocusRingTimeout = mkDefault 15;
-      };
-      # LSQuarantine stays disabled through the first-class owner: system.defaults.LaunchServices.LSQuarantine.
-      # --- [DEVELOPER_SECURITY_SETTINGS]
       "com.apple.dt.Xcode" = {
         DVTTextEditorTrimTrailingWhitespace = mkDefault false;
       };

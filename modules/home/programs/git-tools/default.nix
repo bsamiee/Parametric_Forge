@@ -5,7 +5,6 @@
 # Path          : modules/home/programs/git-tools/default.nix
 # ----------------------------------------------------------------------------
 # Git tools owner: config modules plus the config-free package table
-
 {pkgs, ...}: let
   manifest = import ../../../../overlays/manifest.nix;
   # Git-lane manifest admissions: git-cliff (changelog), mergiraf (structural merge driver; registration rides git.nix).

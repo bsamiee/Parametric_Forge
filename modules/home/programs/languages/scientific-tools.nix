@@ -5,7 +5,6 @@
 # Path          : modules/home/programs/languages/scientific-tools.nix
 # ----------------------------------------------------------------------------
 # Native scientific build/runtime toolchain for source-built Python packages, geospatial/data libraries, numerical kernels, and local provisioning probes.
-
 {
   config,
   forgeToolchainEnvFor,

@@ -5,7 +5,6 @@
 # Path          : modules/darwin/settings/system.nix
 # ----------------------------------------------------------------------------
 # Core system behavior, services, and default application settings.
-
 {
   lib,
   config,
@@ -52,6 +51,7 @@ in {
       include-date = mkDefault true;
       show-thumbnail = mkDefault false;
       target = mkDefault "file";
+      save-selections = mkDefault true;
     };
     # --- [MENU_BAR_CLOCK]
     menuExtraClock = {
@@ -69,9 +69,8 @@ in {
       NetBIOSName = mkDefault null;
       ServerDescription = mkDefault null;
     };
-    LaunchServices = {
-      LSQuarantine = mkDefault false;
-    };
+    # LSQuarantine is dead as a global opt-out on modern macOS (quarantine is per-producing-app, Gatekeeper enforces regardless);
+    # cask quarantine stays off through HOMEBREW_CASK_OPTS=--no-quarantine.
     # --- [ACCESSIBILITY]
     universalaccess = {
       closeViewScrollWheelToggle = mkDefault false;
@@ -89,6 +88,11 @@ in {
       "com.apple.sound.beep.volume" = mkDefault null;
       "com.apple.sound.beep.feedback" = mkDefault 0;
     };
+    ".GlobalPreferences" = {
+      "com.apple.sound.beep.sound" = mkDefault "/System/Library/Sounds/Tink.aiff";
+      "com.apple.mouse.scaling" = mkDefault 0.0;
+    };
+    iCal."first day of week" = mkDefault "System Setting";
     # --- [APPLICATION_SPECIFIC_SYSTEM_SETTINGS]
     CustomUserPreferences = {
       "com.apple.Terminal" = {

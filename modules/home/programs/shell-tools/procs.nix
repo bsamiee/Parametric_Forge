@@ -5,7 +5,6 @@
 # Path          : modules/home/programs/shell-tools/procs.nix
 # ----------------------------------------------------------------------------
 # ps replacement; renders process state, resource usage, and ports with estate-themed columns.
-
 {
   config,
   pkgs,
@@ -213,7 +212,7 @@
       cut_to_terminal = true;
       cut_to_pager = false;
       cut_to_pipe = false;
-      color_mode = "Always"; # Force colors even when piping to pager
+      color_mode = "Auto"; # TTY-detected: colored interactively, verbatim in pipes
       separator = "│";
       ascending = "▲";
       descending = "▼";

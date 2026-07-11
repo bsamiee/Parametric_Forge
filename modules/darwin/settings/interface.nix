@@ -5,7 +5,6 @@
 # Path          : modules/darwin/settings/interface.nix
 # ----------------------------------------------------------------------------
 # Visual interface and desktop environment settings for Darwin.
-
 {
   lib,
   config,
@@ -31,6 +30,18 @@ in {
         showhidden = mkDefault false;
         expose-group-apps = mkDefault false;
         mru-spaces = mkDefault false;
+        # Static, animation-minimal dock: instant autohide timing, fast Mission Control, stock gestures pinned. Launchpad died with Tahoe's
+        # Spotlight apps view, so its gesture row never lands.
+        appswitcher-all-displays = mkDefault false;
+        autohide-delay = mkDefault 0.0;
+        autohide-time-modifier = mkDefault 0.0;
+        expose-animation-duration = mkDefault 0.1;
+        scroll-to-open = mkDefault false;
+        slow-motion-allowed = mkDefault false;
+        mouse-over-hilite-stack = mkDefault false;
+        showAppExposeGestureEnabled = mkDefault true;
+        showMissionControlGestureEnabled = mkDefault true;
+        showDesktopGestureEnabled = mkDefault true;
         # Hot corners disabled: corner action 1 is the no-op.
         wvous-tl-corner = mkDefault 1;
         wvous-tr-corner = mkDefault 1;
@@ -96,17 +107,8 @@ in {
       spaces = {
         spans-displays = mkDefault false;
       };
-      # --- [CONTROL_CENTER_MENU_BAR_BYHOST_DOMAIN]
-      # Minimal menu-bar posture: every optional module hidden, battery percentage flag kept true for the Control Center pane readout.
-      controlcenter = {
-        AirDrop = mkDefault false;
-        BatteryShowPercentage = mkDefault true;
-        Bluetooth = mkDefault false;
-        Display = mkDefault false;
-        FocusModes = mkDefault false;
-        NowPlaying = mkDefault false;
-        Sound = mkDefault false;
-      };
+      # Control Center/menu-bar layout has no supported defaults surface on Tahoe (Edit Controls owns it); Ice manages menu-bar items and
+      # AlDente owns battery presentation, so no controlcenter rows exist here.
       # --- [GLOBAL_SYSTEM_DEFAULTS]
       NSGlobalDomain = {
         AppleInterfaceStyle = mkDefault "Dark";
@@ -116,10 +118,20 @@ in {
         AppleShowScrollBars = mkDefault "WhenScrolling";
         AppleScrollerPagingBehavior = mkDefault false;
         AppleICUForce24HourTime = mkDefault true;
+        AppleTemperatureUnit = mkDefault "Fahrenheit";
+        AppleMeasurementUnits = mkDefault "Inches";
+        AppleMetricUnits = mkDefault 0;
+        AppleFontSmoothing = mkDefault 0;
+        # Menu-bar density: native is 16/16; 12/6 tightens one step without crowding. Ice's spacing slider writes the same keys into the
+        # ByHost store, which shadows these rows — its offset stays zeroed so this declaration owns the surface.
+        NSStatusItemSpacing = mkDefault 12;
+        NSStatusItemSelectionPadding = mkDefault 6;
         NSTableViewDefaultSizeMode = mkDefault 1;
         AppleWindowTabbingMode = mkDefault "manual";
         NSNavPanelExpandedStateForSaveMode = mkDefault true;
         NSNavPanelExpandedStateForSaveMode2 = mkDefault true;
+        PMPrintingExpandedStateForPrint = mkDefault true;
+        PMPrintingExpandedStateForPrint2 = mkDefault true;
         NSDocumentSaveNewDocumentsToCloud = mkDefault false;
         NSWindowResizeTime = mkDefault 0.001; # instant window resize
         NSWindowShouldDragOnGesture = mkDefault false;
@@ -144,37 +156,14 @@ in {
           AppleMenuBarVisibleInFullscreen = mkDefault true;
         };
         # --- [FINDER_ADVANCED_SETTINGS]
+        # Preferences only: serialized UI state (sidebar width/disclosure, info panes, NSToolbar dicts) is Finder-owned runtime state, never
+        # declared — Tahoe guarantees no stable schema for it.
         "com.apple.finder" = {
           ShowRecentTags = mkDefault false;
           FavoriteTagNames = mkDefault [];
           ShowSidebar = mkDefault true;
-          SidebarWidth = mkDefault 189;
-          SidebarDevicesSectionDisclosedState = mkDefault true;
-          SidebarPlacesSectionDisclosedState = mkDefault true;
           SidebarShowingiCloudDesktop = mkDefault false;
           SidebarShowingSignedIntoiCloud = mkDefault true;
-          FXInfoPanesExpanded = {
-            General = mkDefault true;
-            OpenWith = mkDefault true;
-            Privileges = mkDefault true;
-          };
-          "NSToolbar Configuration Browser" = {
-            "TB Display Mode" = mkDefault 2;
-            "TB Icon Size Mode" = mkDefault 1;
-            "TB Is Shown" = mkDefault 1;
-            "TB Size Mode" = mkDefault 1;
-            "TB Item Identifiers" = mkDefault [
-              "com.apple.finder.BACK"
-              "com.apple.finder.SWCH"
-              "com.apple.finder.NFLD"
-              "NSToolbarFlexibleSpaceItem"
-              "com.apple.finder.INFO"
-              "com.apple.finder.AirD"
-              "com.apple.finder.SHAR"
-              "NSToolbarSpaceItem"
-              "com.apple.finder.SRCH"
-            ];
-          };
           FXArrangeGroupViewBy = mkDefault "Name";
           FXPreferredGroupBy = mkDefault "None";
         };

@@ -26,7 +26,7 @@ A workflow is a runnable JavaScript orchestrator for Claude Code's `Workflow` to
 - [02]-[PATTERNS](references/patterns.md): the orchestration catalog.
 - [03]-[THROUGHPUT](references/throughput.md): concurrency economics and cross-run law.
 - [04]-[RECOVERY](references/recovery.md): resume, transplant, and reconstruction.
-- [05]-[CODEX_LANES](references/codex-lanes.md): gpt-5.5 lane composition.
+- [05]-[CODEX_LANES](references/codex-lanes.md): codex (gpt-5.6) lane composition.
 
 [TEMPLATES]:
 
@@ -66,7 +66,7 @@ The rules that break runs, each carried in depth by its owning reference:
 - [04]-[THUNKS_NOT_PROMISES]: `parallel()` takes thunks (`[() => agent(…)]`), never bare promises — bare calls start immediately and defeat the limiter.
 - [05]-[FILTER_HOLES]: Always `.filter(Boolean)` on `parallel()`/`pipeline()` results — skipped, failed, and budget-dropped items are `null` holes.
 - [06]-[DISK_RECEIPTS]: A heavy lane product (anything past ~50 rows) goes to disk; only the thin receipt `{ok, report, entries, headline, failure}` crosses the wire, and the terminal reader reads every ok report file IN FULL — relaying a product through an intermediate agent truncates it silently (patterns reference, the report-file shape).
-- [07]-[NO_IDLE_WAIT]: No agent idles — waiting is orchestration: the agent returns a receipt, the orchestrator holds time with `setTimeout`, a fresh agent runs the next round (throughput reference).
+- [07]-[NO_IDLE_WAIT]: No agent idles — a live blocking call is the only legal wait; a wait no single call can hold is orchestration: the agent returns a receipt, the orchestrator holds time with `setTimeout`, a fresh agent runs the next round (throughput reference).
 - [08]-[HARD_STOP]: Every open-ended loop carries a hard stop — a counter, a budget guard (`budget.total && budget.remaining() > N`), or a progress gate; a fix-verify loop gates on file-changing progress, never the round cap alone.
 - [09]-[ARGS_STRUCTURED]: `args` is structured data — read it directly, never `JSON.parse` it, and default the no-args run to a safe no-op, never a full-corpus sweep.
 - [10]-[PROMPT_CONCAT]: Wrap long prompt strings with adjacent `+` at a space kept on the left segment — never a multi-line template literal, which injects `\n` and changes both the value and the resume key.
@@ -89,7 +89,7 @@ export const meta = {
 
 The three `agent()` options tuned most, independent axes:
 
-- `model` — `'sonnet'`/`'opus'`/`'fable'`/`'inherit'` or a full ID; `'sonnet'` is the floor. Cheap mechanical leaf work drops to `'sonnet'`; a self-contained lane routes to gpt-5.5 through the codex-lanes reference; judgment-heavy work inherits the session model.
+- `model` — `'sonnet'`/`'opus'`/`'fable'`/`'inherit'` or a full ID; `'sonnet'` is the floor. Cheap mechanical leaf work drops to `'sonnet'`; a self-contained lane routes to codex (terra default, sol for the hardest legs) through the codex-lanes reference; judgment-heavy work inherits the session model.
 - `effort` — `'low'`…`'max'`, independent of `model`: a cheap model still reasons hard. Synthesis and adversarial judgment run high; mechanical leaf work runs `'low'`.
 - `schema` — a strict JSON Schema (`additionalProperties: false`, everything required, conditional fields required-but-empty) returning a validated object; one strict shape serves native lanes and codex `--output-schema` alike.
 

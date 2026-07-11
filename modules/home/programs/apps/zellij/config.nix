@@ -6,48 +6,46 @@
 # ----------------------------------------------------------------------------
 # Nix-generated Zellij configuration: leader, entry, and normal-mode chord rows project from the chord owner (chords.nix); mode-interior binds and
 # their hint ribbons render from ONE per-mode row table, so a bind and its ribbon hint cannot drift apart.
-
 {
   config,
   lib,
   ...
 }: let
-  inherit (config.forge.theme) palette; # Estate palette owner (modules/home/theme.nix)
+  inherit (config.forge.theme) roles; # Estate palette owner (modules/home/theme.nix)
   chords = config.forge.chords; # Chord-vocabulary owner (modules/home/programs/apps/chords.nix)
   pH = chords.zellij.prefix.hyper;
   inherit (chords) modes layers;
 
-  # Shared color rows for both zjstatus instances; one palette, two surfaces.
-  colorRows = lib.concatStrings (map (n: "        color_${n}    \"${palette.${n}.hex}\"\n") [
-    "crust"
-    "background"
-    "surface"
-    "current_line"
-    "selection"
-    "foreground"
-    "subtle"
-    "comment"
-    "purple"
-    "cyan"
-    "green"
-    "yellow"
-    "amber"
-    "orange"
-    "red"
-    "magenta"
-    "pink"
-    "blue"
-  ]);
+  # zjstatus variable vocabulary for both instances: role-named tokens derived from the theme owner — the bar reads semantic roles
+  # (surface steps, text tiers, accents, states, focus pair, mode ladder), never a raw palette hue.
+  zjVars =
+    {
+      surface = roles.surface.surface;
+      raised = roles.surface.raised;
+      selected = roles.surface.selected;
+      text = roles.text.primary;
+      subtle = roles.text.subtle;
+      muted = roles.text.muted;
+      inverse = roles.text.inverse;
+      accent = roles.accent.primary;
+      accent2 = roles.accent.secondary;
+      structural = roles.accent.structural;
+      focus_active = roles.focus.active;
+      focus_inactive = roles.focus.inactive;
+    }
+    // lib.mapAttrs' (n: c: lib.nameValuePair "state_${n}" c) roles.state
+    // lib.mapAttrs' (n: c: lib.nameValuePair "mode_${n}" c) roles.mode;
+  colorRows = lib.concatStrings (lib.mapAttrsToList (n: c: "        color_${n}    \"${c.hex}\"\n") zjVars);
 
   # Hint-ribbon grammar: native macOS modifier glyphs; a layer chip (R⌘ Hyper, R⌥ Super) prefixes its key group once. Both bars sit on the
-  # surface elevation step; chips carry inverse text on accent fills. Keys cyan, labels muted, mode chip carries the state color shared with the top bar.
+  # surface elevation step; chips carry inverse text on their mode/accent fill. Keys accent, labels muted; the renderer owns all padding.
   seg = c: t: "#[bg=$surface,fg=$" + c + "]" + t;
   segB = c: t: "#[bg=$surface,fg=$" + c + ",bold]" + t;
-  chipOn = bgc: fgc: t: "#[bg=$" + bgc + ",fg=$" + fgc + ",bold] " + t + " " + seg "comment" " ";
-  chip = c: chipOn c "background";
-  pl = k: l: segB "cyan" k + seg "comment" (" " + l + "  ");
+  chipOn = bgc: fgc: t: "#[bg=$" + bgc + ",fg=$" + fgc + ",bold] " + t + " " + seg "muted" " ";
+  chip = c: chipOn c "inverse";
+  pl = k: l: segB "accent" k + seg "muted" (" " + l + "  ");
   plRows = rows: lib.concatStrings (map (x: pl x.k x.l) rows);
-  sep = seg "selection" "│ ";
+  sep = seg "selected" "│ ";
   done = pl "⏎" "done";
 
   # --- [MODE_INTERIOR_ROW_TABLE]
@@ -98,13 +96,13 @@
   modeTable = {
     locked = {
       header = "Locked Mode";
-      chip = ["selection" "foreground" "LOCKED"];
+      chip = ["mode_locked" "text" "LOCKED"];
       tail = "none";
       rows = [(bindH ["${pH} ${modes.locked.exitKey}"] ''SwitchToMode "Normal";'' ["${layers.hyper.chip}${modes.locked.exitKey}" "unlock" 10])];
     };
     tab = {
       header = "Tab Mode";
-      chip = ["magenta" "TAB"];
+      chip = ["mode_tab" "TAB"];
       rows =
         [
           (mkExit modes.tab.key)
@@ -124,7 +122,7 @@
     };
     pane = {
       header = "Pane Mode";
-      chip = ["orange" "PANE"];
+      chip = ["mode_pane" "PANE"];
       rows = [
         (mkExit modes.pane.key)
         (bindH ["h" "Left"] ''MoveFocus "Left";'' ["hjkl" "focus" 10])
@@ -150,7 +148,7 @@
     };
     move = {
       header = "Move Mode";
-      chip = ["cyan" "MOVE"];
+      chip = ["mode_move" "MOVE"];
       rows = [
         (mkExit modes.move.key)
         (bindH ["m" "Tab"] "MovePane;" ["next" 20])
@@ -163,7 +161,7 @@
     };
     resize = {
       header = "Resize Mode";
-      chip = ["purple" "RESIZE"];
+      chip = ["mode_resize" "RESIZE"];
       rows = [
         (mkExit modes.resize.key)
         (bindH ["h" "Left"] ''Resize "Increase Left";'' ["hjkl" "grow" 10])
@@ -180,7 +178,7 @@
     };
     scroll = {
       header = "Scroll Mode";
-      chip = ["yellow" "SCROLL"];
+      chip = ["mode_scroll" "SCROLL"];
       rows =
         [
           (mkExit modes.scroll.key)
@@ -198,7 +196,7 @@
     # Search exits on the scroll entry chord: the pair toggles as one surface.
     search = {
       header = "Search Mode";
-      chip = ["pink" "SEARCH"];
+      chip = ["mode_search" "SEARCH"];
       rows =
         [
           (mkExit modes.scroll.key)
@@ -214,7 +212,7 @@
     };
     session = {
       header = "Session Mode";
-      chip = ["pink" "SESSION"];
+      chip = ["mode_session" "SESSION"];
       rows = [
         (mkExit modes.session.key)
         (bindH ["d"] "Detach;" ["detach" 20])
@@ -226,44 +224,44 @@
       ];
     };
     entersearch = {
-      header = "Prompt Mode";
-      chip = ["pink" "FIND"];
-      note = "type query  ";
+      header = "Find Mode";
+      chip = ["mode_entersearch" "FIND"];
+      note = "type query";
       tail = "none";
       rows = [
-        ((bindH ["${pH} c" "Esc"] ''SwitchToMode "Scroll";'' ["esc" "back  " 20]) // {tag = true;})
+        ((bindH ["${pH} c" "Esc"] ''SwitchToMode "Scroll";'' ["esc" "back" 20]) // {tag = true;})
         (bindH ["Enter"] ''SwitchToMode "Search";'' ["⏎" "search" 10])
       ];
     };
     renametab = {
-      chip = ["red" "RENAME TAB"];
-      note = "type name  ";
+      chip = ["mode_renametab" "RENAME TAB"];
+      note = "type name";
       tail = "none";
       rows = [
         (mkExit "c")
-        (bindH ["Esc"] ''UndoRenameTab; SwitchToMode "Tab";'' ["esc" "undo  " 20])
+        (bindH ["Esc"] ''UndoRenameTab; SwitchToMode "Tab";'' ["esc" "undo" 20])
         (hintRow "⏎" "done" 10)
       ];
     };
     renamepane = {
-      chip = ["red" "RENAME PANE"];
-      note = "type name  ";
+      chip = ["mode_renamepane" "RENAME PANE"];
+      note = "type name";
       tail = "none";
       rows = [
         (mkExit "c")
-        (bindH ["Esc"] ''UndoRenamePane; SwitchToMode "Pane";'' ["esc" "undo  " 20])
+        (bindH ["Esc"] ''UndoRenamePane; SwitchToMode "Pane";'' ["esc" "undo" 20])
         (hintRow "⏎" "done" 10)
       ];
     };
     # Ribbon-only: prompt is a zellij UI state, never a keybind block.
     prompt = {
-      chip = ["foreground" "PROMPT"];
+      chip = ["mode_prompt" "PROMPT"];
       tail = "none";
       rows = [];
     };
     tmux = {
       header = "Tmux Mode";
-      chip = ["green" "TMUX"];
+      chip = ["mode_tmux" "TMUX"];
       rows = [
         ((bind ["${pH} ${modes.tmux.key}"] ''Write 2; SwitchToMode "Normal";'') // {tag = true;})
         (bind ["["] ''SwitchToMode "Scroll";'')
@@ -333,7 +331,7 @@
     else throw "zellij mode chip wants [c label] or [c fg label]: ${builtins.toJSON c}";
   ribbonOf = m:
     chipOf m.chip
-    + lib.optionalString (m ? note) (seg "comment" m.note)
+    + lib.optionalString (m ? note) (seg "muted" (m.note + "  "))
     + lib.concatStrings (map (x: pl (x.hint.k or (builtins.head x.keys)) x.hint.l)
       (lib.sort (a: b: a.hint.rank < b.hint.rank) (lib.filter (x: x ? hint) m.rows)))
     + lib.optionalString ((m.tail or "done") == "done") (sep + done);
@@ -341,10 +339,10 @@
     lib.mapAttrs (_: ribbonOf) modeTable
     // {
       normal =
-        chip "green" "NORMAL"
-        + chip "magenta" layers.hyper.chip
+        chip "mode_normal" "NORMAL"
+        + chip "accent2" layers.hyper.chip
         + plRows chords.zellij.ribbon.hyperGroup
-        + chip "purple" layers.super.chip
+        + chip "structural" layers.super.chip
         + plRows chords.zellij.ribbon.superGroup;
     };
   zjModeName = {
@@ -406,13 +404,15 @@ in {
           zellij-forgot location="file:~/.config/zellij/plugins/zellij_forgot.wasm"
 
           // --- [ZJSTATUS_TOP_BAR]
-          // Cells are pipe-fed by the forge-agents collector, which owns the role->palette styling and ships formatted payloads; the bar renders them
-          // verbatim and never polls a provider itself. WezTerm's tab bar hides at one tab, so no second bar ever stacks above this one.
+          // Cells are pipe-fed by the forge-agents collector, which owns the role->palette styling and ships formatted payloads — the agent/quota
+          // cells AND the uppercase session identity chip pipe per session; the bar renders them verbatim and never polls a provider itself. Tab
+          // labels are index-projected (TAB [N]); {name} survives only in the rename cell as live typing feedback. WezTerm's tab bar hides at one
+          // tab, so no second bar ever stacks above this one. format_left starts at column 0 so the active-tab fill aligns with the pane frame edge.
           zjstatus location="file:~/.config/zellij/plugins/zjstatus.wasm" {
     ${colorRows}
-            format_left               "#[bg=$surface] {tabs}"
+            format_left               "{tabs}"
             format_center             "{swap_layout}"
-            format_right              "{notifications}{pipe_agents}{pipe_quota}#[bg=$pink,fg=$background,bold] {session} "
+            format_right              "{notifications}{pipe_alerts}{pipe_agents}{pipe_quota}{pipe_session}"
             format_space              "#[bg=$surface]"
 
             // Narrow panes: hide whole parts by precedence instead of letting them overlap — agent/quota cells outrank tabs and the swap label.
@@ -423,21 +423,25 @@ in {
             pipe_agents_rendermode    "dynamic"
             pipe_quota_format         "{output}"
             pipe_quota_rendermode     "dynamic"
+            pipe_alerts_format        "{output}"
+            pipe_alerts_rendermode    "dynamic"
+            pipe_session_format       "{output}"
+            pipe_session_rendermode   "dynamic"
 
             // Transient toast rail: zjstatus::notify:: broadcasts (collector rises, receipts push bus) render here and auto-hide.
             // Payloads are literal — urgency rides the text prefix (? input, !! fail), never #[..] directives;
             // per-urgency color stays on pipe_agents. Broadcast reaches both bar instances; only this bar renders it.
-            notification_format_unread           "#[bg=$amber,fg=$background,bold]  {message} "
+            notification_format_unread           "#[bg=$state_warning,fg=$inverse,bold]  {message} "
             notification_format_no_notifications ""
             notification_show_interval           "8"
 
-            swap_layout_format        "#[bg=$surface,fg=$purple,bold] {name} "
+            swap_layout_format        "#[bg=$surface,fg=$structural,bold] {name} "
             swap_layout_hide_if_empty "true"
 
-            tab_active    "#[bg=$cyan,fg=$background,bold] {name} "
-            tab_normal    "#[bg=$surface,fg=$subtle] {name} "
+            tab_active    "#[bg=$focus_active,fg=$inverse,bold] TAB [{index}] "
+            tab_normal    "#[bg=$surface,fg=$focus_inactive] TAB [{index}] "
             tab_separator " "
-            tab_rename    "#[bg=$red,fg=$background,bold] {name} "
+            tab_rename    "#[bg=$mode_renametab,fg=$inverse,bold] TAB [{index}] {name} "
 
             border_enabled              "false"
             hide_frame_for_single_pane  "false"
@@ -448,7 +452,7 @@ in {
           zjstatus-hints location="file:~/.config/zellij/plugins/zjstatus.wasm" {
     ${colorRows}
             format_left   "{mode}"
-            format_right  "#[bg=$surface,fg=$comment]${chords.zellij.hintsRight}"
+            format_right  "#[bg=$surface,fg=$muted]${chords.zellij.hintsRight}"
             format_space  "#[bg=$surface]"
 
             // Narrow panes: the mode ribbon outranks the layer legend.

@@ -5,7 +5,6 @@
 # Path          : modules/home/programs/zsh/init.nix
 # ----------------------------------------------------------------------------
 # Interactive init: session secrets, tool widget wiring, final widget ordering.
-
 {
   config,
   lib,

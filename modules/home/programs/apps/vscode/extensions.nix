@@ -8,7 +8,6 @@
 # runtime state, and extensions.json stays VS Code-owned cache. `forge-vscode doctor` proves installed-vs-roster, the settings and
 # keybindings sentinels; `sync` installs missing rows through the live Code CLI and never uninstalls — an extra is operator freedom,
 # and uninstalling one is an operator gesture, never code.
-
 {
   lib,
   pkgs,

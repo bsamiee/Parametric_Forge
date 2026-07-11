@@ -5,7 +5,6 @@
 # Path          : modules/home/programs/shell-tools/jnv.nix
 # ----------------------------------------------------------------------------
 # Interactive JSON filter using jaq (built-in replacement for jq)
-
 {
   config,
   lib,

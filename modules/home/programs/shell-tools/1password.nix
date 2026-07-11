@@ -5,7 +5,6 @@
 # Path          : modules/home/programs/shell-tools/1password.nix
 # ----------------------------------------------------------------------------
 # 1Password custody: biometric CLI unlock, SSH agent seam, op-inject token cache on rebuild, and GUI/session secret replay
-
 {
   config,
   lib,

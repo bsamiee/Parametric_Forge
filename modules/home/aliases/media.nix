@@ -5,7 +5,6 @@
 # Path          : modules/home/aliases/media.nix
 # ----------------------------------------------------------------------------
 # Media register rows: playback, image, ffmpeg.
-
 [
   {
     alias = "play";

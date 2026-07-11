@@ -5,7 +5,6 @@
 # Path          : modules/home/programs/shell-tools/zoxide.nix
 # ----------------------------------------------------------------------------
 # Directory navigation with frecency-based learning
-
 _: {
   programs.zoxide = {
     enable = true;

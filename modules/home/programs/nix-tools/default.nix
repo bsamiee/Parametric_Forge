@@ -5,7 +5,6 @@
 # Path          : modules/home/programs/nix-tools/default.nix
 # ----------------------------------------------------------------------------
 # Nix tool inventory; imports carry real configuration only.
-
 {pkgs, ...}: {
   imports = [
     ./nix-index.nix

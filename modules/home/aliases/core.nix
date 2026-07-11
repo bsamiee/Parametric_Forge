@@ -5,7 +5,6 @@
 # Path          : modules/home/aliases/core.nix
 # ----------------------------------------------------------------------------
 # Core register rows: system, files, monitoring, data, network, dev; desc/category/risk fields are row payload, not comment prose.
-
 [
   # --- [GENERAL]
   {
@@ -200,6 +199,24 @@
     expansion = "choose";
     desc = "Column selector";
     category = "text-search";
+  }
+  {
+    alias = "rg";
+    expansion = "rg --max-columns=150 --max-columns-preview --trim";
+    desc = "Ripgrep with terminal display cosmetics";
+    category = "text-search";
+  }
+  {
+    alias = "xh";
+    expansion = "xh --style=fruity --print=hbH --pretty=all";
+    desc = "HTTP client with terminal display cosmetics";
+    category = "network";
+  }
+  {
+    alias = "sqlite3";
+    expansion = "sqlite3 -column -header -nullvalue NULL";
+    desc = "SQLite shell with terminal display defaults";
+    category = "data";
   }
   {
     alias = "batg";

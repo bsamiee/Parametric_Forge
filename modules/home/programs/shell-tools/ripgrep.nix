@@ -5,7 +5,6 @@
 # Path          : modules/home/programs/shell-tools/ripgrep.nix
 # ----------------------------------------------------------------------------
 # Fast recursive search configuration
-
 {
   config,
   lib,
@@ -15,14 +14,11 @@
   inherit (config.forge.theme) palette;
   ripgrepConfig = [
     # --- [SEARCH_BEHAVIOR]
+    # Output-mutating flags (trim, column truncation) live in the interactive rg alias — the config applies to every invocation and piped
+    # output must stay verbatim; line numbers need no row because rg enables them on TTY output itself.
     "--smart-case"
     "--hidden"
     "--follow"
-    "--max-columns=150"
-    "--max-columns-preview"
-    "--sort=path" # Deterministic output
-    "--line-number"
-    "--trim" # Trim leading whitespace from printed lines
     "--no-messages" # Suppress file access error messages
     "--search-zip" # Search inside compressed archives
     "--ignore-file-case-insensitive" # macOS case-insensitive filesystem support
@@ -31,9 +27,7 @@
     "--one-file-system" # Don't cross mount points (Nix store safety)
 
     # --- [PERFORMANCE]
-    "--threads=0"
     "--dfa-size-limit=1G" # Increase DFA cache for large pattern files
-    "--mmap" # Use memory-mapped I/O for large files
 
     # --- [VISUAL_FORMATTING]
     # Truecolor RGB triples from the palette tokens
@@ -86,14 +80,8 @@
     "--type-add=headers:*.{h,hpp,hxx,hh}"
 
     # --- [GLOBAL_EXCLUSIONS]
+    # Only .git/ — with --hidden it would otherwise flood every search; all other repo noise is gitignore-owned so explicit targets stay honest.
     "--glob=!.git/"
-    "--glob=!node_modules/"
-    "--glob=!target/"
-    "--glob=!dist/"
-    "--glob=!build/"
-    "--glob=!*.swp"
-    "--glob=!*.swo"
-    "--glob=!.DS_Store"
   ];
 in {
   home.packages = [pkgs.ripgrep];

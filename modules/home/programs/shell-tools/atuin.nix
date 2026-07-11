@@ -5,7 +5,6 @@
 # Path          : modules/home/programs/shell-tools/atuin.nix
 # ----------------------------------------------------------------------------
 # Modern shell history with SQLite backend and full-text search UI
-
 {config, ...}: let
   inherit (config.forge.theme) palette;
 in {

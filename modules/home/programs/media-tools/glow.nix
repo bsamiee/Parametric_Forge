@@ -5,7 +5,6 @@
 # Path          : modules/home/programs/media-tools/glow.nix
 # ----------------------------------------------------------------------------
 # Terminal markdown renderer for Yazi preview
-
 {pkgs, ...}: let
   yamlFormat = pkgs.formats.yaml {};
 

@@ -6,7 +6,6 @@
 # ----------------------------------------------------------------------------
 # XDG hygiene owner: base-directory env, Linux user dirs and desktop shims, and permission-classed directory rows for tools that expect their target
 # directory ahead of first run. Runtime forge projections (~/.config/forge, ~/.local/state/forge*) are owner-created; only ahead-of-run rows live here.
-
 {
   config,
   host,

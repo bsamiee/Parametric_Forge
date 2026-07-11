@@ -63,7 +63,7 @@ New capability lands as a row on the owning table, never a new file. Each axis h
 - [06]: manifest row fields: transport, command/url, env-key names, probe, launcher, Codex fields
 - [07]: env owner axes: core, shell, languages, development, apps, containers, media
 
-The MCP manifest is the deepest fan-out: `mcp-launchers.nix` filters launcher rows, serializes fleet JSON, builds pnpm wrappers, and validates Claude/Codex registration drift against `~/.claude.json` and `~/.codex/config.toml` — a manifest row change ripples to wrapper presence, `forge-mcp drift`, and required Codex servers.
+The MCP manifest is the deepest fan-out: `mcp-launchers.nix` filters launcher rows, serializes fleet JSON, builds pnpm wrappers, reconciles the owned maps in `~/.claude.json` and `~/.codex/config.toml`, joins OAuth credential state into health, and validates registration drift. A manifest row change ripples through switch activation, wrapper presence, both client projections, `forge-mcp doctor`, `forge-mcp drift`, and required Codex servers.
 
 ## [07]-[RUNTIME_SEAMS]
 

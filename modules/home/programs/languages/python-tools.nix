@@ -5,7 +5,6 @@
 # Path          : modules/home/programs/languages/python-tools.nix
 # ----------------------------------------------------------------------------
 # Canonical Python 3.15 development environment.
-
 {
   config,
   lib,

@@ -5,7 +5,6 @@
 # Path          : /flake.nix
 # ----------------------------------------------------------------------------
 # Flake entrypoint.
-
 {
   description = "Unified NixOS + nix-darwin + Home Manager";
 

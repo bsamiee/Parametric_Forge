@@ -6,7 +6,6 @@
 # ----------------------------------------------------------------------------
 # Host-context factory: one vocabulary for every host on every OS. A new machine is a new row here; the host factory projects rows into
 # darwinSystem or nixosSystem, and the home graph gates imports on `host.os`.
-
 let
   # Universal 1Password-held key ("Forge SSH Key"): auth + signing everywhere.
   authorizedKeys = [

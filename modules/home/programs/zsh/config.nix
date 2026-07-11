@@ -5,7 +5,6 @@
 # Path          : modules/home/programs/zsh/config.nix
 # ----------------------------------------------------------------------------
 # Zsh .zshenv env floor: PATH-neutral nix/Homebrew metadata and the never-clobber session-variable fallback.
-
 {
   config,
   forgeToolchainEnvFor,
@@ -43,6 +42,9 @@ in {
   programs.zsh = {
     # Runs in .zshenv for ALL shells (login, interactive, scripts, zellij panes). PATH has ONE owner: home.sessionPath via hm-session-vars; no writers here.
     envExtra = ''
+      setopt no_equals # bare =-leading words (===, =foo) pass through as literals in every shell; =(...) process substitution is unaffected
+      setopt no_nomatch # unmatched globs pass through literally so the tool reports honestly, matching sh/bash expansion semantics
+
       if [[ -o interactive && -z "''${TERM:-}" ]]; then
         export TERM="dumb"
       fi

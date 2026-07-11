@@ -6,7 +6,6 @@
 # ----------------------------------------------------------------------------
 # House code-style vocabulary: plain data imported by both module graphs, so XDG fallback configs (home), treefmt rows (flake), and never-shadow
 # wrapper kernels carry identical bytes. Width/indent are the single law; rendered fragments and the discovery kernel project from them.
-
 let
   indent = 4;
   width = 150;

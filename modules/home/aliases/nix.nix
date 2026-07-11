@@ -5,7 +5,6 @@
 # Path          : modules/home/aliases/nix.nix
 # ----------------------------------------------------------------------------
 # Nix and Darwin register rows: deploy rail, nix ops, flake ops.
-
 [
   # --- [DARWIN]
   {

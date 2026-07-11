@@ -2,22 +2,24 @@
 
 ## [01]-[MODEL_DISPATCH]
 
-Rankings, higher is better. Cost reflects actual operator spend (OpenAI is near-free under a standing deal), not list price. Intelligence is how hard a problem the model absorbs unsupervised. Taste covers UI/UX, code quality, API design, and copy.
+Rankings, higher is better. Cost reflects actual operator spend, not list price. Intelligence is how hard a problem the model absorbs unsupervised. Taste covers UI/UX, code quality, API design, and copy.
 
-| [INDEX] | [MODEL]  | [COST] | [INTELLIGENCE] | [TASTE] |
-| :-----: | :------- | :----: | :------------: | :-----: |
-|  [01]   | gpt-5.5  |   9    |       8        |    5    |
-|  [02]   | sonnet-5 |   5    |       4        |    6    |
-|  [03]   | opus-4.8 |   4    |       7        |    7    |
-|  [04]   | fable-5  |   2    |       9        |    9    |
+| [INDEX] | [MODEL]       | [COST] | [INTELLIGENCE] | [TASTE] |
+| :-----: | :------------ | :----: | :------------: | :-----: |
+|  [01]   | gpt-5.6-terra |   9    |       8        |    6    |
+|  [02]   | gpt-5.6-sol   |   8    |       9        |    7    |
+|  [03]   | gpt-5.6-luna  |   10   |       6        |    5    |
+|  [04]   | sonnet-5      |   5    |       4        |    6    |
+|  [05]   | opus-4.8      |   4    |       7        |    7    |
+|  [06]   | fable-5       |   2    |       9        |    9    |
 
-- Defaults, not limits — standing permission to override: when a cheaper model's output misses the bar, rerun the leg with a smarter model without asking. Judge the output, never the price tag; escalation costs less than shipping mediocre work.
-- Cheap models buy information: probe, gather, and iterate on gpt-5.5 before moving a leg to an expensive model.
-- Bulk/mechanical work (clear-spec implementation, data analysis, migrations) and heavy exploration/research legs dispatch to gpt-5.5 first (`codex exec`, read-only) — the transcript stays out of context and the usage is free.
-- User-facing surfaces (UI, copy, API design) require taste ≥ 7. Plan and implementation reviews: fable-5 or opus-4.8, optionally gpt-5.5 as an independent extra perspective.
-- gpt-5.5 is reachable only through the Codex CLI (`codex exec` / `codex review`); `~/.codex/config.toml` defaults it at medium reasoning — escalate a single run with `-c model_reasoning_effort="high"`, or `--profile xhigh` for the hardest research, review, and design legs. The `codex` skill owns delegation triggers, invocation mechanics, sandboxing, effort tiers, sessions, and review modes.
-- Claude models (sonnet-5, opus-4.8, fable-5) run through the Agent/Workflow `model` parameter at effort `high` — never `xhigh`/`max` on Claude agents. [NEVER]: Haiku. A fable agent never delegates to another fable: a fable leg does its own work inline, and when delegation is truly unavoidable it dispatches a single bounded opus (or below) sub-task, never a chain.
-- Inside workflows gpt-5.5 rides a thin sonnet wrapper labeled with a `gpt-5.5:` prefix; wrappers are launch-only — the orchestrator owns waiting and harvests report files from disk, never the wrapper. The `codex` and `workflow-creator` skills own the full wrapper contract; workflow token budgets count only Claude tokens, so codex work is free and invisible to `budget.spent()`.
+- Terra is the default Codex worker for sweeps, research, migration, and clear-spec implementation; Sol owns ambiguous design, complex code, and the deepest review; Luna owns fixed-schema high-volume transformation.
+- Every Codex lane pins sandbox, suffixed model slug, and effort. `~/.codex/config.toml` carries the interactive Sol Ultra stance, not dispatch defaults.
+- High is the dispatch floor; xhigh and max deepen one context. Subagent spawning is prompt-triggered at any tier; Ultra biases Sol and Terra to self-decompose, while Luna ends at max.
+- Fan-out lanes disable every unused MCP server, including `heptabase-mcp`, and never refan with Ultra. `forge-mcp doctor --network` and `forge-mcp drift` are the fleet gates.
+- User-facing surfaces require taste ≥ 7. Plan and implementation reviews use fable-5 or opus-4.8, with Terra or Sol as the independent Codex lineage.
+- Claude models run through the Agent/Workflow `model` parameter at effort `high`; Codex runs through `codex exec` / `codex review`. [NEVER]: Haiku.
+- Workflow wrappers label the real worker `terra:`, `sol:`, or `luna:` and are call-write-receipt: one blocking `codex` MCP tool call (model, sandbox, cwd, effort pinned), the product written to the lane report path, the thin receipt back. The `codex` and `workflow-creator` skills own the invocation contract.
 
 ## [02]-[ESTATE_LAW]
 
@@ -29,13 +31,15 @@ The Nix estate is machine configuration, not application code: every Nix line co
 - Recurring work is a declared launchd agent under the `com.parametric-forge.<name>` grammar, beside the surface it serves; ad-hoc background processes and manual `launchctl` state are defects.
 - Standing remote connections (mounts, tunnels, sessions) follow the doctrine's `[REMOTE_TRANSPORT]` card: openssh keepalive custody, probed liveness with caused receipts, detach-before-reap drains.
 - [NEVER]: kill live terminal sessions — no `zellij kill-session`/`kill-all-sessions`, no WezTerm restarts. Fix in repo, redeploy; the operator restarts on their own schedule.
-- `.claude/skills/` here are the estate masters for harness skills and `.claude/hooks/setup-env.sh` is the canonical SessionStart hook; edits land in the master and propagate to mirrors (`~/.codex/skills/`, sibling repos) by copy — never edit a mirror, never build sync tooling.
+- `.claude/skills/` here are the estate masters for harness skills and `.claude/hooks/setup-env.sh` is the canonical SessionStart hook; edits land in the master and propagate to admitted mirrors by copy. Claude-caller skills such as `codex` remain outside `~/.codex/skills/` to prevent recursive triggering; never edit a mirror or build sync tooling.
 
 ## [03]-[NIX_CODE_LAW]
 
 Density target: ~300 LOC per file, measured with `loc`, never bytes. Approaching the limit means collapsing polymorphically inside the file — merged functions, dispatch tables, parameterized rows — splitting only when concerns are truly distinct; justified single-concern files (long lists, one owner) may exceed it.
 
 Before adding any code: nixpkgs already solves it? the existing pattern extends? needed now, not "later"? Any "no" means the code does not land. Vocabulary row tables use positional constructors or delimited tuples — the formatter explodes multi-key attrset rows ~2.4x, and density that dies at the fmt lane never lands. Modification is surgical and in-place — read the entire file, understand its patterns, extend the existing surface; a parallel "improved" version is a defect.
+
+Option and package truth is probed, never recalled. The `nixos` MCP's unified `nix` tool answers the pre-add questions: `action=search` (`type=packages|options|programs`, `channel=unstable`) proves whether nixpkgs already solves it; `action=info|browse` with `source=darwin|home-manager|nixos` proves an option's existence, type, and default before any module row lands — `browse` walks a prefix such as `system.defaults.dock`; `nix_versions` dates a package across releases; `action=flake-inputs|store` reads locked inputs and store paths without shell plumbing. Division of labor: the `nixos` MCP for option and package lookup, `context7` for manual narrative and worked examples, the locked module source for final write semantics — value mappings, ByHost domains, activation behavior — because the MCP indexes current upstream manuals, never this flake's lock; `nix-locate`/`comma` for file-to-package resolution.
 
 ```nix accepted
 # YES: dense, multi-capable — one owner absorbs every modality

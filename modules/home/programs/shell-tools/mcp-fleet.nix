@@ -6,7 +6,7 @@
 # ----------------------------------------------------------------------------
 # Declarative MCP fleet manifest: one row is the whole definition of a fleet member. mcp-launchers.nix builds wrappers from `launcher` rows;
 # `forge-mcp doctor` probes rows by `probe` class under `codex.startupTimeoutSec`; `forge-mcp drift` validates both client registrations against
-# rows and only reports — ~/.claude.json and ~/.codex/config.toml stay user/tool-owned.
+# rows, reconciles only the owned MCP maps into the user/tool-owned client files, and reports drift without touching unrelated client state.
 # Row schema (env/header material is key NAMES only, never values):
 #   name             registration key in both clients
 #   transport        "stdio" | "http"
@@ -18,7 +18,9 @@
 #   launcher         { names, pkg, version, bin, prelude?, upstream, updateEngine }
 #                    => Forge-built pnpm wrapper(s); upstream/updateEngine are
 #                    manifest extension-family fields (`forge-mcp outdated` observes)
-#   codex            { required, startupTimeoutSec, toolTimeoutSec, bearerEnvVar?, headerEnv? }
+#   codex            { required, startupTimeoutSec, toolTimeoutSec, auth?, bearerEnvVar?, headerEnv?, toolsApprovalMode? }
+#                    toolsApprovalMode projects codex `default_tools_approval_mode` — "approve" marks a pure information-retrieval server whose
+#                    unannotated tools headless `codex exec` (approval: never) may call; write-capable servers never carry it (MCP runs unsandboxed)
 #   clients          registration expectation, default [ "claude" "codex" ]
 #   assertLevel      "full" (default) | "presence" for host-private rows
 #   doctor           named probe-family checks beyond initialize: the Forge
@@ -26,10 +28,10 @@
 #                    launchdLabel (live agent state), port (loopback bind),
 #                    tokenFile (custody presence, key NAME only), execs
 #                    (companion binaries that must resolve on PATH)
-
 {
   profileBin,
   homeDir,
+  sshBin,
 }: [
   {
     name = "perplexity";
@@ -50,6 +52,7 @@
       required = false;
       startupTimeoutSec = 20;
       toolTimeoutSec = 180;
+      toolsApprovalMode = "approve";
     };
   }
   {
@@ -62,7 +65,7 @@
     launcher = {
       names = ["forge-tavily-mcp"];
       pkg = "tavily-mcp";
-      version = "0.2.20";
+      version = "0.2.21";
       bin = "tavily-mcp";
       upstream = "npm:tavily-mcp";
       updateEngine = "npm-registry";
@@ -71,6 +74,7 @@
       required = false;
       startupTimeoutSec = 20;
       toolTimeoutSec = 180;
+      toolsApprovalMode = "approve";
     };
   }
   {
@@ -120,6 +124,23 @@
       upstream = "npm:@dopplerhq/mcp-server";
       updateEngine = "npm-registry";
     };
+    codex = {
+      required = false;
+      startupTimeoutSec = 30;
+      toolTimeoutSec = 180;
+    };
+  }
+  {
+    # Maghz VPS read-only secret lens: the scoped service token resolves only inside the remote host/container boundary.
+    name = "doppler-remote";
+    transport = "stdio";
+    command = sshBin;
+    args = [
+      "maghz"
+      ''DOPPLER_TOKEN="$(doppler configure get token --plain --scope /srv/maghz)" docker exec -i -e DOPPLER_TOKEN maghz-mcp /opt/mcp/bin/doppler-mcp --read-only --project maghz --config prd_host''
+    ];
+    envKeys = [];
+    probe = "network";
     codex = {
       required = false;
       startupTimeoutSec = 30;
@@ -212,6 +233,22 @@
       required = false;
       startupTimeoutSec = 60;
       toolTimeoutSec = 180;
+    };
+  }
+  {
+    # Nix truth surface: nixpkgs packages plus NixOS/Home Manager/nix-darwin options from the live search index and upstream manuals;
+    # pure retrieval, so headless codex may call it. Binary is the nixpkgs mcp-nixos package installed by mcp-launchers.nix.
+    name = "nixos";
+    transport = "stdio";
+    command = "${profileBin}/mcp-nixos";
+    args = [];
+    envKeys = [];
+    probe = "stdio";
+    codex = {
+      required = false;
+      startupTimeoutSec = 30;
+      toolTimeoutSec = 180;
+      toolsApprovalMode = "approve";
     };
   }
   {
@@ -328,6 +365,7 @@
     envKeys = [];
     probe = "network";
     codex = {
+      auth = "oauth";
       required = false;
       startupTimeoutSec = 20;
       toolTimeoutSec = 180;
@@ -343,6 +381,51 @@
     codex = {
       required = false;
       startupTimeoutSec = 20;
+      toolTimeoutSec = 180;
+    };
+  }
+  {
+    name = "claudeCodeDocs";
+    transport = "http";
+    url = "https://code.claude.com/docs/mcp";
+    headerNames = [];
+    envKeys = [];
+    probe = "network";
+    codex = {
+      required = false;
+      startupTimeoutSec = 20;
+      toolTimeoutSec = 180;
+    };
+  }
+  {
+    # Codex itself as a Claude-side MCP tool: `codex`/`codex-reply` run gpt-5.6 sessions natively — the workflow-lane dispatch surface. Claude-only:
+    # codex never registers itself. The auto-updating user-installed binary lives outside profileBin.
+    name = "codex";
+    transport = "stdio";
+    command = "${homeDir}/.local/bin/codex";
+    args = ["mcp-server"];
+    envKeys = [];
+    probe = "stdio";
+    clients = ["claude"];
+    codex = {
+      required = false;
+      startupTimeoutSec = 30;
+      toolTimeoutSec = 3600;
+    };
+  }
+  {
+    # ChatGPT.app-private Computer Use bridge: presence asserted, definition owned by the app/plugin projection.
+    name = "computer-use";
+    transport = "stdio";
+    command = "./Codex Computer Use.app/Contents/SharedSupport/SkyComputerUseClient.app/Contents/MacOS/SkyComputerUseClient";
+    args = ["mcp"];
+    envKeys = [];
+    probe = "skip";
+    clients = ["codex"];
+    assertLevel = "presence";
+    codex = {
+      required = false;
+      startupTimeoutSec = 120;
       toolTimeoutSec = 180;
     };
   }

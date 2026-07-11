@@ -5,7 +5,6 @@
 # Path          : modules/home/environments/default.nix
 # ----------------------------------------------------------------------------
 # Environment module aggregator
-
 {...}: {
   imports = [
     ./core.nix

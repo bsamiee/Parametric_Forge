@@ -5,8 +5,8 @@
 # Path          : modules/home/programs/shell-tools/fd.nix
 # ----------------------------------------------------------------------------
 # Fast file finder plus the estate noise-pattern taxonomy: `dirs` are directory names, `files` are file globs, `text` is the rendered gitignore-grammar
-# projection fd and watchexec consume verbatim. Narrower per-surface policies (ripgrep search, eza tree prune, rsync filter) stay consumer-owned.
-
+# projection watchexec consumes verbatim; fd consumes `dirText` only — traversal prunes noise directories while file discovery stays exhaustive.
+# Narrower per-surface policies (ripgrep search, eza tree prune, rsync filter) stay consumer-owned.
 {
   config,
   lib,
@@ -25,9 +25,10 @@ in {
   options.forge.ignoreEstate = lib.mkOption {
     type = lib.types.raw;
     readOnly = true;
-    description = "Noise-pattern taxonomy: dirs (names, no slash), files (globs), text (rendered ignore-file projection).";
+    description = "Noise-pattern taxonomy: dirs (names, no slash), files (globs), text (full projection), dirText (directory-only projection).";
     default = rec {
       text = lib.concatStringsSep "\n" (map (d: "${d}/") dirs ++ files);
+      dirText = lib.concatStringsSep "\n" (map (d: "${d}/") dirs);
       dirs = [
         # Version control
         ".git"
@@ -96,6 +97,6 @@ in {
 
   config = {
     home.packages = [fdWithHidden];
-    xdg.configFile."fd/ignore".text = config.forge.ignoreEstate.text;
+    xdg.configFile."fd/ignore".text = config.forge.ignoreEstate.dirText;
   };
 }

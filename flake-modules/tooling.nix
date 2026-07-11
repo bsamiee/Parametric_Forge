@@ -5,7 +5,6 @@
 # Path          : flake-modules/tooling.nix
 # ----------------------------------------------------------------------------
 # Developer shell and formatting surfaces.
-
 _: {
   perSystem = {
     config,

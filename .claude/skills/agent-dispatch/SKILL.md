@@ -11,7 +11,7 @@ description: >-
     delegating a task to a subagent or teammate, choosing between a subagent, fork, team, or
     workflow, writing a `.claude/agents/` definition, designing a fan-out or review pipeline,
     or when a delegation stalls, over-prompts for permission, or returns weak results.
-    Authoring runnable workflow scripts belongs to workflow-creator; gpt-5.5 offload belongs
+    Authoring runnable workflow scripts belongs to workflow-creator; gpt-5.6 offload belongs
     to the codex skill; harness configuration belongs to harness-config.
 ---
 
@@ -63,7 +63,7 @@ Workers run in the background by default and drop to the foreground only when th
 ## [07]-[COMPOSITION]
 
 - Runnable workflow scripts — the `meta` block, `agent()`, `pipeline()`, schemas — belong to workflow-creator; this skill decides when a workflow is the right surface and how its agents are prompted.
-- Offload to gpt-5.5 through `codex exec` belongs to the codex skill; this skill's placement table names the trigger.
+- Offload to gpt-5.6 (terra workhorse, sol flagship) through `codex exec` belongs to the codex skill; this skill's placement table names the trigger.
 - Hook construction for `SubagentStart`, `SubagentStop`, `TeammateIdle`, and task gates belongs to hooks-builder; this skill names where a gate pays for itself.
 - Memory files, rules, settings, model and effort defaults, and headless lanes belong to harness-config; a subagent definition's frontmatter stays here.
 - A delegation smell, orchestration error, or superior pattern surfaced mid-run is codified into its owning skill — codex for offload mechanics, workflow-creator for script shapes, this skill for placement and contract law, harness-config for settings and hooks — in the same session, then propagated byte-identical to every project, reviewer configs included; a lesson left as session knowledge is a regression.

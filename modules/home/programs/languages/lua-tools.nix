@@ -5,7 +5,6 @@
 # Path          : modules/home/programs/languages/lua-tools.nix
 # ----------------------------------------------------------------------------
 # Lua development environment and tooling.
-
 {
   lib,
   pkgs,

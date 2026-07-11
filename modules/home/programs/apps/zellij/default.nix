@@ -5,7 +5,6 @@
 # Path          : modules/home/programs/apps/zellij/default.nix
 # ----------------------------------------------------------------------------
 # Zellij terminal multiplexer configuration
-
 {
   config,
   lib,

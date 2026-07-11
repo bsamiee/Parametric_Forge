@@ -7,7 +7,6 @@
 # VS Code visual projection: one function of the theme and font owners returning the asserted design scalars and the structured appearance rows.
 # The base theme is builtin Dark Modern — always present, never an extension dependency — and every visible family is overridden from the palette
 # owner, so the rendered workbench carries zero third-party color. Git hues bind the owner git vocabulary (roles.git), never per-app conventions.
-
 {
   lib,
   t,

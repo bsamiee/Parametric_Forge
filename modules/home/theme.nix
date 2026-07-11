@@ -7,7 +7,6 @@
 # Estate palette owner: enriched Dracula-variant rows, semantic roles, ANSI-16 projection, the master syntax scope table (tmTheme, treesitter,
 # textMate, and semantic tokens project from one pivot), derived diff/search/git roles, the shared icon vocabulary, the target registry with its
 # coverage projection, and the rendered proof lane. Every color consumer interpolates these tokens; no consumer carries a private hex.
-
 {
   lib,
   pkgs,
@@ -56,6 +55,11 @@
       text = [["primary" palette.foreground] ["subtle" palette.subtle] ["muted" palette.comment] ["inverse" palette.background]];
       accent = [["primary" palette.cyan] ["secondary" palette.magenta] ["tertiary" palette.pink] ["structural" palette.purple]];
       state = [["success" palette.green] ["warning" palette.amber] ["attention" palette.orange] ["danger" palette.red] ["info" palette.blue]];
+      # Focus pair: the one active/inactive derivation every chrome surface (tabs, pane frames, ribbons) reads instead of re-picking hues.
+      focus = [["active" palette.cyan] ["inactive" palette.subtle]];
+      # Modal-UI hue ladder: one hue per mux/editor mode chip; search and entersearch share deliberately (one toggled surface), renames share
+      # (one input-editing state), and every other mode reads distinct at a glance — no two standing modes collapse onto one hue.
+      mode = [["normal" palette.green] ["locked" palette.selection] ["tab" palette.magenta] ["pane" palette.orange] ["move" palette.cyan] ["resize" palette.purple] ["scroll" palette.yellow] ["search" palette.pink] ["entersearch" palette.pink] ["session" palette.blue] ["renametab" palette.red] ["renamepane" palette.red] ["prompt" palette.foreground] ["tmux" palette.amber]];
       diff = [["add" derived.diffAdd] ["addEmph" derived.diffAddEmph] ["del" derived.diffDel] ["delEmph" derived.diffDelEmph] ["change" derived.diffChange] ["changeEmph" derived.diffChangeEmph]];
       ui = [["border" palette.subtle] ["cursor" palette.foreground] ["indent" palette.subtle] ["whitespace" palette.selection] ["search" derived.search] ["match" derived.searchCurrent]];
     }
@@ -159,7 +163,8 @@
   glyphsProved = v: let
     dead =
       lib.attrNames (lib.filterAttrs (_: r: r.glyph == "") v.dirs)
-      ++ lib.attrNames (lib.filterAttrs (_: g: g == "") v.process);
+      ++ lib.attrNames (lib.filterAttrs (_: g: g == "") v.process)
+      ++ lib.attrNames (lib.filterAttrs (_: r: r.glyph == "") v.alphabet);
   in
     if dead == []
     then v
@@ -185,8 +190,21 @@
       ssh = "󰣀";
       git = "󰊢";
       nix = "󱄅";
-      claude = "✳";
+      claude = "󰙴";
     };
+    # Status alphabet: the CLOSED glyph vocabulary for terminal-bound render surfaces — single-codepoint codicons (Symbols Nerd Font Mono,
+    # 1-cell advance proven at font install), each with the ASCII twin persisted surfaces use instead. Emoji and EAW-ambiguous glyphs never
+    # render on width-load-bearing surfaces; a new status class is one row here, never an app-local glyph.
+    alphabet = byName (map (row ["name" "glyph" "ascii"]) [
+      ["running" "" "[>]"]
+      ["idle" "" "[ ]"]
+      ["attention" "" "[?]"]
+      ["failure" "" "[X]"]
+      ["ok" "" "[OK]"]
+      ["bell" "" "[B]"]
+      ["warning" "" "[!]"]
+      ["sync" "" "[~]"]
+    ]);
   };
 
   # --- [TARGET_REGISTRY]
@@ -203,7 +221,7 @@
   in
     map mkTarget [
       ["wezterm" "${apps}/wezterm/default.nix" "lua+toml" "roles ansi16 fonts" "bound"]
-      ["zellij" "${apps}/zellij/config.nix" "kdl" "palette roles" "bound"]
+      ["zellij" "${apps}/zellij/config.nix" "kdl" "roles" "bound"]
       ["zellij-theme" "${apps}/zellij/themes/dracula.nix" "kdl" "palette" "bound"]
       ["yazi" "${apps}/yazi/theme.nix" "toml+tmTheme" "palette icons" "bound"]
       ["nvim" "${apps}/nvim/default.nix" "lua" "palette scopes roles" "bound"]
@@ -528,6 +546,20 @@
         input_selector_label = [roles.surface.raised roles.accent.primary];
         launcher_label = [roles.surface.raised roles.accent.primary];
       };
+    # Display-time grammar: transient/human surfaces render these strftime rows (24h local, no seconds, no tz); stored data stays ISO-8601 UTC.
+    timeDisplay = {
+      sameDay = "%H:%M";
+      dated = "%d/%m %H:%M";
+    };
+    # fzf color vocabulary: the ONE role->slot mapping every fzf-embedding surface consumes (programs.fzf, register browsers, ops pickers).
+    # Selection rides the focus pair, structure rides accents — a picker's selected row reads identically to the active tab chip estate-wide.
+    fzfColorRows = [
+      "--color=fg:${roles.text.primary.hex},fg+:${roles.text.inverse.hex},bg:${roles.surface.base.hex},bg+:${roles.focus.active.hex},selected-fg:${roles.text.inverse.hex},selected-bg:${roles.focus.active.hex}"
+      "--color=hl:${roles.state.success.hex},hl+:${roles.accent.secondary.hex},info:${roles.text.muted.hex},marker:${roles.state.success.hex}"
+      "--color=prompt:${roles.accent.secondary.hex},spinner:${roles.state.success.hex},pointer:${roles.accent.secondary.hex},header:${roles.text.muted.hex}"
+      "--color=gutter:${roles.surface.base.hex},border:${roles.accent.primary.hex},separator:${roles.accent.tertiary.hex},scrollbar:${roles.accent.tertiary.hex}"
+      "--color=preview-fg:${roles.text.primary.hex},preview-scrollbar:${roles.accent.tertiary.hex},label:${roles.accent.secondary.hex},query:${roles.text.primary.hex}"
+    ];
     # Four-step surface ramp for delta blame backgrounds.
     blameRamp = lib.concatMapStringsSep " " (c: c.hex) [
       roles.surface.base

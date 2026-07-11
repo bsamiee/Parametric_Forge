@@ -5,7 +5,6 @@
 # Path          : modules/home/scripts/loc.nix
 # ----------------------------------------------------------------------------
 # scc code counter + loc wrapper for grouped per-file / per-folder LOC
-
 {pkgs, ...}: let
   # Single-pass LOC report: files grouped by top-level folder, folder totals, and one overall target total. --json emits the machine envelope.
   loc = pkgs.writeShellApplication {

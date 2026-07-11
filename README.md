@@ -96,7 +96,7 @@ Doppler is the sole secret backend for projects and agents; 1Password is operato
 
 ## [07]-[MCP_FLEET]
 
-`modules/home/programs/shell-tools/mcp-fleet.nix` is the single fleet manifest: one row declares a member's transport, spawn line or endpoint, env key names, probe class, launcher pin, and client expectations. `mcp-launchers.nix` builds the pinned `forge-*-mcp` wrappers from `launcher` rows; `forge-mcp doctor [--network]` proves every row live, `forge-mcp drift` validates both client registrations against rows, `forge-mcp outdated` surfaces stale pins. Add or extend a server as one manifest row — registrations mirror rows, and drift is the proof.
+`modules/home/programs/shell-tools/mcp-fleet.nix` is the single fleet manifest: one row declares transport, spawn line or endpoint, env key names, probe class, launcher pin, authentication mode, tool-approval posture, and client expectations. Every Darwin switch runs `forge-mcp reconcile claude` and `forge-mcp reconcile codex`, replacing only manifest-owned MCP maps while preserving unrelated client state and app-private Codex rows. `forge-mcp doctor --network` joins endpoint health to declared credentials, `forge-mcp drift` proves the live projections, and `forge-mcp outdated` surfaces stale pins. Add or extend a server as one manifest row.
 
 ## [08]-[SSH_ESTATE]
 
@@ -168,7 +168,7 @@ Day-2 rebuilds: `forge-redeploy --switch`. A fresh NixOS host bootstraps with ni
 - Acceptance: `forge-accept` after any `--switch`; `--from`/`--only` re-enter a failed step without replaying the pipeline.
 - Provisioner: `nix build .#forge-provision`; smoke with `nix run .#forge-provision -- self-test`.
 - Inputs: `nix flake update`; closure diffs review through `nvd`/`nix-diff` before switching.
-- Fleet: `forge-mcp doctor --network` and `forge-mcp drift` after any fleet or client change.
+- Fleet: `forge-mcp reconcile claude`, `forge-mcp reconcile codex`, `forge-mcp doctor --network`, and `forge-mcp drift` after any fleet or client change.
 
 ## [16]-[LICENSE]
 

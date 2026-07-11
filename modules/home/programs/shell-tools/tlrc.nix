@@ -6,7 +6,6 @@
 # ----------------------------------------------------------------------------
 # Official tldr client written in Rust. Config is generator-owned and lands where tlrc resolves it per OS:
 # ~/Library/Application Support on macOS (the XDG path is never consulted there), $XDG_CONFIG_HOME on Linux.
-
 {
   config,
   lib,

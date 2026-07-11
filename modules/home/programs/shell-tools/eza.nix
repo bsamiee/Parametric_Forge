@@ -5,7 +5,6 @@
 # Path          : modules/home/programs/shell-tools/eza.nix
 # ----------------------------------------------------------------------------
 # Modern ls replacement themed from the estate palette owner
-
 {
   config,
   pkgs,
@@ -13,7 +12,7 @@
 }: let
   inherit (config.forge.theme) palette;
   yamlFormat = pkgs.formats.yaml {};
-  treeIgnoreGlobs = ".git|.direnv|.devenv|.cache|.pytest_cache|.mypy_cache|.ruff_cache|__pycache__|node_modules|bin|obj|dist|build|target|coverage|.next|.nuxt|.turbo|.vite|.parcel-cache|vendor";
+  treeIgnoreGlobs = ".git|.direnv|.devenv|.cache|.pytest_cache|.mypy_cache|.ruff_cache|__pycache__|node_modules|obj|dist|build|target|coverage|.next|.nuxt|.turbo|.vite|.parcel-cache|vendor";
   treeCommand = pkgs.writeShellApplication {
     name = "tree";
     runtimeInputs = [pkgs.eza];
@@ -26,7 +25,6 @@
         --bytes \
         --total-size \
         --git \
-        --git-ignore \
         --group-directories-first \
         --icons=auto \
         --classify=auto \

@@ -5,7 +5,6 @@
 # Path          : modules/home/programs/zsh/options.nix
 # ----------------------------------------------------------------------------
 # Zsh shell options and history configuration.
-
 _: {
   programs.zsh = {
     # --- [DIRECTORY_NAVIGATION]

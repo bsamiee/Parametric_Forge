@@ -6,7 +6,6 @@
 # ----------------------------------------------------------------------------
 # Nix-generated Zellij component theme from the estate palette owner. One row per component:
 # [ base background emphasis_0 emphasis_1 emphasis_2 emphasis_3 ] as palette role names; the renderer is one fold over the rows.
-
 {
   config,
   lib,

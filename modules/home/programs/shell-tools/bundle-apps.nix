@@ -7,7 +7,6 @@
 # macOS agent-identity owner: one bundleApps row per background agent projects the Applications/<display>.app Info.plist (so Login Items & Extensions
 # resolves launchd AssociatedBundleIdentifiers to a real name instead of the "/bin/sh" basename) and one LaunchServices registration batch. The notifier
 # rail rides the same surface: one platform-gated binary every caller guards on emptiness.
-
 {
   config,
   lib,

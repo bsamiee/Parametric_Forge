@@ -5,7 +5,6 @@
 # Path          : modules/home/programs/shell-tools/aria2.nix
 # ----------------------------------------------------------------------------
 # Multi-protocol download utility with parallel connections
-
 _: {
   programs.aria2 = {
     enable = true;

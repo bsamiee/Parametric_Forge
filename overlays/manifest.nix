@@ -8,7 +8,6 @@
 # update engine, retention, and projection for every non-nixpkgs package and every host-runtime extension family. overlays/default.nix folds
 # `packages` rows into derivations; flake-modules/packages.nix folds `projection.package/app` into public outputs; HM rosters consume
 # `admissions` rows via `rosterRows`. Pure data plus builtins-only accessors — no pkgs, no lib; validation runs in the overlay fold.
-
 let
   v = rec {
     alerter = "26.5";

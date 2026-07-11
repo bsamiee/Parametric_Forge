@@ -5,7 +5,6 @@
 # Path          : modules/home/scripts/default.nix
 # ----------------------------------------------------------------------------
 # Scripts module aggregator; the terminal rail rides the desktop app graph.
-
 {
   host,
   lib,

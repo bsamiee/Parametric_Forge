@@ -23,6 +23,7 @@ jq -c --arg ts "$ts" \
     --arg zs "${ZELLIJ_SESSION_NAME:-}" --arg zp "${ZELLIJ_PANE_ID:-}" \
     --arg tty "$tty" \
     '{ts: $ts, source: "hook", event: (.hook_event_name // "unknown"), session_id: (.session_id // "-"), cwd: (.cwd // "-"),
+    message: ((.message // "") | tostring | .[0:160]),
     term: $term, wezterm_pane: $wp, zellij_session: $zs, zellij_pane: $zp, tty: $tty}' \
     >>"$feed" 2>/dev/null
 

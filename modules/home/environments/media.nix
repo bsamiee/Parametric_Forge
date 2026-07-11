@@ -5,7 +5,6 @@
 # Path          : modules/home/environments/media.nix
 # ----------------------------------------------------------------------------
 # Media and document processing environment variables
-
 {
   config,
   pkgs,
@@ -15,7 +14,6 @@
   home.sessionVariables = {
     # --- [FFMPEG]
     FFREPORT = "file=${config.xdg.stateHome}/ffmpeg/%p-%t.log:level=32";
-    AV_LOG_FORCE_COLOR = "1";
 
     # --- [IMAGEMAGICK]
     # System font dirs are a Darwin fact; the profile share is portable.

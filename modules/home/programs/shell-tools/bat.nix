@@ -5,7 +5,6 @@
 # Path          : modules/home/programs/shell-tools/bat.nix
 # ----------------------------------------------------------------------------
 # Cat clone with syntax highlighting and Git integration
-
 {
   config,
   pkgs,

@@ -5,7 +5,6 @@
 # Path          : modules/home/scripts/terminal.nix
 # ----------------------------------------------------------------------------
 # Yazi -> Zellij -> Neovim rail: popup dispatcher, RPC handoff, server owner. Pane targeting is ID-based via list-panes JSON; never ordinal focus.
-
 {
   config,
   lib,

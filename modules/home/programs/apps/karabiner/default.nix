@@ -5,7 +5,6 @@
 # Path          : modules/home/programs/apps/karabiner/default.nix
 # ----------------------------------------------------------------------------
 # Karabiner-Elements writable config staging: Karabiner rewrites its own store, so the target stays a real file — generate JSON, copy only on change.
-
 {
   config,
   lib,

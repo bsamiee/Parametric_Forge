@@ -5,7 +5,6 @@
 # Path          : modules/home/programs/container-tools/default.nix
 # ----------------------------------------------------------------------------
 # Container and Kubernetes tool inventory; imports carry real configuration only.
-
 {
   lib,
   pkgs,

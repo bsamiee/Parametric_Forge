@@ -5,7 +5,6 @@
 # Path          : modules/home/programs/languages/dev-tools.nix
 # ----------------------------------------------------------------------------
 # Language-agnostic tooling: linters, formatters, and helpers shared across multiple ecosystems.
-
 {
   config,
   lib,

@@ -6,7 +6,6 @@
 # ----------------------------------------------------------------------------
 # Typed Yazi theme from the estate palette owner, rendered through the native TOML generator; syntect preview highlighting consumes the owner's shared
 # tmTheme artifact and icons project from the shared icon vocabulary plus the extension icon-family vocabulary below.
-
 {
   config,
   lib,

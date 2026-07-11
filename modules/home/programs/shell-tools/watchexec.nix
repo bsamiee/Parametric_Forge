@@ -6,7 +6,6 @@
 # ----------------------------------------------------------------------------
 # watchexec owner: global ignore estate plus forge-watch, the packaged event rail. --events streams kernel filesystem events as JSON lines for
 # agent consumption; run mode owns busy-policy, debounce, and origin knobs.
-
 {
   config,
   pkgs,

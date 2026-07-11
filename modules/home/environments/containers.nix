@@ -6,7 +6,6 @@
 # ----------------------------------------------------------------------------
 # Container runtime and OCI environment. services.colima + programs.docker-cli own DOCKER_HOST/COLIMA_HOME/DOCKER_CONFIG on Darwin; Linux talks
 # to the system Docker socket unpointed with docker-cli owning config.json only.
-
 {
   config,
   lib,

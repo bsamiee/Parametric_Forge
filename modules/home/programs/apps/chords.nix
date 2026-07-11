@@ -7,7 +7,6 @@
 # Single chord-vocabulary owner: physical leader layers, zellij leader binds, mode table, which-key rows, ribbon hints, and per-consumer register
 # rows are ONE parameterized table projected into karabiner JSON, zellij KDL, zellij-forgot content, WezTerm rows.lua, nvim chords.lua, and the
 # VS Code keybindings sentinel tail. A new bind is one row here; consumers never hand-duplicate chords.
-
 {
   config,
   lib,

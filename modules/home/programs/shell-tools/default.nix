@@ -5,7 +5,6 @@
 # Path          : modules/home/programs/shell-tools/default.nix
 # ----------------------------------------------------------------------------
 # Shell tool inventory; imports carry real configuration only. Monitor and proof-lane admissions arrive as manifest roster rows, never bare entries.
-
 {
   lib,
   pkgs,
@@ -17,6 +16,21 @@
   # row. Scope: rows this manifest installs (hm-roster) — ca1/landed rows own their completion surface.
   # getExe resolves mainProgram; attr is not a binary name.
   completionRows = lib.filter (row: row ? completionArgs && row.install == "hm-roster") (lib.attrValues manifest.admissions);
+  # Baked default flag with caller override: exec upstream verbatim when any arg already steers that surface (clap rejects duplicate flags),
+  # otherwise inject the default. Positional row: package, injected flag, case-pattern of caller-owned spellings.
+  withDefaultFlag = pkg: flag: owns:
+    pkgs.writeShellApplication {
+      name = pkg.meta.mainProgram or (lib.getName pkg);
+      text = ''
+        for a in "$@"; do
+          case "$a" in
+            --) break ;;
+            ${owns}) exec ${lib.getExe pkg} "$@" ;;
+          esac
+        done
+        exec ${lib.getExe pkg} ${flag} "$@"
+      '';
+    };
   manifest-completions = pkgs.runCommand "forge-manifest-completions" {} ''
     mkdir -p "$out/share/zsh/site-functions"
     ${lib.concatMapStringsSep "\n" (row: ''${lib.getExe pkgs.${row.attr}} ${lib.escapeShellArgs row.completionArgs} > "$out/share/zsh/site-functions/_${row.attr}"'') completionRows}
@@ -80,7 +94,7 @@ in {
       pkgs.fq # jq for binary formats; structured decode of media, executables, captures
       pkgs.gping # Graphing ping
       pkgs.grex # Regex generator from test cases
-      pkgs.hexyl # Hex viewer
+      (withDefaultFlag pkgs.hexyl "--color=auto" "--color|--color=*|-p|--plain") # Hex viewer; color rides TTY detection
       pkgs.hyperfine # Command benchmarking
       pkgs.mise # Runtime version manager
       pkgs.oha # HTTP load generator with real-time TUI and JSON/CSV output
@@ -90,7 +104,7 @@ in {
       pkgs.process-compose # Non-container process orchestrator; config owned by process-compose.nix
       pkgs.ratchet # GitHub Actions version pinning
       pkgs.rich-cli # Rich terminal rendering
-      pkgs.sd # Structural find and replace
+      (withDefaultFlag pkgs.sd "--across" "-A*|--across|-[!-]*A*") # Structural find and replace; patterns match across the whole input
       pkgs.sshs # Interactive SSH host picker
       pkgs.trash-cli # FreeDesktop trash suite
       pkgs.zizmor # GitHub Actions security auditor

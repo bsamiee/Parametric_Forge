@@ -6,7 +6,6 @@
 # ----------------------------------------------------------------------------
 # Alias register owner: sibling files are typed row lists; this module stamps owner_file/risk, asserts alias uniqueness,
 # exposes forge.registers.aliases, and projects the shell-alias terminal surface from the same rows.
-
 {lib, ...}: let
   files = ["containers" "core" "git" "media" "nix"];
   rows =

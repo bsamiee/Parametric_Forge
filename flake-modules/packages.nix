@@ -6,7 +6,6 @@
 # ----------------------------------------------------------------------------
 # Public packages and apps as folds of overlays/manifest.nix projection rows: `projection.package` publishes the attr, `projection.app` wraps its CLI,
 # `projection.default = true` names the default. `forge-package-manifest` is the machine-readable ledger and rides the same smoke checks.
-
 _: let
   manifest = import ../overlays/manifest.nix;
 in {

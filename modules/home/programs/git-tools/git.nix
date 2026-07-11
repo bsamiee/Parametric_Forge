@@ -5,7 +5,6 @@
 # Path          : modules/home/programs/git-tools/git.nix
 # ----------------------------------------------------------------------------
 # Git identity, op-backed SSH signing, workflow settings, delta + difftastic
-
 {
   config,
   lib,

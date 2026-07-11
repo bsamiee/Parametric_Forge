@@ -5,7 +5,6 @@
 # Path          : flake-modules/qa.nix
 # ----------------------------------------------------------------------------
 # Flake checks: formatting, Nix static analysis, and public-output build smoke.
-
 {self, ...}: {
   perSystem = {
     config,

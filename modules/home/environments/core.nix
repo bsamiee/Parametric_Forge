@@ -5,7 +5,6 @@
 # Path          : modules/home/environments/core.nix
 # ----------------------------------------------------------------------------
 # Core system environment variables
-
 {pkgs, ...}: {
   # MAGIC points at this package's magic.mgc; the binary must ride with it — /usr/bin/file 5.41 rejects v20 magic and floods every `file` call.
   home.packages = [pkgs.file];

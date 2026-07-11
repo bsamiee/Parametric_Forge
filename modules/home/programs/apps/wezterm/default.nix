@@ -7,7 +7,6 @@
 # WezTerm outer-command-deck owner: typed rows (keys, deck commands, quick-select patterns, hyperlink rules, floats, ssh domains, workspaces,
 # fonts, plugin pins) project into generated Lua data + a colors TOML; deck.lua and events.lua are the only static interpreters. A build-time
 # validator gates activation on Lua syntax, plugin payloads, and action-dispatch totality.
-
 {
   config,
   forgeToolchainEnvFor,

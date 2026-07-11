@@ -833,9 +833,9 @@ The scratch convention — one layout, no exceptions:
 
 - Run scratch is `.claude/scratch/<workflow-name>/` (repo-relative, gitignored, ephemeral — deletable once the run's campaign closes). ONE folder per workflow; never a tool-segregated dir, never a bespoke sibling. Scope (campaign/target slug) rides the FILENAME, never extra nesting.
 - Gitignore consequence: `rg`/`fd`/Grep skip ignored dirs by default, so consumers are handed EXPLICIT paths (the roster) and read them directly — never asked to discover products by search. An agent that must hunt inside scratch passes `--no-ignore` (rg) or `-I` (fd).
-- File grammar: `<scope>-<lane>-<artifact>.<ext>` — lane is a 1-2 word semantic slug (`s0`, `gov`, `rip-python`), artifact names the role (`task`, `schema`, `report`, `stderr`). No agent names, no timestamps, no run IDs in filenames.
-- Stale purge is law: a lane's first act deletes its own prior `report`/`stderr` (`rm -f`) — a leftover report satisfies a poll instantly and returns LAST run's data.
-- Run scratch (the lanes' data plane — codex sandboxes write it) is distinct from the SESSION SCRATCHPAD (the harness temp dir outside the repo) — orchestrator-only artifacts like the run ledger live in the session scratchpad, never in run scratch.
+- File grammar: `<scope>-<lane>-<artifact>.<ext>` — lane is a 1-2 word semantic slug (`s0`, `gov`, `rip-python`), artifact names the role (`report`, `dossier`, `map`). A codex lane owns exactly one artifact — its report, written by the wrapper from the tool result; no task, schema, events, or stderr files exist on the MCP path. No agent names, no timestamps, no run IDs in filenames.
+- A lane's first act deletes its own prior report (`rm -f`) — a leftover file reads as THIS run's product to any consumer handed the path.
+- Run scratch (the lanes' data plane) is distinct from the SESSION SCRATCHPAD (the harness temp dir outside the repo) — orchestrator-only artifacts like the run ledger live in the session scratchpad, never in run scratch.
 
 Dual schema: the PRODUCT schema types the on-disk file; the RECEIPT types the wire. Both strict — every object `additionalProperties: false` with every property required — so one shape serves AJV lanes and codex `--output-schema` alike.
 
@@ -912,16 +912,15 @@ const RECEIPT = {
     },
 };
 
-// Dispatch helper: codex wrapper when CODEX, native lane otherwise. `codexPrompt` is the
-// launch-only template in the codex-lanes reference (Write-tool task/schema files + stale
-// purge, test -s guard + verbatim detached launch, mechanical receipt). The `.then()`
+// Dispatch helper: codex wrapper when CODEX, native lane otherwise. `codexLane` is the
+// call-write-receipt template in the codex-lanes reference: ONE blocking `codex` MCP tool
+// call, product written verbatim to the report path, mechanical receipt back. The `.then()`
 // attaches the ORCHESTRATOR-ASSIGNED scope so a lane that dies before writing still names
-// its territory. Codex wrappers are LAUNCH-ONLY: they return a launch receipt in seconds;
-// the orchestrator setTimeout harvest loop owns waiting + promotion.
+// its territory. The blocking tool call is the wrapper's legal wait.
 const lane = (task, o) =>
     (CODEX
-        ? agent(codexPrompt(o.label, task, PRODUCT, !!o.writes), {
-              label: "gpt-5.5:" + o.label,
+        ? agent(codexLane(o.label, task, PRODUCT, !!o.writes), {
+              label: "terra:" + o.label,
               phase: o.phase,
               model: "sonnet",
               effort: "low",

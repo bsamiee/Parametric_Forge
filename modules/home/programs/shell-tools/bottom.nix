@@ -5,7 +5,6 @@
 # Path          : modules/home/programs/shell-tools/bottom.nix
 # ----------------------------------------------------------------------------
 # Resource monitor themed from the estate palette owner
-
 {config, ...}: let
   inherit (config.forge.theme) palette;
 in {

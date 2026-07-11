@@ -9,14 +9,12 @@
 # disposable-session parse gate), watch-with-memory monitor rows, and two read-only inspectors — state (forge-zellij-state/v2: sessions classified
 # live|resurrectable with serialization freshness and the newest fabric receipt joined per session) and peek (typed single-frame pane capture over
 # `subscribe`, attention-joined). Every mutating verb emits one typed kv receipt; fzf fronts the graph, state lives external (no plugin store).
-
 {
   config,
   lib,
   pkgs,
   ...
 }: let
-  inherit (config.forge.theme) palette;
   # Shared dual-receipt emit fold and the F01 latest-needs fold the peek verb resolves with.
   receiptsFold = import ../../shell-tools/receipts.nix;
   attention = import ../../shell-tools/attention.nix {};
@@ -61,14 +59,8 @@
     lib.concatMapStrings (r: "          ${lib.escapeShellArg r.source}) printf '%s' ${lib.escapeShellArg r.slug} ;;\n")
     (lib.filter (r: lib.elem "zellij-session-name" r.consumers) config.forge.registers.naming);
 
-  # Per-command fzf theme projection from the palette owner (same pattern as the register rail; global fzf options stay theme-only in fzf.nix).
-  fzfColorRows = [
-    "--color=fg:${palette.foreground.hex},fg+:${palette.background.hex},bg:${palette.background.hex},bg+:${palette.cyan.hex},selected-fg:${palette.background.hex},selected-bg:${palette.cyan.hex}"
-    "--color=hl:${palette.green.hex},hl+:${palette.magenta.hex},info:${palette.comment.hex},marker:${palette.green.hex}"
-    "--color=prompt:${palette.magenta.hex},spinner:${palette.green.hex},pointer:${palette.magenta.hex},header:${palette.comment.hex}"
-    "--color=gutter:${palette.background.hex},border:${palette.cyan.hex},separator:${palette.pink.hex},scrollbar:${palette.pink.hex}"
-    "--color=preview-fg:${palette.foreground.hex},preview-scrollbar:${palette.pink.hex},label:${palette.magenta.hex},query:${palette.foreground.hex}"
-  ];
+  # Per-command fzf theme: the theme owner's shared fzf vocabulary (global fzf options stay theme-only in fzf.nix).
+  fzfColorRows = config.forge.theme.projections.fzfColorRows;
   fzfBaseArgs = fzfColorRows ++ ["--border=sharp" "--layout=reverse" "--info=right" "--highlight-line" "--prompt=❯ " "--pointer=❯"];
   fzfArgsBash = "fzf_base=(\n${lib.concatMapStringsSep "\n" (a: "        ${lib.escapeShellArg a}") fzfBaseArgs}\n      )";
 

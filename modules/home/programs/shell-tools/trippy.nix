@@ -5,7 +5,6 @@
 # Path          : modules/home/programs/shell-tools/trippy.nix
 # ----------------------------------------------------------------------------
 # Network diagnostic tool combining traceroute and ping
-
 {
   config,
   pkgs,

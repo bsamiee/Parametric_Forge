@@ -7,7 +7,6 @@
 # Determinate Nix custom settings; /etc/nix/nix.conf stays Determinate-owned. One settings vocabulary, two projections: Darwin rides
 # determinateNix customSettings, NixOS rides the thin determinate module plus nix.settings — both land the values in /etc/nix/nix.custom.conf at
 # switch. The OS branch keys on the static host context, never on pkgs (module fixpoint safety).
-
 {
   host,
   lib,

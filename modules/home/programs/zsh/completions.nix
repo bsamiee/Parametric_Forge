@@ -6,7 +6,6 @@
 # ----------------------------------------------------------------------------
 # Completion owner: generator rows written atomically at activation, one fingerprint-keyed compinit that never rescans per shell, data-driven
 # zstyle rows, and the fzf-tab completion UI. A new completion is a row here.
-
 {
   config,
   lib,

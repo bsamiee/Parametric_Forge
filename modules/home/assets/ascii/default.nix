@@ -5,7 +5,6 @@
 # Path          : modules/home/assets/ascii/default.nix
 # ----------------------------------------------------------------------------
 # ASCII art assets for terminal applications
-
 _: {
   # --- [FASTFETCH_ASCII_ART]
   xdg.configFile = {

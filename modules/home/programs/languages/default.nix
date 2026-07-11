@@ -5,7 +5,6 @@
 # Path          : modules/home/programs/languages/default.nix
 # ----------------------------------------------------------------------------
 # Language toolchain aggregator; publishes the package-admission ledger at a stable XDG path for register browsers and receipt rails.
-
 {pkgs, ...}: {
   imports = [
     # Shared tooling

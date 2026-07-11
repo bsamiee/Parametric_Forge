@@ -7,7 +7,6 @@
 # Host factory: every context row becomes a system through one OS dispatch table; the per-host module and Home Manager projection are shared verbatim
 # across OS classes. A new machine is one context row — nothing here changes shape.
 # Bootstrap for NixOS rows is nixos-anywhere + disko; day-2 for every row is forge-redeploy.
-
 {
   inputs,
   nix-darwin,

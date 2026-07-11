@@ -7,7 +7,6 @@
 # SSH client configuration with GitHub integration and VPS loopback tunnels. One tunnel row projects everything: interactive host block,
 # transport-only tunnel block, launchd tunnel agent, rclone mount agents, service-health receipts, and the remote-surface rows every consumer
 # folds (WezTerm SSH domains, Yazi VFS, workspace picker). A future VPS is a new row here, never a new agent module.
-
 {
   config,
   host,

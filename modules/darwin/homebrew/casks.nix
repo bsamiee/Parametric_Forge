@@ -5,7 +5,6 @@
 # Path          : modules/darwin/homebrew/casks.nix
 # ----------------------------------------------------------------------------
 # Homebrew GUI applications, and fonts not available in nixpkgs.
-
 _: {
   homebrew.casks = [
     # --- [SYSTEM_CORE_TOOLS]

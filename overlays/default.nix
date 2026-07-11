@@ -8,7 +8,6 @@
 # openstudio) share one recipe folding row-owned layout, env, and wrapper facts; the sqlite-forge shell kernel generates from its row's profile data;
 # patch rows override upstream packages with row-owned facts; forge-provision is the one hand-authored kernel directory. Vocabulary validation runs
 # here and is forced by the forge-package-manifest build.
-
 final: prev: let
   manifest = import ./manifest.nix;
   inherit (prev) lib;
@@ -58,6 +57,7 @@ final: prev: let
     ) (lib.filter (r: r ? launcher) (import ../modules/home/programs/shell-tools/mcp-fleet.nix {
       profileBin = "";
       homeDir = "";
+      sshBin = "";
     })));
 
   rowOf = name: checkRow name manifest.packages.${name};

@@ -6,7 +6,6 @@
 # ----------------------------------------------------------------------------
 # Machine-global gitleaks policy: Markdown, logs, text, and test trees scan fully as the highest-probability paste channels,
 # and only generated artifacts that cannot carry authored secrets are allowlisted.
-
 {pkgs, ...}: let
   tomlFormat = pkgs.formats.toml {};
 

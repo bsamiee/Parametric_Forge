@@ -6,7 +6,6 @@
 # ----------------------------------------------------------------------------
 # rsync owner: shared exclusion filter plus two packaged rails. rsync-safe.sh is the transparent filtered transport; rsync-mv.sh is the receipted
 # atomic move (rsync cannot remove source directories, only files).
-
 {
   config,
   pkgs,

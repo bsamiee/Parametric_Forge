@@ -7,7 +7,6 @@
 # fmt: polymorphic formatter front door — one command routes every file type to its owning formatter. Formatters resolve from PATH so the Home
 # Manager fallback wrappers keep their never-shadow project-config semantics; those wrappers probe $PWD, so run
 # fmt from inside the project the targets live in.
-
 {pkgs, ...}: let
   style = import ../../style.nix;
   fdExcludes = builtins.concatStringsSep " " (map (d: "--exclude " + d) style.transientDirs);
@@ -214,7 +213,7 @@
         esac
         shift
       done
-      ((''${#targets[@]})) || targets=(.)
+      ((''${#targets[@]})) || _usage
       readonly mode json_mode targets
       readonly deadline="''${FMT_DEADLINE_SECONDS:-300}"
       [[ "$deadline" =~ ^[0-9]+$ ]] || {

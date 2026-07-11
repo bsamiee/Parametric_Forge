@@ -288,6 +288,10 @@ local function switch_workspace(window, pane, name)
     -- Fresh workspaces land their slug-named inner session at the policy cwd; live workspaces ignore spawn, so reattach converges on that session.
     local spawn = { args = M.session_args(name), cwd = M.workspace_cwd(name) }
     window:perform_action(act.SwitchToWorkspace({ name = name, spawn = spawn }), pane)
+    -- Bar-cell warmup: a fresh session's pipe cells land now, not at the collector's next minute tick (the collect lock absorbs overlap).
+    wezterm.time.call_after(2, function()
+        wezterm.background_child_process({ rows.paths.forge_agents, "collect" })
+    end)
     M.receipt({ command = "workspace-switch", action = "switch", workspace = name, result = "ok" })
 end
 
@@ -528,7 +532,8 @@ function M.apply(config)
             toggle_mods = sync_row.mods,
             indicator = false, -- events.lua owns the status plane
             border = true,
-            border_color = rows.theme.roles.state.attention,
+            -- Active broadcast is the danger state everywhere: this border and the events.lua [SYNC] chip read one role.
+            border_color = rows.theme.roles.state.danger,
         })
         -- Wrap the plugin-inserted toggle with the SSH-domain + confirmation guard.
         local guarded = guarded_sync_action(sync)
