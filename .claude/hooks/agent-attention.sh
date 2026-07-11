@@ -41,10 +41,17 @@ jq -c --arg ts "$ts" \
 
 # Edge kick, stamp-throttled to 5s: a fresh lifecycle row re-folds the collector now (flock-serialized there), so the pane mark, bar cell,
 # and banner track the event at second latency instead of the 60s launchd tick; a host without forge-agents still lands the row for later.
+# The kick is hard-capped and disowned: the collector serializes on a flock, so under multi-agent load an uncapped kick accumulates blocked
+# processes faster than the drain — the timeout bounds each kick's life and disown severs it from the harness's child accounting.
 kick="${feed%/*}/.collect-kick"
 if [ -z "$(find "$kick" -newermt '-5 seconds' 2>/dev/null)" ]; then
     : >"$kick"
-    { command -v forge-agents >/dev/null 2>&1 && forge-agents collect; } >/dev/null 2>&1 </dev/null &
+    if command -v forge-agents >/dev/null 2>&1; then
+        kick_cmd=(forge-agents collect)
+        command -v timeout >/dev/null 2>&1 && kick_cmd=(timeout 30 forge-agents collect)
+        "${kick_cmd[@]}" >/dev/null 2>&1 </dev/null &
+        disown 2>/dev/null || true
+    fi
 fi
 
 # Size-gated self-rotation, lock-free: advisory telemetry, so a row a concurrent appender loses to the atomic rename self-heals on its next event.

@@ -6,12 +6,14 @@ Machine-owner repo: nix-darwin + Home Manager flake for one macOS Apple Silicon 
 
 - Fewer, deeper polymorphic surfaces beat many loose files. Optimization means collapsing types/options/functions into denser dispatch surfaces in the same file — never extraction, never capability loss. LOC is measured in lines, never bytes.
 - Parameterize ingress and egress. Hardcoded strings, repo paths, usernames, ports, or geometry numbers are defects; values are rows, parameters, or model-derived.
-- One owner per axis: docs/standards/nix-doctrine.md declares the vocabulary owners (color, keybind, MCP server, tool admission, generated config); a value placed outside its owner or duplicated into a consumer is a defect, whatever the owner's current file name.
+- One owner per axis: docs/laws/projections.md declares the vocabulary owners (color, keybind, MCP server, tool admission, generated config); a value placed outside its owner or duplicated into a consumer is a defect, whatever the owner's current file name.
 - Service estate is IaC: external service state lives as typed Pulumi rows under services/; container provisioning rides the schema-v3 JSON envelope contract under overlays/forge-provision.
 - Deploy rail: forge-redeploy owns switch lifecycle with typed receipts and exact-closure activation; its deploy arm is proven — treat edits there as high-risk.
 - Receipts over narration: lifecycle commands emit typed receipt lines; scripts that print prose status instead of structured receipts are below the bar.
 - Formatters and gates own mechanics (the fmt router, alejandra/deadnix/statix, shellcheck, ruff, biome, stylua) — never restate their law as findings; flag suppressions and bypasses. A shellcheck directive, `noqa`, or `biome-ignore` in a diff demands the ownership justification; suppression-as-fix is the defect.
 - Fix-to-root completeness: a change that patches a symptom while its root cause stands, leaves a known defect unfixed because it sits outside the diff's scope, or defers a residual for a later pass is a defect — the root fix belongs in the same change, and a genuinely blocked item is an explicit unreachable naming its owner, never a silent residual.
+- Coupling completeness: docs/laws/topology.md is the edit-coupling map — a diff touching a listed [SURFACE] without its obligated counterparts is incomplete; generalizable lessons land under the docs/laws/README.md admission law, never as ad-hoc doc edits.
+- Doctrine-surface diffs are judged against docs/laws/landing.md: hardening beats extending beats minting, each move needing the prior proven insufficient; run provenance or process narration in a landed row is a defect; an addition without recurrence evidence or branch-spanning blast radius is spam. Flag the miss as hard as the spam — a topology row the diff proves but does not land, a scar whose law a new gate owns still sitting in the ledger.
 
 ## [02]-[UNIVERSAL_BAR]
 

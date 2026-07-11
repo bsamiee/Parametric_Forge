@@ -38,13 +38,13 @@ Colima is the Docker API / Compose / Buildx / Pulumi default and never yields `D
 
 | [INDEX] | [TRAP]                                                            | [RULE_NOW]                                                        |
 | :-----: | :---------------------------------------------------------------- | :---------------------------------------------------------------- |
-|  [01]   | Project `mcpServers` blocks shadowed the fleet with stale servers | Estate repositories carry no client registration; Forge governs  |
+|  [01]   | Project `mcpServers` blocks shadowed the fleet with stale servers | Estate repositories carry no client registration; Forge governs   |
 |  [02]   | `mcpServers.jupyter.env` carried a literal `JUPYTER_TOKEN`        | Carry no literal token env; the wrapper resolves the live token   |
 |  [03]   | Required MCP registration proves only startup/registration        | `required = true` fails startup/resume if the MCP cannot init     |
 |  [04]   | Relocated LSP telemetry/plugin rows pointed at absent paths/SHAs  | Telemetry is `@forge-lsp`; dead marketplace keys are deleted      |
 |  [05]   | Stdio servers ignoring stdin EOF stranded under hard-killed hosts | Long-lived stdio pythons ride the supervised parent-liveness lane |
-|  [06]   | An unauthenticated HTTP `401` rendered a false-green health row    | Declared OAuth joins Codex credential state with endpoint health  |
-|  [07]   | Parallel clients raced one rotating OAuth refresh token            | Fan-out disables unused OAuth rows; Keychain is the fixed store   |
+|  [06]   | An unauthenticated HTTP `401` rendered a false-green health row   | Declared OAuth joins Codex credential state with endpoint health  |
+|  [07]   | Parallel clients raced one rotating OAuth refresh token           | Fan-out disables unused OAuth rows; Keychain is the fixed store   |
 
 - [02]: the literal token overrode wrapper token-file resolution.
 - [03]: tunnel health, env, and wrapper are separate axes.
@@ -143,7 +143,7 @@ shfmt parses bare hyphenated associative-array subscripts as arithmetic and rewr
 
 ## [12]-[RASM]
 
-Rasm owns the method and language-law bedrock Forge composes: campaign method and the `docs/stacks/{typescript,python}` doctrine that Forge references rather than duplicates. `docs/standards/design-doctrine.md` is byte-identical across Rasm, Forge, and Maghz; Forge adds `nix-doctrine`, Maghz adds `ops-doctrine`. The docgen master is Rasm `.claude/skills/docgen/` and mirrors propagate by copy, never tooling. Forge-owned global Git config controls LFS behavior that reaches Rasm — Rasm's tip carries zero LFS attribute rows, making the filter inert. Rasm points its machine-level scientific and provisioning executables back to Forge ownership: a shell/PATH/scientific/DB failure in Rasm is fixed in the Forge owner, never patched in Rasm.
+Rasm owns the method and language-law bedrock Forge composes: campaign method and the `docs/stacks/{typescript,python}` doctrine that Forge references rather than duplicates. The universal design law Rasm and Maghz carry as `docs/standards/design-doctrine.md` lives here as `docs/laws/design.md` with the machine law pages extending it; Maghz adds `ops-doctrine`. The docgen master is Rasm `.claude/skills/docgen/` and mirrors propagate by copy, never tooling. Forge-owned global Git config controls LFS behavior that reaches Rasm — Rasm's tip carries zero LFS attribute rows, making the filter inert. Rasm points its machine-level scientific and provisioning executables back to Forge ownership: a shell/PATH/scientific/DB failure in Rasm is fixed in the Forge owner, never patched in Rasm.
 
 ## [13]-[MAGHZ]
 

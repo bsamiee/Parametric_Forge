@@ -49,8 +49,9 @@ overlays/                      duckdb, sqlean, nodejs-bin, pnpm ride default.nix
 services/                      IaC owner: Doppler + GitHub topology rows, Automation API driver
 docs/
 ├── atlas/                     estate atlas: platform facts, rails, interconnection, scars
+├── laws/                      landing doctrine, design + machine law, topology, patterns, scars
 ├── stacks/                    python/, typescript/ language law
-└── standards/                 design/nix doctrine, style, formatting, information structure
+└── standards/                 prose owners: style, formatting, information structure
 .claude/                       harness estate: skills/ masters, hooks/, workflows/, lsp-marketplace/
 .greptile/ · .coderabbit.yaml  per-repo reviewer configuration
 ```
@@ -124,7 +125,7 @@ Recurring machine work is launchd-owned under the `com.parametric-forge.<name>` 
 
 | [INDEX] | [SURFACE]       | [STANDARD]                                                                                                      |
 | :-----: | :-------------- | :-------------------------------------------------------------------------------------------------------------- |
-|  [01]   | Nix             | `docs/standards/nix-doctrine.md`; `alejandra`/`deadnix`/`statix` gate via `nix flake check`.                    |
+|  [01]   | Nix             | `docs/laws/design.md` + the machine law pages; `alejandra`/`deadnix`/`statix` gate via `nix flake check`.       |
 |  [02]   | Shell source    | `.sh` extension; `set -euo pipefail`; ShellCheck passes.                                                        |
 |  [03]   | Shell packaging | `writeShellApplication` for any body with a runtime closure; `writeShellScriptBin` for closure-free one-liners. |
 |  [04]   | TypeScript      | `docs/stacks/typescript/` — `services/` code is held to it in full.                                             |

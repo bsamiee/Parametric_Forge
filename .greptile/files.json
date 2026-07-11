@@ -13,12 +13,27 @@
             "description": "Repo structure register: module split, overlays, services, hosts"
         },
         {
-            "path": "docs/standards/design-doctrine.md",
+            "path": "docs/laws/design.md",
             "description": "Universal design law binding every executable surface: rails, dispatch, admitted substrate, parameterization, boundaries, density, vocabularies"
         },
         {
-            "path": "docs/standards/nix-doctrine.md",
-            "description": "Nix extension of the design law: owner modules, row dispatch, overlays, shell kernels, JSON envelope rails, generated config, vocabulary owners",
+            "path": "docs/laws/modules.md",
+            "description": "Nix module graph law: owner modules, row dispatch, overlays, package manifest, flake roots, both-OS eval",
+            "scope": ["**/*.nix", "modules/**", "overlays/**", "flake-modules/**", "hosts/**"]
+        },
+        {
+            "path": "docs/laws/kernels.md",
+            "description": "Shell kernel law: bash/jq division, catalog dispatch, JSON envelope rails, receipts, locks, fork discipline",
+            "scope": ["**/*.nix", "modules/**", "overlays/**", "flake-modules/**", "hosts/**"]
+        },
+        {
+            "path": "docs/laws/projections.md",
+            "description": "Consumer law: Lua projection consumers and generated declarative config, vocabulary owners",
+            "scope": ["**/*.nix", "modules/**", "overlays/**", "flake-modules/**", "hosts/**"]
+        },
+        {
+            "path": "docs/laws/agents.md",
+            "description": "Service-agent law: launchd identity and lifecycle, remote transport, dual-OS rows",
             "scope": ["**/*.nix", "modules/**", "overlays/**", "flake-modules/**", "hosts/**"]
         },
         {
@@ -42,7 +57,7 @@
         },
         {
             "path": "docs/atlas/interconnection.md",
-            "description": "Seam map: config.forge.* option hinges, runtime contracts (attention feed, receipts, terminal mesh, XDG projections), owner tables — the blast radius a cross-module change must honor"
+            "description": "Seam map: config.forge.* option hinges, runtime contracts (attention feed, receipts, terminal mesh, XDG projections), owner tables \u2014 the blast radius a cross-module change must honor"
         },
         {
             "path": "docs/atlas/rails-and-contracts.md",

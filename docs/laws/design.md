@@ -1,6 +1,6 @@
-# [DESIGN_DOCTRINE]
+# [DESIGN]
 
-Universal design law for every executable surface: one outcome carrier per computation, one dispatch owner per concern, admitted substrate over reimplementation, variation as data, one boundary crossing, growth by absorption, and executable vocabularies. Each language stack expresses these laws in its own idiom; the laws bind regardless of language.
+Universal design law for every executable surface: one outcome carrier per computation, one dispatch owner per concern, admitted substrate over reimplementation, variation as data, one boundary crossing, growth by absorption, and executable vocabularies. Each language expresses these laws in its own idiom; the laws bind regardless of language, and the machine law pages — `modules.md`, `kernels.md`, `projections.md`, `agents.md` — extend them onto their surfaces.
 
 ## [01]-[USE_WHEN]
 
