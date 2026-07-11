@@ -94,7 +94,7 @@ in {
       pkgs.fq # jq for binary formats; structured decode of media, executables, captures
       pkgs.gping # Graphing ping
       pkgs.grex # Regex generator from test cases
-      (withDefaultFlag pkgs.hexyl "--color=auto" "--color|--color=*|-p|--plain") # Hex viewer; color rides TTY detection
+      (withDefaultFlag pkgs.hexyl "--color=auto" "--color|--color=*|-p*|--plain|-[!-]*p*") # Hex viewer; color rides TTY detection
       pkgs.hyperfine # Command benchmarking
       pkgs.mise # Runtime version manager
       pkgs.oha # HTTP load generator with real-time TUI and JSON/CSV output

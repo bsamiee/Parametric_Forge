@@ -24,12 +24,12 @@
   };
 
   # Upstream reads any redirected stdin as a request body and flips GET to POST, so a bare call under /dev/null stdin — every agent shell —
-  # mutates instead of reading, and an idle open stdin blocks forever. Null stdin drops the pseudo-body; pipes and files keep stdin-as-body.
-  # Injection precedes "$@": xh tolerates a duplicate --ignore-stdin, and a caller --no-ignore-stdin lands later, so it wins.
+  # mutates instead of reading, and an idle open stdin blocks forever. Null and closed stdin drop the pseudo-body; pipes and files keep
+  # stdin-as-body. Injection precedes "$@": xh tolerates a duplicate --ignore-stdin, and a caller --no-ignore-stdin lands later, so it wins.
   xhAgentSafe = pkgs.writeShellApplication {
     name = "xh";
     text = ''
-      if [[ /dev/fd/0 -ef /dev/null ]]; then
+      if [[ ! -e /dev/fd/0 || /dev/fd/0 -ef /dev/null ]]; then
         exec ${lib.getExe pkgs.xh} --ignore-stdin "$@"
       fi
       exec ${lib.getExe pkgs.xh} "$@"
