@@ -56,7 +56,7 @@ An image-bearing leg (screenshot or diagram judgment) rides the CLI's `-i` — t
 
 ## [05]-[WRITER_REVIEW_LANE]
 
-A review stage mid-chain (a critique between an implement and a red-team) can itself be a codex lane that WRITES — sol at the operator-default effort in a `workspace-write` sandbox, editing the unit's pages in place under the same review prompt a native agent would take. The composition contract that keeps the chain coherent:
+A review stage mid-chain (a critique between an implement and a red-team) can itself be a codex lane that WRITES — sol at the operator-default effort in a `workspace-write` sandbox, editing the unit's pages in place under the same review prompt a native agent takes. The composition contract that keeps the chain coherent:
 
 - The lane's product is its fixlog (files, verdict, deltas, deferred rows, index rows) written to the lane's report path; only the thin receipt crosses the wire, so the orchestrator never re-serializes review claims.
 - The NEXT Claude stage receives the fixlog as a report PATH framed as unverified prior claims ([20] handoff law), reads it in full from disk, and carries the FOLD-FORWARD DUTY: the fixlog's surviving `deferred`/`indexRows` rows are re-verified and folded into that stage's own return — the chain's terminal stage returns the unit's consolidated record, because the orchestrator cannot read the disk product itself.

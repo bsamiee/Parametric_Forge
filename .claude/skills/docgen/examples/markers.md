@@ -76,7 +76,7 @@ A dense delta or checklist spells each state as a full word where a declared com
 - Accepted:
     ```markdown accepted
     - [O] codec landing
-    - [x] seam alignment
+    - [X] seam alignment
     - [!] index migration
     ```
 - Reason: Compact glyphs with globally declared meanings carry state at delta density; a full-word status widens every line where the glyph suffices.

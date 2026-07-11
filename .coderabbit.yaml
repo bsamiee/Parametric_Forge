@@ -228,6 +228,7 @@ knowledge_base:
     code_guidelines:
         enabled: true
         filePatterns:
+            - "docs/laws/*.md"
             - "docs/standards/*.md"
             - "docs/stacks/*/README.md"
     learnings:

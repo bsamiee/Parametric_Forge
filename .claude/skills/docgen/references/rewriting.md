@@ -34,14 +34,11 @@ The rewrite is shorter, carries more capability, and leaves nothing to re-open: 
 
 ## [04]-[TABLE_REPAIR]
 
-A broken table is rebuilt through the structural moves, never flattened: teardown into mega-prose lines or a bare unlabeled list destroys the structure the fix was meant to save, and is the same hamfisted inheritance as softening.
+A broken table is rebuilt through the structural moves, never flattened: teardown into mega-prose lines or a bare unlabeled list destroys the structure the fix was meant to save, and is the same hamfisted inheritance as softening. The moves themselves — split, extract, hoist, relieve — are the structure reference's table-refactor law; this procedure owns only their order:
 
 1. [ELIGIBILITY_FIRST] — Test the table against the eligibility triple before touching cells; a failed test converts the whole container to a record set, indexed list, or cards, and a passed test repairs in place.
-2. [SPLIT] — A cell packing parallel values behind slashes becomes one row per value; the index column re-numbers.
-3. [EXTRACT] — A column whose cells all hold one value becomes a `[VALUE]:` card beside the table; the column dies.
-4. [HOIST] — Words every cell repeats move into the header; a header that then decides nothing deletes its column.
-5. [RELIEVE] — Row-family invariants and long qualifications move to prose before or after the table; the cell keeps its atomic value.
-6. [DEMOTE_LAST] — A row family that resists every move leaves table form as an indexed list or record set with its structure intact — index, label, and payload survive the conversion.
+2. [MOVES] — Run the refactor moves in place; the cell keeps its atomic value and the index column re-numbers.
+3. [DEMOTE_LAST] — A row family that resists every move leaves table form as an indexed list or record set with its structure intact — index, label, and payload survive the conversion.
 
 ## [05]-[LIST_REPAIR]
 

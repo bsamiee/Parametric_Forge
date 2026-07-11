@@ -142,7 +142,7 @@ Skill-bundle authoring classes — triggers, disclosure, instruction bodies — 
 
 ## [06]-[TABLES]
 
-A table is built right at authoring: a one-sentence lead stating the shared invariant, bracketed rubric headers, a centered `[INDEX]`, explicit alignment colons, atomic cells inside the 150-column rendered width cap — then `scripts/prose_gate.py fix --write` pads. Repair is a sequence of minor surgical moves applied in place, exhausted before conversion is even weighed: hoist repeats into headers, relieve clause tails into the lead or a one-line note after the table, split an overloaded row into two, fan joined values one row each. Conversion to another container is earned only two ways — the information is structurally non-tabular (an ordered sequence rides `OrderedStep` records, a no-shared-question row family rides records), or a declared type standard owns that information's shape; a wide cell alone never converts a table.
+A table is built right at authoring: a one-sentence lead stating the shared invariant, bracketed rubric headers, a centered `[INDEX]`, explicit alignment colons, atomic cells inside the 150-column rendered width cap — then `scripts/prose_gate.py fix --write` pads. Repair is a sequence of minor surgical moves applied in place, exhausted before conversion is even weighed, and conversion is earned by structural non-tabularity or a type-standard-owned shape, never by cell width — the move sequence, eligibility triple, cell budget, and header compression are `structure.md` [03]'s law.
 
 ## [07]-[COMMENTS]
 

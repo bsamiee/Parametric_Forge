@@ -280,7 +280,7 @@ const codexRecon = (task, o) => {
     return [
         'DISPATCH ROLE: ' +
             model +
-            ' performs the complete TASK below through one blocking Codex MCP call. Follow exactly three steps; ' +
+            ' performs the complete TASK below through one blocking Codex MCP call. Follow exactly four steps; ' +
             'never perform, edit, judge, soften, summarize, or relay the task yourself.',
         '(1) Call ToolSearch with query "select:mcp__codex__codex". If one Bash probe shows command -v forge-fleet-emit ' +
             'resolving, run forge-fleet-emit --kind codex --model ' +

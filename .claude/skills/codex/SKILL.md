@@ -35,28 +35,28 @@ codex exec -s <sandbox> -m <model> [-c 'model_reasoning_effort="<tier>"'] --skip
 - `--skip-git-repo-check` always.
 - Always pass `-s` and `-m` explicitly — user config may carry a flagship interactive model and a permissive sandbox, so those axes never ride defaults. Effort is the exception: the config default (`model_reasoning_effort = "xhigh"`) IS the estate dispatch tier — state a tier only to deviate. A `--ignore-user-config` lane restates model AND effort, because the skip drops that default.
 - The final message prints to `stdout`; the banner and reasoning stream go to stderr. Capture a synchronous run's result straight from stdout — `out=$(codex exec -s read-only … "<prompt>" </dev/null 2>/dev/null)` — clean, no banner. Even a heavy read (a full doctrine plus catalogue tiers) returns in a few minutes, well inside the 10-minute Bash ceiling, so synchronous capture is the default; reach for `-o` only when backgrounding.
-- Background a long leg with a bare `&`: `codex exec … -o <report> "<prompt>" </dev/null >/dev/null 2><report>-stderr.log &` — the bare `&` form survives the launching shell's exit; never prepend `nohup` (a redirect-less `nohup` writes a stray `nohup.out`), stdout goes to `/dev/null`, and the stderr log's tail IS the crash reason when a run dies with no report. Fleet-grade lanes upgrade this form with `--json` events and a notify push — [07]-[SIGNALS].
+- Background a long leg with a bare `&`: `codex exec … -o <report> "<prompt>" </dev/null >/dev/null 2><report>-stderr.log &` — the bare `&` form survives the launching shell's exit; never prepend `nohup` (a redirect-less `nohup` writes a stray `nohup.out`), stdout goes to `/dev/null`, and the stderr log's tail IS the crash reason when a run dies with no report. Fleet-grade lanes upgrade this form with `--json` events and a notify push — [08]-[SIGNALS].
     - A main-loop foreground Bash call reaps its detached child minutes after the call returns, killing the lane reportless mid-run. From the main loop, run codex SYNCHRONOUSLY inside a `run_in_background` Bash task with promote-on-finish — the background task is the keeper.
-    - Poll a detached leg by its signals ladder ([07]); process liveness (`pgrep -f "<report-basename>"`) is the RUNNING check, and an absent report while the process lives is normal — never relaunch a live run. Liveness is not health: a process alive far past its tier deadline with no report and near-zero CPU accumulation (`ps -p <pid> -o time=`) is WEDGED — kill it (`pkill -f "<report-basename>"`) and relaunch once; a second wedge is the failure.
+    - Poll a detached leg by its signals ladder ([08]); process liveness (`pgrep -f "<report-basename>"`) is the RUNNING check, and an absent report while the process lives is normal — never relaunch a live run. Liveness is not health: a process alive far past its tier deadline with no report and near-zero CPU accumulation (`ps -p <pid> -o time=`) is WEDGED — kill it (`pkill -f "<report-basename>"`) and relaunch once; a second wedge is the failure.
 - `--output-schema` serves the one case where a MACHINE parses the report blind — jq pipelines, exported artifacts, no model between codex and the consumer; a leg whose output a Claude agent reads takes a prose JSON contract instead, validated at that agent's own boundary. The schema is STRICT: every key in `properties` must also appear in `required` (`additionalProperties: false`; a conditional field is required-but-empty) — anything less 400s `invalid_json_schema` and the run silently degrades to unvalidated output. Write task and schema files with a real file-write (never a shell heredoc) at ABSOLUTE paths — cwd drift plus heredoc quoting land files where codex cannot find them, and the launch dies instantly on the missing schema.
 - A detached typed leg owns its artifacts in one ephemeral folder, purged of stale report/stderr before launch (a leftover report reads as instant completion with last run's data): `task.md` (quoting-proof prompt channel), `schema.json` (`--output-schema` takes only a file path), `report.json` (`-o`), `stderr.log` (crash reason), and — on fleet-grade lanes — `events.jsonl` (`--json` stdout). A short SYNCHRONOUS leg needs zero files: inline prompt, stdout capture.
 
-| [INDEX] | [NEED]                                        | [FLAGS]                                                                                              |
-| :-----: | :-------------------------------------------- | :--------------------------------------------------------------------------------------------------- |
-|  [01]   | Read, analyze, research                       | `-s read-only` — blocks `uv run` entirely (uv cache init denied); repo Python tooling needs row [02] |
-|  [02]   | Edit files in the workspace                   | `-s workspace-write` — `.git/` stays write-blocked; staging is the caller's job                      |
-|  [03]   | Extra writable roots alongside the workspace  | `--add-dir <dir>`                                                                                    |
-|  [04]   | Network or system access beyond the workspace | `-s danger-full-access` — only with explicit user authorization                                      |
-|  [05]   | Run rooted in another directory               | `-C <dir>`                                                                                           |
-|  [06]   | Durable report artifact                       | `-o <file>` — an empty file means the process was killed before completion                           |
-|  [07]   | Typed JSON final message                      | `--output-schema <schema.json>`                                                                      |
-|  [08]   | Live web search                               | `-c web_search="live"` — default `cached` answers from an OpenAI index, no live fetch                |
-|  [09]   | Attach images (screenshots, diagrams)         | `-i <file>` (repeatable)                                                                             |
-|  [10]   | Zero-config lane (no MCP fleet, no notify)    | `--ignore-user-config` — auth and skills kept; RESTATE model AND effort                              |
-|  [11]   | Fan-out legs with no session persistence      | `--ephemeral` — not resumable                                                                        |
-|  [12]   | Streamed JSONL events for live monitoring     | `--json` (thread/turn/item events to stdout; composes with `-o`)                                     |
-|  [13]   | Per-lane completion push                      | `-c 'notify=["<sink>","<lane>"]'` — fires at turn end with a JSON payload                            |
-|  [14]   | Config canary                                 | `--strict-config` — unknown config fields and `-c` keys fail fast                                    |
+| [INDEX] | [NEED]                                        | [FLAGS]                                                                                |
+| :-----: | :-------------------------------------------- | :------------------------------------------------------------------------------------- |
+|  [01]   | Read, analyze, research                       | `-s read-only` — blocks `uv run` (uv cache denied); repo Python tooling needs row [02] |
+|  [02]   | Edit files in the workspace                   | `-s workspace-write` — `.git/` stays write-blocked; staging is the caller's job        |
+|  [03]   | Extra writable roots alongside the workspace  | `--add-dir <dir>`                                                                      |
+|  [04]   | Network or system access beyond the workspace | `-s danger-full-access` — only with explicit user authorization                        |
+|  [05]   | Run rooted in another directory               | `-C <dir>`                                                                             |
+|  [06]   | Durable report artifact                       | `-o <file>` — an empty file means the process was killed before completion             |
+|  [07]   | Typed JSON final message                      | `--output-schema <schema.json>`                                                        |
+|  [08]   | Live web search                               | `-c web_search="live"` — default `cached` answers from an OpenAI index, no live fetch  |
+|  [09]   | Attach images (screenshots, diagrams)         | `-i <file>` (repeatable)                                                               |
+|  [10]   | Zero-config lane (no MCP fleet, no notify)    | `--ignore-user-config` — auth and skills kept; RESTATE model AND effort                |
+|  [11]   | Fan-out legs with no session persistence      | `--ephemeral` — not resumable                                                          |
+|  [12]   | Streamed JSONL events for live monitoring     | `--json` (thread/turn/item events to stdout; composes with `-o`)                       |
+|  [13]   | Per-lane completion push                      | `-c 'notify=["<sink>","<lane>"]'` — fires at turn end with a JSON payload              |
+|  [14]   | Config canary                                 | `--strict-config` — unknown config fields and `-c` keys fail fast                      |
 
 ## [04]-[MCP_SELECTION]
 
@@ -123,11 +123,11 @@ GPT-5.x prompting is its own discipline — a Claude-shaped prompt underperforms
 - CONTRACT: a prose JSON contract is reliable on terra (battery: 8/8 raw-parse, zero fences) when it carries the word "JSON", the exact shape, "no prose outside the JSON, no code fences", and null-for-missing — the null clause measurably improves honesty; schema enforcement exists only on the API path, so the MCP/CLI final message stays best-effort by construction.
 - MCP tool calls SERIALIZE within a lane — prompting for parallel batching buys no wall time on the MCP surface (CLI lanes with native tools still parallelize reads).
 
-## [06B]-[USAGE_EXHAUSTION]
+## [07]-[USAGE_EXHAUSTION]
 
 Quota exhaustion fails the individual call LOUDLY with no partial output — a wrapper receives a plain tool error, returns `ok: false` with the error text, and NEVER performs the work itself (the dispatch-role contract forbids it; battery-observed to hold). The fallback is the CALLER's, mapped by role: terra legs re-dispatch to a native opus agent, sol legs to fable, luna legs to sonnet — same task text, native execution — or the leg's failure flows into the run's unmapped-territory path where downstream consumers already cold-read dead lanes' scope. Never leave a sonnet wrapper as the implicit fallback executor, and never pre-assign a Claude twin to idle alongside a healthy codex leg.
 
-## [07]-[SIGNALS]
+## [08]-[SIGNALS]
 
 Detached CLI lanes — main-loop background legs, never workflow wrappers — carry machine-readable completion signals; report-file existence is the fallback witness, never the primary. The fleet-grade launch:
 
@@ -143,7 +143,7 @@ codex exec -s <sandbox> --skip-git-repo-check --json -o <report> \
 - CLASSIFICATION LADDER, applied per lane in order: `turn.completed` in events + non-empty report → READY; `turn.failed` in events → FAILED with the event message; process gone + empty events file → DEAD, the stderr tail is the reason (pre-thread deaths — config errors, required-MCP init — emit ZERO JSONL and never fire notify); process alive + no turn event → RUNNING (wedge check per [03]).
 - `turn.completed.usage` is the fleet's token ledger — sum it across lanes' events files for per-run accounting; codex tokens stay invisible to Claude-side budgets.
 
-## [08]-[SESSIONS]
+## [09]-[SESSIONS]
 
 Every run mints a resumable thread on both surfaces — capture the id whenever follow-up is plausible, and run iterative deep work as ONE thread continued with sharpened prompts, never fresh runs re-paying the exploration cost.
 
@@ -152,7 +152,7 @@ Every run mints a resumable thread on both surfaces — capture the id whenever 
 - `resume --last` resolves to the newest recorded session — valid only when nothing else ran in between; under any concurrency resume by explicit id.
 - `--ephemeral` runs record nothing and cannot be resumed.
 
-## [09]-[REVIEW]
+## [10]-[REVIEW]
 
 `codex review` runs an independent non-interactive code review; the positional prompt sets focus, omitted for a general pass.
 
@@ -164,20 +164,20 @@ Every run mints a resumable thread on both surfaces — capture the id whenever 
 
 - Branch against a base: the CLI rejects a prompt alongside `--base`; a FOCUSED range review routes through `codex exec` with an explicit diff task.
 
-A fleet-grade review lane runs `codex exec review` instead — the same scope flags plus `--json` events, `-o`, and `--output-schema` typed findings, so a detached review composes with the signals ladder ([07]) like any other lane.
+A fleet-grade review lane runs `codex exec review` instead — the same scope flags plus `--json` events, `-o`, and `--output-schema` typed findings, so a detached review composes with the signals ladder ([08]) like any other lane.
 
-## [10]-[FAN_OUT]
+## [11]-[FAN_OUT]
 
-Independent scopes run as concurrent `codex exec` processes, one per scope, each launched fleet-grade ([07]) with its own report, events, and stderr files. Reconcile the reports after all complete. Sandbox isolation is per-process; concurrent workspace-write runs against overlapping paths collide — partition write scopes or serialize them.
+Independent scopes run as concurrent `codex exec` processes, one per scope, each launched fleet-grade ([08]) with its own report, events, and stderr files. Reconcile the reports after all complete. Sandbox isolation is per-process; concurrent workspace-write runs against overlapping paths collide — partition write scopes or serialize them.
 
 A row-shaped sweep — one similar task per work item — rides ONE lane's `spawn_agents_on_csv` tool instead of N processes: the lane builds a CSV, spawns one worker subagent per row under the active agent-concurrency cap, and exports a combined results CSV (`output_schema` types each worker's row; `codex exec` streams one-line batch progress on stderr). Under `-s read-only` the workers return results in-band but the `output_csv_path` export never lands — a lane that needs the CSV artifact runs `workspace-write`. Reusable worker personas are custom agent files the prompt spawns by name; the TOML schema and `[agents]` globals are the meta-management reference's.
 
 A large fleet runs as ONE launcher script in a `run_in_background` Bash task: prompts written to files, lanes pooled with `wait -n` against a max-concurrency cap, the notify sink and ledger written by the same keeper, promotion at the end — launcher and harvester in the same keeper. The keeper's exit code proves nothing about lanes: a spawn-time defect (missing wrapper binary, bad flag) kills every lane in seconds while the keeper still exits 0 and its ledger reads all-FAILED. Verify the fleet within a minute of launch — `pgrep -f 'codex exec'` count at or near the cap plus a clean first stderr log — before trusting it. Never wrap lanes in `timeout`: a deadline kill discards the whole run — codex emits only at completion, so there is no partial result to salvage; hang protection is the wedge check (CPU-time vs wall-time) in [03], or a manual kill of a stalled lane.
 
-## [11]-[WORKFLOWS]
+## [12]-[WORKFLOWS]
 
-`agent()` accepts only Claude models, so a workflow dispatches codex through a thin sonnet wrapper whose whole job is one blocking `codex` MCP tool call and a thin receipt — the wrapper contract, receipt shape, batching economics, and scale law are the workflow-creator skill's codex-lanes reference. A lane expected to outrun the MCP tool timeout is the one case that still runs the detached CLI form ([07]) — from the MAIN loop as a `run_in_background` Bash keeper, never inside a workflow wrapper. Codex tokens never count toward `budget.spent()`.
+`agent()` accepts only Claude models, so a workflow dispatches codex through a thin sonnet wrapper whose whole job is one blocking `codex` MCP tool call and a thin receipt — the wrapper contract, receipt shape, batching economics, and scale law are the workflow-creator skill's codex-lanes reference. A lane expected to outrun the MCP tool timeout is the one case that still runs the detached CLI form ([08]) — from the MAIN loop as a `run_in_background` Bash keeper, never inside a workflow wrapper. Codex tokens never count toward `budget.spent()`.
 
-## [12]-[JUDGMENT]
+## [13]-[JUDGMENT]
 
 Codex output is a colleague's, not an oracle's. Verify load-bearing claims against source or current documentation before acting on them; push back through a session resume, identified as Claude, with evidence — both lineages produce errors. A non-zero exit is reported verbatim; retry only with a changed command. A run that dies with "ran out of room in the model's context window" is OVER-SCOPED, not transient — split the task into narrower sequential lanes (research vs design; sweep vs synthesis) whose later lanes read the earlier lanes' report files; relaunching as-is fails identically.
