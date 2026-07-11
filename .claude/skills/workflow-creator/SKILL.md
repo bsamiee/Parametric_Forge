@@ -27,6 +27,7 @@ A workflow is a runnable JavaScript orchestrator for Claude Code's `Workflow` to
 - [03]-[THROUGHPUT](references/throughput.md): concurrency economics and cross-run law.
 - [04]-[RECOVERY](references/recovery.md): resume, transplant, and reconstruction.
 - [05]-[EXTERNAL_LANES](references/codex-lanes.md): external-model lane composition — codex (gpt-5.6) work lanes, the agy (Gemini) read-only review lane.
+- [06]-[EXECUTION_STANDARD](references/execution-standard.md): the stage-prompt demand bar — hostile stance, the writer's ground-up/absorption law, reviewers as rebuilders, the mapping-lane burden-reduction contract.
 
 [TEMPLATES]:
 
@@ -108,8 +109,12 @@ node ${CLAUDE_SKILL_DIR}/scripts/dry-run.mjs <file.js> [--args '<json>'] [--fixt
 
 The linter enforces the parser's hard rules — errors exit 1 and every one gets fixed; warnings are real defects (runtime bugs, unformatted source), cleared too. The dry-run re-hosts the unmodified file under mocked globals for zero tokens: `parseOk=true ran=true deterministic=true` is the bar, and per-phase agent counts expose fan-out bugs and guard-dropped phases. A green simulation validates the machine, never the meaning — close that gap with a narrow real run on one tiny scope before the full spend. Signals, fixtures, and narrow-run mechanics: api reference, validation section.
 
+The narrow run judges the reasoning path, not only the products: after it lands, read the lane transcripts themselves (`/workflows` raw view), because a schema-valid receipt hides premature exits, wrong-tool selection, and over-verbose queries that only the transcript shows. A DURABLE workflow — one rerun across sessions — additionally earns a small fixed eval set (~15-20 representative `args` inputs with a rubric-scoped judge pass over the products); rerun it after any prompt or schema edit, because the dry-run cannot see a meaning regression.
+
 ## [07]-[RUN]
 
 Launch with `Workflow({ name })` or `Workflow({ scriptPath })`; the run goes to the background, returns a run ID immediately, and notifies on completion; `/workflows` watches it live. The moment the call returns, write the run ledger (run ID, scriptPath, args, exact resume command) from `assets/templates/run-ledger.template.md` into the session scratchpad — without the captured run ID a later turn only starts over. Pause, stop, resume, cross-session transplant, and continuation-script reconstruction: recovery reference.
 
 Iterate by editing the saved file and resuming — every `agent()` call before the first edit replays from cache, only the changed call onward re-runs. Never re-paste a script after the first run, and never edit a launched script while its run is meant to stay resumable. Saving a good run is `s` in `/workflows`, which makes it a `/<name>` command.
+
+A weak lane repairs itself faster than hand-tuning: dispatch one agent holding the lane's PROMPT plus its FAILURE TRANSCRIPT to diagnose why the lane failed and rewrite the prompt or schema, then resume — a model reading its own failure mode finds the fix a cold author misses.

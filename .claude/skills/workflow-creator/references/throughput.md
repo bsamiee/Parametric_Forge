@@ -138,6 +138,7 @@ The same budget applies to POOL-per-cluster shapes (one agent per atomic cluster
 - Repeated mechanics are staged artifacts, never prose. Any step executed more than once across rounds or lanes (checks, promotions, validations) is written ONCE as an executable script and executed verbatim thereafter. Each fresh agent re-deriving mechanics from prose is an independent chance to botch them; across N rounds a botch is guaranteed — a mis-expanded pgrep pattern silently declares live lanes dead.
 - `stallMs` is a stall override, never a wait license: raise it for a legitimately slow single agent (a long build inside one call), never to let an agent poll.
 - `isolation: 'worktree'` costs ~200-500 ms plus disk per agent. Use it only when parallel agents mutate files and otherwise collide; disjoint write scopes make it unnecessary.
+- Native lanes inherit the parent session's FULL tool + MCP surface, and every tool definition spends the lane's context before its first turn. A heavy native fan-out of mechanical lanes routes through `agentType` pointing at a `.claude/agents/` definition with a minimal `tools:` field (Bash/Read/Grep/Edit for a mechanical lane) so each lane starts lean; codex lanes already solve this through the codex skill's graded MCP selection.
 
 ## [05]-[CROSS_RUN]
 

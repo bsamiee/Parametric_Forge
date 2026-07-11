@@ -5,11 +5,12 @@ description: Dispatch work to Codex (gpt-5.6 Terra/Sol/Luna) via the `codex` MCP
 
 # [CODEX]
 
-`codex exec` runs a gpt-5.6 model as a non-interactive agent in its own context window and returns one final message. `~/.codex/config.toml` carries the operator's INTERACTIVE defaults (the flagship at ultra, full access) — never dispatch defaults — so every dispatch lane states sandbox, model, and effort explicitly; the model and effort law is [05]. Choosing WHERE work runs across Claude's own surfaces (subagent, fork, team, workflow) is the agent-dispatch skill; this skill owns the codex leg once dispatch picks it.
+`codex exec` runs a gpt-5.6 model as a non-interactive agent in its own context window and returns one final message. `~/.codex/config.toml` may carry an interactive model and a permissive sandbox — those two axes are always stated per lane — while its `model_reasoning_effort = "xhigh"` row IS the estate dispatch default, inherited by every lane that states no tier; the model and effort law is [05]. Choosing WHERE work runs across Claude's own surfaces (subagent, fork, team, workflow) is the agent-dispatch skill; this skill owns the codex leg once dispatch picks it.
 
 ## [01]-[ROUTING]
 
 - [01]-[META_MANAGEMENT](references/meta-management.md): the three configurable codex surfaces — skills, custom agents, MCP servers — their differentiation, wiring, lifecycle, and maintenance: skill format, discovery roots, and Claude-port deltas; agent TOML schema, spawn mechanics, and `[agents]` globals; MCP membership, health, and per-agent wiring.
+- [02]-[LANE_TEMPLATES](references/lane-templates.md): the canonical recon and write lane prompt architectures — developer-instructions blocks, budget and territory phrasing, output contracts, and the exclusion list.
 
 ## [02]-[DISPATCH]
 
@@ -23,16 +24,16 @@ Keep in Claude: work inseparable from conversation context too large to restate,
 
 ## [03]-[INVOCATION]
 
-Two surfaces carry every leg. The `codex` MCP tool (fleet server `codex`, tools `codex` and `codex-reply`) is the surface for any caller holding the fleet — the main loop, subagents, workflow agents: the prompt rides a tool argument (no shell quoting, no prompt files), `model`, `sandbox`, `cwd`, and `approval-policy` are first-class parameters, effort rides the `config` object (`{"model_reasoning_effort": "high"}`), the final message returns as the tool result with `structuredContent.threadId` for `codex-reply` continuation, and concurrent calls on the one server process complete independently. A blocking tool call is legal waiting wherever an agent cannot sleep, and a multi-minute high-effort call completes inside one call — the `MCP_TOOL_TIMEOUT` row in `~/.claude/settings.json` owns the ceiling. The CLI form below serves the terminal, background legs that must outlive a turn, legs past that ceiling, and image-bearing legs — `-i` is CLI-only, the MCP tool takes no image parameter:
+Two surfaces carry every leg. The `codex` MCP tool (fleet server `codex`, tools `codex` and `codex-reply`) is the surface for any caller holding the fleet — the main loop, subagents, workflow agents: the prompt rides a tool argument (no shell quoting, no prompt files), `model`, `sandbox`, `cwd`, and `approval-policy` are first-class parameters, effort inherits the xhigh config default (pass the `config` object — `{"model_reasoning_effort": "..."}` — only where a lane deviates), and concurrent calls on the one server process complete independently. The tool RESULT is a JSON envelope `{threadId, content}` — `content` holds the final-message text (parse the envelope; a consumer that treats the raw result as the product double-encodes every downstream read), and `threadId` feeds `codex-reply`. Three more parameters the schema carries: `developer-instructions` injects a developer-role message — the channel for lane law (mandates, output contracts, read-only clauses) so `prompt` carries only the task; `base-instructions` REPLACES codex's default system instructions entirely (deliberate use only — it drops the default agent behavior); `compact-prompt` overrides the conversation-compaction prompt on long threads. A blocking tool call is legal waiting wherever an agent cannot sleep, and a multi-minute high-effort call completes inside one call — the `MCP_TOOL_TIMEOUT` row in `~/.claude/settings.json` owns the ceiling. The CLI form below serves the terminal, background legs that must outlive a turn, legs past that ceiling, and image-bearing legs — `-i` is CLI-only, the MCP tool takes no image parameter:
 
 ```bash template
-codex exec -s <sandbox> -m <model> -c 'model_reasoning_effort="<tier>"' --skip-git-repo-check [-C <dir>] [-o <report>] "<prompt>" </dev/null 2>/dev/null
+codex exec -s <sandbox> -m <model> [-c 'model_reasoning_effort="<tier>"'] --skip-git-repo-check [-C <dir>] [-o <report>] "<prompt>" </dev/null 2>/dev/null
 ```
 
 - `</dev/null` is mandatory from a harness: even with a prompt argument, `codex exec` reads piped stdin to EOF (appended as a `<stdin>` block) and blocks forever if stdin is open but silent. Symptom: zero output, zero CPU, indefinite hang. The stderr line `Reading additional input from stdin...` prints before the read even under `</dev/null` — pre-EOF notice, not a hang.
 - `2>/dev/null` drops thinking tokens; keep stderr only when diagnosing a failing run.
 - `--skip-git-repo-check` always.
-- Always pass `-s`, `-m`, and the effort tier explicitly — user config carries the operator's interactive stance (flagship model, ultra effort, permissive sandbox), so an unstated axis runs whatever config last said, never the dispatch default.
+- Always pass `-s` and `-m` explicitly — user config may carry a flagship interactive model and a permissive sandbox, so those axes never ride defaults. Effort is the exception: the config default (`model_reasoning_effort = "xhigh"`) IS the estate dispatch tier — state a tier only to deviate. A `--ignore-user-config` lane restates model AND effort, because the skip drops that default.
 - The final message prints to `stdout`; the banner and reasoning stream go to stderr. Capture a synchronous run's result straight from stdout — `out=$(codex exec -s read-only … "<prompt>" </dev/null 2>/dev/null)` — clean, no banner. Even a heavy read (a full doctrine plus catalogue tiers) returns in a few minutes, well inside the 10-minute Bash ceiling, so synchronous capture is the default; reach for `-o` only when backgrounding.
 - Background a long leg with a bare `&`: `codex exec … -o <report> "<prompt>" </dev/null >/dev/null 2><report>-stderr.log &` — the bare `&` form survives the launching shell's exit; never prepend `nohup` (a redirect-less `nohup` writes a stray `nohup.out`), stdout goes to `/dev/null`, and the stderr log's tail IS the crash reason when a run dies with no report. Fleet-grade lanes upgrade this form with `--json` events and a notify push — [07]-[SIGNALS].
     - A main-loop foreground Bash call reaps its detached child minutes after the call returns, killing the lane reportless mid-run. From the main loop, run codex SYNCHRONOUSLY inside a `run_in_background` Bash task with promote-on-finish — the background task is the keeper.
@@ -40,22 +41,22 @@ codex exec -s <sandbox> -m <model> -c 'model_reasoning_effort="<tier>"' --skip-g
 - `--output-schema` serves the one case where a MACHINE parses the report blind — jq pipelines, exported artifacts, no model between codex and the consumer; a leg whose output a Claude agent reads takes a prose JSON contract instead, validated at that agent's own boundary. The schema is STRICT: every key in `properties` must also appear in `required` (`additionalProperties: false`; a conditional field is required-but-empty) — anything less 400s `invalid_json_schema` and the run silently degrades to unvalidated output. Write task and schema files with a real file-write (never a shell heredoc) at ABSOLUTE paths — cwd drift plus heredoc quoting land files where codex cannot find them, and the launch dies instantly on the missing schema.
 - A detached typed leg owns its artifacts in one ephemeral folder, purged of stale report/stderr before launch (a leftover report reads as instant completion with last run's data): `task.md` (quoting-proof prompt channel), `schema.json` (`--output-schema` takes only a file path), `report.json` (`-o`), `stderr.log` (crash reason), and — on fleet-grade lanes — `events.jsonl` (`--json` stdout). A short SYNCHRONOUS leg needs zero files: inline prompt, stdout capture.
 
-| [INDEX] | [NEED]                                        | [FLAGS]                                                                               |
-| :-----: | :-------------------------------------------- | :------------------------------------------------------------------------------------ |
-|  [01]   | Read, analyze, research                       | `-s read-only`                                                                        |
-|  [02]   | Edit files in the workspace                   | `-s workspace-write` — `.git/` stays write-blocked; staging is the caller's job       |
-|  [03]   | Extra writable roots alongside the workspace  | `--add-dir <dir>`                                                                     |
-|  [04]   | Network or system access beyond the workspace | `-s danger-full-access` — only with explicit user authorization                       |
-|  [05]   | Run rooted in another directory               | `-C <dir>`                                                                            |
-|  [06]   | Durable report artifact                       | `-o <file>` — an empty file means the process was killed before completion            |
-|  [07]   | Typed JSON final message                      | `--output-schema <schema.json>`                                                       |
-|  [08]   | Live web search                               | `-c web_search="live"` — default `cached` answers from an OpenAI index, no live fetch |
-|  [09]   | Attach images (screenshots, diagrams)         | `-i <file>` (repeatable)                                                              |
-|  [10]   | Zero-config lane (no MCP fleet, no notify)    | `--ignore-user-config` — auth and skills kept; RESTATE model AND effort               |
-|  [11]   | Fan-out legs with no session persistence      | `--ephemeral` — not resumable                                                         |
-|  [12]   | Streamed JSONL events for live monitoring     | `--json` (thread/turn/item events to stdout; composes with `-o`)                      |
-|  [13]   | Per-lane completion push                      | `-c 'notify=["<sink>","<lane>"]'` — fires at turn end with a JSON payload             |
-|  [14]   | Config canary                                 | `--strict-config` — unknown config fields and `-c` keys fail fast                     |
+| [INDEX] | [NEED]                                        | [FLAGS]                                                                                              |
+| :-----: | :-------------------------------------------- | :--------------------------------------------------------------------------------------------------- |
+|  [01]   | Read, analyze, research                       | `-s read-only` — blocks `uv run` entirely (uv cache init denied); repo Python tooling needs row [02] |
+|  [02]   | Edit files in the workspace                   | `-s workspace-write` — `.git/` stays write-blocked; staging is the caller's job                      |
+|  [03]   | Extra writable roots alongside the workspace  | `--add-dir <dir>`                                                                                    |
+|  [04]   | Network or system access beyond the workspace | `-s danger-full-access` — only with explicit user authorization                                      |
+|  [05]   | Run rooted in another directory               | `-C <dir>`                                                                                           |
+|  [06]   | Durable report artifact                       | `-o <file>` — an empty file means the process was killed before completion                           |
+|  [07]   | Typed JSON final message                      | `--output-schema <schema.json>`                                                                      |
+|  [08]   | Live web search                               | `-c web_search="live"` — default `cached` answers from an OpenAI index, no live fetch                |
+|  [09]   | Attach images (screenshots, diagrams)         | `-i <file>` (repeatable)                                                                             |
+|  [10]   | Zero-config lane (no MCP fleet, no notify)    | `--ignore-user-config` — auth and skills kept; RESTATE model AND effort                              |
+|  [11]   | Fan-out legs with no session persistence      | `--ephemeral` — not resumable                                                                        |
+|  [12]   | Streamed JSONL events for live monitoring     | `--json` (thread/turn/item events to stdout; composes with `-o`)                                     |
+|  [13]   | Per-lane completion push                      | `-c 'notify=["<sink>","<lane>"]'` — fires at turn end with a JSON payload                            |
+|  [14]   | Config canary                                 | `--strict-config` — unknown config fields and `-c` keys fail fast                                    |
 
 ## [04]-[MCP_SELECTION]
 
@@ -85,7 +86,7 @@ MCP selection is GRADED — pick the tier by what the task actually calls, never
 
 ## [05]-[MODEL_AND_EFFORT]
 
-Every lane pins both axes. Terra is the dispatch default; Sol is the surgical escalation for legs whose value concentrates in judgment; Luna is the volume lane. Bare `gpt-5.6` is an API-only slug that 400s under ChatGPT auth — always the suffixed name.
+Every lane pins the model; effort inherits the operator default — `model_reasoning_effort = "xhigh"` in `~/.codex/config.toml` — and is stated only to deviate. Terra is the dispatch default; Sol is the surgical escalation for legs whose value concentrates in judgment; Luna is the volume lane. Bare `gpt-5.6` is an API-only slug that 400s under ChatGPT auth — always the suffixed name.
 
 | [INDEX] | [MODEL]         | [ROLE]                                                                                                            |
 | :-----: | :-------------- | :---------------------------------------------------------------------------------------------------------------- |
@@ -97,20 +98,34 @@ Every lane pins both axes. Terra is the dispatch default; Sol is the surgical es
 | :-----: | :----- | :----------------------------------- | :---------------------------------------------------------------------- | :-------- |
 |  [01]   | low    | `-c model_reasoning_effort="low"`    | trivial glue: probes, one-line extractions, mechanical relabels         | 300s      |
 |  [02]   | medium | `-c model_reasoning_effort="medium"` | bulk mechanical fan-out legs where throughput beats depth               | 300s      |
-|  [03]   | high   | `-c model_reasoning_effort="high"`   | the assumed dispatch tier for terra and sol alike                       | 600s      |
-|  [04]   | xhigh  | `-c model_reasoning_effort="xhigh"`  | hard single-thread research, review, and design legs                    | 1200s     |
+|  [03]   | high   | `-c model_reasoning_effort="high"`   | a deliberate step down for lighter research and review legs             | 600s      |
+|  [04]   | xhigh  | (config default — state nothing)     | the estate dispatch tier: every lane inherits it unless deviated        | 1200s     |
 |  [05]   | max    | `-c model_reasoning_effort="max"`    | the hardest problems — maximum single-agent depth, multi-minute latency | 1800s     |
-|  [06]   | ultra  | `-c model_reasoning_effort="ultra"`  | Sol or Terra coordinates parallel subagents inside the lane             | 1800s     |
+|  [06]   | ultra  | `-c model_reasoning_effort="ultra"`  | RARE: the lane itself must self-decompose into parallel subagents       | 1800s     |
 
-- Sol and Terra accept low through ultra; Luna accepts low through max and rejects ultra; every model defaults to medium.
-- Subagent spawning is prompt-triggered at EVERY tier — an explicit "spawn N parallel subagents" lands `collab_tool_call` items even at medium; ultra only biases codex to decompose without being asked, and a fan-out the orchestrator already owns never re-fans inside its lanes.
-- Bump past high surgically, one axis at a time: a hard single-context leg takes xhigh or max. Subagent concurrency is `features.multi_agent_v2.max_concurrent_threads_per_session` and spawn depth is `agents.max_depth` — both read from `~/.codex/config.toml`, never assumed.
-- Latency tracks task shape, not tier: a trivial prompt returns in seconds at any tier, so the timeout column is the ceiling for the tier's intended task class, never an expected wall.
+- Sol and Terra accept low through ultra; Luna accepts low through max and rejects ultra; the factory default is medium, and the operator config pins xhigh estate-wide.
+- Subagent spawning is prompt-triggered at EVERY tier — an explicit "spawn N parallel subagents" lands `collab_tool_call` items even at medium; ultra only biases codex to decompose without being asked, which is redundant where the caller (a workflow, a fan-out orchestrator) already owns the decomposition — reach for it only when a single lane must run its own internal fleet.
+- Deviate surgically, one axis at a time: max deepens the single hardest leg, low/medium serve throughput. Subagent concurrency is `features.multi_agent_v2.max_concurrent_threads_per_session` and spawn depth is `agents.max_depth` — both read from `~/.codex/config.toml`, never assumed.
+- Latency tracks task shape, not tier: a trivial prompt returns in seconds at any tier, so the timeout column is the ceiling for the tier's intended task class, never an expected wall. The column sizes the CLI `timeout`; an MCP call ignores it entirely — a heavy high-effort MCP call runs past the 600s row and completes, bounded only by `MCP_TOOL_TIMEOUT`.
 - Codex emits its result only at completion — there is no partial output to salvage from a killed run. Run synchronously with the Bash timeout set to the tier; from xhigh up prefer background execution against the signals ladder.
 
 ## [06]-[PROMPT_CONTRACT]
 
 Codex shares no conversation state — every prompt is self-contained. Include: the goal, absolute paths, scope bounds and what must not be touched, constraints that matter, and an explicit final-message contract ("Final message: a report with sections X, Y, Z" or an `--output-schema` file). For edit runs, name the acceptance signals codex must run before finishing (build, test, lint commands).
+
+GPT-5.x prompting is its own discipline — a Claude-shaped prompt underperforms:
+
+- ROLE SPLIT: durable lane law (mandate, tool rules, output contract) rides `developer-instructions`; the user `prompt` carries only the task instance. Battery-validated: the split posted the strongest depth and territory discipline at zero adherence cost.
+- DE-CONFLICT: GPT-5.x burns reasoning reconciling contradictory or overlapping directives instead of picking one — one directive per concern, no restatement of behavior codex already ships by default (persistence, `apply_patch` fluency, exploration), no emphatic intensifiers ("THOROUGH", "exhaustive" — production-measured to cause tool over-use), no chain-of-thought scaffolding, no preamble/plan-narration requests (they cause early stops on codex).
+- STRUCTURE: named XML spec blocks (`<context_gathering>`, `<persistence>`, `<verification>`, `<output_contract>` last) are the highest-adherence form; explicit early-stop criteria plus an uncertainty escape hatch ("proceed even if not fully certain") for bounded recon.
+- BUDGET PHRASING: cap TOTAL tool calls, never per-file reads, and forbid aggregation explicitly ("read in small batches; never concatenate the territory into one command — tool output truncates"). Battery-measured: a per-file read cap made every lane aggregate the whole territory into one truncating command, collapsing completeness 25/25 to 1/25 — codex obeys budgets literally enough that a mis-calibrated one is a foot-gun; a well-phrased one bought 2-3x speed, 4-7x fewer tokens, and perfect territory discipline.
+- TERRITORY: name instruction and skill files as out of scope explicitly — unbudgeted lanes spontaneously read `~/.codex/skills/*` and repo law files.
+- CONTRACT: a prose JSON contract is reliable on terra (battery: 8/8 raw-parse, zero fences) when it carries the word "JSON", the exact shape, "no prose outside the JSON, no code fences", and null-for-missing — the null clause measurably improves honesty; schema enforcement exists only on the API path, so the MCP/CLI final message stays best-effort by construction.
+- MCP tool calls SERIALIZE within a lane — prompting for parallel batching buys no wall time on the MCP surface (CLI lanes with native tools still parallelize reads).
+
+## [06B]-[USAGE_EXHAUSTION]
+
+Quota exhaustion fails the individual call LOUDLY with no partial output — a wrapper receives a plain tool error, returns `ok: false` with the error text, and NEVER performs the work itself (the dispatch-role contract forbids it; battery-observed to hold). The fallback is the CALLER's, mapped by role: terra legs re-dispatch to a native opus agent, sol legs to fable, luna legs to sonnet — same task text, native execution — or the leg's failure flows into the run's unmapped-territory path where downstream consumers already cold-read dead lanes' scope. Never leave a sonnet wrapper as the implicit fallback executor, and never pre-assign a Claude twin to idle alongside a healthy codex leg.
 
 ## [07]-[SIGNALS]
 
@@ -132,7 +147,7 @@ codex exec -s <sandbox> --skip-git-repo-check --json -o <report> \
 
 Every run mints a resumable thread on both surfaces — capture the id whenever follow-up is plausible, and run iterative deep work as ONE thread continued with sharpened prompts, never fresh runs re-paying the exploration cost.
 
-- MCP: every `codex` tool result carries `structuredContent.threadId`; continue with `codex-reply` — the continuation inherits the thread's model, effort, and sandbox. A caller that discards the threadId has severed the chain; capture it in the same turn that made the call.
+- MCP: every `codex` tool result envelope carries `threadId` beside `content`; continue with `codex-reply` — the continuation inherits the thread's model, effort, and sandbox. A caller that discards the threadId has severed the chain; capture it in the same turn that made the call.
 - CLI: every run prints `session id: <uuid>` in its banner (under `--json`, `thread.started.thread_id` carries the same id). Resume: `codex exec resume <session-id> "<follow-up>" </dev/null 2>/dev/null`, config flags between `exec` and `resume`; the resumed session inherits the original model, effort, and sandbox.
 - `resume --last` resolves to the newest recorded session — valid only when nothing else ran in between; under any concurrency resume by explicit id.
 - `--ephemeral` runs record nothing and cannot be resumed.

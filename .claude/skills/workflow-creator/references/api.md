@@ -274,6 +274,7 @@ It re-hosts the unmodified file inside the same `new Function`-wrapped, injected
 - `deterministic` — both runs produced an identical trace; `false` is a hidden non-deterministic escape, which breaks resume.
 - `perPhase` + `totalAgents` — a phase spawning far beyond the mental model is a fan-out bug; a phase MISSING from the sequence means a truthiness guard (`if (!x)`) dropped the minimal fixture — supply real shapes with `--fixtures` keyed by agent label.
 - `maxConcurrentObserved` against 16 (queuing, a warning) and the 1000-agent lifetime cap (a throw, a real bug).
+- Agent counts against the pre-edit baseline: a body-level try/catch (per-unit failure isolation) swallows a runtime `ReferenceError` inside its stage helpers, so `ran=true deterministic=true` still prints while every unit dies to `null` — the ONLY visible symptom is an agent count silently dropping against the last known-good run. After any dispatch-helper edit, diff `perPhase` against the committed baseline; a drop to zero in a phase that should fan is a swallowed throw, not a guard.
 
 Fixtures are MINIMAL by design (non-empty strings, one-element arrays), so counts are REPRESENTATIVE, not exact production. Exercise every loop down BOTH a converging and a permanently-stuck input, so the hard stop and the fixpoint break both fire.
 
