@@ -47,7 +47,7 @@ PROBES: tuple[Probe, ...] = (  # POLICY: gated dynamic-state rows; {cwd} resolve
 def _run(argv: tuple[str, ...], /) -> str:
     try:
         return subprocess.run(argv, capture_output=True, text=True, timeout=2, check=False).stdout.strip()  # cap: SessionStart blocks startup
-    except (OSError, subprocess.SubprocessError):
+    except OSError, subprocess.SubprocessError:
         return ""
 
 
@@ -82,7 +82,11 @@ def main() -> int:
     except msgspec.DecodeError:
         return 0  # routing/injection failure exits 0 so telemetry never blocks the harness
     _route(ctx)
-    lines = {probe.label: out for probe in sorted(PROBES, key=lambda p: p.priority) if probe.predicate(ctx) and (out := _run(tuple(a.replace("{cwd}", ctx.cwd) for a in probe.argv)))}
+    lines = {
+        probe.label: out
+        for probe in sorted(PROBES, key=lambda p: p.priority)
+        if probe.predicate(ctx) and (out := _run(tuple(a.replace("{cwd}", ctx.cwd) for a in probe.argv)))
+    }
     _persist("SESSION_BRANCH", lines.get("branch", ""))
     if lines:  # inject nothing when no row fires — the empty-state line is pure context pollution
         _inject(f"<{TAG}>\n" + "\n".join(f"{label}: {value}" for label, value in lines.items()) + f"\n</{TAG}>")

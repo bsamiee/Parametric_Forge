@@ -48,7 +48,7 @@ def _mode(payload: PostToolUse, /) -> Mode:
 def _run(argv: tuple[str, ...], /) -> subprocess.CompletedProcess[str] | None:
     try:
         return subprocess.run(argv, capture_output=True, text=True, timeout=TIMEOUT_S, check=False)
-    except (OSError, subprocess.SubprocessError):
+    except OSError, subprocess.SubprocessError:
         return None  # a missing or hung tool never blocks a completed edit
 
 

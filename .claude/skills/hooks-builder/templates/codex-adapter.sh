@@ -23,13 +23,19 @@ set -e
 trap _on_err ERR
 
 # Exit 2: portable on the tool and prompt events; the Stop family blocks via decision JSON, synthesized from stderr.
-if (( code == 2 )); then
+if ((code == 2)); then
     case "${event}" in
-        Stop | SubagentStop) jq -nc --arg reason "$(cat "${errfile}")" '{decision: "block", reason: $reason}'; exit 0 ;;
-        *) cat "${errfile}" >&2; exit 2 ;;
+        Stop | SubagentStop)
+            jq -nc --arg reason "$(cat "${errfile}")" '{decision: "block", reason: $reason}'
+            exit 0
+            ;;
+        *)
+            cat "${errfile}" >&2
+            exit 2
+            ;;
     esac
 fi
-if (( code != 0 )); then
+if ((code != 0)); then
     cat "${errfile}" >&2
     exit "${code}" # non-blocking error passes through unshaped
 fi

@@ -40,6 +40,9 @@
     else "${pkgs.procps}/bin/ps";
   inherit (config.forge.theme) roles icons; # Estate palette owner (modules/home/theme.nix): roles + the closed status-glyph alphabet
   td = config.forge.theme.projections.timeDisplay; # Display-time grammar rows: HH:MM local same-day, dd/mm HH:MM otherwise
+  # Pane-mark sentinel: the ascii attention marker widened by a zero-width-space discriminator — renders as "[?] " yet is byte-impossible to type
+  # in a rename prompt, so the reconcile sweep owns exactly the titles it minted and an operator title spelled "[?] ..." is never unmarked.
+  markSentinel = "${icons.alphabet.attention.ascii}${builtins.fromJSON ''"\u200b"''} ";
   fleet = import ./mcp-fleet.nix {
     inherit profileBin;
     homeDir = config.home.homeDirectory;
@@ -1114,9 +1117,9 @@
             iso_now() { TZ=UTC0 printf '%(%Y-%m-%dT%H:%M:%SZ)T' "$EPOCHSECONDS"; }
             receipt_surface="forge-agents"
             ${receiptsFold}
-            # Shared F01 vocabulary (attention.nix): urgency ladder, kv parser, latest-needs fold — $-bearing jq text as single-quoted data by design.
+            # Shared F01 vocabulary (attention.nix): urgency ladder, kv parser, session key, latest-needs fold — $-bearing jq text as single-quoted data by design.
             # shellcheck disable=SC2016
-            jq_defs=${lib.escapeShellArg (attention.urgencyJq + attention.kvJq + attention.latestNeedsJq)}
+            jq_defs=${lib.escapeShellArg (attention.urgencyJq + attention.kvJq + attention.sessionKeyJq + attention.latestNeedsJq)}
             alerts_catalog='${alertsJson}'
 
             cmd_status() {
@@ -1141,9 +1144,10 @@
 
             cmd_collect() {
               mkdir -p "$state_root" "$(dirname "$lanes_out")"
-              # One collector at a time: an overlapping interval run must not race the cache, the backoff meta, or the notification dedupe.
+              # One collector at a time, bounded queue: a hook kick landing while a tick is mid-fold WAITS for the lock and re-folds the fresh
+              # row instead of dropping the edge to the next 60s tick; every section below is a snapshot-fold, so a queued rerun is idempotent.
               exec {collect_fd}>"$state_root/.collect.lock"
-              flock -n "$collect_fd" || exit 0
+              flock -w 10 "$collect_fd" || exit 0
               now="$EPOCHSECONDS"
               ts="$(iso_now)"
               # Tolerant admission: a torn or foreign cache/meta file folds to {} instead of killing the collector under set -e.
@@ -1155,23 +1159,26 @@
               live_json="$(jq -Rcs 'split("\n") | map(select(length > 0))' <<<"$live_sessions")"
 
               # --- [LIFECYCLE_FOLD]
-              # ONE feed snapshot, ONE jq, lifecycle-pure: per session_id the LATEST hook row is the state — Notification = waiting,
+              # ONE feed snapshot, ONE jq, lifecycle-pure: per session the LATEST hook row is the state — Notification = waiting,
               # UserPromptSubmit/PostToolUse = active, Stop = idle, SessionEnd = gone. Clearing events outstamp the Notification they answer, so
-              # max_by(.ts) encodes every transition; dedupe is group_by(session_id), so stacked tabs never inflate and a reattached tty never
-              # drops a waiter. A session naming a dead zellij session prunes on liveness; the stale window only retires a waiter that went dark
-              # with no clearing event. source=bell rows (WezTerm bell arm) count inside their own policy window — the deck toast owns the bell's
-              # desktop surface — and fromjson? rails the live-appended, lock-free-rotated feed.
+              # max_by(.ts) encodes every transition (same-second ties break to append order); dedupe is group_by(session_key) — session_id
+              # widened by terminal identity for anonymous rows — so stacked tabs never inflate, a reattached tty never drops a waiter, and two
+              # anonymous sessions never clear each other. A session naming a dead zellij session prunes on liveness; the stale window retires a
+              # waiter that went dark with no clearing event, degrading its lane to idle rather than lying waiting forever. source=bell rows
+              # (WezTerm bell arm) count inside their own policy window — the deck toast owns the bell's desktop surface — and fromjson? rails
+              # the live-appended, lock-free-rotated feed.
               TZ=UTC0 printf -v att_cut '%(%Y-%m-%dT%H:%M:%SZ)T' "$((now - ${toString notifyPolicy.staleWindowSec}))"
               TZ=UTC0 printf -v bell_cut '%(%Y-%m-%dT%H:%M:%SZ)T' "$((now - ${toString notifyPolicy.bellWindowSec}))"
               feed_facts="$(tail -n 2000 "$feed" 2>/dev/null | jq -Rcn \
-                --arg cut "$att_cut" --arg bcut "$bell_cut" --argjson live "$live_json" '
+                --arg cut "$att_cut" --arg bcut "$bell_cut" --argjson live "$live_json" "$jq_defs"'
                 [inputs | fromjson? | select(type == "object")] as $rows
-                | ([$rows[] | select((.source // "hook") == "hook")] | group_by(.session_id) | map(max_by(.ts))) as $latest
+                | ([$rows[] | select((.source // "hook") == "hook")] | group_by(session_key) | map(max_by(.ts))) as $latest
                 | ($latest | map(select(.event != "SessionEnd"
                     and (((.zellij_session // "") == "") or (.zellij_session as $s | $live | index($s)))))) as $alive
                 | {
                     sessions: [$alive[] | {session_id, zellij_session, zellij_pane, ts,
-                      state: (if .event == "Notification" then "waiting" elif .event == "Stop" then "idle" else "active" end),
+                      state: (if .event == "Notification" then (if .ts >= $cut then "waiting" else "idle" end)
+                              elif .event == "Stop" then "idle" else "active" end),
                       lane: (if (.zellij_session // "") != "" then "\(.zellij_session)·p\(.zellij_pane)"
                              else (.session_id | tostring | .[0:8]) end)}],
                     waiting: [$alive[] | select(.event == "Notification" and .ts >= $cut)],
@@ -1183,16 +1190,18 @@
               bells="$(jq -c '.bells' <<<"$feed_facts")"
               bells_n="$(jq -r '.bells.count' <<<"$feed_facts")"
 
-              # --- [WAITER_IDENTITY_ENRICHMENT]
-              # One list-panes snapshot per zellij session that hosts a waiter (usually zero or one) resolves pane id -> tab + live frame title,
-              # so the bar cell, banner, alerter, and pane mark all NAME the waiter: SESSION·T<n>. A dead session folds to an empty pane set.
+              # --- [PANE_SNAPSHOT_AND_WAITER_IDENTITY]
+              # ONE list-panes snapshot per live zellij session (usually one or two) resolves pane id -> tab + live frame title, so the bar
+              # cell, banner, alerter, and pane mark all NAME the waiter (SESSION·T<n>) AND the mark reconcile below reads displayed truth for
+              # every pane — the full snapshot is what makes the leaked-mark sweep possible. A dead session folds to an empty pane set.
               panes='{}'
               while IFS= read -r zs; do
+                [ -n "$zs" ] || continue
                 p="$(${profileBin}/zellij --session "$zs" action list-panes --all --json 2>/dev/null || true)"
                 jq -e 'type == "array"' <<<"$p" >/dev/null 2>&1 || p='[]'
                 panes="$(jq -c --arg zs "$zs" --argjson p "$p" \
                   '.[$zs] = ($p | map(select(.is_plugin | not) | {id, tab_position, title}))' <<<"$panes")"
-              done < <(jq -r '[.waiting[] | .zellij_session | select((. // "") != "")] | unique | .[]' <<<"$feed_facts")
+              done <<<"$live_sessions"
               att="$(jq -c --argjson panes "$panes" '
                 [.waiting[] | . as $w
                  | (first(($panes[$w.zellij_session // ""] // [])[] | select((.id | tostring) == ($w.zellij_pane // ""))) // null) as $p
@@ -1236,32 +1245,33 @@
               mv "$tmp_cache" "$cache"
 
               # --- [PANE_MARK_RECONCILE]
-              # The waiting pane itself is the primary attention surface: each waiter's frame title gains a reversible "[?] <title>" mark by pane
-              # id (off-focus, cross-session, no focus theft); undo-rename-pane restores the auto title the moment the clearing event lands. The
-              # meta file holds the marked set; each tick marks entrants and unmarks leavers — set reconciliation, so a dead session or pane
-              # degrades to a benign no-op and a collector restart re-derives the whole set from disk. Only entrants rename, so an operator's
-              # manual title edit on an already-marked pane is never fought.
-              declare -A want_mark=() had_mark=()
+              # The waiting pane itself is the primary attention surface: each waiter's frame title gains a reversible sentinel mark by pane id
+              # (off-focus, cross-session, no focus theft); undo-rename-pane restores the auto title the moment the clearing event lands.
+              # Displayed titles are the ground truth the reconcile reads — a pane counts as system-marked iff its live title opens with the
+              # SENTINEL (ascii marker + zero-width discriminator, untypeable in a rename prompt) — so a crash mid-tick can never nest a second
+              # marker, no state file can leak a mark (the sweep over the full snapshot unmarks any stray sentinel no waiter owns), and an
+              # operator title spelled "[?] ..." is never mistaken for a mark or clobbered. Entrant titles strip a prior sentinel before
+              # prefixing; a dead session or pane degrades to a benign no-op.
+              mark_pfx="${markSentinel}"
+              declare -A want_mark=()
               while IFS=$'\t' read -r w_zs w_zp w_title; do
                 [ -n "$w_zs" ] && [ -n "$w_zp" ] || continue
+                w_title="''${w_title#"$mark_pfx"}"
                 want_mark["$w_zs"$'\x1f'"$w_zp"]="''${w_title:-input needed}"
               done < <(jq -r '.attention.waiting[]?
                 | select(((.zellij_session // "") != "") and ((.zellij_pane // "") != ""))
                 | [.zellij_session, .zellij_pane, (.title // "")] | @tsv' "$cache")
-              while IFS= read -r mk; do
-                [ -n "$mk" ] || continue
-                had_mark["$mk"]=1
-              done < <(jq -r '.marked[]?' <<<"$m")
-              for mk in "''${!had_mark[@]}"; do
-                [ -n "''${want_mark[$mk]+x}" ] \
-                  || ${profileBin}/zellij --session "''${mk%%$'\x1f'*}" action undo-rename-pane --pane-id "''${mk##*$'\x1f'}" 2>/dev/null || true
-              done
-              for mk in "''${!want_mark[@]}"; do
-                [ -n "''${had_mark[$mk]+x}" ] \
-                  || ${profileBin}/zellij --session "''${mk%%$'\x1f'*}" action rename-pane --pane-id "''${mk##*$'\x1f'}" \
-                    "${icons.alphabet.attention.ascii} ''${want_mark[$mk]:0:40}" 2>/dev/null || true
-              done
-              marked="$(printf '%s\n' "''${!want_mark[@]}" | jq -Rcs 'split("\n") | map(select(length > 0))')"
+              while IFS=$'\t' read -r p_zs p_zp p_title; do
+                [ -n "$p_zs" ] && [ -n "$p_zp" ] || continue
+                mk="$p_zs"$'\x1f'"$p_zp"
+                if [ -n "''${want_mark[$mk]+x}" ]; then
+                  [ "''${p_title:0:''${#mark_pfx}}" = "$mark_pfx" ] \
+                    || ${profileBin}/zellij --session "$p_zs" action rename-pane --pane-id "$p_zp" \
+                      "$mark_pfx''${want_mark[$mk]:0:40}" 2>/dev/null || true
+                elif [ "''${p_title:0:''${#mark_pfx}}" = "$mark_pfx" ]; then
+                  ${profileBin}/zellij --session "$p_zs" action undo-rename-pane --pane-id "$p_zp" 2>/dev/null || true
+                fi
+              done < <(jq -r 'to_entries[] | .key as $zs | .value[] | [$zs, (.id | tostring), .title] | @tsv' <<<"$panes")
 
               # --- [PROJECTIONS]
               # The zjstatus top bar is the ONE render surface; the collector owns role->palette styling (build-time hexes from the theme owner)
@@ -1270,12 +1280,13 @@
               # "[?] n · <newest>" when several wait; bells stay a count ("[B] n", amber); standing alerts ride their OWN red cell naming the
               # first kind (+N overflow), so estate state never recolors the agent cell. INVARIANT: every payload — populated or empty — opens
               # with an explicit role-derived #[bg=surface] directive; a directive-less payload under rendermode dynamic inherits the adjacent
-              # cell's hue (the empty-state relic), and an empty payload would drop the pipe message entirely.
+              # cell's hue (the empty-state relic), and an empty payload would drop the pipe message entirely. The waiter label carries a foreign
+              # session name, so the "#[" opener defuses here exactly as notify_bars defuses toast text.
               IFS=$'\x1f' read -r agents_cell alerts_cell sessions_n < <(jq -r '
                 def seg(fg; a; t): "#[bg=${roles.surface.surface.hex},fg=" + fg + a + "]" + t;
                 def blank: "#[bg=${roles.surface.surface.hex}] ";
                 (.attention.needs_input // 0) as $needs
-                | (.attention.latest.label // "agent") as $who
+                | (.attention.latest.label // "agent" | gsub("#\\["; "[")) as $who
                 | (.bells.count // 0) as $bells
                 | (.alerts.count // 0) as $alerts
                 | [
@@ -1299,13 +1310,16 @@
 
               # ONE broadcast fold owns pipe delivery for cells and toasts over the tick's session snapshot; a dead server is benign.
               # __SESSION__ in a payload interpolates each session's uppercase display name — the identity chip, pink accent fill flush to
-              # the bar's right edge (the trailing space rides inside the fill, so no surface gap trails it).
+              # the bar's right edge (the trailing space rides inside the fill, so no surface gap trails it); the name is foreign text, so
+              # its "#[" opener defuses before it rides a payload.
               zj_broadcast() { # $@ = zjstatus pipe payloads, one delivery per live session each
-                local s payload
+                local s chip payload
                 while IFS= read -r s; do
                   [ -n "$s" ] || continue
+                  chip="''${s^^}"
+                  chip="''${chip//"#["/[}"
                   for payload in "$@"; do
-                    ${profileBin}/zellij --session "$s" pipe "''${payload//__SESSION__/''${s^^}}" 2>/dev/null || true
+                    ${profileBin}/zellij --session "$s" pipe "''${payload//__SESSION__/$chip}" 2>/dev/null || true
                   done
                 done <<<"$live_sessions"
               }
@@ -1319,7 +1333,10 @@
               # ntfy target is benign.
               notify_bars() { # $1 = one-line message, truncated to the toast budget and broadcast on the shared fold
                 local msg
-                msg="$(tr -d '\n' <<<"$1")"
+                # Foreign text (prompt bodies, pane peeks) rides these payloads: fold every control byte and defuse the "#[" opener so the
+                # toast can never smuggle a terminal escape or a zjstatus directive.
+                msg="$(tr -d '[:cntrl:]' <<<"$1")"
+                msg="''${msg//"#["/[}"
                 zj_broadcast "zjstatus::notify::''${msg:0:120}"
               }
               # Cross-device custody: session env first, launchd GUI replay second (the collector runs under launchd with no session env).
@@ -1397,12 +1414,12 @@
               fi
 
               # --- [META_TRANSITION_RECEIPT]
-              # The meta file carries the notification throttle stamps AND the pane-mark set the next tick reconciles against.
-              jq -cn --argjson now "$now" --argjson m "$m" --argjson marked "$marked" \
+              # The meta file carries only the per-class notification throttle stamps; the pane-mark set needs no persistence — displayed
+              # titles are the reconcile's ground truth.
+              jq -cn --argjson now "$now" --argjson m "$m" \
                 --argjson notified "$notified" --argjson alert_notified "$alert_notified" '{
                   last_notify: (if $notified == 1 then $now else ($m.last_notify // 0) end),
-                  last_alert_notify: (if $alert_notified == 1 then $now else ($m.last_alert_notify // 0) end),
-                  marked: $marked
+                  last_alert_notify: (if $alert_notified == 1 then $now else ($m.last_alert_notify // 0) end)
                 }' >"$meta.tmp.$$"
               mv "$meta.tmp.$$" "$meta"
 
@@ -1565,10 +1582,17 @@
                 replied)
                   reply="$(jq -r '.activationValue // ""' <<<"$ans")"
                   if [ -n "$reply" ]; then
-                    # Pane-id-addressed write needs no focus; byte 13 submits.
-                    ${profileBin}/zellij --session "$zs" action write-chars --pane-id "$zp" -- "$reply" 2>/dev/null || true
-                    ${profileBin}/zellij --session "$zs" action write --pane-id "$zp" 13 2>/dev/null || true
-                    answer_receipt replied "''${#reply}"
+                    # Liveness gate on the reply target: the dialog blocks up to ${toString notifyPolicy.answerTimeoutSec}s and the pane can die
+                    # mid-answer; a vanished pane degrades to focus instead of minting a false replied receipt for a write into the void.
+                    if ${profileBin}/zellij --session "$zs" action list-panes --all --json 2>/dev/null \
+                      | jq -e --arg id "$zp" 'any(.[]?; (.id | tostring) == $id)' >/dev/null 2>&1; then
+                      # Pane-id-addressed write needs no focus; byte 13 submits.
+                      ${profileBin}/zellij --session "$zs" action write-chars --pane-id "$zp" -- "$reply" 2>/dev/null || true
+                      ${profileBin}/zellij --session "$zs" action write --pane-id "$zp" 13 2>/dev/null || true
+                      answer_receipt replied "''${#reply}"
+                    else
+                      answer_receipt pane-gone "''${#reply}"
+                    fi
                     cmd_focus
                     return 0
                   fi

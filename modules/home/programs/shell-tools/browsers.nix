@@ -288,7 +288,8 @@
 
       # --- [PUSH_BUS]
       # Live failure fold: every new registry row parses, derives urgency, and a high row broadcasts into every live zjstatus bar via
-      # zjstatus::notify::. Torn or foreign lines fold to info and drop; a dead zellij is benign.
+      # zjstatus::notify::. Torn or foreign lines fold to info and drop; a dead zellij is benign. Receipt fields are foreign text, so the
+      # composed toast folds control bytes and defuses the "#[" zjstatus-directive opener before it rides the pipe.
       cmd_bus() {
         local pathmap
         mapfile -t logs < <(jq -r --arg home "$HOME" '.[] | $home + "/" + .path' "$registry")
@@ -305,7 +306,8 @@
               | . + {kind: $row.kind}
               | select(urgency == "high")
               | ((.ts // "") | disp_ts) as $hm
-              | "[X] \(.kind | ascii_upcase) \(.result // .state // .status // "fail")\(if $hm != "" then " · " + $hm else "" end)"' \
+              | "[X] \(.kind | ascii_upcase) \(.result // .state // .status // "fail")\(if $hm != "" then " · " + $hm else "" end)"
+              | gsub("[[:cntrl:]]+"; " ") | gsub("#\\["; "[")' \
           | while IFS= read -r msg; do # streaming boundary: live failure push
               while IFS= read -r s; do
                 [ -n "$s" ] || continue

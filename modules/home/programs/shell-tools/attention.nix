@@ -71,12 +71,20 @@ in {
   # corpus otherwise infers JSON and poisons every COALESCE over the column downstream.
   spineColumnsSql = builtins.concatStringsSep ", " (map (c: "${c}: 'VARCHAR'") spineColumns);
 
-  # Latest needs-input row over a raw feed stream (jq -Rn + inputs): the one spelling of "which session waits newest" —
-  # focus, peek, and answer fallbacks all fold this instead of re-deriving it.
+  # Session-grain dedupe key: session_id, widened by terminal identity when the emitter carried none ("-"), so two anonymous sessions on
+  # different ttys can never clear each other's lifecycle state. Every per-session fold groups on this key, never on raw session_id.
+  sessionKeyJq = ''
+    def session_key:
+      if (.session_id // "-") == "-" then "-\(.tty // "")\(.zellij_pane // "")" else .session_id end;
+  '';
+
+  # Latest needs-input row over a raw feed stream (jq -Rn + inputs): the one spelling of "which session waits newest" — focus, peek, and
+  # answer fallbacks all fold this instead of re-deriving it. Hook rows only: a bell row winning max_by must never mask a waiter. Composes
+  # after sessionKeyJq.
   latestNeedsJq = ''
     def latest_needs:
-      [inputs | fromjson? | select(type == "object")]
-      | [group_by(.session_id)[] | max_by(.ts) | select(.event == "Notification")]
+      [inputs | fromjson? | select(type == "object") | select((.source // "hook") == "hook")]
+      | [group_by(session_key)[] | max_by(.ts) | select(.event == "Notification")]
       | max_by(.ts) // empty;
   '';
 

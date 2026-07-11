@@ -44,7 +44,7 @@ def _baseline(session_id: str, /) -> Path:
 def _load(receipt: Path, /) -> frozenset[Finding]:
     try:
         return frozenset(msgspec.json.decode(receipt.read_bytes(), type=list[Finding]))
-    except (OSError, msgspec.DecodeError):
+    except OSError, msgspec.DecodeError:
         return frozenset()
 
 
@@ -64,7 +64,9 @@ def main() -> int:
     receipt = _baseline(payload.session_id)
     acknowledged = _load(receipt)
     regressions = sorted(current - acknowledged)
-    receipt.write_bytes(msgspec.json.encode(sorted(acknowledged | current)))  # monotonic acknowledged-set: a flaky finding that vanishes then reappears never re-wakes
+    receipt.write_bytes(
+        msgspec.json.encode(sorted(acknowledged | current))
+    )  # monotonic acknowledged-set: a flaky finding that vanishes then reappears never re-wakes
     if regressions:
         rows = "\n".join(f"{f.file}:{f.line} {f.rule}" for f in regressions)
         print(f"async guardrail: {len(regressions)} new finding(s):\n{rows}", file=sys.stderr)

@@ -27,15 +27,25 @@ tty="$(ps -o tty= -p $$ 2>/dev/null | tr -d ' ' || true)"
     tty="$(ps -o tty= -p "$PPID" 2>/dev/null | tr -d ' ' || true)"
 case "$tty" in "?" | "??") tty="" ;; esac
 
+# Message rides verbatim into the banner, alerter, and bar toast, so C0/C1 controls (newlines, ANSI escapes) fold to single spaces at
+# capture — the feed carries one-line prompt text no downstream renderer can be steered by.
 TZ=UTC0 printf -v ts '%(%Y-%m-%dT%H:%M:%SZ)T' "$EPOCHSECONDS"
 jq -c --arg ts "$ts" \
     --arg term "${TERM_PROGRAM:-}" --arg wp "${WEZTERM_PANE:-}" \
     --arg zs "${ZELLIJ_SESSION_NAME:-}" --arg zp "${ZELLIJ_PANE_ID:-}" \
     --arg tty "$tty" \
     '{ts: $ts, source: "hook", event: .hook_event_name, session_id: (.session_id // "-"), cwd: (.cwd // "-"),
-    message: ((.message // "") | tostring | .[0:400]),
+    message: ((.message // "") | tostring | gsub("[[:cntrl:]]+"; " ") | .[0:400]),
     term: $term, wezterm_pane: $wp, zellij_session: $zs, zellij_pane: $zp, tty: $tty}' \
     <<<"$payload" >>"$feed" 2>/dev/null
+
+# Edge kick, stamp-throttled to 5s: a fresh lifecycle row re-folds the collector now (flock-serialized there), so the pane mark, bar cell,
+# and banner track the event at second latency instead of the 60s launchd tick; a host without forge-agents still lands the row for later.
+kick="${feed%/*}/.collect-kick"
+if [ -z "$(find "$kick" -newermt '-5 seconds' 2>/dev/null)" ]; then
+    : >"$kick"
+    { command -v forge-agents >/dev/null 2>&1 && forge-agents collect; } >/dev/null 2>&1 </dev/null &
+fi
 
 # Size-gated self-rotation, lock-free: advisory telemetry, so a row a concurrent appender loses to the atomic rename self-heals on its next event.
 rows="$(wc -l <"$feed")"

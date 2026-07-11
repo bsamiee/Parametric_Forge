@@ -67,7 +67,9 @@ def _records(transcript_path: str, /) -> list[Line]:
 
 
 def _summarize(payload: PreCompact, records: list[Line], /) -> Summary:
-    tools = [ToolCall(r.tool_name, not r.is_error) for r in records if r.type == "assistant" and r.tool_name]  # gate on assistant so a tool_result never double-counts its call
+    tools = [
+        ToolCall(r.tool_name, not r.is_error) for r in records if r.type == "assistant" and r.tool_name
+    ]  # gate on assistant so a tool_result never double-counts its call
     return Summary(
         session_id=payload.session_id,
         trigger=payload.compaction_trigger,
@@ -92,7 +94,11 @@ def main() -> int:
     tmp = artifact.with_suffix(".json.tmp")
     tmp.write_bytes(msgspec.json.encode(summary))
     os.replace(tmp, artifact)  # atomic publish: a killed compaction never leaves the reloader a truncated JSON
-    body = {"continue": True, "systemMessage": f"handoff written to {artifact}", "hookSpecificOutput": {"hookEventName": "PreCompact", "additionalContext": f"pre-compaction handoff at {artifact}"}}
+    body = {
+        "continue": True,
+        "systemMessage": f"handoff written to {artifact}",
+        "hookSpecificOutput": {"hookEventName": "PreCompact", "additionalContext": f"pre-compaction handoff at {artifact}"},
+    }
     sys.stdout.write(msgspec.json.encode(body).decode())
     return 0
 

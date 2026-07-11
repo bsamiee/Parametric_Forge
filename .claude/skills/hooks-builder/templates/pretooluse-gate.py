@@ -144,8 +144,13 @@ def _classify_rm(argv: list[str], /) -> Ruling:
 
 
 GIT_BLOCK: dict[str, tuple[str, ...]] = {  # POLICY: subcommand -> flag fragments that destroy work
-    "checkout": ("--", "-f", "--force"), "reset": ("--hard",), "clean": ("-f", "-fd", "-fdx"),
-    "push": ("--force", "-f"), "branch": ("-D",), "stash": ("drop", "clear"), "rebase": ("--abort",),
+    "checkout": ("--", "-f", "--force"),
+    "reset": ("--hard",),
+    "clean": ("-f", "-fd", "-fdx"),
+    "push": ("--force", "-f"),
+    "branch": ("-D",),
+    "stash": ("drop", "clear"),
+    "rebase": ("--abort",),
 }
 
 
