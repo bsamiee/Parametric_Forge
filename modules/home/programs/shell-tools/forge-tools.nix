@@ -484,7 +484,7 @@
   # Cleanup registry as a tuple grammar: one row per line, projected to typed JSON through rowGrammar. Kinds — mode: converge a directory mode; path:
   # trash a residue tree; glob: trash matches under a root; age: retention window (the age gate IS the live-session guard); deadlink: trash broken
   # links only; ledger: report-only storage budget; adjudicate: named decision, receipt-only; codex-trust: prune stale trusted-project rows; orphan:
-  # ppid-1 agent-lane census — kill rows reap, report rows observe.
+  # agent-lane process census (scope orphan = ppid-1 tty-less, scope any = session children too) — kill rows reap, report rows observe.
   rowGrammar = {
     mode = ["target" "expect"];
     path = ["target"];
@@ -494,7 +494,7 @@
     ledger = ["target" "budgetGb" "owner" "prune"];
     adjudicate = ["target" "decision" "note"];
     codex-trust = ["target"];
-    orphan = ["match" "exclude" "minAgeSec" "action"];
+    orphan = ["match" "exclude" "minAgeSec" "action" "scope"];
   };
   projectRows = registry:
     lib.concatLists (lib.mapAttrsToList
@@ -649,9 +649,11 @@
       harness-policy-drift = [".claude/settings.json" "receipted" "declared bypassPermissions vs live enforcement; receipt per root"];
       rasm-bridge-state = [".rasm" "relocation-pending" "rhino-bridge lease/quit journals in a home root dotdir; relocation rides the bridge owner in Rasm"];
     };
-    # kill rows are the evidence-gated reap set; report rows keep daemon-by-design classes (git fsmonitor, op) visible without lifecycle theft. codex
-    # lanes detach by design; only lanes far past every effort-tier deadline are litter. node-modules
-    # census is the visibility net for new daemon classes before they earn a kill row.
+    # kill rows are the evidence-gated reap set; report rows keep daemon-by-design classes (op) visible without lifecycle theft. codex lanes detach
+    # by design; only lanes far past every effort-tier deadline are litter. node-modules census is the visibility net for new daemon classes before
+    # they earn a kill row. Scope "any" rows reap session-child litter — wedge residue whose age proves it dead (deadlined bodies finish in
+    # seconds); fsmonitor daemons respawn on the next git command, so an aged reap costs nothing; ipykernel stays report-only because the KeepAlive
+    # Jupyter server respawns killed kernels — the server's cull policy owns that lifecycle.
     orphan = {
       biome-lsp-proxy-orphans = ["biome lsp-proxy" "" 300 "kill"];
       biome-daemon-orphans = ["biome __run_server" "" 300 "kill"];
@@ -662,15 +664,18 @@
       csharp-buildhost-orphans = ["(BuildHost-netcore|MSBuild[.]BuildHost[.]dll)" "" 600 "kill"];
       forge-edit-nvim-orphans = ["nvim.*(forge-edit|forge-accept)" "" 1800 "kill"];
       codex-lane-orphans = ["(^|/)codex (exec|e) " "Codex[.]app" 14400 "kill"];
-      git-fsmonitor-census = ["fsmonitor--daemon" "" 604800 "report"];
+      loc-wedge = ["(^|/)bin/loc( |$)" "" 900 "kill" "any"];
+      claude-hook-wedge = ["[.]claude/(hooks|scripts)/[a-z-]+[.]sh" "" 600 "kill" "any"];
+      git-fsmonitor-aged = ["fsmonitor--daemon" "" 259200 "kill"];
+      ipykernel-census = ["ipykernel_launcher" "" 21600 "report" "any"];
       op-daemon-census = ["(^|/)op daemon" "" 86400 "report"];
       node-modules-daemon-census = ["/node_modules/" "biome" 3600 "report"];
     };
   }));
 
   # Guarded cleanup rail: `plan` emits a durable precheck receipt, `apply` executes only rows the plan proved safe, re-verified at act time and
-  # trash-first, so every deletion stays recoverable from ~/.Trash. `sweep` is the orphan lane: fresh detection plus evidence-gated reaping of ppid-1
-  # agent-lane processes, one receipt row per pid.
+  # trash-first, so every deletion stays recoverable from ~/.Trash. `sweep` is the orphan lane: fresh detection plus evidence-gated reaping of
+  # agent-lane litter — ppid-1 orphans by default, session-child wedge residue on scope "any" rows — one receipt row per pid.
   forgeCleanup = mkTool {
     name = "forge-cleanup";
     receiptName = "forge-orphan-sweep";
@@ -702,8 +707,9 @@
       # Trust rows on scratch/transient roots are litter by class; durable repo rows never match this and always survive the prune.
       scratch_re="^(/private/tmp/|/tmp/|$HOME/Downloads(/|$)|$HOME/Library/CloudStorage/)"
 
-      # One live snapshot per run: uid-owned, ppid-1, tty-less processes with age in seconds and RSS KiB; launchd-managed pids drop out first, so a
-      # sanctioned agent (KeepAlive services included) is never a candidate.
+      # One live snapshot per run: every uid-owned process with ppid, tty, age in seconds, and RSS KiB; launchd-managed pids drop out first, so a
+      # sanctioned agent (KeepAlive services included) is never a candidate. The snapshot stays wide because the worst leak classes — wedged hook
+      # bodies, hung tool wrappers, abandoned MCP generations — live UNDER live sessions with a tty; each row's scope narrows the census.
       proc_snapshot() {
         if [ ! -e "$work/procs" ]; then
           # launchd exclusion is a Darwin fact; on a systemd host the managed set is empty (user services carry a non-1 ppid and drop anyway).
@@ -718,20 +724,24 @@
               return hms[1] + 0
             }
             NR == FNR { managed[$1] = 1; next }
-            $2 == 1 && $3 == uid && $4 ~ /^\?\??$/ && !($1 in managed) && $1 != self {
+            $3 == uid && !($1 in managed) && $1 != self {
               cmd = ""
               for (i = 7; i <= NF; i++) cmd = cmd (i > 7 ? " " : "") $i
-              printf "%s\t%s\t%s\t%s\n", $1, esecs($5), $6, cmd
+              printf "%s\t%s\t%s\t%s\t%s\t%s\n", $1, $2, $4, esecs($5), $6, cmd
             }
           ' "$work/managed" - >"$work/procs"
         fi
         cat "$work/procs"
       }
 
-      # args: match exclude min-age action. Deny applies to the kill lane only; report rows keep daemon-by-design classes visible.
+      # args: match exclude min-age action scope. Deny applies to the kill lane only; report rows keep daemon-by-design classes visible. Scope
+      # "orphan" (default) is the classic ppid-1 tty-less census; scope "any" admits session-child litter, where the age threshold IS the
+      # live-work guard. Output keeps the pid/age/rss/cmd shape reap_matches consumes.
       orphan_matches() {
-        proc_snapshot | awk -F '\t' -v m="$1" -v x="$2" -v g="$3" -v a="$4" -v d="$deny_re" '
-          $2 >= g && $4 ~ m && (x == "" || $4 !~ x) && (a != "kill" || $4 !~ d) {print}'
+        proc_snapshot | awk -F '\t' -v m="$1" -v x="$2" -v g="$3" -v a="$4" -v s="$5" -v d="$deny_re" '
+          (s == "any" || ($2 == 1 && $3 ~ /^\?\??$/)) && $4 >= g && $6 ~ m && (x == "" || $6 !~ x) && (a != "kill" || $6 !~ d) {
+            printf "%s\t%s\t%s\t%s\n", $1, $4, $5, $6
+          }'
       }
 
       # TERM, bounded wait, KILL residue.
@@ -744,8 +754,9 @@
         kill -KILL "$1" 2>/dev/null || true
       }
 
-      # Shared reap/report emitter for apply and sweep: $5 is the row action (deny-lane gate), $6 the behavior this run applies (kill|report).
-      reap_matches() { # name match exclude minage row-action act
+      # Shared reap/report emitter for apply and sweep: $5 is the row action (deny-lane gate), $6 the behavior this run applies (kill|report),
+      # $7 the row scope.
+      reap_matches() { # name match exclude minage row-action act scope
         reaped=0
         while IFS=$'\t' read -r opid oage orss ocmd; do
           if [ "$6" = kill ]; then
@@ -758,13 +769,13 @@
           else
             printf '%s\treport\tpid=%s\tage_s=%s\trss_kb=%s\tcmd=%.140s\n' "$1" "$opid" "$oage" "$orss" "$ocmd"
           fi
-        done < <(orphan_matches "$2" "$3" "$4" "$5")
+        done < <(orphan_matches "$2" "$3" "$4" "$5" "$7")
       }
 
-      # One jq projection per row: every field lands in one read. Unit-separator delimited: tab is IFS
-      # whitespace and read would collapse empty fields.
+      # One jq projection per row: every field lands in one read. Unit-separator delimited: tab is IFS whitespace and read would collapse empty
+      # fields. The row pipes in (never <<<): bash-5.3 backs sub-64K here-strings with a self-held pipe that deadlocks under buffer exhaustion.
       row_fields() {
-        jq -r '[.name, .kind, (.target // ""), (.expect // ""), (.root // ""), (.pattern // ""), (.match // ""), (.exclude // ""), (.minAgeSec // 0 | tostring), (.action // ""), (.depth // 0 | tostring), (.maxAgeDays // 0 | tostring), (.budgetGb // 0 | tostring), (.owner // ""), (.prune // ""), (.decision // ""), (.note // "")] | join("\u001f")' <<<"$1"
+        printf '%s\n' "$1" | jq -r '[.name, .kind, (.target // ""), (.expect // ""), (.root // ""), (.pattern // ""), (.match // ""), (.exclude // ""), (.minAgeSec // 0 | tostring), (.action // ""), (.depth // 0 | tostring), (.maxAgeDays // 0 | tostring), (.budgetGb // 0 | tostring), (.owner // ""), (.prune // ""), (.decision // ""), (.note // ""), (.scope // "orphan")] | join("\u001f")'
       }
 
       # One NUL-emitting candidate enumerator per find-shaped kind; detect and apply consume the same predicates, so lane drift is unspellable.
@@ -799,8 +810,8 @@
 
       # One detector owns every row kind; plan and apply both consume it, so apply never acts on a state the detector cannot reproduce live.
       detect_row() {
-        local row="$1" name kind state count kb action safe detail target expect root pattern current match exclude minage oaction opid orss pidlist depth maxage budget owner prune decision note cfg budget_kb
-        IFS=$'\x1f' read -r name kind target expect root pattern match exclude minage oaction depth maxage budget owner prune decision note < <(row_fields "$row")
+        local row="$1" name kind state count kb action safe detail target expect root pattern current match exclude minage oaction opid orss pidlist depth maxage budget owner prune decision note oscope cfg budget_kb
+        IFS=$'\x1f' read -r name kind target expect root pattern match exclude minage oaction depth maxage budget owner prune decision note oscope < <(row_fields "$row")
         state=clean count=0 kb=0 action=none safe=true detail=-
         case "$kind" in
           mode)
@@ -873,7 +884,7 @@
               count=$((count + 1))
               kb=$((kb + orss))
               pidlist="$pidlist,$opid"
-            done < <(orphan_matches "$match" "$exclude" "$minage" "$oaction")
+            done < <(orphan_matches "$match" "$exclude" "$minage" "$oaction" "$oscope")
             if [ "$count" -gt 0 ]; then
               if [ "$oaction" = kill ]; then
                 state=litter action=kill detail="pids=''${pidlist#,}"
@@ -927,7 +938,7 @@
               printf '%s\taction=none\toutcome=skipped-unknown-row\n' "$name"
               continue
             fi
-            IFS=$'\x1f' read -r _ row_kind row_target _ row_root row_pattern row_match row_exclude row_minage _ row_depth row_maxage _ _ _ _ _ < <(row_fields "$row")
+            IFS=$'\x1f' read -r _ row_kind row_target _ row_root row_pattern row_match row_exclude row_minage _ row_depth row_maxage _ _ _ _ _ row_scope < <(row_fields "$row")
             # Re-verify at act time: a row that drifted since plan is skipped.
             fresh_state="$(detect_row "$row" | cut -f3)"
             if [ "$fresh_state" != litter ]; then
@@ -974,7 +985,7 @@
                 fi
                 ;;
               kill)
-                reap_matches "$name" "$row_match" "$row_exclude" "$row_minage" kill kill
+                reap_matches "$name" "$row_match" "$row_exclude" "$row_minage" kill kill "$row_scope"
                 printf '%s\taction=kill\toutcome=applied\tcount=%s\n' "$name" "$reaped"
                 ;;
               *)
@@ -997,11 +1008,12 @@
         {
           printf '# forge-cleanup sweep\tts=%s\treport_only=%s\n' "$run_ts" "$report_only"
           while IFS= read -r row; do
-            IFS=$'\x1f' read -r name kind _ _ _ _ match exclude minage oaction < <(row_fields "$row")
+            # Full-width read: a truncated read folds every trailing field into its last variable, silently degrading kill rows to report.
+            IFS=$'\x1f' read -r name kind _ _ _ _ match exclude minage oaction _ _ _ _ _ _ _ oscope < <(row_fields "$row")
             [ "$kind" = orphan ] || continue
             act="$oaction"
             [ "$report_only" = 0 ] || act=report
-            reap_matches "$name" "$match" "$exclude" "$minage" "$oaction" "$act"
+            reap_matches "$name" "$match" "$exclude" "$minage" "$oaction" "$act" "$oscope"
           done < <(jq -c '.[]' "$rows_json")
         } >"$sweep_file"
         cat "$sweep_file"
@@ -1229,10 +1241,10 @@
       # Topmost root-owned entries only: -prune stops descent so one finding covers a whole in-the-way tree; rm -rf clears its children with it.
       scan() {
         while IFS= read -r row; do
-          root="$(jq -r '.root' <<<"$row")"
+          root="$(printf '%s\n' "$row" | jq -r '.root')"
           [ -d "$HOME/$root" ] || continue
           while IFS= read -r -d "" p; do
-            if jq -e --arg b "''${p##*/}" '.exempt | index($b)' <<<"$row" >/dev/null; then continue; fi
+            if printf '%s\n' "$row" | jq -e --arg b "''${p##*/}" '.exempt | index($b)' >/dev/null; then continue; fi
             printf '%s\0' "$p"
           done < <(find "$HOME/$root" -uid 0 -prune -print0 2>/dev/null)
         done < <(jq -c '.[]' '${sweepRows}')
@@ -1350,8 +1362,8 @@
         fi
         local casks nightly="absent" stable="absent"
         casks="$("$brew_bin" list --cask 2>/dev/null || true)"
-        ! grep -qx 'wezterm@nightly' <<<"$casks" || nightly="installed"
-        ! grep -qx 'wezterm' <<<"$casks" || stable="installed"
+        [[ $'\n'"$casks"$'\n' != *$'\n'wezterm@nightly$'\n'* ]] || nightly="installed"
+        [[ $'\n'"$casks"$'\n' != *$'\n'wezterm$'\n'* ]] || stable="installed"
         if [ "$nightly" = "installed" ] && [ "$stable" = "absent" ]; then
           row PASS preflight-cask "wezterm@nightly=$nightly stable=$stable"
         else
@@ -1412,11 +1424,11 @@
         # shellcheck disable=SC2016  # $PATH expands inside the probed zsh, not here.
         path_out="$(env -i HOME="$HOME" USER="$USER" LOGNAME="$USER" SHELL=/bin/zsh TERM=xterm \
           /bin/zsh -il -c 'printf %s "$PATH"' 2>/dev/null || true)"
-        dup="$(tr ':' '\n' <<<"$path_out" | grep -v '^$' | sort | uniq -d | paste -sd' ' -)"
-        if [ -n "$path_out" ] && [ -z "$dup" ] && grep -q "/etc/profiles/per-user/" <<<"$path_out"; then
+        dup="$(printf '%s\n' "$path_out" | tr ':' '\n' | grep -v '^$' | sort | uniq -d | paste -sd' ' -)"
+        if [ -n "$path_out" ] && [ -z "$dup" ] && [[ "$path_out" == *"/etc/profiles/per-user/"* ]]; then
           row PASS outputs-path "login PATH single-owner: per-user profile present, no duplicate segments"
         else
-          row FAIL outputs-path "dup segments: ''${dup:-none}; per-user profile $(grep -q '/etc/profiles/per-user/' <<<"$path_out" && echo present || echo ABSENT)"
+          row FAIL outputs-path "dup segments: ''${dup:-none}; per-user profile $([[ "$path_out" == *"/etc/profiles/per-user/"* ]] && echo present || echo ABSENT)"
         fi
         if [ -L "$config_home/zsh/.zshrc" ] && [[ "$(readlink "$config_home/zsh/.zshrc")" == /nix/store/* ]]; then
           row PASS outputs-zshrc "generated .zshrc is store-linked"
@@ -1487,9 +1499,9 @@
         }
         local out rc=0 p f d
         out="$(forge-terminal-accept.sh 2>/dev/null)" || rc=$?
-        p="$(jq -r '.summary.pass // 0' <<<"$out" 2>/dev/null || echo 0)"
-        f="$(jq -r '.summary.fail // 0' <<<"$out" 2>/dev/null || echo 0)"
-        d="$(jq -r '.summary.defer // 0' <<<"$out" 2>/dev/null || echo 0)"
+        p="$(printf '%s\n' "$out" | jq -r '.summary.pass // 0' 2>/dev/null || echo 0)"
+        f="$(printf '%s\n' "$out" | jq -r '.summary.fail // 0' 2>/dev/null || echo 0)"
+        d="$(printf '%s\n' "$out" | jq -r '.summary.defer // 0' 2>/dev/null || echo 0)"
         if [ "$rc" = 0 ] && [ "''${f:-1}" = 0 ]; then
           row PASS terminal "terminal harness pass=$p defer=$d (deferred rows run in the attached leg)"
         else
@@ -1507,7 +1519,7 @@
         if [ "$rc" = 0 ]; then
           row PASS fleet-doctor "all probed fleet rows green"
         else
-          row FAIL fleet-doctor "failing rows: $(grep '^\[FAIL\]' <<<"$out" | awk '{print $2}' | paste -sd' ' - || true)"
+          row FAIL fleet-doctor "failing rows: $(printf '%s\n' "$out" | { grep '^\[FAIL\]' || true; } | awk '{print $2}' | paste -sd' ' -)"
         fi
         forge-mcp drift >/dev/null 2>&1 || drc=$?
         if [ "$drc" = 0 ]; then
@@ -1672,7 +1684,7 @@
 
       # Cross-owner shadow scan: a later PATH segment holding a DIFFERENT binary under a DIFFERENT owner class than the winning segment.
       declare -A win
-      IFS=: read -ra segs <<<"$PATH"
+      IFS=: read -ra segs < <(printf '%s\n' "$PATH")
       for d in "''${segs[@]}"; do
         [ -d "$d" ] || continue
         for f in "$d"/*; do
@@ -1989,8 +2001,8 @@ in {
       ];
     } ["${forgeNixMaintenance}/bin/forge-nix-maintenance" "--scheduled"];
 
-    # Hourly orphan sweep (calendar trigger for wake coalescing): evidence-gated reaping of ppid-1 agent-lane litter; kill classes are allowlisted
-    # rows, everything ambiguous stays receipt-only.
+    # Hourly orphan sweep (calendar trigger for wake coalescing): evidence-gated reaping of agent-lane litter — ppid-1 orphans plus scope-any
+    # session-child wedge residue; kill classes are allowlisted rows, everything ambiguous stays receipt-only.
     forge-orphan-sweep = mkAgent "forge-orphan-sweep" {StartCalendarInterval = [{Minute = 0;}];} ["${forgeCleanup}/bin/forge-cleanup" "sweep"];
 
     # Daily 10:00 currency cadence (operator ruling); calendar-only, no RunAtLoad: login must never race live agent work with a lock bump.

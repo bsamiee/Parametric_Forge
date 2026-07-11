@@ -50,6 +50,9 @@
   };
   launcherRows = builtins.filter (r: r ? launcher) fleet;
   fleetJson = pkgs.writeText "mcp-fleet.json" (builtins.toJSON fleet);
+  # Shared supervised stdio lane (relay-cat + group reap): every launcher ties its server subtree to client liveness, so a dead or reconnecting
+  # client leaves zero residue — fleet servers demonstrably ignore stdin EOF and otherwise outlive their closed pipes for hours.
+  superviseStdio = import ./supervise-stdio.nix;
 
   # Traffic-capture policy rows (annex-gated): capture is unreachable without the opt-in env, frames log metadata only, and files age out.
   snoopPolicy = {
@@ -141,7 +144,7 @@
             exit 69
           fi
         fi
-        exec "$entry" "$@"
+        ${superviseStdio ''"$entry"''}
       '';
     };
   launchers = lib.concatMap (row: map (mkLauncher row) row.launcher.names) launcherRows;
@@ -158,14 +161,14 @@
         echo "postgres-mcp: MAGHZ_MCP__DATABASE_URI is unset; replay Forge GUI secrets (gui-op-secrets) and confirm the maghz tunnel" >&2
         exit 78
       fi
-      DATABASE_URI="$MAGHZ_MCP__DATABASE_URI" UV_PYTHON_DOWNLOADS=automatic \
-        exec uvx --python 3.13 postgres-mcp --access-mode=restricted "$@"
+      export DATABASE_URI="$MAGHZ_MCP__DATABASE_URI" UV_PYTHON_DOWNLOADS=automatic
+      ${superviseStdio ''uvx --python 3.13 postgres-mcp --access-mode=restricted''}
     '';
   };
   # Rhino's package manager owns the router install; version-globbing keeps client configs stable across McNeel package updates. Lifecycle gate: the
   # heavy vendor router spawns only while Rhino 9 WIP runs; otherwise a stdio shim serves one rhino_status tool (start Rhino, then reconnect). The
-  # supervised lane owns the router's process group, so client TERM/HUP or a dead client (wrapper reparented to launchd) tears the subtree down; no
-  # session exit strands a router, and the vendor binary exposes no idle-exit.
+  # shared supervised lane ties the router subtree to client liveness through the stdin relay, so a dead, killed, or reconnecting client tears the
+  # subtree down; no session exit strands a router, and the vendor binary exposes no idle-exit.
   rhinoRouter = pkgs.writeShellApplication {
     name = "rhino-mcp-router";
     runtimeInputs = [pkgs.coreutils pkgs.jq];
@@ -179,38 +182,7 @@
           echo "rhino-mcp-router: no Rhino-MCP-Platform package under $base" >&2
           exit 69
         fi
-        set -m
-        "$entry" "$@" <&0 &
-        router=$!
-        set +m
-        reap() {
-          kill -TERM -- "-$router" 2>/dev/null || kill -TERM "$router" 2>/dev/null || true
-        }
-        trap reap TERM INT HUP
-        # Orphan watchdog: an empty or launchd ppid means the MCP client died without reaping the wrapper; take the router subtree down with it.
-        (
-          while kill -0 "$router" 2>/dev/null; do
-            pp="$(/bin/ps -o ppid= -p $$ 2>/dev/null | tr -d ' ')"
-            if [ -z "$pp" ] || [ "$pp" = 1 ]; then
-              kill -TERM -- "-$router" 2>/dev/null || true
-              sleep 2
-              kill -KILL -- "-$router" 2>/dev/null || true
-              exit 0
-            fi
-            sleep 15
-          done
-        ) &
-        wdog=$!
-        rc=0
-        wait "$router" || rc=$?
-        reap
-        for _ in 1 2 3; do
-          kill -0 "$router" 2>/dev/null || break
-          sleep 1
-        done
-        kill -KILL -- "-$router" 2>/dev/null || true
-        kill "$wdog" 2>/dev/null || true
-        exit "$rc"
+        ${superviseStdio ''"$entry"''}
       fi
 
       # Thin responder: newline-delimited JSON-RPC over stdio at near-zero cost. tools/call re-probes Rhino so an agent that started it mid-session
@@ -226,10 +198,10 @@
       # Streaming boundary: one jq projection per message; the 0x1f join survives absent fields, and a malformed line skips without output.
       while IFS= read -r line; do
         [ -n "$line" ] || continue
-        IFS=$'\x1f' read -r method id pv < <(jq -r '
+        IFS=$'\x1f' read -r method id pv < <(printf '%s\n' "$line" | jq -r '
           [(.method // ""), (if has("id") then (.id | tojson) else "" end),
            (.params.protocolVersion // "2025-06-18")] | join("\u001f")' \
-          <<<"$line" 2>/dev/null) || continue
+          2>/dev/null) || continue
         case "$method" in
           initialize)
             [ -n "$id" ] || continue
@@ -495,7 +467,7 @@
             result: (if $rc == "0" then "ok" else "outdated" end),
             rows: (split("\n") | map(select(length > 0) | split("\t")
                    | {state: .[0], pkg: .[1], pin_current: .[2], latest: .[3]}))
-          }' <<<"$rows"
+          }' < <(printf '%s\n' "$rows")
         else
           printf '%s\n' "$rows" | while IFS=$'\t' read -r s p v l; do
             printf '%-9s %s pinned=%s latest=%s\n' "$s" "$p" "$v" "$l"
@@ -579,8 +551,8 @@
         # One jq projection owns the row header; the unit-separator join survives empty fields where tab-IFS reads would collapse them.
         IFS=$'\x1f' read -r name probe transport t cmdpath url bearer auth < <(jq -r \
           '[.name, .probe, .transport, (.codex.startupTimeoutSec // 20 | tostring),
-            (.command // ""), (.url // ""), (.codex.bearerEnvVar // ""), (.codex.auth // "")] | join("\u001f")' <<<"$row")
-        missing="$(jq -r '(.envKeys // [])[]' <<<"$row" | while IFS= read -r k; do
+            (.command // ""), (.url // ""), (.codex.bearerEnvVar // ""), (.codex.auth // "")] | join("\u001f")' < <(printf '%s\n' "$row"))
+        missing="$(printf '%s\n' "$row" | jq -r '(.envKeys // [])[]' | while IFS= read -r k; do
           [ -n "''${!k:-}" ] || printf '%s ' "$k"
         done)"
         envnote=""; [ -z "$missing" ] || envnote=" env-missing: $missing"
@@ -612,7 +584,7 @@
           if [ ! -x "$cmdpath" ]; then
             emit FAIL "command not executable: $cmdpath"; return 0
           fi
-          mapfile -t argv < <(jq -r '(.args // [])[]' <<<"$row")
+          mapfile -t argv < <(printf '%s\n' "$row" | jq -r '(.args // [])[]')
           # FIFO stdin: hold the write end open until the response lands, then close it — stdin EOF is the shutdown, so no probe outlives its answer
           # (a sleep-holder would strand every server for the full timeout after doctor returns); timeout backstops mute servers.
           mkfifo "$out.fifo"
@@ -624,7 +596,7 @@
           exec {wfd}>&-
           exec {rfd}<&-
           rm -f "$out.fifo"
-          if info="$(jq -er '.result.serverInfo | "\(.name) \(.version // "?")"' <<<"$line" 2>/dev/null)"; then
+          if info="$(printf '%s\n' "$line" | jq -er '.result.serverInfo | "\(.name) \(.version // "?")"' 2>/dev/null)"; then
             emit OK "$info$envnote"
           else
             emit FAIL "no initialize response within ''${t}s$envnote"
@@ -639,7 +611,7 @@
             [ -n "$h" ] || continue
             [ -n "''${!v:-}" ] || { emit SKIP "credential env absent: $v"; return 0; }
             hdr+=(-H "$h: ''${!v}")
-          done < <(jq -r '(.codex.headerEnv // {}) | to_entries[] | "\(.key)\t\(.value)"' <<<"$row")
+          done < <(printf '%s\n' "$row" | jq -r '(.codex.headerEnv // {}) | to_entries[] | "\(.key)\t\(.value)"')
           # Body temp lives beside the row outfile inside the doctor's trapped tmpdir, so an aborted probe leaves no $TMPDIR litter.
           body="$out.body"
           # curl -w still emits its code line on transport failure; a second echo would corrupt status, so failures fall through to the 000 default.
@@ -650,7 +622,7 @@
           if [ "$code" = 200 ]; then
             payload="$(grep -m1 '^data:' "$body" | cut -c6- || true)"
             [ -n "$payload" ] || payload="$(cat "$body")"
-            info="$(jq -er '.result.serverInfo | "\(.name) \(.version // "?")"' <<<"$payload" 2>/dev/null || echo "initialize accepted")"
+            info="$(printf '%s\n' "$payload" | jq -er '.result.serverInfo | "\(.name) \(.version // "?")"' 2>/dev/null || echo "initialize accepted")"
             emit OK "$info$envnote"
           elif [ "$code" = 401 ] && [ ''${#hdr[@]} -eq 0 ]; then
             emit FAIL "HTTP 401 with no declared credential mechanism$envnote"
@@ -668,13 +640,13 @@
           local name label port token lctl pid
           # One projection per doctor-row snapshot; 0x1f join survives empties.
           IFS=$'\x1f' read -r name label port token < <(jq -r \
-            '[.name, (.doctor.launchdLabel // ""), (.doctor.port // "" | tostring), (.doctor.tokenFile // "")] | join("\u001f")' <<<"$row")
+            '[.name, (.doctor.launchdLabel // ""), (.doctor.port // "" | tostring), (.doctor.tokenFile // "")] | join("\u001f")' < <(printf '%s\n' "$row"))
           if [ -n "$label" ]; then
             # launchd rows are Darwin facts; a systemd host skips them typed.
             if [ ! -x /bin/launchctl ]; then
               printf 'SKIP\t%s/launchd\tno launchd on this host\n' "$name" >>"$out"
             elif lctl="$(/bin/launchctl print "gui/$(id -u)/$label" 2>/dev/null)"; then
-              pid="$(awk '/^\s*pid = /{print $3; exit}' <<<"$lctl")"
+              pid="$(printf '%s\n' "$lctl" | awk '/^[[:space:]]*pid = /{if (p == "") p = $3} END{print p}')"
               if [ -n "''${pid:-}" ]; then
                 printf 'OK\t%s/launchd\t%s running pid=%s\n' "$name" "$label" "$pid" >>"$out"
               else
@@ -705,7 +677,7 @@
             else
               printf 'FAIL\t%s/exec\t%s absent from PATH\n' "$name" "$x" >>"$out"
             fi
-          done < <(jq -r '(.doctor.execs // [])[]' <<<"$row")
+          done < <(printf '%s\n' "$row" | jq -r '(.doctor.execs // [])[]')
         done < <(jq -c '.[] | select(.doctor)' "$fleet")
       }
 
@@ -794,14 +766,14 @@
         admit_reg() { # $1=json|toml $2=filter $3=file -> object on stdout
           local out
           out="$(extract_reg "$1" "$2" "$3")" || return 1
-          jq -e 'type == "object"' <<<"$out" >/dev/null 2>&1 || return 1
+          printf '%s\n' "$out" | jq -e 'type == "object"' >/dev/null 2>&1 || return 1
           printf '%s' "$out"
         }
         claude_ok=1 codex_ok=1 codex_store=""
         claude_json="$(admit_reg json '.mcpServers // {}' "$HOME/.claude.json")" || { claude_json='{}'; claude_ok=0; }
         if codex_root="$(admit_reg toml '.' "$HOME/.codex/config.toml")"; then
-          codex_json="$(jq -c '.mcp_servers // {}' <<<"$codex_root")"
-          codex_store="$(jq -r '.mcp_oauth_credentials_store // ""' <<<"$codex_root")"
+          codex_json="$(printf '%s\n' "$codex_root" | jq -c '.mcp_servers // {}')"
+          codex_store="$(printf '%s\n' "$codex_root" | jq -r '.mcp_oauth_credentials_store // ""')"
         else
           codex_json='{}'; codex_ok=0
         fi
@@ -930,12 +902,12 @@
             fi
             merged="$(jq -cn --argjson current "$current" --argjson projection "$projection" \
               '$current | .mcpServers = $projection.mcpServers')"
-            if [ "$(jq -Sc . <<<"$current")" = "$(jq -Sc . <<<"$merged")" ]; then
+            if [ "$(printf '%s\n' "$current" | jq -Sc .)" = "$(printf '%s\n' "$merged" | jq -Sc .)" ]; then
               receipt reconcile ok "claude-config-unchanged"
               echo "forge-mcp reconcile: Claude projection already current"
               return 0
             fi
-            jq '.' <<<"$merged" >"$rendered"
+            printf '%s\n' "$merged" | jq '.' >"$rendered"
             chmod 0600 "$rendered"
             if publish_attempt "$cfg" "$source" "$rendered" "$expected" "$had_cfg"; then
               receipt reconcile ok "claude-config-updated-attempt=$attempt"
@@ -980,7 +952,7 @@
             | .mcp_servers = ($projection.mcp_servers + $presence)
             | del(.features.js_repl)          # retired feature row: reconcile strips it wherever the app re-persists it
           ')"
-          if [ "$(jq -Sc . <<<"$current")" = "$(jq -Sc . <<<"$merged")" ]; then
+          if [ "$(printf '%s\n' "$current" | jq -Sc .)" = "$(printf '%s\n' "$merged" | jq -Sc .)" ]; then
             receipt reconcile ok "codex-config-unchanged"
             echo "forge-mcp reconcile: Codex projection already current"
             return 0
@@ -1039,7 +1011,7 @@
             schema: "forge-mcp/v1", ts: $ts, verb: "roots", result: "ok",
             rows: (split("\n") | map(select(length > 0) | split("\t")
                    | {root: .[0], class: .[1], path: .[2], files: (.[3] | tonumber), kb: (.[4] | tonumber)}))
-          }' <<<"$rows"
+          }' < <(printf '%s\n' "$rows")
         else
           printf '%-10s %-14s %-42s %10s %12s\n' ROOT CLASS PATH FILES KB
           printf '%s\n' "$rows" | while IFS=$'\t' read -r r c p f k; do
@@ -1066,8 +1038,8 @@
         find "$logdir" -type f -mtime +${toString snoopPolicy.retentionDays} -delete 2>/dev/null || true
         TZ=UTC0 printf -v snap '%(%Y%m%dT%H%M%SZ)T' "$EPOCHSECONDS"
         log="$logdir/$server.$snap.jsonl"
-        cmdpath="$(jq -r '.command' <<<"$row")"
-        mapfile -t argv < <(jq -r '(.args // [])[]' <<<"$row")
+        cmdpath="$(printf '%s\n' "$row" | jq -r '.command')"
+        mapfile -t argv < <(printf '%s\n' "$row" | jq -r '(.args // [])[]')
         meta() { # $1=direction
           jq -c --unbuffered --arg dir "$1" '{
             ts: (now | todate), dir: $dir,
@@ -1113,6 +1085,10 @@
             receipt_log="''${FORGE_AGENTS_RECEIPT_LOG:-$HOME/Library/Logs/forge-agents.receipts.log}"
             usage() { echo "usage: forge-agents collect | status [--json] | focus | answer" >&2; exit 64; }
             verb="''${1:-status}"; shift || true
+            # Whole-body deadline under the 60s tick: a collector wedged on any stage dies before the next tick instead of holding the flock forever.
+            if [ "$verb" = collect ] && [ -z "''${_FORGE_AGENTS_DEADLINE:-}" ]; then
+              _FORGE_AGENTS_DEADLINE=1 exec timeout -k 10 55 "$0" collect
+            fi
 
             iso_now() { TZ=UTC0 printf '%(%Y-%m-%dT%H:%M:%SZ)T' "$EPOCHSECONDS"; }
             receipt_surface="forge-agents"
@@ -1156,7 +1132,7 @@
 
               # ONE zellij session snapshot serves the fold's liveness prune, the pane-mark reconcile, and the pipe broadcast.
               live_sessions="$(${profileBin}/zellij list-sessions -ns 2>/dev/null || true)"
-              live_json="$(jq -Rcs 'split("\n") | map(select(length > 0))' <<<"$live_sessions")"
+              live_json="$(printf '%s\n' "$live_sessions" | jq -Rcs 'split("\n") | map(select(length > 0))')"
 
               # --- [LIFECYCLE_FOLD]
               # ONE feed snapshot, ONE jq, lifecycle-pure: per session the LATEST hook row is the state — Notification = waiting,
@@ -1186,9 +1162,9 @@
                             | {count: length, latest: (max_by(.ts) // null)})
                   }' 2>/dev/null)" \
                 || feed_facts='{"sessions": [], "waiting": [], "bells": {"count": 0, "latest": null}}'
-              sessions="$(jq -c '.sessions' <<<"$feed_facts")"
-              bells="$(jq -c '.bells' <<<"$feed_facts")"
-              bells_n="$(jq -r '.bells.count' <<<"$feed_facts")"
+              sessions="$(printf '%s\n' "$feed_facts" | jq -c '.sessions')"
+              bells="$(printf '%s\n' "$feed_facts" | jq -c '.bells')"
+              bells_n="$(printf '%s\n' "$feed_facts" | jq -r '.bells.count')"
 
               # --- [PANE_SNAPSHOT_AND_WAITER_IDENTITY]
               # ONE list-panes snapshot per live zellij session (usually one or two) resolves pane id -> tab + live frame title, so the bar
@@ -1198,9 +1174,9 @@
               while IFS= read -r zs; do
                 [ -n "$zs" ] || continue
                 p="$(${profileBin}/zellij --session "$zs" action list-panes --all --json 2>/dev/null || true)"
-                jq -e 'type == "array"' <<<"$p" >/dev/null 2>&1 || p='[]'
+                printf '%s\n' "$p" | jq -e 'type == "array"' >/dev/null 2>&1 || p='[]'
                 panes="$(jq -c --arg zs "$zs" --argjson p "$p" \
-                  '.[$zs] = ($p | map(select(.is_plugin | not) | {id, tab_position, title}))' <<<"$panes")"
+                  '.[$zs] = ($p | map(select(.is_plugin | not) | {id, tab_position, title}))' < <(printf '%s\n' "$panes"))"
               done <<<"$live_sessions"
               att="$(jq -c --argjson panes "$panes" '
                 [.waiting[] | . as $w
@@ -1209,8 +1185,8 @@
                  | . + {label: (if (.zellij_session // "") != ""
                      then ((.zellij_session | ascii_upcase) + (if .tab then "·T\(.tab)" else "" end))
                      else (.session_id | tostring | .[0:6]) end)}]
-                | {needs_input: length, waiting: ., latest: (max_by(.ts) // null)}' <<<"$feed_facts")"
-              needs="$(jq -r '.needs_input' <<<"$att")"
+                | {needs_input: length, waiting: ., latest: (max_by(.ts) // null)}' < <(printf '%s\n' "$feed_facts"))"
+              needs="$(printf '%s\n' "$att" | jq -r '.needs_input')"
 
               # --- [ALERTS_STANDING_ESTATE_CONDITIONS]
               # Catalog rows (attention.nix joined to the receipt registry): each predicate judges the LAST receipt row of its kind, so an alert
@@ -1226,11 +1202,11 @@
                 esac
                 jq -Rc --arg source "$a_source" --arg kind "$a_kind" --arg label "$a_label" \
                   "$jq_defs $a_parse | select($a_pred) | {source: \$source, kind: \$kind, label: \$label, ts: (.ts // null), state: (.state // .deployed // .result // null)}" \
-                  <<<"$last" 2>/dev/null || true
+                  < <(printf '%s\n' "$last") 2>/dev/null || true
               done < <(jq -r '.[] | [.source, .kind, .pred, .label, .path, .grain] | join("\u001f")' "$alerts_catalog") \
                 | jq -sc '.')"
               [ -n "$alerts" ] || alerts='[]'
-              alerts_n="$(jq -r 'length' <<<"$alerts")"
+              alerts_n="$(printf '%s\n' "$alerts" | jq -r 'length')"
 
               # --- [CACHE_ASSEMBLY]
               tmp_cache="$cache.tmp.$$"
@@ -1271,7 +1247,7 @@
                 elif [ "''${p_title:0:''${#mark_pfx}}" = "$mark_pfx" ]; then
                   ${profileBin}/zellij --session "$p_zs" action undo-rename-pane --pane-id "$p_zp" 2>/dev/null || true
                 fi
-              done < <(jq -r 'to_entries[] | .key as $zs | .value[] | [$zs, (.id | tostring), .title] | @tsv' <<<"$panes")
+              done < <(printf '%s\n' "$panes" | jq -r 'to_entries[] | .key as $zs | .value[] | [$zs, (.id | tostring), .title] | @tsv')
 
               # --- [PROJECTIONS]
               # The zjstatus top bar is the ONE render surface; the collector owns role->palette styling (build-time hexes from the theme owner)
@@ -1335,7 +1311,7 @@
                 local msg
                 # Foreign text (prompt bodies, pane peeks) rides these payloads: fold every control byte and defuse the "#[" opener so the
                 # toast can never smuggle a terminal escape or a zjstatus directive.
-                msg="$(tr -d '[:cntrl:]' <<<"$1")"
+                msg="$(printf '%s\n' "$1" | tr -d '[:cntrl:]')"
                 msg="''${msg//"#["/[}"
                 zj_broadcast "zjstatus::notify::''${msg:0:120}"
               }
@@ -1373,15 +1349,15 @@
               # (the waiting pane's last line only as fallback), and states the reply destination in the subtitle; its click runs the policy verb —
               # `answer` (alerter reply routed into the waiting pane) where the alerter rail exists, bare `focus` elsewhere (osascript clicks
               # opened Script Editor — the scar that keeps posting on terminal-notifier).
-              prev_needs="$(jq -r '.attention.needs_input // 0' <<<"$prev")"
-              last_notify="$(jq -r '.last_notify // 0' <<<"$m")"
+              prev_needs="$(printf '%s\n' "$prev" | jq -r '.attention.needs_input // 0')"
+              last_notify="$(printf '%s\n' "$m" | jq -r '.last_notify // 0')"
               notified=0
               tn='${tnBin}'
               if ${lib.boolToString notifyPolicy.needsInput} \
                 && rise_gate "''${needs:-0}" "$prev_needs" "$last_notify"; then
                 peek_line=""
                 IFS=$'\x1f' read -r n_label n_zs n_zp n_msg < <(jq -r \
-                  '.latest // {} | [.label // "agent", .zellij_session // "", .zellij_pane // "", .message // ""] | join("\u001f")' <<<"$att") || true
+                  '.latest // {} | [.label // "agent", .zellij_session // "", .zellij_pane // "", .message // ""] | join("\u001f")' < <(printf '%s\n' "$att")) || true
                 if [ -z "''${n_msg:-}" ] && [ -n "''${n_zs:-}" ] && [ -n "''${n_zp:-}" ]; then
                   peek_line="$(${profileBin}/forge-zellij peek --session "$n_zs" --pane "$n_zp" --lines 5 --text 2>/dev/null | tail -1 || true)"
                   peek_line="''${peek_line:0:80}"
@@ -1400,12 +1376,12 @@
               fi
 
               # standing-alert rise: banner in its own group, no click verb; forge-receipts --verb failures is the follow-up surface.
-              prev_alerts="$(jq -r '.alerts.count // 0' <<<"$prev")"
-              last_alert_notify="$(jq -r '.last_alert_notify // 0' <<<"$m")"
+              prev_alerts="$(printf '%s\n' "$prev" | jq -r '.alerts.count // 0')"
+              last_alert_notify="$(printf '%s\n' "$m" | jq -r '.last_alert_notify // 0')"
               alert_notified=0
               if ${lib.boolToString notifyPolicy.alerts} \
                 && rise_gate "''${alerts_n:-0}" "$prev_alerts" "$last_alert_notify"; then
-                alert_labels="$(jq -r 'map(.label) | join(", ")' <<<"$alerts")"
+                alert_labels="$(printf '%s\n' "$alerts" | jq -r 'map(.label) | join(", ")')"
                 notify_post forge-estate "Forge Estate" "" \
                   "''${alerts_n} standing alert(s): ''${alert_labels}" \
                   "${icons.alphabet.failure.ascii} ''${alert_labels}" "" \
@@ -1424,7 +1400,7 @@
               mv "$meta.tmp.$$" "$meta"
 
               summary="needs=''${needs:-0} sessions=$sessions_n alerts=''${alerts_n:-0} bells=''${bells_n:-0}"
-              prev_summary="$(jq -r '"needs=\(.attention.needs_input // 0) sessions=\(.sessions | length) alerts=\(.alerts.count // 0) bells=\(.bells.count // 0)"' <<<"$prev" 2>/dev/null)" || prev_summary=""
+              prev_summary="$(printf '%s\n' "$prev" | jq -r '"needs=\(.attention.needs_input // 0) sessions=\(.sessions | length) alerts=\(.alerts.count // 0) bells=\(.bells.count // 0)"' 2>/dev/null)" || prev_summary=""
               if [ "$summary" != "$prev_summary" ] || [ "$notified" = 1 ] || [ "$alert_notified" = 1 ]; then
                 printf -v receipt_row 'ts=%s\tverb=collect\tresult=ok\t%s\tnotified=%s' \
                   "$ts" "''${summary// /$'\t'}" "$notified"
@@ -1513,7 +1489,7 @@
               # One projection per row snapshot; the 0x1f join survives empties.
               IFS=$'\x1f' read -r zs zp wp tp tty < <(jq -r \
                 '[.zellij_session // "", .zellij_pane // "", .wezterm_pane // "", .term // "", .tty // ""] | join("\u001f")' \
-                <<<"''${row:-null}" 2>/dev/null) || true
+                < <(printf '%s\n' "''${row:-null}") 2>/dev/null) || true
               # Feed rows are foreign material: tty crosses into ps and an AppleScript literal, so a non-pty spelling drops at the seam.
               [[ "''${tty:-}" =~ ^[A-Za-z0-9]*$ ]] || tty=""
               wezbin="/Applications/WezTerm.app/Contents/MacOS/wezterm"
@@ -1563,7 +1539,7 @@
               row="$(jq -c '.attention.latest // empty' "$cache" 2>/dev/null || true)"
               IFS=$'\x1f' read -r label zs zp msg < <(jq -r \
                 '[.label // "agent", .zellij_session // "", .zellij_pane // "", .message // ""] | join("\u001f")' \
-                <<<"''${row:-null}" 2>/dev/null) || true
+                < <(printf '%s\n' "''${row:-null}") 2>/dev/null) || true
               if [ -z "$alr" ] || [ -z "''${zs:-}" ] || [ -z "''${zp:-}" ]; then
                 cmd_focus
                 return 0
@@ -1577,10 +1553,10 @@
                 --subtitle "reply lands in $zs pane $zp" --reply "Answer" \
                 --timeout ${toString notifyPolicy.answerTimeoutSec} \
                 --group forge-agents-answer --json 2>/dev/null || true)"
-              atype="$(jq -r '.activationType // "none"' <<<"$ans" 2>/dev/null || true)"
+              atype="$(printf '%s\n' "$ans" | jq -r '.activationType // "none"' 2>/dev/null || true)"
               case "''${atype:-none}" in
                 replied)
-                  reply="$(jq -r '.activationValue // ""' <<<"$ans")"
+                  reply="$(printf '%s\n' "$ans" | jq -r '.activationValue // ""')"
                   if [ -n "$reply" ]; then
                     # Liveness gate on the reply target: the dialog blocks up to ${toString notifyPolicy.answerTimeoutSec}s and the pane can die
                     # mid-answer; a vanished pane degrades to focus instead of minting a false replied receipt for a write into the void.

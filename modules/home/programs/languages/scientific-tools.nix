@@ -179,36 +179,9 @@
   forgeJupyterRootPrelude = ''
     export FORGE_PROVISION_ROOT=${lib.escapeShellArg forgeJupyterRootDir}
   '';
-  # Supervised stdio lane: uvx pythons that ignore stdin EOF (jupyter-mcp-server) strand under a hard-killed MCP client;
-  # the watchdog ties the server subtree to client liveness.
-  superviseStdio = server: ''
-    client=$PPID
-    set -m
-    ${server} "$@" <&0 &
-    srv=$!
-    set +m
-    reap() {
-      kill -TERM -- "-$srv" 2>/dev/null || kill -TERM "$srv" 2>/dev/null || true
-    }
-    trap reap TERM INT HUP
-    (
-      while kill -0 "$srv" 2>/dev/null; do
-        if ! kill -0 "$client" 2>/dev/null; then
-          kill -TERM -- "-$srv" 2>/dev/null || true
-          sleep 2
-          kill -KILL -- "-$srv" 2>/dev/null || true
-          exit 0
-        fi
-        sleep 15
-      done
-    ) &
-    wdog=$!
-    rc=0
-    wait "$srv" || rc=$?
-    reap
-    kill "$wdog" 2>/dev/null || true
-    exit "$rc"
-  '';
+  # Shared supervised stdio lane (relay-cat + group reap): uvx pythons that ignore stdin EOF (jupyter-mcp-server) strand under a hard-killed OR
+  # reconnecting MCP client; the relay ties the server subtree to client liveness through the stdin pipe itself.
+  superviseStdio = import ../shell-tools/supervise-stdio.nix;
   forgePythonEnvPrelude = python: profile: ''
     forge_python_root() {
       if [ -n "''${FORGE_PROVISION_ROOT:-}" ]; then
@@ -362,6 +335,12 @@
 
     c = get_config()
     c.IdentityProvider.token = os.environ["JUPYTER_TOKEN"]
+    # Kernel culling makes accumulation structurally impossible: the KeepAlive server respawns killed kernels, so external reaping is the wrong
+    # lever — idle kernels retire here instead. Connected/busy kernels survive; an abandoned kernel loses its connections and ages out.
+    c.MappingKernelManager.cull_idle_timeout = 3600
+    c.MappingKernelManager.cull_interval = 300
+    c.MappingKernelManager.cull_busy = False
+    c.MappingKernelManager.cull_connected = False
   '';
   forgeIfcMcp = pkgs.writeShellApplication {
     name = "forge-ifcmcp";

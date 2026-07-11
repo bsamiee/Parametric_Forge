@@ -20,9 +20,12 @@ scan_re='(^|/)codex (exec|review)|(^|/)agy([[:space:]]|$)'
 now="$EPOCHSECONDS"
 command -v jq >/dev/null 2>&1 || exit 0
 
-payload="$(cat 2>/dev/null || true)"
+# Bounded stdin read, payload piped (never <<<): bash-5.3 backs sub-64K here-strings with a pipe the redirecting process holds both ends of, and
+# under kernel pipe-buffer exhaustion that pre-exec write deadlocks — a statusLine payload is exactly payload-scale foreign data.
+payload=""
+IFS= read -r -t 10 -d '' payload || true
 sid=""
-[ -n "$payload" ] && sid="$(jq -r '.session_id // ""' <<<"$payload" 2>/dev/null || true)"
+[ -n "$payload" ] && sid="$(printf '%s' "$payload" | jq -r '.session_id // ""' 2>/dev/null || true)"
 [ -n "$sid" ] || sid="${CLAUDE_CODE_SESSION_ID:-}"
 
 canon_model() { # one model-vocabulary owner: any provider spelling -> roster title; unknown spellings pass through, "-"/empty clear to "".

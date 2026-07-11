@@ -19,6 +19,15 @@
     text = ''
       shopt -s inherit_errexit
 
+      # Whole-body deadline: the entire run re-execs under timeout, so NO internal stage — scan, jq report, here-doc setup — can wedge a caller
+      # past the budget. bash-5.3 backs sub-64K here-docs with a pipe the redirecting process holds both ends of; under kernel pipe-buffer
+      # exhaustion that write blocks pre-exec and only an outer deadline can kill it, so big payloads below ride explicit pipelines, never <<<.
+      if [[ -z "''${_LOC_DEADLINE_ACTIVE:-}" ]]; then
+        _outer="''${LOC_SCAN_DEADLINE_SECONDS:-120}"
+        [[ "$_outer" =~ ^[0-9]+$ ]] || _outer=120
+        _LOC_DEADLINE_ACTIVE=1 exec timeout -k 10 "$((_outer + 30))" "$0" "$@"
+      fi
+
       # Pure printer: help requests route it to stdout with exit 0, usage errors to stderr with exit 2.
       _usage() { printf 'usage: %s [--json] [--self-test] [target...]\n' "''${0##*/}"; }
 
@@ -36,9 +45,9 @@
           return 1
         }
         rm -rf "$st"
-        jq -e '.total.files == 2 and .total.code == 2
+        printf '%s\n' "$out" | jq -e '.total.files == 2 and .total.code == 2
           and ([.folders[].folder] | sort == ["Root", "sub"])
-          and ([.languages[].name] | sort == ["Nix", "Python"])' <<<"$out" >/dev/null || {
+          and ([.languages[].name] | sort == ["Nix", "Python"])' >/dev/null || {
           printf 'self-test: envelope mismatch: %s\n' "$out" >&2
           return 1
         }
@@ -179,19 +188,19 @@
 
       if ((json_mode)); then
         # Machine envelope: same folder grouping the table renders, plus per-language and overall totals for agent consumption.
-        jq -c --arg root "$root" --argjson targets "$targets_json" "$report_filter"'
+        printf '%s\n' "$json" | jq -c --arg root "$root" --argjson targets "$targets_json" "$report_filter"'
           {
             target: $root,
             targets: $targets,
             languages: (map(select(.Code > 0) | {name: .Name, code: .Code}) | sort_by(-.code)),
             total: {files: (files | length), code: (files | sum_by(.Code)), complexity: (files | sum_by(.Complexity))},
             folders: folder_groups
-          }' <<<"$json"
+          }'
         exit 0
       fi
 
-      jq -r --arg root "$root" --argjson targets "$targets_json" "$report_filter summary" <<<"$json"
-      jq -r --arg root "$root" --argjson targets "$targets_json" "$report_filter table | map(tostring) | @tsv" <<<"$json" |
+      printf '%s\n' "$json" | jq -r --arg root "$root" --argjson targets "$targets_json" "$report_filter summary"
+      printf '%s\n' "$json" | jq -r --arg root "$root" --argjson targets "$targets_json" "$report_filter table | map(tostring) | @tsv" |
         column -t -s "$tab"
     '';
   };
