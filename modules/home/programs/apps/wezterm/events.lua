@@ -14,6 +14,7 @@ local deck = require("deck")
 local M = {}
 
 local roles = rows.theme.roles
+local badges = rows.theme.badges
 
 local function cell(fg, text)
     return {
@@ -35,16 +36,14 @@ local handlers = {
         if gui then
             gui:maximize()
         end
-        -- Bar-cell warmup: the fresh session's pipe cells (identity chip included) land as soon as the zellij server answers,
-        -- instead of waiting out the collector's minute cadence. The collect lock makes an overlapping run a no-op.
-        wezterm.time.call_after(2, function()
-            wezterm.background_child_process({ rows.paths.forge_agents, "collect" })
-        end)
+        -- Bar-cell warmup (deck seam owner): the fresh session's pipe cells, identity chip included, land as soon as the server answers.
+        deck.collect_soon()
     end,
 
     ["mux-startup"] = function()
         local ws = wezterm.mux.get_active_workspace()
         wezterm.mux.spawn_window({ cwd = deck.workspace_cwd(ws), args = deck.session_args(ws) })
+        deck.collect_soon()
     end,
 
     -- Domain attach shaping: one launch receipt per attach.
@@ -59,7 +58,7 @@ local handlers = {
     ["bell"] = function(window, pane)
         local background = not window:is_focused() or pane:pane_id() ~= window:active_pane():pane_id()
         if background then
-            window:toast_notification("forge bell", "bell: " .. pane:get_title(), nil, 4000)
+            window:toast_notification("Forge Bell", "bell: " .. pane:get_title(), nil, 4000)
             local cwd = pane:get_current_working_dir()
             deck.attention({
                 wezterm_pane = tostring(pane:pane_id()),
@@ -85,17 +84,20 @@ local handlers = {
             end
         end
 
+        -- The only key table is the sync-panes broadcast table (disable_default_key_bindings, no ActivateKeyTable rows), so an active
+        -- key table IS the broadcast concept — one role (danger) binds it, the [SYNC] chip, and the deck.lua border.
         local key_table = window:active_key_table()
         if key_table then
-            push(cell(roles.state.attention, "[" .. key_table:upper() .. "]"))
+            push(cell(roles.state.danger, "[" .. key_table:upper() .. "]"))
         end
         if deck.sync and deck.sync.is_synced(window) then
             push(cell(roles.state.danger, "[SYNC]"))
         end
 
+        -- Remote-domain chip: the shared contextBadges.remote row, so a VPS pane reads identically to the prompt hostname and yazi header.
         local domain = pane and pane:get_domain_name() or "local"
         if domain ~= "local" then
-            push(cell(roles.state.info, domain))
+            push(cell(badges.remote.color, badges.remote.glyph .. " " .. domain))
         end
 
         window:set_right_status(wezterm.format(items))

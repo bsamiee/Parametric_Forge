@@ -14,6 +14,23 @@
   ...
 }: let
   tomlFormat = pkgs.formats.toml {};
+  mountRoot = config.forge.ssh.mountRoot;
+
+  # Remote-context Header badge (theme owner contextBadges.remote): a VPS tree — SFTP VFS url or rclone mount — reads the same glyph + hue as
+  # the prompt hostname and the wezterm domain chip; the badge names the host segment and precedes the cwd child (order 500 < 1000).
+  badge = config.forge.theme.projections.contextBadges.remote;
+  remoteBadgeLua = ''
+
+    -- --- [REMOTE_BADGE] (generated: theme owner contextBadges.remote) -----------------------
+    Header:children_add(function()
+        local cwd = tostring(cx.active.current.cwd)
+        local host = cwd:match("^sftp://([^/]+)")
+        if not host and cwd:find("${mountRoot}/", 1, true) == 1 then
+            host = cwd:sub(${toString (builtins.stringLength mountRoot + 2)}):match("^[^/]+")
+        end
+        return host and ui.Span(" ${badge.glyph} " .. host .. " "):fg("${badge.color}"):bold() or ""
+    end, 500, Header.LEFT)
+  '';
 
   yaziPkg = pkgs.yazi.override {
     _7zz = pkgs._7zz-rar; # RAR-capable 7zip: one archive runtime for the whole owner
@@ -239,7 +256,7 @@ in {
     enable = true;
     enableZshIntegration = true;
     package = yaziPkg;
-    initLua = ./init.lua;
+    initLua = builtins.readFile ./init.lua + remoteBadgeLua;
 
     # Store-owned plugin rows, no runtime fetching: nixpkgs `yaziPlugins` is the packaged substrate, and augment-command
     # pins upstream HEAD directly since nixpkgs omits it.

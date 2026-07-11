@@ -8,10 +8,12 @@
 # textMate, and semantic tokens project from one pivot), derived diff/search/git roles, the shared icon vocabulary, the target registry with its
 # coverage projection, and the rendered proof lane. Every color consumer interpolates these tokens; no consumer carries a private hex.
 {
+  config,
   lib,
   pkgs,
   ...
 }: let
+  fonts = config.forge.fonts;
   byte = s: i: lib.fromHexString (builtins.substring i 2 s);
 
   # Color record: uppercase hex plus every numeric rendering consumers need.
@@ -47,32 +49,40 @@
   # on every fill); emphasis is the same hue at +0.06 OKLCH L.
   derived = hexRows "overlay=#37364D diffAdd=#122A18 diffAddEmph=#213926 diffDel=#3B1818 diffDelEmph=#4C2726 diffChange=#152539 diffChangeEmph=#233449 search=#3A3418 searchCurrent=#5A4E1E";
 
-  # Role families as [name color] pair rows folded per family; git rows carry a redundant glyph so meaning never rides hue alone ([name color glyph]).
+  # Role families as [name color] pair rows folded per family.
   pairs = ps: lib.listToAttrs (map (p: lib.nameValuePair (builtins.elemAt p 0) (builtins.elemAt p 1)) ps);
+  families = lib.mapAttrs (_: pairs) {
+    surface = [["crust" palette.crust] ["base" palette.background] ["surface" palette.surface] ["raised" palette.current_line] ["overlay" derived.overlay] ["selected" palette.selection]];
+    text = [["primary" palette.foreground] ["subtle" palette.subtle] ["muted" palette.comment] ["inverse" palette.background]];
+    accent = [["primary" palette.cyan] ["secondary" palette.magenta] ["tertiary" palette.pink] ["structural" palette.purple]];
+    state = [["success" palette.green] ["warning" palette.amber] ["attention" palette.orange] ["danger" palette.red] ["info" palette.blue]];
+    # Focus pair: the one active/inactive derivation every chrome surface (tabs, pane frames, ribbons) reads instead of re-picking hues.
+    focus = [["active" palette.cyan] ["inactive" palette.subtle]];
+    # Modal-UI hue ladder: one hue per mux/editor mode chip; search and entersearch share deliberately (one toggled surface), renames share
+    # (one input-editing state), and every other mode reads distinct at a glance — no two standing modes collapse onto one hue.
+    mode = [["normal" palette.green] ["locked" palette.selection] ["tab" palette.magenta] ["pane" palette.orange] ["move" palette.cyan] ["resize" palette.purple] ["scroll" palette.yellow] ["search" palette.pink] ["entersearch" palette.pink] ["session" palette.blue] ["renametab" palette.red] ["renamepane" palette.red] ["prompt" palette.foreground] ["tmux" palette.amber]];
+    diff = [["add" derived.diffAdd] ["addEmph" derived.diffAddEmph] ["del" derived.diffDel] ["delEmph" derived.diffDelEmph] ["change" derived.diffChange] ["changeEmph" derived.diffChangeEmph]];
+    ui = [["border" palette.subtle] ["cursor" palette.foreground] ["indent" palette.subtle] ["whitespace" palette.selection] ["search" derived.search] ["match" derived.searchCurrent]];
+  };
+
+  # Two-register git vocabulary: rows live on the symbols family (fonts catalog gitAlphabet) so the hb-shape zero-.notdef gate proves every glyph
+  # column. glyph is the terminal nerd-icon register (codepoint-minted, immune to harness stripping); ascii is the persisted/CI/off-terminal twin;
+  # color-role strings resolve against the folded families, so a hue rebind lands on every git consumer with zero edits here.
+  gitRole = {
+    inherit (families.state) success info danger warning attention;
+    inherit (families.accent) structural secondary;
+    inherit (families.text) muted;
+  };
   roles =
-    lib.mapAttrs (_: pairs) {
-      surface = [["crust" palette.crust] ["base" palette.background] ["surface" palette.surface] ["raised" palette.current_line] ["overlay" derived.overlay] ["selected" palette.selection]];
-      text = [["primary" palette.foreground] ["subtle" palette.subtle] ["muted" palette.comment] ["inverse" palette.background]];
-      accent = [["primary" palette.cyan] ["secondary" palette.magenta] ["tertiary" palette.pink] ["structural" palette.purple]];
-      state = [["success" palette.green] ["warning" palette.amber] ["attention" palette.orange] ["danger" palette.red] ["info" palette.blue]];
-      # Focus pair: the one active/inactive derivation every chrome surface (tabs, pane frames, ribbons) reads instead of re-picking hues.
-      focus = [["active" palette.cyan] ["inactive" palette.subtle]];
-      # Modal-UI hue ladder: one hue per mux/editor mode chip; search and entersearch share deliberately (one toggled surface), renames share
-      # (one input-editing state), and every other mode reads distinct at a glance — no two standing modes collapse onto one hue.
-      mode = [["normal" palette.green] ["locked" palette.selection] ["tab" palette.magenta] ["pane" palette.orange] ["move" palette.cyan] ["resize" palette.purple] ["scroll" palette.yellow] ["search" palette.pink] ["entersearch" palette.pink] ["session" palette.blue] ["renametab" palette.red] ["renamepane" palette.red] ["prompt" palette.foreground] ["tmux" palette.amber]];
-      diff = [["add" derived.diffAdd] ["addEmph" derived.diffAddEmph] ["del" derived.diffDel] ["delEmph" derived.diffDelEmph] ["change" derived.diffChange] ["changeEmph" derived.diffChangeEmph]];
-      ui = [["border" palette.subtle] ["cursor" palette.foreground] ["indent" palette.subtle] ["whitespace" palette.selection] ["search" derived.search] ["match" derived.searchCurrent]];
-    }
+    families
     // {
-      git = byName (map (row ["name" "color" "glyph"]) [
-        ["added" palette.green "[+]"]
-        ["staged" palette.green "[●]"]
-        ["modified" palette.blue "[~]"]
-        ["deleted" palette.red "[−]"]
-        ["untracked" palette.green "[?]"]
-        ["renamed" palette.purple "[»]"]
-        ["conflict" palette.magenta "[!]"]
-      ]);
+      git = byName (map (t: {
+          name = builtins.elemAt t 0;
+          color = gitRole.${builtins.elemAt t 1};
+          glyph = builtins.fromJSON ''"\u${builtins.elemAt t 2}"'';
+          ascii = builtins.elemAt t 3;
+        })
+        fonts.catalog."Symbols Nerd Font Mono".gitAlphabet);
     };
 
   # Canonical hex->ANSI-16 assignment; terminal palettes and ANSI-slot consumers agree with truecolor consumers. Slot 4 carries a real blue,
@@ -163,8 +173,7 @@
   glyphsProved = v: let
     dead =
       lib.attrNames (lib.filterAttrs (_: r: r.glyph == "") v.dirs)
-      ++ lib.attrNames (lib.filterAttrs (_: g: g == "") v.process)
-      ++ lib.attrNames (lib.filterAttrs (_: r: r.glyph == "") v.alphabet);
+      ++ lib.attrNames (lib.filterAttrs (_: g: g == "") v.process);
   in
     if dead == []
     then v
@@ -191,20 +200,19 @@
       git = "󰊢";
       nix = "󱄅";
       claude = "󰙴";
+      container = builtins.fromJSON ''"\uf4b7"''; # oct-container: in-container rootfs, distinct from the docker-CLI whale
     };
     # Status alphabet: the CLOSED glyph vocabulary for terminal-bound render surfaces — single-codepoint codicons (Symbols Nerd Font Mono,
-    # 1-cell advance proven at font install), each with the ASCII twin persisted surfaces use instead. Emoji and EAW-ambiguous glyphs never
-    # render on width-load-bearing surfaces; a new status class is one row here, never an app-local glyph.
-    alphabet = byName (map (row ["name" "glyph" "ascii"]) [
-      ["running" "" "[>]"]
-      ["idle" "" "[ ]"]
-      ["attention" "" "[?]"]
-      ["failure" "" "[X]"]
-      ["ok" "" "[OK]"]
-      ["bell" "" "[B]"]
-      ["warning" "" "[!]"]
-      ["sync" "" "[~]"]
-    ]);
+    # 1-cell advance proven at font install), each with the ASCII twin persisted surfaces use instead. Rows live on the symbols family
+    # (fonts catalog statusAlphabet) so the hb-shape zero-.notdef gate proves the exact column these glyphs mint from; codepoint minting is
+    # immune to harness glyph-stripping. Emoji and EAW-ambiguous glyphs never render on width-load-bearing surfaces; a new status class is
+    # one catalog row, never an app-local glyph.
+    alphabet = byName (map (t: {
+        name = builtins.elemAt t 0;
+        glyph = builtins.fromJSON ''"\u${builtins.elemAt t 1}"'';
+        ascii = builtins.elemAt t 2;
+      })
+      fonts.catalog."Symbols Nerd Font Mono".statusAlphabet);
   };
 
   # --- [TARGET_REGISTRY]
@@ -220,33 +228,33 @@
       r // {binds = lib.optionals (r.binds != "-") (lib.splitString " " r.binds);};
   in
     map mkTarget [
-      ["wezterm" "${apps}/wezterm/default.nix" "lua+toml" "roles ansi16 fonts" "bound"]
+      ["wezterm" "${apps}/wezterm/default.nix" "lua+toml" "roles ansi16 fonts badges" "bound"]
       ["zellij" "${apps}/zellij/config.nix" "kdl" "roles" "bound"]
       ["zellij-theme" "${apps}/zellij/themes/dracula.nix" "kdl" "palette" "bound"]
-      ["yazi" "${apps}/yazi/theme.nix" "toml+tmTheme" "palette icons" "bound"]
-      ["nvim" "${apps}/nvim/default.nix" "lua" "palette scopes roles" "bound"]
-      ["vscode" "${apps}/vscode/default.nix" "jsonc-sentinel" "ansi16 scopes semantic fonts" "bound"]
+      ["yazi" "${apps}/yazi/theme.nix" "toml+tmTheme" "palette icons git badges" "bound"]
+      ["nvim" "${apps}/nvim/default.nix" "lua" "roles palette scopes git" "bound"]
+      ["vscode" "${apps}/vscode/default.nix" "jsonc-sentinel" "roles palette git ansi16 scopes semantic fonts" "bound"]
       ["bat" "${st}/bat.nix" "tmTheme" "scopes" "bound"]
-      ["delta" "modules/home/programs/git-tools/git.nix" "gitconfig" "ansi16 diff blameRamp" "bound"]
-      ["lazygit" "modules/home/programs/git-tools/lazygit.nix" "yaml" "palette" "bound"]
-      ["starship" "${st}/starship.nix" "toml" "palette" "bound"]
-      ["fzf" "${st}/fzf.nix" "env" "palette" "bound"]
-      ["eza" "${st}/eza.nix" "yaml" "palette" "bound"]
-      ["fastfetch" "${st}/fastfetch.nix" "json" "palette fonts" "bound"]
-      ["k9s" "modules/home/programs/container-tools/k9s.nix" "yaml" "roles" "bound"]
-      ["atuin" "${st}/atuin.nix" "toml" "palette" "bound"]
-      ["carbon" "${st}/carbon.nix" "json" "scopes fonts" "bound"]
-      ["bottom" "${st}/bottom.nix" "toml" "palette" "bound"]
+      ["delta" "modules/home/programs/git-tools/git.nix" "gitconfig" "diff blameRamp git" "bound"]
+      ["lazygit" "modules/home/programs/git-tools/lazygit.nix" "yaml" "palette git" "bound"]
+      ["starship" "${st}/starship.nix" "toml" "roles palette icons git" "bound"]
+      ["fzf" "${st}/fzf.nix" "env" "roles" "bound"]
+      ["eza" "${st}/eza.nix" "yaml" "roles palette git" "bound"]
+      ["fastfetch" "${st}/fastfetch.nix" "json" "roles fonts" "bound"]
+      ["k9s" "modules/home/programs/container-tools/k9s.nix" "yaml" "roles palette" "bound"]
+      ["atuin" "${st}/atuin.nix" "toml" "roles" "bound"]
+      ["carbon" "${st}/carbon.nix" "json" "roles scopes fonts" "bound"]
+      ["bottom" "${st}/bottom.nix" "toml" "roles palette" "bound"]
       ["procs" "${st}/procs.nix" "toml" "ansi16-slots" "bound"]
-      ["jnv" "${st}/jnv.nix" "flags" "palette" "bound"]
-      ["pik" "${st}/pik.nix" "toml" "palette" "bound"]
-      ["trippy" "${st}/trippy.nix" "toml" "palette" "bound"]
+      ["jnv" "${st}/jnv.nix" "flags" "roles palette" "bound"]
+      ["pik" "${st}/pik.nix" "toml" "roles" "bound"]
+      ["trippy" "${st}/trippy.nix" "toml" "roles palette" "bound"]
       ["tlrc" "${st}/tlrc.nix" "toml" "palette" "bound"]
-      ["ripgrep" "${st}/ripgrep.nix" "flags" "palette" "bound"]
-      ["browsers" "${st}/browsers.nix" "toml" "palette" "bound"]
-      ["posting" "${st}/posting.nix" "yaml" "palette" "bound"]
-      ["process-compose" "${st}/process-compose.nix" "yaml" "palette" "bound"]
-      ["mcp-cells" "${st}/mcp-launchers.nix" "zjstatus-pipe" "roles" "bound"]
+      ["ripgrep" "${st}/ripgrep.nix" "flags" "roles" "bound"]
+      ["browsers" "${st}/browsers.nix" "toml" "roles" "bound"]
+      ["posting" "${st}/posting.nix" "yaml" "roles palette" "bound"]
+      ["process-compose" "${st}/process-compose.nix" "yaml" "roles palette" "bound"]
+      ["mcp-cells" "${st}/mcp-launchers.nix" "zjstatus-pipe" "roles icons" "bound"]
       ["glow" "modules/home/programs/media-tools/glow.nix" "json" "-" "gap"]
       ["zsh-syntax-highlighting" "modules/home/programs/zsh" "env" "-" "gap"]
       ["zsh-autosuggestions" "modules/home/programs/zsh" "env" "-" "gap"]
@@ -257,16 +265,19 @@
       ["dock-controlcenter" "system-owned" "-" "-" "defer"]
     ];
 
-  # Registry rows are proven at eval: every owner path must exist on disk and ids stay unique, so a moved consumer or a
-  # copy-pasted row breaks loudly. "system-owned" rows carry no file.
+  # Registry rows are proven at eval: every owner path must exist on disk, ids stay unique, and verdicts stay on the closed ladder, so a moved
+  # consumer, a copy-pasted row, or a typo'd verdict breaks loudly. "system-owned" rows carry no file.
   targetsProved = let
     missing = builtins.filter (t: t.owner != "system-owned" && !builtins.pathExists (../.. + "/${t.owner}")) targets;
     dupes = lib.attrNames (lib.filterAttrs (_: c: c > 1) (lib.foldl' (acc: t: acc // {${t.id} = (acc.${t.id} or 0) + 1;}) {} targets));
+    unruled = builtins.filter (t: !lib.elem t.verdict ["bound" "gap" "defer"]) targets;
   in
     if missing != []
     then throw "forge.theme.targets: owner paths missing on disk: ${lib.concatMapStringsSep ", " (t: "${t.id}=${t.owner}") missing}"
     else if dupes != []
     then throw "forge.theme.targets: duplicate target ids: ${lib.concatStringsSep ", " dupes}"
+    else if unruled != []
+    then throw "forge.theme.targets: verdicts off the bound|gap|defer ladder: ${lib.concatMapStringsSep ", " (t: "${t.id}=${t.verdict}") unruled}"
     else targets;
 
   scopeRule = row: let
@@ -350,7 +361,7 @@
   paletteHtml = pkgs.writeText "forge-palette.html" ''
     <!doctype html><html><head><meta charset="utf-8"><title>Forge Theme Proof Board</title>
     <style>
-      body{background:${palette.background.hex};color:${palette.foreground.hex};font:14px/1.5 "Geist Mono",monospace;margin:2rem;max-width:1100px}
+      body{background:${palette.background.hex};color:${palette.foreground.hex};font:${fonts.projections.proofFont};margin:2rem;max-width:1100px}
       h1,h2{color:${palette.pink.hex};font-weight:700;text-transform:uppercase;letter-spacing:.08em}
       h2{color:${palette.cyan.hex};margin-top:2.5rem}
       table{border-collapse:collapse;width:100%;margin:.75rem 0}
@@ -393,8 +404,11 @@
     out.push('<h2>Diff + Search Fills</h2>');
     [['diffAdd','+ inserted line'],['diffDel','− deleted line'],['diffChange','~ changed line'],['search','search match'],['searchCurrent','current match']].forEach(function(p){
       out.push('<div style="background:'+D.derived[p[0]]+';padding:.4rem 1rem">'+p[1]+' <span class="muted">fg holds neutral — '+cr(D.palette.foreground,D.derived[p[0]]).toFixed(1)+':1</span></div>')});
-    out.push('<h2>Git States</h2><table><tr><th>state</th><th>glyph</th><th>hue</th></tr>');
-    Object.keys(D.roles.git).forEach(function(k){var g=D.roles.git[k];out.push('<tr><td>'+k+'</td><td style="color:'+g.color+'">'+g.glyph+'</td><td>'+sw(g.color)+'</td></tr>')});
+    out.push('<h2>Git States</h2><table><tr><th>state</th><th>glyph</th><th>ascii twin</th><th>hue</th></tr>');
+    Object.keys(D.roles.git).forEach(function(k){var g=D.roles.git[k];out.push('<tr><td>'+k+'</td><td style="color:'+g.color+'">'+g.glyph+'</td><td class="muted">'+g.ascii+'</td><td>'+sw(g.color)+'</td></tr>')});
+    out.push('</table>');
+    out.push('<h2>Status Alphabet</h2><table><tr><th>role</th><th>glyph</th><th>ascii twin</th></tr>');
+    Object.keys(D.icons.alphabet).forEach(function(k){var a=D.icons.alphabet[k];out.push('<tr><td>'+k+'</td><td>'+a.glyph+'</td><td class="muted">'+a.ascii+'</td></tr>')});
     out.push('</table>');
     document.getElementById('root').innerHTML=out.join(''');
     </script></body></html>
@@ -420,14 +434,19 @@
         exit 66
       }
       hash="$(sha256sum "$p" | cut -c1-12)"
-      font="$(jq -r '.roles.mono + " " + (.metrics.size|tostring)' "$f" 2>/dev/null || true)"
+      font="$(jq -r '.roles.mono + " " + (.surfaces.terminal.size|tostring)' "$f" 2>/dev/null || true)"
       font="''${font:-unknown}"
 
-      # One projection over the palette snapshot: color, syntax, and git rows cross on a unit-separator rail; hex decodes in shell arithmetic.
+      # One projection over the palette snapshot: color, syntax, git, and alphabet rows cross on a unit-separator rail; hex decodes in shell arithmetic.
       declare -A RGB HEX
       syntax_rows=()
       git_rows=()
-      while IFS=$'\x1f' read -r kind key hex glyph; do # streaming boundary: typed row feed
+      alpha_rows=()
+      while IFS=$'\x1f' read -r kind key hex glyph twin; do # streaming boundary: typed row feed
+        if [[ "$kind" == alpha ]]; then # alphabet rows carry glyph + ascii twin, never a hue
+          alpha_rows+=("$key"$'\x1f'"$hex"$'\x1f'"$glyph")
+          continue
+        fi
         h="''${hex#\#}"
         rgb="$((16#''${h:0:2}));$((16#''${h:2:2}));$((16#''${h:4:2}))"
         case "$kind" in
@@ -436,13 +455,14 @@
             HEX[$key]="$hex"
             ;;
           syntax) syntax_rows+=("$key"$'\x1f'"$rgb") ;;
-          git) git_rows+=("$key"$'\x1f'"$rgb"$'\x1f'"$glyph") ;;
+          git) git_rows+=("$key"$'\x1f'"$rgb"$'\x1f'"$glyph"$'\x1f'"$twin") ;;
         esac
       done < <(jq -r '
-        ((.palette | to_entries[] | ["color", "palette.\(.key)", .value, ""]),
-         (.derived | to_entries[] | ["color", "derived.\(.key)", .value, ""]),
-         (.syntax[] | ["syntax", .name, .color, ""]),
-         (.roles.git | to_entries[] | ["git", .key, .value.color, .value.glyph]))
+        ((.palette | to_entries[] | ["color", "palette.\(.key)", .value, "", ""]),
+         (.derived | to_entries[] | ["color", "derived.\(.key)", .value, "", ""]),
+         (.syntax[] | ["syntax", .name, .color, "", ""]),
+         (.roles.git | to_entries[] | ["git", .key, .value.color, .value.glyph, .value.ascii]),
+         (.icons.alphabet | to_entries[] | ["alpha", .key, .value.glyph, .value.ascii, ""]))
         | join("\u001f")' "$p")
 
       esc() { printf '\033[%sm' "$1"; }
@@ -479,13 +499,18 @@
         printf '\n'
       } | fold -w "''${COLUMNS:-100}" -s
       printf '\n%s[DIFF_FILLS]%s\n' "$(esc "$(fg palette.cyan);1")" "$(r)"
-      for pair in "diffAdd:+ inserted" "diffDel:− deleted" "diffChange:~ changed" "search:search match" "searchCurrent:current match"; do
+      for pair in "diffAdd:+ inserted" "diffDel:- deleted" "diffChange:~ changed" "search:search match" "searchCurrent:current match"; do
         printf '  %s %s %s\n' "$(esc "$(bg "derived.''${pair%%:*}");$(fg palette.foreground)")" "''${pair#*:}" "$(r)"
       done
       printf '\n%s[GIT]%s ' "$(esc "$(fg palette.cyan);1")" "$(r)"
       for row in "''${git_rows[@]}"; do
-        IFS=$'\x1f' read -r k rgb glyph <<<"$row"
-        printf '%s%s %s%s  ' "$(esc "38;2;$rgb")" "$glyph" "$k" "$(r)"
+        IFS=$'\x1f' read -r k rgb glyph twin <<<"$row"
+        printf '%s%s %s%s %s%s%s  ' "$(esc "38;2;$rgb")" "$glyph" "$k" "$(r)" "$(esc "$(fg palette.comment)")" "$twin" "$(r)"
+      done
+      printf '\n\n%s[ALPHABET]%s ' "$(esc "$(fg palette.cyan);1")" "$(r)"
+      for row in "''${alpha_rows[@]}"; do
+        IFS=$'\x1f' read -r k glyph twin <<<"$row"
+        printf '%s %s %s%s%s  ' "$glyph" "$k" "$(esc "$(fg palette.comment)")" "$twin" "$(r)"
       done
       printf '\n\n'
       TZ=UTC0 printf -v ts '%(%Y-%m-%dT%H:%M:%SZ)T' "$EPOCHSECONDS"
@@ -497,17 +522,39 @@
     '';
   };
 
+  fzfColorRows = [
+    "--color=fg:${roles.text.primary.hex},fg+:${roles.text.inverse.hex},bg:${roles.surface.base.hex},bg+:${roles.focus.active.hex},selected-fg:${roles.text.inverse.hex},selected-bg:${roles.focus.active.hex}"
+    "--color=hl:${roles.state.success.hex},hl+:${roles.accent.secondary.hex},info:${roles.text.muted.hex},marker:${roles.state.success.hex}"
+    "--color=prompt:${roles.accent.secondary.hex},spinner:${roles.state.success.hex},pointer:${roles.accent.secondary.hex},header:${roles.text.muted.hex}"
+    "--color=gutter:${roles.surface.base.hex},border:${roles.accent.primary.hex},separator:${roles.accent.tertiary.hex},scrollbar:${roles.accent.tertiary.hex}"
+    "--color=preview-fg:${roles.text.primary.hex},preview-scrollbar:${roles.accent.tertiary.hex},label:${roles.accent.secondary.hex},query:${roles.text.primary.hex}"
+  ];
+
   projections = {
     inherit tmThemeFile;
-    # Flat hex mirror of the semantic role tree — the one roles->hex fold every themed app composes instead of re-deriving privately.
+    # Flat hex mirror of the role families hex-projection consumers (VS Code, nvim, wezterm Lua rows) actually index; focus and mode stay Nix-side
+    # deliberately — no hex consumer reads them, and palette.json already carries the full tree. A new family lands here with its first consumer.
     rolesHex = lib.mapAttrs (_: lib.mapAttrs (_: c: c.hex)) {inherit (roles) surface text accent state diff ui;};
-    # Git-state vocabulary rows (hex + glyph); gutter and status consumers project the fields they render.
+    # Git-state vocabulary rows (hex + both registers); terminal-bound consumers render .glyph, persisted/piped surfaces render .ascii, every
+    # consumer takes .color from the same row.
     gitHex =
       lib.mapAttrs (_: g: {
         color = g.color.hex;
-        inherit (g) glyph;
+        inherit (g) glyph ascii;
       })
       roles.git;
+    # Cross-surface machine-context badges (remote host, in-container rootfs): the roles.git single-owner pattern applied to context — each row
+    # carries the glyph, the dotted role path, and the resolved hex (.color, the gitHex field grammar), so prompt, wezterm strip, and yazi header
+    # render one identical badge per class. Row tuple: [processIcon rolePath].
+    contextBadges =
+      lib.mapAttrs (_: t: rec {
+        glyph = icons.process.${builtins.elemAt t 0};
+        role = builtins.elemAt t 1;
+        color = (lib.getAttrFromPath (lib.splitString "." role) roles).hex;
+      }) {
+        remote = ["ssh" "state.warning"];
+        container = ["container" "accent.structural"];
+      };
     # Lua return-table behind the generated Neovim palette; derived fills ride along snake_cased for highlight consumers.
     luaPalette = ''
       -- Generated from the Forge theme owner (modules/home/theme.nix).
@@ -553,13 +600,10 @@
     };
     # fzf color vocabulary: the ONE role->slot mapping every fzf-embedding surface consumes (programs.fzf, register browsers, ops pickers).
     # Selection rides the focus pair, structure rides accents — a picker's selected row reads identically to the active tab chip estate-wide.
-    fzfColorRows = [
-      "--color=fg:${roles.text.primary.hex},fg+:${roles.text.inverse.hex},bg:${roles.surface.base.hex},bg+:${roles.focus.active.hex},selected-fg:${roles.text.inverse.hex},selected-bg:${roles.focus.active.hex}"
-      "--color=hl:${roles.state.success.hex},hl+:${roles.accent.secondary.hex},info:${roles.text.muted.hex},marker:${roles.state.success.hex}"
-      "--color=prompt:${roles.accent.secondary.hex},spinner:${roles.state.success.hex},pointer:${roles.accent.secondary.hex},header:${roles.text.muted.hex}"
-      "--color=gutter:${roles.surface.base.hex},border:${roles.accent.primary.hex},separator:${roles.accent.tertiary.hex},scrollbar:${roles.accent.tertiary.hex}"
-      "--color=preview-fg:${roles.text.primary.hex},preview-scrollbar:${roles.accent.tertiary.hex},label:${roles.accent.secondary.hex},query:${roles.text.primary.hex}"
-    ];
+    inherit fzfColorRows;
+    # Per-command fzf argument vocabulary: colors plus the chrome every generated script carries per invocation (scripts never assume the
+    # interactive FZF_DEFAULT_OPTS reached them); the richer global interactive chrome stays fzf.nix-owned.
+    fzfArgs = fzfColorRows ++ ["--border=sharp" "--layout=reverse" "--info=right" "--highlight-line" "--prompt=❯ " "--pointer=❯"];
     # Four-step surface ramp for delta blame backgrounds.
     blameRamp = lib.concatMapStringsSep " " (c: c.hex) [
       roles.surface.base

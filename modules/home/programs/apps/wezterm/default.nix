@@ -22,6 +22,8 @@
   receiptsFold = import ../../shell-tools/receipts.nix;
   profileBin = "/etc/profiles/per-user/${config.home.username}/bin";
   homeDir = config.home.homeDirectory;
+  # Frozen-layout asset root (forge-zellij layout record): rows.paths and forge-workspace resolve <slug>.kdl from this ONE spelling.
+  recordedLayouts = "${config.xdg.stateHome}/forge/zellij-layouts";
   toolchainEnv = forgeToolchainEnvFor {
     home = homeDir;
     username = config.home.username;
@@ -375,7 +377,7 @@
       nvim = "${profileBin}/nvim";
       forge_agents = "${profileBin}/forge-agents";
       # Frozen-layout assets (forge-zellij layout record): session_args and forge-workspace both resolve <slug>.kdl here before the default.
-      recorded_layouts = "${homeDir}/.local/state/forge/zellij-layouts";
+      recorded_layouts = recordedLayouts;
       # Nightly-only mux pin: without it the mux inherits the identity-less Apple launchd SSH_AUTH_SOCK (deck.lua applies it under has_nightly).
       auth_sock = config.forge.ssh.identityAgent;
     };
@@ -395,10 +397,15 @@
     workspaces = workspaceRows;
     quick_select = quickSelectRows;
     hyperlinks = hyperlinkRows;
+    # WezTerm-host nerdfont identifiers for palette entries — data rows, so deck.lua carries no private literals.
+    palette_icons = {
+      command = "md_dock_window";
+      quick_select = "md_select_search";
+    };
     theme = {
       roles = projections.rolesHex;
-      git = projections.gitHex;
-      accent = roles.accent.primary.hex;
+      # Shared remote-context badge: the strip's non-local domain chip reads the same glyph + hue as the prompt hostname badge (events.lua).
+      badges.remote = {inherit (projections.contextBadges.remote) glyph color;};
     };
   };
   rowsLua = pkgs.writeText "wezterm-rows.lua" ''
@@ -473,7 +480,7 @@
       zellij_bin="${pkgs.zellij}/bin/zellij"
       layout="''${ZELLIJ_DEFAULT_LAYOUT:-default}"
       workspace_root="${workspaceRoot}"
-      recorded_dir="''${XDG_STATE_HOME:-$HOME/.local/state}/forge/zellij-layouts"
+      recorded_dir="${recordedLayouts}"
       receipt_log="''${FORGE_WORKSPACE_RECEIPT_LOG:-$HOME/Library/Logs/forge-workspace.receipts.log}"
       receipt_surface="forge-workspace"
       provider="''${FORGE_SPACE_PROVIDER:-none}"
@@ -538,6 +545,8 @@
                   emit "$slug" warm error "attach --create-background failed (from=$was)" "-"
                 fi
               done
+          # Bar-cell warmup mirrors the deck seam: fresh sessions' pipe cells land once the servers answer, not at the next minute tick.
+          (sleep 2 && ${profileBin}/forge-agents collect) >/dev/null 2>&1 &
           exit 0
           ;;
         --list | "")
@@ -598,6 +607,8 @@
         exit 1
       }
       emit "$slug" spawn ok "pane_id=$pane_id" "$space_state"
+      # Bar-cell warmup mirrors the deck seam: the fresh session's pipe cells (identity chip included) land now, not at the next minute tick.
+      (sleep 2 && ${profileBin}/forge-agents collect) >/dev/null 2>&1 &
       printf '%s\t%s\tpane_id=%s\tspace=%s\n' "$slug" "$cwd" "$pane_id" "$space_state"
     '';
   };

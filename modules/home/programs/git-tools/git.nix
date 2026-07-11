@@ -12,6 +12,9 @@
   ...
 }: let
   isDarwin = pkgs.stdenv.hostPlatform.isDarwin;
+  inherit (config.forge.theme) roles projections;
+  # Delta output routinely pipes to files and CI logs, so its git-state rows take the ASCII twin register, never the terminal glyph.
+  git = projections.gitHex;
   # One universal identity; the unified estate key ("Forge SSH Key" in the Private vault) authenticates and signs. op-ssh-sign resolves it by
   # public key through the 1Password agent seam in shell-tools/1password.nix.
   identity = {
@@ -148,22 +151,22 @@ in {
       light = false;
       side-by-side = true;
 
-      # Line numbers
+      # Line numbers: minus/plus lanes carry the owner git-state hues.
       line-numbers = true;
-      line-numbers-minus-style = "red";
-      line-numbers-plus-style = "green";
+      line-numbers-minus-style = git.deleted.color;
+      line-numbers-plus-style = git.added.color;
       line-numbers-zero-style = "dim";
       line-numbers-left-format = "{nm:>4}⋮";
       line-numbers-right-format = "{np:>4}│";
 
-      # File headers
+      # File headers: state labels are the ASCII twins, so a piped diff carries state in text; copied folds into the rename family (identity move).
       file-style = "bold";
       file-decoration-style = "none";
-      file-added-label = "";
-      file-copied-label = "[==]";
-      file-modified-label = "";
-      file-removed-label = "";
-      file-renamed-label = "";
+      file-added-label = git.added.ascii;
+      file-copied-label = git.renamed.ascii;
+      file-modified-label = git.modified.ascii;
+      file-removed-label = git.deleted.ascii;
+      file-renamed-label = git.renamed.ascii;
 
       # Hunk headers
       hunk-header-style = "file line-number";
@@ -175,16 +178,16 @@ in {
 
       # Blame configuration
       blame-format = "{timestamp:<15} {author:<15.14} {commit:<8}";
-      blame-palette = config.forge.theme.projections.blameRamp;
+      blame-palette = projections.blameRamp;
       blame-separator-format = "│{n:^4}│";
       blame-separator-style = "dim";
       blame-timestamp-output-format = "%Y-%m-%d %H:%M";
 
       # Diff styles: owner-derived fills tint the background and hold the code foreground neutral; word-level emphasis is the same hue lifted.
-      minus-style = "syntax ${config.forge.theme.roles.diff.del.hex}";
-      minus-emph-style = "syntax bold ${config.forge.theme.roles.diff.delEmph.hex}";
-      plus-style = "syntax ${config.forge.theme.roles.diff.add.hex}";
-      plus-emph-style = "syntax bold ${config.forge.theme.roles.diff.addEmph.hex}";
+      minus-style = "syntax ${roles.diff.del.hex}";
+      minus-emph-style = "syntax bold ${roles.diff.delEmph.hex}";
+      plus-style = "syntax ${roles.diff.add.hex}";
+      plus-emph-style = "syntax bold ${roles.diff.addEmph.hex}";
 
       # Grep integration
       grep-output-type = "ripgrep";

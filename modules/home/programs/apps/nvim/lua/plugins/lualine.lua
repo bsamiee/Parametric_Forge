@@ -8,6 +8,7 @@
 -- mode->hue table; git facts from gitsigns buffer state — no second git engine. globalstatus derives from laststatus=3 (owner: config/options.lua).
 
 local p = require("forge.palette")
+local git = require("forge.syntax").roles.git
 
 local mode = function(hue)
     return {
@@ -37,6 +38,12 @@ require("lualine").setup({
             "b:gitsigns_head",
             {
                 "diff",
+                -- Count hues ride the owner git-state vocabulary, not lualine's defaults.
+                diff_color = {
+                    added = { fg = git.added.color },
+                    modified = { fg = git.modified.color },
+                    removed = { fg = git.deleted.color },
+                },
                 source = function()
                     return vim.b.gitsigns_status_dict
                 end,

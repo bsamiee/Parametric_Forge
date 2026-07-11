@@ -88,11 +88,14 @@ local apply = function()
         CurSearch = { bg = roles.ui.match, fg = roles.text.primary },
         Whitespace = { fg = roles.ui.whitespace },
         SnacksIndent = { fg = roles.ui.indent },
-        -- Hunk signs ride the owner git-state vocabulary, overriding dracula's default link to the Diff* tints.
-        GitSignsAdd = { fg = roles.git.added },
-        GitSignsChange = { fg = roles.git.modified },
-        GitSignsDelete = { fg = roles.git.deleted },
-        GitSignsUntracked = { fg = roles.git.untracked },
+        -- Hunk signs ride the owner git-state vocabulary, overriding dracula's default link to the Diff* tints; staged-add and change+delete
+        -- bind their own owner states instead of gitsigns' derived dims.
+        GitSignsAdd = { fg = roles.git.added.color },
+        GitSignsChange = { fg = roles.git.modified.color },
+        GitSignsDelete = { fg = roles.git.deleted.color },
+        GitSignsUntracked = { fg = roles.git.untracked.color },
+        GitSignsStagedAdd = { fg = roles.git.staged.color },
+        GitSignsChangedelete = { fg = roles.git.conflict.color },
     }) do
         vim.api.nvim_set_hl(0, name, def)
     end

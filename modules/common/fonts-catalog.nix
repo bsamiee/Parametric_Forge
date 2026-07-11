@@ -9,6 +9,35 @@
 {pkgs}: let
   notoArabic = pkgs.noto-fonts.override {variants = ["NotoSansArabic" "NotoNaskhArabic"];};
   notoMono = pkgs.noto-fonts.override {variants = ["NotoSansMono"];};
+  # Closed two-register alphabets for terminal-bound render surfaces, owned here so the symbols family's shaping sample derives from the same
+  # columns the theme owner mints glyphs from — one row per class, no by-value mirror anywhere. Status rows: [role codepoint asciiTwin].
+  statusAlphabet = [
+    ["running" "ea71" "[>]"]
+    ["idle" "eabc" "[ ]"]
+    ["attention" "eb32" "[?]"]
+    ["failure" "ea87" "[X]"]
+    ["ok" "eab2" "[OK]"]
+    ["bell" "eaa2" "[B]"]
+    ["warning" "ea6c" "[!]"]
+    ["sync" "ea77" "[~]"]
+  ];
+  # Git-state vocabulary rows: [state colorRole codepoint asciiTwin] — the codicon diff_* family, colors resolved on the theme state ladder.
+  # typechange shares the modified glyph (a mode flip is a modify) and clean shares the staged check; both stay rows so consumers dispatch by state.
+  gitAlphabet = [
+    ["added" "success" "eadc" "[+]"]
+    ["staged" "success" "eab2" "[*]"]
+    ["modified" "info" "eade" "[~]"]
+    ["deleted" "danger" "eadf" "[-]"]
+    ["untracked" "success" "eb32" "[?]"]
+    ["renamed" "structural" "eae0" "[>]"]
+    ["typechange" "info" "eade" "[~]"]
+    ["conflict" "secondary" "ea6c" "[!]"]
+    ["ahead" "success" "eaa1" "[^]"]
+    ["behind" "warning" "ea9a" "[v]"]
+    ["diverged" "attention" "ea99" "[%]"]
+    ["stashed" "muted" "ea98" "[$]"]
+    ["clean" "success" "eab2" "[=]"]
+  ];
 in {
   "Geist Mono" = {
     package = pkgs.geist-font;
@@ -56,7 +85,12 @@ in {
     file = "share/fonts/truetype/NerdFonts/Symbols/SymbolsNerdFontMono-Regular.ttf";
     class = "patched";
     roles = ["symbols"];
-    sample = "\\uf07b \\ue0b0 \\ue712 \\uf121";
+    inherit statusAlphabet gitAlphabet;
+    # Proof corpus: powerline/dev glyphs, the container badge (oct-container), and both alphabets' codepoints — the hb-shape zero-.notdef gate
+    # proves every width-load-bearing glyph the estate renders, not a token sample.
+    sample = builtins.concatStringsSep " " (["\\uf07b" "\\ue0b0" "\\ue712" "\\uf121" "\\uf4b7"]
+      ++ map (t: "\\u" + builtins.elemAt t 1) statusAlphabet
+      ++ map (t: "\\u" + builtins.elemAt t 2) gitAlphabet);
   };
   "Scheherazade New" = {
     package = pkgs.scheherazade-new;

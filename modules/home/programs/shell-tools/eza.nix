@@ -10,7 +10,8 @@
   pkgs,
   ...
 }: let
-  inherit (config.forge.theme) palette;
+  # palette retained for the one hue with no semantic role: string-yellow (size emphasis, octal, build kind, SELinux type).
+  inherit (config.forge.theme) roles palette;
   yamlFormat = pkgs.formats.yaml {};
   treeIgnoreGlobs = ".git|.direnv|.devenv|.cache|.pytest_cache|.mypy_cache|.ruff_cache|__pycache__|node_modules|obj|dist|build|target|coverage|.next|.nuxt|.turbo|.vite|.parcel-cache|vendor";
   treeCommand = pkgs.writeShellApplication {
@@ -39,131 +40,133 @@
 
   ezaTheme = {
     filekinds = {
-      normal = {foreground = palette.foreground.hex;};
+      normal = {foreground = roles.text.primary.hex;};
       directory = {
-        foreground = palette.cyan.hex;
+        foreground = roles.accent.primary.hex;
         is_bold = true;
       };
-      symlink = {foreground = palette.purple.hex;};
-      pipe = {foreground = palette.comment.hex;};
-      block_device = {foreground = palette.red.hex;};
-      char_device = {foreground = palette.red.hex;};
-      socket = {foreground = palette.comment.hex;};
-      special = {foreground = palette.magenta.hex;};
+      symlink = {foreground = roles.accent.structural.hex;};
+      pipe = {foreground = roles.text.muted.hex;};
+      block_device = {foreground = roles.state.danger.hex;};
+      char_device = {foreground = roles.state.danger.hex;};
+      socket = {foreground = roles.text.muted.hex;};
+      special = {foreground = roles.accent.secondary.hex;};
       executable = {
-        foreground = palette.green.hex;
+        foreground = roles.state.success.hex;
         is_bold = true;
       };
-      mount_point = {foreground = palette.orange.hex;};
+      mount_point = {foreground = roles.state.attention.hex;};
     };
     perms = {
-      user_read = {foreground = palette.foreground.hex;};
-      user_write = {foreground = palette.orange.hex;};
-      user_execute_file = {foreground = palette.green.hex;};
-      user_execute_other = {foreground = palette.green.hex;};
-      group_read = {foreground = palette.foreground.hex;};
-      group_write = {foreground = palette.orange.hex;};
-      group_execute = {foreground = palette.green.hex;};
-      other_read = {foreground = palette.foreground.hex;};
-      other_write = {foreground = palette.orange.hex;};
-      other_execute = {foreground = palette.green.hex;};
-      special_user_file = {foreground = palette.magenta.hex;};
-      special_other = {foreground = palette.comment.hex;};
-      attribute = {foreground = palette.foreground.hex;};
+      user_read = {foreground = roles.text.primary.hex;};
+      user_write = {foreground = roles.state.attention.hex;};
+      user_execute_file = {foreground = roles.state.success.hex;};
+      user_execute_other = {foreground = roles.state.success.hex;};
+      group_read = {foreground = roles.text.primary.hex;};
+      group_write = {foreground = roles.state.attention.hex;};
+      group_execute = {foreground = roles.state.success.hex;};
+      other_read = {foreground = roles.text.primary.hex;};
+      other_write = {foreground = roles.state.attention.hex;};
+      other_execute = {foreground = roles.state.success.hex;};
+      special_user_file = {foreground = roles.accent.secondary.hex;};
+      special_other = {foreground = roles.text.muted.hex;};
+      attribute = {foreground = roles.text.primary.hex;};
     };
     size = {
       major = {
         foreground = palette.yellow.hex;
         is_bold = true;
       };
-      minor = {foreground = palette.purple.hex;};
-      number_byte = {foreground = palette.foreground.hex;};
-      number_kilo = {foreground = palette.foreground.hex;};
-      number_mega = {foreground = palette.cyan.hex;};
-      number_giga = {foreground = palette.pink.hex;};
-      number_huge = {foreground = palette.pink.hex;};
-      unit_byte = {foreground = palette.foreground.hex;};
-      unit_kilo = {foreground = palette.cyan.hex;};
-      unit_mega = {foreground = palette.pink.hex;};
-      unit_giga = {foreground = palette.pink.hex;};
-      unit_huge = {foreground = palette.orange.hex;};
+      minor = {foreground = roles.accent.structural.hex;};
+      number_byte = {foreground = roles.text.primary.hex;};
+      number_kilo = {foreground = roles.text.primary.hex;};
+      number_mega = {foreground = roles.accent.primary.hex;};
+      number_giga = {foreground = roles.accent.tertiary.hex;};
+      number_huge = {foreground = roles.accent.tertiary.hex;};
+      unit_byte = {foreground = roles.text.primary.hex;};
+      unit_kilo = {foreground = roles.accent.primary.hex;};
+      unit_mega = {foreground = roles.accent.tertiary.hex;};
+      unit_giga = {foreground = roles.accent.tertiary.hex;};
+      unit_huge = {foreground = roles.state.attention.hex;};
     };
     users = {
-      user_you = {foreground = palette.foreground.hex;};
+      user_you = {foreground = roles.text.primary.hex;};
       user_root = {
-        foreground = palette.red.hex;
+        foreground = roles.state.danger.hex;
         is_bold = true;
       };
-      user_other = {foreground = palette.magenta.hex;};
-      group_yours = {foreground = palette.foreground.hex;};
-      group_other = {foreground = palette.comment.hex;};
-      group_root = {foreground = palette.red.hex;};
+      user_other = {foreground = roles.accent.secondary.hex;};
+      group_yours = {foreground = roles.text.primary.hex;};
+      group_other = {foreground = roles.text.muted.hex;};
+      group_root = {foreground = roles.state.danger.hex;};
     };
     links = {
-      normal = {foreground = palette.purple.hex;};
-      multi_link_file = {foreground = palette.orange.hex;};
+      normal = {foreground = roles.accent.structural.hex;};
+      multi_link_file = {foreground = roles.state.attention.hex;};
     };
+    # Git column hues project from the owner state ladder (roles.git); the glyph column stays eza-fixed (N/M/D/R/T/I/U — not themable), the one
+    # sanctioned tool-owned-glyph exception. Ignored keeps muted text (no owner row: ignore is a visibility tier, not a git state).
     git = {
-      new = {foreground = palette.green.hex;};
-      modified = {foreground = palette.yellow.hex;};
-      deleted = {foreground = palette.red.hex;};
-      renamed = {foreground = palette.cyan.hex;};
-      typechange = {foreground = palette.magenta.hex;};
+      new = {foreground = roles.git.added.color.hex;};
+      modified = {foreground = roles.git.modified.color.hex;};
+      deleted = {foreground = roles.git.deleted.color.hex;};
+      renamed = {foreground = roles.git.renamed.color.hex;};
+      typechange = {foreground = roles.git.typechange.color.hex;};
       ignored = {
-        foreground = palette.comment.hex;
+        foreground = roles.text.muted.hex;
         is_dimmed = true;
       };
       conflicted = {
-        foreground = palette.orange.hex;
+        foreground = roles.git.conflict.color.hex;
         is_bold = true;
       };
     };
     git_repo = {
-      branch_main = {foreground = palette.foreground.hex;};
-      branch_other = {foreground = palette.magenta.hex;};
-      git_clean = {foreground = palette.green.hex;};
-      git_dirty = {foreground = palette.red.hex;};
+      branch_main = {foreground = roles.text.primary.hex;};
+      branch_other = {foreground = roles.accent.secondary.hex;};
+      git_clean = {foreground = roles.git.clean.color.hex;};
+      git_dirty = {foreground = roles.state.danger.hex;};
     };
     security_context = {
-      none = {foreground = palette.comment.hex;};
+      none = {foreground = roles.text.muted.hex;};
       selinux = {
-        colon = {foreground = palette.comment.hex;};
-        user = {foreground = palette.foreground.hex;};
-        role = {foreground = palette.magenta.hex;};
+        colon = {foreground = roles.text.muted.hex;};
+        user = {foreground = roles.text.primary.hex;};
+        role = {foreground = roles.accent.secondary.hex;};
         typ = {foreground = palette.yellow.hex;};
-        range = {foreground = palette.magenta.hex;};
+        range = {foreground = roles.accent.secondary.hex;};
       };
     };
     file_type = {
-      image = {foreground = palette.orange.hex;};
-      video = {foreground = palette.pink.hex;};
-      music = {foreground = palette.green.hex;};
-      lossless = {foreground = palette.green.hex;};
-      crypto = {foreground = palette.purple.hex;};
-      document = {foreground = palette.comment.hex;};
-      compressed = {foreground = palette.magenta.hex;};
-      temp = {foreground = palette.red.hex;};
-      compiled = {foreground = palette.cyan.hex;};
+      image = {foreground = roles.state.attention.hex;};
+      video = {foreground = roles.accent.tertiary.hex;};
+      music = {foreground = roles.state.success.hex;};
+      lossless = {foreground = roles.state.success.hex;};
+      crypto = {foreground = roles.accent.structural.hex;};
+      document = {foreground = roles.text.muted.hex;};
+      compressed = {foreground = roles.accent.secondary.hex;};
+      temp = {foreground = roles.state.danger.hex;};
+      compiled = {foreground = roles.accent.primary.hex;};
       build = {foreground = palette.yellow.hex;};
-      source = {foreground = palette.orange.hex;};
+      source = {foreground = roles.state.attention.hex;};
     };
-    punctuation = {foreground = palette.comment.hex;};
-    date = {foreground = palette.pink.hex;};
-    inode = {foreground = palette.selection.hex;};
-    blocks = {foreground = palette.purple.hex;};
+    punctuation = {foreground = roles.text.muted.hex;};
+    date = {foreground = roles.accent.tertiary.hex;};
+    inode = {foreground = roles.surface.selected.hex;};
+    blocks = {foreground = roles.accent.structural.hex;};
     header = {
-      foreground = palette.cyan.hex;
+      foreground = roles.accent.primary.hex;
       is_bold = true;
     };
     octal = {foreground = palette.yellow.hex;};
-    flags = {foreground = palette.purple.hex;};
-    control_char = {foreground = palette.orange.hex;};
-    symlink_path = {foreground = palette.purple.hex;};
+    flags = {foreground = roles.accent.structural.hex;};
+    control_char = {foreground = roles.state.attention.hex;};
+    symlink_path = {foreground = roles.accent.structural.hex;};
     broken_symlink = {
-      foreground = palette.red.hex;
+      foreground = roles.state.danger.hex;
       is_underline = true;
     };
-    broken_path_overlay = {foreground = palette.orange.hex;};
+    broken_path_overlay = {foreground = roles.state.attention.hex;};
   };
 in {
   programs.eza = {

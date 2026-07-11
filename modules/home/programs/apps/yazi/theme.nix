@@ -12,6 +12,7 @@
   ...
 }: let
   p = config.forge.theme.palette;
+  g = config.forge.theme.roles.git;
 
   # Style combinators over palette rows; badge is the dominant shape (background-colored text on a colored block).
   fg = c: {fg = c.hex;};
@@ -223,6 +224,24 @@ in {
     };
 
     filetype.rules = map ruleRow fileRules;
+
+    # git.yazi linemode vocabulary: the plugin's theme keys bind glyph + hue to the owner git rows, killing its plugin-default set. `updated`
+    # carries git's unmerged patterns (U/AA/DD), so it reads the conflict row; ignored keeps muted text and renders no sign (ignore is a
+    # visibility tier, not an owner git state); clean/unknown stay empty.
+    git = {
+      added = fg g.added.color;
+      modified = fg g.modified.color;
+      deleted = fg g.deleted.color;
+      untracked = fg g.untracked.color;
+      updated = fg g.conflict.color;
+      ignored = fg p.comment;
+      added_sign = g.added.glyph;
+      modified_sign = g.modified.glyph;
+      deleted_sign = g.deleted.glyph;
+      untracked_sign = g.untracked.glyph;
+      updated_sign = g.conflict.glyph;
+      ignored_sign = "";
+    };
 
     icon = {
       # Directory rows project from the shared icon vocabulary (theme owner).

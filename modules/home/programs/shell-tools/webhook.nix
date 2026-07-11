@@ -5,7 +5,9 @@
 # Path          : modules/home/programs/shell-tools/webhook.nix
 # ----------------------------------------------------------------------------
 # Signed-event inbox on adnanh/webhook: typed source rows generate hooks.json (HMAC verification via env-named secrets, never literals) and one
-# projector appends typed receipt rows. Loopback-only; an absent secret fails closed (empty HMAC key never matches a signed delivery).
+# projector appends typed receipt rows. Loopback-only; an absent secret fails closed (empty HMAC key never matches a signed delivery). Rows may
+# pin event type or emitter identity through `match` clauses ANDed beside the HMAC rule. A launchd agent owns the listener on Darwin;
+# forge-cockpit keeps its foreground copy as the diagnostic surface (same port — run it only with the agent booted out).
 {
   config,
   lib,
@@ -15,7 +17,8 @@
   jsonFormat = pkgs.formats.json {};
   port = "9010"; # beside the maghz tunnel's loopback 9000 (VPS hook forward), never under it
 
-  # Source rows: signature grammar + event-id extraction per emitter. `ping` carries no signature and no projector — it is the readiness contract only.
+  # Source rows: signature grammar + event-id extraction per emitter, plus optional `match` pins ({source="header"|"payload"; name; value})
+  # ANDed beside the HMAC clause. `ping` carries no signature and no projector — it is the readiness contract only.
   sources = {
     github = {
       signature = {
@@ -87,9 +90,30 @@
     '';
   };
 
-  mkHook = name: row: {
+  mkHook = name: row: let
+    hmac = {
+      match = {
+        type = "payload-hmac-sha256";
+        # Backtick raw string: Go template parsing runs on the raw JSON bytes, so escaped double quotes would break the action.
+        secret = "{{ getenv `${row.signature.secretEnv}` | js }}";
+        parameter = {
+          source = "header";
+          name = row.signature.header;
+        };
+      };
+    };
+    pins = map (m: {
+      match = {
+        type = "value";
+        inherit (m) value;
+        parameter = {inherit (m) source name;};
+      };
+    }) (row.match or []);
+  in {
     id = name;
     execute-command = "${inbox}/bin/forge-webhook-inbox";
+    success-http-response-code = 202; # async acceptance — command output never rides the response
+    trigger-rule-mismatch-http-response-code = 403; # absent signature headers and failed pins read 403; a present-but-wrong HMAC errors upstream as 500 — fail-closed either way
     pass-arguments-to-command = [
       {
         source = "string";
@@ -112,17 +136,10 @@
         name = row.eventHeader;
         envname = "INBOX_EVENT_ID";
       };
-    trigger-rule = {
-      match = {
-        type = "payload-hmac-sha256";
-        # Backtick raw string: Go template parsing runs on the raw JSON bytes, so escaped double quotes would break the action.
-        secret = "{{ getenv `${row.signature.secretEnv}` | js }}";
-        parameter = {
-          source = "header";
-          name = row.signature.header;
-        };
-      };
-    };
+    trigger-rule =
+      if pins == []
+      then hmac
+      else {and = [hmac] ++ pins;};
   };
 
   # The .json suffix is load-bearing: webhook detects the hooks format by extension.
@@ -132,15 +149,25 @@
       {
         id = "ping";
         execute-command = "${pkgs.coreutils}/bin/true";
+        success-http-response-code = 202;
       }
     ]
   );
 
+  # Secret ladder: session env (hook-resolved) execs directly; a bare spawn — the launchd agent — injects the machine config at the process
+  # boundary via doppler run; when Doppler is unreachable the bare exec keeps the fail-closed HMAC floor (empty key never matches).
   runner = pkgs.writeShellApplication {
     name = "forge-webhook";
-    runtimeInputs = [pkgs.webhook];
+    runtimeInputs = [pkgs.webhook pkgs.doppler];
     text = ''
-      exec webhook -hooks ${hooksJson} -ip 127.0.0.1 -port "''${WEBHOOK_PORT:-${port}}" -template "$@"
+      argv=(webhook -hooks ${hooksJson} -ip 127.0.0.1 -port "''${WEBHOOK_PORT:-${port}}" -template -x-request-id "$@")
+      if [ -n "''${FORGE_WEBHOOK_GITHUB_SECRET:-}" ]; then
+        exec "''${argv[@]}"
+      fi
+      if doppler secrets download --project parametric-forge --config dev_machine --no-file --format json >/dev/null 2>&1; then
+        exec doppler run --project parametric-forge --config dev_machine --preserve-env -- "''${argv[@]}"
+      fi
+      exec "''${argv[@]}"
     '';
   };
 in {
@@ -153,5 +180,20 @@ in {
       mkdir -p "${config.xdg.stateHome}/forge-webhook"
       chmod 700 "${config.xdg.stateHome}/forge-webhook"
     '';
+  };
+
+  # Standing listener: KeepAlive restarts a crashed webhook, the throttle bounds crash loops, and dual logs land beside the other forge agents.
+  launchd.agents.forge-webhook = lib.mkIf pkgs.stdenv.hostPlatform.isDarwin {
+    enable = true;
+    config = {
+      Label = "com.parametric-forge.forge-webhook";
+      ProgramArguments = ["${runner}/bin/forge-webhook"];
+      KeepAlive = true;
+      ThrottleInterval = 30;
+      ProcessType = "Background";
+      StandardOutPath = "${config.home.homeDirectory}/Library/Logs/forge-webhook.log";
+      StandardErrorPath = "${config.home.homeDirectory}/Library/Logs/forge-webhook.log";
+      AssociatedBundleIdentifiers = ["com.parametric-forge.forge-webhook"];
+    };
   };
 }

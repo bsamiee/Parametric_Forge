@@ -4,298 +4,287 @@
 # License       : MIT
 # Path          : modules/home/programs/shell-tools/starship.nix
 # ----------------------------------------------------------------------------
-# Prompt themed from the estate palette owner
+# Prompt themed from the estate palette owner. One $fill-composed top line (context left, telemetry right) over a bare pointer line; every
+# segment is a round-paren conditional group so inactive modules vanish gap-free. Enclosure law: the branch is a bare WORD in its role color;
+# brackets wrap discrete marker clusters (the git-status readout, exit status) as ONE outer pair around space-separated `<marker><count>`
+# tokens; parens wrap transient operations (rebase/merge). Git markers project from the theme vocabulary's ASCII register (roles.git .ascii);
+# the transient profile collapses scrollback prompts via zsh/init.nix.
 {
   config,
   lib,
   ...
-}: {
+}: let
+  inherit (config.forge.theme) roles palette icons projections;
+
+  # BMP private-use glyphs mint from codepoint escapes: the harness edit path strips raw 3-byte PUA literals, so rows
+  # land as \uXXXX through fromJSON. Supplementary-plane glyphs (U+F0000+) survive writes and stay literal below.
+  glyph = lib.mapAttrs (_: c: builtins.fromJSON ''"\u${c}"'') {
+    ellipsis = "EA7C"; # codicon ellipsis
+    github = "EA84"; # codicon github
+    dotnet = "E77F"; # devicon dotnet
+  };
+  # Bare marker chars: the ascii twins shed their own brackets inside the cluster's one outer pair; format-string
+  # metachars ($ for the stash marker) ride behind starship's backslash escape.
+  m = lib.mapAttrs (_: r: lib.escape ["$"] (lib.removePrefix "[" (lib.removeSuffix "]" r.ascii))) roles.git;
+  badges = projections.contextBadges;
+  badgeRole = b: lib.last (lib.splitString "." b.role); # dotted theme path -> forge palette token (leaf names match)
+in {
   programs.starship = {
     enable = true;
-    enableTransience = false;
 
     settings = {
       "$schema" = "https://starship.rs/config-schema.json";
 
       # --- [GLOBAL_CONFIGURATION]
-      palette = "dracula";
-      add_newline = true;
-      scan_timeout = 50; # File-scan budget (ms); prompt never blocks on large trees
-      command_timeout = 800; # Command budget (ms); slow git/tool calls get cut, not awaited
-
-      # --- [DRACULA_COLOR_PALETTE]
-      palettes.dracula = lib.mapAttrs (_: c: c.hex) config.forge.theme.palette;
-
-      # --- [PROMPT_FORMAT]
-      # Left-side prompt (contextual information)
+      palette = "forge";
+      scan_timeout = 30; # File-scan budget (ms); context detection never blocks on large trees
+      command_timeout = 500; # Module budget (ms); a slow module is dropped for one render, never awaited (vcs measures ~28ms dirty in this repo)
+      continuation_prompt = "[❯](muted) ";
       format = lib.concatStrings [
-        "$os"
         "$username"
         "$hostname"
+        "$container"
         "$directory"
         "$vcs"
-        "$nodejs"
-        "$python"
-        "$rust"
-        "$golang"
-        "$docker_context"
+        "$fill"
         "$nix_shell"
+        "$python"
+        "$nodejs"
+        "$dotnet"
+        "$kubernetes"
+        "$jobs"
+        "$cmd_duration"
+        "$status"
         "$line_break"
         "$character"
       ];
 
-      # Right-side prompt: operational telemetry.
-      right_format = lib.concatStrings [
-        "$status"
-        "$cmd_duration"
-        "$jobs"
-        "$shell"
-        "$kubernetes"
-        "$time"
-      ];
+      # Scrollback law: past prompts collapse to HH:MM + pointer via this profile; the zsh hook swaps PROMPT on
+      # zle-line-finish, so the collapsed line keeps exactly the pointer color the live prompt showed. Time rides the
+      # left prompt — zle never paints RPROMPT during the finish repaint, so an rtransient profile cannot land.
+      profiles.transient = "$time$character";
 
-      continuation_prompt = " ";
-
-      # --- [CORE_MODULES]
-      username = {
-        style_user = "foreground";
-        style_root = "red";
-        format = "\\[[$user]($style)\\]";
-        disabled = false;
-        show_always = false; # Only show when SSH or root
+      # --- [SEMANTIC_ROLE_PALETTE]
+      # Styles reference the estate roles by intent, never raw hue names; `syntax` carries string-yellow, the one hue
+      # with no semantic role. Only tokens a module style consumes get a row.
+      palettes.forge = {
+        primary = roles.text.primary.hex;
+        subtle = roles.text.subtle.hex;
+        muted = roles.text.muted.hex;
+        accent = roles.accent.primary.hex;
+        accent2 = roles.accent.secondary.hex;
+        structural = roles.accent.structural.hex;
+        success = roles.state.success.hex;
+        warning = roles.state.warning.hex;
+        attention = roles.state.attention.hex;
+        danger = roles.state.danger.hex;
+        syntax = palette.yellow.hex;
       };
 
+      # --- [CORE_MODULES]
+      fill.symbol = " ";
+
+      character = {
+        success_symbol = "[❯](bold success)";
+        error_symbol = "[❯](bold danger)";
+        vimcmd_symbol = "[❮](bold success)";
+        vimcmd_visual_symbol = "[❮](bold syntax)";
+        vimcmd_replace_symbol = "[❮](bold accent2)";
+        vimcmd_replace_one_symbol = "[❮](bold accent2)";
+      };
+
+      username = {
+        show_always = false; # Renders only for root or over SSH
+        style_user = "primary";
+        style_root = "bold danger";
+        format = "[$user]($style) ";
+      };
+
+      # Remote-host badge binds the shared context vocabulary (projections.contextBadges.remote) — wezterm's domain
+      # strip and the yazi header read the same row, so a VPS file carries one identical badge on every surface.
       hostname = {
         ssh_only = true;
-        ssh_symbol = " ";
-        format = "\\[[$ssh_symbol$hostname]($style)\\]";
-        style = "red";
-        disabled = false;
+        ssh_symbol = "${badges.remote.glyph} ";
+        style = "bold ${badgeRole badges.remote}";
+        format = "[$ssh_symbol$hostname]($style) ";
+      };
+
+      # In-container badge (contextBadges.container): native detection fires only inside a linux container rootfs
+      # (/run/.containerenv, /.dockerenv) — the macOS host never renders it; edits that die with the rootfs are the stakes.
+      container = {
+        symbol = "${badges.container.glyph} ";
+        style = "bold ${badgeRole badges.container}";
+        format = "[$symbol$name]($style) ";
       };
 
       directory = {
-        style = "cyan";
-        format = "[$path]($style)[$read_only]($read_only_style) ";
+        truncation_length = 3;
+        truncate_to_repo = true;
+        truncation_symbol = "${glyph.ellipsis}/";
         home_symbol = "~";
         read_only = " 󰌾";
-        read_only_style = "red";
-        truncation_length = 3;
-        truncation_symbol = "…/";
-        truncate_to_repo = true; # Show path relative to git root
-
-        substitutions = {
-          "Documents" = "󰈙";
-          "Downloads" = "󰇚";
-          "Music" = "󰝚";
-          "Pictures" = "󰋩";
-          "Videos" = "󰕧";
-        };
-      };
-
-      character = {
-        success_symbol = "[](green)";
-        error_symbol = "[](red)";
-        vimcmd_symbol = "[](green)";
-        vimcmd_visual_symbol = "[](yellow)";
-        vimcmd_replace_symbol = "[](magenta)";
-        vimcmd_replace_one_symbol = "[](magenta)";
-        format = "$symbol ";
-      };
-
-      os = {
-        format = "[$symbol]($style) ";
-        style = "cyan";
-        disabled = false;
-        symbols = {
-          Linux = " ";
-          Macos = " ";
-          NixOS = " ";
-          Unknown = " ";
-        };
+        read_only_style = "danger";
+        style = "accent";
+        before_repo_root_style = "muted"; # Ancestors dim, repo name carries the weight
+        repo_root_style = "bold accent";
+        repo_root_format = "[$before_root_path]($before_repo_root_style)[$repo_root]($repo_root_style)[$path]($style)[$read_only]($read_only_style) ";
+        format = "[$path]($style)[$read_only]($read_only_style) ";
+        substitutions."~/Documents/99.Github" = "${glyph.github} ";
       };
 
       # --- [GIT_MODULES]
-      # vcs composes the git payload with one repo-detection pass per prompt; git_metrics stays out (per-draw diff cost).
+      # vcs composes the git payload with one repo-detection pass per prompt; four cooperating modules own one concern
+      # each — branch identity, detached hash, in-progress operation, counted tree state. git_metrics is deliberately
+      # absent: line churn is a passive magnitude meter, redundant with the file counts, banned from standing chrome.
       vcs = {
         disabled = false;
         order = ["git"];
-        git_modules = "$git_branch$git_state$git_status";
+        git_modules = "$git_branch$git_commit$git_state$git_status";
       };
 
+      # Branch is a WORD: the name renders as text in its role color on every branch — trunk included — because the
+      # word IS the information; no suppression, no symbol, ASCII truncation on the rare over-long name.
       git_branch = {
-        symbol = " ";
-        format = "\\[[$symbol$branch]($style)\\]";
-        style = "magenta";
-        truncation_length = 20;
-        truncation_symbol = "…";
-        only_attached = false;
-        always_show_remote = false;
-        ignore_branches = [];
+        style = "bold accent2";
+        truncation_length = 24;
+        truncation_symbol = "..";
+        only_attached = true; # Detached HEAD hands the slot to git_commit
+        format = "[$branch]($style) ";
       };
 
+      git_commit = {
+        only_detached = true;
+        tag_disabled = false;
+        tag_symbol = " #";
+        style = "bold attention";
+        format = "[@$hash$tag]($style) ";
+      };
+
+      # Transient in-progress operation: parens per the enclosure law, plain weight — self-clearing, never an anchor.
       git_state = {
-        format = "\\[[$state( $progress_current/$progress_total)]($style)\\]";
-        style = "orange";
-        rebase = "REBASING";
-        merge = "MERGING";
-        revert = "REVERTING";
-        cherry_pick = "CHERRY-PICKING";
-        bisect = "BISECTING";
-        am = "AM";
-        am_or_rebase = "AM/REBASE";
+        style = "attention";
+        format = "\\([$state( $progress_current/$progress_total)]($style)\\) ";
       };
 
+      # One outer bracket, semiotic marker grammar: the cluster reads `main [ ~69 +10 ?12 ^3 ]` — each state is a
+      # space-terminated `<marker><count>` token whose marker char is the theme vocabulary's ASCII register, and one
+      # muted bracket pair (symmetric inner padding) encloses the whole readout. Color collapses to four meaning-bins —
+      # staged=success (index, ready), worktree=subtle (the marker distinguishes state), conflict=bold danger (the sole
+      # alarm on the line), sync topology=accent — with stash receding on the muted text tier alongside the brackets.
+      # Clean renders nothing and the paren group vanishes gap-free.
       git_status = {
-        format = "(\\[[$all_status$ahead_behind]($style)\\])";
-        style = "amber"; # pending/attention is the warning hue, never string-yellow
-        conflicted = "= ";
-        ahead = "⇡ $count";
-        behind = "⇣ $count";
-        diverged = "⇕⇡ $ahead_count ⇣ $behind_count";
-        up_to_date = "";
-        untracked = " $count";
-        stashed = "󰜰 $count";
-        modified = " $count ";
-        staged = " $count ";
-        renamed = " $count ";
-        deleted = " $count ";
-        typechanged = "~ $count ";
-        ignore_submodules = false;
+        format = "([\\[ ](muted)$all_status$ahead_behind[\\]](muted) )";
+        conflicted = "[${m.conflict}$count ](bold danger)";
+        stashed = "[${m.stashed}$count ](muted)";
+        deleted = "[${m.deleted}$count ](subtle)";
+        renamed = "[${m.renamed}$count ](subtle)";
+        modified = "[${m.modified}$count ](subtle)";
+        typechanged = "[${m.typechange}$count ](subtle)";
+        staged = "[${m.staged}$count ](success)";
+        untracked = "[${m.untracked}$count ](subtle)";
+        ahead = "[${m.ahead}$count ](accent)";
+        behind = "[${m.behind}$count ](accent)";
+        diverged = "[${m.ahead}$ahead_count ${m.behind}$behind_count ](accent)";
       };
 
-      # --- [PROGRAMMING_LANGUAGES]
-      nodejs = {
-        format = "\\[[$symbol($version)]($style)\\]";
-        version_format = "v$major.$minor.$patch";
-        symbol = " ";
-        style = "green";
-        disabled = false;
-        not_capable_style = "red";
-        detect_extensions = ["js" "mjs" "cjs" "ts" "mts" "cts"];
-        detect_files = ["package.json" ".node-version" ".nvmrc"];
-        detect_folders = ["node_modules"];
+      # --- [CONTEXT_MODULES]
+      nix_shell = {
+        symbol = "${icons.process.nix} ";
+        style = "structural";
+        heuristic = false;
+        format = "[$symbol$state( $name)]($style) ";
       };
 
+      # direnv is deliberately absent: the binary ships nowhere in the estate (nix-direnv rides the unratified adoption
+      # menu), so the blocked/denied footgun row could never fire; it returns as one row with that adoption.
+      # Toolchain hierarchy: the symbol keeps its brand hue, the version tail dims to subtle — static facts recede
+      # under the live git state.
       python = {
-        format = "\\[[$symbol$pyenv_prefix($version)($virtualenv)]($style)\\]";
-        version_format = "v$major.$minor.$patch";
-        symbol = " ";
-        style = "yellow";
-        pyenv_prefix = "pyenv ";
-        pyenv_version_name = false;
+        symbol = "${icons.process.python} ";
+        style = "syntax";
+        version_format = "v\${major}.\${minor}";
+        format = "[$symbol]($style)[($version)](subtle)[( \\($virtualenv\\))](subtle) ";
         detect_extensions = ["py"];
         detect_files = [".python-version" "Pipfile" "pyproject.toml" "requirements.txt"];
         detect_folders = ["__pycache__" ".venv" "venv"];
       };
 
-      rust = {
-        format = "\\[[$symbol($version)]($style)\\]";
-        version_format = "v$major.$minor.$patch";
-        symbol = "󱘗 ";
-        style = "orange";
-        detect_extensions = ["rs"];
-        detect_files = ["Cargo.toml" "Cargo.lock"];
-        detect_folders = [];
+      nodejs = {
+        symbol = "${icons.process.node} ";
+        style = "success";
+        not_capable_style = "danger";
+        version_format = "v\${major}";
+        format = "[$symbol]($style)[($version)](subtle) ";
+        detect_extensions = ["js" "mjs" "cjs" "ts" "mts" "cts"];
+        detect_files = ["package.json" ".node-version" ".nvmrc"];
+        detect_folders = ["node_modules"];
       };
 
-      golang = {
-        format = "\\[[$symbol($version)]($style)\\]";
-        version_format = "v$major.$minor.$patch";
-        symbol = "󰟓 ";
-        style = "cyan";
-        detect_extensions = ["go"];
-        detect_files = ["go.mod" "go.sum" "go.work"];
-        detect_folders = ["vendor"];
+      dotnet = {
+        symbol = "${glyph.dotnet} ";
+        style = "structural";
+        version_format = "v\${major}";
+        format = "[$symbol]($style)[($version)](subtle) ";
       };
 
-      # --- [SYSTEM_INFORMATION]
-      docker_context = {
-        format = "\\[[$symbol$context]($style)\\]";
-        style = "cyan";
-        symbol = " ";
-        only_with_files = true;
-        disabled = false;
-        detect_extensions = [];
-        detect_files = ["docker-compose.yml" "docker-compose.yaml" "compose.yml" "compose.yaml" "Dockerfile"];
-        detect_folders = [];
-      };
-
-      nix_shell = {
-        format = "\\[[$symbol$state( ($name))]($style)\\]";
-        symbol = " ";
-        style = "purple";
-        impure_msg = "[impure](red)";
-        pure_msg = "[pure](green)";
-        unknown_msg = "";
-        disabled = false;
-        heuristic = false;
-      };
-
-      # --- [OPERATIONAL_MODULES_RIGHT_PROMPT]
-      # Exit truth: pipestatus-aware, renders only on failure.
-      status = {
-        disabled = false;
-        format = "\\[[$symbol$status]($style)\\]";
-        symbol = "✘ ";
-        style = "red";
-        pipestatus = true;
-        pipestatus_format = "\\[[$pipestatus]($style)\\]";
-        pipestatus_separator = "|";
-        recognize_signal_code = true;
-        map_symbol = false;
-      };
-
-      cmd_duration = {
-        min_time = 2000;
-        format = "\\[[󱎫 $duration]($style)\\]";
-        style = "amber";
-        show_milliseconds = false;
-        show_notifications = true;
-        min_time_to_notify = 45000;
-      };
-
-      jobs = {
-        format = "\\[[$symbol$number]($style)\\]";
-        symbol = "✦ ";
-        style = "cyan";
-        number_threshold = 1;
-        symbol_threshold = 1;
-      };
-
-      # Shell identity only when NOT zsh (nested bash/fish/nu/sh sessions).
-      shell = {
-        disabled = false;
-        format = "(\\[[$indicator]($style)\\])";
-        style = "comment";
-        zsh_indicator = "";
-        bash_indicator = "bash";
-        fish_indicator = "fish";
-        nu_indicator = "nu";
-        unknown_indicator = "sh";
-      };
-
-      # Context-gated: visible only where kube work is provable (manifests, chart/kustomize roots, or an explicit KUBECONFIG); prod contexts go red.
+      # docker_context is deliberately absent: the estate exports DOCKER_HOST=unix://... (colima) into every session,
+      # and starship hard-hides the module for unix-socket contexts — the row could never render on either host.
+      # Context-gated: visible only where kube work is provable in the directory (manifests, chart/kustomize roots);
+      # prod contexts go danger. No detect_env_vars row — scan config present makes it dead (Option::or short-circuits),
+      # and the estate exports KUBECONFIG globally, so an env gate would carry zero directory signal anyway.
       kubernetes = {
         disabled = false;
-        format = "\\[[󱃾 $context( \\($namespace\\))]($style)\\]";
-        style = "purple";
+        symbol = "󱃾 ";
+        style = "structural";
         detect_files = ["skaffold.yaml" "helmfile.yaml" "Chart.yaml" "kustomization.yaml"];
         detect_folders = ["k8s" "kubernetes" "manifests"];
-        detect_env_vars = ["KUBECONFIG"];
+        format = "[$symbol$context( \\($namespace\\))]($style) ";
         contexts = [
           {
             context_pattern = ".*(prod|prd).*";
-            style = "red";
+            style = "bold danger";
           }
         ];
       };
 
+      # --- [TELEMETRY_MODULES]
+      jobs = {
+        symbol = "${icons.alphabet.running.glyph} ";
+        style = "accent";
+        number_threshold = 1;
+        symbol_threshold = 1;
+        format = "[$symbol$number]($style) ";
+      };
+
+      cmd_duration = {
+        min_time = 2000;
+        style = "warning";
+        show_notifications = true;
+        min_time_to_notify = 45000;
+        format = "[󱎫 $duration]($style) ";
+      };
+
+      # Exit truth in the marker register: a discrete atomic event earns the brackets — code plus meaning ([X 130 INT],
+      # [X 127 NOTFOUND]); pipelines surface every stage ([X 0|1]) through the segment projection.
+      status = {
+        disabled = false;
+        symbol = "${icons.alphabet.failure.glyph} ";
+        style = "bold danger";
+        recognize_signal_code = true;
+        map_symbol = false;
+        pipestatus = true;
+        pipestatus_separator = "|";
+        pipestatus_format = "[\\[$symbol$pipestatus\\]]($style) ";
+        pipestatus_segment_format = "[$status]($style)";
+        format = "[\\[$symbol$status( $common_meaning)( $signal_name)\\]]($style) ";
+      };
+
+      # Rendered only through the transient profile: scrollback rows carry the estate display-time grammar.
       time = {
         disabled = false;
-        format = "[$time]($style)";
-        style = "dimmed comment";
-        time_format = "%T";
-        utc_time_offset = "local";
+        style = "muted";
+        time_format = projections.timeDisplay.sameDay;
+        format = "[$time]($style) ";
       };
     };
   };

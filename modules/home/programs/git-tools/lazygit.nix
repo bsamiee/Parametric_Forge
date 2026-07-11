@@ -6,7 +6,7 @@
 # ----------------------------------------------------------------------------
 # Lazygit TUI configuration themed from the estate palette owner
 {config, ...}: let
-  inherit (config.forge.theme) palette;
+  inherit (config.forge.theme) palette roles;
 in {
   programs.lazygit = {
     enable = true;
@@ -36,6 +36,8 @@ in {
         splitDiff = "auto";
         screenMode = "normal";
 
+        # File-status glyphs are lazygit-built-in NFv3 (not themable — the tool-owned-glyph exception beside eza); the themable git-state
+        # surface is color, and unstaged-worktree reads the owner modified hue.
         theme = {
           activeBorderColor = [palette.magenta.hex "bold"];
           inactiveBorderColor = [palette.cyan.hex];
@@ -43,7 +45,7 @@ in {
           optionsTextColor = [palette.cyan.hex];
           selectedLineBgColor = [palette.selection.hex];
           defaultFgColor = [palette.foreground.hex];
-          unstagedChangesColor = [palette.red.hex];
+          unstagedChangesColor = [roles.git.modified.color.hex];
           cherryPickedCommitFgColor = [palette.cyan.hex];
           cherryPickedCommitBgColor = [palette.purple.hex];
           markedBaseCommitFgColor = [palette.yellow.hex];

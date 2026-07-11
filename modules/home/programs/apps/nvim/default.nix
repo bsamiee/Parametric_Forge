@@ -359,8 +359,9 @@
       config.forge.theme.syntaxScopes;
     roles =
       config.forge.theme.projections.rolesHex
-      # Git-state vocabulary: the same hues the VS Code and WezTerm gutters read; the glyph half of the row stays with its terminal consumers.
-      // {git = lib.mapAttrs (_: g: g.color) config.forge.theme.projections.gitHex;};
+      # Git-state vocabulary rows: colorscheme highlights read .color, gitsigns sign text reads .glyph (the editor gutter is a terminal render
+      # surface); the ascii twin stays with persisted consumers.
+      // {git = lib.mapAttrs (_: g: {inherit (g) color glyph;}) config.forge.theme.projections.gitHex;};
   };
 
   luarc =
