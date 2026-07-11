@@ -16,6 +16,7 @@
     home,
     username,
     xdgCacheHome,
+    xdgConfigHome ? "${home}/.config", # XDG default; session/resilient/launchd owners pass their scope's configHome, PATH-only callers inherit.
   }: let
     isDarwin = host.os == "darwin"; # OS branch keys on the static host context, never on pkgs (fixpoint safety).
     # Only provisioned directories: useUserPackages replaces ~/.nix-profile with /etc/profiles; cargo/go user bins return once provisioned.
@@ -85,17 +86,57 @@
       if isDarwin
       then "chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing"
       else "chrome-linux/chrome";
+    # One class-partitioned env owner feeding the session (home.sessionVariables), the .zshenv resilient floor, and the launchd GUI surfaces.
+    # `all` rows land byte-identical everywhere so an interactive shell and a Dock-launched agent never resolve divergent pager/config env;
+    # `session` rows are interactive-only (man/bat). Homebrew constants fold in darwin-only. A new cross-surface var is one `all` row.
+    envByClass = {
+      all =
+        {
+          PAGER = "less";
+          GH_PAGER = "delta";
+          GIT_PAGER = "delta";
+          LESS = "-RFX";
+          GH_CONFIG_DIR = "${xdgConfigHome}/gh";
+          CLOUDSDK_CONFIG = "${xdgConfigHome}/gcloud";
+          WORKSPACE_MCP_CREDENTIALS_DIR = "${xdgCacheHome}/workspace-mcp";
+          GOOGLE_WORKSPACE_CLI_CONFIG_DIR = "${xdgConfigHome}/gws";
+          GOOGLE_WORKSPACE_PROJECT_ID = "workspace-mcp-500605";
+          MAGHZ_REMOTE_HOST = "31.97.131.41";
+          MAGHZ_REMOTE_USER = "maghz-agent";
+          MAGHZ_REMOTE_WORKROOT = "/home/maghz-agent/maghz";
+        }
+        // lib.optionalAttrs isDarwin {
+          HOMEBREW_PREFIX = "/opt/homebrew";
+          HOMEBREW_CELLAR = "/opt/homebrew/Cellar";
+          HOMEBREW_REPOSITORY = "/opt/homebrew";
+        };
+      session = {
+        BAT_PAGER = "less -RFXK"; # -X fixes macOS Terminal.app clearing
+        MANROFFOPT = "-c";
+        MANPAGER = "env BATMAN_IS_BEING_MANPAGER=yes bash ${pkgs.bat-extras.batman}/bin/batman"; # static batman export-env, no per-shell fork
+      };
+    };
+    # Never-clobber floor: shells whose parent scrubbed the env behind __HM_SESS_VARS_SOURCED recover the `all` rows; the fold owns the :- idiom.
+    resilientFloorExports = lib.concatStrings (
+      lib.mapAttrsToList (name: value: ''
+        export ${name}="''${${name}:-${value}}"
+      '')
+      envByClass.all
+    );
   in {
     inherit
       energyEnv
       geoEnv
       pythonEnv
+      resilientFloorExports
       shellExports
       userPathEntries
       ;
 
     launchdPathEntries = userPathEntries ++ fallbackPathEntries;
     scientificSessionEnv = pythonEnv // geoEnv // energyEnv;
+    sessionEnv = envByClass.all // envByClass.session;
+    launchdEnv = envByClass.all;
     puppeteerExecutablePath = "${pkgs.playwright-driver.browsers-chromium}/chromium-${pkgs.playwright-driver.browsersJSON.chromium.revision}/${chromiumShell}";
   };
 }

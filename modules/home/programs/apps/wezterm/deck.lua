@@ -51,6 +51,14 @@ function M.workspace_cwd(name)
     return w and w.cwd
 end
 
+-- Bar-cell warmup seam, one owner for every spawn arm (workspace switch, gui/mux startup): a fresh session's pipe cells land as soon as
+-- the zellij server answers, not at the collector's next minute tick; the collect lock makes an overlapping run a no-op.
+function M.collect_soon()
+    wezterm.time.call_after(2, function()
+        wezterm.background_child_process({ rows.paths.forge_agents, "collect" })
+    end)
+end
+
 -- Destructive-action gate, total across version predicates: nightly prompts via Confirmation, stable via a two-row InputSelector — the safety row
 -- degrades in form, never in force. Build-time factory only: the stable arm registers a callback per call.
 function M.confirm(message, on_confirm)
@@ -288,10 +296,7 @@ local function switch_workspace(window, pane, name)
     -- Fresh workspaces land their slug-named inner session at the policy cwd; live workspaces ignore spawn, so reattach converges on that session.
     local spawn = { args = M.session_args(name), cwd = M.workspace_cwd(name) }
     window:perform_action(act.SwitchToWorkspace({ name = name, spawn = spawn }), pane)
-    -- Bar-cell warmup: a fresh session's pipe cells land now, not at the collector's next minute tick (the collect lock absorbs overlap).
-    wezterm.time.call_after(2, function()
-        wezterm.background_child_process({ rows.paths.forge_agents, "collect" })
-    end)
+    M.collect_soon()
     M.receipt({ command = "workspace-switch", action = "switch", workspace = name, result = "ok" })
 end
 
@@ -337,7 +342,7 @@ local function guarded_sync_action(sync)
         for _, p in ipairs(window:active_tab():panes()) do
             local domain = p:get_domain_name()
             if domain ~= "local" then
-                window:toast_notification("forge deck", "sync-panes blocked: remote pane in tab (" .. domain .. ")", nil, 4000)
+                window:toast_notification("Forge Deck", "sync-panes blocked: remote pane in tab (" .. domain .. ")", nil, 4000)
                 M.receipt({ command = "sync-toggle", action = "on", result = "blocked", domain = domain })
                 return
             end
@@ -467,13 +472,13 @@ function M.apply(config)
     for _, cmd in ipairs(rows.commands) do
         local action = command_action(cmd)
         if action then
-            M.palette[#M.palette + 1] = { brief = cmd.label, icon = "md_dock_window", action = action }
+            M.palette[#M.palette + 1] = { brief = cmd.label, icon = rows.palette_icons.command, action = action }
         end
     end
     for _, pattern in ipairs(rows.quick_select) do
         M.palette[#M.palette + 1] = {
             brief = "quick select: " .. pattern.id,
-            icon = "md_select_search",
+            icon = rows.palette_icons.quick_select,
             action = act.QuickSelectArgs({
                 label = pattern.id,
                 patterns = { pattern.regex },

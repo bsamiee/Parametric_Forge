@@ -18,6 +18,9 @@
   # Shared dual-receipt emit fold and the F01 latest-needs fold the peek verb resolves with.
   receiptsFold = import ../../shell-tools/receipts.nix;
   attention = import ../../shell-tools/attention.nix {};
+  profileBin = "/etc/profiles/per-user/${config.home.username}/bin";
+  # Display-time grammar rows (theme owner): human-rendered stamps collapse to HH:MM local same-day, dd/mm HH:MM otherwise.
+  td = config.forge.theme.projections.timeDisplay;
 
   # --- [WATCH_ROWS]
   # Monitor panels as data: viddy owns history/diff memory, gping owns latency graphs. Rows launch as floating panes, never prompt/status hot
@@ -130,30 +133,42 @@
 
             # Resurrection-with-cause fold: the newest fabric receipt per session (forge-zellij session_id + forge-workspace slug JSONL tails)
             # becomes a name -> "last: verb result ts" map, so an EXITED row says WHY it matters, not merely that it died.
-            # Torn tail lines skip via fromjson? (live-appended JSONL law).
+            # Torn tail lines skip via fromjson? (live-appended JSONL law); stored stamps stay ISO UTC and render on the display-time
+            # grammar here (the map value is human-shaped) — a malformed stamp passes through untouched.
             exited_cause_map() {
               local ws_log="''${FORGE_WORKSPACE_RECEIPT_LOG:-$HOME/Library/Logs/forge-workspace.receipts.log}"
               { tail -qn 400 "''${receipt_log%.log}.jsonl" "''${ws_log%.log}.jsonl" 2>/dev/null || true; } \
-                | jq -Rcn '[inputs | fromjson? | select(type == "object")
+                | jq -Rcn '${attention.dispTsJq td}
+                  [inputs | fromjson? | select(type == "object")
                     | {s: ((.session_id // .slug // "-") | tostring), ts: ((.ts // "") | tostring),
                        what: ((.verb // .action // "-") | tostring), result: ((.result // "-") | tostring)}
                     | select(.s != "-" and .s != "" and .ts != "")]
                   | group_by(.s) | map(max_by(.ts))
-                  | map({key: .s, value: ("last: " + .what + " " + .result + " " + .ts)}) | from_entries'
+                  | map({key: .s, value: ("last: " + .what + " " + .result + " " + (.ts | disp_ts))}) | from_entries'
+            }
+
+            # ONE list-sessions parse: name/exited/detail rows (control chars scrubbed; a no-session exit 1 is benign). The inventory row
+            # grammar and the state classifier both project from these rows, so the text-format parse cannot fork. The " [Created " anchor keeps
+            # space-bearing session names whole (first-word split is the anchorless fallback), and EXITED classifies on the detail alone so a
+            # session NAMED "EXITED-x" never reads as dead.
+            session_rows() {
+              (zellij list-sessions --no-formatting 2>/dev/null || true) | jq -Rcn '
+                [inputs | select(length > 0)
+                 | ((capture("^(?<name>.*?) \\[Created (?<rest>.*)$") | {name, detail: ("[Created " + .rest)})
+                    // {name: (split(" ")[0]), detail: (sub("^\\S+ ?"; ""))})
+                 | {name, exited: (.detail | test("EXITED")),
+                    detail: (.detail | gsub("[\\x00-\\x1f]"; " "))}]'
             }
 
             # --- [DISCRIMINATED_INVENTORY_ONE_ROW_GRAMMAR]
             inventory() {
-              # sessions: live and resurrectable (list-sessions exits 1 when none); jq owns escaping, the cause map enriches EXITED rows.
-              (zellij list-sessions --no-formatting 2>/dev/null || true) | jq -Rc --argjson causes "$(exited_cause_map)" '
-                select(length > 0)
-                | (split(" ")[0]) as $name
-                | (if test("EXITED") then "session-exited" else "session" end) as $kind
-                | (sub("^\\S+ "; "") | gsub("[\\x00-\\x1f]"; " ")) as $detail
-                | {row_id: ($kind + ":" + $name), kind: $kind, label: $name,
-                   detail: (if $kind == "session-exited" and (($causes[$name] // "") != "")
-                            then $detail + " — " + $causes[$name] else $detail end),
-                   target: $name}'
+              # sessions from the shared parse; the cause map enriches EXITED rows.
+              session_rows | jq -c --argjson causes "$(exited_cause_map)" '.[]
+                | (if .exited then "session-exited" else "session" end) as $kind
+                | {row_id: ($kind + ":" + .name), kind: $kind, label: .name,
+                   detail: (if .exited and (($causes[.name] // "") != "")
+                            then .detail + " — " + $causes[.name] else .detail end),
+                   target: .name}'
               if [[ -n "$session" ]]; then
                 zj_json list-tabs | jq -c '.[] | {row_id: ("tab:" + (.tab_id | tostring)), kind: "tab",
                   label: .name, detail: ("swap=" + (.active_swap_layout_name // "-") + (if .active then " active" else "" end)),
@@ -182,21 +197,26 @@
                       label: ($root | split("/") | last), detail: $root, target: $root}'
                   if [[ -e "$root/.git" ]]; then
                     # sub() keeps the whole path ($2 truncates at a space); the rail treats a worktree-less or odd repo as empty, not fatal.
+                    # row_id carries repo@worktree: two repos sharing a worktree name (hotfix, review) must stay distinct picker rows.
                     (git -C "$root" worktree list --porcelain 2>/dev/null || true) | gawk '/^worktree /{sub(/^worktree /, ""); print}' \
                       | tail -n +2 \
-                      | jq -Rc --arg root "$root" '(split("/") | last) as $n
-                          | {row_id: ("worktree:" + $n), kind: "worktree",
-                             label: (($root | split("/") | last) + "@" + $n), detail: ., target: .}'
+                      | jq -Rc --arg root "$root" '($root | split("/") | last) as $r | (split("/") | last) as $n
+                          | {row_id: ("worktree:" + $r + "@" + $n), kind: "worktree",
+                             label: ($r + "@" + $n), detail: ., target: .}'
                   fi
                 done
               done
-              for dir in "$layouts_dir" "$recorded_dir"; do
+              # Recorded assets shadow generated ones under a shared name — the graph row must resolve exactly like `layout apply` (recorded_dir
+              # first), so ONE fold tags both dirs and dedupes by row_id with recorded rows emitted first (unique_by keeps the first per key).
+              for dir in "$recorded_dir" "$layouts_dir"; do
                 [[ -d "$dir" ]] || continue
                 src="$([[ "$dir" == "$recorded_dir" ]] && echo recorded || echo generated)"
-                find "$dir" \( -type f -o -type l \) -name '*.kdl' ! -name '*.swap.kdl' | sort \
-                  | jq -Rc --arg src "$src" '(split("/") | last | rtrimstr(".kdl")) as $n
-                      | {row_id: ("layout:" + $n), kind: "layout", label: $n, detail: $src, target: .}'
-              done
+                find "$dir" \( -type f -o -type l \) -name '*.kdl' ! -name '*.swap.kdl' | sort | gawk -v s="$src" '{print s "\t" $0}'
+              done | jq -Rcn '
+                [inputs | split("\t") | . as [$src, $path]
+                 | ($path | split("/") | last | rtrimstr(".kdl")) as $n
+                 | {row_id: ("layout:" + $n), kind: "layout", label: $n, detail: $src, target: $path}]
+                | unique_by(.row_id)[]'
               if [[ -r "$macros_file" ]]; then
                 gawk -F'\t' 'NF >= 2 {printf "%s\t%s\n", $1, $2}' "$macros_file" \
                   | jq -Rc '(split("\t")) as [$name, $cmd]
@@ -254,11 +274,7 @@
                 # Read-only fabric snapshot, schema v2: sessions classify live|resurrectable and carry serialization freshness (the per-session
                 # cache mtime as serialized_ts) plus the newest fabric receipt (exited_cause_map) — resurrection joined to the
                 # receipts plane as one queryable envelope.
-                srows="$( (zellij list-sessions --no-formatting 2>/dev/null || true) | jq -Rcn '
-                  [inputs | select(length > 0)
-                   | {name: (split(" ")[0]),
-                      state: (if test("EXITED") then "resurrectable" else "live" end),
-                      detail: (sub("^\\S+ "; "") | gsub("[\\x00-\\x1f]"; " "))}]')"
+                srows="$(session_rows | jq -c 'map({name, state: (if .exited then "resurrectable" else "live" end), detail})')"
                 ser_rows=""
                 while IFS= read -r n; do # streaming boundary: one stat pass per session name
                   [[ -n "$n" ]] || continue
@@ -528,6 +544,11 @@
             case "$kind" in
               session | session-exited)
                 if [[ -z "$session" ]]; then
+                  # Bar-cell warmup on resurrection: the revived session's pipe cells land once the server answers, not at the next minute
+                  # tick (deck seam pattern); the detached kick survives the exec.
+                  if [[ "$kind" == session-exited ]]; then
+                    (sleep 2 && ${profileBin}/forge-agents collect) >/dev/null 2>&1 &
+                  fi
                   emit_receipt graph "$kind" "$row_id" attach ok 0 "$duration_ms"
                   exec zellij attach "$target"
                 fi
@@ -549,6 +570,7 @@
                   emit_receipt graph "$kind" "$row_id" new-tab ok 0 "$duration_ms"
                 else
                   emit_receipt graph "$kind" "$row_id" attach-create ok 0 "$duration_ms"
+                  (sleep 2 && ${profileBin}/forge-agents collect) >/dev/null 2>&1 & # bar-cell warmup (deck seam pattern)
                   cd "$target" && exec zellij attach --create "$(session_name_of "$(basename "$target")")"
                 fi
                 ;;

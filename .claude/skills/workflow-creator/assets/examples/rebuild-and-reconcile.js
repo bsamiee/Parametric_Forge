@@ -1,3 +1,17 @@
+/**
+ * rebuild-and-reconcile — fix each file independently, then reconcile the deferrals that
+ * span files: cluster by shared file (union-find), fix each cluster once, verify per claim.
+ *
+ * Demonstrates the reconcile shape: workers DEFER cross-file work as data whose resource
+ * slot is a file LIST, a zero-token JS barrier dedups and clusters residuals by connected
+ * file-set, disjoint clusters fix-and-verify concurrently with no collision, and only
+ * genuinely-unresolvable deferrals reach the return — never silently dropped.
+ *
+ * Workflow({ name: 'rebuild-and-reconcile',
+ *            args: ['libs/typescript/interchange/codec/codec.ts',
+ *                   'libs/typescript/interchange/codec/frame.ts'] })
+ */
+
 export const meta = {
     name: 'rebuild-and-reconcile',
     description:

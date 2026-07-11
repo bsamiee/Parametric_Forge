@@ -89,10 +89,8 @@
         return "$bad"
       }
 
-      _usage() {
-        printf 'usage: %s [--check] [--json] [--self-test] [target...]\n' "''${0##*/}" >&2
-        exit 2
-      }
+      # Pure printer: help requests route it to stdout with exit 0, usage errors to stderr with exit 2.
+      _usage() { printf 'usage: %s [--check] [--json] [--self-test] [target...]\n' "''${0##*/}"; }
 
       # Pure classification: deny rows first, then the extension row; unowned readable files fall through to a bounded shebang probe. A dotfile's
       # whole name is not an extension; a bare trailing dot owns nothing. SQL dialect is a filename fact (estate law): duckdb-* rides its own lane
@@ -114,9 +112,10 @@
           esac
         fi
         # Workflow-DSL scripts (top-level await/return) reroute to the prettier lane: biome's grammar rejects them, prettier's babel parser does not.
+        # Quoted glob segments are deliberate: a bare slash-star byte pair reads as a Nix block comment to scc and poisons this file's own count.
         if [[ "$_out" == web ]]; then
           case "/$path" in
-            */.claude/workflows/*.js | */workflow-creator/assets/*.js) _out=workflow ;;
+            *"/.claude/workflows/"*.js | *"/workflow-creator/assets/"*.js) _out=workflow ;;
           esac
         fi
         if [[ -z "$_out" && -f "$path" && -r "$path" ]]; then
@@ -206,14 +205,14 @@
           --check) mode=check ;;
           --json) json_mode=1 ;;
           --self-test) _self_test; exit ;;
-          --help | -h) _usage ;;
+          --help | -h) _usage; exit 0 ;;
           --) shift; targets+=("$@"); break ;;
-          --*) _usage ;;
+          --*) _usage >&2; exit 2 ;;
           *) targets+=("$1") ;;
         esac
         shift
       done
-      ((''${#targets[@]})) || _usage
+      ((''${#targets[@]})) || { _usage >&2; exit 2; }
       readonly mode json_mode targets
       readonly deadline="''${FMT_DEADLINE_SECONDS:-300}"
       [[ "$deadline" =~ ^[0-9]+$ ]] || {
@@ -267,14 +266,18 @@
         elif [[ -d "$target" ]]; then
           # Streaming boundary: fd emits NUL-delimited paths; the pinned fd is unwrapped, so hidden trees (.github/workflows) need -H here. The
           # second pass surfaces extensionless executables for shebang probing. Transient trees (style.nix transientDirs) never route to a lane —
-          # gitignore covers checkouts, these excludes cover non-git trees.
+          # gitignore covers checkouts, these excludes cover non-git trees. fd walks in parallel, so the bytewise sort pins discovery order:
+          # lane batches, chunk boundaries, and failure diagnostics stay identical run to run.
           while IFS= read -r -d $'\0' path; do
             _assign "$path"
           done < <(
-            fd -0 -t f -H --exclude .git ${fdExcludes} "''${fd_exts[@]}" . "$target"
-            fd -0 -t x -H --exclude .git ${fdExcludes} . "$target"
+            {
+              fd -0 -t f -H --exclude .git ${fdExcludes} "''${fd_exts[@]}" . "$target"
+              fd -0 -t x -H --exclude .git ${fdExcludes} . "$target"
+            } | LC_ALL=C sort -zu
           )
         else
+          ((json_mode)) && jq -nc --arg t "$target" '{error: {surface: "fmt", kind: "target", target: $t}}'
           printf 'fmt: no such target: %s\n' "$target" >&2
           exit 2
         fi

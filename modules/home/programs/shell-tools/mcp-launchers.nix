@@ -5,8 +5,9 @@
 # Path          : modules/home/programs/shell-tools/mcp-launchers.nix
 # ----------------------------------------------------------------------------
 # Data-plane owner: builds pinned pnpm launchers from mcp-fleet.nix rows and ships the fleet/agent observability surface — `forge-mcp` emitting
-# schema=forge-mcp/v1 receipts, plus `forge-agents`, the collector turning agent lanes, attention, and AI quota into cached facts the zjstatus bar
-# renders. Bar code never touches providers or credentials; the collector owns that seam.
+# schema=forge-mcp/v1 receipts, plus `forge-agents`, the collector folding the main-agent lifecycle feed (hook rows), bells, and standing estate
+# alerts into cached facts: named zjstatus bar cells, in-pane attention marks reconciled by pane id, and the banner/alerter answer channel.
+# Session state is lifecycle-pure — event order per session_id, never a process census. Bar code never touches providers or credentials.
 {
   config,
   lib,
@@ -16,7 +17,8 @@
   profileBin = "/etc/profiles/per-user/${config.home.username}/bin";
   stateHome = config.xdg.stateHome;
   # Shared owners: notifier + alerter rails and identity bundles (bundle-apps.nix), the dual-receipt emit fold (receipts.nix), the F01 attention
-  # vocabulary (attention.nix), and the platform ps dispatch — /bin/ps is a Darwin fact; NixOS gets procps by store path.
+  # vocabulary (attention.nix), and the platform ps dispatch (/bin/ps is a Darwin fact; NixOS gets procps by store path) — ps serves ONLY the
+  # focus click's host-app ancestry walk, never session state; the attention fold is lifecycle-pure.
   tnBin = config.forge.notifier;
   alerterBin = config.forge.alerter;
   receiptsFold = import ./receipts.nix;
@@ -37,6 +39,7 @@
     then "/bin/ps"
     else "${pkgs.procps}/bin/ps";
   inherit (config.forge.theme) roles icons; # Estate palette owner (modules/home/theme.nix): roles + the closed status-glyph alphabet
+  td = config.forge.theme.projections.timeDisplay; # Display-time grammar rows: HH:MM local same-day, dd/mm HH:MM otherwise
   fleet = import ./mcp-fleet.nix {
     inherit profileBin;
     homeDir = config.home.homeDirectory;
@@ -60,6 +63,9 @@
     alerts = true;
     minIntervalSec = 300;
     bellWindowSec = 900;
+    # Stale guard only, never the signal: lifecycle events carry the waiting state; the window merely retires a session that emitted a
+    # Notification and then went dark with no clearing event (killed mid-prompt, detached host). Dead zellij sessions prune faster by liveness.
+    staleWindowSec = 3600;
     answerTimeoutSec = 120;
     clickVerb =
       if alerterBin != ""
@@ -78,8 +84,17 @@
       };
     };
   };
-  # Agent-lane roster: process basenames the collector counts as agent lanes.
-  agentLanes = ["claude" "codex"];
+  # Collector-side payload arm per bar pipe row (forge.agents.statusPipes below is the vocabulary; the zellij bar derives its {pipe_*} lane from
+  # the same rows). The assert breaks eval when an arm and the vocabulary drift, so a renamed or added cell cannot silently drop off either side.
+  pipePayloads = {
+    alerts = "$alerts_cell";
+    agents = "$agents_cell";
+    session = "#[bg=${roles.accent.tertiary.hex},fg=${roles.text.inverse.hex},bold] __SESSION__ ";
+  };
+  statusPipes = ["alerts" "agents" "session"];
+  pipeBroadcast = assert lib.assertMsg (lib.naturalSort (lib.attrNames pipePayloads) == lib.naturalSort statusPipes)
+  "forge-agents: collector payload arms [${lib.concatStringsSep " " (lib.attrNames pipePayloads)}] drift from statusPipes [${lib.concatStringsSep " " statusPipes}]";
+    lib.concatMapStringsSep " \\\n                " (p: "\"zjstatus::pipe::pipe_${p}::${pipePayloads.${p}}\"") statusPipes;
   mkLauncher = row: name:
     pkgs.writeShellApplication {
       inherit name;
@@ -960,7 +975,7 @@
             | $current
             | .mcp_oauth_credentials_store = "keyring"
             | .mcp_servers = ($projection.mcp_servers + $presence)
-            | del(.features.js_repl)
+            | del(.features.js_repl)          # retired feature row: reconcile strips it wherever the app re-persists it
           ')"
           if [ "$(jq -Sc . <<<"$current")" = "$(jq -Sc . <<<"$merged")" ]; then
             receipt reconcile ok "codex-config-unchanged"
@@ -1078,10 +1093,11 @@
   };
 
   # --- [FORGE_AGENTS]
-  # One data owner turns agent lanes, attention (hook + bell feed rows), standing estate alerts, and AI quota into one cached fact set; the zjstatus
-  # top bar renders the cells and the {notifications} toast, the desktop banner rides terminal-notifier, and the alerter answer channel closes the
-  # loop — one fold, four renderers, per-source policy rows. Failed provider lanes keep the previous value with stale=true and back off exponentially;
-  # a banner click routes back via `answer`/`focus`.
+  # One data owner folds the main-agent lifecycle feed (hook rows: Notification opens WAITING; UserPromptSubmit/PostToolUse/Stop clear;
+  # SessionEnd retires), bells, and standing estate alerts into one cached fact set; the zjstatus top bar renders named cells and the
+  # {notifications} toast, the waiting pane itself carries a reversible frame-title mark (rename-pane by id, reconciled each tick), the
+  # desktop banner rides terminal-notifier, and the alerter answer channel closes the loop — one fold, five renderers, per-source policy
+  # rows. A banner click routes back via `answer`/`focus`. State derives from event order per session_id, never from a process census.
   forgeAgents = pkgs.writeShellApplication {
     name = "forge-agents";
     runtimeInputs = [pkgs.coreutils pkgs.curl pkgs.jq pkgs.findutils pkgs.gawk pkgs.gnugrep pkgs.flock];
@@ -1111,13 +1127,14 @@
               if [ "''${1:-}" = "--json" ]; then
                 jq . "$cache"
               else
-                jq -r '
-                  "as-of      \(.ts)",
-                  "lanes      running=\(.lanes.running) waiting=\(.lanes.waiting) needs_input=\(.attention.needs_input) alerts=\(.alerts.count // 0) bells=\(.bells.count // 0)",
-                  (.alerts.rows[]? | "  alert: \(.label) since \(.ts // "-")"),
-                  (.lanes.rows[]? | "  pid=\(.pid) \(.agent) cpu=\(.cpu) tty=\(.tty) up=\(.etime)"),
-                  "codex      5h=\(.quota.codex.primary_used_percent // "?")% 7d=\(.quota.codex.secondary_used_percent // "?")% stale=\(.quota.codex.stale) source=\(.quota.codex.source // "-")",
-                  "claude     5h_tokens=\(.quota.claude.window_tokens // 0) 7d_tokens=\(.quota.claude.week_tokens // 0) stale=\(.quota.claude.stale) source=\(.quota.claude.source // "-")"
+                # Human render only: stored stamps stay ISO UTC in the cache; the display-time grammar (theme owner rows) renders them, and a
+                # malformed stamp passes through untouched.
+                jq -r '${attention.dispTsJq td}
+                  "as-of      \(.ts | disp_ts)",
+                  "sessions   live=\(.sessions | length) waiting=\(.attention.needs_input // 0) alerts=\(.alerts.count // 0) bells=\(.bells.count // 0)",
+                  (.attention.waiting[]? | "  waiting: \(.label) pane=\(.zellij_pane // "-") since \(.ts | disp_ts)\(if (.message // "") != "" then " — \(.message | .[0:80])" else "" end)"),
+                  (.alerts.rows[]? | "  alert: \(.label) since \(.ts // "-" | disp_ts)"),
+                  (.sessions[]? | "  session: \(.lane) state=\(.state) seen=\(.ts | disp_ts)")
                 ' "$cache"
               fi
             }
@@ -1133,52 +1150,58 @@
               prev="$(jq -c 'if type == "object" then . else {} end' "$cache" 2>/dev/null)" || prev='{}'
               m="$(jq -c 'if type == "object" then . else {} end' "$meta" 2>/dev/null)" || m='{}'
 
-              # Lane backoff: a failing provider lane is skipped for min(60*2^n, 3600)s.
-              should_run() { # $1=lane
-                jq -e --arg l "$1" --argjson now "$now" '
-                  (.lanes[$l] // {failures: 0, last_attempt: 0}) as $s
-                  | ($s.failures == 0) or ($now - $s.last_attempt) >= ([60 * pow(2; $s.failures), 3600] | min)
-                ' <<<"$m" >/dev/null
-              }
+              # ONE zellij session snapshot serves the fold's liveness prune, the pane-mark reconcile, and the pipe broadcast.
+              live_sessions="$(${profileBin}/zellij list-sessions -ns 2>/dev/null || true)"
+              live_json="$(jq -Rcs 'split("\n") | map(select(length > 0))' <<<"$live_sessions")"
 
-              # --- [AGENT_LANES_PROCESS_FACTS]
-              # The lane filter derives from the Nix-owned agentLanes roster.
-              lanes_rows="$(${psBin} -axo pid=,pcpu=,tt=,etime=,args= | awk '
-                {
-                  n = split($5, parts, "/"); base = parts[n]
-                  if (base ~ /^(${lib.concatStringsSep "|" agentLanes})$/)
-                    printf "%s\t%s\t%s\t%s\t%s\n", $1, $2, $3, $4, base
-                }' | jq -Rcs 'split("\n") | map(select(length > 0) | split("\t")
-                  | {pid: (.[0] | tonumber), cpu: (.[1] | tonumber), tty: .[2], etime: .[3], agent: .[4],
-                     state: (if (.[1] | tonumber) >= 5 then "running" else "waiting" end)})')"
-
-              # --- [ATTENTION_AND_BELLS]
-              # ONE feed snapshot, ONE jq: hook rows join live process facts — a session needs input only when its latest event is Notification within
-              # the window AND its recorded tty still hosts an idle claude lane; one row per tty so stacked tabs never inflate the count, and the
-              # newest row keeps its identity so `focus`/`answer` route the click. source=bell rows (WezTerm bell arm) count inside their own policy
-              # window — the deck toast owns the bell's desktop surface, and fromjson? rails the live-appended, lock-free-rotated feed.
-              TZ=UTC0 printf -v att_cut '%(%Y-%m-%dT%H:%M:%SZ)T' "$((now - 900))"
+              # --- [LIFECYCLE_FOLD]
+              # ONE feed snapshot, ONE jq, lifecycle-pure: per session_id the LATEST hook row is the state — Notification = waiting,
+              # UserPromptSubmit/PostToolUse = active, Stop = idle, SessionEnd = gone. Clearing events outstamp the Notification they answer, so
+              # max_by(.ts) encodes every transition; dedupe is group_by(session_id), so stacked tabs never inflate and a reattached tty never
+              # drops a waiter. A session naming a dead zellij session prunes on liveness; the stale window only retires a waiter that went dark
+              # with no clearing event. source=bell rows (WezTerm bell arm) count inside their own policy window — the deck toast owns the bell's
+              # desktop surface — and fromjson? rails the live-appended, lock-free-rotated feed.
+              TZ=UTC0 printf -v att_cut '%(%Y-%m-%dT%H:%M:%SZ)T' "$((now - ${toString notifyPolicy.staleWindowSec}))"
               TZ=UTC0 printf -v bell_cut '%(%Y-%m-%dT%H:%M:%SZ)T' "$((now - ${toString notifyPolicy.bellWindowSec}))"
               feed_facts="$(tail -n 2000 "$feed" 2>/dev/null | jq -Rcn \
-                --arg cut "$att_cut" --arg bcut "$bell_cut" --argjson lanes "$lanes_rows" '
-                def pty: sub("^tty"; "");
-                ([$lanes[] | select(.agent == "claude" and .state == "waiting") | .tty | pty] | unique) as $idle
-                | [inputs | fromjson? | select(type == "object")] as $rows
+                --arg cut "$att_cut" --arg bcut "$bell_cut" --argjson live "$live_json" '
+                [inputs | fromjson? | select(type == "object")] as $rows
+                | ([$rows[] | select((.source // "hook") == "hook")] | group_by(.session_id) | map(max_by(.ts))) as $latest
+                | ($latest | map(select(.event != "SessionEnd"
+                    and (((.zellij_session // "") == "") or (.zellij_session as $s | $live | index($s)))))) as $alive
                 | {
-                    att: ([$rows | map(select((.source // "hook") == "hook"))
-                           | group_by(.session_id)[] | max_by(.ts)
-                           | select(.event == "Notification" and .ts >= $cut
-                                    and ((.tty // "") as $t | $t != "" and ($idle | index($t | pty))))]
-                          | unique_by(.tty)
-                          | {needs_input: length, latest: (max_by(.ts) // null)}),
+                    sessions: [$alive[] | {session_id, zellij_session, zellij_pane, ts,
+                      state: (if .event == "Notification" then "waiting" elif .event == "Stop" then "idle" else "active" end),
+                      lane: (if (.zellij_session // "") != "" then "\(.zellij_session)·p\(.zellij_pane)"
+                             else (.session_id | tostring | .[0:8]) end)}],
+                    waiting: [$alive[] | select(.event == "Notification" and .ts >= $cut)],
                     bells: ([$rows[] | select((.source // "") == "bell" and .ts >= $bcut)]
                             | {count: length, latest: (max_by(.ts) // null)})
                   }' 2>/dev/null)" \
-                || feed_facts='{"att": {"needs_input": 0, "latest": null}, "bells": {"count": 0, "latest": null}}'
-              att="$(jq -c '.att' <<<"$feed_facts")"
+                || feed_facts='{"sessions": [], "waiting": [], "bells": {"count": 0, "latest": null}}'
+              sessions="$(jq -c '.sessions' <<<"$feed_facts")"
               bells="$(jq -c '.bells' <<<"$feed_facts")"
-              needs="$(jq -r '.att.needs_input' <<<"$feed_facts")"
               bells_n="$(jq -r '.bells.count' <<<"$feed_facts")"
+
+              # --- [WAITER_IDENTITY_ENRICHMENT]
+              # One list-panes snapshot per zellij session that hosts a waiter (usually zero or one) resolves pane id -> tab + live frame title,
+              # so the bar cell, banner, alerter, and pane mark all NAME the waiter: SESSION·T<n>. A dead session folds to an empty pane set.
+              panes='{}'
+              while IFS= read -r zs; do
+                p="$(${profileBin}/zellij --session "$zs" action list-panes --all --json 2>/dev/null || true)"
+                jq -e 'type == "array"' <<<"$p" >/dev/null 2>&1 || p='[]'
+                panes="$(jq -c --arg zs "$zs" --argjson p "$p" \
+                  '.[$zs] = ($p | map(select(.is_plugin | not) | {id, tab_position, title}))' <<<"$panes")"
+              done < <(jq -r '[.waiting[] | .zellij_session | select((. // "") != "")] | unique | .[]' <<<"$feed_facts")
+              att="$(jq -c --argjson panes "$panes" '
+                [.waiting[] | . as $w
+                 | (first(($panes[$w.zellij_session // ""] // [])[] | select((.id | tostring) == ($w.zellij_pane // ""))) // null) as $p
+                 | $w + {tab: (if $p then ($p.tab_position + 1) else null end), title: ($p.title // "")}
+                 | . + {label: (if (.zellij_session // "") != ""
+                     then ((.zellij_session | ascii_upcase) + (if .tab then "·T\(.tab)" else "" end))
+                     else (.session_id | tostring | .[0:6]) end)}]
+                | {needs_input: length, waiting: ., latest: (max_by(.ts) // null)}' <<<"$feed_facts")"
+              needs="$(jq -r '.needs_input' <<<"$att")"
 
               # --- [ALERTS_STANDING_ESTATE_CONDITIONS]
               # Catalog rows (attention.nix joined to the receipt registry): each predicate judges the LAST receipt row of its kind, so an alert
@@ -1200,159 +1223,104 @@
               [ -n "$alerts" ] || alerts='[]'
               alerts_n="$(jq -r 'length' <<<"$alerts")"
 
-              # --- [QUOTA_CODEX_PROVIDER_SNAPSHOTS]
-              cx_prev="$(jq -c '.quota.codex // {}' <<<"$prev")"
-              cx="$cx_prev"; cx_ok=1
-              if should_run codex; then
-                cx_ok=0
-                while IFS= read -r f; do
-                  # fromjson? rail: a torn tail line in a live-appended session file skips instead of aborting the stream mid-file.
-                  rl="$(jq -Rc 'fromjson? | select(.payload.rate_limits.primary) | .payload.rate_limits' "$f" 2>/dev/null | tail -1 || true)"
-                  if [ -n "$rl" ]; then
-                    cx="$(jq -c --arg ts "$ts" '{
-                      provider: "codex", source: "provider", as_of: $ts, stale: false, error: null,
-                      primary_used_percent: .primary.used_percent, primary_window_min: .primary.window_minutes,
-                      primary_resets_at: .primary.resets_at,
-                      secondary_used_percent: .secondary.used_percent, secondary_window_min: .secondary.window_minutes,
-                      secondary_resets_at: .secondary.resets_at
-                    }' <<<"$rl")"
-                    cx_ok=1
-                    break
-                  fi
-                done < <(find "$HOME/.codex/sessions" -type f -name '*.jsonl' -newermt '-7 days' -printf '%T@ %p\n' 2>/dev/null \
-                  | sort -rn | head -20 | cut -d' ' -f2-)
-                if [ "$cx_ok" = 0 ]; then
-                  cx="$(jq -c '. + {stale: true, error: "no rate_limit snapshot within 7d"}' <<<"$cx_prev")"
-                fi
-              fi
-
-              # --- [QUOTA_CLAUDE_LOCAL_ESTIMATION]
-              cl_prev="$(jq -c '.quota.claude // {}' <<<"$prev")"
-              cl="$cl_prev"; cl_ok=1
-              if should_run claude; then
-                cl_ok=0
-                TZ=UTC0 printf -v cutoff '%(%Y-%m-%dT%H:%M:%SZ)T' "$((now - 18000))"
-                win_tok="$(
-                  find "$HOME/.claude/projects" -type f -name '*.jsonl' -newermt '-5 hours' -print0 2>/dev/null \
-                    | while IFS= read -r -d "" f; do tail -n 2000 "$f" 2>/dev/null | grep '"usage"' || true; done \
-                    | jq -Rn --arg c "$cutoff" \
-                      '[inputs | fromjson?
-                        | select(type == "object" and (.message | type) == "object"
-                                 and .message.usage and ((.timestamp // "") >= $c))
-                        | .message.usage | ((.input_tokens // 0) + (.output_tokens // 0))] | add // 0' 2>/dev/null
-                )" || win_tok=""
-                TZ=UTC0 printf -v week_cut '%(%Y-%m-%d)T' "$((now - 604800))"
-                # One projection per stats snapshot; a missing cache leaves both fields at their fallbacks.
-                week_tok="" week_asof=""
-                IFS=$'\x1f' read -r week_tok week_asof < <(jq -r --arg d "$week_cut" \
-                  '[([.dailyModelTokens[]? | select(.date >= $d) | .tokensByModel | add] | add // 0 | tostring),
-                    (.lastComputedDate // "-")] | join("\u001f")' \
-                  "$HOME/.claude/stats-cache.json" 2>/dev/null) || true
-                [ -n "$week_asof" ] || week_asof="-"
-                if [ -n "$win_tok" ]; then
-                  cl="$(jq -cn --arg ts "$ts" --argjson w "$win_tok" --argjson wk "''${week_tok:-0}" --arg wa "$week_asof" '{
-                    provider: "claude", source: "local-estimate", as_of: $ts, stale: false, error: null,
-                    window_min: 300, window_tokens: $w, burn_tokens_per_hour: (($w / 5) | floor),
-                    week_tokens: $wk, week_as_of: $wa
-                  }')"
-                  cl_ok=1
-                else
-                  cl="$(jq -c '. + {stale: true, error: "transcript scan failed"}' <<<"$cl_prev")"
-                fi
-              fi
-
               # --- [CACHE_ASSEMBLY]
               tmp_cache="$cache.tmp.$$"
-              jq -cn --arg ts "$ts" --argjson lanes "$lanes_rows" --argjson att "$att" \
-                --argjson bells "$bells" --argjson alerts "$alerts" \
-                --argjson cx "$cx" --argjson cl "$cl" '{
-                schema: "forge-agents/v1", ts: $ts,
-                lanes: {
-                  rows: $lanes,
-                  running: ([$lanes[] | select(.state == "running")] | length),
-                  waiting: ([$lanes[] | select(.state == "waiting")] | length)
-                },
+              jq -cn --arg ts "$ts" --argjson sessions "$sessions" --argjson att "$att" \
+                --argjson bells "$bells" --argjson alerts "$alerts" '{
+                schema: "forge-agents/v2", ts: $ts,
+                sessions: $sessions,
                 attention: $att,
                 bells: $bells,
-                alerts: {count: ($alerts | length), rows: $alerts},
-                quota: {codex: $cx, claude: $cl}
+                alerts: {count: ($alerts | length), rows: $alerts}
               }' >"$tmp_cache"
               mv "$tmp_cache" "$cache"
 
-              # --- [PROJECTIONS]
-              # The zjstatus top bar is the ONE render surface; the collector owns role->palette styling (build-time hexes from the theme owner) and
-              # ships fully formatted payloads the bar renders verbatim (dynamic). Cell grammar mirrors the toast urgency prefixes: `AI <lanes>`
-              # (muted at 0, green above), attention-glyph<n> needs-input (orange), bell-glyph<n> bells (amber) — segments appear only when nonzero, and the run/wait
-              # CPU split stays out of the bar (sampling noise, not signal). Standing alerts ride their OWN red cell naming the first kind
-              # (+N overflow), so estate state never recolors the agent cell. One projection per cache snapshot; 0x1f join survives empties.
-              IFS=$'\x1f' read -r lanes_n cx_p cx_s cl_w cx_stale cl_stale < <(jq -r '
-                [(.lanes.rows | length | tostring),
-                 (.quota.codex.primary_used_percent // "" | tostring),
-                 (.quota.codex.secondary_used_percent // "" | tostring),
-                 (.quota.claude.window_tokens // "" | tostring),
-                 (.quota.codex.stale != false | tostring),
-                 (.quota.claude.stale != false | tostring)] | join("\u001f")' "$cache")
-              seg() { # $1=fg $2=attrs("" or ",bold") $3=text -> one colored fragment on the bar plane
-                printf '#[bg=${roles.surface.surface.hex},fg=%s%s]%s' "$1" "$2" "$3"
-              }
-              ai_fg="${roles.text.muted.hex}"
-              [ "$lanes_n" = 0 ] || ai_fg="${roles.state.success.hex}"
-              agents_cell="$(seg "$ai_fg" ",bold" " AI $lanes_n")"
-              [ "''${needs:-0}" = 0 ] || agents_cell="$agents_cell$(seg "${roles.state.attention.hex}" ",bold" " ${icons.alphabet.attention.glyph}''${needs}")"
-              [ "''${bells_n:-0}" = 0 ] || agents_cell="$agents_cell$(seg "${roles.state.warning.hex}" "" " ${icons.alphabet.bell.glyph}''${bells_n}")"
-              agents_cell="$agents_cell "
-              # A piped single space clears the cell when the last alert lifts (an empty pipe payload would drop the message entirely).
-              alerts_cell=" "
-              if [ "''${alerts_n:-0}" -gt 0 ]; then
-                a_kind="$(jq -r '.[0].kind // "alert" | ascii_upcase' <<<"$alerts")"
-                a_more=""
-                [ "''${alerts_n}" -le 1 ] || a_more=" +$((alerts_n - 1))"
-                alerts_cell="$(seg "${roles.state.danger.hex}" ",bold" " ${icons.alphabet.failure.glyph} ''${a_kind}''${a_more} ")"
-              fi
-              quota_text=""
-              if [ -n "$cx_p" ]; then quota_text="CX ''${cx_p%.*}%·''${cx_s%.*}%"; fi
-              if [ -n "$cl_w" ]; then
-                cl_h="$(jq -rn --argjson t "$cl_w" 'if $t >= 1000000 then "\(($t / 100000 | floor) / 10)M" elif $t >= 1000 then "\(($t / 1000 | floor))K" else "\($t)" end')"
-                quota_text="''${quota_text:+$quota_text }CL $cl_h"
-              fi
-              [ -n "$quota_text" ] || quota_text="quota -"
-              # Quota escalates on the codex 5h window: muted, warning at 70%, danger at 90%.
-              quota_fg="${roles.text.muted.hex}"
-              if [ -n "$cx_p" ]; then
-                p="''${cx_p%.*}"
-                if [ "$p" -ge 90 ]; then quota_fg="${roles.state.danger.hex}"
-                elif [ "$p" -ge 70 ]; then quota_fg="${roles.state.warning.hex}"; fi
-              fi
-              quota_cell="$(seg "$quota_fg" "" " $quota_text ")"
+              # --- [PANE_MARK_RECONCILE]
+              # The waiting pane itself is the primary attention surface: each waiter's frame title gains a reversible "[?] <title>" mark by pane
+              # id (off-focus, cross-session, no focus theft); undo-rename-pane restores the auto title the moment the clearing event lands. The
+              # meta file holds the marked set; each tick marks entrants and unmarks leavers — set reconciliation, so a dead session or pane
+              # degrades to a benign no-op and a collector restart re-derives the whole set from disk. Only entrants rename, so an operator's
+              # manual title edit on an already-marked pane is never fought.
+              declare -A want_mark=() had_mark=()
+              while IFS=$'\t' read -r w_zs w_zp w_title; do
+                [ -n "$w_zs" ] && [ -n "$w_zp" ] || continue
+                want_mark["$w_zs"$'\x1f'"$w_zp"]="''${w_title:-input needed}"
+              done < <(jq -r '.attention.waiting[]?
+                | select(((.zellij_session // "") != "") and ((.zellij_pane // "") != ""))
+                | [.zellij_session, .zellij_pane, (.title // "")] | @tsv' "$cache")
+              while IFS= read -r mk; do
+                [ -n "$mk" ] || continue
+                had_mark["$mk"]=1
+              done < <(jq -r '.marked[]?' <<<"$m")
+              for mk in "''${!had_mark[@]}"; do
+                [ -n "''${want_mark[$mk]+x}" ] \
+                  || ${profileBin}/zellij --session "''${mk%%$'\x1f'*}" action undo-rename-pane --pane-id "''${mk##*$'\x1f'}" 2>/dev/null || true
+              done
+              for mk in "''${!want_mark[@]}"; do
+                [ -n "''${had_mark[$mk]+x}" ] \
+                  || ${profileBin}/zellij --session "''${mk%%$'\x1f'*}" action rename-pane --pane-id "''${mk##*$'\x1f'}" \
+                    "${icons.alphabet.attention.ascii} ''${want_mark[$mk]:0:40}" 2>/dev/null || true
+              done
+              marked="$(printf '%s\n' "''${!want_mark[@]}" | jq -Rcs 'split("\n") | map(select(length > 0))')"
 
-              # Workspace-graph lane rows: the forge-zellij agent-lane arm reads this.
-              jq -c '[.lanes.rows[] | {lane: "\(.agent)-\(.pid)", status: .state, pane_id: ""}]' \
-                "$cache" >"$lanes_out.tmp.$$"
+              # --- [PROJECTIONS]
+              # The zjstatus top bar is the ONE render surface; the collector owns role->palette styling (build-time hexes from the theme owner)
+              # and ships fully formatted payloads the bar renders verbatim (dynamic). ONE jq over the cache snapshot renders every cell (fork
+              # discipline: one projection per payload). The attention cell NAMES the waiter — "[?] SESSION·T2" (ASCII marker register, orange),
+              # "[?] n · <newest>" when several wait; bells stay a count ("[B] n", amber); standing alerts ride their OWN red cell naming the
+              # first kind (+N overflow), so estate state never recolors the agent cell. INVARIANT: every payload — populated or empty — opens
+              # with an explicit role-derived #[bg=surface] directive; a directive-less payload under rendermode dynamic inherits the adjacent
+              # cell's hue (the empty-state relic), and an empty payload would drop the pipe message entirely.
+              IFS=$'\x1f' read -r agents_cell alerts_cell sessions_n < <(jq -r '
+                def seg(fg; a; t): "#[bg=${roles.surface.surface.hex},fg=" + fg + a + "]" + t;
+                def blank: "#[bg=${roles.surface.surface.hex}] ";
+                (.attention.needs_input // 0) as $needs
+                | (.attention.latest.label // "agent") as $who
+                | (.bells.count // 0) as $bells
+                | (.alerts.count // 0) as $alerts
+                | [
+                    (if $needs == 0 and $bells == 0 then blank
+                     else (if $needs > 0 then
+                             seg("${roles.state.attention.hex}"; ",bold";
+                               " ${icons.alphabet.attention.ascii} " + (if $needs > 1 then "\($needs) · " else "" end) + $who)
+                           else "" end)
+                          + (if $bells > 0 then seg("${roles.state.warning.hex}"; ""; " ${icons.alphabet.bell.ascii} \($bells)") else "" end)
+                          + " " end),
+                    (if $alerts == 0 then blank
+                     else seg("${roles.state.danger.hex}"; ",bold";
+                       " ${icons.alphabet.failure.ascii} \(.alerts.rows[0].kind // "alert" | ascii_upcase)"
+                       + (if $alerts > 1 then " +\($alerts - 1)" else "" end) + " ") end),
+                    (.sessions | length | tostring)
+                  ] | join("\u001f")' "$cache")
+
+              # Workspace-graph lane rows (forge-zellij agent-lane inventory arm): lifecycle sessions with real pane targets, no process census.
+              jq -c '[.sessions[] | {lane, status: .state, pane_id: (.zellij_pane // "")}]' "$cache" >"$lanes_out.tmp.$$"
               mv "$lanes_out.tmp.$$" "$lanes_out"
 
-              # zjstatus pipe cells into every live session; a dead server is benign. The session identity chip is the collector's uppercase
-              # display projection of each session's own name — pink accent fill flush to the bar's right edge (no trailing gap).
-              while IFS= read -r s; do
-                [ -n "$s" ] || continue
-                session_cell="$(printf '#[bg=${roles.accent.tertiary.hex},fg=${roles.text.inverse.hex},bold] %s ' "''${s^^}")"
-                ${profileBin}/zellij --session "$s" pipe "zjstatus::pipe::pipe_alerts::$alerts_cell" 2>/dev/null || true
-                ${profileBin}/zellij --session "$s" pipe "zjstatus::pipe::pipe_agents::$agents_cell" 2>/dev/null || true
-                ${profileBin}/zellij --session "$s" pipe "zjstatus::pipe::pipe_quota::$quota_cell" 2>/dev/null || true
-                ${profileBin}/zellij --session "$s" pipe "zjstatus::pipe::pipe_session::$session_cell" 2>/dev/null || true
-              done < <(${profileBin}/zellij list-sessions -ns 2>/dev/null || true)
-
-              # Rise contract per notification class: rise_gate is the predicate (count rise + per-class throttle); notify_post fans terminal-notifier
-              # banner (optional click verb), in-bar toast, ntfy publish (priority/tags; absent custody → local-only). The {notifications} widget
-              # renders payloads literally, so urgency rides the text prefix ("?" needs-input, "!!" failure) and per-urgency color stays on the
-              # pipe_agents cell. A new class is one gate + one post; a dead zellij, absent notifier, or unreachable ntfy target is benign.
-              notify_bars() { # $1 = one-line message
-                local msg
-                msg="$(tr -d '\n' <<<"$1")"
-                msg="''${msg:0:120}"
+              # ONE broadcast fold owns pipe delivery for cells and toasts over the tick's session snapshot; a dead server is benign.
+              # __SESSION__ in a payload interpolates each session's uppercase display name — the identity chip, pink accent fill flush to
+              # the bar's right edge (the trailing space rides inside the fill, so no surface gap trails it).
+              zj_broadcast() { # $@ = zjstatus pipe payloads, one delivery per live session each
+                local s payload
                 while IFS= read -r s; do
                   [ -n "$s" ] || continue
-                  ${profileBin}/zellij --session "$s" pipe "zjstatus::notify::$msg" 2>/dev/null || true
-                done < <(${profileBin}/zellij list-sessions -ns 2>/dev/null || true)
+                  for payload in "$@"; do
+                    ${profileBin}/zellij --session "$s" pipe "''${payload//__SESSION__/''${s^^}}" 2>/dev/null || true
+                  done
+                done <<<"$live_sessions"
+              }
+              zj_broadcast \
+                ${pipeBroadcast}
+
+              # Rise contract per notification class: rise_gate is the predicate (count rise + per-class throttle); notify_post fans terminal-notifier
+              # banner (optional subtitle + click verb), in-bar toast, ntfy publish (priority/tags; absent custody → local-only). The {notifications}
+              # widget renders payloads literally, so class rides the ASCII marker prefix ("[?]" needs-input, "[X]" failure — the alphabet's ascii
+              # twins) and per-urgency color stays on the cells. A new class is one gate + one post; a dead zellij, absent notifier, or unreachable
+              # ntfy target is benign.
+              notify_bars() { # $1 = one-line message, truncated to the toast budget and broadcast on the shared fold
+                local msg
+                msg="$(tr -d '\n' <<<"$1")"
+                zj_broadcast "zjstatus::notify::''${msg:0:120}"
               }
               # Cross-device custody: session env first, launchd GUI replay second (the collector runs under launchd with no session env).
               ntfy_url="''${NTFY_URL:-}" ntfy_topic="''${NTFY_TOPIC:-}" ntfy_token="''${NTFY_TOKEN:-}"
@@ -1373,19 +1341,21 @@
                 [ "''${1:-0}" -gt "''${2:-0}" ] \
                   && [ $((now - ''${3:-0})) -ge ${toString notifyPolicy.minIntervalSec} ]
               }
-              notify_post() { # $1=group $2=title $3=banner_msg $4=bar_msg $5=click_cmd("" = none) $6=priority $7=tags
+              notify_post() { # $1=group $2=title $3=subtitle("" = none) $4=banner_msg $5=bar_msg $6=click_cmd("" = none) $7=priority $8=tags
                 if [ -n "$tn" ]; then
-                  local -a tn_args=(-title "$2" -message "$3" -group "$1")
-                  [ -z "$5" ] || tn_args+=(-execute "$5")
+                  local -a tn_args=(-title "$2" -message "$4" -group "$1")
+                  [ -z "$3" ] || tn_args+=(-subtitle "$3")
+                  [ -z "$6" ] || tn_args+=(-execute "$6")
                   "$tn" "''${tn_args[@]}" >/dev/null 2>&1 || true
                 fi
-                notify_bars "$4"
-                notify_remote "$6" "$7" "$2" "$3"
+                notify_bars "$5"
+                notify_remote "$7" "$8" "$2" "$4"
               }
 
-              # needs-input rise: the banner carries the waiting pane's last line via peek, and its click runs the policy verb — `answer` (alerter
-              # reply routed into the waiting pane) where the alerter rail exists, bare `focus` elsewhere (osascript clicks opened Script Editor — the
-              # scar that keeps posting on terminal-notifier).
+              # needs-input rise: the banner NAMES the waiter (title "Forge · SESSION·T2"), carries the verbatim Notification prompt as the body
+              # (the waiting pane's last line only as fallback), and states the reply destination in the subtitle; its click runs the policy verb —
+              # `answer` (alerter reply routed into the waiting pane) where the alerter rail exists, bare `focus` elsewhere (osascript clicks
+              # opened Script Editor — the scar that keeps posting on terminal-notifier).
               prev_needs="$(jq -r '.attention.needs_input // 0' <<<"$prev")"
               last_notify="$(jq -r '.last_notify // 0' <<<"$m")"
               notified=0
@@ -1393,22 +1363,20 @@
               if ${lib.boolToString notifyPolicy.needsInput} \
                 && rise_gate "''${needs:-0}" "$prev_needs" "$last_notify"; then
                 peek_line=""
-                IFS=$'\x1f' read -r n_zs n_zp n_msg < <(jq -r \
-                  '.latest // {} | [.zellij_session // "", .zellij_pane // "", .message // ""] | join("\u001f")' <<<"$att") || true
+                IFS=$'\x1f' read -r n_label n_zs n_zp n_msg < <(jq -r \
+                  '.latest // {} | [.label // "agent", .zellij_session // "", .zellij_pane // "", .message // ""] | join("\u001f")' <<<"$att") || true
                 if [ -z "''${n_msg:-}" ] && [ -n "''${n_zs:-}" ] && [ -n "''${n_zp:-}" ]; then
                   peek_line="$(${profileBin}/forge-zellij peek --session "$n_zs" --pane "$n_zp" --lines 5 --text 2>/dev/null | tail -1 || true)"
                   peek_line="''${peek_line:0:80}"
                 fi
-                # Sourcing rides every surface: banner and toast name the emitting session (uppercased); the hook's Notification message is the
-                # detail when present, the waiting pane's last line the fallback.
-                n_src="''${n_zs:-agent}"
-                n_src="''${n_src^^}"
                 n_detail="''${n_msg:-$peek_line}"
+                n_subtitle=""
+                [ -z "''${n_zs:-}" ] || n_subtitle="reply lands in ''${n_zs} pane ''${n_zp}"
                 n_count=""
                 [ "''${needs:-0}" -le 1 ] || n_count="''${needs}x · "
-                notify_post forge-agents "Forge Agents [''${n_src}]" \
-                  "''${n_count}waiting for input''${n_detail:+ — $n_detail}" \
-                  "? ''${n_count}''${n_src}''${n_detail:+ — $n_detail}" \
+                notify_post forge-agents "Forge · ''${n_label:-agent}" "$n_subtitle" \
+                  "''${n_count}''${n_detail:-waiting for input}" \
+                  "${icons.alphabet.attention.ascii} ''${n_count}''${n_label:-agent}''${n_detail:+ — $n_detail}" \
                   "${profileBin}/forge-agents ${notifyPolicy.clickVerb}" \
                   "${notifyPolicy.remote.needsInput.priority}" "${notifyPolicy.remote.needsInput.tags}"
                 notified=1
@@ -1421,33 +1389,25 @@
               if ${lib.boolToString notifyPolicy.alerts} \
                 && rise_gate "''${alerts_n:-0}" "$prev_alerts" "$last_alert_notify"; then
                 alert_labels="$(jq -r 'map(.label) | join(", ")' <<<"$alerts")"
-                notify_post forge-estate "Forge Estate" \
+                notify_post forge-estate "Forge Estate" "" \
                   "''${alerts_n} standing alert(s): ''${alert_labels}" \
-                  "!! ''${alert_labels}" "" \
+                  "${icons.alphabet.failure.ascii} ''${alert_labels}" "" \
                   "${notifyPolicy.remote.alerts.priority}" "${notifyPolicy.remote.alerts.tags}"
                 alert_notified=1
               fi
 
               # --- [META_TRANSITION_RECEIPT]
-              jq -cn --argjson now "$now" --argjson m "$m" \
-                --argjson cx_ok "$cx_ok" --argjson cl_ok "$cl_ok" \
-                --argjson notified "$notified" --argjson alert_notified "$alert_notified" '
-                ($m.lanes // {}) as $l
-                | {
-                    last_notify: (if $notified == 1 then $now else ($m.last_notify // 0) end),
-                    last_alert_notify: (if $alert_notified == 1 then $now else ($m.last_alert_notify // 0) end),
-                    lanes: {
-                      codex: (if $cx_ok == 1 then {failures: 0, last_attempt: $now}
-                              else {failures: ((($l.codex.failures // 0) + 1) | if . > 6 then 6 else . end), last_attempt: $now} end),
-                      claude: (if $cl_ok == 1 then {failures: 0, last_attempt: $now}
-                               else {failures: ((($l.claude.failures // 0) + 1) | if . > 6 then 6 else . end), last_attempt: $now} end)
-                    }
-                  }' >"$meta.tmp.$$"
+              # The meta file carries the notification throttle stamps AND the pane-mark set the next tick reconciles against.
+              jq -cn --argjson now "$now" --argjson m "$m" --argjson marked "$marked" \
+                --argjson notified "$notified" --argjson alert_notified "$alert_notified" '{
+                  last_notify: (if $notified == 1 then $now else ($m.last_notify // 0) end),
+                  last_alert_notify: (if $alert_notified == 1 then $now else ($m.last_alert_notify // 0) end),
+                  marked: $marked
+                }' >"$meta.tmp.$$"
               mv "$meta.tmp.$$" "$meta"
 
-              # jq's // coerces false to the alternative; != false keeps a real false.
-              summary="needs=''${needs:-0} lanes=$lanes_n alerts=''${alerts_n:-0} bells=''${bells_n:-0} cx_stale=$cx_stale cl_stale=$cl_stale"
-              prev_summary="$(jq -r '"needs=\(.attention.needs_input // 0) run=\(.lanes.running // 0) alerts=\(.alerts.count // 0) bells=\(.bells.count // 0) cx_stale=\(.quota.codex.stale != false) cl_stale=\(.quota.claude.stale != false)"' <<<"$prev" 2>/dev/null)" || prev_summary=""
+              summary="needs=''${needs:-0} sessions=$sessions_n alerts=''${alerts_n:-0} bells=''${bells_n:-0}"
+              prev_summary="$(jq -r '"needs=\(.attention.needs_input // 0) sessions=\(.sessions | length) alerts=\(.alerts.count // 0) bells=\(.bells.count // 0)"' <<<"$prev" 2>/dev/null)" || prev_summary=""
               if [ "$summary" != "$prev_summary" ] || [ "$notified" = 1 ] || [ "$alert_notified" = 1 ]; then
                 printf -v receipt_row 'ts=%s\tverb=collect\tresult=ok\t%s\tnotified=%s' \
                   "$ts" "''${summary// /$'\t'}" "$notified"
@@ -1481,20 +1441,20 @@
               done
               return 1
             }
-            focus_wezterm() { # $1=tty $2=recorded-pane-id
+            focus_wezterm() { # $1=tty $2=recorded-pane-id — --no-auto-start on every cli call: a click on a dead GUI must never fork a mux server
               [ -n "$wezbin" ] || return 1
               local pane=""
               if [ -n "$1" ]; then
-                pane="$("$wezbin" cli list --format json 2>/dev/null \
+                pane="$("$wezbin" cli --no-auto-start list --format json 2>/dev/null \
                   | jq -r --arg t "/dev/$1" 'first(.[] | select(.tty_name == $t) | .pane_id) // empty' || true)"
               fi
               if [ -n "$pane" ]; then
-                "$wezbin" cli activate-pane --pane-id "$pane" 2>/dev/null || true
+                "$wezbin" cli --no-auto-start activate-pane --pane-id "$pane" 2>/dev/null || true
                 /usr/bin/open -a WezTerm 2>/dev/null || true
                 focus_receipt "wezterm-pty"
                 return 0
               fi
-              if [ -n "$2" ] && "$wezbin" cli activate-pane --pane-id "$2" 2>/dev/null; then
+              if [ -n "$2" ] && "$wezbin" cli --no-auto-start activate-pane --pane-id "$2" 2>/dev/null; then
                 /usr/bin/open -a WezTerm 2>/dev/null || true
                 focus_receipt "wezterm-pane"
                 return 0
@@ -1546,8 +1506,9 @@
               live_sessions="$(${profileBin}/zellij list-sessions -ns 2>/dev/null || true)"
               if [ -n "$zs" ] && grep -qxF "$zs" <<<"$live_sessions"; then
                 [ -z "$zp" ] || ${profileBin}/zellij --session "$zs" action focus-pane-id "$zp" 2>/dev/null || true
+                # $NF == s: attach clients end their argv with the session name — exact-field compare, so "a" never matches a client attached to "abc".
                 ctty="$(${psBin} -axo tty=,args= | awk -v s="$zs" \
-                  '$1 != "??" && $0 ~ /zellij/ && $0 !~ /--server/ && index($0, s) {print $1; exit}' || true)"
+                  '$1 != "??" && $0 ~ /zellij/ && $0 !~ /--server/ && $NF == s {print $1; exit}' || true)"
                 [ -z "$ctty" ] || tty="$ctty"
               fi
 
@@ -1569,9 +1530,10 @@
               focus_receipt "$(printf '%s-app' "$app" | tr '[:upper:]' '[:lower:]')"
             }
 
-            # Answer channel: the needs-input banner click lands here. Resolve the latest attention row, carry the waiting pane's tail into a blocking
-            # alerter question, and write the typed reply back into the exact pane by pane-id — the notification answers the agent without a window
-            # switch. Every degraded leg falls back to focus.
+            # Answer channel: the needs-input banner click lands here. Resolve the latest attention row, put the VERBATIM Notification prompt in
+            # front of the operator (the waiting pane's tail only when the hook captured no message), title the dialog with the waiter's name, and
+            # write the typed reply back into the exact pane by pane-id — the notification answers the agent without a window switch. Every
+            # degraded leg falls back to focus.
             answer_receipt() { # $1=result $2=reply_len
               local row
               printf -v row 'ts=%s\tverb=answer\treply_len=%s\tresult=%s' \
@@ -1579,19 +1541,22 @@
               append_receipt "$row" 2>/dev/null || true
             }
             cmd_answer() {
-              local alr row zs zp tail_text ans atype reply
+              local alr row label zs zp msg prompt_text ans atype reply
               alr='${alerterBin}'
               row="$(jq -c '.attention.latest // empty' "$cache" 2>/dev/null || true)"
-              IFS=$'\x1f' read -r zs zp _msg < <(jq -r \
-                '[.zellij_session // "", .zellij_pane // "", .message // ""] | join("\u001f")' \
+              IFS=$'\x1f' read -r label zs zp msg < <(jq -r \
+                '[.label // "agent", .zellij_session // "", .zellij_pane // "", .message // ""] | join("\u001f")' \
                 <<<"''${row:-null}" 2>/dev/null) || true
               if [ -z "$alr" ] || [ -z "''${zs:-}" ] || [ -z "''${zp:-}" ]; then
                 cmd_focus
                 return 0
               fi
-              tail_text="$(${profileBin}/forge-zellij peek --session "$zs" --pane "$zp" --lines 10 --text 2>/dev/null | tail -6 || true)"
-              [ -n "$tail_text" ] || tail_text="(pane content unavailable)"
-              ans="$("$alr" --message "$tail_text" --title "Forge Agents" \
+              prompt_text="''${msg:-}"
+              if [ -z "$prompt_text" ]; then
+                prompt_text="$(${profileBin}/forge-zellij peek --session "$zs" --pane "$zp" --lines 10 --text 2>/dev/null | tail -6 || true)"
+              fi
+              [ -n "$prompt_text" ] || prompt_text="(waiting for input — pane content unavailable)"
+              ans="$("$alr" --message "$prompt_text" --title "Forge · ''${label:-agent}" \
                 --subtitle "reply lands in $zs pane $zp" --reply "Answer" \
                 --timeout ${toString notifyPolicy.answerTimeoutSec} \
                 --group forge-agents-answer --json 2>/dev/null || true)"
@@ -1644,54 +1609,65 @@
       '--json[raw collector cache]'
   '';
 in {
-  home.packages = launchers ++ [maghzPostgres rhinoRouter forgeMcp forgeAgents mcpCompletion agentsCompletion pkgs.mcp-nixos];
-
-  # Each Darwin switch reasserts the fleet maps while preserving non-MCP client state; Codex app-private rows remain presence-owned by ChatGPT.
-  home.activation.forgeMcpReconcile = lib.mkIf pkgs.stdenv.hostPlatform.isDarwin (lib.hm.dag.entryAfter ["writeBoundary"] ''
-    run ${forgeMcp}/bin/forge-mcp reconcile claude
-    run ${forgeMcp}/bin/forge-mcp reconcile codex
-  '');
-
-  # Identity bundle rows on the shared owner (bundle-apps.nix): Login Items & Extensions resolves each agent's AssociatedBundleIdentifiers to a name.
-  forge.bundleApps = {
-    forge-mcp-drift = "Forge MCP Drift";
-    forge-agents = "Forge Agents";
+  # Bar-pipe vocabulary: one owner for the collector->zjstatus wire — the zellij bar module derives its {pipe_*} lane and per-pipe rows from these
+  # rows. Declared on this module because the collector evaluates on both hosts while the bar module rides the Darwin-gated apps import.
+  options.forge.agents.statusPipes = lib.mkOption {
+    type = lib.types.listOf lib.types.str;
+    default = statusPipes;
+    readOnly = true;
+    description = "Ordered zjstatus pipe-cell names the forge-agents collector feeds.";
   };
 
-  launchd.agents = {
-    # Weekly pin-drift banner: Notification Center only when a pin is outdated; silent when current or offline (a registry failure never notifies).
-    forge-mcp-outdated = {
-      enable = true;
-      config = {
-        # Estate label grammar: com.parametric-forge.<agent> for repo-owned jobs.
-        Label = "com.parametric-forge.forge-mcp-outdated";
-        ProgramArguments = ["${forgeMcp}/bin/forge-mcp" "outdated" "--notify"];
-        StartCalendarInterval = [
-          {
-            Weekday = 1;
-            Hour = 10;
-            Minute = 0;
-          }
-        ];
-        ProcessType = "Background";
-        StandardOutPath = "${config.home.homeDirectory}/Library/Logs/forge-mcp-outdated.log";
-        StandardErrorPath = "${config.home.homeDirectory}/Library/Logs/forge-mcp-outdated.log";
-        AssociatedBundleIdentifiers = ["com.parametric-forge.forge-mcp-drift"];
-      };
+  config = {
+    home.packages = launchers ++ [maghzPostgres rhinoRouter forgeMcp forgeAgents mcpCompletion agentsCompletion pkgs.mcp-nixos];
+
+    # Each Darwin switch reasserts the fleet maps while preserving non-MCP client state; Codex app-private rows remain presence-owned by ChatGPT.
+    home.activation.forgeMcpReconcile = lib.mkIf pkgs.stdenv.hostPlatform.isDarwin (lib.hm.dag.entryAfter ["writeBoundary"] ''
+      run ${forgeMcp}/bin/forge-mcp reconcile claude
+      run ${forgeMcp}/bin/forge-mcp reconcile codex
+    '');
+
+    # Identity bundle rows on the shared owner (bundle-apps.nix): Login Items & Extensions resolves each agent's AssociatedBundleIdentifiers to a name.
+    forge.bundleApps = {
+      forge-mcp-drift = "Forge MCP Drift";
+      forge-agents = "Forge Agents";
     };
-    # Minute-cadence collector: cached facts for the bar cells; receipts land only on state transitions so the log stays quiet.
-    forge-agents = {
-      enable = true;
-      config = {
-        Label = "com.parametric-forge.forge-agents";
-        ProgramArguments = ["${forgeAgents}/bin/forge-agents" "collect"];
-        StartInterval = 60;
-        RunAtLoad = true;
-        ProcessType = "Background";
-        Nice = 10;
-        StandardOutPath = "${config.home.homeDirectory}/Library/Logs/forge-agents.log";
-        StandardErrorPath = "${config.home.homeDirectory}/Library/Logs/forge-agents.log";
-        AssociatedBundleIdentifiers = ["com.parametric-forge.forge-agents"];
+
+    launchd.agents = {
+      # Weekly pin-drift banner: Notification Center only when a pin is outdated; silent when current or offline (a registry failure never notifies).
+      forge-mcp-outdated = {
+        enable = true;
+        config = {
+          # Estate label grammar: com.parametric-forge.<agent> for repo-owned jobs.
+          Label = "com.parametric-forge.forge-mcp-outdated";
+          ProgramArguments = ["${forgeMcp}/bin/forge-mcp" "outdated" "--notify"];
+          StartCalendarInterval = [
+            {
+              Weekday = 1;
+              Hour = 10;
+              Minute = 0;
+            }
+          ];
+          ProcessType = "Background";
+          StandardOutPath = "${config.home.homeDirectory}/Library/Logs/forge-mcp-outdated.log";
+          StandardErrorPath = "${config.home.homeDirectory}/Library/Logs/forge-mcp-outdated.log";
+          AssociatedBundleIdentifiers = ["com.parametric-forge.forge-mcp-drift"];
+        };
+      };
+      # Minute-cadence collector: cached facts for the bar cells; receipts land only on state transitions so the log stays quiet.
+      forge-agents = {
+        enable = true;
+        config = {
+          Label = "com.parametric-forge.forge-agents";
+          ProgramArguments = ["${forgeAgents}/bin/forge-agents" "collect"];
+          StartInterval = 60;
+          RunAtLoad = true;
+          ProcessType = "Background";
+          Nice = 10;
+          StandardOutPath = "${config.home.homeDirectory}/Library/Logs/forge-agents.log";
+          StandardErrorPath = "${config.home.homeDirectory}/Library/Logs/forge-agents.log";
+          AssociatedBundleIdentifiers = ["com.parametric-forge.forge-agents"];
+        };
       };
     };
   };

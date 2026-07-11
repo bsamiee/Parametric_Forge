@@ -16,8 +16,10 @@ local M = {}
 local roles = rows.theme.roles
 local badges = rows.theme.badges
 
+-- Strip chips are alarm- or machine-context-class, so every cell carries the estate hierarchy's bold weight (prompt hostname and yazi header match).
 local function cell(fg, text)
     return {
+        { Attribute = { Intensity = "Bold" } },
         { Foreground = { Color = fg } },
         { Text = " " .. text .. " " },
     }

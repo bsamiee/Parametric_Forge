@@ -62,6 +62,8 @@ Findings group by severity and land in that order:
 
 An implement-plus-review request runs the cycle without per-step prompts: implement the feature, run `coderabbit review --agent` with the requested scope flags (only when CodeRabbit review is not disabled for the current work), build a task list from the findings, fix critical and warning issues, re-run to verify, and repeat until clean or only info-level findings remain.
 
+A review battery gains an additional independent perspective from an agy (Gemini) read-only lane when the change carries visual, design-judgment, or cross-model blind-spot weight: the lane returns typed findings the reviewing Claude agent adjudicates alongside CodeRabbit's, and the agy skill owns that lane's contract.
+
 ## [05]-[REPO_CONFIGURATION]
 
 `.coderabbit.yaml` at the repository root owns review behavior for hosted and CLI reviews; organization and workspace global overrides outrank it, and it outranks every UI setting.

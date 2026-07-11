@@ -4,8 +4,8 @@
 # License       : MIT
 # Path          : modules/home/programs/shell-tools/attention.nix
 # ----------------------------------------------------------------------------
-# F01 attention-vocabulary owner beside forge-agents: ONE urgency ladder, the kv-grain receipt parser, the normalized
-# event-spine projection, and the standing-alert predicate rows. The forge-agents collector folds these into bar cells
+# Attention-vocabulary owner beside forge-agents: ONE urgency ladder, the display-time projection, the kv-grain receipt parser, the
+# normalized event-spine projection, and the standing-alert predicate rows. The forge-agents collector folds these into bar cells
 # and notifications; the forge-receipts query plane folds the same defs into its SQL corpus and live push bus — one
 # vocabulary, many renderers. jq fragments compose into consumer programs; alert predicates judge the LAST parsed receipt row of their kind.
 {sshHosts ? {}}: let
@@ -33,6 +33,17 @@ in {
       then "high"
       elif (.event // "") == "Notification" then "input"
       else "info" end;
+  '';
+
+  # Display-time projection over the theme owner's timeDisplay rows ({sameDay, dated} strftime grammar): stored stamps stay ISO UTC, human
+  # renders fold this def instead of re-spelling it; a malformed stamp passes through untouched. Callers apply the rows at interpolation.
+  dispTsJq = td: ''
+    def disp_ts: . as $t
+      | try ((strptime("%Y-%m-%dT%H:%M:%SZ") | mktime) as $e
+        | if ($e | strflocaltime("%Y-%m-%d")) == (now | strflocaltime("%Y-%m-%d"))
+          then ($e | strflocaltime("${td.sameDay}"))
+          else ($e | strflocaltime("${td.dated}")) end)
+        catch $t;
   '';
 
   # kv-grain TSV row -> object, numerics restored as JSON numbers (the same numeric law the receipts.nix emit fold applies on the JSONL side).

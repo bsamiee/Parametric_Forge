@@ -12,34 +12,12 @@
   pkgs,
   ...
 }: let
-  # --- [PROGRAMMING_TERMINAL_FONTS]
-  # Plain upstream families plus the one symbols fallback; icon coverage rides Symbols Nerd Font Mono through the owner fallback chain at two orders
-  # of magnitude less closure than a patched nerd-font set.
-  programming = with pkgs; [
-    geist-font
-    iosevka-bin
-    hack-font
-    nerd-fonts.symbols-only
-    ibm-plex
-    (noto-fonts.override {variants = ["NotoSansMono"];})
-  ];
-
-  # --- [UI_SYSTEM_FONTS]
-  interface = with pkgs; [
-    inter
-    dm-sans
-    overpass
-    source-sans
-    source-serif
-  ];
-
-  # --- [PERSO_ARABIC_FONTS]
-  persoArabic = with pkgs; [
-    (noto-fonts.override {variants = ["NotoSansArabic" "NotoNaskhArabic"];})
-    scheherazade-new
-  ];
-
-  fontPackages = programming ++ interface ++ persoArabic;
+  # --- [FONT_INSTALL_SET]
+  # The install list folds the cross-scope catalog (modules/common/fonts-catalog.nix) the home owner names families and drives renderers from, so
+  # every installed family is an owned family and vice versa — no hand-synced second list, no orphan closure. Icon coverage rides Symbols Nerd Font
+  # Mono through the owner fallback chain at two orders of magnitude less closure than a patched nerd-font set; emoji is system-owned, never packaged.
+  catalog = import ../common/fonts-catalog.nix {inherit pkgs;};
+  fontPackages = lib.unique (lib.mapAttrsToList (_: row: row.package) catalog);
   userFontDir = "${config.users.users.${config.system.primaryUser}.home}/Library/Fonts";
 
   # Flat basename view of every font payload; the file set derives from package outputs.

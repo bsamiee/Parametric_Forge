@@ -51,7 +51,7 @@
     codex = {
       required = false;
       startupTimeoutSec = 20;
-      toolTimeoutSec = 180;
+      toolTimeoutSec = 600;
       toolsApprovalMode = "approve";
     };
   }
@@ -151,7 +151,7 @@
     name = "playwright";
     transport = "stdio";
     command = "${profileBin}/forge-playwright-mcp";
-    args = ["--isolated"];
+    args = ["--isolated" "--caps=vision,pdf"];
     envKeys = [];
     probe = "stdio";
     launcher = {
@@ -192,7 +192,7 @@
     codex = {
       required = false;
       startupTimeoutSec = 30;
-      toolTimeoutSec = 180;
+      toolTimeoutSec = 600;
     };
   }
   {
@@ -292,7 +292,7 @@
     name = "rhino-mcp-platform";
     transport = "stdio";
     command = "${profileBin}/rhino-mcp-router";
-    args = [];
+    args = ["--default-version" "9"];
     envKeys = [];
     probe = "stdio";
     codex = {

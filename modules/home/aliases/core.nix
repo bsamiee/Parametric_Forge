@@ -462,8 +462,8 @@
   }
   {
     alias = "whs";
-    expansion = "webhook -hooks $WEBHOOK_HOOKS_DIR/hooks.json -verbose";
-    desc = "Start webhook server";
+    expansion = "forge-webhook -verbose";
+    desc = "Foreground webhook listener with verbose logs (boot the launchd agent out first)";
     category = "network";
   }
   {

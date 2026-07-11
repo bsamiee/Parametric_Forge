@@ -6,7 +6,7 @@
 # ----------------------------------------------------------------------------
 # Modern shell history with SQLite backend and full-text search UI
 {config, ...}: let
-  inherit (config.forge.theme) palette;
+  inherit (config.forge.theme) roles;
 in {
   # Hidden identity bundle row: Login Items & Extensions resolves the HM-owned atuin-daemon agent to "Atuin Daemon" instead of the "/bin/sh"
   # basename home-manager's mutateConfig writes into ProgramArguments[0].
@@ -100,15 +100,15 @@ in {
     themes.dracula = {
       theme.name = "dracula";
       colors = {
-        Base = palette.foreground.hex;
-        Muted = palette.comment.hex;
-        Title = palette.pink.hex;
-        Annotation = palette.comment.hex;
-        Guidance = palette.cyan.hex;
-        Important = palette.magenta.hex;
-        AlertInfo = palette.green.hex;
-        AlertWarn = palette.yellow.hex;
-        AlertError = palette.red.hex;
+        Base = roles.text.primary.hex;
+        Muted = roles.text.muted.hex;
+        Title = roles.accent.tertiary.hex;
+        Annotation = roles.text.muted.hex;
+        Guidance = roles.accent.primary.hex;
+        Important = roles.accent.secondary.hex;
+        AlertInfo = roles.state.info.hex;
+        AlertWarn = roles.state.warning.hex;
+        AlertError = roles.state.danger.hex;
       };
     };
   };

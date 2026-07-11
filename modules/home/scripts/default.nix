@@ -12,7 +12,7 @@
   ...
 }: {
   imports =
-    [./fmt.nix ./loc.nix]
+    [./fmt.nix ./gha.nix ./loc.nix]
     ++ lib.optionals (host.os == "darwin") [./terminal.nix];
 
   home.packages = [

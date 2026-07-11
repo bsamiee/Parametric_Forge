@@ -7,21 +7,41 @@
 # Beautiful code screenshot generation themed from the estate palette owner
 {
   config,
+  lib,
   pkgs,
   ...
 }: let
-  inherit (config.forge.theme) palette;
+  inherit (config.forge.theme) roles syntaxScopes;
   fonts = config.forge.fonts;
+
+  # CodeMirror token -> master scope pivot: each token names its owning syntaxScopes row, so a hue rebind in the theme owner lands here with
+  # zero edits; an unknown row name faults at eval. Chrome (background/text) rides the surface and text roles like every editor projection.
+  scopeOf = name: (lib.findFirst (r: r.name == name) (throw "carbon: no syntax scope row named ${name}") syntaxScopes).color;
+  tokenRows = {
+    variable = "Variable";
+    variable2 = "Variable";
+    variable3 = "Constant";
+    attribute = "Attribute";
+    definition = "Function";
+    keyword = "Keyword";
+    operator = "Operator";
+    property = "Variable";
+    number = "Number";
+    string = "String";
+    comment = "Comment";
+    meta = "Escape";
+    tag = "Tag";
+  };
 
   carbonConfig = {
     latest-preset = {
-      backgroundColor = palette.background.hex;
+      backgroundColor = roles.surface.base.hex;
       # The custom map below is the active theme; the CLI renders it under this id.
       theme = "carbon-now-cli-theme";
       windowTheme = "macos";
       windowControls = true;
       fontFamily = fonts.projections.cssMono;
-      fontSize = "16px";
+      fontSize = fonts.projections.screenshotSize;
       lineNumbers = false;
       firstLineNumber = 1;
       selectedLines = "*";
@@ -30,7 +50,7 @@
       dropShadowBlurRadius = "68px";
       widthAdjustment = true;
       width = "680px";
-      lineHeight = fonts.metrics.cssLineHeight;
+      lineHeight = fonts.projections.screenshotLeading;
       paddingVertical = "48px";
       paddingHorizontal = "48px";
       squaredImage = false;
@@ -38,24 +58,13 @@
       exportSize = "2x";
       type = "png";
 
-      # Custom theme: CodeMirror token vocabulary mapped onto the master scope palette.
-      custom = {
-        background = palette.background.rgba "1";
-        text = palette.foreground.rgba "1";
-        variable = palette.blue.rgba "1";
-        variable2 = palette.blue.rgba "1";
-        variable3 = palette.purple.rgba "1";
-        attribute = palette.magenta.rgba "1";
-        definition = palette.green.rgba "1";
-        keyword = palette.pink.rgba "1";
-        operator = palette.subtle.rgba "1";
-        property = palette.blue.rgba "1";
-        number = palette.purple.rgba "1";
-        string = palette.yellow.rgba "1";
-        comment = palette.comment.rgba "1";
-        meta = palette.orange.rgba "1";
-        tag = palette.magenta.rgba "1";
-      };
+      # Custom theme: CodeMirror token vocabulary folded from the master scope pivot rows.
+      custom =
+        {
+          background = roles.surface.base.rgba "1";
+          text = roles.text.primary.rgba "1";
+        }
+        // lib.mapAttrs (_: name: (scopeOf name).rgba "1") tokenRows;
     };
   };
 

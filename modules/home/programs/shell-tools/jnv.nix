@@ -11,7 +11,8 @@
   pkgs,
   ...
 }: let
-  inherit (config.forge.theme) palette;
+  # palette retained for the one hue with no semantic role: JSON string values ride the estate string-yellow (syntaxScopes String).
+  inherit (config.forge.theme) roles palette;
   tomlFormat = pkgs.formats.toml {};
   # termcfg style strings: "fg=<hex>,bg=<hex>,attr=<token|token...>"
   fg = c: "fg=${c.hex}";
@@ -23,14 +24,14 @@
       on_focus = {
         edit_mode = "Insert";
         word_break_chars = lib.stringToCharacters " !\"#$%&'()*+,-./:;<=>?@[\\]^`{|}~";
-        prefix = "󰅂 ";
-        prefix_style = fg palette.magenta;
-        active_char_style = "fg=${palette.background.hex},bg=${palette.foreground.hex}";
+        prefix = "❯ ";
+        prefix_style = fg roles.accent.secondary;
+        active_char_style = "fg=${roles.text.inverse.hex},bg=${roles.text.primary.hex}";
         inactive_char_style = "";
       };
       on_defocus = {
-        prefix = "󰅂 ";
-        prefix_style = "fg=${palette.comment.hex},attr=dim";
+        prefix = "❯ ";
+        prefix_style = "fg=${roles.text.muted.hex},attr=dim";
         active_char_style = "attr=dim";
         inactive_char_style = "attr=dim";
       };
@@ -40,13 +41,13 @@
       max_streams = 1000;
       stream = {
         indent = 2;
-        curly_brackets_style = fg palette.cyan;
-        square_brackets_style = fg palette.cyan;
-        key_style = fg palette.green;
+        curly_brackets_style = fg roles.accent.primary;
+        square_brackets_style = fg roles.accent.primary;
+        key_style = fg roles.state.success;
         string_value_style = fg palette.yellow;
-        number_value_style = fg palette.orange;
-        boolean_value_style = fg palette.magenta;
-        null_value_style = fg palette.comment;
+        number_value_style = fg roles.state.attention;
+        boolean_value_style = fg roles.accent.secondary;
+        null_value_style = fg roles.text.muted;
         active_item_attribute = "bold";
         inactive_item_attribute = "dim";
         overflow_mode = "Wrap";
@@ -59,8 +60,9 @@
       listbox = {
         lines = 10;
         cursor = "❯ ";
-        active_item_style = "fg=${palette.background.hex},bg=${palette.cyan.hex}";
-        inactive_item_style = fg palette.foreground;
+        # Selection rides the focus fill with inverse text, matching every estate picker.
+        active_item_style = "fg=${roles.text.inverse.hex},bg=${roles.focus.active.hex}";
+        inactive_item_style = fg roles.text.primary;
       };
     };
 

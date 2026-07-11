@@ -1,8 +1,9 @@
 /**
- * implement-and-review — implement a feature, then loop review-and-fix.
+ * implement-and-review — evaluator-optimizer: implement a feature, then loop review-and-fix.
  *
- * The review loop lives in JavaScript, so unlike a hand-orchestrated chat it cannot
- * forget to re-review: a failing review feeds its issues back to a fix, up to 3 rounds.
+ * The evaluator is a SEPARATE fresh-context agent (never the implementer grading itself),
+ * and the loop lives in JavaScript, so unlike a hand-orchestrated chat it cannot forget to
+ * re-review: a failing review feeds its typed issues back to a fix, up to 3 rounds.
  *
  * Workflow({ name: 'implement-and-review', args: 'collapse the duplicate mesh codecs in libs/csharp/Rasm into one [Union]' })
  */
@@ -54,18 +55,22 @@ do {
         schema: REVIEW,
     });
 
-    if (review.passed) {
+    if (review?.passed) {
         log(`Review passed on round ${round}`);
         break;
     }
 
-    log(`Round ${round}: ${review.issues.length} issue(s) — fixing`);
-    phase('Fix');
-    await agent(`Fix these review issues in the codebase:\n${review.issues.map((i) => `- ${i}`).join('\n')}`, { label: `fix:round-${round}` });
+    // A skipped/failed reviewer returns null — a failed round with no issue list re-reviews next round, never crashes or fixes nothing.
+    const issues = review?.issues ?? [];
+    log(`Round ${round}: ${issues.length} issue(s)${issues.length ? ' — fixing' : ' — reviewer returned nothing, re-reviewing'}`);
+    if (issues.length) {
+        phase('Fix');
+        await agent(`Fix these review issues in the codebase:\n${issues.map((i) => `- ${i}`).join('\n')}`, { label: `fix:round-${round}` });
+    }
 } while (round < MAX_ROUNDS);
 
 return {
-    passed: review.passed,
+    passed: !!review?.passed,
     rounds: round,
-    remainingIssues: review.passed ? [] : review.issues,
+    remainingIssues: review?.passed ? [] : (review?.issues ?? []),
 };

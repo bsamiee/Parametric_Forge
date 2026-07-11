@@ -11,7 +11,7 @@
   pkgs,
   ...
 }: let
-  inherit (config.forge.theme) palette;
+  inherit (config.forge.theme) roles;
   ripgrepConfig = [
     # --- [SEARCH_BEHAVIOR]
     # Output-mutating flags (trim, column truncation) live in the interactive rg alias — the config applies to every invocation and piped
@@ -31,11 +31,11 @@
 
     # --- [VISUAL_FORMATTING]
     # Truecolor RGB triples from the palette tokens
-    "--colors=path:fg:${palette.cyan.csv}"
+    "--colors=path:fg:${roles.accent.primary.csv}"
     "--colors=path:style:bold"
-    "--colors=line:fg:${palette.comment.csv}"
-    "--colors=column:fg:${palette.comment.csv}"
-    "--colors=match:fg:${palette.green.csv}"
+    "--colors=line:fg:${roles.text.muted.csv}"
+    "--colors=column:fg:${roles.text.muted.csv}"
+    "--colors=match:fg:${roles.state.success.csv}"
     "--colors=match:style:bold"
 
     # --- [TYPE_DEFINITIONS]

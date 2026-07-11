@@ -6,7 +6,7 @@
 # ----------------------------------------------------------------------------
 # System information display themed from the estate palette owner
 {config, ...}: let
-  inherit (config.forge.theme) palette;
+  inherit (config.forge.theme) roles;
 in {
   programs.fastfetch = {
     enable = true;
@@ -36,25 +36,26 @@ in {
             right = " ]";
           };
           color = {
-            elapsed = palette.green.hex;
-            total = palette.selection.hex;
+            elapsed = roles.state.success.hex;
+            total = roles.surface.selected.hex;
           };
         };
         percent = {
           type = 3;
           ndigits = 0;
+          # Traffic-light health thresholds ride the state ladder; the `yellow` key carries the warning role (amber), never string-yellow.
           color = {
-            green = palette.green.hex;
-            yellow = palette.yellow.hex;
-            red = palette.red.hex;
+            green = roles.state.success.hex;
+            yellow = roles.state.warning.hex;
+            red = roles.state.danger.hex;
           };
         };
         brightColor = true;
         color = {
-          keys = palette.cyan.hex;
-          title = palette.pink.hex;
-          separator = palette.comment.hex;
-          output = palette.foreground.hex;
+          keys = roles.accent.primary.hex;
+          title = roles.accent.tertiary.hex;
+          separator = roles.text.muted.hex;
+          output = roles.text.primary.hex;
         };
       };
 
@@ -78,7 +79,7 @@ in {
         {
           type = "title";
           format = "{user-name-colored}";
-          color = {user = palette.green.hex;};
+          color = {user = roles.state.success.hex;};
         }
         {type = "break";}
 

@@ -26,11 +26,9 @@
       }
 
       # --- [TOOL_INTEGRATION]
-      eval "$(${pkgs.bat-extras.batman}/bin/batman --export-env)"
-
-      # Alias tools to full paths for generated init scripts that call them by name
+      # Atuin's generated init calls `atuin` by bare name; the alias pins it to the store path. Zoxide needs no twin — its HM integration
+      # emits full-path init itself. batman MANPAGER/MANROFFOPT are static session-env rows, so no per-shell export-env fork.
       alias atuin="${pkgs.atuin}/bin/atuin"
-      alias zoxide="${pkgs.zoxide}/bin/zoxide"
 
     '')
 
@@ -54,6 +52,28 @@
       # Final strategy owner: atuin init self-prepends "atuin", so this assignment is the deterministic end state after all widget wrappers source.
       typeset -ga ZSH_AUTOSUGGEST_STRATEGY
       ZSH_AUTOSUGGEST_STRATEGY=(atuin completion)
+    '')
+
+    (lib.mkOrder 1500 ''
+      # --- [TRANSIENT_PROMPT]
+      # Collapses each accepted line to the starship transient profile (HH:MM + pointer). precmd restores the live
+      # template and pre-renders the swap while starship's runtime vars are fresh, so the collapsed pointer keeps the
+      # color the live prompt showed; zle-line-finish assigns PROMPT globally before the reset — a command-scoped
+      # assignment reverts before the finish repaint reads it, redrawing the full prompt instead. TRAPINT collapses an
+      # interrupted prompt line the same way; the bare-zle guard keeps it silent when SIGINT lands mid-command (ZLE
+      # inactive there, and the accepted line is already collapsed).
+      if [[ $PROMPT == *starship* ]]; then
+        autoload -Uz add-zsh-hook add-zle-hook-widget
+        typeset -g _forge_prompt_live="$PROMPT" _forge_transient
+        _forge-transient-save() {
+          TRAPINT() { _forge-transient-apply; return $(( 128 + $1 )) }
+          PROMPT="$_forge_prompt_live"
+          _forge_transient="$(eval "printf '%s' \"''${PROMPT// prompt / prompt --profile transient }\"")"
+        }
+        _forge-transient-apply() { if zle; then PROMPT="$_forge_transient"; zle .reset-prompt; fi }
+        add-zsh-hook precmd _forge-transient-save
+        add-zle-hook-widget zle-line-finish _forge-transient-apply
+      fi
     '')
   ];
 }

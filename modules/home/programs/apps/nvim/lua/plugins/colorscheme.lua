@@ -88,13 +88,14 @@ local apply = function()
         CurSearch = { bg = roles.ui.match, fg = roles.text.primary },
         Whitespace = { fg = roles.ui.whitespace },
         SnacksIndent = { fg = roles.ui.indent },
-        -- Hunk signs ride the owner git-state vocabulary, overriding dracula's default link to the Diff* tints; staged-add and change+delete
-        -- bind their own owner states instead of gitsigns' derived dims.
+        -- Hunk signs ride the owner git-state vocabulary, overriding dracula's default link to the Diff* tints. Staged groups stay UNDEFINED:
+        -- gitsigns derives every GitSignsStaged* from its unstaged owner hue at half intensity, and with signs_staged sharing the sign glyphs
+        -- that dim IS the staged tier — an explicit Staged* row here would erase the staged/unstaged distinction. Change+delete binds the
+        -- conflict row to match its minted glyph.
         GitSignsAdd = { fg = roles.git.added.color },
         GitSignsChange = { fg = roles.git.modified.color },
         GitSignsDelete = { fg = roles.git.deleted.color },
         GitSignsUntracked = { fg = roles.git.untracked.color },
-        GitSignsStagedAdd = { fg = roles.git.staged.color },
         GitSignsChangedelete = { fg = roles.git.conflict.color },
     }) do
         vim.api.nvim_set_hl(0, name, def)

@@ -21,22 +21,23 @@
     ["warning" "ea6c" "[!]"]
     ["sync" "ea77" "[~]"]
   ];
-  # Git-state vocabulary rows: [state colorRole codepoint asciiTwin] — the codicon diff_* family, colors resolved on the theme state ladder.
+  # Git-state vocabulary rows: [state rolePath codepoint asciiTwin] — the codicon diff_* family; the dotted role path resolves on the theme
+  # owner's folded families (the contextBadges grammar), so each row names its hue unambiguously and a new state is one row, never a map edit.
   # typechange shares the modified glyph (a mode flip is a modify) and clean shares the staged check; both stay rows so consumers dispatch by state.
   gitAlphabet = [
-    ["added" "success" "eadc" "[+]"]
-    ["staged" "success" "eab2" "[*]"]
-    ["modified" "info" "eade" "[~]"]
-    ["deleted" "danger" "eadf" "[-]"]
-    ["untracked" "success" "eb32" "[?]"]
-    ["renamed" "structural" "eae0" "[>]"]
-    ["typechange" "info" "eade" "[~]"]
-    ["conflict" "secondary" "ea6c" "[!]"]
-    ["ahead" "success" "eaa1" "[^]"]
-    ["behind" "warning" "ea9a" "[v]"]
-    ["diverged" "attention" "ea99" "[%]"]
-    ["stashed" "muted" "ea98" "[$]"]
-    ["clean" "success" "eab2" "[=]"]
+    ["added" "state.success" "eadc" "[+]"]
+    ["staged" "state.success" "eab2" "[*]"]
+    ["modified" "state.info" "eade" "[~]"]
+    ["deleted" "state.danger" "eadf" "[-]"]
+    ["untracked" "state.success" "eb32" "[?]"]
+    ["renamed" "accent.structural" "eae0" "[>]"]
+    ["typechange" "state.info" "eade" "[~]"]
+    ["conflict" "accent.secondary" "ea6c" "[!]"]
+    ["ahead" "state.success" "eaa1" "[^]"]
+    ["behind" "state.warning" "ea9a" "[v]"]
+    ["diverged" "state.attention" "ea99" "[%]"]
+    ["stashed" "text.muted" "ea98" "[$]"]
+    ["clean" "state.success" "eab2" "[=]"]
   ];
 in {
   "Geist Mono" = {

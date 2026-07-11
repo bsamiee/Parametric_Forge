@@ -47,6 +47,7 @@ in {
     ./browsers.nix
     ./carapace.nix
     ./carbon.nix
+    ./delegation.nix
     ./dust.nix
     ./eza.nix
     ./fastfetch.nix
@@ -56,6 +57,7 @@ in {
     ./heptabase.nix
     ./jnv.nix
     ./mcp-launchers.nix
+    ./mise.nix
     ./pik.nix
     ./posting.nix
     ./process-compose.nix
@@ -96,7 +98,6 @@ in {
       pkgs.grex # Regex generator from test cases
       (withDefaultFlag pkgs.hexyl "--color=auto" "--color|--color=*|-p*|--plain|-[!-]*p*") # Hex viewer; color rides TTY detection
       pkgs.hyperfine # Command benchmarking
-      pkgs.mise # Runtime version manager
       pkgs.oha # HTTP load generator with real-time TUI and JSON/CSV output
       pkgs.ookla-speedtest # Official Ookla speed test CLI
       pkgs.ouch # Archive compression and extraction

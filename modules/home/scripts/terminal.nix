@@ -26,18 +26,36 @@
   # can never miss a production identity. terminal_command is the spawn command (invoked_with), so exec inside the pane never breaks rediscovery.
   yaziPopupIdentity = ''(.is_plugin | not) and (.exited | not) and ((.is_floating // false) or (.is_suppressed // false)) and ((.title // "") == " [YAZI] ") and ((.terminal_command // .command // "") == "forge-yazi.sh")'';
 
-  # One truthy-snapshot kernel: list-panes flaps transiently against a busy session; every reader retries to a non-empty array,
-  # so a flap never misreads the session as pane-free.
+  # One self-row vocabulary: (panes snapshot, $self) -> this pane's row; every kernel resolves its own pane through this exact projection.
+  selfRow = ''[.[] | select((.is_plugin | not) and ((.id | tostring) == $self))][0]'';
+
+  # One live-row vocabulary: (panes snapshot, $id, $tab) -> count of live terminal rows with that id in that tab; the registry-hit gate and the
+  # acceptance harness join registry rows to live panes through this exact predicate.
+  liveInTab = ''[.[] | select((.is_plugin | not) and ((.id | tostring) == $id) and (.tab_id == $tab) and (.exited | not))] | length'';
+
+  # One bounded-retry owner: every startup race, RPC probe, DDS bind wait, and snapshot flap in the rail polls through this single loop.
+  retrySh = ''
+    _retry() { # $1 tries, $2 interval, $3.. simple command; truthy on first success
+      local -i _n="$1"
+      local _iv="$2"
+      shift 2
+      while ((_n-- > 0)); do
+        if "$@"; then return 0; fi
+        ((_n)) && sleep "$_iv"
+      done
+      return 1
+    }
+  '';
+
+  # One truthy-snapshot kernel: list-panes flaps transiently against a busy session; every reader retries to a non-empty array, so a flap never
+  # misreads the session as pane-free. Interpolate after retrySh.
   panesSnapshotSh = listCmd: ''
-    panes="[]"
-    for _ in {1..5}; do
+    # shellcheck disable=SC2329  # invoked through _retry
+    _panes_probe() {
       panes="$(${listCmd} 2>/dev/null || true)"
-      if jq -e 'type == "array" and length > 0' <<<"$panes" >/dev/null 2>&1; then
-        break
-      fi
-      panes="[]"
-      sleep 0.2
-    done
+      jq -e 'type == "array" and length > 0' <<<"$panes" >/dev/null 2>&1
+    }
+    _retry 5 0.2 _panes_probe || panes="[]"
   '';
 
   # One DDS client-id derivation: (session, pane_id) -> deterministic 6-digit id; the popup body, dispatcher, and acceptance harness all pipe
@@ -68,19 +86,17 @@
       ${runtimeBaseSh}
       runtime_root="$runtime_base/''${session}"
       mkdir -p "$runtime_root"
+      ${retrySh}
 
       # Tab resolution can lag pane creation at layout startup; retry briefly and skip registry publication rather than poisoning a tab-0 entry.
       tab_id=""
-      for _ in {1..10}; do
+      # shellcheck disable=SC2329  # invoked through _retry
+      _tab_probe() {
         tab_id="$(zellij action list-panes --all --json 2>/dev/null \
-          | jq -r --arg self "$pane_id" \
-            '[.[] | select((.is_plugin | not) and ((.id | tostring) == $self))][0].tab_id // empty' \
-          || true)"
-        if [[ -n "$tab_id" ]]; then
-          break
-        fi
-        sleep 0.1
-      done
+          | jq -r --arg self "$pane_id" '${selfRow}.tab_id // empty' || true)"
+        [[ -n "$tab_id" ]]
+      }
+      _retry 10 0.1 _tab_probe || true
 
       socket="''${runtime_root}/pane-''${pane_id}.sock"
       rm -f "$socket"
@@ -110,14 +126,14 @@
       caller="''${ZELLIJ_PANE_ID:-}"
       ${runtimeBaseSh}
       runtime_root="$runtime_base/''${session}"
+      ${retrySh}
       # RPC handoff resolves paths against the server's cwd, and a fresh editor pane opens
       # at $PWD; pin caller-relative arguments to absolute so both branches open the caller's files.
       mapfile -d "" -t args < <(realpath -zm -- "$@")
       set -- "''${args[@]}"
       # A dead snapshot degrades to the fresh-editor branch.
       ${panesSnapshotSh "zellij action list-panes --all --json"}
-      caller_row="$(jq -c --arg self "$caller" \
-        '[.[] | select((.is_plugin | not) and ((.id | tostring) == $self))][0] // {}' <<<"$panes")"
+      caller_row="$(jq -c --arg self "$caller" '${selfRow} // {}' <<<"$panes")"
       tab_id="$(jq -r '.tab_id // 0' <<<"$caller_row")"
 
       editor_pane=""
@@ -129,22 +145,12 @@
 
       # Registry hit counts only if the recorded pane still lives in this tab AND the socket answers AND the remote open succeeds; any miss or race
       # falls through to a fresh editor pane. The RPC probe retries briefly: a plugin-busy nvim misses one poll without being dead.
+      # shellcheck disable=SC2329  # invoked through _retry
+      _rpc_probe() { nvim --server "$socket" --remote-expr '1' >/dev/null 2>&1; }
       handed_off="false"
       if [[ -n "$editor_pane" && -n "$socket" && -S "$socket" ]]; then
-        pane_alive="$(jq -r --arg id "$editor_pane" --argjson tab "$tab_id" \
-          '[.[] | select((.is_plugin | not) and ((.id | tostring) == $id)
-            and (.tab_id == $tab) and (.exited | not))] | length > 0' <<<"$panes")"
-        rpc_alive="false"
-        if [[ "$pane_alive" == "true" ]]; then
-          for _ in {1..5}; do
-            if nvim --server "$socket" --remote-expr '1' >/dev/null 2>&1; then
-              rpc_alive="true"
-              break
-            fi
-            sleep 0.2
-          done
-        fi
-        if [[ "$rpc_alive" == "true" ]] \
+        pane_alive="$(jq -r --arg id "$editor_pane" --argjson tab "$tab_id" '${liveInTab} > 0' <<<"$panes")"
+        if [[ "$pane_alive" == "true" ]] && _retry 5 0.2 _rpc_probe \
           && nvim --server "$socket" --remote "$@" >/dev/null 2>&1; then
           handed_off="true"
         fi
@@ -181,6 +187,7 @@
       ${runtimeBaseSh}
       runtime_root="$runtime_base/''${session}"
       mkdir -p "$runtime_root"
+      ${retrySh}
       cid_of() { # $1 = pane id; globally unique across sessions via name hash
         printf '%s:%s' "$session" "$1" | ${cidPipeline}
       }
@@ -246,8 +253,7 @@
         exit 75
       }
       ${panesSnapshotSh "zellij action list-panes --all --json"}
-      tab_id="$(jq -r --arg self "$self" \
-        '[.[] | select((.is_plugin | not) and ((.id | tostring) == $self))][0].tab_id // 0' <<<"$panes")"
+      tab_id="$(jq -r --arg self "$self" '${selfRow}.tab_id // 0' <<<"$panes")"
       # Shared identity vocabulary scoped to this tab, excluding self. Dispatchers ("forge-yazi.sh toggle") and yazi-with-args rows never match;
       # hidden floating popups keep is_floating, so identity holds through the hide cycle.
       popup_row="$(jq -c --arg self "$self" --argjson tab "$tab_id" \
@@ -271,15 +277,8 @@
         zellij action focus-pane-id "terminal_''${popup}" >/dev/null 2>&1 || true
         : >"$marker"
       }
-      emit_popup() { # $1 = client id, $2 = action, $3 = path
-        # A popup's DDS endpoint binds after its pane appears; retry until it answers instead of failing on the startup race.
-        for _ in {1..10}; do
-          if ya emit-to "$1" "$2" "$3" 2>/dev/null; then
-            return 0
-          fi
-          sleep 0.3
-        done
-        return 1
+      emit_popup() { # $1 = client id, $2 = action, $3 = path; the DDS endpoint binds after the pane appears — retry through the startup race
+        _retry 10 0.3 ya emit-to "$1" "$2" "$3" 2>/dev/null
       }
 
       case "$verb" in
@@ -334,7 +333,10 @@
         case "$1" in
           --session) session="''${2:?--session requires a name}"; shift 2 ;;
           --keep) keep="true"; shift ;;
-          *) printf 'unknown flag: %s\n' "$1" >&2; exit 2 ;;
+          *)
+            printf 'unknown flag: %s\nusage: forge-terminal-accept.sh [--session <name>] [--keep]\n' "$1" >&2
+            exit 2
+            ;;
         esac
       done
       # Owned probe names stay short: the zellij IPC socket path rides $TMPDIR/zellij-<uid>/contract_version_N/<session> under a 103-byte sun_path
@@ -345,6 +347,7 @@
         owned="true"
       fi
       ${runtimeBaseSh}
+      ${retrySh}
 
       rows="[]"
       fail=0
@@ -361,14 +364,9 @@
         ${panesSnapshotSh "zj list-panes --all --json"}
         printf '%s' "$panes"
       }
-      poll() {
-        local pred="$1"
-        for _ in {1..50}; do
-          if [[ "$(panes | jq -r "$pred" 2>/dev/null)" == "true" ]]; then return 0; fi
-          sleep 0.2
-        done
-        return 1
-      }
+      # shellcheck disable=SC2329  # invoked through _retry
+      _pred_true() { [[ "$(panes | jq -r "$1" 2>/dev/null)" == "true" ]]; }
+      poll() { _retry 50 0.2 _pred_true "$1"; }
 
       # shellcheck disable=SC2329  # invoked by the EXIT trap
       cleanup() {
@@ -411,16 +409,14 @@
         row R01-session-ready FAIL "generated config did not produce the bar layout"
       fi
 
+      # shellcheck disable=SC2329  # invoked through _retry
+      _client_attached() { [[ "$(zj list-clients 2>/dev/null | awk 'NR > 1 { n++ } END { print n + 0 }')" -gt 0 ]]; }
       attached="false"
-      for _ in {1..3}; do
-        if [[ "$(zj list-clients 2>/dev/null | awk 'NR > 1 { n++ } END { print n + 0 }')" -gt 0 ]]; then
-          attached="true"
-          break
-        fi
-        sleep 0.5
-      done
+      _retry 3 0.5 _client_attached && attached="true"
 
       popup_pred='[.[] | select(${yaziPopupIdentity})]'
+      popup_n() { panes | jq -r "$popup_pred | length"; }
+      popup_head() { panes | jq -r "$popup_pred | .[0].id // empty"; }
 
       # R02: toggle creates exactly one floating popup titled " [YAZI] ".
       zj new-pane --floating -c -- forge-yazi.sh toggle >/dev/null 2>&1 || true
@@ -430,13 +426,13 @@
         row R02-popup-create FAIL "popup row: $(panes | jq -c "$popup_pred")"
       fi
 
-      # R03: second toggle never duplicates the popup (marker-gated hide).
+      # R03: second toggle never duplicates the popup (marker-gated hide). A negative can only settle, never poll.
       zj new-pane --floating -c -- forge-yazi.sh toggle >/dev/null 2>&1 || true
       sleep 1.5
-      if [[ "$(panes | jq -r "$popup_pred | length")" == "1" ]]; then
+      if [[ "$(popup_n)" == "1" ]]; then
         row R03-popup-single PASS "popup count stays 1 after repeat toggle"
       else
-        row R03-popup-single FAIL "popup count $(panes | jq -r "$popup_pred | length") after repeat toggle"
+        row R03-popup-single FAIL "popup count $(popup_n) after repeat toggle"
       fi
 
       # R12/R13: DDS spine — ya rides version-matched in the closure; emit-to retargets the popup by its derived client id and the cd state cache
@@ -448,26 +444,16 @@
       else
         row R12-ya-version FAIL "yazi=$yazi_ver ya=$ya_ver"
       fi
-      popup_id="$(panes | jq -r "$popup_pred | .[0].id // empty")"
+      popup_id="$(popup_head)"
       if [[ -n "$popup_id" ]]; then
         cid="$(printf '%s:%s' "$session" "$popup_id" | ${cidPipeline})"
-        dds_sent="false"
-        for _ in {1..25}; do
-          if ya emit-to "$cid" cd /tmp 2>/dev/null; then
-            dds_sent="true"
-            break
-          fi
-          sleep 0.2
-        done
         state="$runtime_base/''${session}/dds-cd-pane-''${popup_id}.json"
+        # shellcheck disable=SC2329  # invoked through _retry
+        _cd_state_ok() { [[ -r "$state" ]] && jq -e '.body.url | test("^(/private)?/tmp")' "$state" >/dev/null 2>&1; }
+        dds_sent="false"
         cd_seen="false"
-        for _ in {1..25}; do
-          if [[ -r "$state" ]] && jq -e '.body.url | test("^(/private)?/tmp")' "$state" >/dev/null 2>&1; then
-            cd_seen="true"
-            break
-          fi
-          sleep 0.2
-        done
+        _retry 25 0.2 ya emit-to "$cid" cd /tmp 2>/dev/null && dds_sent="true"
+        _retry 25 0.2 _cd_state_ok && cd_seen="true"
         if [[ "$dds_sent" == "true" && "$cd_seen" == "true" ]]; then
           row R13-dds-bridge PASS "emit-to cid=$cid retargeted the popup; cd state cache landed"
         else
@@ -516,6 +502,7 @@
       printf 'gamma\n' >"$probe_dir/c.txt"
       editor_pred='[.[] | select((.is_plugin | not) and (.exited | not)
         and ((.terminal_command // .command // "") | startswith("forge-nvim.sh")))]'
+      editor_n() { panes | jq -r "$editor_pred | length"; }
 
       zj new-pane -c -- forge-edit.sh "$probe_dir/a.txt" >/dev/null 2>&1 || true
       if poll "$editor_pred | length == 1"; then
@@ -524,39 +511,29 @@
         row R04-editor-spawn FAIL "editor rows: $(panes | jq -c "$editor_pred")"
       fi
 
-      # Registry publication and socket liveness lag pane creation; poll both.
+      # Registry publication and socket liveness lag pane creation; poll the row, the socket, and the live-pane join together.
       runtime_root="$runtime_base/''${session}"
       registry=""
       editor_pane=""
       socket=""
-      reg_ok="false"
-      for _ in {1..150}; do
+      reg_tab=""
+      # shellcheck disable=SC2329  # invoked through _retry
+      _registry_live() {
         registry="$(find "$runtime_root" -name 'editor-tab-*.tsv' 2>/dev/null | head -1 || true)"
-        if [[ -n "$registry" ]]; then
-          IFS=$'\t' read -r reg_tab editor_pane socket <"$registry" || true
-          if [[ -n "$editor_pane" && -S "$socket" ]] && panes | jq -e --arg id "$editor_pane" --argjson tab "''${reg_tab:-0}" \
-            '[.[] | select((.is_plugin | not) and ((.id | tostring) == $id) and (.tab_id == $tab) and (.exited | not))] | length == 1' >/dev/null; then
-            reg_ok="true"
-            break
-          fi
-        fi
-        sleep 0.2
-      done
-      if [[ "$reg_ok" == "true" ]]; then
+        [[ -n "$registry" ]] || return 1
+        IFS=$'\t' read -r reg_tab editor_pane socket <"$registry" || true
+        [[ -n "$editor_pane" && -S "$socket" ]] || return 1
+        panes | jq -e --arg id "$editor_pane" --argjson tab "''${reg_tab:-0}" '${liveInTab} == 1' >/dev/null
+      }
+      if _retry 150 0.2 _registry_live; then
         row R05-registry PASS "registry row tab=''${reg_tab:-?} pane=$editor_pane matches live pane"
       else
         row R05-registry FAIL "registry=$registry pane=$editor_pane socket=$socket"
       fi
 
-      rpc_ok="false"
-      for _ in {1..75}; do
-        if [[ -S "$socket" ]] && nvim --server "$socket" --remote-expr '1' >/dev/null 2>&1; then
-          rpc_ok="true"
-          break
-        fi
-        sleep 0.2
-      done
-      if [[ "$rpc_ok" == "true" ]]; then
+      # shellcheck disable=SC2329  # invoked through _retry
+      _rpc_answers() { [[ -S "$socket" ]] && nvim --server "$socket" --remote-expr '1' >/dev/null 2>&1; }
+      if _retry 75 0.2 _rpc_answers; then
         row R06-socket-rpc PASS "editor socket answers remote-expr"
       else
         row R06-socket-rpc FAIL "no RPC answer on $socket"
@@ -565,29 +542,31 @@
       zj new-pane -c -- forge-edit.sh "$probe_dir/b.txt" >/dev/null 2>&1 || true
       # The RPC hand-off is async; poll the buffer instead of a fixed sleep.
       bufname=""
-      for _ in {1..25}; do
+      # shellcheck disable=SC2329  # invoked through _retry
+      _buf_current() {
         bufname="$(nvim --server "$socket" --remote-expr 'bufname("%")' 2>/dev/null || true)"
-        [[ "$bufname" == "$probe_dir/b.txt" ]] && break
-        sleep 0.2
-      done
-      if [[ "$(panes | jq -r "$editor_pred | length")" == "1" && "$bufname" == "$probe_dir/b.txt" ]]; then
+        [[ "$bufname" == "$probe_dir/b.txt" ]]
+      }
+      _retry 25 0.2 _buf_current || true
+      if [[ "$(editor_n)" == "1" && "$bufname" == "$probe_dir/b.txt" ]]; then
         row R07-editor-reuse PASS "second open reused the tab editor; current buffer is b.txt"
       else
-        row R07-editor-reuse FAIL "editors=$(panes | jq -r "$editor_pred | length") bufname=$bufname"
+        row R07-editor-reuse FAIL "editors=$(editor_n) bufname=$bufname"
       fi
 
       zj new-pane -c -- forge-edit.sh "$probe_dir/c.txt" >/dev/null 2>&1 || true
       buflisted=0
-      for _ in {1..25}; do
+      # shellcheck disable=SC2329  # invoked through _retry
+      _bufs_loaded() {
         buflisted="$(nvim --server "$socket" --remote-expr 'len(getbufinfo({"buflisted":1}))' 2>/dev/null || printf '0')"
         [[ "$buflisted" =~ ^[0-9]+$ ]] || buflisted=0
-        [[ "$buflisted" -ge 3 ]] && break
-        sleep 0.2
-      done
-      if [[ "$(panes | jq -r "$editor_pred | length")" == "1" && "$buflisted" -ge 3 ]]; then
+        [[ "$buflisted" -ge 3 ]]
+      }
+      _retry 25 0.2 _bufs_loaded || true
+      if [[ "$(editor_n)" == "1" && "$buflisted" -ge 3 ]]; then
         row R08-editor-multifile PASS "one editor holds all $buflisted probe buffers"
       else
-        row R08-editor-multifile FAIL "editors=$(panes | jq -r "$editor_pred | length") buflisted=$buflisted"
+        row R08-editor-multifile FAIL "editors=$(editor_n) buflisted=$buflisted"
       fi
 
       # R09: the adjudicated runtime residual. The dismiss gesture is a marker-gated HIDE on the real keybind path: the popup persists with its yazi
@@ -597,7 +576,7 @@
       dismiss_chord="''${FORGE_ACCEPT_DISMISS_CHORD:-$(printf '\x1b[%d;%du' "$(printf '%d' "'${yaziToggle.key}")" ${toString yaziToggle.mods})}"
       wezterm_bin="''${FORGE_ACCEPT_WEZTERM_BIN:-/Applications/WezTerm.app/Contents/MacOS/wezterm}"
       dispatcher_pred='[.[] | select((.exited | not) and ((.terminal_command // .command // "") == "forge-yazi.sh toggle"))]'
-      popup_id="$(panes | jq -r "$popup_pred | .[0].id // empty")"
+      popup_id="$(popup_head)"
       if [[ "$attached" == "true" && -n "$popup_id" && -n "''${FORGE_ACCEPT_WEZTERM_SOCK:-}" \
         && -n "''${FORGE_ACCEPT_WEZTERM_PANE:-}" && -x "$wezterm_bin" ]]; then
         # Surface + focus through the real dispatcher so the marker records pre-chord visibility; the chord then means hide.
@@ -606,17 +585,18 @@
         printf '%b' "$dismiss_chord" | WEZTERM_UNIX_SOCKET="$FORGE_ACCEPT_WEZTERM_SOCK" \
           "$wezterm_bin" cli send-text --no-paste --pane-id "$FORGE_ACCEPT_WEZTERM_PANE" || true
         layer_vis="unknown"
-        for _ in {1..25}; do
+        # shellcheck disable=SC2329  # invoked through _retry
+        _layer_hidden() {
           layer_vis="$(zj list-tabs --json 2>/dev/null | jq -r '.[0].are_floating_panes_visible' 2>/dev/null || true)"
-          if [[ "$layer_vis" == "false" ]]; then break; fi
-          sleep 0.2
-        done
+          [[ "$layer_vis" == "false" ]]
+        }
+        _retry 25 0.2 _layer_hidden || true
         sleep 1
         dispatchers="$(panes | jq -r "$dispatcher_pred | length")"
-        if [[ "$(panes | jq -r "$popup_pred | length")" == "1" && "$layer_vis" == "false" && "$dispatchers" == "0" ]]; then
+        if [[ "$(popup_n)" == "1" && "$layer_vis" == "false" && "$dispatchers" == "0" ]]; then
           row R09-dismiss-hide PASS "chord hid the layer; popup persists, dispatcher reaped"
         else
-          row R09-dismiss-hide FAIL "popups=$(panes | jq -r "$popup_pred | length") layer_visible=$layer_vis dispatchers=$dispatchers"
+          row R09-dismiss-hide FAIL "popups=$(popup_n) layer_visible=$layer_vis dispatchers=$dispatchers"
         fi
       else
         row R09-dismiss-hide DEFER "chord needs client input (send-keys is a pane-pty write); set FORGE_ACCEPT_WEZTERM_SOCK/_PANE on an attached probe"
@@ -624,21 +604,21 @@
 
       # R10: create-branch focus retention — the fresh popup must hold focus after the floating dispatcher reaps itself. is_focused is server state in
       # the panes snapshot, so this leg runs attached or detached.
-      popup_id="$(panes | jq -r "$popup_pred | .[0].id // empty")"
+      popup_id="$(popup_head)"
       if [[ -n "$popup_id" ]]; then
         zj close-pane --pane-id "terminal_''${popup_id}" >/dev/null 2>&1 || true
         sleep 1
       fi
       zj new-pane --floating -c -- forge-yazi.sh toggle >/dev/null 2>&1 || true
       if poll "$popup_pred | (length == 1) and (.[0].is_focused == true)"; then
-        new_popup="$(panes | jq -r "$popup_pred | .[0].id")"
+        new_popup="$(popup_head)"
         row R10-create-focus PASS "focus retained on created popup terminal_$new_popup"
       else
         row R10-create-focus FAIL "popup/focus rows: $(panes | jq -c "$popup_pred | map({id, is_focused})")"
       fi
 
       # R11: pane-scoped close returns the tab to zero popups.
-      popup_id="$(panes | jq -r "$popup_pred | .[0].id // empty")"
+      popup_id="$(popup_head)"
       if [[ -n "$popup_id" ]]; then
         zj close-pane --pane-id "terminal_''${popup_id}" >/dev/null 2>&1 || true
       fi
@@ -677,16 +657,12 @@
     name = "yazi-zoxide-cdi.sh";
     runtimeInputs = [pkgs.zoxide pkgs.fzf yaziPkg];
     text = ''
-      # FZF-backed zoxide directory picker for Yazi; emits a safe cwd-change event.
+      # FZF-backed zoxide directory picker for Yazi; emits a safe cwd-change event. Ambient FZF env wins over the HM projections.
       ${lib.optionalString (fzfDefaultOpts != "") ''
-        if [[ -z "''${FZF_DEFAULT_OPTS:-}" ]]; then
-          export FZF_DEFAULT_OPTS=${lib.escapeShellArg fzfDefaultOpts}
-        fi
+        export FZF_DEFAULT_OPTS="''${FZF_DEFAULT_OPTS:-${lib.escapeShellArg fzfDefaultOpts}}"
       ''}
       ${lib.optionalString (fzfDefaultCommand != "") ''
-        if [[ -z "''${FZF_DEFAULT_COMMAND:-}" ]]; then
-          export FZF_DEFAULT_COMMAND=${lib.escapeShellArg fzfDefaultCommand}
-        fi
+        export FZF_DEFAULT_COMMAND="''${FZF_DEFAULT_COMMAND:-${lib.escapeShellArg fzfDefaultCommand}}"
       ''}
       selection="$(zoxide query --interactive -- "$@" || true)"
       if [[ -z "$selection" ]]; then

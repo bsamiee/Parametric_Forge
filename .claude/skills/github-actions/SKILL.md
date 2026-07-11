@@ -22,8 +22,9 @@ Generate and validate production-ready GitHub Actions workflows and custom actio
 6. (custom actions) Read [custom-actions.md](./references/custom-actions.md).
 7. Resolve action versions — `git ls-remote`, Context7 MCP, or WebSearch for latest SHA.
 8. Generate — SHA-pinned actions, minimal permissions, concurrency, caching, timeouts, harden-runner.
-9. Validate — Read validation references, run actionlint, apply the best-practice checks.
-10. Fix and re-validate until passing (max 3 iterations).
+9. Validate — `gha check <files>` gates actionlint, zizmor, and ratchet as one typed envelope; apply the best-practice checks.
+10. Prove locally — `gha run [-j JOB] [-e EVENT.json]` executes Linux jobs through the container runtime; `gha pin` freezes mutable refs; hosted CI stays the merge authority.
+11. Fix and re-validate until passing (max 3 iterations).
 
 [SCOPE]:
 
@@ -130,7 +131,7 @@ Static SHA catalogs decay — actions release frequently and stale pins miss sec
 
 [FALLBACK_METHODS]:
 
-- Context7 MCP: `resolve-library-id` then `get-library-docs` for action documentation.
+- Context7 MCP: `resolve-library-id` then `query-docs` for action documentation.
 - WebSearch: `"[owner/repo] [version] github action"` for release notes.
 
 [IMPORTANT]:
@@ -143,13 +144,15 @@ Static SHA catalogs decay — actions release frequently and stale pins miss sec
 
 ## [06]-[VALIDATION]
 
-[VALIDATION_PIPELINE]:
+[VALIDATION_PIPELINE]: `gha check` folds the first three stages into one typed envelope.
 
-| [INDEX] | [STAGE]         | [TOOL]        | [VALIDATES]                                                          |
-| :-----: | :-------------- | :------------ | :------------------------------------------------------------------- |
-|  [01]   | Static Analysis | actionlint    | YAML syntax, expressions, runner labels, action inputs, CRON, globs. |
-|  [02]   | Best Practices  | custom checks | SHA pinning, permissions, injection, timeouts, harden-runner.        |
-|  [03]   | Local Execution | act           | Dry-run validation against Docker images (requires Docker).          |
+| [INDEX] | [STAGE]         | [TOOL]        | [VALIDATES]                                                            |
+| :-----: | :-------------- | :------------ | :--------------------------------------------------------------------- |
+|  [01]   | Static Analysis | actionlint    | YAML syntax, expressions, runner labels, action inputs, CRON, globs.   |
+|  [02]   | Security Audit  | zizmor        | Injection, credential persistence, unpinned uses, permission excess.   |
+|  [03]   | Ref Pinning     | ratchet       | Mutable `uses:` references; `gha pin` rewrites them to SHAs.           |
+|  [04]   | Best Practices  | custom checks | SHA pinning, permissions, injection, timeouts, harden-runner.          |
+|  [05]   | Local Execution | act           | `gha run` executes jobs in containers; dry-run via `gha run --dryrun`. |
 
 [BEST_PRACTICE_CHECKS]:
 
@@ -171,13 +174,13 @@ Static SHA catalogs decay — actions release frequently and stale pins miss sec
 
 [TROUBLESHOOTING]:
 
-| [INDEX] | [ISSUE]                 | [SOLUTION]                                     |
-| :-----: | :---------------------- | :--------------------------------------------- |
-|  [01]   | Tools not found         | Install actionlint + act (see act_usage.md).   |
-|  [02]   | Docker not running      | Start Docker or validate with actionlint only. |
-|  [03]   | act fails, GitHub works | See act_usage.md — Limitations.                |
-|  [04]   | ARM Mac arch mismatch   | Add `--container-architecture linux/amd64`.    |
-|  [05]   | Custom runner labels    | Declare in `.github/actionlint.yaml`.          |
+| [INDEX] | [ISSUE]                 | [SOLUTION]                                      |
+| :-----: | :---------------------- | :---------------------------------------------- |
+|  [01]   | Tools not found         | Install actionlint + act (see act_usage.md).    |
+|  [02]   | Docker not running      | Start the runtime; `gha check` needs no Docker. |
+|  [03]   | act fails, GitHub works | See act_usage.md — Limitations.                 |
+|  [04]   | ARM Mac arch mismatch   | Add `--container-architecture linux/amd64`.     |
+|  [05]   | Custom runner labels    | Declare in `.github/actionlint.yaml`.           |
 
 [VERIFY] Completion:
 

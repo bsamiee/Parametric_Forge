@@ -65,20 +65,16 @@
     ui = [["border" palette.subtle] ["cursor" palette.foreground] ["indent" palette.subtle] ["whitespace" palette.selection] ["search" derived.search] ["match" derived.searchCurrent]];
   };
 
-  # Two-register git vocabulary: rows live on the symbols family (fonts catalog gitAlphabet) so the hb-shape zero-.notdef gate proves every glyph
-  # column. glyph is the terminal nerd-icon register (codepoint-minted, immune to harness stripping); ascii is the persisted/CI/off-terminal twin;
-  # color-role strings resolve against the folded families, so a hue rebind lands on every git consumer with zero edits here.
-  gitRole = {
-    inherit (families.state) success info danger warning attention;
-    inherit (families.accent) structural secondary;
-    inherit (families.text) muted;
-  };
+  # Two-register git vocabulary from the fonts-catalog gitAlphabet rows; dotted role paths resolve on the folded families (contextBadges grammar),
+  # so a hue rebind lands on every consumer and a new state is one catalog row. Register law: ascii = persisted/piped output and prose-like readouts
+  # where marker+count reads as a text token (delta labels; the operator-ratified starship cluster); glyph = fixed one-cell icon columns where shape
+  # is the cue (gitsigns gutter, yazi linemode); unthemable-glyph tools (eza, lazygit NFv3) take .color only; the prompt alone bins color.
   roles =
     families
     // {
       git = byName (map (t: {
           name = builtins.elemAt t 0;
-          color = gitRole.${builtins.elemAt t 1};
+          color = lib.getAttrFromPath (lib.splitString "." (builtins.elemAt t 1)) families;
           glyph = builtins.fromJSON ''"\u${builtins.elemAt t 2}"'';
           ascii = builtins.elemAt t 3;
         })
@@ -229,7 +225,7 @@
   in
     map mkTarget [
       ["wezterm" "${apps}/wezterm/default.nix" "lua+toml" "roles ansi16 fonts badges" "bound"]
-      ["zellij" "${apps}/zellij/config.nix" "kdl" "roles" "bound"]
+      ["zellij" "${apps}/zellij/config.nix" "kdl" "roles icons" "bound"]
       ["zellij-theme" "${apps}/zellij/themes/dracula.nix" "kdl" "palette" "bound"]
       ["yazi" "${apps}/yazi/theme.nix" "toml+tmTheme" "palette icons git badges" "bound"]
       ["nvim" "${apps}/nvim/default.nix" "lua" "roles palette scopes git" "bound"]
@@ -237,7 +233,7 @@
       ["bat" "${st}/bat.nix" "tmTheme" "scopes" "bound"]
       ["delta" "modules/home/programs/git-tools/git.nix" "gitconfig" "diff blameRamp git" "bound"]
       ["lazygit" "modules/home/programs/git-tools/lazygit.nix" "yaml" "palette git" "bound"]
-      ["starship" "${st}/starship.nix" "toml" "roles palette icons git" "bound"]
+      ["starship" "${st}/starship.nix" "toml" "roles palette icons git badges" "bound"]
       ["fzf" "${st}/fzf.nix" "env" "roles" "bound"]
       ["eza" "${st}/eza.nix" "yaml" "roles palette git" "bound"]
       ["fastfetch" "${st}/fastfetch.nix" "json" "roles fonts" "bound"]

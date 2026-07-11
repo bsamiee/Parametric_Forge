@@ -33,6 +33,7 @@
 ## [05]-[AGENT_RUNTIME]
 
 - Diagnose agent-tool runtime behavior separately from shell behavior. Claude workflow globals such as `args` are owned by Claude's workflow runtime; Nix, zsh, aliases, and PATH only explain subprocess, hook, or shell-command behavior.
+- Gemini judgment, visual, and image-prompt legs route through the `agy` skill (`.claude/skills/agy`), strongest reasoning tier pinned; its review lanes are read-only. A codex session reaches `agy` only under `-s danger-full-access` — the Seatbelt sandbox kills the process at lower sandbox levels.
 - Persist API tokens through `CLAUDE_ENV_FILE` only when subagents or tools need inherited credentials; Claude may expand that file into shell launch command lines while commands run.
 - Use `CLAUDE_ENV_EXPORT_KEYS` (comma/space list) for additional sub-agent credential variables required beyond the default `setup-env.sh` key set.
 - The harness edit path can materialize control-character escapes (``) as raw bytes on disk; after writing content that carries them, byte-verify with `cat -v` — raw control bytes are invisible to every text reader — and can strip 3-byte BMP private-use glyphs while planes 15/16 survive, so glyph-bearing files ride scripted writes with byte-level diff gates.

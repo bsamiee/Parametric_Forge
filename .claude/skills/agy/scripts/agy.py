@@ -38,6 +38,7 @@ class _Settings(BaseSettings):
     model_config = SettingsConfigDict(extra="ignore", frozen=True)
 
     agy_bin: str = Field(default="agy", validation_alias="AGY_BIN")
+    agy_log_file: str = Field(default="", validation_alias="AGY_LOG_FILE")
     agy_model: str = Field(default="Gemini 3.1 Pro (High)", validation_alias="AGY_MODEL")
     agy_print_timeout: str = Field(default="5m", validation_alias="AGY_PRINT_TIMEOUT")
 
@@ -94,6 +95,7 @@ async def _main(argv: list[str] | None = None) -> int:
     prompt.add_argument("text")
     prompt.add_argument("--timeout", default=settings.agy_print_timeout)
     prompt.add_argument("--add-dir", action="append", default=[])
+    prompt.add_argument("--log-file", default=settings.agy_log_file)
 
     sub.add_parser(_Op.MODELS.value)
 
@@ -106,6 +108,8 @@ async def _main(argv: list[str] | None = None) -> int:
         case _Op.PROMPT:
             cmd = [settings.agy_bin, "--print", ns.text, "--print-timeout", ns.timeout]
             cmd.extend(part for path in ns.add_dir for part in ("--add-dir", path))
+            if ns.log_file:
+                cmd.extend(("--log-file", ns.log_file))
             if settings.agy_model:
                 cmd.extend(("--model", settings.agy_model))
             return await _run(op, cmd)

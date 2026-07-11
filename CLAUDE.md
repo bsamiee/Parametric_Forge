@@ -6,10 +6,10 @@ Rankings, higher is better. Cost reflects actual operator spend, not list price.
 
 | [INDEX] | [MODEL]       | [COST] | [INTELLIGENCE] | [TASTE] |
 | :-----: | :------------ | :----: | :------------: | :-----: |
-|  [01]   | gpt-5.6-terra |   9    |       8        |    6    |
-|  [02]   | gpt-5.6-sol   |   8    |       9        |    7    |
-|  [03]   | gpt-5.6-luna  |   10   |       6        |    5    |
-|  [04]   | sonnet-5      |   5    |       4        |    6    |
+|  [01]   | gpt-5.6-terra |   9    |       7        |    6    |
+|  [02]   | gpt-5.6-sol   |   8    |       8        |    7    |
+|  [03]   | gpt-5.6-luna  |   10   |       5        |    5    |
+|  [04]   | sonnet-5      |   5    |       3        |    6    |
 |  [05]   | opus-4.8      |   4    |       7        |    7    |
 |  [06]   | fable-5       |   2    |       9        |    9    |
 
@@ -18,8 +18,9 @@ Rankings, higher is better. Cost reflects actual operator spend, not list price.
 - High is the dispatch floor; xhigh and max deepen one context. Subagent spawning is prompt-triggered at any tier; Ultra biases Sol and Terra to self-decompose, while Luna ends at max.
 - Fan-out lanes disable every unused MCP server, including `heptabase-mcp`, and never refan with Ultra. `forge-mcp doctor --network` and `forge-mcp drift` are the fleet gates.
 - User-facing surfaces require taste ≥ 7. Plan and implementation reviews use fable-5 or opus-4.8, with Terra or Sol as the independent Codex lineage.
-- Claude models run through the Agent/Workflow `model` parameter at effort `high`; Codex runs through `codex exec` / `codex review`. [NEVER]: Haiku.
-- Workflow wrappers label the real worker `terra:`, `sol:`, or `luna:` and are call-write-receipt: one blocking `codex` MCP tool call (model, sandbox, cwd, effort pinned), the product written to the lane report path, the thin receipt back. The `codex` and `workflow-creator` skills own the invocation contract.
+- Delegated agents inherit this table at every depth under the agent-dispatch placement law, never self-escalating beyond the brief.
+- Claude models run through the Agent/Workflow `model` parameter at effort `high`; Codex runs through the `codex` MCP tool or `codex exec` / `codex review` — the codex skill owns invocation. [NEVER]: Haiku.
+- A workflow codex leg is a thin wrapper labeled with the real worker (`terra:`/`sol:`/`luna:`/`gemini:`) making one blocking `codex` MCP call; the workflow-creator codex-lanes reference owns the wrapper and receipt contract.
 
 ## [02]-[ESTATE_LAW]
 

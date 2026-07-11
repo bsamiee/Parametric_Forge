@@ -4,11 +4,11 @@ Codex carries three configurable surfaces — skills, custom agents, MCP servers
 
 ## [01]-[SURFACE_MAP]
 
-| [INDEX] | [SURFACE]    | [UNIT]                         | [HOME]                                        | [SELECTED_BY]                          |
-| :-----: | :----------- | :----------------------------- | :-------------------------------------------- | :------------------------------------- |
-|  [01]   | skill        | directory holding a `SKILL.md` | `~/.agents/skills` (legacy `~/.codex/skills`) | description match or `$skill-name`     |
-|  [02]   | custom agent | one TOML file, one agent       | `~/.codex/agents/*.toml`                      | parent prompt by name, or codex by fit |
-|  [03]   | MCP server   | one `[mcp_servers.<name>]` row | `~/.codex/config.toml`, fleet-projected       | the model calling its tools mid-turn   |
+| [INDEX] | [SURFACE]    | [UNIT]                         | [HOME]                                         | [SELECTED_BY]                          |
+| :-----: | :----------- | :----------------------------- | :--------------------------------------------- | :------------------------------------- |
+|  [01]   | skill        | directory holding a `SKILL.md` | `~/.codex/skills` (mirror); `~/.agents/skills` | description match or `$skill-name`     |
+|  [02]   | custom agent | one TOML file, one agent       | `~/.codex/agents/*.toml`                       | parent prompt by name, or codex by fit |
+|  [03]   | MCP server   | one `[mcp_servers.<name>]` row | `~/.codex/config.toml`, fleet-projected        | the model calling its tools mid-turn   |
 
 Doctrine and procedure land as a skill; a delegated worker persona (model, effort, sandbox, instructions) lands as an agent file; external capability lands as an MCP row. A concern spread across two surfaces is a defect — collapse it into the one that owns the question.
 
@@ -22,7 +22,7 @@ A Codex skill is a directory holding a `SKILL.md` whose frontmatter carries `nam
 - [TRIGGERS]: Invocation is explicit (`$skill-name`, or `/skills` in the CLI/IDE) or implicit by description match. The skills list rides at most 2% of the model's context window; descriptions shorten first and whole skills drop under pressure — the owned deliverable and primary trigger nouns ride the first clause. The selected skill's full `SKILL.md` always loads regardless of listing truncation.
 - [COLLISIONS]: Two skills sharing a `name` do not merge and do not shadow — both list, unlike Claude Code where personal beats project. Symlinked folders resolve to targets. Codex detects skill edits automatically; a missing update means restart.
 - [CLAUDE_DELTAS]: `disable-model-invocation`, `user-invocable`, `context: fork`, `allowed-tools`, and dynamic context injection are Claude Code extensions Codex ignores; invocation policy moves to `policy.allow_implicit_invocation` in `agents/openai.yaml`. Upstream-tracking frontmatter and `use_cases.yaml` fixtures drop on port; an estate skill carries `name` and `description` only.
-- [ESTATE]: Estate codex skills are ports of the Claude-side Forge masters — same body, Claude-only frontmatter stripped, `agents/openai.yaml` added where app-surface metadata or invocation policy earns it. `~/.agents/skills` is the target root for new ports; the deprecated `~/.codex/skills` root still loads and hosts the standing estate until drained.
+- [ESTATE]: Estate codex skills are ports of the Claude-side Forge masters — same body, Claude-only frontmatter stripped, `agents/openai.yaml` added where app-surface metadata or invocation policy earns it. `~/.codex/skills` is the estate mirror root and takes every port; `~/.agents/skills` is the upstream user root and also loads, so a port never lands in both.
 
 `agents/openai.yaml` is the optional Codex-native metadata file — app-surface presentation (`interface.display_name`, icons, `default_prompt`), invocation policy, and the skill's declared tool dependencies:
 
@@ -43,7 +43,7 @@ dependencies:
 
 ## [03]-[AGENTS]
 
-A custom agent file defines a spawnable worker persona: `name`, `description`, and `developer_instructions` are required; `nickname_candidates`, `model`, `model_reasoning_effort`, `sandbox_mode`, `mcp_servers`, and `skills.config` inherit from the parent session when omitted. Codex identifies the agent by its `name` field, never the filename; a custom name matching a built-in (`default`, `worker`, `explorer`) takes precedence.
+A custom agent file defines a spawnable worker persona: `name`, `description`, and `developer_instructions` are required; `sandbox_mode`, `mcp_servers`, and `skills.config` inherit from the parent session when omitted, while subagent MODEL choice stays codex-internal — a pinned `model`/`model_reasoning_effort` row is the only external control over what a spawned worker runs. Codex identifies the agent by its `name` field, never the filename; a custom name matching a built-in (`default`, `worker`, `explorer`) takes precedence.
 
 ```toml template
 name = "reviewer"
@@ -56,8 +56,8 @@ Review code like an owner; lead with concrete findings and reproduction steps.
 """
 ```
 
-- Spawning is prompt-triggered at EVERY effort tier — "spawn the reviewer agent on X" lands a `collab_tool_call` even at medium; effort `ultra` only biases the model to decompose without being asked.
-- Globals live under `[agents]` in config: `max_threads` (default 6) caps concurrent threads, `max_depth` (default 1) stops children spawning grandchildren, `job_max_runtime_seconds` defaults the per-worker CSV timeout. Raise `max_depth` never — recursive fan-out turns one broad instruction into unbounded spend.
+- The parent prompt spawns a persona by name; spawn-trigger and effort law are the skill root's [05].
+- Globals split across two config tables: `[features.multi_agent_v2]` owns concurrency (`max_concurrent_threads_per_session`) and the wait timeouts (`min_wait_timeout_ms`, `default_wait_timeout_ms`); `[agents]` owns `max_depth` (generations below the root — each level multiplies fan-out cost, so the config value is a deliberate operator ruling) and `job_max_runtime_seconds`, the per-worker CSV timeout default.
 - The best agents are narrow and opinionated: one job, a tool surface matching it, instructions that refuse adjacent work. Subagents inherit the parent sandbox unless their file overrides it.
 - Edits to an agent file apply on the next spawn — running threads keep the definition they started with. A persona no other prompt spawns is deleted, not kept.
 

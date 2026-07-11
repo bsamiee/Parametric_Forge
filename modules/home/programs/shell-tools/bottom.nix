@@ -6,7 +6,8 @@
 # ----------------------------------------------------------------------------
 # Resource monitor themed from the estate palette owner
 {config, ...}: let
-  inherit (config.forge.theme) palette;
+  # palette retained for the categorical per-core / per-GPU rainbows — a chromatic spectrum wants stable distinct hues, not semantic roles.
+  inherit (config.forge.theme) roles palette;
 in {
   programs.bottom = {
     enable = true;
@@ -37,46 +38,48 @@ in {
       # --- [STYLE_CONFIGURATION]
       styles = {
         widgets = {
-          border_color = palette.cyan.hex;
-          selected_border_color = palette.magenta.hex;
+          # Focus pair owns the widget-frame active/inactive derivation: the selected frame reads focus.active, every other frame reads inactive.
+          border_color = roles.focus.inactive.hex;
+          selected_border_color = roles.focus.active.hex;
           widget_title = {
-            color = palette.cyan.hex;
+            color = roles.accent.primary.hex;
           };
           table_header = {
-            color = palette.cyan.hex;
+            color = roles.accent.primary.hex;
             bold = true;
           };
           text = {
-            color = palette.foreground.hex;
+            color = roles.text.primary.hex;
           };
+          # Selection rides the focus fill with inverse text.
           selected_text = {
-            color = palette.background.hex;
-            bg_color = palette.cyan.hex;
+            color = roles.text.inverse.hex;
+            bg_color = roles.focus.active.hex;
           };
           disabled_text = {
-            color = palette.comment.hex;
+            color = roles.text.muted.hex;
           };
           thread_text = {
-            color = palette.purple.hex;
+            color = roles.accent.structural.hex;
             bold = false;
           };
         };
         tables = {
           headers = {
-            color = palette.cyan.hex;
+            color = roles.accent.primary.hex;
             bold = true;
           };
         };
         graphs = {
-          graph_color = palette.selection.hex;
+          graph_color = roles.surface.selected.hex;
           legend_text = {
-            color = palette.cyan.hex;
+            color = roles.accent.primary.hex;
             bold = false;
           };
         };
         cpu = {
-          all_entry_color = palette.cyan.hex;
-          avg_entry_color = palette.pink.hex;
+          all_entry_color = roles.accent.primary.hex;
+          avg_entry_color = roles.accent.tertiary.hex;
           cpu_core_colors = [
             palette.green.hex # Core 0
             palette.cyan.hex # Core 1
@@ -89,10 +92,10 @@ in {
           ];
         };
         memory = {
-          ram = palette.green.hex;
-          swap = palette.orange.hex;
-          cache = palette.cyan.hex;
-          arc = palette.purple.hex;
+          ram = roles.state.success.hex;
+          swap = roles.state.attention.hex;
+          cache = roles.accent.primary.hex;
+          arc = roles.accent.structural.hex;
           gpu_colors = [
             palette.pink.hex # GPU 0
             palette.cyan.hex # GPU 1
@@ -101,15 +104,15 @@ in {
           ];
         };
         network = {
-          rx = palette.green.hex;
-          tx = palette.pink.hex;
-          rx_total = palette.cyan.hex;
-          tx_total = palette.orange.hex;
+          rx = roles.state.success.hex;
+          tx = roles.accent.tertiary.hex;
+          rx_total = roles.accent.primary.hex;
+          tx_total = roles.state.attention.hex;
         };
         battery = {
-          high_battery = palette.green.hex; # Healthy (50%+)
-          medium_battery = palette.yellow.hex; # Caution (10-50%)
-          low_battery = palette.red.hex; # Critical (<10%)
+          high_battery = roles.state.success.hex; # Healthy (50%+)
+          medium_battery = roles.state.warning.hex; # Caution (10-50%) — warning role (amber)
+          low_battery = roles.state.danger.hex; # Critical (<10%)
         };
       };
       # --- [PROCESS_CONFIGURATION]

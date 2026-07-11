@@ -13,8 +13,8 @@
   pkgs,
   ...
 }: let
-  inherit (config.forge.theme) palette;
-  # Shared dual-receipt emit fold (receipts.nix) + the F01 attention vocabulary (attention.nix): urgency ladder, kv parser, spine, alert rows.
+  inherit (config.forge.theme) roles;
+  # Shared dual-receipt emit fold (receipts.nix) + the attention vocabulary (attention.nix): urgency ladder, kv parser, spine, alert rows.
   receiptsFold = import ./receipts.nix;
   attention = import ./attention.nix {sshHosts = config.forge.ssh.hosts;};
   profileBin = "/etc/profiles/per-user/${config.home.username}/bin";
@@ -145,11 +145,9 @@
     };
   catalogJson = pkgs.writeText "forge-browse-catalog.json" (builtins.toJSON catalogRows);
 
-  # Per-browser fzf theme: the theme owner's shared fzf vocabulary rides every generated command (global fzf options stay theme-only in fzf.nix).
-  fzfColorRows = config.forge.theme.projections.fzfColorRows;
-  fzfBaseArgs = fzfColorRows ++ ["--border=sharp" "--layout=reverse" "--info=right" "--highlight-line" "--prompt=❯ " "--pointer=❯"];
-  # Bash array literal injected into each generated script; consumers expand "''${fzf_base[@]}" so every browser carries the theme per command.
-  fzfArgsBash = "fzf_base=(\n${lib.concatMapStringsSep "\n" (a: "        ${lib.escapeShellArg a}") fzfBaseArgs}\n      )";
+  # Per-browser fzf theme: the theme owner's per-command argument vocabulary (colors + chrome) rides every generated command as a bash array
+  # literal; consumers expand "''${fzf_base[@]}", so every browser carries the theme without assuming the interactive FZF_DEFAULT_OPTS arrived.
+  fzfArgsBash = "fzf_base=(\n${lib.concatMapStringsSep "\n" (a: "        ${lib.escapeShellArg a}") config.forge.theme.projections.fzfArgs}\n      )";
 
   # --- [RECEIPT_VERB_ROWS]
   # Canned [desc sql] projections over the normalized event spine (fixed columns per attention.spineColumnsSql) so every verb binds on any
@@ -183,9 +181,9 @@
       attention_feed="''${FORGE_ATTENTION_FEED:-''${XDG_STATE_HOME:-$HOME/.local/state}/forge/agent-attention.jsonl}"
       reg_rows="$(jq -r '.[] | [.kind, .path, (.grain // "kv")] | @tsv' "$registry")"
       ${fzfArgsBash}
-      # Shared F01 vocabulary (attention.nix) composed into every jq program; the $-bearing jq text is single-quoted data, never a shell expansion.
+      # Shared attention vocabulary (attention.nix) composed into every jq program; the $-bearing jq text is single-quoted data, never a shell expansion.
       # shellcheck disable=SC2016
-      jq_defs=${lib.escapeShellArg (attention.urgencyJq + attention.kvJq + attention.spineJq)}
+      jq_defs=${lib.escapeShellArg (attention.urgencyJq + attention.kvJq + attention.spineJq + attention.dispTsJq config.forge.theme.projections.timeDisplay)}
       mode="" render="table" since="" failures=0 limit=40 pick="" sql_query="" verb_name=""
       kinds=()
       usage() { printf '%s\n' 'Usage: forge-receipts [--kind K]... [--since ISO|Nh|Nd] [--failures] [--limit N]' '                      [--json|--tsv|--fzf|--follow] [--pick kind@ts]' '                      [--sql QUERY] [--verb NAME] [--verbs] [--audit] [--bus]'; }
@@ -222,16 +220,19 @@
         [ "''${#kinds[@]}" -eq 0 ] || case " ''${kinds[*]} " in *" $1 "*) return 0 ;; *) return 1 ;; esac
       }
 
-      collect() { # $1 = per-source row cap; grain selects the parse expression
+      collect() { # $1 = per-source row cap; grain selects the parse expression; the attention feed folds in as one more json-grain source
         local cap="''${1:-500}" kind path grain parse f
-        while IFS=$'\t' read -r kind path grain; do
-          f="$HOME/$path"
+        {
+          printf '%s\n' "$reg_rows"
+          printf 'attention\t%s\tjson\n' "$attention_feed"
+        } | while IFS=$'\t' read -r kind path grain; do
+          case "$path" in "/"*) f="$path" ;; *) f="$HOME/$path" ;; esac # registry rows are $HOME-relative; the feed row is absolute
           { [ -f "$f" ] && wanted "$kind"; } || continue
           parse='kv_row'
           [ "$grain" != json ] || parse='(fromjson? | select(type == "object"))'
           tail -n "$cap" "$f" \
             | jq -Rc --arg kind "$kind" "$jq_defs $parse"' + {kind: $kind}' 2>/dev/null || true
-        done <<<"$reg_rows"
+        done
       }
 
       # --- [SQL_PLANE]
@@ -240,13 +241,7 @@
         tmpd="$(mktemp -d)"
         trap 'rm -rf "$tmpd"' EXIT
         corpus="$tmpd/corpus.jsonl"
-        {
-          collect 100000
-          if wanted attention; then
-            tail -n 100000 "$attention_feed" 2>/dev/null \
-              | jq -Rc 'fromjson? | select(type == "object") + {kind: "attention"}' || true
-          fi
-        } | jq -c "$jq_defs spine" >"$corpus"
+        collect 100000 | jq -c "$jq_defs spine" >"$corpus"
         [ -s "$corpus" ] || { printf 'forge-receipts: empty corpus\n' >&2; exit 1; }
         duckdb_args=()
         [ "$render" != json ] || duckdb_args+=(-json)
@@ -309,8 +304,8 @@
               | (if $row.grain == "json" then ($line | fromjson? // {}) else ($line | kv_row) end)
               | . + {kind: $row.kind}
               | select(urgency == "high")
-              | ((.ts // "" | fromdateiso8601? | localtime | strftime("%H:%M")) // "") as $hm
-              | "!! \(.kind | ascii_upcase) \(.result // .state // .status // "fail")\(if $hm != "" then " · " + $hm else "" end)"' \
+              | ((.ts // "") | disp_ts) as $hm
+              | "[X] \(.kind | ascii_upcase) \(.result // .state // .status // "fail")\(if $hm != "" then " · " + $hm else "" end)"' \
           | while IFS= read -r msg; do # streaming boundary: live failure push
               while IFS= read -r s; do
                 [ -n "$s" ] || continue
@@ -337,6 +332,7 @@
           wanted "$kind" || continue
           [ -f "$HOME/$path" ] && logs+=("$HOME/$path")
         done <<<"$reg_rows"
+        if wanted attention && [ -f "$attention_feed" ]; then logs+=("$attention_feed"); fi
         [ "''${#logs[@]}" -gt 0 ] || { printf 'forge-receipts: no logs to follow\n' >&2; exit 1; }
         exec tail -n 0 -F "''${logs[@]}"
       fi
@@ -509,7 +505,7 @@
         ${lib.concatStringsSep " \\\n  " (map (r: "'${r}'") (lib.splitString ";" specs))}
     '';
   browseCompletion = mkCompletion "forge-browse" "1:domain:(${domainsWord});--json[emit register JSON]:domain:(${domainsWord});--list-domains[list register domains];--preview[render row preview]:domain:(${domainsWord})";
-  receiptsCompletion = mkCompletion "forge-receipts" "*--kind[filter by kind]:kind:(${lib.concatMapStringsSep " " (r: r.kind) receiptSources});--since[time window ISO or Nh/Nd]:window:;--failures[failed rows only];--limit[row cap]:count:;--json[JSON rows];--tsv[TSV rows];--fzf[interactive picker];--follow[live tail];--pick[one row]:row:;--sql[SQL over the receipts spine table]:query:;--verb[canned SQL projection]:verb:(${lib.concatStringsSep " " (lib.attrNames receiptVerbs)});--verbs[list verb rows];--audit[registry-vs-disk truth];--bus[live failure push into zjstatus bars]";
+  receiptsCompletion = mkCompletion "forge-receipts" "*--kind[filter by kind]:kind:(${lib.concatMapStringsSep " " (r: r.kind) receiptSources} attention);--since[time window ISO or Nh/Nd]:window:;--failures[failed rows only];--limit[row cap]:count:;--json[JSON rows];--tsv[TSV rows];--fzf[interactive picker];--follow[live tail];--pick[one row]:row:;--sql[SQL over the receipts spine table]:query:;--verb[canned SQL projection]:verb:(${lib.concatStringsSep " " (lib.attrNames receiptVerbs)});--verbs[list verb rows];--audit[registry-vs-disk truth];--bus[live failure push into zjstatus bars]";
 
   # --- [TELEVISION_CHANNELS]
   # Durable semantic channels over the same registers; source/preview commands are store-path exact so channels never depend on ambient PATH.
@@ -579,7 +575,7 @@ in {
     };
 
     # Television: durable channel host. Shell integration stays off — Ctrl-R is Atuin, Ctrl-T is fzf; channels launch via `tv <channel>`.
-    # Theme roles bind palette roles: one role row serves every bound key.
+    # Semantic role rows bind every Television key; selection rides the focus fill, matching every estate picker.
     programs.television = {
       enable = true;
       enableBashIntegration = false;
@@ -589,16 +585,21 @@ in {
         use_nerd_font_icons = true;
       };
       channels = tvChannels;
-      themes.forge-dracula = lib.concatMapAttrs (role: keys: lib.genAttrs keys (_: palette.${role}.hex)) {
-        background = ["background" "channel_mode_fg" "remote_control_mode_fg" "action_picker_mode_fg"];
-        comment = ["border_fg" "dimmed_text_fg"];
-        cyan = ["result_name_fg" "channel_mode_bg" "send_to_channel_mode_fg"];
-        foreground = ["text_fg" "input_text_fg" "result_value_fg" "selection_fg"];
-        green = ["match_fg" "remote_control_mode_bg"];
-        magenta = ["result_count_fg" "preview_title_fg" "action_picker_mode_bg"];
-        selection = ["selection_bg"];
-        yellow = ["result_line_number_fg"];
-      };
+      # One [role-family role-name keys] row per semantic; selection rides the focus fill + inverse text, matching every estate picker.
+      themes.forge-dracula = let
+        tvRows = [
+          ["surface" "base" ["background"]]
+          ["text" "inverse" ["channel_mode_fg" "remote_control_mode_fg" "action_picker_mode_fg" "selection_fg"]]
+          ["text" "muted" ["border_fg" "dimmed_text_fg"]]
+          ["text" "primary" ["text_fg" "input_text_fg" "result_value_fg"]]
+          ["text" "subtle" ["result_line_number_fg"]]
+          ["accent" "primary" ["result_name_fg" "channel_mode_bg" "send_to_channel_mode_fg"]]
+          ["accent" "secondary" ["result_count_fg" "preview_title_fg" "action_picker_mode_bg"]]
+          ["state" "success" ["match_fg" "remote_control_mode_bg"]]
+          ["focus" "active" ["selection_bg"]]
+        ];
+      in
+        lib.foldl' (acc: r: acc // lib.genAttrs (lib.elemAt r 2) (_: roles.${lib.elemAt r 0}.${lib.elemAt r 1}.hex)) {} tvRows;
     };
 
     # Agent-facing register projections beside the theme's palette.json.

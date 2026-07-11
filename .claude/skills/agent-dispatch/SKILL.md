@@ -27,18 +27,21 @@ Dispatch is three decisions taken in order: placement — which execution surfac
 
 ## [02]-[PLACEMENT]
 
-| [INDEX] | [SURFACE]        | [CONTEXT]                                  | [SELECT_WHEN]                                                         |
-| :-----: | :--------------- | :----------------------------------------- | :-------------------------------------------------------------------- |
-|  [01]   | Main turn        | Full history, full tools                   | Iterative back-and-forth, phases share context, targeted change       |
-|  [02]   | `/btw`           | Full history, no tools, answer discarded   | A side question about material already in the conversation            |
-|  [03]   | Fork             | Inherits history + system prompt + cache   | Side task needing accumulated context; parallel takes on a base       |
-|  [04]   | Subagent         | Fresh: own prompt, memory, git snapshot    | Noisy or verbose work whose transcript stays out of the parent        |
-|  [05]   | Nested subagent  | Fresh, spawned by a worker                 | A delegated task that itself splits; grandchild noise stays hidden    |
-|  [06]   | Agent team       | Independent peer sessions, tasks, mailbox  | Workers must trade findings, challenge, self-claim tasks              |
-|  [07]   | Dynamic workflow | Script vars hold every intermediate result | Dozens to hundreds of agents, codified reruns, bounded loops          |
-|  [08]   | Codex offload    | Separate model + context, one report       | Transcript-heavy mechanical or research legs — codex skill owns these |
+| [INDEX] | [SURFACE]          | [CONTEXT]                                  | [SELECT_WHEN]                                                         |
+| :-----: | :----------------- | :----------------------------------------- | :-------------------------------------------------------------------- |
+|  [01]   | Main turn          | Full history, full tools                   | Iterative back-and-forth, phases share context, targeted change       |
+|  [02]   | `/btw`             | Full history, no tools, answer discarded   | A side question about material already in the conversation            |
+|  [03]   | Fork               | Inherits history + system prompt + cache   | Side task needing accumulated context; parallel takes on a base       |
+|  [04]   | Subagent           | Fresh: own prompt, memory, git snapshot    | Noisy or verbose work whose transcript stays out of the parent        |
+|  [05]   | Nested subagent    | Fresh, spawned by a worker                 | A delegated task that itself splits; grandchild noise stays hidden    |
+|  [06]   | Agent team         | Independent peer sessions, tasks, mailbox  | Workers must trade findings, challenge, self-claim tasks              |
+|  [07]   | Dynamic workflow   | Script vars hold every intermediate result | Dozens to hundreds of agents, codified reruns, bounded loops          |
+|  [08]   | Codex offload      | Separate model + context, one report       | Transcript-heavy mechanical or research legs — codex skill owns these |
+|  [09]   | Machine automation | No agent; launchd, mise, webhook rows      | Recurring, watch-shaped, or event work with no per-firing judgment    |
 
 Placement law rides four axes: cost rises down the table, so the cheapest surface that isolates the noise wins; a fork beats a fresh subagent when the worker needs the conversation so far, because the fork reuses the parent prompt cache; a team beats parallel subagents only when workers must communicate, since each teammate is a full session priced accordingly; a workflow beats a team when the plan is codifiable and the intermediates belong in script variables instead of any context window.
+
+The law is hierarchy-independent: every agent at every depth — main loop, subagent, workflow agent, offloaded session — applies the same placement economics and the same model mixture. Writing and judgment run at capable tiers, recon and mechanical legs offload to the workhorse lineage, an independent perspective comes from an external lineage — codex for workhorse second reads, agy for Gemini judgment and visual legs — rather than a second reviewer of the same one, and no agent escalates its own model tier beyond its brief. The active repo's model table prices the tiers; the codex and agy skills own their legs once this law picks one.
 
 ## [03]-[CONTRACT]
 
@@ -56,6 +59,8 @@ Result flow is chosen before the first spawn: star for independent fan-out with 
 
 Subagents spawn subagents to a fixed ceiling of five levels below the main conversation; at the floor the Agent tool is withheld, and a background worker's depth is pinned at spawn — resuming it from a shallower context restores no headroom. Depth is spent to shed noise, never for parallelism theater: a worker earns the Agent tool only when its own task splits, and its prompt then carries an explicit split policy — what each child owns, what returns, and the remaining depth budget. A fork spawns named subagents but never another fork.
 
+Depth ledgers are per-lineage: the five-level ceiling meters Claude spawning Claude only — an offload to the other lineage spends no Claude depth, and that lineage's own spawn bound is its skill's law (codex).
+
 ## [06]-[RUNTIME]
 
 Workers run in the background by default and drop to the foreground only when the result gates the next step. Background permission prompts surface in the main session named by requester; approval releases one call, Esc denies that call without killing the worker. Stopped workers resume through `SendMessage` with full history intact; an API-error death returns the worker's last output rather than losing the run.
@@ -63,7 +68,8 @@ Workers run in the background by default and drop to the foreground only when th
 ## [07]-[COMPOSITION]
 
 - Runnable workflow scripts — the `meta` block, `agent()`, `pipeline()`, schemas — belong to workflow-creator; this skill decides when a workflow is the right surface and how its agents are prompted.
-- Offload to gpt-5.6 (terra workhorse, sol flagship) through `codex exec` belongs to the codex skill; this skill's placement table names the trigger.
+- Offload to gpt-5.6 (terra workhorse, sol flagship) through the `codex` MCP tool or `codex exec` belongs to the codex skill; this skill's placement table names the trigger.
 - Hook construction for `SubagentStart`, `SubagentStop`, `TeammateIdle`, and task gates belongs to hooks-builder; this skill names where a gate pays for itself.
+- Recurring machine work — launchd rows, `mise` task and watch surfaces, the signed webhook inbox — belongs to the estate machine owner; the placement table names when work leaves agent surfaces entirely.
 - Memory files, rules, settings, model and effort defaults, and headless lanes belong to harness-config; a subagent definition's frontmatter stays here.
 - A delegation smell, orchestration error, or superior pattern surfaced mid-run is codified into its owning skill — codex for offload mechanics, workflow-creator for script shapes, this skill for placement and contract law, harness-config for settings and hooks — in the same session, then propagated byte-identical to every project, reviewer configs included; a lesson left as session knowledge is a regression.

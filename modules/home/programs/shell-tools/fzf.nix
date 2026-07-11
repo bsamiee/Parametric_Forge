@@ -7,6 +7,7 @@
 # FZF configuration themed from the estate palette owner
 {config, ...}: let
   inherit (config.forge.theme) projections;
+  fdFiles = "fd --type f --hidden --follow --exclude .git";
 in {
   programs.fzf = {
     enable = true;
@@ -14,7 +15,7 @@ in {
     tmux.enableShellIntegration = false;
 
     # --- [DEFAULT_CONFIGURATION]
-    defaultCommand = "fd --type f --hidden --follow --exclude .git";
+    defaultCommand = fdFiles;
 
     # Color rows come from the theme owner's shared fzf vocabulary; every other fzf-embedding surface consumes the same rows.
     defaultOptions =
@@ -41,7 +42,7 @@ in {
 
     # --- [CTRL_T_FILE_SELECTION]
     fileWidget = {
-      command = "fd --type f --hidden --follow --exclude .git";
+      command = fdFiles;
       options = [
         "--border-label='[FILES]'"
         "--preview='bat --color=always --style=numbers --line-range=:500 {} 2>/dev/null || tree --level=2 --color=always --icons=always {}'"

@@ -1,12 +1,12 @@
 # [ACT_USAGE]
 
-## [01]-[ACTIONLINT]
+## [01]-[GATE]
+
+`gha` fronts the local chain: `gha check [PATH...]` runs actionlint, zizmor, and ratchet over discovered workflow files as one envelope (`--json` for machine rows; exit 1 on findings, 2 on usage), `gha pin` rewrites mutable `uses:` refs to SHAs, `gha run [-j JOB] [-e EVENT.json] [ARGS...]` rides act on the deployed runner images, and `gha events` lists simulatable events. The sections below carry per-tool depth.
+
+## [02]-[ACTIONLINT]
 
 ```bash copy-safe
-# Installation
-bash <(curl https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash)
-
-# Usage
 actionlint .github/workflows/ci.yml          # Single file
 actionlint .github/workflows/*.yml           # All workflows
 actionlint                                   # Default location (.github/workflows/)
@@ -18,7 +18,7 @@ actionlint -format sarif                     # SARIF (code scanning integration)
 
 [EXIT_CODES]: `0` = success, `1` = errors found, `2` = fatal error.
 
-### [01.1]-[CONFIGURATION]
+### [02.1]-[CONFIGURATION]
 
 ```yaml copy-safe
 # .github/actionlint.yaml
@@ -33,7 +33,7 @@ self-hosted-runner:
     labels: [my-custom-runner, gpu-runner] # Declare custom labels
 ```
 
-### [01.2]-[CI_INTEGRATION]
+### [02.2]-[CI_INTEGRATION]
 
 ```yaml conceptual
 name: Lint Workflows
@@ -54,7 +54,7 @@ jobs:
                   sarif_file: actionlint.sarif
 ```
 
-### [01.3]-[KEY_CHECKS]
+### [02.3]-[KEY_CHECKS]
 
 | [INDEX] | [CHECK_CATEGORY]    | [WHAT_IT_VALIDATES]                                           |
 | :-----: | :------------------ | :------------------------------------------------------------ |
@@ -69,14 +69,9 @@ jobs:
 |  [09]   | Permissions         | Valid scope names (`models`, `artifact-metadata`).            |
 |  [10]   | Constant conditions | `if: true`, `if: false`, and complex constant expressions.    |
 
-## [02]-[ACT]
+## [03]-[ACT]
 
 ```bash template
-# Installation
-brew install act                               # macOS
-curl -s https://raw.githubusercontent.com/nektos/act/master/install.sh | bash  # Linux
-
-# Usage
 act -l                                         # List all workflows and jobs
 act -l push                                    # List workflows for push event
 act -n                                         # Dry-run (validate without executing)
@@ -89,7 +84,7 @@ act workflow_dispatch --input version=1.2.3    # Trigger with inputs
 
 [EXIT_CODES]: `0` = success, `1` = job failed, `2` = parse/execution error.
 
-### [02.1]-[OPTIONS]
+### [03.1]-[OPTIONS]
 
 | [INDEX] | [FLAG]                                 | [PURPOSE]                                    |
 | :-----: | :------------------------------------- | :------------------------------------------- |
@@ -102,7 +97,7 @@ act workflow_dispatch --input version=1.2.3    # Trigger with inputs
 |  [07]   | `--action-offline-mode`                | Skip downloading actions (use cached).       |
 |  [08]   | `--matrix os:ubuntu-latest`            | Filter matrix to specific combination.       |
 
-### [02.2]-[CONFIGURATION_FILE]
+### [03.2]-[CONFIGURATION_FILE]
 
 ```bash copy-safe
 # .actrc (project root or $HOME)
@@ -111,7 +106,7 @@ act workflow_dispatch --input version=1.2.3    # Trigger with inputs
 -P ubuntu-latest=catthehacker/ubuntu:act-latest
 ```
 
-## [03]-[LIMITATIONS]
+## [04]-[LIMITATIONS]
 
 | [INDEX] | [TOOL]     | [LIMITATION]                 | [IMPACT]                                                   |
 | :-----: | :--------- | :--------------------------- | :--------------------------------------------------------- |
@@ -123,7 +118,7 @@ act workflow_dispatch --input version=1.2.3    # Trigger with inputs
 |  [06]   | act        | Default images differ        | Use `-P` to match GitHub-hosted runner images.             |
 |  [07]   | act        | `.github/workflows/` only    | Cannot validate workflows in other directories.            |
 
-## [04]-[TROUBLESHOOTING]
+## [05]-[TROUBLESHOOTING]
 
 | [INDEX] | [ISSUE]                         | [SOLUTION]                                                    |
 | :-----: | :------------------------------ | :------------------------------------------------------------ |

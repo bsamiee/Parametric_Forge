@@ -1,117 +1,195 @@
 #!/usr/bin/env bash
 # Fleet roster renderer for the Claude Code main statusLine: one compact row for one or two external workers, then an aligned matrix for larger fleets.
-# Native Claude subagents stay in the agent panel because their payload carries no effort truth. Emitted ledger workers fold with one process scan;
-# unpinned Codex defaults are read by that scanner only when required, and report labels become OSC 8 file links where the process exposes -o.
+# Session-scoped: a lane renders only in its owning session's pane. The discriminator is CLAUDE_CODE_SESSION_ID — claude exports it to every child, it
+# equals the statusLine payload's session_id, and it survives daemonization (a detached codex reparents to launchd, so ancestry dies at pid 1; the
+# inherited env does not) — read per candidate pid via ps -E. Ledger rows carry a session stamp; unstamped rows adopt by live-pid env probe or drop.
+# The pgrep census and pid->session map memoize in a shared TTL cache (candidates are machine-wide facts, so every session shares one cache), keeping
+# the per-tick cost to jq folds, liveness checks, and targeted per-pid ps reads. Empty stdin falls back to the caller's own session, then machine-wide.
+# The awk is strictly POSIX: the raw ~/.claude/hooks mirror resolves /usr/bin/awk (no gawk on the statusline PATH) while the nix package bakes gawk.
 set -Eeuo pipefail
 shopt -s inherit_errexit
+[ -n "${FORGE_FLEET_DEBUG:-}" ] || trap 'exit 0' ERR
 
 ledger="${FORGE_FLEET_LEDGER:-${XDG_STATE_HOME:-$HOME/.local/state}/forge/delegation.jsonl}"
+scan_cache="${FORGE_FLEET_SCAN_CACHE:-$ledger.scan}"
+scan_ttl="${FORGE_FLEET_SCAN_TTL:-5}"
 stale="${FORGE_FLEET_STALE_SECS:-1800}"
 tail_rows="${FORGE_FLEET_TAIL_ROWS:-400}"
 gear="${FORGE_FLEET_GLYPH:-⛭}"
+scan_re='(^|/)codex (exec|review)|(^|/)agy([[:space:]]|$)'
 now="$EPOCHSECONDS"
-# The statusLine payload names the coordinator session; worker lanes render machine-wide (the cross-session external-worker view), but the native task
-# snapshot scopes to this session so a sibling session's in-flight count never inflates this roster. Empty sid (no payload) keeps every snapshot.
-sid="$(jq -r '.session_id // ""' 2>/dev/null <<<"$(cat 2>/dev/null)" || true)"
+command -v jq >/dev/null 2>&1 || exit 0
 
-fmt_el() {
+payload="$(cat 2>/dev/null || true)"
+sid=""
+[ -n "$payload" ] && sid="$(jq -r '.session_id // ""' <<<"$payload" 2>/dev/null || true)"
+[ -n "$sid" ] || sid="${CLAUDE_CODE_SESSION_ID:-}"
+
+canon_model() { # one model-vocabulary owner: any provider spelling -> roster title; unknown spellings pass through, "-"/empty clear to "".
+    case "$1" in
+        *[Tt]erra*) REPLY="Terra" ;; *[Ss]ol*) REPLY="Sol" ;; *[Ll]una*) REPLY="Luna" ;; *gpt* | *GPT*) REPLY="GPT" ;;
+        *[Gg]emini*) REPLY="Gemini" ;; *[Oo]pus*) REPLY="Opus" ;; *[Ss]onnet*) REPLY="Sonnet" ;; *[Ff]able*) REPLY="Fable" ;;
+        - | "") REPLY="" ;;
+        *) REPLY="$1" ;;
+    esac
+}
+pid_sid() { # REPLY = the live pid's inherited CLAUDE_CODE_SESSION_ID (own-uid env via ps -E), "" when unreadable or absent; memoized per pid.
+    local envline
+    REPLY=""
+    envline="$(ps -Eww -o command= -p "$1" 2>/dev/null || true)"
+    [[ "$envline" =~ CLAUDE_CODE_SESSION_ID=([0-9a-fA-F-]+) ]] && REPLY="${BASH_REMATCH[1]}" || true
+    pid_session["$1"]="$REPLY"
+}
+adopt() { # $1=row session stamp ("-" = unstamped) $2=pid ("-" = absent): stamped rows match sid; unstamped adopt by live-pid env truth, else drop.
+    local rsid="$1" pid="$2"
+    [ -z "$sid" ] && return 0
+    [ "$rsid" = "$sid" ] && return 0
+    { [ "$rsid" = "-" ] && [ "$pid" != "-" ]; } || return 1
+    if [ -n "${pid_session[$pid]+x}" ]; then REPLY="${pid_session[$pid]}"; else pid_sid "$pid"; fi
+    [ "$REPLY" = "$sid" ]
+}
+fmt_el() { # elapsed grammar shared with forge-fleet-row's elx: minutes always two digits (07:44), hours unpadded with minute pad (1:07h).
     local s="$1"
     [[ "$s" =~ ^[0-9]+$ ]] || s=0
     if [ "$s" -lt 3600 ]; then
-        printf '%d:%02d' $((s / 60)) $((s % 60))
+        printf '%02d:%02d' $((s / 60)) $((s % 60))
     else printf '%d:%02dh' $((s / 3600)) $(((s % 3600) / 60)); fi
 }
-render_one() {
+render_one() { # rows arrive with the model already canonical and label defaulted, so this only maps icon, pads, and wraps OSC 8 report links.
     local label="$1" model="$2" effort="$3" secs="$4" report="$5" model_width="$6" label_width="$7"
-    local icon model_effort elapsed padded_label
-    [ "$label" = "-" ] && label=""
-    [ "$model" = "-" ] && model=""
+    local icon model_effort elapsed padded_label pad
     [ "$effort" = "-" ] && effort=""
     [ "$report" = "-" ] && report=""
-    case "$model" in
-        *[Tt]erra*) model="Terra" ;; *[Ss]ol*) model="Sol" ;; *[Ll]una*) model="Luna" ;; *gpt* | *GPT*) model="GPT" ;;
-        *[Gg]emini*) model="Gemini" ;; *[Oo]pus*) model="Opus" ;; *[Ss]onnet*) model="Sonnet" ;; *[Ff]able*) model="Fable" ;;
-    esac
     case "$model" in
         Terra | Sol | Luna | GPT) icon="⬡" ;;
         Gemini) icon="✦" ;;
         Opus | Sonnet | Fable) icon="✳" ;;
         *) icon="$gear" ;;
     esac
-    model="${model:-Worker}"
-    label="${label:-worker}"
     effort="${effort,,}"
     effort="${effort//[^a-z]/}"
     model_effort="${model}${effort:+·${effort}}"
     elapsed="$(fmt_el "$secs")"
-    if [ "$model_width" -gt 0 ]; then printf -v model_effort '%-*s' "$model_width" "$model_effort"; fi
+    # printf %-*s pads by bytes, so the multibyte "·" would shear the column grid; pad by character count instead.
+    if [ "$model_width" -gt "${#model_effort}" ]; then printf -v pad '%*s' $((model_width - ${#model_effort})) '' && model_effort+="$pad"; fi
     if [ "$label_width" -gt 0 ]; then
-        printf -v padded_label '%-*s' "$label_width" "${label:0:label_width}"
+        padded_label="${label:0:label_width}"
+        if [ "$label_width" -gt "${#padded_label}" ]; then printf -v pad '%*s' $((label_width - ${#padded_label})) '' && padded_label+="$pad"; fi
     else padded_label="${label:0:16}"; fi
     if [ -n "$report" ]; then padded_label=$'\e]8;;file://'"${report}"$'\e\\'"${padded_label}"$'\e]8;;\e\\'; fi
     printf '%s %s %s %s' "$icon" "$model_effort" "$padded_label" "$elapsed"
 }
 
-# --- ledger fold: live workers (last-write-wins per wid, in a LIVE state, within the stale window) as TSV, plus the native snapshot task tail count.
+# --- scan census: pgrep candidates plus their pid->session map, refreshed on a shared TTL so steady-state ticks skip the process-table walk entirely.
+declare -A pid_session=()
+declare -a cands=()
+fresh=0
+if [ -s "$scan_cache" ]; then
+    while IFS=$'\t' read -r a b; do
+        if [ "$fresh" -eq 0 ]; then
+            [[ "$a" =~ ^[0-9]+$ ]] && [ $((now - a)) -lt "$scan_ttl" ] || break
+            fresh=1
+        else
+            cands+=("$a")
+            pid_session["$a"]="$b"
+        fi
+    done <"$scan_cache" 2>/dev/null || true
+fi
+if [ "$fresh" -eq 0 ]; then
+    cands=()
+    while read -r p; do
+        [[ "$p" =~ ^[0-9]+$ ]] || continue
+        pid_sid "$p"
+        cands+=("$p")
+    done < <(pgrep -f "$scan_re" 2>/dev/null || true)
+    {
+        printf '%s\n' "$now"
+        for p in "${cands[@]}"; do printf '%s\t%s\n' "$p" "${pid_session[$p]:--}"; done
+    } >"$scan_cache.$$" 2>/dev/null && mv -f "$scan_cache.$$" "$scan_cache" 2>/dev/null || rm -f "$scan_cache.$$" 2>/dev/null || true
+fi
+
+# --- ledger fold: live lanes (last-write-wins per wid, live state, inside the stale window) session-gated through adopt, plus the snapshot tail count.
+# fromjson? drops malformed or torn lines so one bad row never blanks the roster; every empty field travels as "-" because tab-IFS collapses empties.
 declare -a rows=()
 declare -A seen_pid=()
 task_tail=0
 if [ -s "$ledger" ]; then
-    while IFS=$'\t' read -r tag label model effort start pid; do
+    while IFS=$'\t' read -r tag label model effort start pid rsid; do
         case "$tag" in
             W)
-                rows+=("$label"$'\t'"$model"$'\t'"$effort"$'\t'"$((now - start))"$'\t-')
                 [ "$pid" != "-" ] && seen_pid["$pid"]=1
+                adopt "$rsid" "$pid" || continue
+                canon_model "$model"
+                [ "$label" = "-" ] && label="worker"
+                rows+=("$label"$'\t'"${REPLY:-Worker}"$'\t'"$effort"$'\t'"$((now - start))"$'\t-')
                 ;;
             C) task_tail="$label" ;;
         esac
-    done < <(tail -n "$tail_rows" "$ledger" 2>/dev/null | jq -rn --argjson now "$now" --argjson stale "$stale" --arg sid "$sid" '
-        [inputs] as $r
-        | ($r | map(select(.ev == "worker"))) as $w
+    done < <(tail -n "$tail_rows" "$ledger" 2>/dev/null | jq -Rrn --argjson now "$now" --argjson stale "$stale" --arg sid "$sid" '
+        [inputs | fromjson?] as $r
         | ($r | map(select(.ev == "snapshot" and ($sid == "" or .session_id == $sid))) | max_by(.t)) as $snap
-        | ($w | map(select(.kind != "subagent")) | group_by(.wid)
-            | map(max_by(.t) as $l | {label: $l.label, model: $l.model,
-                effort: (map(select(.effort != null)) | last.effort),
-                start: (map(.t) | min), last: $l.t, state: $l.state, pid: $l.pid})
-            | map(select((.state as $s | ["running", "started", "stream", "waiting"] | index($s)) != null and ($now - .last) < $stale))
+        | ($r | map(select(.ev == "worker" and .kind != "subagent")) | group_by(.wid)
+            | map(. as $g | (max_by(.t)) as $l | {label: $l.label, model: $l.model,
+                effort: ([$g[] | .effort // empty] | last), start: ([$g[] | .t] | min), last: $l.t, state: $l.state,
+                pid: ([$g[] | .pid // empty] | last), sid: ([$g[] | .session_id // empty] | map(select(. != "-")) | last)})
+            | map(select(IN(.state; "running", "started", "stream", "waiting") and ($now - .last) < $stale))
             | sort_by(.start)) as $live
-        | ($live[] | "W\t\((.label // "-"))\t\((.model // "-"))\t\((.effort // "-"))\t\(.start)\t\((.pid // "-"))"),
-          ((($snap.tasks // []) | map(select(.type != "subagent")) | length) | "C\t\(.)\t-\t-\t-\t-")' 2>/dev/null)
+        | ($live[] | "W\t\((.label // "-"))\t\((.model // "-"))\t\((.effort // "-"))\t\(.start)\t\((.pid // "-"))\t\((.sid // "-"))"),
+          ((($snap.tasks // []) | map(select(.type != "subagent")) | length) | "C\t\(.)\t-\t-\t0\t-\t-")' 2>/dev/null)
 fi
 
-# --- process scan: one ps|awk pass resolves every undeclared codex/agy lane. The awk process opens config.toml at most once and only after observing an
-# unpinned Codex command. Rows already declared by forge-fleet-emit are dropped by pid, so emitted truth always wins without double-counting.
-while IFS=$'\t' read -r pid label model effort secs report; do
-    [ -n "${seen_pid[$pid]:-}" ] && continue
-    rows+=("${label:0:22}"$'\t'"$model"$'\t'"$effort"$'\t'"$secs"$'\t'"$report")
-done < <(ps -axww -o pid=,etime=,command= 2>/dev/null | awk -v me="$$" -v ppid="$PPID" -v config="$HOME/.codex/config.toml" -v cwd="$PWD" '
+# --- process scan: session-adopted census pids not already declared by emit get one targeted ps read; the awk resolves label, model, effort, elapsed
+# seconds, and the -o report path. Codex resolution mirrors codex's own precedence: cmdline flags win, then the --profile file (~/.codex/<name>.config.toml),
+# then the top-level config.toml default for any axis still unset; each file opens at most once per render.
+declare -a scan_lines=()
+for p in "${cands[@]}"; do
+    [ -n "${seen_pid[$p]:-}" ] && continue
+    kill -0 "$p" 2>/dev/null || continue
+    if [ -n "$sid" ] && [ "${pid_session[$p]:-}" != "$sid" ]; then continue; fi
+    line="$(ps -ww -o pid=,etime=,command= -p "$p" 2>/dev/null || true)"
+    [ -n "$line" ] && scan_lines+=("$line")
+done
+if [ "${#scan_lines[@]}" -gt 0 ]; then
+    while IFS=$'\t' read -r _ label model effort secs report; do
+        canon_model "$model"
+        rows+=("${label:0:22}"$'\t'"${REPLY:-Worker}"$'\t'"$effort"$'\t'"$secs"$'\t'"$report")
+    done < <(printf '%s\n' "${scan_lines[@]}" | awk -v conf="$HOME/.codex" -v cwd="$PWD" '
+    BEGIN { q = sprintf("%c", 39); config = conf "/config.toml" }
     function option(cmd, flag,    rest, first, stop) {
       if (!match(cmd, "(^|[[:space:]])" flag "[[:space:]]+")) return ""
       rest = substr(cmd, RSTART + RLENGTH); first = substr(rest, 1, 1)
-      if (first == "\"" || first == sprintf("%c", 39)) {
+      if (first == "\"" || first == q) {
         rest = substr(rest, 2); stop = index(rest, first); return stop ? substr(rest, 1, stop - 1) : rest
       }
       sub(/[[:space:]].*$/, "", rest); return rest
     }
     function clean(value,    n, part) {
-      gsub(/[\\\"]/, "", value); gsub(/\047/, "", value); n = split(value, part, "-"); return part[n]
+      gsub(/[\\"]/, "", value); gsub(q, "", value); n = split(value, part, "-"); return part[n]
     }
     function effort_of(cmd,    value) {
-      if (!match(cmd, /model_reasoning_effort[[:space:]]*=[[:space:]]*[\047\"]?[[:alpha:]]+[\047\"]?/)) return ""
+      if (!match(cmd, "model_reasoning_effort[[:space:]]*=[[:space:]]*[" q "\"]?[[:alpha:]]+[" q "\"]?")) return ""
       value = substr(cmd, RSTART, RLENGTH); sub(/^.*=[[:space:]]*/, "", value); return tolower(clean(value))
     }
-    function load_defaults(    line, value) {
-      if (defaults_loaded) return
-      defaults_loaded = 1
-      while ((getline line < config) > 0) {
-        if (default_model == "" && match(line, /^model[[:space:]]*=[[:space:]]*"[^"]+"/)) {
-          value = substr(line, RSTART, RLENGTH); sub(/^[^"]*"/, "", value); sub(/"$/, "", value); default_model = value
+    function read_toml(file, pfx,    line, value) {
+      while ((getline line < file) > 0) {
+        if (kv[pfx "model"] == "" && match(line, /^model[[:space:]]*=[[:space:]]*"[^"]+"/)) {
+          value = substr(line, RSTART, RLENGTH); sub(/^[^"]*"/, "", value); sub(/"$/, "", value); kv[pfx "model"] = value
         }
-        if (default_effort == "" && match(line, /^model_reasoning_effort[[:space:]]*=[[:space:]]*"[[:alpha:]]+"/)) {
-          value = substr(line, RSTART, RLENGTH); sub(/^[^"]*"/, "", value); sub(/"$/, "", value); default_effort = tolower(value)
+        if (kv[pfx "effort"] == "" && match(line, /^model_reasoning_effort[[:space:]]*=[[:space:]]*"[[:alpha:]]+"/)) {
+          value = substr(line, RSTART, RLENGTH); sub(/^[^"]*"/, "", value); sub(/"$/, "", value); kv[pfx "effort"] = tolower(value)
         }
       }
-      close(config)
+      close(file)
+    }
+    function load_defaults() {
+      if (defaults_loaded) return
+      defaults_loaded = 1
+      read_toml(config, "d:")
+    }
+    function load_profile(name) {
+      if (name in prof_loaded) return
+      prof_loaded[name] = 1
+      read_toml(conf "/" name ".config.toml", "p:" name ":")
     }
     function absolute(path) {
       if (path == "") return "-"
@@ -121,7 +199,7 @@ done < <(ps -axww -o pid=,etime=,command= 2>/dev/null | awk -v me="$$" -v ppid="
     }
     { pid = $1; et = $2; cmd = $0; sub(/^[[:space:]]*[0-9]+[[:space:]]+[^[:space:]]+[[:space:]]+/, "", cmd)
       isagy = (cmd ~ /(^|\/)agy([[:space:]]|$)/); iscx = (cmd ~ /(^|\/)codex (exec|review)/)
-      if ((!isagy && !iscx) || pid == me || pid == ppid) next
+      if (!isagy && !iscx) next
       effort = effort_of(cmd); report = option(cmd, "-o")
       if (isagy) {
         model = "gemini"; label = "agy"
@@ -130,8 +208,17 @@ done < <(ps -axww -o pid=,etime=,command= 2>/dev/null | awk -v me="$$" -v ppid="
         }
       } else {
         model = option(cmd, "-m"); if (model == "") model = option(cmd, "--model")
-        profile = option(cmd, "--profile")
-        if (model == "" && profile == "") { load_defaults(); model = default_model; if (effort == "") effort = default_effort }
+        pname = option(cmd, "--profile")
+        if (pname != "" && (model == "" || effort == "")) {
+          load_profile(pname)
+          if (model == "") model = kv["p:" pname ":model"]
+          if (effort == "") effort = kv["p:" pname ":effort"]
+        }
+        if (model == "" || effort == "") {
+          load_defaults()
+          if (model == "") model = kv["d:model"]
+          if (effort == "") effort = kv["d:effort"]
+        }
         label = "codex"
       }
       model = clean(model); if (model == "") model = isagy ? "gemini" : "gpt"
@@ -141,11 +228,12 @@ done < <(ps -axww -o pid=,etime=,command= 2>/dev/null | awk -v me="$$" -v ppid="
       k = split(e, tp, ":"); if (k == 3) { h = tp[1]; mm = tp[2]; s = tp[3] } else if (k == 2) { mm = tp[1]; s = tp[2] } else s = tp[1]
       printf "%s\t%s\t%s\t%s\t%d\t%s\n", pid, label, model, (effort == "" ? "-" : effort), (((d * 24 + h) * 60 + mm) * 60 + s), absolute(report)
     }')
+fi
 
-[ "${#rows[@]}" -eq 0 ] && {
-    [ "$task_tail" -gt 0 ] && printf '%s %d tasks\n' "$gear" "$task_tail"
+if [ "${#rows[@]}" -eq 0 ]; then
+    [ "$task_tail" -gt 0 ] && printf '%s %d task%s\n' "$gear" "$task_tail" "$([ "$task_tail" -eq 1 ] || printf s)"
     exit 0
-}
+fi
 
 # --- render: longest-running first; one or two workers stay inline, while larger fleets become a six-worker aligned matrix with overflow in the tail.
 mapfile -t rows < <(printf '%s\n' "${rows[@]}" | sort -t$'\t' -k4,4nr)
@@ -169,10 +257,6 @@ fi
 model_width=0 label_width=16
 for ((i = 0; i < shown; i++)); do
     IFS=$'\t' read -r label model effort _ _ <<<"${rows[i]}"
-    case "$model" in
-        *[Tt]erra*) model="Terra" ;; *[Ss]ol*) model="Sol" ;; *[Ll]una*) model="Luna" ;; *gpt* | *GPT*) model="GPT" ;;
-        *[Gg]emini*) model="Gemini" ;; *[Oo]pus*) model="Opus" ;; *[Ss]onnet*) model="Sonnet" ;; *[Ff]able*) model="Fable" ;;
-    esac
     [ "$effort" = "-" ] && effort=""
     width=${#model}
     [ -n "$effort" ] && width=$((width + ${#effort} + 1))
@@ -187,3 +271,4 @@ for ((i = 0; i < shown; i++)); do
     printf '\n'
 done
 [ "$tail_n" -gt 0 ] && printf '%s %d task%s\n' "$gear" "$tail_n" "$([ "$tail_n" -eq 1 ] || printf s)"
+exit 0

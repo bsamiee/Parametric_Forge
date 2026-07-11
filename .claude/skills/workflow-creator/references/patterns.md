@@ -59,8 +59,7 @@ flowchart LR
     S -->|"no"| PL["pipeline — 04"]
     S -->|"yes"| BA["barrier — 05"]
     L -->|"command green"| SR["self-repair — 09"]
-    L -->|"count target"| DL["count / dry loop — 16, 18"]
-    L -->|"token target"| BL["budget loop — 17"]
+    L -->|"count, token, or dry target"| LO["loop family — 16"]
     V -->|"yes"| SK["skeptic vote — 11"]
     V -->|"no"| F{Field?}
     F -->|"shallow"| PA["panel — 12"]
@@ -70,11 +69,18 @@ flowchart LR
     classDef success fill:#50FA7BBF,stroke:#50FA7B,color:#282A36
     classDef boundary fill:#282A36,stroke:#BD93F9,color:#F8F8F2
     class Kind,N,V,S,L,F primary
-    class PL,BA,SR,DL,BL,SK,PA,TO,DE success
+    class PL,BA,SR,LO,SK,PA,TO,DE success
     class In boundary
 ```
 
 The delegation contract — objective, territory, exclusions, output contract, success criteria — is the agent-dispatch skill's prompting law and rides every `agent()` prompt here unchanged. The workflow-specific residue: the output contract is a `schema` wherever a later line reads a field, and mid-run clarification does not exist — a subagent left needing to ask was dispatched vaguely.
+
+Anti-shapes the catalog refuses, each priced by the failure it manufactures:
+
+- Raw transcript as the coordination substrate: workers exchange receipts, typed facts, and product files ([21], [23]) — a full-history handoff bloats every downstream context and couples lanes to each other's reasoning.
+- Debate or vote as VERIFICATION: a command-checkable claim takes self-repair or a refutation vote ([09], [11]); debate ([14]) earns its spend only on genuinely contested interpretation — agreement pressure suppresses independent correction, so unanimity is never the proof.
+- Unbounded delegation: every fan carries a cap, every loop a stop, every worker a bounded charter; a status update that carries no new evidence is noise, and a worker that widens its own scope mid-run files the excess as data ([22]) instead.
+- The ceremonial Plan phase: an agent that returns a bare roster the next stage re-derives spends a context to produce nothing — the plan-phase law in SKILL.md, with the discovery bar at [19].
 
 ## [02]-[CHAIN]
 
@@ -129,7 +135,9 @@ const report = await agent("Combine the research below into one cohesive briefin
 return { questionCount: clean.length, report };
 ```
 
-Inline synthesis is small-output only: past ~50 rows of collected product, the `JSON.stringify` handoff spends the synthesizer's context before its work starts — route heavy products through the report-file topology at [23].
+Inline synthesis is small-output only: past ~50 rows of collected product, the `JSON.stringify` handoff spends the synthesizer's context before its work starts — route heavy products through the report-file topology at [21].
+
+The synthesis is also where individually-valid lane results conflict, duplicate, or miss coverage — map-reduce-refine closes it: a SEPARATE auditor checks the merged artifact against a coverage-and-conflict contract, and a refiner repairs merge-level defects only, never re-doing lane work. One audit round is the spend; a merge that fails a second audit is a decomposition defect, not a refine target.
 
 ## [04]-[PIPELINE]
 
@@ -251,7 +259,24 @@ const integrated = await agent("Integrate these independently-completed units; r
 return { integrated, unitCount: done.length };
 ```
 
-The planner returns DATA (a typed task list via `schema`), never prose — the JS fans out over it. The integrator is the orchestrator's other half: workers cannot see each other's context, so a terminal stage owns whatever spans them.
+The planner returns DATA (a typed task list via `schema`), never prose — the JS fans out over it. The integrator is the orchestrator's other half: workers cannot see each other's context, so a terminal stage owns whatever spans them. The planner earns its agent because decomposition is judgment; a "planner" that merely enumerates files is the plan-phase defect (SKILL.md) — fold that enumeration into a discovery stage that also analyzes ([19]).
+
+Re-planning variant — the worklist emerges from evidence. When execution feedback reshapes the plan (a repository-wide change, open-ended research, a dependency graph discovered mid-run), the planner loops: workers execute only the issued tasks, their receipts feed a re-planner that emits the next FULL typed plan or `done`, and a revision cap plus the budget guard bound the loop. The re-planner receives receipts as data, never worker transcripts, and every revision is a complete plan — a diff-shaped patch drifts from the state it patches.
+
+```js conceptual
+let plan = await agent(planPrompt(task), { label: "plan:0", schema: PLAN }); // → { done, tasks: [{id, instruction}] }
+for (let rev = 1; !plan?.done && rev <= MAX_REVISIONS && (!budget.total || budget.remaining() > 100_000); rev++) {
+    const done = (
+        await parallel(
+            (plan.tasks ?? []).map((t) => () => agent(t.instruction, { label: `work:${rev}:${t.id}`, schema: WORK }).then((r) => ({ id: t.id, ...r }))),
+        )
+    ).filter(Boolean);
+    plan = await agent("Revise the plan from these receipts. Issue only remaining work; emit done=true when nothing remains.\n" + JSON.stringify(done), {
+        label: `replan:${rev}`,
+        schema: PLAN,
+    });
+}
+```
 
 ## [08]-[REFINE]
 
@@ -418,6 +443,8 @@ const final = await agent(
 return { final };
 ```
 
+Portfolio pruning — spend the expensive stage on survivors only. When drafts are cheap and the terminal pass is dear, a deterministic or bounded scorer (a command gate, a rubric-scoped floor-model screen) ranks the field FIRST and only the top k reach the judge or synthesis: diversity happens before convergence, and the prune is an explicit budgeted transition, never a judge reading the whole flood. The panel above is the k-equals-all case; shrink k as the draft count grows, and let deliberately different strategies — not reworded prompts — supply the diversity the prune selects over.
+
 ## [13]-[TOURNAMENT]
 
 Canonical: voting hardened for wide fields. Primitive: a plain-JS single-elimination bracket over blind pairwise judges. Guards: absolute-score drift — parallel judges scoring 1-10 calibrate differently, so ranks reshuffle run to run — and source bias, where a judge that knows which agent or angle produced a draft ratifies pedigree instead of quality. A comparative pick between two concrete artifacts is stable where an absolute scale is not.
@@ -523,6 +550,8 @@ return { ruling };
 
 Laws: the diversity of the lenses does the work, not debate length — one rebuttal round captures the gain, and further rounds mostly manufacture convergence; positions travel anonymized (no author labels), so rebuttals attack arguments, never reputations; the judge is a separate agent that never held a position; post-rebuttal agreement is signal, but unanimity without reasons is treated as pressure, not proof.
 
+Evidence-graph hardening — adjudicate structure, never transcript. For the highest-stakes contested claim, each position returns ATOMIC claims with evidence plus explicit support/attack edges under a typed schema; a zero-token JS merge builds the graph, and the judge rules per edge on evidence coverage. A ruling over conversational prose cannot be audited, and free-form exchange converges on comfort — the graph makes every concession traceable to the evidence that forced it.
+
 ## [15]-[ESCALATE]
 
 Canonical: routing by outcome. Primitive: a tier table and a residual loop — every item enters the cheapest tier, and only items that FAIL a tier's check re-dispatch to the next. Guards: paying the strongest model for volume a floor model finishes; the bulk resolves cheap, and the expensive tiers see only what defeated the tier below. Cost: expected spend per item is the tier ladder weighted by residual rates — the top tier prices only the hard residue.
@@ -569,59 +598,41 @@ while (pending.length) {
 return { done };
 ```
 
-Laws: the tier verdict comes from a check (the schema's `passed` backed by a command or a separate verifier), never the worker's optimism; the escalated prompt carries the failed attempt's NAVIGATION only — files and locations touched, never its rationale or self-assessment, per the anchoring law at [22]; the top tier's failures return as data, never silently dropped. The same ladder tiers a review: a floor-model screen passes only its uncertain findings to the expensive judge.
+Laws: the tier verdict comes from a check (the schema's `passed` backed by a command or a separate verifier), never the worker's optimism; the escalated prompt carries the failed attempt's NAVIGATION only — files and locations touched, never its rationale or self-assessment, per the anchoring law at [20]; the top tier's failures return as data, never silently dropped. The same ladder tiers a review: a floor-model screen passes only its uncertain findings to the expensive judge.
 
-## [16]-[COUNT_LOOP]
+## [16]-[LOOPS]
 
-Canonical: orchestrator-workers with an unknown count — the loop IS the orchestrator. Primitive: a plain-JS `while` with a counter. Guards: stopping short on discovery work with a fixed goal, and running forever, via the explicit count cap. Cost: rounds scale inversely with per-round yield; the target count is the only ceiling.
+Canonical: orchestrator-workers with an unknown count — the loop IS the orchestrator. Primitive: a plain-JS `while` whose guard composes the stop table below. Guards: both halves of the unknown-size trap — a fixed counter stops short of the long tail, an open loop never terminates — plus the ungoverned spend a token target closes. Cost: rounds scale inversely with per-round yield; the composed guard is the only ceiling. One shape carries every stop; a run keeps the guards its work needs and always keeps a hard cap.
 
-```js conceptual
-const bugs = [];
-while (bugs.length < 10) {
-    const r = await agent("Find bugs not already listed below.\n\n" + JSON.stringify(bugs.map((b) => b.title)), { schema: BUGS_SCHEMA });
-    bugs.push(...r.bugs);
-    log(`${bugs.length}/10 found`);
-}
-return { bugs: bugs.slice(0, 10) };
-```
-
-## [17]-[BUDGET_LOOP]
-
-Canonical: orchestrator-workers scaled to a token target. Primitive: a `while` guarded on `budget`. Guards: over- or under-spending — depth scales to the user's token target, so spend is pinned by construction. The `budget.total &&` guard is essential: without a target, `remaining()` is `Infinity` and the loop runs to the 1000-agent cap.
-
-```js conceptual
-const issues = [];
-while (budget.total && budget.remaining() > 50_000) {
-    const r = await agent("Find one more issue in this codebase.", { schema: ISSUE_SCHEMA });
-    issues.push(...r.issues);
-    log(`${issues.length} found · ${Math.round(budget.remaining() / 1000)}k tokens left`);
-}
-return { issues };
-```
-
-## [18]-[DRY_LOOP]
-
-Canonical: orchestrator-workers, count unknown and unbounded. Primitive: a `while` with a dry-streak counter and a hard cap. Guards: both halves of the unknown-size trap — a fixed counter stops short of the long tail, and an open loop never terminates. Cost: yield-adaptive — spend tracks the corpus's true size plus K dry rounds of overhead. Keep spawning finders until K consecutive rounds turn up nothing new.
+| [INDEX] | [STOP]       | [GUARD]                                  | [FITS]                                     |
+| :-----: | :----------- | :--------------------------------------- | :----------------------------------------- |
+|  [01]   | Count target | `found.length < N`                       | discovery with a fixed goal                |
+|  [02]   | Token target | `budget.total && budget.remaining() > K` | depth scaled to the user's token directive |
+|  [03]   | Dry streak   | `dry < K` reset on any fresh yield       | unknown, unbounded corpus                  |
+|  [04]   | Progress     | file-changing progress per round ([17])  | fix-verify drive-to-zero                   |
 
 ```js conceptual
 const seen = new Set();
 const found = [];
-let dryRounds = 0;
-
-while (dryRounds < 2 && found.length < 100) {
+let dry = 0;
+while (dry < 2 && found.length < 100 && (!budget.total || budget.remaining() > 50_000)) {
     const r = await agent("Find issues NOT in this list:\n" + [...seen].join("\n"), { schema: ISSUE_SCHEMA });
-    const fresh = (r.issues ?? []).filter((x) => !seen.has(x.id));
+    const fresh = (r?.issues ?? []).filter((x) => !seen.has(x.id));
     fresh.forEach((x) => {
         seen.add(x.id);
         found.push(x);
     });
-    dryRounds = fresh.length === 0 ? dryRounds + 1 : 0;
-    log(`+${fresh.length} new · ${found.length} total · dry streak ${dryRounds}`);
+    dry = fresh.length === 0 ? dry + 1 : 0;
+    log(`+${fresh.length} new · ${found.length} total · dry streak ${dry}`);
 }
 return { found };
 ```
 
-## [19]-[RECONCILE]
+- The `budget.total &&` spelling is load-bearing on a budget-driven stop: with no target, `remaining()` is `Infinity` and the loop runs to the 1000-agent cap; the `!budget.total ||` form above merely lets a budget-less run fall through to its other stops.
+- The cumulative `seen` set is the dedup spine — each round's prompt excludes everything found, so yield measures genuinely new work and the dry streak means the corpus is exhausted, never that the finder repeated itself.
+- The exclusion paste grows per round and is small-output-only; a heavy accumulator moves to a report file ([21]).
+
+## [17]-[RECONCILE]
 
 Canonical: sectioning with a terminal orchestrator stage. Primitive: `parallel` to fan out, a pure-JS barrier to cluster, `pipeline` to fix-and-verify each cluster. Cost: clustering is zero-token JS; the reconcile adds one fix-verify pair per cluster on top of the fan. Guards: the silent loss of cross-item work — each worker fixes what it owns alone but DEFERS work that spans items it does not own (a cross-file seam, a type siblings must share, a dangling reference). A plain fan-out collects those deferrals and drops them. The remedy is a terminal reconcile stage that consumes them.
 
@@ -702,7 +713,7 @@ return { hard: pending }; // still-open: log LOUDLY + return, never drop
 
 (1) a fix that touched no file (or returned `clean`) has nothing to verify — skip the verify and drop the cluster; (2) the cumulative `seen` set (key `sorted-files|claim`) stops a fixer that re-surfaces the same residual from feeding the loop forever; (3) a round that changes no file never will, so break — `MAX_ROUNDS` is a runaway backstop, never the exit. The no-defer guarantee holds: a genuinely-open residual is still surfaced, never dropped.
 
-## [20]-[NEST]
+## [18]-[NEST]
 
 Canonical: composition — a topology as a worker inside a larger one. Primitive: `workflow()`. Guards: re-inlining a self-contained sub-job by hand. Cost: the child spends from this run's shared caps and budget — nesting isolates state, never spend. `workflow()` runs a saved workflow inline and returns its result; nesting is one level deep.
 
@@ -717,7 +728,7 @@ return { article };
 
 Call the child once with the whole work-set, never once per item in a loop. Each `workflow()` invocation owns its internal state — caches, `seen`-sets, dedup closures. A `for (const item of items) await workflow('child', item)` re-runs the child's shared discovery per item, and when the child's reachability overlaps it both redoes the overlapping work and mis-classifies an item that is primary in one call yet secondary in another. Make the child accept its scope as a single value OR an array, and pass the full set in one call; the child's dedup, closure, and classification guarantees hold only WITHIN one invocation. Thread cross-cutting run flags (a dry-run toggle, a model override) into the child's `args` too, so the whole tree honors them.
 
-## [21]-[SCOPE]
+## [19]-[SCOPE]
 
 Canonical: orchestrator-workers where the planner is a discovery agent resolving caller targets into the worklist. Primitive: one discovery `agent()` (the orchestrator has no filesystem) emitting structured page sets, then plain-JS filtering. Cost: one cheap discovery call, then spend proportional to the targeted subset, never the corpus. Guards: the fragility of a workflow that accepts only one coarse scope. A granular workflow takes a TARGET that is a single file, a sub-folder at ANY nesting depth, a unit root, or several of these at once, and acts on exactly that subset — while keeping a folder-wide terminal concern over the whole owning unit.
 
@@ -795,7 +806,7 @@ return { targets: TARGETS, units: (inv?.packages ?? []).map((p) => p.name), done
 
 The `string | array | unit-root | sub-folder | file` target space collapses to one discovery agent plus pure-JS filtering — accepting many targets is the array branch in `rawTargets`, never a second entrypoint. A "many"-granularity sibling (one agent per whole unit instead of per file) is the same shape with a coarser work unit and the terminal stage promoted to a cross-unit align; size the unit to the coherence boundary the stages need, and scope every terminal stage to the TARGETED units, never the whole corpus.
 
-## [22]-[HANDOFF]
+## [20]-[HANDOFF]
 
 Canonical: prompt chaining hardened for review integrity. Primitive: sequential `agent()` stages passing a facts-only JS projection. Cost: the projection is free JS — what it buys is a reviewer whose verdict is independent enough to be worth its spend. Guards: reviewer anchoring — a reviewer that reads the producer's rationale, self-assessment, or confidence ratifies instead of attacking; verdicts flip on authority cues alone, "ignore the prior verdict" instructions do not remove the bias, and a reviewer handed the producer's framing scores below one reading the artifact cold. Withholding is the only mitigation that works.
 
@@ -814,7 +825,7 @@ The rules that make a writer → critic → red-team chain fast AND independent:
 
 Give sequential review stages genuinely different objectives (a clause-by-clause conformance audit against a pre-mortem/counterfactual attack) and license "clean after a failed attack" as a first-class verdict — a second identical review manufactures findings the artifact cannot supply, and a reviewer forced to edit invents defects. Distinct from [11] (independent skeptic votes on one claim): this hardens a SEQUENTIAL chain where every stage also writes.
 
-## [23]-[REPORTS]
+## [21]-[REPORTS]
 
 Canonical: sectioning hardened for heavy products. Primitive: a fan of producing LANES, each writing its complete product to run scratch and returning a thin receipt; one terminal reader consuming the files. Cost: receipts hold the wire at a constant few fields per lane regardless of product size; the terminal reader pays for full products once, from disk. Guards: relay loss — every hop a heavy product takes through an intermediate agent's structured output is a truncation/paraphrase risk on the weakest model in the chain, and a full product `JSON.stringify`-ed into a downstream prompt spends the reader's context before its work starts. This is the dataflow contract, not a topology of its own — it composes with any concurrency shape.
 
@@ -972,13 +983,13 @@ The producer prompt carries the evidence law for defect-shaped products: the lan
 
 The terminal reader's consumption protocol, baked into its prompt, in order: (a) UNMAPPED is the direct-hunt queue — a failed lane's territory gets the reader's own cold read FIRST; (b) every ok report read IN FULL from disk, shared-surface/governance lanes before per-item lanes, grouped by `claimKey` while reading — the same key across lanes is ONE defect with corroborating evidence, never several priorities; (c) every entry is a SIGNAL, not law — anchors behind an edit re-verify MANDATORY, navigation-only entries in untouched groups re-verify only when touched; (d) a finding whose anchors do not re-confirm is rejected with reason, and the reader hunts PAST the signal list on its own authority.
 
-Fix-to-root is the executor's standing law, not a per-pattern nicety: the terminal reader and every write-station resolve each confirmed defect at its cause, and a defect surfaced beyond the mapped scope — the `beyond[]` attestation, a lane's UNMAPPED territory, a quirk caught mid-edit — is fixed in the same pass, never handed to a later one. A defect genuinely out of reach lands as an explicit unreachable naming its owner, the [24] escalation seam a recurring pass files as data, never a silent residual a successor re-discovers.
+Fix-to-root is the executor's standing law, not a per-pattern nicety: the terminal reader and every write-station resolve each confirmed defect at its cause, and a defect surfaced beyond the mapped scope — the `beyond[]` attestation, a lane's UNMAPPED territory, a quirk caught mid-edit — is fixed in the same pass, never handed to a later one. A defect genuinely out of reach lands as an explicit unreachable naming its owner, the [22] escalation seam a recurring pass files as data, never a silent residual a successor re-discovers.
 
 Recovery synergy: product files make every stage re-enterable at zero cache dependence — receipts are exactly what a continuation script rebuilds (recovery reference).
 
-Distinct from [03] (inline synthesis — correct below ~50 rows) and [19] (deferral reconcile — which rides this contract when its residual sets grow heavy). Report specimens under legacy scratch paths are read-only evidence of retired runs, never a copy target — every new lane writes under its own workflow's run scratch.
+Distinct from [03] (inline synthesis — correct below ~50 rows) and [17] (deferral reconcile — which rides this contract when its residual sets grow heavy). A report specimen under another workflow's scratch path is read-only evidence of a retired run, never a copy target — every new lane writes under its own workflow's run scratch.
 
-## [24]-[RECUR]
+## [22]-[RECUR]
 
 Canonical: composition with the harness — a workflow as the deterministic inner pass of an outer loop, or a chain of workflows with the conversation as the checkpoint. Primitive: a saved workflow plus a harness trigger (`/loop`, a schedule, a goal loop) or a per-stage `Workflow` launch. Cost: priced per tick, so the idempotency law IS the economics — an empty-queue tick exits at the no-op guard for near zero. Guards: two failure modes the runtime imposes — a workflow accepts no mid-run user input, and a recurring job hand-driven every time never becomes durable.
 
@@ -987,7 +998,18 @@ Canonical: composition with the harness — a workflow as the deterministic inne
 - Idempotency law. The inner pass defaults to a no-op on an empty queue (`if (!work.length) return { skipped: true, reason: 'queue empty' }`) so a schedule tick costs nothing, and dedupes against durable state on disk — each run starts with a fresh cache, so anything that must persist across ticks lives in a file an agent reads, never in script variables.
 - Escalation seam. A recurring pass that discovers work beyond its charter files it as data for the operator (a triage list on disk), never expands its own scope mid-run.
 
-## [25]-[SCHEMAS]
+## [23]-[BLACKBOARD]
+
+Canonical: sectioning coordinated over evolving shared facts. Primitive: a typed, append-only board of fact files in run scratch — one namespaced write file per lane, declared read slices, a deterministic reducer stage. Cost: each lane pays one extra read of its declared slices; one reducer replaces pairwise peer messaging. Guards: the two failure modes of cross-lane coordination — broadcasting raw transcript (context bloat, accidental coupling to a sibling's reasoning) and writing one shared file (silent edit collisions). Use it when concurrent lanes must compose each other's LANDED facts mid-run — seam endpoints, frozen wire names, claimed territory — where the report-file contract's one-way fan ([21]) cannot carry the exchange.
+
+- One board directory per run under run scratch; each lane appends to exactly ONE file it owns (`<scope>-<lane>-facts.json`), so writes never collide, and every sibling file is read-only to it.
+- Rows are typed facts with anchors — a claim, a decision, an open question — landed only when a sibling must compose them; status narration never earns a row.
+- A lane re-reads its declared slices immediately before acting on shared territory, never once at spawn — landed sibling facts compose as found.
+- Conflicts resolve in one reducer stage — evidence-first, a separate agent, its ruling written back to the board — never by lanes negotiating with each other.
+
+A seam ledger is this contract's minimal form: typed fact rows per territory, read by area before any cross-territory edit. Distinct from [21]: a report file is a lane's terminal product for one downstream reader; a board row is a mid-run fact every live sibling may compose.
+
+## [24]-[SCHEMAS]
 
 A schema is a plain JSON Schema object. Keep them small, strict, and `required`-tight so the subagent returns exactly what the next line needs. Default to the strict profile — `additionalProperties: false` on every object, every property listed in `required`, conditional fields required-but-empty — so the same shape is copyable into a codex `--output-schema` lane without edits (validator split: api reference).
 

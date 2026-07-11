@@ -4,9 +4,9 @@
 # License       : MIT
 # Path          : modules/home/fonts.nix
 # ----------------------------------------------------------------------------
-# Estate font owner: family catalog, typography roles, fallback chains, per-family metrics, and renderer projections. Every
-# type consumer interpolates these rows; no consumer carries a private family string. The darwin module installs files; this owner names families
-# and drives renderers — it never reads config.fonts.packages.
+# Estate font owner: the cross-scope family catalog, typography roles, fallback chains, per-surface typography rows, and renderer projections. Every
+# type consumer interpolates these rows; no consumer carries a private family, size, leading, or weight. The darwin module folds the same catalog into
+# its install list; this owner names families and drives renderers — it never reads config.fonts.packages.
 {
   config,
   host,
@@ -14,110 +14,47 @@
   pkgs,
   ...
 }: let
-  notoArabic = pkgs.noto-fonts.override {variants = ["NotoSansArabic" "NotoNaskhArabic"];};
-  notoMono = pkgs.noto-fonts.override {variants = ["NotoSansMono"];};
-
   # --- [FAMILY_CATALOG]
-  # The attr name is the CoreText family; the manifest derivation opens each representative file with fonttools and fails the build when the internal
-  # name table disagrees (manifest-vs-payload parity at build time). `class`: static | variable | patched. `sample` overrides the shaping-receipt text.
-  catalog = {
-    "Geist Mono" = {
-      package = pkgs.geist-font;
-      file = "share/fonts/opentype/GeistMono-Regular.otf";
-      class = "static";
-      roles = ["mono"];
-      lineHeight = 0.95;
-    };
-    Geist = {
-      package = pkgs.geist-font;
-      file = "share/fonts/opentype/Geist-Regular.otf";
-      class = "static";
-      roles = ["sans"];
-    };
-    Iosevka = {
-      package = pkgs.iosevka-bin;
-      file = "share/fonts/truetype/Iosevka-Regular.ttc";
-      class = "static";
-      roles = ["mono"];
-      lineHeight = 1.0;
-    };
-    Hack = {
-      package = pkgs.hack-font;
-      file = "share/fonts/truetype/Hack-Regular.ttf";
-      class = "static";
-      roles = ["mono"];
-      lineHeight = 1.0;
-    };
-    "IBM Plex Mono" = {
-      package = pkgs.ibm-plex;
-      file = "share/fonts/opentype/IBMPlexMono-Regular.otf";
-      class = "static";
-      roles = ["mono"];
-      lineHeight = 1.05;
-    };
-    "Noto Sans Mono" = {
-      package = notoMono;
-      file = "share/fonts/noto/NotoSansMono.ttf";
-      class = "variable";
-      roles = ["mono"];
-      lineHeight = 1.0;
-    };
-    "Symbols Nerd Font Mono" = {
-      package = pkgs.nerd-fonts.symbols-only;
-      file = "share/fonts/truetype/NerdFonts/Symbols/SymbolsNerdFontMono-Regular.ttf";
-      class = "patched";
-      roles = ["symbols"];
-      sample = "\\uf07b \\ue0b0 \\ue712 \\uf121";
-    };
-    "Source Serif 4" = {
-      package = pkgs.source-serif;
-      file = "share/fonts/opentype/SourceSerif4-Regular.otf";
-      class = "static";
-      roles = ["serif"];
-    };
-    "Scheherazade New" = {
-      package = pkgs.scheherazade-new;
-      file = "share/fonts/truetype/ScheherazadeNew-Regular.ttf";
-      class = "static";
-      roles = ["script"];
-      sample = "سلام دنیا چطوری";
-    };
-    "Noto Naskh Arabic" = {
-      package = notoArabic;
-      file = "share/fonts/noto/NotoNaskhArabic.ttf";
-      class = "variable";
-      roles = ["script"];
-      sample = "سلام دنیا چطوری";
-    };
-    "Noto Sans Arabic" = {
-      package = notoArabic;
-      file = "share/fonts/noto/NotoSansArabic.ttf";
-      class = "variable";
-      roles = ["script"];
-      sample = "سلام دنیا چطوری";
-    };
-  };
+  # The cross-scope catalog (modules/common/fonts-catalog.nix) is the single family-truth surface; the darwin owner folds the same rows into its
+  # install list, so a catalog family absent from the install set is structurally impossible. The manifest derivation opens each representative file
+  # with fonttools and fails the build on name-table disagreement (parity at build time). `class`: static | variable | patched. `sample` overrides text.
+  catalog = import ../common/fonts-catalog.nix {inherit pkgs;};
 
-  # --- [ROLES_CHAINS_METRICS_FEATURES]
-  # Roles are the swap surface: one family per role, scripts ordered by shaping preference. The mono chain is the only fallback expression on
-  # macOS — fontconfig is inert against CoreText and Chromium renderers.
+  # --- [ROLES_CHAINS_SURFACES_FEATURES]
+  # Roles are the swap surface: one family per role, scripts ordered by shaping preference. The mono chain is the only fallback expression on macOS —
+  # fontconfig is inert against CoreText and Chromium renderers. Emoji is system-owned (Apple Color Emoji) and is never a role or a package row.
   roles = {
     mono = "Geist Mono"; # forge-font:mono
     sans = "Geist";
-    serif = "Source Serif 4";
     symbols = "Symbols Nerd Font Mono";
-    emoji = "Apple Color Emoji"; # system-owned; never a package row
     scripts = ["Scheherazade New" "Noto Naskh Arabic" "Noto Sans Arabic"];
   };
   chains.mono = [roles.mono roles.symbols] ++ roles.scripts;
 
-  metrics = {
-    size = 13.0;
-    # Terminal leading travels per mono family: 0.95 is tuned for Geist and clips Monaspace/JetBrains descenders; below 1.0 is family-proven only.
-    lineHeights = lib.mapAttrs (_: row: row.lineHeight) (lib.filterAttrs (_: row: row ? lineHeight) catalog);
-    editorLineHeight = 1.5;
-    cssLineHeight = "140%";
+  # Per-mono-family terminal leading, folded from catalog rows: 0.95 is tuned for Geist and clips Monaspace/JetBrains descenders; below 1.0 is
+  # family-proven only. Projected to WezTerm's per-family line_heights; the terminal surface's default_line_height governs any family without a row.
+  familyLeading = lib.mapAttrs (_: row: row.lineHeight) (lib.filterAttrs (_: row: row ? lineHeight) catalog);
+
+  # Per-surface typography table: each surface binds a family role, size (px), leading (unitless), and weight — the sole owner of every type fact.
+  # Every renderer projection folds from its surface row; no consumer carries a private family, size, leading, or weight. Positional constructor keeps
+  # rows single-line (alejandra explodes multi-key attrset literals); weightBold defaults bold and only the terminal surface reads it.
+  mkSurface = family: size: leading: weight: {
+    inherit family size leading weight;
+    weightBold = "bold";
   };
+  surfaces = {
+    terminal = mkSurface "mono" 13.0 1.0 "normal";
+    editor = mkSurface "mono" 13.0 1.5 "normal";
+    screenshot = mkSurface "mono" 16.0 1.4 "normal";
+    proof = mkSurface "sans" 14.0 1.5 "normal";
+    label = mkSurface "mono" 13.0 1.0 "normal";
+  };
+
+  # CSS projectors: px size and rounded-percent leading single-source the unit forms consumers previously hardcoded (F5's numeric-vs-% disagreement).
+  cssSize = surf: "${toString (builtins.floor surfaces.${surf}.size)}px";
+  cssLeading = surf: "${toString (builtins.floor (surfaces.${surf}.leading * 100.0 + 0.5))}%";
+  # Sans body stack (proof surface): sans role first, the mono chain as fallback, generic monospace last.
+  cssSansStack = lib.concatStringsSep ", " ([roles.sans] ++ chains.mono ++ ["monospace"]);
 
   # Literal-safe shaping: contextual alternates on, every ligature class off.
   features = {
@@ -180,9 +117,9 @@
   manifestJson = pkgs.runCommand "forge-fonts.json" {nativeBuildInputs = [pkgs.jq];} ''
     jq --argjson roles ${lib.escapeShellArg (builtins.toJSON roles)} \
        --argjson chains ${lib.escapeShellArg (builtins.toJSON chains)} \
-       --argjson metrics ${lib.escapeShellArg (builtins.toJSON metrics)} \
+       --argjson surfaces ${lib.escapeShellArg (builtins.toJSON surfaces)} \
        --argjson features ${lib.escapeShellArg (builtins.toJSON features)} \
-       '. + {roles: $roles, chains: $chains, metrics: $metrics, features: $features}' \
+       '. + {roles: $roles, chains: $chains, surfaces: $surfaces, features: $features}' \
        ${fontManifest}/families.json >$out
   '';
 
@@ -328,25 +265,30 @@ in {
     type = lib.types.raw;
     readOnly = true;
     default = {
-      inherit catalog roles chains metrics features overridePath;
-      manifest = manifestJson;
+      # overridePath reaches consumers only through luaFont.override_path — one public channel, never two; the manifest's one channel is the
+      # xdg projection every kernel reads.
+      inherit catalog roles chains surfaces features;
       projections = {
-        # WezTerm rows: deck.lua walks the chain, applies per-family leading, and prepends the override family when the override file exists.
+        # WezTerm rows (terminal surface): deck.lua walks the chain, applies per-family leading, and prepends the override family when it exists.
         luaFont = {
           chain = map (f: {family = f;}) chains.mono;
-          inherit (metrics) size;
-          line_heights = metrics.lineHeights;
-          default_line_height = 1.0;
+          inherit (surfaces.terminal) size;
+          line_heights = familyLeading;
+          default_line_height = surfaces.terminal.leading;
           harfbuzz_features = features.harfbuzz;
           override_path = overridePath;
         };
-        # Quoted family chain for editor-class consumers.
+        # Quoted mono chain for editor-class consumers; the CSS stacks carry a generic fallback, and the sans stack falls through to the mono chain.
         vscodeFamily = lib.concatMapStringsSep ", " (f: "'${f}'") chains.mono;
         cssMono = lib.concatStringsSep ", " (chains.mono ++ ["monospace"]);
-        fastfetchLabel = "${roles.mono} ${toString (builtins.floor metrics.size)}pt";
+        fastfetchLabel = "${roles.mono} ${toString (builtins.floor surfaces.label.size)}pt";
+        # Screenshot (carbon) and proof (theme HTML) CSS: one font shorthand plus the two scalar CSS forms the consumers previously hardcoded.
+        proofFont = "${cssSize "proof"}/${cssLeading "proof"} ${cssSansStack}";
+        screenshotSize = cssSize "screenshot";
+        screenshotLeading = cssLeading "screenshot";
       };
     };
-    description = "Estate font owner: family catalog, roles, chains, metrics, projections.";
+    description = "Estate font owner: family catalog, roles, chains, per-surface typography, projections.";
   };
 
   config = {

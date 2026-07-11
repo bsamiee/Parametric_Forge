@@ -14,10 +14,12 @@
   inherit (lib) mkDefault;
   inherit (config.system) primaryUser;
   primaryUserHome = config.users.users.${primaryUser}.home;
+  configHome = "${primaryUserHome}/.config"; # system scope has no config.xdg; one binding carries the literal the home scope derives.
   toolchainEnv = forgeToolchainEnvFor {
     home = primaryUserHome;
     username = primaryUser;
     xdgCacheHome = "${primaryUserHome}/.cache";
+    xdgConfigHome = configHome;
   };
 in {
   system.defaults = {
@@ -104,21 +106,17 @@ in {
   # Keep GUI-launched processes aligned with Nix/Home Manager PATH, so a tool in the shell also resolves in app-launched subprocesses.
   launchd.user.envVariables =
     toolchainEnv.scientificSessionEnv
+    // toolchainEnv.launchdEnv
     // {
       PATH = toolchainEnv.launchdPathEntries;
       DOCKER_HOST = "unix://${primaryUserHome}/.local/share/colima/default/docker.sock";
       COLIMA_HOME = "${primaryUserHome}/.local/share/colima";
-      DOCKER_CONFIG = "${primaryUserHome}/.config/docker";
-      GH_CONFIG_DIR = "${primaryUserHome}/.config/gh";
+      DOCKER_CONFIG = "${configHome}/docker";
       # Dock/Finder-launched WezTerm never sees shell sessionVariables; without these rows the GUI runtime (gui-sock, agent links, logs)
       # lands in XDG data instead of the declared XDG state root.
       WEZTERM_RUNTIME_DIR = "${primaryUserHome}/.local/state/wezterm";
       WEZTERM_LOG_DIR = "${primaryUserHome}/.local/state/wezterm";
       PNPM_HOME = "${primaryUserHome}/.local/share/pnpm";
       PUPPETEER_EXECUTABLE_PATH = toolchainEnv.puppeteerExecutablePath;
-      PAGER = "less";
-      GH_PAGER = "delta";
-      GIT_PAGER = "delta";
-      LESS = "-RFX";
     };
 }

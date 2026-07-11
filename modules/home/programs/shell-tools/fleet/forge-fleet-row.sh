@@ -1,11 +1,14 @@
 #!/usr/bin/env bash
 # Per-subagent row renderer for the Claude Code subagentStatusLine: replaces the default `name · description · tokens` agent-panel row with
-# `<provider-icon> <model:6> · <label:22> · M:SS · ctx%`, sourced purely from the tasks payload (per-task `model`, `startTime`, `tokenCount`,
+# `<provider-icon> <model:6> · <label:22> · MM:SS · ctx%`, sourced purely from the tasks payload (per-task `model`, `startTime`, `tokenCount`,
 # `contextWindowSize`). Provider resolves from the label's worker prefix first (terra:/sol:/luna:/gemini: name the real external worker behind a
-# sonnet wrapper), then the model: Claude ✳, OpenAI ⬡, Gemini ✦. Fixed-width model and label columns keep every row's separators vertically
-# aligned in the panel. One JSON line per task on stdout; pure and stateless — no ledger read, so it stays well under the refresh tick.
+# sonnet wrapper), then the model: Claude ✳, OpenAI ⬡, Gemini ✦. Fixed-width model and label columns plus a right-aligned percentage keep every row's
+# separators vertically aligned in the panel. Elapsed shares forge-fleet-status's fmt_el grammar: two-digit minutes (07:44), hours as 1:07h. The panel
+# re-renders only on the harness's ~5s refresh tick — a platform bound with no configurable interval, so counters advance in tick-sized steps.
+# One JSON line per task on stdout; pure and stateless — no ledger read, so it stays well under the refresh tick.
 set -Eeuo pipefail
-trap 'exit 0' ERR
+[ -n "${FORGE_FLEET_DEBUG:-}" ] || trap 'exit 0' ERR
+command -v jq >/dev/null 2>&1 || exit 0
 
 jq -c --argjson now "$EPOCHSECONDS" '
   def short($m): if $m == null then null
@@ -30,10 +33,11 @@ jq -c --argjson now "$EPOCHSECONDS" '
       elif $n > 1000000000 then (($now - $n) | floor) else null end;
   def two($n): ("0" + ($n | tostring))[-2:];
   def elx($s): if $s == null or $s < 0 then ""
-    elif $s < 3600 then "\(($s / 60) | floor):\(two($s % 60))"
+    elif $s < 3600 then "\(two(($s / 60) | floor)):\(two($s % 60))"
     else "\(($s / 3600) | floor):\(two((($s % 3600) / 60) | floor))h" end;
   def ctx($tc; $cw): ($tc | tonumber?) as $t | ($cw | tonumber?) as $c
-    | if $t == null or $c == null or $c == 0 then "" else "\((100 * $t / $c) | floor)%" end;
+    | if $t == null or $c == null or $c == 0 then ""
+      else ((100 * $t / $c) | floor) as $p | (if $p >= 100 then "\($p)" else ("  " + "\($p)")[-2:] end) + "%" end;
   .tasks[]? | (.label // .name // .description // "agent" | tostring) as $lbl | short(.model) as $m | {id: .id, content: (
     [ pad($m; 6), pad($lbl | .[0:22]; 22), elx(secs(.startTime)), ctx(.tokenCount; .contextWindowSize) ]
     | map(select(. != "" and . != null)) | icon(provider($m; $lbl)) + " " + join(" · ") )}

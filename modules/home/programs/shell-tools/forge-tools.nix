@@ -14,6 +14,50 @@
   logs = "${config.home.homeDirectory}/Library/Logs";
   bundleId = "com.parametric-forge.forge-nix-automation";
   receiptsFold = import ./receipts.nix;
+  inherit (config.forge.theme) roles icons;
+
+  # One verdict fold across the acceptance rail and the two doctors: `mark` renders a verdict as its alphabet ASCII twin colored on the state
+  # ladder, TTY/NO_COLOR-gated because every line is piped and persisted; `tsv_row` folds both family-keyed receipt grammars (owner optional).
+  statusFold = ''
+    if [ -t 2 ] && [ -z "''${NO_COLOR:-}" ]; then _sgr() { printf '\033[38;2;%sm' "$1"; }; _rst=$'\033[0m'; else _sgr() { :; }; _rst=""; fi
+    # shellcheck disable=SC2329
+    mark() {
+      local m c
+      case "$1" in
+        PASS) m='${icons.alphabet.ok.ascii}' c='${roles.state.success.triple}' ;;
+        FAIL) m='${icons.alphabet.failure.ascii}' c='${roles.state.danger.triple}' ;;
+        WARN) m='${icons.alphabet.warning.ascii}' c='${roles.state.warning.triple}' ;;
+        INSTRUCT) m='${icons.alphabet.attention.ascii}' c='${roles.state.attention.triple}' ;;
+        SKIP) m='${icons.alphabet.idle.ascii}' c='${roles.text.muted.triple}' ;;
+        *) m="$1" c='${roles.text.muted.triple}' ;;
+      esac
+      printf '%s%-4s%s' "$(_sgr "$c")" "$m" "$_rst"
+    }
+    # shellcheck disable=SC2329
+    tsv_row() {
+      if [ "$#" -eq 3 ]; then printf 'ts=%s\tfamily=%s\towner=%s\t%b\n' "$ts" "$1" "$2" "$3"; else printf 'ts=%s\tfamily=%s\t%b\n' "$ts" "$1" "$2"; fi
+    }
+  '';
+
+  # Shared scheduled-run gate (maintenance + drift agents): AC-gated on battery hosts — pmset is a Darwin fact, a host without it is
+  # mains-powered and skips the gate instead of dying under pipefail; scheduled runs yield the lock (-n), manual runs wait. Consume-all grep
+  # avoids the -q pipefail/SIGPIPE false skip. Callers own trap-set receipts before interpolating, so the battery skip stays visible.
+  acGateFold = ''
+    if [ "$mode" = "scheduled" ]; then
+      if [ -x /usr/bin/pmset ]; then
+        /usr/bin/pmset -g batt | grep "AC Power" >/dev/null || {
+          power="battery" result="skipped"
+          exit 0
+        }
+        power="ac"
+      else
+        power="mains"
+      fi
+      flock_args=(-n)
+    else
+      flock_args=(-w 600)
+    fi
+  '';
   # Platform ps dispatch: /bin/ps is a Darwin fact; NixOS gets procps by store path so a manual run on the Linux host degrades typed, never 127.
   psBin =
     if pkgs.stdenv.hostPlatform.isDarwin
@@ -409,22 +453,7 @@
       }
       trap emit_receipt EXIT
 
-      # Scheduled runs stay AC-gated and yield to a live deploy; manual runs wait. Consume-all grep avoids the -q pipefail/SIGPIPE false skip.
-      if [ "$mode" = "scheduled" ]; then
-        # pmset is a Darwin fact; a host without it is mains-powered and skips the battery gate instead of dying under pipefail.
-        if [ -x /usr/bin/pmset ]; then
-          /usr/bin/pmset -g batt | grep "AC Power" >/dev/null || {
-            power="battery" result="skipped"
-            exit 0
-          }
-          power="ac"
-        else
-          power="mains"
-        fi
-        flock_args=(-n)
-      else
-        flock_args=(-w 600)
-      fi
+      ${acGateFold}
       mkdir -p "$(dirname "$lock_file")"
       exec {lock_fd}>"$lock_file"
       flock "''${flock_args[@]}" "$lock_fd" || {
@@ -1032,22 +1061,7 @@
           -message "$1" -group forge-nix-drift >/dev/null 2>&1 || true
       }
 
-      # Scheduled runs stay AC-gated: a moved input triggers a full host build.
-      if [ "$mode" = "scheduled" ]; then
-        # pmset is a Darwin fact; a host without it is mains-powered and skips the battery gate instead of dying under pipefail.
-        if [ -x /usr/bin/pmset ]; then
-          /usr/bin/pmset -g batt | grep "AC Power" >/dev/null || {
-            power="battery" result="skipped"
-            exit 0
-          }
-          power="ac"
-        else
-          power="mains"
-        fi
-        flock_args=(-n)
-      else
-        flock_args=(-w 600)
-      fi
+      ${acGateFold}
       # Own lock serializes drift runs; the deploy flock stays redeploy-owned, so an in-flight deploy
       # surfaces as build=deploy-in-flight, not deadlock.
       mkdir -p "$(dirname "$lock_file")"
@@ -1270,6 +1284,7 @@
     name = "forge-accept";
     inputs = [pkgs.coreutils pkgs.gnugrep pkgs.gawk pkgs.jq pkgs.findutils pkgs.lsof pkgs.zellij pkgs.flock forgeActivationSweep forgeRedeploy];
     text = ''
+      ${statusFold}
       declare -ra STEPS=(preflight switch replay outputs zellij terminal fleet lanes maghz relaunch)
       usage() {
         printf 'Usage: forge-accept [--from STEP | --only STEP | --list]\n  steps: %s\n' "''${STEPS[*]}" >&2
@@ -1303,7 +1318,7 @@
 
       row() {
         append_receipt "$(printf 'ts=%s\tstep=%s\tstatus=%s\tdetail=%s' "$ts" "$2" "$1" "$3")" || true
-        printf '%-8s | %-22s | %s\n' "$1" "$2" "$3" >&2
+        printf '%s | %-22s | %s\n' "$(mark "$1")" "$2" "$3" >&2
         case "$1" in
           PASS) pass=$((pass + 1)) ;;
           WARN) warn=$((warn + 1)) ;;
@@ -1635,6 +1650,7 @@
     name = "forge-path-doctor";
     inputs = [pkgs.coreutils pkgs.findutils pkgs.gnugrep pkgs.gawk pkgs.jq];
     text = ''
+      ${statusFold}
       shadows=0 mismatches=0 unadjudicated=0
       brew_bin="''${FORGE_BREW:-/opt/homebrew/bin/brew}"
 
@@ -1651,8 +1667,8 @@
         esac
       }
 
-      # %b: payload fields carry embedded \t separators.
-      row() { printf 'ts=%s\tfamily=%s\t%b\n' "$ts" "$1" "$2"; }
+      # Family-keyed receipt rows through the shared fold (%b: payload fields carry embedded \t separators).
+      row() { tsv_row "$@"; }
 
       # Cross-owner shadow scan: a later PATH segment holding a DIFFERENT binary under a DIFFERENT owner class than the winning segment.
       declare -A win
@@ -1896,14 +1912,15 @@
     name = "forge-update-board";
     inputs = [pkgs.coreutils pkgs.gnugrep pkgs.gawk];
     text = ''
+      ${statusFold}
       brew_bin="''${FORGE_BREW:-/opt/homebrew/bin/brew}"
       logs="$HOME/Library/Logs"
       families=0
 
-      # %b: payload fields carry embedded \t separators.
+      # Family+owner receipt rows through the shared fold (%b: payload fields carry embedded \t separators).
       row() {
         families=$((families + 1))
-        printf 'ts=%s\tfamily=%s\towner=%s\t%b\n' "$ts" "$1" "$2" "$3"
+        tsv_row "$1" "$2" "$3"
       }
       tail_receipt() {
         if [ -f "$1" ]; then tail -1 "$1"; else echo "no-receipt"; fi

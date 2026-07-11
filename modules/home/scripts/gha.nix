@@ -18,7 +18,8 @@
 
       # --- [GATE_VOCABULARY]
       # One row per gate: the normalizer emits one JSON row per finding on stdout — {tool,file,line,id,severity,message} — and returns 0 clean,
-      # 1 findings, 2 tool failure. Rows are the verdict detail; tool exit codes only classify the state.
+      # 1 findings, >1 tool failure with deadline kills passing through as 124/137. Rows are the verdict detail; exit codes only classify state.
+      # Every tool spawn rides `timeout -k 10` under the one deadline: TERM first, KILL after a 10s grace (duration 0 disarms, matching fmt/loc).
       declare -Ar _GATE=(
         ["actionlint"]=_gate_actionlint
         ["ratchet"]=_gate_ratchet
@@ -28,36 +29,55 @@
       # shellcheck disable=SC2329  # invoked through the gate dispatch table
       _gate_actionlint() {
         local out rc=0
-        out="$(actionlint -format '{{json .}}' -- "$@" 2>&1)" || rc=$?
+        out="$(timeout -k 10 "$deadline" actionlint -format '{{json .}}' -- "$@" 2>&1)" || rc=$?
         ((rc <= 1)) || {
           printf '%s\n' "$out" >&2
-          return 2
+          return "$rc"
         }
         jq -c '.[] | {tool: "actionlint", file: .filepath, line: .line, id: .kind, severity: "error", message: .message}' <<<"$out"
         return "$rc"
       }
 
       # shellcheck disable=SC2329  # invoked through the gate dispatch table
+      # ratchet's reader is CWD-rooted — absolute and ..-relative paths are read errors — so each file runs from its own directory by basename
+      # and the caller's path is restored on the row. The one gate deadline spans every file: the remaining budget shrinks per spawn.
       _gate_ratchet() {
-        local out rc=0
-        out="$(ratchet lint "$@" 2>&1)" || rc=$?
-        ((rc <= 1)) || {
-          printf '%s\n' "$out" >&2
-          return 2
-        }
-        jq -cR 'try capture("^(?<file>[^:]+):(?<line>[0-9]+):[0-9]+: (?<message>.+)$")
-          | {tool: "ratchet", file: .file, line: (.line | tonumber), id: "unpinned", severity: "error", message: .message}' <<<"$out"
+        local f dir out rc=0 frc
+        local -ri t0="$BASH_MONOSECONDS"
+        local -i remaining=0
+        for f in "$@"; do
+          if ((deadline > 0)); then
+            remaining=$((deadline - (BASH_MONOSECONDS - t0)))
+            ((remaining > 0)) || return 124
+          fi
+          dir="''${f%/*}"
+          [[ "$dir" == "$f" ]] && dir=.
+          frc=0
+          out="$(cd "$dir" && timeout -k 10 "$remaining" ratchet lint "''${f##*/}" 2>&1)" || frc=$?
+          ((frc <= 1)) || {
+            printf '%s\n' "$out" >&2
+            return "$frc"
+          }
+          ((frc == 0)) || rc=1
+          jq -cR --arg file "$f" 'try capture("^[^:]+:(?<line>[0-9]+):[0-9]+: (?<message>.+)$")
+            | {tool: "ratchet", file: $file, line: (.line | tonumber), id: "unpinned", severity: "error", message: .message}' <<<"$out"
+        done
         return "$rc"
       }
 
       # shellcheck disable=SC2329  # invoked through the gate dispatch table
+      # zizmor chats progress on stderr, so stderr rides a side file: findings JSON stays clean and a tool failure still surfaces its diagnostics.
       _gate_zizmor() {
-        local out rc=0
-        out="$(zizmor --format json --no-online-audits "$@" 2>/dev/null)" || rc=$?
+        local out err rc=0
+        err="$tmp/zizmor.err"
+        out="$(timeout -k 10 "$deadline" zizmor --format json --no-online-audits "$@" 2>"$err")" || rc=$?
         case "$rc" in
           0) ;;
           1[0-4]) rc=1 ;; # zizmor encodes the highest finding severity as exit 10-14
-          *) return 2 ;;
+          *)
+            cat "$err" >&2
+            return "$rc"
+            ;;
         esac
         jq -c '.[] | {tool: "zizmor", file: (.locations[0].symbolic.key.Local.given_path // ""),
           line: ((.locations[0].concrete.location.start_point.row // -1) + 1), id: .ident,
@@ -76,6 +96,7 @@
             continue
           fi
           [[ -d "$t" ]] || {
+            ((json_mode)) && jq -nc --arg t "$t" '{error: {surface: "gha", kind: "target", target: $t}}'
             printf 'gha: no such target: %s\n' "$t" >&2
             exit 2
           }
@@ -85,16 +106,25 @@
             < <(fd -0 -t f -H -e yml -e yaml . "$root" | LC_ALL=C sort -z)
         done
         ((''${#files[@]})) || {
+          ((json_mode)) && jq -nc '{error: {surface: "gha", kind: "discovery", targets: $ARGS.positional}}' --args -- "$@"
           printf 'gha: no workflow files under: %s\n' "$*" >&2
           exit 2
         }
       }
 
-      _check() {
-        _discover "''${targets[@]:-.}"
-        local tmp gate rc n
+      # One scratch owner: a fatal INT/TERM lands as a deferred trap that exits through EXIT cleanup, so no run leaves temp litter — the
+      # in-flight tool spawn drains first (bash defers traps past the foreground command) and stays deadline-bounded.
+      _scratch() {
         tmp="$(mktemp -d)"
         trap 'rm -rf "$tmp"' EXIT
+        trap 'exit 130' INT
+        trap 'exit 143' TERM
+      }
+
+      _check() {
+        _discover "''${targets[@]:-.}"
+        local gate rc n
+        _scratch
         local -A gate_rc=() gate_state=()
         local status=0
         mapfile -t gates < <(printf '%s\n' "''${!_GATE[@]}" | sort)
@@ -105,7 +135,11 @@
           case "$rc" in
             0) gate_state[$gate]=ok ;;
             1) gate_state[$gate]=fail ;;
-            *) gate_state[$gate]=error ;;
+            *)
+              gate_state[$gate]=error
+              # 124 = timeout sent TERM; 137 = the -k grace expired and KILL landed. Both read as deadline kills only while the wrapper is armed.
+              ((deadline > 0 && (rc == 124 || rc == 137))) && gate_state[$gate]=timeout
+              ;;
           esac
           ((rc == 0)) || status=1
         done
@@ -113,8 +147,8 @@
           for gate in "''${gates[@]}"; do
             jq -sc --arg tool "$gate" --arg state "''${gate_state[$gate]}" --argjson rc "''${gate_rc[$gate]}" \
               '{tool: $tool, state: $state, rc: $rc, findings: length, rows: .}' <"$tmp/$gate.jsonl"
-          done | jq -sc --argjson files "''${#files[@]}" \
-            '{mode: "check", files: $files, tools: sort_by(.tool), ok: (map(.state == "ok") | all)}'
+          done | jq -sc --argjson files "''${#files[@]}" --argjson deadline "$deadline" \
+            '{mode: "check", files: $files, deadline: $deadline, tools: sort_by(.tool), ok: (map(.state == "ok") | all)}'
           exit "$status"
         fi
         for gate in "''${gates[@]}"; do
@@ -123,8 +157,9 @@
             ok) printf '[OK]   %-10s %3d file(s)\n' "$gate" "''${#files[@]}" ;;
             fail)
               printf '[FAIL] %-10s %3d finding(s)\n' "$gate" "$n"
-              jq -r '"    \(.file):\(.line) [\(.severity)] \(.id): \(.message)"' <"$tmp/$gate.jsonl" | head -40
+              jq -rs 'limit(40; .[]) | "    \(.file):\(.line) [\(.severity)] \(.id): \(.message)"' <"$tmp/$gate.jsonl"
               ;;
+            timeout) printf '[FAIL] %-10s timed out after %ss\n' "$gate" "$deadline" ;;
             error) printf '[ERROR] %-9s rc=%d — tool failure, findings unknown\n' "$gate" "''${gate_rc[$gate]}" ;;
           esac
         done
@@ -133,27 +168,67 @@
 
       _pin() {
         _discover "''${targets[@]:-.}"
-        local out rc=0
-        out="$(ratchet pin "''${files[@]}" 2>&1)" || rc=$?
+        local f dir out frc status=0 rows=""
+        local -ri t0="$BASH_MONOSECONDS"
+        local -i remaining=0
+        for f in "''${files[@]}"; do
+          if ((deadline > 0)); then
+            remaining=$((deadline - (BASH_MONOSECONDS - t0)))
+            ((remaining > 0)) || {
+              ((json_mode)) && jq -nc --argjson deadline "$deadline" --arg file "$f" \
+                '{error: {surface: "gha", kind: "deadline", deadline: $deadline, at: $file}}'
+              printf 'gha: pin deadline (%ss) exhausted at %s\n' "$deadline" "$f" >&2
+              exit 1
+            }
+          fi
+          dir="''${f%/*}"
+          [[ "$dir" == "$f" ]] && dir=.
+          frc=0
+          # ratchet pin resolves refs over the network — the estate's most deadline-worthy spawn.
+          out="$(cd "$dir" && timeout -k 10 "$remaining" ratchet pin "''${f##*/}" 2>&1)" || frc=$?
+          ((frc == 0)) || status=1
+          if ((json_mode)); then
+            rows+="$(jq -nc --arg file "$f" --argjson rc "$frc" --arg output "$out" \
+              '{file: $file, rc: $rc, ok: ($rc == 0), output: $output}')"$'\n'
+          elif ((frc == 0)); then
+            printf '[PIN]  %s\n' "$f"
+          else
+            printf '[FAIL] %s rc=%d\n%s\n' "$f" "$frc" "$out"
+          fi
+        done
         if ((json_mode)); then
-          printf '%s\n' "''${files[@]}" | jq -Rc '{file: .}' | jq -sc --argjson rc "$rc" --arg output "$out" \
-            '{mode: "pin", files: ., rc: $rc, ok: ($rc == 0), output: $output}'
-        else
-          local f
-          for f in "''${files[@]}"; do printf '[PIN] %s\n' "$f"; done
-          ((rc == 0)) || printf '[FAIL] ratchet pin rc=%d\n%s\n' "$rc" "$out"
+          jq -sc '{mode: "pin", files: length, rows: ., ok: (map(.ok) | all)}' <<<"$rows"
         fi
-        ((rc == 0)) || exit 1
+        exit "$status"
       }
 
       _events() {
-        [[ -d .github/workflows ]] || {
-          printf 'gha: no workflow files under: .\n' >&2
+        # act reads the CWD's .github/workflows only, so the guard demands actual workflow files there — a present-but-empty tree is the same
+        # typed discovery failure a check run reports, on both rails.
+        local f
+        local -a wf=()
+        if [[ -d .github/workflows ]]; then
+          while IFS= read -r -d $'\0' f; do wf+=("$f"); done < <(fd -0 -t f -H -e yml -e yaml . .github/workflows)
+        fi
+        ((''${#wf[@]})) || {
+          ((json_mode)) && jq -nc '{error: {surface: "gha", kind: "discovery", targets: ["."]}}'
+          printf 'gha: no workflow files under: .github/workflows\n' >&2
           exit 2
         }
         # act --list projection: the Events column is the table's last field; header row drops, comma lists split, duplicates collapse.
-        local ev_json
-        ev_json="$(act --list 2>/dev/null | jq -Rsc 'split("\n")[1:] | map(select(length > 0) | split(" ") | last | split(",")) | flatten | unique')"
+        # A parse-rejected workflow is a typed failure, never an empty event list.
+        local out errf rc=0 ev_json
+        _scratch
+        errf="$tmp/act.err"
+        out="$(timeout -k 10 "$deadline" act --list 2>"$errf")" || rc=$?
+        ((rc == 0)) || {
+          ((json_mode)) && jq -nc --rawfile detail "$errf" '{error: {surface: "gha", kind: "act", detail: $detail}}'
+          printf 'gha: act --list failed:\n' >&2
+          cat "$errf" >&2
+          exit 1
+        }
+        # Columns pad with trailing spaces to the widest row, so the last non-space token — never split(" ")|last — is the Events field.
+        ev_json="$(jq -Rsc '[split("\n")[1:][] | select(test("\\S")) | [scan("\\S+")] | last | split(",")] | flatten | unique' <<<"$out")"
         if ((json_mode)); then
           jq -nc --argjson events "$ev_json" '{mode: "events", events: $events}'
         else
@@ -169,8 +244,8 @@
             return 1
           }
         done
-        local st
-        st="$(mktemp -d)"
+        _scratch
+        local st="$tmp/fixture"
         mkdir -p "$st/.github/workflows"
         # Fixture carries one defect per gate: an undefined function for actionlint, a mutable ref for ratchet, credential persistence for zizmor.
         cat >"$st/.github/workflows/probe.yml" <<'EOF'
@@ -188,7 +263,6 @@
         a="$({ _gate_actionlint "$st/.github/workflows/probe.yml" || true; } | jq -sc length)"
         r="$({ _gate_ratchet "$st/.github/workflows/probe.yml" || true; } | jq -sc length)"
         z="$({ _gate_zizmor "$st/.github/workflows/probe.yml" || true; } | jq -sc length)"
-        rm -rf "$st"
         ((a >= 1 && r == 1 && z >= 1)) || {
           printf 'self-test: fixture findings actionlint=%d ratchet=%d zizmor=%d (want >=1, ==1, >=1)\n' "$a" "$r" "$z" >&2
           return 1
@@ -205,6 +279,11 @@
       shift
       json_mode=0
       targets=()
+      readonly deadline="''${GHA_DEADLINE_SECONDS:-300}"
+      [[ "$deadline" =~ ^[0-9]+$ ]] || {
+        printf 'gha: GHA_DEADLINE_SECONDS must be a whole number of seconds\n' >&2
+        exit 2
+      }
       case "$verb" in
         --help | -h)
           _usage

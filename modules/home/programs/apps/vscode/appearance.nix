@@ -73,17 +73,17 @@ in {
   asserted = {
     # --- [TYPOGRAPHY]
     "editor.fontFamily" = f.projections.vscodeFamily;
-    "editor.fontSize" = builtins.floor f.metrics.size;
+    "editor.fontSize" = builtins.floor f.surfaces.editor.size;
     "editor.fontLigatures" = f.features.vscode;
     "editor.fontVariations" = false; # static primary; fractional axes are a variable-font lever
-    "editor.lineHeight" = f.metrics.editorLineHeight;
+    "editor.lineHeight" = f.surfaces.editor.leading;
     "editor.renderWhitespace" = "trailing";
     "terminal.integrated.fontFamily" = f.projections.vscodeFamily;
-    "terminal.integrated.fontSize" = builtins.floor f.metrics.size;
+    "terminal.integrated.fontSize" = builtins.floor f.surfaces.terminal.size;
     "terminal.integrated.fontLigatures.enabled" = false;
-    "terminal.integrated.lineHeight" = 1.0;
-    "terminal.integrated.fontWeight" = "normal";
-    "terminal.integrated.fontWeightBold" = "bold";
+    "terminal.integrated.lineHeight" = f.surfaces.terminal.leading;
+    "terminal.integrated.fontWeight" = f.surfaces.terminal.weight;
+    "terminal.integrated.fontWeightBold" = f.surfaces.terminal.weightBold;
     # --- [THEME_OWNERSHIP]
     # Builtin substrate: every visible family is overridden below, so the base theme contributes fallback values only, never a rendered color.
     # Product icons ride the one finalist restyling the full codicon registry — same publisher family as the file icons, one visual vocabulary

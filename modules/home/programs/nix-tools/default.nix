@@ -4,12 +4,16 @@
 # License       : MIT
 # Path          : modules/home/programs/nix-tools/default.nix
 # ----------------------------------------------------------------------------
-# Nix tool inventory; imports carry real configuration only.
+# Nix tool inventory; nixd carries the only import-worthy configuration.
 {pkgs, ...}: {
-  imports = [
-    ./nix-index.nix
-    ./nixd.nix
-  ];
+  imports = [./nixd.nix];
+
+  # Command-not-found with the pre-built package database; comma rides the same database.
+  programs.nix-index = {
+    enable = true;
+    enableZshIntegration = true;
+  };
+  programs.nix-index-database.comma.enable = true;
 
   home.packages = [
     pkgs.alejandra # Uncompromising Nix code formatter

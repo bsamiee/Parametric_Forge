@@ -10,7 +10,8 @@
   pkgs,
   ...
 }: let
-  inherit (config.forge.theme) palette;
+  # palette retained for the one hue with no semantic role: string-yellow (radius ring, current-flow label).
+  inherit (config.forge.theme) roles palette;
   tomlFormat = pkgs.formats.toml {};
 
   trippyConfig = {
@@ -24,41 +25,42 @@
     tui-max-flows = 64;
 
     # --- [THEME_CONFIGURATION_ESTATE_PALETTE_TOKENS]
+    # Selected chart series ride the focus fill; borders read the canonical ui.border; dialogs sit on the raised surface.
     theme-colors = {
-      bg-color = palette.background.hex;
-      border-color = palette.selection.hex;
-      text-color = palette.foreground.hex;
-      tab-text-color = palette.comment.hex;
-      hops-table-header-bg-color = palette.current_line.hex;
-      hops-table-header-text-color = palette.cyan.hex;
-      hops-table-row-active-text-color = palette.foreground.hex;
-      hops-table-row-inactive-text-color = palette.comment.hex;
-      hops-chart-selected-color = palette.green.hex;
-      hops-chart-unselected-color = palette.comment.hex;
-      hops-chart-axis-color = palette.comment.hex;
-      frequency-chart-bar-color = palette.purple.hex;
-      frequency-chart-text-color = palette.foreground.hex;
-      flows-chart-bar-selected-color = palette.green.hex;
-      flows-chart-bar-unselected-color = palette.comment.hex;
+      bg-color = roles.surface.base.hex;
+      border-color = roles.ui.border.hex;
+      text-color = roles.text.primary.hex;
+      tab-text-color = roles.text.muted.hex;
+      hops-table-header-bg-color = roles.surface.raised.hex;
+      hops-table-header-text-color = roles.accent.primary.hex;
+      hops-table-row-active-text-color = roles.text.primary.hex;
+      hops-table-row-inactive-text-color = roles.text.muted.hex;
+      hops-chart-selected-color = roles.focus.active.hex;
+      hops-chart-unselected-color = roles.text.muted.hex;
+      hops-chart-axis-color = roles.text.muted.hex;
+      frequency-chart-bar-color = roles.accent.structural.hex;
+      frequency-chart-text-color = roles.text.primary.hex;
+      flows-chart-bar-selected-color = roles.focus.active.hex;
+      flows-chart-bar-unselected-color = roles.text.muted.hex;
       flows-chart-text-current-color = palette.yellow.hex;
-      flows-chart-text-non-current-color = palette.comment.hex;
-      samples-chart-color = palette.pink.hex;
-      samples-chart-lost-color = palette.red.hex;
-      help-dialog-bg-color = palette.current_line.hex;
-      help-dialog-text-color = palette.foreground.hex;
-      settings-dialog-bg-color = palette.current_line.hex;
-      settings-tab-text-color = palette.comment.hex;
-      settings-table-header-text-color = palette.cyan.hex;
-      settings-table-header-bg-color = palette.current_line.hex;
-      settings-table-row-text-color = palette.foreground.hex;
-      map-world-color = palette.foreground.hex;
+      flows-chart-text-non-current-color = roles.text.muted.hex;
+      samples-chart-color = roles.accent.tertiary.hex;
+      samples-chart-lost-color = roles.state.danger.hex;
+      help-dialog-bg-color = roles.surface.raised.hex;
+      help-dialog-text-color = roles.text.primary.hex;
+      settings-dialog-bg-color = roles.surface.raised.hex;
+      settings-tab-text-color = roles.text.muted.hex;
+      settings-table-header-text-color = roles.accent.primary.hex;
+      settings-table-header-bg-color = roles.surface.raised.hex;
+      settings-table-row-text-color = roles.text.primary.hex;
+      map-world-color = roles.text.primary.hex;
       map-radius-color = palette.yellow.hex;
-      map-selected-color = palette.green.hex;
-      map-info-panel-border-color = palette.selection.hex;
-      map-info-panel-bg-color = palette.background.hex;
-      map-info-panel-text-color = palette.foreground.hex;
-      info-bar-bg-color = palette.current_line.hex;
-      info-bar-text-color = palette.foreground.hex;
+      map-selected-color = roles.focus.active.hex;
+      map-info-panel-border-color = roles.ui.border.hex;
+      map-info-panel-bg-color = roles.surface.base.hex;
+      map-info-panel-text-color = roles.text.primary.hex;
+      info-bar-bg-color = roles.surface.raised.hex;
+      info-bar-text-color = roles.text.primary.hex;
     };
 
     # --- [KEY_BINDINGS]
