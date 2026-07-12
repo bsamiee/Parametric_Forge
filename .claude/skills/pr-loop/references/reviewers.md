@@ -26,15 +26,7 @@ Keyed by GitHub identity. The loop gathers each active reviewer's comments, dete
 - Completion: poll `check-runs`, filter `app.id == 900172` (or the `Macroscope - ` name prefix), done when `status == "completed"`. Receipt line: `Macroscope summarized <sha>. N files reviewed, ...`.
 - Confidence: severity `Low`/`Medium`/`High`/`Critical`; Approvability gates on unresolved comments at or above the Minimum Blocking Severity (default `Medium`). No number.
 
-## [04]-[GEMINI_CODE_ASSIST]
-
-- Login: `gemini-code-assist[bot]` (id `176961590`) — one login for summary, review, and inline comments. The plain `gemini-code-assist` user (id `200291788`) is a different account, not the reviewer.
-- Surfaces: a `COMMENTED` review whose body opens `## Code Review`; inline comments each prefixed with a severity badge `https://www.gstatic.com/codereviewagent/<low|medium|high|critical>-priority.svg`; an issue-comment summary. No check-run; no PR-body edit.
-- Re-trigger: `/gemini review` as a top-level issue comment (`/gemini summary`, `/gemini help` also exist). Auto on open via `.gemini/config.yaml` (`code_review.pull_request_opened`); `comment_severity_threshold` default `MEDIUM`.
-- Completion: appearance of the `gemini-code-assist[bot]` review object (state always `COMMENTED`; it never gates merge).
-- Confidence: per-finding `LOW`/`MEDIUM`/`HIGH`/`CRITICAL` via the badge image; no overall rating.
-
-## [05]-[OPENAI_CODEX]
+## [04]-[OPENAI_CODEX]
 
 - Login: `chatgpt-codex-connector[bot]` (id `199175422`). This is the cloud connector, not `openai/codex-action` (which posts as `github-actions[bot]`).
 - Surfaces: a standard PR review plus inline review threads. Reacts with an eyes glyph on the trigger, flipping to a thumbs-up when an auto-review finds nothing.
@@ -42,19 +34,19 @@ Keyed by GitHub identity. The loop gathers each active reviewer's comments, dete
 - Completion: a posted review by the bot; no separate check-run gate.
 - Confidence: priority tags `P0`/`P1` by default (`P2`/`P3` only when an `AGENTS.md` review section defines them); no number.
 
-## [06]-[CLAUDE_GITHUB_APP]
+## [05]-[CLAUDE_GITHUB_APP]
 
 - Login: detected at runtime via the author scan — the exact `[bot]` login depends on the install, commonly a `claude`-prefixed bot or the Actions identity.
 - Surfaces: posted review plus inline comments.
 - Re-trigger: `@claude` mention.
 - Confidence: per its configuration. Until the login is confirmed for the repo, the author-scan fallback gathers and reports it.
 
-## [07]-[HUMANS]
+## [06]-[HUMANS]
 
 - Any author whose `type` is not `Bot`. Their review `state` (`APPROVED`/`CHANGES_REQUESTED`/`COMMENTED`) drives `reviewDecision`; an open `CHANGES_REQUESTED` on the current head blocks convergence.
 - Re-trigger: `gh pr edit <pr> --add-reviewer <login>`.
 - Their comments triage like any other; a human thread resolves only when the fix actually satisfies it.
 
-## [08]-[AUTHOR_SCAN_FALLBACK]
+## [07]-[AUTHOR_SCAN_FALLBACK]
 
 For any reviewer not keyed above: scan the PR's reviews and comments for authors with `user.type == "Bot"` (or a `[bot]` login suffix) not already handled, gather their unresolved current-head comments generically, treat completion as a review object present for the current head, re-trigger by push only (no known mention), and name the unknown reviewer explicitly in the final report so its trigger joins this registry.

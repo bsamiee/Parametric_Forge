@@ -15,7 +15,7 @@ Rankings, higher is better. Cost reflects actual operator spend, not list price.
 
 - Terra is the default Codex worker for sweeps, research, migration, and clear-spec implementation; Sol owns ambiguous design, complex code, and the deepest review; Luna owns fixed-schema high-volume transformation.
 - Every Codex lane pins sandbox and the suffixed model slug; effort inherits the operator default (`xhigh` in `~/.codex/config.toml`) and is stated only to deviate.
-- Xhigh is the dispatch default for every model; low/medium serve bulk throughput, max deepens the single hardest leg. Subagent spawning is prompt-triggered at any tier; Ultra only biases Sol and Terra to self-decompose - redundant where the caller owns the fan-out - while Luna ends at max.
+- Xhigh is the dispatch default for every model; low/medium serve bulk throughput, max deepens the single hardest leg. Bounded subagent spawning is agent-discretionary when independent or parallel work materially improves the result; Ultra only biases Sol and Terra to self-decompose - redundant where the caller owns the fan-out - while Luna ends at max. Critique and red-team roles are optional, used on explicit request or when heavy code or logic warrants independent adversarial review.
 - Fan-out lanes disable every unused MCP server, including `heptabase-mcp`, and never refan with Ultra. `forge-mcp doctor --network` and `forge-mcp drift` are the fleet gates.
 - User-facing surfaces require taste ≥ 7. Plan and implementation reviews use fable-5 or opus-4.8, with Terra or Sol as the independent Codex lineage.
 - Delegated agents inherit this table at every depth under the agent-dispatch placement law, never self-escalating beyond the brief.

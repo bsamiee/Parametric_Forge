@@ -137,7 +137,7 @@ Static SHA catalogs decay — actions release frequently and stale pins miss sec
 [IMPORTANT]:
 
 - [ALWAYS]: Verify the tag exists before pinning — deleted tags return empty results.
-- [ALWAYS]: Include version comment suffix (`# vX.Y.Z`) — Dependabot/Renovate parse these for automated updates.
+- [ALWAYS]: Include version comment suffix (`# vX.Y.Z`) — Dependabot parses it for automated updates.
 - [NEVER]: Embed static SHAs in reference files — they decay within weeks.
 
 [REFERENCE] [version-discovery.md](./references/version-discovery.md) — Discovery protocol, SHA pinning format, common actions index, automated maintenance.

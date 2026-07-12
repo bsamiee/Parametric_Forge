@@ -31,7 +31,7 @@ The driver brokers the Pulumi passphrase and Doppler IaC token from 1Password wh
 
 ## [04]-[REVIEWER_MATRIX]
 
-The app census records ChatGPT Codex Connector, Claude, CodeRabbit, Gemini Code Assist, Google AI Studio, Greptile, Macroscope, and Nx Cloud. Reviewer config custody remains repo-owned, and `node services/driver.ts reviewers` separates applicable local artifacts, configuration hashes, default-branch installation evidence, hosted-PR activity, and required-check admission. `node services/driver.ts apps` emits the declared browser-custodied installation selection without claiming live API verification. Installation evidence never substitutes for a completed hosted review, and required checks enter `main-guard` only after a PR proves their stable context and integration identity.
+The app census records ChatGPT Codex Connector, Claude, CodeRabbit, Google AI Studio, Greptile, Macroscope, and Nx Cloud. Reviewer config custody remains repo-owned, and `node services/driver.ts reviewers` separates applicable local artifacts, configuration hashes, default-branch installation evidence, hosted-PR activity, and required-check admission. Codex cloud settings own repository review enablement, and each top-level `AGENTS.md` owns its review focus; neither local `config.toml` nor Pulumi controls that SaaS boundary. `node services/driver.ts apps` emits the declared browser-custodied installation selection without claiming live API verification. Installation evidence never substitutes for a completed hosted review, and required checks enter `main-guard` only after a PR proves their stable context and integration identity.
 
 ## [05]-[VERBS]
 

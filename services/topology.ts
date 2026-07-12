@@ -223,12 +223,6 @@ const _appInstallations = [
         origin: 'browser',
     },
     {
-        identity: 'Gemini Code Assist',
-        installationId: 93194989,
-        selectionMode: 'all',
-        origin: 'browser',
-    },
-    {
         identity: 'Google AI Studio',
         installationId: 95565745,
         selectionMode: 'all',

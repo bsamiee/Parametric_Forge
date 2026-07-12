@@ -39,7 +39,7 @@
 - The harness edit path can materialize control-character escapes (the `\u001f` class) as raw bytes on disk; after writing content that carries them, byte-verify with `cat -v` — raw control bytes are invisible to every text reader — and can strip 3-byte BMP private-use glyphs while planes 15/16 survive, so glyph-bearing files ride scripted writes with byte-level diff gates.
 - Estate rebuild passes hold the structural-win bar: a pass that only polishes is a failed pass unless an exhausted attack proves clean; a byte-fidelity deferral discharges by baseline eval-diff of the rendered artifact, never by standing; every pass returns evidence-anchored harvest rows that fold into scars, doctrine, and review rules the same session.
 - `docs/laws/` binds every substantive pass: a touched topology `[SURFACE]` lands its obligated counterparts in the same change, and harvest nominations land only through the run's terminal doctrine stage under the corpus admission law — `CLAUDE.md` [02] carries the full pointer.
-- A touched file is a rebuild surface: ground-up to its language's bleeding edge, every line lifted — task-relevant or not; naive patterns, hand-rolled reimplementations of shipped capability, and spam shapes found in passing are destroyed on contact, and the rebuilt shape obeys the density law (`CLAUDE.md` [03]) — polymorphic collapse in place, never extraction.
+- Rebuild task-owned surfaces when replacement materially improves the requested outcome; preserve unrelated code and active-session work.
 
 ## [06]-[DEPLOY_SEAM]
 
@@ -48,3 +48,8 @@
 - A change to any module the shared home graph imports proves both hosts before it lands: the darwin system build plus `nix eval '.#nixosConfigurations.maghz.config.system.build.toplevel.drvPath'` — `nix flake check` covers neither toplevel.
 - The `maghz` NixOS host deploys over SSH from this repo (`forge-redeploy --os nixos --host maghz --target-host <ssh>`); its services stay loopback-bound and are reached through the `vpsTunnels` rows, never by opening ports.
 - An interrupted-server dialog or dead remote mount is a transport event: decode it from the lane's receipts before touching code — the transition contract lives in `docs/atlas/interconnection.md`, the transport law in `docs/laws/agents.md`'s `[REMOTE_TRANSPORT]` card.
+
+## [07]-[REVIEW_GUIDELINES]
+
+- Report only demonstrated P0 or P1 correctness, security, data-loss, concurrency, or contract defects introduced by the diff; omit summaries, praise, style-only comments, speculative risks, and findings already present on the pull request.
+- Anchor each finding to the smallest changed range and state the triggering execution path, violated invariant, and concrete consequence.
