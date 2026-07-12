@@ -2,7 +2,6 @@
 # Delegation-ledger observer for Claude lifecycle events. Subagent/task rows and native background-task snapshots share one session-stamped JSONL rail;
 # every failure is fail-open, every body is process-group-deadlined, stdin is time/size bounded, and one stale-reclaiming lock serializes hook writers.
 set -Eeuo pipefail
-shopt -s inherit_errexit
 
 # The raw ~/.claude mirror may inherit no Nix profile paths, so executable binding probes PATH and both user-profile projections explicitly. The
 # packaged wrapper remains the deadline owner when timeout itself is dependency-private; a machine missing both rails drops telemetry immediately.
@@ -30,6 +29,18 @@ _resolve_executable() {
     return 1
 }
 
+# GUI hooks can enter through Apple's Bash 3.2. Re-enter the Home Manager package before touching Bash 5-only shell state; a machine without the
+# packaged owner drops telemetry rather than partially executing the raw mirror.
+if ((BASH_VERSINFO[0] < 5)); then
+    hook_bin=""
+    _resolve_executable forge-fleet-hook && hook_bin="${REPLY}"
+    if [[ -n "${hook_bin}" ]] && ! [[ "${hook_bin}" -ef "$0" ]]; then
+        exec "${hook_bin}" "$@"
+    fi
+    exit 0
+fi
+shopt -s inherit_errexit
+
 if [[ -z "${_FORGE_FLEET_DEADLINE:-}" ]]; then
     timeout_bin=""
     _resolve_executable timeout && timeout_bin="${REPLY}"
@@ -48,7 +59,7 @@ fi
 readonly LEDGER="${FORGE_FLEET_LEDGER:-${XDG_STATE_HOME:-$HOME/.local/state}/forge/delegation.jsonl}"
 readonly MAX_ROWS_RAW="${FORGE_FLEET_MAX_ROWS:-4000}" KEEP_ROWS_RAW="${FORGE_FLEET_KEEP_ROWS:-1000}"
 readonly MAX_PAYLOAD_BYTES=1048576 LOCK="${LEDGER}.lock" REAPER="${LEDGER}.lock.reap" STALE_SECONDS=60
-payload_file="" LEDGER_DIR="${LEDGER%/*}" lock_owned=0 reaper_owned=0 REAPER_TOKEN="" MAX_ROWS="" KEEP_ROWS=""
+payload_file="" LEDGER_DIR="${LEDGER%/*}" lock_owned=0 reaper_owned=0 LOCK_TOKEN="" REAPER_TOKEN="" MAX_ROWS="" KEEP_ROWS=""
 [[ "${LEDGER_DIR}" != "${LEDGER}" ]] || LEDGER_DIR="."
 readonly LEDGER_DIR
 
@@ -57,7 +68,7 @@ source "${FORGE_FLEET_LOCK_LIB:-${BASH_SOURCE[0]%/*}/forge-fleet-lock.sh}"
 
 _cleanup() {
     ((reaper_owned)) && _release_reaper || true
-    ((lock_owned)) && rm -rf -- "${LOCK}" 2>/dev/null || true
+    ((lock_owned)) && _release_lock || true
     [[ -z "${payload_file}" ]] || rm -f -- "${payload_file}" 2>/dev/null || true
 }
 trap '_cleanup' EXIT

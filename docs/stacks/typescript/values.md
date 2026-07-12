@@ -34,7 +34,6 @@ A value invariant selects the form that owns it; the most specific invariant win
 The invariant selects the container before any code is shaped, and the write surface is a fold. A keyed accumulator is one `Array.reduce` over `HashMap.modifyAt` — persistent structural sharing keeps the fold allocation-honest, no intermediate map escapes mid-fold, and the single `Option -> Option` update function owns every write modality one keyed concern will ever need.
 
 [OWNER_SELECTION]:
-
 - Law: keyed state rides `HashMap` keyed by `Data`-constructed values or primitives — JS `Map` is reference-keyed, so structurally equal keys miss on every fresh build and composite keys degrade into hand-joined strings; membership rides `HashSet`, never an `Array.includes` scan.
 - Law: order arrives at construction, never at read — `SortedMap.fromIterable(rows, order)`/`SortedMap.empty(order)` carry the `Order`, and `SortedMap.headOption`/`SortedMap.lastOption` read the extremes that construction already paid for; ordered membership rides `SortedSet` the same way, whose `SortedSet.union`/`intersection`/`difference`/`isSubset`/`toggle` are owner reads a sorted array re-derives on every probe.
 - Law: the key-space test decides record versus map — a closed literal key set is a plain record under `Record`/`Struct`/`Tuple` folds because the type level already carries its vocabulary, and an open, runtime-keyed space is `HashMap`; a `HashMap` over closed keys erases compile-time exhaustiveness, a record over open keys forges it.
@@ -43,7 +42,6 @@ The invariant selects the container before any code is shaped, and the write sur
 - Boundary: a keyed accumulator threaded through incremental dataflow is `streams.md`'s; `Schema.HashMap`/`Schema.Chunk` admission is `shapes.md`'s; the kernel mark is `language.md`'s.
 
 [KEYED_FOLD]:
-
 - Law: `HashMap.modifyAt` is the single keyed write — its update function receives `Option<V>` and returns `Option<V>`, so insert (`none -> some`), update (`some -> some`), and delete (`-> none`) are three arms of one fold; a `get`-then-`set` pair, a `has` ladder, or a spread rebuild restates modalities the fold already discriminates.
 - Law: the owner constructs its own keys — a lookup or write takes the raw discriminants and builds the `Data` key inside, because a caller-built key arrives plain-constructed and misses silently.
 - Reject: object-as-map mutation; an escaping mutable map; a second map holding a projection of the first that one `HashMap.filterMap` derives on demand.
@@ -87,7 +85,6 @@ export { Meter };
 ```
 
 [GRAPH_AND_TRIE]:
-
 - Law: relationship and adjacency state rides `Graph.directed`/`Graph.undirected`, and every write is scoped — construction writes ride the constructor's own closure, later writes batch through `Graph.mutate` yielding a fresh immutable value, and the whole write vocabulary accepts only the scoped `MutableGraph` view: `Graph.addNode`/`addEdge`/`updateNode`/`updateEdge`/`removeNode`/`removeEdge` are the point writes, `Graph.mapNodes`/`Graph.mapEdges` reshape every payload in place, `Graph.filterNodes`/`filterEdges`/`filterMapNodes`/`filterMapEdges` prune structurally — a dropped node takes its edges — and `Graph.reverse` inverts every edge; the unbracketed `Graph.beginMutation`/`endMutation` pair is the rejected spelling because its draft escapes the expression, and a hand walk over `Graph.nodes` feeding point removals restates the transform family.
 - Law: `Graph` is `@experimental` — the manifest pin owns drift, and exactly one owner declaration constructs and writes each graph value while consumers take the value and its owner reads, so a minor-line API break lands as one broken declaration, never a consumer sweep.
 - Law: traversal, path, condensation, and diagram questions are owner reads the value already carries — an adjacency `HashMap` under a hand-rolled frontier restates that algorithm family — and the walker, path, and projection reads compose in `computation.md`'s consumption law; this owner constructs and writes, never re-teaches the reads.
@@ -148,7 +145,6 @@ export { Flow, Lane };
 Identity is declared where a value is built, never computed where it is compared. The `Data` constructors implant `Equal` and `Hash` at construction, every keyed and deduplicating container consumes both, and one concept constructs through one channel — so equality, dedup, keying, and memo identity are structure-decided facts of the value itself.
 
 [CONSTRUCTED_IDENTITY]:
-
 - Law: `Data.struct`, `Data.tuple`, and `Data.array` implant `Equal` and `Hash` to full depth when members are themselves `Data`-constructed or primitive; `Equal.equals` is the one domain equality and `Hash.hash` its container-facing shadow, and `Equal.equals` implies hash agreement — the container contract — so equality arriving anywhere but the constructors desynchronizes from `Hash` and breaks retrieval silently.
 - Law: one concept constructs through one channel — mixing `Data`-constructed and plain-built values of one concept splits identity down the middle, and half the concept misses every set, map, and dedup it enters.
 - Law: the channel itself holds one identity across module instances — an identity-bearing interior anchor (a memo table, an interned-value registry) mints through `GlobalValue.globalValue("<scope>/anchor", make)` so a bundler-duplicated or hot-reloaded module evaluates `make` once and every copy shares the instance, the value-plane sibling of the `Symbol.for` nominal key; a capability smuggled through it instead of the Layer graph is the module-level live instance the wiring law already rejects.
@@ -187,13 +183,11 @@ export { Mark };
 Ordering, equivalence, and refinement carry domain policy, so each is one composed instance value every consumer shares — built from shipped atoms at the owner declaration, passed as a parameter into instance-taking operations, and projecting its derived operator family so no call site re-derives what the instance carries.
 
 [ORDER_COMPOSITION]:
-
 - Law: an `Order` composes inline at its owner declaration — `Order.mapInput` projects onto `Order.number`/`Order.string`/`Order.bigint`/`Order.boolean`/`Order.Date`, `Order.reverse` inverts, `Order.combine`/`Order.combineAll` chain lexicographic tie-breaks, `Order.struct`/`Order.tuple`/`Order.array` assemble composite orders — and the loose intermediate consts a consumer otherwise reassembles do not exist; the `(a, b) => a.x - b.x` comparator is deleted as NaN-blind policy restated per site.
 - Law: the instance anchors its derived family — `Order.min`, `Order.max`, `Order.clamp`, `Order.between`, `Order.lessThan` are projections of one instance, so one policy edit repoints every operator at once; `Array.min`/`Array.max` demand a `NonEmptyReadonlyArray`, so the empty case is decided at the type, never by a sentinel element.
 - Law: instances travel as parameters — `Array.sortBy`, `Array.dedupeWith`, `Array.containsWith`, and `SortedMap`/`SortedSet` construction take the instance; `Array.sortBy`'s variadic orders accept the composed policy, never an inline re-derivation of it.
 
 [EQUIVALENCE_REFINEMENT]:
-
 - Law: projection equality is a composed `Equivalence` — `Equivalence.struct`/`tuple`/`array`/`mapInput` over `Equivalence.string`/`number`/`bigint` atoms — and instances are contravariant material: a record instance accepts every richer shape by parameter contravariance, so no mirror instance per consumer type exists and the delimiter-joined key string dies.
 - Law: refinement composes as values — `Predicate.and`/`or`/`not`/`xor` over `Predicate.struct`/`tuple` field rows, `Predicate.mapInput` projecting an atom onto the rich shape — and composition order pre-solves inference: the widest-typed predicate leads a data-first composition so the type parameter lands on the rich shape and narrower field instances follow by contravariance.
 - Reject: boolean-soup conditions; per-site min/max/clamp ternaries; a comparison policy that exists twice under two names.
@@ -245,13 +239,11 @@ export { Probe };
 A domain combine is a `Semigroup`/`Monoid` instance, never an ad-hoc function. `Semigroup.struct` is the merge table — one row per field algebra, every merge semantic recoverable from the declaration, growth a row and never a second function — and the instance shares its type's name, so one exported name serves annotation and algebra together.
 
 [MERGE_TABLE]:
-
 - Law: rows are shipped atoms or one-line derivations — `SemigroupSum`/`SemigroupMax`/`MonoidSum` and `Bounded` from `@effect/typeclass/data/Number`, the `data/Duration`, `data/String`, and `data/Boolean` siblings, `Semigroup.min`/`Semigroup.max` deriving the extremum semigroup from any `Order`, `Semigroup.first`/`Semigroup.last` keep policies, `Semigroup.constant` the pinned policy, `Semigroup.intercalate` separator folds, `Semigroup.imap` carrying an instance across a wrapper pair — and a re-authored `(a, b) => a + b` restates an atom that ships; `Semigroup.tuple`/`Monoid.tuple` assemble the positional merge the same way `struct` assembles the keyed one.
 - Law: the fold signature encodes the identity decision — `combineAll(rows)` where every row carries a lawful `empty` (a `Monoid` table), `combineMany(head, rest)` over a witnessed head where any row is identity-free — `first`, `last`, and `intercalate` admit no lawful empty, so promoting their fold to `combineAll` with a forged sentinel forges data; the plural caller's `NonEmptyReadonlyArray` arity supplies the witnessed head as type evidence.
 - Law: `Bounded` lifts the extremum to lawful over domain bounds — `Monoid.max(bounded)` folds zero rows to `minBound`, `Monoid.min(bounded)` to `maxBound`, and the lift's material is the domain's own scale (a literal-union floor and ceiling), because where a shipped `MonoidMax`/`MonoidMin` atom exists the atom is the row and the lift restates it; `Monoid.fromSemigroup(semigroup, empty)` names the identity explicitly where one lawfully exists.
 
 [KEYED_AND_ABSENT_MERGE]:
-
 - Law: a keyed partial-record merge is an instance — `getMonoidUnion`/`getSemigroupUnion` from `@effect/typeclass/data/Record` keep keys present in one side and combine keys present in both by the row algebra, `getSemigroupIntersection` keeps only shared keys — and the spread overlay `{ ...left, ...right }` is the deleted spelling because it silently last-wins every collision.
 - Law: absence lifts an identity-free algebra to lawful — `getOptionalMonoid(semigroup)` from `data/Option` makes `Option.none()` the empty, so an absent field is the identity and no sentinel value is forged to pad the fold.
 - Use: `Record.union(self, that, combine)` as the one-off spelling when the combine is genuinely site-local; a keyed merge that recurs is the instance.
@@ -318,14 +310,12 @@ export { Gauge, Ledger, Tally };
 A scalar invariant rides the owner whose operations are the domain's operations: instants are `DateTime`, spans are `Duration`, exact decimals are `BigDecimal`, and every partial numeric operation returns `Option` so absence folds once at the consumer instead of leaking as `NaN`, `Infinity`, or a throw.
 
 [TIME_OWNERS]:
-
 - Law: calendar arithmetic lives on `DateTime` — `DateTime.add`, `DateTime.addDuration`, `DateTime.subtractDuration`, `DateTime.startOf`, `DateTime.endOf`, `DateTime.nearest` move, `DateTime.distanceDuration` measures elapsed, `DateTime.Order` with `min`/`max`/`between`/`clamp` compares — so epoch-millisecond arithmetic never carries domain meaning and `Date` survives only at the FFI seam under `Order.Date`.
 - Law: an instant is `DateTime.Utc` or `DateTime.Zoned`, and the zone is value-carried — `DateTime.makeZoned(input, { timeZone })` anchors an instant and returns `Option`; wall-clock input adds `{ adjustForTimeZone: true, disambiguation }` so a DST-gap or DST-overlap reading resolves by declared policy, never platform accident — `disambiguation` decides nothing over instant input. `DateTime.setZone` re-anchors the same instant, calendar moves on a `Zoned` resolve in its wall zone so a DST shift is an arithmetic fact, and `DateTime.toParts`/`DateTime.getPart` project calendar fields — the ambient-zone forms (`DateTime.withCurrentZone`, `DateTime.nowInCurrentZone`) are capability reads whose provision is `services-and-layers.md`'s.
 - Law: span policy is one value table — named `Duration` rows validated by `satisfies` without widening, constructed by `Duration.millis`/`seconds`/`minutes`/`hours` or the `Duration.decode` template forms, combined by `Duration.sum`/`times`/`subtract`, compared by `Duration.Order`/`lessThan`/`between` — a raw millisecond literal re-derives units at every reader, and unit egress happens once at the seam through `Duration.toMillis`/`Duration.parts`/`Duration.format`, never by hand division.
 - Law: `DateTime.now` rides the rail as `Effect<Utc>`; `DateTime.unsafeNow`, `BigDecimal.unsafeFromNumber`, `Number.unsafeDivide`, and every `unsafe*` constructor is kernel vocabulary stating a proof obligation at the call site — outside a marked kernel the total or `Option`-returning form is the only legal spelling.
 
 [EXACT_AND_PARTIAL_NUMBERS]:
-
 - Law: exact decimals are `BigDecimal` — `make`/`fromString` construction, `sum`/`multiply`/`subtract`/`divide` arithmetic, `round` with an explicit `RoundingMode`, `normalize` for canonical form, `BigDecimal.Order` comparisons — and binary-float money math is the deleted spelling.
 - Law: a partial operation returns `Option` — `Number.divide`, `Number.parse`, `BigDecimal.fromString`, `BigDecimal.divide`, `BigDecimal.safeFromNumber` for the float-to-exact admission, `BigInt.fromString` and `BigInt.toNumber` for the integer text and precision crossings, `Duration.divide`, `DateTime.make`, `DateTime.makeZoned` — and partiality composes: `Option.flatMap` chains partial construction and partial arithmetic into one absent-or-present pipeline, so a failed parse and a zero divisor collapse into the same fold at the consumer.
 - Law: `Duration.decode` stays total because `DurationInput` is proven at the type; `Duration.decodeUnknown` is its unknown-admitting `Option` twin — typed input buys totality, untyped input buys a fold.
@@ -377,7 +367,6 @@ export { Scale };
 Bytes and secrets are sealed at the text seam. The interior carries `Uint8Array` and sealed values; base64, hex, and URI text exist only at the channel, and a secret never exists raw past its admission expression.
 
 [SEALED_SEAMS]:
-
 - Law: the byte codecs are asymmetric — `Encoding.encodeBase64`, `encodeBase64Url`, and `encodeHex` accept `Uint8Array | string` and always succeed, while `decodeBase64`, `decodeBase64Url`, `decodeHex` and the string-returning `decodeBase64String`/`decodeBase64UrlString`/`decodeHexString` return `Either<_, DecodeException>` — malformed text is a value at the seam, and the interior never sees undecoded text.
 - Law: the URI plane is fallible in both directions — `Encoding.encodeUriComponent` and `Encoding.decodeUriComponent` return `Either`, because a lone surrogate fails encode with `EncodeException` — so every fallible side of the seam is an `Either` value, never a thrown `URIError` or `atob` escape.
 - Law: the secret lifecycle is structural — `Redacted.make` seals at admission, values travel and compare sealed through `Redacted.getEquivalence`, `Redacted.value` unwraps exactly once at the consuming boundary, and `Redacted.unsafeWipe` retires terminally: a wiped secret throws on `value`, so retirement is enforced by the carrier, and the wipe's boolean is its receipt. `Redacted` implements `Equal` and prints `<redacted>` on every string, JSON, and inspect channel — safety is construction, never discipline.

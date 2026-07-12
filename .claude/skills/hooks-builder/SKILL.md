@@ -12,12 +12,11 @@ description: >-
 
 # [HOOKS_BUILDER]
 
-A hook binds a handler — shell command, HTTP endpoint, MCP tool call, single-turn prompt, or multi-turn agent — to a lifecycle event, filtered by a matcher and an optional `if` rule. The event decides what the automation intercepts or observes, the handler decides whether the verdict is deterministic or judged, and the control channel decides how the verdict binds: exit 2 with a stderr reason is the one blocking primitive that behaves identically on both providers, and exit-0 stdout JSON is the scalpel that rewrites input, redacts output, or injects context. Build order: pick the event, pick the handler, write the config into the provider's settings surface, then prove it with a direct stdin replay before it ships.
+A hook binds a handler — shell command, HTTP endpoint, MCP tool call, single-turn prompt, or multi-turn agent — to a lifecycle event, filtered by a matcher and an optional `if` rule. The event decides what the automation intercepts or observes, the handler decides whether the verdict is deterministic or judged, and the control channel decides how the verdict binds: exit 2 with a stderr reason is the one blocking primitive that behaves identically on both providers, and exit-0 stdout JSON is the scalpel that rewrites input, redacts output, or injects context. Build order: pick the event, pick the handler, write the config into the provider's settings surface, then prove it with a direct stdin replay before it ships. A Python body draws its dependencies from the estate's admitted libraries assumed uv-resolvable — `msgspec` for wire admission, `anyio` for structured concurrency and subprocess, `httpx` for transport, `stamina` for retry — composing the shipped primitive at full depth rather than a hand-rolled naive reimplementation, `msgspec`-lean on the hot path and richer off it.
 
 ## [01]-[ROUTING]
 
 [REFERENCES]:
-
 - [01]-[EVENTS](references/events.md): the full event census for both providers, per-event matcher values, input payload, exit-2 blockability, and decision-control fields; open when selecting an event or writing its input handling.
 - [02]-[CONFIG](references/config.md): configuration placement and scopes, matcher-evaluation law, the five handler types with all fields, exec versus shell form, and the JSON output contract; open when wiring the settings entry.
 - [03]-[DUAL_PROVIDER](references/dual-provider.md): the one-canonical-body plus thin-adapter pattern, the portable exit-2 path, the per-event output-dialect divergence, Codex discovery and trust, and the component-hook port; open when a hook must serve both Claude Code and Codex.
@@ -25,9 +24,9 @@ A hook binds a handler — shell command, HTTP endpoint, MCP tool call, single-t
 - [05]-[INTEGRATION](references/integration.md): path placeholders, context injection, terminal notifications, env persistence, async execution, session-to-pane routing, the telemetry lane, and component-scoped frontmatter; open when the hook feeds context or runs off the hot path.
 - [06]-[SECURITY](references/security.md): the security model — the threat surface, the enforcement-locus law, disposition by role, and supply-chain trust; open when reasoning about a hostile input or an untrusted hook.
 - [07]-[VERIFICATION](references/verification.md): fixture replay, malformed-payload and timeout cases, the dual-mode red-team harness, the diagnostic surfaces, and the symptom index; open when proving a hook or diagnosing a misfire.
+- [08]-[RECIPES](references/recipes.md): the advanced-move catalog — command decomposition, value rewrite, priority-banded dispatch, the completion loop, data-driven injection, hot-path offload, the telemetry chain, standing permission, durable state, and the paired audit — each move's hinge and the naive form it beats; open when composing a non-trivial hook body.
 
 [TEMPLATES]:
-
 - [01]-[PRETOOLUSE_GATE](templates/pretooluse-gate.py): typed PreToolUse validator, per-command semantic dispatch, sandbox admission, fail-closed exit-2 block.
 - [02]-[POSTTOOLUSE_FORMAT](templates/posttooluse-format.py): MODE-polymorphic PostToolUse owner formatting through the `fmt` router and redacting tool output.
 - [03]-[SESSION_CONTEXT](templates/session-context.py): SessionStart injector with gated probes, the session-to-pane routing capture, and env persistence.
@@ -36,9 +35,12 @@ A hook binds a handler — shell command, HTTP endpoint, MCP tool call, single-t
 - [06]-[PRECOMPACT_EXTRACT](templates/precompact-extract.py): PreCompact extractor writing a typed transcript summary as a handoff across the compaction boundary.
 - [07]-[CODEX_ADAPTER](templates/codex-adapter.sh): thin per-provider adapter piping a Codex payload into one canonical body.
 
-[EXAMPLES]:
-
-- [01]-[FRAGMENTS](examples/fragments.md): advanced logic moves — command decomposition, the JSON scalpel, async rewake, completion-token continuation, the priority-banded registry, the loaded nudge artifact, telemetry chaining with the CloudEvents envelope, the dual-mode red-team harness, permission auto-approval, and durable state.
+[EXAMPLES]: complete droppable exemplars, each composing several recipe moves into one production hook.
+- [01]-[DISPATCH_DAEMON](examples/dispatch-daemon.py): priority-banded handler registry served behind a session-scoped Unix-socket daemon, with an in-process fallback when none answers.
+- [02]-[REDTEAM_HARNESS](examples/redteam-harness.py): dual-mode paired-corpus auditor, subprocess or in-process, reporting each fixture against its benign twin.
+- [03]-[TELEMETRY_TRANSMITTER](examples/telemetry-transmitter.py): async CloudEvents or private-tier transmitter chained after policy, fail-open by construction.
+- [04]-[PERMISSION_AUTOAPPROVE](examples/permission-autoapprove.py): PermissionRequest auto-approver persisting a durable rule, stripping the Codex-reserved fields under the codex brand.
+- [05]-[NUDGE_INJECTOR](examples/nudge-injector.py): UserPromptSubmit data-driven nudge table decoded from `nudges.json` with match and exclude regex and a priority band.
 
 ## [02]-[EVENT_SELECTION]
 
@@ -51,7 +53,7 @@ A hook binds a handler — shell command, HTTP endpoint, MCP tool call, single-t
 - Environment reactivity -> `FileChanged`, `CwdChanged`, `ConfigChange` (audit or block settings edits), `InstructionsLoaded` (observe memory loads); worktrees -> `WorktreeCreate`/`WorktreeRemove`; compaction -> `PreCompact`/`PostCompact`; MCP input -> `Elicitation`/`ElicitationResult`.
 - Observation only -> `Notification`, `SubagentStart`, `StopFailure` (API-error autopsy; output and exit code ignored).
 
-Codex carries ten of these events; the turn-done and team tiers are Claude-only. The delta and its fill are the events reference.
+Codex carries ten of these events, `Stop`/`SubagentStop` among them; the team and extra-lifecycle tiers are Claude-only. The delta and its fill are the events reference.
 
 ## [03]-[HANDLER_SELECTION]
 
@@ -67,7 +69,7 @@ Codex carries ten of these events; the turn-done and team tiers are Claude-only.
 
 ## [04]-[PROVIDER_DIVERGENCE]
 
-Claude Code is the superset: thirty events, five handler types, `terminalSequence`, async, and a rich per-event JSON dialect. Codex is command-only, synchronous, ten events, tool coverage limited to `Bash`/`apply_patch`/MCP, with turn-complete living off the hook bus in `notify`. The one path that behaves identically on both is exit 2 plus a stderr reason on the shared tool and prompt events — a hook body that only ever blocks that way ports verbatim with zero dialect branching. The moment a hook blocks the Stop family on Codex, injects context, or rewrites a value through stdout JSON, the per-event dialect diverges and the dual-provider reference owns the exact shape per provider.
+Claude Code is the superset: thirty events, five handler types, `terminalSequence`, async, and a rich per-event JSON dialect. Codex is command-only, synchronous, ten events including `Stop`/`SubagentStop`, tool coverage limited to `Bash`/`apply_patch`/MCP, with `notify` a separate legacy notification channel beside the bus. The one path that behaves identically on both is exit 2 plus a stderr reason on the shared tool, prompt, and `Stop`/`SubagentStop` events — a hook body that only ever blocks that way ports verbatim with zero dialect branching. The moment a hook injects context or rewrites a value through stdout JSON, the per-event dialect diverges and the dual-provider reference owns the exact shape per provider.
 
 ## [05]-[GATE]
 

@@ -82,7 +82,6 @@ Headless, no dialogs. All bound to the slot's doc.
 |  [04]   | `set_layer_material` | layer material write | material status             |
 
 [SCENE_QUERY_SHAPES]:
-
 - Filters: `names[]?`, `layer?`, `geometryType?`, `includeHidden=false`, `includeLocked=true`, `limit=1000`.
 - Object item: `{id, name, layer, type}`.
 - Selection write: `ids[]?`, `names[]?`, `layer?`, and `geometryType?` select a union after clearing current selection.
@@ -99,7 +98,6 @@ Headless, no dialogs. All bound to the slot's doc.
 |  [04]   | `zoom_to_object`     | object GUIDs         | object union bbox zoom   |
 
 [VIEWPORT_CAPTURE_SHAPE]:
-
 - Size: `width=480` up to `1280`, `height=270` up to `720`.
 - Frame inputs: `view?`, `displayMode?`, `cameraLocation?`, `target?`, `boxMin?`/`boxMax?`, `zoom?`.
 - Output: JSON metadata plus JPEG when the scene is renderable; metadata-only diagnostic when empty or off-screen.
@@ -112,13 +110,11 @@ Headless, no dialogs. All bound to the slot's doc.
 `g2_*` is the Grasshopper graph-authoring surface for Rasm MCP work. It authors `Grasshopper2` canvas and document objects through McNeel's interactive MCP platform; bridge scenarios remain the typed verification boundary.
 
 [GH_KERNEL_RULES]:
-
 - Solve: mutating GH2 tools accept `solve=true`; set `solve=false` while batching and solve once after the batch.
 - Explicit solve: use `g2_solve_canvas` for solve/status readback.
 - Slider policy: GH2 sliders use `decimals` `0..12`; `0` gives integer behavior.
 
 [GH_COMPONENT_SHAPES]:
-
 - Component search: `query`, `category?`, `subcategory?`, and `limit=20` return `Guid`, `Name`, `Category`, `SubCategory`, `Kind`, and `Description`.
 - Component description: `g2_describe_component` returns `Inputs[]` and `Outputs[]` parameter records with `Name`, `UserName`, `Description`, `TypeName`, `Access`, and `Requirement`.
 
@@ -138,7 +134,6 @@ Placement operations create canvas objects from component and slider inputs:
 |  [02]   | `g2_place_slider`    | slider value policy | placed slider    |
 
 [GH_GRAPH_BATCH_SHAPE]:
-
 - Component placement: `selector` prefers `Guid`; `x=100`, `y=100`, and `solve=true` are default placement inputs.
 - Slider placement: `min`, `value`, `max`, `x`, `y`, `decimals`, `solve`, and `name?` define the slider.
 - Batch apply: `g2_apply_graph` accepts `sliders[]`, `components[]` with caller `Key`, `wires[]` with `SrcKey`/`DstKey`, and `solve=true`.
@@ -154,7 +149,6 @@ Wiring and solving operations connect objects, apply batches, and resolve the ca
 |  [04]   | `g2_solve_canvas` | solve policy  | solve status         |
 
 [GH_CANVAS_READBACK_SHAPE]:
-
 - Canvas readback: `g2_get_canvas_graph` accepts `include_data=true` and `sample_size=3`.
 - Canvas payload: readback returns `Objects[]` and `Wires[]`; records carry `Messages[]`, input `Sources[]`, data summaries, and slider `DisplaySummary` where applicable.
 - Canvas cleanup: `g2_clear_canvas` requires `confirm=true` and accepts `solve=true`.

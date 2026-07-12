@@ -11,11 +11,11 @@ An author defends a fixed set of attack shapes, each landing at one event and ca
 |  [01]   | Command obfuscation | `PreToolUse` Bash argument                   | `_leaves` de-obfuscation and quote-aware split in the gate     |
 |  [02]   | Destructive intent  | `PreToolUse` Bash argument                   | per-`argv` semantic dispatch — `rm` path tiers, `git` subtable |
 |  [03]   | Path escape         | `PreToolUse` `Edit`/`Write`                  | the shared canonicalizer plus `is_relative_to` sandbox check   |
-|  [04]   | Secret exfiltration | outbound `PreToolUse`, inbound `PostToolUse` | the JSON scalpel and the block-and-summarize redaction lane    |
+|  [04]   | Secret exfiltration | outbound `PreToolUse`, inbound `PostToolUse` | the JSON scalpel and the `updatedToolOutput` redaction lane    |
 |  [05]   | Context injection   | `additionalContext` on any injecting event   | factual-statement phrasing, never an out-of-band imperative    |
 |  [06]   | Untrusted hook      | the hook file itself                         | the red-team harness audit before the hook is trusted          |
 
-The `_leaves` decomposition of [01] de-obfuscates `$IFS`, treats an unquoted newline as `;`, strips a leading `NAME=value` env-prefix and every wrapper, and descends command substitutions, backticks, and clustered-flag shell/interpreter one-liners before any classify — and [02]'s dispatch denies an opaque inline interpreter one-liner fail-closed rather than admitting it through a keyword denylist. Tactics [01]-[03] are the `pretooluse-gate` template and the command-normalization fragment; [04] is the JSON-scalpel fragment and the `posttooluse-format` redaction lane; [05] is the context-injection placement law in the integration reference; [06] is the red-team harness in the verification reference.
+The `_leaves` decomposition of [01] de-obfuscates `$IFS`, treats an unquoted newline as `;`, strips a leading `NAME=value` env-prefix and every wrapper, and descends command substitutions, backticks, and clustered-flag shell/interpreter one-liners before any classify — and [02]'s dispatch denies an opaque inline interpreter one-liner fail-closed rather than admitting it through a keyword denylist. Tactics [01]-[03] are the `pretooluse-gate` template and the command-decomposition recipe; [04] is the value-rewrite recipe and the `posttooluse-format` redaction lane; [05] is the context-injection placement law in the integration reference; [06] is the red-team harness in the verification reference.
 
 ## [02]-[ENFORCEMENT_LOCUS]
 

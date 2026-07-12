@@ -27,7 +27,7 @@
         local -n _result="$2"
         [[ "$raw" =~ ^0*([0-9]{1,5})$ ]] || return 1
         local -r value=$((10#''${BASH_REMATCH[1]}))
-        ((value <= 86400)) || return 1
+        ((value <= 840)) || return 1
         _result="$value"
       }
       if [[ -z "''${_LOC_DEADLINE_ACTIVE:-}" ]]; then
@@ -123,7 +123,7 @@
       readonly deadline="''${LOC_SCAN_DEADLINE_SECONDS:-120}"
       deadline_seconds=0
       _deadline_value "$deadline" deadline_seconds || {
-        printf 'loc: LOC_SCAN_DEADLINE_SECONDS must be 0..86400 decimal seconds\n' >&2
+        printf 'loc: LOC_SCAN_DEADLINE_SECONDS must be 0..840 decimal seconds\n' >&2
         exit 2
       }
       readonly deadline_seconds

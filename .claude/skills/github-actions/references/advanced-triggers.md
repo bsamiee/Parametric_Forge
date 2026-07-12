@@ -141,7 +141,6 @@ jobs:
 [SECURE_BY_DEFAULT]: Workflow source always comes from default branch — no matter which branch the PR targets. `GITHUB_REF` resolves to `refs/heads/main`; `GITHUB_SHA` points to default branch HEAD at run start. Environment protection rules evaluate against the execution ref. This eliminates "pwn request" attacks where malicious PRs modified workflow definitions.
 
 [CRITICAL]:
-
 - [NEVER]: Checkout PR head without environment protection gate (required reviewers).
 - [ALWAYS]: Use for labeling, commenting, triage only.
 

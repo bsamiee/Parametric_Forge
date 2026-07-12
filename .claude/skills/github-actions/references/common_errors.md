@@ -58,7 +58,6 @@
 |  [04]   | `::add-path::VALUE`            | Removed.            | `echo "VALUE" >> "$GITHUB_PATH"`       |
 
 [STILL_VALID_WORKFLOW_COMMANDS]:
-
 - `::add-mask::VALUE` — dynamically mask a value in subsequent logs.
 - `::debug::MESSAGE` — debug-level log output.
 - `::notice file=F,line=L::MESSAGE` — annotation on workflow run page.

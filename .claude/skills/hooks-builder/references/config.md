@@ -75,7 +75,7 @@ A prompt or agent handler returns a judged verdict, so it binds only where the e
 
 ## [07]-[JSON_OUTPUT]
 
-JSON output is processed only on exit 0, and stdout must contain only the JSON object — one approach per hook, exit codes alone or exit 0 with JSON, never both. Output strings cap at 10,000 characters; overflow saves to a file and passes a preview plus path.
+JSON output is processed only on exit 0, and stdout must contain only the JSON object — one approach per hook, exit codes alone or exit 0 with JSON, never both. Output strings cap at 10,000 characters; overflow saves to a file and passes a preview plus path. The output envelope keys in camelCase — `hookSpecificOutput.hookEventName`, `updatedInput`, `additionalContext` — even though the stdin payload keys in snake_case (`hook_event_name`).
 
 | [INDEX] | [FIELD]            | [EFFECT]                                                                             |
 | :-----: | :----------------- | :----------------------------------------------------------------------------------- |

@@ -24,7 +24,8 @@ _record_is_stale() {
         raw_epoch="${BASH_REMATCH[1]}"
         pid="${BASH_REMATCH[2]}"
         _normalize_decimal "${raw_epoch}" 18 epoch || return 1
-        kill -0 "${pid}" 2>/dev/null && ((epoch > EPOCHSECONDS || EPOCHSECONDS - epoch <= STALE_SECONDS)) && return 1
+        ((epoch <= EPOCHSECONDS)) || return 1
+        kill -0 "${pid}" 2>/dev/null && return 1
         return 0
     fi
     _path_epoch "${path}" || return 1
@@ -103,14 +104,27 @@ _reap_stale_lock() {
     _release_reaper || true
 }
 
+_release_lock() {
+    local owner_record=""
+    _read_record "${LOCK}/owner" || return 1
+    owner_record="${REPLY}"
+    [[ -n "${LOCK_TOKEN}" && "${owner_record}" == "${LOCK_TOKEN}" ]] || return 1
+    rm -- "${LOCK}/owner" 2>/dev/null || return 1
+    rmdir -- "${LOCK}" 2>/dev/null || return 1
+    lock_owned=0
+    LOCK_TOKEN=""
+}
+
 _acquire_lock() {
     local -i attempt
     for ((attempt = 0; attempt < 100; attempt++)); do
         if mkdir -- "${LOCK}" 2>/dev/null; then
-            if { printf '%s %s\n' "${EPOCHSECONDS}" "$$"; } 2>/dev/null >"${LOCK}/owner"; then
+            LOCK_TOKEN="${EPOCHSECONDS} $$"
+            if { printf '%s\n' "${LOCK_TOKEN}"; } 2>/dev/null >"${LOCK}/owner"; then
                 lock_owned=1
                 return 0
             fi
+            LOCK_TOKEN=""
             rmdir -- "${LOCK}" 2>/dev/null || true
         fi
         _reap_stale_lock || true

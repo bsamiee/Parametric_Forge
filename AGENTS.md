@@ -11,11 +11,11 @@
 - Runtime routing — Kubernetes stays on the kubectl/kind/helm chain; Apple Container is not a Kubernetes owner.
 - `~/.codex` is the sole Codex configuration home; no file in this repository is Codex configuration source of truth. Repo `.claude/` state serves the Claude harness, and this file carries policy, never configuration.
 
-## [02]-[SKILL_MASTERS]
+## [02]-[ESTATE_PROPAGATION]
 
-- `.claude/skills/` here are the estate masters for harness skills; sibling-repo copies and Codex-admitted `~/.codex/skills/` are mirrors. Claude-caller skills such as `codex` remain Claude-only to prevent recursive triggering. A skill edit lands in the master and propagates by copy — never edit a mirror, never build sync tooling.
-- `.claude/hooks/setup-env.sh` is the canonical SessionStart hook, byte-identical in every estate repo and mastered here; hook fixes land here first.
-- The byte-copied mirror set spans `.claude/{skills,hooks,scripts,agents}`, `commands/docs.md`, `docs/stacks/{python,typescript}/`, and the three prose standards (`information-structure`, `formatting`, `style-guide`); sibling copies are read-only mirrors.
+- `.claude/hooks/` and `.claude/scripts/` are Forge-mastered: fixes land here first, then byte-copy to the sibling repos, `~/.claude/`, and `~/.codex/`. `.claude/hooks/setup-env.sh` is the canonical SessionStart hook, byte-identical everywhere it lands.
+- Every other estate surface carries no master: a change to `.claude/skills/` or `.claude/agents/` in any project byte-copies to the other two regardless of where it was edited, and skills additionally port to `~/.codex/skills/` frontmatter-stripped. Claude-caller skills such as `codex` stay out of `~/.codex/skills/` to prevent recursive triggering; never build sync tooling.
+- The byte-copied set spans `.claude/{skills,hooks,scripts,agents}`, `commands/docs.md`, `docs/stacks/{python,typescript}/`, and the three prose standards (`information-structure`, `formatting`, `style-guide`); every copy is byte-identical across the repos where the surface exists.
 
 ## [03]-[NIX_SHELL_EXECUTION]
 

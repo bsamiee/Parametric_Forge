@@ -12,7 +12,6 @@ Every artifact is one self-contained file: a deliverable type fixes its composit
 ## [01]-[ROUTING]
 
 [REFERENCES]:
-
 - [01]-[DELIVERABLES](references/deliverables.md): the type registry — per-type spine, layout class, element set, capture contract, and the variant table that resolves every named deliverable onto a core type.
 - [02]-[HTML](references/html.md): advanced HTML — semantic structure, density, and the coding patterns every artifact composes from.
 - [03]-[SVG](references/svg.md): advanced inline SVG for HTML — the element vocabulary, construction patterns, and figure and diagram craft.
@@ -20,11 +19,9 @@ Every artifact is one self-contained file: a deliverable type fixes its composit
 - [05]-[INTERACTION](references/interaction.md): interaction and the return channel — the data-to-presentation mapping, the drawer, and how a page returns the user's adjustments as data.
 
 [TEMPLATES]:
-
 - [01]-[ARTIFACT](templates/artifact.template.html): the gate-clean shell with the registry, layers, body order, drawer, and script kernels.
 
 [EXAMPLES]:
-
 - [01]-[DECISION_RECORD](examples/decision-record.html): the worked decision-doc instance at composed scale.
 
 ## [02]-[BUILD]

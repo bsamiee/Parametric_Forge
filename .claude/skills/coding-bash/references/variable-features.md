@@ -2,13 +2,13 @@
 
 Call stack introspection, nameref composition patterns, hierarchical trap composition, process lifecycle with PID maps, and dispatch-table capability detection including Bash 5.3 variables.
 
-| [INDEX] | [PATTERN]          | [S] | [USE_WHEN]                               |
-| :-----: | :----------------- | :-: | :--------------------------------------- |
-|  [01]   | Call stack diag    | S1  | ERR traps, reporting, auto-span          |
-|  [02]   | Nameref patterns   | S2  | Return channels, multi-return, pitfalls  |
-|  [03]   | Trap hierarchy     | S3  | ERR→EXIT ordering, resource scopes       |
-|  [04]   | Process lifecycle  | S4  | PID maps, signal fwd, wait -n, exec      |
-|  [05]   | Runtime capability | S5  | Fallback chains, env contracts, 5.3 vars |
+| [INDEX] | [PATTERN]          |  [S]  | [USE_WHEN]                               |
+| :-----: | :----------------- | :---: | :--------------------------------------- |
+|  [01]   | Call stack diag    |  S1   | ERR traps, reporting, auto-span          |
+|  [02]   | Nameref patterns   |  S2   | Return channels, multi-return, pitfalls  |
+|  [03]   | Trap hierarchy     |  S3   | ERR→EXIT ordering, resource scopes       |
+|  [04]   | Process lifecycle  |  S4   | PID maps, signal fwd, wait -n, exec      |
+|  [05]   | Runtime capability |  S5   | Fallback chains, env contracts, 5.3 vars |
 
 ## [01]-[CALL_STACK_DIAGNOSTICS]
 

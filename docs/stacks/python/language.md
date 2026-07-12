@@ -110,14 +110,12 @@ Use the active Python surface directly. This chooser owns language syntax, type-
 Use these contracts when the chooser names the primitive but code still needs a placement rule.
 
 [TYPE_DECLARATION_SITE]:
-
 - Use when: the defining declaration, the decorator that builds a family of owners, or the callable signature can carry type evidence that callers otherwise repair downstream.
 - Accept: inline type parameters, `type` aliases, `TypeForm[T]` for type-expression values, type parameter defaults, `NoDefault`, `slice[T]`, `io.Reader`/`io.Writer`, `@typing.override`, `typing.Self`, `@typing.disjoint_base`, `@typing.final` and `Final`, `@dataclass_transform()` with `field_specifiers` for a generated-owner decorator, inline `**P` with `Concatenate` for parameter-preserving callable signatures, and `TypeVarTuple` `bound`, `covariant`, `contravariant`, and `infer_variance` arguments.
 - Reject: erased `Callable[..., T]`, imported `ParamSpec` or `TypeVar`/`Generic` where inline `**P` and `class C[T]` express the shape, `from typing_extensions import` for any member the active `typing` namespace exports, `slots_default`/non-existent decorator keywords, remote alias repair, broad `type[T]` or `object` placeholders for type-form values, unmarked overrides, prose-only disjointness or finality, bound-self boilerplate, checker-invisible model decorators, and protocol shells created only to type an existing object.
 - Boundary: `TypeForm`, disjointness, finality, generated-owner, and signature evidence are static typing contracts that carry no runtime value; runtime validation, object-family policy, aspect architecture, protocol ports, and payload materialization belong to the owning concept page.
 
 [TYPE_PREDICATE_SITE]:
-
 - Use when: a reusable predicate proves exact type membership that inline narrowing cannot express.
 - Accept: `TypeIs[T]` over the concrete or owned structural target where the predicate is true exactly for `T`; `TypeGuard[T]` only for genuine non-subtype narrowing; `beartype.door.is_bearable(value, hint)` as the `TypeIs`-returning guard for a parametrized hint, and `beartype.door.is_subhint` for decidable subtype proof over a type-expression registry.
 - Reject: subtype-compatible predicates written as `TypeGuard`, subset predicates disguised as membership proofs, bool helpers followed by `cast`, hand-rolled `isinstance` trees over parametrized hints, and runtime-checkable protocols created only to satisfy `isinstance`.
@@ -219,7 +217,6 @@ def described(context: Context, value: Member, raw: object, /) -> str:
 ```
 
 [TYPED_DICT_PAYLOAD_SITE]:
-
 - Use when: keyword or dictionary payload shape is part of the static callable contract; the type form and its root signature are declared here.
 - Accept: `Unpack[TypedDict]` as the keyword-payload type at the root entrypoint, `closed=True` for exact-key closure, `extra_items=T` for the typed extension band — `ReadOnly`-wrapped when the band is read-only — and `Required[]`, `NotRequired[]`, `ReadOnly[T]` as per-key static evidence; the interior consumes the concrete `TypedDict` by value, reading a `NotRequired[]` key through `.get` rather than re-checking presence.
 - Reject: homogeneous `**kwargs`, open payload prose, split total/non-total `TypedDict` mirror shapes, `Unpack` re-spread through an interior signature, mutable-key promises in comments, and `Mapping[str, object]` bags.
@@ -253,14 +250,12 @@ SHAPE = admitted(key="<key-a>", span={"lo": 0, "hi": 4}, tag="<ext-a>")
 ```
 
 [MODULE_BOUNDARY_SITE]:
-
 - Use when: a module declares its public names, imports another module surface, or registers an auditable startup hook.
 - Accept: named imports, end-of-file `__all__`, `__init__.py` only when it owns real package initialization or a public package contract, and `.start` entries in mandatory `pkg.mod:callable` form for zero-argument startup hooks.
 - Reject: wildcard imports, barrel files, facade-only exports, empty `__init__.py` package markers, re-export files that hide the real owner, executable `.pth` import lines, implicit import side effects, and startup code hidden in package marker files.
 - Boundary: package topology, generated API documentation, public package contracts, source-symbol documentation, site processing, and startup ordering belong to their owning platform, architecture, or code-documentation surface.
 
 [LAZY_IMPORT_SITE]:
-
 - Use when: a cold, heavy, native, or cyclically coupled dependency must stay declared at the module boundary while its import cost falls on first use, or a package `__init__` publishes a deferred public surface — mandatory re-exports kept lexically static-visible, optional install-extra-gated submodules left degradable, and a computed metadata tail — eagerly importing none of it.
 - Accept: the form keys on what defers and on whether a published name is mandatory or optional. A module deferring an absolute dependency it names itself uses module-scope `lazy import X` or `lazy from X import Y`, so a heavy or native import costs nothing until first use and deferring a coupled peer breaks the cycle. A package `__init__` re-exporting a mandatory owned symbol uses module-scope `lazy from package.submodule import Symbol`: the name stays lexically present, so a type checker resolves a downstream `from package import Symbol` while the load defers and the in-`__init__` deferral breaks the package self-cycle. Only an optional, install-extra-gated submodule and the computed `__version__` fall to the module `__getattr__` resolver, with the companion `__dir__` unioning the static and optional names. `__lazy_modules__`, a per-module collection of fully-qualified module-name strings whose opt-in is checked by `__contains__`, is the bulk per-module deferral for a name the file does not mark inline.
 - Reject: a `lazy` statement inside a function, class, or `try`, a `lazy from M import *`, and a `lazy from __future__` are each a `SyntaxError`, the soft keyword being module-scope, non-star, and non-future only; `lazy from . import a` and `lazy from .core import Y` compile but the `ban-relative-imports` gate rejects them, routing the package surface through the absolute `lazy from package.submodule import ...` form; a function-local `import`, an `importlib.import_module` scattered beyond the single resolver, a `sys.modules` mutation, and a per-call re-import each stand in for a module-scope binding; `lazy_loader.attach`/`attach_stub`/`load` (not an admitted dependency, superseded by the native keyword and the `__getattr__` surface) and `importlib.util.LazyLoader` (no `from`-import support, eager spec resolution) are dead forms; a `__lazy_modules__ = ["*"]` wildcard and a process-wide `sys.set_lazy_imports` blanket mode override the explicit per-import boundary.
@@ -320,7 +315,6 @@ __all__ = ("Backend", "Shape", "TABLE", "codec", "driver", "render", "store")
 ```
 
 [TEMPLATE_STRUCTURE_SITE]:
-
 - Use when: dynamic text must preserve template structure for policy or AST analysis instead of collapsing to a rendered string.
 - Accept: live `string.templatelib.Template`/`Interpolation` for evaluated `value`/`expression`/`conversion`/`format_spec` fields, and `ast.TemplateStr`/`ast.Interpolation` over `ast.parse(optimize=, module=)` for the pre-evaluation source structure — `Constant.value` static segments, `Interpolation.str` expression text with the integer `conversion` ordinal, and the nested `Interpolation.format_spec` as an `ast.JoinedStr` of `ast.FormattedValue` expression nodes — proved congruent with `ast.compare`.
 - Reject: f-string pre-parsing, rendered-string reparsing, regex extraction from formatted text, hand-built interpolation tuples, `ast.dump` string comparison where `ast.compare` decides node equality, string concatenation hiding template policy, and an f-string, `%`-format, or `str.format` splice of dynamic input into SVG, XML, HTML, or Typst markup, whose interpolation renders before the destination escaper can run.
@@ -355,7 +349,6 @@ CONGRUENT = ast.compare(ast.parse('t"{alpha}"', mode="eval"), ast.parse('t"{alph
 ```
 
 [REFLECTION_SITE]:
-
 - Use when: annotations, members, unions, protocols, generic bases, execution locals, or AST structure must be read as the language's own structured form instead of reconstructed from rendered text or private state.
 - Accept: deferred annotations through `annotationlib.get_annotations(format=...)` and `inspect.signature(annotation_format=...)` at the `annotationlib.Format` the consumer needs — `VALUE`, `FORWARDREF`, or `STRING`; side-effect-free member reads through `inspect.getmembers_static()`; union and protocol shape through `typing.get_origin()`/`get_args()`/`get_protocol_members()`/`is_protocol()`; generic bases through `types.get_original_bases()`; execution locals through an explicit `locals=` argument or a `types.FrameLocalsProxyType` over `frame.f_locals`; and AST structure through per-node `ast.<Node>._field_types` with `ast.compare()` deciding node equality over `ast.parse(optimize=, module=)`.
 - Reject: direct `__annotations__`/`__orig_bases__`/`__protocol_attrs__` dunder reads, descriptor-triggering `getattr` member scans, private union or protocol implementation probes, mutating `locals()` snapshots, `ast.dump()` string comparison where `ast.compare()` decides equality, and re-parsing rendered text a structured reader already returns.
@@ -400,21 +393,18 @@ REFLECTED: Reflected = reflected(Shape)
 ```
 
 [CLOSED_MATCH_SITE]:
-
 - Use when: a closed domain must project every case through one operation-local `match` statement.
 - Accept: structural pattern dispatch over the sealed member set, one operation-local projection, and `case _ as unreachable: assert_never(unreachable)` as the exhaustiveness witness; a `TypeIs` predicate narrows at the projection boundary before the `match`, never as a guarded arm the checker cannot prove total.
 - Reject: tag `if` chains, an arm body opening a second `match` or an `if` ladder where a refining guard or an or-pattern carries the sub-case, a `case x if predicate(x):` guard arm carrying the only narrowing, catch-all raises, default arms that hide a missing case, and pre-match normalization that erases the discriminant.
 - Boundary: the type-evidence spotlight above demonstrates the closed `match` over `@disjoint_base` members; variant ownership, error rail shape, and cross-module dispatch architecture belong to the owning domain or surface concept page.
 
 [SENTINEL_DEFAULT_SITE]:
-
 - Use when: omission or inherited selection must be distinct from every valid domain value, including `None`.
 - Accept: module-global `NAME = Sentinel("NAME")` through the PEP 661 `typing_extensions.Sentinel` the `typing` namespace does not yet export, the variable name matching the sentinel name, reused by `is`, and carried directly in the union as `T | NAME`.
 - Reject: a repeated `Sentinel("NAME")` call for one semantic value — a second call mints a distinct object, so the module global is the sole identity — `object()` defaults, `None` defaults when `None` is domain-valid, string tokens, omitted-vs-supplied overloads with no return-shape change, and bool flags that split one option shape.
 - Boundary: queue or task lifecycle, wire payload tags, and protocol tokens use the owning lifecycle API or explicit domain value instead of sentinel payloads.
 
 [FROZENDICT_TABLE_SITE]:
-
 - Use when: immutable mapping rows or nested policy tables need mapping semantics, language-level immutability, and order-insensitive equality or hashing of the `frozendict` value.
 - Accept: `frozendict[K, V]` rows with hashable keys; values must also be hashable when the row itself is hashed or used as an outer key.
 - Law: one primary correspondence is the single edit site and every secondary — an inverse, a projection, a nested composite-keyed policy table — is a comprehension over the primary's `.items()`, so a new entry lands once on the primary and each derived table re-derives with no consumer edited.
@@ -453,19 +443,16 @@ HEAVIEST: Tier = RANK[max(RANK)]
 Use these tests before keeping a local abstraction beside a language primitive.
 
 [TYPE_EVIDENCE_REPAIR]:
-
 - Smell: a cast, alias, erased callable, fake protocol, runtime-checkable shell, or bool predicate exists only to recover type evidence the declaration itself carries.
 - Collapse: move evidence into the owner declaration, `TypeIs` predicate, `TypedDict` payload, `TypeForm`, parameter-preserving callable, or real structural owner.
 - Done when: callers narrow, call, unpack, or inspect the value without `cast`, wildcard protocols, post-check repair code, or duplicated declaration aliases.
 
 [STRING_RECOVERY]:
-
 - Smell: code parses rendered strings, paths, URLs, annotations, regex intent, warning filters, template fields, AST structure, or source names by hand.
 - Collapse: ask the language API for the structured form.
 - Done when: the implementation consumes typed components instead of reconstructed text.
 
 [MAGIC_VALUE]:
-
 - Smell: absence, inherited selection, closed-domain membership, or ordering is carried by a bare string, an `object()` token, a numeric sentinel, or a `.value` literal the program already names.
 - Collapse: replace the literal with the language form that carries the semantics — `Sentinel("NAME")` for omission, a `StrEnum`/`Literal` member for closed membership, a `frozendict` row for a derived correspondence, `Never`/`assert_never` for the unreachable arm.
 - Done when: the value carries its own semantics through a named language form, and no prose restates a meaning the declaration already holds; stdlib primitive policy (`uuid.NIL`/`uuid.MAX`, base-N decode flags, buffer flags) is the system-API owner's magic-value rule, named there.

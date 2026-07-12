@@ -2,15 +2,15 @@
 
 Production logging for Bash `5.2+`/5.3: every emitter writes one atomic line, a numeric threshold gates each level, and stderr stays the default channel so stdout carries clean pipeline data.
 
-| [INDEX] | [PATTERN]            | [S] | [USE_WHEN]                                          |
-| :-----: | :------------------- | :-: | :-------------------------------------------------- |
-|  [01]   | JSON-ND structured   | S1  | Container workloads, log aggregation                |
-|  [02]   | Level-gated dispatch | S2  | Every script — numeric gate, caller injection       |
-|  [03]   | Terminal capability  | S3  | Interactive output — NO_COLOR, tput, CI detect      |
-|  [04]   | CI platform          | S4  | GH Actions / GitLab — annotations, collapsible      |
-|  [05]   | Async log shipping   | S5  | High-throughput — coprocess sink, FD rotation       |
-|  [06]   | Context propagation  | S6  | Distributed tracing — correlation, OTEL traceparent |
-|  [07]   | Fork-free emission   | S7  | Bash 5.3+ — zero-fork timestamps, elapsed timing    |
+| [INDEX] | [PATTERN]            |  [S]  | [USE_WHEN]                                          |
+| :-----: | :------------------- | :---: | :-------------------------------------------------- |
+|  [01]   | JSON-ND structured   |  S1   | Container workloads, log aggregation                |
+|  [02]   | Level-gated dispatch |  S2   | Every script — numeric gate, caller injection       |
+|  [03]   | Terminal capability  |  S3   | Interactive output — NO_COLOR, tput, CI detect      |
+|  [04]   | CI platform          |  S4   | GH Actions / GitLab — annotations, collapsible      |
+|  [05]   | Async log shipping   |  S5   | High-throughput — coprocess sink, FD rotation       |
+|  [06]   | Context propagation  |  S6   | Distributed tracing — correlation, OTEL traceparent |
+|  [07]   | Fork-free emission   |  S7   | Bash 5.3+ — zero-fork timestamps, elapsed timing    |
 
 ## [01]-[JSON_ND_STRUCTURED_LOGGING]
 

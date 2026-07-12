@@ -21,13 +21,11 @@ Durable prose is law for an agent that loads it with no memory of why it was wri
 ## [01]-[ROUTING]
 
 [REFERENCES]:
-
 - [01]-[STRUCTURE](references/structure.md): altitude tiers, routing law, representation choice, table design, file-kind schemas, marker systems
 - [02]-[DEFECTS](references/defects.md): the defect catalog — definitions, detection tests, pairs, reframe rules
 - [03]-[REWRITING](references/rewriting.md): rebuilding an existing document without inheriting its frame
 
 [TEMPLATES]: authoring a new instance of a known file kind starts from its template; a finished instance carries zero residual slot tokens and its heading census matches the template.
-
 - [01]-[IDEAS](templates/ideas.template.md): copy verbatim; fill only the H1 token and lead slot
 - [02]-[TASKLOG](templates/tasklog.template.md): copy verbatim; fill only the H1 token and lead slot
 - [03]-[README](templates/readme.template.md): exact structure, replace only the slots; multi-folder units group domain cards under one `[FOLDER_TOKEN]:` label per folder
@@ -37,14 +35,12 @@ Durable prose is law for an agent that loads it with no memory of why it was wri
 - [07]-[LAWS](templates/laws.template.md): registry law page — atomic table rows default with family-fitted header rubrics; a law too large for a cell graduates to a marker-led `[DEEP_ROWS]` entry, never a card; drop `[02]` when no row has graduated
 
 [EXAMPLES]: symptom-indexed worked pairs; consult the matching set before building or repairing the container.
-
 - [01]-[TABLES](examples/tables.md): table crimes and their structural repairs
 - [02]-[LISTS](examples/lists.md): mega bullets, shredded splits, the classified repair
 - [03]-[MARKERS](examples/markers.md): entry leaders, status vocabularies, glyphs
 - [04]-[INTROS](examples/intros.md): leads that legislate and the rejected frames
 
 [SCRIPTS]:
-
 - [01]-[PROSE_GATE](scripts/prose_gate.py): the deterministic gate and fixer; invocation in the gate section
 
 ## [02]-[GATE]
@@ -57,7 +53,7 @@ uv run scripts/prose_gate.py [--json] <paths...>
 uv run scripts/prose_gate.py fix [--write] <paths...>
 ```
 
-Run the gate on every touched durable doc before returning. `fix` applies every deterministic repair — header rubrics, the `[INDEX]` column and its `[NN]` entries, alignment colons, H2/H3 numbering, loose numbered list leaders, trailing whitespace, table spacing, and the canonical column-aligned render — printing a per-change plan as a dry run by default and mutating only under `--write`; judgment-tier repairs surface as `SKIP` rows for review. The gate and the fixer share one table model, so a grid whose canonical render exceeds the 150-column width cap fails `table-width` regardless of its current padding. It is the mechanical floor — fence, heading, table, link, list, and source section-divider and comment-stack structure, severed rows, fence-intent mislabels, and group labels echoing their heading; link custody, failing a relative link in any file outside the routing class (`README.md`, `SKILL.md`, `CLAUDE.md`, `AGENTS.md`, `MEMORY.md`), beside sibling-interior anchor pointers and page self-references; template residue, bold emphasis in prose and table cells alike, ASCII em-dash misuse, and trailing whitespace; the banned-lexeme roster of hedges, meta-phrases, self-counts, version anchors and bands, freshness deictics, and permission verbs — and a skill bundle additionally gates frontmatter shape, name shape and directory identity, description voice and budgets, the root line ceiling, and orphan bundle files, the mechanical floor beneath the skill-writer skill's authoring law; the full check census is the script's `Check` vocabulary. The gate scans prose spans only: fence bodies, code spans, link destinations, template placeholders, and example-leader rows are structural carriers, not prose findings. Every semantic class and every altitude judgment remains review work against the catalog.
+Run the gate on every touched durable doc before returning. `fix` applies every deterministic repair — header rubrics, the `[INDEX]` column and its `[NN]` entries, alignment colons, H2/H3 numbering, loose numbered list leaders, the colon a floating list label lacks, the label-to-list hug, trailing whitespace, table spacing, and the canonical column-aligned render — printing a per-change plan as a dry run by default and mutating only under `--write`; judgment-tier repairs surface as `SKIP` rows for review. The gate and the fixer share one table model, so a grid whose canonical render exceeds the 150-column width cap fails `table-width` regardless of its current padding. It is the mechanical floor — fence, heading, table, link, list, and source section-divider and comment-stack structure, severed rows, fence-intent mislabels, and group labels echoing their heading; link custody, failing a relative link in any file outside the routing class (`README.md`, `SKILL.md`, `CLAUDE.md`, `AGENTS.md`, `MEMORY.md`), beside sibling-interior anchor pointers and page self-references; template residue, bold emphasis in prose and table cells alike, ASCII em-dash misuse, and trailing whitespace; the banned-lexeme roster of hedges, meta-phrases, self-counts, version anchors and bands, freshness deictics, and permission verbs — and a skill bundle additionally gates frontmatter shape, name shape and directory identity, description voice and budgets, the root line ceiling, and orphan bundle files, the mechanical floor beneath the skill-writer skill's authoring law; the full check census is the script's `Check` vocabulary. The gate scans prose spans only: fence bodies, code spans, link destinations, template placeholders, and example-leader rows are structural carriers, not prose findings. Every semantic class and every altitude judgment remains review work against the catalog.
 
 ## [03]-[REGISTER]
 
@@ -118,7 +114,6 @@ Rebuilding an existing document under this register is its own discipline — th
 ## [04]-[FACT_LAW]
 
 [FACT_CLASSES] — Every fact in a durable doc is exactly one of:
-
 - [LAW]: Intent, invariant, boundary, prohibition. Survives any rename. Carried in prose.
 - [REPRESENTATION]: A structure snapshot — tree, codemap, diagram. Regenerable from disk, verified by tooling, carried only in a fence or diagram, never restated in prose.
 - [REGISTRY]: A fact whose system of record is the doc itself. The only class allowed to enumerate.

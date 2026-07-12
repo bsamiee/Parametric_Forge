@@ -34,6 +34,7 @@ Editing a card or journal reads first, edits the returned `content`, and saves w
 Markdown syntax maps to the ProseMirror nodes and marks the CLI creates:
 
 <!-- prettier-ignore -->
+
 | [INDEX] | [MARKDOWN]                                                              | [PROSEMIRROR]                                         |
 | :-----: | :---------------------------------------------------------------------- | :---------------------------------------------------- |
 |  [01]   | `# H1` through `###### H6`                                              | `heading`                                             |
@@ -88,6 +89,7 @@ Every card, PDF, and whiteboard mention UUID resolves from a CLI read or list fi
 Optional attrs carry a trailing `?`. Every `id` and `fileId` is a UUID string or null; string attrs (`src`, `url`, `width`, `title`, and peers) are string or null; `originalWidth`/`originalHeight` are number or null; timestamp attrs are ISO 8601 strings (see [Timestamp Attrs](#timestamp-attrs)). Media `reference` attrs are preserved from `read`, never created manually (see [Media References](#media-references)). For `table_cell`/`table_header`, `colspan?`/`rowspan?` are positive integers, `colwidth?` is a positive integer[] or null, and `backgroundColor?`/`textColor?` are an editor color or null (see [Editor Colors](#editor-colors)). For `embed` and `mention`, `objectType` is `note`, `journal`, `highlightElement`, `image`, `video`, or `audio`, and `objectId` is a UUID string, or `YYYY-MM-DD` when `objectType` is `journal`. Deprecated `image`/`video` attrs live in [Deprecated attributes](#deprecated-attributes).
 
 <!-- prettier-ignore -->
+
 | [INDEX] | [NODE]                       | [CONTENT]                     | [ATTRS]                                                               |
 | :-----: | :--------------------------- | :---------------------------- | :-------------------------------------------------------------------- |
 |  [01]   | `doc`                        | `block+`                      | none                                                                  |
@@ -139,6 +141,7 @@ Editor colors for `table_cell` / `table_header` `backgroundColor` and `textColor
 ### [03.2]-[INLINE_NODES]
 
 <!-- prettier-ignore -->
+
 | [INDEX] | [NODE]                                   | [ATTRS]                                                         |
 | :-----: | :--------------------------------------- | :-------------------------------------------------------------- |
 |  [01]   | `text`                                   | none                                                            |
@@ -169,6 +172,7 @@ Marks only attach to `text` nodes. Each mark is an entry in that node's `marks` 
 Saving as Markdown yields bold, italic, and the other marks from the syntax in [Markdown Content](#markdown-content). Underline and text/background color have no Markdown syntax — save as JSON (ProseMirror) for those marks.
 
 <!-- prettier-ignore -->
+
 | [INDEX] | [MARK]      | [ATTRS]                                         | [NOTES]                                                      |
 | :-----: | :---------- | :---------------------------------------------- | :----------------------------------------------------------- |
 |  [01]   | `em`        | none                                            | italic                                                       |
@@ -189,6 +193,7 @@ Saving as Markdown yields bold, italic, and the other marks from the syntax in [
 Some attrs remain in the schema as legacy. When creating new JSON, omit them unless round-tripping an existing document from `read`:
 
 <!-- prettier-ignore -->
+
 | [INDEX] | [NODE_MARK] | [DEPRECATED]                            | [NOTES]                                                                        |
 | :-----: | :---------- | :-------------------------------------- | :----------------------------------------------------------------------------- |
 |  [01]   | `image`     | `alt`, `title`                          | Markdown import ignores them; use `fileId` / `src` and `alignment` instead     |

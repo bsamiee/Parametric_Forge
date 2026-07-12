@@ -231,50 +231,55 @@
         ${superviseStdio ''"$entry"''}
       fi
 
-      # Thin responder: newline-delimited JSON-RPC over stdio at near-zero cost. tools/call re-probes Rhino so an agent that started it mid-session
-      # reads live state plus the reconnect instruction; stdin EOF is the shutdown, so the shim can never outlive its client.
-      status_text() {
-        if /usr/bin/pgrep -qf "$rhino_bin"; then
-          printf 'Rhino is running but this MCP connection predates it. Reconnect the rhino-mcp-platform server (/mcp -> reconnect, or restart the session) to spawn the router and load the full toolset.'
-        else
-          printf 'Rhino 9 WIP is not running; the rhino-mcp-platform router spawns only against a live Rhino. Start it (open -a RhinoWIP), wait for the app to finish loading, then reconnect the rhino-mcp-platform server (/mcp -> reconnect, or restart the session) to load the full toolset.'
-        fi
+      # Thin responder: newline-delimited JSON-RPC over stdio at near-zero cost. Its blocking read carries a long idle lease directly, so retained
+      # inherited pipe writers cannot strand an app-server generation and the Rhino-down path needs no supervisor helper processes.
+      rhino_gate() {
+        status_text() {
+          if /usr/bin/pgrep -qf "$rhino_bin"; then
+            printf 'Rhino is running but this MCP connection predates it. Reconnect the rhino-mcp-platform server (/mcp -> reconnect, or restart the session) to spawn the router and load the full toolset.'
+          else
+            printf 'Rhino 9 WIP is not running; the rhino-mcp-platform router spawns only against a live Rhino. Start it (open -a RhinoWIP), wait for the app to finish loading, then reconnect the rhino-mcp-platform server (/mcp -> reconnect, or restart the session) to load the full toolset.'
+          fi
+        }
+        local tools_json line method id pv gate_idle_seconds="''${RHINO_MCP_GATE_IDLE_SECONDS:-480}"
+        [[ "$gate_idle_seconds" =~ ^[1-9][0-9]*$ ]] || gate_idle_seconds=480
+        tools_json='{"tools":[{"name":"rhino_status","description":"Reports the Rhino MCP gate: the full rhino-mcp-platform toolset loads only while Rhino 9 WIP runs. Call this to learn how to bring the toolset up.","inputSchema":{"type":"object","properties":{}}}]}'
+        # Streaming boundary: one jq projection per message; the 0x1f join survives absent fields, and a malformed line skips without output.
+        while IFS= read -r -t "$gate_idle_seconds" line; do
+          [ -n "$line" ] || continue
+          IFS=$'\x1f' read -r method id pv < <(printf '%s\n' "$line" | jq -r '
+            [(.method // ""), (if has("id") then (.id | tojson) else "" end),
+             (.params.protocolVersion // "2025-06-18")] | join("\u001f")' \
+            2>/dev/null) || continue
+          case "$method" in
+            initialize)
+              [ -n "$id" ] || continue
+              jq -cn --argjson id "$id" --arg pv "$pv" \
+                '{jsonrpc: "2.0", id: $id, result: {protocolVersion: $pv, capabilities: {tools: {}}, serverInfo: {name: "rhino-mcp-gate", version: "1.0.0"}}}'
+              ;;
+            tools/list)
+              [ -n "$id" ] || continue
+              jq -cn --argjson id "$id" --argjson t "$tools_json" '{jsonrpc: "2.0", id: $id, result: $t}'
+              ;;
+            tools/call)
+              [ -n "$id" ] || continue
+              jq -cn --argjson id "$id" --arg text "$(status_text)" \
+                '{jsonrpc: "2.0", id: $id, result: {content: [{type: "text", text: $text}], isError: true}}'
+              ;;
+            ping)
+              [ -n "$id" ] || continue
+              jq -cn --argjson id "$id" '{jsonrpc: "2.0", id: $id, result: {}}'
+              ;;
+            notifications/* | "") : ;;
+            *)
+              [ -n "$id" ] || continue
+              jq -cn --argjson id "$id" \
+                '{jsonrpc: "2.0", id: $id, error: {code: -32601, message: "rhino-mcp-gate: method unavailable while Rhino is down; call rhino_status"}}'
+              ;;
+          esac
+        done
       }
-      tools_json='{"tools":[{"name":"rhino_status","description":"Reports the Rhino MCP gate: the full rhino-mcp-platform toolset loads only while Rhino 9 WIP runs. Call this to learn how to bring the toolset up.","inputSchema":{"type":"object","properties":{}}}]}'
-      # Streaming boundary: one jq projection per message; the 0x1f join survives absent fields, and a malformed line skips without output.
-      while IFS= read -r line; do
-        [ -n "$line" ] || continue
-        IFS=$'\x1f' read -r method id pv < <(printf '%s\n' "$line" | jq -r '
-          [(.method // ""), (if has("id") then (.id | tojson) else "" end),
-           (.params.protocolVersion // "2025-06-18")] | join("\u001f")' \
-          2>/dev/null) || continue
-        case "$method" in
-          initialize)
-            [ -n "$id" ] || continue
-            jq -cn --argjson id "$id" --arg pv "$pv" \
-              '{jsonrpc: "2.0", id: $id, result: {protocolVersion: $pv, capabilities: {tools: {}}, serverInfo: {name: "rhino-mcp-gate", version: "1.0.0"}}}'
-            ;;
-          tools/list)
-            [ -n "$id" ] || continue
-            jq -cn --argjson id "$id" --argjson t "$tools_json" '{jsonrpc: "2.0", id: $id, result: $t}'
-            ;;
-          tools/call)
-            [ -n "$id" ] || continue
-            jq -cn --argjson id "$id" --arg text "$(status_text)" \
-              '{jsonrpc: "2.0", id: $id, result: {content: [{type: "text", text: $text}], isError: true}}'
-            ;;
-          ping)
-            [ -n "$id" ] || continue
-            jq -cn --argjson id "$id" '{jsonrpc: "2.0", id: $id, result: {}}'
-            ;;
-          notifications/* | "") : ;;
-          *)
-            [ -n "$id" ] || continue
-            jq -cn --argjson id "$id" \
-              '{jsonrpc: "2.0", id: $id, error: {code: -32601, message: "rhino-mcp-gate: method unavailable while Rhino is down; call rhino_status"}}'
-            ;;
-        esac
-      done
+      rhino_gate
     '';
   };
   # updateEngine selects the probe set: only npm-registry rows feed the npm-latest check; a manual or other engine row never emits a false pin row.
@@ -533,6 +538,18 @@
       # rows, and Codex app-server inventory for OAuth rows so its credential store performs the authenticated initialize plus tools/list. Values never
       # print. Each probe emits one typed row (STATUS<TAB>name<TAB>detail); presentation is the doctor's, so human and --json share the same rows.
       req='{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"forge-mcp-doctor","version":"1.0.0"}}}'
+      stop_owned_process() { # process-group leader
+        local pid="$1"
+        kill -TERM -- "-$pid" 2>/dev/null || kill -TERM "$pid" 2>/dev/null || true
+        for _ in 1 2 3 4 5 6 7 8 9 10; do
+          { kill -0 -- "-$pid" 2>/dev/null || kill -0 "$pid" 2>/dev/null; } || break
+          sleep 0.1
+        done
+        if kill -0 -- "-$pid" 2>/dev/null || kill -0 "$pid" 2>/dev/null; then
+          kill -KILL -- "-$pid" 2>/dev/null || kill -KILL "$pid" 2>/dev/null || true
+        fi
+        wait "$pid" 2>/dev/null || true
+      }
       codex_oauth_inventory() { # $1=workdir $2=result-file
         local work="$1" result="$2" oauth_home="$1/codex-oauth-home" fifo="$1/codex-oauth.in" raw="$1/codex-oauth.raw"
         local pid input_fd success=0
@@ -550,11 +567,12 @@
 
         mkfifo "$fifo"
         : >"$raw"
+        set -m
         CODEX_HOME="$oauth_home" codex app-server --strict-config --stdio <"$fifo" >"$raw" 2>"$work/codex-oauth.err" &
         pid=$!
+        set +m
         if ! exec {input_fd}>"$fifo"; then
-          kill "$pid" 2>/dev/null || true
-          wait "$pid" 2>/dev/null || true
+          stop_owned_process "$pid"
           return 1
         fi
         response_ready() { # $1=id $2=50ms-attempts
@@ -575,8 +593,7 @@
           success=1
         fi
         exec {input_fd}>&-
-        kill "$pid" 2>/dev/null || true
-        wait "$pid" 2>/dev/null || true
+        stop_owned_process "$pid"
         if [ "$success" = 1 ] && jq -ce '
           select(.id == 2 and (.result.data | type == "array"))
           | {ok: true, reason: "verified", rows: [.result.data[] | {
@@ -635,12 +652,14 @@
           # (a sleep-holder would strand every server for the full timeout after doctor returns); timeout backstops mute servers.
           mkfifo "$out.fifo"
           line=""
-          exec {rfd}< <(timeout "$((t + 2))" "$cmdpath" ''${argv[0]+"''${argv[@]}"} <"$out.fifo" 2>/dev/null || true)
+          exec {rfd}< <(timeout -k 2 "$((t + 2))" "$cmdpath" ''${argv[0]+"''${argv[@]}"} <"$out.fifo" 2>/dev/null || true)
+          probe_pid=$!
           exec {wfd}>"$out.fifo"
           printf '%s\n' "$req" >&"$wfd"
           IFS= read -r -t "$t" line <&"$rfd" || true
           exec {wfd}>&-
           exec {rfd}<&-
+          wait "$probe_pid" 2>/dev/null || true
           rm -f "$out.fifo"
           if info="$(printf '%s\n' "$line" | jq -er '.result.serverInfo | "\(.name) \(.version // "?")"' 2>/dev/null)"; then
             emit OK "$info$envnote"
@@ -728,6 +747,9 @@
       }
 
       cmd_doctor() {
+        if [ -z "''${_FORGE_MCP_DOCTOR_DEADLINE:-}" ]; then
+          _FORGE_MCP_DOCTOR_DEADLINE=1 exec timeout -k 5 300 "$0" doctor "$@"
+        fi
         network=0 as_json=0
         for a in "$@"; do
           case "$a" in
@@ -738,7 +760,7 @@
         done
         tmp="$(mktemp -d)"; trap 'rm -rf "$tmp"' EXIT
         codex_auth="$tmp/codex-auth.json"
-        if command -v codex >/dev/null 2>&1 && codex mcp list --json >"$codex_auth" 2>/dev/null; then
+        if command -v codex >/dev/null 2>&1 && timeout -k 2 30 codex mcp list --json >"$codex_auth" 2>/dev/null; then
           :
         else
           printf '[]\n' >"$codex_auth"
@@ -757,11 +779,20 @@
         done < <(jq -r '.[] | (.launcher.names // [])[]' "$fleet")
         family_rows "$tmp/families"
         i=0
+        batch_count=0
+        declare -a probe_pids=()
         while IFS= read -r row; do
           probe_row "$row" "$network" "$tmp/row.$i" "$codex_auth" "$codex_oauth" &
+          probe_pids+=("$!")
           i=$((i + 1))
+          batch_count=$((batch_count + 1))
+          if [ "$batch_count" -eq 4 ]; then
+            for probe_pid in "''${probe_pids[@]}"; do wait "$probe_pid" 2>/dev/null || true; done
+            probe_pids=()
+            batch_count=0
+          fi
         done < <(jq -c '.[]' "$fleet")
-        wait
+        for probe_pid in "''${probe_pids[@]}"; do wait "$probe_pid" 2>/dev/null || true; done
         rows="$tmp/rows"
         {
           [ ! -f "$tmp/wrappers" ] || cat "$tmp/wrappers"

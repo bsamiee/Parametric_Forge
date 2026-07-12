@@ -55,7 +55,6 @@ A closed token set with no per-member content is exploded into a one-per-line li
     ```
     ```markdown accepted
     [STATUS]:
-
     - `[QUEUED]`: Accepted for the sequence, not yet running
     - `[BLOCKED]`: Held by a dependency
     ```

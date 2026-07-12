@@ -2,14 +2,14 @@
 
 Set algebra via associative arrays, structural transforms via bulk expansion, higher-order traversal via nameref + function dispatch, and null-safe pipeline bridging.
 
-| [INDEX] | [PATTERN]         | [S] | [USE_WHEN]                                                |
-| :-----: | :---------------- | :-: | :-------------------------------------------------------- |
-|  [01]   | Set algebra       | S1  | Union, intersect, diff, dedup on indexed arrays           |
-|  [02]   | Relational ops    | S1B | Set algebra + joins on associative arrays                 |
-|  [03]   | Structural xforms | S2  | Reshape, zip, transpose w/o element-wise loops            |
-|  [04]   | Nameref builders  | S2B | Accumulate/merge into caller's assoc array via `local -n` |
-|  [05]   | Higher-order trav | S3  | Map/filter/reduce/scan/predicates via nameref             |
-|  [06]   | Pipeline bridge   | S4  | Null-safe array-to-pipeline, parallel map, collect        |
+| [INDEX] | [PATTERN]         |  [S]  | [USE_WHEN]                                                |
+| :-----: | :---------------- | :---: | :-------------------------------------------------------- |
+|  [01]   | Set algebra       |  S1   | Union, intersect, diff, dedup on indexed arrays           |
+|  [02]   | Relational ops    |  S1B  | Set algebra + joins on associative arrays                 |
+|  [03]   | Structural xforms |  S2   | Reshape, zip, transpose w/o element-wise loops            |
+|  [04]   | Nameref builders  |  S2B  | Accumulate/merge into caller's assoc array via `local -n` |
+|  [05]   | Higher-order trav |  S3   | Map/filter/reduce/scan/predicates via nameref             |
+|  [06]   | Pipeline bridge   |  S4   | Null-safe array-to-pipeline, parallel map, collect        |
 
 ## [01]-[SET_ALGEBRA]
 

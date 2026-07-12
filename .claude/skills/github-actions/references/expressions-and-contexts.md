@@ -119,7 +119,6 @@ jobs:
 ## [06]-[INJECTION_PREVENTION]
 
 [CRITICAL]:
-
 - [NEVER]: Interpolate `${{ github.event.* }}` directly in `run:` — attacker-controlled PR titles, branch names, and commit messages can inject shell commands.
 - [ALWAYS]: Route untrusted values through `env:` block, then reference as shell variable.
 
@@ -135,7 +134,6 @@ jobs:
 ```
 
 [UNTRUSTED_FIELDS] — attacker-controlled in fork PRs:
-
 - `github.event.pull_request.title`, `.body`, `.head.ref`
 - `github.event.comment.body`
 - `github.event.head_commit.message`, `.author.name`, `.author.email`

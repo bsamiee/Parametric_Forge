@@ -20,13 +20,11 @@ Choose the lifecycle role before adding an owner, construct, rail, or projection
 |  [06]   | Egress          | final handoff          | projection            | encoded material   | codec writer     | late correctness     |
 
 [HANDOFF_LAW]:
-
 - Law: a stage skip is admitted only where one boundary owns both endpoints — `Raw -> Canonical owner` fuses payload and materialization at a single factory when no payload type is reused, and any other skip is a missing owner, not a shortcut.
 - Law: an erased `object` or `Mapping[str, object]` handoff stops at the boundary that admits it; the interior signature names the canonical owner, the closed member, the owner rail, or the admitted port, and never the erased shape.
 - Law: a composed pipeline keeps each lifecycle surface visible — admission, materialization, projection, and egress stay nameable functions or methods, never folded into one opaque pass that hides where shape changes.
 
 [SHARED_REFINEMENT]:
-
 - Law: each validator enforces only its own metadata — `msgspec.Meta(...)` on the wire, a `pydantic` `Field(min_length=..., ge=...)` (or its constrained-type) at ingress, `beartype.vale.Is[...]` at the owner factory — and no validator reads a foreign one's marker, so the policy is declared once as the numeric edge plus the predicate and each stage projects the slice it enforces: the shared edge derives the wire and ingress markers from one constant pair, the predicate rides the owner alias alone, and no mixed alias serves all three; the policy is the single edit site, zero parallel constraint values.
 - Law: `beartype.vale.Is[...]` and `msgspec.Meta(...)` never share one `Annotated` on a `@beartype` factory hint, in either order — `[Is, Meta]` raises `BeartypeDecorHintPep593Exception` at decoration (rejecting the agnostic `Meta` as "not beartype validator"), and `[Meta, Is]` is worse, decorating cleanly while silently dropping the `Is` so an unrefined value passes the contract — so the owner alias carries the predicate-as-`Is` alone (the numeric edge is already wire-proven before the factory) while `msgspec.Meta` rides the wire alias and the pydantic `Field` constraint rides the ingress field, each marker landing on the validator that reads it.
 - Law: admission maps a contract violation onto the seam's fault, never an exception into the interior — `ConfigDict(extra="forbid", strict=True)` on the ingress model rejects drift, `BeartypeConf(violation_type=...)` redirects a boundary violation to a domain exception the seam catches, and the interior receives only the admitted owner.
@@ -108,7 +106,6 @@ Choose the invariant owner before choosing a package-backed model, wrapper, prot
 |  [09]   | replaceable capability | open, structural id      | `[TOKEN_STATE_PORT]` | `Protocol`                 | single implementation |
 
 [OWNER_SELECTION]:
-
 - Law: the discriminant columns resolve left to right and the first matching row wins — admission is read before identity, identity before arity — so a shape that matches `[BOUNDARY_SHAPES]` on admission never falls through to a `[DOMAIN_SHAPES]` arity match, and placement is mechanical rather than by feel.
 - Law: a `[BOUNDARY_SHAPES]` owner exists only between the wire and the canonical owner — `TypedDict` carries static-key closure (`closed=True`/`extra_items`/per-key `Required`/`NotRequired`/`ReadOnly`), Pydantic carries untrusted runtime admission, settings, alias policy, and `Discriminator`/`Tag` variant resolution, `msgspec.Struct` carries deterministic wire/row layout with `gc=False` dropping a non-container leaf from the tracked set on hot paths — and none survives into an interior signature.
 - Law: a `[DOMAIN_SHAPES]` owner is the first durable frozen shape the interior accepts — a frozen dataclass for a compact value-equal invariant under `copy.replace`, a frozen Pydantic model only when compiled validation, computed fields, and JSON Schema are themselves the contract, a frozen `msgspec.Struct` only when a fixed wire layout is the canonical owner, a rich class when construction law, folds, transitions, evidence, or projection methods exceed declarative fields.
@@ -116,14 +113,12 @@ Choose the invariant owner before choosing a package-backed model, wrapper, prot
 - Reject: a package-branded interior layer, a parallel DTO, a one-field wrapper without an independent invariant, `None`-as-failure, `Option` masking an error cause, mutable staging after materialization, and a protocol minted to repair weak ownership — each is a row answered by package convenience instead of by discriminant.
 
 [COLLAPSE_AND_GROWTH]:
-
 - Law: the collapse move is keyed on which owner absorbs the family, and the absorption test is the `[02]` discriminants, never a field-count or a resemblance judgment — sibling shapes answering admission, identity regime, payload timing, and consumer identically fold into one `[DOMAIN_SHAPES]` closed family (a union of distinct frozen records for distinct payloads, a `@tagged_union` when each case carries payload), sibling module constants fold into one `[TOKEN_STATE_PORT]` `frozendict` table or `StrEnum`, a wrapper renaming a package API dissolves into the `[BOUNDARY_SHAPES]` package surface used directly, and a sibling survives beside the family only on a genuinely distinct discriminant answer it can name.
 - Law: a one-field wrapper, a field-rename class, a sibling factory, and a variant shell each fold into the deeper owner — the wrapper becomes a refinement alias on the owner's field, the rename becomes an egress projection, the sibling factory becomes one classmethod discriminating on input shape, the shell becomes one case under the owner's `match`.
 - Law: the same owner is the single growth site forward, and the diff of the next requirement names it — a new `[BOUNDARY_SHAPES]` key is one `extra_items`/`Required` line plus one promotion-fold branch, a new `[DOMAIN_SHAPES]` variant is one frozen record plus one arm under the total `match`, a new `[TOKEN_STATE_PORT]` token is one vocabulary member, a new policy correspondence is one `frozendict` row, and the projection and rail follow by derivation so a new field reaches the wire through one projection, never a parallel edit across owner, wire, and row.
 - Reject: a shape minted to lower local line count, a mirror total/non-total payload pair, an enum-plus-parallel-`dict` where the enum should carry the column, a second owner restating an invariant the first proves, a new requirement answered by a parallel type or boolean flag rather than a case/row/member, and an owner sized for the single case in hand whose every consumer must change when the second arrives.
 
 [OWNER_COMPOSITION]:
-
 - Law: owners nest without revalidation — a canonical owner holding another canonical owner trusts the inner owner's admission, and the outer materialization never re-runs the inner factory, because admission is proven once at the leaf and the composite inherits it.
 - Law: identity regime stays local to each owner in a composite — a value-equal field, a tag-identity case, and a key-identity vocabulary coexist under one owner, each comparing by its own regime, and the composite's equality is the structural product of its fields' regimes, never a flattened reference check.
 - Law: a recursive node — a self-nesting composite such as an AST or document tree node — indexed in a map or diffed against another tree takes key identity by structural path, the `tuple[int, ...]` of child ordinals from the root that is the node's structural uid, never by content, because a content-only key collapses structurally-distinct identical siblings onto one slot; content equality is the separate change-detection axis compared only within a fixed path, and the counterpart on the foreign-owner axis, where content cannot recover the foreign owner's identity, is the boundary page's.
@@ -134,7 +129,6 @@ Choose the invariant owner before choosing a package-backed model, wrapper, prot
 A typed payload is the one shape that lives between the wire and the canonical owner: admitted exactly once and never forwarded inward. The closed `TypedDict` payload type form — exact-key closure, the typed `extra_items` band, per-key presence and read-only evidence, and the `Unpack[TypedDict]` root signature — is the language page's settled contract; this page owns the value lifecycle it sheds, where a module-level `TypeAdapter` is the runtime admission gate that materializes the payload into the owner and the extension band condenses into one `frozendict` of evidence.
 
 [TYPED_PAYLOADS]:
-
 - Law: the payload admits exactly once through one module-level `TypeAdapter`, and its type appears only at the `Unpack` root signature — never in a domain interior, because materialization hands the interior the canonical owner; per-request `TypeAdapter` construction and a forwarded payload kwarg are the two leaks this forbids.
 - Law: the `extra_items` band materializes into one `frozendict` of evidence at promotion — `ReadOnly` is a static marker no runtime validator enforces inside a band, so the frozen owner field carries extension immutability — and the band partitions through `Payload.__required_keys__ | __optional_keys__`, never a key set hand-listed parallel to the declaration.
 - Law: a new key grows the payload by one closure or band line plus one branch in the promotion fold and the owner by one field; a second total/non-total mirror shape, a homogeneous `**kwargs` widening, or a parallel `Mapping[str, object]` bag is the rejected alternative.
@@ -182,13 +176,11 @@ def accepted(**raw: Unpack[ShapePayload]) -> Result[Shape, PayloadFault]:
 ```
 
 [PYDANTIC_ADMISSION]:
-
 - Use: module-level `TypeAdapter` for unions, payloads, scalars, and containers; frozen and closed ingress models (`ConfigDict(frozen=True, extra="forbid")`) for closed contracts; `Discriminator`/`Tag` for variant admission instead of ambiguous union order; `AliasChoices`/`AliasGenerator` for wire-to-canonical renaming.
 - Law: validators normalize and admit only — no I/O, registry mutation, or domain orchestration inside a validator — and a caught `ValidationError` maps through `.errors()` (the `loc` path and `type` code), never `str(exc)`, before entering domain logic.
 - Reject: per-request `TypeAdapter` construction, `model_construct` on untrusted input, `model_dump` key surgery, and a second Pydantic pass inside a domain interior.
 
 [MATERIALIZATION]:
-
 - Law: normalization precedes construction — wire names and foreign tokens resolve to canonical spelling before the owner factory runs, and promotion crosses exactly one named adapter or composition-root gate, never a scatter of inline coercions ahead of the constructor.
 - Law: construction that can fail returns `Result[Owner, E]`; the interior then receives owners, closed-family members, or rails over owners, never the payload.
 - Law: egress projects from the canonical owner through `msgspec.convert`, explicit construction, or an owner-approved projection — never a re-validation pass.
@@ -198,7 +190,6 @@ def accepted(**raw: Unpack[ShapePayload]) -> Result[Shape, PayloadFault]:
 The canonical owner is the first durable frozen shape domain logic accepts, and it owns the invariants, lifecycle transitions, folds, and projections that no boundary owns. Owner-type selection follows OWNER_INDEX rows [04]-[06]; a canonical owner never imports a boundary engine unless that engine is itself the durable owner.
 
 [CANONICAL_OWNER_LAW]:
-
 - Law: domain invariants and the failable transition graph live on the owner — a transition that can fail returns `Result[Self, E]` so the successor re-proves the invariant, and an absence-bearing field is `Option[T]`, never `None`; the transition is an owner method, never a free function reconstructing the invariant outside the owner.
 - Law: a guard transition reads the owner's own evidence to admit or refuse the next state, so a sequence of transitions threads through `bind` and reports the first refusal, and the owner is the single site that knows which moves are legal from which state.
 - Law: a projection method derives the boundary view from the owner and the view never gains authority; the projection mechanics and the projection family are the boundary page's and the projection card's, named here only as the owner's outward derivation.
@@ -248,12 +239,10 @@ class Shape:
 One vocabulary owner feeds ingress discriminants, canonical tags, wire tags, registry rows, and schema enum arms; absence is a closed axis, not a scatter of nullable fields; and a variant family is one owner namespace under a total `match`. The three concerns share one rule: a bounded set of states is one closed owner, never parallel module-level types or boolean flags.
 
 [VOCABULARY]:
-
 - Use: `StrEnum` for runtime token identity, iteration, registry keys, settings, CLI, or wire values; `Literal` when static proof suffices and no runtime vocabulary behavior is needed; verified `Flag` only when bit composition is the contract.
 - Reject: routing on `.value` strings in domain code; duplicating a token band across enums, literals, schemas, fixtures, and handler maps.
 
 [ABSENCE]:
-
 - Law: omitted key is `NotRequired[T]`; valid null is `T | None` only when `None` is a real domain or wire value; caller omission or inherited default rides the `Sentinel("NAME")` form, distinct from every valid value including `None`, and never serialized.
 - Law: wire unset is the codec's own presence sentinel collapsed at the seam — `msgspec.UNSET` (a field typed `T | UnsetType = UNSET` round-trips absent under `omit_defaults`) on the struct side and `pydantic.experimental.missing_sentinel.MISSING` on the model side — and the domain absence axis that changes dispatch is a `@tagged_union` case, never the wire sentinel leaked inward.
 - Law: `Nothing` is non-failing computed absence after admission; `Result.Error` is failure.
@@ -305,7 +294,6 @@ def selected(note: Note, fallback: Option[str] = Nothing, /) -> Option[str]:
 ```
 
 [FAMILIES]:
-
 - Law: a closed family of variants that carry different fields or lifecycle states is one `type Member = A | B | C` union of distinct frozen records whose interior owns the failable transition fold — a transition returns `Result[Active, E]`, the live arm projects the successor record, and a fourth variant lands as one frozen record plus one arm with every fold breaking loudly at type-check until the arm exists; the growth axis is the union member, never a sibling type beside the family.
 - Law: the distinct-records union is the form when cases hold disjoint field sets; the shared-field shallow encoding — one frozen owner with a `StrEnum` discriminant, or one `@tagged_union` when payload-carrying cases need a wire tag — is the codec/dispatch form the surface and boundary pages own, and the choice is field disjointness, never preference. This card owns the distinct-records transition fold; combining two transitions applicatively is the rail page's accumulation algebra, composed over this family, never re-taught here.
 - Law: total structural `match` with `assert_never` is the settled exhaustiveness mechanic the language and surface pages own; this card composes it to carry the transition fold, splitting one member into sub-cases through a guard that refines after the member pattern and never stands in for the exhaustiveness proof.
@@ -370,7 +358,6 @@ def advanced(member: Member, /) -> Result[Member, MemberFault]:
 Projection derives outward and never gains authority: a wire struct, persistence row, receipt, or schema view is computed from the canonical owner, and the owner stays unaware of the wire. One owner derives a whole projection family — the pure-rename leg and the value-transform leg are two methods on the owner, not two parallel owners — and a structural port is the inverse seam, a capability the interior consumes through admitted implementers. This page fixes which owner a port is and that an owner derives its projections; the codec mechanics that the projection methods invoke are the boundary page's.
 
 [BOUNDARY_PROJECTIONS]:
-
 - Law: ingress admits foreign material inward through payloads, settings, and ingress models; egress derives wire structs, rows, receipts, and schema views outward from the canonical owner, and each projection is a method on the owner so the family has one growth site, never a sibling free function per target.
 - Law: the pure-rename leg and the value-transform leg split by whether the projection changes a value — a rename keeps canonical attribute names and routes through the boundary page's `msgspec.convert` seam composed in one line, a transform composes an explicit constructor or a `frozendict` correspondence, and the two never collapse onto one path because `convert` cannot transform.
 - Law: a foreign boundary remaps provider names, token vocabularies, cardinality, discriminants, and omitted fields before canonical entry, and the correspondence lives in an adapter table or schema-owned alias the boundary page owns, never a provider-shaped field reaching the owner.
@@ -422,7 +409,6 @@ class Shape:
 ```
 
 [STRUCTURAL_PORTS]:
-
 - Law: a `Protocol` is a capability seam, admitted only when multiple independent implementers satisfy one replaceable operation family without inheritance; method sets stay minimal and capability-named, and every method returns the rail the domain declares.
 - Law: keying scope by `type[Port]` injects the port, `get_protocol_members` proves coverage at registration, `@runtime_checkable` gates only a real dynamic edge, and `TypeIs[Port]` narrows when semantic membership exceeds member presence.
 - Boundary: the generic function constrained `[S: Port]` and its rail composition are the surface page's dispatch law; this page fixes only that the port is the owner for a replaceable capability and that its methods stay rail-typed.
@@ -433,7 +419,6 @@ class Shape:
 A durable owner is frozen after materialization, and state change is a transition that returns a successor, never a mutation. The replacement lane splits by trust: a same-process trusted swap runs the owner kernel directly, and an untrusted, computed, or wire-sourced delta starts from a closed patch payload validated at the boundary and returns through the owner rail.
 
 [IMMUTABLE_REPLACEMENT_LAW]:
-
 - Law: durable collections are `tuple`, `frozenset`, `frozendict`, `Map`, `Block`, or another admitted immutable owner; a transition returns `Self`, `Result[Self, E]`, or a closed successor union.
 - Law: a trusted swap uses `copy.replace`, `msgspec.structs.replace`, `frozendict` union, or a persistent `Map`/`Block` combinator; an untrusted delta validates a closed patch first, then becomes a replacement expression.
 - Law: a patch is a closed `TypedDict` with `NotRequired` update fields and `Required[ReadOnly[...]]` identity or version fields, admitted exactly once through the `[03]-[PAYLOAD_AND_MATERIALIZATION]` `TypeAdapter` gate; the replacement lane receives the admitted patch and never re-validates it, so this section owns the transition algebra and not the admission it composes.

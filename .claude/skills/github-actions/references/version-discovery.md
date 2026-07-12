@@ -3,7 +3,6 @@
 ## [01]-[DISCOVERY_PROTOCOL]
 
 [IMPORTANT]:
-
 - [ALWAYS]: Resolve versions at generation time — never embed static SHAs in reference docs.
 - [ALWAYS]: Verify tags exist before pinning.
 - [ALWAYS]: Dereference annotated tags with `^{}` — lightweight tags resolve directly.
@@ -30,7 +29,6 @@ Format: `owner/repo@<40-char-SHA> # vX.Y.Z`
 A mutable tag is trivially retargeted to a malicious commit, so only a full 40-char SHA is immutable.
 
 [CRITICAL]:
-
 - [ALWAYS]: Pin to full 40-character SHA with version comment suffix.
 - [NEVER]: Use mutable refs (`@main`, `@latest`, `@v1`) in production workflows.
 
@@ -111,7 +109,6 @@ SHA pinning is the enforced control; OCI immutable action refs (`ghcr.io/`) are 
 |  [10]   | `gitleaks/gitleaks-action`         |   v2    | `scan_mode`                          | `contents: read`                          |
 
 [FURTHER_KEY_INPUTS]:
-
 - `actions/checkout`: `sparse-checkout`
 - `actions/setup-node`: `cache` (npm/yarn/pnpm)
 - `actions/setup-python`: `cache` (pip/pipenv/poetry)

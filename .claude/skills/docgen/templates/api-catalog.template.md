@@ -27,22 +27,18 @@
 ## [04]-[IMPLEMENTATION_LAW]
 
 [<package-token>_TOPOLOGY]:
-
 - <topology-invariant-law>
 - the shape kernel folds every op through one dispatch surface
 
 [STACKING]:
-
 - `<sibling-package>`(`.api/<sibling-path>`): <exact-integration-shape>
 - `row-codec`(`.api/data/row-codec.md`): shapes fold into the content-keyed frame
 
 [LOCAL_ADMISSION]:
-
 - <accept-in-repo-rule>
 - the shape kernel is admitted at the primary domain tier
 
 [RAIL_LAW]:
-
 - Package: <rail-package-id>
 - Owns: <owned-concern>
 - Accept: <accept-rule>

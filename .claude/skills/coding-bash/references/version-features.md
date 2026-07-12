@@ -2,18 +2,18 @@
 
 Bash 5.2/5.3 feature exploitation. Minimum baseline is 5.2 — features below that threshold are unconditionally available.
 
-| [INDEX] | [PATTERN]              | [S] | [VER] | [USE_WHEN]                                           |
-| :-----: | :--------------------- | :-: | :---: | :--------------------------------------------------- |
-|  [01]   | Fork-free substitution | S1  |  5.3  | Tight loops, accumulator patterns, hot-path captures |
-|  [02]   | REPLY-bound expansion  | S2  |  5.3  | Result binding, structured side-effect separation    |
-|  [03]   | GLOBSORT pipelines     | S3  |  5.3  | File processing by size/mtime without sort(1)        |
-|  [04]   | Epoch instrumentation  | S4  | 5.2+  | Benchmarking, TTL caches, SRANDOM nonces             |
-|  [05]   | Monotonic clock        | S5  |  5.3  | Elapsed time immune to NTP drift, SLA enforcement    |
-|  [06]   | Trap signal dispatch   | S6  |  5.3  | Multi-signal handlers, graceful shutdown dispatch    |
-|  [07]   | Loadable builtins      | S7  |  5.3  | Float math, date/KV ops without awk/date forks       |
-|  [08]   | Shell options (5.3)    | S8  |  5.3  | array_expand_once, read -E, source -p PATH           |
-|  [09]   | Wait primitives        | S9  | 5.2+  | Bounded concurrency, PID tracking, job completion    |
-|  [10]   | Version gating         | S10 | 5.2+  | Feature dispatch across 5.2/5.3 fleet boundary       |
+| [INDEX] | [PATTERN]              |  [S]  | [VER] | [USE_WHEN]                                           |
+| :-----: | :--------------------- | :---: | :---: | :--------------------------------------------------- |
+|  [01]   | Fork-free substitution |  S1   |  5.3  | Tight loops, accumulator patterns, hot-path captures |
+|  [02]   | REPLY-bound expansion  |  S2   |  5.3  | Result binding, structured side-effect separation    |
+|  [03]   | GLOBSORT pipelines     |  S3   |  5.3  | File processing by size/mtime without sort(1)        |
+|  [04]   | Epoch instrumentation  |  S4   | 5.2+  | Benchmarking, TTL caches, SRANDOM nonces             |
+|  [05]   | Monotonic clock        |  S5   |  5.3  | Elapsed time immune to NTP drift, SLA enforcement    |
+|  [06]   | Trap signal dispatch   |  S6   |  5.3  | Multi-signal handlers, graceful shutdown dispatch    |
+|  [07]   | Loadable builtins      |  S7   |  5.3  | Float math, date/KV ops without awk/date forks       |
+|  [08]   | Shell options (5.3)    |  S8   |  5.3  | array_expand_once, read -E, source -p PATH           |
+|  [09]   | Wait primitives        |  S9   | 5.2+  | Bounded concurrency, PID tracking, job completion    |
+|  [10]   | Version gating         |  S10  | 5.2+  | Feature dispatch across 5.2/5.3 fleet boundary       |
 
 ## [01]-[FORK_FREE_SUBSTITUTION]
 

@@ -2,17 +2,17 @@
 
 Production testing for Bash `5.2+`/5.3: bats-core suites, subshell isolation, PATH-mocked dependencies, coverage gates, and property fuzzing.
 
-| [INDEX] | [PATTERN]           | [S] | [USE_WHEN]                                    |
-| :-----: | :------------------ | :-: | :-------------------------------------------- |
-|  [01]   | bats-core framework | S1  | Every test suite — lifecycle, helpers, tags   |
-|  [02]   | Test isolation      | S2  | Side-effect-free — temp dirs, FD sandbox, env |
-|  [03]   | Mock/stub patterns  | S3  | External command interception, function stubs |
-|  [04]   | Coverage/mutation   | S4  | Quality gates — kcov, lcov, mutation sweep    |
-|  [05]   | CI integration      | S5  | GH Actions — lint, test matrix, coverage gate |
-|  [06]   | Property-based      | S6  | Input domain exploration, random generation   |
-|  [07]   | Snapshot testing    | S7  | Output baseline comparison, approval workflow |
-|  [08]   | Contract testing    | S8  | CLI exit codes, stdout schema, stderr rules   |
-|  [09]   | ShellCheck 0.11.0   | S9  | SC2327-SC2332 — new codes for test/prod code  |
+| [INDEX] | [PATTERN]           |  [S]  | [USE_WHEN]                                    |
+| :-----: | :------------------ | :---: | :-------------------------------------------- |
+|  [01]   | bats-core framework |  S1   | Every test suite — lifecycle, helpers, tags   |
+|  [02]   | Test isolation      |  S2   | Side-effect-free — temp dirs, FD sandbox, env |
+|  [03]   | Mock/stub patterns  |  S3   | External command interception, function stubs |
+|  [04]   | Coverage/mutation   |  S4   | Quality gates — kcov, lcov, mutation sweep    |
+|  [05]   | CI integration      |  S5   | GH Actions — lint, test matrix, coverage gate |
+|  [06]   | Property-based      |  S6   | Input domain exploration, random generation   |
+|  [07]   | Snapshot testing    |  S7   | Output baseline comparison, approval workflow |
+|  [08]   | Contract testing    |  S8   | CLI exit codes, stdout schema, stderr rules   |
+|  [09]   | ShellCheck 0.11.0   |  S9   | SC2327-SC2332 — new codes for test/prod code  |
 
 ## [01]-[BATS_CORE_FRAMEWORK]
 

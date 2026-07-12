@@ -25,7 +25,6 @@ Durable prose is law for agents that read it with no memory of why it was writte
 [REGENERATION_TEST] — The core test, applied sentence by sentence: delete the sentence. If a fresh agent regenerates the fact from disk plus the document's stated invariants, the sentence was a mirror — delete it, or demote it to a fenced representation when structure must be shown. If the fact cannot be regenerated, it is law kept at the altitude that owns it, still answerable to every defect class — surviving regeneration rules out the mirror alone, never a freeze, hedge, or ledger the catalog deletes. Fences and diagrams are exempt: a representation is declared regenerable, verified by tooling, and never paraphrased back into prose.
 
 [FACT_CLASSES] — Every fact in a durable doc is exactly one of:
-
 - [LAW]: Intent, invariant, boundary, prohibition. Survives any rename. Carried in prose.
 - [REPRESENTATION]: A structure snapshot (tree, codemap, diagram). Regenerable from disk, verified by tooling, carried only in a fence or diagram, never restated in prose.
 - [REGISTRY]: A fact whose system of record is the doc itself (package admissions, seam contracts). The only class allowed to enumerate.
@@ -175,14 +174,12 @@ Comments — in source files and in transcription-complete fences alike — exis
 Use a front-and-close paragraph shape. The first sentence states the rule, claim, scope, outcome, or transition. The final sentence closes on the consequence, boundary, confirmation, or route the reader retains.
 
 [KEEP_OR_CONVERT]:
-
 - Keep a standalone sentence when it leads, transitions, captions, closes, states a consequence, names a route boundary, or marks a gap.
 - Convert a sentence to `Label: value` only when the value is scanned, quoted, or updated independently.
 - Convert local detail to a note, alert, or row-owned record only when its scope is local to one row, claim, risk, or artifact.
 - Delete or fold a sentence that only repeats emphasis.
 
 [MECHANICS]:
-
 - Coordinating conjunctions join equal-rank ideas: `for`, `and`, `nor`, `but`, `or`, `yet`, and `so`.
 - Use a comma before a coordinating conjunction joining two independent clauses.
 - Omit the comma for imperative clauses sharing an implied subject unless contrast, length, or ambiguity requires it.
@@ -208,13 +205,11 @@ Use one term for one concept inside a bounded context. Names are load-bearing: p
 ## [08]-[PUNCTUATION]
 
 [LOCAL_MECHANICS]:
-
 - Use U.S. English spelling unless a product or proper name differs.
 - Form singular possessives with `'s`; use the serial comma; use one space after terminal punctuation.
 - Use ASCII hyphen-minus in commands, flags, paths, slugs, identifiers, code, config, tracker literals, and copyable text.
 
 [COLONS_DASHES]:
-
 - Use a colon after a complete sentence that introduces a list, table, example, consequence, or explanation.
 - Capitalize the first word after a colon only when the following material is a complete sentence.
 - Use parentheses for nonessential clarification; promote required conditions into the main sentence.
@@ -224,7 +219,6 @@ Use one term for one concept inside a bounded context. Names are load-bearing: p
 - Prefer sentence splits or vertical lists over semicolon-ended bullets.
 
 [QUOTES_NUMBERS]:
-
 - Use numerals for versions, measurements, commands, flags, identifiers, dates, editions, counts, thresholds, and compared values.
 - Spell out isolated nontechnical counts from zero through nine only when the value is not a comparison, threshold, field value, or literal.
 - Use backticks for UI labels, commands, code, exact strings, and copied literals.
@@ -241,7 +235,6 @@ Use one term for one concept inside a bounded context. Names are load-bearing: p
 - When inline code contains a backtick, use a longer matching backtick delimiter rather than a backslash escape.
 
 [PLACEHOLDER_EXAMPLES]:
-
 - Accepted: `Shape`, `RefinedShape`, and `OtherShape`. Near miss: `Customer`, `PremiumCustomer`, and `WebhookPayload`. Reason: the accepted names show type structure without importing a business domain.
 - Accepted: `Variant`, `PRIMARY`, `SECONDARY`, `"<variant-a>"`. Near miss: `Mode`, `PROD`, `STAGING`, `"premium"`. Reason: the accepted names teach enum shape without deployment or pricing semantics.
 - Accepted: `SELECTED`, `SELECTED_RESULT`, `"<value-a>"`. Near miss: `active_customer`, `invoice_total`, `"alice"`. Reason: the accepted names mark selection and data position without anchoring the sample to an identity or product.

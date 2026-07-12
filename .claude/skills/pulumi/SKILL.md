@@ -36,7 +36,7 @@ Level choice requires knowing what is already on disk: inspect the filesystem fi
 - [04]-[AUTOMATION_API](references/automation-api.md): embedding Pulumi in a program, multi-stack orchestration, and inline versus local programs.
 - [05]-[DEBUGGING](references/debugging.md): reading a failed `up` or `preview` from Pulumi Cloud's record, tracing the cause, and placing the fix.
 
-## [02]-[LEVEL_1]
+## [02]-[ONE_SHOT_OPERATIONS]
 
 `pulumi do` runs one-shot, stateless resource operations against any provider — no project files, no `${...}` wiring, no Pulumi state. The canonical invocation is `npx pulumi <command>`; `npx pulumi version` confirms availability without touching Pulumi Cloud, and the resource verbs require CLI `v3.243.0` or newer.
 
@@ -56,7 +56,7 @@ First invocation in an agent context without saved credentials may provision an 
 
 When a `Pulumi.yaml` project already manages a resource, changes go through the program — never `pulumi do`.
 
-## [03]-[LEVEL_2]
+## [03]-[PROJECT_PROGRAMS]
 
 A Pulumi project is code in Python, TypeScript, Go, C#, or Java describing related resources and their dependencies. Match the codebase language when one is present; default to TypeScript otherwise.
 
@@ -77,7 +77,7 @@ npx pulumi config set aws:region us-west-2
 npx pulumi config set --secret dbPassword "..."
 ```
 
-## [04]-[LEVEL_3]
+## [04]-[CLOUD_GOVERNANCE]
 
 Pulumi Cloud layers governance onto a project: ESC composes secrets and configuration from cloud secret managers, OIDC-vended credentials, and other environments into one resolved bundle; policy packs run against the resource graph before any cloud API call; deployments run operations server-side; schedules automate drift detection and rotation.
 

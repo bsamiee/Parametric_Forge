@@ -1825,6 +1825,27 @@ docker_compose_version() {
     fi
 }
 
+# Typed doctor verdict: endpoint policy, CLI presence, socket existence, and server reachability remain distinct facts.
+doctor_runtime_state() {
+    local policy_status="$1"
+    local docker_path="$2"
+    local endpoint_path_exists="$3"
+    local docker_server="$4"
+    if [[ "$policy_status" != "ok" ]]; then
+        printf 'endpoint-policy-rejected'
+    elif [[ "$docker_path" == "-" ]]; then
+        printf 'cli-unavailable'
+    elif [[ "$docker_server" != "unavailable" ]]; then
+        printf 'healthy'
+    elif [[ "$endpoint_path_exists" == "true" ]]; then
+        printf 'socket-stale'
+    elif [[ "$endpoint_path_exists" == "false" ]]; then
+        printf 'socket-absent'
+    else
+        printf 'server-unavailable'
+    fi
+}
+
 atomic_render() {
     local target="$1"
     local renderer="$2"
@@ -2598,7 +2619,8 @@ cmd_doctor() {
     fi
     local docker_path="-" policy_status="ok" policy_reason="" incoming_host="${DOCKER_HOST:-}" incoming_context="${DOCKER_CONTEXT:-}"
     local host_docker_config="${DOCKER_CONFIG:-$HOME/.docker}/config.json" host_creds_store="none" host_cred_helpers="0"
-    local compose_version="unavailable" docker_server="unavailable" ports_available=false ports_json="[]" anonymous_config_exists=false issue="" listener_method
+    local compose_version="unavailable" docker_server="unavailable" docker_state="server-unavailable" doctor_ok=false
+    local ports_available=false ports_json="[]" anonymous_config_exists=false issue="" listener_method
     listener_method="$(listener_probe_method)"
     resolve_docker_endpoint
     if ! issue="$(docker_runtime_issue)"; then
@@ -2630,19 +2652,29 @@ cmd_doctor() {
     fi
     [[ -f "$docker_config_dir/config.json" ]] && anonymous_config_exists=true
     docker_path="$(command -v docker || printf '-')"
-    if [[ "$policy_status" == "ok" ]] && docker info >/dev/null 2>&1; then
-        compose_version="$(docker_compose_version)"
-        docker_server="$(docker info --format '{{.ServerVersion}}' 2>/dev/null || printf 'unavailable')"
-        ports_available=true
-        ports_json="$(port_records_json)"
+    compose_version="$(docker_compose_version)"
+    if [[ "$policy_status" == "ok" && "$docker_path" != "-" ]]; then
+        if docker_server="$(docker info --format '{{.ServerVersion}}' 2>/dev/null)" && [[ -n "$docker_server" ]]; then
+            ports_available=true
+            ports_json="$(port_records_json)"
+        else
+            docker_server="unavailable"
+        fi
     fi
+    docker_state="$(doctor_runtime_state "$policy_status" "$docker_path" "$endpoint_path_exists" "$docker_server")"
+    doctor_ok="$(bool_json test "$docker_state" = healthy)"
+    [[ "$docker_state" != "cli-unavailable" ]] || warn "Docker CLI is unavailable"
+    [[ "$docker_state" != "socket-stale" ]] || warn "Docker unix endpoint socket exists but the Docker server is unavailable"
+    [[ "$docker_state" != "server-unavailable" ]] || warn "Docker server is unavailable for the selected endpoint"
+    [[ "$compose_version" != "unavailable" ]] || warn "Docker Compose CLI is unavailable"
     if [[ "$json" == true ]]; then
-        emit_stack_json doctor true "$(envelope_filter envelope-doctor.jq)" \
+        emit_stack_json doctor "$doctor_ok" "$(envelope_filter envelope-doctor.jq)" \
             --arg dockerPath "$docker_path" \
             --arg policyStatus "$policy_status" \
             --arg policyReason "$policy_reason" \
             --arg resolvedEndpoint "$docker_endpoint" \
             --argjson endpointPathExists "$endpoint_path_exists" \
+            --arg dockerState "$docker_state" \
             --arg endpointFingerprint "$(docker_endpoint_hash 2>/dev/null || true)" \
             --arg hostCredsStore "$host_creds_store" \
             --arg hostCredHelpers "$host_cred_helpers" \
@@ -2656,6 +2688,7 @@ cmd_doctor() {
             --argjson colima "$(colima_json)" \
             --argjson appleContainer "$(apple_container_json)" \
             --argjson diagnostic "$diagnostic_json"
+        [[ "$doctor_ok" == true ]] || exit 1
         return 0
     fi
     printf 'doctor\tcommand=forge-provision\ndoctor\tforge_root=%s\ndoctor\tproject=%s\ndoctor\troot_key=%s\ndoctor\tdocker=%s\ndoctor\tdocker_policy=%s\n' \
@@ -2663,8 +2696,8 @@ cmd_doctor() {
     [[ -z "$policy_reason" ]] || printf 'doctor\tdocker_policy_reason=%s\n' "$policy_reason"
     printf 'doctor\tresolved_endpoint=%s\ndoctor\tendpoint_path_exists=%s\ndoctor\tincoming_docker_host=%s\ndoctor\tincoming_docker_context=%s\ndoctor\tactive_docker_host=%s\ndoctor\tactive_docker_context=%s\ndoctor\tdocker_config=%s\n' \
         "$docker_endpoint" "$endpoint_path_exists" "$incoming_host" "$incoming_context" "${DOCKER_HOST:-}" "${DOCKER_CONTEXT:-}" "${DOCKER_CONFIG:-$HOME/.docker}"
-    printf 'doctor\thost_docker_config=%s\ndoctor\thost_docker_config_credsStore=%s\ndoctor\thost_docker_config_credHelpers=%s\ndoctor\tanonymous_pull_config=%s\texists=%s\ndoctor\tdocker_compose=%s\ndoctor\tdocker_server=%s\n' \
-        "$host_docker_config" "$host_creds_store" "$host_cred_helpers" "$docker_config_dir/config.json" "$anonymous_config_exists" "$compose_version" "$docker_server"
+    printf 'doctor\thost_docker_config=%s\ndoctor\thost_docker_config_credsStore=%s\ndoctor\thost_docker_config_credHelpers=%s\ndoctor\tanonymous_pull_config=%s\texists=%s\ndoctor\tdocker_compose=%s\ndoctor\tdocker_server=%s\ndoctor\tdocker_state=%s\n' \
+        "$host_docker_config" "$host_creds_store" "$host_cred_helpers" "$docker_config_dir/config.json" "$anonymous_config_exists" "$compose_version" "$docker_server" "$docker_state"
     local ports_usable=false
     [[ "$ports_available" != true ]] || ports_usable="$(jq -r 'all(.[]; .state == "disabled" or .owner == "none" or .owner == "provision:this-project")' <<<"$ports_json")"
     printf 'doctor\tports_inspectable=%s\ndoctor\tports_usable=%s\n' "$ports_available" "$ports_usable"
@@ -2673,6 +2706,7 @@ cmd_doctor() {
     else
         printf 'doctor\tports=skipped\treason=docker-unavailable-or-policy-failed\n'
     fi
+    [[ "$doctor_ok" == true ]] || exit 1
 }
 
 cmd_inventory() {
@@ -2714,6 +2748,12 @@ cmd_self_test() {
     [[ -z "${command_handler["psql-timescale"]+x}" ]] || die "retired psql-timescale command is still registered"
     [[ -z "${command_handler["psql-search"]+x}" ]] || die "retired psql-search command is still registered"
     [[ -z "${command_handler["psql-pgduckdb"]+x}" ]] || die "retired psql-pgduckdb command is still registered"
+    [[ "$(doctor_runtime_state ok /path/to/docker true 1.2.3)" == "healthy" ]] || die "doctor runtime state missed healthy server"
+    [[ "$(doctor_runtime_state ok /path/to/docker true unavailable)" == "socket-stale" ]] || die "doctor runtime state missed stale socket"
+    [[ "$(doctor_runtime_state ok /path/to/docker false unavailable)" == "socket-absent" ]] || die "doctor runtime state missed absent socket"
+    [[ "$(doctor_runtime_state ok - true unavailable)" == "cli-unavailable" ]] || die "doctor runtime state missed unavailable CLI"
+    [[ "$(doctor_runtime_state rejected /path/to/docker true unavailable)" == "endpoint-policy-rejected" ]] || die "doctor runtime state missed rejected policy"
+    [[ "$(doctor_runtime_state ok /path/to/docker null unavailable)" == "server-unavailable" ]] || die "doctor runtime state missed non-unix server failure"
     for command in "${!command_handler[@]}"; do
         [[ -n "${command_desc[$command]:-}" ]] || die "command missing description: $command"
         [[ -n "${command_argspec[$command]:-}" ]] || die "command missing argspec: $command"
@@ -2797,7 +2837,7 @@ cmd_self_test() {
     rm -rf -- "$tmp_dir"
     validate_forge_root "$forge_root"
     if [[ "$output_json" == true ]]; then
-        emit_stack_json self-test true '. + {checks: {commands: true, services: true, extensions: true, root: true, gnuCoreutils: true}}'
+        emit_stack_json self-test true '. + {checks: {commands: true, services: true, extensions: true, root: true, gnuCoreutils: true, doctorRuntime: true}}'
     else
         printf 'self-test\tok\t%s\n' "$forge_root"
     fi

@@ -22,25 +22,21 @@ This table selects the owner for a foreign signal; when a signal matches several
 The absence taxonomy arrives settled from `shapes.md` — `None`-as-failure never crosses inward, computed non-failing absence is `Option`, a cause-bearing foreign state is a `@tagged_union` case — and the carrier-minting matrix is `rails-and-effects.md`'s. This page owns what neither settles: _where_ a foreign sentinel is admitted, _where_ a plugin set is discovered without importing it, and that every site that can mint absence or activate foreign code is a seam.
 
 [SENTINEL_SITE]:
-
 - Law: a sentinel projects at the single read site that first sees the foreign value, and that line is the last one in the program that names the sentinel — the carrier the rail page's `of_optional`/`to_result` matrix mints crosses inward, and no interior reader re-derives absence from a value it was never handed.
 - Law: a sentinel that _re-appears_ after the seam — a transform that can itself return `None`, a nested field that erases late, a provider default surfacing on a second call — is a second admission site, not a leaked first one, so it projects where it appears; the present branch never manufactures `Some(None)`, because a carrier wrapping a foreign sentinel re-leaks the sentinel one hop later and breaks the interior totality the first admission promised.
 - Reject: a sentinel admitted once then trusted forever where a later transform re-mints it; a `None`-check threaded through interior flow; a nullable field riding past the seam; a `dict.get(...)` `None` consumed directly; `Option.value` read without an `is_some` proof.
 
 [ENV_ADMISSION]:
-
 - Law: the environment is the one foreign surface whose read, validation, and rail lift fuse into a single admission step — a `pydantic-settings` `BaseSettings` runs the source chain (env, dotenv, secrets dir) at construction, so `os.environ` is never read raw and a missing or malformed variable surfaces as `SettingsError`/`ValidationError` captured once into the seam fault, never a scattered `os.getenv(...) or default` across the interior.
 - Law: provision and runtime state are separate axes — a required capability is _always present_ as a port whose value carries its own `unavailable`/`degraded` case, so a settings field is the static admission of presence and the port's tagged state is the dynamic admission of liveness; a `None` field standing in for "the service might be down" conflates the two.
 - Reject: a raw `os.environ[...]` read in interior flow; a settings value re-validated past the `BaseSettings` step; a nullable settings field where the absence carries a cause the port should own; a `beartype.vale.Is` refinement on a settings field, which the pydantic validator ignores (`shapes.md` owns the per-validator-metadata law) — the field constraint rides a pydantic-native `AnyUrl`, a constrained type, or a `Field` bound.
 
 [PROBE_SWEEP]:
-
 - Law: a multi-probe admission — several settings groups, capability handshakes, or provider reads admitted together — fixes its abort-versus-accumulate disposition at the seam where the probes run, never downstream, and composes the rail page's settled fold to realize it; the seam's contribution is the locality, that the decision is bound before the first probe rather than reconstructed by a later reader from a `Block` of mixed outcomes.
 - Law: a per-probe boundary obligation — a release, a converted provider exception, a token check — attaches at the probe that incurs it, never inside the traverse that sweeps, because a fail-fast traverse abandons the tail probes and their obligations never run; a survivor/casualty partition is admitted only when callers need both the usable values and the rejected facts, and the obligation rides each probe's own rail so an abandoned probe carries no orphaned cleanup.
 - Reject: a single rail for a sweep whose callers need every casualty; a cleanup hung off the sweep that a short-circuit skips; a later walk over the admitted set reinterpreting why each probe disappeared.
 
 [PLUGIN_DISCOVERY]:
-
 - Law: a plugin set is read from distribution metadata, never an import-time registry — `importlib.metadata.entry_points(group=...)` (equivalently `.select(group=, name=)` over the returned `EntryPoints`, whose `.groups` and `.names` enumerate the inventory) exposes each `EntryPoint`'s `name`, `group`, `value`, `module`, and `attr` without importing the plugin module, so the available set is recoverable from metadata and discovery runs no plugin code.
 - Law: `EntryPoint.load()` is the single eager activation seam — it imports the named module and resolves the attribute exactly once, traversed fallibly through the rail page's fold so a broken plugin lands as one casualty rather than an import-time crash, and the loaded value is handed to the interior's own admission like any other foreign value.
 - Law: explicit discovery is the structural replacement for the import-time side-effect registry — a deferred `lazy import` never runs the module body a registering decorator, metaclass, or `__init_subclass__` hook relied on, so that registry silently empties, where metadata discovery plus an explicit `.load()` is independent of whether the plugin module ever imports.
@@ -112,7 +108,6 @@ def discovered(group: str, disposition: Sweep, /) -> Result[Block[tuple[str, obj
 ## [03]-[LIFETIME]
 
 [CAPSULE_OWNER]:
-
 - Use: native handles, FFI pointers, pinned buffers, pooled values, external cursors, memory-mapped trees, and any foreign object with an explicit release.
 - Law: borrowed, owned, and measured lifetimes are cases of one closed `@tagged_union` capsule — the owned and measured cases register release through `weakref.finalize` tied to the owner's identity so disposal fires once when the capsule is collected, the borrowed case projects a detached copy and never disposes; one `use` fold projects a read-only copy across all three dispositions under a single or-pattern so a caller never branches on lifetime to read.
 - Law: the measured disposition is the owned, mutable window — a multi-megabyte buffer or memory-mapped tree revised across many edits — and `revised` threads that one owned window through the edit `Block` as a single imperative kernel mutating it in place by slice assignment and returning a write-count `Result`; the per-edit fold that rebinds and recopies the whole buffer is the rejected `O(N*size)` form the platform makes prohibitive, so mutation is the disposition's structural property and `revised` refuses the read-only cases with the `readonly` fault rather than a runtime flag.
@@ -217,14 +212,12 @@ def detached(capsule: Capsule, /) -> Result[bytes, CapsuleFault]:
 ```
 
 [REF_SAFE_PROJECTION]:
-
 - Law: the borrow window the capsule's `use` fold opens is strictly synchronous — a `memoryview`/`collections.abc.Buffer` materialized from foreign memory is consumed and copied to owned material before any `await`, because a suspension between the view and its copy lets the foreign owner free the backing store mid-await and the resumed read faults on dangling memory; the value that escapes the window is `bytes(view)` or an owned array, never the view, so the async seam never threads a live foreign buffer through a checkpoint.
 - Reject: storing a `memoryview` on a frozen owner; returning the view itself; an `await` between the view materialization and its `bytes(view)` copy; a foreign `Buffer` passed to `to_thread.run_sync` where the loop can free it before the worker reads it.
 
 ## [04]-[EVENTS_AND_THREADS]
 
 [SUBSCRIPTION_VALUE]:
-
 - Use: events, callbacks, observers, file watches, notifications, and foreign lifecycle hooks.
 - Law: a subscription is the detacher returned by attach, holding the exact callback identity attach used; the callback borrows every touched handle for the whole subscription window, and detach completes before any borrowed handle is released. The detacher is a frozen value with a `close()` method, consumed through `with` or an `AsyncExitStack`, never an inline lambda that cannot be removed.
 - Law: the subscription set is the scope — reactivation constructs a fresh set, never appends to a retained one, and the set dies with the live state that owns it.
@@ -232,14 +225,12 @@ def detached(capsule: Capsule, /) -> Result[bytes, CapsuleFault]:
 - Reject: an inline lambda passed to `attach` that detach cannot match; a finalizer-owned unsubscribe; split attach and detach owners; host deregistration assumed rather than confirmed.
 
 [HOST_MARSHAL]:
-
 - Law: the seam this card owns is the inbound crossing's evidence — a foreign thread the loop never spawned re-enters through `concurrency.md`'s `BlockingPortal`, and the seam converts that crossing's outcome into a closed fault the interior reads, never the provider exception the bridge raised. The portal lifecycle (`start_blocking_portal`/`BlockingPortalProvider`, the coroutine-function-not-awaitable call contract, the worker-thread token rule for a bare `from_thread.run`) and the outbound offload it pairs with are `concurrency.md`'s runtime; the seam composes the bridge and owns only the conversion, mapping every non-cancellation worker raise into the closed crossing fault so none escapes unconverted.
 - Law: a crossing fault carries which crossing failed — loop teardown after the bridge closed, a refused readiness handshake, a converted worker raise — as distinct closed cases, never one stringified provider message, so the `Recovery` predicate sends the loop-closed and handshake-refusal arms to rebuild a fresh provider — a closed loop's provider never re-runs, so reusing it re-faults — while the converted worker raise returns railed to `rails-and-effects.md`'s transient weave, never re-crossed at this seam; cancellation is `concurrency.md`'s re-raised carrier and never enters this fault family.
 - Law: context propagation and thread affinity are separate decisions — the bridge copies the caller's context across the crossing, and a callback reading no ambient state needs none; an interior transform never reads ambient thread state to recover what the crossing already carried, because the crossing's evidence is already an admitted value.
 - Reject: a `threading.current_thread()` affinity test in interior flow; an ambient `ContextVar` read inside a reusable transform; a fire-and-forget thread launch outside `concurrency.md`'s task group; `from_thread.run` from a thread the loop did not spawn; a stringified provider message standing in for the closed crossing fault.
 
 [HANDOFF_DRAIN]:
-
 - Law: a high-frequency foreign callback submits intent and returns — `concurrency.md`'s memory object stream is the log this seam owns for a consumer that must see every intermediate, and a single committed cell behind the agent is the latest-value register for a per-tick consumer; the consumer's need selects the carrier here, and producer back-pressure is the stream's `max_buffer_size`, its live fill read off `statistics().current_buffer_used` rather than a tally the seam maintains, independent of consumer pacing.
 - Law: a bounded stream's full behavior is the seam's declared policy stated where the producer sends — a zero `max_buffer_size` rendezvous-blocks the producer, a positive bound buffers then back-pressures — and `send_nowait`'s two failure signals are distinct dispositions the seam routes, never one collapsed arm: `WouldBlock` on a full positive bound is the back-pressure drop the policy already authorized, while `BrokenResourceError` means every receiver closed, so the callback retires its own subscription rather than dropping into a dead channel forever.
 - Reject: blocking the foreign callback on interior work; mutating interior state from the callback thread; the callback running arbitrary downstream logic instead of sending one message; collapsing `WouldBlock` and `BrokenResourceError` into one silent drop.
@@ -322,7 +313,6 @@ def subscribed(emitter: "Emitter", sink: MemoryObjectSendStream["Signal"], /) ->
 ## [05]-[STATE_CELLS]
 
 [SERIALIZING_AGENT]:
-
 - Use: session, singleton, wake, drain, and cross-call boundary lifetime — every cell a foreign edge mutates from more than one task.
 - Law: the serialization owner is one consumer task draining a `MemoryObjectReceiveStream[Command]` — the bundled `expression.MailboxProcessor` is forbidden here because it reaches `asyncio.get_event_loop()` against the `asyncio` ban, so the cell rides an `anyio` send/receive pair where producers `send_nowait` a command and the lone consumer applies it. The agent holds the cell as a plain local, replaces the whole immutable reference per applied command, and is the only reader, so a torn multi-field read and a read-modify-write race are both structurally impossible — the `anyio` single-consumer drain is what `threading.Lock` around shared mutable state is the rejected substitute for.
 - Law: the lifecycle is a closed `@tagged_union` state family (pending, live, draining, failed; never booleans), the agent's command set is a second closed `@tagged_union` (open, close, drain, poison) folded under one total `match`, and the refusal rail is a third closed `GateFault` vocabulary — never a bare `str` reason — so the `failed` state carries the typed cause and a waiter recovers on the fault's own case rather than a reconstructed message. A new lifecycle verb is one state case plus one command case plus one transition arm, never a new lock, flag, or sibling mutator, so the agent surface absorbs the verb family the next requirement adds (the `draining` state is exactly that growth: one case carrying the deadline and in-flight count, one arm fencing admission).
@@ -332,7 +322,6 @@ def subscribed(emitter: "Emitter", sink: MemoryObjectSendStream["Signal"], /) ->
 - Reject: a `MailboxProcessor` on the `anyio` substrate; a `threading.Lock` or shutdown boolean standing in for the agent; a bare `str` reason where the closed `GateFault` carries the cause; a second flag polled from outside the reply; teardown that disposes a replacement session; a factory, deadline await, or external call inside the apply step; acting on a change fired from an aborted transition.
 
 [MEMO_KEY]:
-
 - Law: a boundary memo key binds the foreign identity content alone cannot recover — a provider handle's `id()`, a session token, or a capability fingerprint joins the content and policy axes into one hashable composite, a fixed axis set riding a `tuple` and a dynamic one a `frozendict`, so two payloads identical in bytes but sourced from distinct foreign owners never collide.
 - Law: a structural index or tree diff binds the discriminant content alone cannot recover — a node's path-vector or sibling ordinal joins the content digest so two identical-content siblings under one parent key distinctly, the structural axis riding the same composite `tuple` the foreign-identity axis does; an order-sensitive tree keyed on content alone collapses those siblings to one entry and the diff loses the move.
 - Reject: a content-only, path-only, or type-only key dropping the foreign axis; a content-only AST or tree key dropping the structural-path axis and collapsing identical-content siblings; a `dict[str, object]` key bag where a fixed `tuple` states the axes; a mutable `dict` memo store where the agent's own state or a `frozendict` snapshot owns the table.
@@ -459,14 +448,12 @@ def keyed(
 ## [06]-[WIRE_CONTRACTS]
 
 [PROTOCOL_EDGE]:
-
 - Use: payload structs, envelopes, serializer contracts, persisted packets, and remote frames.
 - Law: wire shapes stay protocol-shaped at the edge — a `msgspec.Struct` with `rename=`/`forbid_unknown_fields=True` or a pydantic ingress model is the only site where protocol and interior schemas meet, and interior canonical owners carry no codec attributes, serializer options, or transport fields. The converter is the boundary; the domain owner is unaware of the wire.
 - Law: inner envelopes reject drift — `forbid_unknown_fields=True` on `msgspec.Struct` and `extra="forbid"` on a pydantic model fail an unknown member before admission — while only a declared `extra_items` band tolerates extension material.
 - Reject: a `schema_version` branch on a canonical owner that belongs to read-boundary migration; last-write-wins parse for an owned protocol shape; a domain owner decorated with serializer config.
 
 [CONVERTER_OWNER]:
-
 - Law: one converter owns a closed wire family — `msgspec.json.Decoder(type=Family)` over a tagged union resolves the discriminant once on read and `msgspec.json.Encoder` emits it on write, and `msgspec.convert(owner, Wire, from_attributes=True)` projects a pure field rename when the wire struct keeps canonical attribute names and renames only at the encoded edge; the converter consumes exactly the family it owns and discriminates both wire-rejection paths into distinct fault cases — `msgspec.DecodeError` for malformed bytes, `msgspec.ValidationError` for a constraint or discriminant miss — as separate `except` arms under the shared `msgspec.MsgspecError` base, so neither escapes unconverted and which path failed stays a boundary fact rather than collapsing to one token.
 - Law: a value-transforming projection (not a pure rename) rides an explicit constructor or a `frozendict` adapter table, never `msgspec.convert`; the convert path is reserved for name-only correspondence.
 - Reject: a converter per case; a case-level codec bypassing the family owner; a sentinel returned from a decoder hook instead of a raised validation error; per-call `Decoder`/`Encoder` construction where one module-level instance serves.
@@ -528,7 +515,6 @@ def signed(raw: bytes, /) -> Result[tuple[str, str], WireFault]:
 ```
 
 [BYTE_IDENTITY]:
-
 - Use: signatures, content hashes, idempotency keys, checksums, and byte-stable forwarding.
 - Law: the sub-tree that must round-trip byte-identically is a `msgspec.Raw` band on the envelope — the decoder holds the inner octets opaque instead of parsing them and a re-encode writes them verbatim, so a float spelled `1.1000`, a `-0.0`, and a non-finite `1e400` survive intact where a parse-then-reserialize re-spells every one; `bytes(raw)` is the exact octet sequence the digest signs, captured before any interior owner sees a parsed value.
 - Law: semantic equality and byte equality are different contracts — one `hashlib` surface per byte-identity domain is fixed at composition (`hashlib.sha256(bytes(raw)).hexdigest()`), never chosen per site, and the parsed projection of the same envelope is a separate egress that never feeds the signature.

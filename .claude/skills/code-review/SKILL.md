@@ -12,7 +12,7 @@ description: >-
 
 # [CODE_REVIEW]
 
-CodeRabbit review of changed code: bugs, security issues, and quality risks, grouped by severity, with fix guidance shaped for agents via `--agent` output.
+CodeRabbit review of changed code: bugs, security issues, and quality risks, grouped by severity, with fix guidance shaped for agents via `--agent` output. The runbook sections run in order from prerequisites through the autonomous fix cycle; the configuration reference and security guardrails that follow carry standing law the review consults when it calls for them.
 
 ## [01]-[PREREQUISITES]
 
@@ -64,7 +64,7 @@ An implement-plus-review request runs the cycle without per-step prompts: implem
 
 A review battery gains an additional independent perspective from an agy (Gemini) read-only lane when the change carries visual, design-judgment, or cross-model blind-spot weight: the lane returns typed findings the reviewing Claude agent adjudicates alongside CodeRabbit's, and the agy skill owns that lane's contract.
 
-## [05]-[REPO_CONFIGURATION]
+## [05]-[CONFIGURATION_REFERENCE]
 
 `.coderabbit.yaml` at the repository root owns review behavior for hosted and CLI reviews; organization and workspace global overrides outrank it, and it outranks every UI setting.
 

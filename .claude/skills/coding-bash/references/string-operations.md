@@ -2,13 +2,13 @@
 
 Multi-stage transform pipelines, regex extraction with BASH_REMATCH, codec patterns (URL/hex/base64), printf formatting, and template expansion.
 
-| [INDEX] | [PATTERN]          | [S] | [USE_WHEN]                                    |
-| :-----: | :----------------- | :-: | :-------------------------------------------- |
-|  [01]   | Transform pipeline | S1  | Multi-stage string reshape via chained PE     |
-|  [02]   | Regex extraction   | S2  | Structured parsing via BASH_REMATCH captures  |
-|  [03]   | Printf formatting  | S3  | `%q`, `%(%T)T`, `printf -v` fork-free capture |
-|  [04]   | Codec patterns     | S4  | URL encode, hex, base64, JSON escape          |
-|  [05]   | Template expansion | S5  | Heredocs, format strings, envsubst            |
+| [INDEX] | [PATTERN]          |  [S]  | [USE_WHEN]                                    |
+| :-----: | :----------------- | :---: | :-------------------------------------------- |
+|  [01]   | Transform pipeline |  S1   | Multi-stage string reshape via chained PE     |
+|  [02]   | Regex extraction   |  S2   | Structured parsing via BASH_REMATCH captures  |
+|  [03]   | Printf formatting  |  S3   | `%q`, `%(%T)T`, `printf -v` fork-free capture |
+|  [04]   | Codec patterns     |  S4   | URL encode, hex, base64, JSON escape          |
+|  [05]   | Template expansion |  S5   | Heredocs, format strings, envsubst            |
 
 ## [01]-[TRANSFORM_PIPELINES]
 

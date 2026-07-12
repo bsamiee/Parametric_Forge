@@ -1,18 +1,18 @@
 # [SCRIPT_PATTERNS]
 
-| [INDEX] | [PATTERN]              | [S] | [USE_WHEN]                                      |
-| :-----: | :--------------------- | :-: | :---------------------------------------------- |
-|  [01]   | Polymorphic arg parser | S1  | Multi-axis dispatch, short/long flags           |
-|  [02]   | Metadata-driven help   | S2  | Auto-generated, grouped, colorized usage        |
-|  [03]   | Configuration loader   | S3  | Key-value config files with validation          |
-|  [04]   | Structured logging     | S4  | Caller context, JSON-ND/text polymorphic output |
-|  [05]   | Trap chain + cleanup   | S5  | ERR trap, signal internals, EXIT interaction    |
-|  [06]   | Parallel processing    | S6  | Bounded concurrency with PID tracking           |
-|  [07]   | Locks and signals      | S7  | Single-instance, graceful shutdown              |
-|  [08]   | Retry with backoff     | S8  | Network calls, flaky ops, SRANDOM jitter        |
-|  [09]   | Atomic I/O             | S9  | File output, state persistence, config writes   |
-|  [10]   | Coprocess              | S10 | Persistent subprocess, sentinel-framed I/O      |
-|  [11]   | Testing                | S11 | Inline assertions, self-test mode               |
+| [INDEX] | [PATTERN]              |  [S]  | [USE_WHEN]                                      |
+| :-----: | :--------------------- | :---: | :---------------------------------------------- |
+|  [01]   | Polymorphic arg parser |  S1   | Multi-axis dispatch, short/long flags           |
+|  [02]   | Metadata-driven help   |  S2   | Auto-generated, grouped, colorized usage        |
+|  [03]   | Configuration loader   |  S3   | Key-value config files with validation          |
+|  [04]   | Structured logging     |  S4   | Caller context, JSON-ND/text polymorphic output |
+|  [05]   | Trap chain + cleanup   |  S5   | ERR trap, signal internals, EXIT interaction    |
+|  [06]   | Parallel processing    |  S6   | Bounded concurrency with PID tracking           |
+|  [07]   | Locks and signals      |  S7   | Single-instance, graceful shutdown              |
+|  [08]   | Retry with backoff     |  S8   | Network calls, flaky ops, SRANDOM jitter        |
+|  [09]   | Atomic I/O             |  S9   | File output, state persistence, config writes   |
+|  [10]   | Coprocess              |  S10  | Persistent subprocess, sentinel-framed I/O      |
+|  [11]   | Testing                |  S11  | Inline assertions, self-test mode               |
 
 ## [01]-[ARGUMENT_PARSING]
 

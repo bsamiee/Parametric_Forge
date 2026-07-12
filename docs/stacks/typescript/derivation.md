@@ -82,7 +82,6 @@ Each table routes a correspondence to the form that owns it, and every `[USE]` n
 Each contract fixes the placement rule its chooser rows cannot state. Snippets compose settled surfaces as supporting material; the spotlight is the derivation mechanism itself, and each contract closes on the boundary that hands the derived surface to its owning page.
 
 [VOCABULARY_TABLE_SITE]:
-
 - Use when: a bounded keyed domain carries behavior rows and its secondary surfaces — discriminant, projections, wire literal, returns — must stay provably consistent with it.
 - Accept: interior anchors unexported — the `as const` key tuple where order, iteration, or a non-empty spread is load-bearing, the plain `as const` row table keeping every literal — and one exported owner assembling them: rows spread in, companions as properties, operations as members, the merged `declare namespace` hub carrying every derived type off the single import, the assembled owner's alias flattened through `Types.Simplify` so consumers read one record instead of a `typeof` intersection; the contract as a constrained-default guard pair inside the hub — a row guard whose default `typeof` query proves completeness and row shape, a key guard whose default discriminant proves no excess row — drift failing loudly at the alias declaration with zero widening of the anchors; `keyof typeof` discriminants; indexed row and axis projections; a conditional return derived as indexed access over the table keyed by the generic literal parameter; the tuple spread into `Schema.Literal`.
 - Reject: a hand union or parallel constant beside the table; a discriminant anchored on the assembled owner — `keyof` there drags member keys into the key space, so `Kind` anchors on the interior row table; an annotation restating row literals to buy the export — the assembled owner's annotation derives as a `typeof` intersection over its interior anchors; a row-tuple anchor (`[{ kind: ... }] as const`) self-carrying its keys — lookup degrades to a linear scan and the discriminant re-derives as `(typeof rows)[number]["kind"]`, so the record owns lookup and the tuple owns order; `Object.keys` enumeration widened to `Array<string>` and asserted back when the tuple already carries the ordered key set; an `extends ?` conditional return — the checker cannot prove its body, and the cast it demands marks dispatch that belongs to the overload owner.
@@ -133,7 +132,6 @@ export { Tier };
 ```
 
 [REGISTRY_MERGE_SITE]:
-
 - Use when: a row set must accept contributions from modules the owner never imports — capability rows, codec rows, handler rows landing from feature modules — while the union, projections, and governance still derive at the owner.
 - Accept: one open `interface Registry` merged with its `declare namespace` hub under one exported name — the one sanctioned open interface in the corpus; contributor rows injected as `declare module "<owner-specifier>"` blocks at the declaring module, one row per contribution; `keyof Registry` deriving the union across every contribution with no central edit; indexed access `Registry[K]["axis"]` projecting per-contribution literals; the constrained-default guard re-validating the merged whole, so a malformed row in any contributing module fails at the owner's declaration.
 - Reject: a second open interface anywhere — openness is this seam's monopoly, and a shape that merely wants fields is a closed owner; augmentation aimed at any module other than the declaring one; a central table contributors edit — the seam exists so contribution is a new file's row, never a shared-file edit; a registry whose every row one module contributes — a closed `as const` table wearing the open form.
@@ -171,7 +169,6 @@ export type { Registry };
 ```
 
 [GENERATED_SURFACE_SITE]:
-
 - Use when: a member family corresponds to an anchor generatively — renamed handler names, capability matrices, filtered projections — so the family's size tracks the anchor's, never a hand count.
 - Accept: mapped types with `as` key remapping and the intrinsic case operators `Capitalize`, `Uncapitalize`, `Uppercase`, `Lowercase`; template-literal cross products multiplying union anchors; row-predicate filtering by remapping the excluded key to `never`; modifier algebra on the same mapped clause — `-readonly` strips and `+?`/`-?` recast presence, so a type-seam view derives with zero second family; `Extract` and `Exclude` over template patterns for subsets; the governed value closing the loop under a stated `Record<GeneratedUnion, V>` annotation — the mapped domain demands completeness, the fresh-literal check rejects excess, the binding exports, and a new anchor row breaks it loudly at compile time; the consumed-union residue `(x satisfies never)` in the terminal arm of a narrowing chain — `never` assigns to every return type, so the arm compiles exactly while the chain consumes the whole union.
 - Reject: sibling interfaces restating a family member by member; enumerated string constants a template cross product derives; a parallel filtered table beside its anchor; a generated family over members that merely rhyme — generation encodes a real correspondence, never a coincidence of spelling.
@@ -224,7 +221,6 @@ export { quota, Signal, toll };
 ```
 
 [INFERENCE_PRESOLVE_SITE]:
-
 - Use when: an owner accepts literal-bearing arguments whose precision downstream types consume — plans, routes, step tuples, keyed selections.
 - Accept: a `const` type parameter so caller literals and tuples arrive narrow with zero call-site ceremony; `NoInfer` on every position that checks against another position's inference instead of driving it; an instantiation expression pre-solving a package generic once at the owner under a semantic name — on an exported binding the applied generic rides the annotation as `typeof` over the instantiation, never a restated signature; a variadic-tuple signature — `readonly [...Steps, Next]` — flowing tuple shape through the owner with every literal position preserved, leading or trailing rest patterns replacing a positional overload ladder; derived return fields projecting the inferred literal shape.
 - Reject: caller `as const` discipline — unenforceable and lost at the first refactor; a mirror type parameter added to repair inference order; a wrapper arrow restating a whole signature to pin one type argument — the instantiation expression pins it with no body; a call site writing a type argument the owner's signature should have fixed; index arithmetic re-deriving a position the variadic pattern states — `steps[steps.length - 1]` demands the cast the pattern never needs; an exported call-result binding — its type exists only by inference, so it fails the stated-annotation gate, and a proof or staging binding stays interior instead.
@@ -271,7 +267,6 @@ export type { Step };
 ```
 
 [REVERSE_MAPPED_SITE]:
-
 - Use when: an owner takes a keyed record of rows whose payloads relate within each row — a seed and the step that consumes it, a config and its handler — and every lambda must arrive typed with zero call-site ceremony.
 - Accept: one reverse-mapped parameter — `{ readonly [K in keyof T]: Cell<T[K]> }` over a bare `T extends Record<string, unknown>` — so the caller's object literal solves `T` key by key; exactly one non-function site per row at depth 1 driving the row's inference, every function site at depth 2 consuming the solved payload contextually; returns projecting `T[K]` by indexed access so the checker proves the body; per-row precision at the projection — a keyed read returns its row's payload, never the cross-row union.
 - Reject: a `const` type parameter on a reverse-mapped owner — a literal-pinned seed forbids the step from producing new values of the row's type, so rows widen deliberately and literal retention stays with the presolve owner; lambda parameter annotations restating what the sibling site already solves; a row whose only `T[K]` occurrence hides under a second function layer — inference strands the row at `unknown` and every consumer widens; a call-site type argument.
@@ -307,7 +302,6 @@ export { lattice };
 ```
 
 [CONDITIONAL_DECOMPOSITION_SITE]:
-
 - Use when: a type computes from another type's structure — channel extraction, literal-pattern parsing, whole-shape questions over unions.
 - Accept: shipped extractors first — `Effect.Effect.Success`, `Effect.Effect.Error`, `Effect.Effect.Context`, `Schema.Schema.Type`, `Schema.Schema.Encoded`, `Context.Tag.Service`, `Layer.Layer.Success` — so a hand `infer` over a package carrier re-derives what the package already exports; one bracketed multi-clause conditional for local carriers, every channel extracted in a single match with `infer ... extends` constraints inline; naked-parameter distribution only as the deliberate member-wise map; tail-position recursion with an accumulator parameter for bounded literal-pattern decomposition.
 - Reject: chained single-`infer` conditionals where one clause extracts every channel; a naked conditional that must answer once for the whole — `boolean` splits to `true | false` and `never` distributes to nothing, so an undeclared posture is a latent bug, not a style choice; recursion that wraps its own result — pending work stacks toward the depth gate that the tail form elides; a directive over `TS2589` or `TS2590` — the overrun is the architecture finding, not the noise.
@@ -355,7 +349,6 @@ export type { Facet, Flow, Parse, Realm, Trail, Verb };
 ```
 
 [CONTAINER_KIND_SITE]:
-
 - Use when: one combinator must serve many containers — the same enrichment over `Option`, `ReadonlyArray`, and an own container, written once.
 - Accept: an own `HKT.TypeLambda` implementor per own container, whose single `readonly type` line states how the container consumes `this["Target"]` — interface-declared by necessity, since a `this` type resolves only in an interface, and with the registry seam it is one of this layer's two interface sites; combinator signatures over `HKT.Kind<F, In, Out2, Out1, Target>` constrained by the `@effect/typeclass` vocabulary — `Covariant` and its siblings — with `In`, `Out2`, and `Out1` threading ambient channels and `Target` as the mapped slot; shipped instances from `@effect/typeclass/data/Option` and `@effect/typeclass/data/Array`; one own instance per own container, its dual `map` paired with the `covariant.imap` derivation.
 - Reject: an HKT combinator with one instance — an ordinary generic wearing a lambda; domain variation carried on `F` — vocabulary rows and tagged families own domain axes, the lambda owns containers only; a local functor-shaped interface shadowing the typeclass vocabulary; container abstraction no call site swaps.
@@ -403,7 +396,6 @@ export type { Ranked, RankedTypeLambda };
 ```
 
 [NOMINAL_CARRIER_SITE]:
-
 - Use when: an own carrier type — a feed, a handle, a resource cell — must not unify with structural look-alikes, and its type parameters need declared, witnessed variance.
 - Accept: the annotated `unique symbol` pair — `const FeedTypeId: unique symbol = Symbol.for("<scope>/Feed")` with the same-name `type FeedTypeId = typeof FeedTypeId` — the symbol is the nominal key and `Symbol.for` holds one identity across module instances; the carrier keyed by `[FeedTypeId]` holding a variance struct, one row per parameter at its true variance — `Types.Contravariant<Cmd>`, `Types.Covariant<Row>`, `Types.Invariant` where reads meet writes — paired with `in`/`out` on the parameter list; cast-free runtime witnesses — `Function.constVoid` inhabits a contravariant row and `(_: never) => _` a covariant row; assignability then follows declared variance, so a carrier of narrower commands and wider rows flows where the wider carrier is demanded.
 - Reject: `Schema.brand` reached for carrier identity — the brand marks admitted values at the decode seam inside Schema owners and carries parse evidence, never carrier identity; a TypeId minted for a domain shape a Schema owner admits — the same defect from the other plane; a variance struct omitting a parameter — the omitted parameter erases from comparison exactly like an unwitnessed typestate parameter, and instantiations unify; a string-literal brand field as the key — two modules spelling one string forge each other, where `unique symbol` identity cannot collide.
@@ -447,7 +439,6 @@ export type { Feed };
 ```
 
 [TYPESTATE_SITE]:
-
 - Use when: the legality of a call depends on protocol position — a terminal operation forbidden until every slot is set, a transition forbidden after it fires — and the runtime holds no state to check it.
 - Accept: one state parameter accumulating filled keys through `Exclude`-constrained transitions, so a refill fails at the key constraint; the terminal operation demanding completion structurally — its parameter typed at the full record, never a conditional return; `Record.singleton` composing the accumulated record — a generic computed key in an object literal widens to a string index, so the package construction carries what the checker cannot type; `@ts-expect-error` proof tokens pinning each forbidden call as rejected.
 - Reject: a phantom parameter carrying ordinary domain data — a value the program reads at runtime is a field on its owner, never a type argument; an unreferenced state parameter — an unused type parameter does not participate in assignability, so every instantiation unifies and the protocol it claims is unenforced; a runtime flag re-checking what the state parameter proves; a conditional-return terminal whose implementation needs the cast.
@@ -494,25 +485,21 @@ export type { Draft, Slots };
 Use these tests before keeping a form the derivation layer already owns.
 
 [PARALLEL_RESTATEMENT]:
-
 - Smell: a hand union tracks a table's keys, an interface mirrors a derivable type, a second constant restates rows another declaration carries, an exported anchor's annotation restates every row, a central table collects rows other modules contribute, or a value ungoverned by the type plane drifts unchecked beside its generated union.
 - Collapse: derive — `keyof typeof`, indexed access, mapped generation, template cross product, or the shipped extractor — home the contract as the namespace guard pair, open the row set through the registry seam when contribution crosses modules, and govern the value under the generated union's stated annotation.
 - Done when: every secondary surface computes from its anchor, every governed value breaks on anchor growth, and deleting the parallel changes no meaning anywhere.
 
 [CALL_SITE_RESIDUE]:
-
 - Smell: consumers write `as const`, type arguments, or literal re-assertions, annotate lambda parameters a sibling site already solves, re-derive a union the owner already carries, aim `Parameters`/`ReturnType` at an owner's export, or a call-result binding sits in the exports block.
 - Collapse: `const` type parameters, `NoInfer` check-only positions, instantiation expressions, and reverse-mapped parameters at the owner; the owner's merged namespace carries the type a consumer otherwise re-derives; proofs and staging bindings stay interior.
 - Done when: call sites carry values only, and the owner's signature is the only place inference is described.
 
 [TYPE_PLANE_OVERREACH]:
-
 - Smell: type-level parsing or arithmetic re-derives a value fact, a recursive conditional wraps its own result toward the depth gate, a decomposition consumes an alphabet past ASCII, a directive silences `TS2589` or `TS2590`, or a conditional return needs a cast to implement.
 - Collapse: compute at the value level and derive the type from the anchor; rewrite the recursion with a tail-position accumulator; move provable returns to indexed access and dispatch to the overload owner.
 - Done when: every conditional body is checker-proven, and no directive or cast spans a derivation.
 
 [UNWITNESSED_ABSTRACTION]:
-
 - Smell: an HKT combinator every call site applies to one container, a state parameter that is unused or carries domain data, a variance struct missing a parameter's row, a TypeId minted for a shape a Schema owner admits, or a registry whose every row one module contributes.
 - Collapse: the ordinary generic or the container's own module; a structural or `Types.Invariant` witness, or a field on the owning shape; the completed struct; `Schema.brand` at the decode seam; the closed `as const` table.
 - Done when: every lambda has plural instances at real call sites, every state parameter is witnessed and protocol-only, and every nominal or open form carries its witness.

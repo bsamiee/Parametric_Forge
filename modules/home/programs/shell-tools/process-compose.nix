@@ -71,34 +71,15 @@
     '';
   };
 
-  # Cockpit: the machine-scoped operator mesh — signed-event inbox, receipt tailer, MCP fleet drift probe — as one foreground process-compose
-  # project. Probes are processes with restart cadence, never launchd agents; the webhook port projects from the webhook.nix session variable.
-  webhookPort = lib.toInt config.home.sessionVariables.WEBHOOK_PORT;
+  # Cockpit: the machine-scoped operator mesh consumes the launchd-owned signed-event inbox through its receipt ledger and runs the MCP drift probe
+  # as one foreground process-compose project. The foreground mesh never mints a second owner for a standing machine service.
   receiptsFile = "${config.xdg.stateHome}/forge-webhook/receipts.jsonl";
 
   cockpitConfig = {
     version = "0.5";
     processes = {
-      inbox = {
-        command = "forge-webhook";
-        readiness_probe = {
-          http_get = {
-            host = "127.0.0.1";
-            port = webhookPort;
-            path = "/hooks/ping";
-          };
-          initial_delay_seconds = 1;
-          period_seconds = 10;
-          failure_threshold = 3;
-        };
-        availability = {
-          restart = "always";
-          backoff_seconds = 2;
-        };
-      };
       inbox-tail = {
         command = "touch ${receiptsFile} && exec tail -n 40 -F ${receiptsFile}";
-        depends_on.inbox.condition = "process_started";
         availability = {
           restart = "always";
           backoff_seconds = 2;

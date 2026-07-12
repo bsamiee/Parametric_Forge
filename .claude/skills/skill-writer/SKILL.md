@@ -22,7 +22,6 @@ A skill is deployed law plus packaged capability: the description competes for s
 ## [01]-[ROUTING]
 
 [REFERENCES]:
-
 - [01]-[ANATOMY](references/anatomy.md): bundle anatomy, budgets, frontmatter policy, the root schema, freedom calibration
 - [02]-[TRIGGERS](references/triggers.md): trigger science and listing economics
 - [03]-[DEFECTS](references/defects.md): the authoring defect catalog
@@ -30,11 +29,9 @@ A skill is deployed law plus packaged capability: the description competes for s
 - [05]-[ESTATE](references/estate.md): fleet-scale governance, audit cadence, mirror discipline
 
 [EXAMPLES]:
-
 - [01]-[REPAIRS](examples/repairs.md): pressure cases with worked fixes
 
 [SCRIPTS]:
-
 - [01]-[ESTATE_AUDIT](scripts/estate_audit.py): one-pass fleet sweep; invocation in the estate section
 
 ## [02]-[PLACEMENT]

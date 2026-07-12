@@ -663,6 +663,7 @@
       csharp-buildhost-orphans = ["(BuildHost-netcore|MSBuild[.]BuildHost[.]dll)" "" 600 "kill"];
       forge-edit-nvim-orphans = ["nvim.*(forge-edit|forge-accept)" "" 1800 "kill"];
       codex-lane-orphans = ["(^|/)codex (exec|e) " "Codex[.]app" 14400 "kill"];
+      bash-here-string-wedge = ["bash -c (wc -c <<<|cat <<<)" "" 600 "kill" "any"];
       loc-wedge = ["(^|/)bin/loc( |$)" "" 900 "kill" "any"];
       claude-hook-wedge = ["[.]claude/(hooks|scripts)/[a-z-]+[.]sh" "" 600 "kill" "any"];
       git-fsmonitor-census = ["fsmonitor--daemon" "" 604800 "report"];
@@ -775,6 +776,41 @@
           && { [ "$5" != kill ] || [[ ! "$cmd" =~ $deny_re ]]; }
       }
 
+      group_member_admitted() { # record row-action
+        local pid uid rss state cmd
+        IFS=$'\t' read -r pid _ _ uid _ _ rss state _ cmd < <(printf '%s\n' "$1")
+        [ "$uid" = "$owner_uid" ] && [ "$pid" != "$$" ] && [[ "$rss" =~ ^[0-9]+$ ]] && [[ "$state" != Z* ]] && [ -f "$work/managed" ] \
+          && ! awk -v pid="$pid" '$1 == pid { found = 1 } END { exit !found }' "$work/managed" \
+          && { [ "$2" != kill ] || [[ ! "$cmd" =~ $deny_re ]]; }
+      }
+
+      group_descends_from() { # group-file leader-pid
+        awk -F '\t' -v leader="$2" '
+          { parent[$1] = $2; live[$1] = 1 }
+          END {
+            if (!(leader in live)) exit 1
+            for (pid in live) {
+              if (pid == leader) continue
+              delete seen
+              cursor = pid
+              while (cursor != leader) {
+                if (!(cursor in parent) || seen[cursor]++) exit 1
+                cursor = parent[cursor]
+              }
+            }
+          }' "$1"
+      }
+
+      # Group survivors may be reparented after TERM kills their leader; immutable process-instance fields still defeat PID/PGID reuse.
+      same_group_identity() { # expected current
+        local ep _epp eg eu et ea er es ez ec cp _cpp cg cu ct ca cr cs cz cc
+        IFS=$'\t' read -r ep _epp eg eu et ea er es ez ec < <(printf '%s\n' "$1")
+        IFS=$'\t' read -r cp _cpp cg cu ct ca cr cs cz cc < <(printf '%s\n' "$2")
+        [ "$ep" = "$cp" ] && [ "$eg" = "$cg" ] && [ "$eu" = "$cu" ] && [ "$et" = "$ct" ] && [ "$ez" = "$cz" ] && [ "$ec" = "$cc" ] \
+          && [[ "$ea" =~ ^[0-9]+$ ]] && [[ "$ca" =~ ^[0-9]+$ ]] && [ "$ca" -ge "$ea" ] \
+          && [[ "$er" =~ ^[0-9]+$ ]] && [[ "$cr" =~ ^[0-9]+$ ]] && [ -n "$es" ] && [ -n "$cs" ]
+      }
+
       revalidate_candidate() { # expected match exclude minage row-action scope
         local pid _ current
         IFS=$'\t' read -r pid _ < <(printf '%s\n' "$1")
@@ -788,19 +824,18 @@
       group_snapshot_admitted() { # pgid match exclude minage row-action scope output expected-leader
         local pgid="$1" output="$7" expected_leader="$8" record pid leader_pid count=0 leader_seen=0
         IFS=$'\t' read -r leader_pid _ < <(printf '%s\n' "$expected_leader")
-        : >"$output"
+        group_records "$pgid" >"$output"
         while IFS= read -r record; do
           [ -n "$record" ] || continue
-          record_admitted "$record" "$2" "$3" "$4" "$5" "$6" || return 1
+          group_member_admitted "$record" "$5" || return 1
           IFS=$'\t' read -r pid _ < <(printf '%s\n' "$record")
           if [ "$pid" = "$leader_pid" ]; then
             same_identity "$expected_leader" "$record" || return 1
             leader_seen=1
           fi
-          printf '%s\n' "$record" >>"$output"
           count=$((count + 1))
-        done < <(group_records "$pgid")
-        [ "$count" -gt 0 ] && [ "$leader_seen" = 1 ]
+        done <"$output"
+        [ "$count" -gt 0 ] && [ "$leader_seen" = 1 ] && group_descends_from "$output" "$leader_pid"
       }
 
       group_snapshot_revalidated() { # pgid match exclude minage row-action scope expected-file
@@ -809,10 +844,10 @@
         group_records "$pgid" >"$current_file"
         while IFS= read -r record; do
           [ -n "$record" ] || continue
-          record_admitted "$record" "$2" "$3" "$4" "$5" "$6" || return 1
+          group_member_admitted "$record" "$5" || return 1
           IFS=$'\t' read -r pid _ < <(printf '%s\n' "$record")
           expected="$(awk -F '\t' -v pid="$pid" '$1 == pid {print; exit}' "$expected_file")"
-          [ -n "$expected" ] && same_identity "$expected" "$record" || return 1
+          [ -n "$expected" ] && same_group_identity "$expected" "$record" || return 1
           count=$((count + 1))
         done <"$current_file"
         [ "$count" -gt 0 ]
@@ -838,8 +873,8 @@
         [[ "$state" == Z* ]]
       }
 
-      # A group-leading match owns its process group only while every live member passes the row and denial gates. Both signal boundaries refresh
-      # the complete tuple; KILL additionally proves that every survivor existed in the TERM snapshot, so a reused PID or PGID can never inherit it.
+      # A matched orphan leader owns only the same-group descendants proven beneath it; descendants retain UID, managed-process, and denial gates but
+      # need not repeat the leader command. Both signal boundaries refresh identity, and KILL admits only survivors from the TERM snapshot.
       reap_pid() { # expected match exclude minage row-action scope
         local expected="$1" pid pgid mode=pid target group_before="$work/group-before-$SRANDOM" revalidate_rc
         IFS=$'\t' read -r pid _ pgid _ < <(printf '%s\n' "$expected")

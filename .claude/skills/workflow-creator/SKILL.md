@@ -21,7 +21,6 @@ A workflow is a runnable JavaScript orchestrator for Claude Code's `Workflow` to
 ## [01]-[ROUTING]
 
 [REFERENCES]:
-
 - [01]-[API](references/api.md): every global, option, cap, and the validation rail — the runtime manual.
 - [02]-[PATTERNS](references/patterns.md): the orchestration catalog.
 - [03]-[THROUGHPUT](references/throughput.md): concurrency economics and cross-run law.
@@ -30,15 +29,12 @@ A workflow is a runnable JavaScript orchestrator for Claude Code's `Workflow` to
 - [06]-[EXECUTION_STANDARD](references/execution-standard.md): the stage-prompt demand bar — hostile stance, the writer's ground-up/absorption law, reviewers as rebuilders, the mapping-lane burden-reduction contract.
 
 [TEMPLATES]:
-
 - [01]-[SKELETONS](assets/templates/): starter skeletons — fan-out, loop, pipeline, and `run-ledger.template.md`.
 
 [EXAMPLES]:
-
 - [01]-[RUNNABLE](assets/examples/): complete runnable examples, each self-described by its header comment.
 
 [SCRIPTS]:
-
 - [01]-[GATES](scripts/): the deterministic validate and dry-run gates.
 
 ## [02]-[FIT]

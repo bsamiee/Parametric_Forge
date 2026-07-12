@@ -22,13 +22,11 @@ An interview converts the gap between the request and the territory into visible
 ## [01]-[ROUTING]
 
 [REFERENCES]:
-
 - [01]-[AXES](references/axes.md): the axis catalog — each axis with its probe method, question shape, and confirming evidence; loaded before any grounding pass.
 - [02]-[MODES](references/modes.md): the staged mode procedures with per-stage exit tests; loaded when a mode begins.
 - [03]-[QUESTION_CRAFT](references/question-craft.md): composition depth — thread design, evidence extraction, challenge protocols, option and batch mechanics; loaded when composing any round.
 
 [EXAMPLES]:
-
 - [01]-[ARTIFACTS](examples/artifacts.md): worked accepted and rejected kind instances.
 - [02]-[BATCHES](examples/batches.md): worked question batches and threads.
 - [03]-[THREAD](examples/thread.md): one complete descent — request, re-frame, thread plan, strata, record, landing.

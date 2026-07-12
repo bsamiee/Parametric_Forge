@@ -32,7 +32,7 @@ The Nix estate is machine configuration, not application code: every Nix line co
 - Recurring work is a declared launchd agent under the `com.parametric-forge.<name>` grammar, beside the surface it serves; ad-hoc background processes and manual `launchctl` state are defects.
 - Standing remote connections (mounts, tunnels, sessions) follow the doctrine's `[REMOTE_TRANSPORT]` card: openssh keepalive custody, probed liveness with caused receipts, detach-before-reap drains.
 - [NEVER]: kill live terminal sessions — no `zellij kill-session`/`kill-all-sessions`, no WezTerm restarts. Fix in repo, redeploy; the operator restarts on their own schedule.
-- `.claude/skills/` here are the estate masters for harness skills and `.claude/hooks/setup-env.sh` is the canonical SessionStart hook; edits land in the master and propagate to admitted mirrors by copy. Claude-caller skills such as `codex` remain outside `~/.codex/skills/` to prevent recursive triggering; never edit a mirror or build sync tooling.
+- `.claude/hooks/` and `.claude/scripts/` are Forge-mastered and copy to the sibling repos, `~/.claude/`, and `~/.codex/` (`.claude/hooks/setup-env.sh` is the canonical SessionStart hook); every other `.claude/` surface carries no master and byte-copies bidirectionally on change, skills porting to `~/.codex/skills/` frontmatter-stripped. Claude-caller skills such as `codex` stay outside `~/.codex/skills/` to prevent recursive triggering; never build sync tooling.
 - `docs/laws/` is the design and maintenance-law corpus: the landing doctrine, `design.md` with its machine law pages, the coupling topology, the cross-branch pattern residue, and the scar admission boundary. Read it at source before any cross-surface edit; a touched `topology.md` `[SURFACE]` lands its obligated counterparts in the same change, and corpus landings run only through a run's terminal doctrine stage under `docs/laws/README.md` + `docs/laws/landing.md` with the `docgen` and `skill-writer` skills loaded.
 
 ## [03]-[NIX_CODE_LAW]
@@ -88,11 +88,9 @@ Every module opens with the header block and takes only the arguments it reads:
 Code-generation law lives in the stack atlases: `docs/stacks/python/README.md` and `docs/stacks/typescript/README.md` route every language, shape, rail, and boundary decision to its owning page. Design law lives in the `docs/laws/` corpus — `design.md` binds every executable surface (rails, dispatch, vocabularies), and the machine law pages extend it: `modules.md` onto the Nix module graph, `kernels.md` onto packaged shell, `projections.md` onto Lua consumers and generated config, `agents.md` onto service agents and remote transport. Durable Markdown follows the `docs/standards/` owners — `style-guide.md` for language law, `formatting.md` for surface mechanics, `information-structure.md` for container design. The docgen skill's `prose_gate.py` compiles those owners into the mechanical floor: bare invocation checks, `fix --write` repairs; every touched durable doc passes it before the turn ends.
 
 [SHELL]:
-
 - `.sh` extension on every bash script; `set -euo pipefail` mandatory; ShellCheck passes. Package shell CLIs with `writeShellApplication` when they carry a runtime closure, ShellCheck integration, or a stable Home Manager-installed binary; `writeShellScriptBin` only for closure-free one-liners.
 
 [PYTHON]:
-
 - 3.15 only, never older; `uv` for package management; `ruff` for all linting/formatting.
 - Type checking: `ty` with `mypy` as the strict secondary gate — both resolve the project environment first, `ty` falling back to the Nix build, `mypy` to the newest release through uv's tool cache.
 

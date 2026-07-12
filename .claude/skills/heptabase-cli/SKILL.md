@@ -8,7 +8,7 @@ metadata:
 
 # [HEPTABASE_CLI]
 
-Manage Heptabase knowledge base content through the local CLI; every read and write enters through the `heptabase` command.
+Manage Heptabase knowledge base content through the local CLI; every read and write enters through the `heptabase` command and returns JSON on stdout for `jq` parsing or downstream piping.
 
 ## [01]-[ROUTING]
 
@@ -55,7 +55,7 @@ Use these as quick recipes for frequent requests. For less common flags or if a 
 - [LIST_CARDS_ON_A_WHITEBOARD]: `heptabase whiteboard cards <whiteboardId>`
 - [ADD_A_CARD_TO_A_WHITEBOARD]: `heptabase whiteboard add-card --whiteboard-id <whiteboardId> --card-id <cardIdOrDate>`
 
-## [05]-[NOTE_AND_JOURNAL_CARD_CONTENT_EDITING]
+## [05]-[CONTENT_EDITING]
 
 Use `create` / `append` with Markdown for ordinary writing. Reading `card-content-schema.md` is mandatory before calling `heptabase note save` / `heptabase journal save` with ProseMirror JSON, and before generating Markdown that uses Heptabase-specific extensions such as card mentions, whiteboard mentions, dates, videos, math, or `toggle`/`todo` lists.
 
@@ -63,11 +63,7 @@ Use `create` / `append` with Markdown for ordinary writing. Reading `card-conten
 
 Setting a property value requires reading `property-values.md` first and inspecting the target property with `heptabase card properties <cardIdOrDate>` and/or `heptabase tag properties <tagId>`. Property formats vary by type, and relation writes replace the full relation value. For relation properties, use `heptabase tag properties <sourceTagId>` to get the property definition's `relationTargetTagId`, then list valid related cards before writing.
 
-## [07]-[ALL_OUTPUT_IS_JSON]
-
-Every command prints JSON to stdout — parse it with `jq` or pipe it to other tools.
-
-## [08]-[TROUBLESHOOTING]
+## [07]-[TROUBLESHOOTING]
 
 - [DESKTOP_APP_MUST_BE_RUNNING]: The CLI communicates with a local server inside the app. If the app is closed, all commands fail. Run `heptabase start` to launch and wait for readiness.
 - [CODEX_SANDBOX_MAY_BLOCK_LOCAL_CLI_SERVER]: If Heptabase starts but Codex says the CLI server is not ready, read `codex-sandbox.md`; retry `heptabase` commands outside the sandbox when Codex permits escalation.
@@ -75,14 +71,11 @@ Every command prints JSON to stdout — parse it with `jq` or pipe it to other t
 - [REQUEST_BODY_SIZE_LIMIT]: The server rejects request bodies larger than 1 MB.
 - [REQUEST_TIMEOUT]: The server times out requests that take longer than 10 seconds to send their body.
 
-## [09]-[KNOWN_LIMITATIONS]
+## [08]-[BOUNDARIES]
 
+- [CLI_ONLY_ACCESS]: Never directly read, write, or modify Heptabase app data through local database files, app storage, cache files, internal endpoints, or any other non-CLI mechanism. If the CLI does not carry the requested operation, stop and report that it is not supported.
 - [LOCAL_SERVER_SETUP]: If the local CLI server is disabled or CLI wiring is missing, the skill cannot repair it by itself; ask the user to enable Local CLI Server and CLI install from desktop settings first.
 - [LOCAL_FILES_ONLY]: `heptabase file export` works only when the file metadata and raw file are already available locally in the desktop app. It does not download missing files from cloud storage.
 - [BINARY_UPLOAD]: This skill is for JSON/text operations on notes/journals/tags/cards and AI Tutor reads, not file upload or media-processing APIs.
 - [WHITEBOARD_MUTATION]: Listing whiteboards and adding, listing, or removing cards on them works; creating, renaming, moving, or deleting whiteboards does not.
 - [PROPERTY_FILTERING]: Reading tag property schemas, reading property values, and setting one property value on a card works; querying cards by property value does not.
-
-## [10]-[WARNINGS]
-
-- [CLI_ONLY_ACCESS]: Never directly read, write, or modify Heptabase app data through local database files, app storage, cache files, internal endpoints, or any other non-CLI mechanism. If the CLI does not carry the requested operation, stop and report that it is not supported.

@@ -31,7 +31,6 @@ Routing is the one job that licenses linking and naming siblings; every other pa
 Choose the container by what the reader retrieves; convert before styling.
 
 [CONTAINERS]:
-
 - Prose carries law; a list carries parallel atomic items; a card — key plus earned field lines — carries a decision cluster; a table carries atomic lookup facts crossed row-by-column; a tree or diagram carries structure and relations. Tables enumerate, cards legislate.
 - A bullet is one atomic entry — one fact, one rule, one member. A closed token set referenced rather than defined rides inline after its group label on one line; the list form is earned only when members carry per-member content.
 - An entry carries one decision in one to two sentences, three at the hard cap; past the cap the entry is hiding a card, a labeled block, or section prose. Closed enumerations whose payload is the roster itself are registry entries and legal at length, and a `- Field: value` record field answers to the earned-field law at card altitude, never the entry budget.
@@ -40,7 +39,6 @@ Choose the container by what the reader retrieves; convert before styling.
 - Diagram fences — question admission, type selection, construction, render validation — ride the mermaid-diagramming skill; a doc admits one only as a declared regenerable representation.
 
 [FENCE_CONTENT]:
-
 - A fence carries a language tag plus one intent label from the closed set — `copy-safe` runs as written, `template` carries neutral placeholders, `conceptual` illustrates, `generated` and `output-only` carry produced output, `signature` carries a transcription-complete owner declaration an implementer copies verbatim, `test-only` carries test source, `accepted` and `rejected` carry a worked contrast pair, `codemap` and `seams` carry width-capped topology.
 - The body honors its label: a copy-safe body runs bare of placeholder slots and prompts, an output-only body carries no prompt-led run command, and a renderable body renders under the corpus validator — a mismatch retags the fence.
 - Reusable examples use legal neutral identifiers; placeholder strings such as `"<value-a>"` appear only inside literals, and no project, host, or domain concept anchors an example meant to travel.
@@ -73,13 +71,11 @@ Choose the container by what the reader retrieves; convert before styling.
 The header set and the first lines are the highest-value signal an agent loads; both are engineered, never accumulated.
 
 [HEADERS]:
-
 - Headers form a closed, consistent vocabulary across sibling documents of one kind — same tokens, same order, same zero-padded numbering — so a machine can census them and an agent predicts the shape before opening the file.
 - A section exists only where it owns a decision cluster; a header that groups nothing is deleted, not filled.
 - Headers absorb what their content repeats: entries that each begin with the same word belong under a header carrying that word once.
 
 [LEADS]:
-
 - The lead is one charter sentence plus at most one boundary-consequence sentence, opening with the document's own law — never the doc-set, the siblings, the audience, or the process.
 - A lead needing semicolons or parenthetical inventories is carrying a lower tier's payload; intro material earns its slot by changing the reader's next action.
 

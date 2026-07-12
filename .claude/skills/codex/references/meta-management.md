@@ -22,7 +22,7 @@ A Codex skill is a directory holding a `SKILL.md` whose frontmatter carries `nam
 - [TRIGGERS]: Invocation is explicit (`$skill-name`, or `/skills` in the CLI/IDE) or implicit by description match. The skills list rides at most 2% of the model's context window; descriptions shorten first and whole skills drop under pressure — the owned deliverable and primary trigger nouns ride the first clause. The selected skill's full `SKILL.md` always loads regardless of listing truncation.
 - [COLLISIONS]: Two skills sharing a `name` do not merge and do not shadow — both list, unlike Claude Code where personal beats project. Symlinked folders resolve to targets. Codex detects skill edits automatically; a missing update means restart.
 - [CLAUDE_DELTAS]: `disable-model-invocation`, `user-invocable`, `context: fork`, `allowed-tools`, and dynamic context injection are Claude Code extensions Codex ignores; invocation policy moves to `policy.allow_implicit_invocation` in `agents/openai.yaml`. Upstream-tracking frontmatter and `use_cases.yaml` fixtures drop on port; an estate skill carries `name` and `description` only.
-- [ESTATE]: Estate codex skills are ports of the Claude-side Forge masters — same body, Claude-only frontmatter stripped, `agents/openai.yaml` added where app-surface metadata or invocation policy earns it. `~/.codex/skills` is the estate mirror root and takes every port; `~/.agents/skills` is the upstream user root and also loads, so a port never lands in both.
+- [ESTATE]: Estate codex skills are ports of the estate Claude skills — same body, Claude-only frontmatter stripped, `agents/openai.yaml` added where app-surface metadata or invocation policy earns it. `~/.codex/skills` is the estate mirror root and takes every port; `~/.agents/skills` is the upstream user root and also loads, so a port never lands in both.
 
 `agents/openai.yaml` is the optional Codex-native metadata file — app-surface presentation (`interface.display_name`, icons, `default_prompt`), invocation policy, and the skill's declared tool dependencies:
 
@@ -72,7 +72,7 @@ The fleet manifest is the single source for MCP membership: one manifest row pro
 
 ## [05]-[MAINTENANCE]
 
-- A Claude-side skill edit propagates to the codex port by copy from the Forge master; a port that drifts from its master is repaired by re-copy, never by parallel editing.
+- A Claude-side skill edit propagates to the codex port by copy from the estate Claude skill; a port that drifts from its Claude source is repaired by re-copy, never by parallel editing.
 - Codex surfaces are home-only: a project-local `.codex/` directory is a defect — port load-bearing rows to `~/.codex`, then delete it; checked-in repo skills ride `.agents/skills`, never `.codex/`.
 - Config hygiene rides `--strict-config` canaries: an unknown field fails fast there, and steady-state lanes stay unflagged.
 - Cleanup is census-driven: `/skills` lists what codex sees, `codex mcp list --json` what it registers, `ls ~/.codex/agents/` what it can spawn — a row in any census with no live consumer is deleted in the same pass that finds it.

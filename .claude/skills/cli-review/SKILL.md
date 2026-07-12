@@ -11,7 +11,7 @@ allowed-tools: Bash(git:*) Bash(greptile:*) Bash(command:*) Bash(curl:*) Bash(np
 
 # [CLI_REVIEW]
 
-Run a Greptile review from the local checkout and summarize the findings. `greptile review` diffs the current branch against its base — the repository default, or `-b <base>` — so it needs no PR and no freshly created branch.
+Run a Greptile review from the local checkout and summarize the findings. `greptile review` diffs the current branch against its base — the repository default, or `-b <base>` — so it needs no PR and no freshly created branch. The runbook sections run in order to reach the summary; the reference sections that follow carry the `.greptile/` configuration cascade and the CLI surface, consulted when the review calls for them.
 
 ## [01]-[CONTEXT]
 
@@ -44,7 +44,7 @@ A usage error on `--json` falls back to `greptile review --agent`. When both fai
 
 JSON output reports review status, finding count, highest-severity findings first, files needing edits, and the suggested next command or fix path. Plain-text output preserves the same structure. The summary stays concise and actionable.
 
-## [06]-[REPO_CONFIGURATION]
+## [06]-[CONFIGURATION_REFERENCE]
 
 A `.greptile/` directory in any directory of the repository configures reviews for that directory tree; all three files are optional, and a `.greptile/` directory beats a same-directory legacy `greptile.json`.
 
@@ -85,7 +85,7 @@ A `.greptile/` directory in any directory of the repository configures reviews f
 
 No dedicated security mode or flag exists. Security standards land as high-severity `rules` rows, `rules.md` sections, or org enforced dashboard rules — a security-focused pass is a rules change, not a CLI switch.
 
-## [07]-[CLI_SURFACE]
+## [07]-[CLI_REFERENCE]
 
 - [OUTPUT]: `--json` selects machine parsing, `--text`/`--agent` plain text; the remaining render flags route to `greptile review --help`.
 - [SESSIONS]: `--resume` continues an interrupted review; `greptile review show [ID]` reopens a finished one; `greptile review status` exits `0` completed, `3` in progress, `4` failed, `5` cancelled.

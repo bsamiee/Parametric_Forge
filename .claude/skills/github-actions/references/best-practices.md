@@ -3,7 +3,6 @@
 ## [01]-[SECURITY]
 
 [CRITICAL]:
-
 - [ALWAYS]: SHA-pin every `uses:` reference — format: `owner/repo@<SHA> # vN.N.N`.
 - [ALWAYS]: `step-security/harden-runner` as first step in every job — monitors network egress, file integrity, process activity. Block mode enforces endpoint allowlists.
 - [ALWAYS]: Minimal permissions at job level — top-level `permissions: {}` (deny-all default), grant per-job.
@@ -78,7 +77,6 @@ Prerequisite: `permissions: { id-token: write }` at job level. Subject claims in
 ## [03]-[PERFORMANCE]
 
 [IMPORTANT]:
-
 - [ALWAYS]: `actions/cache` or a setup action's built-in cache (`cache: 'pnpm'`).
 - [ALWAYS]: `concurrency` groups with `cancel-in-progress: true` for CI; `false` for deploys.
 - [ALWAYS]: `timeout-minutes:` on every job — prevents runaway billing. Step-level `timeout-minutes:` also supported natively (not in composite actions).
@@ -145,7 +143,6 @@ Larger runners (Team/Enterprise): up to 1,000 concurrent jobs; 100 GPU max.
 ### [03.3]-[SELF_HOSTED_SCALING]
 
 [ACTIONS_RUNNER_CONTROLLER]: Kubernetes operator for ephemeral, autoscaling self-hosted runners.
-
 - Runner Scale Sets: ephemeral container-based runners; clean scale-up/down.
 - ScaleSet Listener patches EphemeralRunnerSet replica count via K8s APIs.
 - Install via Helm: `oci://ghcr.io/actions/actions-runner-controller-charts/gha-runner-scale-set-controller`.

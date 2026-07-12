@@ -22,11 +22,9 @@ All SQL follows these governing principles:
 ## [01]-[ROUTING]
 
 [FOUNDATION]: always load.
-
 - [01]-[VALIDATION](references/validation.md): compliance checklist, Effect-SQL alignment, migration safety
 
 [TASK_ROUTED_REFERENCES]: load when the task matches.
-
 - [01]-[DDL](references/ddl.md): schema design, domain/composite/range types, temporal constraints, generated columns, partitioning, lock levels
 - [02]-[QUERIES](references/queries.md): CTE algebra, MERGE, window functions, JSON_TABLE, recursive patterns
 - [03]-[INDEXES](references/indexes.md): index type selection, partial indexes, covering indexes, maintenance
@@ -68,14 +66,12 @@ All SQL follows these governing principles:
 ## [04]-[CONTRACTS]
 
 [TYPE_DISCIPLINE]:
-
 - One domain type per semantic concept; column declarations reference the domain, never inline `CHECK` constraints.
 - Composite types for structured return values from functions — never `OUT` parameter proliferation.
 - Range types (`tstzrange`, `int4range`, custom) for interval semantics — never dual `start`/`end` columns.
 - `NOT NULL` is default posture; nullable columns require documented justification.
 
 [QUERY_ALGEBRA]:
-
 - CTEs for named intermediate results; recursive CTEs with `SEARCH BREADTH FIRST` or `CYCLE` for graph traversal.
 - `MERGE` with `RETURNING OLD.*, NEW.*, merge_action()` for write-audit fusion.
 - Window functions with `GROUPS`/`EXCLUDE` framing where row-count framing is insufficient.
@@ -83,7 +79,6 @@ All SQL follows these governing principles:
 - `LATERAL JOIN` for correlated subquery materialization — never scalar subqueries in SELECT list.
 
 [INDEX_STRATEGY]:
-
 - Every `WHERE` clause pattern has a corresponding index; partial indexes for selective predicates.
 - `INCLUDE` columns for index-only scans on high-frequency read paths.
 - GIN for JSONB containment (`@>`), array overlap (`&&`), full-text (`@@`).
@@ -91,13 +86,11 @@ All SQL follows these governing principles:
 - BRIN for append-only monotonic columns (timestamps, serial IDs) — orders of magnitude smaller than B-tree.
 
 [SECURITY]:
-
 - RLS enabled on every tenant-scoped table; policies use fail-closed `nullif(current_setting('app.current_tenant', true), '')` tenant scoping.
 - Functions default to `SECURITY INVOKER` (always the default); `SECURITY DEFINER` only with `SET search_path = pg_catalog, public`.
 - Column-level `GRANT` for sensitive fields — never rely on view-based column hiding alone.
 
 [PERFORMANCE]:
-
 - `EXPLAIN (ANALYZE, BUFFERS, VERBOSE, SETTINGS)` is the verification tool; assertions against plan shape, not just row counts.
 - AIO (`io_method = io_uring`) for sequential scan and vacuum workloads on Linux.
 - Parallel query enabled for aggregation, hash join, index scan — `max_parallel_workers_per_gather` tuned to workload.

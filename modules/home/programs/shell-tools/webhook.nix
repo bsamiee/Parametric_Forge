@@ -7,7 +7,7 @@
 # Signed-event inbox on adnanh/webhook: typed source rows generate hooks.json (HMAC verification via env-named secrets, never literals) and one
 # projector appends typed receipt rows. Loopback-only; an absent secret fails closed (empty HMAC key never matches a signed delivery). Rows may
 # pin event type or emitter identity through `match` clauses ANDed beside the HMAC rule. A launchd agent owns the listener on Darwin;
-# forge-cockpit keeps its foreground copy as the diagnostic surface (same port — run it only with the agent booted out).
+# forge-cockpit consumes the standing listener's receipt ledger and never creates a second listener.
 {
   config,
   lib,

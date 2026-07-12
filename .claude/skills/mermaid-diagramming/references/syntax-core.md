@@ -73,7 +73,6 @@ flowchart LR
 `markdownAutoWrap: false` stops auto-wrap on markdown labels; edge labels take math as `|"$$\sqrt{x+3}$$"|`. `@{ label: "text" }` overrides the bracket text, and the `text` shape renders a borderless label-only node.
 
 [GOTCHAS]:
-
 - Reserved IDs `end`, `default`, `subgraph`, `class`, `graph` need quoting or capitalization.
 - A space inside `A [txt]` breaks the node.
 - Markdown strings are inert inside `@{ label: ... }` metadata — backtick labels ride the classic bracket forms.
@@ -149,7 +148,6 @@ sequenceDiagram
 Lifecycle uses `create participant X`, the aliased variant `create actor D as Donald`, and `destroy X` mid-diagram. Grouping boxes wrap participants: `box rgb(33, 34, 44) Name ... end`, or `box transparent Name`, and `rect` background blocks nest. The async `-)`/`--)` send terminates in the `-filled-head` marker, which the engine leaves unstyled — the family `themeCSS` stamps it onto the signal hue. Parallel and conditional blocks are `par ... and ... end`, `critical ... option ... end`, and `break ... end`. `autonumber` accepts a decimal start and increment: `autonumber 10.5 0.25`, `autonumber off` halts numbering, and a bare `autonumber` resumes it. A note takes a `:wrap:` or `:nowrap:` modifier as `Note over X:wrap: text`. Actor menus attach interactive links, live in interactive renderers only: `link Alice: Dashboard @ <url>` and `links Alice: {"Dashboard": "<url>"}`. KaTeX renders in participant names and messages.
 
 [GOTCHAS]:
-
 - Balance every `+` activation with a `-` deactivation.
 - Wrap message text containing `end` in parentheses as `(end)`; `<br/>` breaks a message line.
 - Actor menus are dead in sandboxed or static hosts.
@@ -220,7 +218,6 @@ stateDiagram-v2
 Pseudostates are `<<choice>>`, `<<fork>>`, and `<<join>>`. `state "long text" as S` aliases a spaced label. A `click` directive attaches an interactive link to a state.
 
 [GOTCHAS]:
-
 - `end` and `state` are reserved words.
 - A pseudostate stereotype declared after the state's first edge reference silently drops — the state renders as a plain labeled box; `state X <<choice>>` precedes X's first use.
 - State honors `layout: elk` only where the host registers the ELK loader, with no dagre fallback when it is missing — state fences omit the key and stay on the type-owned layout.
@@ -288,7 +285,6 @@ classDiagram
 Lollipop interfaces are `bar ()-- foo`. `note for Shape "text"` attaches a note, and `direction RL` reorients. Two hyperlink forms carry tooltips: `link Shape "<url>" "tooltip"` renders a static anchor, `click Shape href "<url>" "tooltip"` fires only in interactive renderers.
 
 [GOTCHAS]:
-
 - A generic suffix drops in references — two classes differing only by generic collide.
 - Notes and namespaces take themes but are not individually styleable — the note chip themes through `noteBkgColor`/`noteBorderColor`/`noteTextColor` and namespaces through `clusterBorder`/`titleColor`.
 - A member-less `class Foo` renders empty members hidden under the unified renderer.
@@ -366,7 +362,6 @@ Word-alias cardinalities map onto the crow's-foot markers, and `to` versus `opti
 |  [04]   | `one or more` `many(1)` `1+`  | `}\|` required   |
 
 [GOTCHAS]:
-
 - Keys accept only `PK`, `FK`, `UK` — no Unicode or markdown in a key.
 - An empty entity block `{ }` is invalid; reserved words are `ONE`, `MANY`, `TO`, `U`, `1`.
 - The hand-drawn look and `direction` apply.

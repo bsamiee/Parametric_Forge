@@ -44,7 +44,7 @@
         ["py"]=python ["pyi"]=python
         ["ts"]=web ["tsx"]=web ["js"]=web ["jsx"]=web ["mjs"]=web ["cjs"]=web ["mts"]=web ["cts"]=web
         ["json"]=web ["jsonc"]=web ["css"]=web
-        ["md"]=prose ["markdown"]=prose ["html"]=prose
+        ["html"]=prose
         ["yml"]=yaml ["yaml"]=yaml
         ["lua"]=lua
         ["sql"]=sql
@@ -223,21 +223,35 @@
       # --- [COLLECTION_EXPLICIT_FILES_AS_GIVEN_DIRECTORIES_VIA_FD]
       tmp="$(mktemp -d)"
       trap 'rm -rf "$tmp"' EXIT
-      # Abort rail: async lanes inherit SIGINT-ignored, so Ctrl-C or TERM on the parent would orphan running formatters. Each lane records its
-      # spawned tool pid — timeout setpgids itself away, so only a direct TERM reaches it, and it forwards the TERM to its child group before
-      # exiting. A formatter that ignores TERM holds _abort in wait — the traps are already cleared, so a second Ctrl-C
-      # kills the shell and the EXIT trap still runs.
+      # Abort rail: each lane records its spawned timeout/tool pid because timeout setpgids itself away. TERM gets a bounded grace, KILL closes every
+      # survivor, and explicit waits reap the lane shells before EXIT removes their shared state.
       declare -A lane_pid=() lane_rc=() lane_state=()
       # shellcheck disable=SC2329  # invoked through the INT/TERM trap
       _abort() {
+        local -ri exit_code=$((128 + BASH_TRAPSIG))
         trap - INT TERM
-        local f
+        local f pid _
+        local -i alive=0
+        local -a abort_pid=()
+        local -A admitted_pid=()
         for f in "$tmp"/pid.*; do
-          [[ -f "$f" ]] && kill -TERM "$(<"$f")" 2>/dev/null || true
+          [[ -f "$f" ]] || continue
+          pid="$(<"$f")"
+          [[ "$pid" =~ ^[0-9]+$ ]] || continue
+          admitted_pid[$pid]=1
         done
-        ((''${#lane_pid[@]})) && kill -TERM "''${lane_pid[@]}" 2>/dev/null || true
-        wait
-        exit "$((128 + BASH_TRAPSIG))"
+        for pid in "''${lane_pid[@]}"; do admitted_pid[$pid]=1; done
+        abort_pid=("''${!admitted_pid[@]}")
+        ((''${#abort_pid[@]})) && kill -TERM "''${abort_pid[@]}" 2>/dev/null || true
+        for _ in 1 2 3 4 5; do
+          alive=0
+          for pid in "''${abort_pid[@]}"; do kill -0 "$pid" 2>/dev/null && alive=1; done
+          ((alive)) || break
+          sleep 1
+        done
+        for pid in "''${abort_pid[@]}"; do kill -0 "$pid" 2>/dev/null && kill -KILL "$pid" 2>/dev/null || true; done
+        for pid in "''${lane_pid[@]}"; do wait "$pid" 2>/dev/null || true; done
+        exit "$exit_code"
       }
       trap _abort INT TERM
       declare -A lane_count=() seen=()

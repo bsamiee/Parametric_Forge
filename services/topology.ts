@@ -156,7 +156,7 @@ const _webhooks = [
     },
 ] as const satisfies ReadonlyArray<_WebhookRow>;
 
-// GitHub settings-as-code: every owned repo carries the shared merge-hygiene policy from estate.ts and one active main-guard ruleset.
+// GitHub settings-as-code: every owned repo carries the shared merge-hygiene policy from estate.ts; branch rulesets are removed, so main takes direct pushes.
 const _owner = 'bsamiee';
 
 const _repositories = [
@@ -249,35 +249,17 @@ const _appInstallations = [
     },
 ] as const satisfies ReadonlyArray<_AppInstallationRow>;
 
-// importId is the live ruleset ID; the adopt import ID is `<repository>:<importId>`.
-const _rulesets = [
-    {
-        repository: 'Parametric_Forge',
-        name: 'main-guard',
-        importId: 18698897,
-        origin: 'adopt',
-    },
-    {
-        repository: 'Rasm',
-        name: 'main-guard',
-        importId: 18698898,
-        origin: 'adopt',
-    },
-    {
-        repository: 'Maghz',
-        name: 'main-guard',
-        importId: 18698899,
-        origin: 'adopt',
-    },
-] as const satisfies ReadonlyArray<{
+type _RulesetRow = {
     readonly repository: _RepositoryName;
     readonly name: string;
     readonly importId: number;
     readonly origin: _Origin;
-}>;
+};
 
-// One shared main-guard policy: every change reaches main through a squash or rebase pull request with resolved review threads and linear history;
-// zero approval-count theater leaves reviewer judgment advisory while Copilot re-reviews every pushed revision.
+// Branch rulesets removed estate-wide by decision: main takes direct pushes with no PR, force-push, or deletion guard. A new row restores one.
+const _rulesets: ReadonlyArray<_RulesetRow> = [];
+
+// Dormant ruleset policy retained for re-enablement only: no ruleset applies it while `_rulesets` is empty, and restoring a ruleset row reactivates it.
 const _rulesetPolicy = {
     nonFastForward: true,
     deletion: true,
@@ -378,7 +360,7 @@ declare namespace Topology {
     type Webhook = (typeof _webhooks)[number];
     type Repository = (typeof _repositories)[number];
     type AppInstallation = (typeof _appInstallations)[number];
-    type Ruleset = (typeof _rulesets)[number];
+    type Ruleset = _RulesetRow;
     type RulesetPolicy = typeof _rulesetPolicy;
     type Reviewer = (typeof _reviewers)[number];
 }

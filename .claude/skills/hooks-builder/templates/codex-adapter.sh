@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Codex adapter: pipe the Codex payload into one canonical hook body, then emit the exact Codex dialect per event. The adapter is
 # the SOLE dialect owner; the body is dialect-blind and ALWAYS emits Claude dialect. Wire in .codex/hooks.json (or config.toml).
-# Exit-2 blocks pass through on PreToolUse/PostToolUse/UserPromptSubmit; a Stop-family exit-2 re-emits as decision JSON.
+# Exit-2 blocks pass through natively on the tool, prompt, AND Stop-family events; only stdout-JSON rewrites need a per-event branch.
 set -Eeuo pipefail
 shopt -s inherit_errexit
 _on_err() { printf 'adapter error: exit %d at line %d: %s\n' "$?" "${LINENO}" "${BASH_COMMAND}" >&2; }
@@ -22,18 +22,10 @@ code=$?
 set -e
 trap _on_err ERR
 
-# Exit 2: portable on the tool and prompt events; the Stop family blocks via decision JSON, synthesized from stderr.
+# Exit 2: portable across both providers on the tool, prompt, AND Stop-family events; Codex Stop/SubagentStop honor exit-2 + stderr.
 if ((code == 2)); then
-    case "${event}" in
-        Stop | SubagentStop)
-            jq -nc --arg reason "$(cat "${errfile}")" '{decision: "block", reason: $reason}'
-            exit 0
-            ;;
-        *)
-            cat "${errfile}" >&2
-            exit 2
-            ;;
-    esac
+    cat "${errfile}" >&2
+    exit 2
 fi
 if ((code != 0)); then
     cat "${errfile}" >&2
@@ -52,7 +44,13 @@ printf '%s' "${out}" | jq -c --arg event "${event}" '
         {hookSpecificOutput: {hookEventName: "PermissionRequest",
                               decision: {behavior: (.hookSpecificOutput.decision.behavior // "deny"),
                                          message: (.hookSpecificOutput.decision.message // "")}}}
-      elif $event == "PreToolUse" and (.hookSpecificOutput.permissionDecision // "") == "defer" then
-        .hookSpecificOutput.permissionDecision = "ask"
+      elif $event == "PreToolUse" and ((.hookSpecificOutput.permissionDecision // "") | . == "defer" or . == "ask") then
+        .hookSpecificOutput.permissionDecision = "deny"
+      elif $event == "PostToolUse" and (.hookSpecificOutput.updatedToolOutput != null) then
+        (.hookSpecificOutput.updatedToolOutput) as $o
+        | {decision: "block", reason: (if ($o | type) == "string" then $o
+            elif ($o | type) == "object" then (([($o.stdout // ""), ($o.stderr // "")] | map(select(. != "")) | join("\n")) as $t
+              | if $t == "" then ($o | tojson) else $t end)
+            else ($o | tojson) end)}
       else . end
 '

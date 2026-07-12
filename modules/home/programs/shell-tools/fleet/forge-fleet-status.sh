@@ -2,9 +2,9 @@
 # Fleet roster renderer for the Claude Code main statusLine: one compact row for one or two external workers, then an aligned matrix for larger fleets.
 # Session-scoped: a lane renders only in its owning session's pane. The discriminator is CLAUDE_CODE_SESSION_ID — claude exports it to every child, it
 # equals the statusLine payload's session_id, and it survives daemonization (a detached codex reparents to launchd, so ancestry dies at pid 1; the
-# inherited env does not) — read per candidate pid via ps -E. Ledger rows carry a session stamp; unstamped rows adopt by live-pid env probe or drop.
-# The pgrep census memoizes in a shared TTL cache because candidates are machine-wide facts; pid session truth revalidates every tick so PID reuse
-# cannot inherit a cached owner. Steady-state work is bounded ps projections plus ledger folds. Empty stdin falls back to caller session, then machine-wide.
+# inherited env does not). Ledger rows carry a session stamp; unstamped rows adopt by live-pid env truth or drop. The pgrep census memoizes in a shared
+# TTL cache because candidates are machine-wide facts; one unioned pid/state/environment snapshot revalidates every candidate and ledger pid per tick,
+# so PID reuse cannot inherit a cached owner. Steady-state work is bounded ps projections plus ledger folds. Empty stdin falls back to caller session.
 # The awk is strictly POSIX: the raw ~/.claude/hooks mirror resolves /usr/bin/awk (no gawk on the statusline PATH) while the nix package bakes gawk.
 
 # The raw ~/.claude mirror can inherit no Nix profile PATH. Reenter the packaged owner first, then let its dependency-private timeout bound the body.
@@ -86,35 +86,15 @@ canon_model() { # one model-vocabulary owner: any provider spelling -> roster ti
         *) REPLY="$1" ;;
     esac
 }
-pid_sid() { # REPLY = the live pid's inherited CLAUDE_CODE_SESSION_ID (own-uid env via ps -E), "" when unreadable or absent; memoized per pid.
-    REPLY=""
-    IFS= read -r REPLY < <(ps -Eww -o command= -p "$1" 2>/dev/null | awk '
-      { for (i = 1; i <= NF; i++) if ($i ~ /^CLAUDE_CODE_SESSION_ID=[^[:space:]]+$/) { sid = $i; sub(/^[^=]*=/, "", sid) } }
-      END { print sid }') || true
-    pid_session["$1"]="$REPLY"
-}
-pid_is_live() { # A recorded pid is live only while ps still exposes a non-zombie process; memoization also collapses repeated ledger rows.
-    local pid="$1" state=""
-    if [ -n "${pid_liveness[$pid]+x}" ]; then
-        [ "${pid_liveness[$pid]}" -eq 1 ]
-        return
-    fi
-    IFS= read -r state < <(ps -ww -o state= -p "$pid" 2>/dev/null) || true
-    state="${state#"${state%%[![:space:]]*}"}"
-    if [ -n "$state" ] && [ "${state:0:1}" != Z ]; then
-        pid_liveness["$pid"]=1
-        return 0
-    fi
-    pid_liveness["$pid"]=0
-    return 1
+pid_is_live() { # The union snapshot marks only visible, non-zombie pids live; missing rows remain dead.
+    [ "${pid_liveness[$1]:-0}" -eq 1 ]
 }
 adopt() { # $1=row session stamp ("-" = unstamped) $2=pid ("-" = absent): stamped rows match sid; unstamped adopt by live-pid env truth, else drop.
     local rsid="$1" pid="$2"
     [ -z "$sid" ] && return 0
     [ "$rsid" = "$sid" ] && return 0
     { [ "$rsid" = "-" ] && [ "$pid" != "-" ]; } || return 1
-    if [ -n "${pid_session[$pid]+x}" ]; then REPLY="${pid_session[$pid]}"; else pid_sid "$pid"; fi
-    [ "$REPLY" = "$sid" ]
+    [ "${pid_session[$pid]:-}" = "$sid" ]
 }
 fmt_el() { # elapsed grammar shared with forge-fleet-row's elx: minutes always two digits (07:44), hours unpadded with minute pad (1:07h).
     local s="$1"
@@ -148,7 +128,7 @@ render_one() { # rows arrive with the model already canonical and label defaulte
     printf '%s %s %s %s' "$icon" "$model_effort" "$padded_label" "$elapsed"
 }
 
-# --- scan census: pgrep candidates share a TTL cache; each cached pid's session revalidates so a recycled pid never inherits the prior process owner.
+# --- scan census: pgrep candidates share a TTL cache; the union snapshot below revalidates identity before any cached pid can render.
 declare -A pid_session=() pid_liveness=()
 declare -a cands=()
 fresh=0
@@ -160,7 +140,6 @@ if [ -s "$scan_cache" ]; then
         else
             [[ "$a" =~ ^[1-9][0-9]*$ ]] || continue
             cands+=("$a")
-            pid_sid "$a"
         fi
     done <"$scan_cache" 2>/dev/null || true
 fi
@@ -168,7 +147,6 @@ if [ "$fresh" -eq 0 ]; then
     cands=()
     while read -r p; do
         [[ "$p" =~ ^[0-9]+$ ]] || continue
-        pid_sid "$p"
         cands+=("$p")
     done < <(pgrep -f "$scan_re" 2>/dev/null || true)
     {
@@ -177,25 +155,30 @@ if [ "$fresh" -eq 0 ]; then
     } >"$scan_cache.$$" 2>/dev/null && mv -f "$scan_cache.$$" "$scan_cache" 2>/dev/null || rm -f "$scan_cache.$$" 2>/dev/null || true
 fi
 
-# --- ledger fold: live lanes (last-write-wins per wid, live state, inside the stale window) session-gated through adopt, plus the snapshot tail count.
+# --- bounded ledger projection: collect live last-write-wins lanes before identity resolution so candidate and ledger pids enter one ps -E snapshot.
 # fromjson? drops malformed or torn lines so one bad row never blanks the roster; every empty field travels as "-" because tab-IFS collapses empties.
-declare -a rows=()
-declare -A seen_pid=()
+declare -A identity_seen=()
+declare -a identity_pids=() ledger_labels=() ledger_models=() ledger_efforts=() ledger_starts=() ledger_pids=() ledger_sids=()
+for p in "${cands[@]}"; do
+    [ -n "${identity_seen[$p]+x}" ] && continue
+    identity_seen["$p"]=1
+    identity_pids+=("$p")
+done
 task_tail=0
 if [ -s "$ledger" ]; then
     while IFS=$'\t' read -r tag label model effort start pid rsid; do
         case "$tag" in
             W)
-                [[ "$start" =~ ^[0-9]+$ ]] || continue
-                { [ "$pid" = "-" ] || [[ "$pid" =~ ^[1-9][0-9]*$ ]]; } || continue
-                adopt "$rsid" "$pid" || continue
-                if [ "$pid" != "-" ]; then
-                    pid_is_live "$pid" || continue
-                    seen_pid["$pid"]=1
+                ledger_labels+=("$label")
+                ledger_models+=("$model")
+                ledger_efforts+=("$effort")
+                ledger_starts+=("$start")
+                ledger_pids+=("$pid")
+                ledger_sids+=("$rsid")
+                if [[ "$pid" =~ ^[1-9][0-9]*$ ]] && [ -z "${identity_seen[$pid]+x}" ]; then
+                    identity_seen["$pid"]=1
+                    identity_pids+=("$pid")
                 fi
-                canon_model "$model"
-                [ "$label" = "-" ] && label="worker"
-                rows+=("$label"$'\t'"${REPLY:-Worker}"$'\t'"$effort"$'\t'"$((now - start))"$'\t-')
                 ;;
             C) task_tail="$label" ;;
         esac
@@ -213,6 +196,45 @@ if [ -s "$ledger" ]; then
         | ($live[] | "W\t\((.label // "-"))\t\((.model // "-"))\t\((.effort // "-"))\t\(.start)\t\((.pid // "-"))\t\((.sid // "-"))"),
           ((($snap.tasks // []) | map(select(.type != "subagent")) | length) | "C\t\(.)\t-\t-\t0\t-\t-")' 2>/dev/null)
 fi
+
+# --- identity snapshot: initialize every requested pid dead/unowned, then lift one fresh ps projection into session and liveness maps for this tick.
+for p in "${identity_pids[@]}"; do
+    pid_session["$p"]=""
+    pid_liveness["$p"]=0
+done
+if [ "${#identity_pids[@]}" -gt 0 ]; then
+    printf -v identity_pid_list '%s,' "${identity_pids[@]}"
+    identity_pid_list="${identity_pid_list%,}"
+    while IFS=$'\t' read -r p state psid; do
+        [[ "$p" =~ ^[1-9][0-9]*$ ]] || continue
+        [ "$psid" = "-" ] && psid=""
+        pid_session["$p"]="$psid"
+        [ -n "$state" ] && [ "${state:0:1}" != Z ] && pid_liveness["$p"]=1
+    done < <(ps -Eww -o pid=,state=,command= -p "$identity_pid_list" 2>/dev/null | awk '
+      $1 ~ /^[0-9]+$/ {
+        pid = $1; state = $2; sid = "-"
+        for (i = 3; i <= NF; i++) if ($i ~ /^CLAUDE_CODE_SESSION_ID=[^[:space:]]+$/) { sid = $i; sub(/^[^=]*=/, "", sid) }
+        printf "%s\t%s\t%s\n", pid, state, sid
+      }')
+fi
+
+# --- ledger fold: validate the bounded projection against the fresh identity maps, then admit each pid once ahead of the process census.
+declare -a rows=()
+declare -A seen_pid=()
+for i in "${!ledger_pids[@]}"; do
+    label="${ledger_labels[i]}" model="${ledger_models[i]}" effort="${ledger_efforts[i]}" start="${ledger_starts[i]}"
+    pid="${ledger_pids[i]}" rsid="${ledger_sids[i]}"
+    [[ "$start" =~ ^[0-9]+$ ]] || continue
+    { [ "$pid" = "-" ] || [[ "$pid" =~ ^[1-9][0-9]*$ ]]; } || continue
+    adopt "$rsid" "$pid" || continue
+    if [ "$pid" != "-" ]; then
+        pid_is_live "$pid" || continue
+        seen_pid["$pid"]=1
+    fi
+    canon_model "$model"
+    [ "$label" = "-" ] && label="worker"
+    rows+=("$label"$'\t'"${REPLY:-Worker}"$'\t'"$effort"$'\t'"$((now - start))"$'\t-')
+done
 
 # --- process scan: session-adopted census pids not already declared by emit enter one ps batch; zombie rows drop while detached ppid=1 workers remain
 # valid. The awk resolves label, model, effort, elapsed seconds, and -o report path. Codex resolution mirrors codex's own precedence: cmdline flags win,

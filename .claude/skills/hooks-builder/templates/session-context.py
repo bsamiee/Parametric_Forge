@@ -3,24 +3,31 @@
 # requires-python = ">=3.15"
 # dependencies = ["msgspec"]
 # ///
-# SessionStart owner: inject only dynamic state that a gated probe produces, capture the session_id->{tty,pane} routing row a
-# shared-worktree estate needs, persist a scalar cache. Wire: SessionStart matcher "startup|resume|clear|compact". Inject nothing silent.
-# Boundary kernel: os.environ/subprocess admitted here. Every $CLAUDE_ENV_FILE value passes shlex.quote — the file is sourced into
-# bash, so an unquoted $()/backtick in a branch, path, or fetched value would execute. Probes run in ctx.cwd and stay cheap; SessionStart blocks startup.
+"""Own SessionStart: inject only dynamic state a gated probe produces, capture the routing row, persist a scalar cache.
+
+Capture the session_id->{tty,pane} routing row a shared-worktree estate needs. Wire: SessionStart matcher "startup|resume|clear|compact". Inject nothing silent.
+Boundary kernel: os.environ/subprocess admitted here. Every $CLAUDE_ENV_FILE value passes shlex.quote — the file is sourced into
+bash, so an unquoted $()/backtick in a branch, path, or fetched value would execute. Probes run in ctx.cwd and stay cheap; SessionStart blocks startup.
+"""
+
+from collections.abc import Callable
 import os
+from pathlib import Path
 import shlex
 import subprocess
 import sys
-from collections.abc import Callable
-from pathlib import Path
 
 import msgspec
 
+
 TAG = "repo_state"
 PREVIEW_CAP = 10_000  # over this, additionalContext writes to a file and passes a preview plus path
+MAX_PAYLOAD = 8 * 1024 * 1024  # bound the stdin read; a pathological payload never balloons resident memory
 
 
 class SessionStart(msgspec.Struct, frozen=True):
+    """Decoded SessionStart hook payload."""
+
     session_id: str = ""
     cwd: str = "."
     source: str = "startup"
@@ -28,6 +35,8 @@ class SessionStart(msgspec.Struct, frozen=True):
 
 
 class Probe(msgspec.Struct, frozen=True):
+    """Gated dynamic-state probe row."""
+
     label: str
     argv: tuple[str, ...]
     predicate: Callable[[SessionStart], bool]
@@ -35,6 +44,7 @@ class Probe(msgspec.Struct, frozen=True):
 
 
 def _worktree(ctx: SessionStart, /) -> bool:
+    """Report whether ctx.cwd is inside a git work tree."""
     return _run(("git", "-C", ctx.cwd, "rev-parse", "--is-inside-work-tree")) == "true"
 
 
@@ -45,19 +55,22 @@ PROBES: tuple[Probe, ...] = (  # POLICY: gated dynamic-state rows; {cwd} resolve
 
 
 def _run(argv: tuple[str, ...], /) -> str:
+    """Run a capped probe, returning its stripped stdout or an empty string on failure."""
     try:
         return subprocess.run(argv, capture_output=True, text=True, timeout=2, check=False).stdout.strip()  # cap: SessionStart blocks startup
     except OSError, subprocess.SubprocessError:
         return ""
 
 
-def _persist(key: str, value: str, /) -> None:  # shlex.quote neutralizes $()/backticks so a ref value cannot inject when sourced
+def _persist(key: str, value: str, /) -> None:
+    """Append an exported scalar to the env file; shlex.quote neutralizes $()/backticks so a ref value cannot inject when sourced."""
     if (env_file := os.environ.get("CLAUDE_ENV_FILE")) and value:
         with Path(env_file).open("a", encoding="utf-8") as sink:
             sink.write(f"export {key}={shlex.quote(value)}\n")
 
 
-def _route(ctx: SessionStart, /) -> None:  # payload carries no tty/pane; read them from this child's own runtime, key by session_id
+def _route(ctx: SessionStart, /) -> None:
+    """Persist the session routing row; payload carries no tty/pane, so read them from this child's own runtime, keyed by session_id."""
     if not ctx.session_id:
         return
     pane = next((v for k in ("WEZTERM_PANE", "ZELLIJ_PANE_ID", "TMUX_PANE", "KITTY_WINDOW_ID", "TERM_SESSION_ID") if (v := os.environ.get(k))), "")
@@ -69,6 +82,7 @@ def _route(ctx: SessionStart, /) -> None:  # payload carries no tty/pane; read t
 
 
 def _inject(context: str, /) -> None:
+    """Emit additionalContext, spilling to a file with a preview above the cap."""
     if len(context) > PREVIEW_CAP:
         sink = Path(os.environ.get("TMPDIR", "/tmp")) / f"session-context-{os.getpid()}.txt"
         sink.write_text(context, encoding="utf-8")
@@ -77,8 +91,9 @@ def _inject(context: str, /) -> None:
 
 
 def main() -> int:
+    """Route the session, run gated probes, persist the branch cache, and inject collected state."""
     try:
-        ctx = msgspec.json.decode(sys.stdin.buffer.read(), type=SessionStart)
+        ctx = msgspec.json.decode(sys.stdin.buffer.read(MAX_PAYLOAD), type=SessionStart)
     except msgspec.DecodeError:
         return 0  # routing/injection failure exits 0 so telemetry never blocks the harness
     _route(ctx)

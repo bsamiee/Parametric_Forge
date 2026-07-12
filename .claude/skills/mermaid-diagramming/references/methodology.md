@@ -129,7 +129,6 @@ The question shape selects the declaration; the full grammar, floor, and trap ro
 The quantitative rows — pie, xychart, sankey, radar — hold only while the artifact must stay a mermaid fence; a standing data visualization routes to the dataviz lane.
 
 [CONTRAST]: classic mismatches, each repaired by payload alignment:
-
 - lifecycle drawn as flowchart -> `stateDiagram-v2`
 - call order drawn as graph -> `sequenceDiagram`
 - dependency drawn as sequence -> `flowchart`

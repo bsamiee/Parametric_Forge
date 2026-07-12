@@ -204,7 +204,6 @@ _reduce() {
 ```
 
 [NAMEREF_GOTCHAS]:
-
 - [NAME_COLLISION]: `local -n ref=ref` is undefined; same-name shadowing causes self-reference. Convention: `_` prefix on all nameref locals (`_result`, `_out`, `_items`).
 - [ARRAY_CONSTRAINT]: `local -na` is invalid. Namerefs CAN reference arrays (`local -n _arr=my_array; ${_arr[@]}`), but cannot be declared as arrays.
 - [SCOPE]: Namerefs resolve at the call site's scope, not the declaration site — this is why they work for returning values up the call stack.

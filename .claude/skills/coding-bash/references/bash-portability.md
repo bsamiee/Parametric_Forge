@@ -2,14 +2,14 @@
 
 Cross-platform shell compatibility for Bash `5.2+`/5.3, zsh, dash, and container-minimal shells.
 
-| [INDEX] | [PATTERN]               | [S] | [USE_WHEN]                                                |
-| :-----: | :---------------------- | :-: | :-------------------------------------------------------- |
-|  [01]   | Shebang + macOS re-exec | S1  | Entry point — env resolution, Homebrew fallback           |
-|  [02]   | Shell compat matrix     | S2  | Feature selection — bash/zsh/dash/ash semantic divergence |
-|  [03]   | Coreutil divergence     | S3  | Cross-platform — GNU vs BSD flag differences              |
-|  [04]   | Platform dispatch       | S4  | Runtime binding — OS-keyed function resolution            |
-|  [05]   | Container environments  | S5  | Alpine, Wolfi, distroless — PID 1 + image selection       |
-|  [06]   | Signal/trap portability | S6  | Cross-shell trap semantics — EXIT, ERR, subshell          |
+| [INDEX] | [PATTERN]               |  [S]  | [USE_WHEN]                                                |
+| :-----: | :---------------------- | :---: | :-------------------------------------------------------- |
+|  [01]   | Shebang + macOS re-exec |  S1   | Entry point — env resolution, Homebrew fallback           |
+|  [02]   | Shell compat matrix     |  S2   | Feature selection — bash/zsh/dash/ash semantic divergence |
+|  [03]   | Coreutil divergence     |  S3   | Cross-platform — GNU vs BSD flag differences              |
+|  [04]   | Platform dispatch       |  S4   | Runtime binding — OS-keyed function resolution            |
+|  [05]   | Container environments  |  S5   | Alpine, Wolfi, distroless — PID 1 + image selection       |
+|  [06]   | Signal/trap portability |  S6   | Cross-shell trap semantics — EXIT, ERR, subshell          |
 
 ## [01]-[SHEBANG_AND_MACOS_REEXEC]
 

@@ -27,7 +27,6 @@ Choose the owner form before writing any field. The most specific matching row w
 |  [13]   | patch, intake, or view of an owner                   | derived projection, never declared      | derives           | inherited  |
 
 [OWNER_SELECTION]:
-
 - Law: named products take `Schema.Class` regardless of wire exposure — the class costs one identifier string over the `Data.Class` form and gains decode, encode, `make` validation, and the whole derived-surface family the moment any consumer needs them; `Data.Class` and `Data.Case` are rejected product forms because a second product paradigm buys nothing the Schema form lacks.
 - Law: the `Data`-versus-`Schema` split is earned only for case families, where the Schema form costs a class per case — a family that never serializes, never logs structurally, and never joins a decoded union is `Data.taggedEnum`; any family that ever does is declared wire-carried from the start, because a `Data.taggedEnum` cannot reach a wire and promotion rewrites every case construction site.
 - Law: inside a wire-carried union, a case with behavior is `Schema.TaggedClass` and a pure-data case is `Schema.TaggedStruct` — the union mixes both freely, and behavior arriving later converts a struct case to a class case with zero consumer edits, because tag and fields are unchanged and construction rides `.make` on both forms.
@@ -36,7 +35,6 @@ Choose the owner form before writing any field. The most specific matching row w
 - Reject: a one-field class wrapping a scalar row [09] already refines; an `interface` or `type` alias declared beside any owner; a shape triple minted per architectural layer; a boolean-discriminated pair standing where row [03] or [04] owns the family.
 
 [SHAPE_ECONOMY]:
-
 - Law: absorption is the collapse test — two shapes sharing an identity regime, an admission path, a payload timing, or a consumer are one owner, the junior absorbed as a case, a variant column, a derived projection, or an embedded field block; survival demands a distinct discriminant the chooser table names, and the bare struct-shaped `interface` beside any owner is the rejected floor regardless of how many consumers it accreted.
 - Law: growth lands inside the owner as a row — a field, a getter, a case, a variant column, a refinement — and the diff of the next requirement is the proof: one declaration inside the owner, consumers untouched or broken loudly at the missing arm.
 - Law: a refinement shared by two owners is one `_`-prefixed interior field schema composed into both field records and exported by neither; the brand reaches consumers only through owner fields — `Shape["key"]` indexed access, instance reads — so the refinement has one edit site and zero standalone dependents.
@@ -47,7 +45,6 @@ Choose the owner form before writing any field. The most specific matching row w
 The rich owner is one `Schema.Class<Self>(identifier)(fields)` declaration: the class is the value, the type, the decode anchor, and the constructor under a single name, so a consumer takes one import and never aliases, re-derives, or writes `typeof` at a call site.
 
 [RICH_OWNER_LAW]:
-
 - Law: brands ride fields — `Schema.NonEmptyString.pipe(Schema.pattern(/.../), Schema.brand("<key>"))` declared at the field or as the shared interior schema; the branded type exists only through the owner, and a standalone exported brand is the named defect.
 - Law: every derived reading is a class getter composing the algebra the fields admit, and the algebra instance itself rides the owner as a `static` — `Anchor.byWeight` — so policy and owner arrive through one import; a free function re-deriving what a getter states, a loose comparator const beside the class, or a consumer computing either at the call site marks the missing member.
 - Law: an embedded concept with its own invariants is its own class composed as a field at full depth — `Schema.NonEmptyArray(Anchor)` — never flattened into prefixed sibling fields; the inline `Struct` block is the sub-form only while the block has no behavior and no second consumer.
@@ -103,7 +100,6 @@ export { Anchor, Sealed, Shape };
 ```
 
 [RECURSIVE_OWNER]:
-
 - Law: a self-referential field closes through `Schema.suspend((): Schema.Schema<Owner, OwnerEncoded> => Owner)` — the lazy reference breaks the module-initialization cycle an eager mention crashes, and the return annotation is mandatory because inference cannot fix a type that mentions itself.
 - Law: the suspend annotation is the one sanctioned hand-stated encoded twin — an interior `interface OwnerEncoded` exists solely to state what inference cannot close, stays unexported, and `typeof Owner.Encoded` remains the twin every consumer reads; everywhere else the hand-declared twin stays the named defect.
 - Law: a family whose cases contain the family is the same form threaded through the member — the recursive arm of the `Schema.Union` is the suspended owner, and folds over the tree are getters on the case classes, total by construction.
@@ -147,7 +143,6 @@ export { Group, Leaf };
 A closed family is one owner under one name; the `_tag` is simultaneously the runtime discriminant, the wire discriminant, and the dispatch key, so exactly one spelling of case identity exists.
 
 [CASE_FAMILIES]:
-
 - Use: `type Variant = Data.TaggedEnum<{...}>` plus `const Variant: Data.TaggedEnum.Constructor<Variant> = Data.taggedEnum<Variant>()` — the same name serves the union type, the case constructors, `$is`, and `$match`, so declaration, construction, guarding, dispatch, and typing are one import.
 - Law: case payloads are `readonly` fields and a payload-free case is `{}`; constructors carry structural equality, so family members compare by value with no identity ceremony.
 - Law: a generic family rides `Data.TaggedEnum.WithGenerics` with a definition interface — never a hand-parameterized union restating the case algebra per type argument.
@@ -158,7 +153,6 @@ A closed family is one owner under one name; the `_tag` is simultaneously the ru
 - Reject: sibling schemas per case with no union owner; a string-typed `status` field where a case family owns the states; a `kind` field beside `_tag`; a class hierarchy dispatched by `instanceof`.
 
 [FAULT_DECLARATION]:
-
 - Use: `Schema.TaggedError<Self>()(tag, fields)` for a fault that crosses a wire, logs structurally, or joins a decoded union — one class is the fault value, the fault schema, and the `_tag` catch key, and the instance is yieldable on the rail.
 - Law: the in-process fault is `Data.TaggedError("<tag>")<Fields>` — the same `_tag` catch key and yieldable instance at zero codec cost; the wire test is the one case families answer, and promotion to the Schema form rewrites only the declaration, because `new Fault({ ... })` construction is identical on both.
 - Law: fields carry evidence as data — the refused key, the stage, retryability, severity — typed so policy reads them; `message` is a derived `override get` computed from fields and never a stored field, because a message field is denormalized evidence that drifts from what the fields prove.
@@ -214,7 +208,6 @@ export { Beat, Journal, ShapeFault };
 The interior never meets `?:`, `undefined`, or `null`: `Schema.optionalWith(S, { as: "Option" })` is the sole absence spelling on a decoded field — total `Option<A>` on the type side, optional on the encoded side — and every wire dialect folds into that one interior shape at the declaration.
 
 [ABSENCE_LAW]:
-
 - Law: the options row selects the wire dialect, never the interior type — `{ as: "Option", nullable: true }` folds absent-or-null to none, with `onNoneEncoding: () => Option.some(null)` when the wire demands an explicit null on write; `{ as: "Option", exact: true }` when key absence alone spells absence; `Schema.OptionFromNullOr(S)` when the key is always present and null is the absence value. Four dialects, one `Option<A>` field.
 - Law: `{ default: () => value }` versus `as: "Option"` is ownership of the fallback — default when the owner fixes the value and no consumer distinguishes absent from defaulted; `Option` when the consumer decides; a defaulted field is total and plain in the interior, and `Option.getOrElse` repeating one fallback across consumers marks a default that belonged in the declaration.
 - Law: absence with a cause is a tagged family — `Option.none()` carries zero evidence, so the moment two causes of absence exist the field is a case family whose cases carry their cause, and `Option` survives only as the cause-free projection the owner carries as a member — attached to the family constructor, never exported beside it, and one-directional: the family sheds cause down to `Option`, never rebuilds from it, because a shed cause cannot be recovered.
@@ -269,7 +262,6 @@ export { Presence, Slot };
 The wire twin derives: `typeof Owner.Encoded` is the wire type, `Schema.encodedSchema(Owner)` materializes it as a schema, and a hand-declared wire interface beside an owner is the named defect. Divergence between wire and domain lands inside the owner declaration, graded by severity.
 
 [WIRE_TWIN_LAW]:
-
 - Law: spelling divergence is a field-level rename — `Schema.propertySignature(S).pipe(Schema.fromKey("<foreign-name>"))` inside the field record, so the decoded side carries canonical names, the encoded side carries the foreign spelling, and no parallel rename map or mapping layer exists.
 - Law: structural divergence is one bidirectional declaration — `Schema.transform(From, To, { strict: true, decode, encode })` when total, `Schema.transformOrFail` returning `ParseResult.succeed` or `ParseResult.fail(new ParseResult.Type(ast, actual, "<why>"))` when partial; both directions declare at one site, and the `To` side's own refinements re-prove after the mapping runs, so a transform moves spelling and structure but never restates validation.
 - Law: `Schema.parseJson(Owner)` fuses `JSON.parse` and `JSON.stringify` into the codec — raw JSON string to owner is one decode and owner to string is one encode; a `JSON.parse` call beside a decode is the named defect, and the fused schema composes anywhere a schema does.
@@ -278,7 +270,6 @@ The wire twin derives: `typeof Owner.Encoded` is the wire type, `Schema.encodedS
 - Reject: hand-written `toWire`/`fromWire` method pairs; a codec class beside an owner; two one-directional transforms for one twin; a version branch inside the owner where a read-boundary migration owns it.
 
 [OUTCOME_TRANSPORT]:
-
 - Law: a computation outcome crossing a wire is `Schema.Exit({ success, failure, defect })` — success carries the owner, failure carries the fault family, `Schema.Defect` normalizes thrown junk into transportable form, and the decoded side is a real `Exit.Exit<A, E>` a consumer folds with the ordinary outcome algebra; a hand-rolled `{ ok: boolean }` envelope re-invents that fold untyped.
 - Law: `Schema.Cause({ error, defect })` transports the failure tree alone — interruption, defects, and composed failures survive the wire, so a remote failure reconstructs with its forensic structure intact instead of flattening to a message string.
 - Law: the `FromSelf` twins — `Schema.ExitFromSelf`, `Schema.CauseFromSelf` — compose inside owners whose encoded side stays in-process; the plain forms own the JSON-bound envelope.
@@ -339,7 +330,6 @@ export { Grade, GradeFault };
 When one concept systematically projects into N storage or wire views, the variant axis is data: `VariantSchema.make({ variants, defaultVariant })` yields a field-family kit — `Class`, `Field`, `FieldOnly`, `FieldExcept`, `fieldFromKey`, `fieldEvolve`, `Union`, `extract` — and one declaration emits every variant schema.
 
 [VARIANT_FAMILY]:
-
 - Law: per-field modality declares where a field exists — a plain schema field rides every variant, `Field({ "<variant>": S })` enumerates, `FieldOnly("<variant>")(S)` restricts, `FieldExcept("<variant>")(S)` subtracts; a generated column is `FieldOnly` on read variants, a secret is `FieldExcept` on egress variants, and the field record is the single site stating the whole matrix.
 - Law: the class decodes the default variant and carries every variant as a same-name static — `Row.insert`, `Row.json` — with `extract(Row, "<variant>")` as the computed access when the variant is selected at runtime; a new variant is one tuple entry plus the per-field rows it changes, never a new shape, and a loose `const` re-binding a variant static is the beside-export defect.
 - Law: the kit's derived tier keeps the matrix data — `fieldFromKey(field, { "<variant>": "<wire-key>" })` respells one variant's encoded key where dialects disagree, `fieldEvolve` maps an existing field family into a successor per variant, and the kit's `Union` assembles a tagged family whose per-variant member unions ride the union value as variant-named statics — so a second field family hand-derived from the first is the parallel-shape defect.
@@ -398,7 +388,6 @@ export { Row };
 A foreign class is admitted by identity, never re-modeled: `Schema.instanceOf` and `Schema.declare` extend the AST to values the schema world does not construct, and the admission is complete only when the declaration carries the annotations that keep every derived surface total.
 
 [FOREIGN_OWNERS]:
-
 - Use: `Schema.instanceOf(Ctor, { identifier, arbitrary, pretty })` admits a constructor-carrying foreign class — the schema is `FromSelf`: type and encoded side are both the live instance, so no wire twin exists and the value never pretends to serialize; deletes the interface hand-mirroring a foreign class's fields.
 - Law: a foreign value with no reachable constructor takes the guard form `Schema.declare((input: unknown): input is Shape => ..., annotations)`; the parameterized form `Schema.declare(typeParameters, { decode, encode }, annotations)` owns foreign containers over schema type parameters and is the form the shipped `*FromSelf` containers are built on.
 - Law: derivation totality is bought at the declaration — `Arbitrary.make` and `Pretty.make` throw `Missing annotation` at first derivation over a bare declaration, while `Schema.equivalence` silently falls back to `Equal.equals`, which on a foreign instance that never implanted `Equal` is reference identity; the loud pair polices itself, the silent one is the audit line, so a foreign owner is admitted with its annotation set complete or not at all.
@@ -434,20 +423,17 @@ export { HandleFromSelf };
 Every free surface derives from the owner's AST, and every ad-hoc view derives from the owner's field record; a hand-maintained parallel of either is the named defect.
 
 [DERIVED_INSTANCES]:
-
 - Law: the derivation set is `Arbitrary.make(Owner)` yielding a `FastCheck.Arbitrary<Owner>`, `JSONSchema.make(Owner)` yielding a `JSONSchema.JsonSchema7Root`, `Pretty.make(Owner)`, `Schema.equivalence(Owner)` yielding an `Equivalence.Equivalence<Owner>`, `Schema.is(Owner)` as the derived guard, and `Schema.standardSchemaV1(Owner)` as the one view handed to foreign validation consumers — a hand-written generator, printer, comparator, guard, JSON contract, or parallel validator beside an owner restates what the AST already proves.
 - Law: field refinements are what keep derived surfaces truthful — `between`, `maxLength`, `pattern`, and brands flow into generation and contract emission, so a refinement skipped at the field surfaces downstream as a lying arbitrary and an under-constrained contract.
 - Law: derived instances are `_`-prefixed interior consts at the owner module, exported only on cross-module demand — the owner is the export; its derivations are its interior.
 
 [ANNOTATIONS]:
-
 - Law: identity is positional on class owners — `Schema.Class<Self>("<identifier>")` — and `.annotations({ identifier })` on schema values; `JSONSchema.make` keys `$defs` by it and parse issues name it, so an owner without identity emits anonymous contracts and unattributable failures.
 - Law: parse forensics attach at the declaration — a field-level `Schema.annotations({ message })` owns the refusal text where the filter lives, `parseIssueTitle` scopes the owner's issue headline, and `decodingFallback` declares read-side degradation as policy — recovery visible at the owner, never a `try`/`catch` at call sites.
 - Law: `jsonSchema`, `arbitrary`, `pretty`, and `equivalence` annotations override derivation only where a filter cannot express the bound — a constraint expressible as `between`/`maxLength`/`pattern` rides the field, and every derived surface stays truthful for free; `title`/`description`/`examples` are contract documentation earned by wire-published owners.
 - Reject: refusal text assembled at call sites; a documentation file restating what owner annotations emit; an `arbitrary` override standing where a filter states the bound.
 
 [PROJECTIONS]:
-
 - Law: a projection re-anchors on the field record — `Schema.Struct(Owner.fields)` then `Schema.pick(...)`, `Schema.omit(...)`, `Schema.partialWith({ exact: true })`, `Schema.extend(...)` — because the class node is a transformation and its projections derive from its fields, not from the class itself.
 - Law: a patch is `omit` of identity then `partialWith({ exact: true })` — absent means unchanged, the exact form emits `?:` without `| undefined`, and a patch that can address a different aggregate or spell set-to-undefined is a wrong shape, not a caller error.
 - Law: a projection never gains authority — it carries no field the owner lacks, and a value reaching a wire outside any owner field marks a missing owner field, not a projection to widen.

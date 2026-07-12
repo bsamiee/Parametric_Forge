@@ -11,12 +11,12 @@ readonly MAX_ROWS_RAW="${FORGE_FLEET_MAX_ROWS:-4000}" KEEP_ROWS_RAW="${FORGE_FLE
 readonly MAX_INPUT_BYTES=1048576 LOCK="${LEDGER}.lock" REAPER="${LEDGER}.lock.reap" STALE_SECONDS=60
 ledger_dir="${LEDGER%/*}"
 [[ "${ledger_dir}" != "${LEDGER}" ]] || ledger_dir=.
-lock_owned=0 reaper_owned=0 rotation="" REAPER_TOKEN="" MAX_ROWS="" KEEP_ROWS=""
+lock_owned=0 reaper_owned=0 rotation="" LOCK_TOKEN="" REAPER_TOKEN="" MAX_ROWS="" KEEP_ROWS=""
 
 _cleanup() {
     [[ -z "${rotation}" ]] || rm -f -- "${rotation}" 2>/dev/null || true
     ((reaper_owned)) && _release_reaper || true
-    ((lock_owned)) && rm -rf -- "${LOCK}" 2>/dev/null || true
+    ((lock_owned)) && _release_lock || true
 }
 trap '_cleanup' EXIT
 trap 'exit 0' TERM INT HUP

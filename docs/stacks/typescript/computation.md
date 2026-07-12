@@ -40,14 +40,12 @@ A computational shape selects the form that owns it; the most specific shape win
 A body that needs several quantities from one sequence folds them in one pass into a typed seed whose fields are the running invariants. The collapse is the multi-pass scatter: `sum`, `min`, `max`, and `length` over one collection are four traversals; one `Array.reduce(values, SEED, step)` is one. The seed is the growth site — a new statistic is one field, one step line, and one merge row — and the same `(step, SEED)` pair serves the terminal fold and the running trace, so the two forms cannot drift.
 
 [STRUCT_SEED]:
-
 - Law: the seed is a plain readonly record, never `Data`-constructed — it is fold-local and no container consumes its identity, so construction-time `Equal`/`Hash` buys one dead allocation per element; three or more named running quantities earn the record, and a two-quantity seed stays a readonly tuple.
 - Law: the fold carries raw associative accumulators — counts, sums, sums of squares, extrema — and derived statistics project at read through the `Option`-returning partial owners; a running mean or variance carried as fold state is the rejected form because it cannot combine across two partial folds.
 - Law: partial folds fuse through the seed's own `Semigroup.struct` row table — the seed shape doubles as the merge table, so lane-partitioned folds combine row-by-row under `combineMany` and the fusion is recoverable from one declaration; the instance algebra is `values.md`'s, composed here.
 - Reject: a `let` rebound across steps; a `sum`/`min`/`max` pass apiece over one sequence; a mutated accumulator object; a `Data.struct` seed.
 
 [SCAN_TRACE]:
-
 - Law: `Array.scan(values, SEED, step)` shares the fold's exact `(step, SEED)` pair and keeps every intermediate seed the fold discards — the return is `NonEmptyArray` with the seed first, so the origin's presence is a type fact, and a consumer that must not see it drops it at the read, never by patching the step; `Array.scanRight` threads the suffix trace from the right.
 - Boundary: a fold whose accumulator is `Option`/`Either` or whose faults must accumulate is `rails-and-effects.md`'s carrier algebra, and the same trace over a live feed is `Stream.scan`, `streams.md`'s — this seed is a pure value, total over admitted elements.
 
@@ -105,13 +103,11 @@ export { Sketch };
 A multi-stage transform selects eager or lazy by materialization cost, and its windows never spell an index. Eager `Array` combinators own the bounded collection in hand; the `Iterable` module owns the pipeline whose source is large, generated, or consumed once — each stage an iterator over the previous, exactly one materialization at the tail. Window, chunk, co-iteration, grouping, and the verdict sieve are named operators, so the moment slice arithmetic, a nested loop, a bucket accumulator, or a filter-then-map double pass appears, an operator already owns the shape.
 
 [LAZY_PIPELINE]:
-
 - Law: laziness is a memory contract — `Iterable.map`/`filter`/`filterMap`/`take`/`takeWhile`/`drop`/`flatMap`/`flatten`/`dedupeAdjacent` compose without materializing and hold bounded memory over an unbounded source, `Iterable.scan` keeps the running trace lazy, and `Iterable.filterMapWhile` fuses filter, transform, and stop into one operator; the tail materializes once — `Array.fromIterable` for a collection, `Iterable.reduce` for a value — and a fully built array mid-chain re-buys the allocation laziness deleted.
 - Law: production is an anamorphism — `Iterable.unfold(seed, step)` generates from a seed with `Option` termination, and `Iterable.range`/`Iterable.makeBy` name the arithmetic sources — so a `function*` generator in domain flow is a statement seam smuggled in as production.
 - Reject: a `[...feed]` spread or intermediate array between stages; a hand `while` loop growing an array where `unfold` states the production; laziness over a small bounded collection already in hand — the eager combinators read shorter and allocate once.
 
 [WINDOW_ALGEBRA]:
-
 - Law: an index is never spelled — `Array.window(values, width)` yields every full sliding window and only full windows, `Array.chunksOf(values, width)` yields fixed pieces keeping the shorter last, and the two differ by name, never by a flag; position, where the shape genuinely carries it, is the callback's own index parameter, which every fold and map already passes.
 - Law: co-iteration is a named pairing — `Array.zipWith(self, that, combine)` pairs positionally and truncates to the shorter operand, the stated semantics a caller proves length against; adjacent difference is `zipWith` against the self dropped by one, and `Array.cartesianWith(self, that, combine)` collapses the nested loop into one operator.
 - Law: grouping selects by discipline — `Array.groupBy(values, key)` builds the keyed record of `NonEmptyArray` runs in one pass, `Array.span(values, predicate)` splits the satisfying prefix, `Array.splitWhere` splits at the first breach, and `Iterable.groupWith` groups adjacent runs under an equivalence; a mutable bucket object grown in a loop restates all four.
@@ -208,13 +204,11 @@ export { Sieve };
 State that threads element-to-element is a Mealy step — one `(state, element) => [state, output]` declaration — and stateful computation has exactly three rungs: the step folded over a collection, the step's rows lifted into a vocabulary table when the state space closes, and the actor when the state must outlive one traversal and answer requests. Every rung is the same shape written once; a `let` beside a `map`, a `switch` advancing a mutable phase, and a class of mutable fields are one defect at three sizes.
 
 [MEALY_STEP]:
-
 - Law: `Array.mapAccum(values, seed, step)` threads the accumulator and emits per element, returning `[state, outputs]` — the carried state decouples from the emitted shape, and the step's third parameter is the index, so a hand counter beside the fold restates the signature.
 - Law: the step is written once and both carriers consume it — the same declaration lifts unchanged into `Stream.mapAccum` when the data becomes incremental; the lift and its pipeline law are `streams.md`'s.
 - Reject: a `let` rebound across `Array.map`; a module-level cell advanced by a traversal; a step hand-specialized per carrier.
 
 [TRANSITION_LADDER]:
-
 - Law: a closed transition system is a vocabulary table, not control flow — one `as const` anchor keyed by state whose rows carry `(next, emit)` per input kind, driven by one `mapAccum` reading rows — so a new phase or input is a row, never a branch; the anchor's derivation and guard mechanics are `derivation.md`'s.
 - Law: scale is table composition, never state explosion — a hierarchical phase nests as a row whose payload anchors a sub-table driven by the same fold, parallel regions are independent fields of one state record each advanced by the signals it reads, and a guard is a predicate column the step consults before the row fires; the cross-product table enumerating every region combination is the rejected form.
 - Law: the ladder tops at the actor, declared as procedure rows over one state — in-process, `Machine.makeWith<State, Input>()` with `Machine.procedures.make(initial)` grown by `Machine.procedures.add<Req>()(tag, handler)` on `Request.TaggedClass` rows; across a process edge, `Machine.makeSerializable({ state, input }, initialize)` with `Machine.serializable.make`/`Machine.serializable.add` on `Schema.TaggedRequest` rows — each handler `({ request, state })` returns `[reply, state]` on the rail, the initialize arrow returns its list bare because a procedure list is its own `Effect`, and `Machine.boot` yields the scoped `Actor` whose `send` serializes every request against one state on one fiber.
@@ -328,7 +322,6 @@ export { Transit };
 A computation over a recursive structure is one algebra applied by one traversal: a `(leaf, join)` pair serves every reduction over the closed family, and depth selects the execution form — native recursion to data depth, the frontier kernel or the rail past it — never the algebra. When the structure is a graph rather than a tree, the traversal itself is owned: the walker families delete the hand frontier.
 
 [CATAMORPHISM]:
-
 - Law: one `(leaf, join)` algebra value serves every reduction — sum, depth, flatten, render are algebra rows, never a recursive function per reduction — and the traversal threads children through the same public surface; the fold rides tag refinement because the record dispatch's carrier reduction strands the bare `R` its arms return, the `Unify` mechanics `surfaces-and-dispatch.md` owns.
 - Law: native recursion is legal only to data depth — a structure admitted at bounded fan-in and height reads freely, and input-scaled or adversarial depth forfeits the form, because the JS call stack is a fixed platform ceiling no flag, option, or worker size raises.
 - Exemption: the frontier kernel is this page's statement-bearing seam, licensed by that fixed ceiling — an immutable `List` work stack rebound each turn, `expand` frames sliding a `combine` marker beneath a branch's children and a second immutable stack carrying results until the marker joins them — so the traversal is iterative exactly where native recursion overflows; the mark's legality is `language.md`'s.
@@ -407,7 +400,6 @@ export { Limb, chased };
 ```
 
 [GRAPH_CONSUMPTION]:
-
 - Law: when the structure is a graph the frontier is never hand-rolled — `Graph.dfs`/`Graph.bfs`/`Graph.dfsPostOrder`/`Graph.topo` return walkers consumed as iterables through `Graph.values`/`Graph.indices`/`Graph.entries`, so traversal order is a named read; `Graph` is `@experimental`, an admission fact the pin owns.
 - Law: path, condensation, and rendering questions are owner reads — `Graph.dijkstra`/`Graph.astar`/`Graph.bellmanFord` return `Option` of a `PathResult` carrying `path`, `distance`, and `costs`, `Graph.floydWarshall` answers all pairs, `Graph.stronglyConnectedComponents`/`Graph.isAcyclic` answer condensation, and `Graph.toMermaid`/`Graph.toGraphViz` project the same owner to a diagram — a hand Dijkstra over adjacency state or a hand-walked serializer restates the family.
 - Boundary: graph construction, the `Graph.mutate` write discipline, and `Trie` prefix reads are `values.md`'s owners — this page owns only the algorithmic consumption.
@@ -441,14 +433,12 @@ export { charted };
 No pure memoization combinator ships, and that absence is the law: a pure recurrence with overlapping subproblems tabulates bottom-up as a fold that threads its solved table, effectful memoization rides an owned combinator family, and a mutation kernel exists only where measurement indicts the fold. The hand memo `Map`, the module-level cache object, and the unmarked hot loop are three spellings of one defect.
 
 [MEMO_OWNERS]:
-
 - Law: the pure recurrence tabulates — one fold over the ordered subproblem space threading the solved table as its seed, a `Chunk` for dense keys because `Chunk.append` grows amortized where an array rebuild copies per rung, a `HashMap` for sparse ones — the structural dual of a memo with no cache identity, no eviction, and no stack growth, so the deep dynamic program is a fold, never a stack-bound recursion.
 - Law: effectful memoization is one family selected by lifetime policy — `Effect.cachedFunction(f)` memoizes per argument under structural `Equal` with an `Equivalence` as the optional second parameter, `Effect.cached` defers and memoizes one result for the flow's life, `Effect.cachedWithTTL(self, ttl)` expires it so the first pull after the window recomputes, `Effect.cachedInvalidateWithTTL(self, ttl)` returns the memo paired with its invalidate effect so staleness is forced on evidence rather than waited out, and `Effect.once` runs at most once and replays `void` — each returns the memoized surface inside `Effect`, so the cache lives exactly as long as the flow that built it and the window is a `Duration` policy value.
 - Boundary: keyed concurrent caching under capacity and TTL policy is `Cache.make`, `concurrency.md`'s contention owner — reached for when concurrent misses must collapse, never when a pure table folds.
 - Reject: a hand memo `Map` beside the function; a captured mutable operand the key omits; a module-level cache object outliving every flow that reads it; a TTL spelled as a stored timestamp compared in the body.
 
 [KERNEL_EARN]:
-
 - Law: the earn test is sequential — fold first, measure, then mark: a kernel exists only where a measured hot path indicts the fold's allocation or dispatch cost, or where a platform contract forces statements; a kernel kept after its measurement pressure disappears reverts to the fold.
 - Law: the draft is scoped and the return detaches — `MutableHashMap` batches structural-keyed writes, `MutableList` the append lane, a `TypedArray` the numeric lane — and the kernel returns an immutable projection with no live reference escaping; the mark's legality and the cast algebra inside it are `language.md`'s.
 - Reject: a `Map` or object cache in domain flow; a `TypedArray` view escaping its kernel; mutation justified by style where no measurement exists.

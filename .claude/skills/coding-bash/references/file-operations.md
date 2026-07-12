@@ -2,12 +2,12 @@
 
 Production patterns for file I/O beyond basic reads and conditionals.
 
-| [INDEX] | [PATTERN]             | [S] | [USE_WHEN]                                    |
-| :-----: | :-------------------- | :-: | :-------------------------------------------- |
-|  [01]   | Atomic write          | S1  | Config/log output that must not be partial    |
-|  [02]   | Descriptor multiplex  | S2  | Parallel logging, lock files, output channels |
-|  [03]   | Directory traversal   | S3  | Sorted globs, fd search, recursive processing |
-|  [04]   | Structured extraction | S4  | Config parsing, marker sections, line access  |
+| [INDEX] | [PATTERN]             |  [S]  | [USE_WHEN]                                    |
+| :-----: | :-------------------- | :---: | :-------------------------------------------- |
+|  [01]   | Atomic write          |  S1   | Config/log output that must not be partial    |
+|  [02]   | Descriptor multiplex  |  S2   | Parallel logging, lock files, output channels |
+|  [03]   | Directory traversal   |  S3   | Sorted globs, fd search, recursive processing |
+|  [04]   | Structured extraction |  S4   | Config parsing, marker sections, line access  |
 
 ## [01]-[ATOMIC_WRITE_LIFECYCLE]
 

@@ -5,7 +5,6 @@ Each diagram type answers one question with a bounded mark vocabulary. Per type:
 ## [01]-[CORE_TYPES]
 
 [FLOWCHART]:
-
 - Question: what exists and how same-level parts relate under one relation.
 - Node: an owner or operation at one abstraction level.
 - Edge: the single declared relation, its direction load-bearing.
@@ -33,7 +32,6 @@ Each diagram type answers one question with a bounded mark vocabulary. Per type:
     - no edge contradicts the subject's declared direction law, a dependency edge pointing one way throughout.
 
 [SEQUENCE]:
-
 - Question: who exchanges what, in what order, to complete one scenario.
 - Participant: an autonomous runtime actor — process, service, or thread — never a data object.
 - Message: one protocol step its sender can actually initiate.
@@ -62,7 +60,6 @@ Each diagram type answers one question with a bounded mark vocabulary. Per type:
     - the message order is achievable, no reply preceding its request.
 
 [STATE]:
-
 - Question: which modes an entity occupies and which events move it.
 - State: a mode the system rests in, observable between events.
 - Transition: an event plus optional guard; guards leaving one state stay disjoint.
@@ -92,7 +89,6 @@ Each diagram type answers one question with a bounded mark vocabulary. Per type:
     - each composite's substates genuinely share its external transitions.
 
 [CLASS]:
-
 - Question: how declared types relate under inheritance, composition, or dependency.
 - Class: a real declared type in the system.
 - Relation: a compile-time relationship the source proves.
@@ -119,7 +115,6 @@ Each diagram type answers one question with a bounded mark vocabulary. Per type:
     - cardinality appears only where the association is the point.
 
 [ER]:
-
 - Question: what data entities exist, how they identify each other, and what multiplicity constrains them.
 - Entity: a persisted noun with identity.
 - Relationship: a join path whose cardinality storage enforces.
@@ -149,7 +144,6 @@ Each diagram type answers one question with a bounded mark vocabulary. Per type:
 ## [02]-[EXTENDED_TYPES]
 
 [BLOCK]:
-
 - Question: how parts occupy a fixed grid the layout engine must not rearrange.
 - Block: one cell or span in a declared column raster, nesting reading as containment.
 - Signal: the raster itself — position and span assert the meaning automatic layout destroys.
@@ -158,7 +152,6 @@ Each diagram type answers one question with a bounded mark vocabulary. Per type:
 - Logic checks: every row's spans sum within the declared `columns`.
 
 [JOURNEY]:
-
 - Question: how satisfaction moves across the phases one actor set walks.
 - Task: one scored step owned by named actors, the score asserting measured or judged sentiment.
 - Signal: the sentiment curve across phases — the face row is the finding, the tasks are its evidence.
@@ -167,7 +160,6 @@ Each diagram type answers one question with a bounded mark vocabulary. Per type:
 - Logic checks: every task carries at least one actor and a defensible 1-5 score.
 
 [ARCHITECTURE]:
-
 - Question: which deployable units run where and reach each other over what path.
 - Service: a deployable unit.
 - Edge: network reachability over a real port or protocol.
@@ -177,7 +169,6 @@ Each diagram type answers one question with a bounded mark vocabulary. Per type:
 - Logic checks: every edge traces a real port or protocol path.
 
 [C4]:
-
 - Question: what the system landscape holds at one audience's zoom level.
 - Element: a context, container, or component fixed at one level per view.
 - Signal: the boundary walls — what sits inside the system under discussion and what talks to it from outside.
@@ -186,7 +177,6 @@ Each diagram type answers one question with a bounded mark vocabulary. Per type:
 - Logic checks: every element resolves into the next zoom level.
 
 [GANTT]:
-
 - Question: which owned work commits to which dates, and what waits on what.
 - Task: owned work with real start and end dates.
 - Dependency: an `after` chain onto a prior task.
@@ -196,7 +186,6 @@ Each diagram type answers one question with a bounded mark vocabulary. Per type:
 - Logic checks: every `after` chain matches a real dependency.
 
 [TREEMAP]:
-
 - Question: how a whole decomposes into parts weighted by one measure.
 - Leaf: a part carrying its numeric weight, nesting reading as strict containment under one root.
 - Signal: relative area — the two-second read of where the measure concentrates.
@@ -205,7 +194,6 @@ Each diagram type answers one question with a bounded mark vocabulary. Per type:
 - Logic checks: sibling weights share one unit and sum to their parent's meaning.
 
 [TIMELINE]:
-
 - Question: what occurred across successive periods.
 - Event: a dated occurrence under its period; adjacency asserts no cause.
 - Signal: density and clustering along the axis — when things happened, and how much at once.
@@ -214,7 +202,6 @@ Each diagram type answers one question with a bounded mark vocabulary. Per type:
 - Logic checks: the period sequence runs strictly chronological.
 
 [MINDMAP]:
-
 - Question: how one root concept decomposes into an owned hierarchy.
 - Node: a child owned by exactly one parent, the tree admitting no explicit edge.
 - Signal: the first-level partition — the four-to-six branches that claim to exhaust the root.
@@ -223,7 +210,6 @@ Each diagram type answers one question with a bounded mark vocabulary. Per type:
 - Logic checks: every node traces one path back to the root.
 
 [KANBAN]:
-
 - Question: which workflow stage holds which work right now.
 - Column: a work queue.
 - Card: one task carrying its stage.
@@ -233,7 +219,6 @@ Each diagram type answers one question with a bounded mark vocabulary. Per type:
 - Logic checks: every card sits in exactly one column.
 
 [TREEVIEW]:
-
 - Question: what a filesystem or containment hierarchy actually holds.
 - Entry: one file or directory at its true depth, a trailing slash marking a directory.
 - Signal: the annotated entries — the highlight and descriptions carry the argument, the tree is its address system.
@@ -242,7 +227,6 @@ Each diagram type answers one question with a bounded mark vocabulary. Per type:
 - Logic checks: the tree matches a listing of the real structure it claims.
 
 [CYNEFIN]:
-
 - Question: which decision domain each item occupies and what movement between domains is claimed.
 - Item: one situated practice quoted under exactly one domain, a transition asserting a real reclassification event.
 - Signal: the sort itself — which practices the team treats as known versus emergent, and what last moved.
@@ -251,7 +235,6 @@ Each diagram type answers one question with a bounded mark vocabulary. Per type:
 - Logic checks: every transition names its trigger in the label.
 
 [RAILROAD]:
-
 - Question: which strings a grammar admits, rule by rule.
 - Production: one named rule owning its expression, a reference naming another rule.
 - Signal: the rail alternatives — what a valid string may do at each junction.
@@ -260,7 +243,6 @@ Each diagram type answers one question with a bounded mark vocabulary. Per type:
 - Logic checks: every referenced nonterminal carries its own production.
 
 [REQUIREMENT]:
-
 - Question: which requirements trace to which satisfying or verifying elements.
 - Requirement: a demanded capability node.
 - Element: a design or artifact node bound by `satisfies`, `verifies`, or `traces`.
@@ -270,7 +252,6 @@ Each diagram type answers one question with a bounded mark vocabulary. Per type:
 - Logic checks: every requirement reaches at least one element via `satisfies` or `verifies`.
 
 [GITGRAPH]:
-
 - Question: how branches diverge, commit, and merge across repository history.
 - Commit: one node on a branch.
 - Branch: a named line joined by parentage or merge.
@@ -282,7 +263,6 @@ Each diagram type answers one question with a bounded mark vocabulary. Per type:
 - Logic checks: every commit id stays unique and every branch predates its checkout.
 
 [QUADRANT]:
-
 - Question: where items place across two independent judgments.
 - Point: an item positioned by two coordinates.
 - Axis: one independent judgment bounded low to high.
@@ -294,7 +274,6 @@ Each diagram type answers one question with a bounded mark vocabulary. Per type:
 - Logic checks: every coordinate falls within its declared axis range.
 
 [PACKET]:
-
 - Question: how bits lay out across a wire-format field contract.
 - Field: a named bit range in the packet.
 - Signal: field widths at a glance — where the payload budget actually goes.
@@ -303,7 +282,6 @@ Each diagram type answers one question with a bounded mark vocabulary. Per type:
 - Logic checks: field ranges match the wire spec exactly, no gaps or overlaps.
 
 [SWIMLANE]:
-
 - Question: which owner performs which step in one laned process.
 - Lane: one owner, a node asserting that owner performs the step.
 - Signal: the handoffs — every cross-lane edge is a coordination cost made visible.
@@ -312,7 +290,6 @@ Each diagram type answers one question with a bounded mark vocabulary. Per type:
 - Logic checks: every node sits in the lane of the owner that performs it.
 
 [EVENTMODELING]:
-
 - Question: which commands produce which events and which projections consume them, in timeline order.
 - Frame: one numbered timeframe holding a ui, command, event, processor, or read-model fact; frame order is the asserted causality.
 - Signal: the lane rhythm — commands descending into events, read models rising from them, left to right.
@@ -321,7 +298,6 @@ Each diagram type answers one question with a bounded mark vocabulary. Per type:
 - Logic checks: frame numbers strictly increase within each timeline run, and every read model traces to an upstream event frame.
 
 [VENN]:
-
 - Question: how much the declared sets genuinely overlap under one measure.
 - Set: a weighted membership region; a union row asserts a measured overlap, never a drawn guess.
 - Signal: the labeled regions — each union caption names what the overlap IS, not just that it exists.
@@ -330,7 +306,6 @@ Each diagram type answers one question with a bounded mark vocabulary. Per type:
 - Logic checks: every union size is at most the smallest member set's size.
 
 [WARDLEY]:
-
 - Question: where each capability sits on visibility and evolution, and what depends on what.
 - Component: a capability at assessed `[visibility, evolution]` coordinates; the anchor is the user need every chain serves.
 - Signal: the slope — visible custom capability up-left, invisible commodity down-right, and the evolve arrows naming the strategy.
@@ -339,7 +314,6 @@ Each diagram type answers one question with a bounded mark vocabulary. Per type:
 - Logic checks: every component reaches an anchor through the dependency links, and every coordinate stays inside the unit square.
 
 [ISHIKAWA]:
-
 - Question: which cause categories plausibly produce one named effect.
 - Cause: one contributing condition under exactly one category; the head names the effect, never a category.
 - Signal: depth under a category — a deep branch is the diagnosis, a flat one a suspicion.
