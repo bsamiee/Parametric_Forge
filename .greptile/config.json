@@ -5,6 +5,7 @@
     "triggerOnDrafts": true,
     "statusCheck": true,
     "statusCommentsEnabled": true,
+    "updateExistingSummaryComment": true,
     "fixWithAI": true,
     "shouldUpdateDescription": false,
     "updateSummaryOnly": false,

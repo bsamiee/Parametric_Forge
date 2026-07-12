@@ -16,6 +16,11 @@
   # custody/bootstrap anchor — a fresh machine emits from it before Doppler tokens exist.
   sessionCache = "${config.xdg.cacheHome}/forge-secrets/session-env.sh";
   opCache = "${config.xdg.configHome}/hm-op-session.sh";
+  setupEnv = pkgs.writeShellApplication {
+    name = "forge-setup-env";
+    runtimeInputs = [pkgs.coreutils pkgs.doppler pkgs.findutils pkgs.gawk pkgs.gnused pkgs.jq];
+    text = builtins.readFile ../../../../.claude/hooks/setup-env.sh;
+  };
   # Replay constants as rows: one declaration owns name AND value; the export block and the replay-manifest name set both derive from it.
   replayRows = {
     CLOUDSDK_CONFIG = "${config.xdg.configHome}/gcloud";
@@ -75,6 +80,8 @@
       tmp="$(mktemp -d)"; trap 'rm -rf "$tmp"' EXIT
       printf -- '--- CLI lane (SessionStart hook, fresh env file)\n'
       hook_rc=0
+      # shellcheck source=/dev/null
+      . "${config.xdg.configHome}/forge-session-secrets.sh"
       CLAUDE_ENV_FILE="$tmp/env.sh" bash "$HOME/.claude/hooks/setup-env.sh" >"$tmp/alerts" 2>"$tmp/receipt" || hook_rc=$?
       printf '  hook rc: %s\n' "$hook_rc"
       sed 's/^/  receipt: /' "$tmp/receipt"
@@ -90,7 +97,7 @@
         else
           printf '  ABSENT  %s\n' "$k"
         fi
-      done <<<"$keys"
+      done < <(printf '%s\n' "$keys")
     '';
   };
 in {
@@ -104,7 +111,7 @@ in {
   };
 
   home = {
-    packages = [secretsProof];
+    packages = [secretsProof setupEnv];
 
     # --- [BIOMETRIC_UNLOCK]
     sessionVariables = {
@@ -170,13 +177,10 @@ in {
     '';
 
     # --- [SESSION_SECRETS]
-    # The SessionStart hook maintains the doppler-first session cache; the op cache serves only a fresh machine where no session cache exists yet.
+    # The op cache supplies bootstrap credentials; Doppler session material overlays every ordinary secret with the fresher owner value.
     "forge-session-secrets.sh".text = ''
-      if [ -f "${sessionCache}" ]; then
-        . "${sessionCache}"
-      elif [ -f "${opCache}" ]; then
-        . "${opCache}"
-      fi
+      [ ! -f "${opCache}" ] || . "${opCache}"
+      [ ! -f "${sessionCache}" ] || . "${sessionCache}"
     '';
 
     # --- [SECRET_TEMPLATE]
@@ -199,6 +203,11 @@ in {
       # Codex (which cannot remap env names at the MCP boundary) and the GUI domain get it ambient correctly.
       export HOSTINGER_API_TOKEN="op://Tokens/HOSTINGER_TOKEN/token"
       export CONTEXT7_API_KEY="op://Tokens/CONTEXT7_API_KEY/token"
+
+      # Config-scoped Doppler tokens keep SessionStart independent of personal CLI authentication.
+      export DOPPLER_TOKEN_AGENT_RUNTIME="op://Tokens/DOPPLER_AGENT_READONLY/token"
+      export DOPPLER_TOKEN_FORGE_MACHINE="op://Tokens/DOPPLER_FORGE_MACHINE_READONLY/token"
+      export DOPPLER_TOKEN_MAGHZ_HOST="op://Tokens/DOPPLER_MAGHZ_HOST_READONLY/token"
 
       # GitHub CLI (gh prefers GH_TOKEN, GITHUB_TOKEN is fallback for other tools)
       export GH_TOKEN="op://Tokens/Github Token/token"

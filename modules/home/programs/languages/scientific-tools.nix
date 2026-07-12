@@ -335,12 +335,11 @@
 
     c = get_config()
     c.IdentityProvider.token = os.environ["JUPYTER_TOKEN"]
-    # Kernel culling makes accumulation structurally impossible: the KeepAlive server respawns killed kernels, so external reaping is the wrong
-    # lever — idle kernels retire here instead. Connected/busy kernels survive; an abandoned kernel loses its connections and ages out.
+    # MCP WebSockets remain connected for the client lifetime, so connected idle kernels must remain eligible; busy kernels retain compute ownership.
     c.MappingKernelManager.cull_idle_timeout = 3600
     c.MappingKernelManager.cull_interval = 300
     c.MappingKernelManager.cull_busy = False
-    c.MappingKernelManager.cull_connected = False
+    c.MappingKernelManager.cull_connected = True
   '';
   forgeIfcMcp = pkgs.writeShellApplication {
     name = "forge-ifcmcp";
@@ -354,7 +353,7 @@
       ${forgeJupyterTokenPrelude}
       ${forgeJupyterRootPrelude}
       exec ${forgeCompanionEnv}/bin/forge-companion-env uvx --python "${pkgs.python312}/bin/python3" \
-        --from "jupyterlab==4.6.0" --with "jupyter-collaboration==4.4.1" --with "jupyter-mcp-tools==0.1.6" \
+        --from "jupyterlab==4.6.1" --with "jupyter-collaboration==4.4.1" --with "jupyter-mcp-tools==0.1.6" \
         jupyter-lab --no-browser --ServerApp.ip=127.0.0.1 --ServerApp.port=${toString forgeJupyterPort} \
         --ServerApp.port_retries=0 \
         --config=${lib.escapeShellArg forgeJupyterServerConfig} "$@"
@@ -369,7 +368,7 @@
       # Connector defaults owned here so both MCP fleets carry no per-client env.
       export JUPYTER_URL="''${JUPYTER_URL:-http://127.0.0.1:${toString forgeJupyterPort}}"
       export ALLOW_IMG_OUTPUT="''${ALLOW_IMG_OUTPUT:-true}"
-      ${superviseStdio ''${forgeCompanionEnv}/bin/forge-companion-env uvx --python "${pkgs.python312}/bin/python3" --from "jupyter-mcp-server==1.0.2" jupyter-mcp-server''}
+      ${superviseStdio ''${forgeCompanionEnv}/bin/forge-companion-env uvx --python "${pkgs.python312}/bin/python3" --from "jupyter-mcp-server==1.0.3" jupyter-mcp-server --transport stdio --start-new-runtime false''}
     '';
   };
 in
@@ -461,6 +460,8 @@ in
         KeepAlive = true;
         ThrottleInterval = 30;
         ProcessType = "Interactive";
+        AbandonProcessGroup = false;
+        ExitTimeOut = 30;
         StandardOutPath = "${config.home.homeDirectory}/Library/Logs/forge-jupyter.log";
         StandardErrorPath = "${config.home.homeDirectory}/Library/Logs/forge-jupyter.log";
         AssociatedBundleIdentifiers = ["com.parametric-forge.forge-jupyter"];

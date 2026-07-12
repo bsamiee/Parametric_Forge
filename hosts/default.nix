@@ -21,12 +21,6 @@
     nixpkgs.overlays = [inputs.self.overlays.default];
 
     networking.hostName = host.name;
-    # Darwin cedes tz to macOS custody: nix-darwin's activation guard (systemsetup | grep -q under pipefail) SIGPIPE-fails under kernel pipe-buffer
-    # pressure, and the machine tz is operator-stable; the NixOS host keeps the declarative row.
-    time.timeZone =
-      if host.os == "darwin"
-      then null
-      else host.timeZone;
 
     system = {
       configurationRevision = inputs.self.rev or inputs.self.dirtyRev or null;
@@ -80,12 +74,13 @@
     };
     nixos = {
       mkSystem = lib.nixosSystem;
-      modules = _: [
+      modules = host: [
         inputs.determinate.nixosModules.default # Determinate Nix owner: generates /etc/nix/nix.custom.conf
         inputs.disko.nixosModules.disko # Declarative disk layout; nixos-anywhere consumes this at bootstrap
         ../modules/common # Common config: Nix settings + toolchain env factory
         ../modules/nixos
         home-manager.nixosModules.home-manager
+        {time.timeZone = host.timeZone;}
       ];
     };
   };

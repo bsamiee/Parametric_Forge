@@ -280,9 +280,8 @@
     };
 
     # Cursor
-    default_cursor_style = "BlinkingBar";
+    default_cursor_style = "SteadyBar";
     cursor_thickness = 2;
-    cursor_blink_rate = 250;
     force_reverse_video_cursor = true;
 
     # Behavior
@@ -326,7 +325,7 @@
     # Performance
     front_end = "WebGpu";
     max_fps = 120;
-    animation_fps = 120;
+    animation_fps = 10;
     scrollback_lines = 5000;
 
     # Outer plane rows (pure data)
@@ -376,6 +375,7 @@
       zellij = "${pkgs.zellij}/bin/zellij";
       nvim = "${profileBin}/nvim";
       forge_agents = "${profileBin}/forge-agents";
+      attention_emit = "${profileBin}/forge-attention-emit";
       # Frozen-layout assets (forge-zellij layout record): session_args and forge-workspace both resolve <slug>.kdl here before the default.
       recorded_layouts = recordedLayouts;
       # Nightly-only mux pin: without it the mux inherits the identity-less Apple launchd SSH_AUTH_SOCK (deck.lua applies it under has_nightly).

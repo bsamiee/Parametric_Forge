@@ -25,6 +25,10 @@ local function cell(fg, text)
     }
 end
 
+local function domain_name(pane)
+    return pane:get_domain_name()
+end
+
 local handlers = {
     -- Session persistence is code-defined: GUI and auto-spawned mux servers land the default workspace's slug session at its name-policy cwd; an
     -- explicit `wezterm start -- prog` keeps its own args untouched.
@@ -97,7 +101,11 @@ local handlers = {
         end
 
         -- Remote-domain chip: the shared contextBadges.remote row, so a VPS pane reads identically to the prompt hostname and yazi header.
-        local domain = pane and pane:get_domain_name() or "local"
+        local domain = "local"
+        if pane then
+            local ok, name = pcall(domain_name, pane)
+            domain = ok and name and name ~= "" and name or domain
+        end
         if domain ~= "local" then
             push(cell(badges.remote.color, badges.remote.glyph .. " " .. domain))
         end
@@ -108,8 +116,8 @@ local handlers = {
 
     ["format-tab-title"] = function(tab)
         local pane = tab.active_pane
-        local proc = (pane.foreground_process_name or ""):gsub(".*/", "")
-        local title = proc ~= "" and proc or pane.title
+        local title = pane.title or ""
+        title = title ~= "" and title or "wezterm"
         return string.format(" %d:%s ", tab.tab_index + 1, title)
     end,
 

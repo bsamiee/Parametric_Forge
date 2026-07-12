@@ -1,61 +1,109 @@
 #!/usr/bin/env bash
-# External-worker emit helper: the opt-in richer lane for codex/agy (and any wrapped external model) to declare itself into the delegation ledger the
-# fleet roster folds. One call opens a lane (--state running), a later call closes it (--state done|failed|cancelled), paired by --wid. When wrappers do
-# not call this, forge-fleet-status still surfaces the process via its scan; this helper adds the resolved model, label, and exit truth a scan cannot
-# see. Rows stamp the caller's inherited CLAUDE_CODE_SESSION_ID (override: FORGE_FLEET_SESSION) so the roster scopes lanes to their owning session even
-# after the worker pid dies or daemonizes away from its ancestry.
+# External-worker delegation emitter. Every invocation admits one bounded worker row, serializes append and rotation with the lifecycle-hook writer,
+# and fails open when malformed input, dead ownership metadata, or filesystem contention would otherwise interfere with the calling worker.
 set -Eeuo pipefail
 shopt -s inherit_errexit
-[ -n "${FORGE_FLEET_DEBUG:-}" ] || trap 'exit 0' ERR
 
-ledger="${FORGE_FLEET_LEDGER:-${XDG_STATE_HOME:-$HOME/.local/state}/forge/delegation.jsonl}"
+[[ -n "${FORGE_FLEET_DEBUG:-}" ]] || trap 'exit 0' ERR
+
+readonly LEDGER="${FORGE_FLEET_LEDGER:-${XDG_STATE_HOME:-$HOME/.local/state}/forge/delegation.jsonl}"
+readonly MAX_ROWS_RAW="${FORGE_FLEET_MAX_ROWS:-4000}" KEEP_ROWS_RAW="${FORGE_FLEET_KEEP_ROWS:-1000}"
+readonly MAX_INPUT_BYTES=1048576 LOCK="${LEDGER}.lock" REAPER="${LEDGER}.lock.reap" STALE_SECONDS=60
+ledger_dir="${LEDGER%/*}"
+[[ "${ledger_dir}" != "${LEDGER}" ]] || ledger_dir=.
+lock_owned=0 reaper_owned=0 rotation="" REAPER_TOKEN="" MAX_ROWS="" KEEP_ROWS=""
+
+_cleanup() {
+    [[ -z "${rotation}" ]] || rm -f -- "${rotation}" 2>/dev/null || true
+    ((reaper_owned)) && _release_reaper || true
+    ((lock_owned)) && rm -rf -- "${LOCK}" 2>/dev/null || true
+}
+trap '_cleanup' EXIT
+trap 'exit 0' TERM INT HUP
+
+# shellcheck source=forge-fleet-lock.sh
+source "${FORGE_FLEET_LOCK_LIB:-${BASH_SOURCE[0]%/*}/forge-fleet-lock.sh}"
+
+_take_value() {
+    (($# >= 2)) || return 1
+    REPLY="$2"
+}
+
 session="${FORGE_FLEET_SESSION:-${CLAUDE_CODE_SESSION_ID:-}}"
 kind="external" label="" model="" effort="" state="running" wid="" pid="${FORGE_FLEET_PID:-}"
-
-while [ $# -gt 0 ]; do
+(($# <= 32)) || exit 0
+while (($# > 0)); do
     case "$1" in
         --kind)
-            kind="$2"
+            _take_value "$@" || exit 0
+            kind="${REPLY}"
             shift 2
             ;;
         --label)
-            label="$2"
+            _take_value "$@" || exit 0
+            label="${REPLY}"
             shift 2
             ;;
         --model)
-            model="$2"
+            _take_value "$@" || exit 0
+            model="${REPLY}"
             shift 2
             ;;
         --effort)
-            effort="$2"
+            _take_value "$@" || exit 0
+            effort="${REPLY}"
             shift 2
             ;;
         --state)
-            # Normalize wrapper spellings to the fold vocabulary: start->running, stop->done.
-            case "$2" in start) state="running" ;; stop) state="done" ;; *) state="$2" ;; esac
+            _take_value "$@" || exit 0
+            case "${REPLY}" in start) state="running" ;; stop) state="done" ;; *) state="${REPLY}" ;; esac
             shift 2
             ;;
         --wid)
-            wid="$2"
+            _take_value "$@" || exit 0
+            wid="${REPLY}"
             shift 2
             ;;
         --pid)
-            pid="$2"
+            _take_value "$@" || exit 0
+            pid="${REPLY}"
             shift 2
             ;;
         --session)
-            session="$2"
+            _take_value "$@" || exit 0
+            session="${REPLY}"
             shift 2
             ;;
         *) shift ;;
     esac
 done
-[ -n "$wid" ] || wid="${kind}-$$"
+[[ -n "${wid}" ]] || wid="${kind}-$$"
 
-mkdir -p "${ledger%/*}"
-jq -nc --argjson t "$EPOCHSECONDS" \
-    --arg wid "$wid" --arg kind "$kind" --arg label "$label" --arg model "$model" --arg effort "$effort" --arg state "$state" --arg pid "$pid" \
-    --arg session "$session" \
-    '{t: $t, ev: "worker", wid: $wid, kind: $kind, label: ($label | if . == "" then null else .[0:48] end),
-      model: ($model | if . == "" then null else . end), effort: ($effort | if . == "" then null else . end), state: $state,
-      pid: (if $pid == "" then null else ($pid | tonumber?) end), session_id: (if $session == "" then null else $session end)}' >>"$ledger" 2>/dev/null
+_normalize_decimal "${MAX_ROWS_RAW}" 6 MAX_ROWS || exit 0
+_normalize_decimal "${KEEP_ROWS_RAW}" 6 KEEP_ROWS || exit 0
+((MAX_ROWS > 0 && MAX_ROWS <= 100000 && KEEP_ROWS > 0)) || exit 0
+((KEEP_ROWS <= MAX_ROWS)) || exit 0
+readonly MAX_ROWS KEEP_ROWS
+((\
+${#session} + ${#kind} + ${#label} + ${#model} + ${#effort} + ${#state} + ${#wid} + ${#pid} <= MAX_INPUT_BYTES)) ||
+    exit 0
+
+mkdir -p -- "${ledger_dir}"
+_acquire_lock || exit 0
+jq -nc --argjson t "${EPOCHSECONDS}" \
+    --arg wid "${wid}" --arg kind "${kind}" --arg label "${label}" --arg model "${model}" --arg effort "${effort}" \
+    --arg state "${state}" --arg pid "${pid}" --arg session "${session}" '
+      {t: $t, ev: "worker", wid: $wid[0:128], kind: $kind[0:48], label: ($label | if . == "" then null else .[0:48] end),
+       model: ($model | if . == "" then null else .[0:128] end), effort: ($effort | if . == "" then null else .[0:48] end), state: $state[0:48],
+       pid: (if $pid == "" then null else (($pid | tonumber?) // null) end), session_id: (if $session == "" then null else $session[0:128] end)}
+    ' >>"${LEDGER}" 2>/dev/null
+
+rows="$(wc -l <"${LEDGER}" 2>/dev/null)" || rows=0
+rows="${rows//[[:space:]]/}"
+_normalize_decimal "${rows}" 18 rows || rows=0
+if ((rows > MAX_ROWS)); then
+    rotation="${LOCK}/rotation"
+    tail -n "${KEEP_ROWS}" -- "${LEDGER}" >"${rotation}"
+    mv -f -- "${rotation}" "${LEDGER}"
+    rotation=""
+fi

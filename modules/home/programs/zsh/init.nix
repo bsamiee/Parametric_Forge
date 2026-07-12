@@ -49,28 +49,39 @@
     '')
 
     (lib.mkOrder 730 ''
-      # Final strategy owner: atuin init self-prepends "atuin", so this assignment is the deterministic end state after all widget wrappers source.
+      # Atuin remains the Ctrl-R/up-arrow history owner; inline suggestions use zsh-native synchronous history after every widget wrapper sources.
       typeset -ga ZSH_AUTOSUGGEST_STRATEGY
-      ZSH_AUTOSUGGEST_STRATEGY=(atuin completion)
+      ZSH_AUTOSUGGEST_STRATEGY=(history)
+      unset ZSH_AUTOSUGGEST_USE_ASYNC
     '')
 
     (lib.mkOrder 1500 ''
       # --- [TRANSIENT_PROMPT]
-      # Collapses each accepted line to the starship transient profile (HH:MM + pointer). precmd restores the live
-      # template and pre-renders the swap while starship's runtime vars are fresh, so the collapsed pointer keeps the
-      # color the live prompt showed; zle-line-finish assigns PROMPT globally before the reset — a command-scoped
-      # assignment reverts before the finish repaint reads it, redrawing the full prompt instead. TRAPINT collapses an
-      # interrupted prompt line the same way; the bare-zle guard keeps it silent when SIGINT lands mid-command (ZLE
-      # inactive there, and the accepted line is already collapsed).
+      # Collapses accepted or interrupted lines to HH:MM + pointer without another Starship render.
       if [[ $PROMPT == *starship* ]]; then
         autoload -Uz add-zsh-hook add-zle-hook-widget
-        typeset -g _forge_prompt_live="$PROMPT" _forge_transient
+        typeset -g _forge_prompt_live="$PROMPT"
+        typeset -gi _forge_prompt_status=0
         _forge-transient-save() {
           TRAPINT() { _forge-transient-apply; return $(( 128 + $1 )) }
           PROMPT="$_forge_prompt_live"
-          _forge_transient="$(eval "printf '%s' \"''${PROMPT// prompt / prompt --profile transient }\"")"
+          _forge_prompt_status=''${STARSHIP_CMD_STATUS:-0}
         }
-        _forge-transient-apply() { if zle; then PROMPT="$_forge_transient"; zle .reset-prompt; fi }
+        _forge-transient-apply() {
+          if zle; then
+            local pointer=❯ pointer_color
+            if [[ $KEYMAP == vicmd ]]; then
+              pointer=❮
+              pointer_color="${config.forge.theme.roles.state.success.hex}"
+            elif (( _forge_prompt_status == 0 )); then
+              pointer_color="${config.forge.theme.roles.state.success.hex}"
+            else
+              pointer_color="${config.forge.theme.roles.state.danger.hex}"
+            fi
+            PROMPT="%F{${config.forge.theme.roles.text.muted.hex}}%D{%H:%M}%f %B%F{''${pointer_color}}''${pointer}%f%b "
+            zle .reset-prompt
+          fi
+        }
         add-zsh-hook precmd _forge-transient-save
         add-zle-hook-widget zle-line-finish _forge-transient-apply
       fi

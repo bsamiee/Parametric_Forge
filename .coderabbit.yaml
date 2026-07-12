@@ -5,7 +5,7 @@ enable_free_tier: true
 inheritance: false
 reviews:
     profile: assertive
-    request_changes_workflow: false
+    request_changes_workflow: true
     high_level_summary: true
     high_level_summary_instructions: >-
         Lead with contract-surface and behavior deltas, one dense paragraph. No restated diff statistics, no methodology narration.
@@ -15,7 +15,7 @@ reviews:
     review_status: true
     review_details: true
     commit_status: true
-    fail_commit_status: false
+    fail_commit_status: true
     collapse_walkthrough: true
     changed_files_summary: true
     sequence_diagrams: true
@@ -23,8 +23,8 @@ reviews:
     assess_linked_issues: true
     related_issues: true
     related_prs: true
-    suggested_labels: true
-    auto_apply_labels: true
+    suggested_labels: false
+    auto_apply_labels: false
     suggested_reviewers: false
     auto_assign_reviewers: false
     in_progress_fortune: false
@@ -107,7 +107,7 @@ reviews:
             enabled: false
         github-checks:
             enabled: true
-            timeout_ms: 90000
+            timeout_ms: 900000
         languagetool:
             enabled: false
         biome:
@@ -258,4 +258,4 @@ issue_enrichment:
     planning:
         enabled: false
     labeling:
-        auto_apply_labels: true
+        auto_apply_labels: false

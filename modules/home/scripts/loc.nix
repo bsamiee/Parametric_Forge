@@ -19,39 +19,61 @@
     text = ''
       shopt -s inherit_errexit
 
-      # Whole-body deadline: the entire run re-execs under timeout, so NO internal stage — scan, jq report, here-doc setup — can wedge a caller
-      # past the budget. bash-5.3 backs sub-64K here-docs with a pipe the redirecting process holds both ends of; under kernel pipe-buffer
-      # exhaustion that write blocks pre-exec and only an outer deadline can kill it, so big payloads below ride explicit pipelines, never <<<.
+      # Whole-body deadline: the entire run re-execs under timeout, so NO internal stage — scan, jq report, or pipe setup — can wedge a caller
+      # past the budget. Decimal normalization precedes arithmetic because Bash reads a leading zero as octal; malformed or oversized values use
+      # the safe outer fallback, then the invoked body rejects them unless help already terminated the CLI. Payloads ride pipelines, never <<<.
+      _deadline_value() {
+        local -r raw="$1"
+        local -n _result="$2"
+        [[ "$raw" =~ ^0*([0-9]{1,5})$ ]] || return 1
+        local -r value=$((10#''${BASH_REMATCH[1]}))
+        ((value <= 86400)) || return 1
+        _result="$value"
+      }
       if [[ -z "''${_LOC_DEADLINE_ACTIVE:-}" ]]; then
         _outer="''${LOC_SCAN_DEADLINE_SECONDS:-120}"
-        [[ "$_outer" =~ ^[0-9]+$ ]] || _outer=120
-        _LOC_DEADLINE_ACTIVE=1 exec timeout -k 10 "$((_outer + 30))" "$0" "$@"
+        _outer_seconds=120
+        _deadline_value "$_outer" _outer_seconds || true
+        _LOC_DEADLINE_ACTIVE=1 exec timeout -k 10 "$((_outer_seconds + 30))" "$0" "$@"
       fi
 
       # Pure printer: help requests route it to stdout with exit 0, usage errors to stderr with exit 2.
       _usage() { printf 'usage: %s [--json] [--self-test] [target...]\n' "''${0##*/}"; }
 
-      # Self-test rides the full scan -> envelope rail by re-invocation over a two-file fixture; folder grouping, relpath, language split,
-      # and totals are the proof surface — the jq report program is this command's riskiest arm.
+      # Self-test rides the full scan -> envelope rail: the fixture overlaps a directory with a repeated file target and uses a leading-zero
+      # deadline, while the second scan forces / as the common root. Unique totals, language derivation, target truth, and grouping prove the jq arm.
       _self_test() {
-        local st out
+        local st out root_out cleanup
         st="$(mktemp -d)"
+        printf -v cleanup 'rm -rf -- %q' "$st"
+        # shellcheck disable=SC2064  # Capture the shell-quoted path while the function-local value remains in scope.
+        trap "$cleanup" EXIT
         printf 'x = 1\n' >"$st/a.py"
         mkdir "$st/sub"
         printf '{a = 1;}\n' >"$st/sub/b.nix"
-        out="$("$0" --json "$st")" || {
-          rm -rf "$st"
+        out="$(env -u _LOC_DEADLINE_ACTIVE LOC_SCAN_DEADLINE_SECONDS=08 "$0" --json "$st" "$st/a.py" "$st/a.py")" || {
           printf 'self-test: fixture scan failed\n' >&2
           return 1
         }
-        rm -rf "$st"
         printf '%s\n' "$out" | jq -e '.total.files == 2 and .total.code == 2
+          and (.targets | length == 2)
           and ([.folders[].folder] | sort == ["Root", "sub"])
           and ([.languages[].name] | sort == ["Nix", "Python"])' >/dev/null || {
           printf 'self-test: envelope mismatch: %s\n' "$out" >&2
           return 1
         }
-        printf 'self-test: scan envelope ok (2 files, 2 folders, 2 languages)\n'
+        root_out="$("$0" --json "$st/a.py" "$0")" || {
+          printf 'self-test: root scan failed\n' >&2
+          return 1
+        }
+        printf '%s\n' "$root_out" | jq -e '.target == "/" and .total.files == 2
+          and (.folders | length == 2) and all(.folders[]; .folder != "Root")' >/dev/null || {
+          printf 'self-test: root envelope mismatch: %s\n' "$root_out" >&2
+          return 1
+        }
+        rm -rf -- "$st"
+        trap - EXIT
+        printf 'self-test: scan envelope ok (deduplicated targets, decimal deadline, root grouping)\n'
       }
 
       json_mode=0
@@ -79,6 +101,11 @@
           printf 'loc: no such target: %s\n' "$t" >&2
           exit 2
         }
+        duplicate=0
+        for seen in "''${resolved[@]}"; do
+          [[ "$p" == "$seen" ]] && { duplicate=1; break; }
+        done
+        ((duplicate)) && continue
         resolved+=("$p")
         [[ -d "$p" ]] || dirs_only=0
       done
@@ -94,10 +121,12 @@
       [[ -n "$root" ]] || root="/"
       readonly root dirs_only json_mode
       readonly deadline="''${LOC_SCAN_DEADLINE_SECONDS:-120}"
-      [[ "$deadline" =~ ^[0-9]+$ ]] || {
-        printf 'loc: LOC_SCAN_DEADLINE_SECONDS must be a whole number of seconds\n' >&2
+      deadline_seconds=0
+      _deadline_value "$deadline" deadline_seconds || {
+        printf 'loc: LOC_SCAN_DEADLINE_SECONDS must be 0..86400 decimal seconds\n' >&2
         exit 2
       }
+      readonly deadline_seconds
       readonly tab=$'\t'
       readonly exclude_dirs="${excludeDirs}"
       targets_json="$(jq -nc '$ARGS.positional' --args -- "''${resolved[@]}")"
@@ -110,14 +139,14 @@
 
       # Detached stdin + deadline: a dead invoking session must never strand this command substitution as an orphaned subshell. TERM first, KILL
       # after a 10s grace — a scan wedged on a dead mount ignores TERM.
-      json="$(timeout -k 10 "$deadline" scc "''${resolved[@]}" "''${scc_flags[@]}" </dev/null)" || {
+      json="$(timeout -k 10 "$deadline_seconds" scc "''${resolved[@]}" "''${scc_flags[@]}" </dev/null)" || {
         rc=$?
         # Failure keeps the envelope rail: machine consumers get one typed error shape, never empty stdout beside a human stderr line.
         if ((json_mode)); then
-          jq -nc --argjson rc "$rc" --argjson deadline "$deadline" \
+          jq -nc --argjson rc "$rc" --argjson deadline "$deadline_seconds" \
             '{error: {surface: "loc", kind: "scan", rc: $rc, deadline: $deadline}}'
         fi
-        printf 'loc: scc scan failed (rc=%s, deadline=%ss)\n' "$rc" "$deadline" >&2
+        printf 'loc: scc scan failed (rc=%s, deadline=%ss)\n' "$rc" "$deadline_seconds" >&2
         exit "$rc"
       }
       readonly json
@@ -129,13 +158,16 @@
           . as $location
           | if $location == $root then
               "(root)"
+            elif $root == "/" and startswith("/") then
+              ltrimstr("/")
             elif ($location | startswith($root + "/")) then
               $location | ltrimstr($root + "/")
             else
               $location
             end;
         def files:
-          [.[] | .Files[]? | . + {RelPath: (.Location | relpath)}];
+          [.[] | .Files[]? | . + {RelPath: (.Location | relpath)}]
+          | unique_by([.Location, .Language]);
         def sum_by(f): map(f) | add // 0;
         def folder_name:
           if . == "(root)" or startswith("/") or (contains("/") | not) then
@@ -149,8 +181,14 @@
           else
             split("/")[1:] | join("/")
           end;
+        def languages:
+          files
+          | group_by(.Language)
+          | map({name: .[0].Language, code: sum_by(.Code)})
+          | map(select(.code > 0))
+          | sort_by(-.code, .name);
         def language_summary:
-          map(select(.Code > 0) | "\(.Name) \(.Code)")
+          languages | map("\(.name) \(.code)")
           | if length == 0 then "none" else join("; ") end;
         def folder_groups:
           files
@@ -170,8 +208,8 @@
             })
           | sort_by(.code) | reverse;
         def summary:
-          "LOC " + ($root | split("/") | last),
-          (if ($targets | length) > 1 then "Targets: " + ($targets | join(" ")) else "Target: " + $root end),
+          "LOC " + (if $root == "/" then "/" else ($root | split("/") | last) end),
+          (if ($targets | length) > 1 then "Targets: " + ($targets | join(" ")) else "Target: " + $targets[0] end),
           "Languages: " + language_summary,
           "";
         def table:
@@ -192,7 +230,7 @@
           {
             target: $root,
             targets: $targets,
-            languages: (map(select(.Code > 0) | {name: .Name, code: .Code}) | sort_by(-.code)),
+            languages: languages,
             total: {files: (files | length), code: (files | sum_by(.Code)), complexity: (files | sum_by(.Complexity))},
             folders: folder_groups
           }'

@@ -4,9 +4,9 @@
 // License       : MIT
 // Path          : services/driver.ts
 // ----------------------------------------------------------------------------
-// Services-IaC boot module: Pulumi Automation API over a local file backend under XDG state, passphrase and Doppler token brokered
-// from 1Password per invocation. Zero YAML on disk: the project manifest synthesizes into the workspace temp dir. Also owns
-// the machine directory-scope rail, the replacement for per-repo doppler.yaml. Exports nothing; runMain terminates.
+// Services-IaC boot module: Pulumi Automation API over a local file backend under XDG state, with 1Password brokering only the
+// Pulumi passphrase and Doppler IaC credential. GitHub and webhook credentials resolve from Doppler. Zero YAML on disk: the project
+// manifest synthesizes into the workspace temp dir. Also owns the machine scope and reviewer receipts. Exports nothing; runMain terminates.
 
 import { createHash } from 'node:crypto';
 import { homedir } from 'node:os';
@@ -22,6 +22,12 @@ import { Topology } from './topology.ts';
 
 const PROJECT = 'forge-services';
 const STACK = 'estate';
+
+const _reviewerSlugs = {
+    coderabbit: 'coderabbitai',
+    greptile: 'greptile-apps',
+    macroscope: 'macroscopeapp',
+} as const satisfies Record<Extract<Topology.Reviewer, { readonly mechanism: 'app' }>['identity'], string>;
 
 // --- [TYPES] ---------------------------------------------------------------------------
 
@@ -95,29 +101,26 @@ const _run = (cmd: Command.Command, label: string) =>
 
 const _shell = (command: string, ...args: ReadonlyArray<string>) => _run(Command.make(command, ...args), `${command} ${args.join(' ')}`);
 
-// Webhook signing secrets brokered from their Doppler custody rows via the IaC token; each seals as Redacted
-// at admission and unwraps only at the engine's secret-input seam inside estate.ts.
+const _dopplerSecret = (token: Redacted.Redacted<string>, project: string, config: string, name: string) =>
+    Effect.map(
+        _run(
+            Command.make('doppler', 'secrets', 'get', name, '--project', project, '--config', config, '--plain').pipe(
+                Command.env({ DOPPLER_TOKEN: Redacted.value(token) }),
+            ),
+            `doppler secrets get ${name} (${project}/${config})`,
+        ),
+        (raw) => Redacted.make(raw.trim()),
+    );
+
+// Webhook signing secrets broker from their Doppler custody rows; each stays Redacted until estate.ts supplies the engine's secret input.
 const _webhookSecrets = (token: Redacted.Redacted<string>) =>
     Effect.map(
         Effect.forEach(
             Topology.webhooks,
             (row) =>
                 Effect.map(
-                    _run(
-                        Command.make(
-                            'doppler',
-                            'secrets',
-                            'get',
-                            row.secretSource.name,
-                            '--project',
-                            row.secretSource.project,
-                            '--config',
-                            row.secretSource.config,
-                            '--plain',
-                        ).pipe(Command.env({ DOPPLER_TOKEN: Redacted.value(token) })),
-                        `doppler secrets get ${row.secretSource.name} (${row.secretSource.project}/${row.secretSource.config})`,
-                    ),
-                    (raw) => [row.slug, Redacted.make(raw.trim())] as const,
+                    _dopplerSecret(token, row.secretSource.project, row.secretSource.config, row.secretSource.name),
+                    (secret) => [row.slug, secret] as const,
                 ),
             { concurrency: 2 },
         ),
@@ -134,10 +137,6 @@ const _settings = Config.all({
         Config.withDefault('op://Tokens/DOPPLER_IAC_TOKEN/token'),
         Config.withDescription('1Password reference the Doppler IaC token brokers from'),
     ),
-    githubTokenRef: Config.nonEmptyString('FORGE_SERVICES_GITHUB_TOKEN_REF').pipe(
-        Config.withDefault('op://Tokens/Github Token/token'),
-        Config.withDescription('1Password reference the GitHub provider token brokers from'),
-    ),
     stateDir: Config.nonEmptyString('FORGE_SERVICES_STATE_DIR').pipe(
         Config.orElse(() => Config.map(Config.nonEmptyString('XDG_STATE_HOME'), (root) => path.join(root, 'forge-services'))),
         Config.withDefault(path.join(homedir(), '.local', 'state', 'forge-services')),
@@ -147,7 +146,8 @@ const _settings = Config.all({
         Config.withDescription('Ambient stack passphrase; short-circuits 1Password'),
     ),
     token: Config.option(Config.redacted('DOPPLER_TOKEN')).pipe(Config.withDescription('Ambient Doppler token; short-circuits 1Password')),
-    githubToken: Config.option(Config.redacted('GITHUB_TOKEN')).pipe(Config.withDescription('Ambient GitHub token; short-circuits 1Password')),
+    githubToken: Config.option(Config.redacted('GITHUB_TOKEN')).pipe(Config.withDescription('Ambient GitHub provider token; short-circuits Doppler')),
+    ghToken: Config.option(Config.redacted('GH_TOKEN')).pipe(Config.withDescription('Ambient gh token; fallback alias before Doppler')),
 });
 
 // Ambient env short-circuits 1Password; otherwise the op reference resolves per run.
@@ -157,18 +157,32 @@ const _brokered = (ambient: Option.Option<Redacted.Redacted<string>>, ref: strin
         onNone: () => Effect.map(_shell('op', 'read', ref), (raw) => Redacted.make(raw.trim())),
     });
 
+const _githubToken = <R>(ambient: Option.Option<Redacted.Redacted<string>>, dopplerToken: Effect.Effect<Redacted.Redacted<string>, ShellFault, R>) =>
+    Option.match(ambient, {
+        onSome: (value) => Effect.succeed(value),
+        onNone: () => Effect.flatMap(dopplerToken, (token) => _dopplerSecret(token, 'agent-runtime', 'dev', 'GITHUB_TOKEN')),
+    });
+
 const _openStack = (flags: Flags) =>
     Effect.gen(function* () {
         const cfg = yield* _settings;
         const fs = yield* FileSystem.FileSystem;
         yield* fs.makeDirectory(cfg.stateDir, { recursive: true });
         yield* fs.chmod(cfg.stateDir, 0o700);
-        const [passphrase, token, githubToken] = yield* Effect.all(
-            [_brokered(cfg.passphrase, cfg.passphraseRef), _brokered(cfg.token, cfg.tokenRef), _brokered(cfg.githubToken, cfg.githubTokenRef)],
-            { concurrency: 3 },
-        );
+        const [passphrase, token] = yield* Effect.all([_brokered(cfg.passphrase, cfg.passphraseRef), _brokered(cfg.token, cfg.tokenRef)], {
+            concurrency: 2,
+        });
         const backendUrl = `file://${cfg.stateDir}`;
-        const webhookSecrets = yield* _webhookSecrets(token);
+        const [githubToken, webhookSecrets] = yield* Effect.all(
+            [
+                _githubToken(
+                    Option.orElse(cfg.githubToken, () => cfg.ghToken),
+                    Effect.succeed(token),
+                ),
+                _webhookSecrets(token),
+            ],
+            { concurrency: 2 },
+        );
         return yield* Effect.tryPromise({
             // BOUNDARY ADAPTER: Pulumi Automation API is promise-native; secrets unwrap only into the engine's child process environment.
             try: () =>
@@ -330,9 +344,22 @@ const _scopeVerbs = {
 
 type ReviewerRepo = {
     readonly repo: string;
-    readonly present: boolean;
+    readonly configurationApplicable: boolean;
+    readonly configured: boolean;
     readonly configHash: string;
+    readonly installation: 'observed' | 'not-observed' | 'ruleset-native';
+    readonly active: false;
+    readonly required: false;
 };
+
+type ReviewerRow = Omit<Topology.Reviewer, 'artifacts'> & { readonly repos: ReadonlyArray<ReviewerRepo> };
+
+const _Repository = Schema.parseJson(Schema.Struct({ defaultBranch: Schema.String }));
+const _CheckSuites = Schema.parseJson(
+    Schema.Struct({
+        apps: Schema.Array(Schema.Struct({ id: Schema.Number, slug: Schema.String })),
+    }),
+);
 
 // BOUNDARY ADAPTER: node:crypto digest kernel — the mutable hash draft dies at the return; both matrix hash sites feed it.
 const _digest = (bodies: ReadonlyArray<Uint8Array | string>): string =>
@@ -341,9 +368,7 @@ const _digest = (bodies: ReadonlyArray<Uint8Array | string>): string =>
         .digest('hex')
         .slice(0, 16);
 
-// App identities hash their repo-owned artifacts per repo root; ruleset-native identities hash the desired rule policy
-// once — drift shows up as a hash change on either side, never as prose. Repo roots derive from repository rows as
-// `<scopeRoot>/<name>`, so the matrix follows the GitHub surface and never couples to Doppler scope rows.
+// Local artifacts and live installation evidence remain separate: an app without a repository artifact is unconfigured, never uninstalled.
 const _artifactHash = (root: string, artifacts: readonly string[]) =>
     Effect.map(
         Effect.flatMap(FileSystem.FileSystem, (fs) =>
@@ -362,48 +387,99 @@ const _artifactHash = (root: string, artifacts: readonly string[]) =>
         (bodies) => {
             const found = Arr.getSomes(bodies);
             return {
-                present: artifacts.length > 0 && found.length === artifacts.length,
+                applicable: artifacts.length > 0,
+                configured: artifacts.length > 0 && found.length === artifacts.length,
                 hash: Arr.isNonEmptyArray(found) ? _digest(found) : '',
             };
         },
     );
 
-const _reviewerMatrix = Effect.gen(function* () {
-    const policyHash = _digest([JSON.stringify(Topology.rulesetPolicy)]);
-    const rows = yield* Effect.forEach(
-        Topology.reviewers,
-        (row) =>
-            Effect.map(
-                Effect.forEach(
-                    Topology.repositories,
-                    (repository) =>
-                        row.mechanism === 'ruleset'
-                            ? Effect.succeed({
-                                  repo: repository.name,
-                                  present: row.posture === 'active',
-                                  configHash: row.posture === 'active' ? policyHash : '',
-                              } satisfies ReviewerRepo)
-                            : Effect.map(
-                                  _artifactHash(path.join(Topology.scopeRoot, repository.name), row.artifacts),
-                                  (proof) =>
-                                      ({
-                                          repo: repository.name,
-                                          present: proof.present,
-                                          configHash: proof.hash,
-                                      }) satisfies ReviewerRepo,
-                              ),
-                    { concurrency: 3 },
-                ),
-                (repos) => ({ ...Struct.omit(row, 'artifacts'), repos }),
+const _ghApi = (token: Redacted.Redacted<string>, endpoint: string, projection: string) =>
+    _run(Command.make('gh', 'api', endpoint, '--jq', projection).pipe(Command.env({ GH_TOKEN: Redacted.value(token) })), `gh api ${endpoint}`);
+
+const _repositoryApps = (token: Redacted.Redacted<string>, repository: string) =>
+    Effect.gen(function* () {
+        const coordinate = `repos/${Topology.owner}/${repository}`;
+        const metadata = yield* Effect.flatMap(_ghApi(token, coordinate, '{defaultBranch:.default_branch}'), Schema.decodeUnknown(_Repository));
+        const suites = yield* Effect.flatMap(
+            _ghApi(
+                token,
+                `${coordinate}/commits/${encodeURIComponent(metadata.defaultBranch)}/check-suites?per_page=100`,
+                '{apps:[.check_suites[] | select(.app != null) | {id:.app.id,slug:.app.slug}]}',
             ),
-        { concurrency: 2 },
-    );
-    // Gated identities prove ABSENCE; active identities prove presence on every repo root.
-    const ok = Arr.every(rows, (row) =>
-        row.posture === 'gated' ? Arr.every(row.repos, (repo) => !repo.present) : Arr.every(row.repos, (repo) => repo.present),
-    );
-    return { reviewers: rows, ok };
-});
+            Schema.decodeUnknown(_CheckSuites),
+        );
+        return HashSet.fromIterable(Arr.map(suites.apps, (app) => `${app.id}:${app.slug}`));
+    });
+
+const _reviewerMatrix = (githubToken: Redacted.Redacted<string>) =>
+    Effect.gen(function* () {
+        const policyHash = _digest([JSON.stringify(Topology.rulesetPolicy)]);
+        const installed = Record.fromEntries(
+            yield* Effect.forEach(
+                Topology.repositories,
+                (repository) => Effect.map(_repositoryApps(githubToken, repository.name), (apps) => [repository.name, apps] as const),
+                { concurrency: 3 },
+            ),
+        );
+        const rows = yield* Effect.forEach(
+            Topology.reviewers,
+            (row) =>
+                Effect.map(
+                    Effect.forEach(
+                        Topology.repositories,
+                        (repository) =>
+                            row.mechanism === 'ruleset'
+                                ? Effect.succeed<ReviewerRepo>({
+                                      repo: repository.name,
+                                      configurationApplicable: true,
+                                      configured: row.posture === 'active',
+                                      configHash: row.posture === 'active' ? policyHash : '',
+                                      installation: 'ruleset-native',
+                                      active: false,
+                                      required: false,
+                                  } satisfies ReviewerRepo)
+                                : Effect.map(
+                                      _artifactHash(path.join(Topology.scopeRoot, repository.name), row.artifacts),
+                                      (proof): ReviewerRepo => ({
+                                          repo: repository.name,
+                                          configurationApplicable: proof.applicable,
+                                          configured: proof.configured,
+                                          configHash: proof.hash,
+                                          installation: HashSet.has(
+                                              Option.getOrElse(Record.get(installed, repository.name), () => HashSet.empty<string>()),
+                                              `${row.liveEvidence.appId}:${_reviewerSlugs[row.identity]}`,
+                                          )
+                                              ? 'observed'
+                                              : 'not-observed',
+                                          active: false,
+                                          required: false,
+                                      }),
+                                  ),
+                        { concurrency: 3 },
+                    ),
+                    (repos): ReviewerRow => ({ ...Struct.omit(row, 'artifacts'), repos }),
+                ),
+            { concurrency: 2 },
+        );
+        // Activity stays unproven until a pull request produces reviewer behavior; required stays false until a proven check context enters policy.
+        const ok = Arr.every(rows, (row) =>
+            Arr.every(
+                row.repos,
+                (repo) => (!repo.configurationApplicable || repo.configured) && repo.installation !== 'not-observed' && repo.active && repo.required,
+            ),
+        );
+        return { reviewers: rows, ok };
+    });
+
+const _appCensus = {
+    installations: Arr.map(Topology.appInstallations, (row) => ({
+        ...row,
+        custody: row.origin,
+        verification: 'declared-topology-only',
+    })),
+    liveVerified: false,
+} as const;
 
 // --- [ENTRY] ---------------------------------------------------------------------------
 
@@ -412,7 +488,8 @@ const USAGE =
     '  preview|up|refresh [--adopt] [--refresh] [--expect-no-changes] [--target=<project>/<config>/<token>]\n' +
     '  outputs [name] [--reveal]\n' +
     '  scopes apply|doctor|strict\n' +
-    '  reviewers';
+    '  reviewers\n' +
+    '  apps';
 
 // One flag anchor: `=`-suffixed flags match by prefix, the rest match whole.
 const _FLAGS = { adopt: '--adopt', reveal: '--reveal', refresh: '--refresh', expectNoChanges: '--expect-no-changes', target: '--target=' } as const;
@@ -487,7 +564,16 @@ const _verbs = {
             onSome: (sub) => _scopeVerbs[sub],
         }),
     reviewers: (_flags2: Flags, _positional: ReadonlyArray<string>) =>
-        Effect.flatMap(_reviewerMatrix, (matrix) => Console.log(JSON.stringify(matrix, null, 2))),
+        Effect.gen(function* () {
+            const cfg = yield* _settings;
+            const token = yield* _githubToken(
+                Option.orElse(cfg.githubToken, () => cfg.ghToken),
+                _brokered(cfg.token, cfg.tokenRef),
+            );
+            const matrix = yield* _reviewerMatrix(token);
+            yield* Console.log(JSON.stringify(matrix, null, 2));
+        }),
+    apps: (_flags2: Flags, _positional: ReadonlyArray<string>) => Console.log(JSON.stringify(_appCensus, null, 2)),
 } as const;
 
 const _verb = Schema.decodeUnknownOption(Schema.Literal(...Struct.keys(_verbs)));

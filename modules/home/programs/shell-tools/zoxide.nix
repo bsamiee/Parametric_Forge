@@ -12,7 +12,7 @@ _: {
 
     options = [
       "--cmd=cd" # Replace cd command entirely
-      "--hook=prompt" # Update frecency based on time spent (better than pwd)
+      "--hook=pwd" # Score directories on directory changes (default)
     ];
   };
 }

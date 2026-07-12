@@ -25,16 +25,19 @@ declare namespace estate {
     };
 }
 
-// Uniform repo policy: merge hygiene plus the live feature-surface booleans — an unspecified boolean plans as a removal against adopted state.
+// Uniform repo policy: merge hygiene plus live feature-surface booleans; deprecated provider inputs stay unbound.
 const _mergeHygiene = {
+    allowAutoMerge: true,
     allowMergeCommit: false,
     allowSquashMerge: true,
     allowRebaseMerge: true,
+    allowUpdateBranch: true,
     deleteBranchOnMerge: true,
+    squashMergeCommitTitle: 'PR_TITLE',
+    squashMergeCommitMessage: 'PR_BODY',
     hasWiki: false,
     hasIssues: true,
-    hasProjects: true,
-    hasDownloads: true,
+    hasProjects: false,
 } as const;
 
 const estate =

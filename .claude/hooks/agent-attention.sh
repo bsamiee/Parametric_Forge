@@ -7,72 +7,148 @@
 # `source` discriminator (hook here; the WezTerm bell arm appends source=bell rows on the same schema) so the collector folds per-source policy.
 # Append-only; any failure exits 0 so the hook can never block the harness.
 set -Eeuo pipefail
-trap 'exit 0' ERR
+shopt -s inherit_errexit 2>/dev/null || true
+trap 'exit 0' ERR HUP INT TERM
+umask 077
 
-# Whole-body deadline: re-exec under timeout so no stage — stdin read, jq, feed append — can strand a hook body past the budget. bash-5.3 backs
-# sub-64K here-docs/here-strings with a pipe the redirecting process holds both ends of; under kernel pipe-buffer exhaustion that write deadlocks
-# pre-exec, so the payload rides a temp FILE into every jq below and the deadline forecloses any residual wedge.
-if [ -z "${_FORGE_HOOK_DEADLINE:-}" ] && command -v timeout >/dev/null 2>&1; then
-    _FORGE_HOOK_DEADLINE=1 exec timeout -k 5 45 "$0" "$@"
+_resolve_bin() {
+    local -r name="$1" out_name="$2"
+    local candidate=""
+    candidate="$(command -v "$name" 2>/dev/null || true)"
+    if [[ -x "$candidate" && ! -d "$candidate" ]]; then
+        printf -v "$out_name" '%s' "$candidate"
+        return 0
+    fi
+    local -ra candidates=(
+        "/etc/profiles/per-user/${USER:-${LOGNAME:-}}/bin/$name"
+        "${HOME:-}/.nix-profile/bin/$name"
+        "/run/current-system/sw/bin/$name"
+        "/nix/var/nix/profiles/default/bin/$name"
+    )
+    for candidate in "${candidates[@]}"; do
+        if [[ -x "$candidate" && ! -d "$candidate" ]]; then
+            printf -v "$out_name" '%s' "$candidate"
+            return 0
+        fi
+    done
+    return 1
+}
+
+owner_bin=""
+_resolve_bin forge-agent-attention owner_bin || true
+if [[ -z "${_FORGE_ATTENTION_OWNER:-}" && -n "$owner_bin" && ! "$owner_bin" -ef "$0" ]]; then
+    export _FORGE_ATTENTION_OWNER=1
+    "$owner_bin" "$@" || true
+    exit 0
+fi
+
+timeout_bin=""
+flock_bin=""
+forge_agents_bin=""
+jq_bin=""
+_resolve_bin timeout timeout_bin || true
+_resolve_bin flock flock_bin || true
+_resolve_bin forge-agents forge_agents_bin || true
+_resolve_bin jq jq_bin || true
+readonly owner_bin timeout_bin flock_bin forge_agents_bin jq_bin
+[[ -n "$timeout_bin" && -n "$flock_bin" && -n "$jq_bin" ]] || exit 0
+((BASH_VERSINFO[0] >= 5)) || exit 0
+
+# Whole-body deadline: one parent wrapper re-enters the hook under timeout so no stage can hold the harness beyond 4s, while every timeout outcome
+# still returns success. Bash 5.3 backs sub-64K here-docs/here-strings with a self-held pipe that can deadlock pre-exec under kernel pipe-buffer
+# exhaustion, so payload-scale data enters through bounded stdin once and then rides a temp file into every jq below.
+if [[ -z "${_FORGE_HOOK_DEADLINE:-}" && -n "$timeout_bin" ]]; then
+    export _FORGE_HOOK_DEADLINE=1
+    "$timeout_bin" -k 1 4 "$BASH" "$0" "$@" >/dev/null 2>&1 || true
+    exit 0
 fi
 
 feed="${FORGE_ATTENTION_FEED:-${XDG_STATE_HOME:-$HOME/.local/state}/forge/agent-attention.jsonl}"
-max_rows="${FORGE_ATTENTION_MAX_ROWS:-4000}"
-keep_rows="${FORGE_ATTENTION_KEEP_ROWS:-1000}"
+max_rows_raw="${FORGE_ATTENTION_MAX_ROWS:-4000}"
+keep_rows_raw="${FORGE_ATTENTION_KEEP_ROWS:-1000}"
+[[ "$max_rows_raw" =~ ^0*([1-9][0-9]{0,5})$ ]] || exit 0
+max_rows=$((10#${BASH_REMATCH[1]}))
+[[ "$keep_rows_raw" =~ ^0*([1-9][0-9]{0,5})$ ]] || exit 0
+keep_rows=$((10#${BASH_REMATCH[1]}))
+((max_rows <= 100000 && keep_rows <= max_rows)) || exit 0
+feed_dir="${feed%/*}"
+[[ "$feed_dir" == "$feed" ]] && feed_dir="."
+pf=""
+row=""
+rotation=""
 
-# Bounded stdin read: the read builtin consumes to EOF (or the 20s guard when a harness holds the pipe open) with no cat fork and no
-# command-substitution pipe; a timeout keeps whatever partial payload arrived.
+_cleanup() {
+    [[ -z "${pf:-}" ]] || rm -f -- "$pf" 2>/dev/null || true
+    [[ -z "${row:-}" ]] || rm -f -- "$row" 2>/dev/null || true
+    [[ -z "${rotation:-}" ]] || rm -f -- "$rotation" 2>/dev/null || true
+}
+trap _cleanup EXIT
+
+# Bounded stdin read: one C-locale read admits at most 1 MiB plus one sentinel byte and waits at most 1s for EOF; oversize or incomplete JSON drops.
 payload=""
-IFS= read -r -t 20 -d '' payload || true
-[ -n "$payload" ] || exit 0
+LC_ALL=C IFS= read -r -t 1 -N 1048577 payload || true
+[[ -n "$payload" ]] || exit 0
+((${#payload} <= 1048576)) || exit 0
 pf="$(mktemp "${TMPDIR:-/tmp}/forge-attention.XXXXXX")"
-trap 'rm -f "$pf"' EXIT
+row="$(mktemp "${TMPDIR:-/tmp}/forge-attention-row.XXXXXX")"
 printf '%s' "$payload" >"$pf"
 
-# Admission gate before any fork: main agent only (agent_id absent) on the lifecycle roster — Notification opens WAITING, the other five clear or
-# retire the session in the collector's lifecycle fold. A dropped payload exits before ps/mkdir ever run, so subagent tool churn costs one jq.
-jq -e '((.agent_id // "") == "")
+# Payload admission before any telemetry fork: main agent only (agent_id absent) on the lifecycle roster — Notification opens WAITING, the other five
+# clear or retire the session in the collector's lifecycle fold. A dropped payload exits before ps/mkdir ever run, so subagent churn costs one jq.
+"$jq_bin" -e '((.agent_id // "") == "")
   and ((.hook_event_name // "") | IN("Notification", "Stop", "UserPromptSubmit", "PostToolUse", "SessionStart", "SessionEnd"))' \
     "$pf" >/dev/null 2>&1 || exit 0
-mkdir -p "${feed%/*}"
+mkdir -p "$feed_dir"
 
 # Terminal identity: the hook's own controlling tty, else the spawning agent's; no-controlling-terminal ("??" BSD, "?" procps) admits as empty.
 # PATH-resolved ps: /bin/ps is a Darwin fact and the hook runs on every host.
 tty="$(ps -o tty= -p $$ 2>/dev/null | tr -d ' ' || true)"
-{ [ -n "$tty" ] && [ "$tty" != "??" ] && [ "$tty" != "?" ]; } ||
+{ [[ -n "$tty" && "$tty" != "??" && "$tty" != "?" ]]; } ||
     tty="$(ps -o tty= -p "$PPID" 2>/dev/null | tr -d ' ' || true)"
 case "$tty" in "?" | "??") tty="" ;; esac
 
 # Message rides verbatim into the banner, alerter, and bar toast, so C0/C1 controls (newlines, ANSI escapes) fold to single spaces at
 # capture — the feed carries one-line prompt text no downstream renderer can be steered by.
 TZ=UTC0 printf -v ts '%(%Y-%m-%dT%H:%M:%SZ)T' "$EPOCHSECONDS"
-jq -c --arg ts "$ts" \
+"$jq_bin" -c --arg ts "$ts" \
     --arg term "${TERM_PROGRAM:-}" --arg wp "${WEZTERM_PANE:-}" \
     --arg zs "${ZELLIJ_SESSION_NAME:-}" --arg zp "${ZELLIJ_PANE_ID:-}" \
     --arg tty "$tty" \
-    '{ts: $ts, source: "hook", event: .hook_event_name, session_id: (.session_id // "-"), cwd: (.cwd // "-"),
+    $'{ts: $ts, source: "hook", event: .hook_event_name, session_id: (.session_id // "-"), cwd: (.cwd // "-"),
     message: ((.message // "") | tostring | gsub("[[:cntrl:]]+"; " ") | .[0:400]),
     term: $term, wezterm_pane: $wp, zellij_session: $zs, zellij_pane: $zp, tty: $tty}' \
-    "$pf" >>"$feed" 2>/dev/null
+    "$pf" >"$row" 2>/dev/null
 
-# Edge kick, stamp-throttled to 5s: a fresh lifecycle row re-folds the collector now (flock-serialized there), so the pane mark, bar cell,
-# and banner track the event at second latency instead of the 60s launchd tick; a host without forge-agents still lands the row for later.
-# The kick is hard-capped and disowned: the collector serializes on a flock, so under multi-agent load an uncapped kick accumulates blocked
-# processes faster than the drain — the timeout bounds each kick's life and disown severs it from the harness's child accounting.
-kick="${feed%/*}/.collect-kick"
-if [ -z "$(find "$kick" -newermt '-5 seconds' 2>/dev/null)" ]; then
-    : >"$kick"
-    if command -v forge-agents >/dev/null 2>&1; then
-        kick_cmd=(forge-agents collect)
-        command -v timeout >/dev/null 2>&1 && kick_cmd=(timeout 30 forge-agents collect)
-        "${kick_cmd[@]}" >/dev/null 2>&1 </dev/null &
-        disown 2>/dev/null || true
-    fi
-fi
-
-# Size-gated self-rotation, lock-free: advisory telemetry, so a row a concurrent appender loses to the atomic rename self-heals on its next event.
+# One bounded writer lock owns append and rotation as a single transaction, so concurrent lifecycle rows cannot land on the pre-rename inode.
+[[ -n "$flock_bin" ]] || exit 0
+exec {writer_fd}>"${feed}.writer.lock"
+"$flock_bin" -w 1 "$writer_fd" || exit 0
+<"$row" cat >>"$feed"
 rows="$(wc -l <"$feed")"
-if [ "$rows" -gt "$max_rows" ]; then
-    tail -n "$keep_rows" "$feed" >"$feed.rot.$$"
-    mv -f "$feed.rot.$$" "$feed"
+rows="${rows//[[:space:]]/}"
+if [[ "$rows" =~ ^(0|[1-9][0-9]{0,7})$ ]] && ((10#$rows > max_rows)); then
+    rotation="$(mktemp "${feed}.rot.XXXXXX")"
+    tail -n "$keep_rows" -- "$feed" >"$rotation"
+    mv -f -- "$rotation" "$feed"
+    rotation=""
+fi
+exec {writer_fd}>&-
+
+# Edge kick: the nonblocking lock makes admission atomic, its descriptor survives into the disowned collector and therefore admits at most one queued
+# body, and the epoch stamp suppresses completed bursts for 5s. The inner timeout bounds the collector independently of this hook's parent deadline.
+kick="$feed_dir/.collect-kick"
+if [[ -n "$flock_bin" && -n "$timeout_bin" && -n "$forge_agents_bin" ]]; then
+    exec {kick_fd}>"${kick}.lock"
+    if "$flock_bin" -n "$kick_fd"; then
+        last_kick=0
+        [[ ! -f "$kick" ]] || IFS= read -r last_kick <"$kick" || last_kick=0
+        [[ "$last_kick" =~ ^(0|[1-9][0-9]*)$ ]] || last_kick=0
+        now="$EPOCHSECONDS"
+        if ((now < last_kick || now - last_kick >= 5)); then
+            printf '%s\n' "$now" >"$kick"
+            "$timeout_bin" -k 5 30 "$forge_agents_bin" collect >/dev/null 2>&1 </dev/null &
+            disown 2>/dev/null || true
+        fi
+    fi
+    exec {kick_fd}>&-
 fi

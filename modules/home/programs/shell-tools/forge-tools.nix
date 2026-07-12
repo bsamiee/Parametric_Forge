@@ -652,8 +652,7 @@
     # kill rows are the evidence-gated reap set; report rows keep daemon-by-design classes (op) visible without lifecycle theft. codex lanes detach
     # by design; only lanes far past every effort-tier deadline are litter. node-modules census is the visibility net for new daemon classes before
     # they earn a kill row. Scope "any" rows reap session-child litter — wedge residue whose age proves it dead (deadlined bodies finish in
-    # seconds); fsmonitor daemons respawn on the next git command, so an aged reap costs nothing; ipykernel stays report-only because the KeepAlive
-    # Jupyter server respawns killed kernels — the server's cull policy owns that lifecycle.
+    # seconds); fsmonitor and ipykernel stay report-only because their owning Git repository and KeepAlive Jupyter server hold the lifecycle.
     orphan = {
       biome-lsp-proxy-orphans = ["biome lsp-proxy" "" 300 "kill"];
       biome-daemon-orphans = ["biome __run_server" "" 300 "kill"];
@@ -666,7 +665,7 @@
       codex-lane-orphans = ["(^|/)codex (exec|e) " "Codex[.]app" 14400 "kill"];
       loc-wedge = ["(^|/)bin/loc( |$)" "" 900 "kill" "any"];
       claude-hook-wedge = ["[.]claude/(hooks|scripts)/[a-z-]+[.]sh" "" 600 "kill" "any"];
-      git-fsmonitor-aged = ["fsmonitor--daemon" "" 259200 "kill"];
+      git-fsmonitor-census = ["fsmonitor--daemon" "" 604800 "report"];
       ipykernel-census = ["ipykernel_launcher" "" 21600 "report" "any"];
       op-daemon-census = ["(^|/)op daemon" "" 86400 "report"];
       node-modules-daemon-census = ["/node_modules/" "biome" 3600 "report"];
@@ -704,30 +703,41 @@
 
       # Hard deny for the kill lane: session servers, GUI apps, credential daemons, and system trees are never reaped even on a class match.
       deny_re='/System/|/Applications/|zellij|[Ww]ez[Tt]erm|1[Pp]assword|[Cc]rashpad|loginwindow|(^|/)ssh'
+      owner_uid="$(id -u)"
       # Trust rows on scratch/transient roots are litter by class; durable repo rows never match this and always survive the prune.
       scratch_re="^(/private/tmp/|/tmp/|$HOME/Downloads(/|$)|$HOME/Library/CloudStorage/)"
 
-      # One live snapshot per run: every uid-owned process with ppid, tty, age in seconds, and RSS KiB; launchd-managed pids drop out first, so a
+      # Canonical process rows carry both the mutable observations and a stable start stamp. The latter plus PID/PPID/PGID/UID/TTY/command defeats
+      # PID and process-group reuse; elapsed and RSS are re-read at each signal boundary without pretending either mutable value is an identity key.
+      process_rows() {
+        ${psBin} -axo pid=,ppid=,pgid=,uid=,tty=,etime=,rss=,state=,lstart=,command= 2>/dev/null | awk '
+          function esecs(e,  a, n, d, hms) {
+            d = 0
+            if (index(e, "-") > 0) { split(e, a, "-"); d = a[1]; e = a[2] }
+            n = split(e, hms, ":")
+            if (n == 3) return ((d * 24 + hms[1]) * 60 + hms[2]) * 60 + hms[3]
+            if (n == 2) return (d * 24 * 60 + hms[1]) * 60 + hms[2]
+            return hms[1] + 0
+          }
+          NF >= 14 {
+            cmd = ""
+            for (i = 14; i <= NF; i++) cmd = cmd (i > 14 ? " " : "") $i
+            started = $9 " " $10 " " $11 " " $12 " " $13
+            printf "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", $1, $2, $3, $4, $5, esecs($6), $7, $8, started, cmd
+          }'
+      }
+
+      # One live snapshot per run: every uid-owned process with its complete identity/observation tuple; launchd-managed pids drop out first, so a
       # sanctioned agent (KeepAlive services included) is never a candidate. The snapshot stays wide because the worst leak classes — wedged hook
       # bodies, hung tool wrappers, abandoned MCP generations — live UNDER live sessions with a tty; each row's scope narrows the census.
       proc_snapshot() {
         if [ ! -e "$work/procs" ]; then
           # launchd exclusion is a Darwin fact; on a systemd host the managed set is empty (user services carry a non-1 ppid and drop anyway).
           { /bin/launchctl list 2>/dev/null || true; } | awk 'NR > 1 && $1 ~ /^[0-9]+$/ {print $1}' >"$work/managed"
-          ${psBin} -axo pid=,ppid=,uid=,tty=,etime=,rss=,command= 2>/dev/null | awk -v uid="$(id -u)" -v self="$$" '
-            function esecs(e,  a, n, d, hms) {
-              d = 0
-              if (index(e, "-") > 0) { split(e, a, "-"); d = a[1]; e = a[2] }
-              n = split(e, hms, ":")
-              if (n == 3) return ((d * 24 + hms[1]) * 60 + hms[2]) * 60 + hms[3]
-              if (n == 2) return (d * 24 * 60 + hms[1]) * 60 + hms[2]
-              return hms[1] + 0
-            }
+          process_rows | awk -F '\t' -v uid="$owner_uid" -v self="$$" '
             NR == FNR { managed[$1] = 1; next }
-            $3 == uid && !($1 in managed) && $1 != self {
-              cmd = ""
-              for (i = 7; i <= NF; i++) cmd = cmd (i > 7 ? " " : "") $i
-              printf "%s\t%s\t%s\t%s\t%s\t%s\n", $1, $2, $4, esecs($5), $6, cmd
+            $4 == uid && !($1 in managed) && $1 != self {
+              print
             }
           ' "$work/managed" - >"$work/procs"
         fi
@@ -736,38 +746,160 @@
 
       # args: match exclude min-age action scope. Deny applies to the kill lane only; report rows keep daemon-by-design classes visible. Scope
       # "orphan" (default) is the classic ppid-1 tty-less census; scope "any" admits session-child litter, where the age threshold IS the
-      # live-work guard. Output keeps the pid/age/rss/cmd shape reap_matches consumes.
+      # live-work guard. Zombies are already terminated and never enter the reap set.
       orphan_matches() {
         proc_snapshot | awk -F '\t' -v m="$1" -v x="$2" -v g="$3" -v a="$4" -v s="$5" -v d="$deny_re" '
-          (s == "any" || ($2 == 1 && $3 ~ /^\?\??$/)) && $4 >= g && $6 ~ m && (x == "" || $6 !~ x) && (a != "kill" || $6 !~ d) {
-            printf "%s\t%s\t%s\t%s\n", $1, $4, $5, $6
-          }'
+          $8 !~ /^Z/ && (s == "any" || ($2 == 1 && $5 ~ /^\?\??$/)) && $6 >= g && $10 ~ m &&
+            (x == "" || $10 !~ x) && (a != "kill" || $10 !~ d) { print }'
       }
 
-      # TERM, bounded wait, KILL residue.
-      reap_pid() {
-        kill -TERM "$1" 2>/dev/null || return 1
+      process_record() { process_rows | awk -F '\t' -v pid="$1" '$1 == pid {print}'; }
+      group_records() { process_rows | awk -F '\t' -v pgid="$1" '$3 == pgid && $8 !~ /^Z/ {print}'; }
+
+      # Stable identity fields must match exactly, the elapsed clock may only advance, and both mutable observations must remain well-formed.
+      same_identity() { # expected current
+        local ep epp eg eu et ea er es ez ec cp cpp cg cu ct ca cr cs cz cc
+        IFS=$'\t' read -r ep epp eg eu et ea er es ez ec < <(printf '%s\n' "$1")
+        IFS=$'\t' read -r cp cpp cg cu ct ca cr cs cz cc < <(printf '%s\n' "$2")
+        [ "$ep" = "$cp" ] && [ "$epp" = "$cpp" ] && [ "$eg" = "$cg" ] && [ "$eu" = "$cu" ] && [ "$et" = "$ct" ] \
+          && [ "$ez" = "$cz" ] && [ "$ec" = "$cc" ] && [[ "$ea" =~ ^[0-9]+$ ]] && [[ "$ca" =~ ^[0-9]+$ ]] \
+          && [ "$ca" -ge "$ea" ] && [[ "$er" =~ ^[0-9]+$ ]] && [[ "$cr" =~ ^[0-9]+$ ]] && [ -n "$es" ] && [ -n "$cs" ]
+      }
+
+      record_admitted() { # record match exclude minage row-action scope
+        local pid ppid pgid uid tty age rss state cmd
+        IFS=$'\t' read -r pid ppid pgid uid tty age rss state _ cmd < <(printf '%s\n' "$1")
+        [ "$uid" = "$owner_uid" ] && [ "$pid" != "$$" ] && [[ "$age" =~ ^[0-9]+$ ]] && [ "$age" -ge "$4" ] \
+          && [[ "$rss" =~ ^[0-9]+$ ]] && [[ "$state" != Z* ]] && [[ "$cmd" =~ $2 ]] \
+          && { [ -z "$3" ] || [[ ! "$cmd" =~ $3 ]]; } && { [ "$6" = any ] || { [ "$ppid" = 1 ] && [[ "$tty" =~ ^\?\??$ ]]; }; } \
+          && { [ "$5" != kill ] || [[ ! "$cmd" =~ $deny_re ]]; }
+      }
+
+      revalidate_candidate() { # expected match exclude minage row-action scope
+        local pid _ current
+        IFS=$'\t' read -r pid _ < <(printf '%s\n' "$1")
+        current="$(process_record "$pid")"
+        [ -n "$current" ] || return 1
+        IFS=$'\t' read -r _ _ _ _ _ _ _ state _ < <(printf '%s\n' "$current")
+        [[ "$state" != Z* ]] || return 1
+        same_identity "$1" "$current" && record_admitted "$current" "$2" "$3" "$4" "$5" "$6" || return 2
+      }
+
+      group_snapshot_admitted() { # pgid match exclude minage row-action scope output expected-leader
+        local pgid="$1" output="$7" expected_leader="$8" record pid leader_pid count=0 leader_seen=0
+        IFS=$'\t' read -r leader_pid _ < <(printf '%s\n' "$expected_leader")
+        : >"$output"
+        while IFS= read -r record; do
+          [ -n "$record" ] || continue
+          record_admitted "$record" "$2" "$3" "$4" "$5" "$6" || return 1
+          IFS=$'\t' read -r pid _ < <(printf '%s\n' "$record")
+          if [ "$pid" = "$leader_pid" ]; then
+            same_identity "$expected_leader" "$record" || return 1
+            leader_seen=1
+          fi
+          printf '%s\n' "$record" >>"$output"
+          count=$((count + 1))
+        done < <(group_records "$pgid")
+        [ "$count" -gt 0 ] && [ "$leader_seen" = 1 ]
+      }
+
+      group_snapshot_revalidated() { # pgid match exclude minage row-action scope expected-file
+        local pgid="$1" expected_file="$7" record pid expected count=0
+        local current_file="$work/group-current-$pgid-$SRANDOM"
+        group_records "$pgid" >"$current_file"
+        while IFS= read -r record; do
+          [ -n "$record" ] || continue
+          record_admitted "$record" "$2" "$3" "$4" "$5" "$6" || return 1
+          IFS=$'\t' read -r pid _ < <(printf '%s\n' "$record")
+          expected="$(awk -F '\t' -v pid="$pid" '$1 == pid {print; exit}' "$expected_file")"
+          [ -n "$expected" ] && same_identity "$expected" "$record" || return 1
+          count=$((count + 1))
+        done <"$current_file"
+        [ "$count" -gt 0 ]
+      }
+
+      revalidate_target() { # mode expected pgid match exclude minage row-action scope expected-group-file
+        if [ "$1" = group ]; then
+          group_snapshot_revalidated "$3" "$4" "$5" "$6" "$7" "$8" "$9"
+        else
+          revalidate_candidate "$2" "$4" "$5" "$6" "$7" "$8"
+        fi
+      }
+
+      target_terminated() { # mode pid pgid
+        local record state
+        if [ "$1" = group ]; then
+          [ -z "$(group_records "$3")" ]
+          return
+        fi
+        record="$(process_record "$2")"
+        [ -n "$record" ] || return 0
+        IFS=$'\t' read -r _ _ _ _ _ _ _ state _ < <(printf '%s\n' "$record")
+        [[ "$state" == Z* ]]
+      }
+
+      # A group-leading match owns its process group only while every live member passes the row and denial gates. Both signal boundaries refresh
+      # the complete tuple; KILL additionally proves that every survivor existed in the TERM snapshot, so a reused PID or PGID can never inherit it.
+      reap_pid() { # expected match exclude minage row-action scope
+        local expected="$1" pid pgid mode=pid target group_before="$work/group-before-$SRANDOM" revalidate_rc
+        IFS=$'\t' read -r pid _ pgid _ < <(printf '%s\n' "$expected")
+        revalidate_rc=0
+        revalidate_candidate "$expected" "$2" "$3" "$4" "$5" "$6" || revalidate_rc=$?
+        [ "$revalidate_rc" = 0 ] || return "$revalidate_rc"
+        target="$pid"
+        if [ "$pid" = "$pgid" ] && group_snapshot_admitted "$pgid" "$2" "$3" "$4" "$5" "$6" "$group_before" "$expected"; then
+          mode=group
+          target="-$pgid"
+        fi
+        revalidate_rc=0
+        revalidate_target "$mode" "$expected" "$pgid" "$2" "$3" "$4" "$5" "$6" "$group_before" || revalidate_rc=$?
+        [ "$revalidate_rc" = 0 ] || return "$revalidate_rc"
+        if ! kill -TERM -- "$target" 2>/dev/null; then
+          target_terminated "$mode" "$pid" "$pgid" && return 0
+          return 2
+        fi
         for _ in 1 2 3; do
-          kill -0 "$1" 2>/dev/null || return 0
+          target_terminated "$mode" "$pid" "$pgid" && return 0
           sleep 1
         done
-        kill -KILL "$1" 2>/dev/null || true
+        revalidate_rc=0
+        revalidate_target "$mode" "$expected" "$pgid" "$2" "$3" "$4" "$5" "$6" "$group_before" || revalidate_rc=$?
+        [ "$revalidate_rc" = 0 ] || return "$revalidate_rc"
+        if ! kill -KILL -- "$target" 2>/dev/null; then
+          target_terminated "$mode" "$pid" "$pgid" && return 0
+          return 2
+        fi
+        for _ in 1 2; do
+          target_terminated "$mode" "$pid" "$pgid" && return 0
+          sleep 1
+        done
+        return 2
       }
 
       # Shared reap/report emitter for apply and sweep: $5 is the row action (deny-lane gate), $6 the behavior this run applies (kill|report),
       # $7 the row scope.
       reap_matches() { # name match exclude minage row-action act scope
-        reaped=0
-        while IFS=$'\t' read -r opid oage orss ocmd; do
+        reaped=0 failed_reaps=0
+        while IFS=$'\t' read -r opid oppid opgid ouid otty oage orss ostate ostarted ocmd; do
           if [ "$6" = kill ]; then
-            if reap_pid "$opid"; then
+            process_identity="$(printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s' \
+              "$opid" "$oppid" "$opgid" "$ouid" "$otty" "$oage" "$orss" "$ostate" "$ostarted" "$ocmd")"
+            if reap_pid "$process_identity" "$2" "$3" "$4" "$5" "$7"; then
               reaped=$((reaped + 1))
-              printf '%s\tkilled\tpid=%s\tage_s=%s\trss_kb=%s\tcmd=%.140s\n' "$1" "$opid" "$oage" "$orss" "$ocmd"
+              printf '%s\tkilled\tpid=%s\tppid=%s\tpgid=%s\tuid=%s\ttty=%s\tage_s=%s\trss_kb=%s\tstarted=%s\tcmd=%.140s\n' \
+                "$1" "$opid" "$oppid" "$opgid" "$ouid" "$otty" "$oage" "$orss" "$ostarted" "$ocmd"
             else
-              printf '%s\tgone\tpid=%s\n' "$1" "$opid"
+              reap_rc=$?
+              if [ "$reap_rc" = 1 ]; then
+                printf '%s\tgone\tpid=%s\tpgid=%s\n' "$1" "$opid" "$opgid"
+              else
+                failed_reaps=$((failed_reaps + 1))
+                printf '%s\tfailed\tpid=%s\tpgid=%s\n' "$1" "$opid" "$opgid"
+              fi
             fi
           else
-            printf '%s\treport\tpid=%s\tage_s=%s\trss_kb=%s\tcmd=%.140s\n' "$1" "$opid" "$oage" "$orss" "$ocmd"
+            printf '%s\treport\tpid=%s\tppid=%s\tpgid=%s\tuid=%s\ttty=%s\tage_s=%s\trss_kb=%s\tstarted=%s\tcmd=%.140s\n' \
+              "$1" "$opid" "$oppid" "$opgid" "$ouid" "$otty" "$oage" "$orss" "$ostarted" "$ocmd"
           fi
         done < <(orphan_matches "$2" "$3" "$4" "$5" "$7")
       }
@@ -880,7 +1012,7 @@
             ;;
           orphan)
             pidlist=""
-            while IFS=$'\t' read -r opid _ orss _; do
+            while IFS=$'\t' read -r opid _ _ _ _ _ orss _ _ _; do
               count=$((count + 1))
               kb=$((kb + orss))
               pidlist="$pidlist,$opid"
@@ -906,6 +1038,7 @@
       }
 
       cmd_plan() {
+        [ "$#" -eq 0 ] || usage
         mkdir -p "$state_dir"
         plan_file="$state_dir/plan-$run_ts.tsv"
         {
@@ -918,6 +1051,8 @@
       }
 
       cmd_apply() {
+        [ "$#" -le 1 ] || usage
+        mkdir -p "$state_dir"
         plan_file="''${1:-$(find "$state_dir" -maxdepth 1 -name 'plan-*.tsv' 2>/dev/null | sort | tail -1)}"
         if [ -z "$plan_file" ] || [ ! -f "$plan_file" ]; then
           echo "forge-cleanup: no plan receipt; run forge-cleanup plan first" >&2
@@ -940,15 +1075,15 @@
             fi
             IFS=$'\x1f' read -r _ row_kind row_target _ row_root row_pattern row_match row_exclude row_minage _ row_depth row_maxage _ _ _ _ _ row_scope < <(row_fields "$row")
             # Re-verify at act time: a row that drifted since plan is skipped.
-            fresh_state="$(detect_row "$row" | cut -f3)"
+            IFS=$'\t' read -r _ _ fresh_state _ _ fresh_action _ _ < <(detect_row "$row")
             if [ "$fresh_state" != litter ]; then
               printf '%s\taction=none\toutcome=drifted-%s\n' "$name" "$fresh_state"
               continue
             fi
-            case "$action" in
+            case "$fresh_action" in
               chmod-*)
-                chmod "''${action#chmod-}" "$HOME/$row_target"
-                printf '%s\taction=%s\toutcome=applied\n' "$name" "$action"
+                chmod "''${fresh_action#chmod-}" "$HOME/$row_target"
+                printf '%s\taction=%s\toutcome=applied\n' "$name" "$fresh_action"
                 ;;
               trash | trash-aged | trash-links)
                 moved=0
@@ -961,7 +1096,7 @@
                     moved=$((moved + 1))
                   done < <(candidates "$row_kind" "$HOME/$row_root" "$row_pattern" "$row_depth" "$row_maxage")
                 fi
-                printf '%s\taction=%s\toutcome=applied\tcount=%s\n' "$name" "$action" "$moved"
+                printf '%s\taction=%s\toutcome=applied\tcount=%s\n' "$name" "$fresh_action" "$moved"
                 ;;
               prune-trust)
                 cfg="$HOME/$row_target"
@@ -986,23 +1121,32 @@
                 ;;
               kill)
                 reap_matches "$name" "$row_match" "$row_exclude" "$row_minage" kill kill "$row_scope"
-                printf '%s\taction=kill\toutcome=applied\tcount=%s\n' "$name" "$reaped"
+                printf '%s\taction=kill\toutcome=applied\tcount=%s\tfailed=%s\n' "$name" "$reaped" "$failed_reaps"
                 ;;
               *)
-                printf '%s\taction=%s\toutcome=unknown-action\n' "$name" "$action"
+                printf '%s\taction=%s\toutcome=unknown-action\n' "$name" "$fresh_action"
                 ;;
             esac
           done <"$plan_file"
         } | tee "$apply_file"
-        persist_receipt "$(printf 'ts=%s\tverb=apply\tapplied=%s\tplan=%s\treceipt=%s\tresult=ok' \
-          "$ts" "$(grep -c 'outcome=applied' "$apply_file" || true)" "$plan_file" "$apply_file")"
+        apply_failed="$(grep -c $'\tfailed\tpid=' "$apply_file" || true)"
+        apply_result=ok
+        [ "$apply_failed" = 0 ] || apply_result=partial
+        persist_receipt "$(printf 'ts=%s\tverb=apply\tapplied=%s\tfailed=%s\tplan=%s\treceipt=%s\tresult=%s' \
+          "$ts" "$(grep -c 'outcome=applied' "$apply_file" || true)" "$apply_failed" "$plan_file" "$apply_file" "$apply_result")"
+        [ "$apply_result" = ok ]
       }
 
       # Orphan-only lane for the scheduled agent: fresh detection each run, kill rows reaped, report
       # rows logged; per-pid receipt plus one summary line on the receipts log.
       cmd_sweep() {
         report_only=0
-        [ "''${1:-}" != "--report-only" ] || report_only=1
+        case "''${1:-}" in
+          "") ;;
+          --report-only) report_only=1 ;;
+          *) usage ;;
+        esac
+        [ "$#" -le 1 ] || usage
         mkdir -p "$state_dir"
         sweep_file="$state_dir/sweep-$run_ts.tsv"
         {
@@ -1017,13 +1161,16 @@
           done < <(jq -c '.[]' "$rows_json")
         } >"$sweep_file"
         cat "$sweep_file"
-        read -r killed reported gone < <(awk -F '\t' 'NR > 1 {c[$2]++} END {printf "%d %d %d\n", c["killed"] + 0, c["report"] + 0, c["gone"] + 0}' "$sweep_file")
-        persist_receipt "$(printf 'ts=%s\tverb=sweep\tkilled=%s\treported=%s\tgone=%s\treport_only=%s\treceipt=%s\tresult=ok' \
-          "$ts" "$killed" "$reported" "$gone" "$report_only" "$sweep_file")"
+        read -r killed reported gone failed < <(awk -F '\t' 'NR > 1 {c[$2]++} END {printf "%d %d %d %d\n", c["killed"] + 0, c["report"] + 0, c["gone"] + 0, c["failed"] + 0}' "$sweep_file")
+        sweep_result=ok
+        [ "$failed" = 0 ] || sweep_result=partial
+        persist_receipt "$(printf 'ts=%s\tverb=sweep\tkilled=%s\treported=%s\tgone=%s\tfailed=%s\treport_only=%s\treceipt=%s\tresult=%s' \
+          "$ts" "$killed" "$reported" "$gone" "$failed" "$report_only" "$sweep_file" "$sweep_result")"
+        [ "$sweep_result" = ok ]
       }
 
       case "$verb" in
-        plan) cmd_plan ;;
+        plan) cmd_plan "$@" ;;
         apply) cmd_apply "$@" ;;
         sweep) cmd_sweep "$@" ;;
         *) usage ;;
@@ -1482,14 +1629,14 @@
           attached="$(zellij --session "$name" action list-clients 2>/dev/null | tail -n +2 | wc -l | tr -d ' ' || echo 0)"
           if [ "''${start:-0}" != 0 ] && [ "$start" -ge "$sys_epoch" ]; then
             row PASS zellij-respawn "session '$name' server postdates the live generation (clients=''${attached:-0})"
-          elif [[ "$name" == forge-accept-* ]] && [ "''${attached:-0}" = 0 ]; then
+          elif [[ "$name" =~ ^fa-[0-9]+-[0-9]+$ ]] && [ "''${attached:-0}" = 0 ]; then
             zellij kill-session "$name" >/dev/null 2>&1 || true
             zellij delete-session "$name" >/dev/null 2>&1 || true
             row PASS zellij-respawn "disposable '$name' (stale server) reaped; respawn legal: forge-owned, zero clients"
           else
             row INSTRUCT zellij-respawn "session '$name' server predates the live generation (clients=''${attached:-0}); close it and relaunch from WezTerm — respawn is legal only at zero attached clients, and only WezTerm may spawn the server"
           fi
-        done <<<"$sessions"
+        done < <(printf '%s\n' "$sessions")
       }
 
       step_terminal() {
@@ -1541,11 +1688,11 @@
         CLAUDE_ENV_FILE="$tmp/env.sh" bash "$hook" >/dev/null 2>"$tmp/receipt" || true
         cli_names="$(key_names "$tmp/env.sh" | sort -u)"
         cli_missing="$(comm -23 <(printf '%s\n' "$expected") <(printf '%s\n' "$cli_names") | paste -sd' ' -)"
-        tui_missing="$(ZKEYS="$(paste -sd' ' - <<<"$expected")" /bin/zsh -il -c \
+        tui_missing="$(ZKEYS="$(printf '%s\n' "$expected" | paste -sd' ' -)" /bin/zsh -il -c \
           'for k in ''${(s: :)ZKEYS}; do [ -n "''${(P)k}" ] || print "$k"; done' 2>/dev/null | paste -sd' ' -)"
         gui_missing="$(comm -23 <(printf '%s\n' "$expected") <(gui_names | sort -u) | paste -sd' ' -)"
         if [ -z "$cli_missing$tui_missing$gui_missing" ]; then
-          row PASS lanes "cli/tui/gui all carry the expected key-name set ($(wc -l <<<"$expected" | tr -d ' ') names)"
+          row PASS lanes "cli/tui/gui all carry the expected key-name set ($(printf '%s\n' "$expected" | wc -l | tr -d ' ') names)"
         else
           row FAIL lanes "missing — cli:[''${cli_missing}] tui:[''${tui_missing}] gui:[''${gui_missing}]"
         fi
@@ -1574,14 +1721,14 @@
           if [ -z "$last" ]; then
             row WARN "$name" "no tunnel receipts at $receipts"
           else
-            state="$(grep -oE 'state=[a-z-]+' <<<"$last" | cut -d= -f2 || true)"
+            [[ "$last" =~ state=([a-z-]+) ]] && state="''${BASH_REMATCH[1]}"
             case "$state" in
               up)
                 row PASS "$name" "tunnel up: ''${last#*state=up}"
                 ;;
               port-conflict)
                 local -a cports=()
-                read -ra cports <<<"$(grep -oE 'spawn:[0-9 ]+' <<<"$last" | cut -d: -f2 || true)"
+                [[ "$last" =~ spawn:([0-9\ ]+) ]] && read -ra cports < <(printf '%s\n' "''${BASH_REMATCH[1]}")
                 # lsof exits 1 when a holder vanished between probes; under pipefail that rc would kill the step before the row lands.
                 kinds="$(for p in "''${cports[@]}"; do
                   lsof -nP -iTCP:"$p" -sTCP:LISTEN 2>/dev/null | awk 'NR>1 {print $2}' || true
@@ -1830,7 +1977,7 @@
         [ -n "$label" ] || continue
         declared=$((declared + 1))
         o="$(obs "$label")"
-        IFS=$'\t' read -r _ opid ostatus <<<"$o" || true
+        IFS=$'\t' read -r _ opid ostatus < <(printf '%s\n' "$o") || true
         IFS=$'\t' read -r cls note < <(classify "$label")
         if [ -n "$o" ]; then
           loaded=$((loaded + 1))

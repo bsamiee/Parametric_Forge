@@ -34,7 +34,7 @@ const ROUTES = {
     },
     ts: {
         prompt: (f) =>
-            `Refactor ${f} to the TypeScript doctrine in coding-ts: replace thrown errors with ` +
+            `Refactor ${f} to the TypeScript doctrine in docs/stacks/typescript/: replace thrown errors with ` +
             `typed Effect error channels, model variants as exhaustive discriminated unions, and ` +
             `move boundary parsing to Schema. No any, no enum, no throw. Report what changed and ` +
             `any cross-file follow-up.`,

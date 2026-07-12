@@ -63,7 +63,6 @@ in {
         autocrlf = "input";
         whitespace = "trailing-space,space-before-tab";
         preloadindex = true;
-        fsmonitor = true; # Background daemon for instant git status; forge-git-doctor owns the health receipt
         untrackedCache = true; # 2x faster untracked file detection
         commitGraph = true; # Cache commit DAG for faster git log
       };

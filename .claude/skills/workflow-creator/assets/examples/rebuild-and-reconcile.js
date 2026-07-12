@@ -114,7 +114,7 @@ const done = (
         agent(
             'Tighten the wire-decode module ' +
                 f +
-                ' in place against coding-ts. Fix everything you can within this ONE file. Anything that also requires ' +
+                ' in place against docs/stacks/typescript/. Fix everything you can within this ONE file. Anything that also requires ' +
                 'editing OTHER files (a shared decoded shape, a codec/frame/fault seam two files must agree on) you MUST NOT touch here — instead report it in ' +
                 'residual as {files: [every file the fix touches], claim}.',
             { label: 'edit:' + f, phase: 'Edit', schema: EDIT },

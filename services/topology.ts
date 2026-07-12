@@ -94,6 +94,12 @@ const _tokens = [
         access: 'read',
     },
     {
+        project: 'parametric-forge',
+        config: 'dev_machine',
+        name: 'forge-machine-readonly',
+        access: 'read',
+    },
+    {
         project: 'maghz',
         config: 'prd_host',
         name: 'maghz-host-readonly',
@@ -177,6 +183,78 @@ const _repositories = [
 
 type _RepositoryName = (typeof _repositories)[number]['name'];
 
+type _AppRepositoryName = _RepositoryName | 'Parametric_Portal';
+
+type _AppInstallationRow = {
+    readonly identity: string;
+    readonly installationId: number;
+} & (
+    | {
+          readonly selectionMode: 'all';
+          readonly origin: 'browser';
+          readonly selectedRepositories?: never;
+      }
+    | {
+          readonly selectionMode: 'selected';
+          readonly selectedRepositories: readonly [_AppRepositoryName, ...ReadonlyArray<_AppRepositoryName>];
+          readonly origin: 'browser';
+      }
+);
+
+// Installation selection remains browser-custodied because Git transport identity cannot authenticate the REST mutation and no broad API token is
+// admitted; a selected installation's nonempty repository tuple remains the complete intended grant and drift reference.
+const _appInstallations = [
+    {
+        identity: 'ChatGPT Codex Connector',
+        installationId: 67774119,
+        selectionMode: 'all',
+        origin: 'browser',
+    },
+    {
+        identity: 'Claude',
+        installationId: 93086152,
+        selectionMode: 'all',
+        origin: 'browser',
+    },
+    {
+        identity: 'CodeRabbit',
+        installationId: 110036864,
+        selectionMode: 'all',
+        origin: 'browser',
+    },
+    {
+        identity: 'Gemini Code Assist',
+        installationId: 93194989,
+        selectionMode: 'all',
+        origin: 'browser',
+    },
+    {
+        identity: 'Google AI Studio',
+        installationId: 95565745,
+        selectionMode: 'all',
+        origin: 'browser',
+    },
+    {
+        identity: 'Greptile Apps',
+        installationId: 103134796,
+        selectionMode: 'all',
+        origin: 'browser',
+    },
+    {
+        identity: 'MacroscopeApp',
+        installationId: 142885994,
+        selectionMode: 'all',
+        origin: 'browser',
+    },
+    {
+        identity: 'Nx Cloud',
+        installationId: 96791012,
+        selectionMode: 'selected',
+        selectedRepositories: ['Parametric_Portal', 'Rasm'],
+        origin: 'browser',
+    },
+] as const satisfies ReadonlyArray<_AppInstallationRow>;
+
 // importId is the live ruleset ID; the adopt import ID is `<repository>:<importId>`.
 const _rulesets = [
     {
@@ -204,21 +282,32 @@ const _rulesets = [
     readonly origin: _Origin;
 }>;
 
-// One shared main-guard rule policy: history protection plus Copilot review as the GitHub-native ruleset rule; reviewOnPush stays off because
-// CodeRabbit and Greptile already re-review each push. Direct pushes to main stay legal.
+// One shared main-guard policy: every change reaches main through a squash or rebase pull request with resolved review threads and linear history;
+// zero approval-count theater leaves reviewer judgment advisory while Copilot re-reviews every pushed revision.
 const _rulesetPolicy = {
     nonFastForward: true,
     deletion: true,
-    copilotCodeReview: { reviewOnPush: false, reviewDraftPullRequests: false },
+    requiredLinearHistory: true,
+    pullRequest: {
+        allowedMergeMethods: ['squash', 'rebase'] satisfies string[],
+        dismissStaleReviewsOnPush: false,
+        requireCodeOwnerReview: false,
+        requireLastPushApproval: false,
+        requiredApprovingReviewCount: 0,
+        requiredReviewThreadResolution: true,
+    },
+    copilotCodeReview: { reviewOnPush: true, reviewDraftPullRequests: false },
 } as const;
 
-// Reviewer service matrix: config custody stays repo-owned, `driver.ts reviewers` proves presence plus config hash; gated identities prove absence.
-// Macroscope holds at gated until its check-run and fix policy are typed rows.
+// Reviewer service matrix separates configuration custody from observed live execution. App IDs are the verified check-suite app identities, not
+// installation IDs or required-check declarations; repo artifacts remain the local configuration receipt where a reviewer owns them.
 const _reviewers = [
     {
         identity: 'coderabbit',
         mechanism: 'app',
         posture: 'active',
+        configuration: 'repository-artifacts',
+        liveEvidence: { source: 'check-suite', appId: 347564 },
         trigger: 'pr-open+push',
         statusCheck: true,
         overlapClass: 'line-review',
@@ -228,6 +317,8 @@ const _reviewers = [
         identity: 'greptile',
         mechanism: 'app',
         posture: 'active',
+        configuration: 'repository-artifacts',
+        liveEvidence: { source: 'check-suite', appId: 867647 },
         trigger: 'pr-open+push',
         statusCheck: true,
         overlapClass: 'semantic-review',
@@ -237,6 +328,8 @@ const _reviewers = [
         identity: 'copilot',
         mechanism: 'ruleset',
         posture: 'active',
+        configuration: 'ruleset-policy',
+        liveEvidence: { source: 'ruleset-policy' },
         trigger: 'pr-open',
         statusCheck: false,
         overlapClass: 'native-review',
@@ -245,7 +338,9 @@ const _reviewers = [
     {
         identity: 'macroscope',
         mechanism: 'app',
-        posture: 'gated',
+        posture: 'active',
+        configuration: 'github-app',
+        liveEvidence: { source: 'check-suite', appId: 900172 },
         trigger: 'pr-open',
         statusCheck: false,
         overlapClass: 'remediation',
@@ -254,7 +349,9 @@ const _reviewers = [
 ] as const satisfies ReadonlyArray<{
     readonly identity: 'coderabbit' | 'greptile' | 'copilot' | 'macroscope';
     readonly mechanism: 'app' | 'ruleset';
-    readonly posture: 'active' | 'gated';
+    readonly posture: 'active';
+    readonly configuration: 'repository-artifacts' | 'ruleset-policy' | 'github-app';
+    readonly liveEvidence: { readonly source: 'check-suite'; readonly appId: 347564 | 867647 | 900172 } | { readonly source: 'ruleset-policy' };
     readonly trigger: 'pr-open' | 'pr-open+push';
     readonly statusCheck: boolean;
     readonly overlapClass: 'line-review' | 'semantic-review' | 'native-review' | 'remediation';
@@ -271,6 +368,7 @@ const Topology = {
     webhooks: _webhooks,
     owner: _owner,
     repositories: _repositories,
+    appInstallations: _appInstallations,
     rulesets: _rulesets,
     rulesetPolicy: _rulesetPolicy,
     reviewers: _reviewers,
@@ -285,6 +383,7 @@ declare namespace Topology {
     type Scope = (typeof _scopes)[number];
     type Webhook = (typeof _webhooks)[number];
     type Repository = (typeof _repositories)[number];
+    type AppInstallation = (typeof _appInstallations)[number];
     type Ruleset = (typeof _rulesets)[number];
     type RulesetPolicy = typeof _rulesetPolicy;
     type Reviewer = (typeof _reviewers)[number];

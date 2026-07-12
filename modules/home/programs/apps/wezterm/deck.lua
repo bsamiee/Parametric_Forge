@@ -117,10 +117,8 @@ function M.attention(fields)
         row[k] = v
     end
     local ok, json = pcall(wezterm.json_encode, row)
-    local f = ok and io.open(rows.attention_feed, "a") or nil
-    if f then
-        f:write(json .. "\n")
-        f:close()
+    if ok then
+        wezterm.background_child_process({ rows.paths.attention_emit, rows.attention_feed, json })
     end
 end
 

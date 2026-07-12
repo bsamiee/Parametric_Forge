@@ -15,8 +15,36 @@
 # CLAUDE_TOOL_PATHS (colon list). CLAUDE_DOPPLER_OFFLINE=1 forces fallback-only.
 set -Eeuo pipefail
 # GUI/TUI launch contexts can resolve `env bash` to Apple Bash 3.2, which rejects inherit_errexit below; re-exec through the per-user profile Bash 5.
-if ((BASH_VERSINFO[0] < 5)) && [[ -x "/etc/profiles/per-user/${USER}/bin/bash" ]]; then
-    exec "/etc/profiles/per-user/${USER}/bin/bash" "$0" "$@"
+profile_user="${USER:-${LOGNAME:-}}"
+if ((BASH_VERSINFO[0] < 5)) && [[ -n "$profile_user" && -x "/etc/profiles/per-user/${profile_user}/bin/bash" ]]; then
+    exec "/etc/profiles/per-user/${profile_user}/bin/bash" "$0" "$@"
+fi
+
+# The raw byte-copied hook re-enters its packaged owner so every host receives the same Bash and dependency closure even from a minimal GUI PATH.
+if [[ -z "${_FORGE_SETUP_ENV_OWNER:-}" ]]; then
+    setup_env_owner="$(command -v forge-setup-env 2>/dev/null || true)"
+    [[ -x "$setup_env_owner" || -z "$profile_user" ]] || setup_env_owner="/etc/profiles/per-user/${profile_user}/bin/forge-setup-env"
+    [[ -x "$setup_env_owner" || -z "${HOME:-}" ]] || setup_env_owner="${HOME}/.nix-profile/bin/forge-setup-env"
+    if [[ -x "$setup_env_owner" && ! "$setup_env_owner" -ef "$0" ]]; then
+        export _FORGE_SETUP_ENV_OWNER=1
+        exec "$setup_env_owner" "$@"
+    fi
+fi
+((BASH_VERSINFO[0] >= 5)) || exit 0
+
+# One outer deadline owns cold resolution and detached refresh alike; individual Doppler request budgets remain narrower inner bounds.
+setup_env_timeout="$(command -v timeout 2>/dev/null || true)"
+[[ -x "$setup_env_timeout" || -z "$profile_user" ]] || setup_env_timeout="/etc/profiles/per-user/${profile_user}/bin/timeout"
+[[ -x "$setup_env_timeout" || -z "${HOME:-}" ]] || setup_env_timeout="${HOME}/.nix-profile/bin/timeout"
+if [[ -z "${_FORGE_SETUP_ENV_DEADLINE_ACTIVE:-}" && -x "$setup_env_timeout" ]]; then
+    setup_env_deadline="${FORGE_SETUP_ENV_DEADLINE_SECONDS:-45}"
+    if [[ ! "$setup_env_deadline" =~ ^[1-9][0-9]{0,2}$ ]] || ((10#$setup_env_deadline > 300)); then
+        printf 'setup-env: FORGE_SETUP_ENV_DEADLINE_SECONDS must be 1..300\n' >&2
+        exit 2
+    fi
+    setup_env_deadline="$((10#$setup_env_deadline))"
+    export _FORGE_SETUP_ENV_DEADLINE_ACTIVE=1
+    exec "$setup_env_timeout" -k 5 "$setup_env_deadline" "$0" "$@"
 fi
 shopt -s inherit_errexit
 IFS=$'\n\t'
@@ -32,7 +60,8 @@ readonly SESSION_CACHE="${SESSION_CACHE_DIR}/session-env.sh"
 readonly REFRESH_LOCK="${SESSION_CACHE_DIR}/.refresh.lock"
 readonly DOPPLER_OFFLINE="${CLAUDE_DOPPLER_OFFLINE:-0}"
 _stale_days="${CLAUDE_DOPPLER_STALE_DAYS:-14}"
-[[ "${_stale_days}" =~ ^[0-9]+$ ]] || _stale_days=14
+[[ "${_stale_days}" =~ ^[0-9]{1,5}$ ]] || _stale_days=14
+_stale_days="$((10#${_stale_days}))"
 readonly SNAPSHOT_STALE_DAYS="${_stale_days}"
 declare -ra DOPPLER_SOURCES=(
     'agent-runtime:dev:agent-runtime.json:DOPPLER_TOKEN_AGENT_RUNTIME'
@@ -115,7 +144,7 @@ _resolve_source() {
     # (outcome|keys|age_days|auth|reason), and refreshes the per-source key-name manifest a dead row is reported against.
     local -r spec="$1" out="$2"
     local project config snapshot tokenvar
-    IFS=: read -r project config snapshot tokenvar <<<"${spec}"
+    IFS=: read -r project config snapshot tokenvar < <(printf '%s\n' "${spec}")
     local -r snap="${DOPPLER_CACHE_DIR}/${snapshot}"
     local token="" auth=cli
     if [[ -n "${tokenvar}" && -n "${!tokenvar:-}" ]]; then
@@ -166,7 +195,7 @@ _prune_snapshots() {
     local f base row spec keep
     local -a expected=("${SNAPSHOT_KEEP[@]}") pruned=()
     for spec in "${DOPPLER_SOURCES[@]}"; do
-        IFS=: read -r _ _ row _ <<<"${spec}"
+        IFS=: read -r _ _ row _ < <(printf '%s\n' "${spec}")
         expected+=("${row}" "${row%.json}.keys")
     done
     # Prune only the file families this hook owns; doppler's own dot-prefixed fallback/metadata files and foreign material stay untouched.
@@ -211,7 +240,7 @@ _load_secrets() {
             out="${outs[${idx}]}"
             local project config snapshot tokenvar label keysfile owed
             local outcome=dead nkeys=0 age=0 auth=none reason="resolver died"
-            IFS=: read -r project config snapshot tokenvar <<<"${DOPPLER_SOURCES[${idx}]}"
+            IFS=: read -r project config snapshot tokenvar < <(printf '%s\n' "${DOPPLER_SOURCES[${idx}]}")
             label="${project}/${config}"
             if [[ -f "${out}.meta" ]]; then
                 IFS='|' read -r outcome nkeys age auth reason <"${out}.meta" || true
@@ -284,7 +313,7 @@ _emit_extra_env_keys() {
     [[ -n "${EXTRA_ENV_KEYS}" ]] || return 0
     local -a keys=()
     local key
-    IFS=$' \t' read -ra keys <<<"${EXTRA_ENV_KEYS//,/ }"
+    IFS=$' \t' read -ra keys < <(printf '%s\n' "${EXTRA_ENV_KEYS//,/ }")
     for key in "${keys[@]}"; do
         _emit_env_key "${key}"
     done
@@ -294,7 +323,7 @@ _emit_tool_paths() {
     [[ -n "${TOOL_PATHS}" ]] || return 0
     local -a paths=() selected=()
     local path path_value
-    IFS=: read -ra paths <<<"${TOOL_PATHS}"
+    IFS=: read -ra paths < <(printf '%s\n' "${TOOL_PATHS}")
     for path in "${paths[@]}"; do
         [[ -n "${path}" ]] || continue
         if [[ -d "${path}" || "${ALLOW_MISSING_TOOL_PATHS}" == "1" ]]; then
@@ -416,7 +445,10 @@ _replay_cache() {
 if [[ -s "${SESSION_CACHE}" ]]; then
     _replay_cache
     printf 'setup-env: replay served from session cache; refresh dispatched\n' >&2
-    (nohup "$0" --refresh >/dev/null 2>>"${SESSION_CACHE_DIR}/refresh.err" &)
+    (
+        unset _FORGE_SETUP_ENV_DEADLINE_ACTIVE
+        nohup "$0" --refresh >/dev/null 2>>"${SESSION_CACHE_DIR}/refresh.err" &
+    )
     exit 0
 fi
 

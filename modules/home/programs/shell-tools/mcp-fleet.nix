@@ -32,7 +32,23 @@
   profileBin,
   homeDir,
   sshBin,
-}: [
+}: let
+  mkSupervised = {
+    cmd,
+    args ? [],
+    idleSeconds ? null,
+  }: {
+    command = "${profileBin}/forge-supervise-stdio";
+    args =
+      (
+        if idleSeconds == null
+        then []
+        else ["--idle-seconds" (toString idleSeconds)]
+      )
+      ++ [cmd]
+      ++ args;
+  };
+in [
   {
     name = "perplexity";
     transport = "stdio";
@@ -134,11 +150,17 @@
     # Maghz VPS read-only secret lens: the scoped service token resolves only inside the remote host/container boundary.
     name = "doppler-remote";
     transport = "stdio";
-    command = sshBin;
-    args = [
-      "maghz"
-      ''DOPPLER_TOKEN="$(doppler configure get token --plain --scope /srv/maghz)" docker exec -i -e DOPPLER_TOKEN maghz-mcp /opt/mcp/bin/doppler-mcp --read-only --project maghz --config prd_host''
-    ];
+    inherit
+      (mkSupervised {
+        cmd = sshBin;
+        args = [
+          "maghz"
+          ''DOPPLER_TOKEN="$(doppler configure get token --plain --scope /srv/maghz)" docker exec -i -e DOPPLER_TOKEN maghz-mcp /opt/mcp/bin/doppler-mcp --read-only --project maghz --config prd_host''
+        ];
+      })
+      command
+      args
+      ;
     envKeys = [];
     probe = "network";
     codex = {
@@ -212,8 +234,14 @@
   {
     name = "google-workspace";
     transport = "stdio";
-    command = "${profileBin}/forge-workspace-mcp";
-    args = ["--tool-tier" "extended"];
+    inherit
+      (mkSupervised {
+        cmd = "${profileBin}/forge-workspace-mcp";
+        args = ["--tool-tier" "extended"];
+      })
+      command
+      args
+      ;
     envKeys = ["GOOGLE_OAUTH_CLIENT_ID" "GOOGLE_OAUTH_CLIENT_SECRET" "WORKSPACE_MCP_CREDENTIALS_DIR"];
     probe = "stdio";
     codex = {
@@ -225,8 +253,7 @@
   {
     name = "nuget";
     transport = "stdio";
-    command = "${profileBin}/nuget-mcp";
-    args = [];
+    inherit (mkSupervised {cmd = "${profileBin}/nuget-mcp";}) command args;
     envKeys = [];
     probe = "stdio";
     codex = {
@@ -240,8 +267,7 @@
     # pure retrieval, so headless codex may call it. Binary is the nixpkgs mcp-nixos package installed by mcp-launchers.nix.
     name = "nixos";
     transport = "stdio";
-    command = "${profileBin}/mcp-nixos";
-    args = [];
+    inherit (mkSupervised {cmd = "${profileBin}/mcp-nixos";}) command args;
     envKeys = [];
     probe = "stdio";
     codex = {
@@ -397,13 +423,20 @@
       toolTimeoutSec = 180;
     };
   }
-  {
+  rec {
     # Codex itself as a Claude-side MCP tool: `codex`/`codex-reply` run gpt-5.6 sessions natively — the workflow-lane dispatch surface. Claude-only:
     # codex never registers itself. The auto-updating user-installed binary lives outside profileBin.
     name = "codex";
     transport = "stdio";
-    command = "${homeDir}/.local/bin/codex";
-    args = ["mcp-server"];
+    inherit
+      (mkSupervised {
+        cmd = "${homeDir}/.local/bin/codex";
+        args = ["mcp-server"];
+        idleSeconds = codex.toolTimeoutSec + 300;
+      })
+      command
+      args
+      ;
     envKeys = [];
     probe = "stdio";
     clients = ["claude"];

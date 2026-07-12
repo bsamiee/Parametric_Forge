@@ -4,56 +4,56 @@ Parametric Forge is the machine estate: one flake owns the macOS workstation and
 
 ## [01]-[LAYOUT]
 
-```text
-flake.nix                      inputs (Determinate pin, nixpkgs-unstable, flake-parts, nix-darwin, home-manager master, disko, treefmt-nix), systems, host exports
-flake.lock
-flake-modules/                 nixpkgs config, package/app outputs, checks + formatter, dev shell
-hosts/
-├── context.nix                host-context factory: one row per machine
-├── darwin/                    macbook
-└── nixos/                     maghz: nixos-anywhere + disko bootstrap, forge-redeploy day-2
-modules/
-├── common/                    Determinate Nix settings + shared toolchain env (both OSes)
-├── darwin/
-│   ├── settings/              macOS defaults, input, interface, security
-│   └── homebrew/              Homebrew bridge
-├── nixos/                     boot/disko, static network, SSH, users, containers, loopback services
-└── home/
-    ├── aliases/               shell alias register
-    ├── assets/
-    │   ├── ascii/             fetch banner art
-    │   └── wallpaper/
-    ├── environments/          cross-tool environment surfaces
-    ├── programs/
-    │   ├── apps/
-    │   │   ├── karabiner/     leader-chord keyboard layer
-    │   │   ├── nvim/          editor estate (lua/)
-    │   │   ├── vscode/
-    │   │   ├── wezterm/       terminal host
-    │   │   ├── yazi/          file manager
-    │   │   └── zellij/        multiplexer (layouts/, themes/)
-    │   ├── container-tools/
-    │   ├── git-tools/
-    │   ├── languages/         per-language toolchains
-    │   ├── mac-tools/
-    │   ├── media-tools/
-    │   ├── nix-tools/
-    │   ├── shell-tools/       CLI estate: forge-* kernels, MCP launchers, ssh, secrets
-    │   └── zsh/
-    └── scripts/               integration + analysis kernels
-overlays/                      duckdb, sqlean, nodejs-bin, pnpm ride default.nix rows
-├── energyplus/
-├── openstudio/
-├── sqlite-forge/              extension-loaded sqlite shell profiles
-└── forge-provision/           local provisioning CLI (bash/, data/, jq/, sql/)
-services/                      IaC owner: Doppler + GitHub topology rows, Automation API driver
-docs/
-├── atlas/                     estate atlas: platform facts, rails, interconnection, scars
-├── laws/                      landing doctrine, design + machine law, topology, patterns, scars
-├── stacks/                    python/, typescript/ language law
-└── standards/                 prose owners: style, formatting, information structure
-.claude/                       harness estate: skills/ masters, hooks/, workflows/, lsp-marketplace/
-.greptile/ · .coderabbit.yaml  per-repo reviewer configuration
+This regenerable topology maps the repository's owning entry points.
+
+```text codemap
+Parametric_Forge/
+├── flake.nix                      # Flake inputs, systems, outputs
+├── flake.lock
+├── flake-modules/                 # Outputs, checks, formatter, development shell
+├── hosts/
+│   ├── context.nix                # Host-context row registry
+│   └── default.nix                # OS dispatch and system projection
+├── modules/
+│   ├── common/                    # Shared Nix settings and toolchain environment
+│   ├── darwin/
+│   │   ├── settings/              # MacOS defaults, input, interface, security
+│   │   └── homebrew/              # Homebrew bridge
+│   ├── nixos/                     # Boot, network, SSH, users, containers, services
+│   └── home/
+│       ├── aliases/               # Shell alias registry
+│       ├── assets/
+│       │   ├── ascii/             # Fetch banner assets
+│       │   └── wallpaper/         # Wallpaper assets
+│       ├── environments/          # Cross-tool environment projections
+│       ├── programs/
+│       │   ├── apps/
+│       │   │   ├── karabiner/     # Leader-chord keyboard layer
+│       │   │   ├── nvim/          # Editor estate
+│       │   │   ├── vscode/
+│       │   │   ├── wezterm/       # Terminal host
+│       │   │   ├── yazi/          # File manager
+│       │   │   └── zellij/        # Multiplexer layouts and themes
+│       │   ├── container-tools/
+│       │   ├── git-tools/
+│       │   ├── languages/         # Language toolchains
+│       │   ├── mac-tools/
+│       │   ├── media-tools/
+│       │   ├── nix-tools/
+│       │   ├── shell-tools/       # CLI kernels, MCP launchers, SSH, secrets
+│       │   └── zsh/
+│       └── scripts/               # Integration and analysis kernels
+├── overlays/                      # Manifest-folded package admissions
+│   └── forge-provision/           # Local provisioning CLI
+├── services/                      # Doppler and GitHub IaC rows
+├── docs/
+│   ├── atlas/                     # Platform facts, rails, interconnection, scars
+│   ├── laws/                      # Estate design and machine law
+│   ├── stacks/                    # Language law
+│   └── standards/                 # Prose, formatting, information structure
+├── .claude/                       # Harness skills, hooks, workflows, LSP marketplace
+├── .greptile/                     # Per-repo reviewer configuration
+└── .coderabbit.yaml               # Per-repo reviewer configuration
 ```
 
 ## [02]-[HOSTS]
@@ -89,7 +89,7 @@ This machine runs Determinate Nix, not vanilla: Determinate owns the daemon and 
 - `modules/home/` carries user-scope state under Home Manager: XDG hygiene, session environments, program owners, scripts. System and home scopes never mix in one module.
 - `overlays/` is the admission gate for upstream packages nixpkgs lacks or pins wrongly: each overlay owns its version, source hash (`nix-prefetch-github`), and build; the flake-level overlay composes them. Admission requires a real consumer now — never anticipatory packaging.
 - `services/` owns live service state as code, held to `docs/stacks/typescript/` in full. The repo root is the single pnpm workspace (`package.json` + `pnpm-workspace.yaml` catalog — one manifest, no per-folder package files). An existing service domain extends its rows; a new service domain gets a new organized owner, mirroring the module folder philosophy.
-- `services/` workspace commands: `node services/driver.ts preview|up|refresh [--adopt] [--target=<p>/<c>/<token>]` converges the estate; `outputs [--reveal]` projects receipts; `scopes apply|doctor|strict` governs directory-scope resolution; `reviewers` proves the reviewer matrix. The driver brokers its own tokens from `op` per invocation.
+- `services/` workspace commands: `node services/driver.ts preview|up|refresh [--adopt] [--target=<p>/<c>/<token>]` converges the estate; `outputs [--reveal]` projects receipts; `scopes apply|doctor|strict` governs directory-scope resolution; `reviewers` proves the reviewer matrix; `apps` projects the browser-custodied GitHub App census. The driver brokers the Pulumi and Doppler control credentials from 1Password and resolves `GITHUB_TOKEN` from the agent environment or Doppler.
 
 ## [06]-[SECRETS]
 
@@ -135,7 +135,7 @@ Recurring machine work is launchd-owned under the `com.parametric-forge.<name>` 
 
 ## [13]-[GITHUB_AND_SERVICES]
 
-GitHub repository settings for the estate (merge hygiene, rulesets, feature booleans) are `@pulumi/github` rows in `services/topology.ts`; `node driver.ts preview` is the verification surface — repo state is never enumerated in prose or edited in the GitHub UI. Doppler projects, environments, branch configs, and service tokens live as rows in the same file. Code review rides CodeRabbit (`.coderabbit.yaml`) and Greptile (`.greptile/`); the `pr-loop` skill owns hosted-PR round-trips.
+GitHub repository settings for the estate (merge hygiene, rulesets, feature booleans) are `@pulumi/github` rows in `services/topology.ts`; `node driver.ts preview` is the verification surface — repo state is never enumerated in prose or edited in the GitHub UI. GitHub App installation IDs and selection modes live in the same topology as a browser-custodied census: the universal SSH identity owns Git transport and commit signing, while GitHub exposes no SSH-authenticated REST control for app installation selection. Doppler projects, environments, branch configs, and service tokens live as rows in the same file. Code review rides CodeRabbit (`.coderabbit.yaml`) and Greptile (`.greptile/`); the `pr-loop` skill owns hosted-PR round-trips.
 
 ## [14]-[FRESH_MACHINE_BOOTSTRAP]
 

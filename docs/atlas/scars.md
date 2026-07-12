@@ -36,20 +36,20 @@ Colima is the Docker API / Compose / Buildx / Pulumi default and never yields `D
 
 ## [05]-[MCP]
 
-| [INDEX] | [TRAP]                                                            | [RULE_NOW]                                                        |
-| :-----: | :---------------------------------------------------------------- | :---------------------------------------------------------------- |
-|  [01]   | Project `mcpServers` blocks shadowed the fleet with stale servers | Estate repositories carry no client registration; Forge governs   |
-|  [02]   | `mcpServers.jupyter.env` carried a literal `JUPYTER_TOKEN`        | Carry no literal token env; the wrapper resolves the live token   |
-|  [03]   | Required MCP registration proves only startup/registration        | `required = true` fails startup/resume if the MCP cannot init     |
-|  [04]   | Relocated LSP telemetry/plugin rows pointed at absent paths/SHAs  | Telemetry is `@forge-lsp`; dead marketplace keys are deleted      |
-|  [05]   | Stdio servers ignoring stdin EOF stranded under hard-killed hosts | Long-lived stdio pythons ride the supervised parent-liveness lane |
-|  [06]   | An unauthenticated HTTP `401` rendered a false-green health row   | Declared OAuth joins Codex credential state with endpoint health  |
-|  [07]   | Parallel clients raced one rotating OAuth refresh token           | Fan-out disables unused OAuth rows; Keychain is the fixed store   |
+| [INDEX] | [TRAP]                                                            | [RULE_NOW]                                                       |
+| :-----: | :---------------------------------------------------------------- | :--------------------------------------------------------------- |
+|  [01]   | Project `mcpServers` blocks shadowed the fleet with stale servers | Estate repositories carry no client registration; Forge governs  |
+|  [02]   | `mcpServers.jupyter.env` carried a literal `JUPYTER_TOKEN`        | Carry no literal token env; the wrapper resolves the live token  |
+|  [03]   | Required MCP registration proves only startup/registration        | `required = true` fails startup/resume if the MCP cannot init    |
+|  [04]   | Relocated LSP telemetry/plugin rows pointed at absent paths/SHAs  | Telemetry is `@forge-lsp`; dead marketplace keys are deleted     |
+|  [05]   | Retained stdio writers kept abandoned fleet generations live      | Forge-owned stdio rows ride an activity lease and group reap     |
+|  [06]   | An unauthenticated HTTP `401` rendered a false-green health row   | Declared OAuth joins Codex credential state with endpoint health |
+|  [07]   | Parallel clients raced one rotating OAuth refresh token           | Fan-out disables unused OAuth rows; Keychain is the fixed store  |
 
 - [02]: the literal token overrode wrapper token-file resolution.
 - [03]: tunnel health, env, and wrapper are separate axes.
 - [04]: the plugin cache is materialized with `claude plugin update`.
-- [05]: `superviseStdio` (`languages/scientific-tools.nix`) and the rhino router lane own the pattern — process group + `kill -0` client watchdog; node fleet servers exit on EOF and ride bare.
+- [05]: `supervise-stdio.nix` owns the bidirectional relay, inactivity lease, and process-group reap; `mcp-fleet.nix` routes every Forge-owned stdio registration through that owner.
 - [06]: `mcp-fleet.nix` declares `auth = "oauth"`; `forge-mcp doctor --network` requires Codex `o_auth` before an unauthenticated reachability probe can pass.
 - [07]: `mcp_oauth_credentials_store = "keyring"` prevents backend drift; concurrent lanes omit `heptabase-mcp` unless they call it.
 

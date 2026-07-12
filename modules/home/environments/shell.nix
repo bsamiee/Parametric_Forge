@@ -31,7 +31,6 @@ in {
       LESSHISTFILE = "${config.xdg.stateHome}/less/history";
       # ZSH_AUTOSUGGEST_STRATEGY is a zsh array, not a session scalar.
       ZSH_AUTOSUGGEST_BUFFER_MAX_SIZE = "20";
-      ZSH_AUTOSUGGEST_USE_ASYNC = "1";
       KEYTIMEOUT = "200";
       # procs reads no pager env var; its pager is config-owned, not env.
       RICH_THEME = "dracula"; # rich accepts named Pygments styles only; dracula matches the estate palette variant
@@ -82,4 +81,10 @@ in {
       DOTNET_NOLOGO = "1";
       DOTNET_CLI_TELEMETRY_OPTOUT = "1";
     };
+
+  # The HM session guard survives nested shells, so the autosuggestion lifecycle must reset unconditionally before .zshrc sources the plugin.
+  programs.zsh.envExtra = ''
+    export ZSH_AUTOSUGGEST_MANUAL_REBIND=1
+    unset ZSH_AUTOSUGGEST_USE_ASYNC
+  '';
 }
