@@ -3,6 +3,8 @@
 # requires-python = ">=3.15"
 # dependencies = ["msgspec"]
 # ///
+# Focused one-line docstrings carry no Returns section at the boundary-kernel hook seam.
+# ruff: noqa: DOC201
 """Inject context from a data-driven nudge table decoded from nudges.json, never a code literal.
 
 Each nudge row keys on a target field with match and exclude regex arrays and a priority, so a new nudge is a
@@ -52,23 +54,24 @@ class Nudge(msgspec.Struct, frozen=True):
 
 def _haystacks(payload: Payload, /) -> dict[str, str]:
     """Admit the payload once into the field a nudge target selects."""
-    return {"prompt": payload.prompt, "tool_name": payload.tool_name,
-            "agent_type": payload.agent_type, "command": payload.tool_input.command}
+    return {"prompt": payload.prompt, "tool_name": payload.tool_name, "agent_type": payload.agent_type, "command": payload.tool_input.command}
 
 
 def fired(payload: Payload, rows: tuple[Nudge, ...], /) -> list[str]:
     """Return the priority-ordered nudge texts whose target matches and no exclude vetoes."""
     field = _haystacks(payload)
-    return [row.text for row in sorted(rows, key=lambda r: r.priority)
-            if (hay := field.get(row.target, "")) and any(re.search(p, hay) for p in row.match)
-            and not any(re.search(x, hay) for x in row.exclude)]
+    return [
+        row.text
+        for row in sorted(rows, key=lambda r: r.priority)
+        if (hay := field.get(row.target, "")) and any(re.search(p, hay) for p in row.match) and not any(re.search(x, hay) for x in row.exclude)
+    ]
 
 
 def load(path: str, /) -> tuple[Nudge, ...]:
     """Load the nudge table from disk; a missing or malformed file injects nothing."""
     try:
         return tuple(msgspec.json.decode(Path(path).read_bytes(), type=list[Nudge]))
-    except (OSError, msgspec.DecodeError):
+    except OSError, msgspec.DecodeError:
         return ()
 
 
@@ -79,8 +82,7 @@ def main() -> int:
     except msgspec.DecodeError:
         return 0  # an injector observes: a malformed payload injects nothing rather than failing the prompt
     if hits := fired(payload, load(TABLE_PATH)):
-        body = {"hookSpecificOutput": {"hookEventName": payload.event or "UserPromptSubmit",
-                                       "additionalContext": "\n".join(hits)}}
+        body = {"hookSpecificOutput": {"hookEventName": payload.event or "UserPromptSubmit", "additionalContext": "\n".join(hits)}}
         sys.stdout.write(msgspec.json.encode(body).decode())
     return 0
 

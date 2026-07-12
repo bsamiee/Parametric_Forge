@@ -230,14 +230,6 @@
         scope = "workspace";
         args = ["${profileBin}/zsh" "-l"];
       }
-      {
-        # Pane-capture float: the waiting agent pane's tail (forge-zellij peek --attention) pinned in a pager — F10 capture on the float rail.
-        id = "peek-attention";
-        label = "forge: peek waiting agent pane";
-        kind = "float";
-        float = "utility";
-        args = ["${pkgs.bash}/bin/bash" "-c" "${profileBin}/forge-zellij peek --attention --text | ${pkgs.less}/bin/less -R +G"];
-      }
     ]
     ++ map (d: {
       id = "attach-${d.name}";
@@ -294,7 +286,7 @@
     skip_close_confirmation_for_processes_named = ["bash" "sh" "zsh" "fish" "tmux" "nu"];
     use_cap_height_to_scale_fallback_fonts = true;
     warn_about_missing_glyphs = true;
-    # Bell rings are structured attention: the events.lua bell arm owns the surface (receipt row always, toast when background), never a beep.
+    # Silent bell: the events.lua bell arm lands a receipt row instead of a beep.
     audible_bell = "Disabled";
 
     # Input seam
@@ -368,14 +360,10 @@
   rows = {
     nightly_floor = "20260707";
     receipts_log = "${homeDir}/Library/Logs/forge-wezterm.receipts.log";
-    # Attention-feed seam: the bell arm appends source=bell rows on the hook-feed schema for the collector fold.
-    attention_feed = "${config.xdg.stateHome}/forge/agent-attention.jsonl";
     paths = {
       path = lib.concatStringsSep ":" toolchainEnv.launchdPathEntries;
       zellij = "${pkgs.zellij}/bin/zellij";
       nvim = "${profileBin}/nvim";
-      forge_agents = "${profileBin}/forge-agents";
-      attention_emit = "${profileBin}/forge-attention-emit";
       # Frozen-layout assets (forge-zellij layout record): session_args and forge-workspace both resolve <slug>.kdl here before the default.
       recorded_layouts = recordedLayouts;
       # Nightly-only mux pin: without it the mux inherits the identity-less Apple launchd SSH_AUTH_SOCK (deck.lua applies it under has_nightly).
@@ -545,8 +533,6 @@
                   emit "$slug" warm error "attach --create-background failed (from=$was)" "-"
                 fi
               done
-          # Bar-cell warmup mirrors the deck seam: fresh sessions' pipe cells land once the servers answer, not at the next minute tick.
-          (sleep 2 && ${profileBin}/forge-agents collect) >/dev/null 2>&1 &
           exit 0
           ;;
         --list | "")
@@ -607,8 +593,6 @@
         exit 1
       }
       emit "$slug" spawn ok "pane_id=$pane_id" "$space_state"
-      # Bar-cell warmup mirrors the deck seam: the fresh session's pipe cells (identity chip included) land now, not at the next minute tick.
-      (sleep 2 && ${profileBin}/forge-agents collect) >/dev/null 2>&1 &
       printf '%s\t%s\tpane_id=%s\tspace=%s\n' "$slug" "$cwd" "$pane_id" "$space_state"
     '';
   };

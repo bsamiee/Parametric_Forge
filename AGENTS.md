@@ -14,7 +14,7 @@
 ## [02]-[ESTATE_PROPAGATION]
 
 - `.claude/hooks/` and `.claude/scripts/` are Forge-mastered: fixes land here first, then byte-copy to the sibling repos, `~/.claude/`, and `~/.codex/`. `.claude/hooks/setup-env.sh` is the canonical SessionStart hook, byte-identical everywhere it lands.
-- Every other estate surface carries no master: a change to `.claude/skills/` or `.claude/agents/` in any project byte-copies to the other two regardless of where it was edited, and skills additionally port to `~/.codex/skills/` frontmatter-stripped. Claude-caller skills such as `codex` stay out of `~/.codex/skills/` to prevent recursive triggering; never build sync tooling.
+- Every other estate surface carries no master: a change to `.claude/skills/` or `.claude/agents/` in any project byte-copies to the other two regardless of where it was edited, and skills additionally byte-copy to `~/.codex/skills/`. Claude-caller skills such as `codex` stay out of `~/.codex/skills/` to prevent recursive triggering; never build sync tooling.
 - The byte-copied set spans `.claude/{skills,hooks,scripts,agents}`, `commands/docs.md`, `docs/stacks/{python,typescript}/`, and the three prose standards (`information-structure`, `formatting`, `style-guide`); every copy is byte-identical across the repos where the surface exists.
 
 ## [03]-[NIX_SHELL_EXECUTION]

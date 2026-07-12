@@ -208,6 +208,8 @@
 
       tmpdir="$(mktemp -d "''${TMPDIR:-/tmp}/forge-redeploy.XXXXXX")"
       trap 'emit_receipt; rm -rf "$tmpdir"' EXIT
+      trap 'exit 143' TERM
+      trap 'exit 130' INT
       out_link="$tmpdir/system"
 
       # Backend-dispatched token resolution: ambient CACHIX_AUTH_TOKEN wins, the session-secrets dispatcher (FORGE_SECRETS_FILE) resolves the machine
@@ -1247,14 +1249,6 @@
       }
       trap emit_receipt EXIT
 
-      # terminal-notifier over osascript: OSA notifications attribute to Script Editor and a click opens its document dialog. The shared notifier rail
-      # (bundle-apps.nix) is empty on hosts without one — notify no-ops there.
-      notify() {
-        tn='${config.forge.notifier}'
-        [ -z "$tn" ] || "$tn" -title "Forge Nix drift" \
-          -message "$1" -group forge-nix-drift >/dev/null 2>&1 || true
-      }
-
       ${acGateFold}
       # Own lock serializes drift runs; the deploy flock stays redeploy-owned, so an in-flight deploy
       # surfaces as build=deploy-in-flight, not deadlock.
@@ -1275,8 +1269,10 @@
 
       tmpdir="$(mktemp -d "''${TMPDIR:-/tmp}/forge-nix-drift.XXXXXX")"
       trap 'emit_receipt; rm -rf "$tmpdir"' EXIT
+      trap 'exit 143' TERM
+      trap 'exit 130' INT
 
-      # Installed daemon vs pinned artifact: Determinate version drift is a separate object from flake-input drift and only ever notifies.
+      # Installed daemon vs pinned artifact: Determinate version drift is a separate object from flake-input drift; it surfaces in the receipt only.
       pinned="$(jq -r '[.nodes | to_entries[] | select(.key | startswith("determinate-nixd-")) | .value.locked.url // ""] | first // ""' flake.lock | grep -o 'v[0-9.]*' || true)"
       installed="$(/usr/local/bin/determinate-nixd version 2>/dev/null | awk '/daemon version:/ {print "v" $NF; exit}' || true)"
       nixd="''${installed:--}:''${pinned:--}"
@@ -1303,11 +1299,10 @@
           bump="skipped-deploy-in-flight"
         else
           snap >"$tmpdir/pre"
-          # A failed update (network/registry) is withdrawn and notified; a partially written lock must never wedge later runs into skipped-dirty.
+          # A failed update (network/registry) is withdrawn; a partially written lock must never wedge later runs into skipped-dirty.
           if ! nix flake update; then
             git checkout -- flake.lock
             bump="fail"
-            notify "Flake update failed; lock kept at HEAD."
             exit 1
           fi
           if [ -z "$(git status --porcelain -- flake.lock)" ]; then
@@ -1344,8 +1339,6 @@
           commit="ok"
         else
           commit="failed"
-          # An uncommitted bump gates every later run into skipped-dirty; notify once here so the wedge never accrues silently.
-          notify "Lock bump built but commit failed; flake.lock left uncommitted."
           printf 'forge-nix-drift: WARNING lock bump built but commit failed; flake.lock left uncommitted\n' >&2
         fi
         exec {deploy_fd}>&-
@@ -1367,20 +1360,11 @@
         ok)
           result="ok"
           if [ "$commit" = "failed" ]; then result="partial"; fi
-          if [ "$bump" = "moved" ]; then
-            notify "Inputs bumped ($inputs); build proved. Switch when ready."
-          elif [ "$deployed" = "drift" ]; then
-            notify "Declared system differs from deployed; forge-redeploy --switch converges."
-          fi
-          if [ -n "$installed" ] && [ -n "$pinned" ] && [ "$installed" != "$pinned" ]; then
-            notify "determinate-nixd $installed installed, $pinned pinned; switch or upgrade."
-          fi
           ;;
         deploy-in-flight)
           result="skipped"
           ;;
         *)
-          notify "Drift build failed; inspect ~/Library/Logs/forge-nix-drift.log"
           exit 1
           ;;
       esac
@@ -1419,6 +1403,8 @@
       }
       tmpdir="$(mktemp -d "''${TMPDIR:-/tmp}/forge-activation-sweep.XXXXXX")"
       trap 'emit_receipt; rm -rf "$tmpdir"' EXIT
+      trap 'exit 143' TERM
+      trap 'exit 130' INT
 
       # Topmost root-owned entries only: -prune stops descent so one finding covers a whole in-the-way tree; rm -rf clears its children with it.
       scan() {
@@ -2122,7 +2108,6 @@
 
       row flake-inputs forge-nix-drift "$(tail_receipt "$logs/forge-nix-drift.receipts.log")"
       row deploy forge-redeploy "$(tail_receipt "$logs/forge-redeploy.receipts.log")"
-      row mcp-pins forge-mcp-outdated "$(grep -v '^$' "$logs/forge-mcp-outdated.log" 2>/dev/null | tail -1 || echo no-receipt)"
       if [ -x "$brew_bin" ]; then
         formulae="$(HOMEBREW_NO_AUTO_UPDATE=1 "$brew_bin" outdated --quiet 2>/dev/null | wc -l | tr -d ' ')"
         casks="$(HOMEBREW_NO_AUTO_UPDATE=1 "$brew_bin" outdated --cask --quiet 2>/dev/null | wc -l | tr -d ' ')"

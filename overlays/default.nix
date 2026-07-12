@@ -142,15 +142,6 @@ final: prev: let
   };
 
   recipes = {
-    # Notarized single-binary release: the zip carries the signed Mach-O and the TCC notification identity rides its embedded signature — install
-    # copies bytes only; any strip, patch, or re-link forfeits the identity.
-    alerter = _: {
-      installPhase = ''
-        runHook preInstall
-        install -Dm755 ./alerter "$out/bin/alerter"
-        runHook postInstall
-      '';
-    };
     # Flat single-binary release: no archive, the fetched file IS the tool.
     biome = _: {
       dontUnpack = true;

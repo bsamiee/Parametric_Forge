@@ -259,8 +259,6 @@ in {
       cmd_duration = {
         min_time = 2000;
         style = "warning";
-        show_notifications = true;
-        min_time_to_notify = 45000;
         format = "[󱎫 $duration]($style) ";
       };
 

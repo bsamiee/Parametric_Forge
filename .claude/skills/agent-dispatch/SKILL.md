@@ -37,7 +37,7 @@ Dispatch is three decisions taken in order: placement — which execution surfac
 |  [06]   | Agent team         | Independent peer sessions, tasks, mailbox  | Workers must trade findings, challenge, self-claim tasks              |
 |  [07]   | Dynamic workflow   | Script vars hold every intermediate result | Dozens to hundreds of agents, codified reruns, bounded loops          |
 |  [08]   | Codex offload      | Separate model + context, one report       | Transcript-heavy mechanical or research legs — codex skill owns these |
-|  [09]   | Machine automation | No agent; launchd, mise, webhook rows      | Recurring, watch-shaped, or event work with no per-firing judgment    |
+|  [09]   | Machine automation | No agent; launchd, webhook rows            | Recurring, watch-shaped, or event work with no per-firing judgment    |
 
 Placement law rides four axes: cost rises down the table, so the cheapest surface that isolates the noise wins; a fork beats a fresh subagent when the worker needs the conversation so far, because the fork reuses the parent prompt cache; a team beats parallel subagents only when workers must communicate, since each teammate is a full session priced accordingly; a workflow beats a team when the plan is codifiable and the intermediates belong in script variables instead of any context window.
 
@@ -70,6 +70,6 @@ Workers run in the background by default and drop to the foreground only when th
 - Runnable workflow scripts — the `meta` block, `agent()`, `pipeline()`, schemas — belong to workflow-creator; this skill decides when a workflow is the right surface and how its agents are prompted.
 - Offload to gpt-5.6 (terra workhorse, sol flagship) through the `codex` MCP tool or `codex exec` belongs to the codex skill; this skill's placement table names the trigger.
 - Hook construction for `SubagentStart`, `SubagentStop`, `TeammateIdle`, and task gates belongs to hooks-builder; this skill names where a gate pays for itself.
-- Recurring machine work — launchd rows, `mise` task and watch surfaces, the signed webhook inbox — belongs to the estate machine owner; the placement table names when work leaves agent surfaces entirely.
+- Recurring machine work — launchd rows and the signed webhook inbox — belongs to the estate machine owner; the placement table names when work leaves agent surfaces entirely.
 - Memory files, rules, settings, model and effort defaults, and headless lanes belong to harness-config; a subagent definition's frontmatter stays here.
 - A delegation smell, orchestration error, or superior pattern surfaced mid-run is codified into its owning skill — codex for offload mechanics, workflow-creator for script shapes, this skill for placement and contract law, harness-config for settings and hooks — in the same session, then propagated byte-identical to every project, reviewer configs included; a lesson left as session knowledge is a regression.

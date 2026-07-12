@@ -3,6 +3,8 @@
 # requires-python = ">=3.15"
 # dependencies = ["msgspec", "httpx"]
 # ///
+# Boundary-kernel hook seam: a fail-open observer swallows every fault to a guaranteed exit 0, and focused one-line docstrings carry no Returns section.
+# ruff: noqa: BLE001, DOC201, S110
 """Forward every hook firing to a sink after the policy hook decides, without ever touching the verdict.
 
 Chained second on the event array and wired async:true, the transmitter is non-blocking by construction: the whole
@@ -47,15 +49,28 @@ class Event(msgspec.Struct, frozen=True, rename={"event": "hook_event_name"}):
 
 def _private(event: Event, raw: bytes, /) -> dict[str, object]:
     """Build the private-tier envelope: hot query keys flat beside the raw payload nested whole."""
-    return {"toolname": event.tool_name, "sessionid": event.session_id, "eventname": event.event,
-            "agentid": event.agent_id, "source": BRAND, "payload": msgspec.json.decode(raw)}
+    return {
+        "toolname": event.tool_name,
+        "sessionid": event.session_id,
+        "eventname": event.event,
+        "agentid": event.agent_id,
+        "source": BRAND,
+        "payload": msgspec.json.decode(raw),
+    }
 
 
 def _cloudevent(event: Event, raw: bytes, /) -> dict[str, object]:
     """Build the CloudEvents 1.0 envelope; hook identity rides flat lowercase extensions."""
-    return {"specversion": "1.0", "type": f"{NAMESPACE}.hook.{event.event}", "source": BRAND,
-            "id": f"{event.session_id}-{time_ns()}", "time": datetime.now(UTC).isoformat(),  # true UTC, never a tagged Z
-            "sessionid": event.session_id, "toolname": event.tool_name, "data": msgspec.json.decode(raw)}
+    return {
+        "specversion": "1.0",
+        "type": f"{NAMESPACE}.hook.{event.event}",
+        "source": BRAND,
+        "id": f"{event.session_id}-{time_ns()}",
+        "time": datetime.now(UTC).isoformat(),  # true UTC, never a tagged Z
+        "sessionid": event.session_id,
+        "toolname": event.tool_name,
+        "data": msgspec.json.decode(raw),
+    }
 
 
 def envelope(event: Event, raw: bytes, tier: Tier, /) -> dict[str, object]:

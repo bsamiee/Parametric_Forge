@@ -164,7 +164,11 @@ RENDER_CONFIG = {
 
 
 def _browser_path() -> str | None:
-    """Resolve a pinned headless-safe Chromium; never the real Chrome.app, which a sandboxed headless caller aborts at _RegisterApplication."""
+    """Resolve a pinned headless-safe Chromium; never the real Chrome.app, which a sandboxed headless caller aborts at _RegisterApplication.
+
+    Returns:
+        Path to a pinned chrome-headless-shell binary, or None when none resolves.
+    """
     import os
 
     env = os.environ.get("PUPPETEER_EXECUTABLE_PATH", "")

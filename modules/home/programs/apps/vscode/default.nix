@@ -173,6 +173,8 @@
       "nix.serverPath" = "${profileBin}/nixd";
       "nix.formatterPath" = "${profileBin}/alejandra";
       "nix.serverSettings".nixd.formatting.command = ["${profileBin}/alejandra"];
+      # nixd's definition provider errors on AST node types it does not implement (-32001); swallow the client toast, an upstream gap.
+      "nix.hiddenLanguageServerErrors" = ["textDocument/definition"];
       "biome.lsp.bin" = "${profileBin}/biome";
       "shfmt.executablePath" = "${profileBin}/shfmt";
       "todo-tree.ripgrep.ripgrep" = "${profileBin}/rg"; # the extension ships no arm64 vscode-ripgrep; bind the estate binary

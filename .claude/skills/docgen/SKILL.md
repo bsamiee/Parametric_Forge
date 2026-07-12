@@ -32,7 +32,7 @@ Durable prose is law for an agent that loads it with no memory of why it was wri
 - [04]-[ARCHITECTURE](templates/architecture.template.md): exact structure, replace only the slots
 - [05]-[SPEC](templates/spec.template.md): exact section spine; slots carry their budgets, cluster count follows the domain
 - [06]-[API_CATALOG](templates/api-catalog.template.md): exact structure, replace only the slots
-- [07]-[LAWS](templates/laws.template.md): registry law page — atomic table rows default with family-fitted header rubrics; a law too large for a cell graduates to a marker-led `[DEEP_ROWS]` entry, never a card; drop `[02]` when no row has graduated
+- [07]-[LAWS](templates/laws.template.md): law page — one law family carried in the representation it needs (comparison table, marker-led `[TOKEN]:` cards, or numbered doctrine sections); the register binds every shape, and no shape is the default
 
 [EXAMPLES]: symptom-indexed worked pairs; consult the matching set before building or repairing the container.
 - [01]-[TABLES](examples/tables.md): table crimes and their structural repairs

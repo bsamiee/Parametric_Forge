@@ -229,6 +229,8 @@ POINTER = re.compile(r"[\w./-]*\w\.md#[\w.-]+|\b[\w./-]+/[\w.-]+#[A-Z][A-Z0-9_]+
 # Deictic freshness and permission verbs warn: both admit context-legal uses review adjudicates.
 FRESHNESS_DEICTIC = re.compile(r"\b(?:currently|recently|nowadays|at\s+present|these\s+days|going\s+forward|modern)\b", re.IGNORECASE)
 WEAK_VERB = re.compile(r"\b(?:supports|provides|offers|allows|enables)\b", re.IGNORECASE)
+# Soft-preference and discourse hedges warn: `prefer` names a legitimate default across the estate, so review adjudicates each.
+SOFT_HEDGE = re.compile(r"\b(?:however|prefer(?:s|red|ably)?|etc)\b", re.IGNORECASE)
 PATTERNS: tuple[tuple[Check, re.Pattern[str], Status], ...] = (
     (Check.HEDGE, HEDGE_WORDS, "fail"),
     (Check.HEDGE, MARKER_WORDS, "fail"),
@@ -239,6 +241,7 @@ PATTERNS: tuple[tuple[Check, re.Pattern[str], Status], ...] = (
     (Check.VERSION_ANCHOR, VERSION_BAND, "fail"),
     (Check.VERSION_ANCHOR, FRESHNESS_DEICTIC, "warn"),
     (Check.WEAK_VERB, WEAK_VERB, "warn"),
+    (Check.HEDGE, SOFT_HEDGE, "warn"),
     (Check.EM_DASH, EM_DASH_ASCII, "fail"),
 )
 

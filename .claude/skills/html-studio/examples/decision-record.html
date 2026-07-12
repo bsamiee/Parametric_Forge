@@ -8,12 +8,12 @@
             @layer reset, tokens, base, components, utilities, print, overrides;
 
             @property --tone {
-                syntax: "<percentage>";
+                syntax: '<percentage>';
                 inherits: true;
                 initial-value: 0%;
             }
             @property --raise {
-                syntax: "<number>";
+                syntax: '<number>';
                 inherits: true;
                 initial-value: 0;
             }
@@ -76,7 +76,7 @@
                         --shadow-2: 0 6px 24px oklch(0 0 0/0.12), 0 2px 6px oklch(0 0 0/0.08);
                     }
                 }
-                :root[data-theme="light"] {
+                :root[data-theme='light'] {
                     color-scheme: light;
                     --bg: oklch(0.975 0.008 85);
                     --surface: oklch(0.945 0.012 85);
@@ -212,9 +212,9 @@
                     --lh-heading: 1.25;
                     --lh-body: 1.6;
                     --lh-data: 1.4;
-                    --font-display: ui-serif, Georgia, "Iowan Old Style", serif;
-                    --font-sans: ui-sans-serif, system-ui, "Segoe UI", Roboto, sans-serif;
-                    --font-mono: ui-monospace, "SF Mono", Menlo, "Cascadia Mono", Consolas, monospace;
+                    --font-display: ui-serif, Georgia, 'Iowan Old Style', serif;
+                    --font-sans: ui-sans-serif, system-ui, 'Segoe UI', Roboto, sans-serif;
+                    --font-mono: ui-monospace, 'SF Mono', Menlo, 'Cascadia Mono', Consolas, monospace;
                     --dur-1: 120ms;
                     --dur-2: 200ms;
                     --dur-3: 320ms;
@@ -419,7 +419,7 @@
                 }
                 .section > h2::before {
                     counter-increment: sec;
-                    content: "0" counter(sec) " ";
+                    content: '0' counter(sec) ' ';
                     font-family: var(--font-mono);
                     font-size: var(--fs-sm);
                     font-weight: 600;
@@ -605,10 +605,10 @@
                     border-block-start: 1px solid var(--line-strong);
                     font-weight: 600;
                 }
-                tr[data-leading] th[scope="row"] {
+                tr[data-leading] th[scope='row'] {
                     box-shadow: inset 3px 0 0 var(--ok);
                 }
-                input[type="number"] {
+                input[type='number'] {
                     inline-size: 4.5rem;
                     block-size: 32px;
                     padding-inline: var(--s2);
@@ -1440,17 +1440,17 @@
 
         <script>
             (() => {
-                "use strict";
+                'use strict';
 
                 // --- models -----------------------------------------------------------------------------
-                const payload = JSON.parse(document.getElementById("payload").textContent);
+                const payload = JSON.parse(document.getElementById('payload').textContent);
                 const state = {
-                    verdicts: Object.fromEntries(payload.options.map((o) => [o.id, ""])),
-                    pick: "",
+                    verdicts: Object.fromEntries(payload.options.map((o) => [o.id, ''])),
+                    pick: '',
                     scores: structuredClone(payload.scores),
                     steals: Object.fromEntries(payload.steals.map((s) => [s.id, false])),
                 };
-                const draftKey = "draft:" + document.title;
+                const draftKey = 'draft:' + document.title;
                 try {
                     const saved = localStorage.getItem(draftKey);
                     if (saved) Object.assign(state, JSON.parse(saved));
@@ -1458,16 +1458,16 @@
                     /* file:// storage is best-effort */
                 }
                 const baseline = structuredClone({
-                    verdicts: Object.fromEntries(payload.options.map((o) => [o.id, ""])),
-                    pick: "",
+                    verdicts: Object.fromEntries(payload.options.map((o) => [o.id, ''])),
+                    pick: '',
                     scores: payload.scores,
                     steals: Object.fromEntries(payload.steals.map((s) => [s.id, false])),
                 });
                 const undoStack = [];
 
                 // --- pure operations --------------------------------------------------------------------
-                const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
-                const fmt = new Intl.NumberFormat("en", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+                const fmt = new Intl.NumberFormat('en', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
                 const clamp = (v) => Math.min(5, Math.max(0, Math.round(Number(v) || 0)));
                 const totals = () =>
                     Object.fromEntries(
@@ -1491,10 +1491,10 @@
                 const stealRows = () => payload.steals.filter((s) => state.steals[s.id]).map((s) => s.id);
                 const dirtyCount = () => changedRows().length + decisionRows().length + stealRows().length + (state.pick ? 1 : 0);
                 const snapshotEnvelope = () => ({
-                    kind: "decision",
+                    kind: 'decision',
                     version: 1,
                     artifact: payload.artifact,
-                    decision: { status: state.pick ? "approve" : "open", at: new Date().toISOString() },
+                    decision: { status: state.pick ? 'approve' : 'open', at: new Date().toISOString() },
                     decisions: decisionRows(),
                     changes: changedRows(),
                     annotations: [],
@@ -1502,27 +1502,27 @@
                     extensions: { pick: state.pick, steals: stealRows() },
                 });
                 const validateEnvelope = (env) => [
-                    ...(env.kind === "decision" ? [] : ["kind"]),
-                    ...(typeof env.artifact?.id === "string" && env.artifact.id ? [] : ["artifact.id"]),
-                    ...(Number.isInteger(env.version) && env.version >= 1 ? [] : ["version"]),
-                    ...(Array.isArray(env.decisions) && Array.isArray(env.changes) ? [] : ["rows"]),
+                    ...(env.kind === 'decision' ? [] : ['kind']),
+                    ...(typeof env.artifact?.id === 'string' && env.artifact.id ? [] : ['artifact.id']),
+                    ...(Number.isInteger(env.version) && env.version >= 1 ? [] : ['version']),
+                    ...(Array.isArray(env.decisions) && Array.isArray(env.changes) ? [] : ['rows']),
                 ];
                 const markdown = () => {
                     const env = snapshotEnvelope();
-                    const pick = env.extensions.pick ? `**Pick**: ${optionLabel(env.extensions.pick)}` : "**Pick**: none recorded";
-                    const rows = env.decisions.map((d) => `| ${d.id} | ${optionLabel(d.id)} | ${d.verdict} |`).join("\n");
-                    const changes = env.changes.map((c) => `- \`${c.path}\`: ${c.from} -> ${c.to}`).join("\n");
-                    const steals = env.extensions.steals.map((id) => `- ${payload.steals.find((s) => s.id === id)?.label ?? id}`).join("\n");
+                    const pick = env.extensions.pick ? `**Pick**: ${optionLabel(env.extensions.pick)}` : '**Pick**: none recorded';
+                    const rows = env.decisions.map((d) => `| ${d.id} | ${optionLabel(d.id)} | ${d.verdict} |`).join('\n');
+                    const changes = env.changes.map((c) => `- \`${c.path}\`: ${c.from} -> ${c.to}`).join('\n');
+                    const steals = env.extensions.steals.map((id) => `- ${payload.steals.find((s) => s.id === id)?.label ?? id}`).join('\n');
                     return [
                         `# ${payload.artifact.title}`,
                         `> ${payload.ruling}`,
                         pick,
-                        rows ? `\n| id | option | verdict |\n| --- | --- | --- |\n${rows}` : "",
-                        changes ? `\n**Score edits (against ${payload.artifact.baseline})**\n${changes}` : "",
-                        steals ? `\n**Steals folded into the winner**\n${steals}` : "",
+                        rows ? `\n| id | option | verdict |\n| --- | --- | --- |\n${rows}` : '',
+                        changes ? `\n**Score edits (against ${payload.artifact.baseline})**\n${changes}` : '',
+                        steals ? `\n**Steals folded into the winner**\n${steals}` : '',
                     ]
                         .filter(Boolean)
-                        .join("\n");
+                        .join('\n');
                 };
 
                 // --- composition wiring -----------------------------------------------------------------
@@ -1530,7 +1530,7 @@
                 const q = (sel) => doc.querySelector(sel);
                 const qa = (sel) => [...doc.querySelectorAll(sel)];
                 const toast = (() => {
-                    const node = q("#toast");
+                    const node = q('#toast');
                     let timer;
                     return (message) => {
                         node.textContent = message;
@@ -1547,33 +1547,33 @@
                             input.checked = input.value === verdict;
                         });
                     });
-                    qa("[data-pick]").forEach((input) => {
+                    qa('[data-pick]').forEach((input) => {
                         input.checked = input.value === state.pick;
                     });
-                    qa("[data-steal]").forEach((input) => {
+                    qa('[data-steal]').forEach((input) => {
                         input.checked = Boolean(state.steals[input.dataset.steal]);
                     });
-                    qa("[data-score]").forEach((input) => {
-                        const [o, c] = input.dataset.score.split(":");
+                    qa('[data-score]').forEach((input) => {
+                        const [o, c] = input.dataset.score.split(':');
                         input.value = state.scores[o][c];
                     });
                     const scoreTotals = totals();
                     const lead = leadingId();
-                    qa("[data-total]").forEach((out) => {
+                    qa('[data-total]').forEach((out) => {
                         out.value = fmt.format(scoreTotals[out.dataset.total]);
                     });
-                    qa("tr[data-row]").forEach((row) => {
-                        row.toggleAttribute("data-leading", row.dataset.row === lead);
+                    qa('tr[data-row]').forEach((row) => {
+                        row.toggleAttribute('data-leading', row.dataset.row === lead);
                     });
-                    q("[data-lead]").value = `[${lead.toUpperCase()}] ${optionLabel(lead)} ${fmt.format(scoreTotals[lead])}`;
-                    q("[data-lead-score]").value = fmt.format(scoreTotals[lead]);
+                    q('[data-lead]').value = `[${lead.toUpperCase()}] ${optionLabel(lead)} ${fmt.format(scoreTotals[lead])}`;
+                    q('[data-lead-score]').value = fmt.format(scoreTotals[lead]);
                     const dirty = dirtyCount();
-                    q("[data-dirty]").textContent = dirty ? `${dirty} unsent` : "nothing pending";
-                    q("[data-tab-count]").textContent = dirty ? `Export (${dirty})` : "Export";
-                    q("#dirty-note").textContent = dirty ? `${dirty} pending judgment${dirty === 1 ? "" : "s"}` : "No pending judgment";
+                    q('[data-dirty]').textContent = dirty ? `${dirty} unsent` : 'nothing pending';
+                    q('[data-tab-count]').textContent = dirty ? `Export (${dirty})` : 'Export';
+                    q('#dirty-note').textContent = dirty ? `${dirty} pending judgment${dirty === 1 ? '' : 's'}` : 'No pending judgment';
                     q("[data-export='changed']").disabled = changedRows().length === 0;
-                    q("[data-undo]").disabled = undoStack.length === 0;
-                    q(".export-bar textarea").value = JSON.stringify(snapshotEnvelope(), null, 2);
+                    q('[data-undo]').disabled = undoStack.length === 0;
+                    q('.export-bar textarea').value = JSON.stringify(snapshotEnvelope(), null, 2);
                     try {
                         localStorage.setItem(draftKey, JSON.stringify(state));
                     } catch {
@@ -1593,17 +1593,17 @@
                 };
 
                 const download = (name, text) => {
-                    const url = URL.createObjectURL(new Blob([text], { type: "application/json" }));
-                    Object.assign(doc.createElement("a"), { href: url, download: name }).click();
+                    const url = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
+                    Object.assign(doc.createElement('a'), { href: url, download: name }).click();
                     setTimeout(() => URL.revokeObjectURL(url), 1000);
                 };
                 const copyText = async (button, text, what) => {
-                    const mirror = q(".export-bar textarea");
+                    const mirror = q('.export-bar textarea');
                     mirror.value = text;
                     try {
                         await navigator.clipboard.writeText(text);
-                        button.setAttribute("data-copied", "");
-                        setTimeout(() => button.removeAttribute("data-copied"), 400);
+                        button.setAttribute('data-copied', '');
+                        setTimeout(() => button.removeAttribute('data-copied'), 400);
                         toast(`${what} copied`);
                     } catch {
                         mirror.focus();
@@ -1616,8 +1616,8 @@
                 const tokenMeta = doc.querySelector('meta[name="artifact-token"]');
                 const sendToAgent = async (envelope) => {
                     const res = await fetch(returnMeta.content, {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json", "X-Artifact-Token": tokenMeta?.content ?? "" },
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'X-Artifact-Token': tokenMeta?.content ?? '' },
                         body: JSON.stringify({ kind: envelope.kind, artifact: envelope.artifact.id, version: envelope.version, data: envelope }),
                     });
                     if (!res.ok) throw new Error(`submit ${res.status}`);
@@ -1628,100 +1628,100 @@
                     const env = snapshotEnvelope();
                     const faults = validateEnvelope(env);
                     if (faults.length) {
-                        toast(`Export blocked: ${faults.join(", ")}`);
+                        toast(`Export blocked: ${faults.join(', ')}`);
                         return;
                     }
                     const mode = button.dataset.export;
-                    if (mode === "markdown") await copyText(button, markdown(), "Markdown");
-                    if (mode === "json") {
+                    if (mode === 'markdown') await copyText(button, markdown(), 'Markdown');
+                    if (mode === 'json') {
                         download(`${env.artifact.id}.json`, JSON.stringify(env, null, 2));
-                        toast("JSON downloaded");
+                        toast('JSON downloaded');
                     }
-                    if (mode === "changed")
+                    if (mode === 'changed')
                         await copyText(
                             button,
                             JSON.stringify({ ...env, state: undefined, annotations: undefined }, null, 2),
-                            "Changed-only envelope",
+                            'Changed-only envelope',
                         );
-                    if (mode === "send") {
+                    if (mode === 'send') {
                         button.disabled = true;
                         try {
                             await sendToAgent(env);
-                            button.textContent = "Sent";
-                            toast("Receipt accepted");
+                            button.textContent = 'Sent';
+                            toast('Receipt accepted');
                         } catch {
-                            button.textContent = "Send failed — copied instead";
-                            await copyText(button, JSON.stringify(env, null, 2), "Envelope");
+                            button.textContent = 'Send failed — copied instead';
+                            await copyText(button, JSON.stringify(env, null, 2), 'Envelope');
                         } finally {
                             button.disabled = false;
                         }
                     }
                 };
 
-                const themeKey = "theme:" + document.title;
+                const themeKey = 'theme:' + document.title;
                 const applyTheme = (mode) => {
                     doc.documentElement.dataset.theme = mode;
-                    const toggle = q("[data-theme-toggle]");
-                    toggle.setAttribute("aria-pressed", String(mode === "dark"));
-                    toggle.textContent = mode === "dark" ? "Dark" : "Light";
+                    const toggle = q('[data-theme-toggle]');
+                    toggle.setAttribute('aria-pressed', String(mode === 'dark'));
+                    toggle.textContent = mode === 'dark' ? 'Dark' : 'Light';
                 };
                 try {
                     const savedTheme = localStorage.getItem(themeKey);
                     applyTheme(
-                        savedTheme === "light" || savedTheme === "dark"
+                        savedTheme === 'light' || savedTheme === 'dark'
                             ? savedTheme
-                            : matchMedia("(prefers-color-scheme: light)").matches
-                              ? "light"
-                              : "dark",
+                            : matchMedia('(prefers-color-scheme: light)').matches
+                              ? 'light'
+                              : 'dark',
                     );
                 } catch {
-                    applyTheme(matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
+                    applyTheme(matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
                 }
 
                 const ROUTES = {
                     change: [
                         [
-                            "[data-verdict-for]",
+                            '[data-verdict-for]',
                             (hit) =>
                                 commit((s) => {
                                     s.verdicts[hit.dataset.verdictFor] = hit.value;
                                 }),
                         ],
                         [
-                            "[data-pick]",
+                            '[data-pick]',
                             (hit) =>
                                 commit((s) => {
                                     s.pick = hit.value;
                                 }),
                         ],
                         [
-                            "[data-steal]",
+                            '[data-steal]',
                             (hit) =>
                                 commit((s) => {
                                     s.steals[hit.dataset.steal] = hit.checked;
                                 }),
                         ],
                         [
-                            "[data-score]",
+                            '[data-score]',
                             (hit) =>
                                 commit((s) => {
-                                    const [o, c] = hit.dataset.score.split(":");
+                                    const [o, c] = hit.dataset.score.split(':');
                                     s.scores[o][c] = clamp(hit.value);
                                 }),
                         ],
                     ],
                     click: [
                         [
-                            "[data-export]",
+                            '[data-export]',
                             (hit) => {
                                 egress(hit);
                             },
                         ],
-                        ["[data-undo]", () => undoLast()],
+                        ['[data-undo]', () => undoLast()],
                         [
-                            "[data-theme-toggle]",
+                            '[data-theme-toggle]',
                             (hit) => {
-                                const next = hit.getAttribute("aria-pressed") === "true" ? "light" : "dark";
+                                const next = hit.getAttribute('aria-pressed') === 'true' ? 'light' : 'dark';
                                 applyTheme(next);
                                 try {
                                     localStorage.setItem(themeKey, next);
@@ -1740,23 +1740,23 @@
                         });
                     }),
                 );
-                doc.addEventListener("keydown", (event) => {
-                    if ((event.metaKey || event.ctrlKey) && event.key === "z") {
+                doc.addEventListener('keydown', (event) => {
+                    if ((event.metaKey || event.ctrlKey) && event.key === 'z') {
                         event.preventDefault();
                         undoLast();
                     }
                 });
 
-                if (returnMeta) q("[data-send]").hidden = false;
+                if (returnMeta) q('[data-send]').hidden = false;
 
                 const detailStates = new Map();
-                addEventListener("beforeprint", () => {
-                    qa("details").forEach((node) => {
+                addEventListener('beforeprint', () => {
+                    qa('details').forEach((node) => {
                         detailStates.set(node, node.open);
                         node.open = true;
                     });
                 });
-                addEventListener("afterprint", () => {
+                addEventListener('afterprint', () => {
                     detailStates.forEach((open, node) => {
                         node.open = open;
                     });

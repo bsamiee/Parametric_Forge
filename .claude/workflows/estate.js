@@ -36,7 +36,7 @@ const TRACKS = {
     nix: {
         doctrine:
             'CODE DOCTRINE: read docs/laws/design.md, docs/laws/modules.md, and docs/laws/agents.md IN FULL, plus CLAUDE.md [02]-[03]; ' +
-            'docs/atlas/scars.md sections [07]-[09] carry the paid-for deploy and kernel traps. ',
+            'docs/laws/scars.md [DEPLOY] and [SHELL_KERNELS] carry the paid-for deploy and kernel traps. ',
         scope:
             'The whole Nix module graph: modules/common, modules/darwin, modules/nixos, modules/home, hosts/, flake-modules/, flake.nix, and the ' +
             'overlay .nix surfaces (overlays/default.nix, overlays/manifest.nix, per-package overlay files). Hygiene mandate: the ~300 LOC density ' +
@@ -55,7 +55,7 @@ const TRACKS = {
     shell: {
         doctrine:
             'CODE DOCTRINE: read docs/laws/design.md and docs/laws/kernels.md IN FULL; ' +
-            'docs/atlas/scars.md sections [08]-[09] carry the paid-for kernel and formatter traps - re-prove their rows on every owner you touch. ',
+            'docs/laws/scars.md [SHELL_KERNELS] and [FORMATTERS] carry the paid-for kernel and formatter traps - re-prove their rows on every owner you touch. ',
         scope:
             'Every packaged and standalone shell surface: overlays/forge-provision (bash/, jq/, sql/ - jq programs own JSON shape in jq/ files, ' +
             'data/ catalogs own dispatch facts, bash owns admission and exit codes, SQL probes stay read-only), modules/home/scripts kernels, ' +
@@ -212,9 +212,9 @@ const TIER_LAW = {
 };
 
 const LAWS_READ =
-    'LAWS: read docs/laws/README.md + landing.md + topology.md + patterns.md + scars.md IN FULL (short registry pages; the design and machine law ' +
+    'LAWS: read docs/laws/README.md + topology.md + scars.md IN FULL (short registry pages; the design and machine law ' +
     'pages ride the doctrine read above) — a topology row whose [SURFACE] your pass touches binds its obligated counterparts into the SAME pass. ' +
-    'docs/atlas/scars.md is the paid-for trap ledger: a pass touching an owner re-proves the scar rows anchored to it. ';
+    'docs/laws/scars.md is the paid-for trap ledger: a pass touching an owner re-proves the scar rows anchored to it. ';
 
 const HARVEST_LAW =
     'HARVEST (required key, usually empty): nominate ONLY findings that generalize beyond this pass — a construction law reusable across the estate, ' +
@@ -282,12 +282,7 @@ const codexRecon = (task, o) => {
             model +
             ' performs the complete TASK below through one blocking Codex MCP call. Follow exactly four steps; ' +
             'never perform, edit, judge, soften, summarize, or relay the task yourself.',
-        '(1) Call ToolSearch with query "select:mcp__codex__codex". If one Bash probe shows command -v forge-fleet-emit ' +
-            'resolving, run forge-fleet-emit --kind codex --model ' +
-            model +
-            ' --label ' +
-            JSON.stringify(fileTag(o.label)) +
-            ' --state start now and --state stop right after step (2); when the tool is absent skip both silently.',
+        '(1) Call ToolSearch with query "select:mcp__codex__codex".',
         '(2) Call the loaded mcp__codex__codex tool ONCE with model="' +
             model +
             '", sandbox="workspace-write" (the task writes its one dossier file), cwd=' +
@@ -381,8 +376,7 @@ const doctrinePrompt = (rows, residuals) =>
     '\nPOOLED RESIDUALS (deliberately-left estate items with reasons — CONTEXT only, never a drain queue: a residual recurring across tracks may itself be ' +
     'a durable law worth nominating, but you never mechanically clear one here): ' +
     JSON.stringify(residuals) +
-    '\nRead `docs/laws/README.md` AND `docs/laws/landing.md` FIRST — they own the admission table, the harden>extend>mint bar, the per-surface ' +
-    'routing and justification, the laws page grammar, and the poison guard; obey them over any restatement. ADJUDICATE each nomination per that ' +
+    '\nRead `docs/laws/README.md` FIRST — it owns the corpus admission and page-shape law; obey it over any restatement. ADJUDICATE each nomination per that ' +
     'bar: cold-read its target surface IN FULL, verify its anchors on CURRENT disk, and demand the admission evidence; LAND NOTHING is a ' +
     'first-class verdict. Run-specific routing facts: reviewer rulings mirror across `.greptile/rules.md` and the matching `.coderabbit.yaml` ' +
     'block; a ruling on a mirrored master obligates its sibling-repo byte copies per the topology; an estate run weighs toward the constitution, ' +

@@ -52,16 +52,16 @@
             "scope": ["**/*.py"]
         },
         {
-            "path": "docs/atlas/scars.md",
-            "description": "Estate regression scars: named failure classes past incidents proved, with the load-bearing repair shape"
+            "path": "docs/laws/scars.md",
+            "description": "The trap ledger: each paid-for failure and the rule that now forecloses it, anchored to its owning surface"
         },
         {
             "path": "docs/atlas/interconnection.md",
-            "description": "Seam map: config.forge.* option hinges, runtime contracts (attention feed, receipts, terminal mesh, XDG projections), owner tables \u2014 the blast radius a cross-module change must honor"
+            "description": "Seam map: config.forge.* option hinges, runtime contracts (receipts, terminal mesh, XDG projections), owner tables \u2014 the blast radius a cross-module change must honor"
         },
         {
             "path": "docs/atlas/rails-and-contracts.md",
-            "description": "Estate rails and contract surfaces: receipts, envelopes, registers, notification and attention plumbing"
+            "description": "Estate rails and contract surfaces: forge-* command rails, receipts, provision envelopes, registers"
         },
         {
             "path": "docs/standards/style-guide.md",

@@ -119,10 +119,10 @@ def fired(payload: NudgeInput, rows: tuple[Nudge, ...], /) -> list[str]:  # a ne
 - Law: a scan that outlives the command-hook timeout forks — the firing spawns a detached process that writes its result to a session-keyed file and returns immediately, and a later firing wakes only on findings new since the last acknowledged set; this detached lane is also the dual-provider fallback, since Codex parses `async` and skips it, so a portable guardrail runs synchronously or splits its slow leg to the same detached process.
 - Reject: a synchronous suite on every `PostToolUse`; a fire-and-forget check whose failure never surfaces.
 
-## [08]-[ATTENTION_STREAM]
+## [08]-[TELEMETRY_STREAM]
 
 [TELEMETRY_CHAIN]:
-- Use: a multi-agent fleet needs an event stream — a dashboard, a registry, an attention feed — that must never gate the loop.
+- Use: a multi-agent fleet needs an event stream — a dashboard, a registry — that must never gate the loop.
 - Law: a transmitter chains after the policy hook on the same event array, wired `async: true`, so the gate decides and the transmitter forwards without touching the verdict; the whole body sits under one broad exception swallow and an unconditional exit 0, because a narrow `(DecodeError, HTTPError)` catch lets `httpx.InvalidURL` and `StreamError` escape as a non-zero exit that blocks the loop.
 - Law: a private sink takes the raw payload nested whole with the hot query keys hoisted flat beside it; a shared bus takes a CloudEvents envelope whose `source` derives from the provider brand so a dual-provider fleet self-identifies, and whose `time` is a true-UTC stamp, never a local `strftime` suffixed `Z`.
 - Reject: policy and telemetry in one hook where a logging failure blocks a tool call; a two-type catch over an async transmitter; duplicating the metrics Codex already emits through its own exporter.

@@ -8,19 +8,26 @@
 # worktree, layout, macro, agent lane), layout live assets (record — a bare record freezes the session under its own slug — and apply, both behind a
 # disposable-session parse gate), watch-with-memory monitor rows, and two read-only inspectors — state (forge-zellij-state/v2: sessions classified
 # live|resurrectable with serialization freshness and the newest fabric receipt joined per session) and peek (typed single-frame pane capture over
-# `subscribe`, attention-joined). Every mutating verb emits one typed kv receipt; fzf fronts the graph, state lives external (no plugin store).
+# `subscribe`). Every mutating verb emits one typed kv receipt; fzf fronts the graph, state lives external (no plugin store).
 {
   config,
   lib,
   pkgs,
   ...
 }: let
-  # Shared dual-receipt emit fold and the F01 latest-needs fold the peek verb resolves with.
+  # Dual-receipt emit fold (receipts.nix).
   receiptsFold = import ../../shell-tools/receipts.nix;
-  attention = import ../../shell-tools/attention.nix {};
-  profileBin = "/etc/profiles/per-user/${config.home.username}/bin";
-  # Display-time grammar rows (theme owner): human-rendered stamps collapse to HH:MM local same-day, dd/mm HH:MM otherwise.
+  # Display-time grammar rows (theme owner): human stamps collapse to HH:MM local same-day, dd/mm HH:MM otherwise.
   td = config.forge.theme.projections.timeDisplay;
+  # Display-time projection (inlined; the resurrection-cause map is the sole consumer): ISO-UTC stored, folded to local at render; malformed passes through.
+  dispTsJq = td: ''
+    def disp_ts: . as $t
+      | try ((strptime("%Y-%m-%dT%H:%M:%SZ") | mktime) as $e
+        | if ($e | strflocaltime("%Y-%m-%d")) == (now | strflocaltime("%Y-%m-%d"))
+          then ($e | strflocaltime("${td.sameDay}"))
+          else ($e | strflocaltime("${td.dated}")) end)
+        catch $t;
+  '';
 
   # --- [WATCH_ROWS]
   # Monitor panels as data: viddy owns history/diff memory, gping owns latency graphs. Rows launch as floating panes, never prompt/status hot
@@ -37,10 +44,6 @@
     failures = {
       cmd = "viddy --interval 30 -- forge-receipts --failures --limit 15";
       desc = "failing receipt rows across estate logs";
-    };
-    attention = {
-      cmd = "viddy --interval 5 -- forge-zellij peek --attention --text";
-      desc = "waiting agent pane tail (collector-resolved)";
     };
     drift = {
       cmd = "viddy --interval 60 -- forge-receipts --kind drift --limit 5";
@@ -91,8 +94,6 @@
 
             receipt_surface="forge-zellij"
             ${receiptsFold}
-            # Shared F01 latest-needs fold (attention.nix).
-            att_defs=${lib.escapeShellArg attention.latestNeedsJq}
             emit_receipt() { # $1=verb $2=row_kind $3=row_id $4=action $5=result $6=exit $7=duration_ms
               local ts row
               TZ=UTC0 printf -v ts '%(%Y-%m-%dT%H:%M:%SZ)T' "$EPOCHSECONDS"
@@ -138,7 +139,7 @@
             exited_cause_map() {
               local ws_log="''${FORGE_WORKSPACE_RECEIPT_LOG:-$HOME/Library/Logs/forge-workspace.receipts.log}"
               { tail -qn 400 "''${receipt_log%.log}.jsonl" "''${ws_log%.log}.jsonl" 2>/dev/null || true; } \
-                | jq -Rcn '${attention.dispTsJq td}
+                | jq -Rcn '${dispTsJq td}
                   [inputs | fromjson? | select(type == "object")
                     | {s: ((.session_id // .slug // "-") | tostring), ts: ((.ts // "") | tostring),
                        what: ((.verb // .action // "-") | tostring), result: ((.result // "-") | tostring)}
@@ -261,7 +262,7 @@
                 printf 'Usage: forge-zellij [graph [--json]] | row ID | state | star [--pane ID] | unstar\n'
                 printf '       | layout record [NAME] | layout apply NAME|PATH | watch [ROW] | watch --list\n'
                 printf '       | macro add NAME CMD... | macro rm NAME | macro list\n'
-                printf '       | peek [--session S] [--pane N] [--lines N] [--attention] [--text]\n'
+                printf '       | peek [--session S] [--pane N] [--lines N] [--text]\n'
                 exit 0
                 ;;
 
@@ -296,8 +297,7 @@
 
               peek)
                 # Typed pane capture without temp files: one `subscribe` initial frame (NDJSON pane_update: viewport + scrollback, ANSI-stripped)
-                # becomes a JSON envelope. --attention resolves the collector's latest attention row so "what does the waiting pane say" is one
-                # command; --session targets any live session from a detached shell. Read-only inspector — no receipt, like `state`.
+                # becomes a JSON envelope. --session targets any live session from a detached shell. Read-only inspector — no receipt, like `state`.
                 shift
                 peek_session="$session" peek_pane="" lines=20 render=json
                 while [[ "$#" -gt 0 ]]; do
@@ -305,16 +305,6 @@
                     --session) peek_session="''${2:?--session needs a name}"; shift ;;
                     --pane) peek_pane="''${2:?--pane needs an id}"; shift ;;
                     --lines) lines="''${2:?--lines needs a count}"; shift ;;
-                    --attention)
-                      att_row="$(jq -c '.attention.latest // empty' "$state_root/agent-state.json" 2>/dev/null || true)"
-                      [[ -n "$att_row" ]] || att_row="$(tail -n 500 "''${FORGE_ATTENTION_FEED:-$state_root/agent-attention.jsonl}" 2>/dev/null \
-                        | jq -Rcn "$att_defs latest_needs" 2>/dev/null || true)"
-                      [[ -n "$att_row" ]] || { echo "peek: no attention row to resolve" >&2; exit 66; }
-                      IFS=$'\x1f' read -r peek_session peek_pane < <(jq -r \
-                        '[.zellij_session // "", .zellij_pane // ""] | join("\u001f")' <<<"$att_row")
-                      [[ -n "$peek_session" && -n "$peek_pane" ]] \
-                        || { echo "peek: latest attention row carries no zellij identity" >&2; exit 66; }
-                      ;;
                     --text) render=text ;;
                     *) echo "peek: unknown argument $1" >&2; exit 64 ;;
                   esac
@@ -324,7 +314,7 @@
                 # Session routing lands BEFORE pane resolution: a detached `peek --session S` resolves S's focused pane, not the caller's absent one.
                 [[ -z "$peek_session" || "$peek_session" == "$session" ]] || session_args=(--session "$peek_session")
                 if [[ -z "$peek_pane" ]]; then
-                  [[ -n "$peek_session" ]] || { echo "peek needs --pane, --attention, or a Zellij session" >&2; exit 64; }
+                  [[ -n "$peek_session" ]] || { echo "peek needs --pane or a Zellij session" >&2; exit 64; }
                   peek_pane="$(zj_json list-panes --all | jq -r \
                     'first(.[] | select(.is_focused and (.is_plugin | not)) | .id) // empty')"
                   [[ -n "$peek_pane" ]] || { echo "peek: no focused terminal pane" >&2; exit 66; }
@@ -544,11 +534,6 @@
             case "$kind" in
               session | session-exited)
                 if [[ -z "$session" ]]; then
-                  # Bar-cell warmup on resurrection: the revived session's pipe cells land once the server answers, not at the next minute
-                  # tick (deck seam pattern); the detached kick survives the exec.
-                  if [[ "$kind" == session-exited ]]; then
-                    (sleep 2 && ${profileBin}/forge-agents collect) >/dev/null 2>&1 &
-                  fi
                   emit_receipt graph "$kind" "$row_id" attach ok 0 "$duration_ms"
                   exec zellij attach "$target"
                 fi
@@ -570,7 +555,6 @@
                   emit_receipt graph "$kind" "$row_id" new-tab ok 0 "$duration_ms"
                 else
                   emit_receipt graph "$kind" "$row_id" attach-create ok 0 "$duration_ms"
-                  (sleep 2 && ${profileBin}/forge-agents collect) >/dev/null 2>&1 & # bar-cell warmup (deck seam pattern)
                   cd "$target" && exec zellij attach --create "$(session_name_of "$(basename "$target")")"
                 fi
                 ;;
@@ -598,7 +582,7 @@
       layout) _values 'layout' record apply ;;
       watch) _values 'watch row' ${lib.concatStringsSep " " watchNames} ;;
       macro) _values 'macro' add rm list ;;
-      peek) _values 'peek option' --session --pane --lines --attention --text ;;
+      peek) _values 'peek option' --session --pane --lines --text ;;
     esac
   '';
 in {

@@ -47,7 +47,7 @@ Parametric_Forge/
 │   └── forge-provision/           # Local provisioning CLI
 ├── services/                      # Doppler and GitHub IaC rows
 ├── docs/
-│   ├── atlas/                     # Platform facts, rails, interconnection, scars
+│   ├── atlas/                     # Platform facts, rails, interconnection
 │   ├── laws/                      # Estate design and machine law
 │   ├── stacks/                    # Language law
 │   └── standards/                 # Prose, formatting, information structure
@@ -74,8 +74,6 @@ Rulings derive from principles, not precedent lists. A new situation resolves fr
 |  [06]   | Currency as review     | Newest stable everything; a pin exists only with a named incompatibility and dies when compatibility lands. |
 |  [07]   | No LFS                 | Repo media ships as plain git blobs kept preview-small; the Git LFS client serves external repos only.      |
 |  [08]   | Aesthetics first-class | Visual surfaces (theme, prompt, TUI, fonts) are designed systems with single palette ownership.             |
-
-- LOC target: ~300 per file measured with `loc`; justified single-concern lists may exceed it.
 
 ## [04]-[DETERMINATE_NIX]
 

@@ -42,14 +42,11 @@ local handlers = {
         if gui then
             gui:maximize()
         end
-        -- Bar-cell warmup (deck seam owner): the fresh session's pipe cells, identity chip included, land as soon as the server answers.
-        deck.collect_soon()
     end,
 
     ["mux-startup"] = function()
         local ws = wezterm.mux.get_active_workspace()
         wezterm.mux.spawn_window({ cwd = deck.workspace_cwd(ws), args = deck.session_args(ws) })
-        deck.collect_soon()
     end,
 
     -- Domain attach shaping: one launch receipt per attach.
@@ -57,20 +54,9 @@ local handlers = {
         deck.receipt({ action = "attach", domain = domain:name(), result = "ok" })
     end,
 
-    -- Bell rings are structured attention: a receipt row always; a toast plus an attention-feed row only when the ring lands outside the focused
-    -- view (background pane or unfocused window) — a watched pane's bell is already seen. audible_bell is Disabled; this arm is the surface. The
-    -- feed row makes any process ending with \a a first-class attention emitter: the collector folds it,
-    -- the bar counts it, `forge-agents focus` routes it.
+    -- Bell rings land one background-classified receipt row (a watched pane's bell is already seen); audible_bell is Disabled, so this arm is the surface.
     ["bell"] = function(window, pane)
         local background = not window:is_focused() or pane:pane_id() ~= window:active_pane():pane_id()
-        if background then
-            window:toast_notification("Forge Bell", "bell: " .. pane:get_title(), nil, 4000)
-            local cwd = pane:get_current_working_dir()
-            deck.attention({
-                wezterm_pane = tostring(pane:pane_id()),
-                cwd = cwd and cwd.file_path or "-",
-            })
-        end
         deck.receipt({
             action = "bell",
             pane_id = pane:pane_id(),

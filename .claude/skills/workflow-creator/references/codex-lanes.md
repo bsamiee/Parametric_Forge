@@ -6,8 +6,6 @@ A workflow routes a leg to an external model through a thin Claude wrapper, beca
 
 The wrapper runs `model: 'sonnet', effort: 'low'` with a label prefixed by the real worker — `terra:`, `sol:`, `luna:`, or `gemini:` — because the workflow UI shows the wrapper's Claude model. Its whole job is call-write-receipt:
 
-When `forge-fleet-emit` resolves on PATH, the wrapper brackets its blocking call — `forge-fleet-emit --kind codex --model <model> --label <label> --state start` before, `--state stop` after — so the operator's live delegation roster names the real worker instead of inferring it from a process scan; a machine without the tool skips the bracket silently (`command -v forge-fleet-emit >/dev/null &&`). The same bracket serves a Gemini lane with `--kind agy`.
-
 1. Load the tool: `ToolSearch` with `select:mcp__codex__codex`.
 2. Call `codex` ONCE: the complete self-contained task as `prompt`, `model` pinned, `sandbox` by modality (`read-only` for investigation, `workspace-write` for edits), `cwd` at the repo root; effort inherits the operator config default (xhigh) — pass `config` (`{"model_reasoning_effort": "..."}`) only where the lane deviates.
 3. Parse the result envelope — the MCP tool result is `{threadId, content}` where `content` holds the final-message text. Write that CONTENT text to the lane's scratch report path with the Write tool, unmodified; writing the raw envelope double-encodes every downstream read. This write re-emits the whole product as the wrapper's own output tokens (~minutes for a 40-50KB product) — acceptable at report scale; a lane whose product is far larger flips the write to the CODEX side (workspace-write, the report path its sole write scope) so the wrapper returns only the receipt.

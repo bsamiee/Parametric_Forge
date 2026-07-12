@@ -51,14 +51,6 @@ function M.workspace_cwd(name)
     return w and w.cwd
 end
 
--- Bar-cell warmup seam, one owner for every spawn arm (workspace switch, gui/mux startup): a fresh session's pipe cells land as soon as
--- the zellij server answers, not at the collector's next minute tick; the collect lock makes an overlapping run a no-op.
-function M.collect_soon()
-    wezterm.time.call_after(2, function()
-        wezterm.background_child_process({ rows.paths.forge_agents, "collect" })
-    end)
-end
-
 -- Destructive-action gate, total across version predicates: nightly prompts via Confirmation, stable via a two-row InputSelector — the safety row
 -- degrades in form, never in force. Build-time factory only: the stable arm registers a callback per call.
 function M.confirm(message, on_confirm)
@@ -95,30 +87,6 @@ function M.receipt(fields)
     if j then
         j:write(json .. "\n")
         j:close()
-    end
-end
-
--- Attention emitter: one JSONL row on the hook-feed superset schema (ts + source + event + terminal identity), so non-Claude processes ride the same
--- collector fold, focus routing, and history queries as harness sessions. Append-only and failure-silent — a bell must never fault the event plane.
-function M.attention(fields)
-    local row = {
-        ts = os.date("!%Y-%m-%dT%H:%M:%SZ"),
-        source = "bell",
-        event = "Bell",
-        session_id = "-",
-        cwd = "-",
-        term = "WezTerm",
-        wezterm_pane = "",
-        zellij_session = "",
-        zellij_pane = "",
-        tty = "",
-    }
-    for k, v in pairs(fields) do
-        row[k] = v
-    end
-    local ok, json = pcall(wezterm.json_encode, row)
-    if ok then
-        wezterm.background_child_process({ rows.paths.attention_emit, rows.attention_feed, json })
     end
 end
 
@@ -294,7 +262,6 @@ local function switch_workspace(window, pane, name)
     -- Fresh workspaces land their slug-named inner session at the policy cwd; live workspaces ignore spawn, so reattach converges on that session.
     local spawn = { args = M.session_args(name), cwd = M.workspace_cwd(name) }
     window:perform_action(act.SwitchToWorkspace({ name = name, spawn = spawn }), pane)
-    M.collect_soon()
     M.receipt({ command = "workspace-switch", action = "switch", workspace = name, result = "ok" })
 end
 
@@ -382,10 +349,6 @@ local function key_actions(launcher, quick_select)
         ["debug-overlay"] = act.ShowDebugOverlay,
         ["quick-select"] = quick_select,
         ["launcher"] = act.ShowLauncherArgs(launcher),
-        -- Attention router: one keypress resolves the collector's latest needs-input row and focuses that pane (forge-agents owns the hops).
-        ["attention-focus"] = wezterm.action_callback(function()
-            wezterm.background_child_process({ rows.paths.forge_agents, "focus" })
-        end),
         ["workspace-switch"] = wezterm.action_callback(function(window, pane)
             window:perform_action(
                 act.InputSelector({

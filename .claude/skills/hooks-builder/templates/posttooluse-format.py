@@ -3,6 +3,8 @@
 # requires-python = ">=3.15"
 # dependencies = ["msgspec"]
 # ///
+# Focused one-line docstrings carry no Returns section at the boundary-kernel hook seam.
+# ruff: noqa: DOC201
 """Own PostToolUse: recover MODE from the payload shape, formatting a file event and redacting a tool-output event.
 
 A file event formats through the estate `fmt` router then gates on `fmt --check`; a tool-output event redacts secrets.

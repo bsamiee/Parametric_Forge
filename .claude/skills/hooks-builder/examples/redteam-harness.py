@@ -3,6 +3,8 @@
 # requires-python = ">=3.15"
 # dependencies = ["msgspec", "anyio"]
 # ///
+# Focused one-line docstrings carry no Returns section at the boundary-kernel hook seam.
+# ruff: noqa: DOC201
 """Audit any hook against a paired fixture corpus, asserting its exit code, before the hook is trusted.
 
 Two modes share one entry: spawned subprocesses for real fidelity, an in-process callable for a fast inner loop,
@@ -90,7 +92,7 @@ async def _spawn(target: str, payload: bytes, /) -> int:
         with anyio.fail_after(FIXTURE_TIMEOUT):
             result = await anyio.run_process([target], input=payload, check=False)
             return result.returncode
-    except (TimeoutError, OSError):
+    except TimeoutError, OSError:
         return TIMEOUT_CODE  # a hung or unspawnable target can match no expected verdict, so it lands as a miss
 
 

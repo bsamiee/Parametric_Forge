@@ -86,10 +86,7 @@ const auditTask = (scope) =>
 // re-judging the work. Effort inherits the operator default; no config clause without a real deviation.
 const lanePrompt = (label, task) =>
     'DISPATCH ROLE: gpt-5.6-terra performs the complete TASK below through one blocking codex MCP call; never perform, edit, judge, or relay ' +
-    'the work yourself. (1) ToolSearch "select:mcp__codex__codex"; if one Bash probe shows command -v forge-fleet-emit resolving, run ' +
-    'forge-fleet-emit --kind codex --model gpt-5.6-terra --label ' +
-    label +
-    ' --state start now and --state stop after step (2); absent tool, skip both silently. (2) Call mcp__codex__codex ONCE with ' +
+    'the work yourself. (1) ToolSearch "select:mcp__codex__codex". (2) Call mcp__codex__codex ONCE with ' +
     'model="gpt-5.6-terra", sandbox="read-only", cwd set to the repo root, "developer-instructions" = the LANE LAW block below VERBATIM, ' +
     'prompt = the TASK block below VERBATIM. On a tool error retry the identical call ONCE. (3) The tool result is a JSON envelope ' +
     '{threadId, content}; Write the CONTENT text (never the envelope) unmodified to ' +

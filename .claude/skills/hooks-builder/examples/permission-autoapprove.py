@@ -3,6 +3,8 @@
 # requires-python = ">=3.15"
 # dependencies = ["msgspec"]
 # ///
+# Focused one-line docstrings carry no Returns section at the boundary-kernel hook seam.
+# ruff: noqa: DOC201
 """Approve a matched-safe PermissionRequest and persist a standing addRules rule, so it never re-prompts.
 
 Approval keys on tool identity and argument shape, never a free-text command substring, and the matcher wiring

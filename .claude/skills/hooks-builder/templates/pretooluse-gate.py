@@ -3,6 +3,8 @@
 # requires-python = ">=3.15"
 # dependencies = ["msgspec"]
 # ///
+# Boundary-kernel hook seam: fail-closed broad-except, focused one-line docstrings, and POLICY danger-root literals, never temp-file creation.
+# ruff: noqa: BLE001, DOC201, S108
 """Gate a PreToolUse call: admit once, decompose each command to leaves, dispatch per argv[0] on a semantic table, fail closed by construction.
 
 Wire: PreToolUse matcher "Bash|Edit|Write" (Codex "Bash|apply_patch"). The POLICY tables are the edit surface.

@@ -11,17 +11,10 @@
   lib,
   ...
 }: let
-  inherit (config.forge.theme) roles; # Estate palette owner (modules/home/theme.nix): semantic roles; toast markers ride collector payloads
+  inherit (config.forge.theme) roles; # Estate palette owner (modules/home/theme.nix): semantic roles
   chords = config.forge.chords; # Chord-vocabulary owner (modules/home/programs/apps/chords.nix)
   pH = chords.zellij.prefix.hyper;
   inherit (chords) modes layers;
-
-  # Collector->bar pipe vocabulary (mcp-launchers.nix owns the rows and asserts its payload arms against them): the {pipe_*} lane and the
-  # per-pipe format/rendermode rows all derive here, so a new bar cell is one vocabulary row — never a three-edit hand sync.
-  pipes = config.forge.agents.statusPipes;
-  pipeKv = k: v: "        ${k}${lib.strings.replicate (lib.max 1 (26 - lib.stringLength k)) " "}\"${v}\"";
-  pipeLane = lib.concatMapStrings (p: "{pipe_${p}}") pipes;
-  pipeRows = lib.concatMapStringsSep "\n" (p: pipeKv "pipe_${p}_format" "{output}" + "\n" + pipeKv "pipe_${p}_rendermode" "dynamic") pipes;
 
   # zjstatus variable vocabulary for both instances: role-named tokens derived from the theme owner — the bar reads semantic roles
   # (surface steps, text tiers, accents, states, focus pair, mode ladder), never a raw palette hue.
@@ -411,30 +404,19 @@ in {
           zellij-forgot location="file:~/.config/zellij/plugins/zellij_forgot.wasm"
 
           // --- [ZJSTATUS_TOP_BAR]
-          // Cells are pipe-fed by the forge-agents collector, which owns the role->palette styling and ships formatted payloads — the agent, alert,
-          // and uppercase session identity cells pipe per session; the bar renders them verbatim and never polls a provider itself. Tab
-          // labels are index-projected (TAB [N]); {name} survives only in the rename cell as live typing feedback. WezTerm's tab bar hides at one
-          // tab, so no second bar ever stacks above this one. format_left starts at column 0 so the active-tab fill aligns with the pane frame edge.
+          // Native zjstatus widgets only: tab labels index-projected (TAB [N]), the swap-layout name, and the session identity ({session}). {name}
+          // survives only in the rename cell as live typing feedback. WezTerm's tab bar hides at one tab, so no second bar ever stacks above this one.
+          // format_left starts at column 0 so the active-tab fill aligns with the pane frame edge.
           zjstatus location="file:~/.config/zellij/plugins/zjstatus.wasm" {
     ${colorRows}
             format_left               "{tabs}"
             format_center             "{swap_layout}"
-            format_right              "{notifications}${pipeLane}"
+            format_right              "#[bg=$surface,fg=$accent,bold] {session} "
             format_space              "#[bg=$surface]"
 
-            // Narrow panes: hide whole parts by precedence instead of letting them overlap — the agent and alert cells outrank tabs and the swap label.
+            // Narrow panes: hide whole parts by precedence instead of letting them overlap — the session cell outranks tabs and the swap label.
             format_hide_on_overlength "true"
             format_precedence         "rlc"
-
-    ${pipeRows}
-
-            // Transient toast rail: zjstatus::notify:: broadcasts (collector rises, receipts push bus) render here and auto-hide.
-            // Payloads are literal — the class rides each payload's ASCII marker prefix ([?] input, [X] fail), never #[..] directives; the
-            // payload owns its one marker, so this format adds none. Per-urgency color stays on the cells. Broadcast reaches both bar
-            // instances; only this bar renders it. The cell opens with a surface-colored gap (never amber bleed against the tabs).
-            notification_format_unread           "#[bg=$surface] #[bg=$state_warning,fg=$inverse,bold] {message} "
-            notification_format_no_notifications ""
-            notification_show_interval           "8"
 
             swap_layout_format        "#[bg=$surface,fg=$structural,bold] {name} "
             swap_layout_hide_if_empty "true"

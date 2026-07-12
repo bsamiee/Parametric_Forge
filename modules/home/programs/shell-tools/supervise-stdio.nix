@@ -19,6 +19,7 @@ server: ''
   watchdog=0
   srv=0
   life_fd=0
+  client_pid="$PPID"
   work="$(mktemp -d "''${TMPDIR:-/tmp}/forge-stdio.XXXXXX")"
   activity="$work/activity"
   printf '%s\n' "$BASH_MONOSECONDS" >"$activity"
@@ -76,7 +77,7 @@ server: ''
   }
 
   guardian_loop() {
-    local -r server_pid="$1" in_pid="$2" out_pid="$3" activity_file="$4" work_dir="$5"
+    local -r server_pid="$1" in_pid="$2" out_pid="$3" activity_file="$4" work_dir="$5" client_pid="$6"
     local last="$BASH_MONOSECONDS" now read_status
     trap 'exit 0' TERM INT HUP
     while :; do
@@ -86,6 +87,9 @@ server: ''
         break
       fi
       if ((read_status > 128)); then
+        # Parent-liveness gate: a hard client SIGKILL orphans the wrapper with relays blocked on reads that never see EOF, so the
+        # lifeline never closes; probing the launching client reaps the generation within a poll instead of waiting out the idle lease.
+        ((client_pid > 1)) && ! kill -0 "$client_pid" 2>/dev/null && break
         now="$BASH_MONOSECONDS"
         if [[ -s "$activity_file" ]]; then
           IFS= read -r last <"$activity_file" || true
@@ -125,7 +129,7 @@ server: ''
   ${server} "$@" <&"$server_stdin" >&"$server_stdout" &
   srv=$!
   set +m
-  exec {life_fd}> >(guardian_loop "$srv" "$input_relay" "$output_relay" "$activity" "$work")
+  exec {life_fd}> >(guardian_loop "$srv" "$input_relay" "$output_relay" "$activity" "$work" "$client_pid")
   watchdog=$!
   exec {server_stdin}<&-
   exec {server_stdout}>&-

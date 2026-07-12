@@ -10,7 +10,6 @@
 # `admissions` rows via `rosterRows`. Pure data plus builtins-only accessors — no pkgs, no lib; validation runs in the overlay fold.
 let
   v = rec {
-    alerter = "26.5";
     biome = "2.5.3";
     duckdb = "1.5.4";
     nodejs = "26.5.0";
@@ -65,30 +64,6 @@ in rec {
   # Overlay/package rows. `projection.overlay = "override"` requires `overlayReason` — overlay mutation transitively overrides consumer
   # dependencies and re-keys fixed-output hashes; "new" attrs are inert.
   packages = {
-    alerter = {
-      upstream = "github:vjeantet/alerter";
-      version = v.alerter;
-      versionPolicy = "fast";
-      sourceKind = "github-release";
-      # Notarized Developer ID binary posting under fr.vjeantet.alerter: the macOS notification (TCC) identity rides the embedded signature, so admission
-      # fetches the release artifact unmodified — a source rebuild or binary patch forfeits the identity and every --reply/--actions path.
-      assets.aarch64-darwin = {
-        url = "https://github.com/vjeantet/alerter/releases/download/v${v.alerter}/alerter-${v.alerter}.zip";
-        fetch = "zip";
-        hash = "sha256-JSqn8a1t3cWY/ZDynbqq7T+3Hm8XNOMGM9uhBv7RG2E=";
-      };
-      license = "mit";
-      patchFamily = "none";
-      cacheClass = "binary-only-local";
-      updateEngine = "manual";
-      retention = "git-history";
-      projection.overlay = "new";
-      consumers = ["bundle-apps" "mcp-launchers"];
-      description = "Blocking macOS alerts with typed JSON reply and action results";
-      homepage = "https://github.com/vjeantet/alerter";
-      mainProgram = "alerter";
-    };
-
     biome = {
       upstream = "github:biomejs/biome";
       version = v.biome;

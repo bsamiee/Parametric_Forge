@@ -42,8 +42,6 @@ in {
         options = {
           ${optionSetName}.expr = hostOptions;
           home-manager.expr = "${hostOptions}.home-manager.users.type.getSubOptions [ ]";
-          # flake-parts debug output is enabled in flake.nix for this row.
-          flake-parts.expr = "${flake}.debug.options";
         };
       };
     };

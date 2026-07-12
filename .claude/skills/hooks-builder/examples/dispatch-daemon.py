@@ -3,6 +3,8 @@
 # requires-python = ">=3.15"
 # dependencies = ["msgspec", "anyio"]
 # ///
+# Boundary-kernel hook seam: focused one-line docstrings, a nested command scan, a boundary-admission try, fail-open telemetry, and runtime-resolved msgspec annotations are admitted.
+# ruff: noqa: DOC201, PLR1702, PLW0717, S110, TC002
 """Route every hook event through a priority-banded handler registry, optionally behind a resident daemon.
 
 Two run modes share one body: a resident daemon (`--serve`) holds the registry, its structs, and its handler
@@ -234,7 +236,7 @@ async def _forward(raw: bytes, /) -> Reply | None:
                 except anyio.EndOfStream:
                     pass
                 return msgspec.json.decode(bytes(buffer), type=Reply)
-    except (OSError, TimeoutError, anyio.BrokenResourceError, msgspec.DecodeError):
+    except OSError, TimeoutError, anyio.BrokenResourceError, msgspec.DecodeError:
         return None  # no daemon, a wedged one, or a broken reply -> the in-process fallback keeps the hook self-sufficient
 
 

@@ -3,6 +3,13 @@
         "command": "lua-language-server",
         "extensionToLanguage": {
             ".lua": "lua"
+        },
+        "settings": {
+            "Lua": {
+                "diagnostics": {
+                    "globals": ["vim", "Snacks"]
+                }
+            }
         }
     }
 }

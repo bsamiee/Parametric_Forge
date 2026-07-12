@@ -290,10 +290,9 @@
     ["launcher" "l" "CMD|SHIFT" "wezterm launcher" "overlay" 330]
     ["char-select" "u" "CMD|SHIFT" "wezterm unicode picker" "overlay" 340]
     ["debug-overlay" "d" "CMD|SHIFT" "wezterm debug overlay" "overlay" 350]
-    # Command deck: workspace router, attention router, guarded broadcast.
+    # Command deck: workspace router, guarded broadcast.
     ["workspace-switch" "o" "CMD|SHIFT" "wezterm workspace switch" "deck" 360]
     ["workspace-new" "n" "CMD|SHIFT" "wezterm workspace new" "deck" 365]
-    ["attention-focus" "a" "CMD|SHIFT" "jump to waiting agent" "deck" 368]
     ["sync-toggle" "e" "CMD|SHIFT" "wezterm sync panes" "deck" 370 null null true]
     # Pass-through-aware pane nav: Neovim window motion inside nvim panes, raw bytes into zellij panes, WezTerm pane motion in plain splits.
     ["nav-left" "h" "CTRL" "pane nav left" "nav" 380 "wezterm pane nav" "⌃H/J/K/L (plain splits)"]

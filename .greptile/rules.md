@@ -13,7 +13,7 @@ Machine-owner repo: nix-darwin + Home Manager flake for one macOS Apple Silicon 
 - Formatters and gates own mechanics (the fmt router, alejandra/deadnix/statix, shellcheck, ruff, biome, stylua) — never restate their law as findings; flag suppressions and bypasses. A shellcheck directive, `noqa`, or `biome-ignore` in a diff demands the ownership justification; suppression-as-fix is the defect.
 - Fix-to-root completeness: a change that patches a symptom while its root cause stands, leaves a known defect unfixed because it sits outside the diff's scope, or defers a residual for a later pass is a defect — the root fix belongs in the same change, and a genuinely blocked item is an explicit unreachable naming its owner, never a silent residual.
 - Coupling completeness: docs/laws/topology.md is the edit-coupling map — a diff touching a listed [SURFACE] without its obligated counterparts is incomplete; generalizable lessons land under the docs/laws/README.md admission law, never as ad-hoc doc edits.
-- Doctrine-surface diffs are judged against docs/laws/landing.md: hardening beats extending beats minting, each move needing the prior proven insufficient; run provenance or process narration in a landed row is a defect; an addition without recurrence evidence or branch-spanning blast radius is spam. Flag the miss as hard as the spam — a topology row the diff proves but does not land, a scar whose law a new gate owns still sitting in the ledger.
+- Doctrine-surface diffs are judged against docs/laws/README.md: hardening beats extending beats minting, each move needing the prior proven insufficient; run provenance or process narration in a landed row is a defect; an addition without recurrence evidence or branch-spanning blast radius is spam. Flag the miss as hard as the spam — a topology row the diff proves but does not land, a scar whose law a new gate owns still sitting in the ledger.
 
 ## [02]-[UNIVERSAL_BAR]
 
@@ -28,7 +28,6 @@ Anticipate 10x functionality growth: surfaces absorb new modalities as rows, cas
 ## [04]-[LOAD_BEARING_EXCEPTIONS]
 
 Code that violates generic best practice on purpose — do not flag:
-
 - Aggressive API breaks with every call site updated in the same change are the sanctioned rename path, not regressions.
 - Dense single-expression bodies and heavy polymorphic dispatch are the bar, not obfuscation.
 - Absent defensive guards inside domain logic reflect admission-once boundaries, not missing error handling.
@@ -39,7 +38,6 @@ Code that violates generic best practice on purpose — do not flag:
 ## [05]-[DURABLE_PROSE_AND_SKILL_DETECTION]
 
 Durable markdown — docs, standards, skills, prompts — is agent-facing law. Flag:
-
 - No-op intensifiers: quality adjectives (careful, high-quality, robust, thorough) in a sentence with no owner, action, trigger, or gate.
 - Filler lead-ins: `it is important to note`, `note that`, `make sure to`, `be sure to`, `remember to`, `keep in mind`.
 - Restated harness obligations: telling an agent to follow CLAUDE.md/AGENTS.md, use available tools, or obey system instructions.

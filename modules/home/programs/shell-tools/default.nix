@@ -47,7 +47,6 @@ in {
     ./browsers.nix
     ./carapace.nix
     ./carbon.nix
-    ./delegation.nix
     ./dust.nix
     ./eza.nix
     ./fastfetch.nix
