@@ -109,10 +109,13 @@
   '';
   fontManifest =
     pkgs.runCommand "forge-font-manifest" {
-      nativeBuildInputs = [(pkgs.python3.withPackages (ps: [ps.fonttools])) pkgs.harfbuzzFull.dev];
+      nativeBuildInputs = [(pkgs.python3.withPackages (ps: [ps.fonttools])) pkgs.harfbuzz.dev];
     } ''
       mkdir -p $out
-      python3 ${manifestPy} ${catalogJson} ${pkgs.harfbuzzFull.dev}/bin/hb-shape $out
+      # Base harfbuzz owns the shaping oracle: the icu variant ships no core libharfbuzz.so on Linux, and hb-shape carries no RUNPATH, so the
+      # explicit library path binds the loader on Linux while staying inert on darwin (absolute install-names). OT shaping needs no ICU.
+      export LD_LIBRARY_PATH=${lib.makeLibraryPath [pkgs.harfbuzz]}
+      python3 ${manifestPy} ${catalogJson} ${pkgs.harfbuzz.dev}/bin/hb-shape $out
     '';
   manifestJson = pkgs.runCommand "forge-fonts.json" {nativeBuildInputs = [pkgs.jq];} ''
     jq --argjson roles ${lib.escapeShellArg (builtins.toJSON roles)} \
