@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # /// script
-# requires-python = ">=3.13"
+# requires-python = ">=3.15"
 # dependencies = ["cyclopts", "defusedxml", "msgspec", "networkx", "svgelements", "xxhash"]
 # ///
 """Validate Mermaid fences through typed source analysis, SVG render proof, and rendered-geometry legibility inspection."""
@@ -26,7 +26,7 @@ from tempfile import TemporaryDirectory
 from typing import Literal, TYPE_CHECKING
 
 from cyclopts import App
-from defusedxml.ElementTree import fromstring, ParseError  # type: ignore[import-untyped]  # no bundled stubs
+from defusedxml.ElementTree import fromstring, ParseError
 import msgspec
 import networkx as nx
 from svgelements import Path as SvgPath  # type: ignore[import-untyped]  # ty: ignore[unresolved-import]  # untyped, no py.typed stub
@@ -783,7 +783,7 @@ def _shape_bbox(el: Element) -> tuple[float, float, float, float] | None:
         return None
     try:
         return shape(el)
-    except (ValueError, TypeError):
+    except ValueError, TypeError:
         return None
 
 
@@ -819,7 +819,9 @@ def _edge_polyline(el: Element, tx: float, ty: float) -> list[tuple[float, float
     return None
 
 
-def svg_geometry(svg_text: str) -> tuple[list[tuple[float, float, float, float]], list[list[tuple[float, float]]], list[tuple[float, float, float, float]]]:
+def svg_geometry(
+    svg_text: str,
+) -> tuple[list[tuple[float, float, float, float]], list[list[tuple[float, float]]], list[tuple[float, float, float, float]]]:
     root = fromstring(svg_text)
     nodes: list[tuple[float, float, float, float]] = []
     edges: list[list[tuple[float, float]]] = []
@@ -874,7 +876,7 @@ def geometry_rows(svg_text: str, diagram: Diagram) -> tuple[Row, ...]:
         return ()
     try:
         nodes, edges, clusters = svg_geometry(svg_text)
-    except (ParseError, ValueError, TypeError):
+    except ParseError, ValueError, TypeError:
         return ()
     del clusters
     rows: list[Row] = [
@@ -886,16 +888,13 @@ def geometry_rows(svg_text: str, diagram: Diagram) -> tuple[Row, ...]:
     endpoints = [_endpoints(edge, nodes) for edge in edges] if nodes else [set() for _ in edges]
     for ei, edge in enumerate(edges):
         interior = edge[1:-1] if len(edge) > 2 else edge
-        crossed = next(
-            (ni for ni, box in enumerate(nodes) if ni not in endpoints[ei] and any(_in_box(pt, box, -2.0) for pt in interior)), None
-        )
+        crossed = next((ni for ni, box in enumerate(nodes) if ni not in endpoints[ei] and any(_in_box(pt, box, -2.0) for pt in interior)), None)
         rows.append(row(diagram.fence, Check.LEGIBILITY, "warn", f"edge-over-node:{ei}-{crossed}")) if crossed is not None else None
     crossings = sum(
         1
         for i in range(len(edges))
         for j in range(i + 1, len(edges))
-        if not (endpoints[i] & endpoints[j])
-        and any(_segments_cross(a, b, c, d) for a, b in pairwise(edges[i]) for c, d in pairwise(edges[j]))
+        if not (endpoints[i] & endpoints[j]) and any(_segments_cross(a, b, c, d) for a, b in pairwise(edges[i]) for c, d in pairwise(edges[j]))
     )
     rows.append(row(diagram.fence, Check.LEGIBILITY, "warn", f"edge-crossings:{crossings}")) if crossings else None
     return tuple(rows)

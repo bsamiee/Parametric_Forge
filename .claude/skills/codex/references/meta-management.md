@@ -49,7 +49,6 @@ A custom agent file defines a spawnable worker persona: `name`, `description`, a
 name = "reviewer"
 description = "PR reviewer focused on correctness, security, and missing tests."
 model = "gpt-5.6-terra"
-model_reasoning_effort = "xhigh"
 sandbox_mode = "read-only"
 developer_instructions = """
 Review code like an owner; lead with concrete findings and reproduction steps.

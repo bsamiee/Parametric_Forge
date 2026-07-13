@@ -41,12 +41,16 @@ dependencies = [
 
 [dependency-groups]
 dev = [
-    "lxml", # html-studio skill scripts import it; the env must resolve every mirrored-skill import for ty
+    "defusedxml", # defusedxml through svgelements: mirrored skill scripts import them; the env resolves every skill import for ty
+    "lxml",
     "mypy",
     "ruff>=0.15.20,<0.16", # preview rule set moves per minor; the band holds the vetted gate stable
     "sqlfluff",
+    "svgelements",
     "ty",
+    "types-defusedxml",
     "types-lxml",
+    "types-networkx",
 ]
 
 # --- [UV] -------------------------------------------------------------------------------

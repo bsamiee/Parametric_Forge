@@ -11,6 +11,8 @@ Every substantive stage — author, critique, red-team, fixer alike — holds th
 - Every enumerated checklist, collapse-signal list, and attack list in a stage prompt is a FLOOR hunted past, never the complete set.
 - NO CHURN: an edit requires a named violated law or invariant plus the concrete case that breaks it; a clean verdict earned by an attack that finds nothing is a first-class result, proven by adding nothing — and a reviewer forced to edit invents defects.
 
+The stance is SUBSTANCE, not register. The burden of proof on the work, both naivety axes, and the cold pass bind every stage regardless of which model executes it, but the PHRASING is model-shaped. A Claude-executed stage carries this hostile register verbatim — Claude reads the intensifiers as calibration. A codex-executed stage (a codex work or review lane) carries the same demands de-conflicted and neutral: the intensifier stacks and hostile-stance paragraphs that sharpen a Claude lane make a codex lane over-use tools and probe out of territory. A workflow routing a stage to codex builds that stage's prompt codex-shaped and never hands codex the native Claude-register builder verbatim (codex-lanes reference, the prompt-shape law).
+
 ## [02]-[WRITER_BAR]
 
 The implement stage authors ground-up, never patches:

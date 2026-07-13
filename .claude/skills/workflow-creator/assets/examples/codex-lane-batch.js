@@ -124,7 +124,7 @@ const batchPrompt = (label, files) =>
 // Orchestrator-owned scope rides the receipt so a lane that dies before writing still names its territory.
 // QUOTA FALLBACK: usage exhaustion fails the call loudly; the CALLER re-dispatches the same task natively at
 // the role's Claude twin (terra->opus) — the sonnet wrapper never becomes the implicit executor. The wrapper
-// stall sits above the xhigh blocking-call ceiling (1200s): a silent live MCP call is legal waiting.
+// stall sits above the codex effort tier's blocking-call ceiling: a silent live MCP call is legal waiting.
 const shape = (label, scope) => (r) => ({
     lane: label,
     scope,
