@@ -15,9 +15,10 @@
 #   envKeys          env key names the server consumes
 #   claudeEnvNames   Claude env-block name set when it differs from envKeys
 #   probe            "stdio" (probed) | "network" (probed only with --network) | "skip"
-#   launcher         { names, pkg, version, bin, prelude?, upstream, updateEngine }
+#   launcher         { names, pkg, version, bin, prelude?, upstream, updateEngine, idleSeconds? }
 #                    => Forge-built pnpm wrapper(s); upstream/updateEngine are
-#                    manifest extension-family fields (`forge-mcp outdated` observes)
+#                    manifest extension-family fields (`forge-mcp outdated` observes); idleSeconds
+#                    overrides the supervised idle lease (default toolTimeoutSec+300) for heavy no-session servers
 #   codex            { required, startupTimeoutSec, toolTimeoutSec, auth?, bearerEnvVar?, headerEnv?, toolsApprovalMode? }
 #                    toolsApprovalMode projects codex `default_tools_approval_mode` — "approve" marks a pure information-retrieval server whose
 #                    unannotated tools headless `codex exec` (approval: never) may call; write-capable servers never carry it (MCP runs unsandboxed)
@@ -183,6 +184,7 @@ in [
       bin = "playwright-mcp";
       upstream = "npm:@playwright/mcp";
       updateEngine = "npm-registry";
+      idleSeconds = 180; # heavy chromium subtree reaps fast when idle, no persistent session to preserve
     };
     codex = {
       required = false;
@@ -321,6 +323,9 @@ in [
     args = ["--default-version" "9"];
     envKeys = [];
     probe = "stdio";
+    doctor = {
+      execs = ["forge-rhino-up"];
+    };
     codex = {
       required = false;
       startupTimeoutSec = 20;

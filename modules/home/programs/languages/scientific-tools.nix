@@ -343,7 +343,10 @@
   '';
   forgeIfcMcp = pkgs.writeShellApplication {
     name = "forge-ifcmcp";
-    text = superviseStdio ''${forgeCompanionEnv}/bin/forge-companion-env uvx --python "${pkgs.python312}/bin/python3" --from "ifcopenshell-mcp[mcp]==0.8.5" ifcmcp'';
+    text = ''
+      export FORGE_STDIO_IDLE_SECONDS=180
+      ${superviseStdio ''${forgeCompanionEnv}/bin/forge-companion-env uvx --python "${pkgs.python312}/bin/python3" --from "ifcopenshell-mcp[mcp]==0.8.5" ifcmcp''}
+    '';
   };
   # writeShellApplication: the token prelude runs sed under launchd/systemd minimal PATH, so the tool arrives via runtimeInputs, never ambient lookup.
   forgeJupyter = pkgs.writeShellApplication {
@@ -368,6 +371,7 @@
       # Connector defaults owned here so both MCP fleets carry no per-client env.
       export JUPYTER_URL="''${JUPYTER_URL:-http://127.0.0.1:${toString forgeJupyterPort}}"
       export ALLOW_IMG_OUTPUT="''${ALLOW_IMG_OUTPUT:-true}"
+      export FORGE_STDIO_IDLE_SECONDS=180 # thin bridge to the persistent JupyterLab LaunchAgent; reap fast, the kernel server survives
       ${superviseStdio ''${forgeCompanionEnv}/bin/forge-companion-env uvx --python "${pkgs.python312}/bin/python3" --from "jupyter-mcp-server==1.0.3" jupyter-mcp-server --transport stdio --start-new-runtime false''}
     '';
   };

@@ -103,7 +103,7 @@
             exit 69
           fi
         fi
-        export FORGE_STDIO_IDLE_SECONDS=${toString (row.codex.toolTimeoutSec + 300)}
+        export FORGE_STDIO_IDLE_SECONDS=${toString (row.launcher.idleSeconds or (row.codex.toolTimeoutSec + 300))}
         ${superviseStdio ''"$entry"''}
       '';
     };
@@ -142,8 +142,23 @@
           echo "rhino-mcp-router: no Rhino-MCP-Platform package under $base" >&2
           exit 69
         fi
+        # Host-liveness watchdog: Rhino exit TERMs this wrapper (never Rhino itself), so the supervised router generation reaps within a poll of
+        # the app closing. The lstart identity pin makes the TERM target exact — a recycled PID mismatches and the watchdog exits instead.
+        guard=$$
+        guard_start="$(/bin/ps -o lstart= -p "$guard" 2>/dev/null || true)"
+        (
+          while /usr/bin/pgrep -qf "$rhino_bin"; do
+            [ "$(/bin/ps -o lstart= -p "$guard" 2>/dev/null || true)" = "$guard_start" ] || exit 0
+            sleep 3
+          done
+          [ "$(/bin/ps -o lstart= -p "$guard" 2>/dev/null || true)" = "$guard_start" ] && kill -TERM "$guard" 2>/dev/null || true
+        ) &
         ${superviseStdio ''"$entry"''}
       fi
+
+      # Rhino-down entry: any live vendor router is a stray from a dead generation. The liveness recheck pins the sweep to a still-down Rhino,
+      # so a router another session just spawned against a freshly opened app is never collateral.
+      /usr/bin/pgrep -qf "$rhino_bin" || /usr/bin/pkill -f "Rhino-MCP-Platform/.*/router/osx-arm64/rhino-mcp-router" 2>/dev/null || true
 
       # Thin responder: newline-delimited JSON-RPC over stdio at near-zero cost. Its blocking read carries a long idle lease directly, so retained
       # inherited pipe writers cannot strand an app-server generation and the Rhino-down path needs no supervisor helper processes.
@@ -152,7 +167,7 @@
           if /usr/bin/pgrep -qf "$rhino_bin"; then
             printf 'Rhino is running but this MCP connection predates it. Reconnect the rhino-mcp-platform server (/mcp -> reconnect, or restart the session) to spawn the router and load the full toolset.'
           else
-            printf 'Rhino 9 WIP is not running; the rhino-mcp-platform router spawns only against a live Rhino. Start it (open -a RhinoWIP), wait for the app to finish loading, then reconnect the rhino-mcp-platform server (/mcp -> reconnect, or restart the session) to load the full toolset.'
+            printf 'Rhino 9 WIP is not running; the rhino-mcp-platform router spawns only against a live Rhino. Run forge-rhino-up (idempotent, splash-free), wait for the app to finish loading, then reconnect the rhino-mcp-platform server (/mcp -> reconnect, or restart the session) to load the full toolset.'
           fi
         }
         local tools_json line method id pv gate_idle_seconds="''${RHINO_MCP_GATE_IDLE_SECONDS:-480}"
@@ -194,6 +209,31 @@
         done
       }
       rhino_gate
+    '';
+  };
+  # Agent host bootstrap: one splash-free idempotent verb brings RhinoWIP up; the MCP platform listener autostarts with the app, and the router
+  # loads the full toolset on the next server (re)connect. `open -a` passes -nosplash only on a fresh launch, so the pgrep guard keeps it honest.
+  rhinoUp = pkgs.writeShellApplication {
+    name = "forge-rhino-up";
+    runtimeInputs = [pkgs.coreutils];
+    text = ''
+      app="''${RHINO_WIP_APP_PATH:-/Applications/RhinoWIP.app}"
+      rhino_bin="$app/Contents/MacOS/Rhinoceros"
+      if /usr/bin/pgrep -qf "$rhino_bin"; then
+        echo "rhino: running (pid $(/usr/bin/pgrep -f "$rhino_bin" | head -1))"
+        exit 0
+      fi
+      [ -d "$app" ] || { echo "forge-rhino-up: $app not installed" >&2; exit 69; }
+      /usr/bin/open -a "$app" --args -nosplash
+      for _ in $(seq 1 60); do
+        if /usr/bin/pgrep -qf "$rhino_bin"; then
+          echo "rhino: launched splash-free (pid $(/usr/bin/pgrep -f "$rhino_bin" | head -1)); reconnect rhino-mcp-platform once loading settles"
+          exit 0
+        fi
+        sleep 0.5
+      done
+      echo "forge-rhino-up: Rhino did not register within 30s" >&2
+      exit 1
     '';
   };
   # updateEngine selects the probe set: only npm-registry rows feed the npm-latest check; a manual or other engine row never emits a false pin row.
@@ -1061,7 +1101,7 @@
   '';
 in {
   config = {
-    home.packages = launchers ++ [forgeSuperviseStdio maghzPostgres rhinoRouter forgeMcp mcpCompletion pkgs.mcp-nixos];
+    home.packages = launchers ++ [forgeSuperviseStdio maghzPostgres rhinoRouter rhinoUp forgeMcp mcpCompletion pkgs.mcp-nixos];
 
     # Each Darwin switch reasserts the fleet maps while preserving non-MCP client state; Codex app-private rows remain presence-owned by ChatGPT.
     home.activation.forgeMcpReconcile = lib.mkIf pkgs.stdenv.hostPlatform.isDarwin (lib.hm.dag.entryAfter ["writeBoundary"] ''
