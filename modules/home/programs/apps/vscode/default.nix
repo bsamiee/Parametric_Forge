@@ -128,7 +128,6 @@
       "git.autoStash" = true;
       "git.branchProtection" = ["main"];
       "git.branchProtectionPrompt" = "alwaysCommitToNewBranch";
-      "git.blame.editorDecoration.enabled" = true;
       "git.openRepositoryInParentFolders" = "never";
       "git.mergeEditor" = true;
       "diffEditor.ignoreTrimWhitespace" = false;
