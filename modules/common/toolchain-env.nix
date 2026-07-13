@@ -80,12 +80,21 @@
       lib.concatStringsSep "\n" (
         lib.mapAttrsToList (name: value: "export ${name}=${lib.escapeShellArg (toString value)}") env
       );
-    # Nix Chrome-for-Testing for headless render (mmdc/puppeteer, the mermaid validator); one owner feeds login-shell and launchd surfaces so a
-    # GUI-spawned agent never falls to an unpinned browser.
+    # Nix chrome-headless-shell for headless render (mmdc/puppeteer, the mermaid validator); one owner feeds login-shell and launchd surfaces so a
+    # GUI-spawned agent never falls to an unpinned browser. The bare Mach-O shell never registers with LaunchServices, so a render failure never
+    # raises the macOS "quit unexpectedly" dialog; the full Chrome-for-Testing .app aborts at _RegisterApplication when spawned headless from an
+    # agent shell and is never a valid headless pin.
+    headlessShellBrowsers = pkgs.playwright-driver.browsers.override {
+      withChromium = false;
+      withChromiumHeadlessShell = true;
+      withFfmpeg = false;
+      withFirefox = false;
+      withWebkit = false;
+    };
     chromiumShell =
       if isDarwin
-      then "chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing"
-      else "chrome-linux/chrome";
+      then "chrome-headless-shell-mac-arm64/chrome-headless-shell"
+      else "chrome-headless-shell-linux64/chrome-headless-shell";
     # One class-partitioned env owner feeding the session (home.sessionVariables), the .zshenv resilient floor, and the launchd GUI surfaces.
     # `all` rows land byte-identical everywhere so an interactive shell and a Dock-launched agent never resolve divergent pager/config env;
     # `session` rows are interactive-only (man/bat). Homebrew constants fold in darwin-only. A new cross-surface var is one `all` row.
@@ -137,6 +146,6 @@
     scientificSessionEnv = pythonEnv // geoEnv // energyEnv;
     sessionEnv = envByClass.all // envByClass.session;
     launchdEnv = envByClass.all;
-    puppeteerExecutablePath = "${pkgs.playwright-driver.browsers-chromium}/chromium-${pkgs.playwright-driver.browsersJSON.chromium.revision}/${chromiumShell}";
+    puppeteerExecutablePath = "${headlessShellBrowsers}/chromium_headless_shell-${pkgs.playwright-driver.browsersJSON."chromium-headless-shell".revision}/${chromiumShell}";
   };
 }

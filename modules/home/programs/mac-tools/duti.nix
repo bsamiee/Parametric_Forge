@@ -12,9 +12,9 @@
   ...
 }: let
   dutiConfig = ''
-    # PDF Documents -> Preview
-    com.apple.Preview	com.adobe.pdf	all
-    com.apple.Preview	.pdf	all
+    # PDF Documents -> Adobe Acrobat Pro
+    com.adobe.Acrobat.Pro	com.adobe.pdf	all
+    com.adobe.Acrobat.Pro	.pdf	all
 
     # URL Schemes -> Arc Browser (HTML associations need manual setup due to macOS restrictions)
     company.thebrowser.Browser	http	all

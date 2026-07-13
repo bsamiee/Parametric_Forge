@@ -23,6 +23,7 @@ import shutil
 import subprocess
 import sys
 from tempfile import TemporaryDirectory
+import time
 from typing import Literal, TYPE_CHECKING
 
 from cyclopts import App
@@ -73,6 +74,7 @@ APP = App(name="validate-mermaid")
 ENCODER = msgspec.json.Encoder()
 ENV_MARKERS = ("chrome", "chromium", "puppeteer", "browser", "libnss", "sandbox", "econnrefused", "enoent")
 # Version-pinned fallback renderer: proves whether a syntax failure survives a known-good release.
+CACHE_TTL = 3600  # seconds; the gitignored render cache stays ephemeral — every run drops entries older than this before rendering
 RELEASE_RENDERER = ("pnpm", "dlx", "@mermaid-js/mermaid-cli@11.16.0")
 RENDER_TIMEOUT = 120
 SUFFIXES = frozenset({".md", ".mmd"})
@@ -133,6 +135,7 @@ CANON = frozenset({
     "edgeError",
     "edgeExternal",
     "edgeData",
+    "edgeControl",
     "edgeTrace",
 })
 PALETTE = frozenset({
@@ -182,7 +185,7 @@ MATRIX = re.compile(r"matrix\(\s*(?:[-\d.eE]+[ ,]+){4}([-\d.eE]+)[ ,]+([-\d.eE]+
 
 
 def _browser_path() -> str | None:
-    """Resolve a pinned headless-safe Chromium; never the real Chrome.app, which a sandboxed headless caller aborts at _RegisterApplication.
+    """Resolve a pinned headless-shell binary; never an .app bundle, which LaunchServices registers and aborts at _RegisterApplication when headless.
 
     Returns:
         Path to a pinned chrome-headless-shell binary, or None when none resolves.
@@ -190,7 +193,7 @@ def _browser_path() -> str | None:
     import os
 
     env = os.environ.get("PUPPETEER_EXECUTABLE_PATH", "")
-    if env and Path(env).is_file():
+    if env and ".app/" not in env and Path(env).is_file():
         return env
     shells = sorted(
         Path.home().glob(".cache/puppeteer/chrome-headless-shell/*/chrome-headless-shell-*/chrome-headless-shell"),
@@ -200,8 +203,11 @@ def _browser_path() -> str | None:
 
 
 PUPPETEER_CONFIG = {
-    # Throwaway-profile render never touches the macOS keychain: mock-keychain and the basic password store kill the "Chrome Safe Storage" prompt.
-    "args": ["--no-sandbox", "--disable-dev-shm-usage", "--use-mock-keychain", "--password-store=basic"],
+    # Shell headless mode plus a bare non-bundle binary keeps every render crash silent (no ReportCrash dialog); breakpad off drops the crash
+    # handler entirely. Throwaway-profile render never touches the macOS keychain: mock-keychain and the basic password store kill the
+    # "Chrome Safe Storage" prompt.
+    "headless": "shell",
+    "args": ["--no-sandbox", "--disable-dev-shm-usage", "--disable-breakpad", "--use-mock-keychain", "--password-store=basic"],
     **({"executablePath": _path} if (_path := _browser_path()) else {}),
 }
 THEMED = frozenset({
@@ -900,7 +906,16 @@ def geometry_rows(svg_text: str, diagram: Diagram) -> tuple[Row, ...]:
     return tuple(rows)
 
 
+def prune_cache(cache_dir: Path, ttl: float = CACHE_TTL) -> None:
+    cutoff = time.time() - ttl
+    for entry in cache_dir.glob("*.svg"):
+        with suppress(OSError):
+            if entry.stat().st_mtime < cutoff:
+                entry.unlink()
+
+
 def rendered_rows(prefix: tuple[str, ...], cwd: Path | None, diagrams: tuple[Diagram, ...], cache_dir: Path, export: Path | None) -> tuple[Row, ...]:
+    prune_cache(cache_dir)
     rows: list[Row] = []
     with TemporaryDirectory(prefix="mermaid-validate-") as tmp:
         workdir = Path(tmp)
