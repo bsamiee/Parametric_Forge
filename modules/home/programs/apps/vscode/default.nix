@@ -109,6 +109,8 @@
         "**/uv.lock" = true;
         "**/node_modules/**" = true;
       };
+      # Nix-store and HM-symlinked files are fs read-only; the permission bit locks generated files against in-place edits.
+      "files.readonlyFromPermissions" = true;
       "search.exclude" =
         lib.genAttrs (map (d: "**/${d}/**") style.transientDirs) (_: true)
         // {
@@ -123,7 +125,11 @@
       # --- [GIT_DIFF_TESTING]
       "git.autofetch" = true;
       "git.pruneOnFetch" = true;
+      "git.autoStash" = true;
       "git.branchProtection" = ["main"];
+      "git.branchProtectionPrompt" = "alwaysCommitToNewBranch";
+      "git.blame.editorDecoration.enabled" = true;
+      "git.openRepositoryInParentFolders" = "never";
       "git.mergeEditor" = true;
       "diffEditor.ignoreTrimWhitespace" = false;
       "diffEditor.hideUnchangedRegions.enabled" = true;
@@ -131,6 +137,12 @@
       "testing.automaticallyOpenTestResults" = "openOnTestFailure";
       "workbench.editor.highlightModifiedTabs" = true;
       "workbench.editor.pinnedTabSizing" = "compact";
+      # Agent sessions spray open tabs; the per-group limit bounds the editor stack without closing pinned work.
+      "workbench.editor.limit.enabled" = true;
+      "workbench.editor.limit.value" = 12;
+      "workbench.editor.limit.perEditorGroup" = true;
+      "telemetry.telemetryLevel" = "off";
+      "extensions.ignoreRecommendations" = true; # the manifest roster owns extension admission; marketplace nags are noise
       # Keyboard shortcuts sync per platform: the forge-keys tail is mac law and must never ride to or from another platform's shortcut file.
       "settingsSync.keybindingsPerPlatform" = true;
 

@@ -57,7 +57,7 @@
         },
         {
             "path": "docs/atlas/interconnection.md",
-            "description": "Seam map: config.forge.* option hinges, runtime contracts (receipts, terminal mesh, XDG projections), owner tables \u2014 the blast radius a cross-module change must honor"
+            "description": "Seam map: config.forge.* option hinges, runtime contracts (receipts, terminal mesh, XDG projections), owner tables — the blast radius a cross-module change must honor"
         },
         {
             "path": "docs/atlas/rails-and-contracts.md",
@@ -77,6 +77,14 @@
             "path": "docs/standards/information-structure.md",
             "description": "Information architecture law: structure, density, tables vs prose",
             "scope": ["**/*.md"]
+        },
+        {
+            "path": "docs/laws/topology.md",
+            "description": "Edit-coupling map: which surfaces obligate which counterparts in the same change"
+        },
+        {
+            "path": "docs/laws/README.md",
+            "description": "Admission law for the docs/laws corpus: what earns a law page and how findings land"
         }
     ]
 }

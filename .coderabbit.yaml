@@ -1,6 +1,6 @@
 # yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
 language: en-US
-tone_instructions: "Senior-to-senior register. Dense, declarative, evidence-anchored findings. No praise, no emojis, no hedging. Doctrine violations (CLAUDE.md/AGENTS.md) are defects, not suggestions. Prefer polymorphic collapse over additive patches."
+tone_instructions: "Senior-to-senior register. Findings name the defect class and the line. No praise, no emojis, no hedging. Doctrine (docs/stacks, docs/standards, docs/laws) outranks generic convention; violations are defects. Prefer collapse over additive patches."
 early_access: false
 enable_free_tier: true
 inheritance: false
@@ -231,7 +231,7 @@ knowledge_base:
         filePatterns:
             - "docs/laws/*.md"
             - "docs/standards/*.md"
-            - "docs/stacks/*/README.md"
+            - "docs/stacks/**/*.md"
     learnings:
         scope: local
         approval_delay: 0
