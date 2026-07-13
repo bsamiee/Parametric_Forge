@@ -46,7 +46,8 @@ const clean = results.map((r, i) => (r ? { item: items[i], ...r } : null)).filte
 log(`${clean.length}/${items.length} returned usable results.`);
 
 // PHASE 2 — one synthesis agent. It is a fresh context: it never saw the workers. It learns the results only because we paste them into its prompt.
-// Paste fan-in is the SMALL-output shape; past ~50 rows the product moves to a run-scratch report file + thin receipt — the patterns reference report-file shape.
+// Paste fan-in is the SMALL-output shape; past ~50 rows the product moves to a run-scratch report file + thin receipt — the patterns reference
+// report-file shape, with the scratch dir instance-minted from the normalized args (the scratch convention), never a per-workflow constant.
 
 // --- [SYNTHESIZE]
 phase('Synthesize');

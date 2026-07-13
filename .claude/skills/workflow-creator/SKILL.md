@@ -26,7 +26,7 @@ A workflow is a runnable JavaScript orchestrator for Claude Code's `Workflow` to
 - [03]-[THROUGHPUT](references/throughput.md): concurrency economics and cross-run law.
 - [04]-[RECOVERY](references/recovery.md): resume, transplant, and reconstruction.
 - [05]-[EXTERNAL_LANES](references/codex-lanes.md): external-model lane composition — codex (gpt-5.6) work lanes, the agy (Gemini) read-only review lane.
-- [06]-[EXECUTION_STANDARD](references/execution-standard.md): the stage-prompt demand bar — hostile stance, the writer's ground-up/absorption law, reviewers as rebuilders, the mapping-lane burden-reduction contract.
+- [06]-[EXECUTION_STANDARD](references/execution-standard.md): the stage-prompt demand bar — hostile stance, the writer's ground-up/absorption law, reviewers as rebuilders, the mapping-lane burden-reduction contract with unit-granularity mapping, the two-lane ideation split, and the own-pass-first consumption ladder.
 
 [TEMPLATES]:
 - [01]-[SKELETONS](assets/templates/): starter skeletons — fan-out, loop, pipeline, and `run-ledger.template.md`.
@@ -70,6 +70,8 @@ The rules that break runs, each carried in depth by its owning reference:
 - [09]-[ARGS_STRUCTURED]: `args` is structured data — read it directly, never `JSON.parse` it, and default the no-args run to a safe no-op, never a full-corpus sweep.
 - [10]-[PROMPT_CONCAT]: Wrap long prompt strings with adjacent `+` at a space kept on the left segment — never a multi-line template literal, which injects `\n` and changes both the value and the resume key.
 - [11]-[LIVE_INTERPOLATION]: A stage prompt that embeds earlier receipts interpolates them live at author time — `+ JSON.stringify(receipts) +` or a single-line `${JSON.stringify(receipts)}` — never a `__TOKEN__` placeholder patched later and never a `${'$'}{…}` escape: both ship literal text the agent reads as its data, and the defect stays silent until that stage fires hours in. The linter flags both shapes; a patched persisted script re-runs it before the launch is trusted.
+- [12]-[INSTANCE_SCRATCH]: Run scratch is minted per INSTANCE — `.claude/scratch/<name>-<slug>-<hash>`, derived deterministically from the normalized args after normalization (patterns reference, the scratch convention). A per-workflow constant dir mixes concurrent and successive runs' products; a clock- or random-based path breaks resume.
+- [13]-[FRAGILE_PROSE]: No prose mirrors a fact the code owns: a constant's value lives ONLY on its declaration, prose names the concept never the number, and a roster, model, or path claim is verified against the code or deleted. A prompt needing a tunable interpolates its constant live (`' + CAP + '`). Exactness that GOVERNS the acting agent stays exact — schema bounds, protocol facts, thresholds, derivation notes beside their own constant, counts bound to an adjacent named enumeration; hardening removes fragility, never precision.
 
 ## [05]-[FILE]
 
@@ -84,7 +86,7 @@ export const meta = {
 };
 ```
 
-`meta.phases[].model` is a dialog label only — the model is set per `agent()` call; a re-tiered phase sets both or the dialog lies. Then the body: async JavaScript with injected globals — `agent(prompt, opts?)`, `pipeline(items, …stages)`, `parallel(thunks)`, `phase(title)`, `log(msg)`, `console`, `setTimeout`, `budget`, `args`, `workflow(name, args?)` — and the body's `return` becomes the tool result. Full signatures, the `args` shape map, and every cap: api reference.
+`meta.phases[].model` is a dialog label only — the model is set per `agent()` call; a re-tiered phase sets both or the dialog lies. META DISCIPLINE: meta is a selection and dialog surface, not a second copy of the prompts — `description` states what the run produces, the args shape, and the phase spine; `whenToUse` is one selection clause; `phases[].detail` names each phase's concept. Law text, consumption protocols, and derived agent tallies live in the prompts and the code — a meta that re-serializes them drifts on every stage edit and buries the contract the dialog exists to show ([13]-[FRAGILE_PROSE]). Size is never the metric, in meta or in prompts: prose optimizes by DENSITY — wording refined per the docgen register and the `docs/standards/` prose owners until fewer words carry the same guidance — and never by dropping guidance the acting agent needs; no gate or script imposes a length cap. The lean-prompt shaping that trims intensifiers and hostile register is codex-lane law (external-lanes reference), never a general bar. Then the body: async JavaScript with injected globals — `agent(prompt, opts?)`, `pipeline(items, …stages)`, `parallel(thunks)`, `phase(title)`, `log(msg)`, `console`, `setTimeout`, `budget`, `args`, `workflow(name, args?)` — and the body's `return` becomes the tool result. Full signatures, the `args` shape map, and every cap: api reference.
 
 The three `agent()` options tuned most, independent axes:
 

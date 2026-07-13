@@ -847,7 +847,23 @@ Vocabulary, one meaning each: a LANE is one concurrent worker in a fan — its o
 
 The scratch convention — one layout, no exceptions:
 
-- Run scratch is `.claude/scratch/<workflow-name>/` (repo-relative, gitignored, ephemeral — deletable once the run's campaign closes). ONE folder per workflow; never a tool-segregated dir, never a bespoke sibling. Scope (campaign/target slug) rides the FILENAME, never extra nesting.
+- Run scratch is `.claude/scratch/<workflow-name>-<slug>-<hash>` (repo-relative, gitignored, ephemeral — deletable once the run's campaign closes): ONE FLAT directory per INSTANCE, never per workflow. A per-workflow constant dir mixes the products of concurrent and successive runs — a sibling run's leftover report reads as THIS run's product to any consumer handed the path, and a second launch clobbers a paused run's dossiers.
+- The script mints the path deterministically from its NORMALIZED args, after args normalization and never in a constants block above it — a clock or randomness breaks resume, since a resume re-executes the script and must rehydrate the identical directory.
+- `<slug>` is the human-readable scope (target basenames joined, lowercased, `[^a-z0-9.-]` runs collapsed to `-`, bounded ~60 chars); `<hash>` is a short FNV-1a of the normalized args JSON, so equal slugs over distinct arg sets still fork (`libs/python/data` and `libs/typescript/data` share a basename, never a directory). Never a tool-segregated dir, never a bespoke sibling, never extra nesting — scope beyond the instance rides the FILENAME.
+
+```js conceptual
+// Instance mint — sits AFTER args normalization; deterministic, so a resume recomputes the identical path.
+const fnv1a = (s) => {
+    let h = 0x811c9dc5;
+    for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 0x01000193);
+    return (h >>> 0).toString(16).padStart(8, '0').slice(0, 6);
+};
+const SCRATCH =
+    '.claude/scratch/' +
+    ('<workflow-name>-' + TARGETS.map((t) => t.split('/').pop().toLowerCase()).join('-')).replace(/[^a-z0-9.-]+/g, '-').slice(0, 60) +
+    '-' +
+    fnv1a(JSON.stringify(TARGETS));
+```
 - Gitignore consequence: `rg`/`fd`/Grep skip ignored dirs by default, so consumers are handed EXPLICIT paths (the roster) and read them directly — never asked to discover products by search. An agent that must hunt inside scratch passes `--no-ignore` (rg) or `-I` (fd).
 - File grammar: `<scope>-<lane>-<artifact>.<ext>` — lane is a 1-2 word semantic slug (`s0`, `gov`, `rip-python`), artifact names the role (`report`, `dossier`, `map`). A codex lane owns exactly one artifact — its report, written by the wrapper from the tool result; no task, schema, events, or stderr files exist on the MCP path. No agent names, no timestamps, no run IDs in filenames.
 - A lane's first act deletes its own prior report (`rm -f`) — a leftover file reads as THIS run's product to any consumer handed the path.

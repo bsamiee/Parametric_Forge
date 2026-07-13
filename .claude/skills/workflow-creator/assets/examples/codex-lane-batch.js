@@ -26,15 +26,23 @@ export const meta = {
     ],
 };
 
-// --- [CONSTANTS] -----------------------------------------------------------------------
-
-const SCRATCH = '.claude/scratch/codex-lane-batch'; // run scratch: lane report files; receipts carry the paths
-
 // --- [INPUTS] --------------------------------------------------------------------------
 
 // Structured args — heavy scopes fan one lane each; short probe files batch into one wrapper.
 const scopes = Array.isArray(args?.scopes) && args.scopes.length ? args.scopes : ['libs/python/geometry', 'libs/python/compute'];
 const probes = Array.isArray(args?.probes) && args.probes.length ? args.probes : ['pyproject.toml', 'libs/python/README.md'];
+// Per-instance run scratch (lane report files; receipts carry the paths) — minted deterministically from the normalized args AFTER
+// normalization, so concurrent and successive runs never share a directory and a resume rehydrates the same one; clock or randomness breaks resume.
+const fnv1a = (s) => {
+    let h = 0x811c9dc5;
+    for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 0x01000193);
+    return (h >>> 0).toString(16).padStart(8, '0').slice(0, 6);
+};
+const SCRATCH =
+    '.claude/scratch/' +
+    ('codex-lane-batch-' + scopes.map((s) => s.split('/').pop().toLowerCase()).join('-')).replace(/[^a-z0-9.-]+/g, '-').slice(0, 60) +
+    '-' +
+    fnv1a(JSON.stringify([scopes, probes]));
 
 // --- [MODELS] --------------------------------------------------------------------------
 

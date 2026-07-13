@@ -106,8 +106,8 @@ Recover a failed, cancelled, or quit run with a CONTINUATION SCRIPT, never journ
 // Stage 1 completed in wf_a1b2c3; its outputs reconstructed from the journal's `result`
 // records and baked in as a literal. The body below is the original stage 2 onward, unchanged.
 const stage1 = [
-    { lane: "s0", report: ".claude/scratch/rebuild/gov-s0-report.json", entries: 14 },
-    { lane: "s1", report: ".claude/scratch/rebuild/api-s1-report.json", entries: 9 },
+    { lane: "s0", report: ".claude/scratch/rebuild-core-data-b7c42c/gov-s0-report.json", entries: 14 },
+    { lane: "s1", report: ".claude/scratch/rebuild-core-data-b7c42c/api-s1-report.json", entries: 9 },
 ];
 ```
 
