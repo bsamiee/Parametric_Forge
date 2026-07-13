@@ -24,12 +24,12 @@ A skill is deployed law plus packaged capability: the description competes for s
 [REFERENCES]:
 - [01]-[ANATOMY](references/anatomy.md): bundle anatomy, budgets, frontmatter policy, the root schema, freedom calibration
 - [02]-[TRIGGERS](references/triggers.md): trigger science and listing economics
-- [03]-[DEFECTS](references/defects.md): the authoring defect catalog
+- [03]-[DEFECTS](references/defects.md): the authoring defect catalog, each class carrying its copyable repair
 - [04]-[EVALS](references/evals.md): the eval loop that proves firing and adherence
 - [05]-[ESTATE](references/estate.md): fleet-scale governance, audit cadence, mirror discipline
 
-[EXAMPLES]:
-- [01]-[REPAIRS](examples/repairs.md): pressure cases with worked fixes
+[TEMPLATES]:
+- [01]-[SKILL](templates/skill.template.md): the root schema as a copyable skeleton; fill the slots, leave zero residual tokens
 
 [SCRIPTS]:
 - [01]-[ESTATE_AUDIT](scripts/estate_audit.py): one-pass fleet sweep; invocation in the estate section
@@ -63,9 +63,9 @@ Selection runs on name and description alone — the body is invisible until aft
 
 Findings cite class and line; definitions, detection tests, and reframes are [references/defects.md](references/defects.md).
 
-[TRIGGER]: `OVER_BROAD_TRIGGER` `STARVED_TRIGGER` `KEYWORD_STUFFING` `SELF_VOICED_DISCOVERY`
+[TRIGGER]: `OVER_BROAD_TRIGGER` `STARVED_TRIGGER` `KEYWORD_STUFFING` `SELF_VOICED_DISCOVERY` `COLLIDING_TRIGGERS`
 [DISCLOSURE]: `MONOLITH_ROOT` `REFERENCE_MAZE` `UNEARNED_HOP`
-[BODY]: `NO_OP_INTENSIFIER` `FILLER_LEAD` `CHAIN_RESTATEMENT` `QUALITY_LADDER` `COMMAND_CATALOG` `LIFECYCLE_SCRIPT` `CHECKLIST_TAIL` `SCRIPT_AS_PROSE` `BARE_ABSTRACTION` `FIXED_OUTPUT` `DEGREES_OF_FREEDOM` `SEDIMENT` `NEGATION_ONLY` `SUPPLY_CHAIN` `DECORATIVE_DIAGRAM` `INERT_EXAMPLE`
+[BODY]: `NO_OP_INTENSIFIER` `FILLER_LEAD` `CHAIN_RESTATEMENT` `QUALITY_LADDER` `COMMAND_CATALOG` `LIFECYCLE_SCRIPT` `CHECKLIST_TAIL` `SCRIPT_AS_PROSE` `BARE_ABSTRACTION` `FIXED_OUTPUT` `DEGREES_OF_FREEDOM` `SEDIMENT` `NEGATION_ONLY` `SUPPLY_CHAIN` `DECORATIVE_DIAGRAM` `INERT_EXAMPLE` `FORM_MISMATCH`
 
 ## [06]-[EVALS]
 

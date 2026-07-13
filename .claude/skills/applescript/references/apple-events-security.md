@@ -142,7 +142,7 @@ The `access` row keys on `(service, client, client_type, indirect_object_identif
 |  [04]   |      `6`      | MDM policy     |
 |  [05]   |     `11`      | entitled       |
 
-The columns `pid_version`, `boot_uuid`, `last_modified`, and `last_reminded` bind the grant to one process generation and reminder cadence. `tccutil reset AppleEvents [bundle-id]` is the sanctioned reset path — it clears the client-to-target relationship rows and forces re-consent. Resetting a sender, resigning a sender, moving a path-identified binary, or changing receiver identity invalidates an existing approval. Enterprise pre-grants flow through PPPC, never through direct `TCC.db` edits.
+The columns `pid_version`, `boot_uuid`, `last_modified`, and `last_reminded` bind the grant to one process generation and reminder cadence. `tccutil reset AppleEvents [bundle-id]` is the sanctioned reset path — it clears the client-to-target relationship rows and forces re-consent. Resetting a sender, moving a path-identified binary, or changing receiver identity invalidates an existing approval. The `csreq` is a code-requirement predicate, not a fixed hash, so a stable Team-ID-plus-bundle-ID designated requirement carries the grant across rebuilds and re-signs, while an ad-hoc or cdhash-pinned identity — every unsigned or `--compile` rebuild a fresh code identity — stops satisfying the stored requirement and silently fails the next send with `errAEEventNotPermitted` (`-1743`); an agent that rebuilds an applet signs it under a stable designated requirement or re-earns consent every build. Enterprise pre-grants flow through PPPC, never through direct `TCC.db` edits.
 
 ## [07]-[AUDIT_TOKEN_ATTRIBUTION]
 

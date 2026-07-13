@@ -11,7 +11,7 @@ A non-fork worker's opening context is exactly: its own system prompt (the defin
 Every delegation prompt carries five fields; a missing field is filled by the worker's imagination.
 
 - [01]-[OBJECTIVE]: The single outcome, stated as a verifiable end state, never an activity.
-- [02]-[TERRITORY]: Exact files, directories, symbols, or sources in scope.
+- [02]-[TERRITORY]: Exact files, directories, symbols, or sources in scope, and the tools or MCP servers the worker leans on where the default set is wrong.
 - [03]-[EXCLUSIONS]: Adjacent surfaces the worker must not touch, and the boundary with sibling workers.
 - [04]-[CONTRACT]: The return shape — schema, receipt fields, report sections, evidence requirements.
 - [05]-[ACCEPTANCE]: The externally checkable signal that the work is done — passing gate, count, artifact.

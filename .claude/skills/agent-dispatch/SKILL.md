@@ -5,14 +5,14 @@ description: >-
     turn, `/btw`, fork, subagent, background task, nested subagent, agent team, dynamic
     workflow — with the selection economics that pick one, the delegation contract that makes
     a worker prompt self-contained (objective, territory, output contract, receipt), the
-    communication topologies (star, pipeline, panel, tournament, loop), depth budgeting for
-    meta-delegation, and the runtime mechanics of background permission surfacing,
-    `SendMessage` resume, and persistent worker memory. Use when parallelizing work,
+    communication topologies (star, pipeline, panel, tournament, loop), depth and fan-out
+    budgeting, and the runtime mechanics of background permission surfacing, `SendMessage`
+    resume, and worker memory. Use when parallelizing work,
     delegating a task to a subagent or teammate, choosing between a subagent, fork, team, or
     workflow, writing a `.claude/agents/` definition, designing a fan-out or review pipeline,
     or when a delegation stalls, over-prompts for permission, or returns weak results.
     Authoring runnable workflow scripts belongs to workflow-creator; gpt-5.6 offload belongs
-    to the codex skill; harness configuration belongs to harness-config.
+    to the codex skill and Gemini offload to agy; harness configuration belongs to harness-config.
 ---
 
 # [AGENT_DISPATCH]
@@ -42,6 +42,8 @@ Dispatch is three decisions taken in order: placement — which execution surfac
 Placement law rides four axes: cost rises down the table, so the cheapest surface that isolates the noise wins; a fork beats a fresh subagent when the worker needs the conversation so far, because the fork reuses the parent prompt cache; a team beats parallel subagents only when workers must communicate, since each teammate is a full session priced accordingly; a workflow beats a team when the plan is codifiable and the intermediates belong in script variables instead of any context window.
 
 The law is hierarchy-independent: every agent at every depth — main loop, subagent, workflow agent, offloaded session — applies the same placement economics and the same model mixture. Writing and judgment run at capable tiers, recon and mechanical legs offload to the workhorse lineage, an independent perspective comes from an external lineage — codex for workhorse second reads, agy for Gemini judgment and visual legs — rather than a second reviewer of the same one, and no agent escalates its own model tier beyond its brief. The active repo's model table prices the tiers; the codex and agy skills own their legs once this law picks one.
+
+Fan-out width is budgeted like depth. Worker count tracks genuine task breadth — one worker or none for a lookup, a few for a bounded comparison, many only for a breadth-heavy sweep across disjoint territories — and nothing is spawned to look busy. Delegation costs roughly an order of magnitude more tokens than a main-turn pass, so coupled work, dependent-step chains, and low-value edits stay in the main turn where the context is already warm; a fan-out earns its cost only when the territories are independent and the parallel work exceeds one window. Over-fanning a trivial or serial task is the dominant delegation spam, as wasteful as leaving noisy work undelegated.
 
 ## [03]-[CONTRACT]
 

@@ -11,6 +11,8 @@ The description is built in fixed order because truncation eats from the tail:
 - [UTTERANCES]: Quoted user phrasings that select the skill even when the domain noun is absent — the phrases a task actually arrives wearing.
 - [BOUNDARY]: The adjacent deliverable the skill refuses, named last, naming the owning sibling where one exists.
 
+The loader admits a `when_to_use` field appended to the description under one shared cap; the utterance and boundary clauses fold into the single description instead, so one budgeted surface carries the whole trigger and the tail-truncation law governs it undivided.
+
 Third person throughout; a voiced description breaks the selection register beside its siblings. The name is the directory name: a lowercase hyphenated noun or gerund phrase naming the deliverable, never a vague stem such as helper, utils, or tools, and never a loader's reserved words.
 
 ## [02]-[LISTING_ECONOMICS]

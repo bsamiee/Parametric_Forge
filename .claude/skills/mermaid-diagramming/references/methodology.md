@@ -126,7 +126,7 @@ The question shape selects the declaration; the full grammar, floor, and trap ro
 |  [29]   | plausible causes of one effect        | `ishikawa-beta`      |
 |  [30]   | wire-format bit contract              | `packet`             |
 
-The quantitative rows — pie, xychart, sankey, radar — hold only while the artifact must stay a mermaid fence; a standing data visualization routes to the dataviz lane.
+The quantitative rows — pie, xychart, sankey, radar — hold only for a one-off structural illustration inside a doc that must stay a mermaid fence; a reused, interactive, or precision-critical chart routes to the dataviz lane.
 
 [CONTRAST]: classic mismatches, each repaired by payload alignment:
 - lifecycle drawn as flowchart -> `stateDiagram-v2`
@@ -134,6 +134,7 @@ The quantitative rows — pie, xychart, sankey, radar — hold only while the ar
 - dependency drawn as sequence -> `flowchart`
 - ownership lanes drawn as subgraph decoration -> `swimlane-beta`
 - a tree with one needed cross-link -> `flowchart`, the subject is a graph
+- hierarchy by lens: measured leaf weight -> `treemap-beta`, radial concept partition -> `mindmap`, on-disk containment -> `treeView-beta`
 - quantity drawn as node-link -> chart
 
 ## [08]-[SOUNDNESS]

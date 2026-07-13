@@ -1,6 +1,6 @@
 # [EVALS]
 
-A skill's value is measured, never assumed, along exactly two axes: trigger — the skill loads on the tasks it owns and stays silent on its neighbors — and adherence — the loaded body changes output relative to a run without it. Both run before a bundle ships and after every material revision; a skill without an eval history is a hypothesis wearing a description.
+A skill's value is measured, never assumed, along exactly two axes: trigger — the skill loads on the tasks it owns and stays silent on its neighbors — and adherence — the loaded body changes output relative to a run without it. Both run before a bundle ships and after every material revision; the suite is authored before the body it measures, so a body rule ships only after an adherence run proves it changes output, and a skill without an eval history is a hypothesis wearing a description.
 
 ## [01]-[TRIGGER_EVALS]
 

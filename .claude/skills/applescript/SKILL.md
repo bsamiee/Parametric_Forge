@@ -30,21 +30,21 @@ Load the reference, template, or example that owns the failing decision.
 - [06]-[DEPLOY_DEBUG](references/deploy-debug.md): artifact topology, signing and notarization, the shell boundary, Apple Event performance, error architecture, the observation rails, Nix and Homebrew packaging, and the Swift migration boundary.
 
 [TEMPLATES]:
-- [01]-[HARDENED_RUNNER](assets/templates/hardened-osascript-runner.sh): an agent or CLI drives automation through `osascript` behind a silent consent preflight, argv-only data, a JSON envelope, a timeout budget, and hash-only audit.
-- [02]-[OBJC_BRIDGE_TOOL](assets/templates/jxa-objc-tool.js): JXA reaches Foundation and CoreServices through an `NSTask` process kernel, a deep-unwrap boundary, and a JSON envelope over `run(argv)`.
-- [03]-[COMPILED_LIBRARY](assets/templates/applescript-library.applescript): reusable AppleScript ships as a `.scpt`/`.scptd` script object with policy rows, receipt-shaped errors, and AppleScriptObjC JSON and atomic-write rails.
-- [04]-[NOTARIZED_APPLET](assets/templates/notarized-applet.sh): a script-app carries a hardened runtime, the minimal Apple Events entitlement, nested signing, notarization, and a stapled ticket.
+- [01]-[HARDENED_RUNNER](templates/hardened-osascript-runner.sh): an agent or CLI drives automation through `osascript` behind a silent consent preflight, argv-only data, a JSON envelope, a timeout budget, and hash-only audit.
+- [02]-[OBJC_BRIDGE_TOOL](templates/jxa-objc-tool.js): JXA reaches Foundation and CoreServices through an `NSTask` process kernel, a deep-unwrap boundary, and a JSON envelope over `run(argv)`.
+- [03]-[COMPILED_LIBRARY](templates/applescript-library.applescript): reusable AppleScript ships as a `.scpt`/`.scptd` script object with policy rows, receipt-shaped errors, and AppleScriptObjC JSON and atomic-write rails.
+- [04]-[NOTARIZED_APPLET](templates/notarized-applet.sh): a script-app carries a hardened runtime, the minimal Apple Events entitlement, nested signing, notarization, and a stapled ticket.
 
 [EXAMPLES]:
-- [01]-[CONSENT_PREFLIGHT](assets/examples/aedetermine-preflight.js): `AEDeterminePermissionToAutomateTarget` classified silently through the JXA ObjC bridge, reading the granted, denied, and never-asked verdicts.
-- [02]-[RAW_EVENT_CODES](assets/examples/raw-apple-event-codes.applescript): chevron `«event»`/`«class»`/`«constant»` literals and `NSAppleEventDescriptor` list and record surgery over the four-character ABI.
-- [03]-[THREAD_SAFETY](assets/examples/osakit-thread-safety.swift): one serial `OSALanguageInstance` per lane behind a Swift actor, with the main-thread and run-loop-reentrancy confinement.
-- [04]-[EVENT_OBSERVATION](assets/examples/appleevents-observation.sh): the `com.apple.appleevents` unified-log rail, the `AEDebug` per-process taps, and the `tcc_modify` consent-change stream as a runnable probe.
-- [05]-[DICTIONARY_ROUTING](assets/examples/dictionary-first-routing.js): a runtime dictionary probe before script synthesis and a pathological `whose` predicate delegated across the JXA and AppleScript boundary.
+- [01]-[CONSENT_PREFLIGHT](examples/aedetermine-preflight.js): `AEDeterminePermissionToAutomateTarget` classified silently through the JXA ObjC bridge, reading the granted, denied, and never-asked verdicts.
+- [02]-[RAW_EVENT_CODES](examples/raw-apple-event-codes.applescript): chevron `«event»`/`«class»`/`«constant»` literals and `NSAppleEventDescriptor` list and record surgery over the four-character ABI.
+- [03]-[THREAD_SAFETY](examples/osakit-thread-safety.swift): one serial `OSALanguageInstance` per lane behind a Swift actor, with the main-thread and run-loop-reentrancy confinement.
+- [04]-[EVENT_OBSERVATION](examples/appleevents-observation.sh): the `com.apple.appleevents` unified-log rail, the `AEDebug` per-process taps, and the `tcc_modify` consent-change stream as a runnable probe.
+- [05]-[DICTIONARY_ROUTING](examples/dictionary-first-routing.js): a runtime dictionary probe before script synthesis and a pathological `whose` predicate delegated across the JXA and AppleScript boundary.
 
 ## [02]-[IDENTITY_LAW]
 
-TCC Automation consent binds to the process identity that sends the event, so the artifact that owns durable consent is the signed container, never the development shell. A script run through Terminal, Script Editor, an `osascript` invocation, an applet, Automator, Shortcuts, or an embedding host earns a distinct TCC row keyed on that sender's code requirement. Distribution therefore exercises Apple Events from the final signed applet or command-line tool, and a permission lane rechecks authorization before each privileged send because an OS update resets some grants. A helper embedded in a main app is audited as its own sender unless the system attributes the prompt to the container.
+TCC Automation consent binds to the process identity that sends the event, so the artifact that owns durable consent is the signed container, never the development shell. A script run through Terminal, Script Editor, an `osascript` invocation, an applet, Automator, Shortcuts, or an embedding host earns a distinct TCC row keyed on that sender's code requirement. Distribution therefore exercises Apple Events from the final signed applet or command-line tool, and a permission lane rechecks authorization before each privileged send because an OS update resets some grants. A helper embedded in a main app is audited as its own sender unless the system attributes the prompt to the container. The grant binds to the sender's code-requirement predicate, so a stable Team-ID-and-bundle-ID designated requirement carries consent across rebuilds while an ad-hoc or cdhash-pinned identity re-earns it every build.
 
 ## [03]-[CONSENT_LAW]
 

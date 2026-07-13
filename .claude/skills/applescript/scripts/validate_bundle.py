@@ -126,8 +126,8 @@ def _fences(path: Path, /) -> Block[Admitted]:
 
 
 def discovered(bundle: Path, /) -> Block[Admitted]:
-    templates = Block.of_seq(sorted((bundle / "assets" / "templates").glob("*"))).choose(_template)
-    examples = Block.of_seq(sorted((bundle / "assets" / "examples").glob("*"))).choose(_template)
+    templates = Block.of_seq(sorted((bundle / "templates").glob("*"))).choose(_template)
+    examples = Block.of_seq(sorted((bundle / "examples").glob("*"))).choose(_template)
     documents = Block.of_seq(sorted((bundle / "references").glob("*.md")))
     return documents.fold(lambda acc, doc: acc.append(_fences(doc)), templates.append(examples))
 

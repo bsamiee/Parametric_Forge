@@ -2,7 +2,7 @@
 name: mermaid-diagramming
 description: >-
     Generates and validates Mermaid diagrams with YAML frontmatter, ELK layout, Dracula theme
-    tokens, and a bundled render-plus-graph-logic validator. Owns diagram methodology — when to
+    tokens, and a bundled render, graph-logic, and SVG-geometry validator. Owns diagram methodology — when to
     diagram, node and edge selection, per-type construction, logical soundness — the archetype
     template catalog from architecture spine to weighted decomposition, the concept-to-diagram
     map that turns state machines, dispatch topologies, dependency graphs, protocol seams, and
@@ -80,7 +80,7 @@ A diagram is not done until its fence passes both stages: graph-logic checks ove
 uv run scripts/validate_mermaid.py <file.md ...>
 ```
 
-Each fence emits `file:line: STATUS check detail` rows with check kinds `render`, `frontmatter`, `contract`, `logic`, `setup`, `read`, and `collect`; `--json` emits identical-key NDJSON for tooling. Contract, logic, and frontmatter rows fire only on findings — a clean fence prints its render row alone, and silence from a check is a pass. Graph-logic analysis covers the families the validator implements; any family outside that set emits a `logic-unimplemented` warn instead of silent approval. A logic failure blocks on a structural break the graph cannot resolve, and a logic warn demands a split or a stated reason; the emitted row names the exact condition. Contract warnings cover accessibility presence and order, `theme: base`, the flat-look lock (`look: classic`, `useGradient`, `dropShadow`), the mono-stack floors, `clusterBkg`, label backing, canonical classes, linkStyle index drift, semantic edge rails, sequence grouping, and palette drift including translucent-alpha discipline. `--no-render` runs the logic and frontmatter checks alone for a fast loop; the process exits nonzero when any fence fails. A render failure splits `syntax` from `environment`, so a missing browser never masquerades as a broken diagram.
+Each fence emits `file:line: STATUS check detail` rows with check kinds `render`, `legibility`, `frontmatter`, `contract`, `logic`, `export`, `setup`, `read`, and `collect`; `--json` emits identical-key NDJSON for tooling. Contract, logic, legibility, and frontmatter rows fire only on findings — a clean fence prints its render row alone, and silence from a check is a pass. Graph-logic analysis covers the families the validator implements; any family outside that set emits a `logic-unimplemented` warn instead of silent approval. A logic failure blocks on a structural break the graph cannot resolve, and a logic warn demands a split or a stated reason; the emitted row names the exact condition. Contract warnings cover accessibility presence and order, `theme: base`, the flat-look lock (`look: classic`, `useGradient`, `dropShadow`), the mono-stack floors, `clusterBkg`, label backing, canonical classes, linkStyle index drift, semantic edge rails, sequence grouping, and palette drift including translucent-alpha discipline. `--no-render` runs the logic and frontmatter checks alone for a fast loop; the process exits nonzero when any fence fails. A render failure splits `syntax` from `environment`, so a missing browser never masquerades as a broken diagram. After a fence renders, the `legibility` pass parses the SVG geometry for the graph families (flowchart, state, ER, class) and emits `node-overlap` (fail), `edge-over-node`, and `edge-crossings:N` rows — the mechanical arm of the legibility audit, computed from node bounding boxes and edge routing rather than eyeballed; sequence, gantt, and quantitative families carry inherent crossings and are exempt.
 
 The canon checker runs beside the validator as `uv run scripts/check_canon.py <file.md ...>` — a render-free, table-driven enforcement of the theming, styling, and config canon per family (palette closure, alpha tiers, yellow law, micro-scale stamps, per-family floors) emitting the same `file:line: STATUS canon rule detail` row shape with `--json` NDJSON and a nonzero exit on any fail. `--explain <rule-id>` prints a finding's canon sentence and owning reference.
 
@@ -97,14 +97,10 @@ The canon checker runs beside the validator as `uv run scripts/check_canon.py <f
 
 ## [06]-[LEGIBILITY]
 
-Legibility bounds a diagram, not syntax capacity. A rendered diagram ships only after it passes every legibility check:
+Legibility bounds a diagram, not syntax capacity. A rendered diagram ships only after both arms clear.
 
-- Labels render untruncated.
-- Edges do not visually dominate nodes.
-- Orientation matches reading order.
-- Node groups stay visually separable.
-- Contrast survives both light and dark hosts.
-- The diagram type matches the subject.
+- [MACHINE]: The validator's `legibility` pass owns the geometric arm from the rendered SVG — `node-overlap` blocks, `edge-over-node` and `edge-crossings:N` warn; a crossing is a defect unless the crossing is the subject, repaired at the source by reorder, re-home, re-port, or split.
+- [JUDGMENT]: The reviewer clears what geometry cannot score — labels render untruncated, orientation matches reading order, contrast survives both light and dark hosts, and the diagram type matches the subject.
 
 A faulted fence converges on its own source across at most five render-inspect-edit rounds; each correction is a minimal text edit to the fence itself, never a sibling file.
 

@@ -6,29 +6,30 @@ A concept arrives as code, prose, a plan, or an argument — never as a diagram 
 
 Read the material for the shape, not the topic. Every row names the signals that select it and the archetype that owns it; the archetype's template carries the construction law.
 
-| [INDEX] | [SHAPE]             | [SIGNALS_IN_THE_MATERIAL]                    | [ROUTE]                                                         |
-| :-----: | :------------------ | :------------------------------------------- | :-------------------------------------------------------------- |
-|  [01]   | mode machine        | _in_ a state; "once X, never back"           | lifecycle                                                       |
-|  [02]   | dispatch topology   | one entry point, a discriminant, many arms   | logic-flow                                                      |
-|  [03]   | ownership walk      | "first, then, finally" across owners         | spine                                                           |
-|  [04]   | dependency lattice  | "X needs Y"; imports; "never depend upward"  | strata                                                          |
-|  [05]   | boundary seam       | two packages naming each other's types       | seam-graph                                                      |
-|  [06]   | conversation        | parties taking turns; request/response pairs | wire-sequence                                                   |
-|  [07]   | identity web        | "each X has many Y"; uniqueness claims       | schema                                                          |
-|  [08]   | command causality   | "when X happens, Y fires"; handlers emit     | event-flow                                                      |
-|  [09]   | chronology          | dated occurrences, no causal claim           | history for repositories, `timeline` otherwise                  |
-|  [10]   | committed future    | dated work with "after" deps; milestones     | schedule                                                        |
-|  [11]   | queue snapshot      | named stages now; ticket/owner vocabulary    | board                                                           |
-|  [12]   | zoned deployment    | units in zones over ports and protocols      | topology                                                        |
-|  [13]   | system neighborhood | one system and all that talks to it          | landscape                                                       |
-|  [14]   | capability profile  | one axis scored across two subjects          | profile                                                         |
-|  [15]   | weighted whole      | one measure/unit across parts of a whole     | decomposition                                                   |
-|  [16]   | strict taxonomy     | is-a/part-of under one root, no cross-links  | `mindmap`; a needed cross-link makes it a `flowchart`           |
-|  [17]   | diagnosis fan       | many conditions converging on one effect     | `ishikawa-beta`                                                 |
-|  [18]   | position judgment   | items placed by two independent gradings     | `quadrantChart`; evolution and visibility select `wardley-beta` |
-|  [19]   | domain sort         | practices sorted by cause-effect knowability | `cynefin-beta`                                                  |
-|  [20]   | admitted language   | strings/fields/bit-ranges a contract admits  | `railroad-*-beta` for grammars, `packet` for wire formats       |
-|  [21]   | laned procedure     | owning actor is the point, handoffs the cost | `swimlane-beta`                                                 |
+| [INDEX] | [SHAPE]             | [SIGNALS_IN_THE_MATERIAL]                       | [ROUTE]                                                         |
+| :-----: | :------------------ | :---------------------------------------------- | :-------------------------------------------------------------- |
+|  [01]   | mode machine        | _in_ a state; "once X, never back"              | lifecycle                                                       |
+|  [02]   | dispatch topology   | one entry point, a discriminant, many arms      | logic-flow                                                      |
+|  [03]   | ownership walk      | "first, then, finally" across owners            | spine                                                           |
+|  [04]   | dependency lattice  | "X needs Y"; imports; "never depend upward"     | strata                                                          |
+|  [05]   | boundary seam       | two packages naming each other's types          | seam-graph                                                      |
+|  [06]   | conversation        | parties taking turns; request/response pairs    | wire-sequence                                                   |
+|  [07]   | identity web        | "each X has many Y"; uniqueness claims          | schema                                                          |
+|  [08]   | command causality   | "when X happens, Y fires"; handlers emit        | event-flow                                                      |
+|  [09]   | chronology          | dated occurrences, no causal claim              | history for repositories, `timeline` otherwise                  |
+|  [10]   | committed future    | dated work with "after" deps; milestones        | schedule                                                        |
+|  [11]   | queue snapshot      | named stages now; ticket/owner vocabulary       | board                                                           |
+|  [12]   | zoned deployment    | units in zones over ports and protocols         | topology                                                        |
+|  [13]   | system neighborhood | one system and all that talks to it             | landscape                                                       |
+|  [14]   | capability profile  | one axis scored across two subjects             | profile                                                         |
+|  [15]   | weighted whole      | one measure/unit across parts of a whole        | decomposition                                                   |
+|  [16]   | strict taxonomy     | is-a/part-of under one root, no cross-links     | `mindmap`; a needed cross-link makes it a `flowchart`           |
+|  [17]   | diagnosis fan       | many conditions converging on one effect        | `ishikawa-beta`                                                 |
+|  [18]   | position judgment   | items placed by two independent gradings        | `quadrantChart`; evolution and visibility select `wardley-beta` |
+|  [19]   | domain sort         | practices sorted by cause-effect knowability    | `cynefin-beta`                                                  |
+|  [20]   | admitted language   | strings/fields/bit-ranges a contract admits     | `railroad-*-beta` for grammars, `packet` for wire formats       |
+|  [21]   | laned procedure     | owning actor is the point, handoffs the cost    | `swimlane-beta`                                                 |
+|  [22]   | phase sentiment     | one actor path scored by satisfaction per phase | `journey`                                                       |
 
 - mode machine: status or phase vocabulary; an enum field written from many sites under guards
 - dispatch topology: match or switch expressions; policy tables; routing rules; "depending on"
@@ -57,6 +58,7 @@ The document lists steps, so it becomes a flowchart of the steps in order.
 
 ```text accepted
 The steps carry three owners and four handoffs between them; ownership is the payload, so the shape is a laned procedure and the fence is swimlane-beta with the steps homed in owner lanes.
+| [22] | phase sentiment | one actor path scored by satisfaction per phase | `journey` |
 ```
 
 The naive reading maps surface order onto arrows; the shape reading asks which relation carries the reader's decision — order, ownership, dependency, causality, or identity — and routes on that relation.
@@ -64,7 +66,6 @@ The naive reading maps surface order onto arrows; the shape reading asks which r
 ## [03]-[MISFIT_SHAPES]
 
 Some concepts carry no inspectable relation, and a fence forced onto them decorates instead of asserting:
-
 - A scalar comparison across subjects is a table; position on a page adds nothing to two numbers.
 - An unordered roster is a list; drawing edges between peers invents relations the material never claimed.
 - A single relation across fewer than three parts is a clause; the root's mark threshold owns this floor.

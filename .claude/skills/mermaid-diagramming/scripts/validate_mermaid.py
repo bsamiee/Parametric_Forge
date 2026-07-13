@@ -1,18 +1,21 @@
 #!/usr/bin/env python3
 # /// script
 # requires-python = ">=3.13"
-# dependencies = ["cyclopts", "msgspec", "networkx", "xxhash"]
+# dependencies = ["cyclopts", "defusedxml", "msgspec", "networkx", "svgelements", "xxhash"]
 # ///
-"""Validate Mermaid fences through typed source analysis and SVG render proof."""
+"""Validate Mermaid fences through typed source analysis, SVG render proof, and rendered-geometry legibility inspection."""
 
 # ruff: noqa: T201, D101, D103
 
 # --- [RUNTIME_PRELUDE] ------------------------------------------------------------------
 
+import base64
 from collections import Counter
 from collections.abc import Iterable
+from contextlib import suppress
 from enum import StrEnum
 from itertools import pairwise
+import json
 from pathlib import Path
 import re
 import shlex
@@ -20,12 +23,18 @@ import shutil
 import subprocess
 import sys
 from tempfile import TemporaryDirectory
-from typing import Literal
+from typing import Literal, TYPE_CHECKING
 
 from cyclopts import App
+from defusedxml.ElementTree import fromstring, ParseError  # type: ignore[import-untyped]  # no bundled stubs
 import msgspec
 import networkx as nx
+from svgelements import Path as SvgPath  # type: ignore[import-untyped]  # ty: ignore[unresolved-import]  # untyped, no py.typed stub
 from xxhash import xxh3_128_hexdigest
+
+
+if TYPE_CHECKING:
+    from xml.etree.ElementTree import Element
 
 
 # --- [TYPES] ----------------------------------------------------------------------------
@@ -38,6 +47,7 @@ class Check(StrEnum):
     CONTRACT = "contract"
     EXPORT = "export"
     FRONTMATTER = "frontmatter"
+    LEGIBILITY = "legibility"
     LOGIC = "logic"
     READ = "read"
     RENDER = "render"
@@ -161,6 +171,14 @@ RENDER_CONFIG = {
     "architecture": {"randomize": False, "seed": 1001},
     "flowchart": {"defaultRenderer": "elk"},
 }
+
+# Geometry legibility: the g.node/path model families ELK and dagre both render; sequence/gantt/quantitative carry inherent crossings and are exempt.
+GEOM_FAMILIES = frozenset({Family.FLOWCHART, Family.STATE, Family.ER, Family.CLASS})
+GEOM_EDGE_CLASS = ("flowchart-link", "transition", "edge-thickness", "relation")
+GEOM_LABEL_TOK = frozenset({"label", "nodelabel", "edgelabel", "cluster-label"})
+GEOM_SAMPLES = 12
+TRANSLATE = re.compile(r"translate\(\s*([-\d.eE]+)[ ,]+([-\d.eE]+)")
+MATRIX = re.compile(r"matrix\(\s*(?:[-\d.eE]+[ ,]+){4}([-\d.eE]+)[ ,]+([-\d.eE]+)")
 
 
 def _browser_path() -> str | None:
@@ -720,6 +738,169 @@ def class_logic(diagram: Diagram) -> tuple[Row, ...]:
     )
 
 
+# --- [GEOMETRY] -------------------------------------------------------------------------
+
+
+def _delta(transform: str) -> tuple[float, float]:
+    if m := TRANSLATE.search(transform):
+        return float(m.group(1)), float(m.group(2))
+    if m := MATRIX.search(transform):
+        return float(m.group(1)), float(m.group(2))
+    return 0.0, 0.0
+
+
+def _tag(el: Element) -> str:
+    return el.tag.rsplit("}", 1)[-1]
+
+
+def _poly_d(points: str) -> str:
+    nums = re.findall(r"[-\d.eE]+", points)
+    return "M" + " L".join(f"{nums[i]},{nums[i + 1]}" for i in range(0, len(nums) - 1, 2)) + " Z" if len(nums) >= 4 else ""
+
+
+def _rect_box(el: Element) -> tuple[float, float, float, float]:
+    x, y, w, h = (float(el.get(key, 0)) for key in ("x", "y", "width", "height"))
+    return x, y, x + w, y + h
+
+
+def _circle_box(el: Element) -> tuple[float, float, float, float]:
+    cx, cy, r = (float(el.get(key, 0)) for key in ("cx", "cy", "r"))
+    return cx - r, cy - r, cx + r, cy + r
+
+
+def _path_box(el: Element) -> tuple[float, float, float, float] | None:
+    d = el.get("d") or _poly_d(el.get("points", ""))
+    box = SvgPath(d).bbox() if d else None
+    return (box[0], box[1], box[2], box[3]) if box else None
+
+
+# Shape-tag dispatch keeps the failure-guarding try body to one statement; the caller adds the accumulated translate.
+SHAPE_BOX = {"rect": _rect_box, "circle": _circle_box, "path": _path_box, "polygon": _path_box}
+
+
+def _shape_bbox(el: Element) -> tuple[float, float, float, float] | None:
+    if (shape := SHAPE_BOX.get(_tag(el))) is None:
+        return None
+    try:
+        return shape(el)
+    except (ValueError, TypeError):
+        return None
+
+
+def _group_box(group: Element, tx: float, ty: float) -> tuple[float, float, float, float] | None:
+    # Union the shape descendants of a node or cluster group, skipping label subtrees whose foreignObject inflates the box.
+    boxes: list[tuple[float, float, float, float]] = []
+
+    def descend(el: Element, ax: float, ay: float, *, labelled: bool) -> None:
+        dx, dy = _delta(el.get("transform", ""))
+        ax, ay = ax + dx, ay + dy
+        labelled = labelled or bool({t.lower() for t in el.get("class", "").split()} & GEOM_LABEL_TOK) or _tag(el) in {"foreignObject", "text"}
+        if not labelled and (bb := _shape_bbox(el)):
+            boxes.append((bb[0] + ax, bb[1] + ay, bb[2] + ax, bb[3] + ay))
+        for child in el:
+            descend(child, ax, ay, labelled=labelled)
+
+    for child in group:
+        descend(child, tx, ty, labelled=False)
+    return (min(b[0] for b in boxes), min(b[1] for b in boxes), max(b[2] for b in boxes), max(b[3] for b in boxes)) if boxes else None
+
+
+def _edge_polyline(el: Element, tx: float, ty: float) -> list[tuple[float, float]] | None:
+    # The exact ELK/dagre data-points routing waypoints when present; else the sampled path, curve smoothing included.
+    if raw := el.get("data-points"):
+        with suppress(ValueError, KeyError, TypeError):
+            waypoints = json.loads(base64.b64decode(raw))
+            if len(waypoints) >= 2:
+                return [(point["x"] + tx, point["y"] + ty) for point in waypoints]
+    if d := el.get("d"):
+        with suppress(ValueError, TypeError, ZeroDivisionError):
+            path = SvgPath(d)
+            return [(path.point(i / GEOM_SAMPLES).x + tx, path.point(i / GEOM_SAMPLES).y + ty) for i in range(GEOM_SAMPLES + 1)]
+    return None
+
+
+def svg_geometry(svg_text: str) -> tuple[list[tuple[float, float, float, float]], list[list[tuple[float, float]]], list[tuple[float, float, float, float]]]:
+    root = fromstring(svg_text)
+    nodes: list[tuple[float, float, float, float]] = []
+    edges: list[list[tuple[float, float]]] = []
+    clusters: list[tuple[float, float, float, float]] = []
+
+    def walk(el: Element, tx: float, ty: float) -> None:
+        dx, dy = _delta(el.get("transform", ""))
+        tx, ty = tx + dx, ty + dy
+        tokens = el.get("class", "").split()
+        if _tag(el) == "g" and ("cluster" in tokens or "subgraph" in tokens):
+            clusters.append(bb) if (bb := _group_box(el, tx, ty)) else None
+            return  # nested subgraph and cluster groups share one rect; capture once
+        if "node" in tokens:
+            nodes.append(bb) if (bb := _group_box(el, tx, ty)) else None
+            return  # node outline captured from its shapes; never descend into the label
+        if _tag(el) == "path" and any(kind in el.get("class", "") for kind in GEOM_EDGE_CLASS) and (pts := _edge_polyline(el, tx, ty)):
+            edges.append(pts)
+        for child in el:
+            walk(child, tx, ty)
+
+    walk(root, 0.0, 0.0)
+    return nodes, edges, clusters
+
+
+def _orient(o: tuple[float, float], a: tuple[float, float], b: tuple[float, float]) -> float:
+    return (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0])
+
+
+def _segments_cross(a: tuple[float, float], b: tuple[float, float], c: tuple[float, float], d: tuple[float, float]) -> bool:
+    # Proper (strict) intersection excludes shared endpoints and collinear touches by construction.
+    return _orient(c, d, a) * _orient(c, d, b) < 0 and _orient(a, b, c) * _orient(a, b, d) < 0
+
+
+def _endpoints(edge: list[tuple[float, float]], nodes: list[tuple[float, float, float, float]]) -> set[int]:
+    # An edge's true endpoint nodes are the boxes nearest its two termini; every other box it enters is a defect.
+    def nearest(pt: tuple[float, float]) -> int:
+        return min(
+            range(len(nodes)),
+            key=lambda i: (pt[0] - (nodes[i][0] + nodes[i][2]) / 2) ** 2 + (pt[1] - (nodes[i][1] + nodes[i][3]) / 2) ** 2,
+            default=-1,
+        )
+
+    return {index for index in (nearest(edge[0]), nearest(edge[-1])) if index >= 0}
+
+
+def _in_box(pt: tuple[float, float], box: tuple[float, float, float, float], pad: float) -> bool:
+    return box[0] - pad <= pt[0] <= box[2] + pad and box[1] - pad <= pt[1] <= box[3] + pad
+
+
+def geometry_rows(svg_text: str, diagram: Diagram) -> tuple[Row, ...]:
+    if diagram.family not in GEOM_FAMILIES:
+        return ()
+    try:
+        nodes, edges, clusters = svg_geometry(svg_text)
+    except (ParseError, ValueError, TypeError):
+        return ()
+    del clusters
+    rows: list[Row] = [
+        row(diagram.fence, Check.LEGIBILITY, "fail", f"node-overlap:{i}-{j}")
+        for i, a in enumerate(nodes)
+        for j, b in enumerate(nodes)
+        if i < j and a[0] < b[2] and a[2] > b[0] and a[1] < b[3] and a[3] > b[1]
+    ]
+    endpoints = [_endpoints(edge, nodes) for edge in edges] if nodes else [set() for _ in edges]
+    for ei, edge in enumerate(edges):
+        interior = edge[1:-1] if len(edge) > 2 else edge
+        crossed = next(
+            (ni for ni, box in enumerate(nodes) if ni not in endpoints[ei] and any(_in_box(pt, box, -2.0) for pt in interior)), None
+        )
+        rows.append(row(diagram.fence, Check.LEGIBILITY, "warn", f"edge-over-node:{ei}-{crossed}")) if crossed is not None else None
+    crossings = sum(
+        1
+        for i in range(len(edges))
+        for j in range(i + 1, len(edges))
+        if not (endpoints[i] & endpoints[j])
+        and any(_segments_cross(a, b, c, d) for a, b in pairwise(edges[i]) for c, d in pairwise(edges[j]))
+    )
+    rows.append(row(diagram.fence, Check.LEGIBILITY, "warn", f"edge-crossings:{crossings}")) if crossings else None
+    return tuple(rows)
+
+
 def rendered_rows(prefix: tuple[str, ...], cwd: Path | None, diagrams: tuple[Diagram, ...], cache_dir: Path, export: Path | None) -> tuple[Row, ...]:
     rows: list[Row] = []
     with TemporaryDirectory(prefix="mermaid-validate-") as tmp:
@@ -727,8 +908,13 @@ def rendered_rows(prefix: tuple[str, ...], cwd: Path | None, diagrams: tuple[Dia
         for diagram in diagrams:
             outcome = render(prefix, cwd, diagram, workdir, cache_dir)
             rows.append(outcome)
-            if export is not None and outcome.status == "ok":
-                rows.append(export_svg(Path(outcome.detail.split(":", 1)[1]), diagram, export))
+            if outcome.status != "ok":
+                continue
+            svg_path = Path(outcome.detail.split(":", 1)[1])
+            with suppress(OSError):
+                rows.extend(geometry_rows(svg_path.read_text(encoding="utf-8", errors="ignore"), diagram))
+            if export is not None:
+                rows.append(export_svg(svg_path, diagram, export))
     return tuple(rows)
 
 

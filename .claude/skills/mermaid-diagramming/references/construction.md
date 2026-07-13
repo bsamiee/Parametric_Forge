@@ -320,3 +320,18 @@ Each diagram type answers one question with a bounded mark vocabulary. Per type:
 - Method: three or four categories, causes deepened into sub-causes where evidence exists; growth deepens branches rather than adding categories.
 - Failure modes: categories that are org names rather than causal families, or a remedy listed where a condition belongs.
 - Logic checks: every cause states a condition, and each sits under exactly one category.
+
+[RADAR]:
+- Question: how two or three subjects compare across one shared measured axis set.
+- Axis: one dimension every subject scores on; a subject's reach along each axis is its score, and the enclosed polygon is its profile.
+- Signal: polygon shape and area — which axis a subject dominates and where two profiles cross.
+- Method: five to eight axes in one fixed order shared across subjects, scores from the assessment record with the scoring basis stated beside the fence, at most three subjects so the polygons stay separable.
+- Failure modes: axes on incomparable scales collapsing the shape, or so many overlaid subjects the polygons read as noise.
+- Logic checks: every subject scores on every axis, and all axes share one normalized range.
+
+[QUANTITATIVE]:
+- Question: pie — part-to-whole share in one fence; sankey — conserved flow splitting across stages; xychart — a measure against ordered categories.
+- Boundary: a standing, interactive, or precision-critical chart is the dataviz skill's; these hold only as a one-off structural illustration that must stay a mermaid fence.
+- Signal: pie — the dominant wedge; sankey — where volume concentrates and splits; xychart — the trend line or the outlier bar.
+- Failure modes: a pie past six slices or whose shares miss the whole, a sankey flow exceeding its source, or an xychart axis hiding the zero baseline.
+- Logic checks: pie shares sum to the whole; every interior sankey node's inflow equals its outflow; xychart categories share one measure and unit.
