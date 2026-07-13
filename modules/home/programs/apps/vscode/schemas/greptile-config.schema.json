@@ -2,6 +2,7 @@
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "forge://schemas/greptile-config.schema.json",
     "title": "Greptile .greptile/config.json",
+    "$comment": "Upstream census: https://www.greptile.com/docs/code-review/greptile-config-reference — Greptile publishes no official schema (no SchemaStore entry); this file mirrors that reference and is corrected against it on drift.",
     "type": "object",
     "additionalProperties": false,
     "$defs": {
@@ -52,6 +53,10 @@
         "skipReview": { "const": "AUTOMATIC", "description": "Skip auto-review entirely for files in this directory; manual triggers still work" },
         "shouldUpdateDescription": { "type": "boolean", "description": "Update PR description instead of posting a review comment" },
         "updateSummaryOnly": { "type": "boolean", "description": "Only update the summary; no individual inline comments" },
+        "updateExistingSummaryComment": {
+            "type": "boolean",
+            "description": "Update the existing summary comment in place on re-review instead of posting a new one; honored by the bot, absent from the current reference census"
+        },
         "fixWithAI": { "type": "boolean", "description": "Add AI fix prompts to suggested fixes" },
         "hideFooter": { "type": "boolean", "description": "Hide the Greptile footer from review comments" },
         "summarySection": { "$ref": "#/$defs/section", "description": "PR summary at the top of the review" },

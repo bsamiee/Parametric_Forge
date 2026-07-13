@@ -134,14 +134,12 @@
       # Keyboard shortcuts sync per platform: the forge-keys tail is mac law and must never ride to or from another platform's shortcut file.
       "settingsSync.keybindingsPerPlatform" = true;
 
-      # --- [SCHEMA_BINDING]: projected forge schemas validate estate file shapes
+      # --- [SCHEMA_BINDING]: projected forge schemas validate estate file shapes. Greptile publishes no schema, so the forge mirror binds here;
+      # .coderabbit.yaml self-binds through its yaml-language-server modeline (canonical coderabbit.ai URL, SchemaStore-registered) — no row here.
       "json.schemas" = map (name: {
         fileMatch = ["**/.greptile/${name}.json"];
         url = "file://${config.xdg.configHome}/forge/schemas/greptile-${name}.schema.json";
       }) ["config" "files"];
-      "yaml.schemas" = {
-        "https://storage.googleapis.com/coderabbit_public_assets/schema.v2.json" = ".coderabbit.yaml";
-      };
 
       # --- [LANGUAGE_BLOCKS]
       # Per-key merge law: a workspace block overrides only the keys it names, so these compose under every

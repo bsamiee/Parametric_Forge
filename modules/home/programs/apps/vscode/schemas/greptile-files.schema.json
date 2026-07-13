@@ -2,6 +2,7 @@
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "forge://schemas/greptile-files.schema.json",
     "title": "Greptile .greptile/files.json",
+    "$comment": "Upstream census: https://www.greptile.com/docs/code-review/greptile-config-reference (files.json section) — Greptile publishes no official schema; this file mirrors that reference and is corrected against it on drift.",
     "type": "object",
     "additionalProperties": false,
     "required": ["files"],
