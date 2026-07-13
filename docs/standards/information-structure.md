@@ -152,7 +152,9 @@ A type standard narrows this vocabulary only when it declares exact casing, acti
 
 [WHITESPACE]:
 - Put one blank line after every H1, H2, and H3 heading, and one blank line on each side of a table, fenced block, or diagram; a lead sentence introduces the structure but the blank line still separates prose from the opening fence.
-- Do not hard-wrap prose: write each paragraph as one logical line and let the renderer soft-wrap; insert manual breaks only for list items, table rows, record fields, and fences.
+- Raw prose is one logical line per paragraph: write the whole paragraph on a single physical line and let the editor soft-wrap it. A manual newline inside a paragraph is an artificial break the `prose-wrap` gate fails, because a fresh agent cannot tell an intentional break from a wrap artifact.
+- Manual line breaks are structural only — a list item, a table row, a record field line, and a fence body each own their physical line; ordinary paragraph prose never does.
+- A paragraph that runs long splits into two logical paragraphs separated by one blank line, each again a single physical line; it is never chopped mid-thought into fixed-width lines.
 
 ## [04]-[SECTION_SHAPES]
 

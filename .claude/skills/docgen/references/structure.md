@@ -32,6 +32,7 @@ Choose the container by what the reader retrieves; convert before styling.
 
 [CONTAINERS]:
 - Prose carries law; a list carries parallel atomic items; a card — key plus earned field lines — carries a decision cluster; a table carries atomic lookup facts crossed row-by-column; a tree or diagram carries structure and relations. Tables enumerate, cards legislate.
+- Prose is one logical line per paragraph: the whole paragraph rides a single physical line the editor soft-wraps, and a manual newline mid-paragraph is an artificial break the `prose-wrap` gate fails. Structural breaks belong to list items, table rows, record fields, and fence bodies; a long paragraph splits into two blank-line-separated paragraphs, never fixed-width lines.
 - A bullet is one atomic entry — one fact, one rule, one member. A closed token set referenced rather than defined rides inline after its group label on one line; the list form is earned only when members carry per-member content.
 - An entry carries one decision in one to two sentences, three at the hard cap; past the cap the entry is hiding a card, a labeled block, or section prose. Closed enumerations whose payload is the roster itself are registry entries and legal at length, and a `- Field: value` record field answers to the earned-field law at card altitude, never the entry budget.
 - A representation is declared regenerable, verified by tooling where a verifier exists, and never paraphrased back into prose — the paraphrase is a second copy that drifts.

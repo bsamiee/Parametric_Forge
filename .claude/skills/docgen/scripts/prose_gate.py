@@ -85,6 +85,7 @@ class Check(StrEnum):
 
 CAP = 150
 CELL_BUDGET = 160
+CELL_WORD_BUDGET = 6
 COLUMN_FLOOR = 5
 COMMENT_RUNT_FLOOR = 50
 COMMENT_SHRED_FLOOR = 100
@@ -207,6 +208,8 @@ META_PHRASE = re.compile(
 )
 # Quoted user utterances and code spans are trigger material, not voice.
 QUOTED_SPAN = re.compile(r"\"[^\"]*\"|“[^”]*”|`[^`]*`")
+# A cell carrying an internal comma or semicolon is a card wearing a row; the atomic budget is one clause of six words.
+CLAUSE_PUNCT = re.compile(r"[,;]")
 SKILL_NAME_SHAPE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 SKILL_NAME_RESERVED = re.compile(r"(?:^|-)(?:claude|anthropic)(?:-|$)")
 SKILL_VOICE = re.compile(r"\b(?:I(?!/)|me|my|mine|we|our|you|your)\b", re.IGNORECASE)
@@ -626,6 +629,13 @@ def lex(path: Path, text: str, cap: int) -> tuple[Document, tuple[Row, ...]]:
 # --- [CHECKS] ---------------------------------------------------------------------------
 
 
+def prose_column_cell(cell: str) -> bool:
+    # A stub-key column (short atomic decision key) is not prose; only a comma/semicolon or a phrase past the
+    # word budget marks a genuine prose column that a link cell must not ride beside.
+    bare = QUOTED_SPAN.sub(" ", cell)
+    return not LINK.search(bare) and (CLAUSE_PUNCT.search(bare) is not None or len(bare.split()) > CELL_WORD_BUDGET)
+
+
 def table_rows(doc: Document) -> tuple[Row, ...]:
     rows: list[Row] = []
     for table in doc.tables:
@@ -670,11 +680,17 @@ def table_rows(doc: Document) -> tuple[Row, ...]:
                 )
             )
         linked = any(LINK.search(QUOTED_SPAN.sub("", cell)) for body in table.rows for cell in body)
-        prose_bearing = any(
-            len(QUOTED_SPAN.sub("", cell).split()) >= 4 for body in table.rows for cell in body if not LINK.search(QUOTED_SPAN.sub("", cell))
-        )
+        prose_bearing = any(prose_column_cell(cell) for body in table.rows for cell in body)
         if linked and prose_bearing:
-            rows.append(row(doc.path, table.line, Check.TABLE_LINKS, "fail", "links ride cells beside prose columns; links move below the table"))
+            rows.append(
+                row(
+                    doc.path,
+                    table.line,
+                    Check.TABLE_LINKS,
+                    "fail",
+                    "a prose column rides beside a link column; move links below the table or drop the prose column",
+                )
+            )
         if (width := max(len(line) for line in rendered(table))) > TABLE_WIDTH_CAP:
             rows.append(
                 row(doc.path, table.line, Check.TABLE_WIDTH, "fail", f"rendered width {width} > cap {TABLE_WIDTH_CAP}; relieve cells, keep the table")
