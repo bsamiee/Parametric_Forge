@@ -1,9 +1,6 @@
 {
     "strictness": 1,
-    "commentTypes": [
-        "logic",
-        "syntax"
-    ],
+    "commentTypes": ["logic", "syntax"],
     "triggerOnUpdates": true,
     "triggerOnDrafts": false,
     "statusCheck": true,
@@ -35,10 +32,7 @@
     },
     "ignorePatterns": "flake.lock\npnpm-lock.yaml\nuv.lock\nmodules/home/assets/**",
     "context": {
-        "repos": [
-            "bsamiee/Rasm",
-            "bsamiee/Maghz"
-        ]
+        "repos": ["bsamiee/Rasm", "bsamiee/Maghz"]
     },
     "rules": [
         {
@@ -52,51 +46,34 @@
             "rule": "Extend the canonical owner: each vocabulary axis (color, keybind, MCP server, tool admission) has exactly one declaring owner per docs/laws/projections.md, and new capability lands as a row on that owner. A new singleton file or duplicated value for an owned axis is a defect.",
             "severity": "high",
             "enabled": true,
-            "scope": [
-                "**/*.nix",
-                "modules/**",
-                "overlays/**",
-                "flake-modules/**",
-                "hosts/**"
-            ]
+            "scope": ["**/*.nix", "modules/**", "overlays/**", "flake-modules/**", "hosts/**"]
         },
         {
             "id": "shell-app-bar",
             "rule": "Shell bodies — packaged via writeShellApplication or standalone .sh including .claude hooks — declare runtimeInputs where packaged, use set -euo pipefail, pass shellcheck without directives, and embed no repo paths, usernames, or magic values. An '|| true' survives only as a pipefail rail where non-zero exit is an expected data condition (probe no-match, vanished process, torn tail line of a live-appended file); an '|| true' that hides a real failure class is a defect. Literal associative-array subscripts are quoted (shfmt rewrites bare hyphenated keys as arithmetic, corrupting dispatch tables). Receipts trail the action they attest: state= transitions per landed step, result= only after the final step.",
             "severity": "medium",
-            "scope": [
-                "modules/**",
-                "overlays/**",
-                "flake-modules/**",
-                ".claude/**"
-            ],
+            "scope": ["modules/**", "overlays/**", "flake-modules/**", ".claude/**"],
             "enabled": true
         },
         {
             "id": "provision-contract",
             "rule": "forge-provision emits schema-v3 JSON envelopes only; agent-facing JSON never carries socket paths, host absolute paths, or token material; every envelope change lands with its README contract row; jq programs live in jq/ files, never inlined in Bash.",
             "severity": "high",
-            "scope": [
-                "overlays/forge-provision/**"
-            ],
+            "scope": ["overlays/forge-provision/**"],
             "enabled": true
         },
         {
             "id": "services-effect-rails",
             "rule": "services/ TypeScript follows docs/stacks/typescript law: Effect rails, tagged faults, Config.redacted, Schema boundary decodes, typed Pulumi rows, secrets never in unredacted state outputs. Dependency movement is forward-only: a downgrade or stale pin without a recorded reason is a defect.",
             "severity": "high",
-            "scope": [
-                "services/**"
-            ],
+            "scope": ["services/**"],
             "enabled": true
         },
         {
             "id": "generated-projection",
             "rule": "Lua and TOML app config consumes Nix-owned vocabulary projections; a private hex color, ad hoc keybind, or duplicated theme value in consumer config is a defect — the value belongs on the generating owner. Lua consumers index generated row tables directly (a hand-written key mirror is the two-edit drift the projection exists to kill); host callback-registration APIs register permanently per call, so actions build once per config generation, never inside press/open/event bodies; a theme role bound to a highlight group is proven against the plugin's real group names from source. A hand-template-to-row-table collapse of generated config is gated by baseline eval-diff: snapshot the rendered bytes, rebuild, diff — byte-fidelity risk is dischargeable, never a reason to defer.",
             "severity": "medium",
-            "scope": [
-                "modules/home/programs/**"
-            ],
+            "scope": ["modules/home/programs/**"],
             "enabled": true
         },
         {
@@ -104,39 +81,27 @@
             "rule": "Cross-module seams are single-owner projections mapped in docs/atlas/interconnection.md. A change touching an owner surface mapped there must land with its consumers verified; a consumer-side literal that re-derives an owner value, a renamed field only one side knows about, or a new kernel hand-rolling an owned grammar (receipt paths, launchd labels, envelope keys) is drift. When an owner gains a new vocabulary family, every consumer projection block is grepped and extended in the same change - a family present in the owner but absent from one projection is an invisible fork.",
             "severity": "high",
             "enabled": true,
-            "scope": [
-                "**/*.nix",
-                "modules/**",
-                "overlays/**",
-                "flake-modules/**",
-                "hosts/**"
-            ]
+            "scope": ["**/*.nix", "modules/**", "overlays/**", "flake-modules/**", "hosts/**"]
         },
         {
             "id": "workflow-determinism",
             "rule": "Workflow scripts are deterministic orchestration: schema-typed agent outputs, bounded loops, stage products written to disk with path receipts. Bare promises, unbounded polling, wall-clock branching, and subagents instructed to wait are defects.",
             "severity": "medium",
-            "scope": [
-                ".claude/workflows/**"
-            ],
+            "scope": [".claude/workflows/**"],
             "enabled": true
         },
         {
             "id": "upstream-layout-guards",
             "rule": "Every install step depending on upstream layout — strips, wrapper targets, conditional install branches — carries an existence guard that fails the build with a named drift error: silent strips ship fatter outputs on drift, silent-skip guards ship thinner ones, both are the same defect. Package layout vocabulary is single-owner via passthru projections; a per-package kernel file is admitted only when install logic differs — a data-only delta belongs on the manifest row.",
             "severity": "high",
-            "scope": [
-                "overlays/**"
-            ],
+            "scope": ["overlays/**"],
             "enabled": true
         },
         {
             "id": "vscode-truth-ladder",
             "rule": "VS Code keys and color tokens verify against the shipped workbench bundle or the installed extension manifests, never recall; asserted rows pin design law, never extension-behavior toggles with UI side effects; universal (user-level) rows respect per-key language-block merges and application-scope exclusions — an application- or machine-scoped key promoted into workspace guidance is a defect.",
             "severity": "medium",
-            "scope": [
-                "modules/home/programs/apps/vscode/**"
-            ],
+            "scope": ["modules/home/programs/apps/vscode/**"],
             "enabled": true
         }
     ]
