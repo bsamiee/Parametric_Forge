@@ -250,6 +250,9 @@
       + (if (.codex.bearerEnvVar // null) == null then {}
          else {Authorization: ("Bearer " + (.codex.bearerEnvVar | env_ref))}
          end);
+    # Mirror of the projection client-idle derivation so a projected `timeout` reads as clean, not false drift.
+    def claude_idle_timeout:
+      (.codex.toolTimeoutSec * 1000) as $ms | if $ms > 1800000 then $ms else null end;
     ($fleet[0]) as $rows
     | ($claude[0] // {}) as $cl
     | ($codex[0] // {}) as $cx
@@ -262,7 +265,7 @@
              elif $cl[$row.name] == null then ["claude\t\($row.name): MISSING in claude"]
              elif $lvl == "presence" then []
              else ($cl[$row.name]) as $c
-              | (if $row.transport == "stdio" then
+              | ((if $row.transport == "stdio" then
                   (if ($c.type // "stdio") != "stdio" then ["claude\t\($row.name): claude type != stdio"] else [] end)
                   + (if ($c.command // "") != $row.command then ["claude\t\($row.name): claude command \($c.command // "absent") != \($row.command)"] else [] end)
                   + (if ($c.args // []) != ($row.args // []) then ["claude\t\($row.name): claude args \($c.args // [])"] else [] end)
@@ -272,6 +275,8 @@
                   + (if ($c.url // "") != $row.url then ["claude\t\($row.name): claude url \($c.url // "absent")"] else [] end)
                   + (if ($c.headers // {}) != ($row | claude_headers) then ["claude\t\($row.name): claude header inheritance contract drift"] else [] end)
                 end)
+                + (($row | claude_idle_timeout) as $want
+                   | if ($c.timeout // null) != $want then ["claude\t\($row.name): claude timeout \($c.timeout // "absent") != \($want // "absent")"] else [] end))
              end)
             + (if ($who | index("codex")) | not then []
                elif $cx[$row.name] == null then ["codex\t\($row.name): MISSING in codex"]
@@ -344,6 +349,11 @@
       + (if (.codex.bearerEnvVar // null) == null then {}
          else {Authorization: ("Bearer " + (.codex.bearerEnvVar | env_ref))}
          end);
+    # Client idle ceiling: Claude Code aborts a silent MCP call at 1800000ms unless the row carries `timeout` (ms). A row whose tool budget outlasts
+    # that default projects toolTimeoutSec as milliseconds so the client waits the full budget; the supervisor idle lease (toolTimeoutSec+300) then
+    # outlasts the client and reaps after it aborts, and workflow-lane wrappers stall above both. Short-call rows stay under the default, gain no field.
+    def claude_idle_timeout:
+      (.codex.toolTimeoutSec * 1000) as $ms | if $ms > 1800000 then $ms else null end;
     {
       mcpServers: ([
         .[]
@@ -352,11 +362,12 @@
         | {
             key: .name,
             value: (
-              if .transport == "stdio" then
+              (if .transport == "stdio" then
                 {type: "stdio", command, args: (.args // []), env: claude_env}
               else
                 {type: "http", url, headers: claude_headers}
               end)
+              + (claude_idle_timeout as $t | if $t == null then {} else {timeout: $t} end))
           }
       ] | from_entries),
       managed_names: [.[] | select((.clients // ["claude", "codex"]) | index("claude")) | .name]

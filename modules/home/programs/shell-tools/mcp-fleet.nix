@@ -34,20 +34,15 @@
   homeDir,
   sshBin,
 }: let
+  # The supervisor counts protocol BYTES as activity — a silent in-flight call spends the lease — so every row binds idleSeconds explicitly
+  # (lease = codex.toolTimeoutSec + 300 via rec, matching the launcher-wrapper default) and the script's generic fallback never governs a fleet row.
   mkSupervised = {
     cmd,
     args ? [],
-    idleSeconds ? null,
+    idleSeconds,
   }: {
     command = "${profileBin}/forge-supervise-stdio";
-    args =
-      (
-        if idleSeconds == null
-        then []
-        else ["--idle-seconds" (toString idleSeconds)]
-      )
-      ++ [cmd]
-      ++ args;
+    args = ["--idle-seconds" (toString idleSeconds) cmd] ++ args;
   };
 in [
   {
@@ -147,7 +142,7 @@ in [
       toolTimeoutSec = 180;
     };
   }
-  {
+  rec {
     # Maghz VPS read-only secret lens: the scoped service token resolves only inside the remote host/container boundary.
     name = "doppler-remote";
     transport = "stdio";
@@ -158,6 +153,7 @@ in [
           "maghz"
           ''DOPPLER_TOKEN="$(doppler configure get token --plain --scope /srv/maghz)" docker exec -i -e DOPPLER_TOKEN maghz-mcp /opt/mcp/bin/doppler-mcp --read-only --project maghz --config prd_host''
         ];
+        idleSeconds = codex.toolTimeoutSec + 300;
       })
       command
       args
@@ -233,13 +229,14 @@ in [
       toolTimeoutSec = 180;
     };
   }
-  {
+  rec {
     name = "google-workspace";
     transport = "stdio";
     inherit
       (mkSupervised {
         cmd = "${profileBin}/forge-workspace-mcp";
         args = ["--tool-tier" "extended"];
+        idleSeconds = codex.toolTimeoutSec + 300;
       })
       command
       args
@@ -252,10 +249,17 @@ in [
       toolTimeoutSec = 180;
     };
   }
-  {
+  rec {
     name = "nuget";
     transport = "stdio";
-    inherit (mkSupervised {cmd = "${profileBin}/nuget-mcp";}) command args;
+    inherit
+      (mkSupervised {
+        cmd = "${profileBin}/nuget-mcp";
+        idleSeconds = codex.toolTimeoutSec + 300;
+      })
+      command
+      args
+      ;
     envKeys = [];
     probe = "stdio";
     codex = {
@@ -264,12 +268,19 @@ in [
       toolTimeoutSec = 180;
     };
   }
-  {
+  rec {
     # Nix truth surface: nixpkgs packages plus NixOS/Home Manager/nix-darwin options from the live search index and upstream manuals;
     # pure retrieval, so headless codex may call it. Binary is the nixpkgs mcp-nixos package installed by mcp-launchers.nix.
     name = "nixos";
     transport = "stdio";
-    inherit (mkSupervised {cmd = "${profileBin}/mcp-nixos";}) command args;
+    inherit
+      (mkSupervised {
+        cmd = "${profileBin}/mcp-nixos";
+        idleSeconds = codex.toolTimeoutSec + 300;
+      })
+      command
+      args
+      ;
     envKeys = [];
     probe = "stdio";
     codex = {
@@ -448,7 +459,9 @@ in [
     codex = {
       required = false;
       startupTimeoutSec = 30;
-      toolTimeoutSec = 3600;
+      # A long sol/high turn holds one silent blocking call; the claude projection derives this row's client idle `timeout` (ms) from this value,
+      # so Claude Code waits the full tool budget instead of aborting at its 1800s default.
+      toolTimeoutSec = 7200;
     };
   }
   {
