@@ -40,6 +40,7 @@ reviews:
         - "!pnpm-lock.yaml"
         - "!uv.lock"
         - "!modules/home/assets/**"
+        - "!.claude/scratch/**"
     path_instructions:
         - path: "**"
           instructions: >-
