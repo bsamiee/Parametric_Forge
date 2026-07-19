@@ -4,17 +4,17 @@ Claude Code's `Workflow` tool runs one author-written JavaScript file that deter
 
 ## [01]-[MODEL]
 
-A workflow is a JavaScript program that orchestrates subagents. The author writes one file; the `Workflow` tool runs it in a sandbox.
+A workflow is a JavaScript program that orchestrates subagents. Its author writes one file; the `Workflow` tool runs it in a sandbox.
 
-The word that matters is deterministic. In a normal session, Claude decides the next step — reads a result, thinks, picks a tool — and that control flow varies run to run. A workflow inverts it: the loops, the conditionals, the fan-out, the retries are plain JavaScript. The model does only the leaf work inside each `agent()` call. The orchestration spends zero tokens and behaves identically every run.
+One word matters: deterministic. In a normal session, Claude decides the next step — reads a result, thinks, picks a tool — and that control flow varies run to run. A workflow inverts it: the loops, the conditionals, the fan-out, the retries are plain JavaScript. A model does only the leaf work inside each `agent()` call. Orchestration spends zero tokens and behaves identically every run.
 
-The one-sentence model: a script runs in a sandbox → every `agent()` call spawns a fresh subagent with its own clean context window → the script collects results with ordinary JavaScript → the return value comes back as the tool result.
+One-sentence model: a script runs in a sandbox → every `agent()` call spawns a fresh subagent with its own clean context window → the script collects results with ordinary JavaScript → the return value comes back as the tool result.
 
-Fresh context windows are the point. A single session has one context window; a big multi-step job fills it with every file and every intermediate thought. In a workflow each `agent()` gets a brand-new empty context, does its one job, returns only its result, and its context is discarded. The main conversation barely grows, agents cannot contaminate each other, and the job touches far more material than one window holds.
+Fresh context windows are the point. A single session has one context window; a big multi-step job fills it with every file and every intermediate thought. In a workflow each `agent()` gets a brand-new empty context, does its one job, returns only its result, and its context is discarded. Main conversation barely grows, agents cannot contaminate each other, and the job touches far more material than one window holds.
 
 ## [02]-[INVOCATION]
 
-The `Workflow` tool takes at least one of `script`, `name`, or `scriptPath`:
+`Workflow` takes at least one of `script`, `name`, or `scriptPath`:
 
 | [INDEX] | [FIELD]           | [TYPE] | [MEANING]                                                                                             |
 | :-----: | :---------------- | :----- | :---------------------------------------------------------------------------------------------------- |
@@ -24,22 +24,22 @@ The `Workflow` tool takes at least one of `script`, `name`, or `scriptPath`:
 |  [04]   | `args`            | any    | Optional input exposed to the script as the global `args`, as structured data; `undefined` if omitted |
 |  [05]   | `resumeFromRunId` | string | A prior run ID (`wf_…`) to resume from; same session only (recovery reference)                        |
 
-The persist-and-edit loop: every invocation writes the script to a file in the session directory and returns that path. Iterate by editing the saved file with Write/Edit and re-invoking with `{ scriptPath }` — never re-send the full script text after the first run.
+Persist-and-edit loop: every invocation writes the script to a file in the session directory and returns that path. Iterate by editing the saved file with Write/Edit and re-invoking with `{ scriptPath }` — never re-send the full script text after the first run.
 
 Placement and precedence:
 
 - Project workflows live in `.claude/workflows/`, personal ones in `~/.claude/workflows/`; a saved workflow runs as `/<name>`. On a name collision the project one wins.
 - In a monorepo, project workflows load from every `.claude/workflows/` between the working directory and the repo root; the closest definition of a name wins, and a save lands in the closest existing `.claude/workflows/` directory.
-- The `name` inside `meta` — not the filename — is the workflow's name.
+- `name` inside `meta` — not the filename — is the workflow's name.
 
 User-side entry points: a saved or bundled command (`/deep-research …`); the `ultracode` keyword in a prompt (a plain-words "use a workflow" works identically); or `/effort ultracode`, which makes Claude plan a workflow for every substantive task in the session. Saving a good run is `s` in `/workflows`.
 
 Runtime posture knobs, all advisory or off-switches — none change script semantics:
 
-- The workflow-size setting (`/config` → Dynamic workflow size) sends Claude an agent-count aim per script it writes: `unrestricted` (default), `small` under 5, `medium` under 15, `large` under 50. Guidance only; the runtime caps still govern.
+- Workflow-size setting (`/config` → Dynamic workflow size) sends Claude an agent-count aim per script it writes: `unrestricted` (default), `small` under 5, `medium` under 15, `large` under 50. Guidance only; the runtime caps still govern.
 - A run that schedules more than 25 agents or projects past 1.5 million tokens raises an advisory large-workflow warning in the task panel; a set size guideline replaces the 25-agent threshold, and ultracode sessions suppress the warning.
 - Off switches: the `/config` toggle, `"disableWorkflows": true` in settings, or `CLAUDE_CODE_DISABLE_WORKFLOWS=1` at startup. Disabling removes bundled commands, the keyword trigger, and the ultracode effort tier.
-- The launch prompt shows the planned phases with run / remember-approval / view-raw-script / cancel; in auto permission mode consent is recorded on first launch. Bypass-permissions and headless runs start without prompting.
+- Launch prompt shows the planned phases with run / remember-approval / view-raw-script / cancel; in auto permission mode consent is recorded on first launch. Bypass-permissions and headless runs start without prompting.
 
 ## [03]-[ANATOMY]
 
@@ -47,7 +47,7 @@ Two parts, in this order; the parser is strict about both.
 
 ### [03.1]-[META_FIRST_LITERAL]
 
-The very first statement must be `export const meta = {…}`, and the object must be a pure literal: no variables, no function calls, no spreads, no template interpolation. The parser walks the syntax tree and rejects anything else, along with reserved keys (`__proto__`, `constructor`, `prototype`). A backtick anywhere in the literal is rejected — the parser reads any backtick as a template literal, even inside a single-quoted string — so `name`, `description`, and `phases` stay free of code-fenced spans.
+Every workflow's first statement must be `export const meta = {…}`, and the object must be a pure literal: no variables, no function calls, no spreads, no template interpolation. A parser walks the syntax tree and rejects anything else, along with reserved keys (`__proto__`, `constructor`, `prototype`). A backtick anywhere in the literal is rejected — the parser reads any backtick as a template literal, even inside a single-quoted string — so `name`, `description`, and `phases` stay free of code-fenced spans.
 
 ```js conceptual
 export const meta = {
@@ -62,11 +62,11 @@ export const meta = {
 };
 ```
 
-`phases[].title` is matched exactly against `phase()` calls. `phases[].model` is a label, not a setting: the binary shows it in the permission dialog, but no code reads it to pick a model. The model is set only by the `model` option on each `agent()` call — a re-tiered phase sets both, or the dialog lies.
+`phases[].title` is matched exactly against `phase()` calls. `phases[].model` is a label, not a setting: the binary shows it in the permission dialog, but no code reads it to pick a model. Only the `model` option on each `agent()` call sets the model — a re-tiered phase sets both, or the dialog lies.
 
 ### [03.2]-[BODY]
 
-Everything after `meta` is the body. It runs inside an `async` function, so `await` works at the top level. The orchestration globals are injected — nothing is imported. The body's `return` value becomes the tool result. Standard JS built-ins (`JSON`, `Math`, `Array`, `Map`, `Set`, …) are available; section [10] lists what is removed. The body is JavaScript only — TypeScript syntax (type annotations, `interface`, `as` casts) is a parse error.
+Everything after `meta` is the body. It runs inside an `async` function, so `await` works at the top level. Orchestration globals are injected — nothing is imported. Its `return` value becomes the tool result. Standard JS built-ins (`JSON`, `Math`, `Array`, `Map`, `Set`, …) are available; section [10] lists what is removed. Body source is JavaScript only — TypeScript syntax (type annotations, `interface`, `as` casts) is a parse error.
 
 ### [03.3]-[PROMPT_STRINGS]
 
@@ -138,7 +138,7 @@ Inside a long `[COMPOSITION]`, mark each phase with a bare subsection divider wh
 
 ### [04.1]-[READING_ARGS]
 
-`args` arrives as structured data, exactly as the caller supplied it — no serialization to undo. `Workflow({ args: { minUsers: 5 } })` yields the object; an array stays an array; a string stays a string; nothing passed yields `undefined`. The only handling a script needs is a default for the omitted case plus a shape check when one workflow accepts both a config object and a free-text task:
+`args` arrives as structured data, exactly as the caller supplied it — no serialization to undo. `Workflow({ args: { minUsers: 5 } })` yields the object; an array stays an array; a string stays a string; nothing passed yields `undefined`. A script needs only a default for the omitted case plus a shape check when one workflow accepts both a config object and a free-text task:
 
 ```js conceptual
 const threshold = args?.minUsers ?? 20; // object input
@@ -187,7 +187,7 @@ Not how the model gets set: `meta.phases[].model` (display-only), and the `CLAUD
 
 ### [05.2]-[SCHEMA_OUTPUT]
 
-The runtime compiles the schema with AJV, synthesizes a hidden `StructuredOutput` tool whose input is that schema, and tells the subagent it must call it exactly once. The call is AJV-validated; on a mismatch the agent is handed the error and retries; a subagent that finishes without calling it is nudged up to twice more before failing. The value `agent()` returns is the validated tool input.
+Runtime compiles the schema with AJV, synthesizes a hidden `StructuredOutput` tool whose input is that schema, and tells the subagent it must call it exactly once. That call is AJV-validated; on a mismatch the agent is handed the error and retries; a subagent that finishes without calling it is nudged up to twice more before failing. Whatever `agent()` returns is the validated tool input.
 
 `agent(…, { schema })` is the workflow's one validation boundary — a codex lane's product arrives as tool-result text under a prose JSON contract and the WRAPPER's receipt schema validates what crosses the wire (codex-lanes reference). Keep schemas strict by convention: `additionalProperties: false`, every key in `required`, conditional fields required-but-empty — the same shape then serves a rare `codex exec --output-schema` leg (a machine parsing a report blind, OpenAI strict profile enforced) without edits.
 
@@ -201,9 +201,9 @@ Rules for computing data properly: use `schema` for anything a later line reads 
 
 `pipeline(items, stage1, stage2, …)` runs each item through all stages independently — no barrier between stages; item A reaches stage 3 while item B is still in stage 1. Every stage callback receives `(prevResult, originalItem, index)` — take all three in any stage past the first, or the stage loses the item it needs to label `verify:${file}` or branch on position. A stage that throws drops that item to `null` and skips its remaining stages.
 
-`parallel(thunks)` runs an array of functions concurrently and waits for all of them — a barrier. The shape is thunks, `[() => agent(…)]`, never bare promises: bare calls start immediately and defeat the concurrency limiter. A thunk that throws resolves to `null`; the call itself never rejects.
+`parallel(thunks)` runs an array of functions concurrently and waits for all of them — a barrier. Its shape is thunks, `[() => agent(…)]`, never bare promises: bare calls start immediately and defeat the concurrency limiter. A thunk that throws resolves to `null`; the call itself never rejects.
 
-The rule: default to `pipeline()`. Reach for `parallel()` only when a stage genuinely needs the entire previous result set at once — dedup or merge across the full set, an early-exit on a total count, a prompt that compares one item against all others. "Flatten/filter first" happens inside a pipeline stage; "cleaner code" is not a reason. The wall-clock economics live in the throughput reference.
+One rule: default to `pipeline()`. Reach for `parallel()` only when a stage genuinely needs the entire previous result set at once — dedup or merge across the full set, an early-exit on a total count, a prompt that compares one item against all others. "Flatten/filter first" happens inside a pipeline stage; "cleaner code" is not a reason. Wall-clock economics live in the throughput reference.
 
 ## [07]-[BUDGET]
 
@@ -215,11 +215,11 @@ The rule: default to `pipeline()`. Reach for `parallel()` only when a stage genu
 |  [02]   | `budget.spent()`     | Output tokens spent this turn — main loop and all workflows share one pool |
 |  [03]   | `budget.remaining()` | `max(0, total − spent())`, or `Infinity` with no target                    |
 
-The target is a hard ceiling: once `spent()` reaches `total`, further `agent()` calls throw; in-flight agents finish and their results are kept. Guard budget loops on `budget.total` — with no target, `remaining()` is `Infinity` and the loop runs to the agent cap. Codex tokens are invisible to `budget.spent()`; budget-gated loops meter only their Claude lanes.
+That target is a hard ceiling: once `spent()` reaches `total`, further `agent()` calls throw; in-flight agents finish and their results are kept. Guard budget loops on `budget.total` — with no target, `remaining()` is `Infinity` and the loop runs to the agent cap. Codex tokens are invisible to `budget.spent()`; budget-gated loops meter only their Claude lanes.
 
 ## [08]-[NESTING]
 
-`workflow(nameOrRef, args?)` runs another workflow inline and returns its result — a name for a saved workflow, or `{ scriptPath }` for a file. The child shares this run's concurrency cap, agent counter, abort signal, and token budget. Nesting is one level only — `workflow()` inside a child throws; it also throws on an unknown name, an unreadable path, or a child syntax error. Call the child once with the whole work-set, never per item in a loop — the composition law is the patterns reference.
+`workflow(nameOrRef, args?)` runs another workflow inline and returns its result — a name for a saved workflow, or `{ scriptPath }` for a file. That child shares this run's concurrency cap, agent counter, abort signal, and token budget. Nesting is one level only — `workflow()` inside a child throws; it also throws on an unknown name, an unreadable path, or a child syntax error. Call the child once with the whole work-set, never per item in a loop — the composition law is the patterns reference.
 
 ## [09]-[LIMITS]
 
@@ -254,15 +254,15 @@ Subagents run in `acceptEdits` mode and inherit the session tool allowlist regar
 
 Bundled checks gate every workflow before it spends a token. Run both; reach for an external parser for neither. Raw `node --check` is a dead end — a body's top-level `return` and `export const meta` parse under no single module mode.
 
-The linter enforces the parser's hard rules:
+Linter checks enforce the parser's hard rules:
 
 ```bash template
 node ${CLAUDE_SKILL_DIR}/scripts/validate-workflow.mjs <file.js>
 ```
 
-A missing or non-first `meta`, a non-literal `meta` (a stray backtick included), a missing `name`/`description`, a banned non-deterministic call, and an oversized script are ERRORS — exit 1, fix every one. An `effort`/`model` value outside the allowed set, a host API, and a bare-promise `parallel([agent(...)])` are WARNINGS — exit 0, but each is a real runtime bug, so clear them too. The linter checks rules, not syntax.
+A missing or non-first `meta`, a non-literal `meta` (a stray backtick included), a missing `name`/`description`, a banned non-deterministic call, and an oversized script are ERRORS — exit 1, fix every one. An `effort`/`model` value outside the allowed set, a host API, and a bare-promise `parallel([agent(...)])` are WARNINGS — exit 0, but each is a real runtime bug, so clear them too. That linter checks rules, not syntax.
 
-The dry-run is the syntax, control-flow, and determinism check, for zero tokens:
+Dry-run is the syntax, control-flow, and determinism check, for zero tokens:
 
 ```bash template
 node ${CLAUDE_SKILL_DIR}/scripts/dry-run.mjs <file.js> [--args '<json>'] [--fixtures '<json>']

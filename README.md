@@ -109,11 +109,11 @@ Recurring machine work is launchd-owned under the `com.parametric-forge.<name>` 
 
 ## [10]-[TOOLCHAINS]
 
-- [PYTHON]: 3.15 GIL build; `uv`, `ruff`, `ty`, `mypy` resolve project-local versions first through the shim. `forge-scientific-sync` locks an isolated XDG-state uv env; `forge-scientific-env` exposes the native build closure (clang, gfortran, GDAL/GEOS/PROJ, HDF5/netCDF, Arrow, OpenBLAS, ONNX, Eigen, PDAL, Boost) plus EnergyPlus/OpenStudio. `forge-companion-env` is the cp312 lane for tooling gated below 3.15.
+- [PYTHON]: 3.15 GIL build; `uv`, `ruff`, `ty`, `mypy` resolve project-local versions first through the shim. `forge-scientific-sync` locks an isolated XDG-state uv env; `forge-scientific-env` exposes the native build closure (clang, gfortran, GDAL/GEOS/PROJ, HDF5/netCDF, Arrow, OpenBLAS, ONNX, Eigen, PDAL, Boost) declared in `languages/scientific-tools.nix`.
 - [NODE_LUA_DB]: Node 26 via the Nix-owned official binary + pnpm pin; Lua with LSP tooling; DuckDB/SQLite with sqlean/spatialite/vec; PostgreSQL 18 client tools are Home Manager-owned, PostgreSQL server extensions stay Docker-owned by `forge-provision`.
 - [DOTNET_AEC]: Nix-managed dotnet SDKs (8/9/10); `energyplus` and `openstudio` are Forge-owned machine runtimes with disjoint ambient identities.
 - [PROVISIONING]: `forge-provision` (overlay-owned, Home Manager-installed) is the local service provisioner — schema-v3 sanitized JSON, deterministic ports, preserved volumes, noninteractive by contract; `forge-provision --help` is the live verb list. Rasm campaign work enters through its own assay rail; direct calls are Forge-level debugging.
-- [MCP_LAUNCHERS]: `forge-ifcmcp` (cp312 IfcOpenShell), `forge-jupyter-mcp`, `nuget-mcp` (.NET 10), and the fleet wrappers are Home Manager-installed; sibling-repo skills invoke them — launcher behavior is fixed here, never in a sibling.
+- [MCP_LAUNCHERS]: `nuget-mcp` (.NET 10) and the fleet wrappers are Home Manager-installed; sibling-repo MCP configs invoke them — launcher behavior is fixed here, never in a sibling.
 
 ## [11]-[TERMINAL_MESH_AND_THEME]
 

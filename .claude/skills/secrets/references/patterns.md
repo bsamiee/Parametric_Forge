@@ -35,7 +35,7 @@ Command chains are generated inside owned wrappers — Nix rows, driver code —
 
 ## [04]-[MCP_ROW]
 
-The fleet row runs the server through a doppler-run indirection: the outer run injects the MCP service token from its own config, and the inner server authenticates with that token.
+Fleet rows run the server through a doppler-run indirection: the outer run injects the MCP service token from its own config, and the inner server authenticates with that token.
 
 ```text
 doppler run --project <token-project> --config <token-config> --fallback <snapshot> \
@@ -47,7 +47,7 @@ doppler run --project <token-project> --config <token-config> --fallback <snapsh
 
 ## [05]-[PLAN_GATES]
 
-The Developer plan is the operating envelope: 10 projects, 4 environments per project, 10 configs per environment, 5 config syncs, 5 webhooks, 50 service tokens, 3-day activity logs. Plan-gated features stay out of estate design:
+Developer-plan quotas are the operating envelope: 10 projects, 4 environments per project, 10 configs per environment, 5 config syncs, 5 webhooks, 50 service tokens, 3-day activity logs. Plan-gated features stay out of estate design:
 
 | [INDEX] | [FEATURE]                              | [PLAN]     |
 | :-----: | :------------------------------------- | :--------- |

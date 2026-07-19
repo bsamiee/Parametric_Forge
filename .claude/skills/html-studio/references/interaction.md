@@ -1,10 +1,10 @@
 # [INTERACTION]
 
-The data model is the single source of truth, the DOM renders a projection of it, and every judgment the reader records leaves the page as one validated envelope. Interaction is a contract: the reader pays attention and state management, and the page repays insight a static form cannot give — the default state answers the most common question with zero interaction, and the argument survives with every widget ignored.
+One data model is the single source of truth, the DOM renders a projection of it, and every judgment the reader records leaves the page as one validated envelope. Interaction is a contract: the reader pays attention and state management, and the page repays insight a static form cannot give — the default state answers the most common question with zero interaction, and the argument survives with every widget ignored.
 
 ## [01]-[MODEL]
 
-The artifact models its content before it renders it: entities, relations, hierarchy, and decision states live in the model, and markup carries no fact the model lacks. A single entity kind stays a flat row list; the model normalizes into keyed collections the moment two views read one entity or any item is referenced by id — a fact duplicated across the payload is a fork.
+Every artifact models its content before it renders it: entities, relations, hierarchy, and decision states live in the model, and markup carries no fact the model lacks. A single entity kind stays a flat row list; the model normalizes into keyed collections the moment two views read one entity or any item is referenced by id — a fact duplicated across the payload is a fork.
 
 One plain state object holds every captured fact; `render()` projects it into the DOM, and DOM position or DOM text is never read back as authority. Load freezes a baseline through `structuredClone`, every changed-key and diff readout derives from state versus baseline, and undo is a snapshot stack pushed before each mutation — an artifact with edit capture exposes its undo through both the keyboard and a visible control whenever the stack is non-empty.
 
@@ -30,7 +30,7 @@ Every region is a projection — filter, group, join — of the one model, and a
 
 ## [02]-[PAYLOAD]
 
-The dataset ships as one `<script type="application/json" id="payload">` block parsed once at boot; the parser output is the sole data source, and markup never duplicates a field. The embed is sanitized so the payload text has no way to terminate its own script element, and repeated rows hydrate by cloning a `<template>`:
+One `<script type="application/json" id="payload">` block ships the dataset, parsed once at boot; the parser output is the sole data source, and markup never duplicates a field. Embed sanitization leaves the payload text no way to terminate its own script element, and repeated rows hydrate by cloning a `<template>`:
 
 ```js copy-safe
 const embed = (data) =>
@@ -181,14 +181,14 @@ One canonical envelope rides every egress path — clipboard, download, and the 
 - Arrays serialize in canonical model order, never current DOM order, and object keys hold one stable order.
 - Changed-only payloads carry the baseline id they diff against; a changed-only export with nothing changed is disabled, never emitted empty.
 - Timestamps are UTC ISO strings, and unknown fields ride only under an explicit `extensions` object.
-- The artifact validates its own payload before any egress and visibly blocks a malformed export.
-- The `state` object carries whole-artifact view facts the next turn replays — active tab, filter — never a second copy of the decision fields.
+- Every artifact validates its own payload before any egress and visibly blocks a malformed export.
+- `state` carries whole-artifact view facts the next turn replays — active tab, filter — never a second copy of the decision fields.
 
-Every capturing artifact exports two forms from the one state graph: the markdown summary for human scanning — verdict first, then decision rows, then annotations — and the JSON envelope as the authoritative instruction. Review loops consume the changed-only form; implementation loops consume the full state. The markdown form composes from the model, never from rendered DOM text: decision rows serialize as a pipe table with cell pipes escaped, annotations as a list anchored by item id, and both forms derive from one `snapshot()` so they never disagree.
+Every capturing artifact exports two forms from the one state graph: the markdown summary for human scanning — verdict first, then decision rows, then annotations — and the JSON envelope as the authoritative instruction. Review loops consume the changed-only form; implementation loops consume the full state. Markdown composes from the model, never from rendered DOM text: decision rows serialize as a pipe table with cell pipes escaped, annotations as a list anchored by item id, and both forms derive from one `snapshot()` so they never disagree.
 
 ## [07]-[DRAWER]
 
-The export drawer is the one egress surface on every capturing page: a fixed tab pill opens the panel through `popovertarget`, so open, light-dismiss, and `Esc` arrive natively, focus returns to the tab on close, and reduced motion stills the slide through the zeroed duration tokens. The panel is default-collapsed, rounded, and 60vh — never full-height or full-width — and its interior order is fixed across every artifact type: the send section, then disk egress, then per-type fields, then the readonly mirror.
+Every capturing page carries one egress surface, the export drawer: a fixed tab pill opens the panel through `popovertarget`, so open, light-dismiss, and `Esc` arrive natively, focus returns to the tab on close, and reduced motion stills the slide through the zeroed duration tokens. That panel is default-collapsed, rounded, and 60vh — never full-height or full-width — and its interior order is fixed across every artifact type: the send section, then disk egress, then per-type fields, then the readonly mirror.
 
 - [DIRTY_COUNT] — the drawer renders the live unsent tally (changes plus active decisions plus active annotations), and the collapsed tab carries the same count beside its label, so pending judgment is visible before the drawer ever opens.
 - [MIRROR] — the readonly textarea shows the exact payload leaving the page before every attempted copy or send; the send is never blind.
@@ -197,9 +197,9 @@ The export drawer is the one egress surface on every capturing page: a fixed tab
 
 ## [08]-[RETURN_CHANNEL]
 
-A served artifact returns judgment automatically; an artifact opened from `file://` returns it through the drawer's copy and download controls. The serving process injects two head metas — `<meta name="artifact-return" content="/submit">` naming the submit path and `<meta name="artifact-token">` carrying the per-run bearer — and the return meta's presence is the whole protocol switch: present means served and the send action renders; absent means disk and it never renders. The token travels back only as the `X-Artifact-Token` request header, never as a query parameter.
+A served artifact returns judgment automatically; an artifact opened from `file://` returns it through the drawer's copy and download controls. Serving injects two head metas — `<meta name="artifact-return" content="/submit">` naming the submit path and `<meta name="artifact-token">` carrying the per-run bearer — and the return meta's presence is the whole protocol switch: present means served and the send action renders; absent means disk and it never renders. That bearer travels back only as the `X-Artifact-Token` request header, never as a query parameter.
 
-The wire form wraps the canonical envelope without redefining it: the POST body is `{ kind, artifact, version, data }` where `artifact` is the artifact id string and `data` carries the full envelope. The server enforces the shape strictly — an unknown top-level field or a non-string `artifact` is a 422 `bad-envelope` rejection — and each accepted submission lands as one receipt row the agent reads after the session.
+A wire form wraps the canonical envelope without redefining it: the POST body is `{ kind, artifact, version, data }` where `artifact` is the artifact id string and `data` carries the full envelope. Server enforcement is strict — an unknown top-level field or a non-string `artifact` is a 422 `bad-envelope` rejection — and each accepted submission lands as one receipt row the agent reads after the session.
 
 ```js conceptual
 const returnMeta = document.querySelector('meta[name="artifact-return"]');

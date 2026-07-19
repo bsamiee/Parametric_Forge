@@ -1,6 +1,6 @@
 # [DECOMPOSITION]
 
-Draw how a whole decomposes into parts weighted by one decision-bearing measure — remaining work, spend, line count, latency — so tile area answers where attention goes next. The template bakes in the treemap discipline an unassisted attempt breaks — one measure in one unit across every leaf, so sibling areas compare truthfully; branches follow the reader's grouping; and `classDef` stays out entirely, because its inline `!important` fills lock the section surfaces against the canon stamps. Branch hues assign from the ordinal range in declaration order with full-hue `cScalePeer` borders, sections recess to `#21222C` through the section stamp so the translucent leaf tiles composite over the dark canvas, `cScaleLabel` inks Foreground, and the label caps hold the engine's fit-to-tile sizing on the type ramp. Use `treemap-beta` with 3-5 branches and 3-7 leaves each; a leaf below label size hides its text, so the smallest tail aggregates into a named remainder — here the planning core rides as one aggregated leaf instead of two label-hiding slivers.
+Draw how a whole decomposes into parts weighted by one decision-bearing measure — remaining work, spend, line count, latency — so tile area answers where attention goes next. Template law bakes in the treemap discipline an unassisted attempt breaks — one measure in one unit across every leaf, so sibling areas compare truthfully; branches follow the reader's grouping; and `classDef` stays out entirely, because its inline `!important` fills lock the section surfaces against the canon stamps. Root chrome consumes `cScale0`, so branch hues assign from `cScale1` up in declaration order with full-hue `cScalePeer` borders — the palette's five slots carry the root plus 3-4 branches, and a fifth branch derives an illegible hue; sections recess to `#21222C` through the section stamp so the translucent leaf tiles composite over the dark canvas, and `cScaleLabel` inks Foreground. Label sizes are fixed by the type-ramp stamps rather than fit-to-tile, so a short tile hides its value line and a sliver hides its label entirely — which is why the smallest tail aggregates into a named remainder, and why that remainder lives at root only while it holds a visible fraction of the whole: under branch dominance the aggregate nests inside its owning branch or accepts a value-less tile. Use `treemap-beta` with 3-4 branches and 3-6 leaves each; a root-level tail leaf paints the root's `cScale0` hue.
 
 ```mermaid
 ---
@@ -32,17 +32,17 @@ config:
     cScalePeer2: "#8BE9FD"
     cScalePeer3: "#50FA7B"
     cScalePeer4: "#FFB86C"
-  themeCSS: ".treemapLeaf{fill-opacity:.45;stroke-width:1.5px}.treemapSection{fill:#21222C!important;fill-opacity:1;stroke-opacity:1;stroke-width:1px}.treemapSectionLabel{font-size:13.5px;font-weight:700}.treemapSectionValue{font-size:12px}.treemapLabel{font-size:13px!important;font-weight:500}.treemapValue{font-size:11px!important}.treemapTitle{font-size:15px;font-weight:600}"
+  themeCSS: ".treemapLeaf{fill-opacity:.45;stroke-width:1.5px}.treemapSection{fill:#21222C!important;fill-opacity:1;stroke-opacity:1;stroke-width:1px}.treemapSectionLabel{font-size:13.5px;font-weight:700}.treemapSectionValue{font-size:12px}.treemapLabel{font-size:13px!important;font-weight:500}.treemapValue{font-size:12px!important}.treemapTitle{font-size:15px;font-weight:600}"
 ---
 treemap-beta
 accTitle: Open planning work decomposition
 accDescr: Open card counts decomposed across the three language branches and the shared planning core, so tile area answers where the remaining work concentrates.
 "Open cards"
     "csharp"
-        "Rasm.Compute": 46
-        "Rasm.Bim": 38
-        "Rasm.AppHost": 27
-        "Rasm.Persistence": 19
+        "solver": 46
+        "domain": 38
+        "apphost": 27
+        "persistence": 19
     "python"
         "geometry": 31
         "compute": 24
@@ -55,4 +55,4 @@ accDescr: Open card counts decomposed across the three language branches and the
     "planning core": 13
 ```
 
-Refill by renaming branches and leaves to the real decomposition under one stated decision-bearing measure and unit — the accessible description names both; sibling weights must sum to their parent's meaning, and the smallest tail aggregates rather than hiding labels. The recessed sections, translucent hue tiles, full-hue borders, Foreground ink, and capped label ramp are fixed law — a refill renames the tree, never strips the fidelity surface.
+Refill by renaming branches and leaves to the real decomposition under one stated decision-bearing measure and unit — the accessible description names both; sibling weights must sum to their parent's meaning, and the smallest tail aggregates where its labels stay visible.

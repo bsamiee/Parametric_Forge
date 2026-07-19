@@ -78,6 +78,7 @@ in {
         warning = roles.state.warning.hex;
         attention = roles.state.attention.hex;
         danger = roles.state.danger.hex;
+        info = roles.state.info.hex;
         syntax = palette.yellow.hex;
       };
 
@@ -166,22 +167,23 @@ in {
         format = "\\([$state( $progress_current/$progress_total)]($style)\\) ";
       };
 
-      # One outer bracket, semiotic marker grammar: the cluster reads `main [ ~69 +10 ?12 ^3 ]` — each state is a
+      # One outer bracket, semiotic marker grammar: the cluster reads `main [ +10 ~69 ?12 ^3 ]` — each state is a
       # space-terminated `<marker><count>` token whose marker char is the theme vocabulary's ASCII register, and one
-      # muted bracket pair (symmetric inner padding) encloses the whole readout. Color collapses to four meaning-bins —
-      # staged=success (index, ready), worktree=subtle (the marker distinguishes state), conflict=bold danger (the sole
-      # alarm on the line), sync topology=accent — with stash receding on the muted text tier alongside the brackets.
-      # Clean renders nothing and the paren group vanishes gap-free.
+      # muted bracket pair (symmetric inner padding) encloses the whole readout. Color carries state meaning from the
+      # theme git vocabulary — added/staged/untracked=success (green, new content), deleted=danger (red), modified and
+      # typechange=info (blue), renamed=structural (purple), conflict=bold accent2 (magenta, the alarm), stash=muted —
+      # while sync topology (ahead/behind/diverged) holds accent so a commit distance never reads as a worktree file
+      # count. Clean renders nothing and the paren group vanishes gap-free.
       git_status = {
         format = "([\\[ ](muted)$all_status$ahead_behind[\\]](muted) )";
-        conflicted = "[${m.conflict}$count ](bold danger)";
+        conflicted = "[${m.conflict}$count ](bold accent2)";
         stashed = "[${m.stashed}$count ](muted)";
-        deleted = "[${m.deleted}$count ](subtle)";
-        renamed = "[${m.renamed}$count ](subtle)";
-        modified = "[${m.modified}$count ](subtle)";
-        typechanged = "[${m.typechange}$count ](subtle)";
+        deleted = "[${m.deleted}$count ](danger)";
+        renamed = "[${m.renamed}$count ](structural)";
+        modified = "[${m.modified}$count ](info)";
+        typechanged = "[${m.typechange}$count ](info)";
         staged = "[${m.staged}$count ](success)";
-        untracked = "[${m.untracked}$count ](subtle)";
+        untracked = "[${m.untracked}$count ](success)";
         ahead = "[${m.ahead}$count ](accent)";
         behind = "[${m.behind}$count ](accent)";
         diverged = "[${m.ahead}$ahead_count ${m.behind}$behind_count ](accent)";

@@ -55,11 +55,11 @@ jobs:
             artifact-id: ${{ steps.upload.outputs.artifact-id }}
             version: ${{ steps.version.outputs.value }}
         steps:
-            - uses: step-security/harden-runner@5ef0c079ce82195b2a36a210272d6b661572d83e # v2.14.2
+            - uses: step-security/harden-runner@<SHA> # v2.14.2
               with: {egress-policy: audit}
-            - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+            - uses: actions/checkout@<SHA> # v6.0.2
               with: {persist-credentials: false}
-            - uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
+            - uses: actions/setup-node@<SHA> # v6.2.0
               with: {node-version: "${{ inputs.runtime-version }}", cache: "[PACKAGE_MANAGER]"}
             - run: "[ENABLE_CMD]"
             - run: "[INSTALL_CMD]"
@@ -68,13 +68,13 @@ jobs:
             - run: "[BUILD_CMD]"
               env: {NODE_AUTH_TOKEN: "${{ secrets.[REGISTRY_TOKEN] }}"}
             - id: upload
-              uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+              uses: actions/upload-artifact@<SHA> # v6.0.0
               with:
                 name: build-${{ github.sha }}
                 path: "[BUILD_PATH]"
                 if-no-files-found: error
             - if: inputs.enable-attestation && github.ref == 'refs/heads/main'
-              uses: actions/attest-build-provenance@96278af6caaf10aea03fd8d33a09a777ca52d62f # v3.2.0
+              uses: actions/attest-build-provenance@<SHA> # v3.2.0
               with: {subject-path: "[BUILD_PATH]"}
             - run: |
                 {
@@ -104,6 +104,6 @@ jobs:
               #     timeout-minutes: 5
               #     permissions: { contents: read }
               #     steps:
-              #       - uses: step-security/harden-runner@5ef0c079ce82195b2a36a210272d6b661572d83e # v2.14.2
+              #       - uses: step-security/harden-runner@<SHA> # v2.14.2
               #         with: { egress-policy: audit }
               #       - run: echo "Built v${{ needs.ci.outputs.version }}, artifact ${{ needs.ci.outputs.artifact-id }}"

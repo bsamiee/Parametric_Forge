@@ -404,6 +404,6 @@ CREATE INDEX ON chunks (tenant_id, created_at);
 - [MULTI_TENANT_SCALE]: replace HNSW with DiskANN plus label-column filtering when `vectorscale` is available.
     - Store discrete tenant/category labels in the indexed label column and query with label containment so filtering participates in index search instead of relying only on post-filtering.
     - HNSW + RLS post-filter visits `ef_search` neighbors first then discards non-matching tenants, which at high selectivity can return fewer than `LIMIT k` results or require expensive iterative scan expansion
-- [WRITE_AMPLIFICATION]: the three-index strategy (HNSW + GIN tsvector + GIN trgm) means each INSERT touches three indexes — acceptable for moderate ingestion but bottleneck for bulk pipelines.
+- [WRITE_AMPLIFICATION]: A three-index strategy (HNSW + GIN tsvector + GIN trgm) means each INSERT touches three indexes — acceptable for moderate ingestion but bottleneck for bulk pipelines.
     - Bulk mitigation: load into an unindexed staging table, batch-merge via `MERGE INTO chunks ... USING staging`, then `CREATE INDEX CONCURRENTLY` post-load.
     - Incremental ingestion: maintain indexes but set `gin_pending_list_limit = 64MB` to batch GIN updates and accept slightly stale trigram results during high-write bursts

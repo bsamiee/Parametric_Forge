@@ -70,7 +70,7 @@
           path = "/healthz";
         }
         {
-          port = 8788; # Jupyter owns 8888 on both tunnel ends
+          port = 8788;
           service = "atuin";
           probe = "http";
           path = "/";

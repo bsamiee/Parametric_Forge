@@ -1,6 +1,6 @@
 # Run Recovery
 
-Stop, resume, transplant, and reconstruct workflow runs without losing completed work. Completed work is never lost: every agent's result is journaled the instant it finishes, so a pause or stop only ever discards agents still in flight, which re-run on resume. The expensive failure is operator-made — a resumable run re-run from zero. Recovery routes as one dispatch — every edge a condition, every leaf the owning section:
+Stop, resume, transplant, and reconstruct workflow runs without losing completed work. Completed work is never lost: every agent's result is journaled the instant it finishes, so a pause or stop only ever discards agents still in flight, which re-run on resume. One expensive failure is operator-made — a resumable run re-run from zero. Recovery routes as one dispatch — every edge a condition, every leaf the owning section:
 
 ```mermaid
 ---
@@ -51,7 +51,7 @@ flowchart LR
 
 ## [01]-[CONTROLS]
 
-A run is a background task. The tool call returns a run ID immediately; progress streams to `/workflows`; a `<task-notification>` lands in the conversation on completion.
+A run is a background task. A launch call returns a run ID immediately; progress streams to `/workflows`; a `<task-notification>` lands in the conversation on completion.
 
 | [INDEX] | [ACTION]          | [MECHANISM]                                                                             |
 | :-----: | :---------------- | :-------------------------------------------------------------------------------------- |
@@ -64,7 +64,7 @@ Stop a still-running prior run before relaunching its script. Never kill a live 
 
 ## [02]-[JOURNAL]
 
-The journal is the cache. Each run owns a directory under `~/.claude/projects/<project>/<session>/subagents/workflows/wf_<id>/`, and `journal.jsonl` inside it is the resume cache. Every `agent()` call appends a `{type:"started", key, agentId}` record when it begins and a `{type:"result", key, agentId, result}` record carrying the validated result when it finishes. The `key` is `v2:<sha256>` over the call's prompt plus its `schema`/`model`/`isolation`/`agentType` — never `label`/`phase`/`effort`/`stallMs`. Each agent's full transcript is a separate `agent-<id>.jsonl`; the journal — never the transcripts — is what resume reads, and the runtime writes it automatically.
+Journal files are the cache. Each run owns a directory under `~/.claude/projects/<project>/<session>/subagents/workflows/wf_<id>/`, and `journal.jsonl` inside it is the resume cache. Every `agent()` call appends a `{type:"started", key, agentId}` record when it begins and a `{type:"result", key, agentId, result}` record carrying the validated result when it finishes. Each `key` is `v2:<sha256>` over the call's prompt plus its `schema`/`model`/`isolation`/`agentType` — never `label`/`phase`/`effort`/`stallMs`. Each agent's full transcript is a separate `agent-<id>.jsonl`; the journal — never the transcripts — is what resume reads, and the runtime writes it automatically.
 
 Resume replays the journal by key: `Workflow({ scriptPath, resumeFromRunId })` re-executes the deterministic script and, per `agent()` call, recomputes the key — a `result` record returns instantly with no model call; a `started`-only record (in-flight at the stop) or no record runs live. Same script + same `args` = a full cache hit; an edited script replays every unchanged call before the edit.
 
@@ -72,12 +72,12 @@ Resume replays the journal by key: `Workflow({ scriptPath, resumeFromRunId })` r
 
 Resume is one specific call, and each of these mistakes silently turns it into a fresh run:
 
-- No `resumeFromRunId`. A bare `Workflow({ scriptPath })` or `Workflow({ name })` is a NEW run with an empty journal — it never consults a prior run's cache. The most common cause of an unexpected restart.
-- A different session. The journal lives under the launching session's directory; a plain resume from a new session (or after a process restart) finds an empty journal and re-runs from zero. Recover with the transplant at [05].
-- A changed cache key from the top. Editing the script, or changing the `args` that feed the first agent's prompt, changes its key, misses the cache there, and re-runs from that point. Do not edit a launched script while its run is resumable — edit only to intentionally re-run from the changed call onward (the iteration loop).
+- No `resumeFromRunId`. A bare `Workflow({ scriptPath })` or `Workflow({ name })` is a NEW run with an empty journal — it never consults a prior run's cache. Most common cause of an unexpected restart.
+- A different session. That journal lives under the launching session's directory; a plain resume from a new session (or after a process restart) finds an empty journal and re-runs from zero. Recover with the transplant at [05].
+- A changed cache key from the top. Editing the script, or changing the `args` that feed the first agent's prompt, changes its key, misses the cache there, and re-runs from that point. Do not edit a launched script while its run is resumable — edit only to intentionally re-run from the changed call onward (the iteration loop). A file-path arg (`{brief: "<path>.md"}`) contributes only the path STRING to the key: editing the referenced file invalidates nothing, so completed agents replay pre-edit content while later agents read the new file — a split-brain corpus. Freeze every path-referenced brief and the engine script while any consuming run is resumable; a brief change is a fresh run.
 - An unstable launch source. Launch from a stable on-disk `scriptPath` so the exact bytes that ran stay on disk to replay against; an inline `script` string leaves nothing stable to resume from.
 
-The run ledger makes the first rule reliable: the moment `Workflow` returns, write a small file in the session scratchpad (harness temp dir, never the repo) holding the run ID, the launched `scriptPath`, the `args`, and the exact resume command — copy `assets/templates/run-ledger.template.md` and update it on every resume or restart. The ledger is not the journal: the journal is the runtime's automatic result cache that DOES the resuming; the ledger is the one-line note of the run ID a later turn passes back. A lost run ID is recoverable in-session — the launch tool result prints it, the completion notification repeats it, `/workflows` lists every run, and the run directory is literally named `wf_<id>` — so a missing ledger is inconvenient, never fatal, within the session.
+A run ledger makes the first rule reliable: the moment `Workflow` returns, write a small file in the session scratchpad (harness temp dir, never the repo) holding the run ID, the launched `scriptPath`, the `args`, and the exact resume command — copy `assets/templates/run-ledger.template.md` and update it on every resume or restart. That ledger is not the journal: the journal is the runtime's automatic result cache that DOES the resuming; the ledger is the one-line note of the run ID a later turn passes back. A lost run ID is recoverable in-session — the launch tool result prints it, the completion notification repeats it, `/workflows` lists every run, and the run directory is literally named `wf_<id>` — so a missing ledger is inconvenient, never fatal, within the session.
 
 ## [04]-[VERIFY]
 
@@ -87,7 +87,7 @@ Stop a run re-executing cached work the moment drift is confirmed; otherwise sto
 
 ## [05]-[TRANSPLANT]
 
-The cache key is content-addressed with no session component, so a journal moves between sessions intact as long as the script bytes and `args` are unchanged. Cross-session there is ONE transplant window: the journal must land in the new session's run directory before the FIRST in-session read of that run ID — only the first read is honored, and records appended or rewritten after it fail internal validation and are ignored.
+Cache keys are content-addressed with no session component, so a journal moves between sessions intact as long as the script bytes and `args` are unchanged. Cross-session there is ONE transplant window: the journal must land in the new session's run directory before the FIRST in-session read of that run ID — only the first read is honored, and records appended or rewritten after it fail internal validation and are ignored.
 
 1. If the new session already relaunched the workflow, stop that run first (`TaskStop`) — a resume call adopts the old run ID and creates `wf_<id>` under the new session even when it finds no journal there.
 2. Locate both run directories under `~/.claude/projects/<project>/<session>/subagents/workflows/wf_<id>/` — the old session's holds the populated `journal.jsonl`.
@@ -95,7 +95,7 @@ The cache key is content-addressed with no session component, so a journal moves
 4. Resume with `Workflow({ scriptPath, resumeFromRunId: 'wf_<id>' })` — unchanged calls return cached, only genuinely-unfinished calls run live.
 5. Run the [04] verification before walking away.
 
-The transplant carries only the result cache; per-agent transcripts stay in the old directory and are not needed. When the script or `args` HAVE changed, the transplant still replays every call before the first edit; for a diverged script, fall back to the continuation script at [06].
+A transplant carries only the result cache; per-agent transcripts stay in the old directory and are not needed. When the script or `args` HAVE changed, the transplant still replays every call before the first edit; for a diverged script, fall back to the continuation script at [06].
 
 ## [06]-[CONTINUATION]
 
@@ -119,6 +119,6 @@ Receipts are claims; disk artifacts are truth. An agent's failure report is not 
 
 ## [08]-[COMMIT_TRAIL]
 
-The journal caches agent RESULTS; git commits durably land FILES — complementary recovery axes. A stage that writes to a repo commits its own scoped work as it completes: explicit pathspecs, signed, `[scope]: action`, `git status` first so a concurrent stage's or a sibling wave's hunks stay frozen, never `git add -A`/`-u`. A run that dies between stages then loses no landed files even where the journal lost its tail, and a successor run or a fresh agent reconstructs where work stopped from the commit trail. Recovery reads BOTH: the journal for cached results, the git log for landed files.
+Journals cache agent RESULTS; git commits durably land FILES — complementary recovery axes. A stage that writes to a repo commits its own scoped work as it completes: explicit pathspecs, signed, `[scope]: action`, `git status` first so a concurrent stage's or a sibling wave's hunks stay frozen, never `git add -A`/`-u`. A run that dies between stages then loses no landed files even where the journal lost its tail, and a successor run or a fresh agent reconstructs where work stopped from the commit trail. Recovery reads BOTH: the journal for cached results, the git log for landed files.
 
-The commit trail is a RECOVERY signal, never a JUDGMENT input. A stage scopes its work from the current tree as-found, not from the history of how the tree got there — this binds the stations hardest: a cold critique and a red-team read the files AS THEY ARE and improve, extend, or rebuild ground-up, never diffing the git log to scope their pass or to defer to a prior commit's intent. Cold means the tree, not the changelog.
+That commit trail is a RECOVERY signal, never a JUDGMENT input. A stage scopes its work from the current tree as-found, not from the history of how the tree got there — this binds the stations hardest: a cold critique and a red-team read the files AS THEY ARE and improve, extend, or rebuild ground-up, never diffing the git log to scope their pass or to defer to a prior commit's intent. Cold means the tree, not the changelog.

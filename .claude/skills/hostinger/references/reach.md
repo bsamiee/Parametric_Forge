@@ -21,7 +21,7 @@ curl -X POST "https://developers.hostinger.com/api/reach/v1/contacts" \
   -d '{ "email": "subscriber@example.com", "name": "Ada", "surname": "Lovelace" }'
 ```
 
-The create response carries a message only, never the contact body, so a follow-up `GET /contacts` reads the assigned UUID and `subscription_status`. Contact groups are the legacy surface superseded by segments; the `group_uuid` filter and `listContactGroupsV1` remain for old data.
+A create response carries a message only, never the contact body, so a follow-up `GET /contacts` reads the assigned UUID and `subscription_status`. Contact groups are the legacy surface superseded by segments; the `group_uuid` filter and `listContactGroupsV1` remain for old data.
 
 ## [03]-[SEGMENTS]
 
@@ -35,7 +35,7 @@ curl -X POST "https://developers.hostinger.com/api/reach/v1/segmentation/segment
                         { "field": "email_engagement", "operator": "opened" } ] }'
 ```
 
-The audience reads through `listSegmentContactsV1` (`GET .../segments/{segmentUuid}/contacts`) or its profile-scoped variant, paginated by `page` and `per_page` (default 25); account-wide contact listing paginates by `page` alone.
+A segment's audience reads through `listSegmentContactsV1` (`GET .../segments/{segmentUuid}/contacts`) or its profile-scoped variant, paginated by `page` and `per_page` (default 25); account-wide contact listing paginates by `page` alone.
 
 ## [04]-[API_REFERENCE]
 

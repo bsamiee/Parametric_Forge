@@ -1,19 +1,19 @@
 # [AXES]
 
-The interrogation-axis catalog: where unknown unknowns hide and how each is hunted. Every grounding pass selects the axes the request touches, runs each axis's probe, verifies every candidate on disk, and records survivors as confrontation-set entries. An axis that comes back clean is recorded clean; absence of findings is a finding.
+Each interrogation axis names where an unknown-unknown hides and how it is hunted. Every grounding pass selects the axes the request touches, runs each axis's probe, verifies every candidate on disk, and records survivors as confrontation-set entries. An axis that comes back clean is recorded clean; absence of findings is a finding.
 
-Each axis carries one card: Definition (the pathology), Probe (what to read or sweep, phrased as a leg a delegation runs over a subtree or a seam spine), Question (the shape that confronts the user with a named anchor), Evidence (what confirms a hit before it enters a question). The section label is the axis token — it names the axis in confrontation-set entries and in blindspot-ledger leaders, and the token is the axis identity every confrontation row and ledger leader binds; the two-digit ordinal orders the reading families alone, so a new axis joins its family, takes an ordinal, and reorders the tail without drifting a single reference.
+Each axis carries one card: Definition (the pathology), Probe (what to read or sweep, phrased as a leg a delegation runs over a subtree or a seam spine), Question (the shape that confronts the user with a named anchor), Evidence (what confirms a hit before it enters a question). Each section label is the axis token — it names the axis in confrontation-set entries and in blindspot-ledger leaders, and the token is the axis identity every confrontation row and ledger leader binds; the two-digit ordinal orders the reading families alone, so a new axis joins its family, takes an ordinal, and reorders the tail without drifting a single reference.
 
-The catalog reads in families — ownership; identity, inverse, and seam; topology and grain; time and growth; custody and proof; premise and omission — and a selection pass touches the family before the axis; the cards run in that order. A cross-cutting set hunts across owners rather than inside one — CONSERVATION, IDENTITY, ROUNDTRIP, TOUCH_POINT, TEMPORAL, and LAYERING — so a single-subtree probe records them clean while a split-brain hides across the seam; the scaling law carries them on seam-spine legs.
+Axes read in families — ownership; identity, inverse, and seam; topology and grain; time and growth; custody and proof; premise and omission — and a selection pass touches the family before the axis; the cards run in that order. A cross-cutting set hunts across owners rather than inside one — CONSERVATION, IDENTITY, ROUNDTRIP, TOUCH_POINT, TEMPORAL, and LAYERING — so a single-subtree probe records them clean while a split-brain hides across the seam; the scaling law carries them on seam-spine legs.
 
-[CONFRONTATION_SET] — The grounding product is a flat entry list, one row per verified finding; a cross-owner finding carries the mirror anchor beside the primary:
+[CONFRONTATION_SET] — Grounding produces a flat entry list, one row per verified finding; a cross-owner finding carries the mirror anchor beside the primary:
 
 ```markdown template
 - [<AXIS>]: <path>:<line> — <observed-fact-in-one-clause>
 - [<AXIS>]: <path>:<line> ⇄ <path>:<line> — <the-fact-and-how-the-two-ends-diverge>
 ```
 
-[SCALING] — A corpus past one reading budget partitions on two dimensions at once. Subtree legs at unit grain carry the local axes over one folder subtree; seam-spine legs carry the cross-cutting axes along one identity, wire, persistence, runtime, or host spine end to end, because a split-brain only shows where the probe crosses owners. Each leg reads its slice's index docs in full, samples implementation pages, and returns confrontation rows — with the mirror anchor where its axis is cross-cutting — plus its clean-axis list. The interviewer merges, dedupes by anchor pair, and re-verifies any row it embeds in a question. A cross-cutting axis assigned only to subtree legs is a partition defect: it reports clean while the seam it never traversed hides the finding.
+[SCALING] — A corpus past one reading budget partitions on two dimensions at once. Subtree legs at unit grain carry the local axes over one folder subtree; seam-spine legs carry the cross-cutting axes along one identity, wire, persistence, runtime, or host spine end to end, because a split-brain only shows where the probe crosses owners. Each leg reads its slice's index docs in full, samples implementation pages, and returns confrontation rows — with the mirror anchor where its axis is cross-cutting — plus its clean-axis list. Interviewer merges, dedupes by anchor pair, and re-verifies any row it embeds in a question. A cross-cutting axis assigned only to subtree legs is a partition defect: it reports clean while the seam it never traversed hides the finding.
 
 ## [01]-[STRUCTURE]
 
@@ -69,7 +69,7 @@ The catalog reads in families — ownership; identity, inverse, and seam; topolo
 - Definition: Structure pathologies of the tree itself — one-folder-one-file chains, over-nesting with single children, one concern scattered across many small siblings, flat dumps past navigability.
 - Probe: Sweep the tree for single-child directories and single-file folders; count files per directory and flag flat sets past the point where naming convention is the only index; a leg returns the counts and chains for its subtree.
 - Question: `<folder>` holds one file its parent map already names — which rule decides folder against section, and what does the extra level buy.
-- Evidence: The tree listing itself — counts and chains verified by a fresh sweep.
+- Evidence: A tree listing whose counts and chains a fresh sweep verifies.
 
 ## [09]-[NAMING]
 
@@ -131,7 +131,7 @@ The catalog reads in families — ownership; identity, inverse, and seam; topolo
 
 - Definition: A request naming a solution or sub-problem whose motivating problem the territory contradicts or serves better elsewhere — the stated ask is a means already chosen, the goal behind it unstated, and the unit of success undefined.
 - Probe: Extract the request's implied goal and trace the pain to its origin — the episode, cost, or constraint that produced the ask; check whether the corpus already serves that goal by another surface and whether the ask's success leaves the pain standing; a leg returns each ask whose motivating pain a different change resolves more directly.
-- Question: The request asks for `<solution>`; the pain anchors at `<anchor>` — does `<solution>` retire that pain, or does `<other-change>` retire it at lower cost, and which outcome is the unit of success.
+- Question: A request asks for `<solution>`; the pain anchors at `<anchor>` — does `<solution>` retire that pain, or does `<other-change>` retire it at lower cost, and which outcome is the unit of success.
 - Evidence: A motivating pain the stated ask leaves standing, or a corpus surface that already serves the extracted goal.
 
 ## [18]-[SCOPE_NAIVETY]
@@ -145,12 +145,12 @@ The catalog reads in families — ownership; identity, inverse, and seam; topolo
 
 - Definition: Unstated premises internal to the design's own reasoning, warranted or not by evidence the author can produce on request — the roster a key-assumptions check produces, ranked by importance against evidence.
 - Probe: Write each settled line, articulate its stated and unstated premises, and place each on the importance-by-evidence quadrant; a leg returns the high-importance low-evidence corner as its row set.
-- Question: The design rests on `<premise>` — what evidence carries it, and does the judgment survive its failure.
+- Question: A design rests on `<premise>` — what evidence carries it, and does the judgment survive its failure.
 - Evidence: A load-bearing premise whose supporting evidence cannot be produced on request.
 
 ## [20]-[COUNTERFACTUAL]
 
-- Definition: The unexamined inverse — what failure looks like with the goal met, a surface success (a render, a green test, a passing demo) reached off the owned rail, which trigger chains nobody mapped.
+- Definition: An unexamined inverse — what failure looks like with the goal met, a surface success (a render, a green test, a passing demo) reached off the owned rail, which trigger chains nobody mapped.
 - Probe: Take each settled judgment and each success signal, assume the negation or the bypass happened, build the backward pathway, and name the observables that mark each stage; a leg returns each pathway with the constraint that fails to block it.
 - Question: `<goal>` is met and the result still counts as failure — what happened, and which owned rail did the success signal bypass.
 - Evidence: A plausible pathway to the negated outcome that no stated constraint blocks, or a success signal that clears while a canonical path is skipped.

@@ -28,8 +28,8 @@ in {
     settings = {
       db_path = "${config.xdg.dataHome}/atuin/history.db";
       key_path = "${config.xdg.dataHome}/atuin/key";
-      # Sync rail: the maghz services.atuin host, loopback-only through the atuin tunnel (port 8788 — the Jupyter loopback owns 8888 on both
-      # ends). Credential custody is Doppler: ATUIN_SYNC_PASSWORD for the one-time register/login, ATUIN_SYNC_KEY escrowing `atuin key`. Any
+      # Sync rail: the maghz services.atuin host, loopback-only through the atuin tunnel on port 8788. Credential custody is Doppler:
+      # ATUIN_SYNC_PASSWORD for the one-time register/login, ATUIN_SYNC_KEY escrowing `atuin key`. Any
       # host with the tunnel plus Doppler joins; no per-machine roster exists anywhere.
       auto_sync = true;
       sync_address = "http://127.0.0.1:8788";

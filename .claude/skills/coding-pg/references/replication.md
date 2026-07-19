@@ -75,7 +75,7 @@ Subscription contracts:
 
 ## [03]-[RLS_BYPASS_IN_LOGICAL_REPLICATION]
 
-[SECURITY_CRITICAL]: The apply worker executes as the subscription owner (typically superuser), which bypasses all RLS policies. Row-level security is not evaluated during logical replication apply.
+[SECURITY_CRITICAL]: Apply workers execute as the subscription owner (typically superuser), which bypasses all RLS policies. Row-level security is not evaluated during logical replication apply.
 
 Impact: if publisher replicates all rows and subscriber relies on RLS for tenant isolation, every tenant's data is visible to the apply worker and written without RLS checks.
 

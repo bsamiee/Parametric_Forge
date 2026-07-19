@@ -1,6 +1,6 @@
 # [HTML]
 
-Markup is the argument: every fact rides the native element that owns its meaning, so the document reads intact with the stylesheet and script deleted. The shell grammar fixes where everything lives, the vocabulary fixes what each element carries, the admission bands fix what platform surface ships, and ARIA repairs only what no native element expresses.
+Markup is the argument: every fact rides the native element that owns its meaning, so the document reads intact with the stylesheet and script deleted. Shell grammar fixes where everything lives, the vocabulary fixes what each element carries, the admission bands fix what platform surface ships, and ARIA repairs only what no native element expresses.
 
 ## [01]-[SHELL]
 
@@ -9,11 +9,11 @@ One `<!doctype html>` document opens `<html lang="en">` and declares `<meta char
 Body order is fixed: skip link, artifact `<header>`, sticky control band, the layout shell around `<main id="main">`, auxiliary native surfaces — `<template>`, `<dialog>`, `[popover]` panels — after `<main>`, the export drawer, payload data, then the executable script.
 
 - One `<h1>` per document. Headings descend without level skips, and each names a claim or a reader task, never a bare topic.
-- The root element is the theme seam: the script stamps `data-theme` on `<html>` and every other node just reads tokens.
+- `<html>` is the theme seam: the script stamps `data-theme` on it and every other node just reads tokens.
 - Every `id` is unique and stable: sections carry ids so the contents rail, fragment deep links, scroll spy, and capture records address them, and the same ids serve `aria-labelledby` and `for` wiring.
-- The `style` attribute never appears — presentation binds through a class or a custom property written by `style.setProperty`, so state stays inspectable and theme-safe.
+- `style` attributes never appear — presentation binds through a class or a custom property written by `style.setProperty`, so state stays inspectable and theme-safe.
 - Inline handler attributes never appear; the delegation script owns every event. `data-*` carries machine state — `data-id` for record identity, `data-k` for figure keys, `data-state` for lifecycle — while classes carry appearance alone.
-- The executable script is one IIFE ordered models, then pure operations, then composition wiring, so the script audits top-down in owner order.
+- One IIFE owns the executable script — models, then pure operations, then composition wiring — so the script audits top-down in owner order.
 - `<base href>` never appears — it silently rewrites every relative resolution in the document.
 - A deck is the one alternate visible shell — a full-viewport stack of `<section class="slide">` panels under the same payload, drawer, and script grammar.
 
@@ -23,9 +23,9 @@ Landmarks hand assistive navigation the same map the visual layout draws.
 
 - `<main id="main">` appears once and holds the argument. `<header>` carries the masthead, `<nav>` wraps the contents rail, `<aside>` carries the detail rail and sidenotes, `<footer>` closes the shell, and `<search>` wraps every filter cluster.
 - A repeated landmark kind takes a distinguishing `aria-label`: `<nav aria-label="Sections">` beside `<nav aria-label="Slides">`.
-- The `<title>` text mirrors the `<h1>` claim, so the tab, the window, and the print header agree on what the page is.
-- The masthead is a fixed triad — mono eyebrow kicker, the `<h1>`, a muted deck line — with the chip row baseline-beside or above the title, never below it.
-- The skip link is the first focusable node — `<a class="skip" href="#main">Skip to content</a>` — and a target that is not natively focusable carries `tabindex="-1"` so focus actually lands.
+- `<title>` text mirrors the `<h1>` claim, so the tab, the window, and the print header agree on what the page is.
+- A fixed triad rules the masthead — mono eyebrow kicker, the `<h1>`, a muted deck line — with the chip row baseline-beside or above the title, never below it.
+- A skip link is the first focusable node — `<a class="skip" href="#main">Skip to content</a>` — and a target that is not natively focusable carries `tabindex="-1"` so focus actually lands.
 - Native semantics precede ARIA: `role` appears only where no element exists — `tablist`/`tab`/`tabpanel`, `role="img"` on meaning-bearing SVG, `role="status"` on the toast, `role="meter"` on the styled meter bar. A role restating its element (`role="button"` on `<button>`) is a defect.
 - State and position ride their canonical carriers: `aria-pressed` on every toggle button, `aria-expanded` on a control owning a collapsed region, `aria-current="step"` on the active step, `aria-current="page"` on the active rail anchor, `aria-selected` with roving `tabindex` inside composites, `aria-label` on every icon-only button.
 - `inert` freezes a background region while an overlay owns interaction; `hidden="until-found"` keeps collapsed prose reachable by find-in-page where plain `hidden` buries it, and the `beforematch` event tells the script to expand the revealed region's owner.
@@ -59,7 +59,7 @@ Meter and progress split by meaning, never by looks: `<meter min max low high op
 
 ## [04]-[TABLES]
 
-The table is the artifact's densest surface; its markup does the aligning so the stylesheet only paints.
+A table is the artifact's densest surface; its markup does the aligning so the stylesheet only paints.
 
 - `<caption>` names the question the table answers; a caption the layout already states rides `.sr-only` rather than vanishing.
 - Header cells declare direction: `<th scope="col">` across the head row, `<th scope="row">` leading each body row, and a matrix corner cell stays an empty `<td>`.
@@ -102,13 +102,13 @@ The table is the artifact's densest surface; its markup does the aligning so the
 Native disclosure and top-layer elements own open state, dismissal, focus, and stacking; script only reacts.
 
 - `<details>` holds depth in place: `<summary>` stays a short claim with an optional trailing chip or count, and a shared `name` makes a sibling group mutually exclusive with zero script. Load-bearing conclusions render open at rest — disclosure deepens the argument, never gates it.
-- `<dialog>` opened by `showModal()` makes the rest of the page inert automatically; `<form method="dialog">` with valued buttons returns the choice through `returnValue`, so a confirm flow carries no focus-trap plumbing. The least-destructive button carries `autofocus`, so Enter-through never destroys.
+- `<dialog>` opened by `showModal()` makes the rest of the page inert automatically; `<form method="dialog">` with valued buttons returns the choice through `returnValue`, so a confirm flow carries no focus-trap plumbing. A least-destructive button carries `autofocus`, so Enter-through never destroys.
 - `popovertarget` pairs a button to its `popover` panel and supplies open, light-dismiss, and `Esc` natively; a timed toast is a `popover="manual"` div carrying `role="status"`, shown and hidden by script alone — `<output>` stays bound to named inputs through `for`.
 - Dialog and popover split by weight: a `<dialog>` blocks the page for a decision the flow requires; a popover floats context the reader dismisses at will. A blocking popover and a light-dismiss dialog are both the wrong element.
-- The `toggle` event on a popover or `<details>` is the state seam the script listens on — open state reads from the event, never from a click handler inferring it.
+- `toggle` on a popover or `<details>` is the state seam the script listens on — open state reads from the event, never from a click handler inferring it.
 - Nested popovers form one open chain: opening a child keeps its ancestor panels open, and light-dismiss unwinds from the top of the chain.
 - An anchored panel declares `anchor-name` on its trigger and `position-anchor` + `position-area` on the panel, so the menu tethers to its button with zero placement script.
-- The export drawer is a fixed tab button paired to a popover panel with a fixed interior order — send, disk egress, per-type fields, mirror:
+- A fixed tab button pairs to a popover panel as the export drawer, its interior order fixed — send, disk egress, per-type fields, mirror:
 
 ```html template
 <button class="drawer-tab" popovertarget="drawer">Export</button>
@@ -141,7 +141,7 @@ A composite widget is the one place `role` builds what HTML lacks; the markup ca
 <section role="tabpanel" id="panel-b" aria-labelledby="tab-b" hidden></section>
 ```
 
-- The active tab holds `tabindex="0"` and `aria-selected="true"`; every other tab holds `-1` and `false`, so the tablist is one tab stop and arrow keys roll focus.
+- An active tab holds `tabindex="0"` and `aria-selected="true"`; every other tab holds `-1` and `false`, so the tablist is one tab stop and arrow keys roll focus.
 - A keyboard-traversed grid or list is one roving-tabindex composite: cells carry `data-cell` with exactly one at `tabindex="0"`, and the container carries `data-roving` for the delegated arrow-key handler.
 - A drag surface pairs `draggable="true"` cards carrying `data-id` with `data-bucket` list containers and one reusable drop-marker element; the markup names the move (card id, target bucket) so the drop reduces to a model mutation.
 - An annotation rail is an `<aside>` of note cards each carrying `data-for` naming its target's id, so the rail aligns notes to their anchors by data, never by hand-placed offsets.
@@ -167,7 +167,7 @@ Native form semantics own every capture control, so keyboard order, grouping, an
 Density is semantic compression: fewer, richer elements each carrying a whole fact.
 
 - A `<div>` exists only as a layout shell; every content node is a semantic element, so the renderer and the delegation script address meaning, never wrapper depth.
-- The kv ledger — `<dl class="kv">` with mono `dt` labels and aligned `dd` values — replaces scattered `small` runs for owners, dates, ids, and counts.
+- A kv ledger — `<dl class="kv">` with mono `dt` labels and aligned `dd` values — replaces scattered `small` runs for owners, dates, ids, and counts.
 - One fact, one node: a status is one chip, an identity one `data-id`, a metric one `.stat` block; markup never restates what a sibling node already carries.
 - `<ul>` carries parallel atomic facts and `<ol>` carries claimed order; a one-item list is a paragraph wearing a bullet.
 - `<time>` renders human text over an ISO `datetime` at the precision the estimate holds — a quarter-grade guess never renders day-precise.
@@ -178,7 +178,7 @@ Density is semantic compression: fewer, richer elements each carrying a whole fa
 - `<pre>` is whitespace-verbatim: the code text opens flush against `<pre><code>` and the source indentation is the rendered indentation, so embedded snippets never inherit the surrounding markup's leading whitespace.
 - Inline semantics finish the compression: `<code>` for symbols and paths, `<kbd>` for keystrokes, `<mark>` for search hits, `<time>` for instants, `<small>` for captions — each a hook the stylesheet and the delegation script address without extra classes.
 
-The composed card shows the grammar at real scale — identity on the article, the header band, the kv ledger, disclosure holding the evidence:
+A composed card shows the grammar at real scale — identity on the article, the header band, the kv ledger, disclosure holding the evidence:
 
 ```html template
 <article class="card" data-id="st-2">
@@ -205,7 +205,7 @@ The composed card shows the grammar at real scale — identity on the article, t
 
 ## [09]-[ADMISSION]
 
-Platform vocabulary lands by support band: plain vocabulary ships unguarded, guarded vocabulary enhances a complete fallback, and dead vocabulary never appears. The bands below are the admission registry.
+Platform vocabulary lands by support band: plain vocabulary ships unguarded, guarded vocabulary enhances a complete fallback, and dead vocabulary never appears. These bands register admission.
 
 [PLAIN] — shipped bare, each deleting the script it obsoletes:
 

@@ -21,28 +21,29 @@ All SQL follows these governing principles:
 
 ## [01]-[ROUTING]
 
-[FOUNDATION]: always load.
+[REFERENCES]: `validation.md` always loads; the rest load when the task matches.
 - [01]-[VALIDATION](references/validation.md): compliance checklist, Effect-SQL alignment, migration safety
+- [02]-[DDL](references/ddl.md): schema design, domain/composite/range types, temporal constraints, generated columns, partitioning, lock levels
+- [03]-[QUERIES](references/queries.md): CTE algebra, MERGE, window functions, JSON_TABLE, recursive patterns
+- [04]-[INDEXES](references/indexes.md): index type selection, partial indexes, covering indexes, maintenance
+- [05]-[FUNCTIONS](references/functions.md): polymorphic functions, custom aggregates, procedures, PL/pgSQL dispatch
+- [06]-[EXTENSIONS](references/extensions.md): pgvector, pg_trgm, PostGIS, TimescaleDB, pg_cron, pg_partman, pg_duckdb, embeddings, spatial, OLAP
+- [07]-[SECURITY](references/security.md): RLS, row-level security, tenant isolation, privileges, audit, pgaudit
+- [08]-[OBSERVABILITY](references/observability.md): monitoring, statistics, auto_explain, wait events, lock contention
+- [09]-[PERFORMANCE](references/performance.md): tuning, io_uring, JIT, parallel query, vacuum, SSD, NVMe, EXPLAIN
+- [10]-[REPLICATION](references/replication.md): replication, publications, subscriptions, conflict tracking, CDC
 
-[TASK_ROUTED_REFERENCES]: load when the task matches.
-- [01]-[DDL](references/ddl.md): schema design, domain/composite/range types, temporal constraints, generated columns, partitioning, lock levels
-- [02]-[QUERIES](references/queries.md): CTE algebra, MERGE, window functions, JSON_TABLE, recursive patterns
-- [03]-[INDEXES](references/indexes.md): index type selection, partial indexes, covering indexes, maintenance
-- [04]-[FUNCTIONS](references/functions.md): polymorphic functions, custom aggregates, procedures, PL/pgSQL dispatch
-- [05]-[EXTENSIONS](references/extensions.md): pgvector, pg_trgm, PostGIS, TimescaleDB, pg_cron, pg_partman, pg_duckdb, embeddings, similarity search, time-series, spatial, partitioning automation, analytics, OLAP, analytical
-- [06]-[SECURITY](references/security.md): RLS, row-level security, tenant isolation, privileges, audit, pgaudit
-- [07]-[OBSERVABILITY](references/observability.md): monitoring, statistics, auto_explain, wait events, lock contention
-- [08]-[PERFORMANCE](references/performance.md): tuning, io_uring, JIT, parallel query, vacuum, SSD, NVMe, EXPLAIN
-- [09]-[REPLICATION](references/replication.md): replication, publications, subscriptions, conflict tracking, CDC
+[SCRIPTS]: run after writing or modifying SQL.
+- [01]-[PG_LINT](scripts/pg_lint.sh): doctrine lint over SQL paths; errors block merge, warnings need justification; flags route to `--help`
 
 ## [02]-[PARADIGM]
 
-- [IMMUTABILITY]: append-only event tables, temporal versioning via `tstzrange` + `WITHOUT OVERLAPS`, soft-delete via `archived_at` timestamp — zero in-place mutation of historical records
-- [TYPE_ANCHORING]: one `CREATE TYPE` or `CREATE DOMAIN` per semantic concept — derive column declarations from domain types, never redeclare equivalent `CHECK` constraints across tables
-- [EXPRESSION_CONTROL_FLOW]: `CASE`-free query design via `COALESCE`, `NULLIF`, `GREATEST`/`LEAST`, lateral joins, and `FILTER (WHERE ...)` — reserve `CASE` for irreducible multi-branch projection only
-- [SET_COMPOSITION]: CTEs as named relational algebra steps; `UNION ALL` over procedural accumulation; `MERGE` over conditional INSERT/UPDATE sequences
-- [CONSTRAINT_DRIVEN_INTEGRITY]: `CHECK`, `EXCLUDE`, `WITHOUT OVERLAPS`, `GENERATED ALWAYS AS` — push validation into DDL; application-layer checks are redundant defense, not primary enforcement
-- [EXTENSION_FIRST]: pgvector for embeddings, pg_trgm for fuzzy search, PostGIS for spatial, TimescaleDB for time-series — never hand-roll what an extension owns
+- [IMMUTABILITY]: append-only events, `tstzrange` + `WITHOUT OVERLAPS` versioning, soft-delete via `archived_at` — zero in-place mutation
+- [TYPE_ANCHORING]: one `CREATE TYPE` or `CREATE DOMAIN` per semantic concept — columns reference the domain, never redeclaring `CHECK` per table
+- [EXPRESSION_CONTROL_FLOW]: `COALESCE`, `NULLIF`, `GREATEST`/`LEAST`, `LATERAL`, `FILTER (WHERE ...)` — `CASE` only for multi-branch projection
+- [SET_COMPOSITION]: CTEs as named relational algebra steps; `UNION ALL` over procedural accumulation; `MERGE` over conditional INSERT/UPDATE
+- [CONSTRAINT_DRIVEN_INTEGRITY]: DDL validates — `CHECK`, `EXCLUDE`, `WITHOUT OVERLAPS`, `GENERATED ALWAYS AS`; application checks never enforce
+- [EXTENSION_FIRST]: pgvector, pg_trgm, PostGIS, TimescaleDB — never hand-roll what an extension owns
 
 ## [03]-[CONVENTIONS]
 
@@ -60,7 +61,8 @@ All SQL follows these governing principles:
 |  [10]   | Observability  | pg_stat_statements + auto_explain | Query fingerprinting, automatic slow-query plan capture        |
 
 - Effect-SQL (`@effect/sql` + `@effect/sql-pg`) is the assumed TypeScript integration layer.
-- `Model.Class` field modifiers (`Generated`, `FieldOnly`, `FieldExcept`, `Sensitive`) must align with DDL constraints — `Generated` fields map to `DEFAULT` or `GENERATED ALWAYS AS` columns.
+- `Model.Class` field modifiers (`Generated`, `FieldOnly`, `FieldExcept`, `Sensitive`) must align with DDL constraints.
+- `Generated` fields map to `DEFAULT` or `GENERATED ALWAYS AS` columns.
 - All SQL identifiers use `snake_case`; TypeScript receives `camelCase` via `transformResultNames`.
 
 ## [04]-[CONTRACTS]
@@ -146,5 +148,5 @@ All SQL follows these governing principles:
 
 After writing or modifying SQL, run in order:
 
-1. [AUTOMATED_LINT]: run `bash scripts/pg_lint.sh [PATH...]` from this skill directory; errors (E) block merge, warnings (W) require justification. Flags route to `--help`.
+1. [AUTOMATED_LINT]: `bash ${CLAUDE_SKILL_DIR}/scripts/pg_lint.sh [PATH...]`; errors block merge, warnings need justification; flags route to `--help`.
 2. [MANUAL_CHECKLIST]: `references/validation.md` — compliance gates not automatable (Effect-SQL alignment, migration safety, lock-level awareness).

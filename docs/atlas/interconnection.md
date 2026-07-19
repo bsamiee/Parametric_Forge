@@ -36,7 +36,7 @@ Consumers never restate hex. WezTerm receives `projections.luaPalette` as `wezte
 
 ## [04]-[HOST_CONTEXT_FACTORY]
 
-`hosts/context.nix` mints the per-host row (`name`, `os`, `system`, versions, timeZone, user, ssh, and NixOS disk/network/service-user fields; Darwin rows add `label`). One wrong row shape breaks flake host construction, NixOS static networking, and Home Manager import gates at once. `hosts/default.nix` is the single factory: an OS dispatch row selects the system builder and module set, and one shared per-host module carries platform, identity, and the Home Manager projection for every row — a new machine is one context row. `host.os` is the gate that keeps Darwin-only GUI apps and mac tools off Linux (`modules/home/programs/default.nix`) and drives the static systemd-user-service gates in `ssh.nix` and `scientific-tools.nix`.
+`hosts/context.nix` mints the per-host row (`name`, `os`, `system`, versions, timeZone, user, ssh, and NixOS disk/network/service-user fields; Darwin rows add `label`). One wrong row shape breaks flake host construction, NixOS static networking, and Home Manager import gates at once. `hosts/default.nix` is the single factory: an OS dispatch row selects the system builder and module set, and one shared per-host module carries platform, identity, and the Home Manager projection for every row — a new machine is one context row. `host.os` is the gate that keeps Darwin-only GUI apps and mac tools off Linux (`modules/home/programs/default.nix`) and drives the static systemd-user-service gate in `ssh.nix`.
 
 ## [05]-[TOOLCHAIN_PATH_FACTORY]
 
@@ -67,7 +67,7 @@ The MCP manifest is the deepest fan-out: `mcp-launchers.nix` filters launcher ro
 
 ## [07]-[RUNTIME_SEAMS]
 
-Beyond eval-time option hinges, five contracts bind processes at runtime across module boundaries; each side is edited only with the other in view.
+Beyond eval-time option hinges, these contracts bind processes at runtime across module boundaries; each side is edited only with the other in view.
 
 - [01]-[RECEIPTS]: every `forge-*` kernel persists TSV receipts to `~/Library/Logs/forge-<name>.receipts.log`, override key `FORGE_<NAME>_RECEIPT_LOG` (grammar minted by the `forge-tools.nix` builder); `forge-receipts` discovers sources from `config.forge.registers.receiptSources` (rows carry `grain` — `kv` TSV or `json` JSONL) plus `config.forge.ssh.hosts` rows. A new kernel that hand-rolls its receipt path is an `--audit` FAIL — invisible to browser and query plane alike.
     - The plane is queryable and live: `--sql`/`--verb` run DuckDB over the normalized event spine, and `--audit` diffs registry rows against on-disk reality and fails on unregistered emitters.

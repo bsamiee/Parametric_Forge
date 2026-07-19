@@ -8,11 +8,11 @@ One complete descent at composed scale: a solution-shaped request, the grounding
 Add a cache in front of the render pipeline — rebuilds are too slow.
 ```
 
-The ask names a mechanism, not a problem: a cache is a means already chosen, the goal behind it unstated, the unit of success undefined. The grounding pass runs before any question.
+That request names a mechanism, not a problem: a cache is a means already chosen, the goal behind it unstated, the unit of success undefined. Grounding runs before any question.
 
 ## [02]-[GROUNDING]
 
-Axes selected by the request — FRAMING, CONSERVATION, IDENTITY, APPROACH, TEMPORAL — probed over the pipeline subtree and the persistence seam. The confrontation set:
+Axes selected by the request — FRAMING, CONSERVATION, IDENTITY, APPROACH, TEMPORAL — probed over the pipeline subtree and the persistence seam. Grounding yields the confrontation set:
 
 ```markdown generated
 - [FRAMING]: <unit>/pipeline/render.md:41 — render outputs are already content-keyed through the artifact index; the asked-for cache exists
@@ -23,7 +23,7 @@ Axes selected by the request — FRAMING, CONSERVATION, IDENTITY, APPROACH, TEMP
 
 ## [03]-[RE_FRAME]
 
-The FRAMING rows indict the request: the asked-for cache exists, and the pain — cold-rebuild wall time — anchors at the one un-keyed stage the cache never touches. The extracted goal replaces the ask as the interview's subject, and the ask enters the fan as one candidate resolution among its rivals.
+FRAMING rows indict the request: the asked-for cache exists, and the pain — cold-rebuild wall time — anchors at the one un-keyed stage the cache never touches. Its extracted goal replaces the ask as the interview's subject, and the ask enters the fan as one candidate resolution among its rivals.
 
 ```markdown generated
 [CONSTRAINT] Unit of success: cold-rebuild wall time, not cache presence.
@@ -70,7 +70,7 @@ Terminal schema: one ruling naming the owner surface that changes, with its conf
     invalidating condition recorded]
 ```
 
-The descent terminates: the next question detects no new gap. Stratum 2's rejected arms carry their reopen conditions into the record; the stratum 1 reported belief becomes option (a)'s reopen condition — the profile that revives it.
+Descent terminates: the next question detects no new gap. Stratum 2's rejected arms carry their reopen conditions into the record; the stratum 1 reported belief becomes option (a)'s reopen condition — the profile that revives it.
 
 ## [06]-[RECORD]
 
@@ -101,9 +101,9 @@ The descent terminates: the next question detects no new gap. Stratum 2's reject
 
 Three inspectable facts complete the landing.
 
-- The record composes as its html-studio decision-doc page — constraint frame, option grid with per-option verdicts and steal chips, weight-declared scoring matrix, ruling with marked premises, rejected options with reopen conditions — gated and rendered under both themes, homed under the repo's naming law as `decision-record.render-pipeline.rebuild-latency.html`.
-- The page runs served: the reader's pick returns as one receipt — pick `o2`, `o1`/`o3` rejected, the tree-digest short-circuit stolen from `o3` as a keyed fast path — and the receipt's verdicts face the same challenge as spoken answers before the record seals.
-- The fold-back orders rulings by tweak pressure, decisions before mechanics:
+- Record composes as its html-studio decision-doc page — constraint frame, option grid with per-option verdicts and steal chips, weight-declared scoring matrix, ruling with marked premises, rejected options with reopen conditions — gated and rendered under both themes, homed under the repo's naming law as `decision-record.render-pipeline.rebuild-latency.html`.
+- Served, the page returns the reader's pick as one receipt — pick `o2`, `o1`/`o3` rejected, the tree-digest short-circuit stolen from `o3` as a keyed fast path — and the receipt's verdicts face the same challenge as spoken answers before the record seals.
+- Fold-back orders rulings by tweak pressure, decisions before mechanics:
 
 ```text
 Bind these rulings as input: (1) the artifact index is the only content-key regime — no front cache,

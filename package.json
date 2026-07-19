@@ -17,7 +17,6 @@
     },
     "devDependencies": {
         "@effect/language-service": "catalog:",
-        "@effect/tsgo": "catalog:",
         "@effect/platform": "catalog:",
         "@effect/platform-node": "catalog:",
         "@pulumi/github": "catalog:",

@@ -1,6 +1,6 @@
 # [VERIFICATION]
 
-A hook is proven by replaying an exact-format payload on its stdin and asserting on the exit code or the stdout JSON — the harness never enters the loop. Replay is language-agnostic, subprocess-cheap, and CI-able, and it doubles as an audit tool for any third-party hook before it is trusted. The discipline is to test the block path, the allow path, and the malformed path together, since a gate that permits by crashing looks correct on the happy replay alone.
+A hook is proven by replaying an exact-format payload on its stdin and asserting on the exit code or the stdout JSON — the harness never enters the loop. Replay is language-agnostic, subprocess-cheap, and CI-able, and it doubles as an audit tool for any third-party hook before it is trusted. Discipline is testing the block path, the allow path, and the malformed path together, since a gate that permits by crashing looks correct on the happy replay alone.
 
 ## [01]-[FIXTURE_REPLAY]
 
@@ -12,21 +12,21 @@ printf '%s' '{"hook_event_name":"PreToolUse","tool_name":"Bash","tool_input":{"c
 printf '%s' 'not json at all' | ./pretooluse-gate.py; echo "malformed -> $?"
 ```
 
-A stdout-JSON hook asserts on the parsed object instead — `... | ./session-context.py | jq -e '.hookSpecificOutput.additionalContext'`. The fixture is the same shape both providers deliver, so one replay set covers a dual-provider body; append `turn_id` to a fixture to prove the Codex overlay is ignored harmlessly.
+A stdout-JSON hook asserts on the parsed object instead — `... | ./session-context.py | jq -e '.hookSpecificOutput.additionalContext'`. That fixture is the same shape both providers deliver, so one replay set covers a dual-provider body; append `turn_id` to a fixture to prove the Codex overlay is ignored harmlessly.
 
 ## [02]-[THE_CASES]
 
 Every hook carries these fixtures, and a gate carries dangerous cases paired against benign look-alikes, because a missed attack and a false alarm are the same failure:
 
-- [BLOCK]: The payload the hook exists to stop returns exit 2 with a non-empty stderr reason.
-- [ALLOW]: The benign look-alike returns 0 — `git checkout -b feature` against `git checkout -- file`, `myenvironment.txt` against `.env`, a path inside the sandbox against one that escapes it.
+- [BLOCK]: Payload the hook exists to stop returns exit 2 with a non-empty stderr reason.
+- [ALLOW]: Benign look-alike returns 0 — `git checkout -b feature` against `git checkout -- file`, `myenvironment.txt` against `.env`, a path inside the sandbox against one that escapes it.
 - [MALFORMED]: Non-JSON, an empty payload, and a payload missing the field the hook reads all hit the fail-closed path — a gate blocks, an observer exits 0.
 - [OBFUSCATED]: `rm${IFS}-rf${IFS}/`, a quoted `"rm" -rf`, and a `bash -c 'rm -rf /'` wrapper prove the command-normalization move before matching (the command-decomposition recipe carries it).
 - [LOOP]: A `Stop` fixture with `stop_hook_active: true` proves the continuation hook permits the second pass rather than livelocking.
 
 ## [03]-[RED_TEAM_HARNESS]
 
-A single harness runs any hook against a fixture corpus and asserts the exit code, so it audits an external or gist hook without reading its source and regression-tests an owned hook on every edit. It runs in two modes: a spawned subprocess for real-world fidelity and an in-process call for a fast inner loop, and CI runs both so the fast path never diverges from spawn behavior. Each row reports `RULE`, `CASE`, `EXPECTED`, and `ACTUAL`, naming the offending policy on a miss rather than a bare fail line. The corpus is disciplined by pairing, not volume: every dangerous fixture ships with its benign twin, and a benign fixture that blocks (crying wolf) is the same defect class as a dangerous fixture that passes (a missed attack). The merge gate binds the corpus to the rulebook — a new or changed policy row lands only with its paired fixture, so the corpus grows with the rules and never behind them. The runnable harness is the redteam-harness example. The discipline generalizes past `PreToolUse`: a `SessionStart` injector is replayed and its `additionalContext` asserted, a `Stop` continuation is replayed with `stop_hook_active` set, so every event class carries the same audit.
+A single harness runs any hook against a fixture corpus and asserts the exit code, so it audits an external or gist hook without reading its source and regression-tests an owned hook on every edit. It runs in two modes: a spawned subprocess for real-world fidelity and an in-process call for a fast inner loop, and CI runs both so the fast path never diverges from spawn behavior. Each row reports `RULE`, `CASE`, `EXPECTED`, and `ACTUAL`, naming the offending policy on a miss rather than a bare fail line. That corpus is disciplined by pairing, not volume: every dangerous fixture ships with its benign twin, and a benign fixture that blocks (crying wolf) is the same defect class as a dangerous fixture that passes (a missed attack). A merge gate binds the corpus to the rulebook — a new or changed policy row lands only with its paired fixture, so the corpus grows with the rules and never behind them. Its runnable harness is the redteam-harness example. This discipline generalizes past `PreToolUse`: a `SessionStart` injector is replayed and its `additionalContext` asserted, a `Stop` continuation is replayed with `stop_hook_active` set, so every event class carries the same audit.
 
 ## [04]-[TIMING_AND_RACES]
 

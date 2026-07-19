@@ -1,32 +1,34 @@
 # [EMBEDDING]
 
-A validated fence reaches its reader through a host, and every host binds one of two lanes: source lane — the host renders the fence itself — or render lane — the page carries the pre-rendered SVG. The fence stays the single source of truth in both; the SVG is a projection regenerated at will. The mermaid-diagramming validator owns the render mechanics.
+A validated fence reaches its reader through a host, and every host binds one of two lanes: source lane — the host renders the fence itself — or render lane — the page carries the pre-rendered SVG. Fence stays the single source of truth in both; the SVG is a projection regenerated at will. Mermaid-diagramming validator owns the render mechanics.
 
 ## [01]-[MARKDOWN_HOSTS]
 
-Durable markdown carries the source lane: the fence itself, opened with the `mermaid` info string, frontmatter on line 1 of the body, delimiters at column one, one diagram per fence, placed beside the prose that cites it.
+Durable markdown carries the source lane: the fence itself, one diagram per fence, placed beside the prose that cites it.
 
-- A platform that renders fences client-side injects its own `initialize`; the fence's frontmatter `theme`, `look`, `themeVariables`, and `themeCSS` outrank it, so a themed fence keeps its face on any renderer that honors frontmatter. A docs host that owns a site-level theme takes the whole-theme drop rule in the theming reference.
+- A platform that renders fences client-side injects its own `initialize`; a themed fence keeps its face wherever the host honors frontmatter, and a docs host that owns a site-level theme takes the whole-theme drop rule in the theming reference.
+- GitHub is a partial-strip host: it renders fences and honors theme colors while dropping the `themeCSS` type stamps and the `themeVariables` font stack — a README fence keeps its palette, never its mono face.
 - `accTitle` and `accDescr` travel inside the fence, so every downstream render carries its SVG `<title>` and `<desc>` without the embedding page adding anything.
-- The bundled validator consumes the markdown file directly — the fence in its final host position is the artifact under test, never a copy in a scratch file.
+- Bundled validator consumes the markdown file directly — the fence in its final host position is the artifact under test, never a copy in a scratch file.
 
 ## [02]-[HTML_ARTIFACTS]
 
-A single-file HTML artifact — an html-studio deliverable or any page under a strict content-security policy — carries the render lane: the pre-rendered SVG inlined into the document, never a CDN script tag and never a bundled runtime spent on a static picture.
+Render lane binds on self-containment and CSP, never on the host being HTML: a single-file html-studio deliverable or any strict-CSP page carries the pre-rendered SVG inlined into the document — never a CDN script tag, never a bundled runtime spent on a static picture — while a claude.ai Artifact page renders `mermaid` fences and `<pre class="mermaid">` blocks natively and stays a source-lane host despite its HTML form.
 
 ```bash template
 uv run scripts/validate_mermaid.py --export <dir> <file.md ...>
 ```
 
-The export row is the contract: each passing fence lands as an SVG whose root id is unique per fence (multi-diagram pages never collide on ids, selectors, or aria references), whose `accTitle`/`accDescr` ride as `<title>`/`<desc>` with the aria wiring intact, whose `width="100%"` plus `viewBox` scale to any container, and whose Dracula canvas is baked so the diagram self-carries on light and dark hosts alike.
+Export row is the contract: each passing fence lands as an SVG whose root id is unique per fence (multi-diagram pages never collide on ids, selectors, or aria references), whose `accTitle`/`accDescr` ride as `<title>`/`<desc>` with the aria wiring intact, whose `width="100%"` plus `viewBox` scale to any container, and whose Dracula canvas is baked so the diagram self-carries on light and dark hosts alike.
 
-- The SVG sits inside a container with `overflow-x: auto`; a wide diagram scrolls in its own box and never forces page-level horizontal scroll.
+- SVG sits inside a container with `overflow-x: auto`; a wide diagram scrolls in its own box and never forces page-level horizontal scroll.
 - On a dark host the baked `#282A36` canvas reads as a raised panel; the container steps its own surface down a level or frames the SVG with a visible border — the elevation rule the theming reference states for inline placement.
-- The source fence rides beside the render — a collapsed `<details>` block carrying the fence keeps the diagram legible to machine readers, who see explicit labeled edges where a human sees layout. Spatial implication is invisible to an agent; the fence is the diagram's machine form.
+- Source fence rides beside the render — a collapsed `<details>` block carrying the fence keeps the diagram legible to machine readers, who see explicit labeled edges where a human sees layout. Spatial implication is invisible to an agent; the fence is the diagram's machine form.
 - A page that must re-render user-edited diagram source is an editor, not an artifact: only there does an inlined mermaid runtime earn its megabytes, initialized once with the host's security posture, and the artifact contract stops applying.
 
 ## [03]-[EXPORT_SURFACES]
 
-- Inline SVG in a browser context is full fidelity: labels ride `foreignObject` HTML, and every browser renders it. A consumer outside the browser — vector editors, PDF pipelines, image toolchains — drops `foreignObject`, so anything bound for one exports PNG through the mmdc raster flags the config reference owns.
-- Chat surfaces, slides, and issue trackers take PNG; a repository README takes the fence itself and lets the platform render; an HTML artifact takes the exported SVG. The consumer picks the surface — the fence never changes to suit one.
-- A regenerated export replaces its predecessor wholesale; the unique root id is deterministic per source file and fence line, so a re-export lands on the same id and downstream references hold.
+- Validator-rendered and `--export` SVGs carry native SVG text for flowchart, class, state, and ER — the render config bakes root `htmlLabels: false` — so those families survive vector editors, PDF pipelines, and pure-SVG rasterizers intact; a family still emitting `foreignObject` labels exports PNG through the mmdc raster flags the config reference owns.
+- Visual proof is the validator's `--proof` lane: a browserless resvg raster of the canonical SVG, falling back to mmdc's own PNG where `foreignObject` labels remain — a pure-SVG rasterizer aimed at a `foreignObject` fence is label-blind and reads a healthy diagram as broken.
+- Chat surfaces, slides, and issue trackers take PNG; a repository README takes the fence itself and lets the platform render; an HTML artifact takes the exported SVG. A consumer picks the surface — the fence never changes to suit one.
+- A regenerated export replaces its predecessor wholesale; the unique root id is deterministic per source file and fence line, so a re-export lands on the same id and downstream references hold. Export slugs key on the file's basename — two same-basename files exported into one directory collide, so exports land in per-file directories or under unique basenames.

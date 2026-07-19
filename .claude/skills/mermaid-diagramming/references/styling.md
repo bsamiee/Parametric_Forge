@@ -1,10 +1,10 @@
 # [STYLING]
 
-The engine's full styling grammar — every link form, node shape, container, and style statement under one ruled precedence. Color assignment rides the palette layer; this reference owns the mechanical surface.
+Full engine styling grammar spans every link form, node shape, container, and style statement under one ruled precedence. Color assignment rides the palette layer; this reference owns the mechanical surface.
 
 ## [01]-[EDGES]
 
-The flowchart endpoint matrix is the stroke family crossed with the endpoint marker. Every cell is a working link; an open form omits the arrowhead, a marker on the left mirrors the right.
+Flowchart endpoint matrix crosses the stroke family with the endpoint marker. Every cell is a working link; an open form omits the arrowhead, a marker on the left mirrors the right.
 
 | [INDEX] | [STROKE]  | [OPEN]    | [POINT]    | [CIRCLE]   | [CROSS]    | [POINT_BOTH] | [CIRCLE_BOTH] | [CROSS_BOTH] |
 | :-----: | :-------- | :-------- | :--------- | :--------- | :--------- | :----------- | :------------ | :----------- |
@@ -49,7 +49,7 @@ An edge id names one edge for behavior metadata: `A e1@--> B` then a metadata bl
 |  [02]   | `e1@{ animation: fast }` | Fast preset; `slow` is the slow preset.                                      |
 |  [03]   | `e1@{ curve: <value> }`  | Per-edge spline from the documented curve set, overriding the diagram curve. |
 
-The metadata block owns only animate, animation, and curve; stroke width, dash, and label color ride `linkStyle` or an edge-id class — `class e1 edgeError` styles the id's stroke, width, dash, and label through the class system, the engine deriving the arrowhead from the resolved stroke. When an edge is modified more than once the last modification wins.
+Metadata blocks own only animate, animation, and curve; stroke width, dash, and label color ride `linkStyle` or an edge-id class — `class e1 edgeError` styles the id's stroke, width, dash, and label through the class system, the engine deriving the arrowhead from the resolved stroke. When an edge is modified more than once the last modification wins.
 
 | [INDEX] | [FORM]                  | [EFFECT]                                  |
 | :-----: | :---------------------- | :---------------------------------------- |
@@ -57,7 +57,7 @@ The metadata block owns only animate, animation, and curve; stroke width, dash, 
 |  [02]   | `linkStyle 1,2,7 ...`   | One style across the listed indices.      |
 |  [03]   | `linkStyle default ...` | Styles every edge.                        |
 
-The `linkStyle` property set is `stroke`, `stroke-width`, `stroke-dasharray`, `color`, and `fill`; a non-default edge that declares no `fill` gets `fill:none` injected. The built-in `animate`/`animation` metadata survives alongside an edge class, and a class-borne animation payload adds no second animation over it. A dash animation rides a class rather than the id — `classDef animate stroke-dasharray:9\,5,animation:dash 25s linear infinite` bound by `class e1 animate`, the dasharray comma escaped as `\,`.
+`linkStyle` property set is `stroke`, `stroke-width`, `stroke-dasharray`, `color`, and `fill`; a non-default edge that declares no `fill` gets `fill:none` injected. Built-in `animate`/`animation` metadata survives alongside an edge class, and a class-borne animation payload adds no second animation over it. A dash animation rides a class rather than the id — `classDef animate stroke-dasharray:9\,5,animation:dash 25s linear infinite` bound by `class e1 animate`, the dasharray comma escaped as `\,`.
 
 Sequence lines carry no `linkStyle`; the stroke shape is the arrow token itself, and grouped backgrounds live in containers.
 
@@ -145,7 +145,7 @@ A reverse form places the marker on the opposite end (`Duck --\|> Animal`); the 
 |  [47]   | `odd`        | none                                                             | odd                   |
 |  [48]   | `lin-doc`    | `lined-document`                                                 | lined document        |
 
-The classic bracket forms are shorthands over that registry.
+Classic bracket forms are shorthands over that registry.
 
 | [INDEX] | [SHORTHAND]   | [SHAPE]    |
 | :-----: | :------------ | :--------- |
@@ -201,13 +201,15 @@ Containers style through the id, never the title, and each type admits a bounded
 
 A subgraph names its id and title as `subgraph id [Title]`, nests, and takes an inner `direction`; that inner direction is dropped and inherited from the parent the moment any member node links outside the block. `style id` on the subgraph beats `clusterBkg`, and a class on the subgraph id colors the title text over `titleColor`.
 
+An edge endpoint may name a subgraph id: under ELK the arrowhead lands on the cluster boundary, so one labeled edge onto a layer stands where per-member edges would fan. Fan-to-foundation recipe — N upper tiers composing one shared base — resolves by the edge's truth class: a permission or law diagram consolidates the fan into one demonstrative dashed rail onto the base's boundary, while an import-truth diagram draws every real import as a solid edge carrying its one sourced-type label targeted at the named member, falling to the cluster boundary only where the sourcing names no specific member — a dashed edge standing for several imports fabricates. `mergeEdges` never substitutes for either move — it fuses routing corridors, not semantics, and railed edges lose their colors and end markers under it.
+
 ## [04]-[PRECEDENCE]
 
 Node styling resolves in application order, later and more specific winning.
 
 - Theme variables and theme CSS set the diagram defaults.
 - `classDef default` sets the fallback class where the type honors it — verified for flowchart, ER, and requirement.
-- A named `classDef` layers through `class` or `:::` assignments; among conflicting classes on one node the later `classDef` definition wins, never the assignment order. The `classDef` declares at diagram root after the nodes it styles — declared above them it renders unstyled.
+- A named `classDef` layers through `class` or `:::` assignments; among conflicting classes on one node the later assignment wins — the last `class` or `:::` statement in source order overwrites, regardless of `classDef` declaration order — and a `classDef` styles its nodes from any position in the fence.
 - Inline `style id ...` is the direct override and wins last — the engine emits it as an inline `!important` declaration; its property set is `fill`, `stroke`, `stroke-width`, `color`, and `stroke-dasharray`.
 - `classDef` rules emit with `!important`, so a `themeCSS` rule without `!important` loses to any class on the same node.
 
@@ -312,68 +314,42 @@ Each diagram type accepts a bounded set of styling statements; `yes` is verified
 |  [12]   | Journey      | `fillType0`–`fillType7` vars      |
 |  [13]   | C4           | `Update*Style` calls              |
 
-The silent traps live where syntax parses but styling does not apply or applies destructively: mindmap `:::` classes must be supplied by the host, so in-diagram `classDef` never defines them; block `:::` has no verified route; state styling reaches plain states while a composite class parses and lands in the DOM with its fill and stroke non-portable and `[*]` markers unstyleable; treemap `classDef` emits inline `!important` fills that lock out every stylesheet correction, so a themed treemap carries no classes and rides its ordinal range plus section stamps; and the nested packet theme-variable block half-applies, so packet styling rides its `themeCSS` classes.
+Silent traps live where syntax parses but styling does not apply or applies destructively: mindmap `:::` classes must be supplied by the host, so in-diagram `classDef` never defines them; block `:::` has no verified route; state styling reaches plain states while a composite class parses and lands in the DOM with its fill and stroke non-portable and `[*]` markers unstyleable; treemap `classDef` emits inline `!important` fills that lock out every stylesheet correction, so a themed treemap carries no classes and rides its ordinal range plus section stamps; and the nested packet theme-variable block half-applies, so packet styling rides its `themeCSS` classes.
 
 ## [06]-[FLOORS]
 
-Every family ships at or above its render floor. Each row inherits `theme: base`, `look: classic`, `fontFamily`, flat locks, palette closure, label backing, and the micro-scale stamp unless `[BOUND]` names a limited surface.
+Every family ships at or above its render floor — `theme: base`, `look: classic`, the mono stack, the flat locks, palette closure, label backing, and the micro-scale stamp — with each family's floor keys demonstrated in its syntax section. These families carry a bound the floor works around:
 
-[UNBOUND]: families whose floor binds no limited surface.
-
-| [INDEX] | [FAMILY]    | [TOKENS]          | [ROUTE]           | [STAMP]           |
-| :-----: | :---------- | :---------------- | :---------------- | :---------------- |
-|  [01]   | flowchart   | base vars         | canonical classes | edge rails        |
-|  [02]   | sequence    | actor signal vars | region surfaces   | marker fill       |
-|  [03]   | state       | general vars      | state classes     | composite stamp   |
-|  [04]   | class       | class vars        | type classes      | note chip         |
-|  [05]   | ER          | band vars         | entity classes    | relation stamp    |
-|  [06]   | gantt       | task vars         | axis cadence      | section stamp     |
-|  [07]   | timeline    | ordinal colors    | section borders   | wayfinding stamp  |
-|  [08]   | kanban      | ordinal colors    | card variables    | priority remap    |
-|  [09]   | gitGraph    | branch colors     | commit variables  | rail dot stamps   |
-|  [10]   | requirement | requirement vars  | element classes   | marker scale      |
-|  [11]   | C4          | `c4:` config      | relation updates  | boundary hooks    |
-|  [12]   | pie         | pie ordinals      | slice stamps      | foreground labels |
-|  [13]   | quadrant    | quadrant vars     | point classes     | opacity stamp     |
-|  [14]   | xychart     | `xyChart` block   | plot palette      | label caps        |
-|  [15]   | radar       | `radar` block     | curve ordinals    | margin clearance  |
-|  [16]   | venn        | set styles        | union labels      | label sizes       |
-|  [17]   | treeView    | tree config       | highlight class   | description stamp |
-|  [18]   | swimlane    | flowchart floor   | lane styles       | title stamp       |
-|  [19]   | railroad    | railroad block    | terminal chips    | rule labels       |
-
-[BOUND]: families whose floor names a limited surface in `[BOUND]`.
-
-| [INDEX] | [FAMILY]      | [TOKENS]         | [ROUTE]         | [STAMP]        | [BOUND]             |
-| :-----: | :------------ | :--------------- | :-------------- | :------------- | :------------------ |
-|  [01]   | mindmap       | depth colors     | host classes    | node opacity   | no in-fence classes |
-|  [02]   | architecture  | arch vars        | align grid      | icon refill    | group icons         |
-|  [03]   | sankey        | `nodeColors`     | label strategy  | link blend     | legacy labels       |
-|  [04]   | treemap       | scale ranges     | section stamps  | label caps     | no `classDef`       |
-|  [05]   | packet        | themeCSS classes | wash fills      | packet labels  | no variables        |
-|  [06]   | journey       | fill actors      | face vars       | axis stamps    | title config        |
-|  [07]   | eventmodeling | `em*` pairs      | swimlane vars   | mono spans     | no acc directives   |
-|  [08]   | wardley       | wardley block    | evolution color | engine metrics | component anchor    |
-|  [09]   | cynefin       | cynefin block    | domain washes   | item chips     | seed                |
-|  [10]   | ishikawa      | global vars      | main surface    | line weights   | no stylesheet       |
+| [INDEX] | [FAMILY]      | [BOUND]                                                                               |
+| :-----: | :------------ | :------------------------------------------------------------------------------------ |
+|  [01]   | mindmap       | in-fence `classDef` breaks the parse — per-section `themeCSS` overrides carry canon   |
+|  [02]   | architecture  | built-in icons hardcode a blue plate — the paired svg-rect refill stamp re-fills both |
+|  [03]   | sankey        | `labelStyle` stays `legacy` — outlined labels halo on the dark canvas                 |
+|  [04]   | treemap       | `classDef` emits inline `!important` fills — a themed treemap carries no classes      |
+|  [05]   | packet        | `themeVariables.packet` half-applies — the `.packet*` `themeCSS` classes own styling  |
+|  [06]   | journey       | title text reads `journey:` config keys — the theme stack never reaches it            |
+|  [07]   | eventmodeling | acc directives break the frame parser — the relation sentence rides beside the fence  |
+|  [08]   | wardley       | no stylesheet emits — `themeCSS` and the mono stack never reach it                    |
+|  [09]   | cynefin       | boundary jitter and transition bows are engine geometry — `cynefin.seed` pins jitter  |
+|  [10]   | ishikawa      | global variables only — no stylesheet classes reach the bones                         |
 
 ## [07]-[CONSISTENCY_LAWS]
 
-Review binds these laws on every committed fence; the values each law spends — hexes, stamps, rail styles — live with their owner, and a law here never redefines them.
+Review binds these laws on every committed fence; the values each law spends — hexes, stamps, weights, rail styles — live with the palette layer, and a law here never redefines them.
 
-- Edge-rail law: every semantic edge carries an explicit rail from the six-rail set the palette layer owns, bound positionally through `linkStyle` or insertion-stably through an edge-id class; only a plain forward hop inherits the default, every fault edge is Red, and every edge insertion recounts positional indices.
-- Weight law: every stroke spends the palette layer's one weight ladder — `2px` standing edge, `3px` fault and emphasis, `1.5px` dashed and node border, `1px` container — so weight alone lifts an important hop above a routine one; the arrowhead rides the `.marker path` scale the family stamp carries, never the line weight.
-- Animation law: `animate: true` marks the one called-out flow — the hot path or the edge feeding a callout node — never decoration; the engine stills it under reduced motion, and a second competing animation dilutes the first. A static export freezes the animation's dash keyframe, so the edge prints dashed and collides with the trace rhythm — a fence whose proof or destination is a raster leaves `animate` off and carries the emphasis on weight or a callout instead.
-- Container law: Titled containers recess below the canvas. Flowchart subgraphs, state composites, class namespaces, sequence regions, kanban columns, swimlane lanes, gantt sections, treemap sections, C4 boundaries, and architecture groups use Darker fill, `1px` dashed Lavender boundary, and Lavender 13.5px/700 title ink. Nested regions step one tone lighter; white containers fail the render floor.
-- Render-flat law: every shape renders flat and solid-bordered — `look: classic`, `useGradient: false`, `dropShadow: "none"`, and the `filter:none!important` belt in every node-bearing `themeCSS` string kill the engine's gradient borders and halo at all four layers, and no fence, string, or template reintroduces a gradient reference or a node filter.
-- Terminus law: every terminus mark rides its line's color — Pink arrowheads, start discs, terminal rings, and lollipop rings on control flow, cardinality marks on the relation stroke — at the palette layer's one marker scale and one circle scale, so no circle reads as a stray dot, no circle shoulders its label, and no head outweighs its line; an engine that leaves a marker unfilled takes an explicit fill-and-stroke stamp, so no arrowhead renders grey anywhere.
-- Crossing law: no edge crosses a node — a block raster links only adjacent cells, an architecture fence aligns every rank both ways, a C4 fence homes externals in their own boundary, and a layout that cannot clear its nodes splits the figure.
+- Edge-rail law: every semantic edge carries an explicit rail from the set the palette layer owns, bound positionally through `linkStyle` or insertion-stably through an edge-id class; only a plain forward hop inherits the default, every fault edge is Red, and every edge insertion recounts positional indices — the id form escapes the recount.
+- Weight law: every stroke spends the palette layer's one weight ladder, so weight alone lifts an important hop above a routine one; the arrowhead rides the `.marker path` scale the family stamp carries, never the line weight.
+- Animation law: `animate: true` marks live, streaming, or hot-path semantics — a wire carrying traffic, a drain in motion, the edge feeding a callout — one per diagram and never decoration; the engine stills it under reduced motion, and a second competing animation dilutes the first. A static export freezes the animation's dash keyframe, so the edge prints dashed and collides with the trace rhythm — a fence whose proof or destination is a raster leaves `animate` off and carries the emphasis on weight or a callout instead.
+- Container law: every container family — flowchart subgraph, state composite, class namespace, sequence region, kanban column, swimlane lane, gantt and treemap section, C4 boundary, architecture group — spends the border canon's one container surface and title ink; nested regions step one tone lighter, and white containers fail the render floor.
+- Render-flat law: the border canon's four-layer flat lock reaches every fence, and no fence, string, or template reintroduces a gradient reference or a node filter.
+- Terminus law: every terminus mark rides its line's color at the palette layer's marker and circle scales, so no circle reads as a stray dot, no circle shoulders its label, and no head outweighs its line; an engine that leaves a marker unfilled takes an explicit fill-and-stroke stamp, so no arrowhead renders grey anywhere.
+- Crossing law: methodology owns the crossing defect; the mechanical levers are per family — a block raster links only adjacent cells, an architecture fence aligns every rank both ways, a C4 fence homes externals in their own boundary, a fan-to-foundation shape takes the [03] recipe, and a layout that cannot clear its nodes splits the figure.
 - Label-placement law: an edge or relationship label never sits bare on its stroke — the recessed backing chip masks the line it crosses, offsets clear collision hot spots, and a label the engine strands away from its edge is dropped in favor of the rail's color semantics.
 - Elbow law: edges route orthogonally with sharp elbows wherever the family admits routing control — ELK owns flowchart bends, the swimlane layout owns lane hops, ports and aligns own the architecture grid — and soft splines survive only where the engine owns the curve outright.
 - classDef-completeness law: a flowchart, state, ER, class, or requirement diagram ships every class its semantics demand — an aggregate root, junction, fault, or dormant state rendering identical to its neighbors is the defect.
-- Translucency law: every semantically colored shape composites the two-tier alpha table — dark-ink chips at 75%, light-ink surfaces at their measured alphas, washes below — under a full-opacity border of the same hue; an opaque accent fill is the defect the alpha table exists to prevent.
-- Typography law: the ruled mono stack and the micro-scale `themeCSS` stamps reach every committed fence, emphasis rides a callout node or color rather than a markdown `**bold**` span that renders chunky in mono, and no canvas text renders below the theming floor.
-- Backing law: label backings ride Darker `#21222C`, one step recessed below the canvas — a subtle recessed chip masks the stroke it crosses without the bright pill a Selection backing paints, and a backing equal to the canvas reads as a hole.
+- Translucency law: every semantically colored shape composites the palette layer's two-tier alpha table under a full-opacity border of the same hue; an opaque accent fill is the defect the table exists to prevent.
+- Typography law: the palette layer's mono stack and micro-scale stamps reach every committed fence, emphasis rides a callout node or color rather than a markdown `**bold**` span that renders chunky in mono, and no canvas text renders below the theming floor.
+- Backing law: label backings ride the palette layer's recessed backing chip so the chip masks the stroke it crosses; a backing equal to the canvas reads as a hole.
 - Ordinal-completeness law: a type reading an ordinal palette defines the full engine range the base block carries, so no band derives to `primaryColor` mud.
 - Single-home law: the palette layer carries every token role, the micro-scale stamps, and the canonical class and rail sets; this reference carries the mechanical grammar and the per-family floors; an extended fence demonstrates the keys it consumes and never privately defines a role.
 

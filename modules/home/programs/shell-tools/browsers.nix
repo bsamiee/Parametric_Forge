@@ -150,7 +150,7 @@
       assertLevel = r.assertLevel or "full";
       launcher = sub (lib.genAttrs ["pkg" "version"] (_: null)) (r.launcher or null);
       codex = r.codex or null;
-      doctor = sub (lib.genAttrs ["launchdLabel" "port"] (_: null) // {execs = [];}) (r.doctor or null);
+      doctor = sub {execs = [];} (r.doctor or null);
     })
     fleet;
   registerJson = domain: rows: pkgs.writeText "forge-register-${domain}.json" (builtins.toJSON rows);
@@ -173,7 +173,7 @@
         desc = lib.elemAt t 1;
       }
       // lib.optionalAttrs (lib.length t > 2) {binds = lib.elemAt t 2;}) {
-      aliases = [''.[] | [.alias, .category, .risk, .expansion] | @tsv'' "shell alias register"];
+      aliases = [''.[] | [.alias, .category, .risk, .expansion, .desc] | @tsv'' "shell alias register"];
       chords = [''.[] | [.chord_id, .mods, .key, .label] | @tsv'' "chord register across consumers"];
       mcp = [''.[] | [.name, .transport, (.launcher.version // "-"), .probe] | @tsv'' "MCP fleet rows" ["ctrl-d:execute(${profileBin}/forge-mcp doctor | ${pkgs.less}/bin/less -R)"]];
       naming = [''.[] | [.slug, .source, .display, .domain] | @tsv'' "name policy rows"];

@@ -40,11 +40,11 @@ jobs:
         timeout-minutes: 10
         permissions: {contents: read}
         steps:
-            - uses: step-security/harden-runner@5ef0c079ce82195b2a36a210272d6b661572d83e # v2.14.2
+            - uses: step-security/harden-runner@<SHA> # v2.14.2
               with: {egress-policy: audit}
-            - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+            - uses: actions/checkout@<SHA> # v6.0.2
               with: {persist-credentials: false}
-            - uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
+            - uses: actions/setup-node@<SHA> # v6.2.0
               with: {node-version: '${{ env.[RUNTIME_ENV_KEY] }}', cache: '[PACKAGE_MANAGER]'}
             - run: '[ENABLE_CMD]'
             - run: '[INSTALL_CMD]'
@@ -66,17 +66,17 @@ jobs:
                     - {runner: ubuntu-24.04-arm, '[VERSION_KEY]': '[V3]'}
             fail-fast: false
         steps:
-            - uses: step-security/harden-runner@5ef0c079ce82195b2a36a210272d6b661572d83e # v2.14.2
+            - uses: step-security/harden-runner@<SHA> # v2.14.2
               with: {egress-policy: audit}
-            - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+            - uses: actions/checkout@<SHA> # v6.0.2
               with: {persist-credentials: false}
-            - uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
+            - uses: actions/setup-node@<SHA> # v6.2.0
               with: {node-version: '${{ matrix.[VERSION_KEY] }}', cache: '[PACKAGE_MANAGER]'}
             - run: '[ENABLE_CMD]'
             - run: '[INSTALL_CMD]'
             - run: '[TEST_CMD]'
             - if: always()
-              uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+              uses: actions/upload-artifact@<SHA> # v6.0.0
               with:
                 name: test-${{ matrix.runner }}-${{ matrix.[VERSION_KEY] }}
                 path: '[RESULTS_PATH]'
@@ -96,24 +96,24 @@ jobs:
         outputs:
             artifact-id: ${{ steps.upload.outputs.artifact-id }}
         steps:
-            - uses: step-security/harden-runner@5ef0c079ce82195b2a36a210272d6b661572d83e # v2.14.2
+            - uses: step-security/harden-runner@<SHA> # v2.14.2
               with: {egress-policy: audit}
-            - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+            - uses: actions/checkout@<SHA> # v6.0.2
               with: {persist-credentials: false}
-            - uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
+            - uses: actions/setup-node@<SHA> # v6.2.0
               with: {node-version: '${{ env.[RUNTIME_ENV_KEY] }}', cache: '[PACKAGE_MANAGER]'}
             - run: '[ENABLE_CMD]'
             - run: '[INSTALL_CMD]'
             - run: '[BUILD_CMD]'
             - id: upload
-              uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+              uses: actions/upload-artifact@<SHA> # v6.0.0
               with:
                 name: build-${{ github.sha }}
                 path: '[BUILD_PATH]'
                 retention-days: 7
                 if-no-files-found: error
             - if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-              uses: actions/attest-build-provenance@96278af6caaf10aea03fd8d33a09a777ca52d62f # v3.2.0
+              uses: actions/attest-build-provenance@<SHA> # v3.2.0
               with: {subject-path: '[BUILD_PATH]'}
             - run: |
                 echo "## Build Summary" >> "$GITHUB_STEP_SUMMARY"
@@ -128,11 +128,11 @@ jobs:
         environment: {name: '[ENV_NAME]', url: '[ENV_URL]'}
         permissions: {contents: read, deployments: write, id-token: write}
         steps:
-            - uses: step-security/harden-runner@5ef0c079ce82195b2a36a210272d6b661572d83e # v2.14.2
+            - uses: step-security/harden-runner@<SHA> # v2.14.2
               with: {egress-policy: audit}
-            - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+            - uses: actions/checkout@<SHA> # v6.0.2
               with: {persist-credentials: false}
-            - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+            - uses: actions/download-artifact@<SHA> # v7.0.0
               with: {name: 'build-${{ github.sha }}', path: '[BUILD_PATH]'}
             - run: '[DEPLOY_CMD]'
               env: {'[SECRET_KEY]': '${{ secrets.[SECRET_NAME] }}'}

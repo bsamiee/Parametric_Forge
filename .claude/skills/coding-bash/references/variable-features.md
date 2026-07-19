@@ -89,7 +89,7 @@ Nameref resolution uses dynamic scope, producing three failure modes:
 |  [02]   | Scope collision | `local` shadows nameref target     | Binds callee local not caller var   | `__` prefix for nameref names |
 |  [03]   | Nested alias    | Nested callee re-namerefs same ref | Silent overwrites across call depth | Unique prefixes per depth     |
 
-The `__` prefix convention prevents callee nameref names from colliding with caller variables — the Bash equivalent of name mangling.
+Prefixing callee nameref names with `__` keeps them from colliding with caller variables — the Bash equivalent of name mangling.
 
 ## [03]-[TRAP_HIERARCHY]
 

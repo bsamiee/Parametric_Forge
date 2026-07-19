@@ -235,14 +235,20 @@ const INFRA_LAW =
     'the infra is missing outright, admitting new packages through the admission procedure whenever they raise the bar.';
 
 const TIER_LAW = {
-    T1: 'PASS T1 (INITIAL): realize the whole mandate with full write authority — implement, extend, and collapse; this is build work, not cleanup.',
+    T1:
+        'PASS T1 (INITIAL): realize the whole mandate with full write authority — implement, extend, and collapse; this is build work, not ' +
+        'cleanup. CAPABILITY-COMPLETENESS IS MANDATORY: every gauge, fixture algebra, law table, and discovery-driven registration you build ' +
+        'implements what its name and prose promise — a named-but-omitted capability (a lane, marker, or SUT the infra claims but never wires) ' +
+        'is a defect you close NOW, at the same bar as any finding.',
     T2:
         'PASS T2 (CRITIQUE): a cold pass with FULL, EQUAL write authority. Derive your own findings from disk first; every earlier pass output is suspect ' +
         'material to attack, never a boundary or a baseline to defer to. Run the mechanical line-by-line doctrinal-conformance and capability-completeness ' +
         'audit repaired in place — collapse scan, owner choice, knob test, rails, language modernity, capability and illusion — as a floor and hunt past it; ' +
         'every hit is a fix, never a note; extend, expand, and ripple wherever you find value.',
     T3:
-        'PASS T3 (REDTEAM): everything critique does AND the terminal attack — counterfactual on core owners/algebras/dispatch, diff-of-the-next-feature ' +
+        'PASS T3 (REDTEAM): everything critique does AND the terminal attack — a counterfactual on core owners/algebras/dispatch that REBUILDS ' +
+        'with the central assumption removed (name the assumption the current shape stands on, derive the form without it, build the stronger ' +
+        'form in place — "the current shape also works" is never a refutation), diff-of-the-next-feature ' +
         '(the next case, project, or package lands as one row with consumers untouched or loudly broken), long-tail and failure-mode attack, boundary and ' +
         'strata integrity, surface sprawl and phantom members, domain completeness — plus a full cold re-review of every dimension. The estate ends ' +
         'objectively denser and more capable than the prior pass left it.',
@@ -260,6 +266,21 @@ const HARVEST_LAW =
     'pass-local fix never nominates; an empty array is the normal verdict — the terminal doctrine lander refutes weak rows, so nominate substance, never volume.';
 
 // --- [OPERATIONS] ----------------------------------------------------------------------
+
+const sleep = (ms) => new Promise((res) => setTimeout(res, ms));
+const RETRY_ATTEMPTS = 2; // re-dispatches per dead critical write pass; the count bounds spend, the backoff buys recovery time
+const RETRY_BACKOFF = 1800000; // usage-limit deaths clear on reset or an operator credit top-up; each attempt waits the window out first
+// Bounded re-dispatch for a dead CRITICAL write pass (usage-limit or transport death — agent() returned null): attempt-counted
+// with a backoff before each; the final death isolates the pass but NEVER the chain — every later pass and the final track still
+// run, and each pass derives its own findings from disk, so a dead predecessor removes grounding, never the stage.
+const retryLane = async (fn) => {
+    for (let a = 0; a < RETRY_ATTEMPTS; a++) {
+        await sleep(RETRY_BACKOFF);
+        const r = await fn();
+        if (r) return r;
+    }
+    return null;
+};
 
 const docsOrder = (t) =>
     (t.docs
@@ -307,21 +328,18 @@ const reconPrompt = (t, name, lane) =>
 // dossier (workspace-write, that one file) and returns the receipt as its final message — the wrapper relays
 // that receipt, no product write, no relay hop. Lane law rides developer-instructions; the prompt carries only the task.
 const fileTag = (label) => label.replace(/[^A-Za-z0-9_.-]+/g, '-');
+// Codex lanes in this workflow are recon-only — the write passes stay native fable behind network-bound gates a codex sandbox
+// cannot reach — so the lane law is the read-only investigation contract; no write/fix branch exists to fork.
 const laneLaw = (schema, o) =>
-    (o.fix
-        ? '<persistence>\nComplete every named move before yielding; do not stop at analysis or a partial edit. If the chosen ' +
-          'approach resists, pick the next-best one and proceed. Return without an applied edit only if the territory genuinely ' +
-          'admits none.\n</persistence>\n\n<verification>\nAfter editing, re-read each changed file and confirm it is coherent ' +
-          'and nothing it carried was lost. Fix what fails before yielding.\n</verification>'
-        : '<context_gathering>\nTerritory: the exact files and directories the task names. Do not open files outside it, ' +
-          'including skill or instruction files (.claude/, CLAUDE.md, AGENTS.md).\nBudget: at most ' +
-          (o.calls || 60) +
-          ' tool calls total. Read in small batches (a handful of files per command, line-capped); never concatenate the whole ' +
-          'territory into one command - tool output truncates and the data is lost.\nStop as soon as the product is complete. ' +
-          'If something is still uncertain at the budget, proceed and record the residue in the product gap/unverified field ' +
-          'instead of re-reading.\n</context_gathering>\n\n<verification>\nBefore the final message, confirm every cited ' +
-          'spelling appears verbatim in the cited file; anything unconfirmed is recorded as a gap, never asserted.\n' +
-          '</verification>') +
+    '<context_gathering>\nTerritory: the exact files and directories the task names. Do not open files outside it, ' +
+    'including skill or instruction files (.claude/, CLAUDE.md, AGENTS.md).\nBudget: at most ' +
+    (o.calls || 60) +
+    ' tool calls total. Read in small batches (a handful of files per command, line-capped); never concatenate the whole ' +
+    'territory into one command - tool output truncates and the data is lost.\nStop as soon as the product is complete. ' +
+    'If something is still uncertain at the budget, proceed and record the residue in the product gap/unverified field ' +
+    'instead of re-reading.\n</context_gathering>\n\n<verification>\nBefore the final message, confirm every cited ' +
+    'spelling appears verbatim in the cited file; anything unconfirmed is recorded as a gap, never asserted.\n' +
+    '</verification>' +
     '\n\n<output_contract>\nYour final message is a single JSON object with exactly this shape: ' +
     JSON.stringify(schema) +
     '\n- JSON only: no prose before or after it, no code fences, no markdown.\n- Every key shown is required.\n' +
@@ -341,8 +359,10 @@ const codexRecon = (task, o) => {
             JSON.stringify(root) +
             (o.codexEffort ? ', config={"model_reasoning_effort":"' + o.codexEffort + '"}' : '') +
             ', "developer-instructions" set to the LANE LAW block below VERBATIM, and prompt set to the TASK block below ' +
-            'VERBATIM. If the call errors, retry the identical call ONCE; if the retry errors, skip step (3) and return the ' +
-            'error through step (4).',
+            'VERBATIM. If the call errors, do NOT immediately retry: an abandoned workspace-write call usually completes server-side and the ' +
+            'lane writes its dossier as its final act — run step (3) FIRST, and a present, non-empty dossier proceeds to step (4) as success. ' +
+            'Only a missing or empty dossier earns ONE identical retry (a second writer over the same path is the last resort); a failed retry ' +
+            'with no dossier returns the error through step (4).',
         'LANE LAW:\n\n' + laneLaw(o.schema, o),
         'TASK:\n\n' + task,
         '(3) The tool result is a JSON envelope {threadId, content} whose content field holds the final-message text — the ' +
@@ -431,6 +451,15 @@ const passPrompt = (t, name, tier, reconRows) =>
     'reasons), harvest (per the harvest law below). ' +
     HARVEST_LAW;
 
+// A T-pass is the run's critical WRITE lane: fable, high effort, network-bound gates — the most usage-limit-exposed lane in the
+// run. It rides the attempt-counted retryLane with a suffixed retry label; a final death returns null and the chain continues,
+// because every later pass and the final track derive their own findings from disk (a dead predecessor removes grounding, never a stage).
+const passOpts = (label, phase) => ({ model: 'fable', effort: 'high', phase, label, schema: PASS_RECEIPT });
+const runPass = (t, name, tier, reconRows, label, phase) =>
+    agent(passPrompt(t, name, tier, reconRows), passOpts(label, phase)).then(
+        (r) => r || retryLane(() => agent(passPrompt(t, name, tier, reconRows), passOpts(label + ':r1', phase))),
+    );
+
 // Doctrine lander: adjudicates pooled harvest nominations against the live doctrine surfaces; an estate run owns test/tool/config
 // infrastructure and monorepo alignment, so its routing weighs toward the constitution, the test/tool READMEs, and the reviewer rules.
 const doctrinePrompt = (rows, residuals) =>
@@ -462,36 +491,9 @@ log('estate tracks: ' + ACTIVE.join(', ') + (WANT_FINAL ? ' + final' : ''));
 const results = await pipeline(
     trackRows,
     (t) => parallel([() => reconLane(t, t.lang, 'scope', 'Recon'), () => reconLane(t, t.lang, 'libs', 'Recon')]),
-    (recon, t) =>
-        agent(passPrompt(t, t.lang, 'T1', (recon || []).filter(Boolean)), {
-            model: 'fable',
-            effort: 'high',
-            phase: 'Estate',
-            label: 't1:' + t.lang,
-            schema: PASS_RECEIPT,
-        }).then((r) => ({ t1: r })),
-    (acc, t) =>
-        agent(passPrompt(t, t.lang, 'T2', null), {
-            model: 'fable',
-            effort: 'high',
-            phase: 'Estate',
-            label: 't2:' + t.lang,
-            schema: PASS_RECEIPT,
-        }).then((r) => ({
-            ...acc,
-            t2: r,
-        })),
-    (acc, t) =>
-        agent(passPrompt(t, t.lang, 'T3', null), {
-            model: 'fable',
-            effort: 'high',
-            phase: 'Estate',
-            label: 't3:' + t.lang,
-            schema: PASS_RECEIPT,
-        }).then((r) => ({
-            ...acc,
-            t3: r,
-        })),
+    (recon, t) => runPass(t, t.lang, 'T1', (recon || []).filter(Boolean), 't1:' + t.lang, 'Estate').then((r) => ({ t1: r })),
+    (acc, t) => runPass(t, t.lang, 'T2', null, 't2:' + t.lang, 'Estate').then((r) => ({ ...acc, t2: r })),
+    (acc, t) => runPass(t, t.lang, 'T3', null, 't3:' + t.lang, 'Estate').then((r) => ({ ...acc, t3: r })),
 );
 
 // --- [FINAL]
@@ -502,27 +504,9 @@ if (WANT_FINAL && ACTIVE.length) {
     const fRecon = (await parallel([() => reconLane(f, 'monorepo', 'scope', 'Final'), () => reconLane(f, 'monorepo', 'libs', 'Final')])).filter(
         Boolean,
     );
-    const f1 = await agent(passPrompt(f, 'monorepo FINAL', 'T1', fRecon), {
-        model: 'fable',
-        effort: 'high',
-        phase: 'Final',
-        label: 'final:t1',
-        schema: PASS_RECEIPT,
-    });
-    const f2 = await agent(passPrompt(f, 'monorepo FINAL', 'T2', null), {
-        model: 'fable',
-        effort: 'high',
-        phase: 'Final',
-        label: 'final:t2',
-        schema: PASS_RECEIPT,
-    });
-    const f3 = await agent(passPrompt(f, 'monorepo FINAL', 'T3', null), {
-        model: 'fable',
-        effort: 'high',
-        phase: 'Final',
-        label: 'final:t3',
-        schema: PASS_RECEIPT,
-    });
+    const f1 = await runPass(f, 'monorepo FINAL', 'T1', fRecon, 'final:t1', 'Final');
+    const f2 = await runPass(f, 'monorepo FINAL', 'T2', null, 'final:t2', 'Final');
+    const f3 = await runPass(f, 'monorepo FINAL', 'T3', null, 'final:t3', 'Final');
     final = { t1: f1, t2: f2, t3: f3 };
 }
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env -S uv run
 # /// script
-# requires-python = ">=3.13"
+# requires-python = ">=3.15"
 # dependencies = [
 #   "anyio", "coloraide", "cyclopts", "expression", "httpx", "lxml", "msgspec", "psutil",
 #   "stamina", "structlog", "tree-sitter", "tree-sitter-typescript", "watchfiles", "xxhash",

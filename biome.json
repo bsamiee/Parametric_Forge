@@ -40,7 +40,7 @@
     },
     "overrides": [
         {
-            "includes": [".claude/skills/applescript/assets/**"],
+            "includes": [".claude/skills/applescript/{examples,templates}/**"],
             "linter": {
                 "rules": {
                     "correctness": {

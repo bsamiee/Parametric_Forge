@@ -28,7 +28,6 @@ dependencies = [
     "httpx",                  # typed HTTP boundary
     "lxml",                   # XML/HTML processing
     "networkx",               # graph checks (mermaid validation)
-    "pillow",                 # image IO
     "playwright",             # headless render probes (browsers ride PLAYWRIGHT_BROWSERS_PATH)
     "psutil",                 # process inspection (html-studio serve)
     "ruamel-yaml",            # round-trip YAML editing

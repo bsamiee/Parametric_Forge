@@ -4,6 +4,8 @@
 
 ### [01.1]-[LIMITS]
 
+This table owns the reusable-workflow limits; `advanced-triggers.md` and `common_errors.md` route here.
+
 | [INDEX] | [CONSTRAINT]             | [LIMIT]                       | [WHAT_TO_FLAG]                                                         |
 | :-----: | :----------------------- | :---------------------------- | :--------------------------------------------------------------------- |
 |  [01]   | Nesting depth            | 10 levels                     | Top-level caller + up to 9 levels of nested reusable workflows.        |
@@ -143,8 +145,8 @@ Only basic YAML anchors (`&name`) and aliases (`*name`) resolve.
 ```yaml template
 # Correct: anchor and alias for shared step sequences
 x-setup: &setup
-    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-    - uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
+    - uses: actions/checkout@<SHA> # v6.0.2
+    - uses: actions/setup-node@<SHA> # v6.2.0
       with: { node-version: '24', cache: 'pnpm' }
     - run: corepack enable && pnpm install --frozen-lockfile
 
@@ -158,13 +160,15 @@ jobs:
 
 ## [07]-[MATRIX_STRATEGY]
 
+This section owns matrix strategy semantics; `advanced-triggers.md` routes here.
+
 | [INDEX] | [KEY]               | [DEFAULT]               | [BEHAVIOR]                                                                           |
 | :-----: | :------------------ | :---------------------- | :----------------------------------------------------------------------------------- |
 |  [01]   | `fail-fast`         | `true`                  | Cancels all in-progress/queued matrix jobs when any job fails.                       |
 |  [02]   | `max-parallel`      | Unlimited (runner pool) | Limits concurrent matrix jobs. Omit for maximum parallelism.                         |
 |  [03]   | `continue-on-error` | `false`                 | Per-job: `true` masks failure from `fail-fast` and downstream `needs:` sees success. |
 
-[INTERACTION_SEMANTICS]: `continue-on-error: true` on a matrix job masks its failure from `fail-fast` — remaining matrix jobs continue. Downstream `needs:` jobs see the failed job's result as `success`, hiding real failures. The matrix policy: `fail-fast: false` without `continue-on-error`, then aggregate results via `needs.*.result` in a downstream job.
+[INTERACTION_SEMANTICS]: `continue-on-error: true` on a matrix job masks its failure from `fail-fast` — remaining matrix jobs continue. Downstream `needs:` jobs see the failed job's result as `success`, hiding real failures. Matrix policy: `fail-fast: false` without `continue-on-error`, then aggregate results via `needs.*.result` in a downstream job.
 
 | [INDEX] | [CHECK]                     | [TAG]      | [WHAT_TO_FLAG]                                                       |
 | :-----: | :-------------------------- | :--------- | :------------------------------------------------------------------- |
@@ -175,32 +179,34 @@ jobs:
 
 ## [08]-[NODE_RUNTIME]
 
+This section owns the JavaScript-action runtime status; `supply_chain.md` and `custom-actions.md` route here.
+
 | [INDEX] | [RUNTIME]  | [STATUS]                                                  |
 | :-----: | :--------- | :-------------------------------------------------------- |
 |  [01]   | Node.js 12 | Removed — actions fail at runtime.                        |
 |  [02]   | Node.js 16 | Removed — actions fail at runtime.                        |
-|  [03]   | Node.js 20 | Deprecated — forced migration to node24 on March 4, 2026. |
+|  [03]   | Node.js 20 | Removed — past upstream EOL, superseded by node24.        |
 |  [04]   | Node.js 22 | Skipped — GitHub jumped node20 directly to node24.        |
 |  [05]   | Node.js 24 | Required — use `using: 'node24'` for JavaScript actions.  |
 
-### [08.1]-[MIGRATION_TIMELINE]
+### [08.1]-[MIGRATION_HISTORY]
 
-| [INDEX] |         [DATE] | [EVENT]                                                                                    |
-| :-----: | -------------: | :----------------------------------------------------------------------------------------- |
-|  [01]   |      Fall 2025 | Runner v2.328+ supports node20 and node24 side-by-side.                                    |
-|  [02]   |  March 4, 2026 | node24 forced default. node20 fails unless `ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true`. |
-|  [03]   | April 30, 2026 | Node.js 20 reaches upstream EOL.                                                           |
-|  [04]   |    Summer 2026 | node20 fully removed — environment variable override stops working.                        |
+| [INDEX] |         [DATE] | [EVENT]                                                                                |
+| :-----: | -------------: | :------------------------------------------------------------------------------------- |
+|  [01]   |      Fall 2025 | Runner v2.328+ gained side-by-side node20 and node24.                                  |
+|  [02]   |  March 4, 2026 | node24 became the forced default; node20 failed without the unsecure-version override. |
+|  [03]   | April 30, 2026 | Node.js 20 reached upstream EOL.                                                       |
+|  [04]   |    Summer 2026 | node20 removed entirely; the environment-variable override stopped working.            |
 
 ### [08.2]-[DETECTION_RULES]
 
 | [INDEX] | [CHECK]                              | [TAG]       | [WHAT_TO_FLAG]                                                          |
 | :-----: | :----------------------------------- | :---------- | :---------------------------------------------------------------------- |
-|  [01]   | node20 action                        | `[RUNTIME]` | Actions using `runs.using: 'node20'` — will break after March 4, 2026.  |
+|  [01]   | node20 action                        | `[RUNTIME]` | Actions using `runs.using: 'node20'` — broken on current runners.       |
 |  [02]   | Old action major                     | `[RUNTIME]` | `actions/cache@v3`/`@v4`, `actions/checkout@v4` — require latest major. |
-|  [03]   | `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24` | `[RUNTIME]` | Early testing env var — flag if present in production workflows.        |
+|  [03]   | `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24` | `[RUNTIME]` | Migration-era env var — flag as dead config in any workflow.            |
 
-[IMPORTANT] Early testing: set `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true` as workflow env var. node24 is incompatible with macOS 13.4 and earlier; ARM32 self-hosted runners are unsupported.
+[IMPORTANT] node24 is incompatible with macOS 13.4 and earlier; ARM32 self-hosted runners are unsupported.
 
 ## [09]-[WORKFLOW_DISPATCH_INPUTS]
 

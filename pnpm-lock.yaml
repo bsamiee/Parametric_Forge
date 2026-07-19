@@ -15,9 +15,6 @@ catalogs:
     '@effect/platform-node':
       specifier: 0.107.0
       version: 0.107.0
-    '@effect/tsgo':
-      specifier: 0.15.0
-      version: 0.15.0
     '@pulumi/github':
       specifier: 6.14.0
       version: 6.14.0
@@ -53,9 +50,6 @@ importers:
       '@effect/platform-node':
         specifier: 'catalog:'
         version: 0.107.0(@effect/cluster@0.59.0(@effect/platform@0.96.2(effect@3.21.4))(@effect/rpc@0.75.1(@effect/platform@0.96.2(effect@3.21.4))(effect@3.21.4))(@effect/sql@0.51.1(@effect/experimental@0.60.0(@effect/platform@0.96.2(effect@3.21.4))(effect@3.21.4))(@effect/platform@0.96.2(effect@3.21.4))(effect@3.21.4))(@effect/workflow@0.18.2(@effect/experimental@0.60.0(@effect/platform@0.96.2(effect@3.21.4))(effect@3.21.4))(@effect/platform@0.96.2(effect@3.21.4))(@effect/rpc@0.75.1(@effect/platform@0.96.2(effect@3.21.4))(effect@3.21.4))(effect@3.21.4))(effect@3.21.4))(@effect/platform@0.96.2(effect@3.21.4))(@effect/rpc@0.75.1(@effect/platform@0.96.2(effect@3.21.4))(effect@3.21.4))(@effect/sql@0.51.1(@effect/experimental@0.60.0(@effect/platform@0.96.2(effect@3.21.4))(effect@3.21.4))(@effect/platform@0.96.2(effect@3.21.4))(effect@3.21.4))(effect@3.21.4)
-      '@effect/tsgo':
-        specifier: 'catalog:'
-        version: 0.15.0
       '@pulumi/github':
         specifier: 'catalog:'
         version: 6.14.0(typescript@6.0.3)
@@ -141,45 +135,6 @@ packages:
       '@effect/experimental': ^0.60.0
       '@effect/platform': ^0.96.1
       effect: ^3.21.2
-
-  '@effect/tsgo-darwin-arm64@0.15.0':
-    resolution: {integrity: sha512-sZkpl4Tf3qOZZ0mxnRV8OngSMAseFBkQ2GA9Dc/4XlZ6cleVdORvWHajXkcJz9BpALCRRkQX7XmKIUOkJMmsVA==}
-    cpu: [arm64]
-    os: [darwin]
-
-  '@effect/tsgo-darwin-x64@0.15.0':
-    resolution: {integrity: sha512-KnhO581RTyow7qKg/ESY+v5B0So1K+YXVlQ88CXEVk9SLREx/E9PoJenO9/KBbTL5LXibMGOWwJwese1RwBlLQ==}
-    cpu: [x64]
-    os: [darwin]
-
-  '@effect/tsgo-linux-arm64@0.15.0':
-    resolution: {integrity: sha512-Yc4OI6aUYW1cp/uoddUBSslE3FT7qLXlXh1zKW5jzjzkfXX24o9ESUaMnIffBCrhfUHZ5qh0HI6/GW3PTzzklg==}
-    cpu: [arm64]
-    os: [linux]
-
-  '@effect/tsgo-linux-arm@0.15.0':
-    resolution: {integrity: sha512-2iutC28/VH3HDTqizF+so4mH/+pF9hjZjjZJfzHpevqxAzmNCsBIbT9H0F3Figa9O4lkfBYju/NBLUvGTIW4sw==}
-    cpu: [arm]
-    os: [linux]
-
-  '@effect/tsgo-linux-x64@0.15.0':
-    resolution: {integrity: sha512-lC60WvoCN2KnbarnS9xstI08/u0YT3hGXSwtaWK8swIPmOQC6PwMx33BSqkgC9lgqDyFruzMECpX6JSQMh9oHQ==}
-    cpu: [x64]
-    os: [linux]
-
-  '@effect/tsgo-win32-arm64@0.15.0':
-    resolution: {integrity: sha512-ew0R4MXNSk7mCAama+M4tOKmchalq6z9tP9BOKrrogWqwjCY/pFqJRFMWrMxq8tQXNeso8llYdhNw9ju2f3E7Q==}
-    cpu: [arm64]
-    os: [win32]
-
-  '@effect/tsgo-win32-x64@0.15.0':
-    resolution: {integrity: sha512-LNTdM0GDjjoft4tZ3EjBFbzjg5DCPv7sOEWBSY+OdhsBXVuHOZFUjA7mhUQYnHveRoK3X5zsG8v0slnMRNTZHQ==}
-    cpu: [x64]
-    os: [win32]
-
-  '@effect/tsgo@0.15.0':
-    resolution: {integrity: sha512-0SRXLxbYiNqQr2joKiPkAOB1ahxBSBtyuneCEhyBratiulwQg2FENtJnGw2ojmpq3QEkTmHsMOsm8ZL0D1iSgA==}
-    hasBin: true
 
   '@effect/workflow@0.18.2':
     resolution: {integrity: sha512-2av0TexhxHnapQa3eLn6TkniokUFRZKf8dlWlLqbODMpXAJ3mm+DOHWM0ozMGkg9K/+zGCtiL3dMqJyJ8r7G8g==}
@@ -1375,37 +1330,6 @@ snapshots:
       '@effect/platform': 0.96.2(effect@3.21.4)
       effect: 3.21.4
       uuid: 11.1.1
-
-  '@effect/tsgo-darwin-arm64@0.15.0':
-    optional: true
-
-  '@effect/tsgo-darwin-x64@0.15.0':
-    optional: true
-
-  '@effect/tsgo-linux-arm64@0.15.0':
-    optional: true
-
-  '@effect/tsgo-linux-arm@0.15.0':
-    optional: true
-
-  '@effect/tsgo-linux-x64@0.15.0':
-    optional: true
-
-  '@effect/tsgo-win32-arm64@0.15.0':
-    optional: true
-
-  '@effect/tsgo-win32-x64@0.15.0':
-    optional: true
-
-  '@effect/tsgo@0.15.0':
-    optionalDependencies:
-      '@effect/tsgo-darwin-arm64': 0.15.0
-      '@effect/tsgo-darwin-x64': 0.15.0
-      '@effect/tsgo-linux-arm': 0.15.0
-      '@effect/tsgo-linux-arm64': 0.15.0
-      '@effect/tsgo-linux-x64': 0.15.0
-      '@effect/tsgo-win32-arm64': 0.15.0
-      '@effect/tsgo-win32-x64': 0.15.0
 
   '@effect/workflow@0.18.2(@effect/experimental@0.60.0(@effect/platform@0.96.2(effect@3.21.4))(effect@3.21.4))(@effect/platform@0.96.2(effect@3.21.4))(@effect/rpc@0.75.1(@effect/platform@0.96.2(effect@3.21.4))(effect@3.21.4))(effect@3.21.4)':
     dependencies:

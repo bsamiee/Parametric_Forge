@@ -4,7 +4,7 @@ List repair is symptom-indexed: each entry names one defect an agent already see
 
 ## [01]-[MEGA_BULLET]
 
-The canonical crime fuses a law, its mechanism, two consequences, an exception, and an example into one hyphen; repair keeps the law and routes every other fragment to the container that owns it.
+One hyphen fusing a law, its mechanism, two consequences, an exception, and an example is the canonical crime; repair keeps the law and routes every other fragment to the container that owns it.
 
 - Detection: One entry past the char budget or three sentences carrying more than one fragment class — a law plus mechanism, consequence, exception, or example — chained by semicolons, em dashes, and parentheticals that hide the section it has become.
 - Rejected:
@@ -88,7 +88,6 @@ A list whose entries answer different reader questions — what exists, how it r
 
     ```markdown accepted
     [Row model]:
-
     - Fields: `format`, `extent`, `style`.
 
     [Decode]: the `mesh` arm folds `Reader.Decode` over the accessor contract.

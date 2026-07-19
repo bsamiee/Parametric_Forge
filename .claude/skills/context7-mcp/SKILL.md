@@ -6,7 +6,7 @@ description: >-
     examples from live indexed docs instead of training-data recall. Use for setup or
     configuration questions, code generation involving a library, API references, or any
     mention of a specific framework — React, Vue, Next.js, Prisma, Supabase, and peers.
-    General web research beyond indexed library docs belongs to tavily-dynamic-search.
+    General web research beyond indexed library docs belongs to tavily-search.
 ---
 
 # [CONTEXT7_MCP]
@@ -15,9 +15,10 @@ Library questions resolve against live indexed documentation, never training dat
 
 ## [01]-[FLOW]
 
-- [RESOLVE]: `resolve-library-id` takes `libraryName` plus the full question as `query` for relevance ranking. Selection prefers the exact or closest name match, higher benchmark scores, official or primary packages over community forks, and a version-specific ID whenever the task names a version.
-- [QUERY]: `query-docs` takes the chosen `libraryId` and one specific question. Each call carries a single concept — a question spanning distinct concepts splits into one call per concept, capped at three calls per question.
-- [APPLY]: The fetched signatures and examples land in the answer as verified fact; the library version rides along only when it changes the guidance.
+- [RESOLVE]: `resolve-library-id` takes `libraryName` plus the full question as `query` for relevance ranking.
+- [SELECT]: Selection ranks by closest name match, higher benchmark score, official over forks, and a version-specific ID when the task names one.
+- [QUERY]: `query-docs` takes the chosen `libraryId` and one single-concept question; a multi-concept question splits per concept, capped at three.
+- [APPLY]: Fetched signatures and examples land in the answer as verified fact; the library version rides along only when it changes the guidance.
 
 ## [02]-[QUERY_SHAPE]
 
@@ -30,8 +31,8 @@ libraryId: /supabase/supabase
 query: "How to verify a JWT and read the authenticated user in a server-side route"
 ```
 
-Specific, task-shaped queries return targeted sections; bare keywords return noise. The user's own phrasing, passed whole, outperforms a paraphrase.
+Specific, task-shaped queries return targeted sections; bare keywords return noise. Passing the user's own phrasing whole outperforms a paraphrase.
 
 ## [03]-[FALLBACK]
 
-A library or version absent from the index routes to its own repository or documentation site through tavily-dynamic-search — never to memory.
+A library or version absent from the index routes to its own repository or documentation site through tavily-search — never to memory.

@@ -637,15 +637,13 @@
       homebrew-trust-db = [".config/homebrew/trust.json" "keep" "live Homebrew 6 trust DB; placement re-adjudication open"];
       homebrew-root-dot-trust = [".homebrew" "open" "split trust state; collapse rides homebrew ownership re-adjudication"];
       jgit-probe-state = [".config/jgit" "retention-ignore" "host-probe cache; regrows on JGit use"];
-      claude-desktop-config = ["Library/Application Support/Claude/claude_desktop_config.json" "registry-candidate" "joins the five-way MCP registration drift when the generator lands"];
+      claude-desktop-config = ["Library/Application Support/Claude/claude_desktop_config.json" "registry-candidate" "joins the MCP registration drift lanes when the generator lands"];
       vscode-extensions-root = [".vscode" "keep" "live VS Code extension estate; manifest extension lane owns admission"];
       cloudstorage-variant-roots = ["Library/CloudStorage" "operator-disposal" "stale GoogleDrive account-variant roots; FileProvider-managed, never bulk-trashed"];
       sqlean-unmanaged-dylibs = [".local/share/sqlean" "operator-disposal" "unmanaged copies; live owner the sqlean/sqlite-forge rows in overlays/manifest.nix"];
-      jupyter-root-dot = [".jupyter" "relocation-pending" "forge-jupyter probe family owns live state"];
       secret-custody-gcloud = [".config/gcloud" "custody-row" "credential DBs under config; key-name-only receipts"];
       secret-custody-gws = [".config/gws" "custody-row" "token cache + client secret under config"];
       secret-custody-op-session = [".config/hm-op-session.sh" "custody-row" "generated literal-token file; owner shell-tools/1password.nix"];
-      secret-custody-jupyter-token = [".config/jupyter/forge-token.env" "custody-row" "literal JUPYTER_TOKEN; owner languages/scientific-tools.nix"];
       secret-custody-gh-hosts = [".config/gh/hosts.yml" "custody-row" "live gh auth state; ssh-doctor custody, never an HM target"];
       codex-browser-authority = [".codex/browser/config.toml" "declared" "never_ask + full CDP ride the operator full-authority grant"];
       harness-policy-drift = [".claude/settings.json" "receipted" "declared bypassPermissions vs live enforcement; receipt per root"];
@@ -654,12 +652,12 @@
     # kill rows are the evidence-gated reap set; report rows keep daemon-by-design classes (op) visible without lifecycle theft. codex lanes detach
     # by design; only lanes far past every effort-tier deadline are litter. node-modules census is the visibility net for new daemon classes before
     # they earn a kill row. Scope "any" rows reap session-child litter — wedge residue whose age proves it dead (deadlined bodies finish in
-    # seconds); fsmonitor and ipykernel stay report-only because their owning Git repository and KeepAlive Jupyter server hold the lifecycle.
+    # seconds); fsmonitor stays report-only because its owning Git repository holds the lifecycle.
     orphan = {
       biome-lsp-proxy-orphans = ["biome lsp-proxy" "" 300 "kill"];
       biome-daemon-orphans = ["biome __run_server" "" 300 "kill"];
       mcp-fleet-orphans = ["[.]cache/forge-mcp/" "" 300 "kill"];
-      mcp-uv-orphans = ["(postgres-mcp|workspace-mcp|jupyter-mcp|notebooklm-mcp|ifcmcp|nuget-mcp)" "" 300 "kill"];
+      mcp-uv-orphans = ["(postgres-mcp|workspace-mcp|notebooklm-mcp|nuget-mcp)" "" 300 "kill"];
       rhino-router-orphans = ["rhino-mcp-router" "" 300 "kill"];
       lsp-server-orphans = ["(tsgo --lsp|bash-language-server|yaml-language-server|lua-language-server|(^|/)nixd|dts-lsp|postgrestools|roslyn-language-server|Microsoft[.]CodeAnalysis[.]LanguageServer|(^|/)ty server)" "" 300 "kill"];
       csharp-buildhost-orphans = ["(BuildHost-netcore|MSBuild[.]BuildHost[.]dll)" "" 600 "kill"];
@@ -669,7 +667,6 @@
       loc-wedge = ["(^|/)bin/loc( |$)" "" 900 "kill" "any"];
       claude-hook-wedge = ["[.]claude/(hooks|scripts)/[a-z-]+[.]sh" "" 600 "kill" "any"];
       git-fsmonitor-census = ["fsmonitor--daemon" "" 604800 "report"];
-      ipykernel-census = ["ipykernel_launcher" "" 21600 "report" "any"];
       op-daemon-census = ["(^|/)op daemon" "" 86400 "report"];
       node-modules-daemon-census = ["/node_modules/" "biome" 3600 "report"];
     };

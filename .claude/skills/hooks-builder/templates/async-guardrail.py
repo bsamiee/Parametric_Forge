@@ -8,7 +8,7 @@
 """Run a slow check off the hot path; wake the session only on findings not in the baseline receipt.
 
 A pre-existing failure never re-wakes every turn. Wire: PostToolUse (or Stop) with "async": true, "asyncRewake": true.
-The wake rides exit-2 + stderr, never additionalContext, and asyncRewake is never wired to SessionStart (#44872 context leak).
+The wake rides exit-2 + stderr, never additionalContext, and asyncRewake is never wired to SessionStart: the wake injects a prior run's stale output as current context.
 """
 
 import os

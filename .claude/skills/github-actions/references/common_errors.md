@@ -74,21 +74,21 @@
 |  [03]   | `Unexpected input`                     | `action`          | Remove undocumented inputs, check action metadata.                 |
 |  [04]   | Deprecated input                       | `action`          | Input has `deprecationMessage` — use replacement from action docs. |
 |  [05]   | `Node.js 12/16 actions are deprecated` | `action`          | Update to current major — node12/16 removed from runners.          |
-|  [06]   | `Node.js 20 actions are deprecated`    | `action`          | Update to latest major (node24 required March 4, 2026).            |
+|  [06]   | `Node.js 20 actions are deprecated`    | `action`          | Update to latest major — node24 is the enforced runner default.    |
 |  [07]   | Supply chain compromise                | —                 | Pin to SHA, verify via `git ls-remote`, enable Dependabot.         |
 
 ### [04.1]-[OUTDATED_ACTION_VERSIONS]
 
-| [INDEX] | [ACTION]                  | [OUTDATED] | [CURRENT] | [SHA]                                      |
-| :-----: | :------------------------ | :--------- | :-------- | :----------------------------------------- |
-|  [01]   | actions/checkout          | v3, v4     | v6.0.2    | `de0fac2e4500dabe0009e67214ff5f5447ce83dd` |
-|  [02]   | actions/setup-node        | v3, v4     | v6.2.0    | `6044e13b5dc448c55e2357c09f80417699197238` |
-|  [03]   | actions/cache             | v3, v4     | v5.0.3    | `cdf6c1fa76f9f475f3d7449005a359c84ca0f306` |
-|  [04]   | actions/upload-artifact   | v3, v4     | v6.0.0    | `b7c566a772e6b6bfb58ed0dc250532a479d7789f` |
-|  [05]   | actions/download-artifact | v3, v4     | v7.0.0    | `37930b1c2abaa49bbe596cd826c3c89aef350131` |
-|  [06]   | github/codeql-action      | v2, v3     | v4.32.2   | `45cbd0c69e560cd9e7cd7f8c32362050c9b7ded2` |
+Actions whose old majors still appear in the wild. Pin each to `owner/repo@<SHA> # vN.N.N`, resolving the SHA with `git ls-remote` at generation time.
 
-Resolve each SHA with `git ls-remote` at generation time.
+| [INDEX] | [ACTION]                  | [OUTDATED] |
+| :-----: | :------------------------ | :--------- |
+|  [01]   | actions/checkout          | v3, v4     |
+|  [02]   | actions/setup-node        | v3, v4     |
+|  [03]   | actions/cache             | v3, v4     |
+|  [04]   | actions/upload-artifact   | v3, v4     |
+|  [05]   | actions/download-artifact | v3, v4     |
+|  [06]   | github/codeql-action      | v2, v3     |
 
 ## [05]-[JOB_CONFIGURATION]
 
@@ -143,11 +143,11 @@ Resolve each SHA with `git ls-remote` at generation time.
 
 ## [10]-[PERMISSIONS_ERRORS]
 
-Valid `permissions:` scopes are `actions`, `attestations`, `checks`, `contents`, `deployments`, `id-token`, `issues`, `models`, `packages`, `pages`, `pull-requests`, `repository-projects`, `security-events`, `statuses`, and `artifact-metadata`.
+Valid scopes and their levels live in `best-practices.md` [01.1]-[GITHUB_TOKEN_SCOPES].
 
 | [INDEX] | [ERROR]                         | [ACTIONLINT_RULE] | [FIX]                                                           |
 | :-----: | :------------------------------ | :---------------- | :-------------------------------------------------------------- |
-|  [01]   | Invalid permission scope        | `permissions`     | Use a valid scope from the list above.                          |
+|  [01]   | Invalid permission scope        | `permissions`     | Use a scope from the GITHUB_TOKEN_SCOPES roster.                |
 |  [02]   | `write-all` / no `permissions:` | —                 | Add top-level `permissions: {}` for least privilege default.    |
 |  [03]   | Missing `id-token: write`       | —                 | Required for OIDC federation (AWS/GCP/Azure auth actions).      |
 |  [04]   | Missing `attestations: write`   | —                 | Required for `actions/attest-build-provenance` / `attest-sbom`. |

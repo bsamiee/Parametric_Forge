@@ -4,7 +4,7 @@ An advanced move is a hook technique whose correctness hinges on one field, one 
 
 ## [01]-[ROUTING]
 
-The chooser routes a need to its move; the hinge is the one field or invariant the move turns on, and the beaten form is the naive spelling that reads correct and fails silently.
+A chooser routes a need to its move; the hinge is the one field or invariant the move turns on, and the beaten form is the naive spelling that reads correct and fails silently.
 
 | [INDEX] | [NEED]                        | [MOVE]                | [HINGE]                               | [BEATS]                               |
 | :-----: | :---------------------------- | :-------------------- | :------------------------------------ | :------------------------------------ |
@@ -138,7 +138,7 @@ def envelope(event: Event, raw: bytes, source: str, /) -> dict[str, object]:  # 
 
 [DURABLE_RULE]:
 - Use: a repetitive safe operation — a read-only probe, a scoped `git` call — prompts every invocation and one clearance settles it.
-- Law: a `PermissionRequest` hook approves the matched-safe call and persists a standing rule through an `addRules` `PermissionUpdate` entry with a `localSettings` destination, so the same call auto-approves without re-prompting; a `setMode` entry switches the session mode instead. The matcher stays narrow — a broad one auto-clears the file writes and shell commands the author never inspected — and approval keys on tool identity and argument shape, never a free-text command substring.
+- Law: a `PermissionRequest` hook approves the matched-safe call and persists a standing rule through an `addRules` `PermissionUpdate` entry with a `localSettings` destination, so the same call auto-approves without re-prompting; a `setMode` entry switches the session mode instead. That matcher stays narrow — a broad one auto-clears the file writes and shell commands the author never inspected — and approval keys on tool identity and argument shape, never a free-text command substring.
 - Boundary: the durable rule is Claude-only — Codex `PermissionRequest` accepts only `decision.behavior` and fails closed on `updatedPermissions`, `updatedInput`, and `interrupt`, so the adapter strips them and a portable rewrite moves to `PreToolUse`.
 - Reject: a permission-prompt storm on a known-safe call; a `.*` matcher; a managed deny rule a hook allow can never override.
 

@@ -5,729 +5,140 @@
 # Path          : modules/home/aliases/core.nix
 # ----------------------------------------------------------------------------
 # Core register rows: system, files, monitoring, data, network, dev; desc/category/risk fields are row payload, not comment prose.
-[
-  # --- [GENERAL]
-  {
-    alias = "cl";
-    expansion = "clear";
-    desc = "Clear screen";
-    category = "general";
-  }
-  {
-    alias = "vim";
-    expansion = "nvim";
-    desc = "Neovim as vim";
-    category = "general";
-  }
-  {
-    alias = "nv";
-    expansion = "nvim";
-    desc = "Neovim shorthand";
-    category = "general";
-  }
-  {
-    alias = "ff";
-    expansion = "fastfetch";
-    desc = "System summary";
-    category = "general";
-  }
-  # --- [SHELL]
-  {
-    alias = "envs";
-    expansion = "env | sort";
-    desc = "Environment variables sorted";
-    category = "shell";
-  }
-  {
-    alias = "ezsh";
-    expansion = "$EDITOR \${ZDOTDIR:-$HOME}/.zshrc";
-    desc = "Edit zsh config";
-    category = "shell";
-  }
-  {
-    alias = "rzsh";
-    expansion = "source \${ZDOTDIR:-$HOME}/.zshrc";
-    desc = "Reload zsh config";
-    category = "shell";
-  }
-  {
-    alias = "reload";
-    expansion = "exec $SHELL";
-    desc = "Replace shell process";
-    category = "shell";
-  }
-  # --- [FILES]
-  {
-    alias = "ls";
-    expansion = "eza -la --header --no-user --time-style=relative";
-    desc = "Long listing via eza";
-    category = "files";
-  }
-  {
-    alias = "fda";
-    expansion = "fd --hidden --no-ignore -a";
-    desc = "Find all files incl. hidden/ignored";
-    category = "files";
-  }
-  {
-    alias = "mkdir";
-    expansion = "mkdir -pv";
-    desc = "Create parents verbosely";
-    category = "files";
-  }
-  {
-    alias = "rsmv";
-    expansion = "rsync-mv.sh";
-    desc = "Atomic move with directory cleanup";
-    category = "files";
-  }
-  {
-    alias = "yz";
-    expansion = "forge-yazi.sh reveal";
-    desc = "Reveal a path in the tab's yazi popup (creates it when absent)";
-    category = "files";
-  }
-  {
-    alias = "yzd";
-    expansion = "forge-yazi.sh cd";
-    desc = "Retarget the tab's yazi popup to a directory";
-    category = "files";
-  }
-  {
-    alias = "cpsp";
-    expansion = "rsync -ahPSX --";
-    desc = "Sparse copy (VMs, disk images)";
-    category = "files";
-  }
-  {
-    alias = "backup";
-    expansion = "rsync -ahPX --delete";
-    desc = "Mirror with deletion";
-    category = "files";
-    risk = "destructive";
-  }
-  {
-    alias = "rsyncd";
-    expansion = "rsync -ahPn";
-    desc = "Dry-run transfer preview";
-    category = "files";
-  }
-  {
-    alias = "rsyncf";
-    expansion = "rsync -ahPX --append-verify";
-    desc = "Resume interrupted transfers";
-    category = "files";
-  }
-  {
-    alias = "rcs";
-    expansion = "rclone sync --progress --transfers 4";
-    desc = "Cloud sync with progress";
-    category = "files";
-    risk = "destructive";
-  }
-  {
-    alias = "hex";
-    expansion = "hexyl";
-    desc = "Hex viewer";
-    category = "files";
-  }
-  {
-    alias = "pack";
-    expansion = "ouch compress";
-    desc = "Compress files/directories";
-    category = "files";
-  }
-  {
-    alias = "unpack";
-    expansion = "ouch decompress";
-    desc = "Decompress archives";
-    category = "files";
-  }
-  # --- [MONITORING]
-  {
-    alias = "pst";
-    expansion = "procs --tree";
-    desc = "Process tree";
-    category = "monitoring";
-  }
-  {
-    alias = "psc";
-    expansion = "procs --sortd cpu";
-    desc = "Processes by CPU";
-    category = "monitoring";
-  }
-  {
-    alias = "psm";
-    expansion = "procs --sortd mem";
-    desc = "Processes by memory";
-    category = "monitoring";
-  }
-  {
-    alias = "psw";
-    expansion = "procs --watch";
-    desc = "Watch processes";
-    category = "monitoring";
-  }
-  {
-    alias = "top";
-    expansion = "btm";
-    desc = "System monitor";
-    category = "monitoring";
-  }
-  {
-    alias = "dfi";
-    expansion = "dua i";
-    desc = "Interactive disk usage";
-    category = "monitoring";
-  }
-  {
-    alias = "killi";
-    expansion = "pik";
-    desc = "Interactive process killer";
-    category = "monitoring";
-    risk = "destructive";
-  }
-  {
-    alias = "bench";
-    expansion = "hyperfine";
-    desc = "Command benchmarking";
-    category = "monitoring";
-  }
-  # --- [TEXT_SEARCH]
-  {
-    alias = "chs";
-    expansion = "choose";
-    desc = "Column selector";
-    category = "text-search";
-  }
-  {
-    alias = "rg";
-    expansion = "rg --max-columns=150 --max-columns-preview --trim";
-    desc = "Ripgrep with terminal display cosmetics";
-    category = "text-search";
-  }
-  {
-    alias = "xh";
-    expansion = "xh --style=fruity --print=hbH --pretty=all";
-    desc = "HTTP client with terminal display cosmetics";
-    category = "network";
-  }
-  {
-    alias = "sqlite3";
-    expansion = "sqlite3 -column -header -nullvalue NULL";
-    desc = "SQLite shell with terminal display defaults";
-    category = "data";
-  }
-  {
-    alias = "batg";
-    expansion = "batgrep";
-    desc = "Bat-powered ripgrep";
-    category = "text-search";
-  }
-  {
-    alias = "tldru";
-    expansion = "tldr --update";
-    desc = "Update tldr cache";
-    category = "text-search";
-  }
-  {
-    alias = "rgx";
-    expansion = "grex -xc";
-    desc = "Regex from test cases";
-    category = "text-search";
-  }
-  {
-    alias = "rgxf";
-    expansion = "grex -xc -f";
-    desc = "Regex from file input";
-    category = "text-search";
-  }
-  {
-    alias = "sr";
-    expansion = "serpl";
-    desc = "TUI search and replace";
-    category = "text-search";
-  }
-  {
-    alias = "mdv";
-    expansion = "rich --markdown";
-    desc = "Markdown viewer";
-    category = "text-search";
-  }
-  # --- [SCREENSHOT]
-  {
-    alias = "carbonc";
-    expansion = "carbon-now.sh --to-clipboard";
-    desc = "Code screenshot to clipboard";
-    category = "screenshot";
-  }
-  {
-    alias = "carboni";
-    expansion = "carbon-now.sh --interactive";
-    desc = "Code screenshot interactive";
-    category = "screenshot";
-  }
-  # --- [DATA]
-  {
-    alias = "jqr";
-    expansion = "jq -r";
-    desc = "Raw jq output";
-    category = "data";
-  }
-  {
-    alias = "jqc";
-    expansion = "jq -c";
-    desc = "Compact JSON output";
-    category = "data";
-  }
-  {
-    alias = "jqs";
-    expansion = "jq -S";
-    desc = "Sort object keys";
-    category = "data";
-  }
-  {
-    alias = "jqi";
-    expansion = "jnv";
-    desc = "Interactive JSON explorer";
-    category = "data";
-  }
-  {
-    alias = "hq";
-    expansion = "harlequin";
-    desc = "Terminal SQL IDE";
-    category = "data";
-  }
-  {
-    alias = "fqd";
-    expansion = "fq d";
-    desc = "Decode binary file structure";
-    category = "data";
-  }
-  {
-    alias = "j2y";
-    expansion = "yq eval -P";
-    desc = "JSON to YAML";
-    category = "data";
-  }
-  {
-    alias = "y2j";
-    expansion = "yq eval -o=json";
-    desc = "YAML to JSON";
-    category = "data";
-  }
-  {
-    alias = "yaml";
-    expansion = "yq eval";
-    desc = "Process YAML";
-    category = "data";
-  }
-  {
-    alias = "c2j";
-    expansion = "mlr --c2j cat";
-    desc = "CSV to JSON";
-    category = "data";
-  }
-  {
-    alias = "j2c";
-    expansion = "mlr --j2c cat";
-    desc = "JSON to CSV";
-    category = "data";
-  }
-  # --- [TRASH]
-  {
-    alias = "trestore";
-    expansion = "trash-restore";
-    desc = "Restore from trash";
-    category = "trash";
-  }
-  {
-    alias = "tls";
-    expansion = "trash-list";
-    desc = "List trashed files";
-    category = "trash";
-  }
-  {
-    alias = "trm";
-    expansion = "trash-rm";
-    desc = "Remove specific trashed files";
-    category = "trash";
-    risk = "destructive";
-  }
-  {
-    alias = "tempty";
-    expansion = "trash-empty";
-    desc = "Empty entire trash";
-    category = "trash";
-    risk = "destructive";
-  }
-  # --- [NAVIGATION]
-  {
-    alias = "cdr";
-    expansion = "cd $(git rev-parse --show-toplevel)";
-    desc = "Jump to repo root";
-    category = "navigation";
-  }
-  {
-    alias = "..";
-    expansion = "cd ..";
-    desc = "Up one level";
-    category = "navigation";
-  }
-  {
-    alias = "...";
-    expansion = "cd ../..";
-    desc = "Up two levels";
-    category = "navigation";
-  }
-  {
-    alias = "....";
-    expansion = "cd ../../..";
-    desc = "Up three levels";
-    category = "navigation";
-  }
-  {
-    alias = ".....";
-    expansion = "cd ../../../..";
-    desc = "Up four levels";
-    category = "navigation";
-  }
-  {
-    alias = "-";
-    expansion = "cd -";
-    desc = "Previous directory";
-    category = "navigation";
-  }
-  # --- [NETWORK]
-  {
-    alias = "http";
-    expansion = "xh";
-    desc = "HTTPie-compatible client";
-    category = "network";
-  }
-  {
-    alias = "https";
-    expansion = "xh --https";
-    desc = "HTTPS by default";
-    category = "network";
-  }
-  {
-    alias = "POST";
-    expansion = "xh POST";
-    desc = "RESTful POST";
-    category = "network";
-  }
-  {
-    alias = "PUT";
-    expansion = "xh PUT";
-    desc = "RESTful PUT";
-    category = "network";
-  }
-  {
-    alias = "tripu";
-    expansion = "trip --udp --target-port 33434";
-    desc = "UDP tracing for ECMP paths";
-    category = "network";
-  }
-  {
-    alias = "ohaj";
-    expansion = "oha --no-tui --output-format json";
-    desc = "HTTP load run with JSON report";
-    category = "network";
-  }
-  {
-    alias = "serve";
-    expansion = "python3 -m http.server 8000";
-    desc = "Quick static server";
-    category = "network";
-  }
-  {
-    alias = "bw";
-    expansion = "sudo bandwhich";
-    desc = "Bandwidth monitor";
-    category = "network";
-    risk = "sudo";
-  }
-  {
-    alias = "speedtestl";
-    expansion = "speedtest --accept-license";
-    desc = "Ookla speed test, license pre-accepted";
-    category = "network";
-  }
-  {
-    alias = "lssh";
-    expansion = "sshs";
-    desc = "Interactive SSH picker";
-    category = "network";
-  }
-  {
-    alias = "whs";
-    expansion = "forge-webhook -verbose";
-    desc = "Foreground webhook listener with verbose logs (boot the launchd agent out first)";
-    category = "network";
-  }
-  {
-    alias = "ports";
-    expansion = "sudo lsof -iTCP -sTCP:LISTEN -n -P";
-    desc = "List listening TCP ports";
-    category = "network";
-    risk = "sudo";
-  }
-  {
-    alias = "flushdns";
-    expansion = "sudo dscacheutil -flushcache && sudo killall -HUP mDNSResponder";
-    desc = "Flush macOS DNS cache";
-    category = "network";
-    risk = "sudo";
-  }
-  # --- [TIME]
-  {
-    alias = "timestamp";
-    expansion = "date +'%Y%m%d_%H%M%S'";
-    desc = "Filename-safe timestamp";
-    category = "time";
-  }
-  {
-    alias = "epoch";
-    expansion = "date +%s";
-    desc = "Unix timestamp";
-    category = "time";
-  }
-  {
-    alias = "now";
-    expansion = "date +'%Y-%m-%d %H:%M:%S'";
-    desc = "ISO 8601 timestamp";
-    category = "time";
-  }
-  {
-    alias = "today";
-    expansion = "date +'%Y-%m-%d'";
-    desc = "ISO date";
-    category = "time";
-  }
-  {
-    alias = "week";
-    expansion = "date +%V";
-    desc = "Week number";
-    category = "time";
-  }
-  # --- [1PASSWORD]
-  {
-    alias = "opls";
-    expansion = "op item list --format=json | jq -r '.[] | \"\\(.id) \\(.title)\"'";
-    desc = "List 1Password items";
-    category = "1password";
-  }
-  {
-    alias = "opg";
-    expansion = "op item get";
-    desc = "Get item details";
-    category = "1password";
-  }
-  {
-    alias = "opr";
-    expansion = "op run --";
-    desc = "Run with secrets injected";
-    category = "1password";
-  }
-  {
-    alias = "opi";
-    expansion = "op inject -i";
-    desc = "Inject secrets into template";
-    category = "1password";
-  }
-  # --- [ZELLIJ]
-  {
-    alias = "zjl";
-    expansion = "zellij list-sessions";
-    desc = "List sessions";
-    category = "zellij";
-  }
-  {
-    alias = "zja";
-    expansion = "zellij attach";
-    desc = "Attach to session";
-    category = "zellij";
-  }
-  {
-    alias = "zjd";
-    expansion = "zellij delete-session";
-    desc = "Delete a session";
-    category = "zellij";
-    risk = "session-destructive";
-  }
-  {
-    alias = "zjda";
-    expansion = "zellij delete-all-sessions";
-    desc = "Delete all sessions";
-    category = "zellij";
-    risk = "session-destructive";
-  }
-  {
-    alias = "zjk";
-    expansion = "zellij kill-session";
-    desc = "Kill a session";
-    category = "zellij";
-    risk = "session-destructive";
-  }
-  {
-    alias = "zjka";
-    expansion = "zellij kill-all-sessions";
-    desc = "Kill all sessions";
-    category = "zellij";
-    risk = "session-destructive";
-  }
-  # --- [ACTIONS]
-  {
-    alias = "actl";
-    expansion = "act -l";
-    desc = "List workflows/jobs";
-    category = "actions";
-  }
-  {
-    alias = "alint";
-    expansion = "actionlint";
-    desc = "Lint workflow files";
-    category = "actions";
-  }
-  # --- [DEV]
-  {
-    alias = "tyc";
-    expansion = "ty check";
-    desc = "Type-check shorthand";
-    category = "dev";
-  }
-  {
-    alias = "rfix";
-    expansion = "ruff check --fix";
-    desc = "Ruff autofix";
-    category = "dev";
-  }
-  {
-    alias = "rformat";
-    expansion = "ruff format";
-    desc = "Ruff format";
-    category = "dev";
-  }
-  {
-    alias = "rhproject";
-    expansion = "dotnet new rhino -sample";
-    desc = "Rhino plugin template";
-    category = "dev";
-  }
-  {
-    alias = "ghproject";
-    expansion = "dotnet new grasshopper -sample";
-    desc = "Grasshopper template";
-    category = "dev";
-  }
-  {
-    alias = "watch";
-    expansion = "watchexec -c";
-    desc = "Clear terminal on file change";
-    category = "dev";
-  }
-  {
-    alias = "watchr";
-    expansion = "watchexec -r";
-    desc = "Restart process on file change";
-    category = "dev";
-  }
-  {
-    alias = "pc";
-    expansion = "process-compose";
-    desc = "Project-local process mesh";
-    category = "dev";
-  }
-  {
-    alias = "pdev";
-    expansion = "pnpm dev";
-    desc = "Vite dev server";
-    category = "dev";
-  }
-  {
-    alias = "pbuild";
-    expansion = "pnpm build";
-    desc = "Production build";
-    category = "dev";
-  }
-  {
-    alias = "ptest";
-    expansion = "pnpm test";
-    desc = "Run Vitest tests";
-    category = "dev";
-  }
-  {
-    alias = "dnr";
-    expansion = "dotnet run --";
-    desc = "dotnet run with args";
-    category = "dev";
-  }
-  {
-    alias = "dnw";
-    expansion = "dotnet watch run --";
-    desc = "dotnet hot reload";
-    category = "dev";
-  }
-  {
-    alias = "dnb";
-    expansion = "dotnet build -c Release";
-    desc = "dotnet release build";
-    category = "dev";
-  }
-  {
-    alias = "dnt";
-    expansion = "dotnet test --logger 'console;verbosity=minimal'";
-    desc = "dotnet clean test output";
-    category = "dev";
-  }
-  {
-    alias = "yakb";
-    expansion = "yak build";
-    desc = "Package Rhino plugins";
-    category = "dev";
-  }
-  {
-    alias = "rhcode";
-    expansion = "rhinocode";
-    desc = "Rhino script compiler";
-    category = "dev";
-  }
-  # --- [MACOS]
-  {
-    alias = "awake";
-    expansion = "caffeinate -dims";
-    desc = "Prevent sleep";
-    category = "macos";
-  }
-  {
-    alias = "reveal";
-    expansion = "open -R";
-    desc = "Reveal in Finder";
-    category = "macos";
-  }
-  {
-    alias = "lsapps";
-    expansion = "ls /Applications";
-    desc = "List installed applications";
-    category = "macos";
-  }
-  {
-    alias = "o";
-    expansion = "open";
-    desc = "Open with default app";
-    category = "macos";
-  }
-  {
-    alias = "oo";
-    expansion = "open .";
-    desc = "Open cwd in Finder";
-    category = "macos";
-  }
-  {
-    alias = "qq";
-    expansion = "qlmanage -p 2>/dev/null";
-    desc = "Quick Look preview";
-    category = "macos";
-  }
-]
+{
+  "1password" = [
+    ["opls" "op item list --format=json | jq -r '.[] | \"\\(.id) \\(.title)\"'" "List 1Password items"]
+    ["opg" "op item get" "Get item details"]
+    ["opr" "op run --" "Run with secrets injected"]
+    ["opi" "op inject -i" "Inject secrets into template"]
+  ];
+  actions = [
+    ["actl" "act -l" "List workflows/jobs"]
+    ["alint" "actionlint" "Lint workflow files"]
+  ];
+  data = [
+    ["sqlite3" "sqlite3 -column -header -nullvalue NULL" "SQLite shell with terminal display defaults"]
+    ["jqr" "jq -r" "Raw jq output"]
+    ["jqc" "jq -c" "Compact JSON output"]
+    ["jqs" "jq -S" "Sort object keys"]
+    ["jqi" "jnv" "Interactive JSON explorer"]
+    ["hq" "harlequin" "Terminal SQL IDE"]
+    ["fqd" "fq d" "Decode binary file structure"]
+    ["j2y" "yq eval -P" "JSON to YAML"]
+    ["y2j" "yq eval -o=json" "YAML to JSON"]
+    ["yaml" "yq eval" "Process YAML"]
+    ["c2j" "mlr --c2j cat" "CSV to JSON"]
+    ["j2c" "mlr --j2c cat" "JSON to CSV"]
+  ];
+  dev = [
+    ["tyc" "ty check" "Type-check shorthand"]
+    ["rfix" "ruff check --fix" "Ruff autofix"]
+    ["rformat" "ruff format" "Ruff format"]
+    ["watch" "watchexec -c" "Clear terminal on file change"]
+    ["watchr" "watchexec -r" "Restart process on file change"]
+    ["pc" "process-compose" "Project-local process mesh"]
+    ["pdev" "pnpm dev" "Vite dev server"]
+    ["pbuild" "pnpm build" "Production build"]
+    ["ptest" "pnpm test" "Run Vitest tests"]
+    ["dnr" "dotnet run --" "dotnet run with args"]
+    ["dnw" "dotnet watch run --" "dotnet hot reload"]
+    ["dnb" "dotnet build -c Release" "dotnet release build"]
+    ["dnt" "dotnet test --logger 'console;verbosity=minimal'" "dotnet clean test output"]
+  ];
+  files = [
+    ["ls" "eza -la --header --no-user --time-style=relative" "Long listing via eza"]
+    ["fda" "fd --hidden --no-ignore -a" "Find all files incl. hidden/ignored"]
+    ["mkdir" "mkdir -pv" "Create parents verbosely"]
+    ["rsmv" "rsync-mv.sh" "Atomic move with directory cleanup"]
+    ["yz" "forge-yazi.sh reveal" "Reveal a path in the tab's yazi popup (creates it when absent)"]
+    ["yzd" "forge-yazi.sh cd" "Retarget the tab's yazi popup to a directory"]
+    ["cpsp" "rsync -ahPSX --" "Sparse copy (VMs, disk images)"]
+    ["backup" "rsync -ahPX --delete" "Mirror with deletion" "destructive"]
+    ["rsyncd" "rsync -ahPn" "Dry-run transfer preview"]
+    ["rsyncf" "rsync -ahPX --append-verify" "Resume interrupted transfers"]
+    ["rcs" "rclone sync --progress --transfers 4" "Cloud sync with progress" "destructive"]
+    ["hex" "hexyl" "Hex viewer"]
+    ["pack" "ouch compress" "Compress files/directories"]
+    ["unpack" "ouch decompress" "Decompress archives"]
+  ];
+  general = [
+    ["cl" "clear" "Clear screen"]
+    ["vim" "nvim" "Neovim as vim"]
+    ["nv" "nvim" "Neovim shorthand"]
+    ["ff" "fastfetch" "System summary"]
+  ];
+  monitoring = [
+    ["pst" "procs --tree" "Process tree"]
+    ["psc" "procs --sortd cpu" "Processes by CPU"]
+    ["psmem" "procs --sortd mem" "Processes by memory"]
+    ["psw" "procs --watch" "Watch processes"]
+    ["top" "btm" "System monitor"]
+    ["dfi" "dua i" "Interactive disk usage"]
+    ["killi" "pik" "Interactive process killer" "destructive"]
+    ["bench" "hyperfine" "Command benchmarking"]
+  ];
+  navigation = [
+    ["cdr" "cd $(git rev-parse --show-toplevel)" "Jump to repo root"]
+    [".." "cd .." "Up one level"]
+    ["..." "cd ../.." "Up two levels"]
+    ["...." "cd ../../.." "Up three levels"]
+    ["....." "cd ../../../.." "Up four levels"]
+    ["-" "cd -" "Previous directory"]
+  ];
+  network = [
+    ["xh" "xh --style=fruity --print=hbH --pretty=all" "HTTP client with terminal display cosmetics"]
+    ["http" "xh" "HTTPie-compatible client"]
+    ["https" "xh --https" "HTTPS by default"]
+    ["POST" "xh POST" "RESTful POST"]
+    ["PUT" "xh PUT" "RESTful PUT"]
+    ["tripu" "trip --udp --target-port 33434" "UDP tracing for ECMP paths"]
+    ["ohaj" "oha --no-tui --output-format json" "HTTP load run with JSON report"]
+    ["serve" "python3 -m http.server 8000" "Quick static server"]
+    ["bw" "sudo bandwhich" "Bandwidth monitor" "sudo"]
+    ["speedtestl" "speedtest --accept-license" "Ookla speed test, license pre-accepted"]
+    ["lssh" "sshs" "Interactive SSH picker"]
+    ["whs" "forge-webhook -verbose" "Foreground webhook listener with verbose logs (boot the launchd agent out first)"]
+    ["ports" "sudo lsof -iTCP -sTCP:LISTEN -n -P" "List listening TCP ports" "sudo"]
+  ];
+  screenshot = [
+    ["carbonc" "carbon-now.sh --to-clipboard" "Code screenshot to clipboard"]
+    ["carboni" "carbon-now.sh --interactive" "Code screenshot interactive"]
+  ];
+  shell = [
+    ["envs" "env | sort" "Environment variables sorted"]
+    ["ezsh" "$EDITOR \${ZDOTDIR:-$HOME}/.zshrc" "Edit zsh config"]
+    ["rzsh" "source \${ZDOTDIR:-$HOME}/.zshrc" "Reload zsh config"]
+    ["reload" "exec $SHELL" "Replace shell process"]
+  ];
+  text-search = [
+    ["chs" "choose" "Column selector"]
+    ["rg" "rg --max-columns=150 --max-columns-preview --trim" "Ripgrep with terminal display cosmetics"]
+    ["batg" "batgrep" "Bat-powered ripgrep"]
+    ["tldru" "tldr --update" "Update tldr cache"]
+    ["rgx" "grex -xc" "Regex from test cases"]
+    ["rgxf" "grex -xc -f" "Regex from file input"]
+    ["sr" "serpl" "TUI search and replace"]
+    ["mdv" "rich --markdown" "Markdown viewer"]
+  ];
+  time = [
+    ["timestamp" "date +'%Y%m%d_%H%M%S'" "Filename-safe timestamp"]
+    ["epoch" "date +%s" "Unix timestamp"]
+    ["now" "date +'%Y-%m-%d %H:%M:%S'" "ISO 8601 timestamp"]
+    ["today" "date +'%Y-%m-%d'" "ISO date"]
+    ["week" "date +%V" "Week number"]
+  ];
+  trash = [
+    ["trestore" "trash-restore" "Restore from trash"]
+    ["tls" "trash-list" "List trashed files"]
+    ["trm" "trash-rm" "Remove specific trashed files" "destructive"]
+    ["tempty" "trash-empty" "Empty entire trash" "destructive"]
+  ];
+  zellij = [
+    ["zjl" "zellij list-sessions" "List sessions"]
+    ["zja" "zellij attach" "Attach to session"]
+    ["zjd" "zellij delete-session" "Delete a session" "session-destructive"]
+    ["zjda" "zellij delete-all-sessions" "Delete all sessions" "session-destructive"]
+    ["zjk" "zellij kill-session" "Kill a session" "session-destructive"]
+    ["zjka" "zellij kill-all-sessions" "Kill all sessions" "session-destructive"]
+  ];
+}

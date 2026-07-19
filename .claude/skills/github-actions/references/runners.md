@@ -92,7 +92,7 @@ strategy:
 runs-on: ${{ matrix.runner }}
 ```
 
-[IMPORTANT] Validate ARM64 matrix uses `-arm` suffix (not `-arm64`). Flag `ubuntu-latest-arm64` in matrix definitions.
+Matrix `runner` values obey the [03]-[ARM64_RUNNERS] label rules.
 
 ## [08]-[SELF_HOSTED]
 
@@ -119,7 +119,7 @@ Custom labels must be declared for actionlint validation — unlisted labels pro
 
 ## [09]-[SELECTION_CHECKLIST]
 
-- [01]-[ARCHITECTURE]: ARM64 via `-arm` suffix — free for public repos only.
+- [01]-[ARCHITECTURE]: ARM64 per [03]-[ARM64_RUNNERS] — free for public repos only.
 - [02]-[COST]: Standard included; ARM64 (public) free; GPU $0.07/min; xlarge $0.16/min.
 - [03]-[GPU_NEEDS]: ML/AI workloads need `gpu-t4-4-core` — Team/Enterprise only.
 - [04]-[DEPRECATIONS]: Retired `ubuntu-20.04`, `macos-12/13`, `windows-2019`; plan Intel macOS exit by Fall 2027.

@@ -9,7 +9,7 @@ Secret custody is partitioned into classes, each with one origin, one movement p
 |  [01]   | User CLI Doppler token     | `doppler login` ambient auth                         | `env -u` strip          | one CLI identity  |
 |  [02]   | Config service token       | Pulumi `doppler.ServiceToken` row                    | `driver.ts --reveal`    | read-only grant   |
 |  [03]   | IaC admin token            | `op://Tokens/DOPPLER_IAC_TOKEN/token`                | `op read`, else ambient | driver child only |
-|  [04]   | GitHub IaC PAT             | `op://Tokens/Github Token/token`                     | `op read`, else ambient | provider env only |
+|  [04]   | GitHub IaC PAT             | `op://Tokens/GITHUB_TOKEN/token`                     | `op read`, else ambient | provider env only |
 |  [05]   | MCP Doppler token          | `agent-runtime/dev` secret `DOPPLER_MCP_AGENT_TOKEN` | `doppler run` wrap      | wrapper-scoped    |
 |  [06]   | 1Password personal custody | `Forge SSH Key` in the `Personal` vault              | 1Password agent         | public key only   |
 
@@ -24,7 +24,7 @@ Secret custody is partitioned into classes, each with one origin, one movement p
 
 The SessionStart hook `.claude/hooks/setup-env.sh` is the estate's secret ingress. `DOPPLER_SOURCES` rows have shape `project:config:snapshot[:TOKEN_ENV_VAR]`; an empty token segment means ambient CLI auth, a present one names the config-service-token env var. Each source resolves in a background worker that writes an outcome/keys/age/auth/reason meta, downloads against the config with a snapshot `--fallback`, and decodes JSON with `jq` assigned literally — secret bytes are never sourced or evaluated. The resolved keys land in the mandatory mode-600 `CLAUDE_ENV_FILE`; the receipt at the cache path carries source verdicts, key counts, stale/dead states, and unresolved key names, never values.
 
-Two knobs change the rail: `CLAUDE_DOPPLER_OFFLINE=1` forces `--fallback-only`, and `CLAUDE_SECRET_BACKEND=transition` re-arms the `~/.config/hm-op-session.sh` 1Password fill for unset keys (default backend is `doppler`). The GUI lane is separate: `gui-op-secrets` sources backend-dispatched session material and writes key values into the launchd GUI domain with `launchctl setenv`, so GUI-launched Codex/Claude inherit tokens shells already have — its replay manifest stores key names only.
+`CLAUDE_DOPPLER_OFFLINE=1` forces `--fallback-only` fetches. `~/.config/hm-op-session.sh` is the permanent op baseline sourced ahead of this Doppler cache, so Doppler overlays op with fresher per-key values, never retiring it. The GUI lane is separate: `gui-op-secrets` sources the session material and writes key values into the launchd GUI domain with `launchctl setenv`, so GUI-launched Codex/Claude inherit tokens shells already have — its replay manifest stores key names only.
 
 ## [03]-[SERVICES_IAC]
 
@@ -34,7 +34,7 @@ Directory scopes replace `doppler.yaml`: `scopes apply` runs `doppler configure 
 
 ## [04]-[SSH_GIT_SIGNING]
 
-`secretBackend = "doppler"` in `1password.nix` flips the CLI/TUI/GUI lanes to the Doppler-first session cache; `transition` re-arms the 1Password fallback. `hm-op-session.sh` is generated during activation by `op inject` from `~/.config/op/env.template` and published mode 600. SSH auth serves only `Forge SSH Key` from the `Personal` vault through the 1Password agent, and `ssh.nix` sets the Darwin `IdentityAgent` to the stable 1Password socket. Git signing uses SSH format with `key::<publicKey>`, `op-ssh-sign`, and an `allowed_signers` generated from the same public key — signing and verification are the 1Password agent item, not an on-disk key.
+`hm-op-session.sh` is generated during activation by `op inject` from `~/.config/op/env.template` and published mode 600 — the permanent op custody baseline every lane (CLI, TUI, GUI) sources before the Doppler session cache overlays it. SSH auth serves only `Forge SSH Key` from the `Personal` vault through the 1Password agent, and `ssh.nix` sets the Darwin `IdentityAgent` to the stable 1Password socket. Git signing uses SSH format with `key::<publicKey>`, `op-ssh-sign`, and an `allowed_signers` generated from the same public key — signing and verification are the 1Password agent item, not an on-disk key.
 
 ## [05]-[TUNNELS]
 

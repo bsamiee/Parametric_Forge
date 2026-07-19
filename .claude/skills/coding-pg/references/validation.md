@@ -1,4 +1,4 @@
-# Validation
+# [VALIDATION]
 
 Each item gates PostgreSQL 18 SQL at merge; run after writing or modifying SQL, and correct every violation before merge.
 
@@ -168,11 +168,3 @@ PG error codes to Effect tagged errors:
 
 - `uuid_generate_v4()`/`gen_random_uuid()` on a new ordered PK: justify random UUIDs by workload.
 - EXCLUDE_OVER_WITHOUT_OVERLAPS: use WITHOUT OVERLAPS when equality + range overlap is enough.
-
-## [10]-[SKILL_EVAL_PROMPTS]
-
-- Explicit invocation: "Using coding-pg, design a temporal pricing table with PostgreSQL 18 constraints and validation commands."
-- Implicit invocation: "Review this migration.sql for PostgreSQL 18 RLS, MERGE, index, and temporal-table issues."
-- Noisy context: "Given this app bug, ignore framework chatter and audit only the embedded SQL for doctrine violations."
-- Negative control: "Write TypeScript domain models only." Expected: do not invoke PostgreSQL references unless SQL or schema design appears.
-- Compliance checks: output loads only task-relevant references, avoids command thrash, avoids creating helper files, preserves `uuidv7()`/`WITHOUT OVERLAPS`/RLS doctrine, and runs `../scripts/pg_lint.sh` from this references directory when SQL text or fixtures are available.

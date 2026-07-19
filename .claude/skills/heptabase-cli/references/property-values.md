@@ -57,7 +57,7 @@ Relation property reads return an array of populated relation objects, not a pla
 - [09]-[EMAIL]: `email` — literal string via `--value "person@example.com"`.
 - [10]-[RELATION]: `relation` — JSON array of related card IDs or journal dates via `--json-value '["card-id","2026-05-05"]'`.
 
-- `date`: The CLI normalizes `start` to an ISO UTC string with milliseconds and stores `end: null` because the UI does not display date ranges.
+- `date`: normalizes `start` to an ISO UTC string with milliseconds and stores `end: null`, because the UI does not display date ranges.
 - `relation`: Replaces the full relation value; related cards must belong to the relation property's target tag database, and source-type cards are rejected.
 
 ## [02]-[RELATION_PROPERTIES]

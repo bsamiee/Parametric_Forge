@@ -18,7 +18,7 @@ There is no Pulumi logical name to choose: the CLI derives an internal name from
 
 ## [02]-[PROPERTY_INPUT]
 
-Properties come from per-property flags, a body file, or both; flags overlay the body. Flags set top-level scalar properties only — nested or structured values (`tags`, nested blocks) come from the body file. The body defaults to PCL as flat `name = value` attributes; `--input yaml` selects YAML via the converter plugin.
+Properties come from per-property flags, a body file, or both; flags overlay the body. Flags set top-level scalar properties only — nested or structured values (`tags`, nested blocks) come from the body file. Body content defaults to PCL as flat `name = value` attributes; `--input yaml` selects YAML via the converter plugin.
 
 ```bash copy-safe
 cat > bucket.pcl <<'EOF'
@@ -34,7 +34,7 @@ Before authoring properties for a resource new to the session, `npx pulumi packa
 
 ## [03]-[OUTPUT_CONTRACT]
 
-`create`, `read`, and `patch` each write one JSON object to stdout with the resource's properties top-level beside an `id` field holding the cloud identifier — no nested `outputs` object, no `urn`, no echoed type token. `list` writes a JSON array of `{id, name}` entries; a function writes its declared result shape. The exit code is checked on every invocation.
+`create`, `read`, and `patch` each write one JSON object to stdout with the resource's properties top-level beside an `id` field holding the cloud identifier — no nested `outputs` object, no `urn`, no echoed type token. `list` writes a JSON array of `{id, name}` entries; a function writes its declared result shape. Check the exit code on every invocation.
 
 ```json output-only
 {
@@ -69,4 +69,4 @@ Resources `pulumi do` created are ordinary cloud resources with no Pulumi state 
 npx pulumi import aws:s3/bucket:Bucket assets my-data
 ```
 
-The generated code moves into the program, which manages the resource from then on. Bulk adoption passes resources in a `--file`.
+Generated code moves into the program, which manages the resource from then on. Bulk adoption passes resources in a `--file`.

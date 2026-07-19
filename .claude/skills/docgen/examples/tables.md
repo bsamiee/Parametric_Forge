@@ -74,31 +74,7 @@ A column carries one identical value down every row, restating a universal fact 
 - Reason: A value constant down a column decides nothing per row; a `[VALUE]:` card states it once and narrows the grid to what varies.
 - Reframe: Extract the universal value to a `[KEY]: value` card above the table and delete the column.
 
-## [04]-[BINARY_FIELD]
-
-A boolean column mixes truthy and falsy spellings, forcing a per-row normalization the reader must carry.
-
-- Detection: A boolean column spelled inconsistently down the rows.
-- Rejected:
-    ```markdown rejected
-    | [INDEX] | [SYMBOL] | [PURE]  |
-    | :-----: | :------- | :-----: |
-    |  [01]   | `Alpha`  |    Y    |
-    |  [02]   | `Beta`   |  false  |
-    |  [03]   | `Gamma`  | enabled |
-    ```
-- Accepted:
-    ```markdown accepted
-    | [INDEX] | [SYMBOL] | [PURE] |
-    | :-----: | :------- | :----: |
-    |  [01]   | `Alpha`  |  yes   |
-    |  [02]   | `Beta`   |   no   |
-    |  [03]   | `Gamma`  |  yes   |
-    ```
-- Reason: One fixed pair of one-word semantic values makes the column scannable; mixed spellings fork one binary state into many tokens.
-- Reframe: Pick one pair — `yes` and `no` — and spell every cell from it.
-
-## [05]-[HEADER_RESTATES_CELLS]
+## [04]-[HEADER_RESTATES_CELLS]
 
 Every cell restates a word the header already owns, widening the row for nothing.
 
@@ -120,7 +96,7 @@ Every cell restates a word the header already owns, widening the row for nothing
 - Reason: The header owns the repeated word once; a cell that restates its header wastes the column and widens every row.
 - Reframe: Hoist the shared word into the header and strip it from every cell.
 
-## [06]-[PROSE_CRAMMED_CELL]
+## [05]-[PROSE_CRAMMED_CELL]
 
 A cell packs a multi-clause caveat, a signature, and behavior into a slot the column cannot hold.
 
@@ -145,7 +121,7 @@ A cell packs a multi-clause caveat, a signature, and behavior into a slot the co
 - Reason: The load-bearing caveat lives in a lead sentence the table cannot hold; each cell drops to one atomic member.
 - Reframe: Move the invariant to prose before the table and split the crammed clause into atomic rows.
 
-## [07]-[SENTENCE_ROWS]
+## [06]-[SENTENCE_ROWS]
 
 Every row needs a comma-bearing sentence to explain itself, so the table is the wrong container.
 
@@ -161,12 +137,10 @@ Every row needs a comma-bearing sentence to explain itself, so the table is the 
 
     ```markdown accepted
     [interview]:
-
     - Trigger: Requirements ambiguous, unstated, or contested
     - Output: Decisions table plus implementation prompt
 
     [plan]:
-
     - Trigger: Scope settled, sequence unresolved
     - Output: Ordered build steps
     ```
@@ -174,27 +148,7 @@ Every row needs a comma-bearing sentence to explain itself, so the table is the 
 - Reason: A row that needs a comma-bearing sentence is a card; the GroupedRecord carries field lines the cell budget forbids.
 - Reframe: Promote each row to a `[KEY]:` card with `- Field: value` lines.
 
-## [08]-[INDEX_LABEL_PROSE]
-
-The rows carry exactly an index, a label, and one prose clause — the indexed-list shape, not a table.
-
-- Detection: The table holds exactly an index, a bracketed label, and one prose clause per row.
-- Rejected:
-    ```markdown rejected
-    | [INDEX] | [LABEL]  | [DETAIL]                                   |
-    | :-----: | :------- | :----------------------------------------- |
-    |  [01]   | `QUEUED` | accepted for the sequence, not yet running |
-    |  [02]   | `ACTIVE` | executing inside the record scope          |
-    ```
-- Accepted:
-    ```markdown accepted
-    - [01]-[QUEUED]: Accepted for the sequence, not yet running.
-    - [02]-[ACTIVE]: Executing inside the record scope.
-    ```
-- Reason: Index, label, and one prose clause is the indexed-list shape; a prose column disqualifies the table and cards over-structure a lone clause.
-- Reframe: Demote to `- [NN]-[LABEL]: Prose.` entries in document order.
-
-## [09]-[HAMFISTED_TEARDOWN]
+## [07]-[HAMFISTED_TEARDOWN]
 
 A row family resists every table fix, and the teardown flattens it to mega-prose or dumps it to a bare unlabeled list — both destroy the structure the table held.
 
@@ -219,7 +173,7 @@ A row family resists every table fix, and the teardown flattens it to mega-prose
 - Reason: The mega-prose form drowns the lookup and the bare list strips every label and index; the structured conversion keeps a greppable key per member without a column set the family rejects.
 - Reframe: Convert to a labeled indexed list or a GroupedRecord set, never a paragraph flood or an unkeyed dump.
 
-## [10]-[LINKS_IN_CELLS]
+## [08]-[LINKS_IN_CELLS]
 
 A link rides inside a comparison cell, so it drifts with the attribute grid instead of a routing surface.
 
@@ -246,31 +200,7 @@ A link rides inside a comparison cell, so it drifts with the attribute grid inst
 - Reason: A mixed table is not a routing table; the link belongs on a `- Key: path` line after the grid, not inside a comparison cell.
 - Reframe: Strip links from attribute cells to a routing list below; keep an in-cell link only in a path-only routing table.
 
-## [11]-[SEQUENCE_ROWS]
-
-The rows are ordered steps a reader executes in order — a sequence wearing a grid — so the standardized carrier is the `OrderedStep` record set, one of the two earned conversions.
-
-- Detection: Rows are steps with an execution order; the action column carries imperative commands; row order is the payload.
-- Rejected:
-    ```markdown rejected
-    | [INDEX] | [ACTION]                                   | [VERIFY]          |
-    | :-----: | :----------------------------------------- | :---------------- |
-    |  [01]   | Install the runtime: `<command-a>`         | `<check-a>` lists |
-    |  [02]   | Authenticate: `<command-b>` (keyring, SSH) | `<check-b>`       |
-    ```
-- Accepted:
-    ```markdown accepted
-    1. Install the runtime.
-        - Command: `<command-a>`
-        - Verify: `<check-a>` lists the runtime
-    2. Authenticate.
-        - Command: `<command-b>` (keyring, SSH)
-        - Verify: `<check-b>`
-    ```
-- Reason: A table asserts comparable rows; a sequence's payload is order plus per-step fields, which is the `OrderedStep` shape, and commands crammed into cells blow the budget.
-- Reframe: Convert ordered steps to numbered `OrderedStep` records carrying `Command`/`Verify` field lines; this and the type-standard-owned shape are the only earned conversions.
-
-## [12]-[MISSING_INDEX]
+## [09]-[MISSING_INDEX]
 
 An enumerable table drops the leading `[INDEX]` column or carries bare-word headers, breaking stable reference and census.
 
@@ -292,7 +222,7 @@ An enumerable table drops the leading `[INDEX]` column or carries bare-word head
 - Reason: The `[INDEX]` column gives every row a stable reference and the bracketed rubric makes headers censusable across sibling tables.
 - Reframe: Add the centered `[INDEX]` column numbered `[01]` onward and bracket every header as an uppercase rubric.
 
-## [13]-[SUB_LETTERED_INDEX]
+## [10]-[SUB_LETTERED_INDEX]
 
 Rows carry invented sub-index tokens — `[1a]`, `[1b]` — to nest children under a parent row, breaking the `[NN]` sequence and the grid's flat-lookup contract.
 

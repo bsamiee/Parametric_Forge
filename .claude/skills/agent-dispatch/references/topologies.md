@@ -1,6 +1,6 @@
 # [TOPOLOGIES]
 
-Topology is the shape of result flow, fixed before the first spawn: it decides who consolidates, what each worker returns, and when the run stops. The wrong shape wastes tokens symmetrically — a panel on divisible work debates instead of dividing, a star on contested judgment averages instead of arguing.
+Topology is the shape of result flow, fixed before the first spawn: it decides who consolidates, what each worker returns, and when the run stops. A wrong shape wastes tokens symmetrically — a panel on divisible work debates instead of dividing, a star on contested judgment averages instead of arguing.
 
 ## [01]-[SHAPES]
 
@@ -15,7 +15,7 @@ Topology is the shape of result flow, fixed before the first spawn: it decides w
 
 ## [02]-[CONSOLIDATION]
 
-Raw parallel reports are not a result. The consolidator resolves conflicts between workers, deduplicates overlapping findings, ranks by severity or value, and emits one action plan — a distinct worker with its own contract, never an afterthought in the dispatcher's context. Panel adjudication weighs argument quality over vote counts, since worker diversity, not worker count, is what exposes blind spots; a tournament's comparator stays blind to which variant produced which output, and the unblinded pass afterward extracts why the winner won.
+Raw parallel reports are not a result. A consolidator resolves conflicts between workers, deduplicates overlapping findings, ranks by severity or value, and emits one action plan — a distinct worker with its own contract, never an afterthought in the dispatcher's context. Panel adjudication weighs argument quality over vote counts, since worker diversity, not worker count, is what exposes blind spots; a tournament's comparator stays blind to which variant produced which output, and the unblinded pass afterward extracts why the winner won.
 
 ## [03]-[OWNERSHIP]
 
@@ -35,9 +35,8 @@ two consecutive rounds without a new fix end the run as stuck, returning the evi
 ```
 
 Loop law:
-
 - [CAP]: every loop carries a maximum iteration count beside its stop condition; the pair prevents both runaway and premature exit.
 - [PROGRESS]: two consecutive rounds without new findings or fixes end the run as converged-or-stuck; a stuck verdict returns evidence, not retries.
-- [VERIFY]: the checker is independent of the producer — a fresh-context reviewer, a deterministic gate, or a stop-hook that blocks completion until validation passes. Self-grading inflates.
+- [VERIFY]: Checkers stay independent of the producer — a fresh-context reviewer, a deterministic gate, or a stop-hook that blocks completion until validation passes. Self-grading inflates.
 - [CHECKPOINT]: long loops externalize state to disk each round so a dead run resumes from its last artifact instead of its first prompt.
 - [TRIGGER]: recurring loops ride `/loop` for interval work and scheduled routines for calendar work; event triggers beat clock polling wherever the source system emits one.

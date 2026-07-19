@@ -3,7 +3,7 @@
 # requires-python = ">=3.15"
 # dependencies = ["cyclopts", "defusedxml", "msgspec", "networkx", "svgelements", "xxhash"]
 # ///
-"""Validate Mermaid fences through typed source analysis, SVG render proof, and rendered-geometry legibility inspection."""
+"""Validate Mermaid fences through typed source analysis, SVG render proof, rendered-geometry legibility, and browserless raster proof."""
 
 # ruff: noqa: T201, D101, D103
 
@@ -11,18 +11,19 @@
 
 import base64
 from collections import Counter
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from contextlib import suppress
 from enum import StrEnum
 from itertools import pairwise
 import json
+import os
 from pathlib import Path
 import re
 import shlex
 import shutil
 import subprocess
 import sys
-from tempfile import TemporaryDirectory
+from tempfile import mkdtemp, TemporaryDirectory
 import time
 from typing import Literal, TYPE_CHECKING
 
@@ -50,6 +51,7 @@ class Check(StrEnum):
     FRONTMATTER = "frontmatter"
     LEGIBILITY = "legibility"
     LOGIC = "logic"
+    PROOF = "proof"
     READ = "read"
     RENDER = "render"
     SETUP = "setup"
@@ -120,7 +122,28 @@ LOOK_CLASSIC = re.compile(r"^\s*look\s*:\s*classic\s*$", re.MULTILINE)
 GRADIENT_KILL = re.compile(r"^\s*useGradient\s*:\s*false\s*$", re.MULTILINE)
 SHADOW_KILL = re.compile(r"^\s*dropShadow\s*:", re.MULTILINE)
 
-ACC_EXEMPT = frozenset({"block", "block-beta", "eventmodeling", "ishikawa-beta", "kanban", "mindmap", "sankey", "sankey-beta", "venn-beta"})
+# Refusal probe on the workspace 11.16.0 binary: block/mindmap/sankey/venn refuse accTitle/accDescr at parse, kanban/ishikawa render the
+# directives as content, timeline/eventmodeling accept them inert with no aria output — none earns an acc-missing warn.
+ACC_EXEMPT = frozenset({
+    "block",
+    "block-beta",
+    "eventmodeling",
+    "ishikawa-beta",
+    "kanban",
+    "mindmap",
+    "sankey",
+    "sankey-beta",
+    "timeline",
+    "venn-beta",
+})
+# Timeline and eventmodeling parse the directives yet emit no aria output, so a fence carrying them claims accessibility it never delivers.
+ACC_INERT = frozenset({"eventmodeling", "timeline"})
+CANVAS = "#282A36"
+# A semantic rail is chosen by the relation an edge encodes — its label — never the names of the nodes it joins; an invisible ~~~ rank pin
+# is layout furniture and never a semantic edge. Word-boundary prefixes keep `default` off the fault vocabulary.
+FAULT_LABEL = re.compile(r"\b(fault|error|reject)", re.IGNORECASE)
+RAIL_LABEL = re.compile(r"\b(fault|error|reject|trace|data|wire|external|receipt)", re.IGNORECASE)
+TRANSFORM_BOX_RULE = re.compile(r"[^{}]+\{[^{}]*transform-box:fill-box[^{}]*\}")
 CANON = frozenset({
     "primary",
     "boundary",
@@ -168,6 +191,9 @@ ENGINE_HOOKS = frozenset({"#444444"})
 FILL_ALPHAS = frozenset({"", "1A", "26", "33", "4D", "54", "66", "80", "BF"})
 RENDER_CONFIG = {
     "theme": "base",
+    # Root htmlLabels false renders flowchart/state/class/ER labels as native SVG text (probe-verified on 11.16.0, <br/> line breaks
+    # included), so the one canonical SVG rasterizes browserlessly with no label loss; families on their own label path ignore the key.
+    "htmlLabels": False,
     "deterministicIds": True,
     "deterministicIDSeed": "mermaid-corpus",
     "handDrawnSeed": 1001,
@@ -190,14 +216,14 @@ def _browser_path() -> str | None:
     Returns:
         Path to a pinned chrome-headless-shell binary, or None when none resolves.
     """
-    import os
-
     env = os.environ.get("PUPPETEER_EXECUTABLE_PATH", "")
     if env and ".app/" not in env and Path(env).is_file():
         return env
+    by_revision = lambda p: [int(n) for n in re.findall(r"\d+", p.parts[-3])]  # noqa: E731
     shells = sorted(
-        Path.home().glob(".cache/puppeteer/chrome-headless-shell/*/chrome-headless-shell-*/chrome-headless-shell"),
-        key=lambda p: [int(n) for n in re.findall(r"\d+", p.parts[-3])],
+        Path.home().glob(".cache/puppeteer/chrome-headless-shell/*/chrome-headless-shell-*/chrome-headless-shell"), key=by_revision
+    ) or sorted(
+        Path("/nix/store").glob("*-playwright-browsers/chromium_headless_shell-*/chrome-headless-shell-*/chrome-headless-shell"), key=by_revision
     )
     return str(shells[-1]) if shells else None
 
@@ -207,9 +233,21 @@ PUPPETEER_CONFIG = {
     # handler entirely. Throwaway-profile render never touches the macOS keychain: mock-keychain and the basic password store kill the
     # "Chrome Safe Storage" prompt.
     "headless": "shell",
-    "args": ["--no-sandbox", "--disable-dev-shm-usage", "--disable-breakpad", "--use-mock-keychain", "--password-store=basic"],
+    # FontationsFontBackend off routes web-font shaping back through CoreText, shedding the fontations-attributed share of the benign
+    # macOS-26 teardown traps (SIGTRAP in Chromium's Rust region after a successful render; RustyPng has no runtime switch since M142).
+    "args": [
+        "--no-sandbox",
+        "--disable-dev-shm-usage",
+        "--disable-breakpad",
+        "--disable-features=FontationsFontBackend",
+        "--use-mock-keychain",
+        "--password-store=basic",
+    ],
     **({"executablePath": _path} if (_path := _browser_path()) else {}),
 }
+# A stale session env can still carry an .app-bundle pin that puppeteer honors over its cache; the render subprocess drops it so the config
+# executablePath (or a clean renderer error) is the only launch route.
+RENDER_ENV = {k: v for k, v in os.environ.items() if not (k == "PUPPETEER_EXECUTABLE_PATH" and ".app/" in v)}
 THEMED = frozenset({
     "architecture-beta",
     "block",
@@ -495,6 +533,7 @@ def contract(diagram: Diagram) -> tuple[Row, ...]:
     rows += [row(diagram.fence, Check.CONTRACT, "warn", "acc-order")] if access and access[:2] != ["accTitle", "accDescr"] else []
     rows += [row(diagram.fence, Check.CONTRACT, "warn", "acc-pair-incomplete")] if ("accTitle" in body) != ("accDescr" in body) else []
     rows += [row(diagram.fence, Check.CONTRACT, "warn", "acc-missing")] if not access and diagram.header and diagram.header not in ACC_EXEMPT else []
+    rows += [row(diagram.fence, Check.CONTRACT, "warn", "acc-inert")] if access and diagram.header in ACC_INERT else []
     rows += [row(diagram.fence, Check.CONTRACT, "warn", f"off-palette:{value}") for value in off_palette]
     rows += (
         [row(diagram.fence, Check.CONTRACT, "warn", "floor:theme-base")]
@@ -507,7 +546,7 @@ def contract(diagram: Diagram) -> tuple[Row, ...]:
             for name, pattern in (("look-classic", LOOK_CLASSIC), ("use-gradient", GRADIENT_KILL), ("drop-shadow", SHADOW_KILL))
             if not pattern.search(diagram.frontmatter)
         ]
-        if diagram.header in THEMED and diagram.frontmatter
+        if diagram.header in THEMED
         else []
     )
     rows += (
@@ -584,17 +623,9 @@ def style_logic(diagram: Diagram) -> tuple[Row, ...]:
         rows += [
             row(diagram.fence, Check.CONTRACT, "warn", f"edge:semantic-rail:{edge.index}")
             for edge in diagram.edges
-            if any(
-                word in f"{edge.label} {edge.source} {edge.target}".lower()
-                for word in ("fault", "error", "reject", "trace", "data", "wire", "external", "receipt")
-            )
-            and edge.index not in styled
+            if "~" not in edge.token and RAIL_LABEL.search(edge.label) and edge.index not in styled
         ]
-        fault_edges = [
-            edge
-            for edge in diagram.edges
-            if any(word in f"{edge.label} {edge.source} {edge.target}".lower() for word in ("fault", "error", "reject"))
-        ]
+        fault_edges = [edge for edge in diagram.edges if "~" not in edge.token and FAULT_LABEL.search(edge.label)]
         rows += [
             row(diagram.fence, Check.CONTRACT, "warn", f"edge:fault-not-red:{edge.index}")
             for edge in fault_edges
@@ -615,113 +646,148 @@ def style_logic(diagram: Diagram) -> tuple[Row, ...]:
     return tuple(rows)
 
 
+def _flowchart_logic(diagram: Diagram) -> tuple[Row, ...]:
+    declared: set[str] = set()
+    for line in diagram.lines:
+        clean = FC_EDGE_ID.sub("", FC_STR.sub("QL", strip_metadata(line)))
+        if not FC_SKIP.match(clean) and FC_EDGE.search(clean) is None:
+            declared.update(IDENT.findall(FC_SHAPE.sub(" ", clean)))
+    endpoint = {node for edge in diagram.edges for node in (edge.source, edge.target)}
+    # A declared-but-edgeless node renders correctly — inventory-by-membership is a legitimate pattern — so orphanhood warns, never blocks.
+    rows = [row(diagram.fence, Check.LOGIC, "warn", f"orphan-node:{node}") for node in sorted(declared - endpoint)]
+    rows += [
+        row(diagram.fence, Check.LOGIC, "warn", f"duplicate-edge:{a}->{b}")
+        for (a, b, _), count in Counter((edge.source, edge.target, edge.label) for edge in diagram.edges if "~" not in edge.token).items()
+        if count > 1
+    ]
+    return tuple(rows)
+
+
+def _state_logic(diagram: Diagram) -> tuple[Row, ...]:
+    reach: nx.DiGraph[str, dict[str, object], dict[str, object]] = nx.DiGraph()
+    states, starts, sources, terminals = set[str](), set[str](), set[str](), set[str]()
+    for line in diagram.lines:
+        if match := ST_TRANSITION.match(line):
+            left, right = match.group(1), match.group(2)
+            states.update(node for node in (left, right) if node != "[*]")
+            starts.update({right} if left == "[*]" and right != "[*]" else set())
+            sources.update({left} if left != "[*]" else set())
+            terminals.update({left} if right == "[*]" and left != "[*]" else set())
+            reach.add_edge(left, right)
+    reachable = set().union(*(nx.descendants(reach, start) | {start} for start in starts), set()) if starts else states
+    rows = [row(diagram.fence, Check.LOGIC, "fail", f"unreachable-state:{state}") for state in sorted(states - reachable)]
+    # An absorbing non-terminal state — entered, never exited, never declared terminal — models nothing; declare the exit or the terminal.
+    rows += [row(diagram.fence, Check.LOGIC, "warn", f"absorbing-state:{state}") for state in sorted(states - sources - terminals)]
+    return tuple(rows)
+
+
+def _sequence_logic(diagram: Diagram) -> tuple[Row, ...]:
+    declared, used = set[str](), set[str]()
+    for line in diagram.lines:
+        declared.update(match.group(1) for match in [SQ_PARTICIPANT.match(line.strip())] if match)
+        used.update(name for match in [SQ_ARROW.match(line)] if match for name in (match.group(1), match.group(2)))
+    return tuple(row(diagram.fence, Check.LOGIC, "warn", f"orphan-participant:{name}") for name in sorted(declared - used))
+
+
+def _er_logic(diagram: Diagram) -> tuple[Row, ...]:
+    blocks, related = dict[str, str](), set[str]()
+    entity = ""
+    for line in diagram.lines:
+        related.update(name for match in [ER_RELATION.match(line)] if match for name in (match.group(1), match.group(2)))
+        if match := re.match(r"^\s*([\w-]+)\s*\{", line):
+            entity = match.group(1)
+            blocks.setdefault(entity, "")
+        elif entity and re.match(r"^\s*\}", line):
+            entity = ""
+        elif entity:
+            blocks[entity] += f" {line}"
+    keyed = {name: set(re.findall(r"\b(PK|FK)\b", body)) for name, body in blocks.items()}
+    rows = [row(diagram.fence, Check.LOGIC, "warn", f"orphan-entity:{name}") for name in sorted(set(blocks) - related)]
+    rows += [
+        row(diagram.fence, Check.LOGIC, "warn", f"er:no-pk:{name}")
+        for name, keys in sorted(keyed.items())
+        if blocks[name].strip() and "PK" not in keys
+    ]
+    # Entity-granular only: a bare discriminator pair without an FK marker is the sanctioned polymorphic form and never flags.
+    rows += [
+        row(diagram.fence, Check.LOGIC, "warn", f"er:fk-without-edge:{name}")
+        for name, keys in sorted(keyed.items())
+        if "FK" in keys and name not in related
+    ]
+    return tuple(rows)
+
+
+def _gantt_logic(diagram: Diagram) -> tuple[Row, ...]:
+    ids, refs = set[str](), set[str]()
+    heads = ("section", "title", "dateFormat", "axisFormat", "tickInterval", "excludes", "includes", "todayMarker", "weekend")
+    for line in diagram.lines:
+        if ":" not in line or line.strip().startswith(heads):
+            continue
+        parts = [part.strip() for part in line.split(":", 1)[1].split(",")]
+        ids.update(part for part in parts if re.fullmatch(r"[A-Za-z_][\w-]*", part) and part not in {"active", "crit", "done", "milestone", "vert"})
+        refs.update(match.group(2) for match in re.finditer(r"\b(after|until)\s+([\w-]+)", line))
+    return tuple(row(diagram.fence, Check.LOGIC, "fail", f"dangling-task:{ref}") for ref in sorted(refs - ids))
+
+
+def _architecture_logic(diagram: Diagram) -> tuple[Row, ...]:
+    groups, nodes, member_refs, edge_refs = (set[str](), set[str](), set[str](), set[str]())
+    for line in diagram.lines:
+        text = line.strip()
+        if match := re.match(r"^group\s+([\w-]+)", text):
+            groups.add(match.group(1))
+        elif match := re.match(r"^(?:service|junction)\s+([\w-]+)", text):
+            nodes.add(match.group(1))
+            member_refs.update(ref.group(1) for ref in [re.search(r"\bin\s+([\w-]+)\s*$", text)] if ref)
+        elif match := re.match(r"^([\w-]+)(?:\{[\w-]+\})?:[TBLR]\s*(?:<)?--(?:>)?\s*[TBLR]:([\w-]+)(?:\{[\w-]+\})?", text):
+            edge_refs.update((match.group(1), match.group(2)))
+    rows = [row(diagram.fence, Check.LOGIC, "fail", f"dangling-group:{name}") for name in sorted(member_refs - groups)]
+    rows += [row(diagram.fence, Check.LOGIC, "fail", f"dangling-service:{name}") for name in sorted(edge_refs - nodes)]
+    rows += [row(diagram.fence, Check.LOGIC, "warn", f"orphan-service:{name}") for name in sorted(nodes - edge_refs)]
+    return tuple(rows)
+
+
+def _requirement_logic(diagram: Diagram) -> tuple[Row, ...]:
+    kinds = "requirement|functionalRequirement|interfaceRequirement|performanceRequirement|physicalRequirement|designConstraint|element"
+    declared, requirements, related = set[str](), set[str](), set[str]()
+    for line in diagram.lines:
+        text = line.strip()
+        if match := re.match(rf"^({kinds})\s+([\w-]+)\s*\{{", text):
+            declared.add(match.group(2))
+            requirements.update({match.group(2)} if match.group(1) != "element" else set())
+        elif match := re.match(r"^([\w-]+)\s*(?:-\s*\w+\s*->|<-\s*\w+\s*-)\s*([\w-]+)", text):
+            related.update((match.group(1), match.group(2)))
+    rows = [row(diagram.fence, Check.LOGIC, "fail", f"dangling-relation:{name}") for name in sorted(related - declared)]
+    rows += [row(diagram.fence, Check.LOGIC, "warn", f"orphan-requirement:{name}") for name in sorted(requirements - related)]
+    return tuple(rows)
+
+
+def _c4_logic(diagram: Diagram) -> tuple[Row, ...]:
+    declared = {match.group(1) for line in diagram.lines for match in [re.match(r"^\s*(?!Rel|BiRel|Update)[A-Za-z_]+\(\s*(\w+)\s*,", line)] if match}
+    related = {
+        name
+        for line in diagram.lines
+        for match in [re.match(r"^\s*(?:Bi)?Rel\w*\(\s*(\w+)\s*,\s*(\w+)", line)]
+        if match
+        for name in (match.group(1), match.group(2))
+    }
+    return tuple(row(diagram.fence, Check.LOGIC, "fail", f"dangling-relation:{name}") for name in sorted(related - declared))
+
+
+LOGIC_FAMILY: dict[Family, Callable[[Diagram], tuple[Row, ...]]] = {
+    Family.FLOWCHART: _flowchart_logic,
+    Family.STATE: _state_logic,
+    Family.SEQUENCE: _sequence_logic,
+    Family.ER: _er_logic,
+    Family.GANTT: _gantt_logic,
+    Family.ARCHITECTURE: _architecture_logic,
+    Family.REQUIREMENT: _requirement_logic,
+    Family.C4: _c4_logic,
+}
+
+
 def graph_logic(diagram: Diagram) -> tuple[Row, ...]:
-    if diagram.family == Family.FLOWCHART:
-        graph: nx.MultiDiGraph[str, dict[str, object], dict[str, object]] = nx.MultiDiGraph()
-        graph.add_edges_from((edge.source, edge.target) for edge in diagram.edges)
-        declared: set[str] = set()
-        for line in diagram.lines:
-            clean = FC_EDGE_ID.sub("", FC_STR.sub("QL", strip_metadata(line)))
-            if not FC_SKIP.match(clean) and FC_EDGE.search(clean) is None:
-                declared.update(IDENT.findall(FC_SHAPE.sub(" ", clean)))
-        endpoint = {node for edge in diagram.edges for node in (edge.source, edge.target)}
-        rows = [row(diagram.fence, Check.LOGIC, "fail", f"orphan-node:{node}") for node in sorted(declared - endpoint)]
-        rows += [
-            row(diagram.fence, Check.LOGIC, "warn", f"duplicate-edge:{a}->{b}")
-            for (a, b, _), count in Counter((edge.source, edge.target, edge.label) for edge in diagram.edges).items()
-            if count > 1
-        ]
-        return tuple(rows)
-    if diagram.family == Family.STATE:
-        reach: nx.DiGraph[str, dict[str, object], dict[str, object]] = nx.DiGraph()
-        states, starts = set[str](), set[str]()
-        for line in diagram.lines:
-            if match := ST_TRANSITION.match(line):
-                left, right = match.group(1), match.group(2)
-                states.update(node for node in (left, right) if node != "[*]")
-                starts.update({right} if left == "[*]" and right != "[*]" else set())
-                reach.add_edge(left, right)
-        reachable = set().union(*(nx.descendants(reach, start) | {start} for start in starts), set()) if starts else states
-        rows = [row(diagram.fence, Check.LOGIC, "fail", f"unreachable-state:{state}") for state in sorted(states - reachable)]
-        return tuple(rows)
-    if diagram.family == Family.SEQUENCE:
-        declared, used = set[str](), set[str]()
-        for line in diagram.lines:
-            declared.update(match.group(1) for match in [SQ_PARTICIPANT.match(line.strip())] if match)
-            used.update(name for match in [SQ_ARROW.match(line)] if match for name in (match.group(1), match.group(2)))
-        rows = [row(diagram.fence, Check.LOGIC, "warn", f"orphan-participant:{name}") for name in sorted(declared - used)]
-        return tuple(rows)
-    if diagram.family == Family.ER:
-        blocks, related = set[str](), set[str]()
-        for line in diagram.lines:
-            related.update(name for match in [ER_RELATION.match(line)] if match for name in (match.group(1), match.group(2)))
-            blocks.update(match.group(1) for match in [re.match(r"^\s*([\w-]+)\s*\{", line)] if match)
-        rows = [row(diagram.fence, Check.LOGIC, "warn", f"orphan-entity:{name}") for name in sorted(blocks - related)]
-        return tuple(rows)
-    if diagram.family == Family.CLASS:
-        names = set[str]()
-        for line in diagram.lines:
-            names.update(match.group(1) for match in [re.match(r"^\s*class\s+([\w-]+)", line)] if match)
-            names.update(
-                name
-                for match in [re.match(r"^\s*([\w.-]+)\s*(?:<\|--|--\|>|\*--|o--|-->|\.\.>|\.\.\|>|\(\)--)\s*([\w.-]+)", line)]
-                if match
-                for name in (match.group(1), match.group(2))
-            )
-        del names
-        return ()
-    if diagram.family == Family.GANTT:
-        ids, refs = set[str](), set[str]()
-        heads = ("section", "title", "dateFormat", "axisFormat", "tickInterval", "excludes", "includes", "todayMarker", "weekend")
-        for line in diagram.lines:
-            if ":" not in line or line.strip().startswith(heads):
-                continue
-            parts = [part.strip() for part in line.split(":", 1)[1].split(",")]
-            ids.update(
-                part for part in parts if re.fullmatch(r"[A-Za-z_][\w-]*", part) and part not in {"active", "crit", "done", "milestone", "vert"}
-            )
-            refs.update(match.group(2) for match in re.finditer(r"\b(after|until)\s+([\w-]+)", line))
-        return tuple(row(diagram.fence, Check.LOGIC, "fail", f"dangling-task:{ref}") for ref in sorted(refs - ids))
-    if diagram.family == Family.ARCHITECTURE:
-        groups, nodes, member_refs, edge_refs = (set[str](), set[str](), set[str](), set[str]())
-        for line in diagram.lines:
-            text = line.strip()
-            if match := re.match(r"^group\s+([\w-]+)", text):
-                groups.add(match.group(1))
-            elif match := re.match(r"^(?:service|junction)\s+([\w-]+)", text):
-                nodes.add(match.group(1))
-                member_refs.update(ref.group(1) for ref in [re.search(r"\bin\s+([\w-]+)\s*$", text)] if ref)
-            elif match := re.match(r"^([\w-]+)(?:\{[\w-]+\})?:[TBLR]\s*(?:<)?--(?:>)?\s*[TBLR]:([\w-]+)(?:\{[\w-]+\})?", text):
-                edge_refs.update((match.group(1), match.group(2)))
-        rows = [row(diagram.fence, Check.LOGIC, "fail", f"dangling-group:{name}") for name in sorted(member_refs - groups)]
-        rows += [row(diagram.fence, Check.LOGIC, "fail", f"dangling-service:{name}") for name in sorted(edge_refs - nodes)]
-        rows += [row(diagram.fence, Check.LOGIC, "warn", f"orphan-service:{name}") for name in sorted(nodes - edge_refs)]
-        return tuple(rows)
-    if diagram.family == Family.REQUIREMENT:
-        kinds = "requirement|functionalRequirement|interfaceRequirement|performanceRequirement|physicalRequirement|designConstraint|element"
-        declared, requirements, related = set[str](), set[str](), set[str]()
-        for line in diagram.lines:
-            text = line.strip()
-            if match := re.match(rf"^({kinds})\s+([\w-]+)\s*\{{", text):
-                declared.add(match.group(2))
-                requirements.update({match.group(2)} if match.group(1) != "element" else set())
-            elif match := re.match(r"^([\w-]+)\s*(?:-\s*\w+\s*->|<-\s*\w+\s*-)\s*([\w-]+)", text):
-                related.update((match.group(1), match.group(2)))
-        rows = [row(diagram.fence, Check.LOGIC, "fail", f"dangling-relation:{name}") for name in sorted(related - declared)]
-        rows += [row(diagram.fence, Check.LOGIC, "warn", f"orphan-requirement:{name}") for name in sorted(requirements - related)]
-        return tuple(rows)
-    if diagram.family == Family.C4:
-        declared = {
-            match.group(1) for line in diagram.lines for match in [re.match(r"^\s*(?!Rel|BiRel|Update)[A-Za-z_]+\(\s*(\w+)\s*,", line)] if match
-        }
-        related = {
-            name
-            for line in diagram.lines
-            for match in [re.match(r"^\s*(?:Bi)?Rel\w*\(\s*(\w+)\s*,\s*(\w+)", line)]
-            if match
-            for name in (match.group(1), match.group(2))
-        }
-        return tuple(row(diagram.fence, Check.LOGIC, "fail", f"dangling-relation:{name}") for name in sorted(related - declared))
+    if (family_logic := LOGIC_FAMILY.get(diagram.family)) is not None:
+        return family_logic(diagram)
     return (
         (row(diagram.fence, Check.LOGIC, "warn", f"logic-unimplemented:{diagram.header}"),)
         if diagram.family == Family.UNKNOWN and diagram.header
@@ -896,13 +962,15 @@ def geometry_rows(svg_text: str, diagram: Diagram) -> tuple[Row, ...]:
         interior = edge[1:-1] if len(edge) > 2 else edge
         crossed = next((ni for ni, box in enumerate(nodes) if ni not in endpoints[ei] and any(_in_box(pt, box, -2.0) for pt in interior)), None)
         rows.append(row(diagram.fence, Check.LEGIBILITY, "warn", f"edge-over-node:{ei}-{crossed}")) if crossed is not None else None
+    # A pair counts once however many times its two polylines cross, and curve sampling under-detects, so N is a lower bound on visual
+    # crossings — the honest name is pairs, never a crossing count.
     crossings = sum(
         1
         for i in range(len(edges))
         for j in range(i + 1, len(edges))
         if not (endpoints[i] & endpoints[j]) and any(_segments_cross(a, b, c, d) for a, b in pairwise(edges[i]) for c, d in pairwise(edges[j]))
     )
-    rows.append(row(diagram.fence, Check.LEGIBILITY, "warn", f"edge-crossings:{crossings}")) if crossings else None
+    rows.append(row(diagram.fence, Check.LEGIBILITY, "warn", f"edge-crossing-pairs:{crossings}")) if crossings else None
     return tuple(rows)
 
 
@@ -914,7 +982,70 @@ def prune_cache(cache_dir: Path, ttl: float = CACHE_TTL) -> None:
                 entry.unlink()
 
 
-def rendered_rows(prefix: tuple[str, ...], cwd: Path | None, diagrams: tuple[Diagram, ...], cache_dir: Path, export: Path | None) -> tuple[Row, ...]:
+def _slug(diagram: Diagram) -> str:
+    stem = re.sub(r"[^a-z0-9]+", "-", Path(diagram.fence.file).name.split(".")[0].lower()).strip("-") or "diagram"
+    return f"{stem}-{diagram.fence.line}"
+
+
+def _canvased(svg: str) -> str:
+    # The renderer bakes background-color: white onto the SVG root; the Dracula canvas replaces it so the artifact self-carries on any host.
+    head, sep, tail = svg.partition(">")
+    if "background-color" in head:
+        head = re.sub(r"background-color:\s*[^;\"]+", f"background-color: {CANVAS}", head)
+    elif 'style="' in head:
+        head = head.replace('style="', f'style="background-color: {CANVAS}; ', 1)
+    else:
+        head = head.replace("<svg", f'<svg style="background-color: {CANVAS};"', 1)
+    return head + sep + tail
+
+
+def proof_png(prefix: tuple[str, ...], cwd: Path | None, diagram: Diagram, svg_path: Path, workdir: Path, proof_dir: Path) -> Row:
+    target = proof_dir / f"{_slug(diagram)}.png"
+    svg = svg_path.read_text(encoding="utf-8", errors="ignore")
+    resvg = shutil.which("resvg")
+    if "<foreignObject" not in svg and resvg:
+        # resvg applies CSS transform without transform-box support, scaling from the canvas origin and casting label chips adrift, so
+        # every transform-box:fill-box rule drops from the raster copy — geometry stays true, only the micro-scale garnish is shed.
+        flattened = workdir / f"{_slug(diagram)}-raster.svg"
+        flattened.write_text(_canvased(TRANSFORM_BOX_RULE.sub("", svg)), encoding="utf-8")
+        with suppress(subprocess.TimeoutExpired, OSError):
+            raster = subprocess.run(
+                [resvg, "--zoom", "2", "--background", CANVAS, str(flattened), str(target)],
+                capture_output=True,
+                text=True,
+                timeout=RENDER_TIMEOUT,
+                check=False,
+            )
+            if raster.returncode == 0 and target.is_file():
+                return row(diagram.fence, Check.PROOF, "ok", f"proof:{target}")
+    # foreignObject labels die under resvg, so the faithful raster for this SVG is mmdc's own PNG render.
+    src, cfg, browser = workdir / f"{_slug(diagram)}-proof.mmd", workdir / "mermaid-config.json", workdir / "puppeteer-config.json"
+    src.write_text(diagram.fence.body, encoding="utf-8")
+    cfg.write_bytes(ENCODER.encode(RENDER_CONFIG))
+    browser.write_bytes(ENCODER.encode(PUPPETEER_CONFIG))
+    try:
+        proc = subprocess.run(
+            [*prefix, "-q", "-i", str(src), "-o", str(target), "-c", str(cfg), "-p", str(browser), "-b", CANVAS, "-s", "2"],
+            cwd=cwd,
+            env=RENDER_ENV,
+            capture_output=True,
+            text=True,
+            timeout=RENDER_TIMEOUT,
+            check=False,
+        )
+    except subprocess.TimeoutExpired:
+        return row(diagram.fence, Check.PROOF, "fail", f"environment:proof-timeout:{RENDER_TIMEOUT}s")
+    except OSError as exc:
+        return row(diagram.fence, Check.PROOF, "fail", f"environment:proof-renderer-unavailable:{type(exc).__name__}")
+    if proc.returncode != 0 or not target.is_file():
+        raw = next((line for line in (proc.stderr or proc.stdout).splitlines() if line.strip()), "proof render failed")
+        return row(diagram.fence, Check.PROOF, "fail", f"environment:{raw.strip()[:280]}")
+    return row(diagram.fence, Check.PROOF, "ok", f"proof:{target}")
+
+
+def rendered_rows(
+    prefix: tuple[str, ...], cwd: Path | None, diagrams: tuple[Diagram, ...], cache_dir: Path, export: Path | None, proof_dir: Path | None
+) -> tuple[Row, ...]:
     prune_cache(cache_dir)
     rows: list[Row] = []
     with TemporaryDirectory(prefix="mermaid-validate-") as tmp:
@@ -927,6 +1058,9 @@ def rendered_rows(prefix: tuple[str, ...], cwd: Path | None, diagrams: tuple[Dia
             svg_path = Path(outcome.detail.split(":", 1)[1])
             with suppress(OSError):
                 rows.extend(geometry_rows(svg_path.read_text(encoding="utf-8", errors="ignore"), diagram))
+            if proof_dir is not None:
+                released = outcome.detail.startswith(("rendered-release:", "release-cache-hit:"))
+                rows.append(proof_png(RELEASE_RENDERER if released else prefix, None if released else cwd, diagram, svg_path, workdir, proof_dir))
             if export is not None:
                 rows.append(export_svg(svg_path, diagram, export))
     return tuple(rows)
@@ -936,6 +1070,9 @@ def resolve_renderer(override: str | None) -> tuple[tuple[str, ...], Path | None
     if override:
         argv = tuple(shlex.split(override))
         return (argv, None) if argv and shutil.which(argv[0]) else ((), None)
+    workspace = next((c for d in (Path.cwd(), *Path.cwd().parents) if (c := d / "node_modules" / ".bin" / "mmdc").is_file()), None)
+    if workspace is not None:
+        return ((str(workspace),), None)
     return (("mmdc",), None) if shutil.which("mmdc") else ((), None)
 
 
@@ -969,6 +1106,7 @@ def attempt(prefix: tuple[str, ...], cwd: Path | None, diagram: Diagram, workdir
         proc = subprocess.run(
             [*prefix, "-q", "-i", str(src), "-o", str(out), "-c", str(cfg), "-p", str(browser)],
             cwd=cwd,
+            env=RENDER_ENV,
             capture_output=True,
             text=True,
             timeout=RENDER_TIMEOUT,
@@ -995,20 +1133,11 @@ def attempt(prefix: tuple[str, ...], cwd: Path | None, diagram: Diagram, workdir
 def export_svg(source: Path, diagram: Diagram, export_dir: Path) -> Row:
     export_dir.mkdir(parents=True, exist_ok=True)
     svg = source.read_text(encoding="utf-8", errors="ignore")
-    stem = re.sub(r"[^a-z0-9]+", "-", Path(diagram.fence.file).name.split(".")[0].lower()).strip("-") or "diagram"
-    slug = f"{stem}-{diagram.fence.line}"
+    slug = _slug(diagram)
     if root_id := next(iter(re.findall(r'<svg[^>]*?\bid="([^"]+)"', svg)), None):
         svg = svg.replace(root_id, slug)
-    head, sep, tail = svg.partition(">")
-    # The export bakes the Dracula canvas so the inline SVG self-carries on light and dark hosts alike.
-    if "background-color" in head:
-        head = re.sub(r"background-color:\s*[^;\"]+", "background-color: #282A36", head)
-    elif 'style="' in head:
-        head = head.replace('style="', 'style="background-color: #282A36; ', 1)
-    else:
-        head = head.replace("<svg", '<svg style="background-color: #282A36;"', 1)
     target = export_dir / f"{slug}.svg"
-    target.write_text(head + sep + tail, encoding="utf-8")
+    target.write_text(_canvased(svg), encoding="utf-8")
     return row(diagram.fence, Check.EXPORT, "ok", f"exported:{target}")
 
 
@@ -1033,9 +1162,9 @@ def main(
     renderer: str | None = None,
     cache_dir: Path = Path(".cache/mermaid"),
     export: Path | None = None,
-    jobs: int = 4,
+    proof: bool = False,
+    keep: bool = False,
 ) -> int:
-    del jobs
     files, rows = collect(paths)
     fences: list[Fence] = []
     for file in files:
@@ -1046,9 +1175,20 @@ def main(
     diagrams = tuple(diagram for diagram in parsed if diagram is not None)
     rows = (*rows, *static_rows(tuple(fences)))
     if not no_render and diagrams:
+        # Proof rasters are per-run ephemera, never a growing cache: the dir dies with the run unless --keep preserves it for inspection.
+        proof_dir = Path(mkdtemp(prefix="mermaid-proof-")) if proof else None
         prefix, cwd = resolve_renderer(renderer)
-        rendered = rendered_rows(prefix, cwd, diagrams, cache_dir, export) if prefix else (Row("-", 0, Check.SETUP, "fail", "no mermaid renderer"),)
+        rendered = (
+            rendered_rows(prefix, cwd, diagrams, cache_dir, export, proof_dir)
+            if prefix
+            else (Row("-", 0, Check.SETUP, "fail", "no mermaid renderer"),)
+        )
         rows = (*rows, *rendered)
+        if proof_dir is not None:
+            if keep:
+                rows = (*rows, Row("-", 0, Check.PROOF, "ok", f"proof-dir:{proof_dir}"))
+            else:
+                shutil.rmtree(proof_dir, ignore_errors=True)
     for output in rows:
         emit(output, json)
     return exit_code(rows)

@@ -17,7 +17,7 @@ curl -X POST "https://developers.hostinger.com/api/ecommerce/v1/stores" \
 
 ## [02]-[PREREQUISITES]
 
-A store takes orders only once a payment method and a shipping rate exist. The manual payment method is a checkout-time instruction (bank transfer, cash on delivery); shipping is a single flat rate that creates the shipping zone when absent, with `0` meaning free shipping.
+A store takes orders only once a payment method and a shipping rate exist. A manual payment method is a checkout-time instruction (bank transfer, cash on delivery); shipping is a single flat rate that creates the shipping zone when absent, with `0` meaning free shipping.
 
 ```bash copy-safe
 curl -X POST "https://developers.hostinger.com/api/ecommerce/v1/stores/{id}/payment-methods/manual" \
@@ -38,7 +38,7 @@ curl -X POST "https://developers.hostinger.com/api/ecommerce/v1/stores/{id}/prod
 
 ## [04]-[SALES_CHANNELS]
 
-The primary channel arrives with the store; a custom channel drives a headless storefront on external infrastructure. Update a channel's `name` and `url` (returned as its `domain`) with a `PATCH`, passing `null` to clear a field, and read the Markdown wiring guide from `getCustomStorefrontSetupInstructionsV1`.
+Every store arrives with its primary channel; a custom channel drives a headless storefront on external infrastructure. Update a channel's `name` and `url` (returned as its `domain`) with a `PATCH`, passing `null` to clear a field, and read the Markdown wiring guide from `getCustomStorefrontSetupInstructionsV1`.
 
 ```bash copy-safe
 curl -X POST  "https://developers.hostinger.com/api/ecommerce/v1/stores/{id}/sales-channels" \

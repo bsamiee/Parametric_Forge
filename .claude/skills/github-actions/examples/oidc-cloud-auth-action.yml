@@ -5,7 +5,6 @@
 # NOTE: harden-runner is CALLER responsibility — actions are steps, not jobs.
 name: "Multi-Cloud OIDC Authentication"
 description: "Unified OIDC federation for AWS, GCP, and Azure — conditional dispatch, normalized outputs, credential masking"
-author: "Example Author"
 
 inputs:
     provider:

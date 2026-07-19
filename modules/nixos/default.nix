@@ -4,7 +4,7 @@
 # License       : MIT
 # Path          : modules/nixos/default.nix
 # ----------------------------------------------------------------------------
-# NixOS system surface: boot, network, SSH, users, container runtime, and the Atuin sync server. Owns nothing Darwin owns —
+# NixOS system surface: boot, network, SSH, users, container runtime, and the Atuin and ntfy sync servers. Owns nothing Darwin owns —
 # Homebrew, launchd, and macOS defaults never generalize here.
 {
   host,
@@ -63,7 +63,7 @@
       };
     };
 
-    # Atuin sync server: loopback-only, reached exclusively through the client tunnel row. Port 8788 — 8888 belongs to forge-jupyter on every host.
+    # Atuin sync server: loopback-only, reached exclusively through the client tunnel row.
     atuin = {
       enable = true;
       host = "127.0.0.1";
@@ -98,7 +98,7 @@
         inherit (host.user) home;
         extraGroups = ["wheel" "docker"];
         openssh.authorizedKeys.keys = host.ssh.authorizedKeys;
-        # Lingering keeps HM systemd user services (Jupyter, tunnels) alive without an interactive session — the launchd RunAtLoad analogue.
+        # Lingering keeps HM systemd user services (tunnels) alive without an interactive session — the launchd RunAtLoad analogue.
         linger = true;
       };
     }

@@ -4,7 +4,7 @@ Findings cite class and line. Every entry carries one field set in one order, an
 
 ## [01]-[ENUMERATION_ANCHOR]
 
-Prose enumerates the present cases, fields, operations, or files of an owner so exhaustively that today's roster becomes the stated law: list-shaped truth standing in for the owner algebra, so a rebuild reads the count as the contract. The self-directed form counts or characterizes the document's own content — a member count, a completeness claim, an ordinal self-reference, a size self-description — and the next entry falsifies it.
+Prose enumerates the present cases, fields, operations, or files of an owner so exhaustively that today's roster becomes the stated law: list-shaped truth standing in for the owner algebra, so a rebuild reads the count as the contract. Its self-directed form counts or characterizes the document's own content — a member count, a completeness claim, an ordinal self-reference, a size self-description — and the next entry falsifies it.
 
 - Detection: A prose sentence naming more than two sibling members of one owner, or a scalar count of enumerable content whose members live outside the counting clause. A quantity survives only as a rule threshold, a domain value, or a same-clause count.
 - Rejected: `Kind` carries `ScaleFit`, `Tile`, `Crop`, `Merge`, `Matte`, `Rotate`, and `Overlay`, the seven composition operations.
@@ -54,7 +54,7 @@ One fact carried at more than one altitude or in more than one wording — a sea
 
 ## [06]-[REPORT_FRAME]
 
-The page reads as a report of its own production: research origin, verification evidence, versions checked, proof posture, review labels, freshness stamps.
+A page that reads as a report of its own production: research origin, verification evidence, versions checked, proof posture, review labels, freshness stamps.
 
 - Detection: A sentence that only makes sense to someone who watched the doc being written.
 - Rejected: All members decompile-verified against `provider 12.2.0`; four proofs, each independently fatal.
@@ -74,7 +74,7 @@ Links, citations, numbered references, or meta-references to files, sources, or 
 
 ## [08]-[HEDGE]
 
-Non-committal qualifiers, deferred-decision markers, and defensive residue around settled decisions: apology, reassurance tails answering unasked doubts, risk-hedge warnings, litigation against a claim nobody made, ceremonial surfaces minted only to embody a prohibition. The word roster is owned by the gate constants; this class is the framing the roster cannot catch.
+Non-committal qualifiers, deferred-decision markers, and defensive residue around settled decisions: apology, reassurance tails answering unasked doubts, risk-hedge warnings, litigation against a claim nobody made, ceremonial surfaces minted only to embody a prohibition. Gate constants own the word roster; this class is the framing the roster cannot catch.
 
 - Detection: The clause answers an objection no reader raised, or softens a decision already made.
 - Rejected: Delivery is exactly-once effective — at-least-once transport plus consumer dedupe by content key (never magic).
@@ -104,7 +104,7 @@ A shape preserved because an old caller, persisted reader, or predecessor depend
 
 ## [11]-[SET_IN_STONE]
 
-Wording freezes the current shape against ground-up rebuild: sealed, frozen, final, legislated counts, never-re-opened clauses, per-member byte-identical chants. The prose ages the instant the shape legitimately grows, and it orders a rebuild agent to treat a rebuildable fence as untouchable.
+Wording freezes the current shape against ground-up rebuild: sealed, frozen, final, legislated counts, never-re-opened clauses, per-member byte-identical chants. Such prose ages the instant the shape legitimately grows, and it orders a rebuild agent to treat a rebuildable fence as untouchable.
 
 - Detection: Freeze vocabulary, a count legislated rather than derivable, or a prohibition on re-opening.
 - Rejected: The frozen twenty-column receipt: field names, types, and order are byte-identical wire law.
@@ -114,9 +114,9 @@ Wording freezes the current shape against ground-up rebuild: sealed, frozen, fin
 
 ## [12]-[WEAK_VERBS]
 
-Permission verbs — `supports`, `allows`, `enables`, `provides`, `offers` — where an owning verb states law. The verb roster is owned by the gate constants; this class is the smuggled form the roster cannot catch, and a surviving instance marks a seam where ownership was never decided.
+Permission verbs — `supports`, `allows`, `enables`, `provides`, `offers` — where an owning verb states law. Gate constants own the verb roster; this class is the smuggled form the roster cannot catch, and a surviving instance marks a seam where ownership was never decided. Its zero-verb limit is the article-led annotation — a named surface trailed by a `— the <noun>` apposition acting on nothing — whose mechanical form the gate's `article-opener` check owns.
 
-- Detection: A law sentence whose operative verb grants permission instead of exercising ownership, including a permission verb smuggled into the object of an owning main verb — owns the option to enable, holds the ability to support — where the owner takes a permission rather than the concern.
+- Detection: A law sentence whose operative verb grants permission instead of exercising ownership, including a permission verb smuggled into the object of an owning main verb — owns the option to enable, holds the ability to support — where the owner takes a permission rather than the concern; the zero-verb form is an annotation opening on `the` after a named surface with no operative verb following.
 - Rejected: The package offers an optional self-hosted graph lane.
 - Accepted: The graph lane binds only under the self-hosted profile row.
 - Reason: The package is material the owner consumes, never a benefactor that supplies; the deployment condition is a policy row, not a hedge in the verb.
@@ -154,7 +154,7 @@ Law stated as an inventory of forbidden alternatives with the positive rule buri
 
 ## [16]-[IMPORTED_POSTURE]
 
-The corpus adopts a foreign authority's posture toward its own ruled standard: an upstream maturity label (`experimental`, `beta`) on a capability the corpus rules standard, the ecosystem's default presented as the default here, a fallback or safe alternative named beside the ruling, probationary ceremony on the ruled path, setup caveats the operating environment already resolves, and defect facts arranged as an indictment of the ruling. The driver is authority inversion: the source's register survives into law, so the document serves the upstream's risk posture instead of the ruling it exists to state.
+A corpus adopting a foreign authority's posture toward its own ruled standard: an upstream maturity label (`experimental`, `beta`) on a capability the corpus rules standard, the ecosystem's default presented as the default here, a fallback or safe alternative named beside the ruling, probationary ceremony on the ruled path, setup caveats the operating environment already resolves, and defect facts arranged as an indictment of the ruling. Authority inversion is the driver: the source's register survives into law, so the document serves the upstream's risk posture instead of the ruling it exists to state.
 
 - Detection: A register the ruling never produced — a maturity label, a named alternative, selective ceremony, or a foreign-environment caveat attached to a ruled standard; the generalized tell is any sentence whose deference points outside the corpus.
 - Rejected: The engine stays experimental — a diagram ships only after its render is inspected, and the shared renderer is the fallback when a defect bites.
@@ -164,7 +164,7 @@ The corpus adopts a foreign authority's posture toward its own ruled standard: a
 
 ## [17]-[VERSION_ANCHOR]
 
-Durable prose anchored to a release point in time: a version number or pin, a version-conditional behavior band (`at 2.3+`), a date, release narration, or deictic freshness vocabulary — `newest`, `latest`, `modern`, `currently`, `recently`. The corpus assumes the newest stable release of everything it touches, so every such anchor is stale the day after it is written and orders a rebuild agent to honor a dead boundary; the gate constants own the numeric and deictic floors.
+Durable prose anchored to a release point in time: a version number or pin, a version-conditional behavior band (`at 2.3+`), a date, release narration, or deictic freshness vocabulary — `newest`, `latest`, `modern`, `currently`, `recently`. A corpus assumes the newest stable release of everything it touches, so every such anchor is stale the day after it is written and orders a rebuild agent to honor a dead boundary; the gate constants own the numeric and deictic floors.
 
 - Detection: A version literal, release band, date, or freshness deictic in prose; the manifest, lockfile, or codec owner is the only surface a version legally inhabits. A standards-document clause or table citation (`Table 2.3.2`, `§ 6.3`) is a domain value, never a release pin.
 - Rejected: The neo look lands at 2.14.0+; the curve default moved at 2.13.0 — restore the spline with the prior key.

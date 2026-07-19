@@ -43,6 +43,7 @@ class Probe(msgspec.Struct, frozen=True):
     argv: tuple[str, ...]
     predicate: Callable[[SessionStart], bool]
     priority: int = 100
+    cap: int = 512  # POLICY: per-row output ceiling; PREVIEW_CAP bounds the whole block, so without this one churning row eats it
 
 
 def _worktree(ctx: SessionStart, /) -> bool:
@@ -51,8 +52,8 @@ def _worktree(ctx: SessionStart, /) -> bool:
 
 
 PROBES: tuple[Probe, ...] = (  # POLICY: gated dynamic-state rows; {cwd} resolves to ctx.cwd so gate and probe share one root
-    Probe("branch", ("git", "-C", "{cwd}", "branch", "--show-current"), _worktree, 10),
-    Probe("status", ("git", "-C", "{cwd}", "status", "--short"), _worktree, 20),
+    Probe("branch", ("git", "-C", "{cwd}", "branch", "--show-current"), _worktree, 10, 128),
+    Probe("status", ("git", "-C", "{cwd}", "status", "--short"), _worktree, 20, 1024),  # a dirty tree is bounded, never a full churn dump
 )
 
 
@@ -62,6 +63,11 @@ def _run(argv: tuple[str, ...], /) -> str:
         return subprocess.run(argv, capture_output=True, text=True, timeout=2, check=False).stdout.strip()  # cap: SessionStart blocks startup
     except OSError, subprocess.SubprocessError:
         return ""
+
+
+def _clip(text: str, cap: int, /) -> str:
+    """Bound one probe's contribution at its own policy ceiling, cutting on a line edge so a truncated row never reads as data."""
+    return text if len(text) <= cap else "\n".join(text[:cap].splitlines()[:-1] or [text[:cap]]) + f"\n… clipped at {cap} chars"
 
 
 def _persist(key: str, value: str, /) -> None:
@@ -102,7 +108,7 @@ def main() -> int:
     lines = {
         probe.label: out
         for probe in sorted(PROBES, key=lambda p: p.priority)
-        if probe.predicate(ctx) and (out := _run(tuple(a.replace("{cwd}", ctx.cwd) for a in probe.argv)))
+        if probe.predicate(ctx) and (out := _clip(_run(tuple(a.replace("{cwd}", ctx.cwd) for a in probe.argv)), probe.cap))
     }
     _persist("SESSION_BRANCH", lines.get("branch", ""))
     if lines:  # inject nothing when no row fires — the empty-state line is pure context pollution

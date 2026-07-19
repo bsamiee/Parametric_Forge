@@ -49,7 +49,7 @@ Dependabot natively parses `# v4.2.2` comments after SHA pins — updates both S
 
 ## [04]-[IMMUTABLE_ACTIONS]
 
-SHA pinning is the enforced control; OCI immutable action refs (`ghcr.io/`) are informational, not the pin target. The org setting "Require actions to be pinned to a full-length commit SHA" rejects `@v1`/`@main`, so resolve every ref to a 40-char SHA and let Dependabot track updates.
+SHA pinning is the enforced control; OCI immutable action refs (`ghcr.io/`) are informational, not the pin target. Org setting "Require actions to be pinned to a full-length commit SHA" rejects `@v1`/`@main`, so resolve every ref to a 40-char SHA and let Dependabot track updates.
 
 ## [05]-[COMMON_ACTIONS_INDEX]
 

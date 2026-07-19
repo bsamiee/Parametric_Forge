@@ -146,8 +146,8 @@ jobs:
     preview:
         runs-on: ubuntu-latest
         steps:
-            - uses: actions/checkout@v4
-            - uses: pulumi/actions@v5
+            - uses: actions/checkout@<version>
+            - uses: pulumi/actions@<version>
               with: { command: preview, stack-name: production }
               env: { PULUMI_ACCESS_TOKEN: '${{ secrets.PULUMI_ACCESS_TOKEN }}' }
     deploy:
@@ -155,7 +155,7 @@ jobs:
         if: github.ref == 'refs/heads/main'
         runs-on: ubuntu-latest
         steps:
-            - uses: pulumi/actions@v5
+            - uses: pulumi/actions@<version>
               with: { command: up, stack-name: production }
 ```
 

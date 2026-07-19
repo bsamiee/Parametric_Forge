@@ -7,7 +7,7 @@ External SaaS desired state as typed Pulumi rows: `topology.ts` declares rows, `
 | [INDEX] | [PROVIDER]             | [OWNS]                                                                               |
 | :-----: | :--------------------- | :----------------------------------------------------------------------------------- |
 |  [01]   | `@pulumiverse/doppler` | Projects, environments, branch configs, service tokens, change-notification webhooks |
-|  [02]   | `@pulumi/github`       | Repository core, pull-request main guards, linear history, and Copilot review policy |
+|  [02]   | `@pulumi/github`       | Repository core and merge hygiene; the ruleset family is dormant                    |
 
 Pins follow the package schema, never registry-page text. `pulumi-command` is admitted as tactical last-mile glue only — it installs with its first real resource, never anticipatorily. Doppler `secretsSync` and service-account rows wait for a real consumer: Actions secret sync is rejected while zero workflows exist, and every webhook row names its live receiver. Cloudflare, Tailscale, Hostinger-bridge, and Cachix Deploy hold behind their annex tripwires.
 
@@ -16,7 +16,7 @@ Pins follow the package schema, never registry-page text. `pulumi-command` is ad
 | [INDEX] | [FAMILY]                 | [STATE]                                                                                                     |
 | :-----: | :----------------------- | :---------------------------------------------------------------------------------------------------------- |
 |  [01]   | Repository core          | Uniform agent merge hygiene and feature booleans, `protect: true`, adopt-imported                           |
-|  [02]   | Rulesets / branch policy | `main-guard` requires pull requests, resolved review threads, and linear history on `~DEFAULT_BRANCH`       |
+|  [02]   | Rulesets / branch policy | Empty by ruling: `main` takes direct pushes; the dormant policy in `topology.ts` restores on a new row       |
 |  [03]   | Environments             | Estate deployment rows stay empty; GitHub-managed agent environments remain platform-owned                  |
 |  [04]   | Secret/variable rows     | Empty by ruling: zero workflow consumers; Actions secret sync rejected until a workflow names its exact set |
 |  [05]   | Access bindings          | Empty by ruling: sole-owner repos, account-level SSH identity; no collaborators, teams, or deploy keys      |
@@ -31,7 +31,7 @@ The driver brokers the Pulumi passphrase and Doppler IaC token from 1Password wh
 
 ## [04]-[REVIEWER_MATRIX]
 
-The app census records ChatGPT Codex Connector, Claude, CodeRabbit, Google AI Studio, Greptile, Macroscope, and Nx Cloud. Reviewer config custody remains repo-owned, and `node services/driver.ts reviewers` separates applicable local artifacts, configuration hashes, default-branch installation evidence, hosted-PR activity, and required-check admission. Codex cloud settings own repository review enablement, and each top-level `AGENTS.md` owns its review focus; neither local `config.toml` nor Pulumi controls that SaaS boundary. `node services/driver.ts apps` emits the declared browser-custodied installation selection without claiming live API verification. Installation evidence never substitutes for a completed hosted review, and required checks enter `main-guard` only after a PR proves their stable context and integration identity.
+The app census records ChatGPT Codex Connector, Claude, CodeRabbit, Google AI Studio, Greptile, Macroscope, and Nx Cloud. Reviewer config custody remains repo-owned, and `node services/driver.ts reviewers` separates applicable local artifacts, configuration hashes, default-branch installation evidence, hosted-PR activity, and required-check admission. Codex cloud settings own repository review enablement, and each top-level `AGENTS.md` owns its review focus; neither local `config.toml` nor Pulumi controls that SaaS boundary. `node services/driver.ts apps` emits the declared browser-custodied installation selection without claiming live API verification. Installation evidence never substitutes for a completed hosted review, and required checks enter a restored ruleset row only after a PR proves their stable context and integration identity.
 
 ## [05]-[VERBS]
 
@@ -43,5 +43,6 @@ The app census records ChatGPT Codex Connector, Claude, CodeRabbit, Google AI St
 |  [04]   | `node services/driver.ts reviewers`     | Reviewer configuration, installation, activity, and requirement evidence   |
 |  [05]   | `node services/driver.ts apps`          | Declared GitHub App installation IDs, selection modes, and browser custody |
 |  [06]   | `node services/driver.ts outputs`       | Token outputs; `--reveal` is the one-time handoff path                     |
+|  [07]   | `node services/driver.ts refresh`       | Reconciles state against live provider reads before a diff                 |
 
 `--refresh` on `preview`/`up` diffs against refreshed live state — the drift probe; `--expect-no-changes` on any stack verb fails the run when a change plans, so `preview --refresh --expect-no-changes` is the machine-checkable steady-state gate.

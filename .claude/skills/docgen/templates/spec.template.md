@@ -1,6 +1,8 @@
 # [<pkg-token>_<page-token>]
 
-<page-charter-lead-1-3-sentences>
+<page-telos-lead-one-paragraph: the owner's charter in owning voice — the capability it owns, the piece it plays in the unit's system, and the boundary it holds; never the doc-set, realization status, or a sibling recap.>
+
+<page-composition-lead-one-paragraph: the settled facts a rebuild composes without re-derivation — reused axes and their owning pages, seam obligations and frozen wire names, admission and receipt rails, modality and policy rows the page binds; present only when the page carries them, never process narration or restated higher law.>
 
 ## [01]-[INDEX]
 
@@ -37,51 +39,13 @@ class ShapeFold:
     def apply(self, op: ShapeOp) -> Result[ShapeReceipt, ShapeFault]: ...
 ```
 
-```mermaid
----
-config:
-  theme: base
-  look: classic
-  layout: elk
-  flowchart:
-    curve: linear
-    padding: 25
-  themeVariables:
-    darkMode: true
-    fontFamily: "SF Mono, Menlo, Cascadia Mono, Segoe UI Mono, Consolas, monospace"
-    useGradient: false
-    dropShadow: "none"
-    background: "#282A36"
-    primaryColor: "#44475A"
-    primaryTextColor: "#F8F8F2"
-    primaryBorderColor: "#BD93F9"
-    lineColor: "#FF79C6"
-    textColor: "#F8F8F2"
-    edgeLabelBackground: "#21222C"
-    labelBackgroundColor: "#21222C"
-  themeCSS: ".nodeLabel{font-size:13px;font-weight:500}.edgeLabel{font-size:12px;font-weight:500}.edge-thickness-normal{stroke-width:2px}.node rect,.node circle,.node polygon,.node path,.node .outer-path{stroke-width:1.5px;filter:none!important}.marker path{transform:scale(.8);transform-origin:5px 5px}.edgeLabel rect{transform-box:fill-box;transform-origin:center;transform:scale(1.1,1.2)}"
----
-flowchart LR
-    accTitle: Shape fold dispatch
-    accDescr: One shape-op entry discriminating op cases into kernel arms that fold into one receipt on the delivery rail.
-    In([apply]) -->|"[SHAPE]: ShapeOp"| Op{Op?}
-    Op -->|"refine"| ArmA[Refine]
-    Op -->|"merge"| ArmB[Merge]
-    Op -->|"split"| ArmC[Split]
-    ArmA --> Fold[Fold]
-    ArmB --> Fold
-    ArmC --> Fold
-    Fold -->|"[RECEIPT]: ShapeReceipt"| Receipt[/ShapeReceipt/]
-    linkStyle 7 stroke:#50FA7B,color:#F8F8F2
-    classDef primary fill:#44475A,stroke:#FF79C6,color:#F8F8F2
-    classDef success fill:#50FA7BBF,stroke:#50FA7B,color:#282A36
-    classDef boundary fill:#282A36,stroke:#BD93F9,color:#F8F8F2
-    class Op,ArmA,ArmB,ArmC primary
-    class Receipt success
-    class In,Fold boundary
-```
+<logic-flow diagram: one entry discriminating op cases into kernel arms folding to one receipt>
 
 ## [04]-[RESEARCH]
 
-- [<research-token>]-[OPEN|BLOCKED]: <exact-question-plus-verification-route>
-- [SPLIT_MEMBER]-[OPEN]: does `shape-core` expose `split_all`; verify against the member rail.
+<!-- source-only: research row template:
+[TOKEN]-[OPEN|BLOCKED]: <exact question>; <verification route>.
+[SPLIT_MEMBER]-[OPEN]: does `shape-core` expose `split_all`; verify against the member rail.
+-->
+
+(none)

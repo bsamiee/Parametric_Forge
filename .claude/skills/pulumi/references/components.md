@@ -53,13 +53,13 @@ class StaticSite(pulumi.ComponentResource):
         self.register_outputs({"bucket_name": self.bucket_name})
 ```
 
-The type URN is `<package>:<module>:<type>` — organization or package name, module usually `index`, PascalCase type: `myorg:index:StaticSite`.
+Every type URN spells `<package>:<module>:<type>` — organization or package name, module usually `index`, PascalCase type: `myorg:index:StaticSite`.
 
 A missing `registerOutputs()` leaves the component stuck "creating" in the console and its outputs unpersisted — it is always the constructor's last line. Child names derive from the component name (`${name}-bucket`); a hardcoded child name collides the moment two instances exist.
 
 ## [02]-[ARGS_DESIGN]
 
-The args interface defines what consumers configure and how composable the component is.
+An args interface defines what consumers configure and how composable the component is.
 
 - [INPUT_WRAP]: Every property wraps in `Input<T>` so it accepts plain values and `Output<T>` alike; a bare `string` forces consumers to unwrap outputs with `.apply()`.
 - [FLAT]: Flat interfaces with optional properties beat nested arg objects; deep nesting is hard to use and harder to evolve.
@@ -111,7 +111,7 @@ Consumers install with `pulumi package add <git-repo-url>[@vX.Y.Z]`, which downl
 |  [04]   | Language ecosystem | Package manager  | npm, PyPI, NuGet, Maven                       |
 |  [05]   | Public community   | Pulumi Registry  | Submit via the pulumi/registry GitHub repo    |
 
-The private registry generates API documentation automatically, manages versions, and makes components org-wide discoverable. Versions are `v`-prefixed git tags; a README is required and becomes the registry documentation page; type annotations (JSDoc, docstrings, Go `Annotate()`) enrich generated SDK docs.
+A private registry generates API documentation automatically, manages versions, and makes components org-wide discoverable. Versions are `v`-prefixed git tags; a README is required and becomes the registry documentation page; type annotations (JSDoc, docstrings, Go `Annotate()`) enrich generated SDK docs.
 
 ```bash template
 pulumi package publish https://github.com/myorg/my-component --publisher myorg
@@ -125,9 +125,9 @@ jobs:
     publish:
         runs-on: ubuntu-latest
         steps:
-            - uses: actions/checkout@v4
+            - uses: actions/checkout@<version>
               with: { fetch-depth: 0 }
-            - uses: pulumi/auth-actions@v1
+            - uses: pulumi/auth-actions@<version>
               with:
                   organization: myorg
                   requested-token-type: urn:pulumi:token-type:access_token:organization

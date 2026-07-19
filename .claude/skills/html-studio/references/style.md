@@ -1,16 +1,16 @@
 # [STYLE]
 
-The design language is dark-first on a violet-black ground: tone carries depth, violet carries interaction, copper carries editorial voice, mono carries every datum. One token registry, one cascade architecture, and one legibility law bind every artifact, so a plan, a dashboard, and a deck read as one system.
+A dark-first design language rides a violet-black ground: tone carries depth, violet carries interaction, copper carries editorial voice, mono carries every datum. One token registry, one cascade architecture, and one legibility law bind every artifact, so a plan, a dashboard, and a deck read as one system.
 
 ## [01]-[CASCADE]
 
-The stylesheet is an architecture: layers order the cascade once, and every rule lands in a named layer.
+A stylesheet is an architecture: layers order the cascade once, and every rule lands in a named layer.
 
 ```css copy-safe
 @layer reset, tokens, base, components, utilities, print, overrides;
 ```
 
-- [LAYER_HOMES]: the reset, token registry, and element base populate the early layers; artifact components land in `components`, one-off structure in `utilities`, print reflow in `print`, forced-state and preference rewrites in `overrides`. Same-name layers merge, and later source order wins ties inside a layer.
+- [LAYER_HOMES]: reset, token registry, and element base populate the early layers; artifact components land in `components`, one-off structure in `utilities`, print reflow in `print`, forced-state and preference rewrites in `overrides`. Same-name layers merge, and later source order wins ties inside a layer.
 - [NO_UNLAYERED]: one unlayered rule outranks every layer and re-opens the specificity war the architecture closed; every rule is authored inside a named layer.
 - [IMPORTANT_INVERTS]: `!important` flips layer precedence toward the earliest layer; it is legal only inside `print` and `overrides`, for forced-state resets alone.
 - [PRECEDENCE]: resolution runs origin, importance, layer, specificity, then source proximity — layer outranks specificity for normal declarations, and `revert-layer` rolls a property back to earlier layers.
@@ -19,7 +19,7 @@ The stylesheet is an architecture: layers order the cascade once, and every rule
 
 ## [02]-[TOKENS]
 
-Semantic names only — a consumer reads intent, never hex. The dark registry is the shipped base:
+Semantic names only — a consumer reads intent, never hex. One dark registry ships as the base:
 
 ```css copy-safe
 @property --tone {
@@ -116,7 +116,7 @@ Semantic names only — a consumer reads intent, never hex. The dark registry is
 }
 ```
 
-The light palette is one declaration block carried twice — inside `@media (prefers-color-scheme: light)` scoped to `:root:not([data-theme])`, and under the selector below, so a stamped choice suppresses the media branch and wins in both directions. Both light blocks — and the print flip's token rewrites — precede the dark base in source: layer precedence and specificity, not source order, select the palette, and the last-declared registry, the dark base, is the one the artifact gate audits.
+One declaration block carries the light palette twice — inside `@media (prefers-color-scheme: light)` scoped to `:root:not([data-theme])`, and under the selector below, so a stamped choice suppresses the media branch and wins in both directions. Both light blocks — and the print flip's token rewrites — precede the dark base in source: layer precedence and specificity, not source order, select the palette, and the last-declared registry, the dark base, is the one the artifact gate audits.
 
 ```css copy-safe
 @layer tokens {
@@ -160,7 +160,7 @@ The light palette is one declaration block carried twice — inside `@media (pre
 - [TEXT_ROLES]: `--text-muted` is contrast-guaranteed body copy; `--text-faint` is decoration-only ink for grip dots, disabled controls, and filter-dimmed rows at 13px and above — an information-bearing label at 12px or below binds `--text-muted`, never faint.
 - [ACCENT_ROLES]: violet is the interactive role — buttons, links, focus, selection, meters; copper (`--editorial`) is the editorial role — eyebrows, section numerals, keyline callouts, figure captions. Copper never fills a control, and violet never decorates prose.
 - [STATUS]: `--ok` `--warn` `--fail` `--info` mark state on chips, rails, and marks; the bracket text — `[DONE]` `[BLOCKED]` `[AT-RISK]` — is the accessible carrier and hue is reinforcement.
-- [SERIES]: `--series-1`..`--series-6` paint chart marks only. The dark ladder holds one lightness band (0.72–0.80) and one chroma band (0.11–0.19) with hue gaps of 40° or more, so no series reads as emphasis; the light branch restates the ladder at 0.52–0.60 lightness, because a 0.72-lightness mark on white drops below the graphical-contrast floor.
+- [SERIES]: `--series-1`..`--series-6` paint chart marks only. Dark's ladder holds one lightness band (0.72–0.80) and one chroma band (0.11–0.19) with hue gaps of 40° or more, so no series reads as emphasis; the light branch restates the ladder at 0.52–0.60 lightness, because a 0.72-lightness mark on white drops below the graphical-contrast floor.
 - [SPACE_AND_SHAPE]: every gap, pad, and margin rides `--s1`..`--s8`; radii ride `--r-1`..`--r-full`; one `--measure` per artifact.
 
 ## [03]-[COLOR]
@@ -168,18 +168,18 @@ The light palette is one declaration block carried twice — inside `@media (pre
 OKLCH is the only working space, and the channels carry distinct jobs: lightness owns elevation, text hierarchy, and contrast; chroma owns emphasis; hue owns identity. Equal lightness reads equal across hues, so a ladder built on L holds contrast where an HSL ladder drifts.
 
 - [DERIVED_ONLY_MIX]: every derived color is `color-mix(in oklch, ...)` off a registry token — fills at `<token> 10-22%, transparent`, hairlines at `var(--text) 16%, transparent`, scrims at `var(--bg) 55%, transparent`. A raw hex or an sRGB mix forks the palette and desaturates along the wrong curve.
-- [STATE_POLARITY]: interactive state moves lightness toward the theme's ink — dark hover lightens (+0.06 L) and active darkens; light hover darkens (−0.05 L) and active darkens further — so pressed reads as pressed in both themes. The hover, active, and weak values are registry tokens; a locally re-mixed hover forks the interaction grammar.
+- [STATE_POLARITY]: interactive state moves lightness toward the theme's ink — dark hover lightens (+0.06 L) and active darkens; light hover darkens (−0.05 L) and active darkens further — so pressed reads as pressed in both themes. Hover, active, and weak values are registry tokens; a locally re-mixed hover forks the interaction grammar.
 - [RELATIVE_DERIVE]: a lightness-only or chroma-only move derives through relative color syntax — `oklch(from var(--accent) calc(l + 0.06) c h)` — while `color-mix` owns blends between two colors; each idiom names the operation it performs.
 - [ON_ACCENT]: text on a filled accent binds `--on-accent`, an ink derived from the ground rather than white, so the filled control holds contrast in both themes.
 - [CHROMA_DISCIPLINE]: registry chroma stays conservative (≤0.2) so every mix lands in gamut in both themes; high chroma clips to the device gamut and shifts hue at the clip.
 - [CONTRAST_LAW]: body text holds 4.5:1 against its resting surface, and graphical marks and UI edges hold 3:1. A tinted chip is judged after compositing: ink over a 14% status fill over `--surface` is the pair that must clear the floor, not ink over the raw token.
-- [HUE_ANCHORS]: the ground family sits at hue 290 with trace chroma (0.008–0.03) so neutrals stay warm-violet rather than dead gray; accent hue 292 keeps the interactive role inside the ground's family, and copper at 55 opposes it across the wheel. Status hues spread across the green, amber, red, and blue quadrants — far enough apart that no state pair collides under common color-vision deficits once the bracket text is present — and each theme tunes its own exact status lightness for its ground.
+- [HUE_ANCHORS]: ground family sits at hue 290 with trace chroma (0.008–0.03) so neutrals stay warm-violet rather than dead gray; accent hue 292 keeps the interactive role inside the ground's family, and copper at 55 opposes it across the wheel. Status hues spread across the green, amber, red, and blue quadrants — far enough apart that no state pair collides under common color-vision deficits once the bracket text is present — and each theme tunes its own exact status lightness for its ground.
 
 ## [04]-[TYPOGRAPHY]
 
-Type is a role system with one voice per job: mono is the systemic voice — every numeral, label, tag, chip, keycap, data cell, stamp, and code span; serif (`--font-display`) is a restrained editorial accent spent on `h1` and `h2` alone; sans carries sentences and nothing else. The stacks are system-native, so zero font bytes travel and the page renders identically offline.
+Type is a role system with one voice per job: mono is the systemic voice — every numeral, label, tag, chip, keycap, data cell, stamp, and code span; serif (`--font-display`) is a restrained editorial accent spent on `h1` and `h2` alone; sans carries sentences and nothing else. Every stack is system-native, so zero font bytes travel and the page renders identically offline.
 
-The scale is modular at ratio 1.2, and fluidity lives in exactly one token — `--fs-4xl`, the display ramp, whose `clamp()` anchors in rem hold the 200% zoom contract while `cqi` scales it locally. Every class carries an exact floor; an element rendering below its floor is a defect regardless of how the page reads at a glance.
+A modular scale rides ratio 1.2, and fluidity lives in exactly one token — `--fs-4xl`, the display ramp, whose `clamp()` anchors in rem hold the 200% zoom contract while `cqi` scales it locally. Every class carries an exact floor; an element rendering below its floor is a defect regardless of how the page reads at a glance.
 
 | [INDEX] | [ROLE]                        | [TOKEN]      | [FAMILY_WEIGHT]    | [FLOOR] |
 | :-----: | :---------------------------- | :----------- | :----------------- | :------ |
@@ -217,7 +217,7 @@ Salience is budgeted; the review counts it.
 
 ## [06]-[LAYOUT]
 
-The artifact class fixes the content column, and one `--measure` rules the page — a page mixing widths per section reads as three documents stapled together.
+Each artifact class fixes the content column, and one `--measure` rules the page — a page mixing widths per section reads as three documents stapled together.
 
 | [INDEX] | [CLASS]                                 | [MEASURE]          | [COLLAPSE]                        |
 | :-----: | :-------------------------------------- | :----------------- | :-------------------------------- |
@@ -236,7 +236,7 @@ The artifact class fixes the content column, and one `--measure` rules the page 
 - [LOGICAL_AXES]: layout speaks `margin-inline`, `padding-block`, `inset-inline`, and `border-inline-start`; physical sides survive only where geometry is physical — shadows, transforms, gradient angles, print imposition.
 - [FLUID_SPACE]: a locally fluid gap is one `clamp()` pair — rem floor and ceiling holding the zoom contract, a `cqi` middle term scaling against the nearest container — beside the fixed `--s*` steps.
 
-The structural devices are the page's shared visual vocabulary; every artifact composes from this set, so sibling artifacts read as one system.
+Structural devices are the page's shared visual vocabulary; every artifact composes from this set, so sibling artifacts read as one system.
 
 - [01]-[HEADER_TRIAD]: mono eyebrow kicker, serif display `h1`, muted deck line.
 - [02]-[SECTION_NUMERALS]: CSS-counter `h2::before` in copper mono where order is meaningful.
@@ -299,14 +299,14 @@ Entries ride the entry durations and exits ride the shorter `--dur-out-*` set wi
 - [DISCRETE_REVEAL]: `transition-behavior: allow-discrete` with `@starting-style` animates `display`-toggled overlays in and out; opacity and transform carry the visible motion while `display` flips discretely.
 - [NAMED_TRANSITIONS]: a component lists its transitioned properties; `transition: all` hides ownership and animates the unintended.
 - [SPRING_BUDGET]: `--ease-spring` marks one completed action — a check settling, a copy confirming; a spring on hover or layout reads as jitter.
-- [REDUCED_MOTION]: the registry zeroes every duration under `prefers-reduced-motion`, so a transition reading the tokens collapses to instant with no per-rule guard. Focus rings transition nothing — they appear instantly.
+- [REDUCED_MOTION]: registry zeroes every duration under `prefers-reduced-motion`, so a transition reading the tokens collapses to instant with no per-rule guard. Focus rings transition nothing — they appear instantly.
 - [SCROLL_ENHANCE]: `animation-timeline: scroll()` behind `@supports` drives orientation-only progress; comprehension never depends on a scroll animation.
 
 ## [09]-[THEMES_AND_PREFERENCES]
 
-The base root is dark; light arrives twice — by system preference for the unstamped page, by `data-theme="light"` on the root when a choice is stamped — and `color-scheme` follows the palette so native controls match. A preference rewrites token values, never a parallel component.
+Dark is the base root; light arrives twice — by system preference for the unstamped page, by `data-theme="light"` on the root when a choice is stamped — and `color-scheme` follows the palette so native controls match. A preference rewrites token values, never a parallel component.
 
-- [PRINT_FLIP]: the print layer flips the registry to the light palette on white, drops shadows, hides screen chrome (`.toolbar`, `.export-bar`, `.drawer-tab`, `.toc`, buttons), expands disclosure, and holds `break-inside: avoid` on cards, rows, figures, and code with `break-after: avoid` on headings; `print-color-adjust: exact` keeps the tokened tints. `break-inside: avoid` is a request an oversized box overrides — a unit that must stay whole is sized to a sheet.
+- [PRINT_FLIP]: print layer flips the registry to the light palette on white, drops shadows, hides screen chrome (`.toolbar`, `.export-bar`, `.drawer-tab`, `.toc`, buttons), expands disclosure, and holds `break-inside: avoid` on cards, rows, figures, and code with `break-after: avoid` on headings; `print-color-adjust: exact` keeps the tokened tints. `break-inside: avoid` is a request an oversized box overrides — a unit that must stay whole is sized to a sheet.
 - [FORCED_COLORS]: `forced-colors: active` hands the palette to system keywords — `Canvas`, `CanvasText`, `Highlight` — and zeroes shadows; borders and outlines carry the semantics color drops.
 - [CONTRAST_MORE]: `prefers-contrast: more` promotes `--line` to `--line-strong` and widens the focus ring; no preference branch removes a focus ring.
 

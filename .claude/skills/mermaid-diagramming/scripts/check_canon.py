@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # /// script
-# requires-python = ">=3.13"
+# requires-python = ">=3.15"
 # dependencies = ["cyclopts", "msgspec", "ruamel.yaml"]
 # ///
 """Enforce the Dracula theme and style canon on Mermaid fences through one table-driven per-family rule registry."""
@@ -77,6 +77,7 @@ class Cond(StrEnum):
     ASYNC = "async"
     AUTONUMBER = "autonumber"
     BAR = "bar"
+    CHERRY_PICK = "cherry-pick"
     COMPOSITE = "composite"
     CONTAINS = "contains"
     CRIT = "crit"
@@ -237,6 +238,7 @@ CONDITIONS: dict[Cond, tuple[re.Pattern[str], str]] = {
     Cond.ASYNC: (re.compile(r"--?\)"), "body"),
     Cond.AUTONUMBER: (re.compile(r"^\s*autonumber\b", re.MULTILINE), "body"),
     Cond.BAR: (re.compile(r"^\s*bar\s*\[", re.MULTILINE), "body"),
+    Cond.CHERRY_PICK: (re.compile(r"^\s*cherry-pick\b", re.MULTILINE), "body"),
     Cond.COMPOSITE: (re.compile(r"^\s*state\s+\S.*\{", re.MULTILINE), "body"),
     Cond.CONTAINS: (re.compile(r"-\s*contains\s*->|<-\s*contains\s*-"), "body"),
     Cond.CRIT: (re.compile(r":\s*crit\b|,\s*crit\b"), "body"),
@@ -287,7 +289,7 @@ CANON_CSS_SAFE = (
 CANON_CLASSDEF = "Every classDef sets an explicit color: to survive a host swap."
 CANON_CLASS_FLOOR = "A flowchart ships base vars plus three or more canonical classes with an explicit rail on every non-primary edge."
 CANON_ORDINAL = "A type reading an ordinal palette defines the full engine range it consumes, so no band derives to primaryColor mud."
-CANON_ACC = "Seven families refuse accTitle/accDescr - block, mindmap, kanban, ishikawa, eventmodeling mis-handle them and sankey, venn reject at parse - so the relation sentence rides beside the fence."
+CANON_ACC = "Six families break on accTitle/accDescr - block, mindmap, sankey, venn refuse at parse and kanban, ishikawa render the directives as content - while timeline and eventmodeling accept them inert with no aria output, so the relation sentence rides beside the fence."
 CANON_INIT = "%%{init:...}%% directives are deprecated - frontmatter is the current channel."
 CANON_ORDER = "The config block holds one key order: theme, look, layout, root render keys, per-type blocks, themeVariables (opening darkMode, fontFamily, useGradient, dropShadow), themeCSS last."
 
@@ -391,10 +393,10 @@ RULES: tuple[Rule, ...] = (
         expect=FONT_STACK,
     ),
     Rule("font-root-ban", FAIL, Surface.FM_NONE, "fontFamily never sits at config root", CANON_MONO, f"{REF_CONFIG} [01]", path=("fontFamily",)),
-    Rule("font-hyphen", FAIL, Surface.DERIVED, "no hyphenated family token in any fontFamily", CANON_MONO, f"{REF_CONFIG} [06]"),
+    Rule("font-hyphen", FAIL, Surface.DERIVED, "no hyphenated family token in any fontFamily", CANON_MONO, f"{REF_THEMING} [03]"),
     Rule("init-directive", FAIL, Surface.BODY_NONE, "no deprecated init directive", CANON_INIT, f"{REF_CONFIG} [01]", pattern=r"%%\{\s*init\s*:"),
-    Rule("css-child-combinator", FAIL, Surface.DERIVED, "no > combinator in themeCSS", CANON_CSS_SAFE, f"{REF_CONFIG} [06]"),
-    Rule("css-text-transform", FAIL, Surface.DERIVED, "no text-transform in themeCSS", CANON_CSS_SAFE, f"{REF_CONFIG} [06]"),
+    Rule("css-child-combinator", FAIL, Surface.DERIVED, "no > combinator in themeCSS", CANON_CSS_SAFE, f"{REF_THEMING} [05]"),
+    Rule("css-text-transform", FAIL, Surface.DERIVED, "no text-transform in themeCSS", CANON_CSS_SAFE, f"{REF_THEMING} [05]"),
     Rule(
         "hex-off-palette",
         FAIL,
@@ -433,7 +435,7 @@ RULES: tuple[Rule, ...] = (
         "family refuses accTitle/accDescr",
         CANON_ACC,
         f"{REF_CONFIG} [04]",
-        fams=(Fam.BLOCK, Fam.MINDMAP, Fam.KANBAN, Fam.ISHIKAWA, Fam.EVENTMODELING, Fam.SANKEY, Fam.VENN),
+        fams=(Fam.BLOCK, Fam.MINDMAP, Fam.KANBAN, Fam.ISHIKAWA, Fam.SANKEY, Fam.VENN),
         pattern=r"accTitle|accDescr",
     ),
     # --- [FLOWCHART]
@@ -793,8 +795,8 @@ RULES: tuple[Rule, ...] = (
         "seq-region-grouped",
         FAIL,
         Surface.DERIVED,
-        "every alt/par/critical/break region wraps in a box or rect",
-        "A sequence ships one box or rect grouping around each alt/par/critical region.",
+        "a region-carrying sequence ships at least one box or rect grouping",
+        "A sequence carrying alt/par/critical/break regions ships at least one box or rect grouping; per-region wrapping stays authorial judgment.",
         f"{REF_STYLING} [06]",
         fams=(Fam.SEQUENCE,),
     ),
@@ -1904,7 +1906,7 @@ RULES: tuple[Rule, ...] = (
         Surface.FM_ANY,
         "architecture.seed is the deterministic lock",
         "randomize: false alone never guarantees identical renders.",
-        f"{REF_CONFIG} [06]",
+        f"{REF_CONFIG} [02]",
         fams=(Fam.ARCHITECTURE,),
         path=("architecture", "seed"),
     ),
@@ -2177,6 +2179,17 @@ RULES: tuple[Rule, ...] = (
         fams=(Fam.GITGRAPH,),
         pattern=".tag-label{fill:#F8F8F2}",
         when=Cond.TAG,
+    ),
+    Rule(
+        "git-cherry-ink",
+        FAIL,
+        Surface.CSS,
+        "cherry-pick double-dots re-ink Foreground",
+        "The engine hardcodes cherry-pick double-dots #fff; the .commit-cherry-pick stamp re-inks them Foreground so lifted commits stay in Dracula closure.",
+        f"{REF_STYLING} [06]",
+        fams=(Fam.GITGRAPH,),
+        pattern=".commit-cherry-pick circle{fill:#F8F8F2",
+        when=Cond.CHERRY_PICK,
     ),
     Rule(
         "git-css-arrow",

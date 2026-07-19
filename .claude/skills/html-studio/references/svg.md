@@ -5,12 +5,12 @@ Inline SVG is the artifact's pen: every diagram, infographic, and figure is gene
 ## [01]-[CANVAS]
 
 - One deliberate `viewBox` per SVG, fixed at authoring — `0 0 960 540` and `0 0 720 320` are the house frames — with `preserveAspectRatio` chosen, never defaulted: `xMidYMid meet` for figures that must stay whole, `slice` for full-bleed stage panels, `none` only where non-uniform stretch is the point — and never over text children, because the stretch shears every glyph with the frame. Geometry rides a 4px grid with major bands on 8px increments, so alignment is arithmetic, never eyeballed.
-- The canvas background stays transparent — the host surface shows through, so one figure serves every elevation and both themes without a repaint.
+- Canvas background stays transparent — the host surface shows through, so one figure serves every elevation and both themes without a repaint.
 - One polar convention across every circular figure: 0° at 12 o'clock, positive clockwise. All radial math below assumes it.
 - A 1px horizontal or vertical stroke in an unscaled frame centers on a `.5` coordinate (`y="88.5"`); filled rects stay on integers. `shape-rendering="crispEdges"` is legal only on axis-aligned gridlines, ticks, and bars — it disables antialiasing, so arcs, diagonals, and curves keep the default precision.
 - Linework that survives responsive scaling carries `vector-effect="non-scaling-stroke"`; a dashed edge under it recomputes its dash against on-screen length or drops the effect, and the other `vector-effect` values are not interoperable and never ship.
 - Every transformed element declares `transform-box: fill-box` (or `view-box` for stage-anchored pivots) with an explicit `transform-origin` — the implicit origin is the viewport corner, and every rotation without this law pivots wrong. Pan and zoom ride an inner `<g>` transform — a CSS transform on the `<svg>` root scales the rendered raster, not the coordinate system.
-- The SVG root inherits `color` from the page ink; marks read `currentColor` or a `var(--token)` presentation value. Presentation attributes carry zero specificity, so attribute values are seeds and artifact CSS owns theme and state — a hard-coded hex inside a themed SVG lies in one theme or the other.
+- An SVG root inherits `color` from the page ink; marks read `currentColor` or a `var(--token)` presentation value. Presentation attributes carry zero specificity, so attribute values are seeds and artifact CSS owns theme and state — a hard-coded hex inside a themed SVG lies in one theme or the other.
 - One parametric scale anchors marks to typography: with label size `s`, standard stroke ≈ `s/12`, node padding `0.75s × 0.45s`, node gap `1.25s`, corner radius `min(8, 0.5s)`, arrowhead length `3.5×stroke + 2`. Derived, never sprinkled constants.
 - An SVG inside a card sizes to the content box, never the viewport; a diagram whose canvas tone sits within one elevation step of its host loses its edge — the host steps down or the SVG takes a `--line-strong` frame.
 - Draw order is document order: zone bands, then edges, then nodes, then labels — each layer one `<g>` with its layer class, so a whole layer dims, hides, or exports as one node.
@@ -24,14 +24,14 @@ Path data is the construction language; generators emit it from data, and hand-t
 - Compound subpaths in one `<path>` cut holes under `fill-rule="evenodd"`; the default `nonzero` follows winding direction, so a hole under `nonzero` requires the inner subpath to wind opposite.
 - Coordinates round to two decimals at authoring scale; deeper precision only bloats the file.
 - `pathLength="1"` normalizes dash and draw-on math to the 0–1 range regardless of geometry — set it on animation paths only, never on measured or textPath paths.
-- The `d` attribute animates through CSS `d: path("...")` only between command lists of identical shape; a morph across differing command counts snaps instead of tweening.
+- `d` animates through CSS `d: path("...")` only between command lists of identical shape; a morph across differing command counts snaps instead of tweening.
 
 ## [03]-[PAINT]
 
 - Standard edges set `stroke-linejoin: round` with butt caps; round caps mark only gauge arcs and endpoint dots, where the cap is the mark.
 - Stroke ladder at figure scale: 1px hairline and grid, 1.5px standard edge, 2px emphasis and container, 2.5px selected; past 3px only width-encoded flow ribbons. Fills stay translucent over opaque strokes — `color-mix(in oklch, <token> 10-22%, transparent)` for region fills — with density carried by stroke weight, never by heavier fill. Connector ink stays under a third of content ink: when edges outweigh nodes and labels, drop edge alpha or weight before touching content.
 - One dash vocabulary spans the whole artifact: solid is realized, `4 6` is trace, annotation, or async, `6 6` is planned, `5 4` is containment, and the animated flow edge rides `6 4` with a `stroke-dashoffset` keyframe. A fifth rhythm is a defect.
-- Markers live in `<defs>`, one id per edge class; `markerUnits` defaults to `strokeWidth`, so marker geometry scales with its edge. The house barbed head draws a body near 4.8x stroke width with `refX` at the tip; `fill="context-stroke"` inherits each edge's color, with a per-class pre-colored fallback marker for engines without it:
+- Markers live in `<defs>`, one id per edge class; `markerUnits` defaults to `strokeWidth`, so marker geometry scales with its edge. A house barbed head draws a body near 4.8x stroke width with `refX` at the tip; `fill="context-stroke"` inherits each edge's color, with a per-class pre-colored fallback marker for engines without it:
 
 ```svg copy-safe
 <defs><marker id="arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
@@ -89,7 +89,7 @@ Meaning rides two orthogonal class axes — geometry names what a node is, role 
 
 ## [06]-[RADIAL]
 
-A figure earns its geometry by the reader question: magnitude and proportion stay linear — meter, waffle, bars — and a radial form is legal only where the bounded scalar, the genuine cycle, or the shared-center comparison is itself the subject. The polar kernel below is what every circular figure composes, and degeneracy is law: a zero-width domain returns the neutral point, a span under 0.5° culls the segment, and a full 360° ring splits into two 180° arcs.
+A figure earns its geometry by the reader question: magnitude and proportion stay linear — meter, waffle, bars — and a radial form is legal only where the bounded scalar, the genuine cycle, or the shared-center comparison is itself the subject. Every circular figure composes the polar kernel below, and degeneracy is law: a zero-width domain returns the neutral point, a span under 0.5° culls the segment, and a full 360° ring splits into two 180° arcs.
 
 ```js copy-safe
 const P = (cx, cy, r, deg) => {
@@ -111,7 +111,7 @@ const ringSeg = (cx, cy, ri, ro, a0, a1) => {
 };
 ```
 
-- [ARC_GAUGE] — a scalar with a known maximum: `p = norm(v, min, max)`, foreground `arcPath` over `a0 + p·(a1 - a0)` at `stroke-width:6; stroke-linecap:round`, background the full span at 16% opacity; the semicircle house span is `[-120, 120]`. The value renders as HTML text over the center — it animates and wraps where SVG text cannot.
+- [ARC_GAUGE] — a scalar with a known maximum: `p = norm(v, min, max)`, foreground `arcPath` over `a0 + p·(a1 - a0)` at `stroke-width:6; stroke-linecap:round`, background the full span at 16% opacity; the semicircle house span is `[-120, 120]`. That value renders as HTML text over the center — it animates and wraps where SVG text cannot.
 - [DONUT_SEGMENTS] — categorical slices as `ringSeg` per category with a 2° pad; band width `ro - ri` runs 12–20 at figure scale, 6–8 at micro; a rounded segment corner never exceeds `(ro - ri)/2`, and a padded ring keeps `ri ≥ ro × padAngle / sin(θ)` so inner edges never collapse. Magnitude and cross-group part-to-whole stay linear — a meter or waffle — because length compares where angle cannot.
 - [SUNBURST] — depth owns radius (`ri = r0 + depth × (band + gap)`, `ro = ri + band`); sibling spans divide the parent's span by cumulative value: `a0ᵢ = parent.a0 + parent.span × cumBeforeᵢ / parent.sum`.
 - [RADAR] — n axes at `aᵢ = i × 360 / n`, each value normalized per axis through `norm`, vertex `P(cx, cy, R × ρᵢ, aᵢ)`, closed polygon filled at 18% with a 1.5px stroke; grid rings at 25/50/75/100% in `--line`. Three overlaid shapes maximum, each on its own series token.
@@ -127,7 +127,7 @@ const ringSeg = (cx, cy, ri, ro, a0, a1) => {
 - [LAYERED_DAG] — pipelines and ownership chains lay out in two passes: layer by longest path from sources, then order each layer by the barycenter of neighbor indices, two alternating sweeps. House spacing: 50px between ranks, 50px between nodes, 20px between parallel edges, compressed to 20/20/10 for dense strata. Cross-layer edges route orthogonally; a cycle renders in `--fail`, never silently broken.
 - [SEQUENCE] — time flows top-down, vertical order is model order: participant heads are top `node` rects at `xᵢ = left + i × laneGap`, lifelines 1px dashed `--line` verticals from each head, activations narrow `--raised` rects (`width ≈ 10`, `rx="2"`) centered on the lifeline over the active window. Sync messages are solid `edge` horizontals with the barbed head, returns dashed `4 6` open-headed, async the `.async` modifier; a self-message loops off the lifeline's right side as a rectangular jog.
 - [FRAGMENT] — a combined `alt`/`opt`/`loop` block over a sequence: a labeled `5 4` containment rect spanning the participating lifelines, a mono tab label at its top-left, and a dashed divider per compartment.
-- [SANKEY_RIBBON] — 3–12 flows: node bars 24px wide with 8px padding, slots assigned cumulatively (`slotY = node.y0 + Σ priorWidths + w/2`), outgoing links sorted by target y and incoming by source y, up to 6 relaxation sweeps of barycenter reordering when crossings fight value-tracking. Ribbon totals conserve: a node's in-width equals its out-width or the gap renders as an explicit loss stub. The ribbon is two horizontal-tangent cubics closed into one path:
+- [SANKEY_RIBBON] — 3–12 flows: node bars 24px wide with 8px padding, slots assigned cumulatively (`slotY = node.y0 + Σ priorWidths + w/2`), outgoing links sorted by target y and incoming by source y, up to 6 relaxation sweeps of barycenter reordering when crossings fight value-tracking. Ribbon totals conserve: a node's in-width equals its out-width or the gap renders as an explicit loss stub. Each ribbon is two horizontal-tangent cubics closed into one path:
 
 ```js copy-safe
 const ribbon = (x0, y0, w0, x1, y1, w1) => {
@@ -147,7 +147,7 @@ const ribbon = (x0, y0, w0, x1, y1, w1) => {
 
 - [TREEMAP] — small ordered sets slice-dice (alternate the split axis by depth); unordered sets squarify: sort descending, grow the current row while it improves `worst(row, shortSide) = max(shortSide²·max(row) / (Σrow)², (Σrow)² / (shortSide²·min(row)))`, lay each accepted row across the longer side. Padding defaults to 0 and becomes a signal only when depth must read as containment; areas round by largest remainder so cells sum exactly; cell labels obey the 11px floor or drop to a legend.
 - [ICICLE] — hierarchy with legible ancestry: a child's span divides the parent's by value, `y = top + depth × bandH`; the flame variant grows upward.
-- [DIMETRIC_STACK] — layered systems in the 2:1 pixel projection: `sx = ox + (x - y) × tileW/2`, `sy = oy + (x + y) × tileH/2 - z × zH` with `tileW = 2 × tileH`; a block is three faces — top at +8% lightness via `color-mix`, left at base, right at −8% — drawn back-to-front so nearer blocks occlude. The cheap flat sibling is the extruded stack: depth offset `(14, -10)` on each panel's top and right faces, five layers maximum.
+- [DIMETRIC_STACK] — layered systems in the 2:1 pixel projection: `sx = ox + (x - y) × tileW/2`, `sy = oy + (x + y) × tileH/2 - z × zH` with `tileW = 2 × tileH`; a block is three faces — top at +8% lightness via `color-mix`, left at base, right at −8% — drawn back-to-front so nearer blocks occlude. An extruded stack is the cheap flat sibling: depth offset `(14, -10)` on each panel's top and right faces, five layers maximum.
 - [HEX_GRID] — modular capability cells. Pointy-top axial: `px = cx + s√3 × (q + r/2)`, `py = cy + 1.5s × r`, corner k at `30 + 60k`°. Flat-top axial: `px = cx + 1.5s × q`, `py = cy + s√3 × (r + q/2)`, corner k at `60k`°.
 - [WAFFLE] — countable units in a 10-column lattice, cell counts from largest-remainder rounding: `x = left + (i % 10) × cell`, `y = top + ⌊i / 10⌋ × cell`, dot radius `0.28 × cell`; filled dots are units, outlined dots remaining capacity, category fill by `--series-*`.
 - [SPAN_BARS] — schedules and epochs on a linear time scale `x(t) = left + (t - t0) / (t1 - t0) × W`: spans as `rx="4"` rects of `width = max(1, x(end) - x(start))`, instants as ticks, epoch bands behind everything at 8–14% opacity, dependencies routed Manhattan with the arrow marker; the today line spans every lane, and the critical chain draws at emphasis weight with slack rendered as a lighter buffer extension.
@@ -236,7 +236,7 @@ const setFlow = (key) => {
 
 ## [12]-[EXPORT]
 
-A figure sheet delivers standalone illustrations — doc headers, README figures — each exportable alone, its download filename derived from the figure's `<title>` slug so sibling figures export distinct names. The standalone frame is `viewBox="0 0 720 320"`, rects at `rx="10"`, strokes 1.5px neutral and 2px emphasis, flat fills only. Export is a pipeline, never a bare serialize: the clone carries `xmlns`, explicit `width`/`height`, `<title>`/`<desc>`, every `var(--token)` resolved to its literal, ids rewritten with the figure slug, interactive-only state stripped, and its own `<style>` in `<defs>` — page CSS does not travel, and a `<foreignObject>` label dies outside the page.
+A figure sheet delivers standalone illustrations — doc headers, README figures — each exportable alone, its download filename derived from the figure's `<title>` slug so sibling figures export distinct names. A standalone frame is `viewBox="0 0 720 320"`, rects at `rx="10"`, strokes 1.5px neutral and 2px emphasis, flat fills only. Export is a pipeline, never a bare serialize: the clone carries `xmlns`, explicit `width`/`height`, `<title>`/`<desc>`, every `var(--token)` resolved to its literal, ids rewritten with the figure slug, interactive-only state stripped, and its own `<style>` in `<defs>` — page CSS does not travel, and a `<foreignObject>` label dies outside the page.
 
 ```js copy-safe
 const exportSvg = (svg, filename) => {

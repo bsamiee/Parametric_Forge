@@ -6,7 +6,7 @@ Website creation and every WordPress, plugin, theme, core, and Node.js build mut
 
 ## [01]-[WEBSITES]
 
-A website binds to a hosting `order_id`; the first site on a plan also picks a `datacenter_code` (`listAvailableDatacentersV1` returns the plan-filtered set), and every later site inherits it. The domain never starts with `www.`, and `createWebsiteV1` returns empty `200` before provisioning — poll `listWebsitesV1` until the domain lands.
+A website binds to a hosting `order_id`; the first site on a plan also picks a `datacenter_code` (`listAvailableDatacentersV1` returns the plan-filtered set), and every later site inherits it. Website domains never start with `www.`, and `createWebsiteV1` returns empty `200` before provisioning — poll `listWebsitesV1` until the domain lands.
 
 ```bash template
 curl -X POST "https://developers.hostinger.com/api/hosting/v1/websites" \
@@ -43,22 +43,22 @@ curl -X POST "https://developers.hostinger.com/api/hosting/v1/accounts/{username
   -d '{ "name": "u123456789_app", "user": "u123456789_admin", "password": "...", "website_domain": "example.com" }'
 ```
 
-Remote access opens per database (`POST .../databases/{name}/remote-connections` with an `ip`, or `%` for any host) and revokes by the same `ip` query; `getPhpMyAdminLinkV1` and `repairDatabaseV1` round out the surface. The remote-connection list is account-wide; create and delete are per-database.
+Remote access opens per database (`POST .../databases/{name}/remote-connections` with an `ip`, or `%` for any host) and revokes by the same `ip` query; `getPhpMyAdminLinkV1` and `repairDatabaseV1` round out the surface. Remote-connection listing is account-wide; create and delete are per-database.
 
 ## [04]-[NODE_JS]
 
-A Node.js build takes a source archive — `createNodeJSBuildFromArchiveV1` with a `.zip`/`.tar.gz`/`.tgz` under 50 MB containing SOURCE ONLY (no `node_modules`, no build output; the build runs server-side). `node_version` (`18`/`20`/`22`/`24`), `app_type` (`vite`, `express`, `nest`, and peers), and `package_manager` auto-detect from `package.json` when omitted. The build carries a `state` of `pending` → `running` → `completed`/`failed`, polled via `listNodeJSBuildsV1`; `restartNode_jsApplicationV1` cycles the running app.
+A Node.js build takes a source archive — `createNodeJSBuildFromArchiveV1` with a `.zip`/`.tar.gz`/`.tgz` under 50 MB containing SOURCE ONLY (no `node_modules`, no build output; the build runs server-side). `node_version` (`18`/`20`/`22`/`24`), `app_type` (`vite`, `express`, `nest`, and peers), and `package_manager` auto-detect from `package.json` when omitted. Each build carries a `state` of `pending` → `running` → `completed`/`failed`, polled via `listNodeJSBuildsV1`; `restartNode_jsApplicationV1` cycles the running app.
 
 ## [05]-[CACHE_CRON_PHP]
 
 - [CACHE]: `clearWebsiteCacheV1` and `toggleWebsiteCacheV1` are website-scoped (`{domain}`) and also purge the CDN when enabled; LiteSpeed and Memcached (`purgeLiteSpeedCacheV1`, `toggleMemcachedObjectCacheV1`, with `{ "enabled": ... }`) are WordPress-scoped (`{software}`) — different path keys.
 - [CRON]: `createAccountCronJobV1` takes a five-field `time` and a `command`; `getCronJobOutputV1` returns the last run's captured output by the job `uid`.
-- [PHP]: `getPHPDetailsV1`/`getPHPInfoV1` read; `updatePHPVersionV1`, `updatePHPOptionsV1`, and `updatePHPExtensionsV1` mutate, with `resetPHPExtensionsV1` reverting to defaults. The PHP version gates WordPress core-version resolution.
+- [PHP]: `getPHPDetailsV1`/`getPHPInfoV1` read; `updatePHPVersionV1`, `updatePHPOptionsV1`, and `updatePHPExtensionsV1` mutate, with `resetPHPExtensionsV1` reverting to defaults. PHP version gates WordPress core-version resolution.
 - [MAINTENANCE]: `toggleMaintenanceModeV1` (`{ "enabled": ... }`) is WordPress-scoped.
 
 ## [06]-[HORIZONS]
 
-The Horizons AI builder generates a site from a prompt: `horizons_createWebsiteV1` takes `message` as an array of `{ "type": "text", "text": ... }` items, the text carrying the full project spec up to 20000 characters. `horizons_getWebsiteV1` returns an edit link into the Horizons UI — a Horizons site is editable only there, never through the API.
+Horizons AI builder generates a site from a prompt: `horizons_createWebsiteV1` takes `message` as an array of `{ "type": "text", "text": ... }` items, the text carrying the full project spec up to 20000 characters. `horizons_getWebsiteV1` returns an edit link into the Horizons UI — a Horizons site is editable only there, never through the API.
 
 ## [07]-[COMPOSITE_DEPLOY]
 

@@ -21,9 +21,9 @@ A ProseMirror document is a JSON object:
 }
 ```
 
-The `text` node is special: put the characters in a `text` property (not in `attrs`), and put optional formatting in a `marks` array on the same object. See [Marks](#marks) and [Paragraph With Marks And Link](#paragraph-with-marks-and-link).
+`text` is the special node: put the characters in a `text` property (not in `attrs`), and put optional formatting in a `marks` array on the same object. See [Marks](#marks) and [Paragraph With Marks And Link](#paragraph-with-marks-and-link).
 
-The document must contain at least one block. `{"type":"doc","content":[]}` is invalid.
+Every document must contain at least one block. `{"type":"doc","content":[]}` is invalid.
 
 When editing existing content, preserve existing `id` values from `read`. For new blocks, omit `id` or set it to `null`; the CLI save handler backfills valid IDs. Do not create custom string IDs yourself.
 
@@ -76,7 +76,7 @@ This is a video:
 
 Video markdown rules:
 
-- The whole line must be only `{{video URL}}`, `{{youtube URL}}`, `{{vimeo URL}}`, or `{{bilibili URL}}` — no text before or after on the same line.
+- A video line holds only `{{video URL}}`, `{{youtube URL}}`, `{{vimeo URL}}`, or `{{bilibili URL}}` — no text before or after on the same line.
 - Put a blank line before and after the video line when other blocks are nearby.
 - Invalid: `Watch this: {{youtube https://...}}` (trailing text prevents a `video` block).
 

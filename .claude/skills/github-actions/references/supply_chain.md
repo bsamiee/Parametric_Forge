@@ -16,7 +16,7 @@
 
 ### [01.2]-[TJ_ACTIONS_INCIDENT]
 
-CVE-2025-30066 retargeted every `tj-actions/changed-files` version tag to a malicious commit that exfiltrated Runner Worker secrets, so a mutable tag is trivially retargeted and only a 40-char SHA is immutable. The cascade entered through a prior `reviewdog/action-setup` compromise (CVE-2025-30154), and `step-security/harden-runner` surfaced it by flagging the anomalous egress.
+CVE-2025-30066 retargeted every `tj-actions/changed-files` version tag to a malicious commit that exfiltrated Runner Worker secrets, so a mutable tag is trivially retargeted and only a 40-char SHA is immutable. That cascade entered through a prior `reviewdog/action-setup` compromise (CVE-2025-30154), and `step-security/harden-runner` surfaced it by flagging the anomalous egress.
 
 [VALIDATOR_CHECKS_INFORMED_BY_INCIDENT]:
 - [ALWAYS]: Flag any `uses:` line without full 40-char SHA.
@@ -25,7 +25,7 @@ CVE-2025-30066 retargeted every `tj-actions/changed-files` version tag to a mali
 
 ### [01.3]-[IMMUTABLE_ACTIONS]
 
-Org-level SHA-pin enforcement is the supply-chain control; OCI immutable action refs are informational. The org/repo setting "Require actions to be pinned to a full-length commit SHA" enforces `@<40-char-SHA>` and rejects `@v1`/`@main` refs, available in GitHub Enterprise Cloud and Server `3.12+`.
+Org-level SHA-pin enforcement is the supply-chain control; OCI immutable action refs are informational. GitHub Enterprise Cloud and Server `3.12+` carry the org/repo setting "Require actions to be pinned to a full-length commit SHA", which enforces `@<40-char-SHA>` and rejects `@v1`/`@main` refs.
 
 | [INDEX] | [CHECK]                      | [WHAT_TO_FLAG]                                               |
 | :-----: | :--------------------------- | :----------------------------------------------------------- |
@@ -49,6 +49,8 @@ Org-level SHA-pin enforcement is the supply-chain control; OCI immutable action 
 |  [04]   | Missing subject claim restriction | `[OIDC-TRUST]` | Flag when the trust policy lacks subject claims.                        |
 
 ### [02.2]-[PROVIDER_MATRIX]
+
+This matrix is the OIDC provider owner; `best-practices.md` routes here.
 
 | [INDEX] | [PROVIDER] | [ACTION]                                | [CURRENT_MAJOR] | [KEY_INPUTS]                                    |
 | :-----: | :--------- | :-------------------------------------- | :-------------: | :---------------------------------------------- |
@@ -138,6 +140,8 @@ harden-runner is an EDR-class agent for GitHub Actions runners.
 
 ### [05.1]-[TOKEN_SELECTION]
 
+This table is the token-selection owner; `best-practices.md` routes here. Prefer App tokens over PATs — scoped, auditable, account-independent.
+
 | [INDEX] | [TYPE]           | [SCOPE]            | [LIFETIME]   | [CROSS_REPO] | [USE_CASE]           |
 | :-----: | :--------------- | :----------------- | :----------- | :----------: | :------------------- |
 |  [01]   | `GITHUB_TOKEN`   | Current repo       | Job duration |      No      | Standard in-repo CI. |
@@ -172,14 +176,8 @@ harden-runner is an EDR-class agent for GitHub Actions runners.
 
 ## [07]-[NODE_RUNTIME]
 
-| [INDEX] | [RUNTIME] | [STATUS]                                  | [DEADLINE]        |
-| :-----: | :-------- | :---------------------------------------- | :---------------- |
-|  [01]   | node16    | Removed.                                  | Already enforced. |
-|  [02]   | node20    | Deprecated — forced migration to node24.  | March 4, 2026.    |
-|  [03]   | node22    | Skipped — GitHub jumped node20 -> node24. | N/A.              |
-|  [04]   | node24    | Current default.                          | Active.           |
+Runtime status and migration history live in `modern_features.md` [08]-[NODE_RUNTIME]. Supply-chain flags:
 
-[IMPORTANT]:
-- [ALWAYS]: Flag actions still bundled with node20 runtime — will break after March 4, 2026.
+- [ALWAYS]: Flag actions still bundled with node20 runtime — they break on current runners.
 - [ALWAYS]: Flag `actions/cache@v3` or `@v4` — requires v5 for node24 compatibility.
-- [ALWAYS]: Flag `actions/checkout@v4` or earlier — v6 is current stable with node22+ runtime.
+- [ALWAYS]: Flag `actions/checkout@v4` or earlier — v6 is current stable on the node24 runtime.

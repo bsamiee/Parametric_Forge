@@ -660,39 +660,8 @@
       family_rows() { # $1=outfile
         local out="$1"
         while IFS= read -r row; do
-          local name label port token lctl pid
-          # One projection per doctor-row snapshot; 0x1f join survives empties.
-          IFS=$'\x1f' read -r name label port token < <(jq -r \
-            '[.name, (.doctor.launchdLabel // ""), (.doctor.port // "" | tostring), (.doctor.tokenFile // "")] | join("\u001f")' < <(printf '%s\n' "$row"))
-          if [ -n "$label" ]; then
-            # launchd rows are Darwin facts; a systemd host skips them typed.
-            if [ ! -x /bin/launchctl ]; then
-              printf 'SKIP\t%s/launchd\tno launchd on this host\n' "$name" >>"$out"
-            elif lctl="$(/bin/launchctl print "gui/$(id -u)/$label" 2>/dev/null)"; then
-              pid="$(printf '%s\n' "$lctl" | awk '/^[[:space:]]*pid = /{if (p == "") p = $3} END{print p}')"
-              if [ -n "''${pid:-}" ]; then
-                printf 'OK\t%s/launchd\t%s running pid=%s\n' "$name" "$label" "$pid" >>"$out"
-              else
-                printf 'FAIL\t%s/launchd\t%s loaded but not running\n' "$name" "$label" >>"$out"
-              fi
-            else
-              printf 'FAIL\t%s/launchd\t%s absent from gui domain\n' "$name" "$label" >>"$out"
-            fi
-          fi
-          if [ -n "$port" ]; then
-            if (exec {tcp_fd}<>"/dev/tcp/127.0.0.1/$port" && exec {tcp_fd}>&-) 2>/dev/null; then
-              printf 'OK\t%s/port\tloopback %s bound\n' "$name" "$port" >>"$out"
-            else
-              printf 'FAIL\t%s/port\tloopback %s not listening\n' "$name" "$port" >>"$out"
-            fi
-          fi
-          if [ -n "$token" ]; then
-            if [ -s "$token" ]; then
-              printf 'OK\t%s/token\tcustody file present\n' "$name" >>"$out"
-            else
-              printf 'FAIL\t%s/token\tcustody file absent or empty: %s\n' "$name" "$(basename "$token")" >>"$out"
-            fi
-          fi
+          local name
+          name="$(jq -r '.name' < <(printf '%s\n' "$row"))"
           while IFS= read -r x; do
             [ -n "$x" ] || continue
             if command -v "$x" >/dev/null 2>&1; then

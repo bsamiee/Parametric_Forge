@@ -25,10 +25,8 @@
 #   clients          registration expectation, default [ "claude" "codex" ]
 #   assertLevel      "full" (default) | "presence" for host-private rows
 #   doctor           named probe-family checks beyond initialize: the Forge
-#                    launcher name IS the probe row. Fields (all optional):
-#                    launchdLabel (live agent state), port (loopback bind),
-#                    tokenFile (custody presence, key NAME only), execs
-#                    (companion binaries that must resolve on PATH)
+#                    launcher name IS the probe row. Field: execs (companion
+#                    binaries that must resolve on PATH)
 {
   profileBin,
   homeDir,
@@ -64,28 +62,6 @@ in [
       required = false;
       startupTimeoutSec = 20;
       toolTimeoutSec = 600;
-      toolsApprovalMode = "approve";
-    };
-  }
-  {
-    name = "tavily";
-    transport = "stdio";
-    command = "${profileBin}/forge-tavily-mcp";
-    args = [];
-    envKeys = ["TAVILY_API_KEY"];
-    probe = "stdio";
-    launcher = {
-      names = ["forge-tavily-mcp"];
-      pkg = "tavily-mcp";
-      version = "0.2.21";
-      bin = "tavily-mcp";
-      upstream = "npm:tavily-mcp";
-      updateEngine = "npm-registry";
-    };
-    codex = {
-      required = false;
-      startupTimeoutSec = 20;
-      toolTimeoutSec = 180;
       toolsApprovalMode = "approve";
     };
   }
@@ -288,41 +264,6 @@ in [
       startupTimeoutSec = 30;
       toolTimeoutSec = 180;
       toolsApprovalMode = "approve";
-    };
-  }
-  {
-    name = "ifc";
-    transport = "stdio";
-    command = "${profileBin}/forge-ifcmcp";
-    args = [];
-    envKeys = [];
-    probe = "stdio";
-    doctor = {
-      execs = ["forge-companion-env" "forge-ifcmcp"];
-    };
-    codex = {
-      required = false;
-      startupTimeoutSec = 120;
-      toolTimeoutSec = 180;
-    };
-  }
-  {
-    name = "jupyter";
-    transport = "stdio";
-    command = "${profileBin}/forge-jupyter-mcp";
-    args = [];
-    envKeys = [];
-    probe = "stdio";
-    doctor = {
-      launchdLabel = "com.parametric-forge.forge-jupyter";
-      port = 8888;
-      tokenFile = "${homeDir}/.config/jupyter/forge-token.env";
-      execs = ["forge-companion-env" "forge-jupyter" "forge-jupyter-mcp"];
-    };
-    codex = {
-      required = false;
-      startupTimeoutSec = 60;
-      toolTimeoutSec = 180;
     };
   }
   {

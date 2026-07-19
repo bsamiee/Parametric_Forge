@@ -1,6 +1,6 @@
 # [INTRO_CRAFT]
 
-The lead is one charter sentence opening with the document's own law, plus at most one boundary-consequence sentence — never the doc-set, the siblings, the audience, or the process. Each entry contrasts a leaked lead against its reframe under the fixed Detection / Rejected / Accepted / Reason / Reframe card.
+A lead is one charter sentence opening with the document's own law, plus at most one boundary-consequence sentence — never the doc-set, the siblings, the audience, or the process. Each entry contrasts a leaked lead against its reframe under the fixed Detection / Rejected / Accepted / Reason / Reframe card.
 
 ## [01]-[INDEX_LEAD]
 
@@ -52,7 +52,7 @@ A tool-doc lead narrates a command tour or mirrors help output instead of statin
 
 ## [04]-[DOC_SET_NARRATION]
 
-The lead's grammatical subject is the document or the doc-set, so it states no law of its own.
+A lead whose grammatical subject is the document or the doc-set states no law of its own.
 
 - Detection: A lead whose subject is the artifact itself — its job, its relations, its place in the corpus.
 - Rejected:
@@ -68,7 +68,7 @@ The lead's grammatical subject is the document or the doc-set, so it states no l
 
 ## [05]-[INVENTORY_JAM]
 
-The lead crams a member inventory, a sub-domain roster, or wire mechanism behind semicolons and parentheses.
+A lead cramming a member inventory, a sub-domain roster, or wire mechanism behind semicolons and parentheses.
 
 - Detection: A lead carrying a parenthetical roster or a mechanism clause that a lower tier owns.
 - Rejected:

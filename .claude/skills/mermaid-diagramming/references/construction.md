@@ -22,7 +22,7 @@ Each diagram type answers one question with a bounded mark vocabulary. Per type:
     - Keep annotation traffic on dashed Comment traces so the solid control rail stays the loudest ink on the canvas.
     - Broadcast with `A --> B & C` only for genuinely symmetric fan-out; asymmetric hops get their own labeled edges.
 - Failure modes:
-    - the god-flowchart absorbing lifecycle, sequence, or schema payloads.
+    - god-flowchart absorbing lifecycle, sequence, or schema payloads.
     - control flow drawn beside data flow, both unlabeled.
     - decorative arrowheads on a symmetric relation.
     - branch arms that never rejoin, leaking the merge.
@@ -45,19 +45,20 @@ Each diagram type answers one question with a bounded mark vocabulary. Per type:
 - Master patterns:
     - Name the frame shape ON the wire in a `Note over` both sides — the contract becomes a visible shared fact, not two private assumptions.
     - Tint the region one participant owns with `rect` — sequence's one styling lever — so ownership reads as surface, never inference.
-    - Split aborts from outcomes: `break` for the path that ends the exchange, `alt` for the paths that complete it differently.
+    - Spend the five region kinds by intent — `alt` mutually exclusive outcomes, `opt` a single conditional step, `par` concurrent arms, `critical`/`option` a mandatory step with its optional fault, `loop` repetition — and `break` as the abort escape that ends the exchange rather than branching it.
+    - Bound every retry, polling, or drain loop on its frame label — `loop retry [attempt < max]` — so the exchange provably terminates; an unbounded retry loop is the sequence counterpart of an unbounded recovery state.
     - Run `autonumber` on any exchange another document cites, so a step reference survives edits.
     - Show lifetime with `create`/`destroy` instead of a static roster when the scenario births or kills a participant.
-    - Group participants into `box` blocks by process boundary, so the wire crossings stand apart from in-process calls.
+    - Group in-process participants into `box` blocks; a bare lifeline reads as external — sequence carries no per-actor accent class, so process membership is the externality encoding, and the wire crossings stand apart from in-process calls.
 - Failure modes:
-    - the god-participant sending and receiving everything, hiding decomposition.
+    - god-participant sending and receiving everything, hiding decomposition.
     - response arrows omitted, leaving causality unverifiable.
     - `alt` or `par` blocks nesting past two levels, the signal to split the scenario.
     - data objects promoted to participants.
 - Logic checks:
     - every request expecting a reply carries its dotted return.
     - no message departs a participant destroyed or never created.
-    - the message order is achievable, no reply preceding its request.
+    - message order is achievable, no reply preceding its request.
 
 [STATE]:
 - Question: which modes an entity occupies and which events move it.
@@ -84,7 +85,7 @@ Each diagram type answers one question with a bounded mark vocabulary. Per type:
 - Logic checks:
     - every non-terminal state holds an exit.
     - an absorbing state is declared terminal or gains an exit.
-    - the machine carries its initial `[*]` entry.
+    - machine carries its initial `[*]` entry.
     - guards leaving one state are mutually exclusive and cover the event's domain.
     - each composite's substates genuinely share its external transitions.
 
@@ -322,11 +323,11 @@ Each diagram type answers one question with a bounded mark vocabulary. Per type:
 - Logic checks: every cause states a condition, and each sits under exactly one category.
 
 [RADAR]:
-- Question: how two or three subjects compare across one shared measured axis set.
+- Question: how two subjects compare across one shared measured axis set.
 - Axis: one dimension every subject scores on; a subject's reach along each axis is its score, and the enclosed polygon is its profile.
 - Signal: polygon shape and area — which axis a subject dominates and where two profiles cross.
-- Method: five to eight axes in one fixed order shared across subjects, scores from the assessment record with the scoring basis stated beside the fence, at most three subjects so the polygons stay separable.
-- Failure modes: axes on incomparable scales collapsing the shape, or so many overlaid subjects the polygons read as noise.
+- Method: five to eight axes in one fixed order shared across subjects, scores from the assessment record with the scoring basis stated beside the fence; two subjects are canonical, a third is admitted only where the polygons visibly separate, and four is a defect.
+- Failure modes: axes on incomparable scales collapsing the shape, or overlaid subjects whose translucent fills stack into one unreadable center.
 - Logic checks: every subject scores on every axis, and all axes share one normalized range.
 
 [QUANTITATIVE]:
@@ -334,4 +335,4 @@ Each diagram type answers one question with a bounded mark vocabulary. Per type:
 - Boundary: a standing, interactive, or precision-critical chart is the dataviz skill's; these hold only as a one-off structural illustration that must stay a mermaid fence.
 - Signal: pie — the dominant wedge; sankey — where volume concentrates and splits; xychart — the trend line or the outlier bar.
 - Failure modes: a pie past six slices or whose shares miss the whole, a sankey flow exceeding its source, or an xychart axis hiding the zero baseline.
-- Logic checks: pie shares sum to the whole; every interior sankey node's inflow equals its outflow; xychart categories share one measure and unit.
+- Logic checks: pie shares sum to the whole; a conservation sankey balances every interior node's inflow against its outflow, and a budget or leakage sankey names its loss as an explicit sink; xychart categories share one measure and unit.

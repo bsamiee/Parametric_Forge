@@ -1,6 +1,6 @@
 # [DEFECTS]
 
-The classes here are the failures only an instruction bundle can commit; a finding cites the class and line, and each class owns the copyable before-and-after that repairs it, so detection and fix have one owner. The trigger is repaired before the body — a body no task selects is dead law. Prose-register defects inside bundle files — hedges, meta-frames, ledgers, litanies — belong to the docgen catalog and are cited from there.
+Classes here are the failures only an instruction bundle can commit; a finding cites the class and line, and each class owns the copyable before-and-after that repairs it, so detection and fix have one owner. Repair the trigger before the body — a body no task selects is dead law.
 
 ## [01]-[TRIGGER_CLASSES]
 
@@ -77,7 +77,7 @@ Two precise sibling descriptions both match one prompt, so selection is a coin f
 
 ### [02.1]-[MONOLITH_ROOT]
 
-The root inlines reference banks and example floods, so every activation pays for branches the task never takes.
+Root inlines reference banks and example floods, so every activation pays for branches the task never takes.
 
 - Detection: A root past the platform line ceiling, or root sections named after an API reference, a troubleshooting ledger, or an example inventory every activation loads.
 - Rejected:
@@ -116,7 +116,7 @@ The root inlines reference banks and example floods, so every activation pays fo
 
 ## [03]-[BODY_CLASSES]
 
-A body line earns its place by changing trigger selection, routing, execution, or validation; intensity, ceremony, and restated harness obligations change nothing and are deleted. The form each line takes follows the failure it guards, and that mapping is [03.17]-[FORM_MISMATCH].
+A body line earns its place by changing trigger selection, routing, execution, or validation; intensity, ceremony, and restated harness obligations change nothing and are deleted. Form each line takes follows the failure it guards, and that mapping is [03.17]-[FORM_MISMATCH].
 
 ### [03.1]-[NO_OP_INTENSIFIER]
 
@@ -160,7 +160,7 @@ A body line earns its place by changing trigger selection, routing, execution, o
 
 ### [03.6]-[LIFECYCLE_SCRIPT]
 
-The body narrates a generic work loop instead of the one domain decision a generic agent gets wrong.
+Body narrates a generic work loop instead of the one domain decision a generic agent gets wrong.
 
 - Detection: Numbered lifecycle steps every coding task already performs — think, plan, inspect, implement, validate — or a mandated reasoning shape with fixed depth.
 - Rejected:
@@ -197,6 +197,8 @@ A closing checklist of reminders stands where a machine gate belongs, so complet
     ```
 - Reason: A reminder is skipped or paraphrased under pressure; a gate command with an exit code is executed or visibly failed.
 - Reframe: Replace the tail with the concrete gate invocation, or delete it.
+
+Boundary: a checklist the body directs the model to copy into its response and tick as it advances is a PINNED-band progress tracker for a fragile multi-step workflow, not this defect — it is worked visibly during the run and gates each next step, where CHECKLIST_TAIL is a closing recital with no command, no exit code, and nothing copied forward. It is likewise not [03.6]-[LIFECYCLE_SCRIPT], which bans the generic think-plan-implement loop every task already runs; the tracker enumerates the one fragile domain sequence a generic agent drops mid-run. Price the three by use: recited at the end is the defect, the model's native loop restated is LIFECYCLE_SCRIPT, and the domain-fragile sequence carried live is the sanctioned tracker.
 
 ### [03.8]-[SCRIPT_AS_PROSE]
 
@@ -242,7 +244,7 @@ Instruction rigidity contradicts task variance: fragile mechanics float free whi
 
 ### [03.12]-[SEDIMENT]
 
-The body accretes one guard per past incident until dead threats outweigh live law.
+Body accretes one guard per past incident until dead threats outweigh live law.
 
 - Detection: A rule explainable only by a past incident, not by the deliverable — a guard against a failure the current bundle, tooling, or model no longer exhibits.
 - Rejected:
@@ -274,31 +276,7 @@ The body accretes one guard per past incident until dead threats outweigh live l
 - Reason: A skill is an executable supply-chain artifact; an instructed fetch is an injection channel wearing documentation.
 - Reframe: Bundle the mechanics; an owned install surface carries source, scope, and verification in one row.
 
-### [03.15]-[DECORATIVE_DIAGRAM]
-
-A fence restates the table beside it, so every activation pays render validation and reader traversal for information the prose already carries.
-
-- Detection: A diagram fence restating an adjacent table, roster, or two-step sequence — no topology, state, or flow the prose fails to carry.
-- Rejected:
-    ```mermaid rejected
-    flowchart LR
-      accTitle: Decorative reading-order chain
-      accDescr: A linear description-to-references chain restating the loading tiers in reading order.
-      A[description] --> B[SKILL.md] --> C[references]
-    ```
-- Accepted:
-    ```mermaid accepted
-    flowchart TD
-      accTitle: Eval-miss routing
-      accDescr: Each eval-miss class routes to the repair surface that owns it.
-      M{eval miss} -->|must-fire miss| D[starved discriminant: repair the first clause]
-      M -->|must-not-fire hit| B[collision: repair both descriptions]
-      M -->|adherence tie| L[dead law: delete the body rule]
-    ```
-- Reason: The rejected fence repeats an adjacent table in reading order and carries no structure; the accepted fence is a dispatch whose labeled edges route each miss class to its repair surface — shape is the content.
-- Reframe: Admit a fence only where edges carry routing, state, or interaction that prose spends a paragraph per arm to state; construction and render validation ride the mermaid-diagramming skill.
-
-### [03.16]-[INERT_EXAMPLE]
+### [03.15]-[INERT_EXAMPLE]
 
 - Detection: An example whose accepted half cannot drop into a template or live bundle unchanged — narrative retelling, elided bodies, placeholder residue.
 - Rejected: An entry narrating how a weak description was once improved, with the improved description elided.
@@ -306,9 +284,9 @@ A fence restates the table beside it, so every activation pays render validation
 - Reason: Examples exist because agents copy; a pair that resists copying calibrates nothing and feeds no template.
 - Reframe: Rebuild the pair at copyable scale or delete it; templates distill from examples, and an example no template inherits is an illustration.
 
-### [03.17]-[FORM_MISMATCH]
+### [03.16]-[FORM_MISMATCH]
 
-The instruction is well-founded but wears the wrong form for its failure, so it misfires the way the wrong tool does.
+A well-founded instruction wears the wrong form for its failure, so it misfires the way the wrong tool does.
 
 - Detection: A prohibition guarding a wrongly-shaped output, a positive recipe guarding a rule violated under pressure, prose guarding an element the model omits, or an unconditional rule guarding behavior that is correct only under a predicate.
 - Rejected: Never write shallow analysis. (the failure is shallow output, not a violation under pressure)

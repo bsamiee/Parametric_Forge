@@ -19,7 +19,7 @@ Bash 5.2/5.3 feature exploitation. Minimum baseline is 5.2 — features below th
 
 `${ cmd; }` (whitespace after `{` mandatory) runs in the current shell, capturing stdout without fork/exec. Side effects propagate — variable assignments, traps, `cd` persist. This is not sandboxed capture.
 
-The performance gap is structural: `$()` forks a subshell (clone + pipe + exec), `${ }` runs inline. In a 10k-iteration loop, `${ printf '%s' x; }` completes ~5-8x faster than `$(printf '%s' x)` — fork/exec overhead dominates at scale.
+That performance gap is structural: `$()` forks a subshell (clone + pipe + exec), `${ }` runs inline. In a 10k-iteration loop, `${ printf '%s' x; }` completes ~5-8x faster than `$(printf '%s' x)` — fork/exec overhead dominates at scale.
 
 ```bash conceptual
 # Fork cost quantified: measure the gap directly
@@ -70,7 +70,7 @@ Use `${ }` for inline value construction in hot paths. Use `$()` when isolation 
 
 ## [02]-[REPLY_BOUND_EXPANSION]
 
-`${| cmd; }` executes `cmd` in the current shell, expands to the value of `REPLY`, and restores `REPLY` after expansion. It does not capture stdout. The command must assign `REPLY` directly; any stdout it writes still goes to the caller's stdout. Bind the expansion immediately when the value matters.
+`${| cmd; }` executes `cmd` in the current shell, expands to the value of `REPLY`, and restores `REPLY` after expansion. It does not capture stdout. `cmd` must assign `REPLY` directly; any stdout it writes still goes to the caller's stdout. Bind the expansion immediately when the value matters.
 
 ```bash conceptual
 # Sequential binding: each body sets REPLY, expansion reads that value
@@ -215,7 +215,7 @@ _rate_check() {
 
 `BASH_MONOSECONDS` (5.3) reads the system monotonic clock — immune to NTP adjustments, leap seconds, and manual `date -s` changes that corrupt `EPOCHREALTIME`-based elapsed measurements. Integer seconds resolution. Availability depends on OS `clock_gettime(CLOCK_MONOTONIC)` support, present on Linux, macOS, and the BSDs.
 
-The critical distinction: `EPOCHREALTIME` measures wall-clock time (subject to NTP step corrections mid-measurement), `BASH_MONOSECONDS` measures elapsed time (monotonically increasing, never adjusted). Use `EPOCHREALTIME` for timestamps, `BASH_MONOSECONDS` for durations.
+One distinction is critical: `EPOCHREALTIME` measures wall-clock time (subject to NTP step corrections mid-measurement), `BASH_MONOSECONDS` measures elapsed time (monotonically increasing, never adjusted). Use `EPOCHREALTIME` for timestamps, `BASH_MONOSECONDS` for durations.
 
 ```bash conceptual
 # Elapsed-time measurement: NTP-immune, integer-resolution

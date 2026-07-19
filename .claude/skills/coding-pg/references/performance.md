@@ -88,7 +88,7 @@ Vacuum contracts:
 
 ## [05]-[COST_MODEL_TUNING]
 
-The planner's cost model determines whether it chooses index scans or sequential scans. Incorrect cost parameters directly undermine index strategy.
+Planner cost model decides index scan versus sequential scan. Incorrect cost parameters directly undermine index strategy.
 
 ```ini conceptual
 random_page_cost = 1.1                    # SSD (default 4.0 assumes spinning disk)
@@ -239,7 +239,7 @@ SELECT pg_try_advisory_lock(hashtext('leader_election'));
 
 Optimization contracts:
 
-- `SKIP LOCKED` skips locked rows entirely — they are not retried; a periodic sweep reclaims stuck rows so every row is processed
+- `SKIP LOCKED` queue semantics are ruled by [05]-[BATCH_QUEUE_PATTERNS](functions.md)
 - Prepared statements: `PREPARE stmt AS ...` + `EXECUTE stmt(...)` — avoids repeated parse/plan after 5th execution (custom plan to generic plan transition)
 - `plan_cache_mode = force_custom_plan` for parameterized queries where generic plan is suboptimal (skewed data distribution)
 - Statistics target: `ALTER TABLE orders ALTER COLUMN status SET STATISTICS 1000` — increase for high-cardinality skewed columns

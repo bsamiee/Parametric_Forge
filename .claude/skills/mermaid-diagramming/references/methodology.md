@@ -5,13 +5,13 @@ A diagram is the answer to one written question; its node set, edge set, type, a
 ## [01]-[QUESTION_FIRST]
 
 - Removal test: a fence earns its slot only when page meaning changes on its removal; below that threshold prose or a table owns the fact.
-- One-question law: the question lands as one sentence before any node exists — an unwritable question means the subject splits into separate diagrams.
+- One-question law: the question lands as one sentence before any node exists.
 - Audience sets abstraction: the reader's decision picks the level, never the available implementation detail.
-- Diagrams stay out of lists, scalar facts, decision records, and API contracts that carry no inspectable relation.
+- Misfit material — lists, scalar facts, decision records, contract clauses without an inspectable relation — stays prose or a table; the concept-mapping reference owns the misfit roster.
 
 ## [02]-[INVESTIGATION]
 
-The pre-drawing procedure runs in order before the first shape.
+Pre-drawing procedure runs in order before the first shape.
 
 1. Inventory candidate entities, relations, and attributes on separate lists, keeping attributes off the node roster.
 2. Classify every relation into one semantic family — ownership, dependency, dataflow, invocation, sequence, containment, state-transition.
@@ -47,32 +47,33 @@ A committed diagram is grown in rounds, never drawn at final size in one pass; n
 4. Layering round: meaning that earns presence but not a node lands on the secondary vocabulary — edge labels, notes, annotation-classed side nodes on the Comment rail, subgraph membership, dashed traces — so density rises without new primary marks.
 5. Split check: growth stops the moment a round's question is a second question — that round becomes a new diagram sharing the same name vocabulary, not a larger canvas.
 
-The node-annotation-omission ladder rules every candidate mark:
+Node-annotation-omission ladder rules every candidate mark:
 
-- NODE — it owns, receives, transforms, stores, decides, or transitions under the payload relation and carries at least one committed edge.
+- NODE — it clears the NODE_LAW admission predicate and carries at least one committed edge.
 - EDGE LABEL — it qualifies one relation with its verb, kind, or guard; it has no independent existence off that edge.
 - ANNOTATION — a reader decision needs it, but it holds no payload relation: a note, a brace comment, or an `annotation`-classed node on a dashed Comment trace.
 - OMISSION — its removal leaves the answer intact; the owning page's prose carries it, and the diagram does not.
 
-A massive subject stays one diagram only while every mark still serves the single question under hierarchy — composites, subgraphs, summarizing nodes; a needed legend, a second edge semantic, or density that aggregation cannot cure is the split, partitioned along the seam the reader already knows: phase, aggregate, package, or gate.
+A massive subject grows under hierarchy — composites, subgraphs, summarizing nodes — until a needed legend, a second edge semantic, or density that aggregation cannot cure forces the split, partitioned along the seam the reader already knows: phase, aggregate, package, or gate.
 
 ## [04]-[NODE_LAW]
 
 - Every primary node holds the same abstraction level; a product beside a function makes edge semantics unknowable.
-- A concept reaches node status only when it owns, receives, transforms, stores, decides, or transitions under the payload relation.
+- Admission predicate: a concept reaches node status only when it owns, receives, transforms, stores, decides, or transitions under the payload relation.
 - Technologies, protocols, versions, and statuses demote to labels unless the question asks how those items relate to each other.
-- The smallest node set answers the question; when a graph becomes a search task instead of a read, hierarchy, filtering, or a split lands first.
+- Smallest node set answers the question; when a graph becomes a search task instead of a read, hierarchy, filtering, or a split lands first.
 - Names are canonical domain nouns found in source, glossary, or architecture record — never `manager`, `processor`, `handler`, `service`.
-- Omission test: a node whose removal leaves the answer intact is deleted.
 
 ## [05]-[EDGE_LAW]
 
 - One edge semantic carries the whole diagram.
 - Every edge holds a specific verb phrase matching its direction — `publishes events to`, `validates token with`, never `uses`.
+- A dependency or import edge label names at most one sourced type; a comma-list of composed targets is N hidden relations — split to N edges or fold the list to prose.
+- One label grammar rules the canvas: a `[KIND]:` prefix is boundary-crossing vocabulary, a bare verb is rooting vocabulary — both present is a second question, so split.
 - Direction draws only for an asymmetric relation, and a bidirectional edge never dodges the real semantics of two distinct claims.
 - Cardinality appears only when multiplicity changes the reader's decision on capacity, ownership, optionality, or fan-out.
-- Edge crossings are defects unless the crossing is the subject; the repair is split, reorder, aggregate, or a type change.
-- Structural edges never imply time; first, next, retry, and timeout route to a sequence or state diagram.
+- Edge crossings are defects unless the crossing is the subject; the repair — split, reorder, re-home, re-port, aggregate, or a type change — lands at the source, and the render re-proves after it.
+- Structural edges never imply time.
 - No edge skips an abstraction level — the intermediate owner joins the view or the whole view drops one level.
 
 ## [06]-[VISUAL_ENCODING]
@@ -85,13 +86,29 @@ Every visual channel is spent deliberately; a channel spent twice on one meaning
 - Node labels are noun phrases with the discriminating word first; edge labels are verb phrases; direct labels beat legends — a legend is a lookup jump forced on every read.
 - Dashed and dotted strokes carry modality — optional, planned, inferred — never primary direction; direction rides the arrowhead.
 - Dense many-to-many interiors defeat node-link reading; the repair is a summarizing node, a split, or a table, never a bigger canvas.
-- Peers declare contiguously and flows declare in walk order — declaration order is the author's one lever over layout stability wherever the engine carries no stronger one; where it does, the stronger lever is spent: ELK model order and rank edges on flowcharts, `align row|column` plus edge ports on architecture, boundary homing on C4, adjacent-cell linking on block grids.
-- A crossing found in the render is repaired at the source — reorder declarations, re-home a member, re-port an edge, or split the figure — never accepted as engine fate; the render is re-proven after the repair.
+- Peers declare contiguously and flows declare in walk order — declaration order is the author's one lever over layout stability wherever the engine carries no stronger one; where it does, the stronger lever is spent, and the styling reference names each family's lever.
 - A diagram read by an agent keeps its source fence beside the render, names nodes uniquely, and states every relation as an explicit labeled edge — spatial implication is invisible to a machine reader.
 
 ## [07]-[TYPE_SELECTION]
 
-The question shape selects the declaration; the full grammar, floor, and trap roster per row is the syntax reference's property.
+Payload family selected in [02] step 3 keys the type decision: the family lands in one cluster, the question wording refines within it, and wording never re-decides across clusters. The full grammar, floor, and trap roster per row is the syntax reference's property.
+
+| [INDEX] | [PAYLOAD_FAMILY] | [CLUSTER]                                                                                           |
+| :-----: | :--------------- | :-------------------------------------------------------------------------------------------------- |
+|  [01]   | ownership        | `flowchart` walk; `swimlane-beta` when the owning actor is the point; `C4` at system zoom           |
+|  [02]   | dependency       | `flowchart` lattice or seam view; `classDiagram` at compile time; `gantt` when the deps carry dates |
+|  [03]   | dataflow         | `flowchart`; `sankey` when conserved stage volume is the measure                                    |
+|  [04]   | invocation       | `flowchart` dispatch topology; `sequenceDiagram` when one scenario's ordering is the payload        |
+|  [05]   | sequence         | `sequenceDiagram`; `eventmodeling` for command-event causality; `gitGraph` for branch topology      |
+|  [06]   | containment      | hierarchy-by-lens row in [CONTRAST]; `block-beta` when grid placement is the meaning                |
+|  [07]   | state-transition | `stateDiagram-v2`                                                                                   |
+
+Two clusters carry the live ambiguity, each resolved by the payload the reader's decision traverses:
+
+- Flow/order cluster — `flowchart`, `sequenceDiagram`, `swimlane-beta`, `sankey`, `eventmodeling`: standing relation structure takes flowchart, message order between autonomous actors takes sequence, owner-per-step with handoffs takes swimlane, conserved volume takes sankey, command-to-event causality takes eventmodeling. A gateway routing to services is invocation: the arm vocabulary as payload draws the flowchart dispatch, one scenario's ordering as payload draws the sequence — never both on one canvas.
+- Chronology cluster — `stateDiagram-v2`, `gantt`, `timeline`, `gitGraph`, `journey`: guarded mode changes take state, dated owned work with dependencies takes gantt, dated occurrences without causal claim take timeline, branch-and-merge divergence takes gitGraph, sentiment per phase takes journey. A dated, owned lifecycle — order opened, paid, shipped — is a mode machine first; its schedule is a second question on a paired gantt. A PR lifecycle splits the same way: one PR's modes are state, the repository's branch topology is gitGraph.
+
+Question table refines within the selected cluster:
 
 | [INDEX] | [QUESTION]                            | [TYPE]               |
 | :-----: | :------------------------------------ | :------------------- |
@@ -126,11 +143,11 @@ The question shape selects the declaration; the full grammar, floor, and trap ro
 |  [29]   | plausible causes of one effect        | `ishikawa-beta`      |
 |  [30]   | wire-format bit contract              | `packet`             |
 
-The quantitative rows — pie, xychart, sankey, radar — hold only for a one-off structural illustration inside a doc that must stay a mermaid fence; a reused, interactive, or precision-critical chart routes to the dataviz lane.
+Quantitative rows — pie, xychart, sankey — hold only for a one-off structural illustration inside a doc that must stay a mermaid fence; a reused, interactive, or precision-critical chart routes to the dataviz lane, while a capability profile stays a committed `radar-beta` fence.
 
 [CONTRAST]: classic mismatches, each repaired by payload alignment:
 - lifecycle drawn as flowchart -> `stateDiagram-v2`
-- call order drawn as graph -> `sequenceDiagram`
+- call order, or first/next/retry/timeout vocabulary, drawn as graph -> `sequenceDiagram` or `stateDiagram-v2`
 - dependency drawn as sequence -> `flowchart`
 - ownership lanes drawn as subgraph decoration -> `swimlane-beta`
 - a tree with one needed cross-link -> `flowchart`, the subject is a graph
@@ -141,14 +158,15 @@ The quantitative rows — pie, xychart, sankey, radar — hold only for a one-of
 
 Every committed diagram passes a mechanical audit; each finding blocks the fence.
 
-- [MACHINE] — the bundled `validate_mermaid.py` owns the machine roster, blocking on structural defects and warning on legibility pressure; its output is the authority.
-- [JUDGMENT] — the reviewer clears these before commit:
-    - a cycle in a domain declared acyclic
-    - one concept rendered under two names
-    - an edge skipping the declared abstraction level
-    - mixed edge semantics hidden behind precise labels
-    - a legend explaining two taxonomies or two edge semantics
-    - a diagram needing narration to supply its own title, scope, node types, or edge meaning
+[MACHINE] — the bundled `validate_mermaid.py` owns the machine roster, blocking on structural defects and warning on legibility pressure; its output is the authority.
+
+[JUDGMENT] — the reviewer clears these before commit:
+- a cycle in a domain declared acyclic
+- one concept rendered under two names
+- an edge skipping the declared abstraction level
+- mixed edge semantics hidden behind precise labels
+- a legend explaining two taxonomies or two edge semantics
+- a diagram needing narration to supply its own title, scope, node types, or edge meaning
 
 ## [09]-[COMPOSITION]
 

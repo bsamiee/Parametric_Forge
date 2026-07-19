@@ -128,10 +128,9 @@ in {
 
       # --- [TOKEN_CACHE]
       # Runs AFTER linkGeneration: xdg.configFile entries (the template) land after writeBoundary, so an earlier run would read a stale template.
-      injectSecretsFromVault = lib.hm.dag.entryAfter ["linkGeneration" "ensureForgeJupyterToken"] ''
+      injectSecretsFromVault = lib.hm.dag.entryAfter ["linkGeneration"] ''
         cache_file="$HOME/.config/hm-op-session.sh"
         template_file="$HOME/.config/op/env.template"
-        jupyter_token_file="$HOME/.config/jupyter/forge-token.env"
 
         # A missing template is a DAG-ordering defect; fail loudly.
         if [[ ! -f "$template_file" ]]; then
@@ -144,10 +143,6 @@ in {
         mkdir -p "$(dirname "$cache_file")"
         tmp_file="$(mktemp "$cache_file.XXXXXX")"
         if ${pkgs._1password-cli}/bin/op inject -f -i "$template_file" -o "$tmp_file" >/dev/null; then
-          if [[ -f "$jupyter_token_file" ]]; then
-            # No-match is a valid empty append; grep rc=1 must not kill the switch.
-            grep -E '^export JUPYTER_TOKEN=' "$jupyter_token_file" >>"$tmp_file" || true
-          fi
           chmod 600 "$tmp_file"
           mv -f "$tmp_file" "$cache_file"
           echo "Tokens cached" >&2
@@ -194,14 +189,11 @@ in {
       export GOOGLE_WORKSPACE_CLI_CLIENT_ID="op://Tokens/GOOGLE_OAUTH_CLIENT_ID/credential"
       export GOOGLE_WORKSPACE_CLI_CLIENT_SECRET="op://Tokens/GOOGLE_OAUTH_CLIENT_SECRET/credential"
       export RHINO_TOKEN="op://Tokens/RHINO_TOKEN/token"
-      export EXA_API_KEY="op://Tokens/Exa API Key/token"
-      export PERPLEXITY_API_KEY="op://Tokens/Perplexity Sonar API Key/token"
-      export TAVILY_API_KEY="op://Tokens/Tavily Auth Token/token"
-      export CACHIX_AUTH_TOKEN="op://Tokens/Cachix Auth Token - Parametric Forge/token"
-      export HOSTINGER_TOKEN="op://Tokens/HOSTINGER_TOKEN/token"
-      # HOSTINGER_API_TOKEN is the exact env name the hostinger MCP reads; aliased to the same vault item so
-      # Codex (which cannot remap env names at the MCP boundary) and the GUI domain get it ambient correctly.
-      export HOSTINGER_API_TOKEN="op://Tokens/HOSTINGER_TOKEN/token"
+      export EXA_API_KEY="op://Tokens/EXA_API_KEY/token"
+      export PERPLEXITY_API_KEY="op://Tokens/PERPLEXITY_API_KEY/token"
+      export TAVILY_API_KEY="op://Tokens/TAVILY_API_KEY/token"
+      export CACHIX_AUTH_TOKEN="op://Tokens/CACHIX_AUTH_TOKEN/token"
+      export HOSTINGER_API_TOKEN="op://Tokens/HOSTINGER_API_TOKEN/token"
       export CONTEXT7_API_KEY="op://Tokens/CONTEXT7_API_KEY/token"
 
       # Config-scoped Doppler tokens keep SessionStart independent of personal CLI authentication.
@@ -210,8 +202,8 @@ in {
       export DOPPLER_TOKEN_MAGHZ_HOST="op://Tokens/DOPPLER_MAGHZ_HOST_READONLY/token"
 
       # GitHub CLI (gh prefers GH_TOKEN, GITHUB_TOKEN is fallback for other tools)
-      export GH_TOKEN="op://Tokens/Github Token/token"
-      export GITHUB_TOKEN="op://Tokens/Github Token/token"
+      export GH_TOKEN="op://Tokens/GITHUB_TOKEN/token"
+      export GITHUB_TOKEN="op://Tokens/GITHUB_TOKEN/token"
 
       # GitHub Projects (Classic PAT required - fine-grained PATs don't support Projects API)
       export GH_PROJECTS_TOKEN="op://Tokens/GH_PROJECTS_TOKEN/token"

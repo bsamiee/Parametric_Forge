@@ -227,7 +227,7 @@ _assert_call_count() {
 }
 ```
 
-The `--self-test` assertion primitives `_assert_eq`/`_assert_match`/`_assert_set` are composed here, never redefined.
+Every `--self-test` assertion primitive — `_assert_eq`/`_assert_match`/`_assert_set` — is composed here, never redefined.
 
 ## [04]-[COVERAGE_AND_MUTATION]
 
@@ -288,7 +288,7 @@ _mutation_sweep() {
 
 ## [05]-[CI_INTEGRATION]
 
-The pipeline runs lint, then a container test matrix, then the coverage gate; lint uses `koalaman/shellcheck-action@v2`.
+CI runs lint first, then a container test matrix, then the coverage gate; lint uses `koalaman/shellcheck-action@v2`.
 
 ```yaml conceptual
 # .github/workflows/shell-tests.yml — canonical pipeline: lint -> test (container matrix) -> coverage
@@ -348,7 +348,7 @@ jobs:
 docker run --rm -v "${PWD}/lib:/code/lib:ro" -v "${PWD}/tests:/code/tests:ro" \
     bats/bats:latest --jobs 4 --timing /code/tests
 
-# Extended image for additional deps (jq, curl, etc.)
+# Extended image for additional deps
 # FROM bats/bats:latest
 # RUN apk --no-cache add jq curl
 ```
@@ -514,7 +514,7 @@ _assert_cli_contract() {
 
 ## [09]-[SHELLCHECK_0_11_0]
 
-The test-relevant `0.11.0` codes below surface in test infrastructure or scripts under test.
+Every test-relevant `0.11.0` code below surfaces in test infrastructure or scripts under test.
 
 | [INDEX] | [CODE]   | [SEV] | [ISSUE]                          | [VIOLATION]                           | [FIX]                              |
 | :-----: | :------- | :---: | :------------------------------- | :------------------------------------ | :--------------------------------- |

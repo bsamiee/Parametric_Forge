@@ -5,7 +5,7 @@
 # │  Identity:    [ACTION_NAME], [DESCRIPTION], [AUTHOR_NAME]                   │
 # │  Branding:    [ICON_NAME], [COLOR]                                          │
 # │                                                                             │
-# │  Runtime:     node24 (forced March 4, 2026 — node20 removal summer 2026)    │
+# │  Runtime:     node24 (enforced default — node20 is removed)                 │
 # │  Toolkit:     @actions/core@3.x (ESM-only), @actions/github@9.x             │
 # │  Bundle:      npx @vercel/ncc build src/index.ts -o dist --minify           │
 # │                                                                             │

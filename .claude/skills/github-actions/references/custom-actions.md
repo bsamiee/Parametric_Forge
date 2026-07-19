@@ -90,7 +90,7 @@ git tag -a v1.0.0 -m "Release v1.0.0" && git push origin v1.0.0
 git tag -fa v1 -m "Update v1 to v1.0.0" && git push origin v1 --force
 ```
 
-Consumers reference: `@v1.0.0` (exact), `@v1` (latest v1.x), `@SHA` (most secure).
+Publish the moving major tag for discoverability, but consumers reference `@<SHA> # vN.N.N` only — a `@v1` or `@v1.0.0` ref is retargetable and rates HIGH risk in `supply_chain.md` [01.1]-[DETECTION_RULES].
 
 ## [06]-[RUNTIME]
 
@@ -99,6 +99,8 @@ Consumers reference: `@v1.0.0` (exact), `@v1` (latest v1.x), `@SHA` (most secure
 |  [01]   | `node24`    | Required — use `using: 'node24'` for JavaScript actions. |
 |  [02]   | `docker`    | Stable — `using: 'docker'` with `image: 'Dockerfile'`.   |
 |  [03]   | `composite` | Stable — `using: 'composite'` with `steps:`.             |
+
+Node runtime status and migration history live in `modern_features.md` [08]-[NODE_RUNTIME].
 
 [TOOLKIT]: `@actions/core@3.x`, `@actions/github@9.x`. Bundle with `@vercel/ncc@0.38.x build index.js --minify`.
 
@@ -133,7 +135,7 @@ FROM golang:1.23 AS builder
 COPY . .
 RUN CGO_ENABLED=0 go build -o /action ./...
 
-FROM gcr.io/distroless/static:nonroot
+FROM gcr.io/distroless/static-debian12:nonroot
 COPY --from=builder /action /action
 ENTRYPOINT ["/action"]
 ```
@@ -190,4 +192,4 @@ steps:
 2. Branding metadata (icon + color) — Feather icon set.
 3. README.md with usage examples.
 4. Semantic version tags (`v1`, `v1.0.0`).
-5. Node 24 runtime for JavaScript actions (node20 forced migration March 4, 2026).
+5. Node 24 runtime for JavaScript actions — node20 no longer runs.

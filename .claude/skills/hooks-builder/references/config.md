@@ -26,7 +26,7 @@ Configuration nests three levels: a hook event, a matcher group filtering when i
 |  [05]   | Plugin `hooks/hooks.json`     | While the plugin is enabled   | Bundled with the plugin       |
 |  [06]   | Skill or agent frontmatter    | While the component is active | Defined in the component file |
 
-Same-event hooks from all scopes run in parallel. The file watcher picks up direct edits; `disableAllHooks: true` turns everything off temporarily subject to the managed hierarchy, and `allowManagedHooksOnly` lets administrators block user, project, and plugin hooks. Managed policy settings survive `disableAllHooks`. Codex reads the same nested shape from `~/.codex/hooks.json`, `<repo>/.codex/hooks.json`, or inline TOML in either `config.toml`, all trust-gated; the dual-provider reference owns Codex placement and discovery.
+Same-event hooks from all scopes run in parallel. A file watcher picks up direct edits; `disableAllHooks: true` turns everything off temporarily subject to the managed hierarchy, and `allowManagedHooksOnly` lets administrators block user, project, and plugin hooks. Managed policy settings survive `disableAllHooks`. Codex reads the same nested shape from `~/.codex/hooks.json`, `<repo>/.codex/hooks.json`, or inline TOML in either `config.toml`, all trust-gated; the dual-provider reference owns Codex placement and discovery.
 
 ## [02]-[MATCHER_LAW]
 
@@ -38,7 +38,7 @@ Matcher evaluation depends on the characters the value contains:
 
 MCP tools match as regular tools under the `mcp__<server>__<tool>` pattern. Matching every tool from a server needs the `.*` suffix — `mcp__memory__.*` — because a bare `mcp__memory` is exact-match and matches no tool. Plugin-bundled servers scope as `mcp__plugin_<plugin>_<server>__<tool>`; matchers against the bare server key never fire for them.
 
-The `if` field narrows further with exactly one permission rule — `"Bash(git *)"`, `"Edit(*.ts)"` — evaluated only on tool events; there is no `&&`/`||`, so multiple conditions become multiple handlers. Bash patterns strip leading `VAR=value` assignments, check each subcommand of `&&` chains, and check inside `$()` and backticks; a pattern specifying more than the command name still runs the hook on substitutions, and an unparseable command fails open. The `if` filter is best-effort — hard allow/deny enforcement belongs to the permission system, not a hook.
+`if` narrows further with exactly one permission rule — `"Bash(git *)"`, `"Edit(*.ts)"` — evaluated only on tool events; there is no `&&`/`||`, so multiple conditions become multiple handlers. Bash patterns strip leading `VAR=value` assignments, check each subcommand of `&&` chains, and check inside `$()` and backticks; a pattern specifying more than the command name still runs the hook on substitutions, and an unparseable command fails open. `if` filtering is best-effort — hard allow/deny enforcement belongs to the permission system, not a hook.
 
 ## [03]-[COMMON_FIELDS]
 
@@ -54,9 +54,9 @@ The `if` field narrows further with exactly one permission rule — `"Bash(git *
 
 ## [04]-[COMMAND_HOOKS]
 
-Command hooks add `command`, `args`, `async`, `asyncRewake`, and `shell`. The form is chosen by `args`:
+Command hooks add `command`, `args`, `async`, `asyncRewake`, and `shell`. `args` chooses the form:
 
-- [EXEC]: With `args`, `command` resolves as an executable and spawns directly with `args` as the argument vector — no shell, no tokenization, path placeholders substitute as plain strings. The form for any hook referencing a path placeholder, and the form that avoids a shell-profile echo corrupting the JSON channel.
+- [EXEC]: With `args`, `command` resolves as an executable and spawns directly with `args` as the argument vector — no shell, no tokenization, path placeholders substitute as plain strings. Required form for any hook referencing a path placeholder, and the form that avoids a shell-profile echo corrupting the JSON channel.
 - [SHELL]: Without `args`, the string passes to a shell (`sh -c` on macOS/Linux; Git Bash on Windows, PowerShell fallback, or `shell: "powershell"` explicitly) with full tokenization, pipes, and globs; placeholders wrap in double quotes.
 
 On Windows, exec form requires a real executable — `.cmd`/`.bat` shims from `node_modules/.bin` spawn via `node` plus the script path instead. `async: true` runs the hook in the background without blocking (command hooks only); `asyncRewake: true` additionally wakes the session on exit 2.
@@ -75,7 +75,7 @@ A prompt or agent handler returns a judged verdict, so it binds only where the e
 
 ## [07]-[JSON_OUTPUT]
 
-JSON output is processed only on exit 0, and stdout must contain only the JSON object — one approach per hook, exit codes alone or exit 0 with JSON, never both. Output strings cap at 10,000 characters; overflow saves to a file and passes a preview plus path. The output envelope keys in camelCase — `hookSpecificOutput.hookEventName`, `updatedInput`, `additionalContext` — even though the stdin payload keys in snake_case (`hook_event_name`).
+JSON output is processed only on exit 0, and stdout must contain only the JSON object — one approach per hook, exit codes alone or exit 0 with JSON, never both. Output strings cap at 10,000 characters; overflow saves to a file and passes a preview plus path. Output envelope keys in camelCase — `hookSpecificOutput.hookEventName`, `updatedInput`, `additionalContext` — even though the stdin payload keys in snake_case (`hook_event_name`).
 
 | [INDEX] | [FIELD]            | [EFFECT]                                                                             |
 | :-----: | :----------------- | :----------------------------------------------------------------------------------- |
@@ -85,4 +85,4 @@ JSON output is processed only on exit 0, and stdout must contain only the JSON o
 |  [04]   | `systemMessage`    | Warning message shown to the user                                                    |
 |  [05]   | `terminalSequence` | Allowlisted terminal escape emitted on the hook's behalf — notification, title, bell |
 
-`continue: false` beats every event-specific decision. The per-event decision fields — top-level `decision`, the `hookSpecificOutput` shapes, and the rewrite surfaces (`updatedInput`, `updatedToolOutput`, `displayContent`, `worktreePath`) — are the events reference's decision-control table, and the Codex dialect for each is the dual-provider reference.
+`continue: false` beats every event-specific decision. Per-event decision fields — top-level `decision`, the `hookSpecificOutput` shapes, and the rewrite surfaces (`updatedInput`, `updatedToolOutput`, `displayContent`, `worktreePath`) — are the events reference's decision-control table, and the Codex dialect for each is the dual-provider reference.

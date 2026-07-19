@@ -1,0 +1,218 @@
+# [REFUTED_CLASSES] — the machine-read guard roster review_rail.py compiles into its claim
+# classifier, recurrence detector, and generated settled-rulings block. Runtime data:
+# rows grow one per refuted class from the `harvest` feed's proposal block; a landed row is
+# edited here, never in the script.
+#
+# Row schema (mirrors the RefutedClass struct):
+#   class_id:          stable kebab-case id for the refuted claim class
+#   matchers:          case-insensitive regex patterns over the finding claim text; an
+#                      invalid pattern falls back to a literal case-insensitive match
+#   refuting_citation: the ruling or evidence that refuted the class (doc path, ledger id)
+#   landed_surfaces:   reviewer-config paths that carry the do-not-flag guard
+#   rounds_seen:       round numbers where the class recurred
+classes:
+    - class_id: interior-revalidation-of-admitted-values
+      matchers:
+        - 're-?valid(at|ity)'
+        - 'valid(at|ity)\w*.{0,60}(smart ?enum|value ?(object|struct)|generated (enum|case)|already (validated|admitted|constructed))'
+        - '(null|none|invalid|bounds|range).{0,20}(check|guard).{0,60}(smart ?enum|value ?(object|struct)|generated (enum|case)|by construction)'
+      refuting_citation: 'templates/lane-law.md trichotomy — generated-enum instances and value-struct payloads are valid by construction; interior re-validation of admitted values is pushed back'
+      landed_surfaces:
+        - '.coderabbit.yaml'
+        - '.greptile/rules.md'
+        - '.macroscope/correctness/csharp/api-truths.md'
+      rounds_seen: [1, 2, 3]
+    - class_id: host-api-misspelling-is-truth
+      matchers:
+        - 'ShowSilhouttes'
+        - 'TryGetUnmanged'
+        - '(typo|misspell|spelling).{0,60}(host|member|api)'
+      refuting_citation: '.macroscope/correctness/csharp/api-truths.md [02] — an apparent typo in a decompile-verified host member is the shipped spelling; a corrected-spelling demand breaks the binding and is void at every severity'
+      landed_surfaces:
+        - '.coderabbit.yaml'
+        - '.greptile/rules.md'
+        - '.macroscope/correctness/csharp/api-truths.md'
+      rounds_seen: [3]
+    - class_id: stale-disk-quoted-shape-void
+      matchers:
+        - 'WebAnswer'
+        - '(quoted|cited) (code|shape|argument|literal).{0,50}(missing|absent|removed)'
+        - '(code|member|shape) (no longer|does not) (exist|appear|match)'
+      refuting_citation: '.macroscope/correctness/general/stance.md — a finding quoting an argument, literal, or shape the current file does not contain is void; a stale review snapshot never outranks disk'
+      landed_surfaces:
+        - '.coderabbit.yaml'
+        - '.greptile/rules.md'
+        - '.macroscope/correctness/general/stance.md'
+      rounds_seen: [2, 3]
+    - class_id: absence-positive-claim-bar
+      matchers:
+        - '(missing|absent|no such|undeclared|not declared|removed).{0,60}(member|case|method|property|declaration|overload)'
+        - 'does not (define|declare|implement|expose)'
+      refuting_citation: '.macroscope/correctness/general/stance.md — a claimed absence verifies at the positive-claim bar: the current file re-opened and the member proven missing before emission; a removal claim verifies both the declaration and every constructor site'
+      landed_surfaces:
+        - '.coderabbit.yaml'
+        - '.greptile/rules.md'
+        - '.macroscope/correctness/general/stance.md'
+      rounds_seen: [1, 2]
+    - class_id: nan-sentinel-banned-verbatim
+      matchers:
+        - 'NaN.{0,20}sentinel'
+        - 'Brent\.TryFindRoot'
+      refuting_citation: '.greptile/rules.md [03] — the current fold is Fin-railed bounded bisection naming the NaN bridge only as its forbidden form; a banned-form name a page quotes re-minted as the live defect is the standing re-review false-positive engine'
+      landed_surfaces:
+        - '.coderabbit.yaml'
+        - '.greptile/rules.md'
+        - '.macroscope/correctness/general/stance.md'
+      rounds_seen: []
+    - class_id: replay-wrapper-compensation
+      matchers:
+        - 'ReplayHistoryResult'
+        - '(detached copy|per-result dispose|compensation).{0,60}(replay|history)'
+      refuting_citation: '.macroscope/correctness/csharp/api-truths.md [02] — history-replay result wrappers carry internal constructors and update host-owned native state; detached-copy, per-result dispose, or compensation demands contradict the decompiled lineage'
+      landed_surfaces:
+        - '.coderabbit.yaml'
+        - '.greptile/rules.md'
+        - '.macroscope/correctness/csharp/api-truths.md'
+      rounds_seen: []
+    - class_id: host-enum-zero-default
+      matchers:
+        - '(enum|zero member).{0,60}(uninitialized|invalid|malformed).{0,40}(default|field)'
+        - 'default.{0,30}enum.{0,40}(invalid|undefined|unset)'
+      refuting_citation: '.macroscope/correctness/csharp/api-truths.md [01] — a host enum-typed field is a value type at catalog authority whose zero member is a legitimate roster default at decompile authority; undefined integral values are the one representable defect, admitted through the defined-value gate'
+      landed_surfaces:
+        - '.coderabbit.yaml'
+        - '.greptile/rules.md'
+        - '.macroscope/correctness/csharp/api-truths.md'
+      rounds_seen: []
+    - class_id: fabricated-host-invariant
+      matchers:
+        - 'CreatePreviewBitmap'
+        - 'Guid\.Empty.{0,60}(invariant|guard|reject|nonempty)'
+        - '(maximum|ceiling|limit).{0,40}(bitmap|preview|dimension)'
+        - 'host (rejects|throws).{0,50}(clamp|out of range)'
+      refuting_citation: '.macroscope/correctness/csharp/api-truths.md [02] — an invariant the host surface does not document is never demanded: no maximum-dimension contract exists, absence sentinels collapse at the read seam and round-trip at apply, and a clamp-proven member makes pre-host refusal the corpus form'
+      landed_surfaces:
+        - '.coderabbit.yaml'
+        - '.greptile/rules.md'
+        - '.macroscope/correctness/csharp/api-truths.md'
+      rounds_seen: []
+    - class_id: empty-finding-row
+      matchers:
+        - '^\s*$'
+        - '^(placeholder|n/a|none)$'
+      refuting_citation: '.greptile/rules.md [01] — a finding row carrying an id and severity but no claim, target, or anchor is void and emits as nothing, never a placeholder'
+      landed_surfaces:
+        - '.coderabbit.yaml'
+        - '.greptile/rules.md'
+        - '.macroscope/correctness/general/stance.md'
+      rounds_seen: []
+    - class_id: wire-shape-settled-by-constructor
+      matchers:
+        - 'ArchiveValue\.Rows'
+        - '(wire|slot) ?shape.{0,40}(mismatch|drift|wrong)'
+        - '(carrier|arity).{0,40}mismatch'
+      refuting_citation: '.greptile/rules.md [03] — wire-shape and carrier-arity claims settle at the owning normalizing constructor: array and Seq<T> fold into one payload while the array slot shape publishes, and an anchor-row carrier keeps one outer row per anchor with its complete set within'
+      landed_surfaces:
+        - '.coderabbit.yaml'
+        - '.greptile/rules.md'
+        - '.macroscope/correctness/csharp/api-truths.md'
+      rounds_seen: []
+    - class_id: languageext-hashset-mutable-reading
+      matchers:
+        - 'HashSet.{0,60}(mutable|mutati|shared state|not thread|concurrent modif)'
+      refuting_citation: '.macroscope/correctness/csharp/api-truths.md [01] — LanguageExt.HashSet is the immutable persistent carrier whose update operations return values; namespace qualification is the standing recurrence guard'
+      landed_surfaces:
+        - '.coderabbit.yaml'
+        - '.greptile/rules.md'
+        - '.macroscope/correctness/csharp/api-truths.md'
+      rounds_seen: []
+    - class_id: validation-traverse-short-circuit
+      matchers:
+        - '(Traverse|Validation).{0,60}(short.?circuit|first failure|stops? (at|on) (the )?first)'
+      refuting_citation: '.greptile/rules.md [03] — steps converted to Validation before Traverse accumulate every failure applicatively with ToFin following the complete traversal; a first-failure short-circuit claim against that shape is false'
+      landed_surfaces:
+        - '.coderabbit.yaml'
+        - '.greptile/rules.md'
+        - '.macroscope/correctness/csharp/api-truths.md'
+      rounds_seen: []
+    - class_id: fin-catch-strictness-escape
+      matchers:
+        - '(host read|side effect|effect).{0,60}(escape|outside|leak).{0,40}(catch|rail|frame)'
+        - 'Fin.{0,40}(lazy|deferred|not captured)'
+      refuting_citation: '.greptile/rules.md [03] — Fin''s Bind/Map/TraverseM evaluate strictly inside a catch lambda, so host reads there are already captured by the surrounding catch frame; the demanded form pulls every seam host read inside that frame'
+      landed_surfaces:
+        - '.coderabbit.yaml'
+        - '.greptile/rules.md'
+        - '.macroscope/correctness/csharp/api-truths.md'
+      rounds_seen: []
+    - class_id: smartenum-membership-guard
+      matchers:
+        - '(smart ?enum|generated enum).{0,60}(membership|guard|invalid instance)'
+        - 'guard.{0,40}undeclared enum'
+      refuting_citation: '.macroscope/correctness/csharp/api-truths.md [01] — a generated [SmartEnum] admits no invalid instance by construction; a membership guard against undeclared enum items is structurally void'
+      landed_surfaces:
+        - '.coderabbit.yaml'
+        - '.greptile/rules.md'
+        - '.macroscope/correctness/csharp/api-truths.md'
+      rounds_seen: [2]
+    - class_id: default-ghost-seam-removal
+      matchers:
+        - 'default.?ghost'
+        - '(redundant|unnecessary|duplicate).{0,40}(check|guard|seam).{0,60}(struct|zero-?init|default)'
+      refuting_citation: '.coderabbit.yaml csharp block — field zero-init and default mint admission-bypassing ghosts on readonly partial struct value objects, so the one mandated outer storage seam reading the key member stays; deleting it as redundant is the inverse false positive'
+      landed_surfaces:
+        - '.coderabbit.yaml'
+        - '.greptile/rules.md'
+        - '.macroscope/correctness/csharp/api-truths.md'
+      rounds_seen: [1, 2]
+    - class_id: full-roster-restore-bracket
+      matchers:
+        - '(restore|bracket).{0,60}(subset|only (the )?changed|partial write)'
+        - 'full.?roster.{0,40}(restore|fold|unnecessary)'
+      refuting_citation: '.greptile/rules.md [03] — folding the complete facet roster is the page-legislated deterministic-scope contract; the subset fold leaks ambient state, so a partial-write or over-restore claim is false'
+      landed_surfaces:
+        - '.coderabbit.yaml'
+        - '.greptile/rules.md'
+        - '.macroscope/correctness/csharp/api-truths.md'
+      rounds_seen: []
+    - class_id: using-var-pattern-var-style
+      matchers:
+        - 'using var.{0,60}(replace|explicit|avoid|restructure)'
+        - 'var.{0,30}pattern.{0,40}(explicit type|restructure)'
+      refuting_citation: '.macroscope/correctness/csharp/api-truths.md [01] — using var on a scoped disposable boundary carrier and var bindings inside pattern arms are doctrine-prescribed spellings; restructure or explicit-type demands are style noise at every severity'
+      landed_surfaces:
+        - '.coderabbit.yaml'
+        - '.greptile/rules.md'
+        - '.macroscope/correctness/csharp/api-truths.md'
+      rounds_seen: [2]
+    - class_id: upward-stratum-delegation-demand
+      matchers:
+        - '(delegate|call|reference).{0,50}(directly|upward).{0,40}(stratum|higher)'
+        - 'higher stratum.{0,50}(directly|delegate)'
+      refuting_citation: '.greptile/rules.md [03] — the owning ARCHITECTURE strata table prohibits a lower stratum referencing a higher one; the injected-seam form, the higher stratum supplying its capability through a parameter, is the legal shape'
+      landed_surfaces:
+        - '.coderabbit.yaml'
+        - '.greptile/rules.md'
+        - '.macroscope/correctness/general/architecture-law.md'
+      rounds_seen: [2]
+    - class_id: decompile-lease-lineage
+      matchers:
+        - '(dispose|disposal).{0,50}(per.?site|per.?use|missing|each)'
+        - 'IDisposable.{0,50}(missing|not disposed|leak)'
+        - '(custody|ownership).{0,50}(lease|dispose)'
+      refuting_citation: '.macroscope/correctness/csharp/api-truths.md [02] — a host type''s decompile-proven IDisposable lineage settles lease-ownership demands: custody lands as an owned lease through total union dispatch, so a per-site dispose demand the lease rail already owns, or a custody claim contradicting the lineage, is false'
+      landed_surfaces:
+        - '.coderabbit.yaml'
+        - '.greptile/rules.md'
+        - '.macroscope/correctness/csharp/api-truths.md'
+      rounds_seen: [2]
+    - class_id: forbidden-form-comment-remint
+      matchers:
+        - '(forbidden|rejected).?form'
+        - 'banned (form|shape).{0,40}(present|used|live|introduced)'
+      refuting_citation: '.macroscope/correctness/general/stance.md — a shape appearing only inside a declared forbidden-form comment or rejected-form example is documentation of the ban, never the live defect'
+      landed_surfaces:
+        - '.coderabbit.yaml'
+        - '.greptile/rules.md'
+        - '.macroscope/correctness/general/stance.md'
+      rounds_seen: [4]

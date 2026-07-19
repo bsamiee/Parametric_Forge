@@ -8,7 +8,7 @@
 """Own PostToolUse: recover MODE from the payload shape, formatting a file event and redacting a tool-output event.
 
 A file event formats through the estate `fmt` router then gates on `fmt --check`; a tool-output event redacts secrets.
-Wire: PostToolUse matcher "Edit|Write|MultiEdit|Bash|Read|Grep|WebFetch".
+Wire: PostToolUse matcher "Edit|Write|NotebookEdit|Bash|Read|Grep|WebFetch".
 Boundary kernel: subprocess/shutil.which are admitted here. tool_response is typed Raw because its shape varies per tool (str for
 some, object {stdout,stderr,...} for most built-ins), so it is normalized in-body, never decoded against a single declared shape.
 """
@@ -23,7 +23,7 @@ import sys
 import msgspec
 
 
-WRITE_TOOLS = frozenset(("Edit", "Write", "MultiEdit"))  # POLICY: tools that mutate a file; only these route to FORMAT
+WRITE_TOOLS = frozenset(("Edit", "Write", "NotebookEdit"))  # POLICY: tools that mutate a file; only these route to FORMAT
 REDACT_TOOLS = frozenset(("Bash", "Read", "Grep", "WebFetch"))  # POLICY: tools whose output is scanned for secrets
 SECRET = re.compile(r"sk-ant-[A-Za-z0-9_-]{16,}|ghp_[A-Za-z0-9]{36}|AKIA[A-Z0-9]{16}|xox[baprs]-[A-Za-z0-9-]{10,}")  # POLICY
 CHECK_OVERLAY: dict[str, tuple[str, ...]] = {".py": ("ruff", "check")}  # POLICY: linter beyond `fmt`, where format != lint
@@ -44,6 +44,12 @@ class ToolInput(msgspec.Struct, frozen=True):
     """File-tool input fields."""
 
     file_path: str = ""
+    notebook_path: str = ""  # NotebookEdit names its target here, never file_path
+
+    @property
+    def target(self) -> str:
+        """Resolve the one written path across the file tools' divergent field names."""
+        return self.file_path or self.notebook_path
 
 
 class PostToolUse(msgspec.Struct, frozen=True):
@@ -56,7 +62,7 @@ class PostToolUse(msgspec.Struct, frozen=True):
 
 def _mode(payload: PostToolUse, /) -> Mode:
     """Recover the operating mode from tool identity, never file_path alone: a Read carries a path yet must never be formatted."""
-    if payload.tool_name in WRITE_TOOLS and payload.tool_input.file_path and Path(payload.tool_input.file_path).is_file():
+    if payload.tool_name in WRITE_TOOLS and payload.tool_input.target and Path(payload.tool_input.target).is_file():
         return Mode.FORMAT
     return Mode.REDACT if payload.tool_name in REDACT_TOOLS else Mode.SKIP
 
@@ -124,7 +130,7 @@ def main() -> int:
         return 0  # observer role: a malformed payload never blocks a completed tool call
     match _mode(payload):
         case Mode.FORMAT:
-            return _format(Path(payload.tool_input.file_path))
+            return _format(Path(payload.tool_input.target))
         case Mode.REDACT:
             return _redact(payload)
         case Mode.SKIP:

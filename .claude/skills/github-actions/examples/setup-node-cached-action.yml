@@ -3,7 +3,6 @@
 # NOTE: harden-runner is CALLER responsibility — actions are steps, not jobs.
 name: "Setup Node.js with Smart Caching"
 description: "Detect package manager from lockfile, pin via corepack, resolve cache dir, install with prefer-offline on hit"
-author: "Example Author"
 
 inputs:
     node-version:

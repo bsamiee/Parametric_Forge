@@ -41,7 +41,7 @@ const ROUTES = {
     },
     py: {
         prompt: (f) =>
-            `Refactor ${f} to the Python doctrine in coding-python: rewrite mutable accumulation as ` +
+            `Refactor ${f} to the Python doctrine in docs/stacks/python: rewrite mutable accumulation as ` +
             `expression-style folds and comprehensions, route failures through a typed Result rail, ` +
             `and tighten the type annotations. Report what changed and any cross-file follow-up.`,
     },

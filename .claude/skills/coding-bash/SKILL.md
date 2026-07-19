@@ -15,7 +15,7 @@ All code follows these governing principles:
 - [FUNCTIONAL] — immutable locals, pure functions, dispatch tables, and tightly bounded mutable shell state
 - [POLYMORPHIC] — one parser, one dispatcher, one logger; extend via table entries not code branches
 - [PRODUCTION_HARDENED] — ERR traps, atomic I/O, signal forwarding, cleanup registries, version gating
-- [FORK_MINIMAL] — `printf -v`, `$(<file)`, `EPOCHSECONDS`, fork-free `${ }` substitution (5.3), `BASH_MONOSECONDS` monotonic timing, `mapfile` over subshell patterns
+- [FORK_MINIMAL] — `printf -v`, `$(<file)`, `EPOCHSECONDS`, fork-free `${ }` (5.3), `BASH_MONOSECONDS` timing, `mapfile` over subshell patterns
 - [ECOSYSTEM_FIRST] — `rg`/`fd`/`jq`/`sd`/`choose`/`mlr` over sed/grep/find/cut when available
 - [EXECUTABLE_DOCTRINE] — examples and templates must pass syntax, ShellCheck, and their own self-tests
 
@@ -45,14 +45,20 @@ All code follows these governing principles:
 
 ## [02]-[PARADIGM]
 
-- [IMMUTABILITY]: `local -r` for all non-mutating function locals, `readonly` for module-level constants. Mutable state only for argument parsing — frozen via `readonly` in `_main` before core logic
-- [DISPATCH_TABLES]: `declare -Ar` for O(1) command routing, two-dimensional `verb:resource` keyed dispatch, option metadata, validation rules, log-level gating, env contract validation (regex patterns per env var). `case/esac` reserved exclusively for glob/regex pattern matching — never conditional routing
-- [PURE_FUNCTIONS]: Input via positional parameters, output via stdout or nameref (`local -n`). No global reads except `readonly` constants. Side effects isolated to `_main`, trap handlers, cleanup registries, and explicitly marked shell boundary loops
-- [METADATA_DRIVEN_HELP]: `_OPT_META` with `short|long|desc|VALUE_NAME|default` entries generates `_usage` programmatically. One table entry + one `case` branch per option
-- [MIDDLEWARE_COMPOSITION]: `_use()` registers middleware functions into `_MIDDLEWARE` array; `_run_with_middleware()` executes the chain before handler dispatch. Argument parsing in 3 composable phases — subcommand dispatch (O(1) table lookup), flag parsing (case/esac), positional collection
-- [EXPRESSION_OVER_STATEMENT]: `${var:-default}` over if-empty checks, `${var:?message}` over assert-not-empty, `(( expr ))` over `test`, parameter expansion over external commands
-- [FORK_ELIMINATION]: `printf -v var '%(%F %T)T' -1` over `$(date)`, `$(<file)` over `$(cat file)`, `EPOCHSECONDS`/`EPOCHREALTIME` over `$(date +%s)`, `mapfile` over `while read` loops, `BASH_REMATCH` over `grep -oP`
-- [ATOMIC_IO]: All file writes via `mktemp` + write + `mv` (rename is atomic on same filesystem). `umask 077` before `mktemp` for sensitive data. Dynamic FDs via `exec {fd}>file`
+- [IMMUTABILITY]: `local -r` for every non-mutating function local, `readonly` for module-level constants
+- [FROZEN_ARGS]: Mutable state only for argument parsing — frozen via `readonly` in `_main` before core logic
+- [DISPATCH_TABLES]: `declare -Ar` for O(1) command routing and two-dimensional `verb:resource` dispatch
+- [DATA_TABLES]: `declare -Ar` also tables option metadata, validation rules, log-level gating, and env contracts (regex per var)
+- [CASE_RESERVED]: `case/esac` reserved exclusively for glob/regex pattern matching — never conditional routing
+- [PURE_FUNCTIONS]: Input via positional parameters, output via stdout or nameref (`local -n`); no global reads except `readonly` constants
+- [SIDE_EFFECTS]: Side effects isolated to `_main`, trap handlers, cleanup registries, and explicitly marked shell boundary loops
+- [METADATA_DRIVEN_HELP]: `_OPT_META` with `short|long|desc|VALUE_NAME|default` entries generates `_usage`. One entry + one `case` branch per option
+- [MIDDLEWARE_COMPOSITION]: `_use()` registers middleware into `_MIDDLEWARE`; `_run_with_middleware()` executes the chain before handler dispatch
+- [PARSE_PHASES]: Argument parsing composes subcommand dispatch (O(1) table lookup), flag parsing (`case/esac`), positional collection
+- [EXPRESSION_OVER_STATEMENT]: `${var:-default}` over if-empty, `${var:?message}` over assert-nonempty, `(( expr ))` over `test`, expansion over forks
+- [FORK_ELIMINATION]: `printf -v var '%(%F %T)T' -1` over `$(date)`, `$(<file)` over `$(cat file)`, `EPOCHSECONDS`/`EPOCHREALTIME` over `$(date +%s)`, `mapfile` over `while read`, `BASH_REMATCH` over `grep -oP`
+- [ATOMIC_IO]: Every file write goes `mktemp` + write + `mv` — rename is atomic on the same filesystem; `umask 077` before `mktemp` for sensitive data
+- [DYNAMIC_FD]: Dynamic FDs via `exec {fd}>file`
 
 ## [03]-[CONVENTIONS]
 
@@ -83,17 +89,20 @@ All code follows these governing principles:
 - Mutable state (parsed args, log level) declared at module level, frozen via `readonly` in `_main` before core logic.
 - `declare -Ar` for all dispatch tables, option metadata, and lookup maps.
 - `local -n` (nameref) for passing arrays to functions — never `eval` or indirect expansion.
-- Nameref return channels: scalar-returning functions take result var as last arg (`_ext "$item" key`) and write via `printf -v "$2"` or `local -n` — callers pass a name, never `$()`. Multi-return via multiple namerefs (e.g., `_project_meta "$slug" name created`).
+- Nameref return channels: a scalar-returning function takes the result var last (`_ext "$item" key`), writing via `printf -v "$2"` or `local -n`.
+- Callers pass a name, never `$()`. Multi-return via multiple namerefs (`_project_meta "$slug" name created`).
 - Naming: `UPPER_SNAKE` for constants/env, `lower_snake` for locals/functions, `_` prefix for internal functions.
 
 [CONTROL_FLOW]:
 - `case/esac` for pattern matching (globs, regexes) only — never for if/elif-style routing.
 - `declare -Ar` dispatch tables for command routing: `"${_DISPATCH[${cmd}]}" "${args[@]}"`. Nest for subdomains: `_CONFIG_SUBCMDS`, `_INIT_SUBCMDS`.
 - `[[ ]]` over `[ ]`. `(( ))` for arithmetic. `&&`/`||` for short-circuit.
-- `mapfile -t` / `readarray -d ''` over `while read` loops for collection. Streaming consumers may use `while IFS= read -r` with a comment naming the stream boundary.
+- `mapfile -t` / `readarray -d ''` over `while read` loops for collection.
+- Streaming consumers may use `while IFS= read -r` with a comment naming the stream boundary.
 - Ternary via arithmetic: `(( condition )) && action1 || action2` or `${var:+if_set}${var:-if_unset}`.
 - Bounded concurrency: `wait -n -p finished_pid` with job-count gate `(( ${#jobs[@]} >= MAX_JOBS ))` — see `_run_pool` pattern in examples.
-- Shell reality exceptions must be explicit: option parsing uses `case`; cleanup stacks may use a static `eval` template over shell-quoted commands; bounded counters and polling loops may mutate when the mutation is the resource protocol.
+- Shell reality exceptions are explicit: option parsing uses `case`; cleanup stacks may use a static `eval` template over shell-quoted commands.
+- Bounded counters and polling loops may mutate when the mutation is the resource protocol.
 
 [ERROR_HANDLING]:
 - `set -Eeuo pipefail` + `shopt -s inherit_errexit` in every script. No exceptions.
@@ -101,10 +110,13 @@ All code follows these governing principles:
 - `_CLEANUP_STACK` LIFO registry invoked by EXIT trap. `_CLEANING` guard prevents re-entrant execution on cascading signals.
 - Exit codes: 0=success, 1=general error, 2=usage error. Custom codes in `EX_*` constants.
 - `_die()` for fatal errors (log + exit). `_die_usage()` for argument errors (log + hint + exit 2).
-- Timing rule: `BASH_MONOSECONDS` (`5.3+`) for elapsed-time durations — monotonic, immune to NTP drift, zero forks. `EPOCHREALTIME` only for absolute timestamps and microsecond-precision benchmarks (`_bench()` shape: `(end_s - start_s) * 1000000 + 10#end_us - 10#start_us`). See `references/version-features.md` for version-safe `BASH_MONOSECONDS` / `EPOCHREALTIME` fallback dispatch.
+- Timing: `BASH_MONOSECONDS` (`5.3+`) for elapsed-time durations — monotonic, immune to NTP drift, zero forks.
+- `EPOCHREALTIME` only for absolute timestamps and microsecond benchmarks (`_bench()` shape: `(end_s - start_s) * 1000000 + 10#end_us - 10#start_us`).
+- Version-safe `BASH_MONOSECONDS` / `EPOCHREALTIME` fallback dispatch: `references/version-features.md`.
 
 [LOGGING_ARCHITECTURE]:
-- `declare -Ar _LOG_EMIT=([json]=_log_json [text]=_log_text_emit)` — format resolved once at startup via `readonly _LOG_EMITTER="${_LOG_EMIT[${LOG_FORMAT:-text}]}"`.
+- `declare -Ar _LOG_EMIT=([json]=_log_json [text]=_log_text_emit)` tables the emitters.
+- Format resolves once at startup: `readonly _LOG_EMITTER="${_LOG_EMIT[${LOG_FORMAT:-text}]}"`.
 - `_log()` gates on `_LOG_LEVELS` numeric threshold, then dispatches via `"${_LOG_EMITTER}"` — zero branching per call.
 - JSON emitter: `jq -nc --arg` for injection-safe serialization with `EPOCHREALTIME` microsecond timestamps and optional W3C trace context fields.
 - `FUNCNAME` offset accounts for `_info` -> `_log` -> `_LOG_EMITTER` call chain depth (typically `FUNCNAME[3]`, `BASH_LINENO[2]`).
@@ -117,14 +129,15 @@ All code follows these governing principles:
 - ~350 LOC scrutiny threshold — investigate compression via dispatch tables and awk programs, not file splitting.
 
 [RESOURCES]:
-- Temporary files: `mktemp` + `_register_cleanup "rm -f -- $(printf '%q' "${tmp}")"` or equivalent static quoted cleanup template. Work directories: `mktemp -d` with `SRANDOM` in path for uniqueness.
+- Temporary files: `mktemp` + `_register_cleanup "rm -f -- $(printf '%q' "${tmp}")"` or an equivalent static quoted cleanup template.
+- Work directories: `mktemp -d` with `SRANDOM` in path for uniqueness.
 - Signal forwarding for PID 1: trap TERM/INT, `kill -"${sig}" "${_CHILD_PID}"`, exit with signal code (143/130). Guard on `(( _CHILD_PID > 0 ))`.
 - On 5.3, `BASH_TRAPSIG` carries the signal number, so one unified handler routes every signal through a dispatch table.
 - `GLOBSORT` controls glob ordering (e.g., `-mtime` for newest-first file discovery).
-- Retry: `_retry_exec max delay max_delay cmd...` — exponential backoff `delay=$(( delay * 2 > max_delay ? max_delay : delay * 2 ))` with `SRANDOM` jitter.
+- Retry: `_retry_exec max delay max_delay cmd...` — backoff `delay=$(( delay * 2 > max_delay ? max_delay : delay * 2 ))` with `SRANDOM` jitter.
 - Env contracts: `declare -Ar _ENV_CONTRACT=([VAR]='^regex$')` validated at startup — dispatch table over env vars, regex per key.
 - Health endpoint: `socat TCP-LISTEN:${port},reuseaddr,fork SYSTEM:"printf 'HTTP/1.1 200 OK\r\n...'"` backgrounded with cleanup registration.
-- W3C tracing: parse `TRACEPARENT` via `BASH_REMATCH`, generate via `printf -v TRACE_ID '%08x%08x%08x%08x' "${SRANDOM}"...`, export for child propagation.
+- W3C tracing: parse `TRACEPARENT` via `BASH_REMATCH`, generate via `printf -v TRACE_ID '%08x%08x%08x%08x' "${SRANDOM}"...`, export for children.
 
 ## [05]-[ANTI_PATTERNS]
 
@@ -141,7 +154,7 @@ All code follows these governing principles:
 [SAFETY_VIOLATIONS]:
 - HARDCODED FD: `exec 3>file` with literal FD numbers. Use `exec {fd}>file` for safe dynamic allocation.
 - UNQUOTED EXPANSION: `$var` without quotes. Always `"${var}"` — exceptions only in `(( ))` arithmetic.
-- EVAL INJECTION: `eval "$user_string"` with untrusted input. Only static cleanup/capture templates over shell-quoted values are allowed; otherwise use `declare -Ar` dispatch or `case/esac` pattern match.
+- EVAL INJECTION: `eval "$user_string"` with untrusted input. Use `declare -Ar` dispatch or `case/esac` pattern match.
 - ECHO OVER PRINTF: `echo -e`/`echo -n` for formatted output. Use `printf` — portable, no ambiguity, format strings.
 
 [ORGANIZATION_VIOLATIONS]:
@@ -169,4 +182,3 @@ All code follows these governing principles:
 |  [09]   | `mlr`        | 6+       | CSV/TSV/JSON format transforms             |
 |  [10]   | `sd`         | 1+       | Stream editing (sed replacement)           |
 |  [11]   | `choose`     | 1.3+     | Column selection (cut replacement)         |
-|  [12]   | `gawk`       | 5.3+     | Text processing, inline programs           |

@@ -20,8 +20,8 @@ curl -X POST "https://developers.hostinger.com/api/domains/v1/portfolio" \
   -d '{
     "domain": "my-new-domain.com",
     "item_id": "hostingercom-domain-com-usd-1y",
-    "payment_method_id": 1327362,
-    "domain_contacts": { "owner_id": 741288, "admin_id": 741288, "billing_id": 741288, "tech_id": 741288 }
+    "payment_method_id": <payment-method-id>,
+    "domain_contacts": { "owner_id": <whois-profile-id>, "admin_id": <whois-profile-id>, "billing_id": <whois-profile-id>, "tech_id": <whois-profile-id> }
   }'
 ```
 
@@ -55,7 +55,7 @@ curl -X POST "https://developers.hostinger.com/api/domains/v1/forwarding" \
 
 Profiles are per-TLD contact bundles reused across domains; `entity_type` is `individual` or `organization`, and requirements differ by TLD. Usage is checked before deletion — a profile in use by active domains refuses to delete.
 
-```bash copy-safe
+```bash template
 curl -X GET "https://developers.hostinger.com/api/domains/v1/whois?tld=com" -H "Authorization: Bearer $HOSTINGER_API_TOKEN"
 
 curl -X POST "https://developers.hostinger.com/api/domains/v1/whois" \
@@ -66,7 +66,7 @@ curl -X POST "https://developers.hostinger.com/api/domains/v1/whois" \
       "phone": "+1.5551234567", "address": "123 Main St", "city": "New York", "state": "NY", "zip": "10001" }
   }'
 
-curl -X GET "https://developers.hostinger.com/api/domains/v1/whois/741288/usage" -H "Authorization: Bearer $HOSTINGER_API_TOKEN"
+curl -X GET "https://developers.hostinger.com/api/domains/v1/whois/<whois-profile-id>/usage" -H "Authorization: Bearer $HOSTINGER_API_TOKEN"
 ```
 
 ## [05]-[LOCK_PRIVACY_VERIFICATION]
@@ -96,7 +96,7 @@ curl -X GET "https://developers.hostinger.com/api/v2/direct/verifications/active
 
 ## [07]-[BULK_AUDIT]
 
-Portfolio-wide security posture reads as one list call plus a per-domain detail loop: `GET /api/domains/v1/portfolio`, then check `domain_lock` and `privacy_protection` on each, enabling both wherever absent. The same loop shape serves any portfolio-wide mutation.
+Portfolio-wide security posture reads as one list call plus a per-domain detail loop: `GET /api/domains/v1/portfolio`, then check `domain_lock` and `privacy_protection` on each, enabling both wherever absent. This same loop shape serves any portfolio-wide mutation.
 
 ## [08]-[API_REFERENCE]
 

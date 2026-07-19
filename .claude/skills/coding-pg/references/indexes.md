@@ -240,7 +240,7 @@ WHERE idx_scan = 0 AND idx_tup_read = 0;
 
 ## [13]-[BITMAP_OR_MERGING]
 
-The planner merges bitmaps from independent single-column indexes instead of requiring one composite index: two smaller B-trees on `(status)` and `(created_at)` serve `WHERE status = $1 AND created_at > $2` via bitmap AND when no single composite covers >60% of access paths on highly variable query patterns. Verify with `EXPLAIN (ANALYZE, BUFFERS)` — `BitmapAnd`/`BitmapOr` nodes with low `lossy` block ratio confirm it; still prefer composite B-tree when one column order dominates, since bitmap merging adds heap-recheck overhead.
+Planner merges bitmaps from independent single-column indexes instead of requiring one composite index: two smaller B-trees on `(status)` and `(created_at)` serve `WHERE status = $1 AND created_at > $2` via bitmap AND when no single composite covers >60% of access paths on highly variable query patterns. Verify with `EXPLAIN (ANALYZE, BUFFERS)` — `BitmapAnd`/`BitmapOr` nodes with low `lossy` block ratio confirm it; still prefer composite B-tree when one column order dominates, since bitmap merging adds heap-recheck overhead.
 
 ## [14]-[ADDITIONAL_INDEX_FEATURES]
 

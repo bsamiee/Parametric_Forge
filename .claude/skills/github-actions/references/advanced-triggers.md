@@ -178,7 +178,7 @@ jobs:
     build:
         needs: setup
         strategy:
-            fail-fast: true
+            fail-fast: false
             max-parallel: 4
             matrix: ${{ fromJSON(needs.setup.outputs.matrix) }}
         runs-on: ubuntu-latest
@@ -186,18 +186,12 @@ jobs:
             - run: echo "Building ${{ matrix.project }} on Node ${{ matrix.node }}"
 ```
 
-| [INDEX] | [KEY]               | [DEFAULT]                   | [BEHAVIOR]                                                          |
-| :-----: | :------------------ | :-------------------------- | :------------------------------------------------------------------ |
-|  [01]   | `fail-fast`         | `true`                      | Cancels all in-progress/queued matrix jobs when any job fails.      |
-|  [02]   | `max-parallel`      | Unlimited (runner pool cap) | Limits concurrent matrix jobs. Omit for maximum parallelism.        |
-|  [03]   | `continue-on-error` | `false`                     | Per-job override: `true` shields that job's failure from fail-fast. |
-
-[INTERACTION_SEMANTICS]: `continue-on-error: true` on a matrix job masks its failure from `fail-fast` — remaining matrix jobs continue. However, downstream `needs:` jobs see the failed job's result as `success`, which can hide real failures. The matrix policy: `fail-fast: false` (let all matrix jobs run) without `continue-on-error`, then aggregate results in a downstream job via `needs.*.result`.
+Strategy keys, their defaults, and the `fail-fast` / `continue-on-error` interaction live in `modern_features.md` [07]-[MATRIX_STRATEGY].
 
 [IMPORTANT] `uses:` values are static strings — not dynamically generated. Max 256 jobs per matrix.
 
 ## [10]-[ORCHESTRATION_PATTERNS]
 
 - [01]-[ENVIRONMENT_PROMOTION]: Chain stages via `needs:`, each carrying independent protection rules — reviewers, wait timers, branch restrictions.
-- [02]-[REUSABLE_WORKFLOWS]: Nest at most 2 levels and 50 unique per run; `secrets: inherit` at each level; `job_workflow_ref` earns SLSA L3.
+- [02]-[REUSABLE_WORKFLOWS]: Nesting and per-run limits live in `modern_features.md` [01.1]-[LIMITS]; `secrets: inherit` at each level; `job_workflow_ref` earns SLSA L3.
 - [03]-[CONCURRENCY_GROUPS]: One running plus one pending per group; `cancel-in-progress: true` for CI, `false` for deploys to avoid state corruption.

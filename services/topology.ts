@@ -303,7 +303,7 @@ const _reviewers = [
     {
         identity: 'copilot',
         mechanism: 'ruleset',
-        posture: 'active',
+        posture: 'dormant',
         configuration: 'ruleset-policy',
         liveEvidence: { source: 'ruleset-policy' },
         trigger: 'pr-open',
@@ -325,7 +325,7 @@ const _reviewers = [
 ] as const satisfies ReadonlyArray<{
     readonly identity: 'coderabbit' | 'greptile' | 'copilot' | 'macroscope';
     readonly mechanism: 'app' | 'ruleset';
-    readonly posture: 'active';
+    readonly posture: 'active' | 'dormant';
     readonly configuration: 'repository-artifacts' | 'ruleset-policy' | 'github-app';
     readonly liveEvidence: { readonly source: 'check-suite'; readonly appId: 347564 | 867647 | 900172 } | { readonly source: 'ruleset-policy' };
     readonly trigger: 'pr-open' | 'pr-open+push';

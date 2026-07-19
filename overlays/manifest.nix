@@ -161,7 +161,7 @@ in rec {
       updateEngine = "nvfetcher";
       retention = "git-history";
       projection.overlay = "new";
-      consumers = ["node-tools" "pnpm_11"];
+      consumers = ["node-tools" "pnpm_11" "mcp-launchers"];
       description = "Node.js official binary distribution";
       homepage = "https://nodejs.org/";
       mainProgram = "node";
@@ -252,7 +252,7 @@ in rec {
       retention = "git-history";
       projection.overlay = "override";
       overlayReason = "patch-only override of the nixpkgs package; update-notifier configstore state is disabled at admission (CA-9 residue policy)";
-      consumers = ["carbon.nix"];
+      consumers = ["carbon"];
     };
 
     openstudio = {
@@ -357,7 +357,7 @@ in rec {
         default = true;
       };
       kernel = true;
-      consumers = ["forge-tools" "Rasm tools/assay"];
+      consumers = ["scripts" "nvim" "Rasm tools/assay"];
     };
 
     sqlite-forge = {
@@ -383,7 +383,7 @@ in rec {
           fileio = ["fileio"];
         };
       };
-      consumers = ["db-tools"];
+      consumers = ["db-tools" "forge-provision"];
     };
   };
 

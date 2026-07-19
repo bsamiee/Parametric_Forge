@@ -20,6 +20,7 @@
   # (surface steps, text tiers, accents, states, focus pair, mode ladder), never a raw palette hue.
   zjVars =
     {
+      base = roles.surface.base;
       surface = roles.surface.surface;
       raised = roles.surface.raised;
       selected = roles.surface.selected;
@@ -37,8 +38,8 @@
     // lib.mapAttrs' (n: c: lib.nameValuePair "mode_${n}" c) roles.mode;
   colorRows = lib.concatStrings (lib.mapAttrsToList (n: c: "        color_${n}    \"${c.hex}\"\n") zjVars);
 
-  # Hint-ribbon grammar: native macOS modifier glyphs; a layer chip (R⌘ Hyper, R⌥ Super) prefixes its key group once. Both bars sit on the
-  # surface elevation step; chips carry inverse text on their mode/accent fill. Keys accent, labels muted; the renderer owns all padding.
+  # Hint-ribbon grammar: native macOS modifier glyphs; a layer chip (R⌘ Hyper, R⌥ Super) prefixes its key group once. The mode ribbon sits on the
+  # surface elevation step (the top bar recedes onto base); chips carry inverse text on their mode/accent fill. Keys accent, labels muted; the renderer owns all padding.
   seg = c: t: "#[bg=$surface,fg=$" + c + "]" + t;
   segB = c: t: "#[bg=$surface,fg=$" + c + ",bold]" + t;
   chipOn = bgc: fgc: t: "#[bg=$" + bgc + ",fg=$" + fgc + ",bold] " + t + " " + seg "muted" " ";
@@ -406,23 +407,25 @@ in {
           // --- [ZJSTATUS_TOP_BAR]
           // Native zjstatus widgets only: tab labels index-projected (TAB [N]), the swap-layout name, and the session identity ({session}). {name}
           // survives only in the rename cell as live typing feedback. WezTerm's tab bar hides at one tab, so no second bar ever stacks above this one.
-          // format_left starts at column 0 so the active-tab fill aligns with the pane frame edge.
+          // format_left starts at column 0 so the active-tab fill aligns with the pane frame edge. Receding cells (space, normal tab, swap label) carry
+          // no bg escape so they inherit WezTerm's translucent default background and blend into the body; only the active-tab and session chips set an
+          // explicit fill and read solid (text_background_opacity holds them opaque) — the session chip carries accent2 (magenta), one grammar with TAB.
           zjstatus location="file:~/.config/zellij/plugins/zjstatus.wasm" {
     ${colorRows}
             format_left               "{tabs}"
             format_center             "{swap_layout}"
-            format_right              "#[bg=$surface,fg=$accent,bold] {session} "
-            format_space              "#[bg=$surface]"
+            format_right              "#[bg=$accent2,fg=$inverse,bold] {session} "
+            format_space              ""
 
             // Narrow panes: hide whole parts by precedence instead of letting them overlap — the session cell outranks tabs and the swap label.
             format_hide_on_overlength "true"
             format_precedence         "rlc"
 
-            swap_layout_format        "#[bg=$surface,fg=$structural,bold] {name} "
+            swap_layout_format        "#[fg=$structural,bold] {name} "
             swap_layout_hide_if_empty "true"
 
             tab_active    "#[bg=$focus_active,fg=$inverse,bold] TAB [{index}] "
-            tab_normal    "#[bg=$surface,fg=$focus_inactive] TAB [{index}] "
+            tab_normal    "#[fg=$focus_inactive] TAB [{index}] "
             tab_separator " "
             tab_rename    "#[bg=$mode_renametab,fg=$inverse,bold] TAB [{index}] {name} "
 

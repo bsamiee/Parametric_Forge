@@ -21,7 +21,6 @@ catalog:
     # toolchain — tsgo (TS7 native preview) is the primary gate, tsc the secondary
     typescript: 6.0.3
     "@typescript/native-preview": 7.0.0-dev.20260702.3
-    "@effect/tsgo": 0.15.0
     "@types/node": 26.1.1
     "@effect/language-service": 0.86.5
 

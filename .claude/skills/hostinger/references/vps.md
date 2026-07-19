@@ -6,11 +6,11 @@ VPS fleet law: VM lifecycle, Docker Manager projects, firewalls, SSH keys, provi
 
 A VM moves `initial` → `running` → `stopped`; a VM in `initial` state needs setup before anything else. Purchase takes an `item_id` from the billing catalog, an OS `template_id` (`GET /api/vps/v1/templates`), and a `data_center_id` (`GET /api/vps/v1/data-centers`).
 
-```bash copy-safe
+```bash template
 # Purchase, then setup when the VM lands in initial state
 curl -X POST "https://developers.hostinger.com/api/vps/v1/virtual-machines" \
   -H "Authorization: Bearer $HOSTINGER_API_TOKEN" -H "Content-Type: application/json" \
-  -d '{ "item_id": "hostingercom-vps-kvm2-usd-1m", "payment_method_id": 517244,
+  -d '{ "item_id": "hostingercom-vps-kvm2-usd-1m", "payment_method_id": <payment-method-id>,
         "template_id": 1, "data_center_id": 1, "hostname": "my-server", "password": "..." }'
 curl -X POST "https://developers.hostinger.com/api/vps/v1/virtual-machines/12345/setup" \
   -H "Authorization: Bearer $HOSTINGER_API_TOKEN" -H "Content-Type: application/json" \

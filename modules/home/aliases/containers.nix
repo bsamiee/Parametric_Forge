@@ -5,86 +5,24 @@
 # Path          : modules/home/aliases/containers.nix
 # ----------------------------------------------------------------------------
 # Container and Kubernetes register rows.
-[
-  # --- [DOCKER]
-  {
-    alias = "dps";
-    expansion = "docker ps";
-    desc = "Running containers";
-    category = "docker";
-  }
-  {
-    alias = "di";
-    expansion = "docker images";
-    desc = "List images";
-    category = "docker";
-  }
-  {
-    alias = "dcp";
-    expansion = "docker compose";
-    desc = "Compose shorthand";
-    category = "docker";
-  }
-  # --- [KUBERNETES]
-  {
-    alias = "k";
-    expansion = "kubecolor";
-    desc = "Colorized kubectl";
-    category = "kubernetes";
-  }
-  {
-    alias = "kx";
-    expansion = "kubectx";
-    desc = "Switch context";
-    category = "kubernetes";
-  }
-  {
-    alias = "kn";
-    expansion = "kubens";
-    desc = "Switch namespace";
-    category = "kubernetes";
-  }
-  {
-    alias = "kgp";
-    expansion = "kubectl get pods";
-    desc = "List pods";
-    category = "kubernetes";
-  }
-  {
-    alias = "kl";
-    expansion = "kubectl logs -f";
-    desc = "Follow pod logs";
-    category = "kubernetes";
-  }
-  {
-    alias = "k9";
-    expansion = "k9s";
-    desc = "Kubernetes TUI";
-    category = "kubernetes";
-  }
-  # --- [KUBE_DEBUG]
-  {
-    alias = "klog";
-    expansion = "stern";
-    desc = "Multi-pod log tailing";
-    category = "kube-debug";
-  }
-  {
-    alias = "kcap";
-    expansion = "kube-capacity";
-    desc = "Resource usage";
-    category = "kube-debug";
-  }
-  {
-    alias = "ktree";
-    expansion = "kubectl-tree";
-    desc = "Object hierarchy";
-    category = "kube-debug";
-  }
-  {
-    alias = "kneat";
-    expansion = "kubectl-neat";
-    desc = "Clean YAML output";
-    category = "kube-debug";
-  }
-]
+{
+  docker = [
+    ["dps" "docker ps" "Running containers"]
+    ["di" "docker images" "List images"]
+    ["dcp" "docker compose" "Compose shorthand"]
+  ];
+  kube-debug = [
+    ["klog" "stern" "Multi-pod log tailing"]
+    ["kcap" "kube-capacity" "Resource usage"]
+    ["ktree" "kubectl-tree" "Object hierarchy"]
+    ["kneat" "kubectl-neat" "Clean YAML output"]
+  ];
+  kubernetes = [
+    ["k" "kubecolor" "Colorized kubectl"]
+    ["kx" "kubectx" "Switch context"]
+    ["kn" "kubens" "Switch namespace"]
+    ["kgp" "kubectl get pods" "List pods"]
+    ["kl" "kubectl logs -f" "Follow pod logs"]
+    ["k9" "k9s" "Kubernetes TUI"]
+  ];
+}

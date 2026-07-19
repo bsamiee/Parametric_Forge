@@ -38,10 +38,6 @@ in {
       VD_CONFIG = "${config.xdg.configHome}/visidata/config.py";
       VD_DIR = "${config.xdg.stateHome}/visidata";
 
-      # --- [TYPESCRIPT_JAVASCRIPT_TOOLING]
-      TAILWIND_MODE = "watch"; # JIT compilation for development
-      VITEST_MODE = "run"; # Default test runner mode
-
       # --- [NODE_PNPM_RAIL]
       # pnpm is the sole package-manager verb on PATH; npm_config_* rows contain any vendored npm run under XDG,
       # COREPACK_* rows neutralize transitive corepack calls (network off, strict pins, XDG cache).

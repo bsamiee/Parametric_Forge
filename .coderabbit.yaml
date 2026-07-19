@@ -15,7 +15,7 @@ reviews:
     auto_title_placeholder: "@coderabbitai"
     review_status: true
     review_details: true
-    commit_status: true
+    review_progress: true
     fail_commit_status: true
     collapse_walkthrough: true
     changed_files_summary: true

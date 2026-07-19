@@ -4,7 +4,7 @@ SSH-first deployment for Dockerized applications on a Hostinger VPS: SSH plus Do
 
 ## [01]-[INPUTS_AND_ACCESS]
 
-The working set: `HOSTINGER_API_TOKEN`, the VM id, `SSH_USER@SSH_HOST`, the key path, and the remote app directory. On this estate SSH rides the universal key in `~/.ssh/config`, so a configured host alias replaces explicit `-i` flags. Key provisioning for a new box is API work: register the public key, attach it to the VM, then verify with `ssh <host> "echo SSH_OK && hostname"`.
+Deployment inputs are `HOSTINGER_API_TOKEN`, the VM id, `SSH_USER@SSH_HOST`, the key path, and the remote app directory. On this estate SSH rides the universal key in `~/.ssh/config`, so a configured host alias replaces explicit `-i` flags. Key provisioning for a new box is API work: register the public key, attach it to the VM, then verify with `ssh <host> "echo SSH_OK && hostname"`.
 
 ## [02]-[BASELINE]
 
@@ -22,9 +22,9 @@ SETUP
 Baseline gates before the first deploy:
 
 - Docker engine and compose plugin present.
-- The app directory exists.
+- App directory exists.
 - `.env` exists with non-empty values for every required key.
-- The firewall accepts SSH and the app ports only.
+- Firewall accepts SSH and the app ports only.
 - Database ports stay internal to the Docker network unless explicitly required.
 
 ## [03]-[DEPLOY_AND_UPDATE]
@@ -59,7 +59,7 @@ Three levels, infrastructure to functionality:
 
 Before every risky deploy — migrations, major version bumps — two safety nets: a VPS snapshot via the API (`POST .../snapshot`; the new snapshot overwrites the old) and an on-box database dump (`docker compose exec db pg_dump -U postgres mydb > /tmp/backup_$(date +%Y%m%d_%H%M%S).sql`).
 
-Failed-deploy recovery, smallest hammer first: restore the previous compose or image version (`git checkout HEAD~1 -- docker-compose.yaml` or the previous tag), `docker compose up -d`, restore the DB dump when a migration proved incompatible, then re-verify. The nuclear option is a full snapshot restore via the API — it overwrites the entire VM.
+Failed-deploy recovery, smallest hammer first: restore the previous compose or image version (`git checkout HEAD~1 -- docker-compose.yaml` or the previous tag), `docker compose up -d`, restore the DB dump when a migration proved incompatible, then re-verify. A full snapshot restore via the API is the nuclear option — it overwrites the entire VM.
 
 ## [06]-[LANE_SPLIT]
 

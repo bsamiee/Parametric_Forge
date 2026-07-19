@@ -65,6 +65,12 @@ class ToolInput(msgspec.Struct, frozen=True):
 
     command: str = ""
     file_path: str = ""
+    notebook_path: str = ""  # NotebookEdit names its target here, never file_path
+
+    @property
+    def target(self) -> str:
+        """Resolve the one written path across the file tools' divergent field names."""
+        return self.file_path or self.notebook_path
 
 
 class Envelope(msgspec.Struct, frozen=True, rename={"event": "hook_event_name"}):
@@ -137,8 +143,8 @@ def _safety(payload: Envelope, /) -> Verdict:
             targets = (t for leaf in leaves if leaf[:1] == ["rm"] for t in leaf[1:])
             hit = next((t for t in targets if not t.startswith("-") and PurePosixPath(t) in DANGER_ROOTS), "")
             return Verdict(Code.BLOCK, f"rm targets {CTRL.sub(' ', hit)}; catastrophic") if hit else Verdict()
-        case "Edit" | "Write" | "MultiEdit" | "apply_patch":
-            name = PurePosixPath(payload.tool_input.file_path).name
+        case "Edit" | "Write" | "NotebookEdit" | "apply_patch":
+            name = PurePosixPath(payload.tool_input.target).name
             return Verdict(Code.BLOCK, f"{CTRL.sub(' ', name)} is a protected secret file") if name in PROTECTED else Verdict()
         case _:
             return Verdict()

@@ -19,7 +19,7 @@ Cross-platform shell compatibility for Bash `5.2+`/5.3, zsh, dash, and container
 |  [02]   | `#!/bin/bash`         | Security policy mandates abs paths  |
 |  [03]   | `#!/bin/sh`           | POSIX-only, system init, containers |
 
-`env -S` (GNU coreutils `8.30+`) forwards shebang flags; macOS and busybox `env` lack it. Handle flags in the script body, never the shebang.
+`env -S` forwards shebang flags on macOS and GNU coreutils `8.30+`; busybox `env` lacks it. Handle flags in the script body when busybox is a target.
 
 ```bash conceptual
 # macOS: /bin/bash is 3.2.57 permanently (Apple GPLv3 refusal)
@@ -256,7 +256,7 @@ Cleanup (`_cleanup`, `_CLEANUP_STACK`, `_CLEANING` guard) and the ERR stack trac
 
 ## [07]-[RULES]
 
-- `#!/usr/bin/env bash` default — NEVER `#!/bin/bash` unless security policy mandates. NEVER `env -S` (macOS/busybox lack it).
+- `#!/usr/bin/env bash` default — NEVER `#!/bin/bash` unless security policy mandates. `env -S` carries interpreter args on macOS and GNU coreutils; busybox lacks it.
 - macOS Homebrew re-exec pattern for `_BASH_V < 502` — probes `/opt/homebrew/bin/bash` then `/usr/local/bin/bash`.
 - Capability probes over version checks — `(( _CAN_X ))` arithmetic dispatch, not `if [[ version >= N ]]`.
 - `_PLATFORM_OPS[action_${_PLATFORM}]` for OS-specific function binding — resolve once at init, dispatch via key.

@@ -1,6 +1,6 @@
 # [SCHEDULE]
 
-Draw owned work committed to dates. The template bakes in the schedule discipline an unassisted attempt fakes — every bar chains through `after` onto its real dependency and a convergence point lists every prerequisite (`after k2 s2`), so the critical path is derivable, never asserted; state marks truth (`done`, `active`, `crit`), with active bars straddling the today rule; a `vert` task draws the governance gate as a full-height marker — an engine rect classed `.vert` that renders as an opaque pipe until the fill-opacity stamp washes it; excluded days recess instead of glare; and the milestone is the one zero-length commitment the chains converge on. Use `gantt` with sections in phase order, parallel workstreams as interleaved chains, `axisFormat` with `tickInterval` and `weekday` sized to the span, and the Lavender `.sectionTitle` stamp so lane titles carry the container-title law. The today rule spans the full canvas, so it carries a translucent stroke through the `todayMarker` style string and never blinds what it crosses. Dependency-free decoration bars are the defect — a bar with no `after` and no date commitment is prose, not schedule.
+Draw owned work committed to dates. Template law bakes in the schedule discipline an unassisted attempt fakes — every bar chains through `after` onto its real dependency and a convergence point lists every prerequisite (`after k2 s2`), so the critical path is derivable, never asserted; state marks truth against the real today (`done`, `active`, `crit`), a law the refiller upholds by dating active bars to straddle the today rule; a `vert` task draws the governance gate as a full-height marker — an engine rect classed `.vert` that renders as an opaque pipe until the fill-opacity stamp washes it; excluded days recess instead of glare; and the milestone is the zero-length terminal commitment downstream of the convergence gate. Gantt has no blocked state: a stalled task carries its blocker in the label, and `crit` stays reserved for the critical path rather than doubling as an alarm chip. Use `gantt` with sections in phase order, parallel workstreams as interleaved chains, `axisFormat` with `tickInterval` and `weekday` sized to the span, and the Lavender `.sectionTitle` stamp so lane titles carry the container-title law; themeCSS owns every gantt text size, so the `gantt:` block carries geometry keys only. Today's rule spans the full canvas, so it carries a translucent stroke through the `todayMarker` style string and never blinds what it crosses. Dependency-free decoration bars are the defect — a bar with no `after` and no date commitment is prose, not schedule.
 
 ```mermaid
 ---
@@ -8,8 +8,6 @@ config:
   theme: base
   look: classic
   gantt:
-    fontSize: 12
-    sectionFontSize: 13
     barHeight: 20
     barGap: 5
     topPadding: 70
@@ -54,12 +52,12 @@ gantt
   excludes weekends
   todayMarker stroke-width:2px,stroke:#FF79C6,opacity:0.55
   section Discovery
-  Package survey :done, d1, 2026-06-15, 4d
+  Package survey :done, d1, 2026-06-29, 4d
   Api catalogs :done, d2, after d1, 3d
   section Design
   Campaign brief :done, b1, after d2, 4d
   Architecture pass :active, b2, after b1, 5d
-  Scope freeze :vert, v1, 2026-07-10, 0d
+  Scope freeze :vert, v1, 2026-07-24, 0d
   section Build
   Solver kernel :active, k1, after b1, 6d
   Receipt algebra :k2, after k1, 4d
@@ -71,4 +69,4 @@ gantt
   Landed :milestone, m1, after l2, 0d
 ```
 
-Refill by renaming sections to the real phases and tasks to the owned work, keep every bar on its `after` chain with convergence points listing all prerequisites, mark state truthfully against the real today, place the `vert` gate on its governed date, and size `tickInterval`/`weekday` to the real span so the axis never overlaps. The Lavender section stamp, recessed exclude bands, translucent critical chip, and translucent today rule are fixed law — a refill renames work, never strips the fidelity surface.
+Refill by renaming sections to the real phases and tasks to the owned work, keep every bar on its `after` chain with convergence points listing all prerequisites, mark state truthfully against the real today, place the `vert` gate on its governed date, and size `tickInterval`/`weekday` to the real span so the axis never overlaps.

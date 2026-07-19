@@ -4,7 +4,6 @@
 # NOTE: harden-runner is CALLER responsibility — actions are steps, not jobs.
 name: "Dockerfile Lint and Image Scan"
 description: "Lint Dockerfiles with hadolint (--format sarif), scan images with grype (-o sarif), merge results, gate on severity"
-author: "Example Author"
 
 inputs:
     dockerfile:

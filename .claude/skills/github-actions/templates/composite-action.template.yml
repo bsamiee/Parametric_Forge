@@ -9,7 +9,7 @@
 # │  Branding:    [ICON_NAME], [COLOR]                                          │
 # │  Cleanup:     [CLEANUP_PATTERN] (glob for temp files)                       │
 # │                                                                             │
-# │  Node 20 EOL: April 2026. Forced node24 migration: March 4, 2026.           │
+# │  Node 20 is past upstream EOL; node24 is the enforced runner default.       │
 # │  Composite actions lack pre/post lifecycle — use if: always() for cleanup.  │
 # └─────────────────────────────────────────────────────────────────────────────┘
 name: "[ACTION_NAME]"
@@ -57,7 +57,7 @@ runs:
         # --- Detect container context (skip setup-node inside containers) ---
         - name: Setup runtime
           if: runner.environment != 'github-hosted' || env.CONTAINER == ''
-          uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
+          uses: actions/setup-node@<SHA> # v6.2.0
           with:
             node-version: ${{ inputs.runtime-version }}
             cache: "[PACKAGE_MANAGER]"

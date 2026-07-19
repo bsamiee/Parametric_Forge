@@ -8,7 +8,6 @@
 {
   config,
   forgeToolchainEnvFor,
-  host,
   lib,
   pkgs,
   ...
@@ -136,11 +135,6 @@
     ]
     ++ aecNativeTools;
 
-  companionNativeLibs =
-    geoNativeLibs
-    ++ numericNativeLibs
-    ++ pointCloudNativeLibs;
-
   energyRuntimePrelude = toolchainEnv.shellExports toolchainEnv.energyEnv;
 
   gfortranTool = pkgs.writeShellScriptBin "gfortran" ''
@@ -159,29 +153,7 @@
     library = lib.makeLibraryPath libs;
   };
   scientificPaths = mkSearchPaths scientificNativeLibs;
-  companionPaths = mkSearchPaths companionNativeLibs;
   forgePythonStateHome = config.xdg.stateHome;
-  forgeJupyterTokenFile = "${config.xdg.configHome}/jupyter/forge-token.env";
-  forgeJupyterPort = 8888;
-  forgeJupyterRootDir = "${config.xdg.stateHome}/forge-jupyter/root";
-  forgeJupyterTokenPrelude = ''
-    token_file=${lib.escapeShellArg forgeJupyterTokenFile}
-    if [ -z "''${JUPYTER_TOKEN:-}" ] && [ -f "$token_file" ]; then
-      # Typed extraction, never source: a mutable file must not reach the parser. First-match-quit sed; head's early exit SIGPIPEs sed under pipefail.
-      JUPYTER_TOKEN="$(sed -n '/^export JUPYTER_TOKEN=/{s///p;q;}' "$token_file")"
-    fi
-    if [ -z "''${JUPYTER_TOKEN:-}" ]; then
-      printf 'forge-jupyter: missing JUPYTER_TOKEN; expected %s\n' "$token_file" >&2
-      exit 1
-    fi
-    export JUPYTER_TOKEN
-  '';
-  forgeJupyterRootPrelude = ''
-    export FORGE_PROVISION_ROOT=${lib.escapeShellArg forgeJupyterRootDir}
-  '';
-  # Shared supervised stdio lane (relay-cat + group reap): uvx pythons that ignore stdin EOF (jupyter-mcp-server) strand under a hard-killed OR
-  # reconnecting MCP client; the relay ties the server subtree to client liveness through the stdin pipe itself.
-  superviseStdio = import ../shell-tools/supervise-stdio.nix;
   forgePythonEnvPrelude = python: profile: ''
     forge_python_root() {
       if [ -n "''${FORGE_PROVISION_ROOT:-}" ]; then
@@ -280,26 +252,6 @@
       exec "$@"
     '';
   };
-  forgeCompanionEnv = pkgs.writeShellApplication {
-    name = "forge-companion-env";
-    # Companion tasks run on Python 3.12 for IFC and hosted code-generation tools that ship there.
-    runtimeInputs = nativeBuildTools ++ companionNativeLibs ++ [pkgs.coreutils pkgs.uv pkgs.python312];
-    text = ''
-      ${forgePythonEnvPrelude pkgs.python312 "companion"}
-      export UV_PYTHON_PREFERENCE="only-system"
-      export UV_PYTHON_DOWNLOADS="never"
-      export MACOSX_DEPLOYMENT_TARGET="${darwinMinVersion}"
-      ${energyRuntimePrelude}
-      export CC="${pkgs.clang}/bin/clang"
-      export CXX="${pkgs.clang}/bin/clang++"
-      export AR="${llvmTools}/bin/llvm-ar"
-      export RANLIB="${llvmTools}/bin/llvm-ranlib"
-      export PKG_CONFIG_PATH="${companionPaths.pkgconfig}''${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
-      export CMAKE_PREFIX_PATH="${companionPaths.cmake}''${CMAKE_PREFIX_PATH:+:$CMAKE_PREFIX_PATH}"
-      export LIBRARY_PATH="${companionPaths.library}''${LIBRARY_PATH:+:$LIBRARY_PATH}"
-      exec "$@"
-    '';
-  };
   forgeScientificSync = pkgs.writeShellApplication {
     name = "forge-scientific-sync";
     runtimeInputs = [forgeScientificEnv pkgs.coreutils pkgs.python315 pkgs.uv];
@@ -320,169 +272,17 @@
             "google-crc32c==$crc32c_version"
         fi
       fi
-
-      if [ -x "$UV_PROJECT_ENVIRONMENT/bin/python" ] && "$UV_PROJECT_ENVIRONMENT/bin/python" -c 'import ipykernel' 2>/dev/null; then
-        root_key="$(forge_python_root_key)"
-        project_name="$(basename "$project_root")"
-        "$UV_PROJECT_ENVIRONMENT/bin/python" -m ipykernel install --user \
-          --name "forge-scientific-$root_key" \
-          --display-name "Python 3.15 (forge-scientific: $project_name)"
-      fi
     '';
   };
-  forgeJupyterServerConfig = pkgs.writeText "forge-jupyter-server-config.py" ''
-    import os
-
-    c = get_config()
-    c.IdentityProvider.token = os.environ["JUPYTER_TOKEN"]
-    # MCP WebSockets remain connected for the client lifetime, so connected idle kernels must remain eligible; busy kernels retain compute ownership.
-    c.MappingKernelManager.cull_idle_timeout = 3600
-    c.MappingKernelManager.cull_interval = 300
-    c.MappingKernelManager.cull_busy = False
-    c.MappingKernelManager.cull_connected = True
-  '';
-  forgeIfcMcp = pkgs.writeShellApplication {
-    name = "forge-ifcmcp";
-    text = ''
-      export FORGE_STDIO_IDLE_SECONDS=180
-      ${superviseStdio ''${forgeCompanionEnv}/bin/forge-companion-env uvx --python "${pkgs.python312}/bin/python3" --from "ifcopenshell-mcp[mcp]==0.8.5" ifcmcp''}
-    '';
-  };
-  # writeShellApplication: the token prelude runs sed under launchd/systemd minimal PATH, so the tool arrives via runtimeInputs, never ambient lookup.
-  forgeJupyter = pkgs.writeShellApplication {
-    name = "forge-jupyter";
-    runtimeInputs = [pkgs.gnused];
-    text = ''
-      ${forgeJupyterTokenPrelude}
-      ${forgeJupyterRootPrelude}
-      exec ${forgeCompanionEnv}/bin/forge-companion-env uvx --python "${pkgs.python312}/bin/python3" \
-        --from "jupyterlab==4.6.1" --with "jupyter-collaboration==4.4.1" --with "jupyter-mcp-tools==0.1.6" \
-        jupyter-lab --no-browser --ServerApp.ip=127.0.0.1 --ServerApp.port=${toString forgeJupyterPort} \
-        --ServerApp.port_retries=0 \
-        --config=${lib.escapeShellArg forgeJupyterServerConfig} "$@"
-    '';
-  };
-  forgeJupyterMcp = pkgs.writeShellApplication {
-    name = "forge-jupyter-mcp";
-    runtimeInputs = [pkgs.gnused];
-    text = ''
-      ${forgeJupyterTokenPrelude}
-      ${forgeJupyterRootPrelude}
-      # Connector defaults owned here so both MCP fleets carry no per-client env.
-      export JUPYTER_URL="''${JUPYTER_URL:-http://127.0.0.1:${toString forgeJupyterPort}}"
-      export ALLOW_IMG_OUTPUT="''${ALLOW_IMG_OUTPUT:-true}"
-      export FORGE_STDIO_IDLE_SECONDS=180 # thin bridge to the persistent JupyterLab LaunchAgent; reap fast, the kernel server survives
-      ${superviseStdio ''${forgeCompanionEnv}/bin/forge-companion-env uvx --python "${pkgs.python312}/bin/python3" --from "jupyter-mcp-server==1.0.3" jupyter-mcp-server --transport stdio --start-new-runtime false''}
-    '';
-  };
-in
-  {
-    home = {
-      packages =
-        [
-          gfortranTool
-        ]
-        ++ scientificProfileNativeLibs
-        ++ scientificRuntimeTools
-        ++ [
-          forgeCompanionEnv
-          forgeScientificEnv
-          forgeScientificSync
-          forgeIfcMcp
-          forgeJupyter
-          forgeJupyterMcp
-        ];
-
-      file = lib.optionalAttrs isDarwin {
-        "Applications/Forge Jupyter.app/Contents/Info.plist".text = ''
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0">
-          <dict>
-            <key>CFBundleIdentifier</key>
-            <string>com.parametric-forge.forge-jupyter</string>
-            <key>CFBundleName</key>
-            <string>Forge Jupyter</string>
-            <key>CFBundleDisplayName</key>
-            <string>Forge Jupyter</string>
-            <key>CFBundleVersion</key>
-            <string>1</string>
-            <key>CFBundleShortVersionString</key>
-            <string>1.0</string>
-            <key>CFBundlePackageType</key>
-            <string>APPL</string>
-            <key>LSUIElement</key>
-            <true/>
-            <key>LSBackgroundOnly</key>
-            <true/>
-          </dict>
-          </plist>
-        '';
-      };
-
-      activation =
-        lib.optionalAttrs isDarwin {
-          registerForgeJupyterApp = lib.hm.dag.entryAfter ["linkGeneration"] ''
-            app="$HOME/Applications/Forge Jupyter.app"
-            lsregister="/System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/LaunchServices.framework/Versions/A/Support/lsregister"
-            if [ -d "$app" ] && [ -x "$lsregister" ]; then
-              "$lsregister" -f "$app" || true
-            fi
-          '';
-        }
-        // {
-          ensureForgeJupyterToken = lib.hm.dag.entryAfter ["linkGeneration"] ''
-            token_file=${lib.escapeShellArg forgeJupyterTokenFile}
-            mkdir -p "$(dirname "$token_file")"
-            if [ ! -s "$token_file" ]; then
-              # mktemp in the target directory: unpredictable name, same-filesystem rename.
-              tmp_file="$(umask 077; mktemp "$token_file.XXXXXX")"
-              printf 'export JUPYTER_TOKEN=%s\n' "$(${pkgs.openssl}/bin/openssl rand -hex 32)" >"$tmp_file"
-              chmod 600 "$tmp_file"
-              mv -f "$tmp_file" "$token_file"
-            fi
-            chmod 600 "$token_file"
-          '';
-
-          ensureForgeJupyterRootDir = lib.hm.dag.entryAfter ["linkGeneration"] ''
-            ${pkgs.coreutils}/bin/install -d -m 700 ${lib.escapeShellArg forgeJupyterRootDir}
-          '';
-        };
-    };
-
-    # Persistent Jupyter rides a supervisor on both hosts: launchd on Darwin, a lingering systemd user service on Linux.
-    # KeepAlive implies launch-at-load; Interactive classification exempts user-facing kernel compute from Background throttling per launchd.plist(5).
-    launchd.agents.forge-jupyter = {
-      enable = true;
-      config = {
-        Label = "com.parametric-forge.forge-jupyter";
-        ProgramArguments = ["${forgeJupyter}/bin/forge-jupyter"];
-        WorkingDirectory = forgeJupyterRootDir;
-        EnvironmentVariables = {
-          FORGE_PROVISION_ROOT = forgeJupyterRootDir;
-        };
-        KeepAlive = true;
-        ThrottleInterval = 30;
-        ProcessType = "Interactive";
-        AbandonProcessGroup = false;
-        ExitTimeOut = 30;
-        StandardOutPath = "${config.home.homeDirectory}/Library/Logs/forge-jupyter.log";
-        StandardErrorPath = "${config.home.homeDirectory}/Library/Logs/forge-jupyter.log";
-        AssociatedBundleIdentifiers = ["com.parametric-forge.forge-jupyter"];
-      };
-    };
-  }
-  # Static host gate: top-level attr names must never depend on pkgs (fixpoint).
-  // lib.optionalAttrs (host.os == "nixos") {
-    systemd.user.services.forge-jupyter = {
-      Unit.Description = "Forge JupyterLab (loopback, token-gated)";
-      Service = {
-        ExecStart = "${forgeJupyter}/bin/forge-jupyter";
-        WorkingDirectory = forgeJupyterRootDir;
-        Environment = ["FORGE_PROVISION_ROOT=${forgeJupyterRootDir}"];
-        Restart = "always";
-        RestartSec = 30;
-      };
-      Install.WantedBy = ["default.target"];
-    };
-  }
+in {
+  home.packages =
+    [
+      gfortranTool
+    ]
+    ++ scientificProfileNativeLibs
+    ++ scientificRuntimeTools
+    ++ [
+      forgeScientificEnv
+      forgeScientificSync
+    ];
+}

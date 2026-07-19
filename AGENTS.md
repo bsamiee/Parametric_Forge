@@ -10,12 +10,13 @@
 - Runtime routing — Apple Container runs single isolated OCI run/build, `container machine`, and per-container-VM benchmarking.
 - Runtime routing — Kubernetes stays on the kubectl/kind/helm chain; Apple Container is not a Kubernetes owner.
 - `~/.codex` is the sole Codex configuration home; no file in this repository is Codex configuration source of truth. Repo `.claude/` state serves the Claude harness, and this file carries policy, never configuration.
+- Open the memory index at `~/.claude/projects/-Users-bardiasamiee-Documents-99-Github-Parametric-Forge/memory/MEMORY.md` before module, launchd, propagation, or provisioning work — memories carry machine laws and estate gotchas the docs corpus omits.
 
 ## [02]-[ESTATE_PROPAGATION]
 
 - `.claude/hooks/` and `.claude/scripts/` are Forge-mastered: fixes land here first, then byte-copy to the sibling repos, `~/.claude/`, and `~/.codex/`. `.claude/hooks/setup-env.sh` is the canonical SessionStart hook, byte-identical everywhere it lands.
 - Every other estate surface carries no master: a change to `.claude/skills/` or `.claude/agents/` in any project byte-copies to the other two regardless of where it was edited, and skills additionally byte-copy to `~/.codex/skills/`. Claude-caller skills such as `codex` stay out of `~/.codex/skills/` to prevent recursive triggering; never build sync tooling.
-- The byte-copied set spans `.claude/{skills,hooks,scripts,agents}`, `commands/docs.md`, `docs/stacks/{python,typescript}/`, and the three prose standards (`information-structure`, `formatting`, `style-guide`); every copy is byte-identical across the repos where the surface exists.
+- The byte-copied set spans `.claude/{skills,hooks,scripts,agents}`, `commands/`, `docs/stacks/{python,typescript}/`, and the three prose standards (`information-structure`, `formatting`, `style-guide`); every copy is byte-identical across the repos where the surface exists.
 
 ## [03]-[NIX_SHELL_EXECUTION]
 
@@ -27,8 +28,8 @@
 ## [04]-[PROVISIONING_AND_LAUNCHERS]
 
 - The `forge-provision` mechanism — packaged executable, campaign entry, rename-over-shim policy, DB-tooling ownership, schema-v3 JSON contract — is owned by `CLAUDE.md`; provisioning stays noninteractive for agents by contract.
-- MCP and server launchers are Home Manager-installed wrappers: the `forge-*-mcp` fleet wrappers project from `modules/home/programs/shell-tools/mcp-launchers.nix` rows, while `forge-ifcmcp`, `forge-jupyter` (persistent JupyterLab LaunchAgent on loopback `127.0.0.1:8888`), and `forge-jupyter-mcp` live in `modules/home/programs/languages/scientific-tools.nix` and `nuget-mcp` in `modules/home/programs/languages/dev-tools.nix`.
-- Sibling-repo `ifc`/`jupyter`/`nuget` skills and MCP configs invoke these launchers; launcher behavior is fixed here, never in a sibling repo.
+- MCP and server launchers are Home Manager-installed wrappers: the `forge-*-mcp` fleet wrappers project from `modules/home/programs/shell-tools/mcp-launchers.nix` rows, while `nuget-mcp` lives in `modules/home/programs/languages/dev-tools.nix`.
+- Sibling-repo `nuget` skill and MCP configs invoke this launcher; launcher behavior is fixed here, never in a sibling repo.
 
 ## [05]-[AGENT_RUNTIME]
 

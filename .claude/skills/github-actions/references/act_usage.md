@@ -2,7 +2,7 @@
 
 ## [01]-[GATE]
 
-`gha` fronts the local chain: `gha check [PATH...]` runs actionlint, zizmor, and ratchet over discovered workflow files as one envelope (`--json` for machine rows; exit 1 on findings, 2 on usage), `gha pin` rewrites mutable `uses:` refs to SHAs, `gha run [-j JOB] [-e EVENT.json] [ARGS...]` rides act on the deployed runner images, and `gha events` lists simulatable events. The sections below carry per-tool depth.
+`gha` fronts the local chain: `gha check [PATH...]` runs actionlint, zizmor, and ratchet over discovered workflow files as one envelope (`--json` for machine rows; exit 1 on findings, 2 on usage), `gha pin` rewrites mutable `uses:` refs to SHAs, `gha run [-j JOB] [-e EVENT.json] [ARGS...]` rides act on the deployed runner images, and `gha events` lists simulatable events. Each section below carries per-tool depth.
 
 ## [02]-[ACTIONLINT]
 

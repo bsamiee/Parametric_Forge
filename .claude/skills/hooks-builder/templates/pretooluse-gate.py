@@ -7,7 +7,7 @@
 # ruff: noqa: BLE001, DOC201, S108
 """Gate a PreToolUse call: admit once, decompose each command to leaves, dispatch per argv[0] on a semantic table, fail closed by construction.
 
-Wire: PreToolUse matcher "Bash|Edit|Write" (Codex "Bash|apply_patch"). The POLICY tables are the edit surface.
+Wire: PreToolUse matcher "Bash|Edit|Write|NotebookEdit" (Codex "Bash|apply_patch"). The POLICY tables are the edit surface.
 Boundary kernel: os.environ/os.getcwd/subprocess are admitted here per the scripting boundary-kernel carve-out. The ASK stdout-JSON
 branch is Claude-only dialect; under Codex the adapter maps it, so a dual-provider wiring routes this body through codex-adapter.sh.
 """
@@ -30,8 +30,6 @@ _BACKTICK = re.compile(r"`([^`]*)`")  # backtick substitution; the inner command
 CTRL = re.compile(r"[\x00-\x1f\x7f]+")  # scrub control chars from untrusted text before it reaches a terminal-facing reason
 _PATCH_TARGET = re.compile(r"^\*\*\* (?:Add|Update|Delete|Move to) File: (.+)$", re.MULTILINE)  # apply_patch envelope target paths
 
-PROJECT_ROOT = PurePosixPath(os.environ.get("CLAUDE_PROJECT_DIR", os.getcwd()))
-PROJECT_REAL = Path(os.environ.get("CLAUDE_PROJECT_DIR", os.getcwd())).resolve()  # symlink-resolved root for file-tool checks
 HOME = PurePosixPath(os.environ.get("HOME", "/nonexistent"))
 WRAPPERS = frozenset(("sudo", "doas", "env", "command", "nice", "nohup", "stdbuf", "timeout", "xargs"))
 SHELLS = frozenset(("sh", "bash", "zsh", "dash", "ksh"))
@@ -63,9 +61,15 @@ class ToolInput(msgspec.Struct, frozen=True):
 
     command: str = ""
     file_path: str = ""
+    notebook_path: str = ""  # NotebookEdit names its target here, never file_path
     old_string: str = ""
     new_string: str = ""
     content: str = ""
+
+    @property
+    def target(self) -> str:
+        """Resolve the one edited path across the file tools' divergent field names."""
+        return self.file_path or self.notebook_path
 
 
 class PreToolUse(msgspec.Struct, frozen=True, rename={"event": "hook_event_name"}):
@@ -73,24 +77,38 @@ class PreToolUse(msgspec.Struct, frozen=True, rename={"event": "hook_event_name"
 
     tool_name: str = ""
     tool_input: ToolInput = msgspec.field(default_factory=ToolInput)
+    cwd: str = ""  # the sandbox root, certified on both providers' stdin; the env var is Claude-only and falls back to os.getcwd()
     event: str = ""
 
 
-def _canonical(target: str, /) -> PurePosixPath:
+class Roots(msgspec.Struct, frozen=True):
+    """Sandbox roots for one call: pure-lexical for canonicalization, symlink-resolved for file-tool checks."""
+
+    pure: PurePosixPath
+    real: Path
+
+
+def _sandbox(cwd: str, /) -> Roots:
+    """Derive the sandbox from the payload cwd; the env var serves only a payload that omits it, never as the primary root."""
+    base = cwd or os.environ.get("CLAUDE_PROJECT_DIR") or os.getcwd()
+    return Roots(PurePosixPath(base), Path(base).resolve())
+
+
+def _canonical(target: str, roots: Roots, /) -> PurePosixPath:
     """Resolve ~/.. against project and home roots without touching the filesystem."""
     raw = target.replace("$HOME", str(HOME)).replace("${HOME}", str(HOME))  # noqa: RUF027 — literal shell tokens, not f-strings
     expanded = str(HOME) if raw in {"~", "~/"} else (str(HOME) + raw[1:] if raw.startswith("~/") else raw)  # bare ~ -> HOME
-    path = PurePosixPath(expanded) if expanded.startswith("/") else PROJECT_ROOT / expanded
+    path = PurePosixPath(expanded) if expanded.startswith("/") else roots.pure / expanded
     stack: list[str] = []
     for part in path.parts:
         stack.pop() if part == ".." and stack[1:] else None if part in {".", ".."} else stack.append(part)
     return PurePosixPath(*stack)
 
 
-def _escapes(path: str, /) -> bool:
+def _escapes(path: str, roots: Roots, /) -> bool:
     """Report whether a path escapes the sandbox; real-resolve follows symlinks out, pure-canon covers a missing path."""
-    target = Path(path) if Path(path).is_absolute() else PROJECT_REAL / path
-    return not (target.resolve().is_relative_to(PROJECT_REAL) and _canonical(path).is_relative_to(PROJECT_ROOT))
+    target = Path(path) if Path(path).is_absolute() else roots.real / path
+    return not (target.resolve().is_relative_to(roots.real) and _canonical(path, roots).is_relative_to(roots.pure))
 
 
 def _subs(command: str, /) -> tuple[str, list[str]]:
@@ -148,7 +166,7 @@ def _flag_operand(argv: list[str], letter: str, /) -> str:
     return next((argv[i + 1] for i, t in enumerate(argv) if t.startswith("-") and not t.startswith("--") and letter in t and i + 1 < len(argv)), "")
 
 
-def _classify_rm(argv: list[str], /) -> Ruling:
+def _classify_rm(argv: list[str], roots: Roots, /) -> Ruling:
     """Rule on an rm invocation by recursion/force flags against danger, temp, and project roots."""
     flags = "".join(t[1:] for t in argv if t.startswith("-") and not t.startswith("--"))
     targets = [t for t in argv[1:] if not t.startswith("-")]
@@ -157,10 +175,10 @@ def _classify_rm(argv: list[str], /) -> Ruling:
     for target in targets:
         if any(ch in target for ch in "$`*"):
             return Ruling(Verdict.DENY, f"rm target {CTRL.sub(' ', target)!r} is dynamic or globbed; unverifiable")
-        canon = _canonical(target)
-        if canon in DANGER_ROOTS or canon == PROJECT_ROOT:
+        canon = _canonical(target, roots)
+        if canon in DANGER_ROOTS or canon == roots.pure:
             return Ruling(Verdict.DENY, f"rm -rf targets {CTRL.sub(' ', str(canon))}; catastrophic")
-        if not any(canon.is_relative_to(root) for root in (*TEMP_ROOTS, PROJECT_ROOT)):
+        if not any(canon.is_relative_to(root) for root in (*TEMP_ROOTS, roots.pure)):
             return Ruling(Verdict.ASK, f"rm -rf {CTRL.sub(' ', str(canon))} lands outside project and temp roots")
     return Ruling()
 
@@ -176,7 +194,7 @@ GIT_BLOCK: dict[str, tuple[str, ...]] = {  # POLICY: subcommand -> flag fragment
 }
 
 
-def _classify_git(argv: list[str], /) -> Ruling:
+def _classify_git(argv: list[str], _roots: Roots, /) -> Ruling:
     """Rule on a git invocation whose subcommand plus flags would discard work."""
     sub = next((t for t in argv[1:] if not t.startswith("-")), "")
     fragments = GIT_BLOCK.get(sub, ())
@@ -187,50 +205,51 @@ def _classify_git(argv: list[str], /) -> Ruling:
     )
 
 
-ANALYZERS: dict[str, Callable[[list[str]], Ruling]] = {"rm": _classify_rm, "git": _classify_git}  # POLICY: argv[0] -> analyzer
+ANALYZERS: dict[str, Callable[[list[str], Roots], Ruling]] = {"rm": _classify_rm, "git": _classify_git}  # POLICY: argv[0] -> analyzer
 
 
-def _classify(argv: list[str], /) -> Ruling:
+def _classify(argv: list[str], roots: Roots, /) -> Ruling:
     """Dispatch one argv leaf to its analyzer, denying opaque interpreters and blocked commands."""
     if argv[0] == "\0interp":
         return Ruling(Verdict.DENY, "inline interpreter one-liner is opaque; denied by default")  # fail-closed, never a keyword denylist
     if analyzer := ANALYZERS.get(PurePosixPath(argv[0]).name):
-        return analyzer(argv)
+        return analyzer(argv, roots)
     name = PurePosixPath(argv[0]).name
     return Ruling(Verdict.DENY, BLOCKED_ARGV[name]) if name in BLOCKED_ARGV else Ruling()
 
 
-def _bash(tool_input: ToolInput, /) -> Ruling:
+def _bash(tool_input: ToolInput, roots: Roots, /) -> Ruling:
     """Rule on a Bash tool call by its first non-allow leaf."""
-    return next((r for leaf in _leaves(tool_input.command) if (r := _classify(leaf)).verdict is not Verdict.ALLOW), Ruling())
+    return next((r for leaf in _leaves(tool_input.command) if (r := _classify(leaf, roots)).verdict is not Verdict.ALLOW), Ruling())
 
 
-def _file(tool_input: ToolInput, /) -> Ruling:
+def _file(tool_input: ToolInput, roots: Roots, /) -> Ruling:
     """Rule on a file tool call against protected basenames and sandbox escape."""
-    name = PurePosixPath(tool_input.file_path).name
+    name = PurePosixPath(tool_input.target).name
     if name in PROTECTED:
         return Ruling(Verdict.DENY, f"{CTRL.sub(' ', name)} is a protected secret file")
-    return Ruling(Verdict.DENY, "path escapes the project sandbox") if _escapes(tool_input.file_path) else Ruling()
+    return Ruling(Verdict.DENY, "path escapes the project sandbox") if _escapes(tool_input.target, roots) else Ruling()
 
 
-def _apply_patch(tool_input: ToolInput, /) -> Ruling:
+def _apply_patch(tool_input: ToolInput, roots: Roots, /) -> Ruling:
     """Rule on an apply_patch call by sandbox-checking each target in the patch envelope; no readable target denies fail-closed."""
     targets = [t.strip() for t in _PATCH_TARGET.findall(tool_input.command or tool_input.content)]
     if not targets:
         return Ruling(Verdict.DENY, "apply_patch carries no readable target path; denied by default")  # never an empty file_path allow
-    hit = next((t for t in targets if PurePosixPath(t).name in PROTECTED or _escapes(t)), "")
+    hit = next((t for t in targets if PurePosixPath(t).name in PROTECTED or _escapes(t, roots)), "")
     return Ruling(Verdict.DENY, f"apply_patch target {CTRL.sub(' ', hit)} is protected or escapes the sandbox") if hit else Ruling()
 
 
 def _decide(payload: PreToolUse, /) -> Ruling:
-    """Route a payload to its per-tool ruling; apply_patch reads its target from the patch body, never an absent file_path."""
+    """Route a payload to its per-tool ruling under the payload-derived sandbox; apply_patch reads its target from the patch body."""
+    roots = _sandbox(payload.cwd)
     match payload.tool_name:
         case "Bash":
-            return _bash(payload.tool_input)
-        case "Edit" | "Write" | "MultiEdit":
-            return _file(payload.tool_input)
+            return _bash(payload.tool_input, roots)
+        case "Edit" | "Write" | "NotebookEdit":
+            return _file(payload.tool_input, roots)
         case "apply_patch":
-            return _apply_patch(payload.tool_input)
+            return _apply_patch(payload.tool_input, roots)
         case _:
             return Ruling()
 

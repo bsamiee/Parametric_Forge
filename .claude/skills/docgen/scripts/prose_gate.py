@@ -26,6 +26,7 @@ type Align = Literal["center", "left", "right", "none"]
 
 
 class Check(StrEnum):
+    ARTICLE_OPENER = "article-opener"
     BOLD_EMPHASIS = "bold-emphasis"
     COLLECT = "collect"
     COMMENT_RUNT = "comment-runt"
@@ -52,6 +53,7 @@ class Check(StrEnum):
     LIST_MARKER = "list-marker"
     LIST_WRAP = "list-wrap"
     META_PHRASE = "meta-phrase"
+    NO_OP_WORD = "no-op-word"
     PROSE_WRAP = "prose-wrap"
     READ = "read"
     SECTION_DIVIDER = "section-divider"
@@ -128,6 +130,8 @@ TEACHING = frozenset({"templates", "examples", "assets"})
 PRUNED = frozenset({".git", "node_modules", ".venv", ".cache", ".direnv", "result", "dist", "coverage", ".archive", ".history"})
 # Routing is a file class: only these filenames carry file links; a relative link anywhere else is coupling.
 ROUTING_FILES = frozenset({"README.md", "SKILL.md", "CLAUDE.md", "AGENTS.md", "MEMORY.md"})
+# Instruction files weight constraints with the closed invocation-marker family; the leader is legal there and nowhere else.
+INSTRUCTION_FILES = frozenset({"CLAUDE.md", "CLAUDE.local.md", "AGENTS.md"})
 APP = App(help="Gate and format durable markdown prose.")
 ENCODER = msgspec.json.Encoder()
 
@@ -141,6 +145,29 @@ DIVIDER_BODY = re.compile(r"^\[(?P<label>[A-Z][A-Z0-9_]*)\](?P<tail>.*)$")
 DIVIDER_LOOSE = re.compile(r"^\[(?P<raw>[^\]]+)\](?P<tail>.*)$")
 CHECKBOX = re.compile(r"^\[[ xX]\]\s")
 CARD_ROW = re.compile(r"^\s*-\s+`[^`]+`\s+-\s+")
+# A named-surface leader — code span or link, optionally behind marker tokens — is the annotation's subject, so the
+# clause after its dash or colon opens with the owning verb; the definite-article opener is the dead appositive form.
+ARTICLE_ANNOTATION = re.compile(
+    r"^\s*(?:(?:[-+*]|\d+[.)])\s+)?(?:\[[^\]]*\][-\u2013\u2014]?\s*)*(?:`[^`]+`|\[[^\]]+\]\([^)\s]+\))\s*(?:[\u2013\u2014:]|-)\s+[Tt]he\s"
+)
+# A list-entry body never opens on the definite article in either case, behind a marker label or bare; an entry leads with its owner's name or verb.
+ARTICLE_FRAGMENT = re.compile(r"^\s*(?:[-+*]|\d+[.)])\s+(?:\[[A-Z][A-Z0-9_]*\](?:-\[[A-Z][A-Z0-9_]*\])*:\s+)?[Tt]he\s")
+# A sentence never opens on the definite article, which buries the owning subject one word deep. Boundary strength picks
+# its case: a line start and a true sentence end admit neither `The` nor the lowercase dodge that clears the check while
+# leaving the subject buried, and a colon, semicolon, or leader dash keeps ordinary lowercase continuation legal. Spans
+# arrive code-stripped, so a code-span lead never matches.
+SENTENCE_ARTICLE = re.compile(r"^\s*[Tt]he\b|[.!?]\s+[Tt]he\b|[:;\u2013\u2014]\s+The\b")
+# A comment is prose under the same law — fence body and source file alike — so its first word is never the article in
+# either case; lowercasing `The` to `the` clears the finding and leaves the dead form standing.
+COMMENT_ARTICLE = re.compile(r"^[Tt]he\s")
+# A fence tag names the marker its full-line comments carry, so a fence body answers the comment law its language spells.
+FENCE_MARKERS: dict[str, str] = (
+    dict.fromkeys(("python", "py", "bash", "sh", "shell", "zsh", "nix", "toml", "jq", "yaml", "yml", "ruby"), "#")
+    | dict.fromkeys(
+        ("csharp", "cs", "typescript", "ts", "tsx", "javascript", "js", "jsx", "jsonc", "rust", "go", "java", "kotlin", "swift", "cpp"), "//"
+    )
+    | dict.fromkeys(("lua", "sql", "haskell", "elm"), "--")
+)
 # Doc-comment glyphs bind only marker-adjacent (`///`, `//!`, `#!`, `--[[`, `#:schema`, `//#region`); a spaced glyph opens prose.
 COMMENT_GLYPH = re.compile(r"[!/@:#\[-]")
 # Tool pragmas count as structural only in pragma spelling — a bare tool name opening prose stays countable.
@@ -157,7 +184,7 @@ EXAMPLE_LINE = re.compile(
 )
 # Any-indent fences: list-nested fences open at the item's content column; close indent is bounded at the check site.
 FENCE = re.compile(r"^(?P<indent>[ \t]*)(?P<marker>`{3,}|~{3,})(?P<info>.*)$")
-# The 2600-27BF block covers warning/exclamation/info pictographs; the arrow blocks stay legal for codemap glyphs.
+# Block 2600-27BF covers warning/exclamation/info pictographs; the arrow blocks stay legal for codemap glyphs.
 EMOJI = re.compile(r"[\U0001F000-\U0001FAFF\u2600-\u27BF\u2B50\u2139\uFE0F]")
 PROMPT_LINE = re.compile(r"^\s*(?:\$|\u276F|PS>)\s+\S")
 GROUP_LABEL = re.compile(r"^\[[A-Z][A-Z0-9_]*\]:\s*$")
@@ -170,6 +197,8 @@ HEADER_CELL = re.compile(r"^\[[A-Z][A-Z0-9_]*\]$")
 HEADING = re.compile(r"^(?P<level>#{1,6})\s+(?P<title>.+?)\s*$")
 LIST_ITEM = re.compile(r"^(?P<indent>\s*)(?P<mark>[-+*]|\d+[.)])\s+(?P<body>\S.*)$")
 LIST_LEADER = re.compile(r"^\s*(?:[-+*]|\d+[.)])\s+\[(?:\d{2}(?:\.\d+)?(?:-[A-Z0-9_]+)?|[A-Z0-9_]+|[OX!~ ])\](?:\s+[—-]|[-:]\s*|:)")
+# An invocation-marker leader weights the imperative following it directly — no colon, no dash — per the formatting standard's closed family.
+INVOCATION_LEADER = re.compile(r"^\s*[-+*]\s+\[(?:ALWAYS|NEVER|IMPORTANT|CRITICAL)\]\s+\S")
 # A `- Field: value` record field answers to the earned-field law at card altitude; the entry budget binds peer bullets.
 FIELD_LINE = re.compile(r"^[A-Z][A-Za-z-]*(?: [A-Za-z-]+){0,2}: \S")
 # Hard-wrap detection: a flush-left prose line whose predecessor is also flush-left prose; structural leads are excluded.
@@ -219,7 +248,7 @@ SELF_COUNT = re.compile(
     r"|tests|checks|steps|entries|forms|tiers|bands|devices|archetypes|templates|references|tables|diagrams|cards"
     r"|rows|columns|tokens|markers|vocabularies)\b"
 )
-# The lookahead spares dotted-quad network literals; the lookbehind blocks interior re-matches inside them.
+# Its lookahead spares dotted-quad network literals; the lookbehind blocks interior re-matches inside them.
 VERSION_ANCHOR = re.compile(r"(?<![\d.])\b(?!(?:\d{1,3}\.){3}\d{1,3}\b)v?\d+\.\d+(?:\.\d+)+\b|\b\d+\.\d+(?:\.\d+)?\+|\bv\d+\.\d+\b")
 # A bare major band anchored to a capitalized product token: the `<Product> NN+` compatibility floor.
 VERSION_BAND = re.compile(r"\b[A-Z][A-Za-z]*\s+\d{1,3}\+(?!\+)")
@@ -234,6 +263,13 @@ FRESHNESS_DEICTIC = re.compile(r"\b(?:currently|recently|nowadays|at\s+present|t
 WEAK_VERB = re.compile(r"\b(?:supports|provides|offers|allows|enables)\b", re.IGNORECASE)
 # Soft-preference and discourse hedges warn: `prefer` names a legitimate default across the estate, so review adjudicates each.
 SOFT_HEDGE = re.compile(r"\b(?:however|prefer(?:s|red|ably)?|etc)\b", re.IGNORECASE)
+# Grade and intensity words warn: each grades a fact the fact already carries, and deleting one costs no law. Roster
+# admits only the unambiguous — a domain term the corpus owns (`robust` predicates) and a contrastive `merely` stay legal.
+NO_OP_WORD = re.compile(
+    r"\b(?:simply|very|really|quite|basically|essentially|seamless(?:ly)?|effortless(?:ly)?|cutting-edge"
+    r"|state-of-the-art|best-in-class|world-class|powerful|utiliz(?:e|es|ed|ing)|comprehensive)\b",
+    re.IGNORECASE,
+)
 PATTERNS: tuple[tuple[Check, re.Pattern[str], Status], ...] = (
     (Check.HEDGE, HEDGE_WORDS, "fail"),
     (Check.HEDGE, MARKER_WORDS, "fail"),
@@ -246,6 +282,8 @@ PATTERNS: tuple[tuple[Check, re.Pattern[str], Status], ...] = (
     (Check.WEAK_VERB, WEAK_VERB, "warn"),
     (Check.HEDGE, SOFT_HEDGE, "warn"),
     (Check.EM_DASH, EM_DASH_ASCII, "fail"),
+    (Check.ARTICLE_OPENER, SENTENCE_ARTICLE, "fail"),
+    (Check.NO_OP_WORD, NO_OP_WORD, "warn"),
 )
 
 
@@ -484,7 +522,8 @@ def lex(path: Path, text: str, cap: int) -> tuple[Document, tuple[Row, ...]]:
     mermaid_access = True
     plain_run = False
     last_rubric = ""
-    pointered = path.name not in ROUTING_FILES and "templates" not in path.parts and not teaching(path)
+    template = "templates" in path.parts
+    pointered = path.name not in ROUTING_FILES and not template and not teaching(path)
     n = 0
     while n < len(raw):
         number, line = n + 1, raw[n]
@@ -499,7 +538,6 @@ def lex(path: Path, text: str, cap: int) -> tuple[Document, tuple[Row, ...]]:
             plain_run = False
             marker, info = matched.group("marker"), matched.group("info").strip()
             tokens = info.lower().split()
-            template = "templates" in path.parts
             if not info:
                 rows.append(row(path, number, Check.FENCE_LANGUAGE, "fail", "opening fence has no language tag"))
             elif template:
@@ -537,6 +575,12 @@ def lex(path: Path, text: str, cap: int) -> tuple[Document, tuple[Row, ...]]:
                 rows.append(
                     row(path, number, Check.FENCE_INTENT, "fail", "prompt-led command rides an output-only fence; the body is a run instruction")
                 )
+            if fence is not None and (mark := FENCE_MARKERS.get(info.split()[0] if info else "", "")):
+                commented = line.strip()
+                if commented.startswith(mark) and COMMENT_ARTICLE.match(commented.removeprefix(mark).lstrip()):
+                    rows.append(
+                        row(path, number, Check.ARTICLE_OPENER, "fail", "fence comment opens on 'the'; lead with the constraint's owner or verb")
+                    )
             n += 1
             continue
         if path.name == "README.md" and CARD_ROW.match(line) and len(line) > cap:
@@ -579,6 +623,15 @@ def lex(path: Path, text: str, cap: int) -> tuple[Document, tuple[Row, ...]]:
         if line.lstrip().startswith("|"):
             rows.append(row(path, number, Check.TABLE_SEVERED, "fail", "table row stranded outside a grid"))
         links.extend(LinkRef(number, link.group(2)) for link in LINK.finditer(re.sub(r"`[^`]*`", "", line)))
+        if not template and not EXAMPLE_LINE.match(line):
+            if ARTICLE_ANNOTATION.match(line):
+                rows.append(
+                    row(
+                        path, number, Check.ARTICLE_OPENER, "fail", "annotation opens on 'the'; the leader is the subject — open with its owning verb"
+                    )
+                )
+            elif ARTICLE_FRAGMENT.match(line):
+                rows.append(row(path, number, Check.ARTICLE_OPENER, "fail", "entry opens on 'the'; lead with the owner's name or an owning verb"))
         if item := LIST_ITEM.match(line):
             if item.group("mark") in "*+":
                 rows.append(row(path, number, Check.LIST_MARKER, "fail", f"bullet marker {item.group('mark')} where - is the only legal marker"))
@@ -806,7 +859,7 @@ def prose_rows(doc: Document) -> tuple[Row, ...]:
         rows.extend(row(doc.path, span.line, Check.GLYPH_BAN, "fail", f"banned glyph {hit.group(0)!r}") for hit in EMOJI.finditer(span.text))
         voiced = QUOTED_SPAN.sub(" ", span.text)
         rows.extend(
-            row(doc.path, span.line, check, status, hit.group(0).lstrip(".!? "))
+            row(doc.path, span.line, check, status, hit.group(0).lstrip(".!?:; "))
             for check, pattern, status in PATTERNS
             for hit in pattern.finditer(voiced)
             if not (check is Check.VERSION_ANCHOR and CITATION_LEAD.search(voiced[: hit.start()]))
@@ -817,12 +870,19 @@ def prose_rows(doc: Document) -> tuple[Row, ...]:
 def list_rows(doc: Document) -> tuple[Row, ...]:
     if doc.template:
         return ()
+    parts = Path(doc.path).parts
+    instruction = Path(doc.path).name in INSTRUCTION_FILES or "rules" in parts
     rows: list[Row] = []
     for entry in doc.lists:
         card = ROUTER_CARD.match(f"- {entry.text}")
         if card is not None and f"- {entry.text}" != carded(card):
             rows.append(row(doc.path, entry.line, Check.LIST_LEADER, "fail", f"router card deviates from - [NN]-[TOKEN](path): {entry.text[:50]}"))
-        elif entry.text.startswith("[") and not CHECKBOX.match(entry.text) and not LIST_LEADER.match(f"- {entry.text}"):
+        elif (
+            entry.text.startswith("[")
+            and not CHECKBOX.match(entry.text)
+            and not LIST_LEADER.match(f"- {entry.text}")
+            and not (instruction and INVOCATION_LEADER.match(f"- {entry.text}"))
+        ):
             rows.append(row(doc.path, entry.line, Check.LIST_LEADER, "fail", entry.text.split(":", 1)[0]))
         if entry.span_share < ROSTER_SPAN_SHARE and not entry.text.startswith("`") and FIELD_LINE.match(entry.text) is None:
             sentences = len(SENTENCE_END.findall(entry.prose))
@@ -918,7 +978,7 @@ def comment_rows(path: Path, text: str) -> tuple[Row, ...]:
     for number, line in enumerate(text.splitlines(), 1):
         body = line.strip()
         if not body.startswith(marker):
-            # The leading zones survive the shebang (`#!` opens every marker language's line 1) and interior blanks.
+            # Leading zones survive the shebang (`#!` opens every marker language's line 1) and interior blanks.
             close()
             if body and not (number == 1 and body.startswith("#!")):
                 zone = "body"
@@ -945,6 +1005,8 @@ def comment_rows(path: Path, text: str) -> tuple[Row, ...]:
             close()
             continue
         rows.extend(row(path, number, Check.HEDGE, "warn", hit.group(0)) for hit in MARKER_WORDS.finditer(tail))
+        if COMMENT_ARTICLE.match(tail):
+            rows.append(row(path, number, Check.ARTICLE_OPENER, "fail", "comment opens on 'the'; lead with the constraint's owner or verb"))
         run.append((number, width))
     close()
     return tuple(rows)

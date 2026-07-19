@@ -28,17 +28,18 @@ A single-bucket request in a directory with no Pulumi project is an L1 task — 
 
 Level choice requires knowing what is already on disk: inspect the filesystem first, and in a restricted context ask before any Pulumi command runs — a command that requires a login silently provisions a new agent account parallel to one the operator already owns.
 
+An uncertain CLI flag, command shape, or resource property is looked up, never guessed: `npx pulumi <command> --help` documents every flag from the CLI itself; the full reference, provider catalog, and conceptual docs live at https://www.pulumi.com/docs and https://www.pulumi.com/registry/.
+
 ## [01]-[ROUTING]
 
-- [01]-[CLI_OPERATIONS](references/cli-operations.md): L1 command shape, property input files, `pulumi package info` discovery, output contracts, cross-resource value passing, and `pulumi import` graduation.
-- [02]-[BEST_PRACTICES](references/best-practices.md): `Output<T>` and `apply()` law, passing outputs as inputs, secrets hygiene, refactor aliases, preview discipline, and CI wiring before any non-trivial program.
+- [01]-[CLI_OPERATIONS](references/cli-operations.md): driving one-off resource work from the CLI, and graduating it into a program.
+- [02]-[BEST_PRACTICES](references/best-practices.md): laws every non-trivial program obeys before it runs.
 - [03]-[COMPONENTS](references/components.md): `ComponentResource` anatomy, args interface design, multi-language packaging, and distribution.
 - [04]-[AUTOMATION_API](references/automation-api.md): embedding Pulumi in a program, multi-stack orchestration, and inline versus local programs.
-- [05]-[DEBUGGING](references/debugging.md): reading a failed `up` or `preview` from Pulumi Cloud's record, tracing the cause, and placing the fix.
 
 ## [02]-[ONE_SHOT_OPERATIONS]
 
-`pulumi do` runs one-shot, stateless resource operations against any provider — no project files, no `${...}` wiring, no Pulumi state. The canonical invocation is `npx pulumi <command>`; `npx pulumi version` confirms availability without touching Pulumi Cloud, and the resource verbs require CLI `v3.243.0` or newer.
+`pulumi do` runs one-shot, stateless resource operations against any provider — no project files, no `${...}` wiring, no Pulumi state. `npx pulumi <command>` is the canonical invocation and the only one carrying a CLI new enough for the resource verbs — the PATH `pulumi` predates them. `npx pulumi version` confirms availability without touching Pulumi Cloud.
 
 ```text
 pulumi do <pkg:mod:type> create [flags]
@@ -92,6 +93,40 @@ npx pulumi stack schedule new --kind drift --cron "0 0 * * *"
 
 A provider with OIDC federation vends cloud credentials through it rather than static keys in environment YAML. A schedule is standing automation that outlives the session — confirm operation, cadence, and stack with the operator first, and default to detection-only: `--kind drift --auto-remediate` and `--kind ttl` act without a human in the loop.
 
-## [05]-[REFERENCE]
+## [05]-[DEBUGGING]
 
-An uncertain CLI flag, command shape, or resource property is looked up, never guessed: `npx pulumi <command> --help` documents every flag from the CLI itself; the full reference, provider catalog, and conceptual docs live at https://www.pulumi.com/docs and https://www.pulumi.com/registry/.
+A failed `pulumi up` or `pulumi preview` already recorded its error; debugging reads that record, traces the cause, and places the fix — nothing reruns to reproduce. Every read command reaches Pulumi Cloud through `pulumi api`, addressing a stack by explicit `{orgName}/{projectName}/{stackName}` path, so the stack need not be selected locally to read its record; selection matters only when applying the fix.
+
+### [05.1]-[IDENTIFY_THE_OPERATION]
+
+An operation arrives as org, project, stack, and an update version or preview id — usually in prose ("debug update 161 of vvm-dev"). Missing fields fill from context: the selected stack (`pulumi stack --show-name`, `pulumi stack ls`) or `Pulumi.yaml`; a missing version means the most recent update. Confirm the landed-on operation — version or preview id and stack — with the operator before reading further.
+
+When nothing identifies the operation, the target is the operator's most recent one. Update lists never record who ran each update, so identity resolves through the API: `pulumi whoami` gives the login; `pulumi api /api/stacks/{orgName}/{projectName}/{stackName}/updates/latest` gives the latest update and its `requestedBy.githubLogin`; on mismatch, walk back one version at a time via `/updates/<n>` until the login matches. State which operation was landed on — version, kind, result — and confirm before going further.
+
+### [05.2]-[READ_WHAT_FAILED]
+
+Failed updates and failed previews both record engine events; the error lives in the diagnostic messages inside them.
+
+```bash template
+# Failed update — by version number
+pulumi api /api/stacks/{orgName}/{projectName}/{stackName}/update/<version>/events \
+  | jq -r '.events[].diagnosticEvent | select(. != null) | "[\(.severity)] \(.message)"' \
+  | sed 's/<{%reset%}>//g'
+
+# Failed preview — by preview id
+pulumi api /api/stacks/{orgName}/{projectName}/{stackName}/preview/<preview-id>/events \
+  | jq -r '.events[].diagnosticEvent | select(. != null) | "[\(.severity)] \(.message)"' \
+  | sed 's/<{%reset%}>//g'
+```
+
+Every message matters, not only `severity == "error"`: a provider error carries the `error` tag, but a program error — the common case when a preview fails — arrives as a stderr diagnostic tagged `info#err`. A trailing `sed` strips the terminal color codes Pulumi embeds.
+
+### [05.3]-[PLACE_THE_FIX]
+
+An operation can fail with errors from more than one resource: read all diagnostics first, then trace each error to the resource that raised it (URN and type), its declaration in the program, and the inputs feeding it. Error text names the problem kind, and the kind names where the fix belongs:
+
+- [PROGRAM]: Code is wrong — a bad reference, wrong type, rejected input, or a value used before it resolved. Usual failed-preview cause: the plan never built. Fix by editing the code.
+- [STATE]: Code is correct but stored state and cloud reality disagree. Reconcile drift with `pulumi refresh`; bring an already-existing external resource under management with `pulumi import` rather than recreating it. An operation that failed partway may have already changed resources — check current state before deciding.
+- [ENVIRONMENT]: Problem sits outside Pulumi — credentials, permissions, OIDC, quota. Fix the role, the ESC environment, or the capacity the provider rejected, never the resource code.
+
+Smallest change addressing the root cause wins; confirmation and delivery of the fix follow the active mode's workflow.

@@ -12,7 +12,7 @@ Multi-stage transform pipelines, regex extraction with BASH_REMATCH, codec patte
 
 ## [01]-[TRANSFORM_PIPELINES]
 
-Each `${}` produces a new string without mutating the variable — reassignment is explicit. In a loop processing N strings with M transforms, chained PE costs 0 forks vs `sed`/`awk` costing N\*M process spawns. The `${var,,}` / `${var^^}` case transforms are locale-dependent — under `LC_CTYPE=tr_TR.UTF-8`, `${var^^}` maps `i` to `I` (dotless), not `İ`. Pin `LC_ALL=C` when ASCII-only case folding is required.
+Each `${}` produces a new string without mutating the variable — reassignment is explicit. In a loop processing N strings with M transforms, chained PE costs 0 forks vs `sed`/`awk` costing N\*M process spawns. Case transforms `${var,,}` / `${var^^}` are locale-dependent — under `LC_CTYPE=tr_TR.UTF-8`, `${var^^}` maps `i` to `I` (dotless), not `İ`. Pin `LC_ALL=C` when ASCII-only case folding is required.
 
 ```bash conceptual
 # Multi-stage path normalization: 5 transforms, 0 forks
@@ -214,7 +214,7 @@ _json_escape() {
 }
 ```
 
-`printf '%%%02X' "'${char}"` — the `'` prefix extracts the character's numeric value (POSIX `printf` extension). `${input//%/\\x}` converts all `%` to `\x` in a single expansion, then `printf '%b'` interprets `\xNN` sequences — the entire decode is one PE + one builtin. `_b64url_decode` padding restoration: base64 requires length divisible by 4; modular arithmetic restores the stripped `=` characters.
+`printf '%%%02X' "'${char}"` — extracts the character's numeric value via the `'` prefix (POSIX `printf` extension). `${input//%/\\x}` converts all `%` to `\x` in a single expansion, then `printf '%b'` interprets `\xNN` sequences — the entire decode is one PE + one builtin. `_b64url_decode` padding restoration: base64 requires length divisible by 4; modular arithmetic restores the stripped `=` characters.
 
 ## [05]-[TEMPLATE_EXPANSION]
 
@@ -259,7 +259,7 @@ _render_row() {
 }
 ```
 
-`envsubst` explicit variable list prevents unintended expansion of `$PATH`, `$HOME`, etc. `_render_from_file` exports then unexports to avoid polluting the environment. `printf` format strings over `eval`-based templates — format specifiers cannot execute code.
+`envsubst` explicit variable list prevents unintended expansion of `$PATH`, `$HOME`, and `$IFS`. `_render_from_file` exports then unexports to avoid polluting the environment. `printf` format strings over `eval`-based templates — format specifiers cannot execute code.
 
 ## [06]-[RULES]
 

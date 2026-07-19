@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+Title    : launchd-osa-agent.plist
+Purpose  : Unattended launchd user agent driving one OSA artifact: label identity, the program
+           argument vector, one trigger, stream custody, environment, and run state.
+Install  : ~/Library/LaunchAgents/LABEL.plist, then launchctl bootstrap gui/$UID against it.
+Replace  : LABEL, the ProgramArguments vector, the trigger region, the log paths, and the
+           AssociatedBundleIdentifiers row. Exactly one trigger key stays uncommented.
+-->
+<plist version="1.0">
+<dict>
+
+  <!-- Label is the job's identity across bootstrap, kickstart, and unload, and it matches the
+       file name. TCC charges every Apple event this job sends against the signed executable
+       launchd starts here, never against the script file that executable reads. -->
+  <key>Label</key>
+  <string>LABEL</string>
+
+  <!-- One executable and its literal argv; launchd runs no shell, so globs, pipes, redirections,
+       and variable expansion never resolve. A flat script path takes its interpreter as argv[0]. -->
+  <key>ProgramArguments</key>
+  <array>
+    <string>EXECUTABLE_PATH</string>
+    <string>SCRIPT_PATH</string>
+    <string>DATA_ARGUMENT</string>
+  </array>
+
+  <!-- Trigger region: one form governs. StartInterval counts seconds from the previous start and
+       coalesces missed firings into one; StartCalendarInterval fires on every omitted-key wildcard
+       match and catches up after sleep; WatchPaths fires on any change to a listed path, so a
+       drained queue directory is the watched target rather than a file the job itself rewrites. -->
+  <key>StartInterval</key>
+  <integer>3600</integer>
+  <!--
+  <key>StartCalendarInterval</key>
+  <dict>
+    <key>Hour</key><integer>9</integer>
+    <key>Minute</key><integer>0</integer>
+  </dict>
+  <key>WatchPaths</key>
+  <array>
+    <string>WATCHED_PATH</string>
+  </array>
+  -->
+
+  <!-- Stream custody: an unattended job has no terminal, so both streams land in owned files that
+       an external rotation rail truncates. stdout carries the one result envelope, stderr the
+       diagnostics, and a shared path interleaves them past any parse. -->
+  <key>StandardOutPath</key>
+  <string>STDOUT_LOG_PATH</string>
+  <key>StandardErrorPath</key>
+  <string>STDERR_LOG_PATH</string>
+
+  <!-- launchd hands the job a minimal environment; every variable the run depends on lands here.
+       The Apple Event debug taps instrument only a process launchd starts, which is the attach
+       point a Finder-launched or agent-launched artifact otherwise has no way to reach. -->
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PATH</key>
+    <string>/usr/bin:/bin:/usr/sbin:/sbin</string>
+    <key>AEDebugSends</key>
+    <string>0</string>
+    <key>AEDebugReceives</key>
+    <string>0</string>
+  </dict>
+
+  <!-- Run state. RunAtLoad fires once at bootstrap ahead of the trigger; KeepAlive false leaves a
+       finished run finished, so an exit is completion rather than a restart. ThrottleInterval is
+       the floor between two starts, and Background yields CPU and I/O to user-facing work. -->
+  <key>RunAtLoad</key>
+  <false/>
+  <key>KeepAlive</key>
+  <false/>
+  <key>ThrottleInterval</key>
+  <integer>60</integer>
+  <key>ProcessType</key>
+  <string>Background</string>
+  <key>WorkingDirectory</key>
+  <string>WORKING_DIRECTORY</string>
+
+  <!-- A GUI session job reaches window-server and per-user automation surfaces a system daemon
+       never sees; the bundle identifier row binds the job to its owning app's Login Items entry. -->
+  <key>LimitLoadToSessionType</key>
+  <string>Aqua</string>
+  <key>AssociatedBundleIdentifiers</key>
+  <array>
+    <string>BUNDLE_IDENTIFIER</string>
+  </array>
+
+</dict>
+</plist>

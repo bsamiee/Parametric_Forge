@@ -21,22 +21,26 @@
 
 ### [01.1]-[GITHUB_TOKEN_SCOPES]
 
-| [INDEX] | [SCOPE]           | [LEVELS]            | [COMMON_USE]                       |
-| :-----: | :---------------- | :------------------ | :--------------------------------- |
-|  [01]   | `actions`         | read / write / none | Manage workflow runs               |
-|  [02]   | `attestations`    | read / write / none | Build provenance, SBOM attestation |
-|  [03]   | `checks`          | read / write / none | Check runs and suites              |
-|  [04]   | `contents`        | read / write / none | Repo content, commits, releases    |
-|  [05]   | `deployments`     | read / write / none | Create/manage deployments          |
-|  [06]   | `discussions`     | read / write / none | GitHub Discussions                 |
-|  [07]   | `id-token`        | write / none        | OIDC federation (no read level)    |
-|  [08]   | `issues`          | read / write / none | Issues and comments                |
-|  [09]   | `models`          | read / none         | GitHub Models inference API        |
-|  [10]   | `packages`        | read / write / none | Upload/publish packages (GHCR)     |
-|  [11]   | `pages`           | read / write / none | GitHub Pages builds                |
-|  [12]   | `pull-requests`   | read / write / none | PRs, labels, reviews               |
-|  [13]   | `security-events` | read / write / none | Code scanning, SARIF upload        |
-|  [14]   | `statuses`        | read / write / none | Commit statuses                    |
+This roster is the permission-scope owner; `common_errors.md` routes here.
+
+| [INDEX] | [SCOPE]               | [LEVELS]            | [COMMON_USE]                       |
+| :-----: | :-------------------- | :------------------ | :--------------------------------- |
+|  [01]   | `actions`             | read / write / none | Manage workflow runs               |
+|  [02]   | `artifact-metadata`   | read / write / none | Artifact metadata queries          |
+|  [03]   | `attestations`        | read / write / none | Build provenance, SBOM attestation |
+|  [04]   | `checks`              | read / write / none | Check runs and suites              |
+|  [05]   | `contents`            | read / write / none | Repo content, commits, releases    |
+|  [06]   | `deployments`         | read / write / none | Create/manage deployments          |
+|  [07]   | `discussions`         | read / write / none | GitHub Discussions                 |
+|  [08]   | `id-token`            | write / none        | OIDC federation (no read level)    |
+|  [09]   | `issues`              | read / write / none | Issues and comments                |
+|  [10]   | `models`              | read / none         | GitHub Models inference API        |
+|  [11]   | `packages`            | read / write / none | Upload/publish packages (GHCR)     |
+|  [12]   | `pages`               | read / write / none | GitHub Pages builds                |
+|  [13]   | `pull-requests`       | read / write / none | PRs, labels, reviews               |
+|  [14]   | `repository-projects` | read / write / none | Classic repository projects        |
+|  [15]   | `security-events`     | read / write / none | Code scanning, SARIF upload        |
+|  [16]   | `statuses`            | read / write / none | Commit statuses                    |
 
 Shorthand: `permissions: read-all` / `permissions: write-all` / `permissions: {}` (deny-all). `write` implies `read` for all scopes except `id-token`.
 
@@ -54,25 +58,9 @@ Shorthand: `permissions: read-all` / `permissions: write-all` / `permissions: {}
 |  [08]   | Secret scanning   | Push protection blocks detected secrets pre-merge; up to 500 custom patterns. |
 |  [09]   | Auto-maintenance  | Ratchet and Dependabot keep pins current                                      |
 
-### [02.1]-[OIDC_FEDERATION]
+### [02.1]-[OIDC_AND_TOKENS]
 
-| [INDEX] | [PROVIDER] | [ACTION]                                | [KEY_INPUTS]                                    |
-| :-----: | :--------- | :-------------------------------------- | :---------------------------------------------- |
-|  [01]   | AWS        | `aws-actions/configure-aws-credentials` | `role-to-assume`, `aws-region`                  |
-|  [02]   | GCP        | `google-github-actions/auth`            | `workload_identity_provider`, `service_account` |
-|  [03]   | Azure      | `azure/login`                           | `client-id`, `tenant-id`, `subscription-id`     |
-
-Prerequisite: `permissions: { id-token: write }` at job level. Subject claims include repo, branch, environment for fine-grained trust policies. Short-lived tokens per session — zero rotation overhead.
-
-### [02.2]-[TOKEN_SELECTION]
-
-| [INDEX] | [TYPE]           | [SCOPE]            | [LIFETIME]   | [CROSS_REPO] | [USE_CASE]           |
-| :-----: | :--------------- | :----------------- | :----------- | :----------: | :------------------- |
-|  [01]   | `GITHUB_TOKEN`   | Current repo       | Job duration |      No      | Standard in-repo CI. |
-|  [02]   | Fine-grained PAT | Selected repos     | Up to 1 year |     Yes      | Personal automation. |
-|  [03]   | GitHub App token | Installation repos | 1 hour       |     Yes      | Org-wide automation. |
-
-[IMPORTANT] Prefer App tokens over PATs — scoped, auditable, account-independent.
+Provider matrix, detection rules, and OIDC errors live in `supply_chain.md` [02]-[OIDC_FEDERATION]. Token selection and App-token errors live in `supply_chain.md` [05]-[TOKEN_HYGIENE].
 
 ## [03]-[PERFORMANCE]
 
@@ -130,15 +118,7 @@ Larger runners (Team/Enterprise): up to 1,000 concurrent jobs; 100 GPU max.
 
 ### [03.2]-[RUNNERS]
 
-| [INDEX] | [TYPE]    | [SPEC]          | [NOTES]                                     |
-| :-----: | :-------- | :-------------- | :------------------------------------------ |
-|  [01]   | Standard  | 2 vCPU / 7 GB   | Default `ubuntu-latest`.                    |
-|  [02]   | 4-core    | 4 vCPU / 16 GB  | Team/Enterprise plans; SSD-backed.          |
-|  [03]   | 8-64-core | 8-64 vCPU       | Up to 256 GB RAM; SSD-backed.               |
-|  [04]   | GPU (T4)  | 4 vCPU / 28 GB  | Tesla T4 / 16 GB VRAM; $0.07/min.           |
-|  [05]   | ARM64     | 4 vCPU (Cobalt) | `ubuntu-24.04-arm` — free for public repos. |
-
-[IMPORTANT] ARM64 labels: `ubuntu-24.04-arm`, `ubuntu-22.04-arm`. No `-arm64` suffix — the canonical format is `-arm`. Free for public repos; Team/Enterprise for private repos.
+Labels, specs, pricing, ARM64 naming, and deprecations live in `runners.md`.
 
 ### [03.3]-[SELF_HOSTED_SCALING]
 

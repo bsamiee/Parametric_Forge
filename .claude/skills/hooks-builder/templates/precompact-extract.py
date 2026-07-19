@@ -115,11 +115,7 @@ def main() -> int:
     tmp = artifact.with_suffix(".json.tmp")
     tmp.write_bytes(msgspec.json.encode(summary))
     tmp.replace(artifact)  # atomic publish: a killed compaction never leaves the reloader a truncated JSON
-    body = {
-        "continue": True,
-        "systemMessage": f"handoff written to {artifact}",
-        "hookSpecificOutput": {"hookEventName": "PreCompact", "additionalContext": f"pre-compaction handoff at {artifact}"},
-    }
+    body = {"continue": True, "systemMessage": f"handoff written to {artifact}"}  # PreCompact carries no additionalContext; the field is dropped
     sys.stdout.write(msgspec.json.encode(body).decode())
     return 0
 

@@ -39,7 +39,7 @@ Colima is the Docker API / Compose / Buildx / Pulumi default and never yields `D
 | [INDEX] | [TRAP]                                                            | [RULE_NOW]                                                       |
 | :-----: | :---------------------------------------------------------------- | :--------------------------------------------------------------- |
 |  [01]   | Project `mcpServers` blocks shadowed the fleet with stale servers | Estate repositories carry no client registration; Forge governs  |
-|  [02]   | `mcpServers.jupyter.env` carried a literal `JUPYTER_TOKEN`        | Carry no literal token env; the wrapper resolves the live token  |
+|  [02]   | `mcpServers.<name>.env` carried a literal token                   | Carry no literal token env; the wrapper resolves the live token  |
 |  [03]   | Required MCP registration proves only startup/registration        | `required = true` fails startup/resume if the MCP cannot init    |
 |  [04]   | Relocated LSP telemetry/plugin rows pointed at absent paths/SHAs  | Telemetry is `@forge-lsp`; dead marketplace keys are deleted     |
 |  [05]   | Retained stdio writers kept abandoned fleet generations live      | Forge-owned stdio rows ride an activity lease and group reap     |
@@ -92,7 +92,7 @@ Colima is the Docker API / Compose / Buildx / Pulumi default and never yields `D
 - [03]: PlistBuddy `Add` failed under `set -e`; owner `assets/wallpaper/`.
 - [04]: HUP/INT/TERM reap resolver workers before EXIT cleanup; the stranded workers were SessionStart resolver workers (`.claude/hooks/setup-env.sh`).
 - [05]: the dead reference (`forge.chords` from darwin-gated `apps/`) shipped through repeated darwin-only switches; `nix eval '.#nixosConfigurations.maghz.config.system.build.toplevel.drvPath'` is the missing half of the gate.
-- [06]: `terminal-notifier` in `shell-tools/` (imported by both hosts) throws at linux eval; an empty interpolation plus a runtime `[ -n "$tn" ]` guard is the shape.
+- [06]: a darwin-only `pkgs.*` in a both-host module throws at linux eval; an empty interpolation plus a runtime `[ -n "$tn" ]` guard is the shape.
 
 ## [08]-[SHELL_KERNELS]
 

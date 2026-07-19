@@ -1,6 +1,6 @@
 # [PULUMI_AUTOMATION_API]
 
-The Automation API drives Pulumi operations from code instead of the CLI: multi-stack orchestration, self-service infrastructure platforms, embedded per-tenant provisioning, and the replacement of fragile shell scripts stitching `pulumi` commands. A single project with standard deployment needs stays on the CLI.
+Automation API drives Pulumi operations from code instead of the CLI: multi-stack orchestration, self-service infrastructure platforms, embedded per-tenant provisioning, and the replacement of fragile shell scripts stitching `pulumi` commands. A single project with standard deployment needs stays on the CLI.
 
 ```typescript conceptual
 import * as automation from "@pulumi/pulumi/automation";
@@ -19,7 +19,7 @@ const upResult = await stack.up({ onOutput: console.log });
 
 - [LOCAL_SOURCE]: `workDir` points at an existing Pulumi project on disk. Fits separate ownership — a platform team orchestrating application-team programs, independent version control and release cycles.
 - [INLINE_SOURCE]: `program` embeds the Pulumi program as a function in the orchestrator. Fits single-team ownership, tight coupling by design, and compiled-binary distribution with no source files.
-- [LANGUAGE_INDEPENDENCE]: The orchestrator's language and the orchestrated programs' languages are independent — a Go orchestrator manages TypeScript programs.
+- [LANGUAGE_INDEPENDENCE]: Orchestrator and orchestrated programs choose languages independently — a Go orchestrator manages TypeScript programs.
 
 ```typescript conceptual
 // Local source
