@@ -32,8 +32,9 @@
   homeDir,
   sshBin,
 }: let
-  # The supervisor counts protocol BYTES as activity — a silent in-flight call spends the lease — so every row binds idleSeconds explicitly
-  # (lease = codex.toolTimeoutSec + 300 via rec, matching the launcher-wrapper default) and the script's generic fallback never governs a fleet row.
+  # The supervisor counts protocol BYTES as activity and a live client renews the lease, so idleSeconds bounds only abandoned generations;
+  # every row binds it explicitly (lease = codex.toolTimeoutSec + 300 via rec, matching the launcher-wrapper default) and the script's
+  # generic fallback never governs a fleet row.
   mkSupervised = {
     cmd,
     args ? [],
@@ -156,7 +157,7 @@ in [
       bin = "playwright-mcp";
       upstream = "npm:@playwright/mcp";
       updateEngine = "npm-registry";
-      idleSeconds = 180; # heavy chromium subtree reaps fast when idle, no persistent session to preserve
+      idleSeconds = 180; # heavy chromium subtree reaps fast once its client generation is abandoned, no persistent session to preserve
     };
     codex = {
       required = false;

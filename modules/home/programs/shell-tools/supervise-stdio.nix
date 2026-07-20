@@ -4,9 +4,10 @@
 # License       : MIT
 # Path          : modules/home/programs/shell-tools/supervise-stdio.nix
 # ----------------------------------------------------------------------------
-# Supervised stdio lane shared by every MCP launcher: blocking byte relays bind both protocol directions to a bounded activity lease, while EOF,
-# server exit, wrapper death, and termination signals converge on one whole-process-group reap. A lifeline guardian survives wrapper SIGKILL,
-# retained client pipe writers cannot hold an abandoned generation forever, and inherited server stderr stays outside the JSON-RPC stream.
+# Supervised stdio lane shared by every MCP launcher: EOF, server exit, wrapper death, and termination signals converge on one
+# whole-process-group reap, and a lifeline guardian survives wrapper SIGKILL. The idle lease governs only abandoned generations — a dead or
+# unprobeable client expires under it, while a live client renews it indefinitely, so an idle session never sees its server disconnect.
+# Inherited server stderr stays outside the JSON-RPC stream.
 server: ''
   idle_seconds="''${FORGE_STDIO_IDLE_SECONDS:-900}"
   if [[ ! "$idle_seconds" =~ ^[1-9][0-9]*$ ]]; then
@@ -95,7 +96,12 @@ server: ''
           IFS= read -r last <"$activity_file" || true
         fi
         [[ "$last" =~ ^[0-9]+$ ]] || last="$now"
-        ((now >= last && now - last >= idle_seconds)) && break
+        if ((now >= last && now - last >= idle_seconds)); then
+          # Live-client hold: a provably live client renews the lease, so a quiet session never loses its server mid-run; expiry reaps
+          # only generations without a probeable client, whose relays may hold no EOF to converge on.
+          { ((client_pid > 1)) && kill -0 "$client_pid" 2>/dev/null; } || break
+          printf '%s\n' "$now" >"$activity_file"
+        fi
         continue
       fi
       break

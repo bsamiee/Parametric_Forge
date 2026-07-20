@@ -350,8 +350,8 @@
          else {Authorization: ("Bearer " + (.codex.bearerEnvVar | env_ref))}
          end);
     # Client idle ceiling: Claude Code aborts a silent MCP call at 1800000ms unless the row carries `timeout` (ms). A row whose tool budget outlasts
-    # that default projects toolTimeoutSec as milliseconds so the client waits the full budget; the supervisor idle lease (toolTimeoutSec+300) then
-    # outlasts the client and reaps after it aborts, and workflow-lane wrappers stall above both. Short-call rows stay under the default, gain no field.
+    # that default projects toolTimeoutSec as milliseconds so the client waits the full budget; the supervisor reaps the subtree once the client
+    # generation ends (EOF or client death), and workflow-lane wrappers stall above both. Short-call rows stay under the default, gain no field.
     def claude_idle_timeout:
       (.codex.toolTimeoutSec * 1000) as $ms | if $ms > 1800000 then $ms else null end;
     {
