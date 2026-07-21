@@ -7,6 +7,8 @@
 # Supervised stdio lane shared by every MCP launcher: EOF, server exit, wrapper death, and termination signals converge on one
 # whole-process-group reap, and a lifeline guardian survives wrapper SIGKILL. The idle lease governs only abandoned generations — a dead or
 # unprobeable client expires under it, while a live client renews it indefinitely, so an idle session never sees its server disconnect.
+# Client liveness pins launch-time process identity (lstart), so a recycled PID never renews a dead client's lease. Every reap appends one
+# schema=forge-mcp/v1 TSV exit receipt (server, pid, cause, code, uptime, client state) to the forge-mcp receipt log — file-only, never stdout.
 # Inherited server stderr stays outside the JSON-RPC stream.
 server: ''
   idle_seconds="''${FORGE_STDIO_IDLE_SECONDS:-900}"
@@ -21,9 +23,44 @@ server: ''
   srv=0
   life_fd=0
   client_pid="$PPID"
+  client_lstart="$(ps -o lstart= -p "$client_pid" 2>/dev/null || true)"
+  server_name="$(basename ${server})"
+  srv_started="$BASH_MONOSECONDS"
+  receipt_log="''${FORGE_MCP_RECEIPT_LOG:-$HOME/Library/Logs/forge-mcp.receipts.log}"
   work="$(mktemp -d "''${TMPDIR:-/tmp}/forge-stdio.XXXXXX")"
   activity="$work/activity"
   printf '%s\n' "$BASH_MONOSECONDS" >"$activity"
+
+  client_alive() {
+    ((client_pid > 1)) || return 1
+    kill -0 "$client_pid" 2>/dev/null || return 1
+    [[ -z "$client_lstart" ]] || [[ "$(ps -o lstart= -p "$client_pid" 2>/dev/null)" == "$client_lstart" ]]
+  }
+
+  receipt() {
+    local -r cause="$1" code="$2"
+    local alive=dead
+    client_alive && alive=live
+    mkdir -p "$(dirname "$receipt_log")" 2>/dev/null || return 0
+    printf 'schema=forge-mcp/v1\tkind=stdio-reap\tts=%s\tserver=%s\tpid=%s\tcause=%s\tcode=%s\tuptime_s=%s\tclient=%s\n' \
+      "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$server_name" "$srv" "$cause" "$code" \
+      "$((BASH_MONOSECONDS - srv_started))" "$alive" >>"$receipt_log" 2>/dev/null || true
+  }
+
+  sweep_stale_generations() {
+    # A hard SIGKILL or orphan-then-kill bypasses both the cleanup EXIT trap and the guardian rm, stranding that generation's work dir;
+    # SIGKILL is untrappable, so the leak reaps at the next launch, not at exit. A live generation renews its activity file within
+    # idle_seconds, so reaping only siblings whose activity aged past 2*idle_seconds — or that never wrote one — clears the dead
+    # without racing a quiet-but-live session or a sibling mktemp still in flight.
+    local -r stale_min=$(( (idle_seconds * 2 + 59) / 60 ))
+    local act dir
+    while IFS= read -r act; do
+      dir="''${act%/activity}"
+      [[ "$dir" == "$work" ]] && continue
+      rm -rf -- "$dir" 2>/dev/null || true
+    done < <(find "''${TMPDIR:-/tmp}" -maxdepth 2 -type f -name activity -path '*/forge-stdio.*/activity' -mmin +"$stale_min" 2>/dev/null)
+    find "''${TMPDIR:-/tmp}" -maxdepth 1 -type d -name 'forge-stdio.*' -empty -mmin +"$stale_min" ! -path "$work" -exec rm -rf -- {} + 2>/dev/null || true
+  }
 
   tree_alive() {
     local -r server_pid="$1"
@@ -78,8 +115,8 @@ server: ''
   }
 
   guardian_loop() {
-    local -r server_pid="$1" in_pid="$2" out_pid="$3" activity_file="$4" work_dir="$5" client_pid="$6"
-    local last="$BASH_MONOSECONDS" now read_status
+    local -r server_pid="$1" in_pid="$2" out_pid="$3" activity_file="$4" work_dir="$5"
+    local last="$BASH_MONOSECONDS" now read_status cause="lifeline-eof"
     trap 'exit 0' TERM INT HUP
     while :; do
       read_status=0
@@ -89,25 +126,34 @@ server: ''
       fi
       if ((read_status > 128)); then
         # Parent-liveness gate: a hard client SIGKILL orphans the wrapper with relays blocked on reads that never see EOF, so the
-        # lifeline never closes; probing the launching client reaps the generation within a poll instead of waiting out the idle lease.
-        ((client_pid > 1)) && ! kill -0 "$client_pid" 2>/dev/null && break
+        # lifeline never closes; probing the launching client (identity-pinned) reaps the generation within a poll instead of waiting
+        # out the idle lease.
+        if ((client_pid > 1)) && ! client_alive; then
+          cause="client-death"
+          break
+        fi
         now="$BASH_MONOSECONDS"
         if [[ -s "$activity_file" ]]; then
           IFS= read -r last <"$activity_file" || true
         fi
         [[ "$last" =~ ^[0-9]+$ ]] || last="$now"
         if ((now >= last && now - last >= idle_seconds)); then
-          # Live-client hold: a provably live client renews the lease, so a quiet session never loses its server mid-run; expiry reaps
-          # only generations without a probeable client, whose relays may hold no EOF to converge on.
-          { ((client_pid > 1)) && kill -0 "$client_pid" 2>/dev/null; } || break
+          # Live-client hold: a provably live, identity-matched client renews the lease, so a quiet session never loses its server
+          # mid-run; expiry reaps only generations without a probeable same-identity client, whose relays may hold no EOF to converge on.
+          if ! client_alive; then
+            cause="idle-expiry"
+            break
+          fi
           printf '%s\n' "$now" >"$activity_file"
         fi
         continue
       fi
+      cause="lifeline-close"
       break
     done
     trap - TERM INT HUP
     stop_tree "$server_pid" "$in_pid" "$out_pid"
+    receipt "$cause" "-"
     rm -rf -- "$work_dir"
   }
 
@@ -127,6 +173,8 @@ server: ''
   trap 'exit 130' INT
   trap 'exit 129' HUP
 
+  sweep_stale_generations
+
   exec {server_stdin}< <(relay_stream)
   input_relay=$!
   exec {server_stdout}> >(relay_stream)
@@ -135,7 +183,7 @@ server: ''
   ${server} "$@" <&"$server_stdin" >&"$server_stdout" &
   srv=$!
   set +m
-  exec {life_fd}> >(guardian_loop "$srv" "$input_relay" "$output_relay" "$activity" "$work" "$client_pid")
+  exec {life_fd}> >(guardian_loop "$srv" "$input_relay" "$output_relay" "$activity" "$work")
   watchdog=$!
   exec {server_stdin}<&-
   exec {server_stdout}>&-
@@ -144,14 +192,17 @@ server: ''
   rc=0
   wait -fn -p finished "$input_relay" "$output_relay" "$watchdog" "$srv" 2>/dev/null || rc=$?
   if [[ "$finished" == "$srv" ]]; then
+    receipt "server-exit" "$rc"
     exit "$rc"
   fi
 
   # A relay ended before the server: preserve a prompt EOF-driven server exit, then classify forced lifecycle retirement as successful supervision.
   sleep 1
   if kill -0 "$srv" 2>/dev/null; then
+    receipt "client-disconnect" "-"
     exit 0
   fi
   wait "$srv" 2>/dev/null || rc=$?
+  receipt "client-disconnect" "$rc"
   exit "$rc"
 ''
