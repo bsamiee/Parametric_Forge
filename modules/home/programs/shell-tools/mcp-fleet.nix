@@ -382,8 +382,9 @@ in [
     };
   }
   rec {
-    # Codex itself as a Claude-side MCP tool: `codex`/`codex-reply` run gpt-5.6 sessions natively — the workflow-lane dispatch surface. Claude-only:
-    # codex never registers itself. The auto-updating user-installed binary lives outside profileBin.
+    # Codex itself as a Claude-side MCP tool: `codex`/`codex-reply` run gpt-5.6 sessions natively — interactive and light dispatch only; heavy
+    # work lanes ride the per-lane `codex exec` script (codex-lane.sh in each repo's codex skill). Claude-only: codex never registers itself.
+    # The binary installs via forge-install-codex (dev-tools.nix) into ~/.local/bin, outside profileBin.
     name = "codex";
     transport = "stdio";
     inherit
@@ -401,9 +402,9 @@ in [
     codex = {
       required = false;
       startupTimeoutSec = 30;
-      # A long sol/high turn holds one silent blocking call; the claude projection derives this row's client idle `timeout` (ms) from this value,
-      # so Claude Code waits the full tool budget instead of aborting at its 1800s default.
-      toolTimeoutSec = 7200;
+      # The claude projection derives this row's client idle `timeout` (ms, omitted under 1800 s → Claude's native default) and the supervisor
+      # idle lease (+300 s) from this one value. Every work lane rides codex-lane.sh, so this budget covers interactive/light calls only.
+      toolTimeoutSec = 900;
     };
   }
   {
